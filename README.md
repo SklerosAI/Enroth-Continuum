@@ -1,3 +1,22 @@
+# Enroth Continuum
+
+> **A respectful SklerosAI fork of [OpenEnroth](https://github.com/OpenEnroth/OpenEnroth).**
+>
+> OpenEnroth is the engine project this repository builds upon. This fork retains its
+> upstream history, license, notices, and attribution, and intends to keep general
+> improvements suitable for upstream collaboration. See [CREDITS.md](CREDITS.md) and
+> [project/UPSTREAM.md](project/UPSTREAM.md).
+
+Enroth Continuum is early project infrastructure for a native-macOS-oriented
+Might & Magic VI-VIII experience and an optional, balance-aware legacy-campaign
+layer. **No Skleros engine adaptations are included yet.**
+
+Original game assets remain local to each owner. The tracked
+[local-game-data/README.md](local-game-data/README.md) describes the deliberately
+ignored workspace location for MM6, MM7, and MM8 installations.
+
+---
+
 # OpenEnroth
 
 [![Build](https://github.com/OpenEnroth/OpenEnroth/actions/workflows/build_release.yml/badge.svg)](https://github.com/OpenEnroth/OpenEnroth/actions/workflows/build_release.yml)

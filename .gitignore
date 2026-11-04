@@ -59,3 +59,9 @@ local.properties
 .claude/settings.local.json
 .claude/plans
 .claude/worktrees/
+
+# Locally owned Might & Magic VI-VIII installations and extracted GOG data.
+# Keep the tracked README as the only file in this directory tree. Do not use
+# `git add -f` for game data, saves, installers, or derived asset archives.
+/local-game-data/*
+!/local-game-data/README.md

@@ -74,6 +74,11 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   (active adapter), `mm7-isolated-runtime` (verified baseline), and
   `mm8-isolated-runtime` (reserved untouched baseline). MM8 has no adapted
   engine or bundled app yet.
+- The intended installed layout is three sibling helpers (`MM6.app`,
+  `MM7.app`, `MM8.app`) and three private profiles. The current Atlas build
+  script still packages a single engine as `OpenEnroth.app`; a title-aware
+  assembler is required before adding MM6 or MM8 so builds cannot replace
+  another game's helper.
 - Offline MM6 probes cover all 134 retained map/delta entries, all 52 indoor
   `.blv` and `.dlv` layouts, all 15 outdoor `.odm` and `.ddm` layouts, and the
   67 listed map scripts plus `global.evt`. Every base and delta layout reaches

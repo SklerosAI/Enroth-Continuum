@@ -166,7 +166,18 @@ that requirement.
   whether MM6 needs either in its UI.
 - [ ] Map every binary-table record and font to title-specific behavior and
   verify the resources rendered by the MM6 interface.
-- [ ] Video and audio archives, soundtrack mapping, playback and fallbacks.
+- [x] Cross-check retained media archive entry names and soundtrack manifest
+  against MM6's map music IDs and `dsounds.bin`: all 12 distinct map track IDs
+  have corresponding numbered MP3 files; the sound table has 1,355 rows and
+  seven names absent from the 1,526-entry retained `Audio.snd` index. Determine
+  whether these are unused, aliases or errors before assigning fallbacks.
+- [ ] Video and audio archive structure, house/movie routing, playback and
+  fallbacks. The 116 distinct MM6 house animation IDs used in `2devents.txt`
+  are within the inherited 196-entry MM7 `pAnimatedRooms` array, but **zero**
+  of their MM7 video names occur in the retained MM6 `Anims1`/`Anims2` indexes.
+  Build an MM6-specific room descriptor table rather than indexing the MM7 one.
+  The seven active opcode-12 event records also need MM6-specific decoding:
+  their payload shape does not match the current `EVENT_ShowMovie` parser.
 - [ ] Compare one low, middle and high record of every ID family and every
   structure boundary with MM7. Record incompatible assumptions explicitly.
 
@@ -185,6 +196,7 @@ correct before the F4 readiness gate:
 | Indoor maps | `IndoorLocation::Load` decodes both `.blv` and `.dlv` as `IndoorLocation_MM7` / `IndoorDelta_MM7`; no MM6 indoor snapshot reader exists. Offline probes now confirm all 52 MM6 base and delta section layouts, including MM6's shorter header and record sizes. | Implement MM6 decoding, reconstruction, respawn and delta persistence for all 52 interiors; do not reuse MM7's 40-byte delta header or per-face/per-sprite attribute arrays. |
 | Events | Listed map scripts use opcodes 20, 27 and 28 absent from `EvtEnums.h` | Implement parsing and semantics, then cover every active opcode and event variable |
 | Event text | Seven MM6 mouseover IDs exceed their `.str` count without a house-name override. Opcode 5 has 56 uses with an unverified operand; `EVENT_InputString` has 19 uses but its interpreter path currently asserts. | Resolve MM6 hint, location and input-dialog behavior against shipped scripts; keep all map text accessible. |
+| Houses and media | MM6 uses 116 room animation IDs, but none of the corresponding MM7 `pAnimatedRooms` video names appears in the MM6 video indexes; seven `dsounds.bin` names are absent from the sound archive index. All 12 map music IDs have MP3 files. | Implement MM6 room descriptors, reconcile sound aliases/missing names, decode MM6 event media operands, and verify house, event and map playback. |
 | Character UI | `UIPartyCreation.cpp` allocates nine class icons and 22 portraits and draws MM7 classes including Monk and Thief | Build MM6 custom party and Quick Start paths, portraits, six classes and skills |
 | Save/load | `SaveLoad.cpp` always serializes `SaveGame_MM7` and `IndoorDelta_MM7` / `OutdoorDelta_MM7`; file names and the `UISaveLoad.cpp` list filter require `.mm7` | Define, write, list and reload versioned MM6 saves and map deltas in the MM6 profile; leave MM7 saves readable in the MM7 profile |
 | Launcher | Installed Atlas has only MM7 Play | Stage independent `MM6.app` beside verified `MM7.app`; preserve MM7 on install |
@@ -266,6 +278,11 @@ to the owned GOG tables and scripts.
   preferences, caches and logs. A title may read only its own runtime data.
 - [ ] Rebuilding or installing one title preserves the other two app bundles,
   their saved games and their Atlas launch actions.
+- [ ] Replace the MM7-era `launcher/build.sh` flow with a title-aware Atlas
+  assembler. It must identify every input engine, stage existing playable
+  siblings, reject a title mismatch, and leave the installed app intact on
+  failure. In particular, an MM6 or MM8 build must never occupy MM7's helper
+  slot.
 - [ ] From one installed Atlas, launch all three campaigns in succession without
   rebuilding or swapping files; save and reload each, update one engine, then
   repeat all three checks.

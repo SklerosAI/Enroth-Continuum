@@ -19,8 +19,13 @@ title-specific implementation and an appropriate offline or live check exist.
 - [x] Extract text locally from the owned 61-page manual and 5-page reference
   card. Both source PDFs and text are ignored; their sections still need full
   mechanic-by-mechanic review.
-- [ ] Inventory the video, sound, music, executable and save families, including
-  exact formats, counts and hash coverage.
+- [x] Inventory the installed video, sound, music and executable file families:
+  `Anims1.vid` has 40 entries, `Anims2.vid` has 87, `Audio.snd` has 1,526,
+  and `Sounds/2.mp3` through `16.mp3` provide 15 music tracks. Archive and
+  executable hashes, and per-track music hashes, are in the ignored research
+  folder. The original executable is PE32 x86; it is reference material only.
+- [ ] Decode media entry formats and map all movie, effect and music IDs to
+  game behavior; inspect native MM6 save format if a lawful local sample exists.
 - [ ] Read the owned original manual and reference card and annotate every
   relevant mechanic. Compare the [original manual](https://www.mocagh.org/nwc/mm6-manual.pdf),
   [New World Computing guide](https://www.mocagh.org/nwc/mm6le-strategyguide.pdf),
@@ -80,12 +85,27 @@ that requirement.
 - [ ] LOD directory, compressed payload and case-insensitive lookup semantics.
 - [ ] Icon, bitmap and sprite formats, palettes, transparency, animation frames,
   equipment positions, character faces and title-specific UI resources.
+- [x] Verify the 67 map filenames in `mapstats.txt` match the 67 base files in
+  `Games.lod`, with every 15 outdoor and 52 indoor file having its delta pair.
+  All 134 retained map entries have valid size headers and their raw DEFLATE
+  streams produce exactly the declared sizes. Strict zlib validation fails
+  Adler-32 on `cd3.blv` and `d08.blv`; the exact cause and safe decoding policy
+  remain open. The ignored `map-probe.json` records entry and decoded hashes.
 - [ ] All 15 `.odm` outdoor maps and 15 `.ddm` delta companions: geometry,
   terrain, objects, actors, doors, chests, map events and persistence.
 - [ ] All 52 `.blv` indoor maps and 52 `.dlv` delta companions: geometry,
   portals, rooms, lights, objects, actors, doors, chests and persistence.
-- [ ] All 83 extracted `.evt` scripts, including global, map and dialogue
-  variants; enumerate every opcode, operand schema, condition and side effect.
+- [x] Frame all 67 listed map EVT files and `global.evt`: 14,477 records, 43
+  distinct opcodes, no framing errors. The other 15 EVT-named files are not
+  listed maps; one (`d4bm.evt`) is not a framed script and must not be fed to
+  the current event parser. The ignored `event-probe.json` retains every record.
+- [ ] Resolve whether any unlisted EVT file is reachable through a hidden map
+  or event path before treating it as ignorable.
+- [ ] Decode and implement every listed-map/global EVT operand and side effect.
+  Specifically, active opcodes 20, 27 and 28 are absent from the current C++
+  enum. The [MM6 level editor's event format source](https://github.com/angeld29/mm8leveleditor/blob/master/src/org/gamenet/application/mm8leveleditor/data/mm6/fileFormat/EventFormatMM6.java)
+  identifies them as item modification, random password and random answer;
+  confirm operand layouts against shipped records and game behavior.
 - [ ] All 76 `.str` string resources and their map/event references.
 - [ ] Remaining 11 `.bin` data families and 14 `.fnt` font files.
 - [ ] Video and audio archives, soundtrack mapping, playback and fallbacks.

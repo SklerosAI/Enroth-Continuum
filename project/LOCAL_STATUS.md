@@ -74,3 +74,8 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   (active adapter), `mm7-isolated-runtime` (verified baseline), and
   `mm8-isolated-runtime` (reserved untouched baseline). MM8 has no adapted
   engine or bundled app yet.
+- Offline MM6 probes cover all 134 retained map/delta entries and the 67
+  listed map scripts plus `global.evt`. Two indoor map entries have Adler-32
+  mismatches despite complete raw DEFLATE output. Three opcodes used in listed
+  map scripts still lack MM6-specific C++ parsing and execution. These findings
+  are recorded in the checklist; no installed runtime changed.

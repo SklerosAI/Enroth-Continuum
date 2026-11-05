@@ -24,13 +24,16 @@ storage. See [plan.md](plan.md) for the staged acceptance checks.
 ## Trilogy support
 
 The MM7 Mac baseline and first private mod overrides are working in this fork.
-MM6 is the next engine goal here, using the owner's local GOG data. We can
-diverge from OpenEnroth's implementation and schedule while preserving its
-license, history and credit. The Atlas will offer MM6 as an experimental game
-only after an observed opening campaign session and save/load check; full MM6
-support means the campaign can reach its ending. MM8 follows as a separate
-implementation, then cross-game character transfer. See [plan.md](plan.md),
-section 18.1, for gates and checks.
+MM6 is the active next engine goal, using the owner's local GOG data. MM7 is
+frozen as its own complete runtime while MM6 is built from a separate source
+copy. MM8 later gets an equally separate runtime. The Atlas ultimately holds
+three sibling engine apps and three independent sets of data, saves, mods and
+preferences, so all campaigns can work at once. We can diverge from
+OpenEnroth's implementation and schedule while preserving its license, history
+and credit. The Atlas will offer MM6 only after an observed campaign session
+and save/load check; full MM6 support means the campaign can reach its ending.
+Cross-game character transfer follows working source and destination games.
+See [plan.md](plan.md), section 18.1, for gates and checks.
 
 ## Optional legacy campaign
 

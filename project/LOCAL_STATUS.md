@@ -75,10 +75,10 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   `mm8-isolated-runtime` (reserved untouched baseline). MM8 has no adapted
   engine or bundled app yet.
 - Offline MM6 probes cover all 134 retained map/delta entries, all 52 indoor
-  `.blv` layouts and 52 `.dlv` layouts, and the 67 listed map scripts plus
-  `global.evt`. Every indoor base and delta layout reaches its exact decoded
-  end. Two `.blv` entries contain
-  complete DEFLATE streams followed by extra bytes inside the archive entry;
+  `.blv` and `.dlv` layouts, all 15 outdoor `.odm` and `.ddm` layouts, and the
+  67 listed map scripts plus `global.evt`. Every base and delta layout reaches
+  its exact decoded end. Two `.blv` entries contain complete DEFLATE streams
+  followed by extra bytes inside the archive entry;
   their runtime decoding policy remains open. Three opcodes used in listed map
   scripts still lack MM6-specific C++ parsing and execution. These findings are
   recorded in the checklist; no installed runtime changed.

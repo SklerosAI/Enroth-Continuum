@@ -82,8 +82,11 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   their runtime decoding policy remains open. Three opcodes used in listed map
   scripts still lack MM6-specific C++ parsing and execution; their payload
   lengths are now inventoried. All 15 unlisted EVT files lack matching archived
-  base maps. These findings are recorded in the checklist; no installed runtime
-  changed.
+  base maps. Offline checks also match 67 map string/EVT pairs, all 11 binary
+  table boundaries and all 14 font glyph atlases. Seven non-house mouseover
+  hints remain out of range; opcode 5 and MM6 input-dialog behavior need
+  resolution. These findings are recorded in the checklist; no installed
+  runtime changed.
 - A locally retained, ignored copy of the 412-page Prima strategy guide is
   text-searchable. Its chapter outline has been converted into explicit
   campaign-coverage work in the checklist. This is source indexing, not yet a

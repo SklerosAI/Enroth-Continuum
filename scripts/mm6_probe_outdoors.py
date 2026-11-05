@@ -86,7 +86,7 @@ def probe_delta(path: Path) -> dict:
         # MM6 has no MM7 per-face or per-sprite attribute arrays here.
         read_count(cur, "creatures", 548, entry)
         read_count(cur, "items", 100, entry)
-        read_count(cur, "chests", 4204, entry)
+        read_count(cur, "chests", 4204, entry)  # 140 items and 140 grid cells
         cur.take(200)  # persistent map bits
         cur.take(56)  # visit time, sky, five four-byte fields, reserved bytes
         entry["parsed_bytes"] = cur.offset

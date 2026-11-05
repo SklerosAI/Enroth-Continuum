@@ -139,8 +139,8 @@ def probe_delta(path: Path, base: dict) -> dict:
         # MM6 has no per-face or per-sprite attribute arrays here.
         cur.count("creatures", 548, entry)
         cur.count("items", 100, entry)
-        # Four-byte chest header, 140 x 28-byte contents, 9x9 short grid,
-        # and 118 trailing bytes: 4 + 3920 + 162 + 118 = 4204.
+        # Four-byte chest header, 140 x 28-byte contents, 140 short grid
+        # cells: 4 + 3920 + 280 = 4204. The MM6 dchest table says 14x10.
         cur.count("chests", 4204, entry)
         if base["doors"] != 200:
             raise FormatError(f"expected 200 base door slots, found {base['doors']}")

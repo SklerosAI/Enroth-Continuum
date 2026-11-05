@@ -142,8 +142,30 @@ that requirement.
   payload lengths of 5, 2 and 1 bytes. Opcode 20 occurs seven times in
   `znwc.evt`; 27 and 28 occur once each in `d09.evt`. Determine field meanings
   and game behavior before implementing them.
-- [ ] All 76 `.str` string resources and their map/event references.
-- [ ] Remaining 11 `.bin` data families and 14 `.fnt` font files.
+- [x] Pair all 67 listed maps with their `.str` and `.evt` files and check
+  established local-string operands against the NUL-delimited string count.
+  Of 2,925 such references, 2,400 are in range and 518 out-of-range mouseover
+  values belong to house events where the current engine uses the house name.
+  Seven mouseover values have no such override and would display no hint under
+  the current lookup. Opcode 5 occurs 56 times; the MM6 editor describes its
+  one-byte operand as unknown, so it is inventoried separately rather than
+  assumed to index local strings. The ignored `string-probe.json` keeps the
+  exact map/event IDs and all nine unlisted `.str` names.
+- [ ] Resolve the seven direct mouseover exceptions, opcode 5 semantics, and
+  use of the nine unlisted `.str` files, including `intro`, `win` and `lose`.
+- [x] Validate record boundaries of all 11 shipped `.bin` resources. Ten use
+  a four-byte count followed by fixed-size records; `dsft.bin` has two counts,
+  6,455 sprite frames and 1,656 extended-frame indices. The ignored
+  `binary-table-probe.json` records counts, lengths and hashes. `dchest.bin`
+  has eight 36-byte records; every MM6 row declares a 14×10 chest grid and
+  image IDs 1–8. The current runtime does not load it.
+- [x] Validate all 14 `.fnt` headers and glyph bounds against the runtime's
+  two font atlas layouts. Thirteen use the MM7-style metrics layout; `calig.fnt`
+  uses the older width-only layout. The ignored `font-probe.json` records each
+  format. `calig.fnt` and `legal.fnt` have no direct `LoadFont` call; determine
+  whether MM6 needs either in its UI.
+- [ ] Map every binary-table record and font to title-specific behavior and
+  verify the resources rendered by the MM6 interface.
 - [ ] Video and audio archives, soundtrack mapping, playback and fallbacks.
 - [ ] Compare one low, middle and high record of every ID family and every
   structure boundary with MM7. Record incompatible assumptions explicitly.
@@ -158,9 +180,11 @@ correct before the F4 readiness gate:
 | --- | --- | --- |
 | Startup and resources | `Engine.cpp` still enters `MM6_Initialize`, `MM7_LoadLods` and `MM7_Initialize` | Audit each initializer and make title-specific asset, layout and rule paths explicit |
 | Items | `MM6ItemTable.cpp` reads MM6 tables but still populates shared special/artifact bonus maps | Verify every MM6 item ID, special effect, potion recipe, enchantment and equipment rule |
+| Chests | MM6 `dchest.bin` declares 14×10 grids; `ChestTable.cpp` currently hardcodes eight 9×9 MM7 layouts. The 4,204-byte MM6 delta chest record accommodates 140 28-byte items and 140 short grid cells. | Load MM6 chest dimensions and images, reconstruct MM6 chest items and matrices, and verify placement, opening and save/reload without changing MM7 chests. |
 | Outdoor maps | `MM6OutdoorSnapshot.cpp` maps MM6 data into MM7 structures. Offline probes confirm all 15 base/delta layouts; all 921 owned model headers declare zero BSP nodes. `OutdoorLocation::Load` still deserializes `OutdoorDelta_MM7`. | Implement MM6 delta decoding and reconstruction; prove geometry, collision, decoration, spawn, events and persistence across all 15 maps. |
 | Indoor maps | `IndoorLocation::Load` decodes both `.blv` and `.dlv` as `IndoorLocation_MM7` / `IndoorDelta_MM7`; no MM6 indoor snapshot reader exists. Offline probes now confirm all 52 MM6 base and delta section layouts, including MM6's shorter header and record sizes. | Implement MM6 decoding, reconstruction, respawn and delta persistence for all 52 interiors; do not reuse MM7's 40-byte delta header or per-face/per-sprite attribute arrays. |
 | Events | Listed map scripts use opcodes 20, 27 and 28 absent from `EvtEnums.h` | Implement parsing and semantics, then cover every active opcode and event variable |
+| Event text | Seven MM6 mouseover IDs exceed their `.str` count without a house-name override. Opcode 5 has 56 uses with an unverified operand; `EVENT_InputString` has 19 uses but its interpreter path currently asserts. | Resolve MM6 hint, location and input-dialog behavior against shipped scripts; keep all map text accessible. |
 | Character UI | `UIPartyCreation.cpp` allocates nine class icons and 22 portraits and draws MM7 classes including Monk and Thief | Build MM6 custom party and Quick Start paths, portraits, six classes and skills |
 | Save/load | `SaveLoad.cpp` always serializes `SaveGame_MM7` and `IndoorDelta_MM7` / `OutdoorDelta_MM7`; file names and the `UISaveLoad.cpp` list filter require `.mm7` | Define, write, list and reload versioned MM6 saves and map deltas in the MM6 profile; leave MM7 saves readable in the MM7 profile |
 | Launcher | Installed Atlas has only MM7 Play | Stage independent `MM6.app` beside verified `MM7.app`; preserve MM7 on install |

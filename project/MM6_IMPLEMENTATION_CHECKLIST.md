@@ -16,6 +16,9 @@ title-specific implementation and an appropriate offline or live check exist.
   conversion and generated names mean extracted count is not an archive count.
 - [x] Catalog every extracted file with size and SHA-256, plus every nonempty
   row of the 30 text tables, locally. This is raw coverage, not semantic review.
+- [x] Extract text locally from the owned 61-page manual and 5-page reference
+  card. Both source PDFs and text are ignored; their sections still need full
+  mechanic-by-mechanic review.
 - [ ] Inventory the video, sound, music, executable and save families, including
   exact formats, counts and hash coverage.
 - [ ] Read the owned original manual and reference card and annotate every
@@ -91,9 +94,13 @@ that requirement.
 
 ## Engine and campaign behavior
 
-- [ ] Startup, title, credits, options, UI scale, input and intro videos.
+- [ ] Startup, title, credits, options, UI scale, input and intro videos. The
+  MM6 reference card describes a New Game choice between custom party and
+  pregenerated Quick Start; both paths need their own UI and initial state.
 - [ ] Four-character party creation, portrait/voice selection, classes,
-  statistics, starting skills, equipment and initial New Sorpigal state.
+  statistics, starting skills, equipment and initial New Sorpigal state. The
+  reference card specifies 50 starting stat points, two fixed and two selected
+  skills per character, and a starting letter; verify the exact data mapping.
 - [ ] Leveling, training, class promotions, skill points, mastery trainers,
   reputation, fame, conditions, aging, death and recovery.
 - [ ] Equipment slots, armor class, weapon damage, identification, repair,

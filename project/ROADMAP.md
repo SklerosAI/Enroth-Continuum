@@ -28,7 +28,8 @@ MM6 is the active next engine goal, using the owner's local GOG data. MM7 is
 frozen as its own complete runtime while MM6 is built from a separate source
 copy. MM8 later gets an equally separate runtime. The Atlas ultimately holds
 three sibling engine apps and three independent sets of data, saves, mods and
-preferences, so all campaigns can work at once. We can diverge from
+preferences, so all campaigns can work from one installation without switching
+builds or replacing another game. We can diverge from
 OpenEnroth's implementation and schedule while preserving its license, history
 and credit. The Atlas will offer MM6 only after an observed campaign session
 and save/load check; full MM6 support means the campaign can reach its ending.

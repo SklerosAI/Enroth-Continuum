@@ -37,10 +37,15 @@ def probe(path: Path) -> dict:
         result["checksum_valid"] = False
         result["zlib_error"] = str(exc)
         try:
-            decoded = zlib.decompress(payload[2:-4], -15)
+            inflater = zlib.decompressobj(-15)
+            decoded = inflater.decompress(payload[2:-4]) + inflater.flush()
         except zlib.error as raw_exc:
             result["error"] = f"raw DEFLATE also failed: {raw_exc}"
             return result
+        if not inflater.eof or inflater.unconsumed_tail:
+            result["error"] = "raw DEFLATE stream did not reach its end"
+            return result
+        result["trailing_payload_bytes"] = len(inflater.unused_data)
         result["stored_adler32"] = payload[-4:].hex()
         result["actual_adler32"] = f"{zlib.adler32(decoded):08x}"
     result["decoded_bytes"] = len(decoded)
@@ -90,7 +95,9 @@ def main() -> None:
     for entry in errors:
         print(f"  ERROR {entry['name']}: {entry['error']}")
     for name in checksum_failures:
-        print(f"  CHECKSUM {name}: decoded size matched, Adler-32 did not")
+        entry = next(item for item in result["maps"] if item["name"] == name)
+        print(f"  FRAMING {name}: decoded size matched; "
+              f"{entry.get('trailing_payload_bytes', 0)} bytes follow DEFLATE before the final trailer")
     if errors or result["missing_pairs"] or result["extra_pairs"]:
         raise SystemExit(1)
 

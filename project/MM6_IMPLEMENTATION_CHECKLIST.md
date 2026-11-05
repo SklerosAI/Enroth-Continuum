@@ -96,9 +96,16 @@ that requirement.
 - [x] Verify the 67 map filenames in `mapstats.txt` match the 67 base files in
   `Games.lod`, with every 15 outdoor and 52 indoor file having its delta pair.
   All 134 retained map entries have valid size headers and their raw DEFLATE
-  streams produce exactly the declared sizes. Strict zlib validation fails
-  Adler-32 on `cd3.blv` and `d08.blv`; the exact cause and safe decoding policy
-  remain open. The ignored `map-probe.json` records entry and decoded hashes.
+  streams produce exactly the declared sizes. Strict zlib validation fails on
+  `cd3.blv` and `d08.blv`: their complete DEFLATE streams are followed by 2,500
+  and 1,385 extra bytes respectively before the final four bytes. Determine
+  why those bytes are present and define a bounded runtime decoding policy.
+  The ignored `map-probe.json` records entry and decoded hashes.
+- [x] Validate the section boundaries of all 52 retained `.blv` files against
+  MM6's distinct face, room, sprite, light and spawn sizes. Every decoded file
+  parses exactly to its declared end; the ignored `indoor-probe.json` records
+  section counts and hashes. Format cross-check: [MM8LevelEditor's MM6 indoor
+  reader](https://github.com/angeld29/mm8leveleditor/blob/master/src/org/gamenet/application/mm8leveleditor/data/mm6/indoor/IndoorDataMap.java).
 - [ ] All 15 `.odm` outdoor maps and 15 `.ddm` delta companions: geometry,
   terrain, objects, actors, doors, chests, map events and persistence.
 - [ ] All 52 `.blv` indoor maps and 52 `.dlv` delta companions: geometry,

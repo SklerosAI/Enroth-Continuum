@@ -16,6 +16,11 @@ title-specific implementation and an appropriate offline or live check exist.
   conversion and generated names mean extracted count is not an archive count.
 - [x] Catalog every extracted file with size and SHA-256, plus every nonempty
   row of the 30 text tables, locally. This is raw coverage, not semantic review.
+- [x] Generate ignored, reviewable TSV indexes for all item, spell, monster,
+  map and quest-bit IDs. Numeric sequences are continuous: item 0–580, spell
+  1–99, monster 1–173, map 1–67 and quest bit 1–512. Item templates 0, 299 and
+  399 have blank names; only 52 quest-bit rows contain visible quest-note text.
+  Blank rows still need use-site review before calling them unused.
 - [x] Extract text locally from the owned 61-page manual and 5-page reference
   card. Both source PDFs and text are ignored; their sections still need full
   mechanic-by-mechanic review.

@@ -536,6 +536,7 @@ enum class HouseId {
     HOUSE_523 = 523, // Unused.
     HOUSE_524 = 524, // Unused.
     HOUSE_525 = 525, // Unused.
+    HOUSE_MM6_LAST = 557, // MM6's 2devents.txt has entries through 557.
 
     // These two are "pseudo" houses, they do not have entries in the building table.
     HOUSE_THRONEROOM_WIN_GOOD = 600, // Final task completion for good side
@@ -581,7 +582,7 @@ enum class HouseId {
     HOUSE_LAST_ARCOMAGE_TAVERN = HOUSE_TAVERN_STONE_CITY,
 
     HOUSE_FIRST = HOUSE_WEAPON_SHOP_EMERALD_ISLAND,
-    HOUSE_LAST = HOUSE_525
+    HOUSE_LAST = HOUSE_MM6_LAST
 };
 using enum HouseId;
 

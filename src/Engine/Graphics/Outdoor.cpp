@@ -31,6 +31,7 @@
 #include "Engine/Party.h"
 #include "Engine/PartyPlacement.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
+#include "Engine/Snapshots/MM6OutdoorSnapshot.h"
 #include "Engine/SpellFxRenderer.h"
 #include "Engine/Tables/ItemTable.h"
 #include "Engine/Tables/TileTable.h"
@@ -39,6 +40,7 @@
 #include "Engine/Graphics/Vis.h"
 #include "Engine/Graphics/BspRenderer.h"
 #include "Engine/MapEnumFunctions.h"
+#include "Engine/MM6/MM6Archive.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
@@ -454,7 +456,12 @@ void OutdoorLocation::Load(std::string_view filename, int days_played, int respa
     odm_filename.replace(odm_filename.length() - 4, 4, ".odm");
 
     OutdoorLocation_MM7 location;
-    deserialize(lod::decodeMaybeCompressed(pGames_LOD->read(odm_filename)), &location); // read throws.
+    Blob mapEntry = pGames_LOD->read(odm_filename); // read throws.
+    Blob mapData = engine->gameTitle() == GameTitle::MM6 ? decodeMM6ArchiveEntry(mapEntry) : lod::decodeMaybeCompressed(mapEntry);
+    if (engine->gameTitle() == GameTitle::MM6)
+        deserializeMM6Outdoor(mapData, &location);
+    else
+        deserialize(mapData, &location);
     reconstruct(location, this);
 
     // ****************.ddm file*********************//

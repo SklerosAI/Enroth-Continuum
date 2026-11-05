@@ -15,7 +15,7 @@ struct EventTrigger {
 
 class EvtProgram {
  public:
-    static EvtProgram load(const Blob &rawData);
+    static EvtProgram load(const Blob &rawData, GameTitle gameTitle = GameTitle::MM7);
 
     void add(int eventId, EvtInstruction ir);
     void clear();

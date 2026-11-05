@@ -83,8 +83,9 @@ enum class NpcProfession : int32_t {
     NPC_PROFESSION_MONK = 56,            // Unarmed: +2, Dodge: +2.
     NPC_PROFESSION_SAGE = 57,            // Monster ID: +6. TODO(captainurist): vanilla MM7 also gives Item ID +6, OE doesn't.
     NPC_PROFESSION_HUNTER = 58,          // Monster ID: +6.
+    NPC_PROFESSION_MM6_LAST = 77, // MM6 npcprof.txt has entries through 77; effects need title-specific handling.
 
     NPC_PROFESSION_FIRST = NPC_PROFESSION_SMITH,
-    NPC_PROFESSION_LAST = NPC_PROFESSION_HUNTER
+    NPC_PROFESSION_LAST = NPC_PROFESSION_MM6_LAST
 };
 using enum NpcProfession;

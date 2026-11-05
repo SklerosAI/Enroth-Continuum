@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Engine/Spells/SpellEnums.h"
+#include "Engine/GameTitle.h"
 #include "Engine/Objects/CombinedSkillValue.h"
 #include "Engine/Data/SoundEnums.h"
 
@@ -82,7 +83,7 @@ struct MonsterInfo {
 };
 
 struct MonsterStats {
-    void Initialize(const Blob &monsters);
+    void Initialize(const Blob &monsters, GameTitle gameTitle = GameTitle::MM7);
     void InitializePlacements(const Blob &placements);
     MonsterId FindMonsterByInternalName(std::string_view internalName);
 

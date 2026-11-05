@@ -17,7 +17,8 @@ TurnBasedOverlay turnBasedOverlay;
 
 void TurnBasedOverlay::loadIcons() {
     _initialIconId = pIconsFrameTable->animationId("turnstart");
-    _initialAnimationLength = pIconsFrameTable->animationLength(_initialIconId);
+    // MM6 has no turnstart/turnstop/turnhour entries in dift.bin.
+    _initialAnimationLength = _initialIconId >= 0 ? pIconsFrameTable->animationLength(_initialIconId) : 0_ticks;
     _attackIconId = pIconsFrameTable->animationId("turnstop");
     _waitIconId = pIconsFrameTable->animationId("turnhour");
 
@@ -70,7 +71,7 @@ void TurnBasedOverlay::update(Duration dt, TurnEngineStep newStep) {
 }
 
 void TurnBasedOverlay::draw() {
-    if (_state == TURN_BASED_OVERLAY_NONE)
+    if (_state == TURN_BASED_OVERLAY_NONE || _initialIconId < 0)
         return;
 
     render->DrawQuad2D(currentIcon(), {394, 288});

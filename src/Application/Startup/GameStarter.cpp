@@ -108,7 +108,7 @@ void GameStarter::initialize() {
     MM_INFO("Using data path '{}'.", _options.dataPath); // Can't use dfs->displayPath("") b/c it'll show "embedded://"...
 
     // Migrate saves if needed. We don't migrate anything else.
-    if (!_options.ramFsUserData && _options.dataPath.normalized() != _options.userPath.normalized())
+    if (_options.gameTitle == GameTitle::MM7 && !_options.ramFsUserData && _options.dataPath.normalized() != _options.userPath.normalized())
         migrateSaves();
 
     // Create platform.
@@ -124,7 +124,7 @@ void GameStarter::initialize() {
         _environment->setenv("ALSOFT_DRIVERS", "null");
 
     // Can validate the resolved data path now.
-    failOnInvalidPath(_options.dataPath, _platform.get());
+    failOnInvalidPath(_options.dataPath, _options.gameTitle, _platform.get());
 
     // Create application.
     _application = std::make_unique<PlatformApplication>(_platform.get());
@@ -184,7 +184,7 @@ void GameStarter::initialize() {
     ::mouse = EngineIocContainer::ResolveMouse();
 
     // Init engine.
-    _engine = std::make_unique<Engine>(_config, *_overlaySystem);
+    _engine = std::make_unique<Engine>(_config, *_overlaySystem, _options.gameTitle);
     ::engine = _engine.get();
     _engine->Initialize();
 
@@ -225,7 +225,7 @@ GameStarter::~GameStarter() {
 
 void GameStarter::resolveUserPath(Environment *environment, GameStarterOptions *options) {
     if (options->userPath.isEmpty())
-        options->userPath = resolveMm7UserPath(environment);
+        options->userPath = options->gameTitle == GameTitle::MM6 ? resolveMm6UserPath(environment) : resolveMm7UserPath(environment);
 }
 
 void GameStarter::resolveDataPath(Environment *environment, GameStarterOptions *options) {
@@ -233,7 +233,7 @@ void GameStarter::resolveDataPath(Environment *environment, GameStarterOptions *
     if (!options->dataPath.isEmpty()) {
         candidates.push_back(options->dataPath);
     } else {
-        candidates = resolveMm7Paths(environment);
+        candidates = options->gameTitle == GameTitle::MM6 ? resolveMm6Paths(environment) : resolveMm7Paths(environment);
     }
     assert(!candidates.empty());
 
@@ -241,7 +241,7 @@ void GameStarter::resolveDataPath(Environment *environment, GameStarterOptions *
         std::string missingFile;
         if (!fs::exists(candidates[i])) {
             MM_INFO("Data path #{} ('{}') doesn't exist.", i + 1, candidates[i]);
-        } else if (!validateMm7Path(candidates[i], &missingFile)) {
+        } else if (!(options->gameTitle == GameTitle::MM6 ? validateMm6Path(candidates[i], &missingFile) : validateMm7Path(candidates[i], &missingFile))) {
             MM_INFO("Data path #{} ('{}') is missing file '{}'.", i + 1, candidates[i], missingFile);
         } else {
             MM_INFO("Data path #{} ('{}') is OK!", i + 1, candidates[i]);
@@ -255,16 +255,17 @@ void GameStarter::resolveDataPath(Environment *environment, GameStarterOptions *
         options->dataPath = candidates.back();
 }
 
-void GameStarter::failOnInvalidPath(PathView dataPath, Platform *platform) {
+void GameStarter::failOnInvalidPath(PathView dataPath, GameTitle gameTitle, Platform *platform) {
     std::string missingFile;
-    if (validateMm7Path(dataPath, &missingFile))
+    if (gameTitle == GameTitle::MM6 ? validateMm6Path(dataPath, &missingFile) : validateMm7Path(dataPath, &missingFile))
         return;
 
     std::string message = fmt::format(
         "Required file '{}' not found.\n"
         "\n"
-        "You should acquire licensed copy of M&M VII and copy its resources to {}.",
+        "Select a licensed M&M {} data folder at {}.",
         missingFile,
+        gameTitle == GameTitle::MM6 ? "VI" : "VII",
         dataPath
     );
     platform->showMessageBox("CRITICAL ERROR: missing resources", message);

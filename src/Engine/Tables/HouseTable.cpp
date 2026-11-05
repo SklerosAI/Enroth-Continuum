@@ -24,7 +24,7 @@ static float floatOrZero(std::string_view token) {
     return token.empty() ? 0.0f : fromString<float>(token);
 }
 
-void initializeHouses(const Blob &houses) {
+void initializeHouses(const Blob &houses, GameTitle gameTitle) {
     // 2devents.txt table structure (column names are the headers from the data file):
     //  0: "#"                  - house id
     //  1: "#"                  - per-type sequence number, resets at each new Type         (not used)
@@ -78,6 +78,14 @@ void initializeHouses(const Blob &houses) {
         {"Mercenary Guild", HOUSE_TYPE_TOWN_HALL}, // This is MM6 only. TODO(captainurist): Is this right and not Merc Guild (18)?
     };
 
+    auto houseInt = [gameTitle](std::string_view token) {
+        if (gameTitle == GameTitle::MM6) {
+            int result = 0;
+            return tryDeserialize(token, &result) ? result : 0;
+        }
+        return intOrZero(token);
+    };
+
     for (std::string_view line : split(houses.str()).by("\r\n").drop(2).skip("")) {
         std::array<std::string_view, 24> tokens = split(line).by('\t').resize(24, ""); // Some lines have only ~12 cols.
 
@@ -86,17 +94,17 @@ void initializeHouses(const Blob &houses) {
         //                     enums will be handled by the engine. Also apply to other table parsers.
         HouseId houseId = static_cast<HouseId>(fromString<int>(tokens[0]));
         houseTable[houseId].uType = tokens[2].empty() ? HOUSE_TYPE_INVALID : valueOr(houseTypeMap, tokens[2], HOUSE_TYPE_MERCENARY_GUILD);
-        houseTable[houseId].uAnimationID = intOrZero(tokens[4]);
+        houseTable[houseId].uAnimationID = houseInt(tokens[4]);
         houseTable[houseId].name = unquote(tokens[5]);
         houseTable[houseId].pProprieterName = unquote(tokens[6]);
         houseTable[houseId].pProprieterTitle = unquote(tokens[7]);
         houseTable[houseId].fPriceMultiplier = floatOrZero(tokens[12]);
-        houseTable[houseId].flt_24 = floatOrZero(tokens[13]);
-        houseTable[houseId].generation_interval_days = intOrZero(tokens[15]);
-        houseTable[houseId].uOpenTime = intOrZero(tokens[18]);
-        houseTable[houseId].uCloseTime = intOrZero(tokens[19]);
-        houseTable[houseId].uExitPicID = intOrZero(tokens[20]);
-        houseTable[houseId].uExitMapID = static_cast<MapId>(intOrZero(tokens[21]));
-        houseTable[houseId]._quest_bit = static_cast<QuestBit>(intOrZero(tokens[22]));
+        houseTable[houseId].flt_24 = gameTitle == GameTitle::MM6 ? 0.0f : floatOrZero(tokens[13]);
+        houseTable[houseId].generation_interval_days = houseInt(tokens[15]);
+        houseTable[houseId].uOpenTime = houseInt(tokens[18]);
+        houseTable[houseId].uCloseTime = houseInt(tokens[19]);
+        houseTable[houseId].uExitPicID = houseInt(tokens[20]);
+        houseTable[houseId].uExitMapID = static_cast<MapId>(houseInt(tokens[21]));
+        houseTable[houseId]._quest_bit = static_cast<QuestBit>(houseInt(tokens[22]));
     }
 }

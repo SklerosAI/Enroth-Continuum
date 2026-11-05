@@ -11,7 +11,7 @@
 
 #include "Utility/System/Fs.h"
 
-static const std::vector<std::string_view> globalValidateList = {
+static const std::vector<std::string_view> mm7ValidateList = {
     {"anims/magic7.vid"},
     {"anims/might7.vid"},
     {"data/bitmaps.lod"},
@@ -22,6 +22,16 @@ static const std::vector<std::string_view> globalValidateList = {
     {"data/icons.lod"},
     {"data/sprites.lod"},
     {"sounds/audio.snd"}
+};
+
+static const std::vector<std::string_view> mm6ValidateList = {
+    "anims/anims1.vid",
+    "anims/anims2.vid",
+    "data/bitmaps.lod",
+    "data/games.lod",
+    "data/icons.lod",
+    "data/sprites.lod",
+    "sounds/audio.snd"
 };
 
 struct PathResolutionConfig {
@@ -123,11 +133,11 @@ std::vector<Path> resolveMm8Paths(Environment *environment) {
     return resolvePaths(environment, mm8Config);
 }
 
-bool validateMm7Path(PathView dataPath, std::string *missingFile) {
+static bool validatePath(PathView dataPath, const std::vector<std::string_view> &files, std::string *missingFile) {
     NativeFileSystem dirFs(dataPath);
     LowercaseFileSystem lowerFs(&dirFs);
 
-    for (std::string_view entry : globalValidateList) {
+    for (std::string_view entry : files) {
         if (!lowerFs.exists(entry)) {
             *missingFile = entry;
             return false;
@@ -135,6 +145,27 @@ bool validateMm7Path(PathView dataPath, std::string *missingFile) {
     }
 
     return true;
+}
+
+bool validateMm7Path(PathView dataPath, std::string *missingFile) {
+    return validatePath(dataPath, mm7ValidateList, missingFile);
+}
+
+bool validateMm6Path(PathView dataPath, std::string *missingFile) {
+    return validatePath(dataPath, mm6ValidateList, missingFile);
+}
+
+Path resolveMm6UserPath(Environment *environment) {
+#ifdef _WINDOWS
+    std::string savedGames = environment->path(PATH_WINDOWS_SAVED_GAMES);
+    return savedGames.empty() ? fs::cwd() : Path(std::move(savedGames)) / "Enroth Continuum/MM6";
+#elif __ANDROID__
+    return Path(environment->path(PATH_ANDROID_STORAGE_INTERNAL)) / ".enroth-continuum/mm6";
+#elif __APPLE__
+    return Path(environment->path(PATH_HOME)) / "Library/Application Support/Enroth Continuum/Profiles/MM6";
+#else
+    return Path(environment->path(PATH_HOME)) / ".enroth-continuum/mm6";
+#endif
 }
 
 Path resolveMm7UserPath(Environment *environment) {

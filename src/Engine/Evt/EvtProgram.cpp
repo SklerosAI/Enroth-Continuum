@@ -1,6 +1,7 @@
 #include "EvtProgram.h"
 
 #include <algorithm>
+#include <exception>
 #include <ranges>
 #include <tuple>
 #include <vector>
@@ -20,7 +21,7 @@
 #include "Utility/MapAccess.h"
 #include "Utility/Exception.h"
 
-EvtProgram EvtProgram::load(const Blob &rawData) {
+EvtProgram EvtProgram::load(const Blob &rawData, GameTitle gameTitle) {
     EvtProgram result;
 
     const uint8_t *pos = reinterpret_cast<const uint8_t *>(rawData.data());
@@ -33,7 +34,11 @@ EvtProgram EvtProgram::load(const Blob &rawData) {
             throw Exception("Encountered corrupted evt binary data");
         MemoryInputStream stream(pos + 1, size - 1); // offset is 1 because we are skipping the `size` byte - it was already read
         uint16_t eventId = fromStream<uint16_t>(stream);
-        result.add(eventId, EvtInstruction::parse(stream, size));
+        try {
+            result.add(eventId, EvtInstruction::parse(stream, size, gameTitle));
+        } catch (const std::exception &e) {
+            throw Exception("Evt record at byte offset {} (event {}): {}", pos - reinterpret_cast<const uint8_t *>(rawData.data()), eventId, e.what());
+        }
         pos += size;
     }
 

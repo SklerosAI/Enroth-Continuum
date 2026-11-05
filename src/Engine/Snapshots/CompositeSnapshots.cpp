@@ -860,6 +860,29 @@ void deserialize(const Blob &src, SaveGameLite_MM7 *dst) {
     dst->thumbnail = lodReader.read("image.pcx");
 }
 
+void reconstruct(const SpriteFrameTable_MM6 &src, SpriteFrameTable *dst) {
+    reconstruct(src.frames, &dst->pSpriteSFrames);
+    reconstruct(src.eframes, &dst->pSpriteEFrames);
+
+    for (size_t i = 0; i < dst->pSpriteSFrames.size(); i++) {
+        SpriteFrame &frame = dst->pSpriteSFrames[i];
+        if (frame.spriteName.empty())
+            continue;
+        Duration length = frame.frameLength;
+        size_t j = i;
+        while ((dst->pSpriteSFrames[j].flags & SPRITE_FRAME_HAS_MORE) && ++j < dst->pSpriteSFrames.size())
+            length += dst->pSpriteSFrames[j].frameLength;
+        frame.animationLength = length;
+    }
+}
+
+void deserialize(InputStream &src, SpriteFrameTable_MM6 *dst) {
+    deserialize(src, &dst->frameCount);
+    deserialize(src, &dst->eframeCount);
+    deserialize(src, &dst->frames, tags::presized(dst->frameCount));
+    deserialize(src, &dst->eframes, tags::presized(dst->eframeCount));
+}
+
 void reconstruct(const SpriteFrameTable_MM7 &src, SpriteFrameTable *dst) {
     reconstruct(src.frames, &dst->pSpriteSFrames);
     reconstruct(src.eframes, &dst->pSpriteEFrames);

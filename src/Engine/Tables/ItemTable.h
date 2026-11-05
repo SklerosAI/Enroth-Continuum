@@ -17,6 +17,7 @@ class Blob;
 
 struct ItemTable {
     void Initialize(ResourceManager *resourceManager);
+    void InitializeMm6(ResourceManager *resourceManager);
     void LoadStandardEnchantments(const Blob &stditems);
     void LoadSpecialEnchantments(const Blob &spcitems);
     void LoadItems(const Blob &items);

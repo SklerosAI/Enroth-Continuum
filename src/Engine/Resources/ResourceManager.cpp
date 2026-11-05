@@ -107,10 +107,11 @@ static Palette grayscalePalette() {
 ResourceManager::ResourceManager() : _tileGenerator(std::make_unique<TileGenerator>(this)) {}
 ResourceManager::~ResourceManager() = default;
 
-void ResourceManager::open(float saturation, float lightness) {
+void ResourceManager::open(float saturation, float lightness, GameTitle gameTitle) {
     _saturation = saturation;
     _lightness = lightness;
-    _eventsLodReader.open(dfs->read("data/events.lod"));
+    // MM6 stores its tables and event programs alongside images in icons.lod.
+    _eventsLodReader.open(dfs->read(gameTitle == GameTitle::MM6 ? "data/icons.lod" : "data/events.lod"));
     _iconsLodReader.open(dfs->read("data/icons.lod"));
     _bitmapsLodReader.open(dfs->read("data/bitmaps.lod"));
     _spritesLodReader.open(dfs->read("data/sprites.lod"));

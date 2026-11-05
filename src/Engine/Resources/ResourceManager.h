@@ -4,6 +4,7 @@
 #include <span>
 #include <string_view>
 
+#include "Engine/GameTitle.h"
 #include "Engine/Tables/ResourceMaskTable.h"
 
 #include "Utility/Memory/Blob.h"
@@ -32,7 +33,7 @@ class ResourceManager {
      * @param saturation                Saturation multiplier for the bitmaps and palettes this class returns.
      * @param lightness                 Lightness multiplier for the bitmaps and palettes this class returns.
      */
-    void open(float saturation = 1.0f, float lightness = 1.0f);
+    void open(float saturation = 1.0f, float lightness = 1.0f, GameTitle gameTitle = GameTitle::MM7);
 
     Blob eventsData(std::string_view filename);
 

@@ -55,7 +55,7 @@ void AudioPlayer::MusicPlayTrack(MusicId eTrack) {
         }
         currentMusicTrack = MUSIC_INVALID;
 
-        std::string file_path = fmt::format("music/{}.mp3", std::to_underlying(eTrack));
+        std::string file_path = fmt::format("{}{}.mp3", engine->gameTitle() == GameTitle::MM6 ? "sounds/" : "music/", std::to_underlying(eTrack));
         if (!dfs->exists(file_path)) {
             MM_WARNING("AudioPlayer: {} not found", file_path);
             return;

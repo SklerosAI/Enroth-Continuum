@@ -882,7 +882,7 @@ static Enum narrowToEnum(Int value, std::string_view what) {
     return static_cast<Enum>(value);
 }
 
-EvtInstruction EvtInstruction::parse(InputStream &stream, size_t size) {
+EvtInstruction EvtInstruction::parse(InputStream &stream, size_t size, GameTitle gameTitle) {
     EvtInstruction ir = {};  // A zeroed member may be unset or may be a real 0, the two are not distinguishable here.
 
     ir.step = fromStream<uint8_t>(stream);
@@ -976,8 +976,8 @@ EvtInstruction EvtInstruction::parse(InputStream &stream, size_t size) {
             ir.str = fromStream<std::string>(stream, tags::nullTerminated);
             break;
         case EVENT_Compare:
-            requireSize(11);
-            ir.data.variable_descr.type = static_cast<EvtVariable>(fromStream<uint16_t>(stream));
+            requireSize(gameTitle == GameTitle::MM6 ? 10 : 11);
+            ir.data.variable_descr.type = static_cast<EvtVariable>(gameTitle == GameTitle::MM6 ? fromStream<uint8_t>(stream) : fromStream<uint16_t>(stream));
             ir.data.variable_descr.value = fromStream<uint32_t>(stream);
             ir.target_step = fromStream<uint8_t>(stream);
             break;
@@ -989,8 +989,8 @@ EvtInstruction EvtInstruction::parse(InputStream &stream, size_t size) {
         case EVENT_Add:
         case EVENT_Subtract:
         case EVENT_Set:
-            requireSize(8);
-            ir.data.variable_descr.type = static_cast<EvtVariable>(fromStream<uint16_t>(stream));
+            requireSize(gameTitle == GameTitle::MM6 ? 10 : 8);
+            ir.data.variable_descr.type = static_cast<EvtVariable>(gameTitle == GameTitle::MM6 ? fromStream<uint8_t>(stream) : fromStream<uint16_t>(stream));
             ir.data.variable_descr.value = fromStream<uint32_t>(stream);
             break;
         case EVENT_SummonMonsters:
@@ -1132,8 +1132,8 @@ EvtInstruction EvtInstruction::parse(InputStream &stream, size_t size) {
             ir.target_step = fromStream<uint8_t>(stream);
             break;
         case EVENT_OnCanShowDialogItemCmp:
-            requireSize(12);
-            ir.data.variable_descr.type = static_cast<EvtVariable>(fromStream<uint16_t>(stream));
+            requireSize(gameTitle == GameTitle::MM6 ? 11 : 12);
+            ir.data.variable_descr.type = static_cast<EvtVariable>(gameTitle == GameTitle::MM6 ? fromStream<uint8_t>(stream) : fromStream<uint16_t>(stream));
             ir.data.variable_descr.value = fromStream<uint32_t>(stream);
             ir.target_step = fromStream<uint8_t>(stream);
             break;

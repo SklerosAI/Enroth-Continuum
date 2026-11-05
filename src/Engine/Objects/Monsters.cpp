@@ -251,7 +251,7 @@ void MonsterStats::InitializePlacements(const Blob &placements) {
 
 // TODO(captainurist): move to MonsterTable?
 //----- (0045501E) --------------------------------------------------------
-void MonsterStats::Initialize(const Blob &monsters) {
+void MonsterStats::Initialize(const Blob &monsters, GameTitle gameTitle) {
     // monsters.txt table structure: id | name (localized) | internal name | level | hp | ac | exp | treasure |
     //                               blood splat | flying | movement | ai | hostility | speed | recovery |
     //                               attack prefs | special attack | a1 type | a1 dmg | a1 missile |
@@ -509,6 +509,24 @@ void MonsterStats::Initialize(const Blob &monsters) {
 
     for (std::string_view line : split(monsters.str()).by("\r\n").drop(4).skip("")) {
         std::array<std::string_view, 39> tokens = split(line).by('\t');
+        if (gameTitle == GameTitle::MM6) {
+            const auto mm6 = tokens;
+            tokens[1] = mm6[2]; // MM6 puts picture before display name.
+            tokens[2] = mm6[1];
+            tokens[26] = "0"; // MM6 monsters have one spell attack.
+            tokens[27] = "0";
+            tokens[28] = mm6[26]; // Fire, electricity, cold, poison.
+            tokens[29] = mm6[27];
+            tokens[30] = mm6[28];
+            tokens[31] = mm6[29];
+            tokens[32] = mm6[31]; // MM6's magic resistance covers non-elemental schools.
+            tokens[33] = mm6[31];
+            tokens[34] = mm6[31];
+            tokens[35] = mm6[31];
+            tokens[36] = mm6[31];
+            tokens[37] = mm6[30];
+            tokens[38] = mm6[32];
+        }
 
         MonsterId id = static_cast<MonsterId>(fromString<int>(tokens[0]));
         MonsterInfo &info = infos[id];

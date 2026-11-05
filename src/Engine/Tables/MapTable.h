@@ -3,6 +3,7 @@
 #include <string_view>
 
 #include "Engine/Data/MapData.h"
+#include "Engine/GameTitle.h"
 #include "Engine/MapEnums.h"
 
 #include "Utility/IndexedArray.h"
@@ -10,7 +11,7 @@
 class Blob;
 
 struct MapTable {
-    void Initialize(const Blob &mapStats);
+    void Initialize(const Blob &mapStats, GameTitle gameTitle = GameTitle::MM7);
     MapId GetMapInfo(std::string_view fileName);
     IndexedArray<MapData, MAP_FIRST, MAP_LAST> pInfos;
 };

@@ -1,7 +1,9 @@
 #include "NPCTable.h"
 
+#include <algorithm>
 #include <array>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "Engine/MapEnumFunctions.h"
@@ -123,6 +125,69 @@ void NPCStats::Initialize(ResourceManager *resourceManager) {
     InitializeNPCDist(resourceManager->eventsData("npcdist.txt"));
     InitializeNPCNames(resourceManager->eventsData("npcnames.txt"));
     InitializeNPCProfs(resourceManager->eventsData("npcprof.txt"));
+}
+
+void NPCStats::InitializeMm6(ResourceManager *resourceManager) {
+    pOriginalNPCData.fill(NPCData());
+    Blob npcData = resourceManager->eventsData("npcdata.txt");
+    for (std::string_view line : split(npcData.str()).by("\r\n").drop(2).skip("")) {
+        std::array<std::string_view, 14> cells = split(line).by('\t');
+        int id = 0;
+        if (!tryDeserialize(cells[0], &id) || id < 1 || id >= pOriginalNPCData.size())
+            continue;
+        NPCData &npc = pOriginalNPCData[id];
+        npc.name = unquote(cells[1]);
+        pNPCUnicNames[id] = npc.name;
+        npc.portraitId = fromString<int>(cells[2]);
+        npc.house = static_cast<HouseId>(fromString<int>(cells[6]));
+        npc.profession = static_cast<NpcProfession>(fromString<int>(cells[7]));
+        npc.canJoin = cells[8] == "1";
+        npc.newsTopic = fromString<int>(cells[9]);
+        npc.dialogue_1_evt_id = fromString<int>(cells[10]);
+        npc.dialogue_2_evt_id = fromString<int>(cells[11]);
+        npc.dialogue_3_evt_id = fromString<int>(cells[12]);
+        uNumNewNPCs = std::max(uNumNewNPCs, id + 1);
+    }
+
+    Blob npcText = resourceManager->eventsData("npctext.txt");
+    for (std::string_view line : split(npcText.str()).by("\r\n").skip("")) {
+        std::array<std::string_view, 2> cells = split(line).by('\t');
+        int id = 0;
+        if (tryDeserialize(cells[0], &id) && id >= 1 && id <= pNPCTopics.size())
+            pNPCTopics[id - 1].pText = unquote(cells[1]);
+    }
+
+    Blob npcTopics = resourceManager->eventsData("npctopic.txt");
+    for (std::string_view line : split(npcTopics.str()).by("\r\n").skip("")) {
+        std::array<std::string_view, 2> cells = split(line).by('\t');
+        int id = 0;
+        if (tryDeserialize(cells[0], &id) && id >= 1 && id < pNPCTopics.size())
+            pNPCTopics[id].pTopic = unquote(cells[1]);
+    }
+
+    Blob npcNews = resourceManager->eventsData("npcnews.txt");
+    for (std::string_view line : split(npcNews.str()).by("\r\n").skip("")) {
+        std::array<std::string_view, 4> cells = split(line).by('\t');
+        int id = 0;
+        if (tryDeserialize(cells[0], &id) && id >= 0 && id < pCatchPhrases.size())
+            pCatchPhrases[id] = unquote(cells[3]);
+    }
+
+    InitializeNPCNames(resourceManager->eventsData("npcnames.txt"));
+
+    Blob npcProfs = resourceManager->eventsData("npcprof.txt");
+    for (std::string_view line : split(npcProfs.str()).by("\r\n").skip("")) {
+        std::array<std::string_view, 8> cells = split(line).by('\t');
+        int id = 0;
+        if (!tryDeserialize(cells[0], &id) || id < 1 || id > std::to_underlying(NPC_PROFESSION_LAST))
+            continue;
+        NPCProfession &profession = pProfessions[static_cast<NpcProfession>(id)];
+        profession.uHirePrice = fromString<int>(cells[3]);
+        profession.pActionText = unquote(cells[5]);
+        profession.pBenefits = unquote(cells[6]);
+        profession.pJoinText = unquote(cells[7]);
+        uNumNPCProfessions = std::max(uNumNPCProfessions, id);
+    }
 }
 
 void NPCStats::InitializeNPCNames(const Blob &npcNames) {

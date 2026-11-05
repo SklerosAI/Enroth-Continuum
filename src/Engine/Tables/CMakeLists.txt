@@ -11,6 +11,7 @@ set(ENGINE_TABLES_SOURCES
         IconFrameTable.cpp
         ItemTable.cpp
         MapTable.cpp
+        MM6ItemTable.cpp
         MerchantTable.cpp
         MessageScrollTable.cpp
         NPCTable.cpp

@@ -20,15 +20,18 @@ OpenEnrothOptions OpenEnrothOptions::parse(int argc, char **argv) {
 
     OpenEnrothOptions result;
     std::unique_ptr<CliApp> app = std::make_unique<CliApp>();
+    std::string game = "mm7";
+
+    app->add_option("--game", game, "Game to launch: mm6 or mm7. Defaults to mm7.")->option_text("GAME");
 
     std::optional<bool> portable;
     app->add_option(
         "--data-path", result.dataPath,
-        fmt::format("Path to MM7 data folder, default is taken from '{}' environment variable. "
+        fmt::format("Path to selected game's data folder, default is taken from its OPENENROTH_MM*_PATH environment variable. "
                     "If neither this argument is supplied nor the environment variable is set, "
                     "then OpenEnroth will try to look for game data in the current folder, "
                     "then on Windows it will also try to read the path from registry, "
-                    "and on MacOS it will also try to look in '~/Library/Application Support/OpenEnroth'.", mm7PathOverrideKey))->check(CLI::ExistingDirectory)->option_text("PATH");
+                    "and on MacOS it will also try to look in '~/Library/Application Support/OpenEnroth'."))->check(CLI::ExistingDirectory)->option_text("PATH");
     app->add_option(
         "--user-path", result.userPath,
         fmt::format("Path to OpenEnroth user data folder. Default is '{}'.",
@@ -67,6 +70,12 @@ OpenEnrothOptions OpenEnrothOptions::parse(int argc, char **argv) {
     retrace->set_help_flag("-h,--help", "Print help and exit."); // This places --help last in the command list.
 
     app->parse(argc, argv, result.helpPrinted);
+
+    if (game == "mm6") {
+        result.gameTitle = GameTitle::MM6;
+    } else if (game != "mm7") {
+        throw Exception("Unsupported game '{}'; choose mm6 or mm7.", game);
+    }
 
     if (!portable && fs::exists(".portable"))
         portable = true;

@@ -86,6 +86,7 @@ struct NPCGreeting {
 
 struct NPCStats {
     void Initialize(ResourceManager *resourceManager);
+    void InitializeMm6(ResourceManager *resourceManager);
     void InitializeNPCNames(const Blob &npcNames);
     void InitializeNPCProfs(const Blob &npcProfs);
     void InitializeNPCText(const Blob &npcText);
@@ -120,7 +121,7 @@ struct NPCStats {
     IndexedArray<std::vector<std::string>, SEX_FIRST, SEX_LAST> pNPCNames = {};
     IndexedArray<NPCProfession, NPC_PROFESSION_FIRST, NPC_PROFESSION_LAST> pProfessions = {};
     std::array<NPCData, 100> pAdditionalNPC = {{}};
-    std::array<std::string, 52> pCatchPhrases{};   // 15CA4h
+    std::array<std::string, 300> pCatchPhrases{};  // MM6 npcnews.txt extends past the MM7 range.
     std::array<std::string, 501> pNPCUnicNames{};  // NPC names from npcdata.txt, 1-based like the data above.
     IndexedArray<NPCProfessionChance, MAP_FIRST, MAP_LAST> pProfessionChance;
     int field_17884 = 0;

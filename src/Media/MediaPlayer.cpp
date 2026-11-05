@@ -742,8 +742,13 @@ class Movie : public IMovie {
 };
 
 void MPlayer::Initialize() {
-    might_list.open(dfs->read("anims/might7.vid"));
-    magic_list.open(dfs->read("anims/magic7.vid"));
+    if (engine->gameTitle() == GameTitle::MM6) {
+        might_list.open(dfs->read("anims/anims1.vid"));
+        magic_list.open(dfs->read("anims/anims2.vid"));
+    } else {
+        might_list.open(dfs->read("anims/might7.vid"));
+        magic_list.open(dfs->read("anims/magic7.vid"));
+    }
 }
 
 void MPlayer::OpenHouseMovie(std::string_view pMovieName, bool bLoop) {

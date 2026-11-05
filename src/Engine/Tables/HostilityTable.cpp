@@ -10,6 +10,13 @@
 
 HostilityTable *pHostilityTable;
 
+void HostilityTable::InitializeMm6() {
+    // MM6 has no hostile.txt. Party hostility comes from monsters.txt; until
+    // faction behavior is mapped, keep monster-to-monster relations friendly.
+    for (auto &line : relations)
+        line.fill(HOSTILITY_FRIENDLY);
+}
+
 //----- (004547E4) --------------------------------------------------------
 void HostilityTable::Initialize(const Blob &factions) {
     // hostile.txt table structure: monster name (localized, not used) | hostility values per monster group...

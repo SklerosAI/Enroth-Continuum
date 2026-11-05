@@ -23,9 +23,14 @@ storage. See [plan.md](plan.md) for the staged acceptance checks.
 
 ## Trilogy support
 
-OpenEnroth currently supports playable MM7. MM6 and MM8 work belongs to the
-upstream compatibility roadmap. Enroth Continuum may contribute compatible,
-well-scoped engine work, but will not misrepresent planned support as complete.
+The MM7 Mac baseline and first private mod overrides are working in this fork.
+MM6 is the next engine goal here, using the owner's local GOG data. We can
+diverge from OpenEnroth's implementation and schedule while preserving its
+license, history and credit. The Atlas will offer MM6 as an experimental game
+only after an observed opening campaign session and save/load check; full MM6
+support means the campaign can reach its ending. MM8 follows as a separate
+implementation, then cross-game character transfer. See [plan.md](plan.md),
+section 18.1, for gates and checks.
 
 ## Optional legacy campaign
 

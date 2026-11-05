@@ -188,12 +188,16 @@ bool Game::loop() {
 
             pParty->pPickedItem.itemId = ITEM_NULL;
 
-            engine->_pendingTransition = MapDestination(MAP_EMERALD_ISLAND, MAP_START_POINT_PARTY);
-
-            bFlashQuestBook = true;
-            pMediaPlayer->PlayFullscreenMovie("Intro Post");
+            if (engine->gameTitle() == GameTitle::MM6) {
+                engine->_pendingTransition = MapDestination(pMapTable->GetMapInfo("oute3.odm"), MAP_START_POINT_PARTY);
+                bFlashQuestBook = false;
+            } else {
+                engine->_pendingTransition = MapDestination(MAP_EMERALD_ISLAND, MAP_START_POINT_PARTY);
+                bFlashQuestBook = true;
+                pMediaPlayer->PlayFullscreenMovie("Intro Post");
+            }
             saveNewGame();
-            if (engine->config->debug.NoMargaret.value()) {
+            if (engine->gameTitle() != GameTitle::MM6 && engine->config->debug.NoMargaret.value()) {
                 pParty->_questBits.set(QBIT_EMERALD_ISLAND_MARGARET_TOUR_OFF);
             }
 

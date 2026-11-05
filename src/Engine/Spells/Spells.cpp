@@ -482,7 +482,7 @@ bool SpellBuff::Apply(Time expire_time, Mastery uSkillMastery,
     return true;
 }
 
-void SpellStats::Initialize(const Blob &spells) {
+void SpellStats::Initialize(const Blob &spells, GameTitle gameTitle) {
     static const std::map<std::string, DamageType, ascii::NoCaseLess> spellSchoolMaps = { // TODO(captainurist): #enum, use enum serialization
         {"fire", DAMAGE_FIRE},
         {"air", DAMAGE_AIR},
@@ -499,9 +499,25 @@ void SpellStats::Initialize(const Blob &spells) {
     // spells.txt table structure: index | ... | name (localized) | school (not localized) | ...
     // Section header lines have an empty first column and are skipped.
     for (std::string_view line : split(spells.str()).by("\r\n").drop(2).skip("")) {
-        std::array<std::string_view, 11> tokens = split(line).by('\t');
+        std::array<std::string_view, 12> tokens = split(line).by('\t');
         if (tokens[0].empty())
             continue; // Skip section headers.
+
+        if (gameTitle == GameTitle::MM6) {
+            int id = 0;
+            if (!tryDeserialize(trim(tokens[0]), &id))
+                continue;
+            SpellId spellId = static_cast<SpellId>(id);
+            pInfos[spellId].name = unquote(tokens[2]);
+            pInfos[spellId].damageType = valueOr(spellSchoolMaps, tokens[3], DAMAGE_PHYSICAL);
+            pInfos[spellId].pShortName = unquote(tokens[4]);
+            pInfos[spellId].pDescription = unquote(tokens[8]);
+            pInfos[spellId].pBasicSkillDesc = unquote(tokens[9]);
+            pInfos[spellId].pExpertSkillDesc = unquote(tokens[10]);
+            pInfos[spellId].pMasterSkillDesc = unquote(tokens[11]);
+            pInfos[spellId].pGrandmasterSkillDesc = pInfos[spellId].pMasterSkillDesc;
+            continue;
+        }
 
         SpellId uSpellID = static_cast<SpellId>(fromString<int>(tokens[0]));
         pInfos[uSpellID].name = unquote(tokens[2]);

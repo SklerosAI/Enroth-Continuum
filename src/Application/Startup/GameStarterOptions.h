@@ -2,11 +2,14 @@
 
 #include <optional>
 
+#include "Engine/GameTitle.h"
+
 #include "Library/Logger/LogEnums.h"
 
 #include "Utility/System/Path.h"
 
 struct GameStarterOptions {
+    GameTitle gameTitle = GameTitle::MM7;
     Path dataPath; // Path to game data.
     Path userPath; // Path to user data.
     std::optional<LogLevel> logLevel; // Override log level.

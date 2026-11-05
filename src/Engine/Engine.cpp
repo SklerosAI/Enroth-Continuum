@@ -398,7 +398,8 @@ bool Engine::draw_debug_outlines() {
 }
 
 //----- (0044E4B7) --------------------------------------------------------
-Engine::Engine(std::shared_ptr<GameConfig> config, OverlaySystem &overlaySystem) : _overlaySystem(overlaySystem) {
+Engine::Engine(std::shared_ptr<GameConfig> config, OverlaySystem &overlaySystem, GameTitle gameTitle)
+    : _overlaySystem(overlaySystem), _gameTitle(gameTitle) {
     this->config = config;
     this->bloodsplat_container = EngineIocContainer::ResolveBloodsplatContainer();
     this->decal_builder = EngineIocContainer::ResolveDecalBuilder();
@@ -774,7 +775,7 @@ void FinalInitialization() {
 }
 
 void MM7_LoadLods() {
-    engine->resources()->open(engine->config->graphics.Saturation.value(), engine->config->graphics.Lightness.value());
+    engine->resources()->open(engine->config->graphics.Saturation.value(), engine->config->graphics.Lightness.value(), engine->gameTitle());
 
     // TODO(captainurist):
     // on error in `open` we had this:
@@ -809,7 +810,7 @@ void Engine::MM7_Initialize() {
     localization->initialize();
 
     pSpriteFrameTable = new SpriteFrameTable;
-    deserialize(engine->resources()->eventsData("dsft.bin"), pSpriteFrameTable);
+    deserialize(engine->resources()->eventsData("dsft.bin"), pSpriteFrameTable, gameTitle());
 
     pTextureFrameTable = new TextureFrameTable;
     deserialize(engine->resources()->eventsData("dtft.bin"), pTextureFrameTable);
@@ -824,19 +825,19 @@ void Engine::MM7_Initialize() {
     deserialize(engine->resources()->eventsData("dift.bin"), pIconsFrameTable);
 
     pDecorationTable = new DecorationTable;
-    deserialize(engine->resources()->eventsData("ddeclist.bin"), pDecorationTable);
+    deserialize(engine->resources()->eventsData("ddeclist.bin"), pDecorationTable, gameTitle());
 
     pObjectTable = new ObjectTable;
-    deserialize(engine->resources()->eventsData("dobjlist.bin"), pObjectTable);
+    deserialize(engine->resources()->eventsData("dobjlist.bin"), pObjectTable, gameTitle());
 
     pMonsterList = new MonsterList;
-    deserialize(engine->resources()->eventsData("dmonlist.bin"), pMonsterList);
+    deserialize(engine->resources()->eventsData("dmonlist.bin"), pMonsterList, gameTitle());
 
     pOverlayTable = std::make_unique<OverlayTable>();
     deserialize(engine->resources()->eventsData("doverlay.bin"), pOverlayTable.get());
 
     pSoundList = new SoundList;
-    deserialize(engine->resources()->eventsData("dsounds.bin"), pSoundList);
+    deserialize(engine->resources()->eventsData("dsounds.bin"), pSoundList, gameTitle());
 
     if (!config->debug.NoSound.value())
         pAudioPlayer->Initialize();
@@ -855,25 +856,39 @@ void Engine::SecondaryInitialization() {
     mouse->Initialize();
 
     pMapTable = new MapTable();
-    pMapTable->Initialize(engine->resources()->eventsData("MapStats.txt"));
+    if (gameTitle() == GameTitle::MM6)
+        MM_INFO("Loading MM6 map table.");
+    pMapTable->Initialize(engine->resources()->eventsData("MapStats.txt"), gameTitle());
 
     pMonsterStats = new MonsterStats();
-    pMonsterStats->Initialize(engine->resources()->eventsData("monsters.txt"));
-    pMonsterStats->InitializePlacements(engine->resources()->eventsData("placemon.txt"));
+    if (gameTitle() == GameTitle::MM6)
+        MM_INFO("Loading MM6 monster table.");
+    pMonsterStats->Initialize(engine->resources()->eventsData("monsters.txt"), gameTitle());
+    if (gameTitle() == GameTitle::MM7)
+        pMonsterStats->InitializePlacements(engine->resources()->eventsData("placemon.txt"));
 
     pSpellStats = new SpellStats();
-    pSpellStats->Initialize(engine->resources()->eventsData("spells.txt"));
+    if (gameTitle() == GameTitle::MM6)
+        MM_INFO("Loading MM6 spell table.");
+    pSpellStats->Initialize(engine->resources()->eventsData("spells.txt"), gameTitle());
 
     pHostilityTable = new HostilityTable();
-    pHostilityTable->Initialize(engine->resources()->eventsData("hostile.txt"));
+    if (gameTitle() == GameTitle::MM6)
+        pHostilityTable->InitializeMm6();
+    else
+        pHostilityTable->Initialize(engine->resources()->eventsData("hostile.txt"));
 
     pHistoryTable = new HistoryTable();
-    pHistoryTable->Initialize(engine->resources()->eventsData("history.txt"));
+    if (gameTitle() == GameTitle::MM7)
+        pHistoryTable->Initialize(engine->resources()->eventsData("history.txt"));
 
     pItemTable = new ItemTable();
-    pItemTable->Initialize(engine->resources());
+    if (gameTitle() == GameTitle::MM6)
+        pItemTable->InitializeMm6(engine->resources());
+    else
+        pItemTable->Initialize(engine->resources());
 
-    initializeHouses(engine->resources()->eventsData("2dEvents.txt"));
+    initializeHouses(engine->resources()->eventsData("2dEvents.txt"), gameTitle());
 
     // TODO(captainurist): try resurrecting the food / gold animations using resource files from MM6?
     //for (unsigned i = 0; i < 4; ++i) {
@@ -892,18 +907,28 @@ void Engine::SecondaryInitialization() {
     spell_fx_renedrer->loadEffectBitmaps();
 
     pNPCStats = new NPCStats();
-    pNPCStats->Initialize(engine->resources());
+    if (gameTitle() == GameTitle::MM6)
+        pNPCStats->InitializeMm6(engine->resources());
+    else
+        pNPCStats->Initialize(engine->resources());
 
     initializeQuests(engine->resources()->eventsData("quests.txt"));
     initializeAutonotes(engine->resources()->eventsData("autonote.txt"));
     initializeAwards(engine->resources()->eventsData("awards.txt"));
     initializeTransitions(engine->resources()->eventsData("trans.txt"));
     initializeMerchants(engine->resources()->eventsData("merchant.txt"));
-    initializeMessageScrolls(engine->resources()->eventsData("scroll.txt"));
+    if (gameTitle() == GameTitle::MM6)
+        initializeMm6MessageScrolls(engine->resources()->eventsData("scroll.txt"));
+    else
+        initializeMessageScrolls(engine->resources()->eventsData("scroll.txt"));
     initializeChests();
 
-    engine->_globalEventMap = EvtProgram::load(engine->resources()->eventsData("global.evt"));
+    if (gameTitle() == GameTitle::MM6)
+        MM_INFO("Loading MM6 global events.");
+    engine->_globalEventMap = EvtProgram::load(engine->resources()->eventsData("global.evt"), gameTitle());
 
+    if (gameTitle() == GameTitle::MM6)
+        MM_INFO("Loading MM6 map archive.");
     Initialize_GamesLOD_NewLOD();
 }
 
@@ -1579,7 +1604,7 @@ void loadMapEventsAndStrings(MapId mapid) {
 
     initLevelStrings(engine->resources()->eventsData(fmt::format("{}.str", mapNameWithoutExt)));
 
-    engine->_localEventMap = EvtProgram::load(engine->resources()->eventsData(fmt::format("{}.evt", mapNameWithoutExt)));
+    engine->_localEventMap = EvtProgram::load(engine->resources()->eventsData(fmt::format("{}.evt", mapNameWithoutExt)), engine->gameTitle());
 }
 
 bool _44100D_should_alter_right_panel() {

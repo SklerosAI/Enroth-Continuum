@@ -38,6 +38,15 @@ void deserialize(const Blob &src, DecorationTable *dst) {
     assert(!dst->decorations.empty());
 }
 
+void deserialize(const Blob &src, DecorationTable *dst, GameTitle gameTitle) {
+    if (gameTitle == GameTitle::MM6) {
+        dst->decorations.clear();
+        deserialize(src, &dst->decorations, tags::append, tags::each, tags::via<DecorationData_MM6>);
+    } else {
+        deserialize(src, dst);
+    }
+}
+
 void deserialize(const Blob &src, IconFrameTable *dst) {
     dst->_frames.clear();
     deserialize(src, &dst->_frames, tags::append, tags::each, tags::via<IconFrameData_MM7>);
@@ -61,11 +70,37 @@ void deserialize(const Blob &src, MonsterList *dst) {
         dst->monsters[index] = monsters[i++];
 }
 
+void deserialize(const Blob &src, MonsterList *dst, GameTitle gameTitle) {
+    if (gameTitle != GameTitle::MM6) {
+        deserialize(src, dst);
+        return;
+    }
+
+    std::vector<MonsterDesc> monsters;
+    deserialize(src, &monsters, tags::append, tags::each, tags::via<MonsterDesc_MM6>);
+    if (monsters.size() != 173)
+        throw Exception("Invalid MM6 monster list size, expected 173, got {}", monsters.size());
+    monsters.pop_back(); // The final entry is unused in MM6 too.
+
+    dst->monsters.fill(MonsterDesc());
+    for (size_t i = 0; i < monsters.size(); i++)
+        dst->monsters[static_cast<MonsterId>(i + 1)] = std::move(monsters[i]);
+}
+
 void deserialize(const Blob &src, ObjectTable *dst) {
     dst->pObjects.clear();
     deserialize(src, &dst->pObjects, tags::append, tags::each, tags::via<ObjectData_MM7>);
 
     assert(!dst->pObjects.empty());
+}
+
+void deserialize(const Blob &src, ObjectTable *dst, GameTitle gameTitle) {
+    if (gameTitle == GameTitle::MM6) {
+        dst->pObjects.clear();
+        deserialize(src, &dst->pObjects, tags::append, tags::each, tags::via<ObjectData_MM6>);
+    } else {
+        deserialize(src, dst);
+    }
 }
 
 void deserialize(const Blob &src, OverlayTable *dst) {
@@ -77,6 +112,14 @@ void deserialize(const Blob &src, OverlayTable *dst) {
 
 void deserialize(const Blob &src, SpriteFrameTable *dst) {
     deserialize(src, dst, tags::via<SpriteFrameTable_MM7>);
+}
+
+void deserialize(const Blob &src, SpriteFrameTable *dst, GameTitle gameTitle) {
+    if (gameTitle == GameTitle::MM6) {
+        deserialize(src, dst, tags::via<SpriteFrameTable_MM6>);
+    } else {
+        deserialize(src, dst);
+    }
 }
 
 void deserialize(const Blob &src, TextureFrameTable *dst) {
@@ -114,6 +157,18 @@ void deserialize(const Blob &src, SoundList *dst) {
             MM_WARNING("Sound id {} is used by both '{}' and '{}'", std::to_underlying(sound.soundId), dst->_mapSounds[sound.soundId].name, sound.name);
         dst->_mapSounds[sound.soundId] = sound;
     }
+}
+
+void deserialize(const Blob &src, SoundList *dst, GameTitle gameTitle) {
+    if (gameTitle != GameTitle::MM6) {
+        deserialize(src, dst);
+        return;
+    }
+
+    std::vector<SoundInfo> sounds;
+    deserialize(src, &sounds, tags::append, tags::each, tags::via<SoundInfo_MM6>);
+    for (const SoundInfo &sound : sounds)
+        dst->_mapSounds[sound.soundId] = sound;
 }
 
 void deserialize(const Blob &src, TileTable *dst) {

@@ -1,6 +1,6 @@
 # Enroth Continuum: implementation plan
 
-Status: **proposal for owner review, revision 7, 2026-11-05**. This is a plan, not an implementation log. Nothing below is marked done just because upstream supports it. Every environment fact in section 3 was checked on this Mac on 2026-11-04. Recheck them before acting on them.
+Status: **MM6 planning revision 8, 2026-11-05**. Sections 1–17 preserve the original MM7 execution plan; see [LOCAL_STATUS.md](LOCAL_STATUS.md) for its completed baseline and measured results. Section 18.1 is the next proposed implementation phase, not work already started. Every environment fact in section 3 was checked on this Mac on 2026-11-04. Recheck it before acting on it.
 
 ## 0. Ground rules for this plan
 
@@ -43,7 +43,7 @@ The owner should be able to do all of this:
 
 Record the macOS version, fork SHA, installer version and test outcomes, and commit none of the game content. If the playable fork is established early and the Goal remains active, begin the narrow MM7 mod compatibility work in section 17: custom party portraits first, then armor stat overrides. Report the exact point reached even if the stretch work is unfinished.
 
-Scope order is **(A) MM7 playable locally → (B) fork build and The Atlas launcher playable and tested → (C) first personal MM7 mod overrides through the launcher if there is headroom → (D) optional Mac fixes or packaging → (E) optional Skleros integration → (F) MM6, MM8 and cross-game legacy transfer**. The Theseus MM7 sidecar and actual legacy transfers are separate follow-on work. Neither is a prerequisite for playing MM7 by hand. The original campaign must stay playable without fork features.
+The MM7 baseline, installed Atlas and first personal MM7 mod overrides are recorded in [LOCAL_STATUS.md](LOCAL_STATUS.md). **The next engine goal is MM6 in this fork**, using the owner's private GOG files on this Mac. MM8 and cross-game legacy transfer follow MM6; optional Mac polish, packaging and Skleros integration do not block it. The original campaigns must stay playable without fork features.
 
 ## 3. Verified environment (2026-11-04)
 
@@ -701,7 +701,9 @@ This is the first extension to attempt if MM7 works quickly and the active Goal 
 
 **Stretch evidence:** record which of the two targets actually works, with a screenshot of The Atelier and the relevant game UI, a save/load result and a vanilla fallback result. If the Goal runs out of headroom after Gate 2, leave a concrete implementation note and stop; do not report the unbuilt mod path as complete.
 
-## 18. Later phases (after Gate 2)
+## 18. Work after the MM7 baseline
+
+Phase F is the next engine goal. Phases D and E remain optional work that can be scheduled separately; their older labels do not set the execution order.
 
 **Phase D, optional personal Mac quality.** Fix only the problems that affect the owner's play. Candidates:
 
@@ -724,7 +726,25 @@ If a generic engine fix is useful upstream, consider contributing it after it wo
 
 The agent must not see hidden game state, and normal play must be unchanged when the bridge is off. **Gate 4:** a repeatable Mac sidecar run (load → observe → act → save → reload), plus a normal session with the bridge disabled.
 
-**Phase F, MM6, MM8, broader mods and legacy characters.** Track upstream milestones. The engine checks only the MM7 file list today. Each new title needs a verified data root, its own engine adapter, startup and save handling, campaign tests and graphical smoke runs before its Atlas card gets a Play button. Store per-game mod profiles separately, and expose only overrides that the selected engine actually applies. The small MM7 overrides in section 17 are a starting point, not a general plugin API; align later work with upstream's modding direction where practical.
+**Phase F, MM6 in this fork (next).** This fork may diverge from OpenEnroth to get the owner's MM6 campaign working on the M2 Mac. Retain its copyright notices, license, history and visible credit, but do not make an upstream milestone, upstream acceptance or a general three-game architecture a prerequisite. Reuse existing MM6 decoders when they work; implement a title-specific path where that is faster and safer for personal play. MM8, broader mods and legacy transfer remain later phases.
+
+### 18.1 MM6 implementation path
+
+**Starting point.** The owner's extracted MM6 GOG data is already in a private local game-data directory. It contains `data/Games.lod`, `data/BITMAPS.LOD`, `data/SPRITES.LOD`, `Anims/Anims1.vid`, `Anims/Anims2.vid` and `Sounds/Audio.snd`; it does **not** contain MM7's `data/events.lod`. Current startup validation and the main resource/table loader assume the MM7 archive layout. Existing MM6 snapshot structures are useful groundwork, but do not establish a playable MM6 campaign. The Atlas must continue to show MM6 as unavailable until the gate below passes.
+
+| Gate | Work in this fork | Evidence to advance |
+| --- | --- | --- |
+| MM6-0: data and baseline | Pin the known-good MM7 fork revision and keep its build and save/load smoke check. Inventory the local MM6 archives read-only, including table names and formats, map/event resources, sound and music. Record the installer identity and local hashes without tracking proprietary files. | A concrete MM6 resource map, a reproducible MM7 baseline, and no game content in Git. |
+| MM6-1: select and mount | Add an explicit MM6 game selection to engine startup, a separate MM6 path manifest and precise missing/wrong-game errors. Load MM6 tables from their actual archives and handle the format differences needed for menus and the opening map. Keep MM7 the default until the launcher has an MM6 action. | A native arm64 MM6 process reaches its own menu using MM6 data, while MM7 still launches and saves. |
+| MM6-2: playable opening | Implement MM6 party creation, classes and skills, a New Sorpigal start, map/event loading, movement, interaction, combat, spells, travel, shops and audiovisual playback as each is needed for an end-to-end opening route. Audit hard-coded MM7 map, item, monster, spell, quest and UI IDs at the point they affect that route. | The owner can create a party, explore New Sorpigal and an early dungeon, fight and interact for a meaningful session, with music and effects; inspect the rendered Mac window and capture any defects. |
+| MM6-3: durable saves and Atlas | Give MM6 its own profile and versioned fork save format, with a title marker, backup and safe write behavior. Save, quit, relaunch and load both manually and through autosave; never write into GOG data or MM7 saves. Add **Play MM6 (experimental)** to the installed Atlas only after the opening route and save/load pass. | A fresh MM6 session survives relaunch from `/Applications/Enroth Continuum.app`; MM7 still works, and the Atlas labels MM6 accurately. |
+| MM6-4: personal campaign completion | Continue through the campaign, fixing blocked maps, events, quests, combat, character advancement, travel and endings. Keep a checkpoint save and a short observed test result for each major region and system. | The owner can progress to the MM6 ending from a new party on this Mac, including repeated save/load, without a blocking MM6 defect or MM7 regression. |
+
+**Implementation boundaries.** Separate MM6 and MM7 data roots, runtime settings, mods and save directories. Start with a fork-native MM6 save (for example `.ec6`); importing original `.mm6` saves is a separate task and must not be implied by the first playable build. Never rename MM6 archives to mimic MM7, splice in MM7 game files, or modify the owner's GOG installation. Keep the MM7 Vanilla and modded launch paths working. The MM7 portrait and armor overrides only appear for MM6 after their MM6 behavior is implemented and checked; a general mod API can wait.
+
+**Validation and scope.** Add focused checks for title selection, wrong-game data rejection and MM6 save isolation where they protect the MM7 baseline. Use actual on-screen gameplay on the Mac for the menu, opening route and later campaign checkpoints; check sound, controls, logs and save/reload rather than treating a successful build as proof of playability. A 30–60 minute opening-session smoke run is the minimum for the experimental Atlas button, not a claim that the full campaign works. The full personal goal is an MM6 campaign that can reach its ending. Record blockers honestly if some MM6 behavior requires more work. Public CI, release packaging, upstream parity and MM8 do not gate this goal.
+
+**After MM6.** Give MM8 its own data, engine and save checks. Its extracted game data has numbered MP3 music files, and the owner's separate `mm_8_ost_flac.zip` download contains FLAC soundtrack tracks. Inventory in-game music mapping and sound effects separately; the soundtrack archive does not resolve the missing `Sounds/Audio.snd` question. Then design the Hall of Echoes transfer adapters against the actual working titles. Do not expose a transfer direction until both games and that direction's import/export and save checks pass.
 
 The **Hall of Echoes** is a guided, opt-in export/import workflow, not a save converter. It reads a completed source character through a tested game-specific adapter, creates a versioned local character blueprint, and previews each destination mapping before writing a new destination party. Its conservative preset follows [ROADMAP.md](ROADMAP.md): level at most 5, skills at most Expert, one eligible piece of equipment per character, and a destination-specific gold cap. The preview must explain class, race, spell, item and skill mappings; any unsupported choice needs an explicit replacement or omission. Quest flags, keys, map discovery and other campaign state never transfer. Back up the source and destination saves, leave the source untouched, write the import into a fresh destination save, and verify that save loads and the campaign can progress. A transfer button remains unavailable until both campaign adapters and the destination import check pass. Start with one proven direction, then add the other paths deliberately; showing three cards is not a promise that all six transfer directions work.
 

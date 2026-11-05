@@ -148,6 +148,7 @@ struct SpriteFrame_MM6 {
 };
 static_assert(sizeof(SpriteFrame_MM6) == 56);
 MM_DECLARE_MEMCOPY_SERIALIZABLE(SpriteFrame_MM6)
+void reconstruct(const SpriteFrame_MM6 &src, SpriteFrame *dst);
 
 
 struct SpriteFrame_MM7 : SpriteFrame_MM6 {

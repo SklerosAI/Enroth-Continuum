@@ -13,6 +13,7 @@
 #include "Engine/Graphics/FaceEnums.h"
 #include "Engine/Spells/SpellEnums.h"
 #include "Engine/Data/SoundEnums.h"
+#include "Engine/GameTitle.h"
 
 class InputStream;
 
@@ -26,7 +27,7 @@ class EvtInstruction {
      * @return                          The instruction in readable form, for logging.
      */
     std::string toString(EvtSource source) const;
-    static EvtInstruction parse(InputStream &stream, size_t size);
+    static EvtInstruction parse(InputStream &stream, size_t size, GameTitle gameTitle = GameTitle::MM7);
 
     EvtOpcode opcode = EVENT_Invalid;
     int step = 0;

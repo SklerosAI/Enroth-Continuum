@@ -9,6 +9,7 @@
 #include "Application/GameConfig.h"
 
 #include "Engine/Evt/EvtProgram.h"
+#include "Engine/GameTitle.h"
 #include "Engine/MapEnums.h"
 #include "Engine/PartyPlacement.h"
 #include "Engine/mm7_data.h"
@@ -66,13 +67,17 @@ struct PersistentVariables {
 
 class Engine {
  public:
-    explicit Engine(std::shared_ptr<GameConfig> config, OverlaySystem &overlaySystem);
+    explicit Engine(std::shared_ptr<GameConfig> config, OverlaySystem &overlaySystem, GameTitle gameTitle = GameTitle::MM7);
     virtual ~Engine();
 
     static void LogEngineBuildInfo();
 
     ResourceManager *resources() const {
         return _resourceManager.get();
+    }
+
+    GameTitle gameTitle() const {
+        return _gameTitle;
     }
 
     bool isOverlayOpen() const;
@@ -162,6 +167,7 @@ class Engine {
     std::unique_ptr<LightsStack_MobileLight_> _mobileLights;
 
  private:
+    GameTitle _gameTitle;
     std::unique_ptr<ResourceManager> _resourceManager;
 };
 

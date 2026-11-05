@@ -15,7 +15,7 @@
 
 MapTable *pMapTable;
 
-void MapTable::Initialize(const Blob &mapStats) {
+void MapTable::Initialize(const Blob &mapStats, GameTitle gameTitle) {
     // mapstats.txt table structure: map id | name (localized) | file name | ... |
     //                               map designer (set only in mm6, not used) | dev notes | parent map (not used).
     static const std::map<std::string, uint8_t, ascii::NoCaseLess> eaxEnvMap = {
@@ -61,12 +61,35 @@ void MapTable::Initialize(const Blob &mapStats) {
 
     for (std::string_view line : split(mapStats.str()).by("\r\n").drop(3).skip("")) {
         std::array<std::string_view, 30> tokens = split(line).by('\t');
+        if (gameTitle == GameTitle::MM6 && trim(tokens[0]).empty())
+            continue; // MM6 has tab-filled trailing rows.
         MapId mapId = static_cast<MapId>(fromString<int>(tokens[0]));
         MapData &info = pInfos[mapId];
         info.name = unquote(tokens[1]);
         info.fileName = ascii::toLower(unquote(tokens[2]));
         info.numResets = fromString<int>(tokens[3]);
         info.firstVisitedAt = fromString<int>(tokens[4]);
+        if (gameTitle == GameTitle::MM6) {
+            info.respawnIntervalDays = fromString<int>(tokens[5]);
+            info.disarmDifficulty = fromString<int>(tokens[6]);
+            info.trapDamageD20DiceCount = fromString<int>(tokens[7]);
+            info.mapTreasureLevel = static_cast<MapTreasureLevel>(fromString<int>(tokens[8]));
+            info.encounterChance = fromString<int>(tokens[9]);
+            info.encounter1Chance = fromString<int>(tokens[10]);
+            info.encounter2Chance = fromString<int>(tokens[11]);
+            info.encounter3Chance = fromString<int>(tokens[12]);
+            info.encounter1MonsterInternalName = unquote(tokens[14]);
+            info.Dif_M1 = fromString<int>(tokens[15]);
+            parseRange(tokens[16], &info.encounter1MinCount, &info.encounter1MaxCount);
+            info.encounter2MonsterInternalName = unquote(tokens[18]);
+            info.Dif_M2 = fromString<int>(tokens[19]);
+            parseRange(tokens[20], &info.encounter2MinCount, &info.encounter2MaxCount);
+            info.encounter3MonsterInternalName = unquote(tokens[22]);
+            info.Dif_M3 = fromString<int>(tokens[23]);
+            parseRange(tokens[24], &info.encounter3MinCount, &info.encounter3MaxCount);
+            info.musicId = static_cast<MusicId>(fromString<int>(tokens[25]));
+            continue;
+        }
         info.perceptionDifficulty = fromString<int>(tokens[5]);
         info.respawnIntervalDays = fromString<int>(tokens[6]);
         info.alertDays = fromString<int>(tokens[7]);

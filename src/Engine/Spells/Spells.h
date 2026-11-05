@@ -5,6 +5,7 @@
 #include <string>
 
 #include "Engine/Objects/ItemEnums.h"
+#include "Engine/GameTitle.h"
 #include "Engine/Objects/CharacterEnums.h"
 #include "Engine/Objects/SpriteEnums.h"
 
@@ -34,7 +35,7 @@ struct SpellStats {
     /**
      * @offset 0x45384A
      */
-    void Initialize(const Blob &spells);
+    void Initialize(const Blob &spells, GameTitle gameTitle = GameTitle::MM7);
 
     IndexedArray<SpellInfo, SPELL_FIRST_REGULAR, SPELL_LAST_REGULAR> pInfos;
 };

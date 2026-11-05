@@ -331,10 +331,14 @@ void GUIWindow_PartyCreation::Update() {
     DrawText(ui_partycreation_font.get(), {pTextCenter + 1, 0}, colorTable.White,
         localization->str(LSTR_C_R_E_A_T_E_P_A_R_T_Y), pGUIWindow_CurrentMenu->frameRect);
 
-    render->DrawQuad2D(ui_partycreation_portraits[pParty->pCharacters[0].uCurrentFace], {17, 35});
-    render->DrawQuad2D(ui_partycreation_portraits[pParty->pCharacters[1].uCurrentFace], {176, 35});
-    render->DrawQuad2D(ui_partycreation_portraits[pParty->pCharacters[2].uCurrentFace], {335, 35});
-    render->DrawQuad2D(ui_partycreation_portraits[pParty->pCharacters[3].uCurrentFace], {494, 35});
+    for (int i = 0; i < 4; ++i) {
+        GraphicsImage *original = ui_partycreation_portraits[pParty->pCharacters[i].uCurrentFace];
+        Pointi position(17 + 159 * i, 35);
+        if (GraphicsImage *custom = assets->getCustomPortrait(i))
+            render->DrawQuad2D(custom, Recti(Pointi(), custom->size()), Recti(position, original->size()));
+        else
+            render->DrawQuad2D(original, position);
+    }
 
     // arrows
     render->DrawQuad2D(ui_partycreation_character_frame, {pX, 29});

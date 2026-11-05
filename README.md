@@ -7,9 +7,13 @@
 > improvements suitable for upstream collaboration. See [CREDITS.md](CREDITS.md) and
 > [project/UPSTREAM.md](project/UPSTREAM.md).
 
-Enroth Continuum is early project infrastructure for a native-macOS-oriented
-Might & Magic VI-VIII experience and an optional, balance-aware legacy-campaign
-layer. **No Skleros engine adaptations are included yet.**
+Enroth Continuum is a personal, native Apple Silicon launcher and fork for
+Might & Magic VII, with MM6 and MM8 data staging and later campaign support
+planned. The local **Atlas** app opens MM7 through a bundled OpenEnroth engine,
+manages local save backups, and offers optional private MM7 portrait and armor
+AC overrides. See [launcher/README.md](launcher/README.md) for the current scope
+and build instructions. MM6, MM8, and character transfer are not yet playable
+through this fork.
 
 Original game assets remain local to each owner. The tracked
 [local-game-data/README.md](local-game-data/README.md) describes the deliberately

@@ -24,6 +24,8 @@ struct ItemTable {
     void LoadPotions(const Blob &potions);
     void LoadPotionNotes(const Blob &notes);
     void LoadItemSizes();
+    /** Applies optional local MM7 armor template values after the original item table is loaded. */
+    void ApplyPrivateArmorOverrides();
 
     /**
      * @offset 0x456620

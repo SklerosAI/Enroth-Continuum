@@ -1218,10 +1218,13 @@ void GameUI_DrawPortraits() {
         if (true /* || pPlayer->uExpressionImageIndex != pFrame->uTextureID - 1*/) {
             pPlayer->portraitImageIndex = faceTextureIndex - 1;
             pPortrait = game_ui_player_faces[i][pPlayer->portraitImageIndex];  // pFace = (Texture_MM7*)game_ui_player_faces[i][pFrame->uTextureID];
-            if (pParty->pPartyBuffs[PARTY_BUFF_INVISIBILITY].Active())
-                render->DrawQuad2D(pPortrait, {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i], 388}, colorTable.MediumGrey);
+            bool invisible = pParty->pPartyBuffs[PARTY_BUFF_INVISIBILITY].Active();
+            Pointi position(pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i] + (invisible ? 0 : 1), 388);
+            if (GraphicsImage *custom = assets->getCustomPortrait(i))
+                render->DrawQuad2D(custom, Recti(Pointi(), custom->size()), Recti(position, pPortrait->size()),
+                                   invisible ? colorTable.MediumGrey : colorTable.White);
             else
-                render->DrawQuad2D(pPortrait, {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i] + 1, 388});
+                render->DrawQuad2D(pPortrait, position, invisible ? colorTable.MediumGrey : colorTable.White);
             continue;
         }
     }

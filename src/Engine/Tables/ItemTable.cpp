@@ -2,8 +2,12 @@
 
 #include <array>
 #include <cctype>
+#include <charconv>
 #include <cstdlib>
+#include <fstream>
 #include <map>
+#include <set>
+#include <tuple>
 #include <vector>
 #include <string>
 #include <string_view>
@@ -248,6 +252,58 @@ void ItemTable::Initialize(ResourceManager *resourceManager) {
 
     // Patch up the data - we want wetsuits to be armor.
     items[ITEM_QUEST_WETSUIT].type = ITEM_TYPE_ARMOUR;
+    ApplyPrivateArmorOverrides();
+}
+
+void ItemTable::ApplyPrivateArmorOverrides() {
+    const char *directory = std::getenv("ENROTH_MM7_MOD_DIR");
+    if (!directory || !*directory)
+        return;
+
+    std::ifstream stream(std::string(directory) + "/armor.tsv");
+    if (!stream)
+        return;
+
+    auto parseNumber = [](std::string_view text, int *out) {
+        auto result = std::from_chars(text.data(), text.data() + text.size(), *out);
+        return result.ec == std::errc() && result.ptr == text.data() + text.size();
+    };
+
+    std::vector<std::tuple<ItemId, int, int>> overrides;
+    std::set<int> seen;
+    std::string line;
+    while (std::getline(stream, line)) {
+        if (!line.empty() && line.back() == '\r')
+            line.pop_back();
+        if (line.empty() || line[0] == '#')
+            continue;
+        size_t first = line.find('\t');
+        size_t second = first == std::string::npos ? first : line.find('\t', first + 1);
+        int id = 0, base = 0, bonus = 0;
+        if (line.size() > 128 || first == std::string::npos || second == std::string::npos ||
+            line.find('\t', second + 1) != std::string::npos ||
+            !parseNumber(std::string_view(line).substr(0, first), &id) ||
+            !parseNumber(std::string_view(line).substr(first + 1, second - first - 1), &base) ||
+            !parseNumber(std::string_view(line).substr(second + 1), &bonus) ||
+            id < std::to_underlying(ITEM_FIRST_VALID) || id > std::to_underlying(ITEM_LAST_VALID) ||
+            base < 0 || base > 100 || bonus < 0 || bonus > 100 || !seen.insert(id).second ||
+            items[static_cast<ItemId>(id)].type != ITEM_TYPE_ARMOUR || overrides.size() >= 32) {
+            MM_WARNING("Ignoring private armor overrides: invalid or non-armor entry. Original values remain in use.");
+            return;
+        }
+        overrides.emplace_back(static_cast<ItemId>(id), base, bonus);
+    }
+    if (stream.bad()) {
+        MM_WARNING("Ignoring private armor overrides: could not read the complete file.");
+        return;
+    }
+
+    for (auto [id, base, bonus] : overrides) {
+        items[id].damageDice = base;
+        items[id].damageMod = bonus;
+        MM_INFO("Applied private armor template override for item id {} (base AC {}, bonus AC {}).",
+                std::to_underlying(id), base, bonus);
+    }
 }
 
 //----- (00453B3C) --------------------------------------------------------

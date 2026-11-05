@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <string>
 #include <unordered_map>
 #include <memory>
@@ -23,6 +24,8 @@ class AssetsManager {
     void releaseImage(GraphicsImage *image);
 
     GraphicsImage *getIcon(std::string_view name);
+    /** Local, per-party-slot PNG override. Returns nullptr when vanilla mode is selected or the image is invalid. */
+    GraphicsImage *getCustomPortrait(int partySlot);
     GraphicsImage *getImage_Buff(std::string_view name);
 
     GraphicsImage *getBitmap(std::string_view name, bool generated = false);
@@ -50,6 +53,8 @@ class AssetsManager {
     std::unordered_map<std::string, std::unique_ptr<GraphicsImage>> bitmaps;
     std::unordered_map<std::string, std::unique_ptr<GraphicsImage>> sprites;
     std::unordered_map<std::string, std::unique_ptr<GraphicsImage>> images;
+    std::array<std::unique_ptr<GraphicsImage>, 4> customPortraits;
+    bool customPortraitsLoaded = false;
 };
 
 extern AssetsManager *assets;

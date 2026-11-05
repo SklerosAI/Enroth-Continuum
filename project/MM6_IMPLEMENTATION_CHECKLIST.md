@@ -127,14 +127,21 @@ that requirement.
 - [x] Frame all 67 listed map EVT files and `global.evt`: 14,477 records, 43
   distinct opcodes, no framing errors. The other 15 EVT-named files are not
   listed maps; one (`d4bm.evt`) is not a framed script and must not be fed to
-  the current event parser. The ignored `event-probe.json` retains every record.
-- [ ] Resolve whether any unlisted EVT file is reachable through a hidden map
-  or event path before treating it as ignorable.
+  the current event parser. The ignored `event-probe.json` retains every record
+  and the payload-length set for each active opcode.
+- [x] Check unlisted EVT files against every archived `.odm`/`.blv` basename
+  and the runtime's event lookup. None has a matching base map; the current
+  engine loads only `global.evt` and the active map's basename plus `.evt`.
+  Keep these files in the private catalog, but do not feed them to the active
+  parser unless a new path to them is found.
 - [ ] Decode and implement every listed-map/global EVT operand and side effect.
   Specifically, active opcodes 20, 27 and 28 are absent from the current C++
   enum. The [MM6 level editor's event format source](https://github.com/angeld29/mm8leveleditor/blob/master/src/org/gamenet/application/mm8leveleditor/data/mm6/fileFormat/EventFormatMM6.java)
-  identifies them as item modification, random password and random answer;
-  confirm operand layouts against shipped records and game behavior.
+  labels them item modification, random password and random answer but marks
+  their argument meanings unverified. The owned scripts confirm respective
+  payload lengths of 5, 2 and 1 bytes. Opcode 20 occurs seven times in
+  `znwc.evt`; 27 and 28 occur once each in `d09.evt`. Determine field meanings
+  and game behavior before implementing them.
 - [ ] All 76 `.str` string resources and their map/event references.
 - [ ] Remaining 11 `.bin` data families and 14 `.fnt` font files.
 - [ ] Video and audio archives, soundtrack mapping, playback and fallbacks.

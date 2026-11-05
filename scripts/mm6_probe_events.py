@@ -52,21 +52,34 @@ def main() -> None:
         file["role"] = "listed_map" if stem in listed_maps else ("global" if stem == "global" else "unlisted")
     active = [file for file in results if file["role"] != "unlisted"]
     counts = Counter(record["opcode"] for file in active for record in file["records"])
+    payload_lengths = {
+        opcode: sorted({record["size"] - 5 for file in active for record in file["records"]
+                        if record["opcode"] == opcode})
+        for opcode in counts
+    }
+    games = root / "Games"
+    base_map_names = {path.stem.lower() for suffix in ("*.odm", "*.blv")
+                      for path in games.glob(suffix)}
+    unlisted_with_base_map = [file["name"] for file in results
+                              if file["role"] == "unlisted" and
+                              Path(file["name"]).stem.lower() in base_map_names]
     summary = {"files": len(results), "records": sum(len(file["records"]) for file in results),
                "listed_map_files": sum(file["role"] == "listed_map" for file in results),
                "global_files": sum(file["role"] == "global" for file in results),
                "unlisted_files": [file["name"] for file in results if file["role"] == "unlisted"],
                "active_records": sum(len(file["records"]) for file in active),
                "active_unique_opcodes": len(counts), "active_opcodes": dict(sorted(counts.items())),
+               "active_opcode_payload_lengths": dict(sorted(payload_lengths.items())),
                "active_errors": [file["name"] for file in active if "error" in file],
-               "unlisted_errors": [file["name"] for file in results if file["role"] == "unlisted" and "error" in file]}
+               "unlisted_errors": [file["name"] for file in results if file["role"] == "unlisted" and "error" in file],
+               "unlisted_with_base_map": unlisted_with_base_map}
     report.write_text(json.dumps({"format": 1, "summary": summary, "files": results}, indent=2) + "\n")
     print(f"Probed {summary['files']} EVT files, {summary['records']} records, "
           f"{summary['active_unique_opcodes']} opcodes in listed maps/global; "
           f"{len(summary['active_errors'])} malformed active files; "
           f"{len(summary['unlisted_errors'])} malformed unlisted files")
     print("Active opcode counts:", " ".join(f"{opcode}:{count}" for opcode, count in counts.most_common()))
-    if summary["active_errors"] or summary["listed_map_files"] != len(listed_maps):
+    if summary["active_errors"] or summary["listed_map_files"] != len(listed_maps) or unlisted_with_base_map:
         raise SystemExit(1)
 
 

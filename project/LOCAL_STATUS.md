@@ -79,3 +79,7 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   mismatches despite complete raw DEFLATE output. Three opcodes used in listed
   map scripts still lack MM6-specific C++ parsing and execution. These findings
   are recorded in the checklist; no installed runtime changed.
+- A locally retained, ignored copy of the 412-page Prima strategy guide is
+  text-searchable. Its chapter outline has been converted into explicit
+  campaign-coverage work in the checklist. This is source indexing, not yet a
+  page-by-page reconciliation or proof of any implemented behavior.

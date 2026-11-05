@@ -24,6 +24,9 @@ title-specific implementation and an appropriate offline or live check exist.
   and `Sounds/2.mp3` through `16.mp3` provide 15 music tracks. Archive and
   executable hashes, and per-track music hashes, are in the ignored research
   folder. The original executable is PE32 x86; it is reference material only.
+- [x] Match the `mapstats.txt` Redbook track column to the local MP3 filenames:
+  all 67 maps select an installed track. Twelve distinct track IDs are used by
+  maps; the remaining MP3s need event or menu mapping checks.
 - [ ] Decode media entry formats and map all movie, effect and music IDs to
   game behavior; inspect native MM6 save format if a lawful local sample exists.
 - [ ] Read the owned original manual and reference card and annotate every
@@ -114,6 +117,24 @@ that requirement.
 
 ## Engine and campaign behavior
 
+The current MM6 branch is a format adapter, not a complete engine. Source
+review points to these concrete inherited MM7 assumptions to remove or prove
+correct before the F4 readiness gate:
+
+| Runtime area | Current evidence | Required MM6 work |
+| --- | --- | --- |
+| Startup and resources | `Engine.cpp` still enters `MM6_Initialize`, `MM7_LoadLods` and `MM7_Initialize` | Audit each initializer and make title-specific asset, layout and rule paths explicit |
+| Items | `MM6ItemTable.cpp` reads MM6 tables but still populates shared special/artifact bonus maps | Verify every MM6 item ID, special effect, potion recipe, enchantment and equipment rule |
+| Outdoor maps | `MM6OutdoorSnapshot.cpp` maps MM6 data into MM7 structures and discards legacy BSP ordering lists | Prove geometry, collision, decoration, spawn, events and delta persistence across all 15 maps |
+| Indoor maps | No MM6 indoor snapshot reader exists | Implement `.blv` and `.dlv` decoding and runtime behavior for all 52 interiors |
+| Events | Listed map scripts use opcodes 20, 27 and 28 absent from `EvtEnums.h` | Implement parsing and semantics, then cover every active opcode and event variable |
+| Character UI | Current party screen visibly uses MM7 class and portrait assets | Build MM6 custom party and Quick Start paths, portraits, six classes and skills |
+| Save/load | Current branch has no MM6 save format | Define, write, reload and migrate versioned MM6 saves with map deltas |
+| Launcher | Installed Atlas has only MM7 Play | Stage independent `MM6.app` beside verified `MM7.app`; preserve MM7 on install |
+
+This table is a source-derived gap register, not a claim that these are the only
+differences. Continue cross-file review and update it when evidence changes.
+
 - [ ] Startup, title, credits, options, UI scale, input and intro videos. The
   MM6 reference card describes a New Game choice between custom party and
   pregenerated Quick Start; both paths need their own UI and initial state.
@@ -124,7 +145,11 @@ that requirement.
 - [ ] Leveling, training, class promotions, skill points, mastery trainers,
   reputation, fame, conditions, aging, death and recovery.
 - [ ] Equipment slots, armor class, weapon damage, identification, repair,
-  enchanting, artifacts, quest items, shops and item generation.
+  enchanting, artifacts, quest items, shops and item generation. Include
+  ingredient-to-potion and potion-to-potion mixing, failed mixtures, colored
+  and white potions, and black potion side effects, as described in the
+  [New World Computing mini guide](https://www.mocagh.org/nwc/mm6le-strategyguide.pdf);
+  reconcile recipes and effects with the shipped item/event data.
 - [ ] Every spell ID 1–99 with Normal, Expert and Master behavior: target rules,
   mana, recovery, damage, resistance, status, buffs and world effects.
 - [ ] Real-time and turn-based combat, projectiles, monster AI, pathfinding,
@@ -133,6 +158,10 @@ that requirement.
   traps, chests, doors, switches and map reset rules.
 - [ ] EVT interpreter coverage for all shipped scripts; NPC dialogue, houses,
   guilds, quests, awards, travel, hirelings and endings.
+- [ ] Scripted dungeon checks for switches, traps, keys, doors, teleports,
+  encounters and quest rewards. Start with the Temple of Baa, Silver Helm
+  outpost, Shadow Guild outpost and Dragoons' caverns described in the
+  [official mini guide](https://www.mocagh.org/nwc/mm6le-strategyguide.pdf).
 - [ ] Audio, music, movie playback and settings on Apple Silicon.
 - [ ] Separate `.ec6` save writer and reader: all party, inventory, quest,
   NPC, world, map delta, time and configuration state; atomic writes, versioning,
@@ -142,6 +171,34 @@ that requirement.
   scenario checks for critical campaign branches and an ending path.
 - [ ] Live visual and play validation from New Sorpigal through ending, with
   save/quit/relaunch/load at multiple checkpoints.
+
+## Campaign coverage from the Prima guide
+
+The [official strategy guide](https://www.mocagh.org/nwc/mm6-hintbook.pdf)
+has separate chapters for party creation, monsters, nine spell schools, items,
+skills, NPCs, shops/locations, essential quests, promotion quests, minor quests
+and maps. These headings are a coverage index; exact behavior remains subject
+to the owned GOG tables and scripts.
+
+- [ ] Character classes and party compositions: Knight, Cleric, Sorcerer,
+  Paladin, Archer and Druid, including both promotion tiers of each.
+- [ ] Monster families and their variant stats, encounter placement, loot,
+  AI, special attacks and resistances.
+- [ ] Spell schools: Fire, Air, Water, Earth, Spirit, Mind, Body, Light and Dark;
+  all eleven spells per school and all three mastery levels.
+- [ ] Item categories: weapons, body protection, wands, herbs, potions,
+  scrolls, spellbooks, artifacts, relics, quest objects and miscellaneous items.
+- [ ] Item generation and alchemy rules, including town-shop stock and treasure.
+- [ ] Skill trainers, Expert and Master gates, guild access and class limits.
+- [ ] NPC hiring, service effects, reputation response and quest dialogue.
+- [ ] Weapon, armor, magic and general shops; stables, ship routes, temples,
+  training grounds, guilds, taverns, banks, castles and dungeon entrances.
+- [ ] Essential campaign chain: High Council, Nicolai, traitor, Oracle,
+  Tomb of Varn, Control Center, Archibald and Hive, including the ending.
+- [ ] All twelve class promotion quests, plus Seer and the minor regional
+  quests across the listed outdoor map grid.
+- [ ] Every indoor and outdoor map in the guide's appendix linked to its
+  `mapstats.txt` ID, archive resources, events, quest requirements and exits.
 
 ## Trilogy coexistence contract
 

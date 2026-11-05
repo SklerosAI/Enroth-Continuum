@@ -125,7 +125,8 @@ that requirement.
 
 ## Trilogy coexistence contract
 
-- [ ] Three source/build trees: MM6, MM7 and MM8, each independently buildable.
+- [x] Three source worktrees exist side by side: MM6, MM7 and reserved MM8.
+- [ ] All three are independently built as their own title-specific engines.
 - [ ] Three sibling bundles inside The Atlas: `MM6.app`, `MM7.app`, `MM8.app`.
 - [ ] Three independent game-data roots, profiles, save formats, mod folders,
   preferences, caches and logs. A title may read only its own runtime data.

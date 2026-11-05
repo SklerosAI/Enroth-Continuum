@@ -70,3 +70,7 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
 - MM6 is still not playable. The isolated MM7 bundle is a protected baseline;
   MM6 and later MM8 will be separate sibling engines and profiles, with their
   own Atlas actions once their campaign checks pass.
+- Three source checkouts now exist simultaneously: `mm6-mac-implementation`
+  (active adapter), `mm7-isolated-runtime` (verified baseline), and
+  `mm8-isolated-runtime` (reserved untouched baseline). MM8 has no adapted
+  engine or bundled app yet.

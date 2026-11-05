@@ -101,11 +101,16 @@ that requirement.
   and 1,385 extra bytes respectively before the final four bytes. Determine
   why those bytes are present and define a bounded runtime decoding policy.
   The ignored `map-probe.json` records entry and decoded hashes.
-- [x] Validate the section boundaries of all 52 retained `.blv` files against
-  MM6's distinct face, room, sprite, light and spawn sizes. Every decoded file
-  parses exactly to its declared end; the ignored `indoor-probe.json` records
-  section counts and hashes. Format cross-check: [MM8LevelEditor's MM6 indoor
-  reader](https://github.com/angeld29/mm8leveleditor/blob/master/src/org/gamenet/application/mm8leveleditor/data/mm6/indoor/IndoorDataMap.java).
+- [x] Validate the section boundaries of all 52 retained `.blv` files and
+  their 52 `.dlv` companions against MM6's distinct record sizes. Every
+  decoded file parses exactly to its declared end; the ignored
+  `indoor-probe.json` records section counts and hashes. MM6 deltas have an
+  8-byte opening header, 875 visible-map bytes, 548-byte creatures, 100-byte
+  items, 20 fixed 4,204-byte chests, and 200 fixed 80-byte door slots plus
+  variable door data from the base map. The per-door variable-array counts
+  exactly equal each base map's declared door-data size. Format cross-check:
+  [MM8LevelEditor's MM6 indoor reader](https://github.com/angeld29/mm8leveleditor/blob/master/src/org/gamenet/application/mm8leveleditor/data/mm6/indoor/IndoorDataMap.java)
+  and [delta reader](https://github.com/angeld29/mm8leveleditor/blob/master/src/org/gamenet/application/mm8leveleditor/data/mm6/indoor/DeltaIndoorDataMap.java).
 - [ ] All 15 `.odm` outdoor maps and 15 `.ddm` delta companions: geometry,
   terrain, objects, actors, doors, chests, map events and persistence.
 - [ ] All 52 `.blv` indoor maps and 52 `.dlv` delta companions: geometry,
@@ -138,7 +143,7 @@ correct before the F4 readiness gate:
 | Startup and resources | `Engine.cpp` still enters `MM6_Initialize`, `MM7_LoadLods` and `MM7_Initialize` | Audit each initializer and make title-specific asset, layout and rule paths explicit |
 | Items | `MM6ItemTable.cpp` reads MM6 tables but still populates shared special/artifact bonus maps | Verify every MM6 item ID, special effect, potion recipe, enchantment and equipment rule |
 | Outdoor maps | `MM6OutdoorSnapshot.cpp` maps MM6 data into MM7 structures and discards legacy BSP ordering lists | Prove geometry, collision, decoration, spawn, events and delta persistence across all 15 maps |
-| Indoor maps | `IndoorLocation::Load` decodes both `.blv` and `.dlv` as `IndoorLocation_MM7` / `IndoorDelta_MM7`; no MM6 indoor snapshot reader exists | Implement MM6 decoding, reconstruction, respawn and delta persistence for all 52 interiors |
+| Indoor maps | `IndoorLocation::Load` decodes both `.blv` and `.dlv` as `IndoorLocation_MM7` / `IndoorDelta_MM7`; no MM6 indoor snapshot reader exists. Offline probes now confirm all 52 MM6 base and delta section layouts, including MM6's shorter header and record sizes. | Implement MM6 decoding, reconstruction, respawn and delta persistence for all 52 interiors; do not reuse MM7's 40-byte delta header or per-face/per-sprite attribute arrays. |
 | Events | Listed map scripts use opcodes 20, 27 and 28 absent from `EvtEnums.h` | Implement parsing and semantics, then cover every active opcode and event variable |
 | Character UI | `UIPartyCreation.cpp` allocates nine class icons and 22 portraits and draws MM7 classes including Monk and Thief | Build MM6 custom party and Quick Start paths, portraits, six classes and skills |
 | Save/load | `SaveLoad.cpp` always serializes `SaveGame_MM7` and `IndoorDelta_MM7` / `OutdoorDelta_MM7`; file names and the `UISaveLoad.cpp` list filter require `.mm7` | Define, write, list and reload versioned MM6 saves and map deltas in the MM6 profile; leave MM7 saves readable in the MM7 profile |

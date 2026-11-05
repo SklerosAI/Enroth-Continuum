@@ -2,8 +2,9 @@
 """Check the section boundaries of private MM6 indoor maps offline.
 
 The record sizes and section order are cross-checked against the MM6 branch of
-MM8LevelEditor's IndoorDataMap, IndoorFace, Room, Sprite, LightSource and
-SpawnPoint readers: https://github.com/angeld29/mm8leveleditor/tree/master/src/org/gamenet/application/mm8leveleditor/data/mm6
+MM8LevelEditor's IndoorDataMap, DeltaIndoorDataMap, IndoorFace, Room, Sprite,
+LightSource, SpawnPoint, Creature, Item, ChestContents and Door readers:
+https://github.com/angeld29/mm8leveleditor/tree/master/src/org/gamenet/application/mm8leveleditor/data/mm6
 
 Only retained, ignored Games.lod extracts are read. The report contains counts,
 offsets, hashes and errors, never map contents, and must remain in that folder.
@@ -118,6 +119,55 @@ def probe(path: Path) -> dict:
     return entry
 
 
+def probe_delta(path: Path, base: dict) -> dict:
+    entry: dict = {"name": path.name}
+    try:
+        if "error" in base:
+            raise FormatError("base map did not pass layout check")
+        if not path.is_file():
+            raise FormatError("delta companion is missing")
+        entry["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        data, checksum_valid, trailing_bytes = decode(path)
+        entry["decoded_sha256"] = hashlib.sha256(data).hexdigest()
+        entry["decoded_bytes"] = len(data)
+        entry["checksum_valid"] = checksum_valid
+        entry["trailing_payload_bytes"] = trailing_bytes
+
+        cur = Cursor(data)
+        cur.take(8)  # reset count and last reset day
+        cur.take(875)  # revealed map outlines
+        # MM6 has no per-face or per-sprite attribute arrays here.
+        cur.count("creatures", 548, entry)
+        cur.count("items", 100, entry)
+        # Four-byte chest header, 140 x 28-byte contents, 9x9 short grid,
+        # and 118 trailing bytes: 4 + 3920 + 162 + 118 = 4204.
+        cur.count("chests", 4204, entry)
+        if base["doors"] != 200:
+            raise FormatError(f"expected 200 base door slots, found {base['doors']}")
+        door_variable_bytes = 0
+        for slot in range(200):
+            record_offset = cur.offset + slot * 80
+            if record_offset + 76 > len(data):
+                raise FormatError("door records overrun the delta")
+            vertices, faces, rooms, offsets = struct.unpack_from("<4h", data, record_offset + 68)
+            if min(vertices, faces, rooms, offsets) < 0:
+                raise FormatError(f"door slot {slot} has a negative variable-array count")
+            door_variable_bytes += 2 * (vertices + 3 * faces + rooms + 3 * offsets)
+        entry["door_variable_bytes_computed"] = door_variable_bytes
+        if door_variable_bytes != base["variable_bytes"]["doors"]:
+            raise FormatError("door variable-array counts differ from the base header")
+        cur.take(200 * 80)  # fixed door records, including unused slots
+        cur.take(base["variable_bytes"]["doors"])
+        cur.take(200)  # map bits
+        cur.take(56)  # visit time, sky, five weather fields, reserved bytes
+        entry["parsed_bytes"] = cur.offset
+        if cur.offset != len(data):
+            raise FormatError(f"parsed {cur.offset} of {len(data)} decoded bytes")
+    except (FormatError, OSError) as exc:
+        entry["error"] = str(exc)
+    return entry
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("reference", type=Path, help="ignored MM6 research directory")
@@ -132,17 +182,20 @@ def main() -> None:
     if not paths:
         parser.error("no retained indoor maps found")
     entries = [probe(path) for path in paths]
-    failures = [entry["name"] for entry in entries if "error" in entry]
+    deltas = [probe_delta(path.with_suffix(".dlv"), base) for path, base in zip(paths, entries)]
+    failures = [entry["name"] for entry in entries + deltas if "error" in entry]
     result = {
-        "format": 1,
-        "source": "retained MM6 Games.lod indoor extracts",
+        "format": 2,
+        "source": "retained MM6 Games.lod indoor and delta extracts",
         "maps": entries,
-        "summary": {"entries": len(entries), "layout_failures": failures,
-                    "checksum_failures": [e["name"] for e in entries if e.get("checksum_valid") is False]},
+        "deltas": deltas,
+        "summary": {"base_maps": len(entries), "deltas": len(deltas),
+                    "layout_failures": failures,
+                    "checksum_failures": [e["name"] for e in entries + deltas if e.get("checksum_valid") is False]},
     }
     report.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-    print(f"Probed {len(entries)} indoor maps; {len(failures)} layout failures")
-    for entry in entries:
+    print(f"Probed {len(entries)} indoor maps and {len(deltas)} deltas; {len(failures)} layout failures")
+    for entry in entries + deltas:
         if "error" in entry:
             print(f"  {entry['name']}: {entry['error']}")
     if failures:

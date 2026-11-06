@@ -236,3 +236,8 @@ Chronological record of wiki activity.
 - Linked the title-specific descriptor for MM6 event-variable ranges and the runtime guard that prevents IDs 46–226 from entering colliding MM7 execution paths.
 - Recorded that the 100 candidate map bytes have checked ID indexes but remain unbound to delta storage or `.ec6`; the inherited path for IDs 1–45 is provisional.
 - Syntax-checked the changed interpreter and unit source and partitioned all 127 active IDs in the ignored retained catalog. No MM6 process or original installation was opened.
+
+## [2026-11-06] update | MM6 map wire and outdoor event integration
+- by: T-Burton-ND via codex
+- Linked bounded indoor and outdoor wire readers, private-backed creation rules and the event-variable guard in the current F4 handoff. The integrated build and eighteen focused C++ tests passed, including all 52 indoor map pairs.
+- Added checked zero-based outdoor texture and all-faces facet event targeting. The F3-matched retained fixture covered 12 texture and six facet records; persistence and graphical behavior remain F4/F5 work.

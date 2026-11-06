@@ -409,3 +409,8 @@ Chronological record of wiki activity.
 - Audited character and party recovery, last regeneration, days without rest, daily spell-use counters, cached calendar and active rest UI. Added required `RCVR` v1 with a `PART` clock anchor and derived calendar staging.
 - MM6-only capture and copy staging reject active rest/wait or turn-based mode until their UI and queue state have a complete save contract. The whole-save assembler and SaveLoad remain untouched.
 - The arm64 unit target built and two focused recovery tests passed; C++ style and diff checks passed. No original installation was reread or partial MM6 game launched.
+
+## [2026-11-06] update | MM6 hireling and recovery assembly
+- by: T-Burton-ND via codex
+- Integrated bounded `HIRE` and `RCVR` into the partial `.ec6` known-save assembler, which now requires sixteen distinct sections. Added a `PART`/`HEAD`/`RCVR` clock agreement check, nonzero synthetic round-trip values and late recovery failure before destination mutation.
+- Built the native arm64 MM6, MM7 and unit targets from main. The offline runner passed 83/83 native tests plus four F3-matched aggregate checks. HIRE/RESC identity, active turn/rest state and the complete SaveLoad transaction remain open; no original installation or MM6 game process was opened.

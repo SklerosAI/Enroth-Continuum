@@ -18,4 +18,4 @@ The status above is an evidence summary, not a full compatibility claim. For exa
 
 Source: [project/LOCAL_STATUS.md](../project/LOCAL_STATUS.md), [project/MM7_AUDIT_CHECKLIST.md](../project/MM7_AUDIT_CHECKLIST.md), reviewed 2026-11-05.
 
-See also: [Runtime Isolation](Runtime-Isolation.md), [Project Overview](Project-Overview.md), [Local Status Source](Source-Local-Status.md), [Agent Handoff](Agent-Handoff.md), [Open Questions](Open-Questions.md).
+See also: [Runtime Isolation](Runtime-Isolation.md), [Project Overview](Project-Overview.md), [Local Status Source](Source-Local-Status.md), [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), [Agent Handoff](Agent-Handoff.md), [Open Questions](Open-Questions.md).

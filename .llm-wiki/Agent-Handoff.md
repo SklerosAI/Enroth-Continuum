@@ -12,7 +12,7 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 1. Run `git status --short --branch`, `git worktree list`, and `git log -1 --oneline` in the checkout you intend to use. The branch and worktree descriptions below were checked on 2026-11-05 and may drift.
 2. Read [AGENTS.md](../AGENTS.md), [project/plan.md §18.1–18.2](../project/plan.md), [project/LOCAL_STATUS.md](../project/LOCAL_STATUS.md), [project/MM6_IMPLEMENTATION_CHECKLIST.md](../project/MM6_IMPLEMENTATION_CHECKLIST.md), and [project/MM7_AUDIT_CHECKLIST.md](../project/MM7_AUDIT_CHECKLIST.md).
-3. Read [MM6 F2 Workstreams](MM6-F2-Workstreams.md) and [Open Questions](Open-Questions.md) before taking an assignment. Use this wiki's [schema](SCHEMA_Enroth-Continuum.md) for durable findings. The tracked source and fresh checks outrank this page.
+3. Read [MM6 F2 Workstreams](MM6-F2-Workstreams.md), [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), and [Open Questions](Open-Questions.md) before taking an assignment. Use this wiki's [schema](SCHEMA_Enroth-Continuum.md) for durable findings. The tracked source and fresh checks outrank this page.
 
 ## Current phase and gates (2026-11-05)
 
@@ -20,7 +20,7 @@ This page is the starting brief for future Codex agents working in parallel on E
 | --- | --- | --- |
 | MM7 personal baseline | An independent arm64 MM7 source/app and profile have launched graphically, loaded an existing save, and returned to Atlas. The full campaign audit is still **planned**. | M7-A0 protects and rechecks this baseline before the separate M7-A1–A5 audit. |
 | MM6 F0 | Separate MM7 baseline exists and has been live checked. | Keep it frozen while MM6 research proceeds. |
-| MM6 F1/F2 | Private retained archive references, broad offline format inventories, guide chapter indexing, and focused class/skill and save/delta specifications exist. Detailed mechanic-to-data-to-engine reconciliation remains open. | Finish F2 coverage and resolve or explicitly label every uncertainty. |
+| MM6 F1/F2 | Private retained references, broad offline format inventories, guide indexing, and focused class/skill, save/delta, event/campaign, and media/UI specifications exist. They identify structural gaps in Question/NPC topics, potion UI, map-state preservation and media routing. Detailed mechanic-to-data-to-engine reconciliation remains open. | Finish F2 coverage and resolve or explicitly label every uncertainty. |
 | MM6 F3 | **Not performed.** | Run one deliberate read-only original-data preflight after F2 is broad enough; retain its detailed report locally and ignored. |
 | MM6 F4–F6 | **Not gate-ready.** The current MM6 adapter renders title/party screens, but is not a playable engine. | After F3, complete offline implementation, then real graphical campaign/save checks, then a title-aware Atlas installation. |
 | MM8 | Reserved separate checkout; no adapted engine or Play action. | Begin its own title-specific audit and implementation after the MM6 priority allows it. |
@@ -35,6 +35,8 @@ The [campaign status](Campaign-Status.md) summarizes observed play. A build, dec
 | Verified Mac behavior and bundle/profile state | [local status](../project/LOCAL_STATUS.md), then fresh local checks | [launcher README](../launcher/README.md) |
 | MM6 class, skill, creation IDs | [class/skill specification](../project/MM6_CLASS_SKILL_SPEC.md) | Retained private tables and guide page locators, never copied here |
 | MM6 map deltas and save contract | [save specification](../project/MM6_SAVE_SPEC.md) | Retained private map probes and source consumers |
+| MM6 event, dialogue and campaign behavior | [event/campaign specification](../project/MM6_EVENT_CAMPAIGN_SPEC.md) | [guide reconciliation](../project/MM6_GUIDE_RECONCILIATION.md) and retained private event probes |
+| MM6 media and character interface | [media/UI specification](../project/MM6_MEDIA_UI_SPEC.md) | Retained private media indexes and [class/skill specification](../project/MM6_CLASS_SKILL_SPEC.md) |
 | MM7 audit scope | [MM7 audit checklist](../project/MM7_AUDIT_CHECKLIST.md), [plan §18.2](../project/plan.md) | Frozen baseline and fresh local manifest |
 | Attribution and legal boundary | [CREDITS.md](../CREDITS.md), [project/UPSTREAM.md](../project/UPSTREAM.md), [LICENSE](../LICENSE) | [source/privacy boundary](Source-and-Privacy-Boundary.md) |
 
@@ -66,6 +68,6 @@ Label evidence precisely: **inventory** means found/indexed; **parse** means bou
 
 ## Immediate tasks
 
-Begin the [F2 workstreams](MM6-F2-Workstreams.md). Bring their unresolved findings into [Open Questions](Open-Questions.md) and the authoritative checklist. Protect the MM7 baseline; the independent MM7 audit can start later in a separate branch without blocking MM6 research. Do not declare F2 complete, perform F3, begin F4, enable MM6/MM8 Play, or expose character transfer merely because the title screen or offline probes work.
+Continue the [F2 workstreams](MM6-F2-Workstreams.md) from the [structural findings](MM6-F2-Structural-Findings.md): classify Question and NPC-topic behavior, reconcile potion creation/UI rules, establish nonzero map-state/tail semantics and lossless saves, and resolve media routing against source evidence. Bring unresolved findings into [Open Questions](Open-Questions.md) and the authoritative checklist. Protect the MM7 baseline; the independent MM7 audit can start later in a separate branch without blocking MM6 research. Do not declare F2 complete, perform F3, begin F4, enable MM6/MM8 Play, or expose character transfer merely because the title screen or offline probes work.
 
-See also: [MM6 F2 Workstreams](MM6-F2-Workstreams.md), [Open Questions](Open-Questions.md), [Campaign Status](Campaign-Status.md), [Runtime Isolation](Runtime-Isolation.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).
+See also: [MM6 F2 Workstreams](MM6-F2-Workstreams.md), [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), [Open Questions](Open-Questions.md), [Campaign Status](Campaign-Status.md), [Runtime Isolation](Runtime-Isolation.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

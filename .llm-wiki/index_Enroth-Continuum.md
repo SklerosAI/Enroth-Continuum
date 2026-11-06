@@ -28,6 +28,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 ## Agent work and open questions
 
 - [MM6 F2 Workstreams](MM6-F2-Workstreams.md) — Four research lanes, current three-worker rotation, and handoff packet
+- [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md) — Confirmed inheritance gaps and unproven semantics from current F2 specs
 - [Open Questions](Open-Questions.md) — Dated F2 gaps requiring reconciliation before F3
 
 ## Source summaries
@@ -35,5 +36,9 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [README Source](Source-README.md) — Public README and OpenEnroth attribution
 - [Local Status Source](Source-Local-Status.md) — Dated local validation and its limits
 - [Roadmap Source](Source-Roadmap.md) — Intended trilogy and optional transfer design
+- [MM6 Class and Skill Spec Source](Source-MM6-Class-Skill-Spec.md) — Creation, class/skill, and potion UI source audit
+- [MM6 Save Spec Source](Source-MM6-Save-Spec.md) — Map-state boundaries, preservation, and save contract
+- [MM6 Event and Campaign Spec Source](Source-MM6-Event-Campaign-Spec.md) — Question, NPC-topic, variable, and campaign gaps
+- [MM6 Media and UI Spec Source](Source-MM6-Media-UI-Spec.md) — Movie, house, sound, music, and interface routing
 
 <!-- Add pages here as the wiki grows -->

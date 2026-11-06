@@ -1,7 +1,7 @@
 ---
 type: analysis
 up: "[[Agent-Handoff]]"
-derived_from: ["[[Campaign-Status]]", "[[Runtime-Isolation]]"]
+derived_from: ["[[Campaign-Status]]", "[[Runtime-Isolation]]", "[[MM6-F2-Structural-Findings]]"]
 tags: [mm6, gaps, handoff]
 ---
 
@@ -15,16 +15,16 @@ What must agents resolve before the consolidated MM6 F3 preflight can validate a
 
 ## Context
 
-The active MM6 adapter reaches title/party screens but not a playable map. Private offline probes established broad structural coverage; semantic behavior, campaign correctness, and save compatibility remain open. [Plan §18.1](../project/plan.md) requires F2 reconciliation before one deliberate F3 original-file review. The [MM7 audit](../project/MM7_AUDIT_CHECKLIST.md) is a separate planned effort.
+The active MM6 adapter reaches title/party screens but not a playable map. The new [F2 structural findings](MM6-F2-Structural-Findings.md) narrow several inherited-routing gaps; semantic behavior, campaign correctness, and save compatibility remain open. [Plan §18.1](../project/plan.md) requires F2 reconciliation before one deliberate F3 original-file review. The [MM7 audit](../project/MM7_AUDIT_CHECKLIST.md) is a separate planned effort.
 
 ## Analysis
 
 | Owner lane | Open question (2026-11-05) | Source of gap and closure evidence |
 | --- | --- | --- |
-| A | Which exact MM6 class/skill, spell, item, mastery, trainer, potion, and combat semantics differ from inherited MM7 behavior? | [Class/skill spec](../project/MM6_CLASS_SKILL_SPEC.md) and [MM6 checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md); link every shipped row family to a consumer and acceptance scenario. |
-| B | How do MM6 indoor/outdoor deltas, unusual base-map compression cases, 200 persistent bytes, chests/doors, and a versioned `.ec6` save preserve state? Is any native MM6 save format evidence available? | [Save spec](../project/MM6_SAVE_SPEC.md); validate field meanings, title boundaries, and round trips before an F4 serializer. Native import/export remains unproven. |
-| C | What are the semantics of the MM6-specific event opcodes and variable ranges, dialogue/input behavior, and the full quest chain to an ending? | [MM6 checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md) and [guide reconciliation](../project/MM6_GUIDE_RECONCILIATION.md); trace scripts, text, map links, interpreter consumers, and representative branch scenarios. |
-| D | Which MM6 portraits, UI layouts, house animations, movies, sound aliases, and music cues map to actual resources and behavior on this Mac? | [MM6 checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md) and [local status](../project/LOCAL_STATUS.md); resolve resource references offline, reserve graphical and audible confirmation for F5. |
+| A | What are the MM6 creation defaults, class formulas, spell/item effects and potion recipes? The inherited potion UI predicates miss MM6 herbs/bottles and gate mixing on an Alchemy skill absent from the MM6 table. | [Class/skill spec](../project/MM6_CLASS_SKILL_SPEC.md) and [class/skill source summary](Source-MM6-Class-Skill-Spec.md); reconcile the shipped matrices and acceptance scenarios without assuming MM7 behavior. |
+| B | What do nonzero MM6 map-state bytes and the final delta tail mean, and how are they preserved through resets and `.ec6` saves? Baseline fixed regions are zero-filled, so their boundaries are stronger evidence than their field labels. | [Save spec](../project/MM6_SAVE_SPEC.md) and [save source summary](Source-MM6-Save-Spec.md); use nonzero synthetic round trips and later source checks. Native import/export remains unproven. |
+| C | How do MM6 Question answer/cancel paths work, and how should labeled NPC topics without a current global event or special handler behave? Are other missing opcode/variable semantics and campaign links resolved? | [Event/campaign spec](../project/MM6_EVENT_CAMPAIGN_SPEC.md) and [event source summary](Source-MM6-Event-Campaign-Spec.md). The reproducible `scripts/mm6_probe_dialogue_events.py` reports structural routing only; unmatched topics are not confirmed original-game defects. |
+| D | Which MM6 movie and house names, sound aliases, spell cues, portraits, fonts and UI screens should each consumer use? The inherited lookup and descriptor paths do not match retained indexes. | [Media/UI spec](../project/MM6_MEDIA_UI_SPEC.md) and [media source summary](Source-MM6-Media-UI-Spec.md); F3 checks raw archive names, F5 checks seen/heard playback. Music file presence alone is not playback. |
 | Integrator | Has every item, spell, map, event, NPC, media, UI, save, and ending family been reconciled, with contradictions and uncertainty explicit? | Consolidate A–D into [MM6 checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md); only then define the F3 read-only preflight sample and acceptance record. |
 
 MM7's full resource/rules/campaign audit, MM8's engine adapter, and the title-aware Atlas assembler remain separate later work. None is evidenced complete by the MM6 F2 probes. The Atlas currently has only MM7 Play; adding another action requires that game's own play/save gate.
@@ -39,4 +39,4 @@ F2 is incomplete. Agents should close the scoped evidence gaps and hand them to 
 - At F3, record discrepancies, checksums, and raw findings only in ignored local storage; update this public page with conclusions and remaining uncertainty.
 - Keep the protected MM7 baseline available while planning its separate M7-A0–A5 audit.
 
-See also: [Agent Handoff](Agent-Handoff.md), [MM6 F2 Workstreams](MM6-F2-Workstreams.md), [Campaign Status](Campaign-Status.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).
+See also: [Agent Handoff](Agent-Handoff.md), [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), [MM6 F2 Workstreams](MM6-F2-Workstreams.md), [Campaign Status](Campaign-Status.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

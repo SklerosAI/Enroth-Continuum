@@ -391,3 +391,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated the bounded `HELD` and `BUFF` sections into the partial `.ec6` known-save assembler, which now requires fourteen distinct sections. Added nonzero round-trip assertions, late BUFF corruption rejection before destination mutation and a null held-item destination guard.
 - Built the native arm64 MM6, MM7 and unit targets from main. The retained-data offline runner, now including the 198-join private spell-item verifier, passed 73/73 tests. The complete save transaction, buff-overlay joins, cursor display and F5 persistence remain open; no original installation or MM6 game process was opened.
+
+## [2026-11-06] ingest | MM6 spellbook school prerequisites
+- by: T-Burton-ND via codex
+- Reused the corrected F3 PE six-family skill matrix through the private creation profile as a necessary class/school book-learning gate. The owner manual and MMExtension structure reference support a trained school skill and the matrix's availability codes; all 18 class IDs and 99 spell IDs are covered by a synthetic native test.
+- Kept book learning closed after the proven prerequisites because the retained spell text, captured PE spell records and owned guide introduction do not establish each spell's required mastery. A later bounded original-routine trace or F5 three-rank learning matrix is needed.
+- The private verifier matched the profile to its F3 report hash and checked the spell-record shape without printing rows. The arm64 unit target rebuilt, four focused spell-item/learning tests passed, and C++ style, wiki links and diff checks passed. No partial game or original installation was opened.

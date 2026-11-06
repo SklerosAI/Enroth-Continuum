@@ -11,8 +11,10 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/EvtProgram.h"
+#include "Engine/Evt/MM6MapByteState.h"
 #include "Engine/Evt/MM6EventVariables.h"
 #include "Engine/Evt/MM6SpriteEvent.h"
+#include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Outdoor.h"
@@ -25,6 +27,7 @@
 #include "Engine/mm7_data.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/Actor.h"
+#include "Engine/Objects/Decoration.h"
 #include "Engine/Objects/NPCEnumFunctions.h"
 #include "Engine/Objects/Monsters.h"
 #include "Engine/Party.h"
@@ -38,6 +41,7 @@
 #include "Engine/Tables/IconFrameTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
+#include "Engine/Timer.h"
 
 #include "GUI/GUIButton.h"
 #include "GUI/GUIProgressBar.h"
@@ -312,6 +316,108 @@ GAME_TEST(MM6Headless, DISABLED_ScopedFirstOutdoorWorld) {
     EXPECT_FALSE(pActors.empty());
     EXPECT_EQ(vChests.size(), 20u);
     EXPECT_EQ(lWindowList.size(), 1u);
+    EXPECT_EQ(window->nativeHandle(), nullptr);
+}
+
+// This is a bounded post-load subsystem step, not Game::gameLoop: the normal
+// New Game path still stops at the guarded saveNewGame() call. Run alone in a
+// fresh process because DoPrepareWorld has no complete global rollback.
+GAME_TEST(MM6Headless, DISABLED_FirstOutdoorSubsystemStep) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    ASSERT_NE(pGUIWindow_CurrentMenu, nullptr);
+    ASSERT_EQ(pGUIWindow_CurrentMenu->eWindowType, WINDOW_PARTY_CREATION);
+
+    const MapId firstMap = pMapTable->GetMapInfo("oute3.odm");
+    ASSERT_NE(firstMap, MAP_INVALID);
+    pMapDeltas.clear();
+    for (const std::string &name : pGames_LOD->ls()) {
+        if (std::string_view(name).ends_with(".dlv") || std::string_view(name).ends_with(".ddm"))
+            pMapDeltas.emplace(name, Blob::copy(pGames_LOD->read(name)));
+    }
+    ASSERT_TRUE(pMapDeltas.contains("oute3.ddm"));
+    mm6::resetChestTitleState(&mm6::chestTitleState());
+    ASSERT_TRUE(mm6::restoreChestTitleState(GameTitle::MM6, &mm6::chestTitleState(),
+                                            0x12345678u, {}));
+
+    bool prepared = false;
+    game.runGameRoutine([firstMap, &prepared] {
+        // This is normally called by Game::gameLoop before DoPrepareWorld.
+        GameUI_LoadPlayerPortraitsAndVoices();
+        engine->_pendingTransition = MapDestination(firstMap, MAP_START_POINT_PARTY);
+        {
+            mm6::ScopedChestMapLoadOptIn chestOptIn;
+            DoPrepareWorld(/* bLoading = */ false, /* fullscreen = */ 1);
+        }
+        prepared = !mm6::chestMapLoadOptedIn();
+    });
+    for (int tick = 0; tick < 256 && !prepared; ++tick)
+        game.tick();
+    ASSERT_TRUE(prepared);
+    ASSERT_EQ(engine->_currentLoadedMapId, firstMap);
+    ASSERT_EQ(uCurrentlyLoadedLevelType, LEVEL_OUTDOOR);
+    ASSERT_FALSE(pActors.empty());
+    ASSERT_FALSE(pLevelDecorations.empty());
+
+    // Select a reload branch whose source compares an MM6 map byte and then
+    // sets a bounded decoration. Force the opposite visibility before replay
+    // so the assertion proves that the interpreter ran this event.
+    int variableId = -1;
+    int variableValue = -1;
+    int decorationIndex = -1;
+    bool expectedVisible = false;
+    for (const EventTrigger trigger : engine->_localEventMap.enumerateTriggers(EVENT_OnMapReload)) {
+        const EvtInstruction &comparison = engine->_localEventMap.instruction(trigger.eventId,
+                                                                               trigger.eventStep + 1);
+        if (comparison.opcode != EVENT_Compare ||
+            describeMM6Variable(std::to_underlying(comparison.data.variable_descr.type)).family !=
+                MM6VariableFamily::MapByte)
+            continue;
+        const EvtInstruction &branch = engine->_localEventMap.instruction(trigger.eventId,
+                                                                           comparison.target_step);
+        if (branch.opcode != EVENT_SetSprite || branch.data.sprite_texture_descr.cog < 0 ||
+            static_cast<size_t>(branch.data.sprite_texture_descr.cog) >= pLevelDecorations.size())
+            continue;
+        variableId = std::to_underlying(comparison.data.variable_descr.type);
+        variableValue = comparison.data.variable_descr.value;
+        decorationIndex = branch.data.sprite_texture_descr.cog;
+        expectedVisible = branch.data.sprite_texture_descr.hide;
+        break;
+    }
+    ASSERT_GE(variableId, 0);
+    ASSERT_GE(decorationIndex, 0);
+    game.runGameRoutine([=] {
+        MM6MapByteState(pOutdoor->mm6DeltaBytes).set(variableId, variableValue);
+        LevelDecoration &decoration = pLevelDecorations[decorationIndex];
+        if (expectedVisible)
+            decoration.uFlags |= LEVEL_DECORATION_INVISIBLE;
+        else
+            decoration.uFlags &= ~LEVEL_DECORATION_INVISIBLE;
+        onMapLoad();
+    });
+    EXPECT_EQ(!(pLevelDecorations[decorationIndex].uFlags & LEVEL_DECORATION_INVISIBLE), expectedVisible);
+
+    const Vec3f initialPos = pParty->pos;
+    const int initialYaw = pParty->_viewYaw;
+    game.runGameRoutine([] { gameTimer->setPaused(false); });
+    game.tick(2); // Advance the null-platform clock while the parent loop remains in party creation.
+    game.runGameRoutine([] {
+        gameTimer->tick();
+        current_screen_type = SCREEN_GAME;
+        onTimer();
+        Actor::UpdateActorAI();
+        pPartyActionQueue->Reset();
+        pPartyActionQueue->Add(PARTY_TurnLeft);
+        pPartyActionQueue->Add(PARTY_WalkForward);
+        UpdateUserInput_and_MapSpecificStuff();
+        gameTimer->setPaused(true);
+    });
+    EXPECT_NE(pParty->_viewYaw, initialYaw);
+    EXPECT_NE(pParty->pos, initialPos);
+    EXPECT_EQ(pPartyActionQueue->uNumActions, 0u);
+    EXPECT_FALSE(engine->_pendingTransition.has_value());
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }
 

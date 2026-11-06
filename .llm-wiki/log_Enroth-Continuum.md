@@ -121,3 +121,9 @@ Chronological record of wiki activity.
 - Updated the spell source summary with all 99 guide entries and 297 Normal/Expert/Master clause summaries, while retaining the four rank-effect guide/table disputes and full C++ effect comparison as open.
 - Recorded 58 same-ID label/base-mana conflicts, 41 unverified effects and zero verified running spells; exact rank clauses remain in the ignored private matrix.
 - F2 remains open and F3 has not read the original installation.
+
+## [2026-11-05] ingest | MM6 high-risk item roles and generic NPC routes
+- by: T-Burton-ND via codex
+- Updated the item source summary with retained-role/C++ consumer coverage for 404 high-risk IDs and wand, scroll, book, artifact and message range collisions. This did not change the unreviewed item guide-effect count.
+- Added initial-route results for 70 generic-profession NPC records, distinguishing static hire choices, house conversations and cases requiring outdoor/event routing; live hireability is unproven.
+- Kept detailed per-ID and per-NPC joins ignored locally, F2 open and F3 unrun.

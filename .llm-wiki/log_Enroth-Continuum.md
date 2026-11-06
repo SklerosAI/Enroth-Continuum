@@ -964,3 +964,8 @@ Chronological record of wiki activity.
 - A hash-checked read-only original PE trace proves two menu-selected shop stock banks, 12-position physical reads, zero-item-ID display suppression and a corresponding guild stock read. Purchase writes, original bank labels, full item tuple semantics and an adjacent shop/guild boundary remain unproved. The [packet](../project/MM6_F4_SHOP_STOCK_TUPLE_AND_AUTOSAVE.md) and [wiki page](MM6-F4-Shop-Stock-Tuple-and-Autosave.md) preserve those limits; exact addresses and retained IDs remain ignored.
 - Current `startMapTransition()` calls `autoSave()` before scheduling a different-map transition, while MM6 `saveGame()` throws before its write-error catch. Cross-map travel through that helper therefore remains blocked by the guarded save route. Same-map travel and six direct pending-transition sites have different paths requiring separate audit.
 - An ignored focused checker passed executable-hash, menu-bank, zero-ID, boundary, raw Party-span and autosave-order assertions. No codec, C++ build, MM6 launch, original installation reread or MM7/MM8 edit occurred; live MM6 SaveLoad remains closed.
+
+## [2026-11-06] update | MM6 underwater map identity
+- by: T-Burton-ND via codex
+- Followed all remaining `isMapUnderwater` consumers and title-gated the central world transition and indoor loader so MM6 map IDs cannot acquire MM7 underwater state. Updated the [outdoor title packet](../project/MM6_F4_OUTDOOR_TITLE_BOUNDARY.md) and [wiki page](MM6-F4-Outdoor-Title-Boundary.md).
+- The arm64 MM6, OpenEnroth and unit targets linked after the change. MM6 underwater behavior and graphical validation remain open; no MM6 process was launched.

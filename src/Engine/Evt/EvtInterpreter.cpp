@@ -313,7 +313,8 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
 
             // TODO(captainurist): this should be a data mod. The Emerald Island ship sails to Harmondale for a week, and
             //                     the week passes after the autosave that startMapTransition writes.
-            if (engine->_currentLoadedMapId == MAP_EMERALD_ISLAND && destination.map() == MAP_HARMONDALE) {
+            if (engine->gameTitle() == GameTitle::MM7 && engine->_currentLoadedMapId == MAP_EMERALD_ISLAND &&
+                destination.map() == MAP_HARMONDALE) {
                 Rest(Duration::fromDays(7));
                 pParty->restAndHeal();
                 pParty->days_played_without_rest = 0;
@@ -519,7 +520,7 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             // TODO(captainurist): move this workaround into patched event data, and add the OnMapReload step from
             //                     GrayFace's d27.evt that re-applies the empty cage sprite once the quest bit is set.
             //                     The sprite isn't saved, so after a reload the cage shows Roland until the next click.
-            if (engine->_currentLoadedMapId == MAP_COLONY_ZOD && _context.eventId == 376 &&
+            if (engine->gameTitle() == GameTitle::MM7 && engine->_currentLoadedMapId == MAP_COLONY_ZOD && _context.eventId == 376 &&
                 ir.data.variable_descr.type == VAR_PlayerItemInHands && pParty->_questBits[QBIT_TALKED_TO_ROLAND])
                 break; // Roland's cage script adds the key on every click, it never checks the quest bit.
             for (Character &character : iterateCharacters(_who, ir.data.variable_descr.type, grng))
@@ -650,7 +651,8 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
         case EVENT_SpeakNPC:
             if (!_context.duringMapLoad) {
                 // TODO(pskeltonm): Fix #2223 stop tutorial message spam - should be data mod
-                if (engine->_currentLoadedMapId == MAP_EMERALD_ISLAND && _context.eventId >= 200 && _context.eventId <= 218) {
+                if (engine->gameTitle() == GameTitle::MM7 && engine->_currentLoadedMapId == MAP_EMERALD_ISLAND &&
+                    _context.eventId >= 200 && _context.eventId <= 218) {
                     if (engine->_OE_transientVariables[_context.eventId - 200])
                         break;
                     engine->_OE_transientVariables[_context.eventId - 200] = 1;

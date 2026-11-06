@@ -13,6 +13,8 @@
 #include "Engine/MM6/MM6MonsterSpecialAttack.h"
 #include "Engine/MM6/MM6MonsterProjectile.h"
 #include "Engine/MM6/MM6MonsterSpells.h"
+#include "Engine/Snapshots/TableSerialization.h"
+#include "Engine/Tables/ObjectTable.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -214,4 +216,35 @@ UNIT_TEST(MM6MonsterProjectile, RetainsAllF3MatchedRangedAttackCells) {
         }
     }
     EXPECT_EQ(counts, (std::array<int, 10>{6, 18, 17, 10, 12, 6, 4, 3, 3, 3}));
+}
+
+UNIT_TEST(MM6MonsterProjectile, NineLabelsResolveToRetainedMM6ObjectRows) {
+    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
+    if (!research)
+        GTEST_SKIP() << "Set ignored MM6 F3 research directory";
+    const std::filesystem::path path = std::filesystem::path(research) / "icons/dobjlist.bin";
+    std::ifstream stream(path, std::ios::binary);
+    ASSERT_TRUE(stream.is_open());
+    std::string data(std::istreambuf_iterator<char>{stream}, {});
+    ObjectTable objects;
+    deserialize(Blob::fromString(std::move(data)), &objects, GameTitle::MM6);
+    ASSERT_EQ(objects.pObjects.size(), 232);
+
+    constexpr std::array labels = {
+        MONSTER_PROJECTILE_MM6_ARROW, MONSTER_PROJECTILE_MM6_FLAMING_ARROW,
+        MONSTER_PROJECTILE_MM6_FIRE, MONSTER_PROJECTILE_MM6_ELECTRICITY,
+        MONSTER_PROJECTILE_MM6_COLD, MONSTER_PROJECTILE_MM6_POISON,
+        MONSTER_PROJECTILE_MM6_ENERGY, MONSTER_PROJECTILE_MM6_MAGIC,
+        MONSTER_PROJECTILE_MM6_ROCK,
+    };
+    for (MonsterProjectile label : labels) {
+        const SpriteId objectId = mm6::monsterProjectileObjectId(label);
+        const unsigned row = objects.ObjectIDByItemID(objectId);
+        ASSERT_GT(row, 0);
+        ASSERT_LT(row, objects.pObjects.size());
+        EXPECT_EQ(objects.pObjects[row].uObjectID, objectId);
+        EXPECT_GT(objects.pObjects[row].uSpriteID, 0);
+    }
+    EXPECT_THROW(mm6::monsterProjectileObjectId(MONSTER_PROJECTILE_MM6_DAGGER), std::runtime_error);
+    EXPECT_THROW(mm6::monsterProjectileObjectId(MONSTER_PROJECTILE_NONE), std::runtime_error);
 }

@@ -7,6 +7,7 @@
 
 #include "Engine/GameTitle.h"
 #include "Engine/Objects/MonsterEnums.h"
+#include "Engine/Objects/SpriteEnums.h"
 #include "Utility/String/Ascii.h"
 
 namespace mm6 {
@@ -37,6 +38,25 @@ inline MonsterProjectile monsterProjectileType(std::string_view label, bool acti
 inline void requireVerifiedMonsterProjectile(GameTitle title, MonsterProjectile type) {
     if (title == GameTitle::MM6 && type != MONSTER_PROJECTILE_NONE)
         throw std::runtime_error("MM6 monster projectile launch is unverified");
+}
+
+// Nine source labels join directly to retained MM6 dobjlist.bin object IDs.
+// Dagger has no proved projectile object; the ordinary dagger item row is not
+// enough to infer its launch and impact behavior.
+inline SpriteId monsterProjectileObjectId(MonsterProjectile type) {
+    switch (type) {
+        case MONSTER_PROJECTILE_MM6_ARROW: return static_cast<SpriteId>(500);
+        case MONSTER_PROJECTILE_MM6_FLAMING_ARROW: return static_cast<SpriteId>(510);
+        case MONSTER_PROJECTILE_MM6_FIRE: return static_cast<SpriteId>(520);
+        case MONSTER_PROJECTILE_MM6_ELECTRICITY: return static_cast<SpriteId>(530);
+        case MONSTER_PROJECTILE_MM6_COLD: return static_cast<SpriteId>(540);
+        case MONSTER_PROJECTILE_MM6_POISON: return static_cast<SpriteId>(550);
+        case MONSTER_PROJECTILE_MM6_ENERGY: return static_cast<SpriteId>(560);
+        case MONSTER_PROJECTILE_MM6_MAGIC: return static_cast<SpriteId>(570);
+        case MONSTER_PROJECTILE_MM6_ROCK: return static_cast<SpriteId>(580);
+        default: break;
+    }
+    throw std::runtime_error("MM6 projectile has no verified object ID");
 }
 
 }  // namespace mm6

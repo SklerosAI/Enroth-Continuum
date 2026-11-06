@@ -34,6 +34,7 @@
 #include "Engine/Spells/MM6FirstAidRules.h"
 #include "Engine/Spells/MM6PowerCureRules.h"
 #include "Engine/Spells/MM6TimedCureRules.h"
+#include "Engine/Spells/MM6CombatBuffRules.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
 
@@ -348,6 +349,24 @@ void CastSpellInfoHelpers::castSpell() {
             mm6::applyTimedCure(pCastSpell->uSpellID, spell_mastery, spell_level,
                                  pParty->GetPlayingTime(),
                                  pParty->pCharacters[pCastSpell->targetCharacterIndex].conditions);
+            pPlayer->SpendMana(uRequiredMana);
+            setSpellRecovery(pCastSpell, recoveryTime);
+        } else if (engine->gameTitle() == GameTitle::MM6 && mm6::isCombatBuffSpell(pCastSpell->uSpellID)) {
+            const mm6::CombatBuffPlan plan = mm6::planCombatBuff(pCastSpell->uSpellID, spell_mastery,
+                                                                 spell_level, pParty->GetPlayingTime());
+            if (pCastSpell->targetPid)
+                throw std::runtime_error("MM6 combat buff cannot target an actor");
+            if (plan.partyWide) {
+                for (Character &target : pParty->pCharacters)
+                    mm6::applyCombatBuff(target.pCharacterBuffs[plan.buff], plan,
+                                          pCastSpell->casterCharacterIndex);
+            } else {
+                if (pCastSpell->targetCharacterIndex < 0 || pCastSpell->targetCharacterIndex >= 4)
+                    throw std::runtime_error("MM6 combat buff requires one party member target");
+                Character &target = pParty->pCharacters[pCastSpell->targetCharacterIndex];
+                mm6::applyCombatBuff(target.pCharacterBuffs[plan.buff], plan,
+                                      pCastSpell->casterCharacterIndex);
+            }
             pPlayer->SpendMana(uRequiredMana);
             setSpellRecovery(pCastSpell, recoveryTime);
         } else {
@@ -3193,6 +3212,13 @@ void pushSpellOrRangedAttack(SpellId spell,
         if (engine->gameTitle() == GameTitle::MM6 && mm6::isTimedCureSpell(spell)) {
             flags &= ~(ON_CAST_TargetedActor | ON_CAST_TargetedActorOrCharacter);
             flags |= ON_CAST_TargetedCharacter;
+        }
+        if (engine->gameTitle() == GameTitle::MM6 && mm6::isCombatBuffSpell(spell)) {
+            flags &= ~(ON_CAST_TargetedActor | ON_CAST_TargetedActorOrCharacter | ON_CAST_TargetedCharacter);
+            const Mastery mastery = checkSkill ? checkSkill.mastery() :
+                character->pActiveSkills[skillForSpell(spell)].mastery();
+            if (mastery == MASTERY_NOVICE)
+                flags |= ON_CAST_TargetedCharacter;
         }
     }
 

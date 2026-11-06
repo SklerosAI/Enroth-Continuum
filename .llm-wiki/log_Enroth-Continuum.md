@@ -386,3 +386,8 @@ Chronological record of wiki activity.
 - Added a bounded required `.ec6` BUFF section for 20 party and 4×24 character SpellBuff slots, plus MM6-guarded capture and copy-staging. The current NPC flight/water-walk source marks a Master buff `isGM`; that flag is preserved separately from mastery. Staging avoids overlay-mutating buff methods.
 - Built the isolated arm64 unit and save-runtime targets; five focused synthetic BUFF tests passed, including malformed/valid-CRC rejection before assignment. Direct C++ style and diff checks passed. No original installation was reread or partial MM6 game launched.
 - Kept BUFF outside the earlier eleven-section known-save candidate for a coordinated manifest revision. Overlay reference consistency, exact MM6 effect behavior, initialized-party capture/staging, SaveLoad and F5 persistence remain open.
+
+## [2026-11-06] update | MM6 held item and buff assembly
+- by: T-Burton-ND via codex
+- Integrated the bounded `HELD` and `BUFF` sections into the partial `.ec6` known-save assembler, which now requires fourteen distinct sections. Added nonzero round-trip assertions, late BUFF corruption rejection before destination mutation and a null held-item destination guard.
+- Built the native arm64 MM6, MM7 and unit targets from main. The retained-data offline runner, now including the 198-join private spell-item verifier, passed 73/73 tests. The complete save transaction, buff-overlay joins, cursor display and F5 persistence remain open; no original installation or MM6 game process was opened.

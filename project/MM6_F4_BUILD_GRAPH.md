@@ -24,6 +24,8 @@ The [item-effect seams](MM6_ITEM_EFFECT_SEAMS_F2.md) require an MM6 read-window 
 
 The [monster-effect seams](MM6_MONSTER_EFFECT_SEAMS_F2.md) require title-specific gender and multi-target selection, weapon-break eligibility, Energy/resistance and fixed-drop policy. Test each against the F3-reconciled rules; the current source/guide mismatches alone do not supply original outcome formulas.
 
+The [late item-guide packet](MM6_ITEM_GUIDE_CLOSURE_F2.md) groups held-item event signatures; parse all affected map scripts before asserting those item gates work. The [media-schema packet](MM6_MEDIA_SCHEMA_LEADS_F2.md) narrows likely VID/SND directory widths, but F4 must follow F3-confirmed extensionless lookup, payload bounds, codecs and vanilla portrait selection. Candidate PNG dimensions do not substitute for rendered F5 checks.
+
 ## F3 lock before code
 
 The F3 report must resolve original archive identity, active schema boundaries and ID/source discrepancies, or name a specific ambiguity with a conservative representation and F4/F5 check. The source SHA and private F2 report hashes come from `scripts/mm6_f2_freeze_manifest.py`; `scripts/mm6_f3_identity_preflight.py` is one component of F3, not a content gate by itself. The integrator updates this build graph after F3 if the original data contradicts F2, then records an F4 start decision. Exact original bytes, per-ID ledgers and screenshots remain ignored locally.

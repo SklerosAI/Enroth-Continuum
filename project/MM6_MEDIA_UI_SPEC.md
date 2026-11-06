@@ -32,6 +32,13 @@ table. These are lexical and potential-ID checks, not evidence that original
 MM6 lacks portraits/voice or that any frame/sample was seen or heard. The
 exact names and IDs stay in ignored `media-consumer-probe.json`.
 
+The later [media schema leads](MM6_MEDIA_SCHEMA_LEADS_F2.md) compare pinned
+primary VID/SND readers with the retained F1 indexes. They support candidate
+44-byte VID and 52-byte SND directory widths, matching the current readers'
+record sizes; raw owner archive headers, optional VID trailer and payload
+bounds still need F3. Twelve complete 01–53 icon-frame groups with 59×79 PNG
+headers are strong MM6 portrait candidates, not verified face identities.
+
 Source locations: `src/Media/MediaPlayer.cpp` (`Initialize`, `LoadMovie`,
 `OpenHouseMovie`), `src/Library/Vid/VidReader.cpp`,
 `src/Library/Vid/VidSnapshots.h`, `src/Application/GameStates/GameFsmBuilder.cpp`,

@@ -286,6 +286,15 @@ that requirement.
   MM6's max ID, and none of the 50 MM6 message scrolls passes the inherited
   read-window numeric guard. These are current-source mismatches, not verified
   original effects or a witnessed UI result.
+- [x] Review late item-guide entries and retained held-item operands in
+  [MM6_ITEM_GUIDE_CLOSURE_F2.md](MM6_ITEM_GUIDE_CLOSURE_F2.md).
+  Of 43 individually printed late entries, eight give qualitative role clues
+  and 35 give no explicit rule. A separate gem table matches nine of ten
+  retained name/value pairs and disagrees on one identity. Fifty of 67 broad
+  special/misc IDs have 400 held-item event references across 13 EVT files;
+  the opcode signatures are grouped privately. Guide identity and script
+  operands do not verify executable effects, so the 164 unresolved item
+  semantics remain open for F3/F4/F5.
 - [ ] Replace MM7 item-kind range assumptions with MM6-specific IDs and
   checks. Make every MM6 spell scroll cast its intended spell, every book
   teach its intended spell, every message scroll display its text, and every
@@ -563,6 +572,14 @@ that requirement.
   sound IDs occur more than once in `dsounds.bin`, and the MM6 table loader
   currently keeps the last row for each. This is source-level evidence only;
   no MM6 media playback has been checked.
+- [x] Record [primary-source MM6 media schema leads](MM6_MEDIA_SCHEMA_LEADS_F2.md)
+  against retained F1 indexes. The pinned VID/SND readers use the same
+  44/52-byte directory widths as current C++, but MM6 video names are
+  extensionless in the retained 127-entry index while current lookup appends
+  a suffix. Twelve complete 01–53 icon-frame groups (636 extracted PNG
+  headers, 59×79) are strong vanilla portrait candidates; their identity and
+  playback are not verified. F3 must check raw original headers, names,
+  payload boundaries, codecs and frames before F4 locks loaders.
 - [x] Register [MMExtension MM6 executable table locators](MM6_EXECUTABLE_TABLE_LOCATORS_F2.md)
   for 100 14-byte spell records, 119 16-byte house-movie records and 36
   candidate transport entries. The 116 distinct retained room IDs span

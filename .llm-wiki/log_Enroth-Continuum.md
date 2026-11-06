@@ -230,3 +230,9 @@ Chronological record of wiki activity.
 - Added a validated, private profile manifest generated from the corrected F3 PE report, preserving exact creation arrays outside Git.
 - Wired MM6-only six-family starting stats/skills, class choices, mana-attribute groups and provisional HP/SP calculations; kept Quick Start and promotion behavior explicitly open.
 - Verified all eighteen mana groups against F3, retained class/skill row shapes and six icon names, three exporter tests, and syntax checks for five changed C++ units. No original file was reopened or MM6 process launched.
+
+## [2026-11-06] ingest | MM6 event variable collision guard
+- by: T-Burton-ND via codex
+- Linked the title-specific descriptor for MM6 event-variable ranges and the runtime guard that prevents IDs 46–226 from entering colliding MM7 execution paths.
+- Recorded that the 100 candidate map bytes have checked ID indexes but remain unbound to delta storage or `.ec6`; the inherited path for IDs 1–45 is provisional.
+- Syntax-checked the changed interpreter and unit source and partitioned all 127 active IDs in the ignored retained catalog. No MM6 process or original installation was opened.

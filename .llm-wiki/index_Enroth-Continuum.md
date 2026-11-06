@@ -60,6 +60,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 NPC State](MM6-F4-NPC-State.md) — Bounded `.ec6` RESC NPC/group fields and copy-staging with open gameplay semantics
 - [MM6 F4 NPC Events](MM6-F4-NPC-Events.md) — Bounded topic/move state and MM6 global-script precedence over MM7 teacher IDs
 - [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial sixteen-section `.ec6` candidate, cross-field checks and remaining save gaps
+- [MM6 F4 World Save Runtime](MM6-F4-World-Save-Runtime.md) — Actual NPC and 67-map buffer capture/staging with current-map replacement
 - [MM6 F4 Timed Buffs](MM6-F4-Timed-Buffs.md) — Bounded BUFF fields for party/character effects and open runtime/F5 checks
 - [MM6 F4 Hireling State](MM6-F4-Hireling-State.md) — HIRE party copies, sacrifice progress and bounded MM6 NPC lookup
 - [MM6 F4 Atomic Save File](MM6-F4-Atomic-Save-File.md) — Known-field `.ec6` replacement, read-only slot inventory and semantic load preflight

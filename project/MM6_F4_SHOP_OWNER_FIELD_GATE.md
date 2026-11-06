@@ -16,7 +16,7 @@ The existing partial session coordinator intentionally rejects nonempty inherite
 
 ## Shortest unlock
 
-1. Trace any other writers/readers across purchase and refresh at the shared physical row; verify the original record layout and alias against an owner-local nonzero `party.bin` sample from the user's owned game data. The successful purchase write and menu-level shared refresh are traced.
+1. Continue the [direct-reference audit](MM6_F4_SHOP_SHARED_ROW_ACCESS_AUDIT.md) through downstream calls and indirect aliases; verify the original record layout and alias against an owner-local nonzero native save from the user's owned game data. The successful purchase write and menu-level shared refresh are traced.
 2. Connect a title-local live Party owner to the proved physical array with a single policy for every shared slot. Have MM6 service generation and purchase paths write that owner; validate every nonzero item template against the loaded MM6 item table. Keep bans and bounty separate until their own row and lifetime traces are complete.
 3. Only then add `SHOP` to the mandatory known-save section set. Stage all rows on a copy, reject invalid full item records and inject failure at the final row to prove that neither the live owner nor the previous disk slot changes. Verify save–quit–reload after all remaining `.ec6` owners and world commit are ready.
 

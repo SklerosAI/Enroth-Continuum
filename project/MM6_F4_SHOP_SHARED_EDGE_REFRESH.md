@@ -10,6 +10,6 @@ The detached [refresh seam](../src/Engine/MM6/MM6ShopRefreshBoundary.h) joins th
 
 The linked unit cases model shop-first then guild-first refresh at the alias, strict equality, and rollback after a synthetic second-bank failure. The integrated focused shop/clock suites passed **8/8** and the private-backed MM6/LOD gate **338/338**. A standalone native probe also passed shop/guild arbitration. A nonzero native `party.bin` comparison and live MM6 service bridge remain open.
 
-Next: trace any other writers/readers of the shared edge and compare a nonzero owner-local native save; establish full MM6 item-field conversion and a live service writer before joining `SHOP` to the required known-save manifest. Ban and bounty state have separate gates.
+The follow-up [shared-row access audit](MM6_F4_SHOP_SHARED_ROW_ACCESS_AUDIT.md) maps the direct stock-base source families and narrows the remaining indirect-writer and item-conversion gap. Next: trace downstream calls receiving stock pointers and compare a nonzero owner-local native save; establish full MM6 item-field conversion and a live service writer before joining `SHOP` to the required known-save manifest. Ban and bounty state have separate gates.
 
 See [purchase-write gate](MM6_F4_SHOP_PURCHASE_WRITE_GATE.md), [shop owner field gate](MM6_F4_SHOP_OWNER_FIELD_GATE.md), [shop/guild clock save](MM6_F4_SHOP_GUILD_CLOCK_SAVE.md), and [save transaction checklist](../.llm-wiki/MM6-F4-Save-Transaction-Checklist.md).

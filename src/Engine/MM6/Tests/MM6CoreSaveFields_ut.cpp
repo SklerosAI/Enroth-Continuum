@@ -12,6 +12,7 @@
 #include "Engine/MM6/MM6CoreSaveFields.h"
 #include "Engine/MM6/MM6CoreSaveRuntime.h"
 #include "Engine/Objects/Character.h"
+#include "Engine/Party.h"
 
 namespace {
 
@@ -25,6 +26,13 @@ mm6::CoreSaveFields exampleFields() {
     fields.party.viewYaw = 512;
     fields.party.viewPitch = -21;
     fields.party.activeCharacter = 2;
+    fields.party.verticalVelocity = -237.5f;
+    fields.party.savedFlightZ = 720;
+    fields.party.waterLavaTimerTicks = 987700;
+    fields.party.fallStartZ = 910;
+    fields.party.flying = 1;
+    fields.party.partyFlags = 0x020c;
+    fields.party.partyFlags2 = 2;
     for (size_t i = 0; i < fields.characters.size(); ++i) {
         auto &character = fields.characters[i];
         character.name = "Hero" + std::to_string(i);
@@ -163,6 +171,55 @@ UNIT_TEST(MM6CoreSaveFields, NonzeroPartyAndFourCharacterRoundTrip) {
     mm6::CoreSaveFields destination;
     mm6::loadCoreFieldsBeforeMutation(bytes, &destination);
     EXPECT_EQ(destination, source);
+    EXPECT_EQ(destination.party.verticalVelocity, -237.5f);
+    EXPECT_EQ(destination.party.savedFlightZ, 720);
+    EXPECT_EQ(destination.party.fallStartZ, 910);
+    EXPECT_EQ(destination.party.partyFlags, 0x020c);
+}
+
+UNIT_TEST(MM6CoreSaveFields, CapturesAndStagesMovementOnDetachedParty) {
+    Party source;
+    for (Character &character : source.pCharacters)
+        character.name = "Hero";
+    source.pos = Vec3f(10, 20, 340);
+    source.velocity = Vec3f(80, -90, -237.5f);
+    source.sPartySavedFlightZ = 720;
+    source._6FC_water_lava_timer = Time::fromTicks(987700);
+    source.uFallStartZ = 910;
+    source.bFlying = 1;
+    source.uFlags = PARTY_FLAG_WATER_DAMAGE | PARTY_FLAG_AIRBORNE | PARTY_FLAG_BURNING;
+    source.uFlags2 = PARTY_FLAGS_2_RUNNING;
+    source.floor_face_id = 19;
+    mm6::CoreSaveFields fields = mm6::captureCoreFields(source, GameTitle::MM6);
+    EXPECT_EQ(fields.party.verticalVelocity, -237.5f);
+    EXPECT_EQ(fields.party.fallStartZ, 910);
+    EXPECT_EQ(fields.party.partyFlags, 0x020c);
+    EXPECT_EQ(fields.party.partyFlags2, 2);
+
+    Party prior;
+    prior.velocity = Vec3f(8, 9, 10);
+    prior.uFallStartZ = 77;
+    prior.floor_face_id = 42;
+    Party staged = mm6::stageCoreParty(
+        prior, mm6::encodeSaveContainer(containerFor(fields)), GameTitle::MM6);
+    EXPECT_EQ(staged.pos.z, 340);
+    EXPECT_EQ(staged.velocity.x, 0);
+    EXPECT_EQ(staged.velocity.y, 0);
+    EXPECT_EQ(staged.velocity.z, -237.5f);
+    EXPECT_EQ(staged.sPartySavedFlightZ, 720);
+    EXPECT_EQ(staged._6FC_water_lava_timer.ticks(), 987700);
+    EXPECT_EQ(staged.uFallStartZ, 910);
+    EXPECT_EQ(staged.bFlying, 1);
+    EXPECT_EQ(std::to_underlying(staged.uFlags), 0x020c);
+    EXPECT_EQ(std::to_underlying(staged.uFlags2), 2);
+    EXPECT_EQ(staged.floor_face_id, -1);
+    EXPECT_EQ(staged.currentWalkingSound, SOUND_Invalid);
+    EXPECT_EQ(prior.velocity.z, 10);
+    EXPECT_EQ(prior.uFallStartZ, 77);
+    EXPECT_EQ(prior.floor_face_id, 42);
+    EXPECT_THROW((void) mm6::captureCoreFields(source, GameTitle::MM7), std::exception);
+    EXPECT_THROW((void) mm6::stageCoreParty(
+        prior, mm6::encodeSaveContainer(containerFor(fields)), GameTitle::MM7), std::exception);
 }
 
 UNIT_TEST(MM6CoreSaveFields, InvalidFieldLeavesDestinationUntouched) {
@@ -176,6 +233,21 @@ UNIT_TEST(MM6CoreSaveFields, InvalidFieldLeavesDestinationUntouched) {
     invalid = containerFor(before);
     invalid.sections[1].payload.pop_back(); // Final character's last v4 bonus byte is missing.
     EXPECT_THROW(mm6::loadCoreFieldsBeforeMutation(mm6::encodeSaveContainer(invalid), &destination), std::exception);
+    EXPECT_EQ(destination, before);
+
+    invalid = containerFor(before);
+    invalid.sections[0].payload.pop_back(); // Final PART v2 flags byte is missing.
+    EXPECT_THROW(mm6::loadCoreFieldsBeforeMutation(mm6::encodeSaveContainer(invalid), &destination),
+                 std::exception);
+    EXPECT_EQ(destination, before);
+
+    invalid = containerFor(before);
+    invalid.sections[0].payload[42] = 0;
+    invalid.sections[0].payload[43] = 0;
+    invalid.sections[0].payload[44] = 0x80;
+    invalid.sections[0].payload[45] = 0x7f; // Infinite vertical speed with valid CRC.
+    EXPECT_THROW(mm6::loadCoreFieldsBeforeMutation(mm6::encodeSaveContainer(invalid), &destination),
+                 std::exception);
     EXPECT_EQ(destination, before);
 
     invalid = containerFor(before);
@@ -210,6 +282,12 @@ UNIT_TEST(MM6CoreSaveFields, RejectsMissingMalformedAndForeignSections) {
     container.sections[1].payload[0] = 2; // Superseded CHAR v2 payload.
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
     container.sections[1].payload[0] = 3; // Superseded CHAR v3 payload.
+    EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
+
+    container = containerFor(fields);
+    container.sections[0].payload[0] = 1; // Superseded PART v1 payload.
+    EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
+    container.sections[0].payload.resize(42); // Exact old provisional v1 length.
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
 
     container = containerFor(fields);

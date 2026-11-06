@@ -19,6 +19,8 @@ std::vector<std::uint8_t> encodeOfflineNewGameAutosave(
     if (seed.metadata.header.mapFileName != NEW_GAME_FIRST_MAP ||
         expectedNames.size() != 67 || !readDefaultDelta || !readBase || !verifyItem)
         throw std::runtime_error("MM6 new-game autosave lacks first-map or verified archive inputs");
+    if (seed.core.party.position[2] != 340 || seed.core.party.fallStartZ != 340)
+        throw std::runtime_error("MM6 new-game autosave lacks its first-map fall start");
 
     KnownSaveFields candidate = seed;
     candidate.maps.deltas.clear();

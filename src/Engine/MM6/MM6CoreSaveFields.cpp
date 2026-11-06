@@ -15,7 +15,7 @@ namespace {
 
 constexpr std::array<char, 4> PART_TAG = {'P', 'A', 'R', 'T'};
 constexpr std::array<char, 4> CHAR_TAG = {'C', 'H', 'A', 'R'};
-constexpr std::uint8_t PARTY_VERSION = 1;
+constexpr std::uint8_t PARTY_VERSION = 2;
 constexpr std::uint8_t CHARACTER_VERSION = 4;
 constexpr size_t MAX_NAME_BYTES = 63;
 constexpr size_t MAX_CHARACTER_PAYLOAD = 4 * (1 + MAX_NAME_BYTES + 4 + 2 + 8 + 12 + 28 + 62 + 13 + 39 + 2 + 8) + 2;
@@ -99,7 +99,13 @@ void validate(const CoreSaveFields &fields) {
     if (fields.party.gold < 0 || fields.party.food < 0 || fields.party.bankGold < 0 ||
         fields.party.playingTicks < 0 || fields.party.activeCharacter < -1 || fields.party.activeCharacter > 3 ||
         std::any_of(fields.party.position.begin(), fields.party.position.end(),
-                    [](float component) { return !std::isfinite(component) || std::abs(component) > 10000000; }))
+                    [](float component) { return !std::isfinite(component) || std::abs(component) > 10000000; }) ||
+        !std::isfinite(fields.party.verticalVelocity) ||
+        std::abs(fields.party.verticalVelocity) > 10000000 ||
+        fields.party.savedFlightZ < -10000000 || fields.party.savedFlightZ > 10000000 ||
+        fields.party.waterLavaTimerTicks < 0 ||
+        fields.party.fallStartZ < -10000000 || fields.party.fallStartZ > 10000000 ||
+        fields.party.flying > 1)
         throw std::runtime_error("invalid MM6 core party fields");
 
     for (const CoreCharacterFields &character : fields.characters) {
@@ -126,11 +132,18 @@ std::vector<std::uint8_t> encodeParty(const CorePartyFields &party) {
     put32(&bytes, std::bit_cast<std::uint32_t>(party.viewYaw));
     put32(&bytes, std::bit_cast<std::uint32_t>(party.viewPitch));
     put8(&bytes, std::bit_cast<std::uint8_t>(party.activeCharacter));
+    put32(&bytes, std::bit_cast<std::uint32_t>(party.verticalVelocity));
+    put32(&bytes, std::bit_cast<std::uint32_t>(party.savedFlightZ));
+    put64(&bytes, std::bit_cast<std::uint64_t>(party.waterLavaTimerTicks));
+    put32(&bytes, std::bit_cast<std::uint32_t>(party.fallStartZ));
+    put32(&bytes, party.flying);
+    put32(&bytes, party.partyFlags);
+    put32(&bytes, party.partyFlags2);
     return bytes;
 }
 
 CorePartyFields decodeParty(std::span<const std::uint8_t> bytes) {
-    if (bytes.size() != 42)
+    if (bytes.size() != 74)
         throw std::runtime_error("invalid MM6 PART field length");
     Reader reader(bytes);
     if (reader.u8() != PARTY_VERSION)
@@ -145,6 +158,13 @@ CorePartyFields decodeParty(std::span<const std::uint8_t> bytes) {
     party.viewYaw = std::bit_cast<std::int32_t>(reader.u32());
     party.viewPitch = std::bit_cast<std::int32_t>(reader.u32());
     party.activeCharacter = std::bit_cast<std::int8_t>(reader.u8());
+    party.verticalVelocity = std::bit_cast<float>(reader.u32());
+    party.savedFlightZ = std::bit_cast<std::int32_t>(reader.u32());
+    party.waterLavaTimerTicks = std::bit_cast<std::int64_t>(reader.u64());
+    party.fallStartZ = std::bit_cast<std::int32_t>(reader.u32());
+    party.flying = reader.u32();
+    party.partyFlags = reader.u32();
+    party.partyFlags2 = reader.u32();
     reader.finish();
     return party;
 }

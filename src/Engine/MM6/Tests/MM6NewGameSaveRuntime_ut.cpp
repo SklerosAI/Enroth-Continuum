@@ -33,6 +33,7 @@ mm6::KnownSaveFields seed(std::int64_t ticks) {
     fields.core.party.playingTicks = ticks;
     fields.core.party.activeCharacter = 1;
     fields.core.party.position = {-10178, -11206, 340};
+    fields.core.party.fallStartZ = 340;
     for (mm6::CoreCharacterFields &character : fields.core.characters)
         character.name = "Hero";
     fields.metadata.header.displayName = "New game";
@@ -127,6 +128,11 @@ UNIT_TEST(MM6NewGameSaveRuntime, WritesAndPreflightsOnlyMM6FirstMapAutosave) {
     wrongMap.metadata.header.mapFileName = "d0.blv";
     EXPECT_THROW((void) mm6::writeOfflineNewGameAutosave(
         profile.root(), wrongMap, names, readDefault, baseReader(),
+        [](std::int32_t) { return true; }, GameTitle::MM6), std::exception);
+    mm6::KnownSaveFields wrongFall = seed(43);
+    wrongFall.core.party.fallStartZ = 0;
+    EXPECT_THROW((void) mm6::writeOfflineNewGameAutosave(
+        profile.root(), wrongFall, names, readDefault, baseReader(),
         [](std::int32_t) { return true; }, GameTitle::MM6), std::exception);
     EXPECT_EQ(deltaReads, 67);
     EXPECT_EQ(readFile(profile.primary()), bytes);

@@ -69,6 +69,15 @@ struct CorePartyFields {
     std::int32_t viewYaw = 0;
     std::int32_t viewPitch = 0;
     std::int8_t activeCharacter = -1;
+    // Current runtime movement state. X/Y velocity is input-derived per frame.
+    float verticalVelocity = 0;
+    std::int32_t savedFlightZ = 0;
+    std::int64_t waterLavaTimerTicks = 0;
+    std::int32_t fallStartZ = 0;
+    std::uint32_t flying = 0;
+    // Preserve current-runtime flags bit for bit without claiming native MM6 meaning.
+    std::uint32_t partyFlags = 0;
+    std::uint32_t partyFlags2 = 0;
 
     bool operator==(const CorePartyFields &) const = default;
 };

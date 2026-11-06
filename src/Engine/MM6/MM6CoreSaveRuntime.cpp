@@ -117,6 +117,13 @@ CoreSaveFields captureCoreFields(const Party &party, GameTitle title) {
     fields.party.viewYaw = party._viewYaw;
     fields.party.viewPitch = party._viewPitch;
     fields.party.activeCharacter = party.hasActiveCharacter() ? party.activeCharacterIndex() : -1;
+    fields.party.verticalVelocity = party.velocity.z;
+    fields.party.savedFlightZ = party.sPartySavedFlightZ;
+    fields.party.waterLavaTimerTicks = party._6FC_water_lava_timer.ticks();
+    fields.party.fallStartZ = party.uFallStartZ;
+    fields.party.flying = party.bFlying;
+    fields.party.partyFlags = std::bit_cast<std::uint32_t>(std::to_underlying(party.uFlags));
+    fields.party.partyFlags2 = std::bit_cast<std::uint32_t>(std::to_underlying(party.uFlags2));
 
     for (size_t i = 0; i < fields.characters.size(); ++i) {
         const Character &source = party.pCharacters[i];
@@ -162,6 +169,17 @@ Party stageCoreParty(const Party &live, std::span<const std::uint8_t> bytes, Gam
     staged._viewYaw = fields.party.viewYaw;
     staged._viewPitch = fields.party.viewPitch;
     staged.setActiveCharacterIndex(fields.party.activeCharacter);
+    // Only vertical velocity persists; horizontal movement is derived from
+    // current input. Ground face IDs belong to the reloaded map, so reset it.
+    staged.velocity = Vec3f(0, 0, fields.party.verticalVelocity);
+    staged.sPartySavedFlightZ = fields.party.savedFlightZ;
+    staged._6FC_water_lava_timer = Time::fromTicks(fields.party.waterLavaTimerTicks);
+    staged.uFallStartZ = fields.party.fallStartZ;
+    staged.bFlying = fields.party.flying;
+    staged.uFlags = static_cast<PartyFlags>(std::bit_cast<std::int32_t>(fields.party.partyFlags));
+    staged.uFlags2 = static_cast<PARTY_FLAGS_2>(std::bit_cast<std::int32_t>(fields.party.partyFlags2));
+    staged.floor_face_id = -1;
+    staged.currentWalkingSound = SOUND_Invalid;
 
     for (size_t i = 0; i < fields.characters.size(); ++i) {
         const CoreCharacterFields &source = fields.characters[i];

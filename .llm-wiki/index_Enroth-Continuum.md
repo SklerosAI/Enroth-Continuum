@@ -82,6 +82,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial seventeen-section `.ec6` candidate with `CHAR` v4 raw bonus and required CHST preservation
 - [MM6 F4 Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md) — Live-owner gaps, detached staging order and atomic commit gates
 - [MM6 F4 Chest EC6 Transaction](MM6-F4-Chest-EC6-Transaction.md) — Required title-local chest state, raw active-delta sidecar and first-map movement audit
+- [MM6 F4 Party Movement Save](MM6-F4-Party-Movement-Save.md) — PART v2 vertical motion, flight, hazard flags and map-local ground reset
 - [MM6 F4 Partial Stage Coordinator](MM6-F4-Partial-Stage-Coordinator.md) — Validated 67-map candidate with detached Party, active map, NPC/map and timer/overlay copies
 - [MM6 F4 New Game Autosave](MM6-F4-New-Game-Autosave.md) — Offline `oute3.odm` known-field candidate and atomic `.ec6` autosave with live guard retained
 - [MM6 F4 Shop Save Key Matrix](MM6-F4-Shop-Save-Key-Matrix.md) — Retained house-type join versus inherited MM7 shop, guild and bounty save owner ranges

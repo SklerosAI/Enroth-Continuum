@@ -37,3 +37,9 @@ Chronological record of wiki activity.
 ## [2026-11-05] update | Handoff index wording
 - by: T-Burton-ND via codex
 - Aligned the index description with the current three-worker rotation across four research lanes.
+
+## [2026-11-05] ingest | MM6 F2 structural source reviews
+- by: T-Burton-ND via codex
+- Added source summaries for MM6 class/skill, save/map, event/campaign and media/UI specifications, plus a linked synthesis of inherited routing gaps.
+- Updated the handoff and open questions for Question/NPC topics, potion UI, map-state tail preservation and media routing while keeping F2/F3/F4 gates explicit.
+- Recorded the reproducible dialogue probe as structural evidence only; unmatched NPC topics are not established original-game defects. Checked 21 wiki pages for frontmatter and local links.

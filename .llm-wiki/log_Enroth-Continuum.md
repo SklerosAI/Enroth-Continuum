@@ -352,3 +352,9 @@ Chronological record of wiki activity.
 - Assembled the eleven currently landed `.ec6` field sections into a frozen partial v1 candidate. Decode rejects missing, optional or extra sections, cross-checks duplicate party clocks and active selection, and requires 67 unique map deltas including the active map companion before assigning output.
 - Built the isolated arm64 unit target; seven focused synthetic assembly tests passed, including valid-CRC cross-field errors and a late NPC failure with destination unchanged. Direct C++ style and diff checks passed. No original installation was reread or partial MM6 game launched.
 - Left expected map-name/base-delta validation, new resistance and remaining runtime state, SaveLoad transaction wiring and F5 save/quit/relaunch open. This is not a final whole-save manifest.
+
+## [2026-11-06] ingest | MM6 remaining save state and resistances
+- by: T-Burton-ND via codex
+- Audited the current party, character, NPC and inherited snapshot fields into a consumer/lifetime matrix covering buffs, resistance, held/shop items, hirelings, clocks, generated artifacts and other campaign state; retained F3 report scope supplied no native whole-save offsets.
+- Added required `RSTS` v1 for all four characters' eleven signed base and eleven bonus resistance fields, with MM6-guarded capture and copy staging. The channel meanings and whole-save manifest integration remain open.
+- The arm64 unit target built and two focused resistance tests passed; C++ style and diff checks passed. No original installation was reread or partial MM6 game launched.

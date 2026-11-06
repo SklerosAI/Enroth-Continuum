@@ -1528,3 +1528,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The MM6 tile table now retains raw source tileset and variant identity beside the normalized runtime type. Outdoor walking/running sound uses the original 28-group dispatcher for in-bounds MM6 terrain; unsupported raw IDs suppress sound. MM7 movement retains its prior lookup and boundary behavior.
 - The integrated focused sound/map tests passed 2/2, monitored MM6 headless suite 47/47, private-backed MM6/LOD unit gate 327/327 and general non-MM6 gate 437/437. An MM7 headless control passed 1/1; no visible window or focus change occurred. Audible playback and full terrain/season visual fidelity remain open.
+
+## [2026-11-06] audit | MM6 terrain identity and season schema
+- by: T-Burton-ND via codex
+- A read-only trace of the F3-matched staged executable confirmed that the outdoor tile accessor adds the authored selector base to the local tile byte without a month operand. The retained tile table has 882 rows and 59 duplicate raw tileset/variant pairs; global tile ID must remain the exact art key.
+- The current changed-grass/transition season route still uses a lossy MM7-normalized lookup. Full original season behavior is unproved, so the audit records a source-backed implementation gate rather than changing runtime art speculatively. No private records or executable bytes entered Git.

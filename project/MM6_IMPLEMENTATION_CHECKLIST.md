@@ -499,6 +499,12 @@ that requirement.
   The first source-level service collision is MM6 training house IDs 79–88
   indexing an MM7 cap table for 89–98; temple restrictions and NPC profession
   effects also need MM6-specific joins. No live service behavior is proven.
+- [x] Join all 77 MM6 profession rows to guide names, NPC references and
+  inherited C++ effect paths in [MM6 NPC profession packet](MM6_NPC_PROFESSION_F2.md).
+  Guide professions 1–51 match retained names; 26 generic rows remain
+  guide-unlisted, 20 generic IDs have `canJoin` flags in NPC data, and seven
+  generic IDs alias MM7 special effects. Hireability and original effect
+  numbers are still uncertain; the exact per-ID ledger remains ignored.
 - [ ] Video and audio archive structure, house/movie routing, playback and
   fallbacks. The 116 distinct MM6 house animation IDs used in `2devents.txt`
   are within the inherited 196-entry MM7 `pAnimatedRooms` array, but **zero**
@@ -556,7 +562,7 @@ correct before the F4 readiness gate:
 | Houses and media | MM6 uses 116 room animation IDs, but none of the corresponding MM7 `pAnimatedRooms` video names appears in the MM6 video indexes; seven `dsounds.bin` names are absent from the sound archive index. All 12 map music IDs have MP3 files. | Implement MM6 room descriptors, reconcile sound aliases/missing names, identify movie triggers, and verify house and map playback. |
 | Character UI | `UIPartyCreation.cpp` allocates nine class icons and 22 portraits and draws MM7 classes including Monk and Thief | Build MM6 custom party and Quick Start paths, portraits, six classes and skills |
 | Other UI screens | [Screen register](MM6_UI_SCREEN_AUDIT_F2.md) maps named current screen IDs; `UIGame.cpp` uses MM7 decoration-topic base 380 and `UICharacter.cpp` retains MM6-artifact assertion branches | Reconcile MM6 books, dialogue, rest, paperdoll, hints, menus, options and ending visuals with title-specific data; inspect each in F5 |
-| Services | `Training.cpp` indexes MM6 house IDs 79–88 into an MM7-only 89–98 cap table; `Temple.cpp` and NPC profession paths retain MM7 assumptions | Branch training, temple and NPC service eligibility and effects by title; test at/around level and condition boundaries |
+| Services | `Training.cpp` indexes MM6 house IDs 79–88 into an MM7-only 89–98 cap table; `Temple.cpp` retains MM7 restrictions; seven generic MM6 NPC profession IDs alias inherited MM7 effects | Branch training, temple and NPC service eligibility and effects by title; test at/around level, condition and profession-ID boundaries |
 | Save/load | `SaveLoad.cpp` always serializes `SaveGame_MM7` and `IndoorDelta_MM7` / `OutdoorDelta_MM7`; file names and the `UISaveLoad.cpp` list filter require `.mm7` | Define, write, list and reload versioned MM6 saves and map deltas in the MM6 profile; leave MM7 saves readable in the MM7 profile |
 | Launcher | Installed Atlas has only MM7 Play | Stage independent `MM6.app` beside verified `MM7.app`; preserve MM7 on install |
 

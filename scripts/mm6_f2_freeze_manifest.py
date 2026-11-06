@@ -43,12 +43,14 @@ def main() -> int:
 
     evidence = args.evidence_root.resolve()
     output = args.output.resolve()
-    if not GATE.read_text().splitlines()[2].startswith("Status: **frozen"):
+    if not any(line.startswith("Status: **frozen") for line in GATE.read_text().splitlines()[:10]):
         parser.error("F2 gate is not frozen in project/MM6_F2_GATE_REVIEW.md")
     if git("status", "--porcelain", "--untracked-files=all"):
         parser.error("tracked worktree must be clean before freezing F2")
     if not evidence.is_dir():
         parser.error(f"missing derived-evidence root: {evidence}")
+    if not evidence.is_relative_to(REPO) or not output.is_relative_to(evidence):
+        parser.error("evidence root and output must stay under the repository's private evidence tree")
     if output.exists():
         parser.error(f"freeze manifest already exists: {output}")
     if subprocess.run(["git", "check-ignore", "-q", str(output)], cwd=REPO).returncode != 0:

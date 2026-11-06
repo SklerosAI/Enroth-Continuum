@@ -48,6 +48,11 @@ static GraphicsImage *scrollstop = nullptr;
 static std::vector<SavegameSlot> loadMenuSlots() {
     std::vector<SavegameSlot> result;
 
+    // The MM6 profile uses .ec6. Do not present or inspect MM7 saves until
+    // the title-specific slot reader is wired to the complete EC6 transaction.
+    if (engine->gameTitle() == GameTitle::MM6)
+        return result;
+
     if (!ufs->exists("saves"))
         return result;
 

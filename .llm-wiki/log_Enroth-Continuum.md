@@ -818,3 +818,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Current `Party` clocks, stock, bans and bounty tuples use inherited MM7 `HouseId` intervals, including a shop array ending at `HOUSE_52`. Current service consumers index these arrays by house ID, but the MM6 house path is display-only. Accepted F3 evidence identifies the MM6 house table, room and transport records without an MM6 shop/guild/town-hall save key or stock/refresh/bounty persistence contract.
 - The [shop save audit](../project/MM6_F4_SHOP_SAVE_IDENTITY.md) and [transaction checklist](MM6-F4-Save-Transaction-Checklist.md) state the required MM6 key/storage and coupled-clock/stock/target proof before a `SHOP` section. No codec or live SaveLoad path changed. This was a source/accepted-report audit; no build, original installation reread or MM6 launch was needed.
+
+## [2026-11-06] implement | MM6 duplicate item removal priority
+- by: T-Burton-ND via codex
+- Retained original-PE Subtract instructions scan backpack grid cells 0–125 and immediately remove the first matching item. The MM6-only ID-17 removal helper now follows that row-major grid priority, even when a later-created inventory record occupies the earlier cell; it still checks the cursor only after all grid cells miss. MM7 retains its existing path.
+- A focused native test uses duplicate IDs with distinct charges in reverse record/grid order and checks the selected item, surviving item and untouched cursor. Arm64 MM6, OpenEnroth and unit targets linked; all eight focused item comparison/write tests passed. The original executable was not reread and MM6 was not launched. Artifact grant and full-party ground drop remain guarded.

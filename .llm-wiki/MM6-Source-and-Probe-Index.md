@@ -14,6 +14,7 @@ This index directs agents to the current public specifications and reproducible 
 - [MM6 implementation checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md) is the public coverage and gap register; its checked research rows are not playable-rule claims.
 - [F2 gate review](../project/MM6_F2_GATE_REVIEW.md) is the integration decision record. F2 is open and unfrozen; this review does not authorize F3.
 - [F3 preflight matrix](../project/MM6_F3_PREFLIGHT_MATRIX.md) is a draft one-pass original-file question list, not F2 or F3 gate completion.
+- [F3 identity checker](../scripts/mm6_f3_identity_preflight.py) is prepared to compare eight original archive/media/executable hashes with retained F1 ledgers during that consolidated pass. It has only parsed the retained ledgers; it has **not** read originals or passed F3.
 - [Local status](../project/LOCAL_STATUS.md) records observed Mac behavior and its limits.
 - [OpenEnroth credit](../CREDITS.md) and [upstream relationship](../project/UPSTREAM.md) govern attribution.
 

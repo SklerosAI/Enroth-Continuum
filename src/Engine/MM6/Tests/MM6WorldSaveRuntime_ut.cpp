@@ -16,6 +16,7 @@
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/SpriteObject.h"
+#include "Engine/Tables/MapTable.h"
 
 namespace {
 
@@ -116,6 +117,32 @@ UNIT_TEST(MM6WorldSaveRuntime, CapturesAndStagesNonzeroNpcAndCurrentMapOnCopies)
     EXPECT_EQ(staged.mapDeltas.at("o14.ddm").str(), "prior:o14.ddm");
     EXPECT_EQ(destination.pNPCData[70].name, "Old runtime");
     EXPECT_EQ(prior.at("d0.dlv").str(), "prior:d0.dlv");
+}
+
+UNIT_TEST(MM6WorldSaveRuntime, OutdoorIdentityJoinsCurrentMapTableHeadAndManifest) {
+    MapTable maps;
+    maps.pInfos[MAP_EMERALD_ISLAND].fileName = "o0.odm";
+    maps.pInfos[MAP_HARMONDALE].fileName = "o1.odm";
+    std::vector<std::string> names = expectedNames();
+
+    EXPECT_NO_THROW(mm6::validateOutdoorMapIdentity(
+        MAP_EMERALD_ISLAND, maps, "o0.odm", names, GameTitle::MM6));
+    EXPECT_THROW(mm6::validateOutdoorMapIdentity(
+        MAP_HARMONDALE, maps, "o0.odm", names, GameTitle::MM6), std::exception);
+    EXPECT_THROW(mm6::validateOutdoorMapIdentity(
+        MAP_INVALID, maps, "o0.odm", names, GameTitle::MM6), std::exception);
+    EXPECT_THROW(mm6::validateOutdoorMapIdentity(
+        MAP_EMERALD_ISLAND, maps, "d0.blv", names, GameTitle::MM6), std::exception);
+    EXPECT_THROW(mm6::validateOutdoorMapIdentity(
+        MAP_EMERALD_ISLAND, maps, "o0.odm", names, GameTitle::MM7), std::exception);
+
+    names[52] = "other.ddm"; // Replace the active companion, preserving count 67.
+    EXPECT_THROW(mm6::validateOutdoorMapIdentity(
+        MAP_EMERALD_ISLAND, maps, "o0.odm", names, GameTitle::MM6), std::exception);
+    names = expectedNames();
+    maps.pInfos[MAP_HARMONDALE].fileName = "o0.odm";
+    EXPECT_THROW(mm6::validateOutdoorMapIdentity(
+        MAP_EMERALD_ISLAND, maps, "o0.odm", names, GameTitle::MM6), std::exception);
 }
 
 UNIT_TEST(MM6WorldSaveRuntime, RejectsIncompleteAndLateInvalidStateWithoutInputMutation) {

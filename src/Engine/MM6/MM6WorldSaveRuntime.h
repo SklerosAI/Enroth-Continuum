@@ -9,9 +9,12 @@
 #include "MM6KnownSaveFields.h"
 
 #include "Engine/GameTitle.h"
+#include "Engine/MapEnums.h"
 #include "Engine/Tables/NPCTable.h"
 
 #include "Utility/Memory/Blob.h"
+
+struct MapTable;
 
 namespace mm6 {
 
@@ -19,6 +22,12 @@ struct StagedWorldFields {
     NPCStats npcs;
     std::unordered_map<std::string, Blob> mapDeltas;
 };
+
+// The outdoor object has no filename. Check the current MM6 engine map ID
+// against the loaded MM6 map table, HEAD and the private 67-name delta set.
+void validateOutdoorMapIdentity(MapId currentMapId, const MapTable &mapTable,
+                                std::string_view savedMapName,
+                                std::span<const std::string> expectedNames, GameTitle title);
 
 // Copy actual NPC/group and all 67 saved map buffers into a known-section
 // candidate. The current map's bounded encoded delta must be supplied and

@@ -1,5 +1,6 @@
 #include "MM6WorldSaveRuntime.h"
 
+#include <algorithm>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -9,6 +10,8 @@
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/LocationFunctions.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Engine.h"
+#include "Engine/Tables/MapTable.h"
 #include "Engine/Snapshots/MM6IndoorSnapshot.h"
 #include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
 
@@ -35,6 +38,23 @@ std::vector<std::uint8_t> copiedBytes(const Blob &blob) {
 }
 
 } // namespace
+
+void validateOutdoorMapIdentity(MapId currentMapId, const MapTable &mapTable,
+                                std::string_view savedMapName,
+                                std::span<const std::string> expectedNames, GameTitle title) {
+    requireMM6(title);
+    if (currentMapId < MAP_FIRST || currentMapId > MAP_LAST ||
+        !savedMapName.ends_with(".odm") || expectedNames.size() != 67)
+        throw std::runtime_error("MM6 outdoor capture has no bounded current map identity");
+
+    const std::string &currentName = mapTable.pInfos[currentMapId].fileName;
+    if (currentName != savedMapName ||
+        std::count(expectedNames.begin(), expectedNames.end(), deltaCompanion(savedMapName)) != 1)
+        throw std::runtime_error("MM6 outdoor map disagrees with HEAD or the 67-map manifest");
+    for (MapId id : mapTable.pInfos.indices())
+        if (id != currentMapId && mapTable.pInfos[id].fileName == currentName)
+            throw std::runtime_error("ambiguous MM6 outdoor map-table filename");
+}
 
 KnownSaveFields captureKnownWorldFields(const KnownSaveFields &seed, const NPCStats &npcs,
                                         const std::unordered_map<std::string, Blob> &priorDeltas,
@@ -91,6 +111,9 @@ KnownSaveFields captureKnownWorldFromActiveMap(
         pIndoor && pIndoor->filename == mapName) {
         changed = encodeMM6IndoorChangedState(*pIndoor);
     } else if (uCurrentlyLoadedLevelType == LEVEL_OUTDOOR && mapName.ends_with(".odm") && pOutdoor) {
+        if (!engine || engine->gameTitle() != GameTitle::MM6 || !pMapTable)
+            throw std::runtime_error("MM6 outdoor capture requires its loaded engine map table");
+        validateOutdoorMapIdentity(engine->_currentLoadedMapId, *pMapTable, mapName, expectedNames, title);
         changed = encodeMM6OutdoorChangedState(*pOutdoor);
     } else {
         throw std::runtime_error("MM6 active level and save map do not match");

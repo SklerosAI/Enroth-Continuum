@@ -51,6 +51,8 @@ The [shop item conversion matrix](MM6-F4-Shop-Item-Record-Conversion-Gate.md) no
 
 The [IFOV section](MM6-F4-Indoor-Face-Overrides.md) captures changed indoor face attributes and texture identities against a deterministic pre-`OnMapReload` base, then applies saved changed fields after reload scripts. The linked IFOV suite passed **3/3**, and a combined known-save guard passed with all three standalone sections (**4/4** total focused); live adapters and whole-save admission remain closed. The [beacon renderer contract](MM6-F4-Beacon-Renderer-Contract.md) identifies the checked creation/cleanup API and graphical regression tests needed before GPU publication.
 
+The [raw item authority decision](MM6-F4-Raw-Item-Authority.md) adds an exact 28-byte `ItemRecord28` to detached SHOP stock. Item/shop/clock tests pass **10/10** and the integrated private-backed MM6/LOD gate passes **345/345**. Provisional `ITEM` and `HELD` v1 preserve only current-runtime logical values; both need a native-byte-preserving redesign before live save admission. The original inventory/held/ground framing and mutation paths must be proved before extending the shared value type to those owners.
+
 ## Authority and source order
 
 | Question | Start with | Supporting source |

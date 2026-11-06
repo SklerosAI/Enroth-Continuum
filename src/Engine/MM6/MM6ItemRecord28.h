@@ -7,9 +7,9 @@
 
 namespace mm6 {
 
-// Original MM6 item storage. Keep this value as the authority across shop,
-// inventory, chest, ground and cursor contexts until each live adapter proves
-// its own semantics. In particular, bytes 26 and 27 are not MM7 item fields.
+// Original MM6 item storage shape. SHOP uses this as its raw authority; other
+// item-bearing contexts need their own source and mutation proof before using
+// this value. In particular, bytes 26 and 27 are not MM7 item fields.
 struct ItemRecord28 {
     std::array<std::uint8_t, 28> bytes = {};
 

@@ -95,7 +95,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Item Event Writes](MM6-F4-Item-Event-Writes.md) — Retained reward/handoff topology and bounded Add/Subtract transaction limits
 - [MM6 F4 Item Event PE](MM6-F4-Item-Event-PE.md) — Original executable dispatch, bounded Add/Subtract and remaining cursor/artifact gates
 - [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial eighteen-section `.ec6` candidate; standalone `SHOP`/`BEAC` still reject before mutation
-- [MM6 F4 Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md) — Current live-owner gaps, raw SHOP/BEAC boundaries and atomic commit gates
+- [MM6 F4 Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md) — Current live-owner gaps, raw item/SHOP/BEAC boundaries and atomic commit gates
 - [MM6 F4 Chest EC6 Transaction](MM6-F4-Chest-EC6-Transaction.md) — Required title-local chest state, raw active-delta sidecar and first-map movement audit
 - [MM6 F4 Party Movement Save](MM6-F4-Party-Movement-Save.md) — PART v3 vertical motion, flight, hazard flags, justice counters and map-local ground reset
 - [MM6 F4 Justice Counter Save](MM6-F4-Justice-Counter-Save.md) — Linked PART v3 checks preserve current-runtime fine, death, prison and bounty counters; native MM6 semantics remain open
@@ -110,6 +110,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Shop Stock Tuple and Autosave](MM6-F4-Shop-Stock-Tuple-and-Autosave.md) — Two original stock banks, zero-ID display read and current cross-map save dependency
 - [MM6 F4 Shop Owner Field Gate](MM6-F4-Shop-Owner-Field-Gate.md) — Why SCLK is the only complete proved commerce field and stock still lacks a safe keyed owner
 - [MM6 F4 Shop Item Record Conversion Gate](MM6-F4-Shop-Item-Record-Conversion-Gate.md) — Original 28-byte stock fields cannot yet map reversibly into the inherited 36-byte MM7 item
+- [MM6 F4 Raw Item Authority](MM6-F4-Raw-Item-Authority.md) — Byte-preserving MM6 item owner for proven contexts; provisional ITEM/HELD schemas need revision
 - [MM6 F4 Shop Purchase-Write Gate](MM6-F4-Shop-Purchase-Write-Gate.md) — Linked 28-byte purchase mutation and detached physical SHOP section; live service owner remains open
 - [MM6 F4 Shop Shared-Edge Refresh](MM6-F4-Shop-Shared-Edge-Refresh.md) — Linked original stock/deadline arbitration and failure-atomic detached refresh seam; live service remains gated
 - [MM6 F4 Shop Shared Row Access Audit](MM6-F4-Shop-Shared-Row-Access-Audit.md) — Direct source access families and remaining indirect-writer, nonzero-save and item-conversion blockers

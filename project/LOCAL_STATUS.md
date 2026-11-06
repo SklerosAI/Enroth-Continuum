@@ -626,3 +626,11 @@ tests passed **3/3**; a fourth linked test confirms IFOV, SHOP and BEAC remain
 outside the partial known-save manifest. Live texture capture, renderer
 publication and whole-save wiring remain guarded. A checked renderer contract
 is documented, but no generic renderer patch was made.
+
+The detached MM6 `SHOP` owner now uses an exact `ItemRecord28` value type with
+little-endian structural accessors; linked item/shop/clock tests passed
+**10/10** and the private-backed MM6/LOD gate passed **345/345**. This does not
+make carried, held, ground or chest runtime items lossless. The provisional
+`ITEM` and `HELD` logical `.ec6` sections derive from inherited `Item` and omit
+native MM6 trailing bytes, so the final save manifest needs raw item owners
+and context-specific adapters before live MM6 SaveLoad opens.

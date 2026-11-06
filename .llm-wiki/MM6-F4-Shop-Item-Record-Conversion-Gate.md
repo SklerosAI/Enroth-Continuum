@@ -13,4 +13,6 @@ The mapping into live `Item` is incomplete: MM7's category-dependent bonus union
 
 Decision: `ShopStockFields` is the sole physical 28-byte authority, including the shop/guild alias and sold-slot trailing bytes. The detached `SHOP` section may preserve raw records; it stays outside required known-save and live service paths. The next unlock is a title-local item mapping with nonzero generated/purchased records, complete category and flag validation, exact raw-tail preservation and late-failure tests.
 
-See also: [Shop Owner Field Gate](MM6-F4-Shop-Owner-Field-Gate.md), [Shared Row Access Audit](MM6-F4-Shop-Shared-Row-Access-Audit.md), [Shop Purchase-Write Gate](MM6-F4-Shop-Purchase-Write-Gate.md).
+The shared [raw item authority decision](MM6-F4-Raw-Item-Authority.md) introduces an exact 28-byte value type for detached stock. It also identifies the provisional `ITEM` and `HELD` logical schemas as insufficient native-byte owners; their live admission remains guarded.
+
+See also: [Shop Owner Field Gate](MM6-F4-Shop-Owner-Field-Gate.md), [Shared Row Access Audit](MM6-F4-Shop-Shared-Row-Access-Audit.md), [Shop Purchase-Write Gate](MM6-F4-Shop-Purchase-Write-Gate.md), [Raw Item Authority](MM6-F4-Raw-Item-Authority.md).

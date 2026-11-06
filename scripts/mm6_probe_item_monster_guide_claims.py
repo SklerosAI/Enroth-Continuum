@@ -76,6 +76,113 @@ def retained_item_values(path: Path) -> dict[int, int | None]:
     return values
 
 
+def retained_item_roles(path: Path) -> dict[int, dict]:
+    roles = {}
+    with path.open(encoding="latin-1", newline="") as source:
+        for cells in csv.reader(source, delimiter="\t"):
+            if len(cells) >= 16 and cells[0].isdigit():
+                roles[int(cells[0])] = {
+                    "effect_token": cells[6].strip(),
+                    "quest_description_marker": cells[15].lstrip().casefold().startswith("quest item:"),
+                }
+    if sorted(roles) != list(range(581)):
+        raise ValueError("retained MM6 items.txt role IDs are incomplete")
+    return roles
+
+
+def source_wand_spells(root: Path) -> tuple[dict[int, int], dict[str, str]]:
+    item_path = root / "src/Engine/Objects/ItemEnums.h"
+    spell_path = root / "src/Engine/Spells/SpellEnums.h"
+    mapping_path = root / "src/Engine/Objects/ItemEnumFunctions.cpp"
+    item_text, spell_text, mapping_text = (path.read_text() for path in (item_path, spell_path, mapping_path))
+    item_enum = {name: int(value) for name, value in re.findall(r"\b(ITEM_[A-Z0-9_]+)\s*=\s*(\d+)", item_text)}
+    spell_enum = {name: int(value) for name, value in re.findall(r"\b(SPELL_[A-Z0-9_]+)\s*=\s*(\d+)", spell_text)}
+    inherited_boundaries = {
+        "ITEM_WAND_OF_FIRE": 135, "ITEM_MYSTIC_WAND_OF_INCINERATION": 159,
+        "ITEM_SCROLL_TORCH_LIGHT": 300, "ITEM_SCROLL_SOULDRINKER": 398,
+        "ITEM_SPELLBOOK_TORCH_LIGHT": 400, "ITEM_SPELLBOOK_SOULDRINKER": 498,
+        "ITEM_ARTIFACT_PUCK": 500, "ITEM_RELIC_MEKORIGS_HAMMER": 528,
+        "ITEM_SPECIAL_GROGNARDS_CUTLASS": 552,
+        "ITEM_QUEST_HEART_OF_THE_WOOD": 600, "ITEM_699": 699,
+        "ITEM_MESSAGE_FROM_ERATHIA": 700, "ITEM_781": 781,
+    }
+    if any(item_enum.get(name) != value for name, value in inherited_boundaries.items()):
+        raise ValueError("inherited ItemId boundaries changed; review source predicates")
+    block = mapping_text.split("spellByWand = {", 1)[1].split("};", 1)[0]
+    mapping = {
+        item_enum[item]: spell_enum[spell]
+        for item, spell in re.findall(r"\{(ITEM_[A-Z0-9_]+),\s*(SPELL_[A-Z0-9_]+)\}", block)
+    }
+    if sorted(mapping) != list(range(135, 160)):
+        raise ValueError("inherited wand mapping does not cover retained MM6 wand IDs")
+    consumer_paths = (
+        item_path, spell_path, mapping_path,
+        root / "src/Engine/Objects/ItemEnumFunctions.h",
+        root / "src/Engine/Objects/Item.cpp",
+        root / "src/Engine/Objects/Character.cpp",
+        root / "src/Engine/Tables/MM6ItemTable.cpp",
+        root / "src/Engine/Tables/ItemTable.cpp",
+        root / "src/Engine/Evt/EvtVariables.cpp",
+        root / "src/GUI/UI/UIMessageScroll.cpp",
+    )
+    fingerprints = {
+        path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in consumer_paths
+    }
+    return mapping, fingerprints
+
+
+def retained_held_item_refs(path: Path) -> tuple[dict[int, list[dict]], str]:
+    report = json.loads(path.read_text())
+    refs: dict[int, list[dict]] = {}
+    for link in report["links"]:
+        if link["kind"] == "event_variable_operand" and link["variable_id"] == 0x11:
+            item_id = link["operand"]
+            if 0 <= item_id <= 580:
+                refs.setdefault(item_id, []).append({
+                    "event": link["event"], "opcode": link["opcode"], "offset": link["offset"]
+                })
+    return refs, hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def retained_role(item: dict, quest_marker: bool) -> str:
+    kind = item["mm6_type"]
+    if kind == "WeaponW":
+        return "wand"
+    if kind == "Sscroll":
+        return "spell_scroll"
+    if kind == "Book":
+        return "spellbook"
+    if item["rarity_field"] == "Artifact":
+        return "artifact_equipment"
+    if item["rarity_field"] == "Relic":
+        return "relic_equipment"
+    if kind == "Mscroll":
+        return "message_scroll"
+    if item["id"] >= 400:
+        equipment = kind != "N / A"
+        if quest_marker:
+            return "quest_described_equipment" if equipment else "quest_described_misc"
+        return "special_equipment_role_unresolved" if equipment else "special_misc_role_unresolved"
+    return "outside_high_risk_scope"
+
+
+def source_role_consumer(role: str) -> tuple[str, str]:
+    if role == "wand":
+        return "Character attack -> spellForWand; Item::postGenerate charges", "source_spell_id_comparison"
+    if role == "spell_scroll":
+        return "Character item use -> spellForScroll -> CastSpellInfo", "inherited_spell_lookup_range_300_398"
+    if role == "spellbook":
+        return "Character item use -> spellForSpellbook -> spell mastery; spellbooksForSchool", "inherited_spell_lookup_range_400_498"
+    if role in {"artifact_equipment", "relic_equipment"}:
+        return "Item::rarity/equipment; isArtifact ID predicate; PopulateArtifactBonusMap; ItemTable generation", "inherited_artifact_range_500_552"
+    if role == "message_scroll":
+        return "Character item use -> CreateMsgScrollWindow; isMessageScroll ID predicate; Item::canSellRepairIdentifyAt", "inherited_message_scroll_range_700_781"
+    if role != "outside_high_risk_scope":
+        return "EvtVariables held-item operand; Item type/use/shop; isQuestItem ID predicate", "inherited_quest_range_600_699"
+    return "MM6ItemTable load; shared ItemTable/ItemEnumFunctions/UIPopup behavior requires title check", "outside_high_risk_scope"
+
+
 def value_claims(name: str, page_spec: str, pages: dict[int, str]) -> list[dict]:
     """Extract only exact-name plus nearby numeric value claims from OCR."""
     if not name:
@@ -150,6 +257,9 @@ def main() -> None:
     pages = {page: normalized(body) for page, body in raw_pages.items()}
     item_values_path = reference / "icons/items.txt"
     item_values = retained_item_values(item_values_path)
+    item_roles = retained_item_roles(item_values_path)
+    wand_spells, source_fingerprints = source_wand_spells(root)
+    held_item_refs, quest_graph_hash = retained_held_item_refs(reference / "quest-graph-probe.json")
     overrides_path = reference / "item-monster-guide-reviewed-overrides.json"
     overrides = json.loads(overrides_path.read_text()) if overrides_path.is_file() else {}
     if overrides and overrides.get("prima_pdf_sha256") != guide_report["sources"]["prima"]["pdf_sha256"]:
@@ -167,6 +277,33 @@ def main() -> None:
     item_records = []
     for item in items:
         family, page_spec = guide_family(item)
+        item_id = item["id"]
+        role_data = item_roles[item_id]
+        role = retained_role(item, role_data["quest_description_marker"])
+        consumer, source_dispatch_basis = source_role_consumer(role)
+        spell_token = role_data["effect_token"]
+        retained_spell_id = int(spell_token[1:]) if role in {"wand", "spell_scroll", "spellbook"} and re.fullmatch(r"S\d+", spell_token) else None
+        if role in {"wand", "spell_scroll", "spellbook"} and retained_spell_id is None:
+            raise ValueError(f"missing retained spell token for item {item_id}")
+        if role == "spell_scroll" and retained_spell_id != item_id - 199:
+            raise ValueError(f"nonsequential MM6 scroll spell ID at {item_id}")
+        if role == "spellbook" and retained_spell_id != item_id - 299:
+            raise ValueError(f"nonsequential MM6 spellbook spell ID at {item_id}")
+        source_wand_spell_id = wand_spells[item_id] if role == "wand" else None
+        if role == "wand":
+            source_dispatch_status = "wand_spell_id_matches_retained_token" if source_wand_spell_id == retained_spell_id else "wand_spell_id_disagrees_with_retained_token"
+        elif role == "spell_scroll":
+            source_dispatch_status = "retained_scroll_id_outside_inherited_lookup_range"
+        elif role == "spellbook":
+            source_dispatch_status = "retained_book_id_outside_inherited_lookup_range"
+        elif role in {"artifact_equipment", "relic_equipment"}:
+            source_dispatch_status = "retained_rarity_not_in_inherited_artifact_id_range"
+        elif role == "message_scroll":
+            source_dispatch_status = "retained_message_id_outside_inherited_message_range"
+        elif role != "outside_high_risk_scope":
+            source_dispatch_status = "retained_special_id_outside_inherited_quest_range"
+        else:
+            source_dispatch_status = "not_audited_in_high_risk_pass"
         all_hits = page_hits(item["name"], pages, 157, 240)
         expected = candidate_pages(page_spec)
         within = [page for page in all_hits if page in expected]
@@ -196,9 +333,25 @@ def main() -> None:
             "ocr_hit_pages_elsewhere_in_item_chapter": outside,
             "visual_review_page": reviewed["pdf_page"] if reviewed else None,
             "retained_base_value": item_values[item["id"]],
+            "retained_data_role": role,
+            "retained_role_evidence": "retained item type, rarity and description marker only",
+            "retained_quest_description_marker": role_data["quest_description_marker"],
+            "retained_effect_token": spell_token if role in {"wand", "spell_scroll", "spellbook"} else None,
+            "retained_spell_id": retained_spell_id,
+            "source_wand_spell_id": source_wand_spell_id,
+            "source_dispatch_status": source_dispatch_status,
+            "source_dispatch_basis": source_dispatch_basis,
+            "inherited_id_predicates": {
+                "is_spellbook": 400 <= item_id <= 498,
+                "is_artifact": 500 <= item_id <= 552,
+                "is_spawnable_artifact": 500 <= item_id <= 528,
+                "is_message_scroll": 700 <= item_id <= 781,
+                "is_quest_item": 600 <= item_id <= 699,
+            } if role != "outside_high_risk_scope" else None,
+            "retained_event_held_item_references": held_item_refs.get(item_id, []) if item_id >= 400 else [],
             "ocr_value_claims": claims,
             "guide_semantic_status": semantic_status,
-            "engine_consumer": "MM6ItemTable load; shared ItemTable/ItemEnumFunctions/UIPopup behavior requires title check",
+            "engine_consumer": consumer,
             "next_evidence": "guide page image + retained row + source consumer; F3 original confirmation; F4/F5 behavior",
         })
     monster_records = []
@@ -235,6 +388,8 @@ def main() -> None:
             "prima_pdf": guide_report["sources"]["prima"]["pdf_sha256"],
             "prima_text": hashlib.sha256(prima_text_path.read_bytes()).hexdigest(),
             "retained_items_txt": hashlib.sha256(item_values_path.read_bytes()).hexdigest(),
+            "retained_quest_graph_probe": quest_graph_hash,
+            "current_item_source": source_fingerprints,
             "reviewed_overrides": hashlib.sha256(overrides_path.read_bytes()).hexdigest() if overrides else None,
         },
         "summary": {
@@ -246,6 +401,10 @@ def main() -> None:
             "visually_reviewed_item_ids": sum(record["visual_review_page"] is not None for record in item_records),
             "visually_reviewed_monster_ids": sum(record["visual_review_page"] is not None for record in monster_records),
             "item_semantic_status": dict(sorted(Counter(record["guide_semantic_status"] for record in item_records).items())),
+            "high_risk_item_ids": sum(record["retained_data_role"] != "outside_high_risk_scope" for record in item_records),
+            "high_risk_retained_roles": dict(sorted(Counter(record["retained_data_role"] for record in item_records if record["retained_data_role"] != "outside_high_risk_scope").items())),
+            "high_risk_source_dispatch_status": dict(sorted(Counter(record["source_dispatch_status"] for record in item_records if record["retained_data_role"] != "outside_high_risk_scope").items())),
+            "special_band_held_item_ref_ids": sum(bool(record["retained_event_held_item_references"]) for record in item_records if record["id"] >= 400),
             "monster_semantic_status": dict(sorted(Counter(record["guide_semantic_status"] for record in monster_records).items())),
         },
         "items": item_records,

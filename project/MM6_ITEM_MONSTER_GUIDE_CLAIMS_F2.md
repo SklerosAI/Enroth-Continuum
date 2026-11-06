@@ -104,6 +104,45 @@ that can return an unenchanted top-level weapon. Original shipped behavior
 must decide whether this is a guide error, inherited-engine difference or
 data interpretation issue.
 
+### High-risk item role and consumer pass
+
+The private queue now classifies all **404 IDs** in the wand, spell-scroll,
+spellbook and 400–580 special-item bands from retained type, rarity, spell
+token and description markers. It also records the current C++ consumer and
+inherited ID predicates per ID. This is complete **static role/consumer
+coverage** for this scope, not a new guide semantic check: **402 of 581 item
+rows remain semantically unreviewed**. No new guide page or original game
+archive was opened for this pass.
+
+| Retained role | IDs | Static C++ finding |
+| --- | ---: | --- |
+| Wands | 25 | Retained spell tokens and [spellForWand](../src/Engine/Objects/ItemEnumFunctions.cpp) agree for 9 IDs and disagree for **16**; the numeric wand range aligns, so the wrong spell can be selected without a range error. |
+| Spell scrolls | 99 | All retained rows carry sequential spell tokens 1–99, but [Character item use](../src/Engine/Objects/Character.cpp) calls an inherited scroll lookup for IDs 300–398; MM6 scroll IDs are 200–298. All 99 are outside its range. |
+| Spellbooks | 99 | All retained rows carry sequential spell tokens 1–99, but Character calls an inherited book lookup for IDs 400–498; MM6 book IDs are 300–398. All 99 are outside its range. |
+| Artifacts and relics | 30 | Retained rarity marks 15 of each at IDs 400–429. [MM6ItemTable](../src/Engine/Tables/MM6ItemTable.cpp) loads that rarity, while inherited `isArtifact`, generation and [bonus map](../src/Engine/Objects/Item.cpp) use IDs 500–552. None of these 30 enters that artifact-ID path. |
+| Other special items and message scrolls | 151 | 50 retained message scrolls occupy 500–549; inherited `isMessageScroll` uses 700–781 and inherited `isArtifact` treats 500–552 as artifacts. The other 101 rows include 34 with a `Quest Item:` description marker; 67 have only a broad special or miscellaneous role from the retained table. None lies in inherited `isQuestItem` range 600–699. |
+
+The retained [quest graph](MM6_EVENT_CAMPAIGN_SPEC.md) has held-item variable
+operands referencing **98 distinct IDs** in the 400–580 band: two artifact
+IDs, 53 IDs at 430–499, 15 message-scroll IDs and 28 IDs at 550–580.
+The private queue retains exact event/offset locators. An operand is evidence
+of a script reference, not proof of an item's quest purpose or complete use
+flow. `Quest Item:` is a retained description marker, not an engine predicate.
+
+The ID collisions are active source seams: MM6 item types route scrolls,
+books and messages into [Character.cpp](../src/Engine/Objects/Character.cpp),
+whose lookups or [message window](../src/GUI/UI/UIMessageScroll.cpp) use
+inherited numeric ranges. Inherited `isSpellbook` also matches MM6 IDs
+400–498, including artifacts and special items; inherited `isArtifact` matches
+three MM6 memory-crystal IDs beyond the message band. The inherited level-six
+artifact picker can select IDs 500–528, which MM6 retains as message scrolls.
+Static inspection cannot settle the original executable's spell targets and effects, scroll
+consumption/cancellation, wand charge rules, artifact bonuses and rarity
+policy, message text/display, or quest item interactions and persistence.
+F3 must confirm those against the original installation after the gate;
+F4 needs title-specific ID dispatch and isolated tests, and F5 needs cast,
+equip, read and quest/save-reload play checks.
+
 ## Monster-family and combat claims
 
 The rendered guide introduction describes **57 three-variant groups**. The
@@ -118,8 +157,8 @@ selected guide/retained-data disagreement**: 11 printed treasure gold-dice
 entries and three level/HP pairs. The checked monster fields include level,
 HP, armor class, XP, treasure, attack and resistance labels; a selected-field
 match does not prove all fields or behavior. The earlier potion comparison
-found two separate guide-result disagreements among 25 safe pairs. These are concrete
-reasons to keep guide text as a hypothesis and recheck original shipped data
+found two separate guide-result disagreements among 25 safe pairs. These
+are concrete reasons to keep guide text as a hypothesis and recheck original shipped data
 at F3; neither source should be silently substituted for the other.
 
 The guide also describes attack preference, secondary attack chance and

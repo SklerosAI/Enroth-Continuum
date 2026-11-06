@@ -12,6 +12,7 @@ add_library(engine_mm6_save_container STATIC MM6SaveContainer.cpp MM6SaveContain
     MM6ChestSaveFields.cpp MM6ChestSaveFields.h
     MM6ShopGuildClockFields.cpp MM6ShopGuildClockFields.h
     MM6ShopStockFields.cpp MM6ShopStockFields.h MM6ShopStockPurchase.h
+    MM6BeaconSaveFields.cpp MM6BeaconSaveFields.h
     MM6KnownSaveFields.cpp MM6KnownSaveFields.h)
 target_check_style(engine_mm6_save_container)
 
@@ -20,6 +21,7 @@ target_link_libraries(engine_mm6_atomic_save PUBLIC engine_mm6_save_container)
 target_check_style(engine_mm6_atomic_save)
 
 add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRuntime.h
+    MM6BeaconSaveRuntime.cpp MM6BeaconSaveRuntime.h
     MM6DurableSaveRuntime.cpp MM6SaveMetadataRuntime.cpp MM6ResistanceSaveRuntime.cpp
     MM6HeldItemSaveRuntime.cpp MM6BuffSaveRuntime.cpp MM6HirelingSaveRuntime.cpp
     MM6RecoverySaveRuntime.cpp MM6MapSaveValidation.cpp MM6MapSaveValidation.h
@@ -106,6 +108,7 @@ if(OE_BUILD_TESTS)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_save_container)
 
     add_library(test_engine_mm6_save_runtime OBJECT Tests/MM6MapSaveValidation_ut.cpp
+        Tests/MM6BeaconSaveFields_ut.cpp
         Tests/MM6PrivateMapSource_ut.cpp Tests/MM6WorldSaveRuntime_ut.cpp
         Tests/MM6NewGameSaveRuntime_ut.cpp)
     target_link_libraries(test_engine_mm6_save_runtime PUBLIC testing_unit engine_mm6_save_runtime)

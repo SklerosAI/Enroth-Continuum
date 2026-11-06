@@ -52,8 +52,9 @@ def main() -> None:
                 raise ValueError("retained indoor member differs from F3")
             decoded, checksum_valid, _ = decode(path)
             prior = expected[path.name.casefold()]
-            if (sha256(decoded) != row["decoded_sha256"] or
-                    sha256(decoded) != prior["decoded_sha256"] or
+            # F3's "decoded" field describes archive extraction; retained
+            # members still carry their separate map compression wrapper.
+            if (sha256(decoded) != prior["decoded_sha256"] or
                     checksum_valid != prior["checksum_valid"]):
                 raise ValueError("decoded indoor member differs from F2 probe")
             prepared.append((path, decoded))

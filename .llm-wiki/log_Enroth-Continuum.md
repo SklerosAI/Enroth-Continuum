@@ -521,3 +521,9 @@ Chronological record of wiki activity.
 - Added a native retained-F3 map source that verifies the private manifest, all 67 expected names, the F3 identity/gate/report/probe hash chain and each decoded base-map hash. Reads are bounded, confined to a canonical root and restricted to regular files; the manifest must be owner-only.
 - Connected the source to the known-save map validator through an offline staging wrapper. A symlinked base-directory escape, tampered manifest digest or F3 report rejects before destination mutation. SaveLoad, installed game-data loading and complete live transaction remain unwired.
 - Built the arm64 unit target and passed three focused map tests with retained F3-matched copies; direct C++ style and diff checks passed. No original installation was reread or partial MM6 game launched.
+
+## [2026-11-06] ingest | MM6 ground item save guard and shop gap
+- by: T-Burton-ND via codex
+- Audited shop stock/refresh and map ground items. Ground items already live in counted DLV/DDM records within `MAPS`, so the map pass now requires an MM6 item-template verifier for every nonempty projected item before staging. Invalid IDs and absent templates reject without changing the destination.
+- Kept `SHOP` unimplemented: current party stock and timers use inherited MM7 house-index arrays ending at 52, while the retained MM6 house table has 557 rows and guild stock generation still rejects MM6. A complete MM6 house mapping and refresh contract are needed first.
+- The arm64 unit target built and four focused map tests passed with retained F3-matched pairs, synthetic nonzero and malformed item IDs, callback rejection and no-mutation checks. Direct C++ style and diff checks passed. No original installation was reread or partial MM6 game launched.

@@ -30,6 +30,7 @@ class EvtInstruction {
     static EvtInstruction parse(InputStream &stream, size_t size, GameTitle gameTitle = GameTitle::MM7);
 
     EvtOpcode opcode = EVENT_Invalid;
+    GameTitle gameTitle = GameTitle::MM7;
     int step = 0;
     int target_step = 0;
     EvtTargetCharacter who = CHOOSE_PLAYER1;
@@ -146,6 +147,25 @@ class EvtInstruction {
             FaceAttribute face_bit;
             int is_on;
         } faces_bit_descr;
+        struct {
+            int model;
+            int facet;
+        } mm6_outdoor_texture_descr;
+        struct {
+            int model;
+            int facet;
+            int bit;
+            int is_on;
+        } mm6_outdoor_facet_descr;
+        struct {
+            int prompt;
+            int answer;
+            int failure;
+        } mm6_question_descr;
+        struct {
+            std::array<uint8_t, 5> bytes;
+            int length;
+        } mm6_unknown_descr;
         struct {
             SpriteId sprite;
             int x;

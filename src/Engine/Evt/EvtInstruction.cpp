@@ -668,6 +668,28 @@ static std::string getVariableCompareStr(EvtVariable type, int value) {
 }
 
 std::string EvtInstruction::toString(EvtSource source) const {
+    if (gameTitle == GameTitle::MM6) {
+        switch (opcode) {
+        case EVENT_ShowMovie:
+            return fmt::format("{}: MM6SetOutdoorTexture({}, {}, \"{}\")", step,
+                               data.mm6_outdoor_texture_descr.model, data.mm6_outdoor_texture_descr.facet, str);
+        case EVENT_ToggleActorFlag:
+            return fmt::format("{}: MM6SetOutdoorFacetBit({}, {}, 0x{:x}, {})", step,
+                               data.mm6_outdoor_facet_descr.model, data.mm6_outdoor_facet_descr.facet,
+                               data.mm6_outdoor_facet_descr.bit, data.mm6_outdoor_facet_descr.is_on);
+        case EVENT_InputString:
+            return fmt::format("{}: MM6Question({}, {}, {}) -> {}", step,
+                               data.mm6_question_descr.prompt, data.mm6_question_descr.answer,
+                               data.mm6_question_descr.failure, target_step);
+        case EVENT_MM6_Opcode20:
+        case EVENT_MM6_Opcode27:
+        case EVENT_MM6_Opcode28:
+            return fmt::format("{}: MM6Opcode{} ({} bytes, effect unresolved)", step,
+                               std::to_underlying(opcode), data.mm6_unknown_descr.length);
+        default:
+            break;
+        }
+    }
     switch (opcode) {
         case EVENT_Exit:
             return fmt::format("{}: Exit", step);
@@ -884,6 +906,7 @@ static Enum narrowToEnum(Int value, std::string_view what) {
 
 EvtInstruction EvtInstruction::parse(InputStream &stream, size_t size, GameTitle gameTitle) {
     EvtInstruction ir = {};  // A zeroed member may be unset or may be a real 0, the two are not distinguishable here.
+    ir.gameTitle = gameTitle;
 
     ir.step = fromStream<uint8_t>(stream);
     ir.opcode = EvtOpcode(fromStream<uint8_t>(stream));
@@ -964,10 +987,17 @@ EvtInstruction EvtInstruction::parse(InputStream &stream, size_t size, GameTitle
             ir.str = fromStream<std::string>(stream, tags::nullTerminated);
             break;
         case EVENT_ShowMovie:
-            requireSize(8);
-            fromStream<uint8_t>(stream);  // TODO(yoctozepto): always 1 in MM7 data, check MM6&8
-            ir.data.movie_unknown_field = fromStream<uint8_t>(stream);  // NOTE(yoctozepto): seems to be a boolean as it takes either 0 or 1 in MM7 data
-            ir.str = fromStream<std::string>(stream, tags::nullTerminated);
+            if (gameTitle == GameTitle::MM6) {
+                requireSize(20);
+                ir.data.mm6_outdoor_texture_descr.model = fromStream<uint32_t>(stream);
+                ir.data.mm6_outdoor_texture_descr.facet = fromStream<uint32_t>(stream);
+                ir.str = fromStream<std::string>(stream, tags::nullTerminated);
+            } else {
+                requireSize(8);
+                fromStream<uint8_t>(stream);  // TODO(yoctozepto): always 1 in MM7 data, check MM8
+                ir.data.movie_unknown_field = fromStream<uint8_t>(stream);
+                ir.str = fromStream<std::string>(stream, tags::nullTerminated);
+            }
             break;
         case EVENT_SetSprite:
             requireSize(11);
@@ -994,16 +1024,30 @@ EvtInstruction EvtInstruction::parse(InputStream &stream, size_t size, GameTitle
             ir.data.variable_descr.value = fromStream<uint32_t>(stream);
             break;
         case EVENT_SummonMonsters:
-            requireSize(28);
+            requireSize(gameTitle == GameTitle::MM6 ? 20 : 28);
             ir.data.monster_descr.type = fromStream<uint8_t>(stream);
             ir.data.monster_descr.level = fromStream<uint8_t>(stream);
             ir.data.monster_descr.count = fromStream<uint8_t>(stream);
             ir.data.monster_descr.x = fromStream<uint32_t>(stream);
             ir.data.monster_descr.y = fromStream<uint32_t>(stream);
             ir.data.monster_descr.z = fromStream<uint32_t>(stream);
-            ir.data.monster_descr.group = fromStream<uint32_t>(stream);
-            ir.data.monster_descr.name_id = fromStream<uint32_t>(stream);
+            if (gameTitle != GameTitle::MM6) {
+                ir.data.monster_descr.group = fromStream<uint32_t>(stream);
+                ir.data.monster_descr.name_id = fromStream<uint32_t>(stream);
+            }
             break;
+        case EVENT_MM6_Opcode20:
+        case EVENT_MM6_Opcode27:
+        case EVENT_MM6_Opcode28: {
+            if (gameTitle != GameTitle::MM6)
+                throw Exception("MM6-only evt opcode {} in another title", std::to_underlying(ir.opcode));
+            size_t payloadSize = ir.opcode == EVENT_MM6_Opcode20 ? 5 : ir.opcode == EVENT_MM6_Opcode27 ? 2 : 1;
+            requireSize(5 + payloadSize);
+            ir.data.mm6_unknown_descr.length = payloadSize;
+            for (size_t i = 0; i < payloadSize; ++i)
+                ir.data.mm6_unknown_descr.bytes[i] = fromStream<uint8_t>(stream);
+            break;
+        }
         case EVENT_CastSpell:
             requireSize(32);
             ir.data.spell_descr.spell_id = static_cast<SpellId>(fromStream<uint8_t>(stream));
@@ -1027,10 +1071,18 @@ EvtInstruction EvtInstruction::parse(InputStream &stream, size_t size, GameTitle
             ir.data.faces_bit_descr.is_on = fromStream<uint8_t>(stream);
             break;
         case EVENT_ToggleActorFlag:  // TODO(yoctozepto): not present in used MM7 data
-            requireSize(14);
-            ir.data.actor_flag_descr.id = fromStream<uint32_t>(stream);
-            ir.data.actor_flag_descr.attr = static_cast<ActorAttribute>(fromStream<uint32_t>(stream));
-            ir.data.actor_flag_descr.is_set = fromStream<uint8_t>(stream);
+            if (gameTitle == GameTitle::MM6) {
+                requireSize(18);
+                ir.data.mm6_outdoor_facet_descr.model = fromStream<uint32_t>(stream);
+                ir.data.mm6_outdoor_facet_descr.facet = fromStream<uint32_t>(stream);
+                ir.data.mm6_outdoor_facet_descr.bit = fromStream<uint32_t>(stream);
+                ir.data.mm6_outdoor_facet_descr.is_on = fromStream<uint8_t>(stream);
+            } else {
+                requireSize(14);
+                ir.data.actor_flag_descr.id = fromStream<uint32_t>(stream);
+                ir.data.actor_flag_descr.attr = static_cast<ActorAttribute>(fromStream<uint32_t>(stream));
+                ir.data.actor_flag_descr.is_set = fromStream<uint8_t>(stream);
+            }
             break;
         case EVENT_RandomGoTo:
             requireSize(11);
@@ -1049,8 +1101,16 @@ EvtInstruction EvtInstruction::parse(InputStream &stream, size_t size, GameTitle
             }
             break;
         case EVENT_InputString:  // TODO(yoctozepto): not present in used MM7 data; likely present in MM8 (e.g., Escaton's riddles)
-            requireSize(9);
-            ir.data.text_id = fromStream<uint32_t>(stream);
+            if (gameTitle == GameTitle::MM6) {
+                requireSize(18);
+                ir.data.mm6_question_descr.prompt = fromStream<uint32_t>(stream);
+                ir.data.mm6_question_descr.answer = fromStream<uint32_t>(stream);
+                ir.data.mm6_question_descr.failure = fromStream<uint32_t>(stream);
+                ir.target_step = fromStream<uint8_t>(stream);
+            } else {
+                requireSize(9);
+                ir.data.text_id = fromStream<uint32_t>(stream);
+            }
             break;
         case EVENT_StatusText:
             requireSize(9);

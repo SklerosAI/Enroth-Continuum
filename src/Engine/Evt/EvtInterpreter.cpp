@@ -31,6 +31,7 @@
 
 #include "Utility/Math/TrigLut.h"
 #include "Utility/String/Transformations.h"
+#include "Utility/Exception.h"
 
 #include "GUI/GUIProgressBar.h"
 #include "GUI/GUIMessageQueue.h"
@@ -298,6 +299,8 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         case EVENT_ShowMovie:
         {
+            if (engine->gameTitle() == GameTitle::MM6)
+                throw Exception("MM6 outdoor texture event needs a title-specific executor");
             std::string movieName = trimRemoveQuotes(ir.str);
             if (movieName.length() == 0) {
                 break;
@@ -388,6 +391,8 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                 setEvtVariable(character, ir.data.variable_descr.type, ir.data.variable_descr.value);
             break;
         case EVENT_SummonMonsters:
+            if (engine->gameTitle() == GameTitle::MM6)
+                throw Exception("MM6 monster spawn event needs a title-specific executor");
             spawnMonsters(ir.data.monster_descr.type, ir.data.monster_descr.level, ir.data.monster_descr.count,
                           Vec3f(ir.data.monster_descr.x, ir.data.monster_descr.y, ir.data.monster_descr.z),
                           ir.data.monster_descr.group, ir.data.monster_descr.name_id);
@@ -415,11 +420,15 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             setFacesBit(ir.data.faces_bit_descr.cog, ir.data.faces_bit_descr.face_bit, ir.data.faces_bit_descr.is_on);
             break;
         case EVENT_ToggleActorFlag:
+            if (engine->gameTitle() == GameTitle::MM6)
+                throw Exception("MM6 outdoor facet event needs a title-specific executor");
             Actor::toggleFlag(ir.data.actor_flag_descr.id, ir.data.actor_flag_descr.attr, ir.data.actor_flag_descr.is_set);
             break;
         case EVENT_RandomGoTo:
             return {EVT_FLOW_JUMP, ir.data.random_goto_descr.random_goto[grng->random(ir.data.random_goto_descr.random_goto_len)]};
         case EVENT_InputString:
+            if (engine->gameTitle() == GameTitle::MM6)
+                throw Exception("MM6 question event needs a title-specific executor");
             // Originally starting step was checked to ensure skipping this command when returning from dialogue.
             // Changed to using "step + 1" to go to next event
             //
@@ -431,6 +440,10 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             startBranchlessDialogue(EVENT_InputString, continuation(ir.step + 1));
 #endif
             return {EVT_FLOW_STOP};
+        case EVENT_MM6_Opcode20:
+        case EVENT_MM6_Opcode27:
+        case EVENT_MM6_Opcode28:
+            throw Exception("MM6 evt opcode {} needs a title-specific executor", std::to_underlying(ir.opcode));
         case EVENT_StatusText:
             if (_context.source == EVT_SOURCE_GLOBAL) {
                 if (!_context.objectPid) // An NPC topic.

@@ -27,6 +27,7 @@ enum class EvtOpcode : uint8_t {
     EVENT_Subtract = 17,
     EVENT_Set = 18,
     EVENT_SummonMonsters = 19,
+    EVENT_MM6_Opcode20 = 20, // Active in MM6; the editor's ModifyItem label is not yet an effect rule.
 
     EVENT_CastSpell = 21,
     EVENT_SpeakNPC = 22,
@@ -34,6 +35,8 @@ enum class EvtOpcode : uint8_t {
     EVENT_ToggleActorFlag = 24,
     EVENT_RandomGoTo = 25,
     EVENT_InputString = 26,
+    EVENT_MM6_Opcode27 = 27, // Active in MM6; password effect remains to be resolved.
+    EVENT_MM6_Opcode28 = 28, // Active in MM6; answer effect remains to be resolved.
 
     EVENT_StatusText = 29,
     EVENT_ShowMessage = 30,

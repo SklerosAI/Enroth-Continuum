@@ -10,6 +10,7 @@
 
 #include "GUI/HudFrameResources.h"
 #include "GUI/HudNavigationResources.h"
+#include "GUI/HudStatusResources.h"
 #include "GUI/MM6HudActionControls.h"
 #include "GUI/MM6HudBookControls.h"
 
@@ -586,7 +587,7 @@ void SetUserInterface(PartyAlignment align) {
         game_ui_bottomframe = assets->getIcon(frames.bottom);
         game_ui_topframe = assets->getIcon(frames.top);
         game_ui_leftframe = assets->getIcon(frames.left);
-        game_ui_statusbar = assets->getIcon("IB-Foot-c.pcx");
+        game_ui_statusbar = assets->getIcon(hudStatusBarIcon(engine->gameTitle(), "IB-Foot-c.pcx"));
 
         game_ui_right_panel_frame = assets->getIcon("ib-mb-C");
         game_ui_minimap_frame = assets->getIcon("ib-autmask-c");
@@ -639,7 +640,7 @@ void SetUserInterface(PartyAlignment align) {
         game_ui_bottomframe = assets->getIcon(frames.bottom);
         game_ui_topframe = assets->getIcon(frames.top);
         game_ui_leftframe = assets->getIcon(frames.left);
-        game_ui_statusbar = assets->getIcon("IB-Foot-a.pcx");
+        game_ui_statusbar = assets->getIcon(hudStatusBarIcon(engine->gameTitle(), "IB-Foot-a.pcx"));
 
         game_ui_right_panel_frame = assets->getIcon("ib-mb-A");
         game_ui_minimap_frame = assets->getIcon("ib-autmask-a");
@@ -692,7 +693,7 @@ void SetUserInterface(PartyAlignment align) {
         game_ui_bottomframe = assets->getIcon(frames.bottom);
         game_ui_topframe = assets->getIcon(frames.top);
         game_ui_leftframe = assets->getIcon(frames.left);
-        game_ui_statusbar = assets->getIcon("IB-Foot-b.pcx");
+        game_ui_statusbar = assets->getIcon(hudStatusBarIcon(engine->gameTitle(), "IB-Foot-b.pcx"));
 
         game_ui_right_panel_frame = assets->getIcon("ib-mb-B");
         game_ui_minimap_frame = assets->getIcon("ib-autmask-b");

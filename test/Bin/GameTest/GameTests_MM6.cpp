@@ -18,6 +18,7 @@
 #include "GUI/GUIWindow.h"
 #include "GUI/HudFrameResources.h"
 #include "GUI/HudNavigationResources.h"
+#include "GUI/HudStatusResources.h"
 #include "GUI/MM6HudActionControls.h"
 #include "GUI/MM6HudBookControls.h"
 #include "GUI/UI/Books/CalendarBackgroundResources.h"
@@ -114,6 +115,24 @@ GAME_TEST(MM6Headless, HudFrameResourcesAvailable) {
     }};
     for (const auto &[name, size] : expected)
         EXPECT_EQ(engine->resources()->iconSize(name), size) << name;
+}
+
+GAME_TEST(MM6Headless, StatusStripAndMapArrowsAvailable) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    EXPECT_EQ(engine->resources()->iconSize(hudStatusBarIcon(GameTitle::MM6, {})), Sizei(483, 24));
+    // These eight inherited minimap directions already exist in the MM6
+    // archive; the dynamic top-frame state remains a separate open mapping.
+    for (int i = 1; i <= 8; ++i) {
+        const std::string icon = "MAPDIR" + std::to_string(i);
+        EXPECT_EQ(engine->resources()->iconSize(icon), Sizei(7, 7)) << icon;
+    }
+}
+
+TEST(MM6HeadlessStatusStrip, TitleIsolation) {
+    EXPECT_EQ(hudStatusBarIcon(GameTitle::MM6, "IB-Foot-a.pcx"), "footer");
+    EXPECT_EQ(hudStatusBarIcon(GameTitle::MM7, "IB-Foot-a.pcx"), "IB-Foot-a.pcx");
+    EXPECT_EQ(hudStatusBarIcon(GameTitle::MM7, "IB-Foot-b.pcx"), "IB-Foot-b.pcx");
+    EXPECT_EQ(hudStatusBarIcon(GameTitle::MM7, "IB-Foot-c.pcx"), "IB-Foot-c.pcx");
 }
 
 GAME_TEST(MM6Headless, FourBookHitBoxesAndActions) {

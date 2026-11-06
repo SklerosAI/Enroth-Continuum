@@ -1,6 +1,6 @@
 # MM6 HUD navigation resources
 
-Status: **MM6 frame, baked book/action controls and time background staged; linked checks and visual acceptance pending** (2026-11-06).
+Status: **MM6 frame, baked controls, time background and status strip staged; linked checks and visual acceptance pending** (2026-11-06).
 
 The inherited `SetUserInterface` skin requests many MM7 alignment-specific icons that are absent from the private MM6 icon archive. `UI_Create` likewise requests MM7 tome and status art. The retained archive contains a compass strip and two zoom-labelled controls whose names and dimensions make them plausible HUD candidates. The exact plus/minus meaning remains provisional. `hudNavigationResources(GameTitle, ...)` selects those three MM6 identifiers for every alignment while passing through the exact existing MM7 identifiers. `SetUserInterface` uses the result at its three alignment branches. A headless test checks that all three chosen MM6 entries can be read, and a pure test checks the title selection and exact MM7 neutral, good and evil preservation; neither test establishes zoom semantics.
 
@@ -19,6 +19,10 @@ The same right frame has four baked lower controls. The original manual identifi
 The retained MM6 time background is 360×300 and matches the Calendar/Events page role. The Calendar view now loads it only for MM6; MM7 continues loading `sbdate-time`. Headless and pure tests check its availability and title selection. The current Calendar text coordinates, title wording, moon icons and the full meaning of the MM6 Events page still need review and graphical acceptance.
 
 The inherited NPC-scroll buttons still request absent MM7 alignment icons. The retained `arrowl*`/`arrowr*` sequence is used by the MM6 party-creation UI, not proven as the in-game NPC-scroll control. Other generic arrow images also lack a verified right-panel role. No NPC arrow alias or position change is made until original UI evidence identifies the correct art and hit boxes. The existing NPC-scroll placeholders and possible click feedback remain a presentation blocker.
+
+The MM6 archive has a 483×24 footer with a text inset that matches the status strip consumer. `hudStatusBarIcon` selects it for MM6 and passes through the MM7 neutral, good and evil footer names unchanged. The current draw origin and text coordinates are retained until a graphical alignment check. Headless tests check the MM6 size and title isolation. The eight existing `MAPDIR` lookups also resolve to 7×7 MM6 icons; a focused presence test records that already working minimap subfamily.
+
+The 172×142 MM6 top-panel images vary by visible environmental and alert states, while the inherited minimap frame is one alignment-specific image. Choosing one top image without mapping those states would misrepresent the original interface, so minimap-frame selection remains gated. The MM6 portrait frame has narrow vertical bar slots and retained 6×78 hit/mana images, but inherited MM7 bar positions and 50-pixel hit boxes do not align with them. Those assets are not bound until title-specific bar origins, color behavior, and hit boxes have a coherent measured contract. Character portrait hit boxes also need a separate geometry pass.
 
 After the save/chest map gates open, a graphical pass must inspect the frame seams, compass crop and heading, zoom button meaning and feedback, all four book and action controls and their opened pages, and the surrounding HUD at the actual render resolution. Resolve the NPC arrows and other icon families from source evidence and then verify them visually before claiming an MM6 HUD.
 

@@ -63,7 +63,7 @@ bool validName(std::string_view name) {
         (!name.ends_with(".ddm") && !name.ends_with(".dlv")))
         return false;
     return std::all_of(name.begin(), name.end() - 4, [](char c) {
-        return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_';
+        return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-';
     });
 }
 

@@ -417,3 +417,23 @@ the title-specific save tuple are not yet typed. Live SaveLoad and house
 services remain guarded. All detailed PE evidence and proprietary data remain
 ignored locally; the installed MM7 app/profile and reserved MM8 checkout were
 not changed.
+
+## MM6 F4 integrated checkpoint — 233 tests, 2026-11-06
+
+The arm64 MM6, OpenEnroth and unit targets linked. The private-backed offline
+gate passed **233/233 MM6/LOD tests from 63 suites**, including 192 seeded ANY
+item stages against an ignored F3-matched chest profile; the general gate
+passed **438/438**. No MM6 process, graphical view or audible playback was
+launched.
+
+The original chest trace now has detached retained-table caller, gold-source,
+ANY finalization and 140-cell first-placement models. They do not mutate live
+state. Direct tier-seven artifact selection, changed chest-grid persistence,
+entry-side integration and the all-owner `.ec6` transaction remain open; the
+live title guard still stops every MM6 map load. A separate original outdoor
+border trace bounds the neighbor grid, travel-day and arrival shape, while
+party eligibility is untyped and MM6 border travel stays guarded. MM7-only
+event exceptions, border/fog tables and underwater-map classification are
+title-gated. Cross-map transitions still hit the MM6 autosave guard before
+scheduling travel. The installed MM7 app/profile and reserved MM8 checkout
+remain untouched; exact game/executable evidence stays ignored locally.

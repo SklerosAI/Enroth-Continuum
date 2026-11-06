@@ -29,19 +29,22 @@ mm6::KnownSaveFields exampleFields() {
     fields.npcs.activeCount = 399;
     fields.npcs.npcData[398].name = "Synthetic NPC";
     fields.npcs.groups[50] = 23;
+    fields.resistances.characters[0].base[0] = -5;
+    fields.resistances.characters[3].bonus[10] = 17;
     return fields;
 }
 
 } // namespace
 
-UNIT_TEST(MM6KnownSaveFields, AssemblesAllElevenRequiredSections) {
+UNIT_TEST(MM6KnownSaveFields, AssemblesAllTwelveRequiredSections) {
     mm6::KnownSaveFields fields = exampleFields();
     std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(fields);
     mm6::SaveContainer container = mm6::decodeSaveContainer(bytes);
-    ASSERT_EQ(container.sections.size(), 11);
+    ASSERT_EQ(container.sections.size(), 12);
     for (const mm6::SaveSection &section : container.sections)
         EXPECT_TRUE(section.required);
     EXPECT_EQ(mm6::encodeKnownSave(mm6::decodeKnownSave(bytes)), bytes);
+    EXPECT_EQ(mm6::decodeKnownSave(bytes).resistances, fields.resistances);
 
     std::reverse(container.sections.begin(), container.sections.end());
     EXPECT_EQ(mm6::encodeKnownSave(mm6::decodeKnownSave(mm6::encodeSaveContainer(container))), bytes);
@@ -107,10 +110,11 @@ UNIT_TEST(MM6KnownSaveFields, LateDecodeFailureLeavesDestinationUntouched) {
     mm6::KnownSaveFields destination = exampleFields();
     destination.metadata.header.displayName = "Prior state";
     mm6::SaveContainer invalid = mm6::decodeSaveContainer(mm6::encodeKnownSave(exampleFields()));
-    invalid.sections.back().payload[0] = 2; // RESC version, with a valid outer CRC.
+    invalid.sections.back().payload[0] = 2; // RSTS version, with a valid outer CRC.
     EXPECT_THROW(mm6::loadKnownSaveBeforeMutation(mm6::encodeSaveContainer(invalid), &destination), std::exception);
     EXPECT_EQ(destination.metadata.header.displayName, "Prior state");
     EXPECT_EQ(destination.npcs.npcData[398].name, "Synthetic NPC");
+    EXPECT_EQ(destination.resistances.characters[0].base[0], -5);
     EXPECT_THROW(mm6::loadKnownSaveBeforeMutation(mm6::encodeKnownSave(exampleFields()), nullptr), std::exception);
 }
 

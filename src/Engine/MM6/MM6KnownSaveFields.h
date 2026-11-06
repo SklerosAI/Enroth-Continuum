@@ -8,6 +8,7 @@
 #include "MM6DurableSaveFields.h"
 #include "MM6MapSaveFields.h"
 #include "MM6NpcSaveFields.h"
+#include "MM6ResistanceSaveFields.h"
 #include "MM6SaveMetadata.h"
 
 namespace mm6 {
@@ -20,12 +21,13 @@ struct KnownSaveFields {
     SaveMetadataFields metadata;
     MapSaveFields maps;
     NpcSaveFields npcs;
+    ResistanceSaveFields resistances;
 };
 
-/** Encode exactly eleven required sections after every field and cross-check. */
+/** Encode exactly twelve required sections after every field and cross-check. */
 std::vector<std::uint8_t> encodeKnownSave(const KnownSaveFields &fields);
 
-/** Reject missing/extra sections and decode all eleven before returning state. */
+/** Reject missing/extra sections and decode all twelve before returning state. */
 KnownSaveFields decodeKnownSave(std::span<const std::uint8_t> bytes);
 
 /** Decode and validate the entire known set before assigning the destination. */

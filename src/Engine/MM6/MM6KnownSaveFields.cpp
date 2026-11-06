@@ -12,15 +12,15 @@
 namespace mm6 {
 namespace {
 
-constexpr std::array<std::array<char, 4>, 11> REQUIRED_TAGS = {{
+constexpr std::array<std::array<char, 4>, 12> REQUIRED_TAGS = {{
     {'P', 'A', 'R', 'T'}, {'C', 'H', 'A', 'R'}, {'Q', 'E', 'S', 'T'}, {'E', 'F', 'F', 'T'},
     {'I', 'T', 'E', 'M'}, {'H', 'E', 'A', 'D'}, {'T', 'I', 'M', 'E'}, {'U', 'I', 'S', 'T'},
-    {'V', 'I', 'S', 'U'}, {'M', 'A', 'P', 'S'}, {'R', 'E', 'S', 'C'},
+    {'V', 'I', 'S', 'U'}, {'M', 'A', 'P', 'S'}, {'R', 'E', 'S', 'C'}, {'R', 'S', 'T', 'S'},
 }};
 
 void checkSectionSet(const SaveContainer &container) {
     if (container.sections.size() != REQUIRED_TAGS.size())
-        throw std::runtime_error("MM6 known save requires exactly eleven sections");
+        throw std::runtime_error("MM6 known save requires exactly twelve sections");
     for (const SaveSection &section : container.sections) {
         if (!section.required ||
             std::find(REQUIRED_TAGS.begin(), REQUIRED_TAGS.end(), section.tag) == REQUIRED_TAGS.end())
@@ -55,6 +55,7 @@ std::vector<std::uint8_t> encodeKnownSave(const KnownSaveFields &fields) {
     auto metadata = encodeMetadataSections(fields.metadata);
     SaveSection maps = encodeMapSection(fields.maps);
     SaveSection npcs = encodeNpcSection(fields.npcs);
+    SaveSection resistances = encodeResistanceSection(fields.resistances);
     checkCrossFields(fields);
 
     SaveContainer container;
@@ -67,6 +68,7 @@ std::vector<std::uint8_t> encodeKnownSave(const KnownSaveFields &fields) {
         container.sections.push_back(std::move(section));
     container.sections.push_back(std::move(maps));
     container.sections.push_back(std::move(npcs));
+    container.sections.push_back(std::move(resistances));
     checkSectionSet(container);
     return encodeSaveContainer(container);
 }
@@ -80,6 +82,7 @@ KnownSaveFields decodeKnownSave(std::span<const std::uint8_t> bytes) {
     fields.metadata = decodeMetadataSections(container);
     fields.maps = decodeMapSection(container);
     fields.npcs = decodeNpcSection(container);
+    fields.resistances = decodeResistanceSection(container);
     checkCrossFields(fields);
     return fields;
 }

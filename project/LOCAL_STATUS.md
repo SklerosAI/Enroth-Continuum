@@ -216,20 +216,26 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   has title/version, bounds and integrity checks. A [core field codec](MM6_EC6_CORE_FIELDS_F4.md)
   now stages party/character data from a checked container into a copy; the
   durable quest/award/condition/inventory fields also have bounded codecs;
-  nonempty inventory restoration, file writing and load-menu integration remain open.
+  nonempty indexed inventory restoration, a native atomic writer, and a partial
+  twelve-section assembly are present offline. SaveLoad and load-menu integration
+  remain guarded, and complete state coverage is open.
 - The [outdoor wire codec](MM6_OUTDOOR_WIRE_F4.md) checked all 15 retained base/
   delta pairs; the [indoor wire decoder](../src/Engine/Snapshots/MM6IndoorSnapshot.h)
   checked all 52 original-matched retained pairs. Both preserve opaque bytes
   and reject malformed counts. The MM6 outdoor loader now projects reset,
-  visibility, actor, ground-item and chest records into runtime structures;
-  changed-state encoding remains open. The MM6 indoor loader now projects
-  52 checked BLV/DLV pairs into runtime, retaining the raw wire sidecar.
+  visibility, actor, ground-item and chest records into runtime structures.
+  Bounded indoor and outdoor changed-state encoders preserve the raw sidecar,
+  while unsupported live changes fail closed. The MM6 indoor loader projects
+  52 checked BLV/DLV pairs into runtime; all 67 deltas round-trip in `.ec6` offline.
   The [creation rules foundation](MM6_F4_CREATION_RULES_FOUNDATION.md) reads a
   private profile manifest and adds six starting class choices; formulas,
   Quick Start and promotion remain provisional. The [variable guard](MM6_F4_VARIABLE_GUARD.md)
   prevents MM6-specific event IDs from executing as colliding MM7 meanings.
-- The integrated MM6 app, MM7 app and unit targets built. Thirty-one focused C++ tests passed
-  across EVT framing, wire codecs, indoor/outdoor projection, variable guard, `.ec6` fields, private transport rules, descriptor 173 and LOD order; the
+- The integrated MM6 app, MM7 app and unit targets built with the resistance
+  assembly revision. The offline suite passed 64 tests across EVT
+  framing and selected guarded effects, wire codecs and indoor/outdoor projection,
+  variable guard, `.ec6` fields and partial assembly, private transport/spell
+  rules, descriptor 173 and LOD order; the
   private actor fixture checked 67 map deltas/342 actors and one ID 173.
   F4 rules, map state, events, services, media output and saves remain open.
   No MM6 process or original GOG file was opened for these F4 checks.
@@ -239,6 +245,11 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   and all-faces facet targets (6/6); those runtime effects are not yet saved.
   MM6 Question now has a provisional text-entry and two-answer continuation
   path, with visible and original-behavior checks still pending.
+- A private F3-backed spell manifest covers all 99 IDs at three mastery ranks.
+  Regular player-cast cost/recovery uses it; effect paths and scroll/book use
+  remain open. The raw `RSTS` resistance section captured all 88 current
+  character values and is now required by the revised partial assembly. Buffs, held/shop items, hirelings,
+  recovery timers, generated artifacts and complete save/relaunch remain open.
 - The private F3-derived transport manifest is read by a title-specific
   three-option MM6 menu. It hides unproved quest, weekday and special routes;
   selection makes no payment or departure while the `.ec6` save transaction

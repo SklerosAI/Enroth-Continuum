@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <optional>
 
@@ -10,6 +11,7 @@ namespace mm6 {
 struct ChestTrapDecision {
     bool disarmed = false;
     int variant = -1;  // 0..3 when triggered; no sprite/effect is emitted here.
+    int spriteId = 0;  // Original variant order: fire, cold, lightning, body.
     int drawsConsumed = 0;
     std::uint32_t nextLcgState = 0;
 };
@@ -39,6 +41,8 @@ inline std::optional<ChestTrapDecision> stageChestTrapDecision(
         }
     }
     result.variant = nextChestRandom15(result.nextLcgState) % 4;
+    constexpr std::array<int, 4> sprites = {811, 813, 812, 814};
+    result.spriteId = sprites[result.variant];
     ++result.drawsConsumed;
     return result;
 }

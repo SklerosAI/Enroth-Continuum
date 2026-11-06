@@ -1,0 +1,45 @@
+#pragma once
+
+#include <cstdint>
+#include <optional>
+
+#include "Engine/GameTitle.h"
+
+namespace mm6 {
+
+// Values read by the original MM6 chest disarm-score helper. These booleans
+// must come from a title-validated character/equipment and hireling snapshot;
+// this detached stage does not scan live MM7-shaped owners.
+struct ChestDisarmScoreInput {
+    GameTitle title = GameTitle::MM7;
+    std::uint8_t encodedSkill = 0;  // Low six bits: level; bit 6: expert; bit 7: master.
+    bool unbrokenItem410 = false;
+    bool unbrokenItem415 = false;
+    bool unbrokenThieveryEnchantment = false;
+    bool hasTinker = false;     // Profession 25.
+    bool hasLocksmith = false;  // Profession 26.
+    bool hasBurglar = false;    // Profession 51.
+};
+
+inline std::optional<int> stageChestDisarmScore(const ChestDisarmScoreInput &input) {
+    if (input.title != GameTitle::MM6)
+        return std::nullopt;
+    int score = input.encodedSkill & 63;
+    if (input.unbrokenItem410)
+        score *= 2;
+    if (input.unbrokenItem415)
+        score *= 2;
+    if (input.unbrokenThieveryEnchantment)
+        score *= 2;
+    if (input.hasTinker)
+        score += 4;
+    if (input.hasLocksmith)
+        score += 6;
+    if (input.hasBurglar)
+        score += 8;
+    const int masteryMultiplier = (input.encodedSkill & 128) ? 4 :
+                                  (input.encodedSkill & 64) ? 3 : 2;
+    return score * masteryMultiplier;
+}
+
+}  // namespace mm6

@@ -1,3 +1,4 @@
+#include <array>
 #include <cstdint>
 
 #include "Testing/Unit/UnitTest.h"
@@ -20,6 +21,7 @@ UNIT_TEST(MM6ChestTrapDecision, ZeroScoreTriggersWithoutDisarmDraw) {
     ASSERT_TRUE(decision);
     EXPECT_FALSE(decision->disarmed);
     EXPECT_EQ(decision->variant, 0);
+    EXPECT_EQ(decision->spriteId, 811);
     EXPECT_EQ(decision->drawsConsumed, 1);
     EXPECT_EQ(decision->nextLcgState, 4243115u);
     EXPECT_EQ(mm6::readChest16(record, 2), 3u);
@@ -32,6 +34,7 @@ UNIT_TEST(MM6ChestTrapDecision, ThresholdAndTriggeredVariantFollowSourceOrder) {
     ASSERT_TRUE(triggered);
     EXPECT_FALSE(triggered->disarmed);
     EXPECT_EQ(triggered->variant, 2);  // Second draw is 28170 % 4.
+    EXPECT_EQ(triggered->spriteId, 812);
     EXPECT_EQ(triggered->drawsConsumed, 2);
     EXPECT_EQ(triggered->nextLcgState, 1846202050u);
 
@@ -39,8 +42,23 @@ UNIT_TEST(MM6ChestTrapDecision, ThresholdAndTriggeredVariantFollowSourceOrder) {
     ASSERT_TRUE(disarmed);
     EXPECT_TRUE(disarmed->disarmed);
     EXPECT_EQ(disarmed->variant, -1);
+    EXPECT_EQ(disarmed->spriteId, 0);
     EXPECT_EQ(disarmed->drawsConsumed, 1);
     EXPECT_EQ(disarmed->nextLcgState, 4243115u);
+}
+
+UNIT_TEST(MM6ChestTrapDecision, UsesOriginalFourSpriteOrder) {
+    const auto record = placedTrappedRecord();
+    constexpr std::array<std::uint32_t, 4> seeds = {3, 1, 0, 4};
+    constexpr std::array<int, 4> sprites = {811, 813, 812, 814};
+    for (int variant = 0; variant < 4; ++variant) {
+        const auto decision = mm6::stageChestTrapDecision(GameTitle::MM6, record, true, 0, 0,
+                                                          seeds[variant]);
+        ASSERT_TRUE(decision);
+        EXPECT_EQ(decision->variant, variant);
+        EXPECT_EQ(decision->spriteId, sprites[variant]);
+        EXPECT_EQ(decision->drawsConsumed, 1);
+    }
 }
 
 UNIT_TEST(MM6ChestTrapDecision, RejectsForeignAndUnreadyInputsWithoutMutation) {

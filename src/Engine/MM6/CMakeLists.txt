@@ -60,7 +60,8 @@ if(OE_BUILD_TESTS)
     add_library(test_engine_mm6_chest_record OBJECT Tests/MM6ChestRecordTransaction_ut.cpp
         Tests/MM6ChestRuntimeProjection_ut.cpp Tests/MM6ChestMapLoadHandoff_ut.cpp
         Tests/MM6ChestLiveOwnerAdapter_ut.cpp Tests/MM6ChestSeedAndOwnership_ut.cpp
-        Tests/MM6ChestFirstOpenTransaction_ut.cpp Tests/MM6ChestTrapDecision_ut.cpp)
+        Tests/MM6ChestFirstOpenTransaction_ut.cpp Tests/MM6ChestTrapDecision_ut.cpp
+        Tests/MM6ChestDisarmScore_ut.cpp)
     target_link_libraries(test_engine_mm6_chest_record PUBLIC testing_unit engine_tables engine_objects engine_serialization)
     target_check_style(test_engine_mm6_chest_record)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_chest_record)

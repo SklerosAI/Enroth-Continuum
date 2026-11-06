@@ -697,3 +697,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The MM6 spell table now retains seven typed source labels for all 99 IDs. Eleven Electricity, Cold and Poison rows that previously fell through the inherited school map are explicit in the MM6 source view; MM7 loading and the live MM6 spell-effect gate remain unchanged.
 - Arm64 MM6, OpenEnroth and unit targets built, and both focused tests passed, including all 99 F3-matched retained rows. Numeric damage, target and resistance semantics remain open. No original installation or MM6 process was opened.
+
+## [2026-11-06] guard | MM6 load candidate preflight
+- by: T-Burton-ND via codex
+- A new read-only `.ec6` preflight checks primary and backup through the current sixteen-section decoder and a required caller-supplied semantic validator. It can select a valid backup when a CRC-valid primary fails later semantic checks, without restoring or changing either file. A future live caller must supply private map/base and complete runtime checks before any recovery or global commit; SaveLoad remains guarded.
+- The arm64 MM6, OpenEnroth and unit targets built. Focused atomic-save tests passed 5/5, including primary acceptance, semantic fallback, both-candidate rejection and backup-only selection with unchanged disk bytes. Cpplint and diff checks passed. No original installation or MM6 process was opened.

@@ -113,6 +113,7 @@ void GUIWindow_Transport::mainDialogue() {
 
     if (engine->gameTitle() == GameTitle::MM6) {
         std::vector<std::string> optionsText;
+        bool hasActiveRoute = false;
         const int house = std::to_underlying(houseId());
         const int weekday = pParty->uCurrentDayOfMonth % 7;
         for (size_t slot = 0; slot < 3; ++slot) {
@@ -120,11 +121,18 @@ void GUIWindow_Transport::mainDialogue() {
             if (route) {
                 MapId destination = pMapTable->GetMM6TransportMapInfo(*pGames_LOD, route->mapIndex);
                 optionsText.push_back(localization->format(LSTR_D_DAYS_TO_S, route->duration, pMapTable->pInfos[destination].name));
+                hasActiveRoute = true;
             } else {
                 optionsText.emplace_back();
             }
         }
-        drawOptions(optionsText, colorTable.PaleCanary, 146, true);
+        if (hasActiveRoute) {
+            drawOptions(optionsText, colorTable.PaleCanary, 146, true);
+        } else {
+            int textHeight = assets->pFontArrus->CalcTextHeight(localization->str(LSTR_SORRY_COME_BACK_ANOTHER_DAY), travel_window.w, 0);
+            int vertMargin = (SIDE_TEXT_BOX_BODY_TEXT_HEIGHT - textHeight) / 2 + SIDE_TEXT_BOX_BODY_TEXT_OFFSET;
+            DrawTitleText(assets->pFontArrus.get(), 0, vertMargin, colorTable.White, localization->str(LSTR_SORRY_COME_BACK_ANOTHER_DAY), 3, travel_window);
+        }
         return;
     }
 

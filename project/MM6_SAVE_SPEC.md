@@ -84,6 +84,8 @@ The application can initially store MM6 map deltas as losslessly encoded MM6 wir
 
 MM6's event-variable numbering is also title-specific. A 200-byte map-state block does not justify reuse of MM7 event ID arithmetic; reconcile the retained event-variable probe with the MM6 runtime mapping before implementing reads or writes to those bytes.
 
+F4 guard (2026-11-06): until the complete `.ec6` transaction is wired, MM6 `loadGame`, `createSaveData`, `saveGame` and `saveNewGame` reject before entering the inherited MM7 serializer or writing an `.mm7` file. This makes the staged `MM6.app` intentionally unavailable for live play. Replace this guard only with a title-specific, fully validated transaction; the bounded `.ec6` field codecs alone do not satisfy it.
+
 ## Transition and write-path audit
 
 This F2 source review adds consumer obligations, not new field semantics.

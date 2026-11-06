@@ -5,6 +5,7 @@
 #include <string>
 #include <string_view>
 #include <memory>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -44,6 +45,9 @@
 std::unordered_map<std::string, Blob> pMapDeltas;
 
 void loadGame(std::string_view fileName) {
+    if (engine->gameTitle() == GameTitle::MM6)
+        throw std::runtime_error("MM6 save loading is unavailable until the EC6 transaction is complete");
+
     std::string path = fmt::format("saves/{}", fileName);
     if (!ufs->exists(path)) {
         pAudioPlayer->playUISound(SOUND_error);
@@ -144,6 +148,9 @@ void loadGame(std::string_view fileName) {
 }
 
 std::pair<SaveGameHeader, Blob> createSaveData(bool resetWorld, std::string_view title) {
+    if (engine->gameTitle() == GameTitle::MM6)
+        throw std::runtime_error("MM6 save encoding is unavailable until the EC6 transaction is complete");
+
     std::string currentMapName = pMapTable->pInfos[engine->_currentLoadedMapId].fileName;
 
     // Populate SaveGameState from global variables.
@@ -203,6 +210,9 @@ std::pair<SaveGameHeader, Blob> createSaveData(bool resetWorld, std::string_view
 }
 
 SaveGameHeader saveGame(bool isAutoSave, bool resetWorld, std::string_view path, std::string_view title) {
+    if (engine->gameTitle() == GameTitle::MM6)
+        throw std::runtime_error("MM6 save writing is unavailable until the EC6 transaction is complete");
+
     assert(isAutoSave || !title.empty());
     assert(engine->_currentLoadedMapId != MAP_ARENA || isAutoSave); // No manual saves in Arena.
 
@@ -251,6 +261,9 @@ void doSavegame(std::string fileName, std::string_view title) {
 }
 
 void saveNewGame() {
+    if (engine->gameTitle() == GameTitle::MM6)
+        throw std::runtime_error("MM6 new-game save is unavailable until the EC6 transaction is complete");
+
     if (engine->gameTitle() == GameTitle::MM6) {
         engine->_currentLoadedMapId = pMapTable->GetMapInfo("oute3.odm");
         // New Sorpigal's arrival point in the original MM6 coordinate system.

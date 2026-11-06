@@ -1,6 +1,6 @@
 # MM6 item and monster guide claims: F2 reconciliation queue
 
-Status: **partial direct guide review, complete per-ID OCR catalog queue, F2 open**
+Status: **direct visual item-catalog pass, complete per-ID evidence queue, F2 open**
 (2026-11-05). This packet extends [item rules](MM6_RULES_F2_CLOSURE.md),
 [monster/combat semantics](MM6_COMBAT_SEMANTICS_F2.md), and the
 [guide chapter ledger](MM6_GUIDE_F2_REVIEW.md). It does not read original
@@ -10,9 +10,9 @@ the F2 gate.
 ## Method and evidence
 
 The owner's retained 412-page [Prima strategy guide](https://www.mocagh.org/nwc/mm6-hintbook.pdf)
-was checked as rendered scans at PDF pp. **36–38, 40, 42–45, 47–48, 50,
-52–54, 59, 158–159, 164, 168, 180, 189, 201, 203–204, 206, 209,
-213, 219, 224, 228 and 232–233** (32 pages).
+was checked as rendered scans at PDF pp. **159–231** (the complete printed
+item-catalog span, 73 pages) plus earlier selected monster and rules pages
+**36–38, 40, 42–45, 47–48, 50, 52–54, 59, 158 and 232–233**.
 The earlier [potion review](MM6_RULES_F2_CLOSURE.md) visually checked
 pp. 238–239. The chapter text layer was searched across all monster catalog
 pages 35–96 and item catalog pages 157–240; it has visible OCR mistakes. The private
@@ -27,7 +27,7 @@ consumes already retained, ignored `item-range-probe.json`,
 reviewed overrides locked to the PDF hash. It writes an ignored
 `item-monster-guide-queue.json` with candidate guide section, exact normalized
 OCR-name page hits, OCR base-value claims, catalog match status, semantic
-review status and current consumer for **every 581 item IDs (0–580)**
+review status, retained field schema and current consumer for **every 581 item IDs (0–580)**
 and **173 monster IDs (1–173)**. Input fingerprints travel with the queue. A
 candidate section or OCR hit is a work locator, not proof that a printed row
 or its effect is correct. Reproduce with:
@@ -40,27 +40,31 @@ python3 scripts/mm6_probe_item_monster_guide_claims.py \
 
 The catalog statuses have narrow meanings: **matched** means a unique exact
 normalized name in the candidate guide section or a visual override;
-**ambiguous** means a single-word, repeated or out-of-section hit; **absent**
-means no exact name in the extracted chapter text, **not** absent from the
-scanned guide; **unreviewed** means the retained row has no name. Visual
-inspection found both an item and a monster variant that OCR had missed. The
-queue reports **174 matched, 263 ambiguous, 141 OCR-absent and 3 unreviewed
-items**; **82 matched, 52 ambiguous and 39 OCR-absent monsters**. Direct page
-images cover **16 item IDs and 39 monster IDs**. For items, 11 selected field
-sets match, three selected base values disagree, two have identity checks
-only, and 163 additional base values agree through OCR extraction alone;
-**402 item semantic rows remain unreviewed**. For monsters, 25 selected field
-sets match and 14 disagree; **134 monster semantic rows remain unreviewed**.
-The 166 unique OCR item value claims include the three disagreements, all
-confirmed in rendered scans. OCR agreement is a partial value check, not a
-complete entry, effect, or runtime check. These denominators keep lexical,
-partial value, rendered-row, and rule coverage separate.
+**ambiguous** and **absent** are OCR results, not scanned-guide absences;
+**generic category only** means the relevant scanned page illustrates or
+discusses a category without listing that ID; **not listed in printed catalog**
+requires inspection of the complete relevant printed table. The queue now
+reports **460 matched, 97 generic-category-only, two confirmed not listed,
+nine OCR-ambiguous, ten OCR-absent and three nameless items**. The monster
+queue remains **82 matched, 52 ambiguous and 39 OCR-absent**.
 
-No retained ID is yet classified as **not listed in the printed guide** or
-**unreadable in its scanned entry** without direct page evidence. The 141
-item and 39 monster OCR absences remain unresolved; they must not be
-silently converted into a printed absence. The three blank item rows have
-no retained name to seek in the guide.
+Rendered pages resolve **460 item IDs to individual printed entries** and
+**39 monster IDs**. Among items, **403 selected field sets match** and **12
+disagree**; two entries have identity checks only, and 43 more printed
+entries have no field/effect comparison yet. **164 of 581 item semantic rows
+remain unreviewed**, down from 402 at the start of this pass. These 164 are
+43 printed entry identities, 97 generic-category IDs, two printed catalog
+absences, 19 unresolved OCR locators and three blank retained rows. OCR-only
+value agreements have been superseded where visual pages were checked; they
+never established complete effects. The monster field results remain **25
+matches, 14 disagreements and 134 unreviewed**. No original executable
+effect was verified by the guide pass.
+
+The two confirmed printed-catalog absences are the final spell-scroll and
+spellbook IDs. A spell description elsewhere in the guide does not establish
+an individual item listing. Ten other item and 39 monster OCR absences still
+have unknown printed status. The three blank item rows have no retained name
+to seek in the guide.
 
 The source-level diagnoses below have **high confidence** where a retained
 field and current C++ path directly show a mismatch. Guide behavior has
@@ -86,12 +90,17 @@ it. A checked name or value is not an item/monster runtime check.
 | Unclassified item (157–240) | 6 | Blank/gold/other types require direct row and consumer inspection before any default behavior. |
 
 These are **candidate** buckets generated from retained type, rarity and ID
-band; their counts sum to 581. The packet does not claim each printed guide
-entry has been individually matched. Selected visual checks now span weapon,
+band; their counts sum to 581. Selected visual checks now span weapon,
 armor, wand, herb, potion, scroll, spellbook, artifact, relic, quest and
 miscellaneous sections. Matching name/value/skill/damage cells do not
 establish actual casts, damage, merchant price, quest role, identify or repair
 behavior.
+The 12 selected field disagreements split into seven weapon prices, four
+armor/headgear rows (one also differs on armor bonus), and one quest shield
+identify level. Exact guide and retained cells remain in the ignored private
+ledger. The 99 scroll and 99 book retained spell tokens are complete static
+sequences; the guide lists 98 entries in each printed table. Their final
+IDs and all cast/learn effects still require executable evidence.
 The guide's generated-item page describes level and enchantment constraints;
 [MM6ItemTable.cpp](../src/Engine/Tables/MM6ItemTable.cpp) loads 14 standard
 and 59 special enchantment rows plus random weights, while shared
@@ -110,9 +119,9 @@ The private queue now classifies all **404 IDs** in the wand, spell-scroll,
 spellbook and 400–580 special-item bands from retained type, rarity, spell
 token and description markers. It also records the current C++ consumer and
 inherited ID predicates per ID. This is complete **static role/consumer
-coverage** for this scope, not a new guide semantic check: **402 of 581 item
-rows remain semantically unreviewed**. No new guide page or original game
-archive was opened for this pass.
+coverage** for this scope, not a guide effect check: **164 of 581 item
+rows remain semantically unreviewed**. The subsequent rendered catalog pass
+used the owner-retained guide, without reopening original game archives.
 
 | Retained role | IDs | Static C++ finding |
 | --- | ---: | --- |
@@ -178,14 +187,15 @@ source/runtime gaps.
 
 ## F3, F4 and F5 handoff
 
-1. **Before F3:** resolve the 263 ambiguous and 141 OCR-absent item names,
-   and 52 ambiguous and 39 OCR-absent monster names against rendered guide
-   pages; then directly compare each of the 581 item and 173 monster IDs
-   against its scanned guide entry where one exists. Record an explicit
-   not-in-guide or OCR-uncertain exception rather than a fabricated match.
-   Reconcile every item category, generated-item level/bonus rule, monster
-   label, guide treasure discrepancy and the two-row tail. A status/count
-   must remain available for each ID in the private queue.
+1. **Before F3:** resolve the nine ambiguous and ten OCR-absent item locators,
+   then compare meaningful fields/effects for the 43 visually identified but
+   semantically unreviewed entries. Preserve the 97 generic-category-only,
+   two printed-table-absent and three blank-name exceptions per ID. Resolve
+   52 ambiguous and 39 OCR-absent monster names against rendered pages and
+   compare all 134 semantically unreviewed variants. Reconcile item
+   generation, the potion matrix, monster labels, guide treasure differences
+   and the two-row tail. A status/count must remain available for each ID in
+   the private queue.
 2. **F3 read-only original pass:** compare retained table hashes, exact
    disagreement rows and executable-only rules to the owner's original
    installation once the shared F2 gate freezes. If the printed guide differs,

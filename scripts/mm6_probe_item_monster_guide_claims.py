@@ -84,6 +84,15 @@ def retained_item_roles(path: Path) -> dict[int, dict]:
                 roles[int(cells[0])] = {
                     "effect_token": cells[6].strip(),
                     "quest_description_marker": cells[15].lstrip().casefold().startswith("quest item:"),
+                    "schema_cells": {
+                        "icon": cells[1], "name": cells[2], "base_value": cells[3],
+                        "type": cells[4], "skill": cells[5],
+                        "damage_or_effect": cells[6], "damage_modifier": cells[7],
+                        "rarity": cells[8], "identify_repair": cells[9],
+                        "unidentified_name": cells[10], "sprite_id": cells[11],
+                        "paperdoll_x": cells[13], "paperdoll_y": cells[14],
+                        "description_present": bool(cells[15].strip()),
+                    },
                 }
     if sorted(roles) != list(range(581)):
         raise ValueError("retained MM6 items.txt role IDs are incomplete")
@@ -181,6 +190,24 @@ def source_role_consumer(role: str) -> tuple[str, str]:
     if role != "outside_high_risk_scope":
         return "EvtVariables held-item operand; Item type/use/shop; isQuestItem ID predicate", "inherited_quest_range_600_699"
     return "MM6ItemTable load; shared ItemTable/ItemEnumFunctions/UIPopup behavior requires title check", "outside_high_risk_scope"
+
+
+def retained_schema_consumer(item: dict, role: str) -> str:
+    """Current C++ path selected by the retained row, not behavior proof."""
+    if not item["name"]:
+        return "blank-name retained row; no named item consumer mapped"
+    if role != "outside_high_risk_scope":
+        return source_role_consumer(role)[0]
+    kind = item["mm6_type"].casefold()
+    if kind in {"weapon", "weapon1or2", "weapon2", "missile"}:
+        return "MM6ItemTable template; ItemTable generation; Character equip/attack"
+    if kind in {"armor", "shield", "helm", "boots", "cloak", "belt", "gauntlets", "ring", "amulet"}:
+        return "MM6ItemTable template; ItemTable generation; Character equip/AC/bonuses"
+    if kind in {"bottle", "herb"}:
+        return "MM6ItemTable template; Character item use; UIPopup potion/mixture path"
+    if kind == "gold":
+        return "MM6ItemTable template; Item gold type; party gold pickup and value path"
+    return "MM6ItemTable template; Item type/display; ItemTable generation or event item path requires title check"
 
 
 def value_claims(name: str, page_spec: str, pages: dict[int, str]) -> list[dict]:
@@ -311,15 +338,39 @@ def main() -> None:
         status = catalog_status(item["name"], within, outside)
         reviewed = overrides.get("items", {}).get(str(item["id"]))
         if reviewed:
-            if reviewed["status"] not in {"matched", "ambiguous", "absent"}:
+            if reviewed["status"] not in {"matched", "ambiguous", "absent", "generic_category_only", "not_listed_in_printed_catalog"}:
                 raise ValueError("invalid visual item override status")
-            if not 157 <= reviewed["pdf_page"] <= 240:
+            if reviewed["status"] in {"generic_category_only", "not_listed_in_printed_catalog"}:
+                if reviewed.get("pdf_page") is not None or not reviewed.get("reviewed_pages"):
+                    raise ValueError("catalog category/absence needs reviewed pages, not a row page")
+                if any(not 157 <= page <= 240 for page in reviewed["reviewed_pages"]):
+                    raise ValueError("catalog category/absence review outside item chapter")
+                if reviewed.get("semantic_status", "unreviewed") != "unreviewed":
+                    raise ValueError("category/absence cannot claim a semantic field comparison")
+            elif not 157 <= reviewed["pdf_page"] <= 240:
                 raise ValueError("visual item override outside guide chapter")
+            if reviewed.get("semantic_status", "").startswith("selected_fields") and not reviewed.get("checked_fields"):
+                raise ValueError("selected-field comparison needs an explicit checked-field list")
             status = reviewed["status"]
         claims = value_claims(item["name"], page_spec, raw_pages)
         semantic_status = reviewed.get("semantic_status", "unreviewed") if reviewed else "unreviewed"
         if not reviewed and len(claims) == 1:
             semantic_status = "ocr_value_match" if claims[0]["value"] == item_values[item["id"]] else "ocr_value_disagree_unverified"
+        visual_page = reviewed.get("pdf_page") if reviewed else None
+        if status == "not_listed_in_printed_catalog":
+            page_resolution = "visually_confirmed_not_listed_in_printed_catalog"
+        elif status == "generic_category_only":
+            page_resolution = "visually_confirmed_generic_category_only"
+        elif visual_page is not None:
+            page_resolution = "visual_entry_checked"
+        elif status == "matched":
+            page_resolution = "unique_exact_ocr_page_candidate"
+        elif status == "ambiguous":
+            page_resolution = "ambiguous_ocr_page_candidates"
+        elif status == "absent":
+            page_resolution = "ocr_absent_print_status_unknown"
+        else:
+            page_resolution = "retained_row_has_no_name"
         item_records.append({
             "id": item["id"],
             "name": item["name"],
@@ -328,11 +379,17 @@ def main() -> None:
             "candidate_guide_family": family,
             "candidate_prima_pdf_pages": page_spec,
             "catalog_match_status": status,
-            "catalog_match_evidence": "visual_scan" if reviewed else "exact_normalized_ocr_name",
+            "catalog_match_evidence": "visual_catalog_scan" if reviewed else "exact_normalized_ocr_name",
             "ocr_hit_pages_in_candidate_section": within,
             "ocr_hit_pages_elsewhere_in_item_chapter": outside,
-            "visual_review_page": reviewed["pdf_page"] if reviewed else None,
+            "guide_page_resolution_status": page_resolution,
+            "guide_page_candidates": sorted(set(within + outside + ([visual_page] if visual_page else []))),
+            "catalog_reviewed_pages": reviewed.get("reviewed_pages", []) if reviewed else [],
+            "visual_review_page": visual_page,
+            "visual_checked_fields": reviewed.get("checked_fields", []) if reviewed else [],
             "retained_base_value": item_values[item["id"]],
+            "retained_field_schema": role_data["schema_cells"],
+            "retained_field_schema_consumer": retained_schema_consumer(item, role),
             "retained_data_role": role,
             "retained_role_evidence": "retained item type, rarity and description marker only",
             "retained_quest_description_marker": role_data["quest_description_marker"],
@@ -399,6 +456,9 @@ def main() -> None:
             "item_catalog_status": dict(sorted(Counter(record["catalog_match_status"] for record in item_records).items())),
             "monster_catalog_status": dict(sorted(Counter(record["catalog_match_status"] for record in monster_records).items())),
             "visually_reviewed_item_ids": sum(record["visual_review_page"] is not None for record in item_records),
+            "visually_confirmed_printed_catalog_absences": sum(record["guide_page_resolution_status"] == "visually_confirmed_not_listed_in_printed_catalog" for record in item_records),
+            "visually_confirmed_generic_category_only": sum(record["guide_page_resolution_status"] == "visually_confirmed_generic_category_only" for record in item_records),
+            "item_guide_page_resolution_status": dict(sorted(Counter(record["guide_page_resolution_status"] for record in item_records).items())),
             "visually_reviewed_monster_ids": sum(record["visual_review_page"] is not None for record in monster_records),
             "item_semantic_status": dict(sorted(Counter(record["guide_semantic_status"] for record in item_records).items())),
             "high_risk_item_ids": sum(record["retained_data_role"] != "outside_high_risk_scope" for record in item_records),

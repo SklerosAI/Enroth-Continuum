@@ -16,6 +16,7 @@
 #include "Library/Serialization/Serialization.h"
 
 #include "Engine/Random/Random.h"
+#include "Engine/MM6/MM6ItemIconGuard.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Engine.h"
 #include "Engine/Resources/EngineFileSystem.h"
@@ -28,6 +29,7 @@
 #include "Library/Logger/Logger.h"
 
 #include "Utility/String/Ascii.h"
+#include "Utility/Exception.h"
 #include "Utility/MapAccess.h"
 #include "Utility/Memory/Blob.h"
 #include "Utility/String/Transformations.h"
@@ -360,6 +362,13 @@ void ItemTable::LoadItemSizes() {
     // (think about all these random reads from your HDD) but is totally fine today. Another option would've been to
     // precalculate these and place in a json file, but why precalculate what's cheap to recalculate?
     LodReader reader(dfs->read("data/icons.lod"));
+
+    if (engine && engine->gameTitle() == GameTitle::MM6) {
+        std::vector<ItemId> missing = mm6::collectMissingItemIconIds(
+            *this, [&reader](std::string_view iconName) { return reader.exists(iconName); });
+        if (!missing.empty())
+            throw Exception("MM6 item {} has no icon in icons.lod", std::to_underlying(missing.front()));
+    }
 
     for (ItemId itemId : items.indices()) {
         std::string iconName = items[itemId].iconName;

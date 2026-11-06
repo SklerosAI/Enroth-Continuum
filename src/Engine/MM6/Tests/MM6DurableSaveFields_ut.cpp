@@ -5,6 +5,7 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6DurableSaveFields.h"
+#include "Engine/MM6/MM6ItemIconGuard.h"
 #include "Engine/Objects/Inventory.h"
 #include "Engine/Tables/ItemTable.h"
 
@@ -129,4 +130,19 @@ UNIT_TEST(MM6DurableSaveFields, SparseIndexedItemPlacementRejectsOverlap) {
     EXPECT_EQ(inventory.entry(ITEM_SLOT_RING1).index(), 4);
     EXPECT_FALSE(inventory.tryRestoreAt(3, ITEM_SLOT_RING1, ring));
     EXPECT_FALSE(inventory.tryRestoreAt(4, ITEM_SLOT_RING2, ring));
+}
+
+UNIT_TEST(MM6ItemIconGuard, NamedTemplatesRequireImagesButPlaceholdersDoNot) {
+    ItemTable table;
+    table.items[ITEM_CRUDE_LONGSWORD].iconName = "present";
+    table.items[ITEM_BRASS_RING].iconName = "missing";
+
+    auto exists = [](std::string_view name) { return name == "present"; };
+    EXPECT_EQ(mm6::collectMissingItemIconIds(table, exists),
+              (std::vector<ItemId>{ITEM_BRASS_RING}));
+
+    table.items[ITEM_BRASS_RING].iconName.clear();
+    EXPECT_TRUE(mm6::collectMissingItemIconIds(table, exists).empty());
+    table.items[ITEM_BRASS_RING].iconName = "present";
+    EXPECT_TRUE(mm6::collectMissingItemIconIds(table, exists).empty());
 }

@@ -230,8 +230,10 @@ that requirement.
   string references and an existing target step; the inherited parser reads
   one field and the interpreter asserts. A retained NPC comparison finds 35
   labeled topic references without a global event or current special handler.
-  These are structural findings; the intended answer and dialogue behavior
-  still require semantic review.
+  `scripts/mm6_probe_dialogue_events.py` reproduces the aggregate counts and
+  writes the per-record evidence only to an ignored local report. These are
+  structural findings; the intended answer and dialogue behavior still
+  require semantic review.
 - [ ] Classify every nonzero MM6 NPC topic as a global event, MM6-specific
   special action or evidenced text-only choice. Define Question answer/cancel
   branches, the missing opcode effects, and a private quest dependency graph

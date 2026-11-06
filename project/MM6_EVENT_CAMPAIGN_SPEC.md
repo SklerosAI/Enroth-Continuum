@@ -10,6 +10,10 @@ original-file preflight has not happened.
 
 The retained, ignored `event-probe.json`, `event-parser-probe.json`, and
 `event-variable-probe.json` cover the 67 listed map scripts plus `global.evt`.
+The reproducible `scripts/mm6_probe_dialogue_events.py` writes a detailed,
+ignored `dialogue-event-probe.json` and prints only aggregate Question and NPC
+topic counts; it records source and input hashes and requires the report to
+stay under the ignored MM6 reference tree.
 Their parser/source hashes were checked against the current C++ tree. The
 owned guide's campaign milestones are indexed in
 [MM6_GUIDE_RECONCILIATION.md](MM6_GUIDE_RECONCILIATION.md), but are not yet

@@ -1603,3 +1603,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The F3-matched source audit classified direct new-game clear, generation, menu, purchase, hover/pricing and raw Party persistence paths for the shared shop/guild stock row. General item-generation calls receive computed stock pointers, so direct-address tracing does not prove a complete writer set.
 - No nonzero owner-local native save was found in the staged references. Original stock records are 28 bytes while the inherited runtime item snapshot is 36 bytes; the chest tail preservation seam does not establish shop conversion. The live SHOP owner and SaveLoad remain guarded pending these checks.
+
+## [2026-11-06] verify | MM6 standalone section manifest guard
+- by: T-Burton-ND via codex
+- Added a linked fixture proving that recognized standalone `SHOP` and `BEAC` sections still make the provisional eighteen-section known save reject before destination mutation.
+- Corrected the wiki's stale `PART` version to v3. The focused known-save guard passed 1/1; this does not open the live save path.

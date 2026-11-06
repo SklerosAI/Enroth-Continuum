@@ -39,6 +39,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Indoor Runtime](MM6-F4-Indoor-Runtime.md) — Bounded BLV/DLV projection and changed-state encoding with retained opaque wire
 - [MM6 F4 Map Save Fields](MM6-F4-Map-Save-Fields.md) — Bounded `.ec6` map-delta section and whole-save validation obligations
 - [MM6 F4 NPC State](MM6-F4-NPC-State.md) — Bounded `.ec6` RESC NPC/group fields and copy-staging with open gameplay semantics
+- [MM6 F4 Atomic Save File](MM6-F4-Atomic-Save-File.md) — Native `.ec6` atomic replacement, validated backup recovery and unsupported filesystem cases
 - [Open Questions](Open-Questions.md) — F2-frozen source uncertainties and F3/F4/F5 resolution routes
 
 ## Evidence and future play

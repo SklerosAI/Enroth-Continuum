@@ -82,4 +82,5 @@ UNIT_TEST(MM6HeldItemSaveFields, RejectsInvalidBeforeDestinationMutation) {
     wrongTitle[2] = '7';
     EXPECT_THROW(mm6::loadHeldItemBeforeMutation(wrongTitle, &destination), std::exception);
     EXPECT_EQ(destination, before);
+    EXPECT_THROW(mm6::loadHeldItemBeforeMutation(saveBytes(before), nullptr), std::exception);
 }

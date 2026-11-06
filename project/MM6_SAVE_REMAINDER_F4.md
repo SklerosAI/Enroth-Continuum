@@ -44,12 +44,12 @@ Read this beside [the save-field register](MM6_SAVE_FIELD_REGISTER_F2.md), [the 
 
 `MM6ResistanceSaveFields.*` encodes one required `RSTS` section: version 1, four characters, eleven channels, reserved zero, then 22 little-endian signed 16-bit values per character (base first, bonus second). The decoder requires exact 180-byte payload and rejects missing/optional/duplicate/malformed values. `captureResistanceFields` and `stageResistanceParty` require the active MM6 title; staging decodes the full title-tagged container before copying the party and changing only those 88 scalars. MM7's serializer remains separate. The section is deliberately raw: preservation of current fields is proved; which MM6 channels should contribute to damage is not.
 
-Two focused C++ tests passed in the linked arm64 `OpenEnroth_UnitTest` binary. They cover signed extremes, exact round-trip, valid-container malformed shape and length, optional-section rejection, wrong title, and destination immutability. Runtime capture/stage compiled as part of the full unit target, but no game launch or integrated map test occurred. The whole-save mandatory-section assembler still needs to include `RSTS` when the complete transaction is ready.
+Two focused C++ tests passed in the linked arm64 `OpenEnroth_UnitTest` binary. They cover signed extremes, exact round-trip, valid-container malformed shape and length, optional-section rejection, wrong title, and destination immutability. Runtime capture/stage compiled as part of the full unit target, but no game launch or integrated map test occurred. The partial known-save assembler now requires `RSTS`; the complete transaction still needs the remaining state.
 
 ## Whole-save completion order
 
-1. Resolve buff slot and overlay references, then add a bounded timed-effect section plus recovery and daily counters.
+1. Resolve buff slot and overlay references for the bounded `BUFF` section, then add recovery and daily counters.
 2. Resolve title-specific house/shop indices, stock item identity and refresh/ban times; add shop and event-clock sections.
-3. Add held item and party hireling copies with NPC identity/fee/sacrifice joins, then generated-artifact state under a verified MM6 item range.
+3. Complete post-load cursor UI for the bounded `HELD` section; add party hireling copies with NPC identity/fee/sacrifice joins, then generated-artifact state under a verified MM6 item range.
 4. Add remaining campaign modifiers, calendar, flags and beacon state with explicit reset policies for transient fields.
 5. Require every mandatory section and cross-field invariant in the whole-save assembler before enabling `SaveLoad` or menu slots; perform F5 save/quit/relaunch/load and visual checks.

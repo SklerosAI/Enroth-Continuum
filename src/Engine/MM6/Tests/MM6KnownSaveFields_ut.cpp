@@ -31,20 +31,27 @@ mm6::KnownSaveFields exampleFields() {
     fields.npcs.groups[50] = 23;
     fields.resistances.characters[0].base[0] = -5;
     fields.resistances.characters[3].bonus[10] = 17;
+    fields.heldItem.present = true;
+    fields.heldItem.itemId = 1;
+    fields.buffs.party[0].expireTicks = 100;
+    fields.buffs.party[0].power = 12;
+    fields.buffs.characters[3][23].isGM = true;
     return fields;
 }
 
 } // namespace
 
-UNIT_TEST(MM6KnownSaveFields, AssemblesAllTwelveRequiredSections) {
+UNIT_TEST(MM6KnownSaveFields, AssemblesAllFourteenRequiredSections) {
     mm6::KnownSaveFields fields = exampleFields();
     std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(fields);
     mm6::SaveContainer container = mm6::decodeSaveContainer(bytes);
-    ASSERT_EQ(container.sections.size(), 12);
+    ASSERT_EQ(container.sections.size(), 14);
     for (const mm6::SaveSection &section : container.sections)
         EXPECT_TRUE(section.required);
     EXPECT_EQ(mm6::encodeKnownSave(mm6::decodeKnownSave(bytes)), bytes);
     EXPECT_EQ(mm6::decodeKnownSave(bytes).resistances, fields.resistances);
+    EXPECT_EQ(mm6::decodeKnownSave(bytes).heldItem, fields.heldItem);
+    EXPECT_EQ(mm6::decodeKnownSave(bytes).buffs, fields.buffs);
 
     std::reverse(container.sections.begin(), container.sections.end());
     EXPECT_EQ(mm6::encodeKnownSave(mm6::decodeKnownSave(mm6::encodeSaveContainer(container))), bytes);
@@ -110,11 +117,13 @@ UNIT_TEST(MM6KnownSaveFields, LateDecodeFailureLeavesDestinationUntouched) {
     mm6::KnownSaveFields destination = exampleFields();
     destination.metadata.header.displayName = "Prior state";
     mm6::SaveContainer invalid = mm6::decodeSaveContainer(mm6::encodeKnownSave(exampleFields()));
-    invalid.sections.back().payload[0] = 2; // RSTS version, with a valid outer CRC.
+    invalid.sections.back().payload[0] = 2; // BUFF version, with a valid outer CRC.
     EXPECT_THROW(mm6::loadKnownSaveBeforeMutation(mm6::encodeSaveContainer(invalid), &destination), std::exception);
     EXPECT_EQ(destination.metadata.header.displayName, "Prior state");
     EXPECT_EQ(destination.npcs.npcData[398].name, "Synthetic NPC");
     EXPECT_EQ(destination.resistances.characters[0].base[0], -5);
+    EXPECT_EQ(destination.heldItem.itemId, 1);
+    EXPECT_EQ(destination.buffs.party[0].power, 12);
     EXPECT_THROW(mm6::loadKnownSaveBeforeMutation(mm6::encodeKnownSave(exampleFields()), nullptr), std::exception);
 }
 

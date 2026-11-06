@@ -12,15 +12,16 @@
 namespace mm6 {
 namespace {
 
-constexpr std::array<std::array<char, 4>, 12> REQUIRED_TAGS = {{
+constexpr std::array<std::array<char, 4>, 14> REQUIRED_TAGS = {{
     {'P', 'A', 'R', 'T'}, {'C', 'H', 'A', 'R'}, {'Q', 'E', 'S', 'T'}, {'E', 'F', 'F', 'T'},
     {'I', 'T', 'E', 'M'}, {'H', 'E', 'A', 'D'}, {'T', 'I', 'M', 'E'}, {'U', 'I', 'S', 'T'},
     {'V', 'I', 'S', 'U'}, {'M', 'A', 'P', 'S'}, {'R', 'E', 'S', 'C'}, {'R', 'S', 'T', 'S'},
+    {'H', 'E', 'L', 'D'}, {'B', 'U', 'F', 'F'},
 }};
 
 void checkSectionSet(const SaveContainer &container) {
     if (container.sections.size() != REQUIRED_TAGS.size())
-        throw std::runtime_error("MM6 known save requires exactly twelve sections");
+        throw std::runtime_error("MM6 known save requires exactly fourteen sections");
     for (const SaveSection &section : container.sections) {
         if (!section.required ||
             std::find(REQUIRED_TAGS.begin(), REQUIRED_TAGS.end(), section.tag) == REQUIRED_TAGS.end())
@@ -56,6 +57,8 @@ std::vector<std::uint8_t> encodeKnownSave(const KnownSaveFields &fields) {
     SaveSection maps = encodeMapSection(fields.maps);
     SaveSection npcs = encodeNpcSection(fields.npcs);
     SaveSection resistances = encodeResistanceSection(fields.resistances);
+    SaveSection heldItem = encodeHeldItemSection(fields.heldItem);
+    SaveSection buffs = encodeBuffSection(fields.buffs);
     checkCrossFields(fields);
 
     SaveContainer container;
@@ -69,6 +72,8 @@ std::vector<std::uint8_t> encodeKnownSave(const KnownSaveFields &fields) {
     container.sections.push_back(std::move(maps));
     container.sections.push_back(std::move(npcs));
     container.sections.push_back(std::move(resistances));
+    container.sections.push_back(std::move(heldItem));
+    container.sections.push_back(std::move(buffs));
     checkSectionSet(container);
     return encodeSaveContainer(container);
 }
@@ -83,6 +88,8 @@ KnownSaveFields decodeKnownSave(std::span<const std::uint8_t> bytes) {
     fields.maps = decodeMapSection(container);
     fields.npcs = decodeNpcSection(container);
     fields.resistances = decodeResistanceSection(container);
+    fields.heldItem = decodeHeldItemSection(container);
+    fields.buffs = decodeBuffSection(container);
     checkCrossFields(fields);
     return fields;
 }

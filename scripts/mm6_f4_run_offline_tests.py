@@ -28,6 +28,8 @@ def main() -> None:
 
     for script in ("mm6_f4_prepare_indoor_fixture.py", "mm6_f4_prepare_outdoor_fixture.py"):
         subprocess.run([sys.executable, "-B", str(root / "scripts" / script), str(research)], check=True)
+    subprocess.run([sys.executable, "-B", str(root / "scripts/mm6_f4_check_spell_items.py"),
+                    str(research)], check=True)
 
     rules = Path.home() / "Library/Application Support/Enroth Continuum/Profiles/MM6/rules"
     transport_manifest = rules / "transport.json"

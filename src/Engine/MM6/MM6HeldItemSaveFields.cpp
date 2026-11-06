@@ -115,6 +115,8 @@ HeldItemSaveFields decodeHeldItemSection(const SaveContainer &container) {
 
 void loadHeldItemBeforeMutation(std::span<const std::uint8_t> bytes,
                                 HeldItemSaveFields *destination) {
+    if (!destination)
+        throw std::runtime_error("null MM6 held item destination");
     HeldItemSaveFields staged = decodeHeldItemSection(decodeSaveContainer(bytes));
     *destination = std::move(staged);
 }

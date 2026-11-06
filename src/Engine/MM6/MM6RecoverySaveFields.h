@@ -53,11 +53,15 @@ struct RecoverySaveFields {
     std::array<std::int64_t, 4> turnBasedRecoveryTicks{};
     std::array<RecoveryDailyCounters, 4> daily{};
     EventClockFields eventClocks;
+    // Raw current-runtime timed effect state; original MM6 spell semantics remain unproved.
+    std::int64_t armageddonTimerTicks = 0;
+    std::int32_t armageddonDamage = 0;
+    std::int32_t armageddonForceCount = 0;
 
     bool operator==(const RecoverySaveFields &) const = default;
 };
 
-/** Required, exact-size RCVR v2 section for currently represented runtime state. */
+/** Required, exact-size RCVR v3 section for currently represented runtime state. */
 SaveSection encodeRecoverySection(const RecoverySaveFields &fields);
 RecoverySaveFields decodeRecoverySection(const SaveContainer &container);
 void loadRecoveryBeforeMutation(std::span<const std::uint8_t> bytes,

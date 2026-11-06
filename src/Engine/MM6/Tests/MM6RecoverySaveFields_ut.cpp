@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <exception>
+#include <memory>
 #include <vector>
 
 #include "Testing/Unit/UnitTest.h"
@@ -24,6 +25,9 @@ mm6::RecoverySaveFields example() {
     fields.eventClocks.counters[2] = 314;
     fields.eventClocks.history[17] = -1;
     fields.eventClocks.unknownTimes[19] = 2718;
+    fields.armageddonTimerTicks = 256;
+    fields.armageddonDamage = 17;
+    fields.armageddonForceCount = -4; // Runtime decrement can outlast the impulse window.
     return fields;
 }
 
@@ -35,13 +39,16 @@ std::vector<std::uint8_t> saveBytes(const mm6::RecoverySaveFields &fields) {
 
 UNIT_TEST(MM6RecoverySaveFields, RoundTripClockAndDerivedCalendar) {
     mm6::RecoverySaveFields fields = example();
-    EXPECT_EQ(mm6::encodeRecoverySection(fields).payload.size(), 572);
+    EXPECT_EQ(mm6::encodeRecoverySection(fields).payload.size(), 588);
     std::vector<std::uint8_t> bytes = saveBytes(fields);
     EXPECT_EQ(mm6::decodeRecoverySection(mm6::decodeSaveContainer(bytes)), fields);
 
     mm6::RecoverySaveFields destination;
     mm6::loadRecoveryBeforeMutation(bytes, &destination);
     EXPECT_EQ(destination, fields);
+    EXPECT_EQ(destination.armageddonTimerTicks, 256);
+    EXPECT_EQ(destination.armageddonDamage, 17);
+    EXPECT_EQ(destination.armageddonForceCount, -4);
 
     mm6::RecoveryCalendar calendar = mm6::calendarForPlayingTicks(fields.playingTicks);
     EXPECT_EQ(calendar.year, 1168);
@@ -84,6 +91,33 @@ UNIT_TEST(MM6RecoverySaveFields, EventClocksCaptureAndStageOnDetachedRuntimeCopy
     EXPECT_EQ(prior.CounterEventValues[2].ticks(), 99);
 }
 
+UNIT_TEST(MM6RecoverySaveFields, CapturesAndStagesArmageddonTupleOnDetachedParty) {
+    auto source = std::make_unique<Party>();
+    source->playing_time = Time(0, 0, 9);
+    source->last_regenerated = source->playing_time;
+    source->armageddon_timer = Duration::fromTicks(256);
+    source->armageddonDamage = 17;
+    source->armageddonForceCount = -4;
+
+    const mm6::RecoverySaveFields fields = mm6::captureRecoveryFields(*source, GameTitle::MM6);
+    EXPECT_EQ(fields.armageddonTimerTicks, 256);
+    EXPECT_EQ(fields.armageddonDamage, 17);
+    EXPECT_EQ(fields.armageddonForceCount, -4);
+
+    auto prior = std::make_unique<Party>();
+    prior->playing_time = source->playing_time;
+    prior->armageddon_timer = Duration::fromTicks(9);
+    prior->armageddonDamage = 99;
+    prior->armageddonForceCount = 99;
+    Party staged = mm6::stageRecoveryParty(*prior, saveBytes(fields), GameTitle::MM6);
+    EXPECT_EQ(staged.armageddon_timer.ticks(), 256);
+    EXPECT_EQ(staged.armageddonDamage, 17);
+    EXPECT_EQ(staged.armageddonForceCount, -4);
+    EXPECT_EQ(prior->armageddon_timer.ticks(), 9);
+    EXPECT_EQ(prior->armageddonDamage, 99);
+    EXPECT_EQ(prior->armageddonForceCount, 99);
+}
+
 UNIT_TEST(MM6RecoverySaveFields, RejectsInvalidBeforeMutation) {
     const mm6::RecoverySaveFields before = example();
     mm6::RecoverySaveFields destination = before;
@@ -97,9 +131,31 @@ UNIT_TEST(MM6RecoverySaveFields, RejectsInvalidBeforeMutation) {
     invalid = before;
     invalid.daily[3].fireSpike = 128;
     EXPECT_THROW((void) mm6::encodeRecoverySection(invalid), std::exception);
+    invalid = before;
+    invalid.armageddonTimerTicks = 418;
+    EXPECT_THROW((void) mm6::encodeRecoverySection(invalid), std::exception);
+    invalid.armageddonTimerTicks = -1;
+    EXPECT_THROW((void) mm6::encodeRecoverySection(invalid), std::exception);
 
     mm6::SaveContainer container{{mm6::encodeRecoverySection(before)}};
     container.sections[0].payload[21] = 1;
+    EXPECT_THROW(mm6::loadRecoveryBeforeMutation(mm6::encodeSaveContainer(container), &destination),
+                 std::exception);
+    EXPECT_EQ(destination, before);
+
+    container = {{mm6::encodeRecoverySection(before)}};
+    container.sections[0].payload[0] = 2; // Superseded v2 payload with a valid checksum.
+    EXPECT_THROW(mm6::loadRecoveryBeforeMutation(mm6::encodeSaveContainer(container), &destination),
+                 std::exception);
+    EXPECT_EQ(destination, before);
+    container.sections[0].payload.resize(572); // Exact old v2 length.
+    EXPECT_THROW(mm6::loadRecoveryBeforeMutation(mm6::encodeSaveContainer(container), &destination),
+                 std::exception);
+    EXPECT_EQ(destination, before);
+
+    container = {{mm6::encodeRecoverySection(before)}};
+    container.sections[0].payload[572] = 0xa2; // 418 timer ticks with valid container checksums.
+    container.sections[0].payload[573] = 1;
     EXPECT_THROW(mm6::loadRecoveryBeforeMutation(mm6::encodeSaveContainer(container), &destination),
                  std::exception);
     EXPECT_EQ(destination, before);

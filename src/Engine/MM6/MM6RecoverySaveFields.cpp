@@ -16,7 +16,20 @@ namespace mm6 {
 namespace {
 
 constexpr std::array<char, 4> TAG = {'R', 'C', 'V', 'R'};
-constexpr size_t PAYLOAD_SIZE = 4 + 8 + 8 + 4 + 4 * 8 + 4 * 8 + 4 * 3 + 59 * 8;
+constexpr size_t PAYLOAD_SIZE = 4 + 8 + 8 + 4 + 4 * 8 + 4 * 8 + 4 * 3 + 59 * 8 + 8 + 4 + 4;
+
+void put32(std::vector<std::uint8_t> *bytes, std::int32_t value) {
+    std::uint32_t raw = std::bit_cast<std::uint32_t>(value);
+    for (int shift = 0; shift < 32; shift += 8)
+        bytes->push_back(raw >> shift);
+}
+
+std::int32_t get32(std::span<const std::uint8_t> bytes, size_t *offset) {
+    std::uint32_t raw = 0;
+    for (int shift = 0; shift < 32; shift += 8)
+        raw |= std::uint32_t(bytes[(*offset)++]) << shift;
+    return std::bit_cast<std::int32_t>(raw);
+}
 
 void put64(std::vector<std::uint8_t> *bytes, std::int64_t value) {
     std::uint64_t raw = std::bit_cast<std::uint64_t>(value);
@@ -58,6 +71,8 @@ void validate(const RecoverySaveFields &fields) {
     validateEventClocks(fields.eventClocks.counters);
     validateEventClocks(fields.eventClocks.history);
     validateEventClocks(fields.eventClocks.unknownTimes);
+    if (fields.armageddonTimerTicks < 0 || fields.armageddonTimerTicks > 417)
+        throw std::runtime_error("MM6 Armageddon timer exceeds current-runtime range");
 }
 
 } // namespace
@@ -66,7 +81,7 @@ SaveSection encodeRecoverySection(const RecoverySaveFields &fields) {
     validate(fields);
     std::vector<std::uint8_t> bytes;
     bytes.reserve(PAYLOAD_SIZE);
-    bytes.insert(bytes.end(), {2, 4, 0, 0}); // Version, character count, reserved.
+    bytes.insert(bytes.end(), {3, 4, 0, 0}); // Version, character count, reserved.
     put64(&bytes, fields.playingTicks);
     put64(&bytes, fields.lastRegenerationTicks);
     bytes.insert(bytes.end(), {fields.daysWithoutRest, 0, 0, 0});
@@ -85,6 +100,9 @@ SaveSection encodeRecoverySection(const RecoverySaveFields &fields) {
         put64(&bytes, ticks);
     for (std::int64_t ticks : fields.eventClocks.unknownTimes)
         put64(&bytes, ticks);
+    put64(&bytes, fields.armageddonTimerTicks);
+    put32(&bytes, fields.armageddonDamage);
+    put32(&bytes, fields.armageddonForceCount);
     return {TAG, true, std::move(bytes)};
 }
 
@@ -100,7 +118,7 @@ RecoverySaveFields decodeRecoverySection(const SaveContainer &container) {
     if (!section || !section->required || section->payload.size() != PAYLOAD_SIZE)
         throw std::runtime_error("missing or invalid MM6 RCVR section");
     std::span<const std::uint8_t> bytes = section->payload;
-    if (bytes[0] != 2 || bytes[1] != 4 || bytes[2] || bytes[3] ||
+    if (bytes[0] != 3 || bytes[1] != 4 || bytes[2] || bytes[3] ||
         bytes[21] || bytes[22] || bytes[23])
         throw std::runtime_error("unsupported MM6 RCVR version or reserved fields");
     RecoverySaveFields result;
@@ -124,6 +142,9 @@ RecoverySaveFields decodeRecoverySection(const SaveContainer &container) {
         ticks = get64(bytes, &offset);
     for (std::int64_t &ticks : result.eventClocks.unknownTimes)
         ticks = get64(bytes, &offset);
+    result.armageddonTimerTicks = get64(bytes, &offset);
+    result.armageddonDamage = get32(bytes, &offset);
+    result.armageddonForceCount = get32(bytes, &offset);
     validate(result);
     return result;
 }

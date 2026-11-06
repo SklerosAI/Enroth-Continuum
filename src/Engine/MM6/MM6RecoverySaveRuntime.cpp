@@ -88,6 +88,9 @@ RecoverySaveFields captureRecoveryFields(const Party &party, GameTitle title) {
                                captureCounter(character.uNumFireSpikeCasts)};
     }
     fields.eventClocks = captureEventClocks(party.PartyTimes, title);
+    fields.armageddonTimerTicks = party.armageddon_timer.ticks();
+    fields.armageddonDamage = party.armageddonDamage;
+    fields.armageddonForceCount = party.armageddonForceCount;
     (void) encodeRecoverySection(fields);
     return fields;
 }
@@ -112,6 +115,9 @@ Party stageRecoveryParty(const Party &live, std::span<const std::uint8_t> bytes,
         character.uNumFireSpikeCasts = static_cast<char>(fields.daily[index].fireSpike);
     }
     staged.PartyTimes = stageEventClocks(live.PartyTimes, fields.eventClocks, title);
+    staged.armageddon_timer = Duration::fromTicks(fields.armageddonTimerTicks);
+    staged.armageddonDamage = fields.armageddonDamage;
+    staged.armageddonForceCount = fields.armageddonForceCount;
     setDerivedCalendar(&staged, calendar);
     return staged;
 }

@@ -10,6 +10,8 @@ The [profession packet](../project/MM6_NPC_PROFESSION_F2.md) joins all 77 retain
 
 Seven generic MM6 IDs alias named MM7 special-effect professions in inherited code. The MM6 loader omits several display and generation fields, and source-level bonus/action paths diverge from selected guide and retained-table effects. Navigator and Scout values disagree between guide and retained data. F3 must reconcile original IDs and benefit evidence; F4 must title-scope effects and make generic rows safe; F5 must observe hire/fire, service, commission and persistence. This is a static audit, not live hireling validation.
 
+A private route join covers all 70 NPC records using generic professions. Forty have an initial house/dialogue path that can insert a paid-hire choice, 23 have an initial house conversation without that choice, and seven need outdoor or event routing. Scripted moves and topic changes can alter these initial paths; none proves a reachable live hire.
+
 Authority: [project/MM6_NPC_PROFESSION_F2.md](../project/MM6_NPC_PROFESSION_F2.md), reviewed 2026-11-05. Exact per-ID and guide text remain in the ignored private ledger.
 
 See also: [MM6 Manual and Services Claims F2 Source](Source-MM6-Manual-Services-Claims-F2.md), [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), [Open Questions](Open-Questions.md).

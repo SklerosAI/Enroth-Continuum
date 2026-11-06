@@ -25,6 +25,15 @@ struct MM6OutdoorDeltaSnapshot {
 
 MM6OutdoorDeltaSnapshot decodeMM6OutdoorDelta(const Blob &source);
 
+// Apply only checked MM6 DDM fields to the retained wire. Unsupported record
+// mutations and count changes are rejected before any result is returned.
+Blob encodeMM6OutdoorRuntimeDelta(const MM6OutdoorDeltaSnapshot &delta);
+
+struct OutdoorLocation;
+// Capture supported fields from the active outdoor runtime, using the current
+// MM6 sidecar as source for opaque bytes and event MapVar changes.
+Blob encodeMM6OutdoorChangedState(const OutdoorLocation &location);
+
 // Shared bounded MM6 record projections for outdoor and indoor deltas.
 // These do not encode a changed record; callers must retain their wire bytes.
 Actor_MM7 projectMM6ActorRecord(std::span<const std::uint8_t> record);

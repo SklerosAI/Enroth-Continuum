@@ -31,7 +31,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F2 Workstreams](MM6-F2-Workstreams.md) — Four research lanes, current three-worker rotation, and handoff packet
 - [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md) — Confirmed inheritance gaps and unproven semantics from current F2 specs
 - [MM6 F3 Read-Only Preflight](MM6-F3-Read-Only-Preflight.md) — Accepted original-data gate, results, and F4/F5 obligations
-- [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md) — Current partial code seams, including outdoor DDM projection, focused checks, and next blockers
+- [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md) — Partial code seams, including bounded outdoor DDM changed-state encoding, focused checks, and next blockers
 - [MM6 F4 Transport Manifest](MM6-F4-Transport-Manifest.md) — Private F3-derived travel descriptors, blank/special slot policy and title-specific UI handoff
 - [MM6 F4 Map Bytes](MM6-F4-Map-Bytes.md) — Bounded active map-byte dispatch, 200-byte delta preservation, and unresolved arithmetic/persistence edges
 - [MM6 F4 Portrait Seam](MM6-F4-Portrait-Seam.md) — Offline MM6 face/frame implementation, verification, and remaining voice/visual work

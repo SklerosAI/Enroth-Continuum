@@ -7,6 +7,13 @@
 #include <cstring>
 #include <limits>
 #include <stdexcept>
+#include <utility>
+#include <vector>
+
+#include "Engine/Graphics/Outdoor.h"
+#include "Engine/Objects/Actor.h"
+#include "Engine/Objects/Chest.h"
+#include "Engine/Objects/SpriteObject.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -17,6 +24,20 @@ static_assert(offsetof(Actor_MM7, field_84) == 132);
 static_assert(offsetof(Actor_MM7, group) == 708);
 static_assert(offsetof(SpriteObject_MM7, containing_item) == 36);
 static_assert(offsetof(SpriteObject_MM7, uSpellID) == 72);
+
+void copyBytes(void *dst, const void *src, size_t offset, size_t length) {
+    std::memcpy(static_cast<std::uint8_t *>(dst) + offset, static_cast<const std::uint8_t *>(src) + offset, length);
+}
+
+void write16(std::span<std::uint8_t> bytes, size_t offset, std::uint16_t value) {
+    bytes[offset] = static_cast<std::uint8_t>(value);
+    bytes[offset + 1] = static_cast<std::uint8_t>(value >> 8);
+}
+
+void write32(std::span<std::uint8_t> bytes, size_t offset, std::uint32_t value) {
+    write16(bytes, offset, value);
+    write16(bytes, offset + 2, value >> 16);
+}
 
 std::uint16_t read16(std::span<const std::uint8_t> bytes, size_t offset) {
     return std::uint16_t(bytes[offset]) | (std::uint16_t(bytes[offset + 1]) << 8);
@@ -156,4 +177,120 @@ MM6OutdoorDeltaSnapshot decodeMM6OutdoorDelta(const Blob &source) {
     for (size_t i = 0; i < result.wire.chestCount; ++i)
         result.chests.push_back(projectMM6ChestRecord(chests.subspan(i * 4204, 4204)));
     return result;
+}
+
+Blob encodeMM6OutdoorRuntimeDelta(const MM6OutdoorDeltaSnapshot &delta) {
+    if (delta.wire.bytes.empty())
+        throw std::runtime_error("MM6 outdoor writer requires a decoded DDM sidecar");
+    MM6OutdoorDeltaSnapshot original = decodeMM6OutdoorDelta(
+        Blob::copy(delta.wire.bytes.data(), delta.wire.bytes.size()));
+    if (delta.actors.size() != original.actors.size() ||
+        delta.spriteObjects.size() != original.spriteObjects.size() ||
+        delta.chests.size() != original.chests.size())
+        throw std::runtime_error("MM6 outdoor writer cannot change record counts");
+    if (delta.respawnCount > std::numeric_limits<int>::max() ||
+        delta.lastRespawnDay > std::numeric_limits<int>::max())
+        throw std::runtime_error("MM6 outdoor reset counter exceeds runtime range");
+
+    mm6::OutdoorDeltaWire wire = std::move(original.wire);
+    auto reset = wire.part(mm6::OutdoorDeltaPart::ResetHeader);
+    write32(reset, 0, delta.respawnCount);
+    write32(reset, 4, delta.lastRespawnDay);
+    auto visibility = wire.part(mm6::OutdoorDeltaPart::Visibility);
+    std::memcpy(visibility.data(), delta.fullyRevealedCells.data(), 88 * 11);
+    std::memcpy(visibility.data() + 88 * 11, delta.partiallyRevealedCells.data(), 88 * 11);
+
+    auto actors = wire.part(mm6::OutdoorDeltaPart::Actors).subspan(4);
+    for (size_t i = 0; i < delta.actors.size(); ++i) {
+        const Actor_MM7 &current = delta.actors[i];
+        Actor_MM7 permitted = original.actors[i];
+        if (current.hp < 0)
+            throw std::runtime_error("MM6 outdoor actor has unverified negative HP encoding");
+        permitted.attributes = current.attributes;
+        permitted.hp = current.hp;
+        // MM6 118..165 and 168..195 align to MM7 134..181 and 184..211.
+        // Keep the intervening padding words and all other fields verbatim.
+        copyBytes(&permitted, &current, 134, 48);
+        copyBytes(&permitted, &current, 184, 28);
+        if (std::memcmp(&permitted, &current, sizeof(current)) != 0)
+            throw std::runtime_error("MM6 outdoor actor has unsupported changed fields");
+        auto record = actors.subspan(i * 548, 548);
+        write32(record, 36, current.attributes);
+        write16(record, 40, current.hp);
+        std::memcpy(record.data() + 118, reinterpret_cast<const std::uint8_t *>(&current) + 134, 48);
+        std::memcpy(record.data() + 168, reinterpret_cast<const std::uint8_t *>(&current) + 184, 28);
+    }
+
+    auto ground = wire.part(mm6::OutdoorDeltaPart::GroundItems).subspan(4);
+    for (size_t i = 0; i < delta.spriteObjects.size(); ++i) {
+        const SpriteObject_MM7 &current = delta.spriteObjects[i];
+        SpriteObject_MM7 permitted = original.spriteObjects[i];
+        copyBytes(&permitted, &current, 0, 24);
+        // The contained MM6 item has mapped fields only through byte 25.
+        // Keep its final two bytes from the sidecar.
+        copyBytes(&permitted, &current, 26, 36);
+        if (std::memcmp(&permitted, &current, sizeof(current)) != 0)
+            throw std::runtime_error("MM6 outdoor ground item has unsupported changed fields");
+        auto record = ground.subspan(i * 100, 100);
+        std::memcpy(record.data(), &current, 24);
+        std::memcpy(record.data() + 26, reinterpret_cast<const std::uint8_t *>(&current) + 26, 36);
+    }
+
+    auto chests = wire.part(mm6::OutdoorDeltaPart::Chests).subspan(4);
+    for (size_t i = 0; i < delta.chests.size(); ++i) {
+        const Chest_MM7 &current = delta.chests[i];
+        Chest_MM7 permitted = original.chests[i];
+        permitted.flags = current.flags;
+        for (size_t j = 0; j < current.items.size(); ++j)
+            std::memcpy(&permitted.items[j], &current.items[j], 26);
+        if (std::memcmp(&permitted, &current, sizeof(current)) != 0)
+            throw std::runtime_error("MM6 outdoor chest has unsupported grid or type change");
+        auto record = chests.subspan(i * 4204, 4204);
+        write16(record, 2, current.flags);
+        for (size_t j = 0; j < current.items.size(); ++j)
+            std::memcpy(record.data() + 4 + j * 28, &current.items[j], 26);
+    }
+
+    std::vector<std::uint8_t> encoded = mm6::encodeOutdoorDelta(wire);
+    (void) decodeMM6OutdoorDelta(Blob::copy(encoded.data(), encoded.size()));
+    return Blob::copy(encoded.data(), encoded.size());
+}
+
+Blob encodeMM6OutdoorChangedState(const OutdoorLocation &location) {
+    if (pOutdoor != &location || location.mm6DeltaBytes.empty() ||
+        location.ddm.respawnCount < 0 || location.ddm.lastRespawnDay < 0)
+        throw std::runtime_error("MM6 outdoor runtime lacks bounded delta state");
+    MM6OutdoorDeltaSnapshot current = decodeMM6OutdoorDelta(
+        Blob::copy(location.mm6DeltaBytes.data(), location.mm6DeltaBytes.size()));
+    if (pActors.size() != current.actors.size() || pSpriteObjects.size() != current.spriteObjects.size() ||
+        vChests.size() != current.chests.size())
+        throw std::runtime_error("MM6 outdoor runtime record count changed; save encoding is not established");
+    current.respawnCount = location.ddm.respawnCount;
+    current.lastRespawnDay = location.ddm.lastRespawnDay;
+    current.fullyRevealedCells = location.uFullyRevealedCellOnMap;
+    current.partiallyRevealedCells = location.uPartiallyRevealedCellOnMap;
+    for (size_t i = 0; i < current.actors.size(); ++i) {
+        Actor_MM7 live{};
+        snapshot(pActors[i], &live);
+        current.actors[i].attributes = live.attributes;
+        current.actors[i].hp = live.hp;
+        copyBytes(&current.actors[i], &live, 134, 48);
+        copyBytes(&current.actors[i], &live, 184, 28);
+    }
+    for (size_t i = 0; i < current.spriteObjects.size(); ++i) {
+        SpriteObject_MM7 live{};
+        snapshot(pSpriteObjects[i], &live);
+        copyBytes(&current.spriteObjects[i], &live, 0, 24);
+        copyBytes(&current.spriteObjects[i], &live, 26, 36);
+    }
+    for (size_t i = 0; i < current.chests.size(); ++i) {
+        Chest_MM7 live{};
+        snapshot(vChests[i], &live);
+        if (live.inventoryMatrix != current.chests[i].inventoryMatrix)
+            throw std::runtime_error("MM6 outdoor chest grid changed; its wire layout is unresolved");
+        current.chests[i].flags = live.flags;
+        for (size_t j = 0; j < live.items.size(); ++j)
+            std::memcpy(&current.chests[i].items[j], &live.items[j], 26);
+    }
+    return encodeMM6OutdoorRuntimeDelta(current);
 }

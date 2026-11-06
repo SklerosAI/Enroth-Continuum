@@ -1,6 +1,6 @@
 # MM6 outdoor wire codec — F4 offline progress
 
-Status: **bounded C++ decoded-payload parser plus partial MM6 outdoor runtime projection, 2026-11-06**. The codec is title-specific and works from the ignored retained F1/F3 map extracts. It never reads the original GOG installation and does not make the outdoor campaign playable.
+Status: **bounded decoded-payload parser, partial runtime projection and changed-state writer, 2026-11-06**. The codec is title-specific and works from the ignored retained F1/F3 map extracts. It never reads the original GOG installation and does not make the outdoor campaign playable.
 
 ## Implemented boundary
 
@@ -14,12 +14,18 @@ The MM6 branch of `OutdoorLocation::Load` now decodes `.ddm` through the MM6 wir
 
 This is **partial runtime reconstruction**. MM6 actor buff/status slots, spell IDs/mastery and some resistance meanings are not yet mapped to their MM7 runtime equivalents. Chest grid width is still ambiguous; the adapter copies the whole 280-byte region and retains the source bytes, while the retained shipped grids are all zero. The 200 persistent bytes and 56-byte tail are preserved but not applied to runtime state. The inherited save path still writes an MM7 DDM and does not serialize this sidecar, so MM6 map mutation/save/reload is not accepted. Reset uses the inherited first-entry/timed policy provisionally because shipped reset fields are zero; F5 must verify a nonzero original-game or controlled state. No MM6 campaign was launched.
 
+## Bounded changed-state writer
+
+`encodeMM6OutdoorRuntimeDelta` starts from the current decoded DDM sidecar, not a fresh template. It overlays reset count/day, both visibility arrays, actor attributes/HP and established motion/action fields, selected ground-item fields, and chest flags plus the first 26 known bytes of each contained item. It refuses record-count changes, negative actor HP, chest type/grid changes, and changed snapshot fields with no proven MM6 mapping. The 200-byte persistent block, including live MapVar writes, unmapped actor/item/chest bytes and the 56-byte tail are copied unchanged. `encodeMM6OutdoorChangedState` captures those supported fields from the active outdoor runtime and passes them through the same validator; it is an API for a later MM6 save transaction, not a SaveLoad hook. The final two bytes of each 28-byte MM6 item remain opaque; the [pinned editor's field list](https://github.com/angeld29/mm8leveleditor/blob/bf3b8c4a86100635a5fc6ff53fac6e4e0af5cb53/src/org/gamenet/application/mm8leveleditor/data/mm6/Item.java) labels the earlier fields but does not establish those final bytes.
+
+The runtime capture deliberately projects only the supported actor/item fields. It cannot yet detect arbitrary unsupported changes held only in live MM7 objects; the strict snapshot writer does reject them when supplied directly. Save/load must remain gated until that coverage, nonzero changed-state behavior, and chest-grid interpretation are resolved. Spawned actors and ground objects currently fail on count changes. Baseline test coverage uses all 15 original-matched decoded DDMs plus synthetic nonzero actor/item/chest/visibility/reset and MapVar mutations; this establishes byte preservation and our guards, not original-game behavior.
+
 ## Offline evidence
 
 A compiled clang C++23 harness used the real codec on all **15 retained outdoor bases and 15 retained deltas** after their existing strict wrapper decode. All 30 decoded payloads re-encoded byte-for-byte; all 15 deltas preserved a synthetic nonzero persistent-byte mutation; and all 60 deliberate truncated/count-overflow cases were rejected. No proprietary bytes or map names were written to Git. The synthetic C++ unit source also covers zero-count base/delta round trips, opaque section mutations, overflow counts, truncation and checked model/facet access. Codec, unit source and the existing MM6 base adapter passed C++23 syntax checks. The full CMake unit binary was not run in this fresh worktree.
 
 ## Next F4 lock
 
-Complete MM6-specific actor status/combat and item effect mappings; resolve chest placement, persistent-variable and tail semantics; then encode changed runtime entities back into the retained MM6 wire sidecar for a versioned `.ec6` writer. Test changed objects and timed reset across transitions. F5 must inspect map geometry, terrain, actors, loot, events, weather and save/reload in the graphical game.
+Complete MM6-specific actor status/combat and item effect mappings; resolve chest placement, persistent-variable and tail semantics; then connect the bounded writer to a versioned `.ec6` transaction. Test changed objects and timed reset across transitions. F5 must inspect map geometry, terrain, actors, loot, events, weather and save/reload in the graphical game.
 
 The arm64 `OpenEnroth_UnitTest` target built, and three focused adapter tests passed. The retained-data test decoded all 15 original-matched outdoor deltas, projected every counted actor, ground item and chest without a bounds failure, and verified byte-identical re-encoding of the preserved wire. Synthetic checks covered ID 173, item/chest/visibility/reset projection, opaque persistent/tail bytes and malformed/truncated rejection. These are offline checks only.

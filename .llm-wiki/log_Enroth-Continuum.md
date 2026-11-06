@@ -292,3 +292,9 @@ Chronological record of wiki activity.
 - Rebuilt the integrated arm64 MM6 and MM7 targets and restored 15 ignored outdoor test pairs from F3-matched retained copies, without opening the original GOG installation. The combined suite passed 31 focused C++ tests, including all 68 active EVTs, 52 indoor pairs and 15 outdoor deltas.
 - Added a bounded private transport-manifest parser and three-option MM6 menu. Its title branch never indexes MM7 route arrays; ambiguous/special and unproved quest-bit routes stay hidden, and selection cannot charge gold or depart before `.ec6` save integration. Two private-backed tests cover all 21 houses, weekdays and malformed manifests.
 - Updated the F4 handoff with the indoor projection and durable save fields. Graphical travel and save/reload remain F5 work; no partial MM6 process was launched.
+
+## [2026-11-06] ingest | MM6 indexed inventory staging
+- by: T-Burton-ND via codex
+- Checked 578 usable retained MM6 item icons, two blank placeholder rows and bounded grid footprints under the current inventory-slot formula, without reopening the original installation.
+- Added explicit checked inventory record placement and MM6-only copy-staging of nonempty character inventory; malformed indexes, overlaps or changed icon footprints reject the stage without changing the live party.
+- Syntax-checked the changed C++ units, passed a compiled sparse-index/equipment/overlap harness and checked C++ style. Live SaveLoad, held/shop/map items and F5 graphical checks remain open.

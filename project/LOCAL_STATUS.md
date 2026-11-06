@@ -393,3 +393,27 @@ closed: active actors/chests, PID rebinding, other state owners and the final
 commit are unproved. Exact PE evidence and GOG assets stay in ignored local
 storage; the installed MM7 app/profile and reserved MM8 checkout were not
 changed.
+
+## MM6 F4 integrated checkpoint — 224 tests, 2026-11-06
+
+The arm64 MM6, OpenEnroth and unit targets linked after the next isolated
+changes were integrated. The private-backed offline gate passed **224/224
+MM6/LOD tests from 62 suites**; the general non-MM6 gate passed **438/438**.
+No MM6 process, graphical view or audible playback was launched.
+
+The original-executable chest trace now has detached, seeded MM6 marker remap,
+base-item ID and ANY item-field models. They stage artifact flags and RNG plus
+identification, enchantment and wand-charge fields without mutating the live
+game. The title guard still blocks every MM6 level load because retained-table
+callers, other item sources, chest placement, grid encoding and persistence
+are unresolved. Quick Start's sixteen starter-skill paths, one face-derived
+sound selector and bounded first-map script were audited; random inventory,
+remaining audio gaps and full loader effects still block its live route.
+
+The partial `.ec6` stage now rejects saved overlay actor PIDs outside the
+validated active-map actor count. Original MM6 shop/guild handlers prove
+row-keyed refresh and raw Party-block persistence, but stock slot meaning and
+the title-specific save tuple are not yet typed. Live SaveLoad and house
+services remain guarded. All detailed PE evidence and proprietary data remain
+ignored locally; the installed MM7 app/profile and reserved MM8 checkout were
+not changed.

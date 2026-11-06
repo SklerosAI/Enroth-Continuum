@@ -878,3 +878,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The MM6 house presentation plan now carries a read-only greeting candidate derived from its title-specific room sound group. Zero-group rooms have no candidate; blank, terminal and MM7 routes reject. The preview still plays no house cue. The accepted F3 join confirms table and archive identity for all 63 nonzero-group rooms among 116 referenced rooms, with 53 zero-group rooms. No private sound names or payloads entered Git.
 - Both modified C++ translation units passed syntax checks, and an independent private-data join reproduced the 63/53 aggregate. A focused native test was added for the linked integration run. Original playback timing, service responses and audible output remain unproved; no original installation was reread and no MM6 process was launched.
+
+## [2026-11-06] implement | MM6 character spell preferences
+- by: T-Burton-ND via codex
+- The detached `.ec6` `CHAR` payload advances to v3, adding current-runtime quick spell and last spellbook page for each of four characters. Capture bounds spell IDs to 0–99 and pages to 0–8; decode and detached stage reject malformed values and foreign titles. Earlier offline v1/v2 payloads are superseded; no live save slot or SaveLoad route changed.
+- The isolated arm64 MM6, OpenEnroth and unit targets built, and 17 focused core, known-save and atomic-file tests passed. A Party-level test attempt crashed because its constructor needs an initialized global GameConfig; it was removed and the owner-local Character capture/stage plus four-character payload tests passed. The eight private bonus bytes, Lloyd beacons and changed chest grid remain unresolved. No original installation or MM6 process was opened; MM7/MM8 were untouched.

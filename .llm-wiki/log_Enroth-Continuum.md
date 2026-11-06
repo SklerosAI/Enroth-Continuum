@@ -1312,3 +1312,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The linked monitored `MM6ZSaveHeadless.ScopedRealFirstMapSaveAndRollback` passed 1/1 in 21.0 seconds using the private loaded MM6 Games archive, hash-checked F3 map source and unique temporary native save profile. It exercised two successful EC6 first-map writes, then callback failure with exact primary/backup bytes and all 67 map-cache/CHST state restored. The host monitor observed 1,566 samples, no focus change and zero on-screen windows. The run log remains ignored under `local-game-data/mm6/research-2026-11-05/F4_MM6_SAVE_HEADLESS_TEST_PRIVATE.log`.
 - The test does not call `DoPrepareWorld`, and it makes no claim about live world rollback or normal MM6 SaveLoad. The production guard remains closed.
+
+## [2026-11-06] verify | Joined MM6 first-map save and preparation
+- by: T-Burton-ND via codex
+- The integrated arm64 build and private offline suite passed **308/308** from 78 suites; general tests passed **438/438**. With the private F3 source explicitly supplied, the monitored MM6 headless suite passed **29/29** across 1,322 host samples with no focus change or on-screen window; the MM7 headless control passed **1/1**. The suite includes the scoped EC6 first-map save rollback, outdoor preparation, chest projection and HUD resource checks.
+- Refreshed the [build graph](../project/MM6_F4_BUILD_GRAPH.md) and [agent handoff](Agent-Handoff.md). Normal new-game SaveLoad and chest guards remain closed; full `DoPrepareWorld`, rendered gameplay and save–quit–reload are not yet accepted.

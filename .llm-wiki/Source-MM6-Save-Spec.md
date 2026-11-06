@@ -12,6 +12,8 @@ Retained baseline deltas support the boundaries of the opening, persistent map r
 
 The separate [world closure packet](../project/MM6_WORLD_F2_CLOSURE.md) and [roundtrip probe](../scripts/mm6_probe_world_roundtrip.py) now show byte-exact section reassembly for all retained deltas and synthetic nonzero preservation and malformed-input rejection in the offline Python checker. This tightens the wire-boundary evidence, while leaving MM6 C++ reconstruction, reset and field semantics, and an end-to-end `.ec6` save/reload unverified.
 
+The [world field map](../project/MM6_WORLD_FIELD_MAP_F2.md) supersedes an earlier claim about the delta chest grid. `dchest.bin` declares 14×10 layout metadata, but the chest delta's final 280 bytes could be 81 grid shorts plus 118 opaque bytes or 140 shorts; both candidate subregions are zero in all retained baseline chests. No delta grid has been proved. Preserve those bytes losslessly until changed-state evidence resolves the split.
+
 Authority: [project/MM6_SAVE_SPEC.md](../project/MM6_SAVE_SPEC.md), reviewed 2026-11-05. Its exact wire layout and source-consumer table remain the implementation reference; this wiki contains no decoded map bytes or saved-game contents.
 
-See also: [MM6 World F2 Closure Source](Source-MM6-World-F2-Closure.md), [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), [Open Questions](Open-Questions.md), [Runtime Isolation](Runtime-Isolation.md).
+See also: [MM6 World Field Map F2 Source](Source-MM6-World-Field-Map-F2.md), [MM6 World F2 Closure Source](Source-MM6-World-F2-Closure.md), [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), [Open Questions](Open-Questions.md), [Runtime Isolation](Runtime-Isolation.md).

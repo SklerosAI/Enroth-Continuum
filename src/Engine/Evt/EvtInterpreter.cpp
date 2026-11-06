@@ -20,6 +20,7 @@
 #include "Engine/Evt/MM6DayOfYear.h"
 #include "Engine/Evt/MM6GoldEvent.h"
 #include "Engine/Evt/MM6NpcEventState.h"
+#include "Engine/Evt/MM6ItemEventCompare.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Party.h"
 #include "Engine/Graphics/Indoor.h"
@@ -392,6 +393,14 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         case EVENT_Compare:
             if (engine->gameTitle() == GameTitle::MM6 &&
+                ir.data.variable_descr.type == VAR_PlayerItemInHands) {
+                for (Character &character : iterateCharacters(_who, grng))
+                    if (mm6::hasEventItem(character, pParty->pPickedItem, 17,
+                                          ir.data.variable_descr.value))
+                        return {EVT_FLOW_JUMP, ir.target_step};
+                break;
+            }
+            if (engine->gameTitle() == GameTitle::MM6 &&
                 ir.data.variable_descr.type == VAR_FixedGold) {
                 if (mm6::hasEventGold(pParty->GetGold(), ir.data.variable_descr.value))
                     return {EVT_FLOW_JUMP, ir.target_step};
@@ -440,6 +449,9 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         case EVENT_Add:
             if (engine->gameTitle() == GameTitle::MM6 &&
+                ir.data.variable_descr.type == VAR_PlayerItemInHands)
+                throw Exception("MM6 item grant needs a title-specific held-item transaction");
+            if (engine->gameTitle() == GameTitle::MM6 &&
                 ir.data.variable_descr.type == VAR_FixedGold) {
                 const int balance = mm6::goldAfterEventAdd(pParty->GetGold(), ir.data.variable_descr.value);
                 pParty->SetGold(balance, true);
@@ -478,6 +490,9 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                 addEvtVariable(character, ir.data.variable_descr.type, ir.data.variable_descr.value);
             break;
         case EVENT_Subtract: {
+            if (engine->gameTitle() == GameTitle::MM6 &&
+                ir.data.variable_descr.type == VAR_PlayerItemInHands)
+                throw Exception("MM6 item removal needs a title-specific inventory transaction");
             if (engine->gameTitle() == GameTitle::MM6 &&
                 ir.data.variable_descr.type == VAR_FixedGold) {
                 std::optional<int> balance =
@@ -533,6 +548,9 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         }
         case EVENT_Set:
+            if (engine->gameTitle() == GameTitle::MM6 &&
+                ir.data.variable_descr.type == VAR_PlayerItemInHands)
+                throw Exception("MM6 item Set is absent from retained scripts");
             if (engine->gameTitle() == GameTitle::MM6 &&
                 ir.data.variable_descr.type == VAR_QBits_QuestsDone) {
                 MM6QuestBitState(pParty->_questBits).set(16, ir.data.variable_descr.value);
@@ -909,6 +927,14 @@ int EvtInterpreter::checkTopicStep(int step) {
         return -1;
     case EVENT_OnCanShowDialogItemCmp:
         if (engine->gameTitle() == GameTitle::MM6 &&
+            ir->data.variable_descr.type == VAR_PlayerItemInHands) {
+            for (const Character &character : pParty->pCharacters)
+                if (mm6::hasEventItem(character, pParty->pPickedItem, 17,
+                                      ir->data.variable_descr.value))
+                    return ir->target_step;
+            break;
+        }
+        if (engine->gameTitle() == GameTitle::MM6 &&
             ir->data.variable_descr.type == VAR_FixedGold) {
             if (mm6::hasEventGold(pParty->GetGold(), ir->data.variable_descr.value))
                 return ir->target_step;
@@ -970,6 +996,8 @@ bool EvtInterpreter::validateVariableValue(const EvtInstruction &ir) const {
             throw Exception("MM6 day-of-year event variable only supports comparison");
         if (rawId == 21 && ir.opcode == EVENT_Set)
             throw Exception("MM6 gold event variable Set is absent from retained scripts");
+        if (rawId == 17 && ir.opcode != EVENT_Compare && ir.opcode != EVENT_OnCanShowDialogItemCmp)
+            throw Exception("MM6 item event variable needs a title-specific write transaction");
         if (!isValidMM6SharedCandidateValue(rawId, ir.data.variable_descr.value))
             throw Exception("MM6 evt variable {} value {} is outside title range", rawId,
                             ir.data.variable_descr.value);

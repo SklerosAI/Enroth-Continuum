@@ -733,3 +733,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A new MM6-only adapter copies actual `NPCStats` records/groups and the 67 runtime `pMapDeltas` buffers into the partial sixteen-section `.ec6` candidate. It requires a supplied encoded active-map delta and replaces that map's stale buffer. Staging returns detached NPC and map copies, retaining original NPC tables and leaving live globals untouched.
 - The arm64 MM6, OpenEnroth and unit targets built; two focused tests passed with nonzero NPC/group/map values, current-map replacement, foreign-title/missing-map rejection and a late valid-CRC field failure. Cpplint and diff checks passed. This does not validate map bases or complete party/service state, and SaveLoad remains guarded. No original installation or MM6 process was opened.
+
+## [2026-11-06] implement | MM6 read-only item event comparison
+- by: T-Burton-ND via codex
+- The F3-matched retained active EVT corpus has 641 raw ID-17 uses across 41 files: 195 Compare, 290 Add and 156 Subtract. A title-specific read-only helper checks selected character inventory or the party-held item; dialog-item comparison searches the party. The 446 active writes now reject before inherited MM7 item mutation.
+- The frozen aggregate checker rehashes the private report, item table and 68 EVT resources, passed standalone, and is wired into the offline runner. Arm64 MM6, OpenEnroth and unit targets built; two focused item-comparison native tests passed. Grant/removal transactions and save/reload remain open. No original installation or MM6 process was opened.

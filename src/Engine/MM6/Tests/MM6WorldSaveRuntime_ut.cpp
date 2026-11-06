@@ -144,7 +144,7 @@ UNIT_TEST(MM6WorldSaveRuntime, RejectsIncompleteAndLateInvalidStateWithoutInputM
     mm6::KnownSaveFields captured = mm6::captureKnownWorldFields(
         seedFields(), liveNpcs, prior, "d0.dlv", current, names, GameTitle::MM6);
     mm6::SaveContainer lateInvalid = mm6::decodeSaveContainer(mm6::encodeKnownSave(captured));
-    lateInvalid.sections.back().payload[0] = 2; // RCVR version with valid outer CRCs.
+    lateInvalid.sections.back().payload[0] = 3; // Unsupported RCVR version with valid outer CRCs.
     std::vector<std::uint8_t> bytes = mm6::encodeSaveContainer(lateInvalid);
     EXPECT_THROW((void) mm6::stageKnownWorldFields(liveNpcs, bytes, names, GameTitle::MM6),
                  std::exception);

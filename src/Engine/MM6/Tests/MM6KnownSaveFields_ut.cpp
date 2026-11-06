@@ -40,6 +40,9 @@ mm6::KnownSaveFields exampleFields() {
     fields.recovery.playingTicks = 42;
     fields.recovery.lastRegenerationTicks = 40;
     fields.recovery.characterRecoveryTicks[0] = 7;
+    fields.recovery.eventClocks.counters[2] = 31;
+    fields.recovery.eventClocks.history[17] = -1;
+    fields.recovery.eventClocks.unknownTimes[19] = 9;
     return fields;
 }
 
@@ -58,6 +61,7 @@ UNIT_TEST(MM6KnownSaveFields, AssemblesAllSixteenRequiredSections) {
     EXPECT_EQ(mm6::decodeKnownSave(bytes).buffs, fields.buffs);
     EXPECT_EQ(mm6::decodeKnownSave(bytes).hirelings.displayNames[0], "Synthetic hireling");
     EXPECT_EQ(mm6::decodeKnownSave(bytes).recovery, fields.recovery);
+    EXPECT_EQ(mm6::decodeKnownSave(bytes).recovery.eventClocks.counters[2], 31);
 
     std::reverse(container.sections.begin(), container.sections.end());
     EXPECT_EQ(mm6::encodeKnownSave(mm6::decodeKnownSave(mm6::encodeSaveContainer(container))), bytes);
@@ -132,7 +136,7 @@ UNIT_TEST(MM6KnownSaveFields, LateDecodeFailureLeavesDestinationUntouched) {
     mm6::KnownSaveFields destination = exampleFields();
     destination.metadata.header.displayName = "Prior state";
     mm6::SaveContainer invalid = mm6::decodeSaveContainer(mm6::encodeKnownSave(exampleFields()));
-    invalid.sections.back().payload[0] = 2; // RCVR version, with a valid outer CRC.
+    invalid.sections.back().payload[0] = 3; // Unsupported RCVR version, with a valid outer CRC.
     EXPECT_THROW(mm6::loadKnownSaveBeforeMutation(mm6::encodeSaveContainer(invalid), &destination), std::exception);
     EXPECT_EQ(destination.metadata.header.displayName, "Prior state");
     EXPECT_EQ(destination.npcs.npcData[398].name, "Synthetic NPC");

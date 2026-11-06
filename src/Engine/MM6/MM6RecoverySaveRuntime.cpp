@@ -39,6 +39,39 @@ void setDerivedCalendar(Party *party, const RecoveryCalendar &calendar) {
 
 } // namespace
 
+EventClockFields captureEventClocks(const PartyTimeStruct &times, GameTitle title) {
+    if (title != GameTitle::MM6)
+        throw std::runtime_error("MM6 event clocks cannot apply to another title");
+    EventClockFields fields;
+    for (size_t index = 0; index < fields.counters.size(); ++index)
+        fields.counters[index] = times.CounterEventValues[index].ticks();
+    for (size_t index = 0; index < fields.history.size(); ++index)
+        fields.history[index] = times.HistoryEventTimes[index].ticks();
+    for (size_t index = 0; index < fields.unknownTimes.size(); ++index)
+        fields.unknownTimes[index] = times._s_times[index].ticks();
+    RecoverySaveFields probe;
+    probe.eventClocks = fields;
+    (void) encodeRecoverySection(probe);
+    return fields;
+}
+
+PartyTimeStruct stageEventClocks(const PartyTimeStruct &live, const EventClockFields &saved,
+                                 GameTitle title) {
+    if (title != GameTitle::MM6)
+        throw std::runtime_error("MM6 event clocks cannot apply to another title");
+    RecoverySaveFields probe;
+    probe.eventClocks = saved;
+    (void) encodeRecoverySection(probe);
+    PartyTimeStruct staged = live;
+    for (size_t index = 0; index < saved.counters.size(); ++index)
+        staged.CounterEventValues[index] = Time::fromTicks(saved.counters[index]);
+    for (size_t index = 0; index < saved.history.size(); ++index)
+        staged.HistoryEventTimes[index] = Time::fromTicks(saved.history[index]);
+    for (size_t index = 0; index < saved.unknownTimes.size(); ++index)
+        staged._s_times[index] = Time::fromTicks(saved.unknownTimes[index]);
+    return staged;
+}
+
 RecoverySaveFields captureRecoveryFields(const Party &party, GameTitle title) {
     requireSafeMM6State(party, title);
     RecoverySaveFields fields;
@@ -53,6 +86,7 @@ RecoverySaveFields captureRecoveryFields(const Party &party, GameTitle title) {
                                captureCounter(character.uNumArmageddonCasts),
                                captureCounter(character.uNumFireSpikeCasts)};
     }
+    fields.eventClocks = captureEventClocks(party.PartyTimes, title);
     (void) encodeRecoverySection(fields);
     return fields;
 }
@@ -76,6 +110,7 @@ Party stageRecoveryParty(const Party &live, std::span<const std::uint8_t> bytes,
         character.uNumArmageddonCasts = static_cast<char>(fields.daily[index].armageddon);
         character.uNumFireSpikeCasts = static_cast<char>(fields.daily[index].fireSpike);
     }
+    staged.PartyTimes = stageEventClocks(live.PartyTimes, fields.eventClocks, title);
     setDerivedCalendar(&staged, calendar);
     return staged;
 }

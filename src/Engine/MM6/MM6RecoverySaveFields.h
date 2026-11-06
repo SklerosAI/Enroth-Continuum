@@ -10,6 +10,7 @@
 #include "MM6SaveContainer.h"
 
 struct Party;
+struct PartyTimeStruct;
 
 namespace mm6 {
 
@@ -35,6 +36,15 @@ struct RecoveryDailyCounters {
     bool operator==(const RecoveryDailyCounters &) const = default;
 };
 
+// Raw event timestamps. Slot meaning remains with the MM6 event interpreter.
+struct EventClockFields {
+    std::array<std::int64_t, 10> counters{};
+    std::array<std::int64_t, 29> history{};
+    std::array<std::int64_t, 20> unknownTimes{};
+
+    bool operator==(const EventClockFields &) const = default;
+};
+
 struct RecoverySaveFields {
     std::int64_t playingTicks = 0; // Must agree with PART/HEAD before commit.
     std::int64_t lastRegenerationTicks = 0;
@@ -42,11 +52,12 @@ struct RecoverySaveFields {
     std::array<std::int64_t, 4> characterRecoveryTicks{};
     std::array<std::int64_t, 4> turnBasedRecoveryTicks{};
     std::array<RecoveryDailyCounters, 4> daily{};
+    EventClockFields eventClocks;
 
     bool operator==(const RecoverySaveFields &) const = default;
 };
 
-/** Required, exact-size RCVR v1 section for currently represented runtime state. */
+/** Required, exact-size RCVR v2 section for currently represented runtime state. */
 SaveSection encodeRecoverySection(const RecoverySaveFields &fields);
 RecoverySaveFields decodeRecoverySection(const SaveContainer &container);
 void loadRecoveryBeforeMutation(std::span<const std::uint8_t> bytes,
@@ -55,6 +66,11 @@ void loadRecoveryBeforeMutation(std::span<const std::uint8_t> bytes,
 /** Recompute the current runtime's cached calendar from the clock anchor. */
 RecoveryCalendar calendarForPlayingTicks(std::int64_t playingTicks);
 void validateRecoveryAgainstCore(const RecoverySaveFields &recovery, const CoreSaveFields &core);
+
+/** Copy the MM6 event timestamps without assuming MM7 variable IDs or changing live state. */
+EventClockFields captureEventClocks(const PartyTimeStruct &times, GameTitle title);
+PartyTimeStruct stageEventClocks(const PartyTimeStruct &live, const EventClockFields &saved,
+                                 GameTitle title);
 
 /** Reject active rest/turn mode; stage only on a party copy after core clock staging. */
 RecoverySaveFields captureRecoveryFields(const Party &party, GameTitle title);

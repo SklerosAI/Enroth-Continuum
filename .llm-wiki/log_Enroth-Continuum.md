@@ -403,3 +403,9 @@ Chronological record of wiki activity.
 - Added required `.ec6` HIRE fields for two full party NPC copies, separate display names and sacrifice progress. HIRE reuses the RESC logical NPC record codec so dialogue IDs and ability-use state survive without MM7's sacrifice/event-field aliasing. Capture and staging are MM6-guarded and stage on a party copy.
 - Built isolated arm64 unit and save-runtime targets. Six new HIRE tests and five existing RESC tests passed; direct C++ style and diff checks passed. The private F3 logical manifest was used only for the two-slot scope, with no original installation reread or partial game launch.
 - Left HIRE/RESC hired-identity agreement, derived nonhire follower count, initialized-party adapter checks, exact profession/sacrifice behavior, SaveLoad integration and F5 persistence open. The earlier known-save candidate is unchanged.
+
+## [2026-11-06] ingest | MM6 recovery and calendar save field
+- by: T-Burton-ND via codex
+- Audited character and party recovery, last regeneration, days without rest, daily spell-use counters, cached calendar and active rest UI. Added required `RCVR` v1 with a `PART` clock anchor and derived calendar staging.
+- MM6-only capture and copy staging reject active rest/wait or turn-based mode until their UI and queue state have a complete save contract. The whole-save assembler and SaveLoad remain untouched.
+- The arm64 unit target built and two focused recovery tests passed; C++ style and diff checks passed. No original installation was reread or partial MM6 game launched.

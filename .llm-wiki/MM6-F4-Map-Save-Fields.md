@@ -15,4 +15,6 @@ The ignored F3 research copy now has a private 67-name manifest derived from the
 
 The MM6-only `MM6MapSaveValidation` pass decodes the sixteen known `.ec6` sections, checks the expected map set, and loads all 67 matching base maps through a caller-supplied trusted reader before returning or assigning state. Indoor deltas are checked against parsed base structure; outdoor base and delta are each parsed within bounds, while their content-level relationship remains unproved. Missing or malformed bases and malformed deltas reject the whole candidate. This pass is offline and not wired to SaveLoad, a user profile or live world mutation.
 
+`PrivateMapSource` now supplies that reader from an explicit native retained-F3 directory. It enforces bounded, canonical-contained regular files and owner-only manifest permissions, verifies the F3 identity/gate/report/probe hash chain and all 67 manifest entries, and checks each decoded base hash before use. The wrapper stages a known-save candidate only after the full validation pass. The installed game-data path, complete live transaction, active map capture and outdoor content-level relation remain open.
+
 See also: [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

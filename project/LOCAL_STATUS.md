@@ -449,3 +449,14 @@ uses a null platform, renderer and audio driver for headless startup, but the
 existing game-test runner still defaults to MM7 and has no MM6 selector.
 No MM6 headless process, foreground process, graphical view or audio playback
 was run for this planning update. The goal remains paused.
+
+## MM6 F4 refreshed integrated checkpoint — 249 tests, 2026-11-06
+
+The main arm64 `MM6`, `OpenEnroth` and `OpenEnroth_UnitTest` targets linked
+after the detached chest outer-loop, direct-artifact, grid-wire and type/layout
+commits. The private-backed offline runner passed **249/249 MM6/LOD tests from
+66 suites**; the general non-MM6 runner passed **438/438 tests from 56 suites**.
+This supersedes the prior 233-test checkpoint as the current build baseline.
+The chest generation and MM6 SaveLoad guards remain closed. No MM6 process,
+rendered view or audio playback was launched; the installed MM7 app/profile
+and reserved MM8 checkout remain untouched.

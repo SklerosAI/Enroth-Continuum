@@ -77,6 +77,8 @@ inline std::optional<ChestPlacementResult> placeChestItemsDetached(const ChestPl
                 return std::nullopt;
             position = draw() & 255;
         } while (position >= area);
+        // The original stores index zero into its zero-initialized buffer, so
+        // that first entry still appears vacant to this occupancy check.
         while (shuffledCells[position])
             position = (position + 1) % area;
         shuffledCells[position] = static_cast<std::uint8_t>(index);

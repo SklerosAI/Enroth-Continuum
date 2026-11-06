@@ -50,6 +50,7 @@ def main() -> None:
     timed_cure_manifest = rules / "timed-cures.json"
     combat_buff_manifest = rules / "combat-buffs.json"
     house_room_manifest = rules / "house-rooms.json"
+    chest_caller_profile = research.parent / "research-2026-11-06/F4_CHEST_CALLER_PROFILE_PRIVATE.txt"
     staged_icons = (Path.home() / "Library/Application Support/Enroth Continuum"
                     / "Game Data/MM6/app/data/icons.lod")
     staged_anims1 = (Path.home() / "Library/Application Support/Enroth Continuum"
@@ -63,6 +64,8 @@ def main() -> None:
                                            timed_cure_manifest, combat_buff_manifest,
                                            house_room_manifest)):
         parser.error("private MM6 rule or room manifest is missing from the local user profile")
+    if not chest_caller_profile.is_file():
+        parser.error("ignored F3-matched MM6 chest caller profile is missing")
     subprocess.run([sys.executable, "-B", str(root / "scripts/mm6_f4_check_house_presentation.py"),
                     str(research), str(house_room_manifest), str(staged_icons),
                     str(staged_anims1), str(staged_anims2)], check=True)
@@ -90,6 +93,7 @@ def main() -> None:
         "ENROTH_MM6_STAGED_ANIMS1_VID": str(staged_anims1),
         "ENROTH_MM6_STAGED_ANIMS2_VID": str(staged_anims2),
         "ENROTH_MM6_STAGED_AUDIO_SND": str(staged_audio),
+        "MM6_F3_CHEST_CALLER_PROFILE": str(chest_caller_profile),
     })
     subprocess.run([str(binary), "--gtest_filter=MM6*.*:LodReader.OriginalDirectoryOrder"],
                    check=True, env=environment)

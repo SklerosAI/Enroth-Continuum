@@ -34,7 +34,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md) — Partial code seams, including bounded outdoor DDM changed-state encoding, focused checks, and next blockers
 - [MM6 F4 Monster Special Attacks](MM6-F4-Monster-Special-Attack.md) — All retained special labels decoded with unverified MM6 effects gated before mutation
 - [MM6 F4 Monster Spells](MM6-F4-Monster-Spells.md) — All 55 active monster casts retain MM6 spell IDs while effects remain gated
-- [MM6 F4 Monster Projectiles](MM6-F4-Monster-Projectiles.md) — Forty-six active projectile labels still collapse to an inherited no-missile sentinel
+- [MM6 F4 Monster Projectiles](MM6-F4-Monster-Projectiles.md) — All 82 active cells retain MM6 source types while launch and impact remain gated
 - [MM6 F4 Spell Damage Tags](MM6-F4-Spell-Damage-Tags.md) — Seven source damage labels retained for all 99 spells while effect semantics remain gated
 - [MM6 F4 Transport Manifest](MM6-F4-Transport-Manifest.md) — Private F3-derived travel descriptors, blank/special slot policy and title-specific UI handoff
 - [MM6 F4 Map Bytes](MM6-F4-Map-Bytes.md) — Bounded active map-byte dispatch, 200-byte delta preservation, and unresolved arithmetic/persistence edges

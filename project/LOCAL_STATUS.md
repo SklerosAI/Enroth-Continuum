@@ -231,12 +231,13 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   private profile manifest and adds six starting class choices; formulas,
   Quick Start and promotion remain provisional. The [variable guard](MM6_F4_VARIABLE_GUARD.md)
   prevents MM6-specific event IDs from executing as colliding MM7 meanings.
-- The integrated MM6 app, MM7 app and unit targets built with the resistance
-  assembly revision and the spell-item mapping guard. The offline suite passed 83 tests across EVT
+- The integrated MM6 app, MM7 app and unit targets built with the sixteen-section
+  partial assembly and the spell-item prerequisite guard. The offline suite passed 83 tests across EVT
   framing and selected guarded effects, wire codecs and indoor/outdoor projection,
   variable guard, `.ec6` fields and partial assembly, private transport/spell
   rules, descriptor 173 and LOD order; the
   private actor fixture checked 67 map deltas/342 actors and one ID 173.
+  The general non-MM6 unit suite passed 438/438 tests from the same build.
   F4 rules, map state, events, services, media output and saves remain open.
   No MM6 process or original GOG file was opened for these F4 checks.
   A title-specific zero-mastery `CheckSkill` branch now has a provisional

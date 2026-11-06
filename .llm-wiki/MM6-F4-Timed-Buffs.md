@@ -13,4 +13,6 @@ It records 20 party and 4×24 character slots, including expiration, power, mast
 
 The existing `EFFT` section owns condition clocks; the F3 logical effect grouping did not specify original buff wire widths. The integrated partial known-save assembly now requires `BUFF`. Overlay reference consistency with `VISU`, exact MM6 effect semantics, initialized-party runtime testing, SaveLoad integration and F5 save/relaunch remain open.
 
+`SpellBuff::Reset` uses a nonzero overlay ID as a one-based index into the 50 runtime slots. The `BUFF` codec bounds that ID, but an animation can finish or a slot can be reused before a longer buff expires. An active buff does not prove its `VISU` slot is still active; future staging needs reset/replacement checks rather than a false mandatory-active join.
+
 See also: [Known Save Assembly](MM6-F4-Known-Save-Assembly.md), [F2 Save Fields](Source-MM6-Save-Field-Register-F2.md), [F4 Offline Seams](MM6-F4-Offline-Seams.md).

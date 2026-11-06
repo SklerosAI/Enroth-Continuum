@@ -13,8 +13,9 @@
 
 namespace mm6 {
 
-// Detached identity supplied by a title-specific base/runtime adapter. Texture
-// names are canonical lower-case bitmap keys, never renderer pointers.
+// Detached identity supplied by a title-specific base/runtime adapter. Base
+// means the deterministic face state just before OnMapReload, including fixed
+// load-time repairs. Texture names are canonical bitmap keys, never pointers.
 struct IndoorFaceState {
     std::uint32_t attributes = 0;
     std::string textureName;
@@ -47,7 +48,7 @@ struct IndoorFaceOverrides {
 
 using IndoorBaseFaceReader = std::function<std::vector<IndoorFaceState>(std::string_view)>;
 
-// Returns no map entry when every face still matches its BLV base. The caller
+// Returns no map entry when every face still matches the pre-event base. The caller
 // must supply stable texture identity, including for animated faces; an adapter
 // must reject a face whose identity it cannot establish.
 std::optional<IndoorFaceMapOverrides> captureIndoorFaceOverrides(

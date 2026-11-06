@@ -20,7 +20,7 @@ constexpr size_t MAX_PAYLOAD_SIZE = 32 * 1024 * 1024;
 
 void put32(std::vector<std::uint8_t> *bytes, std::uint32_t value) {
     for (int shift = 0; shift < 32; shift += 8)
-        bytes->push_back(value >> shift);
+        bytes->push_back(static_cast<std::uint8_t>(value >> shift));
 }
 
 class Reader {
@@ -88,11 +88,11 @@ SaveSection encodeMapSection(const MapSaveFields &fields) {
     validate(fields);
     SaveSection section{MAPS_TAG, true, {}};
     section.payload.push_back(VERSION);
-    section.payload.push_back(fields.deltas.size());
+    section.payload.push_back(static_cast<std::uint8_t>(fields.deltas.size()));
     for (const SavedMapDelta &delta : fields.deltas) {
-        section.payload.push_back(delta.name.size());
+        section.payload.push_back(static_cast<std::uint8_t>(delta.name.size()));
         section.payload.insert(section.payload.end(), delta.name.begin(), delta.name.end());
-        put32(&section.payload, delta.bytes.size());
+        put32(&section.payload, static_cast<std::uint32_t>(delta.bytes.size()));
         section.payload.insert(section.payload.end(), delta.bytes.begin(), delta.bytes.end());
     }
     return section;

@@ -1,5 +1,6 @@
 #include "CastSpellInfo.h"
 
+#include <algorithm>
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -52,6 +53,11 @@ static SpellFxRenderer *spell_fx_renderer = EngineIocContainer::ResolveSpellFxRe
 
 static const size_t CAST_SPELL_QUEUE_SIZE = 10;
 static std::array<CastSpellInfo, CAST_SPELL_QUEUE_SIZE> pCastSpellInfo;
+
+bool CastSpellInfoHelpers::hasPendingSpellCastForSave() noexcept {
+    return std::any_of(pCastSpellInfo.begin(), pCastSpellInfo.end(),
+                       [](const CastSpellInfo &spell) { return spell.uSpellID != SPELL_NONE; });
+}
 
 // Recovery time when spell failed because of curse
 static constexpr Duration SPELL_FAILURE_RECOVERY_TIME_ON_CURSE = 100_ticks;

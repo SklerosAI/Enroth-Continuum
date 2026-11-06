@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <span>
+#include <string>
 #include <vector>
 
 #include "Engine/GameTitle.h"
@@ -9,6 +10,7 @@
 #include "MM6SaveContainer.h"
 
 struct Party;
+struct ItemTable;
 
 namespace mm6 {
 
@@ -42,5 +44,34 @@ HeldItemSaveFields captureHeldItem(const Party &party, GameTitle title);
 
 /** Validate the item against loaded MM6 tables and assign only to a party copy. */
 Party stageHeldItemParty(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title);
+
+struct PendingActionStateForSave {
+    bool spellQueueActive = false;
+    bool targetedSpellWindow = false;
+    bool enchanting = false;
+    bool turnModeActive = false;
+    bool turnQueueActive = false;
+    bool turnActionsPending = false;
+    bool attackListActive = false;
+    bool playerSelectionActive = false;
+};
+
+struct HeldCursorRestorePlan {
+    std::string iconName = "MICON1";
+    bool itemCursor = false;
+    // The held-item click offset is transient and resets after load.
+    bool resetClickOffset = true;
+    bool operator==(const HeldCursorRestorePlan &) const = default;
+};
+
+// Read-only live action probe. Active spells/targeting/turn work are rejected
+// by the detached cursor plan rather than silently dropped on save/reload.
+PendingActionStateForSave capturePendingActionStateForSave(GameTitle title);
+
+// Validate a saved HELD field against explicit loaded MM6 templates and
+// stage only the post-commit cursor intent. No mouse, image or UI is touched.
+HeldCursorRestorePlan stageHeldCursorRestorePlan(
+    const HeldItemSaveFields &held, const ItemTable &items,
+    const PendingActionStateForSave &actions, GameTitle title);
 
 } // namespace mm6

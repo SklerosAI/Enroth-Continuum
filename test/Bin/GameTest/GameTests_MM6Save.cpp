@@ -17,6 +17,7 @@
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/MM6/MM6KnownSaveFields.h"
+#include "Engine/MM6/MM6HeldItemSaveFields.h"
 #include "Engine/MM6/MM6NewGameSaveRuntime.h"
 #include "Engine/MM6/MM6PrivateMapSource.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
@@ -79,6 +80,7 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
         bool rollbackExact = false;
         bool freshDiskStage = false;
         bool detachedOutdoorPlan = false;
+        bool idleHeldCursorPlan = false;
         bool wrongTitleRejected = false;
         bool corruptPrimaryRecoveredReadOnly = false;
         std::string error;
@@ -110,6 +112,11 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
             pActiveOverlayList->Reset();
             pMapDeltas.clear();
             mm6::resetChestTitleState(&mm6::chestTitleState());
+            const auto actions = mm6::capturePendingActionStateForSave(GameTitle::MM6);
+            const auto cursorPlan = mm6::stageHeldCursorRestorePlan(
+                {}, *pItemTable, actions, GameTitle::MM6);
+            result.idleHeldCursorPlan = cursorPlan.iconName == "MICON1" &&
+                !cursorPlan.itemCursor && cursorPlan.resetClickOffset;
 
             (void) mm6::saveNewGameMM6ScopedForTest(profile.root, research,
                 [&](const Party &staged, const std::unordered_map<std::string, Blob> &cache,
@@ -224,6 +231,7 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
     EXPECT_TRUE(result.failureCallback);
     EXPECT_TRUE(result.freshDiskStage);
     EXPECT_TRUE(result.detachedOutdoorPlan);
+    EXPECT_TRUE(result.idleHeldCursorPlan);
     EXPECT_TRUE(result.wrongTitleRejected);
     EXPECT_TRUE(result.corruptPrimaryRecoveredReadOnly);
     EXPECT_FALSE(result.primaryBeforeFailure.empty());

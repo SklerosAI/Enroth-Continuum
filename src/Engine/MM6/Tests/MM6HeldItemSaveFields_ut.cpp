@@ -5,6 +5,7 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6HeldItemSaveFields.h"
+#include "Engine/Tables/ItemTable.h"
 
 namespace {
 
@@ -83,4 +84,54 @@ UNIT_TEST(MM6HeldItemSaveFields, RejectsInvalidBeforeDestinationMutation) {
     EXPECT_THROW(mm6::loadHeldItemBeforeMutation(wrongTitle, &destination), std::exception);
     EXPECT_EQ(destination, before);
     EXPECT_THROW(mm6::loadHeldItemBeforeMutation(saveBytes(before), nullptr), std::exception);
+}
+
+UNIT_TEST(MM6HeldItemSaveFields, DetachedCursorIntentRequiresIdleActionsAndLoadedIcon) {
+    ItemTable items;
+    const ItemId id = static_cast<ItemId>(501);
+    items.items[id].iconName = "held501";
+    items.itemSizes[id] = Sizei(2, 3);
+    mm6::PendingActionStateForSave idle;
+    const auto empty = mm6::stageHeldCursorRestorePlan({}, items, idle, GameTitle::MM6);
+    EXPECT_EQ(empty.iconName, "MICON1");
+    EXPECT_FALSE(empty.itemCursor);
+    EXPECT_TRUE(empty.resetClickOffset);
+
+    mm6::HeldItemSaveFields held = example();
+    const auto staged = mm6::stageHeldCursorRestorePlan(held, items, idle, GameTitle::MM6);
+    EXPECT_EQ(staged.iconName, "held501");
+    EXPECT_TRUE(staged.itemCursor);
+    EXPECT_TRUE(staged.resetClickOffset);
+    EXPECT_EQ(items.items[id].iconName, "held501");
+
+    mm6::PendingActionStateForSave busy;
+    busy.spellQueueActive = true;
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
+    busy = {};
+    busy.targetedSpellWindow = true;
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
+    busy = {};
+    busy.enchanting = true;
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
+    busy = {};
+    busy.turnModeActive = true;
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
+    busy = {};
+    busy.turnQueueActive = true;
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
+    busy = {};
+    busy.turnActionsPending = true;
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
+    busy = {};
+    busy.attackListActive = true;
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
+    busy = {};
+    busy.playerSelectionActive = true;
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, idle, GameTitle::MM7), std::exception);
+    EXPECT_THROW((void) mm6::capturePendingActionStateForSave(GameTitle::MM7), std::exception);
+    items.items[id].iconName.clear();
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, idle, GameTitle::MM6), std::exception);
+    EXPECT_EQ(staged.iconName, "held501");
+    EXPECT_FALSE(items.items[id].iconName == "held501");
 }

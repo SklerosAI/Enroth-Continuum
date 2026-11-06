@@ -1,0 +1,19 @@
+# MM6 held cursor and pending action gate — F4
+
+Status, 2026-11-06: **complete detached `HELD` scalar stage plus a bounded post-commit cursor intent and fail-closed live action probe; no mouse/UI commit or normal MM6 SaveLoad route**.
+
+## Durable held item and transient cursor
+
+`Party::pPickedItem` is captured in required `HELD` v1 with every current item scalar and copy-staged on a detached Party. A present item requires a loaded MM6 template icon and valid inventory footprint. `Party::setHoldingItem()` cannot be used on load: before setting the new item it places or drops the previous held item, then changes the global mouse image and click offset. `Party::takeHoldingItem()` clears the held item and sets `MICON1` with zero offset. During world loading, `Engine::ResetCursor_Palettes_LODs_Level_Audio_SFT_Windows()` also sets `MICON1`; `_461103_load_level_sub()` sets a held item's bitmap after map entry. `Io::Mouse::SetCursorBitmapFromItemID()` looks up the template icon name, and `SetCursorImage()` clears cursor buffers, can acquire an icon and updates platform cursor visibility. Those effects belong **after** a complete all-owner commit.
+
+`stageHeldCursorRestorePlan()` accepts the validated `HELD` fields, an explicit loaded MM6 item table and a captured action state. It revalidates the full HELD field, rejects any active action, checks a nonempty icon name and 14×9 footprint for a present item, and returns an owned icon name with a transient click-offset reset policy. Empty HELD produces `MICON1`. It does not call mouse, assets, renderer, GUI or `setHoldingItem()`. The loaded MM6 item-table initialization already checks that nonempty template icons exist in `icons.lod`; this plan does not prove that a rendered modded cursor looks correct.
+
+## Pending work cannot be silently dropped
+
+The player spell queue is a private ten-slot array in `CastSpellInfo.cpp`; an occupied slot has `uSpellID != SPELL_NONE`. Targeted casting can also own `pGUIWindow_CastTargetedSpell`, enchanting state and a different cursor (`MICON2`). `CastSpellInfoHelpers::hasPendingSpellCastForSave()` is a read-only query of the queue. `capturePendingActionStateForSave()` requires a live MM6 engine, Party and turn engine, then observes that queue, targeted window, enchanting flags, Party turn mode, turn queue/stage/pending actions, `attackList` and `Party::playerAlreadyPicked`. The detached cursor plan rejects any non-idle observation. The test-only `saveNewGameMM6ScopedForTest()` runs this gate before opening the private map source or touching disk. Normal `saveNewGame()` and `loadGame()` remain guarded.
+
+This is a conservative **idle-only** policy for the observed owners, not a complete action save format. The GUI message queue, rest state, projectiles already present in map deltas, and first-frame consequences still require their own save/reload audit. A real live capture must take the action observation at a stable simulation boundary and keep it unchanged through preflight/write/commit; the current query does not lock a concurrent writer. A future load must stage HELD and the cursor plan before global mutation, then apply its mouse image and zero click offset only after the world, Party and UI reset are committed. Failure to resolve the icon or apply the UI operation cannot be allowed to leave disk and process owners half committed; no such commit path is opened here.
+
+## Verification
+
+A focused native case tests empty and nonzero held cursor intent, all observed busy-action flags, wrong title, missing icon and retained prior plan after a late icon failure. The existing monitored private save GameTest now asks the live MM6 action probe and empty HELD cursor plan before its scoped first-map transaction. Source and test changes require the parent's clean linked build and monitored run. No private game bytes or GUI files were changed.

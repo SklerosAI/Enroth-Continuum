@@ -1,13 +1,20 @@
 #include "MM6HeldItemSaveFields.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <stdexcept>
 #include <utility>
 
 #include "Engine/Engine.h"
+#include "Engine/AttackList.h"
 #include "Engine/Objects/Item.h"
 #include "Engine/Party.h"
+#include "Engine/Spells/CastSpellInfo.h"
 #include "Engine/Tables/ItemTable.h"
+#include "Engine/TurnEngine/TurnEngine.h"
+#include "Engine/mm7_data.h"
+
+#include "GUI/GUIWindow.h"
 
 namespace mm6 {
 namespace {
@@ -84,6 +91,47 @@ Party stageHeldItemParty(const Party &live, std::span<const std::uint8_t> bytes,
         item.enchantmentExpirationTime = Time::fromTicks(fields.expirationTicks);
     }
     return staged;
+}
+
+PendingActionStateForSave capturePendingActionStateForSave(GameTitle title) {
+    requireMM6(title, true);
+    if (!pParty || !pTurnEngine)
+        throw std::runtime_error("MM6 pending-action preflight lacks live owners");
+    PendingActionStateForSave state;
+    state.spellQueueActive = CastSpellInfoHelpers::hasPendingSpellCastForSave();
+    state.targetedSpellWindow = pGUIWindow_CastTargetedSpell != nullptr;
+    state.enchanting = IsEnchantingInProgress || enchantingActiveCharacter != -1;
+    state.turnModeActive = pParty->bTurnBasedModeOn;
+    state.turnQueueActive = pTurnEngine->turn_stage != TE_NONE || !pTurnEngine->pQueue.empty();
+    state.turnActionsPending = pTurnEngine->pending_actions != 0;
+    state.attackListActive = !attackList.empty();
+    state.playerSelectionActive = std::any_of(pParty->playerAlreadyPicked.begin(),
+        pParty->playerAlreadyPicked.end(), [](bool picked) { return picked; });
+    return state;
+}
+
+HeldCursorRestorePlan stageHeldCursorRestorePlan(
+    const HeldItemSaveFields &held, const ItemTable &items,
+    const PendingActionStateForSave &actions, GameTitle title) {
+    if (title != GameTitle::MM6)
+        throw std::runtime_error("MM6 held cursor cannot stage another title");
+    if (actions.spellQueueActive || actions.targetedSpellWindow || actions.enchanting ||
+        actions.turnModeActive || actions.turnQueueActive || actions.turnActionsPending ||
+        actions.attackListActive || actions.playerSelectionActive)
+        throw std::runtime_error("MM6 held cursor cannot discard a pending action");
+    (void) encodeHeldItemSection(held); // Full scalar/canonical-empty validation.
+    HeldCursorRestorePlan plan;
+    if (!held.present)
+        return plan;
+    const ItemId id = static_cast<ItemId>(held.itemId);
+    const auto &templateItem = items.items[id];
+    const Sizei size = items.itemSizes[id];
+    if (templateItem.iconName.empty() || size.w < 1 || size.w > 14 ||
+        size.h < 1 || size.h > 9)
+        throw std::runtime_error("MM6 held cursor has no usable loaded item icon");
+    plan.iconName = templateItem.iconName;
+    plan.itemCursor = true;
+    return plan;
 }
 
 } // namespace mm6

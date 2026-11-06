@@ -13,6 +13,8 @@
 class TargetedSpellUI;
 
 namespace CastSpellInfoHelpers {
+/** Read-only save preflight: any occupied spell queue slot is an uncommitted action. */
+bool hasPendingSpellCastForSave() noexcept;
 /**
  * Cast spell processing.
  *

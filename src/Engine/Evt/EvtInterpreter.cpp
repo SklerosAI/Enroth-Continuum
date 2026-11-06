@@ -13,6 +13,7 @@
 #include "Engine/Evt/EvtVariables.h"
 #include "Engine/Evt/MM6EventRules.h"
 #include "Engine/Evt/MM6EventVariables.h"
+#include "Engine/Evt/MM6AutonoteState.h"
 #include "Engine/Evt/MM6MapByteState.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Party.h"
@@ -177,6 +178,15 @@ static BLVFace &mm6OutdoorEventFace(int modelIndex, int facetIndex) {
 static bool isMM6MapByteVariable(EvtVariable variable) {
     return engine->gameTitle() == GameTitle::MM6 &&
            describeMM6Variable(std::to_underlying(variable)).family == MM6VariableFamily::MapByte;
+}
+
+static bool isMM6AutonoteVariable(EvtVariable variable) {
+    return engine->gameTitle() == GameTitle::MM6 &&
+           describeMM6Variable(std::to_underlying(variable)).family == MM6VariableFamily::Autonote;
+}
+
+static MM6AutonoteState mm6AutonoteState() {
+    return MM6AutonoteState(pParty->_autonoteBits);
 }
 
 static MM6MapByteState mm6CurrentMapByteState() {
@@ -371,6 +381,12 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             setDecorationSprite(ir.data.sprite_texture_descr.cog, ir.data.sprite_texture_descr.hide, ir.str);
             break;
         case EVENT_Compare:
+            if (isMM6AutonoteVariable(ir.data.variable_descr.type)) {
+                if (mm6AutonoteState().compare(std::to_underlying(ir.data.variable_descr.type),
+                                               ir.data.variable_descr.value))
+                    return {EVT_FLOW_JUMP, ir.target_step};
+                break;
+            }
             if (isMM6MapByteVariable(ir.data.variable_descr.type)) {
                 if (mm6CurrentMapByteState().compare(std::to_underlying(ir.data.variable_descr.type),
                                                      ir.data.variable_descr.value))
@@ -387,6 +403,11 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             switchDoorAnimation(ir.data.door_descr.door_id, ir.data.door_descr.door_action);
             break;
         case EVENT_Add:
+            if (isMM6AutonoteVariable(ir.data.variable_descr.type)) {
+                mm6AutonoteState().add(std::to_underlying(ir.data.variable_descr.type),
+                                       ir.data.variable_descr.value);
+                break;
+            }
             if (isMM6MapByteVariable(ir.data.variable_descr.type)) {
                 mm6CurrentMapByteState().add(std::to_underlying(ir.data.variable_descr.type),
                                              ir.data.variable_descr.value);
@@ -404,6 +425,11 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                 addEvtVariable(character, ir.data.variable_descr.type, ir.data.variable_descr.value);
             break;
         case EVENT_Subtract: {
+            if (isMM6AutonoteVariable(ir.data.variable_descr.type)) {
+                mm6AutonoteState().subtract(std::to_underlying(ir.data.variable_descr.type),
+                                            ir.data.variable_descr.value);
+                break;
+            }
             if (isMM6MapByteVariable(ir.data.variable_descr.type)) {
                 mm6CurrentMapByteState().subtract(std::to_underlying(ir.data.variable_descr.type),
                                                   ir.data.variable_descr.value);
@@ -434,6 +460,11 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         }
         case EVENT_Set:
+            if (isMM6AutonoteVariable(ir.data.variable_descr.type)) {
+                mm6AutonoteState().set(std::to_underlying(ir.data.variable_descr.type),
+                                       ir.data.variable_descr.value);
+                break;
+            }
             if (isMM6MapByteVariable(ir.data.variable_descr.type)) {
                 mm6CurrentMapByteState().set(std::to_underlying(ir.data.variable_descr.type),
                                              ir.data.variable_descr.value);
@@ -783,6 +814,12 @@ int EvtInterpreter::checkTopicStep(int step) {
     case EVENT_EndCanShowDialogItem:
         return -1;
     case EVENT_OnCanShowDialogItemCmp:
+        if (isMM6AutonoteVariable(ir->data.variable_descr.type)) {
+            if (mm6AutonoteState().compare(std::to_underlying(ir->data.variable_descr.type),
+                                           ir->data.variable_descr.value))
+                return ir->target_step;
+            break;
+        }
         if (!validateVariableValue(*ir))
             break;
         for (Character &player : pParty->pCharacters)

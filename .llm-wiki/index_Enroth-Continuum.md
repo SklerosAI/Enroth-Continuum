@@ -34,6 +34,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md) — Partial code seams, including bounded outdoor DDM changed-state encoding, focused checks, and next blockers
 - [MM6 F4 Transport Manifest](MM6-F4-Transport-Manifest.md) — Private F3-derived travel descriptors, blank/special slot policy and title-specific UI handoff
 - [MM6 F4 Map Bytes](MM6-F4-Map-Bytes.md) — Bounded active map-byte dispatch, 200-byte delta preservation, and unresolved arithmetic/persistence edges
+- [MM6 F4 Autonote Variables](MM6-F4-Autonote-Variables.md) — Bounded party note-bit dispatch for active MM6 event ID 205 and remaining UI/save checks
 - [MM6 F4 Spell Rules](MM6-F4-Spell-Rules.md) — Private F3-backed 99-spell mana/recovery selection and unresolved cast/effect routes
 - [MM6 F4 Spell Dispatch](MM6-F4-Spell-Dispatch.md) — All-99 MM6 effect rejection boundary, per-ID private handoff and remaining semantic proof
 - [MM6 F4 Spell Items](MM6-F4-Spell-Items.md) — F3-matched scroll/book ID bands, checked lookup and guarded consumers

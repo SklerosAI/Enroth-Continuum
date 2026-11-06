@@ -18,7 +18,9 @@ UNIT_TEST(MM6EventVariables, MapByteRangeHasOneHundredCheckedSlots) {
     EXPECT_EQ(describeMM6Variable(105).index, 0);
     EXPECT_EQ(describeMM6Variable(105).scope, MM6VariableScope::Map);
     EXPECT_EQ(describeMM6Variable(204).index, 99);
-    EXPECT_EQ(describeMM6Variable(205).family, MM6VariableFamily::OtherTitleSpecific);
+    EXPECT_EQ(describeMM6Variable(205).family, MM6VariableFamily::Autonote);
+    EXPECT_EQ(describeMM6Variable(205).scope, MM6VariableScope::Party);
+    EXPECT_EQ(describeMM6Variable(206).family, MM6VariableFamily::OtherTitleSpecific);
 }
 
 UNIT_TEST(MM6EventVariables, ClassValueRejectsMM7OnlyIds) {

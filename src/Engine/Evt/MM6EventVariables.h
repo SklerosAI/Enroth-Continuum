@@ -13,6 +13,7 @@ enum class MM6VariableFamily : std::uint8_t {
     Skill,
     Condition,
     MapByte,
+    Autonote,
     OtherTitleSpecific,
 };
 
@@ -20,6 +21,7 @@ enum class MM6VariableScope : std::uint8_t {
     Unknown,
     Character,
     Map,
+    Party,
 };
 
 struct MM6VariableDescriptor {
@@ -45,6 +47,8 @@ constexpr MM6VariableDescriptor describeMM6Variable(int rawId) {
         return {MM6VariableFamily::Condition, MM6VariableScope::Character, rawId - 87};
     if (rawId >= 105 && rawId <= 204)
         return {MM6VariableFamily::MapByte, MM6VariableScope::Map, rawId - 105};
+    if (rawId == 205)
+        return {MM6VariableFamily::Autonote, MM6VariableScope::Party, 0};
     if (rawId >= 205 && rawId <= 226)
         return {MM6VariableFamily::OtherTitleSpecific, MM6VariableScope::Unknown, -1};
     return {MM6VariableFamily::Invalid, MM6VariableScope::Unknown, -1};

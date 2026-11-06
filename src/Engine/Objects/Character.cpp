@@ -23,6 +23,7 @@
 #include "Engine/Localization.h"
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6Portraits.h"
+#include "Engine/MM6/MM6SpellItems.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Tables/ObjectTable.h"
@@ -3626,6 +3627,12 @@ void Character::useItem(int targetCharacter, bool isPortraitClick) {
     }
 
     if (pParty->pPickedItem.isSpellScroll()) {
+        if (engine->gameTitle() == GameTitle::MM6) {
+            (void) mm6::spellForScroll(pParty->pPickedItem.itemId);
+            // The inherited item-target and effect paths are not MM6 rules.
+            // Reject before the scroll is consumed or a cast is queued.
+            throw std::runtime_error("MM6 scroll targeting and effects are not implemented");
+        }
         if (current_screen_type == SCREEN_CASTING) {
             return;
         }
@@ -3664,6 +3671,11 @@ void Character::useItem(int targetCharacter, bool isPortraitClick) {
     }
 
     if (pParty->pPickedItem.isBook()) {
+        if (engine->gameTitle() == GameTitle::MM6) {
+            (void) mm6::spellForSpellbook(pParty->pPickedItem.itemId);
+            // The inherited required-mastery table is not MM6's learn gate.
+            throw std::runtime_error("MM6 spellbook learning rules are not implemented");
+        }
         SpellId bookSpellId = spellForSpellbook(pParty->pPickedItem.itemId);
         if (playerAffected->bHaveSpell[bookSpellId]) {
             engine->_statusBar->setEvent(LSTR_YOU_ALREADY_KNOW_THE_S_SPELL, pParty->pPickedItem.GetDisplayName());

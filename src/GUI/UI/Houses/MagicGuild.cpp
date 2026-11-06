@@ -1,6 +1,7 @@
 #include "MagicGuild.h"
 
 #include <string>
+#include <stdexcept>
 #include <vector>
 
 #include "Engine/Engine.h"
@@ -314,6 +315,9 @@ void GUIWindow_MagicGuild::houseScreenClick() {
 }
 
 void GUIWindow_MagicGuild::generateSpellBooksForGuild() {
+    if (engine->gameTitle() == GameTitle::MM6)
+        throw std::runtime_error("MM6 guild spellbook stock rules are not implemented");
+
     HouseType guildType = buildingType();
 
     // Combined guilds exist only in MM6/MM8 and need to be processed separately

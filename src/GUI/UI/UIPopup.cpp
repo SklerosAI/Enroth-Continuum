@@ -27,6 +27,7 @@
 #include "Engine/Party.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6Portraits.h"
+#include "Engine/MM6/MM6SpellItems.h"
 #include "Engine/Timer.h"
 #include "Engine/Conditions.h"
 #include "Engine/Objects/ActorEnumFunctions.h"
@@ -1391,8 +1392,10 @@ static void drawBuffPopupWindow() {
  * @offset 0x4B1523
  */
 void showSpellbookInfo(ItemId spellbook) {
-    assert(isSpellbook(spellbook));
-    SpellId spell = spellForSpellbook(spellbook);
+    const bool isMM6 = engine->gameTitle() == GameTitle::MM6;
+    if (!isMM6)
+        assert(isSpellbook(spellbook));
+    SpellId spell = isMM6 ? mm6::spellForSpellbook(spellbook) : spellForSpellbook(spellbook);
 
     Pointi cursorPos = EngineIocContainer::ResolveMouse()->position();
     int popupVertPos = 30;
@@ -1406,14 +1409,16 @@ void showSpellbookInfo(ItemId spellbook) {
         assets->pFontSmallnum->GetLineWidth(localization->str(LSTR_NORMAL)),
         assets->pFontSmallnum->GetLineWidth(localization->str(LSTR_EXPERT)),
         assets->pFontSmallnum->GetLineWidth(localization->str(LSTR_MASTER)),
-        assets->pFontSmallnum->GetLineWidth(localization->str(LSTR_GRAND_1))});
+        isMM6 ? 0 : assets->pFontSmallnum->GetLineWidth(localization->str(LSTR_GRAND_1))});
 
-    std::string str = fmt::format("{}\n\n{}\t{:03}:\t{:03}{}\t000\n{}\t{:03}:\t{:03}{}\t000\n{}\t{:03}:\t{:03}{}\t000\n{}\t{:03}:\t{:03}{}",
+    std::string str = fmt::format("{}\n\n{}\t{:03}:\t{:03}{}\t000\n{}\t{:03}:\t{:03}{}\t000\n{}\t{:03}:\t{:03}{}",
                                   pSpellStats->pInfos[spell].pDescription,
                                   localization->str(LSTR_NORMAL), maxLineWidth + 3, maxLineWidth + 10, pSpellStats->pInfos[spell].pBasicSkillDesc,
                                   localization->str(LSTR_EXPERT), maxLineWidth + 3, maxLineWidth + 10, pSpellStats->pInfos[spell].pExpertSkillDesc,
-                                  localization->str(LSTR_MASTER), maxLineWidth + 3, maxLineWidth + 10, pSpellStats->pInfos[spell].pMasterSkillDesc,
-                                  localization->str(LSTR_GRAND_1), maxLineWidth + 3, maxLineWidth + 10, pSpellStats->pInfos[spell].pGrandmasterSkillDesc);
+                                  localization->str(LSTR_MASTER), maxLineWidth + 3, maxLineWidth + 10, pSpellStats->pInfos[spell].pMasterSkillDesc);
+    if (!isMM6)
+        str += fmt::format("\n{}\t{:03}:\t{:03}{}", localization->str(LSTR_GRAND_1), maxLineWidth + 3,
+                           maxLineWidth + 10, pSpellStats->pInfos[spell].pGrandmasterSkillDesc);
 
     popup.h += assets->pFontSmallnum->CalcTextHeight(str, popup.w, 0);
     if (popup.h < 150) {

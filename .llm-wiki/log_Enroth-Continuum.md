@@ -868,3 +868,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Rebuilt arm64 MM6, OpenEnroth and unit targets, then ran the private-backed offline suite after Power Cure, all-room frame, map-item, chest-guard and audio work. The gate passed **209/209 tests from 61 suites**; the separate general suite passed **438/438**. The offline runner checked F3-matched staged audio and retained map/media fixtures without launching MM6.
 - Reconciled [local status](../project/LOCAL_STATUS.md), [build graph](../project/MM6_F4_BUILD_GRAPH.md), [offline seam register](MM6-F4-Offline-Seams.md), [agent handoff](Agent-Handoff.md) and the wiki index. The MM6 chest guard intentionally prevents every level load until title-specific generation or a proved skip policy exists. Complete spell effects, services, save/load and F5 graphical/audio play remain open. Only the retained README under `local-game-data/` is tracked; proprietary assets and detailed reports remain ignored.
+
+## [2026-11-06] correct | MM6 maximum-health floor
+- by: T-Burton-ND via codex
+- A bounded read-only trace of the accepted F3-identity-matched original MM6 executable established that its maximum-health result is clamped to at least one. Corrected the MM6 `Character::GetMaxHealth()` floor from zero to one; the MM7 path is untouched. Exact PE evidence is in an ignored owner-local note.
+- The arm64 MM6 target rebuilt and linked. This verifies one endpoint of the HP formula, while other bonuses, promotion behavior, displayed character-sheet values and save/reload remain open. No MM6 process was launched.

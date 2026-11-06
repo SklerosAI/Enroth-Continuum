@@ -226,7 +226,9 @@ that requirement.
   matrix has 207 quantitative, 87 qualitative and three guide-unknown rank
   clauses, and four guide/table rank-effect disagreements. Its same-ID C++
   screen finds 58 label/base-mana conflicts and 41 not-demonstrated effects.
-  Full C++ effect comparison and runtime casts remain unverified.
+  A later six-facet source screen covers all 99 IDs: 70 effect conflicts,
+  27 limited candidates and two unresolved UI continuations; recovery is
+  unresolved for 96. Full downstream behavior and runtime casts remain unverified.
 - [ ] Implement MM6-specific spell IDs, casting effects, three mastery levels,
   costs, recovery, damage/resistance types, target rules, buff duration,
   scroll/book/wand mappings, monster/event casts, visuals and descriptions.

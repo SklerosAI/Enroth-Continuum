@@ -12,4 +12,4 @@ The accepted corrected PE report provides 99 ID-ordered spell rows with Normal, 
 
 This does not resolve the inherited spell effect switch. The [effect-dispatch boundary](MM6-F4-Spell-Dispatch.md) now rejects all 99 MM6 regular spells before inherited player, event, monster and damage effects. [Spell-item IDs](MM6-F4-Spell-Items.md) have a bounded MM6 mapping, and a private class/school availability gate exists, but book learning remains closed until per-spell required mastery is established. Scroll/NPC override casts and debug Grandmaster casts fail closed; portal/beacon book debits, dynamic modifiers, failure timing, sound and visual effects require separate work. The native tests cover all 297 table cells and malformed or out-of-range input, including the private manifest. No graphical cast or campaign outcome has been verified.
 
-See also: [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), [MM6 F4 Map Bytes](MM6-F4-Map-Bytes.md), [Agent Handoff](Agent-Handoff.md).
+See also: [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), [MM6 F4 Spell Dispatch](MM6-F4-Spell-Dispatch.md), [MM6 F4 Map Bytes](MM6-F4-Map-Bytes.md), [Agent Handoff](Agent-Handoff.md).

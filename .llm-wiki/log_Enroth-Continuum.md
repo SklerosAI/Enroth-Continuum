@@ -55,3 +55,9 @@ Chronological record of wiki activity.
 - Mapped current engine layers, title seams, tracked specs and probes, and a staged observation and agent-control roadmap without claiming MM6 gameplay.
 - Ingested structural monster, campaign-graph, item-matrix and NPC-text findings into source summaries, handoff and open questions; F2 remains in progress and F3/F4 are unpassed.
 - Linked the ignored, local-only private companion and its report registry while stating that Git does not back it up. Checked 27 wiki pages for frontmatter and local links, excluding schema example targets.
+
+## [2026-11-05] ingest | MM6 F2 closure packets and probes
+- by: T-Burton-ND via codex
+- Linked the world wire-section roundtrip, house-route audit, potion-guide reconciliation, and campaign-route audit from the source/probe index and handoff.
+- Added source summaries for world, rules, and campaign closure packets; updated the architecture, structural findings, workstreams, and open questions with their static evidence and F4/F5 obligations.
+- Kept exact recipes and per-record findings private; recorded that the draft F3 preflight matrix is not a passed gate. Checked 30 wiki pages for frontmatter and local links.

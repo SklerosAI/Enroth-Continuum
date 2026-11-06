@@ -1568,3 +1568,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The F3-matched original executable addresses one checked indoor face index for texture and face-bit events. MM6 now targets that face directly and advances unchanged for invalid/nonindoor targets; MM7 retains its cog-group path.
 - The integrated focused headless check passed 1/1, full MM6 headless 49/49, MM7 control 1/1 and general non-MM6 unit gate 437/437 with no on-screen window or focus change. Changed-face save/reload and the visual result remain unproved.
+
+## [2026-11-06] audit | MM6 indoor face persistence gate
+- by: T-Burton-ND via codex
+- The current MM6 changed-state encoder does not read live indoor faces, and the decoded DLV lacks an identified face/texture payload. An F3-matched retained event aggregate has 215 texture and 32 face-bit records across 17 maps; six affected maps have no OnMapReload trigger, so blanket replay cannot be assumed.
+- Documented the headless mutation/stage/reload fixture and a possible MM6-only override schema after replay semantics are established. No speculative runtime save field was added; normal MM6 SaveLoad remains guarded.

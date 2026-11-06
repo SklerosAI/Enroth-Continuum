@@ -392,13 +392,18 @@ that requirement.
   records 4,285 references to 127 distinct IDs in the ignored
   `event-variable-probe.json`, with event offsets, values, source hashes, and
   both MM6 and inherited enum labels. Of these references, 1,609 use IDs 46
-  or above where MM6's variable vocabulary diverges from MM7's; 1,240 are
+  or above where MM6's variable vocabulary cannot be assumed to match MM7's;
+  many, but not all, collide. The format-2 report now fingerprints all 68
+  active EVT inputs and the inherited enum, interpreter and variable consumer.
+  Of those references, 1,240 are
   MM6 map bytes 1–100, 222 are MM6 party-state/autonote variables, 54 are
   conditions, 40 are skills, and 53 are MM6's resistance taxonomy. Concrete
   collisions include MM6 ID 105 (map byte 1) versus inherited `VAR_Cursed`,
   and MM6 ID 205 (event autonote) versus inherited decoration variable 7.
   The [MM6 editor's target-ID list](https://github.com/angeld29/mm8leveleditor/blob/master/src/org/gamenet/application/mm8leveleditor/data/mm6/fileFormat/EventFormatMM6.java)
   supplies the vocabulary; the owned scripts establish which IDs are active.
+  [MM6_VARIABLE_DISPATCH_F2.md](MM6_VARIABLE_DISPATCH_F2.md) records the
+  title-specific source/consumer and F4/F5 acceptance contract.
 - [ ] Give MM6 its own variable-ID decoder, validation and execution semantics
   for compare/add/subtract/set, including 100 map bytes, condition and skill
   IDs, resistance mapping, party-state values and persistence. The current

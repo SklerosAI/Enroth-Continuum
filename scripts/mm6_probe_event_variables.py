@@ -94,6 +94,8 @@ def main() -> None:
     icons = root / "icons"
     mapstats = icons / "mapstats.txt"
     enum_file = Path(__file__).resolve().parents[1] / "src/Engine/Evt/EvtEnums.h"
+    consumer_file = Path(__file__).resolve().parents[1] / "src/Engine/Evt/EvtVariables.cpp"
+    interpreter_file = Path(__file__).resolve().parents[1] / "src/Engine/Evt/EvtInterpreter.cpp"
     active = listed_stems(mapstats) | {"global"}
     names = inherited_names(enum_file)
 
@@ -102,11 +104,13 @@ def main() -> None:
     rows = []
     malformed = []
     files = 0
+    event_hashes = {}
     for path in sorted(icons.glob("*.evt")):
         if path.stem.casefold() not in active:
             continue
         files += 1
         data = path.read_bytes()
+        event_hashes[path.name] = hashlib.sha256(data).hexdigest()
         offset = 0
         while offset < len(data):
             size = data[offset] + 1
@@ -147,10 +151,13 @@ def main() -> None:
                 "by_opcode": {opcode: op_counts[value] for opcode, op_counts in by_opcode.items()
                               if op_counts[value]}}
                for value, count in sorted(counts.items())]
-    result = {"format": 1, "summary": summary, "catalog": catalog,
+    result = {"format": 2, "summary": summary, "catalog": catalog,
               "records": rows,
               "input_sha256": {"mapstats": hashlib.sha256(mapstats.read_bytes()).hexdigest(),
-                               "inherited_enum": hashlib.sha256(enum_file.read_bytes()).hexdigest()}}
+                               "inherited_enum": hashlib.sha256(enum_file.read_bytes()).hexdigest(),
+                               "variable_consumer": hashlib.sha256(consumer_file.read_bytes()).hexdigest(),
+                               "interpreter": hashlib.sha256(interpreter_file.read_bytes()).hexdigest(),
+                               "events": event_hashes}}
     report.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(summary, indent=2))
     if malformed or files != len(active):

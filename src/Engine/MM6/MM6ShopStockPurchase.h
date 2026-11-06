@@ -7,9 +7,11 @@
 
 #include "Engine/GameTitle.h"
 
+#include "MM6ItemRecord28.h"
+
 namespace mm6 {
 
-using ShopStockRecord = std::array<std::uint8_t, 28>;
+using ShopStockRecord = ItemRecord28;
 
 // Apply only after a caller has accepted a purchase and secured inventory space.
 // The original MM6 success paths copy all 28 bytes, then clear bytes 0..24 of

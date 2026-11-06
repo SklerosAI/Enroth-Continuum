@@ -588,3 +588,9 @@ Chronological record of wiki activity.
 - The F3-matched 173-row monster table has 212 active attack cells and 134 zero-chance secondary placeholders. Seven MM6 labels now parse distinctly; five unproved damage channels reject before monster dice and character or actor mutation. Physical and Fire retain their direct paths. MM7 parsing and damage behavior stay title-scoped.
 - A refreshed ignored, owner-only house-route report classifies labels on all 557 retained rows. The inherited parser previously sent 384 active rows to the mercenary guild type; the MM6 parser now has zero unknown nonempty labels and the native suite checks the full retained table. House services, movies and house-ID helpers remain open.
 - The arm64 MM6/MM7/unit targets built; the offline runner passed 136/136 tests across 42 suites and the general suite passed 438/438. The original installation, partial MM6 game and protected MM7 app/profile were not opened.
+
+## [2026-11-06] implement | MM6 award table text and display guard
+- by: T-Burton-ND via codex
+- The F3-matched retained awards table has 100 unique numbered rows, 86 nonempty texts and no priority values. A title-specific bounded loader retains the texts without assigning a made-up priority; malformed or incomplete MM6 tables reject before replacing the global table. MM7 keeps its parser.
+- Seven formatted MM6 rows are excluded from the inherited award pane until the title's numeric counters are mapped. Remaining text is available with provisional order and color; no live display or save/reload is claimed.
+- The integrated arm64 MM6/MM7/unit build passed; the one-command offline suite passed 145/145 tests from 45 suites, and the general suite passed 438/438. The original installation and partial MM6 game were not opened.

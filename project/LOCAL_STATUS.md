@@ -143,3 +143,8 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   that the inherited parser rejects and labeled NPC topic references with no
   current event or special handler. Exact behavior and campaign dependency
   mapping remain open; no runtime was changed by these reviews.
+- A static [text-table consumer audit](MM6_TABLE_CONSUMER_SPEC.md) matches
+  24 of the 30 retained MM6 table names to direct C++ resource loads. Six
+  have no literal loader reference and need indirect-use or non-use review;
+  the audit does not establish that any loaded table is semantically correct.
+  A reproducible offline probe records source locations in an ignored report.

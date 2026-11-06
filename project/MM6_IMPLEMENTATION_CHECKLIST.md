@@ -9,8 +9,9 @@ title-specific implementation and an appropriate offline or live check exist.
 Focused F2 specifications: [guide and campaign evidence](MM6_GUIDE_RECONCILIATION.md),
 [events, dialogue and campaign](MM6_EVENT_CAMPAIGN_SPEC.md),
 [class, skill and party creation IDs](MM6_CLASS_SKILL_SPEC.md),
-[save and map-delta layout](MM6_SAVE_SPEC.md), and
-[presentation and media routing](MM6_MEDIA_UI_SPEC.md). These are audit inputs, not
+[save and map-delta layout](MM6_SAVE_SPEC.md),
+[presentation and media routing](MM6_MEDIA_UI_SPEC.md), and
+[text-table consumers](MM6_TABLE_CONSUMER_SPEC.md). These are audit inputs, not
 claims that their runtime behavior is implemented.
 
 ## Evidence and boundaries
@@ -61,6 +62,17 @@ claims that their runtime behavior is implemented.
 
 Every source row is indexed in the private catalog. The numbers below are raw
 nonempty rows; headers, separators and reserved records still require review.
+
+- [x] Compare the 30 retained table names with literal C++ `eventsData` loads.
+  `scripts/mm6_probe_table_consumers.py` records direct source-path/line hits
+  and source fingerprints only in an ignored report. Twenty-four names have
+  direct loads; six have none. [MM6_TABLE_CONSUMER_SPEC.md](MM6_TABLE_CONSUMER_SPEC.md)
+  identifies the groups and open questions. This is not evidence that a
+  loader understands every MM6 row or that an unreferenced table is unused.
+- [ ] Give every table a verified parser/schema, title-specific consumer,
+  active/reserved/unused classification, and acceptance scenario. Resolve
+  indirect consumers or documented non-use for the six without literal loads
+  before the consolidated F3 preflight.
 
 | File | Raw rows | Required reconciliation |
 | --- | ---: | --- |

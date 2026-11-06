@@ -103,3 +103,9 @@ Chronological record of wiki activity.
 - Refreshed the spell, item/monster, campaign and transport source summaries with 99 visually checked spell base costs, private per-ID item/monster statuses, 32 candidate campaign headings and all printed transport-cell comparisons.
 - Linked a prepared eight-file F3 identity checker while recording that it has not read the original installation or satisfied the broader preflight.
 - Kept exact guide values and joins private and the F2 gate open. Checked 45 wiki pages for frontmatter and local links.
+
+## [2026-11-05] ingest | MM6 screens, services and item/monster claims
+- by: T-Burton-ND via codex
+- Added source summaries for the named-screen register and manual/card/service audit; recorded the MM6 training-house versus inherited cap-table collision as a source risk, not a live failure.
+- Updated the item/monster guide summary with 32 rendered pages, selected discrepancies, and explicit unreviewed semantic counts; exact per-ID claims remain ignored locally.
+- Kept F2 open and F3 unrun. Checked 47 wiki pages for frontmatter and local links.

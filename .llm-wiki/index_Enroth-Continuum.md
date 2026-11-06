@@ -49,6 +49,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Autonote Variables](MM6-F4-Autonote-Variables.md) — Bounded party note-bit dispatch for active MM6 event ID 205 and remaining UI/save checks
 - [MM6 F4 Quest Bit Variable](MM6-F4-Quest-Bit-Variable.md) — Active raw ID 16 operation/operand audit, hidden bits and QEST acceptance gates
 - [MM6 F4 Day of Year](MM6-F4-Day-Of-Year.md) — Bounded raw ID 19 comparison and 592 retained date-gate operands
+- [MM6 F4 First Map Month Event](MM6-F4-First-Map-Month-Event.md) — Bounded raw ID 226 month comparison for a first-map interaction; visible click pending
 - [MM6 F4 Gold Event](MM6-F4-Gold-Event.md) — Bounded raw ID 21 party balance, 147 retained rewards and payments
 - [MM6 F4 Condition Variables](MM6-F4-Condition-Variables.md) — Bounded dispatch for 18 shipped condition uses; 36 status writes remain guarded
 - [MM6 F4 House Type Routing](MM6-F4-House-Type-Routing.md) — Title-specific classification for retained house labels and unresolved services/screens

@@ -10,6 +10,7 @@ set(ENGINE_EVENTS_SOURCES
         MM6AutonoteState.cpp
         MM6QuestBitState.cpp
         MM6DayOfYear.cpp
+        MM6MonthOfYear.cpp
         MM6GoldEvent.cpp
         MM6NpcEventState.cpp
         MM6ItemEventCompare.cpp
@@ -32,6 +33,7 @@ set(ENGINE_EVENTS_HEADERS
         MM6AutonoteState.h
         MM6QuestBitState.h
         MM6DayOfYear.h
+        MM6MonthOfYear.h
         MM6GoldEvent.h
         MM6NpcEventState.h
         MM6ItemEventCompare.h
@@ -47,6 +49,7 @@ if(OE_BUILD_TESTS)
     add_library(test_engine_events OBJECT Tests/MM6EventFraming_ut.cpp Tests/MM6EventVariables_ut.cpp
         Tests/MM6MapByteState_ut.cpp Tests/MM6AutonoteState_ut.cpp Tests/MM6QuestBitState_ut.cpp
         Tests/MM6DayOfYear_ut.cpp
+        Tests/MM6MonthOfYear_ut.cpp
         Tests/MM6GoldEvent_ut.cpp
         Tests/MM6NpcEventState_ut.cpp
         Tests/MM6ItemEventCompare_ut.cpp

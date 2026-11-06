@@ -21,6 +21,7 @@
 #include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
+#include "Engine/MM6/MM6ActualStatCondition.h"
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6MonsterPreferences.h"
@@ -930,10 +931,16 @@ int Character::GetActualStat(Attribute stat) const {
     }
 
     float uConditionMult = 100.0f;
-    if (this->conditions.hasNone({ CONDITION_DEAD, CONDITION_ERADICATED, CONDITION_PETRIFIED }))
+    if (engine->gameTitle() == GameTitle::MM6) {
+        const Condition condition = mm6::actualStatCondition(GameTitle::MM6,
+            [this](Condition candidate) { return conditions.has(candidate); });
+        if (condition != CONDITION_GOOD)
+            uConditionMult = pConditionAttributeModifier[stat][std::to_underlying(condition)];
+    } else if (this->conditions.hasNone({ CONDITION_DEAD, CONDITION_ERADICATED, CONDITION_PETRIFIED })) {
         for (Condition cond : allConditions())  // accumulate all condition effects
             if (this->conditions.has(cond))
                 uConditionMult *= 0.01f * pConditionAttributeModifier[stat][std::to_underlying(cond)];  // weak from disease or poison ect
+    }
 
     int magicBonus = GetMagicalBonus(stat);
     int itemBonus = GetItemsBonus(stat);

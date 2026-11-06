@@ -13,6 +13,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_2500.cpp
         GameTests_MM6.cpp
         GameTests_MM6CharacterBitEvent.cpp
+        GameTests_MM6Creation.cpp
         GameTests_MM6FlyingEvent.cpp
         GameTests_MM6MonthEvent.cpp
         GameTests_MM6Save.cpp)

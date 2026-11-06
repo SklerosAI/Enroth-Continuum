@@ -27,6 +27,6 @@ The MM6 creation refill now occurs after starting-item grants; its integrated fo
 
 ## Open follow-ups
 
-Close every original mana return and helper mapping, compare all six starting families and promoted tiers with the private manifest, and check Quick Start and editable creation after first-map entry and durable save/reload. Keep random starting inventory and fixture activation in the separate Quick Start gate.
+The [max-mana condition trace](MM6-F4-Max-Mana-Condition-Trace.md) closes the original outer returns and corrects MM6 actual-stat condition priority. Finish item/skill helper and promoted-tier mapping, then check Quick Start and editable creation after first-map entry and durable save/reload. Keep random starting inventory and fixture activation in the separate Quick Start gate.
 
 See also: [Creation Rules](MM6-F4-Creation-Rules.md), [Quick Start](MM6-F4-Quick-Start.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

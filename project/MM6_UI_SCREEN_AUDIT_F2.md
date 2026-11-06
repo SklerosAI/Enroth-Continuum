@@ -4,7 +4,7 @@ Status: **source inventory and implementation contract, 2026-11-05**. No MM6 scr
 
 ## Current screen register
 
-`src/GUI/GUIEnums.h` declares screens 0–28, four special numeric screens (0x63, 0x64, 0x67, 0x68), and debug screen 999. The numeric register is a C++ routing inventory, **not** proof that every screen is used by MM6. Reserved names `SCREEN_6`, `SCREEN_20`, `SCREEN_24`, `SCREEN_19`, `SCREEN_1B`, `SCREEN_63`, `SCREEN_64`, and `SCREEN_67` need call-site classification before they are treated as MM6 content. The table groups each named family without losing its ID.
+`src/GUI/GUIEnums.h` declares screens 0–28, four special numeric screens (0x63, 0x64, 0x67, 0x68), and debug screen 999. The numeric register is a C++ routing inventory, **not** proof that every screen is used by MM6. A source search finds no direct construction/assignment of reserved `SCREEN_6`, `SCREEN_20`, `SCREEN_24`, `SCREEN_1B`, `SCREEN_63` or `SCREEN_DEBUG`; `SCREEN_64` and `SCREEN_67` appear as comparison bounds in `Game.cpp`. `SCREEN_19` is assigned only inside `UIMSG_1C`, behind two `assert(false)` calls in that handler. These findings classify current C++ call sites, not original MM6 use; do not promote reserved values into MM6 features. The table groups each named family without losing its ID.
 
 | Screen ID and current name | Source consumer and MM6 decision | Acceptance scenario |
 | --- | --- | --- |
@@ -21,7 +21,7 @@ Status: **source inventory and implementation contract, 2026-11-05**. No MM6 scr
 | 11 `SAVEGAME`, 12 `LOADGAME` | `UISaveLoad.cpp` filters `.mm7` and reads `SaveGameLite_MM7`; `SaveLoad.cpp` writes MM7 snapshots and filenames. Add a title-aware `.ec6` slot policy and thumbnail/header reader before enabling the menu for MM6. | Manual, auto and quick save/reload; display correct thumbnail; reject corrupt/cross-title slots without changing current session or MM7 saves. |
 | 16 `VIDEO`, 9 `CREATORS`, 22 `GAMEOVER_WINDOW` | Intro/credits, loss and ending use inherited video and winner paths. `GameOver.cpp` chooses MM7 good/evil ending text, asserts for any other party alignment, and writes `MM7_Win.Pcx`; all require an MM6 finale policy. | View intro, credits, loss and MM6 victory; verify skip/return and no MM7-named output in MM6 profile. |
 
-The `SHOP_SCREEN_*` submenu register in `GUIEnums.h` includes an MM6-commented `SELL_FOR_CHEAP` value 6; its existence does not establish correct shop routing or prices. The remaining reserved/debug screen values should be classified as used, unused, or internal after call-site review. Marking them as MM6 features from enum names would invent behavior.
+The `SHOP_SCREEN_*` submenu register in `GUIEnums.h` includes an MM6-commented `SELL_FOR_CHEAP` value 6; its existence does not establish correct shop routing or prices. The reserved/debug values are currently enum-only, comparison-only or assertion-guarded as described above. Recheck them if the F4 implementation adds call sites. Marking them as MM6 features from enum names would invent behavior.
 
 ## Source-located conflicts and F3 questions
 

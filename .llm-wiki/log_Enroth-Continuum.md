@@ -508,6 +508,11 @@ Chronological record of wiki activity.
 - The F3-matched variable ledger lists 641 raw item-in-hand ID-17 uses, all with operands 1–578; the retained MM6 item table ends at 580. Added an MM6-only 1–580 check before inherited item event comparison/add/subtract can see an MM7-only ID.
 - The arm64 unit target built and the MM6 variable/autonote focused filter passed 6/6. Inventory effect and quest handoff behavior still need title-specific and F5 checks; no original installation was reread or MM6 process launched.
 
+## [2026-11-06] update | MM6 F4 spell, potion and event integration
+- by: T-Burton-ND via codex
+- Built the arm64 MM6, MM7 and unit targets after the 841-cell potion table, ground-item staging, six timed cures, Shield/Heroism, autonote ID 205 and class/item event operand guards. The one-command offline suite passed 121/121 MM6/LOD tests from 37 suites, and the linked general suite passed 438/438.
+- The private retained potion and F3 map tests, plus First Aid, Power Cure, timed-cure and combat-buff manifests, all ran without skips. Updated the runner and public handoff. Live casting, potion effects, SaveLoad and graphical F5 remain gated; no original installation was reread or MM6 process launched.
+
 ## [2026-11-06] ingest | MM6 known-save map/base pass
 - by: T-Burton-ND via codex
 - Added an MM6-only candidate validator that decodes all sixteen known `.ec6` sections, requires the private expected map-name set, and parses each of 67 delta entries with its caller-supplied base entry before returning or assigning any state.

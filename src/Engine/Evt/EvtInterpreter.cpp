@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -159,6 +160,19 @@ static MapDestination moveToMapDestination(const EvtInstruction &ir) {
     return {};
 }
 
+static BLVFace &mm6OutdoorEventFace(int modelIndex, int facetIndex) {
+    if (uCurrentlyLoadedLevelType != LEVEL_OUTDOOR || !pOutdoor ||
+        modelIndex < 0 || static_cast<size_t>(modelIndex) >= pOutdoor->pBModels.size())
+        throw Exception("MM6 outdoor event has no model {}", modelIndex);
+    const auto &modelFaces = pOutdoor->pBModels[modelIndex].faces;
+    if (facetIndex < 0 || static_cast<size_t>(facetIndex) >= modelFaces.size())
+        throw Exception("MM6 outdoor event model {} has no facet {}", modelIndex, facetIndex);
+    const int faceIndex = modelFaces[facetIndex];
+    if (faceIndex < 0 || static_cast<size_t>(faceIndex) >= pOutdoor->faces.size())
+        throw Exception("MM6 outdoor event has invalid reconstructed face {}", faceIndex);
+    return pOutdoor->faces[faceIndex];
+}
+
 void EvtInterpreter::prepare(EvtContext context) {
     _context = context;
 
@@ -301,8 +315,11 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         case EVENT_ShowMovie:
         {
-            if (engine->gameTitle() == GameTitle::MM6)
-                throw Exception("MM6 outdoor texture event needs a title-specific executor");
+            if (engine->gameTitle() == GameTitle::MM6) {
+                mm6OutdoorEventFace(ir.data.mm6_outdoor_texture_descr.model,
+                                    ir.data.mm6_outdoor_texture_descr.facet).SetTexture(ir.str);
+                break;
+            }
             std::string movieName = trimRemoveQuotes(ir.str);
             if (movieName.length() == 0) {
                 break;
@@ -422,8 +439,27 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             setFacesBit(ir.data.faces_bit_descr.cog, ir.data.faces_bit_descr.face_bit, ir.data.faces_bit_descr.is_on);
             break;
         case EVENT_ToggleActorFlag:
-            if (engine->gameTitle() == GameTitle::MM6)
-                throw Exception("MM6 outdoor facet event needs a title-specific executor");
+            if (engine->gameTitle() == GameTitle::MM6) {
+                const auto &target = ir.data.mm6_outdoor_facet_descr;
+                auto apply = [&](int facetIndex) {
+                    BLVFace &face = mm6OutdoorEventFace(target.model, facetIndex);
+                    const FaceAttribute bit = static_cast<FaceAttribute>(static_cast<uint32_t>(target.bit));
+                    if (target.is_on)
+                        face.attributes |= bit;
+                    else
+                        face.attributes &= ~bit;
+                };
+                if (target.facet == -1) {
+                    if (uCurrentlyLoadedLevelType != LEVEL_OUTDOOR || !pOutdoor ||
+                        target.model < 0 || static_cast<size_t>(target.model) >= pOutdoor->pBModels.size())
+                        throw Exception("MM6 outdoor event has no model {}", target.model);
+                    for (size_t i = 0; i < pOutdoor->pBModels[target.model].faces.size(); ++i)
+                        apply(i);
+                } else {
+                    apply(target.facet);
+                }
+                break;
+            }
             Actor::toggleFlag(ir.data.actor_flag_descr.id, ir.data.actor_flag_descr.attr, ir.data.actor_flag_descr.is_set);
             break;
         case EVENT_RandomGoTo:

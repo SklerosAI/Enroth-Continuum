@@ -10,4 +10,4 @@ The [public packet](../project/MM6_F4_ITEM_EVENT_COMPARE.md) records 641 active 
 
 The MM6 interpreter now evaluates Compare over its selected character inventory and the party's held item through a title-specific read-only helper. Dialog-item comparisons search the party. Item IDs must be 1–580. Native tests cover present/absent inventory and cursor items and invalid values. MM7 stays on the inherited path.
 
-MM6 Add, Subtract and Set fail closed before inherited MM7 item mutations. The 446 active writes still block campaign completion. Resolve item generation and cursor displacement, removal target and priority, artifact bookkeeping, failed removal flow, and `.ec6` save/reload before enabling them. F5 must observe actual reward/handoff branches and visual inventory state.
+The later [PE item transaction packet](MM6-F4-Item-Event-PE.md) enables bounded MM6 Add/Subtract cases while guarding occupied-cursor relocation, generated artifacts and ambiguous duplicate removals. Set remains guarded. F5 must observe actual reward/handoff branches, visual inventory state and save/reload.

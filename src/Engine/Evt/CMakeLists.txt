@@ -13,6 +13,7 @@ set(ENGINE_EVENTS_SOURCES
         MM6GoldEvent.cpp
         MM6NpcEventState.cpp
         MM6ItemEventCompare.cpp
+        MM6ItemEventWrite.cpp
         EvtInterpreter.cpp
         Processor.cpp)
 
@@ -34,6 +35,7 @@ set(ENGINE_EVENTS_HEADERS
         MM6GoldEvent.h
         MM6NpcEventState.h
         MM6ItemEventCompare.h
+        MM6ItemEventWrite.h
         Processor.h
         EvtEnumFunctions.h)
 
@@ -48,6 +50,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6GoldEvent_ut.cpp
         Tests/MM6NpcEventState_ut.cpp
         Tests/MM6ItemEventCompare_ut.cpp
+        Tests/MM6ItemEventWrite_ut.cpp
         Tests/MM6ConditionVariables_ut.cpp)
     target_link_libraries(test_engine_events PUBLIC testing_unit engine_events)
     target_check_style(test_engine_events)

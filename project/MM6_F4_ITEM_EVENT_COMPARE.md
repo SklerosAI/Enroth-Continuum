@@ -11,3 +11,5 @@ MM6 Add, Subtract and Set reject before the inherited item operations. The **446
 The arm64 MM6, OpenEnroth and unit targets built; two focused native tests passed for inventory, held item, absence, bounds and read-only preservation. The private retained checker passed and is wired into the offline runner. These checks do not demonstrate that an MM6 quest branch or item reward works in play.
 
 Next: prove item grant/removal rules against retained MM6 data and independent source, implement a title-specific transaction with representative branch/state tests, then inspect reward/handoff and save/quit/relaunch/load in F5. Keep MM7 regression checks alongside that work.
+
+The [follow-up write audit](MM6_F4_ITEM_EVENT_WRITE_AUDIT.md) records selector and same-event Compare/Subtract topology and the exact cursor, artifact and durable-state contract still needed. It does not enable writes.

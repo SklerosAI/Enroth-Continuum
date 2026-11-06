@@ -60,6 +60,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 NPC State](MM6-F4-NPC-State.md) — Bounded `.ec6` RESC NPC/group fields and copy-staging with open gameplay semantics
 - [MM6 F4 NPC Events](MM6-F4-NPC-Events.md) — Bounded topic/move state and MM6 global-script precedence over MM7 teacher IDs
 - [MM6 F4 Item Event Compare](MM6-F4-Item-Event-Compare.md) — Read-only inventory/held-item comparison and guarded item writes
+- [MM6 F4 Item Event Writes](MM6-F4-Item-Event-Writes.md) — Retained reward/handoff topology and the transaction proof needed before enabling writes
 - [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial sixteen-section `.ec6` candidate, cross-field checks and remaining save gaps
 - [MM6 F4 World Save Runtime](MM6-F4-World-Save-Runtime.md) — NPC and 67-map capture/staging with bounded active-map writer routing
 - [MM6 F4 Timed Buffs](MM6-F4-Timed-Buffs.md) — Bounded BUFF fields for party/character effects and open runtime/F5 checks

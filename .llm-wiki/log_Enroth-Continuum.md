@@ -424,3 +424,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Replaced stale F2/F3 and planning-only instructions in the agent handoff with the accepted F3 source gate, current F4 sixteen-section partial save state, 83 MM6/LOD and 438 general unit results, private fixture boundary and remaining offline/F5 gates.
 - Kept the protected MM7 and reserved MM8 worktree rules explicit so parallel agents can resume from the current public and ignored private packets without mistaking structural tests for playable MM6.
+
+## [2026-11-06] ingest | MM6 spell effect dispatch boundary
+- by: T-Burton-ND via codex
+- Joined all 99 retained spell IDs, private guide locators and inherited player/event/monster case sites in an ignored private handoff, with F3-matched source hashes; no proprietary rows entered Git.
+- Added an MM6-only guard before player queue/executor, event, monster and damage effect dispatch; functional wands reject before charge loss. MM7 remains unchanged, and only non-spell bow/blaster player queue actions pass.
+- Built the isolated arm64 unit target, passed six focused spell-item/learning/effect tests, and checked C++ style, private table count, wiki links and diff. Effects and graphical play remain unverified; no original installation was reread or partial MM6 game launched.

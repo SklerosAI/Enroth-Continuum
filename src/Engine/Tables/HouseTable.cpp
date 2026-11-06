@@ -120,9 +120,9 @@ void initializeHouses(const Blob &houses, GameTitle gameTitle) {
     // 10: "Rep"                - always 0, reputation?                                     (not used in MM7)
     // 11: "Per"                - always 0                                                  (not used in MM7)
     // 12: "Val"                - shop price multiplier, float
-    // 13: "A"                  - skill/spell price multiplier, float
+    // 13: "A"                  - MM7 skill/spell multiplier; MM6 stock/skill text
     // 14: "B"                  - always empty
-    // 15: "C"                  - item-generation interval, days
+    // 15: "C"                  - MM7 item-generation days; MM6 may be a route/arena note
     // 16: "Notes:"             - mostly empty, an alternative index into `pAnimatedRooms`,
     //                            points at the base entry of a race-tier triplet           (not used)
     // 17: "Notes(2):"          - max trainable level for Training houses                   (not used)

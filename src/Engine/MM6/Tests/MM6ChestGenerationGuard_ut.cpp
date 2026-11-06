@@ -5,6 +5,7 @@
 
 #include "Engine/Objects/Chest.h"
 #include "Engine/MM6/MM6ChestBaseItemPicker.h"
+#include "Engine/MM6/MM6ChestDirectArtifactPicker.h"
 #include "Engine/MM6/MM6ChestItemFinalizer.h"
 #include "Engine/MM6/MM6ChestPlacement.h"
 
@@ -330,4 +331,105 @@ UNIT_TEST(MM6ChestGenerationGuard, PlacementRejectsMalformedOrRepeatedInputAtomi
     input.title = GameTitle::MM6;
     input.width = 141;
     EXPECT_FALSE(mm6::placeChestItemsDetached(input));
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, DirectArtifactPickerIncludesOriginalExtraCandidate) {
+    mm6::DirectArtifactScanMemory memory{};
+    auto picked = mm6::pickDirectChestArtifactDetached(GameTitle::MM6, memory, 0);
+    ASSERT_TRUE(picked.has_value());
+    EXPECT_EQ(picked->candidateCount, 31);  // The original list includes ID 430.
+    EXPECT_EQ(picked->itemId, 407);
+    EXPECT_EQ(picked->drawsConsumed, 1);
+    EXPECT_EQ(picked->nextRngState, 2531011u);
+    EXPECT_FALSE(mm6::pickDirectChestArtifactDetached(GameTitle::MM7, memory, 0));
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, DirectArtifactPickerMasksByScanSlotAndHasNoThirteenCap) {
+    mm6::DirectArtifactScanMemory memory{};
+    auto putId = [&memory](int slot, int id) {
+        const int offset = slot * 28;
+        memory[offset] = id & 255;
+        memory[offset + 1] = (id >> 8) & 255;
+    };
+    putId(400, 429);  // PE marks candidate 400 by scan slot, not item ID 429.
+    auto one = mm6::pickDirectChestArtifactDetached(GameTitle::MM6, memory, 16);
+    ASSERT_TRUE(one.has_value());
+    EXPECT_EQ(one->candidateCount, 30);
+    EXPECT_EQ(one->itemId, 401);
+    EXPECT_EQ(one->nextRngState, 5955219u);
+
+    for (int slot = 401; slot <= 412; ++slot)
+        putId(slot, 400);
+    auto thirteen = mm6::pickDirectChestArtifactDetached(GameTitle::MM6, memory, 0);
+    ASSERT_TRUE(thirteen.has_value());
+    EXPECT_EQ(thirteen->candidateCount, 18);
+    EXPECT_EQ(thirteen->itemId, 415);  // Direct source ignores the tier-six 13-artifact cap.
+    EXPECT_EQ(thirteen->drawsConsumed, 1);
+
+    for (int slot = 413; slot <= 429; ++slot)
+        putId(slot, 400);
+    auto extra = mm6::pickDirectChestArtifactDetached(GameTitle::MM6, memory, 0);
+    ASSERT_TRUE(extra.has_value());
+    EXPECT_EQ(extra->candidateCount, 1);
+    EXPECT_EQ(extra->itemId, 430);
+    EXPECT_EQ(extra->drawsConsumed, 1);
+    putId(430, 400);
+    auto none = mm6::pickDirectChestArtifactDetached(GameTitle::MM6, memory, 0);
+    ASSERT_TRUE(none.has_value());
+    EXPECT_EQ(none->candidateCount, 0);
+    EXPECT_EQ(none->itemId, 0);
+    EXPECT_EQ(none->drawsConsumed, 0);
+    EXPECT_EQ(none->nextRngState, 0u);
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, DirectArtifactPickerRejectsUnsafeOriginalMarkWrite) {
+    mm6::DirectArtifactScanMemory memory{};
+    memory[0] = 400 & 255;
+    memory[1] = 400 >> 8;
+    EXPECT_FALSE(mm6::pickDirectChestArtifactDetached(GameTitle::MM6, memory, 17));
+    EXPECT_EQ(memory[0], 400 & 255);
+    EXPECT_EQ(memory[1], 400 >> 8);
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, SafeDirectArtifactPolicyStagesUniqueThirtyId) {
+    std::array<std::uint8_t, 30> owned{};
+    std::array<std::uint8_t, 30> generated{};
+    auto first = mm6::pickDirectChestArtifactSafePolicy(GameTitle::MM6, owned, generated, 0);
+    ASSERT_TRUE(first.has_value());
+    EXPECT_EQ(first->candidateCount, 30);
+    EXPECT_EQ(first->itemId, 408);
+    EXPECT_EQ(first->drawsConsumed, 1);
+    EXPECT_EQ(first->nextRngState, 2531011u);
+    EXPECT_EQ(first->generatedArtifactFlags[8], 1);
+    EXPECT_EQ(generated[8], 0);
+
+    owned[8] = 1;
+    auto second = mm6::pickDirectChestArtifactSafePolicy(GameTitle::MM6, owned, generated, 0);
+    ASSERT_TRUE(second.has_value());
+    EXPECT_EQ(second->candidateCount, 29);
+    EXPECT_EQ(second->itemId, 410);
+    EXPECT_EQ(second->generatedArtifactFlags[8], 0);
+    EXPECT_EQ(second->generatedArtifactFlags[10], 1);
+    EXPECT_FALSE(mm6::pickDirectChestArtifactSafePolicy(GameTitle::MM7, owned, generated, 0));
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, SafeDirectArtifactPolicyCapsUnionAndRejectsMalformedFlags) {
+    std::array<std::uint8_t, 30> owned{};
+    std::array<std::uint8_t, 30> generated{};
+    for (int i = 0; i < 12; ++i)
+        generated[i] = 1;
+    owned[12] = 1;
+    auto capped = mm6::pickDirectChestArtifactSafePolicy(GameTitle::MM6, owned, generated, 17);
+    ASSERT_TRUE(capped.has_value());
+    EXPECT_TRUE(capped->capped);
+    EXPECT_EQ(capped->itemId, 0);
+    EXPECT_EQ(capped->drawsConsumed, 0);
+    EXPECT_EQ(capped->nextRngState, 17u);
+    EXPECT_EQ(capped->generatedArtifactFlags, generated);
+
+    owned[12] = 2;
+    EXPECT_FALSE(mm6::pickDirectChestArtifactSafePolicy(GameTitle::MM6, owned, generated, 17));
+    owned[12] = 0;
+    generated[12] = 2;
+    EXPECT_FALSE(mm6::pickDirectChestArtifactSafePolicy(GameTitle::MM6, owned, generated, 17));
 }

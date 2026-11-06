@@ -191,6 +191,15 @@ that requirement.
   `combat-semantics-probe.json` preserves per-ID evidence. Exact Magic/Energy
   resistance, AI/factions, sprite/spawn joins, fixed drops and conditions
   remain open; this is not a working encounter.
+- [x] Join retained monster descriptions, animation names and baseline map
+  actors in [MM6_MONSTER_SPAWN_LINKS_F2.md](MM6_MONSTER_SPAWN_LINKS_F2.md).
+  The ignored `monster-spawn-links-probe.json` holds exact joins. All 173
+  descriptions match retained text-row picture tokens after normalization;
+  1,382 of 1,384 animation references match the extended sprite-name index.
+  A candidate ID 173 occurs among 342 baseline actors, while the current MM6
+  loader discards description 173. The actor-ID offset is an external schema
+  hypothesis, so F3 must confirm it before the F4 title-specific fix. No
+  texture decode, live sprite or combat result is claimed.
 - [ ] Give MM6 title-specific monster IDs/families, projectiles, damage and
   resistance channels, special attacks, spell casts, hostility/faction rules,
   treasure and fixed drops. Eliminate silent fallbacks for active labels and

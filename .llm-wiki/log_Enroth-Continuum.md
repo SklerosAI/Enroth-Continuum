@@ -1643,3 +1643,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Moved MM6 138-record inventory initialization to `Party::Zero()`, which also covers `Party::Reset()`, and extended the headless check to exercise both paths.
 - The focused check passed 1/1, the full monitored MM6 headless suite passed 51/51 over 1,513 samples, and the MM7 headless control passed 1/1 with no on-screen window or focus change. Raw item ownership and normal MM6 SaveLoad remain gated.
+
+## [2026-11-06] implement | MM7 serializer MM6 entry guards
+- by: T-Burton-ND via codex
+- Added entry checks to inherited MM7 party and character snapshot/reconstruction and direct inventory reconstruction so MM6 or 138-slot state is rejected before destination mutation.
+- A focused MM6 headless test preserved sentinel fields and the final MM6 item slot after each rejection. Full monitored MM6 headless passed 51/51, an MM7 save/load game control 1/1, and the rebuilt non-MM6-prefix unit suite 438/438; live MM6 raw item ownership and SaveLoad remain gated.

@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <tl/generator.hpp>
 
@@ -21,6 +22,7 @@
 #include "Engine/Evt/MM6DayOfYear.h"
 #include "Engine/Evt/MM6GoldEvent.h"
 #include "Engine/Evt/MM6NpcEventState.h"
+#include "Engine/Evt/MM6SpriteEvent.h"
 #include "Engine/Evt/MM6ItemEventCompare.h"
 #include "Engine/Evt/MM6ItemEventWrite.h"
 #include "Engine/Evt/Processor.h"
@@ -35,6 +37,7 @@
 #include "Engine/PartyPlacement.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Tables/ItemTable.h"
+#include "Engine/Tables/DecorationTable.h"
 #include "Engine/Spells/Spells.h"
 #include "Engine/Engine.h"
 #include "Engine/Tables/MapTable.h"
@@ -395,7 +398,16 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         }
         case EVENT_SetSprite:
-            setDecorationSprite(ir.data.sprite_texture_descr.cog, ir.data.sprite_texture_descr.hide, ir.str);
+            if (engine->gameTitle() == GameTitle::MM6) {
+                std::optional<DecorationId> replacement;
+                if (!ir.str.empty() && ir.str != "0")
+                    replacement = pDecorationTable->decorationId(ir.str);
+                mm6::applySetSprite(engine->gameTitle(), pLevelDecorations,
+                                    ir.data.sprite_texture_descr.cog,
+                                    ir.data.sprite_texture_descr.hide, replacement);
+            } else {
+                setDecorationSprite(ir.data.sprite_texture_descr.cog, ir.data.sprite_texture_descr.hide, ir.str);
+            }
             break;
         case EVENT_Compare:
             if (engine->gameTitle() == GameTitle::MM6 &&

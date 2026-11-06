@@ -10,6 +10,7 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/EvtProgram.h"
+#include "Engine/Evt/MM6SpriteEvent.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
@@ -120,10 +121,42 @@ GAME_TEST(MM6Headless, FirstOutdoorResourcePreflight) {
 
     OutdoorLocation_MM7 base;
     deserializeMM6Outdoor(decodeMM6ArchiveEntry(pGames_LOD->read("oute3.odm")), &base);
+    size_t reloadSpriteActions = 0;
+    for (const EventTrigger trigger : events.enumerateTriggers(EVENT_OnMapReload)) {
+        for (const EvtInstruction &instruction : events.function(trigger.eventId)) {
+            if (instruction.opcode != EVENT_SetSprite)
+                continue;
+            EXPECT_GE(instruction.data.sprite_texture_descr.cog, 0);
+            EXPECT_LT(static_cast<size_t>(instruction.data.sprite_texture_descr.cog), base.decorations.size());
+            ++reloadSpriteActions;
+        }
+    }
+    EXPECT_GT(reloadSpriteActions, 0);
     const auto terminator = std::find(base.skyTexture.begin(), base.skyTexture.end(), '\0');
     const std::string_view sky(base.skyTexture.data(), terminator - base.skyTexture.begin());
     EXPECT_EQ(mm6OutdoorBaseSky(GameTitle::MM6, sky), "plansky2");
     EXPECT_EQ(engine->resources()->bitmapSize(sky), Sizei(256, 256));
+}
+
+TEST(MM6HeadlessFirstOutdoorSpriteEvents, IndexAndTitleIsolation) {
+    std::vector<LevelDecoration> decorations(3);
+    decorations[0].uCog = 1;
+    decorations[1].uCog = 0;
+    decorations[2].uCog = 1;
+    decorations[1].uFlags |= LEVEL_DECORATION_INVISIBLE;
+
+    EXPECT_FALSE(mm6::applySetSprite(GameTitle::MM7, decorations, 1, true, std::nullopt));
+    EXPECT_TRUE(decorations[1].uFlags & LEVEL_DECORATION_INVISIBLE);
+    EXPECT_TRUE(mm6::applySetSprite(GameTitle::MM6, decorations, 1, true, std::nullopt));
+    EXPECT_FALSE(decorations[1].uFlags & LEVEL_DECORATION_INVISIBLE);
+    EXPECT_TRUE(mm6::applySetSprite(GameTitle::MM6, decorations, 2, false, std::nullopt));
+    EXPECT_TRUE(decorations[2].uFlags & LEVEL_DECORATION_INVISIBLE);
+    EXPECT_FALSE(decorations[0].uFlags & LEVEL_DECORATION_INVISIBLE);
+    EXPECT_TRUE(mm6::applySetSprite(GameTitle::MM6, decorations, 1, true,
+                                    DecorationId::DECORATION_FOUNTAIN_3));
+    EXPECT_EQ(decorations[1].uDecorationDescID, DecorationId::DECORATION_FOUNTAIN_3);
+    EXPECT_FALSE(mm6::applySetSprite(GameTitle::MM6, decorations, -1, false, std::nullopt));
+    EXPECT_FALSE(mm6::applySetSprite(GameTitle::MM6, decorations, 3, false, std::nullopt));
 }
 
 TEST(MM6HeadlessFirstOutdoorResources, TitleIsolation) {

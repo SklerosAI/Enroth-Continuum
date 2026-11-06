@@ -11,7 +11,8 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_1500.cpp
         GameTests_2000.cpp
         GameTests_2500.cpp
-        GameTests_MM6.cpp)
+        GameTests_MM6.cpp
+        GameTests_MM6Save.cpp)
 set(GAME_TEST_MAIN_HEADERS
         GameTestCommon.h
         GameTestOptions.h
@@ -20,7 +21,8 @@ set(GAME_TEST_MAIN_HEADERS
 add_executable(OpenEnroth_GameTest ${GAME_TEST_MAIN_SOURCES} ${GAME_TEST_MAIN_HEADERS})
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Chest.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6HudAudit.cpp)
-target_link_libraries(OpenEnroth_GameTest PUBLIC application testing_game library_cli library_platform_main library_stack_trace)
+target_link_libraries(OpenEnroth_GameTest PUBLIC application testing_game library_cli library_platform_main library_stack_trace
+        engine_mm6_save_runtime)
 
 target_check_style(OpenEnroth_GameTest)
 

@@ -252,3 +252,9 @@ Chronological record of wiki activity.
 - Added a title-specific MM6 DDM loader projection for visibility, reset fields, actors, ground objects and chests, retaining the full decoded wire as an opaque sidecar. MM7's loader branch remains separate.
 - Built the arm64 native unit target and passed eight focused checks, including all 15 retained outdoor deltas. No original archive was reopened and no partial MM6 game was launched.
 - Marked actor buff/spell semantics, chest grid interpretation, persistent bytes, tail, changed-state encoding, `.ec6` save/reload and F5 graphical behavior as open.
+
+## [2026-11-06] ingest | MM6 core save field codec
+- by: T-Burton-ND via codex
+- Added versioned, bounded `PART` and `CHAR` field payloads plus an MM6-only adapter that stages a validated load into a copy of the party.
+- Built the isolated core codec target and ran a compiled round-trip and reject-before-mutation harness; changed runtime adapter and new unit source passed C++23 syntax checks. No game or original installation was opened.
+- Kept live save/load and slots disabled until the remaining state families, whole-save transaction and atomic write policy are implemented.

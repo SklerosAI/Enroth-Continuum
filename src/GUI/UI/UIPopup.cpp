@@ -23,6 +23,7 @@
 #include "Engine/Tables/ItemTable.h"
 #include "Engine/Tables/PortraitFrameTable.h"
 #include "Engine/Spells/Spells.h"
+#include "Engine/Spells/MM6SpellRules.h"
 #include "Engine/Party.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6Portraits.h"
@@ -1314,9 +1315,10 @@ void DrawSpellDescriptionPopup(SpellId spell_id) {
         }
     }
 
-    auto str2 = fmt::format(
-        "{}\n{}", localization->str(LSTR_SP_COST),
-        pSpellDatas[spell_id].mana_per_skill[skill_mastery]);
+    const int manaCost = engine->gameTitle() == GameTitle::MM6
+        ? mm6::spellManaRecovery(spell_id, skill_mastery).mana
+        : pSpellDatas[spell_id].mana_per_skill[skill_mastery];
+    auto str2 = fmt::format("{}\n{}", localization->str(LSTR_SP_COST), manaCost);
     GUIWindow::DrawTitleText(
         assets->pFontComic.get(), 12,
         frameRect.h - assets->pFontComic->GetHeight() - 16, colorTable.White, str2,
@@ -1426,7 +1428,10 @@ void showSpellbookInfo(ItemId spellbook) {
     popup.w = 108;
     GUIWindow::DrawTitleText(assets->pFontComic.get(), 0xCu, 0x4Bu, colorTable.White, localization->skillName(skillForSpell(spell)), 3u, popup);
 
-    str = fmt::format("{}\n{}", localization->str(LSTR_SP_COST), pSpellDatas[spell].mana_per_skill[MASTERY_NOVICE]);
+    const int manaCost = engine->gameTitle() == GameTitle::MM6
+        ? mm6::spellManaRecovery(spell, MASTERY_NOVICE).mana
+        : pSpellDatas[spell].mana_per_skill[MASTERY_NOVICE];
+    str = fmt::format("{}\n{}", localization->str(LSTR_SP_COST), manaCost);
     GUIWindow::DrawTitleText(assets->pFontComic.get(), 0xCu, popup.h - assets->pFontComic->GetHeight() - 16, colorTable.White, str, 3, popup);
 }
 

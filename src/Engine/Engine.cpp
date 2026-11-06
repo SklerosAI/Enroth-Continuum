@@ -48,6 +48,7 @@
 #include "Engine/SpellFxRenderer.h"
 #include "Engine/Spells/CastSpellInfo.h"
 #include "Engine/Spells/Spells.h"
+#include "Engine/Spells/MM6SpellRules.h"
 #include "Engine/Tables/AwardTable.h"
 #include "Engine/Tables/ChestTable.h"
 #include "Engine/Tables/HouseTable.h"
@@ -790,8 +791,10 @@ void Engine::MM7_Initialize() {
     grng->seed(platform->tickCount());
     vrng->seed(platform->tickCount());
 
-    if (gameTitle() == GameTitle::MM6)
+    if (gameTitle() == GameTitle::MM6) {
         mm6::loadCreationRules(ufs->read("rules/creation.json"));
+        mm6::loadSpellRules(ufs->read("rules/spells.json"));
+    }
 
     gameTimer = new Timer();
 

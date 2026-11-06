@@ -9,6 +9,7 @@
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Party.h"
 #include "Engine/Spells/CastSpellInfo.h"
+#include "Engine/Spells/MM6SpellRules.h"
 #include "Engine/Spells/Spells.h"
 #include "Engine/TurnEngine/TurnEngine.h"
 #include "Engine/Engine.h"
@@ -257,7 +258,9 @@ void Io::KeyboardInputHandler::ProcessGameplayAction(InputAction action) {
 
             if (quickSpellNumber != SPELL_NONE) {
                 Mastery skill_mastery = pParty->activeCharacter().getActualSkillValue(skillForSpell(quickSpellNumber)).mastery();
-                uRequiredMana = pSpellDatas[quickSpellNumber].mana_per_skill[skill_mastery];
+                uRequiredMana = engine->gameTitle() == GameTitle::MM6
+                    ? mm6::spellManaRecovery(quickSpellNumber, skill_mastery).mana
+                    : pSpellDatas[quickSpellNumber].mana_per_skill[skill_mastery];
             }
         }
 

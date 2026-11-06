@@ -1,6 +1,7 @@
 #include "CastSpellInfo.h"
 
 #include <memory>
+#include <stdexcept>
 #include <vector>
 #include <string>
 
@@ -29,6 +30,7 @@
 #include "Engine/TurnEngine/TurnEngine.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Spells/Spells.h"
+#include "Engine/Spells/MM6SpellRules.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
 
 #include "GUI/GUIMessageQueue.h"
@@ -202,13 +204,23 @@ void CastSpellInfoHelpers::castSpell() {
         }
 
         if (isRegularSpell(pCastSpell->uSpellID)) {
-            if (pCastSpell->overrideSkillValue || engine->config->debug.AllMagic.value()) {
-                uRequiredMana = 0;
+            if (engine->gameTitle() == GameTitle::MM6) {
+                // Scroll/NPC overrides and debug Grandmaster casts have no
+                // verified MM6 cost/recovery policy yet.
+                if (pCastSpell->overrideSkillValue || engine->config->debug.AllMagic.value())
+                    throw std::runtime_error("MM6 overridden spell cast lacks a verified cost/recovery rule");
+                const mm6::SpellManaRecovery rule = mm6::spellManaRecovery(pCastSpell->uSpellID, spell_mastery);
+                uRequiredMana = rule.mana;
+                recoveryTime = Duration::fromTicks(rule.recoveryTicks);
             } else {
-                uRequiredMana = pSpellDatas[pCastSpell->uSpellID].mana_per_skill[spell_mastery];
-            }
+                if (pCastSpell->overrideSkillValue || engine->config->debug.AllMagic.value()) {
+                    uRequiredMana = 0;
+                } else {
+                    uRequiredMana = pSpellDatas[pCastSpell->uSpellID].mana_per_skill[spell_mastery];
+                }
 
-            recoveryTime = pSpellDatas[pCastSpell->uSpellID].recovery_per_skill[spell_mastery];
+                recoveryTime = pSpellDatas[pCastSpell->uSpellID].recovery_per_skill[spell_mastery];
+            }
         }
 
         // Recovery time for spell failure if it cannot be cast at all in current context

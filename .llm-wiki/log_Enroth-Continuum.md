@@ -85,3 +85,9 @@ Chronological record of wiki activity.
 - Added source summaries for the 14-family guide review and 173-row combat consumer audit, with tracked probe links and explicit source-versus-live evidence limits.
 - Extended the engine knowledge map, handoff, open questions and private-companion rules; the F2 gate remains open despite the new packet coverage.
 - Defined a future-only, title-scoped agent knowledge/control contract for evidence tiers, rendered-frame observation, bounded input, acknowledgment, local artifacts and save recovery. Checked 39 wiki pages for frontmatter and local links.
+
+## [2026-11-05] ingest | MM6 variable and guide claim handoff
+- by: T-Burton-ND via codex
+- Added source summaries for the 127-ID event-variable dispatch contract and partial spell, item, monster and campaign guide-claim audits.
+- Linked the private per-ID review queues and guide locators without publishing original rows, guide text or captures; F2 and the original-file F3 pass remain open.
+- Checked 43 wiki pages for frontmatter and local links before pausing the MM6 goal at the owner's request.

@@ -207,3 +207,9 @@ Chronological record of wiki activity.
 - Recorded the 23/23 original-file identity, 348-member content comparison, executable and media joins, 636 vanilla portrait pixel matches, and one baseline actor ID 173 reference.
 - Linked the dated twelve-family gate decision and explicit F4/F5 obligations; offline MM6 implementation may begin, while graphical play, audible output and durable saves remain unverified.
 - Kept original files and exact per-ID reports in ignored local storage. Checked 52 wiki pages for frontmatter and local links; only the schema template's three placeholder links are unresolved.
+
+## [2026-11-06] ingest | MM6 F4 portrait seam
+- by: T-Burton-ND via codex
+- Added a title-specific twelve-face, 53-frame resolver and creation/runtime portrait bounds while preserving MM7 behavior.
+- Checked the twelve face stems and 636 frame names against the ignored F3 report, and syntax-checked the five changed C++ units. No MM6 process or original GOG file was opened.
+- Marked Quick Start defaults, expression timing, voice reactions, zombie art and F5 graphical/audio checks as remaining work. The wiki has 53 pages with frontmatter and only the schema template's placeholder links unresolved.

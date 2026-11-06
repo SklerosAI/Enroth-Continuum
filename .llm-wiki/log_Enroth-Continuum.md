@@ -33,3 +33,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Clarified the current four-active-agent limit, including the integrator, in the MM6 F2 workstream handoff.
 - Set the fourth research lane to rotate when a worker slot frees unless future capacity changes.
+
+## [2026-11-05] update | Handoff index wording
+- by: T-Burton-ND via codex
+- Aligned the index description with the current three-worker rotation across four research lanes.

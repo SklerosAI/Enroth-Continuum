@@ -35,7 +35,8 @@ def main() -> None:
                            ("mm6_f4_check_item_footprints.py", research / "icons"),
                            ("mm6_f4_check_award_event_operands.py", research),
                            ("mm6_f4_check_day_of_year_operands.py", research),
-                           ("mm6_f4_check_gold_event_operands.py", research)):
+                           ("mm6_f4_check_gold_event_operands.py", research),
+                           ("mm6_f4_check_npc_event_operands.py", research)):
         subprocess.run([sys.executable, "-B", str(root / "scripts" / script), str(source)], check=True)
 
     rules = Path.home() / "Library/Application Support/Enroth Continuum/Profiles/MM6/rules"

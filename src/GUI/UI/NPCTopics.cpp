@@ -23,6 +23,7 @@
 #include "Engine/Data/HouseEnumFunctions.h"
 #include "Engine/Tables/ItemTable.h"
 #include "Engine/Evt/Processor.h"
+#include "Engine/Evt/MM6NpcEventState.h"
 #include "Engine/Random/Random.h"
 
 #include "GUI/GUIWindow.h"
@@ -33,6 +34,8 @@
 #include "Media/Audio/AudioPlayer.h"
 
 #include "Utility/String/Ascii.h"
+
+#include "Library/Logger/Logger.h"
 
 int membershipOrTrainingApproved;
 int topicEventId; // event id of currently viewed scripted NPC event
@@ -632,6 +635,17 @@ DialogueId handleScriptedNPCTopicSelection(DialogueId topic, NPCData *npcData) {
         eventId = npcData->dialogue_6_evt_id;
     }
 
+    mm6::NpcTopicRoute mm6Route = mm6::npcTopicRoute(
+        engine->gameTitle(), eventId, engine->_globalEventMap.hasEvent(eventId));
+    if (mm6Route == mm6::NpcTopicRoute::GlobalEvent) {
+        current_npc_text.clear();
+        runEvent(EvtContext(EVT_SOURCE_GLOBAL, eventId));
+        return DIALOGUE_MAIN;
+    }
+    if (mm6Route == mm6::NpcTopicRoute::Guarded) {
+        MM_ERROR("MM6 NPC topic {} has no verified global event; skipping inherited special route", eventId);
+        return DIALOGUE_MAIN;
+    }
 
     if (eventId == 311) {
         // Original code also listed this event which presumably opened bounty dialogue but MM7

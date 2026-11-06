@@ -19,6 +19,7 @@
 #include "Engine/Evt/MM6QuestBitState.h"
 #include "Engine/Evt/MM6DayOfYear.h"
 #include "Engine/Evt/MM6GoldEvent.h"
+#include "Engine/Evt/MM6NpcEventState.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Party.h"
 #include "Engine/Graphics/Indoor.h"
@@ -698,6 +699,11 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             return {EVT_FLOW_STOP};
         case EVENT_SetNPCTopic:
         {
+            if (engine->gameTitle() == GameTitle::MM6) {
+                mm6::setNpcTopic(*pNPCStats, GameTitle::MM6, ir.data.npc_topic_descr.npc_id,
+                                 ir.data.npc_topic_descr.index, ir.data.npc_topic_descr.event_id);
+                break;
+            }
             NPCData *npc = &pNPCStats->pNPCData[ir.data.npc_topic_descr.npc_id];
             if (ir.data.npc_topic_descr.index == 0) npc->dialogue_1_evt_id = ir.data.npc_topic_descr.event_id;
             if (ir.data.npc_topic_descr.index == 1) npc->dialogue_2_evt_id = ir.data.npc_topic_descr.event_id;
@@ -718,6 +724,11 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         }
         case EVENT_MoveNPC:
+            if (engine->gameTitle() == GameTitle::MM6) {
+                mm6::moveNpc(*pNPCStats, GameTitle::MM6, ir.data.npc_move_descr.npc_id,
+                             ir.data.npc_move_descr.location_id);
+                break;
+            }
             pNPCStats->pNPCData[ir.data.npc_move_descr.npc_id].house = ir.data.npc_move_descr.location_id;
             // TODO(Nik-RE-dev): Looks like it's artifact of MM6
 #if 0

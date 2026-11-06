@@ -30,6 +30,12 @@ GAME_TEST(MM6PortraitSelection, OriginalPaletteZeroSprite) {
     const SpriteFrame &frame = pSpriteFrameTable->pSpriteSFrames[id];
     EXPECT_EQ(frame.textureName, "aframe1");
     EXPECT_EQ(frame.paletteId, 0);
+    // The archive contains aframe2-6, but the accepted frame table gives
+    // aframe1 the full 48-tick cycle, so every sampled time selects frame 1.
+    EXPECT_EQ(frame.frameLength, Duration::fromTicks(48));
+    EXPECT_EQ(frame.animationLength, frame.frameLength);
+    for (int ticks : {0, 8, 47, 48, 96, 200})
+        EXPECT_EQ(pSpriteFrameTable->GetFrame(id, Duration::fromTicks(ticks)), &frame);
     EXPECT_EQ(engine->resources()->spriteSize("aframe1"), Sizei(69, 91));
 
     GraphicsImage *selection = assets->getMM6SelectionFrame();

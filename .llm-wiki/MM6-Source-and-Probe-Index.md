@@ -14,6 +14,7 @@ This index directs agents to the current public specifications and reproducible 
 - [MM6 implementation checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md) is the public coverage and gap register; its checked research rows are not playable-rule claims.
 - [F2 gate review](../project/MM6_F2_GATE_REVIEW.md) is the integration decision record. F2 is open and unfrozen; this review does not authorize F3.
 - [F3 preflight matrix](../project/MM6_F3_PREFLIGHT_MATRIX.md) is a draft one-pass original-file question list, not F2 or F3 gate completion.
+- [F4 offline build graph](../project/MM6_F4_BUILD_GRAPH.md) is a draft dependency and acceptance plan, to be reconciled after F3; it does not mean F4 has begun.
 - [F2 freeze manifest helper](../scripts/mm6_f2_freeze_manifest.py) is prepared to fingerprint tracked specs and ignored derived reports after an explicit F2 freeze and a clean tracked tree. It currently refuses to run because the gate is open; it never reads the original install.
 - [F3 identity checker](../scripts/mm6_f3_identity_preflight.py) is prepared to compare eight original archive/media/executable hashes with retained F1 ledgers during that consolidated pass. It refuses to read originals until the F2 gate, ignored freeze manifest and clean source SHA agree. It has only parsed retained ledgers; it has **not** read originals or passed F3.
 - [Local status](../project/LOCAL_STATUS.md) records observed Mac behavior and its limits.
@@ -50,6 +51,7 @@ This index directs agents to the current public specifications and reproducible 
 | Thirty-family parser/consumer register and award-row mismatch | [Table semantic F2 packet](../project/MM6_TABLE_SEMANTIC_F2.md) |
 | Monster parser labels, taxonomy, combat gaps | [Monster and combat](../project/MM6_MONSTER_COMBAT_SPEC.md) |
 | Retained monster rows, attack/resistance/AI/loot consumer map | [Combat semantics F2](../project/MM6_COMBAT_SEMANTICS_F2.md) |
+| Per-ID monster catalog identity and selected guide/data semantics | [Monster guide semantics F2](../project/MM6_MONSTER_GUIDE_SEMANTICS_F2.md) |
 | Item and monster per-ID guide review queue and selected discrepancies | [Item and monster guide claims F2](../project/MM6_ITEM_MONSTER_GUIDE_CLAIMS_F2.md) |
 
 ## Tracked probe entry points

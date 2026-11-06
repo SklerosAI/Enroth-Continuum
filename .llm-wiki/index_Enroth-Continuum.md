@@ -35,6 +35,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 ## Evidence and future play
 
 - [MM6 Source and Probe Index](MM6-Source-and-Probe-Index.md) — Public specs, tracked probes, and their evidence limits
+- [MM6 F4 Build Graph Source](Source-MM6-F4-Build-Graph.md) — Ordered offline implementation seams and F3/F5 gates
 - [Private Companion Wiki](Private-Companion-Wiki.md) — Ignored local knowledge base and entry schema; no Git backup
 - [Agent Play and Observation Roadmap](Agent-Play-and-Observation-Roadmap.md) — Future visible-frame observation, bounded input, and saved-session gates
 - [Agent Play Knowledge and Control Contract](Agent-Play-Knowledge-and-Control-Contract.md) — Future claim tiers, title/session identity, observe/act acknowledgments, recovery and private artifacts
@@ -69,6 +70,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 Table Semantic F2 Source](Source-MM6-Table-Semantic-F2.md) — Thirty-family parser map, selected references, and skipped awards
 - [MM6 Monster and Combat Spec Source](Source-MM6-Monster-Combat-Spec.md) — Retained monster parser gaps, title assumptions, and unverified combat
 - [MM6 Combat Semantics F2 Source](Source-MM6-Combat-Semantics-F2.md) — All-row monster consumer map, resistance/AI/loot gaps, and live encounter obligations
+- [MM6 Monster Guide Semantics F2 Source](Source-MM6-Monster-Guide-Semantics-F2.md) — Per-ID catalog evidence and selected guide/data discrepancies
 - [MM6 Item and Monster Guide Claims F2 Source](Source-MM6-Item-Monster-Guide-Claims-F2.md) — Complete per-ID review queue and selected guide/data discrepancies
 - [MM6 Guide F2 Review Source](Source-MM6-Guide-F2-Review.md) — Fourteen guide-family locators, selected claim checks, and open reconciliation
 

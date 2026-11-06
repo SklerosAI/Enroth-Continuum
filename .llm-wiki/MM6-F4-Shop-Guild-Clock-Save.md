@@ -13,4 +13,4 @@ The hash-matched retained 557-row house table and original refresh trace support
 
 Stock banks and bounty tuples remain blocked by complete item field meaning, edge-row service lifetime, a native nonzero save sample and missing MM6 live owners. The later [purchase trace](MM6-F4-Shop-Purchase-Write-Gate.md) proves transfer and partial source clearing, but it does not close those ownership gaps. The inherited MM7-indexed arrays still reject when nonempty. The current route has no MM6 service writers or all-owner commit; live SaveLoad remains guarded.
 
-See also: [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md), [Shop Save Key Matrix](MM6-F4-Shop-Save-Key-Matrix.md), [Shop Stock Tuple and Autosave](MM6-F4-Shop-Stock-Tuple-and-Autosave.md).
+See also: [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md), [Shop Save Key Matrix](MM6-F4-Shop-Save-Key-Matrix.md), [Shop Stock Tuple and Autosave](MM6-F4-Shop-Stock-Tuple-and-Autosave.md), [Shop Shared-Edge Refresh](MM6-F4-Shop-Shared-Edge-Refresh.md).

@@ -1,0 +1,15 @@
+# MM6 F4 shop–guild shared-edge refresh
+
+Status, 2026-11-06: **observed original menu refresh arbitration is source-backed; live MM6 services and SHOP save admission remain guarded**. The accepted F3-matched executable was inspected read only. Exact offsets and disassembly remain ignored in the owner-local research directory.
+
+The last active shop row's second bank and the first active spell-guild row address the same twelve physical 28-byte stock records. They also address the same 64-bit refresh deadline word. Both original shop menu choices compare that deadline with game time and, only when it is strictly older, call the first-bank and second-bank stock generators in that order before advancing the deadline. The guild menu branch uses the same comparison, calls its guild generator when older, and advances the same deadline. Each branch otherwise reads its own displayed stock from that shared physical row without regenerating it. Equality does not trigger refresh in these observed branches.
+
+Therefore, for those entry paths, the service that first encounters an expired shared deadline writes the shared stock row and advances the deadline. A subsequent visit to the other service while that deadline is current skips regeneration and reads the same physical row. This describes the original observed branches; it does not prove there are no other writers, that every generated slot is nonzero, or how the two services appear in a played session. The editor's disjoint guild list cannot represent this shared physical identity.
+
+The detached [refresh seam](../src/Engine/MM6/MM6ShopRefreshBoundary.h) joins the existing raw `ShopStockFields` and `ShopGuildClockFields` owners. It requires an MM6 title, ready owners and a caller-supplied future deadline. It invokes both shop generators or one guild generator only when the current deadline is strictly older than `now`. It stages both owners on copies and publishes them together, so a generator exception cannot leave the fork's detached stock or clock half-updated. That extra failure atomicity is a fork policy, not a claim about the original executable. The seam does not calculate the next deadline, generate items, enter a house, capture a live `Party`, write a save or remove the normal guards.
+
+The linked unit case models shop-first then guild-first refresh at the alias, strict equality, and rollback after a synthetic second-bank failure. The production and test translation units passed arm64 syntax checks; a standalone native probe passed shop/guild arbitration. Linked integration and a nonzero native `party.bin` comparison remain open.
+
+Next: trace any other writers/readers of the shared edge and compare a nonzero owner-local native save; establish full MM6 item-field conversion and a live service writer before joining `SHOP` to the required known-save manifest. Ban and bounty state have separate gates.
+
+See [purchase-write gate](MM6_F4_SHOP_PURCHASE_WRITE_GATE.md), [shop owner field gate](MM6_F4_SHOP_OWNER_FIELD_GATE.md), [shop/guild clock save](MM6_F4_SHOP_GUILD_CLOCK_SAVE.md), and [save transaction checklist](../.llm-wiki/MM6-F4-Save-Transaction-Checklist.md).

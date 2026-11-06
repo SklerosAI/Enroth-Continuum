@@ -13,6 +13,7 @@ add_library(engine_mm6_save_container STATIC MM6SaveContainer.cpp MM6SaveContain
     MM6ShopGuildClockFields.cpp MM6ShopGuildClockFields.h
     MM6ShopStockFields.cpp MM6ShopStockFields.h MM6ShopStockPurchase.h
     MM6BeaconSaveFields.cpp MM6BeaconSaveFields.h
+    MM6ShopRefreshBoundary.cpp MM6ShopRefreshBoundary.h
     MM6KnownSaveFields.cpp MM6KnownSaveFields.h)
 target_check_style(engine_mm6_save_container)
 

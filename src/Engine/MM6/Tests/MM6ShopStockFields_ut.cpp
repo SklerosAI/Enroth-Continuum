@@ -1,12 +1,14 @@
 #include <cstdint>
 #include <exception>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6ShopStockFields.h"
 #include "Engine/MM6/MM6ShopStockIdentity.h"
+#include "Engine/MM6/MM6ShopRefreshBoundary.h"
 
 UNIT_TEST(MM6ShopStockFields, PhysicalAliasAndTailRoundTrip) {
     auto live = std::make_unique<mm6::ShopStockFields>();
@@ -61,4 +63,81 @@ UNIT_TEST(MM6ShopStockFields, RejectsMalformedOrForeignBeforeMutation) {
     EXPECT_THROW(mm6::loadShopStockBeforeMutation(mm6::encodeSaveContainer(container),
                                                  prior.get(), GameTitle::MM6), std::exception);
     EXPECT_EQ(prior->records[0][0], 9);
+}
+
+UNIT_TEST(MM6ShopStockFields, SharedDeadlineArbitratesObservedShopAndGuildRefresh) {
+    auto stock = std::make_unique<mm6::ShopStockFields>();
+    stock->ready = true;
+    mm6::ShopGuildClockFields clocks;
+    clocks.ready = true;
+    const auto sharedStock = mm6::guildStockRecordIndex(119, 0, GameTitle::MM6);
+    const auto sharedClock = mm6::shopClockSlot(47);
+    ASSERT_EQ(sharedClock, mm6::guildClockSlot(119));
+    ASSERT_EQ(sharedStock, mm6::shopStockRecordIndex(mm6::ShopStockBank::Second, 47, 0, GameTitle::MM6));
+
+    int firstRuns = 0;
+    int secondRuns = 0;
+    int guildRuns = 0;
+    const mm6::ShopStockGenerator first = [&](mm6::ShopStockFields &staged) {
+        ++firstRuns;
+        staged.records[mm6::shopStockRecordIndex(mm6::ShopStockBank::First, 47, 0, GameTitle::MM6)][0] = 31;
+    };
+    const mm6::ShopStockGenerator second = [&](mm6::ShopStockFields &staged) {
+        ++secondRuns;
+        staged.records[sharedStock][0] = 73;
+    };
+    const mm6::ShopStockGenerator guild = [&](mm6::ShopStockFields &staged) {
+        ++guildRuns;
+        staged.records[sharedStock][0] = 109;
+    };
+
+    EXPECT_FALSE(mm6::refreshShopStockIfExpired(stock.get(), &clocks, 47, 0, 100,
+                                                first, second, GameTitle::MM6));
+    EXPECT_TRUE(mm6::refreshShopStockIfExpired(stock.get(), &clocks, 47, 1, 100,
+                                               first, second, GameTitle::MM6));
+    EXPECT_EQ(firstRuns, 1);
+    EXPECT_EQ(secondRuns, 1);
+    EXPECT_EQ(stock->records[sharedStock][0], 73);
+    EXPECT_EQ(clocks.deadlineWords[sharedClock], 100);
+    EXPECT_FALSE(mm6::refreshGuildStockIfExpired(stock.get(), &clocks, 119, 1, 200,
+                                                 guild, GameTitle::MM6));
+    EXPECT_FALSE(mm6::refreshGuildStockIfExpired(stock.get(), &clocks, 119, 100, 200,
+                                                 guild, GameTitle::MM6));
+    EXPECT_EQ(guildRuns, 0);
+    EXPECT_EQ(stock->records[sharedStock][0], 73);
+    EXPECT_TRUE(mm6::refreshGuildStockIfExpired(stock.get(), &clocks, 119, 101, 200,
+                                                guild, GameTitle::MM6));
+    EXPECT_EQ(guildRuns, 1);
+    EXPECT_EQ(stock->records[sharedStock][0], 109);
+    EXPECT_FALSE(mm6::refreshShopStockIfExpired(stock.get(), &clocks, 47, 101, 300,
+                                                first, second, GameTitle::MM6));
+    EXPECT_EQ(firstRuns, 1);
+    EXPECT_EQ(secondRuns, 1);
+    clocks.deadlineWords[sharedClock] = 0x8000000000000000ull; // Original compares high words signed.
+    EXPECT_TRUE(mm6::refreshShopStockIfExpired(stock.get(), &clocks, 47, 201, 300,
+                                               first, second, GameTitle::MM6));
+    EXPECT_EQ(secondRuns, 2);
+}
+
+UNIT_TEST(MM6ShopStockFields, FailedRefreshDoesNotPartiallyChangeDetachedOwners) {
+    auto stock = std::make_unique<mm6::ShopStockFields>();
+    stock->ready = true;
+    mm6::ShopGuildClockFields clocks;
+    clocks.ready = true;
+    stock->records[0][0] = 11;
+    const mm6::ShopStockGenerator first = [](mm6::ShopStockFields &staged) { staged.records[0][0] = 73; };
+    const mm6::ShopStockGenerator fail = [](mm6::ShopStockFields &) {
+        throw std::runtime_error("synthetic second-bank failure");
+    };
+
+    EXPECT_THROW(mm6::refreshShopStockIfExpired(stock.get(), &clocks, 47, 1, 100,
+                                                first, fail, GameTitle::MM6), std::runtime_error);
+    EXPECT_EQ(stock->records[0][0], 11);
+    EXPECT_EQ(clocks.deadlineWords[mm6::shopClockSlot(47)], 0);
+    EXPECT_THROW(mm6::refreshShopStockIfExpired(stock.get(), &clocks, 47, 1, 100,
+                                                first, first, GameTitle::MM7), std::runtime_error);
+    EXPECT_THROW(mm6::refreshShopStockIfExpired(stock.get(), &clocks, 47, 1, 1,
+                                                first, first, GameTitle::MM6), std::runtime_error);
+    EXPECT_EQ(stock->records[0][0], 11);
+    EXPECT_EQ(clocks.deadlineWords[mm6::shopClockSlot(47)], 0);
 }

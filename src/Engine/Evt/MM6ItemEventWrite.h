@@ -27,8 +27,8 @@ Character *planEventItemRelocation(std::span<Character *> party, int activeIndex
 // leaves the cursor unchanged and is reported to the event interpreter.
 InventoryEntry relocateEventItemToInventory(Character &recipient, Item &heldItem);
 
-// Plan every selected character before applying a removal, so an ambiguous
-// duplicate grid match cannot leave a partly changed party.
+// Scan each selected character's 126 grid cells in original row-major order,
+// taking the first matching item before considering the cursor.
 std::vector<ItemRemovalStep> planEventItemRemoval(std::span<Character *> characters,
                                                    const Item &heldItem, int rawId, int value);
 

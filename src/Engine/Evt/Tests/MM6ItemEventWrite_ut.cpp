@@ -117,7 +117,7 @@ UNIT_TEST(MM6ItemEventWrite, PlansGridBeforeHeldAndPreservesEquipment) {
     EXPECT_EQ(item.itemId, static_cast<ItemId>(1));
 }
 
-UNIT_TEST(MM6ItemEventWrite, RejectsDuplicateBackpackBeforeAnyRemoval) {
+UNIT_TEST(MM6ItemEventWrite, DuplicateBackpackRemovalUsesFirstGridCellNotRecordOrder) {
     ItemTable localTable;
     ItemTable *previous = pItemTable;
     struct RestoreTable {
@@ -131,14 +131,32 @@ UNIT_TEST(MM6ItemEventWrite, RejectsDuplicateBackpackBeforeAnyRemoval) {
     Character second;
     Item item;
     item.itemId = static_cast<ItemId>(1);
+    item.numCharges = 7;
     ASSERT_TRUE(first.inventory.tryAdd(Pointi(0, 0), item));
-    ASSERT_TRUE(second.inventory.tryAdd(Pointi(0, 0), item));
-    ASSERT_TRUE(second.inventory.tryAdd(Pointi(1, 0), item));
+    item.numCharges = 10;
+    ASSERT_TRUE(second.inventory.tryAdd(Pointi(0, 1), item)); // Lower record index, later grid cell.
+    item.numCharges = 20;
+    ASSERT_TRUE(second.inventory.tryAdd(Pointi(13, 0), item)); // Higher record index, earlier grid cell.
+    Item held;
+    held.itemId = static_cast<ItemId>(1);
+    held.numCharges = 99;
     std::array<Character *, 2> selected{&first, &second};
-    EXPECT_THROW((void) mm6::planEventItemRemoval(selected, Item(), 17, 1), std::runtime_error);
+    std::vector<mm6::ItemRemovalStep> plan = mm6::planEventItemRemoval(selected, held, 17, 1);
+    ASSERT_EQ(plan.size(), 2);
+    ASSERT_TRUE(plan[1].inventoryEntry);
+    EXPECT_EQ(plan[1].inventoryEntry->numCharges, 20);
+    EXPECT_FALSE(plan[1].held);
+    EXPECT_THROW((void) mm6::planEventItemRemoval(selected, held, 17, 0), std::runtime_error);
     EXPECT_EQ(first.inventory.size(), 1);
     EXPECT_EQ(second.inventory.size(), 2);
-    EXPECT_THROW((void) mm6::planEventItemRemoval(selected, Item(), 17, 0), std::runtime_error);
+    EXPECT_EQ(held.numCharges, 99);
+
+    Item removed = second.inventory.take(plan[1].inventoryEntry);
+    EXPECT_EQ(removed.numCharges, 20);
+    ASSERT_TRUE(second.inventory.entry(Pointi(0, 1)));
+    EXPECT_EQ(second.inventory.entry(Pointi(0, 1))->numCharges, 10);
+    EXPECT_FALSE(second.inventory.entry(Pointi(13, 0)));
+    EXPECT_EQ(held.numCharges, 99);
 }
 
 UNIT_TEST(MM6ItemEventWrite, HeldMatchIsConsumedOnceAndMissingItemIsNoOp) {

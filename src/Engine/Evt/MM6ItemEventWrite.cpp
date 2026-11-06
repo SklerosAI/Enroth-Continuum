@@ -13,20 +13,16 @@ ItemId checkedItemId(int rawId, int value) {
     return static_cast<ItemId>(value);
 }
 
-InventoryEntry uniqueGridItem(Character &character, ItemId itemId) {
-    InventoryEntry found;
+InventoryEntry firstGridItem(Character &character, ItemId itemId) {
     Sizei grid = character.inventory.gridSize();
     for (int y = 0; y < grid.h; ++y) {
         for (int x = 0; x < grid.w; ++x) {
             InventoryEntry entry = character.inventory.entry(Pointi(x, y));
-            if (!entry || entry->itemId != itemId || (found && found.index() == entry.index()))
-                continue;
-            if (found)
-                throw std::runtime_error("MM6 item removal has duplicate backpack matches");
-            found = entry;
+            if (entry && entry->itemId == itemId)
+                return entry;
         }
     }
-    return found;
+    return {};
 }
 
 } // namespace
@@ -82,7 +78,7 @@ std::vector<ItemRemovalStep> planEventItemRemoval(std::span<Character *> charact
             throw std::runtime_error("MM6 item removal selected a null character");
         ItemRemovalStep step;
         step.character = character;
-        step.inventoryEntry = uniqueGridItem(*character, itemId);
+        step.inventoryEntry = firstGridItem(*character, itemId);
         step.held = !step.inventoryEntry && heldAvailable;
         if (step.held)
             heldAvailable = false;

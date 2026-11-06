@@ -374,3 +374,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated the title-specific scroll/book mapping and guarded consumers into the main checkout. The F3-matched private verifier passed all 198 joins; the native arm64 MM6, MM7 and unit targets built; the retained-data offline runner passed 66/66 tests.
 - MM6 book learning, scroll casting and guild stock remain deliberately closed pending title-specific rules. The installed MM7 app and saves were untouched; no original installation or partial MM6 game process was opened.
+
+## [2026-11-06] ingest | MM6 held item save field
+- by: T-Burton-ND via codex
+- Audited the cursor-held `Item` and its party, character, chest, shop and popup consumers; added required `HELD` v1 for empty or complete item scalar state, separate from character inventory.
+- Capture and staging require MM6 and a loaded usable item template; staging changes a party copy without invoking cursor mutation or item placement. The full save manifest and post-commit cursor display remain open.
+- Two standalone C++ tests passed empty/present round-trip and malformed/wrong-title no-mutation checks; runtime syntax, C++ style and diff checks passed. No original installation was reread or partial MM6 game launched.

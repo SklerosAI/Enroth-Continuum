@@ -460,3 +460,25 @@ This supersedes the prior 233-test checkpoint as the current build baseline.
 The chest generation and MM6 SaveLoad guards remain closed. No MM6 process,
 rendered view or audio playback was launched; the installed MM7 app/profile
 and reserved MM8 checkout remain untouched.
+
+## MM6 F4 headless and joined staging checkpoint — 262 tests, 2026-11-06
+
+The main arm64 unit and game-test targets linked after the detached chest
+record generator, first-open placement, runtime projection, changed-grid
+writers and partial `.ec6` Party/Character/world candidate. The private-backed
+offline gate passed **262/262 MM6/LOD tests from 68 suites**; the general
+non-MM6 gate passed **438/438 from 56 suites**. The MM7 headless game-test
+control passed **1/1**.
+
+The MM6 game-test runner now selects the title explicitly, reads eight private
+rule manifests into an in-memory profile before engine initialization and
+uses null platform, renderer and audio. A monitored MM6 run passed **4/4
+headless tests**; across the two-test engine smoke, 102 host samples found no
+focus change or on-screen window. These tests verify startup and the existing
+chest and new-game save guards. They do not load the first map or validate
+graphics or audible playback. Normal new-game flow reaches the `.ec6`
+`saveNewGame()` guard before map entry; a separate chest-generation guard also
+blocks map load. Current menu requests some MM7 icon names absent from MM6
+data. Both guards remain closed while the atomic chest handoff, complete
+save transaction and MM6 menu assets are built. Private game data, rule files
+and logs remain ignored locally; installed MM7 and reserved MM8 are untouched.

@@ -17,8 +17,10 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Graphics/OutdoorSkyResources.h"
 #include "Engine/MM6/MM6Archive.h"
+#include "Engine/MM6/MM6EncounterMonster.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/Objects/Chest.h"
+#include "Engine/Objects/Monsters.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/Resources/ResourceManager.h"
@@ -178,6 +180,44 @@ TEST(MM6HeadlessFirstOutdoorSpriteEvents, IndexAndTitleIsolation) {
     EXPECT_EQ(decorations[1].uDecorationDescID, DecorationId::DECORATION_FOUNTAIN_3);
     EXPECT_FALSE(mm6::applySetSprite(GameTitle::MM6, decorations, -1, false, std::nullopt));
     EXPECT_FALSE(mm6::applySetSprite(GameTitle::MM6, decorations, 3, false, std::nullopt));
+}
+
+GAME_TEST(MM6Headless, FirstOutdoorEncounterNames) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const MapId firstMap = pMapTable->GetMapInfo("oute3.odm");
+    ASSERT_NE(firstMap, MAP_INVALID);
+    const MapData &map = pMapTable->pInfos[firstMap];
+    for (const std::string &family : {map.encounter1MonsterInternalName,
+                                      map.encounter2MonsterInternalName}) {
+        ASSERT_FALSE(family.empty());
+        ASSERT_NE(family, "0");
+        for (char rank : {'A', 'B', 'C'}) {
+            const MonsterId id = mm6::resolveEncounterMonster(
+                GameTitle::MM6, *pMonsterStats, family + " " + rank);
+            ASSERT_NE(id, MONSTER_INVALID);
+            EXPECT_EQ(pMonsterStats->infos[id].id, id);
+            EXPECT_FALSE(pMonsterList->monsters[id].internalMonsterName.empty());
+        }
+    }
+}
+
+TEST(MM6EncounterMonster, ResolvesCompactAndDisplayFamiliesWithoutGuessing) {
+    MonsterStats stats{};
+    stats.infos[static_cast<MonsterId>(1)].name = "First";
+    stats.infos[static_cast<MonsterId>(1)].internalName = "FamilyA";
+    stats.infos[static_cast<MonsterId>(2)].name = "Second";
+    stats.infos[static_cast<MonsterId>(2)].internalName = "FamilyB";
+    stats.infos[static_cast<MonsterId>(3)].name = "Third";
+    stats.infos[static_cast<MonsterId>(3)].internalName = "FamilyC";
+    stats.infos[static_cast<MonsterId>(4)].name = "First";
+    stats.infos[static_cast<MonsterId>(4)].internalName = "OtherA";
+
+    EXPECT_EQ(mm6::resolveEncounterMonster(GameTitle::MM6, stats, "Family A"), static_cast<MonsterId>(1));
+    EXPECT_EQ(mm6::resolveEncounterMonster(GameTitle::MM6, stats, "FamilyB"), static_cast<MonsterId>(2));
+    EXPECT_EQ(mm6::resolveEncounterMonster(GameTitle::MM6, stats, "Second C"), static_cast<MonsterId>(3));
+    EXPECT_EQ(mm6::resolveEncounterMonster(GameTitle::MM6, stats, "First A"), MONSTER_INVALID);
+    EXPECT_EQ(mm6::resolveEncounterMonster(GameTitle::MM6, stats, "Missing A"), MONSTER_INVALID);
+    EXPECT_EQ(mm6::resolveEncounterMonster(GameTitle::MM7, stats, "Family A"), MONSTER_INVALID);
 }
 
 TEST(MM6HeadlessFirstOutdoorResources, TitleIsolation) {

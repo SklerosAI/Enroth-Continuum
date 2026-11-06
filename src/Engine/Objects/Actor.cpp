@@ -9,6 +9,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
+#include "Engine/MM6/MM6EncounterMonster.h"
 #include "Engine/MM6/MM6MonsterProjectile.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Data/AwardEnums.h"
@@ -37,6 +38,8 @@
 #include "Engine/Timer.h"
 #include "Engine/TurnEngine/TurnEngine.h"
 #include "Engine/Tables/MapTable.h"
+
+#include "Utility/Exception.h"
 
 #include "GUI/UI/UIGame.h"
 #include "GUI/UI/UIStatusBar.h"
@@ -4291,7 +4294,7 @@ void SpawnEncounter(MapData *mapData, SpawnPoint *spawn, int monsterCatMod, int 
             return;
     }
 
-    if (baseInternalName[0] == '0') return;
+    if (baseInternalName.empty() || baseInternalName[0] == '0') return;
 
     monsterCategoryOddsSet += monsterCatMod;
     if (monsterCategoryOddsSet > 5) monsterCategoryOddsSet = 5;
@@ -4300,6 +4303,23 @@ void SpawnEncounter(MapData *mapData, SpawnPoint *spawn, int monsterCatMod, int 
     if (NumToSpawn <= 0) return;
 
     NumToSpawn = std::max(1, static_cast<int>(std::ceil(NumToSpawn * engine->config->gameplay.SpawnCountMultiplier.value())));
+
+    std::array<MonsterId, 3> mm6EncounterIds{MONSTER_INVALID, MONSTER_INVALID, MONSTER_INVALID};
+    if (engine->gameTitle() == GameTitle::MM6) {
+        const int variants = monsterCategoryOddsSet ? 3 : 1;
+        for (int variant = 0; variant < variants; ++variant) {
+            std::string selectedName = baseInternalName;
+            if (monsterCategoryOddsSet) {
+                selectedName += ' ';
+                selectedName += static_cast<char>('A' + variant);
+            }
+            mm6EncounterIds[variant] = mm6::resolveEncounterMonster(GameTitle::MM6, *pMonsterStats, selectedName);
+            if (mm6EncounterIds[variant] == MONSTER_INVALID)
+                throw Exception("MM6 encounter monster '{}' cannot be resolved", selectedName);
+            if (pMonsterList->monsters[mm6EncounterIds[variant]].internalMonsterName.empty())
+                throw Exception("MM6 encounter monster '{}' has no descriptor", selectedName);
+        }
+    }
 
     int pSector = 0;
     if (uCurrentlyLoadedLevelType == LEVEL_INDOOR)
@@ -4313,6 +4333,7 @@ void SpawnEncounter(MapData *mapData, SpawnPoint *spawn, int monsterCatMod, int 
             continue;
 
         // random monster levels ABC
+        int selectedVariant = 0;
         if (monsterCategoryOddsSet) {
             int catRandom = grng->random(100);
             int finalCat = 3;  // 2 , 10 , 20 - C
@@ -4332,11 +4353,16 @@ void SpawnEncounter(MapData *mapData, SpawnPoint *spawn, int monsterCatMod, int 
             } else {
                 fullInternalName = baseInternalName + " C";
             }
+            selectedVariant = finalCat - 1;
         }
 
-        MonsterId monsterDescID = pMonsterList->GetMonsterIDByName(fullInternalName);
+        MonsterId monsterDescID = engine->gameTitle() == GameTitle::MM6
+                                      ? mm6EncounterIds[selectedVariant]
+                                      : pMonsterList->GetMonsterIDByName(fullInternalName);
         MonsterDesc* monsterDesc = &pMonsterList->monsters[monsterDescID];
-        MonsterId monster = pMonsterStats->FindMonsterByInternalName(fullInternalName);
+        MonsterId monster = engine->gameTitle() == GameTitle::MM6
+                                ? monsterDescID
+                                : pMonsterStats->FindMonsterByInternalName(fullInternalName);
 
         // TODO(captainurist): MONSTER_ANGEL_A is monster #1, why do we even need this check?
         if (monster == MONSTER_INVALID) monster = MONSTER_ANGEL_A;

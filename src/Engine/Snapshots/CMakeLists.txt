@@ -17,7 +17,7 @@ set(ENGINE_SERIALIZATION_HEADERS
         TableSerialization.h)
 
 add_library(engine_serialization STATIC ${ENGINE_SERIALIZATION_SOURCES} ${ENGINE_SERIALIZATION_HEADERS})
-target_link_libraries(engine_serialization PUBLIC engine engine_mm6_save_container library_binary library_snapshots)
+target_link_libraries(engine_serialization PUBLIC engine engine_mm6_save_container engine_mm6_outdoor_wire library_binary library_snapshots)
 target_check_style(engine_serialization)
 
 if(OE_BUILD_TESTS)

@@ -6,6 +6,8 @@
 
 #include "CompositeSnapshots.h"
 
+#include "Engine/MM6/MM6OutdoorWire.h"
+
 #include "Library/Binary/BinarySerialization.h"
 
 #include "Utility/Exception.h"
@@ -106,6 +108,10 @@ void deserializeMM6Outdoor(InputStream &src, OutdoorLocation_MM7 *dst) {
 }
 
 void deserializeMM6Outdoor(const Blob &src, OutdoorLocation_MM7 *dst) {
+    // Bound every model and following section before the inherited serializer
+    // allocates vectors. The wire view retains the legacy BSP lists that this
+    // renderer adapter currently skips.
+    (void) mm6::decodeOutdoorBase({static_cast<const std::uint8_t *>(src.data()), src.size()});
     MemoryInputStream stream(src.data(), src.size(), "MM6 outdoor map");
     deserializeMM6Outdoor(stream, dst);
     if (stream.position() != stream.size())

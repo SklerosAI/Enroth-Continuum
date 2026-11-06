@@ -1623,3 +1623,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added filename-keyed `IFOV` with changed face fields, a deterministic pre-reload base fingerprint and post-`OnMapReload` precedence; integrated focused tests passed 3/3.
 - A combined known-save guard passed 4/4 with IFOV, SHOP and BEAC extras rejected before destination mutation. Indexed the checked renderer contract; live adapters and SaveLoad remain guarded.
+
+## [2026-11-06] implement | MM6 raw item authority
+- by: T-Burton-ND via codex
+- Integrated a 28-byte structural `ItemRecord28` for detached SHOP stock; linked item/shop/clock checks passed 10/10 and the private-backed MM6/LOD gate passed 345/345.
+- Recorded that provisional `ITEM` and `HELD` v1 logical snapshots omit native MM6 item bytes. The final manifest and context-specific live adapters must preserve raw records before normal SaveLoad opens.

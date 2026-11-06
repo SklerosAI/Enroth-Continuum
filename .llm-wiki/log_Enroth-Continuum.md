@@ -1588,3 +1588,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - An F3-matched original-executable trace established that the last shop row and first guild row share both physical stock and one deadline. The first observed service after strict expiry regenerates its bank or guild stock and advances that deadline; equality skips regeneration.
 - Added a detached MM6-only helper that stages stock and clock owners together and leaves them unchanged on generator failure. Integrated focused shop/clock tests passed 8/8 and the private-backed MM6/LOD gate 338/338. Live item generation, service ownership, nonzero native-save comparison and SaveLoad remain guarded.
+
+## [2026-11-06] implement | MM6 beacon CPU image preparation
+- by: T-Burton-ND via codex
+- Added detached reconstruction of saved BEAC beacon and thumbnail RGBA bytes into owned CPU images, checking size and channel order before renderer or Party mutation. The linked focused beacon suite passed 6/6; the last full private-backed MM6/LOD gate passed 338/338 before this helper.
+- Source audit confirms beacon screenshots retain CPU pixels, while viewport thumbnail capture changes render state and `GraphicsImage::Create()` allocates GPU textures immediately. Live image publication, all-owner commit and SaveLoad remain guarded.

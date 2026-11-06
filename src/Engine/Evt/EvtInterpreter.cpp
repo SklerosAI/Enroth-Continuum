@@ -10,6 +10,7 @@
 #include "Engine/Evt/EvtEnumFunctions.h"
 #include "Engine/Evt/EvtInstruction.h"
 #include "Engine/Evt/EvtVariables.h"
+#include "Engine/Evt/MM6EventRules.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Party.h"
 #include "Engine/Graphics/Indoor.h"
@@ -567,7 +568,12 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             assert(_who != CHOOSE_PARTY); // TODO(Nik-RE-dev): original code for this option is dubious
             for (Character &character : iterateCharacters(_who, grng)) {
                 CombinedSkillValue val = character.getSkillValue(ir.data.check_skill_descr.skill_type);
-                if (val.level() >= ir.data.check_skill_descr.skill_level && val.mastery() == ir.data.check_skill_descr.skill_mastery)
+                bool satisfied = engine->gameTitle() == GameTitle::MM6
+                    ? mm6CheckSkillSatisfied(val, ir.data.check_skill_descr.skill_mastery,
+                                             ir.data.check_skill_descr.skill_level)
+                    : val.level() >= ir.data.check_skill_descr.skill_level &&
+                          val.mastery() == ir.data.check_skill_descr.skill_mastery;
+                if (satisfied)
                     return {EVT_FLOW_JUMP, ir.target_step};
             }
             break;

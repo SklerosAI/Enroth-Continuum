@@ -16,6 +16,7 @@ set(ENGINE_EVENTS_HEADERS
         EvtContext.h
         EvtContinuation.h
         EvtEnums.h
+        MM6EventRules.h
         Processor.h
         EvtEnumFunctions.h)
 

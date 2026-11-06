@@ -8,6 +8,7 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/Evt/EvtProgram.h"
+#include "Engine/Evt/MM6EventRules.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -112,4 +113,12 @@ UNIT_TEST(MM6EventFraming, AllActiveRetainedResources) {
         }
     }
     EXPECT_EQ(checked, 68); // 67 listed map scripts plus global.evt; extras are separately classified.
+}
+
+UNIT_TEST(MM6EventFraming, ZeroMasterySkillCheckMatchesTrainedSkill) {
+    EXPECT_FALSE(mm6CheckSkillSatisfied(CombinedSkillValue::none(), MASTERY_NONE, 8));
+    EXPECT_FALSE(mm6CheckSkillSatisfied(CombinedSkillValue::novice(7), MASTERY_NONE, 8));
+    EXPECT_TRUE(mm6CheckSkillSatisfied(CombinedSkillValue::novice(8), MASTERY_NONE, 8));
+    EXPECT_TRUE(mm6CheckSkillSatisfied(CombinedSkillValue(8, MASTERY_EXPERT), MASTERY_NONE, 8));
+    EXPECT_FALSE(mm6CheckSkillSatisfied(CombinedSkillValue(8, MASTERY_EXPERT), MASTERY_MASTER, 8));
 }

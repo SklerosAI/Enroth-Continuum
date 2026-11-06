@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <exception>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -7,6 +8,7 @@
 
 #include "Engine/MM6/MM6HirelingSaveFields.h"
 #include "Engine/MM6/MM6NpcSaveFields.h"
+#include "Engine/Objects/NPC.h"
 
 namespace {
 
@@ -34,6 +36,49 @@ mm6::SaveContainer containerFor(const mm6::HirelingSaveFields &fields) {
 }
 
 } // namespace
+
+UNIT_TEST(MM6HirelingRoster, WideTableRowsRetainFollowerOrder) {
+    NPCStats stats;
+    stats.uNumNewNPCs = 399;
+    NPCData first;
+    first.name = "Companion";
+    NPCData second;
+
+    stats.pNPCData[3].name = first.name;
+    stats.pNPCData[3].flags = NPC_HIRED;
+    for (int index : {4, 254, 398}) {
+        stats.pNPCData[index].name = "Follower";
+        stats.pNPCData[index].flags = NPC_HIRED;
+    }
+    EXPECT_EQ(mm6::collectFollowerIndices(first, second, stats),
+              (std::vector<std::uint16_t>{0, 6, 256, 400}));
+}
+
+UNIT_TEST(MM6HirelingRoster, BoundedFullTableAndMalformedState) {
+    NPCStats stats;
+    stats.uNumNewNPCs = 501;
+    NPCData first;
+    first.name = "First";
+    NPCData second;
+    second.name = "Second";
+    for (NPCData &npc : stats.pNPCData) {
+        npc.name = "Follower";
+        npc.flags = NPC_HIRED;
+    }
+    std::vector<std::uint16_t> roster = mm6::collectFollowerIndices(first, second, stats);
+    ASSERT_EQ(roster.size(), 503);
+    EXPECT_EQ(roster.front(), 0);
+    EXPECT_EQ(roster[1], 1);
+    EXPECT_EQ(roster.back(), 502);
+
+    stats.uNumNewNPCs = 502;
+    EXPECT_THROW((void) mm6::collectFollowerIndices(first, second, stats), std::out_of_range);
+    stats.uNumNewNPCs = -1;
+    EXPECT_THROW((void) mm6::collectFollowerIndices(first, second, stats), std::out_of_range);
+    stats.uNumNewNPCs = 1;
+    stats.pNPCData[0].name.clear();
+    EXPECT_THROW((void) mm6::collectFollowerIndices(first, second, stats), std::invalid_argument);
+}
 
 UNIT_TEST(MM6HirelingSaveFields, FullNpcCopiesNamesAndSacrificeRoundTrip) {
     mm6::HirelingSaveFields fields = exampleFields();

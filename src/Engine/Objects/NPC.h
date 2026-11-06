@@ -1,8 +1,10 @@
 #pragma once
 
-#include <vector>
+#include <array>
+#include <cstddef>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "Utility/IndexedArray.h"
 
@@ -11,6 +13,7 @@
 
 struct NPCData;
 struct NPCSacrificeStatus;
+struct NPCStats;
 
 enum class NpcType {
     NPC_TYPE_QUEST = 1,
@@ -47,6 +50,13 @@ void setNPCNamesOnLoad();
  * @offset 0x445C8B
  */
 NpcType getNPCType(int npcId);
+
+namespace mm6 {
+// The two party slots come first; a table follower at index i is encoded as
+// i + 2. This is a roster position, not a stable identity for a hired NPC.
+std::vector<std::uint16_t> collectFollowerIndices(const NPCData &first, const NPCData &second,
+                                                  const NPCStats &stats);
+} // namespace mm6
 
 class FlatHirelings {
  public:
@@ -86,6 +96,11 @@ class FlatHirelings {
      * If 0 or 1, then it's an index into `pParty->pHirelings`.
      * If 2 or more, then you have to subtract 2 to get an index into `pNPCStats->pNewNPCData`. */
     std::array<int8_t, 1024> ids = {{}};
+
+    // MM6 has more than 254 active table rows. Keep its wider roster separate
+    // so existing MM7/MM8 index and follower behavior is unchanged.
+    std::array<std::uint16_t, 503> mm6Ids = {{}};
+    bool mm6Roster = false;
 
     /** Number of valid ids in the array above. */
     size_t count = 0;

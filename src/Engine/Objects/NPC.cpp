@@ -1,5 +1,7 @@
 #include "Engine/Objects/NPC.h"
 
+#include <algorithm>
+#include <stdexcept>
 #include <string>
 
 #include "Engine/Engine.h"
@@ -241,8 +243,40 @@ int UseNPCSkill(NpcProfession profession, int id) {
     return 0;
 }
 
+std::vector<std::uint16_t> mm6::collectFollowerIndices(const NPCData &first, const NPCData &second,
+                                                       const NPCStats &stats) {
+    if (stats.uNumNewNPCs < 0 || static_cast<size_t>(stats.uNumNewNPCs) > stats.pNPCData.size())
+        throw std::out_of_range("MM6 active NPC count exceeds the NPC table");
+
+    std::vector<std::uint16_t> result;
+    result.reserve(2 + stats.uNumNewNPCs);
+    if (!first.name.empty())
+        result.push_back(0);
+    if (!second.name.empty())
+        result.push_back(1);
+
+    for (size_t i = 0; i < stats.uNumNewNPCs; ++i) {
+        const NPCData &npc = stats.pNPCData[i];
+        if (!(npc.flags & NPC_HIRED))
+            continue;
+        if (npc.name.empty())
+            throw std::invalid_argument("MM6 hired NPC table row has no name");
+        if (npc.name != first.name && npc.name != second.name)
+            result.push_back(static_cast<std::uint16_t>(i + 2));
+    }
+    return result;
+}
+
 void FlatHirelings::Prepare() {
     count = 0;
+    mm6Roster = engine && engine->gameTitle() == GameTitle::MM6;
+    if (mm6Roster) {
+        std::vector<std::uint16_t> roster = mm6::collectFollowerIndices(
+            pParty->pHirelings[0], pParty->pHirelings[1], *pNPCStats);
+        std::copy(roster.begin(), roster.end(), mm6Ids.begin());
+        count = roster.size();
+        return;
+    }
 
     for (size_t i = 0; i < 2; ++i)
         if (!pParty->pHirelings[i].name.empty())
@@ -264,13 +298,15 @@ void FlatHirelings::Prepare() {
 bool FlatHirelings::IsFollower(size_t index) const {
     assert(index < count);
 
+    if (mm6Roster)
+        return mm6Ids[index] >= 2;
     return ids[index] >= 2;
 }
 
 NPCData *FlatHirelings::Get(size_t index) const {
     assert(index < count);
 
-    uint8_t id = ids[index];
+    std::uint16_t id = mm6Roster ? mm6Ids[index] : static_cast<std::uint8_t>(ids[index]);
 
     if (id < 2) {
         return &pParty->pHirelings[id];
@@ -282,7 +318,7 @@ NPCData *FlatHirelings::Get(size_t index) const {
 NPCSacrificeStatus *FlatHirelings::GetSacrificeStatus(size_t index) const {
     assert(index < count);
 
-    uint8_t id = ids[index];
+    std::uint16_t id = mm6Roster ? mm6Ids[index] : static_cast<std::uint8_t>(ids[index]);
     if (id < 2) {
         return &pParty->pHirelingsSacrifice[id];
     } else {

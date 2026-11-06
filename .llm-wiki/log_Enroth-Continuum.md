@@ -952,3 +952,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated the saved-overlay actor PID preflight, detached MM6 chest base-ID and ANY item-field models, face-derived animation sound selector, bounded Quick Start first-map audit, and source-backed shop/guild refresh packet. The arm64 MM6, OpenEnroth and unit targets linked; the private-backed offline gate passed **224/224 tests from 62 suites** and the separate general gate passed **438/438**. Eleven linked chest tests and two linked voice-selector tests passed within that run.
 - Reconciled [local status](../project/LOCAL_STATUS.md), [build graph](../project/MM6_F4_BUILD_GRAPH.md), [offline seams](MM6-F4-Offline-Seams.md) and [agent handoff](Agent-Handoff.md). Only the data README is tracked under `local-game-data/`; exact PE and GOG evidence remain ignored. The live chest guard still blocks every MM6 level load; Quick Start and SaveLoad are not enabled, and no MM6 process or graphical/audio play was launched.
+
+## [2026-11-06] update | MM6 outdoor title boundary
+- by: T-Burton-ND via codex
+- Guarded three MM7-only event campaign exceptions and MM7 outdoor border travel, random fog and underwater classification against MM6 numeric map-ID collisions. The MM6 outdoor loader assertion now checks its normalized `.odm` table row.
+- Recorded the [outdoor title packet](../project/MM6_F4_OUTDOOR_TITLE_BOUNDARY.md) and [wiki handoff](MM6-F4-Outdoor-Title-Boundary.md). MM6 border travel and fog policy remain unimplemented; cross-map autosave is still gated by the incomplete `.ec6` transaction.
+- The arm64 MM6, OpenEnroth and unit targets linked. The private-backed offline runner passed **224/224** MM6/LOD tests, and the general suite passed **438/438**. No MM6 process or graphical view was launched; private game data remained ignored.

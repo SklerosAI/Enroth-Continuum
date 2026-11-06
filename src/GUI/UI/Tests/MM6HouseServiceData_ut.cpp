@@ -14,6 +14,8 @@
 #include "GUI/UI/MM6HouseServiceData.h"
 
 #include "Library/Json/Json.h"
+#include "Library/Lod/LodReader.h"
+#include "Library/LodFormats/LodFormats.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -270,4 +272,36 @@ TEST(MM6HouseServiceData, PreflightsEveryActiveHouseInstruction) {
         ++taverns;
     }
     EXPECT_EQ(taverns, 21);
+}
+
+TEST(MM6HouseServiceData, DecodesEveryReferencedProprietorImageFromStagedArchive) {
+    const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
+    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
+    const char *archive = std::getenv("ENROTH_MM6_STAGED_ICONS_LOD");
+    if (!manifest || !research || !archive)
+        GTEST_SKIP() << "private MM6 room and staged icon evidence is unavailable";
+
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(manifest)));
+    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
+        Blob::fromString(readFile(std::filesystem::path(research) / "icons" / "2devents.txt")), rooms);
+    const LodReader icons{PathView(archive)};
+    std::set<std::string> names;
+    for (int houseId = 1; houseId <= 557; ++houseId) {
+        const mm6::HouseEntryPlan entry = mm6::planHouseEntry(houses, houseId);
+        if (entry.proprietorIconName)
+            names.insert(*entry.proprietorIconName);
+    }
+    EXPECT_EQ(names.size(), 45);
+    for (const std::string &name : names) {
+        ASSERT_TRUE(icons.exists(name));
+        const Blob imageData = icons.read(name);
+        const Sizei size = lod::decodeImageSize(imageData);
+        ASSERT_GT(size.w, 0);
+        ASSERT_GT(size.h, 0);
+        ASSERT_LE(size.w, 1024);
+        ASSERT_LE(size.h, 1024);
+        const LodImage image = lod::decodeImage(imageData);
+        EXPECT_EQ(image.image.size(), size);
+        EXPECT_EQ(image.image.pixels().size(), static_cast<size_t>(size.w * size.h));
+    }
 }

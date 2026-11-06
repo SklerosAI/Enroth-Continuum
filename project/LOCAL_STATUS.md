@@ -148,3 +148,8 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   have no literal loader reference and need indirect-use or non-use review;
   the audit does not establish that any loaded table is semantically correct.
   A reproducible offline probe records source locations in an ignored report.
+- A focused [monster/combat source audit](MM6_MONSTER_COMBAT_SPEC.md) found
+  active MM6 attack, projectile, spell and special-attack labels that fall
+  through inherited MM7 parsers. The adapter also retains MM7 monster-family
+  rules and a temporary all-friendly monster faction table. These are
+  source/retained-table findings; MM6 combat has not been played or verified.

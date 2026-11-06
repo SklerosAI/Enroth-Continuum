@@ -10,8 +10,9 @@ Focused F2 specifications: [guide and campaign evidence](MM6_GUIDE_RECONCILIATIO
 [events, dialogue and campaign](MM6_EVENT_CAMPAIGN_SPEC.md),
 [class, skill and party creation IDs](MM6_CLASS_SKILL_SPEC.md),
 [save and map-delta layout](MM6_SAVE_SPEC.md),
-[presentation and media routing](MM6_MEDIA_UI_SPEC.md), and
-[text-table consumers](MM6_TABLE_CONSUMER_SPEC.md). These are audit inputs, not
+[presentation and media routing](MM6_MEDIA_UI_SPEC.md),
+[text-table consumers](MM6_TABLE_CONSUMER_SPEC.md), and
+[monster/combat rules](MM6_MONSTER_COMBAT_SPEC.md). These are audit inputs, not
 claims that their runtime behavior is implemented.
 
 ## Evidence and boundaries
@@ -111,6 +112,21 @@ For every numeric ID, record whether it is active, reserved, duplicated or
 missing. Record every nonnumeric row by file and line. Each table needs a
 parser, a consumer, and a coverage check; a row count alone does not satisfy
 that requirement.
+
+### Monster and combat reconciliation
+
+- [x] Compare all 173 MM6 monster-table rows and the retained fixed-size
+  description table with the current loader and shared combat parsers.
+  [MM6_MONSTER_COMBAT_SPEC.md](MM6_MONSTER_COMBAT_SPEC.md) records source paths
+  and F3 questions. A retained label comparison finds 49 nonzero attack-type
+  cells falling to physical, 46 missile cells falling to `NONE`, 13 monster
+  spell cells falling to `SPELL_NONE`, and 11 special-attack cells falling to
+  `NONE`. This is parser inventory, not observed combat behavior.
+- [ ] Give MM6 title-specific monster IDs/families, projectiles, damage and
+  resistance channels, special attacks, spell casts, hostility/faction rules,
+  treasure and fixed drops. Eliminate silent fallbacks for active labels and
+  prove representative melee, ranged, caster, flying, neutral and loot cases
+  in offline scenarios and live F5 play.
 
 ### Spell and item ID reconciliation
 

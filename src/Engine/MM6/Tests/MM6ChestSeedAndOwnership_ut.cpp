@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <memory>
+#include <stdexcept>
 
 #include "Testing/Unit/UnitTest.h"
 
@@ -65,4 +66,49 @@ TEST(MM6ChestSeedAndOwnership, ScansFourInventoriesEquipmentAndHeldItem) {
     EXPECT_EQ((*owned)[3], 0);
     EXPECT_EQ((*owned)[29], 1);
     pItemTable = previousTable;
+}
+
+TEST(MM6ChestSeedAndOwnership, PortSeedUsesInjectedEntropyExactlyOncePerNewGame) {
+    mm6::ChestTitleState owner;
+    owner.generatedArtifactFlags[0] = 1;
+    int calls = 0;
+    auto injected = [&calls]() -> std::optional<std::uint32_t> {
+        ++calls;
+        return 0x89ABCDEFu;
+    };
+    ASSERT_TRUE(mm6::initializePortNewGameChestTitleState(GameTitle::MM6, &owner, injected));
+    EXPECT_TRUE(owner.ready);
+    EXPECT_EQ(owner.lcgState, 0x89ABCDEFu);
+    EXPECT_EQ(owner.generatedArtifactFlags[0], 0);
+    EXPECT_EQ(calls, 1);
+
+    EXPECT_FALSE(mm6::initializePortNewGameChestTitleState(GameTitle::MM6, &owner, injected));
+    EXPECT_EQ(calls, 1);
+    EXPECT_EQ(owner.lcgState, 0x89ABCDEFu);
+    mm6::resetChestTitleState(&owner);
+    ASSERT_TRUE(mm6::initializePortNewGameChestTitleState(GameTitle::MM6, &owner, injected));
+    EXPECT_EQ(calls, 2);
+}
+
+TEST(MM6ChestSeedAndOwnership, PortSeedFailureAndForeignTitleAreAtomic) {
+    mm6::ChestTitleState owner;
+    owner.lcgState = 71;
+    owner.generatedArtifactFlags[0] = 1;
+    int calls = 0;
+    auto injected = [&calls]() -> std::optional<std::uint32_t> {
+        ++calls;
+        return 9;
+    };
+    EXPECT_FALSE(mm6::initializePortNewGameChestTitleState(GameTitle::MM7, &owner, injected));
+    EXPECT_FALSE(mm6::initializePortNewGameChestTitleState(GameTitle::MM6, nullptr, injected));
+    EXPECT_EQ(calls, 0);
+    EXPECT_FALSE(mm6::initializePortNewGameChestTitleState(
+        GameTitle::MM6, &owner, []() -> std::optional<std::uint32_t> { return std::nullopt; }));
+    EXPECT_FALSE(mm6::initializePortNewGameChestTitleState(
+        GameTitle::MM6, &owner, []() -> std::optional<std::uint32_t> {
+            throw std::runtime_error("entropy unavailable");
+        }));
+    EXPECT_FALSE(owner.ready);
+    EXPECT_EQ(owner.lcgState, 71u);
+    EXPECT_EQ(owner.generatedArtifactFlags[0], 1);
 }

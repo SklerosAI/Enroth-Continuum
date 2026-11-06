@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <optional>
 
@@ -20,6 +21,42 @@ struct ChestDisarmScoreInput {
     bool hasLocksmith = false;  // Profession 26.
     bool hasBurglar = false;    // Profession 51.
 };
+
+struct ChestDisarmEquippedItem {
+    int itemId = 0;
+    int specialEnchantment = 0;
+    bool broken = false;
+};
+
+struct ChestDisarmEquipmentFlags {
+    bool unbrokenItem410 = false;
+    bool unbrokenItem415 = false;
+    bool unbrokenThieveryEnchantment = false;
+};
+
+// The original reads item 410 from one fixed slot, item 415 from either of
+// two fixed slots, then stops its 16-slot enchantment scan at the first match.
+// Multiple matching instances therefore double only once per category.
+inline std::optional<ChestDisarmEquipmentFlags> scanChestDisarmEquipment(
+    GameTitle title, const std::array<ChestDisarmEquippedItem, 16> &equipped) {
+    if (title != GameTitle::MM6)
+        return std::nullopt;
+    for (const ChestDisarmEquippedItem &item : equipped)
+        if (item.itemId < 0 || item.itemId > 580 || item.specialEnchantment < 0 ||
+            (item.itemId == 0 && item.specialEnchantment != 0))
+            return std::nullopt;
+
+    ChestDisarmEquipmentFlags flags;
+    flags.unbrokenItem410 = equipped[6].itemId == 410 && !equipped[6].broken;
+    flags.unbrokenItem415 = (equipped[0].itemId == 415 && !equipped[0].broken) ||
+                           (equipped[1].itemId == 415 && !equipped[1].broken);
+    for (const ChestDisarmEquippedItem &item : equipped)
+        if (item.specialEnchantment == 35 && !item.broken) {
+            flags.unbrokenThieveryEnchantment = true;
+            break;
+        }
+    return flags;
+}
 
 inline std::optional<int> stageChestDisarmScore(const ChestDisarmScoreInput &input) {
     if (input.title != GameTitle::MM6)

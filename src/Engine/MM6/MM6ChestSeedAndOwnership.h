@@ -2,7 +2,9 @@
 
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <optional>
+#include <random>
 #include <utility>
 
 #include "Engine/MM6/MM6ChestTitleState.h"
@@ -21,9 +23,39 @@ enum class NewGameChestSeedSource {
 inline bool initializeNewGameChestTitleState(GameTitle title, ChestTitleState *owner,
                                              std::uint32_t explicitSeed,
                                              NewGameChestSeedSource source) {
-    if (source != NewGameChestSeedSource::ExplicitDeterministic)
+    if (!owner || owner->ready || source != NewGameChestSeedSource::ExplicitDeterministic)
         return false;
     return restoreChestTitleState(title, owner, explicitSeed, {});
+}
+
+using ChestSeedEntropy = std::function<std::optional<std::uint32_t>()>;
+
+// Port-specific seed policy: ask the local platform entropy provider once at
+// new-game start, then persist the resulting LCG state in CHST. This is an
+// intentional divergence while the original MM6 initial seed is unproved.
+inline std::optional<std::uint32_t> localChestSeedEntropy() {
+    std::random_device entropy;
+    return static_cast<std::uint32_t>(entropy());
+}
+
+// The injected provider makes tests deterministic. It is never called for an
+// MM7 title or an already-ready owner; failure and exceptions leave the owner
+// unchanged. Save restore uses restoreChestTitleState, not this initializer.
+inline bool initializePortNewGameChestTitleState(GameTitle title, ChestTitleState *owner,
+                                                const ChestSeedEntropy &entropy) {
+    if (title != GameTitle::MM6 || !owner || owner->ready || !entropy)
+        return false;
+    try {
+        const auto seed = entropy();
+        return seed && initializeNewGameChestTitleState(
+            title, owner, *seed, NewGameChestSeedSource::ExplicitDeterministic);
+    } catch (...) {
+        return false;
+    }
+}
+
+inline bool initializePortNewGameChestTitleState(GameTitle title, ChestTitleState *owner) {
+    return initializePortNewGameChestTitleState(title, owner, localChestSeedEntropy);
 }
 
 // The personal-fork direct-artifact policy uses actual character-owned Item

@@ -48,3 +48,31 @@ UNIT_TEST(MM6ChestDisarmScore, ForeignTitleRejectsWithoutChangingInput) {
     EXPECT_EQ(input.encodedSkill, 0xFF);
     EXPECT_TRUE(input.unbrokenItem410);
 }
+
+UNIT_TEST(MM6ChestDisarmScore, DuplicateEquippedMatchesDoubleOnlyOncePerCategory) {
+    std::array<mm6::ChestDisarmEquippedItem, 16> equipped{};
+    equipped[0] = {415, 35, false};
+    equipped[1] = {415, 35, false};
+    equipped[6] = {410, 35, false};
+    equipped[7] = {410, 35, false};  // The original checks item 410 only in slot 6.
+    auto flags = mm6::scanChestDisarmEquipment(GameTitle::MM6, equipped);
+    ASSERT_TRUE(flags);
+    mm6::ChestDisarmScoreInput input;
+    input.title = GameTitle::MM6;
+    input.encodedSkill = 5;
+    input.unbrokenItem410 = flags->unbrokenItem410;
+    input.unbrokenItem415 = flags->unbrokenItem415;
+    input.unbrokenThieveryEnchantment = flags->unbrokenThieveryEnchantment;
+    EXPECT_EQ(mm6::stageChestDisarmScore(input), 80);  // 5 * 2 * 2 * 2 * basic 2.
+
+    equipped[6].broken = true;
+    equipped[0].broken = true;
+    equipped[1].broken = true;
+    equipped[7].broken = true;
+    flags = mm6::scanChestDisarmEquipment(GameTitle::MM6, equipped);
+    ASSERT_TRUE(flags);
+    EXPECT_FALSE(flags->unbrokenItem410);
+    EXPECT_FALSE(flags->unbrokenItem415);
+    EXPECT_FALSE(flags->unbrokenThieveryEnchantment);
+    EXPECT_FALSE(mm6::scanChestDisarmEquipment(GameTitle::MM7, equipped));
+}

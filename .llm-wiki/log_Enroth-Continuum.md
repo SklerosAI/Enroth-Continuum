@@ -213,3 +213,9 @@ Chronological record of wiki activity.
 - Added a title-specific twelve-face, 53-frame resolver and creation/runtime portrait bounds while preserving MM7 behavior.
 - Checked the twelve face stems and 636 frame names against the ignored F3 report, and syntax-checked the five changed C++ units. No MM6 process or original GOG file was opened.
 - Marked Quick Start defaults, expression timing, voice reactions, zombie art and F5 graphical/audio checks as remaining work. The wiki has 53 pages with frontmatter and only the schema template's placeholder links unresolved.
+
+## [2026-11-06] ingest | MM6 F4 offline seam integration
+- by: T-Burton-ND via codex
+- Linked the separate arm64 MM6 target, original-order transport lookup, descriptor 173, portrait path, 68-resource EVT framing and title-tagged `.ec6` envelope in a new handoff page.
+- Recorded the integrated nine-test offline pass and private actor fixture, with gameplay effects, state serialization and F5 graphical play still open.
+- Updated source and campaign summaries for future parallel agents; checked 54 wiki pages for frontmatter and local links, with only the schema template placeholders unresolved.

@@ -26,6 +26,7 @@
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/MM6/MM6SpellItems.h"
 #include "Engine/MM6/MM6SpellLearning.h"
+#include "Engine/MM6/MM6ConsumableRules.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Tables/ObjectTable.h"
@@ -3358,6 +3359,14 @@ bool Character::DiscardConditionIfLastsLongerThan(Condition uCondition,
 void Character::useItem(int targetCharacter, bool isPortraitClick) {
     Character *playerAffected = &pParty->pCharacters[targetCharacter];
     if (pParty->bTurnBasedModeOn && (pTurnEngine->turn_stage == TE_WAIT || pTurnEngine->turn_stage == TE_MOVEMENT)) {
+        return;
+    }
+    if (engine->gameTitle() == GameTitle::MM6 &&
+        mm6::shouldBlockDirectUse(pParty->pPickedItem.itemId, pParty->pPickedItem.type())) {
+        // MM6 herb and potion effects have not been established. In particular,
+        // the inherited reagent branch has contradictory MM6 ID 161 cases.
+        engine->_statusBar->setEvent(LSTR_S_CAN_NOT_BE_USED_THAT_WAY, pParty->pPickedItem.GetDisplayName());
+        pAudioPlayer->playUISound(SOUND_error);
         return;
     }
     if (pParty->pPickedItem.isReagent()) {

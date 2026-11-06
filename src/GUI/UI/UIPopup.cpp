@@ -28,6 +28,7 @@
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/MM6/MM6SpellItems.h"
+#include "Engine/MM6/MM6ConsumableRules.h"
 #include "Engine/Timer.h"
 #include "Engine/Conditions.h"
 #include "Engine/Objects/ActorEnumFunctions.h"
@@ -2059,6 +2060,16 @@ void Inventory_ItemPopupAndAlchemy() {
             frameRect.x = pX - 414;
         }
         GUIWindow::DrawMessageBox(frameRect, hint_reference);
+        return;
+    }
+
+    if (engine->gameTitle() == GameTitle::MM6 &&
+        mm6::shouldBlockItemOnItemUse(pParty->pPickedItem.itemId, pParty->pPickedItem.type())) {
+        // MM6 ingredients and scroll IDs overlap MM7's raw potion ranges.
+        // Keep both items unchanged until the title-specific effects are known.
+        engine->_statusBar->setEvent(LSTR_S_CAN_NOT_BE_USED_THAT_WAY, pParty->pPickedItem.GetDisplayName());
+        pAudioPlayer->playUISound(SOUND_error);
+        rightClickItemActionPerformed = true;
         return;
     }
 

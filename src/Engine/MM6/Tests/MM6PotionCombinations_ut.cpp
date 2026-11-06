@@ -8,6 +8,7 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/Tables/MM6PotionCombinations.h"
+#include "Engine/MM6/MM6ConsumableRules.h"
 
 namespace {
 
@@ -38,6 +39,36 @@ std::string encodeMatrix(const Matrix &matrix) {
 }
 
 } // namespace
+
+UNIT_TEST(MM6ConsumableRules, ClassifiesRetainedBandsAndRejectsMismatchedTypes) {
+    for (int id = 160; id <= 196; ++id) {
+        ItemId item = static_cast<ItemId>(id);
+        ItemType expectedType = id <= 162 ? ITEM_TYPE_REAGENT : ITEM_TYPE_POTION;
+        mm6::ConsumableKind expectedKind = id <= 162 ? mm6::ConsumableKind::Herb
+            : id == 163 ? mm6::ConsumableKind::EmptyBottle
+            : id <= 188 ? mm6::ConsumableKind::FilledBottle
+            : mm6::ConsumableKind::UnsupportedBottle;
+        EXPECT_EQ(mm6::classifyConsumable(item, expectedType), expectedKind);
+        EXPECT_EQ(mm6::classifyConsumable(item, ITEM_TYPE_MISC), mm6::ConsumableKind::InvalidTemplate);
+        EXPECT_TRUE(mm6::shouldBlockDirectUse(item, expectedType));
+        EXPECT_TRUE(mm6::shouldBlockItemOnItemUse(item, expectedType));
+    }
+    EXPECT_EQ(mm6::classifyConsumable(static_cast<ItemId>(197), ITEM_TYPE_GOLD), mm6::ConsumableKind::Other);
+    EXPECT_EQ(mm6::classifyConsumable(static_cast<ItemId>(159), ITEM_TYPE_WAND), mm6::ConsumableKind::Other);
+    EXPECT_EQ(mm6::classifyConsumable(static_cast<ItemId>(200), ITEM_TYPE_POTION),
+              mm6::ConsumableKind::InvalidTemplate);
+}
+
+UNIT_TEST(MM6ConsumableRules, BlocksInheritedPotionIdOverlapWithoutBlockingOtherItems) {
+    for (int id = static_cast<int>(ITEM_FIRST_REAGENT); id <= static_cast<int>(ITEM_LAST_POTION); ++id) {
+        ItemId item = static_cast<ItemId>(id);
+        EXPECT_TRUE(mm6::shouldBlockItemOnItemUse(item, ITEM_TYPE_SPELL_SCROLL));
+        EXPECT_FALSE(mm6::shouldBlockDirectUse(item, ITEM_TYPE_SPELL_SCROLL));
+    }
+    EXPECT_FALSE(mm6::shouldBlockItemOnItemUse(static_cast<ItemId>(159), ITEM_TYPE_WAND));
+    EXPECT_FALSE(mm6::shouldBlockItemOnItemUse(static_cast<ItemId>(197), ITEM_TYPE_GOLD));
+    EXPECT_FALSE(mm6::shouldBlockItemOnItemUse(static_cast<ItemId>(272), ITEM_TYPE_SPELL_SCROLL));
+}
 
 UNIT_TEST(MM6PotionCombinations, ParsesAndLooksUpEverySyntheticCell) {
     mm6::PotionCombinations unloaded;

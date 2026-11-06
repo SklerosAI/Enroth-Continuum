@@ -12,9 +12,10 @@ bool isConditionVariable(int rawId) {
 }
 
 Condition checkedCondition(EvtOpcode opcode, int rawId, int value) {
-    // Values are the exact operand forms in the F3-matched shipped EVT set.
-    // The condition operations use the ID as their state key; the numeric
-    // operand is not a duration or severity in the current runtime model.
+    // Values are a subset of operand forms in the F3-matched shipped EVT set.
+    // Only Cursed, Fear and Drunk can be applied through the current runtime
+    // without MM7 protection/item blocking. Other status writes remain
+    // guarded until their MM6 blocking and health effects are established.
     bool supported = false;
     switch (opcode) {
         case EVENT_Compare:
@@ -24,19 +25,14 @@ Condition checkedCondition(EvtOpcode opcode, int rawId, int value) {
         case EVENT_Add:
             supported = (rawId == 87 && value == 1) ||
                         (rawId == 90 && (value == 1 || value == 2 || value == 10)) ||
-                        (rawId == 91 && value == 5) ||
-                        ((rawId == 95 || rawId == 97) && value == 3) ||
-                        (rawId == 98 && value == 2);
+                        (rawId == 91 && value == 5);
             break;
         case EVENT_Subtract:
             supported = rawId == 90 && value == 10;
             break;
         case EVENT_Set:
-            supported = ((rawId == 87 || rawId == 88 || rawId == 92 || rawId == 94 ||
-                          rawId == 96 || rawId == 97 || rawId == 98 || rawId == 101 ||
-                          rawId == 102 || rawId == 103 || rawId == 104) && value == 0) ||
-                        (rawId == 91 && (value == 0 || value == 1)) ||
-                        (rawId == 93 && value == 1);
+            supported = ((rawId == 87 || rawId == 104) && value == 0) ||
+                        (rawId == 91 && (value == 0 || value == 1));
             break;
         default:
             break;

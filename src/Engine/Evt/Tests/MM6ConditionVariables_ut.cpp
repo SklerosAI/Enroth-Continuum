@@ -12,8 +12,8 @@ UNIT_TEST(MM6ConditionVariables, ShippedConditionIdsMapAroundZombieGap) {
     EXPECT_FALSE(mm6::isConditionVariable(105));
 
     EXPECT_EQ(mm6::checkedCondition(EVENT_Set, 87, 0), CONDITION_CURSED);
-    EXPECT_EQ(mm6::checkedCondition(EVENT_Add, 95, 3), CONDITION_POISON_MEDIUM);
-    EXPECT_EQ(mm6::checkedCondition(EVENT_Set, 103, 0), CONDITION_ERADICATED);
+    EXPECT_EQ(mm6::checkedCondition(EVENT_Add, 90, 10), CONDITION_FEAR);
+    EXPECT_EQ(mm6::checkedCondition(EVENT_Subtract, 90, 10), CONDITION_FEAR);
     EXPECT_EQ(mm6::checkedCondition(EVENT_Set, 104, 0), CONDITION_GOOD);
     EXPECT_NE(mm6::checkedCondition(EVENT_Set, 104, 0), CONDITION_ZOMBIE);
 }
@@ -34,6 +34,8 @@ UNIT_TEST(MM6ConditionVariables, UnprovedOperandsAndOperationsFailClosed) {
     EXPECT_THROW(mm6::checkedCondition(EVENT_Set, 86, 0), std::runtime_error);
     EXPECT_THROW(mm6::checkedCondition(EVENT_Set, 105, 0), std::runtime_error);
     EXPECT_THROW(mm6::checkedCondition(EVENT_Add, 104, 0), std::runtime_error);
+    EXPECT_THROW(mm6::checkedCondition(EVENT_Add, 95, 3), std::runtime_error);
+    EXPECT_THROW(mm6::checkedCondition(EVENT_Set, 103, 0), std::runtime_error);
     EXPECT_THROW(mm6::checkedCondition(EVENT_Subtract, 101, 0), std::runtime_error);
     EXPECT_THROW(mm6::checkedCondition(EVENT_Set, 95, 3), std::runtime_error);
     EXPECT_THROW(mm6::checkedCondition(EVENT_Set, 87, 1), std::runtime_error);

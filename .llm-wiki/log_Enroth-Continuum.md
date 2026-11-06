@@ -263,3 +263,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Updated the F4 handoff after integrating the outdoor delta runtime projection and bounded party/character core save codec into the main MM6 build.
 - Ran 25 focused native C++ tests, including 68 active retained EVTs, 52 indoor map pairs and 15 outdoor deltas from ignored local fixtures. Live save/load and graphical MM6 play remain unverified.
+
+## [2026-11-06] ingest | MM6 private transport manifest
+- by: T-Burton-ND via codex
+- Added a checked exporter for the corrected F3 static transport data and linked its public handoff. The mode-0600 private profile manifest contains 36 route descriptors and 21 three-slot houses without placing route constants in Git.
+- Classified 34 regular cells, one weekday-token ambiguity, two opaque specials and 26 blanks. The MM6 transport UI, fare/quest policy, autosave and visible departure remain open.

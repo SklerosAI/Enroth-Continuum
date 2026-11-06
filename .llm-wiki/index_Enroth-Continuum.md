@@ -79,6 +79,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Potion Matrix](MM6-F4-Potion-Matrix.md) — F3-matched 29×29 `useitems.txt` lookup with opaque marker effects
 - [MM6 F4 Portrait Seam](MM6-F4-Portrait-Seam.md) — Offline MM6 face/frame implementation, verification, and remaining voice/visual work
 - [MM6 F4 Creation Rules](MM6-F4-Creation-Rules.md) — Private F3-array manifest, six-class creation path, mana dispatch, verified health floor and remaining formula/UI checks
+- [MM6 F4 Creation HP/SP Init Gate](MM6-F4-Creation-HP-SP-Init-Gate.md) — Original Quick Start refill order, MM6-only current-creation timing correction and remaining mana formula proof
 - [MM6 F4 Quick Start](MM6-F4-Quick-Start.md) — Static opening route, starter skill paths, face-derived animation sound and bounded first-map trigger audit; random item, full map-entry and save gates remain
 - [MM6 F4 Indoor Runtime](MM6-F4-Indoor-Runtime.md) — Bounded BLV/DLV projection and changed-state encoding with retained opaque wire
 - [MM6 F4 Map Save Fields](MM6-F4-Map-Save-Fields.md) — Bounded `.ec6` map-delta section, private F3 source reader and ground/chest item-marker validation

@@ -35,6 +35,11 @@ add_library(engine_mm6_outdoor_wire STATIC MM6OutdoorWire.cpp MM6OutdoorWire.h)
 target_check_style(engine_mm6_outdoor_wire)
 
 if(OE_BUILD_TESTS)
+    add_library(test_engine_mm6_creation_vitals OBJECT Tests/MM6CreationVitals_ut.cpp)
+    target_link_libraries(test_engine_mm6_creation_vitals PUBLIC testing_unit)
+    target_check_style(test_engine_mm6_creation_vitals)
+    target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_creation_vitals)
+
     add_library(test_engine_mm6_voice_sound OBJECT Tests/MM6VoiceSound_ut.cpp)
     target_link_libraries(test_engine_mm6_voice_sound PUBLIC testing_unit)
     target_check_style(test_engine_mm6_voice_sound)

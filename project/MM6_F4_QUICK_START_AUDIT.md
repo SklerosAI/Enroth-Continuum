@@ -18,7 +18,7 @@ The finalizer then walks learned skills to create equipment, inventory and first
 4. Implement a distinct, MM6-only Quick Start action from the original opening choice with the fully verified fixture; preserve editable Create Party and MM7 behavior.
 5. Verify initial state, inventory, character sheets, and `.ec6` save/reload offline before permitting an MM6 game launch; inspect the graphical choice and first party in F5.
 
-The existing MM6 default party remains provisional. This audit does not authorize replacing it with partial Quick Start data or enabling the button. The [creation foundation](MM6_F4_CREATION_RULES_FOUNDATION.md), [creation F2 audit](MM6_CREATION_F2.md), [F3 executable follow-up](MM6_F3_EXECUTABLE_FOLLOWUP.md), and [F4 build graph](MM6_F4_BUILD_GRAPH.md) provide adjacent contracts.
+The existing MM6 default party remains provisional. This audit does not authorize replacing it with partial Quick Start data or enabling the button. The later [HP/SP initialization audit](MM6_F4_CREATION_HP_SP_INIT_GATE.md) checks the finalizer's vital assignment order and the current creation path. The [creation foundation](MM6_F4_CREATION_RULES_FOUNDATION.md), [creation F2 audit](MM6_CREATION_F2.md), [F3 executable follow-up](MM6_F3_EXECUTABLE_FOLLOWUP.md), and [F4 build graph](MM6_F4_BUILD_GRAPH.md) provide adjacent contracts.
 
 ## Starter item and voice follow-up
 

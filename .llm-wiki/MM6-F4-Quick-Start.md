@@ -17,6 +17,8 @@ The [pinned MMExtension player schema](https://github.com/GrayFace/MMExtension/b
 
 The post-finalizer callback writes party header and archive state, then calls a snapshot writer; the actual first outdoor map is loaded in the following game-loop path. The snapshot writer has no inspected direct writes to the four character records. A retained first-map script check verified 411 frames and 11 reload triggers. Under the inherited step-after-trigger rule, ten suffixes can update sprites and one can display a movie; none contains a character-field write opcode. The original executable's reload dispatch and full loader callback closure have not been proved, so **full post-entry character and inventory preservation is still unproved**.
 
+The [HP/SP initialization audit](MM6-F4-Creation-HP-SP-Init-Gate.md) shows the original finalizer fills current vitals after item grants and matches the present MM6 health formula terms at a structural level. Current editable creation now refills MM6 vitals after its item grants; its original Quick Start route remains disabled.
+
 Evidence level: **static source semantics, bounded first-map script check and detached numeric selector**. There was no MM6 process, rendered opening screen, audible cue, live item state, or save/reload validation. Do not activate Quick Start until the original dispatch, complete character/inventory state, input route and durable save transaction are proved.
 
 See also: [MM6 F4 Creation Rules](MM6-F4-Creation-Rules.md), [MM6 F3 Read-Only Preflight](MM6-F3-Read-Only-Preflight.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

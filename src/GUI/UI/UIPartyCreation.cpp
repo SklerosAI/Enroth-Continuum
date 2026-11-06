@@ -12,6 +12,7 @@
 #include "Engine/Graphics/Image.h"
 #include "Engine/Localization.h"
 #include "Engine/MM6/MM6CreationRules.h"
+#include "Engine/MM6/MM6CreationVitals.h"
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/Party.h"
 #include "Engine/Random/Random.h"
@@ -807,8 +808,8 @@ bool PartyCreationUI_LoopInternal() {
         pItemTable->generateItem(ITEM_TREASURE_LEVEL_2, RANDOM_ITEM_RING, &item);
         pParty->pCharacters[i].inventory.add(item);
 
-        pParty->pCharacters[i].health = pParty->pCharacters[i].GetMaxHealth();
-        pParty->pCharacters[i].mana = pParty->pCharacters[i].GetMaxMana();
+        mm6::refillCreationVitalsAtStage(engine->gameTitle(), mm6::CreationVitalStage::BeforeStartingItems,
+                                          &pParty->pCharacters[i]);
         for (Skill j : allSkills()) {
             if (!pParty->pCharacters[i].pActiveSkills[j]) continue;
 
@@ -909,6 +910,8 @@ bool PartyCreationUI_LoopInternal() {
             for (InventoryEntry entry : pParty->pCharacters[i].inventory.entries())
                 entry->SetIdentified();
         }
+        mm6::refillCreationVitalsAtStage(engine->gameTitle(), mm6::CreationVitalStage::AfterStartingItems,
+                                          &pParty->pCharacters[i]);
     }
 
     pAudioPlayer->stopSounds();

@@ -19,6 +19,11 @@ Original game assets remain local to each owner. The tracked
 [local-game-data/README.md](local-game-data/README.md) describes the deliberately
 ignored workspace location for MM6, MM7, and MM8 installations.
 
+Project decisions, verified campaign status, and source summaries are maintained in
+the [LLM wiki](.llm-wiki/Home_Enroth-Continuum.md), based on the University of
+Notre Dame CRC [llm-wiki-memory-template](https://github.com/crcresearch/llm-wiki-memory-template).
+The wiki contains no game assets or private saves.
+
 ---
 
 # OpenEnroth

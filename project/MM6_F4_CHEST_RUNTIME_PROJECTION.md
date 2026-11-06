@@ -1,0 +1,24 @@
+# MM6 chest runtime projection and changed-grid wire — bounded F4 slice
+
+Status: **detached native-tested projection, save writers extended; live MM6 chest-load guard remains closed** (2026-11-06). This slice does not launch a game, open a chest or enable MM6 map generation.
+
+## Resolved record to `ChestInventory`
+
+`mm6::stageChestRuntimeProjection` accepts one resolved 4,204-byte MM6 chest record and a chest index. It rejects foreign titles, unresolved negative item markers, invalid types/IDs, absent item table, invalid item dimensions and unsupported grid references before returning a staged `Chest`. It requires the initialized engine chest table's 9×9 dimensions. It reconstructs `Item` and `ChestInventory` on a local value, snapshots the result, and requires an exact round trip of the active 81 grid cells, header fields and first 24 bytes of every item. The other 59 wire grid cells must be zero for this **live inventory projection**. A failed stage leaves the caller's record and runtime owners untouched.
+
+`mm6::stageChestRuntimeRecord` snapshots that staged `Chest` back onto its retained wire sidecar. It writes flags, the first 24 item bytes and all 140 signed grid cells, while preserving item bytes 24–27 from the MM6 source. Those tail bytes have different or unproved semantics in the inherited MM7 `Item` snapshot. The returned record can be projected again after a 9×9 placement change; the seeded native test moves a stashed item into the grid, sets the placed flag and proves a byte-for-byte reopen with its opaque item byte intact. This opt-in helper is not called by the global map loader.
+
+## Indoor and outdoor delta writers
+
+The MM6 indoor `.dlv` and outdoor `.ddm` snapshot encoders now allow changed chest grids after bounded validation: active grid references must point to present items in the current 9×9 restorable slot range; negative footprint cells must point backward to a positive anchor; any nonzero grid requires the placed flag. The wire writer copies **all 140 signed cells** and all **28 item bytes** from a directly edited `Chest_MM7` delta. It still rejects unsupported chest type or MM7-only high item fields. Runtime `Chest` capture copies the supported first 24 item bytes and full grid while retaining bytes 24–27 from the decoded MM6 sidecar. Thus direct DTO edits can round-trip opaque 140-cell wire data, while the live `ChestInventory` stage accepts only a zero tail beyond cell 80.
+
+Synthetic indoor and outdoor tests round-trip changed cell 0 and cell 139 and reject an out-of-range active reference. The focused arm64 native link also exercises resolved chest inventory projection, first-open grid/flag persistence, malformed/MM7 rejection and the preceding generation transaction. The private retained-file tests were not run in this slice; no original GOG installation or graphical game was opened.
+
+## Remaining live gates
+
+- The map load still invokes `mm6::generateChestItemsForTitle`, which intentionally throws before MM6 chest/RNG/artifact mutation. No automatic join to the detached generator, first-open placement or this runtime stage is present.
+- `reconstructMM6IndoorDelta` and the outdoor load path still use the inherited snapshot reconstructor on baseline records. A title-specific atomic map-level handoff is needed before they can consume generated resolved records, commit RNG/artifact flags and preserve rollback behavior.
+- The current `Chest::open`, `PlaceItems`, trap handling, pickup and GUI flow remain inherited. Their first-open timing, item sizes/icons, gold, inventory changes and save–quit–relaunch–load behavior need an MM6-specific acceptance pass. The placed grid is wire-backed, but `.ec6` SaveLoad remains separately guarded.
+- MM7 must keep its existing chest route, and MM8 remains reserved. The new helpers reject non-MM6 titles; no installed game runtime was changed.
+
+See the [record transaction](MM6_F4_CHEST_RECORD_TRANSACTION.md), [grid wire](MM6_F4_CHEST_GRID_WIRE.md), [interaction gate](MM6_F4_CHEST_INTERACTION_GATE.md) and [save graph](MM6_F4_BUILD_GRAPH.md).

@@ -101,8 +101,10 @@ UNIT_TEST(MM6OutdoorDeltaSnapshot, EncodesBoundedChangedStateWithoutLosingOpaque
     delta.actors[0].pos.x = 555;
     delta.spriteObjects[0].position.y = 678;
     delta.spriteObjects[0].containing_item.itemId = 22;
-    delta.chests[0].flags = 0x1234;
+    delta.chests[0].flags = 0x1236;
     delta.chests[0].items[0].itemId = 23;
+    delta.chests[0].inventoryMatrix[0] = 1;
+    delta.chests[0].inventoryMatrix[139] = -81;
     delta.wire.part(mm6::OutdoorDeltaPart::PersistentBytes)[70] = 0x91;
 
     Blob encoded = encodeMM6OutdoorRuntimeDelta(delta);
@@ -118,8 +120,10 @@ UNIT_TEST(MM6OutdoorDeltaSnapshot, EncodesBoundedChangedStateWithoutLosingOpaque
     EXPECT_EQ(changed.spriteObjects[0].containing_item.itemId, 22);
     EXPECT_EQ(changed.spriteObjects[0].containing_item.lichJarCharacterIndex, 0xB4);
     EXPECT_EQ(static_cast<unsigned char>(changed.spriteObjects[0].containing_item._pad), 0xB5);
-    EXPECT_EQ(changed.chests[0].flags, 0x1234);
+    EXPECT_EQ(changed.chests[0].flags, 0x1236);
     EXPECT_EQ(changed.chests[0].items[0].itemId, 23);
+    EXPECT_EQ(changed.chests[0].inventoryMatrix[0], 1);
+    EXPECT_EQ(changed.chests[0].inventoryMatrix[139], -81);
     EXPECT_EQ(changed.chests[0].items[0].lichJarCharacterIndex, 0xC4);
     EXPECT_EQ(static_cast<unsigned char>(changed.chests[0].items[0]._pad), 0xC5);
     EXPECT_EQ(changed.wire.part(mm6::OutdoorDeltaPart::PersistentBytes)[0], 0xA5);
@@ -135,7 +139,7 @@ UNIT_TEST(MM6OutdoorDeltaSnapshot, RejectsUnsupportedChangedState) {
     delta.actors[0].hp = -1;
     EXPECT_THROW(encodeMM6OutdoorRuntimeDelta(delta), std::runtime_error);
     delta = decodeMM6OutdoorDelta(fixture());
-    delta.chests[0].inventoryMatrix[0] = 1;
+    delta.chests[0].inventoryMatrix[0] = 82;
     EXPECT_THROW(encodeMM6OutdoorRuntimeDelta(delta), std::runtime_error);
     delta = decodeMM6OutdoorDelta(fixture());
     delta.actors.pop_back();

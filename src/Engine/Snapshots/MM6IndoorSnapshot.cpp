@@ -14,6 +14,7 @@
 #include "CompositeSnapshots.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/MM6/MM6Archive.h"
+#include "Engine/MM6/MM6ChestRuntimeProjection.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/Decoration.h"
@@ -617,16 +618,20 @@ Blob encodeMM6IndoorRuntimeDelta(const MM6IndoorRuntimeDelta &delta, const MM6In
                        wire.section(MM6IndoorSectionKind::Chests).bytes.size());
     for (size_t i = 0; i < delta.chests.size(); ++i) {
         const Chest_MM7 &current = delta.chests[i];
+        if (!mm6::validChestRuntimeGrid(GameTitle::MM6, current))
+            throw Exception("MM6 indoor chest {} has invalid active grid", i);
         Chest_MM7 permitted = original.chests[i];
         permitted.flags = current.flags;
+        permitted.inventoryMatrix = current.inventoryMatrix;
         for (size_t j = 0; j < current.items.size(); ++j)
             std::memcpy(&permitted.items[j], &current.items[j], 28);
         if (std::memcmp(&permitted, &current, sizeof(current)) != 0)
-            throw Exception("MM6 indoor chest {} has unsupported grid or item fields", i);
+            throw Exception("MM6 indoor chest {} has unsupported type or item fields", i);
         char *record = chests.data() + 4 + i * 4204;
         std::memcpy(record + 2, &current.flags, sizeof(current.flags));
         for (size_t j = 0; j < current.items.size(); ++j)
             std::memcpy(record + 4 + j * 28, &current.items[j], 28);
+        std::memcpy(record + 3924, current.inventoryMatrix.data(), 280);
     }
     replaceRecords(&wire, MM6IndoorSectionKind::Chests, chests);
 
@@ -695,11 +700,12 @@ Blob encodeMM6IndoorChangedState(const IndoorLocation &location) {
     for (size_t i = 0; i < current.chests.size(); ++i) {
         Chest_MM7 live{};
         snapshot(vChests[i], &live);
-        if (live.inventoryMatrix != current.chests[i].inventoryMatrix)
-            throw Exception("MM6 indoor chest {} grid changed; its wire layout is unresolved", i);
+        if (!mm6::validChestRuntimeGrid(GameTitle::MM6, live))
+            throw Exception("MM6 indoor chest {} has invalid active grid", i);
+        current.chests[i].inventoryMatrix = live.inventoryMatrix;
         current.chests[i].flags = live.flags;
         for (size_t j = 0; j < live.items.size(); ++j)
-            std::memcpy(&current.chests[i].items[j], &live.items[j], 28);
+            std::memcpy(&current.chests[i].items[j], &live.items[j], 24);
     }
     for (size_t i = 0; i < current.doors.size(); ++i) {
         BLVDoor_MM7 live{};

@@ -33,6 +33,15 @@ Blob minimalDelta() {
     return Blob::fromString(std::move(data));
 }
 
+Blob minimalDeltaWithChest() {
+    std::string data(8 + 875 + 3 * 4 + 4204 + 200 * 80 + 200 + 56, '\0');
+    putU32(&data, 8 + 875 + 8, 1);
+    const size_t chest = 8 + 875 + 3 * 4;
+    putU32(&data, chest + 4, 200);
+    data[chest + 4 + 26] = static_cast<char>(0xA5);
+    return Blob::fromString(std::move(data));
+}
+
 Blob readFile(const std::filesystem::path &path) {
     std::ifstream stream(path, std::ios::binary);
     if (!stream)
@@ -102,6 +111,23 @@ UNIT_TEST(MM6IndoorSnapshot, EncodesKnownFieldsAndRejectsUnsupportedChanges) {
     EXPECT_THROW(encodeMM6IndoorRuntimeDelta(delta, base), Exception);
     delta.doors[0].moveLength = 0;
     delta.doors.pop_back();
+    EXPECT_THROW(encodeMM6IndoorRuntimeDelta(delta, base), Exception);
+}
+
+UNIT_TEST(MM6IndoorSnapshot, ChangedChestGridRoundTripsAll140Cells) {
+    MM6IndoorSnapshot base = deserializeMM6IndoorBase(minimalBase());
+    MM6IndoorRuntimeDelta delta = decodeMM6IndoorRuntimeDelta(minimalDeltaWithChest(), base);
+    ASSERT_EQ(delta.chests.size(), 1);
+    delta.chests[0].flags |= 2;
+    delta.chests[0].inventoryMatrix[0] = 1;
+    delta.chests[0].inventoryMatrix[139] = -80;
+    const auto reopened = decodeMM6IndoorRuntimeDelta(encodeMM6IndoorRuntimeDelta(delta, base), base);
+    EXPECT_EQ(reopened.chests[0].inventoryMatrix[0], 1);
+    EXPECT_EQ(reopened.chests[0].inventoryMatrix[139], -80);
+    EXPECT_EQ(reopened.chests[0].items[0].itemId, 200);
+    EXPECT_EQ(reopened.chests[0].items[0].lichJarCharacterIndex, 0xA5);
+
+    delta.chests[0].inventoryMatrix[0] = 82;
     EXPECT_THROW(encodeMM6IndoorRuntimeDelta(delta, base), Exception);
 }
 
@@ -197,7 +223,7 @@ UNIT_TEST(MM6IndoorSnapshot, RetainedFiftyTwoPairs) {
             EXPECT_EQ(reopened.chests[0].items[0].flags, edited.chests[0].items[0].flags);
             expectEqualBytes(delta.section(MM6IndoorSectionKind::PersistentBytes).bytes,
                              reopened.wire.section(MM6IndoorSectionKind::PersistentBytes).bytes);
-            edited.chests[0].inventoryMatrix[0] ^= 1;
+            edited.chests[0].inventoryMatrix[0] = 82;
             EXPECT_THROW(encodeMM6IndoorRuntimeDelta(edited, base), Exception);
             testedChestWrite = true;
         }

@@ -14,6 +14,7 @@
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/SpriteObject.h"
+#include "Engine/MM6/MM6ChestRuntimeProjection.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -121,8 +122,8 @@ Chest_MM7 chestForRuntime(std::span<const std::uint8_t> bytes) {
     result.flags = read16(bytes, 2);
     for (size_t i = 0; i < result.items.size(); ++i)
         std::memcpy(&result.items[i], bytes.data() + 4 + i * 28, 28);
-    // The shipped grid is zero. Copy all 280 bytes, but keep the original in
-    // the wire sidecar because MM6's 81-vs-140-cell interpretation is open.
+    // The MM6 wire carries all 140 signed cells; the 9x9 active area is
+    // validated before changed-state encoding.
     std::memcpy(result.inventoryMatrix.data(), bytes.data() + 3924, 280);
     return result;
 }
@@ -239,16 +240,20 @@ Blob encodeMM6OutdoorRuntimeDelta(const MM6OutdoorDeltaSnapshot &delta) {
     auto chests = wire.part(mm6::OutdoorDeltaPart::Chests).subspan(4);
     for (size_t i = 0; i < delta.chests.size(); ++i) {
         const Chest_MM7 &current = delta.chests[i];
+        if (!mm6::validChestRuntimeGrid(GameTitle::MM6, current))
+            throw std::runtime_error("MM6 outdoor chest has invalid active grid");
         Chest_MM7 permitted = original.chests[i];
         permitted.flags = current.flags;
+        permitted.inventoryMatrix = current.inventoryMatrix;
         for (size_t j = 0; j < current.items.size(); ++j)
-            std::memcpy(&permitted.items[j], &current.items[j], 26);
+            std::memcpy(&permitted.items[j], &current.items[j], 28);
         if (std::memcmp(&permitted, &current, sizeof(current)) != 0)
-            throw std::runtime_error("MM6 outdoor chest has unsupported grid or type change");
+            throw std::runtime_error("MM6 outdoor chest has unsupported type or item fields");
         auto record = chests.subspan(i * 4204, 4204);
         write16(record, 2, current.flags);
         for (size_t j = 0; j < current.items.size(); ++j)
-            std::memcpy(record.data() + 4 + j * 28, &current.items[j], 26);
+            std::memcpy(record.data() + 4 + j * 28, &current.items[j], 28);
+        std::memcpy(record.data() + 3924, current.inventoryMatrix.data(), 280);
     }
 
     std::vector<std::uint8_t> encoded = mm6::encodeOutdoorDelta(wire);
@@ -286,11 +291,12 @@ Blob encodeMM6OutdoorChangedState(const OutdoorLocation &location) {
     for (size_t i = 0; i < current.chests.size(); ++i) {
         Chest_MM7 live{};
         snapshot(vChests[i], &live);
-        if (live.inventoryMatrix != current.chests[i].inventoryMatrix)
-            throw std::runtime_error("MM6 outdoor chest grid changed; its wire layout is unresolved");
+        if (!mm6::validChestRuntimeGrid(GameTitle::MM6, live))
+            throw std::runtime_error("MM6 outdoor live chest has invalid active grid");
+        current.chests[i].inventoryMatrix = live.inventoryMatrix;
         current.chests[i].flags = live.flags;
         for (size_t j = 0; j < live.items.size(); ++j)
-            std::memcpy(&current.chests[i].items[j], &live.items[j], 26);
+            std::memcpy(&current.chests[i].items[j], &live.items[j], 24);
     }
     return encodeMM6OutdoorRuntimeDelta(current);
 }

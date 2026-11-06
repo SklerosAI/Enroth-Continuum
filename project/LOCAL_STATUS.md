@@ -233,7 +233,7 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   prevents MM6-specific event IDs from executing as colliding MM7 meanings.
 - The integrated MM6 app, MM7 app and unit targets built with the sixteen-section
   partial assembly, spell-item prerequisite guard, MM6-only effect-dispatch guard,
-  and exact 67-name MAPS staging validator. The offline suite passed 198 tests from 59 suites
+  and exact 67-name MAPS staging validator. The offline suite passed 200 tests from 59 suites
   across EVT framing and selected guarded effects, wire codecs and indoor/outdoor projection,
   variable guard, `.ec6` fields and partial assembly, private transport/spell
   rules, descriptor 173 and LOD order; the
@@ -268,8 +268,8 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   MM6 stock text, route notes, values and hours. A pure selector joins all 21
   private transport houses to retained rooms and exposes nongated routes. Exact extensionless
   movie lookup covers all 127 F3-matched VID names offline. Failed house
-  loads and loop restarts preserve playback state; decoded MM6 frames and
-  playback remain unobserved. The award loader retains all 100 numbered rows;
+  loads and loop restarts preserve playback state; one staged room frame now
+  decodes offline, while on-screen playback remains unobserved. The award loader retains all 100 numbered rows;
   seven formatted texts stay guarded pending title-specific counters, and
   priority/order remains provisional. The award event guard bounds all
   193 active operands to the 100-row MM6 table. A separate audit covers all
@@ -282,8 +282,8 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   A bounded MM6 branch now handles Add/Subtract using the accepted original-PE dispatch.
   Of 290 Add sites, 288 have eligible static operands/selector, with cursor capacity
   checked at runtime; the artifact-band and party-selected sites remain guarded.
-  All 156 Subtract operands are statically eligible; ambiguous duplicate-grid
-  matches and an unproved full-inventory ground drop stay guarded.
+  All 156 Subtract operands are statically eligible; an unproved full-inventory ground drop stays guarded; duplicate backpack
+  matches now follow first-grid-cell priority.
   Seven spell damage source tags are retained for all 99 MM6 IDs; live effects
   remain gated. MM6 Escape clears a pending targeted cast queue entry and target selection rejects invalid party-slot indices;
   live casting is still gated.
@@ -312,8 +312,8 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   turn/rest recovery remain unresolved. The MAPS exact-set and retained base/delta checks pass offline. A detached
   world-save adapter now captures actual NPC/group state and all 67 map buffers,
   invoking the bounded active-map writer before overlaying the current delta;
-  outdoor map identity and the
-  complete live save transaction remain open.
+  the outdoor ID/table/HEAD/manifest join is checked, while live outdoor
+  transition identity and the complete save transaction remain open.
 - The private F3-derived transport manifest is read by a title-specific
   three-option MM6 menu. It hides unproved quest, weekday and special routes;
   selection makes no payment or departure while the `.ec6` save transaction
@@ -322,7 +322,7 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
 ## MM6 F4 integrated checkpoint — 2026-11-06
 
 The arm64 MM6, OpenEnroth and unit targets linked. The one-command private-backed
-offline gate passed **198/198 tests from 59 suites**, and the separate general
+offline gate passed **200/200 tests from 59 suites**, and the separate general
 suite passed **438/438**. This checkpoint adds the display-only MM6 house window
 with MM6 panel/exit art and title-specific entry/exit routing, bounded item
 Add/Subtract writes including inventory-success occupied-cursor relocation, a
@@ -339,3 +339,12 @@ left untouched. No MM6 process or graphics/audio play was launched. Full MM6
 spell effects, house services, artifact/ground-drop behavior, mandatory save
 state and all-owner load commit remain F4 gates. The MM7 app/profile and
 reserved MM8 checkout were not changed.
+
+The later offline additions decode one bounded first frame from a private
+F3-matched MM6 room movie through the existing Smacker converter and reject
+malformed/truncated samples. Raw ID-17 Subtract now removes the first matching
+backpack grid cell, independent of item-record insertion order. Outdoor save
+capture checks current map ID, loaded table `.odm`, `HEAD` and the unique
+private-manifest `.ddm` before encoding. These add two tests to the integrated
+MM6/LOD gate. Actual house playback, outdoor transitions and save/reload remain
+unobserved; the launch gate stays closed.

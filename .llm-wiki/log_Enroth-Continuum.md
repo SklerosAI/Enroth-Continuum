@@ -532,3 +532,9 @@ Chronological record of wiki activity.
 - Audited shop stock/refresh and map ground items. Ground items already live in counted DLV/DDM records within `MAPS`, so the map pass now requires an MM6 item-template verifier for every nonempty projected item before staging. Invalid IDs and absent templates reject without changing the destination.
 - Kept `SHOP` unimplemented: current party stock and timers use inherited MM7 house-index arrays ending at 52, while the retained MM6 house table has 557 rows and guild stock generation still rejects MM6. A complete MM6 house mapping and refresh contract are needed first.
 - The arm64 unit target built and four focused map tests passed with retained F3-matched pairs, synthetic nonzero and malformed item IDs, callback rejection and no-mutation checks. Direct C++ style and diff checks passed. No original installation was reread or partial MM6 game launched.
+
+## [2026-11-06] ingest | MM6 potion combination lookup
+- by: T-Burton-ND via codex
+- Verified the F3-matched `useitems.txt` source is an icons LOD pseudo-image-zlib member with a matching retained decoded hash. Added a bounded MM6-only 29×29 parser/lookup; numeric cells are candidate product IDs and five marker codes remain opaque.
+- The parser rejects missing or duplicate axes, malformed cells, asymmetric outcomes, out-of-axis results and unloaded/out-of-range lookups. `MM6ItemTable.cpp` reads the icons LOD member; MM7's matrix and item-use path are unchanged.
+- The arm64 unit target built and three focused potion tests passed, including all 841 retained cells (50 numeric, 791 marker). The ignored private-wiki packet records exact markers and source fingerprints. UI mixing, marker effects, consumption, potion power, bottle return and F5 save/reload remain open; no original installation was reread or MM6 game launched.

@@ -9,6 +9,7 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Graphics/Image.h"
 #include "Engine/Localization.h"
+#include "Engine/MM6/MM6Portraits.h"
 #include "Engine/Party.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Tables/ItemTable.h"
@@ -102,10 +103,11 @@ void CreateParty_EventLoop() {
         }
         case UIMSG_PlayerCreation_VoicePrev:
         {
+            const int voiceCount = engine->gameTitle() == GameTitle::MM6 ? mm6::kPortraitFaceCount : 20;
             Sex sex = pParty->pCharacters[param].GetSexByVoice();
             do {
                 if (pParty->pCharacters[param].uVoiceID == 0) {
-                    pParty->pCharacters[param].uVoiceID = 19;
+                    pParty->pCharacters[param].uVoiceID = voiceCount - 1;
                 } else {
                     --pParty->pCharacters[param].uVoiceID;
                 }
@@ -120,10 +122,11 @@ void CreateParty_EventLoop() {
         }
         case UIMSG_PlayerCreation_VoiceNext:
         {
+            const int voiceCount = engine->gameTitle() == GameTitle::MM6 ? mm6::kPortraitFaceCount : 20;
             Sex sex = pParty->pCharacters[param].GetSexByVoice();
             do {
                 pParty->pCharacters[param].uVoiceID =
-                    (pParty->pCharacters[param].uVoiceID + 1) % 20;
+                    (pParty->pCharacters[param].uVoiceID + 1) % voiceCount;
             } while (pParty->pCharacters[param].GetSexByVoice() != sex);
             auto pButton = pCreationUI_BtnPressRight2[param];
             new OnButtonClick(pButton->rect.topLeft(), {0, 0}, pButton, std::string(), false);
@@ -135,7 +138,8 @@ void CreateParty_EventLoop() {
         case UIMSG_PlayerCreation_FacePrev:
             // pPlayer = &pParty->pCharacters[pParam];
             if (!pParty->pCharacters[param].uCurrentFace) {
-                pParty->pCharacters[param].uCurrentFace = 19;
+                pParty->pCharacters[param].uCurrentFace =
+                    (engine->gameTitle() == GameTitle::MM6 ? mm6::kPortraitFaceCount : 20) - 1;
             } else {
                 pParty->pCharacters[param].uCurrentFace -= 1;
             }
@@ -159,8 +163,8 @@ void CreateParty_EventLoop() {
         case UIMSG_PlayerCreation_FaceNext:
             // pPlayer = &pParty->pCharacters[pParam];
             int v20;
-            v20 =
-                (char)((int)pParty->pCharacters[param].uCurrentFace + 1) % 20;
+            v20 = (pParty->pCharacters[param].uCurrentFace + 1) %
+                (engine->gameTitle() == GameTitle::MM6 ? mm6::kPortraitFaceCount : 20);
             pParty->pCharacters[param].uCurrentFace = v20;
             pParty->pCharacters[param].uVoiceID = v20;
             pParty->pCharacters[param].SetInitialStats();
@@ -599,8 +603,11 @@ GUIWindow_PartyCreation::GUIWindow_PartyCreation() :
 
     ui_partycreation_character_frame = assets->getIcon("aframe1");
 
-    for (int uX = 0; uX < 22; ++uX) {
-        ui_partycreation_portraits[uX] = assets->getIcon(fmt::format("{}01", pPlayerPortraitsNames[uX]));
+    const bool isMM6 = engine->gameTitle() == GameTitle::MM6;
+    const int portraitCount = isMM6 ? mm6::kPortraitFaceCount : 22;
+    for (int uX = 0; uX < portraitCount; ++uX) {
+        const std::string stem = isMM6 ? *mm6::portraitStem(uX) : pPlayerPortraitsNames[uX];
+        ui_partycreation_portraits[uX] = assets->getIcon(fmt::format("{}01", stem));
     }
 
     ui_partycreation_minus = assets->getIcon("buttminu");

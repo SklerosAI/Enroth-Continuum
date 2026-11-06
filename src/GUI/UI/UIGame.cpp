@@ -27,6 +27,7 @@
 #include "Engine/Graphics/Image.h"
 #include "Engine/Localization.h"
 #include "Engine/MapEnumFunctions.h"
+#include "Engine/MM6/MM6Portraits.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
@@ -210,12 +211,26 @@ void GUIWindow_GameMenu::Update() {
 }
 
 //----- (00491CB5) --------------------------------------------------------
+static std::string playerPortraitStem(int face) {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        if (auto stem = mm6::portraitStem(face))
+            return *stem;
+        MM_WARNING("Invalid MM6 portrait face index: {}", face);
+        return *mm6::portraitStem(0);
+    }
+    return pPlayerPortraitsNames[face];
+}
+
 void GameUI_LoadPlayerPortraitsAndVoices() {
+    const unsigned frameCount = engine->gameTitle() == GameTitle::MM6 ? mm6::kPortraitFrameCount : 56;
     for (unsigned i = 0; i < 4; ++i) {
-        for (unsigned j = 0; j < 56; ++j) {
+        const std::string stem = playerPortraitStem(pParty->pCharacters[i].uCurrentFace);
+        for (unsigned j = 0; j < frameCount; ++j) {
             game_ui_player_faces[i][j] = assets->getIcon(
-                fmt::format("{}{:02}", pPlayerPortraitsNames[pParty->pCharacters[i].uCurrentFace], j + 1));
+                fmt::format("{}{:02}", stem, j + 1));
         }
+        for (unsigned j = frameCount; j < game_ui_player_faces[i].size(); ++j)
+            game_ui_player_faces[i][j] = game_ui_player_faces[i][0];
     }
 
     game_ui_player_face_eradicated =
@@ -236,12 +251,16 @@ void GameUI_LoadPlayerPortraitsAndVoices() {
 
 //----- (00491DE7) --------------------------------------------------------
 void GameUI_ReloadPlayerPortraits(int player_id, int face_id) {  // the transition from the zombies to the normal state
-    for (unsigned i = 0; i <= 55; ++i) {
+    const unsigned frameCount = engine->gameTitle() == GameTitle::MM6 ? mm6::kPortraitFrameCount : 56;
+    const std::string stem = playerPortraitStem(face_id);
+    for (unsigned i = 0; i < frameCount; ++i) {
         auto filename =
-            fmt::format("{}{:02}", pPlayerPortraitsNames[face_id], i + 1);
+            fmt::format("{}{:02}", stem, i + 1);
         game_ui_player_faces[player_id][i] =
             assets->getIcon(filename);
     }
+    for (unsigned i = frameCount; i < game_ui_player_faces[player_id].size(); ++i)
+        game_ui_player_faces[player_id][i] = game_ui_player_faces[player_id][0];
 }
 
 //----- (00414D24) --------------------------------------------------------
@@ -1215,6 +1234,10 @@ void GameUI_DrawPortraits() {
         else
             faceTextureIndex = pPortraitFrameTable->animationFrameIndex(pPortraitFrameTable->animationId(pPlayer->portrait),
                                                                         pPlayer->portraitTimePassed);
+        if (engine->gameTitle() == GameTitle::MM6 && !mm6::isValidPortraitFrame(faceTextureIndex)) {
+            MM_WARNING("Invalid MM6 portrait frame index: {}", faceTextureIndex);
+            faceTextureIndex = 1;
+        }
         if (true /* || pPlayer->uExpressionImageIndex != pFrame->uTextureID - 1*/) {
             pPlayer->portraitImageIndex = faceTextureIndex - 1;
             pPortrait = game_ui_player_faces[i][pPlayer->portraitImageIndex];  // pFace = (Texture_MM7*)game_ui_player_faces[i][pFrame->uTextureID];

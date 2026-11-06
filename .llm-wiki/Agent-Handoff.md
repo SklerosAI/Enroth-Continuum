@@ -14,6 +14,8 @@ This page is the starting brief for future Codex agents working in parallel on E
 2. Read [AGENTS.md](../AGENTS.md), [project/plan.md §18.1–18.2](../project/plan.md), [project/LOCAL_STATUS.md](../project/LOCAL_STATUS.md), [project/MM6_IMPLEMENTATION_CHECKLIST.md](../project/MM6_IMPLEMENTATION_CHECKLIST.md), [project/MM6_F2_GATE_REVIEW.md](../project/MM6_F2_GATE_REVIEW.md), and [project/MM7_AUDIT_CHECKLIST.md](../project/MM7_AUDIT_CHECKLIST.md).
 3. Read [Engine Architecture and Runtime Map](Engine-Architecture-and-Runtime-Map.md), [MM6 Source and Probe Index](MM6-Source-and-Probe-Index.md), [MM6 F3 Read-Only Preflight](MM6-F3-Read-Only-Preflight.md), [MM6 F2 Workstreams](MM6-F2-Workstreams.md), [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), and [Open Questions](Open-Questions.md) before taking an assignment. Future observation/control work also reads the [Agent Play Knowledge and Control Contract](Agent-Play-Knowledge-and-Control-Contract.md). The ignored local companion at `local-game-data/private-wiki/INDEX.md` holds exact owner-specific evidence; it is not Git backed up. Use this wiki's [schema](SCHEMA_Enroth-Continuum.md) for durable public findings. The tracked source and fresh checks outrank this page.
 
+The first MM6 F4 [portrait seam](MM6-F4-Portrait-Seam.md) is offline-verified in its own implementation worktree. Read its limits before treating face/voice UI as complete.
+
 ## Current phase and gates (2026-11-06)
 
 | Area | Evidence-backed state | Next gate |

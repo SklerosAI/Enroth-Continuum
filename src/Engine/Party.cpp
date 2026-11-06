@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <climits>
 #include <algorithm>
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -16,6 +17,7 @@
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Objects/NPC.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
+#include "Engine/MM6/MM6Portraits.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
 #include "Engine/Tables/ItemTable.h"
@@ -379,6 +381,20 @@ unsigned int Party::fame() {
         UINT_MAX);  // min wasn't present, but could be incorrect without it
 }
 
+static void setProvisionalMM6Portraits(std::array<Character, 4> &characters) {
+    // The original Quick Start fixture is still under investigation. These
+    // creation defaults only keep every face and voice in the verified MM6 range.
+    constexpr std::array<int, 4> faces = {0, 1, mm6::kMasculineFaceCount, mm6::kMasculineFaceCount + 1};
+    for (std::size_t i = 0; i < characters.size(); ++i) {
+        Character &character = characters[i];
+        character.uCurrentFace = faces[i];
+        character.uPrevFace = faces[i];
+        character.uVoiceID = faces[i];
+        character.uPrevVoiceID = faces[i];
+        character.uSex = character.GetSexByVoice();
+    }
+}
+
 void Party::createDefaultParty() {
     pHireling1Name[0] = 0;
     pHireling2Name[0] = 0;
@@ -454,6 +470,9 @@ void Party::createDefaultParty() {
     this->pCharacters[3].pActiveSkills[SKILL_FIRE] = CombinedSkillValue::novice();
     this->pCharacters[3].pActiveSkills[SKILL_STAFF] = CombinedSkillValue::novice();
 
+    if (engine->gameTitle() == GameTitle::MM6)
+        setProvisionalMM6Portraits(pCharacters);
+
     for (Character &pCharacter : pCharacters) {
         if (pCharacter.classType == CLASS_KNIGHT)
             pCharacter.sResMagicBase = 10;
@@ -522,6 +541,9 @@ void Party::Reset() {
     pCharacters[3].SetInitialStats();
     pCharacters[3].uSex = pCharacters[3].GetSexByVoice();
     pCharacters[3].name = localization->str(LSTR_NAME_ALEXIS);
+
+    if (engine->gameTitle() == GameTitle::MM6)
+        setProvisionalMM6Portraits(pCharacters);
 
     for (Character &player : this->pCharacters) {
         player.timeToRecovery = 0_ticks;

@@ -19,6 +19,7 @@
 #include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
+#include "Engine/MM6/MM6Portraits.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Tables/ObjectTable.h"
@@ -557,17 +558,21 @@ void Character::SetCondition(Condition condition, int blockable) {
         case CONDITION_ZOMBIE:
             assert(classType != CLASS_LICH);
 
-            uPrevFace = uCurrentFace;
-            uPrevVoiceID = uVoiceID;
+            if (engine->gameTitle() != GameTitle::MM6) {
+                uPrevFace = uCurrentFace;
+                uPrevVoiceID = uVoiceID;
 
-            if (IsMale()) {
-                uCurrentFace = 23;
-                uVoiceID = 23;
-            } else {
-                uCurrentFace = 24;
-                uVoiceID = 24;
+                if (IsMale()) {
+                    uCurrentFace = 23;
+                    uVoiceID = 23;
+                } else {
+                    uCurrentFace = 24;
+                    uVoiceID = 24;
+                }
+                GameUI_ReloadPlayerPortraits(characterIndex(), uCurrentFace);
             }
-            GameUI_ReloadPlayerPortraits(characterIndex(), uCurrentFace);
+            // MM6's zombie portrait/voice source is not reconciled yet; keep
+            // its verified vanilla face instead of selecting an MM7-only ID.
 
             playReaction(SPEECH_CHEATED_DEATH);
             break;
@@ -608,9 +613,11 @@ void Character::ResetCondition(Condition condition) {
 
     switch (condition) {
         case CONDITION_ZOMBIE:
-            uCurrentFace = uPrevFace;
-            uVoiceID = uPrevVoiceID;
-            GameUI_ReloadPlayerPortraits(characterIndex(), uCurrentFace);
+            if (engine->gameTitle() != GameTitle::MM6) {
+                uCurrentFace = uPrevFace;
+                uVoiceID = uPrevVoiceID;
+                GameUI_ReloadPlayerPortraits(characterIndex(), uCurrentFace);
+            }
             break;
 
         default:
@@ -2864,6 +2871,8 @@ int Character::GetMultiplierForSkillLevel(Skill uSkillType, int mult1, int mult2
 //                     23   zombie male
 //                     24   zombie female
 enum Race Character::GetRace() const {
+    if (engine->gameTitle() == GameTitle::MM6)
+        return RACE_HUMAN;
     if (uCurrentFace <= 7) {
         return RACE_HUMAN;
     } else if (uCurrentFace <= 11) {
@@ -2891,6 +2900,13 @@ std::string Character::GetRaceName() const {
 
 //----- (00490141) --------------------------------------------------------
 Sex Character::GetSexByVoice() const {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        if (!mm6::isValidPortraitFace(uVoiceID)) {
+            MM_WARNING("Invalid MM6 voice index: {}", uVoiceID);
+            return SEX_MALE;
+        }
+        return mm6::isFemininePortraitFace(uVoiceID) ? SEX_FEMALE : SEX_MALE;
+    }
     switch (this->uVoiceID) {
         case 0u:
         case 1u:
@@ -2942,6 +2958,10 @@ void Character::SetInitialStats() {
 
 //----- (004901FC) --------------------------------------------------------
 void Character::SetSexByVoice() {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        uSex = GetSexByVoice();
+        return;
+    }
     switch (this->uVoiceID) {
         case 0:
         case 1:

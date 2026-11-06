@@ -25,6 +25,7 @@
 #include "Engine/Spells/Spells.h"
 #include "Engine/Party.h"
 #include "Engine/MapEnumFunctions.h"
+#include "Engine/MM6/MM6Portraits.h"
 #include "Engine/Timer.h"
 #include "Engine/Conditions.h"
 #include "Engine/Objects/ActorEnumFunctions.h"
@@ -1647,6 +1648,8 @@ void GameUI_CharacterQuickRecord_Draw(Recti window, int characterIndex) {
         else
             faceTextureIndex = pPortraitFrameTable->animationFrameIndex(pPortraitFrameTable->animationId(player->portrait),
                                                                         animTimer->time());
+        if (engine->gameTitle() == GameTitle::MM6 && !mm6::isValidPortraitFrame(faceTextureIndex))
+            faceTextureIndex = 1;
         player->portraitImageIndex = faceTextureIndex - 1;
         v13 = game_ui_player_faces[characterIndex][faceTextureIndex - 1];
     }

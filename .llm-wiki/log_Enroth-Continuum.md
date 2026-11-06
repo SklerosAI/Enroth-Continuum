@@ -1618,3 +1618,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Reconciled the central save checklist with PART v3, standalone physical SHOP, filename-keyed BEAC pixels and the linked extra-section rejection test.
 - Kept live item projection, beacon GPU publication and the complete all-owner save/load commit as explicit gates.
+
+## [2026-11-06] implement | Detached MM6 indoor face override section
+- by: T-Burton-ND via codex
+- Added filename-keyed `IFOV` with changed face fields, a deterministic pre-reload base fingerprint and post-`OnMapReload` precedence; integrated focused tests passed 3/3.
+- A combined known-save guard passed 4/4 with IFOV, SHOP and BEAC extras rejected before destination mutation. Indexed the checked renderer contract; live adapters and SaveLoad remain guarded.

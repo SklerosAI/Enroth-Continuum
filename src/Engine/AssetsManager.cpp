@@ -10,6 +10,7 @@
 #include "Engine/Engine.h"
 #include "Engine/Graphics/ImageLoader.h"
 #include "Engine/Graphics/Image.h"
+#include "Engine/Graphics/Sprites.h"
 #include "Engine/Resources/ResourceManager.h"
 
 #include "Library/Image/Png.h"
@@ -98,10 +99,12 @@ GraphicsImage *AssetsManager::getMM6SelectionFrame() {
         RgbaImage image = engine->resources()->sprite("aframe1");
         if (!image)
             return nullptr;
-        // The original aframe1 SpriteFrame uses palette zero. ResourceManager's
-        // regular sprite image stores palette indices in red for 3D rendering;
-        // this 2D image needs the actual default palette colors.
-        const Palette palette = engine->resources()->palette(0);
+        // MM6's aframe1 frame records palette 2 in dsft.bin. The regular sprite
+        // image stores indices in red for billboards; the 2D HUD needs colors.
+        const int frameId = pSpriteFrameTable->FastFindSprite("aframe1");
+        if (frameId <= 0)
+            return nullptr;
+        const Palette palette = engine->resources()->palette(pSpriteFrameTable->pSpriteSFrames[frameId].paletteId);
         for (Color &pixel : image.pixels()) {
             if (pixel.a)
                 pixel = palette.colors[pixel.r];

@@ -23,19 +23,18 @@ TEST(MM6PortraitSelectionRoute, OriginalFaceAndSpriteAnchors) {
     EXPECT_EQ(hudPortraitSelectionPosition(GameTitle::MM6, 4, {69, 91}, {25, 380}), Pointi(25, 380));
 }
 
-GAME_TEST(MM6PortraitSelection, OriginalPaletteZeroSprite) {
+GAME_TEST(MM6PortraitSelection, OriginalPaletteAndFrameCycle) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     const int id = pSpriteFrameTable->FastFindSprite("aframe1");
     ASSERT_GT(id, 0);
     const SpriteFrame &frame = pSpriteFrameTable->pSpriteSFrames[id];
     EXPECT_EQ(frame.textureName, "aframe1");
-    EXPECT_EQ(frame.paletteId, 0);
-    // The archive contains aframe2-6, but the accepted frame table gives
-    // aframe1 the full 48-tick cycle, so every sampled time selects frame 1.
-    EXPECT_EQ(frame.frameLength, Duration::fromTicks(48));
-    EXPECT_EQ(frame.animationLength, frame.frameLength);
-    for (int ticks : {0, 8, 47, 48, 96, 200})
-        EXPECT_EQ(pSpriteFrameTable->GetFrame(id, Duration::fromTicks(ticks)), &frame);
+    EXPECT_EQ(frame.paletteId, 2);
+    EXPECT_EQ(frame.frameLength, Duration::fromTicks(8));
+    EXPECT_EQ(frame.animationLength, Duration::fromTicks(48));
+    for (int index = 0; index < 6; ++index)
+        EXPECT_EQ(pSpriteFrameTable->GetFrame(id, Duration::fromTicks(index * 8)), &frame + index);
+    EXPECT_EQ(pSpriteFrameTable->GetFrame(id, Duration::fromTicks(48)), &frame);
     EXPECT_EQ(engine->resources()->spriteSize("aframe1"), Sizei(69, 91));
 
     GraphicsImage *selection = assets->getMM6SelectionFrame();
@@ -43,6 +42,7 @@ GAME_TEST(MM6PortraitSelection, OriginalPaletteZeroSprite) {
     EXPECT_EQ(assets->getMM6SelectionFrame(), selection);
     const RgbaImage &decoded = selection->rgba();
     RgbaImage indexed = engine->resources()->sprite("aframe1");
+    const Palette palette = engine->resources()->palette(frame.paletteId);
     ASSERT_EQ(decoded.size(), indexed.size());
     int opaque = 0;
     int transparent = 0;
@@ -53,9 +53,7 @@ GAME_TEST(MM6PortraitSelection, OriginalPaletteZeroSprite) {
             EXPECT_EQ(result.a, 0);
             ++transparent;
         } else {
-            EXPECT_EQ(result.r, result.g);
-            EXPECT_EQ(result.r, result.b);
-            EXPECT_EQ(result.a, 255);
+            EXPECT_EQ(result, palette.colors[source.r]);
             ++opaque;
         }
     }

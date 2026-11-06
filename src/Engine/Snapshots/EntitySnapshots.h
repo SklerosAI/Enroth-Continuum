@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 
 #include "Engine/Objects/ItemEnums.h"
 
@@ -140,22 +141,36 @@ struct SpriteFrame_MM6 {
     std::array<char, 12> textureName; // Texture name in sprites.lod w/o rotational suffixes.
     std::array<int16_t, 8> hwSpriteIds;
     int32_t scale;
-    int32_t flags; // TODO(captainurist): 2 bytes in MM6?
+    uint16_t flags;
     int16_t glowRadius;
     int16_t paletteId; // Palette id, a number in [0, 999] referencing palXXX in bitmaps.lod.
     int16_t paletteIndex; // Not used in OE, this was an index in a palette array that had non-existing palettes removed.
     int16_t frameLength;
+    int16_t animationLength;
 };
 static_assert(sizeof(SpriteFrame_MM6) == 56);
+static_assert(offsetof(SpriteFrame_MM6, glowRadius) == 46);
+static_assert(offsetof(SpriteFrame_MM6, paletteId) == 48);
+static_assert(offsetof(SpriteFrame_MM6, frameLength) == 52);
 MM_DECLARE_MEMCOPY_SERIALIZABLE(SpriteFrame_MM6)
 void reconstruct(const SpriteFrame_MM6 &src, SpriteFrame *dst);
 
 
-struct SpriteFrame_MM7 : SpriteFrame_MM6 {
+struct SpriteFrame_MM7 {
+    std::array<char, 12> spriteName;
+    std::array<char, 12> textureName;
+    std::array<int16_t, 8> hwSpriteIds;
+    int32_t scale;
+    int32_t flags;
+    int16_t glowRadius;
+    int16_t paletteId;
+    int16_t paletteIndex;
+    int16_t frameLength;
     int16_t animationLength;
     int16_t _pad;
 };
 static_assert(sizeof(SpriteFrame_MM7) == 60);
+static_assert(offsetof(SpriteFrame_MM7, paletteId) == 50);
 MM_DECLARE_MEMCOPY_SERIALIZABLE(SpriteFrame_MM7)
 
 void reconstruct(const SpriteFrame_MM7 &src, SpriteFrame *dst);

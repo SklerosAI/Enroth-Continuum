@@ -15,6 +15,7 @@
 #include "Engine/Objects/Chest.h"
 #include "Engine/PartyPlacement.h"
 #include "Engine/Resources/LOD.h"
+#include "Engine/Resources/ResourceManager.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/MapTable.h"
 
@@ -35,6 +36,40 @@ GAME_TEST(MM6SpriteOctants, SevenCharacterDirectionalPrefix) {
     ASSERT_NE(frame, nullptr);
     for (int octant = 0; octant < 8; ++octant)
         EXPECT_NE(frame->sprites[octant], nullptr) << "octant " << octant;
+}
+
+GAME_TEST(MM6SpritePalette, TreeFrameUsesRecordedPalette) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const int frameId = pSpriteFrameTable->FastFindSprite("tree01");
+    ASSERT_GT(frameId, 0);
+    const SpriteFrame &frame = pSpriteFrameTable->pSpriteSFrames[frameId];
+    EXPECT_EQ(frame.paletteId, 140);
+    EXPECT_EQ(frame.glowRadius, 0);
+    EXPECT_EQ(frame.frameLength, Duration::fromTicks(8));
+    ASSERT_NE(pSpriteFrameTable->GetFrame(frameId, 0_ticks)->sprites[0], nullptr);
+    const Palette palette = engine->resources()->palette(frame.paletteId);
+    size_t green = 0;
+    for (const Color &color : palette.colors)
+        green += color.g > color.r && color.g > color.b;
+    EXPECT_GT(green, 20u);
+
+    const int redTreeId = pSpriteFrameTable->FastFindSprite("tree03");
+    ASSERT_GT(redTreeId, 0);
+    EXPECT_EQ(pSpriteFrameTable->pSpriteSFrames[redTreeId].paletteId, 140);
+    auto dominantPixels = [&](std::string_view name, bool redDominant) {
+        const RgbaImage indexed = engine->resources()->sprite(name);
+        size_t count = 0;
+        for (Color pixel : indexed.pixels()) {
+            if (!pixel.a)
+                continue;
+            const Color mapped = palette.colors[pixel.r];
+            count += redDominant ? (mapped.r > mapped.g * 1.3 && mapped.r > mapped.b * 1.3) :
+                                   (mapped.g > mapped.r * 1.3 && mapped.g > mapped.b * 1.3);
+        }
+        return count;
+    };
+    EXPECT_GT(dominantPixels("tree01", false), 1000u);
+    EXPECT_GT(dominantPixels("tree03", true), 1000u);
 }
 
 // Explicit, fresh-process, macOS-only capture. --offscreen-gl installs the

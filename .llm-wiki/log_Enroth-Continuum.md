@@ -241,3 +241,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Linked bounded indoor and outdoor wire readers, private-backed creation rules and the event-variable guard in the current F4 handoff. The integrated build and eighteen focused C++ tests passed, including all 52 indoor map pairs.
 - Added checked zero-based outdoor texture and all-faces facet event targeting. The F3-matched retained fixture covered 12 texture and six facet records; persistence and graphical behavior remain F4/F5 work.
+
+## [2026-11-06] update | MM6 Question input path
+- by: T-Burton-ND via codex
+- Added a title-specific Question text prompt with two-answer matching, encoded-target and next-step continuation, and Escape cancellation. The three string fields follow the MMExtension command reference.
+- Recorded this as provisional F4 behavior pending visible correct, incorrect and cancel branch checks. The integrated MM6 build and nineteen focused C++ tests passed, including all 68 active retained EVT resources.

@@ -38,6 +38,24 @@ class HouseServiceData {
 // travel, sound, or dialogue rules. The house entry gate remains closed.
 HouseServiceData decodeHouseServiceData(const Blob &source, const RoomDescriptors &rooms);
 
+// The game-local source is loaded once from the active MM6 resources and
+// private user-profile room manifest. MM7 does not call this path.
+const HouseServiceData &houseServiceData();
+
+enum class HouseEntryKind { TableBacked, BlankOrUnused, Terminal };
+
+struct HouseEntryPlan {
+    int houseId = 0;
+    HouseEntryKind kind = HouseEntryKind::BlankOrUnused;
+    HouseServiceFamily family = HouseServiceFamily::Other;
+    std::optional<RoomDescriptor> room;
+    std::optional<int> openHour;
+    std::optional<int> closeHour;
+};
+
+// A pre-entry candidate. It does not open the room or mutate the party/UI.
+HouseEntryPlan planHouseEntry(const HouseServiceData &houses, int houseId);
+
 struct TransportMenuData {
     std::array<std::optional<TransportRoute>, 3> routes;
 

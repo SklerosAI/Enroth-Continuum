@@ -195,3 +195,59 @@ TEST(MM6HouseServiceData, PlansOnlyVerifiedTransportMenuSlots) {
     const mm6::HouseServiceData missingRoom = mm6::decodeHouseServiceData(Blob::fromString(blankRoom), rooms);
     EXPECT_THROW(mm6::selectTransportMenu(missingRoom, rules, transportId, 0), std::exception);
 }
+
+TEST(MM6HouseServiceData, PreflightsEveryActiveHouseInstruction) {
+    const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
+    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
+    if (!manifest || !research)
+        GTEST_SKIP() << "private MM6 house evidence is unavailable";
+
+    const std::filesystem::path root(research);
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(manifest)));
+    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
+        Blob::fromString(readFile(root / "icons" / "2devents.txt")), rooms);
+    const Json report = Json::parse(readFile(root / "house-route-probe.json"));
+    int tableBacked = 0;
+    int blankOrUnused = 0;
+    int terminal = 0;
+    for (const Json &site : report.at("enter_house_refs")) {
+        const int houseId = site.at("house_id").get<int>();
+        const mm6::HouseEntryPlan entry = mm6::planHouseEntry(houses, houseId);
+        EXPECT_EQ(entry.houseId, houseId);
+        switch (entry.kind) {
+            case mm6::HouseEntryKind::TableBacked:
+                ASSERT_TRUE(entry.room.has_value());
+                EXPECT_FALSE(entry.room->videoName.empty());
+                ++tableBacked;
+                break;
+            case mm6::HouseEntryKind::BlankOrUnused:
+                EXPECT_FALSE(entry.room.has_value());
+                ++blankOrUnused;
+                break;
+            case mm6::HouseEntryKind::Terminal:
+                EXPECT_FALSE(entry.room.has_value());
+                ++terminal;
+                break;
+        }
+    }
+    EXPECT_EQ(tableBacked, 671);
+    EXPECT_EQ(blankOrUnused, 1);
+    EXPECT_EQ(terminal, 2);
+    EXPECT_THROW(mm6::planHouseEntry(houses, 0), std::exception);
+    EXPECT_THROW(mm6::planHouseEntry(houses, 558), std::exception);
+
+    int taverns = 0;
+    for (int houseId = 1; houseId <= 557; ++houseId) {
+        const mm6::HouseServiceRow &row = houses.at(houseId);
+        if (row.type != HOUSE_TYPE_TAVERN)
+            continue;
+        const mm6::HouseEntryPlan entry = mm6::planHouseEntry(houses, houseId);
+        EXPECT_EQ(entry.kind, mm6::HouseEntryKind::TableBacked);
+        EXPECT_TRUE(entry.room.has_value());
+        EXPECT_TRUE(row.value.has_value());
+        EXPECT_TRUE(entry.openHour.has_value());
+        EXPECT_TRUE(entry.closeHour.has_value());
+        ++taverns;
+    }
+    EXPECT_EQ(taverns, 21);
+}

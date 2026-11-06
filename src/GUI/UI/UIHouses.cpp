@@ -31,6 +31,7 @@
 #include "GUI/UI/UIDialogue.h"
 #include "GUI/UI/UIGame.h"
 #include "GUI/UI/UIStatusBar.h"
+#include "GUI/UI/MM6HouseServiceData.h"
 #include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/Houses/MagicGuild.h"
 #include "GUI/UI/Houses/Bank.h"
@@ -290,8 +291,17 @@ static constexpr IndexedArray<const char *, HOUSE_TYPE_WEAPON_SHOP, HOUSE_TYPE_M
 }};
 
 bool enterHouse(HouseId uHouseID) {
-    if (engine->gameTitle() == GameTitle::MM6)
-        throw std::runtime_error("MM6 house entry needs title-specific room descriptors and service rules");
+    if (engine->gameTitle() == GameTitle::MM6) {
+        // Validate the title-specific table and room before touching the
+        // inherited MM7 house state. Service/media actions remain gated.
+        const mm6::HouseEntryPlan entry = mm6::planHouseEntry(
+            mm6::houseServiceData(), std::to_underlying(uHouseID));
+        if (entry.kind == mm6::HouseEntryKind::Terminal)
+            engine->_statusBar->setEvent("This passage is unavailable.");
+        else
+            engine->_statusBar->setEvent("This place is unavailable.");
+        return false;
+    }
 
     engine->_statusBar->clearAll();
     engine->_messageQueue->clear();

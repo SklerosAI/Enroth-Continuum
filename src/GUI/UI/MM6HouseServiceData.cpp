@@ -7,6 +7,9 @@
 #include <string_view>
 
 #include "Engine/Tables/HouseTable.h"
+#include "Engine/Engine.h"
+#include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/Resources/ResourceManager.h"
 
 #include "Library/Serialization/Serialization.h"
 
@@ -82,6 +85,28 @@ HouseServiceData decodeHouseServiceData(const Blob &source, const RoomDescriptor
     if (expectedId != 558)
         throw std::runtime_error("MM6 house service table requires 557 rows");
     return candidate;
+}
+
+const HouseServiceData &houseServiceData() {
+    if (!engine || engine->gameTitle() != GameTitle::MM6)
+        throw std::runtime_error("MM6 house data requires the MM6 runtime");
+    static const HouseServiceData data = [] {
+        const RoomDescriptors rooms = decodeRoomDescriptors(ufs->read("rules/house-rooms.json"));
+        return decodeHouseServiceData(engine->resources()->eventsData("2dEvents.txt"), rooms);
+    }();
+    return data;
+}
+
+HouseEntryPlan planHouseEntry(const HouseServiceData &houses, int houseId) {
+    if (houseId == 600 || houseId == 601)
+        return {houseId, HouseEntryKind::Terminal, HouseServiceFamily::Other,
+                std::nullopt, std::nullopt, std::nullopt};
+    const HouseServiceRow &house = houses.at(houseId);
+    if (house.type == HOUSE_TYPE_INVALID || house.room.kind != HouseRoomKind::Room)
+        return {houseId, HouseEntryKind::BlankOrUnused, house.family,
+                std::nullopt, std::nullopt, std::nullopt};
+    return {houseId, HouseEntryKind::TableBacked, house.family, house.room.room,
+            house.openHour, house.closeHour};
 }
 
 bool TransportMenuData::hasAvailableRoute() const {

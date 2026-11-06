@@ -233,7 +233,7 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   prevents MM6-specific event IDs from executing as colliding MM7 meanings.
 - The integrated MM6 app, MM7 app and unit targets built with the sixteen-section
   partial assembly, spell-item prerequisite guard, MM6-only effect-dispatch guard,
-  and exact 67-name MAPS staging validator. The offline suite passed 183 tests from 57 suites
+  and exact 67-name MAPS staging validator. The offline suite passed 198 tests from 59 suites
   across EVT framing and selected guarded effects, wire codecs and indoor/outdoor projection,
   variable guard, `.ec6` fields and partial assembly, private transport/spell
   rules, descriptor 173 and LOD order; the
@@ -259,9 +259,8 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   casting remains guarded. The house parser classifies labels on all 557 retained house rows,
   including 384 active rows that previously chose the mercenary guild type;
   services and graphical house screens remain unverified. MM6 house entry now
-  rejects before inherited MM7 room/service state changes. Runtime MM6 pre-entry validates the active 557-row table and private
-  119-room manifest, classifies the entry, and returns unavailable before MM7
-  room/service changes. The read-only resolver classifies all 674 active
+  validates title-specific room/media data for a display-only preview while service actions remain guarded. Runtime MM6 pre-entry validates the active 557-row table and private
+  119-room manifest, classifies the entry, and permits only table-backed display-only previews; blank and terminal routes stay unavailable. The read-only resolver classifies all 674 active
   house-entry instructions. Fifty-one active proprietor picture IDs bind to retained
   icons and preflight metadata before UI state changes. The staged F3-matched
   archive decodes all 45 distinct active proprietor images; display is unverified.
@@ -279,16 +278,18 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   behavior and full persistence remain open. A separate ID-19 branch compares
   the 336-day calendar for all 592 retained active uses. Gold ID 21 bounds
   147 active compares, grants and payments with silent party balance changes.
-  Raw item ID17 has 641 active uses; 195 comparisons now read selected inventory
-  and held item without mutation, while 446 grant/removal writes stay guarded.
-  A retained topology audit found each of 156 removals follows a same-item
-  comparison in its event, but cursor and artifact rules remain unproved.
+  Raw item ID17 has 641 active uses: 195 read-only comparisons and 446 audited writes.
+  A bounded MM6 branch now handles Add/Subtract using the accepted original-PE dispatch.
+  Of 290 Add sites, 288 have eligible static operands/selector, with cursor capacity
+  checked at runtime; the artifact-band and party-selected sites remain guarded.
+  All 156 Subtract operands are statically eligible; ambiguous duplicate-grid
+  matches and an unproved full-inventory ground drop stay guarded.
   Seven spell damage source tags are retained for all 99 MM6 IDs; live effects
   remain gated. MM6 Escape clears a pending targeted cast queue entry and target selection rejects invalid party-slot indices;
   live casting is still gated.
   The general non-MM6 unit suite passed 438/438 tests from the same build.
   F4 rules, map state, events, services, media output and saves remain open.
-  No MM6 process or original GOG file was opened for these F4 checks.
+  The owner-local MM6 executable was inspected read-only once under its accepted F3 hash; no MM6 process was launched.
   A title-specific zero-mastery `CheckSkill` branch now has a provisional
   source-backed rule and focused threshold test; its quest outcome remains F5.
   The retained outdoor target check supports zero-based texture targets (12/12)
@@ -317,3 +318,24 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   three-option MM6 menu. It hides unproved quest, weekday and special routes;
   selection makes no payment or departure while the `.ec6` save transaction
   is incomplete. MM7 transport tables are never indexed for MM6 houses.
+
+## MM6 F4 integrated checkpoint — 2026-11-06
+
+The arm64 MM6, OpenEnroth and unit targets linked. The one-command private-backed
+offline gate passed **198/198 tests from 59 suites**, and the separate general
+suite passed **438/438**. This checkpoint adds the display-only MM6 house window
+with MM6 panel/exit art and title-specific entry/exit routing, bounded item
+Add/Subtract writes including inventory-success occupied-cursor relocation, a
+private-backed detached First Aid character transaction, CHAR v2 character
+modifier capture, and detached Timer/50-overlay save staging. See the
+[house presentation](MM6_F4_HOUSE_PRESENTATION.md),
+[item PE transaction](MM6_F4_ITEM_EVENT_PE_TRANSACTION.md),
+[First Aid effect](MM6_F4_FIRST_AID_EFFECT.md), and
+[save transaction checklist](../.llm-wiki/MM6-F4-Save-Transaction-Checklist.md).
+
+The owner-local MM6 executable was inspected read-only under its accepted F3
+identity for item-event semantics; the original installation was otherwise
+left untouched. No MM6 process or graphics/audio play was launched. Full MM6
+spell effects, house services, artifact/ground-drop behavior, mandatory save
+state and all-owner load commit remain F4 gates. The MM7 app/profile and
+reserved MM8 checkout were not changed.

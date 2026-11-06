@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Engine/Data/HouseEnums.h"
+#include "Engine/GameTitle.h"
 #include "Engine/Objects/NPCEnums.h"
 #include "Engine/Objects/CharacterEnums.h"
 #include "Engine/Objects/MonsterEnums.h"
@@ -78,6 +79,11 @@ struct NPCProfessionChance {
     IndexedArray<int, NPC_PROFESSION_FIRST, NPC_PROFESSION_LAST> chanceByProfession = {{}};
     int total = 0;
 };
+
+// MM6 has no npcdist.txt; its npcprof.txt Chance column is a single
+// title-wide distribution. Profession 77 is a non-generatable terminal row.
+NPCProfessionChance parseMm6ProfessionChance(const Blob &npcProfs);
+NpcProfession selectAdditionalNpcProfession(const NPCProfessionChance &chance, GameTitle title, int draw);
 
 struct NPCGreeting {
     std::string pGreeting1;  // at first meet

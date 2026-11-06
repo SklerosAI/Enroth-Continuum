@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <array>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -24,6 +25,7 @@
 #include "Engine/mm7_data.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/Actor.h"
+#include "Engine/Objects/NPCEnumFunctions.h"
 #include "Engine/Objects/Monsters.h"
 #include "Engine/Party.h"
 #include "Engine/PartyPlacement.h"
@@ -35,6 +37,7 @@
 #include "Engine/Snapshots/MM6OutdoorSnapshot.h"
 #include "Engine/Tables/IconFrameTable.h"
 #include "Engine/Tables/MapTable.h"
+#include "Engine/Tables/NPCTable.h"
 
 #include "GUI/GUIButton.h"
 #include "GUI/GUIProgressBar.h"
@@ -308,6 +311,63 @@ GAME_TEST(MM6Headless, ScopedFirstOutdoorWorld) {
     EXPECT_EQ(vChests.size(), 20u);
     EXPECT_EQ(lWindowList.size(), 1u);
     EXPECT_EQ(window->nativeHandle(), nullptr);
+}
+
+TEST(MM6NpcProfessionChance, ParsesGlobalWeightsAndRejectsBadTables) {
+    NPCProfessionChance chance = parseMm6ProfessionChance(Blob::fromString(
+        "id\tname\tchance\r\n1\tFirst\t2\r\n2\tSecond\t0\r\n3\tThird\t5\r\n77\tTerminal\t??\r\n"));
+    EXPECT_EQ(chance.total, 7);
+    EXPECT_EQ(chance.chanceByProfession[NPC_PROFESSION_SMITH], 2);
+    EXPECT_EQ(chance.chanceByProfession[NPC_PROFESSION_ARMORER], 0);
+    EXPECT_EQ(chance.chanceByProfession[NPC_PROFESSION_ALCHEMIST], 5);
+    EXPECT_EQ(chance.chanceByProfession[NPC_PROFESSION_MM6_LAST], 0);
+    EXPECT_EQ(selectAdditionalNpcProfession(chance, GameTitle::MM6, 0), NPC_PROFESSION_SMITH);
+    EXPECT_EQ(selectAdditionalNpcProfession(chance, GameTitle::MM6, 1), NPC_PROFESSION_SMITH);
+    EXPECT_EQ(selectAdditionalNpcProfession(chance, GameTitle::MM6, 2), NPC_PROFESSION_ALCHEMIST);
+    EXPECT_EQ(selectAdditionalNpcProfession(chance, GameTitle::MM6, 6), NPC_PROFESSION_ALCHEMIST);
+    EXPECT_THROW(selectAdditionalNpcProfession(chance, GameTitle::MM6, 7), std::exception);
+    EXPECT_THROW(parseMm6ProfessionChance(Blob::fromString("1\tFirst\t??\r\n")), std::exception);
+    EXPECT_THROW(parseMm6ProfessionChance(Blob::fromString("1\tFirst\t0\r\n")), std::exception);
+    EXPECT_THROW(parseMm6ProfessionChance(Blob::fromString("1\tFirst\t2\r\n1\tAgain\t3\r\n")),
+                 std::exception);
+
+    NPCProfessionChance mm6Only;
+    mm6Only.chanceByProfession[static_cast<NpcProfession>(60)] = 1;
+    mm6Only.total = 1;
+    EXPECT_EQ(selectAdditionalNpcProfession(mm6Only, GameTitle::MM6, 0), static_cast<NpcProfession>(60));
+    EXPECT_THROW(selectAdditionalNpcProfession(mm6Only, GameTitle::MM7, 0), std::exception);
+}
+
+TEST(MM6NpcProfessionChance, Mm7DistributionRemainsPerMap) {
+    auto stats = std::make_unique<NPCStats>();
+    stats->InitializeNPCDist(Blob::fromString(
+        "header\r\nheader\r\nFirst\t3\t7\r\n"));
+    EXPECT_EQ(stats->pProfessionChance[MAP_EMERALD_ISLAND].total, 3);
+    EXPECT_EQ(stats->pProfessionChance[MAP_HARMONDALE].total, 7);
+    EXPECT_EQ(stats->pProfessionChance[MAP_EMERALD_ISLAND].chanceByProfession[NPC_PROFESSION_SMITH], 3);
+    EXPECT_EQ(stats->pProfessionChance[MAP_HARMONDALE].chanceByProfession[NPC_PROFESSION_SMITH], 7);
+}
+
+GAME_TEST(MM6Headless, ProfessionChanceAvailableForFirstMap) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const MapId firstMap = pMapTable->GetMapInfo("oute3.odm");
+    ASSERT_NE(firstMap, MAP_INVALID);
+    const NPCProfessionChance &chance = pNPCStats->pProfessionChance[firstMap];
+    ASSERT_GT(chance.total, 0);
+    int sum = 0;
+    for (NpcProfession profession : allMm6RandomNpcProfessions()) {
+        ASSERT_GE(chance.chanceByProfession[profession], 0);
+        sum += chance.chanceByProfession[profession];
+    }
+    EXPECT_EQ(sum, chance.total);
+    EXPECT_EQ(chance.chanceByProfession[NPC_PROFESSION_MM6_LAST], 0);
+    EXPECT_EQ(pNPCStats->pProfessionChance[MAP_EMERALD_ISLAND].total, chance.total);
+    for (int draw : {0, chance.total - 1}) {
+        NpcProfession profession = selectAdditionalNpcProfession(chance, GameTitle::MM6, draw);
+        EXPECT_GE(std::to_underlying(profession), std::to_underlying(NPC_PROFESSION_FIRST));
+        EXPECT_LT(std::to_underlying(profession), std::to_underlying(NPC_PROFESSION_MM6_LAST));
+        EXPECT_GT(chance.chanceByProfession[profession], 0);
+    }
 }
 
 TEST(MM6EncounterMonster, ResolvesCompactAndDisplayFamiliesWithoutGuessing) {

@@ -2,11 +2,13 @@
 
 #include <algorithm>
 #include <array>
+#include <limits>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "Engine/MapEnumFunctions.h"
+#include "Engine/Engine.h"
 #include "Engine/Objects/NPC.h"
 #include "Engine/Objects/MonsterEnumFunctions.h"
 #include "Engine/Objects/NPCEnumFunctions.h"
@@ -16,6 +18,7 @@
 #include "Library/Serialization/Serialization.h"
 
 #include "Utility/Memory/Blob.h"
+#include "Utility/Exception.h"
 #include "Utility/String/Split.h"
 #include "Utility/String/Transformations.h"
 
@@ -54,6 +57,49 @@ void NPCStats::InitializeNPCDist(const Blob &npcDist) {
     for (MapId map : allMaps())
         for (NpcProfession prof : allNpcProfessions())
             pProfessionChance[map].total += pProfessionChance[map].chanceByProfession[prof];
+}
+
+NPCProfessionChance parseMm6ProfessionChance(const Blob &npcProfs) {
+    NPCProfessionChance result;
+    std::array<bool, std::to_underlying(NPC_PROFESSION_MM6_LAST)> seen{};
+    for (std::string_view line : split(npcProfs.str()).by("\r\n").skip("")) {
+        std::array<std::string_view, 3> cells = split(line).by('\t');
+        int id = 0;
+        if (!tryDeserialize(cells[0], &id))
+            continue; // Headers and blank rows.
+        if (id < 1 || id > std::to_underlying(NPC_PROFESSION_MM6_LAST))
+            throw Exception("MM6 npcprof.txt contains an invalid profession id");
+        if (id == std::to_underlying(NPC_PROFESSION_MM6_LAST))
+            continue; // The terminal row has no numeric random chance.
+        if (seen[id])
+            throw Exception("MM6 npcprof.txt contains a duplicate profession id");
+        seen[id] = true;
+
+        int weight = 0;
+        if (!tryDeserialize(cells[2], &weight) || weight < 0 ||
+            weight > std::numeric_limits<int>::max() - result.total)
+            throw Exception("MM6 npcprof.txt contains an invalid random chance");
+        result.chanceByProfession[static_cast<NpcProfession>(id)] = weight;
+        result.total += weight;
+    }
+    if (result.total <= 0)
+        throw Exception("MM6 npcprof.txt has no positive random profession chance");
+    return result;
+}
+
+NpcProfession selectAdditionalNpcProfession(const NPCProfessionChance &chance, GameTitle title, int draw) {
+    if (draw < 0 || draw >= chance.total)
+        throw Exception("Additional NPC profession draw is outside the loaded distribution");
+    int cumulative = 0;
+    auto professions = title == GameTitle::MM6
+        ? allMm6RandomNpcProfessions()
+        : Segment<NpcProfession>{NPC_PROFESSION_FIRST, NPC_PROFESSION_HUNTER};
+    for (NpcProfession profession : professions) {
+        cumulative += chance.chanceByProfession[profession];
+        if (cumulative > draw)
+            return profession;
+    }
+    throw Exception("Additional NPC profession distribution has no matching row");
 }
 
 //----- (00476CB5) --------------------------------------------------------
@@ -129,6 +175,7 @@ void NPCStats::Initialize(ResourceManager *resourceManager) {
 
 void NPCStats::InitializeMm6(ResourceManager *resourceManager) {
     pOriginalNPCData.fill(NPCData());
+    pProfessionChance.fill({});
     Blob npcData = resourceManager->eventsData("npcdata.txt");
     for (std::string_view line : split(npcData.str()).by("\r\n").drop(2).skip("")) {
         std::array<std::string_view, 14> cells = split(line).by('\t');
@@ -188,6 +235,12 @@ void NPCStats::InitializeMm6(ResourceManager *resourceManager) {
         profession.pJoinText = unquote(cells[7]);
         uNumNPCProfessions = std::max(uNumNPCProfessions, id);
     }
+    // This table has a global Chance field, unlike MM7's per-map npcdist.txt.
+    // Sharing it across maps is a bounded inference until original generation
+    // behavior is observed in game.
+    NPCProfessionChance mm6ProfessionChance = parseMm6ProfessionChance(npcProfs);
+    for (MapId map : allMaps())
+        pProfessionChance[map] = mm6ProfessionChance;
 }
 
 void NPCStats::InitializeNPCNames(const Blob &npcNames) {
@@ -230,8 +283,6 @@ void NPCStats::InitializeAdditionalNPCs(NPCData *pNPCDataBuff, MonsterId npc_uid
                                         HouseId uLocation2D, MapId uMapId) {
     int rep_gen;
     int uGeneratedPortret;    // ecx@23
-    int test_prof_summ;       // ecx@37
-    int max_prof_cap;         // edx@37
                               // signed int result; // eax@39
     Race uRace;                // [sp+Ch] [bp-Ch]@1
     bool break_gen;           // [sp+10h] [bp-8h]@1
@@ -323,16 +374,11 @@ void NPCStats::InitializeAdditionalNPCs(NPCData *pNPCDataBuff, MonsterId npc_uid
         pNPCDataBuff->rep = 0;
     }
 
-    max_prof_cap = grng->random(pProfessionChance[uMapId].total);
-    test_prof_summ = 0;
-    pNPCDataBuff->profession = NPC_PROFESSION_LAST;
-    for (NpcProfession i : allNpcProfessions()) {
-        test_prof_summ += pProfessionChance[uMapId].chanceByProfession[i];
-        if (test_prof_summ > max_prof_cap) {
-            pNPCDataBuff->profession = i;
-            break;
-        }
-    }
+    const NPCProfessionChance &chance = pProfessionChance[uMapId];
+    if (engine->gameTitle() == GameTitle::MM6 && chance.total <= 0)
+        throw Exception("MM6 additional NPC profession distribution is empty");
+    pNPCDataBuff->profession = selectAdditionalNpcProfession(
+        chance, engine->gameTitle(), grng->random(chance.total));
     pNPCDataBuff->house = uLocation2D;
     pNPCDataBuff->field_24 = 1;
     pNPCDataBuff->canJoin = 1;

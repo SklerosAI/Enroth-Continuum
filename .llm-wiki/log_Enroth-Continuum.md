@@ -346,3 +346,9 @@ Chronological record of wiki activity.
 - Exported the accepted F3 PE spell table to a mode-0600 private MM6 profile manifest after checking the report gate hash; no numeric spell table entered Git. Added an atomic, bounded loader for 99 spell IDs and three mastery ranks.
 - Routed MM6 regular player-cast cost/recovery, quickspell mana gating and cost popups through the title-specific table while keeping MM7 static data unchanged. Scroll/NPC overrides and debug Grandmaster casts fail closed.
 - Built the arm64 unit target and passed three focused tests covering all 297 rank cells, the private manifest and malformed atomic-reload rejection. The exporter rejected an altered report; C++ style checks passed. Effect, scroll/book, event/monster, portal/beacon and wand paths remain open. No original installation was reread or partial MM6 game launched.
+
+## [2026-11-06] ingest | MM6 known save assembly
+- by: T-Burton-ND via codex
+- Assembled the eleven currently landed `.ec6` field sections into a frozen partial v1 candidate. Decode rejects missing, optional or extra sections, cross-checks duplicate party clocks and active selection, and requires 67 unique map deltas including the active map companion before assigning output.
+- Built the isolated arm64 unit target; seven focused synthetic assembly tests passed, including valid-CRC cross-field errors and a late NPC failure with destination unchanged. Direct C++ style and diff checks passed. No original installation was reread or partial MM6 game launched.
+- Left expected map-name/base-delta validation, new resistance and remaining runtime state, SaveLoad transaction wiring and F5 save/quit/relaunch open. This is not a final whole-save manifest.

@@ -41,6 +41,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 First Map Preflight](MM6-F4-First-Map-Preflight.md) — Detached resources, events, encounters and monitored in-memory outdoor load; durable save and gameplay remain open
 - [MM6 F4 Original No-Op Events](MM6-F4-Original-Noop-Events.md) — Linked MM6 executor advances past original no-op values 20, 27 and 28 while MM7 stays isolated
 - [MM6 F4 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md) — Original MM6 indoor face targeting and linked negative DLV round trip; save/reload remains open
+- [MM6 F4 Indoor Face Overrides](MM6-F4-Indoor-Face-Overrides.md) — Detached IFOV section retains changed face fields after reload events; live wiring remains gated
 - [MM6 F4 Outdoor Tile Selectors](MM6-F4-Outdoor-Tile-Selectors.md) — Original base-field trace, MM6-only terrain reconstruction and remaining seasonal art gap
 - [MM6 F4 Outdoor Walk Sound](MM6-F4-Outdoor-Walk-Sound.md) — Original 28-class raw-tileset sound dispatcher, retained tile identity and title-specific outdoor footsteps
 - [MM6 F4 Terrain Schema Audit](MM6-F4-Terrain-Schema-Audit.md) — Global tile ID remains the exact MM6 art key; original seasonal remapping is still unproved
@@ -99,6 +100,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Party Movement Save](MM6-F4-Party-Movement-Save.md) — PART v3 vertical motion, flight, hazard flags, justice counters and map-local ground reset
 - [MM6 F4 Justice Counter Save](MM6-F4-Justice-Counter-Save.md) — Linked PART v3 checks preserve current-runtime fine, death, prison and bounty counters; native MM6 semantics remain open
 - [MM6 F4 Beacon and Thumbnail Save](MM6-F4-Beacon-Visual-Save.md) — Linked filename-keyed BEAC v1 preserves image bytes and prepares owned CPU pixels while GPU publication remains guarded
+- [MM6 F4 Beacon Renderer Contract](MM6-F4-Beacon-Renderer-Contract.md) — Checked texture creation and controlled cleanup required before live BEAC publication
 - [MM6 F4 Partial Stage Coordinator](MM6-F4-Partial-Stage-Coordinator.md) — Validated 67-map candidate with detached Party, active map, NPC/map and timer/overlay copies
 - [MM6 F4 New Game Autosave](MM6-F4-New-Game-Autosave.md) — Offline `oute3.odm` known-field candidate and atomic `.ec6` autosave with live guard retained
 - [MM6 F4 First-Map World Rollback](MM6-F4-First-Map-World-Rollback.md) — Outdoor-entry owner audit and bounded actor/sprite/chest/decoration scratch rollback

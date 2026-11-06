@@ -49,6 +49,8 @@ Follow-up focused checks pass **6/6** for owned CPU beacon-image preparation and
 
 The [shop item conversion matrix](MM6-F4-Shop-Item-Record-Conversion-Gate.md) now identifies exact 28-byte field meanings and the inherited 36-byte `Item_MM7` mismatches; retain raw SHOP as the authority while live item projection remains unproved. A linked known-save test confirms standalone SHOP/BEAC extras reject before mutation. The [beacon renderer packet](MM6-F4-Beacon-Visual-Save.md) records unchecked texture creation and potentially allocating deferred deletion; live GPU publication needs a checked creation/cleanup contract before the save transaction can open.
 
+The [IFOV section](MM6-F4-Indoor-Face-Overrides.md) captures changed indoor face attributes and texture identities against a deterministic pre-`OnMapReload` base, then applies saved changed fields after reload scripts. The linked IFOV suite passed **3/3**, and a combined known-save guard passed with all three standalone sections (**4/4** total focused); live adapters and whole-save admission remain closed. The [beacon renderer contract](MM6-F4-Beacon-Renderer-Contract.md) identifies the checked creation/cleanup API and graphical regression tests needed before GPU publication.
+
 ## Authority and source order
 
 | Question | Start with | Supporting source |

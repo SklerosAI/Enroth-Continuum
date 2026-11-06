@@ -617,3 +617,12 @@ bytes that prevent a reversible conversion to inherited `Item_MM7`. Raw stock
 records remain the authority. The beacon renderer audit also found unchecked
 GPU texture creation and potentially allocating deferred deletion, so CPU
 pixel staging does not yet authorize live image publication.
+
+A detached MM6 `IFOV` section now retains changed indoor face attributes and
+texture identities by canonical map filename, with a fingerprint of the
+deterministic pre-reload face base. It applies saved changed fields after
+`OnMapReload` and rejects a changed base before mutation. Its integrated focused
+tests passed **3/3**; a fourth linked test confirms IFOV, SHOP and BEAC remain
+outside the partial known-save manifest. Live texture capture, renderer
+publication and whole-save wiring remain guarded. A checked renderer contract
+is documented, but no generic renderer patch was made.

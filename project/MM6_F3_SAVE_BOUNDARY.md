@@ -1,0 +1,16 @@
+# MM6 F3 save-state boundary
+
+Status: **read-only F3 original-content reconciliation for save inputs, not an implemented save** (2026-11-05). The [F3 identity](MM6_F3_CAPTURE_RUNBOOK.md) matched eight original core files and 15 soundtrack tracks, and the [content reconciliation](MM6_F3_CONTENT_RECONCILIATION.md) verified all 67 original base/delta map pairs byte for byte against the retained F1 extracts. The F2 [save-field register](MM6_SAVE_FIELD_REGISTER_F2.md) lists the logical party, character, inventory, event, world and UI state families required for a new `.ec6` format. Exact per-field decisions are in ignored `local-game-data/private-wiki/mm6/F3_EC6_LOGICAL_FIELD_MANIFEST.md`. No native whole-save sample was read, no MM6 process was launched and no save writer/reader exists.
+
+## Original-data result and limits
+
+- All 52 indoor and 15 outdoor original base/delta pairs are the same bytes as the frozen retained set. Their wrapper sizes and bounded wire sections agree with the prior offline map probes. The two known base-map zlib checksum anomalies occur in the original bytes; they need narrow hash-identified handling and graphical map checks, not a global checksum waiver.
+- Every shipped baseline delta round-trips byte-exactly through the offline wire-section probe. Its reset/persistent fixed regions and candidate chest tail are all zero in this corpus. That cannot establish the meaning of nonzero changed-world state, so F4 must preserve opaque bytes and test synthetic nonzero changes before F5 save/reload.
+- The original installation establishes IDs and shipped map data, not the schema of a new `.ec6` container. The inherited `SaveGame_MM7` types and `.mm7` slot behavior are current-source comparison points only. Native `.mm6` import/export remains outside this personal milestone unless separately requested.
+- The private logical manifest assigns all eleven F2 state families to proposed sections, runtime owners and bounded/default policies with explicit F4 encoder/decoder and F5 visible/save checks. Its section names are design candidates. Exact wire types, maxima and defaults must be locked when the MM6 runtime model is implemented; they are not presented as original-game facts.
+
+## F4 and F5 contract
+
+F4 must implement a title-tagged, versioned and bounded `.ec6` container, validate into temporary state before touching the running party, and write through a recoverable same-directory replacement. Cover all four characters, 31 skills, 99 spells, 581 item IDs, quest/award/note and NPC state, time/services, and every one of the 67 world deltas. Reject wrong-title, malformed, truncated and future-version files without changing a valid session or previous slot. The exact field manifest becomes an implementation artifact before the first save codec is considered complete.
+
+F5 must save, quit, relaunch and load after creation, promotion, inventory use, NPC hire, service transactions, quest branches, changed map state and spell travel. Inspect party, inventory, map, UI selection and load thumbnail; verify the protected MM7 helper and profile still load their existing saves. The present F3 byte identity supports the source baseline, **not durable MM6 saves or campaign play**.

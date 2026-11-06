@@ -26,8 +26,8 @@ std::string readFile(const std::filesystem::path &path) {
     return {std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
 }
 
-std::string changeFirstRowField(std::string source, int column, std::string_view replacement) {
-    size_t start = source.find("\r\n1\t");
+std::string changeHouseRowField(std::string source, int houseId, int column, std::string_view replacement) {
+    size_t start = source.find("\r\n" + std::to_string(houseId) + "\t");
     if (start == std::string::npos)
         throw std::runtime_error("MM6 retained first house row is missing");
     start += 2;
@@ -123,7 +123,75 @@ TEST(MM6HouseServiceData, RejectsMalformedHouseTableBeforeSelection) {
              std::pair{0, "0"}, std::pair{2, "Unknown MM6 House"},
              std::pair{4, "119"}, std::pair{12, "not-a-value"},
              std::pair{18, "25"}, std::pair{19, ""}}) {
-        const std::string invalid = changeFirstRowField(source, column, replacement);
+        const std::string invalid = changeHouseRowField(source, 1, column, replacement);
         EXPECT_THROW(mm6::decodeHouseServiceData(Blob::fromString(invalid), rooms), std::exception);
     }
+}
+
+TEST(MM6HouseServiceData, PlansOnlyVerifiedTransportMenuSlots) {
+    const char *roomManifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
+    const char *transportManifest = std::getenv("ENROTH_MM6_TRANSPORT_MANIFEST");
+    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
+    if (!roomManifest || !transportManifest || !research)
+        GTEST_SKIP() << "private MM6 transport evidence is unavailable";
+
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(roomManifest)));
+    const std::filesystem::path root(research);
+    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
+        Blob::fromString(readFile(root / "icons" / "2devents.txt")), rooms);
+    const mm6::TransportRules rules = mm6::decodeTransportRules(Blob::fromString(readFile(transportManifest)));
+    ASSERT_EQ(rules.houses.size(), 21);
+
+    int transportRows = 0;
+    int nonTransport = 0;
+    for (int houseId = 1; houseId <= 557; ++houseId) {
+        const mm6::HouseServiceRow &house = houses.at(houseId);
+        if (house.family != mm6::HouseServiceFamily::Transport) {
+            ++nonTransport;
+            EXPECT_EQ(rules.findHouse(houseId), nullptr);
+            continue;
+        }
+        ++transportRows;
+        ASSERT_NE(rules.findHouse(houseId), nullptr);
+        ASSERT_EQ(house.room.kind, mm6::HouseRoomKind::Room);
+        ASSERT_TRUE(house.room.room.has_value());
+        for (int weekday = 0; weekday < 7; ++weekday) {
+            const mm6::TransportMenuData menu = mm6::selectTransportMenu(houses, rules, houseId, weekday);
+            bool any = false;
+            for (size_t slot = 0; slot < menu.routes.size(); ++slot) {
+                const mm6::TransportRoute *expected = rules.scheduledRoute(houseId, slot, weekday, false);
+                EXPECT_EQ(menu.routes[slot].has_value(), expected != nullptr);
+                if (menu.routes[slot]) {
+                    ASSERT_NE(expected, nullptr);
+                    EXPECT_EQ(menu.routes[slot]->mapIndex, expected->mapIndex);
+                    EXPECT_EQ(menu.routes[slot]->duration, expected->duration);
+                    EXPECT_EQ(menu.routes[slot]->questBit, 0);
+                    any = true;
+                }
+            }
+            EXPECT_EQ(menu.hasAvailableRoute(), any);
+        }
+    }
+    EXPECT_EQ(transportRows, 21);
+    EXPECT_EQ(nonTransport, 536);
+    EXPECT_THROW(mm6::selectTransportMenu(houses, rules, 0, 0), std::exception);
+    EXPECT_THROW(mm6::selectTransportMenu(houses, rules, 558, 0), std::exception);
+    EXPECT_THROW(mm6::selectTransportMenu(houses, rules, rules.houses[0].id, -1), std::exception);
+    EXPECT_THROW(mm6::selectTransportMenu(houses, rules, rules.houses[0].id, 7), std::exception);
+    for (int houseId = 1; houseId <= 557; ++houseId) {
+        if (houses.at(houseId).family != mm6::HouseServiceFamily::Transport) {
+            EXPECT_THROW(mm6::selectTransportMenu(houses, rules, houseId, 0), std::exception);
+            break;
+        }
+    }
+
+    const int transportId = rules.houses[0].id;
+    mm6::TransportRules missingRouteHouse = rules;
+    missingRouteHouse.houses.erase(missingRouteHouse.houses.begin());
+    EXPECT_THROW(mm6::selectTransportMenu(houses, missingRouteHouse, transportId, 0), std::exception);
+
+    const std::string source = readFile(root / "icons" / "2devents.txt");
+    const std::string blankRoom = changeHouseRowField(source, transportId, 4, "");
+    const mm6::HouseServiceData missingRoom = mm6::decodeHouseServiceData(Blob::fromString(blankRoom), rooms);
+    EXPECT_THROW(mm6::selectTransportMenu(missingRoom, rules, transportId, 0), std::exception);
 }

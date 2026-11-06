@@ -84,4 +84,26 @@ HouseServiceData decodeHouseServiceData(const Blob &source, const RoomDescriptor
     return candidate;
 }
 
+bool TransportMenuData::hasAvailableRoute() const {
+    for (const std::optional<TransportRoute> &route : routes)
+        if (route)
+            return true;
+    return false;
+}
+
+TransportMenuData selectTransportMenu(const HouseServiceData &houses, const TransportRules &rules,
+                                      int houseId, int weekday) {
+    const HouseServiceRow &house = houses.at(houseId);
+    if (house.family != HouseServiceFamily::Transport || house.room.kind != HouseRoomKind::Room ||
+        !rules.findHouse(houseId) || weekday < 0 || weekday >= 7)
+        throw std::runtime_error("MM6 transport menu needs a validated house, room and weekday");
+
+    TransportMenuData result;
+    for (size_t slot = 0; slot < result.routes.size(); ++slot) {
+        if (const TransportRoute *route = rules.scheduledRoute(houseId, slot, weekday, false))
+            result.routes[slot] = *route;
+    }
+    return result;
+}
+
 } // namespace mm6

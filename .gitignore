@@ -35,6 +35,9 @@ bazel-*
 # Scratch dir for local experiments
 tmp
 
+# Python probe and exporter bytecode.
+__pycache__/
+
 # Doxygen
 docs
 

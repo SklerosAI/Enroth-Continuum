@@ -202,6 +202,14 @@ that requirement.
   loader discards description 173. The actor-ID offset is an external schema
   hypothesis, so F3 must confirm it before the F4 title-specific fix. No
   texture decode, live sprite or combat result is claimed.
+- [x] Join all 173 retained monster rows to attack-preference, special and
+  loot source paths in [MM6_MONSTER_EFFECT_SEAMS_F2.md](MM6_MONSTER_EFFECT_SEAMS_F2.md).
+  Six guide-checked male-target preference rows reach an inherited Monk
+  predicate; 26 numeric multi-target preferences are parsed but have no
+  runtime reader. Three weapon-break rows reach an inverted equipped-weapon
+  guard, and 12 inherited fixed-drop family rows would use numeric IDs in
+  MM6's spell-scroll band. Exact mappings are private. These are static
+  mismatches, not observed original or current MM6 encounter outcomes.
 - [ ] Give MM6 title-specific monster IDs/families, projectiles, damage and
   resistance channels, special attacks, spell casts, hostility/faction rules,
   treasure and fixed drops. Eliminate silent fallbacks for active labels and
@@ -269,6 +277,15 @@ that requirement.
   type ranges, and 98 special-band IDs have held-item event operands. Sixty-seven
   special/misc roles and 164 item guide semantics remain unresolved; static
   consumer coverage does not establish their effects.
+- [x] Triage the 164 unresolved item-semantic rows and current action paths in
+  [MM6_ITEM_EFFECT_SEAMS_F2.md](MM6_ITEM_EFFECT_SEAMS_F2.md).
+  `scripts/mm6_probe_item_effect_seams.py` keeps exact roles/events privately:
+  66 broad special/misc rows, 50 message scrolls, 29 quest-described misc,
+  15 outside the prior high-risk band, two quest-described equipment and one
+  each spell scroll/book. All seven current direct-use item constants exceed
+  MM6's max ID, and none of the 50 MM6 message scrolls passes the inherited
+  read-window numeric guard. These are current-source mismatches, not verified
+  original effects or a witnessed UI result.
 - [ ] Replace MM7 item-kind range assumptions with MM6-specific IDs and
   checks. Make every MM6 spell scroll cast its intended spell, every book
   teach its intended spell, every message scroll display its text, and every

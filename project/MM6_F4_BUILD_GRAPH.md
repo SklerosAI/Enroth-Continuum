@@ -20,6 +20,10 @@ The implementation should use the retained ignored reference set and private F3 
 
 The ordering is a dependency graph, not eight mandatory serial coding teams. Resource readers and title IDs unblock world, rules and presentation work in parallel; event execution needs the MM6 model and world state; `.ec6` needs stable runtime fields; the integrated scenario harness is the final offline join. Use separate agent-owned branches/files for concurrent implementation, with one integrator owning shared dispatch and the checklist. Do not merge a half-implemented MM6 path into the MM7 runtime or install a new Atlas helper during an intermediate seam.
 
+The [item-effect seams](MM6_ITEM_EFFECT_SEAMS_F2.md) require an MM6 read-window ID policy and direct-use dispatch before the item/action scenarios can pass. The 164-row triage is an evidence queue, not 164 verified effects; F3 reconciles exact roles before F4 fixtures lock them.
+
+The [monster-effect seams](MM6_MONSTER_EFFECT_SEAMS_F2.md) require title-specific gender and multi-target selection, weapon-break eligibility, Energy/resistance and fixed-drop policy. Test each against the F3-reconciled rules; the current source/guide mismatches alone do not supply original outcome formulas.
+
 ## F3 lock before code
 
 The F3 report must resolve original archive identity, active schema boundaries and ID/source discrepancies, or name a specific ambiguity with a conservative representation and F4/F5 check. The source SHA and private F2 report hashes come from `scripts/mm6_f2_freeze_manifest.py`; `scripts/mm6_f3_identity_preflight.py` is one component of F3, not a content gate by itself. The integrator updates this build graph after F3 if the original data contradicts F2, then records an F4 start decision. Exact original bytes, per-ID ledgers and screenshots remain ignored locally.

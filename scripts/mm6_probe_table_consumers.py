@@ -25,6 +25,14 @@ def source_fingerprint(paths: list[Path], repo: Path) -> str:
     return digest.hexdigest()
 
 
+def indexed_rows(catalog: dict, name: str) -> dict[int, tuple[str, ...]]:
+    result = {}
+    for row in catalog["tables"][name]["rows"]:
+        if row["id"].isdigit():
+            result[int(row["id"])] = tuple(cell.strip().casefold() for cell in row["cells"][1:])
+    return result
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("reference", type=Path, help="retained ignored MM6 research directory")
@@ -56,6 +64,18 @@ def main() -> None:
 
     rows = [{"table": name, "direct_literal_loads": hits[name.casefold()]}
             for name in names]
+    autonote = indexed_rows(catalog, "autonote.txt")
+    autonotes = indexed_rows(catalog, "autonotes.txt")
+    common_note_ids = autonote.keys() & autonotes.keys()
+    note_comparison = {
+        "singular_numeric_rows": len(autonote),
+        "plural_numeric_rows": len(autonotes),
+        "shared_ids": len(common_note_ids),
+        "shared_ids_with_identical_other_cells": sum(autonote[i] == autonotes[i] for i in common_note_ids),
+        "singular_only_ids": sorted(autonote.keys() - autonotes.keys()),
+        "plural_only_ids": sorted(autonotes.keys() - autonote.keys()),
+        "shared_ids_with_differences": sorted(i for i in common_note_ids if autonote[i] != autonotes[i]),
+    }
     result = {
         "format": 1,
         "scope": "retained table names against literal eventsData calls in current C++ only",
@@ -64,6 +84,7 @@ def main() -> None:
                     "with_literal_load": sum(bool(row["direct_literal_loads"]) for row in rows),
                     "without_literal_load": sum(not row["direct_literal_loads"] for row in rows)},
         "tables": rows,
+        "autonote_plural_comparison": note_comparison,
         "catalog_sha256": hashlib.sha256(catalog_path.read_bytes()).hexdigest(),
         "cpp_source_fingerprint": source_fingerprint(paths, repo),
         "scanned_source_files": len(paths),

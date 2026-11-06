@@ -42,6 +42,14 @@ profession descriptions and item-use flows. Classify `errorlog.txt` as data
 or incidental only after checking its provenance and consumers. Do not simply
 wire every filename into startup.
 
+The probe also compares the two retained autonote tables without publishing
+their text. All 116 numeric IDs in `autonotes.txt` also occur in
+`autonote.txt`; 114 shared rows have identical remaining cells, two differ,
+and the singular table has 12 additional IDs. This suggests a close relationship,
+but not which table the original game uses or whether the differing rows have
+runtime significance. Resolve the provenance and observed behavior before
+calling the plural table redundant.
+
 ## Closure checks
 
 1. For each of the 24 directly loaded tables, compare its actual retained

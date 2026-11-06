@@ -454,3 +454,9 @@ Chronological record of wiki activity.
 - Added an MM6-only candidate validator that decodes all sixteen known `.ec6` sections, requires the private expected map-name set, and parses each of 67 delta entries with its caller-supplied base entry before returning or assigning any state.
 - Indoor delta validation uses its parsed base. Outdoor base and delta are separately bounded; their content-level relation remains unproved. The trusted source reader, full save transaction and SaveLoad wiring remain open.
 - Built the arm64 unit target; two focused tests passed, including all 67 retained F3-matched base/delta pairs and negative missing-base, wrong-base-type, malformed-delta and name-set cases. Direct C++ style and diff checks passed. No original installation was reread or partial MM6 game launched.
+
+## [2026-11-06] update | MM6 follower roster bounds
+- by: T-Burton-ND via codex
+- Audited the HIRE/RESC identity gap and found the inherited follower roster's signed one-byte table index could not address the retained MM6 table's upper rows. No stable source ID was inferred from duplicate names or party copies.
+- Added an MM6-only checked 16-bit roster with party slots first and table followers in row order. The MM7/MM8 roster representation and lookup path remain unchanged; malformed active counts and unnamed hired rows are rejected.
+- The arm64 unit target built and all 11 focused HIRE/roster tests passed, including high-row and 501-row synthetic cases. Exact private table rows were not committed; no original installation was reread or partial game launched. F5 hire/dismiss/save and stable source provenance remain open.

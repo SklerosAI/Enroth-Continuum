@@ -39,8 +39,10 @@ def main() -> None:
     creation_manifest = rules / "creation.json"
     transport_manifest = rules / "transport.json"
     spell_manifest = rules / "spells.json"
-    if not creation_manifest.is_file() or not transport_manifest.is_file() or not spell_manifest.is_file():
-        parser.error("private MM6 creation, transport or spell manifest is missing from the local user profile")
+    first_aid_manifest = rules / "first-aid.json"
+    if not all(path.is_file() for path in (creation_manifest, transport_manifest,
+                                           spell_manifest, first_aid_manifest)):
+        parser.error("private MM6 creation, transport, spell or First Aid manifest is missing from the local user profile")
     subprocess.run([sys.executable, "-B", str(root / "scripts/mm6_f4_check_spell_learning.py"),
                     str(research), str(creation_manifest)], check=True)
 
@@ -52,6 +54,7 @@ def main() -> None:
         "ENROTH_MM6_OUTDOOR_DECODED_DIR": str(research / "F4_OUTDOOR_DECODED"),
         "ENROTH_MM6_TRANSPORT_MANIFEST": str(transport_manifest),
         "ENROTH_MM6_SPELL_RULES_MANIFEST": str(spell_manifest),
+        "ENROTH_MM6_FIRST_AID_MANIFEST": str(first_aid_manifest),
     })
     subprocess.run([str(binary), "--gtest_filter=MM6*.*:LodReader.OriginalDirectoryOrder"],
                    check=True, env=environment)

@@ -6,6 +6,7 @@
 
 #include "Engine/MM6/MM6ShopGuildClockFields.h"
 #include "Engine/MM6/MM6ShopStockIdentity.h"
+#include "Engine/MM6/MM6ShopStockPurchase.h"
 
 UNIT_TEST(MM6ShopGuildClockFields, SourceProvenRowsShareBoundarySlot) {
     EXPECT_EQ(mm6::shopClockSlot(1), 0);
@@ -69,4 +70,26 @@ UNIT_TEST(MM6ShopGuildClockFields, PhysicalStockIndicesPreserveSharedShopGuildEd
     EXPECT_THROW((void) mm6::guildStockRecordIndex(141, 0, GameTitle::MM6), std::exception);
     EXPECT_THROW((void) mm6::guildStockRecordIndex(119, 12, GameTitle::MM6), std::exception);
     EXPECT_THROW((void) mm6::guildStockRecordIndex(119, 0, GameTitle::MM7), std::exception);
+}
+
+UNIT_TEST(MM6ShopGuildClockFields, PurchasedStockCopiesWholeRecordAndClearsOnlyOriginalBytes) {
+    std::vector<mm6::ShopStockRecord> physicalRecords(120 * 12);
+    const size_t shopIndex = mm6::shopStockRecordIndex(mm6::ShopStockBank::Second, 47, 5, GameTitle::MM6);
+    const size_t guildIndex = mm6::guildStockRecordIndex(119, 5, GameTitle::MM6);
+    ASSERT_EQ(shopIndex, guildIndex);
+    mm6::ShopStockRecord &shared = physicalRecords[shopIndex];
+    for (size_t i = 0; i < shared.size(); ++i)
+        shared[i] = static_cast<std::uint8_t>(i + 1);
+    const mm6::ShopStockRecord before = shared;
+
+    EXPECT_THROW((void) mm6::takePurchasedStockRecord(shared, GameTitle::MM7), std::exception);
+    EXPECT_EQ(shared, before);
+    const mm6::ShopStockRecord transferred = mm6::takePurchasedStockRecord(shared, GameTitle::MM6);
+    EXPECT_EQ(transferred, before);
+    for (size_t i = 0; i < 25; ++i)
+        EXPECT_EQ(shared[i], 0) << i;
+    for (size_t i = 25; i < 28; ++i)
+        EXPECT_EQ(shared[i], before[i]) << i;
+    EXPECT_EQ(physicalRecords[guildIndex], shared);
+    EXPECT_THROW((void) mm6::takePurchasedStockRecord(shared, GameTitle::MM6), std::exception);
 }

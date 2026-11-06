@@ -9,7 +9,7 @@ namespace mm6 {
 
 // Physical record identity from the first shop bank's origin. These indices
 // describe original MM6 storage aliasing, not a typed item or live owner.
-// Neither bank's menu label nor purchase mutation is inferred here.
+// Bank menu labels and live ownership remain outside this index contract.
 enum class ShopStockBank { First, Second };
 
 inline std::size_t shopStockRecordIndex(ShopStockBank bank, unsigned row,

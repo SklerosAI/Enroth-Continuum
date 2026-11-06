@@ -104,7 +104,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Shop Refresh PE Trace](MM6-F4-Shop-Refresh-PE-Trace.md) — Original row-keyed refresh and raw Party-block save proof, with stock tuple boundary still open
 - [MM6 F4 Shop Stock Tuple and Autosave](MM6-F4-Shop-Stock-Tuple-and-Autosave.md) — Two original stock banks, zero-ID display read and current cross-map save dependency
 - [MM6 F4 Shop Owner Field Gate](MM6-F4-Shop-Owner-Field-Gate.md) — Why SCLK is the only complete proved commerce field and stock still lacks a safe keyed owner
-- [MM6 F4 Shop Purchase-Write Gate](MM6-F4-Shop-Purchase-Write-Gate.md) — Original 28-byte slot proof, untraced purchase mutation and editor guild-layout discrepancy
+- [MM6 F4 Shop Purchase-Write Gate](MM6-F4-Shop-Purchase-Write-Gate.md) — Original 28-byte purchase copy, 25-byte source clear, active physical alias and remaining live-owner/editor discrepancy
 - [MM6 F4 Active World PID Restore](MM6-F4-Active-World-PID-Restore.md) — Active saved-map actor PID bounds and source-backed post-load identity gate
 - [MM6 F4 World Save Runtime](MM6-F4-World-Save-Runtime.md) — NPC and 67-map capture/staging with bounded active-map writer and outdoor identity join
 - [MM6 F4 Timed Buffs](MM6-F4-Timed-Buffs.md) — Bounded BUFF fields for party/character effects and open runtime/F5 checks

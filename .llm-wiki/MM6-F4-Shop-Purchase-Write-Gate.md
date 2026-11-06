@@ -7,11 +7,11 @@ tags: [mm6, f4, save, shop, stock]
 
 # MM6 F4 Shop Purchase-Write Gate
 
-This [source audit](../project/MM6_F4_SHOP_PURCHASE_WRITE_GATE.md) separates proved physical stock-record identity from unproved purchase mutation and live ownership.
+This [source audit](../project/MM6_F4_SHOP_PURCHASE_WRITE_GATE.md) records the original physical stock identity and purchase mutation while keeping live ownership and save persistence gated.
 
 ## Question
 
-Can the existing MM6 physical stock index support a complete detached `.ec6` stock-record codec now?
+What can the original MM6 stock identity and purchase write support safely now?
 
 ## Context
 
@@ -19,14 +19,16 @@ The original executable identifies two shop banks and a guild bank with 12 posit
 
 ## Analysis
 
-The selected shop slot reaches an item display call, but the inspected direct references do not identify the purchase write, its 28-byte effect, or the next read. The pinned research editor models two 47-row shop lists and then a separate 22-row guild list. Its guild list starts one 12-slot physical row after the original first active guild address, so the editor cannot settle the original shared-edge policy. Its item-field labels are hypotheses until matched to original mutation and a nonzero native save. The fork also lacks an MM6-keyed live stock owner that could supply post-purchase bytes.
+The original successful purchase handlers for both shop banks and the guild copy a complete 28-byte record to inventory, then clear source bytes 0–24 while retaining bytes 25–27. The first shop bank joins the second bank's success block after computing its own selected-record address. Failed gold or inventory checks do not reach that source clear on the inspected paths. The pinned research editor models two 47-row shop lists and then a separate 22-row guild list. Its guild list starts one 12-slot physical row after the original first active guild address, so the editor cannot settle the original shared-edge policy. Its item-field labels remain hypotheses without a nonzero native save. The fork also lacks an MM6-keyed live stock owner that could supply post-purchase bytes.
+
+The original new-game initializer clears complete 28-byte records in three contiguous runs of 564, 564 and 312 slots. These cover physical rows 0–46, 47–93 and 94–119. The last active shop row's second bank and the first active guild row both address physical row 94, which is cleared in the guild run. This strengthens the single physical-index requirement but does not prove the effective service lifetime at the shared edge.
 
 ## Conclusion
 
-Do not add a detached `SHOP` record codec yet. An opaque 28-byte copy proves only copying; an ID-only field loses data; disjoint arrays split the physical alias. The existing `SCLK` refresh-deadline section and normal MM6 SaveLoad guard remain as they are.
+A [detached MM6 helper](../src/Engine/MM6/MM6ShopStockPurchase.h) now models the proved full-record copy and partial source clear. Keep the `SHOP` save codec gated: an ID-only field loses data and disjoint arrays split the physical alias. The existing `SCLK` refresh-deadline section and normal MM6 SaveLoad guard remain as they are.
 
 ## Open follow-ups
 
-Trace purchase writes and subsequent reads in all three bank paths, inspect a nonzero owner-local native save at the shared edge, then define one MM6-keyed physical owner and nonzero/duplicate/late-failure tests. Keep bounty and ban state outside this stock contract.
+Trace the next stock read across sale and refresh at the shared edge, inspect a nonzero owner-local native save, then define one MM6-keyed physical owner and nonzero/duplicate/late-failure tests. Keep bounty and ban state outside this stock contract.
 
 See also: [Shop Stock Tuple and Autosave](MM6-F4-Shop-Stock-Tuple-and-Autosave.md), [Shop Owner Field Gate](MM6-F4-Shop-Owner-Field-Gate.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

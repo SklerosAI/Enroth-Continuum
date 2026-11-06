@@ -660,3 +660,9 @@ Chronological record of wiki activity.
 - A title-specific resolver now distinguishes ordinary MM6 house rows, blank room fields and terminal pseudo-houses 600/601. It rejects foreign house/room IDs and copies a validated MM6 descriptor without accessing the inherited MM7 room array. The retained private-backed test applied it to all 674 active `SpeakInHouse` instructions.
 - Source review mapped seven inherited room-array read sites across house entry, proprietor setup, sound, transitions and movie return. The latter two can reach the MM7 array independently of the guarded `enterHouse`; field consumers and live service/media behavior remain open.
 - The arm64 MM6/MM7/unit targets built; focused room tests passed 2/2 without skips. No original installation, MM6 process or protected MM7 app/profile was opened.
+
+## [2026-11-06] test | 152-test MM6 integration checkpoint
+- by: T-Burton-ND via codex
+- Integrated the bounded MM6 quest-bit party-state path, read-only house room resolver, explicit six-column monster resistance view and stricter sixteen-section `.ec6` disk validation. The quest path omits unproved MM6 journal/audio cues; house entry, unproved damage channels and live SaveLoad remain gated.
+- The combined arm64 MM6, OpenEnroth and unit targets built. The offline runner passed 152/152 tests from 47 suites without skips, including private retained inputs; the general suite passed 438/438. Public status, build graph and agent handoff record this checkpoint.
+- The original installation and partial MM6 game were not opened; only the ignored local references and owner profile were used. MM7's app/profile and the reserved MM8 checkout were untouched.

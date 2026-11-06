@@ -348,3 +348,24 @@ capture checks current map ID, loaded table `.odm`, `HEAD` and the unique
 private-manifest `.ddm` before encoding. These add two tests to the integrated
 MM6/LOD gate. Actual house playback, outdoor transitions and save/reload remain
 unobserved; the launch gate stays closed.
+
+## MM6 F4 integrated checkpoint — 209 tests, 2026-11-06
+
+The arm64 MM6, OpenEnroth and unit targets linked; the one-command private-backed
+offline suite passed **209/209 MM6/LOD tests from 61 suites**, and the separate
+general suite passed **438/438**. Every one of the 116 distinct MM6 house room
+movies referenced by the retained table produced a bounded first decoded frame
+without launching a game. One F3-matched active event sound resolved through
+the MM6 sound table and staged SND archive to nonempty PCM without playback.
+The detached Power Cure transaction stages mana, capped healing and recovery
+for four copied characters; its live cast guard remains closed.
+
+The 67-map save validator checks populated MM6 templates for positive ground
+and chest item IDs, accepts only the six observed negative chest random-item
+markers, and rejects foreign IDs before assigning a candidate. The inherited
+MM7 chest generator could select IDs that are MM6 message scrolls, so a new
+title guard blocks **every MM6 level load** before chest, RNG or artifact
+mutation. The MM6 generator, chest grid, shop save identity, full `.ec6`
+transaction, spell effects and services remain F4 work. No MM6 process was
+launched; the installed MM7 app/profile and reserved MM8 checkout were not
+changed. Proprietary assets and detailed reports remain ignored locally.

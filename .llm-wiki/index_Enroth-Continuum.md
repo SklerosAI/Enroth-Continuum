@@ -45,22 +45,23 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Condition Variables](MM6-F4-Condition-Variables.md) — Bounded dispatch for 18 shipped condition uses; 36 status writes remain guarded
 - [MM6 F4 House Type Routing](MM6-F4-House-Type-Routing.md) — Title-specific classification for retained house labels and unresolved services/screens
 - [MM6 F4 House Service Gate](MM6-F4-House-Service-Gate.md) — House type families and pre-mutation entry boundary pending MM6 services
-- [MM6 F4 Room Descriptors](MM6-F4-Room-Descriptors.md) — Private 119-room manifest and all 674 active house-entry dispositions
+- [MM6 F4 Room Descriptors](MM6-F4-Room-Descriptors.md) — Private 119-room manifest, all 674 entry dispositions, 116 decoded room frames and one decoded event sound
+- [MM6 F4 Chest Generation](MM6-F4-Chest-Generation.md) — Explicit MM6 load guard before inherited MM7 random loot and its original-rule unlock gate
 - [MM6 F4 Movie Lookup](MM6-F4-Movie-Lookup.md) — Exact extensionless VID lookup, owner-matched name coverage and remaining playback checks
 - [MM6 F4 Awards](MM6-F4-Awards.md) — Retained text loading, formatted-row guard and open award ordering/counter rules
 - [MM6 F4 Spell Rules](MM6-F4-Spell-Rules.md) — Private F3-backed 99-spell mana/recovery selection and unresolved cast/effect routes
 - [MM6 F4 Spell Dispatch](MM6-F4-Spell-Dispatch.md) — All-99 MM6 effect rejection boundary, per-ID private handoff and remaining semantic proof
-- [MM6 F4 Player Cast Transaction](MM6-F4-Player-Cast-Transaction.md) — Source-order player-cast audit and detached First Aid character-state transaction
+- [MM6 F4 Player Cast Transaction](MM6-F4-Player-Cast-Transaction.md) — Source-order player-cast audit and detached First Aid/Power Cure character-state transactions
 - [MM6 F4 Spell Items](MM6-F4-Spell-Items.md) — F3-matched scroll/book ID bands, checked lookup and guarded consumers
 - [MM6 F4 Potion Matrix](MM6-F4-Potion-Matrix.md) — F3-matched 29×29 `useitems.txt` lookup with opaque marker effects
 - [MM6 F4 Portrait Seam](MM6-F4-Portrait-Seam.md) — Offline MM6 face/frame implementation, verification, and remaining voice/visual work
 - [MM6 F4 Creation Rules](MM6-F4-Creation-Rules.md) — Private F3-array manifest, six-class creation path, mana dispatch and remaining formula/UI checks
 - [MM6 F4 Indoor Runtime](MM6-F4-Indoor-Runtime.md) — Bounded BLV/DLV projection and changed-state encoding with retained opaque wire
-- [MM6 F4 Map Save Fields](MM6-F4-Map-Save-Fields.md) — Bounded `.ec6` map-delta section, verified private F3 source reader and whole-save validation obligations
+- [MM6 F4 Map Save Fields](MM6-F4-Map-Save-Fields.md) — Bounded `.ec6` map-delta section, private F3 source reader and ground/chest item-marker validation
 - [MM6 F4 NPC State](MM6-F4-NPC-State.md) — Bounded `.ec6` RESC NPC/group fields and copy-staging with open gameplay semantics
 - [MM6 F4 NPC Events](MM6-F4-NPC-Events.md) — Bounded topic/move state and MM6 global-script precedence over MM7 teacher IDs
-- [MM6 F4 Item Event Compare](MM6-F4-Item-Event-Compare.md) — Read-only inventory/held-item comparison and guarded item writes
-- [MM6 F4 Item Event Writes](MM6-F4-Item-Event-Writes.md) — Retained reward/handoff topology and the transaction proof needed before enabling writes
+- [MM6 F4 Item Event Compare](MM6-F4-Item-Event-Compare.md) — Read-only inventory/held-item comparison and bounded item-write handoff
+- [MM6 F4 Item Event Writes](MM6-F4-Item-Event-Writes.md) — Retained reward/handoff topology and bounded Add/Subtract transaction limits
 - [MM6 F4 Item Event PE](MM6-F4-Item-Event-PE.md) — Original executable dispatch, bounded Add/Subtract and remaining cursor/artifact gates
 - [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial sixteen-section `.ec6` candidate with `CHAR` v2 modifiers, cross-field checks and remaining save gaps
 - [MM6 F4 Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md) — Live-owner gaps, detached staging order and atomic commit gates

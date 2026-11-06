@@ -1042,8 +1042,16 @@ void OpenGLRenderer::DrawOutdoorTerrain() {
                     int width = thistexture->width();
                     // check size to see what unit it needs
                     int i;
-                    for (i = 0; i < 8; i++) {
-                        if (terraintexturesizes[i] == width || terraintexturesizes[i] == 0) break;
+                    if (engine->gameTitle() == GameTitle::MM6) {
+                        // MM6 land and water are both 128px. Unit 0 owns seven
+                        // water frames; glterrain reads land only from unit 1.
+                        if (width != terraintexturesizes[0] || numterraintexloaded[1] >= 256)
+                            throw Exception("Unsupported MM6 outdoor land texture layout");
+                        i = 1;
+                    } else {
+                        for (i = 0; i < 8; i++) {
+                            if (terraintexturesizes[i] == width || terraintexturesizes[i] == 0) break;
+                        }
                     }
 
                     if (i == 8) {

@@ -1,5 +1,7 @@
 #include <algorithm>
 #include <cstdlib>
+#include <memory>
+#include <set>
 #include <string>
 #include <string_view>
 
@@ -8,6 +10,7 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/MM6/MM6Archive.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Graphics/Sprites.h"
@@ -17,6 +20,9 @@
 #include "Engine/Resources/LOD.h"
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/SaveLoad.h"
+#include "Engine/Snapshots/CompositeSnapshots.h"
+#include "Engine/Snapshots/MM6OutdoorSnapshot.h"
+#include "Engine/Tables/TileTable.h"
 #include "Engine/Tables/MapTable.h"
 
 #include "GUI/GUIWindow.h"
@@ -36,6 +42,46 @@ GAME_TEST(MM6SpriteOctants, SevenCharacterDirectionalPrefix) {
     ASSERT_NE(frame, nullptr);
     for (int octant = 0; octant < 8; ++octant)
         EXPECT_NE(frame->sprites[octant], nullptr) << "octant " << octant;
+}
+
+GAME_TEST(MM6TerrainTextureUnits, AuthoredOutdoorLandFitsUnitOne) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    size_t maps = 0;
+    size_t peakLandLayers = 0;
+    const Sizei waterSize = engine->resources()->bitmapSize("wtrtyl");
+    ASSERT_EQ(waterSize, Sizei(128, 128));
+
+    for (const std::string &name : pGames_LOD->ls()) {
+        if (!name.ends_with(".odm"))
+            continue;
+        auto base = std::make_unique<OutdoorLocation_MM7>();
+        deserializeMM6Outdoor(decodeMM6ArchiveEntry(pGames_LOD->read(name)), base.get());
+        auto terrain = std::make_unique<OutdoorTerrain>();
+        reconstruct(*base, terrain.get(), GameTitle::MM6);
+
+        for (int month = 0; month < 12; ++month) {
+            terrain->changeSeason(month, GameTitle::MM6);
+            std::set<std::pair<std::string, bool>> landNames;
+            for (int y = 0; y < 127; ++y) {
+                for (int x = 0; x < 127; ++x) {
+                    const TileData &tile = terrain->tileDataByGrid({x, y});
+                    if (tile.textureName == "wtrtyl")
+                        continue;
+                    landNames.emplace(tile.textureName, tile.flags & TILE_GENERATED_TRANSITION);
+                }
+            }
+            for (const auto &[textureName, generated] : landNames) {
+                const Sizei size = generated ? engine->resources()->generatedSize() :
+                    engine->resources()->bitmapSize(textureName);
+                EXPECT_EQ(size, waterSize) << name << " month " << month;
+            }
+            peakLandLayers = std::max(peakLandLayers, landNames.size());
+            EXPECT_LE(landNames.size(), 256u) << name << " month " << month;
+        }
+        ++maps;
+    }
+    EXPECT_EQ(maps, 15u);
+    EXPECT_GT(peakLandLayers, 0u);
 }
 
 GAME_TEST(MM6SpritePalette, TreeFrameUsesRecordedPalette) {

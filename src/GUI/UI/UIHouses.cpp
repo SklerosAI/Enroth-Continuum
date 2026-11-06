@@ -300,6 +300,9 @@ bool enterHouse(HouseId uHouseID) {
         if (entry.proprietorIconName &&
             engine->resources()->iconSize(*entry.proprietorIconName).isEmpty())
             throw std::runtime_error("MM6 house proprietor icon is unavailable");
+        if (entry.kind == mm6::HouseEntryKind::TableBacked &&
+            !pMediaPlayer->hasHouseMoviePayload(entry.room->videoName))
+            throw std::runtime_error("MM6 house room movie is unavailable");
         if (entry.kind == mm6::HouseEntryKind::Terminal)
             engine->_statusBar->setEvent("This passage is unavailable.");
         else

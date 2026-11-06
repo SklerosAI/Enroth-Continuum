@@ -16,6 +16,8 @@ def main() -> None:
     parser.add_argument("research", type=Path)
     parser.add_argument("manifest", type=Path)
     parser.add_argument("staged_icons", type=Path)
+    parser.add_argument("staged_anims1", type=Path)
+    parser.add_argument("staged_anims2", type=Path)
     args = parser.parse_args()
 
     repo = Path(__file__).resolve().parents[1]
@@ -27,23 +29,30 @@ def main() -> None:
                          / "Profiles/MM6/rules/house-rooms.json")
     if args.manifest != expected_manifest or args.manifest.is_symlink():
         parser.error("manifest must be the owner-local MM6 room source")
-    expected_icons = (Path.home() / "Library/Application Support/Enroth Continuum"
-                      / "Game Data/MM6/app/data/icons.lod")
+    staged_app = (Path.home() / "Library/Application Support/Enroth Continuum"
+                  / "Game Data/MM6/app")
+    expected_icons = staged_app / "data/icons.lod"
     if args.staged_icons != expected_icons or args.staged_icons.is_symlink():
         parser.error("icon archive must be the staged owner-local MM6 app copy")
+    for supplied, expected in ((args.staged_anims1, staged_app / "Anims/Anims1.vid"),
+                               (args.staged_anims2, staged_app / "Anims/Anims2.vid")):
+        if supplied != expected or supplied.is_symlink():
+            parser.error("movie archive must be the staged owner-local MM6 app copy")
 
     identity_path = research / "F3_IDENTITY_2026-11-05.json"
     gate = json.loads((research / "F3_GATE_REPORT_HASHES_2026-11-06.json").read_text())
     if gate["reports_sha256"][identity_path.name] != sha256(identity_path):
         raise ValueError("retained MM6 F3 identity report differs from accepted gate")
     identity = json.loads(identity_path.read_text())
-    icon_identity = next(row for row in identity["files"]
-                         if row["relative_path"] == "data/icons.lod")
-    if (icon_identity["status"] != "match" or
-            icon_identity["actual_sha256"] != icon_identity["expected_sha256"] or
-            args.staged_icons.stat().st_size != icon_identity["size_bytes"] or
-            sha256(args.staged_icons) != icon_identity["expected_sha256"]):
-        raise ValueError("staged MM6 icon archive differs from accepted F3 source")
+    for relative, staged in (("data/icons.lod", args.staged_icons),
+                             ("Anims/Anims1.vid", args.staged_anims1),
+                             ("Anims/Anims2.vid", args.staged_anims2)):
+        source = next(row for row in identity["files"] if row["relative_path"] == relative)
+        if (source["status"] != "match" or
+                source["actual_sha256"] != source["expected_sha256"] or
+                staged.stat().st_size != source["size_bytes"] or
+                sha256(staged) != source["expected_sha256"]):
+            raise ValueError("staged MM6 media archive differs from accepted F3 source")
 
     icons_index = research / "icons.entries"
     table = research / "icons/2devents.txt"
@@ -71,7 +80,7 @@ def main() -> None:
                 raise ValueError("referenced MM6 proprietor icon is absent")
     if pictures != 51:
         raise ValueError("MM6 referenced proprietor picture count changed")
-    print("MM6 house presentation: 116 referenced rooms, 51 proprietor pictures present; staged archive F3-matched")
+    print("MM6 house presentation: 116 referenced rooms, 51 proprietor pictures present; three staged archives F3-matched")
 
 
 if __name__ == "__main__":

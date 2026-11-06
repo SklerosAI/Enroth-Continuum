@@ -776,6 +776,10 @@ void MPlayer::OpenHouseMovie(std::string_view pMovieName, bool bLoop) {
     sInHouseMovie = pMovieName;
 }
 
+bool MPlayer::hasHouseMoviePayload(std::string_view movieName) {
+    return static_cast<bool>(LoadMovie(movieName));
+}
+
 void MPlayer::HouseMovieLoop() {
     if (!pMovie_Track || engine->config->debug.NoVideo.value()) {
         return;

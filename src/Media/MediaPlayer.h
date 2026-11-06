@@ -30,6 +30,8 @@ class MPlayer {
     void PlayFullscreenMovie(std::string_view pMovieName);
 
     void OpenHouseMovie(std::string_view pMovieName, bool bLoop);
+    // Resolves the active title's movie bytes without starting playback.
+    bool hasHouseMoviePayload(std::string_view movieName);
     void HouseMovieLoop();
 
     bool IsMoviePlaying() const;

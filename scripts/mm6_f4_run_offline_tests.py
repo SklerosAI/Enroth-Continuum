@@ -52,13 +52,18 @@ def main() -> None:
     house_room_manifest = rules / "house-rooms.json"
     staged_icons = (Path.home() / "Library/Application Support/Enroth Continuum"
                     / "Game Data/MM6/app/data/icons.lod")
+    staged_anims1 = (Path.home() / "Library/Application Support/Enroth Continuum"
+                     / "Game Data/MM6/app/Anims/Anims1.vid")
+    staged_anims2 = (Path.home() / "Library/Application Support/Enroth Continuum"
+                     / "Game Data/MM6/app/Anims/Anims2.vid")
     if not all(path.is_file() for path in (creation_manifest, transport_manifest,
                                            spell_manifest, first_aid_manifest, power_cure_manifest,
                                            timed_cure_manifest, combat_buff_manifest,
                                            house_room_manifest)):
         parser.error("private MM6 rule or room manifest is missing from the local user profile")
     subprocess.run([sys.executable, "-B", str(root / "scripts/mm6_f4_check_house_presentation.py"),
-                    str(research), str(house_room_manifest), str(staged_icons)], check=True)
+                    str(research), str(house_room_manifest), str(staged_icons),
+                    str(staged_anims1), str(staged_anims2)], check=True)
     subprocess.run([sys.executable, "-B", str(root / "scripts/mm6_f4_check_spell_learning.py"),
                     str(research), str(creation_manifest)], check=True)
 
@@ -78,6 +83,8 @@ def main() -> None:
         "ENROTH_MM6_COMBAT_BUFF_MANIFEST": str(combat_buff_manifest),
         "ENROTH_MM6_ROOM_MANIFEST": str(house_room_manifest),
         "ENROTH_MM6_STAGED_ICONS_LOD": str(staged_icons),
+        "ENROTH_MM6_STAGED_ANIMS1_VID": str(staged_anims1),
+        "ENROTH_MM6_STAGED_ANIMS2_VID": str(staged_anims2),
     })
     subprocess.run([str(binary), "--gtest_filter=MM6*.*:LodReader.OriginalDirectoryOrder"],
                    check=True, env=environment)

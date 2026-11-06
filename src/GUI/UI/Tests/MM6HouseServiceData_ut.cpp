@@ -17,6 +17,10 @@
 #include "Library/Lod/LodReader.h"
 #include "Library/LodFormats/LodFormats.h"
 
+#include "Library/Vid/VidReader.h"
+
+#include "Media/MM6MovieLookup.h"
+
 #include "Utility/Memory/Blob.h"
 
 #include "gtest/gtest.h"
@@ -303,5 +307,35 @@ TEST(MM6HouseServiceData, DecodesEveryReferencedProprietorImageFromStagedArchive
         const LodImage image = lod::decodeImage(imageData);
         EXPECT_EQ(image.image.size(), size);
         EXPECT_EQ(image.image.pixels().size(), static_cast<size_t>(size.w * size.h));
+    }
+}
+
+TEST(MM6HouseServiceData, ResolvesEveryReferencedRoomMovieFromStagedArchives) {
+    const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
+    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
+    const char *firstPath = std::getenv("ENROTH_MM6_STAGED_ANIMS1_VID");
+    const char *secondPath = std::getenv("ENROTH_MM6_STAGED_ANIMS2_VID");
+    if (!manifest || !research || !firstPath || !secondPath)
+        GTEST_SKIP() << "private MM6 room and staged movie evidence is unavailable";
+
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(manifest)));
+    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
+        Blob::fromString(readFile(std::filesystem::path(research) / "icons" / "2devents.txt")), rooms);
+    const VidReader first{PathView(firstPath)};
+    const VidReader second{PathView(secondPath)};
+    std::set<std::string> names;
+    for (int houseId = 1; houseId <= 557; ++houseId) {
+        const mm6::HouseEntryPlan entry = mm6::planHouseEntry(houses, houseId);
+        if (entry.kind == mm6::HouseEntryKind::TableBacked) {
+            ASSERT_TRUE(entry.room.has_value());
+            names.insert(entry.room->videoName);
+        }
+    }
+    EXPECT_EQ(names.size(), 116);
+    for (const std::string &name : names) {
+        const Blob movie = lookupMovieBlob(GameTitle::MM6, first, second, name);
+        EXPECT_TRUE(movie);
+        EXPECT_GT(movie.size(), 16);
+        EXPECT_TRUE(movie.str().starts_with("SMK"));
     }
 }

@@ -173,3 +173,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added the whole-program load barrier: current parsing rejects 318 records across 26 listed map scripts, so all-resource parsing precedes side-effect work.
 - Recorded the separate zero-mastery skill-check conflict and its F3/F4/F5 checks. Exact events and operands remain ignored locally; no live quest outcome was claimed.
+
+## [2026-11-05] ingest | MM6 item and monster effect seams
+- by: T-Burton-ND via codex
+- Linked the 164-row item triage, direct-use and message-scroll-window source mismatches to F3 questions and F4/F5 checks.
+- Linked all-173 monster risk joins, including gender/multi-target preference, weapon-break and fixed-drop collisions. Exact per-ID evidence stays ignored locally; no original effect or live encounter was claimed.

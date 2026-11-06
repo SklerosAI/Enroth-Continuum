@@ -268,3 +268,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a checked exporter for the corrected F3 static transport data and linked its public handoff. The mode-0600 private profile manifest contains 36 route descriptors and 21 three-slot houses without placing route constants in Git.
 - Classified 34 regular cells, one weekday-token ambiguity, two opaque specials and 26 blanks. The MM6 transport UI, fare/quest policy, autosave and visible departure remain open.
+
+## [2026-11-06] ingest | MM6 indoor runtime projection
+- by: T-Burton-ND via codex
+- Added a title-specific BLV/DLV renderer projection for faces, rooms, lights, decorations, actors, items, chests, visibility and door arrays, retaining opaque delta bytes for the later writer.
+- Checked all 52 F3-matched retained base/delta pairs and wrapper decode, plus malformed references, in four focused native tests. The arm64 unit target and C++ style checks passed.
+- Recorded remaining save write-back, door motion, event-variable and F5 visual/campaign checks. No MM6 process or original installation was opened.

@@ -7,6 +7,8 @@ tags: [mm6, f4, outdoor, terrain, headless]
 
 # MM6 F4 Outdoor Tile Selectors
 
+The [terrain schema audit](MM6-F4-Terrain-Schema-Audit.md) records why the global tile row ID, not raw tileset and variant alone, is the required MM6 art key.
+
 The [public packet](../project/MM6_F4_OUTDOOR_TILE_SELECTORS.md) records the original-executable trace and the title-specific selector reconstruction.
 
 The earlier statement that the original first outdoor map contains 209 tile-zero cells is superseded. Its used terrain grid has no literal local tile ID zero. The inherited decoder discarded the four serialized base tile IDs and substituted bases through an MM7 tileset enum that collapses MM6 terrain and road types. That led 209 cells to the `pending` placeholder. The F3-identity-matched original executable reads the selected record's base field and adds the local offset. MM6 reconstruction now follows that field, validates its table span and each resulting ID, and leaves MM7's lookup unchanged.

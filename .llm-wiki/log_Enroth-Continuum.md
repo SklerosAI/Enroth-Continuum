@@ -1422,3 +1422,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Parent integrated the vertex/spawn projection and linked both arm64 targets. Focused `MM6WorldSaveRuntime.*` passed 8/8. The private save GameTest passed 1/1 twice with zero child windows and no sampled focus change.
 - The strict monitor wrapper returned 1 because the frontmost app differed only after the child exited, when the user switched from Skleros Chess to ChatGPT. This is a monitor caveat rather than a game-test failure. No private bytes or logs entered Git; normal MM6 SaveLoad remains guarded.
+
+## [2026-11-06] audit | MM6 SHOP field evidence gate
+- by: T-Burton-ND via codex
+- Rechecked the accepted original-executable stock/refresh trace, retained house-key matrix, public save packets and current SCLK owner. The 64-bit MM6-row-keyed refresh deadline is already fully represented by SCLK; a new stock-ID or raw 28-byte `SHOP` field lacks proved purchase-write semantics, complete item bytes, shared family-edge behavior, a nonzero native save sample and a title-local live owner. Ban and bounty keys/lifetimes are also unproved. Added a focused blocker packet and wiki page; no speculative codec or MM7 HouseId adapter was written.
+- The ignored owner-local static checker passed accepted identity, row/stride/boundary, raw Party-block save and cross-map autosave assertions. Linked `MM6ShopGuildClockFields.*` passed 2/2 for nonzero deadline round-trip and late-failure atomicity. No proprietary bytes entered Git. Normal MM6 SaveLoad remains guarded.

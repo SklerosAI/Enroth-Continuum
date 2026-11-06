@@ -4,6 +4,8 @@ Status: **all 99 regular MM6 spell effects reject before inherited dispatch** (2
 
 One [First Aid effect slice](MM6_F4_FIRST_AID_EFFECT.md) now has private-backed three-rank healing and a title-specific character-only branch. Its outer cast gate remains closed until the surrounding cast transaction is verified; this does not reduce the 99 blocked live effects.
 
+The [Power Cure slice](MM6_F4_POWER_CURE_EFFECT.md) adds a private-backed party-healing formula and bounded MM6 branch for another ID. Its live cast gate also remains closed.
+
 ## Evidence and coverage
 
 The retained `spell-effect-probe.json` and private guide matrix each cover IDs 1–99; the probe's `items.txt` and `spells.txt` hashes match the accepted F3 original-file reconciliation. The inherited player effect path has a numeric case or direct branch for all 99 IDs, but case presence does not prove MM6 behavior. At the same numeric ID, 50 spell labels match, 21 occur at another ID and 28 are absent or renamed. The guide comparison marks 58 inherited same-ID implementations as conflicting and 41 as not demonstrated; none is verified as an MM6 effect. All 99 require title-specific target and Normal/Expert/Master behavior checks. The active retained scripts contain 129 spell-cast records using 15 IDs; the monster table has 55 populated spell cells, including 13 labels the inherited parser does not recognize. These counts are structural, not reachability or live-effect proof.

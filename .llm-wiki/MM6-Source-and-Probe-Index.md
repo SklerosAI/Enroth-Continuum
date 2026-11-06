@@ -14,7 +14,8 @@ This index directs agents to the current public specifications and reproducible 
 - [MM6 implementation checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md) is the public coverage and gap register; its checked research rows are not playable-rule claims.
 - [F2 gate review](../project/MM6_F2_GATE_REVIEW.md) is the integration decision record. F2 is open and unfrozen; this review does not authorize F3.
 - [F3 preflight matrix](../project/MM6_F3_PREFLIGHT_MATRIX.md) is a draft one-pass original-file question list, not F2 or F3 gate completion.
-- [MM6 executable table locators F2](../project/MM6_EXECUTABLE_TABLE_LOCATORS_F2.md) records pinned MMExtension memory-address and record-layout leads for spell recovery, house movies and transport. The owner's executable has not been read for these values.
+- [MM6 executable table locators F2](../project/MM6_EXECUTABLE_TABLE_LOCATORS_F2.md) records pinned MMExtension memory-address and record-layout leads for creation, spell recovery, house movies and transport. The owner's executable has not been read for these values.
+- [F3 PE-table helper](../scripts/mm6_f3_pe_tables.py) is prepared to read the identity-matched executable only after F2 freeze and the eight-file identity report. Its [synthetic bounds test](../scripts/test_mm6_f3_pe_tables.py) passes; it has not read the owner executable.
 - [F4 offline build graph](../project/MM6_F4_BUILD_GRAPH.md) is a draft dependency and acceptance plan, to be reconciled after F3; it does not mean F4 has begun.
 - [F2 freeze manifest helper](../scripts/mm6_f2_freeze_manifest.py) is prepared to fingerprint tracked specs and ignored derived reports after an explicit F2 freeze and a clean tracked tree. It currently refuses to run because the gate is open; it never reads the original install.
 - [F3 identity checker](../scripts/mm6_f3_identity_preflight.py) is prepared to compare eight original archive/media/executable hashes with retained F1 ledgers during that consolidated pass. It refuses to read originals until the F2 gate, ignored freeze manifest and clean source SHA agree. It has only parsed retained ledgers; it has **not** read originals or passed F3.
@@ -29,11 +30,12 @@ This index directs agents to the current public specifications and reproducible 
 | Fourteen guide-family chapter/consumer ledger and remaining claim review | [Guide F2 review](../project/MM6_GUIDE_F2_REVIEW.md) |
 | Class, skill, creation, inherited potion UI | [Class and skill](../project/MM6_CLASS_SKILL_SPEC.md) |
 | Create Party, Quick Start, starting stats, items and spells | [Creation F2 audit](../project/MM6_CREATION_F2.md) |
+| Pinned MM6 six-family stat/skill, HP/SP and skill-recovery array leads | [Creation constants F2](../project/MM6_CREATION_CONSTANTS_F2.md) |
 | Starting-array schema lead, potion-guide reconciliation and rules acceptance | [Rules F2 closure packet](../project/MM6_RULES_F2_CLOSURE.md) |
 | All 99 spell IDs, inherited effect and item-range collisions | [Spell effect F2 audit](../project/MM6_SPELL_EFFECT_F2.md) |
 | All 99 spell guide locators and selected visual claim checks | [Spell guide claims F2](../project/MM6_SPELL_GUIDE_CLAIMS_F2.md) |
 | All 99 printed spell recovery categories and original-delay extraction target | [Spell recovery F2](../project/MM6_SPELL_RECOVERY_F2.md) |
-| Candidate MM6 spell, house-movie and transport executable tables | [Executable table locators F2](../project/MM6_EXECUTABLE_TABLE_LOCATORS_F2.md) |
+| Candidate MM6 creation, spell, house-movie and transport executable tables | [Executable table locators F2](../project/MM6_EXECUTABLE_TABLE_LOCATORS_F2.md) |
 | Map deltas, reset, versioned save, persistence | [Save and map](../project/MM6_SAVE_SPEC.md) |
 | Whole-save logical state families and `.ec6` field-manifest handoff | [Save field register F2](../project/MM6_SAVE_FIELD_REGISTER_F2.md) |
 | Retained delta section roundtrip and world consumer obligations | [World F2 closure packet](../project/MM6_WORLD_F2_CLOSURE.md) |

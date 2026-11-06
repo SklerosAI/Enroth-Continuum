@@ -10,6 +10,7 @@
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6MonsterPreferences.h"
 #include "Engine/MM6/MM6MonsterSpecialAttack.h"
+#include "Engine/MM6/MM6MonsterSpells.h"
 
 #include "Library/Logger/Logger.h"
 #include "Library/Serialization/Serialization.h"
@@ -376,7 +377,8 @@ void MonsterStats::Initialize(const Blob &monsters, GameTitle gameTitle) {
 
     // Spell cells. Format: "<spell name>,<mastery>[,]<skill>".
     // Spell names may contain spaces. Efreet's spell cell is "Lightning Bolt,M10", so the second comma is optional.
-    auto parseSpellEntry = [](std::string_view cell, SpellId &outSpellId, CombinedSkillValue &outMastery) {
+    auto parseSpellEntry = [gameTitle](std::string_view cell, SpellId &outSpellId,
+                                      CombinedSkillValue &outMastery) {
         outSpellId = SPELL_NONE;
         outMastery = CombinedSkillValue::none();
         if (cell.size() < 2)
@@ -385,7 +387,7 @@ void MonsterStats::Initialize(const Blob &monsters, GameTitle gameTitle) {
         std::array<std::string_view, 3> parts = split(unquoted).by(',');
         if (parts[0].empty())
             return;
-        outSpellId = ParseSpellType(parts[0]);
+        outSpellId = gameTitle == GameTitle::MM6 ? mm6::monsterSpellId(parts[0]) : ParseSpellType(parts[0]);
         std::string_view mastery = parts[1];
         std::string_view skill = parts[2];
         if (skill.empty() && mastery.size() > 1) {

@@ -11,6 +11,7 @@
 
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6MonsterSpecialAttack.h"
+#include "Engine/MM6/MM6MonsterSpells.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -145,4 +146,33 @@ UNIT_TEST(MM6MonsterSpecialAttack, CoversAllF3MatchedActiveMonsterRows) {
     EXPECT_EQ(fear, 8);
     EXPECT_EQ(mediumPoison, 4);
     EXPECT_EQ(severePoison, 4);
+}
+
+UNIT_TEST(MM6MonsterSpells, ResolvesMM6IdsAndRejectsUnknownNames) {
+    EXPECT_EQ(std::to_underlying(mm6::monsterSpellId("Fire Bolt")), 4);
+    EXPECT_EQ(std::to_underlying(mm6::monsterSpellId("Ice Bolt")), 28);
+    EXPECT_EQ(std::to_underlying(mm6::monsterSpellId("Mind Blast")), 58);
+    EXPECT_EQ(std::to_underlying(mm6::monsterSpellId("Dispell Magic")), 80);
+    EXPECT_EQ(std::to_underlying(mm6::monsterSpellId("Psychic Shockt")), 65);
+    EXPECT_THROW(mm6::monsterSpellId("unsupported"), std::runtime_error);
+}
+
+UNIT_TEST(MM6MonsterSpells, RetainsAllF3MatchedActiveMonsterCasts) {
+    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
+    if (!research)
+        GTEST_SKIP() << "Set ignored MM6 F3 research directory";
+    const std::filesystem::path path = std::filesystem::path(research) / "icons/monsters.txt";
+    std::ifstream stream(path, std::ios::binary);
+    ASSERT_TRUE(stream.is_open());
+    std::string data(std::istreambuf_iterator<char>{stream}, {});
+    MonsterStats stats;
+    stats.Initialize(Blob::fromString(std::move(data)), GameTitle::MM6);
+    int active = 0;
+    for (int rawId = 1; rawId <= 173; ++rawId) {
+        const MonsterInfo &info = stats.infos[static_cast<MonsterId>(rawId)];
+        active += info.spell1UseChance > 0;
+        if (info.spell1UseChance > 0)
+            EXPECT_NE(info.spell1Id, SPELL_NONE) << "monster ID " << rawId;
+    }
+    EXPECT_EQ(active, 55);
 }

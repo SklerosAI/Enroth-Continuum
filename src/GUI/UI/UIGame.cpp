@@ -43,6 +43,7 @@
 
 #include "GUI/GUIButton.h"
 #include "GUI/HudFrameResources.h"
+#include "GUI/HudPortraitAlertResources.h"
 #include "GUI/HudVitalBarResources.h"
 #include "GUI/MM6HudBookControls.h"
 #include "GUI/MM6TopPanelResources.h"
@@ -1274,27 +1275,25 @@ void GameUI_DrawPortraits() {
                     if (pTurnEngine->pQueue[i].uPackedID.type() != OBJECT_Character)
                         break;
 
-                    auto alert_texture = game_ui_player_alert_green;
-                    if (pParty->GetRedAlert())
-                        alert_texture = game_ui_player_alert_red;
-                    else if (pParty->GetYellowAlert())
-                        alert_texture = game_ui_player_alert_yellow;
-
-                    render->DrawQuad2D(alert_texture,
-                        {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[pTurnEngine->pQueue[i].uPackedID.id()] - 4, 384}); // was 385
+                    auto alert_texture = hudPortraitAlertForFlags(game_ui_player_alert_green,
+                        game_ui_player_alert_yellow, game_ui_player_alert_red,
+                        pParty->GetRedAlert(), pParty->GetYellowAlert());
+                    const int character = pTurnEngine->pQueue[i].uPackedID.id();
+                    const Pointi position = hudPortraitAlertPosition(engine->gameTitle(), character,
+                        {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[character] - 4, 384});
+                    render->DrawQuad2D(alert_texture, position);
                 }
             }
         }
     } else {
         for (int i = 0; i < pParty->pCharacters.size(); ++i) {
             if (pParty->pCharacters[i].CanAct() && !pParty->pCharacters[i].timeToRecovery) {
-                auto alert_texture = game_ui_player_alert_green;
-                if (pParty->GetRedAlert())
-                    alert_texture = game_ui_player_alert_red;
-                else if (pParty->GetYellowAlert())
-                    alert_texture = game_ui_player_alert_yellow;
-
-                render->DrawQuad2D(alert_texture, {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i] - 4, 384}); // was 385
+                auto alert_texture = hudPortraitAlertForFlags(game_ui_player_alert_green,
+                    game_ui_player_alert_yellow, game_ui_player_alert_red,
+                    pParty->GetRedAlert(), pParty->GetYellowAlert());
+                const Pointi position = hudPortraitAlertPosition(engine->gameTitle(), i,
+                    {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i] - 4, 384});
+                render->DrawQuad2D(alert_texture, position);
             }
         }
     }

@@ -13,6 +13,7 @@
 #include "GUI/HudNpcArrowResources.h"
 #include "GUI/HudStatusResources.h"
 #include "GUI/HudVitalBarResources.h"
+#include "GUI/HudPortraitAlertResources.h"
 #include "GUI/MM6HudActionControls.h"
 #include "GUI/MM6HudBookControls.h"
 
@@ -607,9 +608,11 @@ void SetUserInterface(PartyAlignment align) {
                                 assets->getIcon("ib-autmask-c");
         game_ui_minimap_compass = assets->getIcon(navigation.compass);
 
-        game_ui_player_alert_green = assets->getIcon("IB-InitG-c");
-        game_ui_player_alert_yellow = assets->getIcon("IB-InitY-c");
-        game_ui_player_alert_red = assets->getIcon("IB-InitR-c");
+        const HudPortraitAlertResources alerts = hudPortraitAlertResources(engine->gameTitle(),
+            "IB-InitG-c", "IB-InitY-c", "IB-InitR-c");
+        game_ui_player_alert_green = assets->getIcon(alerts.green);
+        game_ui_player_alert_yellow = assets->getIcon(alerts.yellow);
+        game_ui_player_alert_red = assets->getIcon(alerts.red);
 
         const HudNpcArrowResources npcArrows = hudNpcArrowResources(engine->gameTitle(),
             "IB-NPCLD-C", "IB-NPCRD-C");
@@ -663,9 +666,11 @@ void SetUserInterface(PartyAlignment align) {
                                 assets->getIcon("ib-autmask-a");
         game_ui_minimap_compass = assets->getIcon(navigation.compass);
 
-        game_ui_player_alert_green = assets->getIcon("IB-InitG-a");
-        game_ui_player_alert_yellow = assets->getIcon("IB-InitY-a");
-        game_ui_player_alert_red = assets->getIcon("IB-InitR-a");
+        const HudPortraitAlertResources alerts = hudPortraitAlertResources(engine->gameTitle(),
+            "IB-InitG-a", "IB-InitY-a", "IB-InitR-a");
+        game_ui_player_alert_green = assets->getIcon(alerts.green);
+        game_ui_player_alert_yellow = assets->getIcon(alerts.yellow);
+        game_ui_player_alert_red = assets->getIcon(alerts.red);
 
         const HudNpcArrowResources npcArrows = hudNpcArrowResources(engine->gameTitle(),
             "IB-NPCLD-A", "IB-NPCRD-A");
@@ -719,9 +724,11 @@ void SetUserInterface(PartyAlignment align) {
                                 assets->getIcon("ib-autmask-b");
         game_ui_minimap_compass = assets->getIcon(navigation.compass);
 
-        game_ui_player_alert_green = assets->getIcon("IB-InitG-b");
-        game_ui_player_alert_yellow = assets->getIcon("IB-InitY-b");
-        game_ui_player_alert_red = assets->getIcon("IB-InitR-b");
+        const HudPortraitAlertResources alerts = hudPortraitAlertResources(engine->gameTitle(),
+            "IB-InitG-b", "IB-InitY-b", "IB-InitR-b");
+        game_ui_player_alert_green = assets->getIcon(alerts.green);
+        game_ui_player_alert_yellow = assets->getIcon(alerts.yellow);
+        game_ui_player_alert_red = assets->getIcon(alerts.red);
 
         const HudNpcArrowResources npcArrows = hudNpcArrowResources(engine->gameTitle(),
             "IB-NPCLD-B", "IB-NPCRD-B");

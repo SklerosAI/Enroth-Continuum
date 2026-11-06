@@ -1,7 +1,10 @@
+#include <algorithm>
+#include <cctype>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -42,7 +45,49 @@ std::vector<std::uint8_t> outdoorDeltaWithItem(std::int32_t itemId) {
     return bytes;
 }
 
+void writeItemId(std::vector<std::uint8_t> *bytes, size_t offset, std::int32_t itemId) {
+    for (int shift = 0; shift < 32; shift += 8)
+        (*bytes)[offset + shift / 8] = static_cast<std::uint8_t>(itemId >> shift);
+}
+
+std::vector<std::uint8_t> deltaWithChestItem(bool indoor, std::int32_t itemId) {
+    constexpr size_t chestSize = 4204;
+    const size_t header = indoor ? 8 + 875 : 8 + 2 * 88 * 11;
+    const size_t doors = indoor ? 200 * 80 : 0;
+    std::vector<std::uint8_t> bytes(header + 3 * 4 + chestSize + doors + 200 + 56, 0);
+    bytes[header + 8] = 1; // One 4204-byte chest after zero actors and objects.
+    writeItemId(&bytes, header + 3 * 4 + 4, itemId); // First 28-byte item slot.
+    return bytes;
+}
+
 bool validGroundItem(std::int32_t id) { return id >= 1 && id <= 580; }
+
+std::set<std::int32_t> retainedItemTemplates(const std::filesystem::path &researchDir) {
+    std::ifstream stream(researchDir / "icons/items.txt");
+    if (!stream)
+        throw std::runtime_error("MM6 retained item table is missing");
+    std::set<std::int32_t> ids;
+    std::string line;
+    while (std::getline(stream, line)) {
+        const size_t firstTab = line.find('\t');
+        if (firstTab == std::string::npos)
+            continue;
+        const size_t secondTab = line.find('\t', firstTab + 1);
+        if (secondTab == std::string::npos)
+            continue;
+        const std::string idText = line.substr(0, firstTab);
+        if (idText.empty() || !std::all_of(idText.begin(), idText.end(),
+                                          [](unsigned char c) { return std::isdigit(c); }))
+            continue;
+        const int id = std::stoi(idText);
+        if (id >= 1 && id <= 580 && secondTab > firstTab + 1 &&
+            line.substr(firstTab + 1, secondTab - firstTab - 1) != "\"\"")
+            ids.insert(id);
+    }
+    if (ids.size() != 578)
+        throw std::runtime_error("MM6 retained item template coverage changed");
+    return ids;
+}
 
 mm6::KnownSaveFields exampleFields() {
     mm6::KnownSaveFields fields;
@@ -159,6 +204,51 @@ UNIT_TEST(MM6MapSaveValidation, NonzeroGroundItemRequiresMM6TemplateBeforeMutati
         {}, &destination), std::exception);
 }
 
+UNIT_TEST(MM6MapSaveValidation, FixedChestItemSlotsRequireMM6TemplateBeforeMutation) {
+    mm6::KnownSaveFields source = exampleFields();
+    const std::vector<std::string> expected = namesOf(source);
+    source.maps.deltas.front().bytes = deltaWithChestItem(true, 42);
+    source.maps.deltas.back().bytes = deltaWithChestItem(false, 43);
+    std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(source);
+    mm6::KnownSaveFields destination;
+    destination.core.party.playingTicks = 999;
+    std::vector<std::int32_t> verified;
+    mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase,
+        [&verified](std::int32_t id) { verified.push_back(id); return id == 42 || id == 43; },
+        &destination);
+    EXPECT_EQ(verified, (std::vector<std::int32_t>{42, 43}));
+    EXPECT_EQ(destination.maps, source.maps);
+
+    destination.core.party.playingTicks = 999;
+    EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase,
+        [](std::int32_t id) { return id == 42; }, &destination), std::exception);
+    EXPECT_EQ(destination.core.party.playingTicks, 999);
+
+    source.maps.deltas.back().bytes = deltaWithChestItem(false, 581);
+    bytes = mm6::encodeKnownSave(source);
+    EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase,
+        [](std::int32_t) { return true; }, &destination), std::exception);
+    EXPECT_EQ(destination.core.party.playingTicks, 999);
+
+    source.maps.deltas.back().bytes = deltaWithChestItem(false, -6);
+    bytes = mm6::encodeKnownSave(source);
+    int randomTemplateCalls = 0;
+    mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase,
+        [&randomTemplateCalls](std::int32_t id) {
+            ++randomTemplateCalls;
+            return id == 42;
+        }, &destination);
+    EXPECT_EQ(randomTemplateCalls, 1);
+    EXPECT_EQ(destination.maps, source.maps);
+
+    destination.core.party.playingTicks = 999;
+    source.maps.deltas.back().bytes = deltaWithChestItem(false, -7);
+    bytes = mm6::encodeKnownSave(source);
+    EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase,
+        [](std::int32_t) { return true; }, &destination), std::exception);
+    EXPECT_EQ(destination.core.party.playingTicks, 999);
+}
+
 UNIT_TEST(MM6MapSaveValidation, RetainedSixtySevenBaseDeltaPairs) {
     const char *indoor = std::getenv("ENROTH_MM6_INDOOR_DECODED_DIR");
     const char *outdoor = std::getenv("ENROTH_MM6_OUTDOOR_DECODED_DIR");
@@ -167,6 +257,7 @@ UNIT_TEST(MM6MapSaveValidation, RetainedSixtySevenBaseDeltaPairs) {
 
     const std::filesystem::path indoorDir(indoor);
     const std::filesystem::path outdoorDir(outdoor);
+    const std::set<std::int32_t> templates = retainedItemTemplates(indoorDir.parent_path());
     mm6::KnownSaveFields source = exampleFields();
     source.maps.deltas.clear();
     for (const auto &[directory, suffix] : {std::pair{indoorDir, ".dlv"}, std::pair{outdoorDir, ".ddm"}}) {
@@ -188,7 +279,7 @@ UNIT_TEST(MM6MapSaveValidation, RetainedSixtySevenBaseDeltaPairs) {
             const auto &directory = baseName.ends_with(".blv") ? indoorDir : outdoorDir;
             const std::vector<std::uint8_t> base = readBytes(directory / baseName);
             return Blob::copy(base.data(), base.size());
-        }, validGroundItem);
+        }, [&templates](std::int32_t id) { return templates.contains(id); });
     EXPECT_EQ(reads, 67);
     EXPECT_EQ(restored.maps, source.maps);
 }

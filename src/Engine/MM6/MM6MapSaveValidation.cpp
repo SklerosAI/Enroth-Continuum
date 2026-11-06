@@ -14,16 +14,31 @@
 namespace mm6 {
 namespace {
 
-void validateGroundItems(const std::vector<SpriteObject_MM7> &objects,
-                         const GroundItemVerifier &verifyGroundItem) {
+void validateItemId(std::int32_t itemId, const GroundItemVerifier &verifyGroundItem) {
+    if (itemId == 0)
+        return;
+    // The retained F3 item table has IDs 0..580. A higher value must not
+    // reach the inherited item-table indexing path during reconstruction.
+    if (itemId < 0 || itemId > 580 || !verifyGroundItem(itemId))
+        throw std::runtime_error("MM6 map save has an invalid item template");
+}
+
+void validateMapItems(const std::vector<SpriteObject_MM7> &objects,
+                      const std::vector<Chest_MM7> &chests,
+                      const GroundItemVerifier &verifyGroundItem) {
     for (const SpriteObject_MM7 &object : objects) {
-        const std::int32_t itemId = object.containing_item.itemId;
-        if (itemId == 0)
-            continue;
-        // The retained F3 item table has IDs 0..580. A higher value must not
-        // reach the inherited item-table indexing path during reconstruction.
-        if (itemId < 0 || itemId > 580 || !verifyGroundItem(itemId))
-            throw std::runtime_error("MM6 map save has an invalid ground item template");
+        validateItemId(object.containing_item.itemId, verifyGroundItem);
+    }
+    // Only the 140 fixed 28-byte item slots have a proved MM6 layout. The
+    // following 280-byte inventory grid/tail remains opaque.
+    for (const Chest_MM7 &chest : chests) {
+        for (const Item_MM7 &item : chest.items) {
+            // Retained MM6 chests also carry the six random-item markers
+            // handled by GenerateItemsInChest. They are not table templates.
+            if (item.itemId >= -6 && item.itemId <= -1)
+                continue;
+            validateItemId(item.itemId, verifyGroundItem);
+        }
     }
 }
 
@@ -42,11 +57,11 @@ void validateMapPair(const SavedMapDelta &delta, const MapBaseReader &readBase,
     if (indoor) {
         MM6IndoorSnapshot base = deserializeMM6IndoorBase(decodedBase);
         MM6IndoorRuntimeDelta decoded = decodeMM6IndoorRuntimeDelta(decodedDelta, base);
-        validateGroundItems(decoded.spriteObjects, verifyGroundItem);
+        validateMapItems(decoded.spriteObjects, decoded.chests, verifyGroundItem);
     } else {
         (void) decodeOutdoorBase({static_cast<const std::uint8_t *>(decodedBase.data()), decodedBase.size()});
         MM6OutdoorDeltaSnapshot decoded = decodeMM6OutdoorDelta(decodedDelta);
-        validateGroundItems(decoded.spriteObjects, verifyGroundItem);
+        validateMapItems(decoded.spriteObjects, decoded.chests, verifyGroundItem);
     }
 }
 

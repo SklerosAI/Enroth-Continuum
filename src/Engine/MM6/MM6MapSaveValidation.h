@@ -15,8 +15,9 @@ namespace mm6 {
 // The caller supplies MM6 base entries by basename from a trusted, title-
 // specific content source. No filesystem or MM7 save path is chosen here.
 using MapBaseReader = std::function<Blob(std::string_view)>;
-// Check a nonempty ground item's MM6 ID against the loaded MM6 item templates.
-// The caller owns the table and may reject a missing icon/footprint.
+// Check nonempty ground and fixed chest-slot item IDs against loaded MM6 item
+// templates. Chest random-item markers -6..-1 are not templates. The caller
+// owns the table and may reject a missing icon/footprint.
 using GroundItemVerifier = std::function<bool(std::int32_t)>;
 
 // Decode every known EC6 section, check all 67 expected names, and validate

@@ -233,7 +233,8 @@ UNIT_TEST(MM6MapSaveValidation, FixedChestItemSlotsRequireMM6TemplateBeforeMutat
     mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase,
         [&verified](std::int32_t id) { verified.push_back(id); return id == 42 || id == 43; },
         &destination);
-    EXPECT_EQ(verified, (std::vector<std::int32_t>{42, 43}));
+    // The active chest item is checked in both MAPS and the CHST sidecar.
+    EXPECT_EQ(verified, (std::vector<std::int32_t>{42, 42, 43}));
     EXPECT_EQ(destination.maps, source.maps);
 
     destination.core.party.playingTicks = 999;
@@ -255,7 +256,7 @@ UNIT_TEST(MM6MapSaveValidation, FixedChestItemSlotsRequireMM6TemplateBeforeMutat
             ++randomTemplateCalls;
             return id == 42;
         }, &destination);
-    EXPECT_EQ(randomTemplateCalls, 1);
+    EXPECT_EQ(randomTemplateCalls, 2);
     EXPECT_EQ(destination.maps, source.maps);
 
     destination.core.party.playingTicks = 999;

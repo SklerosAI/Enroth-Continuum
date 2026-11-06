@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <set>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -207,9 +209,17 @@ TEST(MM6HouseServiceData, PreflightsEveryActiveHouseInstruction) {
     const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
         Blob::fromString(readFile(root / "icons" / "2devents.txt")), rooms);
     const Json report = Json::parse(readFile(root / "house-route-probe.json"));
+    std::istringstream iconIndex(readFile(root / "icons.entries"));
+    std::set<std::string> iconNames;
+    for (std::string name; std::getline(iconIndex, name);) {
+        if (!name.empty() && name.back() == '\r')
+            name.pop_back();
+        iconNames.insert(name);
+    }
     int tableBacked = 0;
     int blankOrUnused = 0;
     int terminal = 0;
+    int proprietorIcons = 0;
     for (const Json &site : report.at("enter_house_refs")) {
         const int houseId = site.at("house_id").get<int>();
         const mm6::HouseEntryPlan entry = mm6::planHouseEntry(houses, houseId);
@@ -218,14 +228,23 @@ TEST(MM6HouseServiceData, PreflightsEveryActiveHouseInstruction) {
             case mm6::HouseEntryKind::TableBacked:
                 ASSERT_TRUE(entry.room.has_value());
                 EXPECT_FALSE(entry.room->videoName.empty());
+                if (entry.proprietorIconName) {
+                    EXPECT_GT(entry.room->npcPicture, 0);
+                    EXPECT_TRUE(iconNames.contains(*entry.proprietorIconName));
+                    ++proprietorIcons;
+                } else {
+                    EXPECT_EQ(entry.room->npcPicture, 0);
+                }
                 ++tableBacked;
                 break;
             case mm6::HouseEntryKind::BlankOrUnused:
                 EXPECT_FALSE(entry.room.has_value());
+                EXPECT_FALSE(entry.proprietorIconName.has_value());
                 ++blankOrUnused;
                 break;
             case mm6::HouseEntryKind::Terminal:
                 EXPECT_FALSE(entry.room.has_value());
+                EXPECT_FALSE(entry.proprietorIconName.has_value());
                 ++terminal;
                 break;
         }
@@ -233,6 +252,7 @@ TEST(MM6HouseServiceData, PreflightsEveryActiveHouseInstruction) {
     EXPECT_EQ(tableBacked, 671);
     EXPECT_EQ(blankOrUnused, 1);
     EXPECT_EQ(terminal, 2);
+    EXPECT_EQ(proprietorIcons, 282);
     EXPECT_THROW(mm6::planHouseEntry(houses, 0), std::exception);
     EXPECT_THROW(mm6::planHouseEntry(houses, 558), std::exception);
 

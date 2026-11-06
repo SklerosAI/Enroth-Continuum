@@ -49,6 +49,7 @@ struct HouseEntryPlan {
     HouseEntryKind kind = HouseEntryKind::BlankOrUnused;
     HouseServiceFamily family = HouseServiceFamily::Other;
     std::optional<RoomDescriptor> room;
+    std::optional<std::string> proprietorIconName;
     std::optional<int> openHour;
     std::optional<int> closeHour;
 };

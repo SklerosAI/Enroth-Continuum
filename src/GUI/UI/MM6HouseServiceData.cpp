@@ -100,13 +100,18 @@ const HouseServiceData &houseServiceData() {
 HouseEntryPlan planHouseEntry(const HouseServiceData &houses, int houseId) {
     if (houseId == 600 || houseId == 601)
         return {houseId, HouseEntryKind::Terminal, HouseServiceFamily::Other,
-                std::nullopt, std::nullopt, std::nullopt};
+                std::nullopt, std::nullopt, std::nullopt, std::nullopt};
     const HouseServiceRow &house = houses.at(houseId);
     if (house.type == HOUSE_TYPE_INVALID || house.room.kind != HouseRoomKind::Room)
         return {houseId, HouseEntryKind::BlankOrUnused, house.family,
-                std::nullopt, std::nullopt, std::nullopt};
+                std::nullopt, std::nullopt, std::nullopt, std::nullopt};
+    std::optional<std::string> iconName;
+    if (const unsigned picture = house.room.room->npcPicture) {
+        std::string number = std::to_string(picture);
+        iconName = "npc" + std::string(number.size() < 3 ? 3 - number.size() : 0, '0') + number;
+    }
     return {houseId, HouseEntryKind::TableBacked, house.family, house.room.room,
-            house.openHour, house.closeHour};
+            iconName, house.openHour, house.closeHour};
 }
 
 bool TransportMenuData::hasAvailableRoute() const {

@@ -20,6 +20,7 @@
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Party.h"
 #include "Engine/PriceCalculator.h"
+#include "Engine/Resources/ResourceManager.h"
 #include "Engine/Graphics/Viewport.h"
 #include "Engine/Tables/HouseTable.h"
 #include "Engine/Tables/TransitionTable.h"
@@ -296,6 +297,9 @@ bool enterHouse(HouseId uHouseID) {
         // inherited MM7 house state. Service/media actions remain gated.
         const mm6::HouseEntryPlan entry = mm6::planHouseEntry(
             mm6::houseServiceData(), std::to_underlying(uHouseID));
+        if (entry.proprietorIconName &&
+            engine->resources()->iconSize(*entry.proprietorIconName).isEmpty())
+            throw std::runtime_error("MM6 house proprietor icon is unavailable");
         if (entry.kind == mm6::HouseEntryKind::Terminal)
             engine->_statusBar->setEvent("This passage is unavailable.");
         else

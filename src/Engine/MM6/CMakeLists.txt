@@ -24,6 +24,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6RecoverySaveRuntime.cpp MM6MapSaveValidation.cpp MM6MapSaveValidation.h
     MM6WorldSaveRuntime.cpp MM6WorldSaveRuntime.h
     MM6NewGameSaveRuntime.cpp MM6NewGameSaveRuntime.h
+    MM6ScopedNewGameSave.cpp MM6ScopedNewGameSave.h
     MM6PrivateMapSource.cpp MM6PrivateMapSource.h)
 target_link_libraries(engine_mm6_save_runtime PUBLIC engine_mm6_save_container engine_mm6_atomic_save engine library_json)
 target_check_style(engine_mm6_save_runtime)

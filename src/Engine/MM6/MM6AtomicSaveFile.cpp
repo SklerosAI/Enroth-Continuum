@@ -224,6 +224,57 @@ void writeAtomicSaveFile(const std::filesystem::path &profileRoot, std::string_v
     detail::writeAtomicSaveFile(profileRoot, slotName, container, {});
 }
 
+detail::SaveSlotRollbackSnapshot detail::snapshotSaveSlotForRollback(
+    const std::filesystem::path &profileRoot, std::string_view slotName) {
+#ifdef _WIN32
+    throw std::runtime_error("native MM6 save rollback is unsupported on Windows");
+#else
+    const std::filesystem::path directory = savesDirectory(profileRoot, slotName);
+    const auto status = std::filesystem::symlink_status(directory);
+    if (status.type() == std::filesystem::file_type::not_found)
+        return {};
+    if (!std::filesystem::is_directory(status))
+        throw std::runtime_error("MM6 saves path is not a native directory");
+    const std::filesystem::path primary = directory / std::string(slotName);
+    const std::filesystem::path backup = directory / (std::string(slotName) + ".bak");
+    SaveSlotRollbackSnapshot snapshot;
+    if (regularFileExists(primary))
+        snapshot.primary = readBoundedFile(primary);
+    if (regularFileExists(backup))
+        snapshot.backup = readBoundedFile(backup);
+    return snapshot;
+#endif
+}
+
+void detail::restoreSaveSlotForRollback(const std::filesystem::path &profileRoot,
+                                        std::string_view slotName,
+                                        const SaveSlotRollbackSnapshot &snapshot) {
+#ifdef _WIN32
+    throw std::runtime_error("native MM6 save rollback is unsupported on Windows");
+#else
+    const std::filesystem::path directory = savesDirectory(profileRoot, slotName);
+    const auto status = std::filesystem::symlink_status(directory);
+    if (status.type() == std::filesystem::file_type::not_found &&
+        !snapshot.primary && !snapshot.backup)
+        return;
+    if (!std::filesystem::is_directory(status))
+        throw std::runtime_error("MM6 saves path is not a native directory");
+    const auto restoreOne = [&](const std::filesystem::path &path,
+                                const std::optional<std::vector<std::uint8_t>> &bytes) {
+        if (bytes) {
+            TempSaveFile temp(directory, slotName);
+            temp.write(*bytes);
+            temp.replace(path);
+        } else if (regularFileExists(path)) {
+            std::filesystem::remove(path);
+        }
+    };
+    restoreOne(directory / std::string(slotName), snapshot.primary);
+    restoreOne(directory / (std::string(slotName) + ".bak"), snapshot.backup);
+    syncDirectory(directory);
+#endif
+}
+
 std::optional<std::vector<std::uint8_t>> loadRecoverableSaveFile(
     const std::filesystem::path &profileRoot, std::string_view slotName) {
 #ifdef _WIN32

@@ -156,24 +156,14 @@ PreparedNewGameSession writeAndStageOfflineNewGameAutosave(
     return prepared;
 }
 
-std::unique_ptr<PublishedFirstMapCache> writeAndPublishOfflineNewGameAutosave(
-    const std::filesystem::path &profileRoot, const KnownSaveFields &seed,
-    const Party &liveParty, const NPCStats &liveNpcs, const Timer &liveTimer,
-    const ActiveOverlayList &liveOverlays, std::span<const std::string> expectedNames,
-    const DefaultDeltaReader &readDefaultDelta, const MapBaseReader &readBase,
-    const GroundItemVerifier &verifyItem, std::size_t overlayTableCount,
-    const ChestSeedEntropy &chestEntropy,
-    std::unordered_map<std::string, Blob> *mapDeltas, ChestTitleState *titleChest,
-    GameTitle title) {
-    if (title != GameTitle::MM6 || !mapDeltas || !titleChest)
-        throw std::runtime_error("MM6 first-map publication lacks title-local owners");
+namespace {
+
+std::unique_ptr<PublishedFirstMapCache> publishPreparedFirstMap(
+    const std::filesystem::path &profileRoot, PreparedNewGameSession prepared,
+    std::unordered_map<std::string, Blob> *mapDeltas, ChestTitleState *titleChest) {
     static_assert(std::is_nothrow_swappable_v<std::unordered_map<std::string, Blob>>);
     static_assert(std::is_nothrow_swappable_v<ChestTitleState>);
     static_assert(std::is_nothrow_copy_assignable_v<ChestTitleState>);
-
-    PreparedNewGameSession prepared = prepareOfflineNewGameSession(
-        seed, liveParty, liveNpcs, liveTimer, liveOverlays, expectedNames,
-        readDefaultDelta, readBase, verifyItem, overlayTableCount, chestEntropy, title);
     // Allocate and move the return object before the disk or process changes.
     auto result = std::unique_ptr<PublishedFirstMapCache>(
         new PublishedFirstMapCache{std::move(prepared), {}, *titleChest, true});
@@ -185,6 +175,25 @@ std::unique_ptr<PublishedFirstMapCache> writeAndPublishOfflineNewGameAutosave(
     return result;
 }
 
+} // namespace
+
+std::unique_ptr<PublishedFirstMapCache> writeAndPublishOfflineNewGameAutosave(
+    const std::filesystem::path &profileRoot, const KnownSaveFields &seed,
+    const Party &liveParty, const NPCStats &liveNpcs, const Timer &liveTimer,
+    const ActiveOverlayList &liveOverlays, std::span<const std::string> expectedNames,
+    const DefaultDeltaReader &readDefaultDelta, const MapBaseReader &readBase,
+    const GroundItemVerifier &verifyItem, std::size_t overlayTableCount,
+    const ChestSeedEntropy &chestEntropy,
+    std::unordered_map<std::string, Blob> *mapDeltas, ChestTitleState *titleChest,
+    GameTitle title) {
+    if (title != GameTitle::MM6 || !mapDeltas || !titleChest)
+        throw std::runtime_error("MM6 first-map publication lacks title-local owners");
+    PreparedNewGameSession prepared = prepareOfflineNewGameSession(
+        seed, liveParty, liveNpcs, liveTimer, liveOverlays, expectedNames,
+        readDefaultDelta, readBase, verifyItem, overlayTableCount, chestEntropy, title);
+    return publishPreparedFirstMap(profileRoot, std::move(prepared), mapDeltas, titleChest);
+}
+
 bool rollbackPublishedFirstMapCache(PublishedFirstMapCache *published,
                                    std::unordered_map<std::string, Blob> *mapDeltas,
                                    ChestTitleState *titleChest, GameTitle title) noexcept {
@@ -194,6 +203,40 @@ bool rollbackPublishedFirstMapCache(PublishedFirstMapCache *published,
     std::swap(*titleChest, published->priorChest);
     published->active = false;
     return true;
+}
+
+std::unique_ptr<PublishedFirstMapCache> runScopedFirstMapEntryForTest(
+    const std::filesystem::path &profileRoot, const KnownSaveFields &seed,
+    const Party &liveParty, const NPCStats &liveNpcs, const Timer &liveTimer,
+    const ActiveOverlayList &liveOverlays, std::span<const std::string> expectedNames,
+    const DefaultDeltaReader &readDefaultDelta, const MapBaseReader &readBase,
+    const GroundItemVerifier &verifyItem, std::size_t overlayTableCount,
+    const ChestSeedEntropy &chestEntropy,
+    std::unordered_map<std::string, Blob> *mapDeltas, ChestTitleState *titleChest,
+    const FirstMapEntryProbe &probe, GameTitle title) {
+    if (title != GameTitle::MM6 || !mapDeltas || !titleChest || !probe)
+        throw std::runtime_error("MM6 scoped first-map entry lacks title-local owners or probe");
+    PreparedNewGameSession prepared = prepareOfflineNewGameSession(
+        seed, liveParty, liveNpcs, liveTimer, liveOverlays, expectedNames,
+        readDefaultDelta, readBase, verifyItem, overlayTableCount, chestEntropy, title);
+    const detail::SaveSlotRollbackSnapshot priorSlot =
+        detail::snapshotSaveSlotForRollback(profileRoot, NEW_GAME_AUTOSAVE_SLOT);
+    std::unique_ptr<PublishedFirstMapCache> published;
+    try {
+        published = publishPreparedFirstMap(
+            profileRoot, std::move(prepared), mapDeltas, titleChest);
+        probe(published->prepared.staged.party, *mapDeltas, *titleChest);
+        return published;
+    } catch (...) {
+        if (published)
+            (void) rollbackPublishedFirstMapCache(published.get(), mapDeltas, titleChest, title);
+        try {
+            detail::restoreSaveSlotForRollback(profileRoot, NEW_GAME_AUTOSAVE_SLOT, priorSlot);
+        } catch (...) {
+            throw std::runtime_error("MM6 first-map entry failed and disk rollback also failed");
+        }
+        throw;
+    }
 }
 
 } // namespace mm6

@@ -104,4 +104,22 @@ bool rollbackPublishedFirstMapCache(PublishedFirstMapCache *published,
                                    std::unordered_map<std::string, Blob> *mapDeltas,
                                    ChestTitleState *titleChest, GameTitle title) noexcept;
 
+using FirstMapEntryProbe = std::function<void(
+    const Party &, const std::unordered_map<std::string, Blob> &, const ChestTitleState &)>;
+
+// Scoped test seam for a first-map entry attempt. The probe observes the
+// staged Party and published map/chest owners. If it throws, the prior process
+// owners and exact primary/backup disk slot bytes are restored before rethrow.
+// The probe must not mutate unrelated process globals; real map loading needs
+// a broader rollback before this can be used as a production path.
+std::unique_ptr<PublishedFirstMapCache> runScopedFirstMapEntryForTest(
+    const std::filesystem::path &profileRoot, const KnownSaveFields &seed,
+    const Party &liveParty, const NPCStats &liveNpcs, const Timer &liveTimer,
+    const ActiveOverlayList &liveOverlays, std::span<const std::string> expectedNames,
+    const DefaultDeltaReader &readDefaultDelta, const MapBaseReader &readBase,
+    const GroundItemVerifier &verifyItem, std::size_t overlayTableCount,
+    const ChestSeedEntropy &chestEntropy,
+    std::unordered_map<std::string, Blob> *mapDeltas, ChestTitleState *titleChest,
+    const FirstMapEntryProbe &probe, GameTitle title);
+
 } // namespace mm6

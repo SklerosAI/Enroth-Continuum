@@ -15,6 +15,7 @@
 
 #include "Engine/MM6/MM6AtomicSaveFile.h"
 #include "Engine/MM6/MM6NewGameSaveRuntime.h"
+#include "Engine/MM6/MM6ScopedNewGameSave.h"
 
 namespace {
 
@@ -278,6 +279,90 @@ UNIT_TEST(MM6NewGameSaveRuntime, CapturesAndPublishesFirstMapCacheOnlyAfterWrite
     EXPECT_EQ(titleChest.lcgState, 71u);
     EXPECT_FALSE(mm6::rollbackPublishedFirstMapCache(
         published.get(), &cache, &titleChest, GameTitle::MM6));
+}
+
+UNIT_TEST(MM6NewGameSaveRuntime, ScopedEntryFailureRemovesNewSlotAndRestoresOwners) {
+    TestProfile profile;
+    const auto names = expectedNames();
+    Party party;
+    NPCStats npcs{};
+    Timer timer;
+    ActiveOverlayList overlays;
+    std::unordered_map<std::string, Blob> cache;
+    cache.emplace("prior.ddm", Blob::fromString("prior cache"));
+    mm6::ChestTitleState chest{true, 75, {}};
+    bool observed = false;
+    int seedCalls = 0;
+    mm6::KnownSaveFields stale = seed(51);
+    stale.shopGuildClocks.deadlineWords[0] = 1;
+    EXPECT_THROW((void) mm6::runScopedFirstMapEntryForTest(
+        profile.root(), stale, party, npcs, timer, overlays, names,
+        defaultReader(), baseReader(), [](std::int32_t) { return true; }, 5,
+        [&] { ++seedCalls; return std::optional<std::uint32_t>(1); }, &cache, &chest,
+        [](const Party &, const std::unordered_map<std::string, Blob> &,
+           const mm6::ChestTitleState &) {}, GameTitle::MM6), std::exception);
+    EXPECT_EQ(seedCalls, 0);
+    EXPECT_FALSE(std::filesystem::exists(profile.primary()));
+    EXPECT_THROW((void) mm6::runScopedFirstMapEntryForTest(
+        profile.root(), seed(51), party, npcs, timer, overlays, names,
+        defaultReader(), baseReader(), [](std::int32_t) { return true; }, 5,
+        [&] { ++seedCalls; return std::optional<std::uint32_t>(0xabc12345); }, &cache, &chest,
+        [&](const Party &stagedParty, const std::unordered_map<std::string, Blob> &published,
+            const mm6::ChestTitleState &publishedChest) {
+            observed = true;
+            EXPECT_EQ(stagedParty.pos.z, 340);
+            EXPECT_EQ(published.size(), 67);
+            EXPECT_EQ(publishedChest.lcgState, 0xabc12345u);
+            throw std::runtime_error("synthetic map entry failure");
+        }, GameTitle::MM6), std::exception);
+    EXPECT_TRUE(observed);
+    EXPECT_EQ(seedCalls, 1);
+    EXPECT_FALSE(std::filesystem::exists(profile.primary()));
+    EXPECT_FALSE(std::filesystem::exists(profile.primary().string() + ".bak"));
+    EXPECT_EQ(cache.size(), 1);
+    EXPECT_EQ(cache.at("prior.ddm").str(), "prior cache");
+    EXPECT_EQ(chest.lcgState, 75u);
+}
+
+UNIT_TEST(MM6NewGameSaveRuntime, ScopedEntryFailureRestoresPriorPrimaryAndBackup) {
+    TestProfile profile;
+    const auto names = expectedNames();
+    const auto write = [&](std::int64_t ticks) {
+        return mm6::writeOfflineNewGameAutosave(profile.root(), seed(ticks), names,
+            defaultReader(), baseReader(), [](std::int32_t) { return true; }, GameTitle::MM6);
+    };
+    const auto oldBackup = write(51);
+    const auto oldPrimary = write(52);
+    const auto backupPath = std::filesystem::path(profile.primary().string() + ".bak");
+    EXPECT_EQ(readFile(backupPath), oldBackup);
+    Party party;
+    NPCStats npcs{};
+    Timer timer;
+    ActiveOverlayList overlays;
+    std::unordered_map<std::string, Blob> cache;
+    cache.emplace("prior.ddm", Blob::fromString("prior cache"));
+    mm6::ChestTitleState chest{true, 75, {}};
+    EXPECT_THROW((void) mm6::runScopedFirstMapEntryForTest(
+        profile.root(), seed(53), party, npcs, timer, overlays, names,
+        defaultReader(), baseReader(), [](std::int32_t) { return true; }, 5,
+        [] { return std::optional<std::uint32_t>(0xabc12345); }, &cache, &chest,
+        [](const Party &, const std::unordered_map<std::string, Blob> &,
+           const mm6::ChestTitleState &) { throw std::runtime_error("late entry failure"); },
+        GameTitle::MM6), std::exception);
+    EXPECT_EQ(readFile(profile.primary()), oldPrimary);
+    EXPECT_EQ(readFile(backupPath), oldBackup);
+    EXPECT_EQ(cache.size(), 1);
+    EXPECT_EQ(cache.at("prior.ddm").str(), "prior cache");
+    EXPECT_EQ(chest.lcgState, 75u);
+}
+
+UNIT_TEST(MM6NewGameSaveRuntime, ScopedRuntimeCallsiteRequiresMM6EngineBeforePrivateReads) {
+    TestProfile profile;
+    EXPECT_THROW((void) mm6::saveNewGameMM6ScopedForTest(
+        profile.root(), profile.root() / "missing-private-map-source",
+        [](const Party &, const std::unordered_map<std::string, Blob> &,
+           const mm6::ChestTitleState &) {}), std::exception);
+    EXPECT_FALSE(std::filesystem::exists(profile.primary()));
 }
 
 UNIT_TEST(MM6NewGameSaveRuntime, LateFinalMapFailurePreservesPriorAutosave) {

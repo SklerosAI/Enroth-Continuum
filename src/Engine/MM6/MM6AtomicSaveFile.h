@@ -54,6 +54,20 @@ std::optional<SaveFileCandidate> preflightRecoverableSaveFile(
 
 namespace detail {
 
+struct SaveSlotRollbackSnapshot {
+    std::optional<std::vector<std::uint8_t>> primary;
+    std::optional<std::vector<std::uint8_t>> backup;
+};
+
+// Test-only transaction support: snapshot the exact existing primary/backup
+// bytes and restore both names after a later map-entry failure. This does not
+// make arbitrary world mutation atomic.
+SaveSlotRollbackSnapshot snapshotSaveSlotForRollback(
+    const std::filesystem::path &profileRoot, std::string_view slotName);
+void restoreSaveSlotForRollback(const std::filesystem::path &profileRoot,
+                               std::string_view slotName,
+                               const SaveSlotRollbackSnapshot &snapshot);
+
 enum class AtomicSaveStep {
     BeforeTempWrite,
     AfterPartialTempWrite,

@@ -188,7 +188,9 @@ that requirement.
   `pSpellDatas`; nine inherited rows require Grandmaster, all 99 MM6 scroll
   and 99 book IDs fall outside their corresponding inherited mapping ranges,
   and 22 of 129 active event-cast records reference IDs whose same-ID labels
-  differ or are absent. None proves a reachable cast or correct effect.
+  differ or are absent. The four inherited inventory-item target IDs also
+  have different same-ID MM6 labels, so their MM6 target kinds need explicit
+  reconciliation. None proves a reachable cast or correct effect.
 - [ ] Implement MM6-specific spell IDs, casting effects, three mastery levels,
   costs, recovery, damage/resistance types, target rules, buff duration,
   scroll/book/wand mappings, monster/event casts, visuals and descriptions.

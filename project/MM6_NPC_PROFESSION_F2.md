@@ -8,6 +8,18 @@ The owned Prima NPC chapter's **four relevant PDF pages, 250–253, were directl
 
 The retained table has **77/77 numeric profession rows**. Its remaining **26** rows do not occur in the guide's 51-name list and have no action or benefit text, but all have join text. The retained `npcdata.txt` copy contains **70** NPC records referencing this range, of which **40** carry a `canJoin` flag across **20** IDs. A flag alone does not prove these NPCs reach a paid-hire dialogue: scripted versus generated NPC dispatch and quest-following need separate joins. These rows are **generic/guide-unlisted**, not safely “nonhireable.” The ignored ledger records every row and every observed NPC reference without exposing that mapping in Git.
 
+### Bounded initial dialogue-route trace
+
+An ignored per-NPC route ledger (`npc-generic-route-private.json`) joins all **70/70** generic-profession NPC records to their retained initial house ID, `canJoin` flag, first three topic IDs, the retained house-entry probe, and the current C++ dispatch. These are *initial static candidates*; event execution can later move an NPC or replace topics.
+
+| Initial record group | Retained/source result | Classification |
+| --- | --- | --- |
+| **40** with `canJoin=1` | All 40 have an initial house with a retained `EnterHouse` reference and a house-table row; the house IDs are distinct. All have zero initial scripted topics. [UIHouses.cpp](../src/GUI/UI/UIHouses.cpp) enumerates unhired NPCs by house, then `prepareScriptedNPCDialogueTopics()` in [NPCTopics.cpp](../src/GUI/UI/NPCTopics.cpp) inserts the hiring-related choice on `canJoin` **before** any `canShowTopic` gate. That choice opens a hire menu and the existing two-slot/fee handler. | **Statically reachable paid-hire *candidate*** if the entry event, house UI, NPC placement and dialogue run. No live hireability proof. |
+| **23** with `canJoin=0` and initial house-entry reference | House enumeration can show them; the current scripted-topic builder does not insert a paid-hire choice. | **House conversation candidate; no initial paid-hire route from the flag.** Events or quest scripts may still alter their role. |
+| **7** with `canJoin=0` and no initial house-entry reference | Their initial house field has no retained `EnterHouse` reference. | **Outdoor/event route ambiguous.** Initial paid-hire route is absent from the checked house path, but NPC encounter and later move events were not proved or ruled out. |
+
+Among the **30** initial nonjoiners, **nine** records have **12** nonzero topic references. The retained event probe finds six ordinary global targets and one teacher-style target present; two ordinary targets and three arena-style targets have no global event record under the current handler. [NPCTopics.cpp](../src/GUI/UI/NPCTopics.cpp) applies `canShowTopic()` to these scripted choices, so a table topic ID alone does not make a choice visible or executable. None of these 12 topic references creates the ordinary paid-hire choice. [NPC.cpp](../src/Engine/Objects/NPC.cpp) classifies static NPC IDs as `NPC_TYPE_QUEST`, then [UIDialogue.cpp](../src/GUI/UI/UIDialogue.cpp) uses this scripted-choice path; it does **not** prohibit hiring a quest-type NPC whose `canJoin` flag is set. Separately, event-variable code can set hired flags and the new-party path copies original NPC data into mutable state, so quest-following and later topic/house changes remain open. The route ledger preserves exact NPC IDs, houses, and topic joins privately.
+
 ## Loader and consumer contract
 
 | Surface | Static result | F3/F4 requirement |
@@ -28,7 +40,7 @@ The retained table has **77/77 numeric profession rows**. Its remaining **26** r
 
 ## Closure conditions
 
-**F3:** Produce a private, testable 77-row profession/NPC join with 51 guide effects, all generic-row dialogue routes, exact fee and display fields, and one consumer or explicit no-effect classification per row. Resolve the guide/data disagreements with retained title-specific evidence before setting expected numbers. Specify title-specific `npcdist`/generation, active-use reset, dismissal, quest follower and save fields.
+**F3:** Extend the private 77-row profession and initial 70-record route joins through dynamic NPC moves, topic mutations, outdoor actors, house-entry conditions and quest-follower scripts. Join all 51 guide effects to exact fee/display fields and one consumer or explicit no-effect classification per row. Resolve guide/data disagreements with retained title-specific evidence before setting expected numbers. Specify title-specific `npcdist`/generation, active-use reset, dismissal, quest follower and save fields.
 
 **F4:** Implement MM6 profession IDs and effects behind the MM6 title boundary; preserve MM7 behavior. Provide bounds-safe generic professions and title-specific names, dialogue, hire/fire, fee, generation and persistence. Focused tests should use representative collisions and negative assertions that generic occupations never inherit an MM7 special ability.
 

@@ -224,3 +224,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Recorded the provisional MM6 zero-mastery `CheckSkill` threshold rule, its source reference and the requirement to observe the quest outcome in F5.
 - Updated the F4 handoff and event packet after ten focused C++ tests passed, including parsing all 68 active retained EVT resources from ignored local input.
+
+## [2026-11-06] ingest | MM6 F4 creation-rule foundation
+- by: T-Burton-ND via codex
+- Added a validated, private profile manifest generated from the corrected F3 PE report, preserving exact creation arrays outside Git.
+- Wired MM6-only six-family starting stats/skills, class choices, mana-attribute groups and provisional HP/SP calculations; kept Quick Start and promotion behavior explicitly open.
+- Verified all eighteen mana groups against F3, retained class/skill row shapes and six icon names, three exporter tests, and syntax checks for five changed C++ units. No original file was reopened or MM6 process launched.

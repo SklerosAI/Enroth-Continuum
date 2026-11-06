@@ -11,8 +11,8 @@ verified on the Mac.
 
 | Area | Observed evidence | Current consumer and gap |
 | --- | --- | --- |
-| Video archives | Retained indexes cover both MM6 VID archives. The index names have no filename suffix. This is an index observation, not yet proof of the raw VID directory format or codec. | `MPlayer::Initialize` selects the MM6 archives, but `VidReader::open` deserializes entries as `VidEntry_MM7`; `MPlayer::LoadMovie` looks only for names with `.bik` or `.smk` appended. F3 must determine whether the retained index preserved raw names and whether a title-specific lookup or VID layout is required. |
-| Intro and ending movies | Three of the six distinct movie base names referenced by the inherited intro, post-intro and loss paths appear in the retained index; none appears there with the loader's appended suffix. This is a name comparison only. | `GameFsmBuilder::_buildIntroVideoSequence`, `VideoState`, and `Game.cpp` carry inherited sequences/names. Enumerate MM6's intended sequence and event-triggered movies before selecting fallbacks. Verify the opening and ending on screen at F5. |
+| Video archives | The [F3 media reconciliation](MM6_F3_MEDIA_RECONCILIATION.md) verified 127 owner VID entries with extensionless names, 44-byte directory rows and `SMK` payload headers. | The [F4 lookup](MM6_F4_MOVIE_LOOKUP.md) now selects exact MM6 names and checks the header before decode; MM7 keeps its suffixed lookup. Smacker decoding, audiovisual output and trigger policy remain unverified. |
+| Intro and ending movies | Three of the six distinct movie base names referenced by the inherited intro, post-intro and loss paths appear in the retained index. This is a source-name comparison only. | `GameFsmBuilder::_buildIntroVideoSequence`, `VideoState`, and `Game.cpp` still carry inherited sequences/names. Enumerate MM6's intended sequence and event-triggered movies before selecting fallbacks. Verify opening and ending on screen at F5. |
 | Houses | All 116 distinct MM6 room animation IDs used by the retained house table span 1–118, within the 119-entry MM6 `HouseMovies` candidate in [MMExtension's pinned source](MM6_EXECUTABLE_TABLE_LOCATORS_F2.md). None of the inherited MM7 room video names at those IDs appears in the MM6 video-name indexes. | `UIHouses.cpp` and `UITransition.cpp` index the MM7 `pAnimatedRooms` table, including video, building type, NPC and sound group. MM6 needs its own descriptor mapping. The external MM6 memory address and record schema guide F3; they do not provide verified owner-executable values. |
 | House entry and UI | A separate offline join finds 674 active `SpeakInHouse` instructions targeting 521 distinct house IDs. Of those, 519 have a retained `2devents.txt` row; the other two IDs are special terminal handlers in `enterHouse`, not missing table rows. The legacy parser sent 384 active labels to the mercenary guild type. | The [F4 type parser](MM6_F4_HOUSE_TYPE_ROUTING.md) now classifies all 557 retained rows, with no active unknown label. This removes the silent mercenary category collision. MM6 room media, service windows and house-ID helpers still require title-specific implementation and live verification. This is a source and event-reference risk, not an observed crash. |
 | Sound table and archive | The retained MM6 sound table uses 112-byte rows; its names have seven unmatched entries against the retained `Audio.snd` index, and three numeric IDs occur more than once. Active event sound IDs are present in the table. These checks do not prove audible playback. | `TableSerialization.cpp` has an MM6 row decoder, but inserts rows into `_mapSounds` by ID, silently replacing earlier duplicate IDs. `AudioPlayer::LoadSound` looks up the resulting name in `SndReader`. Determine whether duplicate IDs are intentional aliases, choose an explicit policy, and classify missing names before fallback. |
@@ -32,12 +32,12 @@ table. These are lexical and potential-ID checks, not evidence that original
 MM6 lacks portraits/voice or that any frame/sample was seen or heard. The
 exact names and IDs stay in ignored `media-consumer-probe.json`.
 
-The later [media schema leads](MM6_MEDIA_SCHEMA_LEADS_F2.md) compare pinned
-primary VID/SND readers with the retained F1 indexes. They support candidate
-44-byte VID and 52-byte SND directory widths, matching the current readers'
-record sizes; raw owner archive headers, optional VID trailer and payload
-bounds still need F3. Twelve complete 01–53 icon-frame groups with 59×79 PNG
-headers are strong MM6 portrait candidates, not verified face identities.
+The [media schema leads](MM6_MEDIA_SCHEMA_LEADS_F2.md) compared pinned
+primary VID/SND readers with retained indexes. F3 subsequently verified the
+owner VID directory rows, extensionless names, payload headers and bounds in
+the [media reconciliation](MM6_F3_MEDIA_RECONCILIATION.md); F4 now has an exact
+MM6 lookup. The 01–53 portrait groups were also matched to owner pixels at
+F3. Decoded video, rendered portraits and heard audio remain F5 checks.
 
 Source locations: `src/Media/MediaPlayer.cpp` (`Initialize`, `LoadMovie`,
 `OpenHouseMovie`), `src/Library/Vid/VidReader.cpp`,
@@ -67,14 +67,14 @@ MM6 call sites against house type rather than assuming the ranges transfer.
    Classify every active `SpeakInHouse` target by MM6 service/dialogue type,
    including generic houses, special event destinations and the two handled
    terminal IDs. Keep the F4 parser's unknown-label guard and resolve any
-   house-ID-range helper before F4.
+   house-ID-range helper during F4.
 2. Enumerate every active movie trigger, including startup, event, house,
    transition, loss and ending routes. Check the requested base name against
    both retained indexes and distinguish a missing shipped resource from a
    suffix or case-normalization mismatch.
-3. During F3's consolidated, read-only original-file pass, verify the exact
-   VID directory names, entry bounds and codecs, and the SND directory shape.
-   If the retained index removed extensions, correct the index and this spec.
+3. F3 verified exact VID directory names, entry bounds and `SMK` headers.
+   F4 must decode a representative payload and verify the SND reader and
+   duplicate-name policy; F5 must observe playback.
 4. Determine whether the three duplicate sound IDs represent aliases or
    conflicts. Tie all seven unmatched sound names to actual consumers or
    establish that they are unused; do not silently substitute a sound.

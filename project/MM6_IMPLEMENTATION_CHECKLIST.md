@@ -125,10 +125,12 @@ nonempty rows; headers, separators and reserved records still require review.
   `initializeAwards` skips a row when that field is empty, so it would skip
   all 100 in the current MM6 initialization path. The table semantic probe
   reproduces this source/data finding; it is not a runtime award check.
-- [ ] Define MM6 award text and ordering without inventing a value for the
-  absent priority field. Load every active MM6 award row and verify award
+- [x] Load all 100 retained MM6 award rows without inventing a shipped
+  priority. The F4 title-specific loader validates complete IDs and preserves
+  MM7's parser; seven formatted rows remain guarded in the MM6 pane.
+- [ ] Define MM6 award ordering and the seven formatted counters; verify
   display, event rewards and save/reload on representative promotion/quest
-  routes while retaining MM7's current award behavior.
+  routes while retaining MM7's award behavior.
 - [ ] Give every table a verified parser/schema, title-specific consumer,
   active/reserved/unused classification, and acceptance scenario. Resolve
   indirect consumers or documented non-use for the six without literal loads

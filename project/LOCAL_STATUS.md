@@ -233,7 +233,7 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   prevents MM6-specific event IDs from executing as colliding MM7 meanings.
 - The integrated MM6 app, MM7 app and unit targets built with the sixteen-section
   partial assembly, spell-item prerequisite guard, MM6-only effect-dispatch guard,
-  and exact 67-name MAPS staging validator. The offline suite passed 136 tests
+  and exact 67-name MAPS staging validator. The offline suite passed 145 tests
   across EVT framing and selected guarded effects, wire codecs and indoor/outdoor projection,
   variable guard, `.ec6` fields and partial assembly, private transport/spell
   rules, descriptor 173 and LOD order; the
@@ -250,9 +250,16 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   writes remain guarded. The monster parser distinguishes seven attack damage
   labels, with five unproved channels stopped before dice or state mutation.
   A read-only First Aid spellbook preflight records transaction inputs; live
-  casting remains guarded. The house parser classifies all 557 retained labels,
+  casting remains guarded. The house parser classifies all 557 retained house rows,
   including 384 active rows that previously chose the mercenary guild type;
-  services and graphical house screens remain unverified.
+  services and graphical house screens remain unverified. MM6 house entry now
+  rejects before inherited MM7 room/service state changes. Exact extensionless
+  movie lookup covers all 127 F3-matched VID names offline, but decoding and
+  playback remain unobserved. The award loader retains all 100 numbered rows;
+  seven formatted texts stay guarded pending title-specific counters, and
+  priority/order remains provisional. MM6 Escape clears a pending targeted
+  cast queue entry and target selection rejects invalid party-slot indices;
+  live casting is still gated.
   The general non-MM6 unit suite passed 438/438 tests from the same build.
   F4 rules, map state, events, services, media output and saves remain open.
   No MM6 process or original GOG file was opened for these F4 checks.

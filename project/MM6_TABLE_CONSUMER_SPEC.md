@@ -59,14 +59,11 @@ all resolve in those selected joins. This proves reference presence only;
 positional enum alignment, second-order actions and row reachability still
 need title-specific checks before F2 can close.
 
-One direct loader has a deterministic full-row mismatch: all 100 retained
-MM6 `awards.txt` numeric rows have an empty priority cell, while
-`AwardTable.cpp::initializeAwards` skips rows with that cell empty. The
-current MM6 initialization therefore assigns no award text/priority entries
-through that loader. The table semantic probe verifies the row shape; source
-inspection verifies the skip. A title-specific parser must define MM6 award
-ordering and text behavior without fabricating a shipped priority value.
-This has not been tested in live MM6 UI or event execution.
+The F2 audit found a deterministic full-row mismatch: all 100 retained MM6
+`awards.txt` rows have an empty priority cell, so the inherited loader skipped
+them. The [F4 title-specific loader](MM6_F4_AWARD_TABLE.md) now retains their
+text under checked IDs with a neutral storage priority. Original ordering,
+seven formatted counters, event effects and live UI remain unverified.
 
 ### Focused structure and consumer findings
 

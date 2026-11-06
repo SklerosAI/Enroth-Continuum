@@ -35,6 +35,12 @@ The explicit MM6 game-test runner seeds eight ignored private rule manifests int
 
 The [campaign status](Campaign-Status.md) summarizes observed play. A build, decoder, parser pass, or title screen never establishes campaign playability. Do not repeatedly launch a graphical partial MM6 build to test isolated F2 assumptions; use the retained ignored references, focused offline checks and, after F4a is verified, bounded headless engine scenarios. The plan permits targeted rereads after F3 when real evidence warrants them.
 
+### Later integrated F4 update (2026-11-06)
+
+The earlier 38-test/no-render checkpoint above is historical. The current integrated MM6 headless suite passed **44/44** in a monitored arm64 process with no visible window or focus change. A separate hidden SDL OpenGL test captured an actual first-map world/HUD frame without taking focus: four portraits, aligned HP/mana bars and source-color foliage are visible. Original MM6 water/shore names and authored outdoor selector bases are in the source; the prior cyan/red `pending` terrain disappeared. The latest hidden frame still has mostly black ground because MM6 128×128 land and water were allocated to the same GPU texture unit; a title-scoped renderer correction is in progress. The original map does not contain the claimed 209 literal tile-zero cells; that earlier diagnosis is superseded by the [tile-selector trace](MM6-F4-Outdoor-Tile-Selectors.md). Neutral-summer MM6 terrain IDs now retain authored art where the current season rule does not change class. Original seasonal grass/transition behavior is still open.
+
+The test-only scoped save rejects queued spells, either GUI message frame, movement/delayed-enchant actions, active turn/rest state and other live actions before disk work. Its arbitrary post-publication map-entry callback remains outside complete action/UI rollback; normal MM6 SaveLoad and chest guards stay closed. Character event-bit Compare/Set, first-map month and party-flight Compare have focused headless coverage; many active effects and services remain guarded. Creation HP/SP refill now follows starting-item grants for MM6, while the full mana/condition formula is under audit. The [F4 build graph](../project/MM6_F4_BUILD_GRAPH.md), current source and dated pages supersede the older summary above. No MM6 campaign play, durable save–quit–relaunch–load or Atlas Play action has been accepted.
+
 ## Authority and source order
 
 | Question | Start with | Supporting source |

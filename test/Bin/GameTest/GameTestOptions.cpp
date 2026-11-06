@@ -5,11 +5,14 @@
 
 #include "Library/Cli/CliApp.h"
 
+#include "Utility/Exception.h"
+
 GameTestOptions GameTestOptions::parse(int argc, char **argv) {
     GameTestOptions result;
     result.ramFsUserData = true; // We want reproducible tests, so shouldn't depend on external user data.
     result.quickStart = true;
     std::optional<std::string> testPath;
+    std::string game = "mm7";
 
     std::unique_ptr<CliApp> app = std::make_unique<CliApp>();
 
@@ -18,6 +21,7 @@ GameTestOptions GameTestOptions::parse(int argc, char **argv) {
 
     auto testPathOption = app->add_option("--test-path", testPath,
                                           "Path to test data dir.")->check(CLI::ExistingDirectory)->option_text("PATH")->group(requiredOptions);
+    app->add_option("--game", game, "Game to test: mm6 or mm7. Defaults to mm7.")->option_text("GAME")->group(otherOptions);
     app->add_option(
         "--data-path", result.dataPath,
         "Path to game data dir.")->check(CLI::ExistingDirectory)->option_text("PATH")->group(otherOptions);
@@ -43,6 +47,16 @@ GameTestOptions GameTestOptions::parse(int argc, char **argv) {
     app->allow_extras();
 
     app->parse(argc, argv, result.helpPrinted);
+
+    if (game == "mm6") {
+        result.gameTitle = GameTitle::MM6;
+        if (!result.headless && !result.helpPrinted && !result.listRequested)
+            throw Exception("MM6 game tests require --headless.");
+        if (result.dataPath.isEmpty() && !result.helpPrinted && !result.listRequested)
+            throw Exception("MM6 game tests require an explicit --data-path.");
+    } else if (game != "mm7") {
+        throw Exception("Unsupported game '{}'; choose mm6 or mm7.", game);
+    }
 
     if (!result.listRequested && !result.helpPrinted && !testPath)
         throw CLI::RequiredError(testPathOption->get_name());

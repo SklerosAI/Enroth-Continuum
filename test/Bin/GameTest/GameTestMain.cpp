@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <string>
+
 #include "Application/Startup/GameStarter.h"
 
 #include "Engine/Components/Control/EngineController.h"
@@ -35,6 +37,11 @@ int platformMain(int argc, char **argv) {
         }
 
         testing::InitGoogleTest(&argc, argv);
+        if (GTEST_FLAG_GET(filter) == "*") {
+            // Keep the existing MM7 default while making an unfiltered MM6
+            // run execute only tests that are safe for the MM6 engine.
+            GTEST_FLAG_SET(filter, opts.gameTitle == GameTitle::MM6 ? "MM6*.*" : "*-MM6*.*");
+        }
         if (opts.listRequested)
             return RUN_ALL_TESTS();
 

@@ -2,7 +2,9 @@
 
 #include <cassert>
 #include <string>
+#include <string_view>
 
+#include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Components/Control/EngineController.h"
 #include "Engine/Components/Control/EngineControlState.h"
@@ -27,6 +29,12 @@ void GameTest::init(EngineController *engineController, TestController *testCont
 
 void GameTest::SetUp() {
     assert(!globalTerminating); // Shouldn't get here if we're already terminating.
+
+    // MM6 cannot load MM7 trace saves, and the MM7 suites must not run against
+    // an MM6 engine. Keep this check even when the runner supplies a filter.
+    const std::string_view suite = testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
+    if ((engine->gameTitle() == GameTitle::MM6) != suite.starts_with("MM6"))
+        GTEST_SKIP() << "Game test belongs to the other title";
 
     const_cast<EngineController *&>(game) = globalEngineController;
     const_cast<TestController *&>(test) = globalTestController;

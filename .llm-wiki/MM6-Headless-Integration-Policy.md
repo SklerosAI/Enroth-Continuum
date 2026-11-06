@@ -37,4 +37,6 @@ Run a small first-map headless scenario after its chest and startup seams join, 
 
 Revisit this choice if a headless test creates a native window, changes focus, accesses physical input, touches the installed MM7 profile, or cannot faithfully drive the required engine paths. Stop the background run and repair the harness before further MM6 process tests. Investigate a separate offscreen renderer only if visual checks are needed without a foreground session; `RENDERER_NULL` cannot validate graphics.
 
+The [F4 headless harness packet](MM6-F4-Headless-Harness.md) records the isolated source candidate and its pending linked-process check.
+
 Source: [local startup](../src/Application/Startup/GameStarter.cpp), [null platform](../src/Library/Platform/Null/NullPlatform.cpp), [null event loop](../src/Library/Platform/Null/NullEventLoop.cpp), [game-test options](../test/Bin/GameTest/GameTestOptions.cpp), and [upstream game-test guidance](https://github.com/OpenEnroth/OpenEnroth/blob/master/HACKING.md). See also: [F4 Offline Seams](MM6-F4-Offline-Seams.md), [Agent Handoff](Agent-Handoff.md), [Runtime Isolation](Runtime-Isolation.md).

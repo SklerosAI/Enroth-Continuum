@@ -33,6 +33,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F3 Read-Only Preflight](MM6-F3-Read-Only-Preflight.md) — Accepted original-data gate, results, and F4/F5 obligations
 - [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md) — Partial code seams, including bounded outdoor DDM changed-state encoding, focused checks, and next blockers
 - [MM6 Headless Integration Policy](MM6-Headless-Integration-Policy.md) — Synthetic-input engine scenarios without a native window; MM6 harness first, graphical checks later
+- [MM6 F4 Headless Harness](MM6-F4-Headless-Harness.md) — Title-selected null-platform smoke candidate, with linked process check pending
 - [MM6 F4 Monster Special Attacks](MM6-F4-Monster-Special-Attack.md) — All retained special labels decoded with unverified MM6 effects gated before mutation
 - [MM6 F4 Monster Spells](MM6-F4-Monster-Spells.md) — All 55 active monster casts retain MM6 spell IDs while effects remain gated
 - [MM6 F4 Monster Projectiles](MM6-F4-Monster-Projectiles.md) — All 82 active cells retain MM6 source types while launch and impact remain gated

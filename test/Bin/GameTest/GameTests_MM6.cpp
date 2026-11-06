@@ -2,12 +2,14 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
+#include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Resources/EngineFileSystem.h"
@@ -19,6 +21,7 @@
 #include "GUI/HudFrameResources.h"
 #include "GUI/HudNavigationResources.h"
 #include "GUI/HudStatusResources.h"
+#include "GUI/HudVitalBarResources.h"
 #include "GUI/MM6HudActionControls.h"
 #include "GUI/MM6HudBookControls.h"
 #include "GUI/UI/Books/CalendarBackgroundResources.h"
@@ -126,6 +129,49 @@ GAME_TEST(MM6Headless, StatusStripAndMapArrowsAvailable) {
         const std::string icon = "MAPDIR" + std::to_string(i);
         EXPECT_EQ(engine->resources()->iconSize(icon), Sizei(7, 7)) << icon;
     }
+}
+
+GAME_TEST(MM6Headless, PortraitVitalBarsAndHitBoxes) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_NE(pPrimaryWindow, nullptr);
+    const HudVitalBarResources bars = hudVitalBarResources(GameTitle::MM6, {}, {}, {}, {});
+    EXPECT_EQ(engine->resources()->iconSize(bars.green), Sizei(6, 78));
+    EXPECT_EQ(engine->resources()->iconSize(bars.blue), Sizei(6, 78));
+    EXPECT_EQ(game_ui_bar_green->size(), Sizei(6, 78));
+    EXPECT_EQ(game_ui_bar_blue->size(), Sizei(6, 78));
+    EXPECT_EQ(game_ui_bar_yellow, nullptr);
+    EXPECT_EQ(game_ui_bar_red, nullptr);
+
+    std::vector<Recti> actual;
+    for (GUIButton *button : pPrimaryWindow->vButtons)
+        if (button->msg == UIMSG_ShowStatus_ManaHP)
+            actual.push_back(button->rect);
+    const auto health = mm6HudHealthBarRects();
+    const auto mana = mm6HudManaBarRects();
+    ASSERT_EQ(actual.size(), 8);
+    for (size_t i = 0; i < health.size(); ++i) {
+        EXPECT_EQ(actual[2 * i], health[i]);
+        EXPECT_EQ(actual[2 * i + 1], mana[i]);
+        EXPECT_EQ(health[i].y + health[i].h, 463);
+        EXPECT_EQ(mana[i].y + mana[i].h, 463);
+    }
+}
+
+TEST(MM6HeadlessVitalBars, TitleIsolation) {
+    const HudVitalBarResources mm6 = hudVitalBarResources(GameTitle::MM6,
+        "ib-statB", "ib-statG", "ib-statY", "ib-statR");
+    EXPECT_EQ(mm6.blue, "manafull");
+    EXPECT_EQ(mm6.green, "hitsfull");
+    EXPECT_TRUE(mm6.yellow.empty());
+    EXPECT_TRUE(mm6.red.empty());
+    const HudVitalBarResources mm7 = hudVitalBarResources(GameTitle::MM7,
+        "ib-statB", "ib-statG", "ib-statY", "ib-statR");
+    EXPECT_EQ(mm7.blue, "ib-statB");
+    EXPECT_EQ(mm7.green, "ib-statG");
+    EXPECT_EQ(mm7.yellow, "ib-statY");
+    EXPECT_EQ(mm7.red, "ib-statR");
+    EXPECT_EQ(mm6HudHealthBarRects()[0], Recti(94, 385, 6, 78));
+    EXPECT_EQ(mm6HudManaBarRects()[3], Recti(447, 385, 6, 78));
 }
 
 TEST(MM6HeadlessStatusStrip, TitleIsolation) {

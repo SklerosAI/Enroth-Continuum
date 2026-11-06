@@ -11,6 +11,7 @@
 #include "GUI/HudFrameResources.h"
 #include "GUI/HudNavigationResources.h"
 #include "GUI/HudStatusResources.h"
+#include "GUI/HudVitalBarResources.h"
 #include "GUI/MM6HudActionControls.h"
 #include "GUI/MM6HudBookControls.h"
 
@@ -405,15 +406,26 @@ void GUIWindow::CreateCharacterButtons() {
     CreateButton("Game_Character3", { 260, 383 }, { 63, 81 }, BUTTON_TYPE_CHARACTER, 94, UIMSG_SelectCharacter, 2, INPUT_ACTION_SELECT_CHAR_3);
     CreateButton("Game_Character4", { 375, 383 }, { 63, 81 }, BUTTON_TYPE_CHARACTER, 94, UIMSG_SelectCharacter, 3, INPUT_ACTION_SELECT_CHAR_4);
 
-    CreateButton({ pHealthBarPos[0], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 1);  // buttons for HP
-    CreateButton({ pHealthBarPos[1], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 2);
-    CreateButton({ pHealthBarPos[2], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 3);
-    CreateButton({ pHealthBarPos[3], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 4);
+    if (engine->gameTitle() == GameTitle::MM6) {
+        const auto health = mm6HudHealthBarRects();
+        const auto mana = mm6HudManaBarRects();
+        for (size_t i = 0; i < health.size(); ++i) {
+            CreateButton(health[i].topLeft(), {health[i].w - 1, health[i].h - 1}, BUTTON_TYPE_NORMAL,
+                         UIMSG_ShowStatus_ManaHP, UIMSG_0, i + 1);
+            CreateButton(mana[i].topLeft(), {mana[i].w - 1, mana[i].h - 1}, BUTTON_TYPE_NORMAL,
+                         UIMSG_ShowStatus_ManaHP, UIMSG_0, i + 1);
+        }
+    } else {
+        CreateButton({ pHealthBarPos[0], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 1);  // buttons for HP
+        CreateButton({ pHealthBarPos[1], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 2);
+        CreateButton({ pHealthBarPos[2], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 3);
+        CreateButton({ pHealthBarPos[3], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 4);
 
-    CreateButton({ pManaBarPos[0], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 1);  // buttons for SP
-    CreateButton({ pManaBarPos[1], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 2);
-    CreateButton({ pManaBarPos[2], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 3);
-    CreateButton({ pManaBarPos[3], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 4);
+        CreateButton({ pManaBarPos[0], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 1);  // buttons for SP
+        CreateButton({ pManaBarPos[1], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 2);
+        CreateButton({ pManaBarPos[2], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 3);
+        CreateButton({ pManaBarPos[3], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 4);
+    }
 }
 
 bool GUIWindow::Contains(unsigned int x, unsigned int y) {
@@ -1069,10 +1081,12 @@ void UI_Create() {
     game_ui_minimap_dirs[6] = assets->getIcon("MAPDIR7");
     game_ui_minimap_dirs[7] = assets->getIcon("MAPDIR8");
 
-    game_ui_bar_blue = assets->getIcon("ib-statB");
-    game_ui_bar_green = assets->getIcon("ib-statG");
-    game_ui_bar_yellow = assets->getIcon("ib-statY");
-    game_ui_bar_red = assets->getIcon("ib-statR");
+    const HudVitalBarResources bars = hudVitalBarResources(engine->gameTitle(),
+        "ib-statB", "ib-statG", "ib-statY", "ib-statR");
+    game_ui_bar_blue = assets->getIcon(bars.blue);
+    game_ui_bar_green = assets->getIcon(bars.green);
+    game_ui_bar_yellow = bars.yellow.empty() ? nullptr : assets->getIcon(bars.yellow);
+    game_ui_bar_red = bars.red.empty() ? nullptr : assets->getIcon(bars.red);
     game_ui_monster_hp_background = assets->getIcon("mhp_bg");
     game_ui_monster_hp_border_left = assets->getIcon("mhp_capl");
     game_ui_monster_hp_border_right = assets->getIcon("mhp_capr");

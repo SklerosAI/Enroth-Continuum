@@ -43,6 +43,7 @@
 
 #include "GUI/GUIButton.h"
 #include "GUI/HudFrameResources.h"
+#include "GUI/HudVitalBarResources.h"
 #include "GUI/MM6HudBookControls.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/GUIMessageQueue.h"
@@ -759,6 +760,9 @@ void GameUI_DrawFoodAndGold() {
 
 //----- (0041B0C9) --------------------------------------------------------
 void GameUI_DrawLifeManaBars() {
+    const bool mm6Bars = engine->gameTitle() == GameTitle::MM6;
+    const auto mm6Health = mm6HudHealthBarRects();
+    const auto mm6Mana = mm6HudManaBarRects();
     for (int i = 0; i < pParty->pCharacters.size(); ++i) {
         if (pParty->pCharacters[i].health > 0) {
             int v17 = 0;
@@ -766,7 +770,10 @@ void GameUI_DrawLifeManaBars() {
             double hpFillRatio = (double)pParty->pCharacters[i].health / (double)pParty->pCharacters[i].GetMaxHealth();
 
             auto pTextureHealth = game_ui_bar_green;
-            if (hpFillRatio > 0.5) {
+            if (mm6Bars) {
+                // The original MM6 archive supplies one green hit fill.
+                hpFillRatio = std::min(hpFillRatio, 1.0);
+            } else if (hpFillRatio > 0.5) {
                 if (hpFillRatio > 1.0) {
                     hpFillRatio = 1.0;
                 }
@@ -776,13 +783,14 @@ void GameUI_DrawLifeManaBars() {
                 pTextureHealth = game_ui_bar_red;
             }
             if (hpFillRatio > 0.0) {
+                Pointi barPosition = mm6Bars ? mm6Health[i].topLeft() : Pointi(v17 + pHealthBarPos[i], pHealthManaBarYPos);
                 int height = pTextureHealth->height() * hpFillRatio;
                 render->SetUIClipRect(Recti(
-                    v17 + pHealthBarPos[i],
-                    pTextureHealth->height() - height + pHealthManaBarYPos,
+                    barPosition.x,
+                    pTextureHealth->height() - height + barPosition.y,
                     pTextureHealth->width(),
                     height));
-                render->DrawQuad2D(pTextureHealth, {v17 + pHealthBarPos[i], pHealthManaBarYPos});
+                render->DrawQuad2D(pTextureHealth, barPosition);
                 render->ResetUIClipRect();
             }
         }
@@ -793,12 +801,13 @@ void GameUI_DrawLifeManaBars() {
             }
             int v17 = 0;
             if (i == 2) v17 = 1;
+            Pointi barPosition = mm6Bars ? mm6Mana[i].topLeft() : Pointi(v17 + pManaBarPos[i], pHealthManaBarYPos);
             int height = mpFillRatio * game_ui_bar_blue->height();
             render->SetUIClipRect(Recti(
-                v17 + pManaBarPos[i],
-                game_ui_bar_blue->height() - height + pHealthManaBarYPos,
+                barPosition.x,
+                game_ui_bar_blue->height() - height + barPosition.y,
                 game_ui_bar_blue->width(), height));
-            render->DrawQuad2D(game_ui_bar_blue, {v17 + pManaBarPos[i], pHealthManaBarYPos});
+            render->DrawQuad2D(game_ui_bar_blue, barPosition);
             render->ResetUIClipRect();
         }
     }

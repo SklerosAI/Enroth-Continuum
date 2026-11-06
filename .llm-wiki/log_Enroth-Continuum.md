@@ -219,3 +219,8 @@ Chronological record of wiki activity.
 - Linked the separate arm64 MM6 target, original-order transport lookup, descriptor 173, portrait path, 68-resource EVT framing and title-tagged `.ec6` envelope in a new handoff page.
 - Recorded the integrated nine-test offline pass and private actor fixture, with gameplay effects, state serialization and F5 graphical play still open.
 - Updated source and campaign summaries for future parallel agents; checked 54 wiki pages for frontmatter and local links, with only the schema template placeholders unresolved.
+
+## [2026-11-06] update | MM6 event skill-check rule
+- by: T-Burton-ND via codex
+- Recorded the provisional MM6 zero-mastery `CheckSkill` threshold rule, its source reference and the requirement to observe the quest outcome in F5.
+- Updated the F4 handoff and event packet after ten focused C++ tests passed, including parsing all 68 active retained EVT resources from ignored local input.

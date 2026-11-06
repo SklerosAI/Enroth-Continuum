@@ -671,3 +671,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The title-specific parser retains all 93 active special-attack labels from the F3-matched monster table. Eight misspelled fear and three shortened poison labels no longer become `NONE`. The MM6 effect consumer now rejects every nonempty special attack before inherited MM7 observer, random or state mutation; MM7 retains its parser and effects.
 - The arm64 MM6, OpenEnroth and unit targets built, and seven focused monster damage/special-attack tests passed with retained private input. Original MM6 condition, inventory and cue rules remain open, so this does not establish combat playability. No original installation or MM6 process was opened.
+
+## [2026-11-06] implement | Read-only MM6 save slot inventory
+- by: T-Burton-ND via codex
+- `listKnownSaveSlots` now inventories sorted `.ec6` primary and backup candidates from the native MM6 profile. It decodes all sixteen currently known sections, exposes saved header metadata and a recovery-needed flag, ignores MM7/temp names, and rejects symlinked save paths. Listing never restores a backup or changes a slot.
+- The arm64 MM6, OpenEnroth and unit targets built; focused atomic-save tests passed 4/4, including valid primary, backup-only, malformed-primary, malformed-only and symlink cases. Cpplint, diff and page-link checks passed. The MM6 SaveLoad guard stays closed pending private map-base and full runtime-state proof. No original installation or MM6 process was opened.

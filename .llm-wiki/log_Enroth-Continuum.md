@@ -448,3 +448,9 @@ Chronological record of wiki activity.
 - Built the arm64 MM6, MM7 and unit targets after spell dispatch, HIRE/RESC diagnostic and MAPS exact-set integration. The one-command offline runner passed 89/89 MM6/LOD tests from 26 suites and the retained F3-matched aggregate checks; the linked general suite passed 438/438. The map-name Python unit passed 1/1.
 - Hardened private spell-dispatch report creation to mode 0600, wired the private 67-name map manifest verifier into the runner, and rejected null MAPS staging destinations before mutation. The private map manifest and spell-dispatch handoff are owner readable only. `git ls-files local-game-data` lists only its public README.
 - Updated the status, build graph and agent handoff with the current test result and the remaining exact map-base/delta, save transaction and spell-effect gates. No original installation was reread, MM6 was not launched, and MM7's installed app/profile was untouched.
+
+## [2026-11-06] ingest | MM6 known-save map/base pass
+- by: T-Burton-ND via codex
+- Added an MM6-only candidate validator that decodes all sixteen known `.ec6` sections, requires the private expected map-name set, and parses each of 67 delta entries with its caller-supplied base entry before returning or assigning any state.
+- Indoor delta validation uses its parsed base. Outdoor base and delta are separately bounded; their content-level relation remains unproved. The trusted source reader, full save transaction and SaveLoad wiring remain open.
+- Built the arm64 unit target; two focused tests passed, including all 67 retained F3-matched base/delta pairs and negative missing-base, wrong-base-type, malformed-delta and name-set cases. Direct C++ style and diff checks passed. No original installation was reread or partial MM6 game launched.

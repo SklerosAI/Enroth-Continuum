@@ -1547,7 +1547,7 @@ void ODM_ProcessPartyActions() {
                             if (isModelWalk) {
                                 sound = SOUND_RunWood;
                             } else {
-                                sound = walkSoundForTileset(pOutdoor->pTerrain.tilesetByPos(partyOldPosition), true);
+                                sound = walkSoundForTile(engine->gameTitle(), pOutdoor->pTerrain.tileDataByGrid(worldToGrid(partyOldPosition)), true);
                             }
                         }
                     } else if (partyIsWalking) {
@@ -1555,7 +1555,7 @@ void ODM_ProcessPartyActions() {
                             if (isModelWalk) {
                                 sound = SOUND_RunWood;
                             } else {
-                                sound = walkSoundForTileset(pOutdoor->pTerrain.tilesetByPos(partyOldPosition), false);
+                                sound = walkSoundForTile(engine->gameTitle(), pOutdoor->pTerrain.tileDataByGrid(worldToGrid(partyOldPosition)), false);
                             }
                         }
                     }

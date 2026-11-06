@@ -1,5 +1,7 @@
 #include "TileEnumFunctions.h"
 
+#include "TileData.h"
+
 #include <cassert>
 #include <unordered_map>
 
@@ -86,6 +88,55 @@ SoundId walkSoundForTileset(Tileset tileset, bool isRunning) {
         return isRunning ? SOUND_RunSwamp : SOUND_WalkSwamp;
     case TILESET_COBBLE_ROAD:
         return isRunning ? SOUND_RunRoad : SOUND_WalkRoad;
+    }
+}
+
+SoundId walkSoundForTile(GameTitle gameTitle, const TileData &tile, bool isRunning) {
+    if (gameTitle != GameTitle::MM6)
+        return walkSoundForTileset(tile.tileset, isRunning);
+
+    // The MM6 terrain sound dispatcher keys off the original tile-table
+    // tileset field. The shared Tileset enum collapses several MM6 classes.
+    switch (tile.sourceTileset) {
+    case 0:
+    case 8:
+        return isRunning ? SOUND_RunGrass : SOUND_WalkGrass;
+    case 1:
+        return isRunning ? SOUND_RunSnow : SOUND_WalkSnow;
+    case 2:
+        return isRunning ? SOUND_RunDesert : SOUND_WalkDesert;
+    case 3:
+        return isRunning ? SOUND_RunCooledLava : SOUND_WalkCooledLava;
+    case 4:
+    case 9:
+    case 18:
+    case 19:
+    case 20:
+    case 21:
+        return isRunning ? SOUND_RunGround : SOUND_WalkGround;
+    case 5:
+        return isRunning ? SOUND_RunWater : SOUND_WalkWater;
+    case 6:
+        return isRunning ? SOUND_RunBadlands : SOUND_WalkBadlands;
+    case 7:
+        return isRunning ? SOUND_RunSwamp : SOUND_WalkSwamp;
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+    case 16:
+    case 17:
+    case 22:
+    case 23:
+    case 24:
+    case 25:
+    case 26:
+    case 27:
+        return isRunning ? SOUND_RunRoad : SOUND_WalkRoad;
+    default:
+        return SOUND_Invalid;
     }
 }
 

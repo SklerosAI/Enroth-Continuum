@@ -319,6 +319,8 @@ void reconstruct(const TileData_MM7 &src, TileData *dst) {
     reconstruct(src.tileset, &dst->tileset);
     reconstruct(src.variant, &dst->variant, tags::context(isRoad(dst->tileset)), tags::context(dst->textureName));
     dst->flags = static_cast<TileFlags>(src.flags);
+    dst->sourceTileset = static_cast<uint16_t>(src.tileset);
+    dst->sourceVariant = static_cast<uint16_t>(src.variant);
 }
 
 void reconstruct(const TextureFrameData_MM7 &src, TextureFrameData *dst) {

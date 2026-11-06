@@ -4,6 +4,7 @@
 #include "TileEnums.h"
 
 #include "Engine/Data/SoundEnums.h"
+#include "Engine/GameTitle.h"
 
 #include "Library/Geometry/Point.h"
 
@@ -52,6 +53,9 @@ inline Segment<Tileset> allTerrainTilesets() {
  * @offset 0x47EE49
  */
 SoundId walkSoundForTileset(Tileset tileset, bool isRunning);
+
+struct TileData;
+SoundId walkSoundForTile(GameTitle gameTitle, const TileData &tile, bool isRunning);
 
 int foodRequiredForTileset(Tileset tileset);
 

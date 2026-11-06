@@ -10,6 +10,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Data/TileEnumFunctions.h"
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Evt/MM6MapByteState.h"
 #include "Engine/Evt/MM6EventVariables.h"
@@ -180,6 +181,10 @@ GAME_TEST(MM6Headless, FirstOutdoorTileSelectors) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     auto base = std::make_unique<OutdoorLocation_MM7>();
     deserializeMM6Outdoor(decodeMM6ArchiveEntry(pGames_LOD->read("oute3.odm")), base.get());
+    for (const OutdoorTileType_MM7 &selector : base->tileTypes) {
+        ASSERT_LT(static_cast<size_t>(selector.tileId), pTileTable->tileCount());
+        EXPECT_EQ(pTileTable->tile(selector.tileId).sourceTileset, static_cast<uint16_t>(selector.tileset));
+    }
 
     auto mm6Terrain = std::make_unique<OutdoorTerrain>();
     auto inheritedTerrain = std::make_unique<OutdoorTerrain>();
@@ -277,6 +282,39 @@ GAME_TEST(MM6Headless, FirstOutdoorTileSelectors) {
     EXPECT_EQ(outdoorCount, 15u);
     EXPECT_EQ(invalidTextures, 0u);
     EXPECT_EQ(outdoorSummerChanges, 0u);
+}
+
+TEST(MM6OutdoorWalkSounds, RawIdentityAndTitleIsolation) {
+    TileData tile;
+    tile.tileset = TILESET_DIRT;
+    tile.sourceTileset = 3;
+    EXPECT_EQ(walkSoundForTile(GameTitle::MM6, tile, false), SOUND_WalkCooledLava);
+    EXPECT_EQ(walkSoundForTile(GameTitle::MM6, tile, true), SOUND_RunCooledLava);
+    EXPECT_EQ(walkSoundForTile(GameTitle::MM7, tile, false), SOUND_WalkDirt);
+
+    tile.sourceTileset = 22;
+    EXPECT_EQ(walkSoundForTile(GameTitle::MM6, tile, false), SOUND_WalkRoad);
+    EXPECT_EQ(walkSoundForTile(GameTitle::MM6, tile, true), SOUND_RunRoad);
+    EXPECT_EQ(walkSoundForTile(GameTitle::MM7, tile, true), SOUND_RunDirt);
+
+    tile.sourceTileset = 4;
+    EXPECT_EQ(walkSoundForTile(GameTitle::MM6, tile, false), SOUND_WalkGround);
+    tile.sourceTileset = 8;
+    EXPECT_EQ(walkSoundForTile(GameTitle::MM6, tile, false), SOUND_WalkGrass);
+    tile.sourceTileset = 27;
+    EXPECT_EQ(walkSoundForTile(GameTitle::MM6, tile, false), SOUND_WalkRoad);
+    tile.sourceTileset = 28;
+    EXPECT_EQ(walkSoundForTile(GameTitle::MM6, tile, false), SOUND_Invalid);
+    tile.sourceTileset = 255;
+    EXPECT_EQ(walkSoundForTile(GameTitle::MM6, tile, true), SOUND_Invalid);
+
+    TileData_MM7 wire{};
+    wire.tileset = TILESET_MM7_ROAD_CRACKED_COBBLE;
+    wire.variant = TILE_VARIANT_MM7_BASE1_NSEW;
+    reconstruct(wire, &tile);
+    EXPECT_EQ(tile.tileset, TILESET_DIRT);
+    EXPECT_EQ(tile.sourceTileset, 22);
+    EXPECT_EQ(tile.sourceVariant, 0);
 }
 
 TEST(MM6HeadlessFirstOutdoorSpriteEvents, IndexAndTitleIsolation) {

@@ -40,6 +40,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Offscreen Render Capture](MM6-F4-Offscreen-Render-Capture.md) — Hidden OpenGL frame with four portraits, aligned bars and source-color foliage; terrain selector correction needs integrated visual check
 - [MM6 F4 First Map Preflight](MM6-F4-First-Map-Preflight.md) — Detached resources, events, encounters and monitored in-memory outdoor load; durable save and gameplay remain open
 - [MM6 F4 Outdoor Tile Selectors](MM6-F4-Outdoor-Tile-Selectors.md) — Original base-field trace, MM6-only terrain reconstruction and remaining seasonal art gap
+- [MM6 F4 Outdoor Walk Sound](MM6-F4-Outdoor-Walk-Sound.md) — Original raw-tileset sound dispatcher and title-specific outdoor footsteps
 - [MM6 F4 Monster Special Attacks](MM6-F4-Monster-Special-Attack.md) — All retained special labels decoded with unverified MM6 effects gated before mutation
 - [MM6 F4 Monster Spells](MM6-F4-Monster-Spells.md) — All 55 active monster casts retain MM6 spell IDs while effects remain gated
 - [MM6 F4 Monster Projectiles](MM6-F4-Monster-Projectiles.md) — All 82 active cells retain MM6 source types while launch and impact remain gated

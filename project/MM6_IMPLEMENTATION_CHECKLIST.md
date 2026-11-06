@@ -211,11 +211,14 @@ that requirement.
   have different same-ID MM6 labels, so their MM6 target kinds need explicit
   reconciliation. None proves a reachable cast or correct effect.
 - [x] Visually inspect all 56 Prima spell-section PDF pages and reconcile
-  each of 99 guide base costs with the retained MM6 spell row in
+  each of 99 guide base costs and all 297 Normal/Expert/Master clauses with
+  the retained MM6 spell row in
   [MM6_SPELL_GUIDE_CLAIMS_F2.md](MM6_SPELL_GUIDE_CLAIMS_F2.md). All 99 base
   costs match; 22 differ from inherited static MM7 base cost. The private
-  matrix names guide cost, target and damage ambiguities. Quantitative rank
-  effects and runtime casts remain unverified.
+  matrix has 207 quantitative, 87 qualitative and three guide-unknown rank
+  clauses, and four guide/table rank-effect disagreements. Its same-ID C++
+  screen finds 58 label/base-mana conflicts and 41 not-demonstrated effects.
+  Full C++ effect comparison and runtime casts remain unverified.
 - [ ] Implement MM6-specific spell IDs, casting effects, three mastery levels,
   costs, recovery, damage/resistance types, target rules, buff duration,
   scroll/book/wand mappings, monster/event casts, visuals and descriptions.

@@ -43,3 +43,10 @@ set(ENGINE_DATA_HEADERS
 add_library(engine_data STATIC ${ENGINE_DATA_SOURCES} ${ENGINE_DATA_HEADERS})
 target_link_libraries(engine_data PUBLIC core_time library_color library_json library_serialization utility)
 target_check_style(engine_data)
+
+if(OE_BUILD_TESTS)
+    add_library(test_engine_data_mm6_house_service OBJECT Tests/MM6HouseService_ut.cpp)
+    target_link_libraries(test_engine_data_mm6_house_service PUBLIC testing_unit engine_tables)
+    target_check_style(test_engine_data_mm6_house_service)
+    target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_data_mm6_house_service)
+endif()

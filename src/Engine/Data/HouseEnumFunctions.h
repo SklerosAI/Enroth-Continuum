@@ -43,6 +43,43 @@ inline bool isMagicGuild(HouseId houseId) {
     return houseId >= HOUSE_FIRST_MAGIC_GUILD && houseId <= HOUSE_LAST_MAGIC_GUILD;
 }
 
+namespace mm6 {
+
+// This classifies a parsed MM6 house type without assuming MM7 house-ID ranges
+// or implying that the corresponding service window and stock are ready.
+enum class HouseServiceFamily { Shop, MagicGuild, Transport, Other };
+
+inline HouseServiceFamily houseServiceFamily(HouseType type) {
+    switch (type) {
+        case HOUSE_TYPE_WEAPON_SHOP:
+        case HOUSE_TYPE_ARMOR_SHOP:
+        case HOUSE_TYPE_MAGIC_SHOP:
+        case HOUSE_TYPE_ALCHEMY_SHOP:
+        case HOUSE_TYPE_GENERAL_STORE:
+            return HouseServiceFamily::Shop;
+        case HOUSE_TYPE_FIRE_GUILD:
+        case HOUSE_TYPE_AIR_GUILD:
+        case HOUSE_TYPE_WATER_GUILD:
+        case HOUSE_TYPE_EARTH_GUILD:
+        case HOUSE_TYPE_SPIRIT_GUILD:
+        case HOUSE_TYPE_MIND_GUILD:
+        case HOUSE_TYPE_BODY_GUILD:
+        case HOUSE_TYPE_LIGHT_GUILD:
+        case HOUSE_TYPE_DARK_GUILD:
+        case HOUSE_TYPE_ELEMENTAL_GUILD:
+        case HOUSE_TYPE_SELF_GUILD:
+        case HOUSE_TYPE_MIRRORED_PATH_GUILD:
+            return HouseServiceFamily::MagicGuild;
+        case HOUSE_TYPE_STABLE:
+        case HOUSE_TYPE_BOAT:
+            return HouseServiceFamily::Transport;
+        default:
+            return HouseServiceFamily::Other;
+    }
+}
+
+} // namespace mm6
+
 inline bool isStable(HouseId houseId) {
     return houseId >= HOUSE_FIRST_STABLE && houseId <= HOUSE_LAST_STABLE;
 }

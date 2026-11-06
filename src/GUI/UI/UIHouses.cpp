@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 #include <utility>
 #include <string>
@@ -289,6 +290,9 @@ static constexpr IndexedArray<const char *, HOUSE_TYPE_WEAPON_SHOP, HOUSE_TYPE_M
 }};
 
 bool enterHouse(HouseId uHouseID) {
+    if (engine->gameTitle() == GameTitle::MM6)
+        throw std::runtime_error("MM6 house entry needs title-specific room descriptors and service rules");
+
     engine->_statusBar->clearAll();
     engine->_messageQueue->clear();
 

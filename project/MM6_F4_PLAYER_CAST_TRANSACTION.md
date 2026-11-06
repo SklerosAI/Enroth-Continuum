@@ -1,6 +1,6 @@
 # MM6 F4 player-cast transaction audit
 
-Status: **read-only First Aid spellbook preflight implemented; live MM6 effect gate closed** (2026-11-06). This packet distinguishes retained MM6 rule data from inherited OpenEnroth transaction behavior. No MM6 cast or graphical play was observed.
+Status: **read-only First Aid preflight and detached character-state commit implemented; live MM6 effect gate closed** (2026-11-06). This packet distinguishes retained MM6 rule data from inherited OpenEnroth transaction behavior. No MM6 cast or graphical play was observed.
 
 ## Current source order
 
@@ -19,6 +19,10 @@ Status: **read-only First Aid spellbook preflight implemented; live MM6 effect g
 `MM6FirstAidPreflight` composes the checked F3-matched 99-spell mana/recovery manifest with the ignored, guide-checked First Aid amount. It accepts only an ordinary book route for MM6 spell ID 68, mastery Normal/Expert/Master, an indexed caster and character target 0–3, positive skill, known spell, able and recovered caster, sufficient nonnegative mana, and a target whose condition has already been checked as healable. It refuses held items, curse, invisibility, underwater and turn-based contexts because their current transaction paths have unproved MM6 side effects. It reports `NeedsCharacterTarget`, `InsufficientMana`, or `InputsReady` without touching queue, UI, party, items, mana, conditions, recovery or cues. `InputsReady` is an input snapshot, **not authorization to execute**.
 
 Synthetic native tests cover all three ranks, missing-target and mana states, title/ID/index/rank/route rejection, and representative unverified contexts. A private-backed test composes both ignored manifests without publishing values. The current player queue and executor guards continue to reject every regular MM6 spell before this plan is used in live play.
+
+## Detached state transaction
+
+`MM6FirstAidTransaction` applies an `InputsReady` plan to a caller-owned copy of four `Character` records. It rejects foreign title, bad indices, insufficient current mana, caster recovery/curse/incapacity, dead/eradicated/unconscious/zombie or nonpositive target HP, and invalid supplied maximum HP before mutation. A valid plan debits mana, caps healing at the supplied maximum, and stages caster recovery. Same-character caster/target works. This is actual character state, but it has no queue, UI, sound, active-character switch or global commit. The caller must derive the current MM6 maximum HP and revalidate any state that changed after preflight. Synthetic native tests cover a successful cast and late invalid-state nonmutation.
 
 ## Gate to execution
 

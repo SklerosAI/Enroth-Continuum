@@ -1,6 +1,6 @@
 # MM6 F4 First Aid effect slice
 
-Status: **private-backed fixed-heal runtime branch implemented, live casting still blocked** (2026-11-06). This is one bounded spell-effect category, not general MM6 spell support.
+Status: **private-backed fixed-heal branch and detached character-state transaction implemented, live casting still blocked** (2026-11-06). This is one bounded spell-effect category, not general MM6 spell support.
 
 ## Evidence chain
 
@@ -9,6 +9,8 @@ The retained `spell-effect-probe.json` identifies spell ID 68 and its three rank
 The prior inherited case scaled healing with skill and also permitted an actor target. The MM6 branch now reads the private three-rank amount and calls the target character's healing method only for a bounded party-member index with no actor target. MM6 target selection is separately marked as character-only. MM7 keeps the inherited case and target routing.
 
 ## Execution boundary
+
+A [detached First Aid transaction](MM6_F4_PLAYER_CAST_TRANSACTION.md) now takes an `InputsReady` plan and four copied `Character` records. It validates title, indices, mana, recovery, conscious target and supplied maximum HP before changing any copy; it stages mana debit, bounded HP gain and caster recovery together. It accepts self-targeting. The caller must supply a current MM6 maximum HP and own the final live commit, target picker, cues and queue cleanup. Two focused tests cover success, self-targeting and late invalid state without mutation.
 
 The outer MM6 effect guard still rejects ID 68 before the queue or effect switch. The new branch is therefore compiled and tested as an effect rule, but **is not reachable in live MM6 casting**. Removing that guard requires a verified transaction for target selection, held-item handling, the provisional 300-tick target-pick recovery, curse failure, mana/recovery application, status conditions, visual and audio cues, cancel behavior and persistence. The branch currently uses the shared `Character::Heal` semantics; MM6-specific maximum HP, unconscious/dead/zombie and overflow behavior must be checked before enabling it. Scroll, event, monster, NPC and wand casts remain closed.
 

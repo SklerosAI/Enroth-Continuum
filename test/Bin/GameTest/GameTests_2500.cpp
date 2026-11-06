@@ -20,6 +20,7 @@
 #include "Engine/Graphics/Vis.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Decoration.h"
+#include "Engine/Objects/MonsterEnumFunctions.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Tables/DecorationTable.h"
@@ -946,6 +947,132 @@ GAME_TEST(Issues, Issue2834) {
     EXPECT_EQ(golemHeadTape, tape(0, 1));
     EXPECT_EQ(golemHeadPlacedTape, tape(true, false));
     EXPECT_EQ(abbeyHeadPlacedTape, tape(false, true));
+}
+
+GAME_TEST(Issues, Issue2859a) {
+    // A hired Squire didn't raise weapon and armor skills.
+    auto swordTape = charTapes.skillLevels(SKILL_SWORD);
+    auto bowTape = charTapes.skillLevels(SKILL_BOW);
+    auto shieldTape = charTapes.skillLevels(SKILL_SHIELD);
+    auto leatherTape = charTapes.skillLevels(SKILL_LEATHER);
+    auto armsmasterTape = charTapes.skillLevels(SKILL_ARMSMASTER);
+    game.startNewGame();
+    pParty->pCharacters[0].setSkillValue(SKILL_ARMSMASTER, CombinedSkillValue::novice(1));
+    test.startTaping();
+    game.tick();
+    hireGolem(NPC_PROFESSION_SQUIRE);
+    game.tick();
+
+    EXPECT_EQ(swordTape, tape({1, 0, 0, 0}, {3, 2, 2, 2}));
+    EXPECT_EQ(bowTape, tape({1, 0, 0, 0}, {3, 2, 2, 2}));
+    EXPECT_EQ(shieldTape, tape({0, 0, 0, 0}, {2, 2, 2, 2})); // Vanilla raises skills the character doesn't have too.
+    EXPECT_EQ(leatherTape, tape({1, 1, 1, 1}, {3, 3, 3, 3}));
+    EXPECT_EQ(armsmasterTape, tape({1, 0, 0, 0})); // Armsmaster is not affected.
+}
+
+GAME_TEST(Issues, Issue2859b) {
+    // A hired Sage raised Monster ID but not Item ID.
+    auto itemIdTape = charTapes.skillLevels(SKILL_ITEM_ID);
+    auto monsterIdTape = charTapes.skillLevels(SKILL_MONSTER_ID);
+    game.startNewGame();
+    for (Skill skill : {SKILL_ITEM_ID, SKILL_MONSTER_ID})
+        pParty->pCharacters[0].setSkillValue(skill, CombinedSkillValue::novice(1));
+    test.startTaping();
+    game.tick();
+    hireGolem(NPC_PROFESSION_SAGE);
+    game.tick();
+
+    EXPECT_EQ(itemIdTape, tape({1, 0, 0, 0}, {7, 6, 6, 6}));
+    EXPECT_EQ(monsterIdTape, tape({1, 0, 0, 0}, {7, 6, 6, 6}));
+}
+
+GAME_TEST(Issues, Issue2864a) {
+    // A Lloyd's Beacon scroll opened the book with the reader's own slot count, not the five slots of the scroll's
+    // master skill.
+    auto slotCountTape = tapes.custom(&lloydsBookSlotCount);
+    auto lastSlotTape = charTapes.hasBeacon(3, 4);
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+    test.startTaping();
+    ASSERT_LT(pParty->pCharacters[3].getActualSkillValue(SKILL_WATER).mastery(), MASTERY_MASTER);
+    pParty->setHoldingItem(Item(ITEM_SCROLL_LLOYDS_BEACON));
+    game.pressGuiButton("Game_Character4", BUTTON_RIGHT); // Read the scroll.
+    game.tick(3);
+    game.pressGuiButton("LloydsBook_Slot4");
+    game.tick();
+
+    EXPECT_EQ(slotCountTape, tape(0, 5));
+    EXPECT_EQ(lastSlotTape, tape(false, true));
+}
+
+GAME_TEST(Issues, Issue2864b) {
+    // Lloyd's Beacon cast from the spellbook should open the book with the caster's own slot count, three at expert
+    // water.
+    auto slotCountTape = tapes.custom(&lloydsBookSlotCount);
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+    test.startTaping();
+    pParty->pCharacters[3].setSkillValue(SKILL_WATER, CombinedSkillValue(4, MASTERY_EXPERT));
+    pParty->pCharacters[3].bHaveSpell[SPELL_WATER_LLOYDS_BEACON] = true; // MM6 lets any water mage learn it, MM7 needs grandmaster.
+    game.castSpell(3, SPELL_WATER_LLOYDS_BEACON);
+    game.tick(2);
+
+    EXPECT_EQ(slotCountTape, tape(0, 3));
+}
+
+GAME_TEST(Issues, Issue2868a) {
+    // "Killed all Erathian Griffins" was set with the Royal Griffins still alive.
+    // "Killed all Bracada Desert Griffins" wasn't set with every griffin dead, because the Gold Golems were alive.
+    for (auto [map, bit, survivor] : {std::tuple(MAP_ERATHIA, QBIT_ERATHIA_GRIFFINS_KILLED, MONSTER_GRIFFIN_C),
+                                      std::tuple(MAP_BRACADA_DESERT, QBIT_BRACADA_DESERT_GRIFFINS_KILLED, MONSTER_INVALID),
+                                      std::tuple(MAP_BRACADA_DESERT, QBIT_BRACADA_DESERT_GRIFFINS_KILLED, MONSTER_GRIFFIN_A)}) {
+        test.prepareForNextTest();
+        auto mapTape = tapes.map();
+        auto questTape = tapes.questBit(bit);
+        game.startNewGame();
+        test.startTaping();
+        game.teleportTo(map, Vec3f(0, 0, 0), 0);
+        for (Actor &actor : pActors)
+            if (monsterTypeForMonsterId(actor.monsterInfo.id) == MONSTER_TYPE_GRIFFIN && actor.monsterInfo.id != survivor)
+                Actor::Die(actor.id);
+        game.teleportTo(MAP_HARMONDALE, Vec3f(0, 0, 0), 0);
+
+        EXPECT_EQ(mapTape, tape(MAP_EMERALD_ISLAND, map, MAP_HARMONDALE));
+        EXPECT_EQ(questTape, survivor == MONSTER_INVALID ? tape(false, true) : tape(false));
+    }
+}
+
+GAME_TEST(Issues, Issue2868b) {
+    // Spark Burnkindle took the troglodytes under Stone City for killed with the Troglodyte Queens still alive.
+    for (bool killQueens : {false, true}) {
+        test.prepareForNextTest();
+        auto questTape = tapes.questBit(QBIT_STONE_CITY_TROGLODYTES_ACTIVE);
+        auto experienceTape = tapes.totalExperience();
+        auto textTape = tapes.allGUIWindowsText();
+        game.startNewGame();
+        game.teleportTo(MAP_STONE_CITY, Vec3f(3904, -3334, -5), 270); // In front of Spark's house.
+        for (Actor &actor : pActors)
+            if (monsterTypeForMonsterId(actor.monsterInfo.id) == MONSTER_TYPE_TROGLODYTE && (killQueens || actor.monsterInfo.id != MONSTER_TROGLODYTE_C))
+                Actor::Die(actor.id);
+        test.startTaping();
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick();
+        game.pressGuiButton("House_Npc0"); // Spark Burnkindle.
+        game.tick();
+        game.pressGuiButton("HouseNpcDialogue_Option0"); // Take the quest.
+        game.tick();
+        game.pressGuiButton("HouseNpcDialogue_Option0"); // Report the troglodytes killed.
+        game.tick();
+
+        EXPECT_EQ(questTape, killQueens ? tape(false, true, false) : tape(false, true));
+        EXPECT_EQ(experienceTape.delta(), killQueens ? 4 * 5000 : 0);
+        if (killQueens) {
+            EXPECT_CONTAINS(textTape.flatten(), "They're gone?  Routed back into the connecting\ntunnels to Nighon!  Excellent!  We can get back to\n"
+                                                "mining immediately!  Thank you so much for your\nhelp; take this as a reward for your services.");
+        } else {
+            EXPECT_CONTAINS(textTape.flatten(), "There are still troglodytes roaming the lower mine\nlevels.  Please remove them!");
+        }
+    }
 }
 
 GAME_TEST(Prs, Pr2876a) {

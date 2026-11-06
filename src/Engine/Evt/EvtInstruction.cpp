@@ -1234,6 +1234,8 @@ EvtInstruction EvtInstruction::parse(InputStream &stream, size_t size, GameTitle
             requireSize(12);
             ir.data.actor_descr.policy = static_cast<ActorKillCheckPolicy>(fromStream<uint8_t>(stream));
             ir.data.actor_descr.param = fromStream<uint32_t>(stream);
+            if (ir.data.actor_descr.policy == KILL_CHECK_MONSTERID)
+                ir.data.actor_descr.param++; // Evt scripts count monster ids from 0.
             ir.data.actor_descr.num = fromStream<uint8_t>(stream);
             ir.target_step = fromStream<uint8_t>(stream);
             break;
@@ -1241,6 +1243,8 @@ EvtInstruction EvtInstruction::parse(InputStream &stream, size_t size, GameTitle
             requireSize(12);
             ir.data.actor_descr.policy = static_cast<ActorKillCheckPolicy>(fromStream<uint8_t>(stream));
             ir.data.actor_descr.param = fromStream<uint32_t>(stream);
+            if (ir.data.actor_descr.policy == KILL_CHECK_MONSTERID)
+                ir.data.actor_descr.param++; // Evt scripts count monster ids from 0.
             ir.data.actor_descr.num = fromStream<uint8_t>(stream);
             ir.target_step = fromStream<uint8_t>(stream);
             break;

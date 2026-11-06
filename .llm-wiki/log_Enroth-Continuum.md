@@ -589,6 +589,12 @@ Chronological record of wiki activity.
 - A refreshed ignored, owner-only house-route report classifies labels on all 557 retained rows. The inherited parser previously sent 384 active rows to the mercenary guild type; the MM6 parser now has zero unknown nonempty labels and the native suite checks the full retained table. House services, movies and house-ID helpers remain open.
 - The arm64 MM6/MM7/unit targets built; the offline runner passed 136/136 tests across 42 suites and the general suite passed 438/438. The original installation, partial MM6 game and protected MM7 app/profile were not opened.
 
+## [2026-11-06] guard | MM6 house entry and service ranges
+- by: T-Burton-ND via codex
+- The retained active house join exposes five transport rows inside the inherited shop ID interval and 13 non-guild rows inside the inherited magic-guild interval; 20 guild-labelled rows lie outside the latter. A title-specific type-family classifier covers all 557 retained rows without using MM7 numeric keys.
+- MM6 `enterHouse` now rejects before status-bar, queue, shop-timer, room-descriptor, NPC or movie mutation. The inherited MM7 path remains unchanged. This keeps the existing offline transport menu behind the house-entry gate until its room and service dependencies are ready.
+- The integrated arm64 MM6/MM7/unit build passed, the offline runner passed 145/145 tests from 45 suites without skips, and the general suite passed 438/438. No original installation or MM6 process was opened.
+
 ## [2026-11-06] implement | MM6 award table text and display guard
 - by: T-Burton-ND via codex
 - The F3-matched retained awards table has 100 unique numbered rows, 86 nonempty texts and no priority values. A title-specific bounded loader retains the texts without assigning a made-up priority; malformed or incomplete MM6 tables reject before replacing the global table. MM7 keeps its parser.

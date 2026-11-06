@@ -644,3 +644,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Raw MM6 EVT variable 16 now routes Compare, Add, Subtract, Set and dialogue-topic comparison through a bounded party-bit helper. It accepts IDs 1–512, changes the party bit once per instruction regardless of character selector, and rejects invalid operands before mutation. The MM7 executor stays unchanged. Inherited MM7 quest and award cues are bypassed; MM6 journal, sound and animation behavior still need source and F5 checks.
 - The F3-matched retained audit still covers all 611 active uses after the source change. Arm64 MM6, OpenEnroth and unit targets built; two focused quest-bit tests passed. The full offline runner and live quest/save scenarios are pending integrated validation. No original installation or partial MM6 process was opened.
+
+## [2026-11-06] ingest | Explicit MM6 monster resistance columns
+- by: T-Burton-ND via codex
+- The MM6 monster loader now retains the six source columns as Fire, Electricity, Cold, Poison, Physical and Magic alongside the inherited MM7-shaped fields. A typed lookup rejects missing MM6 source data and Energy, which has an attack label but no proved resistance column.
+- A native test loaded the F3-matched retained 173-row table and matched its six immunity-marker aggregates to the F2 combat audit; all five focused monster-damage tests passed after the arm64 build. Live damage formulas and unproved channel gates did not change. The original installation and partial MM6 game were not opened.

@@ -1471,3 +1471,8 @@ Chronological record of wiki activity.
 ## [2026-11-06] verify | Integrated foliage, save and event slices
 - by: T-Burton-ND via codex
 - Built both linked arm64 test targets after integration. The focused native group passed 27/27; the monitored focused MM6 GameTest group passed 6/6 over 1,218 ten-millisecond samples, zero on-screen windows and no focus change. The hidden OpenGL first-map capture passed 1/1 over 190 samples with no visible window/focus change; its private PNG was inspected and shows source-color foliage, four portraits and the still-wrong `pending` terrain. The MM7 headless control passed 1/1 over 32 samples without window/focus change. No screenshot, save, original asset or detailed private log entered Git. Full gameplay and durable save/reload remain open.
+
+## [2026-11-06] implement | Queued MM6 save actions
+- by: T-Burton-ND via codex
+- `GUIMessageQueue::haveMessages()` only checks the current frame, while the next frame can later promote a cast. Added a read-only two-frame `hasPendingForSave()` and extended the MM6 scoped save action probe to reject either GUI queue, movement actions and delayed enchant messages before disk work. The title-local idle policy leaves normal SaveLoad closed and does not serialize those actions.
+- Linked `MM6HeldItemSaveFields.*` passed 4/4; monitored private `MM6ZSaveHeadless.*` passed 1/1 over 1,174 samples with no on-screen window or focus change. The stable observation boundary through a full transaction and post-load cursor application remain open. No private bytes or logs entered Git. See [HELD page](MM6-F4-Held-Item.md).

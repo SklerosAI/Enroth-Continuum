@@ -6,6 +6,11 @@ index. The exhaustive per-file and per-row catalog is private at
 An inventoried row is not an implemented game rule. Check an item only when a
 title-specific implementation and an appropriate offline or live check exist.
 
+Focused F2 specifications: [guide and campaign evidence](MM6_GUIDE_RECONCILIATION.md),
+[class, skill and party creation IDs](MM6_CLASS_SKILL_SPEC.md), and
+[save and map-delta layout](MM6_SAVE_SPEC.md). These are audit inputs, not
+claims that their runtime behavior is implemented.
+
 ## Evidence and boundaries
 
 - [x] Preserve the MM7 source baseline on `mm7-isolated-runtime`; independent
@@ -39,6 +44,11 @@ title-specific implementation and an appropriate offline or live check exist.
   [New World Computing guide](https://www.mocagh.org/nwc/mm6le-strategyguide.pdf),
   [Prima guide](https://www.mocagh.org/nwc/mm6-hintbook.pdf) where accessible,
   and [MMExtension reference](https://grayface.github.io/mm/ext/ref/).
+- [x] Index the owned manual, reference card, Prima guide and short NWC guide
+  by mechanic and campaign milestone in
+  [MM6_GUIDE_RECONCILIATION.md](MM6_GUIDE_RECONCILIATION.md). Page locators
+  and acceptance scenarios are recorded; detailed rule-by-rule comparison
+  with shipped tables and actual effects remains open.
 - [ ] Reconcile conflicting guide claims against the shipped GOG data. Keep
   guide citations and disputed claims here; never publish copied guide text.
 - [ ] Run a single deliberate read-only original-archive preflight after this
@@ -153,6 +163,11 @@ that requirement.
   terrain, objects, actors, doors, chests, map events and persistence.
 - [ ] All 52 `.blv` indoor maps and 52 `.dlv` delta companions: geometry,
   portals, rooms, lights, objects, actors, doors, chests and persistence.
+- [x] Consolidate the observed MM6 delta layout, inherited MM7 save paths and
+  isolated `.ec6` save contract in [MM6_SAVE_SPEC.md](MM6_SAVE_SPEC.md). All
+  67 retained delta companions reach their exact decoded end. The 200
+  persistent bytes and 56-byte tail still need field-level semantics and a
+  lossless write/read check; native `.mm6` save compatibility is unproven.
 - [x] Frame all 67 listed map EVT files and `global.evt`: 14,477 records, 43
   distinct opcodes, no framing errors. The other 15 EVT-named files are not
   listed maps; one (`d4bm.evt`) is not a framed script and must not be fed to
@@ -255,6 +270,12 @@ that requirement.
   invokes movies outside these active map events.
 - [ ] Compare one low, middle and high record of every ID family and every
   structure boundary with MM7. Record incompatible assumptions explicitly.
+- [x] Record the retained MM6 class and skill IDs, source row widths, known
+  inherited collisions and creation UI asset families in
+  [MM6_CLASS_SKILL_SPEC.md](MM6_CLASS_SKILL_SPEC.md). MM6 has six three-tier
+  class families (IDs 0–17) and 31 skills (IDs 0–30); inherited MM7 skill
+  ID 30 is Dodge where MM6 has Learning. Affinity, HP/SP and portrait/voice
+  semantics remain to be established and implemented.
 
 ## Engine and campaign behavior
 

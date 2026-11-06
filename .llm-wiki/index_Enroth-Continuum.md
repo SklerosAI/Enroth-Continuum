@@ -44,8 +44,11 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [Local Status Source](Source-Local-Status.md) — Dated local validation and its limits
 - [Roadmap Source](Source-Roadmap.md) — Intended trilogy and optional transfer design
 - [MM6 Class and Skill Spec Source](Source-MM6-Class-Skill-Spec.md) — Creation, class/skill, and potion UI source audit
+- [MM6 Rules F2 Closure Source](Source-MM6-Rules-F2-Closure.md) — Potion guide disagreement, starting-array schema lead, and rule acceptance gaps
 - [MM6 Save Spec Source](Source-MM6-Save-Spec.md) — Map-state boundaries, preservation, and save contract
+- [MM6 World F2 Closure Source](Source-MM6-World-F2-Closure.md) — Offline delta-section preservation and unresolved C++ world/save obligations
 - [MM6 Event and Campaign Spec Source](Source-MM6-Event-Campaign-Spec.md) — Question, NPC-topic, variable, and campaign gaps
+- [MM6 Campaign F2 Closure Source](Source-MM6-Campaign-F2-Closure.md) — Static transport, NPC interception, milestone, and finale routing risks
 - [MM6 Media and UI Spec Source](Source-MM6-Media-UI-Spec.md) — Movie, house, sound, music, and interface routing
 - [MM6 Text Table Consumer Spec Source](Source-MM6-Table-Consumer-Spec.md) — Direct literal load coverage and unresolved parser/consumer questions
 - [MM6 Monster and Combat Spec Source](Source-MM6-Monster-Combat-Spec.md) — Retained monster parser gaps, title assumptions, and unverified combat

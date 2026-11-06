@@ -12,6 +12,8 @@ Of 30 retained table names, 24 have a direct literal load and six do not. This i
 
 A later retained-table review found a complete symmetric two-axis `useitems.txt` matrix in the MM6 herb/bottle band, but the result-token meanings and original interaction behavior are unknown. The current MM6 item loader has no path for that matrix, and the inherited potion UI still uses MM7 rules. A separate source trace found the current MM6 NPC initializer leaves a dismissal-text field unset while the dialogue UI reads it; the proper MM6 text source and actual displayed behavior remain unverified. Overlapping autonote variants and other no-literal-load tables also need consumer and provenance checks. These are implementation leads, not proved original-game defects.
 
+The [potion-guide probe](../scripts/mm6_probe_potion_guide.py) matches 25 unordered numeric-result input pairs against the owned guide chart, with two result disagreements. The guide does not settle the five marker-token meanings, failure effects or original runtime behavior. A primary MMExtension reference also describes dismissal text as MM7-only, strengthening the need to trace MM6's intended flow rather than filling the inherited field by assumption.
+
 Authority: [project/MM6_TABLE_CONSUMER_SPEC.md](../project/MM6_TABLE_CONSUMER_SPEC.md) and the reproducible [table-consumer probe](../scripts/mm6_probe_table_consumers.py), reviewed 2026-11-05. Detailed source-line maps, matrix cells and source fingerprints stay only in ignored local research reports; do not copy them to this wiki or public Git.
 
 See also: [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), [Open Questions](Open-Questions.md), [Agent Handoff](Agent-Handoff.md).

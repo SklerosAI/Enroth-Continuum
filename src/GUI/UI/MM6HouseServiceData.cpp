@@ -120,7 +120,12 @@ HousePresentationState planHousePresentation(GameTitle title, const HouseService
     const HouseEntryPlan entry = planHouseEntry(houses, houseId);
     if (entry.kind != HouseEntryKind::TableBacked || !entry.room)
         throw std::runtime_error("MM6 house presentation requires a file-backed room");
-    return {houseId, entry.room->videoName, entry.proprietorIconName};
+    // F3 matched this candidate for all table-referenced rooms with a sound
+    // group. The original entry timing and cue policy remain unproved.
+    const std::optional<SoundId> candidateGreeting = entry.room->soundGroup
+        ? std::optional<SoundId>(static_cast<SoundId>(30000 + 100 * entry.room->soundGroup + 1))
+        : std::nullopt;
+    return {houseId, entry.room->videoName, entry.proprietorIconName, candidateGreeting};
 }
 
 bool TransportMenuData::hasAvailableRoute() const {

@@ -479,6 +479,7 @@ TEST(MM6HouseServiceData, ActivatesPresentationOnlyForTableBackedMM6Rooms) {
             ASSERT_TRUE(entry.room.has_value());
             EXPECT_EQ(state.videoName, entry.room->videoName);
             EXPECT_EQ(state.proprietorIconName, entry.proprietorIconName);
+            EXPECT_EQ(state.candidateGreetingSoundId.has_value(), entry.room->soundGroup != 0);
             ++tableBacked;
         } else {
             EXPECT_THROW(mm6::planHousePresentation(GameTitle::MM6, houses, houseId), std::exception);
@@ -496,6 +497,67 @@ TEST(MM6HouseServiceData, PreviewExitSkipsLegacyDialogueAndCharacterAdvanceOnlyF
     EXPECT_TRUE(isMM6HousePresentationScreen(GameTitle::MM6, SCREEN_HOUSE));
     EXPECT_FALSE(isMM6HousePresentationScreen(GameTitle::MM6, SCREEN_GAME));
     EXPECT_FALSE(isMM6HousePresentationScreen(GameTitle::MM7, SCREEN_HOUSE));
+}
+
+TEST(MM6HouseServiceData, StagesOnlyF3MatchedMM6GreetingCandidatesWithoutPlayback) {
+    const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
+    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
+    const char *archive = std::getenv("ENROTH_MM6_STAGED_AUDIO_SND");
+    if (!manifest || !research || !archive)
+        GTEST_SKIP() << "private MM6 house cue evidence is unavailable";
+
+    const std::filesystem::path root(research);
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(manifest)));
+    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
+        Blob::fromString(readFile(root / "icons" / "2devents.txt")), rooms);
+    const Json media = Json::parse(readFile(root / "F3_MEDIA_RECONCILIATION_2026-11-05.json"));
+    const Json routes = Json::parse(readFile(root / "house-route-probe.json"));
+    SoundList sounds;
+    deserialize(Blob::fromString(readFile(root / "icons" / "dsounds.bin")), &sounds, GameTitle::MM6);
+    const SndReader snd{PathView(archive)};
+
+    std::array<int, 119> houseForRoom{};
+    for (int houseId = 1; houseId <= 557; ++houseId) {
+        const Json &row = routes.at("house_rows").at(std::to_string(houseId));
+        if (row.at("room_id").is_number_integer()) {
+            const int roomId = row.at("room_id").get<int>();
+            ASSERT_GE(roomId, 1);
+            ASSERT_LE(roomId, 118);
+            if (!houseForRoom[roomId])
+                houseForRoom[roomId] = houseId;
+        }
+    }
+
+    int withGreeting = 0;
+    int silent = 0;
+    for (const Json &join : media.at("house_room_joins")) {
+        const int roomId = join.at("room_id").get<int>();
+        ASSERT_GE(roomId, 1);
+        ASSERT_LE(roomId, 118);
+        ASSERT_NE(houseForRoom[roomId], 0);
+        const mm6::HousePresentationState state = mm6::planHousePresentation(
+            GameTitle::MM6, houses, houseForRoom[roomId]);
+        const mm6::RoomDescriptor &room = rooms.at(roomId);
+        const Json &candidate = join.at("candidate_house_sounds").at("1");
+        if (!room.soundGroup) {
+            EXPECT_FALSE(state.candidateGreetingSoundId);
+            EXPECT_FALSE(candidate.at("name_in_original_snd").get<bool>());
+            ++silent;
+            continue;
+        }
+
+        ASSERT_TRUE(state.candidateGreetingSoundId);
+        const SoundId soundId = *state.candidateGreetingSoundId;
+        EXPECT_EQ(std::to_underlying(soundId), candidate.at("id").get<int>());
+        EXPECT_TRUE(candidate.at("name_in_original_snd").get<bool>());
+        const SoundInfo *sound = sounds.soundInfo(soundId);
+        ASSERT_NE(sound, nullptr);
+        ASSERT_FALSE(sound->name.empty());
+        EXPECT_TRUE(snd.exists(sound->name));
+        ++withGreeting;
+    }
+    EXPECT_EQ(withGreeting, 63);
+    EXPECT_EQ(silent, 53);
 }
 
 TEST(MM6HouseServiceData, DecodesOneActiveMM6EventSoundWithoutPlayback) {

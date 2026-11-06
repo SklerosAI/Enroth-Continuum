@@ -5,6 +5,7 @@
 #include <string>
 
 #include "Engine/Data/HouseEnumFunctions.h"
+#include "Engine/Data/SoundEnums.h"
 #include "Engine/GameTitle.h"
 
 #include "GUI/UI/MM6RoomDescriptors.h"
@@ -62,6 +63,7 @@ struct HousePresentationState {
     int houseId = 0;
     std::string videoName;
     std::optional<std::string> proprietorIconName;
+    std::optional<SoundId> candidateGreetingSoundId; // Read-only; the preview does not play it.
 };
 
 // A display-only MM6 room. Blank and terminal entries, and other titles,

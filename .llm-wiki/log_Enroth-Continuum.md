@@ -1608,3 +1608,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a linked fixture proving that recognized standalone `SHOP` and `BEAC` sections still make the provisional eighteen-section known save reject before destination mutation.
 - Corrected the wiki's stale `PART` version to v3. The focused known-save guard passed 1/1; this does not open the live save path.
+
+## [2026-11-06] audit | MM6 shop item and beacon renderer boundaries
+- by: T-Burton-ND via codex
+- Integrated the original 28-byte shop item field matrix against the inherited 36-byte `Item_MM7` layout. Raw SHOP records remain the authoritative owner because the category unions, byte-26 meaning and missing expiration field prevent a justified direct conversion.
+- Indexed the beacon renderer transaction audit: texture creation lacks a checked success result, and deferred deletion can allocate. Live GPU publication and the whole-save transaction remain guarded.

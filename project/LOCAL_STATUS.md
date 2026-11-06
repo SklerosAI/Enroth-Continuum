@@ -213,18 +213,21 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
 - The [active EVT framing seam](MM6_F4_EVENT_FRAMING.md) parsed all 68 listed/
   global retained resources through the C++ reader. It explicitly blocks
   unresolved MM6-only effects. The [`.ec6` envelope](MM6_EC6_CONTAINER_F4.md)
-  has title/version, bounds and integrity checks but no runtime field codec,
-  file writing or load-menu integration.
+  has title/version, bounds and integrity checks. A [core field codec](MM6_EC6_CORE_FIELDS_F4.md)
+  now stages party/character data from a checked container into a copy; the
+  other state families, file writing and load-menu integration remain open.
 - The [outdoor wire codec](MM6_OUTDOOR_WIRE_F4.md) checked all 15 retained base/
   delta pairs; the [indoor wire decoder](../src/Engine/Snapshots/MM6IndoorSnapshot.h)
   checked all 52 original-matched retained pairs. Both preserve opaque bytes
-  and reject malformed counts. Runtime map-state reconstruction remains open.
+  and reject malformed counts. The MM6 outdoor loader now projects reset,
+  visibility, actor, ground-item and chest records into runtime structures;
+  changed-state encoding and the indoor runtime projection remain open.
   The [creation rules foundation](MM6_F4_CREATION_RULES_FOUNDATION.md) reads a
   private profile manifest and adds six starting class choices; formulas,
   Quick Start and promotion remain provisional. The [variable guard](MM6_F4_VARIABLE_GUARD.md)
   prevents MM6-specific event IDs from executing as colliding MM7 meanings.
-- The integrated MM6 app and unit targets built. Nineteen focused C++ tests passed
-  across EVT framing, wire codecs, variable guard, `.ec6` envelope, descriptor 173 and LOD order; the
+- The integrated MM6 app and unit targets built. Twenty-five focused C++ tests passed
+  across EVT framing, wire codecs, outdoor projection, variable guard, `.ec6` core fields, descriptor 173 and LOD order; the
   private actor fixture checked 67 map deltas/342 actors and one ID 173.
   F4 rules, map state, events, services, media output and saves remain open.
   No MM6 process or original GOG file was opened for these F4 checks.

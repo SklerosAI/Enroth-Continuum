@@ -157,6 +157,8 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
                     staged->staged.worldAndVisuals, GameTitle::MM6);
                 result.detachedOutdoorPlan = plan.mapName == "oute3.odm" &&
                     !plan.base.models.empty() && !plan.faceVertexIds.empty() &&
+                    !plan.vertices.empty() &&
+                    plan.spawnPoints.size() == plan.base.spawnPoints.size() &&
                     plan.activeSidecar.wire.bytes ==
                         staged->staged.worldAndVisuals.rawActiveDelta &&
                     plan.savedDelta.actors.size() == plan.activeSidecar.actors.size();

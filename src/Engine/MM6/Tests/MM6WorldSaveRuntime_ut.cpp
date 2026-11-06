@@ -108,7 +108,7 @@ std::vector<std::uint8_t> outdoorBaseWithTriangle() {
     constexpr std::size_t modelExtra = header + 4 + 188;
     constexpr std::size_t face = modelExtra + 3 * 12;
     std::vector<std::uint8_t> bytes(header + 4 + 188 + 3 * 12 + 308 + 2 + 10 +
-                                    4 + 4 + 128 * 128 * 4 + 4, 0);
+                                    4 + 4 + 128 * 128 * 4 + 4 + 20, 0);
     bytes[header] = 1; // One model.
     bytes[header + 4 + 68] = 3; // Three local vertices.
     bytes[header + 4 + 76] = 1; // One face.
@@ -116,6 +116,14 @@ std::vector<std::uint8_t> outdoorBaseWithTriangle() {
     bytes[face + 32 + 2] = 1;
     bytes[face + 32 + 4] = 2;
     bytes[face + 308 + 2] = 's'; // Opaque texture key, never resolved here.
+    bytes[modelExtra] = 10; // First vertex X.
+    bytes[modelExtra + 12] = 20; // Second vertex X.
+    bytes[modelExtra + 24] = 30; // Third vertex X.
+    bytes[bytes.size() - 24] = 1; // One spawn.
+    bytes[bytes.size() - 20] = 77; // Spawn X.
+    bytes[bytes.size() - 20 + 12] = 8; // Radius.
+    bytes[bytes.size() - 20 + 14] = std::to_underlying(OBJECT_Actor);
+    bytes[bytes.size() - 20 + 16] = 5; // Monster index.
     return bytes;
 }
 
@@ -170,8 +178,14 @@ UNIT_TEST(MM6WorldSaveRuntime, PreparesDetachedOutdoorGeometryWithoutLiveWorld) 
     EXPECT_EQ(plan.mapName, "o0.odm");
     EXPECT_EQ(plan.base.models.size(), 1);
     EXPECT_EQ(plan.base.modelExtras[0].vertices.size(), 3);
+    EXPECT_EQ(plan.vertices, std::vector<Vec3f>({Vec3f(10, 0, 0), Vec3f(20, 0, 0), Vec3f(30, 0, 0)}));
     EXPECT_EQ(plan.faceVertexIds.size(), 1);
     EXPECT_EQ(plan.faceVertexIds[0], std::vector<std::size_t>({0, 1, 2}));
+    ASSERT_EQ(plan.spawnPoints.size(), 1);
+    EXPECT_EQ(plan.spawnPoints[0].position, Vec3f(77, 0, 0));
+    EXPECT_EQ(plan.spawnPoints[0].radius, 8);
+    EXPECT_EQ(plan.spawnPoints[0].type, OBJECT_Actor);
+    EXPECT_EQ(plan.spawnPoints[0].monsterIndex, 5);
     EXPECT_EQ(plan.activeSidecar.wire.bytes, source.chest.rawActiveDelta);
     EXPECT_EQ(plan.savedDelta.wire.bytes, source.chest.rawActiveDelta);
     EXPECT_EQ(npcs.uNumNewNPCs, 0);
@@ -183,6 +197,9 @@ UNIT_TEST(MM6WorldSaveRuntime, PreparesDetachedOutdoorGeometryWithoutLiveWorld) 
     EXPECT_EQ(plan.faceVertexIds[0], std::vector<std::size_t>({0, 1, 2}));
     EXPECT_EQ(staged.rawActiveDelta, source.chest.rawActiveDelta);
     active.base.faceBytes(0, 0)[32] = 0;
+    active.base.bytes[active.base.bytes.size() - 20 + 14] = 9;
+    EXPECT_THROW((void) mm6::prepareDetachedOutdoorWorldPlan(staged, GameTitle::MM6), std::exception);
+    active.base.bytes[active.base.bytes.size() - 20 + 14] = std::to_underlying(OBJECT_Actor);
     staged.rawActiveDelta[0] = 9;
     EXPECT_THROW((void) mm6::prepareDetachedOutdoorWorldPlan(staged, GameTitle::MM6), std::exception);
 }

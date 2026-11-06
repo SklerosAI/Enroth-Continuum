@@ -208,6 +208,8 @@ DetachedOutdoorWorldPlan prepareDetachedOutdoorWorldPlan(
             model.numFaces != active->base.modelFaces[modelIndex].count ||
             extras.vertices.size() > std::size_t(std::numeric_limits<int>::max()) - vertexOffset)
             throw std::runtime_error("MM6 detached outdoor model shape is invalid");
+        for (const Vec3i &vertex : extras.vertices)
+            plan.vertices.push_back(vertex.toFloat());
         for (const ODMFace_MM7 &face : extras.faces) {
             if (face.numVertices > face.vertexIds.size())
                 throw std::runtime_error("MM6 outdoor face exceeds its vertex slots");
@@ -227,6 +229,12 @@ DetachedOutdoorWorldPlan prepareDetachedOutdoorWorldPlan(
         if (spawn.type != std::to_underlying(OBJECT_Actor) &&
             spawn.type != std::to_underlying(OBJECT_Sprite))
             throw std::runtime_error("MM6 outdoor spawn has an unsupported runtime type");
+    plan.spawnPoints.reserve(plan.base.spawnPoints.size());
+    for (const SpawnPoint_MM7 &spawn : plan.base.spawnPoints) {
+        SpawnPoint runtime;
+        reconstruct(spawn, &runtime);
+        plan.spawnPoints.push_back(runtime);
+    }
     return plan;
 }
 

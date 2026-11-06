@@ -17,6 +17,7 @@
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/Graphics/Overlays.h"
 #include "Engine/Timer.h"
+#include "Engine/SpawnPoint.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 
 #include "Utility/Memory/Blob.h"
@@ -57,6 +58,9 @@ struct DetachedOutdoorWorldPlan {
     OutdoorLocation_MM7 base;
     MM6OutdoorDeltaSnapshot savedDelta;
     MM6OutdoorDeltaSnapshot activeSidecar;
+    // Pure runtime values; no asset or title-global table lookup is involved.
+    std::vector<Vec3f> vertices;
+    std::vector<SpawnPoint> spawnPoints;
     // Face references flattened across models in source order. These are
     // validated global vertex indices for a later target-explicit builder.
     std::vector<std::vector<std::size_t>> faceVertexIds;

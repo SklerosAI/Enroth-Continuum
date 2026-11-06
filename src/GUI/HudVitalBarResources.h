@@ -23,11 +23,13 @@ inline constexpr HudVitalBarResources hudVitalBarResources(GameTitle title,
 }
 
 inline constexpr std::array<Recti, 4> mm6HudHealthBarRects() {
-    return {{{94, 385, 6, 78}, {209, 385, 6, 78},
-             {323, 385, 6, 78}, {439, 385, 6, 78}}};
+    // Original MM6 HUD: x = 93 + {0,113,226,338}, row 383, 6x78.
+    return {{{93, 383, 6, 78}, {206, 383, 6, 78},
+             {319, 383, 6, 78}, {431, 383, 6, 78}}};
 }
 
 inline constexpr std::array<Recti, 4> mm6HudManaBarRects() {
-    return {{{102, 385, 6, 78}, {217, 385, 6, 78},
-             {331, 385, 6, 78}, {447, 385, 6, 78}}};
+    // The paired mana slot starts nine pixels to the right of health.
+    return {{{102, 383, 6, 78}, {215, 383, 6, 78},
+             {328, 383, 6, 78}, {440, 383, 6, 78}}};
 }

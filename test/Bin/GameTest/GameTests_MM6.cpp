@@ -590,8 +590,8 @@ GAME_TEST(MM6Headless, PortraitVitalBarsAndHitBoxes) {
     for (size_t i = 0; i < health.size(); ++i) {
         EXPECT_EQ(actual[2 * i], health[i]);
         EXPECT_EQ(actual[2 * i + 1], mana[i]);
-        EXPECT_EQ(health[i].y + health[i].h, 463);
-        EXPECT_EQ(mana[i].y + mana[i].h, 463);
+        EXPECT_EQ(health[i].y + health[i].h, 461);
+        EXPECT_EQ(mana[i].y + mana[i].h, 461);
     }
 }
 
@@ -608,8 +608,13 @@ TEST(MM6HeadlessVitalBars, TitleIsolation) {
     EXPECT_EQ(mm7.green, "ib-statG");
     EXPECT_EQ(mm7.yellow, "ib-statY");
     EXPECT_EQ(mm7.red, "ib-statR");
-    EXPECT_EQ(mm6HudHealthBarRects()[0], Recti(94, 385, 6, 78));
-    EXPECT_EQ(mm6HudManaBarRects()[3], Recti(447, 385, 6, 78));
+    // MM6's 16-bit HUD draw uses row 383, base x 93/102 and character
+    // offsets 0/113/226/338. Keep every slot exact, especially the fourth.
+    constexpr std::array<int, 4> characterOffset = {0, 113, 226, 338};
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(mm6HudHealthBarRects()[i], Recti(93 + characterOffset[i], 383, 6, 78));
+        EXPECT_EQ(mm6HudManaBarRects()[i], Recti(102 + characterOffset[i], 383, 6, 78));
+    }
 }
 
 TEST(MM6HeadlessStatusStrip, TitleIsolation) {

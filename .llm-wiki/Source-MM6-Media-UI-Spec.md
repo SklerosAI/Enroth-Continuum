@@ -12,6 +12,8 @@ The retained video index presents base names while the inherited movie lookup ad
 
 The tracked [house-route probe](../scripts/mm6_probe_house_routes.py) joins active `SpeakInHouse` instructions to retained house rows and the parser's literal type vocabulary. It finds 674 active entries aimed at 521 distinct house IDs: 519 have a retained row, and two are special terminal handlers. Of the table-backed targets, 384 use nonempty labels the current parser silently maps to `HOUSE_TYPE_MERCENARY_GUILD`; `createHouseUI` then chooses the corresponding inherited UI. Some room animation IDs are shared across type labels, and shop/guild helpers use MM7 numeric ID ranges. These are static routing findings, not proof of intended original services, route reachability, or an observed crash. Per-event details stay in the ignored report.
 
+The [media closure packet](../project/MM6_MEDIA_F2_CLOSURE.md) adds lexical checks of inherited creation and runtime portrait names, icons, font loads and generated reaction sound IDs. The inherited portrait names are absent from the retained four-archive icon index; class icons match only partly. This does not establish the original portrait archive or any rendered failure. Literal font names resolve in the retained index, but a present file is not proof of correctly rendered text.
+
 Authority: [project/MM6_MEDIA_UI_SPEC.md](../project/MM6_MEDIA_UI_SPEC.md), reviewed 2026-11-05. Its current C++ consumers and F3/F5 checks remain the reference; this wiki does not reproduce a media name inventory.
 
-See also: [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), [Open Questions](Open-Questions.md), [Campaign Status](Campaign-Status.md).
+See also: [MM6 Media F2 Closure Source](Source-MM6-Media-F2-Closure.md), [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), [Open Questions](Open-Questions.md), [Campaign Status](Campaign-Status.md).

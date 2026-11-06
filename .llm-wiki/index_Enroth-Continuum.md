@@ -37,7 +37,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Main Menu Assets](MM6-F4-Main-Menu-Assets.md) — MM6 title overlay lookups and geometry candidate; graphical acceptance pending
 - [MM6 F4 HUD Resources](MM6-F4-HUD-Resources.md) — Title-specific frame, compass, baked controls, time/status backgrounds, vital bars, NPC arrows, four-state minimap overlay, portrait timing gems and selected-portrait sprite; visual acceptance pending
 - [MM6 F4 UI Resource Blockers](MM6-F4-UI-Resource-Blockers.md) — First-frame resource matrix; scoped first outdoor `DrawGUI` passes headlessly, rendered frame pending
-- [MM6 F4 First Map Preflight](MM6-F4-First-Map-Preflight.md) — Detached resources, event/encounter checks and isolated monitored scoped first-world load with populated actors/chests; durable save/graphical acceptance pending
+- [MM6 F4 First Map Preflight](MM6-F4-First-Map-Preflight.md) — Detached resources, event/encounter checks, scoped first-world load and bounded reload/AI/movement probe; durable save/graphical acceptance pending
 - [MM6 F4 Monster Special Attacks](MM6-F4-Monster-Special-Attack.md) — All retained special labels decoded with unverified MM6 effects gated before mutation
 - [MM6 F4 Monster Spells](MM6-F4-Monster-Spells.md) — All 55 active monster casts retain MM6 spell IDs while effects remain gated
 - [MM6 F4 Monster Projectiles](MM6-F4-Monster-Projectiles.md) — All 82 active cells retain MM6 source types while launch and impact remain gated

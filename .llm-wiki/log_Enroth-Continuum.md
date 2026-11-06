@@ -1375,3 +1375,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The integrated private offline suite passed **312/312** from 78 suites, general unit tests **438/438**, normal MM6 headless tests **38/38** in a monitored process, and the isolated scoped first-world probe **1/1** in a second monitored process. The MM7 headless control passed **1/1**. The selected-portrait resource/frame-cycle tests passed **2/2** under the monitor. No process changed focus or displayed a window.
 - Updated the [build graph](../project/MM6_F4_BUILD_GRAPH.md) and [agent handoff](Agent-Handoff.md). First-map actors, chests and source-backed initial HUD pieces are now covered headlessly. Live MM6 new-game/save guards, complete process rollback, graphical view and audible behavior remain unaccepted.
+
+## [2026-11-06] verify | Detached EC6 disk-stage gates
+- by: T-Burton-ND via codex
+- Parent integrated the detached EC6 disk-read source and linked the arm64 native and GameTest targets. The focused `MM6NewGameSaveRuntime.*` suite passed 13/13 in 13.94 seconds, including the two new fresh-owner/corrupt-slot tests.
+- The monitored private `MM6ZSaveHeadless.*` run passed 1/1 in 35.248 seconds using only a unique temporary profile. Across 2,368 host samples, focus did not change and no on-screen window appeared. The log remains ignored under `local-game-data/mm6/research-2026-11-05/F4_MM6_DISK_STAGE_HEADLESS_PRIVATE.log`. The normal MM6 SaveLoad guard remains closed.

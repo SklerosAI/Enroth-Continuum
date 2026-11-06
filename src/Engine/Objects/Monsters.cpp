@@ -7,6 +7,8 @@
 #include <utility>
 #include <vector>
 
+#include "Engine/MM6/MM6MonsterPreferences.h"
+
 #include "Library/Logger/Logger.h"
 #include "Library/Serialization/Serialization.h"
 
@@ -280,7 +282,6 @@ void MonsterStats::Initialize(const Blob &monsters, GameTitle gameTitle) {
         {'c', ATTACK_PREFERENCE_CLERIC},
         {'d', ATTACK_PREFERENCE_DRUID},
         {'k', ATTACK_PREFERENCE_KNIGHT},
-        {'m', ATTACK_PREFERENCE_MONK},
         {'p', ATTACK_PREFERENCE_PALADIN},
         {'r', ATTACK_PREFERENCE_RANGER},
         {'s', ATTACK_PREFERENCE_SORCERER},
@@ -339,13 +340,15 @@ void MonsterStats::Initialize(const Blob &monsters, GameTitle gameTitle) {
 
     // Parse a string of single-char flags. Letters set ATTACK_PREFERENCE_* class flags, digits 2-4 set
     // numCharactersAttackedPerSpecialAbility.
-    auto parseAttackPrefs = [](std::string_view cell, MonsterInfo &info) {
+    auto parseAttackPrefs = [gameTitle](std::string_view cell, MonsterInfo &info) {
         info.attackPreferences = 0;
         info.numCharactersAttackedPerSpecialAbility = 0;
         for (char c : cell) {
             char lc = ascii::toLower(c);
             if (lc >= '2' && lc <= '4')
                 info.numCharactersAttackedPerSpecialAbility = lc - '0';
+            else if (lc == 'm')
+                info.attackPreferences |= mm6::mAttackPreference(gameTitle);
             else if (auto it = attackPrefMap.find(lc); it != attackPrefMap.end())
                 info.attackPreferences |= it->second;
         }

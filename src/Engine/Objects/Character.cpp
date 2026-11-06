@@ -22,6 +22,7 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
 #include "Engine/MM6/MM6CreationRules.h"
+#include "Engine/MM6/MM6MonsterPreferences.h"
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/MM6/MM6SpellItems.h"
 #include "Engine/MM6/MM6SpellLearning.h"
@@ -5013,6 +5014,23 @@ void Character::Zero() {
 }
 
 bool Character::matchesAttackPreference(MonsterAttackPreference preference) const {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        switch (preference) {
+            case ATTACK_PREFERENCE_KNIGHT:
+            case ATTACK_PREFERENCE_CLERIC:
+            case ATTACK_PREFERENCE_SORCERER:
+            case ATTACK_PREFERENCE_PALADIN:
+            case ATTACK_PREFERENCE_ARCHER:
+            case ATTACK_PREFERENCE_DRUID:
+            case ATTACK_PREFERENCE_RANGER:
+            case ATTACK_PREFERENCE_THIEF:
+            case ATTACK_PREFERENCE_MONK:
+                return mm6::matchesClassAttackPreference(std::to_underlying(classType), preference,
+                    engine->config->gameplay.AttackPreferencesIncludePromotions.value());
+            default:
+                break;
+        }
+    }
     Class baseClass = engine->config->gameplay.AttackPreferencesIncludePromotions.value() ? getTier1Class(classType) : classType;
     switch (preference) {
     case ATTACK_PREFERENCE_KNIGHT:      return baseClass == CLASS_KNIGHT;

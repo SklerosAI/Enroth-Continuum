@@ -499,3 +499,9 @@ Chronological record of wiki activity.
 - Audited the retained F3-matched item footprint set: 578 usable icons, two blank placeholder rows and a maximum 4×9-slot footprint. The inherited missing-icon path silently assigned 1×1 to a named item template.
 - Added an MM6-only preflight over nonempty template icon names against the active `icons.lod` before assigning any item sizes. A missing icon reports its numeric item ID and stops initialization; the two blank placeholders and MM7 path retain their behavior.
 - The arm64 unit target built and five focused durable/icon tests passed. The retained footprint script passed. Icon rendering and modded save/reload remain for F5; no original installation was reread or MM6 game launched.
+
+## [2026-11-06] ingest | MM6 verified private map source
+- by: T-Burton-ND via codex
+- Added a native retained-F3 map source that verifies the private manifest, all 67 expected names, the F3 identity/gate/report/probe hash chain and each decoded base-map hash. Reads are bounded, confined to a canonical root and restricted to regular files; the manifest must be owner-only.
+- Connected the source to the known-save map validator through an offline staging wrapper. A symlinked base-directory escape, tampered manifest digest or F3 report rejects before destination mutation. SaveLoad, installed game-data loading and complete live transaction remain unwired.
+- Built the arm64 unit target and passed three focused map tests with retained F3-matched copies; direct C++ style and diff checks passed. No original installation was reread or partial MM6 game launched.

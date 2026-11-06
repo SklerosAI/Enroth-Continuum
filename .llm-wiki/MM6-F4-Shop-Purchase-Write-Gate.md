@@ -25,10 +25,10 @@ The original new-game initializer clears complete 28-byte records in three conti
 
 ## Conclusion
 
-A [detached MM6 helper](../src/Engine/MM6/MM6ShopStockPurchase.h) now models the proved full-record copy and partial source clear. Its integrated focused unit suite passed **4/4**, and the private-backed MM6/LOD gate passed **329/329**. Keep the `SHOP` save codec gated: an ID-only field loses data and disjoint arrays split the physical alias. The existing `SCLK` refresh-deadline section and normal MM6 SaveLoad guard remain as they are.
+A [detached MM6 helper](../src/Engine/MM6/MM6ShopStockPurchase.h) models the proved full-record copy and partial source clear. Its integrated focused unit suite passed **4/4**, and the private-backed MM6/LOD gate passed **329/329** before the new raw [physical stock owner](../src/Engine/MM6/MM6ShopStockFields.h) was linked. An isolated `SHOP` v1 section now preserves all 1,440 records without splitting the alias. The required known-save manifest still rejects `SHOP`: no live MM6 service writer or owner lifecycle exists, and an ID-only field would lose data. The existing `SCLK` refresh-deadline section and normal MM6 SaveLoad guard remain as they are.
 
 ## Open follow-ups
 
-Trace the next stock read across sale and refresh at the shared edge, inspect a nonzero owner-local native save, then define one MM6-keyed physical owner and nonzero/duplicate/late-failure tests. Keep bounty and ban state outside this stock contract.
+Trace the next stock read across sale and refresh at the shared edge, inspect a nonzero owner-local native save, then define the live MM6-keyed owner lifecycle and nonzero/late-failure tests across actual services and disk publication. Keep bounty and ban state outside this stock contract.
 
 See also: [Shop Stock Tuple and Autosave](MM6-F4-Shop-Stock-Tuple-and-Autosave.md), [Shop Owner Field Gate](MM6-F4-Shop-Owner-Field-Gate.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

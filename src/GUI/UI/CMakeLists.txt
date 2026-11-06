@@ -43,6 +43,7 @@ set(GUI_UI_HEADERS
         UIHouses.h
         MM6HouseServiceData.h
         MM6RoomDescriptors.h
+        MainMenuResources.h
         UIInventory.h
         UIMainMenu.h
         UIPartyCreation.h

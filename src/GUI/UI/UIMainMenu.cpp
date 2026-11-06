@@ -1,4 +1,5 @@
 #include "GUI/UI/UIMainMenu.h"
+#include "GUI/UI/MainMenuResources.h"
 
 #include "Engine/EngineGlobals.h"
 #include "Engine/Localization.h"
@@ -15,20 +16,21 @@
 
 GUIWindow_MainMenu::GUIWindow_MainMenu() :
     GUIWindow(WINDOW_MAIN_MENU, {0, 0}, render->GetRenderDimensions()) {
-    main_menu_background = assets->getIcon("title.pcx");
+    const MainMenuResources resources = mainMenuResources(engine->gameTitle());
+    main_menu_background = assets->getIcon(resources.background);
 
-    ui_mainmenu_new = assets->getIcon("title_new");
-    ui_mainmenu_load = assets->getIcon("title_load");
-    ui_mainmenu_credits = assets->getIcon("title_cred");
-    ui_mainmenu_exit = assets->getIcon("title_exit");
+    ui_mainmenu_new = assets->getIcon(resources.buttons[0].icon);
+    ui_mainmenu_load = assets->getIcon(resources.buttons[1].icon);
+    ui_mainmenu_credits = assets->getIcon(resources.buttons[2].icon);
+    ui_mainmenu_exit = assets->getIcon(resources.buttons[3].icon);
 
-    pBtnNew = CreateButton("MainMenu_NewGame", {495, 172}, ui_mainmenu_new->size(), BUTTON_TYPE_NORMAL, 0,
+    pBtnNew = CreateButton("MainMenu_NewGame", resources.buttons[0].position, ui_mainmenu_new->size(), BUTTON_TYPE_NORMAL, 0,
                            UIMSG_MainMenu_ShowPartyCreationWnd, 0, INPUT_ACTION_NEW_GAME, "", {ui_mainmenu_new});
-    pBtnLoad = CreateButton("MainMenu_LoadGame", {495, 227}, ui_mainmenu_load->size(), BUTTON_TYPE_NORMAL, 0,
+    pBtnLoad = CreateButton("MainMenu_LoadGame", resources.buttons[1].position, ui_mainmenu_load->size(), BUTTON_TYPE_NORMAL, 0,
                             UIMSG_MainMenu_ShowLoadWindow, 1, INPUT_ACTION_LOAD_GAME, "", {ui_mainmenu_load});
-    pBtnCredits = CreateButton("MainMenu_Credits", {495, 282}, ui_mainmenu_credits->size(), BUTTON_TYPE_NORMAL, 0,
+    pBtnCredits = CreateButton("MainMenu_Credits", resources.buttons[2].position, ui_mainmenu_credits->size(), BUTTON_TYPE_NORMAL, 0,
                                UIMSG_ShowCredits, 2, INPUT_ACTION_SHOW_CREDITS, "", {ui_mainmenu_credits});
-    pBtnExit = CreateButton("MainMenu_ExitGame", {495, 337}, ui_mainmenu_exit->size(), BUTTON_TYPE_NORMAL, 0,
+    pBtnExit = CreateButton("MainMenu_ExitGame", resources.buttons[3].position, ui_mainmenu_exit->size(), BUTTON_TYPE_NORMAL, 0,
                             UIMSG_ExitToWindows, 3, INPUT_ACTION_EXIT_GAME, "", {ui_mainmenu_exit});
 }
 
@@ -40,49 +42,30 @@ void GUIWindow_MainMenu::Update() {
     render->DrawQuad2D(main_menu_background, {0, 0});
 
     Pointi pt = mouse->position();
-
-    GraphicsImage *pTexture = nullptr;
+    const MainMenuResources resources = mainMenuResources(engine->gameTitle());
     for (GUIButton *pButton : vButtons) {
-        if (pButton->Contains(pt.x, pt.y)) {
-            auto pControlParam = pButton->msg_param;
-            int pY = 0;
-            switch (pControlParam) {  // backlight for buttons
-                case 0:
-                    pTexture = assets->getIcon("title_new");
-                    pY = 172;
-                    break;
-                case 1:
-                    pTexture = assets->getIcon("title_load");
-                    pY = 227;
-                    break;
-                case 2:
-                    pTexture = assets->getIcon("title_cred");
-                    pY = 282;
-                    break;
-                case 3:
-                    pTexture = assets->getIcon("title_exit");
-                    pY = 337;
-                    break;
-            }
-            render->DrawQuad2D(pTexture, {495, pY});
+        if (pButton->Contains(pt.x, pt.y) && pButton->msg_param < resources.buttons.size()) {
+            const MainMenuButtonResource &button = resources.buttons[pButton->msg_param];
+            render->DrawQuad2D(assets->getIcon(button.icon), button.position);
         }
     }
 }
 
 void GUIWindow_MainMenu::processMessage(UIMessageType message) {
+    const MainMenuResources resources = mainMenuResources(engine->gameTitle());
     // Play the sound and change visual connected to the related button
     switch (message) {
     case UIMSG_MainMenu_ShowPartyCreationWnd:
-        new OnButtonClick({ 495, 172 }, { 0, 0 }, pBtnNew);
+        new OnButtonClick(resources.buttons[0].position, {0, 0}, pBtnNew);
         break;
     case UIMSG_MainMenu_ShowLoadWindow:
-        new OnButtonClick({ 495, 227 }, { 0, 0 }, pBtnLoad);
+        new OnButtonClick(resources.buttons[1].position, {0, 0}, pBtnLoad);
         break;
     case UIMSG_ShowCredits:
-        new OnButtonClick({ 495, 282 }, { 0, 0 }, pBtnCredits);
+        new OnButtonClick(resources.buttons[2].position, {0, 0}, pBtnCredits);
         break;
     case UIMSG_ExitToWindows:
-        new OnButtonClick({ 495, 337 }, { 0, 0 }, pBtnExit);
+        new OnButtonClick(resources.buttons[3].position, {0, 0}, pBtnExit);
         break;
     default:
         break;

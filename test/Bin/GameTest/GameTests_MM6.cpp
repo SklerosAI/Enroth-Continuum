@@ -9,7 +9,10 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/Resources/ResourceManager.h"
 #include "Engine/SaveLoad.h"
+
+#include "GUI/UI/MainMenuResources.h"
 
 #include "Library/FileSystem/Memory/MemoryFileSystem.h"
 #include "Library/Platform/Null/NullEventLoop.h"
@@ -66,6 +69,42 @@ GAME_TEST(MM6Headless, NewGameSaveGuard) {
     // headless runner must stop here rather than attempt a partial map load.
     EXPECT_THROW(saveNewGame(), std::runtime_error);
     EXPECT_FALSE(ufs->exists("saves"));
+}
+
+GAME_TEST(MM6Headless, MainMenuResourcesAvailable) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const MainMenuResources resources = mainMenuResources(engine->gameTitle());
+    Sizei background = engine->resources()->iconSize(resources.background);
+    EXPECT_GT(background.w, 0);
+    EXPECT_GT(background.h, 0);
+    for (const MainMenuButtonResource &button : resources.buttons) {
+        Sizei size = engine->resources()->iconSize(button.icon);
+        EXPECT_GT(size.w, 0) << button.icon;
+        EXPECT_GT(size.h, 0) << button.icon;
+    }
+}
+
+TEST(MM6HeadlessMenuAssets, TitleSpecificLookup) {
+    const MainMenuResources mm6 = mainMenuResources(GameTitle::MM6);
+    const MainMenuResources mm7 = mainMenuResources(GameTitle::MM7);
+    EXPECT_EQ(mm6.background, "title.pcx");
+    EXPECT_EQ(mm7.background, "title.pcx");
+    EXPECT_EQ(mm6.buttons[0].icon, "start00a");
+    EXPECT_EQ(mm6.buttons[1].icon, "start00b");
+    EXPECT_EQ(mm6.buttons[2].icon, "start00c");
+    EXPECT_EQ(mm6.buttons[3].icon, "start00d");
+    EXPECT_EQ(mm6.buttons[0].position, Pointi(482, 9));
+    EXPECT_EQ(mm6.buttons[1].position, Pointi(482, 71));
+    EXPECT_EQ(mm6.buttons[2].position, Pointi(482, 133));
+    EXPECT_EQ(mm6.buttons[3].position, Pointi(482, 195));
+    EXPECT_EQ(mm7.buttons[0].icon, "title_new");
+    EXPECT_EQ(mm7.buttons[1].icon, "title_load");
+    EXPECT_EQ(mm7.buttons[2].icon, "title_cred");
+    EXPECT_EQ(mm7.buttons[3].icon, "title_exit");
+    EXPECT_EQ(mm7.buttons[0].position, Pointi(495, 172));
+    EXPECT_EQ(mm7.buttons[1].position, Pointi(495, 227));
+    EXPECT_EQ(mm7.buttons[2].position, Pointi(495, 282));
+    EXPECT_EQ(mm7.buttons[3].position, Pointi(495, 337));
 }
 
 TEST(MM6HeadlessRules, RejectsMissingRulesOption) {

@@ -56,6 +56,9 @@ struct PendingActionStateForSave {
     bool timerTurnModeActive = false;
     bool restActionActive = false;
     bool restWindowActive = false;
+    bool guiMessageQueued = false;
+    bool movementActionQueued = false;
+    bool delayedEnchantMessage = false;
     bool attackListActive = false;
     bool playerSelectionActive = false;
 };

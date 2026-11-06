@@ -16,6 +16,7 @@
 #include "Engine/mm7_data.h"
 
 #include "GUI/GUIWindow.h"
+#include "GUI/GUIMessageQueue.h"
 #include "GUI/UI/UIRest.h"
 
 namespace mm6 {
@@ -97,7 +98,8 @@ Party stageHeldItemParty(const Party &live, std::span<const std::uint8_t> bytes,
 
 PendingActionStateForSave capturePendingActionStateForSave(GameTitle title) {
     requireMM6(title, true);
-    if (!pParty || !pTurnEngine || !gameTimer)
+    if (!pParty || !pTurnEngine || !gameTimer || !pPartyActionQueue ||
+        !engine->_messageQueue)
         throw std::runtime_error("MM6 pending-action preflight lacks live owners");
     PendingActionStateForSave state;
     state.spellQueueActive = CastSpellInfoHelpers::hasPendingSpellCastForSave();
@@ -110,6 +112,9 @@ PendingActionStateForSave capturePendingActionStateForSave(GameTitle title) {
     state.timerTurnModeActive = gameTimer->isTurnBased();
     state.restActionActive = currentRestType != REST_NONE || remainingRestTime != 0_ticks;
     state.restWindowActive = current_screen_type == SCREEN_REST;
+    state.guiMessageQueued = engine->_messageQueue->hasPendingForSave();
+    state.movementActionQueued = pPartyActionQueue->uNumActions != 0;
+    state.delayedEnchantMessage = AfterEnchClickEventId != UIMSG_0;
     state.attackListActive = !attackList.empty();
     state.playerSelectionActive = std::any_of(pParty->playerAlreadyPicked.begin(),
         pParty->playerAlreadyPicked.end(), [](bool picked) { return picked; });
@@ -125,6 +130,8 @@ HeldCursorRestorePlan stageHeldCursorRestorePlan(
         actions.turnModeActive || actions.turnQueueActive || actions.turnActionsPending ||
         actions.turnPendingFlag || actions.timerTurnModeActive ||
         actions.restActionActive || actions.restWindowActive ||
+        actions.guiMessageQueued || actions.movementActionQueued ||
+        actions.delayedEnchantMessage ||
         actions.attackListActive || actions.playerSelectionActive)
         throw std::runtime_error("MM6 held cursor cannot discard a pending action");
     (void) encodeHeldItemSection(held); // Full scalar/canonical-empty validation.

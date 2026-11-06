@@ -6,6 +6,7 @@
 
 #include "Engine/MM6/MM6HeldItemSaveFields.h"
 #include "Engine/Tables/ItemTable.h"
+#include "GUI/GUIMessageQueue.h"
 
 namespace {
 
@@ -135,6 +136,15 @@ UNIT_TEST(MM6HeldItemSaveFields, DetachedCursorIntentRequiresIdleActionsAndLoade
     busy.restWindowActive = true;
     EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
     busy = {};
+    busy.guiMessageQueued = true;
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
+    busy = {};
+    busy.movementActionQueued = true;
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
+    busy = {};
+    busy.delayedEnchantMessage = true;
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
+    busy = {};
     busy.attackListActive = true;
     EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
     busy = {};
@@ -146,4 +156,23 @@ UNIT_TEST(MM6HeldItemSaveFields, DetachedCursorIntentRequiresIdleActionsAndLoade
     EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, idle, GameTitle::MM6), std::exception);
     EXPECT_EQ(staged.iconName, "held501");
     EXPECT_FALSE(items.items[id].iconName == "held501");
+}
+
+UNIT_TEST(MM6HeldItemSaveFields, PendingUiQueryIncludesCurrentAndNextFrame) {
+    GUIMessageQueue queue;
+    EXPECT_FALSE(queue.hasPendingForSave());
+    queue.addMessageNextFrame(UIMSG_Escape);
+    EXPECT_FALSE(queue.haveMessages());
+    EXPECT_TRUE(queue.hasPendingForSave());
+    queue.clear(); // Current-frame-only clear must retain the queued next frame.
+    EXPECT_TRUE(queue.hasPendingForSave());
+    queue.swapFrames();
+    EXPECT_TRUE(queue.haveMessages());
+    EXPECT_TRUE(queue.hasPendingForSave());
+    queue.clearAll();
+    EXPECT_FALSE(queue.hasPendingForSave());
+    queue.addMessageCurrentFrame(UIMSG_Escape);
+    EXPECT_TRUE(queue.hasPendingForSave());
+    queue.clearAll();
+    EXPECT_FALSE(queue.hasPendingForSave());
 }

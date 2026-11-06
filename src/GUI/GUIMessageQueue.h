@@ -32,6 +32,13 @@ class GUIMessageQueue {
         return !_currentFrameQueue.empty();
     }
 
+    // Read both queues without consuming messages. The existing haveMessages()
+    // intentionally reports only messages ready in this frame.
+    bool hasPendingForSave() const noexcept {
+        return !_currentFrameQueue.messageQueue.empty() ||
+               !_nextFrameQueue.messageQueue.empty();
+    }
+
     void clear() {
         _currentFrameQueue.clear();
     }

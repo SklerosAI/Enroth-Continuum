@@ -44,6 +44,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial twelve-section `.ec6` candidate, cross-field checks and remaining save gaps
 - [MM6 F4 Atomic Save File](MM6-F4-Atomic-Save-File.md) — Native `.ec6` atomic replacement, validated backup recovery and unsupported filesystem cases
 - [MM6 F4 Save Remainder](MM6-F4-Save-Remainder.md) — Field, consumer and lifetime inventory after core/durable/metadata/NPC/MAPS, including raw resistance staging
+- [MM6 F4 Held Item](MM6-F4-Held-Item.md) — Required `.ec6` HELD section, item-table guard and cursor restoration boundary
 - [Open Questions](Open-Questions.md) — F2-frozen source uncertainties and F3/F4/F5 resolution routes
 
 ## Evidence and future play

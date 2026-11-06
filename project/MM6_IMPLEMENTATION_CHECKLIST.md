@@ -173,9 +173,17 @@ that requirement.
   `NONE`. This is parser inventory, not observed combat behavior.
 - [x] Maintain a private per-ID guide review queue for all 581 items and 173
   monsters in [MM6_ITEM_MONSTER_GUIDE_CLAIMS_F2.md](MM6_ITEM_MONSTER_GUIDE_CLAIMS_F2.md).
-  OCR catalog matches are labeled separately from direct scans: 13 item and
-  six monster IDs have selected visual checks; five monster treasure cells
-  disagree with the retained table. Most semantic rows remain open.
+  OCR catalog matches are labeled separately from direct scans: 16 item and
+  39 monster IDs have selected visual checks in that queue, with several
+  guide/data value disagreements. Most semantic rows remain open.
+- [x] Give all 173 monster IDs an explicit catalog identity evidence state in
+  [MM6_MONSTER_GUIDE_SEMANTICS_F2.md](MM6_MONSTER_GUIDE_SEMANTICS_F2.md).
+  Ninety have direct page-image identity evidence, 68 an exact OCR-name match
+  on an expected page, 13 only a page-order candidate, and two fall outside
+  the guide's 57-family catalog. A new 51-variant visual comparison found 15
+  differences among 204 level/HP/AC/XP cells and three among 51 treasure
+  strings. Eighty-one catalog variants still lack direct semantic comparison;
+  none of these guide checks proves original combat behavior.
 - [x] Join all 173 retained monster rows to inherited combat consumers and
   record identity, attack, missile, spell, special, resistance, AI and loot
   gaps with confidence and F4/F5 scenarios in
@@ -570,6 +578,10 @@ that requirement.
 The current MM6 branch is a format adapter, not a complete engine. Source
 review points to these concrete inherited MM7 assumptions to remove or prove
 correct before the F4 readiness gate:
+
+The draft [F4 offline build graph](MM6_F4_BUILD_GRAPH.md) orders these seams by
+dependency; it must be reconciled with the F3 original-file report before any
+runtime implementation phase begins.
 
 | Runtime area | Current evidence | Required MM6 work |
 | --- | --- | --- |

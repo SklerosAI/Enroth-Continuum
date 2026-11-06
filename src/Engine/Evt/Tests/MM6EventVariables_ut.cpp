@@ -54,3 +54,9 @@ UNIT_TEST(MM6EventVariables, DayOfYearValueRejectsOutsideCalendar) {
     EXPECT_FALSE(isValidMM6SharedCandidateValue(19, 0));
     EXPECT_FALSE(isValidMM6SharedCandidateValue(19, 337));
 }
+
+UNIT_TEST(MM6EventVariables, GoldValueRejectsNegativeOperands) {
+    EXPECT_TRUE(isValidMM6SharedCandidateValue(21, 0));
+    EXPECT_TRUE(isValidMM6SharedCandidateValue(21, 250000));
+    EXPECT_FALSE(isValidMM6SharedCandidateValue(21, -1));
+}

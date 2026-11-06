@@ -18,6 +18,7 @@
 #include "Engine/Evt/MM6MapByteState.h"
 #include "Engine/Evt/MM6QuestBitState.h"
 #include "Engine/Evt/MM6DayOfYear.h"
+#include "Engine/Evt/MM6GoldEvent.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Party.h"
 #include "Engine/Graphics/Indoor.h"
@@ -390,6 +391,12 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         case EVENT_Compare:
             if (engine->gameTitle() == GameTitle::MM6 &&
+                ir.data.variable_descr.type == VAR_FixedGold) {
+                if (mm6::hasEventGold(pParty->GetGold(), ir.data.variable_descr.value))
+                    return {EVT_FLOW_JUMP, ir.target_step};
+                break;
+            }
+            if (engine->gameTitle() == GameTitle::MM6 &&
                 ir.data.variable_descr.type == VAR_DayOfYear) {
                 if (mm6::compareDayOfYear(pParty->GetPlayingTime(), 19, ir.data.variable_descr.value))
                     return {EVT_FLOW_JUMP, ir.target_step};
@@ -432,6 +439,12 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         case EVENT_Add:
             if (engine->gameTitle() == GameTitle::MM6 &&
+                ir.data.variable_descr.type == VAR_FixedGold) {
+                const int balance = mm6::goldAfterEventAdd(pParty->GetGold(), ir.data.variable_descr.value);
+                pParty->SetGold(balance, true);
+                break;
+            }
+            if (engine->gameTitle() == GameTitle::MM6 &&
                 ir.data.variable_descr.type == VAR_QBits_QuestsDone) {
                 MM6QuestBitState(pParty->_questBits).add(16, ir.data.variable_descr.value);
                 break;
@@ -464,6 +477,15 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                 addEvtVariable(character, ir.data.variable_descr.type, ir.data.variable_descr.value);
             break;
         case EVENT_Subtract: {
+            if (engine->gameTitle() == GameTitle::MM6 &&
+                ir.data.variable_descr.type == VAR_FixedGold) {
+                std::optional<int> balance =
+                    mm6::goldAfterEventSubtract(pParty->GetGold(), ir.data.variable_descr.value);
+                if (!balance)
+                    return {EVT_FLOW_STOP};
+                pParty->SetGold(*balance, true);
+                break;
+            }
             if (engine->gameTitle() == GameTitle::MM6 &&
                 ir.data.variable_descr.type == VAR_QBits_QuestsDone) {
                 MM6QuestBitState(pParty->_questBits).subtract(16, ir.data.variable_descr.value);
@@ -876,6 +898,12 @@ int EvtInterpreter::checkTopicStep(int step) {
         return -1;
     case EVENT_OnCanShowDialogItemCmp:
         if (engine->gameTitle() == GameTitle::MM6 &&
+            ir->data.variable_descr.type == VAR_FixedGold) {
+            if (mm6::hasEventGold(pParty->GetGold(), ir->data.variable_descr.value))
+                return ir->target_step;
+            break;
+        }
+        if (engine->gameTitle() == GameTitle::MM6 &&
             ir->data.variable_descr.type == VAR_DayOfYear) {
             if (mm6::compareDayOfYear(pParty->GetPlayingTime(), 19, ir->data.variable_descr.value))
                 return ir->target_step;
@@ -929,6 +957,8 @@ bool EvtInterpreter::validateVariableValue(const EvtInstruction &ir) const {
             throw Exception("MM6 evt variable {} needs a title-specific executor", rawId);
         if (rawId == 19 && ir.opcode != EVENT_Compare && ir.opcode != EVENT_OnCanShowDialogItemCmp)
             throw Exception("MM6 day-of-year event variable only supports comparison");
+        if (rawId == 21 && ir.opcode == EVENT_Set)
+            throw Exception("MM6 gold event variable Set is absent from retained scripts");
         if (!isValidMM6SharedCandidateValue(rawId, ir.data.variable_descr.value))
             throw Exception("MM6 evt variable {} value {} is outside title range", rawId,
                             ir.data.variable_descr.value);

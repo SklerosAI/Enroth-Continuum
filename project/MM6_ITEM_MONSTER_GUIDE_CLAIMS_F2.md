@@ -10,8 +10,9 @@ the F2 gate.
 ## Method and evidence
 
 The owner's retained 412-page [Prima strategy guide](https://www.mocagh.org/nwc/mm6-hintbook.pdf)
-was checked as rendered scans at PDF pp. **36–38, 40, 158–159, 164, 180,
-201, 203–204, 206, 209, 213, 219, 224, 228 and 232–233** (19 pages).
+was checked as rendered scans at PDF pp. **36–38, 40, 42–45, 47–48, 50,
+52–54, 59, 158–159, 164, 168, 180, 189, 201, 203–204, 206, 209,
+213, 219, 224, 228 and 232–233** (32 pages).
 The earlier [potion review](MM6_RULES_F2_CLOSURE.md) visually checked
 pp. 238–239. The chapter text layer was searched across all monster catalog
 pages 35–96 and item catalog pages 157–240; it has visible OCR mistakes. The private
@@ -21,11 +22,12 @@ into Git.
 
 The tracked [queue probe](../scripts/mm6_probe_item_monster_guide_claims.py)
 consumes already retained, ignored `item-range-probe.json`,
-`combat-semantics-probe.json`, `guide-coverage-probe.json`, the retained
-page-marked Prima text, and private visually reviewed overrides locked to the
-PDF hash. It writes an ignored `item-monster-guide-queue.json` with candidate
-guide section, exact normalized OCR-name page hits, catalog match status,
-semantic review status and current consumer for **every 581 item IDs (0–580)**
+`combat-semantics-probe.json`, `guide-coverage-probe.json`, retained
+`icons/items.txt`, the retained page-marked Prima text, and private visually
+reviewed overrides locked to the PDF hash. It writes an ignored
+`item-monster-guide-queue.json` with candidate guide section, exact normalized
+OCR-name page hits, OCR base-value claims, catalog match status, semantic
+review status and current consumer for **every 581 item IDs (0–580)**
 and **173 monster IDs (1–173)**. Input fingerprints travel with the queue. A
 candidate section or OCR hit is a work locator, not proof that a printed row
 or its effect is correct. Reproduce with:
@@ -43,13 +45,22 @@ means no exact name in the extracted chapter text, **not** absent from the
 scanned guide; **unreviewed** means the retained row has no name. Visual
 inspection found both an item and a monster variant that OCR had missed. The
 queue reports **174 matched, 263 ambiguous, 141 OCR-absent and 3 unreviewed
-items**; **76 matched, 58 ambiguous and 39 OCR-absent monsters**. Only **13
-item IDs and 6 monster IDs** have direct page-image checks. Within those,
-11 item rows have selected fields matching, two have identity checks only;
-one monster variant has selected fields matching and five have selected-field
-disagreements. The other **568 item and 167 monster semantic rows remain
-unreviewed**. These denominators keep lexical coverage separate from rule
-coverage.
+items**; **82 matched, 52 ambiguous and 39 OCR-absent monsters**. Direct page
+images cover **16 item IDs and 39 monster IDs**. For items, 11 selected field
+sets match, three selected base values disagree, two have identity checks
+only, and 163 additional base values agree through OCR extraction alone;
+**402 item semantic rows remain unreviewed**. For monsters, 25 selected field
+sets match and 14 disagree; **134 monster semantic rows remain unreviewed**.
+The 166 unique OCR item value claims include the three disagreements, all
+confirmed in rendered scans. OCR agreement is a partial value check, not a
+complete entry, effect, or runtime check. These denominators keep lexical,
+partial value, rendered-row, and rule coverage separate.
+
+No retained ID is yet classified as **not listed in the printed guide** or
+**unreadable in its scanned entry** without direct page evidence. The 141
+item and 39 monster OCR absences remain unresolved; they must not be
+silently converted into a printed absence. The three blank item rows have
+no retained name to seek in the guide.
 
 The source-level diagnoses below have **high confidence** where a retained
 field and current C++ path directly show a mismatch. Guide behavior has
@@ -102,10 +113,12 @@ the final two need an explicit guide/picture/spawn/unique join. All 173 IDs
 are queued for individual page/row matching; the queue does not call a
 numeric triplet a semantic family.
 
-In two visually checked three-variant examples, level, HP, armor class and XP
-agree with retained rows, but **five printed treasure gold-dice entries differ
-from the retained GOG table**. The earlier potion comparison found two
-separate guide-result disagreements among 25 safe pairs. These are concrete
+Across 13 visually checked three-variant groups, **14 of 39 variants have a
+selected guide/retained-data disagreement**: 11 printed treasure gold-dice
+entries and three level/HP pairs. The checked monster fields include level,
+HP, armor class, XP, treasure, attack and resistance labels; a selected-field
+match does not prove all fields or behavior. The earlier potion comparison
+found two separate guide-result disagreements among 25 safe pairs. These are concrete
 reasons to keep guide text as a hypothesis and recheck original shipped data
 at F3; neither source should be silently substituted for the other.
 
@@ -127,7 +140,7 @@ source/runtime gaps.
 ## F3, F4 and F5 handoff
 
 1. **Before F3:** resolve the 263 ambiguous and 141 OCR-absent item names,
-   and 58 ambiguous and 39 OCR-absent monster names against rendered guide
+   and 52 ambiguous and 39 OCR-absent monster names against rendered guide
    pages; then directly compare each of the 581 item and 173 monster IDs
    against its scanned guide entry where one exists. Record an explicit
    not-in-guide or OCR-uncertain exception rather than a fabricated match.

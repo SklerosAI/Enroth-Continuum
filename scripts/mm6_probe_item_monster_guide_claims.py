@@ -8,6 +8,7 @@ candidate chapter locators, not assertions that an individual row was checked.
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 import re
@@ -51,10 +52,10 @@ def normalized(text: str) -> str:
     return " ".join(re.findall(r"[a-z0-9]+", unicodedata.normalize("NFKD", text).casefold()))
 
 
-def text_pages(path: Path) -> dict[int, str]:
+def raw_text_pages(path: Path) -> dict[int, str]:
     text = path.read_text()
     pages = {
-        int(page): normalized(body)
+        int(page): body
         for page, body in re.findall(
             r"--- PDF page (\d+) ---\n(.*?)(?=\n--- PDF page|\Z)", text, re.S
         )
@@ -62,6 +63,39 @@ def text_pages(path: Path) -> dict[int, str]:
     if sorted(pages) != list(range(1, 413)):
         raise ValueError("retained Prima text must contain exactly 412 marked pages")
     return pages
+
+
+def retained_item_values(path: Path) -> dict[int, int | None]:
+    values = {}
+    with path.open(encoding="latin-1", newline="") as source:
+        for cells in csv.reader(source, delimiter="\t"):
+            if len(cells) >= 4 and cells[0].isdigit():
+                values[int(cells[0])] = int(cells[3].replace(",", "")) if cells[3].strip() else None
+    if sorted(values) != list(range(581)):
+        raise ValueError("retained MM6 items.txt value IDs are incomplete")
+    return values
+
+
+def value_claims(name: str, page_spec: str, pages: dict[int, str]) -> list[dict]:
+    """Extract only exact-name plus nearby numeric value claims from OCR."""
+    if not name:
+        return []
+    escaped = re.escape(name)
+    block = re.compile(r"^\s*" + escaped + r"\s*\n\s*Value:\s*([\d,]+)\b", re.I | re.M)
+    table = re.compile(r"^\s*" + escaped + r"\s+([\d,]+)\s+\d\b", re.I)
+    found = set()
+    for page in candidate_pages(page_spec):
+        body = pages[page]
+        for match in block.finditer(body):
+            found.add((page, int(match.group(1).replace(",", "")), "labeled_value"))
+        for line in body.splitlines():
+            match = table.match(line)
+            if match:
+                found.add((page, int(match.group(1).replace(",", "")), "table_value"))
+    return [
+        {"pdf_page": page, "value": value, "method": method}
+        for page, value, method in sorted(found)
+    ]
 
 
 def candidate_pages(spec: str) -> set[int]:
@@ -112,7 +146,10 @@ def main() -> None:
     if prima_hash != guide_report["sources"]["prima"]["pdf_sha256"]:
         raise ValueError("retained Prima PDF differs from page coverage report")
     prima_text_path = reference / "mm6-prima-guide.txt"
-    pages = text_pages(prima_text_path)
+    raw_pages = raw_text_pages(prima_text_path)
+    pages = {page: normalized(body) for page, body in raw_pages.items()}
+    item_values_path = reference / "icons/items.txt"
+    item_values = retained_item_values(item_values_path)
     overrides_path = reference / "item-monster-guide-reviewed-overrides.json"
     overrides = json.loads(overrides_path.read_text()) if overrides_path.is_file() else {}
     if overrides and overrides.get("prima_pdf_sha256") != guide_report["sources"]["prima"]["pdf_sha256"]:
@@ -142,6 +179,10 @@ def main() -> None:
             if not 157 <= reviewed["pdf_page"] <= 240:
                 raise ValueError("visual item override outside guide chapter")
             status = reviewed["status"]
+        claims = value_claims(item["name"], page_spec, raw_pages)
+        semantic_status = reviewed.get("semantic_status", "unreviewed") if reviewed else "unreviewed"
+        if not reviewed and len(claims) == 1:
+            semantic_status = "ocr_value_match" if claims[0]["value"] == item_values[item["id"]] else "ocr_value_disagree_unverified"
         item_records.append({
             "id": item["id"],
             "name": item["name"],
@@ -154,7 +195,9 @@ def main() -> None:
             "ocr_hit_pages_in_candidate_section": within,
             "ocr_hit_pages_elsewhere_in_item_chapter": outside,
             "visual_review_page": reviewed["pdf_page"] if reviewed else None,
-            "guide_semantic_status": reviewed.get("semantic_status", "unreviewed") if reviewed else "unreviewed",
+            "retained_base_value": item_values[item["id"]],
+            "ocr_value_claims": claims,
+            "guide_semantic_status": semantic_status,
             "engine_consumer": "MM6ItemTable load; shared ItemTable/ItemEnumFunctions/UIPopup behavior requires title check",
             "next_evidence": "guide page image + retained row + source consumer; F3 original confirmation; F4/F5 behavior",
         })
@@ -191,6 +234,7 @@ def main() -> None:
             "combat_semantics": monster_report["sha256"],
             "prima_pdf": guide_report["sources"]["prima"]["pdf_sha256"],
             "prima_text": hashlib.sha256(prima_text_path.read_bytes()).hexdigest(),
+            "retained_items_txt": hashlib.sha256(item_values_path.read_bytes()).hexdigest(),
             "reviewed_overrides": hashlib.sha256(overrides_path.read_bytes()).hexdigest() if overrides else None,
         },
         "summary": {

@@ -233,7 +233,7 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   prevents MM6-specific event IDs from executing as colliding MM7 meanings.
 - The integrated MM6 app, MM7 app and unit targets built with the sixteen-section
   partial assembly, spell-item prerequisite guard, MM6-only effect-dispatch guard,
-  and exact 67-name MAPS staging validator. The offline suite passed 162 tests from 51 suites
+  and exact 67-name MAPS staging validator. The offline suite passed 169 tests from 53 suites
   across EVT framing and selected guarded effects, wire codecs and indoor/outdoor projection,
   variable guard, `.ec6` fields and partial assembly, private transport/spell
   rules, descriptor 173 and LOD order; the
@@ -245,7 +245,8 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   retained base/delta pairs through the F3-verified private map source before
   staging a candidate, while live SaveLoad stays blocked. The native atomic disk helper now
   rejects CRC-valid files whose sixteen known sections fail semantic decode.
-  A read-only slot inventory lists valid or recovery-needed `.ec6` files. MM6 item-icon and
+  A read-only slot inventory lists valid or recovery-needed `.ec6` files,
+  and a caller-validated load preflight selects a primary or backup without disk mutation. MM6 item-icon and
   high-row NPC lookup guards also passed focused checks. MM6 autonote ID 205 and
   class/item event-operand bounds have title-specific offline paths.
   MM6 condition events now execute 18 bounded retained uses while 36 status
@@ -253,7 +254,8 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   labels, with five unproved channels stopped before dice or state mutation.
   Six MM6 resistance columns are preserved explicitly; Energy remains unmapped.
   All 93 active monster special labels and 55 monster spell cells now retain
-  their MM6 types/IDs, while their effects remain gated.
+  their MM6 types/IDs, while their effects remain gated. Forty-six active
+  projectile cells still become an inherited no-missile sentinel.
   A read-only First Aid spellbook preflight records transaction inputs; live
   casting remains guarded. The house parser classifies labels on all 557 retained house rows,
   including 384 active rows that previously chose the mercenary guild type;
@@ -261,7 +263,8 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   rejects before inherited MM7 room/service state changes. A private 119-room
   descriptor manifest and a read-only resolver classify all 674 active
   house-entry instructions. A read-only 557-row service data decoder preserves
-  MM6 stock text, route notes, values and hours. Exact extensionless
+  MM6 stock text, route notes, values and hours. A pure selector joins all 21
+  private transport houses to retained rooms and exposes nongated routes. Exact extensionless
   movie lookup covers all 127 F3-matched VID names offline. Failed house
   loads and loop restarts preserve playback state; decoded MM6 frames and
   playback remain unobserved. The award loader retains all 100 numbered rows;
@@ -271,8 +274,10 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   611 active quest-bit uses. A title-specific branch now reads and changes the
   bounded party bit once per instruction without inherited MM7 cues; journal
   behavior and full persistence remain open. A separate ID-19 branch compares
-  the 336-day calendar for all 592 retained active uses.
-  MM6 Escape clears a pending targeted cast queue entry and target selection rejects invalid party-slot indices;
+  the 336-day calendar for all 592 retained active uses. Gold ID 21 bounds
+  147 active compares, grants and payments with silent party balance changes.
+  Seven spell damage source tags are retained for all 99 MM6 IDs; live effects
+  remain gated. MM6 Escape clears a pending targeted cast queue entry and target selection rejects invalid party-slot indices;
   live casting is still gated.
   The general non-MM6 unit suite passed 438/438 tests from the same build.
   F4 rules, map state, events, services, media output and saves remain open.

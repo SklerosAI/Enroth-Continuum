@@ -1,6 +1,6 @@
 # MM6 item and monster guide claims: F2 reconciliation queue
 
-Status: **partial direct guide review, complete per-ID queue, F2 open**
+Status: **partial direct guide review, complete per-ID OCR catalog queue, F2 open**
 (2026-11-05). This packet extends [item rules](MM6_RULES_F2_CLOSURE.md),
 [monster/combat semantics](MM6_COMBAT_SEMANTICS_F2.md), and the
 [guide chapter ledger](MM6_GUIDE_F2_REVIEW.md). It does not read original
@@ -10,28 +10,46 @@ the F2 gate.
 ## Method and evidence
 
 The owner's retained 412-page [Prima strategy guide](https://www.mocagh.org/nwc/mm6-hintbook.pdf)
-was checked as rendered scans at PDF pp. **36–38, 158–159, 201, 204, 224,
-and 232–233**. The earlier [potion review](MM6_RULES_F2_CLOSURE.md) visually
-checked pp. 238–239. The chapter text layer was used only for locating
-other sections; it has visible OCR mistakes. The private
+was checked as rendered scans at PDF pp. **36–38, 40, 158–159, 164, 180,
+201, 203–204, 206, 209, 213, 219, 224, 228 and 232–233** (19 pages).
+The earlier [potion review](MM6_RULES_F2_CLOSURE.md) visually checked
+pp. 238–239. The chapter text layer was searched across all monster catalog
+pages 35–96 and item catalog pages 157–240; it has visible OCR mistakes. The private
 `item-monster-guide-selected-claims-private.md` records exact selected guide
 versus retained-row comparisons and page references, without copying them
 into Git.
 
 The tracked [queue probe](../scripts/mm6_probe_item_monster_guide_claims.py)
 consumes already retained, ignored `item-range-probe.json`,
-`combat-semantics-probe.json` and `guide-coverage-probe.json`. It writes an
-ignored `item-monster-guide-queue.json` with a candidate guide section,
-current consumer and **not-directly-reconciled** status for each of **581 item
-IDs (0–580)** and **173 monster IDs (1–173)**. Input fingerprints travel with
-the queue. A candidate section is a work locator, not a claim that the row
-was printed there or that its effect is correct. Reproduce with:
+`combat-semantics-probe.json`, `guide-coverage-probe.json`, the retained
+page-marked Prima text, and private visually reviewed overrides locked to the
+PDF hash. It writes an ignored `item-monster-guide-queue.json` with candidate
+guide section, exact normalized OCR-name page hits, catalog match status,
+semantic review status and current consumer for **every 581 item IDs (0–580)**
+and **173 monster IDs (1–173)**. Input fingerprints travel with the queue. A
+candidate section or OCR hit is a work locator, not proof that a printed row
+or its effect is correct. Reproduce with:
 
 ```sh
 python3 scripts/mm6_probe_item_monster_guide_claims.py \
   local-game-data/mm6/research-2026-11-05 \
   local-game-data/mm6/research-2026-11-05/item-monster-guide-queue.json
 ```
+
+The catalog statuses have narrow meanings: **matched** means a unique exact
+normalized name in the candidate guide section or a visual override;
+**ambiguous** means a single-word, repeated or out-of-section hit; **absent**
+means no exact name in the extracted chapter text, **not** absent from the
+scanned guide; **unreviewed** means the retained row has no name. Visual
+inspection found both an item and a monster variant that OCR had missed. The
+queue reports **174 matched, 263 ambiguous, 141 OCR-absent and 3 unreviewed
+items**; **76 matched, 58 ambiguous and 39 OCR-absent monsters**. Only **13
+item IDs and 6 monster IDs** have direct page-image checks. Within those,
+11 item rows have selected fields matching, two have identity checks only;
+one monster variant has selected fields matching and five have selected-field
+disagreements. The other **568 item and 167 monster semantic rows remain
+unreviewed**. These denominators keep lexical coverage separate from rule
+coverage.
 
 The source-level diagnoses below have **high confidence** where a retained
 field and current C++ path directly show a mismatch. Guide behavior has
@@ -49,22 +67,31 @@ it. A checked name or value is not an item/monster runtime check.
 | Potions and alchemy (204–205, 236–240) | 34 | Reconcile effect/age/condition rules and all 29×29 combination cells; [UIPopup.cpp](../src/GUI/UI/UIPopup.cpp) still uses MM7 potion IDs and Alchemy restrictions. |
 | Spell scrolls (206–208) | 99 | Join each item to the MM6 spell ID, cast target, scroll consumption and visible effect; inherited ranges classify these incorrectly. |
 | Spellbooks (209–212) | 99 | Join learning eligibility, MM6 spell ID, skill/mastery and save/reload; inherited scroll range overlaps this band. |
-| Artifact, relic or other special item candidate (212–231) | 100 | **Unresolved classification** for 400–499; type/ID band alone does not distinguish artifact, relic, quest or ordinary item. Reconcile rarity field, bonus map, generated versus placed and equip use. |
+| Artifacts (212–218) | 15 | Retained rarity field and MM6 loader identify these rows; reconcile unique bonuses, generated versus placed and equip use. |
+| Relics (218–224) | 15 | Retained rarity field and MM6 loader identify these rows; reconcile tradeoffs, equip effects and save persistence. |
+| Other special, quest or miscellaneous candidate (212–231) | 70 | **Unresolved classification** for remaining 400–499 rows; type/ID band alone does not establish quest or ordinary role. |
 | Quest and miscellaneous documents (224–231) | 50 | Join message-scroll IDs with quest/dialogue read and persistence paths. |
 | Quest or miscellaneous candidate (224–231) | 31 | **Unresolved classification** at 500+; join exact event/quest usage, tradability and display. |
 | Unclassified item (157–240) | 6 | Blank/gold/other types require direct row and consumer inspection before any default behavior. |
 
-These are **candidate** buckets generated from retained type and ID band;
-their counts sum to 581. The packet does not claim each printed guide entry
-has been individually matched. Three selected items on rendered guide pages
-had matching retained name/value or skill/damage fields. Their actual wand
-casts, item damage, merchant price and identification behavior remain open.
+These are **candidate** buckets generated from retained type, rarity and ID
+band; their counts sum to 581. The packet does not claim each printed guide
+entry has been individually matched. Selected visual checks now span weapon,
+armor, wand, herb, potion, scroll, spellbook, artifact, relic, quest and
+miscellaneous sections. Matching name/value/skill/damage cells do not
+establish actual casts, damage, merchant price, quest role, identify or repair
+behavior.
 The guide's generated-item page describes level and enchantment constraints;
 [MM6ItemTable.cpp](../src/Engine/Tables/MM6ItemTable.cpp) loads 14 standard
 and 59 special enchantment rows plus random weights, while shared
 [ItemTable.cpp](../src/Engine/Tables/ItemTable.cpp) still contains MM7 artifact,
 spellbook and item-category decisions. This is a consumer map, not proof of
-generation rules.
+generation rules. In particular, the guide's broad claim that top-level
+random items are always magical conflicts with the current retained
+weapon-special chance and [generator branch](../src/Engine/Tables/ItemTable.cpp)
+that can return an unenchanted top-level weapon. Original shipped behavior
+must decide whether this is a guide error, inherited-engine difference or
+data interpretation issue.
 
 ## Monster-family and combat claims
 
@@ -75,8 +102,8 @@ the final two need an explicit guide/picture/spawn/unique join. All 173 IDs
 are queued for individual page/row matching; the queue does not call a
 numeric triplet a semantic family.
 
-In one visually checked three-variant example, level, HP, armor class and XP
-agree with retained rows, but **two printed treasure gold-dice entries differ
+In two visually checked three-variant examples, level, HP, armor class and XP
+agree with retained rows, but **five printed treasure gold-dice entries differ
 from the retained GOG table**. The earlier potion comparison found two
 separate guide-result disagreements among 25 safe pairs. These are concrete
 reasons to keep guide text as a hypothesis and recheck original shipped data
@@ -91,11 +118,17 @@ retained row to current [Monsters.cpp](../src/Engine/Objects/Monsters.cpp),
 The current parser silently changes or drops active attack, missile, spell
 and special labels. Original Magic/Energy damage, AI/faction behavior,
 sprite/spawn joins, condition effects, random/fixed loot and persistence
-remain open. A guide paragraph cannot resolve those source/runtime gaps.
+remain open. The rendered guide's qualitative resistance labels cannot be
+mapped directly to retained numeric cells. Its retreat thresholds disagree
+with the current [Actor.cpp](../src/Engine/Objects/Actor.cpp) path for all
+three fleeing AI classes. A guide paragraph cannot resolve those
+source/runtime gaps.
 
 ## F3, F4 and F5 handoff
 
-1. **Before F3:** directly compare each of the 581 item and 173 monster IDs
+1. **Before F3:** resolve the 263 ambiguous and 141 OCR-absent item names,
+   and 58 ambiguous and 39 OCR-absent monster names against rendered guide
+   pages; then directly compare each of the 581 item and 173 monster IDs
    against its scanned guide entry where one exists. Record an explicit
    not-in-guide or OCR-uncertain exception rather than a fabricated match.
    Reconcile every item category, generated-item level/bonus rule, monster

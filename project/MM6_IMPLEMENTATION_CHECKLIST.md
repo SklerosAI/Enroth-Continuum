@@ -349,6 +349,11 @@ that requirement.
   frames, and keeps exact operands/locations in an ignored report. The source
   audit confirms no inherited cases for opcodes 20, 27 or 28; candidate
   meanings and all title-specific side effects remain unverified.
+- [x] Map each of the 43 active opcodes to a candidate state target, current
+  control-flow route, persistence obligation and F4/F5 scenario in
+  [MM6_OPCODE_SIDE_EFFECTS_F2.md](MM6_OPCODE_SIDE_EFFECTS_F2.md). The seven
+  high-conflict values retain explicit unknown original operands or effects;
+  this is a source-backed contract, not an implemented interpreter.
 - [x] Reconcile MM6 Question and NPC-topic structure with current consumers
   in [MM6_EVENT_CAMPAIGN_SPEC.md](MM6_EVENT_CAMPAIGN_SPEC.md). All 19 active
   opcode-26 Question records have a 13-byte shape with three in-range local
@@ -372,6 +377,13 @@ that requirement.
   routed to the MM7 game-over path. The [campaign closure matrix](MM6_CAMPAIGN_F2_CLOSURE.md)
   records source paths and acceptance scenarios; none of these joins proves
   original behavior or campaign reachability.
+- [x] Inventory the 21 transport-house A/B/C records in retained `2devents.txt`.
+  [MM6_TRANSPORT_FIELDS_F2.md](MM6_TRANSPORT_FIELDS_F2.md) and the tracked
+  `scripts/mm6_probe_transport_fields.py` find 37 populated cells: 34 regular
+  schedule-shaped candidates, one unknown day-token candidate and two special
+  forms. Exact cells are in an ignored report. The inherited house loader
+  drops these route meanings; the original schedule, cost and destinations
+  remain unproven.
 - [ ] Implement MM6-specific transport schedules/destinations and NPC-topic
   precedence after reconciling the retained scripts and guide. Give the Hive
   terminal state its own ending, certificate/video and post-finale policy;

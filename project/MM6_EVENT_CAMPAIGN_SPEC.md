@@ -64,8 +64,10 @@ event/dialogue indexes and structural graph into ignored
 `campaign-routes-probe.json`. It finds 21 typed stable/boat houses; six stable
 IDs are outside the inherited `Transport.cpp` route-array range. The loaded
 MM6 `trans.txt` is parsed by `TransitionTable.cpp` as display text, not route
-schedule data. The MM6 route source, departure days, costs and coordinates
-remain unestablished. For NPC topics, 74 references across 43 IDs have a
+schedule data. The retained `2devents.txt` A/B/C cells are a candidate route
+source: [the transport field audit](MM6_TRANSPORT_FIELDS_F2.md) inventories 37
+populated cells across those 21 houses, but day, cost, destination and
+special-route behavior remain unestablished. For NPC topics, 74 references across 43 IDs have a
 `global.evt` function yet fall in `NPCTopics.cpp`'s inherited teacher range,
 which handles selection before `runEvent()`. This is a structural precedence
 collision; it does not prove which scripts the original game would run.

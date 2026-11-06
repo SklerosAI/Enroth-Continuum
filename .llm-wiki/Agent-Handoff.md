@@ -15,6 +15,7 @@ This page is the starting brief for future Codex agents working in parallel on E
 3. Read [Engine Architecture and Runtime Map](Engine-Architecture-and-Runtime-Map.md), [MM6 Source and Probe Index](MM6-Source-and-Probe-Index.md), [MM6 F3 Read-Only Preflight](MM6-F3-Read-Only-Preflight.md), [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), [MM6 F2 Workstreams](MM6-F2-Workstreams.md), [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), and [Open Questions](Open-Questions.md) before taking an assignment. Future observation/control work also reads the [Agent Play Knowledge and Control Contract](Agent-Play-Knowledge-and-Control-Contract.md). The ignored local companion at `local-game-data/private-wiki/INDEX.md` holds exact owner-specific evidence; it is not Git backed up. Use this wiki's [schema](SCHEMA_Enroth-Continuum.md) for durable public findings. The tracked source and fresh checks outrank this page.
 
 The first MM6 F4 [portrait seam](MM6-F4-Portrait-Seam.md) is offline-verified in its own implementation worktree. Read its limits before treating face/voice UI as complete.
+The MM6 F4 [creation-rule seam](MM6-F4-Creation-Rules.md) uses a private profile manifest from the corrected F3 PE v2 report; its HP/SP formula and Quick Start state remain provisional.
 
 ## Current phase and gates (2026-11-06)
 

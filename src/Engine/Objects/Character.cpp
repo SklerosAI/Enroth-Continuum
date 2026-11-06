@@ -1,8 +1,10 @@
 #include "Engine/Objects/Character.h"
 
 #include <algorithm>
+#include <array>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -19,6 +21,7 @@
 #include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
+#include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Objects/Actor.h"
@@ -55,10 +58,81 @@
 #include "GUI/UI/ItemGrid.h"
 
 #include "Library/Logger/Logger.h"
+#include "Library/Json/Json.h"
 
 #include "Utility/IndexedArray.h"
 
 static SpellFxRenderer *spell_fx_renderer = EngineIocContainer::ResolveSpellFxRenderer();
+
+namespace mm6 {
+namespace {
+
+std::optional<CreationRules> loadedCreationRules;
+
+template <size_t N>
+std::array<int, N> readIntArray(const Json &rows, int maximum) {
+    if (!rows.is_array() || rows.size() != N)
+        throw std::runtime_error("Invalid MM6 creation rules array shape");
+    std::array<int, N> result{};
+    for (size_t i = 0; i < N; ++i) {
+        if (!rows[i].is_number_integer())
+            throw std::runtime_error("Invalid MM6 creation rules value type");
+        const int value = rows[i].get<int>();
+        if (value < 0 || value > maximum)
+            throw std::runtime_error("Invalid MM6 creation rules value");
+        result[i] = value;
+    }
+    return result;
+}
+
+}  // namespace
+
+void loadCreationRules(const Blob &source) {
+    if (source.size() > 16384)
+        throw std::runtime_error("MM6 creation rules manifest is too large");
+    const Json document = Json::parse(source.str());
+    if (!document.is_object() || document.at("format") != 1 ||
+        !document.at("source_report_sha256").is_string() ||
+        document.at("source_report_sha256").get<std::string>().size() != 64)
+        throw std::runtime_error("Invalid MM6 creation rules manifest header");
+
+    CreationRules candidate;
+    candidate.hpBase = readIntArray<kClassFamilyCount>(document.at("hp_base"), 255);
+    candidate.spBase = readIntArray<kClassFamilyCount>(document.at("sp_base"), 255);
+    candidate.hpFactor = readIntArray<kClassCount>(document.at("hp_factor"), 255);
+    candidate.spFactor = readIntArray<kClassCount>(document.at("sp_factor"), 255);
+
+    const Json &stats = document.at("starting_stats");
+    const Json &skills = document.at("starting_skills");
+    if (!stats.is_array() || stats.size() != kClassFamilyCount ||
+        !skills.is_array() || skills.size() != kClassFamilyCount)
+        throw std::runtime_error("Invalid MM6 creation family count");
+    for (int family = 0; family < kClassFamilyCount; ++family) {
+        candidate.startingStats[family] = readIntArray<kAttributeCount>(stats[family], 255);
+        const std::array<int, kSkillCount> codes = readIntArray<kSkillCount>(skills[family], 3);
+        int statTotal = 0;
+        int granted = 0;
+        int selectable = 0;
+        for (int stat : candidate.startingStats[family])
+            statTotal += stat;
+        for (int skill = 0; skill < kSkillCount; ++skill) {
+            candidate.startingSkills[family][skill] = codes[skill];
+            granted += codes[skill] == 1;
+            selectable += codes[skill] == 2;
+        }
+        if (statTotal != 73 || granted != 2 || selectable != 9)
+            throw std::runtime_error("Invalid MM6 creation family shape");
+    }
+    loadedCreationRules = std::move(candidate);
+}
+
+const CreationRules &creationRules() {
+    if (!loadedCreationRules)
+        throw std::runtime_error("MM6 creation rules have not been loaded");
+    return *loadedCreationRules;
+}
+
+}  // namespace mm6
 
 // Race Stat Points Bonus/ Penalty
 struct CharacterCreationAttributeProps {
@@ -313,6 +387,20 @@ static constexpr int parameter_to_bonus_value[29] = {
 
 //----- (00490913) --------------------------------------------------------
 int CharacterCreation_GetUnspentAttributePointCount() {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        int remaining = 50;
+        const mm6::CreationRules &rules = mm6::creationRules();
+        for (const Character &character : pParty->pCharacters) {
+            const int classId = std::to_underlying(character.classType);
+            if (!mm6::isValidClass(classId))
+                throw std::runtime_error("Invalid MM6 class ID in creation party");
+            const auto &base = rules.startingStats[mm6::classFamily(classId)];
+            for (Attribute stat : allStatAttributes())
+                remaining += base[std::to_underlying(stat)] - character._stats[stat];
+        }
+        return remaining;
+    }
+
     int CurrentStatValue = 50;
     int RemainingStatPoints = 50;
     int StatBaseValue;
@@ -1869,6 +1957,17 @@ float Character::GetArmorRecoveryMultiplierFromSkillLevel(Skill armour_skill_typ
 
 //----- (0048E4F8) --------------------------------------------------------
 int Character::GetMaxHealth() const {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        // The source arrays are exact; this combination with bonuses remains
+        // provisional until original HP and promotion behavior is checked.
+        const auto &rules = mm6::creationRules();
+        const int classId = std::to_underlying(classType);
+        if (!mm6::isValidClass(classId))
+            throw std::runtime_error("Invalid MM6 class ID for health");
+        const int perLevel = rules.hpFactor[classId] * (GetActualLevel() + GetParameterBonus(GetActualEndurance()));
+        return std::max(0, uFullHealthBonus + rules.hpBase[mm6::classFamily(classId)] +
+            GetSkillBonus(ATTRIBUTE_HEALTH) + GetItemsBonus(ATTRIBUTE_HEALTH) + perLevel);
+    }
     int endbonus = GetParameterBonus(GetActualEndurance());
     int healthbylevel =
         pBaseHealthPerLevelByClass[classType] * (GetActualLevel() + endbonus);
@@ -1884,6 +1983,32 @@ int Character::GetMaxHealth() const {
 
 //----- (0048E565) --------------------------------------------------------
 int Character::GetMaxMana() const {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        // The mana attribute dispatch is executable-backed. The remaining
+        // level/bonus formula still needs F5 character-sheet checks.
+        const auto &rules = mm6::creationRules();
+        const int classId = std::to_underlying(classType);
+        if (!mm6::isValidClass(classId))
+            throw std::runtime_error("Invalid MM6 class ID for mana");
+        int statBonus = 0;
+        switch (mm6::manaAttribute(classId)) {
+            case mm6::ManaAttribute::None:
+                return 0;
+            case mm6::ManaAttribute::Personality:
+                statBonus = GetParameterBonus(GetActualPersonality());
+                break;
+            case mm6::ManaAttribute::Intellect:
+                statBonus = GetParameterBonus(GetActualIntelligence());
+                break;
+            case mm6::ManaAttribute::Both:
+                statBonus = GetParameterBonus(GetActualPersonality()) +
+                    GetParameterBonus(GetActualIntelligence());
+                break;
+        }
+        const int perLevel = rules.spFactor[classId] * (GetActualLevel() + statBonus);
+        return std::max(0, uFullManaBonus + rules.spBase[mm6::classFamily(classId)] +
+            GetSkillBonus(ATTRIBUTE_MANA) + GetItemsBonus(ATTRIBUTE_MANA) + perLevel);
+    }
     int mainmanastat;
     int statbonus;
     int addmanastat;
@@ -2951,6 +3076,15 @@ BodyType Character::bodyType() const {
 
 //----- (00490188) --------------------------------------------------------
 void Character::SetInitialStats() {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        const int classId = std::to_underlying(classType);
+        if (!mm6::isValidClass(classId))
+            throw std::runtime_error("Invalid MM6 class ID for starting stats");
+        const auto &base = mm6::creationRules().startingStats[mm6::classFamily(classId)];
+        for (Attribute stat : allStatAttributes())
+            _stats[stat] = base[std::to_underlying(stat)];
+        return;
+    }
     Race race = GetRace();
     for (Attribute stat : allStatAttributes())
         _stats[stat] = StatTable[race][stat].uBaseValue;
@@ -2999,6 +3133,28 @@ void Character::SetSexByVoice() {
 
 //----- (0049024A) --------------------------------------------------------
 void Character::ChangeClass(Class cls) {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        const int classId = std::to_underlying(cls);
+        if (!mm6::isStartingClass(classId))
+            throw std::runtime_error("Invalid MM6 starting class choice");
+        classType = cls;
+        uLevel = 1;
+        experience = 251ll + grng->random(100);
+        uBirthYear = 1147 - grng->random(6);
+        for (Skill skill : allVisibleSkills())
+            setSkillValue(skill, CombinedSkillValue());
+        const auto &codes = mm6::creationRules().startingSkills[mm6::classFamily(classId)];
+        for (int sourceSkill = 0; sourceSkill < mm6::kSkillCount; ++sourceSkill) {
+            if (codes[sourceSkill] == 1) {
+                const Skill skill = sourceSkill == 30 ? SKILL_LEARNING : static_cast<Skill>(sourceSkill);
+                setSkillValue(skill, CombinedSkillValue::novice());
+            }
+        }
+        SetInitialStats();
+        health = GetMaxHealth();
+        mana = GetMaxMana();
+        return;
+    }
     classType = cls;
     uLevel = 1;
     experience = 251ll + grng->random(100);
@@ -3018,6 +3174,26 @@ void Character::ChangeClass(Class cls) {
 
 //----- (004903C9) --------------------------------------------------------
 Skill Character::GetSkillIdxByOrder(signed int order) {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        const int classId = std::to_underlying(classType);
+        if (!mm6::isValidClass(classId) || order < 0 || order > 12)
+            return SKILL_INVALID;
+        const auto &codes = mm6::creationRules().startingSkills[mm6::classFamily(classId)];
+        const bool primary = order <= 1;
+        const bool selected = order >= 2 && order <= 3;
+        const int wanted = primary ? order : selected ? order - 2 : order - 4;
+        int found = 0;
+        for (int sourceSkill = 0; sourceSkill < mm6::kSkillCount; ++sourceSkill) {
+            const Skill skill = sourceSkill == 30 ? SKILL_LEARNING : static_cast<Skill>(sourceSkill);
+            if ((primary && codes[sourceSkill] == 1) ||
+                (!primary && codes[sourceSkill] == 2 && (!selected || pActiveSkills[skill]))) {
+                if (found == wanted)
+                    return skill;
+                ++found;
+            }
+        }
+        return SKILL_INVALID;
+    }
     int counter;  // edx@5
     bool canBeInactive;
     SkillAffinity requiredValue;
@@ -3053,6 +3229,15 @@ Skill Character::GetSkillIdxByOrder(signed int order) {
 //----- (0049048D) --------------------------------------------------------
 // uint16_t PartyCreation_BtnMinusClick(Character *_this, int eAttribute)
 void Character::DecreaseAttribute(Attribute eAttribute) {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        const int classId = std::to_underlying(classType);
+        if (!mm6::isValidClass(classId))
+            throw std::runtime_error("Invalid MM6 class ID for attribute change");
+        const int base = mm6::creationRules().startingStats[mm6::classFamily(classId)][std::to_underlying(eAttribute)];
+        if (_stats[eAttribute] > base - 2)
+            --_stats[eAttribute];
+        return;
+    }
     int pBaseValue;    // ecx@1
     int pDroppedStep;  // ebx@1
     int pStep;         // esi@1
@@ -3071,6 +3256,11 @@ void Character::DecreaseAttribute(Attribute eAttribute) {
 //----- (004905F5) --------------------------------------------------------
 // signed int  PartyCreation_BtnPlusClick(Character *this, int eAttribute)
 void Character::IncreaseAttribute(Attribute eAttribute) {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        if (_stats[eAttribute] < 25 && CharacterCreation_GetUnspentAttributePointCount() > 0)
+            ++_stats[eAttribute];
+        return;
+    }
     int maxValue;            // ebx@1
     signed int baseStep;     // edi@1
     signed int tmp;          // eax@17

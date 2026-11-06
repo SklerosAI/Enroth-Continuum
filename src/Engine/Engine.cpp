@@ -68,6 +68,7 @@
 #include "Engine/AttackList.h"
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/MapEnumFunctions.h"
+#include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
@@ -788,6 +789,9 @@ void MM7_LoadLods() {
 void Engine::MM7_Initialize() {
     grng->seed(platform->tickCount());
     vrng->seed(platform->tickCount());
+
+    if (gameTitle() == GameTitle::MM6)
+        mm6::loadCreationRules(ufs->read("rules/creation.json"));
 
     gameTimer = new Timer();
 

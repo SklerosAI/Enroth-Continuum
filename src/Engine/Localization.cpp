@@ -328,6 +328,16 @@ void Localization::initializeSkillNames() {
     // skilldes.txt table structure: name | description | normal | expert | master | grandmaster (all fields localized).
     Blob skillDesBlob = engine->resources()->eventsData("skilldes.txt");
     for (auto [line, i] : split(skillDesBlob.str()).by("\r\n").drop(1).skip("").zip(allVisibleSkills())) {
+        if (engine->gameTitle() == GameTitle::MM6) {
+            std::array<std::string_view, 5> tokens = split(line).by('\t');
+            const Skill skill = i == SKILL_DODGE ? SKILL_LEARNING : i;
+            _skillDescriptions[skill] = unquote(tokens[1]);
+            _skillDescriptionsNormal[skill] = unquote(tokens[2]);
+            _skillDescriptionsExpert[skill] = unquote(tokens[3]);
+            _skillDescriptionsMaster[skill] = unquote(tokens[4]);
+            _skillDescriptionsGrand[skill].clear();
+            continue;
+        }
         std::array<std::string_view, 6> tokens = split(line).by('\t');
         _skillDescriptions[i] = unquote(tokens[1]);
         _skillDescriptionsNormal[i] = unquote(tokens[2]);
@@ -386,6 +396,12 @@ void Localization::initializeClassNames() {
     // class.txt table structure: name (localized) | description (localized) | base class name (not localized, not used).
     Blob classBlob = engine->resources()->eventsData("class.txt");
     for (auto [line, i] : split(classBlob.str()).by("\r\n").drop(1).skip("").zip(_classDescriptions.indices())) {
+        if (engine->gameTitle() == GameTitle::MM6) {
+            std::array<std::string_view, 2> tokens = split(line).by('\t');
+            _classNames[i] = unquote(tokens[0]);
+            _classDescriptions[i] = unquote(tokens[1]);
+            continue;
+        }
         std::array<std::string_view, 3> tokens = split(line).by('\t');
         _classDescriptions[i] = unquote(tokens[1]);
     }

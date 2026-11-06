@@ -17,6 +17,7 @@
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Objects/NPC.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
+#include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
@@ -473,6 +474,13 @@ void Party::createDefaultParty() {
     if (engine->gameTitle() == GameTitle::MM6)
         setProvisionalMM6Portraits(pCharacters);
 
+    if (engine->gameTitle() == GameTitle::MM6) {
+        // Quick Start composition is provisional until its original fixture is recovered.
+        constexpr std::array<int, 4> classes = {0, 3, 6, 15};
+        for (std::size_t i = 0; i < pCharacters.size(); ++i)
+            pCharacters[i].ChangeClass(static_cast<Class>(classes[i]));
+    }
+
     for (Character &pCharacter : pCharacters) {
         if (pCharacter.classType == CLASS_KNIGHT)
             pCharacter.sResMagicBase = 10;
@@ -518,7 +526,7 @@ void Party::Reset() {
     pCharacters[0].uSex = pCharacters[0].GetSexByVoice();
     pCharacters[0].name = localization->str(LSTR_NAME_ZOLTAN);
 
-    pCharacters[1].ChangeClass(CLASS_THIEF);
+    pCharacters[1].ChangeClass(engine->gameTitle() == GameTitle::MM6 ? static_cast<Class>(3) : CLASS_THIEF);
     pCharacters[1].uCurrentFace = 3;
     pCharacters[1].uPrevVoiceID = 3;
     pCharacters[1].uVoiceID = 3;
@@ -526,7 +534,7 @@ void Party::Reset() {
     pCharacters[1].uSex = pCharacters[1].GetSexByVoice();
     pCharacters[1].name = localization->str(LSTR_NAME_RODERICK);
 
-    pCharacters[2].ChangeClass(CLASS_CLERIC);
+    pCharacters[2].ChangeClass(engine->gameTitle() == GameTitle::MM6 ? static_cast<Class>(6) : CLASS_CLERIC);
     pCharacters[2].uCurrentFace = 14;
     pCharacters[2].uPrevVoiceID = 14;
     pCharacters[2].uVoiceID = 14;
@@ -534,7 +542,7 @@ void Party::Reset() {
     pCharacters[2].uSex = pCharacters[3].GetSexByVoice();
     pCharacters[2].name = localization->str(LSTR_NAME_SERENA);
 
-    pCharacters[3].ChangeClass(CLASS_SORCERER);
+    pCharacters[3].ChangeClass(engine->gameTitle() == GameTitle::MM6 ? static_cast<Class>(15) : CLASS_SORCERER);
     pCharacters[3].uCurrentFace = 10;
     pCharacters[3].uPrevVoiceID = 10;
     pCharacters[3].uVoiceID = 10;

@@ -1,6 +1,8 @@
 #include <cstdlib>
+#include <cstddef>
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include "Engine/AssetsManager.h"
 #include "Engine/Engine.h"
@@ -9,6 +11,7 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Graphics/Image.h"
 #include "Engine/Localization.h"
+#include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/Party.h"
 #include "Engine/Random/Random.h"
@@ -201,6 +204,8 @@ void CreateParty_EventLoop() {
             pAudioPlayer->playUISound(SOUND_ClickSkill);
             break;
         case UIMSG_PlayerCreationSelectClass:
+            if (engine->gameTitle() == GameTitle::MM6 && !mm6::isStartingClass(param))
+                break;
             pPlayer[uPlayerCreationUI_SelectedCharacter].ChangeClass((Class)param);
             pAudioPlayer->playUISound(SOUND_SelectingANewCharacter);
             break;
@@ -364,7 +369,8 @@ void GUIWindow_PartyCreation::Update() {
     for (int i = 0; i < 4; ++i) {
         DrawText(assets->pFontCreate.get(), {pIntervalX + 73, 100}, colorTable.White,
             localization->expand(localization->className(pParty->pCharacters[i].classType)), pGUIWindow_CurrentMenu->frameRect);
-        render->DrawQuad2D(ui_partycreation_class_icons[std::to_underlying(pParty->pCharacters[i].classType) / 4], {pIntervalX + 77, 50});
+        render->DrawQuad2D(ui_partycreation_class_icons[std::to_underlying(pParty->pCharacters[i].classType) /
+            (engine->gameTitle() == GameTitle::MM6 ? mm6::kClassTiers : 4)], {pIntervalX + 77, 50});
 
         if (pGUIWindow_CurrentMenu->keyboard_input_status != WINDOW_INPUT_NONE && uPlayerCreationUI_NameEditCharacter == i) {
             switch (pGUIWindow_CurrentMenu->keyboard_input_status) {
@@ -465,66 +471,79 @@ void GUIWindow_PartyCreation::Update() {
     pTextCenter = assets->pFontCreate->AlignText_Center(193, pText);
     DrawText(assets->pFontCreate.get(), {pTextCenter + 324, 395}, colorTable.Tacha, pText, pGUIWindow_CurrentMenu->frameRect);  // Classes
 
-    pColorText = colorTable.Aqua;
-    if (uClassType != CLASS_KNIGHT)
-        pColorText = colorTable.White;
-    pTextCenter = assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_KNIGHT));
-    DrawText(assets->pFontCreate.get(), {pTextCenter + 323, 417}, pColorText, localization->className(CLASS_KNIGHT), pGUIWindow_CurrentMenu->frameRect);
+    if (engine->gameTitle() == GameTitle::MM6) {
+        constexpr std::array<int, 6> baseClasses = {0, 3, 6, 9, 12, 15};
+        for (std::size_t i = 0; i < baseClasses.size(); ++i) {
+            const Class classId = static_cast<Class>(baseClasses[i]);
+            const std::string &name = localization->className(classId);
+            const int x = i < 3 ? 323 : 388;
+            const int y = 417 + (i % 3) * pIntervalY;
+            pColorText = uClassType == classId ? colorTable.Aqua : colorTable.White;
+            pTextCenter = assets->pFontCreate->AlignText_Center(65, name);
+            DrawText(assets->pFontCreate.get(), {pTextCenter + x, y}, pColorText, name, pGUIWindow_CurrentMenu->frameRect);
+        }
+    } else {
+        pColorText = colorTable.Aqua;
+        if (uClassType != CLASS_KNIGHT)
+            pColorText = colorTable.White;
+        pTextCenter = assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_KNIGHT));
+        DrawText(assets->pFontCreate.get(), {pTextCenter + 323, 417}, pColorText, localization->className(CLASS_KNIGHT), pGUIWindow_CurrentMenu->frameRect);
 
-    pColorText = colorTable.Aqua;
-    if (uClassType != CLASS_PALADIN)
-        pColorText = colorTable.White;
-    pTextCenter =
-        assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_PALADIN));
-    DrawText(assets->pFontCreate.get(), {pTextCenter + 323, pIntervalY + 417}, pColorText, localization->className(CLASS_PALADIN), pGUIWindow_CurrentMenu->frameRect);
+        pColorText = colorTable.Aqua;
+        if (uClassType != CLASS_PALADIN)
+            pColorText = colorTable.White;
+        pTextCenter =
+            assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_PALADIN));
+        DrawText(assets->pFontCreate.get(), {pTextCenter + 323, pIntervalY + 417}, pColorText, localization->className(CLASS_PALADIN), pGUIWindow_CurrentMenu->frameRect);
 
-    pColorText = colorTable.Aqua;
-    if (uClassType != CLASS_RANGER)
-        pColorText = colorTable.White;
-    pTextCenter =
-        assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_RANGER));
-    DrawText(assets->pFontCreate.get(), {pTextCenter + 323, 2 * pIntervalY + 417}, pColorText, localization->className(CLASS_RANGER), pGUIWindow_CurrentMenu->frameRect);
+        pColorText = colorTable.Aqua;
+        if (uClassType != CLASS_RANGER)
+            pColorText = colorTable.White;
+        pTextCenter =
+            assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_RANGER));
+        DrawText(assets->pFontCreate.get(), {pTextCenter + 323, 2 * pIntervalY + 417}, pColorText, localization->className(CLASS_RANGER), pGUIWindow_CurrentMenu->frameRect);
 
-    pColorText = colorTable.Aqua;
-    if (uClassType != CLASS_CLERIC)
-        pColorText = colorTable.White;
-    pTextCenter =
-        assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_CLERIC));
-    DrawText(assets->pFontCreate.get(), {pTextCenter + 388, 417}, pColorText, localization->className(CLASS_CLERIC), pGUIWindow_CurrentMenu->frameRect);
+        pColorText = colorTable.Aqua;
+        if (uClassType != CLASS_CLERIC)
+            pColorText = colorTable.White;
+        pTextCenter =
+            assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_CLERIC));
+        DrawText(assets->pFontCreate.get(), {pTextCenter + 388, 417}, pColorText, localization->className(CLASS_CLERIC), pGUIWindow_CurrentMenu->frameRect);
 
-    pColorText = colorTable.Aqua;
-    if (uClassType != CLASS_DRUID)
-        pColorText = colorTable.White;
-    pTextCenter =
-        assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_DRUID));
-    DrawText(assets->pFontCreate.get(), {pTextCenter + 388, pIntervalY + 417}, pColorText, localization->className(CLASS_DRUID), pGUIWindow_CurrentMenu->frameRect);
+        pColorText = colorTable.Aqua;
+        if (uClassType != CLASS_DRUID)
+            pColorText = colorTable.White;
+        pTextCenter =
+            assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_DRUID));
+        DrawText(assets->pFontCreate.get(), {pTextCenter + 388, pIntervalY + 417}, pColorText, localization->className(CLASS_DRUID), pGUIWindow_CurrentMenu->frameRect);
 
-    pColorText = colorTable.Aqua;
-    if (uClassType != CLASS_SORCERER)
-        pColorText = colorTable.White;
-    pTextCenter =
-        assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_SORCERER));
-    DrawText(assets->pFontCreate.get(), {pTextCenter + 388, 2 * pIntervalY + 417}, pColorText, localization->className(CLASS_SORCERER), pGUIWindow_CurrentMenu->frameRect);
+        pColorText = colorTable.Aqua;
+        if (uClassType != CLASS_SORCERER)
+            pColorText = colorTable.White;
+        pTextCenter =
+            assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_SORCERER));
+        DrawText(assets->pFontCreate.get(), {pTextCenter + 388, 2 * pIntervalY + 417}, pColorText, localization->className(CLASS_SORCERER), pGUIWindow_CurrentMenu->frameRect);
 
-    pColorText = colorTable.Aqua;
-    if (uClassType != CLASS_ARCHER)
-        pColorText = colorTable.White;
-    pTextCenter =
-        assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_ARCHER));
-    DrawText(assets->pFontCreate.get(), {pTextCenter + 453, 417}, pColorText, localization->className(CLASS_ARCHER), pGUIWindow_CurrentMenu->frameRect);
+        pColorText = colorTable.Aqua;
+        if (uClassType != CLASS_ARCHER)
+            pColorText = colorTable.White;
+        pTextCenter =
+            assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_ARCHER));
+        DrawText(assets->pFontCreate.get(), {pTextCenter + 453, 417}, pColorText, localization->className(CLASS_ARCHER), pGUIWindow_CurrentMenu->frameRect);
 
-    pColorText = colorTable.Aqua;
-    if (uClassType != CLASS_MONK)
-        pColorText = colorTable.White;
-    pTextCenter =
-        assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_MONK));
-    DrawText(assets->pFontCreate.get(), {pTextCenter + 453, pIntervalY + 417}, pColorText, localization->className(CLASS_MONK), pGUIWindow_CurrentMenu->frameRect);
+        pColorText = colorTable.Aqua;
+        if (uClassType != CLASS_MONK)
+            pColorText = colorTable.White;
+        pTextCenter =
+            assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_MONK));
+        DrawText(assets->pFontCreate.get(), {pTextCenter + 453, pIntervalY + 417}, pColorText, localization->className(CLASS_MONK), pGUIWindow_CurrentMenu->frameRect);
 
-    pColorText = colorTable.Aqua;
-    if (uClassType != CLASS_THIEF)
-        pColorText = colorTable.White;
-    pTextCenter = assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_THIEF));
-    DrawText(assets->pFontCreate.get(), {pTextCenter + 453, 2 * pIntervalY + 417}, pColorText, localization->className(CLASS_THIEF), pGUIWindow_CurrentMenu->frameRect);
+        pColorText = colorTable.Aqua;
+        if (uClassType != CLASS_THIEF)
+            pColorText = colorTable.White;
+        pTextCenter = assets->pFontCreate->AlignText_Center(65, localization->className(CLASS_THIEF));
+        DrawText(assets->pFontCreate.get(), {pTextCenter + 453, 2 * pIntervalY + 417}, pColorText, localization->className(CLASS_THIEF), pGUIWindow_CurrentMenu->frameRect);
+    }
 
     pTextCenter = assets->pFontCreate->AlignText_Center(
         236, localization->str(LSTR_AVAILABLE_SKILLS));
@@ -588,15 +607,22 @@ GUIWindow_PartyCreation::GUIWindow_PartyCreation() :
     uPlayerCreationUI_SelectedCharacter = 0;
     int v0 = assets->pFontCreate->GetHeight() - 2;
 
-    ui_partycreation_class_icons[0] = assets->getIcon("IC_KNIGHT");
-    ui_partycreation_class_icons[1] = assets->getIcon("IC_THIEF");
-    ui_partycreation_class_icons[2] = assets->getIcon("IC_MONK");
-    ui_partycreation_class_icons[3] = assets->getIcon("IC_PALAD");
-    ui_partycreation_class_icons[4] = assets->getIcon("IC_ARCH");
-    ui_partycreation_class_icons[5] = assets->getIcon("IC_RANGER");
-    ui_partycreation_class_icons[6] = assets->getIcon("IC_CLER");
-    ui_partycreation_class_icons[7] = assets->getIcon("IC_DRUID");
-    ui_partycreation_class_icons[8] = assets->getIcon("IC_SORC");
+    if (engine->gameTitle() == GameTitle::MM6) {
+        constexpr std::array<std::string_view, 6> classIcons = {
+            "ic_knig", "ic_cler", "ic_sorc", "ic_palad", "ic_arch", "ic_druid"};
+        for (std::size_t i = 0; i < classIcons.size(); ++i)
+            ui_partycreation_class_icons[i] = assets->getIcon(classIcons[i]);
+    } else {
+        ui_partycreation_class_icons[0] = assets->getIcon("IC_KNIGHT");
+        ui_partycreation_class_icons[1] = assets->getIcon("IC_THIEF");
+        ui_partycreation_class_icons[2] = assets->getIcon("IC_MONK");
+        ui_partycreation_class_icons[3] = assets->getIcon("IC_PALAD");
+        ui_partycreation_class_icons[4] = assets->getIcon("IC_ARCH");
+        ui_partycreation_class_icons[5] = assets->getIcon("IC_RANGER");
+        ui_partycreation_class_icons[6] = assets->getIcon("IC_CLER");
+        ui_partycreation_class_icons[7] = assets->getIcon("IC_DRUID");
+        ui_partycreation_class_icons[8] = assets->getIcon("IC_SORC");
+    }
 
     ui_partycreation_top = assets->getIcon("MAKETOP");
     ui_partycreation_sky_scroller = assets->getIcon("MAKESKY");
@@ -680,15 +706,24 @@ GUIWindow_PartyCreation::GUIWindow_PartyCreation() :
 
     setKeyboardControlGroup(28, true, 7, 40);
 
-    CreateButton({323, 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0);
-    CreateButton({323, v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0xC);
-    CreateButton({323, 2 * v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0x14);
-    CreateButton({388, 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0x18);
-    CreateButton({388, v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0x1C);
-    CreateButton({388, 2 * v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0x20);
-    CreateButton({453, 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0x10);
-    CreateButton({453, v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 8);
-    CreateButton({453, 2 * v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 4);
+    if (isMM6) {
+        constexpr std::array<int, 6> baseClasses = {0, 3, 6, 9, 12, 15};
+        for (std::size_t i = 0; i < baseClasses.size(); ++i) {
+            const int row = static_cast<int>(i % 3);
+            CreateButton({i < 3 ? 323 : 388, 417 + row * v0}, {65, v0},
+                         BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, baseClasses[i]);
+        }
+    } else {
+        CreateButton({323, 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0);
+        CreateButton({323, v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0xC);
+        CreateButton({323, 2 * v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0x14);
+        CreateButton({388, 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0x18);
+        CreateButton({388, v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0x1C);
+        CreateButton({388, 2 * v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0x20);
+        CreateButton({453, 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 0x10);
+        CreateButton({453, v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 8);
+        CreateButton({453, 2 * v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 4);
+    }
 
     uControlParam = 0;
     do {

@@ -1,0 +1,22 @@
+# MM6 F4 creation and class-rule foundation
+
+Status: **offline implementation, 2026-11-06; not a playable MM6 or a verified original HP/SP formula**. This seam consumes the corrected, ignored F3 PE v2 creation arrays without copying their exact values into tracked source. The [F3 executable follow-up](MM6_F3_EXECUTABLE_FOLLOWUP.md) supplies the eighteen-class mana-attribute dispatch. No original file was reopened or MM6 process launched for this work.
+
+## Private data boundary
+
+Run `scripts/mm6_f4_export_creation_rules.py` with the ignored `F3_PE_RECONCILIATION_2026-11-05_v2.json` as `--report` and the MM6 profile's `rules/creation.json` as `--output`. The exporter checks the corrected report status, six family vectors, eighteen factors, seven stats per family, 31 skill codes per family, 73 base stat points, two granted skills and nine selectable skills. It writes a new mode-0600 file and refuses overwrite. The runtime reads this derived manifest from the MM6 user profile through `ufs`; it does not read the original executable. The profile path is determined by `resolveMm6UserPath`, and its exact numeric contents remain outside Git.
+
+The MM6 engine fails early if this private manifest is absent or invalid. It validates the format, bounded array dimensions and values before publishing the rules object. MM7 does not read this file. Regenerate it only when the authoritative F3 report changes and after reviewing the new source identity.
+
+## Implemented MM6-only paths
+
+- Six families and three tiers are represented as MM6 class IDs 0–17; Create Party exposes only the six starting IDs. The MM6 class and skill text parsers accept the original two-column and five-column rows, including source skill ID 30 mapped to the runtime Learning slot instead of MM7 Dodge. The six source-backed class icons are selected by family.
+- Class change applies the F3 family starting stats and granted skill codes, clears old visible skills, and leaves nine eligible optional choices. The shared 50-point pool uses one-point changes, base minus two as the lower bound and 25 as the upper bound.
+- HP/SP uses the private family bases and class factors. Mana chooses None, Personality, Intellect or both by the executable's eighteen-class dispatch; the MM6 Cleric ID no longer falls into the inherited MM7 no-mana branch.
+- Reset and default party use legal MM6 class IDs and the previously verified portrait range. The four-character default composition, names, inventory, spell flags and opening state are **provisional** because the original Quick Start fixture remains unresolved.
+
+## Verification and remaining work
+
+The exporter has three synthetic tests covering valid private output, refusal to overwrite and malformed source shape. An offline check against the ignored F3 reports verified the private profile manifest, all eighteen mana groups, six family mappings, retained 18/31 class/skill text rows and six icon names. The five modified C++ translation units passed syntax-only compilation with the project's compile commands; no native MM6 build or UI render was claimed.
+
+The exact HP/SP bonus and promotion formula remains to be traced and measured; current code combines the confirmed F3 base/factor arrays with the inherited bonus structure **provisionally**. Other class consumers, mastery ceilings, training services, starter items/spells, Quick Start identity, class promotion events, skill ID serialization, generated inventory and full screen/input behavior are still F4/F5 work. The [F4 build graph](MM6_F4_BUILD_GRAPH.md) and [F3 gate](MM6_F3_GATE_REVIEW.md) remain the acceptance authority. No MM7 or MM8 runtime was changed.

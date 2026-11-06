@@ -328,6 +328,13 @@ that requirement.
   four-byte coordinates), the 13-byte monster-modification shape (three
   integers plus one byte), and a distinct input-dialog operand set. Verify
   their semantics against the owned scripts before implementation.
+- [x] Register all 43 active MM6 opcode values with retained payload widths,
+  current parser/executor case presence, source-led interpretation confidence
+  and an F4 scenario in [MM6_OPCODE_SEMANTICS_F2.md](MM6_OPCODE_SEMANTICS_F2.md).
+  `scripts/mm6_probe_opcode_semantics.py` verifies 68 active files and 14,477
+  frames, and keeps exact operands/locations in an ignored report. The source
+  audit confirms no inherited cases for opcodes 20, 27 or 28; candidate
+  meanings and all title-specific side effects remain unverified.
 - [x] Reconcile MM6 Question and NPC-topic structure with current consumers
   in [MM6_EVENT_CAMPAIGN_SPEC.md](MM6_EVENT_CAMPAIGN_SPEC.md). All 19 active
   opcode-26 Question records have a 13-byte shape with three in-range local

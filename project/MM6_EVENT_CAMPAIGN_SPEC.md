@@ -20,6 +20,14 @@ owned guide's campaign milestones are indexed in
 linked into a complete shipped-event dependency graph. The current adapter
 has not reached a playable MM6 map.
 
+The [active-opcode matrix](MM6_OPCODE_SEMANTICS_F2.md) now lists all 43 used
+opcode values with observed payload widths, current parse/execute case
+presence, confidence and scenario requirements. Its reproducible
+`scripts/mm6_probe_opcode_semantics.py` verifies 14,477 retained frames and
+writes exact operands only to ignored `opcode-semantics-probe.json`. This is a
+complete **structural register**, not a completed side-effect contract; the
+missing and conflicting operations below remain unresolved.
+
 | Area | Confirmed from retained records and current source | Semantics still to establish |
 | --- | --- | --- |
 | Parser coverage | At least 318 deterministic parser failures affect 26 of the 68 active EVT files, all map scripts. `EvtProgram.cpp` aborts on a parse error, and `EvtInstruction.cpp` rejects unread payload bytes. `global.evt` has none of these specific framing failures. | Operand meaning and execution for every active opcode, even those that parse without error. A loaded global program does not prove map scripts can load. |

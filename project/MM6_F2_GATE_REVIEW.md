@@ -1,0 +1,26 @@
+# MM6 F2 gate review
+
+Status: **open, 2026-11-05**. This is the integration owner's review of whether the research/specification phase is broad enough for the single read-only F3 original-file preflight. It is a gate decision record, not an implementation checklist or a claim that MM6 runs. Recheck every row against current source and ignored report hashes before changing this decision.
+
+## Gate rule
+
+[Plan §18.1](plan.md) requires every item, spell, skill, class, monster, map, quest/event, NPC, shop, travel route, UI screen, asset family, save field and ending path to be represented by ID/range or a private generated manifest, with confirmed/uncertain/unsupported evidence and an acceptance scenario. The F2 exit condition is **no unexamined table or map family**, plus named engine subsystems and scenarios. An explicit, source-located ambiguity may proceed to F3; an unexamined family or a falsely confirmed rule may not.
+
+## Coverage and evidence level now
+
+| Family | Current F2 evidence | Limit before freeze |
+| --- | --- | --- |
+| Thirty text tables | [Table semantic matrix](MM6_TABLE_SEMANTIC_F2.md), direct-loader and unloaded-table probes cover all 30 family names, immediate parsers and selected numeric links. The awards parser skips all 100 MM6 numeric rows. | Row-level effects, positional enum alignment, six nonliteral-load roles, and second-order consumers are still named gaps. A source path is not semantic correctness. |
+| Sixty-seven maps and deltas | [World closure](MM6_WORLD_F2_CLOSURE.md), [field map](MM6_WORLD_FIELD_MAP_F2.md), retained map/indoor/outdoor/roundtrip probes cover 52 indoor and 15 outdoor base/delta pairs and bounded wire sections. | Nonzero reset/persistent/tail semantics and chest grid meaning cannot be proven from all-zero baseline regions. The final 280 chest bytes remain opaque; runtime conversion and save behavior are F4/F5 work. |
+| Events and campaign | [Event spec](MM6_EVENT_CAMPAIGN_SPEC.md), [campaign matrix](MM6_CAMPAIGN_F2_CLOSURE.md), [opcode matrix](MM6_OPCODE_SEMANTICS_F2.md), parser/variable/dialogue/graph probes cover 68 active EVT files, all 43 opcode values, structural links and six guide milestone groups. | At least 318 records fail current C++ parsing; the opcode register contains widths and confidence leads, not full side-effect semantics. Structural graph links do not prove branch reachability or ending. |
+| Character, item and spell rules | [Rules packet](MM6_RULES_F2_CLOSURE.md), [creation packet](MM6_CREATION_F2.md), [spell-effect audit](MM6_SPELL_EFFECT_F2.md) and retained manifests cover six class families, 31 skill IDs, 581 item rows, 99 spells and numeric potion combinations. | Exact class starting arrays, Quick Start state, spell effects/mastery, potion marker effects, two guide-result disagreements, item/treasure semantics and inherited MM7 numeric collisions remain open. |
+| Monsters and combat | [Monster spec](MM6_MONSTER_COMBAT_SPEC.md) and retained parser report cover 173 rows and known fallback vocabularies. | Title-specific families, combat formulas, AI/hostility, loot and resistance effects need a source/consumer confidence matrix; no live combat evidence exists. |
+| Presentation, media and house services | [Media spec](MM6_MEDIA_UI_SPEC.md), [media packet](MM6_MEDIA_F2_CLOSURE.md), house-route and media probes cover retained names, active house entries, UI literal resources, sound IDs and music track presence. | Raw VID/SND headers, extensionless movie-name cause, MM6 house descriptor, dynamic faces/voices, transport schedules and heard/seen effects remain open. The inherited portrait names are absent from the retained MM6 icon index. |
+| Whole save and title isolation | [Save spec](MM6_SAVE_SPEC.md) and MM7 isolated baseline identify MM7 serialization and load-menu assumptions; 67 MM6 deltas preserve wire sections offline. | No `.ec6` writer/reader or live MM6 save exists. MM7 remains protected. The versioned save contract and negative cases are specified for F4/F5. |
+| Owned guide reconciliation | [Guide index](MM6_GUIDE_RECONCILIATION.md), manual/reference-card locators and focused potion/creation/spell page reviews exist. | Mechanic-by-mechanic and campaign-branch review across the owned guides is incomplete. A full coverage ledger must distinguish scanned-page confirmation from OCR search leads and record discrepancies. |
+
+## Current decision and next check
+
+F2 is **not frozen**. The all-active-opcode structural register is complete, but systematic guide coverage and monster/combat semantics are still in progress. Their reports must be integrated into the shared [implementation checklist](MM6_IMPLEMENTATION_CHECKLIST.md) and `.llm-wiki/` with explicit evidence levels. Then the integrator checks every row above for any *unexamined* family, updates the [F3 preflight matrix](MM6_F3_PREFLIGHT_MATRIX.md), and records the F2 freeze decision with a source SHA. Do not run F3 merely because an inventory count is complete.
+
+F3 can test original archive identity, schemas, offsets, labels and spot samples in one read-only pass. It cannot by itself prove combat balance, GUI/audio playback, quest reachability, changed save-state semantics or a complete MM6 campaign. Those require F4 implementation and F5 graphical play, with the frozen MM7 app and saves left intact.

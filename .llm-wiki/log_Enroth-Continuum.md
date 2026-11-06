@@ -73,3 +73,9 @@ Chronological record of wiki activity.
 - Corrected the delta-chest claim: separate 14×10 layout metadata does not prove the final 280 delta bytes form that grid; both candidate splits are zero in retained baselines.
 - Added source summaries and probe links for world fields and party creation, including inherited Thief, starter-item category collisions and the missing distinct MM6 Quick Start path.
 - Updated handoff, architecture, questions and navigation while retaining F2/F3 uncertainty and private per-record reports. Checked 35 wiki pages for frontmatter and local links.
+
+## [2026-11-05] ingest | MM6 active opcode register and F2 gate review
+- by: T-Burton-ND via codex
+- Linked the 43-value, 68-file structural opcode register and tracked probe; summarized seven high-conflict operations and inherited variable dispatch without marking side effects implemented.
+- Linked the open F2 gate decision from the handoff and source index. The review does not authorize F3; systematic guide and combat work remain outstanding.
+- Updated event source, architecture, findings, workstreams and questions, keeping exact operands in ignored local reports. Checked 36 wiki pages for frontmatter and local links.

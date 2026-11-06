@@ -20,6 +20,7 @@ SOURCE_NAMES = (
     "scripts/mm6_probe_spell_effects.py",
     "scripts/mm6_probe_spells.py",
     "src/Engine/Spells/SpellEnums.h",
+    "src/Engine/Spells/SpellEnumFunctions.h",
     "src/Engine/Spells/Spells.cpp",
     "src/Engine/Spells/CastSpellInfo.cpp",
     "src/Engine/Objects/ItemEnums.h",
@@ -162,6 +163,11 @@ def main() -> None:
         raise ValueError("MM6 loader's table mutation contract changed")
     cast_source = sources["src/Engine/Spells/CastSpellInfo.cpp"].read_text(encoding="utf-8")
     cases = case_lines(cast_source)
+    target_source = sources["src/Engine/Spells/SpellEnumFunctions.h"].read_text(encoding="utf-8")
+    item_target_section = target_source.split("isSpellTargetsItem(", 1)[1].split("}", 1)[0]
+    inherited_item_target_names = set(re.findall(r"SPELL_[A-Z0-9_]+", item_target_section))
+    if len(inherited_item_target_names) != 4 or not inherited_item_target_names <= set(enum.values()):
+        raise ValueError("inherited item-target spell set changed")
     item_enum_source = sources["src/Engine/Objects/ItemEnums.h"].read_text(encoding="utf-8")
     inherited_scroll = [enum_number(item_enum_source, name) for name in
                         ("ITEM_SCROLL_TORCH_LIGHT", "ITEM_SCROLL_SOULDRINKER")]
@@ -238,6 +244,7 @@ def main() -> None:
             "same_first_three_mana": row["mana_normal_expert_master"] == current["mana"][:3],
             "current_cast_case_lines": cases.get(enum_name, []),
             "current_direct_special_branch": enum_name in ("SPELL_WATER_TOWN_PORTAL", "SPELL_WATER_LLOYDS_BEACON"),
+            "current_item_target_branch": enum_name in inherited_item_target_names,
             "current_damage_tag_falls_to_physical": row["damage_tag"].casefold() in {"elec", "cold", "pois"},
             "candidate_scroll_item_id": scroll_id,
             "candidate_spellbook_item_id": book_id,
@@ -259,6 +266,8 @@ def main() -> None:
         "current_grandmaster_required_spells": sum(r["current_spell_data"]["required_mastery"] == "MASTERY_GRANDMASTER" for r in records),
         "current_cast_switch_cases": sum(bool(r["current_cast_case_lines"]) for r in records),
         "current_direct_special_branches_without_case": sum(r["current_direct_special_branch"] and not r["current_cast_case_lines"] for r in records),
+        "current_item_target_ids": sum(r["current_item_target_branch"] for r in records),
+        "current_item_target_ids_with_different_retained_label": sum(r["current_item_target_branch"] and r["label_status"] != "same_label" for r in records),
         "mm6_scroll_ids_outside_inherited_scroll_range": sum(not r["candidate_scroll_in_inherited_range"] for r in records),
         "mm6_spellbook_ids_outside_inherited_book_range": sum(not r["candidate_spellbook_in_inherited_range"] for r in records),
         "mm6_loader_overrides_static_spell_data": False,

@@ -40,9 +40,10 @@ def main() -> None:
     transport_manifest = rules / "transport.json"
     spell_manifest = rules / "spells.json"
     first_aid_manifest = rules / "first-aid.json"
+    power_cure_manifest = rules / "power-cure.json"
     if not all(path.is_file() for path in (creation_manifest, transport_manifest,
-                                           spell_manifest, first_aid_manifest)):
-        parser.error("private MM6 creation, transport, spell or First Aid manifest is missing from the local user profile")
+                                           spell_manifest, first_aid_manifest, power_cure_manifest)):
+        parser.error("private MM6 creation, transport, spell, First Aid or Power Cure manifest is missing from the local user profile")
     subprocess.run([sys.executable, "-B", str(root / "scripts/mm6_f4_check_spell_learning.py"),
                     str(research), str(creation_manifest)], check=True)
 
@@ -52,9 +53,11 @@ def main() -> None:
         "MM6_ACTIVE_EVT_LIST": str(research / "F4_ACTIVE_EVT_LIST_2026-11-06.txt"),
         "ENROTH_MM6_INDOOR_DECODED_DIR": str(research / "F4_INDOOR_DECODED"),
         "ENROTH_MM6_OUTDOOR_DECODED_DIR": str(research / "F4_OUTDOOR_DECODED"),
+        "ENROTH_MM6_F3_RESEARCH_DIR": str(research),
         "ENROTH_MM6_TRANSPORT_MANIFEST": str(transport_manifest),
         "ENROTH_MM6_SPELL_RULES_MANIFEST": str(spell_manifest),
         "ENROTH_MM6_FIRST_AID_MANIFEST": str(first_aid_manifest),
+        "ENROTH_MM6_POWER_CURE_MANIFEST": str(power_cure_manifest),
     })
     subprocess.run([str(binary), "--gtest_filter=MM6*.*:LodReader.OriginalDirectoryOrder"],
                    check=True, env=environment)

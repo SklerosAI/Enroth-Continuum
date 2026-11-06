@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
 #include <functional>
 #include <span>
 #include <string>
@@ -19,6 +20,23 @@ using MapBaseReader = std::function<Blob(std::string_view)>;
 // templates. Chest random-item markers -6..-1 are not templates. The caller
 // owns the table and may reject a missing icon/footprint.
 using GroundItemVerifier = std::function<bool(std::int32_t)>;
+
+struct SavedActiveMapCounts {
+    std::size_t actors = 0;
+    std::size_t sprites = 0;
+    std::size_t chests = 0;
+};
+
+struct ValidatedKnownMapSave {
+    KnownSaveFields known;
+    SavedActiveMapCounts active;
+};
+
+// Return the projected active delta's record counts from the same validated
+// 67-map pass. These are saved-record bounds, not post-load runtime identity.
+ValidatedKnownMapSave decodeKnownSaveWithActiveMapCounts(
+    std::span<const std::uint8_t> bytes, std::span<const std::string> expectedNames,
+    const MapBaseReader &readBase, const GroundItemVerifier &verifyGroundItem);
 
 // Decode every known EC6 section, check all 67 expected names, and validate
 // every delta against its corresponding base before returning candidate state.

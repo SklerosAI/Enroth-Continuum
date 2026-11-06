@@ -13,6 +13,7 @@
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/LocationFunctions.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Pid.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/SpriteObject.h"
@@ -81,6 +82,12 @@ std::vector<std::uint8_t> minimalIndoorDelta() {
     return std::vector<std::uint8_t>(8 + 875 + 3 * 4 + 200 * 80 + 200 + 56, 0);
 }
 
+std::vector<std::uint8_t> indoorDeltaWithActors(std::uint8_t count) {
+    std::vector<std::uint8_t> bytes(8 + 875 + 3 * 4 + count * 548 + 200 * 80 + 200 + 56, 0);
+    bytes[8 + 875] = count;
+    return bytes;
+}
+
 std::vector<std::uint8_t> minimalIndoorBase() {
     std::vector<std::uint8_t> bytes(136 + 10 * 4, 0);
     bytes[136 + 4 * 4] = 200; // Fixed MM6 door slots.
@@ -93,6 +100,12 @@ std::vector<std::uint8_t> minimalOutdoorBase() {
 
 std::vector<std::uint8_t> minimalOutdoorDelta() {
     return std::vector<std::uint8_t>(8 + 2 * 88 * 11 + 3 * 4 + 200 + 56, 0);
+}
+
+std::vector<std::uint8_t> outdoorDeltaWithActors(std::uint8_t count) {
+    std::vector<std::uint8_t> bytes(8 + 2 * 88 * 11 + 3 * 4 + count * 548 + 200 + 56, 0);
+    bytes[8 + 2 * 88 * 11] = count;
+    return bytes;
 }
 
 std::unordered_map<std::string, Blob> validPriorDeltas(const std::vector<std::string> &names) {
@@ -156,7 +169,7 @@ UNIT_TEST(MM6WorldSaveRuntime, ValidatesAndStagesWorldAndVisualsAsOneDetachedCan
     NPCStats savedNpcs = liveNpcs;
     savedNpcs.pNPCData[70].name = "Saved NPC";
     savedNpcs.pGroups[50] = 42;
-    std::vector<std::uint8_t> currentDelta = minimalIndoorDelta();
+    std::vector<std::uint8_t> currentDelta = indoorDeltaWithActors(1);
     currentDelta[0] = 3;
     currentDelta[4] = 5;
     mm6::KnownSaveFields source = mm6::captureKnownWorldFields(
@@ -166,6 +179,7 @@ UNIT_TEST(MM6WorldSaveRuntime, ValidatesAndStagesWorldAndVisualsAsOneDetachedCan
     source.metadata.overlays[4].tableIndex = 3;
     source.metadata.overlays[4].animationLength = 10;
     source.metadata.overlays[4].x = -17;
+    source.metadata.overlays[4].packedPid = Pid::actor(0).packed();
     std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(source);
 
     Timer liveTimer;
@@ -177,7 +191,7 @@ UNIT_TEST(MM6WorldSaveRuntime, ValidatesAndStagesWorldAndVisualsAsOneDetachedCan
     EXPECT_EQ(staged.known.core.party.playingTicks, 42);
     EXPECT_EQ(staged.world.npcs.pNPCData[70].name, "Saved NPC");
     EXPECT_EQ(staged.world.npcs.pGroups[50], 42);
-    EXPECT_EQ(staged.world.mapDeltas.at("d0.dlv").size(), minimalIndoorDelta().size());
+    EXPECT_EQ(staged.world.mapDeltas.at("d0.dlv").size(), currentDelta.size());
     EXPECT_EQ(static_cast<const std::uint8_t *>(staged.world.mapDeltas.at("d0.dlv").data())[0], 3);
     EXPECT_EQ(static_cast<const std::uint8_t *>(staged.world.mapDeltas.at("d0.dlv").data())[4], 5);
     EXPECT_EQ(staged.world.mapDeltas.size(), 67);
@@ -190,6 +204,7 @@ UNIT_TEST(MM6WorldSaveRuntime, ValidatesAndStagesWorldAndVisualsAsOneDetachedCan
 
     source.metadata.overlays[49].tableIndex = 5;
     source.metadata.overlays[49].animationLength = 1;
+    source.metadata.overlays[49].packedPid = Pid::actor(0).packed();
     bytes = mm6::encodeKnownSave(source);
     EXPECT_THROW((void) mm6::stageKnownWorldAndVisuals(
         liveNpcs, liveTimer, liveOverlays, bytes, names, syntheticBase,
@@ -208,6 +223,51 @@ UNIT_TEST(MM6WorldSaveRuntime, ValidatesAndStagesWorldAndVisualsAsOneDetachedCan
     EXPECT_THROW((void) mm6::stageKnownWorldAndVisuals(
         liveNpcs, liveTimer, liveOverlays, mm6::encodeKnownSave(source), names, syntheticBase,
         [](std::int32_t) { return true; }, 5, GameTitle::MM7), std::exception);
+}
+
+UNIT_TEST(MM6WorldSaveRuntime, RejectsSavedOverlayActorPidsOutsideActiveIndoorAndOutdoorDelta) {
+    const std::vector<std::string> names = expectedNames();
+    const auto prior = validPriorDeltas(names);
+    NPCStats npcs{};
+    Timer timer;
+    ActiveOverlayList overlays;
+    overlays.pOverlays[0].screenSpaceX = 91;
+    int baseReads = 0;
+    const auto check = [&](const mm6::KnownSaveFields &source) {
+        std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(source);
+        baseReads = 0;
+        return mm6::stageKnownWorldAndVisuals(npcs, timer, overlays,
+            bytes, names, [&](std::string_view name) {
+                ++baseReads;
+                return syntheticBase(name);
+            },
+            [](std::int32_t id) { return id >= 1 && id <= 580; }, 5, GameTitle::MM6);
+    };
+
+    mm6::KnownSaveFields indoor = mm6::captureKnownWorldFields(
+        seedFields(), npcs, prior, "d0.dlv", indoorDeltaWithActors(1), names, GameTitle::MM6);
+    indoor.metadata.overlays[0].animationLength = 10;
+    indoor.metadata.overlays[0].packedPid = Pid::actor(0).packed();
+    EXPECT_NO_THROW((void) check(indoor));
+    indoor.metadata.overlays[0].packedPid = Pid::actor(1).packed();
+    EXPECT_THROW((void) check(indoor), std::exception);
+    EXPECT_EQ(baseReads, 67);
+    indoor.metadata.overlays[0].packedPid = Pid::sprite(0).packed();
+    EXPECT_THROW((void) check(indoor), std::exception);
+    EXPECT_EQ(overlays.pOverlays[0].screenSpaceX, 91);
+
+    mm6::KnownSaveFields outdoorSeed = seedFields();
+    outdoorSeed.metadata.header.mapFileName = "o0.odm";
+    mm6::KnownSaveFields outdoor = mm6::captureKnownWorldFields(
+        outdoorSeed, npcs, prior, "o0.ddm", outdoorDeltaWithActors(2), names, GameTitle::MM6);
+    outdoor.metadata.overlays[0].animationLength = 10;
+    outdoor.metadata.overlays[0].packedPid = Pid::actor(1).packed();
+    EXPECT_NO_THROW((void) check(outdoor));
+    outdoor.metadata.overlays[0].packedPid = Pid::actor(2).packed();
+    EXPECT_THROW((void) check(outdoor), std::exception);
+    EXPECT_EQ(baseReads, 67);
+    EXPECT_EQ(overlays.pOverlays[0].screenSpaceX, 91);
+    EXPECT_EQ(npcs.uNumNewNPCs, 0);
 }
 
 UNIT_TEST(MM6WorldSaveRuntime, OutdoorIdentityJoinsCurrentMapTableHeadAndManifest) {

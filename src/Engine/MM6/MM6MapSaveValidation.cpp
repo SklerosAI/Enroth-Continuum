@@ -42,8 +42,8 @@ void validateMapItems(const std::vector<SpriteObject_MM7> &objects,
     }
 }
 
-void validateMapPair(const SavedMapDelta &delta, const MapBaseReader &readBase,
-                     const GroundItemVerifier &verifyGroundItem) {
+SavedActiveMapCounts validateMapPair(const SavedMapDelta &delta, const MapBaseReader &readBase,
+                                    const GroundItemVerifier &verifyGroundItem) {
     const bool indoor = delta.name.ends_with(".dlv");
     const std::string baseName = delta.name.substr(0, delta.name.size() - 4) +
                                  (indoor ? ".blv" : ".odm");
@@ -58,26 +58,46 @@ void validateMapPair(const SavedMapDelta &delta, const MapBaseReader &readBase,
         MM6IndoorSnapshot base = deserializeMM6IndoorBase(decodedBase);
         MM6IndoorRuntimeDelta decoded = decodeMM6IndoorRuntimeDelta(decodedDelta, base);
         validateMapItems(decoded.spriteObjects, decoded.chests, verifyGroundItem);
+        return {decoded.actors.size(), decoded.spriteObjects.size(), decoded.chests.size()};
     } else {
         (void) decodeOutdoorBase({static_cast<const std::uint8_t *>(decodedBase.data()), decodedBase.size()});
         MM6OutdoorDeltaSnapshot decoded = decodeMM6OutdoorDelta(decodedDelta);
         validateMapItems(decoded.spriteObjects, decoded.chests, verifyGroundItem);
+        return {decoded.actors.size(), decoded.spriteObjects.size(), decoded.chests.size()};
     }
 }
 
 } // namespace
 
-KnownSaveFields decodeKnownSaveWithMapBases(std::span<const std::uint8_t> bytes,
-                                            std::span<const std::string> expectedNames,
-                                            const MapBaseReader &readBase,
-                                            const GroundItemVerifier &verifyGroundItem) {
+ValidatedKnownMapSave decodeKnownSaveWithActiveMapCounts(
+    std::span<const std::uint8_t> bytes, std::span<const std::string> expectedNames,
+    const MapBaseReader &readBase, const GroundItemVerifier &verifyGroundItem) {
     if (!readBase || !verifyGroundItem)
         throw std::runtime_error("MM6 map save lacks a base or item-template reader");
     KnownSaveFields candidate = decodeKnownSave(bytes);
     validateExpectedMapNames(candidate.maps, expectedNames);
-    for (const SavedMapDelta &delta : candidate.maps.deltas)
-        validateMapPair(delta, readBase, verifyGroundItem);
-    return candidate;
+    const std::string &mapName = candidate.metadata.header.mapFileName;
+    const std::string activeDelta = mapName.substr(0, mapName.size() - 4) +
+                                    (mapName.ends_with(".blv") ? ".dlv" : ".ddm");
+    SavedActiveMapCounts active;
+    bool foundActive = false;
+    for (const SavedMapDelta &delta : candidate.maps.deltas) {
+        SavedActiveMapCounts counts = validateMapPair(delta, readBase, verifyGroundItem);
+        if (delta.name == activeDelta) {
+            active = counts;
+            foundActive = true;
+        }
+    }
+    if (!foundActive)
+        throw std::runtime_error("MM6 active map was not in the validated delta set");
+    return {std::move(candidate), active};
+}
+
+KnownSaveFields decodeKnownSaveWithMapBases(std::span<const std::uint8_t> bytes,
+                                            std::span<const std::string> expectedNames,
+                                            const MapBaseReader &readBase,
+                                            const GroundItemVerifier &verifyGroundItem) {
+    return decodeKnownSaveWithActiveMapCounts(bytes, expectedNames, readBase, verifyGroundItem).known;
 }
 
 void loadKnownSaveWithMapBasesBeforeMutation(std::span<const std::uint8_t> bytes,

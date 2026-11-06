@@ -67,6 +67,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial sixteen-section `.ec6` candidate with `CHAR` v3 spell preferences, cross-field checks and remaining save gaps
 - [MM6 F4 Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md) — Live-owner gaps, detached staging order and atomic commit gates
 - [MM6 F4 Partial Stage Coordinator](MM6-F4-Partial-Stage-Coordinator.md) — Validated 67-map candidate with detached NPC/map and timer/overlay copies
+- [MM6 F4 Active World PID Restore](MM6-F4-Active-World-PID-Restore.md) — Active saved-map actor PID bounds and source-backed post-load identity gate
 - [MM6 F4 World Save Runtime](MM6-F4-World-Save-Runtime.md) — NPC and 67-map capture/staging with bounded active-map writer and outdoor identity join
 - [MM6 F4 Timed Buffs](MM6-F4-Timed-Buffs.md) — Bounded BUFF fields for party/character effects and open runtime/F5 checks
 - [MM6 F4 Hireling State](MM6-F4-Hireling-State.md) — HIRE party copies, sacrifice progress and bounded MM6 NPC lookup

@@ -11,6 +11,7 @@
 #include "Engine/Graphics/LocationFunctions.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Engine.h"
+#include "Engine/Pid.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Snapshots/MM6IndoorSnapshot.h"
 #include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
@@ -51,6 +52,20 @@ StagedWorldFields stageWorldFromKnown(const NPCStats &liveNpcs,
     return staged;
 }
 
+void validateSavedOverlayActorPids(const std::array<SaveOverlayField, 50> &overlays,
+                                   const SavedActiveMapCounts &active) {
+    for (const SaveOverlayField &overlay : overlays) {
+        if (overlay.animationLength <= 0)
+            continue;
+        const Pid pid = Pid::fromPacked(overlay.packedPid);
+        // The current overlay producer is Actor::AddOnDamageOverlay, which
+        // supplies only actor PIDs. This checks the saved delta index, not
+        // the actor identity after respawn, debug filters or load events.
+        if (pid.type() != OBJECT_Actor || static_cast<std::size_t>(pid.id()) >= active.actors)
+            throw std::runtime_error("MM6 active overlay references an absent saved actor");
+    }
+}
+
 } // namespace
 
 StagedKnownWorldAndVisuals stageKnownWorldAndVisuals(
@@ -59,12 +74,14 @@ StagedKnownWorldAndVisuals stageKnownWorldAndVisuals(
     const MapBaseReader &readBase, const GroundItemVerifier &verifyItem,
     std::size_t overlayTableCount, GameTitle title) {
     requireMM6(title);
-    KnownSaveFields known = decodeKnownSaveWithMapBases(bytes, expectedNames, readBase, verifyItem);
-    StagedWorldFields world = stageWorldFromKnown(liveNpcs, known, expectedNames);
+    ValidatedKnownMapSave validated = decodeKnownSaveWithActiveMapCounts(
+        bytes, expectedNames, readBase, verifyItem);
+    StagedWorldFields world = stageWorldFromKnown(liveNpcs, validated.known, expectedNames);
+    validateSavedOverlayActorPids(validated.known.metadata.overlays, validated.active);
     StagedSessionVisuals visuals = stageSessionVisuals(
-        liveTimer, liveOverlays, {known.metadata.timer, known.metadata.overlays},
+        liveTimer, liveOverlays, {validated.known.metadata.timer, validated.known.metadata.overlays},
         overlayTableCount, title);
-    return {std::move(known), std::move(world), std::move(visuals)};
+    return {std::move(validated.known), std::move(world), std::move(visuals)};
 }
 
 void validateOutdoorMapIdentity(MapId currentMapId, const MapTable &mapTable,

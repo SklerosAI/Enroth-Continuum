@@ -17,6 +17,7 @@
 #include "Engine/Evt/MM6ConditionVariables.h"
 #include "Engine/Evt/MM6MapByteState.h"
 #include "Engine/Evt/MM6QuestBitState.h"
+#include "Engine/Evt/MM6DayOfYear.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Party.h"
 #include "Engine/Graphics/Indoor.h"
@@ -388,6 +389,12 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             setDecorationSprite(ir.data.sprite_texture_descr.cog, ir.data.sprite_texture_descr.hide, ir.str);
             break;
         case EVENT_Compare:
+            if (engine->gameTitle() == GameTitle::MM6 &&
+                ir.data.variable_descr.type == VAR_DayOfYear) {
+                if (mm6::compareDayOfYear(pParty->GetPlayingTime(), 19, ir.data.variable_descr.value))
+                    return {EVT_FLOW_JUMP, ir.target_step};
+                break;
+            }
             if (engine->gameTitle() == GameTitle::MM6 &&
                 ir.data.variable_descr.type == VAR_QBits_QuestsDone) {
                 if (MM6QuestBitState(pParty->_questBits).compare(16, ir.data.variable_descr.value))
@@ -869,6 +876,12 @@ int EvtInterpreter::checkTopicStep(int step) {
         return -1;
     case EVENT_OnCanShowDialogItemCmp:
         if (engine->gameTitle() == GameTitle::MM6 &&
+            ir->data.variable_descr.type == VAR_DayOfYear) {
+            if (mm6::compareDayOfYear(pParty->GetPlayingTime(), 19, ir->data.variable_descr.value))
+                return ir->target_step;
+            break;
+        }
+        if (engine->gameTitle() == GameTitle::MM6 &&
             ir->data.variable_descr.type == VAR_QBits_QuestsDone) {
             if (MM6QuestBitState(pParty->_questBits).compare(16, ir->data.variable_descr.value))
                 return ir->target_step;
@@ -914,6 +927,8 @@ bool EvtInterpreter::validateVariableValue(const EvtInstruction &ir) const {
         const int rawId = std::to_underlying(ir.data.variable_descr.type);
         if (!describeMM6Variable(rawId).canUseInheritedExecutor())
             throw Exception("MM6 evt variable {} needs a title-specific executor", rawId);
+        if (rawId == 19 && ir.opcode != EVENT_Compare && ir.opcode != EVENT_OnCanShowDialogItemCmp)
+            throw Exception("MM6 day-of-year event variable only supports comparison");
         if (!isValidMM6SharedCandidateValue(rawId, ir.data.variable_descr.value))
             throw Exception("MM6 evt variable {} value {} is outside title range", rawId,
                             ir.data.variable_descr.value);

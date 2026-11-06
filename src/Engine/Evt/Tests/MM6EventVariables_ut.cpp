@@ -47,3 +47,10 @@ UNIT_TEST(MM6EventVariables, AwardValueRejectsForeignAwardIds) {
     EXPECT_FALSE(isValidMM6SharedCandidateValue(12, 101));
     EXPECT_FALSE(isValidMM6SharedCandidateValue(12, 512));
 }
+
+UNIT_TEST(MM6EventVariables, DayOfYearValueRejectsOutsideCalendar) {
+    EXPECT_TRUE(isValidMM6SharedCandidateValue(19, 1));
+    EXPECT_TRUE(isValidMM6SharedCandidateValue(19, 336));
+    EXPECT_FALSE(isValidMM6SharedCandidateValue(19, 0));
+    EXPECT_FALSE(isValidMM6SharedCandidateValue(19, 337));
+}

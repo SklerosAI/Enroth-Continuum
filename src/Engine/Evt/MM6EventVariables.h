@@ -62,5 +62,7 @@ constexpr bool isValidMM6SharedCandidateValue(int rawId, int value) {
         return value >= 1 && value <= 100;
     if (rawId == 17)  // Item in hand: retained MM6 item IDs are 1..580.
         return value >= 1 && value <= 580;
+    if (rawId == 19)  // Day of year: the MM6 calendar has twelve 28-day months.
+        return value >= 1 && value <= 336;
     return true;
 }

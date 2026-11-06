@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -121,5 +122,21 @@ std::unique_ptr<PublishedFirstMapCache> runScopedFirstMapEntryForTest(
     const ChestSeedEntropy &chestEntropy,
     std::unordered_map<std::string, Blob> *mapDeltas, ChestTitleState *titleChest,
     const FirstMapEntryProbe &probe, GameTitle title);
+
+struct StagedOfflineSaveSlot {
+    std::vector<std::uint8_t> bytes;
+    StagedKnownSession staged;
+    bool needsRecovery = false;
+};
+
+// Read-only fresh-process-style preflight. Every candidate must stage all
+// represented owners and 67 maps before primary/backup selection. This never
+// recovers a backup on disk or assigns any live Party, map or CHST owner.
+std::optional<StagedOfflineSaveSlot> stageOfflineSaveSlotForTest(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    const Party &freshParty, const NPCStats &freshNpcs, const Timer &freshTimer,
+    const ActiveOverlayList &freshOverlays, std::span<const std::string> expectedNames,
+    const MapBaseReader &readBase, const GroundItemVerifier &verifyItem,
+    std::size_t overlayTableCount, GameTitle title);
 
 } // namespace mm6

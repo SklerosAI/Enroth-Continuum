@@ -239,4 +239,28 @@ std::unique_ptr<PublishedFirstMapCache> runScopedFirstMapEntryForTest(
     }
 }
 
+std::optional<StagedOfflineSaveSlot> stageOfflineSaveSlotForTest(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    const Party &freshParty, const NPCStats &freshNpcs, const Timer &freshTimer,
+    const ActiveOverlayList &freshOverlays, std::span<const std::string> expectedNames,
+    const MapBaseReader &readBase, const GroundItemVerifier &verifyItem,
+    std::size_t overlayTableCount, GameTitle title) {
+    if (title != GameTitle::MM6 || !readBase || !verifyItem)
+        throw std::runtime_error("MM6 offline slot stage requires title-specific readers");
+    std::unique_ptr<StagedKnownSession> staged;
+    auto selected = preflightRecoverableSaveFile(profileRoot, slotName,
+        [&](std::span<const std::uint8_t> bytes) {
+            auto candidate = std::make_unique<StagedKnownSession>(stageKnownSession(
+                freshParty, freshNpcs, freshTimer, freshOverlays, bytes,
+                expectedNames, readBase, verifyItem, overlayTableCount, title));
+            staged = std::move(candidate);
+        });
+    if (!selected)
+        return std::nullopt;
+    if (!staged)
+        throw std::runtime_error("MM6 save selected without a complete staged session");
+    return StagedOfflineSaveSlot{std::move(selected->bytes), std::move(*staged),
+                                 selected->needsRecovery};
+}
+
 } // namespace mm6

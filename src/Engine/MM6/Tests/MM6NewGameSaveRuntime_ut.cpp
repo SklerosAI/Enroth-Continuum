@@ -533,6 +533,125 @@ UNIT_TEST(MM6NewGameSaveRuntime, BackupPreflightAndRecoveryAfterCorruptPrimary) 
     EXPECT_EQ(mm6::loadRecoverableSaveFile(profile.root(), mm6::NEW_GAME_AUTOSAVE_SLOT), prior);
     EXPECT_EQ(readFile(profile.primary()), prior);
 }
+
+UNIT_TEST(MM6NewGameSaveRuntime, StagesFreshDiskSlotWithoutPublishingAnyOwner) {
+    TestProfile profile;
+    const auto names = expectedNames();
+    Party writerParty;
+    writerParty.uNumGold = 917;
+    NPCStats writerNpcs{};
+    Timer writerTimer;
+    ActiveOverlayList writerOverlays;
+    const auto entropy = [] { return std::optional<std::uint32_t>(0x76543210); };
+    mm6::KnownSaveFields source = seed(123);
+    source.core.party.gold = 917;
+    auto prepared = mm6::writeAndStageOfflineNewGameAutosave(
+        profile.root(), source, writerParty, writerNpcs, writerTimer, writerOverlays,
+        names, defaultReader(), baseReader(), [](std::int32_t) { return true; },
+        5, entropy, GameTitle::MM6);
+
+    Party freshParty;
+    freshParty.uNumGold = 19;
+    NPCStats freshNpcs{};
+    freshNpcs.pNPCData[0].name = "fresh process";
+    Timer freshTimer;
+    ActiveOverlayList freshOverlays;
+    const auto diskBefore = readFile(profile.primary());
+    auto selected = mm6::stageOfflineSaveSlotForTest(
+        profile.root(), mm6::NEW_GAME_AUTOSAVE_SLOT, freshParty, freshNpcs,
+        freshTimer, freshOverlays, names, baseReader(),
+        [](std::int32_t) { return true; }, 5, GameTitle::MM6);
+    ASSERT_TRUE(selected);
+    EXPECT_FALSE(selected->needsRecovery);
+    EXPECT_EQ(selected->bytes, prepared.bytes);
+    EXPECT_EQ(selected->staged.party.pos.z, 340);
+    EXPECT_EQ(selected->staged.party.uNumGold, 917);
+    EXPECT_EQ(selected->staged.worldAndVisuals.world.mapDeltas.size(), 67);
+    EXPECT_EQ(selected->staged.worldAndVisuals.rawActiveDelta, defaultDelta("oute3.ddm"));
+    EXPECT_TRUE(selected->staged.worldAndVisuals.chestTitle.ready);
+    EXPECT_EQ(selected->staged.worldAndVisuals.chestTitle.lcgState, 0x76543210u);
+    EXPECT_TRUE(selected->staged.shopGuildClocks.ready);
+    EXPECT_EQ(freshParty.uNumGold, 19);
+    EXPECT_EQ(freshNpcs.pNPCData[0].name, "fresh process");
+    EXPECT_EQ(readFile(profile.primary()), diskBefore);
+
+    int baseReads = 0;
+    const auto countingBase = [&](std::string_view name) {
+        ++baseReads;
+        return baseReader()(name);
+    };
+    EXPECT_THROW((void) mm6::stageOfflineSaveSlotForTest(
+        profile.root(), mm6::NEW_GAME_AUTOSAVE_SLOT, freshParty, freshNpcs,
+        freshTimer, freshOverlays, names, countingBase,
+        [](std::int32_t) { return true; }, 5, GameTitle::MM7), std::exception);
+    EXPECT_EQ(baseReads, 0);
+    EXPECT_EQ(readFile(profile.primary()), diskBefore);
+}
+
+UNIT_TEST(MM6NewGameSaveRuntime, DiskStageFallsBackOnlyAfterFullCandidateValidation) {
+    TestProfile profile;
+    const auto names = expectedNames();
+    Party writerParty;
+    NPCStats writerNpcs{};
+    Timer writerTimer;
+    ActiveOverlayList writerOverlays;
+    const auto entropy = [] { return std::optional<std::uint32_t>(0x11223344); };
+    auto write = [&](std::int64_t ticks) {
+        return mm6::writeAndStageOfflineNewGameAutosave(
+            profile.root(), seed(ticks), writerParty, writerNpcs,
+            writerTimer, writerOverlays, names, defaultReader(), baseReader(),
+            [](std::int32_t) { return true; }, 5, entropy, GameTitle::MM6);
+    };
+    auto first = write(42);
+    auto second = write(43);
+    const auto backupPath = std::filesystem::path(profile.primary().string() + ".bak");
+    ASSERT_EQ(readFile(backupPath), first.bytes);
+    ASSERT_EQ(readFile(profile.primary()), second.bytes);
+
+    Party freshParty;
+    freshParty.uNumGold = 23;
+    NPCStats freshNpcs{};
+    Timer freshTimer;
+    ActiveOverlayList freshOverlays;
+    const auto stage = [&] {
+        return mm6::stageOfflineSaveSlotForTest(
+            profile.root(), mm6::NEW_GAME_AUTOSAVE_SLOT, freshParty, freshNpcs,
+            freshTimer, freshOverlays, names, baseReader(),
+            [](std::int32_t) { return true; }, 5, GameTitle::MM6);
+    };
+    freshParty.bTurnBasedModeOn = true; // Late Party stage rejects both otherwise valid files.
+    EXPECT_THROW((void) stage(), std::exception);
+    EXPECT_EQ(readFile(profile.primary()), second.bytes);
+    EXPECT_EQ(readFile(backupPath), first.bytes);
+    freshParty.bTurnBasedModeOn = false;
+
+    {
+        std::ofstream corrupt(profile.primary(), std::ios::binary | std::ios::trunc);
+        corrupt << "broken";
+    }
+    const auto corruptPrimary = readFile(profile.primary());
+    auto selected = stage();
+    ASSERT_TRUE(selected);
+    EXPECT_TRUE(selected->needsRecovery);
+    EXPECT_EQ(selected->bytes, first.bytes);
+    EXPECT_EQ(selected->staged.worldAndVisuals.world.mapDeltas.size(), 67);
+    EXPECT_EQ(selected->staged.worldAndVisuals.chestTitle.lcgState, 0x11223344u);
+    EXPECT_EQ(readFile(profile.primary()), corruptPrimary);
+    EXPECT_EQ(readFile(backupPath), first.bytes);
+
+    {
+        std::ofstream corrupt(backupPath, std::ios::binary | std::ios::trunc);
+        corrupt << "also broken";
+    }
+    EXPECT_THROW((void) stage(), std::exception);
+    EXPECT_EQ(freshParty.uNumGold, 23);
+    EXPECT_EQ(readFile(profile.primary()), corruptPrimary);
+    TestProfile emptyProfile;
+    EXPECT_FALSE(mm6::stageOfflineSaveSlotForTest(
+        emptyProfile.root(), mm6::NEW_GAME_AUTOSAVE_SLOT, freshParty, freshNpcs,
+        freshTimer, freshOverlays, names, baseReader(),
+        [](std::int32_t) { return true; }, 5, GameTitle::MM6).has_value());
+}
 #endif
 
 } // namespace

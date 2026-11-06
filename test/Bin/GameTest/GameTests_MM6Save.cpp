@@ -17,9 +17,13 @@
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/MM6/MM6KnownSaveFields.h"
+#include "Engine/MM6/MM6NewGameSaveRuntime.h"
+#include "Engine/MM6/MM6PrivateMapSource.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/Party.h"
 #include "Engine/SaveLoad.h"
+#include "Engine/Tables/ItemTable.h"
+#include "Engine/Tables/OverlayTable.h"
 
 namespace {
 
@@ -72,6 +76,9 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
         bool failureCallback = false;
         bool success = false;
         bool rollbackExact = false;
+        bool freshDiskStage = false;
+        bool wrongTitleRejected = false;
+        bool corruptPrimaryRecoveredReadOnly = false;
         std::string error;
         std::uint32_t firstSeed = 0;
         std::uint32_t secondSeed = 0;
@@ -118,6 +125,60 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
             result.secondSeed = mm6::chestTitleState().lcgState;
             result.primaryBeforeFailure = readFile(profile.primary());
             result.backupBeforeFailure = readFile(profile.backup());
+            const mm6::PrivateMapSource maps(research);
+            Party freshParty;
+            freshParty.uNumGold = 27;
+            NPCStats freshNpcs{};
+            Timer freshTimer;
+            ActiveOverlayList freshOverlays;
+            const auto readBase = [&maps](std::string_view name) { return maps.readBase(name); };
+            const auto verifyItem = [](std::int32_t id) {
+                return id >= 1 && id <= 580 &&
+                    !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
+            };
+            auto staged = mm6::stageOfflineSaveSlotForTest(
+                profile.root, mm6::NEW_GAME_AUTOSAVE_SLOT, freshParty, freshNpcs,
+                freshTimer, freshOverlays, maps.expectedNames(), readBase,
+                verifyItem, pOverlayTable->overlays.size(), GameTitle::MM6);
+            result.freshDiskStage = staged && !staged->needsRecovery &&
+                staged->bytes == result.primaryBeforeFailure &&
+                staged->staged.party.pos.z == 340 &&
+                staged->staged.worldAndVisuals.world.mapDeltas.size() == 67 &&
+                staged->staged.worldAndVisuals.rawActiveDelta ==
+                    staged->staged.worldAndVisuals.known.chest.rawActiveDelta &&
+                staged->staged.worldAndVisuals.chestTitle.ready &&
+                staged->staged.worldAndVisuals.chestTitle.lcgState == result.secondSeed &&
+                staged->staged.shopGuildClocks.ready && freshParty.uNumGold == 27 &&
+                readFile(profile.primary()) == result.primaryBeforeFailure;
+            try {
+                (void) mm6::stageOfflineSaveSlotForTest(
+                    profile.root, mm6::NEW_GAME_AUTOSAVE_SLOT, freshParty, freshNpcs,
+                    freshTimer, freshOverlays, maps.expectedNames(), readBase,
+                    verifyItem, pOverlayTable->overlays.size(), GameTitle::MM7);
+            } catch (const std::runtime_error &) {
+                result.wrongTitleRejected = readFile(profile.primary()) == result.primaryBeforeFailure;
+            }
+            {
+                std::ofstream corrupt(profile.primary(), std::ios::binary | std::ios::trunc);
+                corrupt << "broken";
+            }
+            const auto corruptPrimary = readFile(profile.primary());
+            auto recovered = mm6::stageOfflineSaveSlotForTest(
+                profile.root, mm6::NEW_GAME_AUTOSAVE_SLOT, freshParty, freshNpcs,
+                freshTimer, freshOverlays, maps.expectedNames(), readBase,
+                verifyItem, pOverlayTable->overlays.size(), GameTitle::MM6);
+            result.corruptPrimaryRecoveredReadOnly = recovered && recovered->needsRecovery &&
+                recovered->bytes == result.backupBeforeFailure &&
+                recovered->staged.worldAndVisuals.world.mapDeltas.size() == 67 &&
+                recovered->staged.worldAndVisuals.chestTitle.ready &&
+                readFile(profile.primary()) == corruptPrimary &&
+                readFile(profile.backup()) == result.backupBeforeFailure &&
+                freshParty.uNumGold == 27;
+            {
+                std::ofstream restorePrimary(profile.primary(), std::ios::binary | std::ios::trunc);
+                restorePrimary.write(reinterpret_cast<const char *>(result.primaryBeforeFailure.data()),
+                                     result.primaryBeforeFailure.size());
+            }
             const auto cacheBeforeFailure = snapshotCache();
             const auto chestBeforeFailure = mm6::chestTitleState();
             try {
@@ -148,6 +209,9 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
     EXPECT_TRUE(result.firstCallback);
     EXPECT_TRUE(result.success);
     EXPECT_TRUE(result.failureCallback);
+    EXPECT_TRUE(result.freshDiskStage);
+    EXPECT_TRUE(result.wrongTitleRejected);
+    EXPECT_TRUE(result.corruptPrimaryRecoveredReadOnly);
     EXPECT_FALSE(result.primaryBeforeFailure.empty());
     EXPECT_FALSE(result.backupBeforeFailure.empty());
     EXPECT_EQ(mm6::decodeKnownSave(result.backupBeforeFailure).chest.lcgState, result.firstSeed);

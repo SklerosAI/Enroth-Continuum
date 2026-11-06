@@ -109,3 +109,9 @@ Chronological record of wiki activity.
 - Added source summaries for the named-screen register and manual/card/service audit; recorded the MM6 training-house versus inherited cap-table collision as a source risk, not a live failure.
 - Updated the item/monster guide summary with 32 rendered pages, selected discrepancies, and explicit unreviewed semantic counts; exact per-ID claims remain ignored locally.
 - Kept F2 open and F3 unrun. Checked 47 wiki pages for frontmatter and local links.
+
+## [2026-11-05] ingest | MM6 profession and F2 freeze handoff
+- by: T-Burton-ND via codex
+- Added the 77-row NPC profession source summary, including the 51-name guide join, generic-row inherited effect collisions and explicit hireability limits.
+- Classified reserved UI screen call sites; linked a prepared private F2 source/report fingerprint helper from the agent handoff and source index. The helper refuses to run while F2 is open and does not read originals.
+- Kept the original-file F3 pass unrun and checked 48 wiki pages for frontmatter and local links.

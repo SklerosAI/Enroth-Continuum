@@ -49,6 +49,29 @@ target topics lack a global event; one falls in the current teacher-special
 range, and the other needs MM6-specific dialogue classification. No original
 game behavior has been inferred from these counts alone.
 
+### Travel, topic precedence and terminal routes
+
+`scripts/mm6_probe_campaign_routes.py` joins the retained house table,
+event/dialogue indexes and structural graph into ignored
+`campaign-routes-probe.json`. It finds 21 typed stable/boat houses; six stable
+IDs are outside the inherited `Transport.cpp` route-array range. The loaded
+MM6 `trans.txt` is parsed by `TransitionTable.cpp` as display text, not route
+schedule data. The MM6 route source, departure days, costs and coordinates
+remain unestablished. For NPC topics, 74 references across 43 IDs have a
+`global.evt` function yet fall in `NPCTopics.cpp`'s inherited teacher range,
+which handles selection before `runEvent()`. This is a structural precedence
+collision; it does not prove which scripts the original game would run.
+
+Two active `SpeakInHouse` instructions in the Hive script target terminal IDs
+600 and 601, outside the retained house table. `UIHouses.cpp` handles those
+IDs through `UIMSG_ShowGameOverWindow`; the current certificate path branches
+on MM7 alignment, writes `MM7_Win.Pcx`, and `Game.cpp` transitions to
+Harmondale after the final window. These current-source effects are
+not an MM6-specific finale implementation; the shipped route conditions and
+intended post-finale behavior still need F2/F3 reconciliation. See the
+[campaign closure matrix](MM6_CAMPAIGN_F2_CLOSURE.md) for milestone scenarios
+and evidence limits.
+
 ## Current C++ consumers
 
 - `src/Engine/Evt/EvtProgram.cpp` and `EvtInstruction.cpp` frame and decode

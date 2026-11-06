@@ -126,7 +126,7 @@ nonempty rows; headers, separators and reserved records still require review.
 | `npctext.txt` | 521 | Dialogue text and event linkage |
 | `npctopic.txt` | 527 | Dialogue topic mapping |
 | `passwords.txt` | 41 | Password and entry event mapping |
-| `trans.txt` | 234 | Transport destinations, schedules, costs and flags |
+| `trans.txt` | 234 | Transition display text; the loaded C++ parser reads descriptions, not transport route schedules. MM6 stable/boat route source remains to identify. |
 | `errorlog.txt` | 1 | Diagnose whether shipped data or incidental log; no gameplay assumption |
 
 For every numeric ID, record whether it is active, reserved, duplicated or
@@ -296,6 +296,18 @@ that requirement.
   branches, the missing opcode effects, and a private quest dependency graph
   through the ending. Quest-note text covers only a subset of the script-used
   quest bits, so do not infer campaign state from visible notes alone.
+- [x] Join house, travel, NPC-topic and ending references against current
+  consumers in `scripts/mm6_probe_campaign_routes.py`. Its ignored report
+  records 21 typed transport houses, six stable IDs outside the inherited
+  route-array range, 74 NPC topic references with global functions that the
+  inherited teacher range intercepts first, and two Hive terminal entries
+  routed to the MM7 game-over path. The [campaign closure matrix](MM6_CAMPAIGN_F2_CLOSURE.md)
+  records source paths and acceptance scenarios; none of these joins proves
+  original behavior or campaign reachability.
+- [ ] Implement MM6-specific transport schedules/destinations and NPC-topic
+  precedence after reconciling the retained scripts and guide. Give the Hive
+  terminal state its own ending, certificate/video and post-finale policy;
+  the current MM7 handler writes `MM7_Win.Pcx` and respawns at Harmondale.
 - [x] Build a private structural graph of active event functions, map moves,
   house exits, quest-bit operands and NPC topic changes. The reproducible
   `scripts/mm6_probe_quest_graph.py` records detailed links only in ignored

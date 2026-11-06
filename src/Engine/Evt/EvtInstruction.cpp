@@ -679,8 +679,8 @@ std::string EvtInstruction::toString(EvtSource source) const {
                                data.mm6_outdoor_facet_descr.bit, data.mm6_outdoor_facet_descr.is_on);
         case EVENT_InputString:
             return fmt::format("{}: MM6Question({}, {}, {}) -> {}", step,
-                               data.mm6_question_descr.prompt, data.mm6_question_descr.answer,
-                               data.mm6_question_descr.failure, target_step);
+                               data.mm6_question_descr.question, data.mm6_question_descr.answer1,
+                               data.mm6_question_descr.answer2, target_step);
         case EVENT_MM6_Opcode20:
         case EVENT_MM6_Opcode27:
         case EVENT_MM6_Opcode28:
@@ -1103,9 +1103,9 @@ EvtInstruction EvtInstruction::parse(InputStream &stream, size_t size, GameTitle
         case EVENT_InputString:  // TODO(yoctozepto): not present in used MM7 data; likely present in MM8 (e.g., Escaton's riddles)
             if (gameTitle == GameTitle::MM6) {
                 requireSize(18);
-                ir.data.mm6_question_descr.prompt = fromStream<uint32_t>(stream);
-                ir.data.mm6_question_descr.answer = fromStream<uint32_t>(stream);
-                ir.data.mm6_question_descr.failure = fromStream<uint32_t>(stream);
+                ir.data.mm6_question_descr.question = fromStream<uint32_t>(stream);
+                ir.data.mm6_question_descr.answer1 = fromStream<uint32_t>(stream);
+                ir.data.mm6_question_descr.answer2 = fromStream<uint32_t>(stream);
                 ir.target_step = fromStream<uint8_t>(stream);
             } else {
                 requireSize(9);

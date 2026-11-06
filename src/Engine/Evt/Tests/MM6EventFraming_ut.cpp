@@ -73,6 +73,9 @@ UNIT_TEST(MM6EventFraming, ActiveTitleSpecificRecords) {
     EXPECT_EQ(textureIr.str, "stone1");
     EXPECT_EQ(program.instruction(102, 0).data.monster_descr.z, 300);
     EXPECT_EQ(program.instruction(103, 0).data.mm6_outdoor_facet_descr.bit, 4);
+    EXPECT_EQ(program.instruction(104, 0).data.mm6_question_descr.question, 5);
+    EXPECT_EQ(program.instruction(104, 0).data.mm6_question_descr.answer1, 6);
+    EXPECT_EQ(program.instruction(104, 0).data.mm6_question_descr.answer2, 7);
     EXPECT_EQ(program.instruction(104, 0).target_step, 8);
     EXPECT_EQ(program.instruction(105, 0).data.mm6_unknown_descr.length, 5);
     EXPECT_EQ(program.instruction(106, 0).data.mm6_unknown_descr.length, 2);

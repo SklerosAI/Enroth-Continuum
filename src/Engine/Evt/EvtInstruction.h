@@ -158,9 +158,9 @@ class EvtInstruction {
             int is_on;
         } mm6_outdoor_facet_descr;
         struct {
-            int prompt;
-            int answer;
-            int failure;
+            int question;
+            int answer1;
+            int answer2;
         } mm6_question_descr;
         struct {
             std::array<uint8_t, 5> bytes;

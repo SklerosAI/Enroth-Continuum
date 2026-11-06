@@ -481,6 +481,11 @@ Chronological record of wiki activity.
 - Integrated the F3-verified private map source, checked MM6 NPC address resolution, missing-item-icon preflight and private-backed Power Cure branch in the offline runner. The map source rejects tampered reports and path escapes before staging the sixteen-section candidate; live SaveLoad is still blocked.
 - The arm64 MM6/MM7/unit build and one-command offline suite passed 105/105 MM6/LOD tests from 33 suites. The linked general suite passed 438/438. The map and two healing tests consumed ignored private inputs without skips. No original installation was reread or MM6 process launched.
 
+## [2026-11-06] audit | MM6 monster damage labels
+- by: T-Burton-ND via codex
+- Counted 212 active attack-type cells in the F3-matched retained 173-monster table, including 39 active secondary attacks. The inherited parser sends 49 electric/cold/poison/magic cells to physical and 12 energy cells to Earth; 134 inactive secondary placeholders are separate.
+- Recorded the exact title-specific mapping and resistance evidence still needed in `project/MM6_F4_MONSTER_DAMAGE_AUDIT.md`. No runtime damage rule was changed, original installation reread or MM6 process launched.
+
 ## [2026-11-06] ingest | MM6 known-save map/base pass
 - by: T-Burton-ND via codex
 - Added an MM6-only candidate validator that decodes all sixteen known `.ec6` sections, requires the private expected map-name set, and parses each of 67 delta entries with its caller-supplied base entry before returning or assigning any state.

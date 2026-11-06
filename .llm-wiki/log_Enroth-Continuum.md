@@ -1513,3 +1513,8 @@ Chronological record of wiki activity.
 ## [2026-11-06] maintain | MM6 integration handoff checkpoint
 - by: T-Burton-ND via codex
 - Updated the agent handoff, F4 build graph and local status to supersede their older 38-test/no-render checkpoint. Current integrated headless MM6 coverage passed 44/44; hidden capture verifies portraits, aligned bars and source-color foliage without taking focus. The authored selector fix removed the cyan/red placeholder, while black terrain texture allocation, complete save/commit ownership and campaign play remain open. MM7 stays protected and MM8 reserved. No private screenshots, data or logs entered Git.
+
+## [2026-11-06] correct | MM6 land texture routing
+- by: T-Burton-ND via codex
+- MM6's 128-pixel land and water textures previously shared GPU unit zero while the terrain shader sampled land from unit one. The MM6 renderer now reserves unit one for land and rejects unsupported size/layer conditions; MM7 retains its existing allocation.
+- The integrated all-map and twelve-month headless texture check passed; a hidden first-map recapture showed land/road art and reduced exact-black pixels in the sampled ground region from 57,500 to zero. MM7 control and monitor checks passed without visible window or focus change. Seasonal and shoreline fidelity remain open.

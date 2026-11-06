@@ -32,6 +32,7 @@
 #include "Engine/Spells/Spells.h"
 #include "Engine/Spells/MM6SpellRules.h"
 #include "Engine/Spells/MM6FirstAidRules.h"
+#include "Engine/Spells/MM6PowerCureRules.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
 
@@ -2406,6 +2407,16 @@ void CastSpellInfoHelpers::castSpell() {
 
                 case SPELL_BODY_POWER_CURE:
                 {
+                    if (engine->gameTitle() == GameTitle::MM6) {
+                        if (pCastSpell->targetPid)
+                            throw std::runtime_error("MM6 Power Cure requires a party target");
+                        const int amount = mm6::powerCureHealAmount(pCastSpell->uSpellID, spell_mastery,
+                                                                     spell_level);
+                        for (Character &character : pParty->pCharacters)
+                            character.Heal(amount);
+                        break;
+                    }
+
                     for (Character &character : pParty->pCharacters) {
                         character.Heal(5 * spell_level + 10);
                     }

@@ -36,6 +36,8 @@
 #include "Library/Image/Png.h"
 #include "Library/Platform/Interface/Platform.h"
 #include "Library/Platform/Null/NullPlatform.h"
+#include "Library/Platform/Proxy/ProxyPlatform.h"
+#include "Library/Platform/Proxy/ProxyWindow.h"
 #include "Library/FileSystem/Memory/MemoryFileSystem.h"
 
 #include "Scripting/AudioBindings.h"
@@ -55,6 +57,34 @@
 #include "PathResolver.h"
 
 constexpr std::string_view configName = "openenroth.ini";
+
+// Installed only by the explicitly opted-in, isolated GameTest. SDL still
+// owns a real hidden OpenGL window/context, but game code cannot reveal/raise
+// it or alter the physical cursor and mouse.
+class OffscreenCaptureGuard final : public ProxyPlatform, public ProxyWindow {
+ public:
+    void setCursorShown(bool) override {}
+    bool isCursorShown() const override { return true; }
+    void showMessageBox(const std::string &, const std::string &) const override {
+        throw Exception("Offscreen capture refused a native message box");
+    }
+    void setVisible(bool visible) override {
+        if (!visible)
+            nonNullWindow()->setVisible(false);
+    }
+    void setWindowMode(PlatformWindowMode mode) override {
+        if (mode != WINDOW_MODE_WINDOWED)
+            throw Exception("Offscreen capture requires windowed mode");
+        nonNullWindow()->setWindowMode(mode);
+    }
+    void setGrabsMouse(bool) override {}
+    void setMouseRelative(bool) override {}
+    void activate() override {}
+    void warpMouse(Pointi) override {}
+
+ private:
+    PlatformWindow *nonNullWindow() const { return ProxyWindow::nonNullBase(); }
+};
 
 GameStarter::GameStarter(GameStarterOptions options, std::function<void(FileSystem *)> prepareUserFs): _options(std::move(options)) {
     // Note: basic logging is initialized in LogStarter constructor, so it's safe to log here.
@@ -99,6 +129,16 @@ void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUse
         _config->graphics.Saturation.setValue(1.0f);
         _config->graphics.Lightness.setValue(1.0f);
     }
+    if (_options.offscreenCapture) {
+        if (_options.headless || _options.gameTitle != GameTitle::MM6)
+            throw Exception("Offscreen capture requires a non-headless MM6 test");
+        _config->graphics.Renderer.setValue(RENDERER_OPENGL);
+        _config->window.Mode.setValue(WINDOW_MODE_WINDOWED);
+        _config->window.Width.setValue(640);
+        _config->window.Height.setValue(480);
+        _config->window.MouseGrab.setValue(false);
+        _config->window.Resizable.setValue(false);
+    }
 
     // Finish logger init now that we have user fs and know the desired log level.
     _logStarter.initialize(ufs, _options.logLevel ? *_options.logLevel : _config->debug.LogLevel.value());
@@ -122,11 +162,11 @@ void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUse
 
     // Prepare OpenAL settings. Unfortunately the only way to do this is by manipulating the env variables.
     // If we don't do this, game tests in GH action on macos-14 will hang for 9 min on init.
-    if (_options.headless)
+    if (_options.headless || _options.offscreenCapture)
         _environment->setenv("ALSOFT_DRIVERS", "null");
 
     // Can validate the resolved data path now.
-    failOnInvalidPath(_options.dataPath, _options.gameTitle, _platform.get());
+    failOnInvalidPath(_options.dataPath, _options.gameTitle, _platform.get(), !_options.offscreenCapture);
 
     // Create application.
     _application = std::make_unique<PlatformApplication>(_platform.get());
@@ -164,6 +204,8 @@ void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUse
     _application->installComponent(std::make_unique<KeyboardController>());
     _application->installComponent(std::make_unique<GameWindowHandler>());
     _application->installComponent(std::make_unique<GameTraceHandler>());
+    if (_options.offscreenCapture)
+        _application->installComponent(std::make_unique<OffscreenCaptureGuard>());
     _application->component<EngineRandomComponent>()->setTracing(_options.tracingRng);
 
     // Init main window. Should happen before the renderer init, which depends on window dimensions & mode.
@@ -257,7 +299,7 @@ void GameStarter::resolveDataPath(Environment *environment, GameStarterOptions *
         options->dataPath = candidates.back();
 }
 
-void GameStarter::failOnInvalidPath(PathView dataPath, GameTitle gameTitle, Platform *platform) {
+void GameStarter::failOnInvalidPath(PathView dataPath, GameTitle gameTitle, Platform *platform, bool allowDialog) {
     std::string missingFile;
     if (gameTitle == GameTitle::MM6 ? validateMm6Path(dataPath, &missingFile) : validateMm7Path(dataPath, &missingFile))
         return;
@@ -270,7 +312,8 @@ void GameStarter::failOnInvalidPath(PathView dataPath, GameTitle gameTitle, Plat
         gameTitle == GameTitle::MM6 ? "VI" : "VII",
         dataPath
     );
-    platform->showMessageBox("CRITICAL ERROR: missing resources", message);
+    if (allowDialog)
+        platform->showMessageBox("CRITICAL ERROR: missing resources", message);
     throw Exception("Data folder '{}' validation failed, missing '{}'", dataPath, missingFile);
 }
 

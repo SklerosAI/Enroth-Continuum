@@ -48,7 +48,7 @@ class GameStarter {
 
     static void resolveUserPath(Environment *environment, GameStarterOptions *options);
     static void resolveDataPath(Environment *environment, GameStarterOptions *options);
-    static void failOnInvalidPath(PathView dataPath, GameTitle gameTitle, Platform *platform);
+    static void failOnInvalidPath(PathView dataPath, GameTitle gameTitle, Platform *platform, bool allowDialog);
     static void migrateSaves();
 
  private:

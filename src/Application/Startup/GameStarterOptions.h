@@ -16,6 +16,7 @@ struct GameStarterOptions {
     bool ramFsUserData = false; // Use in-memory file system for user data, don't read/write config & saves
                                 // from/to disk. This also means that default config will be used.
     bool headless = false; // Run in headless mode.
+    bool offscreenCapture = false; // Test-only hidden SDL OpenGL window; no focus or mouse takeover.
     bool tracingRng = false; // Use tracing random engine?
     bool quickStart = false; // Skip whatever slow initialization that we have, including additional asset generation.
 };

@@ -62,6 +62,11 @@ int platformMain(int argc, char **argv) {
         } else if (opts.gameTitle == GameTitle::MM6 && !isMm6OnlyFilter(GTEST_FLAG_GET(filter))) {
             throw Exception("MM6 game tests require an MM6-only --gtest_filter.");
         }
+        if (opts.offscreenCapture &&
+            (GTEST_FLAG_GET(filter) != "MM6OffscreenFrame.DISABLED_FirstOutdoorCapture" ||
+             !GTEST_FLAG_GET(also_run_disabled_tests))) {
+            throw Exception("MM6 --offscreen-gl requires the isolated disabled first-frame test filter.");
+        }
         if (opts.listRequested)
             return RUN_ALL_TESTS();
 

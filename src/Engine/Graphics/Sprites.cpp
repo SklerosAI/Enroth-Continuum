@@ -7,6 +7,7 @@
 
 #include "Engine/AssetsManager.h"
 #include "Engine/Data/DecorationData.h"
+#include "Engine/Engine.h"
 #include "Engine/Seasons.h"
 
 #include "Library/Logger/Logger.h"
@@ -125,7 +126,12 @@ void SpriteFrameTable::InitializeSprite(signed int uSpriteID) {
                                 }
                             } else {
                                 // some names already passed through with codes attached
-                                if (pSpriteSFrames[iter_uSpriteID].textureName.size() < 7) {
+                                // MM6's seven-character directional prefixes (for example
+                                // pfemsta) have numbered octants in sprites.lod. MM7 keeps
+                                // its existing seven-character lookup rule.
+                                if (pSpriteSFrames[iter_uSpriteID].textureName.size() < 7 ||
+                                    (engine->gameTitle() == GameTitle::MM6 &&
+                                     pSpriteSFrames[iter_uSpriteID].textureName.size() == 7)) {
                                     spriteName = fmt::format("{}{}", pSpriteSFrames[iter_uSpriteID].textureName, i);
                                 } else {
                                     spriteName = pSpriteSFrames[iter_uSpriteID].textureName;

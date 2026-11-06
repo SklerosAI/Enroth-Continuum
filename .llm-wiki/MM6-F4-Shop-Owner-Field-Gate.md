@@ -15,4 +15,4 @@ Decision: retain the existing SCLK section and the coordinator's rejection of no
 
 The ignored original-stock checker passed accepted executable identity, row/stride/boundary, raw save span and cross-map autosave assertions. Linked `MM6ShopGuildClockFields.*` passed 2/2. No proprietary data entered the repository, and the normal MM6 SaveLoad guard remains closed.
 
-See also: [Shop Stock Tuple and Autosave](MM6-F4-Shop-Stock-Tuple-and-Autosave.md), [Shop Guild Clock Save](MM6-F4-Shop-Guild-Clock-Save.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).
+See also: [Shop Stock Tuple and Autosave](MM6-F4-Shop-Stock-Tuple-and-Autosave.md), [Shop Purchase-Write Gate](MM6-F4-Shop-Purchase-Write-Gate.md), [Shop Guild Clock Save](MM6-F4-Shop-Guild-Clock-Save.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

@@ -2,6 +2,10 @@
 
 Status: **source-backed implementation contract, original side effects unverified** (2026-11-05). This extends the [43-opcode structural register](MM6_OPCODE_SEMANTICS_F2.md) into target state, control flow, persistence and acceptance obligations. It uses the retained, ignored `opcode-semantics-probe.json` and `event-variable-probe.json`, current [parser](../src/Engine/Evt/EvtInstruction.cpp), [interpreter](../src/Engine/Evt/EvtInterpreter.cpp), [trigger processor](../src/Engine/Evt/Processor.cpp), and [program hint logic](../src/Engine/Evt/EvtProgram.cpp). The [MMExtension command reference](https://grayface.github.io/mm/ext/ref/) and [MM6 editor format source](https://github.com/angeld29/mm8leveleditor/blob/master/src/org/gamenet/application/mm8leveleditor/data/mm6/fileFormat/EventFormatMM6.java) supply independent *leads*. No original archive was reopened and MM6 was not launched for this audit.
 
+The opcode-20/27/28 effect questions below are historical F2 leads. A later
+[F4 original-dispatch trace](MM6_F4_EVENT_FRAMING.md) found all three are
+ordinary no-ops in the F3-matched executable; its MM6 executor now advances.
+
 The retained index covers **68 active EVT files, 14,477 framed records and all 43 values 1–43**. Widths and active counts are in the structural register; exact operands, offsets and event names stay ignored locally. In the table below, **flow** is the current C++ route where present, followed by the MM6 obligation. **Persist** names state that must be tested across an `.ec6` save or map revisit, not a proven native layout. **Lead** means a retained frame plus an independent command or source-path interpretation; **open** means original meaning, operand order, target or timing is unresolved. A present inherited switch case never proves MM6 behavior.
 
 | Op | MM6 target and current C++ flow | Persist / F4 and F5 acceptance | Evidence limit |

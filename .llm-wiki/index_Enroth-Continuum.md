@@ -39,6 +39,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 UI Resource Blockers](MM6-F4-UI-Resource-Blockers.md) — First-frame resource matrix and corrected sprite-frame palette/timing; selected-portrait animation remains
 - [MM6 F4 Offscreen Render Capture](MM6-F4-Offscreen-Render-Capture.md) — Hidden OpenGL first-map frame with portraits, aligned bars, source-color foliage and land/road art; visual fidelity remains open
 - [MM6 F4 First Map Preflight](MM6-F4-First-Map-Preflight.md) — Detached resources, events, encounters and monitored in-memory outdoor load; durable save and gameplay remain open
+- [MM6 F4 Original No-Op Events](MM6-F4-Original-Noop-Events.md) — F3-matched original dispatcher advances past active opcode values 20, 27 and 28
 - [MM6 F4 Outdoor Tile Selectors](MM6-F4-Outdoor-Tile-Selectors.md) — Original base-field trace, MM6-only terrain reconstruction and remaining seasonal art gap
 - [MM6 F4 Outdoor Walk Sound](MM6-F4-Outdoor-Walk-Sound.md) — Original 28-class raw-tileset sound dispatcher, retained tile identity and title-specific outdoor footsteps
 - [MM6 F4 Terrain Schema Audit](MM6-F4-Terrain-Schema-Audit.md) — Global tile ID remains the exact MM6 art key; original seasonal remapping is still unproved

@@ -1,6 +1,9 @@
 # MM6 events, dialogue and campaign specification (F2)
 
 Status: **structural audit and source-consumer reconciliation, 2026-11-05**.
+The parser and opcode-20/27/28 claims below are historical F2 findings; the
+[F4 event packet](MM6_F4_EVENT_FRAMING.md) records all-resource parse coverage
+and the original-executable-backed no-op dispatch for those three commands.
 This document records implementation obligations, not a functioning MM6 event
 engine or proven campaign route. Detailed event records, NPC text, quest IDs,
 and dependency graphs remain in ignored local reports. F3's consolidated

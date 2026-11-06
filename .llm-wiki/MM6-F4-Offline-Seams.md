@@ -51,4 +51,4 @@ The integrated native `MM6.app`, MM7 `OpenEnroth.app`, unit and game-test target
 
 For a fresh agent, start with [Agent Handoff](Agent-Handoff.md), the [F4 build graph](../project/MM6_F4_BUILD_GRAPH.md), [implementation checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md), the [private report registry](Private-Companion-Wiki.md), and the relevant packet above. After building the unit target, run [the offline suite](../scripts/mm6_f4_run_offline_tests.py) against ignored retained fixtures. Use a separate worktree for concurrent code; the protected MM7 and reserved MM8 checkouts are not implementation scratch space. A parser pass, successful build or synthetic fixture does not satisfy F5.
 
-See also: [World field map](Source-MM6-World-Field-Map-F2.md), [F3 preflight](MM6-F3-Read-Only-Preflight.md), [open questions](Open-Questions.md).
+See also: [World field map](Source-MM6-World-Field-Map-F2.md), [F3 preflight](MM6-F3-Read-Only-Preflight.md), [original MM6 no-op events](MM6-F4-Original-Noop-Events.md), [open questions](Open-Questions.md).

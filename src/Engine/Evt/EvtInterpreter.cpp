@@ -764,7 +764,11 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
         case EVENT_MM6_Opcode20:
         case EVENT_MM6_Opcode27:
         case EVENT_MM6_Opcode28:
-            throw Exception("MM6 evt opcode {} needs a title-specific executor", std::to_underlying(ir.opcode));
+            if (engine->gameTitle() != GameTitle::MM6 || ir.gameTitle != GameTitle::MM6)
+                throw Exception("MM6-only evt opcode {} in another title", std::to_underlying(ir.opcode));
+            // The original MM6 dispatcher routes all three opcodes directly to its
+            // ordinary next-record path. Their operands remain preserved by the parser.
+            break;
         case EVENT_StatusText:
             if (_context.source == EVT_SOURCE_GLOBAL) {
                 if (!_context.objectPid) // An NPC topic.

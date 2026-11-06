@@ -18,9 +18,15 @@ The standalone `MM6AtomicSaveFile` component provides the disk boundary for a fu
 
 This is a menu source seam, not a menu integration or a complete save guarantee. The current known-field decoder does not verify the private 67-name map set or every base/delta pair, and unresolved runtime state is outside its sixteen sections. The MM6 SaveLoad guard stays closed.
 
+## Read-only load preflight
+
+`preflightRecoverableSaveFile(profileRoot, slotName, validate)` selects a primary or backup without copying, renaming or restoring either file. Every candidate first passes all sixteen known-section checks, then a required caller-supplied semantic validator. A valid primary wins; a failed primary can fall back to a valid backup. The result contains detached candidate bytes and a `needsRecovery` flag. If both existing candidates fail validation, it throws with the files untouched; a missing slot returns no value. Symlinked save directories or candidate files reject before data is read. The validator signals an invalid candidate with `std::runtime_error`; an I/O error still propagates.
+
+This is the disk-read half of a future MM6 SaveLoad adapter. The caller must pass a validator that checks the private 67-name set, every base/delta pair, loaded item templates and eventually all remaining runtime fields. After preflight it must stage the complete party/world/NPC/timer state on copies before deciding whether to restore the backup and commit globals. The existing `loadRecoverableSaveFile` restores after the partial known-field check and is **not** sufficient for that live path. No menu or SaveLoad call uses the new preflight yet.
+
 ## Offline verification
 
-The arm64 MM6/MM7/unit targets built and all four focused atomic-save tests passed. They cover initial write and replacement, prior-save backup, CRC-valid malformed-section and missing-primary recovery, rejection of wrong-title, partial and malformed known-save candidates, invalid destination rejection, and injected failures before temp write, after one byte of a temp write, before backup replacement and before primary replacement. The slot-listing test checks valid primary, backup-only, malformed-primary/valid-backup, malformed-only, symlink and wrong-title/temporary cases without modifying any candidate. No partial MM6 game or original game installation was opened.
+The arm64 MM6/MM7/unit targets built and all five focused atomic-save tests passed. They cover initial write and replacement, prior-save backup, CRC-valid malformed-section and missing-primary recovery, rejection of wrong-title, partial and malformed known-save candidates, invalid destination rejection, and injected failures before temp write, after one byte of a temp write, before backup replacement and before primary replacement. The slot-listing test checks valid primary, backup-only, malformed-primary/valid-backup, malformed-only, symlink and wrong-title/temporary cases without modifying any candidate. The preflight test checks semantic-primary rejection, backup selection, both-candidate rejection and backup-only selection with disk bytes unchanged. No partial MM6 game or original game installation was opened.
 
 ## Remaining integration gates
 

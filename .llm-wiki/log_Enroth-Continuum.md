@@ -692,3 +692,8 @@ Chronological record of wiki activity.
 - All 55 active retained monster spell cells now resolve through 20 MM6 label-to-ID entries. Thirteen formerly unrecognized cells and fifteen cells with inherited different-ID matches no longer route to `SPELL_NONE` or the wrong MM6 ID. The MM6 monster effect gate remains closed; the MM7 parser is unchanged.
 - The integrated arm64 MM6, OpenEnroth and unit targets built. The offline runner passed 162/162 tests from 51 suites without skips, including the 592-use day-of-year check, private house metadata and monster rows, save-slot listing and all earlier retained checks. The general suite passed 438/438. Shared status and agent handoff now record these seams.
 - No original installation or MM6 process was opened. The protected MM7 app/profile, reserved MM8 checkout and ignored proprietary data boundary remain intact.
+
+## [2026-11-06] ingest | MM6 spell damage source tags
+- by: T-Burton-ND via codex
+- The MM6 spell table now retains seven typed source labels for all 99 IDs. Eleven Electricity, Cold and Poison rows that previously fell through the inherited school map are explicit in the MM6 source view; MM7 loading and the live MM6 spell-effect gate remain unchanged.
+- Arm64 MM6, OpenEnroth and unit targets built, and both focused tests passed, including all 99 F3-matched retained rows. Numeric damage, target and resistance semantics remain open. No original installation or MM6 process was opened.

@@ -11,6 +11,7 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6WorldSaveRuntime.h"
+#include "Engine/MM6/MM6CoreSaveRuntime.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/LocationFunctions.h"
 #include "Engine/Graphics/Outdoor.h"
@@ -264,6 +265,7 @@ UNIT_TEST(MM6WorldSaveRuntime, StagesRepresentedPartyFamiliesWithWorldAndRejects
     source.core.characters[0].name = "Saved Hero";
     source.core.characters[0].level = 5;
     source.core.characters[0].modifiers.statBonuses[0] = 9;
+    source.core.characters[0].runtimeBonuses.bytes = {0x80, 2, 3, 4, 5, 6, 7, 0xff};
     source.durable.bits.quest[0] = 1;
     source.durable.effects.conditionTicks[0][0] = 1234;
     source.resistances.characters[0].base[0] = 17;
@@ -312,6 +314,8 @@ UNIT_TEST(MM6WorldSaveRuntime, StagesRepresentedPartyFamiliesWithWorldAndRejects
     EXPECT_EQ(staged.party.pCharacters[0].name, "Saved Hero");
     EXPECT_EQ(staged.party.pCharacters[0].uLevel, 5);
     EXPECT_EQ(staged.party.pCharacters[0]._statBonuses[ATTRIBUTE_MIGHT], 9);
+    EXPECT_EQ(mm6::captureCharacterRuntimeBonuses(staged.party.pCharacters[0], GameTitle::MM6).bytes,
+              source.core.characters[0].runtimeBonuses.bytes);
     EXPECT_TRUE(staged.party._questBits.test(static_cast<QuestBit>(1)));
     EXPECT_EQ(staged.party.pCharacters[0].conditions.get(static_cast<Condition>(0)).ticks(), 1234);
     EXPECT_EQ(staged.party.pCharacters[0].sResFireBase, 17);
@@ -344,6 +348,36 @@ UNIT_TEST(MM6WorldSaveRuntime, StagesRepresentedPartyFamiliesWithWorldAndRejects
     EXPECT_EQ(liveParty.pCharacters[0].name, "Prior Hero");
     EXPECT_EQ(liveNpcs.pNPCData[70].name, "Prior NPC");
     EXPECT_EQ(liveTimer.time().ticks(), 0);
+
+    liveParty.bTurnBasedModeOn = false;
+    liveParty.pCharacters[0].vBeacons[0] = LloydBeacon{};
+    EXPECT_THROW((void) stage(), std::exception);
+    EXPECT_THROW((void) mm6::captureKnownPartyFields(source, liveParty, GameTitle::MM6), std::exception);
+    EXPECT_EQ(liveParty.pCharacters[0].name, "Prior Hero");
+    EXPECT_TRUE(liveParty.pCharacters[0].vBeacons[0].has_value());
+    EXPECT_EQ(liveNpcs.pNPCData[70].name, "Prior NPC");
+
+    liveParty.pCharacters[0].vBeacons[0].reset();
+    liveParty.PartyTimes.shopNextRefreshTime[HOUSE_FIRST_SHOP] = Time::fromTicks(700);
+    EXPECT_THROW((void) stage(), std::exception);
+    EXPECT_THROW((void) mm6::captureKnownPartyFields(source, liveParty, GameTitle::MM6), std::exception);
+    liveParty.PartyTimes.shopNextRefreshTime[HOUSE_FIRST_SHOP] = Time();
+
+    liveParty.standartItemsInShops[HOUSE_FIRST_SHOP][0].itemId = ITEM_CRUDE_LONGSWORD;
+    EXPECT_THROW((void) stage(), std::exception);
+    liveParty.standartItemsInShops[HOUSE_FIRST_SHOP][0].Reset();
+    liveParty.standartItemsInShops[HOUSE_FIRST_SHOP][0].goldAmount = 8;
+    EXPECT_THROW((void) stage(), std::exception); // Zero ID must not erase unknown slot data.
+    liveParty.standartItemsInShops[HOUSE_FIRST_SHOP][0].Reset();
+
+    liveParty.PartyTimes.guildNextRefreshTime[HOUSE_FIRST_MAGIC_GUILD] = Time::fromTicks(701);
+    EXPECT_THROW((void) stage(), std::exception);
+    liveParty.PartyTimes.guildNextRefreshTime[HOUSE_FIRST_MAGIC_GUILD] = Time();
+
+    liveParty.PartyTimes.bountyHuntNextGenTime[HOUSE_FIRST_TOWN_HALL] = Time::fromTicks(702);
+    EXPECT_THROW((void) stage(), std::exception);
+    EXPECT_EQ(liveParty.PartyTimes.bountyHuntNextGenTime[HOUSE_FIRST_TOWN_HALL].ticks(), 702);
+    EXPECT_EQ(liveNpcs.pNPCData[70].name, "Prior NPC");
 }
 
 UNIT_TEST(MM6WorldSaveRuntime, RejectsSavedOverlayActorPidsOutsideActiveIndoorAndOutdoorDelta) {

@@ -73,6 +73,50 @@ void validateSavedOverlayActorPids(const std::array<SaveOverlayField, 50> &overl
     }
 }
 
+void requireNoUnrepresentedBeacons(const Party &party) {
+    for (const Character &character : party.pCharacters)
+        for (const auto &beacon : character.vBeacons)
+            if (beacon)
+                throw std::runtime_error("MM6 beacon map identity and image save fields are not represented");
+}
+
+bool hasItemPayload(const Item &item) {
+    return item.itemId != ITEM_NULL || item.potionPower || item.goldAmount ||
+           item.standardEnchantment || item.standardEnchantmentStrength ||
+           item.specialEnchantment != ITEM_ENCHANTMENT_NULL || item.numCharges ||
+           item.maxCharges || item.flags || item.lichJarCharacterIndex != -1 ||
+           item.enchantmentExpirationTime.ticks();
+}
+
+void requireNoUnrepresentedCommerce(const Party &party) {
+    // These are inherited MM7-indexed arrays, not an MM6 house-keyed owner.
+    // Reject nonempty values until the original MM6 tuple and new storage are
+    // proved; copying them would silently lose guild or bounty identity.
+    for (HouseId id : party.standartItemsInShops.indices()) {
+        if (party.PartyTimes.shopNextRefreshTime[id].ticks() ||
+            party.PartyTimes.shopBanTimes[id].ticks() || party.InTheShopFlags[id])
+            throw std::runtime_error("MM6 shop state lacks a title-specific save owner");
+        for (const Item &item : party.standartItemsInShops[id])
+            if (hasItemPayload(item))
+                throw std::runtime_error("MM6 shop stock lacks a title-specific save owner");
+        for (const Item &item : party.specialItemsInShops[id])
+            if (hasItemPayload(item))
+                throw std::runtime_error("MM6 special stock lacks a title-specific save owner");
+    }
+    for (HouseId id : party.spellBooksInGuilds.indices()) {
+        if (party.PartyTimes.guildNextRefreshTime[id].ticks())
+            throw std::runtime_error("MM6 guild refresh lacks a title-specific save owner");
+        for (const Item &item : party.spellBooksInGuilds[id])
+            if (hasItemPayload(item))
+                throw std::runtime_error("MM6 guild stock lacks a title-specific save owner");
+    }
+    for (HouseId id : party.PartyTimes.bountyHuntNextGenTime.indices())
+        if (party.PartyTimes.bountyHuntNextGenTime[id].ticks() ||
+            party.monster_id_for_hunting[id] != MONSTER_INVALID ||
+            party.monster_for_hunting_killed[id])
+            throw std::runtime_error("MM6 bounty state lacks a title-specific save owner");
+}
+
 } // namespace
 
 StagedKnownWorldAndVisuals stageKnownWorldAndVisuals(
@@ -101,6 +145,11 @@ StagedKnownSession stageKnownSession(
         liveNpcs, liveTimer, liveOverlays, bytes, expectedNames, readBase, verifyItem,
         overlayTableCount, title);
 
+    // A partial format must not carry a stale live beacon into the restored
+    // Party or silently omit an active beacon during capture.
+    requireNoUnrepresentedBeacons(liveParty);
+    requireNoUnrepresentedCommerce(liveParty);
+
     // Every adapter stages on its input copy. The core clock must precede
     // recovery, while all late ITEM/HELD/recovery checks precede any commit.
     Party staged = stageCoreParty(liveParty, bytes, title);
@@ -116,6 +165,8 @@ StagedKnownSession stageKnownSession(
 KnownSaveFields captureKnownPartyFields(const KnownSaveFields &seed, const Party &party,
                                        GameTitle title) {
     requireMM6(title);
+    requireNoUnrepresentedBeacons(party);
+    requireNoUnrepresentedCommerce(party);
     KnownSaveFields candidate = seed;
     candidate.core = captureCoreFields(party, title);
     candidate.durable = captureDurableFields(party, title);

@@ -1,3 +1,5 @@
+#include <array>
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -47,6 +49,7 @@ mm6::CoreSaveFields exampleFields() {
         character.modifiers.pureStatPotionUsed[i] = true;
         character.spellPreferences.quickSpell = 1 + i;
         character.spellPreferences.spellbookPage = i + 1;
+        character.runtimeBonuses.bytes = {0x80, 0xff, 1, 2, 3, 4, 5, static_cast<std::uint8_t>(i)};
     }
     return fields;
 }
@@ -120,6 +123,29 @@ UNIT_TEST(MM6CoreSaveFields, CapturesSpellPreferencesAndStagesDetachedCopy) {
     EXPECT_THROW((void) mm6::captureCharacterSpellPreferences(source, GameTitle::MM6), std::exception);
 }
 
+UNIT_TEST(MM6CoreSaveFields, PreservesCurrentRuntimeBonusBytesWithoutNativeClaims) {
+    Character source;
+    source._some_attack_bonus = std::bit_cast<char>(std::uint8_t(0x80));
+    source._melee_dmg_bonus = std::bit_cast<char>(std::uint8_t(0xff));
+    source._ranged_atk_bonus = 3;
+    source._ranged_dmg_bonus = 4;
+    source.uFullHealthBonus = 5;
+    source._health_related = 6;
+    source.uFullManaBonus = 7;
+    source._mana_related = 8;
+    const mm6::CharacterRuntimeBonuses saved = mm6::captureCharacterRuntimeBonuses(source, GameTitle::MM6);
+    EXPECT_EQ(saved.bytes, (std::array<std::uint8_t, 8>{0x80, 0xff, 3, 4, 5, 6, 7, 8}));
+
+    Character prior;
+    prior._some_attack_bonus = 9;
+    Character staged = mm6::stageCharacterRuntimeBonuses(prior, saved, GameTitle::MM6);
+    EXPECT_EQ(mm6::captureCharacterRuntimeBonuses(staged, GameTitle::MM6), saved);
+    EXPECT_EQ(prior._some_attack_bonus, 9);
+    EXPECT_THROW((void) mm6::captureCharacterRuntimeBonuses(source, GameTitle::MM7), std::exception);
+    EXPECT_THROW((void) mm6::stageCharacterRuntimeBonuses(prior, saved, GameTitle::MM7), std::exception);
+    EXPECT_EQ(prior._some_attack_bonus, 9);
+}
+
 mm6::SaveContainer containerFor(const mm6::CoreSaveFields &fields) {
     auto sections = mm6::encodeCoreSections(fields);
     mm6::SaveContainer container;
@@ -148,6 +174,11 @@ UNIT_TEST(MM6CoreSaveFields, InvalidFieldLeavesDestinationUntouched) {
     EXPECT_EQ(destination, before);
 
     invalid = containerFor(before);
+    invalid.sections[1].payload.pop_back(); // Final character's last v4 bonus byte is missing.
+    EXPECT_THROW(mm6::loadCoreFieldsBeforeMutation(mm6::encodeSaveContainer(invalid), &destination), std::exception);
+    EXPECT_EQ(destination, before);
+
+    invalid = containerFor(before);
     invalid.sections[0].payload[1] = 255; // Negative gold with a valid container checksum.
     invalid.sections[0].payload[2] = 255;
     invalid.sections[0].payload[3] = 255;
@@ -171,19 +202,21 @@ UNIT_TEST(MM6CoreSaveFields, RejectsMissingMalformedAndForeignSections) {
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
 
     container = containerFor(fields);
-    container.sections[1].payload[container.sections[1].payload.size() - 3] |= 0x80;
+    container.sections[1].payload[container.sections[1].payload.size() - 11] |= 0x80;
     // Unused pure-stat potion bit in final character.
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
 
     container = containerFor(fields);
     container.sections[1].payload[0] = 2; // Superseded CHAR v2 payload.
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
+    container.sections[1].payload[0] = 3; // Superseded CHAR v3 payload.
+    EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
 
     container = containerFor(fields);
-    container.sections[1].payload[container.sections[1].payload.size() - 2] = 100;
+    container.sections[1].payload[container.sections[1].payload.size() - 10] = 100;
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
     container = containerFor(fields);
-    container.sections[1].payload.back() = 9;
+    container.sections[1].payload[container.sections[1].payload.size() - 9] = 9;
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
 
     std::vector<std::uint8_t> bytes = mm6::encodeSaveContainer(containerFor(fields));

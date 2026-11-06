@@ -76,7 +76,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Item Event Compare](MM6-F4-Item-Event-Compare.md) — Read-only inventory/held-item comparison and bounded item-write handoff
 - [MM6 F4 Item Event Writes](MM6-F4-Item-Event-Writes.md) — Retained reward/handoff topology and bounded Add/Subtract transaction limits
 - [MM6 F4 Item Event PE](MM6-F4-Item-Event-PE.md) — Original executable dispatch, bounded Add/Subtract and remaining cursor/artifact gates
-- [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial sixteen-section `.ec6` candidate with `CHAR` v3 spell preferences, cross-field checks and remaining save gaps
+- [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial sixteen-section `.ec6` candidate with `CHAR` v4 raw bonus preservation, cross-field checks and remaining save gaps
 - [MM6 F4 Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md) — Live-owner gaps, detached staging order and atomic commit gates
 - [MM6 F4 Partial Stage Coordinator](MM6-F4-Partial-Stage-Coordinator.md) — Validated 67-map candidate with detached Party, active map, NPC/map and timer/overlay copies
 - [MM6 F4 Shop Save Key Matrix](MM6-F4-Shop-Save-Key-Matrix.md) — Retained house-type join versus inherited MM7 shop, guild and bounty save owner ranges

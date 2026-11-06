@@ -31,6 +31,14 @@ struct CharacterSpellPreferences {
     bool operator==(const CharacterSpellPreferences &) const = default;
 };
 
+// Raw bytes from the current Character runtime. Their native MM6 identities
+// and the two *_related consumers are not established by this contract.
+struct CharacterRuntimeBonuses {
+    std::array<std::uint8_t, 8> bytes{};
+
+    bool operator==(const CharacterRuntimeBonuses &) const = default;
+};
+
 struct CoreCharacterFields {
     std::string name;
     std::uint8_t sex = 0;
@@ -47,6 +55,7 @@ struct CoreCharacterFields {
     std::array<bool, 99> spells{};
     CharacterModifierFields modifiers;
     CharacterSpellPreferences spellPreferences;
+    CharacterRuntimeBonuses runtimeBonuses;
 
     bool operator==(const CoreCharacterFields &) const = default;
 };

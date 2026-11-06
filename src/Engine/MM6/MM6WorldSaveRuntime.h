@@ -53,8 +53,9 @@ StagedKnownWorldAndVisuals stageKnownWorldAndVisuals(
     std::size_t overlayTableCount, GameTitle title);
 
 // Compose every currently represented Party/Character family on one detached
-// Party after the known-section and 67-map checks. The result still lacks the
-// unrepresented durable owners and cannot be committed to a live session.
+// Party after the known-section and 67-map checks. Nonempty inherited shop,
+// guild, bounty or beacon state rejects rather than silently carrying through
+// an unrepresented owner. The result cannot be committed to a live session.
 StagedKnownSession stageKnownSession(
     const Party &liveParty, const NPCStats &liveNpcs, const Timer &liveTimer,
     const ActiveOverlayList &liveOverlays, std::span<const std::uint8_t> bytes,
@@ -62,7 +63,8 @@ StagedKnownSession stageKnownSession(
     const GroundItemVerifier &verifyItem, std::size_t overlayTableCount, GameTitle title);
 
 // Merge the represented Party/Character families into a detached known-save
-// candidate. The caller must supply complete MM6 world and metadata fields.
+// candidate. Nonempty unrepresented commerce or beacon state rejects. The
+// caller must supply complete MM6 world and metadata fields.
 KnownSaveFields captureKnownPartyFields(const KnownSaveFields &seed, const Party &party,
                                        GameTitle title);
 

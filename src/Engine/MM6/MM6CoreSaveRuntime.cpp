@@ -1,5 +1,6 @@
 #include "MM6CoreSaveRuntime.h"
 
+#include <bit>
 #include <cstddef>
 #include <stdexcept>
 #include <utility>
@@ -77,6 +78,34 @@ Character stageCharacterSpellPreferences(const Character &live, const CharacterS
     return staged;
 }
 
+CharacterRuntimeBonuses captureCharacterRuntimeBonuses(const Character &character, GameTitle title) {
+    requireMM6(title);
+    return {{{static_cast<std::uint8_t>(character._some_attack_bonus),
+              static_cast<std::uint8_t>(character._melee_dmg_bonus),
+              static_cast<std::uint8_t>(character._ranged_atk_bonus),
+              static_cast<std::uint8_t>(character._ranged_dmg_bonus),
+              static_cast<std::uint8_t>(character.uFullHealthBonus),
+              static_cast<std::uint8_t>(character._health_related),
+              static_cast<std::uint8_t>(character.uFullManaBonus),
+              static_cast<std::uint8_t>(character._mana_related)}}};
+}
+
+Character stageCharacterRuntimeBonuses(const Character &live, const CharacterRuntimeBonuses &saved,
+                                      GameTitle title) {
+    requireMM6(title);
+    Character staged = live;
+    const auto &bytes = saved.bytes;
+    staged._some_attack_bonus = std::bit_cast<char>(bytes[0]);
+    staged._melee_dmg_bonus = std::bit_cast<char>(bytes[1]);
+    staged._ranged_atk_bonus = std::bit_cast<char>(bytes[2]);
+    staged._ranged_dmg_bonus = std::bit_cast<char>(bytes[3]);
+    staged.uFullHealthBonus = std::bit_cast<char>(bytes[4]);
+    staged._health_related = std::bit_cast<char>(bytes[5]);
+    staged.uFullManaBonus = std::bit_cast<char>(bytes[6]);
+    staged._mana_related = std::bit_cast<char>(bytes[7]);
+    return staged;
+}
+
 CoreSaveFields captureCoreFields(const Party &party, GameTitle title) {
     requireMM6(title);
     CoreSaveFields fields;
@@ -112,6 +141,7 @@ CoreSaveFields captureCoreFields(const Party &party, GameTitle title) {
             target.spells[spell] = source.bHaveSpell[static_cast<SpellId>(spell + 1)];
         target.modifiers = captureCharacterModifiers(source, title);
         target.spellPreferences = captureCharacterSpellPreferences(source, title);
+        target.runtimeBonuses = captureCharacterRuntimeBonuses(source, title);
     }
 
     (void) encodeCoreSections(fields); // Validate before returning a capture for serialization.
@@ -154,6 +184,7 @@ Party stageCoreParty(const Party &live, std::span<const std::uint8_t> bytes, Gam
             target.bHaveSpell[static_cast<SpellId>(spell + 1)] = source.spells[spell];
         target = stageCharacterModifiers(target, source.modifiers, title);
         target = stageCharacterSpellPreferences(target, source.spellPreferences, title);
+        target = stageCharacterRuntimeBonuses(target, source.runtimeBonuses, title);
     }
     return staged;
 }

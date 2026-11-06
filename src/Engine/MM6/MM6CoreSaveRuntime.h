@@ -22,6 +22,10 @@ CharacterSpellPreferences captureCharacterSpellPreferences(const Character &char
 Character stageCharacterSpellPreferences(const Character &live, const CharacterSpellPreferences &saved,
                                          GameTitle title);
 
+CharacterRuntimeBonuses captureCharacterRuntimeBonuses(const Character &character, GameTitle title);
+Character stageCharacterRuntimeBonuses(const Character &live, const CharacterRuntimeBonuses &saved,
+                                      GameTitle title);
+
 /** Capture only the documented PART/CHAR field subset from an MM6 party. */
 CoreSaveFields captureCoreFields(const Party &party, GameTitle title);
 

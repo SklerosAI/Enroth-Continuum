@@ -16,9 +16,9 @@ namespace {
 constexpr std::array<char, 4> PART_TAG = {'P', 'A', 'R', 'T'};
 constexpr std::array<char, 4> CHAR_TAG = {'C', 'H', 'A', 'R'};
 constexpr std::uint8_t PARTY_VERSION = 1;
-constexpr std::uint8_t CHARACTER_VERSION = 3;
+constexpr std::uint8_t CHARACTER_VERSION = 4;
 constexpr size_t MAX_NAME_BYTES = 63;
-constexpr size_t MAX_CHARACTER_PAYLOAD = 4 * (1 + MAX_NAME_BYTES + 4 + 2 + 8 + 12 + 28 + 62 + 13 + 39 + 2) + 2;
+constexpr size_t MAX_CHARACTER_PAYLOAD = 4 * (1 + MAX_NAME_BYTES + 4 + 2 + 8 + 12 + 28 + 62 + 13 + 39 + 2 + 8) + 2;
 
 class Reader {
  public:
@@ -188,6 +188,8 @@ std::vector<std::uint8_t> encodeCharacters(const std::array<CoreCharacterFields,
         put8(&bytes, potionFlags);
         put8(&bytes, character.spellPreferences.quickSpell);
         put8(&bytes, character.spellPreferences.spellbookPage);
+        for (std::uint8_t value : character.runtimeBonuses.bytes)
+            put8(&bytes, value);
     }
     return bytes;
 }
@@ -237,6 +239,8 @@ std::array<CoreCharacterFields, 4> decodeCharacters(std::span<const std::uint8_t
             character.modifiers.pureStatPotionUsed[bit] = (potionFlags >> bit) & 1;
         character.spellPreferences.quickSpell = reader.u8();
         character.spellPreferences.spellbookPage = reader.u8();
+        for (std::uint8_t &value : character.runtimeBonuses.bytes)
+            value = reader.u8();
     }
     reader.finish();
     return characters;

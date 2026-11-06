@@ -77,7 +77,11 @@ nonempty rows; headers, separators and reserved records still require review.
 - [x] Identify the retained `useitems.txt` two-axis structure: 29 item-ID
   rows and matching header IDs form a complete symmetric 29 × 29 matrix in
   columns 6–34. No MM6 loader consumes it, and its 30 distinct result tokens
-  remain private and semantically unclassified. The
+  remain private and semantically unclassified.
+  `scripts/mm6_probe_unloaded_tables.py` reproduces the matrix, table-overlap
+  and shape checks with detailed evidence in an ignored report. Its lexical
+  classes include 25 candidate item IDs and five marker codes, with effects
+  still unknown. The
   [table-consumer specification](MM6_TABLE_CONSUMER_SPEC.md) records this as
   a strong item-combination lead, not a finished recipe implementation.
 - [ ] Decode the `useitems.txt` token/result vocabulary, recipe and failure

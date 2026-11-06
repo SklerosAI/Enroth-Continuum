@@ -63,6 +63,14 @@ calling the plural table redundant.
 The table matrix, overlap and column facts are from retained ignored content;
 they do not copy game text or result tokens into Git. The private report should
 hold the per-row comparison, source hashes and any future semantic mapping.
+`scripts/mm6_probe_unloaded_tables.py` reproduces these structural checks from
+the retained references and writes detailed cells only to ignored
+`local-game-data/mm6/research-2026-11-05/unloaded-table-probe.json`. Its
+aggregate output confirms all 841 matrix cells are populated and symmetric,
+with 25 distinct numeric candidate item IDs (all present in `items.txt` and
+the matrix axis), four letter-digit markers, and one two-letter marker. The
+diagonal uses the latter marker. These are lexical classes, not decoded
+effects, recipes, or evidence that the current engine consumes the table.
 
 ## Closure checks
 

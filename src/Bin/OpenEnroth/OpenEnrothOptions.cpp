@@ -5,37 +5,34 @@
 #include <vector>
 #include <string>
 
-#include "Application/Startup/PathResolver.h"
-
 #include "Library/Cli/CliApp.h"
-#include "Library/Environment/Interface/Environment.h"
 
 #include "Utility/Exception.h"
-#include "Utility/String/Format.h"
 #include "Utility/System/Fs.h"
 
 OpenEnrothOptions OpenEnrothOptions::parse(int argc, char **argv) {
-    // Note that it's OK to create a temporary `Environment` here.
-    std::unique_ptr<Environment> env = Environment::createStandardEnvironment();
-
     OpenEnrothOptions result;
     std::unique_ptr<CliApp> app = std::make_unique<CliApp>();
+#ifdef EC_MM6_ONLY
+    std::string game = "mm6";
+#else
     std::string game = "mm7";
+#endif
 
+#ifdef EC_MM6_ONLY
+    app->add_option("--game", game, "Game to launch: mm6 only.")->option_text("GAME");
+#else
     app->add_option("--game", game, "Game to launch: mm6 or mm7. Defaults to mm7.")->option_text("GAME");
+#endif
 
     std::optional<bool> portable;
     app->add_option(
         "--data-path", result.dataPath,
-        fmt::format("Path to selected game's data folder, default is taken from its OPENENROTH_MM*_PATH environment variable. "
-                    "If neither this argument is supplied nor the environment variable is set, "
-                    "then OpenEnroth will try to look for game data in the current folder, "
-                    "then on Windows it will also try to read the path from registry, "
-                    "and on MacOS it will also try to look in '~/Library/Application Support/OpenEnroth'."))->check(CLI::ExistingDirectory)->option_text("PATH");
+        "Selected game's data folder. If omitted, check its environment override, "
+        "current folder, platform-specific installation paths, then its Mac support folder.")->check(CLI::ExistingDirectory)->option_text("PATH");
     app->add_option(
         "--user-path", result.userPath,
-        fmt::format("Path to OpenEnroth user data folder. Default is '{}'.",
-                    resolveMm7UserPath(env.get())))->check(CLI::ExistingDirectory)->option_text("PATH");
+        "User data folder. Defaults to the selected game's separate profile.")->check(CLI::ExistingDirectory)->option_text("PATH");
     app->add_flag(
         "--portable", portable,
         "Run in portable mode, game & user data paths will default to current folder. "
@@ -71,11 +68,22 @@ OpenEnrothOptions OpenEnrothOptions::parse(int argc, char **argv) {
 
     app->parse(argc, argv, result.helpPrinted);
 
+#ifdef EC_MM6_ONLY
+    if (game != "mm6")
+        throw Exception("This MM6 app only accepts --game mm6.");
+    result.gameTitle = GameTitle::MM6;
+#else
     if (game == "mm6") {
         result.gameTitle = GameTitle::MM6;
     } else if (game != "mm7") {
         throw Exception("Unsupported game '{}'; choose mm6 or mm7.", game);
     }
+#endif
+
+    // Trace playback still reads MM7 snapshots. Keep the MM6-only executable
+    // from interpreting one as an MM6 save until the EC6 trace path exists.
+    if (result.gameTitle == GameTitle::MM6 && result.subcommand != SUBCOMMAND_GAME)
+        throw Exception("MM6 trace playback is unavailable until EC6 snapshots are implemented.");
 
     if (!portable && fs::exists(".portable"))
         portable = true;

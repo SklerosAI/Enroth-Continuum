@@ -76,7 +76,8 @@ static const PathResolutionConfig mm8Config = {
     }
 };
 
-static std::vector<Path> resolvePaths(Environment *environment, const PathResolutionConfig &config) {
+static std::vector<Path> resolvePaths(Environment *environment, const PathResolutionConfig &config,
+                                      [[maybe_unused]] std::string_view macSupportPath) {
     // If we have a path override then it'll be the only path we'll check.
     std::string envPath = environment->getenv(config.overrideEnvKey);
     if (!envPath.empty()) {
@@ -115,22 +116,22 @@ static std::vector<Path> resolvePaths(Environment *environment, const PathResolu
     // ...or Library/Application Support in home on macOS.
     std::string home = environment->path(PATH_HOME);
     if (!home.empty())
-        result.push_back(Path(std::move(home)) / "Library/Application Support/OpenEnroth");
+        result.push_back(Path(std::move(home)) / "Library/Application Support" / macSupportPath);
 #endif
 
     return result;
 }
 
 std::vector<Path> resolveMm6Paths(Environment *environment) {
-    return resolvePaths(environment, mm6Config);
+    return resolvePaths(environment, mm6Config, "Enroth Continuum/Game Data/MM6/app");
 }
 
 std::vector<Path> resolveMm7Paths(Environment *environment) {
-    return resolvePaths(environment, mm7Config);
+    return resolvePaths(environment, mm7Config, "OpenEnroth");
 }
 
 std::vector<Path> resolveMm8Paths(Environment *environment) {
-    return resolvePaths(environment, mm8Config);
+    return resolvePaths(environment, mm8Config, "Enroth Continuum/Game Data/MM8/app");
 }
 
 static bool validatePath(PathView dataPath, const std::vector<std::string_view> &files, std::string *missingFile) {

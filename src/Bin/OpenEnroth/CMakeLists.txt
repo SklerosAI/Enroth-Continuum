@@ -40,6 +40,20 @@ else()
         add_executable(OpenEnroth MACOSX_BUNDLE ${OpenEnroth_ICON} ${OpenEnroth_ASSETS_CAR} ${BIN_OPENENROTH_HEADERS} ${BIN_OPENENROTH_SOURCES})
         set_target_properties(OpenEnroth PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in)
 
+        # The personal MM6 runtime is an independent sibling app. It never
+        # selects MM7 data or profile paths, and the Atlas only stages it after
+        # the separate MM6 play/save gate passes.
+        add_executable(MM6 MACOSX_BUNDLE ${OpenEnroth_ICON} ${OpenEnroth_ASSETS_CAR} ${BIN_OPENENROTH_HEADERS} ${BIN_OPENENROTH_SOURCES})
+        set_target_properties(MM6 PROPERTIES
+            MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in
+            MACOSX_BUNDLE_BUNDLE_NAME "Might and Magic VI"
+            MACOSX_BUNDLE_GUI_IDENTIFIER "org.sklerosai.enrothcontinuum.mm6"
+            MACOSX_BUNDLE_INFO_STRING "Personal Might and Magic VI runtime based on OpenEnroth."
+            MACOSX_BUNDLE_COPYRIGHT "OpenEnroth and Enroth Continuum contributors (LGPLv3)")
+        target_compile_definitions(MM6 PRIVATE EC_MM6_ONLY=1)
+        target_link_libraries(MM6 PUBLIC application library_cli library_platform_main library_stack_trace)
+        target_check_style(MM6)
+
         # Can't make install on OSX due to signing, dmg generation, etc
     else ()
         add_executable(OpenEnroth ${BIN_OPENENROTH_HEADERS} ${BIN_OPENENROTH_SOURCES})

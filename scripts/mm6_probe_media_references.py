@@ -95,6 +95,15 @@ def inherited_room_names(path: Path) -> list[str]:
     return rows
 
 
+def literal_movie_calls(source_root: Path) -> set[str]:
+    """Collect startup and direct movie literals; event-provided names are separate."""
+    fsm = (source_root / "src/Application/GameStates/GameFsmBuilder.cpp").read_text(encoding="utf-8")
+    game = (source_root / "src/Application/Game.cpp").read_text(encoding="utf-8")
+    intro = re.findall(r'\.state<VideoState>\([^\n]*?,\s*"([^"]+)"\)', fsm)
+    direct = re.findall(r'PlayFullscreenMovie\("([^"]+)"\)', game)
+    return {name.casefold() for name in intro + direct}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("reference", type=Path, help="ignored MM6 research directory")
@@ -123,7 +132,12 @@ def main() -> None:
     map_stems = {Path(row[2].strip().strip('"')).stem.casefold() for row in maps}
     houses = [row for row in text_rows(icons / "2devents.txt") if len(row) > 4 and row[0].strip().isdigit()]
     room_ids = {int(row[4]) for row in houses if row[4].strip().isdigit()}
-    rooms = inherited_room_names(Path(__file__).resolve().parents[1] / "src/GUI/UI/UIHouses.cpp")
+    source_root = Path(__file__).resolve().parents[1]
+    room_source = source_root / "src/GUI/UI/UIHouses.cpp"
+    movie_sources = [source_root / "src/Application/GameStates/GameFsmBuilder.cpp",
+                     source_root / "src/Application/Game.cpp"]
+    rooms = inherited_room_names(room_source)
+    literal_movies = literal_movie_calls(source_root)
     outside_rooms = sorted(index for index in room_ids if index < 0 or index >= len(rooms))
     room_video_matches = sorted(index for index in room_ids if index not in outside_rooms
                                 and rooms[index].casefold() in videos)
@@ -138,6 +152,11 @@ def main() -> None:
 
     summary = {
         "archive_video_names": len(videos), "archive_audio_names": len(audio),
+        "video_names_with_bik_or_smk_suffix": sum(name.endswith((".bik", ".smk")) for name in videos),
+        "literal_movie_calls": len(literal_movies),
+        "literal_movie_base_names_present": sum(name in videos for name in literal_movies),
+        "literal_movie_suffix_candidates_present": sum(
+            any(f"{name}.{suffix}" in videos for suffix in ("bik", "smk")) for name in literal_movies),
         "maps": len(maps), "map_track_ids": sorted(map_tracks),
         "installed_track_ids": sorted(track_files), "missing_map_tracks": sorted(map_tracks - track_files),
         "houses": len(houses), "distinct_room_ids": len(room_ids),
@@ -155,9 +174,12 @@ def main() -> None:
     }
     result = {"format": 1, "summary": summary, "absent_sound_names": absent_sound_names,
               "duplicate_sound_ids": duplicate_sound_ids,
+              "literal_movie_names": sorted(literal_movies),
               "room_video_matching_ids": room_video_matches, "event_media": event_media,
               "input_sha256": {str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest()
-                               for path in required}}
+                               for path in required},
+              "source_sha256": {str(path.relative_to(source_root)): hashlib.sha256(path.read_bytes()).hexdigest()
+                                for path in [room_source, *movie_sources]}}
     report.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(summary, indent=2))
     if summary["missing_map_tracks"] or event_ids_absent or event_media["framing_failures"]:

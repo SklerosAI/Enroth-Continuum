@@ -503,6 +503,11 @@ Chronological record of wiki activity.
 - The F3-matched active variable ledger has 106 raw class-ID-2 uses: 58 comparisons and 48 sets, all with values 0–17. Added an MM6-only value gate before the inherited event executor so MM7-only class operands 18–35 cannot reach MM6 class state.
 - The arm64 unit target built and all three MM6 event-variable tests passed. Promotion effects and the remaining shared-looking IDs still need title-specific checks; no original installation was reread or MM6 game launched.
 
+## [2026-11-06] fix | MM6 item event operand bound
+- by: T-Burton-ND via codex
+- The F3-matched variable ledger lists 641 raw item-in-hand ID-17 uses, all with operands 1–578; the retained MM6 item table ends at 580. Added an MM6-only 1–580 check before inherited item event comparison/add/subtract can see an MM7-only ID.
+- The arm64 unit target built and the MM6 variable/autonote focused filter passed 6/6. Inventory effect and quest handoff behavior still need title-specific and F5 checks; no original installation was reread or MM6 process launched.
+
 ## [2026-11-06] ingest | MM6 known-save map/base pass
 - by: T-Burton-ND via codex
 - Added an MM6-only candidate validator that decodes all sixteen known `.ec6` sections, requires the private expected map-name set, and parses each of 67 delta entries with its caller-supplied base entry before returning or assigning any state.

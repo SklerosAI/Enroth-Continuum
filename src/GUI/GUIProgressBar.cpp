@@ -12,6 +12,7 @@
 #include "Engine/Random/Random.h"
 
 #include "GUI/GUIWindow.h"
+#include "GUI/LoadingScreenResources.h"
 
 #include "Utility/IndexedArray.h"
 
@@ -38,7 +39,9 @@ bool GUIProgressBar::Initialize(Type type) {
     turnHourIconId = pIconsFrameTable->animationId("turnhour");
 
     if (uType == TYPE_Fullscreen) {
-        loading_bg = assets->getIcon(fmt::format("loading{}.pcx", vrng->random(5) + 1));
+        const int variation = engine->gameTitle() == GameTitle::MM6 ? 0 : vrng->random(5) + 1;
+        const LoadingScreenResources resources = fullscreenLoadingResources(engine->gameTitle(), variation);
+        loading_bg = assets->getIcon(resources.background);
 
         uProgressCurrent = 0;
         uX = 122;
@@ -47,7 +50,7 @@ bool GUIProgressBar::Initialize(Type type) {
         uHeight = 56;
         uProgressMax = 8;
 
-        progressbar_loading = assets->getIcon("loadprog");
+        progressbar_loading = resources.progress.empty() ? nullptr : assets->getIcon(resources.progress);
         Draw();
         return true;
     } else {
@@ -95,9 +98,11 @@ void GUIProgressBar::Draw() {
         if (loading_bg) {
             render->DrawQuad2D(loading_bg, {0, 0});
         }
-        render->SetUIClipRect(Recti(172, 459, (double)(300 * uProgressCurrent) / (double)uProgressMax, 12));
-        render->DrawQuad2D(progressbar_loading, {172, 459});
-        render->ResetUIClipRect();
+        if (engine->gameTitle() != GameTitle::MM6) {
+            render->SetUIClipRect(Recti(172, 459, (double)(300 * uProgressCurrent) / (double)uProgressMax, 12));
+            render->DrawQuad2D(progressbar_loading, {172, 459});
+            render->ResetUIClipRect();
+        }
     }
 
     render->Present();

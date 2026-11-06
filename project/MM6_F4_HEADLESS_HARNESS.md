@@ -16,6 +16,8 @@ The normal new-game route leaves the main-menu FSM for party creation. After the
 
 `MM6Headless.NewGameSaveGuard` invokes the same save entry point in the instrumented null-platform engine and asserts that it throws without creating a save directory in ramfs. This is a bounded expected-blocker scenario, not a completed UI new-game or first-map run. The next live scenario can use `EngineController::startNewGame()` only after the EC6 save transaction and chest generation have passed their own focused gates; it should then assert the first map ID, party state, save round-trip and no native input/window activity.
 
+A separate [first-map resource preflight](MM6_F4_FIRST_MAP_PREFLIGHT.md) reads the original map and related resource entries without entering the world. It binds the MM6 full-screen loading background and the first map's explicit sky name, while recording the live delta and chest gates.
+
 Example command, using the owner's private MM6 data and rules paths without placing either in Git:
 
 ```sh

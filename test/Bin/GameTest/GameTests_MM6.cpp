@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <stdexcept>
 #include <string>
@@ -11,10 +12,17 @@
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
+#include "Engine/Graphics/OutdoorSkyResources.h"
+#include "Engine/MM6/MM6Archive.h"
+#include "Engine/MapEnumFunctions.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/Resources/LOD.h"
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/SaveLoad.h"
+#include "Engine/Snapshots/CompositeSnapshots.h"
+#include "Engine/Snapshots/MM6OutdoorSnapshot.h"
+#include "Engine/Tables/MapTable.h"
 
 #include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
@@ -22,6 +30,7 @@
 #include "GUI/HudNavigationResources.h"
 #include "GUI/HudStatusResources.h"
 #include "GUI/HudVitalBarResources.h"
+#include "GUI/LoadingScreenResources.h"
 #include "GUI/MM6HudActionControls.h"
 #include "GUI/MM6HudBookControls.h"
 #include "GUI/UI/Books/CalendarBackgroundResources.h"
@@ -83,6 +92,45 @@ GAME_TEST(MM6Headless, NewGameSaveGuard) {
     // headless runner must stop here rather than attempt a partial map load.
     EXPECT_THROW(saveNewGame(), std::runtime_error);
     EXPECT_FALSE(ufs->exists("saves"));
+}
+
+GAME_TEST(MM6Headless, FirstOutdoorResourcePreflight) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const MapId firstMap = pMapTable->GetMapInfo("oute3.odm");
+    ASSERT_NE(firstMap, MAP_INVALID);
+    EXPECT_TRUE(isMapOutdoor(firstMap));
+    EXPECT_FALSE(isMapIndoor(firstMap));
+    EXPECT_EQ(pMapTable->pInfos[firstMap].fileName, "oute3.odm");
+    ASSERT_TRUE(pGames_LOD->exists("oute3.odm"));
+    EXPECT_TRUE(pGames_LOD->exists("oute3.ddm"));
+    EXPECT_GT(engine->resources()->eventsData("oute3.evt").size(), 0);
+    EXPECT_GT(engine->resources()->eventsData("oute3.str").size(), 0);
+    EXPECT_EQ(engine->resources()->iconSize("oute3"), Sizei(512, 512));
+
+    const LoadingScreenResources loading = fullscreenLoadingResources(GameTitle::MM6, 0);
+    EXPECT_EQ(engine->resources()->iconSize(loading.background), Sizei(640, 480));
+    EXPECT_TRUE(loading.progress.empty());
+
+    OutdoorLocation_MM7 base;
+    deserializeMM6Outdoor(decodeMM6ArchiveEntry(pGames_LOD->read("oute3.odm")), &base);
+    const auto terminator = std::find(base.skyTexture.begin(), base.skyTexture.end(), '\0');
+    const std::string_view sky(base.skyTexture.data(), terminator - base.skyTexture.begin());
+    EXPECT_EQ(mm6OutdoorBaseSky(GameTitle::MM6, sky), "plansky2");
+    EXPECT_EQ(engine->resources()->bitmapSize(sky), Sizei(256, 256));
+}
+
+TEST(MM6HeadlessFirstOutdoorResources, TitleIsolation) {
+    const LoadingScreenResources mm6 = fullscreenLoadingResources(GameTitle::MM6, 1);
+    EXPECT_EQ(mm6.background, "loading.pcx");
+    EXPECT_TRUE(mm6.progress.empty());
+    const LoadingScreenResources mm7First = fullscreenLoadingResources(GameTitle::MM7, 1);
+    const LoadingScreenResources mm7Last = fullscreenLoadingResources(GameTitle::MM7, 5);
+    EXPECT_EQ(mm7First.background, "loading1.pcx");
+    EXPECT_EQ(mm7Last.background, "loading5.pcx");
+    EXPECT_EQ(mm7First.progress, "loadprog");
+    EXPECT_EQ(mm7Last.progress, "loadprog");
+    EXPECT_EQ(mm6OutdoorBaseSky(GameTitle::MM6, "plansky2"), "plansky2");
+    EXPECT_TRUE(mm6OutdoorBaseSky(GameTitle::MM7, "plansky2").empty());
 }
 
 GAME_TEST(MM6Headless, MainMenuResourcesAvailable) {

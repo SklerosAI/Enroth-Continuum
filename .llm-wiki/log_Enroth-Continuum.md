@@ -1613,3 +1613,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated the original 28-byte shop item field matrix against the inherited 36-byte `Item_MM7` layout. Raw SHOP records remain the authoritative owner because the category unions, byte-26 meaning and missing expiration field prevent a justified direct conversion.
 - Indexed the beacon renderer transaction audit: texture creation lacks a checked success result, and deferred deletion can allocate. Live GPU publication and the whole-save transaction remain guarded.
+
+## [2026-11-06] update | MM6 save transaction checklist
+- by: T-Burton-ND via codex
+- Reconciled the central save checklist with PART v3, standalone physical SHOP, filename-keyed BEAC pixels and the linked extra-section rejection test.
+- Kept live item projection, beacon GPU publication and the complete all-owner save/load commit as explicit gates.

@@ -2806,12 +2806,24 @@ int Character::GetSkillBonus(Attribute inSkill) const {
             return 0;
 
         case ATTRIBUTE_HEALTH: {
+            if (engine->gameTitle() == GameTitle::MM6) {
+                const int classId = std::to_underlying(classType);
+                if (!mm6::isValidClass(classId))
+                    throw std::runtime_error("Invalid MM6 class ID for Bodybuilding bonus");
+                return mm6::creationRules().hpFactor[classId] * GetBodybuilding();
+            }
             int base_value = pBaseHealthPerLevelByClass[classType];
             int attrib_modif = GetBodybuilding();
             return base_value * attrib_modif;
         }
 
         case ATTRIBUTE_MANA: {
+            if (engine->gameTitle() == GameTitle::MM6) {
+                const int classId = std::to_underlying(classType);
+                if (!mm6::isValidClass(classId))
+                    throw std::runtime_error("Invalid MM6 class ID for Meditation bonus");
+                return mm6::creationRules().spFactor[classId] * GetMeditation();
+            }
             int base_value = pBaseManaPerLevelByClass[classType];
             int attrib_modif = GetMeditation();
             return base_value * attrib_modif;

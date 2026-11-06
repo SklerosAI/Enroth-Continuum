@@ -544,3 +544,8 @@ Chronological record of wiki activity.
 - Verified the F3-matched `useitems.txt` source is an icons LOD pseudo-image-zlib member with a matching retained decoded hash. Added a bounded MM6-only 29×29 parser/lookup; numeric cells are candidate product IDs and five marker codes remain opaque.
 - The parser rejects missing or duplicate axes, malformed cells, asymmetric outcomes, out-of-axis results and unloaded/out-of-range lookups. `MM6ItemTable.cpp` reads the icons LOD member; MM7's matrix and item-use path are unchanged.
 - The arm64 unit target built and three focused potion tests passed, including all 841 retained cells (50 numeric, 791 marker). The ignored private-wiki packet records exact markers and source fingerprints. UI mixing, marker effects, consumption, potion power, bottle return and F5 save/reload remain open; no original installation was reread or MM6 game launched.
+
+## [2026-11-06] implement | MM6 event autonote variable
+- by: T-Burton-ND via codex
+- The F3-matched private EVT ledger has 101 active raw-ID-205 uses (97 Set, four Add), all within the 128-row singular MM6 autonote table. Added party-scoped MM6 dispatch for checked compare, set, add and subtract on the durable note-bit field; IDs 206–226 remain guarded and MM7 keeps its path.
+- The arm64 unit target built and five focused autonote/variable tests passed. C++ style and diff checks passed. UI flash/sound and live `.ec6` save/reload remain F5 work; no original installation was reread or partial MM6 game launched.

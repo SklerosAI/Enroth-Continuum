@@ -191,6 +191,12 @@ static BLVFace &mm6OutdoorEventFace(int modelIndex, int facetIndex) {
     return pOutdoor->faces[faceIndex];
 }
 
+static BLVFace *mm6IndoorEventFace(uint32_t faceIndex) {
+    if (uCurrentlyLoadedLevelType != LEVEL_INDOOR || !pIndoor || faceIndex >= pIndoor->faces.size())
+        return nullptr; // The original MM6 handler advances without mutation for invalid targets.
+    return &pIndoor->faces[faceIndex];
+}
+
 static bool isMM6MapByteVariable(EvtVariable variable) {
     return engine->gameTitle() == GameTitle::MM6 &&
            describeMM6Variable(std::to_underlying(variable)).family == MM6VariableFamily::MapByte;
@@ -358,7 +364,12 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             }
             break;
         case EVENT_SetTexture:
-            setTexture(ir.data.sprite_texture_descr.cog, ir.str);
+            if (engine->gameTitle() == GameTitle::MM6) {
+                if (BLVFace *face = mm6IndoorEventFace(ir.data.sprite_texture_descr.cog))
+                    face->SetTexture(ir.str);
+            } else {
+                setTexture(ir.data.sprite_texture_descr.cog, ir.str);
+            }
             break;
         case EVENT_ShowMovie:
         {
@@ -709,7 +720,16 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             }
             break;
         case EVENT_SetFacesBit:
-            setFacesBit(ir.data.faces_bit_descr.cog, ir.data.faces_bit_descr.face_bit, ir.data.faces_bit_descr.is_on);
+            if (engine->gameTitle() == GameTitle::MM6) {
+                if (BLVFace *face = mm6IndoorEventFace(ir.data.faces_bit_descr.cog)) {
+                    if (ir.data.faces_bit_descr.is_on)
+                        face->attributes |= ir.data.faces_bit_descr.face_bit;
+                    else
+                        face->attributes &= ~ir.data.faces_bit_descr.face_bit;
+                }
+            } else {
+                setFacesBit(ir.data.faces_bit_descr.cog, ir.data.faces_bit_descr.face_bit, ir.data.faces_bit_descr.is_on);
+            }
             break;
         case EVENT_ToggleActorFlag:
             if (engine->gameTitle() == GameTitle::MM6) {

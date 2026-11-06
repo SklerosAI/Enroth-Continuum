@@ -15,6 +15,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM6CharacterBitEvent.cpp
         GameTests_MM6Creation.cpp
         GameTests_MM6FlyingEvent.cpp
+        GameTests_MM6IndoorFacetEvent.cpp
         GameTests_MM6MonthEvent.cpp
         GameTests_MM6OriginalNoopEvent.cpp
         GameTests_MM6Save.cpp)

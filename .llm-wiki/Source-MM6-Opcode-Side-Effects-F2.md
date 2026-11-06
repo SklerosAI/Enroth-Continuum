@@ -12,4 +12,6 @@ Seven high-conflict opcode values still need title-specific decoding or original
 
 Superseding F4 evidence: the [original no-op trace](MM6-F4-Original-Noop-Events.md) found that this version of the F3-matched executable advances through values 20, 27 and 28 without an effect. Current title-specific parsing also loads all 68 active EVT resources. The paragraph above remains the historical F2 question set, not the current implementation state.
 
+The later [indoor facet trace](MM6-F4-Indoor-Facet-Events.md) found direct global face-index targets for MM6 opcode 11 texture and opcode 23 bit changes; it supersedes the inherited cog-group assumption for those commands.
+
 See also: [MM6 Opcode Semantics F2 Source](Source-MM6-Opcode-Semantics-F2.md), [MM6 Variable Dispatch F2 Source](Source-MM6-Variable-Dispatch-F2.md), [MM6 Source and Probe Index](MM6-Source-and-Probe-Index.md).

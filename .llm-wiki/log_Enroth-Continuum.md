@@ -322,3 +322,9 @@ Chronological record of wiki activity.
 - Added a bounded DDM writer that starts from the live MM6 sidecar and overlays proven reset, visibility, actor, ground-item and chest fields while preserving current MapVar bytes, unknown item bytes and the tail. Unsupported snapshot edits, record-count changes, negative actor HP and chest-grid edits fail closed.
 - Built the arm64 unit target and passed eight focused outdoor tests. All 15 F3-matched retained decoded DDMs re-encoded byte-exactly and kept a synthetic nonzero MapVar byte; changed synthetic fixtures covered supported mutations and rejection paths. C++ style checks passed.
 - Kept SaveLoad integration, arbitrary unsupported live-object detection, chest-grid interpretation and F5 play/save verification open. No partial MM6 game was launched and no original installation was reread.
+
+## [2026-11-06] ingest | MM6 NPC save fields
+- by: T-Burton-ND via codex
+- Added required, bounded `.ec6` RESC fields for the 501 runtime NPC slots, 51 group words and active count, with full scalar preservation and MM6-only copy-staging. Unknown flag bits and generic profession IDs round trip; malformed fields reject before mutation.
+- Checked the ignored F3-matched retained NPC table at aggregate level: 398 numeric rows, IDs 1–398; the earlier 70-record F2 figure covers only a generic-profession subset. The retained icons copy contains no `npcgroup.txt`. No private rows were added to Git.
+- Built the native unit target and passed five focused NPC tests. Direct style checks passed for all new files; the aggregate style target still reports unrelated pre-existing missing includes. SaveLoad integration, group semantics, generated NPC persistence and F5 play remain open. No original installation was reread or partial game launched.

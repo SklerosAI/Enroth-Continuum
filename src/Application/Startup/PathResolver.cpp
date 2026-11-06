@@ -131,7 +131,7 @@ std::vector<Path> resolveMm7Paths(Environment *environment) {
 }
 
 std::vector<Path> resolveMm8Paths(Environment *environment) {
-    return resolvePaths(environment, mm8Config, "Enroth Continuum/Game Data/MM8/app");
+    return resolvePaths(environment, mm8Config, "OpenEnroth");
 }
 
 static bool validatePath(PathView dataPath, const std::vector<std::string_view> &files, std::string *missingFile) {

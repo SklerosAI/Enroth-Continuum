@@ -127,3 +127,8 @@ Chronological record of wiki activity.
 - Updated the item source summary with retained-role/C++ consumer coverage for 404 high-risk IDs and wand, scroll, book, artifact and message range collisions. This did not change the unreviewed item guide-effect count.
 - Added initial-route results for 70 generic-profession NPC records, distinguishing static hire choices, house conversations and cases requiring outdoor/event routing; live hireability is unproven.
 - Kept detailed per-ID and per-NPC joins ignored locally, F2 open and F3 unrun.
+
+## [2026-11-05] ingest | MM6 whole-save state register
+- by: T-Burton-ND via codex
+- Added a source summary for the `.ec6` logical state-family register, linking current MM7 snapshot loss points to MM6 field-manifest and round-trip obligations.
+- Recorded that exact MM6 save fields and a working writer/reader remain open; no native `.mm6` compatibility is claimed. Checked 49 wiki pages for frontmatter and local links.

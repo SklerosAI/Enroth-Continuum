@@ -1548,3 +1548,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The MM6-only recovery section now preserves the current-runtime Armageddon timer, damage and force count together on detached Party copies. Its exact 588-byte v3 payload rejects old versions and malformed timer values before mutation; this does not enable the guarded MM6 spell effect.
 - Integrated linked recovery tests passed 4/4 and the private-backed MM6/LOD gate 328/328. A prior last-byte corruption assertion was retargeted to the final event-clock byte because v3 ends in a valid signed force counter. Scoped first-map save/rollback GameTests passed, but the host foreground app changed after their monitor loops, so those particular runs did not pass the complete focus-control check.
+
+## [2026-11-06] correct | MM6 detached reentry transients
+- by: T-Burton-ND via codex
+- The partial MM6 session stage now clears the frame-derived recovery remainder and delayed reaction timer/speech/character tuple on its detached Party after represented fields validate. It leaves the live Party untouched and retains the saved durable recovery value.
+- Integrated focused world-save tests passed 8/8 and the private-backed MM6/LOD gate passed 328/328. The complete live commit and first-frame graphical reload remain guarded.

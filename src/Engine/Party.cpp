@@ -154,6 +154,8 @@ void Party::Zero() {
     // Characters
     for (Character &player : this->pCharacters) {
         player.Zero();
+        if (engine && engine->gameTitle() == GameTitle::MM6)
+            player.inventory = CharacterInventory::forMM6();
     }
 
     // hirelings
@@ -506,10 +508,6 @@ void Party::createDefaultParty() {
 //----- (004917CE) --------------------------------------------------------
 void Party::Reset() {
     Zero();
-
-    if (engine->gameTitle() == GameTitle::MM6)
-        for (Character &player : pCharacters)
-            player.inventory = CharacterInventory::forMM6();
 
     eyeLevel = engine->config->gameplay.PartyEyeLevel.value();
     uNumGold = engine->config->gameplay.NewGameGold.value();

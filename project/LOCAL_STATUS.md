@@ -641,9 +641,11 @@ pinned MMExtension MM6 layout. Focused checks passed **5/5**, the private-backed
 MM6/LOD gate **347/347** and general non-MM6 unit gate **437/437**. It is outside
 the provisional known-save manifest and has no live raw Party owner. A read-only
 trace of the accepted original executable confirms 138-slot allocation. MM6
-party reset now gives each character 138 runtime slots; MM7 stays at 126. A
+party zeroing, including reset, now gives each character 138 runtime slots;
+MM7 stays at 126. A
 monitored headless test placed an item in the final MM6 slot and verified that
 the inherited MM7 snapshot rejects this inventory before writing. The full MM6
-headless suite passed **51/51** without a visible window or focus change, and
+headless suite passed **51/51** over 1,513 monitored samples without a visible
+window or focus change, and
 the MM7 control passed **1/1**. Provisional ITEM v1 still cannot save the extra
 slots or raw bytes, so normal MM6 SaveLoad remains guarded.

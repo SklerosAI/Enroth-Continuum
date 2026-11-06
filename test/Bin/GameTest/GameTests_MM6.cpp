@@ -122,6 +122,9 @@ GAME_TEST(MM6Headless, NewGameSaveGuard) {
 GAME_TEST(MM6Headless, OriginalCharacterItemCapacity) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     EXPECT_EQ(CharacterInventory().capacity(), 126); // Protected MM7 default.
+    pParty->Zero();
+    for (Character &character : pParty->pCharacters)
+        EXPECT_EQ(character.inventory.capacity(), 138);
     pParty->Reset();
     for (Character &character : pParty->pCharacters)
         EXPECT_EQ(character.inventory.capacity(), 138);

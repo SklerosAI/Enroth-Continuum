@@ -110,6 +110,8 @@ RecoverySaveFields decodeRecoverySection(const SaveContainer &container) {
 
 void loadRecoveryBeforeMutation(std::span<const std::uint8_t> bytes,
                                 RecoverySaveFields *destination) {
+    if (!destination)
+        throw std::runtime_error("null MM6 recovery destination");
     RecoverySaveFields staged = decodeRecoverySection(decodeSaveContainer(bytes));
     *destination = std::move(staged);
 }

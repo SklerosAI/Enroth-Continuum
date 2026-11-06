@@ -217,7 +217,7 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   now stages party/character data from a checked container into a copy; the
   durable quest/award/condition/inventory fields also have bounded codecs;
   nonempty indexed inventory restoration, a native atomic writer, and a partial
-  fourteen-section assembly are present offline. SaveLoad and load-menu integration
+  sixteen-section assembly are present offline. SaveLoad and load-menu integration
   remain guarded, and complete state coverage is open.
 - The [outdoor wire codec](MM6_OUTDOOR_WIRE_F4.md) checked all 15 retained base/
   delta pairs; the [indoor wire decoder](../src/Engine/Snapshots/MM6IndoorSnapshot.h)
@@ -232,7 +232,7 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   Quick Start and promotion remain provisional. The [variable guard](MM6_F4_VARIABLE_GUARD.md)
   prevents MM6-specific event IDs from executing as colliding MM7 meanings.
 - The integrated MM6 app, MM7 app and unit targets built with the resistance
-  assembly revision and the spell-item mapping guard. The offline suite passed 73 tests across EVT
+  assembly revision and the spell-item mapping guard. The offline suite passed 83 tests across EVT
   framing and selected guarded effects, wire codecs and indoor/outdoor projection,
   variable guard, `.ec6` fields and partial assembly, private transport/spell
   rules, descriptor 173 and LOD order; the
@@ -252,7 +252,10 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   character values. Raw timed buffs and the cursor-held item are also bounded
   and required by the revised partial assembly. Their MM6 effects, buff-overlay
   references and post-load cursor presentation remain open. Shop/map items,
-  hirelings, recovery timers, generated artifacts and complete save/relaunch remain open.
+  generated artifacts and complete save/relaunch remain open. Raw hireling copies
+  and recovery/calendar fields are now bounded and required by the partial
+  assembly; HIRE/RESC identity, MM6 day/rest behavior and active turn/rest
+  recovery remain unresolved.
 - The private F3-derived transport manifest is read by a title-specific
   three-option MM6 menu. It hides unproved quest, weekday and special routes;
   selection makes no payment or departure while the `.ec6` save transaction

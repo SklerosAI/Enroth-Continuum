@@ -36,22 +36,28 @@ mm6::KnownSaveFields exampleFields() {
     fields.buffs.party[0].expireTicks = 100;
     fields.buffs.party[0].power = 12;
     fields.buffs.characters[3][23].isGM = true;
+    fields.hirelings.displayNames[0] = "Synthetic hireling";
+    fields.recovery.playingTicks = 42;
+    fields.recovery.lastRegenerationTicks = 40;
+    fields.recovery.characterRecoveryTicks[0] = 7;
     return fields;
 }
 
 } // namespace
 
-UNIT_TEST(MM6KnownSaveFields, AssemblesAllFourteenRequiredSections) {
+UNIT_TEST(MM6KnownSaveFields, AssemblesAllSixteenRequiredSections) {
     mm6::KnownSaveFields fields = exampleFields();
     std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(fields);
     mm6::SaveContainer container = mm6::decodeSaveContainer(bytes);
-    ASSERT_EQ(container.sections.size(), 14);
+    ASSERT_EQ(container.sections.size(), 16);
     for (const mm6::SaveSection &section : container.sections)
         EXPECT_TRUE(section.required);
     EXPECT_EQ(mm6::encodeKnownSave(mm6::decodeKnownSave(bytes)), bytes);
     EXPECT_EQ(mm6::decodeKnownSave(bytes).resistances, fields.resistances);
     EXPECT_EQ(mm6::decodeKnownSave(bytes).heldItem, fields.heldItem);
     EXPECT_EQ(mm6::decodeKnownSave(bytes).buffs, fields.buffs);
+    EXPECT_EQ(mm6::decodeKnownSave(bytes).hirelings.displayNames[0], "Synthetic hireling");
+    EXPECT_EQ(mm6::decodeKnownSave(bytes).recovery, fields.recovery);
 
     std::reverse(container.sections.begin(), container.sections.end());
     EXPECT_EQ(mm6::encodeKnownSave(mm6::decodeKnownSave(mm6::encodeSaveContainer(container))), bytes);
@@ -96,6 +102,9 @@ UNIT_TEST(MM6KnownSaveFields, DuplicatedClockAndSelectionMustAgree) {
     fields.metadata.ui.activeCharacter = 1;
     EXPECT_THROW((void) mm6::encodeKnownSave(fields), std::exception);
     fields = exampleFields();
+    fields.recovery.playingTicks++;
+    EXPECT_THROW((void) mm6::encodeKnownSave(fields), std::exception);
+    fields = exampleFields();
     fields.metadata.timer.elapsedTicks = 500;
     EXPECT_NO_THROW((void) mm6::encodeKnownSave(fields));
 }
@@ -111,19 +120,27 @@ UNIT_TEST(MM6KnownSaveFields, ValidCrcCrossFieldMismatchRejectsDecode) {
     changed.metadata.header.mapFileName = "absent.blv";
     container.sections[5] = mm6::encodeMetadataSections(changed.metadata)[0];
     EXPECT_THROW((void) mm6::decodeKnownSave(mm6::encodeSaveContainer(container)), std::exception);
+
+    container = mm6::decodeSaveContainer(mm6::encodeKnownSave(exampleFields()));
+    changed = exampleFields();
+    changed.recovery.playingTicks = 43;
+    container.sections.back() = mm6::encodeRecoverySection(changed.recovery);
+    EXPECT_THROW((void) mm6::decodeKnownSave(mm6::encodeSaveContainer(container)), std::exception);
 }
 
 UNIT_TEST(MM6KnownSaveFields, LateDecodeFailureLeavesDestinationUntouched) {
     mm6::KnownSaveFields destination = exampleFields();
     destination.metadata.header.displayName = "Prior state";
     mm6::SaveContainer invalid = mm6::decodeSaveContainer(mm6::encodeKnownSave(exampleFields()));
-    invalid.sections.back().payload[0] = 2; // BUFF version, with a valid outer CRC.
+    invalid.sections.back().payload[0] = 2; // RCVR version, with a valid outer CRC.
     EXPECT_THROW(mm6::loadKnownSaveBeforeMutation(mm6::encodeSaveContainer(invalid), &destination), std::exception);
     EXPECT_EQ(destination.metadata.header.displayName, "Prior state");
     EXPECT_EQ(destination.npcs.npcData[398].name, "Synthetic NPC");
     EXPECT_EQ(destination.resistances.characters[0].base[0], -5);
     EXPECT_EQ(destination.heldItem.itemId, 1);
     EXPECT_EQ(destination.buffs.party[0].power, 12);
+    EXPECT_EQ(destination.hirelings.displayNames[0], "Synthetic hireling");
+    EXPECT_EQ(destination.recovery.lastRegenerationTicks, 40);
     EXPECT_THROW(mm6::loadKnownSaveBeforeMutation(mm6::encodeKnownSave(exampleFields()), nullptr), std::exception);
 }
 

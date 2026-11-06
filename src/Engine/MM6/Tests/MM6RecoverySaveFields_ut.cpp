@@ -90,4 +90,5 @@ UNIT_TEST(MM6RecoverySaveFields, RejectsInvalidBeforeMutation) {
     wrongTitle[2] = '7';
     EXPECT_THROW(mm6::loadRecoveryBeforeMutation(wrongTitle, &destination), std::exception);
     EXPECT_EQ(destination, before);
+    EXPECT_THROW(mm6::loadRecoveryBeforeMutation(saveBytes(before), nullptr), std::exception);
 }

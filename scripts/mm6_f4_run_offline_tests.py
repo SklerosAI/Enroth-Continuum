@@ -34,10 +34,13 @@ def main() -> None:
         subprocess.run([sys.executable, "-B", str(root / "scripts" / script), str(source)], check=True)
 
     rules = Path.home() / "Library/Application Support/Enroth Continuum/Profiles/MM6/rules"
+    creation_manifest = rules / "creation.json"
     transport_manifest = rules / "transport.json"
     spell_manifest = rules / "spells.json"
-    if not transport_manifest.is_file() or not spell_manifest.is_file():
-        parser.error("private MM6 transport or spell manifest is missing from the local user profile")
+    if not creation_manifest.is_file() or not transport_manifest.is_file() or not spell_manifest.is_file():
+        parser.error("private MM6 creation, transport or spell manifest is missing from the local user profile")
+    subprocess.run([sys.executable, "-B", str(root / "scripts/mm6_f4_check_spell_learning.py"),
+                    str(research), str(creation_manifest)], check=True)
 
     environment = os.environ.copy()
     environment.update({

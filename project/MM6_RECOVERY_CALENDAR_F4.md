@@ -1,6 +1,6 @@
 # MM6 recovery, rest and calendar save field — F4
 
-Status: bounded current-runtime `.ec6` field and copy-staging, 2026-11-06. This is an offline field seam; SaveLoad and the known-save required manifest are unchanged.
+Status: bounded current-runtime `.ec6` field and copy-staging, 2026-11-06. This is an offline field seam; the partial known-save manifest now requires `RCVR`, while SaveLoad remains guarded.
 
 ## Source, consumers and lifetime
 

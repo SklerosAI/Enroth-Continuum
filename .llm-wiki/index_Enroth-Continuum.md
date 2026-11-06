@@ -41,7 +41,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Indoor Runtime](MM6-F4-Indoor-Runtime.md) — Bounded BLV/DLV projection and changed-state encoding with retained opaque wire
 - [MM6 F4 Map Save Fields](MM6-F4-Map-Save-Fields.md) — Bounded `.ec6` map-delta section and whole-save validation obligations
 - [MM6 F4 NPC State](MM6-F4-NPC-State.md) — Bounded `.ec6` RESC NPC/group fields and copy-staging with open gameplay semantics
-- [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial fourteen-section `.ec6` candidate, cross-field checks and remaining save gaps
+- [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial sixteen-section `.ec6` candidate, cross-field checks and remaining save gaps
 - [MM6 F4 Timed Buffs](MM6-F4-Timed-Buffs.md) — Bounded BUFF fields for party/character effects and open runtime/F5 checks
 - [MM6 F4 Hireling State](MM6-F4-Hireling-State.md) — Two party NPC copies, display names and separate sacrifice progress in HIRE
 - [MM6 F4 Atomic Save File](MM6-F4-Atomic-Save-File.md) — Native `.ec6` atomic replacement, validated backup recovery and unsupported filesystem cases

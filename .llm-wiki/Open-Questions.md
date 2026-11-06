@@ -27,7 +27,7 @@ The active MM6 adapter reached title/party screens in an earlier run but not a p
 
 ## F4 progress — 2026-11-06
 
-The [F4 seam page](MM6-F4-Offline-Seams.md) records a separate title-locked MM6 app build, original-order transport lookup, the ID 173 descriptor fix, vanilla portrait loading, a bounded `.ec6` envelope, and **68/68 active retained EVT resources parsed by C++**. The event parser still rejects unresolved MM6 effects explicitly; correct state changes, all 127 variable meanings, quest reachability and saves remain open. These checks do not replace the questions below or F5 live validation.
+The [F4 seam page](MM6-F4-Offline-Seams.md) records a separate title-locked MM6 app build, original-order transport lookup, the ID 173 descriptor fix, vanilla portrait loading, a bounded `.ec6` envelope, and **68/68 active retained EVT resources parsed by C++**. The one active zero-mastery skill-check now has a provisional MM6 threshold rule and unit check. The event parser still rejects other unresolved MM6 effects explicitly; correct state changes, all 127 variable meanings, quest reachability and saves remain open. These checks do not replace the questions below or F5 live validation.
 
 ## Analysis
 

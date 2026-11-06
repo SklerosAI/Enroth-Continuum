@@ -215,8 +215,10 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   unresolved MM6-only effects. The [`.ec6` envelope](MM6_EC6_CONTAINER_F4.md)
   has title/version, bounds and integrity checks but no runtime field codec,
   file writing or load-menu integration.
-- The integrated MM6 app and unit targets built. Nine focused C++ tests passed
+- The integrated MM6 app and unit targets built. Ten focused C++ tests passed
   across EVT framing, `.ec6` envelope, descriptor 173 and LOD order; the
   private actor fixture checked 67 map deltas/342 actors and one ID 173.
   F4 rules, map state, events, services, media output and saves remain open.
   No MM6 process or original GOG file was opened for these F4 checks.
+  A title-specific zero-mastery `CheckSkill` branch now has a provisional
+  source-backed rule and focused threshold test; its quest outcome remains F5.

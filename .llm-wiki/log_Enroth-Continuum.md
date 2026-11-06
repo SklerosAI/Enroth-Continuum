@@ -743,3 +743,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The world-save adapter now selects the real bounded MM6 indoor or outdoor changed-state writer from the active level type and `HEAD` map extension. Indoor capture also matches the loaded filename. It overlays the returned delta into the detached 67-map `.ec6` candidate without actor compaction, timestamp mutation or global map/NPC assignment.
 - The arm64 MM6, OpenEnroth and unit targets built. Three focused tests passed, including a synthetic active indoor sidecar with nonzero respawn values through the actual writer and `.ec6` round trip, plus malformed/mismatched-state rejection without source mutation. The outdoor live-runtime path and full SaveLoad transaction remain gated. No original installation or MM6 process was opened.
+
+## [2026-11-06] guard | MM6 house proprietor icon binding
+- by: T-Burton-ND via codex
+- The title-specific house entry plan now derives an optional proprietor `npcNNN` icon name from the private MM6 room descriptor. Before returning the still-guarded unavailable status, runtime preflight checks icon metadata in the active MM6 resources; no icon is drawn and no inherited MM7 room is used.
+- The F3-matched retained index contains all 51 nonzero proprietor pictures among 116 referenced rooms. A native test checked all active house-entry plans, including 282 instructions with a proprietor picture. The one-command offline gate now runs a frozen-hash checker for these joins and the separate projectile-frame checker. Arm64 MM6/MM7/unit targets built; offline tests passed 181/181 from 57 suites without skips and general tests passed 438/438. No original installation or MM6 process was opened.

@@ -39,3 +39,11 @@ UNIT_TEST(MM6EventVariables, ItemInHandValueRejectsForeignItemIds) {
     EXPECT_FALSE(isValidMM6SharedCandidateValue(17, 581));
     EXPECT_FALSE(isValidMM6SharedCandidateValue(17, -1));
 }
+
+UNIT_TEST(MM6EventVariables, AwardValueRejectsForeignAwardIds) {
+    EXPECT_TRUE(isValidMM6SharedCandidateValue(12, 1));
+    EXPECT_TRUE(isValidMM6SharedCandidateValue(12, 100));
+    EXPECT_FALSE(isValidMM6SharedCandidateValue(12, 0));
+    EXPECT_FALSE(isValidMM6SharedCandidateValue(12, 101));
+    EXPECT_FALSE(isValidMM6SharedCandidateValue(12, 512));
+}

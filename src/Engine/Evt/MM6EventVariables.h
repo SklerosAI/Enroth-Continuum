@@ -58,6 +58,8 @@ constexpr MM6VariableDescriptor describeMM6Variable(int rawId) {
 constexpr bool isValidMM6SharedCandidateValue(int rawId, int value) {
     if (rawId == 2)  // Class: eighteen MM6 classes, not the MM7 class range.
         return mm6::isValidClass(value);
+    if (rawId == 12)  // Award: the retained MM6 table has numbered rows 1..100.
+        return value >= 1 && value <= 100;
     if (rawId == 17)  // Item in hand: retained MM6 item IDs are 1..580.
         return value >= 1 && value <= 580;
     return true;

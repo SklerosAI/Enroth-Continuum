@@ -2,6 +2,8 @@
 
 Status: **layout evidence and implementation contract, not a completed save implementation**. This document is for the private, Mac-first MM6 build beside the frozen MM7 build. The planned F3 review of the original installed MM6 archives has not happened; this F2 review used only retained, ignored `Games.lod` map extracts and the current source tree.
 
+The [whole-save field register](MM6_SAVE_FIELD_REGISTER_F2.md) maps current MM7 snapshot sections to required MM6 logical state and acceptance. It is a family-level inventory, not a final `.ec6` payload schema.
+
 ## Evidence and boundary
 
 - `scripts/mm6_probe_indoors.py` parses 52 retained `.blv` maps and their 52 `.dlv` companions to the exact decoded end. `local-game-data/mm6/research-2026-11-05/indoor-probe.json` reports no layout failures. Two **base maps** (`cd3.blv`, `d08.blv`) have invalid zlib checksums despite a framed, size-checked raw DEFLATE stream; no `.dlv` has that exception.

@@ -311,6 +311,13 @@ that requirement.
   67 retained delta companions reach their exact decoded end. The 200
   persistent bytes and 56-byte tail still need field-level semantics and a
   lossless write/read check; native `.mm6` save compatibility is unproven.
+- [x] Register whole-save logical field families in
+  [MM6_SAVE_FIELD_REGISTER_F2.md](MM6_SAVE_FIELD_REGISTER_F2.md): container and
+  slot metadata; party pose, time and resources; four characters; conditions,
+  skills, spells, inventory and equipment; NPC/quest/award/note state; all
+  67 map deltas; overlays, beacons, thumbnail and active selection. Each family
+  has a current MM7 source path and MM6 persistence scenario. Exact `.ec6`
+  fields and MM6 meanings remain to be locked after F3.
 - [x] Audit retained MM6 delta records against a pinned primary editor reader
   and current C++ snapshots using `scripts/mm6_probe_world_fields.py`.
   [MM6_WORLD_FIELD_MAP_F2.md](MM6_WORLD_FIELD_MAP_F2.md) records 342 actor,

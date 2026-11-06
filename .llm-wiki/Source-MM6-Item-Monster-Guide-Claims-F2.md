@@ -14,4 +14,6 @@ A subsequent static pass classifies retained role and current C++ consumer for 4
 
 The [item-effect packet](../project/MM6_ITEM_EFFECT_SEAMS_F2.md) triages all 164 still-unreviewed rows by retained role. Its source join finds that the seven current miscellaneous direct-use constants all exceed MM6's maximum item ID, and the inherited message-scroll window guard rejects all 50 MM6 message-scroll IDs. These are deterministic current-source path mismatches, not confirmed original item actions or witnessed UI failures; exact per-ID roles/events remain local.
 
+The [late item-guide packet](../project/MM6_ITEM_GUIDE_CLOSURE_F2.md) directly classifies 43 individually printed late entries: eight offer qualitative role clues, while 35 give no explicit action rule. A separate gem table matches nine of ten retained name/value pairs and differs on one identity. The retained event graph contains 400 held-item operands for 50 of 67 broad special/misc IDs, grouped by opcode signature privately. These checks narrow the F3 questions without resolving the 164 original item effects.
+
 See also: [MM6 Combat Semantics F2 Source](Source-MM6-Combat-Semantics-F2.md), [MM6 Source and Probe Index](MM6-Source-and-Probe-Index.md), [Open Questions](Open-Questions.md).

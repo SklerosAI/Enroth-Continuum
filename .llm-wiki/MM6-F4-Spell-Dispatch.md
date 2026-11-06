@@ -14,6 +14,8 @@ The [First Aid effect slice](../project/MM6_F4_FIRST_AID_EFFECT.md) adds a check
 
 The [Power Cure effect slice](../project/MM6_F4_POWER_CURE_EFFECT.md) adds a checked private base-plus-skill party-heal rule and bounded MM6 branch. Its queue/executor guard remains closed for the same transaction reasons, and the inherited Grandmaster learning gate is not used for MM6. Both effect slices are compiled code with private-backed tests, not observed casts.
 
+The [timed cure cohort](../project/MM6_F4_TIMED_CURE_COHORT.md) groups six one-character, one-condition effects under a common private three-rank age-window manifest. Two IDs collide with unrelated inherited MM7 effects, so MM6 has numeric-ID interception before that switch and title-specific target routing. The shared helper validates all inputs and removes only a recent matching condition; absent, expired and unrelated conditions remain. Awaken, dead/eradicated cures, and poison/disease severity groups remain separate open work. The outer cast guard still blocks all six live casts.
+
 The ignored private companion page `local-game-data/private-wiki/mm6/F4_SPELL_DISPATCH_2026-11-06.md` has per-ID retained/source/guide joins and source fingerprints. It is a research handoff, not a validated effect specification. Resolve rank-specific targets, effects, damage, visuals, sound and persistence before allowing individual IDs; event, monster, scroll and wand sources need separate checks. Runtime rejection is an exception and F5 graphical play has not occurred.
 
 See also: [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), [MM6 F4 Spell Rules](MM6-F4-Spell-Rules.md), [MM6 F4 Spell Items](MM6-F4-Spell-Items.md), [Private Companion Wiki](Private-Companion-Wiki.md).

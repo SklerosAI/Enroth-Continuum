@@ -1083,3 +1083,7 @@ Chronological record of wiki activity.
 - Rebuilt integrated arm64 unit and game-test targets after the constructor-time private-rule seed, proxy-aware null assertions, detached chest runtime projection, changed-grid writers and partial Party/Character save candidate. The private-backed offline suite passed **262/262 MM6/LOD tests from 68 suites**; the general unit suite passed **438/438 from 56 suites**. The MM7 headless control passed **1/1**.
 - The explicit MM6 headless suite passed **4/4**. In the monitored two-test engine smoke, **102 host samples** saw no focus change or on-screen window. Startup, ramfs rules, null platform and both live guards were verified; first-map entry, graphical output and audible playback were not. The new-game path reaches the `.ec6` save guard before map entry, while map loading retains a separate chest guard.
 - Updated [local status](../project/LOCAL_STATUS.md), [build graph](../project/MM6_F4_BUILD_GRAPH.md), [offline seams](MM6-F4-Offline-Seams.md), [source status](Source-Local-Status.md) and [agent handoff](Agent-Handoff.md). Private assets, manifests and logs remain ignored; installed MM7 and reserved MM8 were untouched.
+
+## [2026-11-06] update | MM6 headless plan gate
+- by: T-Burton-ND via codex
+- Updated [plan §18.1](../project/plan.md) to record the verified explicit MM6 headless runner and monitored no-focus/no-window result. The plan keeps first-map play gated by new-game `.ec6` saving and chest loading, and keeps graphical and audible acceptance in F5.

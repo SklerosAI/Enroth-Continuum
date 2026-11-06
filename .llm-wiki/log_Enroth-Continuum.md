@@ -253,6 +253,12 @@ Chronological record of wiki activity.
 - Built the arm64 native unit target and passed eight focused checks, including all 15 retained outdoor deltas. No original archive was reopened and no partial MM6 game was launched.
 - Marked actor buff/spell semantics, chest grid interpretation, persistent bytes, tail, changed-state encoding, `.ec6` save/reload and F5 graphical behavior as open.
 
+## [2026-11-06] audit | MM6 event map-byte storage
+- by: T-Burton-ND via codex
+- Joined pinned MMExtension and level-editor source to the F3-matched retained EVT/map reports: IDs 105–204 name 100 MapVars, but shipped uses stop at index 70 and all 67 map-state baselines are zero.
+- Found that the pinned editor readers skip rather than copy the 200-byte block, and that MMExtension describes barrel/contest state beginning at byte 75. Exact upper-index aliasing, arithmetic edges and nonzero reset/save behavior remain unproved.
+- Kept the MM6 variable executor fail-closed and the 200-byte wire section opaque. No original installation was reread, no game was launched and no private data was committed.
+
 ## [2026-11-06] ingest | MM6 core save field codec
 - by: T-Burton-ND via codex
 - Added versioned, bounded `PART` and `CHAR` field payloads plus an MM6-only adapter that stages a validated load into a copy of the party.

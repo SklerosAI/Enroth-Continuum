@@ -10,6 +10,7 @@
 
 #include "GUI/HudFrameResources.h"
 #include "GUI/HudNavigationResources.h"
+#include "GUI/HudNpcArrowResources.h"
 #include "GUI/HudStatusResources.h"
 #include "GUI/HudVitalBarResources.h"
 #include "GUI/MM6HudActionControls.h"
@@ -609,8 +610,10 @@ void SetUserInterface(PartyAlignment align) {
         game_ui_player_alert_yellow = assets->getIcon("IB-InitY-c");
         game_ui_player_alert_red = assets->getIcon("IB-InitR-c");
 
-        ui_btn_npc_left = assets->getIcon("IB-NPCLD-C");
-        ui_btn_npc_right = assets->getIcon("IB-NPCRD-C");
+        const HudNpcArrowResources npcArrows = hudNpcArrowResources(engine->gameTitle(),
+            "IB-NPCLD-C", "IB-NPCRD-C");
+        ui_btn_npc_left = assets->getIcon(npcArrows.left);
+        ui_btn_npc_right = assets->getIcon(npcArrows.right);
         game_ui_btn_zoomin = assets->getIcon(navigation.zoomIn);
         game_ui_btn_zoomout = assets->getIcon(navigation.zoomOut);
         game_ui_player_selection_frame = assets->getIcon("IB-selec-C");
@@ -662,8 +665,10 @@ void SetUserInterface(PartyAlignment align) {
         game_ui_player_alert_yellow = assets->getIcon("IB-InitY-a");
         game_ui_player_alert_red = assets->getIcon("IB-InitR-a");
 
-        ui_btn_npc_left = assets->getIcon("IB-NPCLD-A");
-        ui_btn_npc_right = assets->getIcon("IB-NPCRD-A");
+        const HudNpcArrowResources npcArrows = hudNpcArrowResources(engine->gameTitle(),
+            "IB-NPCLD-A", "IB-NPCRD-A");
+        ui_btn_npc_left = assets->getIcon(npcArrows.left);
+        ui_btn_npc_right = assets->getIcon(npcArrows.right);
         game_ui_player_selection_frame = assets->getIcon("IB-selec-A");
         game_ui_btn_cast = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m1d-a");
         game_ui_btn_rest = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m2d-a");
@@ -715,8 +720,10 @@ void SetUserInterface(PartyAlignment align) {
         game_ui_player_alert_yellow = assets->getIcon("IB-InitY-b");
         game_ui_player_alert_red = assets->getIcon("IB-InitR-b");
 
-        ui_btn_npc_left = assets->getIcon("IB-NPCLD-B");
-        ui_btn_npc_right = assets->getIcon("IB-NPCRD-B");
+        const HudNpcArrowResources npcArrows = hudNpcArrowResources(engine->gameTitle(),
+            "IB-NPCLD-B", "IB-NPCRD-B");
+        ui_btn_npc_left = assets->getIcon(npcArrows.left);
+        ui_btn_npc_right = assets->getIcon(npcArrows.right);
         game_ui_btn_zoomin = assets->getIcon(navigation.zoomIn);
         game_ui_btn_zoomout = assets->getIcon(navigation.zoomOut);
         game_ui_player_selection_frame = assets->getIcon("IB-selec-B");

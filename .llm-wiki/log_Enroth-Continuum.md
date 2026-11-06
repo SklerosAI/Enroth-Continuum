@@ -633,3 +633,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Frozen F3-matched retained inputs show 611 raw-ID-16 uses across Compare, Add, Subtract and Set, with 208 distinct bit operands in the 512-row quest table. Only 52 used bits have visible text; 156 used bits are hidden-state candidates. The tracked audit script verifies frozen hashes and writes all site locators to an owner-only ignored report.
 - The inherited executor accesses this party bit inside character iteration and borrows MM7 journal/sound cues. The `.ec6` QEST section copy-stages 512 bits but live SaveLoad is unwired. A public packet records operation-specific blockers and offline/F5 acceptance; no runtime mutation, original installation read or MM6 game launch occurred.
+
+## [2026-11-06] guard | MM6 award event operands and integrated handoff
+- by: T-Burton-ND via codex
+- Raw MM6 award variable ID 12 now accepts only numbered rows 1–100 before the inherited MM7 validator. A tracked aggregate check rehashes all 68 retained active EVT files and confirms 193 shipped award operands (63 Compare, 125 Add, five Set), all within that range. Award effects, seven formatted counters, display order and save/reload remain open.
+- The combined arm64 MM6/MM7/unit build passed. The one-command offline runner passed 148/148 native tests from 46 suites, including the private room manifest and award-operand check; the general suite passed 438/438. A separate frozen-input audit records 611 active quest-bit uses and their unresolved party-selection and notification semantics. Shared status and agent handoff now point to these packets.
+- Only the ignored retained references and owner-local profile were used. No original installation, MM6 process or protected MM7 app/profile was opened.

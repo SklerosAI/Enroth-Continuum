@@ -33,6 +33,7 @@
 #include "Engine/Spells/MM6SpellRules.h"
 #include "Engine/Spells/MM6FirstAidRules.h"
 #include "Engine/Spells/MM6PowerCureRules.h"
+#include "Engine/Spells/MM6TimedCureRules.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
 
@@ -340,6 +341,15 @@ void CastSpellInfoHelpers::castSpell() {
                 engine->_messageQueue->addMessageCurrentFrame(UIMSG_OnCastLloydsBeacon, Pid(OBJECT_Character, pCastSpell->casterCharacterIndex).packed(), param2);
                 pCastSpell->flags |= ON_CAST_NoRecoverySpell;
             }
+        } else if (engine->gameTitle() == GameTitle::MM6 && mm6::isTimedCureSpell(pCastSpell->uSpellID)) {
+            if (pCastSpell->targetPid || pCastSpell->targetCharacterIndex < 0 ||
+                pCastSpell->targetCharacterIndex >= 4)
+                throw std::runtime_error("MM6 timed cure requires one party member target");
+            mm6::applyTimedCure(pCastSpell->uSpellID, spell_mastery, spell_level,
+                                 pParty->GetPlayingTime(),
+                                 pParty->pCharacters[pCastSpell->targetCharacterIndex].conditions);
+            pPlayer->SpendMana(uRequiredMana);
+            setSpellRecovery(pCastSpell, recoveryTime);
         } else {
             switch (pCastSpell->uSpellID) {
                 case SPELL_FIRE_TORCH_LIGHT:
@@ -3178,6 +3188,11 @@ void pushSpellOrRangedAttack(SpellId spell,
                 break;
             default:
                 break;
+        }
+
+        if (engine->gameTitle() == GameTitle::MM6 && mm6::isTimedCureSpell(spell)) {
+            flags &= ~(ON_CAST_TargetedActor | ON_CAST_TargetedActorOrCharacter);
+            flags |= ON_CAST_TargetedCharacter;
         }
     }
 

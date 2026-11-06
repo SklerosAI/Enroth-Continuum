@@ -51,6 +51,7 @@
 #include "Engine/Spells/MM6SpellRules.h"
 #include "Engine/Spells/MM6FirstAidRules.h"
 #include "Engine/Spells/MM6PowerCureRules.h"
+#include "Engine/Spells/MM6TimedCureRules.h"
 #include "Engine/Tables/AwardTable.h"
 #include "Engine/Tables/ChestTable.h"
 #include "Engine/Tables/HouseTable.h"
@@ -798,6 +799,7 @@ void Engine::MM7_Initialize() {
         mm6::loadSpellRules(ufs->read("rules/spells.json"));
         mm6::loadFirstAidRules(ufs->read("rules/first-aid.json"));
         mm6::loadPowerCureRules(ufs->read("rules/power-cure.json"));
+        mm6::loadTimedCureRules(ufs->read("rules/timed-cures.json"));
     }
 
     gameTimer = new Timer();

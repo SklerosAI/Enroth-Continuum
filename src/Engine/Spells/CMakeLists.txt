@@ -5,6 +5,7 @@ set(ENGINE_SPELLS_SOURCES
         MM6SpellRules.cpp
         MM6FirstAidRules.cpp
         MM6PowerCureRules.cpp
+        MM6TimedCureRules.cpp
         Spells.cpp)
 
 set(ENGINE_SPELLS_HEADERS
@@ -12,6 +13,7 @@ set(ENGINE_SPELLS_HEADERS
         MM6SpellRules.h
         MM6FirstAidRules.h
         MM6PowerCureRules.h
+        MM6TimedCureRules.h
         SpellBuff.h
         SpellEnums.h
         SpellEnumFunctions.h
@@ -23,7 +25,7 @@ target_check_style(engine_spells)
 
 if(OE_BUILD_TESTS)
     add_library(test_engine_mm6_spell_rules OBJECT Tests/MM6SpellRules_ut.cpp Tests/MM6FirstAidRules_ut.cpp
-        Tests/MM6PowerCureRules_ut.cpp)
+        Tests/MM6PowerCureRules_ut.cpp Tests/MM6TimedCureRules_ut.cpp)
     target_link_libraries(test_engine_mm6_spell_rules PUBLIC testing_unit engine_spells)
     target_check_style(test_engine_mm6_spell_rules)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_spell_rules)

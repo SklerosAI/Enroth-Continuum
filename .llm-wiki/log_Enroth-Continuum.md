@@ -443,6 +443,12 @@ Chronological record of wiki activity.
 - Added a title-specific party-heal branch for stored skill levels and three MM6 masteries while the live effect guard stays closed. MM7's inherited branch is unchanged; shared health/status semantics remain open.
 - Built the main arm64 unit target and passed 11 focused spell guard/rule/healing tests with private manifests. C++ style, Python syntax, local links and diff checks passed. No original installation was reread or partial MM6 game launched.
 
+## [2026-11-06] ingest | MM6 timed condition cure cohort
+- by: T-Burton-ND via codex
+- Grouped the 99-ID spell evidence by target and side effect, then checked six one-character condition cures against the F3-matched retained spell report and visually reviewed guide rows. A single mode-0600 private profile manifest holds their shared three-rank age window; exact claims remain ignored.
+- Added a bounded MM6 helper for six condition IDs, strict age boundaries and title-specific interception for two inherited numeric collisions. Awaken, dead/eradicated, poison and disease effects remain separate; the live cast guard still blocks all six.
+- Built the arm64 unit target and passed 15 focused spell tests with private manifests. C++ style, Python syntax, wiki links and diff checks passed. No original installation was reread or partial MM6 game launched.
+
 ## [2026-11-06] finding | MM6 HIRE and RESC identity
 - by: T-Burton-ND via codex
 - Audited current hire, dismissal, event, generated-NPC, name-load and quest-follower paths. A strict HIRE/RESC identity match cannot be justified without a stable source ID: table-only followers, independent flag edits and generated party copies are representable. An aggregate check of the ignored F3-matched NPC table found five duplicate-name groups, including one duplicate name/portrait/profession group; exact rows remain private.

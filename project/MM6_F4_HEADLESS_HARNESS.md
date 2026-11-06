@@ -4,7 +4,7 @@ Status: **isolated candidate, source syntax checked; no linked MM6 game-test pro
 
 ## Entry and isolation
 
-`OpenEnroth_GameTest` now accepts `--game mm6`. That choice requires `--headless` and an explicit `--data-path` before `GameStarter` can run; `GameStarter` validates the selected title's data. The test runner continues to force in-memory user data and defaults to MM7. When no GoogleTest filter is supplied, it selects only `MM6*.*` suites for MM6 and excludes them for MM7. The `GameTest` fixture also skips a wrong-title suite if a caller supplies an explicit filter, preventing an MM7 trace/save test from running against MM6.
+`OpenEnroth_GameTest` now accepts `--game mm6`. That choice requires `--headless` and an explicit `--data-path` before `GameStarter` can run; `GameStarter` validates the selected title's data. The test runner continues to force in-memory user data and defaults to MM7. When no GoogleTest filter is supplied, it selects only `MM6*.*` suites for MM6 and excludes them for MM7. An explicit MM6 run rejects positive GoogleTest filter patterns outside `MM6*`; the `GameTest` fixture also skips a wrong-title suite as a second boundary. This prevents an MM7 trace/save test from running against MM6 or a wrong-title-only filter from reporting a false pass.
 
 The first `MM6Headless.StartupAndChestGuard` game test asserts the selected engine title, `NullPlatform`, `NullEventLoop`, `NullWindow`, null native window handle, `NullRenderer` and `MemoryFileSystem`. It checks that the existing MM6 chest-generation guard still throws, then ticks one synthetic engine frame. The null event loop receives no physical OS messages; this check does not render a view, exercise a map load, or establish that focus stayed unchanged in a real run.
 

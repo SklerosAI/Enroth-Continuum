@@ -9,7 +9,7 @@ tags: [mm6, f4, headless, tests]
 
 The [public packet](../project/MM6_F4_HEADLESS_HARNESS.md) records an isolated source candidate for a title-selected, null-platform MM6 game-test smoke.
 
-`--game mm6` requires `--headless` and an explicit private data path. The runner keeps an in-memory user filesystem, defaults to MM7, and prevents wrong-title game-test suites from running even with a caller-supplied filter. The first MM6 suite checks null platform, event loop, window handle and renderer, then confirms the live chest guard remains closed.
+`--game mm6` requires `--headless` and an explicit private data path. The runner keeps an in-memory user filesystem, defaults to MM7, and rejects an explicit non-MM6 test filter and skips wrong-title suites as a second boundary. The first MM6 suite checks null platform, event loop, window handle and renderer, then confirms the live chest guard remains closed.
 
 Four C++ units passed focused arm64 syntax checks against the integration build's compile commands. A linked MM6 test process has **not** run, and the result is not a map, graphics, audio or campaign acceptance. The next gate is a linked no-window/no-focus process check with the owner's private data and a known-good MM7 headless control.
 

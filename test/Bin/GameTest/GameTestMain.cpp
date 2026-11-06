@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <string>
+#include <string_view>
 
 #include "Application/Startup/GameStarter.h"
 
@@ -14,9 +15,24 @@
 #include "Library/FileSystem/Native/NativeFileSystem.h"
 
 #include "Utility/String/Format.h"
+#include "Utility/String/Split.h"
 #include "Utility/UnicodeCrt.h"
+#include "Utility/Exception.h"
 
 #include "GameTestOptions.h"
+
+namespace {
+bool isMm6OnlyFilter(std::string_view filter) {
+    std::string_view positive = filter.substr(0, filter.find('-'));
+    if (positive.empty())
+        return false;
+
+    for (std::string_view pattern : split(positive).by(':'))
+        if (!pattern.starts_with("MM6"))
+            return false;
+    return true;
+}
+} // anonymous namespace
 
 void printGoogleTestHelp(char *app) {
     int argc = 2;
@@ -41,6 +57,8 @@ int platformMain(int argc, char **argv) {
             // Keep the existing MM7 default while making an unfiltered MM6
             // run execute only tests that are safe for the MM6 engine.
             GTEST_FLAG_SET(filter, opts.gameTitle == GameTitle::MM6 ? "MM6*.*" : "*-MM6*.*");
+        } else if (opts.gameTitle == GameTitle::MM6 && !isMm6OnlyFilter(GTEST_FLAG_GET(filter))) {
+            throw Exception("MM6 game tests require an MM6-only --gtest_filter.");
         }
         if (opts.listRequested)
             return RUN_ALL_TESTS();

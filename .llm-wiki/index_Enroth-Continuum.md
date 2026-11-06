@@ -50,6 +50,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 Spell Effect F2 Source](Source-MM6-Spell-Effect-F2.md) — Ninety-nine spell paths, inherited data/range/target collisions, and effect gaps
 - [MM6 Spell Guide Claims F2 Source](Source-MM6-Spell-Guide-Claims-F2.md) — All spell guide locators, selected scan checks, and remaining effect claims
 - [MM6 Save Spec Source](Source-MM6-Save-Spec.md) — Map-state boundaries, preservation, and save contract
+- [MM6 Save Field Register F2 Source](Source-MM6-Save-Field-Register-F2.md) — Whole-save state families, inherited loss points and MM6 round-trip checks
 - [MM6 World F2 Closure Source](Source-MM6-World-F2-Closure.md) — Offline delta-section preservation and unresolved C++ world/save obligations
 - [MM6 World Field Map F2 Source](Source-MM6-World-Field-Map-F2.md) — Record hypotheses and corrected chest delta-grid ambiguity
 - [MM6 Event and Campaign Spec Source](Source-MM6-Event-Campaign-Spec.md) — Question, NPC-topic, variable, and campaign gaps

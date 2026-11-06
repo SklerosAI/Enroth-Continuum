@@ -31,6 +31,7 @@ This index directs agents to the current public specifications and reproducible 
 | All 99 spell IDs, inherited effect and item-range collisions | [Spell effect F2 audit](../project/MM6_SPELL_EFFECT_F2.md) |
 | All 99 spell guide locators and selected visual claim checks | [Spell guide claims F2](../project/MM6_SPELL_GUIDE_CLAIMS_F2.md) |
 | Map deltas, reset, versioned save, persistence | [Save and map](../project/MM6_SAVE_SPEC.md) |
+| Whole-save logical state families and `.ec6` field-manifest handoff | [Save field register F2](../project/MM6_SAVE_FIELD_REGISTER_F2.md) |
 | Retained delta section roundtrip and world consumer obligations | [World F2 closure packet](../project/MM6_WORLD_F2_CLOSURE.md) |
 | Record field hypotheses and chest delta-grid ambiguity | [World field map F2](../project/MM6_WORLD_FIELD_MAP_F2.md) |
 | EVT, Question, NPC topics, structural campaign links | [Event and campaign](../project/MM6_EVENT_CAMPAIGN_SPEC.md) |

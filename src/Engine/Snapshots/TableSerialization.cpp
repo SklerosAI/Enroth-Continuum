@@ -189,3 +189,14 @@ void deserialize(const Blob &src, TileTable *dst) {
 
     assert(!dst->_tiles.empty());
 }
+
+void deserialize(const Blob &src, TileTable *dst, GameTitle gameTitle) {
+    deserialize(src, dst);
+    if (gameTitle == GameTitle::MM6) {
+        // The shared MM7 reconstruction adds 'h' to water-road names for its
+        // hardware textures. MM6 keeps the original wtrdr* bitmap names.
+        for (TileData &tile : dst->_tiles)
+            if (tile.textureName.starts_with("hwtrdr"))
+                tile.textureName.erase(0, 1);
+    }
+}

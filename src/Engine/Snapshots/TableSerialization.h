@@ -60,3 +60,4 @@ void deserialize(const Blob &src, SoundList *dst, GameTitle gameTitle);
  * @offset 0x00488000
  */
 void deserialize(const Blob &src, TileTable *dst);
+void deserialize(const Blob &src, TileTable *dst, GameTitle gameTitle);

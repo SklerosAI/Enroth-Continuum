@@ -832,7 +832,7 @@ void Engine::MM7_Initialize() {
     deserialize(engine->resources()->eventsData("dtft.bin"), pTextureFrameTable);
 
     pTileTable = new TileTable;
-    deserialize(engine->resources()->eventsData("dtile.bin"), pTileTable);
+    deserialize(engine->resources()->eventsData("dtile.bin"), pTileTable, gameTitle());
 
     pPortraitFrameTable = new PortraitFrameTable;
     deserialize(engine->resources()->eventsData("dpft.bin"), pPortraitFrameTable);

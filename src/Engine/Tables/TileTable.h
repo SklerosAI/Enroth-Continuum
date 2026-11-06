@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "Engine/Data/TileData.h"
+#include "Engine/GameTitle.h"
 
 #include "Utility/Hash.h"
 
@@ -36,6 +37,7 @@ class TileTable {
     void addTile(TileData tileData);
 
     friend void deserialize(const Blob &src, TileTable *dst); // In TableSerialization.cpp.
+    friend void deserialize(const Blob &src, TileTable *dst, GameTitle gameTitle);
 
  private:
     std::vector<TileData> _tiles; // Tile by id.

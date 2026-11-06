@@ -10,6 +10,7 @@
 #include <utility>
 #include <map>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <vector>
 
@@ -196,6 +197,15 @@ static int waterAnimationFrame() {
     // Vanilla  1/12s   1/6s    1/6s    1/6s    1/6s    1/6s    1/12s   1s
     // OE       1/7s    1/7s    1/7s    1/7s    1/7s    1/7s    1/7s    1s
     return static_cast<int>(std::floor(std::fmod(animTimer->time().realtimeMillisecondsFloat(), 1.0f) * 7.0f));
+}
+
+static std::string_view waterLayerBitmapName(std::string_view name) {
+    // MM6's bitmap archive has wtrtyl and wtrdr* road edges, but no HDWTR
+    // hardware frames. Preserve the renderer's seven GPU layers while sourcing
+    // each from the original MM6 water tile.
+    if (engine->gameTitle() == GameTitle::MM6 && name.starts_with("HDWTR"))
+        return "wtrtyl";
+    return name;
 }
 
 OpenGLRenderer::OpenGLRenderer(
@@ -1138,7 +1148,8 @@ void OpenGLRenderer::DrawOutdoorTerrain() {
 
                 if (tunit == unit) {
                     // get texture
-                    auto texture = assets->getBitmap(it->first, it->first.starts_with("generated")); // TODO(captainurist): terrible, terrible hack, redo this.
+                    auto texture = assets->getBitmap(waterLayerBitmapName(it->first),
+                                                     it->first.starts_with("generated"));
                     // send texture data to gpu
                     glTexSubImage3D(GL_TEXTURE_2D_ARRAY,
                         0,
@@ -2428,7 +2439,7 @@ void OpenGLRenderer::DrawOutdoorBuildings() {
 
                 if (tunit == unit) {
                     // get texture
-                    auto texture = assets->getBitmap(it->first);
+                    auto texture = assets->getBitmap(waterLayerBitmapName(it->first));
 
                     glTexSubImage3D(GL_TEXTURE_2D_ARRAY,
                         0,
@@ -2909,7 +2920,7 @@ void OpenGLRenderer::DrawIndoorFaces() {
 
                     if (tunit == unit) {
                         // get texture
-                        auto texture = assets->getBitmap(it->first);
+                        auto texture = assets->getBitmap(waterLayerBitmapName(it->first));
 
                         glTexSubImage3D(GL_TEXTURE_2D_ARRAY,
                             0,
@@ -3431,8 +3442,11 @@ void OpenGLRenderer::_initWaterTiles() {
         return;
 
     for (unsigned i = 0; i < 7; ++i) {
+        // HDWTR frames belong to the later hardware renderer. MM6's shipped
+        // tile table points at wtrtyl; use that original bitmap for the water
+        // layers until MM6's software animation is reconstructed.
         std::string container_name = fmt::format("HDWTR{:03}", i);
-        hd_water_tile_anim[i] = assets->getBitmap(container_name);
+        hd_water_tile_anim[i] = assets->getBitmap(waterLayerBitmapName(container_name));
     }
 }
 

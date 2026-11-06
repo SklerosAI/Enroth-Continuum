@@ -757,9 +757,6 @@ void MPlayer::OpenHouseMovie(std::string_view pMovieName, bool bLoop) {
         return;
     }
 
-    gameTimer->setPaused(true);
-    pAudioPlayer->pauseLooping();
-    pAudioPlayer->MusicPause();
     if (engine->config->debug.NoVideo.value())
         return;
 
@@ -769,7 +766,12 @@ void MPlayer::OpenHouseMovie(std::string_view pMovieName, bool bLoop) {
     }
 
     std::shared_ptr<Movie> pMovie = std::make_shared<Movie>();
-    pMovie->LoadFromLOD(blob);
+    if (!pMovie->LoadFromLOD(blob))
+        return;
+
+    gameTimer->setPaused(true);
+    pAudioPlayer->pauseLooping();
+    pAudioPlayer->MusicPause();
     pMovie_Track = std::dynamic_pointer_cast<IMovie>(pMovie);
     sInHouseMovie = pMovieName;
 }
@@ -807,12 +809,17 @@ void MPlayer::HouseMovieLoop() {
     } else {
         pMovie_Track = nullptr;
         Blob blob = LoadMovie(sInHouseMovie);
-        if (blob) {
-            std::shared_ptr<Movie> pMovie = std::make_shared<Movie>();
-            pMovie->LoadFromLOD(blob);
-            pMovie_Track = std::dynamic_pointer_cast<IMovie>(pMovie);
-            pMovie_Track->Play();
+        if (!blob) {
+            Unload();
+            return;
         }
+        std::shared_ptr<Movie> pMovie = std::make_shared<Movie>();
+        if (!pMovie->LoadFromLOD(blob)) {
+            Unload();
+            return;
+        }
+        pMovie_Track = std::dynamic_pointer_cast<IMovie>(pMovie);
+        pMovie_Track->Play();
         // callback to prevent skipped frame draw
         HouseMovieLoop();
     }

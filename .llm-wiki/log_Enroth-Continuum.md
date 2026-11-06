@@ -49,3 +49,9 @@ Chronological record of wiki activity.
 - Recorded the narrow static result: 24 direct literal C++ loads among 30 retained text-table names, with six lacking a literal load.
 - Added a source summary and updated the handoff and open questions; neither a load nor its absence proves parsing, semantics or non-use.
 - Kept the detailed source-line report ignored locally, retained F2/F3 gate status, and checked 22 wiki pages for frontmatter and local links.
+
+## [2026-11-05] ingest | MM6 runtime map and current F2 evidence
+- by: T-Burton-ND via codex
+- Mapped current engine layers, title seams, tracked specs and probes, and a staged observation and agent-control roadmap without claiming MM6 gameplay.
+- Ingested structural monster, campaign-graph, item-matrix and NPC-text findings into source summaries, handoff and open questions; F2 remains in progress and F3/F4 are unpassed.
+- Linked the ignored, local-only private companion and its report registry while stating that Git does not back it up. Checked 27 wiki pages for frontmatter and local links, excluding schema example targets.

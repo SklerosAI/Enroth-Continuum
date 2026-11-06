@@ -25,7 +25,7 @@ The original new-game initializer clears complete 28-byte records in three conti
 
 ## Conclusion
 
-A [detached MM6 helper](../src/Engine/MM6/MM6ShopStockPurchase.h) now models the proved full-record copy and partial source clear. Keep the `SHOP` save codec gated: an ID-only field loses data and disjoint arrays split the physical alias. The existing `SCLK` refresh-deadline section and normal MM6 SaveLoad guard remain as they are.
+A [detached MM6 helper](../src/Engine/MM6/MM6ShopStockPurchase.h) now models the proved full-record copy and partial source clear. Its integrated focused unit suite passed **4/4**, and the private-backed MM6/LOD gate passed **329/329**. Keep the `SHOP` save codec gated: an ID-only field loses data and disjoint arrays split the physical alias. The existing `SCLK` refresh-deadline section and normal MM6 SaveLoad guard remain as they are.
 
 ## Open follow-ups
 

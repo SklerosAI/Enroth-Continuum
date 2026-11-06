@@ -1518,3 +1518,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - MM6's 128-pixel land and water textures previously shared GPU unit zero while the terrain shader sampled land from unit one. The MM6 renderer now reserves unit one for land and rejects unsupported size/layer conditions; MM7 retains its existing allocation.
 - The integrated all-map and twelve-month headless texture check passed; a hidden first-map recapture showed land/road art and reduced exact-black pixels in the sampled ground region from 57,500 to zero. MM7 control and monitor checks passed without visible window or focus change. Seasonal and shoreline fidelity remain open.
+
+## [2026-11-06] correct | MM6 actual-stat condition priority
+- by: T-Burton-ND via codex
+- The F3-matched original helper selects the first active condition in a fixed 17-condition order. The inherited helper compounded multiple conditions; MM6 now uses the original priority while MM7 retains its existing calculation.
+- Integrated linked unit checks passed 2/2 and a scoped headless MM6 check passed 1/1 over 89 samples without visible window or focus change. Original max-mana outer terms match structurally; item, skill and promoted-class terms plus live save/reload remain open.

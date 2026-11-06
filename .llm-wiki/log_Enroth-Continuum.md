@@ -430,3 +430,9 @@ Chronological record of wiki activity.
 - Joined all 99 retained spell IDs, private guide locators and inherited player/event/monster case sites in an ignored private handoff, with F3-matched source hashes; no proprietary rows entered Git.
 - Added an MM6-only guard before player queue/executor, event, monster and damage effect dispatch; functional wands reject before charge loss. MM7 remains unchanged, and only non-spell bow/blaster player queue actions pass.
 - Built the isolated arm64 unit target, passed six focused spell-item/learning/effect tests, and checked C++ style, private table count, wiki links and diff. Effects and graphical play remain unverified; no original installation was reread or partial MM6 game launched.
+
+## [2026-11-06] finding | MM6 HIRE and RESC identity
+- by: T-Burton-ND via codex
+- Audited current hire, dismissal, event, generated-NPC, name-load and quest-follower paths. A strict HIRE/RESC identity match cannot be justified without a stable source ID: table-only followers, independent flag edits and generated party copies are representable. An aggregate check of the ignored F3-matched NPC table found five duplicate-name groups, including one duplicate name/portrait/profession group; exact rows remain private.
+- Added a bounded, non-mutating correspondence diagnostic that counts exact and hired candidates without rejecting unmatched or ambiguous copies. The isolated arm64 build and 14 focused HIRE/RESC tests passed; direct C++ style and diff checks passed. No original installation reread or partial game launch.
+- Preserving both sections as saved is the current safe load policy. Stable source provenance, MM6 event reachability and F5 hire/dismiss/save checks are required before adding a strict cross-section rule. The known-save assembler was not changed.

@@ -52,3 +52,10 @@ set(ENGINE_TABLES_HEADERS
 add_library(engine_tables STATIC ${ENGINE_TABLES_SOURCES} ${ENGINE_TABLES_HEADERS})
 target_link_libraries(engine_tables PUBLIC engine_data library_lod)
 target_check_style(engine_tables)
+
+if(OE_BUILD_TESTS)
+    add_library(test_engine_tables_mm6_house OBJECT Tests/MM6HouseType_ut.cpp)
+    target_link_libraries(test_engine_tables_mm6_house PUBLIC testing_unit engine_tables)
+    target_check_style(test_engine_tables_mm6_house)
+    target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_tables_mm6_house)
+endif()

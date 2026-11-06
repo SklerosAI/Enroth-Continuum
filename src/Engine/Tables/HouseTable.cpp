@@ -1,5 +1,6 @@
 #include "HouseTable.h"
 
+#include <algorithm>
 #include <array>
 #include <map>
 #include <string>
@@ -22,6 +23,86 @@ static int intOrZero(std::string_view token) {
 
 static float floatOrZero(std::string_view token) {
     return token.empty() ? 0.0f : fromString<float>(token);
+}
+
+HouseType parseHouseType(std::string_view label, GameTitle gameTitle) {
+    static const std::map<std::string, HouseType, ascii::NoCaseLess> houseTypeMap = {
+        {"Weapon Shop", HOUSE_TYPE_WEAPON_SHOP},
+        {"Armor Shop", HOUSE_TYPE_ARMOR_SHOP},
+        {"Magic Shop", HOUSE_TYPE_MAGIC_SHOP},
+        {"Alchemist", HOUSE_TYPE_ALCHEMY_SHOP},
+        {"Stables", HOUSE_TYPE_STABLE},
+        {"Boats", HOUSE_TYPE_BOAT},
+        {"Temple", HOUSE_TYPE_TEMPLE},
+        {"Training", HOUSE_TYPE_TRAINING_GROUND},
+        {"Town Hall", HOUSE_TYPE_TOWN_HALL},
+        {"Tavern", HOUSE_TYPE_TAVERN},
+        {"Bank", HOUSE_TYPE_BANK},
+        {"Fire Guild", HOUSE_TYPE_FIRE_GUILD},
+        {"Air Guild", HOUSE_TYPE_AIR_GUILD},
+        {"Water Guild", HOUSE_TYPE_WATER_GUILD},
+        {"Earth Guild", HOUSE_TYPE_EARTH_GUILD},
+        {"Spirit Guild", HOUSE_TYPE_SPIRIT_GUILD},
+        {"Mind Guild", HOUSE_TYPE_MIND_GUILD},
+        {"Body Guild", HOUSE_TYPE_BODY_GUILD},
+        {"Light Guild", HOUSE_TYPE_LIGHT_GUILD},
+        {"Dark Guild", HOUSE_TYPE_DARK_GUILD},
+        {"Element Guild", HOUSE_TYPE_ELEMENTAL_GUILD}, // This is MM6 only.
+        {"Self Guild", HOUSE_TYPE_SELF_GUILD},
+        {"Mirrored Path Guild", HOUSE_TYPE_MIRRORED_PATH_GUILD},
+        {"Mercenary Guild", HOUSE_TYPE_TOWN_HALL}, // This is MM6 only. TODO(captainurist): Is this right and not Merc Guild (18)?
+    };
+
+    if (label.empty())
+        return HOUSE_TYPE_INVALID;
+
+    auto known = houseTypeMap.find(std::string(label));
+    if (known != houseTypeMap.end()) {
+        if (gameTitle == GameTitle::MM6 && ascii::toLower(label) == "mercenary guild")
+            return HOUSE_TYPE_MERCENARY_GUILD;
+        return known->second;
+    }
+
+    if (gameTitle != GameTitle::MM6)
+        return HOUSE_TYPE_MERCENARY_GUILD;
+
+    static const std::map<std::string, HouseType, ascii::NoCaseLess> mm6Types = {
+        {"General Store", HOUSE_TYPE_GENERAL_STORE},
+        {"Merc Guild", HOUSE_TYPE_MERCENARY_GUILD},
+        {"Thieves Guild", HOUSE_TYPE_SHADOW_GUILD},
+        {"Throne", HOUSE_TYPE_THRONE_ROOM},
+        {"City Council", HOUSE_TYPE_TOWN_HALL_MM6},
+        {"Circus", HOUSE_TYPE_CIRCUS},
+        {"Jail", HOUSE_TYPE_JAIL},
+        {"The Seer", HOUSE_TYPE_SEER},
+        {"The Oracle", HOUSE_TYPE_HOUSE},
+        {"Dungeon Ent", HOUSE_TYPE_DUNGEON},
+        {"Castle Dun Ent", HOUSE_TYPE_DUNGEON},
+        {"Pyramid Ent", HOUSE_TYPE_DUNGEON},
+        {"Hive Ent", HOUSE_TYPE_DUNGEON},
+        {"Castle Entrance", HOUSE_TYPE_CASTLE},
+        {"Temple Ent", HOUSE_TYPE_HOUSE},
+        {"Tent", HOUSE_TYPE_HOUSE},
+        {"Wagon", HOUSE_TYPE_HOUSE},
+        {"Library", HOUSE_TYPE_HOUSE},
+        {"Hermit", HOUSE_TYPE_HOUSE},
+        {"Not Used", HOUSE_TYPE_INVALID},
+    };
+    auto mm6 = mm6Types.find(std::string(label));
+    if (mm6 != mm6Types.end())
+        return mm6->second;
+
+    std::string lower = ascii::toLower(label);
+    std::string_view suffix;
+    if (lower.starts_with("house "))
+        suffix = std::string_view(lower).substr(6);
+    else if (lower.starts_with("hosue "))
+        suffix = std::string_view(lower).substr(6);
+    if (suffix.size() >= 2 && (suffix[0] == 'p' || suffix[0] == 'm' || suffix[0] == 'r') &&
+        std::all_of(suffix.begin() + 1, suffix.end(), [](char c) { return c >= '0' && c <= '9'; }))
+        return HOUSE_TYPE_HOUSE;
+
+    return HOUSE_TYPE_INVALID;
 }
 
 void initializeHouses(const Blob &houses, GameTitle gameTitle) {
@@ -51,33 +132,6 @@ void initializeHouses(const Blob &houses, GameTitle gameTitle) {
     // 21: "Map"                - exit map id                                               (not used in MM7)
     // 22: "Restrictions"       - exit gating quest bit                                     (not used in MM7)
     // 23: "Text"               - exit text                                                 (not used in MM7)
-    static const std::map<std::string, HouseType, ascii::NoCaseLess> houseTypeMap = {
-        {"Weapon Shop", HOUSE_TYPE_WEAPON_SHOP},
-        {"Armor Shop", HOUSE_TYPE_ARMOR_SHOP},
-        {"Magic Shop", HOUSE_TYPE_MAGIC_SHOP},
-        {"Alchemist", HOUSE_TYPE_ALCHEMY_SHOP},
-        {"Stables", HOUSE_TYPE_STABLE},
-        {"Boats", HOUSE_TYPE_BOAT},
-        {"Temple", HOUSE_TYPE_TEMPLE},
-        {"Training", HOUSE_TYPE_TRAINING_GROUND},
-        {"Town Hall", HOUSE_TYPE_TOWN_HALL},
-        {"Tavern", HOUSE_TYPE_TAVERN},
-        {"Bank", HOUSE_TYPE_BANK},
-        {"Fire Guild", HOUSE_TYPE_FIRE_GUILD},
-        {"Air Guild", HOUSE_TYPE_AIR_GUILD},
-        {"Water Guild", HOUSE_TYPE_WATER_GUILD},
-        {"Earth Guild", HOUSE_TYPE_EARTH_GUILD},
-        {"Spirit Guild", HOUSE_TYPE_SPIRIT_GUILD},
-        {"Mind Guild", HOUSE_TYPE_MIND_GUILD},
-        {"Body Guild", HOUSE_TYPE_BODY_GUILD},
-        {"Light Guild", HOUSE_TYPE_LIGHT_GUILD},
-        {"Dark Guild", HOUSE_TYPE_DARK_GUILD},
-        {"Element Guild", HOUSE_TYPE_ELEMENTAL_GUILD}, // This is MM6 only.
-        {"Self Guild", HOUSE_TYPE_SELF_GUILD},
-        {"Mirrored Path Guild", HOUSE_TYPE_MIRRORED_PATH_GUILD},
-        {"Mercenary Guild", HOUSE_TYPE_TOWN_HALL}, // This is MM6 only. TODO(captainurist): Is this right and not Merc Guild (18)?
-    };
-
     auto houseInt = [gameTitle](std::string_view token) {
         if (gameTitle == GameTitle::MM6) {
             int result = 0;
@@ -93,7 +147,7 @@ void initializeHouses(const Blob &houses, GameTitle gameTitle) {
         //                     entirely, and just use typed ids. Do this once we iron out the details of how #mm6
         //                     enums will be handled by the engine. Also apply to other table parsers.
         HouseId houseId = static_cast<HouseId>(fromString<int>(tokens[0]));
-        houseTable[houseId].uType = tokens[2].empty() ? HOUSE_TYPE_INVALID : valueOr(houseTypeMap, tokens[2], HOUSE_TYPE_MERCENARY_GUILD);
+        houseTable[houseId].uType = parseHouseType(tokens[2], gameTitle);
         houseTable[houseId].uAnimationID = houseInt(tokens[4]);
         houseTable[houseId].name = unquote(tokens[5]);
         houseTable[houseId].pProprieterName = unquote(tokens[6]);

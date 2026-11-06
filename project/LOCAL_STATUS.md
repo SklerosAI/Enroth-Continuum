@@ -590,3 +590,10 @@ helper stages both physical stock and clock owners before publishing either.
 Its focused shop/clock suites passed **8/8**, and the private-backed MM6/LOD
 gate passed **338/338**. Item generation, live house services and a nonzero
 native-save comparison remain open.
+
+Detached `BEAC` staging can now rebuild all saved beacon and thumbnail RGBA
+bytes into owned CPU images before any renderer or Party mutation; its linked
+focused suite passes **6/6**. The current viewport screenshot changes render
+state and requires a stable game/render-thread capture point, while
+`GraphicsImage::Create()` allocates GPU textures immediately. Renderer image
+publication and the all-owner commit remain guarded.

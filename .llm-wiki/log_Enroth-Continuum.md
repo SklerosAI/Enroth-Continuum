@@ -195,3 +195,9 @@ Chronological record of wiki activity.
 - Linked the six nonliteral-load table roles, nine extra STR resources, media trigger joins, full 61-page manual and five-page card review, and all 11 NWC guide pages to the agent handoff and source index.
 - Recorded the guarded 23-input F3 identity and capture runbook; frozen evidence will include text/TSV ledgers and guide PDFs. No original installation was read or partial MM6 game launched.
 - Kept exact per-ID rows, guide claims and media names in ignored local reports; F2 remained open at this ingest. Synthetic preflight tests passed and 51 wiki pages had no broken local links.
+
+## [2026-11-05] update | MM6 F2 frozen for preflight
+- by: T-Burton-ND via codex
+- Recorded the integration decision that all table/map/resource families and guide source families have F2 classification and explicit F3/F4/F5 routes; original-only behavior remains named uncertainty.
+- Updated the current wiki handoff and source summaries from the open gate to F2-frozen, while keeping F3 unrun and F4 unstarted.
+- Verified eight synthetic preflight tests and 51 wiki pages with no broken local links before this log commit.

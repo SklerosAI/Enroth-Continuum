@@ -180,6 +180,15 @@ that requirement.
   not proof that matching names have matching effects. The first three mana
   costs differ for 27 IDs. The MM6 `Elec`, `Cold` and `Pois` damage tags on 11
   spells currently fall through `SpellStats::Initialize` to physical damage.
+- [x] Audit every MM6 spell ID against static `pSpellDatas`, current cast
+  cases, all spell scroll/book item bands, active event casts and monster spell
+  labels. `scripts/mm6_probe_spell_effects.py` writes per-ID evidence privately;
+  the [spell-effect F2 audit](MM6_SPELL_EFFECT_F2.md) records source paths and
+  school-level acceptance. The MM6 text loader never replaces static MM7
+  `pSpellDatas`; nine inherited rows require Grandmaster, all 99 MM6 scroll
+  and 99 book IDs fall outside their corresponding inherited mapping ranges,
+  and 22 of 129 active event-cast records reference IDs whose same-ID labels
+  differ or are absent. None proves a reachable cast or correct effect.
 - [ ] Implement MM6-specific spell IDs, casting effects, three mastery levels,
   costs, recovery, damage/resistance types, target rules, buff duration,
   scroll/book/wand mappings, monster/event casts, visuals and descriptions.

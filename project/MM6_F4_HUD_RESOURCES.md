@@ -1,6 +1,6 @@
 # MM6 HUD navigation resources
 
-Status: **compass/zoom and four frame candidates; headless resource checks pending; visual acceptance pending** (2026-11-06).
+Status: **MM6 frame, baked book/action controls and time background staged; linked checks and visual acceptance pending** (2026-11-06).
 
 The inherited `SetUserInterface` skin requests many MM7 alignment-specific icons that are absent from the private MM6 icon archive. `UI_Create` likewise requests MM7 tome and status art. The retained archive contains a compass strip and two zoom-labelled controls whose names and dimensions make them plausible HUD candidates. The exact plus/minus meaning remains provisional. `hudNavigationResources(GameTitle, ...)` selects those three MM6 identifiers for every alignment while passing through the exact existing MM7 identifiers. `SetUserInterface` uses the result at its three alignment branches. A headless test checks that all three chosen MM6 entries can be read, and a pure test checks the title selection and exact MM7 neutral, good and evil preservation; neither test establishes zoom semantics.
 
@@ -14,6 +14,12 @@ The MM6 History button pointer is explicitly null. The only route that stores it
 
 The hit boxes are bounded candidates measured against the retained frame; a graphical pass must verify cursor targeting and click feedback. The remaining minimap frame, status art and other skin requests stay explicit presentation blockers. The similarly named MM6 `book` item art belongs to spell-book inventory entries and is not evidence for HUD tomes. Resource presence alone does not establish a usable MM6 in-game interface; no detailed private icon inventory is tracked.
 
-After the save/chest map gates open, a graphical pass must inspect the frame seams, compass crop and heading, zoom button meaning and feedback, all four book controls and their opened pages, and the surrounding HUD at the actual render resolution. Resolve the other icon families from source evidence and then verify them visually before claiming an MM6 HUD.
+The same right frame has four baked lower controls. The original manual identifies their left-to-right actions as Cast Spell, Rest, Quick Reference and Game Options. `UI_Create` now creates MM6-only textureless hit boxes over those four visible ovals at (490, 398), (524, 398), (559, 398) and (594, 398), each 29×61. The existing messages and keyboard actions are retained. `OnButtonClick` skips the absent pressed image only for these four MM6 buttons, while still playing the click sound; the MM7 image-backed path is unchanged. The hit-box bounds are image-derived candidates, so cursor alignment and click feedback require a graphical pass. A headless test checks live button metadata, nonoverlap and absence of separate MM6 action textures. The frame-presence test supplies the underlying art; the available `buttcast` image does not establish four independent pressed states.
+
+The retained MM6 time background is 360×300 and matches the Calendar/Events page role. The Calendar view now loads it only for MM6; MM7 continues loading `sbdate-time`. Headless and pure tests check its availability and title selection. The current Calendar text coordinates, title wording, moon icons and the full meaning of the MM6 Events page still need review and graphical acceptance.
+
+The inherited NPC-scroll buttons still request absent MM7 alignment icons. The retained `arrowl*`/`arrowr*` sequence is used by the MM6 party-creation UI, not proven as the in-game NPC-scroll control. Other generic arrow images also lack a verified right-panel role. No NPC arrow alias or position change is made until original UI evidence identifies the correct art and hit boxes. The existing NPC-scroll placeholders and possible click feedback remain a presentation blocker.
+
+After the save/chest map gates open, a graphical pass must inspect the frame seams, compass crop and heading, zoom button meaning and feedback, all four book and action controls and their opened pages, and the surrounding HUD at the actual render resolution. Resolve the NPC arrows and other icon families from source evidence and then verify them visually before claiming an MM6 HUD.
 
 See the [main-menu resource packet](MM6_F4_MAIN_MENU_ASSETS.md), [headless harness packet](MM6_F4_HEADLESS_HARNESS.md), and [MM6 screen audit](MM6_UI_SCREEN_AUDIT_F2.md).

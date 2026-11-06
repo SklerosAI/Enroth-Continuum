@@ -19,4 +19,8 @@ The omitted History pointer is null. A source audit found its only potential der
 
 The MM6 hit boxes are image-measured candidates pending graphical cursor and click checks. The minimap frame, status art and other skin pieces remain open. The similarly named MM6 book item icons are spell-book inventory art. Frame seams, compass behavior, zoom semantics and action feedback need graphical acceptance when the gameplay guards permit a map.
 
+The MM6 right frame also bakes four lower action controls, identified in the original manual as Cast Spell, Rest, Quick Reference and Game Options. `MM6HudActionControls.h` supplies 29×61 bounded hit boxes at x490/524/559/594 and y398. `UI_Create` uses those rectangles only for MM6, without the absent MM7 action textures; the existing messages and actions remain. `OnButtonClick` skips drawing a missing pressed texture only for these four MM6 buttons. Headless tests inspect the live rects, messages, actions, texture absence and nonoverlap. MM7 continues through its original asset and button branch. Image-measured targeting and press feedback await graphical acceptance.
+
+`CalendarBook` now selects the retained 360×300 MM6 time background while preserving the MM7 `sbdate-time` lookup. Resource availability and title selection have tests; text alignment and Events semantics are unverified. The `arrowl*`/`arrowr*` sequence is already a party-creation resource and does not establish NPC-scroll art. Keep the inherited NPC-scroll icon requests visible as an unresolved presentation seam; do not alias a generic arrow without original role and placement evidence.
+
 See also: [Headless Harness](MM6-F4-Headless-Harness.md), [Main Menu Assets](MM6-F4-Main-Menu-Assets.md), [Runtime Isolation](Runtime-Isolation.md).

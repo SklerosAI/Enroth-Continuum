@@ -10,6 +10,7 @@
 
 #include "GUI/HudFrameResources.h"
 #include "GUI/HudNavigationResources.h"
+#include "GUI/MM6HudActionControls.h"
 #include "GUI/MM6HudBookControls.h"
 
 #include "Engine/Engine.h"
@@ -452,7 +453,12 @@ void OnButtonClick::Update() {
     if (_playSound) {
         pAudioPlayer->playUISound(SOUND_StartMainChoice02);
     }
-    render->DrawQuad2D(_button->vTextures[0], frameRect.topLeft());
+    const bool bakedMm6Action = useMm6HudActionControls(engine->gameTitle()) &&
+        (_button == pBtn_CastSpell || _button == pBtn_Rest ||
+         _button == pBtn_QuickReference || _button == pBtn_GameSettings) &&
+        _button->vTextures.empty();
+    if (!bakedMm6Action)
+        render->DrawQuad2D(_button->vTextures[0], frameRect.topLeft());
     if (!sHint.empty()) {
         _button->DrawLabel(sHint, assets->pFontCreate.get(), colorTable.White);
     }
@@ -595,10 +601,10 @@ void SetUserInterface(PartyAlignment align) {
         game_ui_btn_zoomin = assets->getIcon(navigation.zoomIn);
         game_ui_btn_zoomout = assets->getIcon(navigation.zoomOut);
         game_ui_player_selection_frame = assets->getIcon("IB-selec-C");
-        game_ui_btn_cast = assets->getIcon("ib-m1d-c");
-        game_ui_btn_rest = assets->getIcon("ib-m2d-c");
-        game_ui_btn_quickref = assets->getIcon("ib-m3d-c");
-        game_ui_btn_settings = assets->getIcon("ib-m4d-c");
+        game_ui_btn_cast = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m1d-c");
+        game_ui_btn_rest = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m2d-c");
+        game_ui_btn_quickref = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m3d-c");
+        game_ui_btn_settings = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m4d-c");
         ui_exit_cancel_button_background = assets->getIcon("ib-bcu-c");
 
         game_ui_playerbuff_bless = assets->getIcon("isg-01-c");
@@ -646,10 +652,10 @@ void SetUserInterface(PartyAlignment align) {
         ui_btn_npc_left = assets->getIcon("IB-NPCLD-A");
         ui_btn_npc_right = assets->getIcon("IB-NPCRD-A");
         game_ui_player_selection_frame = assets->getIcon("IB-selec-A");
-        game_ui_btn_cast = assets->getIcon("ib-m1d-a");
-        game_ui_btn_rest = assets->getIcon("ib-m2d-a");
-        game_ui_btn_quickref = assets->getIcon("ib-m3d-a");
-        game_ui_btn_settings = assets->getIcon("ib-m4d-a");
+        game_ui_btn_cast = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m1d-a");
+        game_ui_btn_rest = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m2d-a");
+        game_ui_btn_quickref = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m3d-a");
+        game_ui_btn_settings = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m4d-a");
         game_ui_btn_zoomin = assets->getIcon(navigation.zoomIn);
         game_ui_btn_zoomout = assets->getIcon(navigation.zoomOut);
         ui_exit_cancel_button_background = assets->getIcon("ib-bcu-a");
@@ -701,10 +707,10 @@ void SetUserInterface(PartyAlignment align) {
         game_ui_btn_zoomin = assets->getIcon(navigation.zoomIn);
         game_ui_btn_zoomout = assets->getIcon(navigation.zoomOut);
         game_ui_player_selection_frame = assets->getIcon("IB-selec-B");
-        game_ui_btn_cast = assets->getIcon("ib-m1d-b");
-        game_ui_btn_rest = assets->getIcon("ib-m2d-b");
-        game_ui_btn_quickref = assets->getIcon("ib-m3d-b");
-        game_ui_btn_settings = assets->getIcon("ib-m4d-b");
+        game_ui_btn_cast = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m1d-b");
+        game_ui_btn_rest = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m2d-b");
+        game_ui_btn_quickref = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m3d-b");
+        game_ui_btn_settings = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m4d-b");
         ui_exit_cancel_button_background = assets->getIcon("ib-bcu-b");
 
         game_ui_playerbuff_bless = assets->getIcon("isg-01-b");
@@ -1150,18 +1156,33 @@ void UI_Create() {
     pPrimaryWindow->CreateButton({476, 322}, {77, 17}, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_Food, UIMSG_0, 0);
     pPrimaryWindow->CreateButton({555, 322}, {77, 17}, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_Funds, UIMSG_0, 0);
 
-    pBtn_CastSpell = pPrimaryWindow->CreateButton("Game_CastSpell", {476, 450}, game_ui_btn_cast->size(), BUTTON_TYPE_NORMAL, 0,
-                                                  UIMSG_SpellBookWindow, 0, INPUT_ACTION_OPEN_SPELLBOOK,
-                                                  localization->str(LSTR_CAST_SPELL), { game_ui_btn_cast });
-    pBtn_Rest = pPrimaryWindow->CreateButton("Game_Rest", {518, 450}, game_ui_btn_rest->size(), BUTTON_TYPE_NORMAL, 0,
-                                             UIMSG_RestWindow, 0, INPUT_ACTION_REST,
-                                             localization->str(LSTR_REST), { game_ui_btn_rest });
-    pBtn_QuickReference = pPrimaryWindow->CreateButton({560, 450}, game_ui_btn_quickref->size(), BUTTON_TYPE_NORMAL, 0,
-                                                       UIMSG_QuickReference, 0, INPUT_ACTION_OPEN_QUICK_REFERENCE,
-                                                       localization->str(LSTR_QUICK_REFERENCE), { game_ui_btn_quickref });
-    pBtn_GameSettings = pPrimaryWindow->CreateButton({602, 450}, game_ui_btn_settings->size(), BUTTON_TYPE_NORMAL, 0,
-                                                     UIMSG_GameMenuButton, 0, INPUT_ACTION_INVALID,
-                                                     localization->str(LSTR_GAME_OPTIONS), { game_ui_btn_settings });
+    if (useMm6HudActionControls(engine->gameTitle())) {
+        const auto controls = mm6HudActionControls();
+        auto createAction = [&] (const MM6HudActionControl &control, std::string id, std::string_view label) {
+            // CreateButton adds one to each supplied dimension. The MM6 frame
+            // supplies the button art, so these have no separate textures.
+            return pPrimaryWindow->CreateButton(std::move(id), control.rect.topLeft(),
+                {control.rect.w - 1, control.rect.h - 1}, BUTTON_TYPE_NORMAL, 0,
+                control.message, 0, control.action, label);
+        };
+        pBtn_CastSpell = createAction(controls[0], "Game_CastSpell", localization->str(LSTR_CAST_SPELL));
+        pBtn_Rest = createAction(controls[1], "Game_Rest", localization->str(LSTR_REST));
+        pBtn_QuickReference = createAction(controls[2], {}, localization->str(LSTR_QUICK_REFERENCE));
+        pBtn_GameSettings = createAction(controls[3], {}, localization->str(LSTR_GAME_OPTIONS));
+    } else {
+        pBtn_CastSpell = pPrimaryWindow->CreateButton("Game_CastSpell", {476, 450}, game_ui_btn_cast->size(), BUTTON_TYPE_NORMAL, 0,
+                                                      UIMSG_SpellBookWindow, 0, INPUT_ACTION_OPEN_SPELLBOOK,
+                                                      localization->str(LSTR_CAST_SPELL), { game_ui_btn_cast });
+        pBtn_Rest = pPrimaryWindow->CreateButton("Game_Rest", {518, 450}, game_ui_btn_rest->size(), BUTTON_TYPE_NORMAL, 0,
+                                                 UIMSG_RestWindow, 0, INPUT_ACTION_REST,
+                                                 localization->str(LSTR_REST), { game_ui_btn_rest });
+        pBtn_QuickReference = pPrimaryWindow->CreateButton({560, 450}, game_ui_btn_quickref->size(), BUTTON_TYPE_NORMAL, 0,
+                                                           UIMSG_QuickReference, 0, INPUT_ACTION_OPEN_QUICK_REFERENCE,
+                                                           localization->str(LSTR_QUICK_REFERENCE), { game_ui_btn_quickref });
+        pBtn_GameSettings = pPrimaryWindow->CreateButton({602, 450}, game_ui_btn_settings->size(), BUTTON_TYPE_NORMAL, 0,
+                                                         UIMSG_GameMenuButton, 0, INPUT_ACTION_INVALID,
+                                                         localization->str(LSTR_GAME_OPTIONS), { game_ui_btn_settings });
+    }
     pBtn_NPCLeft = pPrimaryWindow->CreateButton({469, 178}, ui_btn_npc_left->size(), BUTTON_TYPE_NORMAL, 0,
                                                 UIMSG_ScrollNPCPanel, 0, INPUT_ACTION_INVALID, "", {ui_btn_npc_left });
     pBtn_NPCRight = pPrimaryWindow->CreateButton({626, 178}, ui_btn_npc_right->size(), BUTTON_TYPE_NORMAL, 0,

@@ -14,6 +14,7 @@
 #include "Engine/Graphics/Viewport.h"
 
 #include "GUI/GUIButton.h"
+#include "GUI/UI/Books/CalendarBackgroundResources.h"
 
 GraphicsImage *ui_book_calendar_background = nullptr;
 
@@ -41,7 +42,7 @@ GUIWindow_CalendarBook::GUIWindow_CalendarBook() : GUIWindow_Book() {
 
     pChildBooksOverlay = std::make_unique<GUIWindow_BooksButtonOverlay>(Pointi{570, 354}, Sizei{0, 0}, pBtn_Calendar);
 
-    ui_book_calendar_background = assets->getIcon("sbdate-time");
+    ui_book_calendar_background = assets->getIcon(calendarBackgroundIcon(engine->gameTitle()));
     ui_book_calendar_moon_new = assets->getIcon("moon_new");
     ui_book_calendar_moon_4 = assets->getIcon("moon_4");
     ui_book_calendar_moon_2 = assets->getIcon("moon_2");

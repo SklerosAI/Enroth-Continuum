@@ -18,8 +18,11 @@
 #include "GUI/GUIWindow.h"
 #include "GUI/HudFrameResources.h"
 #include "GUI/HudNavigationResources.h"
+#include "GUI/MM6HudActionControls.h"
 #include "GUI/MM6HudBookControls.h"
+#include "GUI/UI/Books/CalendarBackgroundResources.h"
 #include "GUI/UI/MainMenuResources.h"
+#include "GUI/UI/UIGame.h"
 
 #include "Library/FileSystem/Memory/MemoryFileSystem.h"
 #include "Library/Platform/Null/NullEventLoop.h"
@@ -130,6 +133,47 @@ GAME_TEST(MM6Headless, FourBookHitBoxesAndActions) {
                 EXPECT_FALSE(actual[j]->Contains(expected[i].rect.center()));
     }
     EXPECT_EQ(pBtn_History, nullptr);
+}
+
+GAME_TEST(MM6Headless, BakedActionHitBoxesAndCalendarBackground) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_NE(pPrimaryWindow, nullptr);
+    const auto expected = mm6HudActionControls();
+    const std::array<GUIButton *, 4> actual = {
+        pBtn_CastSpell, pBtn_Rest, pBtn_QuickReference, pBtn_GameSettings
+    };
+    for (size_t i = 0; i < actual.size(); ++i) {
+        ASSERT_NE(actual[i], nullptr);
+        EXPECT_EQ(actual[i]->rect, expected[i].rect);
+        EXPECT_EQ(actual[i]->msg, expected[i].message);
+        EXPECT_EQ(actual[i]->action, expected[i].action);
+        EXPECT_TRUE(actual[i]->vTextures.empty());
+        EXPECT_TRUE(actual[i]->Contains(expected[i].rect.center()));
+        for (size_t j = 0; j < actual.size(); ++j)
+            if (i != j)
+                EXPECT_FALSE(actual[j]->Contains(expected[i].rect.center()));
+    }
+    EXPECT_EQ(game_ui_btn_cast, nullptr);
+    EXPECT_EQ(game_ui_btn_rest, nullptr);
+    EXPECT_EQ(game_ui_btn_quickref, nullptr);
+    EXPECT_EQ(game_ui_btn_settings, nullptr);
+    EXPECT_EQ(engine->resources()->iconSize(calendarBackgroundIcon(GameTitle::MM6)), Sizei(360, 300));
+}
+
+TEST(MM6HeadlessActionControls, TitleIsolation) {
+    EXPECT_TRUE(useMm6HudActionControls(GameTitle::MM6));
+    EXPECT_FALSE(useMm6HudActionControls(GameTitle::MM7));
+    const auto controls = mm6HudActionControls();
+    EXPECT_EQ(controls[0].message, UIMSG_SpellBookWindow);
+    EXPECT_EQ(controls[0].action, INPUT_ACTION_OPEN_SPELLBOOK);
+    EXPECT_EQ(controls[1].message, UIMSG_RestWindow);
+    EXPECT_EQ(controls[1].action, INPUT_ACTION_REST);
+    EXPECT_EQ(controls[2].message, UIMSG_QuickReference);
+    EXPECT_EQ(controls[2].action, INPUT_ACTION_OPEN_QUICK_REFERENCE);
+    EXPECT_EQ(controls[3].message, UIMSG_GameMenuButton);
+    EXPECT_EQ(controls[3].action, INPUT_ACTION_INVALID);
+    EXPECT_EQ(calendarBackgroundIcon(GameTitle::MM6), "time_bg");
+    EXPECT_EQ(calendarBackgroundIcon(GameTitle::MM7), "sbdate-time");
 }
 
 TEST(MM6HeadlessBookControls, TitleIsolation) {

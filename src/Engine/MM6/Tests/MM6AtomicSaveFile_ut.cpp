@@ -82,6 +82,11 @@ std::vector<std::uint8_t> read(const std::filesystem::path &path) {
     return {std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
 }
 
+void write(const std::filesystem::path &path, const std::vector<std::uint8_t> &bytes) {
+    std::ofstream file(path, std::ios::binary);
+    file.write(reinterpret_cast<const char *>(bytes.data()), bytes.size());
+}
+
 } // namespace
 
 #ifndef _WIN32
@@ -156,5 +161,41 @@ UNIT_TEST(MM6AtomicSaveFile, RejectsInvalidCandidateAndDestination) {
     EXPECT_THROW(mm6::writeAtomicSaveFile(profile.root(), "save001.ec6", sample(7)), std::exception);
     EXPECT_EQ(read(profile.save()), std::vector<std::uint8_t>({'b', 'a', 'd'}));
     EXPECT_THROW((void) mm6::loadRecoverableSaveFile(profile.root(), "save001.ec6"), std::exception);
+}
+
+UNIT_TEST(MM6AtomicSaveFile, ListsOnlyKnownMM6SlotsWithoutRecoveringThem) {
+    TestProfile profile;
+    EXPECT_TRUE(mm6::listKnownSaveSlots(profile.root()).empty());
+    mm6::writeAtomicSaveFile(profile.root(), "save001.ec6", sample(1));
+    mm6::writeAtomicSaveFile(profile.root(), "save002.ec6", sample(2));
+    mm6::writeAtomicSaveFile(profile.root(), "save002.ec6", sample(3));
+    std::filesystem::remove(profile.root() / "saves/save002.ec6");
+    mm6::writeAtomicSaveFile(profile.root(), "save003.ec6", sample(4));
+    mm6::writeAtomicSaveFile(profile.root(), "save003.ec6", sample(5));
+    write(profile.root() / "saves/save003.ec6", malformedKnownSave(6));
+    write(profile.root() / "saves/save004.ec6", malformedKnownSave(7));
+    write(profile.root() / "saves/save005.mm7", sample(8));
+    write(profile.root() / "saves/.save006.ec6.tmp.123456", sample(9));
+
+    std::vector<mm6::SaveSlotInfo> slots = mm6::listKnownSaveSlots(profile.root());
+    ASSERT_EQ(slots.size(), 3);
+    EXPECT_EQ(slots[0].fileName, "save001.ec6");
+    EXPECT_EQ(slots[0].header.displayName, "Sample 1");
+    EXPECT_FALSE(slots[0].needsRecovery);
+    EXPECT_EQ(slots[1].fileName, "save002.ec6");
+    EXPECT_EQ(slots[1].header.displayName, "Sample 2");
+    EXPECT_TRUE(slots[1].needsRecovery);
+    EXPECT_EQ(slots[2].fileName, "save003.ec6");
+    EXPECT_EQ(slots[2].header.displayName, "Sample 4");
+    EXPECT_TRUE(slots[2].needsRecovery);
+    EXPECT_FALSE(std::filesystem::exists(profile.root() / "saves/save002.ec6"));
+    EXPECT_EQ(read(profile.root() / "saves/save003.ec6"), malformedKnownSave(6));
+
+    std::filesystem::create_symlink(profile.save(), profile.root() / "saves/save006.ec6");
+    EXPECT_THROW((void) mm6::listKnownSaveSlots(profile.root()), std::exception);
+    std::filesystem::remove(profile.root() / "saves/save006.ec6");
+    TestProfile redirected;
+    std::filesystem::create_directory_symlink(profile.root() / "saves", redirected.root() / "saves");
+    EXPECT_THROW((void) mm6::listKnownSaveSlots(redirected.root()), std::exception);
 }
 #endif

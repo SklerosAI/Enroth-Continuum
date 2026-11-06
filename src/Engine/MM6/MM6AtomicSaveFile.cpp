@@ -3,6 +3,7 @@
 #include <cerrno>
 #include <cstring>
 #include <fstream>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <system_error>
@@ -69,14 +70,30 @@ std::vector<std::uint8_t> readBoundedFile(const std::filesystem::path &path) {
     return bytes;
 }
 
-std::vector<std::uint8_t> readValidatedFile(const std::filesystem::path &path) {
+std::vector<std::uint8_t> readValidatedFile(const std::filesystem::path &path,
+                                            SaveHeaderFields *header = nullptr) {
     std::vector<std::uint8_t> bytes = readBoundedFile(path);
     try {
-        (void) decodeKnownSave(bytes);
+        KnownSaveFields fields = decodeKnownSave(bytes);
+        if (header)
+            *header = std::move(fields.metadata.header);
     } catch (const std::runtime_error &) {
         throw InvalidSaveFile("MM6 known save validation failed");
     }
     return bytes;
+}
+
+std::optional<std::string> slotNameFromFile(std::string name) {
+    if (name.ends_with(".ec6.bak"))
+        name.resize(name.size() - 4);
+    if (!name.ends_with(".ec6"))
+        return std::nullopt;
+    try {
+        validateSlot(name);
+    } catch (const std::invalid_argument &) {
+        return std::nullopt;
+    }
+    return name;
 }
 
 #ifndef _WIN32
@@ -228,6 +245,50 @@ std::optional<std::vector<std::uint8_t>> loadRecoverableSaveFile(
     std::vector<std::uint8_t> recovered = readValidatedFile(backup);
     restoreBackup(directory, slotName, recovered);
     return recovered;
+#endif
+}
+
+std::vector<SaveSlotInfo> listKnownSaveSlots(const std::filesystem::path &profileRoot) {
+#ifdef _WIN32
+    throw std::runtime_error("native MM6 save slots are unsupported on Windows");
+#else
+    const std::filesystem::path directory = savesDirectory(profileRoot, "save000.ec6");
+    const std::filesystem::file_status directoryStatus = std::filesystem::symlink_status(directory);
+    if (directoryStatus.type() == std::filesystem::file_type::not_found)
+        return {};
+    if (!std::filesystem::is_directory(directoryStatus))
+        throw std::runtime_error("MM6 saves path is not a native directory");
+
+    std::set<std::string> names;
+    for (const std::filesystem::directory_entry &entry : std::filesystem::directory_iterator(directory)) {
+        if (std::optional<std::string> name = slotNameFromFile(entry.path().filename().string()))
+            names.insert(std::move(*name));
+    }
+
+    std::vector<SaveSlotInfo> slots;
+    for (const std::string &name : names) {
+        const std::filesystem::path primary = directory / name;
+        const std::filesystem::path backup = directory / (name + ".bak");
+        SaveHeaderFields header;
+        if (regularFileExists(primary)) {
+            try {
+                (void) readValidatedFile(primary, &header);
+                slots.push_back({name, std::move(header), false});
+                continue;
+            } catch (const InvalidSaveFile &) {
+                // A valid backup may still recover this slot.
+            }
+        }
+        if (regularFileExists(backup)) {
+            try {
+                (void) readValidatedFile(backup, &header);
+                slots.push_back({name, std::move(header), true});
+            } catch (const InvalidSaveFile &) {
+                // Do not present an unusable slot as playable.
+            }
+        }
+    }
+    return slots;
 #endif
 }
 

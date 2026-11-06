@@ -5,8 +5,11 @@
 #include <functional>
 #include <optional>
 #include <span>
+#include <string>
 #include <string_view>
 #include <vector>
+
+#include "MM6SaveMetadata.h"
 
 namespace mm6 {
 
@@ -22,6 +25,17 @@ void writeAtomicSaveFile(const std::filesystem::path &profileRoot, std::string_v
 // candidate is valid, leaving both files untouched.
 std::optional<std::vector<std::uint8_t>> loadRecoverableSaveFile(
     const std::filesystem::path &profileRoot, std::string_view slotName);
+
+struct SaveSlotInfo {
+    std::string fileName;
+    SaveHeaderFields header;
+    bool needsRecovery = false;
+};
+
+// Read-only inventory for a future MM6 save menu. Only known-section .ec6
+// primaries or recoverable backups are listed; malformed slots are omitted.
+// A recovery-needed entry must be loaded through loadRecoverableSaveFile.
+std::vector<SaveSlotInfo> listKnownSaveSlots(const std::filesystem::path &profileRoot);
 
 namespace detail {
 

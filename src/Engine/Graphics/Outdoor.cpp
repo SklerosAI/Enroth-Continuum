@@ -2,9 +2,12 @@
 
 #include <cmath>
 #include <algorithm>
+#include <cstdint>
+#include <exception>
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
@@ -26,12 +29,14 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Objects/Actor.h"
+#include "Engine/Objects/Chest.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Objects/MonsterEnumFunctions.h"
 #include "Engine/Party.h"
 #include "Engine/PartyPlacement.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Snapshots/MM6OutdoorSnapshot.h"
+#include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
 #include "Engine/SpellFxRenderer.h"
 #include "Engine/Tables/ItemTable.h"
 #include "Engine/Tables/TileTable.h"
@@ -55,6 +60,7 @@
 #include "Media/Audio/AudioPlayer.h"
 
 #include "Library/Logger/Logger.h"
+#include "Library/Snapshots/CommonSnapshots.h"
 #include "Library/LodFormats/LodFormats.h"
 
 #include "Utility/String/Ascii.h"
@@ -421,6 +427,7 @@ void OutdoorLocation::Release() {
     faces.clear();
     pSpawnPoints.clear();
     pFaceIDLIST.clear();
+    mm6DeltaBytes.clear();
 
     // free shader data for outdoor location
     render->ReleaseTerrain();
@@ -468,61 +475,126 @@ void OutdoorLocation::Load(std::string_view filename, int days_played, int respa
 
     std::string ddm_filename = fmt::format("{}.ddm", filename.substr(0, filename.length() - 4));
 
-    bool respawnInitial = false; // Perform initial location respawn?
-    bool respawnTimed = false; // Perform timed location respawn?
-    OutdoorDelta_MM7 delta;
-    if (Blob blob = lod::decodeMaybeCompressed(pMapDeltas.at(ddm_filename))) {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        bool respawnInitial = true;
+        bool respawnTimed = false;
+        MM6OutdoorDeltaSnapshot delta;
         try {
-            deserialize(blob, &delta, tags::context(location));
-
-            size_t totalFaces = 0;
-            for (BSPModel &model : pBModels)
-                totalFaces += model.faces.size();
-
-            // Level was changed externally and we have a save there? Don't crash, just respawn.
-            if (delta.header.totalFacesCount && delta.header.bmodelCount && delta.header.decorationCount &&
-                (delta.header.totalFacesCount != totalFaces || delta.header.bmodelCount != pBModels.size() || delta.header.decorationCount != pLevelDecorations.size()))
-                respawnInitial = true;
-
-            // Entering the level for the 1st time?
-            if (delta.header.info.lastRespawnDay == 0)
-                respawnInitial = true;
-
+            Blob blob = decodeMM6ArchiveEntry(pMapDeltas.at(ddm_filename));
+            delta = decodeMM6OutdoorDelta(blob);
+            respawnInitial = delta.lastRespawnDay == 0;
             if (engineFlags & ENGINE_LOADING_SAVEGAME)
                 respawn_interval_days = 0x1BAF800;
-
-            if (!respawnInitial && days_played - delta.header.info.lastRespawnDay >= respawn_interval_days)
+            if (!respawnInitial && days_played - static_cast<int>(delta.lastRespawnDay) >= respawn_interval_days)
                 respawnTimed = true;
-        } catch (const Exception &e) {
-            MM_ERROR("Failed to load '{}', respawning location: {}", ddm_filename, e.what());
-            respawnInitial = true;
+        } catch (const std::exception &e) {
+            MM_ERROR("Failed to load MM6 '{}', respawning location: {}", ddm_filename, e.what());
         }
-    }
 
-    assert(respawnInitial + respawnTimed <= 1);
+        if (respawnInitial || respawnTimed) {
+            Blob original = decodeMM6ArchiveEntry(pGames_LOD->read(ddm_filename));
+            MM6OutdoorDeltaSnapshot fresh = decodeMM6OutdoorDelta(original);
+            if (respawnTimed) {
+                fresh.respawnCount = delta.respawnCount;
+                fresh.lastRespawnDay = delta.lastRespawnDay;
+                fresh.fullyRevealedCells = delta.fullyRevealedCells;
+                fresh.partiallyRevealedCells = delta.partiallyRevealedCells;
+                std::copy(delta.wire.part(mm6::OutdoorDeltaPart::ResetHeader).begin(),
+                          delta.wire.part(mm6::OutdoorDeltaPart::ResetHeader).end(),
+                          fresh.wire.part(mm6::OutdoorDeltaPart::ResetHeader).begin());
+                std::copy(delta.wire.part(mm6::OutdoorDeltaPart::Visibility).begin(),
+                          delta.wire.part(mm6::OutdoorDeltaPart::Visibility).end(),
+                          fresh.wire.part(mm6::OutdoorDeltaPart::Visibility).begin());
+            }
+            delta = std::move(fresh);
+        }
 
-    if (respawnInitial) {
-        deserialize(lod::decodeMaybeCompressed(pGames_LOD->read(ddm_filename)), &delta, tags::context(location));
-        *outdoors_was_respawned = true;
-    } else if (respawnTimed) {
-        auto header = delta.header;
-        auto fullyRevealedCells = delta.fullyRevealedCells;
-        auto partiallyRevealedCells = delta.partiallyRevealedCells;
-        deserialize(lod::decodeMaybeCompressed(pGames_LOD->read(ddm_filename)), &delta, tags::context(location));
-        delta.header = header;
-        delta.fullyRevealedCells = fullyRevealedCells;
-        delta.partiallyRevealedCells = partiallyRevealedCells;
-        *outdoors_was_respawned = true;
+        ddm.respawnCount = delta.respawnCount;
+        ddm.lastRespawnDay = delta.lastRespawnDay;
+        lastVisitTime = Time::fromTicks(0);
+        weather = MapWeather{};
+        reconstruct(delta.fullyRevealedCells, &uFullyRevealedCellOnMap);
+        reconstruct(delta.partiallyRevealedCells, &uPartiallyRevealedCellOnMap);
+        reconstruct(delta.actors, &pActors);
+        nextActorReuseScanStart = 0;
+        for (size_t i = 0; i < pActors.size(); ++i)
+            pActors[i].id = i;
+        reconstruct(delta.spriteObjects, &pSpriteObjects);
+        vChests.resize(delta.chests.size());
+        for (size_t i = 0; i < delta.chests.size(); ++i)
+            reconstruct(delta.chests[i], &vChests[i], tags::context<int>(i));
+
+        if (respawnInitial || respawnTimed) {
+            ddm.lastRespawnDay = days_played;
+            if (respawnTimed)
+                ddm.respawnCount++;
+            auto reset = delta.wire.part(mm6::OutdoorDeltaPart::ResetHeader);
+            for (size_t i = 0; i < 4; ++i) {
+                reset[i] = static_cast<std::uint8_t>(std::uint32_t(ddm.respawnCount) >> (i * 8));
+                reset[i + 4] = static_cast<std::uint8_t>(std::uint32_t(ddm.lastRespawnDay) >> (i * 8));
+            }
+        }
+        // MM6 has no verified mapping for the 200 persistent bytes or the
+        // 56-byte tail. Keep their exact decoded bytes for the later writer.
+        mm6DeltaBytes = std::move(delta.wire.bytes);
+        *outdoors_was_respawned = respawnInitial || respawnTimed;
     } else {
-        *outdoors_was_respawned = false;
+        bool respawnInitial = false; // Perform initial location respawn?
+        bool respawnTimed = false; // Perform timed location respawn?
+        OutdoorDelta_MM7 delta;
+        if (Blob blob = lod::decodeMaybeCompressed(pMapDeltas.at(ddm_filename))) {
+            try {
+                deserialize(blob, &delta, tags::context(location));
+
+                size_t totalFaces = 0;
+                for (BSPModel &model : pBModels)
+                    totalFaces += model.faces.size();
+
+                // Level was changed externally and we have a save there? Don't crash, just respawn.
+                if (delta.header.totalFacesCount && delta.header.bmodelCount && delta.header.decorationCount &&
+                    (delta.header.totalFacesCount != totalFaces || delta.header.bmodelCount != pBModels.size() || delta.header.decorationCount != pLevelDecorations.size()))
+                    respawnInitial = true;
+
+                // Entering the level for the 1st time?
+                if (delta.header.info.lastRespawnDay == 0)
+                    respawnInitial = true;
+
+                if (engineFlags & ENGINE_LOADING_SAVEGAME)
+                    respawn_interval_days = 0x1BAF800;
+
+                if (!respawnInitial && days_played - delta.header.info.lastRespawnDay >= respawn_interval_days)
+                    respawnTimed = true;
+            } catch (const Exception &e) {
+                MM_ERROR("Failed to load '{}', respawning location: {}", ddm_filename, e.what());
+                respawnInitial = true;
+            }
+        }
+
+        assert(respawnInitial + respawnTimed <= 1);
+
+        if (respawnInitial) {
+            deserialize(lod::decodeMaybeCompressed(pGames_LOD->read(ddm_filename)), &delta, tags::context(location));
+            *outdoors_was_respawned = true;
+        } else if (respawnTimed) {
+            auto header = delta.header;
+            auto fullyRevealedCells = delta.fullyRevealedCells;
+            auto partiallyRevealedCells = delta.partiallyRevealedCells;
+            deserialize(lod::decodeMaybeCompressed(pGames_LOD->read(ddm_filename)), &delta, tags::context(location));
+            delta.header = header;
+            delta.fullyRevealedCells = fullyRevealedCells;
+            delta.partiallyRevealedCells = partiallyRevealedCells;
+            *outdoors_was_respawned = true;
+        } else {
+            *outdoors_was_respawned = false;
+        }
+
+        reconstruct(delta, this);
+
+        if (respawnTimed || respawnInitial)
+            ddm.lastRespawnDay = days_played;
+        if (respawnTimed)
+            ddm.respawnCount++;
     }
-
-    reconstruct(delta, this);
-
-    if (respawnTimed || respawnInitial)
-        ddm.lastRespawnDay = days_played;
-    if (respawnTimed)
-        ddm.respawnCount++;
 
     // LABEL_150:
     if (pWeather->bRenderSnow) {  // Ritor1: it's include for snow

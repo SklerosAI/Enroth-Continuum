@@ -91,6 +91,9 @@ struct OutdoorLocation {
     GraphicsImage *sky_texture = nullptr;        // signed int sSky_TextureID;
     std::vector<SpawnPoint> pSpawnPoints;
     LocationInfo ddm;
+    // The complete decoded MM6 DDM, including fields with no runtime mapping.
+    // Kept title-scoped for a later lossless MM6 save writer.
+    std::vector<uint8_t> mm6DeltaBytes;
     Time lastVisitTime;
     MapWeather weather;
     std::array<std::array<uint8_t, 11>, 88> uFullyRevealedCellOnMap;

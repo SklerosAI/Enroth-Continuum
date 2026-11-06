@@ -1,6 +1,6 @@
 # MM6 outdoor wire codec — F4 offline progress
 
-Status: **bounded C++ decoded-payload parser and byte-preserving round trip, 2026-11-06; runtime delta reconstruction remains open**. The codec is title-specific and works from the ignored retained F1/F3 map extracts. It never reads the original GOG installation and does not make the outdoor campaign playable.
+Status: **bounded C++ decoded-payload parser plus partial MM6 outdoor runtime projection, 2026-11-06**. The codec is title-specific and works from the ignored retained F1/F3 map extracts. It never reads the original GOG installation and does not make the outdoor campaign playable.
 
 ## Implemented boundary
 
@@ -8,7 +8,11 @@ Status: **bounded C++ decoded-payload parser and byte-preserving round trip, 202
 
 The base wire view also records each model's contiguous 308-byte face records and 10-byte-per-face texture-name records. `faceBytes(modelIndex, facetIndex)` and `textureNameBytes(...)` require **zero-based** indices and reject missing models/facets before returning mutable or read-only spans. They are a checked lookup primitive for MM6 event opcode 12's outdoor texture and opcode 24's outdoor facet-bit candidate. Event operands must be verified for index base, bit namespace and texture lifetime before calling these accessors; the current parser's four-byte model/facet operands alone do not prove that mapping. A write to the copied base wire is not yet a persistent world change: F4 must apply it to the rendered face, record a title-specific override in `.ec6`/map state, and reapply on map load. The shipped `.ddm` format has no MM7 per-face attribute array to borrow.
 
-`deserializeMM6Outdoor(const Blob &, ...)` now runs the base wire validator before allocating its inherited renderer snapshot. This closes unbounded model/decoration count exposure for MM6 base loading without changing MM7's path. The `.ddm` runtime loader still deserializes through `OutdoorDelta_MM7`; this commit **does not** claim that actor, item, chest, reset, persistent-variable or weather state is reconstructed correctly. A later F4 step must replace that branch with explicit MM6-to-runtime field conversions and preserve the raw unknown-byte sidecar through save/reload.
+`deserializeMM6Outdoor(const Blob &, ...)` runs the base wire validator before allocating its inherited renderer snapshot. This closes unbounded model/decoration count exposure for MM6 base loading without changing MM7's path.
+
+The MM6 branch of `OutdoorLocation::Load` now decodes `.ddm` through the MM6 wire codec and a separate runtime adapter. It projects the two 88×11 visibility arrays, reset count/day, bounded actor records, ground objects and chests into the existing runtime entities. The adapter copies the complete decoded DDM into an MM6-only sidecar, including the 200 persistent bytes, 56-byte tail and every unknown record byte. Actor, ground-item and chest projection helpers require exact 548/100/4,204-byte spans and are available for the indoor adapter. The MM7 load branch is unchanged.
+
+This is **partial runtime reconstruction**. MM6 actor buff/status slots, spell IDs/mastery and some resistance meanings are not yet mapped to their MM7 runtime equivalents. Chest grid width is still ambiguous; the adapter copies the whole 280-byte region and retains the source bytes, while the retained shipped grids are all zero. The 200 persistent bytes and 56-byte tail are preserved but not applied to runtime state. The inherited save path still writes an MM7 DDM and does not serialize this sidecar, so MM6 map mutation/save/reload is not accepted. Reset uses the inherited first-entry/timed policy provisionally because shipped reset fields are zero; F5 must verify a nonzero original-game or controlled state. No MM6 campaign was launched.
 
 ## Offline evidence
 
@@ -16,4 +20,6 @@ A compiled clang C++23 harness used the real codec on all **15 retained outdoor 
 
 ## Next F4 lock
 
-Map each active MM6 actor, ground item, chest, visibility and reset field into title-specific runtime state, preserving every unassigned byte. Replace `OutdoorLocation::Load`'s MM7 delta deserialize path, then test changed objects and timed reset across transitions. Connect a versioned `.ec6` save only after the exact field manifest and encoder/decoder coverage are complete. F5 must inspect map geometry, terrain, actors, loot, events, weather and save/reload in the graphical game.
+Complete MM6-specific actor status/combat and item effect mappings; resolve chest placement, persistent-variable and tail semantics; then encode changed runtime entities back into the retained MM6 wire sidecar for a versioned `.ec6` writer. Test changed objects and timed reset across transitions. F5 must inspect map geometry, terrain, actors, loot, events, weather and save/reload in the graphical game.
+
+The arm64 `OpenEnroth_UnitTest` target built, and three focused adapter tests passed. The retained-data test decoded all 15 original-matched outdoor deltas, projected every counted actor, ground item and chest without a bounds failure, and verified byte-identical re-encoding of the preserved wire. Synthetic checks covered ID 173, item/chest/visibility/reset projection, opaque persistent/tail bytes and malformed/truncated rejection. These are offline checks only.

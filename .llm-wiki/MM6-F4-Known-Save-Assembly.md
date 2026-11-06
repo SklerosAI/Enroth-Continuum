@@ -16,3 +16,5 @@ Every `PART`, `CHAR`, `QEST`, `EFFT`, `ITEM`, `HEAD`, `TIME`, `UIST`, `VISU`, `M
 `MAPS` requires 67 unique deltas and a name matching the active map's `.dlv`/`.ddm` companion. This checks structural completeness only; a later transaction must compare the expected map-name set and validate each delta against its base map. Raw resistance, held item, buff, hireling and recovery values are included, but their MM6 gameplay meaning, shop/map items, generated NPCs and other runtime state remain outside the candidate. SaveLoad integration, atomic slots and F5 save/quit/relaunch remain open.
 
 See also: [F4 Offline Seams](MM6-F4-Offline-Seams.md), [NPC State](MM6-F4-NPC-State.md), [F2 Save Fields](Source-MM6-Save-Field-Register-F2.md).
+
+The [transaction checklist](MM6-F4-Save-Transaction-Checklist.md) maps the remaining live owners and explains why the complete mandatory manifest and global commit are still gated. `TIME`/`VISU` now have a joint detached runtime capture/stage adapter; map PID reconciliation and all-party staging remain open.

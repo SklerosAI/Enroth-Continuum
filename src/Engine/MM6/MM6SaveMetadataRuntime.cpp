@@ -20,11 +20,38 @@ void requireMM6(GameTitle title) {
         throw std::runtime_error("MM6 save metadata cannot apply to another title");
 }
 
+void validateSessionVisualFields(const SessionVisualFields &fields, size_t overlayTableCount,
+                                 GameTitle title) {
+    if (title != GameTitle::MM6)
+        throw std::runtime_error("MM6 session visuals cannot apply to another title");
+    if (fields.timer.elapsedTicks < 0)
+        throw std::runtime_error("negative MM6 simulation time");
+    for (const SaveOverlayField &overlay : fields.overlays)
+        if (overlay.animationLength > 0 &&
+            (overlay.tableIndex < 0 || static_cast<size_t>(overlay.tableIndex) >= overlayTableCount))
+            throw std::runtime_error("MM6 active overlay index exceeds loaded table");
+}
+
+void applyOverlays(const std::array<SaveOverlayField, 50> &saved, ActiveOverlayList *staged) {
+    for (size_t index = 0; index < saved.size(); ++index) {
+        const SaveOverlayField &source = saved[index];
+        ActiveOverlay &target = staged->pOverlays[index];
+        target.indexToOverlayTable = source.tableIndex;
+        target.spriteFrameTime = source.frameTime;
+        target.animLength = source.animationLength;
+        target.screenSpaceX = source.x;
+        target.screenSpaceY = source.y;
+        target.pid = Pid::fromPacked(source.packedPid);
+        target.projSize = source.projectedSize;
+        target.fpDamageMod = source.damageModifier;
+    }
+}
+
 } // namespace
 
 SaveMetadataFields captureMetadata(const std::string &displayName, GameTitle title) {
     requireMM6(title);
-    if (!pMapTable || !pParty || !gameTimer || !pActiveOverlayList ||
+    if (!pMapTable || !pParty || !gameTimer || !pActiveOverlayList || !pOverlayTable ||
         engine->_currentLoadedMapId == MAP_INVALID)
         throw std::runtime_error("MM6 metadata capture requires a loaded map and runtime");
 
@@ -32,10 +59,25 @@ SaveMetadataFields captureMetadata(const std::string &displayName, GameTitle tit
     fields.header.displayName = displayName;
     fields.header.mapFileName = pMapTable->pInfos[engine->_currentLoadedMapId].fileName;
     fields.header.playingTicks = pParty->GetPlayingTime().ticks();
-    fields.timer.elapsedTicks = gameTimer->time().ticks();
+    SessionVisualFields visuals = captureSessionVisualFields(*gameTimer, *pActiveOverlayList,
+                                                              pOverlayTable->overlays.size(), title);
+    fields.timer = visuals.timer;
+    fields.overlays = visuals.overlays;
     fields.ui.activeCharacter = pParty->hasActiveCharacter() ? pParty->activeCharacterIndex() : -1;
+    (void) encodeMetadataSections(fields);
+    (void) stageHeader(fields.header, title);
+    (void) stageOverlays(*pActiveOverlayList, fields.overlays, title);
+    return fields;
+}
+
+SessionVisualFields captureSessionVisualFields(const Timer &timer, const ActiveOverlayList &overlays,
+                                               size_t overlayTableCount, GameTitle title) {
+    if (title != GameTitle::MM6)
+        throw std::runtime_error("MM6 session visuals cannot apply to another title");
+    SessionVisualFields fields;
+    fields.timer.elapsedTicks = timer.time().ticks();
     for (size_t index = 0; index < fields.overlays.size(); ++index) {
-        const ActiveOverlay &source = pActiveOverlayList->pOverlays[index];
+        const ActiveOverlay &source = overlays.pOverlays[index];
         SaveOverlayField &target = fields.overlays[index];
         target.tableIndex = source.indexToOverlayTable;
         target.frameTime = source.spriteFrameTime;
@@ -46,10 +88,18 @@ SaveMetadataFields captureMetadata(const std::string &displayName, GameTitle tit
         target.projectedSize = source.projSize;
         target.damageModifier = source.fpDamageMod;
     }
-    (void) encodeMetadataSections(fields);
-    (void) stageHeader(fields.header, title);
-    (void) stageOverlays(*pActiveOverlayList, fields.overlays, title);
+    validateSessionVisualFields(fields, overlayTableCount, title);
     return fields;
+}
+
+StagedSessionVisuals stageSessionVisuals(const Timer &liveTimer, const ActiveOverlayList &liveOverlays,
+                                        const SessionVisualFields &saved, size_t overlayTableCount,
+                                        GameTitle title) {
+    validateSessionVisualFields(saved, overlayTableCount, title);
+    StagedSessionVisuals staged{liveTimer, liveOverlays};
+    staged.timer.restorePausedSimulationTime(Duration::fromTicks(saved.timer.elapsedTicks));
+    applyOverlays(saved.overlays, &staged.overlays);
+    return staged;
 }
 
 SaveHeaderFields stageHeader(const SaveHeaderFields &saved, GameTitle title) {
@@ -73,8 +123,9 @@ SaveHeaderFields stageHeader(const SaveHeaderFields &saved, GameTitle title) {
 
 Timer stageEventTimer(const Timer &live, const SaveTimerFields &saved, GameTitle title) {
     requireMM6(title);
-    if (saved.elapsedTicks < 0)
-        throw std::runtime_error("negative MM6 simulation time");
+    SessionVisualFields fields;
+    fields.timer = saved;
+    validateSessionVisualFields(fields, 0, title);
     Timer staged = live;
     staged.restorePausedSimulationTime(Duration::fromTicks(saved.elapsedTicks));
     return staged;
@@ -86,22 +137,11 @@ ActiveOverlayList stageOverlays(const ActiveOverlayList &live,
     if (!pOverlayTable)
         throw std::runtime_error("MM6 overlay table must be loaded before overlay staging");
 
+    SessionVisualFields fields;
+    fields.overlays = saved;
+    validateSessionVisualFields(fields, pOverlayTable->overlays.size(), title);
     ActiveOverlayList staged = live;
-    for (size_t index = 0; index < saved.size(); ++index) {
-        const SaveOverlayField &source = saved[index];
-        if (source.animationLength > 0 &&
-            (source.tableIndex < 0 || source.tableIndex >= std::ssize(pOverlayTable->overlays)))
-            throw std::runtime_error("MM6 active overlay table index exceeds loaded table");
-        ActiveOverlay &target = staged.pOverlays[index];
-        target.indexToOverlayTable = source.tableIndex;
-        target.spriteFrameTime = source.frameTime;
-        target.animLength = source.animationLength;
-        target.screenSpaceX = source.x;
-        target.screenSpaceY = source.y;
-        target.pid = Pid::fromPacked(source.packedPid);
-        target.projSize = source.projectedSize;
-        target.fpDamageMod = source.damageModifier;
-    }
+    applyOverlays(saved, &staged);
     return staged;
 }
 

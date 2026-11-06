@@ -1,16 +1,16 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <span>
 #include <string>
 
 #include "Engine/GameTitle.h"
+#include "Engine/Graphics/Overlays.h"
+#include "Engine/Timer.h"
 
 #include "MM6SaveContainer.h"
-
-class Timer;
-struct ActiveOverlayList;
 
 namespace mm6 {
 
@@ -59,6 +59,18 @@ struct SaveMetadataFields {
     bool operator==(const SaveMetadataFields &) const = default;
 };
 
+struct SessionVisualFields {
+    SaveTimerFields timer;
+    std::array<SaveOverlayField, 50> overlays{};
+
+    bool operator==(const SessionVisualFields &) const = default;
+};
+
+struct StagedSessionVisuals {
+    Timer timer;
+    ActiveOverlayList overlays;
+};
+
 /** Encode required HEAD/TIME/UIST/VISU version-one fields after validation. */
 std::array<SaveSection, 4> encodeMetadataSections(const SaveMetadataFields &fields);
 
@@ -73,6 +85,15 @@ void loadMetadataBeforeMutation(std::span<const std::uint8_t> bytes, SaveMetadat
 
 /** Capture metadata from an already initialized MM6 runtime. */
 SaveMetadataFields captureMetadata(const std::string &displayName, GameTitle title);
+
+/** Capture the actual MM6 simulation clock and overlay list without global mutation. */
+SessionVisualFields captureSessionVisualFields(const Timer &timer, const ActiveOverlayList &overlays,
+                                               std::size_t overlayTableCount, GameTitle title);
+
+/** Validate every active overlay, then stage the clock and visuals on copies. */
+StagedSessionVisuals stageSessionVisuals(const Timer &liveTimer, const ActiveOverlayList &liveOverlays,
+                                        const SessionVisualFields &saved, std::size_t overlayTableCount,
+                                        GameTitle title);
 
 /** Validate saved map identity against the loaded MM6 map table without changing the engine. */
 SaveHeaderFields stageHeader(const SaveHeaderFields &saved, GameTitle title);

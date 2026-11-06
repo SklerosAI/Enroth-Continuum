@@ -6,6 +6,7 @@
 
 #include "Engine/MM6/MM6SaveMetadata.h"
 #include "Engine/MM6/MM6CoreSaveFields.h"
+#include "Engine/Graphics/Overlays.h"
 #include "Engine/Timer.h"
 
 namespace {
@@ -86,6 +87,50 @@ UNIT_TEST(MM6SaveMetadata, TimerRestoreDiscardsFrameTiming) {
     EXPECT_FALSE(timer.isTurnBased());
     EXPECT_EQ(timer.dt().ticks(), 0);
     EXPECT_EQ(timer.time().ticks(), 123456);
+}
+
+UNIT_TEST(MM6SaveMetadata, CapturesAndStagesTimerAndFiftyOverlaysOnCopies) {
+    Timer clock;
+    clock.restorePausedSimulationTime(Duration::fromTicks(123456));
+    ActiveOverlayList overlays;
+    overlays.pOverlays[4].indexToOverlayTable = 3;
+    overlays.pOverlays[4].spriteFrameTime = 120;
+    overlays.pOverlays[4].animLength = 350;
+    overlays.pOverlays[4].screenSpaceX = -17;
+    overlays.pOverlays[4].screenSpaceY = 60;
+    overlays.pOverlays[4].pid = Pid::actor(7);
+    overlays.pOverlays[4].projSize = 22;
+    overlays.pOverlays[4].fpDamageMod = 70000;
+
+    mm6::SessionVisualFields captured = mm6::captureSessionVisualFields(clock, overlays, 5, GameTitle::MM6);
+    EXPECT_EQ(captured.timer.elapsedTicks, 123456);
+    EXPECT_EQ(captured.overlays[4].packedPid, Pid::actor(7).packed());
+    EXPECT_EQ(captured.overlays[4].damageModifier, 70000);
+
+    mm6::SaveMetadataFields metadata = exampleFields();
+    metadata.timer = captured.timer;
+    metadata.overlays = captured.overlays;
+    mm6::SaveMetadataFields decoded = mm6::decodeMetadataSections(containerFor(metadata));
+    Timer priorClock;
+    ActiveOverlayList priorOverlays;
+    priorOverlays.pOverlays[4].screenSpaceX = 99;
+    mm6::StagedSessionVisuals staged = mm6::stageSessionVisuals(
+        priorClock, priorOverlays, {decoded.timer, decoded.overlays}, 5, GameTitle::MM6);
+    EXPECT_TRUE(staged.timer.isPaused());
+    EXPECT_FALSE(staged.timer.isTurnBased());
+    EXPECT_EQ(staged.timer.dt().ticks(), 0);
+    EXPECT_EQ(staged.timer.time().ticks(), 123456);
+    EXPECT_EQ(staged.overlays.pOverlays[4].screenSpaceX, -17);
+    EXPECT_EQ(staged.overlays.pOverlays[4].pid, Pid::actor(7));
+    EXPECT_EQ(priorClock.time().ticks(), 0);
+    EXPECT_EQ(priorOverlays.pOverlays[4].screenSpaceX, 99);
+
+    captured.overlays[49].animationLength = 1;
+    captured.overlays[49].tableIndex = 5;
+    EXPECT_THROW((void) mm6::stageSessionVisuals(priorClock, priorOverlays, captured, 5, GameTitle::MM6),
+                 std::exception);
+    EXPECT_THROW((void) mm6::captureSessionVisualFields(clock, overlays, 5, GameTitle::MM7), std::exception);
+    EXPECT_EQ(priorOverlays.pOverlays[4].screenSpaceX, 99);
 }
 
 UNIT_TEST(MM6SaveMetadata, CrossSectionClockAndSelectionMustAgree) {

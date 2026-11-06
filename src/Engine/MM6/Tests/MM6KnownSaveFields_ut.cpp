@@ -3,12 +3,15 @@
 #include <cstddef>
 #include <cstdint>
 #include <exception>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6KnownSaveFields.h"
+#include "Engine/MM6/MM6BeaconSaveFields.h"
+#include "Engine/MM6/MM6ShopStockFields.h"
 
 namespace {
 
@@ -90,6 +93,24 @@ UNIT_TEST(MM6KnownSaveFields, EverySectionIsMandatoryAndExtrasReject) {
     EXPECT_THROW((void) mm6::decodeKnownSave(mm6::encodeSaveContainer(extra)), std::exception);
     extra.sections.back().tag = {'E', 'X', 'T', 'R'};
     EXPECT_THROW((void) mm6::decodeKnownSave(mm6::encodeSaveContainer(extra)), std::exception);
+}
+
+UNIT_TEST(MM6KnownSaveFields, StandaloneShopAndBeaconSectionsStayOutsideKnownSave) {
+    const mm6::SaveContainer baseline = mm6::decodeSaveContainer(mm6::encodeKnownSave(exampleFields()));
+    auto shop = std::make_unique<mm6::ShopStockFields>();
+    shop->ready = true;
+    const mm6::BeaconSaveFields beacon;
+    for (const mm6::SaveSection &standalone : {
+             mm6::encodeShopStockSection(*shop), mm6::encodeBeaconSection(beacon)}) {
+        mm6::SaveContainer candidate = baseline;
+        candidate.sections.push_back(standalone);
+        const std::vector<std::uint8_t> bytes = mm6::encodeSaveContainer(candidate);
+        EXPECT_EQ(mm6::decodeSaveContainer(bytes).sections.size(), 19);
+        EXPECT_THROW((void) mm6::decodeKnownSave(bytes), std::exception);
+        mm6::KnownSaveFields prior = exampleFields();
+        EXPECT_THROW(mm6::loadKnownSaveBeforeMutation(bytes, &prior), std::exception);
+        EXPECT_EQ(mm6::encodeKnownSave(prior), mm6::encodeKnownSave(exampleFields()));
+    }
 }
 
 UNIT_TEST(MM6KnownSaveFields, OldSectionSetsRejectBeforeMutation) {

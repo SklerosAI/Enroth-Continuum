@@ -93,7 +93,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Item Event Compare](MM6-F4-Item-Event-Compare.md) — Read-only inventory/held-item comparison and bounded item-write handoff
 - [MM6 F4 Item Event Writes](MM6-F4-Item-Event-Writes.md) — Retained reward/handoff topology and bounded Add/Subtract transaction limits
 - [MM6 F4 Item Event PE](MM6-F4-Item-Event-PE.md) — Original executable dispatch, bounded Add/Subtract and remaining cursor/artifact gates
-- [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial eighteen-section `.ec6` candidate with `CHAR` v4 raw bonus and required CHST preservation
+- [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial eighteen-section `.ec6` candidate; standalone `SHOP`/`BEAC` still reject before mutation
 - [MM6 F4 Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md) — Live-owner gaps, detached staging order and atomic commit gates
 - [MM6 F4 Chest EC6 Transaction](MM6-F4-Chest-EC6-Transaction.md) — Required title-local chest state, raw active-delta sidecar and first-map movement audit
 - [MM6 F4 Party Movement Save](MM6-F4-Party-Movement-Save.md) — PART v3 vertical motion, flight, hazard flags, justice counters and map-local ground reset

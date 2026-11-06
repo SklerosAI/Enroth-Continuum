@@ -460,6 +460,11 @@ Chronological record of wiki activity.
 - Corrected MM6 `M` monster preference to mean male while retaining the inherited Monk meaning for MM7. Routed MM6 class preferences through six three-tier families, so promotions do not alias the four-ID MM7 enum groups.
 - Checked the F3-matched retained 173-row monster table aggregate (six `M` and six `F` cells), built the arm64 MM6/MM7/unit targets, and passed all four focused monster-list tests. The source and remaining target-weight/multi-victim/F5 gaps are in `project/MM6_F4_MONSTER_PREFERENCE.md`. No original installation or MM6 process was opened.
 
+## [2026-11-06] update | MM6 F4 combined offline gate
+- by: T-Burton-ND via codex
+- Rebuilt the arm64 MM6, MM7 and unit targets after the map-base, hireling roster, First Aid and monster-preference changes. The one-command offline suite passed 98/98 tests from 29 suites, including all 67 retained map base/delta pairs and the private First Aid manifest; the linked general suite passed 438/438.
+- The runner now requires the ignored owner-only First Aid profile manifest and passes it to the native test, avoiding a skipped private-backed check. Updated the public status, build graph and agent handoff to the 98-test checkpoint. Live SaveLoad, MM6 spell casting, encounter probabilities and F5 graphics remain gated; no original installation was reread and no MM6 process launched.
+
 ## [2026-11-06] ingest | MM6 known-save map/base pass
 - by: T-Burton-ND via codex
 - Added an MM6-only candidate validator that decodes all sixteen known `.ec6` sections, requires the private expected map-name set, and parses each of 67 delta entries with its caller-supplied base entry before returning or assigning any state.

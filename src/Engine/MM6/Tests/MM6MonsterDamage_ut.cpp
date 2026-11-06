@@ -13,6 +13,7 @@
 #include "Engine/MM6/MM6MonsterSpecialAttack.h"
 #include "Engine/MM6/MM6MonsterProjectile.h"
 #include "Engine/MM6/MM6MonsterSpells.h"
+#include "Engine/Graphics/Sprites.h"
 #include "Engine/Snapshots/TableSerialization.h"
 #include "Engine/Tables/ObjectTable.h"
 
@@ -218,7 +219,7 @@ UNIT_TEST(MM6MonsterProjectile, RetainsAllF3MatchedRangedAttackCells) {
     EXPECT_EQ(counts, (std::array<int, 10>{6, 18, 17, 10, 12, 6, 4, 3, 3, 3}));
 }
 
-UNIT_TEST(MM6MonsterProjectile, NineLabelsResolveToRetainedMM6ObjectRows) {
+UNIT_TEST(MM6MonsterProjectile, NineLabelsResolveToRetainedMM6ObjectAndSpriteRows) {
     const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
     if (!research)
         GTEST_SKIP() << "Set ignored MM6 F3 research directory";
@@ -230,6 +231,13 @@ UNIT_TEST(MM6MonsterProjectile, NineLabelsResolveToRetainedMM6ObjectRows) {
     deserialize(Blob::fromString(std::move(data)), &objects, GameTitle::MM6);
     ASSERT_EQ(objects.pObjects.size(), 232);
 
+    std::ifstream frameStream(std::filesystem::path(research) / "icons/dsft.bin", std::ios::binary);
+    ASSERT_TRUE(frameStream.is_open());
+    std::string frameData(std::istreambuf_iterator<char>{frameStream}, {});
+    SpriteFrameTable frames;
+    deserialize(Blob::fromString(std::move(frameData)), &frames, GameTitle::MM6);
+    ASSERT_EQ(frames.pSpriteSFrames.size(), 6455);
+
     constexpr std::array labels = {
         MONSTER_PROJECTILE_MM6_ARROW, MONSTER_PROJECTILE_MM6_FLAMING_ARROW,
         MONSTER_PROJECTILE_MM6_FIRE, MONSTER_PROJECTILE_MM6_ELECTRICITY,
@@ -237,13 +245,20 @@ UNIT_TEST(MM6MonsterProjectile, NineLabelsResolveToRetainedMM6ObjectRows) {
         MONSTER_PROJECTILE_MM6_ENERGY, MONSTER_PROJECTILE_MM6_MAGIC,
         MONSTER_PROJECTILE_MM6_ROCK,
     };
-    for (MonsterProjectile label : labels) {
+    constexpr std::array names = {"msl01", "msl02", "msl03", "msl04", "msl05",
+                                  "msl06", "msl07", "msl08", "msl09"};
+    for (size_t index = 0; index < labels.size(); ++index) {
+        MonsterProjectile label = labels[index];
         const SpriteId objectId = mm6::monsterProjectileObjectId(label);
         const unsigned row = objects.ObjectIDByItemID(objectId);
         ASSERT_GT(row, 0);
         ASSERT_LT(row, objects.pObjects.size());
         EXPECT_EQ(objects.pObjects[row].uObjectID, objectId);
-        EXPECT_GT(objects.pObjects[row].uSpriteID, 0);
+        const unsigned frameId = objects.pObjects[row].uSpriteID;
+        ASSERT_GT(frameId, 0);
+        ASSERT_LT(frameId, frames.pSpriteSFrames.size());
+        EXPECT_EQ(frames.pSpriteSFrames[frameId].spriteName, names[index]);
+        EXPECT_FALSE(frames.pSpriteSFrames[frameId].textureName.empty());
     }
     EXPECT_THROW(mm6::monsterProjectileObjectId(MONSTER_PROJECTILE_MM6_DAGGER), std::runtime_error);
     EXPECT_THROW(mm6::monsterProjectileObjectId(MONSTER_PROJECTILE_NONE), std::runtime_error);

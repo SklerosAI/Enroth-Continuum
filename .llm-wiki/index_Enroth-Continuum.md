@@ -42,6 +42,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Map Save Fields](MM6-F4-Map-Save-Fields.md) — Bounded `.ec6` map-delta section and whole-save validation obligations
 - [MM6 F4 NPC State](MM6-F4-NPC-State.md) — Bounded `.ec6` RESC NPC/group fields and copy-staging with open gameplay semantics
 - [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial twelve-section `.ec6` candidate, cross-field checks and remaining save gaps
+- [MM6 F4 Timed Buffs](MM6-F4-Timed-Buffs.md) — Bounded BUFF fields for party/character effects and open runtime/F5 checks
 - [MM6 F4 Atomic Save File](MM6-F4-Atomic-Save-File.md) — Native `.ec6` atomic replacement, validated backup recovery and unsupported filesystem cases
 - [MM6 F4 Save Remainder](MM6-F4-Save-Remainder.md) — Field, consumer and lifetime inventory after core/durable/metadata/NPC/MAPS, including raw resistance staging
 - [MM6 F4 Held Item](MM6-F4-Held-Item.md) — Required `.ec6` HELD section, item-table guard and cursor restoration boundary

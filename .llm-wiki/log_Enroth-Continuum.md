@@ -1523,3 +1523,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The F3-matched original helper selects the first active condition in a fixed 17-condition order. The inherited helper compounded multiple conditions; MM6 now uses the original priority while MM7 retains its existing calculation.
 - Integrated linked unit checks passed 2/2 and a scoped headless MM6 check passed 1/1 over 89 samples without visible window or focus change. Original max-mana outer terms match structurally; item, skill and promoted-class terms plus live save/reload remain open.
+
+## [2026-11-06] implement | MM6 raw-terrain walking sounds
+- by: T-Burton-ND via codex
+- The MM6 tile table now retains raw source tileset and variant identity beside the normalized runtime type. Outdoor walking/running sound uses the original 28-group dispatcher for in-bounds MM6 terrain; unsupported raw IDs suppress sound. MM7 movement retains its prior lookup and boundary behavior.
+- The integrated focused sound/map tests passed 2/2, monitored MM6 headless suite 47/47, private-backed MM6/LOD unit gate 327/327 and general non-MM6 gate 437/437. An MM7 headless control passed 1/1; no visible window or focus change occurred. Audible playback and full terrain/season visual fidelity remain open.

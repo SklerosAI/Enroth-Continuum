@@ -582,3 +582,9 @@ Chronological record of wiki activity.
 - Traced spellbook, quickspell and item routes through target selection, cancellation, pre-effect failure, success and cues. Recorded inherited Escape queue cleanup, held-item relocation and target-pick recovery gaps without enabling casting.
 - Added a pure MM6 First Aid spellbook preflight over private F3-matched mana/recovery and reviewed heal rules; unsupported contexts fail closed and all regular MM6 player effects remain guarded.
 - The integrated arm64 MM6/MM7/unit build passed; 135/135 offline and 438/438 general tests passed. No original installation was reread or partial MM6 game launched.
+
+## [2026-11-06] implement | MM6 monster damage and house type boundaries
+- by: T-Burton-ND via codex
+- The F3-matched 173-row monster table has 212 active attack cells and 134 zero-chance secondary placeholders. Seven MM6 labels now parse distinctly; five unproved damage channels reject before monster dice and character or actor mutation. Physical and Fire retain their direct paths. MM7 parsing and damage behavior stay title-scoped.
+- A refreshed ignored, owner-only house-route report classifies labels on all 557 retained rows. The inherited parser previously sent 384 active rows to the mercenary guild type; the MM6 parser now has zero unknown nonempty labels and the native suite checks the full retained table. House services, movies and house-ID helpers remain open.
+- The arm64 MM6/MM7/unit targets built; the offline runner passed 136/136 tests across 42 suites and the general suite passed 438/438. The original installation, partial MM6 game and protected MM7 app/profile were not opened.

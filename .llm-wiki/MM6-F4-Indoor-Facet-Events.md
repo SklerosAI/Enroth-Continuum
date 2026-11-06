@@ -13,6 +13,6 @@ A read-only trace of the F3-matched staged executable shows opcode 11 checks for
 
 The MM6 interpreter now checks `pIndoor->faces[index]` for these two commands, while MM7 keeps its existing cog-group route. The synthetic headless check covers one selected face despite identical cog numbers on three faces, set/clear, texture, invalid index and outdoor no-op. Integrated arm64 targets linked and the focused monitored headless check passed **1/1** over 306 samples without a visible window or focus change.
 
-This is a target-selection correction. The original texture animation lookup, changed-face save/reload, visual result and campaign path remain open. Normal MM6 SaveLoad and chest generation are still guarded.
+This is a target-selection correction. The [persistence gate](../project/MM6_F4_INDOOR_FACE_PERSISTENCE_GATE.md) found no explicit face array in the MM6 DLV and no `location.faces` capture in the current changed-state writer. Among seventeen affected active maps, six have no map-reload event; the other eleven still need branch and state checks. The opaque DLV blocks have unestablished meanings, so neither original persistence nor an `.ec6` replay rule is proved. Original texture animation lookup, changed-face save/reload, visual result and campaign path remain open. Normal MM6 SaveLoad and chest generation are still guarded.
 
 See also: [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), [MM6 Opcode Side Effects F2 Source](Source-MM6-Opcode-Side-Effects-F2.md), [MM6 F4 Original No-Op Events](MM6-F4-Original-Noop-Events.md).

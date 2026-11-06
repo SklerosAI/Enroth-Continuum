@@ -45,6 +45,7 @@
 #include "GUI/HudFrameResources.h"
 #include "GUI/HudVitalBarResources.h"
 #include "GUI/MM6HudBookControls.h"
+#include "GUI/MM6TopPanelResources.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/GUIMessageQueue.h"
 #include "GUI/UI/Books/LloydsBook.h"
@@ -1544,7 +1545,13 @@ void GameUI_DrawMinimap(const Recti &rect, int zoom) {
     render->SetUIClipRect(Recti(541, 0, 26, 480));
     render->DrawQuad2D(game_ui_minimap_compass, {static_cast<int>(floorf((pParty->_viewYaw * 0.1171875) + 0.5f) + 285), 136});
     render->ResetUIClipRect();
-    render->DrawQuad2D(game_ui_minimap_frame, {468, 0});
+    if (engine->gameTitle() == GameTitle::MM6) {
+        // MM6 draws its hour-selected panel over the completed automap.
+        const std::string_view panel = mm6TopPanelIconForHour(GameTitle::MM6, pParty->uCurrentHour);
+        render->DrawQuad2D(assets->getIcon(panel), {468, 0});
+    } else {
+        render->DrawQuad2D(game_ui_minimap_frame, {468, 0});
+    }
 }
 
 //----- (00441498) --------------------------------------------------------

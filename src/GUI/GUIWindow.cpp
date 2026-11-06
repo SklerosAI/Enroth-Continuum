@@ -603,7 +603,8 @@ void SetUserInterface(PartyAlignment align) {
         game_ui_statusbar = assets->getIcon(hudStatusBarIcon(engine->gameTitle(), "IB-Foot-c.pcx"));
 
         game_ui_right_panel_frame = assets->getIcon("ib-mb-C");
-        game_ui_minimap_frame = assets->getIcon("ib-autmask-c");
+        game_ui_minimap_frame = engine->gameTitle() == GameTitle::MM6 ? nullptr :
+                                assets->getIcon("ib-autmask-c");
         game_ui_minimap_compass = assets->getIcon(navigation.compass);
 
         game_ui_player_alert_green = assets->getIcon("IB-InitG-c");
@@ -658,7 +659,8 @@ void SetUserInterface(PartyAlignment align) {
         game_ui_statusbar = assets->getIcon(hudStatusBarIcon(engine->gameTitle(), "IB-Foot-a.pcx"));
 
         game_ui_right_panel_frame = assets->getIcon("ib-mb-A");
-        game_ui_minimap_frame = assets->getIcon("ib-autmask-a");
+        game_ui_minimap_frame = engine->gameTitle() == GameTitle::MM6 ? nullptr :
+                                assets->getIcon("ib-autmask-a");
         game_ui_minimap_compass = assets->getIcon(navigation.compass);
 
         game_ui_player_alert_green = assets->getIcon("IB-InitG-a");
@@ -713,7 +715,8 @@ void SetUserInterface(PartyAlignment align) {
         game_ui_statusbar = assets->getIcon(hudStatusBarIcon(engine->gameTitle(), "IB-Foot-b.pcx"));
 
         game_ui_right_panel_frame = assets->getIcon("ib-mb-B");
-        game_ui_minimap_frame = assets->getIcon("ib-autmask-b");
+        game_ui_minimap_frame = engine->gameTitle() == GameTitle::MM6 ? nullptr :
+                                assets->getIcon("ib-autmask-b");
         game_ui_minimap_compass = assets->getIcon(navigation.compass);
 
         game_ui_player_alert_green = assets->getIcon("IB-InitG-b");

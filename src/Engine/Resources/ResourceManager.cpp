@@ -115,7 +115,14 @@ void ResourceManager::open(float saturation, float lightness, GameTitle gameTitl
     _iconsLodReader.open(dfs->read("data/icons.lod"));
     _bitmapsLodReader.open(dfs->read("data/bitmaps.lod"));
     _spritesLodReader.open(dfs->read("data/sprites.lod"));
+    _masks = {};
     from_json(Json::parse(dfs->read("data/resource_mask_table.json").str()), _masks);
+    if (gameTitle == GameTitle::MM6) {
+        // The original MM6 top-panel blit skips palette index zero even though
+        // these four LOD headers do not set the normal zero-transparency flag.
+        for (std::string_view name : {"tap1", "tap2", "tap3", "tap4"})
+            _masks.icons[std::string(name)].mode = MASK_ZERO;
+    }
     // TODO(captainurist):
     //  on exception:
     //      Error(localization->str(LSTR_MIGHT_AND_MAGIC_VII_IS_HAVING_TROUBLE), localization->str(LSTR_REINSTALL_NECESSARY));

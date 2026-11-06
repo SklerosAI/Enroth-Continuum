@@ -13,4 +13,6 @@ The retained offline fixture covers 52 indoor and 15 outdoor deltas byte for byt
 
 The ignored F3 research copy now has a private 67-name manifest derived from the F3 gate, capture, reconciliation, schema signoff and decoded-delta hashes. The public generator prints only counts and validity; its optional candidate-set check rejects missing, extra and duplicate names. C++ also provides an exact-set staging overload. Whole-save restore must load and verify that private manifest, then use the overload before mutating any state. The older shape-only helper remains insufficient for that transaction; source-code wiring, per-base-map validation and live verification are still open.
 
+The MM6-only `MM6MapSaveValidation` pass decodes the sixteen known `.ec6` sections, checks the expected map set, and loads all 67 matching base maps through a caller-supplied trusted reader before returning or assigning state. Indoor deltas are checked against parsed base structure; outdoor base and delta are each parsed within bounds, while their content-level relationship remains unproved. Missing or malformed bases and malformed deltas reject the whole candidate. This pass is offline and not wired to SaveLoad, a user profile or live world mutation.
+
 See also: [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

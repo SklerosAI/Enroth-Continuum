@@ -1,0 +1,147 @@
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+#include "Testing/Unit/UnitTest.h"
+
+#include "Engine/MM6/MM6MapSaveValidation.h"
+
+namespace {
+
+std::vector<std::uint8_t> indoorBase() {
+    std::vector<std::uint8_t> bytes(136 + 10 * 4, 0);
+    bytes[136 + 4 * 4] = 200; // Fixed MM6 door slots.
+    return bytes;
+}
+
+std::vector<std::uint8_t> indoorDelta() {
+    return std::vector<std::uint8_t>(8 + 875 + 3 * 4 + 200 * 80 + 200 + 56, 0);
+}
+
+std::vector<std::uint8_t> outdoorBase() {
+    return std::vector<std::uint8_t>(160 + 16 + 3 * 128 * 128 + 4 + 4 + 4 + 128 * 128 * 4 + 4, 0);
+}
+
+std::vector<std::uint8_t> outdoorDelta() {
+    return std::vector<std::uint8_t>(8 + 2 * 88 * 11 + 3 * 4 + 200 + 56, 0);
+}
+
+mm6::KnownSaveFields exampleFields() {
+    mm6::KnownSaveFields fields;
+    fields.core.party.playingTicks = 42;
+    fields.core.party.activeCharacter = 2;
+    for (mm6::CoreCharacterFields &character : fields.core.characters)
+        character.name = "Hero";
+    fields.metadata.header.displayName = "Offline test";
+    fields.metadata.header.mapFileName = "synthetic0.blv";
+    fields.metadata.header.playingTicks = 42;
+    fields.metadata.ui.activeCharacter = 2;
+    fields.recovery.playingTicks = 42;
+    fields.npcs.activeCount = 399;
+    for (int i = 0; i < 52; ++i)
+        fields.maps.deltas.push_back({"synthetic" + std::to_string(i) + ".dlv", indoorDelta()});
+    for (int i = 0; i < 15; ++i)
+        fields.maps.deltas.push_back({"outside" + std::to_string(i) + ".ddm", outdoorDelta()});
+    return fields;
+}
+
+std::vector<std::string> namesOf(const mm6::KnownSaveFields &fields) {
+    std::vector<std::string> names;
+    for (const mm6::SavedMapDelta &delta : fields.maps.deltas)
+        names.push_back(delta.name);
+    return names;
+}
+
+Blob syntheticBase(std::string_view name) {
+    const std::vector<std::uint8_t> bytes = name.ends_with(".blv") ? indoorBase() : outdoorBase();
+    return Blob::copy(bytes.data(), bytes.size());
+}
+
+std::vector<std::uint8_t> readBytes(const std::filesystem::path &path) {
+    std::ifstream stream(path, std::ios::binary);
+    if (!stream)
+        throw std::runtime_error("MM6 retained map fixture is missing");
+    std::string bytes(std::istreambuf_iterator<char>{stream}, {});
+    return {bytes.begin(), bytes.end()};
+}
+
+} // namespace
+
+UNIT_TEST(MM6MapSaveValidation, StagesWholeKnownSaveOnlyAfterEveryMapPasses) {
+    mm6::KnownSaveFields source = exampleFields();
+    const std::vector<std::string> expected = namesOf(source);
+    std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(source);
+    mm6::KnownSaveFields destination;
+    destination.core.party.playingTicks = 999;
+    mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase, &destination);
+    EXPECT_EQ(destination.core.party.playingTicks, 42);
+    EXPECT_EQ(destination.maps, source.maps);
+
+    source.maps.deltas[1].name = "absent.dlv";
+    bytes = mm6::encodeKnownSave(source);
+    destination.core.party.playingTicks = 999;
+    int reads = 0;
+    EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected,
+        [&reads](std::string_view name) { ++reads; return syntheticBase(name); }, &destination), std::exception);
+    EXPECT_EQ(reads, 0);
+    EXPECT_EQ(destination.core.party.playingTicks, 999);
+
+    source = exampleFields();
+    source.maps.deltas.back().bytes.pop_back();
+    bytes = mm6::encodeKnownSave(source);
+    EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase, &destination),
+                 std::exception);
+    EXPECT_EQ(destination.core.party.playingTicks, 999);
+
+    source = exampleFields();
+    bytes = mm6::encodeKnownSave(source);
+    EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected,
+        [](std::string_view) { return Blob(); }, &destination), std::exception);
+    EXPECT_EQ(destination.core.party.playingTicks, 999);
+    EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected,
+        [](std::string_view) {
+            const std::vector<std::uint8_t> bytes = outdoorBase();
+            return Blob::copy(bytes.data(), bytes.size());
+        }, &destination), std::exception);
+    EXPECT_EQ(destination.core.party.playingTicks, 999);
+}
+
+UNIT_TEST(MM6MapSaveValidation, RetainedSixtySevenBaseDeltaPairs) {
+    const char *indoor = std::getenv("ENROTH_MM6_INDOOR_DECODED_DIR");
+    const char *outdoor = std::getenv("ENROTH_MM6_OUTDOOR_DECODED_DIR");
+    if (!indoor || !outdoor)
+        GTEST_SKIP() << "Set ignored decoded MM6 indoor and outdoor fixture directories";
+
+    const std::filesystem::path indoorDir(indoor);
+    const std::filesystem::path outdoorDir(outdoor);
+    mm6::KnownSaveFields source = exampleFields();
+    source.maps.deltas.clear();
+    for (const auto &[directory, suffix] : {std::pair{indoorDir, ".dlv"}, std::pair{outdoorDir, ".ddm"}}) {
+        for (const auto &entry : std::filesystem::directory_iterator(directory)) {
+            if (entry.path().extension() == suffix)
+                source.maps.deltas.push_back({entry.path().filename().string(), readBytes(entry.path())});
+        }
+    }
+    ASSERT_EQ(source.maps.deltas.size(), 67);
+    source.metadata.header.mapFileName = source.maps.deltas.front().name;
+    source.metadata.header.mapFileName.replace(source.metadata.header.mapFileName.size() - 4, 4,
+        source.metadata.header.mapFileName.ends_with(".dlv") ? ".blv" : ".odm");
+    const std::vector<std::string> expected = namesOf(source);
+    const std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(source);
+    int reads = 0;
+    mm6::KnownSaveFields restored = mm6::decodeKnownSaveWithMapBases(bytes, expected,
+        [&](std::string_view baseName) {
+            ++reads;
+            const auto &directory = baseName.ends_with(".blv") ? indoorDir : outdoorDir;
+            const std::vector<std::uint8_t> base = readBytes(directory / baseName);
+            return Blob::copy(base.data(), base.size());
+        });
+    EXPECT_EQ(reads, 67);
+    EXPECT_EQ(restored.maps, source.maps);
+}

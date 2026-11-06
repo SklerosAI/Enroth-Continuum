@@ -482,3 +482,21 @@ blocks map load. Current menu requests some MM7 icon names absent from MM6
 data. Both guards remain closed while the atomic chest handoff, complete
 save transaction and MM6 menu assets are built. Private game data, rule files
 and logs remain ignored locally; installed MM7 and reserved MM8 are untouched.
+
+## MM6 F4 menu, CHAR v4 and chest handoff checkpoint — 269 tests, 2026-11-06
+
+A fresh arm64 build of `MM6`, `OpenEnroth`, unit tests and game tests passed
+after the title-specific MM6 main menu, `CHAR` v4 bonus-byte preservation,
+fail-closed commerce/beacon checks and detached atomic 20-chest handoff. The
+private-backed offline gate passed **269/269 MM6/LOD tests from 69 suites**;
+the general unit gate passed **438/438**. The explicit MM6 headless suite passed
+**6/6** and the MM7 headless control passed **1/1**. A monitored MM6 run saw
+no focus change or on-screen window across 31 host samples. The MM6 title
+button resources now resolve in headless startup; visual alignment and click
+behavior still need a graphical check.
+
+The chest handoff is detached from live `vChests`, original MM6 LCG and
+artifact owners and `.ec6` save state. New-game saving and map loading remain
+guarded. The partial save candidate rejects active beacon and inherited
+MM7-indexed commerce state rather than omitting it. First-map play, HUD art,
+save/reload and campaign effects remain open.

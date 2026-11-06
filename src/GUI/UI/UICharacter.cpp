@@ -840,9 +840,11 @@ std::string GUIWindow_CharacterRecord::getAchievedAwardsString(int idx) {
     std::string str;
 
     // MM6's formatted award rows do not share MM7's numeric counter IDs.
-    // Keep them out of the inherited sprintf cases until their counters map.
-    if (!canRenderAwardText(engine->gameTitle(), pAwards[_achievedAwardsList[idx]].pText))
-        return str;
+    // Keep all MM6 text out of the inherited sprintf cases until counters map.
+    if (engine->gameTitle() == GameTitle::MM6) {
+        const std::string &text = pAwards[_achievedAwardsList[idx]].pText;
+        return canRenderAwardText(GameTitle::MM6, text) ? text : str;
+    }
 
     // TODO(captainurist): fmt can throw
     switch (_achievedAwardsList[idx]) {

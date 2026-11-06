@@ -3302,6 +3302,9 @@ void pushScrollSpell(SpellId spell, int casterIndex) {
 }
 
 void spellTargetPicked(Pid targetPid, int targetCharacterIndex) {
+    if (engine->gameTitle() == GameTitle::MM6 &&
+        (targetCharacterIndex < -1 || targetCharacterIndex >= 4))
+        throw std::runtime_error("MM6 character spell target is out of range");
     assert((targetPid != Pid()) ^ (targetCharacterIndex != -1)); // Only one should be valid.
     assert(targetCharacterIndex == -1 || (targetCharacterIndex >= 0 && targetCharacterIndex <= 4));
 

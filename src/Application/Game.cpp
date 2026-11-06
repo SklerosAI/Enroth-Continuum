@@ -278,6 +278,8 @@ void Game::closeTargetedSpellWindow() {
 }
 
 void Game::onEscape() {
+    if (engine->gameTitle() == GameTitle::MM6)
+        CastSpellInfoHelpers::cancelSpellCastInProgress();
     closeTargetedSpellWindow();
 
     pParty->switchToNextActiveCharacter();  // always check this - could leave

@@ -87,8 +87,14 @@ nonempty rows; headers, separators and reserved records still require review.
 - [ ] Decode the `useitems.txt` token/result vocabulary, recipe and failure
   effects, and any non-potion item use; reconcile with the owned guides and
   original behavior in F3, then cover all matrix cells and representative
-  live mixes in F4/F5. Also resolve the absent profession dismissal text and
+  live mixes in F4/F5. Also resolve the MM6 hired-NPC dismissal path and
   the `npcbtb.txt`, `passwords.txt` and autonote-variant roles.
+- [x] Compare the owned guide's visually checked safe-potion chart with the
+  retained matrix. `scripts/mm6_probe_potion_guide.py` confirms the same 25
+  unordered input pairs, but two result rows disagree with shipped data.
+  Exact recipes and guide transcription stay in ignored local reports; the
+  [rules closure packet](MM6_RULES_F2_CLOSURE.md) records the evidence limit.
+  Resolve both at F3 before encoding results or failure effects.
 
 | File | Raw rows | Required reconciliation |
 | --- | ---: | --- |
@@ -230,6 +236,13 @@ that requirement.
   67 retained delta companions reach their exact decoded end. The 200
   persistent bytes and 56-byte tail still need field-level semantics and a
   lossless write/read check; native `.mm6` save compatibility is unproven.
+- [x] Reassemble all 67 retained MM6 deltas byte-exactly from bounded wire
+  sections using `scripts/mm6_probe_world_roundtrip.py`. Its ignored report
+  records 268 synthetic sentinel checks across fixed regions and 268 malformed
+  input rejections. This proves Python section preservation only; all shipped
+  reset headers, persistent blocks and tails are zero, so nonzero field
+  meanings and C++ save behavior remain open. The [world closure packet](MM6_WORLD_F2_CLOSURE.md)
+  maps those regions to current consumers and acceptance checks.
 - [x] Trace MM7-only reset, door/chest reconstruction, transition, load-menu
   and write paths in the [save specification](MM6_SAVE_SPEC.md). Current
   `SaveLoad.cpp` updates in-memory map deltas before a direct file write, and

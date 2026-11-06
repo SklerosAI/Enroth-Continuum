@@ -56,6 +56,8 @@ def main() -> None:
                      / "Game Data/MM6/app/Anims/Anims1.vid")
     staged_anims2 = (Path.home() / "Library/Application Support/Enroth Continuum"
                      / "Game Data/MM6/app/Anims/Anims2.vid")
+    staged_audio = (Path.home() / "Library/Application Support/Enroth Continuum"
+                    / "Game Data/MM6/app/Sounds/Audio.snd")
     if not all(path.is_file() for path in (creation_manifest, transport_manifest,
                                            spell_manifest, first_aid_manifest, power_cure_manifest,
                                            timed_cure_manifest, combat_buff_manifest,
@@ -64,6 +66,8 @@ def main() -> None:
     subprocess.run([sys.executable, "-B", str(root / "scripts/mm6_f4_check_house_presentation.py"),
                     str(research), str(house_room_manifest), str(staged_icons),
                     str(staged_anims1), str(staged_anims2)], check=True)
+    subprocess.run([sys.executable, "-B", str(root / "scripts/mm6_f4_check_audio_source.py"),
+                    str(research), str(staged_audio)], check=True)
     subprocess.run([sys.executable, "-B", str(root / "scripts/mm6_f4_check_spell_learning.py"),
                     str(research), str(creation_manifest)], check=True)
 
@@ -85,6 +89,7 @@ def main() -> None:
         "ENROTH_MM6_STAGED_ICONS_LOD": str(staged_icons),
         "ENROTH_MM6_STAGED_ANIMS1_VID": str(staged_anims1),
         "ENROTH_MM6_STAGED_ANIMS2_VID": str(staged_anims2),
+        "ENROTH_MM6_STAGED_AUDIO_SND": str(staged_audio),
     })
     subprocess.run([str(binary), "--gtest_filter=MM6*.*:LodReader.OriginalDirectoryOrder"],
                    check=True, env=environment)

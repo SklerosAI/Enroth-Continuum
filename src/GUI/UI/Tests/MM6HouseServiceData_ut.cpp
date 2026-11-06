@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -20,14 +21,19 @@
 #include "GUI/UI/MM6HouseServiceData.h"
 #include "GUI/UI/UIHouses.h"
 
+#include "Engine/Snapshots/TableSerialization.h"
+
 #include "Library/Json/Json.h"
 #include "Library/Lod/LodReader.h"
 #include "Library/LodFormats/LodFormats.h"
+#include "Library/Snd/SndReader.h"
 
 #include "Library/Vid/VidReader.h"
 
 #include "Media/MM6MovieLookup.h"
 #include "Media/MediaPlayer.h"
+#include "Media/Audio/SoundList.h"
+#include "Media/AudioBufferDataSource.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -490,4 +496,52 @@ TEST(MM6HouseServiceData, PreviewExitSkipsLegacyDialogueAndCharacterAdvanceOnlyF
     EXPECT_TRUE(isMM6HousePresentationScreen(GameTitle::MM6, SCREEN_HOUSE));
     EXPECT_FALSE(isMM6HousePresentationScreen(GameTitle::MM6, SCREEN_GAME));
     EXPECT_FALSE(isMM6HousePresentationScreen(GameTitle::MM7, SCREEN_HOUSE));
+}
+
+TEST(MM6HouseServiceData, DecodesOneActiveMM6EventSoundWithoutPlayback) {
+    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
+    const char *archive = std::getenv("ENROTH_MM6_STAGED_AUDIO_SND");
+    if (!research || !archive)
+        GTEST_SKIP() << "private MM6 event sound and staged SND evidence is unavailable";
+
+    const std::filesystem::path root(research);
+    const Json report = Json::parse(readFile(root / "F3_MEDIA_RECONCILIATION_2026-11-05.json"));
+    const Json &events = report.at("event_sound_joins");
+    ASSERT_EQ(events.size(), 8);
+    const int soundId = events.at(0).at("sound_id").get<int>();
+    ASSERT_GT(soundId, 0);
+
+    SoundList table;
+    deserialize(Blob::fromString(readFile(root / "icons" / "dsounds.bin")), &table, GameTitle::MM6);
+    const SoundInfo *sound = table.soundInfo(static_cast<SoundId>(soundId));
+    ASSERT_NE(sound, nullptr);
+    ASSERT_FALSE(sound->name.empty());
+    const SndReader snd{PathView(archive)};
+    ASSERT_TRUE(snd.exists(sound->name));
+    Blob wave = snd.read(sound->name);
+    ASSERT_TRUE(wave);
+    ASSERT_LE(wave.size(), 4 * 1024 * 1024);
+
+    AudioBufferDataSource decoder(std::move(wave));
+    ASSERT_TRUE(decoder.Open());
+    const size_t sampleRate = decoder.GetSampleRate();
+    const size_t channels = decoder.GetChannelCount();
+    EXPECT_GE(sampleRate, 8000);
+    EXPECT_LE(sampleRate, 96000);
+    EXPECT_GE(channels, 1);
+    EXPECT_LE(channels, 2);
+    EXPECT_TRUE(std::isfinite(decoder.GetDuration()));
+    EXPECT_GT(decoder.GetDuration(), 0.0f);
+    EXPECT_LE(decoder.GetDuration(), 60.0f);
+    const Blob samples = decoder.GetNextBuffer();
+    ASSERT_TRUE(samples);
+    ASSERT_GT(channels, 0);
+    const size_t sampleCount = samples.size() / (channels * sizeof(std::int16_t));
+    EXPECT_GT(sampleCount, 0);
+    EXPECT_LE(sampleCount, 2'000'000);
+    EXPECT_EQ(samples.size(), sampleCount * channels * sizeof(std::int16_t));
+    decoder.Close();
+
+    AudioBufferDataSource malformed(Blob::fromString("not a sound"));
+    EXPECT_FALSE(malformed.Open());
 }

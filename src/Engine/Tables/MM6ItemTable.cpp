@@ -8,7 +8,11 @@
 #include <utility>
 #include <vector>
 
+#include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/ResourceManager.h"
+
+#include "Library/Lod/LodReader.h"
+#include "Library/LodFormats/LodFormats.h"
 
 #include "Library/Serialization/Serialization.h"
 #include "Library/Logger/Logger.h"
@@ -151,5 +155,8 @@ void ItemTable::InitializeMm6(ResourceManager *resourceManager) {
 
     Item::PopulateSpecialBonusMap();
     Item::PopulateArtifactBonusMap();
+    LodReader icons(dfs->read("data/icons.lod"));
+    Blob combinations = lod::decodeMaybeCompressed(icons.read("useitems.txt"));
+    mm6PotionCombinations = mm6::PotionCombinations::parse(combinations.str());
     LoadItemSizes();
 }

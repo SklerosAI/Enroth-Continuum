@@ -12,6 +12,7 @@ set(ENGINE_TABLES_SOURCES
         ItemTable.cpp
         MapTable.cpp
         MM6ItemTable.cpp
+        MM6PotionCombinations.cpp
         MerchantTable.cpp
         MessageScrollTable.cpp
         NPCTable.cpp
@@ -35,6 +36,7 @@ set(ENGINE_TABLES_HEADERS
         IconFrameTable.h
         ItemTable.h
         MapTable.h
+        MM6PotionCombinations.h
         MerchantTable.h
         MessageScrollTable.h
         NPCTable.h

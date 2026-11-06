@@ -39,8 +39,8 @@ if(OE_BUILD_TESTS)
         Tests/MM6NpcSaveFields_ut.cpp Tests/MM6ResistanceSaveFields_ut.cpp
         Tests/MM6HeldItemSaveFields_ut.cpp Tests/MM6BuffSaveFields_ut.cpp
         Tests/MM6HirelingSaveFields_ut.cpp Tests/MM6RecoverySaveFields_ut.cpp
-        Tests/MM6KnownSaveFields_ut.cpp)
-    target_link_libraries(test_engine_mm6_save_container PUBLIC testing_unit engine_mm6_save_container)
+        Tests/MM6KnownSaveFields_ut.cpp Tests/MM6PotionCombinations_ut.cpp)
+    target_link_libraries(test_engine_mm6_save_container PUBLIC testing_unit engine_mm6_save_container engine_tables)
     target_check_style(test_engine_mm6_save_container)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_save_container)
 

@@ -5,6 +5,7 @@
 #include "Engine/Data/SpecialEnchantmentData.h"
 #include "Engine/Data/StandardEnchantmentData.h"
 #include "Engine/Data/ItemData.h"
+#include "Engine/Tables/MM6PotionCombinations.h"
 #include "Engine/Objects/Item.h"
 
 #include "Library/Geometry/Size.h"
@@ -57,6 +58,9 @@ struct ItemTable {
      * `ITEM_NULL` means "can't mix even if you try", and is set for cases when `potion1 == potion2`. Item ids in
      * `[1, 4]` denote damage level from mixing. */
     IndexedArray<IndexedArray<ItemId, ITEM_FIRST_REAL_POTION, ITEM_LAST_REAL_POTION>, ITEM_FIRST_REAL_POTION, ITEM_LAST_REAL_POTION> potionCombination;
+
+    /** MM6 useitems.txt outcomes. Opaque markers have no implemented effect. */
+    mm6::PotionCombinations mm6PotionCombinations;
 
     /** Index of autonote bit (`Party::_autonoteBits`) for the potion recipe.
      *

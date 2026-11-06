@@ -649,3 +649,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The MM6 monster loader now retains the six source columns as Fire, Electricity, Cold, Poison, Physical and Magic alongside the inherited MM7-shaped fields. A typed lookup rejects missing MM6 source data and Energy, which has an attack label but no proved resistance column.
 - A native test loaded the F3-matched retained 173-row table and matched its six immunity-marker aggregates to the F2 combat audit; all five focused monster-damage tests passed after the arm64 build. Live damage formulas and unproved channel gates did not change. The original installation and partial MM6 game were not opened.
+
+## [2026-11-06] guard | MM6 atomic save known-field validation
+- by: T-Burton-ND via codex
+- The native `.ec6` writer and recovery path now decode all sixteen currently known required sections before creating a file, copying a primary to backup, or restoring a backup. A CRC-valid partial container or malformed field is not a recoverable save candidate. The partial manifest still lacks full map-base and runtime-state proof, so MM6 SaveLoad remains gated.
+- The arm64 MM6, OpenEnroth and unit targets built. Three focused atomic-save tests passed, including CRC-valid malformed-section recovery and rejection before disk replacement. Cpplint and diff checks passed. No original installation or MM6 process was opened; MM7 app/profile was untouched.

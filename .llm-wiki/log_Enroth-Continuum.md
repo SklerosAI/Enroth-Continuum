@@ -369,3 +369,8 @@ Chronological record of wiki activity.
 - Verified all 99 MM6 scroll and 99 book item joins against ignored retained reports whose item and spell hashes match F3 original-file reconciliation. Added bounded MM6-only mapping and title-specific guild popup lookup, with invalid item IDs rejected.
 - Guarded MM6 scroll use before consumption, book use before inherited mastery checks, and guild stock before MM7 item generation. Recorded unresolved targets/effects, three-rank learnability, guild policy and learned-spell icons; MM7 mapping remains unchanged.
 - Built the isolated arm64 unit target, passed two focused native tests covering every item ID and negative edges, checked the private report verifier, C++ style and wiki links. No partial game was launched or original installation reread.
+
+## [2026-11-06] update | MM6 spell-item integrated check
+- by: T-Burton-ND via codex
+- Integrated the title-specific scroll/book mapping and guarded consumers into the main checkout. The F3-matched private verifier passed all 198 joins; the native arm64 MM6, MM7 and unit targets built; the retained-data offline runner passed 66/66 tests.
+- MM6 book learning, scroll casting and guild stock remain deliberately closed pending title-specific rules. The installed MM7 app and saves were untouched; no original installation or partial MM6 game process was opened.

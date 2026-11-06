@@ -22,6 +22,7 @@
 #include "Library/Vid/VidReader.h"
 
 #include "Media/MM6MovieLookup.h"
+#include "Media/MediaPlayer.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -359,6 +360,35 @@ TEST(MM6HouseServiceData, ResolvesEveryReferencedRoomMovieFromStagedArchives) {
         EXPECT_GT(movie.size(), 16);
         EXPECT_TRUE(movie.str().starts_with("SMK"));
     }
+}
+
+TEST(MM6HouseServiceData, DecodesOneStagedRoomMovieFrameWithoutAudioOrUI) {
+    const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
+    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
+    const char *firstPath = std::getenv("ENROTH_MM6_STAGED_ANIMS1_VID");
+    const char *secondPath = std::getenv("ENROTH_MM6_STAGED_ANIMS2_VID");
+    if (!manifest || !research || !firstPath || !secondPath)
+        GTEST_SKIP() << "private MM6 room and staged movie evidence is unavailable";
+
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(manifest)));
+    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
+        Blob::fromString(readFile(std::filesystem::path(research) / "icons" / "2devents.txt")), rooms);
+    const mm6::HousePresentationState room = mm6::planHousePresentation(GameTitle::MM6, houses, 1);
+    const VidReader first{PathView(firstPath)};
+    const VidReader second{PathView(secondPath)};
+    const Blob movie = lookupMovieBlob(GameTitle::MM6, first, second, room.videoName);
+    ASSERT_TRUE(movie);
+
+    const std::optional<mm6::RoomMovieFrameProbe> frame = mm6::probeRoomMovieFirstFrame(movie);
+    ASSERT_TRUE(frame.has_value());
+    EXPECT_GT(frame->size.w, 0);
+    EXPECT_GT(frame->size.h, 0);
+    EXPECT_LE(frame->size.w, 1024);
+    EXPECT_LE(frame->size.h, 1024);
+    EXPECT_GE(frame->decodedBytes, static_cast<size_t>(frame->size.w * frame->size.h * 4));
+    EXPECT_FALSE(mm6::probeRoomMovieFirstFrame(Blob::fromString("BAD00000")));
+    EXPECT_FALSE(mm6::probeRoomMovieFirstFrame(Blob::fromString("SMK00000")));
+    EXPECT_FALSE(mm6::probeRoomMovieFirstFrame(movie.subBlob(0, std::min<size_t>(movie.size(), 64))));
 }
 
 TEST(MM6HouseServiceData, ActivatesPresentationOnlyForTableBackedMM6Rooms) {

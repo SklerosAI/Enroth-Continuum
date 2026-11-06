@@ -2,8 +2,10 @@
 
 #include <string>
 #include <memory>
+#include <optional>
 
 #include "Library/Vid/VidReader.h"
+#include "Library/Geometry/Size.h"
 
 #include "Media/Movie.h"
 
@@ -51,3 +53,16 @@ class MPlayer {
 
 extern MPlayer *pMediaPlayer;
 extern PMovie pMovie_Track;
+
+namespace mm6 {
+
+struct RoomMovieFrameProbe {
+    Sizei size;
+    size_t decodedBytes = 0;
+};
+
+// Decodes one frame through the existing FFmpeg/Smacker video path without
+// opening audio, creating a window or starting the game loop.
+std::optional<RoomMovieFrameProbe> probeRoomMovieFirstFrame(const Blob &movie);
+
+} // namespace mm6

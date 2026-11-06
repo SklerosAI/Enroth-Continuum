@@ -752,6 +752,54 @@ void MPlayer::Initialize() {
     }
 }
 
+std::optional<mm6::RoomMovieFrameProbe> mm6::probeRoomMovieFirstFrame(const Blob &movie) {
+    if (!movie || movie.size() > 32 * 1024 * 1024 || !movie.str().starts_with("SMK"))
+        return std::nullopt;
+
+    FFmpegBlobIoContext io(Blob::share(movie));
+    AVFormatContext *format = avformat_alloc_context();
+    if (!format)
+        return std::nullopt;
+    format->pb = io.avioContext();
+    if (avformat_open_input(&format, movie.displayPath().c_str(), nullptr, nullptr) < 0) {
+        if (format)
+            avformat_free_context(format);
+        return std::nullopt;
+    }
+
+    std::optional<RoomMovieFrameProbe> result;
+    if (avformat_find_stream_info(format, nullptr) >= 0) {
+        const int index = av_find_best_stream(format, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
+        if (index >= 0) {
+            const AVCodecParameters *parameters = format->streams[index]->codecpar;
+            if (parameters->width > 0 && parameters->height > 0 &&
+                parameters->width <= 1024 && parameters->height <= 1024) {
+                AVVideoStream video;
+                if (video.open(format) && video.converter) {
+                    AVPacket *packet = av_packet_alloc();
+                    if (packet) {
+                        for (int examined = 0; examined < 256 && av_read_frame(format, packet) >= 0; ++examined) {
+                            if (packet->stream_index == video.stream_idx) {
+                                const Blob frame = video.decode_frame(packet);
+                                const size_t expected = static_cast<size_t>(video.width) * video.height * 4;
+                                if (frame && frame.size() >= expected && frame.size() <= expected * 2) {
+                                    result = RoomMovieFrameProbe{{video.width, video.height}, frame.size()};
+                                    av_packet_unref(packet);
+                                    break;
+                                }
+                            }
+                            av_packet_unref(packet);
+                        }
+                        av_packet_free(&packet);
+                    }
+                }
+            }
+        }
+    }
+    avformat_close_input(&format);
+    return result;
+}
+
 void MPlayer::OpenHouseMovie(std::string_view pMovieName, bool bLoop) {
     (void)tryOpenHouseMovie(pMovieName, bLoop);
 }

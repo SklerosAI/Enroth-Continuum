@@ -681,3 +681,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A F3-matched retained ledger has 592 raw-ID-19 uses, all Compare, across four active EVT resources. GrayFace MMExtension identifies ID 19 as `DayOfYearIs`. The MM6 interpreter now compares party time against a bounded one-based 336-day year before character selection; unsupported writes reject before inherited execution. MM7 keeps its prior path.
 - The aggregate verifier rehashes all 68 retained EVT resources and is wired into the offline runner. Arm64 MM6, OpenEnroth and unit targets were current; three focused tests passed for the calendar boundary and invalid inputs. The full integrated runner and actual date-gate branch/save scenarios remain open. No original installation or MM6 process was opened.
+
+## [2026-11-06] implement | MM6 house service source data
+- by: T-Burton-ND via codex
+- A read-only title-specific decoder now preserves all 557 retained MM6 house rows, their validated room joins, parsed service families, numeric `Val`, raw column `A` stock/skill descriptions, raw column `C` notes and paired hours. The MM6 `A` field is text in all 123 populated rows; 20 of 89 populated `C` fields are nonnumeric. It does not invoke MM7 stock, price, guild or travel services.
+- The private-backed test checks every row and rejects malformed IDs, labels, room IDs, values and hours. Arm64 MM6/MM7/unit targets built; four focused service/room tests passed without skips. The house entry gate remains closed and no original installation or MM6 process was opened.

@@ -6,6 +6,8 @@
 #include <string>
 
 #include "Engine/Party.h"
+#include "Engine/Engine.h"
+#include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Overlays.h"
 #include "Engine/Random/Random.h"
@@ -562,6 +564,8 @@ void SpellStats::Initialize(const Blob &spells, GameTitle gameTitle) {
 }
 
 void eventCastSpell(SpellId uSpellID, Mastery skillMastery, int skillLevel, Vec3f from, Vec3f to) {
+    mm6::requireVerifiedSpellEffect(engine->gameTitle(), uSpellID, mm6::SpellEffectSource::Event);
+
     // For bug catching
     assert(skillMastery >= MASTERY_NOVICE && skillMastery <= MASTERY_GRANDMASTER);
 
@@ -827,6 +831,8 @@ bool IsSpellQuickCastableOnShiftClick(SpellId uSpellID) {
 }
 
 int CalcSpellDamage(SpellId uSpellID, int spellLevel, Mastery skillMastery, int currentHp) {
+    mm6::requireVerifiedSpellEffect(engine->gameTitle(), uSpellID, mm6::SpellEffectSource::Damage);
+
     int result;       // eax@1
     unsigned int diceSides;  // [sp-4h] [bp-8h]@9
 
@@ -861,6 +867,9 @@ int CalcSpellDamage(SpellId uSpellID, int spellLevel, Mastery skillMastery, int 
 }
 
 void armageddonProgress() {
+    mm6::requireVerifiedSpellEffect(engine->gameTitle(), SPELL_DARK_ARMAGEDDON,
+                                     mm6::SpellEffectSource::Damage);
+
     assert(uCurrentlyLoadedLevelType == LEVEL_OUTDOOR && pParty->armageddon_timer > 0_ticks);
 
     if (pParty->armageddon_timer > 417_ticks) {

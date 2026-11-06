@@ -8,6 +8,7 @@
 #include <optional>
 
 #include "Engine/Engine.h"
+#include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Data/AwardEnums.h"
 #include "Engine/Data/HouseEnumFunctions.h"
 #include "Engine/Graphics/Camera.h"
@@ -214,6 +215,8 @@ void Actor::SetRandomGoldIfTheresNoItem() {
 //----- (00404AC7) --------------------------------------------------------
 void Actor::AI_SpellAttack(unsigned int uActorID, AIDirection *pDir,
                            SpellId uSpellID, ActorAbility a4, CombinedSkillValue uSkillMastery) {
+    mm6::requireVerifiedSpellEffect(engine->gameTitle(), uSpellID, mm6::SpellEffectSource::Monster);
+
     Duration spellLength;
 
     SpriteObject sprite;
@@ -1248,6 +1251,10 @@ void Actor::StealFrom(unsigned int uActorID) {
 //----- (00403A60) --------------------------------------------------------
 void Actor::AI_SpellAttack2(unsigned int uActorID, Pid edx0,
                             AIDirection *pDir) {
+    if (engine->gameTitle() == GameTitle::MM6)
+        mm6::requireVerifiedSpellEffect(engine->gameTitle(), pActors[uActorID].monsterInfo.spell2Id,
+                                         mm6::SpellEffectSource::Monster);
+
     Actor *v3;           // ebx@1
     int16_t v4;          // esi@3
     int16_t v5;          // edi@3
@@ -1322,6 +1329,10 @@ void Actor::AI_SpellAttack2(unsigned int uActorID, Pid edx0,
 //----- (00403854) --------------------------------------------------------
 void Actor::AI_SpellAttack1(unsigned int uActorID, Pid sTargetPid,
                             AIDirection *pDir) {
+    if (engine->gameTitle() == GameTitle::MM6)
+        mm6::requireVerifiedSpellEffect(engine->gameTitle(), pActors[uActorID].monsterInfo.spell1Id,
+                                         mm6::SpellEffectSource::Monster);
+
     Actor *v3;           // ebx@1
     int16_t v4;          // esi@3
     int16_t v5;          // edi@3

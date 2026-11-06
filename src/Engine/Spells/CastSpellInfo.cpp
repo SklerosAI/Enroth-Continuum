@@ -31,6 +31,7 @@
 #include "Engine/Random/Random.h"
 #include "Engine/Spells/Spells.h"
 #include "Engine/Spells/MM6SpellRules.h"
+#include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
 
 #include "GUI/GUIMessageQueue.h"
@@ -132,6 +133,9 @@ void CastSpellInfoHelpers::castSpell() {
         if (pCastSpell->uSpellID == SPELL_NONE) {
             continue;  // spell item blank skip to next
         }
+
+        mm6::requireVerifiedSpellEffect(engine->gameTitle(), pCastSpell->uSpellID,
+                                         mm6::SpellEffectSource::PlayerQueue);
 
         if (pParty->Invisible()) {
             // casting a spell breaks invisibility
@@ -3022,6 +3026,8 @@ void pushSpellOrRangedAttack(SpellId spell,
                              CombinedSkillValue skill_value,
                              SpellCastFlags flags,
                              Pid target) {
+    mm6::requireVerifiedSpellEffect(engine->gameTitle(), spell, mm6::SpellEffectSource::PlayerQueue);
+
     if (pParty->bTurnBasedModeOn) {
         if (pTurnEngine->turn_stage == TE_WAIT ||
             pTurnEngine->turn_stage == TE_MOVEMENT) {

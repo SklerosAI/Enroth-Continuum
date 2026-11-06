@@ -1830,6 +1830,8 @@ Duration Character::GetAttackRecoveryTime(bool attackUsesBow) const {
         weapon = inventory.functionalEntry(ITEM_SLOT_MAIN_HAND);
         if (weapon) {
             if (weapon->isWand()) {
+                if (engine->gameTitle() == GameTitle::MM6)
+                    throw std::runtime_error("MM6 wand spell and recovery rules are not implemented");
                 weapon_recovery = pSpellDatas[spellForWand(weapon->itemId)].recovery_per_skill[MASTERY_EXPERT];
             } else {
                 weapon_recovery = base_recovery_times_per_weapon_type[weapon->skill()];
@@ -4545,6 +4547,12 @@ bool Character::characterHitOrMiss(Actor *pActor, int distancemod, int skillmod)
 void Character::_42ECB5_CharacterAttacksActor() {
     Character *character = &pParty->activeCharacter();
     if (!character->CanAct()) return;
+
+    if (engine->gameTitle() == GameTitle::MM6) {
+        InventoryEntry heldWand = character->inventory.entry(ITEM_SLOT_MAIN_HAND);
+        if (heldWand && !heldWand->IsBroken() && heldWand->isWand())
+            throw std::runtime_error("MM6 wand spell and effect dispatch are not implemented");
+    }
 
     CastSpellInfoHelpers::cancelSpellCastInProgress();
     // v3 = 0;

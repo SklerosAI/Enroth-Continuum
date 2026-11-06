@@ -27,18 +27,22 @@ This index directs agents to the current public specifications and reproducible 
 | Create Party, Quick Start, starting stats, items and spells | [Creation F2 audit](../project/MM6_CREATION_F2.md) |
 | Starting-array schema lead, potion-guide reconciliation and rules acceptance | [Rules F2 closure packet](../project/MM6_RULES_F2_CLOSURE.md) |
 | All 99 spell IDs, inherited effect and item-range collisions | [Spell effect F2 audit](../project/MM6_SPELL_EFFECT_F2.md) |
+| All 99 spell guide locators and selected visual claim checks | [Spell guide claims F2](../project/MM6_SPELL_GUIDE_CLAIMS_F2.md) |
 | Map deltas, reset, versioned save, persistence | [Save and map](../project/MM6_SAVE_SPEC.md) |
 | Retained delta section roundtrip and world consumer obligations | [World F2 closure packet](../project/MM6_WORLD_F2_CLOSURE.md) |
 | Record field hypotheses and chest delta-grid ambiguity | [World field map F2](../project/MM6_WORLD_FIELD_MAP_F2.md) |
 | EVT, Question, NPC topics, structural campaign links | [Event and campaign](../project/MM6_EVENT_CAMPAIGN_SPEC.md) |
 | All active EVT opcode widths, case presence, confidence and scenarios | [Opcode semantics F2 packet](../project/MM6_OPCODE_SEMANTICS_F2.md) |
+| Active MM6 variable IDs, inherited enum collisions, typed state and persistence | [Variable dispatch F2 packet](../project/MM6_VARIABLE_DISPATCH_F2.md) |
 | Campaign milestones, NPC interception, travel and finale seams | [Campaign F2 closure packet](../project/MM6_CAMPAIGN_F2_CLOSURE.md) |
+| Guide quest headings, Oracle candidate bits, outdoor names and transport lead | [Campaign guide claims F2](../project/MM6_CAMPAIGN_GUIDE_CLAIMS_F2.md) |
 | Movies, houses, audio, portraits, fonts, UI | [Media and UI](../project/MM6_MEDIA_UI_SPEC.md) |
 | Portrait/icon/font/voice consumer name joins | [Media F2 closure packet](../project/MM6_MEDIA_F2_CLOSURE.md) |
 | Text-table loader and no-literal-load questions, item matrix, NPC text | [Table consumers](../project/MM6_TABLE_CONSUMER_SPEC.md) |
 | Thirty-family parser/consumer register and award-row mismatch | [Table semantic F2 packet](../project/MM6_TABLE_SEMANTIC_F2.md) |
 | Monster parser labels, taxonomy, combat gaps | [Monster and combat](../project/MM6_MONSTER_COMBAT_SPEC.md) |
 | Retained monster rows, attack/resistance/AI/loot consumer map | [Combat semantics F2](../project/MM6_COMBAT_SEMANTICS_F2.md) |
+| Item and monster per-ID guide review queue and selected discrepancies | [Item and monster guide claims F2](../project/MM6_ITEM_MONSTER_GUIDE_CLAIMS_F2.md) |
 
 ## Tracked probe entry points
 

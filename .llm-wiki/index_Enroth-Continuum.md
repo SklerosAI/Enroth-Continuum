@@ -48,18 +48,22 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 Creation F2 Source](Source-MM6-Creation-F2.md) — Distinct party routes, inherited default and starter-item collisions
 - [MM6 Rules F2 Closure Source](Source-MM6-Rules-F2-Closure.md) — Potion guide disagreement, starting-array schema lead, and rule acceptance gaps
 - [MM6 Spell Effect F2 Source](Source-MM6-Spell-Effect-F2.md) — Ninety-nine spell paths, inherited data/range/target collisions, and effect gaps
+- [MM6 Spell Guide Claims F2 Source](Source-MM6-Spell-Guide-Claims-F2.md) — All spell guide locators, selected scan checks, and remaining effect claims
 - [MM6 Save Spec Source](Source-MM6-Save-Spec.md) — Map-state boundaries, preservation, and save contract
 - [MM6 World F2 Closure Source](Source-MM6-World-F2-Closure.md) — Offline delta-section preservation and unresolved C++ world/save obligations
 - [MM6 World Field Map F2 Source](Source-MM6-World-Field-Map-F2.md) — Record hypotheses and corrected chest delta-grid ambiguity
 - [MM6 Event and Campaign Spec Source](Source-MM6-Event-Campaign-Spec.md) — Question, NPC-topic, variable, and campaign gaps
 - [MM6 Opcode Semantics F2 Source](Source-MM6-Opcode-Semantics-F2.md) — Complete active structural register with unresolved side effects
+- [MM6 Variable Dispatch F2 Source](Source-MM6-Variable-Dispatch-F2.md) — Active ID families, inherited collisions, and title-specific dispatch obligations
 - [MM6 Campaign F2 Closure Source](Source-MM6-Campaign-F2-Closure.md) — Static transport, NPC interception, milestone, and finale routing risks
+- [MM6 Campaign Guide Claims F2 Source](Source-MM6-Campaign-Guide-Claims-F2.md) — Guide headings, transport table lead, outdoor name join, and unresolved quest branches
 - [MM6 Media and UI Spec Source](Source-MM6-Media-UI-Spec.md) — Movie, house, sound, music, and interface routing
 - [MM6 Media F2 Closure Source](Source-MM6-Media-F2-Closure.md) — Portrait, icon, font, and voice name-index comparisons
 - [MM6 Text Table Consumer Spec Source](Source-MM6-Table-Consumer-Spec.md) — Direct literal load coverage and unresolved parser/consumer questions
 - [MM6 Table Semantic F2 Source](Source-MM6-Table-Semantic-F2.md) — Thirty-family parser map, selected references, and skipped awards
 - [MM6 Monster and Combat Spec Source](Source-MM6-Monster-Combat-Spec.md) — Retained monster parser gaps, title assumptions, and unverified combat
 - [MM6 Combat Semantics F2 Source](Source-MM6-Combat-Semantics-F2.md) — All-row monster consumer map, resistance/AI/loot gaps, and live encounter obligations
+- [MM6 Item and Monster Guide Claims F2 Source](Source-MM6-Item-Monster-Guide-Claims-F2.md) — Complete per-ID review queue and selected guide/data discrepancies
 - [MM6 Guide F2 Review Source](Source-MM6-Guide-F2-Review.md) — Fourteen guide-family locators, selected claim checks, and open reconciliation
 
 <!-- Add pages here as the wiki grows -->

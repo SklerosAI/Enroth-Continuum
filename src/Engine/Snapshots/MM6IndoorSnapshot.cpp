@@ -2,8 +2,24 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
+#include <limits>
+#include <span>
+#include <string>
+#include <type_traits>
 #include <utility>
+#include <vector>
 
+#include "CompositeSnapshots.h"
+#include "Engine/Graphics/Indoor.h"
+#include "Engine/MM6/MM6Archive.h"
+#include "Engine/Objects/Actor.h"
+#include "Engine/Objects/Chest.h"
+#include "Engine/Objects/Decoration.h"
+#include "Engine/Objects/SpriteObject.h"
+#include "MM6OutdoorDeltaSnapshot.h"
+#include "Library/Snapshots/CommonSnapshots.h"
+#include "Library/Compression/Compression.h"
 #include "Utility/Exception.h"
 #include "Utility/Streams/BlobOutputStream.h"
 
@@ -171,4 +187,345 @@ Blob serializeMM6Indoor(const MM6IndoorSnapshot &snapshot) {
         deserializeMM6IndoorBase(output);
     }
     return output;
+}
+
+Blob decodeMM6IndoorBaseArchiveEntry(std::string_view name, const Blob &entry) {
+    try {
+        return decodeMM6ArchiveEntry(entry);
+    } catch (const Exception &) {
+        // Only these two original-matched MM6 BLV entries have an invalid
+        // checksum trailer. Their raw DEFLATE stream and decoded length were
+        // checked independently in F3. Never extend this to arbitrary maps.
+        if (name != "cd3.blv" && name != "d08.blv")
+            throw;
+        if (entry.size() < 14)
+            throw;
+        const auto *header = static_cast<const uint8_t *>(entry.data());
+        uint32_t compressed = uint32_t(header[0]) | uint32_t(header[1]) << 8 |
+                              uint32_t(header[2]) << 16 | uint32_t(header[3]) << 24;
+        uint32_t expected = uint32_t(header[4]) | uint32_t(header[5]) << 8 |
+                            uint32_t(header[6]) << 16 | uint32_t(header[7]) << 24;
+        if (compressed != entry.size() - 8 || expected == 0 || expected > kMaximumDecodedBytes)
+            throw;
+        Blob decoded = zlib::uncompressBestEffort(entry.subBlob(8, compressed), expected);
+        if (decoded.size() != expected)
+            throw Exception("MM6 indoor base '{}' recovered length differs from header", name);
+        (void) deserializeMM6IndoorBase(decoded);
+        return decoded;
+    }
+}
+
+namespace {
+
+template<class T>
+std::vector<T> records(const MM6IndoorSection &section, size_t wireWidth, bool counted = true) {
+    static_assert(std::is_trivially_copyable_v<T>);
+    size_t prefix = counted ? 4 : 0;
+    size_t count = counted ? section.count : section.bytes.size() / wireWidth;
+    if (section.bytes.size() != prefix + count * wireWidth || sizeof(T) != wireWidth)
+        throw Exception("MM6 indoor section {} has an invalid record width", static_cast<int>(section.kind));
+    std::vector<T> result(count);
+    if (count)
+        std::memcpy(result.data(), static_cast<const uint8_t *>(section.bytes.data()) + prefix, count * wireWidth);
+    return result;
+}
+
+template<class T>
+std::vector<T> fixedWords(const MM6IndoorSection &section) {
+    return records<T>(section, sizeof(T), false);
+}
+
+struct MM6Decoration {
+    uint16_t id;
+    uint16_t flags;
+    Vec3i position;
+    int32_t yaw;
+    int16_t eventVariable;
+    int16_t eventId;
+    int16_t triggerRadius;
+    int16_t direction;
+};
+static_assert(sizeof(MM6Decoration) == 28);
+
+} // namespace
+
+IndoorLocation_MM7 projectMM6IndoorBase(const MM6IndoorSnapshot &base) {
+    if (base.isDelta)
+        throw Exception("MM6 indoor base projection received a delta");
+
+    IndoorLocation_MM7 result{};
+    result.vertices = records<Vec3s>(base.section(MM6IndoorSectionKind::Vertices), 6);
+
+    const MM6IndoorSection &faces = base.section(MM6IndoorSectionKind::Faces);
+    result.faces.resize(faces.count);
+    if (faces.bytes.size() != 4 + faces.count * 80)
+        throw Exception("MM6 indoor face records have invalid length");
+    const auto *faceBytes = static_cast<const uint8_t *>(faces.bytes.data()) + 4;
+    for (size_t i = 0; i < result.faces.size(); ++i) {
+        const uint8_t *wire = faceBytes + i * 80;
+        BLVFace_MM7 &face = result.faces[i];
+        // MM6's 80-byte face is the MM7 record without its leading 16-byte
+        // floating-point plane. Its fixed-point plane remains byte-exact.
+        std::memcpy(reinterpret_cast<uint8_t *>(&face) + 16, wire, 80);
+        face.facePlane.normal = face.facePlaneOld.normal.toFloatFromFixpoint();
+        face.facePlane.dist = static_cast<float>(face.facePlaneOld.dist) / 65536.0f;
+        if (face.faceExtraId >= base.section(MM6IndoorSectionKind::FaceExtras).count)
+            throw Exception("MM6 indoor face {} references absent extra {}", i, face.faceExtraId);
+    }
+
+    result.faceData = fixedWords<int16_t>(base.section(MM6IndoorSectionKind::FaceData));
+    size_t faceDataIndex = 0;
+    for (size_t i = 0; i < result.faces.size(); ++i) {
+        size_t vertices = result.faces[i].numVertices;
+        size_t words = 6 * (vertices + 1);
+        if (words > result.faceData.size() - faceDataIndex)
+            throw Exception("MM6 indoor face {} exceeds its variable data", i);
+        for (size_t j = 0; j < vertices; ++j)
+            if (result.faceData[faceDataIndex + j] < 0 ||
+                size_t(result.faceData[faceDataIndex + j]) >= result.vertices.size())
+                throw Exception("MM6 indoor face {} references an absent vertex", i);
+        faceDataIndex += words;
+    }
+    if (faceDataIndex != result.faceData.size())
+        throw Exception("MM6 indoor face data has unused words");
+    result.faceTextures = fixedWords<std::array<char, 10>>(base.section(MM6IndoorSectionKind::FaceTextures));
+    result.faceExtras = records<BLVFaceExtra_MM7>(base.section(MM6IndoorSectionKind::FaceExtras), 36);
+    result.faceExtraTextures = fixedWords<std::array<char, 10>>(base.section(MM6IndoorSectionKind::FaceExtraTextures));
+    result.sectors = records<BLVSector_MM7>(base.section(MM6IndoorSectionKind::Rooms), 116);
+    result.sectorData = fixedWords<uint16_t>(base.section(MM6IndoorSectionKind::RoomData));
+    result.sectorLightData = fixedWords<uint16_t>(base.section(MM6IndoorSectionKind::RoomLightData));
+    result.doorCount = base.section(MM6IndoorSectionKind::DoorSlots).count;
+
+    const MM6IndoorSection &sprites = base.section(MM6IndoorSectionKind::Sprites);
+    if (sprites.bytes.size() != 4 + sprites.count * 60)
+        throw Exception("MM6 indoor decoration records have invalid length");
+    result.decorations.resize(sprites.count);
+    result.decorationNames.resize(sprites.count);
+    const auto *spriteBytes = static_cast<const uint8_t *>(sprites.bytes.data()) + 4;
+    for (size_t i = 0; i < sprites.count; ++i) {
+        MM6Decoration source;
+        std::memcpy(&source, spriteBytes + i * 60, sizeof(source));
+        LevelDecoration_MM7 &target = result.decorations[i];
+        target.uDecorationDescID = source.id;
+        target.uFlags = source.flags;
+        target.vPosition = source.position;
+        target._yawAngle = source.yaw;
+        target.uEventID = source.eventId;
+        target.uTriggerRange = source.triggerRadius;
+        target.eventVarId = source.eventVariable;
+        target.field_1A = source.direction;
+        std::memcpy(result.decorationNames[i].data(), spriteBytes + i * 60 + 28, 32);
+    }
+
+    const std::vector<BLVLight_MM6> lights = records<BLVLight_MM6>(base.section(MM6IndoorSectionKind::Lights), 12);
+    result.lights.reserve(lights.size());
+    for (const BLVLight_MM6 &source : lights) {
+        BLVLight_MM7 &target = result.lights.emplace_back();
+        target.vPosition = source.vPosition;
+        target.uRadius = source.uRadius;
+        target.uRed = target.uGreen = target.uBlue = static_cast<char>(255);
+        target.uType = 0;
+        target.uAtributes = source.uAttributes;
+        target.uBrightness = source.uBrightness;
+    }
+    result.bspNodes = records<BSPNode_MM7>(base.section(MM6IndoorSectionKind::BspNodes), 8);
+    const std::vector<SpawnPoint_MM6> spawns = records<SpawnPoint_MM6>(base.section(MM6IndoorSectionKind::SpawnPoints), 20);
+    result.spawnPoints.reserve(spawns.size());
+    for (const SpawnPoint_MM6 &source : spawns) {
+        SpawnPoint_MM7 &target = result.spawnPoints.emplace_back();
+        target.position = source.position;
+        target.radius = source.radius;
+        target.type = source.type;
+        target.treasureLevelOrMonsterIndex = source.treasureLevelOrMonsterIndex;
+        target.attributes = source.attributes;
+    }
+    result.mapOutlines = records<BLVMapOutline_MM7>(base.section(MM6IndoorSectionKind::Outlines), 12);
+    size_t sectorWord = 0;
+    size_t lightWord = 0;
+    for (size_t i = 0; i < result.sectors.size(); ++i) {
+        BLVSector_MM7 &sector = result.sectors[i];
+        // A few shipped no-BSP rooms encode zero where the runtime uses -1.
+        // Keep the original word in the base wire snapshot.
+        if (result.bspNodes.empty() && sector.firstBspNode == 0)
+            sector.firstBspNode = -1;
+        if (sector.numPortals < 0 || sector.numNonBspFaces > sector.numFaces)
+            throw Exception("MM6 indoor sector {} has invalid face counts", i);
+        const size_t faceGroups[] = {sector.numFloors, sector.numWalls, sector.numCeilings,
+                                     sector.numFluids, size_t(sector.numPortals), sector.numFaces};
+        for (size_t count : faceGroups) {
+            if (count > result.sectorData.size() - sectorWord)
+                throw Exception("MM6 indoor sector {} exceeds room data", i);
+            for (size_t j = 0; j < count; ++j)
+                if (result.sectorData[sectorWord + j] >= result.faces.size())
+                    throw Exception("MM6 indoor sector {} references an absent face", i);
+            sectorWord += count;
+        }
+        const size_t otherGroups[] = {sector.numCogs, sector.numDecorations, sector.numMarkers};
+        for (size_t group = 0; group < 3; ++group) {
+            size_t count = otherGroups[group];
+            if (count > result.sectorData.size() - sectorWord)
+                throw Exception("MM6 indoor sector {} exceeds room data", i);
+            if (group == 1) {
+                for (size_t j = 0; j < count; ++j)
+                    if (result.sectorData[sectorWord + j] >= result.decorations.size())
+                        throw Exception("MM6 indoor sector {} references an absent decoration", i);
+            }
+            sectorWord += count;
+        }
+        if (sector.numLights > result.sectorLightData.size() - lightWord)
+            throw Exception("MM6 indoor sector {} exceeds room light data", i);
+        for (size_t j = 0; j < sector.numLights; ++j)
+            if (result.sectorLightData[lightWord + j] >= result.lights.size())
+                throw Exception("MM6 indoor sector {} references an absent light", i);
+        lightWord += sector.numLights;
+        if (sector.firstBspNode < -1 ||
+            (sector.firstBspNode >= 0 && size_t(sector.firstBspNode) >= result.bspNodes.size()))
+            throw Exception("MM6 indoor sector {} references an absent BSP node", i);
+    }
+    if (sectorWord != result.sectorData.size() || lightWord != result.sectorLightData.size())
+        throw Exception("MM6 indoor room arrays have unused words");
+    return result;
+}
+
+void reconstructMM6IndoorBase(const MM6IndoorSnapshot &base, IndoorLocation *dst) {
+    IndoorLocation_MM7 projected = projectMM6IndoorBase(base);
+    reconstruct(projected, dst);
+    // MM6 decoration event variables are not MM7's 75-offset encoding.
+    for (size_t i = 0; i < projected.decorations.size(); ++i)
+        pLevelDecorations[i].eventVarId = projected.decorations[i].eventVarId;
+}
+
+namespace {
+
+uint32_t word32(const uint8_t *p) {
+    return uint32_t(p[0]) | uint32_t(p[1]) << 8 | uint32_t(p[2]) << 16 | uint32_t(p[3]) << 24;
+}
+
+template<class T, class Projection>
+std::vector<T> projectDeltaRecords(const MM6IndoorSection &part, size_t width, Projection project) {
+    if (part.bytes.size() != 4 + size_t(part.count) * width)
+        throw Exception("MM6 indoor delta section {} has invalid length", static_cast<int>(part.kind));
+    std::vector<T> result;
+    result.reserve(part.count);
+    const auto *p = static_cast<const uint8_t *>(part.bytes.data()) + 4;
+    for (size_t i = 0; i < part.count; ++i)
+        result.push_back(project(std::span<const uint8_t>(p + i * width, width)));
+    return result;
+}
+
+} // namespace
+
+MM6IndoorRuntimeDelta decodeMM6IndoorRuntimeDelta(const Blob &decoded, const MM6IndoorSnapshot &base) {
+    MM6IndoorRuntimeDelta result;
+    result.wire = deserializeMM6IndoorDelta(decoded, base);
+    const auto &reset = result.wire.section(MM6IndoorSectionKind::ResetHeader).bytes;
+    const auto *resetBytes = static_cast<const uint8_t *>(reset.data());
+    result.respawnCount = word32(resetBytes);
+    result.lastRespawnDay = word32(resetBytes + 4);
+    if (result.respawnCount > static_cast<uint32_t>(std::numeric_limits<int>::max()) ||
+        result.lastRespawnDay > static_cast<uint32_t>(std::numeric_limits<int>::max()))
+        throw Exception("MM6 indoor reset header exceeds runtime range");
+
+    const auto &visibility = result.wire.section(MM6IndoorSectionKind::Visibility).bytes;
+    std::memcpy(result.visibleOutlines.data(), visibility.data(), result.visibleOutlines.size());
+    result.actors = projectDeltaRecords<Actor_MM7>(result.wire.section(MM6IndoorSectionKind::Actors), 548, projectMM6ActorRecord);
+    result.spriteObjects = projectDeltaRecords<SpriteObject_MM7>(result.wire.section(MM6IndoorSectionKind::GroundItems), 100, projectMM6GroundItemRecord);
+    result.chests = projectDeltaRecords<Chest_MM7>(result.wire.section(MM6IndoorSectionKind::Chests), 4204, projectMM6ChestRecord);
+    result.doors = fixedWords<BLVDoor_MM7>(result.wire.section(MM6IndoorSectionKind::DoorRecords));
+    result.doorsData = fixedWords<int16_t>(result.wire.section(MM6IndoorSectionKind::DoorData));
+    size_t cursor = 0;
+    for (size_t i = 0; i < result.doors.size(); ++i) {
+        const BLVDoor_MM7 &door = result.doors[i];
+        const size_t needed = size_t(door.numVertices) + 3 * size_t(door.numFaces) +
+                              size_t(door.numSectors) + 3 * size_t(door.numOffsets);
+        if (door.numOffsets < door.numVertices || cursor > result.doorsData.size() ||
+            needed > result.doorsData.size() - cursor)
+            throw Exception("MM6 indoor door {} has invalid variable data", i);
+        for (size_t j = 0; j < door.numVertices; ++j)
+            if (result.doorsData[cursor + j] < 0 ||
+                size_t(result.doorsData[cursor + j]) >= base.section(MM6IndoorSectionKind::Vertices).count)
+                throw Exception("MM6 indoor door {} references an absent vertex", i);
+        cursor += door.numVertices;
+        for (size_t j = 0; j < door.numFaces; ++j)
+            if (result.doorsData[cursor + j] < 0 ||
+                size_t(result.doorsData[cursor + j]) >= base.section(MM6IndoorSectionKind::Faces).count)
+                throw Exception("MM6 indoor door {} references an absent face", i);
+        cursor += door.numFaces;
+        for (size_t j = 0; j < door.numSectors; ++j)
+            if (result.doorsData[cursor + j] < 0 ||
+                size_t(result.doorsData[cursor + j]) >= base.section(MM6IndoorSectionKind::Rooms).count)
+                throw Exception("MM6 indoor door {} references an absent sector", i);
+        cursor += 2 * size_t(door.numFaces) + size_t(door.numSectors) + 3 * size_t(door.numOffsets);
+    }
+    if (cursor != result.doorsData.size())
+        throw Exception("MM6 indoor door data has unused words");
+    return result;
+}
+
+void reconstructMM6IndoorDelta(const MM6IndoorRuntimeDelta &delta, IndoorLocation *dst) {
+    dst->dlv.respawnCount = delta.respawnCount;
+    dst->dlv.lastRespawnDay = delta.lastRespawnDay;
+    dst->_visible_outlines = delta.visibleOutlines;
+    if (dst->mapOutlines.size() > dst->_visible_outlines.size() * 8)
+        throw Exception("MM6 indoor map has too many visibility outlines");
+    for (size_t i = 0; i < dst->mapOutlines.size(); ++i) {
+        if (static_cast<uint8_t>(dst->_visible_outlines[i / 8]) & (1u << (7 - i % 8)))
+            dst->mapOutlines[i].uFlags |= 1;
+    }
+
+    reconstruct(delta.actors, &pActors);
+    nextActorReuseScanStart = 0;
+    for (size_t i = 0; i < pActors.size(); ++i)
+        pActors[i].id = i;
+    reconstruct(delta.spriteObjects, &pSpriteObjects);
+    vChests.resize(delta.chests.size());
+    for (size_t i = 0; i < delta.chests.size(); ++i)
+        reconstruct(delta.chests[i], &vChests[i], tags::context<int>(i));
+
+    reconstruct(delta.doors, &dst->doors);
+    dst->doorsData = delta.doorsData;
+    size_t cursor = 0;
+    for (BLVDoor &door : dst->doors) {
+        const size_t needed = size_t(door.numVertices) + 3 * size_t(door.numFaces) +
+                              size_t(door.numSectors) + 3 * size_t(door.numOffsets);
+        if (needed > dst->doorsData.size() - cursor)
+            throw Exception("MM6 indoor door arrays exceed their wire section");
+        door.pVertexIDs = dst->doorsData.data() + cursor;
+        cursor += door.numVertices;
+        door.pFaceIDs = dst->doorsData.data() + cursor;
+        cursor += door.numFaces;
+        door.pSectorIDs = dst->doorsData.data() + cursor;
+        cursor += door.numSectors;
+        door.pDeltaUs = dst->doorsData.data() + cursor;
+        cursor += door.numFaces;
+        door.pDeltaVs = dst->doorsData.data() + cursor;
+        cursor += door.numFaces;
+        size_t x = cursor;
+        cursor += door.numOffsets;
+        size_t y = cursor;
+        cursor += door.numOffsets;
+        size_t z = cursor;
+        cursor += door.numOffsets;
+        door.offsets.resize(door.numOffsets);
+        for (size_t i = 0; i < door.numOffsets; ++i)
+            door.offsets[i] = Vec3f(dst->doorsData[x + i], dst->doorsData[y + i], dst->doorsData[z + i]);
+        for (size_t i = 0; i < door.numVertices; ++i)
+            if (door.pVertexIDs[i] < 0 || size_t(door.pVertexIDs[i]) >= dst->vertices.size())
+                throw Exception("MM6 indoor door references an absent vertex");
+        for (size_t i = 0; i < door.numFaces; ++i) {
+            if (door.pFaceIDs[i] < 0 || size_t(door.pFaceIDs[i]) >= dst->faces.size())
+                throw Exception("MM6 indoor door references an absent face");
+            const BLVFace &face = dst->faces[door.pFaceIDs[i]];
+            door.pDeltaUs[i] = face.textureDeltaU;
+            door.pDeltaVs[i] = face.textureDeltaV;
+        }
+        for (size_t i = 0; i < door.numSectors; ++i)
+            if (door.pSectorIDs[i] < 0 || size_t(door.pSectorIDs[i]) >= dst->sectors.size())
+                throw Exception("MM6 indoor door references an absent sector");
+    }
+    if (cursor != dst->doorsData.size())
+        throw Exception("MM6 indoor door arrays leave unused bytes");
+
+    // The 200 persistent bytes and 56-byte tail remain in delta.wire. Their
+    // MM6 meanings are not established by the zero-filled shipped deltas.
 }

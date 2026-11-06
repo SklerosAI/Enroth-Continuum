@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <cstring>
 #include <limits>
 #include <optional>
 #include <ranges>
@@ -34,6 +35,8 @@
 #include "Engine/Party.h"
 #include "Engine/PartyPlacement.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
+#include "Engine/Snapshots/MM6IndoorSnapshot.h"
+#include "Engine/MM6/MM6Archive.h"
 #include "Engine/SpellFxRenderer.h"
 #include "Engine/Timer.h"
 #include "Engine/TurnEngine/TurnEngine.h"
@@ -232,6 +235,7 @@ void IndoorLocation::Release() {
     this->sectorData.clear();
     this->sectorLightData.clear();
     this->pSpawnPoints.clear();
+    mm6DeltaBytes.clear();
     this->sectors.clear();
     this->faces.clear();
     this->vertices.clear();
@@ -271,6 +275,61 @@ void IndoorLocation::Load(std::string_view filename, int num_days_played, int re
     Release();
 
     bLoaded = true;
+
+    if (engine->gameTitle() == GameTitle::MM6) {
+        Blob baseEntry = pGames_LOD->read(blv_filename);
+        Blob baseBytes = decodeMM6IndoorBaseArchiveEntry(blv_filename, baseEntry);
+        MM6IndoorSnapshot base = deserializeMM6IndoorBase(baseBytes);
+        reconstructMM6IndoorBase(base, this);
+
+        std::string dlv_filename = fmt::format("{}.dlv", filename.substr(0, filename.size() - 4));
+        MM6IndoorRuntimeDelta delta;
+        bool respawnInitial = true;
+        bool respawnTimed = false;
+        try {
+            delta = decodeMM6IndoorRuntimeDelta(decodeMM6ArchiveEntry(pMapDeltas.at(dlv_filename)), base);
+            respawnInitial = delta.lastRespawnDay == 0;
+            if (engineFlags & ENGINE_LOADING_SAVEGAME)
+                respawn_interval_days = 0x1BAF800;
+            if (!respawnInitial && num_days_played - static_cast<int>(delta.lastRespawnDay) >= respawn_interval_days)
+                respawnTimed = true;
+        } catch (const std::exception &e) {
+            MM_ERROR("Failed to load MM6 '{}', respawning location: {}", dlv_filename, e.what());
+        }
+
+        if (respawnInitial || respawnTimed) {
+            MM6IndoorRuntimeDelta fresh = decodeMM6IndoorRuntimeDelta(
+                decodeMM6ArchiveEntry(pGames_LOD->read(dlv_filename)), base);
+            if (respawnTimed) {
+                fresh.respawnCount = delta.respawnCount;
+                fresh.lastRespawnDay = delta.lastRespawnDay;
+                fresh.visibleOutlines = delta.visibleOutlines;
+                fresh.wire.replaceSection(MM6IndoorSectionKind::ResetHeader, delta.wire.section(MM6IndoorSectionKind::ResetHeader).bytes);
+                fresh.wire.replaceSection(MM6IndoorSectionKind::Visibility, delta.wire.section(MM6IndoorSectionKind::Visibility).bytes);
+            }
+            delta = std::move(fresh);
+        }
+
+        reconstructMM6IndoorDelta(delta, this);
+        if (respawnInitial || respawnTimed) {
+            dlv.lastRespawnDay = num_days_played;
+            if (respawnTimed)
+                dlv.respawnCount++;
+            std::string reset(8, '\0');
+            auto write32 = [&](size_t offset, uint32_t value) {
+                for (size_t i = 0; i < 4; ++i)
+                    reset[offset + i] = static_cast<char>(value >> (i * 8));
+            };
+            write32(0, dlv.respawnCount);
+            write32(4, dlv.lastRespawnDay);
+            delta.wire.replaceSection(MM6IndoorSectionKind::ResetHeader, Blob::fromString(std::move(reset)));
+        }
+        Blob retained = serializeMM6Indoor(delta.wire);
+        mm6DeltaBytes.resize(retained.size());
+        std::memcpy(mm6DeltaBytes.data(), retained.data(), retained.size());
+        *indoor_was_respawned = respawnInitial || respawnTimed;
+        return;
+    }
 
     IndoorLocation_MM7 location;
     deserialize(lod::decodeMaybeCompressed(pGames_LOD->read(blv_filename)), &location); // read throws if file doesn't exist.

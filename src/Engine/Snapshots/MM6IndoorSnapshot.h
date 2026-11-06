@@ -2,9 +2,15 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <array>
+#include <string_view>
 #include <vector>
 
+#include "EntitySnapshots.h"
 #include "Utility/Memory/Blob.h"
+
+struct IndoorLocation;
+struct IndoorLocation_MM7;
 
 // A bounded, lossless view of the MM6 BLV/DLV wire sections. Record field
 // interpretation and runtime reconstruction are separate F4 work.
@@ -54,3 +60,24 @@ struct MM6IndoorSnapshot {
 MM6IndoorSnapshot deserializeMM6IndoorBase(const Blob &decoded);
 MM6IndoorSnapshot deserializeMM6IndoorDelta(const Blob &decoded, const MM6IndoorSnapshot &base);
 Blob serializeMM6Indoor(const MM6IndoorSnapshot &snapshot);
+Blob decodeMM6IndoorBaseArchiveEntry(std::string_view name, const Blob &entry);
+
+// The MM7-shaped value is an intermediate for the existing indoor renderer,
+// never a substitute for the lossless MM6 wire snapshot kept by the caller.
+IndoorLocation_MM7 projectMM6IndoorBase(const MM6IndoorSnapshot &base);
+void reconstructMM6IndoorBase(const MM6IndoorSnapshot &base, IndoorLocation *dst);
+
+struct MM6IndoorRuntimeDelta {
+    MM6IndoorSnapshot wire;
+    uint32_t respawnCount = 0;
+    uint32_t lastRespawnDay = 0;
+    std::array<char, 875> visibleOutlines{};
+    std::vector<Actor_MM7> actors;
+    std::vector<SpriteObject_MM7> spriteObjects;
+    std::vector<Chest_MM7> chests;
+    std::vector<BLVDoor_MM7> doors;
+    std::vector<int16_t> doorsData;
+};
+
+MM6IndoorRuntimeDelta decodeMM6IndoorRuntimeDelta(const Blob &decoded, const MM6IndoorSnapshot &base);
+void reconstructMM6IndoorDelta(const MM6IndoorRuntimeDelta &delta, IndoorLocation *dst);

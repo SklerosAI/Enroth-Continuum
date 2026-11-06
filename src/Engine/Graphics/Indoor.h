@@ -245,6 +245,9 @@ struct IndoorLocation {
     std::vector<int16_t> doorsData;
     std::vector<uint16_t> sectorLightData;
     std::vector<SpawnPoint> pSpawnPoints;
+    // Decoded MM6 DLV bytes, retained until a title-specific save writer can
+    // update verified fields without losing opaque state.
+    std::vector<uint8_t> mm6DeltaBytes;
     LocationInfo dlv;
     Time lastVisitTime;
     std::array<char, 875> _visible_outlines;

@@ -9,6 +9,7 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/Snapshots/MM6IndoorSnapshot.h"
+#include "Engine/Snapshots/CompositeSnapshots.h"
 
 #include "Utility/Exception.h"
 #include "Utility/Memory/Blob.h"
@@ -66,6 +67,14 @@ UNIT_TEST(MM6IndoorSnapshot, SyntheticRoundTripAndOpaqueMutation) {
                           static_cast<const char *>(changed.data()) + changed.size() - 56, 56), 0);
 }
 
+UNIT_TEST(MM6IndoorSnapshot, ProjectsMinimalBase) {
+    MM6IndoorSnapshot base = deserializeMM6IndoorBase(minimalBase());
+    IndoorLocation_MM7 projected = projectMM6IndoorBase(base);
+    EXPECT_TRUE(projected.vertices.empty());
+    EXPECT_TRUE(projected.faces.empty());
+    EXPECT_EQ(projected.doorCount, 200);
+}
+
 UNIT_TEST(MM6IndoorSnapshot, RejectsTruncatedAndInconsistentData) {
     Blob baseBytes = minimalBase();
     MM6IndoorSnapshot base = deserializeMM6IndoorBase(baseBytes);
@@ -90,17 +99,44 @@ UNIT_TEST(MM6IndoorSnapshot, RetainedFiftyTwoPairs) {
         GTEST_SKIP() << "Set ENROTH_MM6_INDOOR_DECODED_DIR to the ignored decoded fixture directory";
 
     size_t pairs = 0;
+    bool testedBadDoorReference = false;
     for (const auto &entry : std::filesystem::directory_iterator(directory)) {
         if (entry.path().extension() != ".blv")
             continue;
         Blob baseBytes = readFile(entry.path());
+        Blob retainedEntry = readFile(entry.path().parent_path().parent_path() / "Games" / entry.path().filename());
+        expectEqualBytes(baseBytes, decodeMM6IndoorBaseArchiveEntry(entry.path().filename().string(), retainedEntry));
+        if (entry.path().filename() == "cd3.blv" || entry.path().filename() == "d08.blv")
+            EXPECT_THROW(decodeMM6IndoorBaseArchiveEntry("other.blv", retainedEntry), Exception);
         std::filesystem::path deltaPath = entry.path();
         deltaPath.replace_extension(".dlv");
         Blob deltaBytes = readFile(deltaPath);
         MM6IndoorSnapshot base = deserializeMM6IndoorBase(baseBytes);
         MM6IndoorSnapshot delta = deserializeMM6IndoorDelta(deltaBytes, base);
+        IndoorLocation_MM7 projected = projectMM6IndoorBase(base);
+        MM6IndoorRuntimeDelta runtimeDelta = decodeMM6IndoorRuntimeDelta(deltaBytes, base);
+        EXPECT_EQ(projected.faces.size(), base.section(MM6IndoorSectionKind::Faces).count);
+        EXPECT_EQ(projected.sectors.size(), base.section(MM6IndoorSectionKind::Rooms).count);
+        EXPECT_EQ(projected.lights.size(), base.section(MM6IndoorSectionKind::Lights).count);
+        EXPECT_EQ(projected.decorations.size(), base.section(MM6IndoorSectionKind::Sprites).count);
+        EXPECT_EQ(runtimeDelta.actors.size(), delta.section(MM6IndoorSectionKind::Actors).count);
+        EXPECT_EQ(runtimeDelta.spriteObjects.size(), delta.section(MM6IndoorSectionKind::GroundItems).count);
+        EXPECT_EQ(runtimeDelta.chests.size(), delta.section(MM6IndoorSectionKind::Chests).count);
+        EXPECT_EQ(runtimeDelta.doors.size(), 200);
+        expectEqualBytes(deltaBytes, serializeMM6Indoor(runtimeDelta.wire));
         expectEqualBytes(baseBytes, serializeMM6Indoor(base));
         expectEqualBytes(deltaBytes, serializeMM6Indoor(delta));
+
+        if (!testedBadDoorReference && !runtimeDelta.doorsData.empty()) {
+            Blob originalDoorData = Blob::copy(delta.section(MM6IndoorSectionKind::DoorData).bytes);
+            std::string badData(static_cast<const char *>(originalDoorData.data()), originalDoorData.size());
+            badData[0] = static_cast<char>(0xFF);
+            badData[1] = static_cast<char>(0x7F);
+            delta.replaceSection(MM6IndoorSectionKind::DoorData, Blob::fromString(std::move(badData)));
+            EXPECT_THROW(decodeMM6IndoorRuntimeDelta(serializeMM6Indoor(delta), base), Exception);
+            delta.replaceSection(MM6IndoorSectionKind::DoorData, originalDoorData);
+            testedBadDoorReference = true;
+        }
 
         for (MM6IndoorSectionKind kind : {MM6IndoorSectionKind::Visibility,
                                           MM6IndoorSectionKind::PersistentBytes,
@@ -128,4 +164,5 @@ UNIT_TEST(MM6IndoorSnapshot, RetainedFiftyTwoPairs) {
         ++pairs;
     }
     EXPECT_EQ(pairs, 52);
+    EXPECT_TRUE(testedBadDoorReference);
 }

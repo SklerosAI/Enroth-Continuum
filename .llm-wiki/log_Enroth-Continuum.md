@@ -163,3 +163,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Updated source summaries and handoff after direct image identity checks reached 460 individual item entries, with 164 item semantic rows still unreviewed and item effects unverified.
 - Linked the all-99 spell recovery guide ledger and its original-executable F3 target; no complete original delay triple is yet verified. Exact per-ID evidence remains ignored locally.
+
+## [2026-11-05] ingest | MM6 executable table locators
+- by: T-Burton-ND via codex
+- Linked pinned MMExtension process-image leads for the MM6 spell, house-movie and transport tables to the F3 matrix and media source summary.
+- Recorded that these addresses require exact-version PE mapping and owner-executable validation; no original executable value was read or declared verified.

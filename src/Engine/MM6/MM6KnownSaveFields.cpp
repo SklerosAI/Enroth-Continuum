@@ -12,17 +12,17 @@
 namespace mm6 {
 namespace {
 
-constexpr std::array<std::array<char, 4>, 17> REQUIRED_TAGS = {{
+constexpr std::array<std::array<char, 4>, 18> REQUIRED_TAGS = {{
     {'P', 'A', 'R', 'T'}, {'C', 'H', 'A', 'R'}, {'Q', 'E', 'S', 'T'}, {'E', 'F', 'F', 'T'},
     {'I', 'T', 'E', 'M'}, {'H', 'E', 'A', 'D'}, {'T', 'I', 'M', 'E'}, {'U', 'I', 'S', 'T'},
     {'V', 'I', 'S', 'U'}, {'M', 'A', 'P', 'S'}, {'R', 'E', 'S', 'C'}, {'R', 'S', 'T', 'S'},
     {'H', 'E', 'L', 'D'}, {'B', 'U', 'F', 'F'}, {'H', 'I', 'R', 'E'}, {'R', 'C', 'V', 'R'},
-    {'C', 'H', 'S', 'T'},
+    {'C', 'H', 'S', 'T'}, {'S', 'C', 'L', 'K'},
 }};
 
 void checkSectionSet(const SaveContainer &container) {
     if (container.sections.size() != REQUIRED_TAGS.size())
-        throw std::runtime_error("MM6 known save requires exactly seventeen sections (CHST required)");
+        throw std::runtime_error("MM6 known save requires exactly eighteen sections (SCLK required)");
     for (const SaveSection &section : container.sections) {
         if (!section.required ||
             std::find(REQUIRED_TAGS.begin(), REQUIRED_TAGS.end(), section.tag) == REQUIRED_TAGS.end())
@@ -66,6 +66,7 @@ std::vector<std::uint8_t> encodeKnownSave(const KnownSaveFields &fields) {
     SaveSection hirelings = encodeHirelingSection(fields.hirelings);
     SaveSection recovery = encodeRecoverySection(fields.recovery);
     SaveSection chest = encodeChestSection(fields.chest);
+    SaveSection shopGuildClocks = encodeShopGuildClockSection(fields.shopGuildClocks);
     checkCrossFields(fields);
 
     SaveContainer container;
@@ -84,6 +85,7 @@ std::vector<std::uint8_t> encodeKnownSave(const KnownSaveFields &fields) {
     container.sections.push_back(std::move(hirelings));
     container.sections.push_back(std::move(recovery));
     container.sections.push_back(std::move(chest));
+    container.sections.push_back(std::move(shopGuildClocks));
     checkSectionSet(container);
     return encodeSaveContainer(container);
 }
@@ -103,6 +105,7 @@ KnownSaveFields decodeKnownSave(std::span<const std::uint8_t> bytes) {
     fields.hirelings = decodeHirelingSection(container);
     fields.recovery = decodeRecoverySection(container);
     fields.chest = decodeChestSection(container);
+    fields.shopGuildClocks = decodeShopGuildClockSection(container);
     checkCrossFields(fields);
     return fields;
 }

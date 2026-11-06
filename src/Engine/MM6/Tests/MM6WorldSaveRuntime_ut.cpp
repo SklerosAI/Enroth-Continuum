@@ -45,6 +45,7 @@ mm6::KnownSaveFields seedFields() {
     fields.metadata.ui.activeCharacter = 1;
     fields.recovery.playingTicks = 42;
     fields.chest = {17, {}, "d0.dlv", std::vector<std::uint8_t>(8 + 875 + 3 * 4 + 200 * 80 + 200 + 56, 0)};
+    fields.shopGuildClocks.ready = true;
     return fields;
 }
 
@@ -267,6 +268,11 @@ UNIT_TEST(MM6WorldSaveRuntime, StagesRepresentedPartyFamiliesWithWorldAndRejects
     mm6::KnownSaveFields source = mm6::captureKnownWorldFields(
         seedFields(), savedNpcs, prior, "d0.dlv", indoorDeltaWithActors(1), names, GameTitle::MM6);
     source.chest.rawActiveDelta = indoorDeltaWithActors(1);
+    mm6::ShopGuildClockFields clocks;
+    clocks.ready = true;
+    clocks.deadlineWords[mm6::shopClockSlot(47)] = 0x12345678;
+    clocks.deadlineWords[mm6::guildClockSlot(140)] = 90001;
+    source = mm6::captureKnownShopGuildClockFields(source, clocks, GameTitle::MM6);
     source.core.party.gold = 731;
     source.core.characters[0].name = "Saved Hero";
     source.core.characters[0].level = 5;
@@ -332,12 +338,22 @@ UNIT_TEST(MM6WorldSaveRuntime, StagesRepresentedPartyFamiliesWithWorldAndRejects
     EXPECT_EQ(staged.party.pCharacters[0].timeToRecovery.ticks(), 250);
     EXPECT_EQ(staged.party.PartyTimes.CounterEventValues[0].ticks(), 901);
     EXPECT_EQ(staged.worldAndVisuals.world.npcs.pNPCData[70].name, "Saved NPC");
+    EXPECT_EQ(staged.shopGuildClocks, clocks);
     EXPECT_TRUE(staged.worldAndVisuals.chestTitle.ready);
     EXPECT_EQ(staged.worldAndVisuals.rawActiveDelta, source.chest.rawActiveDelta);
     EXPECT_TRUE(std::holds_alternative<mm6::StagedIndoorMap>(staged.worldAndVisuals.activeMap));
     EXPECT_EQ(liveParty.uNumGold, 19);
     EXPECT_EQ(liveParty.pCharacters[0].name, "Prior Hero");
     EXPECT_EQ(liveNpcs.pNPCData[70].name, "Prior NPC");
+
+    const std::vector<std::uint8_t> validBytes = bytes;
+    mm6::SaveContainer truncatedClock = mm6::decodeSaveContainer(bytes);
+    truncatedClock.sections.back().payload.pop_back();
+    bytes = mm6::encodeSaveContainer(truncatedClock);
+    EXPECT_THROW((void) stage(), std::exception);
+    EXPECT_EQ(liveParty.uNumGold, 19);
+    EXPECT_EQ(liveNpcs.pNPCData[70].name, "Prior NPC");
+    bytes = validBytes;
 
     // HELD stages after ITEM. A missing loaded held-item template rejects the
     // whole candidate without exposing the already restored inventory.
@@ -493,7 +509,7 @@ UNIT_TEST(MM6WorldSaveRuntime, RejectsIncompleteAndLateInvalidStateWithoutInputM
     mm6::KnownSaveFields captured = mm6::captureKnownWorldFields(
         seedFields(), liveNpcs, prior, "d0.dlv", current, names, GameTitle::MM6);
     mm6::SaveContainer lateInvalid = mm6::decodeSaveContainer(mm6::encodeKnownSave(captured));
-    lateInvalid.sections.back().payload[0] = 3; // Unsupported CHST version with valid outer CRCs.
+    lateInvalid.sections.back().payload[0] = 3; // Unsupported SCLK version with valid outer CRCs.
     std::vector<std::uint8_t> bytes = mm6::encodeSaveContainer(lateInvalid);
     EXPECT_THROW((void) mm6::stageKnownWorldFields(liveNpcs, bytes, names, GameTitle::MM6),
                  std::exception);

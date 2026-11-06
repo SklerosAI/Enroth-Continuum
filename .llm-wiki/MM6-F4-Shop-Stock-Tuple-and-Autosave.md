@@ -9,7 +9,7 @@ tags: [mm6, f4, save, shop, stock, travel]
 
 The [source packet](../project/MM6_F4_SHOP_STOCK_TUPLE_AND_AUTOSAVE.md) records an original stock-read trace and the current cross-map autosave dependency. Exact PE and retained-house details are in ignored local evidence.
 
-The original shop menu selects two distinct stock banks. Each bank uses the current house key, a 12-position physical stride and a zero item ID to suppress a displayed slot. A selected slot uses the same address formula. The original guild path has a corresponding 12-position stride and zero-ID read. Purchase writes, ordinary/special labels, full item fields and adjacent family-boundary behavior remain unproved, so no MM6 shop stock codec or runtime owner was added.
+The original shop menu selects two distinct stock banks. Each bank uses the current house key, a 12-position physical stride and a zero item ID to suppress a displayed slot. A selected slot uses the same address formula. The original guild path has a corresponding 12-position stride and zero-ID read. Purchase writes, ordinary/special labels, full item fields and adjacent family-boundary behavior remain unproved, so no MM6 shop stock codec or runtime owner was added. The later [SCLK section](MM6-F4-Shop-Guild-Clock-Save.md) covers refresh deadlines only.
 
 In current source, `startMapTransition()` autosaves on a different destination map before it sets the pending transition. `autoSave()` reaches the MM6 `saveGame()` throw before the write-error catch. Thus this helper cannot complete an MM6 cross-map move while live save remains guarded. This is a source route finding, not a launched gameplay observation. A complete `.ec6` transaction or a separately proved transition policy is needed; the save guard stays closed.
 

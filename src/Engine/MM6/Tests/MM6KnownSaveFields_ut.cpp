@@ -29,6 +29,9 @@ mm6::KnownSaveFields exampleFields() {
         fields.maps.deltas.push_back({"o" + std::to_string(i) + ".ddm", {2}});
     fields.chest = {0x12345678, {}, "d0.dlv", {1}};
     fields.chest.generatedArtifactFlags[7] = 1;
+    fields.shopGuildClocks.ready = true;
+    fields.shopGuildClocks.deadlineWords[mm6::shopClockSlot(3)] = 72000;
+    fields.shopGuildClocks.deadlineWords[mm6::guildClockSlot(140)] = 99000;
     fields.npcs.activeCount = 399;
     fields.npcs.npcData[398].name = "Synthetic NPC";
     fields.npcs.groups[50] = 23;
@@ -51,11 +54,11 @@ mm6::KnownSaveFields exampleFields() {
 
 } // namespace
 
-UNIT_TEST(MM6KnownSaveFields, AssemblesAllSeventeenRequiredSections) {
+UNIT_TEST(MM6KnownSaveFields, AssemblesAllEighteenRequiredSections) {
     mm6::KnownSaveFields fields = exampleFields();
     std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(fields);
     mm6::SaveContainer container = mm6::decodeSaveContainer(bytes);
-    ASSERT_EQ(container.sections.size(), 17);
+    ASSERT_EQ(container.sections.size(), 18);
     for (const mm6::SaveSection &section : container.sections)
         EXPECT_TRUE(section.required);
     EXPECT_EQ(mm6::encodeKnownSave(mm6::decodeKnownSave(bytes)), bytes);
@@ -66,6 +69,7 @@ UNIT_TEST(MM6KnownSaveFields, AssemblesAllSeventeenRequiredSections) {
     EXPECT_EQ(mm6::decodeKnownSave(bytes).recovery, fields.recovery);
     EXPECT_EQ(mm6::decodeKnownSave(bytes).recovery.eventClocks.counters[2], 31);
     EXPECT_EQ(mm6::decodeKnownSave(bytes).chest, fields.chest);
+    EXPECT_EQ(mm6::decodeKnownSave(bytes).shopGuildClocks, fields.shopGuildClocks);
 
     std::reverse(container.sections.begin(), container.sections.end());
     EXPECT_EQ(mm6::encodeKnownSave(mm6::decodeKnownSave(mm6::encodeSaveContainer(container))), bytes);
@@ -88,15 +92,20 @@ UNIT_TEST(MM6KnownSaveFields, EverySectionIsMandatoryAndExtrasReject) {
     EXPECT_THROW((void) mm6::decodeKnownSave(mm6::encodeSaveContainer(extra)), std::exception);
 }
 
-UNIT_TEST(MM6KnownSaveFields, OldSixteenSectionCandidateRejectsBeforeMutation) {
+UNIT_TEST(MM6KnownSaveFields, OldSectionSetsRejectBeforeMutation) {
     mm6::SaveContainer old = mm6::decodeSaveContainer(mm6::encodeKnownSave(exampleFields()));
+    old.sections.pop_back(); // Old seventeen-section candidate lacks SCLK.
+    ASSERT_EQ(old.sections.size(), 17);
+    mm6::KnownSaveFields destination = exampleFields();
+    destination.core.party.gold = 777;
+    EXPECT_THROW(mm6::loadKnownSaveBeforeMutation(mm6::encodeSaveContainer(old), &destination),
+                 std::exception);
+    EXPECT_EQ(destination.core.party.gold, 777);
     old.sections.erase(std::find_if(old.sections.begin(), old.sections.end(),
         [](const mm6::SaveSection &section) {
             return section.tag == std::array{'C', 'H', 'S', 'T'};
         }));
     ASSERT_EQ(old.sections.size(), 16);
-    mm6::KnownSaveFields destination = exampleFields();
-    destination.core.party.gold = 777;
     EXPECT_THROW(mm6::loadKnownSaveBeforeMutation(mm6::encodeSaveContainer(old), &destination),
                  std::exception);
     EXPECT_EQ(destination.core.party.gold, 777);
@@ -149,7 +158,7 @@ UNIT_TEST(MM6KnownSaveFields, ValidCrcCrossFieldMismatchRejectsDecode) {
     container = mm6::decodeSaveContainer(mm6::encodeKnownSave(exampleFields()));
     changed = exampleFields();
     changed.recovery.playingTicks = 43;
-    container.sections[container.sections.size() - 2] = mm6::encodeRecoverySection(changed.recovery);
+    container.sections[container.sections.size() - 3] = mm6::encodeRecoverySection(changed.recovery);
     EXPECT_THROW((void) mm6::decodeKnownSave(mm6::encodeSaveContainer(container)), std::exception);
 }
 
@@ -157,7 +166,7 @@ UNIT_TEST(MM6KnownSaveFields, LateDecodeFailureLeavesDestinationUntouched) {
     mm6::KnownSaveFields destination = exampleFields();
     destination.metadata.header.displayName = "Prior state";
     mm6::SaveContainer invalid = mm6::decodeSaveContainer(mm6::encodeKnownSave(exampleFields()));
-    invalid.sections.back().payload[0] = 3; // Unsupported CHST version, with a valid outer CRC.
+    invalid.sections.back().payload[0] = 3; // Unsupported SCLK version, with a valid outer CRC.
     EXPECT_THROW(mm6::loadKnownSaveBeforeMutation(mm6::encodeSaveContainer(invalid), &destination), std::exception);
     EXPECT_EQ(destination.metadata.header.displayName, "Prior state");
     EXPECT_EQ(destination.npcs.npcData[398].name, "Synthetic NPC");

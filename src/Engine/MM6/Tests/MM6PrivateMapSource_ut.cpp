@@ -56,6 +56,7 @@ mm6::KnownSaveFields knownFields(const std::filesystem::path &root,
         fields.maps.deltas.push_back({name, readBytes(root / directory / name)});
     }
     fields.chest = {17, {}, names.front(), fields.maps.deltas.front().bytes};
+    fields.shopGuildClocks.ready = true;
     return fields;
 }
 

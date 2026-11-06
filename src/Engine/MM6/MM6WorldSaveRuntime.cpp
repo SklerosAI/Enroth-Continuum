@@ -162,7 +162,19 @@ StagedKnownSession stageKnownSession(
     staged = stageHirelingParty(staged, bytes, title);
     staged = stageHeldItemParty(staged, bytes, title);
     staged = stageRecoveryParty(staged, bytes, title);
-    return {std::move(staged), std::move(worldAndVisuals)};
+    ShopGuildClockFields clocks = captureShopGuildClocks(
+        worldAndVisuals.known.shopGuildClocks, title);
+    return {std::move(staged), std::move(worldAndVisuals), clocks};
+}
+
+KnownSaveFields captureKnownShopGuildClockFields(const KnownSaveFields &seed,
+                                                const ShopGuildClockFields &owner,
+                                                GameTitle title) {
+    requireMM6(title);
+    KnownSaveFields candidate = seed;
+    candidate.shopGuildClocks = captureShopGuildClocks(owner, title);
+    (void) encodeKnownSave(candidate);
+    return candidate;
 }
 
 KnownSaveFields captureKnownPartyFields(const KnownSaveFields &seed, const Party &party,

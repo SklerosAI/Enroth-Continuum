@@ -14,6 +14,7 @@
 #include "MM6ResistanceSaveFields.h"
 #include "MM6RecoverySaveFields.h"
 #include "MM6ChestSaveFields.h"
+#include "MM6ShopGuildClockFields.h"
 #include "MM6SaveMetadata.h"
 
 namespace mm6 {
@@ -32,12 +33,13 @@ struct KnownSaveFields {
     HirelingSaveFields hirelings;
     RecoverySaveFields recovery;
     ChestSaveFields chest;
+    ShopGuildClockFields shopGuildClocks;
 };
 
-/** Encode exactly seventeen required sections after every field and cross-check. */
+/** Encode exactly eighteen required sections after every field and cross-check. */
 std::vector<std::uint8_t> encodeKnownSave(const KnownSaveFields &fields);
 
-/** Reject missing/extra sections and decode all seventeen before returning state. */
+/** Reject missing/extra sections and decode all eighteen before returning state. */
 KnownSaveFields decodeKnownSave(std::span<const std::uint8_t> bytes);
 
 /** Decode and validate the entire known set before assigning the destination. */

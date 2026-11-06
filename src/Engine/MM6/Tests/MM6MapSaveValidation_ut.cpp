@@ -106,6 +106,7 @@ mm6::KnownSaveFields exampleFields() {
     for (int i = 0; i < 15; ++i)
         fields.maps.deltas.push_back({"outside" + std::to_string(i) + ".ddm", outdoorDelta()});
     fields.chest = {17, {}, "synthetic0.dlv", indoorDelta()};
+    fields.shopGuildClocks.ready = true;
     return fields;
 }
 

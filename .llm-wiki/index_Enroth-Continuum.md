@@ -87,6 +87,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Partial Stage Coordinator](MM6-F4-Partial-Stage-Coordinator.md) — Validated 67-map candidate with detached Party, active map, NPC/map and timer/overlay copies
 - [MM6 F4 New Game Autosave](MM6-F4-New-Game-Autosave.md) — Offline `oute3.odm` known-field candidate and atomic `.ec6` autosave with live guard retained
 - [MM6 F4 Shop Save Key Matrix](MM6-F4-Shop-Save-Key-Matrix.md) — Retained house-type join versus inherited MM7 shop, guild and bounty save owner ranges
+- [MM6 F4 Shop Guild Clock Save](MM6-F4-Shop-Guild-Clock-Save.md) — SCLK v1 preserves 68 unique original-MM6 shop and guild refresh deadline words
 - [MM6 F4 Shop Refresh PE Trace](MM6-F4-Shop-Refresh-PE-Trace.md) — Original row-keyed refresh and raw Party-block save proof, with stock tuple boundary still open
 - [MM6 F4 Shop Stock Tuple and Autosave](MM6-F4-Shop-Stock-Tuple-and-Autosave.md) — Two original stock banks, zero-ID display read and current cross-map save dependency
 - [MM6 F4 Active World PID Restore](MM6-F4-Active-World-PID-Restore.md) — Active saved-map actor PID bounds and source-backed post-load identity gate

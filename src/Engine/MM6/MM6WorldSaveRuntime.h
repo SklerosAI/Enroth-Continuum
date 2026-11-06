@@ -45,6 +45,7 @@ struct StagedKnownWorldAndVisuals {
 struct StagedKnownSession {
     Party party;
     StagedKnownWorldAndVisuals worldAndVisuals;
+    ShopGuildClockFields shopGuildClocks;
 };
 
 // Validate the entire current known-section set and all 67 base/delta pairs,
@@ -72,6 +73,12 @@ StagedKnownSession stageKnownSession(
 // caller must supply complete MM6 world and metadata fields.
 KnownSaveFields captureKnownPartyFields(const KnownSaveFields &seed, const Party &party,
                                        GameTitle title);
+
+// Overlay the source-backed MM6 shop/guild refresh deadlines from a ready
+// title-local owner. Stock, ban and bounty tuples remain outside this section.
+KnownSaveFields captureKnownShopGuildClockFields(const KnownSaveFields &seed,
+                                                const ShopGuildClockFields &owner,
+                                                GameTitle title);
 
 // The outdoor object has no filename. Check the current MM6 engine map ID
 // against the loaded MM6 map table, HEAD and the private 67-name delta set.

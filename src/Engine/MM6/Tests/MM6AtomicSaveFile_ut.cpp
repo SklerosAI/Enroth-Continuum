@@ -64,6 +64,7 @@ std::vector<std::uint8_t> sample(std::uint8_t marker) {
     for (int i = 0; i < 15; ++i)
         fields.maps.deltas.push_back({"o" + std::to_string(i) + ".ddm", {2}});
     fields.chest = {marker, {}, "d0.dlv", {1}};
+    fields.shopGuildClocks.ready = true;
     fields.npcs.activeCount = 399;
     return mm6::encodeKnownSave(fields);
 }

@@ -1,6 +1,6 @@
 # MM6 shop stock tuple and cross-map autosave — F4
 
-Status: **bounded original stock-read proof and current-source travel dependency; no `.ec6` codec or live save route** (2026-11-06). Exact executable addresses, retained row IDs and the focused static checker stay ignored in the owner-local research directory. The staged original executable matched its accepted F3 hash; no MM6 process or original installation was opened.
+Status: **bounded original stock-read proof and current-source travel dependency; no stock/bounty `.ec6` codec or live save route** (2026-11-06). Exact executable addresses, retained row IDs and the focused static checker stay ignored in the owner-local research directory. The staged original executable matched its accepted F3 hash; no MM6 process or original installation was opened.
 
 ## Original stock reads
 
@@ -8,7 +8,7 @@ The original shop menu dispatch sends two distinct dialogue choices to two stock
 
 The two shop generator helpers populate different banks, but this trace has not reached the purchase write that removes an item. The menu choice labels, ordinary versus special meaning, complete 28-byte item fields, and whether a sold item is cleared by zeroing its ID or another field remain **unproved**. Shop and guild address formulas coincide at a family boundary; the effective use of that edge is also unproved. A codec that copies two apparent fixed arrays could alias a shop and a guild. The inherited MM7 `Party` arrays are not an MM6 storage contract.
 
-The next targeted original trace is the purchase action's write to a selected shop and guild slot, followed by the next stock read. Check the family edge and a nonzero owner-local native `party.bin` sample before defining keyed MM6 Party storage. Then a detached `.ec6` tuple can validate row keys, active slots, item templates, paired refresh clocks, missing/duplicate rows and late failure without mutation. No such tuple was implemented here.
+The next targeted original trace is the purchase action's write to a selected shop and guild slot, followed by the next stock read. Check the family edge and a nonzero owner-local native `party.bin` sample before defining keyed MM6 Party storage. Then a detached `.ec6` tuple can validate row keys, active slots, item templates, paired refresh clocks, missing/duplicate rows and late failure without mutation. No such tuple was implemented here. A later [SCLK section](MM6_F4_SHOP_GUILD_CLOCK_SAVE.md) covers only the source-proven refresh deadline words, including their shared edge.
 
 ## Cross-map save dependency
 

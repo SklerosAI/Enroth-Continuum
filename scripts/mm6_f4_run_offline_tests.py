@@ -28,6 +28,8 @@ def main() -> None:
 
     for script in ("mm6_f4_prepare_indoor_fixture.py", "mm6_f4_prepare_outdoor_fixture.py"):
         subprocess.run([sys.executable, "-B", str(root / "scripts" / script), str(research)], check=True)
+    subprocess.run([sys.executable, "-B", str(root / "tools/mm6_map_name_manifest.py"),
+                    "--research", str(research)], check=True)
     for script, source in (("mm6_f4_check_spell_items.py", research),
                            ("mm6_f4_check_actor_descriptors.py", research),
                            ("mm6_f4_check_item_footprints.py", research / "icons")):

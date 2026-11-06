@@ -4,6 +4,7 @@
 import argparse
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 
@@ -102,6 +103,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     page = build(args.research_dir, args.source_root)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    with args.output.open("x", encoding="utf-8") as stream:
+    descriptor = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
         stream.write(page)
     print("Wrote private 99-ID MM6 effect dispatch handoff without publishing rows.")

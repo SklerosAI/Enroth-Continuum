@@ -144,6 +144,8 @@ void validateExpectedMapNames(const MapSaveFields &fields, std::span<const std::
 }
 
 void loadMapFieldsBeforeMutation(std::span<const std::uint8_t> bytes, MapSaveFields *destination) {
+    if (!destination)
+        throw std::runtime_error("null MM6 map save destination");
     SaveContainer container = decodeSaveContainer(bytes);
     MapSaveFields candidate = decodeMapSection(container);
     *destination = std::move(candidate);
@@ -151,6 +153,8 @@ void loadMapFieldsBeforeMutation(std::span<const std::uint8_t> bytes, MapSaveFie
 
 void loadMapFieldsBeforeMutation(std::span<const std::uint8_t> bytes, MapSaveFields *destination,
                                  std::span<const std::string> expectedNames) {
+    if (!destination)
+        throw std::runtime_error("null MM6 map save destination");
     SaveContainer container = decodeSaveContainer(bytes);
     MapSaveFields candidate = decodeMapSection(container);
     validateExpectedMapNames(candidate, expectedNames);

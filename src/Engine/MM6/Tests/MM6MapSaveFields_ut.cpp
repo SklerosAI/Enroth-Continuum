@@ -81,6 +81,7 @@ UNIT_TEST(MM6MapSaveFields, ExactExpectedNameSetBeforeMutation) {
     mm6::MapSaveFields destination{{map("safe.dlv", "previous")}};
     mm6::loadMapFieldsBeforeMutation(bytes, &destination, expected);
     EXPECT_EQ(destination, source);
+    EXPECT_THROW(mm6::loadMapFieldsBeforeMutation(bytes, nullptr, expected), std::exception);
 
     destination = {{map("safe.dlv", "previous")}};
     expected.back() = "absent.dlv";

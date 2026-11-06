@@ -50,7 +50,9 @@ void applyBitsAndConditions(const DurableSaveFields &fields, Party *staged) {
 } // namespace
 
 DurableSaveFields captureDurableFields(const Party &party, GameTitle title) {
-    requireMM6(title, true);
+    // Capture reads only the supplied Party; an absent engine is valid for
+    // detached first-map preflight. A present foreign engine still rejects.
+    requireMM6(title, false);
     DurableSaveFields fields;
     captureBits(party._questBits, &fields.bits.quest);
     captureBits(party._autonoteBits, &fields.bits.autonotes);

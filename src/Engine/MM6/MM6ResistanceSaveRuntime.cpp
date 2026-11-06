@@ -36,7 +36,7 @@ void requireMM6(GameTitle title, bool requireEngine) {
 } // namespace
 
 ResistanceSaveFields captureResistanceFields(const Party &party, GameTitle title) {
-    requireMM6(title, true);
+    requireMM6(title, false);
     ResistanceSaveFields fields;
     for (size_t characterIndex = 0; characterIndex < fields.characters.size(); ++characterIndex) {
         const Character &source = party.pCharacters[characterIndex];

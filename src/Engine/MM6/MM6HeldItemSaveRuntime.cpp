@@ -34,7 +34,9 @@ void requireLoadedItem(const HeldItemSaveFields &fields) {
 } // namespace
 
 HeldItemSaveFields captureHeldItem(const Party &party, GameTitle title) {
-    requireMM6(title, true);
+    // Empty cursor capture needs no engine or item table; populated items
+    // still pass requireLoadedItem below.
+    requireMM6(title, false);
     const Item &item = party.pPickedItem;
     HeldItemSaveFields fields;
     if (item.itemId == ITEM_NULL)

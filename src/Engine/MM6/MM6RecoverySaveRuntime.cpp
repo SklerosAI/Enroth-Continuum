@@ -74,7 +74,7 @@ PartyTimeStruct stageEventClocks(const PartyTimeStruct &live, const EventClockFi
 }
 
 RecoverySaveFields captureRecoveryFields(const Party &party, GameTitle title) {
-    requireSafeMM6State(party, title, true);
+    requireSafeMM6State(party, title, false);
     RecoverySaveFields fields;
     fields.playingTicks = party.playing_time.ticks();
     fields.lastRegenerationTicks = party.last_regenerated.ticks();

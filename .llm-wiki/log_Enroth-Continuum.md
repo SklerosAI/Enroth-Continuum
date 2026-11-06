@@ -1365,3 +1365,8 @@ Chronological record of wiki activity.
 ## [2026-11-06] verify | MM6 selected-portrait frame cycle
 - by: T-Burton-ND via codex
 - A targeted retained-frame-table probe resolved an apparent `aframe1`–`aframe6` animation risk. The accepted first frame lasts the full 48-tick cycle, and the later five entries have zero duration; the original time-modulo selector remains on `aframe1`. A monitored headless sample passed **1/1** with no onscreen window or focus change. The staged `MM6PortraitSelection*` test now asserts the cycle length and sampled frame identity before using the cached first sprite. Its translation unit syntax compiled; the integrated linked test and rendered frame remain pending. See [UI blocker packet](../project/MM6_F4_UI_RESOURCE_BLOCKERS.md).
+
+## [2026-11-06] verify | Isolate MM6 full-world GameTest
+- by: T-Burton-ND via codex
+- A combined MM6 suite exposed that the successful full-world test leaves process-global state changed: later save and chest tests failed. Marked only `DISABLED_ScopedFirstOutdoorWorld` disabled by default and documented its explicit one-test fresh-process command. No complete world rollback is claimed.
+- The linked arm64 standalone probe passed 1/1 with `--gtest_also_run_disabled_tests`; the normal MM6 suite passed 38/38 in another process, including the formerly contaminated save and chest tests. Host monitors observed 44 and 1,899 samples respectively, with no focus change, no on-screen process window and unchanged frontmost PID. This preserves the headless test gate without opening normal save/chest guards or claiming graphical acceptance. See [first-map preflight](MM6-F4-First-Map-Preflight.md) and [headless harness](MM6-F4-Headless-Harness.md).

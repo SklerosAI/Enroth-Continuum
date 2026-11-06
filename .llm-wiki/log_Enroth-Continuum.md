@@ -1573,3 +1573,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The current MM6 changed-state encoder does not read live indoor faces, and the decoded DLV lacks an identified face/texture payload. An F3-matched retained event aggregate has 215 texture and 32 face-bit records across 17 maps; six affected maps have no OnMapReload trigger, so blanket replay cannot be assumed.
 - Documented the headless mutation/stage/reload fixture and a possible MM6-only override schema after replay semantics are established. No speculative runtime save field was added; normal MM6 SaveLoad remains guarded.
+
+## [2026-11-06] implement | Detached MM6 physical shop stock
+- by: T-Burton-ND via codex
+- Added one title-specific raw owner and standalone `SHOP` v1 section for all 1,440 physical 28-byte records, preserving the shared shop/guild row and inactive tail. The required known-save manifest still rejects `SHOP`; no live service or Party owner is connected.
+- Integrated purchase and stock-field focused tests passed 6/6, the private-backed MM6/LOD gate 331/331 and monitored MM6 headless suite 49/49. Original shared-edge refresh behavior, a nonzero native save sample and full service/save transaction remain separate gates.

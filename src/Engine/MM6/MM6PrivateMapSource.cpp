@@ -273,12 +273,13 @@ Blob PrivateMapSource::readBase(std::string_view baseName) const {
 
 void loadKnownSaveWithPrivateMapsBeforeMutation(std::span<const std::uint8_t> bytes,
                                                 const std::filesystem::path &researchRoot,
+                                                const GroundItemVerifier &verifyGroundItem,
                                                 KnownSaveFields *destination) {
     if (!destination)
         throw std::runtime_error("null MM6 private map save destination");
     const PrivateMapSource source(researchRoot);
     loadKnownSaveWithMapBasesBeforeMutation(bytes, source.expectedNames(),
-        [&source](std::string_view name) { return source.readBase(name); }, destination);
+        [&source](std::string_view name) { return source.readBase(name); }, verifyGroundItem, destination);
 }
 
 } // namespace mm6

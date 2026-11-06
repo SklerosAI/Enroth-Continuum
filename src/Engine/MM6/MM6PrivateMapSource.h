@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "MM6KnownSaveFields.h"
+#include "MM6MapSaveValidation.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -34,6 +35,7 @@ class PrivateMapSource {
 // This does not wire SaveLoad, a native profile slot, or live world mutation.
 void loadKnownSaveWithPrivateMapsBeforeMutation(std::span<const std::uint8_t> bytes,
                                                 const std::filesystem::path &researchRoot,
+                                                const GroundItemVerifier &verifyGroundItem,
                                                 KnownSaveFields *destination);
 
 } // namespace mm6

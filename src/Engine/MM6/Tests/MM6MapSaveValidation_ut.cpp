@@ -32,6 +32,18 @@ std::vector<std::uint8_t> outdoorDelta() {
     return std::vector<std::uint8_t>(8 + 2 * 88 * 11 + 3 * 4 + 200 + 56, 0);
 }
 
+std::vector<std::uint8_t> outdoorDeltaWithItem(std::int32_t itemId) {
+    constexpr size_t groundCount = 8 + 2 * 88 * 11 + 4;
+    std::vector<std::uint8_t> bytes(8 + 2 * 88 * 11 + 3 * 4 + 100 + 200 + 56, 0);
+    bytes[groundCount] = 1;
+    const size_t itemOffset = groundCount + 4 + 36;
+    for (int shift = 0; shift < 32; shift += 8)
+        bytes[itemOffset + shift / 8] = static_cast<std::uint8_t>(itemId >> shift);
+    return bytes;
+}
+
+bool validGroundItem(std::int32_t id) { return id >= 1 && id <= 580; }
+
 mm6::KnownSaveFields exampleFields() {
     mm6::KnownSaveFields fields;
     fields.core.party.playingTicks = 42;
@@ -79,7 +91,7 @@ UNIT_TEST(MM6MapSaveValidation, StagesWholeKnownSaveOnlyAfterEveryMapPasses) {
     std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(source);
     mm6::KnownSaveFields destination;
     destination.core.party.playingTicks = 999;
-    mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase, &destination);
+    mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase, validGroundItem, &destination);
     EXPECT_EQ(destination.core.party.playingTicks, 42);
     EXPECT_EQ(destination.maps, source.maps);
 
@@ -88,28 +100,63 @@ UNIT_TEST(MM6MapSaveValidation, StagesWholeKnownSaveOnlyAfterEveryMapPasses) {
     destination.core.party.playingTicks = 999;
     int reads = 0;
     EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected,
-        [&reads](std::string_view name) { ++reads; return syntheticBase(name); }, &destination), std::exception);
+        [&reads](std::string_view name) { ++reads; return syntheticBase(name); }, validGroundItem, &destination),
+        std::exception);
     EXPECT_EQ(reads, 0);
     EXPECT_EQ(destination.core.party.playingTicks, 999);
 
     source = exampleFields();
     source.maps.deltas.back().bytes.pop_back();
     bytes = mm6::encodeKnownSave(source);
-    EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase, &destination),
+    EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase,
+                                                              validGroundItem, &destination),
                  std::exception);
     EXPECT_EQ(destination.core.party.playingTicks, 999);
 
     source = exampleFields();
     bytes = mm6::encodeKnownSave(source);
     EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected,
-        [](std::string_view) { return Blob(); }, &destination), std::exception);
+        [](std::string_view) { return Blob(); }, validGroundItem, &destination), std::exception);
     EXPECT_EQ(destination.core.party.playingTicks, 999);
     EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected,
         [](std::string_view) {
             const std::vector<std::uint8_t> bytes = outdoorBase();
             return Blob::copy(bytes.data(), bytes.size());
-        }, &destination), std::exception);
+        }, validGroundItem, &destination), std::exception);
     EXPECT_EQ(destination.core.party.playingTicks, 999);
+}
+
+UNIT_TEST(MM6MapSaveValidation, NonzeroGroundItemRequiresMM6TemplateBeforeMutation) {
+    mm6::KnownSaveFields source = exampleFields();
+    const std::vector<std::string> expected = namesOf(source);
+    source.maps.deltas.back().bytes = outdoorDeltaWithItem(42);
+    std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(source);
+    mm6::KnownSaveFields destination;
+    destination.core.party.playingTicks = 999;
+    int verified = 0;
+    mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase,
+        [&verified](std::int32_t id) { ++verified; return id == 42; }, &destination);
+    EXPECT_EQ(verified, 1);
+    EXPECT_EQ(destination.maps.deltas.back().bytes, source.maps.deltas.back().bytes);
+
+    destination.core.party.playingTicks = 999;
+    EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase,
+        [](std::int32_t) { return false; }, &destination), std::exception);
+    EXPECT_EQ(destination.core.party.playingTicks, 999);
+
+    source.maps.deltas.back().bytes = outdoorDeltaWithItem(581);
+    bytes = mm6::encodeKnownSave(source);
+    EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase,
+        [](std::int32_t) { return true; }, &destination), std::exception);
+    EXPECT_EQ(destination.core.party.playingTicks, 999);
+
+    source.maps.deltas.back().bytes = outdoorDeltaWithItem(-1);
+    bytes = mm6::encodeKnownSave(source);
+    EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase,
+        [](std::int32_t) { return true; }, &destination), std::exception);
+    EXPECT_EQ(destination.core.party.playingTicks, 999);
+    EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(bytes, expected, syntheticBase,
+        {}, &destination), std::exception);
 }
 
 UNIT_TEST(MM6MapSaveValidation, RetainedSixtySevenBaseDeltaPairs) {
@@ -141,7 +188,7 @@ UNIT_TEST(MM6MapSaveValidation, RetainedSixtySevenBaseDeltaPairs) {
             const auto &directory = baseName.ends_with(".blv") ? indoorDir : outdoorDir;
             const std::vector<std::uint8_t> base = readBytes(directory / baseName);
             return Blob::copy(base.data(), base.size());
-        });
+        }, validGroundItem);
     EXPECT_EQ(reads, 67);
     EXPECT_EQ(restored.maps, source.maps);
 }

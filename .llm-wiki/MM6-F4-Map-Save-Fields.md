@@ -17,4 +17,6 @@ The MM6-only `MM6MapSaveValidation` pass decodes the sixteen known `.ec6` sectio
 
 `PrivateMapSource` now supplies that reader from an explicit native retained-F3 directory. It enforces bounded, canonical-contained regular files and owner-only manifest permissions, verifies the F3 identity/gate/report/probe hash chain and all 67 manifest entries, and checks each decoded base hash before use. The wrapper stages a known-save candidate only after the full validation pass. The installed game-data path, complete live transaction, active map capture and outdoor content-level relation remain open.
 
+Ground items already live in counted 100-byte records within the DLV/DDM `MAPS` payloads, so they have no separate `.ec6` section. The known-save map pass now requires a loaded MM6 item-template verifier for every nonempty ground item; invalid IDs or absent templates reject before staging. Synthetic nonzero and malformed cases plus all retained map pairs pass the focused offline tests. Shop stock is different party state: current arrays still use inherited MM7 house indices and cannot safely cover the retained MM6 house table. See the [save remainder matrix](../project/MM6_SAVE_REMAINDER_F4.md) before designing a `SHOP` section.
+
 See also: [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

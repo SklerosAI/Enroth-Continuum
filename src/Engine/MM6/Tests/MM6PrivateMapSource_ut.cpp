@@ -94,7 +94,8 @@ UNIT_TEST(MM6PrivateMapSource, F3IdentityContainmentAndStaging) {
     const std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(fields);
     mm6::KnownSaveFields destination;
     destination.core.party.playingTicks = 999;
-    mm6::loadKnownSaveWithPrivateMapsBeforeMutation(bytes, root, &destination);
+    mm6::loadKnownSaveWithPrivateMapsBeforeMutation(bytes, root,
+        [](std::int32_t id) { return id >= 1 && id <= 580; }, &destination);
     EXPECT_EQ(destination.core.party.playingTicks, 42);
     EXPECT_EQ(destination.maps, fields.maps);
 
@@ -104,7 +105,8 @@ UNIT_TEST(MM6PrivateMapSource, F3IdentityContainmentAndStaging) {
     mm6::PrivateMapSource escaped(scratch.path);
     EXPECT_THROW((void) escaped.readBase(baseName(escaped.expectedNames().front())), std::exception);
     destination.core.party.playingTicks = 999;
-    EXPECT_THROW(mm6::loadKnownSaveWithPrivateMapsBeforeMutation(bytes, scratch.path, &destination),
+    EXPECT_THROW(mm6::loadKnownSaveWithPrivateMapsBeforeMutation(bytes, scratch.path,
+        [](std::int32_t id) { return id >= 1 && id <= 580; }, &destination),
                  std::exception);
     EXPECT_EQ(destination.core.party.playingTicks, 999);
 
@@ -127,7 +129,8 @@ UNIT_TEST(MM6PrivateMapSource, F3IdentityContainmentAndStaging) {
     tamper.put('x');
     tamper.close();
     EXPECT_THROW((void) mm6::PrivateMapSource(scratch.path), std::exception);
-    EXPECT_THROW(mm6::loadKnownSaveWithPrivateMapsBeforeMutation(bytes, scratch.path, &destination),
+    EXPECT_THROW(mm6::loadKnownSaveWithPrivateMapsBeforeMutation(bytes, scratch.path,
+        [](std::int32_t id) { return id >= 1 && id <= 580; }, &destination),
                  std::exception);
     EXPECT_EQ(destination.core.party.playingTicks, 999);
 }

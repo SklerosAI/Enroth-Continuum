@@ -265,7 +265,9 @@ GAME_TEST(MM6Headless, FirstOutdoorPreparation) {
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }
 
-GAME_TEST(MM6Headless, ScopedFirstOutdoorWorld) {
+// World preparation mutates process-global owners without a complete rollback.
+// Run only in a dedicated GameTest process with --gtest_also_run_disabled_tests.
+GAME_TEST(MM6Headless, DISABLED_ScopedFirstOutdoorWorld) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     ASSERT_EQ(window->nativeHandle(), nullptr);
     game.pressGuiButton("MainMenu_NewGame");

@@ -158,3 +158,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a retained-data/source packet and probe joining all 173 descriptions to text rows, animation names to the frame index, and candidate actor IDs to baseline map deltas.
 - Recorded the candidate ID 173 versus the current MM6 loader's final-description discard, with F3 confirmation and F4/F5 acceptance required. Exact names and placements stay ignored locally.
+
+## [2026-11-05] ingest | MM6 item catalog and spell recovery
+- by: T-Burton-ND via codex
+- Updated source summaries and handoff after direct image identity checks reached 460 individual item entries, with 164 item semantic rows still unreviewed and item effects unverified.
+- Linked the all-99 spell recovery guide ledger and its original-executable F3 target; no complete original delay triple is yet verified. Exact per-ID evidence remains ignored locally.

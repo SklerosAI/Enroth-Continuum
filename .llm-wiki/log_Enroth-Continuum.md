@@ -702,3 +702,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A new read-only `.ec6` preflight checks primary and backup through the current sixteen-section decoder and a required caller-supplied semantic validator. It can select a valid backup when a CRC-valid primary fails later semantic checks, without restoring or changing either file. A future live caller must supply private map/base and complete runtime checks before any recovery or global commit; SaveLoad remains guarded.
 - The arm64 MM6, OpenEnroth and unit targets built. Focused atomic-save tests passed 5/5, including primary acceptance, semantic fallback, both-candidate rejection and backup-only selection with unchanged disk bytes. Cpplint and diff checks passed. No original installation or MM6 process was opened.
+
+## [2026-11-06] implement | MM6 transport house menu data
+- by: T-Burton-ND via codex
+- The 21 private transport manifest houses match the 21 retained stable/boat service rows exactly, and all have validated MM6 rooms. A pure three-slot selector now requires that title-specific join and a valid weekday before exposing scheduled, nongated routes. Blank, uncertain, special and quest-gated choices remain absent; house entry, payment, movement and autosave remain disabled.
+- The arm64 MM6/MM7/unit binary contains the selector. Seven focused house/transport tests passed with owner-only manifests and retained data, including missing room/manifest and foreign-input rejection. No original installation or MM6 process was opened.

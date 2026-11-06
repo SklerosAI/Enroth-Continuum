@@ -13,6 +13,7 @@
 #include "Engine/SaveLoad.h"
 
 #include "GUI/UI/MainMenuResources.h"
+#include "GUI/HudNavigationResources.h"
 
 #include "Library/FileSystem/Memory/MemoryFileSystem.h"
 #include "Library/Platform/Null/NullEventLoop.h"
@@ -82,6 +83,41 @@ GAME_TEST(MM6Headless, MainMenuResourcesAvailable) {
         EXPECT_GT(size.w, 0) << button.icon;
         EXPECT_GT(size.h, 0) << button.icon;
     }
+}
+
+GAME_TEST(MM6Headless, HudNavigationResourcesAvailable) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const HudNavigationResources resources = hudNavigationResources(engine->gameTitle(),
+        "IB-COMP-A", "ib-autout-a", "ib-autin-a");
+    for (std::string_view name : {resources.compass, resources.zoomIn, resources.zoomOut}) {
+        Sizei size = engine->resources()->iconSize(name);
+        EXPECT_GT(size.w, 0) << name;
+        EXPECT_GT(size.h, 0) << name;
+    }
+}
+
+TEST(MM6HeadlessHudResources, TitleIsolation) {
+    const HudNavigationResources mm6 = hudNavigationResources(GameTitle::MM6,
+        "IB-COMP-A", "ib-autout-a", "ib-autin-a");
+    EXPECT_EQ(mm6.compass, "compass");
+    EXPECT_EQ(mm6.zoomIn, "zoom+on");
+    EXPECT_EQ(mm6.zoomOut, "zoom-on");
+
+    const HudNavigationResources mm7Neutral = hudNavigationResources(GameTitle::MM7,
+        "IB-COMP-A", "ib-autout-a", "ib-autin-a");
+    EXPECT_EQ(mm7Neutral.compass, "IB-COMP-A");
+    EXPECT_EQ(mm7Neutral.zoomIn, "ib-autout-a");
+    EXPECT_EQ(mm7Neutral.zoomOut, "ib-autin-a");
+    const HudNavigationResources mm7Good = hudNavigationResources(GameTitle::MM7,
+        "IB-COMP-B", "ib-autout-B", "ib-autin-B");
+    EXPECT_EQ(mm7Good.compass, "IB-COMP-B");
+    EXPECT_EQ(mm7Good.zoomIn, "ib-autout-B");
+    EXPECT_EQ(mm7Good.zoomOut, "ib-autin-B");
+    const HudNavigationResources mm7Evil = hudNavigationResources(GameTitle::MM7,
+        "IB-COMP-C", "ib-autout-C", "ib-autin-C");
+    EXPECT_EQ(mm7Evil.compass, "IB-COMP-C");
+    EXPECT_EQ(mm7Evil.zoomIn, "ib-autout-C");
+    EXPECT_EQ(mm7Evil.zoomOut, "ib-autin-C");
 }
 
 TEST(MM6HeadlessMenuAssets, TitleSpecificLookup) {

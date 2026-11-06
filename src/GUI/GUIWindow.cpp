@@ -8,6 +8,8 @@
 #include <memory>
 #include <vector>
 
+#include "GUI/HudNavigationResources.h"
+
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/AssetsManager.h"
@@ -568,6 +570,8 @@ void SetUserInterface(PartyAlignment align) {
     }
 
     if (align == PartyAlignment::PartyAlignment_Evil) {
+        const HudNavigationResources navigation = hudNavigationResources(engine->gameTitle(),
+            "IB-COMP-C", "ib-autout-C", "ib-autin-C");
         game_ui_rightframe = assets->getIcon("ib-r-C.pcx");
         game_ui_bottomframe = assets->getIcon("ib-b-C.pcx");
         game_ui_topframe = assets->getIcon("ib-t-C.pcx");
@@ -576,7 +580,7 @@ void SetUserInterface(PartyAlignment align) {
 
         game_ui_right_panel_frame = assets->getIcon("ib-mb-C");
         game_ui_minimap_frame = assets->getIcon("ib-autmask-c");
-        game_ui_minimap_compass = assets->getIcon("IB-COMP-C");
+        game_ui_minimap_compass = assets->getIcon(navigation.compass);
 
         game_ui_player_alert_green = assets->getIcon("IB-InitG-c");
         game_ui_player_alert_yellow = assets->getIcon("IB-InitY-c");
@@ -584,8 +588,8 @@ void SetUserInterface(PartyAlignment align) {
 
         ui_btn_npc_left = assets->getIcon("IB-NPCLD-C");
         ui_btn_npc_right = assets->getIcon("IB-NPCRD-C");
-        game_ui_btn_zoomin = assets->getIcon("ib-autout-C");
-        game_ui_btn_zoomout = assets->getIcon("ib-autin-C");
+        game_ui_btn_zoomin = assets->getIcon(navigation.zoomIn);
+        game_ui_btn_zoomout = assets->getIcon(navigation.zoomOut);
         game_ui_player_selection_frame = assets->getIcon("IB-selec-C");
         game_ui_btn_cast = assets->getIcon("ib-m1d-c");
         game_ui_btn_rest = assets->getIcon("ib-m2d-c");
@@ -617,6 +621,8 @@ void SetUserInterface(PartyAlignment align) {
         uGameUIFontMain = colorTable.MediumRed;
         uGameUIFontShadow = colorTable.Diesel;
     } else if (align == PartyAlignment::PartyAlignment_Neutral) {
+        const HudNavigationResources navigation = hudNavigationResources(engine->gameTitle(),
+            "IB-COMP-A", "ib-autout-a", "ib-autin-a");
         game_ui_rightframe = assets->getIcon("ib-r-A.pcx");
         game_ui_bottomframe = assets->getIcon("ib-b-A.pcx");
         game_ui_topframe = assets->getIcon("ib-t-A.pcx");
@@ -625,7 +631,7 @@ void SetUserInterface(PartyAlignment align) {
 
         game_ui_right_panel_frame = assets->getIcon("ib-mb-A");
         game_ui_minimap_frame = assets->getIcon("ib-autmask-a");
-        game_ui_minimap_compass = assets->getIcon("IB-COMP-A");
+        game_ui_minimap_compass = assets->getIcon(navigation.compass);
 
         game_ui_player_alert_green = assets->getIcon("IB-InitG-a");
         game_ui_player_alert_yellow = assets->getIcon("IB-InitY-a");
@@ -638,8 +644,8 @@ void SetUserInterface(PartyAlignment align) {
         game_ui_btn_rest = assets->getIcon("ib-m2d-a");
         game_ui_btn_quickref = assets->getIcon("ib-m3d-a");
         game_ui_btn_settings = assets->getIcon("ib-m4d-a");
-        game_ui_btn_zoomin = assets->getIcon("ib-autout-a");
-        game_ui_btn_zoomout = assets->getIcon("ib-autin-a");
+        game_ui_btn_zoomin = assets->getIcon(navigation.zoomIn);
+        game_ui_btn_zoomout = assets->getIcon(navigation.zoomOut);
         ui_exit_cancel_button_background = assets->getIcon("ib-bcu-a");
 
         game_ui_playerbuff_bless = assets->getIcon("isg-01-a");
@@ -666,6 +672,8 @@ void SetUserInterface(PartyAlignment align) {
         uGameUIFontMain = colorTable.Diesel;
         uGameUIFontShadow = colorTable.StarkWhite;
     } else if (align == PartyAlignment::PartyAlignment_Good) {
+        const HudNavigationResources navigation = hudNavigationResources(engine->gameTitle(),
+            "IB-COMP-B", "ib-autout-B", "ib-autin-B");
         game_ui_rightframe = assets->getIcon("ib-r-B.pcx");
         game_ui_bottomframe = assets->getIcon("ib-b-B.pcx");
         game_ui_topframe = assets->getIcon("ib-t-B.pcx");
@@ -674,7 +682,7 @@ void SetUserInterface(PartyAlignment align) {
 
         game_ui_right_panel_frame = assets->getIcon("ib-mb-B");
         game_ui_minimap_frame = assets->getIcon("ib-autmask-b");
-        game_ui_minimap_compass = assets->getIcon("IB-COMP-B");
+        game_ui_minimap_compass = assets->getIcon(navigation.compass);
 
         game_ui_player_alert_green = assets->getIcon("IB-InitG-b");
         game_ui_player_alert_yellow = assets->getIcon("IB-InitY-b");
@@ -682,8 +690,8 @@ void SetUserInterface(PartyAlignment align) {
 
         ui_btn_npc_left = assets->getIcon("IB-NPCLD-B");
         ui_btn_npc_right = assets->getIcon("IB-NPCRD-B");
-        game_ui_btn_zoomin = assets->getIcon("ib-autout-B");
-        game_ui_btn_zoomout = assets->getIcon("ib-autin-B");
+        game_ui_btn_zoomin = assets->getIcon(navigation.zoomIn);
+        game_ui_btn_zoomout = assets->getIcon(navigation.zoomOut);
         game_ui_player_selection_frame = assets->getIcon("IB-selec-B");
         game_ui_btn_cast = assets->getIcon("ib-m1d-b");
         game_ui_btn_rest = assets->getIcon("ib-m2d-b");

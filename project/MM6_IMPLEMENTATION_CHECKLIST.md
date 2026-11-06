@@ -173,9 +173,11 @@ that requirement.
   `NONE`. This is parser inventory, not observed combat behavior.
 - [x] Maintain a private per-ID guide review queue for all 581 items and 173
   monsters in [MM6_ITEM_MONSTER_GUIDE_CLAIMS_F2.md](MM6_ITEM_MONSTER_GUIDE_CLAIMS_F2.md).
-  OCR catalog matches are labeled separately from direct scans: 16 item and
-  39 monster IDs have selected visual checks in that queue, with several
-  guide/data value disagreements. Most semantic rows remain open.
+  OCR catalog matches are labeled separately from direct scans: 460 item
+  entries and 39 monster IDs now have direct visual identity checks in that
+  queue. Among items, 403 selected field sets match and 12 disagree with
+  retained data; 164 item semantic rows remain unreviewed. These checks do
+  not verify executable item effects or generation rules.
 - [x] Give all 173 monster IDs an explicit catalog identity evidence state in
   [MM6_MONSTER_GUIDE_SEMANTICS_F2.md](MM6_MONSTER_GUIDE_SEMANTICS_F2.md).
   All 171 printed-catalog IDs now have direct page-image identity and selected
@@ -238,6 +240,14 @@ that requirement.
   A later six-facet source screen covers all 99 IDs: 70 effect conflicts,
   27 limited candidates and two unresolved UI continuations; recovery is
   unresolved for 96. Full downstream behavior and runtime casts remain unverified.
+- [x] Register [primary-source spell recovery leads](MM6_SPELL_RECOVERY_F2.md)
+  for all 99 spells without inventing exact delays. The guide supplies a
+  baseline category for every ID, explicit Expert/Master categories in 84
+  cells and two numeric rank cells. MMExtension identifies three hard-coded
+  delay fields per MM6 spell but publishes no values: zero complete original
+  triples are verified, and all 96 previously unresolved recovery facets
+  remain open. F3 must read all triples once from the original executable;
+  F4 must implement a title-specific table and dynamic rules.
 - [ ] Implement MM6-specific spell IDs, casting effects, three mastery levels,
   costs, recovery, damage/resistance types, target rules, buff duration,
   scroll/book/wand mappings, monster/event casts, visuals and descriptions.
@@ -257,7 +267,7 @@ that requirement.
   Sixteen of 25 wand spell tokens disagree with inherited lookup. All 99
   scrolls, 99 books, 30 artifacts/relics and 50 message scrolls miss inherited
   type ranges, and 98 special-band IDs have held-item event operands. Sixty-seven
-  special/misc roles and 402 item guide semantics remain unresolved; static
+  special/misc roles and 164 item guide semantics remain unresolved; static
   consumer coverage does not establish their effects.
 - [ ] Replace MM7 item-kind range assumptions with MM6-specific IDs and
   checks. Make every MM6 spell scroll cast its intended spell, every book

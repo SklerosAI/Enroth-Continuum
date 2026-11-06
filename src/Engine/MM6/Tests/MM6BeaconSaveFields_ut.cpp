@@ -100,6 +100,34 @@ UNIT_TEST(MM6BeaconSaveFields, CapturesCurrentMapAsVerifiedFilenameWithoutGraphi
                  std::exception);
 }
 
+UNIT_TEST(MM6BeaconSaveFields, PreparesCpuImagesBeforeRendererPublication) {
+    auto table = std::make_unique<MapTable>();
+    table->pInfos[static_cast<MapId>(1)].fileName = "o0.odm";
+    const std::vector<std::string> names = expectedNames();
+    mm6::StagedBeaconVisuals staged = mm6::stageBeaconVisuals(example(), *table, names, GameTitle::MM6);
+    mm6::PreparedBeaconPixels prepared = mm6::prepareBeaconPixels(staged);
+    ASSERT_TRUE(prepared.thumbnail.has_value());
+    ASSERT_TRUE(prepared.beacons[2][4].has_value());
+    EXPECT_EQ(prepared.thumbnail->size(), Sizei(mm6::SAVE_THUMBNAIL_WIDTH, mm6::SAVE_THUMBNAIL_HEIGHT));
+    EXPECT_EQ(prepared.beacons[2][4]->size(), Sizei(mm6::BEACON_IMAGE_WIDTH, mm6::BEACON_IMAGE_HEIGHT));
+    EXPECT_EQ(prepared.thumbnail->pixels()[0], Color(8, 16, 24, 255));
+    EXPECT_EQ(prepared.beacons[2][4]->pixels()[0], Color(10, 20, 30, 40));
+    EXPECT_EQ(mm6::copyRgbaPixels(*prepared.beacons[2][4],
+                                  mm6::BEACON_IMAGE_WIDTH, mm6::BEACON_IMAGE_HEIGHT),
+              staged.beacons[2][4]->rgba);
+    EXPECT_FALSE(prepared.beacons[0][0].has_value());
+
+    staged.beacons[0][0] = *staged.beacons[2][4];
+    staged.beacons[0][0]->rgba.pop_back();
+    EXPECT_THROW((void) mm6::prepareBeaconPixels(staged), std::exception);
+    EXPECT_EQ(staged.beacons[2][4]->rgba.size(),
+              static_cast<std::size_t>(mm6::BEACON_IMAGE_WIDTH * mm6::BEACON_IMAGE_HEIGHT * 4));
+    staged.beacons[0][0].reset();
+    staged.thumbnailRgba.pop_back();
+    EXPECT_THROW((void) mm6::prepareBeaconPixels(staged), std::exception);
+
+}
+
 UNIT_TEST(MM6BeaconSaveFields, RejectsMalformedImageAndMapBeforeMutation) {
     const mm6::BeaconSaveFields before = example();
     mm6::BeaconSaveFields destination = before;

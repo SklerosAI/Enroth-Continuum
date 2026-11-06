@@ -15,4 +15,6 @@ The F3 gate confirms MM6 source/archive identity and the map family, but not a n
 
 `KnownSaveFields` still requires its prior 18 sections and rejects `BEAC`; active beacons still fail closed. Capture of the full Party and thumbnail, expiry/core-clock join, renderer-owned image publication, stable transaction commit, Lloyd spell behavior and graphical save/relaunch/load remain open.
 
+The follow-up [image transaction audit](../project/MM6_F4_BEACON_VISUAL_SAVE.md) adds detached `prepareBeaconPixels()` reconstruction. It verifies byte counts and RGBA order into owned CPU `RgbaImage` values before any renderer or Party mutation. Current beacon screenshots retain CPU pixels through `GraphicsImage::rgba()`, but the save thumbnail screenshot redraws the viewport and must be captured on the game/render thread. `GraphicsImage::Create()` allocates an OpenGL texture immediately; GPU creation and final all-owner commit remain open, with candidate images required before publication.
+
 See also: [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md), [Known Save Assembly](MM6-F4-Known-Save-Assembly.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

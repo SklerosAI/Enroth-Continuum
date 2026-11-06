@@ -1,6 +1,7 @@
 #include "MM6BeaconSaveRuntime.h"
 
 #include <algorithm>
+#include <new>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -34,6 +35,21 @@ MapId resolveMapId(std::string_view mapName, const MapTable &mapTable,
     return result;
 }
 
+RgbaImage rebuildRgbaPixels(std::span<const std::uint8_t> bytes, int width, int height) {
+    if (bytes.size() != static_cast<std::size_t>(width * height * 4))
+        throw std::runtime_error("invalid MM6 staged image byte count");
+    RgbaImage image = RgbaImage::uninitialized(width, height);
+    if (!image)
+        throw std::bad_alloc();
+    std::span<Color> pixels = image.pixels();
+    for (std::size_t index = 0; index < pixels.size(); ++index) {
+        const std::size_t offset = index * 4;
+        pixels[index] = Color(bytes[offset], bytes[offset + 1],
+                              bytes[offset + 2], bytes[offset + 3]);
+    }
+    return image;
+}
+
 } // namespace
 
 std::vector<std::uint8_t> copyRgbaPixels(RgbaImageView image, int width, int height) {
@@ -46,6 +62,23 @@ std::vector<std::uint8_t> copyRgbaPixels(RgbaImageView image, int width, int hei
         result.push_back(pixel.g);
         result.push_back(pixel.b);
         result.push_back(pixel.a);
+    }
+    return result;
+}
+
+PreparedBeaconPixels prepareBeaconPixels(const StagedBeaconVisuals &staged) {
+    PreparedBeaconPixels result;
+    if (!staged.thumbnailRgba.empty()) {
+        result.thumbnail = rebuildRgbaPixels(staged.thumbnailRgba,
+                                            SAVE_THUMBNAIL_WIDTH, SAVE_THUMBNAIL_HEIGHT);
+    }
+    for (std::size_t character = 0; character < staged.beacons.size(); ++character) {
+        for (std::size_t slot = 0; slot < staged.beacons[character].size(); ++slot) {
+            if (!staged.beacons[character][slot])
+                continue;
+            result.beacons[character][slot] = rebuildRgbaPixels(
+                staged.beacons[character][slot]->rgba, BEACON_IMAGE_WIDTH, BEACON_IMAGE_HEIGHT);
+        }
     }
     return result;
 }

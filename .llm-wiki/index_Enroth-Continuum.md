@@ -38,7 +38,8 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Quest Bit Variable](MM6-F4-Quest-Bit-Variable.md) — Active raw ID 16 operation/operand audit, hidden bits and QEST acceptance gates
 - [MM6 F4 Condition Variables](MM6-F4-Condition-Variables.md) — Bounded dispatch for 18 shipped condition uses; 36 status writes remain guarded
 - [MM6 F4 House Type Routing](MM6-F4-House-Type-Routing.md) — Title-specific classification for retained house labels and unresolved services/screens
-- [MM6 F4 House Service Gate](MM6-F4-House-Service-Gate.md) — House type families and pre-mutation entry boundary pending MM6 rooms and services
+- [MM6 F4 House Service Gate](MM6-F4-House-Service-Gate.md) — House type families and pre-mutation entry boundary pending MM6 services
+- [MM6 F4 Room Descriptors](MM6-F4-Room-Descriptors.md) — Private 119-room manifest and all 674 active house-entry dispositions
 - [MM6 F4 Movie Lookup](MM6-F4-Movie-Lookup.md) — Exact extensionless VID lookup, owner-matched name coverage and remaining playback checks
 - [MM6 F4 Awards](MM6-F4-Awards.md) — Retained text loading, formatted-row guard and open award ordering/counter rules
 - [MM6 F4 Spell Rules](MM6-F4-Spell-Rules.md) — Private F3-backed 99-spell mana/recovery selection and unresolved cast/effect routes

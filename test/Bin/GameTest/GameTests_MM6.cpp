@@ -230,7 +230,8 @@ GAME_TEST(MM6Headless, FirstOutdoorPreparation) {
     }
     ASSERT_TRUE(pMapDeltas.contains("oute3.ddm"));
 
-    game.runGameRoutine([firstMap] {
+    bool completed = false;
+    game.runGameRoutine([firstMap, &completed] {
         pParty->Reset();
         engine->_currentLoadedMapId = firstMap;
         // DoPrepareWorld normally sizes these AI scratch arrays before it
@@ -241,7 +242,15 @@ GAME_TEST(MM6Headless, FirstOutdoorPreparation) {
         ai_near_actors_ids.resize(actorLimit);
         pGameLoadingUI_ProgressBar->Initialize(GUIProgressBar::TYPE_Fullscreen);
         loadAndPrepareODM(firstMap, /* bLoading = */ true);
+        completed = true;
     });
+
+    // The loading screen presents several frames from inside this game
+    // routine. Each present yields to the test controller; resume until the
+    // routine itself completes, with a bound for a stalled loading path.
+    for (int tick = 0; tick < 128 && !completed; ++tick)
+        game.tick();
+    ASSERT_TRUE(completed);
 
     EXPECT_EQ(uCurrentlyLoadedLevelType, LEVEL_OUTDOOR);
     EXPECT_EQ(engine->_currentLoadedMapId, firstMap);

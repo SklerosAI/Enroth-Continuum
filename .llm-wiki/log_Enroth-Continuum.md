@@ -476,6 +476,11 @@ Chronological record of wiki activity.
 - Routed MM6 Bodybuilding and Meditation bonus multiplication through the private eighteen-class HP/SP factors instead of inherited four-ID MM7 class arrays. The current full HP/SP formula remains provisional.
 - Verified the ignored owner profile contains eighteen factors for each stat and built the arm64 MM6, MM7 and unit targets. No character-sheet render, original installation read or MM6 process launch was performed.
 
+## [2026-11-06] update | MM6 private map and item integration
+- by: T-Burton-ND via codex
+- Integrated the F3-verified private map source, checked MM6 NPC address resolution, missing-item-icon preflight and private-backed Power Cure branch in the offline runner. The map source rejects tampered reports and path escapes before staging the sixteen-section candidate; live SaveLoad is still blocked.
+- The arm64 MM6/MM7/unit build and one-command offline suite passed 105/105 MM6/LOD tests from 33 suites. The linked general suite passed 438/438. The map and two healing tests consumed ignored private inputs without skips. No original installation was reread or MM6 process launched.
+
 ## [2026-11-06] ingest | MM6 known-save map/base pass
 - by: T-Burton-ND via codex
 - Added an MM6-only candidate validator that decodes all sixteen known `.ec6` sections, requires the private expected map-name set, and parses each of 67 delta entries with its caller-supplied base entry before returning or assigning any state.

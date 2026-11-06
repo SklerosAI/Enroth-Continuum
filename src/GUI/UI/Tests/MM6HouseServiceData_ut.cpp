@@ -9,9 +9,11 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <utility>
 
 #include "GUI/UI/MM6HouseServiceData.h"
+#include "GUI/UI/UIHouses.h"
 
 #include "Library/Json/Json.h"
 #include "Library/Lod/LodReader.h"
@@ -310,6 +312,25 @@ TEST(MM6HouseServiceData, DecodesEveryReferencedProprietorImageFromStagedArchive
     }
 }
 
+TEST(MM6HouseServiceData, DecodesMM6PreviewPanelAndExitImages) {
+    const char *archive = std::getenv("ENROTH_MM6_STAGED_ICONS_LOD");
+    if (!archive)
+        GTEST_SKIP() << "private staged MM6 icon evidence is unavailable";
+
+    const LodReader icons{PathView(archive)};
+    for (const auto &[name, maximumWidth, maximumHeight] : {
+             std::tuple{"backevt", 163, 480}, std::tuple{"buttexi1", 169, 35}}) {
+        ASSERT_TRUE(icons.exists(name));
+        const Blob data = icons.read(name);
+        const Sizei size = lod::decodeImageSize(data);
+        EXPECT_GT(size.w, 0);
+        EXPECT_GT(size.h, 0);
+        EXPECT_LE(size.w, maximumWidth) << name;
+        EXPECT_LE(size.h, maximumHeight) << name;
+        EXPECT_EQ(lod::decodeImage(data).image.size(), size);
+    }
+}
+
 TEST(MM6HouseServiceData, ResolvesEveryReferencedRoomMovieFromStagedArchives) {
     const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
     const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
@@ -338,4 +359,42 @@ TEST(MM6HouseServiceData, ResolvesEveryReferencedRoomMovieFromStagedArchives) {
         EXPECT_GT(movie.size(), 16);
         EXPECT_TRUE(movie.str().starts_with("SMK"));
     }
+}
+
+TEST(MM6HouseServiceData, ActivatesPresentationOnlyForTableBackedMM6Rooms) {
+    const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
+    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
+    if (!manifest || !research)
+        GTEST_SKIP() << "private MM6 house evidence is unavailable";
+
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(manifest)));
+    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
+        Blob::fromString(readFile(std::filesystem::path(research) / "icons" / "2devents.txt")), rooms);
+    int tableBacked = 0;
+    int unavailable = 0;
+    for (int houseId = 1; houseId <= 557; ++houseId) {
+        const mm6::HouseEntryPlan entry = mm6::planHouseEntry(houses, houseId);
+        if (entry.kind == mm6::HouseEntryKind::TableBacked) {
+            const mm6::HousePresentationState state = mm6::planHousePresentation(GameTitle::MM6, houses, houseId);
+            EXPECT_EQ(state.houseId, houseId);
+            ASSERT_TRUE(entry.room.has_value());
+            EXPECT_EQ(state.videoName, entry.room->videoName);
+            EXPECT_EQ(state.proprietorIconName, entry.proprietorIconName);
+            ++tableBacked;
+        } else {
+            EXPECT_THROW(mm6::planHousePresentation(GameTitle::MM6, houses, houseId), std::exception);
+            ++unavailable;
+        }
+        EXPECT_THROW(mm6::planHousePresentation(GameTitle::MM7, houses, houseId), std::exception);
+    }
+    EXPECT_EQ(tableBacked, 526);
+    EXPECT_EQ(unavailable, 31);
+    EXPECT_THROW(mm6::planHousePresentation(GameTitle::MM6, houses, 600), std::exception);
+    EXPECT_THROW(mm6::planHousePresentation(GameTitle::MM6, houses, 601), std::exception);
+}
+
+TEST(MM6HouseServiceData, PreviewExitSkipsLegacyDialogueAndCharacterAdvanceOnlyForMM6House) {
+    EXPECT_TRUE(isMM6HousePresentationScreen(GameTitle::MM6, SCREEN_HOUSE));
+    EXPECT_FALSE(isMM6HousePresentationScreen(GameTitle::MM6, SCREEN_GAME));
+    EXPECT_FALSE(isMM6HousePresentationScreen(GameTitle::MM7, SCREEN_HOUSE));
 }

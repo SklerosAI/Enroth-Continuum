@@ -36,6 +36,9 @@ void prepareHouse(HouseId house);
 
 void createHouseUI(HouseId houseId);
 
+// The MM6 preview has no legacy house dialogue or automatic character switch on exit.
+bool isMM6HousePresentationScreen(GameTitle title, ScreenType screen);
+
 /**
  * @offset 0x44622E
  */

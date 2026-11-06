@@ -753,27 +753,32 @@ void MPlayer::Initialize() {
 }
 
 void MPlayer::OpenHouseMovie(std::string_view pMovieName, bool bLoop) {
+    (void)tryOpenHouseMovie(pMovieName, bLoop);
+}
+
+bool MPlayer::tryOpenHouseMovie(std::string_view pMovieName, bool bLoop) {
     if (IsMoviePlaying()) {
-        return;
+        return false;
     }
 
     if (engine->config->debug.NoVideo.value())
-        return;
+        return false;
 
     Blob blob = LoadMovie(pMovieName);
     if (!blob) {
-        return;
+        return false;
     }
 
     std::shared_ptr<Movie> pMovie = std::make_shared<Movie>();
     if (!pMovie->LoadFromLOD(blob))
-        return;
+        return false;
 
     gameTimer->setPaused(true);
     pAudioPlayer->pauseLooping();
     pAudioPlayer->MusicPause();
     pMovie_Track = std::dynamic_pointer_cast<IMovie>(pMovie);
     sInHouseMovie = pMovieName;
+    return true;
 }
 
 bool MPlayer::hasHouseMoviePayload(std::string_view movieName) {

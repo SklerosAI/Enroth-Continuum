@@ -5,6 +5,7 @@
 #include <string>
 
 #include "Engine/Data/HouseEnumFunctions.h"
+#include "Engine/GameTitle.h"
 
 #include "GUI/UI/MM6RoomDescriptors.h"
 #include "GUI/UI/Houses/MM6TransportRules.h"
@@ -56,6 +57,16 @@ struct HouseEntryPlan {
 
 // A pre-entry candidate. It does not open the room or mutate the party/UI.
 HouseEntryPlan planHouseEntry(const HouseServiceData &houses, int houseId);
+
+struct HousePresentationState {
+    int houseId = 0;
+    std::string videoName;
+    std::optional<std::string> proprietorIconName;
+};
+
+// A display-only MM6 room. Blank and terminal entries, and other titles,
+// cannot activate the house preview window.
+HousePresentationState planHousePresentation(GameTitle title, const HouseServiceData &houses, int houseId);
 
 struct TransportMenuData {
     std::array<std::optional<TransportRoute>, 3> routes;

@@ -293,21 +293,38 @@ static constexpr IndexedArray<const char *, HOUSE_TYPE_WEAPON_SHOP, HOUSE_TYPE_M
 
 bool enterHouse(HouseId uHouseID) {
     if (engine->gameTitle() == GameTitle::MM6) {
-        // Validate the title-specific table and room before touching the
-        // inherited MM7 house state. Service/media actions remain gated.
+        // Keep MM6 service actions out of the inherited MM7 house path.
         const mm6::HouseEntryPlan entry = mm6::planHouseEntry(
             mm6::houseServiceData(), std::to_underlying(uHouseID));
+        if (entry.kind != mm6::HouseEntryKind::TableBacked) {
+            if (entry.kind == mm6::HouseEntryKind::Terminal)
+                engine->_statusBar->setEvent("This passage is unavailable.");
+            else
+                engine->_statusBar->setEvent("This place is unavailable.");
+            return false;
+        }
+        const mm6::HousePresentationState presentation = mm6::planHousePresentation(
+            GameTitle::MM6, mm6::houseServiceData(), std::to_underlying(uHouseID));
         if (entry.proprietorIconName &&
             engine->resources()->iconSize(*entry.proprietorIconName).isEmpty())
             throw std::runtime_error("MM6 house proprietor icon is unavailable");
-        if (entry.kind == mm6::HouseEntryKind::TableBacked &&
-            !pMediaPlayer->hasHouseMoviePayload(entry.room->videoName))
+        if (!pMediaPlayer->hasHouseMoviePayload(presentation.videoName))
             throw std::runtime_error("MM6 house room movie is unavailable");
-        if (entry.kind == mm6::HouseEntryKind::Terminal)
-            engine->_statusBar->setEvent("This passage is unavailable.");
-        else
+        if (pMediaPlayer->IsMoviePlaying())
+            return false;
+
+        engine->_statusBar->clearAll();
+        engine->_messageQueue->clear();
+        current_npc_text.clear();
+        houseNpcs.clear();
+        currentHouseNpc = -1;
+        uCurrentHouse_Animation = 0; // The MM7 jail sentinel in event dispatch must not remap this house.
+        if (!pMediaPlayer->tryOpenHouseMovie(presentation.videoName, true) &&
+            !presentation.proprietorIconName) {
             engine->_statusBar->setEvent("This place is unavailable.");
-        return false;
+            return false;
+        }
+        return true;
     }
 
     engine->_statusBar->clearAll();
@@ -619,7 +636,42 @@ void houseDialogueGoBackToTop() {
     while (houseDialogueGoBack()) {}
 }
 
+namespace {
+
+class GUIWindow_MM6HousePresentation final : public GUIWindow_House {
+ public:
+    GUIWindow_MM6HousePresentation(HouseId houseId, const mm6::HousePresentationState &presentation)
+        : GUIWindow_House(houseId) {
+        _panel = assets->getIcon("backevt");
+        _exit = assets->getIcon("buttexi1");
+        if (presentation.proprietorIconName)
+            _portrait = assets->getIcon(*presentation.proprietorIconName);
+    }
+
+    void Update() override {
+        render->DrawQuad2D(_panel, {477, 0});
+        render->DrawQuad2D(_exit, {471, 445});
+        if (_portrait) {
+            const Pointi position{pNPCPortraits_x[0][0], pNPCPortraits_y[0][0]};
+            render->DrawQuad2D(_portrait, position);
+        }
+    }
+
+ private:
+    GraphicsImage *_panel = nullptr;
+    GraphicsImage *_exit = nullptr;
+    GraphicsImage *_portrait = nullptr;
+};
+
+} // namespace
+
 void createHouseUI(HouseId houseId) {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        const mm6::HousePresentationState presentation = mm6::planHousePresentation(
+            GameTitle::MM6, mm6::houseServiceData(), std::to_underlying(houseId));
+        window_SpeakInHouse = std::make_unique<GUIWindow_MM6HousePresentation>(houseId, presentation);
+        return;
+    }
     switch (houseTable[houseId].uType) {
       case HOUSE_TYPE_FIRE_GUILD:
       case HOUSE_TYPE_AIR_GUILD:
@@ -680,6 +732,10 @@ void createHouseUI(HouseId houseId) {
     if (houseNpcs.size() == 1) {
         updateHouseNPCTopics(0);
     }
+}
+
+bool isMM6HousePresentationScreen(GameTitle title, ScreenType screen) {
+    return title == GameTitle::MM6 && screen == SCREEN_HOUSE;
 }
 
 void BackToHouseMenu() {
@@ -1065,6 +1121,11 @@ GUIWindow_House::GUIWindow_House(HouseId houseId) : GUIWindow(WINDOW_HOUSE_INTER
     gameTimer->setPaused(true);  // pause timer so not attacked
 
     current_screen_type = SCREEN_HOUSE;
+    if (engine->gameTitle() == GameTitle::MM6) {
+        pBtn_ExitCancel = CreateButton({471, 445}, {169, 35}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0,
+                                       INPUT_ACTION_INVALID, "Exit", {assets->getIcon("buttexi1")});
+        return;
+    }
     pBtn_ExitCancel = CreateButton({471, 445}, {169, 35}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0, INPUT_ACTION_INVALID,
                                    localization->str(LSTR_EXIT_BUILDING), {ui_exit_cancel_button_background});
 

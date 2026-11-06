@@ -114,6 +114,15 @@ HouseEntryPlan planHouseEntry(const HouseServiceData &houses, int houseId) {
             iconName, house.openHour, house.closeHour};
 }
 
+HousePresentationState planHousePresentation(GameTitle title, const HouseServiceData &houses, int houseId) {
+    if (title != GameTitle::MM6)
+        throw std::runtime_error("MM6 house presentation requires the MM6 title");
+    const HouseEntryPlan entry = planHouseEntry(houses, houseId);
+    if (entry.kind != HouseEntryKind::TableBacked || !entry.room)
+        throw std::runtime_error("MM6 house presentation requires a file-backed room");
+    return {houseId, entry.room->videoName, entry.proprietorIconName};
+}
+
 bool TransportMenuData::hasAvailableRoute() const {
     for (const std::optional<TransportRoute> &route : routes)
         if (route)

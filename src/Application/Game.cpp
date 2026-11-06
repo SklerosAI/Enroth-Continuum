@@ -282,9 +282,8 @@ void Game::onEscape() {
         CastSpellInfoHelpers::cancelSpellCastInProgress();
     closeTargetedSpellWindow();
 
-    pParty->switchToNextActiveCharacter();  // always check this - could leave
-                                           // shops with characters who couldnt
-                                           // act sctive
+    if (!isMM6HousePresentationScreen(engine->gameTitle(), current_screen_type))
+        pParty->switchToNextActiveCharacter();
 
     window_SpeakInHouse = nullptr;
     pGUIWindow_CurrentMenu = nullptr;
@@ -583,6 +582,11 @@ void Game::processQueuedMessages() {
                                     current_screen_type = SCREEN_HOUSE;
                                     continue;
                                 case SCREEN_HOUSE:
+                                    if (isMM6HousePresentationScreen(engine->gameTitle(), current_screen_type)) {
+                                        pMediaPlayer->Unload();
+                                        onEscape();
+                                        continue;
+                                    }
                                     if (uGameState == GAME_STATE_CHANGE_LOCATION) {
                                         houseDialogueGoBackToTop();
                                     } else {

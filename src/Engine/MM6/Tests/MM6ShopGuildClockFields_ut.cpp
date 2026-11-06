@@ -5,6 +5,7 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6ShopGuildClockFields.h"
+#include "Engine/MM6/MM6ShopStockIdentity.h"
 
 UNIT_TEST(MM6ShopGuildClockFields, SourceProvenRowsShareBoundarySlot) {
     EXPECT_EQ(mm6::shopClockSlot(1), 0);
@@ -48,4 +49,24 @@ UNIT_TEST(MM6ShopGuildClockFields, NonzeroClocksRoundTripAndLateFailureIsAtomic)
     live.ready = false;
     EXPECT_THROW((void) mm6::captureShopGuildClocks(live, GameTitle::MM6), std::exception);
     EXPECT_THROW((void) mm6::encodeShopGuildClockSection(live), std::exception);
+}
+
+UNIT_TEST(MM6ShopGuildClockFields, PhysicalStockIndicesPreserveSharedShopGuildEdge) {
+    using mm6::ShopStockBank;
+    EXPECT_EQ(mm6::shopStockRecordIndex(ShopStockBank::First, 1, 0, GameTitle::MM6), 12);
+    EXPECT_EQ(mm6::shopStockRecordIndex(ShopStockBank::Second, 1, 0, GameTitle::MM6), 576);
+    for (unsigned position = 0; position < 12; ++position) {
+        EXPECT_EQ(mm6::shopStockRecordIndex(ShopStockBank::Second, 47, position, GameTitle::MM6),
+                  mm6::guildStockRecordIndex(119, position, GameTitle::MM6));
+    }
+    EXPECT_EQ(mm6::guildStockRecordIndex(140, 11, GameTitle::MM6), 1391);
+    EXPECT_THROW((void) mm6::shopStockRecordIndex(ShopStockBank::First, 0, 0, GameTitle::MM6), std::exception);
+    EXPECT_THROW((void) mm6::shopStockRecordIndex(ShopStockBank::Second, 48, 0, GameTitle::MM6), std::exception);
+    EXPECT_THROW((void) mm6::shopStockRecordIndex(ShopStockBank::First, 1, 12, GameTitle::MM6), std::exception);
+    EXPECT_THROW((void) mm6::shopStockRecordIndex(static_cast<ShopStockBank>(2), 1, 0, GameTitle::MM6), std::exception);
+    EXPECT_THROW((void) mm6::shopStockRecordIndex(ShopStockBank::First, 1, 0, GameTitle::MM7), std::exception);
+    EXPECT_THROW((void) mm6::guildStockRecordIndex(118, 0, GameTitle::MM6), std::exception);
+    EXPECT_THROW((void) mm6::guildStockRecordIndex(141, 0, GameTitle::MM6), std::exception);
+    EXPECT_THROW((void) mm6::guildStockRecordIndex(119, 12, GameTitle::MM6), std::exception);
+    EXPECT_THROW((void) mm6::guildStockRecordIndex(119, 0, GameTitle::MM7), std::exception);
 }

@@ -316,3 +316,9 @@ Chronological record of wiki activity.
 - Added bounded HEAD, TIME, UIST and VISU sections for map identity, simulation time, UI policy and overlay state; checked duplicate clock and active selection against PART.
 - Staged map identity, a paused simulation timer and overlays on copies with MM6 title and loaded-table guards, without wiring SaveLoad or changing MM7.
 - Syntax-checked the changed C++ units, passed a compiled round-trip and rejection harness, and checked C++ style. No game or original installation was opened.
+
+## [2026-11-06] ingest | MM6 outdoor changed-state writer
+- by: T-Burton-ND via codex
+- Added a bounded DDM writer that starts from the live MM6 sidecar and overlays proven reset, visibility, actor, ground-item and chest fields while preserving current MapVar bytes, unknown item bytes and the tail. Unsupported snapshot edits, record-count changes, negative actor HP and chest-grid edits fail closed.
+- Built the arm64 unit target and passed eight focused outdoor tests. All 15 F3-matched retained decoded DDMs re-encoded byte-exactly and kept a synthetic nonzero MapVar byte; changed synthetic fixtures covered supported mutations and rejection paths. C++ style checks passed.
+- Kept SaveLoad integration, arbitrary unsupported live-object detection, chest-grid interpretation and F5 play/save verification open. No partial MM6 game was launched and no original installation was reread.

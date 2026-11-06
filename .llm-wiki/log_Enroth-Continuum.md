@@ -79,3 +79,9 @@ Chronological record of wiki activity.
 - Linked the 43-value, 68-file structural opcode register and tracked probe; summarized seven high-conflict operations and inherited variable dispatch without marking side effects implemented.
 - Linked the open F2 gate decision from the handoff and source index. The review does not authorize F3; systematic guide and combat work remain outstanding.
 - Updated event source, architecture, findings, workstreams and questions, keeping exact operands in ignored local reports. Checked 36 wiki pages for frontmatter and local links.
+
+## [2026-11-05] ingest | Guide, combat and future agent-play contract
+- by: T-Burton-ND via codex
+- Added source summaries for the 14-family guide review and 173-row combat consumer audit, with tracked probe links and explicit source-versus-live evidence limits.
+- Extended the engine knowledge map, handoff, open questions and private-companion rules; the F2 gate remains open despite the new packet coverage.
+- Defined a future-only, title-scoped agent knowledge/control contract for evidence tiers, rendered-frame observation, bounded input, acknowledgment, local artifacts and save recovery. Checked 39 wiki pages for frontmatter and local links.

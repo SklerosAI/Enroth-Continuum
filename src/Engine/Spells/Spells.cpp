@@ -511,6 +511,7 @@ void SpellStats::Initialize(const Blob &spells, GameTitle gameTitle) {
                 continue;
             SpellId spellId = static_cast<SpellId>(id);
             pInfos[spellId].name = unquote(tokens[2]);
+            pInfos[spellId].mm6DamageTag = mm6::parseSpellDamageTag(tokens[3]);
             pInfos[spellId].damageType = valueOr(spellSchoolMaps, tokens[3], DAMAGE_PHYSICAL);
             pInfos[spellId].pShortName = unquote(tokens[4]);
             pInfos[spellId].pDescription = unquote(tokens[8]);
@@ -523,6 +524,7 @@ void SpellStats::Initialize(const Blob &spells, GameTitle gameTitle) {
 
         SpellId uSpellID = static_cast<SpellId>(fromString<int>(tokens[0]));
         pInfos[uSpellID].name = unquote(tokens[2]);
+        pInfos[uSpellID].mm6DamageTag.reset();
         pInfos[uSpellID].damageType = valueOr(spellSchoolMaps, tokens[3], DAMAGE_PHYSICAL);
         pInfos[uSpellID].pShortName = unquote(tokens[4]);
         pInfos[uSpellID].pDescription = unquote(tokens[5]);

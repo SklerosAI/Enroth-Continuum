@@ -2,10 +2,12 @@
 
 #include <cstdint>
 #include <array>
+#include <optional>
 #include <string>
 
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/GameTitle.h"
+#include "Engine/MM6/MM6SpellDamageTag.h"
 #include "Engine/Objects/CharacterEnums.h"
 #include "Engine/Objects/SpriteEnums.h"
 
@@ -28,6 +30,7 @@ struct SpellInfo {
     std::string pMasterSkillDesc;
     std::string pGrandmasterSkillDesc;
     DamageType damageType = DAMAGE_FIRE;
+    std::optional<mm6::SpellDamageTag> mm6DamageTag;
     int field_20 = 0;
 };
 

@@ -997,3 +997,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Fixed the impossible invalid-ID condition in `Chest::open`, so it now rejects indices outside the actual chest vector before dereference; arm64 MM6, OpenEnroth and unit targets linked.
 - Recorded [opening, trap, UI, pickup and persistence gates](MM6-F4-Chest-Interaction-Gate.md) for the detached chest work. A fresh accepted-original trace showed MM6 placement and UI use hardcoded 9×9 caller dimensions despite 14×10 `dchest.bin` metadata; corrected the [placement packet](../project/MM6_F4_CHEST_PLACEMENT.md) and marked its 14×10 test as synthetic storage coverage. No MM6 chest was opened on screen.
+
+## [2026-11-06] implement | Detached MM6 chest outer loop
+- by: T-Burton-ND via codex
+- Added an [outer-loop plan](MM6-F4-Chest-Outer-Plan.md) over all 20 chests and 140 item slots, preserving the accepted original entry RNG draw, one-to-five attempts, remapped tier and probability carry across markers. Gold amounts and item IDs stage on copies; ANY and direct-artifact pickers are delegated and cannot silently fall through to MM7.
+- The arm64 unit target linked and five seeded focused tests passed for marker-free entry, multi-marker carry, gold, full capacity and failure-atomic rejection. Complete item fields, artifact policy, 9×9 placement, changed-grid save and live commit remain separate gates; no MM6 process was launched.

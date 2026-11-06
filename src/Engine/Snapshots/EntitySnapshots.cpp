@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -1140,6 +1141,8 @@ void reconstruct(const Character_MM7 &src, Character *dst, ContextTag<int> chara
 }
 
 void snapshot(const CharacterInventory &src, Character_MM7 *dst) {
+    if (src.capacity() != 126)
+        throw std::runtime_error("MM7 inventory snapshot cannot represent MM6 physical item slots");
     for (size_t i = 0; i < 126; i++)
         snapshot(src._records[i].item, &dst->inventoryItems[i], tags::context(src._records[i].slot));
     for (size_t i = 0; i < 126; i++)

@@ -393,6 +393,10 @@ class CharacterInventory : private Inventory {
  public:
     CharacterInventory(): Inventory(Sizei(14, 9), 14 * 9) {}
 
+    // The original MM6 item allocator scans 138 physical records even though
+    // its backpack grid has 126 cells. MM7 retains the existing 126 limit.
+    static CharacterInventory forMM6() { return CharacterInventory(138); }
+
     using Inventory::size;
     using Inventory::capacity;
     using Inventory::gridSize;
@@ -419,6 +423,8 @@ class CharacterInventory : private Inventory {
 
  private:
     friend class Inventory;
+
+    explicit CharacterInventory(int capacity): Inventory(Sizei(14, 9), capacity) {}
 };
 
 

@@ -21,7 +21,7 @@ Which representation should own MM6 item bytes when the inherited runtime uses a
 
 ## Decision
 
-Use `ItemRecord28` as the exact byte value for proven 28-byte contexts. Detached SHOP stock now uses it; chest records already retain full raw bytes in a sidecar. A layout-backed [detached INVR section](MM6-F4-Raw-Inventory-Section.md) retains all 138 physical character records and raw index tables, but original slot activity and runtime mutation rules remain unproved. Cursor and ground use require separate evidence. The linked item/shop suites pass 10/10 and the private-backed MM6/LOD gate passes 345/345 before INVR; live SaveLoad stays guarded.
+Use `ItemRecord28` as the exact byte value for proven 28-byte contexts. Detached SHOP stock now uses it; chest records already retain full raw bytes in a sidecar. A layout-backed [detached INVR section](MM6-F4-Raw-Inventory-Section.md) retains all 138 physical character records and raw index tables. The accepted original executable confirms a 138-slot free-item path, and MM6 Party reset now allocates that capacity without changing MM7's 126-slot default. Runtime raw-byte ownership and mutation rules remain unproved. Cursor and ground use require separate evidence; live SaveLoad stays guarded.
 
 ## Rejected alternatives
 

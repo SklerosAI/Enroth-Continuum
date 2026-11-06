@@ -39,8 +39,10 @@
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
+#include "Engine/Snapshots/EntitySnapshots.h"
 #include "Engine/Snapshots/MM6OutdoorSnapshot.h"
 #include "Engine/Tables/IconFrameTable.h"
+#include "Engine/Tables/ItemTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/Tables/TileTable.h"
@@ -115,6 +117,28 @@ GAME_TEST(MM6Headless, NewGameSaveGuard) {
     // headless runner must stop here rather than attempt a partial map load.
     EXPECT_THROW(saveNewGame(), std::runtime_error);
     EXPECT_FALSE(ufs->exists("saves"));
+}
+
+GAME_TEST(MM6Headless, OriginalCharacterItemCapacity) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    EXPECT_EQ(CharacterInventory().capacity(), 126); // Protected MM7 default.
+    pParty->Reset();
+    for (Character &character : pParty->pCharacters)
+        EXPECT_EQ(character.inventory.capacity(), 138);
+
+    Item item;
+    item.itemId = static_cast<ItemId>(1);
+    ASSERT_FALSE(pItemTable->items[item.itemId].iconName.empty());
+    InventoryEntry restored = pParty->pCharacters[0].inventory.tryRestoreAt(137, Pointi(0, 0), item);
+    ASSERT_TRUE(restored);
+    EXPECT_EQ(restored.index(), 137);
+    EXPECT_EQ(pParty->pCharacters[0].inventory.entry(137)->itemId, item.itemId);
+    EXPECT_FALSE(pParty->pCharacters[0].inventory.entry(138));
+
+    Character_MM7 inheritedSnapshot{};
+    inheritedSnapshot.inventoryItems[0].itemId = 73;
+    EXPECT_THROW(snapshot(pParty->pCharacters[0].inventory, &inheritedSnapshot), std::runtime_error);
+    EXPECT_EQ(inheritedSnapshot.inventoryItems[0].itemId, 73);
 }
 
 GAME_TEST(MM6Headless, FirstOutdoorResourcePreflight) {

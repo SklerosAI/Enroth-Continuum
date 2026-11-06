@@ -639,6 +639,11 @@ The detached `INVR` v1 section now preserves four characters' 138 physical
 28-byte item records, 126 grid words and 16 equipment words each, following a
 pinned MMExtension MM6 layout. Focused checks passed **5/5**, the private-backed
 MM6/LOD gate **347/347** and general non-MM6 unit gate **437/437**. It is outside
-the provisional known-save manifest and has no live Party owner. Whether the
-original executable activates item slots beyond the current 126-record runtime
-capacity remains unresolved; no normal MM6 inventory/save route opens yet.
+the provisional known-save manifest and has no live raw Party owner. A read-only
+trace of the accepted original executable confirms 138-slot allocation. MM6
+party reset now gives each character 138 runtime slots; MM7 stays at 126. A
+monitored headless test placed an item in the final MM6 slot and verified that
+the inherited MM7 snapshot rejects this inventory before writing. The full MM6
+headless suite passed **51/51** without a visible window or focus change, and
+the MM7 control passed **1/1**. Provisional ITEM v1 still cannot save the extra
+slots or raw bytes, so normal MM6 SaveLoad remains guarded.

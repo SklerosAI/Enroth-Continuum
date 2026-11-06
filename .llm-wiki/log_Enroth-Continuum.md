@@ -97,3 +97,9 @@ Chronological record of wiki activity.
 - Linked the all-43-opcode state, flow and persistence contract and the 21-house, 37-cell retained transport audit to the source index and navigation.
 - Kept exact route strings and event locators in ignored private reports; original schedules and side effects remain unresolved, with F2 open and F3 unrun.
 - Checked 45 wiki pages for frontmatter and local links.
+
+## [2026-11-05] ingest | MM6 full spell-base and campaign guide joins
+- by: T-Burton-ND via codex
+- Refreshed the spell, item/monster, campaign and transport source summaries with 99 visually checked spell base costs, private per-ID item/monster statuses, 32 candidate campaign headings and all printed transport-cell comparisons.
+- Linked a prepared eight-file F3 identity checker while recording that it has not read the original installation or satisfied the broader preflight.
+- Kept exact guide values and joins private and the F2 gate open. Checked 45 wiki pages for frontmatter and local links.

@@ -52,8 +52,7 @@ bool Chest::open(int uChestID, Pid objectPid) {
     int pitchAngle = 0;
     SpriteObject pSpellObject;
 
-    assert(uChestID < 20);
-    if ((uChestID < 0) && (uChestID >= 20))
+    if (uChestID < 0 || uChestID >= static_cast<int>(vChests.size()))
         return false;
     Chest *chest = &vChests[uChestID];
 

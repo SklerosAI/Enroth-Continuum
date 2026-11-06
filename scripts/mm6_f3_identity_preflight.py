@@ -12,6 +12,7 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 from pathlib import Path, PurePosixPath
 
 
@@ -68,6 +69,19 @@ def main() -> None:
     args = parser.parse_args()
 
     repo = Path(__file__).resolve().parents[1]
+    gate = repo / "project/MM6_F2_GATE_REVIEW.md"
+    if not any(line.startswith("Status: **frozen") for line in gate.read_text().splitlines()[:10]):
+        parser.error("F2 gate is not frozen; original-file preflight is unavailable")
+    manifest_path = repo / "local-game-data/mm6/research-2026-11-05/F2_FREEZE_MANIFEST.json"
+    if not manifest_path.is_file():
+        parser.error("missing ignored F2 freeze manifest")
+    manifest = json.loads(manifest_path.read_text())
+    current_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
+    if manifest.get("source_commit") != current_commit:
+        parser.error("source commit differs from the frozen F2 manifest")
+    if subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=all"],
+                               cwd=repo, text=True).strip():
+        parser.error("tracked worktree must be clean before original-file preflight")
     allowed = (repo / "local-game-data/mm6").resolve(strict=True)
     reference = args.reference.resolve(strict=True)
     output = args.report.resolve()

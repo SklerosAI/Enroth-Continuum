@@ -50,6 +50,24 @@ but not which table the original game uses or whether the differing rows have
 runtime significance. Resolve the provenance and observed behavior before
 calling the plural table redundant.
 
+The [table semantic matrix](MM6_TABLE_SEMANTIC_F2.md) names an immediate
+parser and at least one downstream use or explicit missing path for every
+retained family. `scripts/mm6_probe_table_semantics.py` records all 30 table
+shapes, source-site hashes and ten selected numeric ID joins in ignored
+`table-semantic-probe.json`. NPC house/profession/topic and house exit-map IDs
+all resolve in those selected joins. This proves reference presence only;
+positional enum alignment, second-order actions and row reachability still
+need title-specific checks before F2 can close.
+
+One direct loader has a deterministic full-row mismatch: all 100 retained
+MM6 `awards.txt` numeric rows have an empty priority cell, while
+`AwardTable.cpp::initializeAwards` skips rows with that cell empty. The
+current MM6 initialization therefore assigns no award text/priority entries
+through that loader. The table semantic probe verifies the row shape; source
+inspection verifies the skip. A title-specific parser must define MM6 award
+ordering and text behavior without fabricating a shipped priority value.
+This has not been tested in live MM6 UI or event execution.
+
 ### Focused structure and consumer findings
 
 | Retained table | Source/data finding | F2/F3 question and later acceptance |

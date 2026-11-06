@@ -72,6 +72,24 @@ nonempty rows; headers, separators and reserved records still require review.
   direct loads; six have none. [MM6_TABLE_CONSUMER_SPEC.md](MM6_TABLE_CONSUMER_SPEC.md)
   identifies the groups and open questions. This is not evidence that a
   loader understands every MM6 row or that an unreferenced table is unused.
+- [x] Register each of the 30 retained tables with its immediate parser and
+  at least one current downstream consumer or an explicit missing path in the
+  [table semantic matrix](MM6_TABLE_SEMANTIC_F2.md). The reproducible
+  `scripts/mm6_probe_table_semantics.py` records all table shapes, loader
+  sites and ten selected numeric joins in an ignored report. All 367 positive
+  NPC-to-house, 332 NPC-to-profession, 298 NPC-to-topic and 41 house-exit-map
+  references resolve; these checks do not establish correct row meaning or
+  reachability. One scroll row lacks an item template but lies outside the
+  MM6 message-scroll loader range, so it is not a proven live missing item.
+- [x] Identify the awards parser's total-drop mismatch. All 100 numeric MM6
+  `awards.txt` rows have an empty third priority field; the shared
+  `initializeAwards` skips a row when that field is empty, so it would skip
+  all 100 in the current MM6 initialization path. The table semantic probe
+  reproduces this source/data finding; it is not a runtime award check.
+- [ ] Define MM6 award text and ordering without inventing a value for the
+  absent priority field. Load every active MM6 award row and verify award
+  display, event rewards and save/reload on representative promotion/quest
+  routes while retaining MM7's current award behavior.
 - [ ] Give every table a verified parser/schema, title-specific consumer,
   active/reserved/unused classification, and acceptance scenario. Resolve
   indirect consumers or documented non-use for the six without literal loads

@@ -15,6 +15,7 @@
 
 #include "Engine/MM6/MM6AtomicSaveFile.h"
 #include "Engine/MM6/MM6NewGameSaveRuntime.h"
+#include "Engine/MM6/MM6FirstMapWorldTransaction.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 
 namespace {
@@ -363,6 +364,50 @@ UNIT_TEST(MM6NewGameSaveRuntime, ScopedRuntimeCallsiteRequiresMM6EngineBeforePri
         [](const Party &, const std::unordered_map<std::string, Blob> &,
            const mm6::ChestTitleState &) {}), std::exception);
     EXPECT_FALSE(std::filesystem::exists(profile.primary()));
+}
+
+UNIT_TEST(MM6NewGameSaveRuntime, WorldCollectionScratchRollsBackLateFault) {
+    std::deque<Actor> actors(1);
+    actors[0].id = 77;
+    std::vector<SpriteObject> sprites(2);
+    std::vector<Chest> chests(3);
+    std::vector<LevelDecoration> decorations(4);
+    EXPECT_THROW((void) mm6::ScopedFirstMapWorldCollections(
+        GameTitle::MM7, &actors, &sprites, &chests, &decorations), std::exception);
+    EXPECT_EQ(actors[0].id, 77);
+    try {
+        mm6::ScopedFirstMapWorldCollections scratch(
+            GameTitle::MM6, &actors, &sprites, &chests, &decorations);
+        EXPECT_TRUE(actors.empty());
+        EXPECT_TRUE(sprites.empty());
+        EXPECT_TRUE(chests.empty());
+        EXPECT_TRUE(decorations.empty());
+        actors.resize(2);
+        sprites.resize(3);
+        chests.resize(4);
+        decorations.resize(5); // Late fault after all four families change.
+        throw std::runtime_error("synthetic outdoor collection fault");
+    } catch (const std::runtime_error &) {
+    }
+    EXPECT_EQ(actors.size(), 1);
+    EXPECT_EQ(actors[0].id, 77);
+    EXPECT_EQ(sprites.size(), 2);
+    EXPECT_EQ(chests.size(), 3);
+    EXPECT_EQ(decorations.size(), 4);
+
+    {
+        mm6::ScopedFirstMapWorldCollections scratch(
+            GameTitle::MM6, &actors, &sprites, &chests, &decorations);
+        actors.resize(6);
+        sprites.resize(7);
+        chests.resize(8);
+        decorations.resize(9);
+        scratch.commit();
+    }
+    EXPECT_EQ(actors.size(), 6);
+    EXPECT_EQ(sprites.size(), 7);
+    EXPECT_EQ(chests.size(), 8);
+    EXPECT_EQ(decorations.size(), 9);
 }
 
 UNIT_TEST(MM6NewGameSaveRuntime, LateFinalMapFailurePreservesPriorAutosave) {

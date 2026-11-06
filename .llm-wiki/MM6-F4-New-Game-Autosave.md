@@ -21,6 +21,8 @@ The monitored `GameTests_MM6Save.cpp` exercises this wrapper with loaded private
 
 The linked monitored private test passed 1/1 in 21.0 seconds with no focus change or on-screen window across 1,566 samples. The ignored log is `local-game-data/mm6/research-2026-11-05/F4_MM6_SAVE_HEADLESS_TEST_PRIVATE.log`. Full outdoor entry, broader world rollback and normal SaveLoad remain guarded.
 
+The [first-map world rollback audit](MM6-F4-First-Map-World-Rollback.md) classifies the outdoor and engine owners changed after the save callback. A bounded scratch owner now protects actor, sprite, chest and decoration collections under late synthetic failure; the outdoor object, Party, transition/events and resource/UI effects still need joined rollback before a full loader can be called atomically.
+
 The seed is only the represented field set. The older byte-builder requires the caller to supply CHST state; the staged new-game helper draws one port-specific seed into a detached owner. Active world reconstruction, native resource identity, MM6-keyed commerce/bounty, beacon images/map identity, first-frame movement/action policy and the final all-owner reload are not proved. `PART` v2 preserves fall-start Z; the offline builder now requires the source-backed 340 position and fall-start Z before archive reads. Keep live first-map autosave guarded until a full `.ec6` capture, atomic write/recovery, quit/relaunch/load and rendered-state scenario succeeds.
 
 See also: [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md), [Known Save Assembly](MM6-F4-Known-Save-Assembly.md), [Partial Stage Coordinator](MM6-F4-Partial-Stage-Coordinator.md), [Atomic Save File](MM6-F4-Atomic-Save-File.md).

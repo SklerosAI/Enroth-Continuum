@@ -88,6 +88,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Party Movement Save](MM6-F4-Party-Movement-Save.md) — PART v2 vertical motion, flight, hazard flags and map-local ground reset
 - [MM6 F4 Partial Stage Coordinator](MM6-F4-Partial-Stage-Coordinator.md) — Validated 67-map candidate with detached Party, active map, NPC/map and timer/overlay copies
 - [MM6 F4 New Game Autosave](MM6-F4-New-Game-Autosave.md) — Offline `oute3.odm` known-field candidate and atomic `.ec6` autosave with live guard retained
+- [MM6 F4 First-Map World Rollback](MM6-F4-First-Map-World-Rollback.md) — Outdoor-entry owner audit and bounded actor/sprite/chest/decoration scratch rollback
 - [MM6 F4 Shop Save Key Matrix](MM6-F4-Shop-Save-Key-Matrix.md) — Retained house-type join versus inherited MM7 shop, guild and bounty save owner ranges
 - [MM6 F4 Shop Guild Clock Save](MM6-F4-Shop-Guild-Clock-Save.md) — SCLK v1 preserves 68 unique original-MM6 shop and guild refresh deadline words
 - [MM6 F4 Shop Refresh PE Trace](MM6-F4-Shop-Refresh-PE-Trace.md) — Original row-keyed refresh and raw Party-block save proof, with stock tuple boundary still open

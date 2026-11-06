@@ -6,16 +6,19 @@
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
+#include <string>
 #include <utility>
+#include <vector>
 
 namespace mm6 {
 namespace {
 
 constexpr std::array<char, 4> PART_TAG = {'P', 'A', 'R', 'T'};
 constexpr std::array<char, 4> CHAR_TAG = {'C', 'H', 'A', 'R'};
-constexpr std::uint8_t FIELD_VERSION = 1;
+constexpr std::uint8_t PARTY_VERSION = 1;
+constexpr std::uint8_t CHARACTER_VERSION = 2;
 constexpr size_t MAX_NAME_BYTES = 63;
-constexpr size_t MAX_CHARACTER_PAYLOAD = 4 * (1 + MAX_NAME_BYTES + 4 + 2 + 8 + 12 + 28 + 62 + 13) + 2;
+constexpr size_t MAX_CHARACTER_PAYLOAD = 4 * (1 + MAX_NAME_BYTES + 4 + 2 + 8 + 12 + 28 + 62 + 13 + 39) + 2;
 
 class Reader {
  public:
@@ -102,6 +105,7 @@ void validate(const CoreSaveFields &fields) {
     for (const CoreCharacterFields &character : fields.characters) {
         if (!validName(character.name) || character.sex > 1 || character.classId >= 18 ||
             character.faceId >= 12 || character.skillPoints < 0 ||
+            character.modifiers.birthYear < 0 || character.modifiers.birthYear > 10000 ||
             std::any_of(character.skills.begin(), character.skills.end(),
                         [](std::uint16_t value) { return !validSkill(value); }))
             throw std::runtime_error("invalid MM6 core character fields");
@@ -110,7 +114,7 @@ void validate(const CoreSaveFields &fields) {
 
 std::vector<std::uint8_t> encodeParty(const CorePartyFields &party) {
     std::vector<std::uint8_t> bytes;
-    put8(&bytes, FIELD_VERSION);
+    put8(&bytes, PARTY_VERSION);
     put32(&bytes, std::bit_cast<std::uint32_t>(party.gold));
     put32(&bytes, std::bit_cast<std::uint32_t>(party.food));
     put32(&bytes, std::bit_cast<std::uint32_t>(party.bankGold));
@@ -127,7 +131,7 @@ CorePartyFields decodeParty(std::span<const std::uint8_t> bytes) {
     if (bytes.size() != 42)
         throw std::runtime_error("invalid MM6 PART field length");
     Reader reader(bytes);
-    if (reader.u8() != FIELD_VERSION)
+    if (reader.u8() != PARTY_VERSION)
         throw std::runtime_error("unsupported MM6 PART field version");
     CorePartyFields party;
     party.gold = std::bit_cast<std::int32_t>(reader.u32());
@@ -146,7 +150,7 @@ CorePartyFields decodeParty(std::span<const std::uint8_t> bytes) {
 std::vector<std::uint8_t> encodeCharacters(const std::array<CoreCharacterFields, 4> &characters) {
     std::vector<std::uint8_t> bytes;
     bytes.reserve(MAX_CHARACTER_PAYLOAD);
-    put8(&bytes, FIELD_VERSION);
+    put8(&bytes, CHARACTER_VERSION);
     put8(&bytes, characters.size());
     for (const CoreCharacterFields &character : characters) {
         put8(&bytes, character.name.size());
@@ -170,6 +174,16 @@ std::vector<std::uint8_t> encodeCharacters(const std::array<CoreCharacterFields,
                 packed |= std::uint8_t(character.spells[offset + bit]) << bit;
             put8(&bytes, packed);
         }
+        for (std::int32_t bonus : character.modifiers.statBonuses)
+            put32(&bytes, std::bit_cast<std::uint32_t>(bonus));
+        put16(&bytes, std::bit_cast<std::uint16_t>(character.modifiers.ac));
+        put16(&bytes, std::bit_cast<std::uint16_t>(character.modifiers.level));
+        put16(&bytes, std::bit_cast<std::uint16_t>(character.modifiers.age));
+        put32(&bytes, std::bit_cast<std::uint32_t>(character.modifiers.birthYear));
+        std::uint8_t potionFlags = 0;
+        for (size_t bit = 0; bit < character.modifiers.pureStatPotionUsed.size(); ++bit)
+            potionFlags |= std::uint8_t(character.modifiers.pureStatPotionUsed[bit]) << bit;
+        put8(&bytes, potionFlags);
     }
     return bytes;
 }
@@ -178,7 +192,7 @@ std::array<CoreCharacterFields, 4> decodeCharacters(std::span<const std::uint8_t
     if (bytes.size() > MAX_CHARACTER_PAYLOAD)
         throw std::runtime_error("MM6 CHAR field exceeds size limit");
     Reader reader(bytes);
-    if (reader.u8() != FIELD_VERSION || reader.u8() != 4)
+    if (reader.u8() != CHARACTER_VERSION || reader.u8() != 4)
         throw std::runtime_error("unsupported MM6 CHAR field version or count");
     std::array<CoreCharacterFields, 4> characters;
     for (CoreCharacterFields &character : characters) {
@@ -206,6 +220,17 @@ std::array<CoreCharacterFields, 4> decodeCharacters(std::span<const std::uint8_t
             for (size_t bit = 0; bit < 8 && offset + bit < character.spells.size(); ++bit)
                 character.spells[offset + bit] = (packed >> bit) & 1;
         }
+        for (std::int32_t &bonus : character.modifiers.statBonuses)
+            bonus = std::bit_cast<std::int32_t>(reader.u32());
+        character.modifiers.ac = std::bit_cast<std::int16_t>(reader.u16());
+        character.modifiers.level = std::bit_cast<std::int16_t>(reader.u16());
+        character.modifiers.age = std::bit_cast<std::int16_t>(reader.u16());
+        character.modifiers.birthYear = std::bit_cast<std::int32_t>(reader.u32());
+        const std::uint8_t potionFlags = reader.u8();
+        if (potionFlags & 0x80)
+            throw std::runtime_error("nonzero MM6 pure-stat potion padding bit");
+        for (size_t bit = 0; bit < character.modifiers.pureStatPotionUsed.size(); ++bit)
+            character.modifiers.pureStatPotionUsed[bit] = (potionFlags >> bit) & 1;
     }
     reader.finish();
     return characters;

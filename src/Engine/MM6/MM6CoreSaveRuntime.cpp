@@ -22,6 +22,41 @@ void requireMM6(GameTitle title) {
 
 } // namespace
 
+CharacterModifierFields captureCharacterModifiers(const Character &character, GameTitle title) {
+    requireMM6(title);
+    CharacterModifierFields fields;
+    for (size_t stat = 0; stat < fields.statBonuses.size(); ++stat) {
+        const Attribute attribute = static_cast<Attribute>(stat);
+        fields.statBonuses[stat] = character._statBonuses[attribute];
+        fields.pureStatPotionUsed[stat] = character._pureStatPotionUsed[attribute];
+    }
+    fields.ac = character.sACModifier;
+    fields.level = character.sLevelModifier;
+    fields.age = character.sAgeModifier;
+    fields.birthYear = character.uBirthYear;
+    if (fields.birthYear < 0 || fields.birthYear > 10000)
+        throw std::runtime_error("MM6 character birth year exceeds supported range");
+    return fields;
+}
+
+Character stageCharacterModifiers(const Character &live, const CharacterModifierFields &saved,
+                                  GameTitle title) {
+    requireMM6(title);
+    if (saved.birthYear < 0 || saved.birthYear > 10000)
+        throw std::runtime_error("MM6 character birth year exceeds supported range");
+    Character staged = live;
+    for (size_t stat = 0; stat < saved.statBonuses.size(); ++stat) {
+        const Attribute attribute = static_cast<Attribute>(stat);
+        staged._statBonuses[attribute] = saved.statBonuses[stat];
+        staged._pureStatPotionUsed[attribute] = saved.pureStatPotionUsed[stat];
+    }
+    staged.sACModifier = saved.ac;
+    staged.sLevelModifier = saved.level;
+    staged.sAgeModifier = saved.age;
+    staged.uBirthYear = saved.birthYear;
+    return staged;
+}
+
 CoreSaveFields captureCoreFields(const Party &party, GameTitle title) {
     requireMM6(title);
     CoreSaveFields fields;
@@ -55,6 +90,7 @@ CoreSaveFields captureCoreFields(const Party &party, GameTitle title) {
             target.skills[skill] = source.pActiveSkills[sourceSkill(skill)].joined();
         for (size_t spell = 0; spell < target.spells.size(); ++spell)
             target.spells[spell] = source.bHaveSpell[static_cast<SpellId>(spell + 1)];
+        target.modifiers = captureCharacterModifiers(source, title);
     }
 
     (void) encodeCoreSections(fields); // Validate before returning a capture for serialization.
@@ -95,6 +131,7 @@ Party stageCoreParty(const Party &live, std::span<const std::uint8_t> bytes, Gam
             target.pActiveSkills[sourceSkill(skill)] = CombinedSkillValue::fromJoined(source.skills[skill]);
         for (size_t spell = 0; spell < source.spells.size(); ++spell)
             target.bHaveSpell[static_cast<SpellId>(spell + 1)] = source.spells[spell];
+        target = stageCharacterModifiers(target, source.modifiers, title);
     }
     return staged;
 }

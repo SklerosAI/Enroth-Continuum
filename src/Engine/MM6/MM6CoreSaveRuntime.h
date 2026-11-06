@@ -8,8 +8,14 @@
 #include "MM6CoreSaveFields.h"
 
 struct Party;
+class Character;
 
 namespace mm6 {
+
+/** Preserve durable modifiers from one actual Character without live-party mutation. */
+CharacterModifierFields captureCharacterModifiers(const Character &character, GameTitle title);
+Character stageCharacterModifiers(const Character &live, const CharacterModifierFields &saved,
+                                  GameTitle title);
 
 /** Capture only the documented PART/CHAR field subset from an MM6 party. */
 CoreSaveFields captureCoreFields(const Party &party, GameTitle title);

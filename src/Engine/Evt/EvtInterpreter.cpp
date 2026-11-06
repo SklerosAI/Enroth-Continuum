@@ -465,8 +465,18 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
         case EVENT_RandomGoTo:
             return {EVT_FLOW_JUMP, ir.data.random_goto_descr.random_goto[grng->random(ir.data.random_goto_descr.random_goto_len)]};
         case EVENT_InputString:
-            if (engine->gameTitle() == GameTitle::MM6)
-                throw Exception("MM6 question event needs a title-specific executor");
+            if (engine->gameTitle() == GameTitle::MM6) {
+                const auto &question = ir.data.mm6_question_descr;
+                auto stringAt = [&](int id) -> std::string {
+                    if (id < 0 || static_cast<size_t>(id) >= engine->_levelStrings.size())
+                        throw Exception("MM6 question string {} is outside the current map", id);
+                    return engine->_levelStrings[id];
+                };
+                startMM6QuestionDialogue({stringAt(question.question), stringAt(question.answer1),
+                                          stringAt(question.answer2), continuation(ir.target_step),
+                                          continuation(ir.step + 1)});
+                return {EVT_FLOW_YIELD};
+            }
             // Originally starting step was checked to ensure skipping this command when returning from dialogue.
             // Changed to using "step + 1" to go to next event
             //

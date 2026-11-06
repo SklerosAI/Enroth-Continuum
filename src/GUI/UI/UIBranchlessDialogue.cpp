@@ -1,11 +1,14 @@
 #include <cassert>
 #include <memory>
 #include <optional>
+#include <stdexcept>
+#include <utility>
 
 #include "UIBranchlessDialogue.h"
 
 #include "Engine/Engine.h"
 #include "Engine/AssetsManager.h"
+#include "Engine/Evt/MM6EventRules.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Party.h"
@@ -33,7 +36,34 @@ GUIWindow_BranchlessDialogue::~GUIWindow_BranchlessDialogue() {
     keyboardInputHandler->EndTextInput(this);
 }
 
+void GUIWindow_BranchlessDialogue::setMM6Question(MM6QuestionDialogue question) {
+    _mm6Question = std::move(question);
+}
+
 void GUIWindow_BranchlessDialogue::Update() {
+    if (_mm6Question) {
+        DrawDialoguePanel(_mm6Question->question);
+        render->DrawQuad2D(game_ui_statusbar, {0, 352});
+        if (keyboard_input_status != WINDOW_INPUT_IN_PROGRESS) {
+            if (keyboard_input_status == WINDOW_INPUT_CONFIRMED) {
+                const bool correct = mm6QuestionMatches(keyboardInputHandler->GetTextInput(),
+                                                         _mm6Question->answer1, _mm6Question->answer2);
+                _continuation = correct ? _mm6Question->success : _mm6Question->incorrect;
+            } else {
+                // Escape cancels the prompt and stops the current event.
+                _continuation.reset();
+            }
+            keyboardInputHandler->EndTextInput(this);
+            engine->_messageQueue->addMessageCurrentFrame(UIMSG_Escape, 0, 0);
+            return;
+        }
+        GUIFont *font = assets->pFontLucida.get();
+        const std::string &input = keyboardInputHandler->GetTextInput();
+        DrawText(font, {13, 357}, colorTable.White, input, frameRect);
+        DrawFlashingInputCursor(font->GetLineWidth(input) + 13, 357, font, frameRect);
+        return;
+    }
+
     if (current_npc_text.length() > 0 && branchless_dialogue_str.empty())
         branchless_dialogue_str = current_npc_text;
 
@@ -82,6 +112,13 @@ void startBranchlessDialogue(EvtOpcode opcode, std::optional<EvtContinuation> co
         gameTimer->setPaused(true);
         pGUIWindow_BranchlessDialogue = std::make_unique<GUIWindow_BranchlessDialogue>(opcode, continuation);
     }
+}
+
+void startMM6QuestionDialogue(MM6QuestionDialogue question) {
+    if (pGUIWindow_BranchlessDialogue)
+        throw std::logic_error("MM6 question dialogue is already open");
+    startBranchlessDialogue(EVENT_InputString, std::nullopt);
+    pGUIWindow_BranchlessDialogue->setMM6Question(std::move(question));
 }
 
 void releaseBranchlessDialogue() {

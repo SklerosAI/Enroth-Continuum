@@ -223,7 +223,7 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   private profile manifest and adds six starting class choices; formulas,
   Quick Start and promotion remain provisional. The [variable guard](MM6_F4_VARIABLE_GUARD.md)
   prevents MM6-specific event IDs from executing as colliding MM7 meanings.
-- The integrated MM6 app and unit targets built. Eighteen focused C++ tests passed
+- The integrated MM6 app and unit targets built. Nineteen focused C++ tests passed
   across EVT framing, wire codecs, variable guard, `.ec6` envelope, descriptor 173 and LOD order; the
   private actor fixture checked 67 map deltas/342 actors and one ID 173.
   F4 rules, map state, events, services, media output and saves remain open.
@@ -232,3 +232,5 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   source-backed rule and focused threshold test; its quest outcome remains F5.
   The retained outdoor target check supports zero-based texture targets (12/12)
   and all-faces facet targets (6/6); those runtime effects are not yet saved.
+  MM6 Question now has a provisional text-entry and two-answer continuation
+  path, with visible and original-behavior checks still pending.

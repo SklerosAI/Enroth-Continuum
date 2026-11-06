@@ -125,3 +125,10 @@ UNIT_TEST(MM6EventFraming, ZeroMasterySkillCheckMatchesTrainedSkill) {
     EXPECT_TRUE(mm6CheckSkillSatisfied(CombinedSkillValue(8, MASTERY_EXPERT), MASTERY_NONE, 8));
     EXPECT_FALSE(mm6CheckSkillSatisfied(CombinedSkillValue(8, MASTERY_EXPERT), MASTERY_MASTER, 8));
 }
+
+UNIT_TEST(MM6EventFraming, QuestionMatchesEitherAnswer) {
+    EXPECT_TRUE(mm6QuestionMatches("  Jbard ", "jbard", "other"));
+    EXPECT_TRUE(mm6QuestionMatches("OTHER", "jbard", "other"));
+    EXPECT_FALSE(mm6QuestionMatches("wrong", "jbard", "other"));
+    EXPECT_FALSE(mm6QuestionMatches("", "", "other"));
+}

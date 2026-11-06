@@ -8,6 +8,14 @@
 
 #include "GUI/GUIWindow.h"
 
+struct MM6QuestionDialogue {
+    std::string question;
+    std::string answer1;
+    std::string answer2;
+    EvtContinuation success;
+    EvtContinuation incorrect;
+};
+
 class GUIWindow_BranchlessDialogue : public GUIWindow {
  public:
     GUIWindow_BranchlessDialogue(EvtOpcode opcode, std::optional<EvtContinuation> continuation);
@@ -23,9 +31,12 @@ class GUIWindow_BranchlessDialogue : public GUIWindow {
         return _continuation;
     }
 
+    void setMM6Question(MM6QuestionDialogue question);
+
  private:
     EvtOpcode _opcode = EVENT_Invalid;
     std::optional<EvtContinuation> _continuation;
+    std::optional<MM6QuestionDialogue> _mm6Question;
 };
 
 /**
@@ -34,6 +45,9 @@ class GUIWindow_BranchlessDialogue : public GUIWindow {
  * @param continuation                  Event paused on the dialogue, or none for a catchphrase.
  */
 void startBranchlessDialogue(EvtOpcode opcode, std::optional<EvtContinuation> continuation);
+
+/** Opens an MM6 password prompt, resuming only after confirmation. */
+void startMM6QuestionDialogue(MM6QuestionDialogue question);
 
 /**
  * Closes the dialogue, returns to the game screen and resumes the event paused on the dialogue, if there is one.

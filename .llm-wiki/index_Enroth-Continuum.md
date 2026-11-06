@@ -27,9 +27,16 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 
 ## Agent work and open questions
 
+- [Engine Architecture and Runtime Map](Engine-Architecture-and-Runtime-Map.md) — Code consumers, title seams, and runtime path
 - [MM6 F2 Workstreams](MM6-F2-Workstreams.md) — Four research lanes, current three-worker rotation, and handoff packet
 - [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md) — Confirmed inheritance gaps and unproven semantics from current F2 specs
 - [Open Questions](Open-Questions.md) — Dated F2 gaps requiring reconciliation before F3
+
+## Evidence and future play
+
+- [MM6 Source and Probe Index](MM6-Source-and-Probe-Index.md) — Public specs, tracked probes, and their evidence limits
+- [Private Companion Wiki](Private-Companion-Wiki.md) — Ignored local knowledge base and entry schema; no Git backup
+- [Agent Play and Observation Roadmap](Agent-Play-and-Observation-Roadmap.md) — Future visible-frame observation, bounded input, and saved-session gates
 
 ## Source summaries
 
@@ -41,5 +48,6 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 Event and Campaign Spec Source](Source-MM6-Event-Campaign-Spec.md) — Question, NPC-topic, variable, and campaign gaps
 - [MM6 Media and UI Spec Source](Source-MM6-Media-UI-Spec.md) — Movie, house, sound, music, and interface routing
 - [MM6 Text Table Consumer Spec Source](Source-MM6-Table-Consumer-Spec.md) — Direct literal load coverage and unresolved parser/consumer questions
+- [MM6 Monster and Combat Spec Source](Source-MM6-Monster-Combat-Spec.md) — Retained monster parser gaps, title assumptions, and unverified combat
 
 <!-- Add pages here as the wiki grows -->

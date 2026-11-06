@@ -18,8 +18,14 @@ This is the LLM-maintained project memory for Enroth Continuum, a personal Apple
 ### Agent handoff
 
 - [Agent Handoff](Agent-Handoff.md) — start here for current gates, source authority, and parallel integration
-- [MM6 F2 Workstreams](MM6-F2-Workstreams.md) — scoped research lanes for the next agents
+- [Engine Architecture and Runtime Map](Engine-Architecture-and-Runtime-Map.md) — source-linked engine and title seams
 - [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md) — current confirmed gaps and unresolved meanings
+
+### Evidence and future play
+
+- [MM6 Source and Probe Index](MM6-Source-and-Probe-Index.md) — audited sources and reproducible scripts
+- [Private Companion Wiki](Private-Companion-Wiki.md) — local-only detailed evidence and provenance rules
+- [Agent Play and Observation Roadmap](Agent-Play-and-Observation-Roadmap.md) — staged path to visible, bounded agent play
 
 ### Project and provenance
 

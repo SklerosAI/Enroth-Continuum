@@ -1167,6 +1167,11 @@ void Actor::AddOnDamageOverlay(unsigned int uActorID, int overlayType, signed in
 
 //----- (0043B3E0) --------------------------------------------------------
 int Actor::_43B3E0_CalcDamage(ActorAbility dmgSource) {
+    if (dmgSource == ABILITY_ATTACK1)
+        mm6::requireVerifiedMonsterDamage(engine->gameTitle(), monsterInfo.attack1Type);
+    if (dmgSource == ABILITY_ATTACK2)
+        mm6::requireVerifiedMonsterDamage(engine->gameTitle(), monsterInfo.attack2Type);
+
     int damageDiceRolls;
     int damageDiceSides;
     int damageBonus;

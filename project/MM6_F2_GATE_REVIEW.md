@@ -23,6 +23,8 @@ Status: **open, 2026-11-05**. This is the integration owner's review of whether 
 
 The [pinned executable locator packet](MM6_EXECUTABLE_TABLE_LOCATORS_F2.md) gives version-sensitive MM6 source leads for spell delays, house movies and transport tables. It narrows the F3 extraction plan but supplies no original owner-executable values or running behavior; it does not close those gate limits.
 
+The [event execution packet](MM6_EVENT_EXECUTION_SEAMS_F2.md) upgrades the 318 parser-failure count into an all-resource load constraint: 26 of 67 listed map EVT files contain rejected records, and the current loader aborts the complete event program on the first one. Its separate zero-mastery CheckSkill finding is a source/data conflict awaiting F3 corroboration. Neither observation is a live campaign result.
+
 F2 is **not frozen**. The all-active-opcode contract, guide chapter locator, and monster consumer matrix are now recorded, but original opcode side effects, guide claim reconciliation and the domain-specific unknowns above are incomplete. The integrator must check every row for any *unexamined* family, update the [F3 preflight matrix](MM6_F3_PREFLIGHT_MATRIX.md), and record the F2 freeze decision with a source SHA. Do not run F3 merely because an inventory count is complete.
 
 F3 can test original archive identity, schemas, offsets, labels and spot samples in one read-only pass. It cannot by itself prove combat balance, GUI/audio playback, quest reachability, changed save-state semantics or a complete MM6 campaign. Those require F4 implementation and F5 graphical play, with the frozen MM7 app and saves left intact.

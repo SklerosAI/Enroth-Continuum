@@ -412,6 +412,16 @@ that requirement.
   [MM6_OPCODE_SIDE_EFFECTS_F2.md](MM6_OPCODE_SIDE_EFFECTS_F2.md). The seven
   high-conflict values retain explicit unknown original operands or effects;
   this is a source-backed contract, not an implemented interpreter.
+- [x] Audit the complete event-load gate and a retained skill-check branch in
+  [MM6_EVENT_EXECUTION_SEAMS_F2.md](MM6_EVENT_EXECUTION_SEAMS_F2.md).
+  `scripts/mm6_probe_event_execution_seams.py` confirms 318 current parser
+  rejections in 26 of 67 listed map EVT files; those files contain 6,964
+  active records and 1,783 variable operands. `EvtProgram::load` rejects the
+  whole resource on its first bad record, so all-resource parse is the first
+  F4 event milestone. A later opcode-43 branch cannot succeed under the
+  current exact mastery comparison; F3 must confirm the MM6 zero-mastery
+  meaning before F4 changes it. No map-load crash or quest failure was
+  observed in a running MM6 game.
 - [x] Reconcile MM6 Question and NPC-topic structure with current consumers
   in [MM6_EVENT_CAMPAIGN_SPEC.md](MM6_EVENT_CAMPAIGN_SPEC.md). All 19 active
   opcode-26 Question records have a 13-byte shape with three in-range local

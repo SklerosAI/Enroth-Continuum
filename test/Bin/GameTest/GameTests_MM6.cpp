@@ -265,7 +265,9 @@ GAME_TEST(MM6Headless, FirstOutdoorPreparation) {
 GAME_TEST(MM6Headless, ScopedFirstOutdoorWorld) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     ASSERT_EQ(window->nativeHandle(), nullptr);
-    ASSERT_EQ(lWindowList.size(), 1u);
+    // The menu fixture owns one extra GUIWindow. DoPrepareWorld deletes it
+    // before asserting that only the persistent primary window remains.
+    ASSERT_EQ(lWindowList.size(), pGUIWindow_CurrentMenu ? 2u : 1u);
     const MapId firstMap = pMapTable->GetMapInfo("oute3.odm");
     ASSERT_NE(firstMap, MAP_INVALID);
 
@@ -283,9 +285,11 @@ GAME_TEST(MM6Headless, ScopedFirstOutdoorWorld) {
     game.runGameRoutine([firstMap, &completed] {
         pParty->Reset();
         engine->_pendingTransition = MapDestination(firstMap, MAP_START_POINT_PARTY);
-        mm6::ScopedChestMapLoadOptIn chestOptIn;
-        DoPrepareWorld(/* bLoading = */ false, /* fullscreen = */ 1);
-        completed = true;
+        {
+            mm6::ScopedChestMapLoadOptIn chestOptIn;
+            DoPrepareWorld(/* bLoading = */ false, /* fullscreen = */ 1);
+        }
+        completed = !mm6::chestMapLoadOptedIn();
     });
     for (int tick = 0; tick < 256 && !completed; ++tick)
         game.tick();
@@ -298,7 +302,7 @@ GAME_TEST(MM6Headless, ScopedFirstOutdoorWorld) {
     EXPECT_FALSE(pOutdoor->pSpawnPoints.empty());
     EXPECT_FALSE(pActors.empty());
     EXPECT_EQ(vChests.size(), 20u);
-    EXPECT_FALSE(mm6::chestMapLoadOptedIn());
+    EXPECT_EQ(lWindowList.size(), 1u);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }
 

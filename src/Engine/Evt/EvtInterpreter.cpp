@@ -410,8 +410,18 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                 setEvtVariable(character, ir.data.variable_descr.type, ir.data.variable_descr.value);
             break;
         case EVENT_SummonMonsters:
-            if (engine->gameTitle() == GameTitle::MM6)
-                throw Exception("MM6 monster spawn event needs a title-specific executor");
+            if (engine->gameTitle() == GameTitle::MM6) {
+                // MM6 carries only the map encounter slot, A/B/C tier, count
+                // and position. Group and unique name are MM7-only operands.
+                if (ir.data.monster_descr.type < 1 || ir.data.monster_descr.type > 3 ||
+                    ir.data.monster_descr.level < 1 || ir.data.monster_descr.level > 3)
+                    throw Exception("MM6 monster spawn has invalid encounter slot or tier");
+                spawnMonsters(ir.data.monster_descr.type, ir.data.monster_descr.level,
+                              ir.data.monster_descr.count,
+                              Vec3f(ir.data.monster_descr.x, ir.data.monster_descr.y, ir.data.monster_descr.z),
+                              0, 0);
+                break;
+            }
             spawnMonsters(ir.data.monster_descr.type, ir.data.monster_descr.level, ir.data.monster_descr.count,
                           Vec3f(ir.data.monster_descr.x, ir.data.monster_descr.y, ir.data.monster_descr.z),
                           ir.data.monster_descr.group, ir.data.monster_descr.name_id);

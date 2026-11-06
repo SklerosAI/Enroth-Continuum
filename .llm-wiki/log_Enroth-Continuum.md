@@ -1538,3 +1538,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A follow-up F3-matched executable trace located the original 16,384-byte grid load, save and direct accessor paths. It found no grid-byte write in the accessor region, while pointer aliases and calendar-dependent rendering or palette changes remain unclosed.
 - The terrain schema packet now names the exact remaining evidence needed before changing MM6 seasonal projection. No runtime behavior or private source bytes were published.
+
+## [2026-11-06] implement | MM6 PART v3 justice counters
+- by: T-Burton-ND via codex
+- The MM6 `.ec6` `PART` payload now preserves current-runtime fine, death, prison and bounty counters through validated detached capture and stage. Older provisional PART versions reject; this makes no claim that inherited justice or award rules match original MM6 behavior.
+- Integrated arm64 targets linked. Focused core-field tests passed 7/7, the private-backed MM6/LOD offline gate 327/327, and a monitored scoped first-map save/rollback check 1/1 over 1,571 samples without window or focus change. The normal SaveLoad guard and full reentry transaction remain open.

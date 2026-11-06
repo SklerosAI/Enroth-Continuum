@@ -161,7 +161,7 @@ UNIT_TEST(MM6RecoverySaveFields, RejectsInvalidBeforeMutation) {
     EXPECT_EQ(destination, before);
 
     container = {{mm6::encodeRecoverySection(before)}};
-    container.sections[0].payload.back() = 0xff;
+    container.sections[0].payload[571] = 0xff; // Final event-clock byte; the v3 suffix is signed effect state.
     EXPECT_THROW(mm6::loadRecoveryBeforeMutation(mm6::encodeSaveContainer(container), &destination),
                  std::exception);
     EXPECT_EQ(destination, before);

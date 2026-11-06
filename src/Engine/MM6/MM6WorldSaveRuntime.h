@@ -12,6 +12,7 @@
 
 #include "Engine/GameTitle.h"
 #include "Engine/MapEnums.h"
+#include "Engine/Party.h"
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/Graphics/Overlays.h"
 #include "Engine/Timer.h"
@@ -36,6 +37,11 @@ struct StagedKnownWorldAndVisuals {
     StagedActiveMap activeMap;
 };
 
+struct StagedKnownSession {
+    Party party;
+    StagedKnownWorldAndVisuals worldAndVisuals;
+};
+
 // Validate the entire current known-section set and all 67 base/delta pairs,
 // then stage map/NPC buffers, the typed active map and paused timer/overlays
 // on detached copies. This is partial: Party, active-map reconstruction and
@@ -45,6 +51,20 @@ StagedKnownWorldAndVisuals stageKnownWorldAndVisuals(
     std::span<const std::uint8_t> bytes, std::span<const std::string> expectedNames,
     const MapBaseReader &readBase, const GroundItemVerifier &verifyItem,
     std::size_t overlayTableCount, GameTitle title);
+
+// Compose every currently represented Party/Character family on one detached
+// Party after the known-section and 67-map checks. The result still lacks the
+// unrepresented durable owners and cannot be committed to a live session.
+StagedKnownSession stageKnownSession(
+    const Party &liveParty, const NPCStats &liveNpcs, const Timer &liveTimer,
+    const ActiveOverlayList &liveOverlays, std::span<const std::uint8_t> bytes,
+    std::span<const std::string> expectedNames, const MapBaseReader &readBase,
+    const GroundItemVerifier &verifyItem, std::size_t overlayTableCount, GameTitle title);
+
+// Merge the represented Party/Character families into a detached known-save
+// candidate. The caller must supply complete MM6 world and metadata fields.
+KnownSaveFields captureKnownPartyFields(const KnownSaveFields &seed, const Party &party,
+                                       GameTitle title);
 
 // The outdoor object has no filename. Check the current MM6 engine map ID
 // against the loaded MM6 map table, HEAD and the private 67-name delta set.

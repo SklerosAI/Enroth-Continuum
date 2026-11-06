@@ -1,5 +1,6 @@
 #include "MM6DurableSaveFields.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
@@ -12,8 +13,9 @@
 namespace mm6 {
 namespace {
 
-void requireMM6(GameTitle title) {
-    if (title != GameTitle::MM6 || !engine || engine->gameTitle() != GameTitle::MM6)
+void requireMM6(GameTitle title, bool requireEngine) {
+    if (title != GameTitle::MM6 || (requireEngine && !engine) ||
+        (engine && engine->gameTitle() != GameTitle::MM6))
         throw std::runtime_error("MM6 durable save fields cannot apply to another title");
 }
 
@@ -48,7 +50,7 @@ void applyBitsAndConditions(const DurableSaveFields &fields, Party *staged) {
 } // namespace
 
 DurableSaveFields captureDurableFields(const Party &party, GameTitle title) {
-    requireMM6(title);
+    requireMM6(title, true);
     DurableSaveFields fields;
     captureBits(party._questBits, &fields.bits.quest);
     captureBits(party._autonoteBits, &fields.bits.autonotes);
@@ -95,7 +97,7 @@ DurableSaveFields captureDurableFields(const Party &party, GameTitle title) {
 }
 
 Party stageDurablePartyWithoutItems(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title) {
-    requireMM6(title);
+    requireMM6(title, false);
     DurableSaveFields fields;
     loadDurableFieldsBeforeMutation(bytes, &fields);
     for (const auto &inventory : fields.inventory.characters)
@@ -108,10 +110,12 @@ Party stageDurablePartyWithoutItems(const Party &live, std::span<const std::uint
 }
 
 Party stageDurableParty(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title) {
-    requireMM6(title);
+    requireMM6(title, false);
     DurableSaveFields fields;
     loadDurableFieldsBeforeMutation(bytes, &fields);
-    if (!pItemTable)
+    const bool hasItems = std::any_of(fields.inventory.characters.begin(), fields.inventory.characters.end(),
+                                      [](const auto &inventory) { return !inventory.empty(); });
+    if (hasItems && !pItemTable)
         throw std::runtime_error("MM6 item table must be loaded before inventory staging");
 
     // All mutations below are on a copy. Any invalid ID, changed icon footprint,

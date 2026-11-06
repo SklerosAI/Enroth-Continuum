@@ -63,11 +63,11 @@ int Party::CountHirelings() {  // non hired followers
 // inlined
 //----- (mm6c::004858D0) --------------------------------------------------
 void Party::Zero() {
-    height = engine->config->gameplay.PartyHeight.value();
-    eyeLevel = engine->config->gameplay.PartyEyeLevel.value();
+    height = engine ? engine->config->gameplay.PartyHeight.value() : 192;
+    eyeLevel = engine ? engine->config->gameplay.PartyEyeLevel.value() : 160;
     radius = 37;
     _yawGranularity = 25;
-    walkSpeed = engine->config->gameplay.PartyWalkSpeed.value();
+    walkSpeed = engine ? engine->config->gameplay.PartyWalkSpeed.value() : 384;
     _yawRotationSpeed = 90;
     jump_strength = 5;
     playing_time = Time(0, 0, 0);
@@ -121,7 +121,11 @@ void Party::Zero() {
     alignment = PartyAlignment_Neutral;
     for (SpellBuff &buff : pPartyBuffs)
         buff.Reset();
-    takeHoldingItem();
+    // Detached save-staging tests construct Party without an initialized UI.
+    if (mouse)
+        takeHoldingItem();
+    else
+        pPickedItem.Reset();
     uFlags = 0;
 
     for (HouseId i : standartItemsInShops.indices())

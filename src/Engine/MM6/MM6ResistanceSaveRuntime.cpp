@@ -27,15 +27,16 @@ constexpr std::array<ResistanceMember, 11> BONUS = {
     &Character::sResLightBonus, &Character::sResDarkBonus,
 };
 
-void requireMM6(GameTitle title) {
-    if (title != GameTitle::MM6 || !engine || engine->gameTitle() != GameTitle::MM6)
+void requireMM6(GameTitle title, bool requireEngine) {
+    if (title != GameTitle::MM6 || (requireEngine && !engine) ||
+        (engine && engine->gameTitle() != GameTitle::MM6))
         throw std::runtime_error("MM6 resistance fields cannot apply to another title");
 }
 
 } // namespace
 
 ResistanceSaveFields captureResistanceFields(const Party &party, GameTitle title) {
-    requireMM6(title);
+    requireMM6(title, true);
     ResistanceSaveFields fields;
     for (size_t characterIndex = 0; characterIndex < fields.characters.size(); ++characterIndex) {
         const Character &source = party.pCharacters[characterIndex];
@@ -49,7 +50,7 @@ ResistanceSaveFields captureResistanceFields(const Party &party, GameTitle title
 }
 
 Party stageResistanceParty(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title) {
-    requireMM6(title);
+    requireMM6(title, false);
     ResistanceSaveFields fields;
     loadResistanceFieldsBeforeMutation(bytes, &fields);
     Party staged = live;

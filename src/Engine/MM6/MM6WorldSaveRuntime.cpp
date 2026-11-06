@@ -15,6 +15,13 @@
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Snapshots/MM6IndoorSnapshot.h"
 #include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
+#include "MM6BuffSaveFields.h"
+#include "MM6CoreSaveRuntime.h"
+#include "MM6DurableSaveFields.h"
+#include "MM6HeldItemSaveFields.h"
+#include "MM6HirelingSaveFields.h"
+#include "MM6ResistanceSaveFields.h"
+#include "MM6RecoverySaveFields.h"
 
 namespace mm6 {
 namespace {
@@ -83,6 +90,44 @@ StagedKnownWorldAndVisuals stageKnownWorldAndVisuals(
         overlayTableCount, title);
     return {std::move(validated.known), std::move(world), std::move(visuals),
             std::move(validated.activeMap)};
+}
+
+StagedKnownSession stageKnownSession(
+    const Party &liveParty, const NPCStats &liveNpcs, const Timer &liveTimer,
+    const ActiveOverlayList &liveOverlays, std::span<const std::uint8_t> bytes,
+    std::span<const std::string> expectedNames, const MapBaseReader &readBase,
+    const GroundItemVerifier &verifyItem, std::size_t overlayTableCount, GameTitle title) {
+    StagedKnownWorldAndVisuals worldAndVisuals = stageKnownWorldAndVisuals(
+        liveNpcs, liveTimer, liveOverlays, bytes, expectedNames, readBase, verifyItem,
+        overlayTableCount, title);
+
+    // Every adapter stages on its input copy. The core clock must precede
+    // recovery, while all late ITEM/HELD/recovery checks precede any commit.
+    Party staged = stageCoreParty(liveParty, bytes, title);
+    staged = stageDurableParty(staged, bytes, title);
+    staged = stageResistanceParty(staged, bytes, title);
+    staged = stageBuffParty(staged, bytes, title);
+    staged = stageHirelingParty(staged, bytes, title);
+    staged = stageHeldItemParty(staged, bytes, title);
+    staged = stageRecoveryParty(staged, bytes, title);
+    return {std::move(staged), std::move(worldAndVisuals)};
+}
+
+KnownSaveFields captureKnownPartyFields(const KnownSaveFields &seed, const Party &party,
+                                       GameTitle title) {
+    requireMM6(title);
+    KnownSaveFields candidate = seed;
+    candidate.core = captureCoreFields(party, title);
+    candidate.durable = captureDurableFields(party, title);
+    candidate.resistances = captureResistanceFields(party, title);
+    candidate.buffs = captureBuffFields(party, title);
+    candidate.hirelings = captureHirelingFields(party, title);
+    candidate.heldItem = captureHeldItem(party, title);
+    candidate.recovery = captureRecoveryFields(party, title);
+    candidate.metadata.header.playingTicks = candidate.core.party.playingTicks;
+    candidate.metadata.ui.activeCharacter = candidate.core.party.activeCharacter;
+    (void) encodeKnownSave(candidate);
+    return candidate;
 }
 
 void validateOutdoorMapIdentity(MapId currentMapId, const MapTable &mapTable,

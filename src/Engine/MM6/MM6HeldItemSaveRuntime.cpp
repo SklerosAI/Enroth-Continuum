@@ -12,8 +12,9 @@
 namespace mm6 {
 namespace {
 
-void requireMM6(GameTitle title) {
-    if (title != GameTitle::MM6 || !engine || engine->gameTitle() != GameTitle::MM6)
+void requireMM6(GameTitle title, bool requireEngine) {
+    if (title != GameTitle::MM6 || (requireEngine && !engine) ||
+        (engine && engine->gameTitle() != GameTitle::MM6))
         throw std::runtime_error("MM6 held item cannot apply to another title");
 }
 
@@ -33,7 +34,7 @@ void requireLoadedItem(const HeldItemSaveFields &fields) {
 } // namespace
 
 HeldItemSaveFields captureHeldItem(const Party &party, GameTitle title) {
-    requireMM6(title);
+    requireMM6(title, true);
     const Item &item = party.pPickedItem;
     HeldItemSaveFields fields;
     if (item.itemId == ITEM_NULL)
@@ -58,7 +59,7 @@ HeldItemSaveFields captureHeldItem(const Party &party, GameTitle title) {
 }
 
 Party stageHeldItemParty(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title) {
-    requireMM6(title);
+    requireMM6(title, false);
     HeldItemSaveFields fields;
     loadHeldItemBeforeMutation(bytes, &fields);
     requireLoadedItem(fields);

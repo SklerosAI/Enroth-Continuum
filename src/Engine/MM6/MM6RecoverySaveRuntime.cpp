@@ -12,8 +12,9 @@
 namespace mm6 {
 namespace {
 
-void requireSafeMM6State(const Party &party, GameTitle title) {
-    if (title != GameTitle::MM6 || !engine || engine->gameTitle() != GameTitle::MM6)
+void requireSafeMM6State(const Party &party, GameTitle title, bool requireEngine) {
+    if (title != GameTitle::MM6 || (requireEngine && !engine) ||
+        (engine && engine->gameTitle() != GameTitle::MM6))
         throw std::runtime_error("MM6 recovery fields cannot apply to another title");
     if (party.bTurnBasedModeOn)
         throw std::runtime_error("MM6 turn-based queue restoration is not implemented");
@@ -73,7 +74,7 @@ PartyTimeStruct stageEventClocks(const PartyTimeStruct &live, const EventClockFi
 }
 
 RecoverySaveFields captureRecoveryFields(const Party &party, GameTitle title) {
-    requireSafeMM6State(party, title);
+    requireSafeMM6State(party, title, true);
     RecoverySaveFields fields;
     fields.playingTicks = party.playing_time.ticks();
     fields.lastRegenerationTicks = party.last_regenerated.ticks();
@@ -92,7 +93,7 @@ RecoverySaveFields captureRecoveryFields(const Party &party, GameTitle title) {
 }
 
 Party stageRecoveryParty(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title) {
-    requireSafeMM6State(live, title);
+    requireSafeMM6State(live, title, false);
     RecoverySaveFields fields;
     loadRecoveryBeforeMutation(bytes, &fields);
     if (fields.playingTicks != live.playing_time.ticks())

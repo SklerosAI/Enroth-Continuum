@@ -19,6 +19,7 @@
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Tables/MapTable.h"
+#include "Engine/Tables/ItemTable.h"
 
 namespace {
 
@@ -248,6 +249,101 @@ UNIT_TEST(MM6WorldSaveRuntime, ValidatesAndStagesWorldAndVisualsAsOneDetachedCan
     EXPECT_THROW((void) mm6::stageKnownWorldAndVisuals(
         liveNpcs, liveTimer, liveOverlays, mm6::encodeKnownSave(source), names, syntheticBase,
         [](std::int32_t) { return true; }, 5, GameTitle::MM7), std::exception);
+}
+
+UNIT_TEST(MM6WorldSaveRuntime, StagesRepresentedPartyFamiliesWithWorldAndRejectsLateFailure) {
+    const std::vector<std::string> names = expectedNames();
+    std::unordered_map<std::string, Blob> prior = validPriorDeltas(names);
+    NPCStats liveNpcs{};
+    liveNpcs.pNPCData[70].name = "Prior NPC";
+    NPCStats savedNpcs = liveNpcs;
+    savedNpcs.pNPCData[70].name = "Saved NPC";
+    mm6::KnownSaveFields source = mm6::captureKnownWorldFields(
+        seedFields(), savedNpcs, prior, "d0.dlv", indoorDeltaWithActors(1), names, GameTitle::MM6);
+    source.core.party.gold = 731;
+    source.core.characters[0].name = "Saved Hero";
+    source.core.characters[0].level = 5;
+    source.core.characters[0].modifiers.statBonuses[0] = 9;
+    source.durable.bits.quest[0] = 1;
+    source.durable.effects.conditionTicks[0][0] = 1234;
+    source.resistances.characters[0].base[0] = 17;
+    source.buffs.party[0].expireTicks = 500;
+    source.buffs.party[0].power = 3;
+    source.hirelings.displayNames[0] = "Mira";
+    mm6::DurableItem sword;
+    sword.sourceIndex = 17;
+    sword.zone = 1;
+    sword.x = 2;
+    sword.y = 3;
+    sword.itemId = std::to_underlying(ITEM_CRUDE_LONGSWORD);
+    source.durable.inventory.characters[0].push_back(sword);
+    source.heldItem.present = true;
+    source.heldItem.itemId = std::to_underlying(ITEM_BRASS_RING);
+    source.recovery.characterRecoveryTicks[0] = 250;
+    source.recovery.eventClocks.counters[0] = 901;
+    std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(source);
+
+    ItemTable localTable;
+    ItemTable *previousTable = pItemTable;
+    struct RestoreTable {
+        ItemTable *previous;
+        ~RestoreTable() { pItemTable = previous; }
+    } restore{previousTable};
+    pItemTable = &localTable;
+    localTable.items[ITEM_CRUDE_LONGSWORD].iconName = "sword";
+    localTable.itemSizes[ITEM_CRUDE_LONGSWORD] = Sizei(2, 1);
+    localTable.items[ITEM_BRASS_RING].iconName = "ring";
+    localTable.itemSizes[ITEM_BRASS_RING] = Sizei(1, 1);
+
+    Party liveParty;
+    liveParty.uNumGold = 19;
+    liveParty.pCharacters[0].name = "Prior Hero";
+    Timer liveTimer;
+    ActiveOverlayList liveOverlays;
+    auto stage = [&] {
+        return mm6::stageKnownSession(liveParty, liveNpcs, liveTimer, liveOverlays,
+                                      bytes, names, syntheticBase,
+                                      [](std::int32_t id) { return id >= 1 && id <= 580; },
+                                      5, GameTitle::MM6);
+    };
+
+    mm6::StagedKnownSession staged = stage();
+    EXPECT_EQ(staged.party.uNumGold, 731);
+    EXPECT_EQ(staged.party.pCharacters[0].name, "Saved Hero");
+    EXPECT_EQ(staged.party.pCharacters[0].uLevel, 5);
+    EXPECT_EQ(staged.party.pCharacters[0]._statBonuses[ATTRIBUTE_MIGHT], 9);
+    EXPECT_TRUE(staged.party._questBits.test(static_cast<QuestBit>(1)));
+    EXPECT_EQ(staged.party.pCharacters[0].conditions.get(static_cast<Condition>(0)).ticks(), 1234);
+    EXPECT_EQ(staged.party.pCharacters[0].sResFireBase, 17);
+    EXPECT_EQ(staged.party.pPartyBuffs[static_cast<PartyBuff>(0)].power, 3);
+    EXPECT_EQ(staged.party.pHireling1Name, "Mira");
+    EXPECT_EQ(staged.party.pCharacters[0].inventory.entry(Pointi(2, 3)).index(), 17);
+    EXPECT_EQ(staged.party.pPickedItem.itemId, ITEM_BRASS_RING);
+    EXPECT_EQ(staged.party.pCharacters[0].timeToRecovery.ticks(), 250);
+    EXPECT_EQ(staged.party.PartyTimes.CounterEventValues[0].ticks(), 901);
+    EXPECT_EQ(staged.worldAndVisuals.world.npcs.pNPCData[70].name, "Saved NPC");
+    EXPECT_TRUE(std::holds_alternative<mm6::StagedIndoorMap>(staged.worldAndVisuals.activeMap));
+    EXPECT_EQ(liveParty.uNumGold, 19);
+    EXPECT_EQ(liveParty.pCharacters[0].name, "Prior Hero");
+    EXPECT_EQ(liveNpcs.pNPCData[70].name, "Prior NPC");
+
+    // HELD stages after ITEM. A missing loaded held-item template rejects the
+    // whole candidate without exposing the already restored inventory.
+    localTable.items[ITEM_BRASS_RING].iconName.clear();
+    EXPECT_THROW((void) stage(), std::exception);
+    EXPECT_FALSE(liveParty.pCharacters[0].inventory.entry(Pointi(2, 3)));
+    EXPECT_EQ(liveParty.pPickedItem.itemId, ITEM_NULL);
+    EXPECT_EQ(liveNpcs.pNPCData[70].name, "Prior NPC");
+    localTable.items[ITEM_BRASS_RING].iconName = "ring";
+
+    // Recovery is the final Party adapter; rejecting active turn state here
+    // must not expose any earlier staged owner to the caller.
+    liveParty.bTurnBasedModeOn = true;
+    EXPECT_THROW((void) stage(), std::exception);
+    EXPECT_EQ(liveParty.uNumGold, 19);
+    EXPECT_EQ(liveParty.pCharacters[0].name, "Prior Hero");
+    EXPECT_EQ(liveNpcs.pNPCData[70].name, "Prior NPC");
+    EXPECT_EQ(liveTimer.time().ticks(), 0);
 }
 
 UNIT_TEST(MM6WorldSaveRuntime, RejectsSavedOverlayActorPidsOutsideActiveIndoorAndOutdoorDelta) {

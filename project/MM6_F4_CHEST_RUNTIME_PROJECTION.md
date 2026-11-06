@@ -17,7 +17,7 @@ Synthetic indoor and outdoor tests round-trip changed cell 0 and cell 139 and re
 ## Remaining live gates
 
 - The map load still invokes `mm6::generateChestItemsForTitle`, which intentionally throws before MM6 chest/RNG/artifact mutation. No automatic join to the detached generator, first-open placement or this runtime stage is present.
-- `reconstructMM6IndoorDelta` and the outdoor load path still use the inherited snapshot reconstructor on baseline records. A title-specific atomic map-level handoff is needed before they can consume generated resolved records, commit RNG/artifact flags and preserve rollback behavior.
+- `reconstructMM6IndoorDelta` and the outdoor load path still use the inherited snapshot reconstructor on baseline records. A later [detached twenty-record handoff](MM6_F4_CHEST_MAP_LOAD_HANDOFF.md) now composes generation, projection, LCG/artifact flags and failure rollback in an explicit owner bundle. A title-specific engine adapter is still needed to bind that bundle to the actual active map sidecar, global chest vector and save state.
 - The current `Chest::open`, `PlaceItems`, trap handling, pickup and GUI flow remain inherited. Their first-open timing, item sizes/icons, gold, inventory changes and save–quit–relaunch–load behavior need an MM6-specific acceptance pass. The placed grid is wire-backed, but `.ec6` SaveLoad remains separately guarded.
 - MM7 must keep its existing chest route, and MM8 remains reserved. The new helpers reject non-MM6 titles; no installed game runtime was changed.
 

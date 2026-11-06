@@ -1,8 +1,10 @@
 #include "MM6NewGameSaveRuntime.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "MM6AtomicSaveFile.h"
@@ -58,6 +60,56 @@ std::vector<std::uint8_t> writeOfflineNewGameAutosave(
         seed, expectedNames, readDefaultDelta, readBase, verifyItem, title);
     writeAtomicSaveFile(profileRoot, NEW_GAME_AUTOSAVE_SLOT, encoded);
     return encoded;
+}
+
+PreparedNewGameSession prepareOfflineNewGameSession(
+    const KnownSaveFields &seed, const Party &liveParty, const NPCStats &liveNpcs,
+    const Timer &liveTimer, const ActiveOverlayList &liveOverlays,
+    std::span<const std::string> expectedNames, const DefaultDeltaReader &readDefaultDelta,
+    const MapBaseReader &readBase, const GroundItemVerifier &verifyItem,
+    std::size_t overlayTableCount, const ChestSeedEntropy &chestEntropy, GameTitle title) {
+    if (title != GameTitle::MM6 || seed.metadata.header.mapFileName != NEW_GAME_FIRST_MAP ||
+        seed.chest.activeDeltaName != "oute3.ddm" || !seed.shopGuildClocks.ready ||
+        std::any_of(seed.shopGuildClocks.deadlineWords.begin(), seed.shopGuildClocks.deadlineWords.end(),
+                    [](std::uint64_t value) { return value != 0; }))
+        throw std::runtime_error("MM6 first-map transaction requires fresh title-local state");
+    const auto partyArtifacts = scanPartyOwnedChestArtifacts(title, liveParty);
+    if (!partyArtifacts || std::any_of(partyArtifacts->begin(), partyArtifacts->end(),
+                                       [](std::uint8_t flag) { return flag != 0; }))
+        throw std::runtime_error("MM6 first-map transaction cannot reset owned artifact state");
+
+    ChestTitleState titleChest;
+    if (!initializePortNewGameChestTitleState(title, &titleChest, chestEntropy))
+        throw std::runtime_error("MM6 first-map transaction lacks a fresh chest seed");
+    KnownSaveFields fresh = seed;
+    fresh.chest.lcgState = titleChest.lcgState;
+    fresh.chest.generatedArtifactFlags = titleChest.generatedArtifactFlags;
+
+    std::vector<std::uint8_t> bytes = encodeOfflineNewGameAutosave(
+        fresh, expectedNames, readDefaultDelta, readBase, verifyItem, title);
+    StagedKnownSession staged = stageKnownSession(
+        liveParty, liveNpcs, liveTimer, liveOverlays, bytes, expectedNames,
+        readBase, verifyItem, overlayTableCount, title);
+    if (!staged.worldAndVisuals.chestTitle.ready ||
+        staged.worldAndVisuals.chestTitle.lcgState != titleChest.lcgState ||
+        staged.worldAndVisuals.chestTitle.generatedArtifactFlags != titleChest.generatedArtifactFlags ||
+        staged.shopGuildClocks != seed.shopGuildClocks)
+        throw std::runtime_error("MM6 first-map title owners changed during detached stage");
+    return {std::move(bytes), std::move(staged)};
+}
+
+PreparedNewGameSession writeAndStageOfflineNewGameAutosave(
+    const std::filesystem::path &profileRoot, const KnownSaveFields &seed,
+    const Party &liveParty, const NPCStats &liveNpcs, const Timer &liveTimer,
+    const ActiveOverlayList &liveOverlays, std::span<const std::string> expectedNames,
+    const DefaultDeltaReader &readDefaultDelta, const MapBaseReader &readBase,
+    const GroundItemVerifier &verifyItem, std::size_t overlayTableCount,
+    const ChestSeedEntropy &chestEntropy, GameTitle title) {
+    PreparedNewGameSession prepared = prepareOfflineNewGameSession(
+        seed, liveParty, liveNpcs, liveTimer, liveOverlays, expectedNames,
+        readDefaultDelta, readBase, verifyItem, overlayTableCount, chestEntropy, title);
+    writeAtomicSaveFile(profileRoot, NEW_GAME_AUTOSAVE_SLOT, prepared.bytes);
+    return prepared;
 }
 
 } // namespace mm6

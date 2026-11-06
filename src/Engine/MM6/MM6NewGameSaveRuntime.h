@@ -12,6 +12,8 @@
 
 #include "MM6KnownSaveFields.h"
 #include "MM6MapSaveValidation.h"
+#include "MM6ChestSeedAndOwnership.h"
+#include "MM6WorldSaveRuntime.h"
 
 namespace mm6 {
 
@@ -39,5 +41,31 @@ std::vector<std::uint8_t> writeOfflineNewGameAutosave(
     const std::filesystem::path &profileRoot, const KnownSaveFields &seed,
     std::span<const std::string> expectedNames, const DefaultDeltaReader &readDefaultDelta,
     const MapBaseReader &readBase, const GroundItemVerifier &verifyItem, GameTitle title);
+
+// Preflight the first-map candidate and every represented live owner on
+// detached copies before any disk or process mutation. A fresh local chest
+// seed is drawn exactly once into a detached title owner; the process owner
+// remains untouched. Stock, bounty and beacons must be empty at this seam.
+struct PreparedNewGameSession {
+    std::vector<std::uint8_t> bytes;
+    StagedKnownSession staged;
+};
+
+PreparedNewGameSession prepareOfflineNewGameSession(
+    const KnownSaveFields &seed, const Party &liveParty, const NPCStats &liveNpcs,
+    const Timer &liveTimer, const ActiveOverlayList &liveOverlays,
+    std::span<const std::string> expectedNames, const DefaultDeltaReader &readDefaultDelta,
+    const MapBaseReader &readBase, const GroundItemVerifier &verifyItem,
+    std::size_t overlayTableCount, const ChestSeedEntropy &chestEntropy, GameTitle title);
+
+// The write follows complete detached preflight. The returned map buffers can
+// later seed pMapDeltas, but this function does not assign it or open SaveLoad.
+PreparedNewGameSession writeAndStageOfflineNewGameAutosave(
+    const std::filesystem::path &profileRoot, const KnownSaveFields &seed,
+    const Party &liveParty, const NPCStats &liveNpcs, const Timer &liveTimer,
+    const ActiveOverlayList &liveOverlays, std::span<const std::string> expectedNames,
+    const DefaultDeltaReader &readDefaultDelta, const MapBaseReader &readBase,
+    const GroundItemVerifier &verifyItem, std::size_t overlayTableCount,
+    const ChestSeedEntropy &chestEntropy, GameTitle title);
 
 } // namespace mm6

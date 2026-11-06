@@ -139,6 +139,88 @@ UNIT_TEST(MM6NewGameSaveRuntime, WritesAndPreflightsOnlyMM6FirstMapAutosave) {
     EXPECT_EQ(readFile(profile.primary()), bytes);
 }
 
+UNIT_TEST(MM6NewGameSaveRuntime, StagesFreshOwnersBeforeWritingFirstMap) {
+    TestProfile profile;
+    const auto names = expectedNames();
+    mm6::KnownSaveFields source = seed(42);
+    source.core.party.gold = 729;
+    source.npcs.activeCount = 1;
+    source.npcs.npcData[0].name = "New Sorpigal NPC";
+    Party party;
+    party.uNumGold = 18;
+    NPCStats npcs{};
+    npcs.pNPCData[0].name = "Prior NPC";
+    Timer timer;
+    ActiveOverlayList overlays;
+    int seedCalls = 0;
+    const mm6::ChestSeedEntropy entropy = [&] {
+        ++seedCalls;
+        return std::optional<std::uint32_t>(0x1234abcd);
+    };
+    const mm6::ChestTitleState priorTitleChest = mm6::chestTitleState();
+
+    auto prepared = mm6::writeAndStageOfflineNewGameAutosave(
+        profile.root(), source, party, npcs, timer, overlays, names,
+        defaultReader(), baseReader(), [](std::int32_t) { return true; },
+        5, entropy, GameTitle::MM6);
+    EXPECT_EQ(seedCalls, 1);
+    EXPECT_EQ(readFile(profile.primary()), prepared.bytes);
+    EXPECT_EQ(prepared.staged.party.uNumGold, 729);
+    EXPECT_EQ(prepared.staged.worldAndVisuals.world.npcs.pNPCData[0].name, "New Sorpigal NPC");
+    EXPECT_EQ(prepared.staged.worldAndVisuals.world.mapDeltas.size(), 67);
+    EXPECT_EQ(prepared.staged.worldAndVisuals.chestTitle.lcgState, 0x1234abcdu);
+    EXPECT_TRUE(prepared.staged.worldAndVisuals.chestTitle.ready);
+    EXPECT_EQ(prepared.staged.worldAndVisuals.rawActiveDelta, defaultDelta("oute3.ddm"));
+    EXPECT_TRUE(prepared.staged.shopGuildClocks.ready);
+    EXPECT_EQ(party.uNumGold, 18);
+    EXPECT_EQ(npcs.pNPCData[0].name, "Prior NPC");
+    EXPECT_EQ(mm6::chestTitleState().ready, priorTitleChest.ready);
+    EXPECT_EQ(mm6::chestTitleState().lcgState, priorTitleChest.lcgState);
+}
+
+UNIT_TEST(MM6NewGameSaveRuntime, LateOwnerFailurePreservesAutosaveAndProcessOwners) {
+    TestProfile profile;
+    const auto names = expectedNames();
+    Party party;
+    party.uNumGold = 18;
+    NPCStats npcs{};
+    Timer timer;
+    ActiveOverlayList overlays;
+    const mm6::ChestSeedEntropy entropy = [] {
+        return std::optional<std::uint32_t>(0x98765432);
+    };
+    auto write = [&](const mm6::KnownSaveFields &source) {
+        return mm6::writeAndStageOfflineNewGameAutosave(
+            profile.root(), source, party, npcs, timer, overlays, names,
+            defaultReader(), baseReader(), [](std::int32_t) { return true; },
+            5, entropy, GameTitle::MM6);
+    };
+    auto prior = write(seed(42));
+    party.bTurnBasedModeOn = true; // Final Party adapter rejects after all map reads.
+    EXPECT_THROW((void) write(seed(43)), std::exception);
+    EXPECT_EQ(readFile(profile.primary()), prior.bytes);
+    EXPECT_EQ(party.uNumGold, 18);
+    EXPECT_TRUE(party.bTurnBasedModeOn);
+
+    party.bTurnBasedModeOn = false;
+    mm6::KnownSaveFields staleShop = seed(43);
+    staleShop.shopGuildClocks.deadlineWords[0] = 1;
+    int seedCalls = 0;
+    EXPECT_THROW((void) mm6::prepareOfflineNewGameSession(
+        staleShop, party, npcs, timer, overlays, names, defaultReader(), baseReader(),
+        [](std::int32_t) { return true; }, 5,
+        [&] { ++seedCalls; return std::optional<std::uint32_t>(1); }, GameTitle::MM6),
+        std::exception);
+    EXPECT_EQ(seedCalls, 0);
+    EXPECT_THROW((void) mm6::prepareOfflineNewGameSession(
+        seed(43), party, npcs, timer, overlays, names, defaultReader(), baseReader(),
+        [](std::int32_t) { return true; }, 5,
+        [&] { ++seedCalls; return std::optional<std::uint32_t>(1); }, GameTitle::MM7),
+        std::exception);
+    EXPECT_EQ(seedCalls, 0);
+    EXPECT_EQ(readFile(profile.primary()), prior.bytes);
+}
+
 UNIT_TEST(MM6NewGameSaveRuntime, LateFinalMapFailurePreservesPriorAutosave) {
     TestProfile profile;
     const std::vector<std::string> names = expectedNames();

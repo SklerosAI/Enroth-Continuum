@@ -43,3 +43,9 @@ Chronological record of wiki activity.
 - Added source summaries for MM6 class/skill, save/map, event/campaign and media/UI specifications, plus a linked synthesis of inherited routing gaps.
 - Updated the handoff and open questions for Question/NPC topics, potion UI, map-state tail preservation and media routing while keeping F2/F3/F4 gates explicit.
 - Recorded the reproducible dialogue probe as structural evidence only; unmatched NPC topics are not established original-game defects. Checked 21 wiki pages for frontmatter and local links.
+
+## [2026-11-05] ingest | MM6 text-table consumer audit
+- by: T-Burton-ND via codex
+- Recorded the narrow static result: 24 direct literal C++ loads among 30 retained text-table names, with six lacking a literal load.
+- Added a source summary and updated the handoff and open questions; neither a load nor its absence proves parsing, semantics or non-use.
+- Kept the detailed source-line report ignored locally, retained F2/F3 gate status, and checked 22 wiki pages for frontmatter and local links.

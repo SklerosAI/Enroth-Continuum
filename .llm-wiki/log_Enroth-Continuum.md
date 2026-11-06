@@ -1543,3 +1543,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The MM6 `.ec6` `PART` payload now preserves current-runtime fine, death, prison and bounty counters through validated detached capture and stage. Older provisional PART versions reject; this makes no claim that inherited justice or award rules match original MM6 behavior.
 - Integrated arm64 targets linked. Focused core-field tests passed 7/7, the private-backed MM6/LOD offline gate 327/327, and a monitored scoped first-map save/rollback check 1/1 over 1,571 samples without window or focus change. The normal SaveLoad guard and full reentry transaction remain open.
+
+## [2026-11-06] implement | MM6 RCVR v3 Armageddon tuple
+- by: T-Burton-ND via codex
+- The MM6-only recovery section now preserves the current-runtime Armageddon timer, damage and force count together on detached Party copies. Its exact 588-byte v3 payload rejects old versions and malformed timer values before mutation; this does not enable the guarded MM6 spell effect.
+- Integrated linked recovery tests passed 4/4 and the private-backed MM6/LOD gate 328/328. A prior last-byte corruption assertion was retargeted to the final event-clock byte because v3 ends in a valid signed force counter. Scoped first-map save/rollback GameTests passed, but the host foreground app changed after their monitor loops, so those particular runs did not pass the complete focus-control check.

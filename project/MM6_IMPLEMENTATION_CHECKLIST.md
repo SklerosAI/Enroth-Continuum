@@ -171,6 +171,11 @@ that requirement.
   cells falling to physical, 46 missile cells falling to `NONE`, 13 monster
   spell cells falling to `SPELL_NONE`, and 11 special-attack cells falling to
   `NONE`. This is parser inventory, not observed combat behavior.
+- [x] Maintain a private per-ID guide review queue for all 581 items and 173
+  monsters in [MM6_ITEM_MONSTER_GUIDE_CLAIMS_F2.md](MM6_ITEM_MONSTER_GUIDE_CLAIMS_F2.md).
+  OCR catalog matches are labeled separately from direct scans: 13 item and
+  six monster IDs have selected visual checks; five monster treasure cells
+  disagree with the retained table. Most semantic rows remain open.
 - [x] Join all 173 retained monster rows to inherited combat consumers and
   record identity, attack, missile, spell, special, resistance, AI and loot
   gaps with confidence and F4/F5 scenarios in
@@ -205,6 +210,12 @@ that requirement.
   differ or are absent. The four inherited inventory-item target IDs also
   have different same-ID MM6 labels, so their MM6 target kinds need explicit
   reconciliation. None proves a reachable cast or correct effect.
+- [x] Visually inspect all 56 Prima spell-section PDF pages and reconcile
+  each of 99 guide base costs with the retained MM6 spell row in
+  [MM6_SPELL_GUIDE_CLAIMS_F2.md](MM6_SPELL_GUIDE_CLAIMS_F2.md). All 99 base
+  costs match; 22 differ from inherited static MM7 base cost. The private
+  matrix names guide cost, target and damage ambiguities. Quantitative rank
+  effects and runtime casts remain unverified.
 - [ ] Implement MM6-specific spell IDs, casting effects, three mastery levels,
   costs, recovery, damage/resistance types, target rules, buff duration,
   scroll/book/wand mappings, monster/event casts, visuals and descriptions.
@@ -395,6 +406,13 @@ that requirement.
   exit targets resolve to listed MM6 maps; four quest bits are read without a
   script write and 70 are written without a script read. These are structural
   leads, not gameplay defects or proof of ending reachability.
+- [x] Give all 32 Prima campaign headings/groups private candidate quest,
+  event, NPC, item and map joins, plus acceptance checks in
+  [MM6_CAMPAIGN_GUIDE_CLAIMS_F2.md](MM6_CAMPAIGN_GUIDE_CLAIMS_F2.md).
+  Twenty-eight have a named note and structural EVT lead; all 12 promotions
+  have distinct note leads. All 36 printed transport options were compared
+  with retained table cells: two durations differ and one extra boat lacks a
+  printed itinerary. These are candidates, not branch or travel proof.
 - [ ] Resolve the graph's guide milestone candidates against actual EVT
   conditions, item/NPC/house effects, alternate routes and persistent state;
   demonstrate a New Sorpigal-to-ending route and required promotions with

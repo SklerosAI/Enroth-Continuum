@@ -1633,3 +1633,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added `INVR` v1 for four physical character item regions, preserving 138 exact 28-byte records, 126 grid words and 16 equipment words per character from a pinned MMExtension layout without interpreting active slots.
 - Integrated focused checks passed 5/5, private-backed MM6/LOD 347/347 and general non-MM6 437/437. The known-save manifest still rejects INVR; live Party ownership, slots beyond current capacity and native save behavior remain open.
+
+## [2026-11-06] implement | Original MM6 character item capacity
+- by: T-Burton-ND via codex
+- A read-only accepted-original-executable trace confirmed that the MM6 free-item path scans all 138 physical records and can refer to a selected record from the grid or equipment. MM6 party reset now allocates 138 runtime item slots while MM7 retains its 126-slot default.
+- The inherited MM7 snapshot rejects a larger inventory before writing. Final monitored MM6 headless checks passed 51/51, private-backed MM6/LOD unit checks 347/347, general non-MM6 unit checks 437/437 and the MM7 headless control 1/1. Live raw item ownership and normal SaveLoad remain guarded.

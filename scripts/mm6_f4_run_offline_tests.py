@@ -29,9 +29,11 @@ def main() -> None:
     for script in ("mm6_f4_prepare_indoor_fixture.py", "mm6_f4_prepare_outdoor_fixture.py"):
         subprocess.run([sys.executable, "-B", str(root / "scripts" / script), str(research)], check=True)
 
-    manifest = Path.home() / "Library/Application Support/Enroth Continuum/Profiles/MM6/rules/transport.json"
-    if not manifest.is_file():
-        parser.error("private MM6 transport manifest is missing from the local user profile")
+    rules = Path.home() / "Library/Application Support/Enroth Continuum/Profiles/MM6/rules"
+    transport_manifest = rules / "transport.json"
+    spell_manifest = rules / "spells.json"
+    if not transport_manifest.is_file() or not spell_manifest.is_file():
+        parser.error("private MM6 transport or spell manifest is missing from the local user profile")
 
     environment = os.environ.copy()
     environment.update({
@@ -39,7 +41,8 @@ def main() -> None:
         "MM6_ACTIVE_EVT_LIST": str(research / "F4_ACTIVE_EVT_LIST_2026-11-06.txt"),
         "ENROTH_MM6_INDOOR_DECODED_DIR": str(research / "F4_INDOOR_DECODED"),
         "ENROTH_MM6_OUTDOOR_DECODED_DIR": str(research / "F4_OUTDOOR_DECODED"),
-        "ENROTH_MM6_TRANSPORT_MANIFEST": str(manifest),
+        "ENROTH_MM6_TRANSPORT_MANIFEST": str(transport_manifest),
+        "ENROTH_MM6_SPELL_RULES_MANIFEST": str(spell_manifest),
     })
     subprocess.run([str(binary), "--gtest_filter=MM6*.*:LodReader.OriginalDirectoryOrder"],
                    check=True, env=environment)

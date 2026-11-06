@@ -527,7 +527,9 @@ void Party::Reset() {
     pCharacters[0].uPrevVoiceID = 17;
     pCharacters[0].uVoiceID = 17;
     pCharacters[0].SetInitialStats();
-    pCharacters[0].uSex = pCharacters[0].GetSexByVoice();
+    // MM6 assigns its own valid face/voice IDs below before deriving sex.
+    if (engine->gameTitle() != GameTitle::MM6)
+        pCharacters[0].uSex = pCharacters[0].GetSexByVoice();
     pCharacters[0].name = localization->str(LSTR_NAME_ZOLTAN);
 
     pCharacters[1].ChangeClass(engine->gameTitle() == GameTitle::MM6 ? static_cast<Class>(3) : CLASS_THIEF);
@@ -535,7 +537,8 @@ void Party::Reset() {
     pCharacters[1].uPrevVoiceID = 3;
     pCharacters[1].uVoiceID = 3;
     pCharacters[1].SetInitialStats();
-    pCharacters[1].uSex = pCharacters[1].GetSexByVoice();
+    if (engine->gameTitle() != GameTitle::MM6)
+        pCharacters[1].uSex = pCharacters[1].GetSexByVoice();
     pCharacters[1].name = localization->str(LSTR_NAME_RODERICK);
 
     pCharacters[2].ChangeClass(engine->gameTitle() == GameTitle::MM6 ? static_cast<Class>(6) : CLASS_CLERIC);
@@ -543,7 +546,8 @@ void Party::Reset() {
     pCharacters[2].uPrevVoiceID = 14;
     pCharacters[2].uVoiceID = 14;
     pCharacters[2].SetInitialStats();
-    pCharacters[2].uSex = pCharacters[3].GetSexByVoice();
+    if (engine->gameTitle() != GameTitle::MM6)
+        pCharacters[2].uSex = pCharacters[3].GetSexByVoice();
     pCharacters[2].name = localization->str(LSTR_NAME_SERENA);
 
     pCharacters[3].ChangeClass(engine->gameTitle() == GameTitle::MM6 ? static_cast<Class>(15) : CLASS_SORCERER);
@@ -551,7 +555,8 @@ void Party::Reset() {
     pCharacters[3].uPrevVoiceID = 10;
     pCharacters[3].uVoiceID = 10;
     pCharacters[3].SetInitialStats();
-    pCharacters[3].uSex = pCharacters[3].GetSexByVoice();
+    if (engine->gameTitle() != GameTitle::MM6)
+        pCharacters[3].uSex = pCharacters[3].GetSexByVoice();
     pCharacters[3].name = localization->str(LSTR_NAME_ALEXIS);
 
     if (engine->gameTitle() == GameTitle::MM6)

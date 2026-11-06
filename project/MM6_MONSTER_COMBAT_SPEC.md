@@ -2,7 +2,10 @@
 
 Status: **retained-table and source-parser audit, 2026-11-05**. This is a
 public, asset-free gap register. The owner data and detailed per-row results
-remain ignored locally. It does not establish correct combat or any playable
+remain ignored locally. `scripts/mm6_probe_monster_rules.py` extracts current
+parser vocabularies, compares retained labels, prints aggregate counts only,
+and writes per-row evidence and hashes to the ignored `monster-rules-probe.json`.
+It does not establish correct combat or any playable
 MM6 encounter. The consolidated F3 original-file preflight has not happened.
 
 ## Structural evidence and current consumers

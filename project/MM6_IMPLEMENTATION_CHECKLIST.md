@@ -118,7 +118,8 @@ that requirement.
 - [x] Compare all 173 MM6 monster-table rows and the retained fixed-size
   description table with the current loader and shared combat parsers.
   [MM6_MONSTER_COMBAT_SPEC.md](MM6_MONSTER_COMBAT_SPEC.md) records source paths
-  and F3 questions. A retained label comparison finds 49 nonzero attack-type
+  and F3 questions. `scripts/mm6_probe_monster_rules.py` reproduces aggregate
+  lexical mismatches in an ignored report. It finds 49 nonzero attack-type
   cells falling to physical, 46 missile cells falling to `NONE`, 13 monster
   spell cells falling to `SPELL_NONE`, and 11 special-attack cells falling to
   `NONE`. This is parser inventory, not observed combat behavior.

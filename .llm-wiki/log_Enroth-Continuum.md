@@ -178,3 +178,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Linked the 164-row item triage, direct-use and message-scroll-window source mismatches to F3 questions and F4/F5 checks.
 - Linked all-173 monster risk joins, including gender/multi-target preference, weapon-break and fixed-drop collisions. Exact per-ID evidence stays ignored locally; no original effect or live encounter was claimed.
+
+## [2026-11-05] guard | MM6 creation and executable table preflight
+- by: T-Burton-ND via codex
+- Linked pinned source leads for six-class creation arrays and the inherited Cleric mana-ID collision to the F3 handoff.
+- Prepared a PE-table helper for creation, spell, house and opaque transport candidate spans. Synthetic tests and the open-gate refusal passed; the owner's executable was not read.

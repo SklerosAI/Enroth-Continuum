@@ -23,7 +23,7 @@ The original Quick Start finalizer writes class, stats, skills and starting item
 
 ## Conclusion
 
-The MM6 creation refill now occurs after starting-item grants; a focused synthetic item-bonus test confirms that MM7 retains its prior timing. No arithmetic correction is supported yet. Keep the title-local HP/SP formulas unchanged while tracing the complete mana helper and obtaining a nonzero post-entry comparison.
+The MM6 creation refill now occurs after starting-item grants; its integrated focused arm64 unit test passed 1/1 and confirms that MM7 retains its prior timing. No arithmetic correction is supported yet. Keep the title-local HP/SP formulas unchanged while tracing the complete mana helper and obtaining a nonzero post-entry comparison.
 
 ## Open follow-ups
 

@@ -465,6 +465,11 @@ Chronological record of wiki activity.
 - Rebuilt the arm64 MM6, MM7 and unit targets after the map-base, hireling roster, First Aid and monster-preference changes. The one-command offline suite passed 98/98 tests from 29 suites, including all 67 retained map base/delta pairs and the private First Aid manifest; the linked general suite passed 438/438.
 - The runner now requires the ignored owner-only First Aid profile manifest and passes it to the native test, avoiding a skipped private-backed check. Updated the public status, build graph and agent handoff to the 98-test checkpoint. Live SaveLoad, MM6 spell casting, encounter probabilities and F5 graphics remain gated; no original installation was reread and no MM6 process launched.
 
+## [2026-11-06] fix | MM6 health and mana skill factors
+- by: T-Burton-ND via codex
+- Routed MM6 Bodybuilding and Meditation bonus multiplication through the private eighteen-class HP/SP factors instead of inherited four-ID MM7 class arrays. The current full HP/SP formula remains provisional.
+- Verified the ignored owner profile contains eighteen factors for each stat and built the arm64 MM6, MM7 and unit targets. No character-sheet render, original installation read or MM6 process launch was performed.
+
 ## [2026-11-06] ingest | MM6 known-save map/base pass
 - by: T-Burton-ND via codex
 - Added an MM6-only candidate validator that decodes all sixteen known `.ec6` sections, requires the private expected map-name set, and parses each of 67 delta entries with its caller-supplied base entry before returning or assigning any state.

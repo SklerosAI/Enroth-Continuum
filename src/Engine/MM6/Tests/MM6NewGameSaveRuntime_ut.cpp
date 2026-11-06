@@ -16,6 +16,7 @@
 #include "Engine/MM6/MM6AtomicSaveFile.h"
 #include "Engine/MM6/MM6NewGameSaveRuntime.h"
 #include "Engine/MM6/MM6FirstMapWorldTransaction.h"
+#include "Engine/MM6/MM6FirstMapPlacementTransaction.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 
 namespace {
@@ -408,6 +409,80 @@ UNIT_TEST(MM6NewGameSaveRuntime, WorldCollectionScratchRollsBackLateFault) {
     EXPECT_EQ(sprites.size(), 7);
     EXPECT_EQ(chests.size(), 8);
     EXPECT_EQ(decorations.size(), 9);
+}
+
+UNIT_TEST(MM6NewGameSaveRuntime, PlacementAndLocalEventsRollBackLateFault) {
+    Party live;
+    live.pos = Vec3f(10, 20, 30);
+    live.velocity = Vec3f(4, 5, 6);
+    live.uFallStartZ = 11;
+    live._viewYaw = 99;
+    live.floor_face_id = 7;
+    Party staged = live;
+    staged.pos = Vec3f(-10178, -11206, 340);
+    staged.velocity = Vec3f(0, 0, -17);
+    staged.uFallStartZ = 340;
+    staged._viewYaw = 128;
+    MapId currentMap = MAP_HARMONDALE;
+    std::optional<MapDestination> pending = MapDestination(
+        MAP_HARMONDALE, PartyPlacement(Vec3f(1, 2, 3), 44, 55, 66));
+    EvtProgram events;
+    events.add(77, EvtInstruction{});
+    std::vector<std::string> strings = {"prior map"};
+    std::array<unsigned char, 50> transient = {};
+    transient[0] = 9;
+    std::string lastSave = "prior.ec6";
+    LevelType levelType = LEVEL_INDOOR;
+    EngineFlags flags = {};
+    flags |= ENGINE_LOADING_SAVEGAME;
+    mm6::FirstMapPlacementOwners owners{&live, &currentMap, &pending, &events,
+        &strings, &transient, &lastSave, &levelType, &flags};
+    const MapDestination firstMap(static_cast<MapId>(15), MAP_START_POINT_PARTY);
+
+    EXPECT_THROW((void) mm6::ScopedFirstMapPlacementAndEvents(
+        GameTitle::MM7, owners, staged, firstMap), std::exception);
+    EXPECT_EQ(live.pos.x, 10);
+    try {
+        mm6::ScopedFirstMapPlacementAndEvents scratch(GameTitle::MM6, owners, staged, firstMap);
+        EXPECT_EQ(live.pos.z, 340);
+        EXPECT_EQ(live.velocity.z, -17);
+        EXPECT_EQ(currentMap, static_cast<MapId>(15));
+        EXPECT_EQ(pending->map(), static_cast<MapId>(15));
+        EXPECT_FALSE(events.hasEvent(77));
+        EXPECT_TRUE(strings.empty());
+        EXPECT_TRUE(lastSave.empty());
+        live.pos.z = 999;
+        live.floor_face_id = 22;
+        currentMap = MAP_INVALID;
+        pending.reset();
+        events.add(88, EvtInstruction{});
+        strings.push_back("failed map");
+        transient[0] = 42;
+        lastSave = "failed.ec6";
+        levelType = LEVEL_OUTDOOR;
+        flags = {};
+        throw std::runtime_error("synthetic late first-map event fault");
+    } catch (const std::runtime_error &) {
+    }
+    EXPECT_EQ(live.pos, Vec3f(10, 20, 30));
+    EXPECT_EQ(live.velocity, Vec3f(4, 5, 6));
+    EXPECT_EQ(live.uFallStartZ, 11);
+    EXPECT_EQ(live._viewYaw, 99);
+    EXPECT_EQ(live.floor_face_id, 7);
+    EXPECT_EQ(currentMap, MAP_HARMONDALE);
+    EXPECT_EQ(pending->map(), MAP_HARMONDALE);
+    ASSERT_TRUE(pending->resolvePlacement());
+    EXPECT_EQ(pending->resolvePlacement()->pos, Vec3f(1, 2, 3));
+    EXPECT_EQ(pending->resolvePlacement()->yaw, 44);
+    EXPECT_EQ(pending->resolvePlacement()->pitch, 55);
+    EXPECT_EQ(pending->resolvePlacement()->zSpeed, 66);
+    EXPECT_TRUE(events.hasEvent(77));
+    EXPECT_FALSE(events.hasEvent(88));
+    EXPECT_EQ(strings, std::vector<std::string>({"prior map"}));
+    EXPECT_EQ(transient[0], 9);
+    EXPECT_EQ(lastSave, "prior.ec6");
+    EXPECT_EQ(levelType, LEVEL_INDOOR);
+    EXPECT_TRUE(flags & ENGINE_LOADING_SAVEGAME);
 }
 
 UNIT_TEST(MM6NewGameSaveRuntime, LateFinalMapFailurePreservesPriorAutosave) {

@@ -25,7 +25,7 @@ The original new-game initializer clears complete 28-byte records in three conti
 
 ## Conclusion
 
-A [detached MM6 helper](../src/Engine/MM6/MM6ShopStockPurchase.h) models the proved full-record copy and partial source clear. Its integrated focused unit suite passed **4/4**, and the private-backed MM6/LOD gate passed **329/329** before the new raw [physical stock owner](../src/Engine/MM6/MM6ShopStockFields.h) was linked. An isolated `SHOP` v1 section now preserves all 1,440 records without splitting the alias. The required known-save manifest still rejects `SHOP`: no live MM6 service writer or owner lifecycle exists, and an ID-only field would lose data. The existing `SCLK` refresh-deadline section and normal MM6 SaveLoad guard remain as they are.
+A [detached MM6 helper](../src/Engine/MM6/MM6ShopStockPurchase.h) models the proved full-record copy and partial source clear. A raw [physical stock owner](../src/Engine/MM6/MM6ShopStockFields.h) and isolated `SHOP` v1 section preserve all 1,440 records without splitting the alias. Their integrated focused unit suites passed **6/6** together and the private-backed MM6/LOD gate **331/331**. The required known-save manifest still rejects `SHOP`: no live MM6 service writer or owner lifecycle exists, and an ID-only field would lose data. The existing `SCLK` refresh-deadline section and normal MM6 SaveLoad guard remain as they are.
 
 ## Open follow-ups
 

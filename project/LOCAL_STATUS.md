@@ -552,3 +552,25 @@ full save commit/reload and normal SaveLoad remain unaccepted. A read-only
 terrain schema audit also found that MM6 global tile ID is the exact art key;
 raw tileset/variant pairs alone repeat, and the original seasonal remap rule
 is still unproved.
+
+## MM6 F4 stock, event and save-schema checkpoint — 2026-11-06
+
+The integrated MM6 headless suite passed **49/49** over 3,414 monitor samples
+with no visible window or focus change; the private-backed MM6/LOD unit gate
+passed **331/331** from 85 suites. The general non-MM6 unit gate passed
+**437/437**, and an MM7 headless control passed **1/1** without window or focus
+change. MM6 `RCVR` v3 now preserves the detached
+current-runtime Armageddon timer/damage/force tuple, and partial session staging
+clears frame-derived rounding and delayed speech state while retaining saved
+recovery. Live spell effects and the full save transaction remain guarded.
+
+F3-matched original-executable traces establish that successful MM6 shop/guild
+purchases transfer all 28 stock bytes and clear only source bytes 0–24, and
+that a physical shop/guild row is shared. A detached `SHOP` v1 section now
+round-trips all 1,440 physical records; it is **outside** the required known
+save manifest until a live MM6 owner and refresh lifecycle are proved. Event
+opcodes 20, 27 and 28 now advance as original no-ops. Indoor texture and
+face-bit events target one checked face index for MM6; MM7 keeps its group
+behavior. The MM6 changed-state writer does not save those face edits, and
+event replay is not established on all affected maps, so reload fidelity and
+campaign play remain open. Normal MM6 chest and SaveLoad guards stay closed.

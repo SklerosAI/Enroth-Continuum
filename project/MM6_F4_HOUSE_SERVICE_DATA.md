@@ -1,0 +1,11 @@
+# MM6 house service data seam
+
+Status: F4 read-only table decoder, 2026-11-06. The MM6 `enterHouse` guard remains closed. No shop, guild, transport, NPC, movie or sound service has been enabled.
+
+The retained F3-matched `2devents.txt` has 557 numbered house rows. MM6 columns `Val`, `A`, `C`, `Open` and `Closed` do not form the same service schema as MM7. `Val` is a numeric value in 153 rows, including fractional values. `A` contains descriptive stock/skill text in 123 rows; it is not a numeric MM7 skill-price multiplier. `C` is populated in 89 rows, of which 20 contain nonnumeric notes (including route/arena forms). Hours occur as a pair in 153 rows. The existing MM6 `initializeHouses` deliberately zeroes the MM7 `flt_24` field and cannot retain the text in `A` or the nonnumeric part of `C`.
+
+`mm6::decodeHouseServiceData` now parses the retained table into a separate, read-only 557-row collection. It preserves the raw `A` and `C` text, bounded `Val` and hours, title-specific parsed house type and service family, and a copy of the matched 119-room descriptor or an explicit blank-room disposition. It rejects missing or reordered IDs, unknown type labels, out-of-range room/value/hour fields, incomplete hour pairs and malformed table size before returning a candidate. It uses the previously validated `selectHouseRoom` join; it never invokes MM7 numeric shop/guild ID ranges, stock generation, pricing, dialogue, media or SaveLoad.
+
+A private-backed native check reads only the retained table, owner-only room manifest and ignored F3 house-route report. It checks all 557 room joins, family totals (47 shop, 22 magic guild, 21 transport, 467 other), 526 numeric and 31 blank room cells, and all populated `Val`/`A`/`C`/hour counts. Malformed table and out-of-range lookup cases reject. The arm64 MM6/MM7/unit targets built and the four focused house data/room tests passed without skips.
+
+Next work must interpret `A` stock and skill descriptions by house family, resolve `C` numeric versus textual meaning, prove MM6 price and schedule calculations, and supply title-specific stock/restock and guild membership rules with durable `.ec6` state. The current table decoder does not justify opening any house. F5 needs visible service, room, NPC and media checks plus save/quit/relaunch.

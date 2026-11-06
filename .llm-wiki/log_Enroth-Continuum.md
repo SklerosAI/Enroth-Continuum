@@ -493,3 +493,9 @@ Chronological record of wiki activity.
 - Traced table, generated and negative follower NPC ID use. The inherited table lookup warned on out-of-range IDs but still indexed; generated IDs lacked a bound, and negative IDs used a potentially overflowing absolute value.
 - Added an MM6-only checked resolver before `getNPCData` and `getNPCType` array or roster access. It covers 501 table rows, 100 generated slots and current flattened follower positions while leaving MM7/MM8 paths unchanged.
 - The arm64 unit target built and 13 focused HIRE/NPC tests passed, including high and invalid ID boundaries. Duplicate-name hire/dismiss behavior remains unresolved without stable source provenance; no original installation was reread or partial game launched.
+
+## [2026-11-06] fix | MM6 missing item icons
+- by: T-Burton-ND via codex
+- Audited the retained F3-matched item footprint set: 578 usable icons, two blank placeholder rows and a maximum 4×9-slot footprint. The inherited missing-icon path silently assigned 1×1 to a named item template.
+- Added an MM6-only preflight over nonempty template icon names against the active `icons.lod` before assigning any item sizes. A missing icon reports its numeric item ID and stops initialization; the two blank placeholders and MM7 path retain their behavior.
+- The arm64 unit target built and five focused durable/icon tests passed. The retained footprint script passed. Icon rendering and modded save/reload remain for F5; no original installation was reread or MM6 game launched.

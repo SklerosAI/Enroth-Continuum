@@ -65,11 +65,14 @@ int platformMain(int argc, char **argv) {
         if (opts.listRequested)
             return RUN_ALL_TESTS();
 
-        GameStarter starter(opts);
+        std::function<void(FileSystem *)> prepareUserFs;
         if (opts.gameTitle == GameTitle::MM6) {
-            NativeFileSystem source(opts.rulesPath);
-            seedMm6HeadlessRules(source, ufs);
+            prepareUserFs = [&opts] (FileSystem *userFs) {
+                NativeFileSystem source(opts.rulesPath);
+                seedMm6HeadlessRules(source, userFs);
+            };
         }
+        GameStarter starter(opts, prepareUserFs);
 
         int exitCode = 0;
         starter.runInstrumented([&] (EngineController *game) {

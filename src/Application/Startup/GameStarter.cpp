@@ -56,19 +56,19 @@
 
 constexpr std::string_view configName = "openenroth.ini";
 
-GameStarter::GameStarter(GameStarterOptions options): _options(std::move(options)) {
+GameStarter::GameStarter(GameStarterOptions options, std::function<void(FileSystem *)> prepareUserFs): _options(std::move(options)) {
     // Note: basic logging is initialized in LogStarter constructor, so it's safe to log here.
     Engine::LogEngineBuildInfo();
 
     try {
-        initialize();
+        initialize(prepareUserFs);
     } catch (const std::exception &e) {
         MM_CRITICAL("Terminated with exception: {}", e.what());
         throw;
     }
 }
 
-void GameStarter::initialize() {
+void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUserFs) {
     // Init environment.
     _environment = Environment::createStandardEnvironment();
 
@@ -76,6 +76,8 @@ void GameStarter::initialize() {
     resolveUserPath(_environment.get(), &_options);
     _fsStarter.initUserFs(_options.ramFsUserData, _options.userPath);
     MM_INFO("Using user path '{}'.", ufs->displayPath(""));
+    if (prepareUserFs)
+        prepareUserFs(ufs);
 
     // Init config.
     _config = std::make_shared<GameConfig>();

@@ -9,6 +9,7 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/SaveLoad.h"
 
 #include "Library/FileSystem/Memory/MemoryFileSystem.h"
 #include "Library/Platform/Null/NullEventLoop.h"
@@ -37,6 +38,18 @@ GAME_TEST(MM6Headless, StartupAndChestGuard) {
     // staged and committed safely.
     EXPECT_THROW(mm6::generateChestItemsForTitle(GameTitle::MM6), std::runtime_error);
     game.tick(1);
+}
+
+GAME_TEST(MM6Headless, NewGameSaveGuard) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_NE(dynamic_cast<MemoryFileSystem *>(ufs), nullptr);
+    ASSERT_FALSE(ufs->exists("saves"));
+
+    // Game::loop calls saveNewGame after party creation and before its first
+    // gameLoop/map transition. The EC6 transaction is still guarded, so the
+    // headless runner must stop here rather than attempt a partial map load.
+    EXPECT_THROW(saveNewGame(), std::runtime_error);
+    EXPECT_FALSE(ufs->exists("saves"));
 }
 
 TEST(MM6HeadlessRules, RejectsMissingRulesOption) {

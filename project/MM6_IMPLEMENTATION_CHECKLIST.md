@@ -58,6 +58,8 @@ claims that their runtime behavior is implemented.
 - [ ] Run a single deliberate read-only original-archive preflight after this
   specification is complete. Record all counts, schema lengths, ID gaps,
   boundary samples and unresolved differences in the ignored local report.
+  The [draft F3 preflight matrix](MM6_F3_PREFLIGHT_MATRIX.md) lists inputs and
+  reconciliation fields; it does not advance the F2 or F3 gate.
 
 ## Shipped table coverage
 

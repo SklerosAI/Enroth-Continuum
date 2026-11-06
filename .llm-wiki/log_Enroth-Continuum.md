@@ -436,3 +436,9 @@ Chronological record of wiki activity.
 - Audited current hire, dismissal, event, generated-NPC, name-load and quest-follower paths. A strict HIRE/RESC identity match cannot be justified without a stable source ID: table-only followers, independent flag edits and generated party copies are representable. An aggregate check of the ignored F3-matched NPC table found five duplicate-name groups, including one duplicate name/portrait/profession group; exact rows remain private.
 - Added a bounded, non-mutating correspondence diagnostic that counts exact and hired candidates without rejecting unmatched or ambiguous copies. The isolated arm64 build and 14 focused HIRE/RESC tests passed; direct C++ style and diff checks passed. No original installation reread or partial game launch.
 - Preserving both sections as saved is the current safe load policy. Stable source provenance, MM6 event reachability and F5 hire/dismiss/save checks are required before adding a strict cross-section rule. The known-save assembler was not changed.
+
+## [2026-11-06] ingest | MM6 MAPS expected-name lock
+- by: T-Burton-ND via codex
+- Derived an ignored, mode-0600 67-name delta manifest from retained F3 gate, capture, reconciliation, signoff and decoded-copy hashes; only schema and aggregate counts were committed.
+- Added offline exact-set checks and a C++ MAPS staging overload that rejects missing, extra or duplicate expected names before assigning a candidate. Whole-save restore must load and verify the private manifest before invoking it; SaveLoad and known-save assembly remain unwired.
+- The arm64 unit target built; three focused C++ tests passed, including the ignored retained fixtures. One Python unit test passed; the private 67-hash chain and positive/negative candidate checks passed. No original installation was reread or partial MM6 game launched.

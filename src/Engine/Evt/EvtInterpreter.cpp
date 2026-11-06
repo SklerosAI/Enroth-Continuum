@@ -22,6 +22,7 @@
 #include "Engine/Evt/MM6DayOfYear.h"
 #include "Engine/Evt/MM6MonthOfYear.h"
 #include "Engine/Evt/MM6PartyFlying.h"
+#include "Engine/Evt/MM6CharacterEventBit.h"
 #include "Engine/Evt/MM6GoldEvent.h"
 #include "Engine/Evt/MM6NpcEventState.h"
 #include "Engine/Evt/MM6SpriteEvent.h"
@@ -446,6 +447,14 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                 break;
             }
             if (engine->gameTitle() == GameTitle::MM6 &&
+                std::to_underlying(ir.data.variable_descr.type) == 213) {
+                for (Character &character : iterateCharacters(_who, grng))
+                    if (mm6::CharacterEventBitState(character._characterEventBits).compare(
+                            213, ir.data.variable_descr.value))
+                        return {EVT_FLOW_JUMP, ir.target_step};
+                break;
+            }
+            if (engine->gameTitle() == GameTitle::MM6 &&
                 ir.data.variable_descr.type == VAR_QBits_QuestsDone) {
                 if (MM6QuestBitState(pParty->_questBits).compare(16, ir.data.variable_descr.value))
                     return {EVT_FLOW_JUMP, ir.target_step};
@@ -624,6 +633,15 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         }
         case EVENT_Set:
+            if (engine->gameTitle() == GameTitle::MM6 &&
+                std::to_underlying(ir.data.variable_descr.type) == 213) {
+                if (ir.data.variable_descr.value < 0 || ir.data.variable_descr.value >= 512)
+                    throw Exception("MM6 character event bit operand is invalid");
+                for (Character &character : iterateCharacters(_who, grng))
+                    mm6::CharacterEventBitState(character._characterEventBits).set(
+                        213, ir.data.variable_descr.value);
+                break;
+            }
             if (engine->gameTitle() == GameTitle::MM6 &&
                 ir.data.variable_descr.type == VAR_PlayerItemInHands)
                 throw Exception("MM6 item Set is absent from retained scripts");
@@ -1034,6 +1052,14 @@ int EvtInterpreter::checkTopicStep(int step) {
             if (mm6::comparePartyFlying(222, ir->data.variable_descr.value, pParty->bFlying,
                                         pParty->pPartyBuffs[PARTY_BUFF_FLY].Active()))
                 return ir->target_step;
+            break;
+        }
+        if (engine->gameTitle() == GameTitle::MM6 &&
+            std::to_underlying(ir->data.variable_descr.type) == 213) {
+            for (Character &character : pParty->pCharacters)
+                if (mm6::CharacterEventBitState(character._characterEventBits).compare(
+                        213, ir->data.variable_descr.value))
+                    return ir->target_step;
             break;
         }
         if (engine->gameTitle() == GameTitle::MM6 &&

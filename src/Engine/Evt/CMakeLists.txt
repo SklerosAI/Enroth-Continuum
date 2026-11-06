@@ -12,6 +12,7 @@ set(ENGINE_EVENTS_SOURCES
         MM6DayOfYear.cpp
         MM6MonthOfYear.cpp
         MM6PartyFlying.cpp
+        MM6CharacterEventBit.cpp
         MM6GoldEvent.cpp
         MM6NpcEventState.cpp
         MM6ItemEventCompare.cpp
@@ -36,6 +37,7 @@ set(ENGINE_EVENTS_HEADERS
         MM6DayOfYear.h
         MM6MonthOfYear.h
         MM6PartyFlying.h
+        MM6CharacterEventBit.h
         MM6GoldEvent.h
         MM6NpcEventState.h
         MM6ItemEventCompare.h
@@ -53,6 +55,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6DayOfYear_ut.cpp
         Tests/MM6MonthOfYear_ut.cpp
         Tests/MM6PartyFlying_ut.cpp
+        Tests/MM6CharacterEventBit_ut.cpp
         Tests/MM6GoldEvent_ut.cpp
         Tests/MM6NpcEventState_ut.cpp
         Tests/MM6ItemEventCompare_ut.cpp

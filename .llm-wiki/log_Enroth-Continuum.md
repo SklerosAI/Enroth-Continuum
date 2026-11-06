@@ -358,3 +358,8 @@ Chronological record of wiki activity.
 - Audited the current party, character, NPC and inherited snapshot fields into a consumer/lifetime matrix covering buffs, resistance, held/shop items, hirelings, clocks, generated artifacts and other campaign state; retained F3 report scope supplied no native whole-save offsets.
 - Added required `RSTS` v1 for all four characters' eleven signed base and eleven bonus resistance fields, with MM6-guarded capture and copy staging. The channel meanings and whole-save manifest integration remain open.
 - The arm64 unit target built and two focused resistance tests passed; C++ style and diff checks passed. No original installation was reread or partial MM6 game launched.
+
+## [2026-11-06] update | MM6 resistance assembly and integrated suite
+- by: T-Burton-ND via codex
+- Revised the partial `.ec6` known-save assembly to require raw `RSTS` alongside the eleven previous sections. The decoder rejects missing/optional/corrupt resistance fields before assigning the destination; all twelve sections must be present and required.
+- Built the native arm64 MM6, MM7 and unit targets from the main checkout. The retained-data offline runner passed 64/64 tests, including private F3-matched transport/spell manifests, 52 indoor pairs and 15 outdoor deltas. Updated the public and ignored private handoffs. The assembler remains partial, SaveLoad still rejects MM6, and no original installation or game process was opened.

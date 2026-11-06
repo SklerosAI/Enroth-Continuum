@@ -1638,3 +1638,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A read-only accepted-original-executable trace confirmed that the MM6 free-item path scans all 138 physical records and can refer to a selected record from the grid or equipment. MM6 party reset now allocates 138 runtime item slots while MM7 retains its 126-slot default.
 - The inherited MM7 snapshot rejects a larger inventory before writing. Final monitored MM6 headless checks passed 51/51, private-backed MM6/LOD unit checks 347/347, general non-MM6 unit checks 437/437 and the MM7 headless control 1/1. Live raw item ownership and normal SaveLoad remain guarded.
+
+## [2026-11-06] update | MM6 inventory zero path
+- by: T-Burton-ND via codex
+- Moved MM6 138-record inventory initialization to `Party::Zero()`, which also covers `Party::Reset()`, and extended the headless check to exercise both paths.
+- The focused check passed 1/1, the full monitored MM6 headless suite passed 51/51 over 1,513 samples, and the MM7 headless control passed 1/1 with no on-screen window or focus change. Raw item ownership and normal MM6 SaveLoad remain gated.

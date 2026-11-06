@@ -133,7 +133,6 @@ GAME_TEST(MM6Headless, StatusStripAndMapArrowsAvailable) {
 
 GAME_TEST(MM6Headless, PortraitVitalBarsAndHitBoxes) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
-    ASSERT_NE(pPrimaryWindow, nullptr);
     const HudVitalBarResources bars = hudVitalBarResources(GameTitle::MM6, {}, {}, {}, {});
     EXPECT_EQ(engine->resources()->iconSize(bars.green), Sizei(6, 78));
     EXPECT_EQ(engine->resources()->iconSize(bars.blue), Sizei(6, 78));
@@ -142,9 +141,13 @@ GAME_TEST(MM6Headless, PortraitVitalBarsAndHitBoxes) {
     EXPECT_EQ(game_ui_bar_yellow, nullptr);
     EXPECT_EQ(game_ui_bar_red, nullptr);
 
+    // The headless startup fixture has not entered the game-screen UI.
+    // Construct this button group explicitly, then let the window clean it up.
+    GUIWindow buttons(WINDOW_NULL, {0, 0}, {640, 480});
+    buttons.CreateCharacterButtons();
     std::vector<Recti> actual;
-    for (GUIButton *button : pPrimaryWindow->vButtons)
-        if (button->msg == UIMSG_ShowStatus_ManaHP)
+    for (GUIButton *button : buttons.vButtons)
+        if (button->uData == UIMSG_ShowStatus_ManaHP)
             actual.push_back(button->rect);
     const auto health = mm6HudHealthBarRects();
     const auto mana = mm6HudManaBarRects();

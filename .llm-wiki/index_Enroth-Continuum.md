@@ -40,5 +40,6 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 Save Spec Source](Source-MM6-Save-Spec.md) — Map-state boundaries, preservation, and save contract
 - [MM6 Event and Campaign Spec Source](Source-MM6-Event-Campaign-Spec.md) — Question, NPC-topic, variable, and campaign gaps
 - [MM6 Media and UI Spec Source](Source-MM6-Media-UI-Spec.md) — Movie, house, sound, music, and interface routing
+- [MM6 Text Table Consumer Spec Source](Source-MM6-Table-Consumer-Spec.md) — Direct literal load coverage and unresolved parser/consumer questions
 
 <!-- Add pages here as the wiki grows -->

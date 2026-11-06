@@ -1,0 +1,46 @@
+#pragma once
+
+#include <cstdint>
+#include <optional>
+
+#include "Engine/MM6/MM6ChestRecordTransaction.h"
+
+namespace mm6 {
+
+struct ChestTrapDecision {
+    bool disarmed = false;
+    int variant = -1;  // 0..3 when triggered; no sprite/effect is emitted here.
+    int drawsConsumed = 0;
+    std::uint32_t nextLcgState = 0;
+};
+
+// The retained MM6 chest-entry PE shows placement first, then active-party
+// and map checks, then this disarm comparison. The original score function is
+// separate; caller supplies its nonnegative result and the map difficulty.
+// This stage deliberately returns no changed chest, damage or UI state: the
+// trap effect call graph and its atomic commit are not yet established.
+inline std::optional<ChestTrapDecision> stageChestTrapDecision(
+    GameTitle title, const ChestRecord &placedRecord, bool activeCharacter,
+    int disarmScore, int mapDifficulty, std::uint32_t lcgState) {
+    if (title != GameTitle::MM6 || !activeCharacter || disarmScore < 0 ||
+        mapDifficulty < 0 || mapDifficulty > 255 ||
+        (readChest16(placedRecord, 2) & 3u) != 3u)
+        return std::nullopt;
+
+    ChestTrapDecision result;
+    result.nextLcgState = lcgState;
+    // The original jumps straight to the triggered branch at score zero.
+    if (disarmScore > 0) {
+        const int roll = nextChestRandom15(result.nextLcgState) % 10;
+        ++result.drawsConsumed;
+        if (disarmScore + roll > 5 * mapDifficulty) {
+            result.disarmed = true;
+            return result;
+        }
+    }
+    result.variant = nextChestRandom15(result.nextLcgState) % 4;
+    ++result.drawsConsumed;
+    return result;
+}
+
+}  // namespace mm6

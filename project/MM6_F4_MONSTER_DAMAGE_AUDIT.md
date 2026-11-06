@@ -1,0 +1,9 @@
+# MM6 F4 monster damage label gate
+
+Status: **retained-data audit, 2026-11-06; no damage-rule change**. The retained `monsters.txt` used here is part of the accepted F3-matched source set. This packet refines the [F2 combat audit](MM6_COMBAT_SEMANTICS_F2.md) for the next title-specific parser and resistance lane.
+
+The table has 173 monster rows and 39 active secondary attacks, giving 212 active attack-type cells. Their labels aggregate as 130 physical, 21 fire, 17 electric, 10 cold, 12 poison, 12 energy and 10 magic. The inherited `ParseAttackType` recognizes the physical/fire labels but silently returns physical for the 49 electric, cold, poison and magic cells. It maps all 12 energy cells to Earth because of an inherited collision. The 134 `0` secondary-type placeholders have zero secondary chance and are outside the active 212.
+
+The MM6 resistance table uses fire, electricity, cold, poison, magic and physical channels; current monster loading maps the four elemental columns onto inherited Fire/Air/Water/Earth fields. That supports a candidate electric→Air, cold→Water and poison→Earth parse translation, but the character-side resistance and damage application contract must be checked before enabling it. Magic and energy need distinct source-backed damage and resistance semantics; simply assigning inherited `DAMAGE_MAGIC` or `DAMAGE_ENERGY` would be unsafe because current damage consumers have no explicit energy branch and the inherited magic rule is MM7 oriented.
+
+Next F4 checks: lock a title-specific typed damage mapping for all seven active labels; verify character and monster resistance selection, secondary attack chance/order and zero-placeholder handling; reject unknown active labels instead of silently changing them to physical; cover each label in offline damage scenarios and a mixed-resistance F5 encounter. Keep MM7 parsing and trace behavior separate.

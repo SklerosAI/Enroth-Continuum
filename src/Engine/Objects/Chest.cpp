@@ -1,5 +1,6 @@
 #include "Engine/Objects/Chest.h"
 
+#include <array>
 #include <memory>
 #include <numeric>
 #include <stdexcept>
@@ -371,6 +372,29 @@ void GenerateItemsInChest() {
 
 mm6::ChestGenerationRoute mm6::chestGenerationRoute(GameTitle title) {
     return title == GameTitle::MM7 ? ChestGenerationRoute::InheritedMM7 : ChestGenerationRoute::Blocked;
+}
+
+std::optional<Segment<ItemTreasureLevel>> mm6::chestTreasureLevelRangeForMarker(
+    int markerId, MapTreasureLevel mapTreasureLevel) {
+    // Original MM6 table at VA 0x4c03a8 in the accepted F3 executable.
+    // Columns use the zero-based map treasure level from MM6 mapstats.txt.
+    static constexpr std::array<std::array<Segment<int>, 7>, 7> ranges = {{
+        {{{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}},
+        {{{1, 1}, {1, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}}},
+        {{{1, 2}, {2, 2}, {2, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}}},
+        {{{2, 2}, {2, 3}, {3, 3}, {3, 4}, {4, 4}, {4, 4}, {4, 4}}},
+        {{{2, 3}, {3, 3}, {3, 4}, {4, 4}, {4, 5}, {5, 5}, {5, 5}}},
+        {{{3, 3}, {3, 4}, {4, 4}, {4, 5}, {5, 5}, {5, 6}, {6, 6}}},
+        {{{7, 7}, {7, 7}, {7, 7}, {7, 7}, {7, 7}, {7, 7}, {7, 7}}}
+    }};
+
+    const int markerLevel = -markerId;
+    const int mapLevel = std::to_underlying(mapTreasureLevel);
+    if (markerLevel < 1 || markerLevel > 7 || mapLevel < 0 || mapLevel > 6)
+        return std::nullopt;
+    Segment<int> range = ranges[markerLevel - 1][mapLevel];
+    return Segment{static_cast<ItemTreasureLevel>(range.front()),
+                   static_cast<ItemTreasureLevel>(range.back())};
 }
 
 void mm6::generateChestItemsForTitle(GameTitle title) {

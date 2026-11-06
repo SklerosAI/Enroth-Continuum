@@ -58,6 +58,9 @@ enum class ChestGenerationRoute {
 };
 
 ChestGenerationRoute chestGenerationRoute(GameTitle title);
+// Detached MM6 PE-backed contract; live MM6 generation remains guarded.
+std::optional<Segment<ItemTreasureLevel>> chestTreasureLevelRangeForMarker(
+    int markerId, MapTreasureLevel mapTreasureLevel);
 void generateChestItemsForTitle(GameTitle title);
 
 }  // namespace mm6

@@ -233,7 +233,7 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   prevents MM6-specific event IDs from executing as colliding MM7 meanings.
 - The integrated MM6 app, MM7 app and unit targets built with the sixteen-section
   partial assembly, spell-item prerequisite guard, MM6-only effect-dispatch guard,
-  and exact 67-name MAPS staging validator. The offline suite passed 152 tests from 47 suites
+  and exact 67-name MAPS staging validator. The offline suite passed 162 tests from 51 suites
   across EVT framing and selected guarded effects, wire codecs and indoor/outdoor projection,
   variable guard, `.ec6` fields and partial assembly, private transport/spell
   rules, descriptor 173 and LOD order; the
@@ -244,20 +244,24 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   Known-save map validation read all 67
   retained base/delta pairs through the F3-verified private map source before
   staging a candidate, while live SaveLoad stays blocked. The native atomic disk helper now
-  rejects CRC-valid files whose sixteen known sections fail semantic decode. MM6 item-icon and
+  rejects CRC-valid files whose sixteen known sections fail semantic decode.
+  A read-only slot inventory lists valid or recovery-needed `.ec6` files. MM6 item-icon and
   high-row NPC lookup guards also passed focused checks. MM6 autonote ID 205 and
   class/item event-operand bounds have title-specific offline paths.
   MM6 condition events now execute 18 bounded retained uses while 36 status
   writes remain guarded. The monster parser distinguishes seven attack damage
   labels, with five unproved channels stopped before dice or state mutation.
   Six MM6 resistance columns are preserved explicitly; Energy remains unmapped.
+  All 93 active monster special labels and 55 monster spell cells now retain
+  their MM6 types/IDs, while their effects remain gated.
   A read-only First Aid spellbook preflight records transaction inputs; live
   casting remains guarded. The house parser classifies labels on all 557 retained house rows,
   including 384 active rows that previously chose the mercenary guild type;
   services and graphical house screens remain unverified. MM6 house entry now
   rejects before inherited MM7 room/service state changes. A private 119-room
   descriptor manifest and a read-only resolver classify all 674 active
-  house-entry instructions. Exact extensionless
+  house-entry instructions. A read-only 557-row service data decoder preserves
+  MM6 stock text, route notes, values and hours. Exact extensionless
   movie lookup covers all 127 F3-matched VID names offline. Failed house
   loads and loop restarts preserve playback state; decoded MM6 frames and
   playback remain unobserved. The award loader retains all 100 numbered rows;
@@ -266,7 +270,8 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   193 active operands to the 100-row MM6 table. A separate audit covers all
   611 active quest-bit uses. A title-specific branch now reads and changes the
   bounded party bit once per instruction without inherited MM7 cues; journal
-  behavior and full persistence remain open.
+  behavior and full persistence remain open. A separate ID-19 branch compares
+  the 336-day calendar for all 592 retained active uses.
   MM6 Escape clears a pending targeted cast queue entry and target selection rejects invalid party-slot indices;
   live casting is still gated.
   The general non-MM6 unit suite passed 438/438 tests from the same build.

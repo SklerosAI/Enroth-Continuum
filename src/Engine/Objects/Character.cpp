@@ -22,6 +22,7 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
 #include "Engine/MM6/MM6CreationRules.h"
+#include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6MonsterPreferences.h"
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/MM6/MM6SpellItems.h"
@@ -1244,6 +1245,7 @@ Color Character::GetExperienceDisplayColor() {
 
 //----- (0048D4B3) --------------------------------------------------------
 int Character::CalculateIncommingDamage(DamageType dmg_type, int dmg) {
+    mm6::requireVerifiedMonsterDamage(engine->gameTitle(), dmg_type);
     // TODO(captainurist): these are some weird casts to CharacterAttributeType
     if (classType == CLASS_LICH &&
         ((Attribute)dmg_type == ATTRIBUTE_RESIST_MIND ||
@@ -1486,6 +1488,7 @@ void Character::Heal(int amount) {
 }
 
 int Character::receiveDamage(signed int amount, DamageType dmg_type) {
+    mm6::requireVerifiedMonsterDamage(engine->gameTitle(), dmg_type);
     conditions.reset(CONDITION_SLEEP);  // wake up if asleep
     signed int recieved_dmg = CalculateIncommingDamage(dmg_type, amount);  // get damage
     // for no damage cheat - moved from elsewhere

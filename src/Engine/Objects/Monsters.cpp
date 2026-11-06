@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6MonsterPreferences.h"
 
 #include "Library/Logger/Logger.h"
@@ -552,11 +553,18 @@ void MonsterStats::Initialize(const Blob &monsters, GameTitle gameTitle) {
         parseAttackPrefs(tokens[15], info);
         parseSpecialAttack(tokens[16], info);
 
-        info.attack1Type = ParseAttackType(tokens[17]);
+        info.attack1Type = gameTitle == GameTitle::MM6
+                               ? mm6::damageTypeForMonsterAttack(tokens[17], true)
+                               : ParseAttackType(tokens[17]);
         ParseDamage(tokens[18], &info.attack1DamageDiceRolls, &info.attack1DamageDiceSides, &info.attack1DamageBonus);
         info.attack1MissileType = ParseMissleAttackType(tokens[19]);
         info.attack2Chance = fromString<int>(tokens[20]);
-        info.attack2Type = ParseAttackType(tokens[21]);
+        // MM6 uses "0" in the secondary type cell only when its chance is zero.
+        if (gameTitle == GameTitle::MM6) {
+            info.attack2Type = mm6::damageTypeForMonsterAttack(tokens[21], info.attack2Chance != 0);
+        } else {
+            info.attack2Type = ParseAttackType(tokens[21]);
+        }
         ParseDamage(tokens[22], &info.attack2DamageDiceRolls, &info.attack2DamageDiceSides, &info.attack2DamageBonus);
         info.attack2MissileType = ParseMissleAttackType(tokens[23]);
         info.spell1UseChance = fromString<int>(tokens[24]);

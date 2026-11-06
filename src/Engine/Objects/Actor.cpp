@@ -8,6 +8,7 @@
 #include <optional>
 
 #include "Engine/Engine.h"
+#include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Data/AwardEnums.h"
 #include "Engine/Data/HouseEnumFunctions.h"
@@ -3725,6 +3726,7 @@ bool Actor::ActorHitOrMiss(Character *pPlayer) {
 //----- (0042756B) --------------------------------------------------------
 int Actor::CalcMagicalDamageToActor(DamageType dmgType,
                                     signed int incomingDmg) {
+    mm6::requireVerifiedMonsterDamage(engine->gameTitle(), dmgType);
     int v4;             // edx@1
     int v5;             // ecx@1
     signed int v6;      // eax@4
@@ -3791,6 +3793,7 @@ int Actor::CalcMagicalDamageToActor(DamageType dmgType,
 
 //----- (00427662) --------------------------------------------------------
 bool Actor::DoesDmgTypeDoDamage(DamageType uType) {
+    mm6::requireVerifiedMonsterDamage(engine->gameTitle(), uType);
     signed int resist;  // esi@2
 
     switch (uType) {

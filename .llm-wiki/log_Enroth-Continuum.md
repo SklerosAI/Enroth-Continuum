@@ -28,3 +28,8 @@ Chronological record of wiki activity.
 - Added a dated handoff with current MM6 and MM7 gates, source authority, checkout roles, integration protocol, and evidence levels.
 - Defined four distinct MM6 F2 research lanes and a public register of questions to resolve before the consolidated F3 preflight.
 - Linked the handoff from the wiki navigation and `AGENTS.md`; validated all 16 wiki pages for required frontmatter and local links.
+
+## [2026-11-05] update | Parallel agent capacity
+- by: T-Burton-ND via codex
+- Clarified the current four-active-agent limit, including the integrator, in the MM6 F2 workstream handoff.
+- Set the fourth research lane to rotate when a worker slot frees unless future capacity changes.

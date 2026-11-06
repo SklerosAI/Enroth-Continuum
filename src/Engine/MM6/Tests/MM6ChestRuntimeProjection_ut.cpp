@@ -16,6 +16,8 @@ struct TableScope {
     TableScope() {
         pItemTable = table.get();
         table->itemSizes[static_cast<ItemId>(200)] = Sizei(1, 1);
+        table->itemSizes[ITEM_GOLD_SMALL] = Sizei(1, 1);
+        table->itemSizes[static_cast<ItemId>(400)] = Sizei(1, 1);
         initializeChests();
     }
     ~TableScope() { pItemTable = previous; }
@@ -71,4 +73,24 @@ UNIT_TEST(MM6ChestRuntimeProjection, RejectsForeignMarkerAndInvalidGridWithoutMu
     mm6::writeChest16(tailGrid, mm6::CHEST_GRID_OFFSET + 2 * 139, 1);
     EXPECT_FALSE(mm6::stageChestRuntimeProjection(GameTitle::MM6, tailGrid, 0));
     EXPECT_EQ(source, oneItemRecord());
+}
+
+UNIT_TEST(MM6ChestRuntimeProjection, GoldAndSafeArtifactKeepTheirItemFields) {
+    TableScope table;
+    auto gold = oneItemRecord();
+    mm6::writeChest32(std::span(gold).subspan(4, 28), 0, std::to_underlying(ITEM_GOLD_SMALL));
+    mm6::writeChest32(std::span(gold).subspan(4, 28), 12, 79);
+    auto goldProjection = mm6::stageChestRuntimeProjection(GameTitle::MM6, gold, 0);
+    ASSERT_TRUE(goldProjection);
+    auto goldWire = mm6::stageChestRuntimeRecord(GameTitle::MM6, *goldProjection);
+    ASSERT_TRUE(goldWire);
+    EXPECT_EQ(*goldWire, gold);
+
+    auto artifact = oneItemRecord();
+    mm6::writeChest32(std::span(artifact).subspan(4, 28), 0, 400);
+    auto artifactProjection = mm6::stageChestRuntimeProjection(GameTitle::MM6, artifact, 0);
+    ASSERT_TRUE(artifactProjection);
+    auto artifactWire = mm6::stageChestRuntimeRecord(GameTitle::MM6, *artifactProjection);
+    ASSERT_TRUE(artifactWire);
+    EXPECT_EQ(*artifactWire, artifact);
 }

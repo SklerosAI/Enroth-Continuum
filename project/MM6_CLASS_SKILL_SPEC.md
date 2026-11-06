@@ -97,6 +97,10 @@ mixing branch for those MM6 IDs; it also gates results on `SKILL_ALCHEMY`,
 which MM6's skill table and the
 [MMExtension skill reference](https://grayface.github.io/mm/ext/ref/) do not
 include for MM6. `MM6ItemTable.cpp` loads no MM6 potion-combination matrix.
+The retained `useitems.txt` has a complete symmetric 29 × 29 matrix whose
+header and row axes are matching MM6 herb/bottle item IDs; see the
+[table-consumer audit](MM6_TABLE_CONSUMER_SPEC.md). Its result-token meanings
+and failure effects are still unverified.
 The manual/reference card confirm herb-to-bottle and potion-to-potion
 interaction and hazards; the Prima and NWC guides provide provisional recipe
 and side-effect leads, not an audited complete matrix. Reconcile exact

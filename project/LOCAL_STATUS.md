@@ -148,6 +148,12 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   have no literal loader reference and need indirect-use or non-use review;
   the audit does not establish that any loaded table is semantically correct.
   A reproducible offline probe records source locations in an ignored report.
+- A focused review of the six tables without direct loaders found a complete,
+  symmetric MM6 item-combination matrix in `useitems.txt`; the adapter does
+  not load it, and result-token meanings remain unverified. The MM6 NPC
+  profession loader also leaves a dismissal-text field blank although the
+  dialogue UI reads it. Autonote, NPC template, password and incidental-file
+  roles remain for F2/F3 reconciliation.
 - A focused [monster/combat source audit](MM6_MONSTER_COMBAT_SPEC.md) found
   active MM6 attack, projectile, spell and special-attack labels that fall
   through inherited MM7 parsers. The adapter also retains MM7 monster-family

@@ -74,6 +74,17 @@ nonempty rows; headers, separators and reserved records still require review.
   active/reserved/unused classification, and acceptance scenario. Resolve
   indirect consumers or documented non-use for the six without literal loads
   before the consolidated F3 preflight.
+- [x] Identify the retained `useitems.txt` two-axis structure: 29 item-ID
+  rows and matching header IDs form a complete symmetric 29 × 29 matrix in
+  columns 6–34. No MM6 loader consumes it, and its 30 distinct result tokens
+  remain private and semantically unclassified. The
+  [table-consumer specification](MM6_TABLE_CONSUMER_SPEC.md) records this as
+  a strong item-combination lead, not a finished recipe implementation.
+- [ ] Decode the `useitems.txt` token/result vocabulary, recipe and failure
+  effects, and any non-potion item use; reconcile with the owned guides and
+  original behavior in F3, then cover all matrix cells and representative
+  live mixes in F4/F5. Also resolve the absent profession dismissal text and
+  the `npcbtb.txt`, `passwords.txt` and autonote-variant roles.
 
 | File | Raw rows | Required reconciliation |
 | --- | ---: | --- |

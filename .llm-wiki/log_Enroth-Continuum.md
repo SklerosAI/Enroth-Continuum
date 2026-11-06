@@ -492,6 +492,11 @@ Chronological record of wiki activity.
 - Counted 212 active attack-type cells in the F3-matched retained 173-monster table, including 39 active secondary attacks. The inherited parser sends 49 electric/cold/poison/magic cells to physical and 12 energy cells to Earth; 134 inactive secondary placeholders are separate.
 - Recorded the exact title-specific mapping and resistance evidence still needed in `project/MM6_F4_MONSTER_DAMAGE_AUDIT.md`. No runtime damage rule was changed, original installation reread or MM6 process launched.
 
+## [2026-11-06] fix | MM6 class event operand bound
+- by: T-Burton-ND via codex
+- The F3-matched active variable ledger has 106 raw class-ID-2 uses: 58 comparisons and 48 sets, all with values 0–17. Added an MM6-only value gate before the inherited event executor so MM7-only class operands 18–35 cannot reach MM6 class state.
+- The arm64 unit target built and all three MM6 event-variable tests passed. Promotion effects and the remaining shared-looking IDs still need title-specific checks; no original installation was reread or MM6 game launched.
+
 ## [2026-11-06] ingest | MM6 known-save map/base pass
 - by: T-Burton-ND via codex
 - Added an MM6-only candidate validator that decodes all sixteen known `.ec6` sections, requires the private expected map-name set, and parses each of 67 delta entries with its caller-supplied base entry before returning or assigning any state.

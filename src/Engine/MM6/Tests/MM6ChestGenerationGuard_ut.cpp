@@ -5,6 +5,7 @@
 
 #include "Engine/Objects/Chest.h"
 #include "Engine/MM6/MM6ChestBaseItemPicker.h"
+#include "Engine/MM6/MM6ChestItemFinalizer.h"
 
 UNIT_TEST(MM6ChestGenerationGuard, BlocksMM6BeforeInheritedChestMutation) {
     EXPECT_EQ(mm6::chestGenerationRoute(GameTitle::MM6), mm6::ChestGenerationRoute::Blocked);
@@ -112,4 +113,128 @@ UNIT_TEST(MM6ChestGenerationGuard, BasePickerFailsClosedForInvalidInputsAndMM7) 
     weights[4] = 3;
     artifacts[0] = 2;
     EXPECT_FALSE(mm6::pickChestBaseItemId(GameTitle::MM6, ITEM_TREASURE_LEVEL_4, weights, artifacts, 17));
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, FinalizerKeepsPlainPotionFieldsAndWandDraw) {
+    mm6::ChestBaseItemPick base{};
+    base.itemId = 160;
+    base.nextRngState = 505908858u;
+    base.drawsConsumed = 2;
+    mm6::ChestItemFinalizationRules rules{};
+    for (auto &range : rules.standardStrengthRange)
+        range = {1, 1};
+
+    auto potion = mm6::finalizeChestAnyItem(GameTitle::MM6, ITEM_TREASURE_LEVEL_4, base,
+                                           {160, ITEM_TYPE_POTION, false, 0}, rules);
+    ASSERT_TRUE(potion.has_value());
+    EXPECT_EQ(potion->itemId, 160);
+    EXPECT_EQ(potion->flags, 1u);
+    EXPECT_EQ(potion->standardAttributeIndex, 0);
+    EXPECT_EQ(potion->standardStrength, 0);
+    EXPECT_EQ(potion->numCharges, 0);
+    EXPECT_EQ(potion->drawsConsumed, 2);
+    EXPECT_EQ(potion->nextRngState, 505908858u);
+
+    base.itemId = 135;
+    auto wand = mm6::finalizeChestAnyItem(GameTitle::MM6, ITEM_TREASURE_LEVEL_4, base,
+                                         {135, ITEM_TYPE_WAND, true, 50}, rules);
+    ASSERT_TRUE(wand.has_value());
+    EXPECT_EQ(wand->flags, 0u);
+    EXPECT_EQ(wand->numCharges, 54);
+    EXPECT_EQ(wand->drawsConsumed, 3);
+    EXPECT_EQ(wand->nextRngState, 3539360597u);
+    EXPECT_EQ(base.nextRngState, 505908858u);
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, FinalizerPreservesStandardZeroRemainderBias) {
+    mm6::ChestBaseItemPick base{};
+    base.itemId = 200;
+    base.nextRngState = 4;
+    base.drawsConsumed = 2;
+    mm6::ChestItemFinalizationRules rules{};
+    for (auto &range : rules.standardStrengthRange)
+        range = {1, 1};
+    rules.equipmentStandardChance[3] = 100;
+    rules.standardAttributeWeightsForType[1] = 3;
+    rules.standardAttributeWeightsForType[2] = 2;
+    rules.standardStrengthRange[3] = {4, 6};
+
+    auto result = mm6::finalizeChestAnyItem(GameTitle::MM6, ITEM_TREASURE_LEVEL_4, base,
+                                           {200, ITEM_TYPE_RING, false, 0}, rules);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->standardAttributeIndex, 1);  // Zero roll chooses zero-weight first row.
+    EXPECT_EQ(result->standardStrength, 4);
+    EXPECT_EQ(result->specialEnchantmentId, 0);
+    EXPECT_EQ(result->drawsConsumed, 5);
+    EXPECT_EQ(result->nextRngState, 3927378665u);
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, FinalizerFiltersSpecialRowsByTier) {
+    mm6::ChestBaseItemPick base{};
+    base.itemId = 200;
+    base.nextRngState = 5;
+    base.drawsConsumed = 2;
+    mm6::ChestItemFinalizationRules rules{};
+    for (auto &range : rules.standardStrengthRange)
+        range = {1, 1};
+    rules.equipmentStandardChance[3] = 1;
+    rules.equipmentSpecialChance[3] = 99;
+    rules.specialChancesForType[2] = {2, 3};
+    rules.specialChancesForType[4] = {2, 2};
+    rules.specialChancesForType[6] = {3, 100};  // Tier 4 excludes level code 3.
+
+    auto equipment = mm6::finalizeChestAnyItem(GameTitle::MM6, ITEM_TREASURE_LEVEL_4, base,
+                                               {200, ITEM_TYPE_RING, true, 0}, rules);
+    ASSERT_TRUE(equipment.has_value());
+    EXPECT_EQ(equipment->specialEnchantmentId, 5);
+    EXPECT_EQ(equipment->standardAttributeIndex, 0);
+    EXPECT_EQ(equipment->flags, 0u);
+    EXPECT_EQ(equipment->drawsConsumed, 4);
+    EXPECT_EQ(equipment->nextRngState, 1880463015u);
+
+    base.itemId = 10;
+    rules.weaponSpecialChance[2] = 100;
+    rules.specialChancesForType = {};
+    rules.specialChancesForType[0] = {0, 3};
+    rules.specialChancesForType[1] = {1, 2};
+    rules.specialChancesForType[2] = {2, 100};
+    auto weapon = mm6::finalizeChestAnyItem(GameTitle::MM6, ITEM_TREASURE_LEVEL_3, base,
+                                            {10, ITEM_TYPE_BOW, false, 0}, rules);
+    ASSERT_TRUE(weapon.has_value());
+    EXPECT_EQ(weapon->specialEnchantmentId, 2);
+    EXPECT_EQ(weapon->drawsConsumed, 4);
+    EXPECT_EQ(weapon->nextRngState, 1880463015u);
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, FinalizerStagesArtifactAndRejectsMalformedRows) {
+    mm6::ChestBaseItemPick base{};
+    base.itemId = 404;
+    base.nextRngState = 1743419155u;
+    base.drawsConsumed = 2;
+    base.generatedArtifactFlags[4] = 1;
+    mm6::ChestItemFinalizationRules rules{};
+    auto artifact = mm6::finalizeChestAnyItem(GameTitle::MM6, ITEM_TREASURE_LEVEL_6, base,
+                                             {}, rules);
+    ASSERT_TRUE(artifact.has_value());
+    EXPECT_EQ(artifact->flags, 0u);
+    EXPECT_EQ(artifact->generatedArtifactFlags[4], 1);
+    EXPECT_EQ(artifact->nextRngState, base.nextRngState);
+    EXPECT_EQ(artifact->drawsConsumed, base.drawsConsumed);
+
+    base.itemId = 200;
+    base.drawsConsumed = 2;
+    rules.equipmentStandardChance[3] = 100;
+    for (auto &range : rules.standardStrengthRange)
+        range = {1, 1};
+    EXPECT_FALSE(mm6::finalizeChestAnyItem(GameTitle::MM6, ITEM_TREASURE_LEVEL_4, base,
+                                           {200, ITEM_TYPE_RING, false, 0}, rules));
+    rules.standardAttributeWeightsForType[0] = 1;
+    rules.specialChancesForType[0] = {4, 1};
+    EXPECT_FALSE(mm6::finalizeChestAnyItem(GameTitle::MM6, ITEM_TREASURE_LEVEL_4, base,
+                                           {200, ITEM_TYPE_RING, false, 0}, rules));
+    rules.specialChancesForType[0] = {0, 1};
+    EXPECT_FALSE(mm6::finalizeChestAnyItem(GameTitle::MM7, ITEM_TREASURE_LEVEL_4, base,
+                                           {200, ITEM_TYPE_RING, false, 0}, rules));
+    EXPECT_EQ(base.nextRngState, 1743419155u);
+    EXPECT_EQ(base.generatedArtifactFlags[4], 1);
 }

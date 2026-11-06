@@ -11,6 +11,11 @@
 
 namespace mm6 {
 
+inline std::uint32_t nextChestRandom15(std::uint32_t &state) {
+    state = state * 214013u + 2531011u;
+    return (state >> 16) & 0x7fffu;
+}
+
 // Detached base-ID stage of the original MM6 ANY-item picker. It does not
 // construct an Item, write live artifact state, or bypass the chest-load guard.
 struct ChestBaseItemPick {
@@ -50,9 +55,8 @@ inline std::optional<ChestBaseItemPick> pickChestBaseItemId(
     ChestBaseItemPick result;
     result.generatedArtifactFlags = generatedArtifactFlags;
     auto draw = [&result, &rngState]() {
-        rngState = rngState * 214013u + 2531011u;
         ++result.drawsConsumed;
-        return (rngState >> 16) & 0x7fffu;
+        return nextChestRandom15(rngState);
     };
 
     // The original ANY path draws this candidate at every treasure tier.

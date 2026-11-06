@@ -246,3 +246,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a title-specific Question text prompt with two-answer matching, encoded-target and next-step continuation, and Escape cancellation. The three string fields follow the MMExtension command reference.
 - Recorded this as provisional F4 behavior pending visible correct, incorrect and cancel branch checks. The integrated MM6 build and nineteen focused C++ tests passed, including all 68 active retained EVT resources.
+
+## [2026-11-06] ingest | MM6 outdoor delta runtime projection
+- by: T-Burton-ND via codex
+- Added a title-specific MM6 DDM loader projection for visibility, reset fields, actors, ground objects and chests, retaining the full decoded wire as an opaque sidecar. MM7's loader branch remains separate.
+- Built the arm64 native unit target and passed eight focused checks, including all 15 retained outdoor deltas. No original archive was reopened and no partial MM6 game was launched.
+- Marked actor buff/spell semantics, chest grid interpretation, persistent bytes, tail, changed-state encoding, `.ec6` save/reload and F5 graphical behavior as open.

@@ -62,6 +62,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Chest Runtime Projection](MM6-F4-Chest-Runtime-Projection.md) — Bounded resolved-record to ChestInventory/Item stage and 140-cell indoor/outdoor changed-grid writers; live handoff remains gated
 - [MM6 F4 Chest Map Load Handoff](MM6-F4-Chest-Map-Load-Handoff.md) — Detached atomic 20-record generation/projection owner bundle with MM6 LCG/artifact rollback; live adapter and save are separate
 - [MM6 F4 Chest Live Owner Adapter](MM6-F4-Chest-Live-Owner-Adapter.md) — Opt-in MM6 title-state owner and atomic actual `vChests`/active-sidecar adapter; guarded load and `.ec6` persistence remain open
+- [MM6 F4 Chest Map Load Route](MM6-F4-Chest-Map-Load-Route.md) — Scoped MM6-only loader join with party artifact scan and twenty-chest atomic sidecar handoff; default guard remains closed pending headless proof
 - [MM6 F4 Chest Type and Entry](MM6-F4-Chest-Type-and-Entry.md) — Original 9×9 active area despite 14×10 metadata; detached eight-type icon/layout adapter
 - [MM6 F4 Movie Lookup](MM6-F4-Movie-Lookup.md) — Exact extensionless VID lookup, owner-matched name coverage and remaining playback checks
 - [MM6 F4 Awards](MM6-F4-Awards.md) — Retained text loading, formatted-row guard and open award ordering/counter rules

@@ -74,6 +74,7 @@
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6CreationRules.h"
+#include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
@@ -1026,7 +1027,12 @@ void Engine::_461103_load_level_sub() {
         nextActorReuseScanStart = 0;
     }
 
-    mm6::generateChestItemsForTitle(gameTitle());
+    // The scoped MM6 route is for integrated headless acceptance. Without a
+    // complete validated chest/sidecar/title-state transaction, retain the
+    // original fail-closed guard. MM7 always takes its inherited route.
+    if (gameTitle() != GameTitle::MM6 ||
+        !mm6::tryActiveChestMapLoad(gameTitle(), _currentLoadedMapId, pMapTable, pItemTable, pParty))
+        mm6::generateChestItemsForTitle(gameTitle());
     UpdateChestPositions();
     pGameLoadingUI_ProgressBar->Progress();
     pParty->arenaState = ARENA_STATE_INITIAL;

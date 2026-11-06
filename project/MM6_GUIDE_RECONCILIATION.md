@@ -21,6 +21,12 @@ manual's page headings and Prima's contents and chapter starts. OCR has broken
 words in places; a guide statement with an uncertain reading must be checked
 against the page image and owned data before implementation.
 
+The [F2 guide review ledger](MM6_GUIDE_F2_REVIEW.md) now maps 14 chapter
+families to current consumers and acceptance checks. Its private page probe
+indexed all 478 retained PDF pages, but that is a locator and text-extraction
+check. It does not establish claim-by-claim coverage of every spell, item,
+monster, quest, service or map. Those direct comparisons remain open here.
+
 ## Rules and interface coverage
 
 | Feature family | Guide evidence | MM6 implementation and verification obligation |

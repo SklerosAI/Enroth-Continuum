@@ -12,7 +12,9 @@ Focused F2 specifications: [guide and campaign evidence](MM6_GUIDE_RECONCILIATIO
 [save and map-delta layout](MM6_SAVE_SPEC.md),
 [presentation and media routing](MM6_MEDIA_UI_SPEC.md),
 [text-table consumers](MM6_TABLE_CONSUMER_SPEC.md), and
-[monster/combat rules](MM6_MONSTER_COMBAT_SPEC.md). These are audit inputs, not
+[monster/combat rules](MM6_MONSTER_COMBAT_SPEC.md),
+[combat semantics](MM6_COMBAT_SEMANTICS_F2.md), and
+[guide F2 review](MM6_GUIDE_F2_REVIEW.md). These are audit inputs, not
 claims that their runtime behavior is implemented.
 
 ## Evidence and boundaries
@@ -53,6 +55,11 @@ claims that their runtime behavior is implemented.
   [MM6_GUIDE_RECONCILIATION.md](MM6_GUIDE_RECONCILIATION.md). Page locators
   and acceptance scenarios are recorded; detailed rule-by-rule comparison
   with shipped tables and actual effects remains open.
+- [x] Index every page of the retained manual (61), reference card (5), and
+  Prima guide (412) in an ignored fingerprint report and record 14 guide
+  families, engine consumers, confidence and F3/F4/F5 scenarios in
+  [MM6_GUIDE_F2_REVIEW.md](MM6_GUIDE_F2_REVIEW.md). Forty low-text pages
+  need visual care; the index is not a sentence-by-sentence semantic review.
 - [ ] Reconcile conflicting guide claims against the shipped GOG data. Keep
   guide citations and disputed claims here; never publish copied guide text.
 - [ ] Run a single deliberate read-only original-archive preflight after this
@@ -164,6 +171,13 @@ that requirement.
   cells falling to physical, 46 missile cells falling to `NONE`, 13 monster
   spell cells falling to `SPELL_NONE`, and 11 special-attack cells falling to
   `NONE`. This is parser inventory, not observed combat behavior.
+- [x] Join all 173 retained monster rows to inherited combat consumers and
+  record identity, attack, missile, spell, special, resistance, AI and loot
+  gaps with confidence and F4/F5 scenarios in
+  [MM6_COMBAT_SEMANTICS_F2.md](MM6_COMBAT_SEMANTICS_F2.md). The ignored
+  `combat-semantics-probe.json` preserves per-ID evidence. Exact Magic/Energy
+  resistance, AI/factions, sprite/spawn joins, fixed drops and conditions
+  remain open; this is not a working encounter.
 - [ ] Give MM6 title-specific monster IDs/families, projectiles, damage and
   resistance channels, special attacks, spell casts, hostility/faction rules,
   treasure and fixed drops. Eliminate silent fallbacks for active labels and

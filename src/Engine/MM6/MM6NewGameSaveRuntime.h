@@ -3,9 +3,11 @@
 #include <cstdint>
 #include <filesystem>
 #include <functional>
+#include <memory>
 #include <span>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 #include "Engine/GameTitle.h"
@@ -23,6 +25,13 @@ using DefaultDeltaReader = std::function<Blob(std::string_view)>;
 
 constexpr std::string_view NEW_GAME_AUTOSAVE_SLOT = "autosave.ec6";
 constexpr std::string_view NEW_GAME_FIRST_MAP = "oute3.odm";
+
+// Capture all represented fresh-session owners before the first map is
+// loaded. Placement is applied to a Party copy, never the live Party.
+KnownSaveFields captureFirstMapKnownSeed(
+    const Party &party, const NPCStats &npcs, const Timer &timer,
+    const ActiveOverlayList &overlays, std::string_view displayName,
+    std::size_t overlayTableCount, GameTitle title);
 
 // Build only the currently represented known-section candidate. The seed must
 // already contain detached Party, NPC and visual capture plus an explicitly
@@ -67,5 +76,32 @@ PreparedNewGameSession writeAndStageOfflineNewGameAutosave(
     const DefaultDeltaReader &readDefaultDelta, const MapBaseReader &readBase,
     const GroundItemVerifier &verifyItem, std::size_t overlayTableCount,
     const ChestSeedEntropy &chestEntropy, GameTitle title);
+
+struct PublishedFirstMapCache {
+    PreparedNewGameSession prepared;
+    std::unordered_map<std::string, Blob> priorMapDeltas;
+    ChestTitleState priorChest;
+    bool active = true;
+};
+
+// Publish only the prepared default-delta cache and CHST title owner after a
+// successful atomic write. Both swaps are no-throw; the returned prior values
+// allow a later map-entry failure to restore these two owners on a separate
+// rollback path. SaveLoad remains guarded pending full session commit proof.
+std::unique_ptr<PublishedFirstMapCache> writeAndPublishOfflineNewGameAutosave(
+    const std::filesystem::path &profileRoot, const KnownSaveFields &seed,
+    const Party &liveParty, const NPCStats &liveNpcs, const Timer &liveTimer,
+    const ActiveOverlayList &liveOverlays, std::span<const std::string> expectedNames,
+    const DefaultDeltaReader &readDefaultDelta, const MapBaseReader &readBase,
+    const GroundItemVerifier &verifyItem, std::size_t overlayTableCount,
+    const ChestSeedEntropy &chestEntropy,
+    std::unordered_map<std::string, Blob> *mapDeltas, ChestTitleState *titleChest,
+    GameTitle title);
+
+// Restore the two published process owners if first-map entry fails before
+// gameplay resumes. The prior autosave on disk is a separate recovery concern.
+bool rollbackPublishedFirstMapCache(PublishedFirstMapCache *published,
+                                   std::unordered_map<std::string, Blob> *mapDeltas,
+                                   ChestTitleState *titleChest, GameTitle title) noexcept;
 
 } // namespace mm6

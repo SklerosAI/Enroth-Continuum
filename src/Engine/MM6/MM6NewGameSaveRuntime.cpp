@@ -2,15 +2,59 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <memory>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
 #include "MM6AtomicSaveFile.h"
 #include "MM6Archive.h"
+#include "MM6BuffSaveFields.h"
+#include "MM6CoreSaveRuntime.h"
+#include "MM6DurableSaveFields.h"
+#include "MM6HeldItemSaveFields.h"
+#include "MM6HirelingSaveFields.h"
+#include "MM6NpcSaveFields.h"
+#include "MM6RecoverySaveFields.h"
+#include "MM6ResistanceSaveFields.h"
 
 namespace mm6 {
+
+KnownSaveFields captureFirstMapKnownSeed(
+    const Party &party, const NPCStats &npcs, const Timer &timer,
+    const ActiveOverlayList &overlays, std::string_view displayName,
+    std::size_t overlayTableCount, GameTitle title) {
+    if (title != GameTitle::MM6)
+        throw std::runtime_error("MM6 first-map capture cannot read another title");
+
+    Party placed = party;
+    placed.pos = Vec3f(-10178, -11206, 340);
+    placed.uFallStartZ = 340;
+    placed._viewPitch = 0;
+    placed._viewYaw = 128;
+
+    KnownSaveFields fields;
+    fields.core = captureCoreFields(placed, title);
+    fields.durable = captureDurableFields(placed, title);
+    fields.resistances = captureResistanceFields(placed, title);
+    fields.buffs = captureBuffFields(placed, title);
+    fields.hirelings = captureHirelingFields(placed, title);
+    fields.heldItem = captureHeldItem(placed, title);
+    fields.recovery = captureRecoveryFields(placed, title);
+    fields.npcs = captureNpcFields(npcs, title);
+    SessionVisualFields visuals = captureSessionVisualFields(
+        timer, overlays, overlayTableCount, title);
+    fields.metadata.header = {std::string(displayName), std::string(NEW_GAME_FIRST_MAP),
+                              fields.core.party.playingTicks};
+    fields.metadata.timer = visuals.timer;
+    fields.metadata.overlays = visuals.overlays;
+    fields.metadata.ui.activeCharacter = fields.core.party.activeCharacter;
+    fields.chest.activeDeltaName = "oute3.ddm";
+    fields.shopGuildClocks.ready = true;
+    return fields;
+}
 
 std::vector<std::uint8_t> encodeOfflineNewGameAutosave(
     const KnownSaveFields &seed, std::span<const std::string> expectedNames,
@@ -110,6 +154,46 @@ PreparedNewGameSession writeAndStageOfflineNewGameAutosave(
         readDefaultDelta, readBase, verifyItem, overlayTableCount, chestEntropy, title);
     writeAtomicSaveFile(profileRoot, NEW_GAME_AUTOSAVE_SLOT, prepared.bytes);
     return prepared;
+}
+
+std::unique_ptr<PublishedFirstMapCache> writeAndPublishOfflineNewGameAutosave(
+    const std::filesystem::path &profileRoot, const KnownSaveFields &seed,
+    const Party &liveParty, const NPCStats &liveNpcs, const Timer &liveTimer,
+    const ActiveOverlayList &liveOverlays, std::span<const std::string> expectedNames,
+    const DefaultDeltaReader &readDefaultDelta, const MapBaseReader &readBase,
+    const GroundItemVerifier &verifyItem, std::size_t overlayTableCount,
+    const ChestSeedEntropy &chestEntropy,
+    std::unordered_map<std::string, Blob> *mapDeltas, ChestTitleState *titleChest,
+    GameTitle title) {
+    if (title != GameTitle::MM6 || !mapDeltas || !titleChest)
+        throw std::runtime_error("MM6 first-map publication lacks title-local owners");
+    static_assert(std::is_nothrow_swappable_v<std::unordered_map<std::string, Blob>>);
+    static_assert(std::is_nothrow_swappable_v<ChestTitleState>);
+    static_assert(std::is_nothrow_copy_assignable_v<ChestTitleState>);
+
+    PreparedNewGameSession prepared = prepareOfflineNewGameSession(
+        seed, liveParty, liveNpcs, liveTimer, liveOverlays, expectedNames,
+        readDefaultDelta, readBase, verifyItem, overlayTableCount, chestEntropy, title);
+    // Allocate and move the return object before the disk or process changes.
+    auto result = std::unique_ptr<PublishedFirstMapCache>(
+        new PublishedFirstMapCache{std::move(prepared), {}, *titleChest, true});
+    writeAtomicSaveFile(profileRoot, NEW_GAME_AUTOSAVE_SLOT, result->prepared.bytes);
+
+    result->priorMapDeltas.swap(*mapDeltas);
+    mapDeltas->swap(result->prepared.staged.worldAndVisuals.world.mapDeltas);
+    *titleChest = result->prepared.staged.worldAndVisuals.chestTitle;
+    return result;
+}
+
+bool rollbackPublishedFirstMapCache(PublishedFirstMapCache *published,
+                                   std::unordered_map<std::string, Blob> *mapDeltas,
+                                   ChestTitleState *titleChest, GameTitle title) noexcept {
+    if (title != GameTitle::MM6 || !published || !published->active || !mapDeltas || !titleChest)
+        return false;
+    mapDeltas->swap(published->priorMapDeltas);
+    std::swap(*titleChest, published->priorChest);
+    published->active = false;
+    return true;
 }
 
 } // namespace mm6

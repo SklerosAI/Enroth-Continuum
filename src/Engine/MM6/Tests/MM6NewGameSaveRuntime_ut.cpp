@@ -221,6 +221,63 @@ UNIT_TEST(MM6NewGameSaveRuntime, LateOwnerFailurePreservesAutosaveAndProcessOwne
     EXPECT_EQ(readFile(profile.primary()), prior.bytes);
 }
 
+UNIT_TEST(MM6NewGameSaveRuntime, CapturesAndPublishesFirstMapCacheOnlyAfterWrite) {
+    TestProfile profile;
+    const auto names = expectedNames();
+    Party party;
+    party.uNumGold = 457;
+    party.pos = Vec3f(8, 9, 10);
+    NPCStats npcs{};
+    Timer timer;
+    ActiveOverlayList overlays;
+    mm6::KnownSaveFields source = mm6::captureFirstMapKnownSeed(
+        party, npcs, timer, overlays, "Fresh MM6", 5, GameTitle::MM6);
+    EXPECT_EQ(source.core.party.position[0], -10178);
+    EXPECT_EQ(source.core.party.position[1], -11206);
+    EXPECT_EQ(source.core.party.position[2], 340);
+    EXPECT_EQ(source.core.party.gold, 457);
+    EXPECT_EQ(party.pos.x, 8);
+    EXPECT_EQ(source.metadata.header.mapFileName, "oute3.odm");
+
+    std::unordered_map<std::string, Blob> cache;
+    cache.emplace("old.ddm", Blob::fromString("old map"));
+    mm6::ChestTitleState titleChest{true, 71, {}};
+    const mm6::ChestSeedEntropy entropy = [] {
+        return std::optional<std::uint32_t>(0xfeedbeef);
+    };
+    EXPECT_THROW((void) mm6::writeAndPublishOfflineNewGameAutosave(
+        "relative-profile", source, party, npcs, timer, overlays, names,
+        defaultReader(), baseReader(), [](std::int32_t) { return true; },
+        5, entropy, &cache, &titleChest, GameTitle::MM6), std::exception);
+    EXPECT_EQ(cache.size(), 1);
+    EXPECT_EQ(cache.at("old.ddm").str(), "old map");
+    EXPECT_EQ(titleChest.lcgState, 71u);
+
+    auto published = mm6::writeAndPublishOfflineNewGameAutosave(
+        profile.root(), source, party, npcs, timer, overlays, names,
+        defaultReader(), baseReader(), [](std::int32_t) { return true; },
+        5, entropy, &cache, &titleChest, GameTitle::MM6);
+    EXPECT_EQ(readFile(profile.primary()), published->prepared.bytes);
+    EXPECT_EQ(cache.size(), 67);
+    EXPECT_TRUE(cache.contains("oute3.ddm"));
+    EXPECT_EQ(published->priorMapDeltas.at("old.ddm").str(), "old map");
+    EXPECT_EQ(published->priorChest.lcgState, 71u);
+    EXPECT_TRUE(titleChest.ready);
+    EXPECT_EQ(titleChest.lcgState, 0xfeedbeefu);
+    EXPECT_EQ(party.pos.x, 8);
+    EXPECT_EQ(party.uNumGold, 457);
+    EXPECT_FALSE(mm6::rollbackPublishedFirstMapCache(
+        published.get(), &cache, &titleChest, GameTitle::MM7));
+    EXPECT_EQ(cache.size(), 67);
+    EXPECT_TRUE(mm6::rollbackPublishedFirstMapCache(
+        published.get(), &cache, &titleChest, GameTitle::MM6));
+    EXPECT_EQ(cache.size(), 1);
+    EXPECT_EQ(cache.at("old.ddm").str(), "old map");
+    EXPECT_EQ(titleChest.lcgState, 71u);
+    EXPECT_FALSE(mm6::rollbackPublishedFirstMapCache(
+        published.get(), &cache, &titleChest, GameTitle::MM6));
+}
+
 UNIT_TEST(MM6NewGameSaveRuntime, LateFinalMapFailurePreservesPriorAutosave) {
     TestProfile profile;
     const std::vector<std::string> names = expectedNames();

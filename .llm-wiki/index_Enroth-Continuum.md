@@ -48,6 +48,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 House Service Gate](MM6-F4-House-Service-Gate.md) — House type families and pre-mutation entry boundary pending MM6 services
 - [MM6 F4 Room Descriptors](MM6-F4-Room-Descriptors.md) — Private 119-room manifest, all 674 entry dispositions, 116 decoded room frames and one decoded event sound
 - [MM6 F4 Chest Generation](MM6-F4-Chest-Generation.md) — MM6 load guard, PE-backed remap and detached seeded ANY base-item/field picker; placement and persistence gates
+- [MM6 F4 Chest Placement](MM6-F4-Chest-Placement.md) — original 140-cell in-memory grid, detached seeded fit/placement model, save-grid gate
 - [MM6 F4 Movie Lookup](MM6-F4-Movie-Lookup.md) — Exact extensionless VID lookup, owner-matched name coverage and remaining playback checks
 - [MM6 F4 Awards](MM6-F4-Awards.md) — Retained text loading, formatted-row guard and open award ordering/counter rules
 - [MM6 F4 Spell Rules](MM6-F4-Spell-Rules.md) — Private F3-backed 99-spell mana/recovery selection and unresolved cast/effect routes

@@ -6,6 +6,7 @@
 #include "Engine/Objects/Chest.h"
 #include "Engine/MM6/MM6ChestBaseItemPicker.h"
 #include "Engine/MM6/MM6ChestItemFinalizer.h"
+#include "Engine/MM6/MM6ChestPlacement.h"
 
 UNIT_TEST(MM6ChestGenerationGuard, BlocksMM6BeforeInheritedChestMutation) {
     EXPECT_EQ(mm6::chestGenerationRoute(GameTitle::MM6), mm6::ChestGenerationRoute::Blocked);
@@ -237,4 +238,96 @@ UNIT_TEST(MM6ChestGenerationGuard, FinalizerStagesArtifactAndRejectsMalformedRow
                                            {200, ITEM_TYPE_RING, false, 0}, rules));
     EXPECT_EQ(base.nextRngState, 1743419155u);
     EXPECT_EQ(base.generatedArtifactFlags[4], 1);
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, PlacementStagesGridAndWandChargeDraw) {
+    mm6::ChestPlacementInput input;
+    input.title = GameTitle::MM6;
+    input.width = 3;
+    input.height = 2;
+    input.rngState = 67;
+    input.items[0] = {10, 16, 16, 0};
+    input.items[1] = {135, 50, 16, 0};
+    input.items[2] = {200, 16, 16, 0};
+
+    auto placed = mm6::placeChestItemsDetached(input);
+    ASSERT_TRUE(placed.has_value());
+    EXPECT_EQ(placed->placedCount, 3);
+    EXPECT_EQ(placed->unplacedCount, 0);
+    EXPECT_EQ(placed->flags, 2);
+    EXPECT_EQ(placed->drawsConsumed, 206);
+    EXPECT_EQ(placed->nextRngState, 4188316497u);
+    EXPECT_EQ(placed->items[1].currentCharges, 28);
+    EXPECT_EQ(placed->grid[1], 3);   // Third item anchor stores slot + 1.
+    EXPECT_EQ(placed->grid[3], 2);   // Wand anchor.
+    EXPECT_EQ(placed->grid[4], -4);  // Wand body refers to anchor cell 3.
+    EXPECT_EQ(placed->grid[5], 1);   // First item anchor.
+    EXPECT_EQ(input.grid[3], 0);
+    EXPECT_EQ(input.items[1].currentCharges, 0);
+    EXPECT_EQ(input.rngState, 67u);
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, PlacementKeepsNoFitItemWithoutExtraWandDraw) {
+    mm6::ChestPlacementInput input;
+    input.title = GameTitle::MM6;
+    input.width = 2;
+    input.height = 1;
+    input.rngState = 4;
+    input.items[0] = {10, 50, 16, 0};
+    input.items[1] = {135, 16, 16, 0};
+
+    auto placed = mm6::placeChestItemsDetached(input);
+    ASSERT_TRUE(placed.has_value());
+    EXPECT_EQ(placed->placedCount, 1);
+    EXPECT_EQ(placed->unplacedCount, 1);
+    EXPECT_EQ(placed->grid[0], 1);
+    EXPECT_EQ(placed->grid[1], -1);
+    EXPECT_EQ(placed->items[1].itemId, 135);
+    EXPECT_EQ(placed->items[1].currentCharges, 0);
+    EXPECT_EQ(placed->drawsConsumed, 192);
+    EXPECT_EQ(placed->nextRngState, 3372229316u);
+    EXPECT_EQ(placed->flags, 2);  // Original marks initialized even when an item cannot fit.
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, PlacementUsesCellsBeyondInheritedNineByNineGrid) {
+    mm6::ChestPlacementInput input;
+    input.title = GameTitle::MM6;
+    input.width = 14;
+    input.height = 10;
+    input.rngState = 6;
+    input.items[0] = {10, 16, 16, 0};
+
+    auto placed = mm6::placeChestItemsDetached(input);
+    ASSERT_TRUE(placed.has_value());
+    EXPECT_EQ(placed->placedCount, 1);
+    EXPECT_EQ(placed->grid[128], 1);
+    EXPECT_EQ(placed->drawsConsumed, 255);
+    EXPECT_EQ(placed->nextRngState, 2019930943u);
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, PlacementRejectsMalformedOrRepeatedInputAtomically) {
+    mm6::ChestPlacementInput input;
+    input.title = GameTitle::MM6;
+    input.width = 2;
+    input.height = 1;
+    input.rngState = 4;
+    input.items[0] = {10, 16, 16, 0};
+    input.items[1] = {-1, 16, 16, 0};
+    EXPECT_FALSE(mm6::placeChestItemsDetached(input));
+    EXPECT_EQ(input.rngState, 4u);
+    EXPECT_EQ(input.grid[0], 0);
+    EXPECT_EQ(input.flags, 0);
+
+    input.items[1] = {};
+    input.grid[0] = 1;
+    EXPECT_FALSE(mm6::placeChestItemsDetached(input));
+    input.grid[0] = 0;
+    input.flags = 2;
+    EXPECT_FALSE(mm6::placeChestItemsDetached(input));
+    input.flags = 0;
+    input.title = GameTitle::MM7;
+    EXPECT_FALSE(mm6::placeChestItemsDetached(input));
+    input.title = GameTitle::MM6;
+    input.width = 141;
+    EXPECT_FALSE(mm6::placeChestItemsDetached(input));
 }

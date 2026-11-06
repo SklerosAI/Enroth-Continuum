@@ -34,6 +34,8 @@ For every count, check `count <= remaining // record_width` before multiplicatio
 
 The item-region split is supported by the editor's `ItemContainer` record arithmetic and the observed 4,204-byte chest stride, not by a game-play test. The uniformly zero grid region is precisely why neither 9×9 nor 14×10 can be promoted to established semantics.
 
+**F4 update:** A bounded original-MM6 PE placement trace now proves that the **in-memory** chest addresses all 280 final bytes as 140 signed 16-bit grid cells; see [MM6 chest placement](MM6_F4_CHEST_PLACEMENT.md). The zero-filled retained delta records still cannot prove how changed grid cells are serialized. Preserve those wire bytes until a changed-state save or save-path trace establishes equivalence.
+
 ## F3/F4 handoff
 
 At the planned one-time F3 original-data reconciliation, compare these expected widths and offsets with original entry framing and inventory metadata; keep exact bytes, map names, hashes and any changed-state captures private. Record any disagreement before freezing the decoder. F4 must implement a title-tagged MM6 lossless sidecar or dedicated snapshot so untouched actor, item, chest, door, persistent and tail bytes survive decode → runtime mutation → encode. Add strict malformed-input rejection and cross-title rejection before state mutation. F5 should observe moving/dead actors, picked-up objects, opened/looted chests, moving doors, map event flags, weather and timed resets in the graphical game, then save/reload and compare; a byte-exact Python split alone does not establish playability.

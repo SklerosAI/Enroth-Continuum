@@ -1026,7 +1026,7 @@ void Engine::_461103_load_level_sub() {
         nextActorReuseScanStart = 0;
     }
 
-    GenerateItemsInChest();
+    mm6::generateChestItemsForTitle(gameTitle());
     UpdateChestPositions();
     pGameLoadingUI_ProgressBar->Progress();
     pParty->arenaState = ARENA_STATE_INITIAL;

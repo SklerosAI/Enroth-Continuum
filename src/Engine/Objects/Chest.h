@@ -3,6 +3,7 @@
 #include <vector>
 #include <optional>
 
+#include "Engine/GameTitle.h"
 #include "Engine/Objects/Item.h"
 #include "Engine/Pid.h"
 
@@ -48,5 +49,17 @@ struct Chest {
 void RemoveItemAtChestIndex(int index);
 void GenerateItemsInChest();
 void UpdateChestPositions();
+
+namespace mm6 {
+
+enum class ChestGenerationRoute {
+    Blocked,
+    InheritedMM7
+};
+
+ChestGenerationRoute chestGenerationRoute(GameTitle title);
+void generateChestItemsForTitle(GameTitle title);
+
+}  // namespace mm6
 
 extern std::vector<Chest> vChests;

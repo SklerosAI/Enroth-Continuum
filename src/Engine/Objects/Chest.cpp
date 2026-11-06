@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <numeric>
+#include <stdexcept>
 #include <unordered_map>
 #include <vector>
 
@@ -366,6 +367,16 @@ void GenerateItemsInChest() {
                 vChests[i].inventory.take(entry);
         }
     }
+}
+
+mm6::ChestGenerationRoute mm6::chestGenerationRoute(GameTitle title) {
+    return title == GameTitle::MM7 ? ChestGenerationRoute::InheritedMM7 : ChestGenerationRoute::Blocked;
+}
+
+void mm6::generateChestItemsForTitle(GameTitle title) {
+    if (chestGenerationRoute(title) != ChestGenerationRoute::InheritedMM7)
+        throw std::runtime_error("MM6 chest random-item generation is not implemented");
+    GenerateItemsInChest();
 }
 
 void UpdateChestPositions() {

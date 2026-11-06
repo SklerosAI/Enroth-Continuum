@@ -29,6 +29,11 @@ add_library(engine_mm6_outdoor_wire STATIC MM6OutdoorWire.cpp MM6OutdoorWire.h)
 target_check_style(engine_mm6_outdoor_wire)
 
 if(OE_BUILD_TESTS)
+    add_library(test_engine_mm6_chest_guard OBJECT Tests/MM6ChestGenerationGuard_ut.cpp)
+    target_link_libraries(test_engine_mm6_chest_guard PUBLIC testing_unit engine_objects)
+    target_check_style(test_engine_mm6_chest_guard)
+    target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_chest_guard)
+
     add_library(test_engine_mm6_spell_items OBJECT Tests/MM6SpellItems_ut.cpp Tests/MM6SpellLearning_ut.cpp
         Tests/MM6SpellEffectGuard_ut.cpp)
     target_link_libraries(test_engine_mm6_spell_items PUBLIC testing_unit)

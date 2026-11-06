@@ -686,3 +686,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A read-only title-specific decoder now preserves all 557 retained MM6 house rows, their validated room joins, parsed service families, numeric `Val`, raw column `A` stock/skill descriptions, raw column `C` notes and paired hours. The MM6 `A` field is text in all 123 populated rows; 20 of 89 populated `C` fields are nonnumeric. It does not invoke MM7 stock, price, guild or travel services.
 - The private-backed test checks every row and rejects malformed IDs, labels, room IDs, values and hours. Arm64 MM6/MM7/unit targets built; four focused service/room tests passed without skips. The house entry gate remains closed and no original installation or MM6 process was opened.
+
+## [2026-11-06] ingest | MM6 monster spell IDs and 162-test checkpoint
+- by: T-Burton-ND via codex
+- All 55 active retained monster spell cells now resolve through 20 MM6 label-to-ID entries. Thirteen formerly unrecognized cells and fifteen cells with inherited different-ID matches no longer route to `SPELL_NONE` or the wrong MM6 ID. The MM6 monster effect gate remains closed; the MM7 parser is unchanged.
+- The integrated arm64 MM6, OpenEnroth and unit targets built. The offline runner passed 162/162 tests from 51 suites without skips, including the 592-use day-of-year check, private house metadata and monster rows, save-slot listing and all earlier retained checks. The general suite passed 438/438. Shared status and agent handoff now record these seams.
+- No original installation or MM6 process was opened. The protected MM7 app/profile, reserved MM8 checkout and ignored proprietary data boundary remain intact.

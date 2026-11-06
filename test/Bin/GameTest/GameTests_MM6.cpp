@@ -9,6 +9,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Evt/EvtProgram.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
@@ -22,6 +23,7 @@
 #include "Engine/SaveLoad.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Snapshots/MM6OutdoorSnapshot.h"
+#include "Engine/Tables/IconFrameTable.h"
 #include "Engine/Tables/MapTable.h"
 
 #include "GUI/GUIButton.h"
@@ -100,16 +102,21 @@ GAME_TEST(MM6Headless, FirstOutdoorResourcePreflight) {
     ASSERT_NE(firstMap, MAP_INVALID);
     EXPECT_TRUE(isMapOutdoor(firstMap));
     EXPECT_FALSE(isMapIndoor(firstMap));
+    EXPECT_FALSE(isHirelingsBlockedOnMap(GameTitle::MM6, firstMap));
     EXPECT_EQ(pMapTable->pInfos[firstMap].fileName, "oute3.odm");
     ASSERT_TRUE(pGames_LOD->exists("oute3.odm"));
     EXPECT_TRUE(pGames_LOD->exists("oute3.ddm"));
     EXPECT_GT(engine->resources()->eventsData("oute3.evt").size(), 0);
     EXPECT_GT(engine->resources()->eventsData("oute3.str").size(), 0);
+    EvtProgram events = EvtProgram::load(engine->resources()->eventsData("oute3.evt"), GameTitle::MM6);
+    EXPECT_EQ(events.enumerateTriggers(EVENT_OnMapReload).size(), 11);
     EXPECT_EQ(engine->resources()->iconSize("oute3"), Sizei(512, 512));
 
     const LoadingScreenResources loading = fullscreenLoadingResources(GameTitle::MM6, 0);
     EXPECT_EQ(engine->resources()->iconSize(loading.background), Sizei(640, 480));
     EXPECT_TRUE(loading.progress.empty());
+    EXPECT_EQ(engine->resources()->iconSize("bardata"), Sizei(300, 100));
+    EXPECT_EQ(pIconsFrameTable->animationId("turnhour"), -1);
 
     OutdoorLocation_MM7 base;
     deserializeMM6Outdoor(decodeMM6ArchiveEntry(pGames_LOD->read("oute3.odm")), &base);
@@ -131,6 +138,15 @@ TEST(MM6HeadlessFirstOutdoorResources, TitleIsolation) {
     EXPECT_EQ(mm7Last.progress, "loadprog");
     EXPECT_EQ(mm6OutdoorBaseSky(GameTitle::MM6, "plansky2"), "plansky2");
     EXPECT_TRUE(mm6OutdoorBaseSky(GameTitle::MM7, "plansky2").empty());
+}
+
+TEST(MM6HeadlessFirstOutdoorMapId, HirelingRuleIsolation) {
+    // MM6's first outdoor map has numeric ID 15, reused by MM7's Shoals.
+    EXPECT_FALSE(isHirelingsBlockedOnMap(GameTitle::MM6, MAP_SHOALS));
+    EXPECT_FALSE(isHirelingsBlockedOnMap(GameTitle::MM6, MAP_LINCOLN));
+    EXPECT_TRUE(isHirelingsBlockedOnMap(GameTitle::MM7, MAP_SHOALS));
+    EXPECT_TRUE(isHirelingsBlockedOnMap(GameTitle::MM7, MAP_LINCOLN));
+    EXPECT_FALSE(isHirelingsBlockedOnMap(GameTitle::MM7, MAP_HARMONDALE));
 }
 
 GAME_TEST(MM6Headless, MainMenuResourcesAvailable) {

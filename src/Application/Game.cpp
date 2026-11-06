@@ -246,7 +246,7 @@ void Game_StartDialogue(int actor_id) {
 void Game_StartHirelingDialogue(int hireling_id) {
     assert(hireling_id == 0 || hireling_id == 1);
 
-    if (isHirelingsBlockedOnMap(engine->_currentLoadedMapId) || current_screen_type != SCREEN_GAME)
+    if (isHirelingsBlockedOnMap(engine->gameTitle(), engine->_currentLoadedMapId) || current_screen_type != SCREEN_GAME)
         return;
 
     engine->_messageQueue->clear();

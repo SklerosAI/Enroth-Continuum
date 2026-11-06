@@ -2848,7 +2848,7 @@ void CastSpellInfoHelpers::castSpell() {
 
                 case SPELL_DARK_SACRIFICE:
                 {
-                    if (isHirelingsBlockedOnMap(engine->_currentLoadedMapId)) {
+                    if (isHirelingsBlockedOnMap(engine->gameTitle(), engine->_currentLoadedMapId)) {
                         spellFailed(pCastSpell, LSTR_SPELL_FAILED);
                         pPlayer->SpendMana(uRequiredMana); // decrease mana on failure
                         setSpellRecovery(pCastSpell, recoveryTime);

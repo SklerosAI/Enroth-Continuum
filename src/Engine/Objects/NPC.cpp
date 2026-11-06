@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "Engine/Engine.h"
 #include "Engine/Graphics/Indoor.h"
@@ -77,7 +78,7 @@ bool PartyHasDragon() { return pNPCStats->pNPCData[57].Hired(); }
 //----- (00476395) --------------------------------------------------------
 // 0x26 Wizard eye at skill level 2
 bool CheckHiredNPCSpeciality(NpcProfession prof) {
-    if (isHirelingsBlockedOnMap(engine->_currentLoadedMapId))
+    if (isHirelingsBlockedOnMap(engine->gameTitle(), engine->_currentLoadedMapId))
         return false;
 
     for (unsigned i = 0; i < pNPCStats->uNumNewNPCs; ++i) {

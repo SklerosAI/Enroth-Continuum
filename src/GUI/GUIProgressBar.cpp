@@ -36,7 +36,7 @@ bool GUIProgressBar::Initialize(Type type) {
     assert(type == TYPE_Box || type == TYPE_Fullscreen);
     uType = type;
 
-    turnHourIconId = pIconsFrameTable->animationId("turnhour");
+    turnHourIconId = engine->gameTitle() == GameTitle::MM6 ? -1 : pIconsFrameTable->animationId("turnhour");
 
     if (uType == TYPE_Fullscreen) {
         const int variation = engine->gameTitle() == GameTitle::MM6 ? 0 : vrng->random(5) + 1;
@@ -92,7 +92,8 @@ void GUIProgressBar::Draw() {
         pParty->updateCharactersAndHirelingsEmotions();
 
         render->DrawQuad2D(progressbar_dungeon, {80, 122});
-        render->DrawQuad2D(pIconsFrameTable->animationFrame(turnHourIconId, 0_ticks), {100, 146});
+        if (engine->gameTitle() != GameTitle::MM6)
+            render->DrawQuad2D(pIconsFrameTable->animationFrame(turnHourIconId, 0_ticks), {100, 146});
         render->FillRect(Recti(174, 164, floorf((double)(113 * uProgressCurrent) / (double)uProgressMax + 0.5f), 16), colorTable.Red);
     } else {
         if (loading_bg) {

@@ -4,6 +4,11 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Library/Lod/LodReader.h"
+#include "Library/Lod/LodSnapshots.h"
+#include "Library/Serialization/Serialization.h"
+#include "Library/Snapshots/SnapshotSerialization.h"
+
+#include "Utility/Streams/BlobOutputStream.h"
 
 const char brokenLod[] =
     "LOD\0"         "Game"          "MMVI"          "\0\0\0\0"      // signature, version
@@ -65,4 +70,45 @@ UNIT_TEST(LodReader, DisplayPath) {
 
 UNIT_TEST(LodReader, Detect) {
     EXPECT_TRUE(lod::detect(Blob::view(brokenLod, sizeof(brokenLod))));
+}
+
+UNIT_TEST(LodReader, OriginalDirectoryOrder) {
+    // A transport map index refers to the on-disk directory position. `ls()` remains sorted for callers that
+    // need a stable name listing, so the two orders must be checked independently.
+    LodHeader header;
+    header.signature = "LOD";
+    header.version = toString(LOD_VERSION_MM6_GAME);
+    header.numDirectories = 1;
+
+    LodEntry root;
+    root.name = "maps";
+    root.dataOffset = sizeof(LodHeader_MM6) + sizeof(LodEntry_MM6);
+    root.dataSize = 2 * sizeof(LodEntry_MM6) + 2;
+    root.numItems = 2;
+
+    LodEntry first;
+    first.name = "Zeta.odm";
+    first.dataOffset = 2 * sizeof(LodEntry_MM6);
+    first.dataSize = 1;
+    LodEntry second;
+    second.name = "Alpha.blv";
+    second.dataOffset = first.dataOffset + first.dataSize;
+    second.dataSize = 1;
+
+    Blob blob;
+    BlobOutputStream stream(&blob, "ordered.lod");
+    serialize(header, &stream, tags::via<LodHeader_MM6>);
+    serialize(root, &stream, tags::via<LodEntry_MM6>);
+    serialize(first, &stream, tags::via<LodEntry_MM6>);
+    serialize(second, &stream, tags::via<LodEntry_MM6>);
+    stream.write("AB");
+    stream.close();
+
+    LodReader reader(std::move(blob));
+    EXPECT_EQ(reader.ls(), (std::vector<std::string>{"alpha.blv", "zeta.odm"}));
+    EXPECT_EQ(reader.entryNameAtDirectoryIndex(1), "Zeta.odm");
+    EXPECT_EQ(reader.entryNameAtDirectoryIndex(2), "Alpha.blv");
+    EXPECT_EQ(reader.read("zeta.odm").str(), "A");
+    EXPECT_THROW((void) reader.entryNameAtDirectoryIndex(0), std::exception);
+    EXPECT_THROW((void) reader.entryNameAtDirectoryIndex(3), std::exception);
 }

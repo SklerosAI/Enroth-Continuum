@@ -5,8 +5,10 @@
 #include <map>
 #include <string>
 
+#include "Library/Lod/LodReader.h"
 #include "Library/Serialization/Serialization.h"
 
+#include "Utility/Exception.h"
 #include "Utility/MapAccess.h"
 #include "Utility/Memory/Blob.h"
 #include "Utility/String/Ascii.h"
@@ -126,4 +128,17 @@ MapId MapTable::GetMapInfo(std::string_view fileName) {
 
     assert(false); // TODO(captainurist): GUIWindow_IndoorEntryExit checks the result against MAP_INVALID, so this assert or that check is wrong.
     return MAP_INVALID;
+}
+
+MapId MapTable::GetMM6TransportMapInfo(const LodReader &gamesLod, size_t oneBasedDirectoryIndex) const {
+    std::string fileName = ascii::toLower(gamesLod.entryNameAtDirectoryIndex(oneBasedDirectoryIndex));
+    if (!fileName.ends_with(".blv") && !fileName.ends_with(".odm"))
+        throw Exception("MM6 transport destination at Games LOD index {} is not a base map", oneBasedDirectoryIndex);
+
+    for (MapId id : pInfos.indices()) {
+        if (pInfos[id].fileName == fileName)
+            return id;
+    }
+
+    throw Exception("MM6 transport destination at Games LOD index {} is absent from mapstats", oneBasedDirectoryIndex);
 }

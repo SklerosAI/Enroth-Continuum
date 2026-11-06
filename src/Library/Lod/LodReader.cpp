@@ -104,8 +104,11 @@ void LodReader::open(Blob blob, LodOpenFlags openFlags) {
     BlobInputStream dirStream(blob.subBlob(rootEntry.dataOffset, rootEntry.dataSize));
     std::vector<LodEntry> entries = parseFileEntries(dirStream, rootEntry, version);
     std::unordered_map<std::string, LodRegion> files;
+    std::vector<std::string> directoryEntryNames;
     files.reserve(entries.size());
+    directoryEntryNames.reserve(entries.size());
     for (const LodEntry &entry : entries) {
+        directoryEntryNames.push_back(entry.name);
         LodRegion region;
         region.offset = rootEntry.dataOffset + entry.dataOffset;
         region.size = entry.dataSize;
@@ -121,6 +124,7 @@ void LodReader::open(Blob blob, LodOpenFlags openFlags) {
     _info.description = std::move(header.description);
     _info.rootName = std::move(rootEntry.name);
     _files = std::move(files);
+    _directoryEntryNames = std::move(directoryEntryNames);
 }
 
 void LodReader::close() {
@@ -128,6 +132,7 @@ void LodReader::close() {
     _lod = Blob();
     _info = {};
     _files = {};
+    _directoryEntryNames = {};
 }
 
 bool LodReader::exists(std::string_view filename) const {
@@ -158,6 +163,15 @@ std::vector<std::string> LodReader::ls() const {
         result.push_back(name);
     std::sort(result.begin(), result.end());
     return result;
+}
+
+std::string_view LodReader::entryNameAtDirectoryIndex(size_t oneBasedIndex) const {
+    assert(isOpen());
+
+    if (oneBasedIndex == 0 || oneBasedIndex > _directoryEntryNames.size())
+        throw Exception("Directory index {} is outside LOD file '{}' ({} entries)", oneBasedIndex, _lod.displayPath(), _directoryEntryNames.size());
+
+    return _directoryEntryNames[oneBasedIndex - 1];
 }
 
 [[nodiscard]] const LodInfo &LodReader::info() const {

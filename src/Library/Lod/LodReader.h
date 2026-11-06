@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <vector>
 #include <unordered_map>
 
@@ -76,6 +77,14 @@ class LodReader final {
     [[nodiscard]] std::vector<std::string> ls() const;
 
     /**
+     * @return                          The raw name at a one-based directory position, preserving the archive's
+     *                                  original entry order. Numeric MM6 Games LOD references use this order, not
+     *                                  the sorted order returned by `ls()`.
+     * @throws Exception                 If the index is zero or outside the directory.
+     */
+    [[nodiscard]] std::string_view entryNameAtDirectoryIndex(size_t oneBasedIndex) const;
+
+    /**
      * @return                          LOD info, containing LOD version, description of this LOD file as specified in
      *                                  the LOD header, and a name of the single folder inside this LOD file.
      */
@@ -91,6 +100,7 @@ class LodReader final {
     Blob _lod;
     LodInfo _info;
     std::unordered_map<std::string, LodRegion> _files;
+    std::vector<std::string> _directoryEntryNames;
 };
 
 namespace lod {

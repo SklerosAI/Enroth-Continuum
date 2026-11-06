@@ -1,6 +1,6 @@
 # MM6 F4a headless game-test harness
 
-Status: **MM7 linked control passed; MM6 linked startup reaches both test bodies and stays headless; one null-leaf assertion fix awaits linked rerun** (2026-11-06). This implements the [headless integration policy](../.llm-wiki/MM6-Headless-Integration-Policy.md) without changing the normal MM7 game executable or removing any MM6 gameplay guard.
+Status: **MM6 startup and scoped first-world headless checks pass; the full-world probe requires a dedicated process because its global state does not roll back** (2026-11-06). This implements the [headless integration policy](../.llm-wiki/MM6-Headless-Integration-Policy.md) without changing the normal MM7 game executable or removing any MM6 gameplay guard.
 
 ## Entry and isolation
 
@@ -26,10 +26,19 @@ OpenEnroth_GameTest --game mm6 --headless --data-path "$MM6_PRIVATE_DATA" \
   --test-path test/Data --gtest_filter=MM6Headless.StartupAndChestGuard
 ```
 
-The current MM6 guard prevents actual map play. The installed MM7 application and profile are not touched by this candidate.
+The current MM6 save guard prevents the normal New Game route from entering play. A separate scoped test can prepare the first outdoor world in memory; it does not touch the installed MM7 application or profile.
 
 Headless startup also logs missing menu art because the current menu requests MM7-specific icon names that the private MM6 data does not supply. This is a presentation blocker for a future graphical menu, separate from the save/chest gameplay gates. The private assets and their inventories remain outside Git.
 
 ## Verification and remaining gate
 
-The first linked run's host monitor observed 75 samples with `focusChanged=false` and `maxOnScreenWindows=0`; engine startup then failed at `ramfs://rules/creation.json` before the smoke body. A second monitored attempt with `--rules-path` stayed headless across 295 samples but failed at the same file because the seed ran **after** the `GameStarter` constructor, whose engine initialization had already read it. The constructor-time callback fixed that ordering. A third monitored run reached both test bodies and passed `NewGameSaveGuard`; `StartupAndChestGuard` failed only its three direct leaf-type casts against the platform proxies. It showed no focus change or on-screen window across 97 samples. The bounded proxy-chain assertion fix awaits linked rerun. A known-good MM7 headless control passed 1/1 in the integration checkout. The isolated worktree did not perform a duplicate full CMake build, link or MM6 process run. A linked pass would establish only the bounded startup and guard checks, not map or campaign play.
+The MM7 linked headless control passed. MM6's title selector, private-rule seed and null-platform checks have passed in the linked arm64 runner. The [first-map packet](MM6_F4_FIRST_MAP_PREFLIGHT.md) records a monitored first outdoor preparation pass and a later scoped full-world pass with actors and chests. A combined MM6 suite then exposed process-global state retained by the full-world probe: subsequent save and chest tests failed. That probe is disabled by default and must run alone in a fresh process:
+
+```sh
+OpenEnroth_GameTest --game mm6 --headless --data-path "$MM6_PRIVATE_DATA" \
+  --rules-path "$MM6_PRIVATE_RULES" --test-path test/Data \
+  --gtest_also_run_disabled_tests \
+  --gtest_filter=MM6Headless.DISABLED_ScopedFirstOutdoorWorld
+```
+
+Do not combine that filter with other tests. The default MM6 suite skips the disabled probe. The linked arm64 standalone probe passed 1/1, and the normal MM6 suite passed 38/38 in a separate process with the private map source available for its save test. Host monitors observed 44 and 1,899 samples respectively, with no focus change, no on-screen process window and unchanged frontmost PID. Neither mode proves durable save/reload or graphical play.

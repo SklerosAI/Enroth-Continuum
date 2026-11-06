@@ -258,3 +258,8 @@ Chronological record of wiki activity.
 - Added versioned, bounded `PART` and `CHAR` field payloads plus an MM6-only adapter that stages a validated load into a copy of the party.
 - Built the isolated core codec target and ran a compiled round-trip and reject-before-mutation harness; changed runtime adapter and new unit source passed C++23 syntax checks. No game or original installation was opened.
 - Kept live save/load and slots disabled until the remaining state families, whole-save transaction and atomic write policy are implemented.
+
+## [2026-11-06] update | MM6 outdoor and core-save integration
+- by: T-Burton-ND via codex
+- Updated the F4 handoff after integrating the outdoor delta runtime projection and bounded party/character core save codec into the main MM6 build.
+- Ran 25 focused native C++ tests, including 68 active retained EVTs, 52 indoor map pairs and 15 outdoor deltas from ignored local fixtures. Live save/load and graphical MM6 play remain unverified.

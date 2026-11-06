@@ -105,7 +105,7 @@ class PEImage:
                 "value": self.data[offset:end].decode("cp1252", errors="replace")}
 
 
-def extract_tables(image: PEImage) -> dict:
+def extract_creation(image: PEImage) -> dict:
     creation = {}
     for label, (va, count) in CREATION_U8_FIELDS.items():
         raw, at, section = image.slice(va, count)
@@ -117,7 +117,10 @@ def extract_tables(image: PEImage) -> dict:
                                   "values": list(struct.unpack("<13h", raw))}
     creation["starting_skill_codes_outside_0_3"] = sum(
         value > 3 for value in creation["starting_skills"]["values"])
+    return creation
 
+
+def extract_spells(image: PEImage) -> dict:
     spells_raw, spells_at, spells_section = image.slice(SPELLS_VA, SPELL_COUNT * SPELL_SIZE)
     spells = []
     for number in range(SPELL_COUNT):
@@ -126,7 +129,11 @@ def extract_tables(image: PEImage) -> dict:
         delays = list(struct.unpack_from("<hhh", spells_raw, at + 6))
         bits = struct.unpack_from("<H", spells_raw, at + 12)[0]
         spells.append({"id": number, "spell_points": points, "delay": delays, "bits": bits})
+    return {"va": SPELLS_VA, "file_offset": spells_at, "section": spells_section,
+            "record_bytes": SPELL_SIZE, "rows": spells}
 
+
+def extract_houses(image: PEImage) -> dict:
     houses_raw, houses_at, houses_section = image.slice(HOUSES_VA, HOUSE_COUNT * HOUSE_SIZE)
     houses = []
     for number in range(HOUSE_COUNT):
@@ -136,7 +143,11 @@ def extract_tables(image: PEImage) -> dict:
                        "background": houses_raw[at + 4],
                        "npc_picture": struct.unpack_from("<i", houses_raw, at + 8)[0],
                        "house_type": houses_raw[at + 12], "sound_group": houses_raw[at + 13]})
+    return {"va": HOUSES_VA, "file_offset": houses_at,
+            "section": houses_section, "record_bytes": HOUSE_SIZE, "rows": houses}
 
+
+def extract_transport(image: PEImage) -> dict:
     # MMExtension gives the next table address, not a TravelInfo record width.
     # Preserve the intervening bytes as an opaque candidate until F3 decodes it.
     if (TRANSPORT_INDEX_VA - TRANSPORT_VA) % TRANSPORT_COUNT:
@@ -145,18 +156,24 @@ def extract_tables(image: PEImage) -> dict:
         TRANSPORT_VA, TRANSPORT_INDEX_VA - TRANSPORT_VA)
     transports = [transport_raw[i:i + TRANSPORT_CANDIDATE_SIZE].hex()
                   for i in range(0, len(transport_raw), TRANSPORT_CANDIDATE_SIZE)]
+    return {"va": TRANSPORT_VA, "file_offset": transport_at,
+            "section": transport_section,
+            "candidate_record_bytes": TRANSPORT_CANDIDATE_SIZE,
+            "record_hex": transports}
 
-    return {
-        "creation": creation,
-        "spells": {"va": SPELLS_VA, "file_offset": spells_at, "section": spells_section,
-                   "record_bytes": SPELL_SIZE, "rows": spells},
-        "house_movies": {"va": HOUSES_VA, "file_offset": houses_at,
-                         "section": houses_section, "record_bytes": HOUSE_SIZE, "rows": houses},
-        "transport_candidate": {"va": TRANSPORT_VA, "file_offset": transport_at,
-                                "section": transport_section,
-                                "candidate_record_bytes": TRANSPORT_CANDIDATE_SIZE,
-                                "record_hex": transports},
-    }
+
+def extract_tables(image: PEImage) -> dict:
+    tables = {}
+    errors = {}
+    for label, extractor in (("creation", extract_creation), ("spells", extract_spells),
+                             ("house_movies", extract_houses),
+                             ("transport_candidate", extract_transport)):
+        try:
+            tables[label] = extractor(image)
+        except (ValueError, struct.error) as exc:
+            errors[label] = str(exc)
+    tables["errors"] = errors
+    return tables
 
 
 def gate_check(repo: Path, reference: Path, identity_report: Path) -> str:
@@ -221,22 +238,31 @@ def main() -> None:
     data = original.read_bytes()
     actual = sha256(data)
     if actual != expected:
-        parser.error("original executable hash differs from retained F1 identity")
+        output.write_text(json.dumps({"format": 1, "status": "identity_mismatch",
+                                      "expected_sha256": expected, "actual_sha256": actual}, indent=2) + "\n")
+        parser.error("original executable hash differs from retained F1 identity; private report retained")
     try:
         image = PEImage(data)
-        tables = extract_tables(image)
     except ValueError as exc:
-        parser.error(str(exc))
+        output.write_text(json.dumps({"format": 1, "status": "pe_parse_failed",
+                                      "exe_sha256": actual, "error": str(exc)}, indent=2) + "\n")
+        parser.error("PE header validation failed; private report retained")
+    tables = extract_tables(image)
     payload = {"format": 1, "scope": "F3 static PE candidate tables; original runtime behavior unverified",
                "exe_sha256": actual, "image_base": image.image_base,
-               "sections": image.sections, "tables": tables}
+               "sections": image.sections, "status": "complete" if not tables["errors"] else "partial",
+               "tables": tables}
     output.write_text(json.dumps(payload, indent=2) + "\n")
-    print(json.dumps({"exe_identity": "match", "creation_fields": len(CREATION_U8_FIELDS) + 1,
-                      "starting_skill_codes_outside_0_3": tables["creation"]["starting_skill_codes_outside_0_3"],
-                      "spell_rows": SPELL_COUNT,
-                      "house_rows": HOUSE_COUNT, "transport_candidate_rows": TRANSPORT_COUNT,
+    print(json.dumps({"exe_identity": "match", "table_status": payload["status"],
+                      "creation_fields": len(tables.get("creation", {})),
+                      "starting_skill_codes_outside_0_3": tables.get("creation", {}).get("starting_skill_codes_outside_0_3"),
+                      "spell_rows": len(tables.get("spells", {}).get("rows", [])),
+                      "house_rows": len(tables.get("house_movies", {}).get("rows", [])),
+                      "transport_candidate_rows": len(tables.get("transport_candidate", {}).get("record_hex", [])),
                       "house_file_backed_names": sum(row["file_name"]["status"] == "file_backed"
-                                                     for row in tables["house_movies"]["rows"])}))
+                                                     for row in tables.get("house_movies", {}).get("rows", []))}))
+    if tables["errors"]:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

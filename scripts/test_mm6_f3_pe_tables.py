@@ -67,6 +67,14 @@ class PETablesTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             image.file_offset(0x4C4FF0, 100)
 
+    def test_one_unmapped_candidate_preserves_other_tables(self):
+        raw = synthetic_pe()
+        struct.pack_into("<I", raw, 0x178 + 16, 0x14000)
+        result = extract_tables(PEImage(bytes(raw)))
+        self.assertIn("transport_candidate", result["errors"])
+        self.assertIn("spells", result)
+        self.assertIn("creation", result)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -611,3 +611,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - MM6 Escape now calls the targeted-cast cancellation helper before closing the picker. MM6 character targets outside the four party slots reject before spell queue mutation. The outer MM6 effect gate stays closed; held-item, recovery, failure and cue semantics still need a real transaction test and F5 observation.
 - The final combined arm64 MM6/MM7/unit build passed. The one-command offline runner passed 145/145 tests from 45 suites without skips, including owner-matched awards, movie names and house rows; the linked general suite passed 438/438. Public status, build graph and agent handoff now point to these seams. No original installation or MM6 process was opened, and MM7's app/profile was untouched.
+
+## [2026-11-06] audit | MM6 formatted award counter gap
+- by: T-Burton-ND via codex
+- The seven guarded `%u` award rows describe bounties, deaths, prison terms and four arena tiers. A F3-matched active EVT ledger has 193 award-variable uses, none targeting the seven rows. Inherited producer paths set different MM7 award-bit IDs; the current bounty field accumulates reward gold, not a bounty count.
+- Owner guide indexes and existing source do not settle MM6 counter producers, durable values, award-bit writes or display order. The seven rows remain guarded. The ignored private packet records the per-ID joins and acceptance checks; no original installation or MM6 process was opened.

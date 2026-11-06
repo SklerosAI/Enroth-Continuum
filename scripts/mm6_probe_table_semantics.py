@@ -71,6 +71,11 @@ def positive_refs(rows: list[list[str]], column: int) -> list[int]:
     return result
 
 
+def populated(rows: list[list[str]], column: int, zero_is_blank: bool = False) -> int:
+    values = (row[column].strip().strip('"') if len(row) > column else "" for row in rows)
+    return sum(bool(value) and (not zero_is_blank or value != "0") for value in values)
+
+
 def edge(name: str, refs: list[int], target: set[int]) -> dict:
     missing = sorted(set(refs) - target)
     return {"name": name, "reference_count": len(refs),
@@ -107,6 +112,7 @@ def main() -> None:
         table_shapes[name] = {
             "physical_lines": len(lines), "nonempty_lines": len(filled),
             "numeric_rows": len(indexed), "numeric_ids": sorted(indexed),
+            "nonempty_row_widths": dict(sorted(Counter(len(row) for row in filled).items())),
             "numeric_row_widths": dict(sorted(Counter(len(row) for row in indexed.values()).items())),
             "nonnumeric_nonempty_rows": len(filled) - len(indexed),
             "numeric_row_hashes": {str(row_id): hashlib.sha256("\t".join(row).encode("utf-8")).hexdigest()
@@ -142,6 +148,10 @@ def main() -> None:
     scroll_message_ids = [value for value in ids["scroll.txt"] if 500 <= value <= 549]
     message_edge = edge("scroll.MM6_message_range_to_items", scroll_message_ids, ids["items.txt"])
     joins.append(message_edge)
+    award_rows = list(numeric_rows["awards.txt"].values())
+    award_rows_with_priority = populated(award_rows, 2)
+    if award_rows_with_priority != 0:
+        raise ValueError("MM6 award priority column changed; review current parser skip")
     summary = {
         "retained_text_tables": len(TABLES),
         "tables_with_direct_literal_loader": len(TABLES) - len(observed_no_load),
@@ -160,6 +170,14 @@ def main() -> None:
         "message_scroll_rows_in_loader_range": len(scroll_message_ids),
         "message_scroll_missing_items": message_edge["missing_reference_count"],
         "all_scroll_rows_missing_items": joins[8]["missing_reference_count"],
+        "award_numeric_rows": len(award_rows),
+        "award_rows_with_priority_cell": award_rows_with_priority,
+        "award_rows_skipped_by_current_parser": len(award_rows) - award_rows_with_priority,
+        "quest_rows_with_visible_text": populated(list(numeric_rows["quests.txt"].values()), 1, True),
+        "npc_topic_rows_with_label": populated(list(numeric_rows["npctopic.txt"].values()), 1, True),
+        "npc_text_rows_with_text": populated(list(numeric_rows["npctext.txt"].values()), 1, True),
+        "transition_rows_with_description": populated(list(numeric_rows["trans.txt"].values()), 1, True),
+        "item_rows_with_name": populated(list(numeric_rows["items.txt"].values()), 2, True),
     }
     payload = {
         "format": 1,

@@ -21,6 +21,7 @@
 #include "Engine/Evt/MM6QuestBitState.h"
 #include "Engine/Evt/MM6DayOfYear.h"
 #include "Engine/Evt/MM6MonthOfYear.h"
+#include "Engine/Evt/MM6PartyFlying.h"
 #include "Engine/Evt/MM6GoldEvent.h"
 #include "Engine/Evt/MM6NpcEventState.h"
 #include "Engine/Evt/MM6SpriteEvent.h"
@@ -434,6 +435,13 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             if (engine->gameTitle() == GameTitle::MM6 &&
                 std::to_underlying(ir.data.variable_descr.type) == 226) {
                 if (mm6::compareMonthOfYear(pParty->uCurrentMonth, 226, ir.data.variable_descr.value))
+                    return {EVT_FLOW_JUMP, ir.target_step};
+                break;
+            }
+            if (engine->gameTitle() == GameTitle::MM6 &&
+                std::to_underlying(ir.data.variable_descr.type) == 222) {
+                if (mm6::comparePartyFlying(222, ir.data.variable_descr.value, pParty->bFlying,
+                                            pParty->pPartyBuffs[PARTY_BUFF_FLY].Active()))
                     return {EVT_FLOW_JUMP, ir.target_step};
                 break;
             }
@@ -1018,6 +1026,13 @@ int EvtInterpreter::checkTopicStep(int step) {
         if (engine->gameTitle() == GameTitle::MM6 &&
             std::to_underlying(ir->data.variable_descr.type) == 226) {
             if (mm6::compareMonthOfYear(pParty->uCurrentMonth, 226, ir->data.variable_descr.value))
+                return ir->target_step;
+            break;
+        }
+        if (engine->gameTitle() == GameTitle::MM6 &&
+            std::to_underlying(ir->data.variable_descr.type) == 222) {
+            if (mm6::comparePartyFlying(222, ir->data.variable_descr.value, pParty->bFlying,
+                                        pParty->pPartyBuffs[PARTY_BUFF_FLY].Active()))
                 return ir->target_step;
             break;
         }

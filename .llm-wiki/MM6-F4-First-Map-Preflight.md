@@ -9,6 +9,8 @@ tags: [mm6, f4, first-map, resources, headless]
 
 The [first-map month event](MM6-F4-First-Map-Month-Event.md) now has a bounded MM6-only calendar comparison for one interactive branch. Its visible outcome and the separate party-flying timer condition still need an observed game session.
 
+The [party-flying timer comparison](MM6-F4-First-Map-Flying-Event.md) is now backed by a locally checked original executable dispatch. Its downstream spell effect and visible timer outcome remain unverified.
+
 The [public packet](../project/MM6_F4_FIRST_MAP_PREFLIGHT.md) traces new-game startup through the first outdoor loader and records a read-only headless resource preflight.
 
 `Game::loop()` sets `oute3.odm` as the MM6 pending transition and calls guarded `saveNewGame()` before `gameLoop()`. The later `DoPrepareWorld()` path reads map events/strings, dispatches to the outdoor loader, reconstructs the base and a `.ddm` from `pMapDeltas`, and then reaches the still-guarded MM6 chest generator. The test checks the map-table dispatch, base/delta and event resources, the parsed reload-trigger count, minimap icon, one MM6 loading background, and a detached base-map sky field and bitmap. It does not enter the map, execute events or write a save.

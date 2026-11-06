@@ -15,17 +15,33 @@
 #include "Library/Platform/Null/NullEventLoop.h"
 #include "Library/Platform/Null/NullPlatform.h"
 #include "Library/Platform/Null/NullWindow.h"
+#include "Library/Platform/Proxy/ProxyBase.h"
 
 #include "Utility/Exception.h"
 
 #include "GameTestOptions.h"
 #include "MM6HeadlessRules.h"
 
+namespace {
+template<class T>
+T *platformLeaf(T *value) {
+    // PlatformApplication exposes a root proxy. Components installed by
+    // GameStarter add more proxies before the final platform object.
+    for (int depth = 0; depth < 64 && value; ++depth) {
+        auto *proxy = dynamic_cast<ProxyBase<T> *>(value);
+        if (!proxy)
+            return value;
+        value = proxy->base();
+    }
+    return nullptr; // Reject a missing leaf or malformed/cyclic chain.
+}
+} // namespace
+
 GAME_TEST(MM6Headless, StartupAndChestGuard) {
     EXPECT_EQ(engine->gameTitle(), GameTitle::MM6);
-    EXPECT_NE(dynamic_cast<NullPlatform *>(platform), nullptr);
-    EXPECT_NE(dynamic_cast<NullEventLoop *>(eventLoop), nullptr);
-    EXPECT_NE(dynamic_cast<NullWindow *>(window), nullptr);
+    EXPECT_NE(dynamic_cast<NullPlatform *>(platformLeaf(platform)), nullptr);
+    EXPECT_NE(dynamic_cast<NullEventLoop *>(platformLeaf(eventLoop)), nullptr);
+    EXPECT_NE(dynamic_cast<NullWindow *>(platformLeaf(window)), nullptr);
     EXPECT_EQ(window->nativeHandle(), nullptr);
     EXPECT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
     EXPECT_NE(dynamic_cast<MemoryFileSystem *>(ufs), nullptr);

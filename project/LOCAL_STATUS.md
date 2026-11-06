@@ -369,3 +369,27 @@ mutation. The MM6 generator, chest grid, shop save identity, full `.ec6`
 transaction, spell effects and services remain F4 work. No MM6 process was
 launched; the installed MM7 app/profile and reserved MM8 checkout were not
 changed. Proprietary assets and detailed reports remain ignored locally.
+
+## MM6 F4 integrated checkpoint — 214 tests, 2026-11-06
+
+The arm64 MM6, OpenEnroth and unit targets linked after the next isolated
+workstreams were integrated. The private-backed offline gate passed **214/214
+MM6/LOD tests from 61 suites**; the separate general gate passed **438/438**.
+No MM6 process, graphical view or audible playback was launched.
+
+A source-identity-checked MM6 executable trace established a one-HP maximum
+health floor and a distinct 7 × 7 chest marker remap. The chest trace also
+identified original outer RNG behavior and title-specific artifact/item paths;
+the detached remap tests pass, but the live chest guard still stops every MM6
+level load. The original Quick Start choice and four-character class, face,
+name-reference, stat and skill fixture are now documented, with generated
+starter inventory, voice and final spell state still unresolved. A staged
+house greeting candidate is read-only and plays no sound.
+
+Detached `.ec6` `CHAR` v3 now preserves quick spell and spellbook page. A
+partial save coordinator validates all known sections and all 67 map pairs
+before staging NPC/map and timer/overlay owners on copies. Live SaveLoad remains
+closed: active actors/chests, PID rebinding, other state owners and the final
+commit are unproved. Exact PE evidence and GOG assets stay in ignored local
+storage; the installed MM7 app/profile and reserved MM8 checkout were not
+changed.

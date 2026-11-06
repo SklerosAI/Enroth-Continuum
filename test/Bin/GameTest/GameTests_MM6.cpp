@@ -10,6 +10,7 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/EvtProgram.h"
+#include "Engine/Evt/MM6EventVariables.h"
 #include "Engine/Evt/MM6SpriteEvent.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Image.h"
@@ -122,16 +123,36 @@ GAME_TEST(MM6Headless, FirstOutdoorResourcePreflight) {
     OutdoorLocation_MM7 base;
     deserializeMM6Outdoor(decodeMM6ArchiveEntry(pGames_LOD->read("oute3.odm")), &base);
     size_t reloadSpriteActions = 0;
+    size_t reloadFacetTextures = 0;
     for (const EventTrigger trigger : events.enumerateTriggers(EVENT_OnMapReload)) {
+        const EvtInstruction &comparison = events.instruction(trigger.eventId, trigger.eventStep + 1);
+        ASSERT_EQ(comparison.opcode, EVENT_Compare);
+        const int rawVariable = std::to_underlying(comparison.data.variable_descr.type);
+        EXPECT_TRUE(rawVariable == 16 ||
+                    describeMM6Variable(rawVariable).family == MM6VariableFamily::MapByte);
+        const EvtInstruction &branch = events.instruction(trigger.eventId, comparison.target_step);
+        EXPECT_TRUE(branch.opcode == EVENT_SetSprite || branch.opcode == EVENT_ShowMovie);
         for (const EvtInstruction &instruction : events.function(trigger.eventId)) {
-            if (instruction.opcode != EVENT_SetSprite)
-                continue;
-            EXPECT_GE(instruction.data.sprite_texture_descr.cog, 0);
-            EXPECT_LT(static_cast<size_t>(instruction.data.sprite_texture_descr.cog), base.decorations.size());
-            ++reloadSpriteActions;
+            if (instruction.opcode == EVENT_SetSprite) {
+                EXPECT_GE(instruction.data.sprite_texture_descr.cog, 0);
+                EXPECT_LT(static_cast<size_t>(instruction.data.sprite_texture_descr.cog), base.decorations.size());
+                ++reloadSpriteActions;
+            } else if (instruction.opcode == EVENT_ShowMovie) {
+                // Opcode 12 is MM6 outdoor SetTexture, not the MM7 movie opcode.
+                ASSERT_EQ(instruction.gameTitle, GameTitle::MM6);
+                const int model = instruction.data.mm6_outdoor_texture_descr.model;
+                const int facet = instruction.data.mm6_outdoor_texture_descr.facet;
+                ASSERT_GE(model, 0);
+                ASSERT_LT(static_cast<size_t>(model), base.modelExtras.size());
+                ASSERT_GE(facet, 0);
+                EXPECT_LT(static_cast<size_t>(facet), base.modelExtras[model].faces.size());
+                EXPECT_NE(engine->resources()->bitmapSize(instruction.str), Sizei());
+                ++reloadFacetTextures;
+            }
         }
     }
     EXPECT_GT(reloadSpriteActions, 0);
+    EXPECT_GT(reloadFacetTextures, 0);
     const auto terminator = std::find(base.skyTexture.begin(), base.skyTexture.end(), '\0');
     const std::string_view sky(base.skyTexture.data(), terminator - base.skyTexture.begin());
     EXPECT_EQ(mm6OutdoorBaseSky(GameTitle::MM6, sky), "plansky2");

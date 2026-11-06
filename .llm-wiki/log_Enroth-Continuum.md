@@ -414,3 +414,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated bounded `HIRE` and `RCVR` into the partial `.ec6` known-save assembler, which now requires sixteen distinct sections. Added a `PART`/`HEAD`/`RCVR` clock agreement check, nonzero synthetic round-trip values and late recovery failure before destination mutation.
 - Built the native arm64 MM6, MM7 and unit targets from main. The offline runner passed 83/83 native tests plus four F3-matched aggregate checks. HIRE/RESC identity, active turn/rest state and the complete SaveLoad transaction remain open; no original installation or MM6 game process was opened.
+
+## [2026-11-06] review | MM6 buff overlay lifetime and MM7 regression
+- by: T-Burton-ND via codex
+- Checked the current SpellBuff and ActiveOverlayList source: buff overlay IDs are bounded one-based slots, but an animation can finish or its slot be reused while the buff remains active. Recorded why a mandatory active-slot equality check would be unsound without a stronger original-runtime contract.
+- Ran the same linked unit binary with MM6 tests excluded; 438/438 general tests passed. The installed MM7 app and saves were untouched.

@@ -334,3 +334,9 @@ Chronological record of wiki activity.
 - Added a native `.ec6` writer that validates before disk mutation, syncs and verifies same-directory temporary files, retains a validated prior save as a backup, and atomically replaces the primary.
 - Added recovery from a valid backup when the primary is corrupt or missing; documented the trusted native-profile boundary, unsupported RAM/custom filesystems, and incomplete whole-save integration.
 - Three standalone C++ tests passed, including injected partial-write and replacement failures with the previous valid save preserved. C++ style and diff checks passed. No game or original installation was opened.
+
+## [2026-11-06] update | MM6 map-save fields and reproducible offline suite
+- by: T-Burton-ND via codex
+- Added a bounded `.ec6` MAPS section for named opaque MM6 map deltas, with duplicate/path/size and container-integrity checks before assignment. A retained fixture round-tripped all 52 indoor and 15 outdoor deltas byte for byte; content validation against each base map remains a whole-save obligation.
+- Corrected the indoor fixture preparer to distinguish F3 archive extraction hashes from the inner map-compression hash, matching the outdoor preparer. Added one local runner that recreates ignored F3-matched fixtures and runs the MM6 unit suite without starting the game or rereading the original GOG installation.
+- The integrated arm64 MM6/MM7 and unit targets built, and 44 focused native tests passed across the current MM6 seams and LOD directory-order check. Live SaveLoad and F5 visual play remain disabled.

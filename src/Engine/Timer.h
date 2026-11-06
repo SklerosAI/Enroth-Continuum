@@ -34,6 +34,15 @@ class Timer {
         return _time;
     }
 
+    /** Stage a loaded simulation clock paused, discarding prior-process frame timing. */
+    void restorePausedSimulationTime(Duration elapsed) {
+        _paused = true;
+        _turnBased = false;
+        _lastFrameTime = Duration();
+        _dt = Duration();
+        _time = elapsed;
+    }
+
     friend void snapshot(const Timer &src, Timer_MM7 *dst); // In EntitySnapshots.cpp.
     friend void reconstruct(const Timer_MM7 &src, Timer *dst); // In EntitySnapshots.cpp.
 

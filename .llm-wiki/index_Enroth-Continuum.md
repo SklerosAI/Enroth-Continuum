@@ -54,9 +54,11 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 World Field Map F2 Source](Source-MM6-World-Field-Map-F2.md) — Record hypotheses and corrected chest delta-grid ambiguity
 - [MM6 Event and Campaign Spec Source](Source-MM6-Event-Campaign-Spec.md) — Question, NPC-topic, variable, and campaign gaps
 - [MM6 Opcode Semantics F2 Source](Source-MM6-Opcode-Semantics-F2.md) — Complete active structural register with unresolved side effects
+- [MM6 Opcode Side Effects F2 Source](Source-MM6-Opcode-Side-Effects-F2.md) — Forty-three operation state, flow, persistence, and acceptance contract
 - [MM6 Variable Dispatch F2 Source](Source-MM6-Variable-Dispatch-F2.md) — Active ID families, inherited collisions, and title-specific dispatch obligations
 - [MM6 Campaign F2 Closure Source](Source-MM6-Campaign-F2-Closure.md) — Static transport, NPC interception, milestone, and finale routing risks
 - [MM6 Campaign Guide Claims F2 Source](Source-MM6-Campaign-Guide-Claims-F2.md) — Guide headings, transport table lead, outdoor name join, and unresolved quest branches
+- [MM6 Transport Fields F2 Source](Source-MM6-Transport-Fields-F2.md) — All transport-house A/B/C cells and unresolved route semantics
 - [MM6 Media and UI Spec Source](Source-MM6-Media-UI-Spec.md) — Movie, house, sound, music, and interface routing
 - [MM6 Media F2 Closure Source](Source-MM6-Media-F2-Closure.md) — Portrait, icon, font, and voice name-index comparisons
 - [MM6 Text Table Consumer Spec Source](Source-MM6-Table-Consumer-Spec.md) — Direct literal load coverage and unresolved parser/consumer questions

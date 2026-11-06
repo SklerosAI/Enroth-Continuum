@@ -33,6 +33,10 @@ mm6::CoreSaveFields exampleFields() {
     fields.party.flying = 1;
     fields.party.partyFlags = 0x020c;
     fields.party.partyFlags2 = 2;
+    fields.party.fine = 125;
+    fields.party.deaths = 3;
+    fields.party.prisonTerms = 2;
+    fields.party.bountiesCollected = -7; // Preserve raw current-runtime event arithmetic.
     for (size_t i = 0; i < fields.characters.size(); ++i) {
         auto &character = fields.characters[i];
         character.name = "Hero" + std::to_string(i);
@@ -175,6 +179,9 @@ UNIT_TEST(MM6CoreSaveFields, NonzeroPartyAndFourCharacterRoundTrip) {
     EXPECT_EQ(destination.party.savedFlightZ, 720);
     EXPECT_EQ(destination.party.fallStartZ, 910);
     EXPECT_EQ(destination.party.partyFlags, 0x020c);
+    EXPECT_EQ(containerFor(source).sections[0].payload.size(), 90);
+    EXPECT_EQ(destination.party.fine, 125);
+    EXPECT_EQ(destination.party.bountiesCollected, -7);
 }
 
 UNIT_TEST(MM6CoreSaveFields, CapturesAndStagesMovementOnDetachedParty) {
@@ -190,11 +197,19 @@ UNIT_TEST(MM6CoreSaveFields, CapturesAndStagesMovementOnDetachedParty) {
     source.uFlags = PARTY_FLAG_WATER_DAMAGE | PARTY_FLAG_AIRBORNE | PARTY_FLAG_BURNING;
     source.uFlags2 = PARTY_FLAGS_2_RUNNING;
     source.floor_face_id = 19;
+    source.uFine = 125;
+    source.uNumDeaths = 3;
+    source.uNumPrisonTerms = 2;
+    source.uNumBountiesCollected = -7;
     mm6::CoreSaveFields fields = mm6::captureCoreFields(source, GameTitle::MM6);
     EXPECT_EQ(fields.party.verticalVelocity, -237.5f);
     EXPECT_EQ(fields.party.fallStartZ, 910);
     EXPECT_EQ(fields.party.partyFlags, 0x020c);
     EXPECT_EQ(fields.party.partyFlags2, 2);
+    EXPECT_EQ(fields.party.fine, 125);
+    EXPECT_EQ(fields.party.deaths, 3);
+    EXPECT_EQ(fields.party.prisonTerms, 2);
+    EXPECT_EQ(fields.party.bountiesCollected, -7);
 
     Party prior;
     prior.velocity = Vec3f(8, 9, 10);
@@ -214,6 +229,10 @@ UNIT_TEST(MM6CoreSaveFields, CapturesAndStagesMovementOnDetachedParty) {
     EXPECT_EQ(std::to_underlying(staged.uFlags2), 2);
     EXPECT_EQ(staged.floor_face_id, -1);
     EXPECT_EQ(staged.currentWalkingSound, SOUND_Invalid);
+    EXPECT_EQ(staged.uFine, 125);
+    EXPECT_EQ(staged.uNumDeaths, 3);
+    EXPECT_EQ(staged.uNumPrisonTerms, 2);
+    EXPECT_EQ(staged.uNumBountiesCollected, -7);
     EXPECT_EQ(prior.velocity.z, 10);
     EXPECT_EQ(prior.uFallStartZ, 77);
     EXPECT_EQ(prior.floor_face_id, 42);
@@ -236,7 +255,16 @@ UNIT_TEST(MM6CoreSaveFields, InvalidFieldLeavesDestinationUntouched) {
     EXPECT_EQ(destination, before);
 
     invalid = containerFor(before);
-    invalid.sections[0].payload.pop_back(); // Final PART v2 flags byte is missing.
+    invalid.sections[0].payload.pop_back(); // Final PART v3 counter byte is missing.
+    EXPECT_THROW(mm6::loadCoreFieldsBeforeMutation(mm6::encodeSaveContainer(invalid), &destination),
+                 std::exception);
+    EXPECT_EQ(destination, before);
+
+    invalid = containerFor(before);
+    invalid.sections[0].payload[74] = 0xff; // Negative fine, valid container checksum.
+    invalid.sections[0].payload[75] = 0xff;
+    invalid.sections[0].payload[76] = 0xff;
+    invalid.sections[0].payload[77] = 0xff;
     EXPECT_THROW(mm6::loadCoreFieldsBeforeMutation(mm6::encodeSaveContainer(invalid), &destination),
                  std::exception);
     EXPECT_EQ(destination, before);
@@ -286,6 +314,10 @@ UNIT_TEST(MM6CoreSaveFields, RejectsMissingMalformedAndForeignSections) {
 
     container = containerFor(fields);
     container.sections[0].payload[0] = 1; // Superseded PART v1 payload.
+    EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
+    container.sections[0].payload[0] = 2; // Superseded PART v2 payload.
+    EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
+    container.sections[0].payload.resize(74); // Exact superseded v2 length.
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
     container.sections[0].payload.resize(42); // Exact old provisional v1 length.
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);

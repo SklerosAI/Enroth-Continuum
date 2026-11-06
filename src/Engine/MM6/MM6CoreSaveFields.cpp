@@ -15,7 +15,7 @@ namespace {
 
 constexpr std::array<char, 4> PART_TAG = {'P', 'A', 'R', 'T'};
 constexpr std::array<char, 4> CHAR_TAG = {'C', 'H', 'A', 'R'};
-constexpr std::uint8_t PARTY_VERSION = 2;
+constexpr std::uint8_t PARTY_VERSION = 3;
 constexpr std::uint8_t CHARACTER_VERSION = 4;
 constexpr size_t MAX_NAME_BYTES = 63;
 constexpr size_t MAX_CHARACTER_PAYLOAD = 4 * (1 + MAX_NAME_BYTES + 4 + 2 + 8 + 12 + 28 + 62 + 13 + 39 + 2 + 8) + 2;
@@ -105,7 +105,7 @@ void validate(const CoreSaveFields &fields) {
         fields.party.savedFlightZ < -10000000 || fields.party.savedFlightZ > 10000000 ||
         fields.party.waterLavaTimerTicks < 0 ||
         fields.party.fallStartZ < -10000000 || fields.party.fallStartZ > 10000000 ||
-        fields.party.flying > 1)
+        fields.party.flying > 1 || fields.party.fine < 0)
         throw std::runtime_error("invalid MM6 core party fields");
 
     for (const CoreCharacterFields &character : fields.characters) {
@@ -139,11 +139,15 @@ std::vector<std::uint8_t> encodeParty(const CorePartyFields &party) {
     put32(&bytes, party.flying);
     put32(&bytes, party.partyFlags);
     put32(&bytes, party.partyFlags2);
+    put32(&bytes, std::bit_cast<std::uint32_t>(party.fine));
+    put32(&bytes, std::bit_cast<std::uint32_t>(party.deaths));
+    put32(&bytes, std::bit_cast<std::uint32_t>(party.prisonTerms));
+    put32(&bytes, std::bit_cast<std::uint32_t>(party.bountiesCollected));
     return bytes;
 }
 
 CorePartyFields decodeParty(std::span<const std::uint8_t> bytes) {
-    if (bytes.size() != 74)
+    if (bytes.size() != 90)
         throw std::runtime_error("invalid MM6 PART field length");
     Reader reader(bytes);
     if (reader.u8() != PARTY_VERSION)
@@ -165,6 +169,10 @@ CorePartyFields decodeParty(std::span<const std::uint8_t> bytes) {
     party.flying = reader.u32();
     party.partyFlags = reader.u32();
     party.partyFlags2 = reader.u32();
+    party.fine = std::bit_cast<std::int32_t>(reader.u32());
+    party.deaths = std::bit_cast<std::int32_t>(reader.u32());
+    party.prisonTerms = std::bit_cast<std::int32_t>(reader.u32());
+    party.bountiesCollected = std::bit_cast<std::int32_t>(reader.u32());
     reader.finish();
     return party;
 }

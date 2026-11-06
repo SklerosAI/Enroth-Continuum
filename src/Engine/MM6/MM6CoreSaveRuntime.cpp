@@ -124,6 +124,10 @@ CoreSaveFields captureCoreFields(const Party &party, GameTitle title) {
     fields.party.flying = party.bFlying;
     fields.party.partyFlags = std::bit_cast<std::uint32_t>(std::to_underlying(party.uFlags));
     fields.party.partyFlags2 = std::bit_cast<std::uint32_t>(std::to_underlying(party.uFlags2));
+    fields.party.fine = party.uFine;
+    fields.party.deaths = party.uNumDeaths;
+    fields.party.prisonTerms = party.uNumPrisonTerms;
+    fields.party.bountiesCollected = party.uNumBountiesCollected;
 
     for (size_t i = 0; i < fields.characters.size(); ++i) {
         const Character &source = party.pCharacters[i];
@@ -178,6 +182,10 @@ Party stageCoreParty(const Party &live, std::span<const std::uint8_t> bytes, Gam
     staged.bFlying = fields.party.flying;
     staged.uFlags = static_cast<PartyFlags>(std::bit_cast<std::int32_t>(fields.party.partyFlags));
     staged.uFlags2 = static_cast<PARTY_FLAGS_2>(std::bit_cast<std::int32_t>(fields.party.partyFlags2));
+    staged.uFine = fields.party.fine;
+    staged.uNumDeaths = fields.party.deaths;
+    staged.uNumPrisonTerms = fields.party.prisonTerms;
+    staged.uNumBountiesCollected = fields.party.bountiesCollected;
     staged.floor_face_id = -1;
     staged.currentWalkingSound = SOUND_Invalid;
 

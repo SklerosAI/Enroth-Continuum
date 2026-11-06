@@ -78,6 +78,11 @@ struct CorePartyFields {
     // Preserve current-runtime flags bit for bit without claiming native MM6 meaning.
     std::uint32_t partyFlags = 0;
     std::uint32_t partyFlags2 = 0;
+    // Preserve current-runtime counters without assigning native MM6 award semantics.
+    std::int32_t fine = 0;
+    std::int32_t deaths = 0;
+    std::int32_t prisonTerms = 0;
+    std::int32_t bountiesCollected = 0;
 
     bool operator==(const CorePartyFields &) const = default;
 };

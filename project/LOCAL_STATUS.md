@@ -233,14 +233,16 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   prevents MM6-specific event IDs from executing as colliding MM7 meanings.
 - The integrated MM6 app, MM7 app and unit targets built with the sixteen-section
   partial assembly, spell-item prerequisite guard, MM6-only effect-dispatch guard,
-  and exact 67-name MAPS staging validator. The offline suite passed 98 tests across EVT
+  and exact 67-name MAPS staging validator. The offline suite passed 105 tests across EVT
   framing and selected guarded effects, wire codecs and indoor/outdoor projection,
   variable guard, `.ec6` fields and partial assembly, private transport/spell
   rules, descriptor 173 and LOD order; the
   private actor fixture checked 67 map deltas/342 actors and one ID 173. The
   offline runner also verified the F3-matched mode-0600 map-name manifest and
-  private First Aid rule. Known-save map validation read all 67 retained base/
-  delta pairs before staging a candidate, while live SaveLoad stays blocked.
+  private First Aid and Power Cure rules. Known-save map validation read all 67
+  retained base/delta pairs through the F3-verified private map source before
+  staging a candidate, while live SaveLoad stays blocked. MM6 item-icon and
+  high-row NPC lookup guards also passed focused checks.
   The general non-MM6 unit suite passed 438/438 tests from the same build.
   F4 rules, map state, events, services, media output and saves remain open.
   No MM6 process or original GOG file was opened for these F4 checks.

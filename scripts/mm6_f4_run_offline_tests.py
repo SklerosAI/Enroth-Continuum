@@ -32,7 +32,8 @@ def main() -> None:
                     "--research", str(research)], check=True)
     for script, source in (("mm6_f4_check_spell_items.py", research),
                            ("mm6_f4_check_actor_descriptors.py", research),
-                           ("mm6_f4_check_item_footprints.py", research / "icons")):
+                           ("mm6_f4_check_item_footprints.py", research / "icons"),
+                           ("mm6_f4_check_award_event_operands.py", research)):
         subprocess.run([sys.executable, "-B", str(root / "scripts" / script), str(source)], check=True)
 
     rules = Path.home() / "Library/Application Support/Enroth Continuum/Profiles/MM6/rules"
@@ -43,10 +44,12 @@ def main() -> None:
     power_cure_manifest = rules / "power-cure.json"
     timed_cure_manifest = rules / "timed-cures.json"
     combat_buff_manifest = rules / "combat-buffs.json"
+    house_room_manifest = rules / "house-rooms.json"
     if not all(path.is_file() for path in (creation_manifest, transport_manifest,
                                            spell_manifest, first_aid_manifest, power_cure_manifest,
-                                           timed_cure_manifest, combat_buff_manifest)):
-        parser.error("private MM6 creation, transport, spell or effect manifest is missing from the local user profile")
+                                           timed_cure_manifest, combat_buff_manifest,
+                                           house_room_manifest)):
+        parser.error("private MM6 rule or room manifest is missing from the local user profile")
     subprocess.run([sys.executable, "-B", str(root / "scripts/mm6_f4_check_spell_learning.py"),
                     str(research), str(creation_manifest)], check=True)
 
@@ -64,6 +67,7 @@ def main() -> None:
         "ENROTH_MM6_POWER_CURE_MANIFEST": str(power_cure_manifest),
         "ENROTH_MM6_TIMED_CURE_MANIFEST": str(timed_cure_manifest),
         "ENROTH_MM6_COMBAT_BUFF_MANIFEST": str(combat_buff_manifest),
+        "ENROTH_MM6_ROOM_MANIFEST": str(house_room_manifest),
     })
     subprocess.run([str(binary), "--gtest_filter=MM6*.*:LodReader.OriginalDirectoryOrder"],
                    check=True, env=environment)

@@ -654,3 +654,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The native `.ec6` writer and recovery path now decode all sixteen currently known required sections before creating a file, copying a primary to backup, or restoring a backup. A CRC-valid partial container or malformed field is not a recoverable save candidate. The partial manifest still lacks full map-base and runtime-state proof, so MM6 SaveLoad remains gated.
 - The arm64 MM6, OpenEnroth and unit targets built. Three focused atomic-save tests passed, including CRC-valid malformed-section recovery and rejection before disk replacement. Cpplint and diff checks passed. No original installation or MM6 process was opened; MM7 app/profile was untouched.
+
+## [2026-11-06] implement | MM6 read-only house room selection
+- by: T-Burton-ND via codex
+- A title-specific resolver now distinguishes ordinary MM6 house rows, blank room fields and terminal pseudo-houses 600/601. It rejects foreign house/room IDs and copies a validated MM6 descriptor without accessing the inherited MM7 room array. The retained private-backed test applied it to all 674 active `SpeakInHouse` instructions.
+- Source review mapped seven inherited room-array read sites across house entry, proprietor setup, sound, transitions and movie return. The latter two can reach the MM7 array independently of the guarded `enterHouse`; field consumers and live service/media behavior remain open.
+- The arm64 MM6/MM7/unit targets built; focused room tests passed 2/2 without skips. No original installation, MM6 process or protected MM7 app/profile was opened.

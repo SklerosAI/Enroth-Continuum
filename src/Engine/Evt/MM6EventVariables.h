@@ -54,7 +54,11 @@ constexpr MM6VariableDescriptor describeMM6Variable(int rawId) {
     return {MM6VariableFamily::Invalid, MM6VariableScope::Unknown, -1};
 }
 
-// Raw ID 2 is the shared-looking class field, but MM6 has only 18 class IDs.
+// Shared-looking IDs still need MM6 value ranges before inherited execution.
 constexpr bool isValidMM6SharedCandidateValue(int rawId, int value) {
-    return rawId != 2 || mm6::isValidClass(value);
+    if (rawId == 2)  // Class: eighteen MM6 classes, not the MM7 class range.
+        return mm6::isValidClass(value);
+    if (rawId == 17)  // Item in hand: retained MM6 item IDs are 1..580.
+        return value >= 1 && value <= 580;
+    return true;
 }

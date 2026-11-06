@@ -855,7 +855,8 @@ bool EvtInterpreter::validateVariableValue(const EvtInstruction &ir) const {
         if (!describeMM6Variable(rawId).canUseInheritedExecutor())
             throw Exception("MM6 evt variable {} needs a title-specific executor", rawId);
         if (!isValidMM6SharedCandidateValue(rawId, ir.data.variable_descr.value))
-            throw Exception("MM6 class event value {} is outside title range", ir.data.variable_descr.value);
+            throw Exception("MM6 evt variable {} value {} is outside title range", rawId,
+                            ir.data.variable_descr.value);
     }
 
     if (isEvtVariableValueValid(ir.opcode, ir.data.variable_descr.type, ir.data.variable_descr.value))

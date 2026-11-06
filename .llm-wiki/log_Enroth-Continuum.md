@@ -908,3 +908,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Read-only checks against the F3-identity-matched staged executable and retained item table resolved all sixteen Quick Start learned-skill passes into equipment, first-spell/book, and bottle-plus-random-herb cases. A separate weighted random item precedes those passes for each character; one opening-letter item is added afterward. The ignored owner-local checker passed sixteen PE dispatch and eighteen retained item-role checks without exposing exact content.
 - The pinned MMExtension MM6 player schema corroborates the observed face, spell and inventory offsets and has no independent MM6 Voice field; face-derived voice remains an inference until the original sound-selection read is traced. Random-item modifiers, later initialization, final inventory and durable save state remain open. No runtime route was enabled and no MM6 process or original installation was opened.
+
+## [2026-11-06] validate | MM6 active saved-map overlay PIDs
+- by: T-Burton-ND via codex
+- Traced inherited map reconstruction from `DoPrepareWorld` through indoor/outdoor delta loading, actor/sprite/chest creation, post-load chest generation and `onMapLoad`. Respawn and later mutations prevent a saved actor index from proving post-load identity.
+- Added a detached active-delta actor-count check to the existing 67-map candidate stage. Active `VISU` PIDs outside that saved actor range or of a wrong type reject after all map checks without assigning caller state. The live MM6 SaveLoad and chest guards remain closed.
+- An isolated arm64 MM6/OpenEnroth/unit build linked, and 17 focused save tests passed with the retained 67-map fixture. Public [packet](../project/MM6_F4_ACTIVE_WORLD_PID_RESTORE.md) and [wiki page](MM6-F4-Active-World-PID-Restore.md) record the source-backed gate; no original installation or MM6 process was opened.

@@ -11,6 +11,11 @@
 #include <string_view>
 #include <tuple>
 #include <utility>
+#include <vector>
+
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "GUI/UI/MM6HouseServiceData.h"
 #include "GUI/UI/UIHouses.h"
@@ -362,7 +367,7 @@ TEST(MM6HouseServiceData, ResolvesEveryReferencedRoomMovieFromStagedArchives) {
     }
 }
 
-TEST(MM6HouseServiceData, DecodesOneStagedRoomMovieFrameWithoutAudioOrUI) {
+TEST(MM6HouseServiceData, RejectsMalformedAndTruncatedRoomMovieFrames) {
     const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
     const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
     const char *firstPath = std::getenv("ENROTH_MM6_STAGED_ANIMS1_VID");
@@ -379,16 +384,74 @@ TEST(MM6HouseServiceData, DecodesOneStagedRoomMovieFrameWithoutAudioOrUI) {
     const Blob movie = lookupMovieBlob(GameTitle::MM6, first, second, room.videoName);
     ASSERT_TRUE(movie);
 
-    const std::optional<mm6::RoomMovieFrameProbe> frame = mm6::probeRoomMovieFirstFrame(movie);
-    ASSERT_TRUE(frame.has_value());
-    EXPECT_GT(frame->size.w, 0);
-    EXPECT_GT(frame->size.h, 0);
-    EXPECT_LE(frame->size.w, 1024);
-    EXPECT_LE(frame->size.h, 1024);
-    EXPECT_GE(frame->decodedBytes, static_cast<size_t>(frame->size.w * frame->size.h * 4));
     EXPECT_FALSE(mm6::probeRoomMovieFirstFrame(Blob::fromString("BAD00000")));
     EXPECT_FALSE(mm6::probeRoomMovieFirstFrame(Blob::fromString("SMK00000")));
     EXPECT_FALSE(mm6::probeRoomMovieFirstFrame(movie.subBlob(0, std::min<size_t>(movie.size(), 64))));
+}
+
+TEST(MM6HouseServiceData, DecodesAllReferencedStagedRoomMovieFirstFramesWithoutAudioOrUI) {
+    const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
+    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
+    const char *firstPath = std::getenv("ENROTH_MM6_STAGED_ANIMS1_VID");
+    const char *secondPath = std::getenv("ENROTH_MM6_STAGED_ANIMS2_VID");
+    if (!manifest || !research || !firstPath || !secondPath)
+        GTEST_SKIP() << "private MM6 room and staged movie evidence is unavailable";
+
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(manifest)));
+    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
+        Blob::fromString(readFile(std::filesystem::path(research) / "icons" / "2devents.txt")), rooms);
+    const VidReader first{PathView(firstPath)};
+    const VidReader second{PathView(secondPath)};
+    std::set<std::string> names;
+    for (int houseId = 1; houseId <= 557; ++houseId) {
+        const mm6::HouseEntryPlan entry = mm6::planHouseEntry(houses, houseId);
+        if (entry.kind == mm6::HouseEntryKind::TableBacked)
+            names.insert(entry.room->videoName);
+    }
+    ASSERT_EQ(names.size(), 116);
+
+    std::vector<std::pair<std::string, std::string>> failures;
+    int decoded = 0;
+    for (const std::string &name : names) {
+        Blob movie;
+        try {
+            movie = lookupMovieBlob(GameTitle::MM6, first, second, name);
+        } catch (const std::exception &) {
+            failures.emplace_back(name, "lookup_error");
+            continue;
+        }
+        if (!movie) {
+            failures.emplace_back(name, "missing_payload");
+        } else if (movie.size() > 32 * 1024 * 1024) {
+            failures.emplace_back(name, "payload_over_bound");
+        } else if (const auto frame = mm6::probeRoomMovieFirstFrame(movie)) {
+            if (frame->size.w > 0 && frame->size.h > 0 && frame->size.w <= 1024 &&
+                frame->size.h <= 1024 &&
+                frame->decodedBytes >= static_cast<size_t>(frame->size.w * frame->size.h * 4)) {
+                ++decoded;
+            } else {
+                failures.emplace_back(name, "decoded_frame_invalid");
+            }
+        } else {
+            failures.emplace_back(name, "decoder_or_packet_bound");
+        }
+    }
+
+    if (!failures.empty()) {
+        const std::filesystem::path privateReport = std::filesystem::path(research) / "F4_ROOM_FRAME_FAILURES_PRIVATE.tsv";
+        const int fd = ::open(privateReport.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC,
+                              S_IRUSR | S_IWUSR);
+        ASSERT_GE(fd, 0);
+        const int chmodResult = ::fchmod(fd, S_IRUSR | S_IWUSR);
+        ::close(fd);
+        ASSERT_EQ(chmodResult, 0);
+        std::ofstream output(privateReport, std::ios::app);
+        ASSERT_TRUE(output.good());
+        for (const auto &[name, reason] : failures)
+            output << name << '\t' << reason << '\n';
+    }
+    EXPECT_EQ(decoded, 116);
+    EXPECT_EQ(failures.size(), 0);
 }
 
 TEST(MM6HouseServiceData, ActivatesPresentationOnlyForTableBackedMM6Rooms) {

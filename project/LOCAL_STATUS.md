@@ -103,6 +103,12 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   current C++ parser, concentrated in monster spawning and six other opcodes.
   The private `event-parser-probe.json` keeps per-record offsets and source
   parser hash for the MM6 implementation pass.
+- An MM6 variable-ID audit covers 4,285 active condition/reward operands.
+  1,609 use IDs in MM6-specific ranges whose meanings diverge from the
+  inherited MM7 enum, including 1,240 references to MM6 map bytes. The
+  current engine has no MM6 variable dispatch or 100-byte map-variable layout;
+  the ignored `event-variable-probe.json` maps each active use to its source
+  event and inherited interpretation.
 - A locally retained, ignored copy of the 412-page Prima strategy guide is
   text-searchable. Its chapter outline has been converted into explicit
   campaign-coverage work in the checklist. This is source indexing, not yet a

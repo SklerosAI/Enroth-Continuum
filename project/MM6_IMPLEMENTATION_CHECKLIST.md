@@ -156,6 +156,26 @@ that requirement.
   four-byte coordinates), the 13-byte monster-modification shape (three
   integers plus one byte), and a distinct input-dialog operand set. Verify
   their semantics against the owned scripts before implementation.
+- [x] Inventory the one-byte variable IDs in all active MM6 compare/add/
+  subtract/set events. The reproducible `scripts/mm6_probe_event_variables.py`
+  records 4,285 references to 127 distinct IDs in the ignored
+  `event-variable-probe.json`, with event offsets, values, source hashes, and
+  both MM6 and inherited enum labels. Of these references, 1,609 use IDs 46
+  or above where MM6's variable vocabulary diverges from MM7's; 1,240 are
+  MM6 map bytes 1–100, 222 are MM6 party-state/autonote variables, 54 are
+  conditions, 40 are skills, and 53 are MM6's resistance taxonomy. Concrete
+  collisions include MM6 ID 105 (map byte 1) versus inherited `VAR_Cursed`,
+  and MM6 ID 205 (event autonote) versus inherited decoration variable 7.
+  The [MM6 editor's target-ID list](https://github.com/angeld29/mm8leveleditor/blob/master/src/org/gamenet/application/mm8leveleditor/data/mm6/fileFormat/EventFormatMM6.java)
+  supplies the vocabulary; the owned scripts establish which IDs are active.
+- [ ] Give MM6 its own variable-ID decoder, validation and execution semantics
+  for compare/add/subtract/set, including 100 map bytes, condition and skill
+  IDs, resistance mapping, party-state values and persistence. The current
+  `PersistentVariables`/`PersistentVariables_MM7` layout has 75 map bytes and
+  125 decoration bytes; do not reinterpret MM6 bytes through the MM7 enum or
+  save them in the MM7 layout. Review all active variable IDs and values in
+  the private catalog, then prove their effects in representative campaign
+  events and MM6 save/reload checks.
 - [x] Pair all 67 listed maps with their `.str` and `.evt` files and check
   established local-string operands against the NUL-delimited string count.
   Of 2,925 such references, 2,400 are in range and 518 out-of-range mouseover
@@ -221,6 +241,7 @@ correct before the F4 readiness gate:
 | Outdoor maps | `MM6OutdoorSnapshot.cpp` maps MM6 data into MM7 structures. Offline probes confirm all 15 base/delta layouts; all 921 owned model headers declare zero BSP nodes. `OutdoorLocation::Load` still deserializes `OutdoorDelta_MM7`. | Implement MM6 delta decoding and reconstruction; prove geometry, collision, decoration, spawn, events and persistence across all 15 maps. |
 | Indoor maps | `IndoorLocation::Load` decodes both `.blv` and `.dlv` as `IndoorLocation_MM7` / `IndoorDelta_MM7`; no MM6 indoor snapshot reader exists. Offline probes now confirm all 52 MM6 base and delta section layouts, including MM6's shorter header and record sizes. | Implement MM6 decoding, reconstruction, respawn and delta persistence for all 52 interiors; do not reuse MM7's 40-byte delta header or per-face/per-sprite attribute arrays. |
 | Events | The offline parser audit finds at least 318 deterministic record failures across opcodes 12, 19, 20, 24, 26, 27 and 28. MM6 opcode 12 is a two-field bitmap operation in all 12 active records, while the inherited parser treats it as `EVENT_ShowMovie`. | Implement MM6-specific parsing and semantics, then cover every active opcode and event variable. Do not equate parse coverage with campaign correctness. |
+| Event variables | 4,285 active compare/add/subtract/set records use 127 IDs. MM6's 100 map-byte IDs begin at 105, while the inherited MM7 map-variable range begins at 123 and has only 75 entries. MM6 skill, condition, resistance and party-state IDs also collide with different inherited names; `EvtVariables.cpp` has no title branch. | Decode and execute MM6 variables through a separate table and storage/save layout; verify event effects and persistence across the campaign. |
 | Event text | Seven MM6 mouseover IDs exceed their `.str` count without a house-name override. Opcode 5 has 56 uses with an unverified operand; `EVENT_InputString` has 19 uses but its interpreter path currently asserts. | Resolve MM6 hint, location and input-dialog behavior against shipped scripts; keep all map text accessible. |
 | Houses and media | MM6 uses 116 room animation IDs, but none of the corresponding MM7 `pAnimatedRooms` video names appears in the MM6 video indexes; seven `dsounds.bin` names are absent from the sound archive index. All 12 map music IDs have MP3 files. | Implement MM6 room descriptors, reconcile sound aliases/missing names, identify movie triggers, and verify house and map playback. |
 | Character UI | `UIPartyCreation.cpp` allocates nine class icons and 22 portraits and draws MM7 classes including Monk and Thief | Build MM6 custom party and Quick Start paths, portraits, six classes and skills |

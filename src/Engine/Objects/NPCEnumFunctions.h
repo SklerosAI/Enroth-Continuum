@@ -9,5 +9,8 @@ inline Segment<MerchantPhrase> allMerchantPhrases() {
 }
 
 inline Segment<NpcProfession> allNpcProfessions() {
-    return {NPC_PROFESSION_FIRST, NPC_PROFESSION_LAST};
+    // This inherited range is used by MM7's NPC distribution table, whose
+    // next row after Hunter is a Totals footer. MM6's npcprof loader handles
+    // its larger 77-row table separately.
+    return {NPC_PROFESSION_FIRST, NPC_PROFESSION_HUNTER};
 }

@@ -12,4 +12,6 @@ The separate [monster catalog packet](../project/MM6_MONSTER_GUIDE_SEMANTICS_F2.
 
 A subsequent static pass classifies retained role and current C++ consumer for 404 high-risk item IDs. Sixteen of 25 wand spell tokens disagree with inherited lookup; all 99 MM6 scrolls, 99 books, 30 artifacts/relics and 50 message scrolls fall outside their inherited type ranges. Ninety-eight special-band IDs have held-item event operands. Sixty-seven special/misc roles and all per-item runtime effects still need resolution; the role pass itself did not add guide semantic checks. The later catalog pass reduced the semantic queue but did not settle those runtime effects.
 
+The [item-effect packet](../project/MM6_ITEM_EFFECT_SEAMS_F2.md) triages all 164 still-unreviewed rows by retained role. Its source join finds that the seven current miscellaneous direct-use constants all exceed MM6's maximum item ID, and the inherited message-scroll window guard rejects all 50 MM6 message-scroll IDs. These are deterministic current-source path mismatches, not confirmed original item actions or witnessed UI failures; exact per-ID roles/events remain local.
+
 See also: [MM6 Combat Semantics F2 Source](Source-MM6-Combat-Semantics-F2.md), [MM6 Source and Probe Index](MM6-Source-and-Probe-Index.md), [Open Questions](Open-Questions.md).

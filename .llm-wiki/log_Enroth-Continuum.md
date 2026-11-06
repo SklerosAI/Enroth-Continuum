@@ -513,6 +513,11 @@ Chronological record of wiki activity.
 - Built the arm64 MM6, MM7 and unit targets after the 841-cell potion table, ground-item staging, six timed cures, Shield/Heroism, autonote ID 205 and class/item event operand guards. The one-command offline suite passed 121/121 MM6/LOD tests from 37 suites, and the linked general suite passed 438/438.
 - The private retained potion and F3 map tests, plus First Aid, Power Cure, timed-cure and combat-buff manifests, all ran without skips. Updated the runner and public handoff. Live casting, potion effects, SaveLoad and graphical F5 remain gated; no original installation was reread or MM6 process launched.
 
+## [2026-11-06] update | MM6 consumable integration gate
+- by: T-Burton-ND via codex
+- Rebuilt arm64 MM6, MM7 and unit targets after the MM6 herb/bottle direct-use and item-on-item guard. The one-command offline suite passed 123/123 MM6/LOD tests from 38 suites; the linked general suite passed 438/438.
+- Updated the public status and agent handoff. Potion effects, marker outcomes, live SaveLoad and F5 remain open. No original installation was reread or MM6 process launched.
+
 ## [2026-11-06] ingest | MM6 known-save map/base pass
 - by: T-Burton-ND via codex
 - Added an MM6-only candidate validator that decodes all sixteen known `.ec6` sections, requires the private expected map-name set, and parses each of 67 delta entries with its caller-supplied base entry before returning or assigning any state.

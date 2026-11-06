@@ -281,6 +281,12 @@ Chronological record of wiki activity.
 - Checked all 52 F3-matched retained base/delta pairs and wrapper decode, plus malformed references, in four focused native tests. The arm64 unit target and C++ style checks passed.
 - Recorded remaining save write-back, door motion, event-variable and F5 visual/campaign checks. No MM6 process or original installation was opened.
 
+## [2026-11-06] update | MM6 indoor changed-state encoder
+- by: T-Burton-ND via codex
+- Added a bounded MM6 DLV encoder for supported reset, visibility, actor, item, chest and door fields; live capture starts from the current sidecar so map-variable edits and opaque bytes survive.
+- Checked all 52 retained pairs for byte-exact no-change encoding, exercised changed record families and rejection of unsupported edits, and passed five native indoor tests plus C++ style checks.
+- Left changed record counts, negative actor HP, chest grids, door geometry, `.ec6` transaction wiring and F5 graphical/save behavior open. No MM6 process or original installation was opened.
+
 ## [2026-11-06] ingest | MM6 durable save fields
 - by: T-Burton-ND via codex
 - Added bounded quest, autonote, award and character-event bitsets, condition clocks and logical character inventory records as versioned `.ec6` payloads.

@@ -1417,3 +1417,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Traced the retained first-map event path for raw MM6 variable 226 and confirmed that four outdoor faces bind the interaction. The MM6 editor names the ID `MONTH_OF_YEAR`, while MMExtension calls the comparison `MonthIs`. Added a checked MM6-only equality comparison against the party's one-based calendar month; MM7 dispatch and unresolved high-ID write guards remain unchanged.
 - A synthetic MM6 record test checks the exact Compare operand/branch shape; pure tests cover adjacent months, year rollover and invalid operands. Native helper execution, arm64 syntax checks for interpreter/test, cpplint and `git diff --check` passed. The parent linked the arm64 UnitTest and the focused suite passed **3/3**. A headless event click and visible F5 outcome remain pending. The separate first-map raw ID 222 flying condition remains guarded. See [first-map month event](MM6-F4-First-Map-Month-Event.md).
+
+## [2026-11-06] verify | Pure outdoor projection linked checks
+- by: T-Burton-ND via codex
+- Parent integrated the vertex/spawn projection and linked both arm64 targets. Focused `MM6WorldSaveRuntime.*` passed 8/8. The private save GameTest passed 1/1 twice with zero child windows and no sampled focus change.
+- The strict monitor wrapper returned 1 because the frontmost app differed only after the child exited, when the user switched from Skleros Chess to ChatGPT. This is a monitor caveat rather than a game-test failure. No private bytes or logs entered Git; normal MM6 SaveLoad remains guarded.

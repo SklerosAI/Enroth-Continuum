@@ -115,3 +115,9 @@ Chronological record of wiki activity.
 - Added the 77-row NPC profession source summary, including the 51-name guide join, generic-row inherited effect collisions and explicit hireability limits.
 - Classified reserved UI screen call sites; linked a prepared private F2 source/report fingerprint helper from the agent handoff and source index. The helper refuses to run while F2 is open and does not read originals.
 - Kept the original-file F3 pass unrun and checked 48 wiki pages for frontmatter and local links.
+
+## [2026-11-05] ingest | MM6 complete guide spell rank summaries
+- by: T-Burton-ND via codex
+- Updated the spell source summary with all 99 guide entries and 297 Normal/Expert/Master clause summaries, while retaining the four rank-effect guide/table disputes and full C++ effect comparison as open.
+- Recorded 58 same-ID label/base-mana conflicts, 41 unverified effects and zero verified running spells; exact rank clauses remain in the ignored private matrix.
+- F2 remains open and F3 has not read the original installation.

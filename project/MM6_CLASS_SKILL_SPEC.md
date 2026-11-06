@@ -70,6 +70,40 @@ audit. Both must agree with the class and skill tables before the consolidated
 F3 preflight. Exact potion recipes and numeric formulas remain open F2
 questions, even though the current code collisions are confirmed.
 
+### Creation and alchemy rule confidence
+
+The owned MM6 reference card and manual establish a shared 50-point creation
+pool that must be spent, four characters, six base classes, and two fixed plus
+two class-eligible optional skills per character. They describe lowering an
+attribute no farther than two below its class base and raising it no higher
+than 25 in one-point steps; changing class resets prior stat adjustments and
+starting skills. The Prima guide suggests class-dependent base vectors, but
+the exact six vectors, fixed/optional skill matrix, starting HP/SP, gold,
+food, letter, equipment, spellbooks and Quick Start characters still require
+reconciliation. A guide's apparent Quick Start composition is not enough to
+freeze the shipped default state.
+
+`Character.cpp` currently uses an MM7 face/race stat table and a shared pool;
+`Party.cpp` and `UIPartyCreation.cpp` seed an MM7 default party and MM7 opening
+state. Test all six MM6 base classes with the exact pool boundary, base minus
+two accepted/base minus three rejected, 25 accepted/26 rejected, class change
+after edits, incomplete skill selection, Quick Start, and save/reload. Keep
+the official numeric rule distinct from the still-unverified class constants.
+
+The retained MM6 item classification places herbs and bottles in an ID band
+outside the current `isReagent`/`isPotion` ranges in
+`ItemEnumFunctions.h`. `UIPopup.cpp` therefore cannot reach its MM7 potion
+mixing branch for those MM6 IDs; it also gates results on `SKILL_ALCHEMY`,
+which MM6's skill table and the
+[MMExtension skill reference](https://grayface.github.io/mm/ext/ref/) do not
+include for MM6. `MM6ItemTable.cpp` loads no MM6 potion-combination matrix.
+The manual/reference card confirm herb-to-bottle and potion-to-potion
+interaction and hazards; the Prima and NWC guides provide provisional recipe
+and side-effect leads, not an audited complete matrix. Reconcile exact
+ingredient/result IDs, order symmetry, failed mixes, power scaling, bottle
+return, black-potion one-time effects and rejuvenation before F4. Test those
+paths without an Alchemy skill and through save/reload.
+
 ## Implementation gates
 
 1. Parse MM6 `class.txt` and `skilldes.txt` as their actual two-field and five-field formats, assert expected counts and named row IDs, and reject mismatched data cleanly.

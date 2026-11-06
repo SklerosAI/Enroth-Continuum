@@ -127,7 +127,8 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
 - Focused F2 documents now cover [guide and campaign milestones](MM6_GUIDE_RECONCILIATION.md),
   [MM6 save and map-delta requirements](MM6_SAVE_SPEC.md), and
   [class, skill and party creation IDs](MM6_CLASS_SKILL_SPEC.md), plus
-  [presentation and media routing](MM6_MEDIA_UI_SPEC.md). The six MM6
+  [presentation and media routing](MM6_MEDIA_UI_SPEC.md) and
+  [event/dialogue semantics](MM6_EVENT_CAMPAIGN_SPEC.md). The six MM6
   three-tier class families and 31-skill table do not fit the inherited MM7
   class/skill IDs or nine-class creation UI. The 67 retained map deltas have
   distinct MM6 layouts, and native MM6 save compatibility has not been
@@ -135,3 +136,10 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   routing that still needs MM6 definitions; video archive names and actual
   playback remain for F3 and F5. These documents specify work still required
   before a playable MM6 runtime.
+- A deeper F2 source review confirmed the inherited MM7 default party,
+  creation skill and potion-mixing paths are unsuitable for MM6. The retained
+  MM6 delta baselines confirm fixed byte spans but contain no nonzero evidence
+  for map-bit and tail semantics. Event analysis found MM6 Question records
+  that the inherited parser rejects and labeled NPC topic references with no
+  current event or special handler. Exact behavior and campaign dependency
+  mapping remain open; no runtime was changed by these reviews.

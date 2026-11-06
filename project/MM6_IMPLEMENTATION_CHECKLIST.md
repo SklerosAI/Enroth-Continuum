@@ -7,6 +7,7 @@ An inventoried row is not an implemented game rule. Check an item only when a
 title-specific implementation and an appropriate offline or live check exist.
 
 Focused F2 specifications: [guide and campaign evidence](MM6_GUIDE_RECONCILIATION.md),
+[events, dialogue and campaign](MM6_EVENT_CAMPAIGN_SPEC.md),
 [class, skill and party creation IDs](MM6_CLASS_SKILL_SPEC.md),
 [save and map-delta layout](MM6_SAVE_SPEC.md), and
 [presentation and media routing](MM6_MEDIA_UI_SPEC.md). These are audit inputs, not
@@ -138,7 +139,11 @@ that requirement.
   and Expert/Master teachers, Learning XP, potion recipes and effects, and
   MM6 damage/resistance formulas against owned documentation, shipped data
   and acceptance scenarios. Class and stats prose tables do not supply every
-  numeric constant.
+  numeric constant. Test the official 50-point pool and attribute bounds,
+  class-change reset, separate Quick Start fixture, starter letter/equipment/
+  spellbooks, MM6 herb/bottle classification, mixing failures and black-potion
+  persistence. The current MM7 potion predicates exclude MM6's herb/bottle
+  range and its Alchemy gate is inapplicable.
 
 ## Archive and map formats
 
@@ -219,6 +224,19 @@ that requirement.
   four-byte coordinates), the 13-byte monster-modification shape (three
   integers plus one byte), and a distinct input-dialog operand set. Verify
   their semantics against the owned scripts before implementation.
+- [x] Reconcile MM6 Question and NPC-topic structure with current consumers
+  in [MM6_EVENT_CAMPAIGN_SPEC.md](MM6_EVENT_CAMPAIGN_SPEC.md). All 19 active
+  opcode-26 Question records have a 13-byte shape with three in-range local
+  string references and an existing target step; the inherited parser reads
+  one field and the interpreter asserts. A retained NPC comparison finds 35
+  labeled topic references without a global event or current special handler.
+  These are structural findings; the intended answer and dialogue behavior
+  still require semantic review.
+- [ ] Classify every nonzero MM6 NPC topic as a global event, MM6-specific
+  special action or evidenced text-only choice. Define Question answer/cancel
+  branches, the missing opcode effects, and a private quest dependency graph
+  through the ending. Quest-note text covers only a subset of the script-used
+  quest bits, so do not infer campaign state from visible notes alone.
 - [x] Inventory the one-byte variable IDs in all active MM6 compare/add/
   subtract/set events. The reproducible `scripts/mm6_probe_event_variables.py`
   records 4,285 references to 127 distinct IDs in the ignored

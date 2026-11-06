@@ -28,6 +28,34 @@ Sizes below are decoded bytes, before the `Games.lod` entry's compression wrappe
 
 The MM6 deltas have no MM7-style per-face attribute and decoration-flag sections between visibility and the counted records. The current MM7 snapshot types **do** have such sections. Do not treat the equal 200-byte persistent-variable total as evidence that MM6 uses MM7's 75 `mapVars` + 125 `decorVars` split; that mapping remains unresolved. Preserve all 200 bytes and the 56-byte tail losslessly until their semantics are proved. Preserve unrecognized bytes within individual records as well.
 
+### Fixed-region field confidence
+
+An aggregate check of all 67 retained baseline deltas found their eight-byte
+opening, 200-byte persistent region and final 56-byte tail zero-filled. That
+supports the region boundaries, not nonzero field meanings or live-save
+behavior. The [MM6 indoor](https://github.com/angeld29/mm8leveleditor/blob/master/src/org/gamenet/application/mm8leveleditor/data/mm6/indoor/DeltaIndoorDataMap.java)
+and [outdoor](https://github.com/angeld29/mm8leveleditor/blob/master/src/org/gamenet/application/mm8leveleditor/data/mm6/outdoor/DeltaOutdoorDataMap.java)
+editor readers and [MMExtension reference](https://grayface.github.io/mm/ext/ref/)
+provide the following leads; the owner data has not yet confirmed their
+semantics with nonzero state.
+
+| Region and offset | Working interpretation | Confidence and required check |
+| --- | --- | --- |
+| Opening bytes 0–3, 4–7 | Two little-endian 32-bit refill count and last refill day values | High confidence in width; medium in meaning. First-visit sentinel, increment rule, signedness and exact reset timing remain unknown. |
+| 200 bytes before tail | Persistent map bits, possibly including MM6 map variables | High confidence in span; low in split and event-ID mapping. Preserve verbatim until event-variable semantics are mapped. The Java readers appear to allocate this region but fail to copy its input bytes while reading, so do not copy that read path. |
+| Tail bytes 0–7 | 64-bit last visit time | Medium-high confidence from both readers and MMExtension; confirm units and reset behavior. |
+| Tail bytes 8–19 | Twelve-byte sky bitmap name | Medium-high confidence in field width; check termination and title-specific lookup. |
+| Tail bytes 20–23 | Day attribute bits | Medium label confidence, low bit-level meaning; correlate with weather, daylight and events. |
+| Tail bytes 24–27, 28–31 | Two fog ranges | Medium confidence; validate units and rendering use. |
+| Tail bytes 32–39 | Two four-byte words called attributes and ceiling in the editor | Unknown for MM6. The editor annotates these labels as MM8; preserve opaque. |
+| Tail bytes 40–55 | Sixteen remaining bytes | Unknown for MM6. Do not assume MMExtension's timer fields occupy them without offset evidence. |
+
+Use synthetic nonzero sentinel values at each fixed offset in offline tests so
+a serializer cannot pass only because the shipped baseline bytes are zero.
+Check MM6 map-variable boundary IDs and adjacent invalid IDs after the event
+audit establishes the byte mapping. The inherited `MapWeather_MM7` layout is
+not an MM6 serializer: its snapshot path zeroes unrecognized bytes.
+
 The MM6 8-byte opening cannot be read as `LocationHeader_MM7` (40 bytes). The inherited MM7 record sizes are 836 bytes for `Actor_MM7`, 112 for `SpriteObject_MM7`, 36 for `Item_MM7`, and 5,324 for `Chest_MM7`; the observed MM6 delta records are respectively 548, 100, 28 within chests (100 for ground items), and 4,204 bytes. Both titles have 80-byte fixed indoor door records, but that equal size does not prove identical field semantics. These MM7 sizes come from static assertions in `src/Engine/Snapshots/EntitySnapshots.h`. A title-specific decoder and encoder are required; changing only the filename extension would corrupt map state.
 
 ## Save and profile contract

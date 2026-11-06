@@ -20,7 +20,7 @@ Each rule or route an agent may rely on needs one durable record with these fiel
 | Evidence tier | **Inventory** (present/indexed), **parse** (bounded decoding), **semantic** (meaning reconciled against sources), **offline implementation** (executed title-specific behavior), **runtime** (visible/heard result), or **campaign** (progression plus durable save/reload). A higher tier needs its own evidence; parser success cannot promote a rule to runtime. |
 | Consumer and closure | C++/UI/save/media consumer, current gap, acceptance scenario, negative case, next gate, and private artifact reference. |
 
-At the current F2 gate, many MM6 claims stop at inventory, parse or source-level semantic leads. The [F2 gate review](../project/MM6_F2_GATE_REVIEW.md) is open. A future play agent must load only the title-specific, source-backed knowledge it needs for the current scenario, prefer fresh runtime observations over an old plan, and stop on a contradiction instead of silently inventing a rule.
+At the frozen F2 gate, many MM6 claims stop at inventory, parse or source-level semantic leads. The [F2 gate review](../project/MM6_F2_GATE_REVIEW.md) authorizes the read-only F3 question pass, not play. A future play agent must load only the title-specific, source-backed knowledge it needs for the current scenario, prefer fresh runtime observations over an old plan, and stop on a contradiction instead of silently inventing a rule.
 
 ## Session identity and observation
 

@@ -44,7 +44,7 @@ MM7's full resource/rules/campaign audit, MM8's engine adapter, and the title-aw
 
 ## Conclusion
 
-F2 is incomplete. Agents should close the scoped evidence gaps and hand them to the integrator. The original-data F3 preflight and full F4 implementation follow a reviewed, consolidated F2 specification.
+F2 is frozen as a coverage and question specification. The remaining rows are original-data, implementation and live-play questions for F3/F4/F5, not claims that the game works. The F3 preflight and full F4 implementation follow the reviewed specification.
 
 ## Open follow-ups
 

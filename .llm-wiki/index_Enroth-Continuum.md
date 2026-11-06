@@ -30,7 +30,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [Engine Architecture and Runtime Map](Engine-Architecture-and-Runtime-Map.md) — Code consumers, title seams, and runtime path
 - [MM6 F2 Workstreams](MM6-F2-Workstreams.md) — Four research lanes, current three-worker rotation, and handoff packet
 - [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md) — Confirmed inheritance gaps and unproven semantics from current F2 specs
-- [Open Questions](Open-Questions.md) — Dated F2 gaps requiring reconciliation before F3
+- [Open Questions](Open-Questions.md) — F2-frozen source uncertainties and F3/F4/F5 resolution routes
 
 ## Evidence and future play
 

@@ -1,6 +1,6 @@
 # MM6 consolidated original-file preflight matrix
 
-Status: **draft for F2 review, 2026-11-05; F3 has not run**. This is the one planned read-only check of the owner's original MM6 installation after the F2 source/guide specification is broad enough. It lists what the preflight must confirm, what may remain an explicitly named semantic ambiguity, and what must be retained privately. It is not permission to mark F2 complete or begin F4 from inventory alone.
+Status: **F2-frozen preflight plan, 2026-11-05; F3 has not run**. This is the one planned read-only check of the owner's original MM6 installation. It lists what the preflight must confirm, what may remain an explicitly named semantic ambiguity, and what must be retained privately. It is not permission to begin F4 from inventory alone.
 
 ## Entry and output contract
 
@@ -32,7 +32,7 @@ Status: **draft for F2 review, 2026-11-05; F3 has not run**. This is the one pla
 
 For the executable rows above, use the [pinned MMExtension table locator packet](MM6_EXECUTABLE_TABLE_LOCATORS_F2.md) as a version-sensitive starting point: map candidate process addresses to PE file sections, validate record spans and pointer targets, then reconcile spell delays, house movies and transport data against the owner's exact executable and retained tables. Do not treat the addresses as file offsets or patched runtime fields as unpatched file facts.
 
-The guarded `scripts/mm6_f3_pe_tables.py` is prepared to extract candidate creation, spell, house-movie and opaque transport spans from the identity-matched executable into an ignored report. It refuses while F2 is open or the source/identity gate is unmet. Synthetic PE bounds tests pass, but the owner's executable has not been read by this helper. The [creation packet](MM6_CREATION_CONSTANTS_F2.md) provides source shapes and explicitly leaves Quick Start, mana-stat source and teacher rules to reconcile.
+The guarded `scripts/mm6_f3_pe_tables.py` is prepared to extract candidate creation, spell, house-movie and opaque transport spans from the identity-matched executable into an ignored report. It refuses until the frozen source/report hashes and original identity gate agree. Synthetic PE bounds tests pass, but the owner's executable has not been read by this helper. The [creation packet](MM6_CREATION_CONSTANTS_F2.md) provides source shapes and explicitly leaves Quick Start, mana-stat source and teacher rules to reconcile.
 
 The prepared [F3 capture runbook](MM6_F3_CAPTURE_RUNBOOK.md) orders the 23-input identity check, bounded archive/media directory snapshot, PE candidate extraction and remaining per-family signoff within one deliberate read-only session. Its capture helper records original member names, offsets, stored hashes and all soundtrack size/hash pairs privately. It does not decode map/event/table payloads or satisfy this matrix by itself; the private report template still requires a reconciliation decision for every family.
 

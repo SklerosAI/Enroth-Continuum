@@ -12,6 +12,6 @@ Seven high-conflict opcode values need title-specific decoding or execution: an 
 
 The later [event execution audit](../project/MM6_EVENT_EXECUTION_SEAMS_F2.md) joins these failures to the whole-program loader: 318 rejected records occur in 26 of 67 listed map EVT resources, and `EvtProgram::load` aborts on the first malformed record. Those map event programs cannot fully load under the current parser. A separate zero-mastery CheckSkill branch cannot succeed under the inherited exact-mastery comparison. Both are source/data findings, not witnessed MM6 crashes or quest outcomes; F3 must confirm original operand semantics.
 
-Authority: [project/MM6_OPCODE_SEMANTICS_F2.md](../project/MM6_OPCODE_SEMANTICS_F2.md), read with [event/campaign specification](../project/MM6_EVENT_CAMPAIGN_SPEC.md), [implementation checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md) and the [F2 gate review](../project/MM6_F2_GATE_REVIEW.md). F2 remains open; the gate review does not authorize F3.
+Authority: [project/MM6_OPCODE_SEMANTICS_F2.md](../project/MM6_OPCODE_SEMANTICS_F2.md), read with [event/campaign specification](../project/MM6_EVENT_CAMPAIGN_SPEC.md), [implementation checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md) and the [F2 gate review](../project/MM6_F2_GATE_REVIEW.md). F2 is frozen for the read-only F3 pass; no original opcode effect is thereby verified.
 
 See also: [MM6 Event and Campaign Specification Source](Source-MM6-Event-Campaign-Spec.md), [MM6 Source and Probe Index](MM6-Source-and-Probe-Index.md), [Open Questions](Open-Questions.md).

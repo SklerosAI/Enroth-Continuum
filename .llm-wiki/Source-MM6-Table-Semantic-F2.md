@@ -12,6 +12,6 @@ The later [six-table role packet](../project/MM6_UNLOADED_TABLE_ROLES_F2.md) sou
 
 All 100 numeric MM6 `awards.txt` rows have an empty priority cell. The shared awards loader skips a row when that cell is empty, so the current source path drops all 100 MM6 award entries. This is a deterministic source/data mismatch, not a live award-screen or quest observation. MM6 award text and ordering require a title-specific rule; no priority should be invented from the empty field.
 
-Authority: [project/MM6_TABLE_SEMANTIC_F2.md](../project/MM6_TABLE_SEMANTIC_F2.md), read with the [six-table role packet](../project/MM6_UNLOADED_TABLE_ROLES_F2.md), [table-consumer specification](../project/MM6_TABLE_CONSUMER_SPEC.md) and [implementation checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md). Detailed rows, IDs, source hashes and exceptions stay in ignored local reports. F2 and F3 remain open.
+Authority: [project/MM6_TABLE_SEMANTIC_F2.md](../project/MM6_TABLE_SEMANTIC_F2.md), read with the [six-table role packet](../project/MM6_UNLOADED_TABLE_ROLES_F2.md), [table-consumer specification](../project/MM6_TABLE_CONSUMER_SPEC.md) and [implementation checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md). Detailed rows, IDs, source hashes and exceptions stay in ignored local reports. F2 is frozen for F3; original use and runtime effects remain open.
 
 See also: [MM6 Text Table Consumer Specification Source](Source-MM6-Table-Consumer-Spec.md), [MM6 Source and Probe Index](MM6-Source-and-Probe-Index.md), [Open Questions](Open-Questions.md).

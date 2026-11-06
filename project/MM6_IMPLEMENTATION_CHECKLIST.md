@@ -358,6 +358,17 @@ that requirement.
   are within the inherited 196-entry MM7 `pAnimatedRooms` array, but **zero**
   of their MM7 video names occur in the retained MM6 `Anims1`/`Anims2` indexes.
   Build an MM6-specific room descriptor table rather than indexing the MM7 one.
+- [x] Join active MM6 house-entry events to the retained house table and the
+  current parser's type labels. `scripts/mm6_probe_house_routes.py` records
+  674 `SpeakInHouse` instructions, 521 distinct targets, 519 table-backed
+  targets and two special terminal handlers in an ignored per-event report.
+  Of the table-backed active targets, 384 have nonempty labels that the parser
+  silently routes to `HOUSE_TYPE_MERCENARY_GUILD`. This is a static routing
+  finding, not an observed runtime crash or a resolved service mapping.
+- [ ] Give every active MM6 house type and entry target an intentional UI,
+  service, movie/background and exit policy. Remove inherited MM7 numeric
+  range assumptions from `isShop`/`isMagicGuild` and resolve the mercenary
+  fallback before testing house entry, training, shops, travel and finale.
 - [x] Reconcile active EVT opcode 11/12 resource names with the retained MM6
   bitmap and video indexes. All 215 opcode-11 and 12 opcode-12 names resolve
   to `BITMAPS`, not to the video indexes. Opcode 11 has a four-byte field before

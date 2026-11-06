@@ -30,4 +30,6 @@ The five remaining labels have no unique title-table join: two collide across mu
 
 The linked headless preflight and outdoor-preparation scenarios verify resource availability, title isolation, decoded map state and a null-window load. A full `DoPrepareWorld()` scenario can then assert the scoped chest transaction, reload-event execution and a synthetic frame. Graphical, audible and save/reload acceptance remain separate.
 
+A separate headless full-world probe is staged with an explicit first-map pending transition, a ready in-memory CHST owner and `ScopedChestMapLoadOptIn` held only around `DoPrepareWorld()`. It checks the single GUI-window reset precondition, drains at most 256 loading presents and asserts actor/chest/map state after completion. Its linked monitored result is pending. This test does not open the default MM6 chest or save guards; failures can leave transient process globals changed, so it runs in an isolated GameTest process rather than claiming an atomic world transaction.
+
 See the [headless harness](MM6_F4_HEADLESS_HARNESS.md), [HUD packet](MM6_F4_HUD_RESOURCES.md), and [active-world identity packet](MM6_F4_ACTIVE_WORLD_PID_RESTORE.md).

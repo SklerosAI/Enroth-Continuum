@@ -18,12 +18,15 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Graphics/OutdoorSkyResources.h"
 #include "Engine/MM6/MM6Archive.h"
+#include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6EncounterMonster.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/mm7_data.h"
 #include "Engine/Objects/Chest.h"
+#include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Monsters.h"
 #include "Engine/Party.h"
+#include "Engine/PartyPlacement.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/Resources/ResourceManager.h"
@@ -256,6 +259,46 @@ GAME_TEST(MM6Headless, FirstOutdoorPreparation) {
     EXPECT_EQ(engine->_currentLoadedMapId, firstMap);
     EXPECT_FALSE(pOutdoor->faces.empty());
     EXPECT_FALSE(pOutdoor->pSpawnPoints.empty());
+    EXPECT_EQ(window->nativeHandle(), nullptr);
+}
+
+GAME_TEST(MM6Headless, ScopedFirstOutdoorWorld) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_EQ(lWindowList.size(), 1u);
+    const MapId firstMap = pMapTable->GetMapInfo("oute3.odm");
+    ASSERT_NE(firstMap, MAP_INVALID);
+
+    pMapDeltas.clear();
+    for (const std::string &name : pGames_LOD->ls()) {
+        if (std::string_view(name).ends_with(".dlv") || std::string_view(name).ends_with(".ddm"))
+            pMapDeltas.emplace(name, Blob::copy(pGames_LOD->read(name)));
+    }
+    ASSERT_TRUE(pMapDeltas.contains("oute3.ddm"));
+    mm6::resetChestTitleState(&mm6::chestTitleState());
+    ASSERT_TRUE(mm6::restoreChestTitleState(GameTitle::MM6, &mm6::chestTitleState(),
+                                            0x12345678u, {}));
+
+    bool completed = false;
+    game.runGameRoutine([firstMap, &completed] {
+        pParty->Reset();
+        engine->_pendingTransition = MapDestination(firstMap, MAP_START_POINT_PARTY);
+        mm6::ScopedChestMapLoadOptIn chestOptIn;
+        DoPrepareWorld(/* bLoading = */ false, /* fullscreen = */ 1);
+        completed = true;
+    });
+    for (int tick = 0; tick < 256 && !completed; ++tick)
+        game.tick();
+    ASSERT_TRUE(completed);
+
+    EXPECT_EQ(engine->_currentLoadedMapId, firstMap);
+    EXPECT_EQ(uCurrentlyLoadedLevelType, LEVEL_OUTDOOR);
+    EXPECT_FALSE(engine->_pendingTransition.has_value());
+    EXPECT_FALSE(pOutdoor->faces.empty());
+    EXPECT_FALSE(pOutdoor->pSpawnPoints.empty());
+    EXPECT_FALSE(pActors.empty());
+    EXPECT_EQ(vChests.size(), 20u);
+    EXPECT_FALSE(mm6::chestMapLoadOptedIn());
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }
 

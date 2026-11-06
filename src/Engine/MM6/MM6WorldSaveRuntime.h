@@ -17,6 +17,7 @@
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/Graphics/Overlays.h"
 #include "Engine/Timer.h"
+#include "Engine/Snapshots/CompositeSnapshots.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -47,6 +48,25 @@ struct StagedKnownSession {
     StagedKnownWorldAndVisuals worldAndVisuals;
     ShopGuildClockFields shopGuildClocks;
 };
+
+struct DetachedOutdoorWorldPlan {
+    std::string mapName;
+    // An owned MM6 projection into the common base snapshot. This contains
+    // terrain, model geometry, decorations and spawn records, but no textures,
+    // renderer objects, listener or OutdoorLocation instance.
+    OutdoorLocation_MM7 base;
+    MM6OutdoorDeltaSnapshot savedDelta;
+    MM6OutdoorDeltaSnapshot activeSidecar;
+    // Face references flattened across models in source order. These are
+    // validated global vertex indices for a later target-explicit builder.
+    std::vector<std::vector<std::size_t>> faceVertexIds;
+};
+
+// Prepare only owned outdoor data from the already staged active MM6 map and
+// CHST sidecar. Rejects invalid model/face/spawn topology before any live
+// OutdoorLocation, asset, listener, renderer or global collection is touched.
+DetachedOutdoorWorldPlan prepareDetachedOutdoorWorldPlan(
+    const StagedKnownWorldAndVisuals &staged, GameTitle title);
 
 // Validate the entire current known-section set and all 67 base/delta pairs,
 // then stage map/NPC buffers, the typed active map and paused timer/overlays

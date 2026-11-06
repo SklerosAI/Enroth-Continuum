@@ -1,6 +1,7 @@
 #include "MM6WorldSaveRuntime.h"
 
 #include <algorithm>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -15,6 +16,7 @@
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Snapshots/MM6IndoorSnapshot.h"
 #include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
+#include "Engine/Snapshots/MM6OutdoorSnapshot.h"
 #include "MM6BuffSaveFields.h"
 #include "MM6CoreSaveRuntime.h"
 #include "MM6DurableSaveFields.h"
@@ -165,6 +167,67 @@ StagedKnownSession stageKnownSession(
     ShopGuildClockFields clocks = captureShopGuildClocks(
         worldAndVisuals.known.shopGuildClocks, title);
     return {std::move(staged), std::move(worldAndVisuals), clocks};
+}
+
+DetachedOutdoorWorldPlan prepareDetachedOutdoorWorldPlan(
+    const StagedKnownWorldAndVisuals &staged, GameTitle title) {
+    requireMM6(title);
+    const auto *active = std::get_if<StagedOutdoorMap>(&staged.activeMap);
+    if (!active || active->mapName != staged.known.metadata.header.mapFileName ||
+        !active->mapName.ends_with(".odm") ||
+        staged.known.chest.activeDeltaName !=
+            active->mapName.substr(0, active->mapName.size() - 4) + ".ddm" ||
+        staged.rawActiveDelta != staged.known.chest.rawActiveDelta ||
+        active->base.bytes.empty())
+        throw std::runtime_error("MM6 detached outdoor plan lacks matching active owners");
+
+    DetachedOutdoorWorldPlan plan;
+    plan.mapName = active->mapName;
+    deserializeMM6Outdoor(Blob::view(active->base.bytes.data(), active->base.bytes.size()), &plan.base);
+    plan.savedDelta = active->delta;
+    plan.activeSidecar = decodeMM6OutdoorDelta(
+        Blob::view(staged.rawActiveDelta.data(), staged.rawActiveDelta.size()));
+    if (plan.base.models.size() != active->base.modelCount ||
+        active->base.modelFaces.size() != plan.base.models.size() ||
+        plan.base.modelExtras.size() != plan.base.models.size() ||
+        plan.base.decorations.size() != active->base.decorationCount ||
+        plan.base.decorationPidList.size() != active->base.decorationPidCount ||
+        plan.base.spawnPoints.size() != active->base.spawnCount ||
+        plan.savedDelta.actors.size() != plan.activeSidecar.actors.size() ||
+        plan.savedDelta.spriteObjects.size() != plan.activeSidecar.spriteObjects.size() ||
+        plan.savedDelta.chests.size() != plan.activeSidecar.chests.size())
+        throw std::runtime_error("MM6 detached outdoor plan has mismatched base or sidecar counts");
+
+    std::size_t vertexOffset = 0;
+    for (std::size_t modelIndex = 0; modelIndex < plan.base.models.size(); ++modelIndex) {
+        const BSPModelData_MM7 &model = plan.base.models[modelIndex];
+        const BSPModelExtras_MM7 &extras = plan.base.modelExtras[modelIndex];
+        if (model.numVertices != extras.vertices.size() ||
+            model.numFaces != extras.faces.size() ||
+            extras.faces.size() != extras.faceTextures.size() ||
+            model.numFaces != active->base.modelFaces[modelIndex].count ||
+            extras.vertices.size() > std::size_t(std::numeric_limits<int>::max()) - vertexOffset)
+            throw std::runtime_error("MM6 detached outdoor model shape is invalid");
+        for (const ODMFace_MM7 &face : extras.faces) {
+            if (face.numVertices > face.vertexIds.size())
+                throw std::runtime_error("MM6 outdoor face exceeds its vertex slots");
+            std::vector<std::size_t> refs;
+            refs.reserve(face.numVertices);
+            for (std::size_t i = 0; i < face.numVertices; ++i) {
+                const int id = face.vertexIds[i];
+                if (id < 0 || std::size_t(id) >= extras.vertices.size())
+                    throw std::runtime_error("MM6 outdoor face references an absent model vertex");
+                refs.push_back(vertexOffset + std::size_t(id));
+            }
+            plan.faceVertexIds.push_back(std::move(refs));
+        }
+        vertexOffset += extras.vertices.size();
+    }
+    for (const SpawnPoint_MM7 &spawn : plan.base.spawnPoints)
+        if (spawn.type != std::to_underlying(OBJECT_Actor) &&
+            spawn.type != std::to_underlying(OBJECT_Sprite))
+            throw std::runtime_error("MM6 outdoor spawn has an unsupported runtime type");
+    return plan;
 }
 
 KnownSaveFields captureKnownShopGuildClockFields(const KnownSaveFields &seed,

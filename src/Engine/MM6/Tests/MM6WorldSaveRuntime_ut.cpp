@@ -103,6 +103,22 @@ std::vector<std::uint8_t> minimalOutdoorBase() {
     return std::vector<std::uint8_t>(160 + 16 + 3 * 128 * 128 + 4 + 4 + 4 + 128 * 128 * 4 + 4, 0);
 }
 
+std::vector<std::uint8_t> outdoorBaseWithTriangle() {
+    constexpr std::size_t header = 160 + 16 + 3 * 128 * 128;
+    constexpr std::size_t modelExtra = header + 4 + 188;
+    constexpr std::size_t face = modelExtra + 3 * 12;
+    std::vector<std::uint8_t> bytes(header + 4 + 188 + 3 * 12 + 308 + 2 + 10 +
+                                    4 + 4 + 128 * 128 * 4 + 4, 0);
+    bytes[header] = 1; // One model.
+    bytes[header + 4 + 68] = 3; // Three local vertices.
+    bytes[header + 4 + 76] = 1; // One face.
+    bytes[face + 302] = 3; // Face uses all three vertices.
+    bytes[face + 32 + 2] = 1;
+    bytes[face + 32 + 4] = 2;
+    bytes[face + 308 + 2] = 's'; // Opaque texture key, never resolved here.
+    return bytes;
+}
+
 std::vector<std::uint8_t> minimalOutdoorDelta() {
     return std::vector<std::uint8_t>(8 + 2 * 88 * 11 + 3 * 4 + 200 + 56, 0);
 }
@@ -128,6 +144,48 @@ Blob syntheticBase(std::string_view name) {
 }
 
 } // namespace
+
+UNIT_TEST(MM6WorldSaveRuntime, PreparesDetachedOutdoorGeometryWithoutLiveWorld) {
+    mm6::KnownSaveFields source = seedFields();
+    source.metadata.header.mapFileName = "o0.odm";
+    source.chest.activeDeltaName = "o0.ddm";
+    source.chest.rawActiveDelta = minimalOutdoorDelta();
+    const auto names = expectedNames();
+    for (const std::string &name : names)
+        source.maps.deltas.push_back({name, name.ends_with(".dlv") ?
+            minimalIndoorDelta() : minimalOutdoorDelta()});
+    const std::vector<std::uint8_t> encoded = mm6::encodeKnownSave(source);
+    const auto readBase = [](std::string_view name) {
+        const auto bytes = name == "o0.odm" ? outdoorBaseWithTriangle() :
+            (name.ends_with(".odm") ? minimalOutdoorBase() : minimalIndoorBase());
+        return Blob::copy(bytes.data(), bytes.size());
+    };
+    NPCStats npcs{};
+    Timer timer;
+    ActiveOverlayList overlays;
+    auto staged = mm6::stageKnownWorldAndVisuals(
+        npcs, timer, overlays, encoded, names, readBase,
+        [](std::int32_t) { return true; }, 5, GameTitle::MM6);
+    auto plan = mm6::prepareDetachedOutdoorWorldPlan(staged, GameTitle::MM6);
+    EXPECT_EQ(plan.mapName, "o0.odm");
+    EXPECT_EQ(plan.base.models.size(), 1);
+    EXPECT_EQ(plan.base.modelExtras[0].vertices.size(), 3);
+    EXPECT_EQ(plan.faceVertexIds.size(), 1);
+    EXPECT_EQ(plan.faceVertexIds[0], std::vector<std::size_t>({0, 1, 2}));
+    EXPECT_EQ(plan.activeSidecar.wire.bytes, source.chest.rawActiveDelta);
+    EXPECT_EQ(plan.savedDelta.wire.bytes, source.chest.rawActiveDelta);
+    EXPECT_EQ(npcs.uNumNewNPCs, 0);
+
+    EXPECT_THROW((void) mm6::prepareDetachedOutdoorWorldPlan(staged, GameTitle::MM7), std::exception);
+    auto &active = std::get<mm6::StagedOutdoorMap>(staged.activeMap);
+    active.base.faceBytes(0, 0)[32] = 3; // Late topology fault after base and sidecar decoding.
+    EXPECT_THROW((void) mm6::prepareDetachedOutdoorWorldPlan(staged, GameTitle::MM6), std::exception);
+    EXPECT_EQ(plan.faceVertexIds[0], std::vector<std::size_t>({0, 1, 2}));
+    EXPECT_EQ(staged.rawActiveDelta, source.chest.rawActiveDelta);
+    active.base.faceBytes(0, 0)[32] = 0;
+    staged.rawActiveDelta[0] = 9;
+    EXPECT_THROW((void) mm6::prepareDetachedOutdoorWorldPlan(staged, GameTitle::MM6), std::exception);
+}
 
 UNIT_TEST(MM6WorldSaveRuntime, CapturesAndStagesNonzeroNpcAndCurrentMapOnCopies) {
     std::vector<std::string> names = expectedNames();

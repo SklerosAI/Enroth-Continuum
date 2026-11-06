@@ -20,6 +20,7 @@
 #include "Engine/MM6/MM6NewGameSaveRuntime.h"
 #include "Engine/MM6/MM6PrivateMapSource.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
+#include "Engine/MM6/MM6WorldSaveRuntime.h"
 #include "Engine/Party.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/ItemTable.h"
@@ -77,6 +78,7 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
         bool success = false;
         bool rollbackExact = false;
         bool freshDiskStage = false;
+        bool detachedOutdoorPlan = false;
         bool wrongTitleRejected = false;
         bool corruptPrimaryRecoveredReadOnly = false;
         std::string error;
@@ -150,6 +152,15 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
                 staged->staged.worldAndVisuals.chestTitle.lcgState == result.secondSeed &&
                 staged->staged.shopGuildClocks.ready && freshParty.uNumGold == 27 &&
                 readFile(profile.primary()) == result.primaryBeforeFailure;
+            if (staged) {
+                const auto plan = mm6::prepareDetachedOutdoorWorldPlan(
+                    staged->staged.worldAndVisuals, GameTitle::MM6);
+                result.detachedOutdoorPlan = plan.mapName == "oute3.odm" &&
+                    !plan.base.models.empty() && !plan.faceVertexIds.empty() &&
+                    plan.activeSidecar.wire.bytes ==
+                        staged->staged.worldAndVisuals.rawActiveDelta &&
+                    plan.savedDelta.actors.size() == plan.activeSidecar.actors.size();
+            }
             try {
                 (void) mm6::stageOfflineSaveSlotForTest(
                     profile.root, mm6::NEW_GAME_AUTOSAVE_SLOT, freshParty, freshNpcs,
@@ -210,6 +221,7 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
     EXPECT_TRUE(result.success);
     EXPECT_TRUE(result.failureCallback);
     EXPECT_TRUE(result.freshDiskStage);
+    EXPECT_TRUE(result.detachedOutdoorPlan);
     EXPECT_TRUE(result.wrongTitleRejected);
     EXPECT_TRUE(result.corruptPrimaryRecoveredReadOnly);
     EXPECT_FALSE(result.primaryBeforeFailure.empty());

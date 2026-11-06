@@ -11,6 +11,7 @@
 
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6MonsterSpecialAttack.h"
+#include "Engine/MM6/MM6MonsterProjectile.h"
 #include "Engine/MM6/MM6MonsterSpells.h"
 
 #include "Utility/Memory/Blob.h"
@@ -175,4 +176,42 @@ UNIT_TEST(MM6MonsterSpells, RetainsAllF3MatchedActiveMonsterCasts) {
             EXPECT_NE(info.spell1Id, SPELL_NONE) << "monster ID " << rawId;
     }
     EXPECT_EQ(active, 55);
+}
+
+UNIT_TEST(MM6MonsterProjectile, TypesEveryActiveLabelAndGatesLaunch) {
+    EXPECT_EQ(mm6::monsterProjectileType("Arrow", true), MONSTER_PROJECTILE_MM6_ARROW);
+    EXPECT_EQ(mm6::monsterProjectileType("FireAr", true), MONSTER_PROJECTILE_MM6_FLAMING_ARROW);
+    EXPECT_EQ(mm6::monsterProjectileType("Magic", true), MONSTER_PROJECTILE_MM6_MAGIC);
+    EXPECT_EQ(mm6::monsterProjectileType("0", false), MONSTER_PROJECTILE_NONE);
+    EXPECT_THROW(mm6::monsterProjectileType("unsupported", true), std::runtime_error);
+    EXPECT_NO_THROW(mm6::requireVerifiedMonsterProjectile(GameTitle::MM6, MONSTER_PROJECTILE_NONE));
+    EXPECT_THROW(mm6::requireVerifiedMonsterProjectile(GameTitle::MM6, MONSTER_PROJECTILE_MM6_ARROW),
+                 std::runtime_error);
+    EXPECT_NO_THROW(mm6::requireVerifiedMonsterProjectile(GameTitle::MM7, MONSTER_PROJECTILE_ARROW));
+}
+
+UNIT_TEST(MM6MonsterProjectile, RetainsAllF3MatchedRangedAttackCells) {
+    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
+    if (!research)
+        GTEST_SKIP() << "Set ignored MM6 F3 research directory";
+    const std::filesystem::path path = std::filesystem::path(research) / "icons/monsters.txt";
+    std::ifstream stream(path, std::ios::binary);
+    ASSERT_TRUE(stream.is_open());
+    std::string data(std::istreambuf_iterator<char>{stream}, {});
+    MonsterStats stats;
+    stats.Initialize(Blob::fromString(std::move(data)), GameTitle::MM6);
+
+    std::array<int, 10> counts{};
+    for (int rawId = 1; rawId <= 173; ++rawId) {
+        const MonsterInfo &info = stats.infos[static_cast<MonsterId>(rawId)];
+        for (MonsterProjectile type : {info.attack1MissileType, info.attack2MissileType}) {
+            if (type == MONSTER_PROJECTILE_NONE)
+                continue;
+            const int index = std::to_underlying(type) - 100;
+            ASSERT_GE(index, 0);
+            ASSERT_LT(index, static_cast<int>(counts.size()));
+            ++counts[index];
+        }
+    }
+    EXPECT_EQ(counts, (std::array<int, 10>{6, 18, 17, 10, 12, 6, 4, 3, 3, 3}));
 }

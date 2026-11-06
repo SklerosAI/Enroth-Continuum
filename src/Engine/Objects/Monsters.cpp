@@ -9,6 +9,7 @@
 
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6MonsterPreferences.h"
+#include "Engine/MM6/MM6MonsterProjectile.h"
 #include "Engine/MM6/MM6MonsterSpecialAttack.h"
 #include "Engine/MM6/MM6MonsterSpells.h"
 
@@ -562,7 +563,9 @@ void MonsterStats::Initialize(const Blob &monsters, GameTitle gameTitle) {
                                ? mm6::damageTypeForMonsterAttack(tokens[17], true)
                                : ParseAttackType(tokens[17]);
         ParseDamage(tokens[18], &info.attack1DamageDiceRolls, &info.attack1DamageDiceSides, &info.attack1DamageBonus);
-        info.attack1MissileType = ParseMissleAttackType(tokens[19]);
+        info.attack1MissileType = gameTitle == GameTitle::MM6
+                                      ? mm6::monsterProjectileType(tokens[19], true)
+                                      : ParseMissleAttackType(tokens[19]);
         info.attack2Chance = fromString<int>(tokens[20]);
         // MM6 uses "0" in the secondary type cell only when its chance is zero.
         if (gameTitle == GameTitle::MM6) {
@@ -571,7 +574,9 @@ void MonsterStats::Initialize(const Blob &monsters, GameTitle gameTitle) {
             info.attack2Type = ParseAttackType(tokens[21]);
         }
         ParseDamage(tokens[22], &info.attack2DamageDiceRolls, &info.attack2DamageDiceSides, &info.attack2DamageBonus);
-        info.attack2MissileType = ParseMissleAttackType(tokens[23]);
+        info.attack2MissileType = gameTitle == GameTitle::MM6
+                                      ? mm6::monsterProjectileType(tokens[23], info.attack2Chance != 0)
+                                      : ParseMissleAttackType(tokens[23]);
         info.spell1UseChance = fromString<int>(tokens[24]);
         parseSpellEntry(tokens[25], info.spell1Id, info.spell1SkillMastery);
         info.spell2UseChance = fromString<int>(tokens[26]);

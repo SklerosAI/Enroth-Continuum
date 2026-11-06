@@ -9,6 +9,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
+#include "Engine/MM6/MM6MonsterProjectile.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Data/AwardEnums.h"
 #include "Engine/Data/HouseEnumFunctions.h"
@@ -731,6 +732,7 @@ void Actor::AggroSurroundingPeasants(unsigned int uActorID, int a2) {
 //----- (00404874) --------------------------------------------------------
 void Actor::AI_RangedAttack(unsigned int uActorID, AIDirection *pDir,
                             MonsterProjectile type, ActorAbility a4) {
+    mm6::requireVerifiedMonsterProjectile(engine->gameTitle(), type);
     if (type == MONSTER_PROJECTILE_NONE)
         return;
 

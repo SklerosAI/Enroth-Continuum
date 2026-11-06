@@ -1598,3 +1598,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - An integrated synthetic headless fixture applies MM6 indoor face-bit and texture events, encodes changed DLV state, reconstructs the base faces and then tries map reload. The DLV bytes remain unchanged and the edits disappear unless a synthetic OnMapReload script reapplies them.
 - The two focused indoor face tests passed 2/2 over 97 monitored samples without visible window or focus change. Six affected retained maps lack an OnMapReload trigger; original save semantics remain unproved, so normal MM6 SaveLoad stays guarded.
+
+## [2026-11-06] audit | MM6 shared shop row access limits
+- by: T-Burton-ND via codex
+- The F3-matched source audit classified direct new-game clear, generation, menu, purchase, hover/pricing and raw Party persistence paths for the shared shop/guild stock row. General item-generation calls receive computed stock pointers, so direct-address tracing does not prove a complete writer set.
+- No nonzero owner-local native save was found in the staged references. Original stock records are 28 bytes while the inherited runtime item snapshot is 36 bytes; the chest tail preservation seam does not establish shop conversion. The live SHOP owner and SaveLoad remain guarded pending these checks.

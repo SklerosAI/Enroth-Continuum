@@ -8,6 +8,7 @@
 #include <memory>
 #include <vector>
 
+#include "GUI/HudFrameResources.h"
 #include "GUI/HudNavigationResources.h"
 
 #include "Engine/Engine.h"
@@ -570,12 +571,14 @@ void SetUserInterface(PartyAlignment align) {
     }
 
     if (align == PartyAlignment::PartyAlignment_Evil) {
+        const HudFrameAssets frames = hudFrameAssets(engine->gameTitle(),
+            "ib-r-C.pcx", "ib-b-C.pcx", "ib-t-C.pcx", "ib-l-C.pcx");
         const HudNavigationResources navigation = hudNavigationResources(engine->gameTitle(),
             "IB-COMP-C", "ib-autout-C", "ib-autin-C");
-        game_ui_rightframe = assets->getIcon("ib-r-C.pcx");
-        game_ui_bottomframe = assets->getIcon("ib-b-C.pcx");
-        game_ui_topframe = assets->getIcon("ib-t-C.pcx");
-        game_ui_leftframe = assets->getIcon("ib-l-C.pcx");
+        game_ui_rightframe = assets->getIcon(frames.right);
+        game_ui_bottomframe = assets->getIcon(frames.bottom);
+        game_ui_topframe = assets->getIcon(frames.top);
+        game_ui_leftframe = assets->getIcon(frames.left);
         game_ui_statusbar = assets->getIcon("IB-Foot-c.pcx");
 
         game_ui_right_panel_frame = assets->getIcon("ib-mb-C");
@@ -621,12 +624,14 @@ void SetUserInterface(PartyAlignment align) {
         uGameUIFontMain = colorTable.MediumRed;
         uGameUIFontShadow = colorTable.Diesel;
     } else if (align == PartyAlignment::PartyAlignment_Neutral) {
+        const HudFrameAssets frames = hudFrameAssets(engine->gameTitle(),
+            "ib-r-A.pcx", "ib-b-A.pcx", "ib-t-A.pcx", "ib-l-A.pcx");
         const HudNavigationResources navigation = hudNavigationResources(engine->gameTitle(),
             "IB-COMP-A", "ib-autout-a", "ib-autin-a");
-        game_ui_rightframe = assets->getIcon("ib-r-A.pcx");
-        game_ui_bottomframe = assets->getIcon("ib-b-A.pcx");
-        game_ui_topframe = assets->getIcon("ib-t-A.pcx");
-        game_ui_leftframe = assets->getIcon("ib-l-A.pcx");
+        game_ui_rightframe = assets->getIcon(frames.right);
+        game_ui_bottomframe = assets->getIcon(frames.bottom);
+        game_ui_topframe = assets->getIcon(frames.top);
+        game_ui_leftframe = assets->getIcon(frames.left);
         game_ui_statusbar = assets->getIcon("IB-Foot-a.pcx");
 
         game_ui_right_panel_frame = assets->getIcon("ib-mb-A");
@@ -672,12 +677,14 @@ void SetUserInterface(PartyAlignment align) {
         uGameUIFontMain = colorTable.Diesel;
         uGameUIFontShadow = colorTable.StarkWhite;
     } else if (align == PartyAlignment::PartyAlignment_Good) {
+        const HudFrameAssets frames = hudFrameAssets(engine->gameTitle(),
+            "ib-r-B.pcx", "ib-b-B.pcx", "ib-t-B.pcx", "ib-l-B.pcx");
         const HudNavigationResources navigation = hudNavigationResources(engine->gameTitle(),
             "IB-COMP-B", "ib-autout-B", "ib-autin-B");
-        game_ui_rightframe = assets->getIcon("ib-r-B.pcx");
-        game_ui_bottomframe = assets->getIcon("ib-b-B.pcx");
-        game_ui_topframe = assets->getIcon("ib-t-B.pcx");
-        game_ui_leftframe = assets->getIcon("ib-l-B.pcx");
+        game_ui_rightframe = assets->getIcon(frames.right);
+        game_ui_bottomframe = assets->getIcon(frames.bottom);
+        game_ui_topframe = assets->getIcon(frames.top);
+        game_ui_leftframe = assets->getIcon(frames.left);
         game_ui_statusbar = assets->getIcon("IB-Foot-b.pcx");
 
         game_ui_right_panel_frame = assets->getIcon("ib-mb-B");

@@ -42,6 +42,7 @@
 #include "Engine/TurnEngine/TurnEngine.h"
 
 #include "GUI/GUIButton.h"
+#include "GUI/HudFrameResources.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/GUIMessageQueue.h"
 #include "GUI/UI/Books/LloydsBook.h"
@@ -806,10 +807,11 @@ void GameUI_DrawRightPanel() {
 
 //----- (0041B3E2) --------------------------------------------------------
 void GameUI_DrawRightPanelFrames() {
-    render->DrawQuad2D(game_ui_topframe, {0, 0});
-    render->DrawQuad2D(game_ui_leftframe, {0, 8});
-    render->DrawQuad2D(game_ui_rightframe, {468, 0});
-    render->DrawQuad2D(game_ui_bottomframe, {0, 352});
+    const HudFramePositions positions = hudFramePositions(engine->gameTitle());
+    render->DrawQuad2D(game_ui_topframe, positions.top);
+    render->DrawQuad2D(game_ui_leftframe, positions.left);
+    render->DrawQuad2D(game_ui_rightframe, positions.right);
+    render->DrawQuad2D(game_ui_bottomframe, positions.bottom);
     GameUI_DrawRightPanelItems();
 
     // render->EndScene();

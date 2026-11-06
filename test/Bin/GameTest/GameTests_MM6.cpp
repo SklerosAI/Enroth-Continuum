@@ -1,5 +1,7 @@
+#include <array>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include "Testing/Game/GameTest.h"
 
@@ -12,8 +14,9 @@
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/SaveLoad.h"
 
-#include "GUI/UI/MainMenuResources.h"
+#include "GUI/HudFrameResources.h"
 #include "GUI/HudNavigationResources.h"
+#include "GUI/UI/MainMenuResources.h"
 
 #include "Library/FileSystem/Memory/MemoryFileSystem.h"
 #include "Library/Platform/Null/NullEventLoop.h"
@@ -94,6 +97,54 @@ GAME_TEST(MM6Headless, HudNavigationResourcesAvailable) {
         EXPECT_GT(size.w, 0) << name;
         EXPECT_GT(size.h, 0) << name;
     }
+}
+
+GAME_TEST(MM6Headless, HudFrameResourcesAvailable) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const HudFrameAssets frames = hudFrameAssets(GameTitle::MM6, {}, {}, {}, {});
+    const std::array<std::pair<std::string_view, Sizei>, 4> expected = {{
+        {frames.right, {172, 339}}, {frames.bottom, {469, 109}},
+        {frames.top, {468, 8}}, {frames.left, {8, 344}}
+    }};
+    for (const auto &[name, size] : expected)
+        EXPECT_EQ(engine->resources()->iconSize(name), size) << name;
+}
+
+TEST(MM6HeadlessHudFrames, TitleIsolation) {
+    const HudFrameAssets mm6 = hudFrameAssets(GameTitle::MM6, {}, {}, {}, {});
+    EXPECT_EQ(mm6.right, "border1.pcx");
+    EXPECT_EQ(mm6.bottom, "border2.pcx");
+    EXPECT_EQ(mm6.top, "border3");
+    EXPECT_EQ(mm6.left, "border4");
+    const HudFramePositions mm6Positions = hudFramePositions(GameTitle::MM6);
+    EXPECT_EQ(mm6Positions.right, Pointi(468, 141));
+    EXPECT_EQ(mm6Positions.bottom, Pointi(0, 371));
+    EXPECT_EQ(mm6Positions.top, Pointi(0, 0));
+    EXPECT_EQ(mm6Positions.left, Pointi(0, 8));
+
+    const HudFrameAssets mm7Neutral = hudFrameAssets(GameTitle::MM7,
+        "ib-r-A.pcx", "ib-b-A.pcx", "ib-t-A.pcx", "ib-l-A.pcx");
+    EXPECT_EQ(mm7Neutral.right, "ib-r-A.pcx");
+    EXPECT_EQ(mm7Neutral.bottom, "ib-b-A.pcx");
+    EXPECT_EQ(mm7Neutral.top, "ib-t-A.pcx");
+    EXPECT_EQ(mm7Neutral.left, "ib-l-A.pcx");
+    const HudFrameAssets mm7Good = hudFrameAssets(GameTitle::MM7,
+        "ib-r-B.pcx", "ib-b-B.pcx", "ib-t-B.pcx", "ib-l-B.pcx");
+    EXPECT_EQ(mm7Good.right, "ib-r-B.pcx");
+    EXPECT_EQ(mm7Good.bottom, "ib-b-B.pcx");
+    EXPECT_EQ(mm7Good.top, "ib-t-B.pcx");
+    EXPECT_EQ(mm7Good.left, "ib-l-B.pcx");
+    const HudFrameAssets mm7Evil = hudFrameAssets(GameTitle::MM7,
+        "ib-r-C.pcx", "ib-b-C.pcx", "ib-t-C.pcx", "ib-l-C.pcx");
+    EXPECT_EQ(mm7Evil.right, "ib-r-C.pcx");
+    EXPECT_EQ(mm7Evil.bottom, "ib-b-C.pcx");
+    EXPECT_EQ(mm7Evil.top, "ib-t-C.pcx");
+    EXPECT_EQ(mm7Evil.left, "ib-l-C.pcx");
+    const HudFramePositions mm7Positions = hudFramePositions(GameTitle::MM7);
+    EXPECT_EQ(mm7Positions.right, Pointi(468, 0));
+    EXPECT_EQ(mm7Positions.bottom, Pointi(0, 352));
+    EXPECT_EQ(mm7Positions.top, Pointi(0, 0));
+    EXPECT_EQ(mm7Positions.left, Pointi(0, 8));
 }
 
 TEST(MM6HeadlessHudResources, TitleIsolation) {

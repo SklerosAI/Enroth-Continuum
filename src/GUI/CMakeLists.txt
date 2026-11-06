@@ -16,6 +16,7 @@ set(GUI_HEADERS
         GUIProgressBar.h
         GUIMessageQueue.h
         GUIWindow.h
+        HudFrameResources.h
         HudNavigationResources.h)
 
 add_library(gui STATIC ${GUI_SOURCES} ${GUI_HEADERS})

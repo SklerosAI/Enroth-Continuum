@@ -481,3 +481,9 @@ Chronological record of wiki activity.
 - Audited the HIRE/RESC identity gap and found the inherited follower roster's signed one-byte table index could not address the retained MM6 table's upper rows. No stable source ID was inferred from duplicate names or party copies.
 - Added an MM6-only checked 16-bit roster with party slots first and table followers in row order. The MM7/MM8 roster representation and lookup path remain unchanged; malformed active counts and unnamed hired rows are rejected.
 - The arm64 unit target built and all 11 focused HIRE/roster tests passed, including high-row and 501-row synthetic cases. Exact private table rows were not committed; no original installation was reread or partial game launched. F5 hire/dismiss/save and stable source provenance remain open.
+
+## [2026-11-06] fix | MM6 NPC ID lookup bounds
+- by: T-Burton-ND via codex
+- Traced table, generated and negative follower NPC ID use. The inherited table lookup warned on out-of-range IDs but still indexed; generated IDs lacked a bound, and negative IDs used a potentially overflowing absolute value.
+- Added an MM6-only checked resolver before `getNPCData` and `getNPCType` array or roster access. It covers 501 table rows, 100 generated slots and current flattened follower positions while leaving MM7/MM8 paths unchanged.
+- The arm64 unit target built and 13 focused HIRE/NPC tests passed, including high and invalid ID boundaries. Duplicate-name hire/dismiss behavior remains unresolved without stable source provenance; no original installation was reread or partial game launched.

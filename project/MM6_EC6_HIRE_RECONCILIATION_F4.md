@@ -16,6 +16,12 @@ The inherited `FlatHirelings` implementation stores a table row plus two in a si
 
 This change only makes table-row addressing safe. It does not add a stable source ID to either party hireling copy, resolve duplicate names, prove that every high table row can become a follower, or connect HIRE/RESC to live MM6 save/load. The normal and high-row cases are covered by synthetic offline tests; F5 hire/dismiss and save/relaunch observations remain required.
 
+## NPC ID lookup bounds
+
+The inherited `getNPCData` warned on table IDs beyond its 501-slot array but still formed the invalid pointer; generated IDs beyond its 100-slot array had no check. Negative follower IDs passed through `std::abs(int)`, which cannot represent the magnitude of the minimum signed integer. MM6 now resolves these three namespaces before pointer arithmetic: table IDs 0–500, generated IDs 5000–5099, and negative one-based positions in the current flattened roster. Invalid IDs throw `std::out_of_range`; `getNPCType` uses the same checked resolution for MM6. The MM7/MM8 branches are unchanged. Synthetic tests cover upper table and generated rows, the 503-entry maximum roster, each out-of-range boundary, and the minimum signed integer.
+
+This is an address safety check, not a claim that every reserved table or generated slot is populated or reachable through MM6 events. The duplicate-name dismissal paths in `NPCTopics.cpp` and `UIDialogue.cpp` still clear every same-name hired table flag. An on-screen party copy has no stable source table ID, and retained records include duplicate name/portrait/profession tuples; changing that behavior safely needs provenance or F5 observations. No name-based coercion was added.
+
 Focused synthetic tests cover table-only quest followers, unmatched/generated party copies, a table flag cleared after copying, three identical candidate tuples, and malformed HIRE/RESC input rejection. No original installation was reread or partial MM6 process launched.
 
 See [HIRE fields](MM6_EC6_HIRELING_FIELDS_F4.md), [NPC fields](MM6_EC6_NPC_FIELDS_F4.md), [F2 profession audit](MM6_NPC_PROFESSION_F2.md) and [whole-save field register](MM6_SAVE_FIELD_REGISTER_F2.md).

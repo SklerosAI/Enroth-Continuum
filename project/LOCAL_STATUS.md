@@ -500,3 +500,21 @@ artifact owners and `.ec6` save state. New-game saving and map loading remain
 guarded. The partial save candidate rejects active beacon and inherited
 MM7-indexed commerce state rather than omitting it. First-map play, HUD art,
 save/reload and campaign effects remain open.
+
+## MM6 F4 first-map and HUD structural checkpoint — 277 tests, 2026-11-06
+
+The offline first-map autosave candidate validates all 67 default deltas
+before an atomic `.ec6` write. A title-local chest owner and opt-in adapter
+can stage actual `vChests` and active indoor/outdoor sidecar bytes without
+mutating a failed candidate. The native private-backed suite passed
+**277/277 MM6/LOD tests from 71 suites** after those additions. Both live
+SaveLoad and chest-generation guards remain closed; initial LCG seed,
+party-owned artifact state, complete `.ec6` reload and first-open behavior
+are not yet joined.
+
+The HUD now has MM6-specific compass/zoom candidates and four source-backed
+frame assets at title-specific positions. The linked headless MM6 suite
+passed **10/10**, and the MM7 control **1/1**. A monitored MM6 run had no
+focus change or on-screen window across 177 host samples. Remaining missing
+requests include book and action icons; the four-book route and its visible
+layout still need implementation and later graphical validation.

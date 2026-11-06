@@ -387,6 +387,10 @@ UNIT_TEST(MM6WorldSaveRuntime, StagesRepresentedPartyFamiliesWithWorldAndRejects
     Party liveParty;
     liveParty.uNumGold = 19;
     liveParty.pCharacters[0].name = "Prior Hero";
+    liveParty._roundingDt = Duration::fromTicks(1);
+    liveParty._delayedReactionTimer = Duration::fromTicks(50);
+    liveParty._delayedReactionSpeech = SPEECH_SHOP_RUDE;
+    liveParty._delayedReactionCharacterId = 2;
     Timer liveTimer;
     ActiveOverlayList liveOverlays;
     auto stage = [&] {
@@ -412,6 +416,10 @@ UNIT_TEST(MM6WorldSaveRuntime, StagesRepresentedPartyFamiliesWithWorldAndRejects
     EXPECT_EQ(staged.party.pPickedItem.itemId, ITEM_BRASS_RING);
     EXPECT_EQ(staged.party.pCharacters[0].timeToRecovery.ticks(), 250);
     EXPECT_EQ(staged.party.PartyTimes.CounterEventValues[0].ticks(), 901);
+    EXPECT_EQ(staged.party._roundingDt.ticks(), 0);
+    EXPECT_EQ(staged.party._delayedReactionTimer.ticks(), 0);
+    EXPECT_EQ(staged.party._delayedReactionSpeech, SPEECH_NONE);
+    EXPECT_EQ(staged.party._delayedReactionCharacterId, -1);
     EXPECT_EQ(staged.worldAndVisuals.world.npcs.pNPCData[70].name, "Saved NPC");
     EXPECT_EQ(staged.shopGuildClocks, clocks);
     EXPECT_TRUE(staged.worldAndVisuals.chestTitle.ready);
@@ -419,6 +427,10 @@ UNIT_TEST(MM6WorldSaveRuntime, StagesRepresentedPartyFamiliesWithWorldAndRejects
     EXPECT_TRUE(std::holds_alternative<mm6::StagedIndoorMap>(staged.worldAndVisuals.activeMap));
     EXPECT_EQ(liveParty.uNumGold, 19);
     EXPECT_EQ(liveParty.pCharacters[0].name, "Prior Hero");
+    EXPECT_EQ(liveParty._roundingDt.ticks(), 1);
+    EXPECT_EQ(liveParty._delayedReactionTimer.ticks(), 50);
+    EXPECT_EQ(liveParty._delayedReactionSpeech, SPEECH_SHOP_RUDE);
+    EXPECT_EQ(liveParty._delayedReactionCharacterId, 2);
     EXPECT_EQ(liveNpcs.pNPCData[70].name, "Prior NPC");
 
     const std::vector<std::uint8_t> validBytes = bytes;

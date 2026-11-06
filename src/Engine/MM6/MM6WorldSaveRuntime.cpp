@@ -166,6 +166,13 @@ StagedKnownSession stageKnownSession(
     staged = stageRecoveryParty(staged, bytes, title);
     ShopGuildClockFields clocks = captureShopGuildClocks(
         worldAndVisuals.known.shopGuildClocks, title);
+    // Frame-derived half-speed remainder is not a save field. Map entry already
+    // cancels delayed speech; clear the whole tuple here so a detached reentry
+    // candidate never inherits it from the unrelated live Party.
+    staged._roundingDt = 0_ticks;
+    staged._delayedReactionTimer = 0_ticks;
+    staged._delayedReactionSpeech = SPEECH_NONE;
+    staged._delayedReactionCharacterId = -1;
     return {std::move(staged), std::move(worldAndVisuals), clocks};
 }
 

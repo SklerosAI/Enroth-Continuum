@@ -258,7 +258,8 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             return {EVT_FLOW_STOP};
         case EVENT_SpeakInHouse:
             if (enterHouse(ir.data.house_id)) {
-                pAudioPlayer->playHouseSound(SOUND_enter, false);
+                if (engine->gameTitle() != GameTitle::MM6)
+                    pAudioPlayer->playHouseSound(SOUND_enter, false);
                 HouseId houseId = HOUSE_JAIL;
                 if (uCurrentHouse_Animation != 167) { // TODO: magic number
                     houseId = ir.data.house_id;

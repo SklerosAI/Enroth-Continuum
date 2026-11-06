@@ -449,6 +449,12 @@ Chronological record of wiki activity.
 - Added a bounded MM6 helper for six condition IDs, strict age boundaries and title-specific interception for two inherited numeric collisions. Awaken, dead/eradicated, poison and disease effects remain separate; the live cast guard still blocks all six.
 - Built the arm64 unit target and passed 15 focused spell tests with private manifests. C++ style, Python syntax, wiki links and diff checks passed. No original installation was reread or partial MM6 game launched.
 
+## [2026-11-06] ingest | MM6 Shield and Heroism buff cohort
+- by: T-Burton-ND via codex
+- Audited the remaining spell-effect register and checked Shield/Heroism target scope, shared duration and effect claims against F3-matched retained spells and visually reviewed guide rows. A mode-0600 private profile manifest holds the coefficients; exact values and guide text remained ignored.
+- Added bounded MM6 buff plans and character-slot application for Normal single-member and Expert/Master party scope. Resistance protections, Haste, Stone Skin, Bless and direct damage remain out of this cohort because their taxonomy or source claims are unresolved; the live cast gate stays closed and MM7 is unchanged.
+- Built the arm64 unit target and passed 19 focused spell tests with private manifests. C++ style, Python syntax, links and diff checks passed. No original installation was reread or partial MM6 game launched.
+
 ## [2026-11-06] finding | MM6 HIRE and RESC identity
 - by: T-Burton-ND via codex
 - Audited current hire, dismissal, event, generated-NPC, name-load and quest-follower paths. A strict HIRE/RESC identity match cannot be justified without a stable source ID: table-only followers, independent flag edits and generated party copies are representable. An aggregate check of the ignored F3-matched NPC table found five duplicate-name groups, including one duplicate name/portrait/profession group; exact rows remain private.

@@ -1020,6 +1020,7 @@ Chronological record of wiki activity.
 - Verified the existing headless startup selects a null platform, renderer and audio driver; its null window has no native handle and its event loop receives no OS messages. The current game-test runner still defaults to MM7, so the [MM6 headless policy](MM6-Headless-Integration-Policy.md) requires a title-specific harness and a no-window/no-physical-input check before any MM6 process test. No MM6 process was launched.
 - Revised the [plan](../project/plan.md) and [build graph](../project/MM6_F4_BUILD_GRAPH.md) into headless harness, joined vertical slices and full offline readiness, with graphical play reserved for a separate owner-available session. The 233/438 counts remain the last full test checkpoint after later chest commits.
 - Added capacity and retention rules for private research, active saves and finished worktrees. The source tree and installed MM7/MM8 runtimes were unchanged; the MM6 goal stayed paused.
+
 ## [2026-11-06] implement | Detached MM6 chest type and entry contract
 - by: T-Burton-ND via codex
 - Reconciled accepted original PE placement and UI paths with the retained eight-row `dchest.bin`: the table's 14×10 metadata is **not** the active runtime grid. Original hardcoded dimensions are **9×9** for every type; table icon IDs select the chest image, and chest entry calls placement on an uninitialized chest before the active-character check. This corrects the earlier placement packet's metadata-based dimension inference while preserving its 140-word in-memory storage finding. Original placement scans only 81 item slots.
@@ -1030,3 +1031,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Rebuilt the main arm64 MM6, OpenEnroth and unit targets after the detached chest outer-loop, direct-artifact, grid-wire and type/layout commits. The private-backed offline gate passed **249/249 MM6/LOD tests from 66 suites**; the general non-MM6 gate passed **438/438 from 56 suites**. Logs and proprietary fixtures stayed ignored locally.
 - Updated [local status](../project/LOCAL_STATUS.md), [build graph](../project/MM6_F4_BUILD_GRAPH.md), [offline seams](MM6-F4-Offline-Seams.md), [source status](Source-Local-Status.md) and [agent handoff](Agent-Handoff.md). The live MM6 chest and SaveLoad guards remain closed; no MM6 game process, graphical view or audio playback was launched. MM7 and the reserved MM8 checkout were untouched.
+
+## [2026-11-06] implement | MM6 headless game-test candidate
+- by: T-Burton-ND via codex
+- Added `--game mm6` to the instrumented game-test runner with required `--headless` and explicit private data path. Default MM7 behavior remains; wrong-title suites skip before fixture setup, and unfiltered MM6 runs select only `MM6*.*`.
+- Added a bounded smoke that asserts the MM6 engine title, null platform/event loop/window/native handle/renderer, in-memory user filesystem, and the still-closed MM6 chest guard before one synthetic frame. The [headless harness packet](MM6-F4-Headless-Harness.md) records the linked-process and focus checks still pending.
+- Four changed C++ units passed arm64 syntax checks and cpplint using the integration build's compile commands; no duplicate full build, MM6 process, graphical view or audio playback was launched from this worktree.

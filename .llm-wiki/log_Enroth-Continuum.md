@@ -858,3 +858,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Audited the retained six chest random-item markers (943 slots) against `rnditems`, the guide/PE packets and the inherited chest generator. The inherited artifact picker uses MM7 IDs 500–528, which are MM6 message scrolls; its remap, roll, placement and persistence semantics are unproved for MM6. An explicit title gate now throws before MM6 chest/RNG/artifact mutation and retains MM7's existing generator. This blocks every MM6 level load at that call, including marker-free maps, until a title-specific generator or proved skip policy exists.
 - The arm64 MM6, OpenEnroth and unit targets linked, and two focused title-route tests passed. Public audit and wiki handoff contain asset-free findings; detailed source/evidence notes remain ignored locally. No original installation was reread and MM6 was not launched.
+
+## [2026-11-06] test | MM6 staged event sound decode
+- by: T-Burton-ND via codex
+- F3 identity and retained-report hashes matched the owner-local staged MM6 audio archive and sound table. A native test followed one of eight active event-sound instructions through the title-specific table and SND reader into the existing FFmpeg decoder. The representative IMA ADPCM WAV yielded a nonempty PCM buffer; malformed audio rejected. No sound was played, and no proprietary name or payload was added to Git.
+- Arm64 MM6, OpenEnroth and unit targets linked; the focused native test passed 1/1. This is one source-to-decoder proof, while cue timing, every event, audible output and house media synchronization remain unproved. Live MM6 house cues remain gated; MM7 was unchanged and no original installation or MM6 process was opened.

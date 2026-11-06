@@ -273,7 +273,7 @@ bool OutdoorLocation::Initialize(std::string_view filename, int days_played,
 
         Load(filename, days_played, respawn_interval_days, outdoors_was_respawned);
 
-        if (isMapUnderwater(engine->_currentLoadedMapId))
+        if (engine->gameTitle() == GameTitle::MM7 && isMapUnderwater(engine->_currentLoadedMapId))
             SetUnderwaterFog();
 
         return true;
@@ -283,6 +283,11 @@ bool OutdoorLocation::Initialize(std::string_view filename, int days_played,
 }
 
 MapDestination OutdoorLocation::getTravelDestination(int partyX, int partyY) {
+    // The tables below contain MM7 map IDs and travel times. MM6 needs its
+    // own border routes before stepping off an outdoor map can be enabled.
+    if (engine->gameTitle() == GameTitle::MM6)
+        return {};
+
     int direction;
     MapId currentMap = engine->_currentLoadedMapId;
     MapId destinationMap;
@@ -370,6 +375,11 @@ int OutdoorLocation::getNumFoodRequiredToRestInCurrentPos(const Vec3f &pos) {
 
 //----- (00489487) --------------------------------------------------------
 void OutdoorLocation::SetFog() {
+    // MM7's map-indexed fog table also consumes a random draw. MM6 weather
+    // must use title-specific map rules before this path can run.
+    if (engine->gameTitle() == GameTitle::MM6)
+        return;
+
     MapId map_id = engine->_currentLoadedMapId;
     if (map_id == MAP_INVALID || map_id == MAP_CELESTE ||
         map_id == MAP_PIT || map_id > MAP_SHOALS)
@@ -1802,7 +1812,11 @@ void UpdateActors_ODM() {
  * @offset 0x47A384
  */
 static void loadAndPrepareODMInternal(MapId mapid) {
-    assert(isMapOutdoor(mapid));
+    assert(mapid >= MAP_FIRST && mapid <= MAP_LAST);
+    if (engine->gameTitle() == GameTitle::MM6)
+        assert(pMapTable->pInfos[mapid].fileName.ends_with(".odm"));
+    else
+        assert(isMapOutdoor(mapid));
 
     MapData *mapData;
     bool outdoor_was_respawned;

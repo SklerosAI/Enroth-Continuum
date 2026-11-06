@@ -81,7 +81,8 @@ StagedKnownWorldAndVisuals stageKnownWorldAndVisuals(
     StagedSessionVisuals visuals = stageSessionVisuals(
         liveTimer, liveOverlays, {validated.known.metadata.timer, validated.known.metadata.overlays},
         overlayTableCount, title);
-    return {std::move(validated.known), std::move(world), std::move(visuals)};
+    return {std::move(validated.known), std::move(world), std::move(visuals),
+            std::move(validated.activeMap)};
 }
 
 void validateOutdoorMapIdentity(MapId currentMapId, const MapTable &mapTable,

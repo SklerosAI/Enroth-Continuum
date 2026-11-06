@@ -31,12 +31,15 @@ struct StagedKnownWorldAndVisuals {
     KnownSaveFields known;
     StagedWorldFields world;
     StagedSessionVisuals visuals;
+    // Decoded active base and changed state, owned independently of input bytes.
+    // Live map reconstruction and global commit remain separate gates.
+    StagedActiveMap activeMap;
 };
 
 // Validate the entire current known-section set and all 67 base/delta pairs,
-// then stage map/NPC buffers and paused timer/overlays on detached copies.
-// This is partial: Party, active-map reconstruction and PID rebinding remain
-// outside the result, so it cannot be committed to a live MM6 session.
+// then stage map/NPC buffers, the typed active map and paused timer/overlays
+// on detached copies. This is partial: Party, active-map reconstruction and
+// PID rebinding remain outside the result, so it cannot be committed live.
 StagedKnownWorldAndVisuals stageKnownWorldAndVisuals(
     const NPCStats &liveNpcs, const Timer &liveTimer, const ActiveOverlayList &liveOverlays,
     std::span<const std::uint8_t> bytes, std::span<const std::string> expectedNames,

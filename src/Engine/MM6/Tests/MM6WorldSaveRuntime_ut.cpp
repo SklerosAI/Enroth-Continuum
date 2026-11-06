@@ -5,6 +5,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "Testing/Unit/UnitTest.h"
@@ -181,12 +182,18 @@ UNIT_TEST(MM6WorldSaveRuntime, ValidatesAndStagesWorldAndVisualsAsOneDetachedCan
     source.metadata.overlays[4].x = -17;
     source.metadata.overlays[4].packedPid = Pid::actor(0).packed();
     std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(source);
+    std::vector<std::uint8_t> indoorBase = minimalIndoorBase();
+    std::vector<std::uint8_t> outdoorBase = minimalOutdoorBase();
 
     Timer liveTimer;
     ActiveOverlayList liveOverlays;
     liveOverlays.pOverlays[4].screenSpaceX = 99;
     mm6::StagedKnownWorldAndVisuals staged = mm6::stageKnownWorldAndVisuals(
-        liveNpcs, liveTimer, liveOverlays, bytes, names, syntheticBase,
+        liveNpcs, liveTimer, liveOverlays, bytes, names,
+        [&](std::string_view name) {
+            const auto &base = name.ends_with(".blv") ? indoorBase : outdoorBase;
+            return Blob::view(base.data(), base.size());
+        },
         [](std::int32_t id) { return id >= 1 && id <= 580; }, 5, GameTitle::MM6);
     EXPECT_EQ(staged.known.core.party.playingTicks, 42);
     EXPECT_EQ(staged.world.npcs.pNPCData[70].name, "Saved NPC");
@@ -198,9 +205,27 @@ UNIT_TEST(MM6WorldSaveRuntime, ValidatesAndStagesWorldAndVisualsAsOneDetachedCan
     EXPECT_EQ(staged.visuals.timer.time().ticks(), 123456);
     EXPECT_TRUE(staged.visuals.timer.isPaused());
     EXPECT_EQ(staged.visuals.overlays.pOverlays[4].screenSpaceX, -17);
+    ASSERT_TRUE(std::holds_alternative<mm6::StagedIndoorMap>(staged.activeMap));
+    const mm6::StagedIndoorMap &active = std::get<mm6::StagedIndoorMap>(staged.activeMap);
+    EXPECT_EQ(active.mapName, "d0.blv");
+    EXPECT_EQ(active.delta.respawnCount, 3);
+    EXPECT_EQ(active.delta.lastRespawnDay, 5);
+    EXPECT_EQ(active.delta.actors.size(), 1);
     EXPECT_EQ(liveNpcs.pNPCData[70].name, "Prior NPC");
     EXPECT_EQ(liveTimer.time().ticks(), 0);
     EXPECT_EQ(liveOverlays.pOverlays[4].screenSpaceX, 99);
+
+    // No active candidate may borrow the encoded input or the base reader's
+    // backing memory: both are allowed to disappear before a later commit.
+    bytes.clear();
+    indoorBase[136 + 4 * 4] = 0;
+    staged.known.maps.deltas[0].bytes[0] = 0;
+    EXPECT_EQ(active.delta.respawnCount, 3);
+    EXPECT_EQ(active.base.section(MM6IndoorSectionKind::DoorSlots).count, 200);
+    EXPECT_EQ(static_cast<std::uint8_t>(active.base.section(MM6IndoorSectionKind::DoorSlots).bytes.str()[0]),
+              200);
+    EXPECT_EQ(static_cast<std::uint8_t>(active.delta.wire.section(MM6IndoorSectionKind::ResetHeader).bytes.str()[0]),
+              3);
 
     source.metadata.overlays[49].tableIndex = 5;
     source.metadata.overlays[49].animationLength = 1;
@@ -262,7 +287,12 @@ UNIT_TEST(MM6WorldSaveRuntime, RejectsSavedOverlayActorPidsOutsideActiveIndoorAn
         outdoorSeed, npcs, prior, "o0.ddm", outdoorDeltaWithActors(2), names, GameTitle::MM6);
     outdoor.metadata.overlays[0].animationLength = 10;
     outdoor.metadata.overlays[0].packedPid = Pid::actor(1).packed();
-    EXPECT_NO_THROW((void) check(outdoor));
+    mm6::StagedKnownWorldAndVisuals stagedOutdoor = check(outdoor);
+    ASSERT_TRUE(std::holds_alternative<mm6::StagedOutdoorMap>(stagedOutdoor.activeMap));
+    const mm6::StagedOutdoorMap &activeOutdoor = std::get<mm6::StagedOutdoorMap>(stagedOutdoor.activeMap);
+    EXPECT_EQ(activeOutdoor.mapName, "o0.odm");
+    EXPECT_EQ(activeOutdoor.delta.actors.size(), 2);
+    EXPECT_EQ(activeOutdoor.delta.wire.actorCount, 2);
     outdoor.metadata.overlays[0].packedPid = Pid::actor(2).packed();
     EXPECT_THROW((void) check(outdoor), std::exception);
     EXPECT_EQ(baseReads, 67);

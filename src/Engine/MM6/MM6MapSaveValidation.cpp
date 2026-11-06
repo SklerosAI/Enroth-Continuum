@@ -1,5 +1,6 @@
 #include "MM6MapSaveValidation.h"
 
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -42,8 +43,13 @@ void validateMapItems(const std::vector<SpriteObject_MM7> &objects,
     }
 }
 
-SavedActiveMapCounts validateMapPair(const SavedMapDelta &delta, const MapBaseReader &readBase,
-                                    const GroundItemVerifier &verifyGroundItem) {
+struct ValidatedMapPair {
+    SavedActiveMapCounts counts;
+    std::optional<StagedActiveMap> activeMap;
+};
+
+ValidatedMapPair validateMapPair(const SavedMapDelta &delta, const MapBaseReader &readBase,
+                                 const GroundItemVerifier &verifyGroundItem, bool retainActive) {
     const bool indoor = delta.name.ends_with(".dlv");
     const std::string baseName = delta.name.substr(0, delta.name.size() - 4) +
                                  (indoor ? ".blv" : ".odm");
@@ -55,15 +61,27 @@ SavedActiveMapCounts validateMapPair(const SavedMapDelta &delta, const MapBaseRe
     Blob decodedDelta = decodeMM6ArchiveEntry(deltaEntry);
 
     if (indoor) {
+        // Both indoor decoders make owned wire copies, so the retained active
+        // result cannot borrow the caller's save span or a base-reader view.
         MM6IndoorSnapshot base = deserializeMM6IndoorBase(decodedBase);
         MM6IndoorRuntimeDelta decoded = decodeMM6IndoorRuntimeDelta(decodedDelta, base);
         validateMapItems(decoded.spriteObjects, decoded.chests, verifyGroundItem);
-        return {decoded.actors.size(), decoded.spriteObjects.size(), decoded.chests.size()};
+        ValidatedMapPair result;
+        result.counts = {decoded.actors.size(), decoded.spriteObjects.size(), decoded.chests.size()};
+        if (retainActive)
+            result.activeMap.emplace(StagedIndoorMap{std::move(baseName), std::move(base), std::move(decoded)});
+        return result;
     } else {
-        (void) decodeOutdoorBase({static_cast<const std::uint8_t *>(decodedBase.data()), decodedBase.size()});
+        // The outdoor wire decoders likewise copy their source bytes.
+        OutdoorBaseWire base = decodeOutdoorBase(
+            {static_cast<const std::uint8_t *>(decodedBase.data()), decodedBase.size()});
         MM6OutdoorDeltaSnapshot decoded = decodeMM6OutdoorDelta(decodedDelta);
         validateMapItems(decoded.spriteObjects, decoded.chests, verifyGroundItem);
-        return {decoded.actors.size(), decoded.spriteObjects.size(), decoded.chests.size()};
+        ValidatedMapPair result;
+        result.counts = {decoded.actors.size(), decoded.spriteObjects.size(), decoded.chests.size()};
+        if (retainActive)
+            result.activeMap.emplace(StagedOutdoorMap{std::move(baseName), std::move(base), std::move(decoded)});
+        return result;
     }
 }
 
@@ -80,17 +98,18 @@ ValidatedKnownMapSave decodeKnownSaveWithActiveMapCounts(
     const std::string activeDelta = mapName.substr(0, mapName.size() - 4) +
                                     (mapName.ends_with(".blv") ? ".dlv" : ".ddm");
     SavedActiveMapCounts active;
-    bool foundActive = false;
+    std::optional<StagedActiveMap> activeMap;
     for (const SavedMapDelta &delta : candidate.maps.deltas) {
-        SavedActiveMapCounts counts = validateMapPair(delta, readBase, verifyGroundItem);
-        if (delta.name == activeDelta) {
-            active = counts;
-            foundActive = true;
+        const bool isActive = delta.name == activeDelta;
+        ValidatedMapPair validated = validateMapPair(delta, readBase, verifyGroundItem, isActive);
+        if (isActive) {
+            active = validated.counts;
+            activeMap = std::move(validated.activeMap);
         }
     }
-    if (!foundActive)
+    if (!activeMap)
         throw std::runtime_error("MM6 active map was not in the validated delta set");
-    return {std::move(candidate), active};
+    return {std::move(candidate), active, std::move(*activeMap)};
 }
 
 KnownSaveFields decodeKnownSaveWithMapBases(std::span<const std::uint8_t> bytes,

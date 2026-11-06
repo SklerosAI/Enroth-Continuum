@@ -6,8 +6,13 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <variant>
 
 #include "MM6KnownSaveFields.h"
+#include "MM6OutdoorWire.h"
+
+#include "Engine/Snapshots/MM6IndoorSnapshot.h"
+#include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -27,9 +32,26 @@ struct SavedActiveMapCounts {
     std::size_t chests = 0;
 };
 
+struct StagedIndoorMap {
+    std::string mapName;
+    MM6IndoorSnapshot base;
+    MM6IndoorRuntimeDelta delta;
+};
+
+struct StagedOutdoorMap {
+    std::string mapName;
+    OutdoorBaseWire base;
+    MM6OutdoorDeltaSnapshot delta;
+};
+
+using StagedActiveMap = std::variant<StagedIndoorMap, StagedOutdoorMap>;
+
 struct ValidatedKnownMapSave {
     KnownSaveFields known;
     SavedActiveMapCounts active;
+    // The active map's decoded, owned candidate from the same 67-map pass.
+    // This is not a reconstructed live IndoorLocation or OutdoorLocation.
+    StagedActiveMap activeMap;
 };
 
 // Return the projected active delta's record counts from the same validated

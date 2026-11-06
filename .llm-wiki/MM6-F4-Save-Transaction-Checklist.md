@@ -13,12 +13,14 @@ The [metadata packet](../project/MM6_EC6_METADATA_F4.md) records the transaction
 
 | Owner to complete before live entry | Unrepresented or unproved state |
 | --- | --- |
-| `Party` and `PartyTimeStruct` | MM6-keyed shop/guild/bounty clocks and stock; fine, death, prison and bounty statistics; alignment, persistent movement/flight/fall flags; generated-artifact identity and flags. Existing house/item enum ranges are inherited MM7 values and require MM6 identity proof. |
+| `Party` and `PartyTimeStruct` | MM6-keyed shop/guild/bounty clocks and stock; fine, death, prison and bounty statistics; alignment, persistent movement/flight/fall flags; generated-artifact identity and flags. The [shop save identity audit](../project/MM6_F4_SHOP_SAVE_IDENTITY.md) shows current stock/clock/bounty arrays use inherited MM7 `HouseId` intervals, while accepted F3 MM6 evidence has no matching state key. |
 | Four `Character` objects | Quick spell/page; Lloyd beacons, map identity and images; previous face/voice; eight private attack/health/mana bonus bytes. `CHAR` v2 covers basic attributes plus stat modifiers, birth year and pure-potion gates only. |
 | Active indoor/outdoor world | Validate all 67 deltas against private bases, instantiate/stage the active map and its actors/items/chests, then verify PID and item-template references before any global swap. Outdoor live filename identity remains open. |
 | Runtime UI and actions | Finish active rest/turn rejection or restore policy, cursor image after `HELD`, pending spell/action policy, and UI reset after a successful commit. |
 
 The load transaction must select a semantically valid primary or backup without disk mutation, decode the **complete** mandatory manifest, validate loaded MM6 resources and all map deltas, stage every owner on copies, then commit only after no stage can throw. Only after that should it restore a recoverable backup or expose the MM6 menu route. The current atomic file writer protects a disk slot, not the simultaneous assignment of `Party`, timer, overlays, NPCs, map buffers and active world. F5 still requires save, quit, relaunch, load and rendered-state checks. No original installation or partial MM6 process is needed for this F4 checklist.
+
+The `SHOP`/bounty owner is blocked before codec work: classify every active MM6 shop, guild and town hall by a stable title-specific key; give the MM6 party owner matching storage; prove stock cardinality, refresh/ban timing, bounty tuple and item/monster identity; then stage the complete keyed state on copies with nonzero late-failure tests. Serializing the inherited MM7 array ranges would silently lose MM6 houses. The current MM6 house view is display-only, so inherited service consumers are not active MM6 behavior proof.
 
 ### `CHAR` v3 bonus-byte gate
 

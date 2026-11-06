@@ -17,6 +17,7 @@ set(MEDIA_HEADERS
         FFmpegBlobIoContext.h
         FFmpegLogProxy.h
         FFmpegLogSource.h
+        MM6MovieLookup.h
         MediaPlayer.h
         Movie.h
         VideoDataSource.h)
@@ -28,3 +29,10 @@ target_link_libraries(media PUBLIC media_audio library_logger library_vid utilit
 target_check_style(media)
 
 add_subdirectory(Audio)
+
+if(OE_BUILD_TESTS)
+    add_library(test_media_mm6_movie OBJECT Tests/MM6MovieLookup_ut.cpp)
+    target_link_libraries(test_media_mm6_movie PUBLIC testing_unit library_vid)
+    target_check_style(test_media_mm6_movie)
+    target_link_libraries(OpenEnroth_UnitTest PUBLIC test_media_mm6_movie)
+endif()

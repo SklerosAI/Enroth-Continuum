@@ -39,6 +39,7 @@ extern "C" {
 #include "Media/Audio/OpenALSoundProvider.h"
 #include "Media/FFmpegLogProxy.h"
 #include "Media/FFmpegBlobIoContext.h"
+#include "Media/MM6MovieLookup.h"
 
 #include "Utility/Memory/FreeDeleter.h"
 
@@ -914,28 +915,7 @@ bool MPlayer::StopMovie() {
 }
 
 Blob MPlayer::LoadMovie(std::string_view video_name) {
-    std::string pVideoNameBik = fmt::format("{}.bik", video_name);
-    std::string pVideoNameSmk = fmt::format("{}.smk", video_name);
-
-    if (might_list.isOpen()) {
-        if (might_list.exists(pVideoNameBik)) {
-            return might_list.read(pVideoNameBik);
-        }
-        if (might_list.exists(pVideoNameSmk)) {
-            return might_list.read(pVideoNameSmk);
-        }
-    }
-
-    if (magic_list.isOpen()) {
-        if (magic_list.exists(pVideoNameBik)) {
-            return magic_list.read(pVideoNameBik);
-        }
-        if (magic_list.exists(pVideoNameSmk)) {
-            return magic_list.read(pVideoNameSmk);
-        }
-    }
-
-    return {};
+    return lookupMovieBlob(engine->gameTitle(), might_list, magic_list, video_name);
 }
 
 void MPlayer::Unload() {

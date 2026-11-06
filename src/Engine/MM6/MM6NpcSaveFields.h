@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <span>
 #include <vector>
@@ -11,6 +12,13 @@
 #include "MM6SaveContainer.h"
 
 namespace mm6 {
+
+inline constexpr size_t MAX_NPC_RECORD_BYTES = 2 + 1024 + 66;
+
+// Shared EC6 logical NPC record used by RESC and the two party hireling copies.
+// This is not a native MM6 or MM7 binary layout.
+std::vector<std::uint8_t> encodeNpcRecord(const NPCData &npc);
+NPCData decodeNpcRecord(std::span<const std::uint8_t> bytes);
 
 // RESC is an EC6 runtime state section, not a native MM6 save record. Every
 // NPCData scalar is stored without interpreting profession, event or flag bits.

@@ -14,7 +14,7 @@ namespace {
 constexpr std::array<char, 4> RESC_TAG = {'R', 'E', 'S', 'C'};
 constexpr std::uint8_t VERSION = 1;
 constexpr size_t MAX_NAME_BYTES = 1024;
-constexpr size_t MAX_PAYLOAD = 1 + 2 + 1 + 2 + 501 * (2 + MAX_NAME_BYTES + 66) + 51 * 2;
+constexpr size_t MAX_PAYLOAD = 1 + 2 + 1 + 2 + 501 * MAX_NPC_RECORD_BYTES + 51 * 2;
 
 class Reader {
  public:
@@ -68,17 +68,20 @@ void put32(std::vector<std::uint8_t> *bytes, std::uint32_t value) {
         put8(bytes, value >> shift);
 }
 
+void validateNpc(const NPCData &npc) {
+    if (npc.name.size() > MAX_NAME_BYTES || npc.name.find('\0') != std::string::npos ||
+        std::to_underlying(npc.sex) > 1 || std::to_underlying(npc.house) < 0 ||
+        std::to_underlying(npc.house) > std::to_underlying(HOUSE_MM6_LAST) ||
+        std::to_underlying(npc.profession) < 0 ||
+        std::to_underlying(npc.profession) > std::to_underlying(NPC_PROFESSION_MM6_LAST))
+        throw std::runtime_error("invalid MM6 NPC field");
+}
+
 void validate(const NpcSaveFields &fields) {
     if (fields.activeCount < 0 || fields.activeCount > fields.npcData.size())
         throw std::runtime_error("invalid MM6 NPC active count");
-    for (const NPCData &npc : fields.npcData) {
-        if (npc.name.size() > MAX_NAME_BYTES || npc.name.find('\0') != std::string::npos ||
-            std::to_underlying(npc.sex) > 1 || std::to_underlying(npc.house) < 0 ||
-            std::to_underlying(npc.house) > std::to_underlying(HOUSE_MM6_LAST) ||
-            std::to_underlying(npc.profession) < 0 ||
-            std::to_underlying(npc.profession) > std::to_underlying(NPC_PROFESSION_MM6_LAST))
-            throw std::runtime_error("invalid MM6 NPC field");
-    }
+    for (const NPCData &npc : fields.npcData)
+        validateNpc(npc);
 }
 
 void encodeNpc(std::vector<std::uint8_t> *bytes, const NPCData &npc) {
@@ -140,6 +143,24 @@ void requireMM6(GameTitle title) {
 }
 
 } // namespace
+
+std::vector<std::uint8_t> encodeNpcRecord(const NPCData &npc) {
+    validateNpc(npc);
+    std::vector<std::uint8_t> bytes;
+    bytes.reserve(2 + npc.name.size() + 66);
+    encodeNpc(&bytes, npc);
+    return bytes;
+}
+
+NPCData decodeNpcRecord(std::span<const std::uint8_t> bytes) {
+    if (bytes.size() > MAX_NPC_RECORD_BYTES)
+        throw std::runtime_error("MM6 NPC record exceeds size limit");
+    Reader reader(bytes);
+    NPCData npc = decodeNpc(&reader);
+    reader.finish();
+    validateNpc(npc);
+    return npc;
+}
 
 SaveSection encodeNpcSection(const NpcSaveFields &fields) {
     validate(fields);

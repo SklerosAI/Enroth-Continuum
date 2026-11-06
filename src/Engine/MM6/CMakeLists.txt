@@ -45,6 +45,11 @@ if(OE_BUILD_TESTS)
     target_check_style(test_engine_mm6_chest_caller)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_chest_caller)
 
+    add_library(test_engine_mm6_chest_grid OBJECT Tests/MM6ChestGridWire_ut.cpp)
+    target_link_libraries(test_engine_mm6_chest_grid PUBLIC testing_unit engine_mm6_save_container)
+    target_check_style(test_engine_mm6_chest_grid)
+    target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_chest_grid)
+
     add_library(test_engine_mm6_spell_items OBJECT Tests/MM6SpellItems_ut.cpp Tests/MM6SpellLearning_ut.cpp
         Tests/MM6SpellEffectGuard_ut.cpp)
     target_link_libraries(test_engine_mm6_spell_items PUBLIC testing_unit)

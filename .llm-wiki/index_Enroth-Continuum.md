@@ -53,6 +53,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Chest Interaction Gate](MM6-F4-Chest-Interaction-Gate.md) — Opening, trap, UI, pickup and persistence consumers after detached generation
 - [MM6 F4 Chest Outer Plan](MM6-F4-Chest-Outer-Plan.md) — Source-order 20-chest marker, probability-carry, gold and delegated item stages
 - [MM6 F4 Chest Direct Artifact](MM6-F4-Chest-Direct-Artifact.md) — Original unsafe slot-index scan, bounded trace, explicit safe 30-ID policy option
+- [MM6 F4 Chest Grid Wire](MM6-F4-Chest-Grid-Wire.md) — Original MM6 full-record save copy proves 140 signed grid cells; detached MAPS round-trip, live guards remain
 - [MM6 F4 Movie Lookup](MM6-F4-Movie-Lookup.md) — Exact extensionless VID lookup, owner-matched name coverage and remaining playback checks
 - [MM6 F4 Awards](MM6-F4-Awards.md) — Retained text loading, formatted-row guard and open award ordering/counter rules
 - [MM6 F4 Spell Rules](MM6-F4-Spell-Rules.md) — Private F3-backed 99-spell mana/recovery selection and unresolved cast/effect routes

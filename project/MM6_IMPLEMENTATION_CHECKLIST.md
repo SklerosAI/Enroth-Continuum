@@ -426,10 +426,10 @@ that requirement.
   and current C++ snapshots using `scripts/mm6_probe_world_fields.py`.
   [MM6_WORLD_FIELD_MAP_F2.md](MM6_WORLD_FIELD_MAP_F2.md) records 342 actor,
   348 ground-object, 1,340 chest and 10,400 fixed door records, with an
-  ignored per-map report. All 1,340 chests have zero bytes in both candidate
-  grid subregions, so the delta's final 280 chest bytes must remain opaque
-  until nonzero changed-state evidence distinguishes 81 grid shorts plus a
-  tail from 140 grid shorts. The `dchest.bin` 14×10 metadata does not settle it.
+  ignored per-map report. All 1,340 baseline chests have zero grid bytes.
+  Later [original placement and save-path traces](MM6_F4_CHEST_GRID_WIRE.md)
+  establish the full final 280 bytes as 140 signed grid cells in memory and
+  serialized delta output; live grid projection and changed saves remain gated.
 - [x] Reassemble all 67 retained MM6 deltas byte-exactly from bounded wire
   sections using `scripts/mm6_probe_world_roundtrip.py`. Its ignored report
   records 268 synthetic sentinel checks across fixed regions and 268 malformed
@@ -723,7 +723,7 @@ runtime implementation phase begins.
 | Startup and resources | `Engine.cpp` still enters `MM6_Initialize`, `MM7_LoadLods` and `MM7_Initialize` | Audit each initializer and make title-specific asset, layout and rule paths explicit |
 | Items | `MM6ItemTable.cpp` reads MM6 tables but still populates shared special/artifact bonus maps. MM6 scrolls, books and messages occupy the inherited MM7 scroll, book and artifact ID bands respectively. | Replace all title-specific item-kind, spell mapping and bonus assumptions; verify every MM6 item ID, special effect, potion recipe, enchantment and equipment rule. |
 | Spells | MM6 spell names differ from inherited numeric labels at 49 of 99 IDs under a strict lexical check; 27 IDs have different mana triples, and 11 nonphysical MM6 damage tags currently fall back to physical. | Implement MM6's own 99 spell definitions and effects across every school and mastery, including the linked MM6 scroll/book/wand mappings. |
-| Chests | MM6 `dchest.bin` declares 14×10 layout metadata; `ChestTable.cpp` currently hardcodes eight 9×9 MM7 layouts. The 4,204-byte MM6 delta chest record has 140 28-byte item slots followed by 280 bytes whose grid/tail split is unproven because both candidate regions are zero in all retained baselines. | Preserve the 280 bytes losslessly, determine live MM6 grid semantics from changed state, load MM6 chest dimensions/images, and verify placement, opening and save/reload without changing MM7 chests. |
+| Chests | MM6 `dchest.bin` declares 14×10 layout metadata; `ChestTable.cpp` currently hardcodes eight 9×9 MM7 layouts. The 4,204-byte MM6 delta chest record has 140 28-byte item slots followed by 140 signed grid cells; the accepted original executable copies the full record into changed map output. | Connect the proved 140-cell wire to live MM6 inventory, load MM6 chest dimensions/images, and verify placement, opening and changed-state save/reload without changing MM7 chests. |
 | Outdoor maps | `MM6OutdoorSnapshot.cpp` maps MM6 data into MM7 structures. Offline probes confirm all 15 base/delta layouts; all 921 owned model headers declare zero BSP nodes. `OutdoorLocation::Load` still deserializes `OutdoorDelta_MM7`. | Implement MM6 delta decoding and reconstruction; prove geometry, collision, decoration, spawn, events and persistence across all 15 maps. |
 | Indoor maps | `IndoorLocation::Load` decodes both `.blv` and `.dlv` as `IndoorLocation_MM7` / `IndoorDelta_MM7`; no MM6 indoor snapshot reader exists. Offline probes now confirm all 52 MM6 base and delta section layouts, including MM6's shorter header and record sizes. | Implement MM6 decoding, reconstruction, respawn and delta persistence for all 52 interiors; do not reuse MM7's 40-byte delta header or per-face/per-sprite attribute arrays. |
 | Events | The offline parser audit finds at least 318 deterministic record failures across opcodes 12, 19, 20, 24, 26, 27 and 28. MM6 opcode 12 is a two-field bitmap operation in all 12 active records, while the inherited parser treats it as `EVENT_ShowMovie`. | Implement MM6-specific parsing and semantics, then cover every active opcode and event variable. Do not equate parse coverage with campaign correctness. |

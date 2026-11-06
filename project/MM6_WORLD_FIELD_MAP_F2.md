@@ -34,7 +34,7 @@ For every count, check `count <= remaining // record_width` before multiplicatio
 
 The item-region split is supported by the editor's `ItemContainer` record arithmetic and the observed 4,204-byte chest stride, not by a game-play test. The uniformly zero grid region is precisely why neither 9×9 nor 14×10 can be promoted to established semantics.
 
-**F4 update:** A bounded original-MM6 PE placement trace now proves that the **in-memory** chest addresses all 280 final bytes as 140 signed 16-bit grid cells; see [MM6 chest placement](MM6_F4_CHEST_PLACEMENT.md). The zero-filled retained delta records still cannot prove how changed grid cells are serialized. Preserve those wire bytes until a changed-state save or save-path trace establishes equivalence.
+**F4 update:** A bounded original-MM6 PE placement trace proved that the **in-memory** chest addresses all 280 final bytes as 140 signed 16-bit grid cells; a subsequent [original save-path trace](MM6_F4_CHEST_GRID_WIRE.md) proves both map families copy the complete 4,204-byte record into serialized delta output. This supersedes the F2 81-cell-plus-tail wire hypothesis. The retained zero-filled grids still provide no changed original-save fixture, and live save/reload remains guarded.
 
 ## F3/F4 handoff
 

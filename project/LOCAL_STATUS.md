@@ -233,7 +233,7 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   prevents MM6-specific event IDs from executing as colliding MM7 meanings.
 - The integrated MM6 app, MM7 app and unit targets built with the sixteen-section
   partial assembly, spell-item prerequisite guard, MM6-only effect-dispatch guard,
-  and exact 67-name MAPS staging validator. The offline suite passed 123 tests
+  and exact 67-name MAPS staging validator. The offline suite passed 136 tests
   across EVT framing and selected guarded effects, wire codecs and indoor/outdoor projection,
   variable guard, `.ec6` fields and partial assembly, private transport/spell
   rules, descriptor 173 and LOD order; the
@@ -246,6 +246,13 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   staging a candidate, while live SaveLoad stays blocked. MM6 item-icon and
   high-row NPC lookup guards also passed focused checks. MM6 autonote ID 205 and
   class/item event-operand bounds have title-specific offline paths.
+  MM6 condition events now execute 18 bounded retained uses while 36 status
+  writes remain guarded. The monster parser distinguishes seven attack damage
+  labels, with five unproved channels stopped before dice or state mutation.
+  A read-only First Aid spellbook preflight records transaction inputs; live
+  casting remains guarded. The house parser classifies all 557 retained labels,
+  including 384 active rows that previously chose the mercenary guild type;
+  services and graphical house screens remain unverified.
   The general non-MM6 unit suite passed 438/438 tests from the same build.
   F4 rules, map state, events, services, media output and saves remain open.
   No MM6 process or original GOG file was opened for these F4 checks.
@@ -267,8 +274,9 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   and recovery/calendar fields are now bounded and required by the partial
   assembly; a non-mutating HIRE/RESC diagnostic reports possible matches but
   cannot establish stable source identity. MM6 day/rest behavior and active
-  turn/rest recovery remain unresolved. The MAPS exact-set validator is still
-  unwired from the complete save transaction; base/delta identity remains open.
+  turn/rest recovery remain unresolved. The MAPS exact-set and retained
+  base/delta checks pass offline, but remain unwired from live capture and the
+  complete save transaction.
 - The private F3-derived transport manifest is read by a title-specific
   three-option MM6 menu. It hides unproved quest, weekday and special routes;
   selection makes no payment or departure while the `.ec6` save transaction

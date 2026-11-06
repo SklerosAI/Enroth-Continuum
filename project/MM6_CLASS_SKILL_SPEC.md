@@ -48,6 +48,28 @@ The MM6 reference card specifies four party members. Each character starts with 
 
 The MM6 manual and reference card establish the creation rules, but do not settle every runtime constant. Verify default Quick Start party, starting HP/SP and base attributes, initial equipment, class-specific skill choices, portrait/voice pairings, training caps, and the two promotion quest transitions against original MM6 behavior. Preserve save/load IDs when translating to any internal shared enum.
 
+## Additional inherited consumers found in F2
+
+This source review used the retained private tables and the current C++ tree;
+it did not launch MM6 or establish the exact starting constants. `class.txt` and
+`stats.txt` supply descriptions, not a machine-readable starting-party or
+numeric stat matrix. The six-class starting matrix must be derived and checked
+against the owned documentation and original behavior before F4.
+
+| Current source path | Inherited assumption | MM6 acceptance obligation |
+| --- | --- | --- |
+| `Party.cpp` (`Reset`, `createDefaultParty`) and `UIPartyCreation.cpp` (completion) | Reset/default party seed MM7 classes, faces, skills, inventory and opening quest/calendar state. The custom creation screen always takes the MM7 reset path. | Define distinct MM6 Create Party and Quick Start initial states. For each, prove four legal characters, starting skills/items/spells, flags, time and New Sorpigal position, then save/reload. No MM7-only Thief, skill or quest bit may leak in. |
+| `Character.cpp` (`GetMaxHealth`, `GetMaxMana`, `ChangeClass`, race/face helpers) and `CharacterEnumFunctions.h` | MM7 race/face bands, four-ID class families, light/dark tiers and MM7 HP/SP tables. A class change currently changes skills/HP/SP without the MM6 starting-stat adjustment described by the reference card. | Reconcile MM6 class-specific starting attributes, 50-point allocation bounds, per-level HP/SP, both promotion tiers and retroactive gains. A portrait must not silently select an MM7 race rule. |
+| `mm7_data.cpp`, `GUIWindow.cpp`, `UICharacter.cpp`, `NPCTopics.cpp`, `UIHouses.cpp` and `MagicGuild.cpp` | Nine-family affinity/cap tables, MM7-only skills, Grandmaster teacher/topic arithmetic and UI grouping. | Show and train only legal MM6 skills through Master; test all six classes, two fixed plus two chosen creation skills, Expert/Master teaching and promotion messaging, and Learning at MM6 ID 30. Resolve whether the listed but unused Thievery skill is trainable. |
+| `MM6ItemTable.cpp`, `ItemEnumFunctions.h`, `ItemTable.cpp`, `UIPopup.cpp` and `Character.cpp` | MM6 item rows still flow into shared MM7 kind/bonus logic; potion mixing uses MM7 potion IDs, its matrix and an Alchemy skill absent from MM6's 31-skill table. | Classify every MM6 item ID before use. Reconcile reagent and potion combinations, successes, failures, side effects and bottle return without an MM7 Alchemy gate. Exercise equipment, scrolls, books, wands and artifacts through use and save/reload. |
+| `Character.cpp` and `ItemEnums.h` | MM7 resistance taxonomy and Grandmaster Learning arithmetic can affect MM6 spell, damage and experience rules. | Check each MM6 damage/resistance family and Learning at Normal, Expert and Master. Spell ID and effect mapping remains a separate full 99-spell obligation in the implementation checklist. |
+
+Promotion **triggers and rewards in EVT/NPC dialogue** belong to the event and
+campaign audit; **character ID and flag serialization** belongs to the save
+audit. Both must agree with the class and skill tables before the consolidated
+F3 preflight. Exact potion recipes and numeric formulas remain open F2
+questions, even though the current code collisions are confirmed.
+
 ## Implementation gates
 
 1. Parse MM6 `class.txt` and `skilldes.txt` as their actual two-field and five-field formats, assert expected counts and named row IDs, and reject mismatched data cleanly.

@@ -7,7 +7,7 @@ An inventoried row is not an implemented game rule. Check an item only when a
 title-specific implementation and an appropriate offline or live check exist.
 
 Focused F2 specifications: [guide and campaign evidence](MM6_GUIDE_RECONCILIATION.md),
-[class, skill and party creation IDs](MM6_CLASS_SKILL_SPEC.md), and
+[class, skill and party creation IDs](MM6_CLASS_SKILL_SPEC.md),
 [save and map-delta layout](MM6_SAVE_SPEC.md), and
 [presentation and media routing](MM6_MEDIA_UI_SPEC.md). These are audit inputs, not
 claims that their runtime behavior is implemented.
@@ -71,8 +71,8 @@ nonempty rows; headers, separators and reserved records still require review.
 | `spells.txt` | 108 | Spell IDs 1–99, nine schools, costs, recovery, duration, targeting and all three mastery levels |
 | `scroll.txt` | 83 | Spell scroll mapping and casting behavior |
 | `skilldes.txt` | 32 | Skills and mastery descriptions |
-| `class.txt` | 19 | Class tree, promotions, starting skills and equipment |
-| `stats.txt` | 26 | Character statistics and derived values |
+| `class.txt` | 19 | Class descriptions and promotion order; starting-skill/equipment matrices are not supplied by this prose table |
+| `stats.txt` | 26 | Stat descriptions; numeric starting limits and derived formulas need other evidence |
 | `monsters.txt` | 176 | Monster IDs 1–173, AI, attacks, spells, drops and resistances |
 | `mapstats.txt` | 70 | Map IDs 1–67, reset, encounter, travel and map file linkage |
 | `2devents.txt` | 559 | House, shop, service and other 2D event IDs |
@@ -127,6 +127,18 @@ that requirement.
   teach its intended spell, every message scroll display its text, and every
   artifact/relic apply its own effect. Verify treasure generation, shops,
   pickup, inventory, equip/use and save/reload for each category.
+- [x] Trace inherited creation, class/skill, potion and combat consumers in
+  [MM6_CLASS_SKILL_SPEC.md](MM6_CLASS_SKILL_SPEC.md). `Party::Reset` and
+  `createDefaultParty` seed MM7 classes, faces, skills and opening state;
+  inherited teacher/UI paths expose Grandmaster; potion mixing uses MM7
+  potion IDs and an Alchemy skill absent from MM6's table. This is source
+  evidence of mismatches, not MM6 rule implementation.
+- [ ] Reconcile exact MM6 Create Party and Quick Start starting matrices,
+  six-class attributes/HP/SP, promotion adjustments, 31 skill availability
+  and Expert/Master teachers, Learning XP, potion recipes and effects, and
+  MM6 damage/resistance formulas against owned documentation, shipped data
+  and acceptance scenarios. Class and stats prose tables do not supply every
+  numeric constant.
 
 ## Archive and map formats
 
@@ -169,6 +181,12 @@ that requirement.
   67 retained delta companions reach their exact decoded end. The 200
   persistent bytes and 56-byte tail still need field-level semantics and a
   lossless write/read check; native `.mm6` save compatibility is unproven.
+- [x] Trace MM7-only reset, door/chest reconstruction, transition, load-menu
+  and write paths in the [save specification](MM6_SAVE_SPEC.md). Current
+  `SaveLoad.cpp` updates in-memory map deltas before a direct file write, and
+  the MM6 path still uses MM7 snapshot and filename types. Plan all-map
+  lossless re-encoding, transition/re-entry checks and atomic-write failure
+  cases before F4; source inspection alone does not prove persistence.
 - [x] Frame all 67 listed map EVT files and `global.evt`: 14,477 records, 43
   distinct opcodes, no framing errors. The other 15 EVT-named files are not
   listed maps; one (`d4bm.evt`) is not a framed script and must not be fed to

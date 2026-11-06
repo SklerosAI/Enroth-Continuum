@@ -53,6 +53,45 @@ The application can initially store MM6 map deltas as losslessly encoded MM6 wir
 
 MM6's event-variable numbering is also title-specific. A 200-byte map-state block does not justify reuse of MM7 event ID arithmetic; reconcile the retained event-variable probe with the MM6 runtime mapping before implementing reads or writes to those bytes.
 
+## Transition and write-path audit
+
+This F2 source review adds consumer obligations, not new field semantics.
+`Indoor.cpp` and `Outdoor.cpp` currently use MM7 header counts and
+`lastRespawnDay` during initial and timed reset. They preserve selected
+visibility state, restore shipped deltas, and rewrite counts. The observed
+MM6 eight-byte opening cannot be interpreted through that 40-byte header.
+The reset-day meaning, map refill rules and which MM6 state survives a refill
+must be reconciled before a title-specific implementation.
+
+`CompositeSnapshots.cpp` reconstructs indoor door pointers and geometry;
+`Indoor.cpp` also consumes door state, timer and speed while updating that
+geometry. MM6's equal fixed door-record size does not prove equal semantics.
+Offline round trips must cover closed, open and mid-motion doors, the variable
+arrays bounded by the base-map header, and invalid face references. Chest
+round trips must cover the MM6 14 × 10 grid, item identity, opened/trap flags,
+loot removal and revisit; the current `ChestTable.cpp` remains an MM7 9 × 9
+table.
+
+`SaveLoad.cpp` copies shipped map deltas at new game, snapshots only the active
+map later, and copies other map blobs into the save. It updates the in-memory
+delta collection before a direct `ufs->write`, with no atomic replacement or
+prior-save recovery. An MM6 `.ec6` writer must avoid leaving either disk or
+memory in a half-updated state on write failure. Audit manual, autosave and
+quicksave callers, plus `Engine.cpp`'s pre-transition autosave and the direct
+travel, portal, beacon and house transition sites. `Outdoor.cpp`'s foot-travel
+table is MM7-specific; MM6 transition and respawn order must be tested against
+MM6 map/event semantics. The existing MM6 profile resolution in
+`PathResolver.cpp` is a useful boundary, but it does not make the current
+MM7 container or load-menu filter safe for MM6.
+
+Acceptance includes strict decode and field-preserving re-encode of all 67
+retained deltas; synthetic mutation of a chest item/flag, ground item, door
+state/timer, visibility bit and persistent byte; transition, save/reload and
+re-entry; and negative tests for truncation, count overflow, wrong map/title,
+unsupported version and failed atomic replacement. Run both initial and
+timed-reset cases. Keep native `.mm6` whole-save compatibility as a separate,
+unproven feature unless the owner later requests import/export.
+
 ## Verification gates for implementation
 
 1. **Pure data:** decode all 52 indoor and 15 outdoor shipped delta companions with strict bounds and exact end; re-encode/redecode each without semantic loss, including reserved bytes. Check base-map anomalies separately and do not weaken delta checksum validation because two `.blv` bases have unusual trailers.

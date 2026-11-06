@@ -600,3 +600,9 @@ Chronological record of wiki activity.
 - The F3-matched retained awards table has 100 unique numbered rows, 86 nonempty texts and no priority values. A title-specific bounded loader retains the texts without assigning a made-up priority; malformed or incomplete MM6 tables reject before replacing the global table. MM7 keeps its parser.
 - Seven formatted MM6 rows are excluded from the inherited award pane until the title's numeric counters are mapped. Remaining text is available with provisional order and color; no live display or save/reload is claimed.
 - The integrated arm64 MM6/MM7/unit build passed; the one-command offline suite passed 145/145 tests from 45 suites, and the general suite passed 438/438. The original installation and partial MM6 game were not opened.
+
+## [2026-11-06] implement | MM6 movie archive lookup
+- by: T-Burton-ND via codex
+- The accepted F3 media capture established 127 extensionless Smacker movie entries across two VID archives. The MM6 loader now requests an exact archive name, rejects an ambiguous cross-archive name and requires an `SMK` payload header before decoding. MM7 keeps its prior suffix and archive priority.
+- Three native tests passed, including a private-backed check of all 127 retained names. The arm64 MM6/MM7/unit build passed; the offline runner passed 145/145 tests from 45 suites without skips and the general suite passed 438/438.
+- This is an archive lookup result. Room descriptors, actual trigger mapping, Smacker decoding and audiovisual F5 observation remain open. No original installation or partial MM6 process was opened.

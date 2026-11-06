@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#include "Engine/MM6/MM6CreationRules.h"
+
 // MM6 EVT operands are one-byte IDs. Their ranges differ from MM7's EvtVariable
 // enum even where the numeric values happen to collide.
 enum class MM6VariableFamily : std::uint8_t {
@@ -46,4 +48,9 @@ constexpr MM6VariableDescriptor describeMM6Variable(int rawId) {
     if (rawId >= 205 && rawId <= 226)
         return {MM6VariableFamily::OtherTitleSpecific, MM6VariableScope::Unknown, -1};
     return {MM6VariableFamily::Invalid, MM6VariableScope::Unknown, -1};
+}
+
+// Raw ID 2 is the shared-looking class field, but MM6 has only 18 class IDs.
+constexpr bool isValidMM6SharedCandidateValue(int rawId, int value) {
+    return rawId != 2 || mm6::isValidClass(value);
 }

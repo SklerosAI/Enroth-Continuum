@@ -20,3 +20,12 @@ UNIT_TEST(MM6EventVariables, MapByteRangeHasOneHundredCheckedSlots) {
     EXPECT_EQ(describeMM6Variable(204).index, 99);
     EXPECT_EQ(describeMM6Variable(205).family, MM6VariableFamily::OtherTitleSpecific);
 }
+
+UNIT_TEST(MM6EventVariables, ClassValueRejectsMM7OnlyIds) {
+    for (int value = 0; value < mm6::kClassCount; ++value)
+        EXPECT_TRUE(isValidMM6SharedCandidateValue(2, value));
+    EXPECT_FALSE(isValidMM6SharedCandidateValue(2, -1));
+    EXPECT_FALSE(isValidMM6SharedCandidateValue(2, mm6::kClassCount));
+    EXPECT_FALSE(isValidMM6SharedCandidateValue(2, 35));
+    EXPECT_TRUE(isValidMM6SharedCandidateValue(16, 35));
+}

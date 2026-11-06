@@ -35,6 +35,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Transport Manifest](MM6-F4-Transport-Manifest.md) — Private F3-derived travel descriptors, blank/special slot policy and title-specific UI handoff
 - [MM6 F4 Map Bytes](MM6-F4-Map-Bytes.md) — Bounded active map-byte dispatch, 200-byte delta preservation, and unresolved arithmetic/persistence edges
 - [MM6 F4 Autonote Variables](MM6-F4-Autonote-Variables.md) — Bounded party note-bit dispatch for active MM6 event ID 205 and remaining UI/save checks
+- [MM6 F4 Quest Bit Variable](MM6-F4-Quest-Bit-Variable.md) — Active raw ID 16 operation/operand audit, hidden bits and QEST acceptance gates
 - [MM6 F4 Condition Variables](MM6-F4-Condition-Variables.md) — Bounded dispatch for 18 shipped condition uses; 36 status writes remain guarded
 - [MM6 F4 House Type Routing](MM6-F4-House-Type-Routing.md) — Title-specific classification for retained house labels and unresolved services/screens
 - [MM6 F4 House Service Gate](MM6-F4-House-Service-Gate.md) — House type families and pre-mutation entry boundary pending MM6 rooms and services

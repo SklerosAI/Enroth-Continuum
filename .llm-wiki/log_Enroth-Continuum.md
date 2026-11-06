@@ -622,3 +622,8 @@ Chronological record of wiki activity.
 - Exported 119 title-specific room descriptors from the accepted corrected F3 PE report and retained house table into an owner-only local profile manifest. The exporter checks the F3 gate hash, confines output to the private MM6 rules directory and rejects symlink paths. No descriptor names or raw values enter Git.
 - The offline decoder validates the complete manifest; a native private-backed test compares all 119 fields with the accepted report and dispositions all 674 active house-entry instructions as 671 numeric room references, one blank room field and two terminal IDs. The MM6 house entry guard remains closed.
 - The integrated arm64 MM6/MM7/unit build passed. The offline runner passed 148/148 tests from 46 suites without skips; the general suite passed 438/438. No original installation or MM6 process was opened.
+
+## [2026-11-06] audit | MM6 quest-bit event variable
+- by: T-Burton-ND via codex
+- Frozen F3-matched retained inputs show 611 raw-ID-16 uses across Compare, Add, Subtract and Set, with 208 distinct bit operands in the 512-row quest table. Only 52 used bits have visible text; 156 used bits are hidden-state candidates. The tracked audit script verifies frozen hashes and writes all site locators to an owner-only ignored report.
+- The inherited executor accesses this party bit inside character iteration and borrows MM7 journal/sound cues. The `.ec6` QEST section copy-stages 512 bits but live SaveLoad is unwired. A public packet records operation-specific blockers and offline/F5 acceptance; no runtime mutation, original installation read or MM6 game launch occurred.

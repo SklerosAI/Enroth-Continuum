@@ -1,0 +1,19 @@
+# MM6 original shop and guild refresh trace — F4
+
+Status: **accepted-executable static proof of row-keyed refresh and raw Party-block persistence; stock tuple still incomplete** (2026-11-06). Exact addresses, row IDs, disassembly and the 557-row mapping remain in ignored owner-local evidence. The staged executable hash matched the accepted F3 PE identity before reading; no original installation or MM6 process was opened.
+
+## Proven path
+
+The original `2dEvents.txt` parser walks 557 fixed-size house records. Its parsed row ordinal matches the retained table key, and it stores column 15 as a signed 16-bit field in each record. The original shop and guild UI paths use the current house key to index that record and per-house 64-bit refresh deadlines. On expiry they call stock generators, convert column 15 to game days, and write the next deadline. This upgrades the prior column-15 inference to **high-confidence original refresh behavior for the observed branches**. It does not prove that every house-type row uses column 15 that way.
+
+The original shop generators use the same house key, a 12-position physical item stride and a type-specific visible-position limit. The four retained shop types resolve to visible limits of 6, 8, 12 and 6. The original spell-guild generator uses the same row-key scheme, a 12-position stock loop and a compact guild-tier index derived from the contiguous retained guild block. These are **high-confidence bounds for generation and display**. The item record is 28 bytes by address stride; its semantic fields, ordinary versus special list roles and sold-out marker still require purchase/read traces.
+
+The `party.bin` writer copies a fixed 64,720-byte global Party block, and the original reader requests the same byte count into that live block. Every traced stock and refresh address lies inside it. This is **high-confidence raw persistence**, but it is not an `.ec6` field codec or a failure-atomic loader: the original archive contains a raw memory block, and this trace has not validated a native nonzero stock sample or a full save/quit/load cycle.
+
+## Remaining gate
+
+The stock and clock address formulas for adjacent families coincide at a boundary index. The original branches may avoid using that edge, share a sentinel, or have another rule; the trace does not yet distinguish those cases. Copying an apparent array length into the fork would risk aliasing the final shop with the first guild. The inherited MM7 `Party` owner also has different ranges and cannot represent the MM6 keyed state safely.
+
+Next, trace original ordinary/special shop purchase and guild-book purchase writes, then the corresponding stock reads and the edge branch. Validate the 28-byte item fields, zero/sold-out meaning, exact active slot use and clock/stock coupling against an owner-local native `party.bin` sample. Only then add title-specific keyed runtime storage and a detached mandatory `.ec6` section with item-template, key and late-failure checks. The live MM6 `SaveLoad.cpp` guard remains closed until every owner can be staged and committed atomically.
+
+See the [557-row key matrix](MM6_F4_SHOP_SAVE_KEY_MATRIX.md), [previous identity audit](MM6_F4_SHOP_SAVE_IDENTITY.md), [save remainder](MM6_SAVE_REMAINDER_F4.md) and [transaction checklist](../.llm-wiki/MM6-F4-Save-Transaction-Checklist.md).

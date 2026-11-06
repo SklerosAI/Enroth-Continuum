@@ -1,6 +1,6 @@
 # MM6 shop, guild and bounty save identity audit — F4
 
-Status: source and accepted-F3 evidence audit, 2026-11-06. This is a **save blocker**, not an `.ec6` codec or permission to enter the inherited service screens. No original installation was reread and no MM6 process was launched.
+Status: source and accepted-F3 evidence audit, 2026-11-06. This is a **save blocker**, not an `.ec6` codec or permission to enter the inherited service screens. A later [targeted original PE trace](MM6_F4_SHOP_REFRESH_PE_TRACE.md) establishes the shop/guild row-keyed refresh path and raw `party.bin` inclusion, while the stock tuple and bounty owner remain incomplete. No original installation was reread and no MM6 process was launched.
 
 ## Current runtime owner and lifetime
 

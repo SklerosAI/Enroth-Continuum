@@ -419,3 +419,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Checked the current SpellBuff and ActiveOverlayList source: buff overlay IDs are bounded one-based slots, but an animation can finish or its slot be reused while the buff remains active. Recorded why a mandatory active-slot equality check would be unsound without a stronger original-runtime contract.
 - Ran the same linked unit binary with MM6 tests excluded; 438/438 general tests passed. The installed MM7 app and saves were untouched.
+
+## [2026-11-06] update | MM6 F4 parallel-agent handoff
+- by: T-Burton-ND via codex
+- Replaced stale F2/F3 and planning-only instructions in the agent handoff with the accepted F3 source gate, current F4 sixteen-section partial save state, 83 MM6/LOD and 438 general unit results, private fixture boundary and remaining offline/F5 gates.
+- Kept the protected MM7 and reserved MM8 worktree rules explicit so parallel agents can resume from the current public and ignored private packets without mistaking structural tests for playable MM6.

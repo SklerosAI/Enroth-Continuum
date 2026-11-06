@@ -7,6 +7,7 @@ set(ENGINE_SPELLS_SOURCES
         MM6FirstAidPreflight.cpp
         MM6FirstAidTransaction.cpp
         MM6PowerCureRules.cpp
+        MM6PowerCureTransaction.cpp
         MM6TimedCureRules.cpp
         MM6CombatBuffRules.cpp
         Spells.cpp)
@@ -18,6 +19,7 @@ set(ENGINE_SPELLS_HEADERS
         MM6FirstAidPreflight.h
         MM6FirstAidTransaction.h
         MM6PowerCureRules.h
+        MM6PowerCureTransaction.h
         MM6TimedCureRules.h
         MM6CombatBuffRules.h
         SpellBuff.h
@@ -33,7 +35,8 @@ if(OE_BUILD_TESTS)
     add_library(test_engine_mm6_spell_rules OBJECT Tests/MM6SpellRules_ut.cpp Tests/MM6FirstAidRules_ut.cpp
         Tests/MM6FirstAidPreflight_ut.cpp
         Tests/MM6FirstAidTransaction_ut.cpp
-        Tests/MM6PowerCureRules_ut.cpp Tests/MM6TimedCureRules_ut.cpp Tests/MM6CombatBuffRules_ut.cpp
+        Tests/MM6PowerCureRules_ut.cpp Tests/MM6PowerCureTransaction_ut.cpp
+        Tests/MM6TimedCureRules_ut.cpp Tests/MM6CombatBuffRules_ut.cpp
         Tests/MM6SpellDamageTag_ut.cpp)
     target_link_libraries(test_engine_mm6_spell_rules PUBLIC testing_unit engine_spells)
     target_check_style(test_engine_mm6_spell_rules)

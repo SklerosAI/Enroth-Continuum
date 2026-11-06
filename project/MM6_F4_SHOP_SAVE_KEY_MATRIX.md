@@ -1,0 +1,29 @@
+# MM6 shop, guild and bounty save-key matrix — F4
+
+Status: **source and accepted-retained-data audit; no `.ec6` codec or live service/save route** (2026-11-06). The exact 557-row join, including active event references and candidate interval tokens, is owner-local in ignored `F4_SHOP_GUILD_BOUNTY_SAVE_KEY_MATRIX_PRIVATE.json`. No original installation or MM6 process was opened.
+
+## Evidence scopes
+
+The F3 content reconciliation accepted the retained `2devents.txt` table, and the existing event probe joined 674 active `SpeakInHouse` instructions to 519 of its 557 rows plus two terminal IDs. `HouseTable.cpp` parses the row ID, type, room and column 15. The corrected accepted F3 PE report covers creation, spell recovery, house media and transport; it establishes **no** shop stock, refresh, ban, guild-book or bounty save-field layout. The accepted F3 save-family manifest also contains no native whole-save sample. A row ID is a plausible MM6 service key, not yet a proved stock-array key or native save offset.
+
+The table `Type` classifier identifies 47 shop rows, 22 spell-guild rows, 21 transport rows and 467 other rows. The older house-service packet counted any `Type` containing “Guild”: 34 guild-labelled active rows, including 12 Mercenary/Thieves Guild rows. Fourteen of those 34 labels fall in the inherited MM7 guild ID interval, but only **two** are spell-guild types; the other 12 are Mercenary/Thieves Guild labels. The 20 guild-labelled rows outside the interval are all spell-guild types. The old “14 magic-guild rows” phrase conflated the label and service-family scopes. These are table classifications, not proof of service reachability or save state.
+
+## Current owner and key mismatch
+
+| State family | Inherited current-runtime owner and serializer | MM6 table join and missing proof |
+| --- | --- | --- |
+| Shop standard/special stock and refresh | `Party::standartItemsInShops` and `specialItemsInShops` have 12 slots per house; `PartyTimeStruct::shopNextRefreshTime` is indexed by MM7 house IDs 1–52. `EntitySnapshots.cpp` copies 52 such entries to `Party_MM7`. | All 47 MM6 shop-type rows happen to fall in 1–52, **along with five transport rows**. Numeric coincidence cannot establish stock slot cardinality, ordinary/special roles, item templates or refresh behavior. |
+| Shop ban and in-shop flag | `shopBanTimes` and `InTheShopFlags` use the same MM7 1–52 range. Inherited `Shops.cpp` sets a one-day ban and changes the flag; other shop dialogue paths clear the flag. | MM6 ban duration and flag lifetime are unproved. They need a keyed policy before save capture. |
+| Guild books and refresh | `spellBooksInGuilds` has 12 slots per guild; `guildNextRefreshTime` is indexed by MM7 IDs 139–170 and serialized as 32 entries. | Only two of 22 MM6 spell-guild types are in that range. The range also contains 12 Mercenary/Thieves Guild labels and 13 non-guild-labelled active rows. The remaining 20 spell guilds have no inherited owner slot. |
+| Bounty clock, target and killed flag | `bountyHuntNextGenTime`, `monster_id_for_hunting` and `monster_for_hunting_killed` use MM7 IDs 102–106. Inherited `TownHall.cpp` uses a monthly boundary; `Actor::Die` marks matching targets across that MM7 range. | All five active rows in 102–106 are outside the MM6 council/town-hall label candidates. The retained table has one explicit MM6 council type and three ambiguous Town Hall labels elsewhere. Neither label proves a bounty service, target identity or per-house save tuple. |
+
+Every MM6 shop and spell-guild row has a numeric nonzero column-15 token. The current parser stores it as `generation_interval_days`; its source comment explicitly says MM6 column 15 **may** have another role. The inherited shop/guild service code uses this value as a refresh interval, but the MM6 presentation route does not call those service mutators. Thus the token is a concrete lead for targeted original-handler tracing, not an accepted refresh-clock contract.
+
+## Unlock sequence
+
+1. Trace the original MM6 shop/guild service handlers from the retained row ID and column-15 accesses, then establish stock slot counts, ordinary/special/book roles, next-refresh rule and ban lifetime. A native whole-save sample or equivalent PE save/load path must identify the persisted tuple and field widths. Do not reuse the MM7 snapshot offsets.
+2. Trace the MM6 council/town-hall route and bounty target generation, claim and actor-death join. Establish which table keys own the clock, monster target and killed flag, and whether the tuple survives save/quit/load. Resolve the ambiguous Town Hall labels by behavior, not spelling.
+3. Add title-specific keyed Party storage and service consumers. Validate each key against the accepted MM6 table, stock item against the MM6 item table and bounty target against the MM6 monster table. Decide whether in-shop flags reset on entry or persist.
+4. Only after those semantics are proved, add one mandatory detached `.ec6` section that captures clocks with their stock/target tuples. Test nonzero purchase/refresh, ban and bounty state, duplicate/missing keys, foreign title, invalid item/monster and late failure without caller mutation. The complete all-owner transaction remains required before opening `SaveLoad.cpp`.
+
+This audit adds **no codec** because there is no proved MM6 stock/bounty runtime owner or persistent field layout to encode. The inherited MM7 arrays cannot represent all MM6 spell guilds or the candidate bounty houses. See the earlier [identity audit](MM6_F4_SHOP_SAVE_IDENTITY.md), [house service gate](MM6_F4_HOUSE_SERVICE_GATE.md), [save remainder](MM6_SAVE_REMAINDER_F4.md) and [transaction checklist](../.llm-wiki/MM6-F4-Save-Transaction-Checklist.md).

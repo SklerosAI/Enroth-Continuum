@@ -481,7 +481,7 @@ void OutdoorLocation::Load(std::string_view filename, int days_played, int respa
         deserializeMM6Outdoor(mapData, &location);
     else
         deserialize(mapData, &location);
-    reconstruct(location, this);
+    reconstruct(location, this, engine->gameTitle());
 
     // ****************.ddm file*********************//
 

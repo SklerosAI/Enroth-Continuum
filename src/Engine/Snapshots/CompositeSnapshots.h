@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include "EntitySnapshots.h"
+#include "Engine/GameTitle.h"
 
 #include "Utility/Memory/Blob.h"
 #include "Utility/Hash.h"
@@ -107,8 +108,8 @@ struct OutdoorLocation_MM7 {
     std::vector<SpawnPoint_MM7> spawnPoints;
 };
 
-void reconstruct(const OutdoorLocation_MM7 &src, OutdoorTerrain *dst);
-void reconstruct(const OutdoorLocation_MM7 &src, OutdoorLocation *dst);
+void reconstruct(const OutdoorLocation_MM7 &src, OutdoorTerrain *dst, GameTitle gameTitle = GameTitle::MM7);
+void reconstruct(const OutdoorLocation_MM7 &src, OutdoorLocation *dst, GameTitle gameTitle = GameTitle::MM7);
 void deserialize(InputStream &src, OutdoorLocation_MM7 *dst);
 
 struct OutdoorDelta_MM7 {

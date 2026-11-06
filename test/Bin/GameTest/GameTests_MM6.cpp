@@ -41,6 +41,7 @@
 #include "Engine/Tables/IconFrameTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
+#include "Engine/Tables/TileTable.h"
 #include "Engine/Timer.h"
 
 #include "GUI/GUIButton.h"
@@ -173,6 +174,65 @@ GAME_TEST(MM6Headless, FirstOutdoorResourcePreflight) {
     const std::string_view sky(base.skyTexture.data(), terminator - base.skyTexture.begin());
     EXPECT_EQ(mm6OutdoorBaseSky(GameTitle::MM6, sky), "plansky2");
     EXPECT_EQ(engine->resources()->bitmapSize(sky), Sizei(256, 256));
+}
+
+GAME_TEST(MM6Headless, FirstOutdoorTileSelectors) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    OutdoorLocation_MM7 base;
+    deserializeMM6Outdoor(decodeMM6ArchiveEntry(pGames_LOD->read("oute3.odm")), &base);
+
+    OutdoorTerrain mm6Terrain;
+    OutdoorTerrain inheritedTerrain;
+    reconstruct(base, &mm6Terrain, GameTitle::MM6);
+    reconstruct(base, &inheritedTerrain, GameTitle::MM7);
+
+    size_t inheritedPending = 0;
+    size_t mm6Pending = 0;
+    for (int y = 0; y < 127; ++y) {
+        for (int x = 0; x < 127; ++x) {
+            inheritedPending += pTileTable->tile(inheritedTerrain.tileIdByGrid({x, y})).textureName == "pending";
+            mm6Pending += pTileTable->tile(mm6Terrain.tileIdByGrid({x, y})).textureName == "pending";
+        }
+    }
+    EXPECT_EQ(inheritedPending, 209u);
+    EXPECT_EQ(mm6Pending, 0u);
+
+    mm6Terrain.changeSeason(6);
+    size_t postSeasonPending = 0;
+    for (int y = 0; y < 127; ++y)
+        for (int x = 0; x < 127; ++x)
+            postSeasonPending += pTileTable->tile(mm6Terrain.tileIdByGrid({x, y})).textureName == "pending";
+    EXPECT_EQ(postSeasonPending, 0u);
+
+    base.tileTypes[0].tileId = 0;
+    EXPECT_THROW(reconstruct(base, &mm6Terrain, GameTitle::MM6), std::exception);
+    EXPECT_NO_THROW(reconstruct(base, &inheritedTerrain, GameTitle::MM7));
+    base.tileTypes[0].tileId = static_cast<uint16_t>(pTileTable->tileCount());
+    EXPECT_THROW(reconstruct(base, &mm6Terrain, GameTitle::MM6), std::exception);
+    EXPECT_NO_THROW(reconstruct(base, &inheritedTerrain, GameTitle::MM7));
+
+    size_t outdoorCount = 0;
+    size_t invalidTextures = 0;
+    for (const std::string &name : pGames_LOD->ls()) {
+        if (!name.ends_with(".odm"))
+            continue;
+        OutdoorLocation_MM7 location;
+        deserializeMM6Outdoor(decodeMM6ArchiveEntry(pGames_LOD->read(name)), &location);
+        OutdoorTerrain terrain;
+        reconstruct(location, &terrain, GameTitle::MM6);
+        for (int y = 0; y < 127; ++y) {
+            for (int x = 0; x < 127; ++x) {
+                const int tileId = terrain.tileIdByGrid({x, y});
+                ASSERT_GE(tileId, 0);
+                ASSERT_LT(static_cast<size_t>(tileId), pTileTable->tileCount());
+                const std::string &texture = pTileTable->tile(tileId).textureName;
+                invalidTextures += texture.empty() || texture == "pending";
+            }
+        }
+        ++outdoorCount;
+    }
+    EXPECT_EQ(outdoorCount, 15u);
+    EXPECT_EQ(invalidTextures, 0u);
 }
 
 TEST(MM6HeadlessFirstOutdoorSpriteEvents, IndexAndTitleIsolation) {

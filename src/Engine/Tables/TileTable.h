@@ -34,6 +34,8 @@ class TileTable {
 
     const TileData &tile(int id) const;
 
+    [[nodiscard]] size_t tileCount() const { return _tiles.size(); }
+
     void addTile(TileData tileData);
 
     friend void deserialize(const Blob &src, TileTable *dst); // In TableSerialization.cpp.

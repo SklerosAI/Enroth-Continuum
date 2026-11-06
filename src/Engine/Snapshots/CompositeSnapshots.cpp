@@ -551,20 +551,34 @@ static int mapToGlobalTileId(const std::array<int, 4> &baseIds, int localTileId)
     return baseIds[tilesetIndex] + tilesetOffset;
 }
 
-void reconstruct(const OutdoorLocation_MM7 &src, OutdoorTerrain *dst) {
+void reconstruct(const OutdoorLocation_MM7 &src, OutdoorTerrain *dst, GameTitle gameTitle) {
     std::array<int, 4> baseTileIds;
     for (int i = 0; i < 4; i++) {
         reconstruct(src.tileTypes[i].tileset, &dst->_tilesets[i]);
-        baseTileIds[i] = pTileTable->tileId(dst->_tilesets[i], isRoad(dst->_tilesets[i]) ? TILE_VARIANT_ROAD_N_S_E_W : TILE_VARIANT_BASE1);
+        if (gameTitle == GameTitle::MM6) {
+            // MM6 stores the first global tile ID for each 36-tile selector in the ODM.
+            // Resolving it through the MM7 tileset enum loses MM6 terrain and road types.
+            const int baseId = src.tileTypes[i].tileId;
+            if (baseId == 0 || static_cast<size_t>(baseId) + 36 > pTileTable->tileCount())
+                throw Exception("Invalid MM6 outdoor tile selector");
+            baseTileIds[i] = baseId;
+        } else {
+            baseTileIds[i] = pTileTable->tileId(dst->_tilesets[i], isRoad(dst->_tilesets[i]) ? TILE_VARIANT_ROAD_N_S_E_W : TILE_VARIANT_BASE1);
+        }
     }
 
     for (int y = 0; y < 128; y++)
         for (int x = 0; x < 128; x++)
             dst->_heightMap[y][x] = src.heightMap[y * 128 + x];
 
-    for (int y = 0; y < 127; y++)
-        for (int x = 0; x < 127; x++)
-            dst->_originalTileMap[y][x] = mapToGlobalTileId(baseTileIds, src.tileMap[y * 128 + x]);
+    for (int y = 0; y < 127; y++) {
+        for (int x = 0; x < 127; x++) {
+            const int tileId = mapToGlobalTileId(baseTileIds, src.tileMap[y * 128 + x]);
+            if (gameTitle == GameTitle::MM6 && static_cast<size_t>(tileId) >= pTileTable->tileCount())
+                throw Exception("Invalid MM6 outdoor tile ID");
+            dst->_originalTileMap[y][x] = tileId;
+        }
+    }
 
     dst->recalculateNormals();
     dst->recalculateTransitions(&dst->_tileMap);
@@ -572,9 +586,9 @@ void reconstruct(const OutdoorLocation_MM7 &src, OutdoorTerrain *dst) {
     dst->_tileMap = Image<int16_t>::copy(dst->_originalTileMap);
 }
 
-void reconstruct(const OutdoorLocation_MM7 &src, OutdoorLocation *dst) {
+void reconstruct(const OutdoorLocation_MM7 &src, OutdoorLocation *dst, GameTitle gameTitle) {
     reconstruct(src.skyTexture, &dst->sky_texture_filename);
-    reconstruct(src, &dst->pTerrain);
+    reconstruct(src, &dst->pTerrain, gameTitle);
 
     dst->pBModels.clear();
     dst->vertices.clear();

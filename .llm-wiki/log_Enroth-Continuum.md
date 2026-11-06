@@ -1370,3 +1370,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A combined MM6 suite exposed that the successful full-world test leaves process-global state changed: later save and chest tests failed. Marked only `DISABLED_ScopedFirstOutdoorWorld` disabled by default and documented its explicit one-test fresh-process command. No complete world rollback is claimed.
 - The linked arm64 standalone probe passed 1/1 with `--gtest_also_run_disabled_tests`; the normal MM6 suite passed 38/38 in another process, including the formerly contaminated save and chest tests. Host monitors observed 44 and 1,899 samples respectively, with no focus change, no on-screen process window and unchanged frontmost PID. This preserves the headless test gate without opening normal save/chest guards or claiming graphical acceptance. See [first-map preflight](MM6-F4-First-Map-Preflight.md) and [headless harness](MM6-F4-Headless-Harness.md).
+
+## [2026-11-06] verify | Integrated MM6 first-world checkpoint
+- by: T-Burton-ND via codex
+- The integrated private offline suite passed **312/312** from 78 suites, general unit tests **438/438**, normal MM6 headless tests **38/38** in a monitored process, and the isolated scoped first-world probe **1/1** in a second monitored process. The MM7 headless control passed **1/1**. The selected-portrait resource/frame-cycle tests passed **2/2** under the monitor. No process changed focus or displayed a window.
+- Updated the [build graph](../project/MM6_F4_BUILD_GRAPH.md) and [agent handoff](Agent-Handoff.md). First-map actors, chests and source-backed initial HUD pieces are now covered headlessly. Live MM6 new-game/save guards, complete process rollback, graphical view and audible behavior remain unaccepted.

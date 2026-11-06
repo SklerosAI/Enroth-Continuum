@@ -37,6 +37,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Map Bytes](MM6-F4-Map-Bytes.md) — Bounded active map-byte dispatch, 200-byte delta preservation, and unresolved arithmetic/persistence edges
 - [MM6 F4 Autonote Variables](MM6-F4-Autonote-Variables.md) — Bounded party note-bit dispatch for active MM6 event ID 205 and remaining UI/save checks
 - [MM6 F4 Quest Bit Variable](MM6-F4-Quest-Bit-Variable.md) — Active raw ID 16 operation/operand audit, hidden bits and QEST acceptance gates
+- [MM6 F4 Day of Year](MM6-F4-Day-Of-Year.md) — Bounded raw ID 19 comparison and 592 retained date-gate operands
 - [MM6 F4 Condition Variables](MM6-F4-Condition-Variables.md) — Bounded dispatch for 18 shipped condition uses; 36 status writes remain guarded
 - [MM6 F4 House Type Routing](MM6-F4-House-Type-Routing.md) — Title-specific classification for retained house labels and unresolved services/screens
 - [MM6 F4 House Service Gate](MM6-F4-House-Service-Gate.md) — House type families and pre-mutation entry boundary pending MM6 services
@@ -56,7 +57,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial sixteen-section `.ec6` candidate, cross-field checks and remaining save gaps
 - [MM6 F4 Timed Buffs](MM6-F4-Timed-Buffs.md) — Bounded BUFF fields for party/character effects and open runtime/F5 checks
 - [MM6 F4 Hireling State](MM6-F4-Hireling-State.md) — HIRE party copies, sacrifice progress and bounded MM6 NPC lookup
-- [MM6 F4 Atomic Save File](MM6-F4-Atomic-Save-File.md) — Native `.ec6` atomic replacement, validated backup recovery and unsupported filesystem cases
+- [MM6 F4 Atomic Save File](MM6-F4-Atomic-Save-File.md) — Known-field `.ec6` replacement/recovery and read-only native slot inventory
 - [MM6 F4 Save Remainder](MM6-F4-Save-Remainder.md) — Field, consumer and lifetime inventory after core/durable/metadata/NPC/MAPS, including raw resistance staging
 - [MM6 F4 Held Item](MM6-F4-Held-Item.md) — HELD section, MM6 icon preflight and cursor restoration boundary
 - [MM6 F4 Recovery and Calendar](MM6-F4-Recovery-Calendar.md) — Required `.ec6` RCVR state, derived calendar and active-rest/turn guards

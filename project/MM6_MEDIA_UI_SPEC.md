@@ -20,6 +20,18 @@ verified on the Mac.
 | Map music | Every distinct track ID selected by the retained MM6 map table has a corresponding numbered MP3 in the owner's installation. | `AudioPlayer::MusicPlayTrack` already uses `sounds/` for MM6, and `PlayLevelMusic` obtains the map's ID. Confirm stream decode, volume, pause/resume and map transition behavior in F5; file presence is not playback. |
 | Character interface | MM6's six starting classes, portrait/icon names and creation flow differ from the inherited MM7 screen; the older `calig.fnt` layout and otherwise unused `legal.fnt` need UI use-site review. | `UIPartyCreation.cpp` still draws nine MM7 classes and asks for MM7 portraits/icons. Use [MM6 class and skill specification](MM6_CLASS_SKILL_SPEC.md) for creation state; audit actual MM6 UI resources and font consumers before drawing a final screen. |
 
+The [media F2 closure packet](MM6_MEDIA_F2_CLOSURE.md) and reproducible
+`scripts/mm6_probe_media_consumers.py` compare additional inherited UI names
+and reaction sound formulas with retained indexes. Five of nine requested
+class icons and 13 of 19 literal creation icons have retained matches; none
+of the 22 inherited first portrait-frame names or 1,232 constructed runtime
+frame names matches the retained icon index. All 38 constructed arrow names
+and 12 literal font requests match. The inherited 22-slot reaction formula
+produces 1,424 possible IDs, only 513 present in the retained MM6 sound
+table. These are lexical and potential-ID checks, not evidence that original
+MM6 lacks portraits/voice or that any frame/sample was seen or heard. The
+exact names and IDs stay in ignored `media-consumer-probe.json`.
+
 Source locations: `src/Media/MediaPlayer.cpp` (`Initialize`, `LoadMovie`,
 `OpenHouseMovie`), `src/Library/Vid/VidReader.cpp`,
 `src/Library/Vid/VidSnapshots.h`, `src/Application/GameStates/GameFsmBuilder.cpp`,

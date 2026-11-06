@@ -409,6 +409,13 @@ that requirement.
   sound IDs occur more than once in `dsounds.bin`, and the MM6 table loader
   currently keeps the last row for each. This is source-level evidence only;
   no MM6 media playback has been checked.
+- [x] Compare inherited creation icons, portrait-frame construction, literal
+  fonts and potential voice-reaction IDs to retained MM6 indexes using
+  `scripts/mm6_probe_media_consumers.py`. The [media F2 closure packet](MM6_MEDIA_F2_CLOSURE.md)
+  records source paths and acceptance checks. Five of nine inherited class
+  icons match, none of 22 inherited first portrait-frame names matches, and
+  all 12 literal font names match. Potential reaction sound IDs have many
+  table gaps; these are source/index risks, not a verified original voice map.
 - [ ] Video and audio archive structure, house/movie routing, playback and
   fallbacks. The 116 distinct MM6 house animation IDs used in `2devents.txt`
   are within the inherited 196-entry MM7 `pAnimatedRooms` array, but **zero**

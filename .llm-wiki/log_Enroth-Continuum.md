@@ -813,3 +813,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Rebuilt the arm64 MM6, OpenEnroth and unit targets after the house, item, First Aid and save seams landed. The one-command private-backed MM6/LOD offline gate passed 198/198 tests from 59 suites; the separate general suite passed 438/438. No MM6 process or graphical/audio play was launched.
 - Reconciled the [agent handoff](Agent-Handoff.md), [offline seam register](MM6-F4-Offline-Seams.md), [build graph](../project/MM6_F4_BUILD_GRAPH.md) and [local status](../project/LOCAL_STATUS.md) to this checkpoint. Full spell effects, house services, artifact and ground-drop behavior, mandatory save fields and an all-owner load commit remain F4 gates. The owner-local executable was inspected read-only under accepted F3 identity for item semantics; proprietary evidence remains ignored. Protected MM7 and reserved MM8 were not edited.
+
+## [2026-11-06] audit | MM6 shop and bounty save keys
+- by: T-Burton-ND via codex
+- Current `Party` clocks, stock, bans and bounty tuples use inherited MM7 `HouseId` intervals, including a shop array ending at `HOUSE_52`. Current service consumers index these arrays by house ID, but the MM6 house path is display-only. Accepted F3 evidence identifies the MM6 house table, room and transport records without an MM6 shop/guild/town-hall save key or stock/refresh/bounty persistence contract.
+- The [shop save audit](../project/MM6_F4_SHOP_SAVE_IDENTITY.md) and [transaction checklist](MM6-F4-Save-Transaction-Checklist.md) state the required MM6 key/storage and coupled-clock/stock/target proof before a `SHOP` section. No codec or live SaveLoad path changed. This was a source/accepted-report audit; no build, original installation reread or MM6 launch was needed.

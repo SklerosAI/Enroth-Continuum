@@ -14,7 +14,7 @@
 #include <unistd.h>
 #endif
 
-#include "MM6SaveContainer.h"
+#include "MM6KnownSaveFields.h"
 
 namespace mm6 {
 namespace {
@@ -72,9 +72,9 @@ std::vector<std::uint8_t> readBoundedFile(const std::filesystem::path &path) {
 std::vector<std::uint8_t> readValidatedFile(const std::filesystem::path &path) {
     std::vector<std::uint8_t> bytes = readBoundedFile(path);
     try {
-        (void) decodeSaveContainer(bytes);
+        (void) decodeKnownSave(bytes);
     } catch (const std::runtime_error &) {
-        throw InvalidSaveFile("MM6 save container validation failed");
+        throw InvalidSaveFile("MM6 known save validation failed");
     }
     return bytes;
 }
@@ -168,7 +168,7 @@ void detail::writeAtomicSaveFile(const std::filesystem::path &profileRoot,
 #ifdef _WIN32
     throw std::runtime_error("native atomic MM6 saves are unsupported on Windows");
 #else
-    (void) decodeSaveContainer(container);
+    (void) decodeKnownSave(container);
     const std::filesystem::path directory = savesDirectory(profileRoot, slotName);
     std::filesystem::create_directories(directory);
     const std::filesystem::path primary = directory / std::string(slotName);

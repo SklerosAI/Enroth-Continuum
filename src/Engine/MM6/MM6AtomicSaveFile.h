@@ -12,6 +12,8 @@ namespace mm6 {
 
 // The caller must pass the resolved native MM6 user-profile root, not a ufs
 // display path. RAM and custom FileSystem implementations have no atomic rename.
+// These helpers require the current sixteen-section KnownSaveFields candidate;
+// they do not validate the private map identity or complete live state.
 void writeAtomicSaveFile(const std::filesystem::path &profileRoot, std::string_view slotName,
                          std::span<const std::uint8_t> container);
 

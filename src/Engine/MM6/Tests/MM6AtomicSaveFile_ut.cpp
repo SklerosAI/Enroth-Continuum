@@ -1,3 +1,4 @@
+#include <array>
 #include <cstdint>
 #include <exception>
 #include <system_error>
@@ -14,6 +15,7 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6AtomicSaveFile.h"
+#include "Engine/MM6/MM6KnownSaveFields.h"
 #include "Engine/MM6/MM6SaveContainer.h"
 
 namespace {
@@ -46,9 +48,33 @@ class TestProfile {
 };
 
 std::vector<std::uint8_t> sample(std::uint8_t marker) {
-    mm6::SaveContainer container;
-    container.sections.push_back({{'H', 'E', 'A', 'D'}, true, {marker}});
-    return mm6::encodeSaveContainer(container);
+    mm6::KnownSaveFields fields;
+    fields.core.party.playingTicks = marker;
+    fields.core.party.activeCharacter = 2;
+    for (mm6::CoreCharacterFields &character : fields.core.characters)
+        character.name = "Hero";
+    fields.metadata.header.displayName = "Sample " + std::to_string(marker);
+    fields.metadata.header.mapFileName = "d0.blv";
+    fields.metadata.header.playingTicks = marker;
+    fields.metadata.ui.activeCharacter = 2;
+    fields.recovery.playingTicks = marker;
+    for (int i = 0; i < 52; ++i)
+        fields.maps.deltas.push_back({"d" + std::to_string(i) + ".dlv", {1}});
+    for (int i = 0; i < 15; ++i)
+        fields.maps.deltas.push_back({"o" + std::to_string(i) + ".ddm", {2}});
+    fields.npcs.activeCount = 399;
+    return mm6::encodeKnownSave(fields);
+}
+
+std::vector<std::uint8_t> malformedKnownSave(std::uint8_t marker) {
+    mm6::SaveContainer container = mm6::decodeSaveContainer(sample(marker));
+    for (mm6::SaveSection &section : container.sections) {
+        if (section.tag == std::array{'H', 'E', 'A', 'D'}) {
+            section.payload[0] = 2; // Unsupported HEAD field version with valid container CRCs.
+            return mm6::encodeSaveContainer(container);
+        }
+    }
+    throw std::runtime_error("missing synthetic MM6 HEAD section");
 }
 
 std::vector<std::uint8_t> read(const std::filesystem::path &path) {
@@ -73,7 +99,11 @@ UNIT_TEST(MM6AtomicSaveFile, InitialReplaceAndRecoverPrevious) {
     EXPECT_EQ(read(profile.save()), next);
     EXPECT_EQ(read(profile.backup()), old);
 
-    { std::ofstream corrupt(profile.save(), std::ios::binary); corrupt << "bad"; }
+    {
+        std::ofstream corrupt(profile.save(), std::ios::binary);
+        std::vector<std::uint8_t> invalid = malformedKnownSave(3);
+        corrupt.write(reinterpret_cast<const char *>(invalid.data()), invalid.size());
+    }
     EXPECT_EQ(mm6::loadRecoverableSaveFile(profile.root(), "save001.ec6"), old);
     EXPECT_EQ(read(profile.save()), old);
     EXPECT_EQ(read(profile.backup()), old);
@@ -114,6 +144,11 @@ UNIT_TEST(MM6AtomicSaveFile, RejectsInvalidCandidateAndDestination) {
     std::vector<std::uint8_t> wrongTitle = sample(6);
     wrongTitle[2] = '7';
     EXPECT_THROW(mm6::writeAtomicSaveFile(profile.root(), "save001.ec6", wrongTitle), std::exception);
+    EXPECT_THROW(mm6::writeAtomicSaveFile(profile.root(), "save001.ec6", malformedKnownSave(6)), std::exception);
+    mm6::SaveContainer partial;
+    partial.sections.push_back({{'H', 'E', 'A', 'D'}, true, {1}});
+    EXPECT_THROW(mm6::writeAtomicSaveFile(profile.root(), "save001.ec6",
+                                         mm6::encodeSaveContainer(partial)), std::exception);
     EXPECT_THROW(mm6::writeAtomicSaveFile(profile.root(), "../save001.ec6", old), std::exception);
     EXPECT_EQ(read(profile.save()), old);
 

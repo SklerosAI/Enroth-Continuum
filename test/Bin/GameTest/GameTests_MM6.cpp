@@ -265,9 +265,14 @@ GAME_TEST(MM6Headless, FirstOutdoorPreparation) {
 GAME_TEST(MM6Headless, ScopedFirstOutdoorWorld) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     ASSERT_EQ(window->nativeHandle(), nullptr);
-    // The menu fixture owns one extra GUIWindow. DoPrepareWorld deletes it
-    // before asserting that only the persistent primary window remains.
-    ASSERT_EQ(lWindowList.size(), pGUIWindow_CurrentMenu ? 2u : 1u);
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    // MainMenuState releases its owned window on this transition. The party
+    // creation window is then owned by pGUIWindow_CurrentMenu, which the
+    // normal world reset deletes before checking for one primary window.
+    ASSERT_NE(pGUIWindow_CurrentMenu, nullptr);
+    ASSERT_EQ(pGUIWindow_CurrentMenu->eWindowType, WINDOW_PARTY_CREATION);
+    ASSERT_EQ(lWindowList.size(), 2u);
     const MapId firstMap = pMapTable->GetMapInfo("oute3.odm");
     ASSERT_NE(firstMap, MAP_INVALID);
 
@@ -283,7 +288,6 @@ GAME_TEST(MM6Headless, ScopedFirstOutdoorWorld) {
 
     bool completed = false;
     game.runGameRoutine([firstMap, &completed] {
-        pParty->Reset();
         engine->_pendingTransition = MapDestination(firstMap, MAP_START_POINT_PARTY);
         {
             mm6::ScopedChestMapLoadOptIn chestOptIn;

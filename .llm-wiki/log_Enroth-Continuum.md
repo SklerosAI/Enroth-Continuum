@@ -718,3 +718,8 @@ Chronological record of wiki activity.
 - Integrated source-typed spell damage labels, bounded silent Gold ID-21 event operations, a pure 21-house transport selector and read-only semantic `.ec6` candidate preflight. The projectile audit records 46 active no-missile fallbacks that still block ranged-combat acceptance.
 - The arm64 MM6, OpenEnroth and unit targets built. The one-command offline runner passed 169/169 native tests from 53 suites without skips, including the F3-matched 147-use Gold ledger; the general suite passed 438/438. Shared status, build graph and agent handoff record the new seams.
 - No original installation or MM6 process was opened. Live house entry/travel, monster projectiles, spell effects and SaveLoad remain gated; MM7's app/profile and the reserved MM8 checkout were untouched.
+
+## [2026-11-06] guard | MM6 house entry preflight
+- by: T-Burton-ND via codex
+- The MM6 entry branch now loads the active title's 557-row house table and owner-only 119-room manifest into a validated service source before inherited UI or party state changes. A preflight classifies 671 active table-backed instructions, one blank/unused instruction and two terminal pseudo-house instructions. Structurally valid entries return a nonfatal unavailable status; no house service, movie, sound, payment or save action is enabled.
+- The retained manual and service ledger still leave exact inn price/time/status, room media/audio and durable save behavior unresolved. All 21 tavern rows have room, value and paired-hour inputs, but these do not prove a rest transaction. The arm64 MM6/MM7/unit targets built and eight focused house/transport tests passed without skips. No original installation or MM6 process was opened.

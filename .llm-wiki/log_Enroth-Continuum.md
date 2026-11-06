@@ -298,3 +298,9 @@ Chronological record of wiki activity.
 - Checked 578 usable retained MM6 item icons, two blank placeholder rows and bounded grid footprints under the current inventory-slot formula, without reopening the original installation.
 - Added explicit checked inventory record placement and MM6-only copy-staging of nonempty character inventory; malformed indexes, overlaps or changed icon footprints reject the stage without changing the live party.
 - Syntax-checked the changed C++ units, passed a compiled sparse-index/equipment/overlap harness and checked C++ style. Live SaveLoad, held/shop/map items and F5 graphical checks remain open.
+
+## [2026-11-06] ingest | MM6 active map-byte event state
+- by: T-Burton-ND via codex
+- Added title-specific Set, Add, Subtract and Compare for shipped MM6 MapVar IDs 105–175, operating once per event on bytes 0–70 of the validated current DDM/DLV sidecar. Upper bytes and the tail remain untouched; unknown IDs and unproved arithmetic edges fail closed.
+- Built the arm64 unit target; four focused tests passed, and the F3-matched retained report verifier checked all 1,240 shipped MapVar operands without committing private data. C++ style checks passed.
+- Kept byte mapping and comparison semantics provisional; changed-state encoding, reset, leave/re-entry, save/reload and live gameplay remain separate gates. No original installation was reread and no partial MM6 game was launched.

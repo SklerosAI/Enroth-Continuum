@@ -268,6 +268,17 @@ that requirement.
   branches, the missing opcode effects, and a private quest dependency graph
   through the ending. Quest-note text covers only a subset of the script-used
   quest bits, so do not infer campaign state from visible notes alone.
+- [x] Build a private structural graph of active event functions, map moves,
+  house exits, quest-bit operands and NPC topic changes. The reproducible
+  `scripts/mm6_probe_quest_graph.py` records detailed links only in ignored
+  `quest-graph-probe.json`. All 93 explicit script map targets and 41 house
+  exit targets resolve to listed MM6 maps; four quest bits are read without a
+  script write and 70 are written without a script read. These are structural
+  leads, not gameplay defects or proof of ending reachability.
+- [ ] Resolve the graph's guide milestone candidates against actual EVT
+  conditions, item/NPC/house effects, alternate routes and persistent state;
+  demonstrate a New Sorpigal-to-ending route and required promotions with
+  scenario checks before F4 is considered complete.
 - [x] Inventory the one-byte variable IDs in all active MM6 compare/add/
   subtract/set events. The reproducible `scripts/mm6_probe_event_variables.py`
   records 4,285 references to 127 distinct IDs in the ignored

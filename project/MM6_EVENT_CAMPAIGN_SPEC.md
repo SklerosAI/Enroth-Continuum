@@ -29,6 +29,26 @@ has not reached a playable MM6 map.
 | NPC topics | A retained NPC/topic comparison finds 298 nonzero first-three topic references. Of the 128 without a `global.evt` event, 93 fall into current special handler ranges; 35 references across 18 IDs have nonempty labels but no matching global event or current special handler. | Whether those 35 are intentional text-only choices, missing MM6 special dialogues, or other behavior. `canShowTopic()` can offer a nonzero topic without an event; `runEvent()` then does nothing. Check every topic's intended behavior before declaring a defect. |
 | Campaign | Guide milestones cover the opening, High Council, Oracle, Varn/Control Center, Archibald/Hive, promotions and regional quests. | The exact map/NPC/house/item/variable dependencies, allowed order and branch outcomes from shipped scripts. Quest-note rows alone cannot identify all script-used state. |
 
+### Structural campaign graph
+
+`scripts/mm6_probe_quest_graph.py` joins the retained map, house, event,
+dialogue and quest-note indexes into an ignored `quest-graph-probe.json` with
+input/source hashes. It records 2,860 active event functions and their
+structural references. All 93 explicit script cross-map targets and all 41
+nonzero house exit-map IDs resolve to listed MM6 maps. Another 118
+MoveToMap records stay on the current map. House origin grid codes provide
+537 candidate map links; 20 other origin labels require manual interpretation.
+
+The graph sees 208 quest-bit values in scripts: 138 are read, 204 written,
+134 both, four read without a script write and 70 written without a script
+read. The one-sided values may be initialized, consumed elsewhere or designed
+as terminal state; they are **not** automatically defects. Six guide milestone
+keyword groups produce private candidate quest/map seeds, not event-control
+flow or a playable route. Among 132 SetNPCTopic instructions, two nonzero
+target topics lack a global event; one falls in the current teacher-special
+range, and the other needs MM6-specific dialogue classification. No original
+game behavior has been inferred from these counts alone.
+
 ## Current C++ consumers
 
 - `src/Engine/Evt/EvtProgram.cpp` and `EvtInstruction.cpp` frame and decode
@@ -65,8 +85,10 @@ has not reached a playable MM6 map.
    UI behavior, and give every campaign-critical topic an acceptance scenario.
 4. Build a private campaign dependency graph from retained map, NPC, house,
    travel, text and EVT references. Publicly report coverage and unresolved
-   links, not proprietary strings or a per-ID catalog. Include alternate
-   quest order, failure states, promotions and the ending.
+   links, not proprietary strings or a per-ID catalog. The structural graph
+   above is a starting index; add actual branch conditions, producers,
+   consumers and route order, including alternate quest order, failure states,
+   promotions and the ending.
 5. In the single F3 read-only original-file preflight, verify event framing,
    string targets, opcode lengths and graph links against the owned archives;
    record discrepancies only in ignored local storage. Targeted later rechecks

@@ -153,3 +153,9 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   through inherited MM7 parsers. The adapter also retains MM7 monster-family
   rules and a temporary all-friendly monster faction table. These are
   source/retained-table findings; MM6 combat has not been played or verified.
+- A private structural campaign graph now links retained event functions,
+  map moves, house exits, quest-bit reads/writes and NPC topic changes.
+  Explicit script and house map destinations all resolve to listed MM6 maps,
+  but guide milestone matches are candidate links only. Control flow,
+  quest meaning and ending reachability remain unverified; details stay in
+  ignored `quest-graph-probe.json`.

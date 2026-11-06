@@ -12,6 +12,8 @@ The retained F3-matched spell and guide reports cover all 99 IDs, but inherited 
 
 The [First Aid effect slice](../project/MM6_F4_FIRST_AID_EFFECT.md) adds a checked private three-rank fixed-heal rule and a character-only MM6 branch for one spell. It is compiled and unit-tested, but the outer queue guard still blocks live casting until target UI, recovery, failure, shared healing semantics and audiovisual side effects are verified. Exact values and the reviewed guide locator remain in ignored local data.
 
+The [player-cast transaction audit](MM6-F4-Player-Cast-Transaction.md) traces the input, picker, cancellation, executor, failure and cue order. A read-only First Aid preflight now composes the private cost and heal rules for a narrow spellbook input snapshot; it does not enable live casting.
+
 The [Power Cure effect slice](../project/MM6_F4_POWER_CURE_EFFECT.md) adds a checked private base-plus-skill party-heal rule and bounded MM6 branch. Its queue/executor guard remains closed for the same transaction reasons, and the inherited Grandmaster learning gate is not used for MM6. Both effect slices are compiled code with private-backed tests, not observed casts.
 
 The [timed cure cohort](../project/MM6_F4_TIMED_CURE_COHORT.md) groups six one-character, one-condition effects under a common private three-rank age-window manifest. Two IDs collide with unrelated inherited MM7 effects, so MM6 has numeric-ID interception before that switch and title-specific target routing. The shared helper validates all inputs and removes only a recent matching condition; absent, expired and unrelated conditions remain. Awaken, dead/eradicated cures, and poison/disease severity groups remain separate open work. The outer cast guard still blocks all six live casts.

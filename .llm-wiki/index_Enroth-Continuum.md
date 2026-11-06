@@ -37,6 +37,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Autonote Variables](MM6-F4-Autonote-Variables.md) — Bounded party note-bit dispatch for active MM6 event ID 205 and remaining UI/save checks
 - [MM6 F4 Spell Rules](MM6-F4-Spell-Rules.md) — Private F3-backed 99-spell mana/recovery selection and unresolved cast/effect routes
 - [MM6 F4 Spell Dispatch](MM6-F4-Spell-Dispatch.md) — All-99 MM6 effect rejection boundary, per-ID private handoff and remaining semantic proof
+- [MM6 F4 Player Cast Transaction](MM6-F4-Player-Cast-Transaction.md) — Source-order player-cast audit and read-only First Aid preflight boundary
 - [MM6 F4 Spell Items](MM6-F4-Spell-Items.md) — F3-matched scroll/book ID bands, checked lookup and guarded consumers
 - [MM6 F4 Potion Matrix](MM6-F4-Potion-Matrix.md) — F3-matched 29×29 `useitems.txt` lookup with opaque marker effects
 - [MM6 F4 Portrait Seam](MM6-F4-Portrait-Seam.md) — Offline MM6 face/frame implementation, verification, and remaining voice/visual work

@@ -14,6 +14,7 @@
 #include "Engine/Evt/MM6EventRules.h"
 #include "Engine/Evt/MM6EventVariables.h"
 #include "Engine/Evt/MM6AutonoteState.h"
+#include "Engine/Evt/MM6ConditionVariables.h"
 #include "Engine/Evt/MM6MapByteState.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Party.h"
@@ -183,6 +184,11 @@ static bool isMM6MapByteVariable(EvtVariable variable) {
 static bool isMM6AutonoteVariable(EvtVariable variable) {
     return engine->gameTitle() == GameTitle::MM6 &&
            describeMM6Variable(std::to_underlying(variable)).family == MM6VariableFamily::Autonote;
+}
+
+static bool isMM6ConditionVariable(EvtVariable variable) {
+    return engine->gameTitle() == GameTitle::MM6 &&
+           mm6::isConditionVariable(std::to_underlying(variable));
 }
 
 static MM6AutonoteState mm6AutonoteState() {
@@ -381,6 +387,14 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             setDecorationSprite(ir.data.sprite_texture_descr.cog, ir.data.sprite_texture_descr.hide, ir.str);
             break;
         case EVENT_Compare:
+            if (isMM6ConditionVariable(ir.data.variable_descr.type)) {
+                for (Character &character : iterateCharacters(_who, grng))
+                    if (mm6::compareCondition(character.conditions,
+                                              std::to_underlying(ir.data.variable_descr.type),
+                                              ir.data.variable_descr.value))
+                        return {EVT_FLOW_JUMP, ir.target_step};
+                break;
+            }
             if (isMM6AutonoteVariable(ir.data.variable_descr.type)) {
                 if (mm6AutonoteState().compare(std::to_underlying(ir.data.variable_descr.type),
                                                ir.data.variable_descr.value))
@@ -403,6 +417,12 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             switchDoorAnimation(ir.data.door_descr.door_id, ir.data.door_descr.door_action);
             break;
         case EVENT_Add:
+            if (isMM6ConditionVariable(ir.data.variable_descr.type)) {
+                for (Character &character : iterateCharacters(_who, grng))
+                    mm6::addCondition(character, std::to_underlying(ir.data.variable_descr.type),
+                                      ir.data.variable_descr.value);
+                break;
+            }
             if (isMM6AutonoteVariable(ir.data.variable_descr.type)) {
                 mm6AutonoteState().add(std::to_underlying(ir.data.variable_descr.type),
                                        ir.data.variable_descr.value);
@@ -425,6 +445,12 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                 addEvtVariable(character, ir.data.variable_descr.type, ir.data.variable_descr.value);
             break;
         case EVENT_Subtract: {
+            if (isMM6ConditionVariable(ir.data.variable_descr.type)) {
+                for (Character &character : iterateCharacters(_who, grng))
+                    mm6::subtractCondition(character, std::to_underlying(ir.data.variable_descr.type),
+                                           ir.data.variable_descr.value);
+                break;
+            }
             if (isMM6AutonoteVariable(ir.data.variable_descr.type)) {
                 mm6AutonoteState().subtract(std::to_underlying(ir.data.variable_descr.type),
                                             ir.data.variable_descr.value);
@@ -460,6 +486,12 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         }
         case EVENT_Set:
+            if (isMM6ConditionVariable(ir.data.variable_descr.type)) {
+                for (Character &character : iterateCharacters(_who, grng))
+                    mm6::setCondition(character, std::to_underlying(ir.data.variable_descr.type),
+                                      ir.data.variable_descr.value);
+                break;
+            }
             if (isMM6AutonoteVariable(ir.data.variable_descr.type)) {
                 mm6AutonoteState().set(std::to_underlying(ir.data.variable_descr.type),
                                        ir.data.variable_descr.value);

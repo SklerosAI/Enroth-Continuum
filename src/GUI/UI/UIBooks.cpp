@@ -2,6 +2,7 @@
 #include <memory>
 
 #include "Engine/Localization.h"
+#include "Engine/Engine.h"
 #include "Engine/AssetsManager.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Graphics/Image.h"
@@ -9,6 +10,7 @@
 
 #include "GUI/GUIFont.h"
 #include "GUI/GUIButton.h"
+#include "GUI/MM6HudBookControls.h"
 #include "GUI/UI/UIBooks.h"
 
 #include "Media/Audio/AudioPlayer.h"
@@ -52,5 +54,7 @@ GUIWindow_BooksButtonOverlay::GUIWindow_BooksButtonOverlay(Pointi position, Size
 {}
 
 void GUIWindow_BooksButtonOverlay::Update() {
+    if (useMm6HudBookControls(engine->gameTitle()))
+        return; // Baked MM6 book images have no separate selected texture yet.
     render->DrawQuad2D(_button->vTextures[0], frameRect.topLeft());
 }

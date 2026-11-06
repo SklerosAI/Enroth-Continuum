@@ -14,8 +14,11 @@
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/SaveLoad.h"
 
+#include "GUI/GUIButton.h"
+#include "GUI/GUIWindow.h"
 #include "GUI/HudFrameResources.h"
 #include "GUI/HudNavigationResources.h"
+#include "GUI/MM6HudBookControls.h"
 #include "GUI/UI/MainMenuResources.h"
 
 #include "Library/FileSystem/Memory/MemoryFileSystem.h"
@@ -108,6 +111,40 @@ GAME_TEST(MM6Headless, HudFrameResourcesAvailable) {
     }};
     for (const auto &[name, size] : expected)
         EXPECT_EQ(engine->resources()->iconSize(name), size) << name;
+}
+
+GAME_TEST(MM6Headless, FourBookHitBoxesAndActions) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_NE(pPrimaryWindow, nullptr);
+    const auto expected = mm6HudBookControls();
+    const std::array<GUIButton *, 4> actual = {pBtn_Quests, pBtn_Autonotes, pBtn_Maps, pBtn_Calendar};
+    for (size_t i = 0; i < actual.size(); ++i) {
+        ASSERT_NE(actual[i], nullptr);
+        EXPECT_EQ(actual[i]->rect, expected[i].rect);
+        EXPECT_EQ(actual[i]->msg, expected[i].message);
+        EXPECT_EQ(actual[i]->action, expected[i].action);
+        EXPECT_TRUE(actual[i]->vTextures.empty()); // Book art is baked into the MM6 frame.
+        EXPECT_TRUE(actual[i]->Contains(expected[i].rect.center()));
+        for (size_t j = 0; j < actual.size(); ++j)
+            if (i != j)
+                EXPECT_FALSE(actual[j]->Contains(expected[i].rect.center()));
+    }
+    EXPECT_EQ(pBtn_History, nullptr);
+}
+
+TEST(MM6HeadlessBookControls, TitleIsolation) {
+    EXPECT_TRUE(useMm6HudBookControls(GameTitle::MM6));
+    EXPECT_FALSE(useMm6HudBookControls(GameTitle::MM7));
+    const auto books = mm6HudBookControls();
+    ASSERT_EQ(books.size(), 4);
+    EXPECT_EQ(books[0].message, UIMSG_OpenQuestBook);
+    EXPECT_EQ(books[1].message, UIMSG_OpenAutonotes);
+    EXPECT_EQ(books[2].message, UIMSG_OpenMapBook);
+    EXPECT_EQ(books[3].message, UIMSG_OpenCalendar);
+    EXPECT_EQ(books[0].action, INPUT_ACTION_OPEN_QUESTS);
+    EXPECT_EQ(books[1].action, INPUT_ACTION_OPEN_AUTONOTES);
+    EXPECT_EQ(books[2].action, INPUT_ACTION_OPEN_MAP);
+    EXPECT_EQ(books[3].action, INPUT_ACTION_OPEN_CALENDAR);
 }
 
 TEST(MM6HeadlessHudFrames, TitleIsolation) {

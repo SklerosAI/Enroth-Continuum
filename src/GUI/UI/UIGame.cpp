@@ -43,6 +43,7 @@
 
 #include "GUI/GUIButton.h"
 #include "GUI/HudFrameResources.h"
+#include "GUI/MM6HudBookControls.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/GUIMessageQueue.h"
 #include "GUI/UI/Books/LloydsBook.h"
@@ -693,6 +694,9 @@ std::string GameUI_GetMinimapHintText() {
 
 //----- (0041AD6E) --------------------------------------------------------
 void GameUI_DrawRightPanelItems() {
+    if (useMm6HudBookControls(engine->gameTitle()))
+        return; // Four MM6 book images are baked into the right-panel frame.
+
     if (bookFlashTimer > pParty->GetPlayingTime()) {
         bookFlashTimer = {};
     }

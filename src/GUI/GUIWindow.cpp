@@ -10,6 +10,7 @@
 
 #include "GUI/HudFrameResources.h"
 #include "GUI/HudNavigationResources.h"
+#include "GUI/MM6HudBookControls.h"
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
@@ -1083,31 +1084,52 @@ void UI_Create() {
 
     pPrimaryWindow->CreateCharacterButtons();
 
-    game_ui_tome_quests = assets->getIcon("ib-td1-A");
-    pBtn_Quests = pPrimaryWindow->CreateButton({491, 353}, game_ui_tome_quests->size(), BUTTON_TYPE_NORMAL, 0,
-                                               UIMSG_OpenQuestBook, 0, INPUT_ACTION_OPEN_QUESTS,
-                                               localization->str(LSTR_CURRENT_QUESTS), { game_ui_tome_quests });
+    if (useMm6HudBookControls(engine->gameTitle())) {
+        const auto books = mm6HudBookControls();
+        auto createBook = [&] (const MM6HudBookControl &book, std::string id, std::string_view label) {
+            // CreateButton uses original closed-interval dimensions and adds
+            // one to each size. The baked frame supplies the visible art.
+            return pPrimaryWindow->CreateButton(std::move(id), book.rect.topLeft(),
+                {book.rect.w - 1, book.rect.h - 1}, BUTTON_TYPE_NORMAL, 0,
+                book.message, 0, book.action, label);
+        };
+        pBtn_Quests = createBook(books[0], "Game_QuestBook", localization->str(LSTR_CURRENT_QUESTS));
+        pBtn_Autonotes = createBook(books[1], "Game_NotesBook", localization->str(LSTR_AUTO_NOTES));
+        pBtn_Maps = createBook(books[2], "Game_MapBook", localization->str(LSTR_MAPS));
+        pBtn_Calendar = createBook(books[3], "Game_EventsBook", localization->str(LSTR_CALENDAR));
+        pBtn_History = nullptr;
+        game_ui_tome_quests = nullptr;
+        game_ui_tome_autonotes = nullptr;
+        game_ui_tome_maps = nullptr;
+        game_ui_tome_calendar = nullptr;
+        game_ui_tome_storyline = nullptr;
+    } else {
+        game_ui_tome_quests = assets->getIcon("ib-td1-A");
+        pBtn_Quests = pPrimaryWindow->CreateButton({491, 353}, game_ui_tome_quests->size(), BUTTON_TYPE_NORMAL, 0,
+                                                   UIMSG_OpenQuestBook, 0, INPUT_ACTION_OPEN_QUESTS,
+                                                   localization->str(LSTR_CURRENT_QUESTS), { game_ui_tome_quests });
 
-    game_ui_tome_autonotes = assets->getIcon("ib-td2-A");
-    pBtn_Autonotes = pPrimaryWindow->CreateButton({527, 353}, game_ui_tome_autonotes->size(), BUTTON_TYPE_NORMAL, 0,
-                                                  UIMSG_OpenAutonotes, 0, INPUT_ACTION_OPEN_AUTONOTES,
-                                                  localization->str(LSTR_AUTO_NOTES), { game_ui_tome_autonotes });
+        game_ui_tome_autonotes = assets->getIcon("ib-td2-A");
+        pBtn_Autonotes = pPrimaryWindow->CreateButton({527, 353}, game_ui_tome_autonotes->size(), BUTTON_TYPE_NORMAL, 0,
+                                                      UIMSG_OpenAutonotes, 0, INPUT_ACTION_OPEN_AUTONOTES,
+                                                      localization->str(LSTR_AUTO_NOTES), { game_ui_tome_autonotes });
 
-    game_ui_tome_maps = assets->getIcon("ib-td3-A");
-    pBtn_Maps = pPrimaryWindow->CreateButton({546, 353}, game_ui_tome_maps->size(), BUTTON_TYPE_NORMAL, 0,
-                                             UIMSG_OpenMapBook, 0, INPUT_ACTION_OPEN_MAP,
-                                             localization->str(LSTR_MAPS), { game_ui_tome_maps });
+        game_ui_tome_maps = assets->getIcon("ib-td3-A");
+        pBtn_Maps = pPrimaryWindow->CreateButton({546, 353}, game_ui_tome_maps->size(), BUTTON_TYPE_NORMAL, 0,
+                                                 UIMSG_OpenMapBook, 0, INPUT_ACTION_OPEN_MAP,
+                                                 localization->str(LSTR_MAPS), { game_ui_tome_maps });
 
-    game_ui_tome_calendar = assets->getIcon("ib-td4-A");
-    pBtn_Calendar = pPrimaryWindow->CreateButton({570, 353}, game_ui_tome_calendar->size(), BUTTON_TYPE_NORMAL, 0,
-                                                 UIMSG_OpenCalendar, 0, INPUT_ACTION_OPEN_CALENDAR,
-                                                 localization->str(LSTR_CALENDAR), { game_ui_tome_calendar });
+        game_ui_tome_calendar = assets->getIcon("ib-td4-A");
+        pBtn_Calendar = pPrimaryWindow->CreateButton({570, 353}, game_ui_tome_calendar->size(), BUTTON_TYPE_NORMAL, 0,
+                                                     UIMSG_OpenCalendar, 0, INPUT_ACTION_OPEN_CALENDAR,
+                                                     localization->str(LSTR_CALENDAR), { game_ui_tome_calendar });
 
-    game_ui_tome_storyline = assets->getIcon("ib-td5-A");
-    pBtn_History = pPrimaryWindow->CreateButton({600, 361}, game_ui_tome_storyline->size(), BUTTON_TYPE_NORMAL, 0,
-                                                UIMSG_OpenHistoryBook, 0, INPUT_ACTION_OPEN_HISTORY,
-                                                localization->str(LSTR_HISTORY), { game_ui_tome_storyline }
-    );
+        game_ui_tome_storyline = assets->getIcon("ib-td5-A");
+        pBtn_History = pPrimaryWindow->CreateButton({600, 361}, game_ui_tome_storyline->size(), BUTTON_TYPE_NORMAL, 0,
+                                                    UIMSG_OpenHistoryBook, 0, INPUT_ACTION_OPEN_HISTORY,
+                                                    localization->str(LSTR_HISTORY), { game_ui_tome_storyline }
+        );
+    }
 
     bFlashAutonotesBook = false;
     bFlashQuestBook = false;

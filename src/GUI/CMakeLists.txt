@@ -17,7 +17,8 @@ set(GUI_HEADERS
         GUIMessageQueue.h
         GUIWindow.h
         HudFrameResources.h
-        HudNavigationResources.h)
+        HudNavigationResources.h
+        MM6HudBookControls.h)
 
 add_library(gui STATIC ${GUI_SOURCES} ${GUI_HEADERS})
 target_check_style(gui)

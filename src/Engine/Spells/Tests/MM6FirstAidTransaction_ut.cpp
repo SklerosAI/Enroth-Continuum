@@ -1,9 +1,17 @@
 #include <array>
+#include <cstdlib>
+#include <fstream>
+#include <iterator>
 #include <stdexcept>
+#include <string>
 
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/Spells/MM6FirstAidTransaction.h"
+#include "Engine/Spells/MM6FirstAidRules.h"
+#include "Engine/Spells/MM6SpellRules.h"
+
+#include "Utility/Memory/Blob.h"
 
 UNIT_TEST(MM6FirstAidTransaction, StagesManaHealingAndRecoveryTogether) {
     std::array<Character, 4> characters;
@@ -50,4 +58,49 @@ UNIT_TEST(MM6FirstAidTransaction, RejectsChangedStateWithoutMutation) {
     EXPECT_EQ(characters[0].mana, 20);
     EXPECT_EQ(characters[1].health, 10);
     EXPECT_EQ(characters[0].timeToRecovery, 0_ticks);
+}
+
+UNIT_TEST(MM6FirstAidTransaction, PrivateRulesPlanAndStageActualCharacterState) {
+    const char *spellPath = std::getenv("ENROTH_MM6_SPELL_RULES_MANIFEST");
+    const char *firstAidPath = std::getenv("ENROTH_MM6_FIRST_AID_MANIFEST");
+    if (!spellPath || !firstAidPath)
+        GTEST_SKIP() << "Set ignored MM6 spell and First Aid manifests";
+
+    auto loadFile = [](const char *path, void (*load)(const Blob &)) {
+        std::ifstream stream(path);
+        ASSERT_TRUE(stream.is_open());
+        std::string bytes(std::istreambuf_iterator<char>{stream}, {});
+        load(Blob::fromString(std::move(bytes)));
+    };
+    loadFile(spellPath, mm6::loadSpellRules);
+    loadFile(firstAidPath, mm6::loadFirstAidRules);
+
+    std::array<Character, 4> characters;
+    characters[0].mana = 1000;
+    characters[1].health = 1;
+    mm6::FirstAidPreflightInput input;
+    input.title = GameTitle::MM6;
+    input.route = mm6::FirstAidCastRoute::Spellbook;
+    input.spell = SPELL_BODY_FIRST_AID;
+    input.mastery = MASTERY_NOVICE;
+    input.skillLevel = 1;
+    input.casterIndex = 0;
+    input.targetCharacterIndex = 1;
+    input.availableMana = characters[0].mana;
+    input.spellKnown = true;
+    input.casterCanAct = true;
+    input.casterInRecovery = false;
+    input.casterCursed = false;
+    input.partyInvisible = false;
+    input.hasHeldItem = false;
+    input.turnBasedMode = false;
+    input.underwater = false;
+    input.targetCanReceiveHealing = true;
+
+    const auto plan = mm6::planFirstAidSpellbookCast(input);
+    ASSERT_EQ(plan.state, mm6::FirstAidPreflightState::InputsReady);
+    const auto change = mm6::stageFirstAidOnCharacters(GameTitle::MM6, plan, &characters, 1000);
+    EXPECT_EQ(change.casterMana, 1000 - plan.manaCost);
+    EXPECT_EQ(change.targetHealth, 1 + plan.healAmount);
+    EXPECT_EQ(change.casterRecovery, Duration::fromTicks(plan.recoveryTicks));
 }

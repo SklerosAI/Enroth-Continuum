@@ -13,7 +13,7 @@ struct FirstAidStateChange {
     Duration casterRecovery;
 };
 
-// Applies a fully validated ordinary First Aid result to detached character
+// Applies a preflighted ordinary First Aid result to detached character
 // state. The caller owns target selection, cues, queue cleanup and the final
 // live commit; none of those are performed here.
 FirstAidStateChange stageFirstAidOnCharacters(GameTitle title,

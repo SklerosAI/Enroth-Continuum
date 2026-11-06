@@ -22,7 +22,7 @@ Synthetic native tests cover all three ranks, missing-target and mana states, ti
 
 ## Detached state transaction
 
-`MM6FirstAidTransaction` applies an `InputsReady` plan to a caller-owned copy of four `Character` records. It rejects foreign title, bad indices, insufficient current mana, caster recovery/curse/incapacity, dead/eradicated/unconscious/zombie or nonpositive target HP, and invalid supplied maximum HP before mutation. A valid plan debits mana, caps healing at the supplied maximum, and stages caster recovery. Same-character caster/target works. This is actual character state, but it has no queue, UI, sound, active-character switch or global commit. The caller must derive the current MM6 maximum HP and revalidate any state that changed after preflight. Synthetic native tests cover a successful cast and late invalid-state nonmutation.
+`MM6FirstAidTransaction` applies an `InputsReady` plan to a caller-owned copy of four `Character` records. It rejects foreign title, bad indices, insufficient current mana, caster recovery/curse/incapacity, dead/eradicated/unconscious/zombie or nonpositive target HP, and invalid supplied maximum HP before mutation. A valid plan debits mana, caps healing at the supplied maximum, and stages caster recovery. Same-character caster/target works. This is actual character state, but it has no queue, UI, sound, active-character switch or global commit. The caller must derive the current MM6 maximum HP and revalidate any state that changed after preflight. Native tests cover a successful cast, late invalid-state nonmutation and private-backed manifest-to-plan-to-character staging.
 
 ## Gate to execution
 

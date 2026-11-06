@@ -738,3 +738,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The F3-matched retained active EVT corpus has 641 raw ID-17 uses across 41 files: 195 Compare, 290 Add and 156 Subtract. A title-specific read-only helper checks selected character inventory or the party-held item; dialog-item comparison searches the party. The 446 active writes now reject before inherited MM7 item mutation.
 - The frozen aggregate checker rehashes the private report, item table and 68 EVT resources, passed standalone, and is wired into the offline runner. Arm64 MM6, OpenEnroth and unit targets built; two focused item-comparison native tests passed. Grant/removal transactions and save/reload remain open. No original installation or MM6 process was opened.
+
+## [2026-11-06] implement | MM6 active-map save capture
+- by: T-Burton-ND via codex
+- The world-save adapter now selects the real bounded MM6 indoor or outdoor changed-state writer from the active level type and `HEAD` map extension. Indoor capture also matches the loaded filename. It overlays the returned delta into the detached 67-map `.ec6` candidate without actor compaction, timestamp mutation or global map/NPC assignment.
+- The arm64 MM6, OpenEnroth and unit targets built. Three focused tests passed, including a synthetic active indoor sidecar with nonzero respawn values through the actual writer and `.ec6` round trip, plus malformed/mismatched-state rejection without source mutation. The outdoor live-runtime path and full SaveLoad transaction remain gated. No original installation or MM6 process was opened.

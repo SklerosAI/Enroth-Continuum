@@ -191,6 +191,10 @@ GAME_TEST(MM6Headless, FirstOutdoorTileSelectors) {
     auto inheritedTerrain = std::make_unique<OutdoorTerrain>();
     reconstruct(*base, mm6Terrain.get(), GameTitle::MM6);
     reconstruct(*base, inheritedTerrain.get(), GameTitle::MM7);
+    EXPECT_TRUE(mm6Terrain->containsGrid({0, 0}));
+    EXPECT_FALSE(mm6Terrain->containsGrid({-1, 0}));
+    EXPECT_FALSE(mm6Terrain->containsGrid({127, 0}));
+    EXPECT_EQ(inheritedTerrain->tilesetByGrid({-1, 0}), TILESET_INVALID);
 
     size_t inheritedPending = 0;
     size_t mm6Pending = 0;

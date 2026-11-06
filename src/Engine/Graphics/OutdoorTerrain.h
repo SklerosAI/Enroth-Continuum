@@ -57,6 +57,8 @@ class OutdoorTerrain {
 
     void changeSeason(int month, GameTitle gameTitle = GameTitle::MM7);
 
+    [[nodiscard]] bool containsGrid(Pointi gridPos) const { return _tileMap.geometry().contains(gridPos); }
+
     /**
      * @param gridPos                   Grid coordinates.
      * @return                          Terrain height at `gridPos`.

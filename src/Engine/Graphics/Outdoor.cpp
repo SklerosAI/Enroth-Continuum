@@ -1547,7 +1547,13 @@ void ODM_ProcessPartyActions() {
                             if (isModelWalk) {
                                 sound = SOUND_RunWood;
                             } else {
-                                sound = walkSoundForTile(engine->gameTitle(), pOutdoor->pTerrain.tileDataByGrid(worldToGrid(partyOldPosition)), true);
+                                if (engine->gameTitle() == GameTitle::MM6) {
+                                    const Pointi grid = worldToGrid(partyOldPosition);
+                                    if (pOutdoor->pTerrain.containsGrid(grid))
+                                        sound = walkSoundForTile(GameTitle::MM6, pOutdoor->pTerrain.tileDataByGrid(grid), true);
+                                } else {
+                                    sound = walkSoundForTileset(pOutdoor->pTerrain.tilesetByPos(partyOldPosition), true);
+                                }
                             }
                         }
                     } else if (partyIsWalking) {
@@ -1555,7 +1561,13 @@ void ODM_ProcessPartyActions() {
                             if (isModelWalk) {
                                 sound = SOUND_RunWood;
                             } else {
-                                sound = walkSoundForTile(engine->gameTitle(), pOutdoor->pTerrain.tileDataByGrid(worldToGrid(partyOldPosition)), false);
+                                if (engine->gameTitle() == GameTitle::MM6) {
+                                    const Pointi grid = worldToGrid(partyOldPosition);
+                                    if (pOutdoor->pTerrain.containsGrid(grid))
+                                        sound = walkSoundForTile(GameTitle::MM6, pOutdoor->pTerrain.tileDataByGrid(grid), false);
+                                } else {
+                                    sound = walkSoundForTileset(pOutdoor->pTerrain.tilesetByPos(partyOldPosition), false);
+                                }
                             }
                         }
                     }

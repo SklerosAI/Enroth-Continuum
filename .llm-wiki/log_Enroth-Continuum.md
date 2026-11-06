@@ -201,3 +201,9 @@ Chronological record of wiki activity.
 - Recorded the integration decision that all table/map/resource families and guide source families have F2 classification and explicit F3/F4/F5 routes; original-only behavior remains named uncertainty.
 - Updated the current wiki handoff and source summaries from the open gate to F2-frozen, while keeping F3 unrun and F4 unstarted.
 - Verified eight synthetic preflight tests and 51 wiki pages with no broken local links before this log commit.
+
+## [2026-11-06] ingest | MM6 F3 source-data gate accepted
+- by: T-Burton-ND via codex
+- Recorded the 23/23 original-file identity, 348-member content comparison, executable and media joins, 636 vanilla portrait pixel matches, and one baseline actor ID 173 reference.
+- Linked the dated twelve-family gate decision and explicit F4/F5 obligations; offline MM6 implementation may begin, while graphical play, audible output and durable saves remain unverified.
+- Kept original files and exact per-ID reports in ignored local storage. Checked 52 wiki pages for frontmatter and local links; only the schema template's three placeholder links are unresolved.

@@ -1087,3 +1087,9 @@ Chronological record of wiki activity.
 ## [2026-11-06] update | MM6 headless plan gate
 - by: T-Burton-ND via codex
 - Updated [plan §18.1](../project/plan.md) to record the verified explicit MM6 headless runner and monitored no-focus/no-window result. The plan keeps first-map play gated by new-game `.ec6` saving and chest loading, and keeps graphical and audible acceptance in F5.
+
+## [2026-11-06] stage | MM6 title-menu resource mapping
+- by: T-Burton-ND via codex
+- Compared the title-menu requests with the retained ignored MM6 icon evidence. The title background has four visible actions and four matching overlay entries; bounded private image matching established their positions. The existing menu was requesting MM7 button icons and placing its hit boxes at MM7 coordinates.
+- Added `mainMenuResources(GameTitle)` and used it for title-specific menu image lookups, hit boxes, hover redraw and click feedback. The MM7 names and positions remain exact. Pure title-isolation assertions and a headless MM6 resource-availability test were added; two changed C++ units passed arm64 syntax and cpplint. No private image bytes or detailed inventory entered Git, and no child GUI or duplicate full build ran.
+- The [menu asset packet](MM6-F4-Main-Menu-Assets.md) marks native visual alignment, hover animation and click-through acceptance as pending. Missing MM7-style in-game HUD icons observed during headless startup are a separate presentation seam.

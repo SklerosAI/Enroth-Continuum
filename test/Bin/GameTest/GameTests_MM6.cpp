@@ -14,6 +14,7 @@
 #include "Engine/Evt/MM6SpriteEvent.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Image.h"
+#include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Graphics/OutdoorSkyResources.h"
 #include "Engine/MM6/MM6Archive.h"
@@ -21,6 +22,7 @@
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/Monsters.h"
+#include "Engine/Party.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/Resources/ResourceManager.h"
@@ -31,6 +33,7 @@
 #include "Engine/Tables/MapTable.h"
 
 #include "GUI/GUIButton.h"
+#include "GUI/GUIProgressBar.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/HudFrameResources.h"
 #include "GUI/HudNavigationResources.h"
@@ -199,13 +202,52 @@ GAME_TEST(MM6Headless, FirstOutdoorEncounterNames) {
             EXPECT_FALSE(pMonsterList->monsters[id].internalMonsterName.empty());
         }
     }
+
+    // Another retained map uses a family label with different word spacing
+    // from the display name in the MM6 monster table.
+    const MapId laterMap = pMapTable->GetMapInfo("outd2.odm");
+    ASSERT_NE(laterMap, MAP_INVALID);
+    const MonsterId laterMonster = mm6::resolveEncounterMonster(
+        GameTitle::MM6, *pMonsterStats,
+        pMapTable->pInfos[laterMap].encounter3MonsterInternalName + " A");
+    ASSERT_NE(laterMonster, MONSTER_INVALID);
+    EXPECT_FALSE(pMonsterList->monsters[laterMonster].internalMonsterName.empty());
+}
+
+GAME_TEST(MM6Headless, FirstOutdoorPreparation) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    const MapId firstMap = pMapTable->GetMapInfo("oute3.odm");
+    ASSERT_NE(firstMap, MAP_INVALID);
+
+    // Seed only default original deltas into the in-memory test owner. The
+    // installed game/profile and durable save path are never written here.
+    pMapDeltas.clear();
+    for (const std::string &name : pGames_LOD->ls()) {
+        if (std::string_view(name).ends_with(".dlv") || std::string_view(name).ends_with(".ddm"))
+            pMapDeltas.emplace(name, Blob::copy(pGames_LOD->read(name)));
+    }
+    ASSERT_TRUE(pMapDeltas.contains("oute3.ddm"));
+
+    game.runGameRoutine([firstMap] {
+        pParty->Reset();
+        engine->_currentLoadedMapId = firstMap;
+        pGameLoadingUI_ProgressBar->Initialize(GUIProgressBar::TYPE_Fullscreen);
+        loadAndPrepareODM(firstMap, /* bLoading = */ true);
+    });
+
+    EXPECT_EQ(uCurrentlyLoadedLevelType, LEVEL_OUTDOOR);
+    EXPECT_EQ(engine->_currentLoadedMapId, firstMap);
+    EXPECT_FALSE(pOutdoor->faces.empty());
+    EXPECT_FALSE(pOutdoor->pSpawnPoints.empty());
+    EXPECT_EQ(window->nativeHandle(), nullptr);
 }
 
 TEST(MM6EncounterMonster, ResolvesCompactAndDisplayFamiliesWithoutGuessing) {
     MonsterStats stats{};
     stats.infos[static_cast<MonsterId>(1)].name = "First";
     stats.infos[static_cast<MonsterId>(1)].internalName = "FamilyA";
-    stats.infos[static_cast<MonsterId>(2)].name = "Second";
+    stats.infos[static_cast<MonsterId>(2)].name = "Two Words";
     stats.infos[static_cast<MonsterId>(2)].internalName = "FamilyB";
     stats.infos[static_cast<MonsterId>(3)].name = "Third";
     stats.infos[static_cast<MonsterId>(3)].internalName = "FamilyC";
@@ -214,7 +256,7 @@ TEST(MM6EncounterMonster, ResolvesCompactAndDisplayFamiliesWithoutGuessing) {
 
     EXPECT_EQ(mm6::resolveEncounterMonster(GameTitle::MM6, stats, "Family A"), static_cast<MonsterId>(1));
     EXPECT_EQ(mm6::resolveEncounterMonster(GameTitle::MM6, stats, "FamilyB"), static_cast<MonsterId>(2));
-    EXPECT_EQ(mm6::resolveEncounterMonster(GameTitle::MM6, stats, "Second C"), static_cast<MonsterId>(3));
+    EXPECT_EQ(mm6::resolveEncounterMonster(GameTitle::MM6, stats, "TwoWords C"), static_cast<MonsterId>(3));
     EXPECT_EQ(mm6::resolveEncounterMonster(GameTitle::MM6, stats, "First A"), MONSTER_INVALID);
     EXPECT_EQ(mm6::resolveEncounterMonster(GameTitle::MM6, stats, "Missing A"), MONSTER_INVALID);
     EXPECT_EQ(mm6::resolveEncounterMonster(GameTitle::MM7, stats, "Family A"), MONSTER_INVALID);

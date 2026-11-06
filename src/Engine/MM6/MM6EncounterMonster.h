@@ -64,7 +64,7 @@ inline MonsterId resolveEncounterMonster(GameTitle title, const MonsterStats &st
 
     MonsterId family = MONSTER_INVALID;
     for (MonsterId id : stats.infos.indices()) {
-        if (!ascii::noCaseEquals(stats.infos[id].name, familyName))
+        if (!ascii::noCaseEquals(compact(stats.infos[id].name), compact(familyName)))
             continue;
         const int first = std::to_underlying(id) - (std::to_underlying(id) - 1) % 3;
         const MonsterId firstId = static_cast<MonsterId>(first);

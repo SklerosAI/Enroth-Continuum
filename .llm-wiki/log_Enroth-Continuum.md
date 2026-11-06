@@ -572,6 +572,11 @@ Chronological record of wiki activity.
 - Added a bounded MM6 classifier and pre-mutation guards for character direct use and inventory item-on-item clicks. Unknown herb/potion effects and the overlapping scroll IDs cannot enter inherited MM7 Alchemy or potion logic; MM7 paths are unchanged.
 - Built arm64 MM6 and unit targets; five focused consumable/matrix tests passed with the retained matrix, and the retained item-row type check passed. Actual MM6 effects, marker meanings, consumption, power and bottle return remain closed pending evidence and F5. No original installation was reread or partial MM6 game launched.
 
+## [2026-11-06] implement | MM6 condition event variables
+- by: T-Burton-ND via codex
+- Classified all 54 F3-matched condition-variable uses: 18 have bounded execution and 36 active status writes stay guarded because inherited MM7 blocking or health effects lack MM6 proof. The executor maps Cursed, Fear, Drunk and Good around the MM7-only Zombie slot and uses the selected character's durable condition clocks.
+- The arm64 MM6/MM7/unit build passed; the offline runner passed 135/135 tests across 42 suites and the general suite passed 438/438. Live `.ec6` save/reload and original status effects remain F5 work; no original installation was reread or MM6 game launched.
+
 ## [2026-11-06] ingest | MM6 player-cast transaction
 - by: T-Burton-ND via codex
 - Traced spellbook, quickspell and item routes through target selection, cancellation, pre-effect failure, success and cues. Recorded inherited Escape queue cleanup, held-item relocation and target-pick recovery gaps without enabling casting.

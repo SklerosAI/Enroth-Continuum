@@ -8,7 +8,8 @@ title-specific implementation and an appropriate offline or live check exist.
 
 Focused F2 specifications: [guide and campaign evidence](MM6_GUIDE_RECONCILIATION.md),
 [class, skill and party creation IDs](MM6_CLASS_SKILL_SPEC.md), and
-[save and map-delta layout](MM6_SAVE_SPEC.md). These are audit inputs, not
+[save and map-delta layout](MM6_SAVE_SPEC.md), and
+[presentation and media routing](MM6_MEDIA_UI_SPEC.md). These are audit inputs, not
 claims that their runtime behavior is implemented.
 
 ## Evidence and boundaries
@@ -251,6 +252,14 @@ that requirement.
   whether these are unused, aliases or errors before assigning fallbacks. The
   reproducible `scripts/mm6_probe_media_references.py` writes the ignored
   `media-reference-probe.json`, including input hashes and per-record evidence.
+- [x] Trace the current video, house, sound, music and character-UI consumers
+  against the retained MM6 name indexes. [MM6_MEDIA_UI_SPEC.md](MM6_MEDIA_UI_SPEC.md)
+  records source paths and F3 questions. The retained video index has
+  extensionless names, while `MPlayer::LoadMovie` appends `.bik` or `.smk`;
+  whether the index preserved raw VID names requires F3 verification. Three
+  sound IDs occur more than once in `dsounds.bin`, and the MM6 table loader
+  currently keeps the last row for each. This is source-level evidence only;
+  no MM6 media playback has been checked.
 - [ ] Video and audio archive structure, house/movie routing, playback and
   fallbacks. The 116 distinct MM6 house animation IDs used in `2devents.txt`
   are within the inherited 196-entry MM7 `pAnimatedRooms` array, but **zero**

@@ -126,9 +126,12 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   page-by-page reconciliation or proof of any implemented behavior.
 - Focused F2 documents now cover [guide and campaign milestones](MM6_GUIDE_RECONCILIATION.md),
   [MM6 save and map-delta requirements](MM6_SAVE_SPEC.md), and
-  [class, skill and party creation IDs](MM6_CLASS_SKILL_SPEC.md). The six MM6
+  [class, skill and party creation IDs](MM6_CLASS_SKILL_SPEC.md), plus
+  [presentation and media routing](MM6_MEDIA_UI_SPEC.md). The six MM6
   three-tier class families and 31-skill table do not fit the inherited MM7
   class/skill IDs or nine-class creation UI. The 67 retained map deltas have
   distinct MM6 layouts, and native MM6 save compatibility has not been
-  established. These documents specify work still required before a playable
-  MM6 runtime.
+  established. The media review finds inherited house/movie and spell-sound
+  routing that still needs MM6 definitions; video archive names and actual
+  playback remain for F3 and F5. These documents specify work still required
+  before a playable MM6 runtime.

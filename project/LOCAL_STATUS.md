@@ -165,3 +165,34 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   but guide milestone matches are candidate links only. Control flow,
   quest meaning and ending reachability remain unverified; details stay in
   ignored `quest-graph-probe.json`.
+
+## MM6 F3 read-only preflight update — 2026-11-06
+
+- F2 is [frozen for F3](MM6_F2_GATE_REVIEW.md). The 30 text-table families,
+  six formerly unclassified table roles, nine extra STR resources and all
+  61 manual, five card and eleven NWC guide pages have F2 source/retained-data
+  coverage. This supersedes the earlier open-role and page-review status above.
+- The original extracted installation passed **23/23** file identities:
+  eight core archives/media/executable and 15 soundtrack tracks. A bounded
+  original directory snapshot found no content-name mismatch. A targeted
+  [content reconciliation](MM6_F3_CONTENT_RECONCILIATION.md) compared 348
+  original table, binary, font, map and event members byte for byte with the
+  private retained extracts. Two map checksum anomalies and one extra event
+  framing anomaly are confirmed in original bytes and have scoped follow-up.
+- The [PE reconciliation](MM6_F3_PE_RECONCILIATION.md) mapped creation,
+  spell-delay, house-movie and transport tables. Exact values remain private;
+  one spell-cost and one weekday-source disagreement are documented. Travel
+  map indices require the original Games archive directory order, which the
+  retained name list does not preserve.
+- The [media reconciliation](MM6_F3_MEDIA_RECONCILIATION.md) checked original
+  video/sound payload framing and all soundtrack streams, and statically
+  resolved the referenced house movie names. It has not rendered video frames
+  or portraits or confirmed audible playback.
+- The [F3 gate review](MM6_F3_GATE_REVIEW.md) accepts the original-data
+  reconciliation for offline F4 work. Executable follow-up confirms static
+  consumers for spell cost, class mana attribute and travel weekdays;
+  portrait/voice reconciliation verifies 636 vanilla portrait pixels; one
+  baseline map actor references monster ID 173 and needs the final descriptor.
+  These are static findings, not runtime or visual/audio acceptance. No MM6
+  runtime was launched during F3; the installed MM7 app, saves and MM8 reserved
+  checkout remain untouched. MM6 still has no Play action or working campaign.

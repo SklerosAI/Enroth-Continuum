@@ -7,15 +7,23 @@ tags: [mm6, gaps, handoff]
 
 # Open Questions
 
-This is a dated, public gap register for the current MM6 F2 handoff, not a substitute for the full implementation checklist or private per-ID reports.
+This is a dated, public gap register for MM6 F4/F5, not a substitute for the full implementation checklist or private per-ID reports. The F2 questions below remain as implementation prompts; the F3 evidence update supersedes their older preflight wording.
 
 ## Question
 
-What must agents resolve before the consolidated MM6 F3 preflight can validate a complete F2 specification?
+What must agents implement and verify after the accepted MM6 F3 original-data gate?
 
 ## Context
 
-The active MM6 adapter reaches title/party screens but not a playable map. The new [F2 structural findings](MM6-F2-Structural-Findings.md) narrow several inherited-routing gaps; semantic behavior, campaign correctness, and save compatibility remain open. [Plan §18.1](../project/plan.md) requires F2 reconciliation before one deliberate F3 original-file review. The [MM7 audit](../project/MM7_AUDIT_CHECKLIST.md) is a separate planned effort.
+The active MM6 adapter reached title/party screens in an earlier run but not a playable map. The [F3 gate review](../project/MM6_F3_GATE_REVIEW.md) accepted original-data identity and named remaining ambiguities for offline F4. Semantic behavior, campaign correctness, presentation and save compatibility remain open. The [MM7 audit](../project/MM7_AUDIT_CHECKLIST.md) is a separate planned effort.
+
+## F3 evidence update — 2026-11-06
+
+- The original installation matched 23/23 frozen file identities and 348 targeted archive members. Two base-map checksum anomalies and one extra EVT framing anomaly are source-native; F4 needs narrow handling and F5 map/flow checks.
+- Original executable arrays now provide creation constants and 99 spell recovery triples. Its code consumes spell-point cost and travel weekday fields and branches by class mana attribute. Quick Start, actual mana debit, remaining HP/SP math and blank/special travel behavior remain open. The private corrected PE v2 report supersedes v1.
+- Original Games LOD directory order, rather than normalized retained `.entries` order, is necessary for transport map indices. A baseline actor references monster ID 173; F4 must retain the last descriptor. Whether that actor appears in play is a F5 check.
+- All 636 original vanilla portrait frames match retained RGBA pixels; twelve face indices and the portrait-frame table are known. Expression, voice reaction, video playback and audible output remain F4/F5 obligations.
+- The eleven-family `.ec6` logical register is an F3 design boundary. Exact per-field encoding, bounds, atomic write/recovery and malformed-file checks block F4 save acceptance. Native `.mm6` import was not requested.
 
 ## Analysis
 
@@ -37,19 +45,19 @@ The active MM6 adapter reaches title/party screens but not a playable map. The n
 | Across A–D | Which retained text tables are parsed with the correct MM6 schema and actually consumed by the intended title-specific behavior? The six without literal loads now have F2 roles: BTB, weekday profession news and item combinations are strong mechanic leads; password, plural autonote and errorlog original use remains unresolved. | [Six-table roles](../project/MM6_UNLOADED_TABLE_ROLES_F2.md), [table-consumer spec](../project/MM6_TABLE_CONSUMER_SPEC.md) and [source summary](Source-MM6-Table-Semantic-F2.md); F3 checks original provenance and F4/F5 consumers. |
 | Across A–C | What default ordering and text behavior should MM6 awards use? The current loader skips all 100 numeric rows because their priority cell is empty; selected cross-table joins prove reference presence only. | [Table semantic packet](../project/MM6_TABLE_SEMANTIC_F2.md), [table source summary](Source-MM6-Table-Semantic-F2.md), and [probe](../scripts/mm6_probe_table_semantics.py); define a title-specific parser and verify award writes/display/persistence without inventing a priority. |
 | Across A–D | Which guide claims still lack retained-data or original-effect reconciliation? All manual/card/NWC pages have direct page review, and Prima has chapter, per-spell, item/monster and campaign ledgers, but exact item/monster effects, quest branches, regional maps and services remain open. | [Guide F2 ledger](../project/MM6_GUIDE_F2_REVIEW.md), [full manual/card review](../project/MM6_MANUAL_CARD_FULL_REVIEW_F2.md), [NWC guide review](../project/MM6_NWC_GUIDE_FULL_REVIEW_F2.md) and [source summary](Source-MM6-Guide-F2-Review.md); keep exact disputes private and use F3/F4/F5 acceptance scenarios. |
-| Integrator | Has every item, spell, map, event, NPC, media, UI, save, and ending family been reconciled, with contradictions and uncertainty explicit? Opcode, guide and monster registers are structural and do not close the gate. | Consolidate A–D into [MM6 checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md) and resolve the open [F2 gate review](../project/MM6_F2_GATE_REVIEW.md); only an explicit freeze decision can precede F3. |
+| Integrator | Does every active MM6 ID, map, event, media cue and save field have an F4 consumer and offline check, with a later F5 outcome? The F3 source gate alone does not close gameplay. | Use the [F3 gate review](../project/MM6_F3_GATE_REVIEW.md), [F4 build graph](../project/MM6_F4_BUILD_GRAPH.md) and [MM6 checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md); keep exact rows and proprietary evidence private. |
 | Future agent control | After a title passes gameplay/save gates, what evidence can a controller use to act, observe and recover without changing hidden state or another title's profile? Current screenshot/input/trace source hooks are not an external interface. | [Knowledge and control contract](Agent-Play-Knowledge-and-Control-Contract.md) and [roadmap](Agent-Play-and-Observation-Roadmap.md); implement title/session binding, visible frame checks, bounded input, acknowledgments and save/relaunch verification only after the relevant runtime gate. |
 
 MM7's full resource/rules/campaign audit, MM8's engine adapter, and the title-aware Atlas assembler remain separate later work. None is evidenced complete by the MM6 F2 probes. The Atlas currently has only MM7 Play; adding another action requires that game's own play/save gate.
 
 ## Conclusion
 
-F2 is frozen as a coverage and question specification. The remaining rows are original-data, implementation and live-play questions for F3/F4/F5, not claims that the game works. The F3 preflight and full F4 implementation follow the reviewed specification.
+F2 is frozen as a coverage and question specification, and F3 is accepted as an original-data gate. The remaining rows are F4 implementation and F5 live-play questions, not claims that the game works.
 
 ## Open follow-ups
 
 - Recheck this page against new checklist and status commits before assigning lanes; remove a question only when its closure evidence is linked.
-- At F3, record discrepancies, checksums, and raw findings only in ignored local storage; update this public page with conclusions and remaining uncertainty.
+- Keep F3 report details and any later discrepancy, checksum or raw finding in ignored local storage; update this public page with conclusions and remaining uncertainty.
 - Keep the protected MM7 baseline available while planning its separate M7-A0–A5 audit.
 
 See also: [Agent Handoff](Agent-Handoff.md), [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), [MM6 F2 Workstreams](MM6-F2-Workstreams.md), [Campaign Status](Campaign-Status.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

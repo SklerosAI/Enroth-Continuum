@@ -1,6 +1,6 @@
 # MM6 F3 original-file capture runbook
 
-Status: **prepared during F2; no original file has been read by this helper** (2026-11-05). This is the bounded first capture for the one planned, read-only [F3 preflight](MM6_F3_PREFLIGHT_MATRIX.md), not an F3 completion claim. Use it only after the [F2 gate review](MM6_F2_GATE_REVIEW.md) explicitly says frozen and the source tree and ignored derived reports match the private freeze manifest. The owner's original data and all output must stay local and Git ignored.
+Status: **bounded capture executed during F3, begun 2026-11-05; [full F3 gate accepted](MM6_F3_GATE_REVIEW.md) on 2026-11-06**. This runbook records the ordered read-only [F3 preflight](MM6_F3_PREFLIGHT_MATRIX.md). The identity and capture helpers ran against the frozen source and ignored derived reports; their outputs remain local and Git ignored. The owner's original data was read without modification.
 
 ## Session order
 
@@ -26,6 +26,6 @@ The capture report's exact names, hashes and offsets are **private**. Its consol
 
 ## What still requires deliberate F3 work
 
-The capture is an **identity and directory inventory**, not a complete decoder. In particular, the [matrix](MM6_F3_PREFLIGHT_MATRIX.md) still requires original-versus-retained schema/spot-sample reconciliation for map base/delta bytes, all 30 text tables, 11 binary tables, 14 fonts, 68 event resources, media payload framing, portrait/frame selection, house and transport joins, and the whole-save field manifest. The prepared offline probes and [MM6 source/probe index](../.llm-wiki/MM6-Source-and-Probe-Index.md) supply the retained expectations; the private F3 template is the per-family signoff. A name/hash match is not a gameplay or save result. If any needed original consumer or format cannot be established in the session, record its exact missing evidence and conservative F4/F5 acceptance rather than silently inventing a rule.
+The capture is an **identity and directory inventory**, not a complete decoder. The later [content](MM6_F3_CONTENT_RECONCILIATION.md), [PE](MM6_F3_PE_RECONCILIATION.md), [media](MM6_F3_MEDIA_RECONCILIATION.md), [portrait/voice](MM6_F3_PORTRAIT_VOICE_RECONCILIATION.md), [actor-ID](MM6_F3_ACTOR_ID_RECONCILIATION.md) and [executable follow-up](MM6_F3_EXECUTABLE_FOLLOWUP.md) packets supply the targeted checks. The [gate review](MM6_F3_GATE_REVIEW.md) records the integrated family decision and names F4/F5 obligations. A name/hash match is not a gameplay or save result.
 
-No original GOG installation or MM6 process was opened to prepare this runbook. Synthetic parser and eight-input/music tests live in `scripts/test_mm6_f3_capture_snapshot.py`.
+The runbook was prepared without opening the original installation. Its later F3 execution read originals without modification; no MM6 process was launched. Synthetic parser and eight-input/music tests live in `scripts/test_mm6_f3_capture_snapshot.py`.

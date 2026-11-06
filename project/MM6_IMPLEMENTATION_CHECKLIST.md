@@ -75,11 +75,22 @@ claims that their runtime behavior is implemented.
   need visual care; the index is not a sentence-by-sentence semantic review.
 - [ ] Reconcile conflicting guide claims against the shipped GOG data. Keep
   guide citations and disputed claims here; never publish copied guide text.
-- [ ] Run a single deliberate read-only original-archive preflight after this
-  specification is complete. Record all counts, schema lengths, ID gaps,
-  boundary samples and unresolved differences in the ignored local report.
-  The [draft F3 preflight matrix](MM6_F3_PREFLIGHT_MATRIX.md) lists inputs and
-  reconciliation fields; it does not advance the F2 or F3 gate.
+- [x] Complete the single deliberate read-only original-file F3 preflight.
+  F2 is frozen and the original **23/23** core/soundtrack identity check,
+  bounded archive/media snapshot, and candidate PE extraction passed. The
+  [content reconciliation](MM6_F3_CONTENT_RECONCILIATION.md) verifies 348
+  targeted table/BIN/font/map/event members byte for byte; the
+  [media reconciliation](MM6_F3_MEDIA_RECONCILIATION.md) verifies original
+  VID/SND framing and soundtrack streams; the
+  [PE reconciliation](MM6_F3_PE_RECONCILIATION.md) records creation, spell,
+  house and travel data with named conflicts. Exact rows stay ignored.
+  The [F3 matrix](MM6_F3_PREFLIGHT_MATRIX.md) family signoff and
+  [gate review](MM6_F3_GATE_REVIEW.md) name the unresolved behavior and F4/F5
+  checks. The [executable](MM6_F3_EXECUTABLE_FOLLOWUP.md),
+  [portrait/voice](MM6_F3_PORTRAIT_VOICE_RECONCILIATION.md) and
+  [actor-ID](MM6_F3_ACTOR_ID_RECONCILIATION.md) supplements tighten active
+  code and asset requirements. F4 is authorized offline; none of these checks
+  establishes a playable MM6.
 
 ## Shipped table coverage
 

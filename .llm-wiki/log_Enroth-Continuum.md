@@ -606,3 +606,8 @@ Chronological record of wiki activity.
 - The accepted F3 media capture established 127 extensionless Smacker movie entries across two VID archives. The MM6 loader now requests an exact archive name, rejects an ambiguous cross-archive name and requires an `SMK` payload header before decoding. MM7 keeps its prior suffix and archive priority.
 - Three native tests passed, including a private-backed check of all 127 retained names. The arm64 MM6/MM7/unit build passed; the offline runner passed 145/145 tests from 45 suites without skips and the general suite passed 438/438.
 - This is an archive lookup result. Room descriptors, actual trigger mapping, Smacker decoding and audiovisual F5 observation remain open. No original installation or partial MM6 process was opened.
+
+## [2026-11-06] guard | MM6 targeted cast cancellation and integration checkpoint
+- by: T-Burton-ND via codex
+- MM6 Escape now calls the targeted-cast cancellation helper before closing the picker. MM6 character targets outside the four party slots reject before spell queue mutation. The outer MM6 effect gate stays closed; held-item, recovery, failure and cue semantics still need a real transaction test and F5 observation.
+- The final combined arm64 MM6/MM7/unit build passed. The one-command offline runner passed 145/145 tests from 45 suites without skips, including owner-matched awards, movie names and house rows; the linked general suite passed 438/438. Public status, build graph and agent handoff now point to these seams. No original installation or MM6 process was opened, and MM7's app/profile was untouched.

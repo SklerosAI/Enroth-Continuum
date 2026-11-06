@@ -1583,3 +1583,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added isolated `BEAC` v1 using lowercase MM6 base-map filenames and exact RGBA bytes for ordered character beacons and an optional save thumbnail. Detached staging resolves filenames against the current MM6 map table and a caller-verified 67-delta set; it does not serialize MM7 map IDs or publish renderer textures.
 - Integrated focused tests passed 5/5, the private-backed MM6/LOD gate 336/336, general non-MM6 unit gate 437/437 and MM7 headless control 1/1 without a visible window or focus change. The required known-save manifest still rejects BEAC and active beacons; live image publication and all-owner save/reload remain open.
+
+## [2026-11-06] implement | MM6 shared shop refresh arbitration
+- by: T-Burton-ND via codex
+- An F3-matched original-executable trace established that the last shop row and first guild row share both physical stock and one deadline. The first observed service after strict expiry regenerates its bank or guild stock and advances that deadline; equality skips regeneration.
+- Added a detached MM6-only helper that stages stock and clock owners together and leaves them unchanged on generator failure. Integrated focused shop/clock tests passed 8/8 and the private-backed MM6/LOD gate 338/338. Live item generation, service ownership, nonzero native-save comparison and SaveLoad remain guarded.

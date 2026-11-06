@@ -522,3 +522,22 @@ passed **10/10**, and the MM7 control **1/1**. A monitored MM6 run had no
 focus change or on-screen window across 177 host samples. Remaining missing
 requests include book and action icons; the four-book route and its visible
 layout still need implementation and later graphical validation.
+
+## MM6 F4 raw-terrain and hidden-render checkpoint — 2026-11-06
+
+The integrated MM6 headless suite passed **47/47** over 1,526 monitor samples,
+with no visible window or focus change. The private-backed offline gate passed
+**327/327** MM6/LOD tests from 84 suites after the original 28-group terrain
+sound route was integrated. MM6 now retains raw tile-table tileset and variant
+IDs alongside its normalized runtime type; outdoor footsteps use that original
+identity, while MM7 retains its previous lookup. Focused sound and all-map
+selector tests passed **2/2**, the general non-MM6 unit gate passed **437/437**,
+and an MM7 headless control passed **1/1**.
+
+A test-only hidden first-map OpenGL recapture shows land and road art after the
+MM6 land texture was assigned its shader's GPU texture unit. The sampled ground
+region has zero exact-black pixels, and the capture did not take focus or open
+an on-screen window. The original 17-condition priority correction also passed
+linked unit and headless checks. Seasonal/shoreline fidelity, audible playback,
+complete save transaction, normal MM6 map entry and campaign play remain open;
+normal chest generation and SaveLoad guards remain closed.

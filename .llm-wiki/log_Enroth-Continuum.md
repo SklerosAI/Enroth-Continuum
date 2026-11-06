@@ -1578,3 +1578,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added one title-specific raw owner and standalone `SHOP` v1 section for all 1,440 physical 28-byte records, preserving the shared shop/guild row and inactive tail. The required known-save manifest still rejects `SHOP`; no live service or Party owner is connected.
 - Integrated purchase and stock-field focused tests passed 6/6, the private-backed MM6/LOD gate 331/331 and monitored MM6 headless suite 49/49. Original shared-edge refresh behavior, a nonzero native save sample and full service/save transaction remain separate gates.
+
+## [2026-11-06] implement | Standalone MM6 beacon visual section
+- by: T-Burton-ND via codex
+- Added isolated `BEAC` v1 using lowercase MM6 base-map filenames and exact RGBA bytes for ordered character beacons and an optional save thumbnail. Detached staging resolves filenames against the current MM6 map table and a caller-verified 67-delta set; it does not serialize MM7 map IDs or publish renderer textures.
+- Integrated focused tests passed 5/5, the private-backed MM6/LOD gate 336/336, general non-MM6 unit gate 437/437 and MM7 headless control 1/1 without a visible window or focus change. The required known-save manifest still rejects BEAC and active beacons; live image publication and all-owner save/reload remain open.

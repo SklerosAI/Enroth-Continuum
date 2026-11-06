@@ -15,7 +15,7 @@ This index directs agents to the current public specifications and reproducible 
 - [F2 gate review](../project/MM6_F2_GATE_REVIEW.md) is the integration decision record. F2 is open and unfrozen; this review does not authorize F3.
 - [F3 preflight matrix](../project/MM6_F3_PREFLIGHT_MATRIX.md) is a draft one-pass original-file question list, not F2 or F3 gate completion.
 - [F2 freeze manifest helper](../scripts/mm6_f2_freeze_manifest.py) is prepared to fingerprint tracked specs and ignored derived reports after an explicit F2 freeze and a clean tracked tree. It currently refuses to run because the gate is open; it never reads the original install.
-- [F3 identity checker](../scripts/mm6_f3_identity_preflight.py) is prepared to compare eight original archive/media/executable hashes with retained F1 ledgers during that consolidated pass. It has only parsed the retained ledgers; it has **not** read originals or passed F3.
+- [F3 identity checker](../scripts/mm6_f3_identity_preflight.py) is prepared to compare eight original archive/media/executable hashes with retained F1 ledgers during that consolidated pass. It refuses to read originals until the F2 gate, ignored freeze manifest and clean source SHA agree. It has only parsed retained ledgers; it has **not** read originals or passed F3.
 - [Local status](../project/LOCAL_STATUS.md) records observed Mac behavior and its limits.
 - [OpenEnroth credit](../CREDITS.md) and [upstream relationship](../project/UPSTREAM.md) govern attribution.
 

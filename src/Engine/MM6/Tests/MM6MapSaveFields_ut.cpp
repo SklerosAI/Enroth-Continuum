@@ -68,3 +68,26 @@ UNIT_TEST(MM6MapSaveFields, RetainedSixtySevenDeltas) {
     mm6::loadMapFieldsBeforeMutation(bytes, &restored);
     EXPECT_EQ(restored, source);
 }
+
+UNIT_TEST(MM6MapSaveFields, ExactExpectedNameSetBeforeMutation) {
+    mm6::MapSaveFields source;
+    std::vector<std::string> expected;
+    for (int i = 0; i < 67; ++i) {
+        std::string name = "synthetic" + std::to_string(i) + ".dlv";
+        expected.push_back(name);
+        source.deltas.push_back(map(name, "delta"));
+    }
+    std::vector<std::uint8_t> bytes = mm6::encodeSaveContainer({{mm6::encodeMapSection(source)}});
+    mm6::MapSaveFields destination{{map("safe.dlv", "previous")}};
+    mm6::loadMapFieldsBeforeMutation(bytes, &destination, expected);
+    EXPECT_EQ(destination, source);
+
+    destination = {{map("safe.dlv", "previous")}};
+    expected.back() = "absent.dlv";
+    EXPECT_THROW(mm6::loadMapFieldsBeforeMutation(bytes, &destination, expected), std::exception);
+    EXPECT_EQ(destination.deltas.front().name, "safe.dlv");
+    expected.back() = expected.front();
+    EXPECT_THROW(mm6::validateExpectedMapNames(source, expected), std::exception);
+    expected.pop_back();
+    EXPECT_THROW(mm6::validateExpectedMapNames(source, expected), std::exception);
+}

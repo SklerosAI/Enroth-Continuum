@@ -127,9 +127,33 @@ MapSaveFields decodeMapSection(const SaveContainer &container) {
     return fields;
 }
 
+void validateExpectedMapNames(const MapSaveFields &fields, std::span<const std::string> expectedNames) {
+    validate(fields);
+    if (expectedNames.size() != MAX_MAPS || fields.deltas.size() != expectedNames.size())
+        throw std::runtime_error("MM6 map save does not match the expected map count");
+
+    std::unordered_set<std::string_view> expected;
+    for (const std::string &name : expectedNames) {
+        if (!validName(name) || !expected.insert(name).second)
+            throw std::runtime_error("invalid MM6 expected map-name manifest");
+    }
+    for (const SavedMapDelta &delta : fields.deltas) {
+        if (!expected.contains(delta.name))
+            throw std::runtime_error("MM6 map save contains an unexpected map name");
+    }
+}
+
 void loadMapFieldsBeforeMutation(std::span<const std::uint8_t> bytes, MapSaveFields *destination) {
     SaveContainer container = decodeSaveContainer(bytes);
     MapSaveFields candidate = decodeMapSection(container);
+    *destination = std::move(candidate);
+}
+
+void loadMapFieldsBeforeMutation(std::span<const std::uint8_t> bytes, MapSaveFields *destination,
+                                 std::span<const std::string> expectedNames) {
+    SaveContainer container = decodeSaveContainer(bytes);
+    MapSaveFields candidate = decodeMapSection(container);
+    validateExpectedMapNames(candidate, expectedNames);
     *destination = std::move(candidate);
 }
 

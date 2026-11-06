@@ -28,5 +28,10 @@ struct MapSaveFields {
 SaveSection encodeMapSection(const MapSaveFields &fields);
 MapSaveFields decodeMapSection(const SaveContainer &container);
 void loadMapFieldsBeforeMutation(std::span<const std::uint8_t> bytes, MapSaveFields *destination);
+// Expected names come from a locally verified, ignored F3 manifest. Reject a
+// missing, extra or duplicate delta before assigning any candidate state.
+void validateExpectedMapNames(const MapSaveFields &fields, std::span<const std::string> expectedNames);
+void loadMapFieldsBeforeMutation(std::span<const std::uint8_t> bytes, MapSaveFields *destination,
+                                 std::span<const std::string> expectedNames);
 
 } // namespace mm6

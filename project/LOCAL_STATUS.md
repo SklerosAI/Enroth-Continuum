@@ -541,3 +541,14 @@ an on-screen window. The original 17-condition priority correction also passed
 linked unit and headless checks. Seasonal/shoreline fidelity, audible playback,
 complete save transaction, normal MM6 map entry and campaign play remain open;
 normal chest generation and SaveLoad guards remain closed.
+
+The MM6-only `.ec6` `PART` v3 payload now preserves the current runtime's fine,
+death, prison and bounty counters alongside the earlier party fields. The
+integrated focused core-field suite passed **7/7**; the private-backed offline
+gate passed **327/327** and a monitored scoped first-map save/rollback check
+passed **1/1** over 1,571 samples without a visible window or focus change.
+This is a detached preservation seam: original MM6 justice/award semantics,
+full save commit/reload and normal SaveLoad remain unaccepted. A read-only
+terrain schema audit also found that MM6 global tile ID is the exact art key;
+raw tileset/variant pairs alone repeat, and the original seasonal remap rule
+is still unproved.

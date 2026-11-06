@@ -15,6 +15,6 @@ The MM6-only capture adapter reads these fields from `Party`. The stage adapter 
 
 `saveNewGame()` assigns position Z and fall-start Z to 340 for `oute3.odm`; the offline autosave builder now requires both values before reading the default map archive. This does not prove new-game chest seed, commerce, beacons, active-world reconstruction, or all-owner commit. Live SaveLoad remains guarded.
 
-The source and focused unit cases syntax compile with the integrated arm64 flags. A standalone native codec probe passed nonzero v2 round-trip, exact 74-byte length, superseded v1 rejection and late truncation without destination mutation. The runtime adapter and new-game tests require a clean integrated rebuild because the prior static objects carry the smaller `CorePartyFields` layout.
+The historical standalone v2 codec probe passed nonzero 74-byte round-trip, superseded v1 rejection and late truncation without destination mutation. The current v3 layout has an integrated arm64 rebuild, a focused **7/7** core-field suite and a monitored scoped first-map save/rollback check **1/1**; the [justice counter page](MM6-F4-Justice-Counter-Save.md) records its new fields and validation. A true first-frame reload and complete runtime transaction remain open.
 
 See also: [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md), [Known Save Assembly](MM6-F4-Known-Save-Assembly.md), [New Game Autosave](MM6-F4-New-Game-Autosave.md).

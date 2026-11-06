@@ -676,3 +676,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - `listKnownSaveSlots` now inventories sorted `.ec6` primary and backup candidates from the native MM6 profile. It decodes all sixteen currently known sections, exposes saved header metadata and a recovery-needed flag, ignores MM7/temp names, and rejects symlinked save paths. Listing never restores a backup or changes a slot.
 - The arm64 MM6, OpenEnroth and unit targets built; focused atomic-save tests passed 4/4, including valid primary, backup-only, malformed-primary, malformed-only and symlink cases. Cpplint, diff and page-link checks passed. The MM6 SaveLoad guard stays closed pending private map-base and full runtime-state proof. No original installation or MM6 process was opened.
+
+## [2026-11-06] implement | MM6 day-of-year event comparison
+- by: T-Burton-ND via codex
+- A F3-matched retained ledger has 592 raw-ID-19 uses, all Compare, across four active EVT resources. GrayFace MMExtension identifies ID 19 as `DayOfYearIs`. The MM6 interpreter now compares party time against a bounded one-based 336-day year before character selection; unsupported writes reject before inherited execution. MM7 keeps its prior path.
+- The aggregate verifier rehashes all 68 retained EVT resources and is wired into the offline runner. Arm64 MM6, OpenEnroth and unit targets were current; three focused tests passed for the calendar boundary and invalid inputs. The full integrated runner and actual date-gate branch/save scenarios remain open. No original installation or MM6 process was opened.

@@ -16,4 +16,4 @@ For upstream material, retain [OpenEnroth](https://github.com/OpenEnroth/OpenEnr
 
 Source: [CREDITS.md](../CREDITS.md), [local-game-data/README.md](../local-game-data/README.md), [project/LOCAL_STATUS.md](../project/LOCAL_STATUS.md), reviewed 2026-11-05.
 
-See also: [Project Overview](Project-Overview.md), [Campaign Status](Campaign-Status.md), [README Source](Source-README.md).
+See also: [Project Overview](Project-Overview.md), [Campaign Status](Campaign-Status.md), [README Source](Source-README.md), [Agent Handoff](Agent-Handoff.md).

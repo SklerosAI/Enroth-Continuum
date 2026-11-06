@@ -15,6 +15,11 @@ This is the LLM-maintained project memory for Enroth Continuum, a personal Apple
 
 ## Categories
 
+### Agent handoff
+
+- [Agent Handoff](Agent-Handoff.md) — start here for current gates, source authority, and parallel integration
+- [MM6 F2 Workstreams](MM6-F2-Workstreams.md) — scoped research lanes for the next agents
+
 ### Project and provenance
 
 - [Project Overview](Project-Overview.md) — scope, upstream credit, and roadmap

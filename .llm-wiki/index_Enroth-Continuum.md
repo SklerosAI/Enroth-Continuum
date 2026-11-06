@@ -10,6 +10,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 ## Navigation and conventions
 
 - [Home](Home_Enroth-Continuum.md) — Curated entry point
+- [Agent Handoff](Agent-Handoff.md) — Current gates, authority, checkout roles, integration and evidence protocol
 - [Schema](SCHEMA_Enroth-Continuum.md) — Page, link, log, and ingest rules
 - [Log](log_Enroth-Continuum.md) — Chronological operations
 - [Edge Types](Edge-Types.md) — CRC template's typed relation vocabulary
@@ -23,6 +24,11 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 
 - [Campaign Status](Campaign-Status.md) — Dated MM6, MM7, and MM8 readiness
 - [Runtime Isolation](Runtime-Isolation.md) — Engine, profile, and launcher separation
+
+## Agent work and open questions
+
+- [MM6 F2 Workstreams](MM6-F2-Workstreams.md) — Three or four parallel research assignments and handoff packet
+- [Open Questions](Open-Questions.md) — Dated F2 gaps requiring reconciliation before F3
 
 ## Source summaries
 

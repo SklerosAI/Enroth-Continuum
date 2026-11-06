@@ -712,3 +712,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The F3-matched retained EVT ledger has 147 raw-ID-21 uses across twelve active resources: 14 Compare, 111 Add and 22 Subtract, with operands 1–250000 and no Set. A tracked aggregate checker rehashes all 68 active EVT files and runs in the offline suite.
 - MM6 now compares party gold once, preflights grants for signed overflow and stops a short payment before mutation. Valid Add/Subtract writes apply the checked balance silently, avoiding inherited MM7 sound/status cues. Unsupported Set and negative input reject; MM7 keeps its prior route. Arm64 MM6/OpenEnroth/unit targets built and three focused tests passed. The next full offline run, MM6 cues and F5 reward/payment/save observation remain open. No original installation or MM6 process was opened.
+
+## [2026-11-06] test | 169-test MM6 offline integration
+- by: T-Burton-ND via codex
+- Integrated source-typed spell damage labels, bounded silent Gold ID-21 event operations, a pure 21-house transport selector and read-only semantic `.ec6` candidate preflight. The projectile audit records 46 active no-missile fallbacks that still block ranged-combat acceptance.
+- The arm64 MM6, OpenEnroth and unit targets built. The one-command offline runner passed 169/169 native tests from 53 suites without skips, including the F3-matched 147-use Gold ledger; the general suite passed 438/438. Shared status, build graph and agent handoff record the new seams.
+- No original installation or MM6 process was opened. Live house entry/travel, monster projectiles, spell effects and SaveLoad remain gated; MM7's app/profile and the reserved MM8 checkout were untouched.

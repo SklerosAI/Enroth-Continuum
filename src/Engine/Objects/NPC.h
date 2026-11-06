@@ -56,6 +56,19 @@ namespace mm6 {
 // i + 2. This is a roster position, not a stable identity for a hired NPC.
 std::vector<std::uint16_t> collectFollowerIndices(const NPCData &first, const NPCData &second,
                                                   const NPCStats &stats);
+
+enum class NpcAddressKind { Table, Generated, Follower };
+
+struct NpcAddress {
+    NpcAddressKind kind;
+    std::size_t index;
+
+    bool operator==(const NpcAddress &) const = default;
+};
+
+// Resolves the title's NPC id namespaces before any array or roster access.
+// Negative ids are one-based positions in the flattened follower roster.
+NpcAddress resolveNpcAddress(int npcId, const NPCStats &stats, std::size_t followerCount);
 } // namespace mm6
 
 class FlatHirelings {

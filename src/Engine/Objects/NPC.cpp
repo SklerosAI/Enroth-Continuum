@@ -29,7 +29,31 @@ static const Segment<Condition> standardConditionsExcludeDead = {CONDITION_CURSE
 // All conditions including dead character ones, but still excluding zombie
 static const Segment<Condition> standardConditionsIncludeDead = {CONDITION_CURSED, CONDITION_ERADICATED};
 
+mm6::NpcAddress mm6::resolveNpcAddress(int npcId, const NPCStats &stats, std::size_t followerCount) {
+    if (npcId < 0) {
+        std::size_t index = static_cast<std::size_t>(-static_cast<std::int64_t>(npcId) - 1);
+        if (index >= followerCount)
+            throw std::out_of_range("MM6 follower NPC id exceeds the roster");
+        return {NpcAddressKind::Follower, index};
+    }
+    if (static_cast<std::size_t>(npcId) < stats.pNPCData.size())
+        return {NpcAddressKind::Table, static_cast<std::size_t>(npcId)};
+    if (npcId >= 5000 && static_cast<std::size_t>(npcId - 5000) < stats.pAdditionalNPC.size())
+        return {NpcAddressKind::Generated, static_cast<std::size_t>(npcId - 5000)};
+    throw std::out_of_range("MM6 NPC id exceeds the NPC arrays");
+}
+
 NPCData *getNPCData(int npcId) {
+    if (engine && engine->gameTitle() == GameTitle::MM6) {
+        if (npcId < 0) {
+            FlatHirelings buf;
+            buf.Prepare();
+            return buf.Get(mm6::resolveNpcAddress(npcId, *pNPCStats, buf.Size()).index);
+        }
+        mm6::NpcAddress address = mm6::resolveNpcAddress(npcId, *pNPCStats, 0);
+        return address.kind == mm6::NpcAddressKind::Table
+            ? &pNPCStats->pNPCData[address.index] : &pNPCStats->pAdditionalNPC[address.index];
+    }
     if (npcId >= 0) {
         if (npcId < 5000) {
             if (npcId >= 501) {
@@ -67,6 +91,15 @@ bool CheckHiredNPCSpeciality(NpcProfession prof) {
 }
 
 NpcType getNPCType(int npcId) {
+    if (engine && engine->gameTitle() == GameTitle::MM6) {
+        if (npcId >= 0)
+            return mm6::resolveNpcAddress(npcId, *pNPCStats, 0).kind == mm6::NpcAddressKind::Table
+                ? NPC_TYPE_QUEST : NPC_TYPE_HIREABLE;
+        FlatHirelings buf;
+        buf.Prepare();
+        return buf.IsFollower(mm6::resolveNpcAddress(npcId, *pNPCStats, buf.Size()).index)
+            ? NPC_TYPE_QUEST : NPC_TYPE_HIREABLE;
+    }
     if (npcId >= 0) {
         if (npcId < 5000) {
             return NPC_TYPE_QUEST;

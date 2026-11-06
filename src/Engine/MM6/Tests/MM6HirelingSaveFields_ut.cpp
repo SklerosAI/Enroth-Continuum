@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <exception>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -78,6 +79,28 @@ UNIT_TEST(MM6HirelingRoster, BoundedFullTableAndMalformedState) {
     stats.uNumNewNPCs = 1;
     stats.pNPCData[0].name.clear();
     EXPECT_THROW((void) mm6::collectFollowerIndices(first, second, stats), std::invalid_argument);
+}
+
+UNIT_TEST(MM6NpcAddress, ResolvesAllBoundedNamespaces) {
+    NPCStats stats;
+    using mm6::NpcAddress;
+    using mm6::NpcAddressKind;
+    EXPECT_EQ(mm6::resolveNpcAddress(0, stats, 0), (NpcAddress{NpcAddressKind::Table, 0}));
+    EXPECT_EQ(mm6::resolveNpcAddress(398, stats, 0), (NpcAddress{NpcAddressKind::Table, 398}));
+    EXPECT_EQ(mm6::resolveNpcAddress(500, stats, 0), (NpcAddress{NpcAddressKind::Table, 500}));
+    EXPECT_EQ(mm6::resolveNpcAddress(5000, stats, 0), (NpcAddress{NpcAddressKind::Generated, 0}));
+    EXPECT_EQ(mm6::resolveNpcAddress(5099, stats, 0), (NpcAddress{NpcAddressKind::Generated, 99}));
+    EXPECT_EQ(mm6::resolveNpcAddress(-1, stats, 503), (NpcAddress{NpcAddressKind::Follower, 0}));
+    EXPECT_EQ(mm6::resolveNpcAddress(-503, stats, 503), (NpcAddress{NpcAddressKind::Follower, 502}));
+}
+
+UNIT_TEST(MM6NpcAddress, RejectsOutOfBoundsBeforePointerArithmetic) {
+    NPCStats stats;
+    for (int id : {501, 4999, 5100, std::numeric_limits<int>::max(), -504,
+                   std::numeric_limits<int>::min()}) {
+        EXPECT_THROW((void) mm6::resolveNpcAddress(id, stats, 503), std::out_of_range);
+    }
+    EXPECT_THROW((void) mm6::resolveNpcAddress(-1, stats, 0), std::out_of_range);
 }
 
 UNIT_TEST(MM6HirelingSaveFields, FullNpcCopiesNamesAndSacrificeRoundTrip) {

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -37,6 +38,8 @@
 #include "Engine/Spells/Spells.h"
 #include "Engine/Engine.h"
 #include "Engine/Tables/MapTable.h"
+
+#include "Io/Mouse.h"
 
 #include "Media/Audio/AudioPlayer.h"
 #include "Media/MediaPlayer.h"
@@ -454,8 +457,34 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                 ir.data.variable_descr.type == VAR_PlayerItemInHands) {
                 if (_who == CHOOSE_PARTY)
                     throw Exception("MM6 party-selected item reward needs repeated-grant preflight");
-                Item item = mm6::makeEventItem(17, ir.data.variable_descr.value, pParty->pPickedItem);
-                pParty->setHoldingItem(item);
+                Item item = mm6::makeEventItem(17, ir.data.variable_descr.value);
+                if (pParty->pPickedItem.itemId == ITEM_NULL) {
+                    pParty->setHoldingItem(item);
+                } else {
+                    std::array<Character *, 4> party;
+                    for (int i = 0; i < 4; ++i)
+                        party[i] = &pParty->pCharacters[i];
+                    Character *recipient = mm6::planEventItemRelocation(
+                        party, pParty->hasActiveCharacter() ? pParty->activeCharacterIndex() : -1,
+                        pParty->pPickedItem);
+                    Item previous = pParty->pPickedItem;
+                    Pointi previousOffset = mouse->pickedItemOffset;
+                    InventoryEntry stored = mm6::relocateEventItemToInventory(*recipient, pParty->pPickedItem);
+                    try {
+                        pParty->setHoldingItem(item);
+                    } catch (...) {
+                        pParty->pPickedItem = previous;
+                        recipient->inventory.take(stored);
+                        // Icon loading may fail after setHoldingItem has changed its name.
+                        // Restoring the already displayed item is best effort only.
+                        try {
+                            mouse->SetCursorBitmapFromItemID(previous.itemId);
+                        } catch (...) {
+                        }
+                        mouse->pickedItemOffset = previousOffset;
+                        throw;
+                    }
+                }
                 break;
             }
             if (engine->gameTitle() == GameTitle::MM6 &&

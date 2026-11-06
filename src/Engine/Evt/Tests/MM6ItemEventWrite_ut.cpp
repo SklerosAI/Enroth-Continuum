@@ -8,7 +8,7 @@
 
 UNIT_TEST(MM6ItemEventWrite, BoundedEmptyCursorRewardHasOnlyOriginalFields) {
     Item held;
-    Item created = mm6::makeEventItem(17, 1, held);
+    Item created = mm6::makeEventItem(17, 1);
     EXPECT_EQ(created.itemId, static_cast<ItemId>(1));
     EXPECT_EQ(created.flags, ITEM_IDENTIFIED);
     EXPECT_EQ(created.potionPower, 0);
@@ -16,14 +16,75 @@ UNIT_TEST(MM6ItemEventWrite, BoundedEmptyCursorRewardHasOnlyOriginalFields) {
     EXPECT_EQ(created.maxCharges, 0);
     EXPECT_EQ(held.itemId, ITEM_NULL);
 
-    held.itemId = static_cast<ItemId>(2);
-    EXPECT_THROW((void) mm6::makeEventItem(17, 1, held), std::runtime_error);
-    held.Reset();
-    EXPECT_THROW((void) mm6::makeEventItem(17, 400, held), std::runtime_error);
-    EXPECT_THROW((void) mm6::makeEventItem(17, 429, held), std::runtime_error);
-    EXPECT_THROW((void) mm6::makeEventItem(17, 0, held), std::runtime_error);
-    EXPECT_THROW((void) mm6::makeEventItem(17, 581, held), std::runtime_error);
-    EXPECT_THROW((void) mm6::makeEventItem(16, 1, held), std::runtime_error);
+    EXPECT_THROW((void) mm6::makeEventItem(17, 400), std::runtime_error);
+    EXPECT_THROW((void) mm6::makeEventItem(17, 429), std::runtime_error);
+    EXPECT_THROW((void) mm6::makeEventItem(17, 0), std::runtime_error);
+    EXPECT_THROW((void) mm6::makeEventItem(17, 581), std::runtime_error);
+    EXPECT_THROW((void) mm6::makeEventItem(16, 1), std::runtime_error);
+}
+
+UNIT_TEST(MM6ItemEventWrite, RelocatesExactHeldItemActiveFirstThenOriginalFallbackOrder) {
+    ItemTable localTable;
+    ItemTable *previous = pItemTable;
+    struct RestoreTable {
+        ItemTable *previous;
+        ~RestoreTable() { pItemTable = previous; }
+    } restore{previous};
+    pItemTable = &localTable;
+    localTable.itemSizes[static_cast<ItemId>(1)] = Sizei(1, 1);
+
+    std::array<Character, 4> characters;
+    std::array<Character *, 4> party{&characters[0], &characters[1], &characters[2], &characters[3]};
+    Item held;
+    held.itemId = static_cast<ItemId>(1);
+    held.numCharges = 7;
+    held.flags = ITEM_BROKEN;
+    EXPECT_EQ(mm6::planEventItemRelocation(party, 2, held), party[2]);
+
+    Sizei grid = characters[2].inventory.gridSize();
+    for (int y = 0; y < grid.h; ++y)
+        for (int x = 0; x < grid.w; ++x)
+            ASSERT_TRUE(characters[2].inventory.tryAdd(Pointi(x, y), held));
+    EXPECT_EQ(mm6::planEventItemRelocation(party, 2, held), party[0]);
+
+    InventoryEntry stored = mm6::relocateEventItemToInventory(characters[0], held);
+    ASSERT_TRUE(stored);
+    EXPECT_EQ(stored->itemId, static_cast<ItemId>(1));
+    EXPECT_EQ(stored->numCharges, 7);
+    EXPECT_EQ(stored->flags, ITEM_BROKEN);
+    EXPECT_EQ(held.itemId, ITEM_NULL);
+    EXPECT_EQ(characters[2].inventory.size(), grid.w * grid.h);
+}
+
+UNIT_TEST(MM6ItemEventWrite, FullPartyPreflightLeavesCursorAndInventoryUnchanged) {
+    ItemTable localTable;
+    ItemTable *previous = pItemTable;
+    struct RestoreTable {
+        ItemTable *previous;
+        ~RestoreTable() { pItemTable = previous; }
+    } restore{previous};
+    pItemTable = &localTable;
+    localTable.itemSizes[static_cast<ItemId>(1)] = Sizei(1, 1);
+
+    std::array<Character, 4> characters;
+    std::array<Character *, 4> party{&characters[0], &characters[1], &characters[2], &characters[3]};
+    Item held;
+    held.itemId = static_cast<ItemId>(1);
+    held.numCharges = 9;
+    for (Character &character : characters) {
+        Sizei grid = character.inventory.gridSize();
+        for (int y = 0; y < grid.h; ++y)
+            for (int x = 0; x < grid.w; ++x)
+                ASSERT_TRUE(character.inventory.tryAdd(Pointi(x, y), held));
+    }
+    EXPECT_THROW((void) mm6::planEventItemRelocation(party, 3, held), std::runtime_error);
+    EXPECT_THROW((void) mm6::relocateEventItemToInventory(characters[0], held), std::runtime_error);
+    EXPECT_EQ(held.itemId, static_cast<ItemId>(1));
+    EXPECT_EQ(held.numCharges, 9);
+    for (Character &character : characters)
+        EXPECT_EQ(character.inventory.size(), character.inventory.gridSize().w * character.inventory.gridSize().h);
+    EXPECT_THROW((void) mm6::makeEventItem(17, 400), std::runtime_error);
+    EXPECT_EQ(held.itemId, static_cast<ItemId>(1));
 }
 
 UNIT_TEST(MM6ItemEventWrite, PlansGridBeforeHeldAndPreservesEquipment) {

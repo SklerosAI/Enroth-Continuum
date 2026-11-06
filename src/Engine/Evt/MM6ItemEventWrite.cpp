@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 
+#include "Engine/Tables/ItemTable.h"
+
 namespace mm6 {
 namespace {
 
@@ -29,16 +31,44 @@ InventoryEntry uniqueGridItem(Character &character, ItemId itemId) {
 
 } // namespace
 
-Item makeEventItem(int rawId, int value, const Item &heldItem) {
+Item makeEventItem(int rawId, int value) {
     ItemId itemId = checkedItemId(rawId, value);
-    if (heldItem.itemId != ITEM_NULL)
-        throw std::runtime_error("MM6 item reward with occupied cursor needs relocation preflight");
     if (value >= 400 && value <= 429)
         throw std::runtime_error("MM6 generated-artifact state is not yet durable");
     Item item;
     item.itemId = itemId;
     item.flags = ITEM_IDENTIFIED;
     return item;
+}
+
+Character *planEventItemRelocation(std::span<Character *> party, int activeIndex,
+                                   const Item &heldItem) {
+    if (party.size() != 4 || activeIndex < -1 || activeIndex >= 4 ||
+        heldItem.itemId < ITEM_FIRST_VALID || heldItem.itemId > static_cast<ItemId>(580) || !pItemTable)
+        throw std::runtime_error("MM6 item relocation has invalid party or held item");
+    for (Character *character : party)
+        if (!character)
+            throw std::runtime_error("MM6 item relocation has a null character");
+
+    Sizei size = heldItem.inventorySize();
+    if (size.w <= 0 || size.h <= 0)
+        throw std::runtime_error("MM6 held item has no valid inventory size");
+    if (activeIndex >= 0 && party[activeIndex]->inventory.canAdd(size))
+        return party[activeIndex];
+    for (Character *character : party)
+        if (character->inventory.canAdd(size))
+            return character;
+    throw std::runtime_error("MM6 item reward requires unproved ground-drop fallback");
+}
+
+InventoryEntry relocateEventItemToInventory(Character &recipient, Item &heldItem) {
+    if (heldItem.itemId == ITEM_NULL)
+        throw std::runtime_error("MM6 item relocation found an empty cursor");
+    InventoryEntry stored = recipient.inventory.tryAdd(heldItem);
+    if (!stored)
+        throw std::runtime_error("MM6 item relocation lost reserved inventory space");
+    heldItem.Reset();
+    return stored;
 }
 
 std::vector<ItemRemovalStep> planEventItemRemoval(std::span<Character *> characters,

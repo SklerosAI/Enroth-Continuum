@@ -14,9 +14,18 @@ struct ItemRemovalStep {
     bool held = false;
 };
 
-// MM6's fixed-item Add creates an identified, otherwise empty item in the cursor.
-// Occupied-cursor relocation and the MM6 generated-artifact band stay guarded.
-Item makeEventItem(int rawId, int value, const Item &heldItem);
+// MM6's fixed-item Add creates an identified, otherwise empty item.
+// The generated-artifact band stays guarded until its state is durable.
+Item makeEventItem(int rawId, int value);
+
+// The original cursor setter tries the active character first, then characters
+// 0..3 in order. Ground-drop fallback stays guarded until it is safe to persist.
+Character *planEventItemRelocation(std::span<Character *> party, int activeIndex,
+                                   const Item &heldItem);
+
+// Insert the exact held item before clearing the cursor. A failed insertion
+// leaves the cursor unchanged and is reported to the event interpreter.
+InventoryEntry relocateEventItemToInventory(Character &recipient, Item &heldItem);
 
 // Plan every selected character before applying a removal, so an ambiguous
 // duplicate grid match cannot leave a partly changed party.

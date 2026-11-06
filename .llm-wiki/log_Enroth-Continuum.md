@@ -340,3 +340,9 @@ Chronological record of wiki activity.
 - Added a bounded `.ec6` MAPS section for named opaque MM6 map deltas, with duplicate/path/size and container-integrity checks before assignment. A retained fixture round-tripped all 52 indoor and 15 outdoor deltas byte for byte; content validation against each base map remains a whole-save obligation.
 - Corrected the indoor fixture preparer to distinguish F3 archive extraction hashes from the inner map-compression hash, matching the outdoor preparer. Added one local runner that recreates ignored F3-matched fixtures and runs the MM6 unit suite without starting the game or rereading the original GOG installation.
 - The integrated arm64 MM6/MM7 and unit targets built, and 44 focused native tests passed across the current MM6 seams and LOD directory-order check. Live SaveLoad and F5 visual play remain disabled.
+
+## [2026-11-06] ingest | MM6 spell mana and recovery rules
+- by: T-Burton-ND via codex
+- Exported the accepted F3 PE spell table to a mode-0600 private MM6 profile manifest after checking the report gate hash; no numeric spell table entered Git. Added an atomic, bounded loader for 99 spell IDs and three mastery ranks.
+- Routed MM6 regular player-cast cost/recovery, quickspell mana gating and cost popups through the title-specific table while keeping MM7 static data unchanged. Scroll/NPC overrides and debug Grandmaster casts fail closed.
+- Built the arm64 unit target and passed three focused tests covering all 297 rank cells, the private manifest and malformed atomic-reload rejection. The exporter rejected an altered report; C++ style checks passed. Effect, scroll/book, event/monster, portal/beacon and wand paths remain open. No original installation was reread or partial MM6 game launched.

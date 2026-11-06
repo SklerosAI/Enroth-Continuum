@@ -49,6 +49,7 @@
 #include "Engine/Spells/CastSpellInfo.h"
 #include "Engine/Spells/Spells.h"
 #include "Engine/Spells/MM6SpellRules.h"
+#include "Engine/Spells/MM6FirstAidRules.h"
 #include "Engine/Tables/AwardTable.h"
 #include "Engine/Tables/ChestTable.h"
 #include "Engine/Tables/HouseTable.h"
@@ -794,6 +795,7 @@ void Engine::MM7_Initialize() {
     if (gameTitle() == GameTitle::MM6) {
         mm6::loadCreationRules(ufs->read("rules/creation.json"));
         mm6::loadSpellRules(ufs->read("rules/spells.json"));
+        mm6::loadFirstAidRules(ufs->read("rules/first-aid.json"));
     }
 
     gameTimer = new Timer();

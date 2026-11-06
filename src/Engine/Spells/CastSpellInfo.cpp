@@ -31,6 +31,7 @@
 #include "Engine/Random/Random.h"
 #include "Engine/Spells/Spells.h"
 #include "Engine/Spells/MM6SpellRules.h"
+#include "Engine/Spells/MM6FirstAidRules.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
 
@@ -2256,6 +2257,15 @@ void CastSpellInfoHelpers::castSpell() {
 
                 case SPELL_BODY_FIRST_AID:
                 {
+                    if (engine->gameTitle() == GameTitle::MM6) {
+                        if (pCastSpell->targetPid || pCastSpell->targetCharacterIndex < 0 ||
+                            pCastSpell->targetCharacterIndex >= 4)
+                            throw std::runtime_error("MM6 First Aid requires one party member target");
+                        pParty->pCharacters[pCastSpell->targetCharacterIndex].Heal(
+                            mm6::firstAidHealAmount(pCastSpell->uSpellID, spell_mastery));
+                        break;
+                    }
+
                     int heal_amount;
                     switch (spell_mastery) {
                         case MASTERY_NOVICE:
@@ -3041,9 +3051,13 @@ void pushSpellOrRangedAttack(SpellId spell,
     if (!(flags & ON_CAST_TargetIsParty)) {
         switch (spell) {
             case SPELL_SPIRIT_FATE:
-            case SPELL_BODY_FIRST_AID:
             case SPELL_DARK_REANIMATE:
                 flags |= ON_CAST_TargetedActorOrCharacter;
+                break;
+
+            case SPELL_BODY_FIRST_AID:
+                flags |= engine->gameTitle() == GameTitle::MM6 ? ON_CAST_TargetedCharacter :
+                                                            ON_CAST_TargetedActorOrCharacter;
                 break;
 
             case SPELL_FIRE_FIRE_AURA:

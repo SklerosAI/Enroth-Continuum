@@ -51,6 +51,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 World F2 Closure Source](Source-MM6-World-F2-Closure.md) — Offline delta-section preservation and unresolved C++ world/save obligations
 - [MM6 World Field Map F2 Source](Source-MM6-World-Field-Map-F2.md) — Record hypotheses and corrected chest delta-grid ambiguity
 - [MM6 Event and Campaign Spec Source](Source-MM6-Event-Campaign-Spec.md) — Question, NPC-topic, variable, and campaign gaps
+- [MM6 Opcode Semantics F2 Source](Source-MM6-Opcode-Semantics-F2.md) — Complete active structural register with unresolved side effects
 - [MM6 Campaign F2 Closure Source](Source-MM6-Campaign-F2-Closure.md) — Static transport, NPC interception, milestone, and finale routing risks
 - [MM6 Media and UI Spec Source](Source-MM6-Media-UI-Spec.md) — Movie, house, sound, music, and interface routing
 - [MM6 Media F2 Closure Source](Source-MM6-Media-F2-Closure.md) — Portrait, icon, font, and voice name-index comparisons

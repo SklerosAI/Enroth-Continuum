@@ -14,6 +14,8 @@ The repeatable [campaign-graph probe](../scripts/mm6_probe_quest_graph.py) joins
 
 The later [campaign closure packet](../project/MM6_CAMPAIGN_F2_CLOSURE.md) and [route probe](../scripts/mm6_probe_campaign_routes.py) identify title-routing seams: six of 21 typed transport house IDs are outside the inherited route array, 74 NPC-topic references with global event functions fall into an inherited teacher-special range, and two active Hive pseudo-house instructions enter MM7 finale code by current source control flow. These are static risks, not observed crashes, complete quest dependencies or a verified MM6 ending.
 
+The [opcode packet](../project/MM6_OPCODE_SEMANTICS_F2.md) now covers all 43 active values and retained payload shapes across 68 EVT files and 14,477 records. Seven highlighted opcode values conflict with inherited parsing/execution or have no cases, and MM6-width variable instructions still enter inherited MM7 variable dispatch. This closes a structural register only; it does not settle side effects or campaign reachability. The [F2 gate review](../project/MM6_F2_GATE_REVIEW.md) remains open.
+
 Authority: [project/MM6_EVENT_CAMPAIGN_SPEC.md](../project/MM6_EVENT_CAMPAIGN_SPEC.md), reviewed 2026-11-05. Keep detailed topic IDs, script offsets, strings and graph edges in ignored local reports.
 
-See also: [MM6 Campaign F2 Closure Source](Source-MM6-Campaign-F2-Closure.md), [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), [Open Questions](Open-Questions.md), [MM6 F2 Workstreams](MM6-F2-Workstreams.md).
+See also: [MM6 Opcode Semantics F2 Source](Source-MM6-Opcode-Semantics-F2.md), [MM6 Campaign F2 Closure Source](Source-MM6-Campaign-F2-Closure.md), [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), [Open Questions](Open-Questions.md), [MM6 F2 Workstreams](MM6-F2-Workstreams.md).

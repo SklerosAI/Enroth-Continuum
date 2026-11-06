@@ -1,6 +1,6 @@
 # MM6 implementation checklist
 
-Status: **inventory in progress, 2026-11-05**. This is the public, asset-free
+Status: **F4 offline implementation in progress, 2026-11-06**. This is the public, asset-free
 index. The exhaustive per-file and per-row catalog is private at
 `local-game-data/mm6/research-2026-11-05/catalog.json` and is ignored by Git.
 An inventoried row is not an implemented game rule. Check an item only when a
@@ -16,6 +16,14 @@ Focused F2 specifications: [guide and campaign evidence](MM6_GUIDE_RECONCILIATIO
 [combat semantics](MM6_COMBAT_SEMANTICS_F2.md), and
 [guide F2 review](MM6_GUIDE_F2_REVIEW.md). These are audit inputs, not
 claims that their runtime behavior is implemented.
+
+The [F3 source-data gate](MM6_F3_GATE_REVIEW.md) is accepted. Current F4 code
+has a separate arm64 MM6 app target, original-order Games LOD transport lookup,
+all 173 monster descriptors, title-specific vanilla portrait loading, a
+bounded `.ec6` container envelope and complete active EVT **framing**. The
+[F4 event packet](MM6_F4_EVENT_FRAMING.md) explains why parse success is not
+event-effect or campaign success. Runtime rules, state serialization and F5
+graphical play remain open.
 
 ## Evidence and boundaries
 

@@ -25,6 +25,10 @@ The active MM6 adapter reached title/party screens in an earlier run but not a p
 - All 636 original vanilla portrait frames match retained RGBA pixels; twelve face indices and the portrait-frame table are known. Expression, voice reaction, video playback and audible output remain F4/F5 obligations.
 - The eleven-family `.ec6` logical register is an F3 design boundary. Exact per-field encoding, bounds, atomic write/recovery and malformed-file checks block F4 save acceptance. Native `.mm6` import was not requested.
 
+## F4 progress — 2026-11-06
+
+The [F4 seam page](MM6-F4-Offline-Seams.md) records a separate title-locked MM6 app build, original-order transport lookup, the ID 173 descriptor fix, vanilla portrait loading, a bounded `.ec6` envelope, and **68/68 active retained EVT resources parsed by C++**. The event parser still rejects unresolved MM6 effects explicitly; correct state changes, all 127 variable meanings, quest reachability and saves remain open. These checks do not replace the questions below or F5 live validation.
+
 ## Analysis
 
 | Owner lane | Open question (2026-11-05) | Source of gap and closure evidence |

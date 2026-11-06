@@ -196,3 +196,27 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   These are static findings, not runtime or visual/audio acceptance. No MM6
   runtime was launched during F3; the installed MM7 app, saves and MM8 reserved
   checkout remain untouched. MM6 still has no Play action or working campaign.
+
+## MM6 F4 offline implementation update — 2026-11-06
+
+- A dedicated native arm64 `MM6.app` **build target** now has its own bundle
+  identifier, defaults to MM6, rejects `--game mm7` and MM7 trace playback,
+  and resolves the MM6 Mac data/profile roots. The separate OpenEnroth target
+  still builds with its existing bundle identity. This staged build was not
+  launched or installed and is not an Atlas Play action.
+- The Games LOD reader preserves original directory order; MM6 transport
+  destination lookup no longer relies on its sorted `ls()` result. The loader
+  now retains all 173 monster descriptors, including the one referenced by a
+  baseline actor. The [portrait seam](../.llm-wiki/MM6-F4-Portrait-Seam.md)
+  uses the twelve verified face families and 53 frames per face, with
+  provisional initial faces/voices pending creation-rule work.
+- The [active EVT framing seam](MM6_F4_EVENT_FRAMING.md) parsed all 68 listed/
+  global retained resources through the C++ reader. It explicitly blocks
+  unresolved MM6-only effects. The [`.ec6` envelope](MM6_EC6_CONTAINER_F4.md)
+  has title/version, bounds and integrity checks but no runtime field codec,
+  file writing or load-menu integration.
+- The integrated MM6 app and unit targets built. Nine focused C++ tests passed
+  across EVT framing, `.ec6` envelope, descriptor 173 and LOD order; the
+  private actor fixture checked 67 map deltas/342 actors and one ID 173.
+  F4 rules, map state, events, services, media output and saves remain open.
+  No MM6 process or original GOG file was opened for these F4 checks.

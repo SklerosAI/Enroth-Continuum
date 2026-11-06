@@ -260,6 +260,30 @@ UNIT_TEST(MM6MonsterProjectile, NineLabelsResolveToRetainedMM6ObjectAndSpriteRow
         EXPECT_EQ(frames.pSpriteSFrames[frameId].spriteName, names[index]);
         EXPECT_FALSE(frames.pSpriteSFrames[frameId].textureName.empty());
     }
+    constexpr std::array impactLabels = {
+        MONSTER_PROJECTILE_MM6_FIRE, MONSTER_PROJECTILE_MM6_ELECTRICITY,
+        MONSTER_PROJECTILE_MM6_COLD, MONSTER_PROJECTILE_MM6_POISON,
+        MONSTER_PROJECTILE_MM6_ENERGY, MONSTER_PROJECTILE_MM6_MAGIC,
+        MONSTER_PROJECTILE_MM6_ROCK,
+    };
+    constexpr std::array impactNames = {
+        "mslx03", "mslx04", "mslx05", "mslx06", "mslx07", "mslx08", "mslx09",
+    };
+    for (size_t index = 0; index < impactLabels.size(); ++index) {
+        const SpriteId objectId = mm6::monsterProjectileImpactObjectId(impactLabels[index]);
+        const unsigned row = objects.ObjectIDByItemID(objectId);
+        ASSERT_GT(row, 0);
+        ASSERT_LT(row, objects.pObjects.size());
+        EXPECT_EQ(objects.pObjects[row].uObjectID, objectId);
+        EXPECT_EQ(objects.pObjects[row].uSpeed, 0);
+        const unsigned frameId = objects.pObjects[row].uSpriteID;
+        ASSERT_LT(frameId, frames.pSpriteSFrames.size());
+        EXPECT_EQ(frames.pSpriteSFrames[frameId].spriteName, impactNames[index]);
+        EXPECT_FALSE(frames.pSpriteSFrames[frameId].textureName.empty());
+    }
+    EXPECT_THROW(mm6::monsterProjectileImpactObjectId(MONSTER_PROJECTILE_MM6_ARROW), std::runtime_error);
+    EXPECT_THROW(mm6::monsterProjectileImpactObjectId(MONSTER_PROJECTILE_MM6_FLAMING_ARROW), std::runtime_error);
+    EXPECT_THROW(mm6::monsterProjectileImpactObjectId(MONSTER_PROJECTILE_MM6_DAGGER), std::runtime_error);
     EXPECT_THROW(mm6::monsterProjectileObjectId(MONSTER_PROJECTILE_MM6_DAGGER), std::runtime_error);
     EXPECT_THROW(mm6::monsterProjectileObjectId(MONSTER_PROJECTILE_NONE), std::runtime_error);
 }

@@ -11,6 +11,11 @@ PROJECTILES = (
     (530, "msl04", 6), (540, "msl05", 6), (550, "msl06", 6),
     (560, "msl07", 4), (570, "msl08", 6), (580, "msl09", 6),
 )
+IMPACTS = (
+    (521, "mslx03", 6), (531, "mslx04", 6), (541, "mslx05", 6),
+    (551, "mslx06", 5), (561, "mslx07", 6), (571, "mslx08", 5),
+    (581, "mslx09", 5),
+)
 
 
 def check(research: Path) -> None:
@@ -32,7 +37,7 @@ def check(research: Path) -> None:
         by_id[object_id] = frame_id
 
     checked = 0
-    for object_id, expected_name, expected_length in PROJECTILES:
+    for object_id, expected_name, expected_length in PROJECTILES + IMPACTS:
         assert object_id in by_id, f"missing projectile object {object_id}"
         frame_id = by_id[object_id]
         assert 0 < frame_id < frame_count
@@ -57,7 +62,7 @@ def check(research: Path) -> None:
         assert sequence_length == expected_length, (expected_name, sequence_length)
         checked += sequence_length
 
-    print(f"MM6 projectile frames: 9 object joins, {checked} sequence frames, all archive names present")
+    print(f"MM6 projectile frames: 9 missile and 7 impact joins, {checked} sequence frames, all archive names present")
 
 
 def main() -> None:

@@ -59,4 +59,21 @@ inline SpriteId monsterProjectileObjectId(MonsterProjectile type) {
     throw std::runtime_error("MM6 projectile has no verified object ID");
 }
 
+// Seven retained MM6 missile object rows have an adjacent, named explosion
+// object. Arrow and flaming arrow have no corresponding row in this family;
+// their impact behavior is still unproved.
+inline SpriteId monsterProjectileImpactObjectId(MonsterProjectile type) {
+    switch (type) {
+        case MONSTER_PROJECTILE_MM6_FIRE: return static_cast<SpriteId>(521);
+        case MONSTER_PROJECTILE_MM6_ELECTRICITY: return static_cast<SpriteId>(531);
+        case MONSTER_PROJECTILE_MM6_COLD: return static_cast<SpriteId>(541);
+        case MONSTER_PROJECTILE_MM6_POISON: return static_cast<SpriteId>(551);
+        case MONSTER_PROJECTILE_MM6_ENERGY: return static_cast<SpriteId>(561);
+        case MONSTER_PROJECTILE_MM6_MAGIC: return static_cast<SpriteId>(571);
+        case MONSTER_PROJECTILE_MM6_ROCK: return static_cast<SpriteId>(581);
+        default: break;
+    }
+    throw std::runtime_error("MM6 projectile has no verified impact object ID");
+}
+
 }  // namespace mm6

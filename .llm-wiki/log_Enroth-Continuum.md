@@ -442,3 +442,9 @@ Chronological record of wiki activity.
 - Derived an ignored, mode-0600 67-name delta manifest from retained F3 gate, capture, reconciliation, signoff and decoded-copy hashes; only schema and aggregate counts were committed.
 - Added offline exact-set checks and a C++ MAPS staging overload that rejects missing, extra or duplicate expected names before assigning a candidate. Whole-save restore must load and verify the private manifest before invoking it; SaveLoad and known-save assembly remain unwired.
 - The arm64 unit target built; three focused C++ tests passed, including the ignored retained fixtures. One Python unit test passed; the private 67-hash chain and positive/negative candidate checks passed. No original installation was reread or partial MM6 game launched.
+
+## [2026-11-06] update | MM6 integrated F4 verification
+- by: T-Burton-ND via codex
+- Built the arm64 MM6, MM7 and unit targets after spell dispatch, HIRE/RESC diagnostic and MAPS exact-set integration. The one-command offline runner passed 89/89 MM6/LOD tests from 26 suites and the retained F3-matched aggregate checks; the linked general suite passed 438/438. The map-name Python unit passed 1/1.
+- Hardened private spell-dispatch report creation to mode 0600, wired the private 67-name map manifest verifier into the runner, and rejected null MAPS staging destinations before mutation. The private map manifest and spell-dispatch handoff are owner readable only. `git ls-files local-game-data` lists only its public README.
+- Updated the status, build graph and agent handoff with the current test result and the remaining exact map-base/delta, save transaction and spell-effect gates. No original installation was reread, MM6 was not launched, and MM7's installed app/profile was untouched.

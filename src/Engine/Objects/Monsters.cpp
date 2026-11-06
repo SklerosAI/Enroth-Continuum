@@ -581,6 +581,18 @@ void MonsterStats::Initialize(const Blob &monsters, GameTitle gameTitle) {
         info.resLight    = parseResistance(tokens[35]);
         info.resDark     = parseResistance(tokens[36]);
         info.resPhysical = parseResistance(tokens[37]);
+        if (gameTitle == GameTitle::MM6) {
+            info.mm6Resistances = mm6::MonsterResistances{
+                .fire = info.resFire,
+                .electricity = info.resAir,
+                .cold = info.resWater,
+                .poison = info.resEarth,
+                .physical = info.resPhysical,
+                .magic = info.resMind,
+            };
+        } else {
+            info.mm6Resistances.reset();
+        }
         parseSpecialAbility(tokens[38], info);
     }
 }

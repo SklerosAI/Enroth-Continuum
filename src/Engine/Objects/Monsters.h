@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <array>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -22,6 +23,20 @@
 #include "MonsterEnums.h"
 
 class Blob;
+
+namespace mm6 {
+
+// Raw six-column MM6 monster resistance view. Energy has no table column.
+struct MonsterResistances {
+    uint8_t fire = 0;
+    uint8_t electricity = 0;
+    uint8_t cold = 0;
+    uint8_t poison = 0;
+    uint8_t physical = 0;
+    uint8_t magic = 0;
+};
+
+}  // namespace mm6
 
 struct MonsterInfo {
     std::string name; // As displayed in the game, e.g. "Archangel".
@@ -65,6 +80,9 @@ struct MonsterInfo {
     uint8_t resLight = 0;
     uint8_t resDark = 0;
     uint8_t resPhysical = 0;
+    // Populated only by the MM6 table loader; the inherited fields above
+    // remain for MM7 and are not an MM6 channel contract.
+    std::optional<mm6::MonsterResistances> mm6Resistances;
     MonsterSpecialAbility specialAbilityType = MONSTER_SPECIAL_ABILITY_NONE;
     uint8_t specialAbilityDamageDiceRolls = 0;
     uint8_t specialAbilityDamageDiceSides = 0;

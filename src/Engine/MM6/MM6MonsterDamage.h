@@ -6,6 +6,7 @@
 
 #include "Engine/GameTitle.h"
 #include "Engine/Objects/ItemEnums.h"
+#include "Engine/Objects/Monsters.h"
 #include "Utility/String/Ascii.h"
 
 namespace mm6 {
@@ -42,6 +43,24 @@ inline DamageType damageTypeForMonsterLabel(MonsterDamageLabel label) {
 inline DamageType damageTypeForMonsterAttack(std::string_view label, bool active) {
     // A zero-chance secondary attack has no effect and uses "0" in the table.
     return active ? damageTypeForMonsterLabel(parseMonsterDamageLabel(label)) : DAMAGE_PHYSICAL;
+}
+
+// The retained table has six resistance columns. Energy is an attack label,
+// but no seventh resistance column exists; its rule needs separate proof.
+inline uint8_t monsterResistanceForAttack(const MonsterInfo &monster, MonsterDamageLabel label) {
+    if (!monster.mm6Resistances)
+        throw std::runtime_error("MM6 monster resistance source is unavailable");
+    const MonsterResistances &values = *monster.mm6Resistances;
+    switch (label) {
+        case MonsterDamageLabel::Physical: return values.physical;
+        case MonsterDamageLabel::Fire: return values.fire;
+        case MonsterDamageLabel::Electricity: return values.electricity;
+        case MonsterDamageLabel::Cold: return values.cold;
+        case MonsterDamageLabel::Poison: return values.poison;
+        case MonsterDamageLabel::Magic: return values.magic;
+        case MonsterDamageLabel::Energy: break;
+    }
+    throw std::runtime_error("MM6 Energy resistance mapping is unverified");
 }
 
 // Physical and Fire have existing direct damage paths. Other labels need an

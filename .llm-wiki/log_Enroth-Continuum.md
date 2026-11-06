@@ -623,6 +623,12 @@ Chronological record of wiki activity.
 - The offline decoder validates the complete manifest; a native private-backed test compares all 119 fields with the accepted report and dispositions all 674 active house-entry instructions as 671 numeric room references, one blank room field and two terminal IDs. The MM6 house entry guard remains closed.
 - The integrated arm64 MM6/MM7/unit build passed. The offline runner passed 148/148 tests from 46 suites without skips; the general suite passed 438/438. No original installation or MM6 process was opened.
 
+## [2026-11-06] guard | House movie load failure state
+- by: T-Burton-ND via codex
+- Source review found `OpenHouseMovie` paused timer/audio before name lookup and ignored a false `Movie::LoadFromLOD` result. It could install a failed track; the loop restart path could call `Play` after failed load or leave audio paused. Playback state now changes only after a successful decoder open, and failed loop restarts call `Unload` to resume it.
+- The ignored F3 media record retains only names, sizes, hashes and 16-byte headers, not a full Smacker body. No representative MM6 frame decode or rendering test was possible without a later bounded private payload capture.
+- The arm64 MM6/MM7/unit build passed; the offline runner passed 148/148 from 46 suites without skips and the general suite passed 438/438. No original installation or partial MM6 process was opened.
+
 ## [2026-11-06] audit | MM6 quest-bit event variable
 - by: T-Burton-ND via codex
 - Frozen F3-matched retained inputs show 611 raw-ID-16 uses across Compare, Add, Subtract and Set, with 208 distinct bit operands in the 512-row quest table. Only 52 used bits have visible text; 156 used bits are hidden-state candidates. The tracked audit script verifies frozen hashes and writes all site locators to an owner-only ignored report.

@@ -24,6 +24,7 @@
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/MM6/MM6SpellItems.h"
+#include "Engine/MM6/MM6SpellLearning.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Tables/ObjectTable.h"
@@ -3672,7 +3673,16 @@ void Character::useItem(int targetCharacter, bool isPortraitClick) {
 
     if (pParty->pPickedItem.isBook()) {
         if (engine->gameTitle() == GameTitle::MM6) {
-            (void) mm6::spellForSpellbook(pParty->pPickedItem.itemId);
+            const SpellId spell = mm6::spellForSpellbook(pParty->pPickedItem.itemId);
+            const Skill school = skillForSpell(spell);
+            if (!mm6::hasKnownSpellLearningPrerequisites(std::to_underlying(playerAffected->classType), spell,
+                                                          playerAffected->getSkillValue(school).level() > 0,
+                                                          mm6::creationRules())) {
+                engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_THE_SKILL_TO_LEARN_S,
+                                             pParty->pPickedItem.GetDisplayName());
+                playerAffected->playReaction(SPEECH_CANT_LEARN_SPELL);
+                return;
+            }
             // The inherited required-mastery table is not MM6's learn gate.
             throw std::runtime_error("MM6 spellbook learning rules are not implemented");
         }

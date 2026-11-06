@@ -11,10 +11,12 @@
 #include "Engine/Party.h"
 #include "Engine/Spells/CastSpellInfo.h"
 #include "Engine/Tables/ItemTable.h"
+#include "Engine/Timer.h"
 #include "Engine/TurnEngine/TurnEngine.h"
 #include "Engine/mm7_data.h"
 
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/UIRest.h"
 
 namespace mm6 {
 namespace {
@@ -95,7 +97,7 @@ Party stageHeldItemParty(const Party &live, std::span<const std::uint8_t> bytes,
 
 PendingActionStateForSave capturePendingActionStateForSave(GameTitle title) {
     requireMM6(title, true);
-    if (!pParty || !pTurnEngine)
+    if (!pParty || !pTurnEngine || !gameTimer)
         throw std::runtime_error("MM6 pending-action preflight lacks live owners");
     PendingActionStateForSave state;
     state.spellQueueActive = CastSpellInfoHelpers::hasPendingSpellCastForSave();
@@ -104,6 +106,10 @@ PendingActionStateForSave capturePendingActionStateForSave(GameTitle title) {
     state.turnModeActive = pParty->bTurnBasedModeOn;
     state.turnQueueActive = pTurnEngine->turn_stage != TE_NONE || !pTurnEngine->pQueue.empty();
     state.turnActionsPending = pTurnEngine->pending_actions != 0;
+    state.turnPendingFlag = bool(pTurnEngine->flags & TE_HAVE_PENDING_ACTIONS);
+    state.timerTurnModeActive = gameTimer->isTurnBased();
+    state.restActionActive = currentRestType != REST_NONE || remainingRestTime != 0_ticks;
+    state.restWindowActive = current_screen_type == SCREEN_REST;
     state.attackListActive = !attackList.empty();
     state.playerSelectionActive = std::any_of(pParty->playerAlreadyPicked.begin(),
         pParty->playerAlreadyPicked.end(), [](bool picked) { return picked; });
@@ -117,6 +123,8 @@ HeldCursorRestorePlan stageHeldCursorRestorePlan(
         throw std::runtime_error("MM6 held cursor cannot stage another title");
     if (actions.spellQueueActive || actions.targetedSpellWindow || actions.enchanting ||
         actions.turnModeActive || actions.turnQueueActive || actions.turnActionsPending ||
+        actions.turnPendingFlag || actions.timerTurnModeActive ||
+        actions.restActionActive || actions.restWindowActive ||
         actions.attackListActive || actions.playerSelectionActive)
         throw std::runtime_error("MM6 held cursor cannot discard a pending action");
     (void) encodeHeldItemSection(held); // Full scalar/canonical-empty validation.

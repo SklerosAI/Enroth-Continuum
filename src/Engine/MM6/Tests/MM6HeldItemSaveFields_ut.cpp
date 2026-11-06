@@ -123,6 +123,18 @@ UNIT_TEST(MM6HeldItemSaveFields, DetachedCursorIntentRequiresIdleActionsAndLoade
     busy.turnActionsPending = true;
     EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
     busy = {};
+    busy.turnPendingFlag = true;
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
+    busy = {};
+    busy.timerTurnModeActive = true;
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
+    busy = {};
+    busy.restActionActive = true;
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
+    busy = {};
+    busy.restWindowActive = true;
+    EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
+    busy = {};
     busy.attackListActive = true;
     EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, busy, GameTitle::MM6), std::exception);
     busy = {};

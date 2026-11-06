@@ -52,6 +52,10 @@ struct PendingActionStateForSave {
     bool turnModeActive = false;
     bool turnQueueActive = false;
     bool turnActionsPending = false;
+    bool turnPendingFlag = false;
+    bool timerTurnModeActive = false;
+    bool restActionActive = false;
+    bool restWindowActive = false;
     bool attackListActive = false;
     bool playerSelectionActive = false;
 };

@@ -437,3 +437,15 @@ event exceptions, border/fog tables and underwater-map classification are
 title-gated. Cross-map transitions still hit the MM6 autosave guard before
 scheduling travel. The installed MM7 app/profile and reserved MM8 checkout
 remain untouched; exact game/executable evidence stays ignored locally.
+
+## MM6 planning update — headless integration, 2026-11-06
+
+After the 233-test checkpoint, detached chest outer-loop, direct-artifact,
+changed-grid wire and type/layout code was integrated. Those commits have not
+yet had a full combined build or offline test run; the live MM6 chest and
+SaveLoad guards remain closed. The [revised plan](plan.md) makes an MM6-specific
+headless game-test harness the next integration prerequisite. Current source
+uses a null platform, renderer and audio driver for headless startup, but the
+existing game-test runner still defaults to MM7 and has no MM6 selector.
+No MM6 headless process, foreground process, graphical view or audio playback
+was run for this planning update. The goal remains paused.

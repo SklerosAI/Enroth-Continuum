@@ -8,6 +8,8 @@ tags: [mm6, f4, implementation, handoff]
 
 F4 implementation is underway after the [F3 original-data gate](../project/MM6_F3_GATE_REVIEW.md). The source tree has **partial offline seams**, not a playable campaign. No partial MM6 game was launched or Atlas Play action enabled for these changes.
 
+The [headless integration policy](MM6-Headless-Integration-Policy.md) now places an MM6 game-test harness before further live joins. The current runner still defaults to MM7, so this is a planned gate. Its null platform can exercise synthetic engine actions without a native window or physical input once the MM6 path is added and checked; graphical F5 remains separate.
+
 | Seam | Code/evidence now present | Next blocking work |
 | --- | --- | --- |
 | Separate Mac runtime | The `MM6.app` arm64 target has its own bundle identifier and `mm6`-locked CLI. Its default Mac data lookup targets the private MM6 app folder; MM7's target and bundle identity still build. | Finish title-specific rules and `.ec6` saves, then F5 play before Atlas stages this helper. The build target itself is not a working installation. |

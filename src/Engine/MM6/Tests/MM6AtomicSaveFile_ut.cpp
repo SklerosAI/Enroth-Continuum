@@ -4,6 +4,7 @@
 #include <system_error>
 #include <filesystem>
 #include <fstream>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -197,5 +198,47 @@ UNIT_TEST(MM6AtomicSaveFile, ListsOnlyKnownMM6SlotsWithoutRecoveringThem) {
     TestProfile redirected;
     std::filesystem::create_directory_symlink(profile.root() / "saves", redirected.root() / "saves");
     EXPECT_THROW((void) mm6::listKnownSaveSlots(redirected.root()), std::exception);
+}
+
+UNIT_TEST(MM6AtomicSaveFile, SemanticLoadPreflightSelectsBackupWithoutDiskMutation) {
+    TestProfile profile;
+    mm6::SaveCandidateValidator accept = [](std::span<const std::uint8_t>) {};
+    EXPECT_FALSE(mm6::preflightRecoverableSaveFile(profile.root(), "save001.ec6", accept).has_value());
+    EXPECT_THROW((void) mm6::preflightRecoverableSaveFile(profile.root(), "save001.ec6", {}), std::exception);
+
+    std::vector<std::uint8_t> old = sample(10);
+    std::vector<std::uint8_t> next = sample(11);
+    mm6::writeAtomicSaveFile(profile.root(), "save001.ec6", old);
+    mm6::writeAtomicSaveFile(profile.root(), "save001.ec6", next);
+    std::optional<mm6::SaveFileCandidate> candidate =
+        mm6::preflightRecoverableSaveFile(profile.root(), "save001.ec6", accept);
+    ASSERT_TRUE(candidate);
+    EXPECT_EQ(candidate->bytes, next);
+    EXPECT_FALSE(candidate->needsRecovery);
+    mm6::SaveCandidateValidator rejectNext = [](std::span<const std::uint8_t> bytes) {
+        if (mm6::decodeKnownSave(bytes).metadata.header.displayName == "Sample 11")
+            throw std::runtime_error("synthetic semantic rejection");
+    };
+    candidate = mm6::preflightRecoverableSaveFile(profile.root(), "save001.ec6", rejectNext);
+    ASSERT_TRUE(candidate);
+    EXPECT_EQ(candidate->bytes, old);
+    EXPECT_TRUE(candidate->needsRecovery);
+    EXPECT_EQ(read(profile.save()), next);
+    EXPECT_EQ(read(profile.backup()), old);
+
+    mm6::SaveCandidateValidator rejectAll = [](std::span<const std::uint8_t>) {
+        throw std::runtime_error("synthetic semantic rejection");
+    };
+    EXPECT_THROW((void) mm6::preflightRecoverableSaveFile(profile.root(), "save001.ec6", rejectAll),
+                 std::exception);
+    EXPECT_EQ(read(profile.save()), next);
+    EXPECT_EQ(read(profile.backup()), old);
+
+    std::filesystem::remove(profile.save());
+    candidate = mm6::preflightRecoverableSaveFile(profile.root(), "save001.ec6", accept);
+    ASSERT_TRUE(candidate);
+    EXPECT_EQ(candidate->bytes, old);
+    EXPECT_TRUE(candidate->needsRecovery);
+    EXPECT_FALSE(std::filesystem::exists(profile.save()));
 }
 #endif

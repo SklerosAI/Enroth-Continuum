@@ -248,6 +248,46 @@ std::optional<std::vector<std::uint8_t>> loadRecoverableSaveFile(
 #endif
 }
 
+std::optional<SaveFileCandidate> preflightRecoverableSaveFile(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    const SaveCandidateValidator &validate) {
+#ifdef _WIN32
+    throw std::runtime_error("native MM6 save preflight is unsupported on Windows");
+#else
+    if (!validate)
+        throw std::invalid_argument("MM6 save preflight needs a semantic validator");
+    const std::filesystem::path directory = savesDirectory(profileRoot, slotName);
+    const std::filesystem::file_status directoryStatus = std::filesystem::symlink_status(directory);
+    if (directoryStatus.type() == std::filesystem::file_type::not_found)
+        return std::nullopt;
+    if (!std::filesystem::is_directory(directoryStatus))
+        throw std::runtime_error("MM6 saves path is not a native directory");
+    const std::filesystem::path primary = directory / std::string(slotName);
+    const std::filesystem::path backup = directory / (std::string(slotName) + ".bak");
+    bool foundCandidate = false;
+    for (const std::filesystem::path &path : {primary, backup}) {
+        if (!regularFileExists(path))
+            continue;
+        foundCandidate = true;
+        std::vector<std::uint8_t> bytes;
+        try {
+            bytes = readValidatedFile(path);
+        } catch (const InvalidSaveFile &) {
+            continue;
+        }
+        try {
+            validate(bytes);
+        } catch (const std::runtime_error &) {
+            continue;
+        }
+        return SaveFileCandidate{std::move(bytes), path == backup};
+    }
+    if (foundCandidate)
+        throw std::runtime_error("MM6 save slot has no semantically valid candidate");
+    return std::nullopt;
+#endif
+}
+
 std::vector<SaveSlotInfo> listKnownSaveSlots(const std::filesystem::path &profileRoot) {
 #ifdef _WIN32
     throw std::runtime_error("native MM6 save slots are unsupported on Windows");

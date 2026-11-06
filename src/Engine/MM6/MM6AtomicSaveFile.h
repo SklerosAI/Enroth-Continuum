@@ -20,9 +20,10 @@ namespace mm6 {
 void writeAtomicSaveFile(const std::filesystem::path &profileRoot, std::string_view slotName,
                          std::span<const std::uint8_t> container);
 
-// Returns no value when neither primary nor backup exists. A damaged primary
-// is restored from a valid backup before bytes are returned. Throws if neither
-// candidate is valid, leaving both files untouched.
+// Standalone known-field recovery only; do not call from live SaveLoad until
+// the full map and runtime transaction is ready. Returns no value when neither
+// primary nor backup exists. A damaged primary is restored from a valid backup
+// before bytes are returned. Throws if neither candidate is valid.
 std::optional<std::vector<std::uint8_t>> loadRecoverableSaveFile(
     const std::filesystem::path &profileRoot, std::string_view slotName);
 
@@ -36,6 +37,20 @@ struct SaveSlotInfo {
 // primaries or recoverable backups are listed; malformed slots are omitted.
 // A recovery-needed entry must be loaded through loadRecoverableSaveFile.
 std::vector<SaveSlotInfo> listKnownSaveSlots(const std::filesystem::path &profileRoot);
+
+struct SaveFileCandidate {
+    std::vector<std::uint8_t> bytes;
+    bool needsRecovery = false;
+};
+
+using SaveCandidateValidator = std::function<void(std::span<const std::uint8_t>)>;
+
+// Select a primary or backup without restoring it. Both candidates must pass
+// known-section decoding and the caller's read-only semantic validation. A future
+// live load must finish state staging before any recovery or global mutation.
+std::optional<SaveFileCandidate> preflightRecoverableSaveFile(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    const SaveCandidateValidator &validate);
 
 namespace detail {
 

@@ -232,7 +232,7 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   Quick Start and promotion remain provisional. The [variable guard](MM6_F4_VARIABLE_GUARD.md)
   prevents MM6-specific event IDs from executing as colliding MM7 meanings.
 - The integrated MM6 app, MM7 app and unit targets built with the resistance
-  assembly revision. The offline suite passed 64 tests across EVT
+  assembly revision and the spell-item mapping guard. The offline suite passed 66 tests across EVT
   framing and selected guarded effects, wire codecs and indoor/outdoor projection,
   variable guard, `.ec6` fields and partial assembly, private transport/spell
   rules, descriptor 173 and LOD order; the
@@ -247,7 +247,8 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   path, with visible and original-behavior checks still pending.
 - A private F3-backed spell manifest covers all 99 IDs at three mastery ranks.
   Regular player-cast cost/recovery uses it; effect paths and scroll/book use
-  remain open. The raw `RSTS` resistance section captured all 88 current
+  remain guarded. A retained-data verifier checked all 99 scroll and 99 book
+  IDs against MM6 spell IDs. The raw `RSTS` resistance section captured all 88 current
   character values and is now required by the revised partial assembly. Buffs, held/shop items, hirelings,
   recovery timers, generated artifacts and complete save/relaunch remain open.
 - The private F3-derived transport manifest is read by a title-specific

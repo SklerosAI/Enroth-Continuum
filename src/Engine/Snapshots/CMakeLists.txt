@@ -5,6 +5,7 @@ set(ENGINE_SERIALIZATION_SOURCES
         CompositeSnapshots.cpp
         EntitySnapshots.cpp
         EnumSnapshots.cpp
+        MM6IndoorSnapshot.cpp
         MM6OutdoorSnapshot.cpp
         TableSerialization.cpp)
 
@@ -13,6 +14,7 @@ set(ENGINE_SERIALIZATION_HEADERS
         CompositeSnapshots.h
         EntitySnapshots.h
         EnumSnapshots.h
+        MM6IndoorSnapshot.h
         MM6OutdoorSnapshot.h
         TableSerialization.h)
 
@@ -21,7 +23,7 @@ target_link_libraries(engine_serialization PUBLIC engine engine_mm6_save_contain
 target_check_style(engine_serialization)
 
 if(OE_BUILD_TESTS)
-    add_library(test_engine_serialization OBJECT Tests/MM6MonsterList_ut.cpp)
+    add_library(test_engine_serialization OBJECT Tests/MM6IndoorSnapshot_ut.cpp Tests/MM6MonsterList_ut.cpp)
     target_link_libraries(test_engine_serialization PUBLIC testing_unit engine_serialization)
     target_check_style(test_engine_serialization)
 

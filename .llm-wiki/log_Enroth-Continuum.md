@@ -980,3 +980,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a title-gated caller adapter from the MM6-initialized item table to the detached ANY base picker and field finalizer. It stages the selected template, 399 tier weights, enchantment chances/strengths and type-specific standard/special rows. The outer source selector keeps empty, gold, ANY and separate direct tier-seven artifact routes distinct; six gold bands stage one RNG draw. The direct artifact selection and all live chest effects remain gated.
 - A 0600 ignored numeric profile was generated only after four retained F3 table hashes matched the freeze manifest. Five focused native tests passed, including 192 seeded stages over six retained tiers. No full CMake rebuild or MM6 process was launched; MM7/MM8 and the global MM6 chest guard were unchanged.
+
+## [2026-11-06] trace | MM6 outdoor border travel
+- by: T-Burton-ND via codex
+- A hash-checked read-only original PE trace found the geometric neighbor helper for the 15-map outdoor grid. It changes column and/or row according to crossed X/Y edges, and the caller checks party-state bits before showing travel. The confirm path rechecks destination, applies a five-day baseline with hireling reductions and a one-day floor, and wraps out-of-bounds arrival coordinates by a map width. Exact addresses and retained names remain ignored.
+- The [packet](../project/MM6_F4_OUTDOOR_BORDER_TRACE.md) and [wiki page](MM6-F4-Outdoor-Border-Trace.md) mark untyped eligibility bits, corner confirmation and native arrival validation as blockers. No fog or underwater rule was proved in the narrow route trace. Current MM6 border guard and cross-map autosave/save gate remain in place.
+- An ignored focused checker passed executable-hash, route-shape, map-grid and title-guard assertions; public Markdown links and diff whitespace passed. No C++ build, MM6 launch, original installation reread, or MM7/MM8 edit occurred.

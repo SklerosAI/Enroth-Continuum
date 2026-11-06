@@ -44,6 +44,7 @@ mm6::KnownSaveFields seedFields() {
     fields.metadata.header.playingTicks = 42;
     fields.metadata.ui.activeCharacter = 1;
     fields.recovery.playingTicks = 42;
+    fields.chest = {17, {}, "d0.dlv", std::vector<std::uint8_t>(8 + 875 + 3 * 4 + 200 * 80 + 200 + 56, 0)};
     return fields;
 }
 
@@ -178,6 +179,7 @@ UNIT_TEST(MM6WorldSaveRuntime, ValidatesAndStagesWorldAndVisualsAsOneDetachedCan
     mm6::KnownSaveFields source = mm6::captureKnownWorldFields(
         seedFields(), savedNpcs, prior, "d0.dlv",
         currentDelta, names, GameTitle::MM6);
+    source.chest.rawActiveDelta = currentDelta;
     source.metadata.timer.elapsedTicks = 123456;
     source.metadata.overlays[4].tableIndex = 3;
     source.metadata.overlays[4].animationLength = 10;
@@ -207,6 +209,9 @@ UNIT_TEST(MM6WorldSaveRuntime, ValidatesAndStagesWorldAndVisualsAsOneDetachedCan
     EXPECT_EQ(staged.visuals.timer.time().ticks(), 123456);
     EXPECT_TRUE(staged.visuals.timer.isPaused());
     EXPECT_EQ(staged.visuals.overlays.pOverlays[4].screenSpaceX, -17);
+    EXPECT_TRUE(staged.chestTitle.ready);
+    EXPECT_EQ(staged.chestTitle.lcgState, 17);
+    EXPECT_EQ(staged.rawActiveDelta, currentDelta);
     ASSERT_TRUE(std::holds_alternative<mm6::StagedIndoorMap>(staged.activeMap));
     const mm6::StagedIndoorMap &active = std::get<mm6::StagedIndoorMap>(staged.activeMap);
     EXPECT_EQ(active.mapName, "d0.blv");
@@ -261,6 +266,7 @@ UNIT_TEST(MM6WorldSaveRuntime, StagesRepresentedPartyFamiliesWithWorldAndRejects
     savedNpcs.pNPCData[70].name = "Saved NPC";
     mm6::KnownSaveFields source = mm6::captureKnownWorldFields(
         seedFields(), savedNpcs, prior, "d0.dlv", indoorDeltaWithActors(1), names, GameTitle::MM6);
+    source.chest.rawActiveDelta = indoorDeltaWithActors(1);
     source.core.party.gold = 731;
     source.core.characters[0].name = "Saved Hero";
     source.core.characters[0].level = 5;
@@ -326,6 +332,8 @@ UNIT_TEST(MM6WorldSaveRuntime, StagesRepresentedPartyFamiliesWithWorldAndRejects
     EXPECT_EQ(staged.party.pCharacters[0].timeToRecovery.ticks(), 250);
     EXPECT_EQ(staged.party.PartyTimes.CounterEventValues[0].ticks(), 901);
     EXPECT_EQ(staged.worldAndVisuals.world.npcs.pNPCData[70].name, "Saved NPC");
+    EXPECT_TRUE(staged.worldAndVisuals.chestTitle.ready);
+    EXPECT_EQ(staged.worldAndVisuals.rawActiveDelta, source.chest.rawActiveDelta);
     EXPECT_TRUE(std::holds_alternative<mm6::StagedIndoorMap>(staged.worldAndVisuals.activeMap));
     EXPECT_EQ(liveParty.uNumGold, 19);
     EXPECT_EQ(liveParty.pCharacters[0].name, "Prior Hero");
@@ -401,6 +409,7 @@ UNIT_TEST(MM6WorldSaveRuntime, RejectsSavedOverlayActorPidsOutsideActiveIndoorAn
 
     mm6::KnownSaveFields indoor = mm6::captureKnownWorldFields(
         seedFields(), npcs, prior, "d0.dlv", indoorDeltaWithActors(1), names, GameTitle::MM6);
+    indoor.chest.rawActiveDelta = indoorDeltaWithActors(1);
     indoor.metadata.overlays[0].animationLength = 10;
     indoor.metadata.overlays[0].packedPid = Pid::actor(0).packed();
     EXPECT_NO_THROW((void) check(indoor));
@@ -413,6 +422,8 @@ UNIT_TEST(MM6WorldSaveRuntime, RejectsSavedOverlayActorPidsOutsideActiveIndoorAn
 
     mm6::KnownSaveFields outdoorSeed = seedFields();
     outdoorSeed.metadata.header.mapFileName = "o0.odm";
+    outdoorSeed.chest.activeDeltaName = "o0.ddm";
+    outdoorSeed.chest.rawActiveDelta = outdoorDeltaWithActors(2);
     mm6::KnownSaveFields outdoor = mm6::captureKnownWorldFields(
         outdoorSeed, npcs, prior, "o0.ddm", outdoorDeltaWithActors(2), names, GameTitle::MM6);
     outdoor.metadata.overlays[0].animationLength = 10;
@@ -482,7 +493,7 @@ UNIT_TEST(MM6WorldSaveRuntime, RejectsIncompleteAndLateInvalidStateWithoutInputM
     mm6::KnownSaveFields captured = mm6::captureKnownWorldFields(
         seedFields(), liveNpcs, prior, "d0.dlv", current, names, GameTitle::MM6);
     mm6::SaveContainer lateInvalid = mm6::decodeSaveContainer(mm6::encodeKnownSave(captured));
-    lateInvalid.sections.back().payload[0] = 3; // Unsupported RCVR version with valid outer CRCs.
+    lateInvalid.sections.back().payload[0] = 3; // Unsupported CHST version with valid outer CRCs.
     std::vector<std::uint8_t> bytes = mm6::encodeSaveContainer(lateInvalid);
     EXPECT_THROW((void) mm6::stageKnownWorldFields(liveNpcs, bytes, names, GameTitle::MM6),
                  std::exception);
@@ -494,6 +505,16 @@ UNIT_TEST(MM6WorldSaveRuntime, RejectsIncompleteAndLateInvalidStateWithoutInputM
 
 UNIT_TEST(MM6WorldSaveRuntime, CapturesBoundedActiveIndoorStateWithoutChangingWorld) {
     ScopedActiveMap globalState;
+    const mm6::ChestTitleState priorChest = mm6::chestTitleState();
+    struct RestoreChest {
+        mm6::ChestTitleState prior;
+        ~RestoreChest() { mm6::chestTitleState() = prior; }
+    } restoreChest{priorChest};
+    mm6::ChestTitleState titleChest;
+    titleChest.ready = true;
+    titleChest.lcgState = 0x12345678;
+    titleChest.generatedArtifactFlags[7] = 1;
+    mm6::chestTitleState() = titleChest;
     IndoorLocation location;
     location.filename = "d0.blv";
     location.mm6DeltaBytes = minimalIndoorDelta();
@@ -519,9 +540,16 @@ UNIT_TEST(MM6WorldSaveRuntime, CapturesBoundedActiveIndoorStateWithoutChangingWo
     EXPECT_EQ(captured.maps.deltas[0].bytes[4], 5);
     mm6::KnownSaveFields decoded = mm6::decodeKnownSave(mm6::encodeKnownSave(captured));
     EXPECT_EQ(decoded.maps.deltas[0].bytes, captured.maps.deltas[0].bytes);
+    EXPECT_EQ(decoded.chest.rawActiveDelta, sidecarBefore);
+    EXPECT_EQ(decoded.chest.lcgState, 0x12345678);
     EXPECT_EQ(location.mm6DeltaBytes, sidecarBefore);
     EXPECT_EQ(prior.at("d0.dlv").str(), "prior:d0.dlv");
     EXPECT_EQ(npcs.pNPCData[0].name, "Runtime NPC");
+
+    mm6::resetChestTitleState(&mm6::chestTitleState());
+    EXPECT_THROW((void) mm6::captureKnownWorldFromActiveMap(
+        seedFields(), npcs, prior, names, GameTitle::MM6), std::exception);
+    mm6::chestTitleState() = titleChest;
 
     location.filename = "other.blv";
     EXPECT_THROW((void) mm6::captureKnownWorldFromActiveMap(

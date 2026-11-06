@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 #include "MM6KnownSaveFields.h"
 #include "MM6MapSaveValidation.h"
@@ -35,6 +36,10 @@ struct StagedKnownWorldAndVisuals {
     // Decoded active base and changed state, owned independently of input bytes.
     // Live map reconstruction and global commit remain separate gates.
     StagedActiveMap activeMap;
+    // Validated MM6 title-local chest state and raw active delta on copies;
+    // no vChests or process owner is assigned.
+    ChestTitleState chestTitle;
+    std::vector<std::uint8_t> rawActiveDelta;
 };
 
 struct StagedKnownSession {

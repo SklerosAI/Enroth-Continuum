@@ -7,7 +7,7 @@ tags: [mm6, f4, save]
 
 # MM6 F4 Known Save Assembly
 
-The [assembly packet](../project/MM6_EC6_KNOWN_ASSEMBLY_F4.md) defines a revised partial v1 candidate for the sixteen `.ec6` sections currently landed. It is a pure encode/decode and copy-assignment boundary, not the final whole-save manifest or a live MM6 save path.
+The [assembly packet](../project/MM6_EC6_KNOWN_ASSEMBLY_F4.md) originally defined a partial sixteen-section candidate. The provisional schema now requires a seventeenth `CHST` section for MM6 chest title state and the active raw delta sidecar; old sixteen-section candidates reject before mutation. See the [CHST transaction packet](MM6-F4-Chest-EC6-Transaction.md). It is a pure encode/decode and copy-assignment boundary, not the final whole-save manifest or a live MM6 save path.
 
 Every `PART`, `CHAR`, `QEST`, `EFFT`, `ITEM`, `HEAD`, `TIME`, `UIST`, `VISU`, `MAPS`, `RESC`, `RSTS`, `HELD`, `BUFF`, `HIRE` and `RCVR` section must be present once and required. Optional extras are rejected pending an explicit preservation policy. The decoder validates all field families and cross-checks the party clock across `PART`, `HEAD` and `RCVR`, plus active-character selection, before assigning any output. The independent `TIME` event clock is not required to equal party playing time.
 

@@ -49,7 +49,8 @@ struct ValidatedMapPair {
 };
 
 ValidatedMapPair validateMapPair(const SavedMapDelta &delta, const MapBaseReader &readBase,
-                                 const GroundItemVerifier &verifyGroundItem, bool retainActive) {
+                                 const GroundItemVerifier &verifyGroundItem, bool retainActive,
+                                 std::span<const std::uint8_t> rawActiveDelta) {
     const bool indoor = delta.name.ends_with(".dlv");
     const std::string baseName = delta.name.substr(0, delta.name.size() - 4) +
                                  (indoor ? ".blv" : ".odm");
@@ -66,6 +67,15 @@ ValidatedMapPair validateMapPair(const SavedMapDelta &delta, const MapBaseReader
         MM6IndoorSnapshot base = deserializeMM6IndoorBase(decodedBase);
         MM6IndoorRuntimeDelta decoded = decodeMM6IndoorRuntimeDelta(decodedDelta, base);
         validateMapItems(decoded.spriteObjects, decoded.chests, verifyGroundItem);
+        if (retainActive) {
+            MM6IndoorRuntimeDelta raw = decodeMM6IndoorRuntimeDelta(
+                Blob::view(rawActiveDelta.data(), rawActiveDelta.size()), base);
+            validateMapItems(raw.spriteObjects, raw.chests, verifyGroundItem);
+            if (raw.actors.size() != decoded.actors.size() ||
+                raw.spriteObjects.size() != decoded.spriteObjects.size() ||
+                raw.chests.size() != decoded.chests.size() || raw.doors.size() != decoded.doors.size())
+                throw std::runtime_error("MM6 CHST sidecar and active indoor delta disagree on record shape");
+        }
         ValidatedMapPair result;
         result.counts = {decoded.actors.size(), decoded.spriteObjects.size(), decoded.chests.size()};
         if (retainActive)
@@ -77,6 +87,15 @@ ValidatedMapPair validateMapPair(const SavedMapDelta &delta, const MapBaseReader
             {static_cast<const std::uint8_t *>(decodedBase.data()), decodedBase.size()});
         MM6OutdoorDeltaSnapshot decoded = decodeMM6OutdoorDelta(decodedDelta);
         validateMapItems(decoded.spriteObjects, decoded.chests, verifyGroundItem);
+        if (retainActive) {
+            MM6OutdoorDeltaSnapshot raw = decodeMM6OutdoorDelta(
+                Blob::view(rawActiveDelta.data(), rawActiveDelta.size()));
+            validateMapItems(raw.spriteObjects, raw.chests, verifyGroundItem);
+            if (raw.actors.size() != decoded.actors.size() ||
+                raw.spriteObjects.size() != decoded.spriteObjects.size() ||
+                raw.chests.size() != decoded.chests.size())
+                throw std::runtime_error("MM6 CHST sidecar and active outdoor delta disagree on record shape");
+        }
         ValidatedMapPair result;
         result.counts = {decoded.actors.size(), decoded.spriteObjects.size(), decoded.chests.size()};
         if (retainActive)
@@ -101,7 +120,8 @@ ValidatedKnownMapSave decodeKnownSaveWithActiveMapCounts(
     std::optional<StagedActiveMap> activeMap;
     for (const SavedMapDelta &delta : candidate.maps.deltas) {
         const bool isActive = delta.name == activeDelta;
-        ValidatedMapPair validated = validateMapPair(delta, readBase, verifyGroundItem, isActive);
+        ValidatedMapPair validated = validateMapPair(delta, readBase, verifyGroundItem, isActive,
+                                                     candidate.chest.rawActiveDelta);
         if (isActive) {
             active = validated.counts;
             activeMap = std::move(validated.activeMap);

@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <set>
 #include <stdexcept>
+#include <vector>
 #include <utility>
 
 namespace mm6 {
@@ -19,12 +20,12 @@ constexpr size_t MAX_FILE_SIZE = 64 * 1024 * 1024;
 constexpr size_t MAX_SECTION_SIZE = 32 * 1024 * 1024;
 constexpr size_t MAX_SECTIONS = 32;
 
-constexpr std::array<std::array<char, 4>, 17> KNOWN_TAGS = {{
+constexpr std::array<std::array<char, 4>, 18> KNOWN_TAGS = {{
     {'H', 'E', 'A', 'D'}, {'P', 'A', 'R', 'T'}, {'T', 'I', 'M', 'E'}, {'C', 'H', 'A', 'R'},
     {'E', 'F', 'F', 'T'}, {'I', 'T', 'E', 'M'}, {'R', 'E', 'S', 'C'}, {'Q', 'E', 'S', 'T'},
     {'M', 'A', 'P', 'S'}, {'V', 'I', 'S', 'U'}, {'U', 'I', 'S', 'T'}, {'M', 'E', 'T', 'A'},
     {'R', 'S', 'T', 'S'}, {'H', 'E', 'L', 'D'}, {'B', 'U', 'F', 'F'}, {'H', 'I', 'R', 'E'},
-    {'R', 'C', 'V', 'R'},
+    {'R', 'C', 'V', 'R'}, {'C', 'H', 'S', 'T'},
 }};
 
 constexpr std::array<std::uint32_t, 256> makeCrcTable() {

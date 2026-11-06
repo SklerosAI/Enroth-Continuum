@@ -23,8 +23,9 @@ constexpr std::string_view NEW_GAME_AUTOSAVE_SLOT = "autosave.ec6";
 constexpr std::string_view NEW_GAME_FIRST_MAP = "oute3.odm";
 
 // Build only the currently represented known-section candidate. The seed must
-// already contain detached Party, NPC and visual capture; this replaces MAPS
-// with all 67 default archive deltas and validates each against its MM6 base.
+// already contain detached Party, NPC and visual capture plus an explicitly
+// sourced MM6 chest LCG/ledger seed. This replaces MAPS with all 67 default
+// archive deltas, derives the decoded CHST sidecar and validates every pair.
 // It is not a complete save or permission to open live SaveLoad.
 std::vector<std::uint8_t> encodeOfflineNewGameAutosave(
     const KnownSaveFields &seed, std::span<const std::string> expectedNames,

@@ -7,7 +7,7 @@ tags: [mm6, f4, save, staging]
 
 # MM6 F4 Partial Stage Coordinator
 
-The [coordinator packet](../project/MM6_F4_PARTIAL_STAGE_COORDINATOR.md) records one detached transaction boundary over the sixteen currently known `.ec6` sections, 67 MM6 map pairs, NPC/map buffers and timer/overlays.
+The [coordinator packet](../project/MM6_F4_PARTIAL_STAGE_COORDINATOR.md) records one detached transaction boundary over the seventeen currently known `.ec6` sections, including the required CHST title state and raw sidecar, 67 MM6 map pairs, NPC/map buffers and timer/overlays.
 
 `stageKnownWorldAndVisuals()` decodes the complete known-section candidate and cross-field joins, validates each saved delta against its trusted MM6 base and item templates, then retains the active map as an owned typed indoor base/delta or outdoor base/delta. It copy-stages NPC groups/records and all map buffers. Its final step stages a paused simulation timer and 50 overlays against the loaded table size. A late overlay rejection after the world copies, a malformed final delta, or a foreign title yields no result and leaves caller state unchanged. The candidate is returned only after every step succeeds.
 

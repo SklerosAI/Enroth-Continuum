@@ -1,10 +1,12 @@
 #include "MM6NewGameSaveRuntime.h"
 
+#include <algorithm>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 #include "MM6AtomicSaveFile.h"
+#include "MM6Archive.h"
 
 namespace mm6 {
 
@@ -28,6 +30,18 @@ std::vector<std::uint8_t> encodeOfflineNewGameAutosave(
         const auto *start = static_cast<const std::uint8_t *>(entry.data());
         candidate.maps.deltas.push_back({name, std::vector<std::uint8_t>(start, start + entry.size())});
     }
+
+    // The first-map sidecar is the decoded default DDM. The caller supplies
+    // the title-local RNG/ledger seed; no inherited MM7 state is consulted.
+    if (candidate.chest.activeDeltaName != "oute3.ddm")
+        throw std::runtime_error("MM6 new-game autosave lacks its CHST first-map identity");
+    const auto active = std::find_if(candidate.maps.deltas.begin(), candidate.maps.deltas.end(),
+        [](const SavedMapDelta &delta) { return delta.name == "oute3.ddm"; });
+    if (active == candidate.maps.deltas.end())
+        throw std::runtime_error("MM6 new-game autosave lacks its first-map delta");
+    Blob decoded = decodeMM6ArchiveEntry(Blob::view(active->bytes.data(), active->bytes.size()));
+    const auto *start = static_cast<const std::uint8_t *>(decoded.data());
+    candidate.chest.rawActiveDelta.assign(start, start + decoded.size());
 
     std::vector<std::uint8_t> encoded = encodeKnownSave(candidate);
     (void) decodeKnownSaveWithActiveMapCounts(encoded, expectedNames, readBase, verifyItem);

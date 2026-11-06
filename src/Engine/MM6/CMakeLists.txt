@@ -9,6 +9,7 @@ add_library(engine_mm6_save_container STATIC MM6SaveContainer.cpp MM6SaveContain
     MM6BuffSaveFields.cpp MM6BuffSaveFields.h
     MM6HirelingSaveFields.cpp MM6HirelingSaveFields.h
     MM6RecoverySaveFields.cpp MM6RecoverySaveFields.h
+    MM6ChestSaveFields.cpp MM6ChestSaveFields.h
     MM6KnownSaveFields.cpp MM6KnownSaveFields.h)
 target_check_style(engine_mm6_save_container)
 
@@ -80,7 +81,8 @@ if(OE_BUILD_TESTS)
         Tests/MM6NpcSaveFields_ut.cpp Tests/MM6ResistanceSaveFields_ut.cpp
         Tests/MM6HeldItemSaveFields_ut.cpp Tests/MM6BuffSaveFields_ut.cpp
         Tests/MM6HirelingSaveFields_ut.cpp Tests/MM6RecoverySaveFields_ut.cpp
-        Tests/MM6KnownSaveFields_ut.cpp Tests/MM6PotionCombinations_ut.cpp)
+        Tests/MM6ChestSaveFields_ut.cpp Tests/MM6KnownSaveFields_ut.cpp
+        Tests/MM6PotionCombinations_ut.cpp)
     target_link_libraries(test_engine_mm6_save_container PUBLIC testing_unit engine_mm6_save_container engine_tables)
     target_check_style(test_engine_mm6_save_container)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_save_container)

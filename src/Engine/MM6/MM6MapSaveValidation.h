@@ -55,7 +55,9 @@ struct ValidatedKnownMapSave {
 };
 
 // Return the projected active delta's record counts from the same validated
-// 67-map pass. These are saved-record bounds, not post-load runtime identity.
+// 67-map pass. The active CHST raw sidecar is decoded against that same base
+// and checked for record shape and item IDs. These are saved-record bounds,
+// not post-load runtime identity.
 ValidatedKnownMapSave decodeKnownSaveWithActiveMapCounts(
     std::span<const std::uint8_t> bytes, std::span<const std::string> expectedNames,
     const MapBaseReader &readBase, const GroundItemVerifier &verifyGroundItem);

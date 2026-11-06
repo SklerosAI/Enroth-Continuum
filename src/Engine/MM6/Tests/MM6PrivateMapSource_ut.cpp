@@ -55,6 +55,7 @@ mm6::KnownSaveFields knownFields(const std::filesystem::path &root,
                                                                           "F4_OUTDOOR_DECODED";
         fields.maps.deltas.push_back({name, readBytes(root / directory / name)});
     }
+    fields.chest = {17, {}, names.front(), fields.maps.deltas.front().bytes};
     return fields;
 }
 

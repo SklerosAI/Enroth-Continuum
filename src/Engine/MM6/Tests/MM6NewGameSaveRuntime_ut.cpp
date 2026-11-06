@@ -40,6 +40,7 @@ mm6::KnownSaveFields seed(std::int64_t ticks) {
     fields.metadata.header.playingTicks = ticks;
     fields.metadata.ui.activeCharacter = 1;
     fields.recovery.playingTicks = ticks;
+    fields.chest = {17, {}, "oute3.ddm", {1}}; // Synthetic seed; builder replaces the sidecar.
     return fields;
 }
 

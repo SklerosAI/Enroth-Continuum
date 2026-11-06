@@ -12,16 +12,17 @@
 namespace mm6 {
 namespace {
 
-constexpr std::array<std::array<char, 4>, 16> REQUIRED_TAGS = {{
+constexpr std::array<std::array<char, 4>, 17> REQUIRED_TAGS = {{
     {'P', 'A', 'R', 'T'}, {'C', 'H', 'A', 'R'}, {'Q', 'E', 'S', 'T'}, {'E', 'F', 'F', 'T'},
     {'I', 'T', 'E', 'M'}, {'H', 'E', 'A', 'D'}, {'T', 'I', 'M', 'E'}, {'U', 'I', 'S', 'T'},
     {'V', 'I', 'S', 'U'}, {'M', 'A', 'P', 'S'}, {'R', 'E', 'S', 'C'}, {'R', 'S', 'T', 'S'},
     {'H', 'E', 'L', 'D'}, {'B', 'U', 'F', 'F'}, {'H', 'I', 'R', 'E'}, {'R', 'C', 'V', 'R'},
+    {'C', 'H', 'S', 'T'},
 }};
 
 void checkSectionSet(const SaveContainer &container) {
     if (container.sections.size() != REQUIRED_TAGS.size())
-        throw std::runtime_error("MM6 known save requires exactly sixteen sections");
+        throw std::runtime_error("MM6 known save requires exactly seventeen sections (CHST required)");
     for (const SaveSection &section : container.sections) {
         if (!section.required ||
             std::find(REQUIRED_TAGS.begin(), REQUIRED_TAGS.end(), section.tag) == REQUIRED_TAGS.end())
@@ -44,6 +45,8 @@ void checkCrossFields(const KnownSaveFields &fields) {
         throw std::runtime_error("invalid MM6 active map name");
     const std::string deltaName = mapName.substr(0, mapName.size() - 4) +
         (mapName.ends_with(".blv") ? ".dlv" : ".ddm");
+    if (fields.chest.activeDeltaName != deltaName)
+        throw std::runtime_error("MM6 CHST sidecar name disagrees with active map");
     if (std::none_of(fields.maps.deltas.begin(), fields.maps.deltas.end(),
                      [&deltaName](const SavedMapDelta &delta) { return delta.name == deltaName; }))
         throw std::runtime_error("MM6 active map has no saved delta companion");
@@ -62,6 +65,7 @@ std::vector<std::uint8_t> encodeKnownSave(const KnownSaveFields &fields) {
     SaveSection buffs = encodeBuffSection(fields.buffs);
     SaveSection hirelings = encodeHirelingSection(fields.hirelings);
     SaveSection recovery = encodeRecoverySection(fields.recovery);
+    SaveSection chest = encodeChestSection(fields.chest);
     checkCrossFields(fields);
 
     SaveContainer container;
@@ -79,6 +83,7 @@ std::vector<std::uint8_t> encodeKnownSave(const KnownSaveFields &fields) {
     container.sections.push_back(std::move(buffs));
     container.sections.push_back(std::move(hirelings));
     container.sections.push_back(std::move(recovery));
+    container.sections.push_back(std::move(chest));
     checkSectionSet(container);
     return encodeSaveContainer(container);
 }
@@ -97,6 +102,7 @@ KnownSaveFields decodeKnownSave(std::span<const std::uint8_t> bytes) {
     fields.buffs = decodeBuffSection(container);
     fields.hirelings = decodeHirelingSection(container);
     fields.recovery = decodeRecoverySection(container);
+    fields.chest = decodeChestSection(container);
     checkCrossFields(fields);
     return fields;
 }

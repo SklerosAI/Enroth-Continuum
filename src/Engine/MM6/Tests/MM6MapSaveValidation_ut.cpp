@@ -105,6 +105,7 @@ mm6::KnownSaveFields exampleFields() {
         fields.maps.deltas.push_back({"synthetic" + std::to_string(i) + ".dlv", indoorDelta()});
     for (int i = 0; i < 15; ++i)
         fields.maps.deltas.push_back({"outside" + std::to_string(i) + ".ddm", outdoorDelta()});
+    fields.chest = {17, {}, "synthetic0.dlv", indoorDelta()};
     return fields;
 }
 
@@ -171,6 +172,21 @@ UNIT_TEST(MM6MapSaveValidation, StagesWholeKnownSaveOnlyAfterEveryMapPasses) {
     EXPECT_EQ(destination.core.party.playingTicks, 999);
 }
 
+UNIT_TEST(MM6MapSaveValidation, LateChestSidecarMismatchLeavesKnownDestinationUntouched) {
+    mm6::KnownSaveFields source = exampleFields();
+    const std::vector<std::string> expected = namesOf(source);
+    source.chest.rawActiveDelta = deltaWithChestItem(true, 42); // Valid wire, different chest count.
+    const std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(source);
+    mm6::KnownSaveFields destination = exampleFields();
+    destination.core.party.playingTicks = 901;
+    destination.chest.lcgState = 0xabcdef01;
+    EXPECT_THROW(mm6::loadKnownSaveWithMapBasesBeforeMutation(
+        bytes, expected, syntheticBase, validGroundItem, &destination), std::exception);
+    EXPECT_EQ(destination.core.party.playingTicks, 901);
+    EXPECT_EQ(destination.chest.lcgState, 0xabcdef01);
+    EXPECT_EQ(destination.chest.rawActiveDelta, indoorDelta());
+}
+
 UNIT_TEST(MM6MapSaveValidation, NonzeroGroundItemRequiresMM6TemplateBeforeMutation) {
     mm6::KnownSaveFields source = exampleFields();
     const std::vector<std::string> expected = namesOf(source);
@@ -208,6 +224,7 @@ UNIT_TEST(MM6MapSaveValidation, FixedChestItemSlotsRequireMM6TemplateBeforeMutat
     mm6::KnownSaveFields source = exampleFields();
     const std::vector<std::string> expected = namesOf(source);
     source.maps.deltas.front().bytes = deltaWithChestItem(true, 42);
+    source.chest.rawActiveDelta = source.maps.deltas.front().bytes;
     source.maps.deltas.back().bytes = deltaWithChestItem(false, 43);
     std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(source);
     mm6::KnownSaveFields destination;
@@ -270,6 +287,8 @@ UNIT_TEST(MM6MapSaveValidation, RetainedSixtySevenBaseDeltaPairs) {
     source.metadata.header.mapFileName = source.maps.deltas.front().name;
     source.metadata.header.mapFileName.replace(source.metadata.header.mapFileName.size() - 4, 4,
         source.metadata.header.mapFileName.ends_with(".dlv") ? ".blv" : ".odm");
+    source.chest.activeDeltaName = source.maps.deltas.front().name;
+    source.chest.rawActiveDelta = source.maps.deltas.front().bytes;
     const std::vector<std::string> expected = namesOf(source);
     const std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(source);
     int reads = 0;

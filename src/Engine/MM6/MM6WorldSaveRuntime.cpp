@@ -132,8 +132,11 @@ StagedKnownWorldAndVisuals stageKnownWorldAndVisuals(
     StagedSessionVisuals visuals = stageSessionVisuals(
         liveTimer, liveOverlays, {validated.known.metadata.timer, validated.known.metadata.overlays},
         overlayTableCount, title);
+    ChestTitleState chestTitle;
+    std::vector<std::uint8_t> rawActiveDelta;
+    restoreChestFieldsBeforeMutation(validated.known.chest, &chestTitle, &rawActiveDelta, title);
     return {std::move(validated.known), std::move(world), std::move(visuals),
-            std::move(validated.activeMap)};
+            std::move(validated.activeMap), chestTitle, std::move(rawActiveDelta)};
 }
 
 StagedKnownSession stageKnownSession(
@@ -253,9 +256,14 @@ KnownSaveFields captureKnownWorldFromActiveMap(
     }
     if (changed.empty())
         throw std::runtime_error("MM6 changed-state writer returned an empty delta");
-    return captureKnownWorldFields(seed, npcs, priorDeltas, deltaCompanion(mapName),
+    KnownSaveFields candidate = captureKnownWorldFields(seed, npcs, priorDeltas, deltaCompanion(mapName),
                                    {static_cast<const std::uint8_t *>(changed.data()), changed.size()},
                                    expectedNames, title);
+    const std::vector<std::uint8_t> &sidecar = mapName.ends_with(".blv") ?
+        pIndoor->mm6DeltaBytes : pOutdoor->mm6DeltaBytes;
+    candidate.chest = captureChestSaveFields(chestTitleState(), deltaCompanion(mapName), sidecar, title);
+    (void) encodeKnownSave(candidate);
+    return candidate;
 }
 
 } // namespace mm6

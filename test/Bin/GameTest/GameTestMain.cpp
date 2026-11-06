@@ -6,6 +6,7 @@
 #include "Application/Startup/GameStarter.h"
 
 #include "Engine/Components/Control/EngineController.h"
+#include "Engine/Resources/EngineFileSystem.h"
 
 #include "Testing/Game/GameTest.h"
 #include "Testing/Game/TestController.h"
@@ -20,6 +21,7 @@
 #include "Utility/Exception.h"
 
 #include "GameTestOptions.h"
+#include "MM6HeadlessRules.h"
 
 namespace {
 bool isMm6OnlyFilter(std::string_view filter) {
@@ -64,6 +66,10 @@ int platformMain(int argc, char **argv) {
             return RUN_ALL_TESTS();
 
         GameStarter starter(opts);
+        if (opts.gameTitle == GameTitle::MM6) {
+            NativeFileSystem source(opts.rulesPath);
+            seedMm6HeadlessRules(source, ufs);
+        }
 
         int exitCode = 0;
         starter.runInstrumented([&] (EngineController *game) {

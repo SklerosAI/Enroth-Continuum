@@ -128,8 +128,12 @@ void TestController::prepareForNextTestInternal() {
     int frameTimeMs = engine->config->debug.TraceFrameTimeMs.value();
     RandomEngineType rngType = engine->config->debug.TraceRandomEngine.value();
 
-    for (const DirectoryEntry &entry : ufs->ls(""))
-        ufs->remove(entry.name);
+    for (const DirectoryEntry &entry : ufs->ls("")) {
+        // MM6's private rule manifests are seeded into ramfs before engine
+        // startup. Keep them across test resets while clearing saves/config.
+        if (engine->gameTitle() != GameTitle::MM6 || entry.name != "rules")
+            ufs->remove(entry.name);
+    }
 
     _callObserver.reset();
     _tapeCallbacks.clear();

@@ -4,6 +4,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTestCommon.cpp
         GameTestMain.cpp
         GameTestOptions.cpp
+        MM6HeadlessRules.cpp
         GameTests_0000.cpp
         GameTests_0500.cpp
         GameTests_1000.cpp
@@ -13,7 +14,8 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM6.cpp)
 set(GAME_TEST_MAIN_HEADERS
         GameTestCommon.h
-        GameTestOptions.h)
+        GameTestOptions.h
+        MM6HeadlessRules.h)
 
 add_executable(OpenEnroth_GameTest ${GAME_TEST_MAIN_SOURCES} ${GAME_TEST_MAIN_HEADERS})
 target_link_libraries(OpenEnroth_GameTest PUBLIC application testing_game library_cli library_platform_main library_stack_trace)

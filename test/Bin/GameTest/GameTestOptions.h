@@ -8,6 +8,7 @@
 
 struct GameTestOptions : GameStarterOptions {
     Path testPath;
+    Path rulesPath; // Explicit private MM6 rules directory, read only; copied to ramfs before startup.
     float speed = FLT_MAX; // Test playback speed.
     bool helpPrinted = false;
     bool listRequested = false;

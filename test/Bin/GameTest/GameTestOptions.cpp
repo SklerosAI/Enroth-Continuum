@@ -25,6 +25,10 @@ GameTestOptions GameTestOptions::parse(int argc, char **argv) {
     app->add_option(
         "--data-path", result.dataPath,
         "Path to game data dir.")->check(CLI::ExistingDirectory)->option_text("PATH")->group(otherOptions);
+    app->add_option(
+        "--rules-path", result.rulesPath,
+        "Private MM6 rules directory to copy into the in-memory test profile.")
+        ->check(CLI::ExistingDirectory)->option_text("PATH")->group(otherOptions);
     app->add_flag(
         "--headless", result.headless,
         "Run in headless mode.")->group(otherOptions);
@@ -54,8 +58,12 @@ GameTestOptions GameTestOptions::parse(int argc, char **argv) {
             throw Exception("MM6 game tests require --headless.");
         if (result.dataPath.isEmpty() && !result.helpPrinted && !result.listRequested)
             throw Exception("MM6 game tests require an explicit --data-path.");
+        if (result.rulesPath.isEmpty() && !result.helpPrinted && !result.listRequested)
+            throw Exception("MM6 game tests require an explicit --rules-path.");
     } else if (game != "mm7") {
         throw Exception("Unsupported game '{}'; choose mm6 or mm7.", game);
+    } else if (!result.rulesPath.isEmpty()) {
+        throw Exception("--rules-path is only supported for MM6 game tests.");
     }
 
     if (!result.listRequested && !result.helpPrinted && !testPath)

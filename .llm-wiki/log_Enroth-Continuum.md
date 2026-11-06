@@ -431,6 +431,12 @@ Chronological record of wiki activity.
 - Added an MM6-only guard before player queue/executor, event, monster and damage effect dispatch; functional wands reject before charge loss. MM7 remains unchanged, and only non-spell bow/blaster player queue actions pass.
 - Built the isolated arm64 unit target, passed six focused spell-item/learning/effect tests, and checked C++ style, private table count, wiki links and diff. Effects and graphical play remain unverified; no original installation was reread or partial MM6 game launched.
 
+## [2026-11-06] ingest | MM6 bounded First Aid effect
+- by: T-Burton-ND via codex
+- Exported one spell's three-rank fixed healing rule to mode-0600 private profile data after checking the F3 original-file identity chain and visually reviewed guide claim; exact amounts remained outside Git.
+- Added a title-specific character-only healing branch, with the outer MM6 cast guard still closed pending target UI, failure/recovery, shared health semantics and audiovisual proof. MM7's branch remains unchanged.
+- Built the main arm64 unit target and passed eight focused spell guard/rule/First Aid tests with private manifests; C++ style, Python syntax, link and diff checks passed. No original installation was reread or partial MM6 game launched.
+
 ## [2026-11-06] finding | MM6 HIRE and RESC identity
 - by: T-Burton-ND via codex
 - Audited current hire, dismissal, event, generated-NPC, name-load and quest-follower paths. A strict HIRE/RESC identity match cannot be justified without a stable source ID: table-only followers, independent flag edits and generated party copies are representable. An aggregate check of the ignored F3-matched NPC table found five duplicate-name groups, including one duplicate name/portrait/profession group; exact rows remain private.

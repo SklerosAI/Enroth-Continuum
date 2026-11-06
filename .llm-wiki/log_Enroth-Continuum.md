@@ -898,3 +898,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a partial `.ec6` transaction coordinator that decodes all sixteen known sections, checks the verified 67-name map set, validates every MM6 base/delta pair and item-template reference, then copy-stages NPC/map buffers and paused timer/overlays in one result. It performs no live commit. A new packet/wiki page records the exact Party, active-world, PID, UI and disk gates that still prevent SaveLoad wiring.
 - A fresh isolated arm64 MM6/OpenEnroth/unit build passed. Thirteen focused world-save, map-validation and known-save tests passed, including nonzero map reset/NPC/overlay state and late overlay and final-map failure paths that leave caller state unchanged. No MM6 process or original installation was opened, and MM7/MM8 were untouched.
+
+## [2026-11-06] integrate | MM6 F4 214-test checkpoint
+- by: T-Burton-ND via codex
+- Integrated the health-floor correction, read-only house greeting candidate, CHAR v3 spell preferences, accepted-PE chest remap and original Quick Start audit, and a detached 67-map world/visual staging coordinator. The arm64 MM6, OpenEnroth and unit targets linked; the private-backed offline gate passed **214/214 tests from 61 suites**, and the separate general suite passed **438/438**.
+- Updated [local status](../project/LOCAL_STATUS.md), [build graph](../project/MM6_F4_BUILD_GRAPH.md), [offline seams](MM6-F4-Offline-Seams.md) and [agent handoff](Agent-Handoff.md). Local Markdown links resolved and only the data README is tracked; PE trace and GOG content remain ignored. Chest generation blocks every MM6 level load, live SaveLoad and Quick Start remain closed, and no MM6 process or graphical/audio play was launched.

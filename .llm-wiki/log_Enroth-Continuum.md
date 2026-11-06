@@ -328,3 +328,9 @@ Chronological record of wiki activity.
 - Added required, bounded `.ec6` RESC fields for the 501 runtime NPC slots, 51 group words and active count, with full scalar preservation and MM6-only copy-staging. Unknown flag bits and generic profession IDs round trip; malformed fields reject before mutation.
 - Checked the ignored F3-matched retained NPC table at aggregate level: 398 numeric rows, IDs 1–398; the earlier 70-record F2 figure covers only a generic-profession subset. The retained icons copy contains no `npcgroup.txt`. No private rows were added to Git.
 - Built the native unit target and passed five focused NPC tests. Direct style checks passed for all new files; the aggregate style target still reports unrelated pre-existing missing includes. SaveLoad integration, group semantics, generated NPC persistence and F5 play remain open. No original installation was reread or partial game launched.
+
+## [2026-11-06] ingest | MM6 atomic save file
+- by: T-Burton-ND via codex
+- Added a native `.ec6` writer that validates before disk mutation, syncs and verifies same-directory temporary files, retains a validated prior save as a backup, and atomically replaces the primary.
+- Added recovery from a valid backup when the primary is corrupt or missing; documented the trusted native-profile boundary, unsupported RAM/custom filesystems, and incomplete whole-save integration.
+- Three standalone C++ tests passed, including injected partial-write and replacement failures with the previous valid save preserved. C++ style and diff checks passed. No game or original installation was opened.

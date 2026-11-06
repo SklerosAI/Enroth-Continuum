@@ -178,12 +178,12 @@ that requirement.
   guide/data value disagreements. Most semantic rows remain open.
 - [x] Give all 173 monster IDs an explicit catalog identity evidence state in
   [MM6_MONSTER_GUIDE_SEMANTICS_F2.md](MM6_MONSTER_GUIDE_SEMANTICS_F2.md).
-  Ninety have direct page-image identity evidence, 68 an exact OCR-name match
-  on an expected page, 13 only a page-order candidate, and two fall outside
-  the guide's 57-family catalog. A new 51-variant visual comparison found 15
-  differences among 204 level/HP/AC/XP cells and three among 51 treasure
-  strings. Eighty-one catalog variants still lack direct semantic comparison;
-  none of these guide checks proves original combat behavior.
+  All 171 printed-catalog IDs now have direct page-image identity and selected
+  field evidence; two tail IDs fall outside the guide's 57-family catalog.
+  For 132 variants in the new packet, 50 of 528 level/HP/AC/XP cells and four
+  of 132 treasure strings disagree with retained data; the prior 39 variants
+  have a differently scoped selected-field set. Full attacks, effects,
+  resistance, sprite/spawn joins and original combat remain open.
 - [x] Join all 173 retained monster rows to inherited combat consumers and
   record identity, attack, missile, spell, special, resistance, AI and loot
   gaps with confidence and F4/F5 scenarios in

@@ -143,3 +143,8 @@ Chronological record of wiki activity.
 - Added the 173-ID monster catalog source summary with direct-image, OCR, page-order and no-catalog evidence states, plus selected guide/data field discrepancies.
 - Linked the draft F4 dependency graph and its offline acceptance seams from the agent handoff and source index. F4 has not begun; F2 remains open and F3 unrun.
 - Kept exact monster values/images private and checked 51 wiki pages for frontmatter and local links.
+
+## [2026-11-05] ingest | MM6 spell source facets
+- by: T-Burton-ND via codex
+- Updated the spell source summary with all-99 six-facet C++ comparisons, including 70 conflicting source effects, 27 limited candidates, two unresolved UI continuations and 96 unresolved recovery facets.
+- Kept the detailed per-ID locators private and did not claim any verified running spell. F2 remains open and F3 has not read originals.

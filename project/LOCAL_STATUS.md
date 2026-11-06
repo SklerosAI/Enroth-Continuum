@@ -232,11 +232,13 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   Quick Start and promotion remain provisional. The [variable guard](MM6_F4_VARIABLE_GUARD.md)
   prevents MM6-specific event IDs from executing as colliding MM7 meanings.
 - The integrated MM6 app, MM7 app and unit targets built with the sixteen-section
-  partial assembly and the spell-item prerequisite guard. The offline suite passed 83 tests across EVT
+  partial assembly, spell-item prerequisite guard, MM6-only effect-dispatch guard,
+  and exact 67-name MAPS staging validator. The offline suite passed 89 tests across EVT
   framing and selected guarded effects, wire codecs and indoor/outdoor projection,
   variable guard, `.ec6` fields and partial assembly, private transport/spell
   rules, descriptor 173 and LOD order; the
-  private actor fixture checked 67 map deltas/342 actors and one ID 173.
+  private actor fixture checked 67 map deltas/342 actors and one ID 173. The
+  offline runner also verified the F3-matched mode-0600 map-name manifest.
   The general non-MM6 unit suite passed 438/438 tests from the same build.
   F4 rules, map state, events, services, media output and saves remain open.
   No MM6 process or original GOG file was opened for these F4 checks.
@@ -247,16 +249,19 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   MM6 Question now has a provisional text-entry and two-answer continuation
   path, with visible and original-behavior checks still pending.
 - A private F3-backed spell manifest covers all 99 IDs at three mastery ranks.
-  Regular player-cast cost/recovery uses it; effect paths and scroll/book use
-  remain guarded. A retained-data verifier checked all 99 scroll and 99 book
+  Regular player-cast cost/recovery uses it; all 99 MM6 regular effect IDs
+  currently reject before inherited player/event/monster/damage dispatch, and
+  scroll/book use remains guarded. A retained-data verifier checked all 99 scroll and 99 book
   IDs against MM6 spell IDs. The raw `RSTS` resistance section captured all 88 current
   character values. Raw timed buffs and the cursor-held item are also bounded
   and required by the revised partial assembly. Their MM6 effects, buff-overlay
   references and post-load cursor presentation remain open. Shop/map items,
   generated artifacts and complete save/relaunch remain open. Raw hireling copies
   and recovery/calendar fields are now bounded and required by the partial
-  assembly; HIRE/RESC identity, MM6 day/rest behavior and active turn/rest
-  recovery remain unresolved.
+  assembly; a non-mutating HIRE/RESC diagnostic reports possible matches but
+  cannot establish stable source identity. MM6 day/rest behavior and active
+  turn/rest recovery remain unresolved. The MAPS exact-set validator is still
+  unwired from the complete save transaction; base/delta identity remains open.
 - The private F3-derived transport manifest is read by a title-specific
   three-option MM6 menu. It hides unproved quest, weekday and special routes;
   selection makes no payment or departure while the `.ec6` save transaction

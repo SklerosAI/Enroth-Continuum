@@ -949,7 +949,7 @@ void loadAndPrepareBLV(MapId mapid, bool bLoading) {
     pBLVRenderParams->uPartyEyeSectorID = 0;
     pBspRenderer->Clear();
 
-    engine->SetUnderwater(isMapUnderwater(mapid));
+    engine->SetUnderwater(engine->gameTitle() == GameTitle::MM7 && isMapUnderwater(mapid));
 
     pParty->_delayedReactionTimer = 0_ticks;
 

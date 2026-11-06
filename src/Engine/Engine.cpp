@@ -710,7 +710,7 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
     ai_near_actors_targets_pid.resize(configLimit, Pid());
     ai_near_actors_ids.resize(configLimit);
 
-    engine->SetUnderwater(isMapUnderwater(transitionMapId));
+    engine->SetUnderwater(engine->gameTitle() == GameTitle::MM7 && isMapUnderwater(transitionMapId));
 
     // Need to reset this one. Pressure plates fire when the party's floor face changes, face ids are
     // per-map, and a leftover id could fire or suppress a plate right after the transition.

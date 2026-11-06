@@ -10,6 +10,8 @@ The two shop generator helpers populate different banks, but this trace has not 
 
 The next targeted original trace is the purchase action's write to a selected shop and guild slot, followed by the next stock read. Check the family edge and a nonzero owner-local native `party.bin` sample before defining keyed MM6 Party storage. Then a detached `.ec6` tuple can validate row keys, active slots, item templates, paired refresh clocks, missing/duplicate rows and late failure without mutation. No such tuple was implemented here. A later [SCLK section](MM6_F4_SHOP_GUILD_CLOCK_SAVE.md) covers only the source-proven refresh deadline words, including their shared edge.
 
+The subsequent [SHOP owner field gate](MM6_F4_SHOP_OWNER_FIELD_GATE.md) compares each candidate field against those missing proofs. It confirms that SCLK is the only currently complete commerce field; even a first-32-bit stock ID would omit the rest of the purchased item record and has no verified MM6 live owner. No new `SHOP` section is justified.
+
 ## Cross-map save dependency
 
 Current `Engine::startMapTransition()` calls `autoSave()` when the destination map differs, **before** it sets `GAME_STATE_CHANGE_LOCATION` or `_pendingTransition`. `autoSave()` enters `saveGame()`, whose MM6 title guard throws before its file-write `try` block. A cross-map move through this helper therefore exits by exception before scheduling the map change. `EvtInterpreter.cpp` calls the helper; the source also notes six direct pending-transition sites that need a separate route audit. A same-map destination bypasses this autosave call. This is a source-backed execution edge, not an observed game launch.

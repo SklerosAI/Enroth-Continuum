@@ -1,0 +1,18 @@
+---
+type: decision
+up: "[[MM6-F4-Save-Transaction-Checklist]]"
+related: ["[[MM6-F4-Shop-Stock-Tuple-and-Autosave]]", "[[MM6-F4-Shop-Guild-Clock-Save]]"]
+tags: [mm6, f4, save, shop, stock]
+---
+
+# MM6 F4 Shop Owner Field Gate
+
+The [field-gate packet](../project/MM6_F4_SHOP_OWNER_FIELD_GATE.md) records why no new `SHOP` field can yet be added safely to detached `.ec6` staging.
+
+The only complete source-backed shop/guild field is the MM6-row-keyed 64-bit refresh deadline, already represented by required `SCLK` v1. The original shop and guild stock paths prove two shop banks, one guild bank, 12 positions per row, a 28-byte item stride, a zero-ID display check and raw original Party-block persistence. They do not prove the remaining item bytes, purchase write, sold-slot mutation, shared shop/guild edge use or a nonzero native saved tuple. The fork has no MM6-keyed live stock owner; inherited MM7 arrays cannot represent the MM6 guild and candidate bounty rows. A standalone item-ID or opaque 28-byte codec would not define a complete updated/restored owner.
+
+Decision: retain the existing SCLK section and the coordinator's rejection of nonempty inherited commerce arrays. Add no duplicate deadline authority and no new `SHOP` section until purchase/write/read and family-edge behavior are verified against an owner-local nonzero save, then create a title-local keyed runtime owner and test full-row detached staging plus late-failure atomicity. Bans and bounty need their own original row/lifetime evidence.
+
+The ignored original-stock checker passed accepted executable identity, row/stride/boundary, raw save span and cross-map autosave assertions. Linked `MM6ShopGuildClockFields.*` passed 2/2. No proprietary data entered the repository, and the normal MM6 SaveLoad guard remains closed.
+
+See also: [Shop Stock Tuple and Autosave](MM6-F4-Shop-Stock-Tuple-and-Autosave.md), [Shop Guild Clock Save](MM6-F4-Shop-Guild-Clock-Save.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

@@ -232,6 +232,14 @@ that requirement.
   `spellForScroll` indexes 300–398, `spellForSpellbook` indexes 400–498,
   and the MM7 artifact/special range begins at 500. The wand range 135–159
   aligns numerically, but each wand's spell still needs MM6-specific mapping.
+- [x] Give all 404 wand, scroll, book and 400–580 special-band IDs a retained
+  role and current C++ consumer in the private queue described by
+  [MM6 item/monster guide claims](MM6_ITEM_MONSTER_GUIDE_CLAIMS_F2.md).
+  Sixteen of 25 wand spell tokens disagree with inherited lookup. All 99
+  scrolls, 99 books, 30 artifacts/relics and 50 message scrolls miss inherited
+  type ranges, and 98 special-band IDs have held-item event operands. Sixty-seven
+  special/misc roles and 402 item guide semantics remain unresolved; static
+  consumer coverage does not establish their effects.
 - [ ] Replace MM7 item-kind range assumptions with MM6-specific IDs and
   checks. Make every MM6 spell scroll cast its intended spell, every book
   teach its intended spell, every message scroll display its text, and every
@@ -508,6 +516,11 @@ that requirement.
   guide-unlisted, 20 generic IDs have `canJoin` flags in NPC data, and seven
   generic IDs alias MM7 special effects. Hireability and original effect
   numbers are still uncertain; the exact per-ID ledger remains ignored.
+- [x] Trace initial house and topic routes for all 70 NPC records using the
+  26 generic profession IDs in [MM6 NPC profession packet](MM6_NPC_PROFESSION_F2.md).
+  Forty have a static initial paid-hire choice, 23 have a house-conversation
+  route without that choice, and seven need outdoor/event routing. Dynamic
+  house/topic changes and actual hireability remain unproven.
 - [ ] Video and audio archive structure, house/movie routing, playback and
   fallbacks. The 116 distinct MM6 house animation IDs used in `2devents.txt`
   are within the inherited 196-entry MM7 `pAnimatedRooms` array, but **zero**

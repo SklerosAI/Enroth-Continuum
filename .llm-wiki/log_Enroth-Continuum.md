@@ -873,3 +873,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A bounded read-only trace of the accepted F3-identity-matched original MM6 executable established that its maximum-health result is clamped to at least one. Corrected the MM6 `Character::GetMaxHealth()` floor from zero to one; the MM7 path is untouched. Exact PE evidence is in an ignored owner-local note.
 - The arm64 MM6 target rebuilt and linked. This verifies one endpoint of the HP formula, while other bonuses, promotion behavior, displayed character-sheet values and save/reload remain open. No MM6 process was launched.
+
+## [2026-11-06] stage | MM6 house greeting candidate IDs
+- by: T-Burton-ND via codex
+- The MM6 house presentation plan now carries a read-only greeting candidate derived from its title-specific room sound group. Zero-group rooms have no candidate; blank, terminal and MM7 routes reject. The preview still plays no house cue. The accepted F3 join confirms table and archive identity for all 63 nonzero-group rooms among 116 referenced rooms, with 53 zero-group rooms. No private sound names or payloads entered Git.
+- Both modified C++ translation units passed syntax checks, and an independent private-data join reproduced the 63/53 aggregate. A focused native test was added for the linked integration run. Original playback timing, service responses and audible output remain unproved; no original installation was reread and no MM6 process was launched.

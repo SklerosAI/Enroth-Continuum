@@ -528,6 +528,12 @@ that requirement.
   sound IDs occur more than once in `dsounds.bin`, and the MM6 table loader
   currently keeps the last row for each. This is source-level evidence only;
   no MM6 media playback has been checked.
+- [x] Register [MMExtension MM6 executable table locators](MM6_EXECUTABLE_TABLE_LOCATORS_F2.md)
+  for 100 14-byte spell records, 119 16-byte house-movie records and 36
+  candidate transport entries. The 116 distinct retained room IDs span
+  1–118, within the candidate house table's 0–118 bounds. These are pinned
+  process-memory source leads, not verified offsets or owner-executable data;
+  F3 must map and validate them in the planned read-only pass.
 - [x] Compare inherited creation icons, portrait-frame construction, literal
   fonts and potential voice-reaction IDs to retained MM6 indexes using
   `scripts/mm6_probe_media_consumers.py`. The [media F2 closure packet](MM6_MEDIA_F2_CLOSURE.md)

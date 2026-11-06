@@ -30,4 +30,6 @@ Status: **draft for F2 review, 2026-11-05; F3 has not run**. This is the one pla
 
 ## Preflight exit review
 
+For the executable rows above, use the [pinned MMExtension table locator packet](MM6_EXECUTABLE_TABLE_LOCATORS_F2.md) as a version-sensitive starting point: map candidate process addresses to PE file sections, validate record spans and pointer targets, then reconcile spell delays, house movies and transport data against the owner's exact executable and retained tables. Do not treat the addresses as file offsets or patched runtime fields as unpatched file facts.
+
 The integration owner compares every row above to the dated private report and signs off each as confirmed, corrected, or ambiguous with a concrete implementation/test route. A discrepancy in archive identity, parser boundary, active ID family, house/quest reference, or source consumer reopens its F2 specification before F4. Reconcile the draft [F4 build graph](MM6_F4_BUILD_GRAPH.md) with this result, then proceed offline against the frozen snapshot, followed by graphical F5 campaign validation and title-safe F6 Atlas installation. See [plan §18.1](plan.md) and [agent handoff](../.llm-wiki/Agent-Handoff.md).

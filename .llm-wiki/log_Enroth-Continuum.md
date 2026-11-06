@@ -893,3 +893,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A read-only trace of the F3-identity-matched staged MM6 executable resolved the original Create Party versus Quick Start button branches and a four-character Quick Start class, face, name-reference, stat and skill fixture. The four stat vectors exhaust the shared 50-point pool and each skill quartet matches two granted plus two selectable class skills. Exact values and disassembly remain in an ignored owner-local audit.
 - The original finalizer generates items by learned skill and uses a random branch; complete inventory, voice, spell flags and later initialization are not yet verified. A public packet and wiki page record the activation checklist. No runtime Quick Start path was enabled, and no MM6 process or original installation was opened.
+
+## [2026-11-06] implement | MM6 detached world and visuals stage
+- by: T-Burton-ND via codex
+- Added a partial `.ec6` transaction coordinator that decodes all sixteen known sections, checks the verified 67-name map set, validates every MM6 base/delta pair and item-template reference, then copy-stages NPC/map buffers and paused timer/overlays in one result. It performs no live commit. A new packet/wiki page records the exact Party, active-world, PID, UI and disk gates that still prevent SaveLoad wiring.
+- A fresh isolated arm64 MM6/OpenEnroth/unit build passed. Thirteen focused world-save, map-validation and known-save tests passed, including nonzero map reset/NPC/overlay state and late overlay and final-map failure paths that leave caller state unchanged. No MM6 process or original installation was opened, and MM7/MM8 were untouched.

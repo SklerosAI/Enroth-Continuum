@@ -1593,3 +1593,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added detached reconstruction of saved BEAC beacon and thumbnail RGBA bytes into owned CPU images, checking size and channel order before renderer or Party mutation. The linked focused beacon suite passed 6/6; the last full private-backed MM6/LOD gate passed 338/338 before this helper.
 - Source audit confirms beacon screenshots retain CPU pixels, while viewport thumbnail capture changes render state and `GraphicsImage::Create()` allocates GPU textures immediately. Live image publication, all-owner commit and SaveLoad remain guarded.
+
+## [2026-11-06] verify | MM6 indoor face reload loss
+- by: T-Burton-ND via codex
+- An integrated synthetic headless fixture applies MM6 indoor face-bit and texture events, encodes changed DLV state, reconstructs the base faces and then tries map reload. The DLV bytes remain unchanged and the edits disappear unless a synthetic OnMapReload script reapplies them.
+- The two focused indoor face tests passed 2/2 over 97 monitored samples without visible window or focus change. Six affected retained maps lack an OnMapReload trigger; original save semantics remain unproved, so normal MM6 SaveLoad stays guarded.

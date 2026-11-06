@@ -233,7 +233,7 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   prevents MM6-specific event IDs from executing as colliding MM7 meanings.
 - The integrated MM6 app, MM7 app and unit targets built with the sixteen-section
   partial assembly, spell-item prerequisite guard, MM6-only effect-dispatch guard,
-  and exact 67-name MAPS staging validator. The offline suite passed 121 tests
+  and exact 67-name MAPS staging validator. The offline suite passed 123 tests
   across EVT framing and selected guarded effects, wire codecs and indoor/outdoor projection,
   variable guard, `.ec6` fields and partial assembly, private transport/spell
   rules, descriptor 173 and LOD order; the

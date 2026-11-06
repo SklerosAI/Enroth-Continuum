@@ -15,7 +15,7 @@ The F3-matched retained active EVT corpus has 215 texture and 32 face-bit record
 
 ## Headless fixture result
 
-`MM6IndoorFacetEvent.ChangedFacesRequireReloadReplayOrSeparateSaveState` uses synthetic faces and DLV bytes in the null-renderer MM6 GameTest. It executes face-bit set, clear and set again plus a texture change on one face. The current changed-state writer emits byte-identical DLV data. Resetting the faces to base state and reconstructing that DLV leaves the face unchanged. With no reload trigger, `onMapLoad()` also leaves it unchanged. A synthetic reload script then re-applies the bit and texture after DLV reconstruction. Both indoor facet GameTests passed in a separately linked, headless arm64 test executable; source and test compilation passed. No installed save, private map, graphical frame or original executable was involved in this fixture.
+`MM6IndoorFacetEvent.ChangedFacesRequireReloadReplayOrSeparateSaveState` uses synthetic faces and DLV bytes in the null-renderer MM6 GameTest. It executes face-bit set, clear and set again plus a texture change on one face. The current changed-state writer emits byte-identical DLV data. Resetting the faces to base state and reconstructing that DLV leaves the face unchanged. With no reload trigger, `onMapLoad()` also leaves it unchanged. A synthetic reload script then re-applies the bit and texture after DLV reconstruction. Both indoor facet GameTests passed **2/2** in the integrated monitored arm64 headless runner over 97 samples with no visible window or focus change. No installed save, private map, graphical frame or original executable was involved in this fixture.
 
 ## Required decision before enabling save
 

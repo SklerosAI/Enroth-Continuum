@@ -45,6 +45,8 @@ The newer integrated checkpoint passes **49/49** monitored MM6 headless tests, *
 
 The next isolated save seams add filename-keyed [BEAC](MM6-F4-Beacon-Visual-Save.md) pixels and a [shared shop/guild refresh](MM6-F4-Shop-Shared-Edge-Refresh.md) model. BEAC passed 5/5 focused and 336/336 private-backed unit checks; it remains outside the known-save set while renderer image publication and all-owner commit are unsafe. The shop refresh model passed 8/8 focused and 338/338 private-backed checks; it stages the shared physical stock/deadline pair without opening live services. These newer counts supersede only the unit count above; the latest full monitored MM6 headless result remains 49/49.
 
+Follow-up focused checks pass **6/6** for owned CPU beacon-image preparation and **2/2** for a monitored synthetic indoor-face DLV round trip. The latter proves the current changed-state writer loses face edits unless `OnMapReload` reapplies them; six affected retained maps lack that trigger. The [shop shared-row access audit](MM6-F4-Shop-Shared-Row-Access-Audit.md) found no nonzero owner-local native save and leaves indirect writer coverage plus 28-byte source to 36-byte runtime item conversion open. Do not join BEAC or SHOP to the required save manifest or open normal MM6 SaveLoad based on these detached checks.
+
 ## Authority and source order
 
 | Question | Start with | Supporting source |

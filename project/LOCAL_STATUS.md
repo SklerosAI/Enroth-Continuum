@@ -597,3 +597,13 @@ focused suite passes **6/6**. The current viewport screenshot changes render
 state and requires a stable game/render-thread capture point, while
 `GraphicsImage::Create()` allocates GPU textures immediately. Renderer image
 publication and the all-owner commit remain guarded.
+
+The integrated synthetic indoor-face save/reload fixture passed **2/2** over
+97 monitored headless samples without a visible window or focus change. The
+current MM6 DLV writer emits unchanged bytes after face-bit and texture events;
+base-map reconstruction loses those edits unless a reload event reapplies them.
+Six of 17 affected retained maps have no reload trigger, so this is an explicit
+MM6 save gate. A read-only shop access audit found the direct clear, generation,
+display, purchase and raw-save paths but cannot exhaust indirect stock writers;
+no nonzero owner-local native save or full 28-to-36-byte item conversion is
+proved. Live face and SHOP persistence stay guarded.

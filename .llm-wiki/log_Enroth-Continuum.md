@@ -380,3 +380,9 @@ Chronological record of wiki activity.
 - Audited the cursor-held `Item` and its party, character, chest, shop and popup consumers; added required `HELD` v1 for empty or complete item scalar state, separate from character inventory.
 - Capture and staging require MM6 and a loaded usable item template; staging changes a party copy without invoking cursor mutation or item placement. The full save manifest and post-commit cursor display remain open.
 - Two standalone C++ tests passed empty/present round-trip and malformed/wrong-title no-mutation checks; runtime syntax, C++ style and diff checks passed. No original installation was reread or partial MM6 game launched.
+
+## [2026-11-06] ingest | MM6 timed buff fields
+- by: T-Burton-ND via codex
+- Added a bounded required `.ec6` BUFF section for 20 party and 4×24 character SpellBuff slots, plus MM6-guarded capture and copy-staging. The current NPC flight/water-walk source marks a Master buff `isGM`; that flag is preserved separately from mastery. Staging avoids overlay-mutating buff methods.
+- Built the isolated arm64 unit and save-runtime targets; five focused synthetic BUFF tests passed, including malformed/valid-CRC rejection before assignment. Direct C++ style and diff checks passed. No original installation was reread or partial MM6 game launched.
+- Kept BUFF outside the earlier eleven-section known-save candidate for a coordinated manifest revision. Overlay reference consistency, exact MM6 effect behavior, initialized-party capture/staging, SaveLoad and F5 persistence remain open.

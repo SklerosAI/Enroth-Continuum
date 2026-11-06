@@ -60,6 +60,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 Campaign Guide Claims F2 Source](Source-MM6-Campaign-Guide-Claims-F2.md) — Guide headings, transport table lead, outdoor name join, and unresolved quest branches
 - [MM6 Transport Fields F2 Source](Source-MM6-Transport-Fields-F2.md) — All transport-house A/B/C cells and unresolved route semantics
 - [MM6 Manual and Services Claims F2 Source](Source-MM6-Manual-Services-Claims-F2.md) — Owner manual/card/service chapter locators and title-specific service risks
+- [MM6 NPC Profession F2 Source](Source-MM6-NPC-Profession-F2.md) — All 77 rows, guide join and inherited effect collisions
 - [MM6 UI Screen Audit F2 Source](Source-MM6-UI-Screen-Audit-F2.md) — Named current screen families, inherited UI collisions and visible checks
 - [MM6 Media and UI Spec Source](Source-MM6-Media-UI-Spec.md) — Movie, house, sound, music, and interface routing
 - [MM6 Media F2 Closure Source](Source-MM6-Media-F2-Closure.md) — Portrait, icon, font, and voice name-index comparisons

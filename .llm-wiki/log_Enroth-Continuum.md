@@ -1558,3 +1558,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A read-only F3-matched original-executable trace established that successful first-bank, second-bank and guild purchases copy a 28-byte physical item record, then clear only source bytes 0–24. The original new-game initializer clears one contiguous 120-row stock region; the last active shop row and first active guild row share a physical slot.
 - A title-specific detached helper preserves the full transfer, trailing three bytes and shared alias. Its linked focused suite passed 4/4; the private-backed MM6/LOD gate passed 329/329. Live MM6 service ownership, refresh lifetime and the known-save SHOP join remain guarded.
+
+## [2026-11-06] correct | MM6 original no-op event commands
+- by: T-Burton-ND via codex
+- The F3-matched original event dispatcher routes opcodes 20, 27 and 28 directly to its next-record path. The MM6 executor now advances for these commands while preserving raw operands; foreign-title instructions still reject and MM7 retains its prior behavior.
+- The linked focused headless check passed 1/1, the full MM6 headless suite 48/48, the MM7 control 1/1 and general non-MM6 unit gate 437/437. Monitored runs had no visible window or focus change. Event reachability and other effects in those scripts remain open.

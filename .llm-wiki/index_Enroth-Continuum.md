@@ -35,8 +35,8 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 Headless Integration Policy](MM6-Headless-Integration-Policy.md) — Synthetic-input engine scenarios without a native window; MM6 harness first, graphical checks later
 - [MM6 F4 Headless Harness](MM6-F4-Headless-Harness.md) — Title-selected null-platform smoke; no-window first run found a private-rule startup dependency
 - [MM6 F4 Main Menu Assets](MM6-F4-Main-Menu-Assets.md) — MM6 title overlay lookups and geometry candidate; graphical acceptance pending
-- [MM6 F4 HUD Resources](MM6-F4-HUD-Resources.md) — Title-specific frame, compass, baked controls, time/status backgrounds, vital bars, NPC arrows, four-state minimap overlay and portrait timing gems; visual acceptance pending
-- [MM6 F4 UI Resource Blockers](MM6-F4-UI-Resource-Blockers.md) — Ordered first-frame `SetUserInterface`/`UI_Create` matrix, native follower arrows, hour-selected top panel, routed timing gems and unresolved portrait selection
+- [MM6 F4 HUD Resources](MM6-F4-HUD-Resources.md) — Title-specific frame, compass, baked controls, time/status backgrounds, vital bars, NPC arrows, four-state minimap overlay and portrait timing gems and selected-portrait sprite; visual acceptance pending
+- [MM6 F4 UI Resource Blockers](MM6-F4-UI-Resource-Blockers.md) — Ordered first-frame `SetUserInterface`/`UI_Create` matrix, native follower arrows, hour-selected top panel, routed timing gems and native selected-portrait oval
 - [MM6 F4 First Map Preflight](MM6-F4-First-Map-Preflight.md) — Detached resources, event/encounter checks, sprite/facet bounds and monitored in-memory outdoor load pass; full world/graphical acceptance pending
 - [MM6 F4 Monster Special Attacks](MM6-F4-Monster-Special-Attack.md) — All retained special labels decoded with unverified MM6 effects gated before mutation
 - [MM6 F4 Monster Spells](MM6-F4-Monster-Spells.md) — All 55 active monster casts retain MM6 spell IDs while effects remain gated

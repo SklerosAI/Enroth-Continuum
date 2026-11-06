@@ -10,6 +10,7 @@
 #include "Engine/Engine.h"
 #include "Engine/Graphics/ImageLoader.h"
 #include "Engine/Graphics/Image.h"
+#include "Engine/Resources/ResourceManager.h"
 
 #include "Library/Image/Png.h"
 
@@ -55,6 +56,8 @@ void AssetsManager::releaseAllTextures() {
     for (auto *cache : {&images, &bitmaps, &sprites})
         for (const auto &[name, image] : *cache)
             image->releaseRenderId();
+    if (mm6SelectionFrame)
+        mm6SelectionFrame->releaseRenderId();
     for (const auto &portrait : customPortraits)
         if (portrait)
             portrait->releaseRenderId();
@@ -63,6 +66,10 @@ void AssetsManager::releaseAllTextures() {
 }
 
 void AssetsManager::releaseImage(GraphicsImage *image) {
+    if (mm6SelectionFrame.get() == image) {
+        mm6SelectionFrame.reset();
+        return;
+    }
     for (auto *cache : {&images, &bitmaps, &sprites}) {
         auto pos = cache->find(image->name());
         if (pos != cache->end() && pos->second.get() == image) {
@@ -82,6 +89,26 @@ GraphicsImage *AssetsManager::getIcon(std::string_view name) {
         i = images.emplace(filename, GraphicsImage::Create(std::make_unique<Icon_LOD_Loader>(engine->resources(), filename))).first;
 
     return i->second.get();
+}
+
+GraphicsImage *AssetsManager::getMM6SelectionFrame() {
+    if (engine->gameTitle() != GameTitle::MM6)
+        return nullptr;
+    if (!mm6SelectionFrame) {
+        RgbaImage image = engine->resources()->sprite("aframe1");
+        if (!image)
+            return nullptr;
+        // The original aframe1 SpriteFrame uses palette zero. ResourceManager's
+        // regular sprite image stores palette indices in red for 3D rendering;
+        // this 2D image needs the actual default palette colors.
+        const Palette palette = engine->resources()->palette(0);
+        for (Color &pixel : image.pixels()) {
+            if (pixel.a)
+                pixel = palette.colors[pixel.r];
+        }
+        mm6SelectionFrame = GraphicsImage::Create(std::move(image));
+    }
+    return mm6SelectionFrame.get();
 }
 
 GraphicsImage *AssetsManager::getCustomPortrait(int partySlot) {

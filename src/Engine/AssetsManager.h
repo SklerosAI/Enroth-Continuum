@@ -24,6 +24,8 @@ class AssetsManager {
     void releaseImage(GraphicsImage *image);
 
     GraphicsImage *getIcon(std::string_view name);
+    /** Decodes MM6's palette-zero aframe1 sprite for the two-dimensional portrait UI. */
+    GraphicsImage *getMM6SelectionFrame();
     /** Local, per-party-slot PNG override. Returns nullptr when vanilla mode is selected or the image is invalid. */
     GraphicsImage *getCustomPortrait(int partySlot);
     GraphicsImage *getImage_Buff(std::string_view name);
@@ -54,6 +56,7 @@ class AssetsManager {
     std::unordered_map<std::string, std::unique_ptr<GraphicsImage>> sprites;
     std::unordered_map<std::string, std::unique_ptr<GraphicsImage>> images;
     std::array<std::unique_ptr<GraphicsImage>, 4> customPortraits;
+    std::unique_ptr<GraphicsImage> mm6SelectionFrame;
     bool customPortraitsLoaded = false;
 };
 

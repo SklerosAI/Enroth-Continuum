@@ -620,7 +620,8 @@ void SetUserInterface(PartyAlignment align) {
         ui_btn_npc_right = assets->getIcon(npcArrows.right);
         game_ui_btn_zoomin = assets->getIcon(navigation.zoomIn);
         game_ui_btn_zoomout = assets->getIcon(navigation.zoomOut);
-        game_ui_player_selection_frame = assets->getIcon("IB-selec-C");
+        game_ui_player_selection_frame = engine->gameTitle() == GameTitle::MM6 ?
+            assets->getMM6SelectionFrame() : assets->getIcon("IB-selec-C");
         game_ui_btn_cast = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m1d-c");
         game_ui_btn_rest = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m2d-c");
         game_ui_btn_quickref = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m3d-c");
@@ -676,7 +677,8 @@ void SetUserInterface(PartyAlignment align) {
             "IB-NPCLD-A", "IB-NPCRD-A");
         ui_btn_npc_left = assets->getIcon(npcArrows.left);
         ui_btn_npc_right = assets->getIcon(npcArrows.right);
-        game_ui_player_selection_frame = assets->getIcon("IB-selec-A");
+        game_ui_player_selection_frame = engine->gameTitle() == GameTitle::MM6 ?
+            assets->getMM6SelectionFrame() : assets->getIcon("IB-selec-A");
         game_ui_btn_cast = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m1d-a");
         game_ui_btn_rest = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m2d-a");
         game_ui_btn_quickref = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m3d-a");
@@ -736,7 +738,8 @@ void SetUserInterface(PartyAlignment align) {
         ui_btn_npc_right = assets->getIcon(npcArrows.right);
         game_ui_btn_zoomin = assets->getIcon(navigation.zoomIn);
         game_ui_btn_zoomout = assets->getIcon(navigation.zoomOut);
-        game_ui_player_selection_frame = assets->getIcon("IB-selec-B");
+        game_ui_player_selection_frame = engine->gameTitle() == GameTitle::MM6 ?
+            assets->getMM6SelectionFrame() : assets->getIcon("IB-selec-B");
         game_ui_btn_cast = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m1d-b");
         game_ui_btn_rest = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m2d-b");
         game_ui_btn_quickref = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-m3d-b");

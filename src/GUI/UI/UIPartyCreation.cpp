@@ -627,7 +627,8 @@ GUIWindow_PartyCreation::GUIWindow_PartyCreation() :
     ui_partycreation_top = assets->getIcon("MAKETOP");
     ui_partycreation_sky_scroller = assets->getIcon("MAKESKY");
 
-    ui_partycreation_character_frame = assets->getIcon("aframe1");
+    ui_partycreation_character_frame = engine->gameTitle() == GameTitle::MM6 ?
+        assets->getMM6SelectionFrame() : assets->getIcon("aframe1");
 
     const bool isMM6 = engine->gameTitle() == GameTitle::MM6;
     const int portraitCount = isMM6 ? mm6::kPortraitFaceCount : 22;

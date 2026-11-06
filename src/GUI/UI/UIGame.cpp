@@ -44,6 +44,7 @@
 #include "GUI/GUIButton.h"
 #include "GUI/HudFrameResources.h"
 #include "GUI/HudPortraitAlertResources.h"
+#include "GUI/HudPortraitSelectionResources.h"
 #include "GUI/HudVitalBarResources.h"
 #include "GUI/MM6HudBookControls.h"
 #include "GUI/MM6TopPanelResources.h"
@@ -1169,9 +1170,15 @@ void GameUI_WritePointedObjectStatusString() {
 
 //----- (0044158F) --------------------------------------------------------
 void GameUI_DrawCharacterSelectionFrame() {
-    if (pParty->hasActiveCharacter())
-        render->DrawQuad2D(game_ui_player_selection_frame,
-            {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[pParty->activeCharacterIndex()] - 9, 380});
+    if (pParty->hasActiveCharacter()) {
+        const int index = pParty->activeCharacterIndex();
+        const Sizei frameSize = engine->gameTitle() == GameTitle::MM6 && game_ui_player_selection_frame ?
+            game_ui_player_selection_frame->size() : Sizei();
+        const Pointi position = hudPortraitSelectionPosition(engine->gameTitle(), index,
+            frameSize,
+            {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[index] - 9, 380});
+        render->DrawQuad2D(game_ui_player_selection_frame, position);
+    }
 }
 
 //----- (0044162D) --------------------------------------------------------
@@ -1231,17 +1238,21 @@ void GameUI_DrawPortraits() {
         if (pPlayer->IsEradicated()) {
             pPortrait = game_ui_player_face_eradicated;
             if (pParty->pPartyBuffs[PARTY_BUFF_INVISIBILITY].Active())
-                render->DrawQuad2D(pPortrait, {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i], 387}, colorTable.MediumGrey); // was 388
+                render->DrawQuad2D(pPortrait, hudPortraitFacePosition(engine->gameTitle(), i,
+                    {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i], 387}), colorTable.MediumGrey); // was 388
             else
-                render->DrawQuad2D(pPortrait, {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i] + 1, 387}); // was 388
+                render->DrawQuad2D(pPortrait, hudPortraitFacePosition(engine->gameTitle(), i,
+                    {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i] + 1, 387})); // was 388
             continue;
         }
         if (pPlayer->IsDead()) {
             pPortrait = game_ui_player_face_dead;
             if (pParty->pPartyBuffs[PARTY_BUFF_INVISIBILITY].Active())
-                render->DrawQuad2D(pPortrait, {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i], 388}, colorTable.MediumGrey);
+                render->DrawQuad2D(pPortrait, hudPortraitFacePosition(engine->gameTitle(), i,
+                    {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i], 388}), colorTable.MediumGrey);
             else
-                render->DrawQuad2D(pPortrait, {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i] + 1, 388});
+                render->DrawQuad2D(pPortrait, hudPortraitFacePosition(engine->gameTitle(), i,
+                    {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i] + 1, 388}));
             continue;
         }
 
@@ -1259,7 +1270,8 @@ void GameUI_DrawPortraits() {
             pPlayer->portraitImageIndex = faceTextureIndex - 1;
             pPortrait = game_ui_player_faces[i][pPlayer->portraitImageIndex];  // pFace = (Texture_MM7*)game_ui_player_faces[i][pFrame->uTextureID];
             bool invisible = pParty->pPartyBuffs[PARTY_BUFF_INVISIBILITY].Active();
-            Pointi position(pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i] + (invisible ? 0 : 1), 388);
+            Pointi position = hudPortraitFacePosition(engine->gameTitle(), i,
+                {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i] + (invisible ? 0 : 1), 388});
             if (GraphicsImage *custom = assets->getCustomPortrait(i))
                 render->DrawQuad2D(custom, Recti(Pointi(), custom->size()), Recti(position, pPortrait->size()),
                                    invisible ? colorTable.MediumGrey : colorTable.White);

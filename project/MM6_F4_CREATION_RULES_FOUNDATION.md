@@ -22,4 +22,6 @@ The exporter has three synthetic tests covering valid private output, refusal to
 
 After the Bodybuilding/Meditation factor route was added, the arm64 MM6, MM7 and unit targets built from the integrated tree. The ignored private creation manifest has eighteen HP and eighteen SP factor entries. The complete HP/SP formula and live character sheet are still unverified.
 
+[GrayFace’s mechanics reference](https://grayface.github.io/mm/mechanics/) states that Endurance’s stat effect is multiplied by the class HP factor, while Intellect and/or Personality effects use the class mana factor. This independently supports the factor × stat-bonus shape already used by the MM6 branch. It does not establish base HP/SP, level indexing, promotion retroactivity, equipment/buff order or the displayed final value.
+
 The exact HP/SP bonus and promotion formula remains to be traced and measured; current code combines the confirmed F3 base/factor arrays with the inherited bonus structure **provisionally**. Other class consumers, mastery ceilings, training services, starter items/spells, Quick Start identity, class promotion events, skill ID serialization, generated inventory and full screen/input behavior are still F4/F5 work. The [F4 build graph](MM6_F4_BUILD_GRAPH.md) and [F3 gate](MM6_F3_GATE_REVIEW.md) remain the acceptance authority. No MM7 or MM8 runtime was changed.

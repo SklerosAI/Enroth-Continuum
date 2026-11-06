@@ -12,10 +12,10 @@
 
 namespace {
 
-struct ScopedPartyTime {
-    Time previous = pParty->GetPlayingTime();
+struct ScopedPartyMonth {
+    int previous = pParty->uCurrentMonth;
 
-    ~ScopedPartyTime() { pParty->GetPlayingTime() = previous; }
+    ~ScopedPartyMonth() { pParty->uCurrentMonth = previous; }
 };
 
 EvtInstruction syntheticMonthCompare() {
@@ -28,19 +28,19 @@ EvtInstruction syntheticMonthCompare() {
 
 GAME_TEST(MM6MonthEvent, InterpreterBranchesOnPartyCalendar) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
-    ScopedPartyTime restore;
+    ScopedPartyMonth restore;
     EvtInstruction instruction = syntheticMonthCompare();
     EvtInterpreter interpreter;
 
-    pParty->GetPlayingTime() = Time::fromMonths(4);
+    pParty->uCurrentMonth = 5;
     EXPECT_EQ(interpreter.executeInstruction(instruction).type, EVT_FLOW_NEXT);
 
-    pParty->GetPlayingTime() = Time::fromMonths(5);
+    pParty->uCurrentMonth = 6;
     EvtFlow matched = interpreter.executeInstruction(instruction);
     EXPECT_EQ(matched.type, EVT_FLOW_JUMP);
     EXPECT_EQ(matched.target, 3);
 
-    pParty->GetPlayingTime() = Time::fromMonths(6);
+    pParty->uCurrentMonth = 7;
     EXPECT_EQ(interpreter.executeInstruction(instruction).type, EVT_FLOW_NEXT);
 
     instruction.data.variable_descr.value = 0;

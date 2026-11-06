@@ -22,19 +22,19 @@ UNIT_TEST(MM6MonthOfYear, FirstMapShapeDecodesAsMonthSixBranch) {
     EXPECT_EQ(ir.target_step, 3);
 }
 
-UNIT_TEST(MM6MonthOfYear, ComparesOneBasedMonthsAcrossYearBoundary) {
-    EXPECT_TRUE(mm6::compareMonthOfYear(Time::fromMonths(0), 226, 1));
-    EXPECT_FALSE(mm6::compareMonthOfYear(Time::fromMonths(0), 226, 6));
-    EXPECT_FALSE(mm6::compareMonthOfYear(Time::fromMonths(4), 226, 6));
-    EXPECT_TRUE(mm6::compareMonthOfYear(Time::fromMonths(5), 226, 6));
-    EXPECT_FALSE(mm6::compareMonthOfYear(Time::fromMonths(6), 226, 6));
-    EXPECT_TRUE(mm6::compareMonthOfYear(Time::fromMonths(11), 226, 12));
-    EXPECT_TRUE(mm6::compareMonthOfYear(Time::fromMonths(12), 226, 1));
+UNIT_TEST(MM6MonthOfYear, ComparesZeroBasedMonthCache) {
+    EXPECT_TRUE(mm6::compareMonthOfYear(0, 226, 0));
+    EXPECT_FALSE(mm6::compareMonthOfYear(0, 226, 6));
+    EXPECT_FALSE(mm6::compareMonthOfYear(5, 226, 6));
+    EXPECT_TRUE(mm6::compareMonthOfYear(6, 226, 6));
+    EXPECT_FALSE(mm6::compareMonthOfYear(7, 226, 6));
+    EXPECT_TRUE(mm6::compareMonthOfYear(11, 226, 11));
 }
 
 UNIT_TEST(MM6MonthOfYear, InvalidInputRejects) {
-    EXPECT_THROW(mm6::compareMonthOfYear(Time::fromMonths(0), 225, 1), std::runtime_error);
-    EXPECT_THROW(mm6::compareMonthOfYear(Time::fromMonths(0), 226, 0), std::runtime_error);
-    EXPECT_THROW(mm6::compareMonthOfYear(Time::fromMonths(0), 226, 13), std::runtime_error);
-    EXPECT_THROW(mm6::compareMonthOfYear(Time::fromTicks(-1), 226, 1), std::runtime_error);
+    EXPECT_THROW(mm6::compareMonthOfYear(0, 225, 0), std::runtime_error);
+    EXPECT_THROW(mm6::compareMonthOfYear(0, 226, -1), std::runtime_error);
+    EXPECT_THROW(mm6::compareMonthOfYear(0, 226, 12), std::runtime_error);
+    EXPECT_THROW(mm6::compareMonthOfYear(-1, 226, 0), std::runtime_error);
+    EXPECT_THROW(mm6::compareMonthOfYear(12, 226, 0), std::runtime_error);
 }

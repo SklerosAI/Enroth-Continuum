@@ -433,7 +433,7 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             }
             if (engine->gameTitle() == GameTitle::MM6 &&
                 std::to_underlying(ir.data.variable_descr.type) == 226) {
-                if (mm6::compareMonthOfYear(pParty->GetPlayingTime(), 226, ir.data.variable_descr.value))
+                if (mm6::compareMonthOfYear(pParty->uCurrentMonth, 226, ir.data.variable_descr.value))
                     return {EVT_FLOW_JUMP, ir.target_step};
                 break;
             }
@@ -1017,7 +1017,7 @@ int EvtInterpreter::checkTopicStep(int step) {
         }
         if (engine->gameTitle() == GameTitle::MM6 &&
             std::to_underlying(ir->data.variable_descr.type) == 226) {
-            if (mm6::compareMonthOfYear(pParty->GetPlayingTime(), 226, ir->data.variable_descr.value))
+            if (mm6::compareMonthOfYear(pParty->uCurrentMonth, 226, ir->data.variable_descr.value))
                 return ir->target_step;
             break;
         }

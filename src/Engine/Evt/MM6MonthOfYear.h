@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Core/Time/Time.h"
-
 namespace mm6 {
 
-// Raw MM6 EVT variable 226 is MonthIs, a one-based calendar comparison.
-bool compareMonthOfYear(Time playingTime, int rawId, int value);
+// Raw MM6 EVT variable 226 is MonthIs and compares the zero-based cached
+// party month with a zero-based operand.
+bool compareMonthOfYear(int currentMonth, int rawId, int value);
 
 } // namespace mm6

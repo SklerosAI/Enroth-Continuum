@@ -16,6 +16,10 @@ This is a personal-machine validation note. It contains no game assets.
   engine and logged as item 66, base 20, bonus 3. The test portrait and armor
   file were removed; the installed app now shows Vanilla mode with no override.
 - OpenAL found local audio devices. Playback was not checked by ear.
+- A full-campaign MM7 engine audit is planned in
+  [MM7_AUDIT_CHECKLIST.md](MM7_AUDIT_CHECKLIST.md). The current graphical
+  opening and save/reload check does not establish later map, rule, quest,
+  alignment or ending coverage; the known-good MM7 build remains protected.
 
 ## MM6: implementation checkpoint, not yet playable
 

@@ -68,8 +68,9 @@ have three IDs each; MM6 Cleric ID 3 would index the inherited Knight family.
 The retained MM6 `class.txt` and `skilldes.txt` establish 18 class rows and
 31 skill rows, but not all six numeric starting vectors or legal selection
 sets. `StartingStats` and `StartingSkills` must be extracted before F4, then
-cross-checked against the owned reference card and a controlled original-game
-creation sequence at F3. MM6 Learning is skill ID 30, whereas the inherited
+cross-checked against the owned reference card and original-file evidence in
+F3 where available. Remaining behavior needs an explicit later graphical
+check. MM6 Learning is skill ID 30, whereas the inherited
 enum places Dodge there and Learning at 36. Normal, Expert and Master are the
 MM6 proficiency set; a Grandmaster option would be an inherited leak.
 
@@ -140,18 +141,20 @@ bonus. Preserve MM7 behavior in its isolated runtime.
 1. Obtain the six `StartingStats[class][stat]` vectors and
    `StartingSkills[class][skill]` codes from original MM6 or a trusted local
    reference. Cross-check distribution shape and every class-change reset.
-2. Capture Quick Start's four identities, class/face/voice/stat/skill state,
+2. Recover Quick Start's four identities, class/face/voice/stat/skill state,
    initial inventory, spell flags, gold/food, time, map position and quest
-   flags. Distinguish it from the editable Create Party defaults.
-3. Capture starting equipment and spellbook/known-spell behavior for each
-   selectable base class/skill combination. Resolve every literal collision
-   from the ignored probe against original behavior.
+   flags from original files if possible; otherwise retain a named ambiguity
+   for F4/F5. Distinguish it from the editable Create Party defaults.
+3. Recover starting equipment and spellbook/known-spell rules for each
+   selectable base class/skill combination from source evidence. Resolve
+   every literal collision from the ignored probe before F4; test behavior
+   graphically at F5.
 4. Obtain exact HP/SP bases and per-level/promotion formulas, mastery caps,
    teacher requirements and promotion quest rewards, including retroactive
    effects. Verify serialization IDs before freezing an MM6 save format.
-5. Inventory MM6 portrait/voice/sex and class icon mappings and render the
-   complete creation screen. Check graphical selection, text, item visuals,
-   error state and save/reload before declaring the route playable.
+5. Inventory MM6 portrait/voice/sex and class icon mappings. Rendering and
+   selection, text, item visuals, error state and save/reload are F4/F5 checks
+   before declaring the route playable.
 
 None of these F3 inputs is closed by a documentation-only shape check or by a
 matching enum label. Keep this lane alongside MM7/MM8 tables and UI rather

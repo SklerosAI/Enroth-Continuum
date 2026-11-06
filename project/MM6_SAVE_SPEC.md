@@ -22,7 +22,7 @@ Sizes below are decoded bytes, before the `Games.lod` entry's compression wrappe
 | Revealed map | 875 outline bytes | Two 88 × 11-byte visibility arrays, 1,936 bytes total |
 | Creature records | Count, then 548 bytes each | Same |
 | Ground item records | Count, then 100 bytes each | Same |
-| Chest records | Count, then 4,204 bytes each: 4-byte header, 140 × 28-byte item slots, 140 × 2-byte grid cells | Same |
+| Chest records | Count, then 4,204 bytes each: 4-byte header, 140 × 28-byte item slots, then 280 bytes of unresolved grid/tail data | Same |
 | Doors | 200 × 80-byte fixed records, then variable `int16` arrays. Their computed total length equals `doorsDataSize` in the companion `.blv` header for all 52 maps. | No door section in the observed outdoor layout |
 | Persistent map bytes | 200 bytes | 200 bytes |
 | Tail | 56 bytes, containing visit-time/sky/weather/reserved fields per probe; field semantics and preservation still need verification | Same 56 bytes |
@@ -97,9 +97,14 @@ must be reconciled before a title-specific implementation.
 geometry. MM6's equal fixed door-record size does not prove equal semantics.
 Offline round trips must cover closed, open and mid-motion doors, the variable
 arrays bounded by the base-map header, and invalid face references. Chest
-round trips must cover the MM6 14 × 10 grid, item identity, opened/trap flags,
-loot removal and revisit; the current `ChestTable.cpp` remains an MM7 9 × 9
-table.
+round trips must preserve all 280 bytes after the MM6 item slots while the
+live grid interpretation is unresolved. `dchest.bin` declares 14 × 10
+image/layout metadata, but the pinned editor reader models the delta's final
+280 bytes as 81 grid shorts plus 118 opaque bytes. Both candidate subregions
+are zero across all 1,340 retained baseline chests, so neither interpretation
+is proved. Test a nonzero changed chest to settle the grid before applying
+item placement; verify item identity, opened/trap flags, loot removal and
+revisit. The current `ChestTable.cpp` remains an MM7 9 × 9 table.
 
 `SaveLoad.cpp` copies shipped map deltas at new game, snapshots only the active
 map later, and copies other map blobs into the save. It updates the in-memory

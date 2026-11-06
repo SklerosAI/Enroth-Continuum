@@ -1,6 +1,6 @@
 # MM6 world field map: F2 evidence and gaps
 
-Status: **bounded retained-delta parsing plus source hypotheses, not confirmed runtime semantics** (2026-11-05). The companion report is ignored at `local-game-data/mm6/research-2026-11-05/world-field-probe.json`. It holds per-map fingerprints and counts; this document deliberately includes no map names, decoded rows, or game assets. No original archive was reopened and no partial MM6 runtime was launched. This evidence **supersedes the 14×10 delta-grid assertion in `MM6_WORLD_F2_CLOSURE.md`**: 14×10 is currently an unproven interpretation, not a verified delta format.
+Status: **bounded retained-delta parsing plus source hypotheses, not confirmed runtime semantics** (2026-11-05). The companion report is ignored at `local-game-data/mm6/research-2026-11-05/world-field-probe.json`. It holds per-map fingerprints and counts; this document deliberately includes no map names, decoded rows, or game assets. No original archive was reopened and no partial MM6 runtime was launched. This evidence **corrects the earlier 14×10 delta-grid assertion**, now reflected in `MM6_WORLD_F2_CLOSURE.md`: 14×10 is currently an unproven delta interpretation, not a verified format.
 
 ## Sources and method
 

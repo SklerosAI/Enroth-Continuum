@@ -631,7 +631,7 @@ void OutdoorLocation::Load(std::string_view filename, int days_played, int respa
     this->sky_texture = assets->getBitmap(weather.skyTextureName);
 
     if (engine->config->graphics.SeasonsChange.value())
-        pOutdoor->pTerrain.changeSeason(pParty->uCurrentMonth);
+        pOutdoor->pTerrain.changeSeason(pParty->uCurrentMonth, engine->gameTitle());
 }
 
 //----- (0047EF60) --------------------------------------------------------
@@ -982,7 +982,7 @@ OutdoorLocation::OutdoorLocation() {
     uLastSunlightUpdateMinute = 0;
 
     engine->config->graphics.SeasonsChange.addListener(this, [this](bool seasonsChange) {
-        pTerrain.changeSeason(seasonsChange ? pParty->uCurrentMonth : 6);
+        pTerrain.changeSeason(seasonsChange ? pParty->uCurrentMonth : 6, engine->gameTitle());
         render->ReleaseTerrain();
     });
 }

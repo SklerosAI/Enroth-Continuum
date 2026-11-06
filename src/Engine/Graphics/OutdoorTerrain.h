@@ -6,10 +6,10 @@
 #include "Library/Image/Image.h"
 
 #include "Engine/Data/TileEnums.h"
+#include "Engine/GameTitle.h"
 
 struct TileData;
 struct OutdoorLocation_MM7;
-enum class GameTitle;
 
 /**
  * A note on grid coordinates. In grid coordinates Y-axis points south (down on the minimap), X-axis points east (right
@@ -55,7 +55,7 @@ class OutdoorTerrain {
 
     void createDebugTerrain();
 
-    void changeSeason(int month);
+    void changeSeason(int month, GameTitle gameTitle = GameTitle::MM7);
 
     /**
      * @param gridPos                   Grid coordinates.

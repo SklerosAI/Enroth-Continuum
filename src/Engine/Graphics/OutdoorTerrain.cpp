@@ -30,17 +30,31 @@ void OutdoorTerrain::createDebugTerrain() {
     _tilesets[3] = TILESET_COBBLE_ROAD;
 }
 
-void OutdoorTerrain::changeSeason(int month) {
+void OutdoorTerrain::changeSeason(int month, GameTitle gameTitle) {
     assert(month >= 0 && month <= 11);
-    std::ranges::transform(_originalTileMap.pixels(), _tileMap.pixels().begin(), [&] (int tileId) {
+    auto unchangedTileset = [month](int tileId) {
+        const Tileset tileset = pTileTable->tile(tileId).tileset;
+        return tilesetForSeason(tileset, month) == tileset;
+    };
+    std::ranges::transform(_originalTileMap.pixels(), _tileMap.pixels().begin(), [&](int tileId) {
         const TileData &tileData = pTileTable->tile(tileId);
         Tileset tileset = tilesetForSeason(tileData.tileset, month);
+        if (gameTitle == GameTitle::MM6 && unchangedTileset(tileId))
+            return tileId;
         TileVariant variant = tileset == TILESET_DIRT ? TILE_VARIANT_BASE1 : tileData.variant;
         return pTileTable->tileId(tileset, variant);
     });
 
     // The call below is needed b/c in winter some snow->dirt->grass transitions turn into just snow.
     recalculateTransitions(&_tileMap);
+    if (gameTitle == GameTitle::MM6) {
+        // The shared transition pass uses normalized MM7 tilesets. Keep authored
+        // MM6 tile IDs for every terrain class the season rule did not change.
+        for (int y = 0; y < _tileMap.height(); ++y)
+            for (int x = 0; x < _tileMap.width(); ++x)
+                if (unchangedTileset(_originalTileMap[y][x]))
+                    _tileMap[y][x] = _originalTileMap[y][x];
+    }
 }
 
 float OutdoorTerrain::heightByGrid(Pointi gridPos) const {

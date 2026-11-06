@@ -188,21 +188,56 @@ GAME_TEST(MM6Headless, FirstOutdoorTileSelectors) {
 
     size_t inheritedPending = 0;
     size_t mm6Pending = 0;
+    std::vector<int> authoredIds;
+    std::vector<int> inheritedIds;
+    authoredIds.reserve(127 * 127);
+    inheritedIds.reserve(127 * 127);
     for (int y = 0; y < 127; ++y) {
         for (int x = 0; x < 127; ++x) {
             inheritedPending += pTileTable->tile(inheritedTerrain->tileIdByGrid({x, y})).textureName == "pending";
             mm6Pending += pTileTable->tile(mm6Terrain->tileIdByGrid({x, y})).textureName == "pending";
+            authoredIds.push_back(mm6Terrain->tileIdByGrid({x, y}));
+            inheritedIds.push_back(inheritedTerrain->tileIdByGrid({x, y}));
         }
     }
     EXPECT_EQ(inheritedPending, 209u);
     EXPECT_EQ(mm6Pending, 0u);
 
-    mm6Terrain->changeSeason(6);
+    mm6Terrain->changeSeason(6, GameTitle::MM6);
     size_t postSeasonPending = 0;
+    size_t summerChanges = 0;
+    for (int y = 0; y < 127; ++y)
+        for (int x = 0; x < 127; ++x) {
+            postSeasonPending += pTileTable->tile(mm6Terrain->tileIdByGrid({x, y})).textureName == "pending";
+            summerChanges += mm6Terrain->tileIdByGrid({x, y}) != authoredIds[y * 127 + x];
+        }
+    EXPECT_EQ(postSeasonPending, 0u);
+    EXPECT_EQ(summerChanges, 0u);
+
+    mm6Terrain->changeSeason(0, GameTitle::MM6);
+    size_t preservedMM6Only = 0;
+    size_t changedGrass = 0;
+    for (int y = 0; y < 127; ++y) {
+        for (int x = 0; x < 127; ++x) {
+            const int localId = base->tileMap[y * 128 + x];
+            const int currentId = mm6Terrain->tileIdByGrid({x, y});
+            if (localId >= 162 && localId < 234) {
+                EXPECT_EQ(currentId, authoredIds[y * 127 + x]);
+                ++preservedMM6Only;
+            } else if (localId >= 90 && localId < 126) {
+                changedGrass += currentId != authoredIds[y * 127 + x];
+            }
+        }
+    }
+    EXPECT_GT(preservedMM6Only, 0u);
+    EXPECT_GT(changedGrass, 0u);
+
+    inheritedTerrain->changeSeason(6, GameTitle::MM7);
+    size_t inheritedSeasonChanges = 0;
     for (int y = 0; y < 127; ++y)
         for (int x = 0; x < 127; ++x)
-            postSeasonPending += pTileTable->tile(mm6Terrain->tileIdByGrid({x, y})).textureName == "pending";
-    EXPECT_EQ(postSeasonPending, 0u);
+            inheritedSeasonChanges += inheritedTerrain->tileIdByGrid({x, y}) != inheritedIds[y * 127 + x];
+    EXPECT_GT(inheritedSeasonChanges, 0u);
 
     base->tileTypes[0].tileId = 0;
     EXPECT_THROW(reconstruct(*base, mm6Terrain.get(), GameTitle::MM6), std::exception);
@@ -213,6 +248,7 @@ GAME_TEST(MM6Headless, FirstOutdoorTileSelectors) {
 
     size_t outdoorCount = 0;
     size_t invalidTextures = 0;
+    size_t outdoorSummerChanges = 0;
     for (const std::string &name : pGames_LOD->ls()) {
         if (!name.ends_with(".odm"))
             continue;
@@ -220,6 +256,8 @@ GAME_TEST(MM6Headless, FirstOutdoorTileSelectors) {
         deserializeMM6Outdoor(decodeMM6ArchiveEntry(pGames_LOD->read(name)), location.get());
         auto terrain = std::make_unique<OutdoorTerrain>();
         reconstruct(*location, terrain.get(), GameTitle::MM6);
+        std::vector<int> originalIds;
+        originalIds.reserve(127 * 127);
         for (int y = 0; y < 127; ++y) {
             for (int x = 0; x < 127; ++x) {
                 const int tileId = terrain->tileIdByGrid({x, y});
@@ -227,12 +265,18 @@ GAME_TEST(MM6Headless, FirstOutdoorTileSelectors) {
                 ASSERT_LT(static_cast<size_t>(tileId), pTileTable->tileCount());
                 const std::string &texture = pTileTable->tile(tileId).textureName;
                 invalidTextures += texture.empty() || texture == "pending";
+                originalIds.push_back(tileId);
             }
         }
+        terrain->changeSeason(6, GameTitle::MM6);
+        for (int y = 0; y < 127; ++y)
+            for (int x = 0; x < 127; ++x)
+                outdoorSummerChanges += terrain->tileIdByGrid({x, y}) != originalIds[y * 127 + x];
         ++outdoorCount;
     }
     EXPECT_EQ(outdoorCount, 15u);
     EXPECT_EQ(invalidTextures, 0u);
+    EXPECT_EQ(outdoorSummerChanges, 0u);
 }
 
 TEST(MM6HeadlessFirstOutdoorSpriteEvents, IndexAndTitleIsolation) {

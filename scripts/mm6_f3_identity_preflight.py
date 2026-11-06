@@ -60,6 +60,33 @@ def expected_files(reference: Path) -> tuple[list[dict], dict[str, str]]:
     return entries, ledger_hashes
 
 
+def verify_frozen_inputs(repo: Path, reference: Path, manifest: dict) -> None:
+    """Fail before original-file access if any F2 source/report fingerprint drifts."""
+    repo = repo.resolve()
+    reference = reference.resolve()
+    for label, entries in (("tracked", manifest.get("tracked_sha256")),
+                           ("ignored derived", manifest.get("ignored_derived_sha256"))):
+        if not isinstance(entries, dict) or not entries:
+            raise ValueError(f"F2 freeze manifest lacks {label} hashes")
+        for relative, expected in entries.items():
+            if (not isinstance(relative, str) or not isinstance(expected, str)
+                    or not re.fullmatch(r"[0-9a-f]{64}", expected)):
+                raise ValueError(f"invalid {label} manifest entry")
+            relative_path = PurePosixPath(relative)
+            if not relative_path.parts or relative_path.is_absolute() or ".." in relative_path.parts:
+                raise ValueError(f"unsafe {label} manifest path")
+            path = repo.joinpath(*relative_path.parts)
+            resolved = path.resolve()
+            if not resolved.is_relative_to(repo):
+                raise ValueError(f"{label} manifest path escapes repository")
+            if label == "ignored derived" and not resolved.is_relative_to(reference):
+                raise ValueError("derived report path escapes frozen reference")
+            if not path.is_file() or path.is_symlink():
+                raise ValueError(f"missing or symlinked frozen {label} input: {relative}")
+            if sha256(path) != expected:
+                raise ValueError(f"changed frozen {label} input: {relative}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("original_app_root", type=Path,
@@ -89,6 +116,10 @@ def main() -> None:
         parser.error("reference must stay inside ignored local-game-data/mm6")
     if not output.is_relative_to(reference) or output.suffix.lower() != ".json" or not output.parent.is_dir():
         parser.error("report must be JSON inside the ignored reference directory")
+    try:
+        verify_frozen_inputs(repo, reference, manifest)
+    except ValueError as exc:
+        parser.error(str(exc))
     original = args.original_app_root.resolve(strict=True)
     if not original.is_dir() or original == reference or original.is_relative_to(reference):
         parser.error("original_app_root must be a separate extracted app directory")

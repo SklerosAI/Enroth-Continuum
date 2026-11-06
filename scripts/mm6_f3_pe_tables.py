@@ -14,7 +14,7 @@ from pathlib import Path
 import struct
 import subprocess
 
-from mm6_f3_identity_preflight import expected_files
+from mm6_f3_identity_preflight import expected_files, verify_frozen_inputs
 
 
 SPELLS_VA = 0x4BDD70
@@ -190,6 +190,7 @@ def gate_check(repo: Path, reference: Path, identity_report: Path) -> str:
     if subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=all"],
                                cwd=repo, text=True).strip():
         raise ValueError("tracked worktree must be clean before original executable read")
+    verify_frozen_inputs(repo, reference, manifest)
     if not identity_report.is_file() or not identity_report.is_relative_to(reference):
         raise ValueError("missing ignored F3 identity report")
     identity = json.loads(identity_report.read_text())

@@ -132,3 +132,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a source summary for the `.ec6` logical state-family register, linking current MM7 snapshot loss points to MM6 field-manifest and round-trip obligations.
 - Recorded that exact MM6 save fields and a working writer/reader remain open; no native `.mm6` compatibility is claimed. Checked 49 wiki pages for frontmatter and local links.
+
+## [2026-11-05] guard | MM6 F3 original-file identity
+- by: T-Burton-ND via codex
+- Documented the identity checker's new refusal path: it requires the frozen F2 gate, private freeze manifest, matching source commit and clean tracked tree before opening the original installation.
+- Verified only the script syntax and refusal while F2 remains open; the original files have not been read in F3.

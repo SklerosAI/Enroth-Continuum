@@ -9,6 +9,7 @@
 
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6MonsterPreferences.h"
+#include "Engine/MM6/MM6MonsterSpecialAttack.h"
 
 #include "Library/Logger/Logger.h"
 #include "Library/Serialization/Serialization.h"
@@ -356,7 +357,7 @@ void MonsterStats::Initialize(const Blob &monsters, GameTitle gameTitle) {
     };
 
     // Special-attack cell: "<name>[x<level>]", default level 1, e.g. "BrkArmor", "Diseasex2".
-    auto parseSpecialAttack = [](std::string_view cell, MonsterInfo &info) {
+    auto parseSpecialAttack = [gameTitle](std::string_view cell, MonsterInfo &info) {
         info.specialAttackLevel = 1;
         info.specialAttackType = SPECIAL_ATTACK_NONE;
         if (cell.size() <= 1)
@@ -368,7 +369,9 @@ void MonsterStats::Initialize(const Blob &monsters, GameTitle gameTitle) {
             info.specialAttackLevel = fromString<int>(name.substr(x + 1));
             name = name.substr(0, x);
         }
-        info.specialAttackType = ParseSpecialAttack(name);
+        info.specialAttackType = gameTitle == GameTitle::MM6
+                                     ? mm6::parseMonsterSpecialAttackName(name)
+                                     : ParseSpecialAttack(name);
     };
 
     // Spell cells. Format: "<spell name>,<mastery>[,]<skill>".

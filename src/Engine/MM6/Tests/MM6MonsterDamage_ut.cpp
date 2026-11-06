@@ -10,6 +10,7 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6MonsterDamage.h"
+#include "Engine/MM6/MM6MonsterSpecialAttack.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -105,4 +106,43 @@ UNIT_TEST(MM6MonsterDamage, RetainsSixF3MatchedMonsterResistanceColumns) {
     }
     EXPECT_EQ(rows, 173);
     EXPECT_EQ(immuneCounts, (std::array<int, 6>{18, 14, 13, 45, 5, 54}));
+}
+
+UNIT_TEST(MM6MonsterSpecialAttack, DecodesRetainedAliasesAndGatesUnverifiedEffects) {
+    EXPECT_EQ(mm6::parseMonsterSpecialAttackName("Affraid"), SPECIAL_ATTACK_FEAR);
+    EXPECT_EQ(mm6::parseMonsterSpecialAttackName("Pois2"), SPECIAL_ATTACK_POISON_MEDIUM);
+    EXPECT_EQ(mm6::parseMonsterSpecialAttackName("Pois3"), SPECIAL_ATTACK_POISON_SEVERE);
+    EXPECT_EQ(mm6::parseMonsterSpecialAttackName("BrkArmor "), SPECIAL_ATTACK_BREAK_ARMOR);
+    EXPECT_THROW(mm6::parseMonsterSpecialAttackName("unsupported"), std::runtime_error);
+    EXPECT_NO_THROW(mm6::requireVerifiedMonsterSpecialAttack(GameTitle::MM6, SPECIAL_ATTACK_NONE));
+    EXPECT_THROW(mm6::requireVerifiedMonsterSpecialAttack(GameTitle::MM6, SPECIAL_ATTACK_FEAR),
+                 std::runtime_error);
+    EXPECT_NO_THROW(mm6::requireVerifiedMonsterSpecialAttack(GameTitle::MM7, SPECIAL_ATTACK_FEAR));
+}
+
+UNIT_TEST(MM6MonsterSpecialAttack, CoversAllF3MatchedActiveMonsterRows) {
+    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
+    if (!research)
+        GTEST_SKIP() << "Set ignored MM6 F3 research directory";
+    const std::filesystem::path path = std::filesystem::path(research) / "icons/monsters.txt";
+    std::ifstream stream(path, std::ios::binary);
+    ASSERT_TRUE(stream.is_open());
+    std::string data(std::istreambuf_iterator<char>{stream}, {});
+    MonsterStats stats;
+    stats.Initialize(Blob::fromString(std::move(data)), GameTitle::MM6);
+    int active = 0;
+    int fear = 0;
+    int mediumPoison = 0;
+    int severePoison = 0;
+    for (int rawId = 1; rawId <= 173; ++rawId) {
+        const MonsterSpecialAttack type = stats.infos[static_cast<MonsterId>(rawId)].specialAttackType;
+        active += type != SPECIAL_ATTACK_NONE;
+        fear += type == SPECIAL_ATTACK_FEAR;
+        mediumPoison += type == SPECIAL_ATTACK_POISON_MEDIUM;
+        severePoison += type == SPECIAL_ATTACK_POISON_SEVERE;
+    }
+    EXPECT_EQ(active, 93);
+    EXPECT_EQ(fear, 8);
+    EXPECT_EQ(mediumPoison, 4);
+    EXPECT_EQ(severePoison, 4);
 }

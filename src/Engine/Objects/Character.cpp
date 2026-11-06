@@ -24,6 +24,7 @@
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6MonsterPreferences.h"
+#include "Engine/MM6/MM6MonsterSpecialAttack.h"
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/MM6/MM6SpellItems.h"
 #include "Engine/MM6/MM6SpellLearning.h"
@@ -1520,6 +1521,7 @@ int Character::receiveDamage(signed int amount, DamageType dmg_type) {
 
 //----- (0048DCF6) --------------------------------------------------------
 int Character::ReceiveSpecialAttackEffect(MonsterSpecialAttack attType, Actor *pActor) {  // long function - consider breaking into two??
+    mm6::requireVerifiedMonsterSpecialAttack(engine->gameTitle(), attType);
     if (engine->callObserver) {
         engine->callObserver->notify(CALL_SPECIAL_ATTACK, attType);
     }

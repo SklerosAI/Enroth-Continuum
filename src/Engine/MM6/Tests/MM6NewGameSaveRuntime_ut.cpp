@@ -227,6 +227,8 @@ UNIT_TEST(MM6NewGameSaveRuntime, CapturesAndPublishesFirstMapCacheOnlyAfterWrite
     Party party;
     party.uNumGold = 457;
     party.pos = Vec3f(8, 9, 10);
+    for (Character &character : party.pCharacters)
+        character.name = "Hero";
     NPCStats npcs{};
     Timer timer;
     ActiveOverlayList overlays;

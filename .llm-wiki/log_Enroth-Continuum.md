@@ -571,3 +571,9 @@ Chronological record of wiki activity.
 - The F3-matched retained item rows identify three herbs, one empty bottle, 25 filled bottles and eight unsupported extra bottle templates. MM6 scroll IDs 200–271 overlap inherited MM7 reagent/potion numeric checks.
 - Added a bounded MM6 classifier and pre-mutation guards for character direct use and inventory item-on-item clicks. Unknown herb/potion effects and the overlapping scroll IDs cannot enter inherited MM7 Alchemy or potion logic; MM7 paths are unchanged.
 - Built arm64 MM6 and unit targets; five focused consumable/matrix tests passed with the retained matrix, and the retained item-row type check passed. Actual MM6 effects, marker meanings, consumption, power and bottle return remain closed pending evidence and F5. No original installation was reread or partial MM6 game launched.
+
+## [2026-11-06] ingest | MM6 player-cast transaction
+- by: T-Burton-ND via codex
+- Traced spellbook, quickspell and item routes through target selection, cancellation, pre-effect failure, success and cues. Recorded inherited Escape queue cleanup, held-item relocation and target-pick recovery gaps without enabling casting.
+- Added a pure MM6 First Aid spellbook preflight over private F3-matched mana/recovery and reviewed heal rules; unsupported contexts fail closed and all regular MM6 player effects remain guarded.
+- The integrated arm64 MM6/MM7/unit build passed; 135/135 offline and 438/438 general tests passed. No original installation was reread or partial MM6 game launched.

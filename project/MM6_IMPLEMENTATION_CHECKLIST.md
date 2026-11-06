@@ -142,6 +142,20 @@ that requirement.
   payload lengths of 5, 2 and 1 bytes. Opcode 20 occurs seven times in
   `znwc.evt`; 27 and 28 occur once each in `d09.evt`. Determine field meanings
   and game behavior before implementing them.
+- [x] Compare all 14,477 active EVT record frames against the current C++
+  parser's MM6 minimum sizes, missing cases and known fixed-width consumers.
+  The reproducible `scripts/mm6_probe_event_parser.py` records 318 certain
+  parser failures in the ignored `event-parser-probe.json`: 272 opcode-19
+  monster spawns are shorter than the inherited minimum; nine records use the
+  absent opcodes 20, 27 or 28; six opcode-24 and 19 opcode-26 records would
+  leave bytes unread; and 12 opcode-12 records would leave bytes under the
+  inherited movie interpretation. This is a lower bound, not proof that the
+  remaining 14,159 records have correct meanings or execution behavior.
+  [MM8LevelEditor's MM6 event source](https://github.com/angeld29/mm8leveleditor/blob/master/src/org/gamenet/application/mm8leveleditor/data/mm6/fileFormat/EventFormatMM6.java)
+  supports the 15-byte monster-spawn shape (three one-byte fields plus three
+  four-byte coordinates), the 13-byte monster-modification shape (three
+  integers plus one byte), and a distinct input-dialog operand set. Verify
+  their semantics against the owned scripts before implementation.
 - [x] Pair all 67 listed maps with their `.str` and `.evt` files and check
   established local-string operands against the NUL-delimited string count.
   Of 2,925 such references, 2,400 are in range and 518 out-of-range mouseover
@@ -206,7 +220,7 @@ correct before the F4 readiness gate:
 | Chests | MM6 `dchest.bin` declares 14×10 grids; `ChestTable.cpp` currently hardcodes eight 9×9 MM7 layouts. The 4,204-byte MM6 delta chest record accommodates 140 28-byte items and 140 short grid cells. | Load MM6 chest dimensions and images, reconstruct MM6 chest items and matrices, and verify placement, opening and save/reload without changing MM7 chests. |
 | Outdoor maps | `MM6OutdoorSnapshot.cpp` maps MM6 data into MM7 structures. Offline probes confirm all 15 base/delta layouts; all 921 owned model headers declare zero BSP nodes. `OutdoorLocation::Load` still deserializes `OutdoorDelta_MM7`. | Implement MM6 delta decoding and reconstruction; prove geometry, collision, decoration, spawn, events and persistence across all 15 maps. |
 | Indoor maps | `IndoorLocation::Load` decodes both `.blv` and `.dlv` as `IndoorLocation_MM7` / `IndoorDelta_MM7`; no MM6 indoor snapshot reader exists. Offline probes now confirm all 52 MM6 base and delta section layouts, including MM6's shorter header and record sizes. | Implement MM6 decoding, reconstruction, respawn and delta persistence for all 52 interiors; do not reuse MM7's 40-byte delta header or per-face/per-sprite attribute arrays. |
-| Events | Listed map scripts use opcodes 20, 27 and 28 absent from `EvtEnums.h`; MM6 opcode 12 is a two-field bitmap operation in all 12 active records, while the inherited parser treats it as `EVENT_ShowMovie` | Implement MM6-specific parsing and semantics, then cover every active opcode and event variable |
+| Events | The offline parser audit finds at least 318 deterministic record failures across opcodes 12, 19, 20, 24, 26, 27 and 28. MM6 opcode 12 is a two-field bitmap operation in all 12 active records, while the inherited parser treats it as `EVENT_ShowMovie`. | Implement MM6-specific parsing and semantics, then cover every active opcode and event variable. Do not equate parse coverage with campaign correctness. |
 | Event text | Seven MM6 mouseover IDs exceed their `.str` count without a house-name override. Opcode 5 has 56 uses with an unverified operand; `EVENT_InputString` has 19 uses but its interpreter path currently asserts. | Resolve MM6 hint, location and input-dialog behavior against shipped scripts; keep all map text accessible. |
 | Houses and media | MM6 uses 116 room animation IDs, but none of the corresponding MM7 `pAnimatedRooms` video names appears in the MM6 video indexes; seven `dsounds.bin` names are absent from the sound archive index. All 12 map music IDs have MP3 files. | Implement MM6 room descriptors, reconcile sound aliases/missing names, identify movie triggers, and verify house and map playback. |
 | Character UI | `UIPartyCreation.cpp` allocates nine class icons and 22 portraits and draws MM7 classes including Monk and Thief | Build MM6 custom party and Quick Start paths, portraits, six classes and skills |

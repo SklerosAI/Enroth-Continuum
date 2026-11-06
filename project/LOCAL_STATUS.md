@@ -98,6 +98,11 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   resolve to MM6 bitmaps; opcode 12 needs a title-specific two-field texture
   operation instead of the inherited MM7 movie interpretation. The ignored
   `media-reference-probe.json` records the reproducible checks.
+- A separate offline parser compatibility audit covers every frame in the 68
+  active MM6 EVT files. It finds at least 318 deterministic rejections in the
+  current C++ parser, concentrated in monster spawning and six other opcodes.
+  The private `event-parser-probe.json` keeps per-record offsets and source
+  parser hash for the MM6 implementation pass.
 - A locally retained, ignored copy of the 412-page Prima strategy guide is
   text-searchable. Its chapter outline has been converted into explicit
   campaign-coverage work in the checklist. This is source indexing, not yet a

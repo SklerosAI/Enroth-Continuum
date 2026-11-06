@@ -1476,3 +1476,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - `GUIMessageQueue::haveMessages()` only checks the current frame, while the next frame can later promote a cast. Added a read-only two-frame `hasPendingForSave()` and extended the MM6 scoped save action probe to reject either GUI queue, movement actions and delayed enchant messages before disk work. The title-local idle policy leaves normal SaveLoad closed and does not serialize those actions.
 - Linked `MM6HeldItemSaveFields.*` passed 4/4; monitored private `MM6ZSaveHeadless.*` passed 1/1 over 1,174 samples with no on-screen window or focus change. The stable observation boundary through a full transaction and post-load cursor application remain open. No private bytes or logs entered Git. See [HELD page](MM6-F4-Held-Item.md).
+
+## [2026-11-06] audit | MM6 action observation commit stability
+- by: T-Burton-ND via codex
+- Traced the scoped save from a single idle-action observation through detached preflight, atomic disk write, cache/CHST publication and caller-supplied map-entry callback. The fixed readers do not explicitly pump events before write, but the callback can render/yield or mutate action/UI owners after publication. Failure rollback covers only disk, cache and CHST; a second read-only check cannot guarantee full transaction stability or restore queued work.
+- Documented the production gate: an enforced game-thread no-reentry safe point across all-owner publication and map entry, or complete staged/no-throw action/UI rollback. The GameTest control-state mutex permits handoff at buffer swap and is not a production action-owner lock. No source, tests, private assets or normal SaveLoad guard changed. See [action stability](MM6-F4-Action-Observation-Stability.md).

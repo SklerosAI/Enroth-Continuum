@@ -37,7 +37,35 @@ std::vector<std::uint8_t> copiedBytes(const Blob &blob) {
     return {start, start + blob.size()};
 }
 
+StagedWorldFields stageWorldFromKnown(const NPCStats &liveNpcs,
+                                     const KnownSaveFields &candidate,
+                                     std::span<const std::string> expectedNames) {
+    validateExpectedMapNames(candidate.maps, expectedNames);
+    StagedWorldFields staged;
+    staged.npcs = liveNpcs;
+    staged.npcs.pNPCData = candidate.npcs.npcData;
+    staged.npcs.pGroups = candidate.npcs.groups;
+    staged.npcs.uNumNewNPCs = candidate.npcs.activeCount;
+    for (const SavedMapDelta &delta : candidate.maps.deltas)
+        staged.mapDeltas.emplace(delta.name, Blob::copy(delta.bytes.data(), delta.bytes.size()));
+    return staged;
+}
+
 } // namespace
+
+StagedKnownWorldAndVisuals stageKnownWorldAndVisuals(
+    const NPCStats &liveNpcs, const Timer &liveTimer, const ActiveOverlayList &liveOverlays,
+    std::span<const std::uint8_t> bytes, std::span<const std::string> expectedNames,
+    const MapBaseReader &readBase, const GroundItemVerifier &verifyItem,
+    std::size_t overlayTableCount, GameTitle title) {
+    requireMM6(title);
+    KnownSaveFields known = decodeKnownSaveWithMapBases(bytes, expectedNames, readBase, verifyItem);
+    StagedWorldFields world = stageWorldFromKnown(liveNpcs, known, expectedNames);
+    StagedSessionVisuals visuals = stageSessionVisuals(
+        liveTimer, liveOverlays, {known.metadata.timer, known.metadata.overlays},
+        overlayTableCount, title);
+    return {std::move(known), std::move(world), std::move(visuals)};
+}
 
 void validateOutdoorMapIdentity(MapId currentMapId, const MapTable &mapTable,
                                 std::string_view savedMapName,
@@ -88,16 +116,7 @@ StagedWorldFields stageKnownWorldFields(const NPCStats &liveNpcs,
                                        std::span<const std::string> expectedNames, GameTitle title) {
     requireMM6(title);
     KnownSaveFields candidate = decodeKnownSave(bytes);
-    validateExpectedMapNames(candidate.maps, expectedNames);
-
-    StagedWorldFields staged;
-    staged.npcs = liveNpcs;
-    staged.npcs.pNPCData = std::move(candidate.npcs.npcData);
-    staged.npcs.pGroups = candidate.npcs.groups;
-    staged.npcs.uNumNewNPCs = candidate.npcs.activeCount;
-    for (const SavedMapDelta &delta : candidate.maps.deltas)
-        staged.mapDeltas.emplace(delta.name, Blob::copy(delta.bytes.data(), delta.bytes.size()));
-    return staged;
+    return stageWorldFromKnown(liveNpcs, candidate, expectedNames);
 }
 
 KnownSaveFields captureKnownWorldFromActiveMap(

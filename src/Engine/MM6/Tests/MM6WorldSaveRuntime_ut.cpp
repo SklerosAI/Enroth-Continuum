@@ -81,6 +81,34 @@ std::vector<std::uint8_t> minimalIndoorDelta() {
     return std::vector<std::uint8_t>(8 + 875 + 3 * 4 + 200 * 80 + 200 + 56, 0);
 }
 
+std::vector<std::uint8_t> minimalIndoorBase() {
+    std::vector<std::uint8_t> bytes(136 + 10 * 4, 0);
+    bytes[136 + 4 * 4] = 200; // Fixed MM6 door slots.
+    return bytes;
+}
+
+std::vector<std::uint8_t> minimalOutdoorBase() {
+    return std::vector<std::uint8_t>(160 + 16 + 3 * 128 * 128 + 4 + 4 + 4 + 128 * 128 * 4 + 4, 0);
+}
+
+std::vector<std::uint8_t> minimalOutdoorDelta() {
+    return std::vector<std::uint8_t>(8 + 2 * 88 * 11 + 3 * 4 + 200 + 56, 0);
+}
+
+std::unordered_map<std::string, Blob> validPriorDeltas(const std::vector<std::string> &names) {
+    std::unordered_map<std::string, Blob> deltas;
+    for (const std::string &name : names) {
+        std::vector<std::uint8_t> bytes = name.ends_with(".dlv") ? minimalIndoorDelta() : minimalOutdoorDelta();
+        deltas.emplace(name, Blob::copy(bytes.data(), bytes.size()));
+    }
+    return deltas;
+}
+
+Blob syntheticBase(std::string_view name) {
+    std::vector<std::uint8_t> bytes = name.ends_with(".blv") ? minimalIndoorBase() : minimalOutdoorBase();
+    return Blob::copy(bytes.data(), bytes.size());
+}
+
 } // namespace
 
 UNIT_TEST(MM6WorldSaveRuntime, CapturesAndStagesNonzeroNpcAndCurrentMapOnCopies) {
@@ -117,6 +145,69 @@ UNIT_TEST(MM6WorldSaveRuntime, CapturesAndStagesNonzeroNpcAndCurrentMapOnCopies)
     EXPECT_EQ(staged.mapDeltas.at("o14.ddm").str(), "prior:o14.ddm");
     EXPECT_EQ(destination.pNPCData[70].name, "Old runtime");
     EXPECT_EQ(prior.at("d0.dlv").str(), "prior:d0.dlv");
+}
+
+UNIT_TEST(MM6WorldSaveRuntime, ValidatesAndStagesWorldAndVisualsAsOneDetachedCandidate) {
+    const std::vector<std::string> names = expectedNames();
+    std::unordered_map<std::string, Blob> prior = validPriorDeltas(names);
+    NPCStats liveNpcs{};
+    liveNpcs.uNumNewNPCs = 71;
+    liveNpcs.pNPCData[70].name = "Prior NPC";
+    NPCStats savedNpcs = liveNpcs;
+    savedNpcs.pNPCData[70].name = "Saved NPC";
+    savedNpcs.pGroups[50] = 42;
+    std::vector<std::uint8_t> currentDelta = minimalIndoorDelta();
+    currentDelta[0] = 3;
+    currentDelta[4] = 5;
+    mm6::KnownSaveFields source = mm6::captureKnownWorldFields(
+        seedFields(), savedNpcs, prior, "d0.dlv",
+        currentDelta, names, GameTitle::MM6);
+    source.metadata.timer.elapsedTicks = 123456;
+    source.metadata.overlays[4].tableIndex = 3;
+    source.metadata.overlays[4].animationLength = 10;
+    source.metadata.overlays[4].x = -17;
+    std::vector<std::uint8_t> bytes = mm6::encodeKnownSave(source);
+
+    Timer liveTimer;
+    ActiveOverlayList liveOverlays;
+    liveOverlays.pOverlays[4].screenSpaceX = 99;
+    mm6::StagedKnownWorldAndVisuals staged = mm6::stageKnownWorldAndVisuals(
+        liveNpcs, liveTimer, liveOverlays, bytes, names, syntheticBase,
+        [](std::int32_t id) { return id >= 1 && id <= 580; }, 5, GameTitle::MM6);
+    EXPECT_EQ(staged.known.core.party.playingTicks, 42);
+    EXPECT_EQ(staged.world.npcs.pNPCData[70].name, "Saved NPC");
+    EXPECT_EQ(staged.world.npcs.pGroups[50], 42);
+    EXPECT_EQ(staged.world.mapDeltas.at("d0.dlv").size(), minimalIndoorDelta().size());
+    EXPECT_EQ(static_cast<const std::uint8_t *>(staged.world.mapDeltas.at("d0.dlv").data())[0], 3);
+    EXPECT_EQ(static_cast<const std::uint8_t *>(staged.world.mapDeltas.at("d0.dlv").data())[4], 5);
+    EXPECT_EQ(staged.world.mapDeltas.size(), 67);
+    EXPECT_EQ(staged.visuals.timer.time().ticks(), 123456);
+    EXPECT_TRUE(staged.visuals.timer.isPaused());
+    EXPECT_EQ(staged.visuals.overlays.pOverlays[4].screenSpaceX, -17);
+    EXPECT_EQ(liveNpcs.pNPCData[70].name, "Prior NPC");
+    EXPECT_EQ(liveTimer.time().ticks(), 0);
+    EXPECT_EQ(liveOverlays.pOverlays[4].screenSpaceX, 99);
+
+    source.metadata.overlays[49].tableIndex = 5;
+    source.metadata.overlays[49].animationLength = 1;
+    bytes = mm6::encodeKnownSave(source);
+    EXPECT_THROW((void) mm6::stageKnownWorldAndVisuals(
+        liveNpcs, liveTimer, liveOverlays, bytes, names, syntheticBase,
+        [](std::int32_t) { return true; }, 5, GameTitle::MM6), std::exception);
+    EXPECT_EQ(liveNpcs.pNPCData[70].name, "Prior NPC");
+    EXPECT_EQ(liveOverlays.pOverlays[4].screenSpaceX, 99);
+
+    source.metadata.overlays[49] = {};
+    source.maps.deltas.back().bytes.pop_back();
+    bytes = mm6::encodeKnownSave(source);
+    EXPECT_THROW((void) mm6::stageKnownWorldAndVisuals(
+        liveNpcs, liveTimer, liveOverlays, bytes, names, syntheticBase,
+        [](std::int32_t) { return true; }, 5, GameTitle::MM6), std::exception);
+    EXPECT_EQ(liveNpcs.pNPCData[70].name, "Prior NPC");
+    EXPECT_EQ(prior.at("d0.dlv").size(), minimalIndoorDelta().size());
+    EXPECT_THROW((void) mm6::stageKnownWorldAndVisuals(
+        liveNpcs, liveTimer, liveOverlays, mm6::encodeKnownSave(source), names, syntheticBase,
+        [](std::int32_t) { return true; }, 5, GameTitle::MM7), std::exception);
 }
 
 UNIT_TEST(MM6WorldSaveRuntime, OutdoorIdentityJoinsCurrentMapTableHeadAndManifest) {

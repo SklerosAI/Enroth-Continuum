@@ -1,16 +1,20 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
 #include <span>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 
 #include "MM6KnownSaveFields.h"
+#include "MM6MapSaveValidation.h"
 
 #include "Engine/GameTitle.h"
 #include "Engine/MapEnums.h"
 #include "Engine/Tables/NPCTable.h"
+#include "Engine/Graphics/Overlays.h"
+#include "Engine/Timer.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -22,6 +26,22 @@ struct StagedWorldFields {
     NPCStats npcs;
     std::unordered_map<std::string, Blob> mapDeltas;
 };
+
+struct StagedKnownWorldAndVisuals {
+    KnownSaveFields known;
+    StagedWorldFields world;
+    StagedSessionVisuals visuals;
+};
+
+// Validate the entire current known-section set and all 67 base/delta pairs,
+// then stage map/NPC buffers and paused timer/overlays on detached copies.
+// This is partial: Party, active-map reconstruction and PID rebinding remain
+// outside the result, so it cannot be committed to a live MM6 session.
+StagedKnownWorldAndVisuals stageKnownWorldAndVisuals(
+    const NPCStats &liveNpcs, const Timer &liveTimer, const ActiveOverlayList &liveOverlays,
+    std::span<const std::uint8_t> bytes, std::span<const std::string> expectedNames,
+    const MapBaseReader &readBase, const GroundItemVerifier &verifyItem,
+    std::size_t overlayTableCount, GameTitle title);
 
 // The outdoor object has no filename. Check the current MM6 engine map ID
 // against the loaded MM6 map table, HEAD and the private 67-name delta set.

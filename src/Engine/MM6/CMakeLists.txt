@@ -34,7 +34,8 @@ if(OE_BUILD_TESTS)
     target_check_style(test_engine_mm6_voice_sound)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_voice_sound)
 
-    add_library(test_engine_mm6_chest_guard OBJECT Tests/MM6ChestGenerationGuard_ut.cpp)
+    add_library(test_engine_mm6_chest_guard OBJECT Tests/MM6ChestGenerationGuard_ut.cpp
+        Tests/MM6ChestOuterPlan_ut.cpp)
     target_link_libraries(test_engine_mm6_chest_guard PUBLIC testing_unit engine_objects)
     target_check_style(test_engine_mm6_chest_guard)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_chest_guard)

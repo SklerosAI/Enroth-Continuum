@@ -99,6 +99,31 @@ void validate(const HirelingSaveFields &fields) {
 
 } // namespace
 
+std::array<HirelingCorrespondence, 2> inspectHirelingCorrespondence(
+    const HirelingSaveFields &hirelings, const NpcSaveFields &npcs) {
+    (void) encodeHirelingSection(hirelings);
+    (void) encodeNpcSection(npcs);
+
+    std::array<HirelingCorrespondence, 2> result;
+    for (size_t slot = 0; slot < result.size(); ++slot) {
+        const NPCData &hireling = hirelings.hirelings[slot];
+        HirelingCorrespondence &match = result[slot];
+        match.occupied = !hireling.name.empty();
+        if (!match.occupied)
+            continue;
+        for (int index = 0; index < npcs.activeCount; ++index) {
+            const NPCData &candidate = npcs.npcData[index];
+            if (candidate.name != hireling.name || candidate.portraitId != hireling.portraitId ||
+                candidate.profession != hireling.profession)
+                continue;
+            ++match.exactCandidates;
+            if (candidate.flags & NPC_HIRED)
+                ++match.hiredCandidates;
+        }
+    }
+    return result;
+}
+
 SaveSection encodeHirelingSection(const HirelingSaveFields &fields) {
     validate(fields);
     std::vector<std::uint8_t> bytes;

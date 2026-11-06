@@ -108,3 +108,45 @@ UNIT_TEST(MM6HirelingSaveFields, RejectsWrongTitleAndCorruptContainer) {
     bytes.back() ^= 1;
     EXPECT_THROW((void) mm6::decodeSaveContainer(bytes), std::exception);
 }
+
+UNIT_TEST(MM6HirelingSaveFields, CorrespondenceDoesNotRequireQuestFollowerInPartySlots) {
+    mm6::HirelingSaveFields hirelings;
+    mm6::NpcSaveFields npcs;
+    npcs.activeCount = 4;
+    npcs.npcData[3].name = "Quest follower";
+    npcs.npcData[3].flags = NPC_HIRED;
+    auto result = mm6::inspectHirelingCorrespondence(hirelings, npcs);
+    EXPECT_EQ(result[0], mm6::HirelingCorrespondence());
+    EXPECT_EQ(result[1], mm6::HirelingCorrespondence());
+}
+
+UNIT_TEST(MM6HirelingSaveFields, CorrespondenceReportsButDoesNotEnforceTableFlag) {
+    mm6::HirelingSaveFields hirelings = exampleFields();
+    mm6::NpcSaveFields npcs;
+    npcs.activeCount = 11;
+    npcs.npcData[10] = hirelings.hirelings[0];
+    auto result = mm6::inspectHirelingCorrespondence(hirelings, npcs);
+    EXPECT_EQ(result[0], (mm6::HirelingCorrespondence{true, 1, 1}));
+    EXPECT_EQ(result[1], (mm6::HirelingCorrespondence{true, 0, 0})); // Generated or renamed copy.
+
+    npcs.npcData[10].flags &= ~NPC_HIRED; // An event can clear the table flag only.
+    result = mm6::inspectHirelingCorrespondence(hirelings, npcs);
+    EXPECT_EQ(result[0], (mm6::HirelingCorrespondence{true, 1, 0}));
+}
+
+UNIT_TEST(MM6HirelingSaveFields, CorrespondenceExposesAmbiguityAndRejectsInvalidInputs) {
+    mm6::HirelingSaveFields hirelings = exampleFields();
+    mm6::NpcSaveFields npcs;
+    npcs.activeCount = 4;
+    for (int index = 1; index < 4; ++index)
+        npcs.npcData[index] = hirelings.hirelings[0];
+    npcs.npcData[2].flags &= ~NPC_HIRED;
+    auto result = mm6::inspectHirelingCorrespondence(hirelings, npcs);
+    EXPECT_EQ(result[0], (mm6::HirelingCorrespondence{true, 3, 2}));
+
+    npcs.activeCount = 502;
+    EXPECT_THROW((void) mm6::inspectHirelingCorrespondence(hirelings, npcs), std::exception);
+    npcs.activeCount = 4;
+    hirelings.hirelings[0].profession = static_cast<NpcProfession>(78);
+    EXPECT_THROW((void) mm6::inspectHirelingCorrespondence(hirelings, npcs), std::exception);
+}

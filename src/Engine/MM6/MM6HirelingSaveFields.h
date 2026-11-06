@@ -14,6 +14,8 @@ struct Party;
 
 namespace mm6 {
 
+struct NpcSaveFields;
+
 struct SavedSacrificeStatus {
     bool inProgress = false;
     std::int64_t elapsedTicks = 0;
@@ -27,6 +29,20 @@ struct HirelingSaveFields {
     std::array<std::string, 2> displayNames;
     std::array<SavedSacrificeStatus, 2> sacrifice;
 };
+
+// An exact same-name/portrait/profession candidate is evidence for a possible
+// source record, not proof of identity. Generated NPCs and event mutations can
+// legitimately leave a party copy with no hired RESC match.
+struct HirelingCorrespondence {
+    bool occupied = false;
+    std::uint16_t exactCandidates = 0;
+    std::uint16_t hiredCandidates = 0;
+
+    bool operator==(const HirelingCorrespondence &) const = default;
+};
+
+std::array<HirelingCorrespondence, 2> inspectHirelingCorrespondence(
+    const HirelingSaveFields &hirelings, const NpcSaveFields &npcs);
 
 SaveSection encodeHirelingSection(const HirelingSaveFields &fields);
 HirelingSaveFields decodeHirelingSection(const SaveContainer &container);

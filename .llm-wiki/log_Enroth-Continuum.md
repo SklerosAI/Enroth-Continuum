@@ -189,3 +189,9 @@ Chronological record of wiki activity.
 - Linked pinned VID/SND directory-width leads and twelve retained portrait-frame candidates, keeping original bytes and audiovisual behavior for F3/F5.
 - Classified late printed item-guide evidence, a gem identity dispute and held-item event signatures without claiming executable effects. Exact names, values and event offsets remain ignored locally.
 - Checked 51 wiki pages for frontmatter and local links; the only unresolved example links are template placeholders in the schema page.
+
+## [2026-11-05] ingest | MM6 F2 family and guide closure
+- by: T-Burton-ND via codex
+- Linked the six nonliteral-load table roles, nine extra STR resources, media trigger joins, full 61-page manual and five-page card review, and all 11 NWC guide pages to the agent handoff and source index.
+- Recorded the guarded 23-input F3 identity and capture runbook; frozen evidence will include text/TSV ledgers and guide PDFs. No original installation was read or partial MM6 game launched.
+- Kept exact per-ID rows, guide claims and media names in ignored local reports; F2 remained open at this ingest. Synthetic preflight tests passed and 51 wiki pages had no broken local links.

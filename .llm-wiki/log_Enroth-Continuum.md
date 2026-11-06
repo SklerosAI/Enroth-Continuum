@@ -1533,3 +1533,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A read-only trace of the F3-matched staged executable confirmed that the outdoor tile accessor adds the authored selector base to the local tile byte without a month operand. The retained tile table has 882 rows and 59 duplicate raw tileset/variant pairs; global tile ID must remain the exact art key.
 - The current changed-grass/transition season route still uses a lossy MM7-normalized lookup. Full original season behavior is unproved, so the audit records a source-backed implementation gate rather than changing runtime art speculatively. No private records or executable bytes entered Git.
+
+## [2026-11-06] audit | MM6 outdoor grid mutation boundary
+- by: T-Burton-ND via codex
+- A follow-up F3-matched executable trace located the original 16,384-byte grid load, save and direct accessor paths. It found no grid-byte write in the accessor region, while pointer aliases and calendar-dependent rendering or palette changes remain unclosed.
+- The terrain schema packet now names the exact remaining evidence needed before changing MM6 seasonal projection. No runtime behavior or private source bytes were published.

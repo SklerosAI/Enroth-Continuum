@@ -666,3 +666,8 @@ Chronological record of wiki activity.
 - Integrated the bounded MM6 quest-bit party-state path, read-only house room resolver, explicit six-column monster resistance view and stricter sixteen-section `.ec6` disk validation. The quest path omits unproved MM6 journal/audio cues; house entry, unproved damage channels and live SaveLoad remain gated.
 - The combined arm64 MM6, OpenEnroth and unit targets built. The offline runner passed 152/152 tests from 47 suites without skips, including private retained inputs; the general suite passed 438/438. Public status, build graph and agent handoff record this checkpoint.
 - The original installation and partial MM6 game were not opened; only the ignored local references and owner profile were used. MM7's app/profile and the reserved MM8 checkout were untouched.
+
+## [2026-11-06] guard | MM6 monster special attack labels
+- by: T-Burton-ND via codex
+- The title-specific parser retains all 93 active special-attack labels from the F3-matched monster table. Eight misspelled fear and three shortened poison labels no longer become `NONE`. The MM6 effect consumer now rejects every nonempty special attack before inherited MM7 observer, random or state mutation; MM7 retains its parser and effects.
+- The arm64 MM6, OpenEnroth and unit targets built, and seven focused monster damage/special-attack tests passed with retained private input. Original MM6 condition, inventory and cue rules remain open, so this does not establish combat playability. No original installation or MM6 process was opened.

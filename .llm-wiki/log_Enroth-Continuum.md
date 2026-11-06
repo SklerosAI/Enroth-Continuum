@@ -153,3 +153,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Updated the monster source summary after direct page-image identity and selected-field checks reached all 171 printed variants; two retained IDs remain outside the guide catalog.
 - Clarified that older queue semantic counters measure a narrower review state. Full effects, sprites/spawns and live combat remain open; exact rows/images stay private.
+
+## [2026-11-05] ingest | MM6 monster description and spawn joins
+- by: T-Burton-ND via codex
+- Added a retained-data/source packet and probe joining all 173 descriptions to text rows, animation names to the frame index, and candidate actor IDs to baseline map deltas.
+- Recorded the candidate ID 173 versus the current MM6 loader's final-description discard, with F3 confirmation and F4/F5 acceptance required. Exact names and placements stay ignored locally.

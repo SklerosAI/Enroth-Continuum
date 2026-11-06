@@ -20,6 +20,7 @@
 #include "Engine/MM6/MM6Archive.h"
 #include "Engine/MM6/MM6EncounterMonster.h"
 #include "Engine/MapEnumFunctions.h"
+#include "Engine/mm7_data.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/Monsters.h"
 #include "Engine/Party.h"
@@ -232,6 +233,12 @@ GAME_TEST(MM6Headless, FirstOutdoorPreparation) {
     game.runGameRoutine([firstMap] {
         pParty->Reset();
         engine->_currentLoadedMapId = firstMap;
+        // DoPrepareWorld normally sizes these AI scratch arrays before it
+        // calls loadAndPrepareODM. This focused probe enters at that later
+        // seam and must establish the same precondition.
+        const int actorLimit = engine->config->gameplay.MaxActors.value();
+        ai_near_actors_targets_pid.resize(actorLimit, Pid());
+        ai_near_actors_ids.resize(actorLimit);
         pGameLoadingUI_ProgressBar->Initialize(GUIProgressBar::TYPE_Fullscreen);
         loadAndPrepareODM(firstMap, /* bLoading = */ true);
     });

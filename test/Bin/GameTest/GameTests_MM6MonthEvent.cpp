@@ -44,5 +44,8 @@ GAME_TEST(MM6MonthEvent, InterpreterBranchesOnPartyCalendar) {
     EXPECT_EQ(interpreter.executeInstruction(instruction).type, EVT_FLOW_NEXT);
 
     instruction.data.variable_descr.value = 0;
+    pParty->uCurrentMonth = 0;
+    EXPECT_EQ(interpreter.executeInstruction(instruction).type, EVT_FLOW_JUMP);
+    instruction.data.variable_descr.value = 12;
     EXPECT_THROW((void) interpreter.executeInstruction(instruction), std::runtime_error);
 }

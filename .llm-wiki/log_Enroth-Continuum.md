@@ -168,3 +168,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Linked pinned MMExtension process-image leads for the MM6 spell, house-movie and transport tables to the F3 matrix and media source summary.
 - Recorded that these addresses require exact-version PE mapping and owner-executable validation; no original executable value was read or declared verified.
+
+## [2026-11-05] ingest | MM6 event execution seams
+- by: T-Burton-ND via codex
+- Added the whole-program load barrier: current parsing rejects 318 records across 26 listed map scripts, so all-resource parsing precedes side-effect work.
+- Recorded the separate zero-mastery skill-check conflict and its F3/F4/F5 checks. Exact events and operands remain ignored locally; no live quest outcome was claimed.

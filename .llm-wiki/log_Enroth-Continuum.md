@@ -61,3 +61,9 @@ Chronological record of wiki activity.
 - Linked the world wire-section roundtrip, house-route audit, potion-guide reconciliation, and campaign-route audit from the source/probe index and handoff.
 - Added source summaries for world, rules, and campaign closure packets; updated the architecture, structural findings, workstreams, and open questions with their static evidence and F4/F5 obligations.
 - Kept exact recipes and per-record findings private; recorded that the draft F3 preflight matrix is not a passed gate. Checked 30 wiki pages for frontmatter and local links.
+
+## [2026-11-05] ingest | MM6 table, spell and media F2 audits
+- by: T-Burton-ND via codex
+- Added source summaries and probe links for the 30-family table parser audit, 99-spell static audit, and portrait/icon/font/voice consumer audit.
+- Recorded the 100-row award loader skip, four spell target-label collisions, inherited spell-item range gap, and retained portrait-name mismatch as source findings without live behavior claims.
+- Updated handoff, architecture, structural findings, workstreams and open questions; kept detailed IDs and private reports ignored. Checked 33 wiki pages for frontmatter and local links.

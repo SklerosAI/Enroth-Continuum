@@ -183,3 +183,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Linked pinned source leads for six-class creation arrays and the inherited Cleric mana-ID collision to the F3 handoff.
 - Prepared a PE-table helper for creation, spell, house and opaque transport candidate spans. Synthetic tests and the open-gate refusal passed; the owner's executable was not read.
+
+## [2026-11-05] ingest | MM6 media schema and late item guide
+- by: T-Burton-ND via codex
+- Linked pinned VID/SND directory-width leads and twelve retained portrait-frame candidates, keeping original bytes and audiovisual behavior for F3/F5.
+- Classified late printed item-guide evidence, a gem identity dispute and held-item event signatures without claiming executable effects. Exact names, values and event offsets remain ignored locally.
+- Checked 51 wiki pages for frontmatter and local links; the only unresolved example links are template placeholders in the schema page.

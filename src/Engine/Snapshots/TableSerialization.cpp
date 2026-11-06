@@ -80,7 +80,6 @@ void deserialize(const Blob &src, MonsterList *dst, GameTitle gameTitle) {
     deserialize(src, &monsters, tags::append, tags::each, tags::via<MonsterDesc_MM6>);
     if (monsters.size() != 173)
         throw Exception("Invalid MM6 monster list size, expected 173, got {}", monsters.size());
-    monsters.pop_back(); // The final entry is unused in MM6 too.
 
     dst->monsters.fill(MonsterDesc());
     for (size_t i = 0; i < monsters.size(); i++)

@@ -19,3 +19,11 @@ set(ENGINE_SERIALIZATION_HEADERS
 add_library(engine_serialization STATIC ${ENGINE_SERIALIZATION_SOURCES} ${ENGINE_SERIALIZATION_HEADERS})
 target_link_libraries(engine_serialization PUBLIC engine library_binary library_snapshots)
 target_check_style(engine_serialization)
+
+if(OE_BUILD_TESTS)
+    add_library(test_engine_serialization OBJECT Tests/MM6MonsterList_ut.cpp)
+    target_link_libraries(test_engine_serialization PUBLIC testing_unit engine_serialization)
+    target_check_style(test_engine_serialization)
+
+    target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_serialization)
+endif()

@@ -522,6 +522,11 @@ void reconstruct(const Item_MM7 &src, Item *dst) {
 }
 
 void snapshot(const Party &src, Party_MM7 *dst) {
+    if (engine && engine->gameTitle() == GameTitle::MM6)
+        throw std::runtime_error("MM7 party snapshot cannot represent MM6 party state");
+    for (const Character &character : src.pCharacters)
+        if (character.inventory.capacity() != 126)
+            throw std::runtime_error("MM7 party snapshot cannot represent MM6 physical item slots");
     memzero(dst);
 
     dst->field_0 = 25; // Vanilla set this to 25, so we're doing the same just in case.
@@ -648,6 +653,11 @@ void snapshot(const Party &src, Party_MM7 *dst) {
 }
 
 void reconstruct(const Party_MM7 &src, Party *dst) {
+    if (engine && engine->gameTitle() == GameTitle::MM6)
+        throw std::runtime_error("MM7 party reconstruction cannot represent MM6 party state");
+    for (const Character &character : dst->pCharacters)
+        if (character.inventory.capacity() != 126)
+            throw std::runtime_error("MM7 party reconstruction cannot represent MM6 physical item slots");
     dst->Zero();
 
     dst->height = src.partyHeight;
@@ -784,6 +794,8 @@ void reconstruct(const CharacterConditions_MM7 &src, CharacterConditions *dst) {
 }
 
 void snapshot(const Character &src, Character_MM7 *dst) {
+    if (src.inventory.capacity() != 126)
+        throw std::runtime_error("MM7 character snapshot cannot represent MM6 physical item slots");
     memzero(dst);
 
     snapshot(src.conditions, &dst->conditions);
@@ -901,6 +913,8 @@ void snapshot(const Character &src, Character_MM7 *dst) {
 }
 
 void reconstruct(const Character_MM7 &src, Character *dst, ContextTag<int> characterIndex) {
+    if (dst->inventory.capacity() != 126)
+        throw std::runtime_error("MM7 character reconstruction cannot represent MM6 physical item slots");
     dst->Zero();
     reconstruct(src.conditions, &dst->conditions);
 
@@ -1155,6 +1169,8 @@ void snapshot(const CharacterInventory &src, Character_MM7 *dst) {
 }
 
 void reconstruct(const Character_MM7 &src, CharacterInventory *dst, ContextTag<int> characterIndex) {
+    if (dst->capacity() != 126)
+        throw std::runtime_error("MM7 inventory reconstruction cannot represent MM6 physical item slots");
     *dst = CharacterInventory();
 
     std::array<bool, 126> processed = {{}};

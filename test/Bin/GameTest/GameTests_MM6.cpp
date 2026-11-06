@@ -142,6 +142,21 @@ GAME_TEST(MM6Headless, OriginalCharacterItemCapacity) {
     inheritedSnapshot.inventoryItems[0].itemId = 73;
     EXPECT_THROW(snapshot(pParty->pCharacters[0].inventory, &inheritedSnapshot), std::runtime_error);
     EXPECT_EQ(inheritedSnapshot.inventoryItems[0].itemId, 73);
+    EXPECT_THROW(snapshot(pParty->pCharacters[0], &inheritedSnapshot), std::runtime_error);
+    EXPECT_EQ(inheritedSnapshot.inventoryItems[0].itemId, 73);
+    EXPECT_THROW(reconstruct(inheritedSnapshot, &pParty->pCharacters[0], tags::context(0)), std::runtime_error);
+    EXPECT_EQ(pParty->pCharacters[0].inventory.entry(137)->itemId, item.itemId);
+    EXPECT_THROW(reconstruct(inheritedSnapshot, &pParty->pCharacters[0].inventory, tags::context(0)), std::runtime_error);
+    EXPECT_EQ(pParty->pCharacters[0].inventory.entry(137)->itemId, item.itemId);
+
+    auto inheritedParty = std::make_unique<Party_MM7>();
+    inheritedParty->partyHeight = 73;
+    EXPECT_THROW(snapshot(*pParty, inheritedParty.get()), std::runtime_error);
+    EXPECT_EQ(inheritedParty->partyHeight, 73);
+    pParty->uNumGold = 4242;
+    EXPECT_THROW(reconstruct(*inheritedParty, pParty), std::runtime_error);
+    EXPECT_EQ(pParty->uNumGold, 4242);
+    EXPECT_EQ(pParty->pCharacters[0].inventory.entry(137)->itemId, item.itemId);
 }
 
 GAME_TEST(MM6Headless, FirstOutdoorResourcePreflight) {

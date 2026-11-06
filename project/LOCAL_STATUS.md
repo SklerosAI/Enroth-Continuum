@@ -649,3 +649,10 @@ headless suite passed **51/51** over 1,513 monitored samples without a visible
 window or focus change, and
 the MM7 control passed **1/1**. Provisional ITEM v1 still cannot save the extra
 slots or raw bytes, so normal MM6 SaveLoad remains guarded.
+
+The inherited MM7 party and character serializers now reject MM6 party or
+138-slot character state at their entry points before destination mutation;
+the direct inventory reconstruction path has the same capacity guard. The
+updated focused test checks sentinels after rejection. The full MM6 headless
+suite passed **51/51** over 1,504 monitored samples, an MM7 save/load control
+passed **1/1**, and rebuilt non-MM6-prefix unit checks passed **438/438**.

@@ -12,9 +12,15 @@ The standalone `MM6AtomicSaveFile` component provides the disk boundary for a fu
 
 `FileSystem` and `NativeFileSystem` expose no rename or sync operation. RAM/custom user filesystems and trace replay therefore cannot use this helper as written; the future SaveLoad adapter must branch at the native profile boundary and keep those cases disabled or implement a separate transaction contract. Windows is explicitly unsupported by this POSIX implementation. The MM7 save path remains separate.
 
+## Read-only MM6 slot inventory
+
+`listKnownSaveSlots(profileRoot)` scans only the native MM6 profile's `saves` directory. It accepts ASCII `.ec6` basenames and `.ec6.bak` companions, ignores `.mm7`, temporary and unrelated files, and returns sorted filename, saved `HEAD` metadata and a `needsRecovery` flag. Each candidate must decode all sixteen known sections. A valid primary wins; a backup appears only when the primary is absent or has invalid known fields. A malformed slot with no valid candidate is omitted. The listing never restores a backup or changes files; a recovery-needed entry must go through `loadRecoverableSaveFile` before a future load. A symlinked save directory or candidate file is rejected rather than traversed.
+
+This is a menu source seam, not a menu integration or a complete save guarantee. The current known-field decoder does not verify the private 67-name map set or every base/delta pair, and unresolved runtime state is outside its sixteen sections. The MM6 SaveLoad guard stays closed.
+
 ## Offline verification
 
-Three focused C++ tests cover initial write and replacement, prior-save backup, CRC-valid malformed-section and missing-primary recovery, rejection of wrong-title, partial and malformed known-save candidates, invalid destination rejection, and injected failures before temp write, after one byte of a temp write, before backup replacement and before primary replacement. The arm64 MM6/MM7/unit targets built and all three focused tests passed. No partial MM6 game or original game installation was opened.
+The arm64 MM6/MM7/unit targets built and all four focused atomic-save tests passed. They cover initial write and replacement, prior-save backup, CRC-valid malformed-section and missing-primary recovery, rejection of wrong-title, partial and malformed known-save candidates, invalid destination rejection, and injected failures before temp write, after one byte of a temp write, before backup replacement and before primary replacement. The slot-listing test checks valid primary, backup-only, malformed-primary/valid-backup, malformed-only, symlink and wrong-title/temporary cases without modifying any candidate. No partial MM6 game or original game installation was opened.
 
 ## Remaining integration gates
 

@@ -53,6 +53,8 @@ The [IFOV section](MM6-F4-Indoor-Face-Overrides.md) captures changed indoor face
 
 The [raw item authority decision](MM6-F4-Raw-Item-Authority.md) adds an exact 28-byte `ItemRecord28` to detached SHOP stock. Item/shop/clock tests pass **10/10** and the integrated private-backed MM6/LOD gate passes **345/345**. Provisional `ITEM` and `HELD` v1 preserve only current-runtime logical values; both need a native-byte-preserving redesign before live save admission. The original inventory/held/ground framing and mutation paths must be proved before extending the shared value type to those owners.
 
+The newer [raw INVR section](MM6-F4-Raw-Inventory-Section.md) preserves the pinned MMExtension MM6 physical layout of 138 items, 126 grid words and 16 equipment words per character without asserting slot activity. It remains detached from Party and outside the eighteen-section known-save manifest. Integrated checks passed **5/5** focused, **347/347** private-backed MM6/LOD and **437/437** general non-MM6 unit tests. Resolve native use of physical slots 127–138 and live mutation ownership before replacing provisional ITEM v1; MM7 remains protected.
+
 ## Authority and source order
 
 | Question | Start with | Supporting source |

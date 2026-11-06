@@ -634,3 +634,11 @@ make carried, held, ground or chest runtime items lossless. The provisional
 `ITEM` and `HELD` logical `.ec6` sections derive from inherited `Item` and omit
 native MM6 trailing bytes, so the final save manifest needs raw item owners
 and context-specific adapters before live MM6 SaveLoad opens.
+
+The detached `INVR` v1 section now preserves four characters' 138 physical
+28-byte item records, 126 grid words and 16 equipment words each, following a
+pinned MMExtension MM6 layout. Focused checks passed **5/5**, the private-backed
+MM6/LOD gate **347/347** and general non-MM6 unit gate **437/437**. It is outside
+the provisional known-save manifest and has no live Party owner. Whether the
+original executable activates item slots beyond the current 126-record runtime
+capacity remains unresolved; no normal MM6 inventory/save route opens yet.

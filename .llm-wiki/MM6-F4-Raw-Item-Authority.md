@@ -21,7 +21,7 @@ Which representation should own MM6 item bytes when the inherited runtime uses a
 
 ## Decision
 
-Use `ItemRecord28` as the exact byte value for proven 28-byte contexts. Detached SHOP stock now uses it; chest records already retain full raw bytes in a sidecar. Future inventory, cursor and ground use requires separate original-source framing and mutation proof. The linked item/shop suites pass 10/10 and the private-backed MM6/LOD gate passes 345/345. Live SaveLoad stays guarded.
+Use `ItemRecord28` as the exact byte value for proven 28-byte contexts. Detached SHOP stock now uses it; chest records already retain full raw bytes in a sidecar. A layout-backed [detached INVR section](MM6-F4-Raw-Inventory-Section.md) retains all 138 physical character records and raw index tables, but original slot activity and runtime mutation rules remain unproved. Cursor and ground use require separate evidence. The linked item/shop suites pass 10/10 and the private-backed MM6/LOD gate passes 345/345 before INVR; live SaveLoad stays guarded.
 
 ## Rejected alternatives
 
@@ -31,4 +31,4 @@ Do not infer original MM6 byte 26 from MM7's lich-jar index or synthesize MM7 ex
 
 Revisit the ownership split if original inventory/held/ground evidence shows a different record size or lifecycle, or if a checked full conversion proves that a raw sidecar is unnecessary for a specific category. Any final manifest change needs nonzero round trips and before-mutation rejection tests.
 
-See also: [Shop Item Conversion Gate](MM6-F4-Shop-Item-Record-Conversion-Gate.md), [Chest Runtime Projection](MM6-F4-Chest-Runtime-Projection.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).
+See also: [Shop Item Conversion Gate](MM6-F4-Shop-Item-Record-Conversion-Gate.md), [Chest Runtime Projection](MM6-F4-Chest-Runtime-Projection.md), [Raw Inventory Section](MM6-F4-Raw-Inventory-Section.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

@@ -111,6 +111,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Shop Owner Field Gate](MM6-F4-Shop-Owner-Field-Gate.md) — Why SCLK is the only complete proved commerce field and stock still lacks a safe keyed owner
 - [MM6 F4 Shop Item Record Conversion Gate](MM6-F4-Shop-Item-Record-Conversion-Gate.md) — Original 28-byte stock fields cannot yet map reversibly into the inherited 36-byte MM7 item
 - [MM6 F4 Raw Item Authority](MM6-F4-Raw-Item-Authority.md) — Byte-preserving MM6 item owner for proven contexts; provisional ITEM/HELD schemas need revision
+- [MM6 F4 Raw Inventory Section](MM6-F4-Raw-Inventory-Section.md) — Detached INVR v1 preserves 138 physical item records and raw index words per character
 - [MM6 F4 Shop Purchase-Write Gate](MM6-F4-Shop-Purchase-Write-Gate.md) — Linked 28-byte purchase mutation and detached physical SHOP section; live service owner remains open
 - [MM6 F4 Shop Shared-Edge Refresh](MM6-F4-Shop-Shared-Edge-Refresh.md) — Linked original stock/deadline arbitration and failure-atomic detached refresh seam; live service remains gated
 - [MM6 F4 Shop Shared Row Access Audit](MM6-F4-Shop-Shared-Row-Access-Audit.md) — Direct source access families and remaining indirect-writer, nonzero-save and item-conversion blockers

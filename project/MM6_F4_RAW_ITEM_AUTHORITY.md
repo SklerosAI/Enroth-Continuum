@@ -6,10 +6,12 @@ The accepted original-executable shop trace transfers all 28 bytes on purchase a
 
 The provisional `.ec6` `ITEM` v1 and `HELD` v1 fields are logical snapshots of the current `Item` runtime. `MM6DurableSaveFields::DurableItem` stores separate potion/gold/enchantment scalars, flags and an eight-byte expiration; `MM6DurableSaveRuntime` captures them from `Item` and reconstructs a new `Item`. `MM6HeldItemSaveFields` does the same for the cursor. Neither logical form contains original MM6 byte 26 or 27, and the added expiration has no source in a 28-byte MM6 record. Their current-runtime round trips do not prove native MM6 item fidelity. `MM6ChestRuntimeProjection` keeps the full raw 28-byte chest record as a sidecar but only checks a 24-byte `Item_MM7` projection. The shop, chest and future inventory/held/ground adapters must therefore not treat `Item_MM7` as the byte authority.
 
+A follow-up [detached INVR section](MM6_F4_RAW_INVENTORY_SECTION.md) preserves the 138 physical item slots, 126 grid words and 16 equipment words described by the pinned MMExtension MM6 layout. It remains outside live Party, the known-save manifest and native-save import. Whether the original executable can activate the twelve slots beyond the current runtime's 126-record character capacity remains to be proved.
+
 ## Migration order
 
 1. Keep `ItemRecord28` as the exact byte value for source-proven 28-byte records. Retain context ownership: SHOP physical rows and chest/map sidecars have different lifetimes and mutation rules.
-2. Prove native inventory, held and ground record framing and mutation paths against the accepted source before assigning this type to those contexts. Capture nonzero examples privately; publish only aggregate findings.
+2. Use the third-party layout-backed detached inventory owner to preserve physical bytes while proving native inventory, held and ground mutation paths against the accepted source. Capture nonzero examples privately; publish only aggregate findings.
 3. Define per-context title-specific views for display, equipment, generation and effects. Each view may interpret only fields whose category and flags are source-backed; keep unknown bytes with the raw owner and update only the bytes a proved operation changes.
 4. Revise the final `.ec6` manifest so each item-bearing context can round-trip its raw owner plus placement/index information. Supersede the provisional `ITEM`/`HELD` v1 payloads rather than silently treating their logical fields as native MM6 records. Reject older provisional saves before live mutation unless an explicit migration can recover every required byte.
 5. Add late-failure and nonzero mutation tests for transfer, save, quit, reload and title isolation before opening normal MM6 SaveLoad.

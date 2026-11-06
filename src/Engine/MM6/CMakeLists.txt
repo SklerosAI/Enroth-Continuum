@@ -13,6 +13,7 @@ add_library(engine_mm6_save_container STATIC MM6SaveContainer.cpp MM6SaveContain
     MM6ChestSaveFields.cpp MM6ChestSaveFields.h
     MM6ShopGuildClockFields.cpp MM6ShopGuildClockFields.h
     MM6ShopStockFields.cpp MM6ShopStockFields.h MM6ShopStockPurchase.h MM6ItemRecord28.h
+    MM6RawInventoryFields.cpp MM6RawInventoryFields.h
     MM6BeaconSaveFields.cpp MM6BeaconSaveFields.h
     MM6ShopRefreshBoundary.cpp MM6ShopRefreshBoundary.h
     MM6KnownSaveFields.cpp MM6KnownSaveFields.h)
@@ -105,6 +106,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6ChestSaveFields_ut.cpp Tests/MM6ShopGuildClockFields_ut.cpp
         Tests/MM6ShopStockFields_ut.cpp
         Tests/MM6ItemRecord28_ut.cpp
+        Tests/MM6RawInventoryFields_ut.cpp
         Tests/MM6KnownSaveFields_ut.cpp
         Tests/MM6PotionCombinations_ut.cpp)
     target_link_libraries(test_engine_mm6_save_container PUBLIC testing_unit engine_mm6_save_container engine_tables)

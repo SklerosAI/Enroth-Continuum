@@ -148,3 +148,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Updated the spell source summary with all-99 six-facet C++ comparisons, including 70 conflicting source effects, 27 limited candidates, two unresolved UI continuations and 96 unresolved recovery facets.
 - Kept the detailed per-ID locators private and did not claim any verified running spell. F2 remains open and F3 has not read originals.
+
+## [2026-11-05] ingest | Full MM6 monster catalog visual coverage
+- by: T-Burton-ND via codex
+- Updated the monster source summary after direct page-image identity and selected-field checks reached all 171 printed variants; two retained IDs remain outside the guide catalog.
+- Clarified that older queue semantic counters measure a narrower review state. Full effects, sprites/spawns and live combat remain open; exact rows/images stay private.

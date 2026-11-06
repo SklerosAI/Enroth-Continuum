@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <optional>
 #include <string>
 
 class Blob;
@@ -28,5 +29,21 @@ class RoomDescriptors {
 // Reads only a generated private profile manifest. The fields are not yet
 // wired to MM6 house entry, which remains guarded before inherited effects.
 RoomDescriptors decodeRoomDescriptors(const Blob &source);
+
+enum class HouseRoomKind {
+    Room,
+    Blank,
+    Terminal,
+};
+
+struct HouseRoomSelection {
+    HouseRoomKind kind;
+    std::optional<RoomDescriptor> room;
+};
+
+// Classifies a retained MM6 house reference without opening a house, movie, or
+// sound. A blank table cell and terminal pseudo-house have no room descriptor.
+HouseRoomSelection selectHouseRoom(const RoomDescriptors &rooms, int houseId,
+                                   std::optional<int> roomId);
 
 } // namespace mm6

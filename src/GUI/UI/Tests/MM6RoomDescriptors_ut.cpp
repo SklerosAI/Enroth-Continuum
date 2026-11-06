@@ -73,16 +73,29 @@ TEST(MM6RoomDescriptors, RetainedRowsAndActiveHouseEntries) {
         const std::string key = std::to_string(houseId);
         if (!houseRows.contains(key)) {
             EXPECT_TRUE(houseId == 600 || houseId == 601);
+            const mm6::HouseRoomSelection selected = mm6::selectHouseRoom(rooms, houseId, std::nullopt);
+            EXPECT_EQ(selected.kind, mm6::HouseRoomKind::Terminal);
+            EXPECT_FALSE(selected.room.has_value());
             ++terminalEvents;
             continue;
         }
         const Json &value = houseRows.at(key).at("room_id");
         if (value.is_null()) {
+            const mm6::HouseRoomSelection selected = mm6::selectHouseRoom(rooms, houseId, std::nullopt);
+            EXPECT_EQ(selected.kind, mm6::HouseRoomKind::Blank);
+            EXPECT_FALSE(selected.room.has_value());
             ++blankEvents;
             continue;
         }
         const int roomId = value.get<int>();
-        ASSERT_FALSE(rooms.at(roomId).videoName.empty());
+        const mm6::HouseRoomSelection selected = mm6::selectHouseRoom(rooms, houseId, roomId);
+        ASSERT_EQ(selected.kind, mm6::HouseRoomKind::Room);
+        ASSERT_TRUE(selected.room.has_value());
+        EXPECT_EQ(selected.room->videoName, rooms.at(roomId).videoName);
+        EXPECT_EQ(selected.room->background, rooms.at(roomId).background);
+        EXPECT_EQ(selected.room->npcPicture, rooms.at(roomId).npcPicture);
+        EXPECT_EQ(selected.room->rawHouseType, rooms.at(roomId).rawHouseType);
+        EXPECT_EQ(selected.room->soundGroup, rooms.at(roomId).soundGroup);
         activeRoomIds.insert(roomId);
         ++numericEvents;
     }
@@ -100,6 +113,13 @@ TEST(MM6RoomDescriptors, RejectsMalformedManifestBeforeUse) {
     const mm6::RoomDescriptors valid = mm6::decodeRoomDescriptors(Blob::fromString(source));
     EXPECT_THROW(valid.at(-1), std::exception);
     EXPECT_THROW(valid.at(119), std::exception);
+    EXPECT_THROW(mm6::selectHouseRoom(valid, 0, 1), std::exception);
+    EXPECT_THROW(mm6::selectHouseRoom(valid, 558, 1), std::exception);
+    EXPECT_THROW(mm6::selectHouseRoom(valid, 1, 0), std::exception);
+    EXPECT_THROW(mm6::selectHouseRoom(valid, 1, 119), std::exception);
+    EXPECT_THROW(mm6::selectHouseRoom(valid, 600, 1), std::exception);
+    EXPECT_EQ(mm6::selectHouseRoom(valid, 1, std::nullopt).kind, mm6::HouseRoomKind::Blank);
+    EXPECT_EQ(mm6::selectHouseRoom(valid, 601, std::nullopt).kind, mm6::HouseRoomKind::Terminal);
 
     Json document = Json::parse(source);
     document.at("rooms")[1]["video_name"] = "../bad";

@@ -89,4 +89,24 @@ RoomDescriptors decodeRoomDescriptors(const Blob &source) {
     return candidate;
 }
 
+HouseRoomSelection selectHouseRoom(const RoomDescriptors &rooms, int houseId,
+                                   std::optional<int> roomId) {
+    if (houseId == 600 || houseId == 601) {
+        if (roomId)
+            throw std::runtime_error("MM6 terminal house must not carry a room ID");
+        return {HouseRoomKind::Terminal, std::nullopt};
+    }
+    if (houseId < 1 || houseId > 557)
+        throw std::runtime_error("MM6 house ID is outside the retained table");
+    if (!roomId)
+        return {HouseRoomKind::Blank, std::nullopt};
+    if (*roomId < 1 || *roomId > 118)
+        throw std::runtime_error("MM6 house room ID is outside usable descriptors");
+
+    const RoomDescriptor &room = rooms.at(*roomId);
+    if (room.videoName.empty())
+        throw std::runtime_error("MM6 house room has no file-backed movie name");
+    return {HouseRoomKind::Room, room};
+}
+
 } // namespace mm6

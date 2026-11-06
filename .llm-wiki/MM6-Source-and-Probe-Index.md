@@ -31,6 +31,7 @@ This index directs agents to the current public specifications and reproducible 
 | Starting-array schema lead, potion-guide reconciliation and rules acceptance | [Rules F2 closure packet](../project/MM6_RULES_F2_CLOSURE.md) |
 | All 99 spell IDs, inherited effect and item-range collisions | [Spell effect F2 audit](../project/MM6_SPELL_EFFECT_F2.md) |
 | All 99 spell guide locators and selected visual claim checks | [Spell guide claims F2](../project/MM6_SPELL_GUIDE_CLAIMS_F2.md) |
+| All 99 printed spell recovery categories and original-delay extraction target | [Spell recovery F2](../project/MM6_SPELL_RECOVERY_F2.md) |
 | Map deltas, reset, versioned save, persistence | [Save and map](../project/MM6_SAVE_SPEC.md) |
 | Whole-save logical state families and `.ec6` field-manifest handoff | [Save field register F2](../project/MM6_SAVE_FIELD_REGISTER_F2.md) |
 | Retained delta section roundtrip and world consumer obligations | [World F2 closure packet](../project/MM6_WORLD_F2_CLOSURE.md) |

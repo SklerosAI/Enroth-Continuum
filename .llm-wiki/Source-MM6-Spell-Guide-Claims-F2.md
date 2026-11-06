@@ -10,4 +10,6 @@ The [spell guide packet](../project/MM6_SPELL_GUIDE_CLAIMS_F2.md) and [probe](..
 
 The later six-facet C++ source screen covers every spell ID's dispatch, mana, recovery, targeting, damage/duration and effect branch. It classifies 70 source effects as conflicting, 27 as limited candidates and two UI continuations as unresolved; recovery is unresolved for 96. These categories are source comparisons, not original or current runtime outcomes. The private matrix holds locators and per-ID F4/F5 checks.
 
+The separate [recovery ledger](../project/MM6_SPELL_RECOVERY_F2.md) assigns a printed baseline recovery category to all 99 spells and records 84 explicit Expert/Master category cells. A pinned MMExtension MM6 structure supplies three signed hard-coded delay-field locations per spell, but no numeric table. Zero full original delay triples are verified; all 96 unresolved recovery facets remain open for the one F3 executable read. Guide categories are qualitative bounds, not runnable MM6 timing constants.
+
 See also: [MM6 Spell Effect F2 Source](Source-MM6-Spell-Effect-F2.md), [MM6 Source and Probe Index](MM6-Source-and-Probe-Index.md), [Open Questions](Open-Questions.md).

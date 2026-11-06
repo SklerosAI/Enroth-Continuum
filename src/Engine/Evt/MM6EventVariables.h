@@ -1,0 +1,49 @@
+#pragma once
+
+#include <cstdint>
+
+// MM6 EVT operands are one-byte IDs. Their ranges differ from MM7's EvtVariable
+// enum even where the numeric values happen to collide.
+enum class MM6VariableFamily : std::uint8_t {
+    Invalid,
+    SharedCandidate,
+    Resistance,
+    Skill,
+    Condition,
+    MapByte,
+    OtherTitleSpecific,
+};
+
+enum class MM6VariableScope : std::uint8_t {
+    Unknown,
+    Character,
+    Map,
+};
+
+struct MM6VariableDescriptor {
+    MM6VariableFamily family;
+    MM6VariableScope scope;
+    int index; // Zero-based within the family; -1 when unresolved.
+
+    // Shared candidates retain the inherited path provisionally. All known
+    // title-specific ranges require a real MM6 executor before side effects.
+    constexpr bool canUseInheritedExecutor() const {
+        return family == MM6VariableFamily::SharedCandidate;
+    }
+};
+
+constexpr MM6VariableDescriptor describeMM6Variable(int rawId) {
+    if (rawId >= 1 && rawId <= 45)
+        return {MM6VariableFamily::SharedCandidate, MM6VariableScope::Unknown, rawId};
+    if (rawId >= 46 && rawId <= 55)
+        return {MM6VariableFamily::Resistance, MM6VariableScope::Character, rawId - 46};
+    if (rawId >= 56 && rawId <= 86)
+        return {MM6VariableFamily::Skill, MM6VariableScope::Character, rawId - 56};
+    if (rawId >= 87 && rawId <= 104)
+        return {MM6VariableFamily::Condition, MM6VariableScope::Character, rawId - 87};
+    if (rawId >= 105 && rawId <= 204)
+        return {MM6VariableFamily::MapByte, MM6VariableScope::Map, rawId - 105};
+    if (rawId >= 205 && rawId <= 226)
+        return {MM6VariableFamily::OtherTitleSpecific, MM6VariableScope::Unknown, -1};
+    return {MM6VariableFamily::Invalid, MM6VariableScope::Unknown, -1};
+}

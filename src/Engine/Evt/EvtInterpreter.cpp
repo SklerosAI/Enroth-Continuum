@@ -11,6 +11,7 @@
 #include "Engine/Evt/EvtInstruction.h"
 #include "Engine/Evt/EvtVariables.h"
 #include "Engine/Evt/MM6EventRules.h"
+#include "Engine/Evt/MM6EventVariables.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Party.h"
 #include "Engine/Graphics/Indoor.h"
@@ -721,6 +722,12 @@ EvtContinuation EvtInterpreter::continuation(int step) const {
 }
 
 bool EvtInterpreter::validateVariableValue(const EvtInstruction &ir) const {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        const int rawId = std::to_underlying(ir.data.variable_descr.type);
+        if (!describeMM6Variable(rawId).canUseInheritedExecutor())
+            throw Exception("MM6 evt variable {} needs a title-specific executor", rawId);
+    }
+
     if (isEvtVariableValueValid(ir.opcode, ir.data.variable_descr.type, ir.data.variable_descr.value))
         return true;
 

@@ -60,7 +60,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial sixteen-section `.ec6` candidate, cross-field checks and remaining save gaps
 - [MM6 F4 Timed Buffs](MM6-F4-Timed-Buffs.md) — Bounded BUFF fields for party/character effects and open runtime/F5 checks
 - [MM6 F4 Hireling State](MM6-F4-Hireling-State.md) — HIRE party copies, sacrifice progress and bounded MM6 NPC lookup
-- [MM6 F4 Atomic Save File](MM6-F4-Atomic-Save-File.md) — Known-field `.ec6` replacement/recovery and read-only native slot inventory
+- [MM6 F4 Atomic Save File](MM6-F4-Atomic-Save-File.md) — Known-field `.ec6` replacement, read-only slot inventory and semantic load preflight
 - [MM6 F4 Save Remainder](MM6-F4-Save-Remainder.md) — Field, consumer and lifetime inventory after core/durable/metadata/NPC/MAPS, including raw resistance staging
 - [MM6 F4 Held Item](MM6-F4-Held-Item.md) — HELD section, MM6 icon preflight and cursor restoration boundary
 - [MM6 F4 Recovery and Calendar](MM6-F4-Recovery-Calendar.md) — Required `.ec6` RCVR state, derived calendar and active-rest/turn guards

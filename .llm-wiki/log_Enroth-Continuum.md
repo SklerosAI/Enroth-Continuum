@@ -67,3 +67,9 @@ Chronological record of wiki activity.
 - Added source summaries and probe links for the 30-family table parser audit, 99-spell static audit, and portrait/icon/font/voice consumer audit.
 - Recorded the 100-row award loader skip, four spell target-label collisions, inherited spell-item range gap, and retained portrait-name mismatch as source findings without live behavior claims.
 - Updated handoff, architecture, structural findings, workstreams and open questions; kept detailed IDs and private reports ignored. Checked 33 wiki pages for frontmatter and local links.
+
+## [2026-11-05] correction | MM6 chest delta and creation audit
+- by: T-Burton-ND via codex
+- Corrected the delta-chest claim: separate 14×10 layout metadata does not prove the final 280 delta bytes form that grid; both candidate splits are zero in retained baselines.
+- Added source summaries and probe links for world fields and party creation, including inherited Thief, starter-item category collisions and the missing distinct MM6 Quick Start path.
+- Updated handoff, architecture, questions and navigation while retaining F2/F3 uncertainty and private per-record reports. Checked 35 wiki pages for frontmatter and local links.

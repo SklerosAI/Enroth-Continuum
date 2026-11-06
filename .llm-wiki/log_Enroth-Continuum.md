@@ -137,3 +137,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Documented the identity checker's new refusal path: it requires the frozen F2 gate, private freeze manifest, matching source commit and clean tracked tree before opening the original installation.
 - Verified only the script syntax and refusal while F2 remains open; the original files have not been read in F3.
+
+## [2026-11-05] ingest | MM6 monster catalog and offline build graph
+- by: T-Burton-ND via codex
+- Added the 173-ID monster catalog source summary with direct-image, OCR, page-order and no-catalog evidence states, plus selected guide/data field discrepancies.
+- Linked the draft F4 dependency graph and its offline acceptance seams from the agent handoff and source index. F4 has not begun; F2 remains open and F3 unrun.
+- Kept exact monster values/images private and checked 51 wiki pages for frontmatter and local links.

@@ -707,3 +707,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The 21 private transport manifest houses match the 21 retained stable/boat service rows exactly, and all have validated MM6 rooms. A pure three-slot selector now requires that title-specific join and a valid weekday before exposing scheduled, nongated routes. Blank, uncertain, special and quest-gated choices remain absent; house entry, payment, movement and autosave remain disabled.
 - The arm64 MM6/MM7/unit binary contains the selector. Seven focused house/transport tests passed with owner-only manifests and retained data, including missing room/manifest and foreign-input rejection. No original installation or MM6 process was opened.
+
+## [2026-11-06] guard | MM6 fixed-gold event values
+- by: T-Burton-ND via codex
+- The F3-matched retained EVT ledger has 147 raw-ID-21 uses across twelve active resources: 14 Compare, 111 Add and 22 Subtract, with operands 1–250000 and no Set. A tracked aggregate checker rehashes all 68 active EVT files and runs in the offline suite.
+- MM6 now compares party gold once, preflights grants for signed overflow and stops a short payment before mutation. Valid Add/Subtract writes apply the checked balance silently, avoiding inherited MM7 sound/status cues. Unsupported Set and negative input reject; MM7 keeps its prior route. Arm64 MM6/OpenEnroth/unit targets built and three focused tests passed. The next full offline run, MM6 cues and F5 reward/payment/save observation remain open. No original installation or MM6 process was opened.

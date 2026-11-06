@@ -16,6 +16,8 @@ The later [campaign closure packet](../project/MM6_CAMPAIGN_F2_CLOSURE.md) and [
 
 The [opcode packet](../project/MM6_OPCODE_SEMANTICS_F2.md) now covers all 43 active values and retained payload shapes across 68 EVT files and 14,477 records. Seven highlighted opcode values conflict with inherited parsing/execution or have no cases, and MM6-width variable instructions still enter inherited MM7 variable dispatch. This closes a structural register only; it does not settle side effects or campaign reachability. The [F2 gate review](../project/MM6_F2_GATE_REVIEW.md) remains open.
 
-Authority: [project/MM6_EVENT_CAMPAIGN_SPEC.md](../project/MM6_EVENT_CAMPAIGN_SPEC.md), reviewed 2026-11-05. Keep detailed topic IDs, script offsets, strings and graph edges in ignored local reports.
+The [extra-STR role packet](../project/MM6_UNLISTED_STR_ROLES_F2.md) classifies all nine string resources outside the 67 listed map pairs. Five have same-basename extra EVT partners with no listed/base map; crossed byte-identical halves cannot establish a safe alias. Three standalone resources are opening/win/loss narrative candidates, and one is table-shaped. Original callers, active/reserved status and visible endings remain F3/F4/F5 questions. The 68 listed/global EVT baseline excludes these extras.
+
+Authority: [project/MM6_EVENT_CAMPAIGN_SPEC.md](../project/MM6_EVENT_CAMPAIGN_SPEC.md) and [extra-STR role packet](../project/MM6_UNLISTED_STR_ROLES_F2.md), reviewed 2026-11-05. Keep detailed topic IDs, script offsets, strings and graph edges in ignored local reports.
 
 See also: [MM6 Opcode Semantics F2 Source](Source-MM6-Opcode-Semantics-F2.md), [MM6 Campaign F2 Closure Source](Source-MM6-Campaign-F2-Closure.md), [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md), [Open Questions](Open-Questions.md), [MM6 F2 Workstreams](MM6-F2-Workstreams.md).

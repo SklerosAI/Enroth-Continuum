@@ -18,6 +18,7 @@ from pathlib import Path, PurePosixPath
 
 LEDGERS = ("archive-sha256.txt", "media-executable-sha256.txt")
 EXPECTED_COUNT = 8
+MUSIC_COUNT = 15
 
 
 def sha256(path: Path) -> str:
@@ -60,10 +61,42 @@ def expected_files(reference: Path) -> tuple[list[dict], dict[str, str]]:
     return entries, ledger_hashes
 
 
+def expected_music_files(reference: Path) -> tuple[list[dict], str]:
+    manifest_path = reference / "music-manifest.json"
+    if not manifest_path.is_file() or manifest_path.is_symlink():
+        raise ValueError("missing retained music manifest")
+    rows = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(rows, list) or len(rows) != MUSIC_COUNT:
+        raise ValueError(f"expected {MUSIC_COUNT} retained music entries")
+    entries = []
+    seen = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("invalid retained music entry")
+        name, size, expected = row.get("file"), row.get("bytes"), row.get("sha256")
+        if (not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9_-]+\.mp3", name)
+                or isinstance(size, bool) or not isinstance(size, int) or size <= 0
+                or not isinstance(expected, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", expected)):
+            raise ValueError("invalid retained music name, size or hash")
+        if name.casefold() in seen:
+            raise ValueError("duplicate retained music name")
+        seen.add(name.casefold())
+        entries.append({"relative_path": f"Sounds/{name}", "expected_sha256": expected.lower(),
+                        "expected_size_bytes": size, "source_ledger": "music-manifest.json"})
+    return entries, sha256(manifest_path)
+
+
 def verify_frozen_inputs(repo: Path, reference: Path, manifest: dict) -> None:
     """Fail before original-file access if any F2 source/report fingerprint drifts."""
     repo = repo.resolve()
     reference = reference.resolve()
+    if not isinstance(manifest, dict) or manifest.get("schema") != 1:
+        raise ValueError("invalid F2 freeze manifest schema")
+    derived = manifest.get("ignored_derived_sha256")
+    required = {str((reference / name).relative_to(repo))
+                for name in (*LEDGERS, "music-manifest.json")}
+    if not isinstance(derived, dict) or not required.issubset(derived):
+        raise ValueError("F2 freeze manifest lacks original identity inputs")
     for label, entries in (("tracked", manifest.get("tracked_sha256")),
                            ("ignored derived", manifest.get("ignored_derived_sha256"))):
         if not isinstance(entries, dict) or not entries:
@@ -102,7 +135,12 @@ def main() -> None:
     manifest_path = repo / "local-game-data/mm6/research-2026-11-05/F2_FREEZE_MANIFEST.json"
     if not manifest_path.is_file():
         parser.error("missing ignored F2 freeze manifest")
-    manifest = json.loads(manifest_path.read_text())
+    try:
+        manifest = json.loads(manifest_path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        parser.error(f"invalid F2 freeze manifest: {exc}")
+    if not isinstance(manifest, dict):
+        parser.error("invalid F2 freeze manifest structure")
     current_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
     if manifest.get("source_commit") != current_commit:
         parser.error("source commit differs from the frozen F2 manifest")
@@ -116,6 +154,10 @@ def main() -> None:
         parser.error("reference must stay inside ignored local-game-data/mm6")
     if not output.is_relative_to(reference) or output.suffix.lower() != ".json" or not output.parent.is_dir():
         parser.error("report must be JSON inside the ignored reference directory")
+    if output.exists():
+        parser.error("F3 identity report already exists; preserve the first comparison")
+    if subprocess.run(["git", "check-ignore", "-q", str(output)], cwd=repo).returncode != 0:
+        parser.error("F3 identity report path must be Git ignored")
     try:
         verify_frozen_inputs(repo, reference, manifest)
     except ValueError as exc:
@@ -126,17 +168,22 @@ def main() -> None:
 
     try:
         entries, ledger_hashes = expected_files(reference)
-    except ValueError as exc:
+        music_entries, music_hash = expected_music_files(reference)
+        entries.extend(music_entries)
+        ledger_hashes["music-manifest.json"] = music_hash
+    except (ValueError, OSError, json.JSONDecodeError) as exc:
         parser.error(str(exc))
     results = []
     for entry in entries:
         path = original.joinpath(*PurePosixPath(entry["relative_path"]).parts)
-        if not path.is_file() or path.is_symlink():
+        if not path.resolve().is_relative_to(original) or not path.is_file() or path.is_symlink():
             results.append({**entry, "status": "missing_or_symlink"})
             continue
         actual = sha256(path)
+        size = path.stat().st_size
+        size_match = size == entry.get("expected_size_bytes", size)
         results.append({**entry, "size_bytes": path.stat().st_size, "actual_sha256": actual,
-                        "status": "match" if actual == entry["expected_sha256"] else "mismatch"})
+                        "status": "match" if actual == entry["expected_sha256"] and size_match else "mismatch"})
 
     statuses = {status: sum(row["status"] == status for row in results)
                 for status in ("match", "mismatch", "missing_or_symlink")}

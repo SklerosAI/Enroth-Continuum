@@ -194,8 +194,8 @@ def gate_check(repo: Path, reference: Path, identity_report: Path) -> str:
     if not identity_report.is_file() or not identity_report.is_relative_to(reference):
         raise ValueError("missing ignored F3 identity report")
     identity = json.loads(identity_report.read_text())
-    if identity.get("summary") != {"match": 8, "mismatch": 0, "missing_or_symlink": 0}:
-        raise ValueError("eight-file F3 identity check has not passed")
+    if identity.get("summary") != {"match": 23, "mismatch": 0, "missing_or_symlink": 0}:
+        raise ValueError("eight core files and 15 soundtrack tracks have not passed F3 identity")
     matching = [row for row in identity.get("files", [])
                 if row.get("relative_path", "").casefold() == "mm6.exe" and row.get("status") == "match"]
     if len(matching) != 1:

@@ -64,7 +64,7 @@ def main() -> int:
     for path in sorted(evidence.rglob("*")):
         if path == output or not path.is_file() or path.is_symlink():
             continue
-        if path.suffix.lower() in {".json", ".md"}:
+        if path.suffix.lower() in {".json", ".md", ".txt", ".tsv", ".csv", ".entries", ".pdf"}:
             report_hashes[str(path.relative_to(REPO))] = digest(path)
     if not report_hashes:
         parser.error("no ignored derived F2 reports found")

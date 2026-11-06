@@ -2,6 +2,7 @@
 """Synthetic PE bounds and table-shape checks; no original game file read."""
 
 import struct
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -12,7 +13,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from mm6_f3_pe_tables import (HOUSE_SIZE, HOUSES_VA, PEImage, SPELL_SIZE,
                               SPELLS_VA, TRANSPORT_INDEX_VA, TRANSPORT_VA,
                               extract_tables)
-from mm6_f3_identity_preflight import sha256 as file_sha256, verify_frozen_inputs
+from mm6_f3_identity_preflight import (expected_music_files, sha256 as file_sha256,
+                                       verify_frozen_inputs)
 
 
 def synthetic_pe() -> bytearray:
@@ -79,6 +81,30 @@ class PETablesTests(unittest.TestCase):
 
 
 class FrozenInputTests(unittest.TestCase):
+    def required_identity_hashes(self, repo: Path, reference: Path) -> dict[str, str]:
+        hashes = {}
+        for name in ("archive-sha256.txt", "media-executable-sha256.txt", "music-manifest.json"):
+            path = reference / name
+            path.write_text("fixture\n")
+            hashes[path.relative_to(repo).as_posix()] = file_sha256(path)
+        return hashes
+
+    def test_music_manifest_requires_fifteen_bounded_tracks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            reference = Path(directory)
+            manifest = reference / "music-manifest.json"
+            rows = [{"file": f"{number}.mp3", "bytes": number,
+                     "sha256": f"{number:064x}"} for number in range(2, 17)]
+            manifest.write_text(json.dumps(rows))
+            entries, digest = expected_music_files(reference)
+            self.assertEqual(len(entries), 15)
+            self.assertEqual(entries[0]["relative_path"], "Sounds/2.mp3")
+            self.assertEqual(digest, file_sha256(manifest))
+            rows[0]["file"] = "../2.mp3"
+            manifest.write_text(json.dumps(rows))
+            with self.assertRaisesRegex(ValueError, "invalid retained music"):
+                expected_music_files(reference)
+
     def test_hashes_match_then_reject_changed_private_report(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)
@@ -88,9 +114,12 @@ class FrozenInputTests(unittest.TestCase):
             report.parent.mkdir(parents=True)
             tracked.write_text("frozen specification\n")
             report.write_text('{"count": 1}\n')
+            derived = self.required_identity_hashes(repo, report.parent)
+            derived[report.relative_to(repo).as_posix()] = file_sha256(report)
             manifest = {
+                "schema": 1,
                 "tracked_sha256": {tracked.relative_to(repo).as_posix(): file_sha256(tracked)},
-                "ignored_derived_sha256": {report.relative_to(repo).as_posix(): file_sha256(report)},
+                "ignored_derived_sha256": derived,
             }
             verify_frozen_inputs(repo, report.parent, manifest)
             report.write_text('{"count": 2}\n')
@@ -102,8 +131,8 @@ class FrozenInputTests(unittest.TestCase):
             repo = Path(directory)
             reference = repo / "local-game-data/mm6/research"
             reference.mkdir(parents=True)
-            manifest = {"tracked_sha256": {"project/foo.md": 42},
-                        "ignored_derived_sha256": {"local-game-data/mm6/research/foo.json": "0" * 64}}
+            manifest = {"schema": 1, "tracked_sha256": {"project/foo.md": 42},
+                        "ignored_derived_sha256": self.required_identity_hashes(repo, reference)}
             with self.assertRaisesRegex(ValueError, "invalid tracked manifest entry"):
                 verify_frozen_inputs(repo, reference, manifest)
             manifest["tracked_sha256"] = {"../outside.md": "0" * 64}

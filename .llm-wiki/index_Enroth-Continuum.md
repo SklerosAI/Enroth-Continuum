@@ -61,13 +61,13 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 Campaign F2 Closure Source](Source-MM6-Campaign-F2-Closure.md) — Static transport, NPC interception, milestone, and finale routing risks
 - [MM6 Campaign Guide Claims F2 Source](Source-MM6-Campaign-Guide-Claims-F2.md) — Guide headings, transport table lead, outdoor name join, and unresolved quest branches
 - [MM6 Transport Fields F2 Source](Source-MM6-Transport-Fields-F2.md) — All transport-house A/B/C cells and unresolved route semantics
-- [MM6 Manual and Services Claims F2 Source](Source-MM6-Manual-Services-Claims-F2.md) — Owner manual/card/service chapter locators and title-specific service risks
+- [MM6 Manual and Services Claims F2 Source](Source-MM6-Manual-Services-Claims-F2.md) — Full manual/card and NWC page reviews, controls, service risks and guide conflicts
 - [MM6 NPC Profession F2 Source](Source-MM6-NPC-Profession-F2.md) — All 77 rows, guide join and inherited effect collisions
 - [MM6 UI Screen Audit F2 Source](Source-MM6-UI-Screen-Audit-F2.md) — Named current screen families, inherited UI collisions and visible checks
 - [MM6 Media and UI Spec Source](Source-MM6-Media-UI-Spec.md) — Movie, house, sound, music, and interface routing
-- [MM6 Media F2 Closure Source](Source-MM6-Media-F2-Closure.md) — Portrait, icon, font, and voice name-index comparisons
+- [MM6 Media F2 Closure Source](Source-MM6-Media-F2-Closure.md) — Portrait/icon/font/voice names and map/event/house/movie trigger joins
 - [MM6 Text Table Consumer Spec Source](Source-MM6-Table-Consumer-Spec.md) — Direct literal load coverage and unresolved parser/consumer questions
-- [MM6 Table Semantic F2 Source](Source-MM6-Table-Semantic-F2.md) — Thirty-family parser map, selected references, and skipped awards
+- [MM6 Table Semantic F2 Source](Source-MM6-Table-Semantic-F2.md) — Thirty-family parser map, six-table roles and skipped awards
 - [MM6 Monster and Combat Spec Source](Source-MM6-Monster-Combat-Spec.md) — Retained monster parser gaps, title assumptions, and unverified combat
 - [MM6 Combat Semantics F2 Source](Source-MM6-Combat-Semantics-F2.md) — All-row monster consumer map, resistance/AI/loot gaps, and live encounter obligations
 - [MM6 Monster Guide Semantics F2 Source](Source-MM6-Monster-Guide-Semantics-F2.md) — Per-ID catalog evidence and selected guide/data discrepancies

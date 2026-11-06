@@ -24,7 +24,13 @@ The [item-effect seams](MM6_ITEM_EFFECT_SEAMS_F2.md) require an MM6 read-window 
 
 The [monster-effect seams](MM6_MONSTER_EFFECT_SEAMS_F2.md) require title-specific gender and multi-target selection, weapon-break eligibility, Energy/resistance and fixed-drop policy. Test each against the F3-reconciled rules; the current source/guide mismatches alone do not supply original outcome formulas.
 
-The [late item-guide packet](MM6_ITEM_GUIDE_CLOSURE_F2.md) groups held-item event signatures; parse all affected map scripts before asserting those item gates work. The [media-schema packet](MM6_MEDIA_SCHEMA_LEADS_F2.md) narrows likely VID/SND directory widths, but F4 must follow F3-confirmed extensionless lookup, payload bounds, codecs and vanilla portrait selection. Candidate PNG dimensions do not substitute for rendered F5 checks.
+The [late item-guide packet](MM6_ITEM_GUIDE_CLOSURE_F2.md) groups held-item event signatures; parse all affected map scripts before asserting those item gates work. The [six-table role packet](MM6_UNLOADED_TABLE_ROLES_F2.md) requires separate MM6 BTB dialogue, weekday profession news and item-combination consumers, plus F3 decisions on the other three files. The [media-schema packet](MM6_MEDIA_SCHEMA_LEADS_F2.md) narrows likely VID/SND directory widths, and the [trigger map](MM6_MEDIA_TRIGGER_MAP_F2.md) identifies map music, event sound, house/movie and spell-cue joins. F4 must follow F3-confirmed extensionless lookup, room descriptors, payload bounds, codecs and vanilla portrait selection. Candidate PNG dimensions and static sound-ID matches do not substitute for seen/heard F5 checks.
+
+The [full manual/card review](MM6_MANUAL_CARD_FULL_REVIEW_F2.md) adds `Y` yell, item-in-hand and target shortcuts, NPC social/reputation choices, option controls and autosave ordering to the MM6 input, service and persistence scenarios. F3 must adjudicate conflicting mastery/XP/spell prose before F4 uses a numeric rule; F5 must exercise controls and visible state rather than infer them from a screen render.
+
+The [extra-STR role packet](MM6_UNLISTED_STR_ROLES_F2.md) keeps nine unlisted string files and five extra event partners separate from the 68 active listed/global EVT baseline. F4 parses and routes only F3-proven active extras; opening, victory and loss text need title-specific flow if the original uses them. F5 checks these outcomes and save/reload without borrowing MM7's ending path.
+
+The [NWC guide review](MM6_NWC_GUIDE_FULL_REVIEW_F2.md) adds 14 matching numeric potion claims, four dungeon walkthrough scenario families and limited Sword/Dagger mastery corroboration. F4 still needs original action/effect rules and the omitted skills; F5 verifies potion side effects and dungeon puzzle/reward persistence.
 
 ## F3 lock before code
 

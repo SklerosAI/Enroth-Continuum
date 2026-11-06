@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """F3-only bounded inventory of the owner's original MM6 files.
 
-Run after the F2 freeze and eight-file identity check, in the same planned F3
+Run after the F2 freeze and 23-file identity check, in the same planned F3
 session as the executable-table and content reconciliation. The output stays
 under ignored local-game-data. This captures stored archive/media entry names,
 bounds and hashes, plus all numbered soundtrack hashes. It does not decode

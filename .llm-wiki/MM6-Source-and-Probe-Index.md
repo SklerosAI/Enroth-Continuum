@@ -14,11 +14,12 @@ This index directs agents to the current public specifications and reproducible 
 - [MM6 implementation checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md) is the public coverage and gap register; its checked research rows are not playable-rule claims.
 - [F2 gate review](../project/MM6_F2_GATE_REVIEW.md) is the integration decision record. F2 is open and unfrozen; this review does not authorize F3.
 - [F3 preflight matrix](../project/MM6_F3_PREFLIGHT_MATRIX.md) is a draft one-pass original-file question list, not F2 or F3 gate completion.
+- [F3 capture runbook](../project/MM6_F3_CAPTURE_RUNBOOK.md) orders the gated 23-input identity check, bounded archive/media snapshot, PE candidate extraction and remaining content signoff. The [capture helper](../scripts/mm6_f3_capture_snapshot.py) has only synthetic tests; it has not opened originals and cannot complete F3 semantics alone.
 - [MM6 executable table locators F2](../project/MM6_EXECUTABLE_TABLE_LOCATORS_F2.md) records pinned MMExtension memory-address and record-layout leads for creation, spell recovery, house movies and transport. The owner's executable has not been read for these values.
-- [F3 PE-table helper](../scripts/mm6_f3_pe_tables.py) is prepared to read the identity-matched executable only after F2 freeze and the eight-file identity report. Its [synthetic bounds test](../scripts/test_mm6_f3_pe_tables.py) passes; it has not read the owner executable.
+- [F3 PE-table helper](../scripts/mm6_f3_pe_tables.py) is prepared to read the identity-matched executable only after F2 freeze and the eight-core-file plus 15-track identity report. Its [synthetic bounds test](../scripts/test_mm6_f3_pe_tables.py) passes; it has not read the owner executable.
 - [F4 offline build graph](../project/MM6_F4_BUILD_GRAPH.md) is a draft dependency and acceptance plan, to be reconciled after F3; it does not mean F4 has begun.
-- [F2 freeze manifest helper](../scripts/mm6_f2_freeze_manifest.py) is prepared to fingerprint tracked specs and ignored derived reports after an explicit F2 freeze and a clean tracked tree. It currently refuses to run because the gate is open; it never reads the original install.
-- [F3 identity checker](../scripts/mm6_f3_identity_preflight.py) is prepared to compare eight original archive/media/executable hashes with retained F1 ledgers during that consolidated pass. It refuses to read originals until the F2 gate, ignored freeze manifest and clean source SHA agree. It has only parsed retained ledgers; it has **not** read originals or passed F3.
+- [F2 freeze manifest helper](../scripts/mm6_f2_freeze_manifest.py) is prepared to fingerprint tracked specs and ignored derived JSON/Markdown/text/TSV/CSV/entry-list reports and guide PDFs after an explicit F2 freeze and a clean tracked tree. It includes F1 identity ledgers and private page/claim ledgers, currently refuses because the gate is open, and never reads the original install.
+- [F3 identity checker](../scripts/mm6_f3_identity_preflight.py) is prepared to compare eight original archive/media/executable hashes and 15 soundtrack size/hash records during that consolidated pass. It refuses to read originals until the F2 gate, ignored freeze manifest, clean source SHA and all frozen evidence hashes agree; it will not overwrite an existing report. It has only parsed retained ledgers; it has **not** read originals or passed F3.
 - [Local status](../project/LOCAL_STATUS.md) records observed Mac behavior and its limits.
 - [OpenEnroth credit](../CREDITS.md) and [upstream relationship](../project/UPSTREAM.md) govern attribution.
 
@@ -49,13 +50,18 @@ This index directs agents to the current public specifications and reproducible 
 | All 21 transport-house A/B/C fields and current loader collision | [Transport field F2 packet](../project/MM6_TRANSPORT_FIELDS_F2.md) |
 | Guide quest headings, Oracle candidate bits, outdoor names and transport lead | [Campaign guide claims F2](../project/MM6_CAMPAIGN_GUIDE_CLAIMS_F2.md) |
 | Manual/card/service chapter, controls, rest, shops, training and temples | [Manual and services F2](../project/MM6_MANUAL_SERVICES_CLAIMS_F2.md) |
+| Direct page-level review of all 61 manual and five card pages, source conflicts and UI/action acceptance | [Full manual/card review F2](../project/MM6_MANUAL_CARD_FULL_REVIEW_F2.md) |
+| Direct review of all 11 NWC limited-edition guide pages, potion/skill/dungeon claims | [NWC guide full review F2](../project/MM6_NWC_GUIDE_FULL_REVIEW_F2.md) |
 | All 77 NPC profession rows and title-scoped effect/fee joins | [NPC profession F2](../project/MM6_NPC_PROFESSION_F2.md) |
 | Named current screen families and visible acceptance | [UI screen audit F2](../project/MM6_UI_SCREEN_AUDIT_F2.md) |
 | Movies, houses, audio, portraits, fonts, UI | [Media and UI](../project/MM6_MEDIA_UI_SPEC.md) |
 | Portrait/icon/font/voice consumer name joins | [Media F2 closure packet](../project/MM6_MEDIA_F2_CLOSURE.md) |
 | Primary VID/SND directory shapes and retained portrait-frame candidates | [Media schema leads F2](../project/MM6_MEDIA_SCHEMA_LEADS_F2.md) |
+| Map music, event sound, room movie, spell-cue and current movie-lookup joins | [Media trigger map F2](../project/MM6_MEDIA_TRIGGER_MAP_F2.md) |
 | Text-table loader and no-literal-load questions, item matrix, NPC text | [Table consumers](../project/MM6_TABLE_CONSUMER_SPEC.md) |
 | Thirty-family parser/consumer register and award-row mismatch | [Table semantic F2 packet](../project/MM6_TABLE_SEMANTIC_F2.md) |
+| Roles and original-use questions for six tables without literal C++ loads | [Six-table role F2 packet](../project/MM6_UNLOADED_TABLE_ROLES_F2.md) |
+| Nine unlisted STR files, five extra EVT partners and opening/outcome text candidates | [Extra-STR role F2 packet](../project/MM6_UNLISTED_STR_ROLES_F2.md) |
 | Monster parser labels, taxonomy, combat gaps | [Monster and combat](../project/MM6_MONSTER_COMBAT_SPEC.md) |
 | Retained monster rows, attack/resistance/AI/loot consumer map | [Combat semantics F2](../project/MM6_COMBAT_SEMANTICS_F2.md) |
 | Monster description, animation-name and baseline actor-ID joins | [Monster spawn links F2](../project/MM6_MONSTER_SPAWN_LINKS_F2.md) |

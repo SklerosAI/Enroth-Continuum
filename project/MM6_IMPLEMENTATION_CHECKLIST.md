@@ -45,11 +45,24 @@ claims that their runtime behavior is implemented.
   maps; the remaining MP3s need event or menu mapping checks.
 - [ ] Decode media entry formats and map all movie, effect and music IDs to
   game behavior; inspect native MM6 save format if a lawful local sample exists.
-- [ ] Read the owned original manual and reference card and annotate every
-  relevant mechanic. Compare the [original manual](https://www.mocagh.org/nwc/mm6-manual.pdf),
+- [x] Read and classify all 61 owner-manual pages and five reference-card pages
+  at F2 page level in the [full manual/card review](MM6_MANUAL_CARD_FULL_REVIEW_F2.md).
+  Gameplay prose pages were read with retained text and page images; framing
+  story, illustrations and blank pages were classified separately. The review
+  adds card-only `Y` to yell and item/target shortcuts, and flags contradictory
+  sword/dagger mastery prose and incomplete spell/XP examples. Exact original
+  rules and live controls remain F3/F5 questions. Compare the [original manual](https://www.mocagh.org/nwc/mm6-manual.pdf),
   [New World Computing guide](https://www.mocagh.org/nwc/mm6le-strategyguide.pdf),
   [Prima guide](https://www.mocagh.org/nwc/mm6-hintbook.pdf) where accessible,
-  and [MMExtension reference](https://grayface.github.io/mm/ext/ref/).
+  and [MMExtension reference](https://grayface.github.io/mm/ext/ref/) when
+  adjudicating source claims.
+- [x] Review all 11 PDF pages of the [New World Computing limited-edition guide](MM6_NWC_GUIDE_FULL_REVIEW_F2.md)
+  at page level. Its 14 named numeric potion results match retained matrix
+  tokens, but guide-only side effects remain unknown; three of four dungeon
+  headings have exact map-name joins and one has an alias question. Its 20-skill
+  chart supports the manual's Sword/Dagger mastery table against a conflicting
+  manual example, but omits eleven skills and does not prove executable
+  effects. Exact claims and page evidence remain ignored locally.
 - [x] Index the owned manual, reference card, Prima guide and short NWC guide
   by mechanic and campaign milestone in
   [MM6_GUIDE_RECONCILIATION.md](MM6_GUIDE_RECONCILIATION.md). Page locators
@@ -101,6 +114,13 @@ nonempty rows; headers, separators and reserved records still require review.
   active/reserved/unused classification, and acceptance scenario. Resolve
   indirect consumers or documented non-use for the six without literal loads
   before the consolidated F3 preflight.
+- [x] Classify the six tables without literal C++ loads at F2 source level in
+  [six-table role packet](MM6_UNLOADED_TABLE_ROLES_F2.md). Pinned MMExtension
+  identifies `npcbtb.txt` as the 13-personality beg/bribe/threat matrix and
+  `proftext.txt` as seven weekday profession-news topic/text pairs; the retained
+  `useitems.txt` is a 29×29 combination matrix. `passwords.txt`, plural
+  `autonotes.txt` and `errorlog.txt` have named provenance/consumer questions.
+  The packet gives F3/F4/F5 acceptance and does not mark original use proven.
 - [x] Identify the retained `useitems.txt` two-axis structure: 29 item-ID
   rows and matching header IDs form a complete symmetric 29 × 29 matrix in
   columns 6–34. No MM6 loader consumes it, and its 30 distinct result tokens
@@ -542,8 +562,15 @@ that requirement.
   one-byte operand as unknown, so it is inventoried separately rather than
   assumed to index local strings. The ignored `string-probe.json` keeps the
   exact map/event IDs and all nine unlisted `.str` names.
+- [x] Classify all nine unlisted `.str` files at retained-data and current-source
+  level in the [extra-STR role packet](MM6_UNLISTED_STR_ROLES_F2.md). Five have
+  bounded same-basename extra EVT files but no listed/base map; three are
+  opening/win/loss narrative candidates and one is table-shaped. Every file
+  has a private status and F3/F4/F5 route. No extra script is counted as an
+  active listed-map EVT or a safe alias based only on byte/text similarity.
 - [ ] Resolve the seven direct mouseover exceptions, opcode 5 semantics, and
-  use of the nine unlisted `.str` files, including `intro`, `win` and `lose`.
+  original use of the nine unlisted `.str` files, including `intro`, `win` and
+  `lose`, then verify any reachable routes in F4/F5.
 - [x] Validate record boundaries of all 11 shipped `.bin` resources. Ten use
   a four-byte count followed by fixed-size records; `dsft.bin` has two counts,
   6,455 sprite frames and 1,656 extended-frame indices. The ignored
@@ -586,6 +613,13 @@ that requirement.
   1–118, within the candidate house table's 0–118 bounds. These are pinned
   process-memory source leads, not verified offsets or owner-executable data;
   F3 must map and validate them in the planned read-only pass.
+- [x] Join retained media triggers to current consumers in the
+  [media trigger map](MM6_MEDIA_TRIGGER_MAP_F2.md): all 67 map music references
+  and eight active event-sound uses resolve to retained names/IDs. The 116
+  distinct MM6 room IDs yield zero matching inherited MM7 movie names, and
+  suffix-form movie lookup matches none of the 127 extensionless retained VID
+  names. These are static joins, not correct cue assignments or playback.
+  F3 must identify MM6 house/movie/effect mappings; F5 must see and hear them.
 - [x] Compare inherited creation icons, portrait-frame construction, literal
   fonts and potential voice-reaction IDs to retained MM6 indexes using
   `scripts/mm6_probe_media_consumers.py`. The [media F2 closure packet](MM6_MEDIA_F2_CLOSURE.md)

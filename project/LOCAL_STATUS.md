@@ -113,6 +113,13 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   current engine has no MM6 variable dispatch or 100-byte map-variable layout;
   the ignored `event-variable-probe.json` maps each active use to its source
   event and inherited interpretation.
+- A spell/item ID audit covers all 99 MM6 spells and all 581 item-table rows.
+  Fifty spell names match inherited IDs under a strict lexical check; 21 have
+  the same name at another inherited ID and 28 are absent or renamed. Mana
+  differs at 27 IDs and 11 elemental spell tags currently default to physical.
+  MM6 spell scrolls are IDs 200–298, spellbooks 300–398, and message scrolls
+  500–549, whereas inherited MM7 helpers assign different categories to those
+  ranges. Private ignored reports retain per-ID evidence for implementation.
 - A locally retained, ignored copy of the 412-page Prima strategy guide is
   text-searchable. Its chapter outline has been converted into explicit
   campaign-coverage work in the checklist. This is source indexing, not yet a

@@ -88,6 +88,35 @@ missing. Record every nonnumeric row by file and line. Each table needs a
 parser, a consumer, and a coverage check; a row count alone does not satisfy
 that requirement.
 
+### Spell and item ID reconciliation
+
+- [x] Compare all 99 shipped MM6 spell rows with the inherited `SpellId`
+  labels and `pSpellDatas` mana costs. `scripts/mm6_probe_spells.py` records
+  the full per-ID comparison in the ignored `spell-reconciliation.json`:
+  50 names match after simple normalization, 21 appear at another inherited
+  ID, and 28 are absent or differently named. These are lexical categories,
+  not proof that matching names have matching effects. The first three mana
+  costs differ for 27 IDs. The MM6 `Elec`, `Cold` and `Pois` damage tags on 11
+  spells currently fall through `SpellStats::Initialize` to physical damage.
+- [ ] Implement MM6-specific spell IDs, casting effects, three mastery levels,
+  costs, recovery, damage/resistance types, target rules, buff duration,
+  scroll/book/wand mappings, monster/event casts, visuals and descriptions.
+  Verify every ID 1–99 against the owned table and guide, with representative
+  live casts across all nine schools; do not route MM6 ID 2 (Flame Arrow)
+  through the inherited ID 2 Fire Bolt effect.
+- [x] Compare the retained MM6 `items.txt` categories with inherited MM7
+  `ItemId` ranges. `scripts/mm6_probe_item_ranges.py` records all 581 rows in
+  the ignored `item-range-probe.json`. MM6 has 99 spell scrolls at 200–298,
+  99 spellbooks at 300–398, and 50 message scrolls at 500–549. Inherited
+  `spellForScroll` indexes 300–398, `spellForSpellbook` indexes 400–498,
+  and the MM7 artifact/special range begins at 500. The wand range 135–159
+  aligns numerically, but each wand's spell still needs MM6-specific mapping.
+- [ ] Replace MM7 item-kind range assumptions with MM6-specific IDs and
+  checks. Make every MM6 spell scroll cast its intended spell, every book
+  teach its intended spell, every message scroll display its text, and every
+  artifact/relic apply its own effect. Verify treasure generation, shops,
+  pickup, inventory, equip/use and save/reload for each category.
+
 ## Archive and map formats
 
 - [ ] LOD directory, compressed payload and case-insensitive lookup semantics.
@@ -236,7 +265,8 @@ correct before the F4 readiness gate:
 | Runtime area | Current evidence | Required MM6 work |
 | --- | --- | --- |
 | Startup and resources | `Engine.cpp` still enters `MM6_Initialize`, `MM7_LoadLods` and `MM7_Initialize` | Audit each initializer and make title-specific asset, layout and rule paths explicit |
-| Items | `MM6ItemTable.cpp` reads MM6 tables but still populates shared special/artifact bonus maps | Verify every MM6 item ID, special effect, potion recipe, enchantment and equipment rule |
+| Items | `MM6ItemTable.cpp` reads MM6 tables but still populates shared special/artifact bonus maps. MM6 scrolls, books and messages occupy the inherited MM7 scroll, book and artifact ID bands respectively. | Replace all title-specific item-kind, spell mapping and bonus assumptions; verify every MM6 item ID, special effect, potion recipe, enchantment and equipment rule. |
+| Spells | MM6 spell names differ from inherited numeric labels at 49 of 99 IDs under a strict lexical check; 27 IDs have different mana triples, and 11 nonphysical MM6 damage tags currently fall back to physical. | Implement MM6's own 99 spell definitions and effects across every school and mastery, including the linked MM6 scroll/book/wand mappings. |
 | Chests | MM6 `dchest.bin` declares 14×10 grids; `ChestTable.cpp` currently hardcodes eight 9×9 MM7 layouts. The 4,204-byte MM6 delta chest record accommodates 140 28-byte items and 140 short grid cells. | Load MM6 chest dimensions and images, reconstruct MM6 chest items and matrices, and verify placement, opening and save/reload without changing MM7 chests. |
 | Outdoor maps | `MM6OutdoorSnapshot.cpp` maps MM6 data into MM7 structures. Offline probes confirm all 15 base/delta layouts; all 921 owned model headers declare zero BSP nodes. `OutdoorLocation::Load` still deserializes `OutdoorDelta_MM7`. | Implement MM6 delta decoding and reconstruction; prove geometry, collision, decoration, spawn, events and persistence across all 15 maps. |
 | Indoor maps | `IndoorLocation::Load` decodes both `.blv` and `.dlv` as `IndoorLocation_MM7` / `IndoorDelta_MM7`; no MM6 indoor snapshot reader exists. Offline probes now confirm all 52 MM6 base and delta section layouts, including MM6's shorter header and record sizes. | Implement MM6 decoding, reconstruction, respawn and delta persistence for all 52 interiors; do not reuse MM7's 40-byte delta header or per-face/per-sprite attribute arrays. |

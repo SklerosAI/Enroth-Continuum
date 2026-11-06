@@ -1,5 +1,7 @@
 ---
+type: synthesis
 up: "[[MM6-F4-Map-Save-Fields]]"
+tags: [mm6, f4, chest, generation]
 ---
 
 # MM6 F4 Chest Generation
@@ -14,4 +16,8 @@ The second detached stage, `mm6::finalizeChestAnyItem`, models only field writes
 
 The [placement follow-up](MM6-F4-Chest-Placement.md) establishes the original **in-memory** 140-cell signed grid and a detached seeded first-placement model with fit, no-fit and wand fallback. Retained baseline delta grids are all zero, so changed-state save equivalence and integration remain open. The live MM6 guard is unchanged.
 
-The detached `MM6ChestCallerAdapter` now fills those caller rows from an MM6-initialized `ItemTable`, using 399 tier weights, the selected template, six chance/strength rows, fourteen standard weights and fifty-nine special rows. It keeps the MM6 equipment special chance separate from the MM7 cumulative field convention. A separate source selector distinguishes empty, gold, ANY and direct tier-seven artifact routes; gold stages one draw and title-specific IDs. The direct artifact path now has a bounded trace model and a separate explicit safe 30-ID policy option, neither wired live because the original ownership scan is unsafe and gameplay/save policy is unresolved. An ignored F3-matched numeric profile drove 192 seeded ANY stages across six tiers in native tests, all passing. No live chest generation was enabled. See the [caller packet](../project/MM6_F4_CHEST_GENERATION_AUDIT.md) for the exact remaining gates.
+The detached `MM6ChestCallerAdapter` fills those caller rows from an MM6-initialized `ItemTable`, using 399 tier weights, the selected template, six chance/strength rows, fourteen standard weights and fifty-nine special rows. It keeps the MM6 equipment special chance separate from the MM7 cumulative field convention. A separate source selector distinguishes empty, gold, ANY and direct tier-seven artifact routes; gold stages one draw and title-specific IDs. An ignored F3-matched numeric profile drove 192 seeded ANY stages across six tiers in native tests, all passing.
+
+The [detached record transaction](../project/MM6_F4_CHEST_RECORD_TRANSACTION.md) now joins all twenty 4,204-byte chest records, source-order outer selections, retained-table ANY fields, gold and direct artifact outcomes into copied 28-byte item records. It preserves fixed item and opaque bytes, rejects malformed generated targets before any publication, returns the staged RNG/artifact state, and keeps first-open 9×9 placement as a separate copied-record transaction. The original direct tier-seven picker has an out-of-bounds slot-index write. The personal fork **explicitly adopts** the safe policy: IDs 400–429 only, party-owned/generated uniqueness, combined cap thirteen, no ID 430 and no unsafe write. No-candidate clears the marker. In a read-only aggregate check of 67 retained baselines, all 186,377 empty, 943 marker and 280 fixed item slots had zero bytes after the four-byte ID; this does not prove changed-save behavior. Focused arm64 native tests cover synthetic generation/placement and malformed/MM7 rejection. The guard remains closed until live `Item`/`ChestInventory` projection, nonzero grid save/reload and chest interaction are proved; indoor/outdoor snapshot adapters currently reject changed grids, and outdoor copies only 26 item bytes. No MM6 process or graphical chest was launched.
+
+See also: [MM6 F4 Chest Outer Plan](MM6-F4-Chest-Outer-Plan.md), [MM6 F4 Chest Grid Wire](MM6-F4-Chest-Grid-Wire.md), [MM6 F4 Chest Interaction Gate](MM6-F4-Chest-Interaction-Gate.md).

@@ -5,6 +5,7 @@
 #include <functional>
 #include <optional>
 #include <utility>
+#include <vector>
 
 #include "Engine/MM6/MM6ChestCallerAdapter.h"
 #include "Engine/Objects/Chest.h"
@@ -25,6 +26,17 @@ struct ChestOuterReward {
     std::uint32_t nextRngState = 0;
 };
 
+// Source-order decisions are needed by a later raw-item transaction. A
+// callback's nth result corresponds to the nth AnyItem/DirectArtifact entry.
+struct ChestOuterSelection {
+    int chestIndex = 0;
+    int slotIndex = 0;
+    ChestRewardSource source = ChestRewardSource::Empty;
+    ItemTreasureLevel tier = ITEM_TREASURE_LEVEL_1;
+    int itemId = 0;
+    int goldAmount = 0;
+};
+
 using ChestOuterPicker = std::function<std::optional<ChestOuterReward>(
     ItemTreasureLevel tier, std::uint32_t rngState)>;
 
@@ -36,6 +48,7 @@ struct ChestOuterResult {
     int markersVisited = 0;
     int rewardsGenerated = 0;
     int emptyAttempts = 0;
+    std::vector<ChestOuterSelection> selections;
 };
 
 // Reproduces the accepted original outer loop's order and first-attempt
@@ -78,11 +91,16 @@ inline std::optional<ChestOuterResult> stageChestOuterIds(
                 if (!pickDirectArtifact)
                     return std::nullopt;
                 const auto reward = pickDirectArtifact(tier, result.nextRngState);
-                if (!reward || !mm6ChestItemId(input.title, reward->itemId))
+                // A bounded policy may have no eligible artifact and clear
+                // the marker, as the original picker does on no candidate.
+                if (!reward || (reward->itemId != 0 && !mm6ChestItemId(input.title, reward->itemId)))
                     return std::nullopt;
                 chest[markerSlot] = reward->itemId;
                 result.nextRngState = reward->nextRngState;
-                ++result.rewardsGenerated;
+                result.selections.push_back({chestIndex, markerSlot, ChestRewardSource::DirectArtifact,
+                                             tier, reward->itemId, 0});
+                if (reward->itemId != 0)
+                    ++result.rewardsGenerated;
                 continue;
             }
 
@@ -102,6 +120,7 @@ inline std::optional<ChestOuterResult> stageChestOuterIds(
                 if (*source == ChestRewardSource::Empty) {
                     chest[targetSlot] = 0;
                     ++result.emptyAttempts;
+                    result.selections.push_back({chestIndex, targetSlot, *source, tier, 0, 0});
                     continue;
                 }
                 if (*source == ChestRewardSource::Gold) {
@@ -111,6 +130,8 @@ inline std::optional<ChestOuterResult> stageChestOuterIds(
                     chest[targetSlot] = std::to_underlying(gold->itemId);
                     result.generatedGoldAmounts[chestIndex][targetSlot] = gold->amount;
                     result.nextRngState = gold->nextRngState;
+                    result.selections.push_back({chestIndex, targetSlot, *source, tier,
+                                                 chest[targetSlot], gold->amount});
                 } else {
                     if (!pickAny)
                         return std::nullopt;
@@ -119,6 +140,8 @@ inline std::optional<ChestOuterResult> stageChestOuterIds(
                         return std::nullopt;
                     chest[targetSlot] = reward->itemId;
                     result.nextRngState = reward->nextRngState;
+                    result.selections.push_back({chestIndex, targetSlot, *source, tier,
+                                                 reward->itemId, 0});
                 }
                 ++result.rewardsGenerated;
             }

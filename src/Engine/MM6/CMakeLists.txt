@@ -55,6 +55,11 @@ if(OE_BUILD_TESTS)
     target_check_style(test_engine_mm6_chest_type)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_chest_type)
 
+    add_library(test_engine_mm6_chest_record OBJECT Tests/MM6ChestRecordTransaction_ut.cpp)
+    target_link_libraries(test_engine_mm6_chest_record PUBLIC testing_unit engine_tables engine_objects)
+    target_check_style(test_engine_mm6_chest_record)
+    target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_chest_record)
+
     add_library(test_engine_mm6_spell_items OBJECT Tests/MM6SpellItems_ut.cpp Tests/MM6SpellLearning_ut.cpp
         Tests/MM6SpellEffectGuard_ut.cpp)
     target_link_libraries(test_engine_mm6_spell_items PUBLIC testing_unit)

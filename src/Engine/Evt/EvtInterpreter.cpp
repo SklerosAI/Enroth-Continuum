@@ -13,6 +13,7 @@
 #include "Engine/Evt/EvtVariables.h"
 #include "Engine/Evt/MM6EventRules.h"
 #include "Engine/Evt/MM6EventVariables.h"
+#include "Engine/Evt/MM6MapByteState.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Party.h"
 #include "Engine/Graphics/Indoor.h"
@@ -171,6 +172,19 @@ static BLVFace &mm6OutdoorEventFace(int modelIndex, int facetIndex) {
     if (faceIndex < 0 || static_cast<size_t>(faceIndex) >= pOutdoor->faces.size())
         throw Exception("MM6 outdoor event has invalid reconstructed face {}", faceIndex);
     return pOutdoor->faces[faceIndex];
+}
+
+static bool isMM6MapByteVariable(EvtVariable variable) {
+    return engine->gameTitle() == GameTitle::MM6 &&
+           describeMM6Variable(std::to_underlying(variable)).family == MM6VariableFamily::MapByte;
+}
+
+static MM6MapByteState mm6CurrentMapByteState() {
+    if (uCurrentlyLoadedLevelType == LEVEL_INDOOR && pIndoor)
+        return MM6MapByteState(pIndoor->mm6DeltaBytes);
+    if (uCurrentlyLoadedLevelType == LEVEL_OUTDOOR && pOutdoor)
+        return MM6MapByteState(pOutdoor->mm6DeltaBytes);
+    throw Exception("MM6 map variable command has no loaded MM6 map delta");
 }
 
 void EvtInterpreter::prepare(EvtContext context) {
@@ -357,6 +371,12 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             setDecorationSprite(ir.data.sprite_texture_descr.cog, ir.data.sprite_texture_descr.hide, ir.str);
             break;
         case EVENT_Compare:
+            if (isMM6MapByteVariable(ir.data.variable_descr.type)) {
+                if (mm6CurrentMapByteState().compare(std::to_underlying(ir.data.variable_descr.type),
+                                                     ir.data.variable_descr.value))
+                    return {EVT_FLOW_JUMP, ir.target_step};
+                break;
+            }
             if (!validateVariableValue(ir))
                 break;
             for (Character &character : iterateCharacters(_who, ir.data.variable_descr.type, grng))
@@ -367,6 +387,11 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             switchDoorAnimation(ir.data.door_descr.door_id, ir.data.door_descr.door_action);
             break;
         case EVENT_Add:
+            if (isMM6MapByteVariable(ir.data.variable_descr.type)) {
+                mm6CurrentMapByteState().add(std::to_underlying(ir.data.variable_descr.type),
+                                             ir.data.variable_descr.value);
+                break;
+            }
             if (!validateVariableValue(ir))
                 break;
             // TODO(captainurist): move this workaround into patched event data, and add the OnMapReload step from
@@ -379,6 +404,11 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                 addEvtVariable(character, ir.data.variable_descr.type, ir.data.variable_descr.value);
             break;
         case EVENT_Subtract: {
+            if (isMM6MapByteVariable(ir.data.variable_descr.type)) {
+                mm6CurrentMapByteState().subtract(std::to_underlying(ir.data.variable_descr.type),
+                                                  ir.data.variable_descr.value);
+                break;
+            }
             if (!validateVariableValue(ir))
                 break;
             bool isShort = false; // The party had less than the script asked for, e.g. gold.
@@ -404,6 +434,11 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         }
         case EVENT_Set:
+            if (isMM6MapByteVariable(ir.data.variable_descr.type)) {
+                mm6CurrentMapByteState().set(std::to_underlying(ir.data.variable_descr.type),
+                                             ir.data.variable_descr.value);
+                break;
+            }
             if (!validateVariableValue(ir))
                 break;
             for (Character &character : iterateCharacters(_who, ir.data.variable_descr.type, grng))

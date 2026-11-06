@@ -33,7 +33,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F3 Read-Only Preflight](MM6-F3-Read-Only-Preflight.md) — Accepted original-data gate, results, and F4/F5 obligations
 - [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md) — Current partial code seams, including outdoor DDM projection, focused checks, and next blockers
 - [MM6 F4 Transport Manifest](MM6-F4-Transport-Manifest.md) — Private F3-derived travel descriptors, blank/special slot policy and title-specific UI handoff
-- [MM6 F4 Map Bytes](MM6-F4-Map-Bytes.md) — Evidence boundary for MM6 event map-byte IDs, 200-byte deltas, arithmetic and persistence
+- [MM6 F4 Map Bytes](MM6-F4-Map-Bytes.md) — Bounded active map-byte dispatch, 200-byte delta preservation, and unresolved arithmetic/persistence edges
 - [MM6 F4 Portrait Seam](MM6-F4-Portrait-Seam.md) — Offline MM6 face/frame implementation, verification, and remaining voice/visual work
 - [MM6 F4 Creation Rules](MM6-F4-Creation-Rules.md) — Private F3-array manifest, six-class creation path, mana dispatch and remaining formula/UI checks
 - [MM6 F4 Indoor Runtime](MM6-F4-Indoor-Runtime.md) — Bounded BLV/DLV projection, door/visibility mapping, retained wire and offline limits

@@ -1,0 +1,13 @@
+# MM6 F4 Shield and Heroism buff cohort
+
+Status: **two title-specific character buff effects implemented behind the closed cast gate** (2026-11-06). Retained MM6 Shield (ID 17) and Heroism (ID 51) share one-character Normal targeting, party-wide Expert/Master targeting and the same rank-duration progression. This is an offline buff-state seam, not live casting.
+
+The F3-matched retained spell report and visually reviewed private guide matrix agree on both targets, duration shapes and effect roles: Shield reduces incoming missile damage and Heroism adds a base-plus-skill damage bonus. `scripts/mm6_f4_export_combat_buff_rules.py` checks these per-ID joins and the accepted F3 `spells.txt` hash, then writes a mode-0600 `rules/combat-buffs.json` in the local MM6 profile. The exact duration and power coefficients and guide locators remain private. The native loader validates source fingerprints, the exact two-ID set, bounded rank durations and Heroism power terms before atomic replacement.
+
+The MM6 plan selects a character buff slot, expiration, mastery, power and single-member or party scope. The applicator validates the plan and caster index before writing a slot. The title-specific cast branch applies Shield or Heroism to one member at Normal rank and each member at Expert/Master rank; MM6 target metadata follows that distinction. The inherited MM7 paths are unchanged. Shared `SpellBuff::Apply` retains a longer existing buff, which the focused tests cover.
+
+The other apparent buff cohorts were excluded. Five party protection spells share rank multipliers, but MM6 electricity, cold, poison and magic resistance channels are still unresolved against current damage consumers. Haste has a retained/guide Normal-duration disagreement; Stone Skin has a Master-duration disagreement; Bless has a guide percentage versus retained flat-bonus wording disagreement. Direct-damage families also need title-specific damage/resistance and projectile rules. None of these is included in the two-buff profile.
+
+The outer MM6 effect guard still rejects both spell IDs before queueing or execution. The compiled helper and branch are testable, but no live MM6 cast reaches them. Before opening the gate, prove target UI/cancel, held-item movement, mana/recovery and curse-failure ordering, buff stacking and expiration, caster provenance, missile/damage consumers, visuals/audio and save/reload. Those inherited consumers remain provisional for MM6. No original installation was reread or partial MM6 game launched.
+
+See also: [effect boundary](MM6_F4_SPELL_EFFECT_DISPATCH.md), [timed cure cohort](MM6_F4_TIMED_CURE_COHORT.md), [monster damage audit](MM6_F4_MONSTER_DAMAGE_AUDIT.md), [F3 gate](MM6_F3_GATE_REVIEW.md).

@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <array>
+#include <initializer_list>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -287,6 +288,26 @@ GAME_TEST(MM6Headless, FirstOutdoorTileSelectors) {
 TEST(MM6OutdoorWalkSounds, RawIdentityAndTitleIsolation) {
     TileData tile;
     tile.tileset = TILESET_DIRT;
+    size_t covered = 0;
+    const auto checkGroup = [&](std::initializer_list<int> rawIds, SoundId walk, SoundId run) {
+        for (int rawId : rawIds) {
+            tile.sourceTileset = rawId;
+            EXPECT_EQ(walkSoundForTile(GameTitle::MM6, tile, false), walk) << rawId;
+            EXPECT_EQ(walkSoundForTile(GameTitle::MM6, tile, true), run) << rawId;
+            ++covered;
+        }
+    };
+    checkGroup({0, 8}, SOUND_WalkGrass, SOUND_RunGrass);
+    checkGroup({1}, SOUND_WalkSnow, SOUND_RunSnow);
+    checkGroup({2}, SOUND_WalkDesert, SOUND_RunDesert);
+    checkGroup({3}, SOUND_WalkCooledLava, SOUND_RunCooledLava);
+    checkGroup({4, 9, 18, 19, 20, 21}, SOUND_WalkGround, SOUND_RunGround);
+    checkGroup({5}, SOUND_WalkWater, SOUND_RunWater);
+    checkGroup({6}, SOUND_WalkBadlands, SOUND_RunBadlands);
+    checkGroup({7}, SOUND_WalkSwamp, SOUND_RunSwamp);
+    checkGroup({10, 11, 12, 13, 14, 15, 16, 17, 22, 23, 24, 25, 26, 27}, SOUND_WalkRoad, SOUND_RunRoad);
+    EXPECT_EQ(covered, 28u);
+
     tile.sourceTileset = 3;
     EXPECT_EQ(walkSoundForTile(GameTitle::MM6, tile, false), SOUND_WalkCooledLava);
     EXPECT_EQ(walkSoundForTile(GameTitle::MM6, tile, true), SOUND_RunCooledLava);

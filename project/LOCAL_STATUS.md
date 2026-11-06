@@ -92,6 +92,12 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   hints remain out of range; opcode 5 and MM6 input-dialog behavior need
   resolution. These findings are recorded in the checklist; no installed
   runtime changed.
+- The retained media audit confirms that all 12 map music IDs have MP3 files.
+  None of MM6's 116 used house animation IDs maps to a video name in the
+  inherited MM7 room table. All 227 active opcode-11/12 event resource names
+  resolve to MM6 bitmaps; opcode 12 needs a title-specific two-field texture
+  operation instead of the inherited MM7 movie interpretation. The ignored
+  `media-reference-probe.json` records the reproducible checks.
 - A locally retained, ignored copy of the 412-page Prima strategy guide is
   text-searchable. Its chapter outline has been converted into explicit
   campaign-coverage work in the checklist. This is source indexing, not yet a

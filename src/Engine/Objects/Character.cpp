@@ -1976,7 +1976,7 @@ int Character::GetMaxHealth() const {
         if (!mm6::isValidClass(classId))
             throw std::runtime_error("Invalid MM6 class ID for health");
         const int perLevel = rules.hpFactor[classId] * (GetActualLevel() + GetParameterBonus(GetActualEndurance()));
-        return std::max(0, uFullHealthBonus + rules.hpBase[mm6::classFamily(classId)] +
+        return std::max(1, uFullHealthBonus + rules.hpBase[mm6::classFamily(classId)] +
             GetSkillBonus(ATTRIBUTE_HEALTH) + GetItemsBonus(ATTRIBUTE_HEALTH) + perLevel);
     }
     int endbonus = GetParameterBonus(GetActualEndurance());

@@ -54,6 +54,11 @@ target_link_libraries(engine_tables PUBLIC engine_data library_lod)
 target_check_style(engine_tables)
 
 if(OE_BUILD_TESTS)
+    add_library(test_engine_tables_mm6_awards OBJECT Tests/MM6AwardTable_ut.cpp)
+    target_link_libraries(test_engine_tables_mm6_awards PUBLIC testing_unit engine_tables)
+    target_check_style(test_engine_tables_mm6_awards)
+    target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_tables_mm6_awards)
+
     add_library(test_engine_tables_mm6_house OBJECT Tests/MM6HouseType_ut.cpp)
     target_link_libraries(test_engine_tables_mm6_house PUBLIC testing_unit engine_tables)
     target_check_style(test_engine_tables_mm6_house)

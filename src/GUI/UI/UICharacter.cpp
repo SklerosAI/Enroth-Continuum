@@ -839,6 +839,11 @@ void GUIWindow_CharacterRecord::CharacterUI_SkillsTab_Draw(Character *player) {
 std::string GUIWindow_CharacterRecord::getAchievedAwardsString(int idx) {
     std::string str;
 
+    // MM6's formatted award rows do not share MM7's numeric counter IDs.
+    // Keep them out of the inherited sprintf cases until their counters map.
+    if (!canRenderAwardText(engine->gameTitle(), pAwards[_achievedAwardsList[idx]].pText))
+        return str;
+
     // TODO(captainurist): fmt can throw
     switch (_achievedAwardsList[idx]) {
     case AWARD_ARENA_PAGE_WINS:
@@ -1614,7 +1619,8 @@ void GUIWindow_CharacterRecord::fillAwardsData() {
 
     _achievedAwardsList.clear();
     for (AwardId awardId : allAwards()) {
-        if (pPlayer->_achievedAwardsBits[awardId] && !pAwards[awardId].pText.empty()) {
+        if (pPlayer->_achievedAwardsBits[awardId] && !pAwards[awardId].pText.empty() &&
+            canRenderAwardText(engine->gameTitle(), pAwards[awardId].pText)) {
             _achievedAwardsList.push_back(awardId);
         }
     }

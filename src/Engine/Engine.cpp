@@ -929,7 +929,7 @@ void Engine::SecondaryInitialization() {
 
     initializeQuests(engine->resources()->eventsData("quests.txt"));
     initializeAutonotes(engine->resources()->eventsData("autonote.txt"));
-    initializeAwards(engine->resources()->eventsData("awards.txt"));
+    initializeAwards(engine->resources()->eventsData("awards.txt"), gameTitle());
     initializeTransitions(engine->resources()->eventsData("trans.txt"));
     initializeMerchants(engine->resources()->eventsData("merchant.txt"));
     if (gameTitle() == GameTitle::MM6)

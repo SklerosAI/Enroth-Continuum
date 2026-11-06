@@ -1,6 +1,7 @@
 #include "MM6IndoorSnapshot.h"
 
 #include <algorithm>
+#include <bit>
 #include <cstdint>
 #include <cstring>
 #include <limits>
@@ -528,4 +529,203 @@ void reconstructMM6IndoorDelta(const MM6IndoorRuntimeDelta &delta, IndoorLocatio
 
     // The 200 persistent bytes and 56-byte tail remain in delta.wire. Their
     // MM6 meanings are not established by the zero-filled shipped deltas.
+}
+
+namespace {
+
+static_assert(std::endian::native == std::endian::little);
+static_assert(offsetof(Actor_MM7, field_84) == 132);
+static_assert(offsetof(SpriteObject_MM7, containing_item) == 36);
+static_assert(offsetof(SpriteObject_MM7, uSpellID) == 72);
+
+void copyBytes(void *dst, const void *src, size_t offset, size_t length) {
+    std::memcpy(static_cast<uint8_t *>(dst) + offset, static_cast<const uint8_t *>(src) + offset, length);
+}
+
+void write32(char *dst, uint32_t value) {
+    for (size_t i = 0; i < 4; ++i)
+        dst[i] = static_cast<char>(value >> (8 * i));
+}
+
+void replaceRecords(MM6IndoorSnapshot *wire, MM6IndoorSectionKind kind, const std::string &bytes) {
+    wire->replaceSection(kind, Blob::fromString(bytes));
+}
+
+} // namespace
+
+Blob encodeMM6IndoorRuntimeDelta(const MM6IndoorRuntimeDelta &delta, const MM6IndoorSnapshot &base) {
+    if (!delta.wire.isDelta)
+        throw Exception("MM6 indoor writer requires a DLV wire snapshot");
+    MM6IndoorRuntimeDelta original = decodeMM6IndoorRuntimeDelta(serializeMM6Indoor(delta.wire), base);
+    if (delta.actors.size() != original.actors.size() ||
+        delta.spriteObjects.size() != original.spriteObjects.size() ||
+        delta.chests.size() != original.chests.size() ||
+        delta.doors.size() != original.doors.size() ||
+        delta.doorsData != original.doorsData)
+        throw Exception("MM6 indoor writer cannot change record counts or door geometry arrays");
+    if (delta.respawnCount > static_cast<uint32_t>(std::numeric_limits<int>::max()) ||
+        delta.lastRespawnDay > static_cast<uint32_t>(std::numeric_limits<int>::max()))
+        throw Exception("MM6 indoor reset counter exceeds runtime range");
+
+    MM6IndoorSnapshot wire = std::move(original.wire);
+    std::string reset(8, '\0');
+    write32(reset.data(), delta.respawnCount);
+    write32(reset.data() + 4, delta.lastRespawnDay);
+    replaceRecords(&wire, MM6IndoorSectionKind::ResetHeader, reset);
+    wire.replaceSection(MM6IndoorSectionKind::Visibility,
+                        Blob::copy(delta.visibleOutlines.data(), delta.visibleOutlines.size()));
+
+    std::string actors(static_cast<const char *>(wire.section(MM6IndoorSectionKind::Actors).bytes.data()),
+                       wire.section(MM6IndoorSectionKind::Actors).bytes.size());
+    for (size_t i = 0; i < delta.actors.size(); ++i) {
+        const Actor_MM7 &current = delta.actors[i];
+        Actor_MM7 permitted = original.actors[i];
+        if (current.hp < 0)
+            throw Exception("MM6 indoor actor {} has unverified negative HP encoding", i);
+        permitted.attributes = current.attributes;
+        permitted.hp = current.hp;
+        // MM6's 118..165 and 168..195 map to the same runtime fields as
+        // MM7's 134..181 and 184..211. Leave both padding words intact.
+        copyBytes(&permitted, &current, 134, 48);
+        copyBytes(&permitted, &current, 184, 28);
+        if (std::memcmp(&permitted, &current, sizeof(current)) != 0)
+            throw Exception("MM6 indoor actor {} has unsupported changed fields", i);
+        char *record = actors.data() + 4 + i * 548;
+        write32(record + 36, current.attributes);
+        std::memcpy(record + 40, &current.hp, sizeof(current.hp));
+        std::memcpy(record + 118, reinterpret_cast<const uint8_t *>(&current) + 134, 48);
+        std::memcpy(record + 168, reinterpret_cast<const uint8_t *>(&current) + 184, 28);
+    }
+    replaceRecords(&wire, MM6IndoorSectionKind::Actors, actors);
+
+    std::string ground(static_cast<const char *>(wire.section(MM6IndoorSectionKind::GroundItems).bytes.data()),
+                       wire.section(MM6IndoorSectionKind::GroundItems).bytes.size());
+    for (size_t i = 0; i < delta.spriteObjects.size(); ++i) {
+        const SpriteObject_MM7 &current = delta.spriteObjects[i];
+        SpriteObject_MM7 permitted = original.spriteObjects[i];
+        copyBytes(&permitted, &current, 0, 24);
+        copyBytes(&permitted, &current, 26, 38);
+        if (std::memcmp(&permitted, &current, sizeof(current)) != 0)
+            throw Exception("MM6 indoor ground item {} has unsupported changed fields", i);
+        char *record = ground.data() + 4 + i * 100;
+        std::memcpy(record, &current, 24);
+        std::memcpy(record + 26, reinterpret_cast<const uint8_t *>(&current) + 26, 38);
+    }
+    replaceRecords(&wire, MM6IndoorSectionKind::GroundItems, ground);
+
+    std::string chests(static_cast<const char *>(wire.section(MM6IndoorSectionKind::Chests).bytes.data()),
+                       wire.section(MM6IndoorSectionKind::Chests).bytes.size());
+    for (size_t i = 0; i < delta.chests.size(); ++i) {
+        const Chest_MM7 &current = delta.chests[i];
+        Chest_MM7 permitted = original.chests[i];
+        permitted.flags = current.flags;
+        for (size_t j = 0; j < current.items.size(); ++j)
+            std::memcpy(&permitted.items[j], &current.items[j], 28);
+        if (std::memcmp(&permitted, &current, sizeof(current)) != 0)
+            throw Exception("MM6 indoor chest {} has unsupported grid or item fields", i);
+        char *record = chests.data() + 4 + i * 4204;
+        std::memcpy(record + 2, &current.flags, sizeof(current.flags));
+        for (size_t j = 0; j < current.items.size(); ++j)
+            std::memcpy(record + 4 + j * 28, &current.items[j], 28);
+    }
+    replaceRecords(&wire, MM6IndoorSectionKind::Chests, chests);
+
+    std::string doors(static_cast<const char *>(wire.section(MM6IndoorSectionKind::DoorRecords).bytes.data()),
+                      wire.section(MM6IndoorSectionKind::DoorRecords).bytes.size());
+    for (size_t i = 0; i < delta.doors.size(); ++i) {
+        const BLVDoor_MM7 &current = delta.doors[i];
+        BLVDoor_MM7 permitted = original.doors[i];
+        permitted.attributes = current.attributes;
+        permitted.timeSinceTriggered = current.timeSinceTriggered;
+        permitted.state = current.state;
+        if (std::memcmp(&permitted, &current, sizeof(current)) != 0)
+            throw Exception("MM6 indoor door {} has unsupported changed geometry", i);
+        char *record = doors.data() + i * 80;
+        write32(record, current.attributes);
+        write32(record + 8, current.timeSinceTriggered);
+        std::memcpy(record + 76, &current.state, sizeof(current.state));
+    }
+    replaceRecords(&wire, MM6IndoorSectionKind::DoorRecords, doors);
+
+    Blob encoded = serializeMM6Indoor(wire);
+    (void) decodeMM6IndoorRuntimeDelta(encoded, base);
+    return encoded;
+}
+
+Blob encodeMM6IndoorChangedState(const IndoorLocation &location) {
+    if (location.mm6DeltaBytes.empty() || location.dlv.respawnCount < 0 || location.dlv.lastRespawnDay < 0 ||
+        location.vertices.size() > std::numeric_limits<uint32_t>::max() ||
+        location.faces.size() > std::numeric_limits<uint32_t>::max() ||
+        location.sectors.size() > std::numeric_limits<uint32_t>::max() ||
+        location.doorsData.size() > std::numeric_limits<uint32_t>::max() / 2)
+        throw Exception("MM6 indoor runtime lacks bounded delta state");
+
+    // The DLV parser needs only the base's door-array byte count and the
+    // projected vertex/face/room counts. These were checked on BLV load.
+    MM6IndoorSnapshot base;
+    base.doorDataBytes = location.doorsData.size() * 2;
+    base.sections.push_back({MM6IndoorSectionKind::DoorSlots, Blob(), 200});
+    base.sections.push_back({MM6IndoorSectionKind::Vertices, Blob(), static_cast<uint32_t>(location.vertices.size())});
+    base.sections.push_back({MM6IndoorSectionKind::Faces, Blob(), static_cast<uint32_t>(location.faces.size())});
+    base.sections.push_back({MM6IndoorSectionKind::Rooms, Blob(), static_cast<uint32_t>(location.sectors.size())});
+    Blob retained = Blob::copy(location.mm6DeltaBytes.data(), location.mm6DeltaBytes.size());
+    MM6IndoorRuntimeDelta current = decodeMM6IndoorRuntimeDelta(retained, base);
+    current.respawnCount = location.dlv.respawnCount;
+    current.lastRespawnDay = location.dlv.lastRespawnDay;
+    current.visibleOutlines = location._visible_outlines;
+    if (pActors.size() != current.actors.size() || pSpriteObjects.size() != current.spriteObjects.size() ||
+        vChests.size() != current.chests.size() || location.doors.size() != current.doors.size() ||
+        location.doorsData.size() != current.doorsData.size())
+        throw Exception("MM6 indoor runtime record count changed; save encoding is not established");
+
+    for (size_t i = 0; i < current.actors.size(); ++i) {
+        Actor_MM7 live{};
+        snapshot(pActors[i], &live);
+        current.actors[i].attributes = live.attributes;
+        current.actors[i].hp = live.hp;
+        copyBytes(&current.actors[i], &live, 134, 48);
+        copyBytes(&current.actors[i], &live, 184, 28);
+    }
+    for (size_t i = 0; i < current.spriteObjects.size(); ++i) {
+        SpriteObject_MM7 live{};
+        snapshot(pSpriteObjects[i], &live);
+        copyBytes(&current.spriteObjects[i], &live, 0, 24);
+        copyBytes(&current.spriteObjects[i], &live, 26, 38);
+    }
+    for (size_t i = 0; i < current.chests.size(); ++i) {
+        Chest_MM7 live{};
+        snapshot(vChests[i], &live);
+        if (live.inventoryMatrix != current.chests[i].inventoryMatrix)
+            throw Exception("MM6 indoor chest {} grid changed; its wire layout is unresolved", i);
+        current.chests[i].flags = live.flags;
+        for (size_t j = 0; j < live.items.size(); ++j)
+            std::memcpy(&current.chests[i].items[j], &live.items[j], 28);
+    }
+    for (size_t i = 0; i < current.doors.size(); ++i) {
+        BLVDoor_MM7 live{};
+        snapshot(location.doors[i], &live);
+        if (live.numVertices != current.doors[i].numVertices ||
+            live.numFaces != current.doors[i].numFaces ||
+            live.numSectors != current.doors[i].numSectors ||
+            live.numOffsets != current.doors[i].numOffsets)
+            throw Exception("MM6 indoor door {} geometry counts changed", i);
+        current.doors[i].attributes = live.attributes;
+        current.doors[i].timeSinceTriggered = live.timeSinceTriggered;
+        current.doors[i].state = live.state;
+    }
+    size_t offset = 0;
+    for (const BLVDoor_MM7 &door : current.doors) {
+        size_t identifiers = size_t(door.numVertices) + size_t(door.numFaces) + size_t(door.numSectors);
+        size_t skippedDeltas = 2 * size_t(door.numFaces);
+        size_t offsets = 3 * size_t(door.numOffsets);
+        if (offset + identifiers + skippedDeltas + offsets > current.doorsData.size() ||
+            !std::equal(current.doorsData.begin() + offset, current.doorsData.begin() + offset + identifiers,
+                        location.doorsData.begin() + offset) ||
+            !std::equal(current.doorsData.begin() + offset + identifiers + skippedDeltas,
+                        current.doorsData.begin() + offset + identifiers + skippedDeltas + offsets,
+                        location.doorsData.begin() + offset + identifiers + skippedDeltas))
+            throw Exception("MM6 indoor door geometry arrays changed");
+        offset += identifiers + skippedDeltas + offsets;
+    }
+    return encodeMM6IndoorRuntimeDelta(current, base);
 }

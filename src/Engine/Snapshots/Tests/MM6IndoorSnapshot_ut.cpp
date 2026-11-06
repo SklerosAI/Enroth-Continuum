@@ -75,6 +75,36 @@ UNIT_TEST(MM6IndoorSnapshot, ProjectsMinimalBase) {
     EXPECT_EQ(projected.doorCount, 200);
 }
 
+UNIT_TEST(MM6IndoorSnapshot, EncodesKnownFieldsAndRejectsUnsupportedChanges) {
+    MM6IndoorSnapshot base = deserializeMM6IndoorBase(minimalBase());
+    MM6IndoorRuntimeDelta delta = decodeMM6IndoorRuntimeDelta(minimalDelta(), base);
+    delta.respawnCount = 3;
+    delta.lastRespawnDay = 42;
+    delta.visibleOutlines[0] = static_cast<char>(0x80);
+    delta.doors[0].attributes = 7;
+    delta.doors[0].timeSinceTriggered = 100;
+    delta.doors[0].state = 2;
+    std::string opaque(200, '\0');
+    opaque[74] = static_cast<char>(0xA5);
+    delta.wire.replaceSection(MM6IndoorSectionKind::PersistentBytes, Blob::fromString(std::move(opaque)));
+
+    Blob encoded = encodeMM6IndoorRuntimeDelta(delta, base);
+    MM6IndoorRuntimeDelta decoded = decodeMM6IndoorRuntimeDelta(encoded, base);
+    EXPECT_EQ(decoded.respawnCount, 3);
+    EXPECT_EQ(decoded.lastRespawnDay, 42);
+    EXPECT_EQ(static_cast<uint8_t>(decoded.visibleOutlines[0]), 0x80);
+    EXPECT_EQ(decoded.doors[0].attributes, 7);
+    EXPECT_EQ(decoded.doors[0].timeSinceTriggered, 100);
+    EXPECT_EQ(decoded.doors[0].state, 2);
+    EXPECT_EQ(static_cast<const uint8_t *>(decoded.wire.section(MM6IndoorSectionKind::PersistentBytes).bytes.data())[74], 0xA5);
+
+    delta.doors[0].moveLength = 1;
+    EXPECT_THROW(encodeMM6IndoorRuntimeDelta(delta, base), Exception);
+    delta.doors[0].moveLength = 0;
+    delta.doors.pop_back();
+    EXPECT_THROW(encodeMM6IndoorRuntimeDelta(delta, base), Exception);
+}
+
 UNIT_TEST(MM6IndoorSnapshot, RejectsTruncatedAndInconsistentData) {
     Blob baseBytes = minimalBase();
     MM6IndoorSnapshot base = deserializeMM6IndoorBase(baseBytes);
@@ -100,6 +130,10 @@ UNIT_TEST(MM6IndoorSnapshot, RetainedFiftyTwoPairs) {
 
     size_t pairs = 0;
     bool testedBadDoorReference = false;
+    bool testedActorWrite = false;
+    bool testedGroundWrite = false;
+    bool testedChestWrite = false;
+    bool testedDoorWrite = false;
     for (const auto &entry : std::filesystem::directory_iterator(directory)) {
         if (entry.path().extension() != ".blv")
             continue;
@@ -115,6 +149,7 @@ UNIT_TEST(MM6IndoorSnapshot, RetainedFiftyTwoPairs) {
         MM6IndoorSnapshot delta = deserializeMM6IndoorDelta(deltaBytes, base);
         IndoorLocation_MM7 projected = projectMM6IndoorBase(base);
         MM6IndoorRuntimeDelta runtimeDelta = decodeMM6IndoorRuntimeDelta(deltaBytes, base);
+        expectEqualBytes(deltaBytes, encodeMM6IndoorRuntimeDelta(runtimeDelta, base));
         EXPECT_EQ(projected.faces.size(), base.section(MM6IndoorSectionKind::Faces).count);
         EXPECT_EQ(projected.sectors.size(), base.section(MM6IndoorSectionKind::Rooms).count);
         EXPECT_EQ(projected.lights.size(), base.section(MM6IndoorSectionKind::Lights).count);
@@ -126,6 +161,57 @@ UNIT_TEST(MM6IndoorSnapshot, RetainedFiftyTwoPairs) {
         expectEqualBytes(deltaBytes, serializeMM6Indoor(runtimeDelta.wire));
         expectEqualBytes(baseBytes, serializeMM6Indoor(base));
         expectEqualBytes(deltaBytes, serializeMM6Indoor(delta));
+
+        if (!testedActorWrite && !runtimeDelta.actors.empty()) {
+            MM6IndoorRuntimeDelta edited = decodeMM6IndoorRuntimeDelta(deltaBytes, base);
+            edited.actors[0].attributes ^= 1;
+            edited.actors[0].hp += 1;
+            MM6IndoorRuntimeDelta reopened = decodeMM6IndoorRuntimeDelta(encodeMM6IndoorRuntimeDelta(edited, base), base);
+            EXPECT_EQ(reopened.actors[0].attributes, edited.actors[0].attributes);
+            EXPECT_EQ(reopened.actors[0].hp, edited.actors[0].hp);
+            expectEqualBytes(delta.section(MM6IndoorSectionKind::PersistentBytes).bytes,
+                             reopened.wire.section(MM6IndoorSectionKind::PersistentBytes).bytes);
+            edited.actors[0].hp = -1;
+            EXPECT_THROW(encodeMM6IndoorRuntimeDelta(edited, base), Exception);
+            testedActorWrite = true;
+        }
+        if (!testedGroundWrite && !runtimeDelta.spriteObjects.empty()) {
+            MM6IndoorRuntimeDelta edited = decodeMM6IndoorRuntimeDelta(deltaBytes, base);
+            edited.spriteObjects[0].position.x += 1;
+            edited.spriteObjects[0].uAttributes ^= 1;
+            edited.spriteObjects[0].containing_item.flags ^= 1;
+            MM6IndoorRuntimeDelta reopened = decodeMM6IndoorRuntimeDelta(encodeMM6IndoorRuntimeDelta(edited, base), base);
+            EXPECT_EQ(reopened.spriteObjects[0].position.x, edited.spriteObjects[0].position.x);
+            EXPECT_EQ(reopened.spriteObjects[0].uAttributes, edited.spriteObjects[0].uAttributes);
+            EXPECT_EQ(reopened.spriteObjects[0].containing_item.flags, edited.spriteObjects[0].containing_item.flags);
+            edited.spriteObjects[0].uSpellID += 1;
+            EXPECT_THROW(encodeMM6IndoorRuntimeDelta(edited, base), Exception);
+            testedGroundWrite = true;
+        }
+        if (!testedChestWrite && !runtimeDelta.chests.empty()) {
+            MM6IndoorRuntimeDelta edited = decodeMM6IndoorRuntimeDelta(deltaBytes, base);
+            edited.chests[0].flags ^= 1;
+            edited.chests[0].items[0].flags ^= 1;
+            MM6IndoorRuntimeDelta reopened = decodeMM6IndoorRuntimeDelta(encodeMM6IndoorRuntimeDelta(edited, base), base);
+            EXPECT_EQ(reopened.chests[0].flags, edited.chests[0].flags);
+            EXPECT_EQ(reopened.chests[0].items[0].flags, edited.chests[0].items[0].flags);
+            expectEqualBytes(delta.section(MM6IndoorSectionKind::PersistentBytes).bytes,
+                             reopened.wire.section(MM6IndoorSectionKind::PersistentBytes).bytes);
+            edited.chests[0].inventoryMatrix[0] ^= 1;
+            EXPECT_THROW(encodeMM6IndoorRuntimeDelta(edited, base), Exception);
+            testedChestWrite = true;
+        }
+        if (!testedDoorWrite && !runtimeDelta.doorsData.empty()) {
+            MM6IndoorRuntimeDelta edited = decodeMM6IndoorRuntimeDelta(deltaBytes, base);
+            edited.doors[0].attributes ^= 1;
+            edited.doors[0].timeSinceTriggered += 1;
+            MM6IndoorRuntimeDelta reopened = decodeMM6IndoorRuntimeDelta(encodeMM6IndoorRuntimeDelta(edited, base), base);
+            EXPECT_EQ(reopened.doors[0].attributes, edited.doors[0].attributes);
+            EXPECT_EQ(reopened.doors[0].timeSinceTriggered, edited.doors[0].timeSinceTriggered);
+            expectEqualBytes(delta.section(MM6IndoorSectionKind::DoorData).bytes,
+                             reopened.wire.section(MM6IndoorSectionKind::DoorData).bytes);
+            testedDoorWrite = true;
+        }
 
         if (!testedBadDoorReference && !runtimeDelta.doorsData.empty()) {
             Blob originalDoorData = Blob::copy(delta.section(MM6IndoorSectionKind::DoorData).bytes);
@@ -165,4 +251,8 @@ UNIT_TEST(MM6IndoorSnapshot, RetainedFiftyTwoPairs) {
     }
     EXPECT_EQ(pairs, 52);
     EXPECT_TRUE(testedBadDoorReference);
+    EXPECT_TRUE(testedActorWrite);
+    EXPECT_TRUE(testedGroundWrite);
+    EXPECT_TRUE(testedChestWrite);
+    EXPECT_TRUE(testedDoorWrite);
 }

@@ -81,3 +81,11 @@ struct MM6IndoorRuntimeDelta {
 
 MM6IndoorRuntimeDelta decodeMM6IndoorRuntimeDelta(const Blob &decoded, const MM6IndoorSnapshot &base);
 void reconstructMM6IndoorDelta(const MM6IndoorRuntimeDelta &delta, IndoorLocation *dst);
+
+// Patches only fields whose MM6 wire positions are established. The writer
+// rejects unsupported edits and keeps every untouched byte from delta.wire.
+Blob encodeMM6IndoorRuntimeDelta(const MM6IndoorRuntimeDelta &delta, const MM6IndoorSnapshot &base);
+
+// Captures the supported fields from the active indoor runtime. The current
+// sidecar supplies opaque bytes, including any event-variable edits.
+Blob encodeMM6IndoorChangedState(const IndoorLocation &location);

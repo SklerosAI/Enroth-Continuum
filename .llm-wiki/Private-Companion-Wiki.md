@@ -25,6 +25,8 @@ Each private finding should record:
 
 The private `INDEX.md` should map each subsystem to its private page and report, state which reports are fresh or stale, and point back to the public [MM6 source/probe index](MM6-Source-and-Probe-Index.md). A future agent first reads the public [handoff](Agent-Handoff.md), checks `git status` and source SHA, then reads only the private pages needed for its assigned lane. It returns public aggregate conclusions, not raw private rows, strings or images, to the integration owner.
 
+For later direct play, attach each local observation, frame, sound sample, trace and save checkpoint to a claim and session under the [knowledge/control contract](Agent-Play-Knowledge-and-Control-Contract.md). Include title/build identity, evidence tier, source SHA, expected and observed result, uncertainty, and recovery status. These records stay ignored locally and need an owner-approved backup; a public claim may point to a private key without copying the underlying artifact.
+
 ## Boundary checks
 
 - Keep all private pages, reports, saves, screenshots, recordings and game assets under the ignored `local-game-data/` tree or another owner-approved local-only location. Never use `git add -f` on them, attach them to issues/PRs, or send them to cloud storage or public tools.

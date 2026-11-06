@@ -20,6 +20,7 @@ This is the LLM-maintained project memory for Enroth Continuum, a personal Apple
 - [Agent Handoff](Agent-Handoff.md) — start here for current gates, source authority, and parallel integration
 - [Engine Architecture and Runtime Map](Engine-Architecture-and-Runtime-Map.md) — source-linked engine and title seams
 - [MM6 F2 Structural Findings](MM6-F2-Structural-Findings.md) — current confirmed gaps and unresolved meanings
+- [Agent Play Knowledge and Control Contract](Agent-Play-Knowledge-and-Control-Contract.md) — future evidence and safe direct-play interface
 
 ### Evidence and future play
 

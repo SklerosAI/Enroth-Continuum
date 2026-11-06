@@ -37,6 +37,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 Source and Probe Index](MM6-Source-and-Probe-Index.md) — Public specs, tracked probes, and their evidence limits
 - [Private Companion Wiki](Private-Companion-Wiki.md) — Ignored local knowledge base and entry schema; no Git backup
 - [Agent Play and Observation Roadmap](Agent-Play-and-Observation-Roadmap.md) — Future visible-frame observation, bounded input, and saved-session gates
+- [Agent Play Knowledge and Control Contract](Agent-Play-Knowledge-and-Control-Contract.md) — Future claim tiers, title/session identity, observe/act acknowledgments, recovery and private artifacts
 
 ## Source summaries
 
@@ -58,5 +59,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 Text Table Consumer Spec Source](Source-MM6-Table-Consumer-Spec.md) — Direct literal load coverage and unresolved parser/consumer questions
 - [MM6 Table Semantic F2 Source](Source-MM6-Table-Semantic-F2.md) — Thirty-family parser map, selected references, and skipped awards
 - [MM6 Monster and Combat Spec Source](Source-MM6-Monster-Combat-Spec.md) — Retained monster parser gaps, title assumptions, and unverified combat
+- [MM6 Combat Semantics F2 Source](Source-MM6-Combat-Semantics-F2.md) — All-row monster consumer map, resistance/AI/loot gaps, and live encounter obligations
+- [MM6 Guide F2 Review Source](Source-MM6-Guide-F2-Review.md) — Fourteen guide-family locators, selected claim checks, and open reconciliation
 
 <!-- Add pages here as the wiki grows -->

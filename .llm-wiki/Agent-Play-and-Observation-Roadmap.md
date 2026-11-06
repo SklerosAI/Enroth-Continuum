@@ -8,6 +8,8 @@ tags: [agent-control, observation, validation]
 
 Future agents should be able to observe and play a verified Enroth campaign on this Mac through a controlled, visible interface; no current MM6 agent-play capability is claimed here.
 
+The [Agent Play Knowledge and Control Contract](Agent-Play-Knowledge-and-Control-Contract.md) defines the future claim record, session binding, visible observation, bounded action, acknowledgment, failure recovery and acceptance checks. It is a design contract, not an implemented bridge.
+
 ## Existing technical footholds
 
 - [GameStarter.cpp](../src/Application/Startup/GameStarter.cpp) creates the window, renderer, input, engine and game components. [EngineController.cpp](../src/Engine/Components/Control/EngineController.cpp) can post keyboard and mouse events from a control routine. Those internal methods are not a complete, safe external agent API.
@@ -28,4 +30,4 @@ MM7's verified Emerald Island launch is a useful graphical control, but its full
 
 The private companion at `local-game-data/private-wiki/INDEX.md` can hold local observation notes, frame references, focus/input calibration and play checkpoints. Public wiki pages record only nonproprietary conclusions and evidence levels. The prior [plan's optional agent bridge](../project/plan.md) also requires normal play to remain unchanged when that bridge is off.
 
-See also: [Engine Architecture and Runtime Map](Engine-Architecture-and-Runtime-Map.md), [Private Companion Wiki](Private-Companion-Wiki.md), [Campaign Status](Campaign-Status.md), [Agent Handoff](Agent-Handoff.md).
+See also: [Agent Play Knowledge and Control Contract](Agent-Play-Knowledge-and-Control-Contract.md), [Engine Architecture and Runtime Map](Engine-Architecture-and-Runtime-Map.md), [Private Companion Wiki](Private-Companion-Wiki.md), [Campaign Status](Campaign-Status.md), [Agent Handoff](Agent-Handoff.md).

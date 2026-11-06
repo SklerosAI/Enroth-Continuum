@@ -22,6 +22,7 @@ This index directs agents to the current public specifications and reproducible 
 | Question | Public specification |
 | --- | --- |
 | Manual/guide categories and campaign milestones | [Guide reconciliation](../project/MM6_GUIDE_RECONCILIATION.md) |
+| Fourteen guide-family chapter/consumer ledger and remaining claim review | [Guide F2 review](../project/MM6_GUIDE_F2_REVIEW.md) |
 | Class, skill, creation, inherited potion UI | [Class and skill](../project/MM6_CLASS_SKILL_SPEC.md) |
 | Create Party, Quick Start, starting stats, items and spells | [Creation F2 audit](../project/MM6_CREATION_F2.md) |
 | Starting-array schema lead, potion-guide reconciliation and rules acceptance | [Rules F2 closure packet](../project/MM6_RULES_F2_CLOSURE.md) |
@@ -37,6 +38,7 @@ This index directs agents to the current public specifications and reproducible 
 | Text-table loader and no-literal-load questions, item matrix, NPC text | [Table consumers](../project/MM6_TABLE_CONSUMER_SPEC.md) |
 | Thirty-family parser/consumer register and award-row mismatch | [Table semantic F2 packet](../project/MM6_TABLE_SEMANTIC_F2.md) |
 | Monster parser labels, taxonomy, combat gaps | [Monster and combat](../project/MM6_MONSTER_COMBAT_SPEC.md) |
+| Retained monster rows, attack/resistance/AI/loot consumer map | [Combat semantics F2](../project/MM6_COMBAT_SEMANTICS_F2.md) |
 
 ## Tracked probe entry points
 
@@ -44,8 +46,9 @@ This index directs agents to the current public specifications and reproducible 
 | --- | --- | --- |
 | Archive/map structure | [map inventory](../scripts/mm6_probe_maps.py), [indoor](../scripts/mm6_probe_indoors.py), [outdoor](../scripts/mm6_probe_outdoors.py), [world roundtrip](../scripts/mm6_probe_world_roundtrip.py), [world fields](../scripts/mm6_probe_world_fields.py) | Bounds, field spans, byte-exact retained delta section reassembly and record hypotheses; chest grid and other nonzero field semantics remain unresolved. |
 | Event structure | [event inventory](../scripts/mm6_probe_events.py), [parser comparison](../scripts/mm6_probe_event_parser.py), [opcode semantics](../scripts/mm6_probe_opcode_semantics.py), [variables](../scripts/mm6_probe_event_variables.py), [dialogue](../scripts/mm6_probe_dialogue_events.py), [quest graph](../scripts/mm6_probe_quest_graph.py), [campaign routes](../scripts/mm6_probe_campaign_routes.py) | All-active opcode frame widths and current-case register, plus structural routing links; not complete side effects or quest reachability. |
-| Rules and tables | [creation rules](../scripts/mm6_probe_creation_rules.py), [item ranges](../scripts/mm6_probe_item_ranges.py), [spells](../scripts/mm6_probe_spells.py), [spell effects](../scripts/mm6_probe_spell_effects.py), [table consumers](../scripts/mm6_probe_table_consumers.py), [table semantics](../scripts/mm6_probe_table_semantics.py), [unloaded tables](../scripts/mm6_probe_unloaded_tables.py), [potion guide](../scripts/mm6_probe_potion_guide.py), [monster labels](../scripts/mm6_probe_monster_rules.py), [binary tables](../scripts/mm6_probe_binary_tables.py) | Starter-item/category, ID/schema, guide/table and parser-consumer comparisons; not correct creation, effects, awards, targeting or combat. |
+| Rules and tables | [creation rules](../scripts/mm6_probe_creation_rules.py), [item ranges](../scripts/mm6_probe_item_ranges.py), [spells](../scripts/mm6_probe_spells.py), [spell effects](../scripts/mm6_probe_spell_effects.py), [table consumers](../scripts/mm6_probe_table_consumers.py), [table semantics](../scripts/mm6_probe_table_semantics.py), [unloaded tables](../scripts/mm6_probe_unloaded_tables.py), [potion guide](../scripts/mm6_probe_potion_guide.py), [monster labels](../scripts/mm6_probe_monster_rules.py), [combat semantics](../scripts/mm6_probe_combat_semantics.py), [binary tables](../scripts/mm6_probe_binary_tables.py) | Starter-item/category, ID/schema, monster row/consumer, guide/table and parser comparisons; not correct creation, effects, awards, targeting or live combat. |
 | Presentation | [media references](../scripts/mm6_probe_media_references.py), [media consumers](../scripts/mm6_probe_media_consumers.py), [house routes](../scripts/mm6_probe_house_routes.py), [strings](../scripts/mm6_probe_strings.py), [fonts](../scripts/mm6_probe_fonts.py) | Resource presence, format boundaries, portrait/icon/font/voice name joins and static house routing; not route reachability or seen/heard playback. |
+| Owned guides | [guide coverage](../scripts/mm6_probe_guide_coverage.py) | PDF identity, page/text indexing and inspection flags; not complete claim-level review or runtime truth. |
 
 Run each script only with its documented local ignored reference and output arguments. The scripts and specs can change; record their Git SHA and the private report's source fingerprints before trusting a result. A stale report must be regenerated or explicitly marked stale. Never stage a private report, raw table, decoded archive, guide text, save, screenshot or trace. A new probe belongs in this index only after its tracked version and output-boundary behavior have been reviewed.
 

@@ -363,3 +363,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Revised the partial `.ec6` known-save assembly to require raw `RSTS` alongside the eleven previous sections. The decoder rejects missing/optional/corrupt resistance fields before assigning the destination; all twelve sections must be present and required.
 - Built the native arm64 MM6, MM7 and unit targets from the main checkout. The retained-data offline runner passed 64/64 tests, including private F3-matched transport/spell manifests, 52 indoor pairs and 15 outdoor deltas. Updated the public and ignored private handoffs. The assembler remains partial, SaveLoad still rejects MM6, and no original installation or game process was opened.
+
+## [2026-11-06] ingest | MM6 spell scroll and book IDs
+- by: T-Burton-ND via codex
+- Verified all 99 MM6 scroll and 99 book item joins against ignored retained reports whose item and spell hashes match F3 original-file reconciliation. Added bounded MM6-only mapping and title-specific guild popup lookup, with invalid item IDs rejected.
+- Guarded MM6 scroll use before consumption, book use before inherited mastery checks, and guild stock before MM7 item generation. Recorded unresolved targets/effects, three-rank learnability, guild policy and learned-spell icons; MM7 mapping remains unchanged.
+- Built the isolated arm64 unit target, passed two focused native tests covering every item ID and negative edges, checked the private report verifier, C++ style and wiki links. No partial game was launched or original installation reread.

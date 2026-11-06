@@ -274,3 +274,9 @@ Chronological record of wiki activity.
 - Added a title-specific BLV/DLV renderer projection for faces, rooms, lights, decorations, actors, items, chests, visibility and door arrays, retaining opaque delta bytes for the later writer.
 - Checked all 52 F3-matched retained base/delta pairs and wrapper decode, plus malformed references, in four focused native tests. The arm64 unit target and C++ style checks passed.
 - Recorded remaining save write-back, door motion, event-variable and F5 visual/campaign checks. No MM6 process or original installation was opened.
+
+## [2026-11-06] ingest | MM6 durable save fields
+- by: T-Burton-ND via codex
+- Added bounded quest, autonote, award and character-event bitsets, condition clocks and logical character inventory records as versioned `.ec6` payloads.
+- The MM6-only capture and copy-staging adapter deliberately rejects nonempty inventory on restore until item footprints and indexed placement are proven; live SaveLoad and UI remain disabled.
+- Syntax-checked the changed C++ units and ran a compiled nonzero round-trip and reject-before-mutation harness. No game or original installation was opened.

@@ -37,7 +37,8 @@ def main() -> None:
                            ("mm6_f4_check_day_of_year_operands.py", research),
                            ("mm6_f4_check_gold_event_operands.py", research),
                            ("mm6_f4_check_npc_event_operands.py", research),
-                           ("mm6_f4_check_item_event_operands.py", research)):
+                           ("mm6_f4_check_item_event_operands.py", research),
+                           ("mm6_f4_check_projectile_frames.py", research)):
         subprocess.run([sys.executable, "-B", str(root / "scripts" / script), str(source)], check=True)
 
     rules = Path.home() / "Library/Application Support/Enroth Continuum/Profiles/MM6/rules"
@@ -54,6 +55,8 @@ def main() -> None:
                                            timed_cure_manifest, combat_buff_manifest,
                                            house_room_manifest)):
         parser.error("private MM6 rule or room manifest is missing from the local user profile")
+    subprocess.run([sys.executable, "-B", str(root / "scripts/mm6_f4_check_house_presentation.py"),
+                    str(research), str(house_room_manifest)], check=True)
     subprocess.run([sys.executable, "-B", str(root / "scripts/mm6_f4_check_spell_learning.py"),
                     str(research), str(creation_manifest)], check=True)
 

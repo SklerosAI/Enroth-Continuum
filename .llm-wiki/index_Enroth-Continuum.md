@@ -27,7 +27,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 
 ## Agent work and open questions
 
-- [MM6 F2 Workstreams](MM6-F2-Workstreams.md) — Three or four parallel research assignments and handoff packet
+- [MM6 F2 Workstreams](MM6-F2-Workstreams.md) — Four research lanes, current three-worker rotation, and handoff packet
 - [Open Questions](Open-Questions.md) — Dated F2 gaps requiring reconciliation before F3
 
 ## Source summaries

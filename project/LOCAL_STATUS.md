@@ -574,3 +574,19 @@ face-bit events target one checked face index for MM6; MM7 keeps its group
 behavior. The MM6 changed-state writer does not save those face edits, and
 event replay is not established on all affected maps, so reload fidelity and
 campaign play remain open. Normal MM6 chest and SaveLoad guards stay closed.
+
+The standalone `BEAC` v1 section now preserves current-runtime Lloyd beacon
+images and an optional save thumbnail as exact RGBA bytes, keyed by lowercase
+MM6 base-map filenames. Its linked focused tests passed **5/5**, the
+private-backed MM6/LOD gate **336/336**, general non-MM6 unit gate **437/437**
+and MM7 headless control **1/1**. The required known-save manifest still rejects
+BEAC and active beacons; renderer-owned image publication, stable all-owner
+commit and graphical save–relaunch–load remain open.
+
+The observed original shop/guild shared edge also shares one refresh deadline:
+the first service after expiry regenerates its stock and advances the deadline;
+the other skips generation while it remains current. A detached MM6 refresh
+helper stages both physical stock and clock owners before publishing either.
+Its focused shop/clock suites passed **8/8**, and the private-backed MM6/LOD
+gate passed **338/338**. Item generation, live house services and a nonzero
+native-save comparison remain open.

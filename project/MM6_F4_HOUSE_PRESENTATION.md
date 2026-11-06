@@ -1,0 +1,11 @@
+# MM6 house proprietor portrait binding
+
+Status: F4 source-backed presentation preflight, 2026-11-06. No MM6 house interior, NPC portrait or movie has been rendered.
+
+The accepted 119-room MM6 descriptor includes an `npc_picture` field. The retained F3-matched 557-row house table references 116 room descriptors. Fifty-one of those referenced descriptors have a nonzero picture ID, and every one resolves to an `npc` icon name in the retained MM6 icons directory using the engine's existing minimum-three-digit name convention. One unreferenced descriptor has a candidate icon name absent from the retained index; it is not on a table-backed entry route. The active `SpeakInHouse` ledger contains 282 instructions whose room has a proprietor picture and 389 table-backed instructions whose room does not.
+
+`planHouseEntry` now carries an optional title-specific proprietor icon name from the MM6 room descriptor. It never substitutes an MM7 room or NPC ID. The guarded MM6 `enterHouse` branch checks the icon metadata through the active title's resource manager before reporting its nonfatal unavailable status. A missing icon rejects before inherited house state; a zero picture ID has no proprietor icon request. This binds source identity and presence only; it does not load, decode or draw the image.
+
+The tracked [retained checker](../scripts/mm6_f4_check_house_presentation.py) verifies the private icon index against its frozen media probe hash, the house table against its format-2 probe, and the owner-only room manifest against the house table. It prints aggregates only and runs in the one-command offline gate. A private-backed native test checks each active entry plan's icon name against the retained index and the 282/389 split. The arm64 MM6/MM7/unit targets built, the focused house/transport set passed 8/8, the full MM6 offline gate passed 181/181 from 57 suites without skips, and the general suite passed 438/438.
+
+The remaining presentation path needs MM6-specific proprietor/NPC selection, icon decoding and placement, room video/background, sound group and service window behavior. F5 must inspect representative taverns, shops, guilds and residences on screen. The global MM6 house entry gate remains closed.

@@ -16,9 +16,9 @@ namespace {
 constexpr std::array<char, 4> PART_TAG = {'P', 'A', 'R', 'T'};
 constexpr std::array<char, 4> CHAR_TAG = {'C', 'H', 'A', 'R'};
 constexpr std::uint8_t PARTY_VERSION = 1;
-constexpr std::uint8_t CHARACTER_VERSION = 2;
+constexpr std::uint8_t CHARACTER_VERSION = 3;
 constexpr size_t MAX_NAME_BYTES = 63;
-constexpr size_t MAX_CHARACTER_PAYLOAD = 4 * (1 + MAX_NAME_BYTES + 4 + 2 + 8 + 12 + 28 + 62 + 13 + 39) + 2;
+constexpr size_t MAX_CHARACTER_PAYLOAD = 4 * (1 + MAX_NAME_BYTES + 4 + 2 + 8 + 12 + 28 + 62 + 13 + 39 + 2) + 2;
 
 class Reader {
  public:
@@ -106,6 +106,8 @@ void validate(const CoreSaveFields &fields) {
         if (!validName(character.name) || character.sex > 1 || character.classId >= 18 ||
             character.faceId >= 12 || character.skillPoints < 0 ||
             character.modifiers.birthYear < 0 || character.modifiers.birthYear > 10000 ||
+            character.spellPreferences.quickSpell > 99 ||
+            character.spellPreferences.spellbookPage > 8 ||
             std::any_of(character.skills.begin(), character.skills.end(),
                         [](std::uint16_t value) { return !validSkill(value); }))
             throw std::runtime_error("invalid MM6 core character fields");
@@ -184,6 +186,8 @@ std::vector<std::uint8_t> encodeCharacters(const std::array<CoreCharacterFields,
         for (size_t bit = 0; bit < character.modifiers.pureStatPotionUsed.size(); ++bit)
             potionFlags |= std::uint8_t(character.modifiers.pureStatPotionUsed[bit]) << bit;
         put8(&bytes, potionFlags);
+        put8(&bytes, character.spellPreferences.quickSpell);
+        put8(&bytes, character.spellPreferences.spellbookPage);
     }
     return bytes;
 }
@@ -231,6 +235,8 @@ std::array<CoreCharacterFields, 4> decodeCharacters(std::span<const std::uint8_t
             throw std::runtime_error("nonzero MM6 pure-stat potion padding bit");
         for (size_t bit = 0; bit < character.modifiers.pureStatPotionUsed.size(); ++bit)
             character.modifiers.pureStatPotionUsed[bit] = (potionFlags >> bit) & 1;
+        character.spellPreferences.quickSpell = reader.u8();
+        character.spellPreferences.spellbookPage = reader.u8();
     }
     reader.finish();
     return characters;

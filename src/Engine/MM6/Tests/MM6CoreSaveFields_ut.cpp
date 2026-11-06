@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <exception>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "Testing/Unit/UnitTest.h"
@@ -44,6 +45,8 @@ mm6::CoreSaveFields exampleFields() {
         character.modifiers.age = 4;
         character.modifiers.birthYear = 1147 + i;
         character.modifiers.pureStatPotionUsed[i] = true;
+        character.spellPreferences.quickSpell = 1 + i;
+        character.spellPreferences.spellbookPage = i + 1;
     }
     return fields;
 }
@@ -81,6 +84,40 @@ UNIT_TEST(MM6CoreSaveFields, CapturesCharacterModifiersAndStagesDetachedCopy) {
     fields.birthYear = -1;
     EXPECT_THROW((void) mm6::stageCharacterModifiers(prior, fields, GameTitle::MM6), std::exception);
     EXPECT_EQ(prior._statBonuses[ATTRIBUTE_MIGHT], 99);
+}
+
+UNIT_TEST(MM6CoreSaveFields, CapturesSpellPreferencesAndStagesDetachedCopy) {
+    Character source;
+    source.uQuickSpell = SPELL_FIRE_FIREBALL;
+    source.lastOpenedSpellbookPage = MAGIC_SCHOOL_WATER;
+    mm6::CharacterSpellPreferences preferences =
+        mm6::captureCharacterSpellPreferences(source, GameTitle::MM6);
+    EXPECT_EQ(preferences.quickSpell, std::to_underlying(SPELL_FIRE_FIREBALL));
+    EXPECT_EQ(preferences.spellbookPage, std::to_underlying(MAGIC_SCHOOL_WATER));
+
+    Character prior;
+    prior.uQuickSpell = SPELL_NONE;
+    prior.lastOpenedSpellbookPage = MAGIC_SCHOOL_FIRE;
+    Character staged = mm6::stageCharacterSpellPreferences(prior, preferences, GameTitle::MM6);
+    EXPECT_EQ(staged.uQuickSpell, SPELL_FIRE_FIREBALL);
+    EXPECT_EQ(staged.lastOpenedSpellbookPage, MAGIC_SCHOOL_WATER);
+    EXPECT_EQ(prior.uQuickSpell, SPELL_NONE);
+    EXPECT_EQ(prior.lastOpenedSpellbookPage, MAGIC_SCHOOL_FIRE);
+
+    EXPECT_THROW((void) mm6::captureCharacterSpellPreferences(source, GameTitle::MM7), std::exception);
+    EXPECT_THROW((void) mm6::stageCharacterSpellPreferences(prior, preferences, GameTitle::MM7), std::exception);
+    preferences.quickSpell = 100;
+    EXPECT_THROW((void) mm6::stageCharacterSpellPreferences(prior, preferences, GameTitle::MM6), std::exception);
+    preferences.quickSpell = 1;
+    preferences.spellbookPage = 9;
+    EXPECT_THROW((void) mm6::stageCharacterSpellPreferences(prior, preferences, GameTitle::MM6), std::exception);
+    EXPECT_EQ(prior.uQuickSpell, SPELL_NONE);
+
+    source.uQuickSpell = static_cast<SpellId>(100);
+    EXPECT_THROW((void) mm6::captureCharacterSpellPreferences(source, GameTitle::MM6), std::exception);
+    source.uQuickSpell = SPELL_FIRE_FIREBALL;
+    source.lastOpenedSpellbookPage = static_cast<MagicSchool>(9);
+    EXPECT_THROW((void) mm6::captureCharacterSpellPreferences(source, GameTitle::MM6), std::exception);
 }
 
 mm6::SaveContainer containerFor(const mm6::CoreSaveFields &fields) {
@@ -134,11 +171,19 @@ UNIT_TEST(MM6CoreSaveFields, RejectsMissingMalformedAndForeignSections) {
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
 
     container = containerFor(fields);
-    container.sections[1].payload.back() |= 0x80; // Unused pure-stat potion bit.
+    container.sections[1].payload[container.sections[1].payload.size() - 3] |= 0x80;
+    // Unused pure-stat potion bit in final character.
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
 
     container = containerFor(fields);
-    container.sections[1].payload[0] = 1; // Superseded CHAR v1 payload.
+    container.sections[1].payload[0] = 2; // Superseded CHAR v2 payload.
+    EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
+
+    container = containerFor(fields);
+    container.sections[1].payload[container.sections[1].payload.size() - 2] = 100;
+    EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
+    container = containerFor(fields);
+    container.sections[1].payload.back() = 9;
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
 
     std::vector<std::uint8_t> bytes = mm6::encodeSaveContainer(containerFor(fields));

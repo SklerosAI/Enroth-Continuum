@@ -57,6 +57,26 @@ Character stageCharacterModifiers(const Character &live, const CharacterModifier
     return staged;
 }
 
+CharacterSpellPreferences captureCharacterSpellPreferences(const Character &character, GameTitle title) {
+    requireMM6(title);
+    const int spell = std::to_underlying(character.uQuickSpell);
+    const int page = std::to_underlying(character.lastOpenedSpellbookPage);
+    if (spell < 0 || spell > 99 || page < 0 || page > 8)
+        throw std::runtime_error("MM6 character spell preferences exceed supported range");
+    return {static_cast<std::uint8_t>(spell), static_cast<std::uint8_t>(page)};
+}
+
+Character stageCharacterSpellPreferences(const Character &live, const CharacterSpellPreferences &saved,
+                                         GameTitle title) {
+    requireMM6(title);
+    if (saved.quickSpell > 99 || saved.spellbookPage > 8)
+        throw std::runtime_error("MM6 character spell preferences exceed supported range");
+    Character staged = live;
+    staged.uQuickSpell = static_cast<SpellId>(saved.quickSpell);
+    staged.lastOpenedSpellbookPage = static_cast<MagicSchool>(saved.spellbookPage);
+    return staged;
+}
+
 CoreSaveFields captureCoreFields(const Party &party, GameTitle title) {
     requireMM6(title);
     CoreSaveFields fields;
@@ -91,6 +111,7 @@ CoreSaveFields captureCoreFields(const Party &party, GameTitle title) {
         for (size_t spell = 0; spell < target.spells.size(); ++spell)
             target.spells[spell] = source.bHaveSpell[static_cast<SpellId>(spell + 1)];
         target.modifiers = captureCharacterModifiers(source, title);
+        target.spellPreferences = captureCharacterSpellPreferences(source, title);
     }
 
     (void) encodeCoreSections(fields); // Validate before returning a capture for serialization.
@@ -132,6 +153,7 @@ Party stageCoreParty(const Party &live, std::span<const std::uint8_t> bytes, Gam
         for (size_t spell = 0; spell < source.spells.size(); ++spell)
             target.bHaveSpell[static_cast<SpellId>(spell + 1)] = source.spells[spell];
         target = stageCharacterModifiers(target, source.modifiers, title);
+        target = stageCharacterSpellPreferences(target, source.spellPreferences, title);
     }
     return staged;
 }

@@ -24,6 +24,13 @@ struct CharacterModifierFields {
     bool operator==(const CharacterModifierFields &) const = default;
 };
 
+struct CharacterSpellPreferences {
+    std::uint8_t quickSpell = 0;
+    std::uint8_t spellbookPage = 0;
+
+    bool operator==(const CharacterSpellPreferences &) const = default;
+};
+
 struct CoreCharacterFields {
     std::string name;
     std::uint8_t sex = 0;
@@ -39,6 +46,7 @@ struct CoreCharacterFields {
     std::array<std::uint16_t, 31> skills{};
     std::array<bool, 99> spells{};
     CharacterModifierFields modifiers;
+    CharacterSpellPreferences spellPreferences;
 
     bool operator==(const CoreCharacterFields &) const = default;
 };

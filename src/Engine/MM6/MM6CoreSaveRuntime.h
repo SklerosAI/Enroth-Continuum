@@ -17,6 +17,11 @@ CharacterModifierFields captureCharacterModifiers(const Character &character, Ga
 Character stageCharacterModifiers(const Character &live, const CharacterModifierFields &saved,
                                   GameTitle title);
 
+/** Copy the current quick spell and spellbook page on detached Character state. */
+CharacterSpellPreferences captureCharacterSpellPreferences(const Character &character, GameTitle title);
+Character stageCharacterSpellPreferences(const Character &live, const CharacterSpellPreferences &saved,
+                                         GameTitle title);
+
 /** Capture only the documented PART/CHAR field subset from an MM6 party. */
 CoreSaveFields captureCoreFields(const Party &party, GameTitle title);
 

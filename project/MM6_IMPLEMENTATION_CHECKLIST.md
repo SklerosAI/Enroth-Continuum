@@ -305,6 +305,14 @@ that requirement.
   unlock labels that differ or are absent at the same MM6 ID, nine MM7 class
   buttons, a Thief default and no MM6 Quick Start route. This is a source and
   retained-index mismatch, not an observed MM6 start or the correct fixture.
+- [x] Record [pinned MM6 creation-constant source leads](MM6_CREATION_CONSTANTS_F2.md)
+  for six family HP/SP bases, 18 promoted factors, 6×7 starting stats, 6×31
+  starting-skill codes and 13 skill-recovery entries. The source provides
+  process addresses and shapes, not values verified from the owner's
+  executable. Retained MM6 Cleric class ID 3 reaches an inherited Black
+  Knight no-mana path; this is a source/ID collision, not observed HP/SP.
+  The guarded F3 PE-table helper has only passed synthetic tests and its
+  open-gate refusal; it has not read the original executable.
 - [ ] Reconcile exact MM6 Create Party and Quick Start starting matrices,
   six-class attributes/HP/SP, promotion adjustments, 31 skill availability
   and Expert/Master teachers, Learning XP, potion recipes and effects, and

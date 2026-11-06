@@ -29,6 +29,8 @@ The [item-effect packet](MM6_ITEM_EFFECT_SEAMS_F2.md) triages all 164 remaining 
 
 The [monster-effect packet](MM6_MONSTER_EFFECT_SEAMS_F2.md) adds all-173 source-risk joins: six guide-checked male-target rows currently parse as Monk, 26 numeric multi-target preferences have no runtime reader, three weapon-break rows reach an inverted eligibility guard, and 12 inherited fixed-drop rows route to item IDs in MM6's scroll band. Exact targeting, hit/effect and loot outcomes remain for F3/F4/F5; no encounter was run.
 
+The [creation-constants packet](MM6_CREATION_CONSTANTS_F2.md) supplies version-sensitive external addresses and shapes for MM6 starting stats/skills, HP/SP factors and skill recovery, while identifying a Cleric/no-mana inherited ID collision. Exact values, Quick Start state and trainer rules remain open. The prepared F3 PE-table helper has been exercised only against synthetic bytes and the open-gate refusal.
+
 F2 is **not frozen**. The all-active-opcode contract, guide chapter locator, and monster consumer matrix are now recorded, but original opcode side effects, guide claim reconciliation and the domain-specific unknowns above are incomplete. The integrator must check every row for any *unexamined* family, update the [F3 preflight matrix](MM6_F3_PREFLIGHT_MATRIX.md), and record the F2 freeze decision with a source SHA. Do not run F3 merely because an inventory count is complete.
 
 F3 can test original archive identity, schemas, offsets, labels and spot samples in one read-only pass. It cannot by itself prove combat balance, GUI/audio playback, quest reachability, changed save-state semantics or a complete MM6 campaign. Those require F4 implementation and F5 graphical play, with the frozen MM7 app and saves left intact.

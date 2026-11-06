@@ -616,3 +616,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The seven guarded `%u` award rows describe bounties, deaths, prison terms and four arena tiers. A F3-matched active EVT ledger has 193 award-variable uses, none targeting the seven rows. Inherited producer paths set different MM7 award-bit IDs; the current bounty field accumulates reward gold, not a bounty count.
 - Owner guide indexes and existing source do not settle MM6 counter producers, durable values, award-bit writes or display order. The seven rows remain guarded. The ignored private packet records the per-ID joins and acceptance checks; no original installation or MM6 process was opened.
+
+## [2026-11-06] ingest | MM6 private room descriptors
+- by: T-Burton-ND via codex
+- Exported 119 title-specific room descriptors from the accepted corrected F3 PE report and retained house table into an owner-only local profile manifest. The exporter checks the F3 gate hash, confines output to the private MM6 rules directory and rejects symlink paths. No descriptor names or raw values enter Git.
+- The offline decoder validates the complete manifest; a native private-backed test compares all 119 fields with the accepted report and dispositions all 674 active house-entry instructions as 671 numeric room references, one blank room field and two terminal IDs. The MM6 house entry guard remains closed.
+- The integrated arm64 MM6/MM7/unit build passed. The offline runner passed 148/148 tests from 46 suites without skips; the general suite passed 438/438. No original installation or MM6 process was opened.

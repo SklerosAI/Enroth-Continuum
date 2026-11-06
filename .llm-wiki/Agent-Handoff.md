@@ -16,6 +16,8 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 The MM6 F4 [offline seam register](MM6-F4-Offline-Seams.md) is the current integration map. Follow the [headless integration policy](MM6-Headless-Integration-Policy.md) before any MM6 game-test process; the explicit MM6 harness has passed monitored headless startup and menu-resource checks (6/6 tests; no focus or on-screen window). Its title-specific modules and sixteen-section partial save assembly are not a playable engine. The [save transaction checklist](MM6-F4-Save-Transaction-Checklist.md) names the remaining live owners and commit order; the detached Party/Character, world, NPC and visual candidate does not close it. The [item PE transaction](MM6-F4-Item-Event-PE.md) records bounded ID-17 writes and their remaining cursor/artifact gates. The [First Aid transaction](MM6-F4-Player-Cast-Transaction.md) stages one effect on copied characters while live casting remains guarded. The [portrait seam](MM6-F4-Portrait-Seam.md) still needs rendered/voice checks. The [creation-rule seam](MM6-F4-Creation-Rules.md) uses a private profile manifest from the corrected F3 PE v2 report; its remaining HP/SP terms and live Quick Start state remain provisional.
 
+For the first-map save blocker, read the [new-game autosave seam](MM6-F4-New-Game-Autosave.md): `Game::loop()` calls the guarded MM6 `saveNewGame()` before `oute3.odm` can load. The new `.ec6` writer is offline only and accepts a previously detached known-field seed; fall-start Z, commerce, beacons, active-world reconstruction and full reload still block a live route.
+
 ## Current phase and gates (2026-11-06)
 
 | Area | Evidence-backed state | Next gate |

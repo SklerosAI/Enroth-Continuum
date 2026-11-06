@@ -5,6 +5,8 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6DurableSaveFields.h"
+#include "Engine/Objects/Inventory.h"
+#include "Engine/Tables/ItemTable.h"
 
 namespace {
 
@@ -96,4 +98,35 @@ UNIT_TEST(MM6DurableSaveFields, RejectsMissingOptionalDuplicateAndForeign) {
     std::vector<std::uint8_t> bytes = mm6::encodeSaveContainer(containerFor(exampleFields()));
     bytes[2] = '7';
     EXPECT_THROW((void) mm6::decodeSaveContainer(bytes), std::exception);
+}
+
+UNIT_TEST(MM6DurableSaveFields, SparseIndexedItemPlacementRejectsOverlap) {
+    ItemTable localTable;
+    ItemTable *previous = pItemTable;
+    struct RestoreTable {
+        ItemTable *previous;
+        ~RestoreTable() { pItemTable = previous; }
+    } restore{previous};
+    pItemTable = &localTable;
+
+    localTable.itemSizes[ITEM_CRUDE_LONGSWORD] = Sizei(2, 1);
+    localTable.itemSizes[ITEM_BRASS_RING] = Sizei(1, 1);
+    CharacterInventory inventory;
+    Item sword;
+    sword.itemId = ITEM_CRUDE_LONGSWORD;
+    InventoryEntry restored = inventory.tryRestoreAt(17, Pointi(3, 2), sword);
+    ASSERT_TRUE(restored);
+    EXPECT_EQ(restored.index(), 17);
+    EXPECT_EQ(inventory.entry(Pointi(4, 2)).index(), 17);
+    EXPECT_FALSE(inventory.tryRestoreAt(4, Pointi(4, 2), sword));
+    EXPECT_FALSE(inventory.tryRestoreAt(126, Pointi(0, 0), sword));
+
+    Item ring;
+    ring.itemId = ITEM_BRASS_RING;
+    InventoryEntry equipped = inventory.tryRestoreAt(4, ITEM_SLOT_RING1, ring);
+    ASSERT_TRUE(equipped);
+    EXPECT_EQ(equipped.index(), 4);
+    EXPECT_EQ(inventory.entry(ITEM_SLOT_RING1).index(), 4);
+    EXPECT_FALSE(inventory.tryRestoreAt(3, ITEM_SLOT_RING1, ring));
+    EXPECT_FALSE(inventory.tryRestoreAt(4, ITEM_SLOT_RING2, ring));
 }

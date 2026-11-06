@@ -5,13 +5,15 @@
 #include <stdexcept>
 #include <utility>
 
+#include "Engine/Engine.h"
 #include "Engine/Party.h"
+#include "Engine/Tables/ItemTable.h"
 
 namespace mm6 {
 namespace {
 
 void requireMM6(GameTitle title) {
-    if (title != GameTitle::MM6)
+    if (title != GameTitle::MM6 || !engine || engine->gameTitle() != GameTitle::MM6)
         throw std::runtime_error("MM6 durable save fields cannot apply to another title");
 }
 
@@ -28,6 +30,19 @@ void stageBits(const std::array<std::uint8_t, N> &source, Bitset *target) {
     for (size_t bit = 0; bit < N * 8; ++bit)
         if ((source[bit / 8] >> (bit % 8)) & 1)
             target->set(static_cast<typename Bitset::key_type>(bit + 1));
+}
+
+void applyBitsAndConditions(const DurableSaveFields &fields, Party *staged) {
+    stageBits(fields.bits.quest, &staged->_questBits);
+    stageBits(fields.bits.autonotes, &staged->_autonoteBits);
+    for (size_t index = 0; index < staged->pCharacters.size(); ++index) {
+        Character &character = staged->pCharacters[index];
+        stageBits(fields.bits.awards[index], &character._achievedAwardsBits);
+        stageBits(fields.bits.characterEvents[index], &character._characterEventBits);
+        for (size_t condition = 0; condition < 19; ++condition)
+            character.conditions.set(static_cast<Condition>(condition),
+                                     Time::fromTicks(fields.effects.conditionTicks[index][condition]));
+    }
 }
 
 } // namespace
@@ -88,15 +103,53 @@ Party stageDurablePartyWithoutItems(const Party &live, std::span<const std::uint
             throw std::runtime_error("MM6 item restoration needs a title-specific inventory adapter");
 
     Party staged = live;
-    stageBits(fields.bits.quest, &staged._questBits);
-    stageBits(fields.bits.autonotes, &staged._autonoteBits);
+    applyBitsAndConditions(fields, &staged);
+    return staged;
+}
+
+Party stageDurableParty(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title) {
+    requireMM6(title);
+    DurableSaveFields fields;
+    loadDurableFieldsBeforeMutation(bytes, &fields);
+    if (!pItemTable)
+        throw std::runtime_error("MM6 item table must be loaded before inventory staging");
+
+    // All mutations below are on a copy. Any invalid ID, changed icon footprint,
+    // overlap or record-index conflict leaves the caller's party untouched.
+    Party staged = live;
+    applyBitsAndConditions(fields, &staged);
     for (size_t index = 0; index < staged.pCharacters.size(); ++index) {
-        Character &character = staged.pCharacters[index];
-        stageBits(fields.bits.awards[index], &character._achievedAwardsBits);
-        stageBits(fields.bits.characterEvents[index], &character._characterEventBits);
-        for (size_t condition = 0; condition < 19; ++condition)
-            character.conditions.set(static_cast<Condition>(condition),
-                                     Time::fromTicks(fields.effects.conditionTicks[index][condition]));
+        CharacterInventory &inventory = staged.pCharacters[index].inventory;
+        inventory.clear();
+        for (const DurableItem &source : fields.inventory.characters[index]) {
+            if (source.itemId < 1 || source.itemId > 580 ||
+                source.standardEnchantment > std::to_underlying(ATTRIBUTE_LAST_ENCHANTABLE) ||
+                source.specialEnchantment > 59)
+                throw std::runtime_error("MM6 saved item has an unsupported title-specific ID");
+
+            const ItemId itemId = static_cast<ItemId>(source.itemId);
+            if (pItemTable->items[itemId].iconName.empty())
+                throw std::runtime_error("MM6 saved item has no loaded template icon");
+
+            Item item;
+            item.itemId = itemId;
+            item.potionPower = source.potionPower;
+            item.goldAmount = source.goldAmount;
+            if (source.standardEnchantment >= 0)
+                item.standardEnchantment = static_cast<Attribute>(source.standardEnchantment);
+            item.standardEnchantmentStrength = source.standardStrength;
+            item.specialEnchantment = static_cast<ItemEnchantment>(source.specialEnchantment);
+            item.numCharges = source.charges;
+            item.maxCharges = source.maxCharges;
+            item.flags = ItemFlags(source.flags);
+            item.enchantmentExpirationTime = Time::fromTicks(source.expirationTicks);
+
+            InventoryEntry restored = source.zone == 1
+                ? inventory.tryRestoreAt(source.sourceIndex, Pointi(source.x, source.y), item)
+                : inventory.tryRestoreAt(source.sourceIndex, static_cast<ItemSlot>(source.equipmentSlot), item);
+            if (!restored || restored.index() != source.sourceIndex)
+                throw std::runtime_error("MM6 saved item footprint or indexed placement is invalid");
+        }
     }
     return staged;
 }

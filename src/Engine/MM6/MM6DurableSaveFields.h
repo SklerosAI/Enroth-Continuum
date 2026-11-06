@@ -85,4 +85,12 @@ DurableSaveFields captureDurableFields(const Party &party, GameTitle title);
  */
 Party stageDurablePartyWithoutItems(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title);
 
+/**
+ * Stage bits, condition clocks and indexed MM6 items on a party copy. Every
+ * item footprint and placement is checked against the loaded MM6 item table.
+ * A changed mod footprint that no longer fits rejects the load without
+ * changing the caller's party.
+ */
+Party stageDurableParty(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title);
+
 } // namespace mm6

@@ -2,6 +2,8 @@
 
 #include <cassert>
 
+#include "Engine/Tables/ItemTable.h"
+
 Inventory::Inventory(Sizei gridSize, int capacity) : _gridSize(gridSize), _capacity(capacity) {
     assert(gridSize.w > 0 && gridSize.h > 0);
     assert(gridSize.w * gridSize.h <= MAX_ITEMS);
@@ -87,6 +89,24 @@ InventoryEntry Inventory::tryAdd(Pointi position, const Item &item) {
 InventoryEntry Inventory::tryAdd(const Item &item) {
     std::optional<Pointi> position = findSpace(item);
     return position ? add(*position, item) : InventoryEntry();
+}
+
+InventoryEntry Inventory::tryRestoreAt(int index, Pointi position, const Item &item) {
+    if (index < 0 || index >= _capacity || _records[index].item.itemId != ITEM_NULL ||
+        item.itemId < ITEM_FIRST_VALID || item.itemId > ITEM_LAST_VALID || !pItemTable)
+        return {};
+    Sizei size = item.inventorySize();
+    if (size.w <= 0 || size.h <= 0 || !canAdd(position, size))
+        return {};
+    return addAt(position, item, index);
+}
+
+InventoryEntry Inventory::tryRestoreAt(int index, ItemSlot slot, const Item &item) {
+    if (index < 0 || index >= _capacity || _records[index].item.itemId != ITEM_NULL ||
+        item.itemId < ITEM_FIRST_VALID || item.itemId > ITEM_LAST_VALID ||
+        slot < ITEM_SLOT_FIRST_VALID || slot > ITEM_SLOT_LAST_VALID || !canEquip(slot))
+        return {};
+    return equipAt(slot, item, index);
 }
 
 bool Inventory::canEquip(ItemSlot slot) const {

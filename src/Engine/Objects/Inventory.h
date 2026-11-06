@@ -269,6 +269,10 @@ class Inventory {
     InventoryEntry tryAdd(Pointi position, const Item &item);
     InventoryEntry tryAdd(const Item &item);
 
+    /** Place a saved item at its original record index after checking bounds and occupancy. */
+    InventoryEntry tryRestoreAt(int index, Pointi position, const Item &item);
+    InventoryEntry tryRestoreAt(int index, ItemSlot slot, const Item &item);
+
     [[nodiscard]] bool canEquip(ItemSlot slot) const;
     InventoryEntry equip(ItemSlot slot, const Item &item);
     InventoryEntry tryEquip(ItemSlot slot, const Item &item);
@@ -401,6 +405,7 @@ class CharacterInventory : private Inventory {
     using Inventory::canAdd;
     using Inventory::add;
     using Inventory::tryAdd;
+    using Inventory::tryRestoreAt;
     using Inventory::canEquip;
     using Inventory::equip;
     using Inventory::tryEquip;

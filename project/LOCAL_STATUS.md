@@ -607,3 +607,13 @@ MM6 save gate. A read-only shop access audit found the direct clear, generation,
 display, purchase and raw-save paths but cannot exhaust indirect stock writers;
 no nonzero owner-local native save or full 28-to-36-byte item conversion is
 proved. Live face and SHOP persistence stay guarded.
+
+The linked known-save fixture confirms that standalone `SHOP` and `BEAC` tags,
+though recognized by the generic `.ec6` container, still reject from the
+provisional eighteen-section assembly before destination mutation. A per-field
+MM6 shop audit verifies the original 28-byte purchase copy and source clear,
+but finds category-dependent unions, byte-26 meaning and absent expiration
+bytes that prevent a reversible conversion to inherited `Item_MM7`. Raw stock
+records remain the authority. The beacon renderer audit also found unchecked
+GPU texture creation and potentially allocating deferred deletion, so CPU
+pixel staging does not yet authorize live image publication.

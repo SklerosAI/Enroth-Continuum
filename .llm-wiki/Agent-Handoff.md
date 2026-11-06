@@ -47,6 +47,8 @@ The next isolated save seams add filename-keyed [BEAC](MM6-F4-Beacon-Visual-Save
 
 Follow-up focused checks pass **6/6** for owned CPU beacon-image preparation and **2/2** for a monitored synthetic indoor-face DLV round trip. The latter proves the current changed-state writer loses face edits unless `OnMapReload` reapplies them; six affected retained maps lack that trigger. The [shop shared-row access audit](MM6-F4-Shop-Shared-Row-Access-Audit.md) found no nonzero owner-local native save and leaves indirect writer coverage plus 28-byte source to 36-byte runtime item conversion open. Do not join BEAC or SHOP to the required save manifest or open normal MM6 SaveLoad based on these detached checks.
 
+The [shop item conversion matrix](MM6-F4-Shop-Item-Record-Conversion-Gate.md) now identifies exact 28-byte field meanings and the inherited 36-byte `Item_MM7` mismatches; retain raw SHOP as the authority while live item projection remains unproved. A linked known-save test confirms standalone SHOP/BEAC extras reject before mutation. The [beacon renderer packet](MM6-F4-Beacon-Visual-Save.md) records unchecked texture creation and potentially allocating deferred deletion; live GPU publication needs a checked creation/cleanup contract before the save transaction can open.
+
 ## Authority and source order
 
 | Question | Start with | Supporting source |

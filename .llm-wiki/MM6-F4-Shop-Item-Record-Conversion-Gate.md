@@ -1,5 +1,5 @@
 ---
-type: decision
+type: synthesis
 up: "[[MM6-F4-Save-Transaction-Checklist]]"
 related: ["[[MM6-F4-Shop-Owner-Field-Gate]]", "[[MM6-F4-Shop-Shared-Row-Access-Audit]]"]
 tags: [mm6, f4, shop, item, conversion, save]

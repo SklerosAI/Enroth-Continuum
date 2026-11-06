@@ -107,6 +107,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Shop Refresh PE Trace](MM6-F4-Shop-Refresh-PE-Trace.md) — Original row-keyed refresh and raw Party-block save proof, with stock tuple boundary still open
 - [MM6 F4 Shop Stock Tuple and Autosave](MM6-F4-Shop-Stock-Tuple-and-Autosave.md) — Two original stock banks, zero-ID display read and current cross-map save dependency
 - [MM6 F4 Shop Owner Field Gate](MM6-F4-Shop-Owner-Field-Gate.md) — Why SCLK is the only complete proved commerce field and stock still lacks a safe keyed owner
+- [MM6 F4 Shop Item Record Conversion Gate](MM6-F4-Shop-Item-Record-Conversion-Gate.md) — Original 28-byte stock fields cannot yet map reversibly into the inherited 36-byte MM7 item
 - [MM6 F4 Shop Purchase-Write Gate](MM6-F4-Shop-Purchase-Write-Gate.md) — Linked 28-byte purchase mutation and detached physical SHOP section; live service owner remains open
 - [MM6 F4 Shop Shared-Edge Refresh](MM6-F4-Shop-Shared-Edge-Refresh.md) — Linked original stock/deadline arbitration and failure-atomic detached refresh seam; live service remains gated
 - [MM6 F4 Shop Shared Row Access Audit](MM6-F4-Shop-Shared-Row-Access-Audit.md) — Direct source access families and remaining indirect-writer, nonzero-save and item-conversion blockers

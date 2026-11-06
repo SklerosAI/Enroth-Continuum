@@ -286,3 +286,9 @@ Chronological record of wiki activity.
 - Added bounded quest, autonote, award and character-event bitsets, condition clocks and logical character inventory records as versioned `.ec6` payloads.
 - The MM6-only capture and copy-staging adapter deliberately rejects nonempty inventory on restore until item footprints and indexed placement are proven; live SaveLoad and UI remain disabled.
 - Syntax-checked the changed C++ units and ran a compiled nonzero round-trip and reject-before-mutation harness. No game or original installation was opened.
+
+## [2026-11-06] update | MM6 offline integration and guarded transport
+- by: T-Burton-ND via codex
+- Rebuilt the integrated arm64 MM6 and MM7 targets and restored 15 ignored outdoor test pairs from F3-matched retained copies, without opening the original GOG installation. The combined suite passed 31 focused C++ tests, including all 68 active EVTs, 52 indoor pairs and 15 outdoor deltas.
+- Added a bounded private transport-manifest parser and three-option MM6 menu. Its title branch never indexes MM7 route arrays; ambiguous/special and unproved quest-bit routes stay hidden, and selection cannot charge gold or depart before `.ec6` save integration. Two private-backed tests cover all 21 houses, weekdays and malformed manifests.
+- Updated the F4 handoff with the indoor projection and durable save fields. Graphical travel and save/reload remain F5 work; no partial MM6 process was launched.

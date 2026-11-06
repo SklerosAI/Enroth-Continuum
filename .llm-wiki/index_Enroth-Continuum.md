@@ -94,7 +94,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Item Event Writes](MM6-F4-Item-Event-Writes.md) — Retained reward/handoff topology and bounded Add/Subtract transaction limits
 - [MM6 F4 Item Event PE](MM6-F4-Item-Event-PE.md) — Original executable dispatch, bounded Add/Subtract and remaining cursor/artifact gates
 - [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Partial eighteen-section `.ec6` candidate; standalone `SHOP`/`BEAC` still reject before mutation
-- [MM6 F4 Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md) — Live-owner gaps, detached staging order and atomic commit gates
+- [MM6 F4 Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md) — Current live-owner gaps, raw SHOP/BEAC boundaries and atomic commit gates
 - [MM6 F4 Chest EC6 Transaction](MM6-F4-Chest-EC6-Transaction.md) — Required title-local chest state, raw active-delta sidecar and first-map movement audit
 - [MM6 F4 Party Movement Save](MM6-F4-Party-Movement-Save.md) — PART v3 vertical motion, flight, hazard flags, justice counters and map-local ground reset
 - [MM6 F4 Justice Counter Save](MM6-F4-Justice-Counter-Save.md) — Linked PART v3 checks preserve current-runtime fine, death, prison and bounty counters; native MM6 semantics remain open

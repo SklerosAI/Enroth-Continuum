@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdlib>
 #include <string>
 #include <string_view>
@@ -96,6 +97,8 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_FirstOutdoorCapture) {
         render->ClearTarget(Color(0, 0, 0));
         engine->drawWorld();
         engine->drawHUD();
+        render->flushAndScale();
+        engine->drawOverlay();
         frame = render->MakeFullScreenshot(); // Read before swap; no display presentation.
     });
 
@@ -121,6 +124,20 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_FirstOutdoorCapture) {
     EXPECT_GT(changed, 10000u);
     EXPECT_GT(nonblackWorld, 10000u);
     EXPECT_GT(nonblackHud, 10000u);
+    // Before the normal 2D flush, these four inner face regions contain only
+    // the monochrome frame backing even though portrait quads were queued.
+    for (int center : {50, 163, 276, 388}) {
+        size_t chromaticPixels = 0;
+        for (int y = 405; y < 445; ++y) {
+            for (int x = center - 12; x < center + 13; ++x) {
+                const Color pixel = frame[y][x];
+                const int spread = std::max({pixel.r, pixel.g, pixel.b}) -
+                                   std::min({pixel.r, pixel.g, pixel.b});
+                chromaticPixels += spread > 30;
+            }
+        }
+        EXPECT_GT(chromaticPixels, 250u) << "portrait center " << center;
+    }
 
     FileOutputStream output{Path(capturePath)};
     output.write(png::encode(frame));

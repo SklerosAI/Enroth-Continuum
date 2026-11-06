@@ -91,3 +91,9 @@ Chronological record of wiki activity.
 - Added source summaries for the 127-ID event-variable dispatch contract and partial spell, item, monster and campaign guide-claim audits.
 - Linked the private per-ID review queues and guide locators without publishing original rows, guide text or captures; F2 and the original-file F3 pass remain open.
 - Checked 43 wiki pages for frontmatter and local links before pausing the MM6 goal at the owner's request.
+
+## [2026-11-05] ingest | MM6 transport fields and opcode effects
+- by: T-Burton-ND via codex
+- Linked the all-43-opcode state, flow and persistence contract and the 21-house, 37-cell retained transport audit to the source index and navigation.
+- Kept exact route strings and event locators in ignored private reports; original schedules and side effects remain unresolved, with F2 open and F3 unrun.
+- Checked 45 wiki pages for frontmatter and local links.

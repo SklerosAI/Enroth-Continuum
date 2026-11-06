@@ -823,3 +823,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Retained original-PE Subtract instructions scan backpack grid cells 0–125 and immediately remove the first matching item. The MM6-only ID-17 removal helper now follows that row-major grid priority, even when a later-created inventory record occupies the earlier cell; it still checks the cursor only after all grid cells miss. MM7 retains its existing path.
 - A focused native test uses duplicate IDs with distinct charges in reverse record/grid order and checks the selected item, surviving item and untouched cursor. Arm64 MM6, OpenEnroth and unit targets linked; all eight focused item comparison/write tests passed. The original executable was not reread and MM6 was not launched. Artifact grant and full-party ground drop remain guarded.
+
+## [2026-11-06] test | MM6 room Smacker first-frame decode
+- by: T-Burton-ND via codex
+- A bounded offline probe reuses the engine's FFmpeg blob reader and video converter to decode the first frame of one F3-matched staged MM6 room movie without an audio device, house window or game process. It accepts Smacker payloads up to 32 MiB, dimensions up to 1024 by 1024 and at most 256 packets, and returns only dimensions and decoded buffer size. Malformed signatures, invalid headers and a truncated payload yield no frame.
+- Arm64 MM6, OpenEnroth and unit targets built; the focused native test passed (`/tmp/enroth-mm6-f4-house-frame-focused-final.log`). This confirms codec compatibility for one representative payload. Full room-movie coverage, audio and visible playback remain unverified; live house/game launch stays gated. No original installation or MM7/MM8 state was touched.

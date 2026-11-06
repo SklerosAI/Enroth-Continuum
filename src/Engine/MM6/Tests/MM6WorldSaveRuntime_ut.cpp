@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <deque>
 #include <exception>
 #include <string>
 #include <string_view>
@@ -9,6 +10,12 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6WorldSaveRuntime.h"
+#include "Engine/Graphics/Indoor.h"
+#include "Engine/Graphics/LocationFunctions.h"
+#include "Engine/Graphics/Outdoor.h"
+#include "Engine/Objects/Actor.h"
+#include "Engine/Objects/Chest.h"
+#include "Engine/Objects/SpriteObject.h"
 
 namespace {
 
@@ -40,6 +47,37 @@ std::unordered_map<std::string, Blob> priorDeltas(const std::vector<std::string>
     for (const std::string &name : names)
         deltas.emplace(name, Blob::fromString("prior:" + name));
     return deltas;
+}
+
+struct ScopedActiveMap {
+    IndoorLocation *indoor = pIndoor;
+    OutdoorLocation *outdoor = pOutdoor;
+    LevelType levelType = uCurrentlyLoadedLevelType;
+    std::deque<Actor> actors;
+    std::vector<SpriteObject> sprites;
+    std::vector<Chest> chests;
+
+    ScopedActiveMap() {
+        actors.swap(pActors);
+        sprites.swap(pSpriteObjects);
+        chests.swap(vChests);
+    }
+
+    ~ScopedActiveMap() {
+        pIndoor = indoor;
+        pOutdoor = outdoor;
+        uCurrentlyLoadedLevelType = levelType;
+        pActors.clear();
+        pSpriteObjects.clear();
+        vChests.clear();
+        actors.swap(pActors);
+        sprites.swap(pSpriteObjects);
+        chests.swap(vChests);
+    }
+};
+
+std::vector<std::uint8_t> minimalIndoorDelta() {
+    return std::vector<std::uint8_t>(8 + 875 + 3 * 4 + 200 * 80 + 200 + 56, 0);
 }
 
 } // namespace
@@ -114,4 +152,50 @@ UNIT_TEST(MM6WorldSaveRuntime, RejectsIncompleteAndLateInvalidStateWithoutInputM
         liveNpcs, mm6::encodeKnownSave(captured), names, GameTitle::MM7), std::exception);
     EXPECT_EQ(liveNpcs.pNPCData[0].name, "Before");
     EXPECT_EQ(prior.at("d0.dlv").str(), "prior:d0.dlv");
+}
+
+UNIT_TEST(MM6WorldSaveRuntime, CapturesBoundedActiveIndoorStateWithoutChangingWorld) {
+    ScopedActiveMap globalState;
+    IndoorLocation location;
+    location.filename = "d0.blv";
+    location.mm6DeltaBytes = minimalIndoorDelta();
+    location._visible_outlines.fill(0);
+    location.doors.assign(200, BLVDoor{});
+    location.dlv.respawnCount = 3;
+    location.dlv.lastRespawnDay = 5;
+    pIndoor = &location;
+    pOutdoor = nullptr;
+    uCurrentlyLoadedLevelType = LEVEL_INDOOR;
+
+    std::vector<std::string> names = expectedNames();
+    std::unordered_map<std::string, Blob> prior = priorDeltas(names);
+    const std::vector<std::uint8_t> sidecarBefore = location.mm6DeltaBytes;
+    NPCStats npcs{};
+    npcs.uNumNewNPCs = 1;
+    npcs.pNPCData[0].name = "Runtime NPC";
+    mm6::KnownSaveFields captured = mm6::captureKnownWorldFromActiveMap(
+        seedFields(), npcs, prior, names, GameTitle::MM6);
+    ASSERT_EQ(captured.maps.deltas.size(), 67);
+    EXPECT_GT(captured.maps.deltas[0].bytes.size(), prior.at("d0.dlv").size());
+    EXPECT_EQ(captured.maps.deltas[0].bytes[0], 3);
+    EXPECT_EQ(captured.maps.deltas[0].bytes[4], 5);
+    mm6::KnownSaveFields decoded = mm6::decodeKnownSave(mm6::encodeKnownSave(captured));
+    EXPECT_EQ(decoded.maps.deltas[0].bytes, captured.maps.deltas[0].bytes);
+    EXPECT_EQ(location.mm6DeltaBytes, sidecarBefore);
+    EXPECT_EQ(prior.at("d0.dlv").str(), "prior:d0.dlv");
+    EXPECT_EQ(npcs.pNPCData[0].name, "Runtime NPC");
+
+    location.filename = "other.blv";
+    EXPECT_THROW((void) mm6::captureKnownWorldFromActiveMap(
+        seedFields(), npcs, prior, names, GameTitle::MM6), std::exception);
+    location.filename = "d0.blv";
+    location.mm6DeltaBytes = {1};
+    EXPECT_THROW((void) mm6::captureKnownWorldFromActiveMap(
+        seedFields(), npcs, prior, names, GameTitle::MM6), std::exception);
+    EXPECT_EQ(prior.at("d0.dlv").str(), "prior:d0.dlv");
+    EXPECT_THROW((void) mm6::captureKnownWorldFromActiveMap(
+        seedFields(), npcs, prior, names, GameTitle::MM7), std::exception);
+    uCurrentlyLoadedLevelType = LEVEL_OUTDOOR;
+    EXPECT_THROW((void) mm6::captureKnownWorldFromActiveMap(
+        seedFields(), npcs, prior, names, GameTitle::MM6), std::exception);
 }

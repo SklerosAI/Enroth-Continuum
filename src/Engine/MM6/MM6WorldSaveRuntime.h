@@ -36,4 +36,12 @@ StagedWorldFields stageKnownWorldFields(const NPCStats &liveNpcs,
                                        std::span<const std::uint8_t> bytes,
                                        std::span<const std::string> expectedNames, GameTitle title);
 
+// Read the active MM6 indoor/outdoor runtime through its bounded changed-state
+// writer, then overlay that encoded delta into a detached known-save candidate.
+// No map, NPC, prior-delta or save global is assigned.
+KnownSaveFields captureKnownWorldFromActiveMap(
+    const KnownSaveFields &seed, const NPCStats &npcs,
+    const std::unordered_map<std::string, Blob> &priorDeltas,
+    std::span<const std::string> expectedNames, GameTitle title);
+
 } // namespace mm6

@@ -6,6 +6,12 @@
 #include <utility>
 #include <vector>
 
+#include "Engine/Graphics/Indoor.h"
+#include "Engine/Graphics/LocationFunctions.h"
+#include "Engine/Graphics/Outdoor.h"
+#include "Engine/Snapshots/MM6IndoorSnapshot.h"
+#include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
+
 namespace mm6 {
 namespace {
 
@@ -72,6 +78,28 @@ StagedWorldFields stageKnownWorldFields(const NPCStats &liveNpcs,
     for (const SavedMapDelta &delta : candidate.maps.deltas)
         staged.mapDeltas.emplace(delta.name, Blob::copy(delta.bytes.data(), delta.bytes.size()));
     return staged;
+}
+
+KnownSaveFields captureKnownWorldFromActiveMap(
+    const KnownSaveFields &seed, const NPCStats &npcs,
+    const std::unordered_map<std::string, Blob> &priorDeltas,
+    std::span<const std::string> expectedNames, GameTitle title) {
+    requireMM6(title);
+    const std::string &mapName = seed.metadata.header.mapFileName;
+    Blob changed;
+    if (uCurrentlyLoadedLevelType == LEVEL_INDOOR && mapName.ends_with(".blv") &&
+        pIndoor && pIndoor->filename == mapName) {
+        changed = encodeMM6IndoorChangedState(*pIndoor);
+    } else if (uCurrentlyLoadedLevelType == LEVEL_OUTDOOR && mapName.ends_with(".odm") && pOutdoor) {
+        changed = encodeMM6OutdoorChangedState(*pOutdoor);
+    } else {
+        throw std::runtime_error("MM6 active level and save map do not match");
+    }
+    if (changed.empty())
+        throw std::runtime_error("MM6 changed-state writer returned an empty delta");
+    return captureKnownWorldFields(seed, npcs, priorDeltas, deltaCompanion(mapName),
+                                   {static_cast<const std::uint8_t *>(changed.data()), changed.size()},
+                                   expectedNames, title);
 }
 
 } // namespace mm6

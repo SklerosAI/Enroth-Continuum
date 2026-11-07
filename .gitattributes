@@ -17,3 +17,6 @@ thirdparty/repo-source/** -text
 
 # Preserve the upstream CRLF Natvis blob in the pinned GLM snapshot.
 thirdparty/glm/util/glm.natvis -text
+thirdparty/inifile_cpp/** -text
+thirdparty/nlohmann_json/** -text
+thirdparty/tcpp/** -text

@@ -1,6 +1,6 @@
 # MM6 raw v2 headless restart handoff
 
-Source checkpoint: integration `03d9ebf4e`. Status: **v2 read-only fresh-process probe added; live reload remains gated**. This packet applies to an explicitly disposable, owner-only system-temp profile and a title-locked MM6 GameTest process. It does not change normal SaveLoad, the load menu or Atlas Play.
+Status, 2026-11-06: **native v2 first-map write and read-only fresh-process stage passed; live reload remains gated**. This packet applies to an explicitly disposable, owner-only system-temp profile and title-locked MM6 GameTest processes. It does not change normal SaveLoad, the load menu or Atlas Play.
 
 ## Existing v1 control route
 

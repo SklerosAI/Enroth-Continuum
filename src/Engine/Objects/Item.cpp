@@ -248,11 +248,13 @@ bool Item::GenerateArtifact() {
     }
 
     Reset();
-    const int artifactLimit = engine->config->gameplay.ArtifactLimit.value();
+    const bool mm7 = engine->gameTitle() == GameTitle::MM7;
+    const int artifactLimit = mm7 ? engine->config->gameplay.ArtifactLimit.value() : 0;
     if (uNumArtifactsNotGenerated &&
         (artifactLimit == 0 || artifactsGenerated < artifactLimit)) {
         itemId = artifacts_list[grng->random(uNumArtifactsNotGenerated)];
-        pParty->isArtifactGenerated[itemId] = true;
+        if (mm7)
+            pParty->isArtifactGenerated[itemId] = true;
         return true;
     } else {
         return false;

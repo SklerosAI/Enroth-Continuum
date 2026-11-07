@@ -1820,6 +1820,8 @@ void SpawnRandomTreasure(MapData *mapData, SpawnPoint *spawn) {
             return;
         spawnedObject.spriteId = pItemTable->items[spawnedObject.containing_item.itemId].spriteId;
         spawnedObject.uObjectDescID = pObjectTable->ObjectIDByItemID(spawnedObject.spriteId);
+        if (engine->gameTitle() != GameTitle::MM7)
+            spawnedObject.containing_item.Reset();
     }
 
     spawnedObject.uAttributes = 0;

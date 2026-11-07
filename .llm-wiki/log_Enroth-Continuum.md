@@ -1788,3 +1788,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added an MM6-only per-window guard for the optional vendor entry refresh. A successful shop or guild refresh consumes one visit; failure allows retry and submenu redraws cannot reroll stock in the same window. The normal deadline route and MM7 behavior are unchanged.
 - Linked stock and MM7 control tests passed 10/10. Atlas currently launches only MM7, so the MM6 setting remains saved for a future title-owned house and save route.
+
+## [2026-11-06] verify | MM6 integration and MM7 vendor control
+- by: T-Burton-ND via codex
+- After integration, the MM6 chest open-owner suite passed 3/3, the MM6 stock and MM7 vendor unit controls passed 10/10, and the non-MM6 unit controls passed 440/440. Monitored MM7 weapon-shop and magic-guild headless entries passed 2/2 with the vendor mod enabled and no visible window or focus change.
+- The installed MM7 Atlas was not replaced; its playable helper and saves remain in place. MM6 live house/chest UI, normal save/load and launcher Play remain gated.

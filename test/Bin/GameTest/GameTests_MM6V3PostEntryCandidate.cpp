@@ -287,46 +287,48 @@ GAME_TEST(MM6V3PostEntryCandidateHeadless, DISABLED_FirstMapFullSessionPreflight
                                 refusalClass = "event-legacy-decor";
                             else
                                 refusalClass = "persistent-event-join";
-                        } else if (message.find("generated NPC") != std::string_view::npos ||
-                            message.find("GNPC") != std::string_view::npos)
-                            refusalClass = "generated-npc";
-                        else if (message.find("inventory") != std::string_view::npos ||
-                                 message.find("INVR") != std::string_view::npos)
-                            refusalClass = "inventory";
-                        else if (message.find("ground item") != std::string_view::npos)
-                            refusalClass = "ground-item";
-                        else if (message.find("commerce") != std::string_view::npos)
-                            refusalClass = "commerce";
-                        else if (message.find("map identity") != std::string_view::npos)
-                            refusalClass = "map-identity";
-                        else if (message.find("nonactive map cache changed") != std::string_view::npos)
-                            refusalClass = "nonactive-cache";
-                        else if (message.find("map cache") != std::string_view::npos)
-                            refusalClass = "map-cache-missing";
-                        else if (message.find("active DDM") != std::string_view::npos ||
-                                 message.find("DDM") != std::string_view::npos)
-                            refusalClass = "active-ddm";
-                        else if (message.find("actor map") != std::string_view::npos)
-                            refusalClass = "actor-map";
-                        else if (message.find("represented world differs") != std::string_view::npos)
-                            refusalClass = "represented-map-join";
-                        else if (message.find("invalid item template") != std::string_view::npos)
-                            refusalClass = "map-item-template";
-                        else if (message.find("missing a base map") != std::string_view::npos)
-                            refusalClass = "map-base";
-                        else if (message.find("record shape") != std::string_view::npos)
-                            refusalClass = "map-record-shape";
-                        else if (message.find("saved delta") != std::string_view::npos)
-                            refusalClass = "map-delta-set";
-                        else if (message.find("MAPS") != std::string_view::npos)
-                            refusalClass = "maps-section";
-                        else if (message.find("map") != std::string_view::npos)
-                            refusalClass = "map-preflight";
-                        else if (message.find("Party") != std::string_view::npos ||
-                                 message.find("core") != std::string_view::npos)
-                            refusalClass = "party";
-                        else
-                            refusalClass = "other-refusal";
+                        } else {
+                            if (message.find("generated NPC") != std::string_view::npos ||
+                                message.find("GNPC") != std::string_view::npos)
+                                refusalClass = "generated-npc";
+                            else if (message.find("inventory") != std::string_view::npos ||
+                                     message.find("INVR") != std::string_view::npos)
+                                refusalClass = "inventory";
+                            else if (message.find("ground item") != std::string_view::npos)
+                                refusalClass = "ground-item";
+                            else if (message.find("commerce") != std::string_view::npos)
+                                refusalClass = "commerce";
+                            else if (message.find("map identity") != std::string_view::npos)
+                                refusalClass = "map-identity";
+                            else if (message.find("nonactive map cache changed") != std::string_view::npos)
+                                refusalClass = "nonactive-cache";
+                            else if (message.find("map cache") != std::string_view::npos)
+                                refusalClass = "map-cache-missing";
+                            else if (message.find("active DDM") != std::string_view::npos ||
+                                     message.find("DDM") != std::string_view::npos)
+                                refusalClass = "active-ddm";
+                            else if (message.find("actor map") != std::string_view::npos)
+                                refusalClass = "actor-map";
+                            else if (message.find("represented world differs") != std::string_view::npos)
+                                refusalClass = "represented-map-join";
+                            else if (message.find("invalid item template") != std::string_view::npos)
+                                refusalClass = "map-item-template";
+                            else if (message.find("missing a base map") != std::string_view::npos)
+                                refusalClass = "map-base";
+                            else if (message.find("record shape") != std::string_view::npos)
+                                refusalClass = "map-record-shape";
+                            else if (message.find("saved delta") != std::string_view::npos)
+                                refusalClass = "map-delta-set";
+                            else if (message.find("MAPS") != std::string_view::npos)
+                                refusalClass = "maps-section";
+                            else if (message.find("map") != std::string_view::npos)
+                                refusalClass = "map-preflight";
+                            else if (message.find("Party") != std::string_view::npos ||
+                                     message.find("core") != std::string_view::npos)
+                                refusalClass = "party";
+                            else
+                                refusalClass = "other-refusal";
+                        }
                     }
                 }, mm6::testing::PostWorldAdmissionResult::AbortToMainMenu);
         });

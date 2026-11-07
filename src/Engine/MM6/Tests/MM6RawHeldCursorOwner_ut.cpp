@@ -84,3 +84,33 @@ UNIT_TEST(MM6RawHeldCursorOwner, LateStagingFailureLeavesSourceUntouched) {
     EXPECT_FALSE(mm6::stageRawHeldCursorSet(*fresh, invalidIncoming, GameTitle::MM6));
     EXPECT_EQ(*fresh, before);
 }
+
+UNIT_TEST(MM6RawHeldCursorOwner, LiveSyncFollowsCarriedRecordOnly) {
+    // The live cursor and the raw HELD owner drifted apart on pickup and drop.
+    auto owner = *mm6::freshRawHeldCursorOwner(GameTitle::MM6);
+    Item carried;
+    carried.itemId = static_cast<ItemId>(17);
+    carried.mm6RawRecord = item();
+    mm6::syncRawHeldCursorSet(&owner, carried, GameTitle::MM6);
+    EXPECT_EQ(owner.record, item());
+
+    Item other = carried;
+    other.mm6RawRecord->setWord(0, 18);
+    mm6::syncRawHeldCursorSet(&owner, other, GameTitle::MM6); // The cursor isn't empty.
+    EXPECT_EQ(owner.record, item());
+
+    mm6::syncRawHeldCursorClear(&owner, GameTitle::MM6);
+    EXPECT_EQ(owner.record.itemNumberRaw(), 0);
+    EXPECT_EQ(owner.record[24], 0);
+    EXPECT_EQ(owner.record[27], 0xd4);
+
+    Item uncarried;
+    uncarried.itemId = static_cast<ItemId>(17);
+    mm6::syncRawHeldCursorSet(&owner, uncarried, GameTitle::MM6);
+    EXPECT_EQ(owner.record.itemNumberRaw(), 0);
+
+    mm6::RawHeldCursorOwner unready;
+    mm6::syncRawHeldCursorSet(&unready, carried, GameTitle::MM6);
+    mm6::syncRawHeldCursorClear(&unready, GameTitle::MM6);
+    EXPECT_EQ(unready, mm6::RawHeldCursorOwner{});
+}

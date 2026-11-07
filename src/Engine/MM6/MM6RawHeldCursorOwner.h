@@ -5,6 +5,7 @@
 #include <optional>
 
 #include "Engine/GameTitle.h"
+#include "Engine/Objects/Item.h"
 
 #include "MM6ItemRecord28.h"
 #include "MM6RawHeldItemSaveFields.h"
@@ -59,6 +60,32 @@ inline std::optional<RawHeldCursorOwner> stageRawHeldCursorClear(
     RawHeldCursorOwner staged = owner;
     std::fill(staged.record.begin(), staged.record.begin() + 25, 0);
     return staged;
+}
+
+/**
+ * Mirrors a live cursor pickup onto a ready raw owner. The original copies all 28 bytes of the incoming record.
+ *
+ * @param owner                         Raw cursor owner, left as is when it isn't ready or still holds a record.
+ * @param item                          Item now on the live cursor. An item without a raw record leaves the owner
+ *                                      as is, and the save-time cursor check then refuses the disagreement.
+ * @param title                         Must be `GameTitle::MM6`.
+ */
+inline void syncRawHeldCursorSet(RawHeldCursorOwner *owner, const Item &item, GameTitle title) {
+    if (!item.mm6RawRecord)
+        return;
+    if (auto staged = stageRawHeldCursorSet(*owner, *item.mm6RawRecord, title))
+        *owner = *staged;
+}
+
+/**
+ * Mirrors a live cursor clear onto a ready raw owner.
+ *
+ * @param owner                         Raw cursor owner, left as is when it isn't ready.
+ * @param title                         Must be `GameTitle::MM6`.
+ */
+inline void syncRawHeldCursorClear(RawHeldCursorOwner *owner, GameTitle title) {
+    if (auto staged = stageRawHeldCursorClear(*owner, title))
+        *owner = *staged;
 }
 
 inline std::optional<RawHeldCursorOwner> stageRawHeldCursorFromFields(

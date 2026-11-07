@@ -19,6 +19,7 @@
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6Portraits.h"
+#include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
 #include "Engine/Tables/ItemTable.h"
@@ -203,6 +204,8 @@ void Party::setHoldingItem(const Item &item, Pointi offset) {
 
     placeHeldItemInInventoryOrDrop();
     pPickedItem = item;
+    if (this == pParty && engine && engine->gameTitle() == GameTitle::MM6)
+        mm6::syncRawHeldCursorSet(&mm6::rawHeldCursorState(GameTitle::MM6), pPickedItem, GameTitle::MM6);
     mouse->SetCursorBitmapFromItemID(pPickedItem.itemId);
     mouse->pickedItemOffset = offset;
 }
@@ -211,6 +214,8 @@ Item Party::takeHoldingItem() {
     Item result = pPickedItem;
 
     pPickedItem.Reset();
+    if (this == pParty && engine && engine->gameTitle() == GameTitle::MM6)
+        mm6::syncRawHeldCursorClear(&mm6::rawHeldCursorState(GameTitle::MM6), GameTitle::MM6);
     mouse->SetCursorImage("MICON1");
     mouse->pickedItemOffset = {};
     return result;

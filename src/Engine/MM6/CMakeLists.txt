@@ -61,6 +61,8 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6V6OutdoorSaveFields.cpp MM6V6OutdoorSaveFields.h MM6VisitedOutdoorRuntimeOwner.h
     MM6VisitedOutdoorReturnPlan.h
     MM6VisitedIndoorRuntimeOwner.h
+    MM6VisitedMapCache.cpp MM6VisitedMapCache.h
+    MM6VisitedMapSection.cpp MM6VisitedMapSection.h
     MM6TransitionPostWorldCaptureForTest.h
     MM6V5LiveSaveCapture.cpp MM6V5LiveSaveCapture.h
     MM6V5FirstMapSaveWriter.cpp MM6V5FirstMapSaveWriter.h
@@ -264,6 +266,8 @@ if(OE_BUILD_TESTS)
         Tests/MM6OutdoorReturnArrival_ut.cpp
         Tests/MM6VisitedOwnerFixtures.h
         Tests/MM6VisitedIndoorRuntimeOwner_ut.cpp
+        Tests/MM6VisitedMapCache_ut.cpp
+        Tests/MM6VisitedMapSection_ut.cpp
         Tests/MM6MapEnumFunctions_ut.cpp
         Tests/MM6VisitedReturnPreEventProbeForTest_ut.cpp
         Tests/MM6TransitionAutosaveInterceptForTest_ut.cpp

@@ -2579,3 +2579,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A bounded opt-in sweep of retained default indoor sources found no native eligible actor with a nonzero StreetNPC marker. The sweep now classifies and asserts this condition; a changed corpus will require a distinct generated-row fixture. Original MM6 row initialization and positive dialogue/hire-fire behavior remain unproved, and the preflight refusal stays closed.
 - Corrected the signed actor pre-map diagnostic wording: its transient roster exception precedes the source-backed signed-to-zero runtime mapping. The new test-only change passed a fresh all-source sweep, risk pre-event check, and MM7 headless control, each 1/1. The previously verified three indoor five-child chains remain 15/15; they were not rerun for this test-only change. Exact source details remain in the ignored private research packet.
+
+## [2026-11-07] verify | MM6 return target-floor probe
+- by: T-Burton-ND via codex
+- Added an opt-in, no-write `DoPrepareWorld(false)` probe that compares the loaded visited target terrain and full floor against the detached source-backed arrival, then aborts to Main Menu before Party placement, chest generation or map events.
+- A scope unit passed 1/1; fresh owner-only v2 seed, v4 baseline and return-probe children each passed 1/1. The fixture kept its one-shot scope armed through the loading screen after an initial early teardown reached the unchanged chest guard.
+- This establishes one target-world floor agreement, not a visited-owner publisher or rollback. The partial world is abandoned; chest handoff, actor/sprite/event restoration, post-event checks and durable travel remain gated.

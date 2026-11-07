@@ -136,6 +136,14 @@ def main() -> int:
                                  text=True, env=environment).strip()
     cxx = subprocess.check_output(["/usr/bin/xcrun", "--find", "clang++"],
                                   text=True, env=environment).strip()
+    sdk = subprocess.check_output(["/usr/bin/xcrun", "--sdk", "macosx",
+                                   "--show-sdk-path"], text=True,
+                                  env=environment).strip()
+    if not Path(sdk).is_dir():
+        raise ValueError("The installed Apple macOS SDK is missing")
+    # libpng generates a C file with a direct compiler invocation. Give that
+    # child the same SDK as CMake instead of inheriting an arbitrary SDKROOT.
+    environment["SDKROOT"] = sdk
 
     output.mkdir(parents=True)
     logs = output / "logs"
@@ -156,6 +164,7 @@ def main() -> int:
     run([str(cmake), "-S", str(REPO), "-B", str(build), "-G", "Ninja",
          f"-DCMAKE_MAKE_PROGRAM={ninja}", "-DCMAKE_BUILD_TYPE=Release",
          "-DCMAKE_OSX_ARCHITECTURES=arm64",
+         f"-DCMAKE_OSX_SYSROOT={sdk}",
          "-DCMAKE_OSX_DEPLOYMENT_TARGET=11.0",
          f"-DCMAKE_C_COMPILER={cc}", f"-DCMAKE_CXX_COMPILER={cxx}",
          "-DEC_LOCAL_ONLY_CONFIGURE=ON", "-DEC_MM7_MAC_ICONV_ADAPTER=ON",

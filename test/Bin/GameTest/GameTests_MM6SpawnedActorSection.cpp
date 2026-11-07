@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -39,9 +40,11 @@ std::string_view refusalClass(std::string_view message) {
 
 } // namespace
 
-// Run alone in a fresh headless process. This reads private game data through
-// the existing loader, writes no profile, and never publishes SPAW to a save.
-GAME_TEST(MM6SpawnedActorSectionHeadless, DISABLED_FirstMapDetachedCapture) {
+namespace {
+
+// Run each caller alone in a fresh headless process. This reads private game
+// data through the loader, writes no profile, and publishes no actor section.
+void exerciseFirstMapActorCapture(EngineController &game, bool allActors) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     ASSERT_EQ(window->nativeHandle(), nullptr);
     game.pressGuiButton("MainMenu_NewGame");
@@ -75,16 +78,21 @@ GAME_TEST(MM6SpawnedActorSectionHeadless, DISABLED_FirstMapDetachedCapture) {
                 resultClass = "missing-baseline-slots";
             } else {
                 try {
-                    const auto appended = std::span(live).subspan(sidecar.actorCount);
+                    const size_t firstSlot = allActors ? 0 : sidecar.actorCount;
+                    const auto appended = std::span(live).subspan(firstSlot);
                     const auto bytes = mm6::encodeSpawnedActorSection(
-                        appended, sidecar.actorCount, GameTitle::MM6);
+                        appended, firstSlot, GameTitle::MM6);
                     const auto replay = mm6::decodeSpawnedActorSection(
-                        bytes, sidecar.actorCount, GameTitle::MM6);
+                        bytes, firstSlot, GameTitle::MM6);
                     captured = mm6::encodeSpawnedActorSection(
-                        replay, sidecar.actorCount, GameTitle::MM6) == bytes;
+                        replay, firstSlot, GameTitle::MM6) == bytes;
                     resultClass = captured ? "pass" : "replay-mismatch";
                 } catch (const std::exception &error) {
-                    resultClass = refusalClass(error.what());
+                    const bool lacksMM6Resistance = allActors && std::any_of(
+                        live.begin(), live.end(), [](const Actor &actor) {
+                            return !actor.monsterInfo.mm6Resistances;
+                        });
+                    resultClass = lacksMM6Resistance ? "missing-mm6-resistance" : refusalClass(error.what());
                 }
             }
         } catch (const std::exception &) {
@@ -97,4 +105,14 @@ GAME_TEST(MM6SpawnedActorSectionHeadless, DISABLED_FirstMapDetachedCapture) {
     ASSERT_TRUE(completed);
     EXPECT_TRUE(captured) << resultClass;
     EXPECT_EQ(window->nativeHandle(), nullptr);
+}
+
+} // namespace
+
+GAME_TEST(MM6SpawnedActorSectionHeadless, DISABLED_FirstMapDetachedCapture) {
+    exerciseFirstMapActorCapture(game, false);
+}
+
+GAME_TEST(MM6SpawnedActorSectionHeadless, DISABLED_FirstMapFullActorCandidate) {
+    exerciseFirstMapActorCapture(game, true);
 }

@@ -829,3 +829,8 @@ with no visible window or focus change; the loader checked first-map entry,
 movement and unchanged slot bytes. The MM7 all-map headless control passed
 **1/1** afterward. Production MM6 loading and menu slots stay guarded, and
 this is not a complete v2 load or graphical campaign check.
+
+Decoded v2 core and progress fields now stage on a detached Party through
+adapters shared with the v1 route. Linked core/durable/raw-runtime tests passed
+**17/17**, including direct-vs-v1 equivalence and invalid-field rejection.
+The full v2 Party coordinator and live MM6 save/load remain open.

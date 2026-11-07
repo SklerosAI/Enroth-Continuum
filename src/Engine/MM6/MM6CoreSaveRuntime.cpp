@@ -164,6 +164,12 @@ Party stageCoreParty(const Party &live, std::span<const std::uint8_t> bytes, Gam
     CoreSaveFields fields;
     loadCoreFieldsBeforeMutation(bytes, &fields);
 
+    return stageCoreParty(live, fields, title);
+}
+
+Party stageCoreParty(const Party &live, const CoreSaveFields &fields, GameTitle title) {
+    requireMM6(title);
+    (void) encodeCoreSections(fields);
     Party staged = live;
     staged.uNumGold = fields.party.gold;
     staged.uNumFoodRations = fields.party.food;

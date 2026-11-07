@@ -94,6 +94,11 @@ DurableSaveFields captureDurableFields(const Party &party, GameTitle title);
  */
 Party stageDurablePartyWithoutItems(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title);
 
+// Stage only QEST/EFFT progress from already decoded v2 fields. Native INVR
+// placement is handled by the separate raw Party inventory adapter.
+Party stageDurableProgressParty(const Party &live, const DurableBits &bits,
+                               const DurableEffects &effects, GameTitle title);
+
 /**
  * Stage bits, condition clocks and indexed MM6 items on a party copy. Every
  * item footprint and placement is checked against the loaded MM6 item table.

@@ -106,8 +106,18 @@ Party stageDurablePartyWithoutItems(const Party &live, std::span<const std::uint
         if (!inventory.empty())
             throw std::runtime_error("MM6 item restoration needs a title-specific inventory adapter");
 
+    return stageDurableProgressParty(live, fields.bits, fields.effects, title);
+}
+
+Party stageDurableProgressParty(const Party &live, const DurableBits &bits,
+                               const DurableEffects &effects, GameTitle title) {
+    requireMM6(title, false);
+    (void) encodeDurableProgressSections(bits, effects);
     Party staged = live;
-    applyBitsAndConditions(fields, &staged);
+    DurableSaveFields progress;
+    progress.bits = bits;
+    progress.effects = effects;
+    applyBitsAndConditions(progress, &staged);
     return staged;
 }
 

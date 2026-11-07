@@ -37,4 +37,8 @@ CoreSaveFields captureCoreFields(const Party &party, GameTitle title);
  */
 Party stageCoreParty(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title);
 
+// Apply already decoded PART/CHAR fields from either EC6 schema to a Party
+// copy. Validate the field widths/ranges again for direct callers.
+Party stageCoreParty(const Party &live, const CoreSaveFields &fields, GameTitle title);
+
 } // namespace mm6

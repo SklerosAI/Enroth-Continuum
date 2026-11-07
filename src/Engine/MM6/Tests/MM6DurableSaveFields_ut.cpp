@@ -63,6 +63,32 @@ UNIT_TEST(MM6DurableSaveFields, BitConditionAndItemRoundTrip) {
     EXPECT_EQ(destination, source);
 }
 
+UNIT_TEST(MM6DurableSaveFields, V2ProgressStageMatchesV1WithoutLogicalItems) {
+    mm6::DurableSaveFields fields = exampleFields();
+    fields.inventory = {};
+    Party prior;
+    prior._questBits.set(static_cast<QuestBit>(3));
+    const auto bytes = mm6::encodeSaveContainer(containerFor(fields));
+    Party fromV1 = mm6::stageDurablePartyWithoutItems(prior, bytes, GameTitle::MM6);
+    Party fromV2 = mm6::stageDurableProgressParty(
+        prior, fields.bits, fields.effects, GameTitle::MM6);
+    const auto v1 = mm6::captureDurableFields(fromV1, GameTitle::MM6);
+    const auto v2 = mm6::captureDurableFields(fromV2, GameTitle::MM6);
+    EXPECT_EQ(v2.bits, v1.bits);
+    EXPECT_EQ(v2.effects, v1.effects);
+    EXPECT_TRUE(fromV2._questBits.test(static_cast<QuestBit>(1)));
+    EXPECT_FALSE(fromV2._questBits.test(static_cast<QuestBit>(3)));
+    EXPECT_EQ(fromV2.pCharacters[1].conditions.get(static_cast<Condition>(16)).ticks(), 1234567);
+    EXPECT_TRUE(prior._questBits.test(static_cast<QuestBit>(3)));
+
+    EXPECT_THROW((void) mm6::stageDurableProgressParty(
+        prior, fields.bits, fields.effects, GameTitle::MM7), std::exception);
+    fields.effects.conditionTicks[1][16] = -1;
+    EXPECT_THROW((void) mm6::stageDurableProgressParty(
+        prior, fields.bits, fields.effects, GameTitle::MM6), std::exception);
+    EXPECT_TRUE(prior._questBits.test(static_cast<QuestBit>(3)));
+}
+
 UNIT_TEST(MM6DurableSaveFields, HighestMM6RecordStagesFromFreshParty) {
     ItemTable localTable;
     ItemTable *previous = pItemTable;

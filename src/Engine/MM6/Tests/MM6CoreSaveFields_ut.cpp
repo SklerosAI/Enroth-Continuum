@@ -217,6 +217,9 @@ UNIT_TEST(MM6CoreSaveFields, CapturesAndStagesMovementOnDetachedParty) {
     prior.floor_face_id = 42;
     Party staged = mm6::stageCoreParty(
         prior, mm6::encodeSaveContainer(containerFor(fields)), GameTitle::MM6);
+    Party direct = mm6::stageCoreParty(prior, fields, GameTitle::MM6);
+    EXPECT_EQ(mm6::captureCoreFields(direct, GameTitle::MM6),
+              mm6::captureCoreFields(staged, GameTitle::MM6));
     EXPECT_EQ(staged.pos.z, 340);
     EXPECT_EQ(staged.velocity.x, 0);
     EXPECT_EQ(staged.velocity.y, 0);
@@ -239,6 +242,10 @@ UNIT_TEST(MM6CoreSaveFields, CapturesAndStagesMovementOnDetachedParty) {
     EXPECT_THROW((void) mm6::captureCoreFields(source, GameTitle::MM7), std::exception);
     EXPECT_THROW((void) mm6::stageCoreParty(
         prior, mm6::encodeSaveContainer(containerFor(fields)), GameTitle::MM7), std::exception);
+    EXPECT_THROW((void) mm6::stageCoreParty(prior, fields, GameTitle::MM7), std::exception);
+    fields.characters[0].classId = 255;
+    EXPECT_THROW((void) mm6::stageCoreParty(prior, fields, GameTitle::MM6), std::exception);
+    EXPECT_EQ(prior.velocity.z, 10);
 }
 
 UNIT_TEST(MM6CoreSaveFields, InvalidFieldLeavesDestinationUntouched) {

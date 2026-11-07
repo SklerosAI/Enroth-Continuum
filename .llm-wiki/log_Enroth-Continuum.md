@@ -2249,3 +2249,9 @@ Chronological record of wiki activity.
 - Added exact ordered DECR runtime decoration ownership to the still test-only v5 schema; its 26 required sections now include SPRT, ARTR and DECR over the v4 baseline. Focused linked codec, pre-event scope and atomic checks passed 16/16, superseding the prior decoration-flag refusal.
 - A strict disposable four-process sequence passed v2 seed, v4 baseline, v5 post-action writer and fresh-child v5 reader at 1/1 each. The reader checked represented owners after world preparation and aborted before input; source slots stayed unchanged. The first reader crashed from large stack frames before owner checks, and heap-backed stage/PART decode fixed that test path.
 - V5 first input, a second post-reload write, indoor/later-map support, production SaveLoad and Atlas remain open. This is not campaign playability.
+
+## [2026-11-07] verify | MM6 v5 second first-map save cycle
+- by: T-Burton-ND via codex
+- Added separate strict test-only first input, second atomic v5 write and second fresh-child reader gates. A disposable seven-process chain passed v2 seed, v4 baseline, post-action v5 writer, fresh v5 reader, bounded real-loop turn/walk, second v5 writer and second fresh reader at 1/1 each.
+- The second writer required changed position and yaw and wrote a distinct slot while prior v2, v4 and v5 candidates stayed byte-identical. The second reader checked exact represented owners after world preparation and aborted before input. Focused v5 atomic checks passed 3/3; an MM7 headless control passed 1/1.
+- This validates a bounded first-map test cycle only. Production MM6 SaveLoad, indoor and later-map replay, campaign play and Atlas launch remain gated.

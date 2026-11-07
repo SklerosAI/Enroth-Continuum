@@ -1842,3 +1842,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated detached archive-backed New Game preflight, a separate nineteen-section EC6 v2 candidate with raw inventory/held/shop state, and a fresh-process test step through timer, AI, turn/walk and draw. The v1 test-only writer and normal MM6 SaveLoad guards remain explicit.
 - The linked save/preflight gate passed 31/31. Two separate monitored MM6 processes passed the disposable New Game write and world/frame reentry (1/1 each), while an MM7 all-map reconstruction control passed 1/1. No process showed a game window or changed focus; the temporary profile was removed.
+
+## [2026-11-06] integrate | MM6 detached chest cursor pickup
+- by: T-Burton-ND via codex
+- Joined one non-gold chest pickup candidate to the exact 28-byte MM6 held-cursor owner, preserving source item tails and rejecting gold, occupied cursor, foreign title and malformed grid before publication.
+- Linked focused chest/open/cursor checks passed 11/11. Live MM6 click pickup, gold settlement, sidecar and save publication remain guarded.

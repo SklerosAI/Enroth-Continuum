@@ -95,7 +95,7 @@ UNIT_TEST(MM6OutdoorActorAppendCodec, RejectsReusedOrMismatchedSlots) {
         source, live, originalRecord, 5, 1000, GameTitle::MM6), std::exception);
 }
 
-UNIT_TEST(MM6OutdoorActorAppendCodec, RejectsUnboundedOrNoninitialSplice) {
+UNIT_TEST(MM6OutdoorActorAppendCodec, RejectsUnboundedOrConflictingDaySplice) {
     const auto originalRecord = record(12, 10);
     const auto appendedRecord = record(13, 40);
     mm6::OutdoorDeltaWire source = mm6::decodeOutdoorDelta(sourceBytes(originalRecord));
@@ -111,4 +111,7 @@ UNIT_TEST(MM6OutdoorActorAppendCodec, RejectsUnboundedOrNoninitialSplice) {
     source.part(mm6::OutdoorDeltaPart::ResetHeader)[4] = 2;
     EXPECT_THROW((void) mm6::appendMM6OutdoorActorRecords(
         source, live, appendedRecord, 5, 1000, GameTitle::MM6), std::exception);
+    source.part(mm6::OutdoorDeltaPart::ResetHeader)[4] = 5;
+    EXPECT_EQ(mm6::appendMM6OutdoorActorRecords(
+        source, live, appendedRecord, 5, 1000, GameTitle::MM6).actorCount, 2);
 }

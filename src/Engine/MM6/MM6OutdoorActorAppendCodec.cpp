@@ -54,9 +54,13 @@ OutdoorDeltaWire appendMM6OutdoorActorRecords(
     // splice point, and malformed source bytes never reach the encoder.
     const OutdoorDeltaWire original = decodeOutdoorDelta(source.bytes);
     const auto reset = original.part(OutdoorDeltaPart::ResetHeader);
-    if (read32(reset, 0) > std::numeric_limits<int>::max() || read32(reset, 4) != 0 ||
+    // OutdoorLocation::Load may already stamp the retained sidecar with the
+    // current day before the initial encounter spawn pass runs.
+    const std::uint32_t sourceDay = read32(reset, 4);
+    if (read32(reset, 0) > std::numeric_limits<int>::max() ||
+        (sourceDay != 0 && sourceDay != lastRespawnDay) ||
         lastRespawnDay == 0 || lastRespawnDay > std::numeric_limits<int>::max())
-        throw std::runtime_error("MM6 actor append requires an initial respawn day transition");
+        throw std::runtime_error("MM6 actor append requires a matching respawn day");
     if (maxActorSlots == 0 || maxActorSlots > MAX_WIRE_ACTORS ||
         finalActors.size() > maxActorSlots || finalActors.size() <= original.actorCount)
         throw std::runtime_error("MM6 actor append exceeds slots or has no appended actors");

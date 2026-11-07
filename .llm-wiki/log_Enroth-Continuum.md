@@ -2656,3 +2656,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Audited 89 registered worktrees, retaining dirty, private-local-data and protected checkouts. Removed 79 clean finished checkouts through Git after Codex archival refused them; local branch refs and seven formerly detached heads were preserved. Registered count is 10, with no broken worktree entries.
 - Added a mandatory pre-create budget check and ten-worktree rule to the repository agent handoff. Disk free space rose from about 3.5 GiB to 45 GiB. The MM6 implementation goal remains paused.
+
+## [2026-11-07] plan | MM6 critical path and token cadence
+- by: T-Burton-ND via codex
+- Revised the paused MM6 plan to finish a normal first-map save/reload first, run an early staged graphical opening check, then add representative transitions before full offline and campaign coverage. Full campaign validation still gates Atlas MM6 Play.
+- Added a concise resume queue, focused-versus-milestone test cadence, narrow wiki updates, at most two independent code-changing agent lanes, and reuse under the ten-worktree cap. No runtime implementation or gameplay gate changed in this planning pass.

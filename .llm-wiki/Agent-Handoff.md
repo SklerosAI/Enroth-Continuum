@@ -30,6 +30,8 @@ The next actor path is a [versioned MM6 runtime owner candidate](MM6-F4-Spawned-
 
 A detached [pre-event GNPC/RNG agreement helper](MM6-F4-Pre-Event-GNPC-Replay.md) passed 2/2 linked checks. The source order is map/actor rebuild, deterministic NPC names, generated-row loop with `grng` draws, then `onMapLoad()` events. Future replay must reconcile spawned actors first, bypass only the generated-row loop inside `_461103_load_level_sub()` while retaining its other work, and publish saved GNPC/RNGS before map events. No hook or live assignment exists yet.
 
+The detached [SPAW v1 runtime section](MM6-F4-Spawned-Actor-Section.md) passed 4/4 linked unit checks and a private-backed, fresh-process first-map encode/decode/re-encode probe 1/1 with ramfs user state. It stores exact contiguous slots, MM6 resistances and runtime-only fields, and refuses actor items/buffs or narrowing. This proves a narrow pristine-spawn capture, not a durable post-entry save. It is not in strict v2, and baseline DDM state, live replay order and later mutated actor fields remain open.
+
 ## Read first
 
 1. Run `git status --short --branch`, `git worktree list`, and `git log -1 --oneline` in the checkout you intend to use. The branch and worktree descriptions below may drift.

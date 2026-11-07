@@ -959,3 +959,12 @@ actor-to-generated-row anchors without mutation; linked checks passed
 `onMapLoad()` events, so the eventual v3 replay must branch around only that
 generation loop, retain the subroutine's other work, and publish saved
 GNPC/RNG before events. No live hook is installed.
+
+A detached [SPAW v1 runtime actor section](MM6_F4_SPAWNED_ACTOR_SECTION.md)
+now preserves exact contiguous slots, MM6 resistance values and runtime-only
+fields while refusing unsupported item/buff states and narrowing. Its linked
+suite passed **4/4**; a private-backed fresh-process first-map capture
+encoded, decoded and re-encoded its spawned actors **1/1** using ramfs user
+state, without writing a save. This is not yet a durable `.ec6` slot or a
+fresh-child replay, and later actor mutations remain outside the admitted
+subset.

@@ -1,7 +1,8 @@
 # MM6 EC6 v5 runtime sprite owner
 
-Status, 2026-11-07: source-backed design gate; no accepted v5 codec, slot or
-replay yet. A bounded v4 first-map reload and real-loop turn/walk passed, but
+Status, 2026-11-07: detached v5 `SPRT` full-list codec and exact 24-section
+manifest passed focused linked checks **3/3**. No v5 slot or live replay yet.
+A bounded v4 first-map reload and real-loop turn/walk passed, but
 the attempted second v4 write refused before disk mutation when a live ground
 sprite had fractional X/Y position. The native 100-byte DDM sprite record
 stores integer position. The current v4 writer correctly rejects narrowing.
@@ -31,12 +32,14 @@ events. Check the full sprite list again after events and before input.
 
 ## Conservative v5 contract
 
-1. Add a required `SPRT` section to a new exact manifest that wraps v4's 23
-   sections. V1 through v4 decoders and refusal behavior remain strict.
-2. Encode every live sprite in ordered PID slot sequence, with exact float
+1. The required `SPRT` section now wraps v4's 23 sections in an exact
+   24-section v5 manifest. V1 through v4 decoders and refusal behavior remain
+   strict; the linked manifest check passed.
+2. The detached codec encodes every live sprite in ordered PID slot sequence, with exact float
    bits for all three vectors, every runtime scalar and timer, particle
    clocks, spell/caster/target fields, and containing-item provenance. Reject
    unsupported nonempty or mutated item forms instead of narrowing them.
+   Its linked fractional round-trip and malformed/provenance refusals passed.
 3. Bind the section to `HEAD`, the active native DDM ground record count and
    each stable source slot/identity. Preserve native 100-byte records and
    28-byte MM6 item records separately. Initially refuse slot compaction,

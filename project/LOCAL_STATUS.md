@@ -1103,3 +1103,6 @@ MM6 raw item provenance, is under design for a later schema; waiting for
 sprites to settle is not a general save strategy. See the
 [v5 sprite-runtime gate](MM6_F4_EC6_V5_SPRITE_RUNTIME.md). The post-action reader is
 disabled and unrun pending a valid candidate.
+The detached v5 SPRT codec and exact 24-section manifest now pass **3/3**
+linked fractional round-trip, refusal and older-version-isolation checks.
+They do not yet provide a live v5 capture, slot or reload.

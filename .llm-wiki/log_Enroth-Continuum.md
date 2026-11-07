@@ -1922,3 +1922,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Joined native primary/backup selection to the represented Party and NPC/map/timer/CHST stages on detached copies. A late unsupported primary item now allows selection of a valid backup without disk repair.
 - Linked atomic/raw/effect/hireling checks passed 20/20, including both-invalid refusal and unchanged disk bytes. This remains an incomplete session, with no production MM6 menu/load admission.
+
+## [2026-11-06] integrate | MM6 v2 outdoor plan preflight
+- by: T-Burton-ND via codex
+- Shared the detached MM6 outdoor geometry, terrain and spawn planner with v2 raw sessions and moved its validation inside primary/backup selection. An unusable outdoor primary can now fall back to a valid indoor backup without disk repair.
+- Linked raw/world runtime tests passed 11/11. Indoor world construction, final actor identity, renderer resources and production MM6 load remain gated.

@@ -145,7 +145,8 @@ bool sameSprite(const SpriteObject &lhs, const SpriteObject &rhs) {
         lhs._ticksPerParticle.ticks() == rhs._ticksPerParticle.ticks();
 }
 
-void requireNativeAnchor(const SpriteRuntimeRecord &record) {
+void requireNativeAnchor(const SpriteRuntimeRecord &record,
+                         bool requireInitialPosition = true) {
     requireFinite(record.runtime.vPosition);
     requireFinite(record.runtime.vVelocity);
     requireFinite(record.runtime.initialPosition);
@@ -155,7 +156,8 @@ void requireNativeAnchor(const SpriteRuntimeRecord &record) {
     const SpriteObject_MM7 native = projectMM6GroundItemRecord(record.nativeRecord);
     if (native.spriteId != std::to_underlying(record.runtime.spriteId) ||
         native.objectDescId != record.runtime.uObjectDescID ||
-        native.initialPosition.toFloat() != record.runtime.initialPosition)
+        (requireInitialPosition &&
+         native.initialPosition.toFloat() != record.runtime.initialPosition))
         throw std::runtime_error("MM6 SPRT native slot identity changed");
     SpriteObject_MM7 projected{};
     snapshot(record.runtime, &projected);
@@ -185,8 +187,8 @@ Vec3f getVec(Reader *input) {
 }
 
 void putRecord(std::vector<std::uint8_t> *out,
-               const SpriteRuntimeRecord &record) {
-    requireNativeAnchor(record);
+               const SpriteRuntimeRecord &record, bool anchored) {
+    requireNativeAnchor(record, anchored);
     requireFinite(record.runtime.vPosition);
     requireFinite(record.runtime.vVelocity);
     requireFinite(record.runtime.initialPosition);
@@ -295,16 +297,25 @@ SaveSection encodeSpriteRuntimeSectionAs(const SpriteRuntimeSaveFields &fields,
                                          GameTitle title) {
     requireMM6(title);
     requireMapName(fields.mapName, kind);
-    if (fields.records.size() > MAX_SPRITES)
+    if (fields.records.size() > MAX_SPRITES ||
+        (kind == SpriteRuntimeSectionKind::OutdoorV5 && fields.nativePrefixCount) ||
+        (kind == SpriteRuntimeSectionKind::IndoorV6 &&
+         fields.nativePrefixCount > fields.records.size()))
         throw std::runtime_error("MM6 SPRT exceeds bounded full-list count");
     std::vector<std::uint8_t> bytes;
-    bytes.reserve(2 + fields.mapName.size() + 4 + fields.records.size() * RECORD_BYTES);
+    const std::size_t extra = kind == SpriteRuntimeSectionKind::IndoorV6 ? 4 : 0;
+    bytes.reserve(2 + fields.mapName.size() + 4 + extra +
+                  fields.records.size() * RECORD_BYTES);
     bytes.push_back(VERSION);
     bytes.push_back(fields.mapName.size());
     bytes.insert(bytes.end(), fields.mapName.begin(), fields.mapName.end());
     put32(&bytes, fields.records.size());
-    for (const SpriteRuntimeRecord &record : fields.records)
-        putRecord(&bytes, record);
+    if (kind == SpriteRuntimeSectionKind::IndoorV6)
+        put32(&bytes, fields.nativePrefixCount);
+    for (std::size_t index = 0; index < fields.records.size(); ++index)
+        putRecord(&bytes, fields.records[index],
+                  kind == SpriteRuntimeSectionKind::OutdoorV5 ||
+                  index < fields.nativePrefixCount);
     return {kind == SpriteRuntimeSectionKind::OutdoorV5 ? OUTDOOR_TAG : INDOOR_TAG,
             true, std::move(bytes)};
 }
@@ -329,7 +340,7 @@ SpriteRuntimeSaveFields decodeSpriteRuntimeSectionAs(
             section = &candidate;
         }
     if (!section || !section->required || section->payload.size() < 6 ||
-        section->payload.size() > 2 + 63 + 4 + MAX_SPRITES * RECORD_BYTES)
+        section->payload.size() > 2 + 63 + 8 + MAX_SPRITES * RECORD_BYTES)
         throw std::runtime_error("missing or unbounded MM6 SPRT section");
     Reader input(section->payload);
     if (input.u8() != VERSION)
@@ -339,8 +350,11 @@ SpriteRuntimeSaveFields decodeSpriteRuntimeSectionAs(
     result.mapName.assign(name.begin(), name.end());
     requireMapName(result.mapName, kind);
     const std::uint32_t count = input.u32();
-    if (count > MAX_SPRITES ||
-        section->payload.size() != 2 + name.size() + 4 + count * RECORD_BYTES)
+    if (kind == SpriteRuntimeSectionKind::IndoorV6)
+        result.nativePrefixCount = input.u32();
+    const std::size_t extra = kind == SpriteRuntimeSectionKind::IndoorV6 ? 4 : 0;
+    if (count > MAX_SPRITES || result.nativePrefixCount > count ||
+        section->payload.size() != 2 + name.size() + 4 + extra + count * RECORD_BYTES)
         throw std::runtime_error("MM6 SPRT count differs from payload");
     result.records.reserve(count);
     for (std::uint32_t index = 0; index < count; ++index)

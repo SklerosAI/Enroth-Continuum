@@ -25,6 +25,9 @@ struct SpriteRuntimeRecord {
 struct SpriteRuntimeSaveFields {
     std::string mapName;
     std::vector<SpriteRuntimeRecord> records;
+    // ISRT only: the exact native ISCR prefix length. Remaining slots were
+    // appended at runtime and carry canonical synthetic image anchors.
+    std::uint32_t nativePrefixCount = 0;
 };
 
 enum class SpriteRuntimeSectionKind { OutdoorV5, IndoorV6 };

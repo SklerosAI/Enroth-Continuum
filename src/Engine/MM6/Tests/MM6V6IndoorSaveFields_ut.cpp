@@ -302,6 +302,25 @@ UNIT_TEST(MM6V6IndoorSaveFields, IndoorSpriteOwnerPreservesFractionalStateAndNat
     EXPECT_EQ(std::bit_cast<std::uint32_t>(detached[0].vPosition.x),
               std::bit_cast<std::uint32_t>(live.vPosition.x));
     EXPECT_EQ(detached[0].timeSinceCreated.ticks(), 70000);
+    std::array<SpriteObject, 2> withAppend{live, live};
+    withAppend[1].initialPosition = Vec3f(1.25f, 2.5f, -3.75f);
+    const auto appended = mm6::captureIndoorSpriteRuntime(
+        "d0.blv", source, withAppend, GameTitle::MM6);
+    EXPECT_EQ(appended.nativePrefixCount, 1u);
+    const auto appendedSection = mm6::encodeSpriteRuntimeSectionAs(
+        appended, mm6::SpriteRuntimeSectionKind::IndoorV6, GameTitle::MM6);
+    mm6::SaveContainer appendedContainer;
+    appendedContainer.sections.push_back(appendedSection);
+    const auto appendedDecoded = mm6::decodeSpriteRuntimeSectionAs(
+        appendedContainer, mm6::SpriteRuntimeSectionKind::IndoorV6, GameTitle::MM6);
+    const auto appendedReplay = mm6::stageIndoorSpriteRuntime(
+        appendedDecoded, "d0.blv", source, GameTitle::MM6);
+    ASSERT_EQ(appendedReplay.size(), 2u);
+    EXPECT_EQ(std::bit_cast<std::uint32_t>(appendedReplay[1].initialPosition.x),
+              std::bit_cast<std::uint32_t>(withAppend[1].initialPosition.x));
+    EXPECT_EQ(mm6::encodeSpriteRuntimeSectionAs(
+        appendedDecoded, mm6::SpriteRuntimeSectionKind::IndoorV6, GameTitle::MM6),
+        appendedSection);
     detached[0].vPosition.x = 0;
     mm6::applyIndoorSpriteRuntimeAfterMapReload(
         decoded, "d0.blv", source, &detached, GameTitle::MM6);

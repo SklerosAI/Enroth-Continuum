@@ -1,9 +1,12 @@
 #include "MM6V6IndoorSpriteRuntime.h"
 
 #include <algorithm>
+#include <cstring>
 #include <stdexcept>
 #include <string>
 #include <utility>
+
+#include "Engine/Snapshots/EntitySnapshots.h"
 
 #include "MM6V6IndoorSaveFields.h"
 
@@ -21,21 +24,42 @@ void requireSourceShape(std::string_view mapName,
         throw std::runtime_error("MM6 ISRT lacks an exact ISCR indoor source");
 }
 
+std::array<std::uint8_t, NATIVE_WIDTH> syntheticAppendImage(
+    const SpriteObject &runtime) {
+    SpriteObject_MM7 image{};
+    snapshot(runtime, &image);
+    std::array<std::uint8_t, NATIVE_WIDTH> result{};
+    std::memcpy(result.data(), &image, 36);
+    if (runtime.containing_item.mm6RawRecord)
+        std::copy(runtime.containing_item.mm6RawRecord->begin(),
+                  runtime.containing_item.mm6RawRecord->end(),
+                  result.begin() + 36);
+    else
+        std::memcpy(result.data() + 36, &image.containing_item, 28);
+    std::memcpy(result.data() + 64,
+        reinterpret_cast<const std::uint8_t *>(&image) + 72, 36);
+    return result;
+}
+
 } // namespace
 
 SpriteRuntimeSaveFields captureIndoorSpriteRuntime(
     std::string_view mapName, const IndoorNativeSlotAnchor &source,
     std::span<const SpriteObject> live, GameTitle title) {
     requireSourceShape(mapName, source, title);
-    if (live.size() != source.count)
-        throw std::runtime_error("MM6 ISRT live full-list count differs from ISCR");
+    if (live.size() < source.count || live.size() > MAX_SPRITES)
+        throw std::runtime_error("MM6 ISRT live full-list lacks its ISCR prefix");
     SpriteRuntimeSaveFields fields;
     fields.mapName = mapName;
+    fields.nativePrefixCount = source.count;
     fields.records.reserve(live.size());
     for (std::size_t index = 0; index < live.size(); ++index) {
         SpriteRuntimeRecord record;
-        std::copy_n(source.records.begin() + index * NATIVE_WIDTH,
-                    NATIVE_WIDTH, record.nativeRecord.begin());
+        if (index < source.count)
+            std::copy_n(source.records.begin() + index * NATIVE_WIDTH,
+                        NATIVE_WIDTH, record.nativeRecord.begin());
+        else
+            record.nativeRecord = syntheticAppendImage(live[index]);
         record.runtime = live[index];
         fields.records.push_back(std::move(record));
     }
@@ -47,14 +71,22 @@ void requireIndoorSpriteRuntimeSourceAgreement(
     const SpriteRuntimeSaveFields &fields, std::string_view mapName,
     const IndoorNativeSlotAnchor &source, GameTitle title) {
     requireSourceShape(mapName, source, title);
-    if (fields.mapName != mapName || fields.records.size() != source.count)
+    if (fields.mapName != mapName ||
+        fields.nativePrefixCount != source.count ||
+        fields.records.size() < source.count ||
+        fields.records.size() > MAX_SPRITES)
         throw std::runtime_error("MM6 ISRT map or slot count differs from ISCR");
-    for (std::size_t index = 0; index < fields.records.size(); ++index)
-        if (!std::equal(fields.records[index].nativeRecord.begin(),
-                        fields.records[index].nativeRecord.end(),
-                        source.records.begin() + index * NATIVE_WIDTH))
-            throw std::runtime_error("MM6 ISRT native record differs at slot " +
+    for (std::size_t index = 0; index < fields.records.size(); ++index) {
+        std::array<std::uint8_t, NATIVE_WIDTH> expected{};
+        if (index < source.count)
+            std::copy_n(source.records.begin() + index * NATIVE_WIDTH,
+                        NATIVE_WIDTH, expected.begin());
+        else
+            expected = syntheticAppendImage(fields.records[index].runtime);
+        if (fields.records[index].nativeRecord != expected)
+            throw std::runtime_error("MM6 ISRT native or appended image differs at slot " +
                                      std::to_string(index));
+    }
     // The shared exact record codec checks fractional geometry, every runtime
     // field and the item image/raw provenance against the native record.
     (void) encodeSpriteRuntimeSectionAs(

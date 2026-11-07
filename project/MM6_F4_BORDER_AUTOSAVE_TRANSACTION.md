@@ -1,0 +1,28 @@
+# MM6 outdoor border autosave transaction
+
+Status: **read-only design audit; no production travel save** (2026-11-07). This packet follows the detached [border route trace](MM6_F4_OUTDOOR_BORDER_TRACE.md), the seven-process [later-outdoor save cycle](MM6_F4_V5_LATER_OUTDOOR.md), and current source. It contains no original game assets or private save data.
+
+## Current source boundary
+
+- [`startMapTransition`](../src/Engine/Engine.cpp) stops audio, calls `autoSave()` before scheduling a different map, then sets the pending destination. The MM6 test-only intercept used by the no-write location-change check skips that call. The check proves target world switching and bounded input, **not** old-map persistence.
+- [`UIMSG_OnTravelByFoot`](../src/Application/Game.cpp) uses its own MM7 path: it closes dialogue, stops audio, pauses the timer, calls `autoSave()` directly, then changes location and applies time/food/rest effects. It bypasses `startMapTransition`. Both entry points need one MM6 transaction owner before live border travel is enabled.
+- Creating [`GUIWindow_Transition`](../src/GUI/UI/UITransition.cpp) pauses the timer. The existing [`captureV5FirstMapLiveSession`](../src/Engine/MM6/MM6V5LiveSaveCapture.cpp) requires a settled, unpaused first-map state. It cannot simply be called from a paused travel confirmation or a later outdoor map.
+- MM6 [`saveGame`](../src/Engine/SaveLoad.cpp) throws before writing. The inherited `autoSave()` returns void; its MM7 write path can swallow an autosave disk failure. MM6 travel needs a required success result before changing Party, map cache, food, time, UI or pending transition. Do not route it through the MM7 `createSaveData(false)` path, which mutates map/cache state while preparing a save.
+- [`writeAtomicV5SaveFileForTest`](../src/Engine/MM6/MM6AtomicSaveFile.cpp) is restricted to named candidates in owner-only disposable profiles. It validates a v5 shell and semantic callback, rejects foreign-version primary/backup files, validates prior same-version files and uses write, sync, readback and rename. Its fault tests do not make it a production autosave API. A failure after primary rename may leave a valid new primary despite a reported sync error; a backup may change before primary replacement. Define a clear durable-result and recovery policy before using that sequence in gameplay.
+- The current v5 container has singular active-map actor, sprite and decoration runtime sections. A later-map save could lose runtime owners from a previously visited map unless a visited-map representation or lossless native-delta projection parks them. The no-write transition check confirms the old `pMapDeltas` entry remains unchanged across the transition, so an in-session return can be stale.
+
+## Required transaction shape
+
+1. Choose a canonical production EC6 version, slot name and title-private profile root. Explicitly reject or migrate older autosave schemas; an existing v2 test seed cannot silently become a v5 production slot.
+2. Stage an exact detached old-map save for any admitted outdoor map at a safe point before travel UI effects. Include Party and character state, inventory/buffs/hirelings, UI/cursor/shops, NPC and generated links, RNG, active and visited map deltas, chests/artifacts, actor/sprite/decoration runtime, event variables and owner identities. The old-map checkpoint must contain a reload-safe in-bounds **Party copy** when the live border position lies outside the map edge; keep live Party untouched until commit.
+3. Revalidate destination geometry, source-map archive identity, the three-bit offer mask and confirmation flying state. Stage target map/resource readiness and a no-reentry capture. Give the disk writer a semantic validator and a required success result.
+4. Only after the old-map save is durably accepted, publish staged old-map cache/visited owners, close the dialogue, stop audio, apply exactly-once MM6 travel time/food effects and queue the target with wrapped arrival coordinates. Do not invoke a second inherited autosave.
+5. On precommit capture or disk refusal, preserve Party, time, food, map/cache, pending transition and UI state. Define the post-rename sync-failure outcome explicitly. On target-load failure, keep input closed in the partial world and return to a recoverable checkpoint or menu until full world rollback exists.
+
+## Headless acceptance
+
+- Inject capture, semantic, schema and atomic-write faults. Check no precommit Party/time/food/cache/pending/UI mutation, valid primary/backup outcomes for each fault point, and no temporary or unrelated slot damage.
+- In separate children: reload the source, execute real border confirmation, write the old-map checkpoint, enter the target and move, then reload the old-map checkpoint and compare actor, sprite, chest, event and NPC owners at a safe in-bounds position. Add an in-session return to the source map.
+- Invalid, flying, cancelled and corner cases must not write. Keep MM7 headless control in the same integration gate. Graphical travel acceptance follows only after the durable headless cycle.
+
+No runtime route, production save or test hook was changed by this audit. See [atomic save design](MM6_ATOMIC_SAVE_F4.md), [save remainder](MM6_SAVE_REMAINDER_F4.md), and [local status](LOCAL_STATUS.md).

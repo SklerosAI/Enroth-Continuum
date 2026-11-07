@@ -82,5 +82,13 @@ The live title guard and normal
 cross-map autosave remain closed; see the
 [border trace](MM6_F4_OUTDOOR_BORDER_TRACE.md).
 
+The [border autosave transaction audit](MM6_F4_BORDER_AUTOSAVE_TRANSACTION.md)
+shows why the no-write transition test cannot yet become production travel:
+the current v5 writer is disposable-only, the travel dialogue pauses a timer
+required by first-map capture, foot confirmation has its own direct autosave,
+and one-active-map runtime sections do not preserve old visited-map owners
+through later saves. A durable old-map checkpoint and tested rollback order
+precede any live route.
+
 See [v5 runtime ownership](MM6_F4_EC6_V5_SPRITE_RUNTIME.md),
 [local status](LOCAL_STATUS.md), and [the F4 path](plan.md).

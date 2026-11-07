@@ -1184,6 +1184,12 @@ unconditionally false while later confirmation, corner acceptance and durable
 autosave remain unproved. Focused route, eligibility and intercept units
 passed **11/11**.
 
+The [border autosave transaction audit](MM6_F4_BORDER_AUTOSAVE_TRANSACTION.md)
+identifies the disposable-only v5 writer, paused-dialogue capture mismatch,
+separate foot-confirmation autosave path and missing visited-map runtime
+ownership. A production old-map checkpoint and failure policy are required
+before enabling a route; the audit made no runtime change.
+
 For indoor save design, a detached IFOV writer and fresh-child reader passed
 against retained private BLV/DLV data, and a separate headless map-load check
 captured the real face baseline immediately before `OnMapReload` (**1/1**).

@@ -15,4 +15,6 @@ Full confirmation dispatch, later party-state changes, corner behavior and a nat
 
 An earlier ignored focused checker passed the accepted executable hash, route-helper/caller/confirmation structure, retained grid and current title guard. The later C++ checks used a headless unit build; no live travel or graphical MM6 launch occurred.
 
-See also: [Outdoor Title Boundary](MM6-F4-Outdoor-Title-Boundary.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).
+The separate [border autosave transaction audit](MM6-F4-Border-Autosave-Transaction.md) lists the old-map durability, visited-map ownership and rollback gates before live travel.
+
+See also: [Outdoor Title Boundary](MM6-F4-Outdoor-Title-Boundary.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md), [Border Autosave Transaction](MM6-F4-Border-Autosave-Transaction.md).

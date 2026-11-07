@@ -47,6 +47,6 @@ positions when reconstructing a different outdoor map, preserving the strict
 target chest join. This test does not provide border travel UI or durable
 autosave; those and normal SaveLoad remain guarded.
 
-See also: [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), [MM6 F4 Save
+See also: [Border Autosave Transaction](MM6-F4-Border-Autosave-Transaction.md), [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), [MM6 F4 Save
 Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md), [Campaign
 Status](Campaign-Status.md), and [Agent Handoff](Agent-Handoff.md).

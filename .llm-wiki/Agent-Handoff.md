@@ -224,6 +224,9 @@ intercept; it does not implement border UI or durable autosave. The pure MM6
 border calculator computes grid geometry and travel days but always refuses
 live offers. A separate pure predicate models the three source-backed offer
 flag bits and confirm flying state; integrated focused checks passed 11/11.
+The [border autosave audit](MM6-F4-Border-Autosave-Transaction.md) requires
+a durable old-map EC6 checkpoint, visited-map runtime owner and explicit
+failure recovery before replacing the no-write test intercept.
 For indoor v6,
 detached IFOV write/read, a real headless pre-`OnMapReload` face-base capture,
 strict synthetic v6 staging and a three-process disposable v2 seed, v6 writer

@@ -6,12 +6,11 @@
 
 namespace mm6 {
 
-Party stageRawHeldParty(const Party &baseline, const RawHeldCursorOwner &cursor,
+Party stageRawHeldParty(Party staged, const RawHeldCursorOwner &cursor,
                         const ItemTable &itemTable, GameTitle title) {
     if (!validRawHeldCursorOwner(cursor, title))
         throw std::runtime_error("MM6 raw held Party stage needs a ready cursor owner");
 
-    Party staged = baseline;
     staged.pPickedItem.Reset();
     if (!cursor.record.itemNumberRaw())
         return staged;

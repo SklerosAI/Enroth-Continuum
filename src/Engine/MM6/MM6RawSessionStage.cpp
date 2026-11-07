@@ -7,6 +7,7 @@
 
 #include "MM6AtomicSaveFile.h"
 #include "MM6RawCursorShopStage.h"
+#include "MM6RawHeldPartyStage.h"
 #include "MM6SavedActorPidPolicy.h"
 
 namespace mm6 {
@@ -26,6 +27,7 @@ StagedRawSessionFields stageRawSessionFields(
     validateRawCursorShopJoin(raw.saved, raw.cursor, raw.shops, title);
     StagedRawPartyInventories party = stageRawPartyRepresentedFields(
         freshParty, raw, itemTable, title);
+    party.party = stageRawHeldParty(std::move(party.party), raw.cursor, itemTable, title);
     StagedRawWorldAndVisuals world = stageRawWorldAndVisuals(
         freshNpcs, freshTimer, freshOverlays, raw, overlayTableCount, title);
     requireNoActiveSavedActorOverlays(raw.saved.metadata.overlays, title);

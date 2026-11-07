@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -71,11 +72,12 @@ struct ItemTableScope {
 
     ItemTableScope() {
         pItemTable = table.get();
-        const ItemId id = static_cast<ItemId>(10);
-        table->items[id].iconName = "raw-party-item";
-        table->items[id].type = static_cast<ItemType>(3);
-        table->items[id].rarity = RARITY_COMMON;
-        table->itemSizes[id] = Sizei(1, 1);
+        for (const ItemId id : {static_cast<ItemId>(10), static_cast<ItemId>(11)}) {
+            table->items[id].iconName = "raw-party-item";
+            table->items[id].type = static_cast<ItemType>(3);
+            table->items[id].rarity = RARITY_COMMON;
+            table->itemSizes[id] = Sizei(1, 1);
+        }
     }
 
     ~ItemTableScope() { pItemTable = previous; }
@@ -433,6 +435,8 @@ UNIT_TEST(MM6RawSaveRuntime, FullRepresentedPreflightFallsBackAfterLatePartyFail
     ASSERT_TRUE(selected->party.party.pCharacters[0].inventory.entry(137));
     EXPECT_EQ(selected->party.party.pCharacters[0].inventory.entry(137)->itemId,
               static_cast<ItemId>(10));
+    EXPECT_EQ(selected->party.party.pPickedItem.itemId, static_cast<ItemId>(11));
+    EXPECT_EQ(selected->party.party.pPickedItem.mm6RawRecord, selected->raw.cursor.record);
     EXPECT_EQ(selected->world.world.mapDeltas.size(), 67);
     ASSERT_TRUE(selected->indoorPlan);
     EXPECT_EQ(selected->indoorPlan->mapName, "synthetic0.blv");
@@ -440,6 +444,7 @@ UNIT_TEST(MM6RawSaveRuntime, FullRepresentedPreflightFallsBackAfterLatePartyFail
     EXPECT_EQ(readBytes(profile.primary()), badBytes);
     EXPECT_EQ(readBytes(profile.backup()), goodBytes);
 
+    selected.reset();
     writeBytes(profile.backup(), badBytes);
     EXPECT_THROW((void) mm6::preflightStagedRawSessionFields(
         profile.root(), "save001.ec6", freshNpcs,
@@ -455,19 +460,55 @@ UNIT_TEST(MM6RawSaveRuntime, BytesStageUsesSameCompleteSemanticGate) {
     const auto names = namesOf(fields);
     const auto bytes = mm6::encodeRawSave(fields, GameTitle::MM6);
     const auto npcs = freshNpcBaseline();
-    auto staged = mm6::stageRawSessionFields(
+    std::optional<mm6::StagedRawSessionFields> staged = mm6::stageRawSessionFields(
         bytes, npcs, names, syntheticBase, validItem,
         *table.table, 5, 145, GameTitle::MM6);
-    EXPECT_FALSE(staged.needsRecovery);
-    ASSERT_TRUE(staged.indoorPlan);
-    EXPECT_EQ(staged.indoorPlan->mapName, "synthetic0.blv");
-    EXPECT_EQ(staged.world.world.mapDeltas.size(), 67);
-    EXPECT_EQ(mm6::encodeRawSave(staged.raw.saved, GameTitle::MM6), bytes);
+    EXPECT_FALSE(staged->needsRecovery);
+    ASSERT_TRUE(staged->indoorPlan);
+    EXPECT_EQ(staged->indoorPlan->mapName, "synthetic0.blv");
+    EXPECT_EQ(staged->world.world.mapDeltas.size(), 67);
+    EXPECT_EQ(staged->party.party.pPickedItem.itemId, static_cast<ItemId>(11));
+    EXPECT_EQ(staged->party.party.pPickedItem.mm6RawRecord, staged->raw.cursor.record);
+    EXPECT_EQ(mm6::encodeRawSave(staged->raw.saved, GameTitle::MM6), bytes);
+    staged.reset();
     fields.inventory.characters[0].items[137].setWord(12, 4);
     EXPECT_THROW((void) mm6::stageRawSessionFields(
         mm6::encodeRawSave(fields, GameTitle::MM6), npcs, names,
         syntheticBase, validItem, *table.table, 5, 145, GameTitle::MM6),
         std::exception);
+}
+
+UNIT_TEST(MM6RawSaveRuntime, RawSessionPreflightFallsBackAfterHeldPartyProjectionFailure) {
+    ItemTableScope table;
+    TestProfile profile;
+    auto fields = exampleRaw();
+    const auto names = namesOf(fields);
+    const auto goodBytes = mm6::encodeRawSave(fields, GameTitle::MM6);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", goodBytes);
+    // ID 12 passes the structural item verifier, but this ItemTable has no
+    // supported template for projecting the physical held item into Party.
+    fields.heldItem.record.setWord(0, 12);
+    const auto badBytes = mm6::encodeRawSave(fields, GameTitle::MM6);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", badBytes);
+
+    const auto npcs = freshNpcBaseline();
+    auto selected = mm6::preflightStagedRawSessionFields(
+        profile.root(), "save001.ec6", npcs, names, syntheticBase, validItem,
+        *table.table, 5, 145, GameTitle::MM6);
+    ASSERT_TRUE(selected);
+    EXPECT_TRUE(selected->needsRecovery);
+    EXPECT_EQ(selected->party.party.pPickedItem.itemId, static_cast<ItemId>(11));
+    EXPECT_EQ(selected->party.party.pPickedItem.mm6RawRecord, selected->raw.cursor.record);
+    EXPECT_EQ(readBytes(profile.primary()), badBytes);
+    EXPECT_EQ(readBytes(profile.backup()), goodBytes);
+
+    selected.reset(); // Do not retain a full staged session during the next candidate pass.
+    writeBytes(profile.backup(), badBytes);
+    EXPECT_THROW((void) mm6::preflightStagedRawSessionFields(
+        profile.root(), "save001.ec6", npcs, names, syntheticBase, validItem,
+        *table.table, 5, 145, GameTitle::MM6), std::exception);
+    EXPECT_EQ(readBytes(profile.primary()), badBytes);
+    EXPECT_EQ(readBytes(profile.backup()), badBytes);
 }
 
 UNIT_TEST(MM6RawSaveRuntime, RawSessionPreflightPreparesOutdoorPlanBeforeSelection) {

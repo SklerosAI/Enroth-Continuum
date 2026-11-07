@@ -80,13 +80,15 @@ void MapTable::Initialize(const Blob &mapStats, GameTitle gameTitle) {
             info.encounter1Chance = fromString<int>(tokens[10]);
             info.encounter2Chance = fromString<int>(tokens[11]);
             info.encounter3Chance = fromString<int>(tokens[12]);
-            info.encounter1MonsterInternalName = unquote(tokens[14]);
+            // MM6 has an internal monster stem ("Mon Pic") followed by a
+            // display label. Encounter spawning resolves the internal stem.
+            info.encounter1MonsterInternalName = unquote(tokens[13]);
             info.Dif_M1 = fromString<int>(tokens[15]);
             parseRange(tokens[16], &info.encounter1MinCount, &info.encounter1MaxCount);
-            info.encounter2MonsterInternalName = unquote(tokens[18]);
+            info.encounter2MonsterInternalName = unquote(tokens[17]);
             info.Dif_M2 = fromString<int>(tokens[19]);
             parseRange(tokens[20], &info.encounter2MinCount, &info.encounter2MaxCount);
-            info.encounter3MonsterInternalName = unquote(tokens[22]);
+            info.encounter3MonsterInternalName = unquote(tokens[21]);
             info.Dif_M3 = fromString<int>(tokens[23]);
             parseRange(tokens[24], &info.encounter3MinCount, &info.encounter3MaxCount);
             info.musicId = static_cast<MusicId>(fromString<int>(tokens[25]));

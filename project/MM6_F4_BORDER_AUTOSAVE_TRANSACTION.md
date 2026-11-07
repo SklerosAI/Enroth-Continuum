@@ -29,9 +29,9 @@ typed refusals without a copy. Even a staged copy returns
 `MissingWorldAndSourceProof` and `canWriteCheckpoint() == false`: it has no
 source archive/terrain agreement, active and visited map owners, or durable
 write result. This is not a complete old-map checkpoint or a live confirmation
-handler. Focused new code compiled with the integration unit-test flags; the
-linked new tests remain pending integration. Existing route/eligibility
-controls passed 8/8 against the current integration binary.
+handler. Focused new code compiled with the integration unit-test flags. The
+rebuilt integration unit target passed 11/11 border checks: three new
+precommit tests and eight existing route/eligibility controls.
 
 1. Choose a canonical production EC6 version, slot name and title-private profile root. Explicitly reject or migrate older autosave schemas; an existing v2 test seed cannot silently become a v5 production slot.
 2. Stage an exact detached old-map save for any admitted outdoor map at a safe point before travel UI effects. Include Party and character state, inventory/buffs/hirelings, UI/cursor/shops, NPC and generated links, RNG, active and visited map deltas, chests/artifacts, actor/sprite/decoration runtime, event variables and owner identities. The old-map checkpoint must contain a reload-safe in-bounds **Party copy** when the live border position lies outside the map edge; keep live Party untouched until commit.

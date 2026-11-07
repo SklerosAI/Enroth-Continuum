@@ -27,6 +27,7 @@
 #include "Engine/MM6/MM6NewGameSaveRuntime.h"
 #include "Engine/MM6/MM6NpcStaticBaseline.h"
 #include "Engine/MM6/MM6PrivateMapSource.h"
+#include "Engine/MM6/MM6RawSessionStage.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/MM6/MM6WorldSaveRuntime.h"
 #include "Engine/Objects/Actor.h"
@@ -554,6 +555,62 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_RestartSlotStagesDetachedFirstMap) {
                 staged->staged.worldAndVisuals.chestTitle.ready &&
                 firstCharacterItems > 0 && plan.mapName == "oute3.odm" &&
                 !plan.vertices.empty() && !plan.spawnPoints.empty();
+        } catch (const std::exception &exception) {
+            error = exception.what();
+        }
+        completed = true;
+    });
+    for (int tick = 0; tick < 256 && !completed; ++tick)
+        game.tick();
+    ASSERT_TRUE(completed);
+    ASSERT_TRUE(error.empty()) << error;
+    EXPECT_TRUE(stagedCorrectly);
+    EXPECT_EQ(readFile(primary), before);
+    EXPECT_EQ(window->nativeHandle(), nullptr);
+}
+
+// Run in a new headless process after an independently validated v2 writer
+// has placed autosave.ec6 in the disposable restart profile. This exercises
+// the native v2 selector and detached session stage only. Live publication
+// and the Main Menu -> gameLoop edge remain gated on complete owner capture.
+GAME_TEST(MM6ZSaveHeadless, DISABLED_RawV2RestartSlotStagesDetachedSession) {
+    const auto profileRoot = restartProfileRoot();
+    if (!profileRoot)
+        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to a disposable system-temp directory";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    const std::filesystem::path primary = *profileRoot / "saves" / "autosave.ec6";
+    ASSERT_TRUE(std::filesystem::is_regular_file(primary));
+    const auto before = readFile(primary);
+
+    bool completed = false;
+    bool stagedCorrectly = false;
+    std::string error;
+    game.runGameRoutine([&] {
+        try {
+            const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
+            const mm6::NpcStaticBaseline freshNpcs =
+                mm6::loadNpcStaticBaseline(*engine->resources(), GameTitle::MM6);
+            Timer freshTimer;
+            ActiveOverlayList freshOverlays;
+            const auto verifyItem = [](std::int32_t id) {
+                return id >= 1 && id <= 580 &&
+                    !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
+            };
+            auto staged = mm6::preflightStagedRawSessionFields(
+                *profileRoot, mm6::NEW_GAME_AUTOSAVE_SLOT, freshNpcs,
+                freshTimer, freshOverlays, maps.expectedNames(),
+                [&maps](std::string_view name) { return maps.readBase(name); },
+                verifyItem, *pItemTable, pOverlayTable->overlays.size(),
+                pTileTable->tileCount(), GameTitle::MM6);
+            stagedCorrectly = staged && !staged->needsRecovery &&
+                staged->outdoorPlan && !staged->indoorPlan &&
+                staged->outdoorPlan->mapName == "oute3.odm" &&
+                staged->party.party.pos.z == 340 &&
+                staged->world.world.mapDeltas.size() == 67 &&
+                staged->world.chestTitle.ready &&
+                staged->raw.shops.ready() &&
+                staged->raw.inventory.ready;
         } catch (const std::exception &exception) {
             error = exception.what();
         }

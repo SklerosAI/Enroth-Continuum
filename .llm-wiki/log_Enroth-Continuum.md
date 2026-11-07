@@ -2271,3 +2271,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A fresh disposable v2 seed and separate headless indoor v6 stage each passed 1/1. The stage used a retained BLV/DLV, actual pre-event face baseline and exact native owner anchors to validate an in-memory candidate; it left the seed slot unchanged and refused gameplay admission.
 - The first probe crashed on the test thread's stack. Scheduling the large detached stage on the established game thread resolved that test boundary, superseding the prior crash record. Atomic v6 write, fresh-child replay, live publication and graphical acceptance remain open.
+
+## [2026-11-07] update | MM7 self-contained repo finish line
+- by: T-Burton-ND via codex
+- Reaffirmed M7-A6 as a required eventual MM7 gate: Mac source and required non-system build inputs must come from this repository, and a clean offline build and Atlas save/reload must pass before replacing the known-good helper.
+- Added user-facing app identity, bundle metadata, CLI/config/cache/log and legacy profile-path audit to the migration packet. OpenEnroth links, history, license and notices remain permanent credit; original GOG files and saves remain private outside Git.

@@ -2,6 +2,7 @@
 #include <exception>
 #include <memory>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 #include "Testing/Unit/UnitTest.h"
@@ -9,6 +10,59 @@
 #include "Engine/MM6/MM6ShopStockFields.h"
 #include "Engine/MM6/MM6ShopStockIdentity.h"
 #include "Engine/MM6/MM6ShopRefreshBoundary.h"
+#include "Engine/MM6/MM6ShopTitleState.h"
+
+UNIT_TEST(MM6ShopTitleState, StagesStockAndClockTogetherBeforePublication) {
+    mm6::ShopTitleState &live = mm6::shopTitleState();
+    const mm6::ShopTitleState prior = live;
+    struct Restore {
+        mm6::ShopTitleState &live;
+        mm6::ShopTitleState prior;
+        ~Restore() { live = std::move(prior); }
+    } restore{live, prior};
+
+    mm6::resetShopTitleState(&live);
+    ASSERT_FALSE(live.ready());
+    EXPECT_THROW((void) mm6::emptyNewGameShopTitleState(GameTitle::MM7), std::exception);
+    mm6::ShopTitleState seed = mm6::emptyNewGameShopTitleState(GameTitle::MM6);
+    ASSERT_TRUE(seed.ready());
+    const std::size_t shopIndex = mm6::shopStockRecordIndex(
+        mm6::ShopStockBank::Second, 47, 5, GameTitle::MM6);
+    ASSERT_EQ(shopIndex, mm6::guildStockRecordIndex(119, 5, GameTitle::MM6));
+    const std::size_t clockIndex = mm6::shopClockSlot(47);
+    ASSERT_EQ(clockIndex, mm6::guildClockSlot(119));
+    seed.stock.records[shopIndex][0] = 73;
+    seed.stock.records[shopIndex][27] = 0xa5;
+    seed.clocks.deadlineWords[clockIndex] = 900;
+
+    mm6::SaveContainer container;
+    container.sections.push_back(mm6::encodeShopStockSection(seed.stock));
+    container.sections.push_back(mm6::encodeShopGuildClockSection(seed.clocks));
+    const std::vector<std::uint8_t> bytes = mm6::encodeSaveContainer(container);
+    mm6::ShopTitleState staged = mm6::stageShopTitleState(bytes, GameTitle::MM6);
+    ASSERT_EQ(staged, seed);
+    mm6::publishShopTitleState(&live, std::move(staged), GameTitle::MM6);
+    ASSERT_EQ(live, seed);
+    EXPECT_EQ(live.stock.records[mm6::guildStockRecordIndex(119, 5, GameTitle::MM6)][27], 0xa5);
+    EXPECT_EQ(live.clocks.deadlineWords[mm6::guildClockSlot(119)], 900);
+
+    container.sections[1].payload.pop_back(); // Late SCLK failure.
+    EXPECT_THROW((void) mm6::stageShopTitleState(mm6::encodeSaveContainer(container),
+                                                  GameTitle::MM6), std::exception);
+    EXPECT_EQ(live, seed);
+    container.sections[1] = mm6::encodeShopGuildClockSection(seed.clocks);
+    container.sections[0].payload.pop_back(); // Large SHOP image fails before commit.
+    EXPECT_THROW((void) mm6::stageShopTitleState(mm6::encodeSaveContainer(container),
+                                                  GameTitle::MM6), std::exception);
+    EXPECT_EQ(live, seed);
+    EXPECT_THROW((void) mm6::stageShopTitleState(bytes, GameTitle::MM7), std::exception);
+    EXPECT_THROW(mm6::publishShopTitleState(&live, seed, GameTitle::MM7), std::exception);
+    EXPECT_EQ(live, seed);
+    mm6::resetShopTitleState(&live);
+    EXPECT_FALSE(live.ready());
+    EXPECT_EQ(live.stock.records[shopIndex][0], 0);
+    EXPECT_EQ(live.clocks.deadlineWords[clockIndex], 0);
+}
 
 UNIT_TEST(MM6ShopStockFields, PhysicalAliasAndTailRoundTrip) {
     auto live = std::make_unique<mm6::ShopStockFields>();

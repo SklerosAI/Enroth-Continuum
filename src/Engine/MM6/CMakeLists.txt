@@ -13,7 +13,8 @@ add_library(engine_mm6_save_container STATIC MM6SaveContainer.cpp MM6SaveContain
     MM6RecoverySaveFields.cpp MM6RecoverySaveFields.h
     MM6ChestSaveFields.cpp MM6ChestSaveFields.h
     MM6ShopGuildClockFields.cpp MM6ShopGuildClockFields.h
-    MM6ShopStockFields.cpp MM6ShopStockFields.h MM6ShopStockPurchase.h MM6ShopBoundedPurchase.h
+    MM6ShopStockFields.cpp MM6ShopStockFields.h MM6ShopTitleState.h
+    MM6ShopStockPurchase.h MM6ShopBoundedPurchase.h
     MM6ShopPhysicalPurchase.h MM6ItemRecord28.h
     MM6PlainItemProjection.h MM6StandardBonusMap.h MM6StandardItemProjection.h
     MM6BoundedItemProjection.h MM6GroundItemProjection.h MM6BoundedInventoryProjection.h

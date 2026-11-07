@@ -16,7 +16,8 @@
 namespace mm6 {
 namespace {
 
-constexpr std::array<char, 4> TAG = {'A', 'R', 'T', 'R'};
+constexpr std::array<char, 4> OUTDOOR_TAG = {'A', 'R', 'T', 'R'};
+constexpr std::array<char, 4> INDOOR_TAG = {'I', 'A', 'R', 'T'};
 constexpr std::uint8_t VERSION = 1;
 constexpr std::size_t MAX_ACTORS = 8192;
 constexpr std::size_t IMAGE_BYTES = sizeof(Actor_MM7);
@@ -28,8 +29,10 @@ void requireMM6(GameTitle title) {
         throw std::runtime_error("MM6 ARTR requires MM6 title");
 }
 
-void requireMapName(std::string_view name) {
-    if (name.empty() || name.size() > 63 || !name.ends_with(".odm") ||
+void requireMapName(std::string_view name, ActorRuntimeSectionKind kind) {
+    const std::string_view suffix = kind == ActorRuntimeSectionKind::OutdoorV5 ?
+        ".odm" : ".blv";
+    if (name.empty() || name.size() > 63 || !name.ends_with(suffix) ||
         !std::all_of(name.begin(), name.end(), [](unsigned char c) {
             return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
                 c == '_' || c == '.';
@@ -225,33 +228,55 @@ ActorRuntimeSaveFields captureActorRuntimeFields(
 
 SaveSection encodeActorRuntimeSection(const ActorRuntimeSaveFields &fields,
                                       GameTitle title) {
+    return encodeActorRuntimeSectionAs(fields, ActorRuntimeSectionKind::OutdoorV5, title);
+}
+
+SaveSection encodeActorRuntimeSectionAs(const ActorRuntimeSaveFields &fields,
+                                        ActorRuntimeSectionKind kind,
+                                        GameTitle title) {
     requireMM6(title);
-    requireMapName(fields.mapName);
-    if (fields.actors.size() > MAX_ACTORS)
+    requireMapName(fields.mapName, kind);
+    if (fields.actors.size() > MAX_ACTORS ||
+        (kind == ActorRuntimeSectionKind::OutdoorV5 && fields.nativePrefixCount) ||
+        (kind == ActorRuntimeSectionKind::IndoorV6 &&
+         fields.nativePrefixCount > fields.actors.size()))
         throw std::runtime_error("MM6 ARTR exceeds bounded actor count");
     std::vector<std::uint8_t> bytes;
-    bytes.reserve(2 + fields.mapName.size() + 4 + fields.actors.size() * RECORD_BYTES);
+    const std::size_t extra = kind == ActorRuntimeSectionKind::IndoorV6 ? 4 : 0;
+    bytes.reserve(2 + fields.mapName.size() + 4 + extra +
+                  fields.actors.size() * RECORD_BYTES);
     bytes.push_back(VERSION);
     bytes.push_back(fields.mapName.size());
     bytes.insert(bytes.end(), fields.mapName.begin(), fields.mapName.end());
     put32(&bytes, fields.actors.size());
+    if (kind == ActorRuntimeSectionKind::IndoorV6)
+        put32(&bytes, fields.nativePrefixCount);
     for (std::size_t index = 0; index < fields.actors.size(); ++index)
         putRecord(&bytes, fields.actors[index], index, title);
-    return {TAG, true, std::move(bytes)};
+    return {kind == ActorRuntimeSectionKind::OutdoorV5 ? OUTDOOR_TAG : INDOOR_TAG,
+            true, std::move(bytes)};
 }
 
 ActorRuntimeSaveFields decodeActorRuntimeSection(const SaveContainer &container,
                                                  GameTitle title) {
+    return decodeActorRuntimeSectionAs(container, ActorRuntimeSectionKind::OutdoorV5, title);
+}
+
+ActorRuntimeSaveFields decodeActorRuntimeSectionAs(
+    const SaveContainer &container, ActorRuntimeSectionKind kind,
+    GameTitle title) {
     requireMM6(title);
+    const auto &tag = kind == ActorRuntimeSectionKind::OutdoorV5 ?
+        OUTDOOR_TAG : INDOOR_TAG;
     const SaveSection *section = nullptr;
     for (const SaveSection &candidate : container.sections)
-        if (candidate.tag == TAG) {
+        if (candidate.tag == tag) {
             if (section)
                 throw std::runtime_error("duplicate MM6 ARTR section");
             section = &candidate;
         }
     if (!section || !section->required || section->payload.size() < 6 ||
-        section->payload.size() > 2 + 63 + 4 + MAX_ACTORS * RECORD_BYTES)
+        section->payload.size() > 2 + 63 + 8 + MAX_ACTORS * RECORD_BYTES)
         throw std::runtime_error("missing or unbounded MM6 ARTR section");
     Reader input(section->payload);
     if (input.u8() != VERSION)
@@ -259,16 +284,19 @@ ActorRuntimeSaveFields decodeActorRuntimeSection(const SaveContainer &container,
     const auto name = input.take(input.u8());
     ActorRuntimeSaveFields result;
     result.mapName.assign(name.begin(), name.end());
-    requireMapName(result.mapName);
+    requireMapName(result.mapName, kind);
     const std::uint32_t count = input.u32();
-    if (count > MAX_ACTORS ||
-        section->payload.size() != 2 + name.size() + 4 + count * RECORD_BYTES)
+    if (kind == ActorRuntimeSectionKind::IndoorV6)
+        result.nativePrefixCount = input.u32();
+    const std::size_t extra = kind == ActorRuntimeSectionKind::IndoorV6 ? 4 : 0;
+    if (count > MAX_ACTORS || result.nativePrefixCount > count ||
+        section->payload.size() != 2 + name.size() + 4 + extra + count * RECORD_BYTES)
         throw std::runtime_error("MM6 ARTR count differs from payload");
     result.actors.reserve(count);
     for (std::uint32_t index = 0; index < count; ++index)
         result.actors.push_back(getRecord(&input, index));
     input.finish();
-    if (encodeActorRuntimeSection(result, title) != *section)
+    if (encodeActorRuntimeSectionAs(result, kind, title) != *section)
         throw std::runtime_error("MM6 ARTR is not canonical");
     return result;
 }

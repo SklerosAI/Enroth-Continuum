@@ -188,6 +188,18 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
         mm6::encodeSpriteRuntimeSectionAs(
         staged->saved.runtimeSprites, mm6::SpriteRuntimeSectionKind::IndoorV6,
         GameTitle::MM6));
+    std::vector<Actor> afterActors(pActors.begin(), pActors.end());
+    mm6::applyIndoorActorRuntimeToDetachedList(
+        staged->saved.runtimeActors, mapName, staged->saved.actors,
+        &afterActors, GameTitle::MM6);
+    ASSERT_EQ(afterActors.size(), staged->actorReplay.size());
+    const auto detachedActors = mm6::captureIndoorActorRuntime(
+        mapName, staged->saved.actors, afterActors, GameTitle::MM6);
+    EXPECT_EQ(mm6::encodeActorRuntimeSectionAs(
+        detachedActors, mm6::ActorRuntimeSectionKind::IndoorV6, GameTitle::MM6),
+        mm6::encodeActorRuntimeSectionAs(
+        staged->saved.runtimeActors, mm6::ActorRuntimeSectionKind::IndoorV6,
+        GameTitle::MM6));
     auto afterEvent = preEventFaces;
     mm6::applyIndoorFaceOverridesAfterMapReload(
         staged->saved.faceOverrides, mapName, &afterEvent, GameTitle::MM6);

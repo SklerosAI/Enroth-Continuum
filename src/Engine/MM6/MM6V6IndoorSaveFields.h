@@ -12,6 +12,7 @@
 #include "MM6IndoorFaceOverrides.h"
 #include "MM6V6IndoorDecorationRuntime.h"
 #include "MM6V6IndoorSpriteRuntime.h"
+#include "MM6V6IndoorActorRuntime.h"
 #include "MM6RawSessionStage.h"
 
 namespace mm6 {
@@ -39,6 +40,7 @@ struct V6IndoorSaveFields {
     IndoorNativeSlotAnchor decorations;
     IndoorDecorationRuntimeFields runtimeDecorations;
     SpriteRuntimeSaveFields runtimeSprites;
+    ActorRuntimeSaveFields runtimeActors;
 };
 
 struct StagedV6IndoorSaveFields {
@@ -46,8 +48,9 @@ struct StagedV6IndoorSaveFields {
     StagedRawSessionFields represented;
     std::vector<LevelDecoration> decorationReplay;
     std::vector<SpriteObject> spriteReplay;
-    // Explicit admission gate: actors still lack an exact indoor mutable
-    // owner, and sprite/post-event live replay is not proved.
+    std::vector<Actor> actorReplay;
+    // Explicit admission gate: IART is detached only. Full actor publication,
+    // post-event equality and other world owners remain unproved.
     bool canEnterGameLoop() const { return false; }
 };
 

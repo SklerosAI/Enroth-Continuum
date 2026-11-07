@@ -18,7 +18,18 @@ namespace mm6 {
 struct ActorRuntimeSaveFields {
     std::string mapName;
     std::vector<Actor> actors;
+    // IART only: ordered native IACR prefix, followed by generated actors.
+    std::uint32_t nativePrefixCount = 0;
 };
+
+enum class ActorRuntimeSectionKind { OutdoorV5, IndoorV6 };
+
+SaveSection encodeActorRuntimeSectionAs(
+    const ActorRuntimeSaveFields &fields, ActorRuntimeSectionKind kind,
+    GameTitle title);
+ActorRuntimeSaveFields decodeActorRuntimeSectionAs(
+    const SaveContainer &container, ActorRuntimeSectionKind kind,
+    GameTitle title);
 
 ActorRuntimeSaveFields captureActorRuntimeFields(
     std::string_view mapName, std::span<const std::uint8_t> baselineActr,

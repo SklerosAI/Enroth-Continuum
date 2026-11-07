@@ -59,11 +59,12 @@ mm6::V6IndoorSaveFields candidate() {
     const std::vector<mm6::IndoorFaceState> changed{{2, "stone"}};
     result.faceOverrides.maps.push_back(*mm6::captureIndoorFaceOverrides(
         "d0.blv", base, changed, GameTitle::MM6));
-    result.actors = {"d0.blv", 1, std::vector<std::uint8_t>(548, 0x11)};
+    result.actors = {"d0.blv", 0, {}};
     result.sprites = {"d0.blv", 0, {}};
     result.decorations = {"d0.blv", 3, std::vector<std::uint8_t>(180, 0x33)};
     result.runtimeDecorations = {"d0.blv", {{1, 0, 0}, {1, 0, 0}, {1, 0, 0}}};
     result.runtimeSprites.mapName = "d0.blv";
+    result.runtimeActors.mapName = "d0.blv";
     return result;
 }
 
@@ -133,12 +134,12 @@ struct ItemTableScope {
 
 } // namespace
 
-UNIT_TEST(MM6V6IndoorSaveFields, StrictTwentyEightSectionRoundTrip) {
+UNIT_TEST(MM6V6IndoorSaveFields, StrictTwentyNineSectionRoundTrip) {
     const auto source = candidate();
     const auto bytes = mm6::encodeV6IndoorSave(source, GameTitle::MM6);
     const auto container = mm6::decodeSaveContainer(bytes);
     EXPECT_EQ(container.version, 6);
-    EXPECT_EQ(container.sections.size(), 28);
+    EXPECT_EQ(container.sections.size(), 29);
     const auto decoded = mm6::decodeV6IndoorSave(bytes, GameTitle::MM6);
     EXPECT_EQ(decoded.raw.metadata.header.mapFileName, "d0.blv");
     EXPECT_EQ(decoded.actors, source.actors);
@@ -146,6 +147,7 @@ UNIT_TEST(MM6V6IndoorSaveFields, StrictTwentyEightSectionRoundTrip) {
     EXPECT_EQ(decoded.decorations, source.decorations);
     EXPECT_EQ(decoded.runtimeDecorations, source.runtimeDecorations);
     EXPECT_EQ(decoded.runtimeSprites.mapName, source.runtimeSprites.mapName);
+    EXPECT_EQ(decoded.runtimeActors.mapName, source.runtimeActors.mapName);
     EXPECT_EQ(mm6::encodeV6IndoorSave(decoded, GameTitle::MM6), bytes);
     EXPECT_THROW((void) mm6::decodeRawSave(bytes, GameTitle::MM6), std::exception);
     EXPECT_FALSE(mm6::StagedV6IndoorSaveFields{}.canEnterGameLoop());
@@ -184,6 +186,11 @@ UNIT_TEST(MM6V6IndoorSaveFields, RejectsMissingMismatchedAndMalformedOwners) {
     container = mm6::decodeSaveContainer(
         mm6::encodeV6IndoorSave(candidate(), GameTitle::MM6));
     section(&container, {'I', 'S', 'R', 'T'}).payload.pop_back();
+    EXPECT_THROW((void) mm6::decodeV6IndoorSave(
+        mm6::encodeSaveContainer(container), GameTitle::MM6), std::exception);
+    container = mm6::decodeSaveContainer(
+        mm6::encodeV6IndoorSave(candidate(), GameTitle::MM6));
+    section(&container, {'I', 'A', 'R', 'T'}).payload.pop_back();
     EXPECT_THROW((void) mm6::decodeV6IndoorSave(
         mm6::encodeSaveContainer(container), GameTitle::MM6), std::exception);
     container = mm6::decodeSaveContainer(
@@ -385,6 +392,41 @@ UNIT_TEST(MM6V6IndoorSaveFields, IndoorSpritePublicationRequiresPreEventContext)
     EXPECT_THROW((void) mm6::testing::runArmedV6PreEventIndoorSpriteReplayForTest(
         mm6::testing::PreEventCheckpointResult::Continue,
         rebuilt, &rebuilt, true, "d0.blv", GameTitle::MM6), std::exception);
+}
+
+UNIT_TEST(MM6V6IndoorSaveFields, IndoorActorOwnerKeepsGeneratedFractionalTail) {
+    mm6::IndoorNativeSlotAnchor source{"d0.blv", 0, {}};
+    Actor actor(0);
+    actor.monsterInfo.id = static_cast<MonsterId>(7);
+    actor.monsterId = MONSTER_INVALID;
+    actor.monsterInfo.attackPreferences = MonsterAttackPreferences{};
+    actor.monsterInfo.mm6Resistances = mm6::MonsterResistances{1, 2, 3, 4, 5, 6};
+    actor.initialPosition = Vec3f(10, 20, 30);
+    actor.pos = Vec3f(11.25f, 20.5f, 30.75f);
+    actor.velocity = Vec3f(0.125f, -0.5f, 1.25f);
+    const auto fields = mm6::captureIndoorActorRuntime(
+        "d0.blv", source, std::span(&actor, 1), GameTitle::MM6);
+    EXPECT_EQ(fields.nativePrefixCount, 0u);
+    mm6::SaveContainer container;
+    container.sections.push_back(mm6::encodeActorRuntimeSectionAs(
+        fields, mm6::ActorRuntimeSectionKind::IndoorV6, GameTitle::MM6));
+    const auto decoded = mm6::decodeActorRuntimeSectionAs(
+        container, mm6::ActorRuntimeSectionKind::IndoorV6, GameTitle::MM6);
+    auto replay = mm6::stageIndoorActorRuntime(
+        decoded, "d0.blv", source, GameTitle::MM6);
+    ASSERT_EQ(replay.size(), 1u);
+    EXPECT_EQ(std::bit_cast<std::uint32_t>(replay[0].pos.x),
+              std::bit_cast<std::uint32_t>(actor.pos.x));
+    replay.clear();
+    mm6::applyIndoorActorRuntimeToDetachedList(
+        decoded, "d0.blv", source, &replay, GameTitle::MM6);
+    ASSERT_EQ(replay.size(), 1u);
+    EXPECT_EQ(mm6::encodeActorRuntimeSectionAs(
+        decoded, mm6::ActorRuntimeSectionKind::IndoorV6, GameTitle::MM6),
+        container.sections[0]);
+    source.count = 1;
+    EXPECT_THROW((void) mm6::stageIndoorActorRuntime(
+        decoded, "d0.blv", source, GameTitle::MM6), std::exception);
 }
 
 UNIT_TEST(MM6V6IndoorSaveFields, NativeAnchorCaptureRequiresMatchingIndoorPlan) {

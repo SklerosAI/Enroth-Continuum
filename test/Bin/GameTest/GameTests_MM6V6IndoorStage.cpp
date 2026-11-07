@@ -180,6 +180,9 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
             saved->eventRuntime = std::move(eventRuntime);
             mm6::captureV6IndoorNativeAnchors(
                 *represented, &saved->actors, &saved->sprites, &saved->decorations);
+            const std::vector<Actor> liveActors(pActors.begin(), pActors.end());
+            saved->runtimeActors = mm6::captureIndoorActorRuntime(
+                mapName, saved->actors, liveActors, GameTitle::MM6);
             saved->runtimeSprites = mm6::captureIndoorSpriteRuntime(
                 mapName, saved->sprites, pSpriteObjects, GameTitle::MM6);
             auto changedDecorations = pLevelDecorations;

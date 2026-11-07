@@ -2185,3 +2185,8 @@ Chronological record of wiki activity.
 - The bounded post-entry outdoor capture patches supported DDM reset, visibility and sprite headers while retaining opaque and original actor/chest bytes. Exact loader floor replay resolved the first-map fractional sprite position; the private-backed retained-DDM/live-owner probe passed 1/1, superseding the earlier header refusal.
 - A test-only ACTR/GNPC/RNGS scope now guards pre-event publication and ordering around chest handoff and map events. Linked replay/checkpoint checks passed 7/7; an ACTR/map/full-session regression group passed 9/9, disposable v2 writer and fresh-child abort controls passed 1/1 each, and an MM7 headless control passed 1/1.
 - A separate no-write full-session first-map candidate refused at public class `map-preflight` (0/1), with exact cause under audit; it guards unrepresented commerce/cursor state. A disabled strict-input-only v3 fresh-child GameTest exists but has not run without an admitted slot. No v3 slot was written and no production SaveLoad, Atlas Play or first-input admission is enabled. Complete writer joins and actor item/buff states remain open.
+
+## [2026-11-07] update | MM7 private runtime path autonomy
+- by: T-Burton-ND via codex
+- Updated the MM7 source-autonomy wiki page to reflect the current Atlas defaults to legacy `OpenEnroth` data/save paths, including saved-folder and character-transfer actions.
+- The planned self-contained gate now includes explicit private Enroth Continuum data and profile roots, verified local copying with rollback, and launch/save/reload checks. OpenEnroth provenance remains; proprietary game data and saves stay outside Git.

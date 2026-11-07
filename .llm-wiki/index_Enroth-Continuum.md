@@ -129,7 +129,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 EC6 V3 Outdoor Actor Map](MM6-F4-EC6-V3-Outdoor-Actor-Map.md) — Read-only ACTR/native-DDM/CHST map, actor-anchor and no-respawn agreement; live replay remains open
 - [MM6 F4 EC6 V3 Full Session Preflight](MM6-F4-EC6-V3-Full-Session-Preflight.md) — Read-only ACTR/map and represented session-owner join with pre-event GNPC/RNG; no live publication
 - [MM6 F4 V3 Post Entry Map and Pre Event](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md) — Exact first-map DDM sprite replay gate and test-only ACTR/GNPC/RNG event-order seam; no v3 disk route
-- [MM6 F4 EC6 V4 Event Runtime](MM6-F4-EC6-V4-Event-Runtime.md) — EVRT v2 exact decoration bindings and strict disposable first-map atomic write/fresh-child reload before input; no production save route
+- [MM6 F4 EC6 V4 Event Runtime](MM6-F4-EC6-V4-Event-Runtime.md) — EVRT v2 exact bindings, disposable first-map write/reload and bounded first input; no production save route
 - [MM6 F4 Pre Event Checkpoint](MM6-F4-Pre-Event-Checkpoint.md) — Test-only fresh-child checkpoint before generated NPCs/map events with safe abort before input
 - [MM6 F4 Baseline Actor Save Audit](MM6-F4-Baseline-Actor-Save-Audit.md) — DDM writer omits original actor mutations; exact resistance and zero-descriptor fixes made full-list detached capture pass
 - [MM6 F4 Active Actor Owner Decision](MM6-F4-Active-Actor-Owner-Decision.md) — Full-list ACTR candidate replaces spawned-only save ownership after first-map headless capture passed

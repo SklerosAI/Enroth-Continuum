@@ -48,8 +48,11 @@ v4 candidate were unchanged. Marker-free chest replay uses a test-only
 validated projection to attach MM6 raw item records while preserving saved
 CHST LCG and DDM bytes. Focused full-session/atomic checks passed **8/8**,
 chest route checks passed **8** with one private-reference skip, and an MM7
-headless control passed **1/1**. First-input admission, a post-action second
-write, indoor/later-map replay and production SaveLoad/Atlas remain closed.
+headless control passed **1/1**. A separate strict fresh-child test continued
+the verified reload into the real null-renderer game loop, reached first
+input, turned and walked once, and quit with both slots unchanged (**1/1**).
+A post-action second write, indoor/later-map replay and production
+SaveLoad/Atlas remain closed.
 
 See also: [V3 Post Entry Map and Pre Event](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md),
 [V3 Full Session Preflight](MM6-F4-EC6-V3-Full-Session-Preflight.md),

@@ -1088,6 +1088,9 @@ native event bytes, ACTR/GNPC/RNGS, chest item provenance and represented
 session owners, then aborts before input. The v2 primary and v4 candidate
 remain unchanged. Focused v4 full-session/atomic checks passed **8/8**,
 chest route checks passed **8** with one private-reference skip, and an MM7
-headless control passed **1/1**. This is a test-only first-map save/reload
-boundary; first-input admission, a post-action second write, indoor/later-map
-replay, production SaveLoad and Atlas remain closed.
+headless control passed **1/1**. A separate strict fresh-child test continued
+the verified reload into the real null-renderer game loop, reached first
+input, turned and walked once, then quit with both slots unchanged (**1/1**).
+This is a test-only first-map reload and bounded input boundary. A post-action
+second write, indoor/later-map replay, production SaveLoad and Atlas remain
+closed.

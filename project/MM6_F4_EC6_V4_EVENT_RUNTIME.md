@@ -7,8 +7,10 @@ passed **1/1**. The detached outdoor-only v4 full-session suite passed
 **5/5**. A strict three-process sequence passed **1/1** at each step:
 disposable v2 seed, atomic first-map v4 candidate write, and fresh-child
 Main Menu QuickLoad replay with exact owner checks before input. The v2
-primary remained unchanged. No production SaveLoad route, first-input
-admission or Atlas Play exists.
+primary remained unchanged. A separate strict fresh-child test then admitted
+the verified candidate into the real headless game loop, turned and walked
+once, and quit with both slots unchanged (**1/1**). No production SaveLoad
+route or Atlas Play exists.
 
 ## Why this owner exists
 
@@ -87,9 +89,11 @@ marker-free chest replay uses a test-only validated projection that preserves
 saved CHST LCG and DDM bytes while attaching the raw MM6 item records needed
 for subsequent exact capture. Focused v4 full-session/atomic checks passed
 **8/8**, chest route checks passed **8** with one private-reference skip, and
-an MM7 headless control passed **1/1**. This proves one disposable first-map
-reload boundary, not a gameplay save cycle. The next gate is first-input
-admission and a second save after a bounded action. Actor item/buff support,
+an MM7 headless control passed **1/1**. The later first-input test passed
+**1/1** under the null renderer and no native window. This proves one
+disposable first-map reload and bounded input, not a gameplay save cycle.
+The next gate is a second save after the action and another fresh-process
+reload. Actor item/buff support,
 indoor and later-map replay, production SaveLoad and Atlas remain open.
 
 See [v3 post-entry map and pre-event seam](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md),

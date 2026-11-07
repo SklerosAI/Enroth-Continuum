@@ -47,6 +47,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6RawCursorImagePlan.cpp MM6RawCursorImagePlan.h
     MM6RawSessionStage.cpp MM6RawSessionStage.h
     MM6PersistentEventBoundary.h
+    MM6PersistentEventPublication.cpp MM6PersistentEventPublication.h
     MM6RawPartyInventoryStage.cpp MM6RawPartyInventoryStage.h
     MM6NewGameSaveRuntime.cpp MM6NewGameSaveRuntime.h
     MM6RawNewGameSaveRuntime.cpp MM6RawNewGameSaveRuntime.h MM6CreationItemSeed.h
@@ -151,6 +152,7 @@ if(OE_BUILD_TESTS)
 
     add_library(test_engine_mm6_save_runtime OBJECT Tests/MM6MapSaveValidation_ut.cpp
         Tests/MM6RawSaveRuntime_ut.cpp Tests/MM6PersistentEventBoundary_ut.cpp
+        Tests/MM6PersistentEventPublication_ut.cpp
         Tests/MM6RawPartyInventoryStage_ut.cpp
         Tests/MM6RawCursorShopStage_ut.cpp
         Tests/MM6RawCursorShopProcessOwner_ut.cpp

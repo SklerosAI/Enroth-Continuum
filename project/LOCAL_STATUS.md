@@ -1389,3 +1389,14 @@ writing a slot; the existing unpaused seven-child v5 chain passed **7/7**
 after this shared capture change, and MM7 control passed **1/1**. This proves
 read-only capture at the paused menu, not normal `doSavegame` publication,
 production slot policy or load recovery.
+
+A test-only armed MM6 first-map load scope now catches failures during the
+load callback or world preparation in `Game::gameLoop`, clears pending load
+and transition state, pauses the timer, and abandons the partial world to
+Main Menu before input. Fresh disposable seed, v4 and v5 writer children
+passed **1/1 each**, followed by injected partial-assignment and pre-event
+fault children at **1/1 each**; each fault case could stage a second attempt.
+The ordinary unarmed seven-child v5 chain still passed **7/7**, and MM7
+control passed **1/1** after the shared game-loop change. This is not a
+rollback: already published globals may remain unsafe. Normal MM6 load/UI
+remains closed until a production recovery transaction is proved.

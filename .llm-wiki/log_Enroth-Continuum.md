@@ -1728,3 +1728,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a title-tagged ready owner that stages full 28-byte cursor sets and first-25-byte clears while retaining the absent tail. It bridges the detached `HELD` v2 value and rejects occupied or malformed source state; live Party and SaveLoad remain untouched.
 - The new synthetic unit translation passed C++23 syntax checking and a standalone arm64 owner driver passed. Linked tests and all-owner live transaction remain open.
+
+## [2026-11-06] stage | Detached MM6 ground item raw record
+- by: T-Burton-ND via codex
+- Added a source-typed, fail-closed projection retaining each complete 100-byte map sprite record and exact 28-byte contained item, including opaque empty/removed records. Capture changes only bounded item fields on a copy.
+- Four synthetic cases passed arm64 C++23 syntax checking; linked integration remains pending. Live map pickup/drop, monster loot, generation and SaveLoad remain guarded while original ground mutation rules and cross-owner transfer are unproved.

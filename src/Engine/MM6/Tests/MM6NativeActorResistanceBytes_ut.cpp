@@ -35,3 +35,39 @@ UNIT_TEST(MM6NativeActorResistanceBytes, RetainsPerActorOverridesWithoutMutation
     stale.bytes.pop_back();
     EXPECT_THROW((void) mm6::decodeNativeActorResistanceBytes(stale, 2, GameTitle::MM6), std::exception);
 }
+
+UNIT_TEST(MM6NativeActorResistanceBytes, RetainsIndoorActorOverridesFromCountedDlvSection) {
+    std::vector<std::uint8_t> bytes(4 + 2 * 548);
+    bytes[0] = 2;
+    const std::array<std::uint8_t, 6> firstValues = {1, 2, 3, 4, 5, 6};
+    const std::array<std::uint8_t, 6> secondValues = {10, 20, 30, 40, 50, 60};
+    for (size_t i = 0; i < 6; ++i) {
+        bytes[4 + 80 + i] = firstValues[i];
+        bytes[4 + 548 + 80 + i] = secondValues[i];
+    }
+    MM6IndoorSnapshot source;
+    source.isDelta = true;
+    source.sections.push_back({MM6IndoorSectionKind::Actors,
+                               Blob::copy(bytes.data(), bytes.size()), 2});
+    const auto actual = mm6::decodeNativeIndoorActorResistanceBytes(
+        source, 2, GameTitle::MM6);
+    ASSERT_EQ(actual.size(), 2);
+    EXPECT_EQ(actual[0], firstValues);
+    EXPECT_EQ(actual[1], secondValues);
+    EXPECT_THROW((void) mm6::decodeNativeIndoorActorResistanceBytes(
+        source, 1, GameTitle::MM6), std::exception);
+    EXPECT_THROW((void) mm6::decodeNativeIndoorActorResistanceBytes(
+        source, 2, GameTitle::MM7), std::exception);
+    source.isDelta = false;
+    EXPECT_THROW((void) mm6::decodeNativeIndoorActorResistanceBytes(
+        source, 2, GameTitle::MM6), std::exception);
+    source.isDelta = true;
+    source.sections.front().count = 1;
+    EXPECT_THROW((void) mm6::decodeNativeIndoorActorResistanceBytes(
+        source, 2, GameTitle::MM6), std::exception);
+    source.sections.front().count = 2;
+    bytes[0] = 1;
+    source.sections.front().bytes = Blob::copy(bytes.data(), bytes.size());
+    EXPECT_THROW((void) mm6::decodeNativeIndoorActorResistanceBytes(
+        source, 2, GameTitle::MM6), std::exception);
+}

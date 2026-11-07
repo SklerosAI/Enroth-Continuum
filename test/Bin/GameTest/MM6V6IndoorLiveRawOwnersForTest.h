@@ -135,13 +135,14 @@ inline void requireV6IndoorNativeResidualsForTest(
         // Native pointer words and padding are retained verbatim in the DLV;
         // the loader reconstructs their runtime aliases from doorsData.
         if (live.attributes != source.attributes || live.doorId != source.doorId ||
-            live.timeSinceTriggered != source.timeSinceTriggered ||
             live.direction != source.direction || live.moveLength != source.moveLength ||
             live.openSpeed != source.openSpeed || live.closeSpeed != source.closeSpeed ||
             live.numVertices != source.numVertices || live.numFaces != source.numFaces ||
-            live.numSectors != source.numSectors || live.numOffsets != source.numOffsets ||
+            live.numSectors != source.numSectors || live.numOffsets != source.numOffsets)
+            throw std::runtime_error("MM6 v6 indoor door geometry lacks exact DLV owner");
+        if (live.timeSinceTriggered != source.timeSinceTriggered ||
             live.state != source.state)
-            throw std::runtime_error("MM6 v6 indoor door runtime lacks exact DLV owner");
+            throw std::runtime_error("MM6 v6 indoor door motion lacks exact DLV owner");
     }
 }
 

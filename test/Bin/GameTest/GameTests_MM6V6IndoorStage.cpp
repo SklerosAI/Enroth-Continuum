@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <exception>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -49,13 +50,26 @@
 
 namespace {
 
-std::string firstIndoorMap(const mm6::LoadedMapSource &maps) {
+std::string indoorProbeMap(const mm6::LoadedMapSource &maps) {
+    const char *caseValue = std::getenv("ENROTH_MM6_V6_INDOOR_CASE");
+    const std::string_view selected = caseValue ? std::string_view(caseValue) :
+                                                 std::string_view("first");
+    if (selected != "first" && selected != "second")
+        throw std::runtime_error("MM6 v6 indoor probe requires first or second case");
     const auto names = maps.expectedNames();
-    const auto entry = std::find_if(names.begin(), names.end(), [](const std::string &name) {
-        return name.ends_with(".dlv");
-    });
+    const int ordinal = selected == "second" ? 2 : 1;
+    auto entry = names.begin();
+    for (int index = 0; index < ordinal; ++index) {
+        entry = std::find_if(entry, names.end(), [](const std::string &name) {
+            return name.ends_with(".dlv");
+        });
+        if (entry == names.end())
+            break;
+        if (index + 1 < ordinal)
+            ++entry;
+    }
     if (entry == names.end())
-        throw std::runtime_error("MM6 v6 indoor probe lacks a source map pair");
+        throw std::runtime_error("MM6 v6 indoor probe lacks the selected source map pair");
     return entry->substr(0, entry->size() - 4) + ".blv";
 }
 
@@ -153,7 +167,7 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
     auto raw = std::unique_ptr<mm6::RawSaveFields>(
         new mm6::RawSaveFields(mm6::decodeRawSave(originalSeed, GameTitle::MM6)));
     const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
-    const std::string mapName = firstIndoorMap(maps);
+    const std::string mapName = indoorProbeMap(maps);
     const MapId map = pMapTable->GetMapInfo(mapName);
     ASSERT_NE(map, MAP_INVALID);
 

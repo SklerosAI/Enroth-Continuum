@@ -15,6 +15,7 @@
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/MM6/MM6Archive.h"
 #include "Engine/MM6/MM6ChestRuntimeProjection.h"
+#include "Engine/MM6/MM6NativeActorResistanceBytes.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/Decoration.h"
@@ -475,10 +476,16 @@ void reconstructMM6IndoorDelta(const MM6IndoorRuntimeDelta &delta, IndoorLocatio
             dst->mapOutlines[i].uFlags |= 1;
     }
 
+    const auto actorResistances = mm6::decodeNativeIndoorActorResistanceBytes(
+        delta.wire, delta.actors.size(), GameTitle::MM6);
     reconstruct(delta.actors, &pActors);
     nextActorReuseScanStart = 0;
-    for (size_t i = 0; i < pActors.size(); ++i)
+    for (size_t i = 0; i < pActors.size(); ++i) {
         pActors[i].id = i;
+        const auto &res = actorResistances[i];
+        pActors[i].monsterInfo.mm6Resistances = mm6::MonsterResistances{
+            res[0], res[1], res[2], res[3], res[4], res[5]};
+    }
     reconstruct(delta.spriteObjects, &pSpriteObjects);
     vChests.resize(delta.chests.size());
     for (size_t i = 0; i < delta.chests.size(); ++i)

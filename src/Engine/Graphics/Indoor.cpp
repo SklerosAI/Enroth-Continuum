@@ -1179,6 +1179,13 @@ void IndoorLocation::PrepareDecorationsRenderList_BLV(unsigned int uDecorationID
     if (pLevelDecorations[uDecorationID].uFlags & LEVEL_DECORATION_INVISIBLE)
         return;
 
+    // Original MM6 BLV data may retain empty decoration slots in a sector's
+    // render list. Their resolved descriptor is the null table sentinel, not
+    // a sprite. Other titles keep their inherited rendering behavior.
+    if (engine->gameTitle() == GameTitle::MM6 &&
+        pLevelDecorations[uDecorationID].uDecorationDescID == DECORATION_NULL)
+        return;
+
     const DecorationData *decoration = pDecorationTable->decoration(pLevelDecorations[uDecorationID].uDecorationDescID);
 
     if (decoration->uFlags & DECORATION_DATA_EMITS_FIRE) {

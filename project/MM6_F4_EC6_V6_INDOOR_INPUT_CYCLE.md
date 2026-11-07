@@ -8,6 +8,36 @@ four-process chain with a read-only first-input child also passed **1/1 per
 child**. This is a bounded transaction gate, not production MM6 SaveLoad or
 a playable indoor campaign.
 
+## Second indoor source case
+
+A later 2026-11-07 test-only probe selects the second distinct indoor pair in
+the title's expected-map order with `ENROTH_MM6_V6_INDOOR_CASE=second`. It does
+not publish that map's name or source contents. A fresh deterministic v2 seed,
+v4 first-map baseline and v6 live-session writer passed **1/1 each** in separate
+headless processes. The writer's candidate staged and round-tripped the
+represented indoor owners; the original v2 and v4 slots remained intact.
+
+That case exposed two general engine omissions. Native indoor actor records
+carry six MM6 resistance bytes, but their MM7-shaped reconstruction had lost
+them; the loader now restores the bounded original per-actor bytes, as the
+outdoor loader already does. An empty native decoration slot resolved to the
+`DECORATION_NULL` sentinel; the MM6 indoor render path now skips that sentinel
+instead of requesting a nonexistent sprite. The observed source name for the
+slot was empty. Neither change alters MM7 rendering or the v6 actor codec's
+strict refusal. The focused resistance suite passed **2/2**, the original
+first-indoor five-process cycle passed **1/1 per child**, and the MM7 headless
+`Prs.Pr2354` control passed **1/1** after the changes.
+
+The second map's fresh-child first-input process then **refused before input**:
+its post-world door motion state differs from the retained DLV while door
+geometry and array shape remain exact. The current v6 candidate has no proven
+owner or replay rule for that changed state. No post-input second-map slot or
+reader result was produced. Determine whether the difference arises from map
+events or loader normalization, capture only supported door state/time fields
+with an exact native round trip, and require saved/live agreement before
+trying input again. Do not relax the residual check or infer general indoor
+playability from the writer pass.
+
 ## Source-backed transaction
 
 1. The live-session writer loads a retained BLV/DLV into an owner-only system
@@ -49,7 +79,7 @@ not a change to older v1–v5 formats.
 
 ## Reproduction and boundaries
 
-The sequence uses five separate `OpenEnroth_GameTest` child processes, each
+The accepted first-case sequence uses five separate `OpenEnroth_GameTest` child processes, each
 with `--game mm6 --headless`, private local `--data-path` and `--rules-path`,
 `--test-path test/Data`, and a fresh 0700 system-temp profile containing a
 0700 `saves/` directory. The disabled tests require explicit environment

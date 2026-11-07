@@ -1763,3 +1763,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added an arm64 `MM7.app` target that rejects MM6, and changed the Atlas build to validate explicit title helpers before staging a signed `MM7.app` sibling. The launcher points to that title-locked helper; MM6/MM8 Play remain disabled.
 - The staged build passed signature verification; a wrong-title helper failed before changing the prior output, and a reuse build retained an identical MM7 helper. The installed Atlas was left intact pending a live launch/save check; the protected MM7 baseline and profiles were not changed.
+
+## [2026-11-06] implement | MM6 first-map precommit action boundary
+- by: T-Burton-ND via codex
+- Moved the scoped first-map observer before `.ec6` disk/cache/CHST publication and added a final pending-action check after detached preflight. A newly queued action now rejects the write before publication and remains queued for normal handling.
+- Updated synthetic failure checks and added a headless next-frame GUI-action injection. Four touched C++ translations passed arm64 syntax checks; linked tests remain for integration. Real active-world staging, an enforced no-reentry commit and normal MM6 SaveLoad remain gated.

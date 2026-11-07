@@ -451,6 +451,16 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
                                 !invalidArrival.detachedParty &&
                                 !returnArrival.canPublish() &&
                                 !returnArrival.canWriteCheckpoint();
+                            if (!returnArrivalStayedDetached)
+                                throw std::runtime_error(
+                                    "MM6 detached return arrival refused: stage=" +
+                                    std::to_string(static_cast<int>(returnArrival.refusal)) +
+                                    " invalid=" +
+                                    std::to_string(static_cast<int>(invalidArrival.refusal)) +
+                                    " hasParty=" +
+                                    std::to_string(returnArrival.detachedParty != nullptr) +
+                                    " hasPlacement=" +
+                                    std::to_string(returnArrival.placement.has_value()));
                             const Blob &oldCacheAfter = pMapDeltas.at("oute3.ddm");
                             const auto *afterBegin = static_cast<const std::uint8_t *>(
                                 oldCacheAfter.data());

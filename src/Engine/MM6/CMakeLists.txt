@@ -46,6 +46,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6PersistentEventBoundary.h
     MM6RawPartyInventoryStage.cpp MM6RawPartyInventoryStage.h
     MM6NewGameSaveRuntime.cpp MM6NewGameSaveRuntime.h
+    MM6RawNewGameSaveRuntime.cpp MM6RawNewGameSaveRuntime.h
     MM6FirstMapWorldTransaction.h
     MM6FirstMapPlacementTransaction.h
     MM6FirstMapCombatTransientTransaction.h
@@ -151,6 +152,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6BeaconSaveFields_ut.cpp
         Tests/MM6PrivateMapSource_ut.cpp Tests/MM6WorldSaveRuntime_ut.cpp
         Tests/MM6NewGameSaveRuntime_ut.cpp
+        Tests/MM6RawNewGameSaveRuntime_ut.cpp
         Tests/MM6NpcStaticBaseline_ut.cpp
         Tests/MM6IndoorWorldPlan_ut.cpp
         Tests/MM6HirelingRecoveryV2Stage_ut.cpp

@@ -216,10 +216,6 @@ void requireDecorationRuntimeBaseAgreement(
             throw std::runtime_error("MM6 DECR source descriptor lacks template");
         const LevelDecoration &runtime = fields.decorations[index];
         requireRuntimeFields(runtime);
-        LevelDecoration interactiveCheck = runtime;
-        if (!runtime.uEventID && interactiveCheck.IsInteractive() &&
-            runtime.eventVarId < 0)
-            throw std::runtime_error("MM6 DECR interactive event ordinal is unset");
         const auto descriptor = std::to_underlying(runtime.uDecorationDescID);
         if (descriptor <= 0 || static_cast<std::size_t>(descriptor) >= table.decorations.size())
             throw std::runtime_error("MM6 DECR runtime descriptor lacks template");
@@ -233,6 +229,20 @@ void requireDecorationRuntimeBaseAgreement(
     }
     if (captureEventRuntimeDecorationBindings(source, title) != events.bindings)
         throw std::runtime_error("MM6 DECR EVRT bindings differ from source ODM");
+    // PrepareDecorations assigns an ordinal only to the first 124 source
+    // interactive no-event slots. Later slots retain their native unset value.
+    // Bind to the source descriptor because DECR is overlaid after preparation.
+    for (std::size_t index = 0; index < source.size(); ++index) {
+        const auto binding = std::find_if(events.bindings.begin(), events.bindings.end(),
+                                          [index](const EventRuntimeDecorationBinding &entry) {
+                                              return entry.decorationIndex == index;
+                                          });
+        const int16_t expectedOrdinal = binding == events.bindings.end() ?
+            source[index].eventVarId : binding->eventVarId;
+        if (fields.decorations[index].eventVarId != expectedOrdinal)
+            throw std::runtime_error("MM6 DECR event ordinal differs from source preparation at slot " +
+                                     std::to_string(index));
+    }
 }
 
 } // namespace mm6

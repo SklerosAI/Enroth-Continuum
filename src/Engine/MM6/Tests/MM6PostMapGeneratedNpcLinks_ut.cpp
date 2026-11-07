@@ -62,8 +62,12 @@ UNIT_TEST(MM6PostMapGeneratedNpcLinks, RejectsBrokenLinksAndRowsWithoutMutation)
     npcs->pAdditionalNPC[0].name.clear();
     EXPECT_THROW((void) mm6::requirePostMapGeneratedNpcLinks(
         actors, *npcs, GameTitle::MM6), std::exception);
+    generatedRow(npcs.get(), 0, peasantB);
+    npcs->pAdditionalNPC[0].profession = NPC_PROFESSION_MM6_LAST;
+    EXPECT_THROW((void) mm6::requirePostMapGeneratedNpcLinks(
+        actors, *npcs, GameTitle::MM6), std::exception);
     EXPECT_EQ(actors[0].npcId, 5000);
-    EXPECT_TRUE(npcs->pAdditionalNPC[0].name.empty());
+    EXPECT_EQ(npcs->pAdditionalNPC[0].profession, NPC_PROFESSION_MM6_LAST);
 }
 
 UNIT_TEST(MM6PostMapGeneratedNpcLinks, RejectsUnrepresentedAndOverCapacityRows) {

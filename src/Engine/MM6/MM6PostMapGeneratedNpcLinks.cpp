@@ -43,7 +43,7 @@ size_t requirePostMapGeneratedNpcLinks(std::span<const Actor> actors,
             row.field_24 != 1 || row.house != HOUSE_INVALID ||
             row.sex != sexForMonsterType(monsterTypeForMonsterId(monster)) ||
             row.profession < NPC_PROFESSION_FIRST ||
-            row.profession > NPC_PROFESSION_MM6_LAST)
+            row.profession >= NPC_PROFESSION_MM6_LAST)
             throw std::runtime_error("MM6 generated NPC row is incomplete");
         ++generated;
     }

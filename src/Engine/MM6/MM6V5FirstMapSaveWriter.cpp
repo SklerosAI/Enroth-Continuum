@@ -56,10 +56,11 @@ V5FirstMapSaveOutcome detail::writeV5FirstMapCandidateForTest(
 
 V5FirstMapSaveAttempt writeV5FirstMapLiveSaveForTest(
     const std::filesystem::path &profileRoot, std::string_view slotName,
-    std::span<const std::uint8_t> sourceV4, GameTitle title) {
+    std::span<const std::uint8_t> sourceV4, GameTitle title,
+    V5FirstMapCaptureBoundary boundary) {
     if (title != GameTitle::MM6)
         throw std::invalid_argument("MM6 first-map writer requires MM6 title");
-    auto candidate = captureV5FirstMapLiveSession(sourceV4);
+    auto candidate = captureV5FirstMapLiveSession(sourceV4, boundary);
     const SaveCandidateValidator validate = [title](
         std::span<const std::uint8_t> bytes) {
         (void) stageV5FirstMapLoadPreflight(bytes, title);

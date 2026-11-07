@@ -40,6 +40,7 @@
 #include "Engine/MM6/MM6V4OutdoorDecorationReplay.h"
 #include "Engine/MM6/MM6V4SaveFields.h"
 #include "Engine/MM6/MM6V5LiveSaveCapture.h"
+#include "Engine/MM6/MM6V5FirstMapSaveWriter.h"
 #include "Engine/MM6/MM6OutdoorWire.h"
 #include "Engine/MM6/MM6ChestRuntimeProjection.h"
 #include "Engine/MM6/MM6ChestLiveOwnerAdapter.h"
@@ -137,14 +138,17 @@ std::vector<LevelDecoration> sourceDecorations(const mm6::LoadedMapSource &maps,
 void runV4FreshChildReplay(EngineController &game, bool allowInput,
                            bool writeAfterAction = false,
                            bool writeV5AfterAction = false,
-                           bool checkPausedSaveMenu = false) {
-    const char *enable = std::getenv(checkPausedSaveMenu ?
+                           bool checkPausedSaveMenu = false,
+                           bool writePausedSaveMenu = false) {
+    const char *enable = std::getenv(writePausedSaveMenu ?
+        "ENROTH_MM6_V5_PAUSED_SAVE_WRITE_ENABLE" : checkPausedSaveMenu ?
         "ENROTH_MM6_V5_PAUSED_SAVE_CAPTURE_ENABLE" : writeV5AfterAction ?
         "ENROTH_MM6_V5_AFTER_ACTION_WRITE_ENABLE" : writeAfterAction ?
         "ENROTH_MM6_V4_AFTER_ACTION_WRITE_ENABLE" :
         allowInput ? "ENROTH_MM6_V4_FIRST_INPUT_ENABLE" :
                      "ENROTH_MM6_V4_REPLAY_ENABLE");
-    const std::string_view required = checkPausedSaveMenu ?
+    const std::string_view required = writePausedSaveMenu ?
+        "strict-v5-paused-write" : checkPausedSaveMenu ?
         "strict-v5-paused-save" : writeV5AfterAction ?
         "strict-v5-after-action" : writeAfterAction ? "strict-v4-after-action" : "strict-v4";
     if (!enable || std::string_view(enable) != required)
@@ -160,6 +164,16 @@ void runV4FreshChildReplay(EngineController &game, bool allowInput,
     const auto seedBefore = slotBytes(profile / "saves" / "autosave.ec6");
     ASSERT_FALSE(before.empty());
     ASSERT_FALSE(seedBefore.empty());
+    const std::filesystem::path pausedSlot =
+        profile / "saves/candidate-v5-after-action.ec6";
+    const std::filesystem::path pausedBackup =
+        profile / "saves/candidate-v5-after-action.ec6.bak";
+    if (writePausedSaveMenu) {
+        ASSERT_TRUE(std::filesystem::is_regular_file(pausedSlot));
+        ASSERT_FALSE(std::filesystem::exists(pausedBackup));
+    }
+    const auto priorPausedSlot = writePausedSaveMenu ? slotBytes(pausedSlot) :
+                                                      std::vector<std::uint8_t>{};
 
     bool selected = false;
     bool checkpointRan = false;
@@ -169,6 +183,7 @@ void runV4FreshChildReplay(EngineController &game, bool allowInput,
     bool firstInputReached = false;
     bool movementApplied = false;
     bool pausedCapturePassed = false;
+    bool pausedWritePassed = false;
     std::string finalOwnerError;
     std::size_t expectedNativeActors = 0;
     std::size_t expectedActiveActors = 0;
@@ -389,9 +404,8 @@ void runV4FreshChildReplay(EngineController &game, bool allowInput,
                     mm6::testing::writeV5AfterActionCandidateForTest(profile, before);
             });
         }
-        if (checkPausedSaveMenu && movementApplied) {
-            // Enter the real game Save window. The candidate remains detached;
-            // this probe never sends UIMSG_SaveGame or writes a save slot.
+        if ((checkPausedSaveMenu || writePausedSaveMenu) && movementApplied) {
+            // Enter the real game Save window without sending UIMSG_SaveGame.
             game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
             game.tick(2);
             game.pressGuiButton("GameMenu_SaveGame");
@@ -403,16 +417,33 @@ void runV4FreshChildReplay(EngineController &game, bool allowInput,
                     pGUIWindow_CurrentMenu->eWindowType != WINDOW_SAVE ||
                     engine->_messageQueue->hasPendingForSave())
                     throw std::runtime_error("MM6 v5 paused capture did not reach idle Save menu");
-                EXPECT_THROW(mm6::captureV5FirstMapLiveSession(before),
-                             std::runtime_error);
-                const auto captured = mm6::captureV5FirstMapLiveSession(
-                    before, mm6::V5FirstMapCaptureBoundary::PausedSaveMenu);
-                EXPECT_FALSE(captured.empty());
-                mm6::requireV5FirstMapLiveSessionAgreement(
-                    captured, mm6::V5FirstMapCaptureBoundary::PausedSaveMenu);
-                EXPECT_THROW(mm6::requireV5FirstMapLiveSessionAgreement(captured),
-                             std::runtime_error);
-                pausedCapturePassed = true;
+                if (checkPausedSaveMenu) {
+                    EXPECT_THROW(mm6::captureV5FirstMapLiveSession(before),
+                                 std::runtime_error);
+                    const auto captured = mm6::captureV5FirstMapLiveSession(
+                        before, mm6::V5FirstMapCaptureBoundary::PausedSaveMenu);
+                    EXPECT_FALSE(captured.empty());
+                    mm6::requireV5FirstMapLiveSessionAgreement(
+                        captured, mm6::V5FirstMapCaptureBoundary::PausedSaveMenu);
+                    EXPECT_THROW(mm6::requireV5FirstMapLiveSessionAgreement(captured),
+                                 std::runtime_error);
+                    pausedCapturePassed = true;
+                }
+                if (writePausedSaveMenu) {
+                    const auto expected = mm6::captureV5FirstMapLiveSession(
+                        before, mm6::V5FirstMapCaptureBoundary::PausedSaveMenu);
+                    const auto attempt = mm6::writeV5FirstMapLiveSaveForTest(
+                        profile, "candidate-v5-after-action.ec6", before,
+                        GameTitle::MM6,
+                        mm6::V5FirstMapCaptureBoundary::PausedSaveMenu);
+                    if (attempt.outcome != mm6::V5FirstMapSaveOutcome::Committed ||
+                        attempt.candidate != expected ||
+                        slotBytes(pausedSlot) != expected ||
+                        slotBytes(pausedBackup) != priorPausedSlot)
+                        throw std::runtime_error(
+                            "MM6 v5 paused Save write differs from live or prior slot");
+                    pausedWritePassed = true;
+                }
             });
         }
         game.runGameRoutine([] {
@@ -442,12 +473,18 @@ void runV4FreshChildReplay(EngineController &game, bool allowInput,
     }
     if (checkPausedSaveMenu)
         EXPECT_TRUE(pausedCapturePassed);
+    if (writePausedSaveMenu)
+        EXPECT_TRUE(pausedWritePassed);
     EXPECT_EQ(slotBytes(candidate), before);
     EXPECT_EQ(slotBytes(profile / "saves" / "autosave.ec6"), seedBefore);
     if (writeAfterAction)
         EXPECT_FALSE(slotBytes(profile / "saves/candidate-v4-after-action.ec6").empty());
     if (writeV5AfterAction)
         EXPECT_FALSE(slotBytes(profile / "saves/candidate-v5-after-action.ec6").empty());
+    if (writePausedSaveMenu) {
+        EXPECT_EQ(slotBytes(pausedBackup), priorPausedSlot);
+        EXPECT_FALSE(slotBytes(pausedSlot).empty());
+    }
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }
 
@@ -469,4 +506,8 @@ GAME_TEST(MM6V5AfterActionWriterHeadless, DISABLED_FreshQuickLoadWritesExactMove
 
 GAME_TEST(MM6V5PausedSaveCaptureHeadless, DISABLED_RealSaveMenuCapturesExactFirstMapOwners) {
     runV4FreshChildReplay(game, true, false, false, true);
+}
+
+GAME_TEST(MM6V5PausedSaveWriterHeadless, DISABLED_RealSaveMenuWritesExactDisposableSlot) {
+    runV4FreshChildReplay(game, true, false, false, false, true);
 }

@@ -8,6 +8,7 @@
 
 #include "Engine/GameTitle.h"
 #include "MM6AtomicSaveFile.h"
+#include "MM6V5LiveSaveCapture.h"
 
 namespace mm6 {
 
@@ -24,11 +25,12 @@ struct V5FirstMapSaveAttempt {
     V5FirstMapSaveOutcome outcome;
 };
 
-// Capture exact settled MM6 first-map owners from a source-anchored v4 save,
-// then write only one of the owner-only disposable v5 candidate slots.
+// Capture exact MM6 first-map owners at the selected live boundary from a
+// source-anchored v4 save, then write only an owner-only disposable v5 slot.
 V5FirstMapSaveAttempt writeV5FirstMapLiveSaveForTest(
     const std::filesystem::path &profileRoot, std::string_view slotName,
-    std::span<const std::uint8_t> sourceV4, GameTitle title);
+    std::span<const std::uint8_t> sourceV4, GameTitle title,
+    V5FirstMapCaptureBoundary boundary = V5FirstMapCaptureBoundary::SettledInput);
 
 namespace detail {
 

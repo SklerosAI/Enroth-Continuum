@@ -1613,7 +1613,15 @@ void Game::gameLoop() {
 
             if (uGameState == GAME_STATE_CHANGE_LOCATION) {
                 pAudioPlayer->stopSounds();
-                PrepareWorld(0);
+                try {
+                    PrepareWorld(0);
+                } catch (const mm6::testing::PreEventCheckpointAbortForTest &) {
+                    // Only an explicitly armed MM6 test probe uses this exit.
+                    // Never resume input in the partially prepared target.
+                    uGameState = GAME_STATE_GAME_QUITTING_TO_MAIN_MENU;
+                    game_finished = true;
+                    continue;
+                }
                 uGameState = GAME_STATE_PLAYING;
                 continue;
             }

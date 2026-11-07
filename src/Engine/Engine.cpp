@@ -89,6 +89,7 @@
 #include "Engine/MM6/MM6V5PreEventSpriteReplayForTest.h"
 #include "Engine/MM6/MM6TransitionAutosaveInterceptForTest.h"
 #include "Engine/MM6/MM6TransitionPostWorldCaptureForTest.h"
+#include "Engine/MM6/MM6VisitedReturnPreEventProbeForTest.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
@@ -748,6 +749,12 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
         // This test-only refusal precedes the ordinary pre-event checkpoint.
         // Clear the pending load before returning to Main Menu, without
         // allowing a partially prepared MM6 map to process events or input.
+        engine->_pendingTransition.reset();
+        pGameLoadingUI_ProgressBar->Release();
+        throw mm6::testing::PreEventCheckpointAbortForTest();
+    } catch (const mm6::testing::VisitedReturnProbeAbortForTest &) {
+        // A test-only return probe observed the target before Party placement
+        // and events. The partial world has no rollback owner: abandon it.
         engine->_pendingTransition.reset();
         pGameLoadingUI_ProgressBar->Release();
         throw mm6::testing::PreEventCheckpointAbortForTest();

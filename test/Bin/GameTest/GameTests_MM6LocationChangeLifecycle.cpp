@@ -42,6 +42,8 @@
 #include "Engine/MM6/MM6V5LiveSaveCapture.h"
 #include "Engine/MM6/MM6V6OutdoorSaveFields.h"
 #include "Engine/MM6/MM6VisitedOutdoorRuntimeOwner.h"
+#include "Engine/MM6/MM6VisitedOutdoorReturnPlan.h"
+#include "Engine/MM6/MM6VisitedReturnPreEventProbeForTest.h"
 #include "Engine/MM6/MM6TransitionAutosaveInterceptForTest.h"
 #include "Engine/MM6/MM6TransitionPostWorldCaptureForTest.h"
 #include "Engine/MM6/MM6V5OutdoorDecorationSource.h"
@@ -152,12 +154,15 @@ std::vector<LevelDecoration> sourceDecorations(const mm6::LoadedMapSource &maps,
 // This test enters an accepted first-map session, then drives the real
 // location-change state machine with one exact autosave interception. It is
 // a lifecycle probe, not border travel or a production save path.
-void runMM6LocationChangeLifecycle(EngineController &game, bool writeV6) {
-    const char *enable = std::getenv(writeV6 ?
-        "ENROTH_MM6_V6_OUTDOOR_WRITE_ENABLE" :
-        "ENROTH_MM6_LOCATION_CHANGE_ENABLE");
+void runMM6LocationChangeLifecycle(EngineController &game, bool writeV6,
+                                   bool probeReturn = false) {
+    const char *enable = std::getenv(probeReturn ?
+        "ENROTH_MM6_VISITED_RETURN_PROBE_ENABLE" :
+        writeV6 ? "ENROTH_MM6_V6_OUTDOOR_WRITE_ENABLE" :
+                  "ENROTH_MM6_LOCATION_CHANGE_ENABLE");
     if (!enable || std::string_view(enable) !=
-            (writeV6 ? "strict-v6-outdoor-write" :
+            (probeReturn ? "strict-visited-return-probe" :
+             writeV6 ? "strict-v6-outdoor-write" :
                        "strict-mm6-location-change"))
         GTEST_SKIP() << "Run only after strict v4 writer and owner admission";
     const std::filesystem::path profile = ownerOnlyProfile();
@@ -201,6 +206,8 @@ void runMM6LocationChangeLifecycle(EngineController &game, bool writeV6) {
     bool targetPreInputCaptured = false;
     bool v6CandidateWritten = false;
     bool v6AtomicFaultRefused = false;
+    bool returnTransitionQueued = false;
+    bool returnPreEventAgreed = false;
     std::vector<std::uint8_t> v6CandidateBytes;
     int sourceGeneratedCursor = -1;
     std::vector<std::uint8_t> oldMapCacheBefore;
@@ -211,6 +218,7 @@ void runMM6LocationChangeLifecycle(EngineController &game, bool writeV6) {
     mm6::GeneratedNpcSaveFields expectedGenerated;
     std::unique_ptr<mm6::V4FullSessionPreflight> staged;
     std::unique_ptr<mm6::VisitedOutdoorRuntimeOwner> visitedOwner;
+    std::unique_ptr<mm6::V6OutdoorSaveFields> returnSaved;
     std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
     std::unique_ptr<mm6::testing::ScopedEventRuntimeRestoreForTest> eventRuntime;
     std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
@@ -218,6 +226,8 @@ void runMM6LocationChangeLifecycle(EngineController &game, bool writeV6) {
     std::unique_ptr<mm6::testing::ScopedPostWorldAdmissionForTest> postWorld;
     std::unique_ptr<mm6::testing::ScopedTransitionPostWorldCaptureForTest>
         targetCapture;
+    std::unique_ptr<mm6::testing::ScopedVisitedReturnPreEventProbeForTest>
+        returnProbe;
     game.runGameRoutine([&] {
         mm6::testing::setLoadGameOverride([&](std::string_view requested) {
             if (requested != mm6::NEW_GAME_AUTOSAVE_SLOT)
@@ -648,6 +658,8 @@ void runMM6LocationChangeLifecycle(EngineController &game, bool writeV6) {
                         !visitedV6FaultsRefused)
                         throw std::runtime_error(
                             "MM6 visited outdoor v6 candidate refused");
+                    if (probeReturn)
+                        returnSaved = std::move(outdoor);
                     if (writeV6) {
                         constexpr std::string_view slot =
                             "candidate-v6-outdoor.ec6";
@@ -742,15 +754,76 @@ void runMM6LocationChangeLifecycle(EngineController &game, bool writeV6) {
                         !engine->_pendingTransition;
                 });
             }
+            if (probeReturn && movementApplied) {
+                game.runGameRoutine([&] {
+                    targetCapture.reset();
+                    const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable,
+                                                    GameTitle::MM6);
+                    auto boundaryParty = std::make_unique<Party>(*pParty);
+                    boundaryParty->uFlags &= ~(
+                        PARTY_FLAG_WATER_DAMAGE | PARTY_FLAG_AIRBORNE |
+                        PARTY_FLAG_STANDING_ON_WATER);
+                    boundaryParty->bFlying = 0;
+                    boundaryParty->pos.x = 0;
+                    boundaryParty->pos.y = -mm6::MM6_OUTDOOR_BORDER_EDGE - 1;
+                    auto arrival = mm6::stageVisitedOutdoorReturnArrival(
+                        *returnSaved, "oute2.odm", "oute3.odm", maps,
+                        *pDecorationTable, *boundaryParty, GameTitle::MM6);
+                    if (arrival.refusal !=
+                            mm6::OutdoorReturnArrivalRefusal::None ||
+                        !arrival.placement || !arrival.detachedParty)
+                        throw std::runtime_error(
+                            "MM6 visited return has no detached arrival");
+                    const PartyPlacement placement = *arrival.placement;
+                    const Vec3f livePosition = pParty->pos;
+                    const MapId sourceMap = engine->_currentLoadedMapId;
+                    const MapId targetMap = pMapTable->GetMapInfo("oute3.odm");
+                    returnProbe = std::make_unique<
+                        mm6::testing::ScopedVisitedReturnPreEventProbeForTest>(
+                            GameTitle::MM6, targetMap,
+                            [&, placement, livePosition, targetMap] {
+                                int faceId = -2;
+                                bool onWater = false;
+                                const float targetFloor = ODM_GetFloorLevel(
+                                    placement.pos, &onWater, &faceId);
+                                returnPreEventAgreed =
+                                    engine->_currentLoadedMapId == targetMap &&
+                                    uCurrentlyLoadedLevelType == LEVEL_OUTDOOR &&
+                                    engine->_pendingTransition &&
+                                    engine->_pendingTransition->map() == targetMap &&
+                                    gameTimer->isPaused() &&
+                                    pParty->pos == livePosition &&
+                                    pOutdoor->pTerrain.heightByPos(placement.pos) ==
+                                        placement.pos.z &&
+                                    targetFloor == placement.pos.z &&
+                                    faceId == -1;
+                                if (!returnPreEventAgreed)
+                                    throw std::runtime_error(
+                                        "MM6 visited return target-world floor/order differs");
+                            });
+                    mm6::testing::ScopedTransitionAutosaveInterceptForTest intercept(
+                        GameTitle::MM6, sourceMap, targetMap);
+                    startMapTransition(MapDestination(targetMap, placement));
+                    returnTransitionQueued = intercept.intercepted() &&
+                        uGameState == GAME_STATE_CHANGE_LOCATION &&
+                        engine->_pendingTransition &&
+                        engine->_pendingTransition->map() == targetMap;
+                });
+                if (returnTransitionQueued)
+                    game.tick(2);
+            }
         }
-        game.runGameRoutine([] {
-            uGameState = GAME_STATE_GAME_QUITTING_TO_MAIN_MENU;
-        });
-        game.tick(2);
+        if (!probeReturn) {
+            game.runGameRoutine([] {
+                uGameState = GAME_STATE_GAME_QUITTING_TO_MAIN_MENU;
+            });
+            game.tick(2);
+        }
     }
     game.runGameRoutine([&] {
         postWorld.reset();
         targetCapture.reset();
+        returnProbe.reset();
         replay.reset();
         checkpoint.reset();
         eventRuntime.reset();
@@ -776,6 +849,11 @@ void runMM6LocationChangeLifecycle(EngineController &game, bool writeV6) {
     EXPECT_TRUE(transitionQueued);
     EXPECT_TRUE(targetMapReady);
     EXPECT_TRUE(movementApplied);
+    if (probeReturn) {
+        EXPECT_TRUE(returnTransitionQueued);
+        EXPECT_TRUE(returnPreEventAgreed);
+        EXPECT_EQ(profileSaveBytes(profile), allSavesBefore);
+    }
     if (writeV6) {
         EXPECT_TRUE(v6AtomicFaultRefused);
         EXPECT_TRUE(v6CandidateWritten);
@@ -800,4 +878,8 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
 
 GAME_TEST(MM6OutdoorV6Headless, DISABLED_WritesActiveAndVisitedCandidate) {
     runMM6LocationChangeLifecycle(game, true);
+}
+
+GAME_TEST(MM6VisitedOutdoorReturnHeadless, DISABLED_AbortsBeforePlacementAndMapEvents) {
+    runMM6LocationChangeLifecycle(game, false, true);
 }

@@ -14,6 +14,7 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
+#include "Engine/MM6/MM6VisitedReturnPreEventProbeForTest.h"
 #include "Engine/AssetsManager.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Camera.h"
@@ -1906,6 +1907,9 @@ void loadAndPrepareODM(MapId mapid, bool bLoading) {
     uCurrentlyLoadedLevelType = LEVEL_OUTDOOR;
 
     loadAndPrepareODMInternal(mapid, bLoading);
+    if (!bLoading && engine->gameTitle() == GameTitle::MM6)
+        mm6::testing::runArmedVisitedReturnPreEventProbeForTest(
+            GameTitle::MM6, mapid);
     if (!bLoading) {
         if (std::optional<PartyPlacement> placement = engine->_pendingTransition->resolvePlacement())
             placeParty(*placement);

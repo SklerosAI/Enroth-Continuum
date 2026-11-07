@@ -11,7 +11,7 @@ The [source-backed packet](../project/MM6_F4_OUTDOOR_ACTOR_APPEND.md)
 records a detached native DDM actor-section splice that preserves original
 actor and opaque suffix bytes while appending complete supplied records.
 
-The codec requires the initial-respawn transition, bounded final actor
+The codec accepts a zero or already matching source respawn day, bounded final actor
 slots, exact 548-byte supplied records and matching per-slot native/runtime
 anchors. It changes the actor count and respawn day and re-decodes the
 result. Its linked synthetic suite passed 3/3. The disposable native v2

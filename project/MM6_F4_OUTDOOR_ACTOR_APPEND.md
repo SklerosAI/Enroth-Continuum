@@ -6,7 +6,7 @@ and no runtime capture adapter yet produces full native records for spawned
 actors. It therefore does not make the first-map v2 slot durable.
 
 `appendMM6OutdoorActorRecords()` re-decodes the source bytes, requires an
-MM6 title, an initial-respawn marker, a positive replacement respawn day,
+MM6 title, a zero or already matching respawn-day marker, a positive target day,
 bounds on decoded size and actor slots, and exactly one 548-byte record per
 new final actor. It checks the original and appended record anchors against
 the final runtime actor slot, embedded monster ID, monster ID and initial
@@ -16,7 +16,9 @@ Original actor bytes and all following opaque bytes are retained.
 
 The linked `MM6OutdoorActorAppendCodec.*` suite passed **3/3**. It covers
 byte-preserving insertion and refusal of reused or mismatched slots,
-noninitial respawn input, wrong title and bounds. The disposable v2 writer
+conflicting respawn-day input, wrong title and bounds. The stamped source
+day case reflects `OutdoorLocation::Load` updating its active sidecar before
+encounter spawning. The disposable v2 writer
 and fresh-child QuickLoad refusal control still passed **1/1** each after
 integration. The latter must continue refusing the pre-entry bootstrap slot.
 

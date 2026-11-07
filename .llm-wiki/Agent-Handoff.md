@@ -24,7 +24,7 @@ The [v2 bootstrap QuickLoad control](MM6-F4-Raw-V2-Bootstrap-Respawn.md) now rea
 
 The detached [RNGS gameplay capsule](MM6-F4-Gameplay-RNG-Save.md) now snapshots and restores the selected MT or sequential stream. RNGS/GNPC linked checks passed 5/5 and an MM7 headless control passed 1/1. Neither capsule is in the exact v2 manifest; a future load must publish saved generated rows and RNG at a proved point before replay-sensitive events.
 
-A detached [native DDM actor append codec](MM6-F4-Outdoor-Actor-Append.md) passed 3/3 linked structural checks. It inserts complete supplied 548-byte records after original actors, preserves all suffix bytes, checks slot anchors and marks the respawn day. There is no full native capture adapter for new runtime actors, so the durable post-entry save remains blocked. The disposable v2 writer and fresh-child guarded refusal still passed 1/1 each after integration.
+A detached [native DDM actor append codec](MM6-F4-Outdoor-Actor-Append.md) passed 3/3 linked structural checks. It inserts complete supplied 548-byte records after original actors, preserves all suffix bytes, checks slot anchors and marks the respawn day, accepting a zero or already matching source day. There is no full native capture adapter for new runtime actors, so the durable post-entry save remains blocked. The disposable v2 writer and fresh-child guarded refusal still passed 1/1 each after integration.
 
 ## Read first
 

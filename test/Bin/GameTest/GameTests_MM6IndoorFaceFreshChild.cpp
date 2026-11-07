@@ -68,8 +68,7 @@ IndoorSourceFaces loadIndoorSourceFaces() {
         decodeMM6ArchiveEntry(maps.readDefaultDelta(*entry)), base);
     const IndoorLocation_MM7 projected = projectMM6IndoorBase(base);
     if (projected.faces.empty() || projected.faces.size() != projected.faceTextures.size() ||
-        delta.wire.section(MM6IndoorSectionKind::DoorRecords).count !=
-            base.section(MM6IndoorSectionKind::DoorSlots).count)
+        delta.doors.size() != projected.doorCount)
         throw std::runtime_error("MM6 indoor probe lacks a paired source face and DLV shape");
     IndoorSourceFaces result{mapName, {}};
     result.faces.reserve(projected.faces.size());

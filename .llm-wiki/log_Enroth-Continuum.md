@@ -2666,3 +2666,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a tracked first-map resume runbook and disposable 13-process gate runner for the seven-child v5 chain, three fresh fault-setup children, two full-retry fault children and MM7 control. Verified runner syntax, filter names, local links, missing-path refusal and list output; the game chain itself remains unrun after the EVRT slice.
 - Updated plan, agent notes and wiki navigation to start from the runbook. An ignored local note holds machine-specific private paths; the 39-file private wiki was copied to a restricted same-disk backup and hash-checked. Normal MM6 SaveLoad and the MM6 goal remain paused.
+
+## [2026-11-07] verify | MM6 first-map EVRT slice
+- by: T-Burton-ND via claude
+- Fixed the gate runner's temporary profile prefix, which every MM6 restart child refused. The runner then passed the Engine event-restore slice: seven main children, five fault-setup and full-retry children and MM7 control, each 1/1 in a fresh process.
+- Resumed MM6 implementation with parallel lanes for the remaining first-map attempt phases and normal Save/Load wiring. Normal MM6 SaveLoad and Atlas MM6 Play remain closed.

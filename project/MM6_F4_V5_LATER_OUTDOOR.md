@@ -58,6 +58,14 @@ slots stayed byte-identical. The focused atomic suite passed **18/18**.
 The writer's direct map setup is not a campaign travel transition, and the
 bounded save cycle does not establish later-map playability.
 
+The same strict writer later passed a detached border-checkpoint probe. It
+placed a test-only Party copy just outside a cardinal edge, clamped a separate
+old-map Party copy, and encoded a second v5 candidate entirely in memory.
+Source/destination base-resource lookup, active-map identity, full v5
+preflight, live represented owner agreement and unchanged existing slots all
+passed after the original disposable candidate write. The border candidate
+was not written or reloaded. This is not actual edge movement or travel.
+
 A separate disposable **three-process** location-change check now passes
 **1/1 per child**: v2 seed, strict first-map v4 candidate, then a fresh child
 loads that candidate, reaches input, calls the real `startMapTransition` and

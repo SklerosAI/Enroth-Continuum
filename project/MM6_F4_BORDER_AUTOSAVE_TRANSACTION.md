@@ -33,6 +33,35 @@ handler. Focused new code compiled with the integration unit-test flags. The
 rebuilt integration unit target passed 11/11 border checks: three new
 precommit tests and eight existing route/eligibility controls.
 
+## Second outdoor no-write checkpoint probe
+
+The production [`captureV5FirstMapLiveSession`](../src/Engine/MM6/MM6V5LiveSaveCapture.cpp)
+remains limited to the first outdoor map, an unpaused settled timer, one
+first-map event owner, and its hardcoded native DDM/decoration anchors. It
+cannot run during the paused travel dialogue or capture a later outdoor map.
+The established test-only [later outdoor writer](../test/Bin/GameTest/GameTests_MM6V5LaterOutdoorCandidate.cpp)
+has a separate source-anchored v5 capture for the second outdoor map. It now
+also accepts a detached Party override for a **no-write** border candidate.
+
+In a fresh owner-only temporary profile, the v2 seed, v4 baseline and
+modified later-map writer each passed **1/1** headlessly. After the writer's
+existing disposable v5 slot was accepted, a copied Party was placed just
+outside one cardinal edge for this fixture. The precommit stage clamped only
+the copied old-map Party; the test confirmed both source and destination base
+resources, encoded a separate candidate in memory, and ran the full v5
+semantic preflight and exact live map/event-owner comparison with the Party
+override. The candidate's map identity and saved in-bounds Party position
+matched the loaded source, while the live Party core and all existing
+disposable slots remained unchanged. The candidate was never written. The
+temporary profile was removed after verification.
+
+The border position was constructed on a copy, not reached by actual
+movement. This probe does not prove a real confirmation handler, source
+terrain safety at the clamped coordinate, visited-map runtime preservation,
+old-map reload from this candidate, or a durable-write outcome. The
+`canWriteCheckpoint()` gate remains false, and MM6 travel/production SaveLoad
+remain closed.
+
 1. Choose a canonical production EC6 version, slot name and title-private profile root. Explicitly reject or migrate older autosave schemas; an existing v2 test seed cannot silently become a v5 production slot.
 2. Stage an exact detached old-map save for any admitted outdoor map at a safe point before travel UI effects. Include Party and character state, inventory/buffs/hirelings, UI/cursor/shops, NPC and generated links, RNG, active and visited map deltas, chests/artifacts, actor/sprite/decoration runtime, event variables and owner identities. The old-map checkpoint must contain a reload-safe in-bounds **Party copy** when the live border position lies outside the map edge; keep live Party untouched until commit.
 3. Revalidate destination geometry, source-map archive identity, the three-bit offer mask and confirmation flying state. Stage target map/resource readiness and a no-reentry capture. Give the disk writer a semantic validator and a required success result.
@@ -45,4 +74,4 @@ precommit tests and eight existing route/eligibility controls.
 - In separate children: reload the source, execute real border confirmation, write the old-map checkpoint, enter the target and move, then reload the old-map checkpoint and compare actor, sprite, chest, event and NPC owners at a safe in-bounds position. Add an in-session return to the source map.
 - Invalid, flying, cancelled and corner cases must not write. Keep MM7 headless control in the same integration gate. Graphical travel acceptance follows only after the durable headless cycle.
 
-No runtime route, production save or test hook was changed by this audit. See [atomic save design](MM6_ATOMIC_SAVE_F4.md), [save remainder](MM6_SAVE_REMAINDER_F4.md), and [local status](LOCAL_STATUS.md).
+No runtime route or production save hook was changed by this probe. See [atomic save design](MM6_ATOMIC_SAVE_F4.md), [save remainder](MM6_SAVE_REMAINDER_F4.md), and [local status](LOCAL_STATUS.md).

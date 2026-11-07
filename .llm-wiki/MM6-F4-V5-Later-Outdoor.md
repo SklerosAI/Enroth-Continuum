@@ -38,6 +38,13 @@ first-map cycle also passed after its live capture moved into a no-write
 engine service. That API remains first-map only. Actual campaign travel,
 production SaveLoad and Atlas Play remain closed.
 
+The same writer also passed an in-memory, no-write border checkpoint probe on
+that loaded second map. It used a synthetic out-of-bounds Party copy and
+checked the clamped old-map copy against the source map, v5 preflight and live
+represented owners; the existing slots and live Party core stayed unchanged. It
+did not follow a real border crossing or save/reload the candidate. See the
+[border transaction](MM6-F4-Border-Autosave-Transaction.md).
+
 A separate three-process disposable lifecycle check now passes strict
 first-map admission, one exact test-only autosave intercept, real
 `GAME_STATE_CHANGE_LOCATION`/`PrepareWorld` into oute2, target owner/cache

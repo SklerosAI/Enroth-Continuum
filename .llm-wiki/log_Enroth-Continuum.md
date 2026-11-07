@@ -1927,3 +1927,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Shared the detached MM6 outdoor geometry, terrain and spawn planner with v2 raw sessions and moved its validation inside primary/backup selection. An unusable outdoor primary can now fall back to a valid indoor backup without disk repair.
 - Linked raw/world runtime tests passed 11/11. Indoor world construction, final actor identity, renderer resources and production MM6 load remain gated.
+
+## [2026-11-06] integrate | MM6 v2 BEAC and IFOV admission
+- by: T-Burton-ND via codex
+- Added fail-closed raw v2 capture checks for occupied beacons and observed indoor face overrides, and rejected beacon-bearing Party baselines during detached staging. The strict nineteen-section decoder continues to reject BEAC/IFOV extras.
+- Integrated raw/world/schema checks passed 16/16. The caller must still compute IFOV from a verified base; this does not admit production save/load.

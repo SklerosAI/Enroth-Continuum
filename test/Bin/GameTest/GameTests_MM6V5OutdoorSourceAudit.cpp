@@ -19,7 +19,8 @@
 GAME_TEST(MM6V5OutdoorSourceHeadless, AllShippedOutdoorPairsDecode) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
-    ASSERT_EQ(maps.expectedNames().size(), 67);
+    const auto names = maps.expectedNames();
+    ASSERT_EQ(names.size(), 67);
     int admitted = 0;
     for (char column = 'a'; column <= 'e'; ++column)
         for (char row = '1'; row <= '3'; ++row) {
@@ -31,11 +32,11 @@ GAME_TEST(MM6V5OutdoorSourceHeadless, AllShippedOutdoorPairsDecode) {
             ASSERT_TRUE(mm6::isMM6OutdoorMapName(name));
             ASSERT_NE(pMapTable->GetMapInfo(name), MAP_INVALID);
             const std::string deltaName = name.substr(0, 5) + ".ddm";
-            ASSERT_EQ(std::count(maps.expectedNames().begin(),
-                                 maps.expectedNames().end(), deltaName), 1);
+            ASSERT_EQ(std::count(names.begin(), names.end(), deltaName), 1);
             const auto base = std::make_unique<OutdoorLocation_MM7>();
             ASSERT_NO_THROW(deserializeMM6Outdoor(maps.readBase(name), base.get()));
-            const auto delta = decodeMM6OutdoorDelta(maps.readDefaultDelta(deltaName));
+            MM6OutdoorDeltaSnapshot delta;
+            ASSERT_NO_THROW(delta = decodeMM6OutdoorDelta(maps.readDefaultDelta(deltaName)));
             EXPECT_EQ(base->decorations.size(), base->decorationNames.size());
             EXPECT_EQ(delta.chests.size(), 20);
             ++admitted;

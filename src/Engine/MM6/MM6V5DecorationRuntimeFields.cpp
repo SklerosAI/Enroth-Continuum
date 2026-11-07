@@ -14,6 +14,7 @@
 #include "Engine/Tables/DecorationTable.h"
 
 #include "MM6V5OutdoorMapIdentity.h"
+#include "MM6V5OutdoorDecorationSource.h"
 
 namespace mm6 {
 namespace {
@@ -212,14 +213,14 @@ void requireDecorationRuntimeBaseAgreement(
         reconstruct(base.decorations[index], &source[index]);
         const auto &name = base.decorationNames[index];
         const auto end = std::find(name.begin(), name.end(), '\0');
-        source[index].uDecorationDescID = table.decorationId(
-            std::string(name.begin(), end));
-        if (source[index].uDecorationDescID == DECORATION_NULL)
-            throw std::runtime_error("MM6 DECR source descriptor lacks template");
+        source[index].uDecorationDescID = requireMM6OutdoorSourceDecorationId(
+            base.decorations[index].uDecorationDescID,
+            std::string_view(name.data(), end - name.begin()), table);
         const LevelDecoration &runtime = fields.decorations[index];
         requireRuntimeFields(runtime);
         const auto descriptor = std::to_underlying(runtime.uDecorationDescID);
-        if (descriptor <= 0 || static_cast<std::size_t>(descriptor) >= table.decorations.size())
+        if (descriptor < 0 || static_cast<std::size_t>(descriptor) >= table.decorations.size() ||
+            (descriptor == 0 && source[index].uDecorationDescID != DECORATION_NULL))
             throw std::runtime_error("MM6 DECR runtime descriptor lacks template");
         if (!samePosition(source[index].vPosition, runtime.vPosition) ||
             source[index]._yawAngle != runtime._yawAngle ||

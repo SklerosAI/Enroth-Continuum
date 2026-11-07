@@ -43,6 +43,7 @@
 #include "Engine/MM6/MM6V4FullSessionPreflight.h"
 #include "Engine/MM6/MM6V4SaveFields.h"
 #include "Engine/MM6/MM6V5FullSessionPreflight.h"
+#include "Engine/MM6/MM6V5OutdoorDecorationSource.h"
 #include "Engine/MM6/MM6V5SaveFields.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Decoration.h"
@@ -103,10 +104,9 @@ std::vector<LevelDecoration> sourceDecorations(const mm6::LoadedMapSource &maps,
         reconstruct(base->decorations[slot], &result[slot]);
         const auto &name = base->decorationNames[slot];
         const auto end = std::find(name.begin(), name.end(), '\0');
-        result[slot].uDecorationDescID = pDecorationTable->decorationId(
-            std::string(name.begin(), end));
-        if (result[slot].uDecorationDescID == DECORATION_NULL)
-            throw std::runtime_error("MM6 later outdoor source decoration lacks a template");
+        result[slot].uDecorationDescID = mm6::requireMM6OutdoorSourceDecorationId(
+            base->decorations[slot].uDecorationDescID,
+            std::string_view(name.data(), end - name.begin()), *pDecorationTable);
     }
     return result;
 }

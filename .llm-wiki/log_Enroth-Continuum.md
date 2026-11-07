@@ -2022,3 +2022,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A test-only MM6 Create Party callback wrote a native v2 first-map slot from the sampled real starter Party into an owner-only disposable system-temp profile. A fresh null-renderer process selected and staged that slot without disk mutation; the temporary profile was removed.
 - The writer and reader each passed 1/1 in the integration build. Full live owner publication, gameplay reload, other random draws and original-game record parity remain open; production SaveLoad and Atlas Play stay guarded.
+
+## [2026-11-06] update | Parallel agent F4 handoff
+- by: T-Burton-ND via codex
+- Added a current handoff checkpoint linking the native v2 first-map write/fresh-process read evidence, detached owner gates and the later MM7 self-contained source milestone.
+- Normal MM6 gameplay reload, graphical acceptance and Atlas Play remain guarded; the protected MM7 baseline is unchanged.

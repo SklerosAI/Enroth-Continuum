@@ -72,6 +72,14 @@ void writeAtomicV3SaveFile(const std::filesystem::path &profileRoot,
                            std::string_view slotName,
                            std::span<const std::uint8_t> container,
                            const SaveCandidateValidator &validate);
+
+// Test-only v4 candidate writer. It accepts only candidate-v4.ec6 in an
+// owner-only mm6-restart-* directory immediately under the system temp root.
+// The required callback must stage all live v4 owners before any file change.
+void writeAtomicV4SaveFileForTest(const std::filesystem::path &profileRoot,
+                                  std::string_view slotName,
+                                  std::span<const std::uint8_t> container,
+                                  const SaveCandidateValidator &validate);
 std::optional<SaveFileCandidate> preflightRecoverableV3SaveFile(
     const std::filesystem::path &profileRoot, std::string_view slotName,
     const SaveCandidateValidator &validate);
@@ -118,6 +126,11 @@ void writeAtomicV3SaveFile(const std::filesystem::path &profileRoot, std::string
                            std::span<const std::uint8_t> container,
                            const SaveCandidateValidator &validate,
                            const AtomicSaveFault &fault);
+void writeAtomicV4SaveFileForTest(const std::filesystem::path &profileRoot,
+                                  std::string_view slotName,
+                                  std::span<const std::uint8_t> container,
+                                  const SaveCandidateValidator &validate,
+                                  const AtomicSaveFault &fault);
 
 } // namespace detail
 } // namespace mm6

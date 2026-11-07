@@ -49,6 +49,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6EventRuntimeRestoreForTest.cpp MM6EventRuntimeRestoreForTest.h
     MM6V4SaveFields.cpp MM6V4SaveFields.h
     MM6V4FullSessionPreflight.cpp MM6V4FullSessionPreflight.h
+    MM6V4OutdoorDecorationReplay.cpp MM6V4OutdoorDecorationReplay.h
     MM6ActiveActorOutdoorDeltaCapture.cpp MM6ActiveActorOutdoorDeltaCapture.h
     MM6IndoorWorldPlan.cpp MM6IndoorWorldPlan.h
     MM6WorldSaveRuntime.cpp MM6WorldSaveRuntime.h
@@ -215,6 +216,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6EventRuntimeRestoreForTest_ut.cpp
         Tests/MM6V4SaveFields_ut.cpp
         Tests/MM6V4FullSessionPreflight_ut.cpp
+        Tests/MM6V4OutdoorDecorationReplay_ut.cpp
         Tests/MM6IndoorWorldPlan_ut.cpp
         Tests/MM6HirelingRecoveryV2Stage_ut.cpp
         Tests/MM6FirstMapCombatTransientTransaction_ut.cpp

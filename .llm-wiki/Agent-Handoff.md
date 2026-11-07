@@ -40,6 +40,8 @@ Exact per-actor MM6 native resistance bytes are now assigned after DDM actor rec
 
 The detached [ACTR v1 full-list section](MM6-F4-Active-Actor-Section.md) passed linked ACTR/SPAW suites 8/8 and a dedicated private-backed first-map ACTR capture 1/1 with ramfs user state. Current v3 now requires ACTR; no disk or live replay route exists. The ACTR codec refuses nondefault actor items/buffs, so do not claim durable campaign save support.
 
+The detached [v3 atomic boundary](MM6-F4-EC6-V3-Atomic-Boundary.md) passed the linked atomic suite 11/11. It adds a required semantic callback for v3 write/read-only preflight/list and refuses recognizable foreign-version primary or backup before v3 mutation or fallback. It does not repair a backup, expose a production MM6 menu, or call live SaveLoad. Existing v1/v2 recovery APIs retain a mixed-schema hazard if manually combined files are fed to them; use only v3 API for any future production v3 route.
+
 ## Read first
 
 1. Run `git status --short --branch`, `git worktree list`, and `git log -1 --oneline` in the checkout you intend to use. The branch and worktree descriptions below may drift.

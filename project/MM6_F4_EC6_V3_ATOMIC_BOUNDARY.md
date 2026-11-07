@@ -4,6 +4,8 @@ Status, 2026-11-07: native v3 write, read-only preflight and read-only list
 APIs. The exact 22-section ACTR/GNPC/RNGS manifest is integrated, but this
 boundary does not publish a live game, repair a backup, expose the MM6 load
 menu or authorize Atlas Play.
+The integrated linked `MM6AtomicSaveFile.*` suite passed **11/11**, including
+the new v3 and existing v1/v2 cases.
 
 `MM6AtomicSaveFile` now distinguishes `FullV3` from known v1 and raw v2. Its
 own structural shell requires container version 3, all nineteen exact v2 raw

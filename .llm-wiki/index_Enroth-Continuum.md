@@ -125,6 +125,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Spawned Actor Owner Decision](MM6-F4-Spawned-Actor-Owner-Decision.md) — Versioned MM6 runtime section candidate for exact-slot spawned actors, with strict refusal until field round-trips are proved
 - [MM6 F4 Spawned Actor Section](MM6-F4-Spawned-Actor-Section.md) — Detached SPAW v1 exact-slot runtime actor capture; first-map headless round-trip passed, live save/reload remains open
 - [MM6 F4 EC6 V3 Manifest](MM6-F4-EC6-V3-Manifest.md) — Detached exact 22-owner candidate now requires full-list ACTR, GNPC and RNGS; live/atomic joins remain open
+- [MM6 F4 EC6 V3 Atomic Boundary](MM6-F4-EC6-V3-Atomic-Boundary.md) — Detached schema-safe v3 atomic write and read-only semantic slot preflight/list; no live repair or menu
 - [MM6 F4 Baseline Actor Save Audit](MM6-F4-Baseline-Actor-Save-Audit.md) — DDM writer omits original actor mutations; exact resistance and zero-descriptor fixes made full-list detached capture pass
 - [MM6 F4 Active Actor Owner Decision](MM6-F4-Active-Actor-Owner-Decision.md) — Full-list ACTR candidate replaces spawned-only save ownership after first-map headless capture passed
 - [MM6 F4 Active Actor Section](MM6-F4-Active-Actor-Section.md) — Detached ACTR v1 full-list runtime capture passed first-map headless probe; live replay and item/buff support remain open

@@ -1004,3 +1004,10 @@ private-backed first-map ACTR capture passed **1/1** headlessly with no
 profile write. The current v3 manifest now requires ACTR;
 actor items/buffs, live pre-event replay and fresh-child save–quit–reload
 remain open.
+
+The detached [v3 atomic slot boundary](MM6_F4_EC6_V3_ATOMIC_BOUNDARY.md)
+adds semantic-callback write and read-only preflight/list APIs, with both
+primary and backup checked for recognizable foreign EC6 versions before
+v3 fallback or mutation. The linked atomic suite passed **11/11** across
+new v3 and existing v1/v2 cases. No production MM6 menu, backup repair or
+live save/load route uses it yet.

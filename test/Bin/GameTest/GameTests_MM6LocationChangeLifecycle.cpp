@@ -40,6 +40,7 @@
 #include "Engine/MM6/MM6V4SaveFields.h"
 #include "Engine/MM6/MM6V5FullSessionPreflight.h"
 #include "Engine/MM6/MM6V5LiveSaveCapture.h"
+#include "Engine/MM6/MM6V6OutdoorSaveFields.h"
 #include "Engine/MM6/MM6VisitedOutdoorRuntimeOwner.h"
 #include "Engine/MM6/MM6TransitionAutosaveInterceptForTest.h"
 #include "Engine/MM6/MM6V5OutdoorDecorationSource.h"
@@ -73,6 +74,8 @@
 #include "GUI/GUIWindow.h"
 #include "Io/Mouse.h"
 #include "Library/Platform/Application/PlatformApplication.h"
+
+#include "MM6V5LaterOutdoorCaptureForTest.h"
 
 namespace {
 
@@ -178,6 +181,9 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
     bool visitedOwnerStaged = false;
     bool visitedOwnerSurvivedTransition = false;
     bool visitedFaultsRefused = false;
+    bool visitedV6RoundTrip = false;
+    bool visitedTwoMapSectionRoundTrip = false;
+    bool visitedV6FaultsRefused = false;
     int sourceGeneratedCursor = -1;
     std::vector<std::uint8_t> oldMapCacheBefore;
     std::string finalOwnerError;
@@ -510,6 +516,95 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
                         visitedOwner->nativeDelta.bytes ==
                             visitedOwner->chest.rawActiveDelta &&
                         oldNow == oldMapCacheBefore;
+                    const auto targetV5 =
+                        mm6::testing::captureV5LaterOutdoorForTest(before);
+                    const auto verifyItem = [](std::int32_t id) {
+                        return id >= 1 && id <= 580 &&
+                            !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
+                    };
+                    auto targetDecorations = sourceDecorations(maps, "oute2.odm");
+                    auto targetStage = mm6::stageV5FullSessionPreflightOnHeap(
+                        targetV5,
+                        mm6::loadNpcStaticBaseline(*engine->resources(), GameTitle::MM6),
+                        maps.expectedNames(),
+                        [&maps](std::string_view name) { return maps.readBase(name); },
+                        verifyItem, *pItemTable, pOverlayTable->overlays.size(),
+                        pTileTable->tileCount(), pActors.size(),
+                        application->component<EngineRandomComponent>()->type(),
+                        targetDecorations, *pDecorationTable, GameTitle::MM6);
+                    std::vector<mm6::VisitedOutdoorRuntimeOwner> bothMaps;
+                    bothMaps.push_back(mm6::stageVisitedOutdoorRuntimeOwner(
+                        *targetStage, "oute2.odm", maps.readBase("oute2.odm"),
+                        *pDecorationTable, GameTitle::MM6));
+                    bothMaps.push_back(*visitedOwner);
+                    const auto bothSection = mm6::encodeVisitedOutdoorSection(
+                        bothMaps, GameTitle::MM6);
+                    const auto bothDecoded = mm6::decodeVisitedOutdoorSection(
+                        {{bothSection}, 6}, GameTitle::MM6);
+                    for (const auto &owner : bothDecoded)
+                        mm6::requireVisitedOutdoorRuntimeOwner(
+                            owner, owner.mapName, maps.readBase(owner.mapName),
+                            *pDecorationTable, GameTitle::MM6);
+                    visitedTwoMapSectionRoundTrip = bothDecoded.size() == 2 &&
+                        bothDecoded[0].mapName == "oute2.odm" &&
+                        bothDecoded[1].mapName == "oute3.odm" &&
+                        mm6::encodeVisitedOutdoorSection(
+                            bothDecoded, GameTitle::MM6) == bothSection;
+                    auto outdoor = std::make_unique<mm6::V6OutdoorSaveFields>();
+                    outdoor->active = mm6::decodeV5Save(targetV5, GameTitle::MM6);
+                    outdoor->visited.push_back(*visitedOwner);
+                    const auto candidate = mm6::encodeV6OutdoorSave(
+                        *outdoor, GameTitle::MM6);
+                    auto decoded = std::make_unique<mm6::V6OutdoorSaveFields>(
+                        mm6::decodeV6OutdoorSave(candidate, GameTitle::MM6));
+                    mm6::requireVisitedOutdoorRuntimeOwner(
+                        decoded->visited.front(), "oute3.odm",
+                        maps.readBase("oute3.odm"), *pDecorationTable,
+                        GameTitle::MM6);
+                    visitedV6RoundTrip = !decoded->canWriteCheckpoint() &&
+                        decoded->visited.size() == 1 &&
+                        decoded->active.v4.v3.raw.metadata.header.mapFileName ==
+                            "oute2.odm" &&
+                        mm6::encodeV5Save(decoded->active, GameTitle::MM6) ==
+                            targetV5 &&
+                        mm6::encodeV6OutdoorSave(*decoded, GameTitle::MM6) ==
+                            candidate;
+                    const auto refuses = [](auto &&action) {
+                        try { action(); } catch (const std::exception &) {
+                            return true;
+                        }
+                        return false;
+                    };
+                    auto malformed = mm6::decodeSaveContainer(candidate);
+                    malformed.sections.back().payload.front() = 2;
+                    const auto badVersion = mm6::encodeSaveContainer(malformed);
+                    const bool versionRefused = refuses([&] {
+                        (void) mm6::decodeV6OutdoorSave(badVersion, GameTitle::MM6);
+                    });
+                    malformed.sections.back().payload.front() = 1;
+                    malformed.sections.back().payload.pop_back();
+                    const auto truncated = mm6::encodeSaveContainer(malformed);
+                    const bool truncatedRefused = refuses([&] {
+                        (void) mm6::decodeV6OutdoorSave(truncated, GameTitle::MM6);
+                    });
+                    auto crossMap = mm6::decodeSaveContainer(candidate);
+                    crossMap.sections.back().payload[7] = '2';
+                    const auto crossMapBytes = mm6::encodeSaveContainer(crossMap);
+                    const bool wireCrossMapRefused = refuses([&] {
+                        (void) mm6::decodeV6OutdoorSave(crossMapBytes,
+                                                        GameTitle::MM6);
+                    });
+                    decoded->visited.front().mapName = "oute2.odm";
+                    const bool crossMapRefused = refuses([&] {
+                        (void) mm6::encodeV6OutdoorSave(*decoded, GameTitle::MM6);
+                    });
+                    visitedV6FaultsRefused = versionRefused &&
+                        truncatedRefused && wireCrossMapRefused &&
+                        crossMapRefused;
+                    if (!visitedV6RoundTrip || !visitedTwoMapSectionRoundTrip ||
+                        !visitedV6FaultsRefused)
+                        throw std::runtime_error(
+                            "MM6 visited outdoor v6 candidate refused");
                     pPartyActionQueue->Add(PARTY_TurnLeft);
                     pPartyActionQueue->Add(PARTY_WalkForward);
                 }
@@ -551,6 +646,9 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
     EXPECT_TRUE(visitedOwnerStaged);
     EXPECT_TRUE(visitedFaultsRefused);
     EXPECT_TRUE(visitedOwnerSurvivedTransition);
+    EXPECT_TRUE(visitedV6RoundTrip);
+    EXPECT_TRUE(visitedTwoMapSectionRoundTrip);
+    EXPECT_TRUE(visitedV6FaultsRefused);
     EXPECT_TRUE(autosaveIntercepted);
     EXPECT_TRUE(transitionQueued);
     EXPECT_TRUE(targetMapReady);

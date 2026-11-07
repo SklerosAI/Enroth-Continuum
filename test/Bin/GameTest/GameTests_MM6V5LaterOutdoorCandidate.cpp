@@ -306,6 +306,11 @@ void requireDetachedBorderOldMapCandidate(std::span<const std::uint8_t> sourceV4
 
 } // namespace
 
+std::vector<std::uint8_t> mm6::testing::captureV5LaterOutdoorForTest(
+    std::span<const std::uint8_t> sourceV4) {
+    return captureLaterOutdoor(sourceV4);
+}
+
 void mm6::testing::writeV5LaterOutdoorAfterInputCandidateForTest(
     const std::filesystem::path &profile,
     std::span<const std::uint8_t> originalV4,

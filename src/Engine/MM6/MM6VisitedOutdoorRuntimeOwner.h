@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <deque>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -33,12 +34,10 @@ struct VisitedOutdoorRuntimeOwner {
     [[nodiscard]] bool canWriteCheckpoint() const { return false; }
 };
 
-// Recheck the joined owners against the same loaded source archive before a
-// transition and after detaching. A stale native map cache, changed source,
-// swapped map name or missing runtime owner refuses without touching live state.
-inline void requireVisitedOutdoorRuntimeOwner(
+// Structural gate for a detached wire owner. Source-base agreement is checked
+// separately by requireVisitedOutdoorRuntimeOwner before the owner is used.
+inline void requireVisitedOutdoorRuntimeWireOwner(
     const VisitedOutdoorRuntimeOwner &owner, std::string_view expectedMap,
-    const Blob &decodedBase, const DecorationTable &decorationTable,
     GameTitle title) {
     if (title != GameTitle::MM6 || !isMM6OutdoorMapName(expectedMap) ||
         owner.mapName != expectedMap)
@@ -59,6 +58,20 @@ inline void requireVisitedOutdoorRuntimeOwner(
                                          owner.actorPayload, title);
     requireSpriteRuntimeNativeAgreement(owner.sprites, expectedMap,
                                         owner.nativeDelta.bytes, title);
+    const std::deque<Actor> orderedActors(owner.actors.actors.begin(),
+                                          owner.actors.actors.end());
+    requireGeneratedNpcActorAgreement(owner.generatedNpcs, orderedActors,
+                                      expectedMap, title);
+}
+
+// Recheck the joined owners against the same loaded source archive before a
+// transition and after detaching. A stale native map cache, changed source,
+// swapped map name or missing runtime owner refuses without touching live state.
+inline void requireVisitedOutdoorRuntimeOwner(
+    const VisitedOutdoorRuntimeOwner &owner, std::string_view expectedMap,
+    const Blob &decodedBase, const DecorationTable &decorationTable,
+    GameTitle title) {
+    requireVisitedOutdoorRuntimeWireOwner(owner, expectedMap, title);
     requireDecorationRuntimeBaseAgreement(owner.decorations, expectedMap,
                                           decodedBase, owner.event,
                                           decorationTable, title);

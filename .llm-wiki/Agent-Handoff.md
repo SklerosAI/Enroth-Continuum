@@ -8,6 +8,17 @@ tags: [handoff, agents, mm6]
 
 This page is the starting brief for future Codex agents working in parallel on Enroth Continuum; recheck its dated status against the authoritative files before acting.
 
+## Worktree budget — 2026-11-07
+
+The repository has a **10-worktree cap**, including the main integration
+checkout and protected baselines. Run `python3 tools/check_worktree_budget.py`
+before creating a worktree. At the cap, reuse one or reconcile and remove a
+finished checkout first. A cleanup reduced 89 registered worktrees to 10;
+local branch refs were retained, including refs for formerly detached heads.
+The active integration tree, protected MM7/MM8 baselines, an existing dirty
+checkout and checkouts containing ignored private local files were preserved.
+Do not merge unreviewed experimental branches solely to satisfy the cap.
+
 ## Current integration checkpoint — 2026-11-07
 
 The [MM6 border transaction](MM6-F4-Border-Autosave-Transaction.md) now has

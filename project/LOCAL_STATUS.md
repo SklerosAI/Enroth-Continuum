@@ -781,3 +781,8 @@ the input skip with queued actions held, then a movement/draw frame that drained
 them. A separate scoped combat-transient reset now stages four pre-load
 containers and passed **3/3** linked rollback/commit tests. Neither is wired
 into production `loadGame()` or a complete `Game::gameLoop()` handoff.
+
+The combat scope now also snapshots seven scalar fields of the turn engine
+alongside its queue. The revised integrated linked fault/commit suite passed
+**3/3**. Persistent events, outdoor resource/listener state and other live
+owners still prevent an all-owner load transaction.

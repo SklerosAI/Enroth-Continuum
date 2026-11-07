@@ -96,6 +96,23 @@ The next gate is a second save after the action and another fresh-process
 reload. Actor item/buff support,
 indoor and later-map replay, production SaveLoad and Atlas remain open.
 
+## Post-action capture boundary
+
+The first attempted second v4 write after the bounded turn/walk refused before
+disk mutation: a live ground sprite had fractional X/Y coordinates, while
+the native DDM sprite record stores integer position. The diagnostic only
+identifies the public refusal class; no private asset contents are recorded.
+Gameplay updates float sprite positions and velocity, so waiting for a
+quiescent moment cannot generally prove exact projection. V4 keeps this
+refusal. The next schema candidate is a separate full-list runtime sprite
+owner with exact float bits, all transient fields and MM6 item provenance,
+bound to native DDM slots and restored after map-object arrangement but
+before map events. It must refuse unsupported sprite/item mutations and
+slot reuse until proven. No post-action candidate or fresh-child reload has
+passed yet.
+
+See the [v5 sprite-runtime design gate](MM6_F4_EC6_V5_SPRITE_RUNTIME.md).
+
 See [v3 post-entry map and pre-event seam](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md),
 [v3 full-session preflight](MM6_F4_EC6_V3_FULL_SESSION_PREFLIGHT.md),
 [event byte boundary](MM6_F4_PERSISTENT_EVENT_BOUNDARY.md) and

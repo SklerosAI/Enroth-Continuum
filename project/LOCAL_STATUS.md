@@ -1094,3 +1094,12 @@ input, turned and walked once, then quit with both slots unchanged (**1/1**).
 This is a test-only first-map reload and bounded input boundary. A post-action
 second write, indoor/later-map replay, production SaveLoad and Atlas remain
 closed.
+
+The first attempted post-action v4 writer refused before a second slot was
+written: a gameplay-updated ground sprite had fractional X/Y coordinates
+that the integer native DDM sprite record cannot preserve. The v4 guard is
+retained. An exact full-list runtime sprite owner, bound to native slots and
+MM6 raw item provenance, is under design for a later schema; waiting for
+sprites to settle is not a general save strategy. See the
+[v5 sprite-runtime gate](MM6_F4_EC6_V5_SPRITE_RUNTIME.md). The post-action reader is
+disabled and unrun pending a valid candidate.

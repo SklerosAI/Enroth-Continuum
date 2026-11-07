@@ -54,6 +54,15 @@ input, turned and walked once, and quit with both slots unchanged (**1/1**).
 A post-action second write, indoor/later-map replay and production
 SaveLoad/Atlas remain closed.
 
+The attempted second v4 write after the bounded turn/walk refused before
+disk mutation because a gameplay-updated ground sprite had fractional X/Y
+coordinates. Native DDM stores integer sprite position; the current strict
+capture will not truncate it. An exact full-list runtime sprite owner is
+under design for a later schema, with native slot and MM6 raw item
+provenance checks. No post-action candidate or reload has passed. See the
+[V5 Sprite Runtime](MM6-F4-EC6-V5-Sprite-Runtime.md) and the
+[source-backed packet](../project/MM6_F4_EC6_V4_EVENT_RUNTIME.md).
+
 See also: [V3 Post Entry Map and Pre Event](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md),
 [V3 Full Session Preflight](MM6-F4-EC6-V3-Full-Session-Preflight.md),
 [Map Bytes](MM6-F4-Map-Bytes.md).

@@ -2703,3 +2703,8 @@ Chronological record of wiki activity.
 - Added a local MM7-only mood PNG resolver, legacy normal fallback, named portrait textures, HUD and quick-record wiring, and Atlas per-mood previews, import and bounded warning display. Clearing a new normal PNG preserves any legacy file.
 - Source-linked portrait tests passed 2/2 and focused MM7 controls 3/3. A hidden OpenGL first-map capture confirmed the synthetic custom portrait in the HUD; temporary captures were deleted.
 - Staged and code-signature-checked a source-owned arm64 Atlas candidate, then ran a bounded headless startup with a disposable profile. Visible Atlas use, quick-record behavior and graphical save/reload remain open; the candidate was not installed.
+
+## [2026-11-07] verify | Isolated MM7 atomic save file
+- by: T-Burton-ND via codex
+- Added an MM7 native-slot helper with read-only primary/backup preflight, full-content validator callback, bounded same-directory writes, and directory sync. Seven synthetic fault and recovery tests passed under network denial.
+- The normal SaveLoad and menu paths still use the inherited writer; the helper is not yet a live durability fix. Full engine integration and graphical save/reload remain open pending the shared MM6 SaveLoad handoff.

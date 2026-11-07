@@ -2017,3 +2017,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a read-only, fail-closed check of selected map name and saved/sidecar/final actor and sprite slot anchors for a future post-world-rebuild handoff.
 - Linked indoor/outdoor synthetic tests passed 2/2. Matching slots do not prove delta provenance or safe PID reuse, and active saved VISU overlays remain blocked.
+
+## [2026-11-06] verify | MM6 real starter native v2 slot
+- by: T-Burton-ND via codex
+- A test-only MM6 Create Party callback wrote a native v2 first-map slot from the sampled real starter Party into an owner-only disposable system-temp profile. A fresh null-renderer process selected and staged that slot without disk mutation; the temporary profile was removed.
+- The writer and reader each passed 1/1 in the integration build. Full live owner publication, gameplay reload, other random draws and original-game record parity remain open; production SaveLoad and Atlas Play stay guarded.

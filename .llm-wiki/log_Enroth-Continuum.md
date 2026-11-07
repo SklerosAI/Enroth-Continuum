@@ -1837,3 +1837,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Routed MM6 `Chest::open` through the title-local first-open owner transaction for untrapped chests, committing the live chest, active raw sidecar and LCG together after GUI construction. MM6 trap and pickup paths remain guarded.
 - A fresh private-backed headless first-map test passed 1/1 after opening a chest and updating its GUI under NullRenderer; the host monitor saw no visible window or focus change. Production map/save entry and rendered chest pixels remain unproved.
+
+## [2026-11-06] integrate | MM6 raw save and reload frame probes
+- by: T-Burton-ND via codex
+- Integrated detached archive-backed New Game preflight, a separate nineteen-section EC6 v2 candidate with raw inventory/held/shop state, and a fresh-process test step through timer, AI, turn/walk and draw. The v1 test-only writer and normal MM6 SaveLoad guards remain explicit.
+- The linked save/preflight gate passed 31/31. Two separate monitored MM6 processes passed the disposable New Game write and world/frame reentry (1/1 each), while an MM7 all-map reconstruction control passed 1/1. No process showed a game window or changed focus; the temporary profile was removed.

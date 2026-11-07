@@ -15,4 +15,6 @@ This **supersedes** the earlier fixed negative follower-link interpretation. The
 
 Three disposable indoor v6 five-child chains pass **15/15**, focused linked unit checks pass **13/13**, and MM7 headless control passes **1/1**. The risk writer verifies post-world zero for the signed source actor. A real click, eligible StreetNPC generation, general indoor play and production MM6 SaveLoad remain open.
 
+The bounded retained-default indoor sweep found no eligible native actor with a nonzero source marker. Its headless classifier now asserts this absence as a fixture gate. The original initializer's generated row and the positive dialogue/hire-fire join remain unproved; the current preflight refusal stays in force. The pre-map negative roster exception is a transient diagnostic, **not** a post-world dialogue result.
+
 See also: [Indoor Source Sweep](MM6-F4-Indoor-Source-Sweep.md), [Signed Actor Dialogue Gate](MM6-F4-Signed-Actor-Dialogue-Gate.md), [V6 Indoor Input Cycle](MM6-F4-V6-Indoor-Input-Cycle.md), and [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

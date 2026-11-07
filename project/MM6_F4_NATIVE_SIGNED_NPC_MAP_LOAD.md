@@ -46,6 +46,16 @@ for eligible monsters, positive actor dialogue lookup, other source marker
 classes, and the legacy MM7-shaped peasant/5000 rule remain separate audit
 tasks. Production MM6 SaveLoad and general indoor gameplay stay closed.
 
+An opt-in bounded sweep of the retained default indoor BLV/DLV pairs found no
+eligible native actor with a nonzero StreetNPC source marker. The sweep now
+classifies that condition and fails its local acceptance assertion if a new
+source supplies one. The original executable's row initializer uses more
+than a simple actor-ID rewrite, so its generated row and dialogue/hire-fire
+join still need a distinct source-backed fixture. No row generator or
+dialogue mapping was admitted from this corpus absence. The pre-map actor
+probe's roster exception is labeled as transient; the established post-world
+fixture verifies the ineligible marker has become zero.
+
 Source pointers: [native actor policy](../src/Engine/MM6/MM6NativeActorNpcPolicy.h),
 [map-load loop](../src/Engine/Engine.cpp), [IART source join](../src/Engine/MM6/MM6V6IndoorActorRuntime.cpp),
 [test-only replay join](../src/Engine/MM6/MM6V6PreEventIndoorActorReplayForTest.h),

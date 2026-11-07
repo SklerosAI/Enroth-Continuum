@@ -65,7 +65,10 @@ reading and pre-event dialogue blocker are **superseded** by the
 ineligible actor's runtime marker is cleared to zero before gameplay. IART
 and the test-only GNPC replay now enforce the source-to-runtime join.
 Eligible nonzero StreetNPC generation refuses pending a title-specific row
-and positive dialogue mapping. A real post-world click/hire-fire check is
+and positive dialogue mapping. The bounded retained-default indoor sweep has
+no eligible nonzero source marker, so a separate source-backed fixture is
+required for that path. The pre-map roster mismatch is transient after the
+ineligible marker clears. A real post-world click/hire-fire check is
 still open. Production saves and general indoor play remain open.
 The one-command MM7
 [clean tracked-source build](MM7-Clean-Offline-Build.md)

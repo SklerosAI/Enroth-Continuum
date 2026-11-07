@@ -51,7 +51,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Indoor Face Overrides](MM6-F4-Indoor-Face-Overrides.md) — Indoor face and runtime owner gates, superseded by a bounded test-only first-input cycle
 - [MM6 F4 V6 Indoor Input Cycle](MM6-F4-V6-Indoor-Input-Cycle.md) — Three distinct indoor five-child replay chains pass with a bounded MM6 native door-motion trace
 - [MM6 F4 Indoor Source Sweep](MM6-F4-Indoor-Source-Sweep.md) — All retained indoor pairs round-trip; a risk-ranked signed source marker receives a strict MM6 native-to-runtime join
-- [MM6 F4 Native Signed NPC Map Load](MM6-F4-Native-Signed-NPC-Map-Load.md) — Original MM6 source/executable trace proves an ineligible signed marker clears after map load; strict DLV/IART join
+- [MM6 F4 Native Signed NPC Map Load](MM6-F4-Native-Signed-NPC-Map-Load.md) — Original MM6 source/executable trace proves an ineligible signed marker clears after map load; strict DLV/IART join and retained-source eligible marker gate
 - [MM6 F4 Signed Actor Dialogue Gate](MM6-F4-Signed-Actor-Dialogue-Gate.md) — Earlier pre-event follower refusal is transient; real dialogue acceptance remains open
 - [MM6 F4 V5 Later Outdoor](MM6-F4-V5-Later-Outdoor.md) — Second-map seven-process save cycle and no-write location-change lifecycle pass; border travel and normal autosave remain open
 - [MM6 F4 Outdoor Tile Selectors](MM6-F4-Outdoor-Tile-Selectors.md) — Original base-field trace, MM6-only terrain reconstruction and remaining seasonal art gap

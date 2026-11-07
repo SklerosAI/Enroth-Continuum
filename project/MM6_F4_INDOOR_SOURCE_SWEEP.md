@@ -10,7 +10,12 @@ does not publish map names, per-map measurements, assets, or save bytes.
 
 The sweep classifies source pairs by active-door multiplicity, initial door
 motion, saved outline visibility, actor and ground-item records, persistent
-bytes, and signed actor NPC anchors. The retained default deltas have clear
+bytes, signed actor NPC anchors, and eligible nonzero native StreetNPC source
+markers. The current retained default corpus has no eligible nonzero source
+marker; the opt-in sweep asserts this condition so a changed local corpus
+cannot silently bypass the missing generated-row fixture. This corpus result
+does not establish campaign-wide absence or permit dialogue admission.
+The retained default deltas have clear
 visibility, no initial door motion, and clear persistent bytes; the other
 features vary. These defaults do not predict post-event or post-input state:
 the accepted [v6 input cycle](MM6_F4_EC6_V6_INDOOR_INPUT_CYCLE.md)

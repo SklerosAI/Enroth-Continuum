@@ -1698,3 +1698,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The bounded plain/gold adapter now rejects non-common source templates before staging or recapturing an item; inherited artifact/relic effects are outside this view.
 - Linked focused checks passed 13/13 and two loaded-table MM6 headless checks passed 2/2 over 76 samples without visible windows or focus change. Live item producers, native nonzero records and SaveLoad remain gated.
+
+## [2026-11-06] ingest | MM6 physical item transfer rules
+- by: T-Burton-ND via codex
+- A read-only accepted-original-executable audit found first-25-byte clears for a bounded backpack-removal path and cursor clear, full incoming cursor/shop copies, and allocation by zero item ID across 138 physical records. Zero-ID tails remain authoritative.
+- Equipment removal, ordinary UI pickup and ground fallback remain unproved. Recorded a detached all-owner transaction design; no live code, private game bytes or GUI process was changed.

@@ -2306,3 +2306,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added an MM6-only one-shot pre-event IDRT application and strict post-`OnMapReload` recapture in the disposable indoor v6 reader. After staging the candidate's exact chest owner under the existing test-only map-load scope, the v2 seed, v6 writer and fresh-child reader passed 1/1 each; focused linked v6 checks passed 7/7.
 - Indoor sprite/actor owners, gameplay admission, production SaveLoad and graphical face acceptance remain open. The test scope does not open normal MM6 chest loading.
+
+## [2026-11-07] implement | Three more MM7 repo-owned inputs
+- by: T-Burton-ND via codex
+- Converted exact pinned `fast_float`, `magic_enum` and `mio` gitlinks into tracked source, retaining all original license files and provenance notes. All 112 original files matched pinned Git blobs; a network-disconnected standalone AppleClang C++20 build/run passed.
+- The integration Mac MM7 target linked against the four tracked snapshots with existing cached prebuilt libraries. Nineteen gitlinks, nested fetches and prebuilt-library source recipes remain; a clean offline MM7 build is not yet possible. The installed app and saves were not replaced.

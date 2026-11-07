@@ -2574,3 +2574,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Reconciled the campaign and local status summaries with the already verified test-only outdoor v6 disk writer, fresh-child reader and detached return arrival. The earlier claim that no v6 file had been written was stale; no production checkpoint or live old-map return has occurred.
 - The integrated MM6 GameTest target compiled after the indoor marker correction, and focused MM6 pre-event and MM7 headless controls each passed 1/1. Production SaveLoad, border travel and return publication remain closed.
+
+## [2026-11-07] verify | MM6 eligible StreetNPC fixture boundary
+- by: T-Burton-ND via codex
+- A bounded opt-in sweep of retained default indoor sources found no native eligible actor with a nonzero StreetNPC marker. The sweep now classifies and asserts this condition; a changed corpus will require a distinct generated-row fixture. Original MM6 row initialization and positive dialogue/hire-fire behavior remain unproved, and the preflight refusal stays closed.
+- Corrected the signed actor pre-map diagnostic wording: its transient roster exception precedes the source-backed signed-to-zero runtime mapping. The new test-only change passed a fresh all-source sweep, risk pre-event check, and MM7 headless control, each 1/1. The previously verified three indoor five-child chains remain 15/15; they were not rerun for this test-only change. Exact source details remain in the ignored private research packet.

@@ -20,6 +20,3 @@
 [submodule "thirdparty/ztd_text"]
 	path = thirdparty/ztd_text
 	url = https://github.com/captainurist/ztd_text.git
-[submodule "thirdparty/cpptrace"]
-	path = thirdparty/cpptrace
-	url = https://github.com/jeremy-rifkin/cpptrace.git

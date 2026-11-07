@@ -2601,3 +2601,8 @@ Chronological record of wiki activity.
 - Audited current `DoPrepareWorld(false)` source order: world reset precedes target DDM consumption, EVRT must precede decoration preparation, and actor/sprite/decoration plus chest/NPC owners have later pre-event boundaries. A single post-load VIST publisher cannot safely satisfy them.
 - Qualified the earlier global-ledger summary: the return plan uses the v6 active snapshot, which may be stale after further play. Return must retain the latest global RNG and chest/artifact ledger rather than restore visited-map historical globals.
 - Kept publication and checkpoint gates false. Post-reset refusal abandons the partial world to Main Menu; production needs a durable checkpoint/reload or separately verified full rollback before a multi-stage return can proceed.
+
+## [2026-11-07] verify | MM6 first-map atomic outcome policy
+- by: T-Burton-ND via codex
+- Added a test-only first-map v5 outcome classifier and read-only primary/backup preflight restricted to the existing disposable candidate slots. A fault after primary rename and before directory sync is reported as unconfirmed unless independent bytes are verified; wrong-map or foreign-version occupants refuse without repair.
+- Two focused linked units passed 2/2, including the disposable post-rename fault and backup selection with unchanged disk bytes. MM7 headless control passed 1/1. Normal MM6 SaveLoad/UI remains closed.

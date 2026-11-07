@@ -51,6 +51,7 @@
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
 #include "Engine/MM6/MM6PreEventCheckpointForTest.h"
+#include "Engine/MM6/MM6V5FirstMapLoadAbandonForTest.h"
 #include "Engine/Tables/MapTable.h"
 
 #include "GUI/GUIButton.h"
@@ -1517,7 +1518,13 @@ void Game::gameLoop() {
     if (bLoading) {
         uGameState = GAME_STATE_PLAYING;
         assert(!engine->_pendingLoadFileName.empty());
-        loadGame(std::exchange(engine->_pendingLoadFileName, {}));
+        try {
+            loadGame(std::exchange(engine->_pendingLoadFileName, {}));
+        } catch (...) {
+            if (mm6::testing::abandonV5FirstMapLoadFailureForTest())
+                return;
+            throw;
+        }
     }
 
     extern bool use_music_folder;
@@ -1537,6 +1544,10 @@ void Game::gameLoop() {
         } catch (const mm6::testing::PreEventCheckpointAbortForTest &) {
             uGameState = GAME_STATE_GAME_QUITTING_TO_MAIN_MENU;
             return;
+        } catch (...) {
+            if (bLoading && mm6::testing::abandonV5FirstMapLoadFailureForTest())
+                return;
+            throw;
         }
         if (bLoading && engine->gameTitle() == GameTitle::MM6 &&
             mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6) ==

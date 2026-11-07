@@ -23,6 +23,8 @@ inline constexpr std::string_view V6_INDOOR_POSTWORLD_PROBE_SLOT =
     "candidate-v6-indoor-postworld.ec6";
 inline constexpr std::string_view V6_INDOOR_LIVE_SESSION_PROBE_SLOT =
     "candidate-v6-indoor-live-session.ec6";
+inline constexpr std::string_view V6_INDOOR_AFTER_INPUT_PROBE_SLOT =
+    "candidate-v6-indoor-after-input.ec6";
 
 inline std::filesystem::path indoorProbeProfile() {
     const char *value = std::getenv("ENROTH_MM6_RESTART_PROFILE");
@@ -49,7 +51,8 @@ inline std::vector<std::uint8_t> readIndoorProbeSlot(
     const std::filesystem::path &profile, std::string_view name) {
     if (name != "autosave.ec6" && name != V6_INDOOR_PROBE_SLOT &&
         name != V6_INDOOR_POSTWORLD_PROBE_SLOT &&
-        name != V6_INDOOR_LIVE_SESSION_PROBE_SLOT)
+        name != V6_INDOOR_LIVE_SESSION_PROBE_SLOT &&
+        name != V6_INDOOR_AFTER_INPUT_PROBE_SLOT)
         throw std::runtime_error("MM6 v6 indoor probe requested another slot");
     const auto path = profile / "saves" / name;
     if (!std::filesystem::is_regular_file(path) || std::filesystem::is_symlink(path) ||
@@ -72,7 +75,8 @@ inline void writeIndoorProbeCandidate(const std::filesystem::path &profile,
     const auto saves = profile / "saves";
     if (name != V6_INDOOR_PROBE_SLOT &&
         name != V6_INDOOR_POSTWORLD_PROBE_SLOT &&
-        name != V6_INDOOR_LIVE_SESSION_PROBE_SLOT)
+        name != V6_INDOOR_LIVE_SESSION_PROBE_SLOT &&
+        name != V6_INDOOR_AFTER_INPUT_PROBE_SLOT)
         throw std::runtime_error("MM6 v6 indoor probe refused an unknown slot");
     const auto primary = saves / name;
     const auto pending = saves / (std::string(name) + ".pending");

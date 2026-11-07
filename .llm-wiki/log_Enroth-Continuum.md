@@ -2124,3 +2124,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Chose a detached, versioned MM6 EC6 runtime actor owner candidate for newly spawned exact PID slots. The present native 548-byte projection omits major state regions, and encounter spawning retains no complete native-record provenance.
 - This is a design boundary, not a live manifest or loader. Unsupported actor states must refuse; a post-entry no-respawn fresh-child round-trip and pre-event GNPC/RNG publication remain required.
+
+## [2026-11-07] stage | MM6 pre-event generated NPC replay gate
+- by: T-Burton-ND via codex
+- Integrated a detached read-only GNPC/RNGS agreement helper for the point after actor rebuild and before generated-row creation or map events. It validates title, map, RNG type, fresh NPC cursor and exact actor-to-row links; linked tests passed 2/2.
+- A later replay must bypass only the NPC generation loop in `_461103_load_level_sub()`, retaining its chest, arena, decoration and cursor work, and publish saved rows/RNG before `onMapLoad()`. No live publication was enabled.

@@ -120,6 +120,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6BoundedPartyInventoryProjection_ut.cpp Tests/MM6GroundItemProjection_ut.cpp Tests/MM6StandardBonusMap_ut.cpp
         Tests/MM6StandardItemProjection_ut.cpp
         Tests/MM6RawInventoryFields_ut.cpp
+        Tests/MM6BackpackItemEventRemoval_ut.cpp
         Tests/MM6KnownSaveFields_ut.cpp
         Tests/MM6PotionCombinations_ut.cpp)
     target_link_libraries(test_engine_mm6_save_container PUBLIC testing_unit engine_mm6_save_container engine_tables)

@@ -2651,3 +2651,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated a strict, test-only first-map numbered `.ec6` slot policy. Focused atomic outcome/collision units passed 2/2 and MM7 control passed 1/1; production Save UI remains closed.
 - Moved the first-map v5 detached graph and exact chest handoff into an Engine-owned attempt. A fresh disposable seven-child replay passed 7/7, both full-retry fault children passed 1/1, and MM7 control passed 1/1. Event, actor/NPC/RNG and post-world lifecycle remain test-hook owned; no playable MM6 load is claimed.
+
+## [2026-11-07] maintain | Worktree cleanup and cap
+- by: T-Burton-ND via codex
+- Audited 89 registered worktrees, retaining dirty, private-local-data and protected checkouts. Removed 79 clean finished checkouts through Git after Codex archival refused them; local branch refs and seven formerly detached heads were preserved. Registered count is 10, with no broken worktree entries.
+- Added a mandatory pre-create budget check and ten-worktree rule to the repository agent handoff. Disk free space rose from about 3.5 GiB to 45 GiB. The MM6 implementation goal remains paused.

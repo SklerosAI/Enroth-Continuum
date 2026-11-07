@@ -2542,7 +2542,13 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Updated local and campaign status to supersede the earlier missing visited-section note after the detached outdoor v6 `VIST` round trip passed for two source-backed map capsules.
 - Kept v6 disk persistence, live return, durable checkpoint policy, production SaveLoad and border travel open.
+
 ## [2026-11-07] verify | MM6 signed actor dialogue preflight
 - by: T-Burton-ND via codex
 - A bounded read-only indoor pre-event fixture retains exact signed native actor identity and checks the current follower roster and interaction predicate. An actor passes `CanInteractWithActor()` while its negative follower address is unresolved; the actual MM6 `getNPCData()` lookup refuses. A deliberate safe-address diagnostic failed 0/1, then the passing blocker characterization passed 1/1 without dialogue or roster mutation.
 - The first, second and risk-ranked test-only indoor v6 chains passed 15/15, and an MM7 headless control passed 1/1. Production dialogue, GNPC and SaveLoad remain unchanged; original MM6 signed-target semantics and post-world clickable hire/fire acceptance remain open.
+## [2026-11-07] verify | MM6 outdoor v6 disposable replay
+- by: T-Burton-ND via codex
+- Added an exact owner-only test slot with atomic v6 shell checks and required active/visited semantic validation. Malformed, cross-map and injected pre-primary-rename faults refused without changing existing slots before the admitted write.
+- A fresh child read the v6 slot through read-only preflight, rebuilt the active outdoor map using the existing v5 replay, revalidated the visited map against source, and aborted before input. The visited owner was not published to the live map cache.
+- Five separate headless children passed 1/1 each: v2 seed, v4 baseline, pre-existing v5 control, v6 writer, v6 reader. Both v6 processes kept the v5 control byte-identical; the disposable profile was removed. Production travel/save, old-map return and post-rename durable-result policy remain closed.

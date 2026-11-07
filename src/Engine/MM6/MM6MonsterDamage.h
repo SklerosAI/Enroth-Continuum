@@ -5,6 +5,7 @@
 #include <string_view>
 
 #include "Engine/GameTitle.h"
+#include "Engine/Objects/CharacterEnums.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Objects/Monsters.h"
 #include "Utility/String/Ascii.h"
@@ -63,12 +64,43 @@ inline uint8_t monsterResistanceForAttack(const MonsterInfo &monster, MonsterDam
     throw std::runtime_error("MM6 Energy resistance mapping is unverified");
 }
 
-// Physical and Fire have existing direct damage paths. Other labels need an
-// MM6 character resistance mapping or source-backed Magic/Energy rule first.
+/**
+ * Refuses MM6 damage to a monster in a channel whose monster resistance rule is not verified.
+ *
+ * @param title                         Running game title, everything passes outside MM6.
+ * @param type                          Damage channel.
+ */
 inline void requireVerifiedMonsterDamage(GameTitle title, DamageType type) {
     if (title != GameTitle::MM6) return;
     if (type == DAMAGE_PHYSICAL || type == DAMAGE_FIRE) return;
     throw std::runtime_error("MM6 damage channel is not verified");
+}
+
+/**
+ * @param type                          Damage channel, the shared runtime stores MM6 Electricity as Air and Cold as
+ *                                      Water.
+ * @return                              MM6 character resistance that the original damage check reads for it.
+ */
+inline Attribute characterResistanceForDamage(DamageType type) {
+    switch (type) {
+        case DAMAGE_FIRE: return ATTRIBUTE_RESIST_FIRE;
+        case DAMAGE_AIR: return ATTRIBUTE_RESIST_AIR;
+        case DAMAGE_WATER: return ATTRIBUTE_RESIST_WATER;
+        default: break;
+    }
+    throw std::runtime_error("MM6 character resistance for this damage channel is not verified");
+}
+
+/**
+ * Refuses MM6 damage to a character in a channel whose character resistance rule is not verified.
+ *
+ * @param title                         Running game title, everything passes outside MM6.
+ * @param type                          Damage channel.
+ */
+inline void requireVerifiedCharacterDamage(GameTitle title, DamageType type) {
+    if (title != GameTitle::MM6) return;
+    if (type == DAMAGE_PHYSICAL) return; // MM6 applies no resistance or luck roll to physical damage.
+    characterResistanceForDamage(type);
 }
 
 }  // namespace mm6

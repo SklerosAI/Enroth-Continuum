@@ -50,10 +50,15 @@ inline MonsterSpecialAttack parseMonsterSpecialAttackName(std::string_view name)
     throw std::runtime_error("Unknown active MM6 monster special attack");
 }
 
-// The MM7 effect executor uses title-specific condition resistance, item
-// breakage, theft and cue rules. MM6 effects stay closed until proven.
+/**
+ * Refuses an MM6 special attack whose save, target choice and effect are not verified. Breaking a random item is the
+ * one verified type.
+ *
+ * @param title                         Running game title, everything passes outside MM6.
+ * @param type                          Special attack of the hitting monster.
+ */
 inline void requireVerifiedMonsterSpecialAttack(GameTitle title, MonsterSpecialAttack type) {
-    if (title == GameTitle::MM6 && type != SPECIAL_ATTACK_NONE)
+    if (title == GameTitle::MM6 && type != SPECIAL_ATTACK_NONE && type != SPECIAL_ATTACK_BREAK_ANY)
         throw std::runtime_error("MM6 monster special attack effect is unverified");
 }
 

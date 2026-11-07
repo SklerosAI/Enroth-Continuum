@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iterator>
 #include <stdexcept>
+#include <string>
 #include <string_view>
 #include <utility>
 
@@ -13,6 +14,7 @@
 #include "Engine/MM6/MM6MonsterSpecialAttack.h"
 #include "Engine/MM6/MM6MonsterProjectile.h"
 #include "Engine/MM6/MM6MonsterSpells.h"
+#include "Engine/MM6/MM6MonsterSpellEffect.h"
 #include "Engine/Graphics/Sprites.h"
 #include "Engine/Snapshots/TableSerialization.h"
 #include "Engine/Tables/ObjectTable.h"
@@ -56,6 +58,24 @@ UNIT_TEST(MM6MonsterDamage, GatesUnverifiedEffectsByTitle) {
         EXPECT_NO_THROW(mm6::requireVerifiedMonsterDamage(GameTitle::MM7, type));
     }
     EXPECT_THROW(mm6::requireVerifiedMonsterDamage(GameTitle::MM6, DAMAGE_MIND), std::runtime_error);
+}
+
+UNIT_TEST(MM6MonsterDamage, GatesCharacterChannelsSeparatelyFromMonsterChannels) {
+    // Characters take Electricity and Cold through their own resistances, monsters don't have a verified rule yet.
+    for (DamageType type : {DAMAGE_PHYSICAL, DAMAGE_FIRE, DAMAGE_AIR, DAMAGE_WATER})
+        EXPECT_NO_THROW(mm6::requireVerifiedCharacterDamage(GameTitle::MM6, type));
+    for (DamageType type : {DAMAGE_EARTH, DAMAGE_MAGIC, DAMAGE_ENERGY, DAMAGE_BODY, DAMAGE_MIND}) {
+        EXPECT_THROW(mm6::requireVerifiedCharacterDamage(GameTitle::MM6, type), std::runtime_error);
+        EXPECT_NO_THROW(mm6::requireVerifiedCharacterDamage(GameTitle::MM7, type));
+    }
+    for (DamageType type : {DAMAGE_AIR, DAMAGE_WATER})
+        EXPECT_THROW(mm6::requireVerifiedMonsterDamage(GameTitle::MM6, type), std::runtime_error);
+
+    EXPECT_EQ(mm6::characterResistanceForDamage(DAMAGE_FIRE), ATTRIBUTE_RESIST_FIRE);
+    EXPECT_EQ(mm6::characterResistanceForDamage(DAMAGE_AIR), ATTRIBUTE_RESIST_AIR);
+    EXPECT_EQ(mm6::characterResistanceForDamage(DAMAGE_WATER), ATTRIBUTE_RESIST_WATER);
+    EXPECT_THROW(mm6::characterResistanceForDamage(DAMAGE_PHYSICAL), std::runtime_error);
+    EXPECT_THROW(mm6::characterResistanceForDamage(DAMAGE_EARTH), std::runtime_error);
 }
 
 UNIT_TEST(MM6MonsterDamage, ReadsSixExplicitMonsterResistanceColumns) {
@@ -120,7 +140,10 @@ UNIT_TEST(MM6MonsterSpecialAttack, DecodesRetainedAliasesAndGatesUnverifiedEffec
     EXPECT_EQ(mm6::parseMonsterSpecialAttackName("BrkArmor "), SPECIAL_ATTACK_BREAK_ARMOR);
     EXPECT_THROW(mm6::parseMonsterSpecialAttackName("unsupported"), std::runtime_error);
     EXPECT_NO_THROW(mm6::requireVerifiedMonsterSpecialAttack(GameTitle::MM6, SPECIAL_ATTACK_NONE));
+    EXPECT_NO_THROW(mm6::requireVerifiedMonsterSpecialAttack(GameTitle::MM6, SPECIAL_ATTACK_BREAK_ANY));
     EXPECT_THROW(mm6::requireVerifiedMonsterSpecialAttack(GameTitle::MM6, SPECIAL_ATTACK_FEAR),
+                 std::runtime_error);
+    EXPECT_THROW(mm6::requireVerifiedMonsterSpecialAttack(GameTitle::MM6, SPECIAL_ATTACK_BREAK_ARMOR),
                  std::runtime_error);
     EXPECT_NO_THROW(mm6::requireVerifiedMonsterSpecialAttack(GameTitle::MM7, SPECIAL_ATTACK_FEAR));
 }
@@ -159,6 +182,26 @@ UNIT_TEST(MM6MonsterSpells, ResolvesMM6IdsAndRejectsUnknownNames) {
     EXPECT_EQ(std::to_underlying(mm6::monsterSpellId("Dispell Magic")), 80);
     EXPECT_EQ(std::to_underlying(mm6::monsterSpellId("Psychic Shockt")), 65);
     EXPECT_THROW(mm6::monsterSpellId("unsupported"), std::runtime_error);
+}
+
+UNIT_TEST(MM6MonsterSpells, FirstMapSpellsUseOriginalMonsterDiceAndOwnElement) {
+    // Monster casts roll the original monster table, not the player spell formula.
+    for (int id : {2, 4, 18}) {
+        const mm6::MonsterSpellDice dice = mm6::monsterSpellDice(static_cast<SpellId>(id), 7);
+        EXPECT_EQ(dice.rolls, 1) << id;
+        EXPECT_EQ(dice.sides, 2) << id;
+    }
+    const mm6::MonsterSpellDice coldBeam = mm6::monsterSpellDice(static_cast<SpellId>(24), 3);
+    EXPECT_EQ(coldBeam.rolls, 3);
+    EXPECT_EQ(coldBeam.sides, 2);
+    EXPECT_THROW(mm6::monsterSpellDice(static_cast<SpellId>(6), 1), std::runtime_error);
+    EXPECT_FALSE(mm6::isVerifiedMonsterSpell(static_cast<SpellId>(26)));
+
+    EXPECT_EQ(mm6::monsterSpellDamageType(mm6::SpellDamageTag::Fire), DAMAGE_FIRE);
+    EXPECT_EQ(mm6::monsterSpellDamageType(mm6::SpellDamageTag::Electricity), DAMAGE_AIR);
+    EXPECT_EQ(mm6::monsterSpellDamageType(mm6::SpellDamageTag::Cold), DAMAGE_WATER);
+    EXPECT_THROW(mm6::monsterSpellDamageType(mm6::SpellDamageTag::Poison), std::runtime_error);
+    EXPECT_THROW(mm6::monsterSpellDamageType(mm6::SpellDamageTag::Magic), std::runtime_error);
 }
 
 UNIT_TEST(MM6MonsterSpells, RetainsAllF3MatchedActiveMonsterCasts) {

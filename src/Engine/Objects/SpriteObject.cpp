@@ -11,6 +11,8 @@
 #include "Engine/Party.h"
 #include "Engine/TurnEngine/TurnEngine.h"
 #include "Engine/AttackList.h"
+#include "Engine/MM6/MM6MonsterSpellEffect.h"
+#include "Engine/Spells/Spells.h"
 #include "Engine/Tables/MapTable.h"
 
 #include "Engine/Random/Random.h"
@@ -740,7 +742,10 @@ bool processSpellImpact(unsigned int uLayingItemID, Pid pid) {
         }
     }
 
-    switch (object->spriteId) {
+    // Verified MM6 monster spells all land like a single-target bolt, and MM6 Fire Bolt has the id of MM7 Fire Aura.
+    const bool mm6MonsterBolt = engine->gameTitle() == GameTitle::MM6 && object->spell_caster_pid.type() == OBJECT_Actor &&
+                                mm6::isVerifiedMonsterSpell(object->uSpellID) && object->spriteId == SpellSpriteMapping[object->uSpellID];
+    switch (mm6MonsterBolt ? SPRITE_SPELL_FIRE_FIRE_BOLT : object->spriteId) {
         case SPRITE_SPELL_FIRE_FIRE_SPIKE:
         case SPRITE_SPELL_AIR_SPARKS:
         case SPRITE_SPELL_DARK_TOXIC_CLOUD: {

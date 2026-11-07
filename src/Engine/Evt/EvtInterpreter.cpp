@@ -30,6 +30,7 @@
 #include "Engine/Evt/MM6ItemEventWrite.h"
 #include "Engine/Evt/MM6EventVariableDispatch.h"
 #include "Engine/Evt/Processor.h"
+#include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/Party.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
@@ -356,6 +357,8 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                 character.playEmotion(ir.data.portrait_id, 0_ticks);
             break;
         case EVENT_ReceiveDamage:
+            // In MM6 the operand is an original damage kind, which has no verified mapping to DamageType.
+            mm6::requireVerifiedMonsterDamage(engine->gameTitle(), ir.data.damage_descr.damage_type);
             for (Character &character : iterateCharacters(ir.who, grng))
                 character.receiveDamage(ir.data.damage_descr.damage, ir.data.damage_descr.damage_type);
             break;

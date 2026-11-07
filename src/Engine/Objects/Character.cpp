@@ -22,6 +22,7 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
 #include "Engine/MM6/MM6ActualStatCondition.h"
+#include "Engine/MM6/MM6CombatRules.h"
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6MonsterPreferences.h"
@@ -1253,7 +1254,8 @@ Color Character::GetExperienceDisplayColor() {
 
 //----- (0048D4B3) --------------------------------------------------------
 int Character::CalculateIncommingDamage(DamageType dmg_type, int dmg) {
-    mm6::requireVerifiedMonsterDamage(engine->gameTitle(), dmg_type);
+    if (engine->gameTitle() == GameTitle::MM6)
+        return mm6::characterIncomingDamage(*this, dmg_type, dmg, *grng);
     // TODO(captainurist): these are some weird casts to CharacterAttributeType
     if (classType == CLASS_LICH &&
         ((Attribute)dmg_type == ATTRIBUTE_RESIST_MIND ||
@@ -1496,7 +1498,7 @@ void Character::Heal(int amount) {
 }
 
 int Character::receiveDamage(signed int amount, DamageType dmg_type) {
-    mm6::requireVerifiedMonsterDamage(engine->gameTitle(), dmg_type);
+    mm6::requireVerifiedCharacterDamage(engine->gameTitle(), dmg_type);
     conditions.reset(CONDITION_SLEEP);  // wake up if asleep
     signed int recieved_dmg = CalculateIncommingDamage(dmg_type, amount);  // get damage
     // for no damage cheat - moved from elsewhere
@@ -1772,6 +1774,10 @@ int Character::ReceiveSpecialAttackEffect(MonsterSpecialAttack attType, Actor *p
             case SPECIAL_ATTACK_BREAK_ANY:
             case SPECIAL_ATTACK_BREAK_ARMOR:
             case SPECIAL_ATTACK_BREAK_WEAPON:
+                if (engine->gameTitle() == GameTitle::MM6) {
+                    mm6::breakItem(this, itemtobreak.get());
+                    return 1;
+                }
                 if (!(itemtobreak->flags & ITEM_HARDENED)) {
                     playReaction(SPEECH_ITEM_BROKEN);
                     itemtobreak->SetBroken();
@@ -4063,7 +4069,6 @@ bool IsDwarfPresentInParty(bool a1) {
 void DamageCharacterFromMonster(Pid uObjID, ActorAbility dmgSource, signed int targetchar) {
     // target character? if any
 
-    SpellId spellId;
     signed int recvdMagicDmg;     // eax@139
     int healthBeforeRecvdDamage;  // [sp+48h] [bp-Ch]@3
 
@@ -4087,6 +4092,8 @@ void DamageCharacterFromMonster(Pid uObjID, ActorAbility dmgSource, signed int t
 
         Character *playerPtr = &pParty->pCharacters[targetchar];
         Actor *actorPtr = &pActors[uActorID];
+        if (engine->gameTitle() == GameTitle::MM6)
+            mm6::requireVerifiedMonsterHit(*actorPtr, dmgSource, true, pParty->pCharacters);
         healthBeforeRecvdDamage = playerPtr->health;
         if (uObjID.type() != OBJECT_Actor || !actorPtr->ActorHitOrMiss(playerPtr))
             return;
@@ -4117,29 +4124,7 @@ void DamageCharacterFromMonster(Pid uObjID, ActorAbility dmgSource, signed int t
                 dmgToReceive /= spellPower;
         }
 
-        DamageType damageType;
-        switch (dmgSource) {
-            case ABILITY_ATTACK1:
-                damageType = actorPtr->monsterInfo.attack1Type;
-                break;
-            case ABILITY_ATTACK2:
-                damageType = actorPtr->monsterInfo.attack2Type;
-                break;
-            case ABILITY_SPELL1:
-                spellId = actorPtr->monsterInfo.spell1Id;
-                damageType = pSpellStats->pInfos[spellId].damageType;
-                break;
-            case ABILITY_SPELL2:
-                spellId = actorPtr->monsterInfo.spell2Id;
-                damageType = pSpellStats->pInfos[spellId].damageType;
-                break;
-            case ABILITY_SPECIAL:
-                damageType = static_cast<DamageType>(actorPtr->monsterInfo.field_3C_some_special_attack);
-                break;
-            default:
-                damageType = DAMAGE_PHYSICAL;
-                break;
-        }
+        DamageType damageType = actorPtr->abilityDamageType(dmgSource);
 
         // calc damage
         dmgToReceive = playerPtr->receiveDamage(dmgToReceive, damageType);
@@ -4239,6 +4224,8 @@ void DamageCharacterFromMonster(Pid uObjID, ActorAbility dmgSource, signed int t
             return;
         } else if (uActorType == OBJECT_Actor) {  // missile fired by actor
             Actor *actorPtr = &pActors[uActorID];
+            if (engine->gameTitle() == GameTitle::MM6)
+                mm6::requireVerifiedMonsterHit(*actorPtr, dmgSource, dmgSource == ABILITY_ATTACK1, pParty->pCharacters);
             if (targetchar == -1) targetchar = stru_50C198.which_player_to_attack(actorPtr);
             Character *playerPtr = &pParty->pCharacters[targetchar];
             int dmgToReceive = actorPtr->_43B3E0_CalcDamage(dmgSource);
@@ -4287,29 +4274,7 @@ void DamageCharacterFromMonster(Pid uObjID, ActorAbility dmgSource, signed int t
                 if (spellPower > 0) dmgToReceive /= spellPower;
             }
 
-            DamageType damageType;
-            switch (dmgSource) {
-                case ABILITY_ATTACK1:
-                    damageType = actorPtr->monsterInfo.attack1Type;
-                    break;
-                case ABILITY_ATTACK2:
-                    damageType = actorPtr->monsterInfo.attack2Type;
-                    break;
-                case ABILITY_SPELL1:
-                    spellId = actorPtr->monsterInfo.spell1Id;
-                    damageType = pSpellStats->pInfos[spellId].damageType;
-                    break;
-                case ABILITY_SPELL2:
-                    spellId = actorPtr->monsterInfo.spell2Id;
-                    damageType = pSpellStats->pInfos[spellId].damageType;
-                    break;
-                case ABILITY_SPECIAL:
-                    damageType = static_cast<DamageType>(actorPtr->monsterInfo.field_3C_some_special_attack);
-                    break;
-                default:
-                    damageType = DAMAGE_PHYSICAL;
-                    break;
-            }
+            DamageType damageType = actorPtr->abilityDamageType(dmgSource);
 
             int reflectedDmg = playerPtr->receiveDamage(dmgToReceive, damageType);
             if (playerPtr->pCharacterBuffs[CHARACTER_BUFF_PAIN_REFLECTION].Active()) {

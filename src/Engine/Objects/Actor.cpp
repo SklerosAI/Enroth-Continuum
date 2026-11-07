@@ -8,9 +8,11 @@
 #include <optional>
 
 #include "Engine/Engine.h"
+#include "Engine/MM6/MM6CombatRules.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6EncounterMonster.h"
 #include "Engine/MM6/MM6MonsterProjectile.h"
+#include "Engine/MM6/MM6MonsterSpellEffect.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Data/AwardEnums.h"
 #include "Engine/Data/HouseEnumFunctions.h"
@@ -241,6 +243,34 @@ void Actor::AI_SpellAttack(unsigned int uActorID, AIDirection *pDir,
         distancemod = 2;
     }
 
+    auto launchProjectile = [&] {
+        sprite.spriteId = SpellSpriteMapping[uSpellID]; // MM6 numbers its spell objects the same way, school * 1000 + 10 * index.
+        sprite.uObjectDescID = GetObjDescId(uSpellID);
+        sprite.containing_item.Reset();
+        sprite.uSpellID = uSpellID;
+        sprite.spell_level = uSkillMastery.level();
+        sprite.spell_skill = MASTERY_NONE; // TODO(captainurist): why do we ignore passed skill mastery?
+        sprite.vPosition = actorPtr->pos + Vec3f(0, 0, actorPtr->height / 2);
+        sprite.uFacing = (short)pDir->uYawAngle;
+        sprite.uAttributes = 0;
+        sprite.uSectorID = pIndoor->GetSector(sprite.vPosition);
+        sprite.timeSinceCreated = 0_ticks;
+        sprite.spell_caster_pid = Pid(OBJECT_Actor, uActorID);
+        sprite.spell_target_pid = Pid();
+        sprite.field_60_distance_related_prolly_lod = distancemod;
+        sprite.spellCasterAbility = ABILITY_SPELL1;
+
+        spriteId = sprite.Create(pDir->uYawAngle, pDir->uPitchAngle, pObjectTable->pObjects[sprite.uObjectDescID].uSpeed, 0);
+        if (spriteId != -1) {
+            pAudioPlayer->playSpellSound(uSpellID, false, SOUND_MODE_PID, Pid(OBJECT_Sprite, spriteId));
+        }
+    };
+
+    if (engine->gameTitle() == GameTitle::MM6) {
+        launchProjectile(); // Every verified MM6 monster spell is a single projectile.
+        return;
+    }
+
     switch (uSpellID) {
         case SPELL_FIRE_FIRE_BOLT:
         case SPELL_FIRE_FIREBALL:
@@ -257,26 +287,7 @@ void Actor::AI_SpellAttack(unsigned int uActorID, AIDirection *pDir,
         case SPELL_LIGHT_LIGHT_BOLT:
         case SPELL_DARK_TOXIC_CLOUD:
         case SPELL_DARK_DRAGON_BREATH:
-            sprite.spriteId = SpellSpriteMapping[uSpellID];
-            sprite.uObjectDescID = GetObjDescId(uSpellID);
-            sprite.containing_item.Reset();
-            sprite.uSpellID = uSpellID;
-            sprite.spell_level = uSkillMastery.level();
-            sprite.spell_skill = MASTERY_NONE; // TODO(captainurist): why do we ignore passed skill mastery?
-            sprite.vPosition = actorPtr->pos + Vec3f(0, 0, actorPtr->height / 2);
-            sprite.uFacing = (short)pDir->uYawAngle;
-            sprite.uAttributes = 0;
-            sprite.uSectorID = pIndoor->GetSector(sprite.vPosition);
-            sprite.timeSinceCreated = 0_ticks;
-            sprite.spell_caster_pid = Pid(OBJECT_Actor, uActorID);
-            sprite.spell_target_pid = Pid();
-            sprite.field_60_distance_related_prolly_lod = distancemod;
-            sprite.spellCasterAbility = ABILITY_SPELL1;
-
-            spriteId = sprite.Create(pDir->uYawAngle, pDir->uPitchAngle, pObjectTable->pObjects[sprite.uObjectDescID].uSpeed, 0);
-            if (spriteId != -1) {
-                pAudioPlayer->playSpellSound(uSpellID, false, SOUND_MODE_PID, Pid(OBJECT_Sprite, spriteId));
-            }
+            launchProjectile();
             break;
 
         case SPELL_FIRE_HASTE:
@@ -1173,9 +1184,9 @@ void Actor::AddOnDamageOverlay(unsigned int uActorID, int overlayType, signed in
 //----- (0043B3E0) --------------------------------------------------------
 int Actor::_43B3E0_CalcDamage(ActorAbility dmgSource) {
     if (dmgSource == ABILITY_ATTACK1)
-        mm6::requireVerifiedMonsterDamage(engine->gameTitle(), monsterInfo.attack1Type);
+        mm6::requireVerifiedCharacterDamage(engine->gameTitle(), monsterInfo.attack1Type);
     if (dmgSource == ABILITY_ATTACK2)
-        mm6::requireVerifiedMonsterDamage(engine->gameTitle(), monsterInfo.attack2Type);
+        mm6::requireVerifiedCharacterDamage(engine->gameTitle(), monsterInfo.attack2Type);
 
     int damageDiceRolls;
     int damageDiceSides;
@@ -1208,6 +1219,8 @@ int Actor::_43B3E0_CalcDamage(ActorAbility dmgSource) {
             skill = this->monsterInfo.spell1SkillMastery;
             skillLevel = skill.level();
             skillMastery = skill.mastery();
+            if (engine->gameTitle() == GameTitle::MM6)
+                return mm6::monsterSpellDamage(this->monsterInfo, spellID, skill, *grng);
             return CalcSpellDamage(spellID, skillLevel, skillMastery, 0);
             break;
         case ABILITY_SPELL2:
@@ -1230,6 +1243,26 @@ int Actor::_43B3E0_CalcDamage(ActorAbility dmgSource) {
         damage += grng->random(damageDiceSides) + 1;
 
     return damage + damageBonus + spellPower;
+}
+
+DamageType Actor::abilityDamageType(ActorAbility ability) const {
+    switch (ability) {
+        case ABILITY_ATTACK1:
+            return monsterInfo.attack1Type;
+        case ABILITY_ATTACK2:
+            return monsterInfo.attack2Type;
+        case ABILITY_SPELL1:
+        case ABILITY_SPELL2: {
+            const SpellInfo &spell = pSpellStats->pInfos[ability == ABILITY_SPELL1 ? monsterInfo.spell1Id : monsterInfo.spell2Id];
+            if (engine->gameTitle() == GameTitle::MM6)
+                return mm6::monsterSpellDamageType(spell.mm6DamageTag);
+            return spell.damageType;
+        }
+        case ABILITY_SPECIAL:
+            return static_cast<DamageType>(monsterInfo.field_3C_some_special_attack);
+        default:
+            return DAMAGE_PHYSICAL;
+    }
 }
 
 //----- (00438B9B) --------------------------------------------------------
@@ -2308,6 +2341,8 @@ void Actor::ActorDamageFromMonster(Pid attacker_id,
     }
     if (attacker_id.type() == OBJECT_Actor) {
         if (!pActors[actor_id].IsNotAlive()) {
+            if (engine->gameTitle() == GameTitle::MM6)
+                mm6::requireVerifiedMonsterOnMonsterHit(pActors[attacker_id.id()], a4);
             pActors[actor_id].lastCharacterIdToHit = attacker_id;
             if (pActors[actor_id].aiState == Fleeing)
                 pActors[actor_id].attributes |= ACTOR_FLEEING;
@@ -2327,29 +2362,9 @@ void Actor::ActorDamageFromMonster(Pid attacker_id,
                 }
                 if (pActors[actor_id].buffs[ACTOR_BUFF_STONED].Active())
                     dmgToRecv = 0;
-                if (a4 == ABILITY_ATTACK1) {
-                    v12 =
-                        pActors[attacker_id.id()].monsterInfo.attack1Type;
-                } else if (a4 == ABILITY_ATTACK2) {
-                    v12 =
-                        pActors[attacker_id.id()].monsterInfo.attack2Type;
-                    if (pActors[actor_id]
-                            .buffs[ACTOR_BUFF_SHIELD]
-                            .Active())
-                        dmgToRecv = dmgToRecv / 2;
-                } else if (a4 == ABILITY_SPELL1) {
-                    v12 = pSpellStats
-                        ->pInfos[pActors[attacker_id.id()].monsterInfo.spell1Id]
-                        .damageType;
-                } else if (a4 == ABILITY_SPELL2) {
-                    v12 = pSpellStats
-                        ->pInfos[pActors[attacker_id.id()].monsterInfo.spell2Id]
-                        .damageType;
-                } else if (a4 == ABILITY_SPECIAL) {
-                    v12 = static_cast<DamageType>(pActors[attacker_id.id()].monsterInfo.field_3C_some_special_attack);
-                } else {
-                    v12 = DAMAGE_PHYSICAL;
-                }
+                if (a4 == ABILITY_ATTACK2 && pActors[actor_id].buffs[ACTOR_BUFF_SHIELD].Active())
+                    dmgToRecv = dmgToRecv / 2;
+                v12 = pActors[attacker_id.id()].abilityDamageType(a4);
                 finalDmg = pActors[actor_id].CalcMagicalDamageToActor(
                     v12, dmgToRecv);
                 pActors[actor_id].hp -= finalDmg;
@@ -2965,6 +2980,7 @@ void Actor::InitializeActors() {
                                                         1);
     }
 }
+
 //----- (00439474) --------------------------------------------------------
 int Actor::DamageMonsterFromParty(Pid a1, unsigned int uActorID_Monster, const Vec3f &pVelocity) {
     SpriteObject *projectileSprite;  // ebx@1
@@ -2996,6 +3012,8 @@ int Actor::DamageMonsterFromParty(Pid a1, unsigned int uActorID_Monster, const V
     Character *character = &pParty->pCharacters[a1.id()];
     pMonster = &pActors[uActorID_Monster];
     if (pMonster->IsNotAlive()) return 0;
+    if (engine->gameTitle() == GameTitle::MM6)
+        mm6::requireVerifiedPartyAttack(*character, projectileSprite);
 
     pMonster->attributes |= ACTOR_NEARBY | ACTOR_ACTIVE;
     if (pMonster->aiState == Fleeing) pMonster->attributes |= ACTOR_FLEEING;

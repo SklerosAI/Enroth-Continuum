@@ -178,6 +178,12 @@ class Actor {
     static void ApplyFineForKillingPeasant(unsigned int uActorID);
     static void DrawHealthBar(Actor *actor, Recti window);
     int _43B3E0_CalcDamage(ActorAbility dmgSource);
+
+    /**
+     * @param ability                   One of this monster's abilities.
+     * @return                          Damage type of a hit made with that ability.
+     */
+    DamageType abilityDamageType(ActorAbility ability) const;
     static void AddOnDamageOverlay(unsigned int uActorID, int overlayType, int damage);
 
     static void Arena_summon_actor(MonsterId monster_id, Vec3f pos);

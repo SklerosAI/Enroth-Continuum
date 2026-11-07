@@ -2396,3 +2396,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Audited the five exact upstream dependency-source revisions and their primary license files, plus the cached FFmpeg archives' embedded configure/license strings. The upstream tag and release digest identify the cached Mac input, but its FFmpeg recipe permits automatic external-library detection and the ZIP lacks a full feature log.
 - Updated the build-input inventory and wiki with license sources and bundled-notice gaps. No replacement recipe or source copies were added in this pass; the local-only configure gate still refuses the incomplete offline build.
+
+## [2026-11-07] analyze | MM6 border Weak and cancel effects
+- by: T-Burton-ND via codex
+- Bounded original confirmation evidence identifies Weak as the insufficient-food condition and shows that its clock refreshes even when already Weak. The inherited condition setter would skip that refresh.
+- Original cancel and rejection both clamp coordinates and close the travel UI without changing time, food, conditions or map. Updated the source packets, topical wiki pages and agent handoff. Production travel and autosave remain gated.

@@ -7,6 +7,7 @@
 
 #include "Testing/Unit/UnitTest.h"
 
+#include "Engine/Engine.h"
 #include "Engine/MM6/MM6RawSaveFields.h"
 #include "Engine/MM6/MM6NpcStaticBaseline.h"
 #include "Engine/MM6/MM6V6IndoorSaveFields.h"
@@ -111,6 +112,14 @@ mm6::V6IndoorSaveFields stagedCandidate() {
     return fields;
 }
 
+struct ItemTableScope {
+    ItemTable table;
+    ItemTable *previous = pItemTable;
+
+    ItemTableScope() { pItemTable = &table; }
+    ~ItemTableScope() { pItemTable = previous; }
+};
+
 } // namespace
 
 UNIT_TEST(MM6V6IndoorSaveFields, StrictTwentySixSectionRoundTrip) {
@@ -198,12 +207,12 @@ UNIT_TEST(MM6V6IndoorSaveFields, ValidatedRawV2IndoorStageRefusesGameplay) {
             throw std::runtime_error("fixture requested another face base");
         return std::vector<mm6::IndoorFaceState>{};
     };
-    ItemTable items;
+    ItemTableScope items;
     const auto npcs = freshNpcBaseline();
     const auto staged = mm6::stageV6IndoorSave(
         bytes, npcs, names, readBase,
         [](std::int32_t id) { return id >= 1 && id <= 580; },
-        items, 5, 145, baseline, GameTitle::MM6);
+        items.table, 5, 145, baseline, GameTitle::MM6);
     ASSERT_TRUE(staged.represented.indoorPlan);
     EXPECT_FALSE(staged.represented.outdoorPlan);
     EXPECT_FALSE(staged.canEnterGameLoop());
@@ -215,9 +224,9 @@ UNIT_TEST(MM6V6IndoorSaveFields, ValidatedRawV2IndoorStageRefusesGameplay) {
     EXPECT_THROW((void) mm6::stageV6IndoorSave(
         mm6::encodeV6IndoorSave(changed, GameTitle::MM6), npcs, names,
         readBase, [](std::int32_t id) { return id >= 1 && id <= 580; },
-        items, 5, 145, baseline, GameTitle::MM6), std::exception);
+        items.table, 5, 145, baseline, GameTitle::MM6), std::exception);
     EXPECT_THROW((void) mm6::stageV6IndoorSave(
         bytes, npcs, names, readBase,
         [](std::int32_t id) { return id >= 1 && id <= 580; },
-        items, 5, 145, {}, GameTitle::MM6), std::exception);
+        items.table, 5, 145, {}, GameTitle::MM6), std::exception);
 }

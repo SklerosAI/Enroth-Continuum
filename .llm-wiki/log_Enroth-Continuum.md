@@ -2255,3 +2255,8 @@ Chronological record of wiki activity.
 - Added separate strict test-only first input, second atomic v5 write and second fresh-child reader gates. A disposable seven-process chain passed v2 seed, v4 baseline, post-action v5 writer, fresh v5 reader, bounded real-loop turn/walk, second v5 writer and second fresh reader at 1/1 each.
 - The second writer required changed position and yaw and wrote a distinct slot while prior v2, v4 and v5 candidates stayed byte-identical. The second reader checked exact represented owners after world preparation and aborted before input. Focused v5 atomic checks passed 3/3; an MM7 headless control passed 1/1.
 - This validates a bounded first-map test cycle only. Production MM6 SaveLoad, indoor and later-map replay, campaign play and Atlas launch remain gated.
+
+## [2026-11-07] implement | MM6 active skill event variables
+- by: T-Burton-ND via codex
+- Routed active MM6 skill Compare and Set through a title-specific checked adapter. It maps the 31 source skill slots, including Learning, without the colliding MM7 event-variable enum; unsupported Add/Subtract and invalid or Grandmaster Set values refuse before mutation.
+- Focused skill, variable and private-corpus framing units passed 15/15, a null-renderer MM6 interpreter scenario passed 1/1, and an MM7 headless control passed 1/1. Visible quest outcomes, broader training behavior and production MM6 save/load remain open.

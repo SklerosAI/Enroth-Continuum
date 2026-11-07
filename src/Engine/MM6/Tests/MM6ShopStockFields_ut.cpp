@@ -141,3 +141,101 @@ UNIT_TEST(MM6ShopStockFields, FailedRefreshDoesNotPartiallyChangeDetachedOwners)
     EXPECT_EQ(stock->records[0][0], 11);
     EXPECT_EQ(clocks.deadlineWords[mm6::shopClockSlot(47)], 0);
 }
+
+UNIT_TEST(MM6ShopStockFields, EntryModRefreshesEachVisitAndPreservesSharedRow) {
+    EXPECT_EQ(mm6::shopRefreshPolicyFromModValue("1", GameTitle::MM6),
+              mm6::ShopRefreshPolicy::OnEntry);
+    EXPECT_EQ(mm6::shopRefreshPolicyFromModValue("", GameTitle::MM6),
+              mm6::ShopRefreshPolicy::WhenExpired);
+    EXPECT_EQ(mm6::shopRefreshPolicyFromModValue("true", GameTitle::MM6),
+              mm6::ShopRefreshPolicy::WhenExpired);
+    EXPECT_EQ(mm6::shopRefreshPolicyFromModValue("1", GameTitle::MM7),
+              mm6::ShopRefreshPolicy::WhenExpired);
+
+    auto stock = std::make_unique<mm6::ShopStockFields>();
+    stock->ready = true;
+    mm6::ShopGuildClockFields clocks;
+    clocks.ready = true;
+    const auto sharedStock = mm6::guildStockRecordIndex(119, 0, GameTitle::MM6);
+    const auto sharedClock = mm6::shopClockSlot(47);
+    ASSERT_EQ(sharedClock, mm6::guildClockSlot(119));
+
+    int firstRuns = 0;
+    int secondRuns = 0;
+    int guildRuns = 0;
+    const mm6::ShopStockGenerator first = [&](mm6::ShopStockFields &) { ++firstRuns; };
+    const mm6::ShopStockGenerator second = [&](mm6::ShopStockFields &staged) {
+        staged.records[sharedStock][0] = static_cast<std::uint8_t>(++secondRuns);
+    };
+    const mm6::ShopStockGenerator guild = [&](mm6::ShopStockFields &staged) {
+        staged.records[sharedStock][0] = static_cast<std::uint8_t>(100 + ++guildRuns);
+    };
+
+    EXPECT_TRUE(mm6::refreshShopStockForEntry(stock.get(), &clocks, 47, 1, 100,
+                                               first, second, GameTitle::MM6,
+                                               mm6::ShopRefreshPolicy::OnEntry));
+    EXPECT_EQ(stock->records[sharedStock][0], 1);
+    EXPECT_EQ(clocks.deadlineWords[sharedClock], 100);
+    EXPECT_FALSE(mm6::refreshShopStockForEntry(stock.get(), &clocks, 47, 2, 200,
+                                                first, second, GameTitle::MM6,
+                                                mm6::ShopRefreshPolicy::WhenExpired));
+    EXPECT_EQ(firstRuns, 1);
+    EXPECT_EQ(secondRuns, 1);
+    EXPECT_TRUE(mm6::refreshShopStockForEntry(stock.get(), &clocks, 47, 2, 200,
+                                               first, second, GameTitle::MM6,
+                                               mm6::ShopRefreshPolicy::OnEntry));
+    EXPECT_EQ(firstRuns, 2);
+    EXPECT_EQ(secondRuns, 2);
+    EXPECT_EQ(stock->records[sharedStock][0], 2);
+    EXPECT_EQ(clocks.deadlineWords[sharedClock], 200);
+
+    EXPECT_TRUE(mm6::refreshGuildStockForEntry(stock.get(), &clocks, 119, 3, 300,
+                                                guild, GameTitle::MM6,
+                                                mm6::ShopRefreshPolicy::OnEntry));
+    EXPECT_EQ(guildRuns, 1);
+    EXPECT_EQ(stock->records[sharedStock][0], 101);
+    EXPECT_EQ(clocks.deadlineWords[sharedClock], 300);
+    EXPECT_TRUE(mm6::refreshShopStockForEntry(stock.get(), &clocks, 47, 4, 400,
+                                               first, second, GameTitle::MM6,
+                                               mm6::ShopRefreshPolicy::OnEntry));
+    EXPECT_EQ(firstRuns, 3);
+    EXPECT_EQ(secondRuns, 3);
+    EXPECT_EQ(stock->records[sharedStock][0], 3);
+    EXPECT_EQ(clocks.deadlineWords[sharedClock], 400);
+}
+
+UNIT_TEST(MM6ShopStockFields, EntryModGeneratorFailureLeavesBothOwnersUnchanged) {
+    auto stock = std::make_unique<mm6::ShopStockFields>();
+    stock->ready = true;
+    stock->records[0][0] = 17;
+    mm6::ShopGuildClockFields clocks;
+    clocks.ready = true;
+    clocks.deadlineWords[mm6::shopClockSlot(47)] = 500;
+    const auto beforeStock = *stock;
+    const auto beforeClocks = clocks;
+    const mm6::ShopStockGenerator first = [](mm6::ShopStockFields &staged) {
+        staged.records[0][0] = 42;
+    };
+    const mm6::ShopStockGenerator fail = [](mm6::ShopStockFields &) {
+        throw std::runtime_error("synthetic generator failure");
+    };
+
+    EXPECT_THROW(mm6::refreshShopStockForEntry(stock.get(), &clocks, 47, 1, 600,
+                                                first, fail, GameTitle::MM6,
+                                                mm6::ShopRefreshPolicy::OnEntry), std::runtime_error);
+    EXPECT_EQ(*stock, beforeStock);
+    EXPECT_EQ(clocks, beforeClocks);
+    EXPECT_THROW(mm6::refreshGuildStockForEntry(stock.get(), &clocks, 119, 1, 600,
+                                                 fail, GameTitle::MM6,
+                                                 mm6::ShopRefreshPolicy::OnEntry), std::runtime_error);
+    EXPECT_EQ(*stock, beforeStock);
+    EXPECT_EQ(clocks, beforeClocks);
+    EXPECT_THROW(mm6::refreshShopStockForEntry(stock.get(), &clocks, 47, 1, 600,
+                                                first, first, GameTitle::MM7,
+                                                mm6::ShopRefreshPolicy::OnEntry), std::runtime_error);
+    EXPECT_THROW(mm6::refreshShopStockForEntry(stock.get(), &clocks, 47, 1, 600,
+                                                first, first, GameTitle::MM6,
+                                                static_cast<mm6::ShopRefreshPolicy>(99)), std::runtime_error);
+    EXPECT_EQ(*stock, beforeStock);
+    EXPECT_EQ(clocks, beforeClocks);
+}

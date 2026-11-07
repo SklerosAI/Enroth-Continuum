@@ -9,11 +9,20 @@
 
 Enroth Continuum is a personal, native Apple Silicon launcher and fork for
 Might & Magic VII, with MM6 and MM8 data staging and later campaign support
-planned. The local **Atlas** app opens MM7 through a bundled OpenEnroth engine,
+planned. The local **Atlas** app opens MM7 through this fork's bundled engine,
 manages local save backups, and offers optional private MM7 portrait and armor
 AC overrides. See [launcher/README.md](launcher/README.md) for the current scope
 and build instructions. MM6, MM8, and character transfer are not yet playable
 through this fork.
+
+For an Apple silicon MM7 build from repository-owned source, run
+`python3 tools/build_mm7_macos.py /absolute/new/output-directory`. The command
+builds the pinned media libraries and stages Atlas without fetching an
+OpenEnroth release or dependency archive; the Apple SDK, Python, CMake and
+Ninja are local build tools. Supply your own MM7 game files outside Git. See
+[the clean build record](project/MM7_CLEAN_OFFLINE_BUILD.md). This publication
+preview has not replaced the installed Atlas app or completed visible
+save/quit/reload checks.
 
 Original game assets remain local to each owner. The tracked
 [local-game-data/README.md](local-game-data/README.md) describes the deliberately

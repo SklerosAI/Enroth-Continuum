@@ -1,7 +1,9 @@
 # Upstream relationship
 
-Enroth Continuum tracks [OpenEnroth/OpenEnroth](https://github.com/OpenEnroth/OpenEnroth)
-as its authoritative engine upstream.
+Enroth Continuum is a source fork of [OpenEnroth/OpenEnroth](https://github.com/OpenEnroth/OpenEnroth).
+OpenEnroth is the historical upstream and an optional source of reviewed
+changes. The SklerosAI repository is the source for this fork's Mac MM7 build;
+the build does not fetch an OpenEnroth release or dependency archive.
 
 ## Working agreement
 
@@ -28,5 +30,5 @@ git fetch upstream
 git log --oneline master..upstream/master
 ```
 
-Upstream synchronization is intentionally a reviewed operation. Do not force-push
+Upstream synchronization is intentionally a reviewed, optional operation. Do not force-push
 the shared branch, and do not mix synchronization commits with SklerosAI work.

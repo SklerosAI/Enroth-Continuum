@@ -71,10 +71,12 @@ The first-map fresh-child test now uses a one-shot fail-closed post-world
 decision: a false or throwing exact owner validator returns to Main Menu
 before timer unpause and input. Integration passed the focused admission units
 **6/6**, the disposable seven-child v5 chain **1/1 per child**, and an MM7
-headless control **1/1**. The decision remains test-only. Global publication
-precedes construction of all replay scopes, so a preworld exception can leave
-a partial live world. Detached precommit and failure recovery must precede
-normal MM6 SaveLoad/UI admission.
+headless control **1/1**. The decision remains test-only. The prior scope
+constructor-order risk is superseded: both first-map readers now construct
+every replay scope before global assignment, and the combined integration
+seven-child chain passed **1/1 per child** with MM7 control **1/1**. Assignment
+or pre-event publication can still fail after mutation. Detached precommit
+and failure recovery must precede normal MM6 SaveLoad/UI admission.
 
 See also: [V4 Event Runtime](MM6-F4-EC6-V4-Event-Runtime.md),
 [V3 Post Entry Map and Pre Event](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md),

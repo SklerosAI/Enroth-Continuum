@@ -364,8 +364,10 @@ The fresh-child first-map test has a one-shot fail-closed post-world decision:
 exact owner refusal or validator exception returns to Main Menu before timer
 unpause/input. Integration passed admission units **6/6**, the seven-child
 v5 chain **1/1 each**, and MM7 control **1/1**. This remains test-only;
-preworld global assignment can precede a throwing replay-scope constructor.
-Build a fully detached precommit bundle and a preworld failure policy before
+both first-map readers now construct all replay scopes before any live owner
+assignment. The combined integration seven-child chain and MM7 control still
+pass. Live assignment or pre-event replay can fail after mutation. Build a
+fully detached precommit bundle and a preworld failure policy before
 opening normal SaveLoad/UI. See the [v5 packet](../project/MM6_F4_EC6_V5_SPRITE_RUNTIME.md).
 
 MM6 manual/quick save actions now refuse before side effects; active

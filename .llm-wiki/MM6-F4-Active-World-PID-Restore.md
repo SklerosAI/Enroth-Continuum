@@ -15,4 +15,6 @@ The detached `stageKnownWorldAndVisuals()` path validates all 67 MM6 base/delta 
 
 Synthetic native tests use nonzero actor PIDs in both indoor and outdoor active deltas and reject out-of-range or wrong-type PIDs after all 67 base reads without changing caller owners. This does not claim an MM6 launch or post-load visual proof.
 
+The later [saved actor PID gate](MM6-F4-Saved-Actor-PID-Identity-Gate.md) refuses active VISU publication until a selected-delta and post-reload identity proof exists. The earlier saved-count bound remains a structural preflight, not a release of actor overlays.
+
 See also: [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md), [Partial Stage Coordinator](MM6-F4-Partial-Stage-Coordinator.md), [World Save Runtime](MM6-F4-World-Save-Runtime.md).

@@ -17,6 +17,11 @@ inline bool &chestMapLoadOptInFlag() {
     return enabled;
 }
 
+inline bool &preserveMarkerFreeChestFlag() {
+    static thread_local bool enabled = false;
+    return enabled;
+}
+
 }  // namespace detail
 
 inline bool chestMapLoadOptedIn() {
@@ -25,12 +30,16 @@ inline bool chestMapLoadOptedIn() {
 
 class ScopedChestMapLoadOptIn {
  public:
-    ScopedChestMapLoadOptIn() : previous_(detail::chestMapLoadOptInFlag()) {
+    explicit ScopedChestMapLoadOptIn(bool preserveMarkerFree = false)
+        : previous_(detail::chestMapLoadOptInFlag()),
+          previousPreserve_(detail::preserveMarkerFreeChestFlag()) {
         detail::chestMapLoadOptInFlag() = true;
+        detail::preserveMarkerFreeChestFlag() = preserveMarkerFree;
     }
 
     ~ScopedChestMapLoadOptIn() {
         detail::chestMapLoadOptInFlag() = previous_;
+        detail::preserveMarkerFreeChestFlag() = previousPreserve_;
     }
 
     ScopedChestMapLoadOptIn(const ScopedChestMapLoadOptIn &) = delete;
@@ -38,6 +47,7 @@ class ScopedChestMapLoadOptIn {
 
  private:
     bool previous_;
+    bool previousPreserve_;
 };
 
 inline bool tryChestMapLoadBinding(GameTitle title, MapTreasureLevel mapLevel,
@@ -57,7 +67,8 @@ inline bool tryActiveChestMapLoad(GameTitle title, MapId mapId, const MapTable *
         return false;
     const auto owned = scanPartyOwnedChestArtifacts(title, *party);
     return owned && applyActiveChestLiveOwnerHandoff(
-        title, maps->pInfos[mapId].mapTreasureLevel, *table, *owned);
+        title, maps->pInfos[mapId].mapTreasureLevel, *table, *owned,
+        detail::preserveMarkerFreeChestFlag());
 }
 
 }  // namespace mm6

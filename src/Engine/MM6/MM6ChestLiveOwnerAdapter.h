@@ -144,10 +144,19 @@ static_assert(noexcept(std::declval<std::vector<std::uint8_t> &>().swap(
 
 inline bool applyChestLiveOwnerHandoff(
     const ChestLiveBinding &binding, MapTreasureLevel mapLevel, const ItemTable &table,
-    const std::array<std::uint8_t, 30> &partyOwnedArtifactFlags) {
+    const std::array<std::uint8_t, 30> &partyOwnedArtifactFlags,
+    bool preserveMarkerFree = false) {
     auto staged = stageChestLiveOwnerHandoff(binding, mapLevel, table, partyOwnedArtifactFlags);
     if (!staged)
         return false;
+    // Fresh child save replay already owns the post-generation CHST LCG.
+    // The original outer loop draws even with zero markers; drawing again
+    // would change that saved owner. A marker-free sidecar must validate and
+    // project to identical bytes before this test-only preservation path.
+    if (preserveMarkerFree && staged->markersVisited == 0)
+        return staged->deltaBytes == *binding.deltaBytes &&
+            staged->generatedArtifactFlags == binding.titleState->generatedArtifactFlags &&
+            staged->chests.size() == binding.chests->size();
     binding.chests->swap(staged->chests);
     binding.deltaBytes->swap(staged->deltaBytes);
     binding.titleState->lcgState = staged->nextLcgState;
@@ -160,7 +169,8 @@ inline bool applyChestLiveOwnerHandoff(
 // flags from an MM6-validated source; current SaveLoad does not persist state.
 inline bool applyActiveChestLiveOwnerHandoff(
     GameTitle title, MapTreasureLevel mapLevel, const ItemTable &table,
-    const std::array<std::uint8_t, 30> &partyOwnedArtifactFlags) {
+    const std::array<std::uint8_t, 30> &partyOwnedArtifactFlags,
+    bool preserveMarkerFree = false) {
     if (title != GameTitle::MM6)
         return false;
     ChestLiveBinding binding;
@@ -177,11 +187,13 @@ inline bool applyActiveChestLiveOwnerHandoff(
         base.doorDataBytes = pIndoor->doorsData.size() * 2;
         base.sections.push_back({MM6IndoorSectionKind::DoorSlots, Blob(), 200});
         binding.indoorBase = &base;
-        return applyChestLiveOwnerHandoff(binding, mapLevel, table, partyOwnedArtifactFlags);
+        return applyChestLiveOwnerHandoff(binding, mapLevel, table,
+                                         partyOwnedArtifactFlags, preserveMarkerFree);
     } else {
         return false;
     }
-    return applyChestLiveOwnerHandoff(binding, mapLevel, table, partyOwnedArtifactFlags);
+    return applyChestLiveOwnerHandoff(binding, mapLevel, table,
+                                     partyOwnedArtifactFlags, preserveMarkerFree);
 }
 
 }  // namespace mm6

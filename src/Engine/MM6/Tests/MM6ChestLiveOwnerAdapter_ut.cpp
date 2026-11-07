@@ -126,6 +126,27 @@ UNIT_TEST(MM6ChestLiveOwnerAdapter, OutdoorCommitsActualOwnerShapeAndPreservesOt
     EXPECT_EQ(sidecar[chestOffset + 20 * mm6::CHEST_WIRE_SIZE], original[chestOffset + 20 * mm6::CHEST_WIRE_SIZE]);
 }
 
+UNIT_TEST(MM6ChestLiveOwnerAdapter, SavedMarkerFreeLoadPreservesExactLcgAndSidecar) {
+    TableScope table;
+    auto sidecar = outdoorSidecar(0);
+    const auto original = sidecar;
+    auto chests = baselineChests(recordsFromOutdoor(sidecar));
+    mm6::ChestTitleState state;
+    ASSERT_TRUE(mm6::restoreChestTitleState(GameTitle::MM6, &state, 8, {}));
+    mm6::ChestLiveBinding binding{GameTitle::MM6, LEVEL_OUTDOOR, &chests, &sidecar, &state};
+    const auto staged = mm6::stageChestLiveOwnerHandoff(
+        binding, MAP_TREASURE_LEVEL_1, *table.table, {});
+    ASSERT_TRUE(staged);
+    EXPECT_EQ(staged->markersVisited, 0);
+    EXPECT_NE(staged->nextLcgState, state.lcgState); // Source loop still draws.
+    EXPECT_TRUE(mm6::applyChestLiveOwnerHandoff(
+        binding, MAP_TREASURE_LEVEL_1, *table.table, {}, true));
+    EXPECT_EQ(state.lcgState, 8u);
+    EXPECT_EQ(sidecar, original);
+    EXPECT_TRUE(mm6::liveChestsMatchSidecar(GameTitle::MM6, chests,
+                                            recordsFromOutdoor(sidecar)));
+}
+
 UNIT_TEST(MM6ChestLiveOwnerAdapter, IndoorCommitsPatchedSidecarAndArtifactState) {
     TableScope table;
     auto sidecar = indoorSidecar(-7);

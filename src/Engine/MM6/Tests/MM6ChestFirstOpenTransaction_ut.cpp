@@ -76,6 +76,8 @@ UNIT_TEST(MM6ChestFirstOpenTransaction, FirstOpenAndItemPickupAreDetached) {
     EXPECT_TRUE(taken->placed);
     EXPECT_TRUE(taken->itemTaken);
     EXPECT_EQ(taken->heldItem.itemId, static_cast<ItemId>(200));
+    ASSERT_TRUE(taken->heldItem.mm6RawRecord);
+    EXPECT_EQ((*taken->heldItem.mm6RawRecord)[26], 0x5a);
     EXPECT_EQ(mm6::readChest32(std::span(taken->record).subspan(4, 28), 0), 0);
     EXPECT_EQ(taken->record[4 + 26], 0x5a);
     EXPECT_EQ(input.record, original);

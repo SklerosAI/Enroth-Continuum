@@ -39,11 +39,15 @@ UNIT_TEST(MM6ChestRuntimeProjection, ResolvedItemAndFirstOpenGridRoundTripWithOp
     auto projected = mm6::stageChestRuntimeProjection(GameTitle::MM6, source, 0);
     ASSERT_TRUE(projected);
     EXPECT_EQ(projected->chest.inventory.size(), 1);
+    ASSERT_TRUE(projected->chest.inventory.entry(0)->mm6RawRecord);
+    EXPECT_EQ((*projected->chest.inventory.entry(0)->mm6RawRecord)[26], 0x5a);
     auto before = mm6::stageChestRuntimeRecord(GameTitle::MM6, *projected);
     ASSERT_TRUE(before);
     EXPECT_EQ(*before, source);
 
     Item item = projected->chest.inventory.take(projected->chest.inventory.entry(0));
+    ASSERT_TRUE(item.mm6RawRecord);
+    EXPECT_EQ((*item.mm6RawRecord)[26], 0x5a);
     projected->chest.inventory.add(Pointi(0, 0), item);
     projected->chest.SetInitialized(true);
     auto changed = mm6::stageChestRuntimeRecord(GameTitle::MM6, *projected);
@@ -56,6 +60,27 @@ UNIT_TEST(MM6ChestRuntimeProjection, ResolvedItemAndFirstOpenGridRoundTripWithOp
     auto again = mm6::stageChestRuntimeRecord(GameTitle::MM6, *reopened);
     ASSERT_TRUE(again);
     EXPECT_EQ(*again, *changed);
+}
+
+UNIT_TEST(MM6ChestRuntimeProjection, RejectsLostChangedOrWrongSlotProvenance) {
+    TableScope table;
+    const auto source = oneItemRecord();
+    auto projected = mm6::stageChestRuntimeProjection(GameTitle::MM6, source, 0);
+    ASSERT_TRUE(projected);
+
+    projected->chest.inventory.entry(0)->mm6RawRecord.reset();
+    EXPECT_FALSE(mm6::stageChestRuntimeRecord(GameTitle::MM6, *projected));
+
+    projected = mm6::stageChestRuntimeProjection(GameTitle::MM6, source, 0);
+    ASSERT_TRUE(projected);
+    (*projected->chest.inventory.entry(0)->mm6RawRecord)[26] ^= 1;
+    EXPECT_FALSE(mm6::stageChestRuntimeRecord(GameTitle::MM6, *projected));
+
+    projected = mm6::stageChestRuntimeProjection(GameTitle::MM6, source, 0);
+    ASSERT_TRUE(projected);
+    projected->chest.inventory.entry(0)->numCharges++;
+    EXPECT_FALSE(mm6::stageChestRuntimeRecord(GameTitle::MM6, *projected));
+    EXPECT_EQ(source, oneItemRecord());
 }
 
 UNIT_TEST(MM6ChestRuntimeProjection, RejectsForeignMarkerAndInvalidGridWithoutMutation) {

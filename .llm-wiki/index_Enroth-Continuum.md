@@ -70,7 +70,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Chest Outer Plan](MM6-F4-Chest-Outer-Plan.md) — Source-order 20-chest marker, probability-carry, gold and delegated item stages
 - [MM6 F4 Chest Direct Artifact](MM6-F4-Chest-Direct-Artifact.md) — Original unsafe slot-index scan, bounded trace, explicit safe 30-ID policy option
 - [MM6 F4 Chest Grid Wire](MM6-F4-Chest-Grid-Wire.md) — Original MM6 full-record save copy proves 140 signed grid cells; detached MAPS round-trip, live guards remain
-- [MM6 F4 Chest Runtime Projection](MM6-F4-Chest-Runtime-Projection.md) — Bounded resolved-record to ChestInventory/Item stage and 140-cell indoor/outdoor changed-grid writers; live handoff remains gated
+- [MM6 F4 Chest Runtime Projection](MM6-F4-Chest-Runtime-Projection.md) — Bounded stage with per-item raw provenance and 140-cell changed-grid writers; live handoff remains gated
 - [MM6 F4 Chest Map Load Handoff](MM6-F4-Chest-Map-Load-Handoff.md) — Detached atomic 20-record generation/projection owner bundle with MM6 LCG/artifact rollback; live adapter and save are separate
 - [MM6 F4 Chest Live Owner Adapter](MM6-F4-Chest-Live-Owner-Adapter.md) — Opt-in MM6 title-state owner and atomic actual `vChests`/active-sidecar adapter; guarded load and `.ec6` persistence remain open
 - [MM6 F4 Chest Map Load Route](MM6-F4-Chest-Map-Load-Route.md) — Scoped MM6-only loader join with party artifact scan and twenty-chest atomic sidecar handoff; default guard remains closed pending headless proof

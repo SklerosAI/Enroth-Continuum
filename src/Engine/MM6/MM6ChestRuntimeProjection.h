@@ -52,7 +52,8 @@ struct ChestRuntimeProjection {
 
 // This is an opt-in stage for a resolved MM6 chest, not a map-load hook. The
 // existing ChestInventory reconstructor is allowed only when it round-trips
-// the active grid and the supported first 24 item bytes exactly.
+// the active grid and the supported first 24 item bytes exactly. Each occupied
+// Item also carries its complete source record for later item-value moves.
 inline std::optional<ChestRuntimeProjection> stageChestRuntimeProjection(
     GameTitle title, const ChestRecord &record, int chestIndex) {
     if (title != GameTitle::MM6 || chestIndex < 0 || chestIndex >= 20 || !pItemTable ||
@@ -97,12 +98,25 @@ inline std::optional<ChestRuntimeProjection> stageChestRuntimeProjection(
     for (int slot = 0; slot < 140; ++slot)
         if (std::memcmp(&replay.items[slot], &source.items[slot], 24) != 0)
             return std::nullopt;
+    for (int slot = 0; slot < 140; ++slot) {
+        if (source.items[slot].itemId <= 0)
+            continue;
+        InventoryEntry entry = result.chest.inventory.entry(slot);
+        if (!entry)
+            return std::nullopt;
+        ItemRecord28 raw;
+        const auto bytes = std::span(record).subspan(4 + slot * 28, 28);
+        std::copy(bytes.begin(), bytes.end(), raw.begin());
+        entry->mm6RawRecord = raw;
+    }
     return result;
 }
 
 // Copy live supported fields onto the original 28-byte records and all 140
-// grid cells. Bytes 24..27 stay in the sidecar: equipped-slot and lich-jar
-// fields in the MM7-shaped Item cannot be assumed equivalent for MM6.
+// grid cells. Occupied slots must still own their exact source record and
+// unchanged supported fields. Bytes 24..27 stay in the sidecar: equipped-slot
+// and lich-jar fields in the MM7-shaped Item cannot be assumed equivalent for
+// MM6. New or modified chest items require a separate proved writer.
 inline std::optional<ChestRecord> stageChestRuntimeRecord(
     GameTitle title, const ChestRuntimeProjection &projection) {
     if (title != GameTitle::MM6)
@@ -121,6 +135,13 @@ inline std::optional<ChestRecord> stageChestRuntimeRecord(
     writeChest16(result, 2, live.flags);
     for (int slot = 0; slot < 140; ++slot) {
         auto bytes = std::span(result).subspan(4 + slot * 28, 28);
+        if (live.items[slot].itemId > 0) {
+            InventoryConstEntry entry = projection.chest.inventory.entry(slot);
+            if (!entry || !entry->mm6RawRecord ||
+                !std::equal(bytes.begin(), bytes.end(), entry->mm6RawRecord->begin()) ||
+                std::memcmp(&live.items[slot], bytes.data(), 24) != 0)
+                return std::nullopt;
+        }
         std::memcpy(bytes.data(), &live.items[slot], 24);
     }
     const auto encoded = encodeChestGridWire(title, result, live.inventoryMatrix);

@@ -25,6 +25,7 @@
 #include "MM6HirelingSaveFields.h"
 #include "MM6ResistanceSaveFields.h"
 #include "MM6RecoverySaveFields.h"
+#include "MM6RawSaveRuntime.h"
 
 namespace mm6 {
 namespace {
@@ -48,16 +49,15 @@ std::vector<std::uint8_t> copiedBytes(const Blob &blob) {
     return {start, start + blob.size()};
 }
 
-StagedWorldFields stageWorldFromKnown(const NPCStats &liveNpcs,
-                                     const KnownSaveFields &candidate,
-                                     std::span<const std::string> expectedNames) {
-    validateExpectedMapNames(candidate.maps, expectedNames);
+StagedWorldFields stageWorldFromFields(const NPCStats &liveNpcs,
+                                      const NpcSaveFields &npcs,
+                                      const MapSaveFields &maps) {
     StagedWorldFields staged;
     staged.npcs = liveNpcs;
-    staged.npcs.pNPCData = candidate.npcs.npcData;
-    staged.npcs.pGroups = candidate.npcs.groups;
-    staged.npcs.uNumNewNPCs = candidate.npcs.activeCount;
-    for (const SavedMapDelta &delta : candidate.maps.deltas)
+    staged.npcs.pNPCData = npcs.npcData;
+    staged.npcs.pGroups = npcs.groups;
+    staged.npcs.uNumNewNPCs = npcs.activeCount;
+    for (const SavedMapDelta &delta : maps.deltas)
         staged.mapDeltas.emplace(delta.name, Blob::copy(delta.bytes.data(), delta.bytes.size()));
     return staged;
 }
@@ -130,7 +130,8 @@ StagedKnownWorldAndVisuals stageKnownWorldAndVisuals(
     requireMM6(title);
     ValidatedKnownMapSave validated = decodeKnownSaveWithActiveMapCounts(
         bytes, expectedNames, readBase, verifyItem);
-    StagedWorldFields world = stageWorldFromKnown(liveNpcs, validated.known, expectedNames);
+    StagedWorldFields world = stageWorldFromFields(
+        liveNpcs, validated.known.npcs, validated.known.maps);
     validateSavedOverlayActorPids(validated.known.metadata.overlays, validated.active);
     StagedSessionVisuals visuals = stageSessionVisuals(
         liveTimer, liveOverlays, {validated.known.metadata.timer, validated.known.metadata.overlays},
@@ -140,6 +141,25 @@ StagedKnownWorldAndVisuals stageKnownWorldAndVisuals(
     restoreChestFieldsBeforeMutation(validated.known.chest, &chestTitle, &rawActiveDelta, title);
     return {std::move(validated.known), std::move(world), std::move(visuals),
             std::move(validated.activeMap), chestTitle, std::move(rawActiveDelta)};
+}
+
+StagedRawWorldAndVisuals stageRawWorldAndVisuals(
+    const NPCStats &liveNpcs, const Timer &liveTimer,
+    const ActiveOverlayList &liveOverlays, const StagedRawTitleOwners &raw,
+    std::size_t overlayTableCount, GameTitle title) {
+    requireMM6(title);
+    StagedWorldFields world = stageWorldFromFields(
+        liveNpcs, raw.saved.npcs, raw.saved.maps);
+    validateSavedOverlayActorPids(raw.saved.metadata.overlays, raw.activeCounts);
+    StagedSessionVisuals visuals = stageSessionVisuals(
+        liveTimer, liveOverlays,
+        {raw.saved.metadata.timer, raw.saved.metadata.overlays},
+        overlayTableCount, title);
+    ChestTitleState chestTitle;
+    std::vector<std::uint8_t> rawActiveDelta;
+    restoreChestFieldsBeforeMutation(raw.saved.chest, &chestTitle, &rawActiveDelta, title);
+    return {std::move(world), std::move(visuals), std::move(chestTitle),
+            std::move(rawActiveDelta)};
 }
 
 StagedKnownSession stageKnownSession(
@@ -343,7 +363,8 @@ StagedWorldFields stageKnownWorldFields(const NPCStats &liveNpcs,
                                        std::span<const std::string> expectedNames, GameTitle title) {
     requireMM6(title);
     KnownSaveFields candidate = decodeKnownSave(bytes);
-    return stageWorldFromKnown(liveNpcs, candidate, expectedNames);
+    validateExpectedMapNames(candidate.maps, expectedNames);
+    return stageWorldFromFields(liveNpcs, candidate.npcs, candidate.maps);
 }
 
 KnownSaveFields captureKnownWorldFromActiveMap(

@@ -846,3 +846,9 @@ inventory on one detached Party, rejecting divergent inventory images and a
 late unsupported fourth-character item before return. Focused linked raw
 runtime, inventory and Antique tests passed **11/11**. This is still a partial
 Party; normal MM6 SaveLoad and Atlas Play remain guarded.
+
+The v2 raw map stage now retains active actor/sprite/chest counts and feeds a
+detached NPC, 67-map-buffer, timer, overlay and CHST stage shared with v1 field
+logic. Linked raw-runtime/world-runtime tests passed **14/14**, including a
+late invalid actor overlay that left input NPC/timer untouched. Live map,
+renderer and UI publication remain unresolved.

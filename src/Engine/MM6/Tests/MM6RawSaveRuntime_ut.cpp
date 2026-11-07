@@ -13,6 +13,8 @@
 
 #include "Engine/MM6/MM6RawSaveRuntime.h"
 #include "Engine/MM6/MM6AtomicSaveFile.h"
+#include "Engine/MM6/MM6WorldSaveRuntime.h"
+#include "Engine/Pid.h"
 
 #ifndef _WIN32
 #include <cstdlib>
@@ -271,6 +273,33 @@ UNIT_TEST(MM6RawSaveRuntime, JoinsCoreProgressAndRawInventoryOnPartyCopy) {
         baseline, owners, *table.table, GameTitle::MM6), std::exception);
     EXPECT_EQ(baseline.uNumGold, 999);
     EXPECT_FALSE(baseline.pCharacters[3].inventory.entry(137));
+}
+
+UNIT_TEST(MM6RawSaveRuntime, StagesWorldAndVisualOwnersAfterValidatedRawMap) {
+    const auto fields = exampleRaw();
+    const auto names = namesOf(fields);
+    auto raw = mm6::stageRawTitleOwners(mm6::encodeRawSave(fields, GameTitle::MM6),
+        names, syntheticBase, validItem, GameTitle::MM6);
+    NPCStats liveNpcs;
+    Timer liveTimer;
+    ActiveOverlayList liveOverlays;
+    auto staged = mm6::stageRawWorldAndVisuals(
+        liveNpcs, liveTimer, liveOverlays, raw, 5, GameTitle::MM6);
+    EXPECT_EQ(staged.world.mapDeltas.size(), 67);
+    EXPECT_EQ(staged.world.npcs.uNumNewNPCs, 399);
+    EXPECT_TRUE(staged.visuals.timer.isPaused());
+    EXPECT_EQ(staged.rawActiveDelta, fields.chest.rawActiveDelta);
+    EXPECT_TRUE(staged.chestTitle.ready);
+    EXPECT_EQ(liveNpcs.uNumNewNPCs, 0);
+    EXPECT_THROW((void) mm6::stageRawWorldAndVisuals(
+        liveNpcs, liveTimer, liveOverlays, raw, 5, GameTitle::MM7), std::exception);
+
+    raw.saved.metadata.overlays[0].animationLength = 1;
+    raw.saved.metadata.overlays[0].packedPid = Pid::actor(0).packed();
+    EXPECT_THROW((void) mm6::stageRawWorldAndVisuals(
+        liveNpcs, liveTimer, liveOverlays, raw, 5, GameTitle::MM6), std::exception);
+    EXPECT_EQ(liveNpcs.uNumNewNPCs, 0);
+    EXPECT_FALSE(liveTimer.isPaused());
 }
 
 #ifndef _WIN32

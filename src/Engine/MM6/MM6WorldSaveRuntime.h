@@ -44,6 +44,15 @@ struct StagedKnownWorldAndVisuals {
     std::vector<std::uint8_t> rawActiveDelta;
 };
 
+struct StagedRawTitleOwners;
+
+struct StagedRawWorldAndVisuals {
+    StagedWorldFields world;
+    StagedSessionVisuals visuals;
+    ChestTitleState chestTitle;
+    std::vector<std::uint8_t> rawActiveDelta;
+};
+
 struct StagedKnownSession {
     Party party;
     StagedKnownWorldAndVisuals worldAndVisuals;
@@ -85,6 +94,14 @@ StagedKnownWorldAndVisuals stageKnownWorldAndVisuals(
     const NPCStats &liveNpcs, const Timer &liveTimer, const ActiveOverlayList &liveOverlays,
     std::span<const std::uint8_t> bytes, std::span<const std::string> expectedNames,
     const MapBaseReader &readBase, const GroundItemVerifier &verifyItem,
+    std::size_t overlayTableCount, GameTitle title);
+
+// Continue from a previously validated v2 raw owner stage, copying NPC/map,
+// timer/overlay and CHST data into detached owners. The caller must keep the
+// raw stage's saved fields and active counts intact. No live owner is assigned.
+StagedRawWorldAndVisuals stageRawWorldAndVisuals(
+    const NPCStats &liveNpcs, const Timer &liveTimer,
+    const ActiveOverlayList &liveOverlays, const StagedRawTitleOwners &raw,
     std::size_t overlayTableCount, GameTitle title);
 
 // Compose every currently represented Party/Character family on one detached

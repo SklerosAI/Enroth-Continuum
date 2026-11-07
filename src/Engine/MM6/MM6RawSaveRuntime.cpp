@@ -73,7 +73,7 @@ StagedRawTitleOwners stageRawTitleOwners(
     RawInventoryFields inventory = validated.raw.inventory;
     ShopTitleState shops = validated.raw.shops;
     return {std::move(validated.raw), std::move(inventory), std::move(*cursor),
-            std::move(shops), std::move(validated.activeMap)};
+            std::move(shops), validated.active, std::move(validated.activeMap)};
 }
 
 RawSaveFields captureRawTitleOwners(const StagedRawTitleOwners &staged,

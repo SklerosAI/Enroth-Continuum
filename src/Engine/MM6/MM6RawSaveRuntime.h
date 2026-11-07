@@ -20,6 +20,7 @@ struct StagedRawTitleOwners {
     RawInventoryFields inventory;
     RawHeldCursorOwner cursor;
     ShopTitleState shops;
+    SavedActiveMapCounts activeCounts;
     StagedActiveMap activeMap;
 };
 

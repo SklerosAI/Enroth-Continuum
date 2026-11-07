@@ -101,6 +101,7 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
     bool reached = false;
     bool aborted = false;
     std::vector<mm6::IndoorFaceState> preEventFaces;
+    std::vector<std::int16_t> preEventDoorsData;
     std::vector<std::uint8_t> activeDelta;
     mm6::GeneratedNpcSaveFields generated;
     GameplayRandomState rng;
@@ -119,6 +120,7 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
                     throw std::runtime_error("MM6 v6 indoor checkpoint preceded map reconstruction");
                 preEventFaces = mm6::captureLiveIndoorFaceStates(
                     *pIndoor, projectedBase, GameTitle::MM6);
+                preEventDoorsData = pIndoor->doorsData;
                 activeDelta = pIndoor->mm6DeltaBytes;
                 generated = mm6::captureGeneratedNpcFields(
                     pActors, *pNPCStats, mapName, GameTitle::MM6);
@@ -209,7 +211,8 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
                 active.bindings = mm6::captureEventRuntimeDecorationBindings(
                     pLevelDecorations, GameTitle::MM6);
                 if (liveSessionWriter) {
-                    mm6::testing::requireV6IndoorNativeResidualsForTest(parsedBase);
+                    mm6::testing::requireV6IndoorNativeResidualsForTest(
+                        parsedBase, preEventDoorsData);
                     postWorldRaw = mm6::testing::captureV6IndoorLiveRawOwnersForTest(
                         *raw, mapName);
                 }

@@ -57,7 +57,8 @@ inline void requireV6IndoorRawSectionsEqualForTest(
 // remaining live DLV field must still equal its retained native sidecar here;
 // a changed chest, door, outline, or reset counter needs a new exact owner.
 inline void requireV6IndoorNativeResidualsForTest(
-    const MM6IndoorSnapshot &base) {
+    const MM6IndoorSnapshot &base,
+    std::span<const std::int16_t> preEventDoorsData) {
     if (!pIndoor || pIndoor->mm6DeltaBytes.empty())
         throw std::runtime_error("MM6 v6 indoor residual check lacks DLV sidecar");
     auto native = decodeMM6IndoorRuntimeDelta(
@@ -71,8 +72,31 @@ inline void requireV6IndoorNativeResidualsForTest(
         throw std::runtime_error("MM6 v6 indoor DLV chest count changed");
     if (native.doors.size() != pIndoor->doors.size())
         throw std::runtime_error("MM6 v6 indoor DLV door count changed");
-    if (native.doorsData != pIndoor->doorsData)
-        throw std::runtime_error("MM6 v6 indoor DLV door geometry words changed");
+    if (native.doorsData.size() != preEventDoorsData.size() ||
+        !std::equal(preEventDoorsData.begin(), preEventDoorsData.end(),
+                    pIndoor->doorsData.begin(), pIndoor->doorsData.end()))
+        throw std::runtime_error("MM6 v6 indoor door words changed after pre-event load");
+    std::size_t cursor = 0;
+    for (const BLVDoor_MM7 &door : native.doors) {
+        const std::size_t identifiers = std::size_t(door.numVertices) +
+            std::size_t(door.numFaces) + std::size_t(door.numSectors);
+        const std::size_t repairedFaceDeltas = 2 * std::size_t(door.numFaces);
+        const std::size_t offsets = 3 * std::size_t(door.numOffsets);
+        const std::size_t end = cursor + identifiers + repairedFaceDeltas + offsets;
+        if (end > native.doorsData.size() ||
+            !std::equal(native.doorsData.begin() + cursor,
+                        native.doorsData.begin() + cursor + identifiers,
+                        preEventDoorsData.begin() + cursor) ||
+            !std::equal(native.doorsData.begin() + cursor + identifiers + repairedFaceDeltas,
+                        native.doorsData.begin() + end,
+                        preEventDoorsData.begin() + cursor + identifiers + repairedFaceDeltas))
+            throw std::runtime_error("MM6 v6 indoor native door geometry changed");
+        // reconstructMM6IndoorDelta replaces only these two face-delta arrays
+        // with deterministic face texture offsets before OnMapReload.
+        cursor = end;
+    }
+    if (cursor != native.doorsData.size())
+        throw std::runtime_error("MM6 v6 indoor door words lack a complete native source");
     const auto &chestBytes = native.wire.section(MM6IndoorSectionKind::Chests).bytes;
     for (std::size_t slot = 0; slot < native.chests.size(); ++slot) {
         ChestRecord record{};

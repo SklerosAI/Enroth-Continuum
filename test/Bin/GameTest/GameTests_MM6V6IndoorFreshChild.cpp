@@ -99,6 +99,7 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
     bool captured = false;
     bool aborted = false;
     std::vector<mm6::IndoorFaceState> preEventFaces;
+    std::vector<std::int16_t> preEventDoorsData;
     std::vector<std::uint8_t> rebuiltDelta;
     std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
     game.runGameRoutine([&] {
@@ -112,6 +113,7 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                     throw std::runtime_error("MM6 v6 reader checkpoint preceded indoor rebuild");
                 preEventFaces = mm6::captureLiveIndoorFaceStates(
                     *pIndoor, projectedBase, GameTitle::MM6);
+                preEventDoorsData = pIndoor->doorsData;
                 rebuiltDelta = pIndoor->mm6DeltaBytes;
                 captured = true;
             },
@@ -330,7 +332,8 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                 throw std::runtime_error("MM6 v6 ISRT changed after map reload events");
             if (postWorldReader) {
                 if (liveSessionReader) {
-                    mm6::testing::requireV6IndoorNativeResidualsForTest(parsedBase);
+                    mm6::testing::requireV6IndoorNativeResidualsForTest(
+                        parsedBase, preEventDoorsData);
                     const auto observedRaw = mm6::testing::captureV6IndoorLiveRawOwnersForTest(
                         staged->saved.raw, mapName);
                     mm6::testing::requireV6IndoorRawSectionsEqualForTest(

@@ -82,7 +82,7 @@ int creationProbeSeed() {
     const std::string_view input(value);
     int seed = -1;
     const auto [end, error] = std::from_chars(input.data(), input.data() + input.size(), seed);
-    if (input.empty() || error != std::errc{} || end != input.data() + input.size() ||
+    if (input.empty() || error != std::errc() || end != input.data() + input.size() ||
         seed < 0 || seed > 65535)
         throw std::runtime_error("MM6 creation probe seed must be an integer from 0 to 65535");
     return seed;

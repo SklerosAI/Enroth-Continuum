@@ -624,7 +624,9 @@ void runMM6LocationChangeLifecycle(EngineController &game, bool writeV6,
                         mm6::encodeV6OutdoorSave(*decoded, GameTitle::MM6) ==
                             candidate;
                     const auto refuses = [](auto &&action) {
-                        try { action(); } catch (const std::exception &) {
+                        try {
+                            action();
+                        } catch (const std::exception &) {
                             return true;
                         }
                         return false;

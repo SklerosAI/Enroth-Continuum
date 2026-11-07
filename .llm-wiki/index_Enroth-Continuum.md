@@ -22,7 +22,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 
 ## Campaigns and runtime
 
-- [Campaign Status](Campaign-Status.md) — Dated MM6, MM7, and MM8 readiness, including detached MM6 outdoor v6 replay and arrival gates
+- [Campaign Status](Campaign-Status.md) — Dated MM6, MM7, and MM8 readiness, including detached MM6 outdoor v6 replay and the no-write return probe
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [Runtime Isolation](Runtime-Isolation.md) — Title-locked MM7 helper and staged Atlas sibling assembler; MM6/MM8 launch gates remain closed
 - [MM7 Self-Contained Source](MM7-Self-Contained-Source.md) — Tracked Mac source and remaining default-build, graphical, save and identity gates

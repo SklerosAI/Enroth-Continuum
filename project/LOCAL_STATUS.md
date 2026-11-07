@@ -1303,3 +1303,12 @@ model-floor overlap; focused units passed **3/3** and the five-child chain
 passed again. This did not execute real border movement or enter the old map.
 `DoPrepareWorld(false)` replay, target-world agreement, rollback, durable
 result policy, production SaveLoad and border travel remain closed.
+
+An opt-in [pre-event return probe](MM6_F4_BORDER_AUTOSAVE_TRANSACTION.md)
+then entered the normal `DoPrepareWorld(false)` path for the visited outdoor
+target. It compared the loaded target's terrain and floor against the
+detached arrival, and aborted to Main Menu before live Party placement, chest
+generation or map events. A scope unit passed **1/1**; fresh disposable seed,
+v4 and return-probe children passed **1/1 each**. This establishes one
+target-floor agreement, not a full visited-owner replay, rollback or
+production return route.

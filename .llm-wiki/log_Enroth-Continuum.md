@@ -1678,3 +1678,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Composed four bounded character views into a detached all-or-nothing stage and capture of `RawInventoryFields`; late fourth-character failure leaves the source alone and prevents partial output.
 - Focused linked checks passed 11/11, including final-slot standard armor, opaque bytes and `INVR` encode/decode. Live inventory copies item values across slots, so transfer-safe raw provenance and a revised final save manifest remain required.
+
+## [2026-11-06] guard | MM6 standard item rarity and value arithmetic
+- by: T-Burton-ND via codex
+- The detached standard-equipment adapter now rejects artifact/relic templates and bonus strengths that would overflow the shared integer price calculation, including multiplication before addition. No live equipment or MM7 path changed.
+- A separate arm64 build passed focused standard-item, bonus-map and bounded-inventory checks 6/6. Native item evidence, title-specific artifact effects and modded armor gameplay remain open.

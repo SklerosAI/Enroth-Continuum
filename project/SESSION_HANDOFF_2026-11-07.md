@@ -77,6 +77,38 @@ was compiled together, and no lane's tests are known to pass at this snapshot.
 | I | 12 files, +305/-25 | `MM6PaperdollEquip.{h,cpp}` | Projection, HELD sync and paperdoll equip in progress. Also edits the v5 replay test that Lane A edits. |
 | S | 16 files, +264/-106 | `MM6CombatRules.h`, `MM6MonsterSpellEffect.h`, `GameTests_MM6Combat.cpp` | Reject-before-mutate ordering and damage channels in progress. Touches `Actor.cpp`, `Character.cpp`, `Game.cpp`, `EvtInterpreter.cpp`, `SpriteObject.cpp`. |
 
+### Lane reports after the resume
+
+- **E, event variables: merged as `91443d377`** (lane commit `dda7dc192`).
+  Variables 46-55 (resistances), 214 (NPC in party), 216-221 (day counters),
+  223 (hired profession compare and dismiss), 224 (circus prizes compare), 225
+  (skill points) and all 36 condition writes run from MM6 dispatch files, with
+  rules read from the original variable jump tables. Lane tests: 22/22 focused
+  unit, full unit suite with 0 failures, 6/6 MM6 headless, MM7 3/3, and the
+  new test fails with the branches switched off. Open: variable 215
+  (reputation) needs a party field and save section, opcodes 41 and 34 need
+  the MM6 item generator and object descriptors, opcode 21 stays with spells,
+  MM6 starts in year 1165 not 1168. The MM7 portrait sparkle helpers crash on
+  MM6 data, so MM6 writes play only the sound and reaction speech.
+- **S, spells and combat: done, not yet merged** (lane commits `3fffc842c`,
+  `bcda1bc2c`, `dc93a3b42`). Reject-before-mutate ordering for party, monster
+  and monster-on-monster hits. Original MM6 Electricity and Cold resistance
+  halving for characters. Monster spells 2, 4, 18, 24 as single projectiles
+  with original monster damage. `BrkItem` effect in an MM6 helper. Cure
+  Weakness (67) castable from the spellbook and quick cast, other spells refuse
+  with a status message. Three `DISABLED_` MM6 game tests through the real New
+  Game flow, each run alone, pass with the fix and fail without it. Unit suite
+  0 failures, MM7 `Prs.Pr2354` 1/1, full MM7 suite not run yet. Decision for
+  the owner: vanilla MM6 made every monster spell Fire damage (GrayFace calls
+  it a bug), the lane uses each spell's own element, one line to revert. Open:
+  MM6 party death, inherited monster AI, monster missiles, other elements and
+  spells, the second-attack bonus, the MM6 portrait animation mapping.
+- **G, MM6 item generator and give-item: started** in the old Lane E
+  worktree on branch `mm6-f4d-item-generator`.
+
+The merge order is now "as lanes complete", resolving shared-file overlaps at
+cherry-pick time, because finished lanes shouldn't wait on unfinished ones.
+
 A stopped lane agent can be resumed with its own context through a message to
 it once the limit resets. A new session should instead read the worktree diff,
 build it through `enroth-build`, and continue from the table above.

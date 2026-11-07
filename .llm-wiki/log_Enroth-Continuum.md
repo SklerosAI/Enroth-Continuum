@@ -2356,3 +2356,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added the exact pinned LuaJIT source with full original COPYRIGHT and provenance: 232 original blobs/modes matched the gitlink commit. The owned CMake recipe now reads a recorded committer timestamp without nested Git; standalone arm64 LuaJIT and integration cached-input MM7 target builds passed, and the generated header matched the earlier Git-based output.
 - Nine gitlinks, nested fetches and prebuilt dependency recipes still block a clean offline clone. The installed MM7 helper and private saves were untouched.
+
+## [2026-11-07] verify | MM6 border eligibility predicates
+- by: T-Burton-ND via codex
+- An accepted original-executable trace resolved the offer caller's three low Party flag bits as water damage, airborne and standing on water; confirmation separately refuses nonzero flying state. Added pure MM6-only predicates without wiring live travel.
+- Four eligibility, four route and three autosave-intercept focused checks passed 11/11 on the integration build. Full confirmation, corner acceptance, durable autosave and MM6 game-loop travel remain gated.

@@ -1912,3 +1912,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added direct decoded-field Party-copy adapters for v2 `RSTS` and `BUFF`, sharing v1 staging semantics; `RESC` remains the NPC-state tag.
 - The integrated linked codec/adapter/raw/world set passed 24/24. Hireling/recovery and the complete live session remain open.
+
+## [2026-11-06] integrate | MM6 represented v2 Party fields
+- by: T-Burton-ND via codex
+- Integrated decoded `HIRE` and `RCVR` adapters, then composed all currently represented v2 Party fields on one detached copy. Reconciled the v2 owner-gap packet with the separate NPC/map/timer/CHST stage.
+- Focused linked raw/effect/hireling-recovery tests passed 12/12, including a late clock rejection without baseline mutation. BEAC/IFOV policy, cursor/shop, live map/UI and production SaveLoad remain open.

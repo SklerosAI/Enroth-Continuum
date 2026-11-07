@@ -2386,3 +2386,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a separate genuine post-world indoor v6 candidate and test-only pre-event GNPC pool/RNG handoff. The fresh child checks exact GNPC row bytes, RNG and IART/ISRT/IDRT after map events. The earlier pre-event fixture remains a distinct bounded gate.
 - Both disposable three-process chains passed 1/1 per child in integration; focused v6/GNPC/v3 units passed 18/18 and an MM7 headless control passed 1/1. The candidate still reuses seed Party/title owners; gameplay admission and production SaveLoad remain closed.
+
+## [2026-11-07] analyze | MM6 border confirmation effects
+- by: T-Burton-ND via codex
+- The accepted original confirmation trace shows conditional rest/heal and food effects, independent coordinate wrapping and target ground-height recomputation. With zero food it skips healing; the inherited foot handler heals through its unconditional time-advance helper.
+- Updated the border transaction packet and wiki. Exact condition-ID equivalence and separate original cancel behavior remain unproved; live travel and production autosave remain closed.

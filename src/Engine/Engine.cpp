@@ -87,6 +87,7 @@
 #include "Engine/MM6/MM6V6PreEventIndoorSpriteReplayForTest.h"
 #include "Engine/MM6/MM6V5PreEventSpriteReplayForTest.h"
 #include "Engine/MM6/MM6TransitionAutosaveInterceptForTest.h"
+#include "Engine/MM6/MM6TransitionPostWorldCaptureForTest.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
@@ -666,6 +667,10 @@ void PrepareWorld(int _0_box_loading_1_fullscreen) {
     gameTimer->setPaused(true);
     animTimer->setPaused(true);
     DoPrepareWorld(false, (_0_box_loading_1_fullscreen == 0) + 1);
+
+    if (engine->gameTitle() == GameTitle::MM6)
+        mm6::testing::runArmedTransitionPostWorldCaptureForTest(
+            GameTitle::MM6, engine->_currentLoadedMapId);
 
     assert(gameTimer->isPaused()); // DoPrepareWorld shouldn't un-pause.
     assert(animTimer->isPaused());

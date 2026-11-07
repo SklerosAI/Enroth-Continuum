@@ -16,6 +16,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Overlays.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
@@ -27,6 +28,7 @@
 #include "Engine/MM6/MM6PrivateMapSource.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/MM6/MM6WorldSaveRuntime.h"
+#include "Engine/Objects/Actor.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Party.h"
 #include "Engine/Resources/LOD.h"
@@ -602,6 +604,46 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_RestartSlotEntersFirstOutdoorWorld) {
     ASSERT_TRUE(completed);
     ASSERT_TRUE(error.empty()) << error;
     EXPECT_TRUE(enteredWorld);
+    EXPECT_EQ(readFile(primary), before);
+    EXPECT_EQ(window->nativeHandle(), nullptr);
+
+    // Run the same timer/AI/input/draw subsystems used by Game::gameLoop on
+    // the freshly restored world. The parent test loop still belongs to party
+    // creation: this is not a production loadGame or gameLoop acceptance test.
+    const Vec3f initialPos = pParty->pos;
+    const int initialYaw = pParty->_viewYaw;
+    bool stepped = false;
+    bool moved = false;
+    std::string stepError;
+    game.runGameRoutine([] { gameTimer->setPaused(false); });
+    game.tick(2);
+    game.runGameRoutine([&] {
+        try {
+            gameTimer->tick();
+            current_screen_type = SCREEN_GAME;
+            uGameState = GAME_STATE_PLAYING;
+            onTimer();
+            Actor::UpdateActorAI();
+            pPartyActionQueue->Reset();
+            pPartyActionQueue->Add(PARTY_TurnLeft);
+            pPartyActionQueue->Add(PARTY_WalkForward);
+            UpdateUserInput_and_MapSpecificStuff();
+            engine->Draw();
+            moved = pParty->_viewYaw != initialYaw && pParty->pos != initialPos &&
+                pPartyActionQueue->uNumActions == 0 &&
+                engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute3.odm") &&
+                !engine->_pendingTransition.has_value();
+        } catch (const std::exception &exception) {
+            stepError = exception.what();
+        }
+        gameTimer->setPaused(true);
+        stepped = true;
+    });
+    for (int tick = 0; tick < 256 && !stepped; ++tick)
+        game.tick();
+    ASSERT_TRUE(stepped);
+    ASSERT_TRUE(stepError.empty()) << stepError;
+    EXPECT_TRUE(moved);
     EXPECT_EQ(readFile(primary), before);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }

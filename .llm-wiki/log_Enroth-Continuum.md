@@ -2681,3 +2681,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Raised the explicit registered worktree cap from ten to fifteen in agent instructions, the pre-create checker and the current plan at the owner's direction. The checker reports 10/15 active worktrees.
 - Existing MM6 lanes and protected baselines remain in place; this policy change does not imply additional concurrent code-changing lanes.
+
+## [2026-11-07] verify | MM7 Atlas and system OpenGL cutover
+- by: T-Burton-ND via codex
+- Fixed isolated MM7 launcher and mod controls, restored the spellbook indent and zero-base armor bonus tooltip, and checked the focused MM7 GameTest set 3/3. The temporary Atlas exposed and opened the local mods folder.
+- Rebuilt the Release MM7 helper against Apple's OpenGL framework, staged and installed a signed Atlas, and launched MM7 visibly to its title menu before returning normally. The prior installed app remains in an ignored local backup; the private data and save profile were not rewritten by installation.
+- Recorded shared-file MM6 lane overlap for sequential integration. MM7 save durability, source-owned media-library cutover, additional mods and graphical tooltip checks remain open.

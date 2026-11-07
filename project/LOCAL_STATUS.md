@@ -58,6 +58,15 @@ MM7 installation and distinct legacy save roots remain untouched.
 
 ## MM6: implementation checkpoint, not yet playable
 
+The [indoor v6 input-cycle packet](MM6_F4_EC6_V6_INDOOR_INPUT_CYCLE.md)
+records five fresh headless children passing 1/1 each: seed, first-map
+baseline, genuine indoor live-session writer, bounded real-loop turn/walk and
+post-input atomic writer, then exact fresh-child replay. The test fixture
+uses validated native floor geometry for placement and captures only
+source-backed, monotonic DLV outline visibility changes. This remains a
+test-only, one-indoor-map gate: production MM6 SaveLoad, general indoor play,
+graphics and Atlas MM6 Play are still closed.
+
 - Owned offline GOG installers were extracted into private, local folders under
   `~/Library/Application Support/Enroth Continuum/Game Data/`.
 - Branch `mm6-mac-implementation` adds `--game mm6`, a separate MM6 user

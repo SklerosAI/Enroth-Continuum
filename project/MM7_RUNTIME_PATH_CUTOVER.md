@@ -1,6 +1,6 @@
 # MM7 Mac runtime path cutover
 
-Status: **source defaults staged; private game data copied and verified; installed app and saves unchanged** (2026-11-07). This packet covers a collision-safe move from inherited OpenEnroth local paths to Enroth Continuum's own MM7 data and profile paths. It does not make the clean offline build or character transfer complete.
+Status: **source defaults staged; private game data copied and verified; installed app and saves unchanged** (2026-11-07). This packet covers a collision-safe move from inherited OpenEnroth local paths to Enroth Continuum's own MM7 data and profile paths. The opt-in clean tracked-source Mac build now passes; graphical play, save/reload, installed-app cutover and character transfer remain open.
 
 ## Source state
 

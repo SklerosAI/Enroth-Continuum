@@ -8,6 +8,16 @@ tags: [handoff, agents, mm6]
 
 This page is the starting brief for future Codex agents working in parallel on Enroth Continuum; recheck its dated status against the authoritative files before acting.
 
+## Current integration checkpoint — 2026-11-07
+
+The [MM6 indoor v6 input cycle](MM6-F4-V6-Indoor-Input-Cycle.md) passed five
+fresh headless children through a real-loop turn/walk, atomic post-input
+candidate and exact fresh-child replay. This is one test-only fixture;
+production MM6 SaveLoad, graphical indoor play and Atlas MM6 Play remain
+closed. The MM7 opt-in [clean tracked-source build](MM7-Clean-Offline-Build.md)
+linked and packaged under network denial, but its staged helper has not passed
+graphical save/reload. Continue using the protected installed MM7 app for play.
+
 ## Current F4 checkpoint — 2026-11-06
 
 The active `mm6-mac-implementation` integration branch has a native EC6 v2 first-map candidate writer, bounded creation-item seed, complete detached v2 session preflight, title-local raw cursor/shop process owners, and detached held-item/image and post-rebuild PID checks. In an owner-only disposable profile, a test-only headless New Game process wrote a v2 `autosave.ec6` from one sampled real creation Party; a fresh headless child selected and staged it read-only. Both integration GameTests passed 1/1. The [v2 restart packet](../project/MM6_F4_RAW_V2_HEADLESS_RESTART.md), [creation seed page](MM6-F4-Creation-Item-Seed.md), [raw save runtime](MM6-F4-Raw-Save-Runtime.md), [cursor owner](MM6-F4-Raw-Cursor-Owner.md), and [post-rebuild PID slot page](MM6-F4-Post-Rebuild-PID-Slots.md) define the exact boundaries. Normal MM6 SaveLoad, game-loop v2 publication, Atlas Play and graphical campaign acceptance remain guarded. Other random starter draws and original-game native record parity remain unverified. The MM7 baseline remains protected. For the owner's later MM7 source-autonomy goal, see [MM7 Self-Contained Source](MM7-Self-Contained-Source.md); its opt-in clean tracked-source build now passes, while installed-app cutover remains open.
@@ -114,6 +124,10 @@ CMake still contains an OpenEnroth dependency URL and recursive submodule
 update. Do not replace the installed MM7 app or merge colliding legacy save
 roots until visible launch/save/reload and collision review pass. The new
 private data root is byte-verified; original data and saves remain private.
+Mac MM7 source now uses a separate Enroth Continuum config/log name and window
+title, prefers the private data root and a new environment override, and
+accepts legacy config/override inputs without moving old saves. Integrated
+MM7 and MM6 headless controls passed 1/1 each after this identity change.
 Preserve OpenEnroth history, LGPL notices and contributor credit.
 
 A disposable v1 two-process probe now drives the real MM6 Main Menu QuickLoad FSM through `Game::loop()`/private `gameLoop()` with explicit test-only load callbacks and chest opt-in. The writer and loader each passed 1/1 under the no-window monitor; the loader entered the first outdoor map, advanced movement and left the slot bytes unchanged. An MM7 all-map headless control passed 1/1 after the shared hooks. Production MM6 load, menu slots and complete v2 session publication remain guarded; the probe is not a playable campaign or rendered-frame proof.

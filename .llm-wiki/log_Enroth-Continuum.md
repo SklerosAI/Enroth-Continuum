@@ -1773,3 +1773,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Extended the bounded first-map collection scratch to protect the live outdoor DDM metadata/wire, last-visit time, map weather, discovery grids and actor reuse cursor in the same rollback scope, without constructing or copying the listener-bearing outdoor object.
 - The synthetic late-fault case verifies all eleven owners restore together, incomplete bindings reject before mutation, and explicit commit retains new values. The changed test translation unit passed arm64 C++23 syntax checking; linked execution and the full outdoor loader remain gated.
+
+## [2026-11-06] verify | MM6 precommit and first-map rollback integration
+- by: T-Burton-ND via codex
+- The linked save/world unit suite passed 14/14 after integration. A monitored private-data headless GameTest passed 1/1 with a next-frame GUI action introduced during precommit; the prior disk slot, map cache and CHST stayed intact, and the monitor observed no visible game window or focus change.
+- These checks do not prove active outdoor entry, a production no-reentry commit, or save–quit–reload. Normal MM6 SaveLoad stays guarded.

@@ -2480,6 +2480,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Built a separate branch from the public SklerosAI MM7 baseline, carrying owned dependency sources and MM7 Mac build, launcher and runtime changes without the local MM6 research history. A clean tracked-source archive completed the one-command MM7 and Atlas build under network denial.
 - Audited the new commit paths for private game data and preserved OpenEnroth license and credit. Pushed `codex/mm7-public-preview` and verified remote SHA `d76afb519`; installed Atlas and personal saves remain untouched.
+
 ## [2026-11-07] verify | MM6 second indoor source case
 - by: T-Burton-ND via codex
 - A second distinct indoor map passed deterministic v2 seed, v4 baseline and v6 live-session writer in separate headless children. Restored MM6 native actor resistance bytes during indoor reconstruction and skipped a verified empty null-decoration render slot; the focused resistance tests passed 2/2.
@@ -2494,3 +2495,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a pure MM6 cardinal-border stage that clones Party, clamps only the old-map copy's X/Y to the original boundary, and returns typed refusals for invalid title, route, party state or unverified corners. It always refuses a disk checkpoint until source, world and durable-write owners are proved.
 - The rebuilt integration unit target passed 11/11 focused border checks, including three new precommit cases. No production travel, autosave, map-cache write or private file operation was enabled.
+## [2026-11-07] verify | MM6 bounded indoor door motion replay
+- by: T-Burton-ND via codex
+- Corrected the earlier phase claim: native door motion matches at pre-event and post-world admission; an already-moving door advances during bounded input ticks. An MM6-only test scope records source door actions and updates, and the strict residual gate requires changed motion and door words to match that trace.
+- The post-input v6 test writer patches only native visibility and verified door state/clock bytes, preserving all unowned DLV bytes. Two distinct indoor source cases each passed the full five-child headless chain, 1/1 per child; an MM7 headless control passed 1/1. Production MM6 SaveLoad and general indoor play remain closed.

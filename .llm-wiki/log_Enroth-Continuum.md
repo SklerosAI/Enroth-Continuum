@@ -2475,3 +2475,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added exact-filter, headless MM7 GameTests with a marked owner-only temporary disk profile. The local-only writer and separate fresh-process normal-menu reader each passed 1/1; the loaded map and test-only Party state matched and the save bytes stayed unchanged.
 - Wrong-filter and unexpected-profile-entry checks refused before startup, and two ordinary MM7 headless controls passed. All disposable profiles were removed. This does not accept the staged Atlas helper or visible play/save/reload.
+
+## [2026-11-07] publish | MM7-only source preview
+- by: T-Burton-ND via codex
+- Built a separate branch from the public SklerosAI MM7 baseline, carrying owned dependency sources and MM7 Mac build, launcher and runtime changes without the local MM6 research history. A clean tracked-source archive completed the one-command MM7 and Atlas build under network denial.
+- Audited the new commit paths for private game data and preserved OpenEnroth license and credit. Pushed `codex/mm7-public-preview` and verified remote SHA `d76afb519`; installed Atlas and personal saves remain untouched.

@@ -108,6 +108,20 @@ corrected v2-seed seven-process chain passed again after this extraction,
 each child 1/1. This is reusable engine code, but it is still first-map-only
 and no production SaveLoad entry point calls it.
 
+The first-map post-world owner agreement has also moved from the disposable
+fresh-child GameTest into the MM6 engine service. The read-only
+`requireV5FirstMapPostWorldAgreement` checks the loaded title/map and paused
+pre-input boundary, then recaptures generated NPC rows, actor/sprite/decoration
+runtime, persistent events, native actor and sprite slots, chests, Party,
+inventory, cursor and other represented owners against the staged v5
+candidate. The caller passes the native actor count captured before the
+pre-event scope takes ownership of its actor-map baseline; the validator does
+not read that moved-from object. The GameTest retains the one-shot publication
+scopes, movement assertion and input decision. After integration, a fresh
+owner-only seven-child first-map chain passed **1/1 per process** and an MM7
+headless control passed **1/1**. This extraction adds no normal MM6 save/load,
+slot listing, rollback, or production gameplay admission.
+
 See [v4 event runtime boundary](MM6_F4_EC6_V4_EVENT_RUNTIME.md),
 [active actor capture](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md) and
 [save specification](MM6_SAVE_SPEC.md).

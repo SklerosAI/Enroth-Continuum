@@ -47,6 +47,18 @@ the second reader checked exact represented owners and aborted before input.
 This is a seven-process first-map cycle, not production SaveLoad or campaign
 playability.
 
+The first-map live capture and exact post-world owner agreement now reside in
+the MM6 engine service. The latter is read-only and checks the title, loaded
+first map, paused pre-input boundary, generated NPCs, actor/sprite/decoration
+runtime, events, native slots, chests, Party, inventory and cursor. The
+fresh-child test still owns its one-shot publication scopes and input decision;
+it passes the native actor count captured before moving the baseline into the
+pre-event replay scope. A fresh seven-child disposable chain passed **1/1 in
+each process** after this extraction; the MM7 headless control passed **1/1**.
+Production SaveLoad, menu listing, failure rollback and gameplay admission
+remain closed. See the [source-backed packet](../project/MM6_F4_EC6_V5_SPRITE_RUNTIME.md)
+for the exact boundary.
+
 See also: [V4 Event Runtime](MM6-F4-EC6-V4-Event-Runtime.md),
 [V3 Post Entry Map and Pre Event](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md),
 [Agent Handoff](Agent-Handoff.md).

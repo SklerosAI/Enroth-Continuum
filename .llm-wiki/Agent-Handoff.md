@@ -55,6 +55,14 @@ published, and the active world was not rolled back. Replay/publication
 order, chest handoff, rollback and durable travel result remain open; both
 write/publish gates are false.
 
+The [first-map outdoor v5 cycle](MM6-F4-EC6-V5-Sprite-Runtime.md) now has
+read-only live capture and exact post-world owner validation in an MM6 engine
+service. A fresh seven-child disposable chain passed 1/1 in every child after
+the post-world extraction, and an MM7 control passed 1/1. The test still owns
+pre-event publication scopes and the bounded input decision; normal MM6
+SaveLoad, `.ec6` menu listing, failure rollback and production admission stay
+closed. Do not infer general later-map or indoor save support from this seam.
+
 The [MM6 indoor v6 input cycle](MM6-F4-V6-Indoor-Input-Cycle.md) passed five
 fresh headless children through a real-loop turn/walk, atomic post-input
 candidate and exact fresh-child replay. This is one test-only fixture;

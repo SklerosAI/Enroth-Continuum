@@ -80,7 +80,88 @@ UNIT_TEST(MM6BoundedInventoryProjection, FinalSlotGridAndEquipmentRoundTrip) {
     EXPECT_EQ(changed->items[136][26], 0x6a);
 
     projection->inventory().take(projection->inventory().entry(137));
+    auto removed = mm6::captureBoundedInventory(*projection, *scope.table, GameTitle::MM6);
+    ASSERT_TRUE(removed);
+    EXPECT_EQ(removed->gridWords[1], 0);
+    EXPECT_EQ(removed->items[137].itemNumberRaw(), 0);
+    EXPECT_EQ(removed->items[137].conditionRaw(), 0);
+    EXPECT_EQ(removed->items[137][26], 0x5a);
+}
+
+UNIT_TEST(MM6BoundedInventoryProjection, GridToPaperdollMoveKeepsRawBytes) {
+    // Equipping a backpack item used to fail capture because its zone changed.
+    TableScope scope;
+    auto source = threeItems();
+    source.items[5].setWord(0, 10);
+    source.items[5].setWord(20, 1);
+    source.items[5][25] = 0x11;
+    source.items[5][27] = 0x77;
+    source.gridWords[20] = 6;
+    source.equipmentWords[3] = 0;
+    source.items[136] = {};
+    auto projection = mm6::stageBoundedInventory(source, *scope.table, GameTitle::MM6);
+    ASSERT_TRUE(projection);
+
+    CharacterInventory &inventory = projection->inventory();
+    Item armor = inventory.take(inventory.entry(5));
+    mm6::setRawBodyLocation(&armor, ITEM_SLOT_ARMOUR);
+    InventoryEntry equipped = inventory.equip(ITEM_SLOT_ARMOUR, armor);
+    ASSERT_EQ(equipped.index(), 1);
+    auto captured = mm6::captureBoundedInventory(*projection, *scope.table, GameTitle::MM6);
+    ASSERT_TRUE(captured);
+    EXPECT_EQ(captured->gridWords[20], 0);
+    EXPECT_EQ(captured->equipmentWords[3], 2);
+    mm6::ItemRecord28 expected = source.items[5];
+    expected[24] = 4;
+    EXPECT_EQ(captured->items[1], expected);
+    EXPECT_EQ(captured->items[5].itemNumberRaw(), 0);
+    EXPECT_EQ(captured->items[5][24], 0);
+    EXPECT_EQ(captured->items[5][25], 0x11);
+    EXPECT_EQ(captured->items[5][27], 0x77);
+    EXPECT_EQ(captured->items[50][27], 0xa5);
+
+    auto restaged = mm6::stageBoundedInventory(*captured, *scope.table, GameTitle::MM6);
+    ASSERT_TRUE(restaged);
+    EXPECT_EQ(restaged->inventory().entry(ITEM_SLOT_ARMOUR).index(), 1);
+
+    // Unequipping and placing in the backpack keeps the body location byte, the original copies all 28 bytes.
+    Item unequipped = restaged->inventory().take(restaged->inventory().entry(ITEM_SLOT_ARMOUR));
+    ASSERT_TRUE(restaged->inventory().tryAdd(Pointi(3, 3), unequipped));
+    auto backpack = mm6::captureBoundedInventory(*restaged, *scope.table, GameTitle::MM6);
+    ASSERT_TRUE(backpack);
+    EXPECT_EQ(backpack->equipmentWords[3], 0);
+    EXPECT_EQ(backpack->gridWords[3 * 14 + 3], 2);
+    EXPECT_EQ(backpack->items[1], expected);
+}
+
+UNIT_TEST(MM6BoundedInventoryProjection, ArrivingItemsNeedRawRecordAndFreeRecord) {
+    // An item arriving from another owner brings its own 28 bytes.
+    TableScope scope;
+    auto source = threeItems();
+    auto projection = mm6::stageBoundedInventory(source, *scope.table, GameTitle::MM6);
+    ASSERT_TRUE(projection);
+    mm6::ItemRecord28 bought;
+    bought.setWord(0, 221);
+    bought[26] = 0x3c;
+    Item scroll;
+    scroll.itemId = static_cast<ItemId>(221);
+    scroll.mm6RawRecord = bought;
+    InventoryEntry added = projection->inventory().tryAdd(Pointi(5, 5), scroll);
+    ASSERT_EQ(added.index(), 1);
+    auto captured = mm6::captureBoundedInventory(*projection, *scope.table, GameTitle::MM6);
+    ASSERT_TRUE(captured);
+    EXPECT_EQ(captured->items[1], bought);
+    EXPECT_EQ(captured->gridWords[5 * 14 + 5], 2);
+
+    added->mm6RawRecord.reset();
     EXPECT_FALSE(mm6::captureBoundedInventory(*projection, *scope.table, GameTitle::MM6));
+
+    // An unreferenced record with an item number is not free to the original allocator.
+    source.items[1].setWord(0, 221);
+    auto occupied = mm6::stageBoundedInventory(source, *scope.table, GameTitle::MM6);
+    ASSERT_TRUE(occupied);
+    ASSERT_EQ(occupied->inventory().tryAdd(Pointi(5, 5), scroll).index(), 1);
+    EXPECT_FALSE(mm6::captureBoundedInventory(*occupied, *scope.table, GameTitle::MM6));
 }
 
 UNIT_TEST(MM6BoundedInventoryProjection, RejectsMalformedReferencesAndUnmappedItems) {
@@ -112,7 +193,13 @@ UNIT_TEST(MM6BoundedInventoryProjection, RejectsMalformedReferencesAndUnmappedIt
 
     Item wand = wide->inventory().take(wide->inventory().entry(ITEM_SLOT_MAIN_HAND));
     ASSERT_TRUE(wide->inventory().tryRestoreAt(0, ITEM_SLOT_OFF_HAND, wand));
-    EXPECT_FALSE(mm6::captureBoundedInventory(*wide, *scope.table, GameTitle::MM6));
+    EXPECT_FALSE(mm6::captureBoundedInventory(*wide, *scope.table, GameTitle::MM6)); // Body location still names the main hand.
+    mm6::setRawBodyLocation(wide->inventory().entry(ITEM_SLOT_OFF_HAND).get(), ITEM_SLOT_OFF_HAND);
+    auto offHand = mm6::captureBoundedInventory(*wide, *scope.table, GameTitle::MM6);
+    ASSERT_TRUE(offHand);
+    EXPECT_EQ(offHand->equipmentWords[0], 1);
+    EXPECT_EQ(offHand->equipmentWords[1], 0);
+    EXPECT_EQ(offHand->items[0][24], 1);
 
     auto unchanged = mm6::stageBoundedInventory(raw, *scope.table, GameTitle::MM6);
     ASSERT_TRUE(unchanged);

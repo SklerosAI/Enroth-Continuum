@@ -1,10 +1,12 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <utility>
 
 #include "Engine/Objects/Inventory.h"
 #include "Engine/Objects/ItemEnumFunctions.h"
@@ -40,24 +42,62 @@ class BoundedInventoryProjection {
     std::array<ItemType, RAW_INVENTORY_ITEM_SLOTS> _originalTypes = {};
 };
 
+/**
+ * Writes the body location byte of an item's raw record. The original paperdoll stores the one-based equipment slot
+ * there on equip, and zero for the item it swaps back onto the cursor. Unequipping reads the byte to find the slot.
+ *
+ * @param item                          Item to update. An item without a raw record is left as is.
+ * @param slot                          Equipment slot, or `ITEM_SLOT_INVALID` for an item that isn't equipped.
+ */
+inline void setRawBodyLocation(Item *item, ItemSlot slot) {
+    if (item->mm6RawRecord)
+        (*item->mm6RawRecord)[24] = static_cast<std::uint8_t>(std::to_underlying(slot));
+}
+
+/**
+ * Writes the projection's runtime inventory back into its physical records. Every item supplies its own 28 bytes
+ * through `Item::mm6RawRecord`, so an item may move between the grid, the paperdoll and other record indices, or
+ * arrive from another owner. A record whose item left is cleared the way the original clears it.
+ *
+ * @param projection                    Projection whose inventory was edited after staging.
+ * @param table                         The loaded MM6 item table.
+ * @param title                         Must be `GameTitle::MM6`.
+ * @return                              Physical inventory, or `std::nullopt` if an item lacks its raw record, has an
+ *                                      unsupported field, lands on a record the original would not pick, or sits in
+ *                                      an equipment slot its body location byte doesn't name.
+ */
 inline std::optional<RawCharacterInventory> captureBoundedInventory(
     const BoundedInventoryProjection &projection, const ItemTable &table, GameTitle title) {
     if (title != GameTitle::MM6 || pItemTable != &table || projection._inventory.capacity() != 138)
         return std::nullopt;
 
+    // The original clears bytes 0..24 of a vacated record and keeps 25..27.
     RawCharacterInventory result = projection._raw;
+    for (int index = 0; index < 138; ++index)
+        if (projection._originalZones[index] != INVENTORY_ZONE_INVALID)
+            std::fill(result.items[index].begin(), result.items[index].begin() + 25, 0);
     result.gridWords.fill(0);
     result.equipmentWords.fill(0);
     for (InventoryConstEntry entry : projection._inventory.entries()) {
         const int index = entry.index();
-        if (index < 0 || index >= 138 || projection._originalZones[index] != entry.zone())
+        if (index < 0 || index >= 138 || !entry->mm6RawRecord)
             return std::nullopt;
-        if (entry.zone() == INVENTORY_ZONE_EQUIPMENT && projection._originalSlots[index] != entry.slot())
-            return std::nullopt;
+        const ItemRecord28 &carried = *entry->mm6RawRecord;
+        const bool unchanged = carried == projection._raw.items[index] &&
+            projection._originalZones[index] == entry.zone() &&
+            (entry.zone() != INVENTORY_ZONE_EQUIPMENT || projection._originalSlots[index] == entry.slot());
 
-        auto item = stageBoundedItem(projection._raw.items[index], table, title);
-        if (!item || boundedItemSourceType(*item) != projection._originalTypes[index])
+        auto item = stageBoundedItem(carried, table, title);
+        if (!item || (unchanged && boundedItemSourceType(*item) != projection._originalTypes[index]))
             return std::nullopt;
+        if (!unchanged) {
+            // The original picks the first record whose item number is zero.
+            if (projection._originalZones[index] == INVENTORY_ZONE_INVALID &&
+                projection._raw.items[index].itemNumberRaw())
+                return std::nullopt;
+            if (entry.zone() == INVENTORY_ZONE_EQUIPMENT && carried.bodyLocationRaw() != std::to_underlying(entry.slot()))
+                return std::nullopt;
+        }
         setBoundedItem(*item, *entry);
         auto encoded = captureBoundedItem(*item, table, title);
         if (!encoded)
@@ -88,11 +128,6 @@ inline std::optional<RawCharacterInventory> captureBoundedInventory(
             return std::nullopt;
         }
     }
-
-    for (int index = 0; index < 138; ++index)
-        if ((projection._originalZones[index] != INVENTORY_ZONE_INVALID) !=
-            static_cast<bool>(projection._inventory.entry(index)))
-            return std::nullopt;
     return result;
 }
 

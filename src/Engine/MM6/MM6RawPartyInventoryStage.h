@@ -23,8 +23,8 @@ StagedRawPartyInventories stageRawPartyInventories(
     const ItemTable &table, GameTitle title);
 
 // Overlay edits from the detached Party into the original native records.
-// The 28-byte carrier and unchanged physical record/index topology must replay
-// exactly; creation, deletion and unsupported field edits fail closed.
+// Each item's 28-byte carrier is written at its current record index and
+// placement, vacated records are cleared, and unsupported edits fail closed.
 RawInventoryFields captureRawPartyInventories(
     const StagedRawPartyInventories &staged,
     const ItemTable &table, GameTitle title);

@@ -66,8 +66,15 @@ UNIT_TEST(MM6BoundedPartyInventoryProjection, FourCharacterRawRoundTripAndAtomic
     projection->inventory(3).entry(137)->mm6RawRecord.reset();
     EXPECT_FALSE(mm6::captureBoundedPartyInventory(*projection, *scope.table, GameTitle::MM6));
     projection->inventory(3).entry(137)->mm6RawRecord = source.characters[3].items[137];
-    projection->inventory(3).take(projection->inventory(3).entry(137));
-    EXPECT_FALSE(mm6::captureBoundedPartyInventory(*projection, *scope.table, GameTitle::MM6));
+    Item moved = projection->inventory(3).take(projection->inventory(3).entry(137));
+    ASSERT_EQ(projection->inventory(2).tryAdd(Pointi(0, 0), moved).index(), 0);
+    auto handedOver = mm6::captureBoundedPartyInventory(*projection, *scope.table, GameTitle::MM6);
+    ASSERT_TRUE(handedOver);
+    EXPECT_EQ(handedOver->characters[2].items[0], source.characters[3].items[137]);
+    EXPECT_EQ(handedOver->characters[2].gridWords[0], 1);
+    EXPECT_EQ(handedOver->characters[3].items[137].itemNumberRaw(), 0);
+    EXPECT_EQ(handedOver->characters[3].items[137][26], 0x83);
+    EXPECT_EQ(handedOver->characters[3].equipmentWords[3], 0);
     EXPECT_EQ(source, fourArmors());
 }
 

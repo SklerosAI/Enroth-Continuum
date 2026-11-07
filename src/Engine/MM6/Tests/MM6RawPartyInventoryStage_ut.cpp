@@ -130,8 +130,9 @@ UNIT_TEST(MM6RawPartyInventoryStage, RejectsForeignTitleAndUnsupportedEditsBefor
                                                         GameTitle::MM6), std::exception);
     staged.party.pCharacters[3].inventory.entry(137)->mm6RawRecord = raw.characters[3].items[137];
     staged.party.pCharacters[3].inventory.take(staged.party.pCharacters[3].inventory.entry(137));
-    EXPECT_THROW((void) mm6::captureRawPartyInventories(staged, *scope.table,
-                                                        GameTitle::MM6), std::exception);
+    const auto removed = mm6::captureRawPartyInventories(staged, *scope.table, GameTitle::MM6);
+    EXPECT_EQ(removed.characters[3].items[137].itemNumberRaw(), 0);
+    EXPECT_EQ(removed.characters[3].items[137][27], raw.characters[3].items[137][27]);
     EXPECT_THROW((void) mm6::captureRawPartyInventories(staged, *scope.table,
                                                         GameTitle::MM7), std::exception);
     EXPECT_EQ(raw, allPlainSourceKinds());

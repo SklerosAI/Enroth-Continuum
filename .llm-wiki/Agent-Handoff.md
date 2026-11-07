@@ -16,7 +16,10 @@ candidate and exact fresh-child replay. This is one test-only fixture;
 production MM6 SaveLoad, graphical indoor play and Atlas MM6 Play remain
 closed. The MM7 opt-in [clean tracked-source build](MM7-Clean-Offline-Build.md)
 linked and packaged under network denial, but its staged helper has not passed
-graphical save/reload. Continue using the protected installed MM7 app for play.
+graphical save/reload. A separate [hidden OpenGL GameTest](MM7-Offscreen-Frame-Capture.md)
+rendered a first-map world/HUD frame without a visible window or focus change;
+it did not exercise the staged app or disk saves. Continue using the protected
+installed MM7 app for play.
 
 ## Current F4 checkpoint — 2026-11-06
 

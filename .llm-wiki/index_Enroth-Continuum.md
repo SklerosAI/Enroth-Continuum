@@ -28,6 +28,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Self-Contained Source](MM7-Self-Contained-Source.md) — Tracked Mac source and remaining default-build, graphical, save and identity gates
 - [MM7 Mac Dependency Recipe](MM7-Mac-Dependency-Recipe.md) — Five tracked media-library sources build to nine static arm64 archives
 - [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md) — Clean tracked-source MM7 link, Atlas package and headless control under network denial
+- [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md) — Hidden OpenGL first-map world and HUD frame with no visible window or focus change; visible save/reload remains open
 - [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md) — Enroth Continuum MM7 source defaults and collision-safe private save migration before installed-app switch
 
 ## Agent work and open questions

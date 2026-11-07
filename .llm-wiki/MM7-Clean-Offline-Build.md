@@ -28,4 +28,9 @@ The iconv adapter is scoped to MM7's production encodings and is not full
 legacy/CJK API parity. Preserve historical OpenEnroth credit and source
 provenance when changing the build default.
 
-See also: [MM7 Self-Contained Source](MM7-Self-Contained-Source.md), [MM7 Mac Dependency Recipe](MM7-Mac-Dependency-Recipe.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [Agent Handoff](Agent-Handoff.md).
+A later [hidden OpenGL diagnostic](MM7-Offscreen-Frame-Capture.md) rendered one
+first-map frame using a GameTest rebuilt in that temporary extraction after
+copying newer test/startup files. The extraction was marked modified for that
+diagnostic; the earlier clean build and staged Atlas evidence above are separate.
+
+See also: [MM7 Self-Contained Source](MM7-Self-Contained-Source.md), [MM7 Mac Dependency Recipe](MM7-Mac-Dependency-Recipe.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [Agent Handoff](Agent-Handoff.md).

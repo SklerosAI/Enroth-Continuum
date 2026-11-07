@@ -2371,3 +2371,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added the exact pinned Boost.Lambda2 source: all 35 original blobs and modes matched its former gitlink. Its pinned documentation names BSL-1.0; an unmodified full license from the official Boost URL was added as separately identified metadata. Standalone arm64 checks and the integration cached-input MM7 target build passed.
 - Eight gitlinks, nested fetches and prebuilt dependency recipes still block a clean offline clone. The installed helper and private saves were untouched.
+
+## [2026-11-07] verify | Sixteen owned MM7 inputs and prebuilt pins
+- by: T-Burton-ND via codex
+- Added exact pinned cpptrace top-level MIT source: 209 original blobs/modes matched, standalone alternate-backend arm64 build and cached-input integration MM7 target passed. Its production Mac libdwarf-lite fetch remains unowned; seven gitlinks remain.
+- The upstream dependency release API publishes the same digest and size as this Mac's cached arm64 ZIP. Its tagged Git tree pins FFmpeg, libpng, OpenAL Soft, SDL and zlib-ng; the inventory records those commits and a build-script reference. Source license review and an original repo-owned recipe remain open. The installed app and private saves were untouched.

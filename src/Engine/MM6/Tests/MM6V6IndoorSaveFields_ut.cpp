@@ -224,6 +224,27 @@ UNIT_TEST(MM6V6IndoorSaveFields, DecorationRuntimeReplaysOnlyMutableSlots) {
         decoded, *base, event, table, &replay, GameTitle::MM6), std::exception);
 }
 
+UNIT_TEST(MM6V6IndoorSaveFields, DecorationRuntimeKeepsNullSourceDescriptorSlot) {
+    auto base = std::make_unique<IndoorLocation_MM7>();
+    base->decorations.resize(1);
+    base->decorationNames.resize(1); // Empty native name resolves to sentinel slot zero.
+    DecorationTable table;
+    table.decorations.resize(1);
+    mm6::EventRuntimeMapEntry event;
+    event.mapName = "d0.blv";
+    std::vector<LevelDecoration> live(1);
+    reconstruct(base->decorations[0], &live[0]);
+    live[0].eventVarId = base->decorations[0].eventVarId;
+    const auto fields = mm6::captureIndoorDecorationRuntime(
+        event.mapName, *base, event, table, live, GameTitle::MM6);
+    ASSERT_EQ(fields.records.size(), 1u);
+    EXPECT_EQ(fields.records[0].descriptorId, 0u);
+    const auto replay = mm6::stageIndoorDecorationRuntime(
+        fields, *base, event, table, GameTitle::MM6);
+    ASSERT_EQ(replay.size(), 1u);
+    EXPECT_EQ(replay[0].uDecorationDescID, DECORATION_NULL);
+}
+
 UNIT_TEST(MM6V6IndoorSaveFields, NativeAnchorCaptureRequiresMatchingIndoorPlan) {
     mm6::StagedRawSessionFields represented;
     represented.indoorPlan.emplace();

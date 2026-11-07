@@ -68,8 +68,9 @@ std::vector<LevelDecoration> sourceDecorations(
         const auto end = std::find(name.begin(), name.end(), '\0');
         result[index].uDecorationDescID = table.decorationId(
             std::string(name.begin(), end));
-        if (result[index].uDecorationDescID == DECORATION_NULL)
-            throw std::runtime_error("MM6 IDRT source decoration lacks template");
+        // The engine's BLV loader keeps DECORATION_NULL for empty or
+        // unresolved source names; table slot zero is a real, indexed
+        // sentinel used by indoor preparation. Preserve its slot identity.
     }
     return result;
 }
@@ -81,7 +82,7 @@ bool sameImmutable(const LevelDecoration &lhs, const LevelDecoration &rhs) {
 }
 
 void requireDescriptor(std::uint16_t id, const DecorationTable &table) {
-    if (id == 0 || id >= table.decorations.size())
+    if (id >= table.decorations.size())
         throw std::runtime_error("MM6 IDRT runtime descriptor lacks template");
 }
 
@@ -107,7 +108,7 @@ IndoorDecorationRuntimeFields captureIndoorDecorationRuntime(
     result.records.reserve(live.size());
     for (const LevelDecoration &decoration : live) {
         const auto descriptor = std::to_underlying(decoration.uDecorationDescID);
-        if (descriptor <= 0 ||
+        if (descriptor < 0 ||
             descriptor > std::numeric_limits<std::uint16_t>::max())
             throw std::runtime_error("MM6 IDRT runtime descriptor is out of range");
         result.records.push_back({static_cast<std::uint16_t>(descriptor),
@@ -137,8 +138,6 @@ SaveSection encodeIndoorDecorationRuntimeSection(
     section.payload.insert(section.payload.end(), fields.mapName.begin(), fields.mapName.end());
     put32(&section.payload, fields.records.size());
     for (const auto &record : fields.records) {
-        if (record.descriptorId == 0)
-            throw std::runtime_error("MM6 IDRT has null runtime descriptor");
         put16(&section.payload, record.descriptorId);
         put16(&section.payload, record.flags);
         put16(&section.payload, std::bit_cast<std::uint16_t>(record.eventVarId));

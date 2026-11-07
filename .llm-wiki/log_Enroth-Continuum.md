@@ -2129,3 +2129,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated a detached read-only GNPC/RNGS agreement helper for the point after actor rebuild and before generated-row creation or map events. It validates title, map, RNG type, fresh NPC cursor and exact actor-to-row links; linked tests passed 2/2.
 - A later replay must bypass only the NPC generation loop in `_461103_load_level_sub()`, retaining its chest, arena, decoration and cursor work, and publish saved rows/RNG before `onMapLoad()`. No live publication was enabled.
+
+## [2026-11-07] stage | MM6 spawned actor runtime section
+- by: T-Burton-ND via codex
+- Integrated detached SPAW v1 with exact contiguous PID slots, MM6 resistances, runtime-only fields and a canonical empty form. Unsupported actor items/buffs and narrowing refuse. Linked unit tests passed 4/4.
+- A private-backed fresh-process headless first-map encode/decode/re-encode probe passed 1/1 with ramfs user state and no profile write. It did not save, quit, reload, or publish actors to the live world; strict v2 remains closed.

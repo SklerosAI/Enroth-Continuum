@@ -196,11 +196,26 @@ refused the default agreement API. The seed and v4 files remained unchanged;
 this test wrote no new slot. The focused child passed **1/1**, the established
 unpaused seven-child v5 cycle passed **7/7**, and MM7 Prs passed **1/1**.
 
-The paused capture API is a read-only seam. `MM6V5FirstMapSaveWriter` still
-selects the unpaused default and only accepts owner-only disposable slots.
+The paused capture API is a read-only seam. `MM6V5FirstMapSaveWriter` defaults
+to the unpaused boundary and only accepts owner-only disposable slots.
 Normal `doSavegame`, Save menu routing, profile selection, durable result
 handling, load publication recovery and UI success/error behavior remain
 closed. No later outdoor or indoor capture is implied.
+
+The test-only writer now also accepts an explicit `PausedSaveMenu` boundary.
+Its new headless fixture starts from a previously written, semantically valid
+first-map v5 disposable primary with no backup. In a separate fresh child it
+replays the v4 source, performs bounded movement, enters the real paused Save
+window, captures the detached expected v5 candidate, and calls the same
+owner-only atomic writer for the existing candidate slot. It requires the
+writer's `Committed` result, byte-identical returned candidate and primary,
+and a backup byte-identical to the prior primary. The v2 seed and v4 source
+remain unchanged. A subsequent independent fresh-child v5 reader checks the
+new primary's represented owners and aborts before input. Seed, v4, prior v5
+writer, paused writer and fresh reader each passed **1/1**; MM7 Prs passed
+**1/1**. The owner-only temp profile was removed. This exercises an existing
+disposable slot only; it does not call `doSavegame`, save to a normal profile,
+report UI success or admit a production load.
 
 An MM6-only armed **test transaction** now catches exceptions from the
 first-map load callback and `DoPrepareWorld(true)` at the game-loop boundary,

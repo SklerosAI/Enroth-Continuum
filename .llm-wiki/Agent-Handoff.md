@@ -105,9 +105,12 @@ records the remaining UI gate: MM6 needs a semantic `.ec6` list and complete
 load handoff. A read-only `PausedSaveMenu` v5 capture now accepts exact
 first-map owners in the real paused Save window after bounded movement; its
 fresh headless child passed **1/1**, the unpaused seven-child chain **7/7**
-and MM7 Prs **1/1**. The earlier paused-timer capture blocker is superseded,
-but the writer still calls the unpaused default. Normal SaveLoad/UI and
-production slots remain closed.
+and MM7 Prs **1/1**. The earlier paused-timer capture blocker is superseded.
+An explicit paused-mode test-only writer then overwrote an existing owner-only
+v5 candidate, verified `Committed`, exact new primary and prior-primary
+backup, and passed independent fresh-child replay. Seed, v4, prior v5 writer,
+paused writer and reader each passed **1/1**; MM7 Prs passed **1/1**. Normal
+SaveLoad/UI and production slots remain closed.
 
 The [MM6 indoor v6 input cycle](MM6-F4-V6-Indoor-Input-Cycle.md) passed five
 fresh headless children through a real-loop turn/walk, atomic post-input

@@ -47,11 +47,15 @@ The earlier paused-timer capture blocker is superseded for the exact first
 map: the read-only v5 engine capture now has a `PausedSaveMenu` boundary that
 requires the actual paused Save window and an idle UI queue, then recaptures
 the exact live owners. A real-menu headless child passed **1/1**; the unpaused
-v5 chain passed **7/7** and MM7 control **1/1**. The disposable writer still
-calls the unpaused default, and normal `doSavegame`/UI remains guarded. A
-future normal route must select the paused contract, preserve the title/map
+v5 chain passed **7/7** and MM7 control **1/1**. The disposable writer now
+also accepts an explicit paused boundary. A real-menu test-only write
+overwrote an existing owner-only v5 candidate with exact primary/backup
+checks, then an independent child replayed the new primary; seed, v4, prior
+v5 writer, paused writer and reader passed **1/1 each**, with MM7 Prs **1/1**.
+Normal `doSavegame`/UI remains guarded. A future normal route must select the
+paused contract, preserve the title/map
 and owner-only slot checks, and report success only for a confirmed atomic
 result. An unconfirmed post-rename result requires read-only preflight. The
 resolved native MM6 profile root must come from startup, including an explicit
-user-path override,
-not from a display string. Normal SaveLoad and menu listing remain closed.
+user-path override, rather than a display string. Normal SaveLoad and menu
+listing remain closed.

@@ -102,8 +102,13 @@ input, in addition to its existing title/map/source and exact-owner checks.
 A fresh owner-only headless child entered that window after bounded movement
 and passed detached capture/recapture **1/1**; the default unpaused contract
 refused there. The established unpaused v5 chain passed **7/7** and MM7 Prs
-**1/1**. The writer service still calls the unpaused default; normal
-`doSavegame`, production slots and UI remain closed. See the
+**1/1**. The writer service defaults to unpaused input, but a test-only real
+Save-menu fixture now explicitly selects the paused contract. It overwrote
+an existing owner-only disposable v5 primary, verified `Committed`, exact new
+primary and prior-primary backup, and passed independent fresh-child replay.
+Seed, v4, prior v5 writer, paused writer and reader each passed **1/1**;
+MM7 Prs passed **1/1**. Normal `doSavegame`, production slots and UI remain
+closed. See the
 [project packet](../project/MM6_F4_EC6_V5_SPRITE_RUNTIME.md).
 
 The test-only first-map load transaction can now abandon faults from the

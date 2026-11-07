@@ -27,6 +27,9 @@ records the next UI seam: MM6 needs its own semantic `.ec6` inventory. The
 prior paused-timer blocker is **superseded** by the exact first-map
 `PausedSaveMenu` capture contract, verified in a real-menu headless child
 **1/1** with the unpaused chain **7/7** and MM7 control **1/1**. The
-disposable writer still uses settled input; normal save/load stays closed.
+disposable writer defaults to settled input, and its explicit paused-mode
+test wrote only an existing owner-only candidate with exact primary/backup
+checks. The independent fresh-child replay passed **1/1**. Normal save/load
+stays closed.
 
 See also: [Raw Save Runtime](MM6-F4-Raw-Save-Runtime.md), [V2 Fresh-Child Owner Audit](MM6-F4-V2-Fresh-Child-Owner-Audit.md).

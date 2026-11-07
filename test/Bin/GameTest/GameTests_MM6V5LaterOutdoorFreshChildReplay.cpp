@@ -203,13 +203,12 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
     } else {
         before = wireBefore;
     }
-    const auto priorV5Before = v6Read ? std::vector<std::uint8_t>{} :
+    const auto priorV5Before =
         slotBytes(profile / "saves" / "candidate-v5-oute2.ec6");
     const auto v4Before = slotBytes(profile / "saves" / "candidate-v4.ec6");
     const auto seedBefore = slotBytes(profile / "saves" / "autosave.ec6");
     ASSERT_FALSE(before.empty());
-    if (!v6Read)
-        ASSERT_FALSE(priorV5Before.empty());
+    ASSERT_FALSE(priorV5Before.empty());
     ASSERT_FALSE(v4Before.empty());
     ASSERT_FALSE(seedBefore.empty());
     const auto actionParty = actionPartyFields(before);
@@ -625,8 +624,7 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
         EXPECT_FALSE(slotBytes(second).empty());
     }
     EXPECT_EQ(slotBytes(candidate), wireBefore);
-    if (!v6Read)
-        EXPECT_EQ(slotBytes(profile / "saves" / "candidate-v5-oute2.ec6"), priorV5Before);
+    EXPECT_EQ(slotBytes(profile / "saves" / "candidate-v5-oute2.ec6"), priorV5Before);
     EXPECT_EQ(slotBytes(profile / "saves" / "candidate-v4.ec6"), v4Before);
     EXPECT_EQ(slotBytes(profile / "saves" / "autosave.ec6"), seedBefore);
     EXPECT_EQ(window->nativeHandle(), nullptr);

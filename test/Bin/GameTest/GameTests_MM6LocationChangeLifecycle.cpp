@@ -169,9 +169,17 @@ void runMM6LocationChangeLifecycle(EngineController &game, bool writeV6) {
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
     const auto before = slotBytes(candidate);
     const auto seedBefore = slotBytes(profile / "saves" / "autosave.ec6");
+    const auto v5Path = profile / "saves" / "candidate-v5-oute2.ec6";
+    if (writeV6 && !std::filesystem::is_regular_file(v5Path))
+        throw std::runtime_error(
+            "MM6 outdoor v6 writer needs a prior v5 control slot");
+    const auto v5Before = writeV6 ? slotBytes(v5Path) :
+        std::vector<std::uint8_t>{};
     const auto allSavesBefore = profileSaveBytes(profile);
     ASSERT_FALSE(before.empty());
     ASSERT_FALSE(seedBefore.empty());
+    if (writeV6)
+        ASSERT_FALSE(v5Before.empty());
 
     bool selected = false;
     bool checkpointRan = false;
@@ -771,6 +779,7 @@ void runMM6LocationChangeLifecycle(EngineController &game, bool writeV6) {
     if (writeV6) {
         EXPECT_TRUE(v6AtomicFaultRefused);
         EXPECT_TRUE(v6CandidateWritten);
+        EXPECT_EQ(slotBytes(v5Path), v5Before);
         auto remaining = profileSaveBytes(profile);
         const auto written = remaining.find("candidate-v6-outdoor.ec6");
         ASSERT_NE(written, remaining.end());

@@ -2520,3 +2520,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Updated local and campaign status after the second-outdoor no-write border candidate and all-source indoor codec sweep. The former passed a three-process disposable chain; the latter exposed a signed actor NPC identity that blocks a risk-ranked third v6 writer.
 - Kept production autosave, live travel, general indoor replay and Atlas MM6 Play closed pending durable visited-map owners and identity semantics.
+
+## [2026-11-07] verify | MM6 detached visited outdoor owner
+- by: T-Burton-ND via codex
+- Staged a source-backed, in-memory first-map runtime capsule before the test-only no-write transition to a second outdoor map. It retains native delta/chest, actor and generated NPC, sprite, decoration and event owners with exact map/source joins; altered delta, event map and sprite map each refused.
+- Fresh owner-only v2 seed, v4 baseline and modified location-change headless children each passed 1/1. The capsule survived the map switch while the old map cache stayed unchanged; the disposable profile was removed.
+- EC6 v5 still has no visited-map disk section or return publisher. Checkpoint write remains refused pending per-map persistence, return/replay and an explicit durable-result policy.

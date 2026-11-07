@@ -17,15 +17,6 @@
 [submodule "thirdparty/nlohmann_json"]
 	path = thirdparty/nlohmann_json
 	url = https://github.com/nlohmann/json.git
-[submodule "thirdparty/magic_enum"]
-	path = thirdparty/magic_enum
-	url = https://github.com/Neargye/magic_enum.git
-[submodule "thirdparty/fast_float"]
-	path = thirdparty/fast_float
-	url = https://github.com/fastfloat/fast_float.git
-[submodule "thirdparty/mio"]
-	path = thirdparty/mio
-	url = https://github.com/mandreyel/mio
 [submodule "thirdparty/spdlog"]
 	path = thirdparty/spdlog
 	url = https://github.com/gabime/spdlog.git

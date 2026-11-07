@@ -14,21 +14,21 @@ namespace {
 
 constexpr std::array<std::uint8_t, 8> MAGIC = {'E', 'C', '6', 'S', 'A', 'V', 'E', 0};
 constexpr std::uint16_t MIN_VERSION = 1;
-constexpr std::uint16_t MAX_VERSION = 2;
+constexpr std::uint16_t MAX_VERSION = 3;
 constexpr size_t HEADER_SIZE = 24;
 constexpr size_t SECTION_HEADER_SIZE = 16;
 constexpr size_t MAX_FILE_SIZE = 64 * 1024 * 1024;
 constexpr size_t MAX_SECTION_SIZE = 32 * 1024 * 1024;
 constexpr size_t MAX_SECTIONS = 32;
 
-constexpr std::array<std::array<char, 4>, 24> KNOWN_TAGS = {{
+constexpr std::array<std::array<char, 4>, 25> KNOWN_TAGS = {{
     {'H', 'E', 'A', 'D'}, {'P', 'A', 'R', 'T'}, {'T', 'I', 'M', 'E'}, {'C', 'H', 'A', 'R'},
     {'E', 'F', 'F', 'T'}, {'I', 'T', 'E', 'M'}, {'R', 'E', 'S', 'C'}, {'Q', 'E', 'S', 'T'},
     {'M', 'A', 'P', 'S'}, {'V', 'I', 'S', 'U'}, {'U', 'I', 'S', 'T'}, {'M', 'E', 'T', 'A'},
     {'R', 'S', 'T', 'S'}, {'H', 'E', 'L', 'D'}, {'B', 'U', 'F', 'F'}, {'H', 'I', 'R', 'E'},
     {'R', 'C', 'V', 'R'}, {'C', 'H', 'S', 'T'}, {'S', 'C', 'L', 'K'},
     {'S', 'H', 'O', 'P'}, {'B', 'E', 'A', 'C'}, {'I', 'N', 'V', 'R'},
-    {'G', 'N', 'P', 'C'}, {'R', 'N', 'G', 'S'},
+    {'G', 'N', 'P', 'C'}, {'R', 'N', 'G', 'S'}, {'S', 'P', 'A', 'W'},
 }};
 
 constexpr std::array<std::uint32_t, 256> makeCrcTable() {

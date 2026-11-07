@@ -41,6 +41,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6GeneratedNpcSaveFields.cpp MM6GeneratedNpcSaveFields.h
     MM6PreEventGeneratedNpcReplay.cpp MM6PreEventGeneratedNpcReplay.h
     MM6GameplayRngSaveFields.cpp MM6GameplayRngSaveFields.h
+    MM6V3SaveFields.cpp MM6V3SaveFields.h
     MM6IndoorWorldPlan.cpp MM6IndoorWorldPlan.h
     MM6WorldSaveRuntime.cpp MM6WorldSaveRuntime.h
     MM6RawSaveRuntime.cpp MM6RawSaveRuntime.h
@@ -82,6 +83,7 @@ add_library(engine_mm6_spawn_actor_section STATIC
     MM6SpawnedActorSection.cpp MM6SpawnedActorSection.h)
 target_link_libraries(engine_mm6_spawn_actor_section PUBLIC engine_serialization)
 target_check_style(engine_mm6_spawn_actor_section)
+target_link_libraries(engine_mm6_save_runtime PUBLIC engine_mm6_spawn_actor_section)
 
 if(OE_BUILD_TESTS)
     add_library(test_engine_mm6_actual_stat_condition OBJECT Tests/MM6ActualStatCondition_ut.cpp)
@@ -194,6 +196,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6GeneratedNpcSaveFields_ut.cpp
         Tests/MM6PreEventGeneratedNpcReplay_ut.cpp
         Tests/MM6GameplayRngSaveFields_ut.cpp
+        Tests/MM6V3SaveFields_ut.cpp
         Tests/MM6IndoorWorldPlan_ut.cpp
         Tests/MM6HirelingRecoveryV2Stage_ut.cpp
         Tests/MM6FirstMapCombatTransientTransaction_ut.cpp

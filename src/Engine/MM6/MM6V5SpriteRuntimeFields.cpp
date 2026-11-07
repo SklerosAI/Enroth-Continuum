@@ -154,11 +154,13 @@ void requireNativeAnchor(const SpriteRuntimeRecord &record,
         std::to_underlying(record.runtime.containing_item.itemId) > 580)
         throw std::runtime_error("MM6 SPRT item ID is outside title table");
     const SpriteObject_MM7 native = projectMM6GroundItemRecord(record.nativeRecord);
-    if (native.spriteId != std::to_underlying(record.runtime.spriteId) ||
-        native.objectDescId != record.runtime.uObjectDescID ||
-        (requireInitialPosition &&
-         native.initialPosition.toFloat() != record.runtime.initialPosition))
-        throw std::runtime_error("MM6 SPRT native slot identity changed");
+    if (native.spriteId != std::to_underlying(record.runtime.spriteId))
+        throw std::runtime_error("MM6 SPRT native sprite ID changed");
+    if (native.objectDescId != record.runtime.uObjectDescID)
+        throw std::runtime_error("MM6 SPRT native object descriptor changed");
+    if (requireInitialPosition &&
+        native.initialPosition.toFloat() != record.runtime.initialPosition)
+        throw std::runtime_error("MM6 SPRT native initial position changed");
     SpriteObject_MM7 projected{};
     snapshot(record.runtime, &projected);
     if (std::memcmp(&projected.containing_item,

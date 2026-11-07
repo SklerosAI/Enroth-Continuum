@@ -115,6 +115,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Plain Item Projection](MM6-F4-Plain-Item-Projection.md) — Source-typed detached view of plain MM6 items and gold with exact raw record retained
 - [MM6 F4 Plain Inventory Projection](MM6-F4-Plain-Inventory-Projection.md) — Historical plain-only stage, superseded by the bounded inventory projection
 - [MM6 F4 Bounded Inventory Projection](MM6-F4-Bounded-Inventory-Projection.md) — Current detached 138-slot character inventory stage for plain and standard-bonus records
+- [MM6 F4 Bounded Party Inventory](MM6-F4-Bounded-Party-Inventory.md) — All-four-character raw inventory stage and atomic detached capture; live item provenance remains open
 - [MM6 F4 Standard Bonus Map](MM6-F4-Standard-Bonus-Map.md) — Source-backed 14-index standard item bonus map shared with the MM6 table loader
 - [MM6 F4 Standard Item Projection](MM6-F4-Standard-Item-Projection.md) — Detached raw-preserving standard-enchanted equipment view for bounded MM6 bonus and strength fields
 - [MM6 F4 Shop Purchase-Write Gate](MM6-F4-Shop-Purchase-Write-Gate.md) — Linked 28-byte purchase mutation and detached physical SHOP section; live service owner remains open

@@ -13,4 +13,6 @@ This supersedes the [plain-only inventory stage](MM6-F4-Plain-Inventory-Projecti
 
 Focused linked checks passed 7/7. Two monitored MM6 headless loaded-table checks passed 2/2 over 65 samples without an on-screen window or focus change, covering a final-slot scroll with its actual icon footprint and standard-bonus armor in its equipment slot. There is no live Party raw owner, native nonzero save sample, effect verification or normal MM6 SaveLoad route.
 
-See also: [Raw Inventory Section](MM6-F4-Raw-Inventory-Section.md), [Plain Item Projection](MM6-F4-Plain-Item-Projection.md), [Standard Item Projection](MM6-F4-Standard-Item-Projection.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).
+The [four-character wrapper](MM6-F4-Bounded-Party-Inventory.md) now stages and recaptures all four physical regions atomically while remaining detached from live `Party`.
+
+See also: [Raw Inventory Section](MM6-F4-Raw-Inventory-Section.md), [Bounded Party Inventory](MM6-F4-Bounded-Party-Inventory.md), [Plain Item Projection](MM6-F4-Plain-Item-Projection.md), [Standard Item Projection](MM6-F4-Standard-Item-Projection.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

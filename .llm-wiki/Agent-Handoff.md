@@ -65,6 +65,8 @@ The later [standard-item projection](MM6-F4-Standard-Item-Projection.md) accepts
 
 The current [bounded inventory projection](MM6-F4-Bounded-Inventory-Projection.md) supersedes that plain-only stage and combines plain/gold with standard-enchanted equipment while preserving the raw 138-slot region. Focused linked checks passed **7/7** and two monitored loaded-table MM6 headless checks **2/2** over 65 samples without focus/window intrusion. It is still detached from Party and normal SaveLoad; item creation/removal and equipment changes reject.
 
+The [four-character bounded inventory stage](MM6-F4-Bounded-Party-Inventory.md) composes those views into a complete-or-reject detached `RawInventoryFields` packet; linked checks passed **11/11**. Read-only live-owner audit found `Inventory::take`/`addAt`/`equipAt` and Party cursor/pickup paths copy `Item` values into new slots. A raw sidecar keyed only to a Party slot would lose provenance. Establish a transfer-safe raw owner before revising provisional `ITEM`/`HELD` or opening SaveLoad.
+
 ## Authority and source order
 
 | Question | Start with | Supporting source |

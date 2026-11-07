@@ -15,4 +15,6 @@ The accepted F3-matched original executable's free-item path also scans all 138 
 
 The later [bounded inventory projection](MM6-F4-Bounded-Inventory-Projection.md) stages source-typed plain/gold and bounded standard-enchanted equipment records into a 138-slot runtime inventory and requires exact grid/equipment replay. It supersedes the [plain-only stage](MM6-F4-Plain-Inventory-Projection.md) but does not provide the missing Party raw owner or full item transfer semantics.
 
-See also: [Raw Item Authority](MM6-F4-Raw-Item-Authority.md), [Bounded Inventory Projection](MM6-F4-Bounded-Inventory-Projection.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md), [Shop Item Conversion Gate](MM6-F4-Shop-Item-Record-Conversion-Gate.md).
+The [four-character bounded stage](MM6-F4-Bounded-Party-Inventory.md) composes these views and captures a complete new raw owner or rejects. It does not attach to live `Party` or enter the known-save manifest.
+
+See also: [Raw Item Authority](MM6-F4-Raw-Item-Authority.md), [Bounded Inventory Projection](MM6-F4-Bounded-Inventory-Projection.md), [Bounded Party Inventory](MM6-F4-Bounded-Party-Inventory.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md), [Shop Item Conversion Gate](MM6-F4-Shop-Item-Record-Conversion-Gate.md).

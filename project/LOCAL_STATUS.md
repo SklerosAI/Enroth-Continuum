@@ -692,3 +692,10 @@ checks passed **7/7** and two monitored loaded-table MM6 headless checks
 **2/2** over 65 samples with no visible window or focus change. It remains
 detached from Party and normal SaveLoad; creation/removal and equipment
 changes still reject.
+
+A [four-character bounded stage](MM6_F4_BOUNDED_PARTY_INVENTORY.md) now composes
+those views into an all-or-nothing `RawInventoryFields` capture. Focused linked
+checks passed **11/11**, including a late fourth-character rejection and an
+`INVR` codec round trip. Live inventory moves copy `Item` values between slots,
+so a Party-slot-only raw sidecar would lose provenance. The stage remains
+detached; no normal MM6 save route is open.

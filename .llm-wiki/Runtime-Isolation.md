@@ -12,6 +12,8 @@ The MM7 source baseline was preserved on `mm7-isolated-runtime` and tested graph
 
 Profiles, game installations, saves, backups, and mods remain local. The Atlas is intended to show true per-title readiness and to keep the original campaign experience available alongside optional private mods and eventual transfer features.
 
+The later [MM7 self-contained source gate](MM7-Self-Contained-Source.md) will make a clean Mac build independent of OpenEnroth-hosted dependency releases and external Git submodules. It preserves the working MM7 app during migration and retains permanent upstream attribution.
+
 Source: [project/LOCAL_STATUS.md](../project/LOCAL_STATUS.md), [project/ROADMAP.md](../project/ROADMAP.md), [launcher/README.md](../launcher/README.md), reviewed 2026-11-06.
 
-See also: [Campaign Status](Campaign-Status.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md), [Project Overview](Project-Overview.md), [Agent Handoff](Agent-Handoff.md).
+See also: [Campaign Status](Campaign-Status.md), [MM7 Self-Contained Source](MM7-Self-Contained-Source.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md), [Project Overview](Project-Overview.md), [Agent Handoff](Agent-Handoff.md).

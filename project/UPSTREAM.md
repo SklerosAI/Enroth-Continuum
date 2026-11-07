@@ -1,7 +1,9 @@
 # Upstream relationship
 
-Enroth Continuum tracks [OpenEnroth/OpenEnroth](https://github.com/OpenEnroth/OpenEnroth)
-as its authoritative engine upstream.
+Enroth Continuum is a source fork of [OpenEnroth/OpenEnroth](https://github.com/OpenEnroth/OpenEnroth).
+OpenEnroth is the historical upstream and an optional source of reviewed changes,
+not a required runtime or final MM7 build source. The SklerosAI repository is the
+authoritative home for this fork's MM7, MM6 and eventual MM8 implementations.
 
 ## Working agreement
 
@@ -28,5 +30,9 @@ git fetch upstream
 git log --oneline master..upstream/master
 ```
 
-Upstream synchronization is intentionally a reviewed operation. Do not force-push
-the shared branch, and do not mix synchronization commits with SklerosAI work.
+Upstream synchronization is intentionally a reviewed, optional operation. Do not
+force-push the shared branch, and do not mix synchronization commits with
+SklerosAI work. The Mac MM7 self-contained-source gate in
+[MM7_SELF_CONTAINED_SOURCE.md](MM7_SELF_CONTAINED_SOURCE.md) removes remaining
+build-time dependencies on OpenEnroth-hosted artifacts while retaining all
+required attribution.

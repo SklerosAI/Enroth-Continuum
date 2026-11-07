@@ -241,6 +241,39 @@ those owners after `_461103` and define failure recovery before any live
 return. A safe `DoPrepareWorld(false)` replay still needs a staged all-owner
 commit/abort policy and explicit post-rename durable result.
 
+## Visited-owner replay order audit
+
+The [return probe](../src/Engine/MM6/MM6VisitedReturnPreEventProbeForTest.h)
+establishes a safe observation point, not a single place to restore `VIST`.
+Source order imposes multiple owner boundaries:
+
+| Boundary | Owner required before it | Current gap |
+| --- | --- | --- |
+| `DoPrepareWorld(false)` entry | A complete active-map rollback or durable checkpoint | `ResetCursor_Palettes_LODs_Level_Audio_SFT_Windows` releases the active world, assets and UI before target admission. A failed target cannot resume the old world by restoring Party alone. |
+| `OutdoorLocation::Initialize` | Target native DDM in `pMapDeltas`, exact base and respawn decision | The saved visited DDM is detached in `VIST`; the normal loader reads the existing cache entry and may time-respawn. The post-load probe is too late to select a different DDM. |
+| `PrepareDecorations` | Target EVRT map/decor variables and binding | The existing EVRT restore hook runs only on `bLoading`. Installing it after target preparation is too late for decoration ordinals. |
+| Before `_461103` | Target ACTR/ARTR, SPRT, DECR and GNPC owner join | V3/V5 hooks are fresh-load-only. The V3 scope couples GNPC and a saved RNG state; a return must keep the **latest global** RNG and chest/artifact ledger rather than replay the visited map's old global values. |
+| `_461103`, `onMapLoad`, first input | CHST handoff, generated-NPC links, event effects and post-event checks | The MM6 chest path remains opt-in and can refuse; map events can further mutate owners. No atomic return publisher or post-event rollback exists. |
+
+The read-only return plan currently takes the global chest ledger from the
+v6 **active snapshot**, which is current only at that capture point. A real
+second-map session could change it afterward. A future transaction must
+capture the latest active global ledger and gameplay RNG at confirmation,
+revalidate a no-respawn or explicit respawn policy, and stage target DDM/EVRT
+before loading. It must then validate all target runtime owners before any
+noexcept publication, run the chest/NPC/event phases exactly once, and check
+the resulting world before input. Widening the existing `bLoading` guards
+alone would restore owners in the wrong order and could rewind global state.
+
+For the present test-only path, any refusal after `DoPrepareWorld(false)`
+starts abandons the partial target to Main Menu, with input closed; no claim
+of active-world rollback is made. Production travel requires a durably
+accepted old-map checkpoint and an explicit post-rename write outcome before
+starting that destructive world reset. If the target then fails, recover by
+loading that known checkpoint in a fresh session or implement a separately
+verified all-owner rollback. No visited owner publisher was added by this
+audit; `canPublish()` and `canWriteCheckpoint()` remain false.
+
 1. Choose a canonical production EC6 version, slot name and title-private profile root. Explicitly reject or migrate older autosave schemas; an existing v2 test seed cannot silently become a v5 production slot.
 2. Stage an exact detached old-map save for any admitted outdoor map at a safe point before travel UI effects. Include Party and character state, inventory/buffs/hirelings, UI/cursor/shops, NPC and generated links, RNG, active and visited map deltas, chests/artifacts, actor/sprite/decoration runtime, event variables and owner identities. The old-map checkpoint must contain a reload-safe in-bounds **Party copy** when the live border position lies outside the map edge; keep live Party untouched until commit.
 3. Revalidate destination geometry, source-map archive identity, the three-bit offer mask and confirmation flying state. Stage target map/resource readiness and a no-reentry capture. Give the disk writer a semantic validator and a required success result.

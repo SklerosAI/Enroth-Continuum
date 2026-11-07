@@ -63,6 +63,19 @@ pre-event publication scopes and the bounded input decision; normal MM6
 SaveLoad, `.ec6` menu listing, failure rollback and production admission stay
 closed. Do not infer general later-map or indoor save support from this seam.
 
+The [visited-owner replay order audit](MM6-F4-Border-Autosave-Transaction.md)
+found no single safe `DoPrepareWorld(false)` hook for VIST publication.
+Target native DDM is consumed before the probe, EVRT before decoration
+preparation, then actor/sprite/decoration runtime before `_461103` and map
+events. Existing fresh-load hooks cannot simply be enabled for returns:
+V3 couples GNPC with a saved RNG, while a return must preserve the latest
+active global RNG and chest/artifact ledger. The current v6 active snapshot
+ledger can become stale after play. The active world has already been
+released before these stages, so a failure must abandon the partial target
+to Main Menu until a durable checkpoint/reload or full rollback exists. No
+publisher was added; both gates remain false. See the packet for the exact
+multi-stage owner order and respawn policy question.
+
 The [MM6 indoor v6 input cycle](MM6-F4-V6-Indoor-Input-Cycle.md) passed five
 fresh headless children through a real-loop turn/walk, atomic post-input
 candidate and exact fresh-child replay. This is one test-only fixture;

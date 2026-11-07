@@ -1947,3 +1947,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a null-platform MM6 check that builds the fresh v2 NPC baseline from the selected private ResourceManager and compares its static NPC rows and profession totals with the initialized MM6 tables without printing or storing source content.
 - The private-backed headless check passed 1/1; an initial assertion incorrectly equated the active source count to the full fixed array size and was corrected. Dialogue, generated NPC state and graphical acceptance remain open.
+
+## [2026-11-06] integrate | MM6 cursor-neutral Party baseline
+- by: T-Burton-ND via codex
+- Made temporary Party construction avoid live mouse reset, while explicit Party Zero/Reset retain that behavior, and made v2 session preflight construct its own fresh Party instead of accepting a caller's live state.
+- Focused raw/NPC units passed 12/12, private MM6 null-platform checks 2/2 and MM7 headless control 1/1. Full live owner publication remains guarded.

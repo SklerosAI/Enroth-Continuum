@@ -7,14 +7,16 @@
 #include "MM6V4SaveFields.h"
 #include "MM6V5SpriteRuntimeFields.h"
 #include "MM6V5ActorRuntimeFields.h"
+#include "MM6V5DecorationRuntimeFields.h"
 
 namespace mm6 {
 
-// Detached EC6 v5 candidate: v4's complete 23 owners plus SPRT and ARTR.
+// Detached EC6 v5 candidate: v4's complete 23 owners plus SPRT, ARTR, DECR.
 struct V5SaveFields {
     V4SaveFields v4;
     SpriteRuntimeSaveFields sprites;
     ActorRuntimeSaveFields actors;
+    DecorationRuntimeSaveFields decorations;
 };
 
 std::vector<std::uint8_t> encodeV5Save(const V5SaveFields &fields, GameTitle title);

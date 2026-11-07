@@ -108,7 +108,8 @@ SaveHeaderFields decodeV5SlotShell(std::span<const std::uint8_t> bytes) {
     SaveContainer container = decodeSaveContainer(bytes);
     constexpr std::array<char, 4> spriteTag = {'S', 'P', 'R', 'T'};
     constexpr std::array<char, 4> actorTag = {'A', 'R', 'T', 'R'};
-    if (container.version != 5 || container.sections.size() != 25)
+    constexpr std::array<char, 4> decorTag = {'D', 'E', 'C', 'R'};
+    if (container.version != 5 || container.sections.size() != 26)
         throw std::runtime_error("MM6 v5 slot has wrong version or section count");
     const auto sprites = std::find_if(container.sections.begin(), container.sections.end(),
                                       [&spriteTag](const SaveSection &section) {
@@ -124,6 +125,13 @@ SaveHeaderFields decodeV5SlotShell(std::span<const std::uint8_t> bytes) {
     if (actors == container.sections.end() || !actors->required)
         throw std::runtime_error("MM6 v5 slot lacks required ARTR");
     container.sections.erase(actors);
+    const auto decorations = std::find_if(container.sections.begin(), container.sections.end(),
+                                          [&decorTag](const SaveSection &section) {
+                                              return section.tag == decorTag;
+                                          });
+    if (decorations == container.sections.end() || !decorations->required)
+        throw std::runtime_error("MM6 v5 slot lacks required DECR");
+    container.sections.erase(decorations);
     container.version = 4;
     return decodeV4SlotShell(encodeSaveContainer(container));
 }

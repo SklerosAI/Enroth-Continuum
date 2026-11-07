@@ -167,6 +167,7 @@ std::vector<std::uint8_t> sampleV5(std::uint8_t marker) {
     fields.actors = mm6::captureActorRuntimeFields(
         "o0.odm", fields.v4.v3.activeActorPayload,
         std::span<const Actor>{}, GameTitle::MM6);
+    fields.decorations.mapName = "o0.odm";
     return mm6::encodeV5Save(fields, GameTitle::MM6);
 }
 

@@ -2104,3 +2104,8 @@ Chronological record of wiki activity.
 - Integration's linked `MM6GeneratedNpcSaveFields.*` suite passed 3/3, superseding the earlier pending GNPC note.
 - Added exact gameplay RNG capture/restore for the selected Mersenne Twister or sequential engine, plus a bounded detached `RNGS` section; strict EC6 v2 still rejects it. AppleClang syntax, targeted style checks and a standalone MT continuation/refusal probe passed; linked RNGS tests remain pending.
 - A complete save version and pre-event generated-row/RNG publication order remain open. The earlier statement that no RNG snapshot API exists is superseded by the detached API; no live MM6 load calls it.
+
+## [2026-11-07] verify | MM6 gameplay RNG capsule linked
+- by: T-Burton-ND via codex
+- The linked detached RNGS and GNPC suites passed 5/5 in integration, and an MM7 headless control passed 1/1 after the shared RNG change. This supersedes the pending linked-check note above.
+- Strict EC6 v2 admission still rejects both detached sections. Their live save/load order, first-map actor persistence, and fresh-child continuation remain open.

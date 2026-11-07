@@ -23,7 +23,8 @@ struct StagedRawSessionFields {
 };
 
 // Read-only v2 slot selection through every currently represented Party and
-// world field adapter. The supplied bases must come from a fresh MM6 session.
+// world field adapter, and checks raw HELD/SHOP/SCLK owner equality. The
+// supplied bases must come from a fresh MM6 session.
 // This remains incomplete: BEAC/IFOV admission, final actor/PID identity,
 // cursor/shop/UI publication and active-world construction are not staged.
 std::optional<StagedRawSessionFields> preflightStagedRawSessionFields(

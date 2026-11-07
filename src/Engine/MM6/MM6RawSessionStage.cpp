@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "MM6AtomicSaveFile.h"
+#include "MM6RawCursorShopStage.h"
 
 namespace mm6 {
 
@@ -23,6 +24,7 @@ std::optional<StagedRawSessionFields> preflightStagedRawSessionFields(
         profileRoot, slotName, [&](std::span<const std::uint8_t> bytes) {
             StagedRawTitleOwners raw = stageRawTitleOwners(
                 bytes, expectedNames, readBase, verifyItem, title);
+            validateRawCursorShopJoin(raw.saved, raw.cursor, raw.shops, title);
             StagedRawPartyInventories party = stageRawPartyRepresentedFields(
                 freshParty, raw, itemTable, title);
             StagedRawWorldAndVisuals world = stageRawWorldAndVisuals(

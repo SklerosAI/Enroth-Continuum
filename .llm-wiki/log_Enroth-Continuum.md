@@ -2206,3 +2206,9 @@ Chronological record of wiki activity.
 - Added detached `EVRT` for exact per-map 75-byte `mapVars` and 125-byte `decorVars`, native respawn anchors and source-order decoration bindings, independent of native DDM/DLV event bytes. The exact v4 manifest is v3's 22 required sections plus EVRT; v1–v3 remain strict.
 - Added an MM6 test-only, no-respawn restore seam before indoor/outdoor decoration preparation, with a safe pre-input abort on mismatch. Linked container/codec/restore checks passed 11/11 and an MM7 headless control passed 1/1.
 - Current binding fields cannot distinguish same-type decorations swapped in position. No v4 full-session preflight, disposable slot, fresh-child replay, production SaveLoad or Atlas Play exists; strengthen exact identity before durable admission.
+
+## [2026-11-07] verify | MM6 EVRT exact binding and v4 stage
+- by: T-Burton-ND via codex
+- EVRT inner payload v2 adds exact position bits, yaw and trigger range to each decoration binding and rejects unpublished v1. A focused same-type position-swap case now refuses; linked container/codec/restore checks passed 12/12, superseding the earlier identity gap.
+- A detached outdoor-only v4 full-session stage joins the represented v3 owners with active EVRT map, respawn anchors and caller-supplied rebuilt decorations. Its linked positive/refusal suite passed 4/4. A disposable v2 writer and fresh-child no-write v4 candidate each passed 1/1 with the v2 primary unchanged.
+- No v4 slot was written or reloaded. Writer-side complete capture, final live-owner checks, production SaveLoad and Atlas Play remain closed.

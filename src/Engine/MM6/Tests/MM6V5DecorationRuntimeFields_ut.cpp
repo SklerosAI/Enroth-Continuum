@@ -20,6 +20,7 @@ struct Fixture {
 
     Fixture() {
         base->decorations.resize(1);
+        base->decorations[0].uDecorationDescID = 4;
         base->decorationNames.resize(1);
         base->decorationNames[0][0] = 'd';
         base->decorationNames[0][1] = 'e';
@@ -81,6 +82,7 @@ UNIT_TEST(MM6V5DecorationRuntimeFields, KeepsUnassignedOrdinalBeyondFirst124) {
     fixture.base->decorationNames.resize(125, fixture.base->decorationNames[0]);
     fixture.fields.decorations.resize(125);
     for (std::size_t index = 0; index < 125; ++index) {
+        fixture.base->decorations[index].uDecorationDescID = 4;
         reconstruct(fixture.base->decorations[index], &fixture.fields.decorations[index]);
         fixture.fields.decorations[index].uDecorationDescID = DECORATION_TRASH_HEAP_4;
         if (index < 124)

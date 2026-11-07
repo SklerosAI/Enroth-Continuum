@@ -2421,3 +2421,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a strict test-only raw-owner capture after a real indoor world load. Four separate headless children passed 1/1 each: seed, first-map v4, indoor v6 live-session writer and fresh-child reader. The reader checked all represented raw sections and post-world actor, sprite, NPC, RNG and event state.
 - The gate retains native chest/door residual checks and allows only the loader's source-backed face-delta repair. This covers one indoor map with a null renderer; first input, production SaveLoad and gameplay admission remain closed.
+
+## [2026-11-07] verify | Private MM7 default data path
+- by: T-Burton-ND via codex
+- Copied the existing extracted MM7 data into the new local Enroth Continuum default folder and verified every regular file byte-for-byte against the retained original. No private files or detailed inventory entered Git.
+- The rebuilt headless MM7 control discovered that new default path and passed 1/1. Existing saves, preferences and the installed app remain unmoved; collision-safe save migration and visible candidate-app checks remain open.

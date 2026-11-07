@@ -2631,3 +2631,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added an MM6-only Main Menu Quick Load refusal after the existing test override and before checking a present `.ec6` quicksave. A disposable headless test put that filename in GameTest's isolated user filesystem and passed 1/1 without queuing a load or changing menus; MM7 control passed 1/1.
 - Normal MM6 load listing and SaveLoad remain guarded until a complete source-backed publication and failure recovery route exists.
+
+## [2026-11-07] verify | MM6 paused Save-menu capture
+- by: T-Burton-ND via codex
+- Added an explicit read-only MM6 first-map paused Save-menu capture boundary with idle UI, timer and exact live-owner checks. Fresh disposable seed, v4 and real Escape-to-Save-menu capture children passed 1/1 each without a slot write; the existing unpaused seven-child v5 cycle passed 7/7 and MM7 control passed 1/1.
+- This supersedes the missing paused-menu capture contract, but normal `doSavegame`, production slots and load recovery remain closed.

@@ -1,6 +1,7 @@
 #include <unordered_set>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "Testing/Game/GameTest.h"
 
@@ -627,6 +628,9 @@ GAME_TEST(Issues, Issue1988_IndoorArtifactRetainsItem) {
     spawn.type = OBJECT_Sprite;
     spawn.treasureLevel = ITEM_TREASURE_LEVEL_7;
     spawn.position = pParty->pos;
+    std::vector<bool> occupiedBefore;
+    for (const SpriteObject &object : pSpriteObjects)
+        occupiedBefore.push_back(object.uObjectDescID != 0);
     SpawnRandomTreasure(&map, &spawn);
 
     ItemId generated = ITEM_NULL;
@@ -638,8 +642,11 @@ GAME_TEST(Issues, Issue1988_IndoorArtifactRetainsItem) {
     }
     ASSERT_NE(generated, ITEM_NULL);
     bool found = false;
-    for (const SpriteObject &object : pSpriteObjects)
-        found |= object.uObjectDescID && object.containing_item.itemId == generated;
+    for (size_t i = 0; i < pSpriteObjects.size(); ++i) {
+        const SpriteObject &object = pSpriteObjects[i];
+        if (i >= occupiedBefore.size() || !occupiedBefore[i])
+            found |= object.uObjectDescID && object.containing_item.itemId == generated;
+    }
     EXPECT_TRUE(found);
 }
 

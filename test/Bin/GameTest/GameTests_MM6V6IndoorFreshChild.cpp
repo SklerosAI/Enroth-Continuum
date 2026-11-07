@@ -25,6 +25,7 @@
 #include "Engine/MM6/MM6NpcStaticBaseline.h"
 #include "Engine/MM6/MM6PreEventCheckpointForTest.h"
 #include "Engine/MM6/MM6PersistentEventPublication.h"
+#include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/MM6/MM6V6IndoorSaveFields.h"
 #include "Engine/MM6/MM6V6IndoorPreEventOwnerGate.h"
@@ -34,6 +35,7 @@
 #include "Engine/Objects/Actor.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
+#include "Engine/Party.h"
 #include "Engine/Snapshots/MM6IndoorSnapshot.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Tables/ItemTable.h"
@@ -44,6 +46,7 @@
 #include "Engine/Timer.h"
 #include "Engine/Graphics/Overlays.h"
 #include "GUI/GUIWindow.h"
+#include "GUI/GUIMessageQueue.h"
 #include "Library/Platform/Application/PlatformApplication.h"
 
 #include "MM6V6IndoorProbeSlot.h"
@@ -57,8 +60,11 @@
 // It never admits input or calls production SaveLoad.
 GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents) {
     const char *enable = std::getenv("ENROTH_MM6_V6_INDOOR_READER_ENABLE");
+    const bool firstInputReader = enable &&
+        std::string_view(enable) == "strict-indoor-v6-first-input-reader";
     const bool liveSessionReader = enable &&
-        std::string_view(enable) == "strict-indoor-v6-live-session-reader";
+        (std::string_view(enable) == "strict-indoor-v6-live-session-reader" ||
+         firstInputReader);
     const bool postWorldReader = enable &&
         (std::string_view(enable) == "strict-indoor-v6-postworld-reader" ||
          liveSessionReader);
@@ -245,6 +251,182 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
         EXPECT_EQ(afterEvent.front().attributes, preEventFaces.front().attributes ^ 1u);
     EXPECT_EQ(mm6::testing::readIndoorProbeSlot(profile, candidateSlot), before);
     EXPECT_EQ(mm6::testing::readIndoorProbeSlot(profile, "autosave.ec6"), seedBefore);
+
+    if (firstInputReader) {
+        game.runGameRoutine([] { uGameState = GAME_FINISHED; });
+        game.tick(2);
+        ASSERT_EQ(GetCurrentMenuID(), MENU_MAIN);
+        bool selected = false;
+        bool postWorldChecked = false;
+        bool firstInputReached = false;
+        bool movementApplied = false;
+        std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chest;
+        std::unique_ptr<mm6::testing::ScopedEventRuntimeRestoreForTest> events;
+        std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> preEvent;
+        std::unique_ptr<mm6::testing::ScopedV6PreEventIndoorDecorationReplayForTest> decorations;
+        std::unique_ptr<mm6::testing::ScopedV6PreEventIndoorSpriteReplayForTest> sprites;
+        std::unique_ptr<mm6::testing::ScopedV6PreEventIndoorActorReplayForTest> actors;
+        std::unique_ptr<mm6::testing::ScopedPostWorldAdmissionForTest> admission;
+        game.runGameRoutine([&] {
+            checkpoint.reset();
+            mm6::testing::setLoadGameOverride([&](std::string_view requested) {
+                if (requested != "autosave.ec6")
+                    throw std::runtime_error("MM6 v6 indoor input selected another menu route");
+                *pParty = staged->represented.party.party;
+                *pNPCStats = staged->represented.world.world.npcs;
+                *gameTimer = staged->represented.world.visuals.timer;
+                *pActiveOverlayList = staged->represented.world.visuals.overlays;
+                pMapDeltas.clear();
+                for (const auto &[name, blob] : staged->represented.world.world.mapDeltas)
+                    pMapDeltas.emplace(name, Blob::copy(blob));
+                mm6::chestTitleState() = staged->represented.world.chestTitle;
+                mm6::publishFreshChildPersistentEventZeros(
+                    &engine->_persistentVariables,
+                    staged->represented.persistentEvents, GameTitle::MM6);
+                mm6::publishRawCursorShopOwners(
+                    &mm6::rawHeldCursorState(GameTitle::MM6), &mm6::shopTitleState(),
+                    staged->represented.raw.saved,
+                    {staged->represented.raw.cursor, staged->represented.raw.shops},
+                    GameTitle::MM6);
+                engine->_pendingTransition = MapDestination(map, MAP_START_POINT_PARTY);
+                engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
+                chest = std::make_unique<mm6::ScopedChestMapLoadOptIn>(true);
+                events = std::make_unique<mm6::testing::ScopedEventRuntimeRestoreForTest>(
+                    GameTitle::MM6, staged->saved.eventRuntime);
+                preEvent = std::make_unique<mm6::testing::ScopedPreEventCheckpointForTest>(
+                    GameTitle::MM6, [&] {
+                        mm6::requireV6IndoorPreEventOwnerAgreement(
+                            *staged, mapName, pActors, pSpriteObjects,
+                            pLevelDecorations, GameTitle::MM6);
+                    });
+                decorations = std::make_unique<
+                    mm6::testing::ScopedV6PreEventIndoorDecorationReplayForTest>(
+                        GameTitle::MM6, mapName, staged->decorationReplay);
+                sprites = std::make_unique<
+                    mm6::testing::ScopedV6PreEventIndoorSpriteReplayForTest>(
+                        GameTitle::MM6, staged->saved.runtimeSprites,
+                        staged->saved.sprites);
+                actors = std::make_unique<
+                    mm6::testing::ScopedV6PreEventIndoorActorReplayForTest>(
+                        GameTitle::MM6, staged->saved.runtimeActors,
+                        staged->saved.actors, staged->saved.generatedNpcs,
+                        staged->saved.gameplayRng, true);
+                admission = std::make_unique<mm6::testing::ScopedPostWorldAdmissionForTest>(
+                    GameTitle::MM6, [&] {
+                        if (!preEvent->reachedMapLoad() || preEvent->reachedInput() ||
+                            !events->restored() || !decorations->published() ||
+                            !sprites->published() || !actors->published() ||
+                            !actors->generatedBypassConsumed() || !actors->rngPublished() ||
+                            engine->_currentLoadedMapId != map ||
+                            uCurrentlyLoadedLevelType != LEVEL_INDOOR ||
+                            !pIndoor->bLoaded || !gameTimer->isPaused() ||
+                            engine->_pendingTransition || pPartyActionQueue->uNumActions != 0)
+                            throw std::runtime_error("MM6 v6 indoor input reached unexpected world order");
+                        mm6::testing::requireV6IndoorNativeResidualsForTest(
+                            parsedBase, preEventDoorsData);
+                        const auto raw = mm6::testing::captureV6IndoorLiveRawOwnersForTest(
+                            staged->saved.raw, mapName);
+                        mm6::testing::requireV6IndoorRawSectionsEqualForTest(
+                            *raw, staged->saved.raw, "MM6 v6 indoor pre-input raw owner");
+                        mm6::requireGeneratedNpcActorAgreement(
+                            staged->saved.generatedNpcs, pActors, mapName, GameTitle::MM6);
+                        const auto generated = mm6::captureGeneratedNpcFields(
+                            pActors, *pNPCStats, mapName, GameTitle::MM6);
+                        if (mm6::encodeGeneratedNpcSection(generated, GameTitle::MM6).payload !=
+                            mm6::encodeGeneratedNpcSection(
+                                staged->saved.generatedNpcs, GameTitle::MM6).payload)
+                            throw std::runtime_error("MM6 v6 indoor pre-input GNPC differs");
+                        const auto rng = mm6::captureGameplayRngFields(
+                            *application->component<EngineRandomComponent>(), GameTitle::MM6);
+                        if (mm6::encodeGameplayRngSection(rng, GameTitle::MM6).payload !=
+                            mm6::encodeGameplayRngSection(
+                                staged->saved.gameplayRng, GameTitle::MM6).payload)
+                            throw std::runtime_error("MM6 v6 indoor pre-input RNG differs");
+                        const auto decorationRuntime = mm6::captureIndoorDecorationRuntime(
+                            mapName, staged->represented.indoorPlan->base, *event,
+                            *pDecorationTable, pLevelDecorations, GameTitle::MM6);
+                        if (decorationRuntime != staged->saved.runtimeDecorations)
+                            throw std::runtime_error("MM6 v6 indoor pre-input IDRT differs");
+                        const auto spriteRuntime = mm6::captureIndoorSpriteRuntime(
+                            mapName, staged->saved.sprites, pSpriteObjects, GameTitle::MM6);
+                        if (mm6::encodeSpriteRuntimeSectionAs(
+                                spriteRuntime, mm6::SpriteRuntimeSectionKind::IndoorV6,
+                                GameTitle::MM6) !=
+                            mm6::encodeSpriteRuntimeSectionAs(
+                                staged->saved.runtimeSprites,
+                                mm6::SpriteRuntimeSectionKind::IndoorV6,
+                                GameTitle::MM6))
+                            throw std::runtime_error("MM6 v6 indoor pre-input ISRT differs");
+                        const std::vector<Actor> liveActors(pActors.begin(), pActors.end());
+                        const auto actorRuntime = mm6::captureIndoorActorRuntime(
+                            mapName, staged->saved.actors, liveActors, GameTitle::MM6);
+                        if (mm6::encodeActorRuntimeSectionAs(
+                                actorRuntime, mm6::ActorRuntimeSectionKind::IndoorV6,
+                                GameTitle::MM6) !=
+                            mm6::encodeActorRuntimeSectionAs(
+                                staged->saved.runtimeActors,
+                                mm6::ActorRuntimeSectionKind::IndoorV6,
+                                GameTitle::MM6))
+                            throw std::runtime_error("MM6 v6 indoor pre-input IART differs");
+                        postWorldChecked = true;
+                    });
+                selected = true;
+            });
+            mm6::testing::setMainMenuAutosaveQuickLoadOverride(true);
+            engine->_messageQueue->addMessageCurrentFrame(UIMSG_QuickLoad);
+        });
+        game.skipLoadingScreen();
+        game.tick(3);
+        if (postWorldChecked) {
+            game.runGameRoutine([&] {
+                firstInputReached = preEvent->reachedInput() &&
+                    !gameTimer->isPaused() &&
+                    !(engineFlags & ENGINE_SKIP_NEXT_WORLD_UPDATE) &&
+                    !(engineFlags & ENGINE_SKIP_NEXT_USER_INPUT) &&
+                    engine->_currentLoadedMapId == map &&
+                    uCurrentlyLoadedLevelType == LEVEL_INDOOR &&
+                    !engine->_pendingTransition && pPartyActionQueue->uNumActions == 0;
+                if (firstInputReached) {
+                    pPartyActionQueue->Add(PARTY_TurnLeft);
+                    pPartyActionQueue->Add(PARTY_WalkForward);
+                }
+            });
+            if (firstInputReached) {
+                const auto beforePosition = pParty->pos;
+                const auto beforeYaw = pParty->_viewYaw;
+                game.tick(3);
+                game.runGameRoutine([&] {
+                    movementApplied = pParty->pos != beforePosition &&
+                        pParty->_viewYaw != beforeYaw &&
+                        pPartyActionQueue->uNumActions == 0 &&
+                        engine->_currentLoadedMapId == map &&
+                        !engine->_pendingTransition;
+                });
+            }
+            game.runGameRoutine([] { uGameState = GAME_STATE_GAME_QUITTING_TO_MAIN_MENU; });
+            game.tick(2);
+        }
+        game.runGameRoutine([&] {
+            admission.reset();
+            decorations.reset();
+            sprites.reset();
+            actors.reset();
+            preEvent.reset();
+            events.reset();
+            chest.reset();
+            mm6::testing::setMainMenuAutosaveQuickLoadOverride(false);
+            mm6::testing::setLoadGameOverride({});
+        });
+        EXPECT_TRUE(selected);
+        EXPECT_TRUE(postWorldChecked);
+        EXPECT_TRUE(firstInputReached);
+        EXPECT_TRUE(movementApplied);
+        EXPECT_FALSE(staged->canEnterGameLoop());
+        EXPECT_EQ(mm6::testing::readIndoorProbeSlot(profile, candidateSlot), before);
+        EXPECT_EQ(mm6::testing::readIndoorProbeSlot(profile, "autosave.ec6"), seedBefore);
+        EXPECT_EQ(window->nativeHandle(), nullptr);
+        return;
+    }
 
     // Rebuild from the same immutable candidate a second time. The first
     // preparation only observed the pre-event face baseline; this one crosses

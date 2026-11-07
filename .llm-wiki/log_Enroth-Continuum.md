@@ -2233,3 +2233,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a detached full-list SPRT codec with exact float bits, widened runtime timers, ordered native 100-byte slot anchors and strict MM6 item provenance. V5 requires v4's 23 owners plus SPRT; v1–v4 remain strict.
 - Focused fractional round-trip, malformed/provenance refusal and older-version isolation checks passed 3/3. No live v5 capture, atomic slot, fresh-child reload or production route is enabled.
+
+## [2026-11-07] stage | MM7 local-only configure boundary
+- by: T-Burton-ND via codex
+- Added an opt-in `EC_LOCAL_ONLY_CONFIGURE=ON` path that skips recursive submodule update, forbids the OpenEnroth prebuilt archive, disconnects nested FetchContent and fails with named missing repository-owned source/recipe inputs. A fresh arm64 AppleClang configure reached that refusal without a download; the normal path and installed MM7 helper remain unchanged.
+- This is a fail-closed migration scaffold, not a successful offline MM7 build. Pinned sources, provenance/license review, local build recipes and private Atlas data/profile migration remain open.

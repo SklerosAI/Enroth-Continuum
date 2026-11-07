@@ -969,11 +969,12 @@ state, without writing a save. This is not yet a durable `.ec6` slot or a
 fresh-child replay, and later actor mutations remain outside the admitted
 subset.
 
-The detached [EC6 v3 manifest](MM6_F4_EC6_V3_MANIFEST.md) now requires
-exactly the nineteen v2 owners plus SPAW, GNPC and RNGS. Linked v3, v2
-regression and SPAW suites passed **12/12**. It validates each new payload
-and the GNPC/HEAD map join, but does not bind SPAW's first slot to the native
-DDM baseline, prove no-respawn replay, or expose a v3 atomic disk route.
+The first detached [EC6 v3 manifest](MM6_F4_EC6_V3_MANIFEST.md) required
+the nineteen v2 owners plus SPAW, GNPC and RNGS and passed **12/12** linked
+structural checks. It was superseded by full-list ACTR in the same candidate
+manifest. The current v3/v2/ACTR suites pass **11/11**; it validates each
+new payload and the GNPC/HEAD map join, but does not bind ACTR's baseline
+portion to native DDM actors, prove no-respawn replay, or expose a v3 atomic disk route.
 V1/v2 remain strict and cannot be silently loaded as v3.
 
 A [baseline actor save audit](MM6_F4_BASELINE_ACTOR_SAVE_AUDIT.md) found that
@@ -995,3 +996,11 @@ and an MM7 headless control passed **1/1** after the MM6-only loader change.
 The [active-actor decision](MM6_F4_ACTIVE_ACTOR_OWNER_DECISION.md) calls for
 full-list ACTR replacing SPAW in the candidate manifest. Actor items/buffs,
 live replay and durable save–quit–reload remain open.
+
+A detached [ACTR v1 full-list section](MM6_F4_ACTIVE_ACTOR_SECTION.md) now
+uses a distinct tag and bounded runtime records for every active actor slot
+from zero. Linked ACTR/SPAW unit suites passed **8/8** and a dedicated
+private-backed first-map ACTR capture passed **1/1** headlessly with no
+profile write. The current v3 manifest now requires ACTR;
+actor items/buffs, live pre-event replay and fresh-child save–quit–reload
+remain open.

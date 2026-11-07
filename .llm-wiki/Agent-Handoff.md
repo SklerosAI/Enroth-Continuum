@@ -32,11 +32,13 @@ A detached [pre-event GNPC/RNG agreement helper](MM6-F4-Pre-Event-GNPC-Replay.md
 
 The detached [SPAW v1 runtime section](MM6-F4-Spawned-Actor-Section.md) passed 4/4 linked unit checks and a private-backed, fresh-process first-map encode/decode/re-encode probe 1/1 with ramfs user state. It stores exact contiguous slots, MM6 resistances and runtime-only fields, and refuses actor items/buffs or narrowing. This proves a narrow pristine-spawn capture, not a durable post-entry save. It is not in strict v2, and baseline DDM state, live replay order and later mutated actor fields remain open.
 
-A detached [EC6 v3 exact manifest](MM6-F4-EC6-V3-Manifest.md) now requires the nineteen v2 owners plus SPAW, GNPC and RNGS. Linked v3/v2/SPAW suites passed 12/12. V1/v2 decoders remain strict; no v3 atomic slot, map-stage first-slot/no-respawn binding, pre-event publisher or production loader exists. The v2 bootstrap refusal remains in force.
+The first detached [EC6 v3 exact manifest](MM6-F4-EC6-V3-Manifest.md) required the nineteen v2 owners plus SPAW, GNPC and RNGS; that structural stage passed 12/12 linked checks. The current manifest now requires full-list ACTR instead of SPAW and passes v3/v2/ACTR checks 11/11. V1/v2 decoders remain strict; no v3 atomic slot, map-stage baseline/no-respawn binding, pre-event publisher or production loader exists. The v2 bootstrap refusal remains in force.
 
 The [baseline actor save audit](MM6-F4-Baseline-Actor-Save-Audit.md) supersedes any implication that spawned-only SPAW plus v3 is enough for gameplay saves: the DDM writer omits original actor mutations, and the first fresh-process full-list runtime capture refused `missing-mm6-resistance` (0/1). The appended-spawn-only probe remains 1/1. Do not promote v3 to a disk or live route until a full active actor owner or strict baseline replay-equivalence refusal is proved.
 
 Exact per-actor MM6 native resistance bytes are now assigned after DDM actor reconstruction; the focused helper passed 1/1. The full-list headless probe moved from missing resistance to a zero descriptor on an actor that can act; the codec now preserves only this exact sentinel with a valid embedded identity and canonical replay. Its linked suite passed 5/5, the full-list first-map capture passed 1/1 and an MM7 headless control passed 1/1. The [active-actor owner decision](MM6-F4-Active-Actor-Owner-Decision.md) now calls for full-list ACTR replacing spawned-only SPAW before v3 live promotion. Actor items/buffs and fresh-child replay remain open.
+
+The detached [ACTR v1 full-list section](MM6-F4-Active-Actor-Section.md) passed linked ACTR/SPAW suites 8/8 and a dedicated private-backed first-map ACTR capture 1/1 with ramfs user state. Current v3 now requires ACTR; no disk or live replay route exists. The ACTR codec refuses nondefault actor items/buffs, so do not claim durable campaign save support.
 
 ## Read first
 

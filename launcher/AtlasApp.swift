@@ -107,6 +107,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         if action == "refresh" { sendState() }
         else if action == "play-mm7" { playMM7() }
         else if action == "open-saves" { NSWorkspace.shared.open(userPath.appendingPathComponent("saves", isDirectory: true)) }
+        else if action == "open-mm7-mods" { openMM7Mods() }
         else if action == "backup-saves" { backupSaves() }
         else if action == "mods-on" { preferences.set(true, forKey: "mods.mm7.enabled"); sendState(message: "MM7 private mods will apply at the next launch.") }
         else if action == "mods-off" { preferences.set(false, forKey: "mods.mm7.enabled"); sendState(message: "Vanilla MM7 will run at the next launch.") }
@@ -194,12 +195,16 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
                 }
             }
             process.environment = environment
-            process.terminationHandler = { [weak self] _ in
+            process.terminationHandler = { [weak self] finished in
                 DispatchQueue.main.async {
                     self?.game = nil
                     self?.window.makeKeyAndOrderFront(nil)
                     NSApp.activate(ignoringOtherApps: true)
-                    self?.sendState(message: "Returned from MM7. Your saves remain on this Mac.")
+                    if finished.terminationReason == .exit && finished.terminationStatus == 0 {
+                        self?.sendState(message: "Returned from MM7. Your saves remain on this Mac.")
+                    } else {
+                        self?.sendState(message: "MM7 exited unexpectedly. Check your latest save before continuing.")
+                    }
                 }
             }
             try process.run()
@@ -233,6 +238,19 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         modRoot.appendingPathComponent("portrait-\(slot).png")
     }
 
+    private func openMM7Mods() {
+        do {
+            try FileManager.default.createDirectory(at: modRoot, withIntermediateDirectories: true)
+            if NSWorkspace.shared.open(modRoot) {
+                sendState(message: "Opened the local MM7 mods folder. Supported files: portrait-1.png through portrait-4.png and armor.tsv.")
+            } else {
+                sendState(message: "Could not open the local MM7 mods folder in Finder.")
+            }
+        } catch {
+            sendState(message: "Could not open MM7 mods folder: \(error.localizedDescription)")
+        }
+    }
+
     private func choosePortrait(_ slot: Int) {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.png]
@@ -243,12 +261,13 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         do {
             let data = try Data(contentsOf: source)
             guard data.count <= 4 * 1024 * 1024, let image = NSBitmapImageRep(data: data),
-                  (32...512).contains(image.pixelsWide), (32...512).contains(image.pixelsHigh) else {
+                  (32...512).contains(image.pixelsWide), (32...512).contains(image.pixelsHigh),
+                  let png = image.representation(using: .png, properties: [:]), png.count <= 4 * 1024 * 1024 else {
                 sendState(message: "Choose a valid PNG between 32 and 512 pixels in each dimension, under 4 MB.")
                 return
             }
             try FileManager.default.createDirectory(at: modRoot, withIntermediateDirectories: true)
-            try data.write(to: portraitURL(slot), options: .atomic)
+            try png.write(to: portraitURL(slot), options: .atomic)
             sendState(message: "Portrait \(slot) is ready for the next modded MM7 launch.")
         } catch {
             sendState(message: "Could not add portrait: \(error.localizedDescription)")
@@ -294,6 +313,9 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
                 try FileManager.default.removeItem(at: file)
             }
             preferences.removeObject(forKey: "mods.mm7.armor.saved")
+            preferences.removeObject(forKey: "mods.mm7.armor.id")
+            preferences.removeObject(forKey: "mods.mm7.armor.base")
+            preferences.removeObject(forKey: "mods.mm7.armor.bonus")
             sendState(message: "Original armor AC will apply on the next MM7 launch.")
         } catch {
             sendState(message: "Could not remove armor override: \(error.localizedDescription)")

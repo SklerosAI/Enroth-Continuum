@@ -1,16 +1,14 @@
 # MM7 private mods: troubleshooting and next design
 
-Status: **planned, 2026-11-07**. Implementation is scheduled after MM6 is
-playable and after the MM7 inherited-engine audit. Findings below come from a
-read-only source review of the installed Atlas and the integration tree.
+Status: **planned, 2026-11-07**. The larger mod designs remain scheduled after
+MM6 is playable and after the MM7 inherited-engine audit. The small fixes
+marked below are implemented in source but need an installed Atlas check.
+Findings came from a source review of the installed Atlas and integration tree.
 
 ## Defects in the current mods
 
-1. Clearing the armor override deletes `armor.tsv` and `mods.mm7.armor.saved`
-   but keeps `armor.id`, `armor.base` and `armor.bonus` in preferences
-   (`launcher/AtlasApp.swift` `clearArmor`). The Atelier then shows HTML
-   defaults instead of the stale values. Clear every armor key, or show the
-   cleared values explicitly.
+1. Fixed in source: clearing the armor override now deletes `armor.tsv` and
+   all four related preference keys (`launcher/AtlasApp.swift` `clearArmor`).
 2. One custom portrait PNG replaces every non-dead face frame
    (`src/GUI/UI/UIGame.cpp` `GameUI_DrawPortraits`). Sleep, unconscious,
    paralysis, stone, damage reactions and the zombie swap become invisible.
@@ -19,10 +17,10 @@ read-only source review of the installed Atlas and the integration tree.
    (`src/GUI/UI/UIPopup.cpp` `GameUI_CharacterQuickRecord_Draw`). All face
    drawing should go through one resolver.
 4. Mod errors are invisible. The engine only logs warnings
-   (`src/Engine/AssetsManager.cpp`, `src/Engine/Tables/ItemTable.cpp`), Atlas
-   neither captures the helper's stderr nor reads its log, and a JPEG renamed
-   to `.png` passes the Atelier but fails `png::decode`. Re-encode chosen
-   images to PNG and surface mod log lines after the game exits.
+   (`src/Engine/AssetsManager.cpp`, `src/Engine/Tables/ItemTable.cpp`), and
+   Atlas neither captures the helper's stderr nor reads its log. Imported
+   portraits are now re-encoded as PNG in source; surfacing mod log lines
+   after the game exits remains open.
 5. The item tooltip prints AC only when `GetDamageDice()` is nonzero
    (`UIPopup.cpp`), while the Atelier accepts a base AC of 0.
 6. Party creation shows the custom PNG regardless of the selected face, while
@@ -31,8 +29,8 @@ read-only source review of the installed Atlas and the integration tree.
    init and cached for portraits, the vendor game tests skip unless an
    environment variable is set, and custom images have an empty `name()` so
    the HUD texture tape cannot see them.
-8. `getCustomPortrait` has no MM7 title check, unlike the other two hooks. A
-   bonus-AC override also raises item break resistance.
+8. Fixed in source: `getCustomPortrait` and the armor override now require an
+   MM7 title. A bonus-AC override also raises item break resistance.
 
 Verified working: the armor override reaches character AC and the tooltip,
 vendor refresh runs once per shop or guild visit, MM6 ignores the hooks, and

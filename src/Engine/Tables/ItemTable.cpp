@@ -258,6 +258,8 @@ void ItemTable::Initialize(ResourceManager *resourceManager) {
 }
 
 void ItemTable::ApplyPrivateArmorOverrides() {
+    if (!engine || engine->gameTitle() != GameTitle::MM7)
+        return;
     const char *directory = std::getenv("ENROTH_MM7_MOD_DIR");
     if (!directory || !*directory)
         return;

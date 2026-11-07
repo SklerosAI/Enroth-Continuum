@@ -1418,7 +1418,7 @@ void showSpellbookInfo(ItemId spellbook) {
                                   localization->str(LSTR_EXPERT), maxLineWidth + 3, maxLineWidth + 10, pSpellStats->pInfos[spell].pExpertSkillDesc,
                                   localization->str(LSTR_MASTER), maxLineWidth + 3, maxLineWidth + 10, pSpellStats->pInfos[spell].pMasterSkillDesc);
     if (!isMM6)
-        str += fmt::format("\n{}\t{:03}:\t{:03}{}", localization->str(LSTR_GRAND_1), maxLineWidth + 3,
+        str += fmt::format("\n{}\t{:03}:\t{:03}{}\t000", localization->str(LSTR_GRAND_1), maxLineWidth + 3,
                            maxLineWidth + 10, pSpellStats->pInfos[spell].pGrandmasterSkillDesc);
 
     popup.h += assets->pFontSmallnum->CalcTextHeight(str, popup.w, 0);

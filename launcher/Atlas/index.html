@@ -80,6 +80,7 @@
     <div id="atelier" class="view"><div class="pagehero"><span class="eyebrow">The Atelier</span><h1>Make it yours.</h1><p>A private workshop for portraits, equipment and vendor stock. Changes stay on this Mac and leave the original game archives untouched.</p></div>
       <div class="panel"><span class="pill good" id="mod-mode">Current play mode · Vanilla</span><h3>MM7 mod profile</h3><p>Portraits, armor AC and vendor stock preferences are read from this Mac when MM7 starts. Your GOG archives and existing saves are left intact.</p>
         <div class="row"><div><strong>Active profile</strong><p>Switch between your local changes and the original game values for the next launch.</p></div><button class="secondary" id="mod-toggle">Use private mods</button></div>
+        <div class="row"><div><strong>Local MM7 mods folder</strong><p>Open the folder to inspect or edit supported files: portrait-1.png through portrait-4.png and armor.tsv. Other files are not loaded yet.</p></div><button class="secondary" id="open-mm7-mods">Open mods folder</button></div>
         <div class="slot-grid" id="portrait-slots"></div>
         <div class="row"><div><strong>Custom party portraits</strong><p>One PNG for each party position. Static art replaces normal expressions; original voices, death and eradication art remain.</p></div><span class="pill good">Supported in MM7</span></div>
         <div class="row"><div><strong>Armor template AC</strong><p>Changes every copy of the chosen armor type while this profile is active.</p><div class="armor-fields"><label>Armor type<select id="armor-id"><option value="66">Leather Armor · 66</option><option value="67">Studded Leather · 67</option><option value="68">Officer's Leather · 68</option><option value="69">Regnan Leather · 69</option><option value="70">Royal Leather · 70</option><option value="71">Chain Mail · 71</option><option value="72">Steel Chain Mail · 72</option><option value="73">Fine Chain Mail · 73</option><option value="74">Resplendent Chain · 74</option><option value="75">Golden Chain Mail · 75</option><option value="76">Plate Armor · 76</option><option value="77">Splendid Plate · 77</option><option value="78">Noble Plate · 78</option></select></label><label>Base AC<input id="armor-base" type="number" min="0" max="100" value="4"></label><label>Bonus AC<input id="armor-bonus" type="number" min="0" max="100" value="0"></label><button class="secondary" id="save-armor">Save AC</button><button class="secondary" id="clear-armor" hidden>Use original AC</button></div></div><span class="pill good" id="armor-status">No override saved</span></div>
@@ -134,6 +135,7 @@
     document.getElementById('clear-armor').hidden=!state.armor.saved;
     safeText('armor-status',state.armor.saved?'Saved · applies next launch':'No override saved');
     if(state.armor.saved){document.getElementById('armor-id').value=state.armor.id;document.getElementById('armor-base').value=state.armor.base;document.getElementById('armor-bonus').value=state.armor.bonus}
+    else{document.getElementById('armor-id').value='66';document.getElementById('armor-base').value='4';document.getElementById('armor-bonus').value='0'}
     const settings=document.getElementById('data-settings');settings.replaceChildren();
     for(const game of Object.keys(titles)){
       const row=document.createElement('div'),info=document.createElement('div'),strong=document.createElement('strong'),p=document.createElement('p'),button=document.createElement('button');
@@ -147,6 +149,7 @@
   document.querySelectorAll('[data-detail]').forEach(b=>b.addEventListener('click',()=>{show('settings');safeText('notice',titles[b.dataset.detail]+' engine support is in progress. You can already choose its private game data folder.')}));
   document.getElementById('play-mm7').addEventListener('click',()=>send('play-mm7'));
   document.getElementById('mod-toggle').addEventListener('click',()=>send(document.getElementById('mod-toggle').textContent==='Play Vanilla'?'mods-off':'mods-on'));
+  document.getElementById('open-mm7-mods').addEventListener('click',()=>send('open-mm7-mods'));
   document.getElementById('vendor-refresh-toggle').addEventListener('click',()=>send(document.getElementById('vendor-refresh-toggle').textContent==='Turn off'?'vendor-refresh-off':'vendor-refresh-on'));
   document.getElementById('save-armor').addEventListener('click',()=>send('armor:'+document.getElementById('armor-id').value+':'+document.getElementById('armor-base').value+':'+document.getElementById('armor-bonus').value));
   document.getElementById('clear-armor').addEventListener('click',()=>send('clear-armor'));

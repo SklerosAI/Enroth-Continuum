@@ -25,7 +25,10 @@ Game data, saves, backups, and mod files stay in the user's home folder.
 The launcher never writes game archives. The mod folder is
 `~/Library/Application Support/Enroth Continuum/Mods/MM7` and contains up to
 four `portrait-N.png` files and an `armor.tsv` file. The engine reads that
-folder only when the Private mods switch is on. The armor file format is:
+folder only when the Private mods switch is on. Use **Open mods folder** in
+the Atelier to inspect or edit these files. Atlas converts imported portraits
+to PNG before placing them there. Other files in this folder are not loaded.
+The armor file format is:
 
 ```text
 # item_id<TAB>base_ac<TAB>bonus_ac

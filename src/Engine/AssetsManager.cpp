@@ -115,6 +115,8 @@ GraphicsImage *AssetsManager::getMM6SelectionFrame() {
 }
 
 GraphicsImage *AssetsManager::getCustomPortrait(int partySlot) {
+    if (!engine || engine->gameTitle() != GameTitle::MM7)
+        return nullptr;
     if (partySlot < 0 || partySlot >= 4)
         return nullptr;
 

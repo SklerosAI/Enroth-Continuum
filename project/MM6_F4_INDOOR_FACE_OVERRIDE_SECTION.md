@@ -126,11 +126,16 @@ passed **1/1 each**. The first strict runs exposed a loader-repaired door
 texture-delta mismatch and a missing pre-event HELD owner; the test now anchors
 door comparison to the real pre-event baseline and publishes the fully staged
 raw owners before the second indoor load. Chest raw provenance and remaining
-door geometry/reset/outline semantics still must match. This is one indoor
+door geometry/reset/outline semantics still must match. At that checkpoint this was one indoor
 map with a null renderer, no first input and no production SaveLoad; gameplay
 admission remains false. The next gate is a bounded first turn/walk in the
 fresh child, then a test-only atomic post-input candidate and another exact
 fresh-child replay. Unsupported active beacons or changed chest/door state
 must still refuse.
+The later [disposable v6 indoor input-cycle packet](MM6_F4_EC6_V6_INDOOR_INPUT_CYCLE.md)
+supersedes the first-input and live-session limits above for one strict
+test-only fixture. Five separate headless processes pass through a real-loop
+turn/walk, atomic post-input candidate and fresh-child exact replay. General
+indoor gameplay, production SaveLoad and graphical acceptance remain open.
 
 See [indoor face persistence gate](MM6_F4_INDOOR_FACE_PERSISTENCE_GATE.md), [known save sections](MM6_EC6_MAP_FIELDS_F4.md), and [atomic save](MM6_ATOMIC_SAVE_F4.md).

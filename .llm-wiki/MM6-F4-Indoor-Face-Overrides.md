@@ -91,7 +91,15 @@ indoor writer, fresh-child reader) pass **1/1 each**. The reader publishes and
 recaptures all 19 raw sections and GNPC/RNG/EVRT/IART/ISRT/IDRT/IFOV after
 `onMapLoad`. Native chest and door residuals remain strict, allowing only
 door face-delta words deliberately reconstructed from the loaded face base.
-This is one indoor map with a null renderer; first input, post-input save,
-production SaveLoad, other maps and graphical acceptance remain open.
+At that checkpoint this was one indoor map with a null renderer; first input,
+post-input save, production SaveLoad, other maps and graphical acceptance remained open.
 
-See also: [MM6 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md), [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), and [implementation packet](../project/MM6_F4_INDOOR_FACE_OVERRIDE_SECTION.md).
+The later [v6 indoor input cycle](MM6-F4-V6-Indoor-Input-Cycle.md)
+supersedes that limit for a **test-only disposable fixture**: a genuine
+live-session candidate captures Party/title and all represented raw owners,
+then survives real-loop turn/walk, an exact post-input write and independent
+fresh-child replay. Five headless children passed 1/1 each. The stage's
+production gameplay-admission flag remains false; normal SaveLoad and a
+graphical indoor/campaign check are still open.
+
+See also: [MM6 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md), [MM6 V6 Indoor Input Cycle](MM6-F4-V6-Indoor-Input-Cycle.md), [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), and [implementation packet](../project/MM6_F4_INDOOR_FACE_OVERRIDE_SECTION.md).

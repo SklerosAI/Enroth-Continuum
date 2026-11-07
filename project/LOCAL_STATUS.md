@@ -1371,3 +1371,12 @@ replay can fail after mutation; these need a game-loop-owned abort/recovery
 transaction. Manual Save also pauses the timer before `doSavegame`, while the
 current writer requires settled unpaused input. A paused-menu capture or
 pre-pause snapshot contract must be proved before wiring that button.
+
+Main Menu Quick Load now refuses an ordinary MM6 request before probing a
+present `.ec6` quicksave or queuing an unsupported load; the existing
+test-only autosave override remains available, and MM7's branch is unchanged.
+A focused headless test created a visible marker in GameTest's isolated user
+filesystem and passed **1/1** with no pending load or menu transition; MM7
+control passed **1/1**. The broader UI audit keeps MM6 load listing empty
+until source-backed slot preflight, publication and failure recovery are
+joined. Manual Save still needs a paused-menu capture contract.

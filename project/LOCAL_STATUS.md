@@ -1297,7 +1297,9 @@ reader rebuilt the active map, checked the visited owner against its source,
 and stopped before input without publishing that owner to the live cache.
 Malformed and cross-map candidates refused, and an injected pre-replacement
 fault left existing slots unchanged. A read-only return plan retained the
-current global chest/artifact ledger. A detached arrival helper then staged a
+v6 active-snapshot chest/artifact ledger, which may be stale after further
+play; a future return must carry the latest global ledger. A detached arrival
+helper then staged a
 copied Party across a cardinal edge, sampled target terrain, and refused
 model-floor overlap; focused units passed **3/3** and the five-child chain
 passed again. This did not execute real border movement or enter the old map.

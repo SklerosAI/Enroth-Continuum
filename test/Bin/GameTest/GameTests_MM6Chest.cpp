@@ -18,6 +18,9 @@
 #include "Engine/SaveLoad.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Tables/MapTable.h"
+#include "Engine/Timer.h"
+
+#include "GUI/UI/UIChest.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -105,4 +108,38 @@ GAME_TEST(MM6ZChestHeadless, ScopedFirstOutdoorMapAndRollback) {
     EXPECT_EQ(mm6::chestTitleState().lcgState, savedState.lcgState);
     EXPECT_EQ(mm6::chestTitleState().generatedArtifactFlags, savedState.generatedArtifactFlags);
     EXPECT_EQ(window->nativeHandle(), nullptr);
+
+    // Open one real untrapped first-map chest through the public entry point.
+    // This must publish the MM6 raw sidecar and live chest together, without
+    // entering the inherited MM7 placement path.
+    int openIndex = -1;
+    for (int index = 0; index < static_cast<int>(vChests.size()); ++index) {
+        if (!vChests[index].Trapped() && !vChests[index].Initialized()) {
+            openIndex = index;
+            break;
+        }
+    }
+    ASSERT_GE(openIndex, 0);
+    const auto beforeOpenSidecar = pOutdoor->mm6DeltaBytes;
+    bool opened = false;
+    game.runGameRoutine([openIndex, &opened] {
+        pParty->setActiveCharacterIndex(0);
+        opened = Chest::open(openIndex, Pid::dummy());
+        if (opened && pGUIWindow_CurrentChest)
+            pGUIWindow_CurrentChest->Update();
+    });
+    EXPECT_TRUE(opened);
+    EXPECT_NE(pGUIWindow_CurrentChest, nullptr);
+    if (pGUIWindow_CurrentChest)
+        EXPECT_EQ(pGUIWindow_CurrentChest->chestId(), openIndex);
+    EXPECT_EQ(current_screen_type, SCREEN_CHEST);
+    EXPECT_TRUE(gameTimer->isPaused());
+    EXPECT_TRUE(vChests[openIndex].Initialized());
+    EXPECT_NE(pOutdoor->mm6DeltaBytes, beforeOpenSidecar);
+    EXPECT_EQ(window->nativeHandle(), nullptr);
+    game.runGameRoutine([] {
+        pGUIWindow_CurrentChest.reset();
+        current_screen_type = SCREEN_GAME;
+        gameTimer->setPaused(false);
+    });
 }

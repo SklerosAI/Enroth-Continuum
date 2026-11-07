@@ -1,8 +1,10 @@
 #include "Engine/Objects/Chest.h"
 
 #include <array>
+#include <limits>
 #include <memory>
 #include <numeric>
+#include <optional>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
@@ -23,6 +25,8 @@
 #include "Engine/Graphics/Sprites.h"
 #include "Engine/Tables/ItemTable.h"
 #include "Engine/Party.h"
+#include "Engine/MM6/MM6ChestOpenOwnerTransaction.h"
+#include "Engine/Resources/ResourceManager.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/ChestTable.h"
 
@@ -40,6 +44,69 @@
 
 std::vector<Chest> vChests;
 
+namespace {
+
+bool openMm6Chest(int chestId) {
+    mm6::ChestLiveBinding binding;
+    binding.title = GameTitle::MM6;
+    binding.levelType = uCurrentlyLoadedLevelType;
+    binding.chests = &vChests;
+    binding.titleState = &mm6::chestTitleState();
+    MM6IndoorSnapshot indoorBase;
+    if (binding.levelType == LEVEL_OUTDOOR && pOutdoor) {
+        binding.deltaBytes = &pOutdoor->mm6DeltaBytes;
+    } else if (binding.levelType == LEVEL_INDOOR && pIndoor &&
+               pIndoor->doorsData.size() <= std::numeric_limits<std::size_t>::max() / 2) {
+        binding.deltaBytes = &pIndoor->mm6DeltaBytes;
+        indoorBase.doorDataBytes = pIndoor->doorsData.size() * 2;
+        indoorBase.sections.push_back({MM6IndoorSectionKind::DoorSlots, Blob(), 200});
+        binding.indoorBase = &indoorBase;
+    } else {
+        return false;
+    }
+
+    const Blob dchest = engine->resources()->eventsData("dchest.bin");
+    const auto rawTypes = std::span(static_cast<const std::uint8_t *>(dchest.data()), dchest.size());
+    const auto layout = mm6::chestTypeLayout(GameTitle::MM6, vChests[chestId].chestTypeId, rawTypes);
+    if (!layout)
+        return false;
+    const auto background = engine->resources()->icon(layout->iconName);
+    if (background.width() <= 0 || background.height() <= 0)
+        return false;
+
+    const auto iconLookup = [](int id) -> std::optional<mm6::ChestIconSize> {
+        if (!pItemTable || id < 1 || id > 580)
+            return std::nullopt;
+        const auto &iconName = pItemTable->items[static_cast<ItemId>(id)].iconName;
+        if (iconName.empty())
+            return std::nullopt;
+        const auto icon = engine->resources()->icon(iconName);
+        if (icon.width() <= 0 || icon.height() <= 0)
+            return std::nullopt;
+        return mm6::ChestIconSize{icon.width(), icon.height()};
+    };
+    auto staged = mm6::stageChestOpenOwner(binding, chestId, rawTypes, iconLookup);
+    if (!staged)
+        return false;
+
+    // Construct the GUI before changing chest, sidecar or RNG owners. Its
+    // constructor can allocate; the remaining owner publication cannot throw.
+    std::unique_ptr<GUIWindow_Chest> chestWindow;
+    if (pParty->hasActiveCharacter())
+        chestWindow = std::make_unique<GUIWindow_Chest>(chestId);
+    binding.chests->swap(staged->chests);
+    binding.deltaBytes->swap(staged->deltaBytes);
+    binding.titleState->lcgState = staged->nextLcgState;
+    if (!chestWindow)
+        return false;
+    pGUIWindow_CurrentChest = std::move(chestWindow);
+    pAudioPlayer->playUISound(SOUND_openchest0101);
+    OpenedTelekinesis = false;
+    return true;
+}
+
+} // namespace
+
 bool Chest::open(int uChestID, Pid objectPid) {
     double dir_x;
     double dir_y;
@@ -54,6 +121,8 @@ bool Chest::open(int uChestID, Pid objectPid) {
 
     if (uChestID < 0 || uChestID >= static_cast<int>(vChests.size()))
         return false;
+    if (engine->gameTitle() == GameTitle::MM6)
+        return openMm6Chest(uChestID);
     Chest *chest = &vChests[uChestID];
 
     if (!chest->Initialized() || engine->config->gameplay.ChestTryPlaceItems.value() == 1)
@@ -234,6 +303,8 @@ void Chest::toggleFlag(int uChestID, ChestFlag uFlag, bool bValue) {
 }
 
 void Chest::OnChestLeftClick() {
+    if (engine->gameTitle() == GameTitle::MM6)
+        return;
     int uChestID = pGUIWindow_CurrentChest->chestId();
     Chest *chest = &vChests[uChestID];
 
@@ -273,6 +344,8 @@ void Chest::OnChestLeftClick() {
 }
 
 void Chest::GrabItem(bool all) {  // new function to grab items from chest using spacebar
+    if (engine->gameTitle() == GameTitle::MM6)
+        return;
     if (pParty->pPickedItem.itemId != ITEM_NULL || !pParty->hasActiveCharacter()) {
         return;
     }

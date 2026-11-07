@@ -752,3 +752,10 @@ of these changes opens production house/event/save/load paths or proves a
 failure-atomic outdoor/resource commit. The temporary profile was removed.
 An MM7 all-map reconstruction control passed **1/1** after the shared terrain
 mapping extraction, also without a visible window or focus change.
+
+The first MM6 live chest entry now uses the title-local staged open-only
+transaction. A dedicated headless first-map run opened an untrapped chest,
+updated its GUI under NullRenderer and verified its raw sidecar and runtime
+chest publication (**1/1**, zero visible windows and no focus change). MM6
+traps and pickup remain guarded; production map entry and SaveLoad remain
+closed. This does not establish rendered chest pixels or campaign play.

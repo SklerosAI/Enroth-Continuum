@@ -11,6 +11,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 
 - [Home](Home_Enroth-Continuum.md) — Curated entry point
 - [Agent Handoff](Agent-Handoff.md) — Fast MM6 resume pointer, current gates, checkout roles and evidence protocol
+- [MM6 Resume Runbook](../project/MM6_RESUME_HANDOFF.md) — Exact paused code state, disposable replay command and next production gates
 - [Schema](SCHEMA_Enroth-Continuum.md) — Page, link, log, and ingest rules
 - [Log](log_Enroth-Continuum.md) — Chronological operations
 - [Edge Types](Edge-Types.md) — CRC template's typed relation vocabulary

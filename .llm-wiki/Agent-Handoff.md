@@ -18,10 +18,12 @@ sprite/decoration and post-world phases in the same Engine-owned first-map
 attempt. Then connect paused Save, native numbered-slot policy and normal UI
 to a fresh-process save/reload, followed by the early graphical F5a check.
 Normal MM6 SaveLoad, visited-map return and Atlas MM6 Play remain closed.
-See [plan section 18.1](../project/plan.md) for the F4b → F5a → F4d → F4c →
-F5b → F6 sequence and risk-based test cadence. Open only the linked packet
-for the current gate; the historical entries below remain available when a
-specific contradiction or regression calls for them.
+Use the [exact resume runbook](../project/MM6_RESUME_HANDOFF.md) and its
+disposable gate runner. See [plan section 18.1](../project/plan.md) for the
+F4b → F5a → F4d → F4c → F5b → F6 sequence and risk-based test cadence.
+Open only the linked packet for the current gate; the historical entries
+below remain available when a specific contradiction or regression calls for
+them.
 
 ## Worktree budget — 2026-11-07
 

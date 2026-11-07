@@ -13,3 +13,4 @@ text eol=lf
 
 # Preserve the pinned LuaJIT source blobs, including upstream CRLF scripts.
 thirdparty/luajit/** -text
+thirdparty/repo-source/** -text

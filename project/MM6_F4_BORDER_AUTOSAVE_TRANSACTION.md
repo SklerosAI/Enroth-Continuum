@@ -212,9 +212,34 @@ remained unchanged. The fresh five-child seed, v4, v5 control, v6 writer and
 v6 reader chain passed **1/1 each**. The synthetic boundary pose was not
 reached by movement or a confirmation UI, and the visited map was not
 entered. `canPublish()` and `canWriteCheckpoint()` remain false. A return on
-`DoPrepareWorld(false)` still needs an owner publication order and rollback;
-ground placement also needs a live target-world comparison before travel can
-be offered.
+`DoPrepareWorld(false)` still needs an owner publication order and rollback.
+
+## Read-only in-session return floor probe
+
+A separate opt-in [pre-event probe](../src/Engine/MM6/MM6VisitedReturnPreEventProbeForTest.h)
+observes an MM6 outdoor `DoPrepareWorld(false)` after native target world
+preparation, before `placeParty`, chest generation, `_461103` and `onMapLoad`.
+The no-write fixture keeps the source-backed `VIST` owner and staged Party
+arrival detached, intercepts the second-map-to-first-map transition autosave,
+and checks the loaded target terrain height and full `ODM_GetFloorLevel` agree
+with the staged Z. It also checks map identity, paused timer, pending
+destination and unchanged live Party position. The probe throws to Main Menu;
+the transition catch clears the pending destination and releases loading
+progress. No target events or gameplay input are admitted. This abandons a
+partial world; it does not roll back to the second map.
+
+The initial probe scope was released while the loading screen was still
+pending, so the later unarmed transition reached the existing MM6 chest guard
+and correctly refused. Keeping the one-shot scope armed through that screen
+fixed the fixture without changing chest behavior. The scope unit passed
+**1/1**. In a fresh owner-only temporary profile, the v2 seed, v4 baseline
+and return-probe children each passed **1/1**; the profile was removed. No
+existing save slot changed. This proves one loaded target floor agrees with
+the detached arrival before placement. It does not publish the visited native
+DDM, actors, sprites, decorations, event state or global chest ledger; test
+those owners after `_461103` and define failure recovery before any live
+return. A safe `DoPrepareWorld(false)` replay still needs a staged all-owner
+commit/abort policy and explicit post-rename durable result.
 
 1. Choose a canonical production EC6 version, slot name and title-private profile root. Explicitly reject or migrate older autosave schemas; an existing v2 test seed cannot silently become a v5 production slot.
 2. Stage an exact detached old-map save for any admitted outdoor map at a safe point before travel UI effects. Include Party and character state, inventory/buffs/hirelings, UI/cursor/shops, NPC and generated links, RNG, active and visited map deltas, chests/artifacts, actor/sprite/decoration runtime, event variables and owner identities. The old-map checkpoint must contain a reload-safe in-bounds **Party copy** when the live border position lies outside the map edge; keep live Party untouched until commit.

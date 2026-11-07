@@ -44,9 +44,16 @@ fresh-child v6 reader passed in a fresh five-child chain after staging a
 synthetic eligible boundary Party and checking the live Party/chest/cache
 unchanged. The saved live Party had an offer-blocking flag, so the fixture
 cleared eligibility bits only on its detached copy. No map return occurred.
-The `DoPrepareWorld(false)` replay/publication order, live terrain comparison,
-rollback and durable travel result remain open; both write/publish gates are
-false.
+The [no-write return probe](MM6-F4-Border-Autosave-Transaction.md) now reaches
+`DoPrepareWorld(false)` and compares one loaded target terrain/full floor
+result to the detached arrival before Party placement, chest generation,
+`_461103` or map events. It aborts the partial world to Main Menu. Its scope
+unit passed 1/1; fresh v2 seed, v4 baseline and return-probe children each
+passed 1/1. The fixture needed to keep the scope armed through the loading
+screen; the existing chest guard was unchanged. No visited owner was
+published, and the active world was not rolled back. Replay/publication
+order, chest handoff, rollback and durable travel result remain open; both
+write/publish gates are false.
 
 The [MM6 indoor v6 input cycle](MM6-F4-V6-Indoor-Input-Cycle.md) passed five
 fresh headless children through a real-loop turn/walk, atomic post-input

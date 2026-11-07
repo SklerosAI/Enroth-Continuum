@@ -229,7 +229,11 @@ detached IFOV write/read, a real headless pre-`OnMapReload` face-base capture,
 strict synthetic v6 staging and a three-process disposable v2 seed, v6 writer
 and fresh-child reader pass. Required IDRT decoration fields now publish
 through an MM6-only pre-event test hook and recapture exactly after reload;
-actor/sprite owners and gameplay admission remain gated. Keep the
+ISRT sprite publication also passes exact post-event recapture. Required
+IART actor ownership and pre-event publication pass focused units and the
+indoor writer, but the fresh-child post-world GNPC join refuses because map
+events add generated links absent from the pre-event fixture. A genuine
+post-world candidate and strict replay remain before gameplay admission. Keep the
 protected MM7 helper and all private profiles untouched while these gates advance. See
 the [current status](../project/LOCAL_STATUS.md) for the exact evidence level.
 

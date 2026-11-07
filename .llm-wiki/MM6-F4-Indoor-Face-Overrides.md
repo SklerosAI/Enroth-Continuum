@@ -68,4 +68,14 @@ child recaptures exact ISRT after `OnMapReload`, before input. Focused v6
 checks passed **10/10**, and the three-process chain passed **1/1 each**
 again. Actor runtime ownership and gameplay admission remain gated.
 
+V6 now also requires `IART` exact indoor actor runtime over the `IACR`
+native prefix, including runtime actor names; its manifest has 28 sections
+without IFOV or 29 with IFOV. The v5 outdoor ARTR wire is unchanged.
+Focused v5 actor/v6 indoor checks passed **14/14**, and a disposable seed,
+first-map baseline and indoor writer passed **1/1 each**. The fresh-child
+reader remains closed: pre-event actor publication and generated-NPC joins
+pass, but normal indoor map events add generated links absent from this
+pre-event fixture. A post-world candidate and strict replay are needed
+before input or production SaveLoad.
+
 See also: [MM6 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md), [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), and [implementation packet](../project/MM6_F4_INDOOR_FACE_OVERRIDE_SECTION.md).

@@ -96,4 +96,17 @@ the disposable seed/writer/reader chain passed **1/1 each** again. The
 remaining indoor actor runtime owner, first input, production SaveLoad and
 graphical acceptance remain open.
 
+V6 now also requires `IART`, an exact indoor actor runtime section bound to
+the native `IACR` prefix and the saved generated-NPC links. Its per-actor
+codec retains runtime names that the inherited fixed actor image omits;
+the v5 outdoor ARTR wire remains unchanged. The manifest has **28 sections
+without IFOV or 29 with IFOV**. Focused v5 actor/v6 indoor checks passed
+**14/14**. A disposable seed, first-map baseline and indoor v6 writer passed
+**1/1 each**. The fresh-child reader remains **closed**: its pre-event IART
+publication and generated-NPC joins pass, but normal indoor map events add
+generated actor links after publication, so a post-world comparison against
+the pre-event candidate fails. A genuine post-world indoor save owner and
+strict replay policy are the next gate. No gameplay admission or normal
+SaveLoad was enabled.
+
 See [indoor face persistence gate](MM6_F4_INDOOR_FACE_PERSISTENCE_GATE.md), [known save sections](MM6_EC6_MAP_FIELDS_F4.md), and [atomic save](MM6_ATOMIC_SAVE_F4.md).

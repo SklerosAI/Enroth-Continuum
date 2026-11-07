@@ -15,6 +15,8 @@ Only after map validation does the function construct fresh `RawInventoryFields`
 
 This is still a raw owner candidate. It does not project every source item kind into `CharacterInventory`, reconstruct the active live world, include beacon state, or make the simultaneous Party/world/UI/commerce commit failure atomic. The existing v1 atomic/New Game route remains separate; v2 is not a production save or playable-campaign claim.
 
+The [detached Party inventory stage](MM6-F4-Raw-Party-Inventory-Stage.md) now projects the supported subset of `INVR` into all four 138-slot runtime inventories on a Party copy. It rejects unsupported nonzero item unions and rarity effects, and keeps the full raw owner for recapture. It does not close the remaining item semantics or live commit gates.
+
 The integrated linked Mac run passed the three new raw owner cases, four ordinary map validation cases and four v2 schema cases (**11 passed**); one optional private fixture test skipped because its decoded fixture paths were not supplied. The synthetic cases cover byte-preserving round trip, raw cursor clear, owner edits, wrong title, wrong map set before any base read, late malformed delta, missing base, invalid active references and rejected item templates. No private game file was read for this check.
 
 See also: [Known Save Assembly](MM6-F4-Known-Save-Assembly.md), [Map Save Fields](MM6-F4-Map-Save-Fields.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

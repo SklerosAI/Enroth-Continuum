@@ -1972,3 +1972,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Extracted the complete detached v2 field gate into a bytes-based stage and made native primary/backup selection call it, avoiding a second semantic path for disposable child-process checks.
 - Linked raw runtime checks passed 13/13. A temporary test stacked two full session results and exhausted the test thread stack; splitting the test restored the passing result. Live publication remains guarded.
+
+## [2026-11-06] integrate | MM6 cursor and shop lifecycle reset
+- by: T-Burton-ND via codex
+- Integrated the title-gated raw cursor/shop process owner and cleared both owners at MM6 child startup and each New Game request; paired publication and live shop/cursor UI remain guarded.
+- The focused linked raw-session, cursor/shop and process-owner tests passed 21/21. Private MM6 null-platform checks passed 2/2 and an MM7 headless save/load control passed 1/1. The disabled v2 restart probe compiled but awaits an admitted real v2 slot.

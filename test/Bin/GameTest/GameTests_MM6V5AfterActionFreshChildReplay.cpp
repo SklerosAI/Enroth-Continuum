@@ -310,7 +310,9 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
         engine->_messageQueue->addMessageCurrentFrame(UIMSG_QuickLoad);
     });
 
-    game.skipLoadingScreen();
+    // A load-callback fault can abandon before a loading screen exists.
+    if (!faultMode)
+        game.skipLoadingScreen();
     game.tick(allowInput ? 3 : 2);
     if (faultMode) {
         game.runGameRoutine([&] {

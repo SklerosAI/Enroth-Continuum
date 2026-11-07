@@ -2190,3 +2190,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Updated the MM7 source-autonomy wiki page to reflect the current Atlas defaults to legacy `OpenEnroth` data/save paths, including saved-folder and character-transfer actions.
 - The planned self-contained gate now includes explicit private Enroth Continuum data and profile roots, verified local copying with rollback, and launch/save/reload checks. OpenEnroth provenance remains; proprietary game data and saves stay outside Git.
+
+## [2026-11-07] verify | MM6 v3 live persistent-event join
+- by: T-Burton-ND via codex
+- A stage marker in the no-write first-map v3 candidate confirmed that detached `stageV3FullSessionPreflight()` returned successfully. The candidate then refused at `persistent-event-join` (0/1), superseding the earlier `map-preflight` classification; the exact live event mismatch remains under audit.
+- The disposable v2 writer control passed 1/1. No v3 atomic write, production SaveLoad route, Atlas Play or first-input admission was enabled.

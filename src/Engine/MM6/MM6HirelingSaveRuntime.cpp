@@ -1,8 +1,7 @@
-#include "MM6HirelingSaveFields.h"
+#include "MM6HirelingSaveRuntime.h"
 
 #include <cstddef>
 #include <stdexcept>
-#include <utility>
 
 #include "Engine/Party.h"
 
@@ -33,10 +32,16 @@ Party stageHirelingParty(const Party &live, std::span<const std::uint8_t> bytes,
     requireMM6(title);
     HirelingSaveFields fields;
     loadHirelingFieldsBeforeMutation(bytes, &fields);
+    return stageHirelingParty(live, fields, title);
+}
+
+Party stageHirelingParty(const Party &live, const HirelingSaveFields &fields, GameTitle title) {
+    requireMM6(title);
+    (void) encodeHirelingSection(fields);
     Party staged = live;
-    staged.pHirelings = std::move(fields.hirelings);
-    staged.pHireling1Name = std::move(fields.displayNames[0]);
-    staged.pHireling2Name = std::move(fields.displayNames[1]);
+    staged.pHirelings = fields.hirelings;
+    staged.pHireling1Name = fields.displayNames[0];
+    staged.pHireling2Name = fields.displayNames[1];
     for (size_t index = 0; index < fields.sacrifice.size(); ++index) {
         const SavedSacrificeStatus &source = fields.sacrifice[index];
         NPCSacrificeStatus &target = staged.pHirelingsSacrifice[index];

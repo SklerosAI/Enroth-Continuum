@@ -9,6 +9,8 @@ tags: [mm6, f4, save, npc]
 
 The [HIRE packet](../project/MM6_EC6_HIRELING_FIELDS_F4.md) defines a bounded `.ec6` section for the two party hireling copies, their display names and sacrifice progress. It is an offline runtime snapshot with title-guarded capture and party-copy staging, not a connected save path or native MM6 wire format.
 
+The v2 container assembly can pass already decoded `HirelingSaveFields` directly to `stageHirelingParty`. The older byte-container overload decodes first and delegates to the same implementation. The decoded overload checks the MM6 title and section bounds before copying `Party`; malformed fields and foreign titles leave the input party unchanged. This is an isolated owner staging seam, not whole-save publication.
+
 `HIRE` reuses the full `RESC` NPC record codec, retaining ability-use, flags, profession, dialogue IDs and names. Sacrifice flag and durations are stored separately; the inherited MM7 save aliases them onto NPC event fields, which would lose dialogue state here. The section validates counts, names, record bounds and nonnegative sacrifice time before assigning a decoded result.
 
 The derived nonhire follower count and hireling scroll position are not part of this section. The [identity reconciliation packet](../project/MM6_EC6_HIRE_RECONCILIATION_F4.md) shows that no strict match can safely be required: table-only quest followers, generated party copies, event-cleared table flags, name rewrites and duplicate retained source identities all defeat a name/portrait/profession key. A bounded diagnostic reports candidate counts without mutating or rejecting valid state.

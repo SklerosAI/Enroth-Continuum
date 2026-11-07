@@ -1,4 +1,4 @@
-#include "MM6RecoverySaveFields.h"
+#include "MM6RecoverySaveRuntime.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -99,6 +99,12 @@ Party stageRecoveryParty(const Party &live, std::span<const std::uint8_t> bytes,
     requireSafeMM6State(live, title, false);
     RecoverySaveFields fields;
     loadRecoveryBeforeMutation(bytes, &fields);
+    return stageRecoveryParty(live, fields, title);
+}
+
+Party stageRecoveryParty(const Party &live, const RecoverySaveFields &fields, GameTitle title) {
+    requireSafeMM6State(live, title, false);
+    (void) encodeRecoverySection(fields);
     if (fields.playingTicks != live.playing_time.ticks())
         throw std::runtime_error("MM6 recovery stage requires the core party clock first");
     const RecoveryCalendar calendar = calendarForPlayingTicks(fields.playingTicks);

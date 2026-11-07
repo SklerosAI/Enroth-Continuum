@@ -2563,3 +2563,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Corrected the earlier fixed negative follower-link interpretation. GrayFace's MM6 structure reference and a bounded owner-only executable trace show that an ineligible native actor's nonzero NPC marker is cleared during map load; eligible nonzero markers use a separate positive StreetNPC index. Exact private actor and executable details remain in the ignored local research packet.
 - Added an MM6-only signed-to-zero runtime rule while preserving original DLV/IACR bytes, plus a strict IART and test-only GNPC replay join. Eligible nonzero StreetNPC generation refuses pending its title-specific mapping. Three indoor five-child chains passed 15/15, focused units 13/13, risk pre-event and all-source sweep 1/1 each, and MM7 control 1/1. Real dialogue/hire-fire, general indoor play and production SaveLoad remain open.
+
+## [2026-11-07] verify | MM6 detached outdoor return arrival
+- by: T-Burton-ND via codex
+- Added a source-backed, cardinal-only arrival stage for a visited outdoor map. It validates the exact owner and loaded target ODM, wraps coordinates, samples terrain height, and positions a copied Party while refusing model-floor overlap and invalid routes.
+- Focused units passed 3/3; a fresh five-child headless seed, v4, v5 control, v6 writer and v6 reader chain passed 1/1 each. The reader used an eligible synthetic boundary Party and verified the live Party, chest and old-map cache stayed unchanged.
+- This supersedes the prior missing detached terrain-arrival evidence. No in-session return or production publication occurred; target-world agreement, `DoPrepareWorld(false)` replay, rollback and durable result policy remain open.

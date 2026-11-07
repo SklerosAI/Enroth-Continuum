@@ -153,10 +153,16 @@ inline bool applyChestLiveOwnerHandoff(
     // The original outer loop draws even with zero markers; drawing again
     // would change that saved owner. A marker-free sidecar must validate and
     // project to identical bytes before this test-only preservation path.
-    if (preserveMarkerFree && staged->markersVisited == 0)
-        return staged->deltaBytes == *binding.deltaBytes &&
-            staged->generatedArtifactFlags == binding.titleState->generatedArtifactFlags &&
-            staged->chests.size() == binding.chests->size();
+    if (preserveMarkerFree && staged->markersVisited == 0) {
+        if (staged->deltaBytes != *binding.deltaBytes ||
+            staged->generatedArtifactFlags != binding.titleState->generatedArtifactFlags ||
+            staged->chests.size() != binding.chests->size())
+            return false;
+        // The projected vector carries each occupied item's exact MM6 raw
+        // record. The ordinary Outdoor reconstruction does not attach it.
+        binding.chests->swap(staged->chests);
+        return true;
+    }
     binding.chests->swap(staged->chests);
     binding.deltaBytes->swap(staged->deltaBytes);
     binding.titleState->lcgState = staged->nextLcgState;

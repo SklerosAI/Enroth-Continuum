@@ -128,9 +128,12 @@ UNIT_TEST(MM6ChestLiveOwnerAdapter, OutdoorCommitsActualOwnerShapeAndPreservesOt
 
 UNIT_TEST(MM6ChestLiveOwnerAdapter, SavedMarkerFreeLoadPreservesExactLcgAndSidecar) {
     TableScope table;
-    auto sidecar = outdoorSidecar(0);
+    auto sidecar = outdoorSidecar(200); // Occupied fixed item needs raw record provenance.
     const auto original = sidecar;
     auto chests = baselineChests(recordsFromOutdoor(sidecar));
+    const auto records = recordsFromOutdoor(sidecar);
+    EXPECT_FALSE(mm6::stageChestRuntimeRecord(
+        GameTitle::MM6, {chests[0], records[0]}));
     mm6::ChestTitleState state;
     ASSERT_TRUE(mm6::restoreChestTitleState(GameTitle::MM6, &state, 8, {}));
     mm6::ChestLiveBinding binding{GameTitle::MM6, LEVEL_OUTDOOR, &chests, &sidecar, &state};
@@ -145,6 +148,10 @@ UNIT_TEST(MM6ChestLiveOwnerAdapter, SavedMarkerFreeLoadPreservesExactLcgAndSidec
     EXPECT_EQ(sidecar, original);
     EXPECT_TRUE(mm6::liveChestsMatchSidecar(GameTitle::MM6, chests,
                                             recordsFromOutdoor(sidecar)));
+    const auto projected = mm6::stageChestRuntimeRecord(
+        GameTitle::MM6, {chests[0], records[0]});
+    ASSERT_TRUE(projected);
+    EXPECT_EQ(*projected, records[0]);
 }
 
 UNIT_TEST(MM6ChestLiveOwnerAdapter, IndoorCommitsPatchedSidecarAndArtifactState) {

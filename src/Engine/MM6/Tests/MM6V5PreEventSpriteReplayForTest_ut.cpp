@@ -75,3 +75,31 @@ UNIT_TEST(MM6V5PreEventSpriteReplayForTest, RefusesChangedNativeAnchor) {
         "oute3.odm", fixture.native, GameTitle::MM6), std::exception);
     EXPECT_FALSE(scope.published());
 }
+
+UNIT_TEST(MM6V5PreEventSpriteReplayForTest, PublishesExactEmptyNativeSlotList) {
+    Fixture fixture;
+    const auto oneSlotNative = fixture.native;
+    constexpr std::size_t groundStart = 8 + 2 * 88 * 11 + 8;
+    fixture.native.erase(fixture.native.begin() + groundStart,
+                         fixture.native.begin() + groundStart + 100);
+    put32(&fixture.native, groundStart - 4, 0);
+    std::vector<SpriteObject> empty;
+    const auto fields = mm6::captureSpriteRuntimeFields(
+        "oute2.odm", fixture.native, empty, GameTitle::MM6);
+    ASSERT_TRUE(fields.records.empty());
+    mm6::testing::ScopedV5PreEventSpriteReplayForTest scope(
+        GameTitle::MM6, fields);
+    EXPECT_THROW((void) mm6::testing::runArmedV5PreEventSpriteReplayForTest(
+        mm6::testing::PreEventCheckpointResult::Continue, empty, &empty, true,
+        "oute3.odm", fixture.native, GameTitle::MM6), std::exception);
+    EXPECT_FALSE(scope.published());
+    EXPECT_THROW((void) mm6::testing::runArmedV5PreEventSpriteReplayForTest(
+        mm6::testing::PreEventCheckpointResult::Continue, empty, &empty, true,
+        "oute2.odm", oneSlotNative, GameTitle::MM6), std::exception);
+    EXPECT_FALSE(scope.published());
+    EXPECT_TRUE(mm6::testing::runArmedV5PreEventSpriteReplayForTest(
+        mm6::testing::PreEventCheckpointResult::Continue, empty, &empty, true,
+        "oute2.odm", fixture.native, GameTitle::MM6));
+    EXPECT_TRUE(scope.published());
+    EXPECT_TRUE(empty.empty());
+}

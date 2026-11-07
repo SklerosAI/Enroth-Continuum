@@ -16,7 +16,7 @@ ScopedV5PreEventSpriteReplayForTest::ScopedV5PreEventSpriteReplayForTest(
     GameTitle title, SpriteRuntimeSaveFields fields)
     : _fields(std::move(fields)) {
     if (title != GameTitle::MM6 || detail::activeV5SpriteReplayScope() ||
-        !isMM6OutdoorMapName(_fields.mapName) || _fields.records.empty())
+        !isMM6OutdoorMapName(_fields.mapName))
         throw std::runtime_error("MM6 v5 sprite replay needs one staged outdoor owner");
     detail::activeV5SpriteReplayScope() = this;
 }

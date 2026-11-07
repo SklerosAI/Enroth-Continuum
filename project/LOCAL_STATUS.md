@@ -834,3 +834,9 @@ Decoded v2 core and progress fields now stage on a detached Party through
 adapters shared with the v1 route. Linked core/durable/raw-runtime tests passed
 **17/17**, including direct-vs-v1 equivalence and invalid-field rejection.
 The full v2 Party coordinator and live MM6 save/load remain open.
+
+The bounded raw item adapter now includes MM6 Antique ID 58 when the loaded
+MM6 table confirms its value-only special contract. Integrated linked item,
+core and durable tests passed **23/23** with exact native record retention and
+late-failure rejection. Other special unions, potions and artifacts remain
+guarded; original-game effect comparison and live save/reload are still open.

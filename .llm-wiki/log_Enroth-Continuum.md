@@ -2569,3 +2569,8 @@ Chronological record of wiki activity.
 - Added a source-backed, cardinal-only arrival stage for a visited outdoor map. It validates the exact owner and loaded target ODM, wraps coordinates, samples terrain height, and positions a copied Party while refusing model-floor overlap and invalid routes.
 - Focused units passed 3/3; a fresh five-child headless seed, v4, v5 control, v6 writer and v6 reader chain passed 1/1 each. The reader used an eligible synthetic boundary Party and verified the live Party, chest and old-map cache stayed unchanged.
 - This supersedes the prior missing detached terrain-arrival evidence. No in-session return or production publication occurred; target-world agreement, `DoPrepareWorld(false)` replay, rollback and durable result policy remain open.
+
+## [2026-11-07] correct | MM6 outdoor v6 global status
+- by: T-Burton-ND via codex
+- Reconciled the campaign and local status summaries with the already verified test-only outdoor v6 disk writer, fresh-child reader and detached return arrival. The earlier claim that no v6 file had been written was stale; no production checkpoint or live old-map return has occurred.
+- The integrated MM6 GameTest target compiled after the indoor marker correction, and focused MM6 pre-event and MM7 headless controls each passed 1/1. Production SaveLoad, border travel and return publication remain closed.

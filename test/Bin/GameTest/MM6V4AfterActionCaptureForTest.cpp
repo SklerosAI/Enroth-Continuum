@@ -181,7 +181,8 @@ static void writeAfterActionCandidateForTest(
             throw std::runtime_error("MM6 v4 after-action nonactive map cache changed");
     }
     const std::vector<Actor> actors(pActors.begin(), pActors.end());
-    fields.activeActorPayload = encodeActiveActorSection(actors, GameTitle::MM6);
+    if (!v5)
+        fields.activeActorPayload = encodeActiveActorSection(actors, GameTitle::MM6);
     fields.generatedNpcs = captureGeneratedNpcFields(
         pActors, *pNPCStats, "oute3.odm", GameTitle::MM6);
     const auto random = application->component<EngineRandomComponent>();
@@ -197,8 +198,10 @@ static void writeAfterActionCandidateForTest(
     if (v5) {
         auto sprites = captureSpriteRuntimeFields(
             "oute3.odm", current, pSpriteObjects, GameTitle::MM6);
+        auto actorRuntime = captureActorRuntimeFields(
+            "oute3.odm", saved.v3.activeActorPayload, actors, GameTitle::MM6);
         const auto complete = std::unique_ptr<V5SaveFields>(
-            new V5SaveFields{std::move(saved), std::move(sprites)});
+            new V5SaveFields{std::move(saved), std::move(sprites), std::move(actorRuntime)});
         bytes = encodeV5Save(*complete, GameTitle::MM6);
     } else {
         bytes = encodeV4Save(saved, GameTitle::MM6);
@@ -222,6 +225,13 @@ static void writeAfterActionCandidateForTest(
             if (encodeSpriteRuntimeSection(liveSprites, GameTitle::MM6) !=
                 encodeSpriteRuntimeSection(checkedV5->sprites, GameTitle::MM6))
                 throw std::runtime_error("MM6 v5 after-action live sprite owner changed");
+            const std::vector<Actor> liveActors(pActors.begin(), pActors.end());
+            const auto checkedActors = captureActorRuntimeFields(
+                "oute3.odm", checked->saved.v3.activeActorPayload,
+                liveActors, GameTitle::MM6);
+            if (encodeActorRuntimeSection(checkedActors, GameTitle::MM6) !=
+                encodeActorRuntimeSection(checkedV5->actors, GameTitle::MM6))
+                throw std::runtime_error("MM6 v5 after-action live actor owner changed");
         } else {
             checkedV4.reset(new V4FullSessionPreflight(stageV4FullSessionPreflight(
                 proposed, freshNpcs, maps.expectedNames(), readBase,

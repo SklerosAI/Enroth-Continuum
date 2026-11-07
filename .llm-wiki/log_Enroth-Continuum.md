@@ -1818,3 +1818,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - An isolated fresh-process GameTest staged a persisted partial EC6 from a disposable profile, published represented owners in the test process, and entered the first outdoor world with actors and twenty chests. The rebuilt monitored run passed 1/1 with no visible window, focus change or disk mutation.
 - Provisional ITEM v1 now accepts logical indices 0–137 and stages a 138-slot MM6 inventory from a fresh 126-slot Party. Focused linked save tests passed 36/36. Native item bytes, all-owner rollback and production MM6 SaveLoad remain guarded.
+
+## [2026-11-06] plan | SklerosAI-owned MM7 source build
+- by: T-Burton-ND via codex
+- Added a later Mac MM7 gate for a clean offline build and Atlas package from this fork, with repository-owned pinned dependency source and a license inventory. The currently working MM7 helper and saves stay protected during migration.
+- The audit found the fork already owns MM7 engine source, while a clean build still uses an OpenEnroth-hosted prebuilt dependency download, 23 external submodules and possible configure-time fetches. Permanent OpenEnroth history, license, notices and contributor credit remain required.

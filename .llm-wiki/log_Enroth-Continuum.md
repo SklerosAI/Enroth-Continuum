@@ -2489,3 +2489,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A fresh shallow clone of the public SklerosAI MM7 preview at code commit `d76afb519`, without initialized submodules, completed the one-command arm64 MM7 and Atlas build under network denial. Both staged app signatures passed, 23 notices were present, and no private data or saves entered the bundle.
 - The branch received a documentation-only update at `c0f5eab63`, verified on the remote. The installed Atlas and personal saves remain unchanged; visible staged-app play and save/reload remain open.
+
+## [2026-11-07] verify | MM6 detached border Party stage
+- by: T-Burton-ND via codex
+- Added a pure MM6 cardinal-border stage that clones Party, clamps only the old-map copy's X/Y to the original boundary, and returns typed refusals for invalid title, route, party state or unverified corners. It always refuses a disk checkpoint until source, world and durable-write owners are proved.
+- The rebuilt integration unit target passed 11/11 focused border checks, including three new precommit cases. No production travel, autosave, map-cache write or private file operation was enabled.

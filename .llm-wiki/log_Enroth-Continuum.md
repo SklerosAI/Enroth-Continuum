@@ -2526,3 +2526,7 @@ Chronological record of wiki activity.
 - Staged a source-backed, in-memory first-map runtime capsule before the test-only no-write transition to a second outdoor map. It retains native delta/chest, actor and generated NPC, sprite, decoration and event owners with exact map/source joins; altered delta, event map and sprite map each refused.
 - Fresh owner-only v2 seed, v4 baseline and modified location-change headless children each passed 1/1. The capsule survived the map switch while the old map cache stayed unchanged; the disposable profile was removed.
 - EC6 v5 still has no visited-map disk section or return publisher. Checkpoint write remains refused pending per-map persistence, return/replay and an explicit durable-result policy.
+## [2026-11-07] verify | MM6 signed indoor actor link
+- by: T-Burton-ND via codex
+- MM6's map-load generator leaves nonzero actor NPC links below 5000 untouched. The generated-NPC capture and pre/post-map gates now classify a signed native actor link as fixed, while IART retains its exact native identity and rejects an unanchored signed appended actor. No follower row or zero replacement is synthesized.
+- The all-source indoor sweep, risk pre-event fixture and MM7 control each passed 1/1; focused unit checks passed 13/13. Three distinct test-only indoor five-child chains passed 15/15. Follower dialogue semantics, general indoor play and production SaveLoad remain open.

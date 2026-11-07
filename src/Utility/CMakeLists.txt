@@ -11,13 +11,18 @@ set(UTILITY_SOURCES
         Streams/InputStream.cpp
         Streams/OutputStream.cpp
         String/Ascii.cpp
-        String/Encoding.cpp
         String/Transformations.cpp
         System/Fs.cpp
         System/Path.cpp
         System/PathView.cpp
         UnicodeCrt.cpp
         String/Wrap.cpp)
+
+if(APPLE AND EC_LOCAL_ONLY_CONFIGURE AND EC_MM7_MAC_ICONV_ADAPTER)
+    list(APPEND UTILITY_SOURCES String/EncodingMac.cpp)
+else()
+    list(APPEND UTILITY_SOURCES String/Encoding.cpp)
+endif()
 
 set(UTILITY_HEADERS
         Attributes.h
@@ -74,13 +79,17 @@ target_link_libraries(utility
         gch::small_vector
         Boost::lambda2
         PRIVATE
-        ztd::text
         mio::mio)
 
-# Tweak ztd buffer size, default is 512Kb, but default stack size of non-main threads on MacOS is also 512Kb.
-target_compile_definitions(utility PRIVATE ZTD_INTERMEDIATE_BUFFER_SUGGESTED_BYTE_SIZE=65536)
+if(APPLE AND EC_LOCAL_ONLY_CONFIGURE AND EC_MM7_MAC_ICONV_ADAPTER)
+    target_link_libraries(utility PRIVATE iconv)
+else()
+    target_link_libraries(utility PRIVATE ztd::text)
+    # Default ztd buffer is 512Kb, as is the default Mac non-main thread stack.
+    target_compile_definitions(utility PRIVATE ZTD_INTERMEDIATE_BUFFER_SUGGESTED_BYTE_SIZE=65536)
+endif()
 
-if(OE_USE_SANITIZERS AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if(NOT (APPLE AND EC_LOCAL_ONLY_CONFIGURE AND EC_MM7_MAC_ICONV_ADAPTER) AND OE_USE_SANITIZERS AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set_source_files_properties(String/Encoding.cpp PROPERTIES COMPILE_OPTIONS -fno-sanitize=undefined) # GCC can't constant-evaluate ztd_text's tables with UBSan checks in them.
 endif()
 

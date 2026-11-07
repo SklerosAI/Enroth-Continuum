@@ -341,6 +341,18 @@ UNIT_TEST(Encoding, Windows1251) {
     EXPECT_EQ(txt::encodedToUtf8("\x98", ENCODING_WINDOWS_1251), "\xef\xbf\xbf");  // U+FFFF
 }
 
+UNIT_TEST(Encoding, Mm7MacCallSiteEncodings) {
+    // MM7 production callers use UTF-8 for path display, CP1251 for Russian
+    // text formatting, and ASCII for trace output. Keep these cases explicit
+    // while the Mac local-only build uses the system encoding converter.
+    EXPECT_EQ(txt::encodedToUtf8("\xc3\x28", ENCODING_UTF8), "\xef\xbf\xbd(");
+    EXPECT_EQ(txt::encodedToUtf8("\xcf\xf0\xe8\xe2\xe5\xf2", ENCODING_WINDOWS_1251),
+              "\xd0\x9f\xd1\x80\xd0\xb8\xd0\xb2\xd0\xb5\xd1\x82");
+    EXPECT_EQ(txt::utf8ToEncoded("\xd0\x9f\xd1\x80\xd0\xb8\xd0\xb2\xd0\xb5\xd1\x82", ENCODING_WINDOWS_1251),
+              "\xcf\xf0\xe8\xe2\xe5\xf2");
+    EXPECT_EQ(txt::utf8ToEncoded("HP \xce\xb1", ENCODING_ASCII), "HP ?");
+}
+
 UNIT_TEST(Encoding, Windows1252) {
     // Windows-1252 (Western European): 0x80 = '€' (Euro sign)
     std::string win = "\x80";

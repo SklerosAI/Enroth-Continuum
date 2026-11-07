@@ -98,6 +98,9 @@ add_subdirectory(generator EXCLUDE_FROM_ALL)
 # lambda2
 add_subdirectory(lambda2)
 
-# ztd.text
-set(ZTD_IDK_EXCLUDE_FROM_ALL ON)
-add_subdirectory(ztd_text EXCLUDE_FROM_ALL)
+# The local-only MM7 helper can opt into the Apple system iconv adapter.
+option(EC_MM7_MAC_ICONV_ADAPTER "Use Apple iconv for the local-only Mac MM7 helper" OFF)
+if(NOT (APPLE AND EC_LOCAL_ONLY_CONFIGURE AND EC_MM7_MAC_ICONV_ADAPTER))
+    set(ZTD_IDK_EXCLUDE_FROM_ALL ON)
+    add_subdirectory(ztd_text EXCLUDE_FROM_ALL)
+endif()

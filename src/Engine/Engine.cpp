@@ -82,6 +82,7 @@
 #include "Engine/MM6/MM6V3PreEventReplayForTest.h"
 #include "Engine/MM6/MM6V5PreEventActorReplayForTest.h"
 #include "Engine/MM6/MM6V5PreEventDecorationReplayForTest.h"
+#include "Engine/MM6/MM6V6PreEventIndoorDecorationReplayForTest.h"
 #include "Engine/MM6/MM6V5PreEventSpriteReplayForTest.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Resources/EngineFileSystem.h"
@@ -771,6 +772,11 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
             (void) mm6::testing::runArmedV5PreEventDecorationReplayForTest(
                 checkpoint, pLevelDecorations, &pLevelDecorations,
                 actorPublished && dynamicActorPublished,
+                eventRuntimeScope && eventRuntimeScope->restored(),
+                pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
+                GameTitle::MM6);
+            (void) mm6::testing::runArmedV6PreEventIndoorDecorationReplayForTest(
+                checkpoint, pLevelDecorations, &pLevelDecorations,
                 eventRuntimeScope && eventRuntimeScope->restored(),
                 pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
                 GameTitle::MM6);

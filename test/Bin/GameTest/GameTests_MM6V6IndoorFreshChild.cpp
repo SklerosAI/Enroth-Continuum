@@ -16,6 +16,7 @@
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6EventRuntimeSaveFields.h"
+#include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6GeneratedNpcSaveFields.h"
 #include "Engine/MM6/MM6IndoorFaceLiveOwner.h"
 #include "Engine/MM6/MM6IndoorFaceOverrides.h"
@@ -24,6 +25,7 @@
 #include "Engine/MM6/MM6PreEventCheckpointForTest.h"
 #include "Engine/MM6/MM6V6IndoorSaveFields.h"
 #include "Engine/MM6/MM6V6IndoorPreEventOwnerGate.h"
+#include "Engine/MM6/MM6V6PreEventIndoorDecorationReplayForTest.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
@@ -40,8 +42,9 @@
 
 // Run only after the strict v6 disposable writer, in a distinct child. It
 // reconstructs the saved DLV through the real indoor loader and observes its
-// pre-OnMapReload face base, then re-stages every detached v6 owner. It never
-// applies the candidate to live Party/actors, admits input, or calls SaveLoad.
+// pre-OnMapReload face base, then re-stages every detached v6 owner. A second
+// bounded load publishes only IDRT before OnMapReload and checks equality
+// after events. It never admits input or calls production SaveLoad.
 GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents) {
     const char *enable = std::getenv("ENROTH_MM6_V6_INDOOR_READER_ENABLE");
     if (!enable || std::string_view(enable) != "strict-indoor-v6-reader")
@@ -176,6 +179,63 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
     mm6::applyIndoorFaceOverridesAfterMapReload(
         staged->saved.faceOverrides, mapName, &afterEvent, GameTitle::MM6);
     EXPECT_EQ(afterEvent.front().attributes, preEventFaces.front().attributes ^ 1u);
+    EXPECT_EQ(mm6::testing::readIndoorProbeSlot(
+        profile, mm6::testing::V6_INDOOR_PROBE_SLOT), before);
+    EXPECT_EQ(mm6::testing::readIndoorProbeSlot(profile, "autosave.ec6"), seedBefore);
+
+    // Rebuild from the same immutable candidate a second time. The first
+    // preparation only observed the pre-event face baseline; this one crosses
+    // onMapLoad with a test-only indoor IDRT publication. No input is queued.
+    pMapDeltas.clear();
+    for (const auto &entry : decoded->raw.maps.deltas)
+        pMapDeltas.emplace(entry.name,
+            Blob::copy(entry.bytes.data(), entry.bytes.size()));
+    bool worldFinished = false;
+    std::exception_ptr worldError;
+    std::unique_ptr<mm6::testing::ScopedEventRuntimeRestoreForTest> eventRestore;
+    std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> worldCheckpoint;
+    std::unique_ptr<mm6::testing::ScopedV6PreEventIndoorDecorationReplayForTest> liveReplay;
+    game.runGameRoutine([&] {
+        try {
+            checkpoint.reset(); // Tear down its game-thread-local scope here.
+            engine->_pendingTransition = MapDestination(map, MAP_START_POINT_PARTY);
+            engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
+            eventRestore = std::make_unique<mm6::testing::ScopedEventRuntimeRestoreForTest>(
+                GameTitle::MM6, staged->saved.eventRuntime);
+            worldCheckpoint = std::make_unique<mm6::testing::ScopedPreEventCheckpointForTest>(
+                GameTitle::MM6, [&] {
+                    mm6::requireV6IndoorPreEventOwnerAgreement(
+                        *staged, mapName, pActors, pSpriteObjects, pLevelDecorations,
+                        GameTitle::MM6);
+                });
+            liveReplay = std::make_unique<
+                mm6::testing::ScopedV6PreEventIndoorDecorationReplayForTest>(
+                    GameTitle::MM6, mapName, staged->decorationReplay);
+            mm6::ScopedChestMapLoadOptIn chestOptIn;
+            DoPrepareWorld(true, 1);
+            if (!worldCheckpoint->reachedMapLoad() || worldCheckpoint->reachedInput() ||
+                !eventRestore->restored() || !liveReplay->published() ||
+                engine->_currentLoadedMapId != map ||
+                uCurrentlyLoadedLevelType != LEVEL_INDOOR || !pIndoor->bLoaded)
+                throw std::runtime_error("MM6 v6 IDRT did not cross the post-world boundary");
+            const auto observed = mm6::captureIndoorDecorationRuntime(
+                mapName, staged->represented.indoorPlan->base, *event,
+                *pDecorationTable, pLevelDecorations, GameTitle::MM6);
+            if (observed != staged->saved.runtimeDecorations)
+                throw std::runtime_error("MM6 v6 IDRT changed after map reload events");
+        } catch (...) {
+            worldError = std::current_exception();
+        }
+        liveReplay.reset();
+        worldCheckpoint.reset();
+        eventRestore.reset();
+        worldFinished = true;
+    });
+    for (int tick = 0; tick < 128 && !worldFinished; ++tick)
+        game.tick();
+    ASSERT_TRUE(worldFinished);
+    if (worldError)
+        std::rethrow_exception(worldError);
     EXPECT_EQ(mm6::testing::readIndoorProbeSlot(
         profile, mm6::testing::V6_INDOOR_PROBE_SLOT), before);
     EXPECT_EQ(mm6::testing::readIndoorProbeSlot(profile, "autosave.ec6"), seedBefore);

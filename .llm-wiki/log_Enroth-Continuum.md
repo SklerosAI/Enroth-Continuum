@@ -2012,3 +2012,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added exact raw/Party held-item replay before deriving the item icon name and tint for a future mouse restore. Occupied pickup offset stays explicitly unresolved; no asset or live cursor is changed.
 - The focused linked cursor-plan tests passed 4/4. Resource resolution and visible placement remain live publication gates.
+
+## [2026-11-06] integrate | MM6 post-rebuild PID slot check
+- by: T-Burton-ND via codex
+- Added a read-only, fail-closed check of selected map name and saved/sidecar/final actor and sprite slot anchors for a future post-world-rebuild handoff.
+- Linked indoor/outdoor synthetic tests passed 2/2. Matching slots do not prove delta provenance or safe PID reuse, and active saved VISU overlays remain blocked.

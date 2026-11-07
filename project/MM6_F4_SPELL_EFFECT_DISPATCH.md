@@ -29,3 +29,9 @@ The guard is title-scoped: MM7 keeps its inherited behavior. Rejection currently
 The focused native tests assert rejection of IDs 1–99 from player, event, monster and damage sources, MM7 pass-through, and only the non-spell player pseudo actions. The private handoff script checks both F3 table hashes, writes all 99 ID rows and fingerprints its current source files without publishing proprietary rows. Before enabling any ID, establish its MM6 target, rank-specific effect, cost/recovery and failure timing, damage/resistance, audiovisual resources and persistence; add offline state tests for every source that can invoke it. F5 then requires visible cast/impact and save/quit/relaunch/load checks in an authorized complete game.
 
 See also: [F2 spell-effect audit](MM6_SPELL_EFFECT_F2.md), [spell rules](MM6_F4_SPELL_MANA_RECOVERY.md), [spell items](MM6_F4_SPELL_ITEMS.md), [implementation checklist](MM6_IMPLEMENTATION_CHECKLIST.md).
+
+## First opened IDs, 2026-11-07
+
+Monster casts of IDs 2, 4, 18 and 24, Flame Arrow, Fire Bolt, Lightning Bolt and Cold Beam, now pass the guard. These are the spells that first-map encounter monsters cast. A hash-checked read of the original executable shows that monsters launch them as single projectiles whose object IDs follow the shared numbering, and that a monster spell hit rolls the original monster damage table plus the monster's first attack bonus, not the player spell formula. Vanilla MM6 dealt Fire damage for every monster spell. GrayFace's patch notes list that as a bug, and the engine uses the spell's own element from `spells.txt`.
+
+Player casts of ID 67, Cure Weakness, pass the guard from the spellbook and quick cast. Scroll, NPC and temple casts of any regular ID refuse before queueing. The MM6 spellbook and quick cast turn down every other regular ID with a status message before the book closes, instead of ending the run. All other IDs and sources still refuse.

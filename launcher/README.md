@@ -40,6 +40,17 @@ or existing saves. When MM7 Private mods is active, Atlas passes
 `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY=1` to its bundled engine. The corresponding
 MM6 engine setting is `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY=1` once MM6 launches.
 
+The source defaults for a future MM7 Atlas build are
+`~/Library/Application Support/Enroth Continuum/Game Data/MM7` and the fresh
+`~/Library/Application Support/Enroth Continuum/Profiles/MM7-Atlas` profile.
+Atlas checks the same eight required MM7 archives as the engine before launch.
+An explicitly chosen data folder remains valid if it contains those archives.
+The existing installed app and its save location are unchanged by this source
+update. MM7 on macOS does not automatically copy saves from the data folder into
+the fresh profile; move existing saves only after comparing any colliding names
+and verifying local backups. Keep both older save locations until the new
+launch, save and reload cycle has passed.
+
 ## Local build
 
 Build the fork's `MM7` target with CMake, then run

@@ -127,7 +127,7 @@ std::vector<Path> resolveMm6Paths(Environment *environment) {
 }
 
 std::vector<Path> resolveMm7Paths(Environment *environment) {
-    return resolvePaths(environment, mm7Config, "OpenEnroth");
+    return resolvePaths(environment, mm7Config, "Enroth Continuum/Game Data/MM7");
 }
 
 std::vector<Path> resolveMm8Paths(Environment *environment) {
@@ -177,7 +177,9 @@ Path resolveMm7UserPath(Environment *environment) {
     return Path(std::move(savedGames)) / "OpenEnroth";
 #elif __ANDROID__
     return Path(environment->path(PATH_ANDROID_STORAGE_INTERNAL)) / ".openenroth";
-#else // Mac & linux
+#elif __APPLE__
+    return Path(environment->path(PATH_HOME)) / "Library/Application Support/Enroth Continuum/Profiles/MM7-Atlas";
+#else // Linux and other Unix-like hosts
     return Path(environment->path(PATH_HOME)) / ".openenroth";
 #endif
 }

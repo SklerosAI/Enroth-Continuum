@@ -11,13 +11,17 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
     private var game: Process?
     private let preferences = UserDefaults.standard
 
+    private var supportPath: URL {
+        FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/Enroth Continuum", isDirectory: true)
+    }
+
     private var userPath: URL {
-        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".openenroth", isDirectory: true)
+        supportPath.appendingPathComponent("Profiles/MM7-Atlas", isDirectory: true)
     }
 
     private var modRoot: URL {
-        FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Application Support/Enroth Continuum/Mods/MM7", isDirectory: true)
+        supportPath.appendingPathComponent("Mods/MM7", isDirectory: true)
     }
 
     private func dataPath(for title: String) -> URL? {
@@ -25,8 +29,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             return URL(fileURLWithPath: saved, isDirectory: true)
         }
         if title == "mm7" {
-            return FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent("Library/Application Support/OpenEnroth", isDirectory: true)
+            return supportPath.appendingPathComponent("Game Data/MM7", isDirectory: true)
         }
         if title == "mm6" {
             return FileManager.default.homeDirectoryForCurrentUser
@@ -39,12 +42,14 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         return nil
     }
 
-    private func dataReady(_ title: String) -> Bool {
-        guard let url = dataPath(for: title) else { return false }
+    private func dataReady(_ title: String, at selectedPath: URL? = nil) -> Bool {
+        guard let url = selectedPath ?? dataPath(for: title) else { return false }
         let expected: [String]
         switch title {
         case "mm6": expected = ["anims/anims1.vid", "data/games.lod", "data/icons.lod", "sounds/audio.snd"]
-        case "mm7": expected = ["anims/magic7.vid", "data/events.lod", "data/games.lod", "sounds/audio.snd"]
+        case "mm7": expected = ["anims/magic7.vid", "anims/might7.vid", "data/bitmaps.lod",
+                                "data/events.lod", "data/games.lod", "data/icons.lod",
+                                "data/sprites.lod", "sounds/audio.snd"]
         case "mm8": expected = ["anims/magicdod.vid", "data/games.lod", "data/icons.lod"]
         default: return false
         }
@@ -53,7 +58,10 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             guard let folder = try? FileManager.default.contentsOfDirectory(atPath: url.path),
                   let matchedFolder = folder.first(where: { $0.lowercased() == parts[0] }),
                   let files = try? FileManager.default.contentsOfDirectory(atPath: url.appendingPathComponent(matchedFolder).path) else { return false }
-            return files.contains(where: { $0.lowercased() == parts[1] })
+            guard let matchedFile = files.first(where: { $0.lowercased() == parts[1] }) else { return false }
+            var isDirectory: ObjCBool = false
+            return FileManager.default.fileExists(atPath: url.appendingPathComponent(matchedFolder)
+                .appendingPathComponent(matchedFile).path, isDirectory: &isDirectory) && !isDirectory.boolValue
         }
     }
 
@@ -212,9 +220,12 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         panel.allowsMultipleSelection = false
         panel.message = "Choose the \(title.uppercased()) extracted game data folder."
         if panel.runModal() == .OK, let url = panel.url {
-            preferences.set(url.path, forKey: "data.\(title)")
-            sendState(message: dataReady(title) ? "\(title.uppercased()) data folder is ready." :
-                "This folder is missing required \(title.uppercased()) archives. You can choose another folder.")
+            if dataReady(title, at: url) {
+                preferences.set(url.path, forKey: "data.\(title)")
+                sendState(message: "\(title.uppercased()) data folder is ready.")
+            } else {
+                sendState(message: "This folder is missing required \(title.uppercased()) archives. Your previous choice was kept.")
+            }
         }
     }
 

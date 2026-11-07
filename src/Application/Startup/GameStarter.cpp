@@ -153,9 +153,13 @@ void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUse
     _fsStarter.initDataFs(_options.dataPath, _config->debug.OverrideBuiltInResources.value());
     MM_INFO("Using data path '{}'.", _options.dataPath); // Can't use dfs->displayPath("") b/c it'll show "embedded://"...
 
-    // Migrate saves if needed. We don't migrate anything else.
+    // On macOS, the Enroth Continuum MM7 profile is populated only by an
+    // explicit, verified migration. Existing save folders can have different
+    // files with the same name, so do not auto-copy from the data directory.
+#if !defined(__APPLE__)
     if (_options.gameTitle == GameTitle::MM7 && !_options.ramFsUserData && _options.dataPath.normalized() != _options.userPath.normalized())
         migrateSaves();
+#endif
 
     // Create platform.
     if (_options.headless) {

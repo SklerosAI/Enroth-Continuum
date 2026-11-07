@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <charconv>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -29,6 +30,7 @@
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Party.h"
+#include "Engine/Random/Random.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
@@ -73,6 +75,19 @@ std::vector<std::uint8_t> readDisposableSlot(const std::filesystem::path &profil
     return {std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
 }
 
+int creationProbeSeed() {
+    const char *value = std::getenv("ENROTH_MM6_CREATION_PROBE_SEED");
+    if (!value)
+        return 0;
+    const std::string_view input(value);
+    int seed = -1;
+    const auto [end, error] = std::from_chars(input.data(), input.data() + input.size(), seed);
+    if (input.empty() || error != std::errc{} || end != input.data() + input.size() ||
+        seed < 0 || seed > 65535)
+        throw std::runtime_error("MM6 creation probe seed must be an integer from 0 to 65535");
+    return seed;
+}
+
 void completeEditableMM6Party() {
     for (Character &character : pParty->pCharacters) {
         for (int order = 4; order <= 12 && character.GetSkillIdxByOrder(3) == SKILL_INVALID; ++order) {
@@ -101,6 +116,7 @@ GAME_TEST(MM6ZCreationItemSeedHeadless, DISABLED_RealStarterItemsStageWithoutDis
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
     EXPECT_FALSE(ufs->exists("saves"));
     test.prepareForNextTest(10, RANDOM_ENGINE_SEQUENTIAL);
+    const int seed = creationProbeSeed();
 
     struct Observation {
         int total = 0;
@@ -171,6 +187,7 @@ GAME_TEST(MM6ZCreationItemSeedHeadless, DISABLED_RealStarterItemsStageWithoutDis
     ASSERT_NE(pGUIWindow_CurrentMenu, nullptr);
     ASSERT_EQ(pGUIWindow_CurrentMenu->eWindowType, WINDOW_PARTY_CREATION);
     game.runGameRoutine(completeEditableMM6Party);
+    game.runGameRoutine([seed] { grng->seed(seed); });
     game.pressGuiButton("PartyCreation_OK");
     game.skipLoadingScreen();
     game.tick(2);
@@ -189,9 +206,9 @@ GAME_TEST(MM6ZCreationItemSeedHeadless, DISABLED_RealStarterItemsStageWithoutDis
     EXPECT_FALSE(ufs->exists("saves"));
     EXPECT_EQ(window->nativeHandle(), nullptr);
     fmt::print(stdout,
-        "MM6 creation seed counts: total={} plain={} standard={} antique={} "
+        "MM6 creation seed counts: seed={} total={} plain={} standard={} antique={} "
         "rejectedSpecial={} rejectedPotion={} rejectedRarity={} rejectedOther={} full={}\n",
-        observed.total, observed.plain, observed.standard, observed.antique,
+        seed, observed.total, observed.plain, observed.standard, observed.antique,
         observed.rejectedSpecial, observed.rejectedPotion, observed.rejectedRarity,
         observed.rejectedOther, observed.fullPartyAdmitted);
 }

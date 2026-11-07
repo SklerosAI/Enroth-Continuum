@@ -53,3 +53,24 @@ on-screen game windows and no focus change. No private rows, item identities,
 raw records or assets entered Git. This verifies one deterministic editable
 creation outcome against loaded tables, not every random ring draw or original
 MM6 native-save byte parity. It does not write or reload a v2 slot.
+
+## Deterministic starter-outcome sweep
+
+The same disabled no-disk GameTest now accepts
+`ENROTH_MM6_CREATION_PROBE_SEED=0..65535` (default `0`). It parses the complete
+decimal value, rejects malformed or out-of-range input, and seeds only the
+gameplay RNG on the game thread immediately before `PartyCreation_OK` grants
+items. The engine harness still uses its sequential RNG and in-memory user
+filesystem. The v2 disk writer test does not read this variable.
+
+Nine separate null-renderer processes used seeds `0, 1, 2, 7, 17, 31, 63,
+127, 255`. Each admitted the complete Party and all **20/20** starter items.
+Across **180** items, **155** were plain and **25** had standard bonuses;
+**zero** Antique, potion, unsupported special, rarity or other rejections
+occurred. The per-Party standard count varied from zero to four. Seeds 31
+and 63 were rerun in new processes with identical aggregate counts. All
+eleven monitored runs had zero on-screen game windows and no focus change.
+No save slot or user profile was written, and no private item identities or
+table rows were recorded. This small seed set exercises only the existing
+editable creation path and sequential RNG; rare special draws, other party
+compositions and original native-record byte parity remain unproved.

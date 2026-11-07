@@ -42,4 +42,14 @@ no focus change (28 and 11 samples). The temporary profile was removed.
 Live v2 publication, gameplay reload, original item-record byte parity and
 other random creation draws remain open.
 
+A later test-only seed input broadened the no-disk loaded-table check across
+nine separate sequential-RNG seeds. All **180/180** starter items admitted:
+**155 plain**, **25 standard-bonus**, **zero rejected**. The number of
+standard-bonus items varied from zero to four per Party, and two seeds repeated
+with identical aggregate counts. Eleven total monitored runs produced no
+on-screen window or focus change; they wrote no save slot. This remains a
+sample of the editable creation path, not a proof of all random outcomes or
+native original-game record parity. See the implementation packet for the
+strict environment input and seed list.
+
 See also: [New Game Autosave](MM6-F4-New-Game-Autosave.md), [Raw Save Runtime](MM6-F4-Raw-Save-Runtime.md), [Raw Cursor Owner](MM6-F4-Raw-Cursor-Owner.md).

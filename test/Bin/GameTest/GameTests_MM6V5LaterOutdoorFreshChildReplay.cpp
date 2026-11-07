@@ -318,6 +318,13 @@ GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorRestoresOwn
                         mm6::requireNoActiveSavedActorOverlays(
                             savedRaw.metadata.overlays, GameTitle::MM6);
                         const auto &pidPlan = *staged->v4.v3.represented.outdoorPlan;
+                        if (pidPlan.savedDelta.actors.size() != expectedNativeActors ||
+                            pidPlan.activeSidecar.actors.size() != expectedNativeActors ||
+                            finalActors.size() < expectedNativeActors ||
+                            pidPlan.savedDelta.spriteObjects.size() !=
+                                pidPlan.activeSidecar.spriteObjects.size() ||
+                            pidPlan.savedDelta.spriteObjects.size() != pSpriteObjects.size())
+                            throw std::runtime_error("MM6 later outdoor native PID slot counts changed");
                         for (std::size_t slot = 0; slot < expectedNativeActors; ++slot) {
                             const auto &saved = pidPlan.savedDelta.actors[slot];
                             const auto &sidecar = pidPlan.activeSidecar.actors[slot];
@@ -329,10 +336,22 @@ GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorRestoresOwn
                             };
                             if (saved.npcId != sidecar.npcId)
                                 refuse("native versus sidecar NPC ID");
-                            if (saved.npcId != live.npcId)
-                                refuse(live.npcId >= 5000 ?
-                                       "native versus generated runtime NPC ID" :
-                                       "native versus static runtime NPC ID");
+                            if (saved.npcId != live.npcId) {
+                                // MM6 map setup assigns a generated peasant a 5000+
+                                // NPC row after reading the DDM's zero NPC link.
+                                // GNPC and exact ARTR above bind that row and the
+                                // final actor to this same ordered PID slot.
+                                const auto row = std::find_if(
+                                    expectedGenerated.rows.begin(), expectedGenerated.rows.end(),
+                                    [slot](const mm6::GeneratedNpcRow &candidate) {
+                                        return candidate.actorSlot == slot;
+                                    });
+                                if (saved.npcId != 0 || row == expectedGenerated.rows.end() ||
+                                    live.npcId != 5000 +
+                                        std::distance(expectedGenerated.rows.begin(), row) ||
+                                    row->monster != live.monsterInfo.id)
+                                    refuse("generated NPC binding");
+                            }
                             if (saved.monsterId != sidecar.monsterId ||
                                 saved.monsterId != std::to_underlying(live.monsterId))
                                 refuse("monster ID");
@@ -345,10 +364,20 @@ GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorRestoresOwn
                             if (live.id != slot)
                                 refuse("runtime slot ID");
                         }
-                        mm6::requirePostRebuildPidSlotAgreement(
-                            pidPlan, "oute2.odm",
-                            std::span<const Actor>(finalActors).first(expectedNativeActors),
-                            pSpriteObjects, GameTitle::MM6);
+                        for (std::size_t slot = 0;
+                             slot < pidPlan.savedDelta.spriteObjects.size(); ++slot) {
+                            const auto &saved = pidPlan.savedDelta.spriteObjects[slot];
+                            const auto &sidecar = pidPlan.activeSidecar.spriteObjects[slot];
+                            const SpriteObject &live = pSpriteObjects[slot];
+                            if (saved.spriteId != sidecar.spriteId ||
+                                saved.spriteId != std::to_underlying(live.spriteId) ||
+                                saved.objectDescId != sidecar.objectDescId ||
+                                saved.objectDescId != live.uObjectDescID ||
+                                saved.initialPosition != sidecar.initialPosition ||
+                                saved.initialPosition.toFloat() != live.initialPosition)
+                                throw std::runtime_error("MM6 later outdoor sprite PID anchor changed at slot " +
+                                                         std::to_string(slot));
+                        }
                         const auto &chest = mm6::chestTitleState();
                         if (!chest.ready || chest.lcgState != savedRaw.chest.lcgState ||
                             chest.generatedArtifactFlags != savedRaw.chest.generatedArtifactFlags ||

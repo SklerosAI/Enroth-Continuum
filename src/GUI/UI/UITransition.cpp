@@ -58,7 +58,8 @@ int getSpecialTransferMessageIndex(std::string_view locationName) {
 GUIWindow_Transition::GUIWindow_Transition(WindowType windowType, ScreenType screenType) : GUIWindow(windowType, {0, 0}, render->GetRenderDimensions()) {
     gameTimer->setPaused(true);
 
-    _dialogueBackground = dialogueBackground(pParty->alignment);
+    _dialogueBackground = windowType == WINDOW_INDOOR_ENTRY_EXIT && engine->gameTitle() == GameTitle::MM6
+        ? assets->getIcon("backevt") : dialogueBackground(pParty->alignment);
     prev_screen_type = current_screen_type;
     current_screen_type = screenType;
 }
@@ -132,6 +133,11 @@ GUIWindow_IndoorEntryExit::GUIWindow_IndoorEntryExit(HouseId transitionHouse, un
 
     _mapName = locationName;
 
+    if (engine->gameTitle() == GameTitle::MM6) {
+        initializeMM6(transitionHouse, exit_pic_id);
+        return;
+    }
+
     transition_ui_icon = assets->getIcon(pHouse_ExitPictures[exit_pic_id]);
 
     // animation or special transfer message
@@ -169,6 +175,11 @@ GUIWindow_IndoorEntryExit::GUIWindow_IndoorEntryExit(HouseId transitionHouse, un
 }
 
 void GUIWindow_IndoorEntryExit::Update() {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        updateMM6();
+        return;
+    }
+
     render->DrawQuad2D(_dialogueBackground, {477, 0});
     render->DrawQuad2D(game_ui_evtnpc, {pNPCPortraits_x[0][0] - 4, pNPCPortraits_y[0][0] - 4});
     render->DrawQuad2D(transition_ui_icon, {pNPCPortraits_x[0][0], pNPCPortraits_y[0][0]});

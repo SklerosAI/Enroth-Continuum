@@ -50,6 +50,10 @@ class GUIWindow_IndoorEntryExit : public GUIWindow_Transition {
     int _transitionStringId = 0;
 
  private:
+    void initializeMM6(HouseId transitionHouse, unsigned exitPictureId);
+    void updateMM6();
+    bool _mm6Unsupported = false;
+
     MapDestination _destination;
     EvtContinuation _continuation;
 };

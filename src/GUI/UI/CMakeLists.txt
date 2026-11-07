@@ -15,6 +15,7 @@ set(GUI_UI_SOURCES
         UIHouses.cpp
         MM6HouseServiceData.cpp
         MM6RoomDescriptors.cpp
+        MM6TransitionDialog.cpp
         UIInventory.cpp
         UIMainMenu.cpp
         UIPartyCreation.cpp
@@ -43,6 +44,7 @@ set(GUI_UI_HEADERS
         UIHouses.h
         MM6HouseServiceData.h
         MM6RoomDescriptors.h
+        MM6TransitionDialog.h
         MainMenuResources.h
         UIInventory.h
         UIMainMenu.h
@@ -72,7 +74,7 @@ add_subdirectory(Books)
 add_subdirectory(Houses)
 
 if(OE_BUILD_TESTS)
-    add_library(test_gui_ui_mm6_rooms OBJECT Tests/MM6HouseServiceData_ut.cpp Tests/MM6RoomDescriptors_ut.cpp)
+    add_library(test_gui_ui_mm6_rooms OBJECT Tests/MM6HouseServiceData_ut.cpp Tests/MM6RoomDescriptors_ut.cpp Tests/MM6TransitionDialog_ut.cpp)
     target_link_libraries(test_gui_ui_mm6_rooms PUBLIC testing_unit gui_ui)
     target_check_style(test_gui_ui_mm6_rooms)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_gui_ui_mm6_rooms)

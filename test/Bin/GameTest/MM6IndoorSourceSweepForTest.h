@@ -12,6 +12,7 @@
 #include "Engine/Graphics/FaceEnums.h"
 #include "Engine/MM6/MM6Archive.h"
 #include "Engine/MM6/MM6LoadedMapSource.h"
+#include "Engine/MM6/MM6NativeActorNpcPolicy.h"
 #include "Engine/Snapshots/MM6IndoorSnapshot.h"
 
 namespace mm6::testing {
@@ -30,6 +31,7 @@ struct IndoorSourceSweepForTest {
     bool hasInitiallyMovingDoor = false;
     bool hasPrevisibleOutlines = false;
     bool hasNegativeActorNpcSource = false;
+    bool hasEligibleNativeStreetNpcMarker = false;
     bool hasMultiActiveDoor = false;
     bool hasActorRecords = false;
     bool hasGroundRecords = false;
@@ -79,6 +81,11 @@ inline IndoorSourceSweepForTest sweepRetainedIndoorSourcesForTest(
             delta.actors.end(), [](const Actor_MM7 &actor) {
                 return actor.npcId < 0;
             });
+        const bool eligibleStreetNpc = std::any_of(delta.actors.begin(),
+            delta.actors.end(), [](const Actor_MM7 &actor) {
+                return actor.npcId != 0 && nativeStreetNpcEligible(
+                    static_cast<MonsterId>(actor.monsterInfo.id));
+            });
 
         // These flags classify engine ownership seams, not private map names,
         // dimensions or asset inventories. The ranking below is deterministic.
@@ -104,6 +111,7 @@ inline IndoorSourceSweepForTest sweepRetainedIndoorSourcesForTest(
         result.hasInitiallyMovingDoor |= movingDoor;
         result.hasPrevisibleOutlines |= visible;
         result.hasNegativeActorNpcSource |= negativeActorNpc;
+        result.hasEligibleNativeStreetNpcMarker |= eligibleStreetNpc;
         result.hasMultiActiveDoor |= activeDoors > 1;
         result.hasActorRecords |= !delta.actors.empty();
         result.hasGroundRecords |= !delta.spriteObjects.empty();

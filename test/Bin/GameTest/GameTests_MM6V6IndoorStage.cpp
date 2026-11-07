@@ -161,6 +161,9 @@ GAME_TEST(MM6IndoorSourceSweep, DISABLED_AllRetainedPairsOffline) {
         mm6::testing::highestRiskAdditionalIndoorCaseForTest(sweep);
     ASSERT_GE(candidate.ordinal, 2u);
     ASSERT_TRUE(candidate.exactDefaultDeltaRoundTrip);
+    // A native eligible source marker would need a separate generated-row and
+    // positive dialogue fixture before this corpus could support admission.
+    EXPECT_FALSE(sweep.hasEligibleNativeStreetNpcMarker);
     std::cout << "MM6 indoor source sweep: all retained pairs parsed; "
               << (sweep.hasCodecRefusal ? "changed-state codec has refusals; " :
                                           "changed-state codec exact; ")
@@ -171,6 +174,9 @@ GAME_TEST(MM6IndoorSourceSweep, DISABLED_AllRetainedPairsOffline) {
               << (sweep.hasNegativeActorNpcSource ?
                   "signed actor NPC source present; " :
                   "signed actor NPC source absent; ")
+              << (sweep.hasEligibleNativeStreetNpcMarker ?
+                  "eligible StreetNPC source marker present; " :
+                  "eligible StreetNPC source marker absent; ")
               << (sweep.hasMultiActiveDoor ? "multiple door anchors present; " :
                                              "multiple door anchors absent; ")
               << (sweep.hasActorRecords ? "actor records present; " :
@@ -183,8 +189,8 @@ GAME_TEST(MM6IndoorSourceSweep, DISABLED_AllRetainedPairsOffline) {
 }
 
 // Reconstruct the risk-ranked source through the real indoor loader, then
-// stop before map events. The native signed actor identity must be preserved
-// while GNPC capture excludes it from generated rows.
+// stop before map events. This checkpoint retains the native signed source
+// marker; the MM6 map-load policy clears it before runtime interaction.
 GAME_TEST(MM6IndoorSourceSweep, DISABLED_RiskCasePreEventActorIdentity) {
     const char *enable = std::getenv("ENROTH_MM6_INDOOR_SWEEP_ENABLE");
     if (!enable || std::string_view(enable) != "strict-risk-pre-event")
@@ -300,10 +306,10 @@ GAME_TEST(MM6IndoorSourceSweep, DISABLED_RiskCasePreEventActorIdentity) {
         std::rethrow_exception(probeError);
     EXPECT_TRUE(exactNativeSignedActor);
     EXPECT_TRUE(generatedOwnerAccepted);
-    std::cout << "MM6 signed actor dialogue preflight: "
+    std::cout << "MM6 signed actor pre-map diagnostic: "
               << (signedActorInteractable ? "interactable; " : "not interactable; ")
-              << (signedActorUnresolved ? "unresolved follower link; " : "follower link in range; ")
-              << (signedActorResolvedAsFollower ? "follower lookup agrees" : "no follower lookup")
+              << (signedActorUnresolved ? "transient roster lookup refused; " : "transient roster lookup in range; ")
+              << (signedActorResolvedAsFollower ? "transient roster lookup agrees" : "no transient roster lookup")
               << '\n';
     // This is a pre-map marker check. The MM6 map-load loop must clear this
     // ineligible signed marker before any real interaction can occur.

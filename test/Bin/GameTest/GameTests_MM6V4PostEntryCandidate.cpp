@@ -274,42 +274,45 @@ GAME_TEST(MM6V4PostEntryCandidateHeadless, DISABLED_FirstMapFullSessionPreflight
                         stage = "encode";
                         const auto bytes = mm6::encodeV4Save(v4, GameTitle::MM6);
                         stage = "full-session-preflight";
-                        const auto preflight = mm6::stageV4FullSessionPreflight(
-                            bytes, freshNpcs, maps.expectedNames(),
-                            [&maps](std::string_view name) { return maps.readBase(name); },
-                            verifyItem, *pItemTable, pOverlayTable->overlays.size(),
-                            pTileTable->tileCount(), pActors.size(), random->type(),
-                            pLevelDecorations,
-                            GameTitle::MM6);
+                        // Direct prvalue construction places this large owner graph
+                        // in heap storage. The atomic callback stages another copy.
+                        const auto preflight = std::unique_ptr<mm6::V4FullSessionPreflight>(
+                            new mm6::V4FullSessionPreflight(mm6::stageV4FullSessionPreflight(
+                                bytes, freshNpcs, maps.expectedNames(),
+                                [&maps](std::string_view name) { return maps.readBase(name); },
+                                verifyItem, *pItemTable, pOverlayTable->overlays.size(),
+                                pTileTable->tileCount(), pActors.size(), random->type(),
+                                pLevelDecorations, GameTitle::MM6)));
                         stage = "runtime-event-join";
                         const auto expectedEvents = mm6::capturePersistentEventBoundary(
-                            preflight.v3.represented.persistentEvents, GameTitle::MM6);
+                            preflight->v3.represented.persistentEvents, GameTitle::MM6);
                         const auto liveWire = mm6::decodeOutdoorDelta(pOutdoor->mm6DeltaBytes);
                         const auto liveEvents = liveWire.part(mm6::OutdoorDeltaPart::PersistentBytes);
                         if (!std::ranges::equal(expectedEvents, liveEvents))
                             throw std::runtime_error("event delta bytes changed");
-                        if (preflight.activeEventRuntime.mapVars !=
+                        if (preflight->activeEventRuntime.mapVars !=
                                 engine->_persistentVariables.mapVars ||
-                            preflight.activeEventRuntime.decorVars !=
+                            preflight->activeEventRuntime.decorVars !=
                                 engine->_persistentVariables.decorVars)
                             throw std::runtime_error("event runtime bytes changed");
                         if (writeEnabled) {
                             stage = "decoration-replay";
                             mm6::requireFirstMapOutdoorDecorationReplay(
                                 "oute3.odm", maps.readBase("oute3.odm"),
-                                preflight.activeEventRuntime, *pDecorationTable,
+                                preflight->activeEventRuntime, *pDecorationTable,
                                 pLevelDecorations, GameTitle::MM6);
                             stage = "atomic-write";
                             const auto validate = [&](std::span<const std::uint8_t> proposed) {
-                                const auto checked = mm6::stageV4FullSessionPreflight(
-                                    proposed, freshNpcs, maps.expectedNames(),
-                                    [&maps](std::string_view name) { return maps.readBase(name); },
-                                    verifyItem, *pItemTable, pOverlayTable->overlays.size(),
-                                    pTileTable->tileCount(), pActors.size(), random->type(),
-                                    pLevelDecorations, GameTitle::MM6);
+                                const auto checked = std::unique_ptr<mm6::V4FullSessionPreflight>(
+                                    new mm6::V4FullSessionPreflight(mm6::stageV4FullSessionPreflight(
+                                        proposed, freshNpcs, maps.expectedNames(),
+                                        [&maps](std::string_view name) { return maps.readBase(name); },
+                                        verifyItem, *pItemTable, pOverlayTable->overlays.size(),
+                                        pTileTable->tileCount(), pActors.size(), random->type(),
+                                        pLevelDecorations, GameTitle::MM6)));
                                 mm6::requireFirstMapOutdoorDecorationReplay(
                                     "oute3.odm", maps.readBase("oute3.odm"),
-                                    checked.activeEventRuntime, *pDecorationTable,
+                                    checked->activeEventRuntime, *pDecorationTable,
                                     pLevelDecorations, GameTitle::MM6);
                             };
                             mm6::writeAtomicV4SaveFileForTest(

@@ -159,6 +159,21 @@ UNIT_TEST(MM6V4FullSessionPreflight, JoinsExactActiveMapAndEventOwner) {
     EXPECT_EQ(staged.saved.eventRuntime, fields.eventRuntime);
 }
 
+UNIT_TEST(MM6V4FullSessionPreflight, KeepsTwoValidatedOwnerGraphsOnHeap) {
+    ItemTableScope items;
+    const auto npcs = freshNpcs();
+    const auto fields = exampleFields();
+    std::vector<LevelDecoration> decorations;
+    // Match the writer callback's overlapping lifetime without two large
+    // V4FullSessionPreflight objects occupying the game-thread stack.
+    const auto first = std::unique_ptr<mm6::V4FullSessionPreflight>(
+        new mm6::V4FullSessionPreflight(stage(fields, npcs, *items.table, decorations)));
+    const auto second = std::unique_ptr<mm6::V4FullSessionPreflight>(
+        new mm6::V4FullSessionPreflight(stage(fields, npcs, *items.table, decorations)));
+    EXPECT_EQ(first->activeEventRuntime, second->activeEventRuntime);
+    EXPECT_EQ(first->v3.actorMap.activeMap.mapName, second->v3.actorMap.activeMap.mapName);
+}
+
 UNIT_TEST(MM6V4FullSessionPreflight, RefusesStaleHeader) {
     ItemTableScope items;
     const auto npcs = freshNpcs();

@@ -30,8 +30,16 @@ staged Atlas passed strict code-signature verification; the helper has valid
 `0.1.0` bundle versions and the archive build records an honest unknown Git
 revision without a configure error. No private data or saves entered the bundle.
 
-This is a clean **tracked-source extraction**, not a remote Git clone. It did
-not test visible gameplay, audio, save/quit/reload, install or a complete MM7
+After publication, a fresh shallow clone of SklerosAI's MM7-only preview at
+code commit `d76afb519` repeated the one-command build under network denial
+with the remaining ztd gitlink uninitialized. The helper and staged Atlas
+passed strict code-signature checks; 23 notices were present and no private
+game data or saves entered the bundle. The branch's later documentation-only
+HEAD is `c0f5eab63`. The staged candidate has not been installed.
+
+The original build was a clean **tracked-source extraction**; the later fresh
+remote-clone run confirms the same source route. Neither run tested visible
+gameplay, audio, save/quit/reload, install or a complete MM7
 campaign. The ordinary CMake lane still references an OpenEnroth release and
 the remaining ztd.text gitlink; the dedicated Mac MM7 wrapper selects the
 proven local-only lane. It does not change the shared MM6/MM8 or non-Mac build

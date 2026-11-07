@@ -57,8 +57,13 @@ clean archive had no Git metadata, so its build banner reported an unknown
 revision without Git error output; an ordinary clone has Git metadata. The
 source build now gives the MM7 bundle a stable `0.1.0` version independent of
 the Git revision. The staged helper plist reported that version and Atlas
-passed strict code-signature verification. This run did not test a remote
-clone or install the staged bundle.
+passed strict code-signature verification. A later fresh shallow clone of the
+published MM7-only branch at code commit `d76afb519` repeated the
+one-command build with the ztd gitlink uninitialized and network access
+denied. Both app signatures passed, 23 media notices were staged, and no
+private game files or saves entered the bundle. The remote branch's current
+documentation-only HEAD is `c0f5eab63`. Neither run installed the staged
+bundle.
 
 ## Remaining gates
 

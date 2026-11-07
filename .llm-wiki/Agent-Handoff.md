@@ -33,8 +33,10 @@ history. Follow the [source and privacy boundary](Source-and-Privacy-Boundary.md
 and audit a separate publication branch before pushing to the public remote.
 The separate MM7-only `codex/mm7-public-preview` branch has now been audited,
 built from a clean tracked-source extraction under network denial, and pushed
-to the SklerosAI remote at `d76afb519`; it excludes the integration branch's
-MM6 research history. Its staged app has not replaced the installed helper.
+to the SklerosAI remote. A fresh shallow clone of code commit `d76afb519`
+built and staged MM7 under network denial with submodules uninitialized; the
+documentation-only branch HEAD is `c0f5eab63`. The branch excludes MM6 research
+history and its staged app has not replaced the installed helper.
 
 ## Current F4 checkpoint — 2026-11-06
 

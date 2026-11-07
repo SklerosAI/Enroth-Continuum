@@ -7,6 +7,7 @@
 
 #include "MM6AtomicSaveFile.h"
 #include "MM6RawCursorShopStage.h"
+#include "MM6SavedActorPidPolicy.h"
 
 namespace mm6 {
 
@@ -30,6 +31,9 @@ std::optional<StagedRawSessionFields> preflightStagedRawSessionFields(
                 freshParty, raw, itemTable, title);
             StagedRawWorldAndVisuals world = stageRawWorldAndVisuals(
                 freshNpcs, freshTimer, freshOverlays, raw, overlayTableCount, title);
+            requireNoActiveSavedActorOverlays(raw.saved.metadata.overlays, title);
+            DetachedPersistentEventBoundary persistentEvents =
+                stagePersistentEventBoundary(raw.activeMap, title);
             std::optional<DetachedIndoorWorldPlan> indoorPlan;
             std::optional<DetachedOutdoorWorldPlan> outdoorPlan;
             if (std::holds_alternative<StagedOutdoorMap>(raw.activeMap))
@@ -38,6 +42,7 @@ std::optional<StagedRawSessionFields> preflightStagedRawSessionFields(
                 indoorPlan = prepareDetachedRawIndoorWorldPlan(raw, title);
             staged.emplace(StagedRawSessionFields{
                 std::move(raw), std::move(party), std::move(world),
+                std::move(persistentEvents),
                 std::move(indoorPlan), std::move(outdoorPlan), false});
         });
     if (!selected)

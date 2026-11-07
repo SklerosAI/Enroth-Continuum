@@ -14,4 +14,6 @@ The lower active range fits a first-75-byte interpretation. The F4 interpreter n
 
 The [detached persistent event boundary](../project/MM6_F4_PERSISTENT_EVENT_BOUNDARY.md) now stages only proved bytes 0–70 from validated active DLV/DDM and exposes a zeroed inherited 75/125 live-array shape without publishing it. It rejects nonzero upper 129 wire bytes and nonzero generic-array writes on capture. This is a fail-closed adapter for the currently evidenced state, not proof that the MM6 bytes correspond to MM7's `mapVars` and `decorVars`. Decoration visibility, `EVENT_ChangeEvent`, and outdoor overlay effects still consume or mutate the generic arrays, so their MM6 addresses and reset behavior gate production publication.
 
+The represented v2 session preflight now requires this boundary before selecting a primary or backup. A primary with an unproved nonzero upper byte falls back to a valid backup without disk repair; the integrated persistent/raw checks passed **13/13**. This still does not assign the inherited arrays or prove upper-byte semantics.
+
 See also: [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), [MM6 Variable Dispatch](Source-MM6-Variable-Dispatch-F2.md), [MM6 World Field Map](Source-MM6-World-Field-Map-F2.md), [Agent Handoff](Agent-Handoff.md).

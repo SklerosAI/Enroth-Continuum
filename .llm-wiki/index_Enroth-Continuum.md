@@ -52,7 +52,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Monster Projectiles](MM6-F4-Monster-Projectiles.md) — All 82 active cells retain MM6 source types while launch and impact remain gated
 - [MM6 F4 Spell Damage Tags](MM6-F4-Spell-Damage-Tags.md) — Seven source damage labels retained for all 99 spells while effect semantics remain gated
 - [MM6 F4 Transport Manifest](MM6-F4-Transport-Manifest.md) — Private F3-derived travel descriptors, blank/special slot policy and title-specific UI handoff
-- [MM6 F4 Map Bytes](MM6-F4-Map-Bytes.md) — Bounded active map-byte dispatch, 200-byte delta preservation, and unresolved arithmetic/persistence edges
+- [MM6 F4 Map Bytes](MM6-F4-Map-Bytes.md) — Bounded active map-byte dispatch, 200-byte delta preservation and fail-closed v2 event-byte preflight
 - [MM6 F4 Outdoor Title Boundary](MM6-F4-Outdoor-Title-Boundary.md) — MM7 route, fog and campaign exceptions gated for MM6; MM6 travel and weather remain open
 - [MM6 F4 Outdoor Border Trace](MM6-F4-Outdoor-Border-Trace.md) — Original geometric neighbor grid, timing and arrival shape; party eligibility and live route remain gated
 - [MM6 F4 Autonote Variables](MM6-F4-Autonote-Variables.md) — Bounded party note-bit dispatch for active MM6 event ID 205 and remaining UI/save checks
@@ -131,6 +131,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Shop Shared-Edge Refresh](MM6-F4-Shop-Shared-Edge-Refresh.md) — Original shared stock/deadline arbitration plus optional per-visit mod guard; MM6 launch and live service remain gated
 - [MM6 F4 Shop Shared Row Access Audit](MM6-F4-Shop-Shared-Row-Access-Audit.md) — Direct source access families and remaining indirect-writer, nonzero-save and item-conversion blockers
 - [MM6 F4 Active World PID Restore](MM6-F4-Active-World-PID-Restore.md) — Active saved-map actor PID bounds and source-backed post-load identity gate
+- [MM6 F4 Saved Actor PID Identity Gate](MM6-F4-Saved-Actor-PID-Identity-Gate.md) — Active saved overlays reject v2 preflight until post-reload actor identity can be proved
 - [MM6 F4 World Save Runtime](MM6-F4-World-Save-Runtime.md) — NPC and 67-map capture/staging with bounded active-map writer and outdoor identity join
 - [MM6 F4 Timed Buffs](MM6-F4-Timed-Buffs.md) — Bounded BUFF fields and direct decoded-field Party-copy stage; live effect checks remain open
 - [MM6 F4 Hireling State](MM6-F4-Hireling-State.md) — HIRE party copies, sacrifice progress and bounded MM6 NPC lookup

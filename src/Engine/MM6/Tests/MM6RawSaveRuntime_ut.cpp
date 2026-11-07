@@ -34,6 +34,12 @@ std::vector<std::uint8_t> indoorDelta() {
     return std::vector<std::uint8_t>(8 + 875 + 3 * 4 + 200 * 80 + 200 + 56, 0);
 }
 
+std::vector<std::uint8_t> indoorDeltaWithActor() {
+    std::vector<std::uint8_t> bytes(8 + 875 + 3 * 4 + 548 + 200 * 80 + 200 + 56, 0);
+    bytes[8 + 875] = 1;
+    return bytes;
+}
+
 std::vector<std::uint8_t> outdoorBase() {
     return std::vector<std::uint8_t>(160 + 16 + 3 * 128 * 128 + 4 + 4 + 4 + 128 * 128 * 4 + 4, 0);
 }
@@ -493,5 +499,60 @@ UNIT_TEST(MM6RawSaveRuntime, RawSessionPreflightPreparesOutdoorPlanBeforeSelecti
     EXPECT_EQ(selected->outdoorPlan->mapName, "outside0.odm");
     EXPECT_EQ(selected->outdoorPlan->terrainTileIds.size(), 127 * 127);
     EXPECT_EQ(readBytes(profile.primary()), outdoorBytes);
+}
+
+UNIT_TEST(MM6RawSaveRuntime, RawSessionPreflightRejectsOpaqueEventBytesBeforeSelection) {
+    ItemTableScope table;
+    TestProfile profile;
+    auto good = exampleRaw();
+    constexpr std::size_t persistent = 8 + 875 + 3 * 4 + 200 * 80;
+    good.maps.deltas[0].bytes[persistent + 70] = 0x5a;
+    const auto names = namesOf(good);
+    const auto goodBytes = mm6::encodeRawSave(good, GameTitle::MM6);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", goodBytes);
+    auto bad = good;
+    bad.maps.deltas[0].bytes[persistent + 71] = 1;
+    const auto badBytes = mm6::encodeRawSave(bad, GameTitle::MM6);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", badBytes);
+
+    const auto npcs = freshNpcBaseline();
+    Timer timer;
+    ActiveOverlayList overlays;
+    auto selected = mm6::preflightStagedRawSessionFields(
+        profile.root(), "save001.ec6", npcs, timer, overlays,
+        names, syntheticBase, validItem, *table.table, 5, 145, GameTitle::MM6);
+    ASSERT_TRUE(selected);
+    EXPECT_TRUE(selected->needsRecovery);
+    EXPECT_EQ(selected->persistentEvents.mapBytes[70], 0x5a);
+    EXPECT_EQ(readBytes(profile.primary()), badBytes);
+    EXPECT_EQ(readBytes(profile.backup()), goodBytes);
+}
+
+UNIT_TEST(MM6RawSaveRuntime, RawSessionPreflightRejectsActiveActorOverlayBeforeSelection) {
+    ItemTableScope table;
+    TestProfile profile;
+    auto good = exampleRaw();
+    const auto names = namesOf(good);
+    const auto goodBytes = mm6::encodeRawSave(good, GameTitle::MM6);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", goodBytes);
+    auto bad = good;
+    bad.maps.deltas[0].bytes = indoorDeltaWithActor();
+    bad.chest.rawActiveDelta = bad.maps.deltas[0].bytes;
+    bad.metadata.overlays[0].animationLength = 1;
+    bad.metadata.overlays[0].packedPid = Pid::actor(0).packed();
+    const auto badBytes = mm6::encodeRawSave(bad, GameTitle::MM6);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", badBytes);
+
+    const auto npcs = freshNpcBaseline();
+    Timer timer;
+    ActiveOverlayList overlays;
+    auto selected = mm6::preflightStagedRawSessionFields(
+        profile.root(), "save001.ec6", npcs, timer, overlays,
+        names, syntheticBase, validItem, *table.table, 5, 145, GameTitle::MM6);
+    ASSERT_TRUE(selected);
+    EXPECT_TRUE(selected->needsRecovery);
+    EXPECT_EQ(selected->raw.saved.metadata.overlays[0].animationLength, 0);
+    EXPECT_EQ(readBytes(profile.primary()), badBytes);
+    EXPECT_EQ(readBytes(profile.backup()), goodBytes);
 }
 #endif

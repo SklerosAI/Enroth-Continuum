@@ -9,6 +9,7 @@
 
 #include "MM6RawSaveRuntime.h"
 #include "MM6IndoorWorldPlan.h"
+#include "MM6PersistentEventBoundary.h"
 #include "MM6WorldSaveRuntime.h"
 
 namespace mm6 {
@@ -17,6 +18,7 @@ struct StagedRawSessionFields {
     StagedRawTitleOwners raw;
     StagedRawPartyInventories party;
     StagedRawWorldAndVisuals world;
+    DetachedPersistentEventBoundary persistentEvents;
     // One plan is populated from the validated MM6 base/delta pair. These
     // are CPU-only projections, not live world or resource publication.
     std::optional<DetachedIndoorWorldPlan> indoorPlan;
@@ -25,7 +27,8 @@ struct StagedRawSessionFields {
 };
 
 // Read-only v2 slot selection through every currently represented Party and
-// world field adapter, and checks raw HELD/SHOP/SCLK owner equality. The
+// world field adapter, raw HELD/SHOP/SCLK owner equality, a bounded map-event
+// projection and the fail-closed saved actor-overlay policy. The
 // NPC baseline is a freshly parsed MM6 table image. The Party baseline is
 // constructed locally without resetting the live mouse cursor; timer and
 // overlay bases must come from a fresh MM6 session.

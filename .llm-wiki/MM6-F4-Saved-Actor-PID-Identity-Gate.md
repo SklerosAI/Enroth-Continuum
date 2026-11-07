@@ -11,7 +11,7 @@ The [source audit](../project/MM6_F4_SAVED_ACTOR_PID_IDENTITY_GATE.md) explains 
 
 Indoor and outdoor MM6 reconstruction initially keep actor order and assign `id = index`. Initial/timed/invalid-delta respawn can substitute fresh actors; loader spawn and debug paths can add or remove actors; `OnMapReload` events can summon actors and `AllocateActor` can reuse a removed index. Numeric bounds therefore do not prove post-load identity.
 
-The detached MM6-only `requireNoActiveSavedActorOverlays` policy refuses active `VISU` slots before publication and keeps inactive slots unchanged. Two linked synthetic tests passed for an in-range actor PID still refusing, inactive-byte preservation, wrong-title refusal and an unexpected active PID type. This policy is not yet wired to the raw session stage or live SaveLoad.
+The detached MM6-only `requireNoActiveSavedActorOverlays` policy refuses active `VISU` slots before publication and keeps inactive slots unchanged. It is now required inside v2 primary/backup preflight, so an active-overlay primary can fall back to an inactive backup without disk repair. Focused policy and coordinator checks passed **4/4**. Live SaveLoad remains guarded; this supersedes the unjoined-policy note.
 
 The next gate is a detached selected-delta and post-reload actor-identity proof, including respawn, initialization, debug and event effects. Only then should the all-owner transaction publish an active actor overlay, followed by visible save/relaunch checks.
 

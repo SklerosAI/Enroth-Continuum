@@ -101,20 +101,17 @@ outside Git. `local-game-data/*` is ignored except its tracked README.
   commit `020cecf49`, in a separate managed worktree. Its staged Atlas bundle
   contains `Contents/Helpers/MM7.app` with a distinct bundle identifier.
 - The new MM7 profile is under
-  `~/Library/Application Support/Enroth Continuum/Profiles/MM7`; the two
-  existing save files were copied there and SHA-256 matched both the originals
-  and a separate local backup. The old `~/.openenroth` profile remains intact.
+  `~/Library/Application Support/Enroth Continuum/Profiles/MM7`; an earlier
+  private save copy was byte-verified against its retained source and backup.
+  The old `~/.openenroth` profile remains intact.
 - The isolated MM7 app built and passed a live graphical check: The Atlas
   launched MM7, an existing save loaded on Emerald Island, and quitting
   returned to The Atlas. The installed `/Applications` app was left in place
   during this verification.
-- The private MM6 reference folder
-  `local-game-data/mm6/research-2026-11-05` holds extracted copies of four
-  LOD archives and an ignored per-file/per-table catalog. Archive entry lists
-  contain 2,703 icons, 134 maps, 1,958 bitmaps and 4,314 sprites. The catalog
-  indexes 9,128 extracted and manifest files and every nonempty row in 30 text
-  tables. See [MM6_IMPLEMENTATION_CHECKLIST.md](MM6_IMPLEMENTATION_CHECKLIST.md)
-  for implementation coverage and remaining audit work.
+- A private MM6 reference catalog was generated from the owner's local game
+  files and retained outside Git. See
+  [MM6_IMPLEMENTATION_CHECKLIST.md](MM6_IMPLEMENTATION_CHECKLIST.md) for
+  implementation coverage and remaining audit work.
 - MM6 is still not playable. The isolated MM7 bundle is a protected baseline;
   MM6 and later MM8 will be separate sibling engines and profiles, with their
   own Atlas actions once their campaign checks pass.

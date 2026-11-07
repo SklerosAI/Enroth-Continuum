@@ -120,7 +120,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Bounded Party Inventory](MM6-F4-Bounded-Party-Inventory.md) — All-four-character raw inventory stage and atomic detached capture; live item provenance remains open
 - [MM6 F4 Standard Bonus Map](MM6-F4-Standard-Bonus-Map.md) — Source-backed 14-index standard item bonus map shared with the MM6 table loader
 - [MM6 F4 Standard Item Projection](MM6-F4-Standard-Item-Projection.md) — Detached common-equipment bonus view with raw preservation and safe value arithmetic
-- [MM6 F4 Shop Purchase-Write Gate](MM6-F4-Shop-Purchase-Write-Gate.md) — Linked 28-byte purchase mutation and detached physical SHOP section; live service owner remains open
+- [MM6 F4 Shop Purchase-Write Gate](MM6-F4-Shop-Purchase-Write-Gate.md) — Linked 28-byte purchase mutation, detached physical SHOP section and bounded stock-to-Item handoff; live service owner remains open
 - [MM6 F4 Shop Shared-Edge Refresh](MM6-F4-Shop-Shared-Edge-Refresh.md) — Linked original stock/deadline arbitration and failure-atomic detached refresh seam; live service remains gated
 - [MM6 F4 Shop Shared Row Access Audit](MM6-F4-Shop-Shared-Row-Access-Audit.md) — Direct source access families and remaining indirect-writer, nonzero-save and item-conversion blockers
 - [MM6 F4 Active World PID Restore](MM6-F4-Active-World-PID-Restore.md) — Active saved-map actor PID bounds and source-backed post-load identity gate

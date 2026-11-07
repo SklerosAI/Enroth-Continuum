@@ -1992,3 +1992,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a bounded, exact-replay projection from the physical v2 HELD cursor onto a detached Party copy, including an empty-cursor clear. No live Party, mouse image or shop owner changes.
 - Both arm64 test targets linked and the focused held-Party suite passed 3/3. Full-session and visible cursor publication remain gated.
+
+## [2026-11-06] integrate | MM6 bounded creation item seed
+- by: T-Burton-ND via codex
+- Added a detached MM6-only adapter that constructs canonical physical records for supported fresh backpack grants, retains their indices and footprints, and requires exact full-inventory replay before a native v2 New Game candidate can use them.
+- Linked creation-item, v2 writer and held-Party suites passed 9/9. Original-game creation-record parity and real loaded-table random-ring outcomes remain unverified; the production New Game and SaveLoad guards stay closed.

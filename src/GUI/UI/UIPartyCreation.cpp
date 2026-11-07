@@ -1,8 +1,11 @@
+#include <array>
 #include <cstdlib>
 #include <cstddef>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "Engine/AssetsManager.h"
 #include "Engine/Engine.h"
@@ -757,6 +760,37 @@ GUIWindow_PartyCreation::~GUIWindow_PartyCreation() {
 }
 
 //----- (00497526) --------------------------------------------------------
+namespace {
+
+void grantMM6StartingSkillItem(Character *character, Skill skill) {
+    if (skill == SKILL_CLUB || skill == SKILL_MISC)
+        return;
+    const int sourceSkill = skill == SKILL_LEARNING ? 30 : std::to_underlying(skill);
+    if (sourceSkill < 0 || sourceSkill > 30 ||
+        (skill >= SKILL_DODGE && skill != SKILL_LEARNING))
+        throw std::runtime_error("MM6 creation has a non-MM6 skill");
+    const auto add = [character](int id) {
+        if (!character->inventory.add(Item(static_cast<ItemId>(id))))
+            throw std::runtime_error("MM6 creation inventory cannot hold a starter item");
+    };
+    constexpr std::array<int, 12> equipment = {61, 1, 15, 23, 31, 47, 50, 0, 84, 66, 71, 76};
+    if (sourceSkill < static_cast<int>(equipment.size())) {
+        if (equipment[sourceSkill])
+            add(equipment[sourceSkill]);
+    } else if (sourceSkill >= 12 && sourceSkill <= 18) {
+        const int firstSpell = 1 + (sourceSkill - 12) * 11;
+        character->bHaveSpell[static_cast<SpellId>(firstSpell)] = true;
+        add(300 + firstSpell); // The source grants the next spell's book.
+    } else if (sourceSkill == 21 || sourceSkill == 23 || sourceSkill == 25 ||
+               sourceSkill == 26 || sourceSkill == 27 || sourceSkill == 29 ||
+               sourceSkill == 30) {
+        add(163);
+        add(160 + grng->random(3));
+    }
+}
+
+} // namespace
+
 bool PartyCreationUI_LoopInternal() {
     Item item;
     bool party_not_creation_flag;
@@ -813,7 +847,9 @@ bool PartyCreationUI_LoopInternal() {
         for (Skill j : allSkills()) {
             if (!pParty->pCharacters[i].pActiveSkills[j]) continue;
 
-            switch (j) {
+            if (engine->gameTitle() == GameTitle::MM6) {
+                grantMM6StartingSkillItem(&pParty->pCharacters[i], j);
+            } else switch (j) {
             case SKILL_STAFF:
                 pParty->pCharacters[i].inventory.add(Item(ITEM_STAFF));
                 break;

@@ -88,7 +88,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Creation Rules](MM6-F4-Creation-Rules.md) — Private F3-array manifest, six-class creation path, mana dispatch, verified health floor and remaining formula/UI checks
 - [MM6 F4 Creation HP/SP Init Gate](MM6-F4-Creation-HP-SP-Init-Gate.md) — Original Quick Start refill order, MM6-only current-creation timing correction and remaining mana formula proof
 - [MM6 F4 Max-Mana Condition Trace](MM6-F4-Max-Mana-Condition-Trace.md) — Original outer SP formula, 17-condition priority correction and remaining item/skill helper checks
-- [MM6 F4 Quick Start](MM6-F4-Quick-Start.md) — Static opening route, starter skill paths, face-derived animation sound and bounded first-map trigger audit; random item, full map-entry and save gates remain
+- [MM6 F4 Quick Start](MM6-F4-Quick-Start.md) — Original static opening route and all skill dispatches; separate editable creation now passes hidden first-frame control flow, with Quick Start and normal save still gated
 - [MM6 F4 Indoor Runtime](MM6-F4-Indoor-Runtime.md) — Bounded BLV/DLV projection and changed-state encoding with retained opaque wire
 - [MM6 F4 Map Save Fields](MM6-F4-Map-Save-Fields.md) — Bounded `.ec6` map-delta section, private F3 source reader and ground/chest item-marker validation
 - [MM6 F4 NPC State](MM6-F4-NPC-State.md) — `.ec6` RESC preserves the source no-house sentinel; joined first-map check passes, while normal save/reload remains gated
@@ -104,7 +104,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Beacon and Thumbnail Save](MM6-F4-Beacon-Visual-Save.md) — Linked filename-keyed BEAC v1 preserves image bytes and prepares owned CPU pixels while GPU publication remains guarded
 - [MM6 F4 Beacon Renderer Contract](MM6-F4-Beacon-Renderer-Contract.md) — Checked texture creation and controlled cleanup required before live BEAC publication
 - [MM6 F4 Partial Stage Coordinator](MM6-F4-Partial-Stage-Coordinator.md) — Validated 67-map candidate with detached Party, active map, NPC/map and timer/overlay copies
-- [MM6 F4 New Game Autosave](MM6-F4-New-Game-Autosave.md) — Offline `oute3.odm` known-field candidate and atomic `.ec6` autosave with live guard retained
+- [MM6 F4 New Game Autosave](MM6-F4-New-Game-Autosave.md) — Test-only temporary `.ec6` path now drives editable New Game into first outdoor frame; ordinary save and reload stay guarded
 - [MM6 F4 First-Map World Rollback](MM6-F4-First-Map-World-Rollback.md) — Temporary `.ec6` to New Sorpigal passes headlessly; full-world rollback and normal SaveLoad remain guarded
 - [MM6 F4 Shop Save Key Matrix](MM6-F4-Shop-Save-Key-Matrix.md) — Retained house-type join versus inherited MM7 shop, guild and bounty save owner ranges
 - [MM6 F4 Shop Guild Clock Save](MM6-F4-Shop-Guild-Clock-Save.md) — SCLK v1 preserves 68 unique original-MM6 shop and guild refresh deadline words

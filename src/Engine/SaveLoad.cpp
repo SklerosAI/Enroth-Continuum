@@ -1,6 +1,7 @@
 #include "SaveLoad.h"
 
 #include <cassert>
+#include <functional>
 #include <unordered_map>
 #include <string>
 #include <string_view>
@@ -43,6 +44,14 @@
 #include "Library/LodFormats/LodFormats.h"
 
 std::unordered_map<std::string, Blob> pMapDeltas;
+
+namespace {
+std::function<void()> mm6NewGameSaveOverride;
+}
+
+void mm6::testing::setNewGameSaveOverride(std::function<void()> callback) {
+    mm6NewGameSaveOverride = std::move(callback);
+}
 
 void loadGame(std::string_view fileName) {
     if (engine->gameTitle() == GameTitle::MM6)
@@ -261,7 +270,7 @@ void doSavegame(std::string fileName, std::string_view title) {
 }
 
 void saveNewGame() {
-    if (engine->gameTitle() == GameTitle::MM6)
+    if (engine->gameTitle() == GameTitle::MM6 && !mm6NewGameSaveOverride)
         throw std::runtime_error("MM6 new-game save is unavailable until the EC6 transaction is complete");
 
     if (engine->gameTitle() == GameTitle::MM6) {
@@ -283,6 +292,11 @@ void saveNewGame() {
         pParty->_viewYaw = 512;
     }
     engine->_lastLoadedSaveFileName.clear(); // Otherwise the save menu would pre-select a save from a previous playthrough.
+
+    if (engine->gameTitle() == GameTitle::MM6) {
+        mm6NewGameSaveOverride();
+        return;
+    }
 
     saveGame(true, true, fmt::format("saves/{}", autosaveFileName), localization->str(LSTR_AUTOSAVE));
 }

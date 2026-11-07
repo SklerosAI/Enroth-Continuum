@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <functional>
 #include <unordered_map>
 #include <string>
 #include <string_view>
@@ -60,6 +61,12 @@ void autoSave();
  */
 void doSavegame(std::string fileName, std::string_view title);
 void saveNewGame();
+
+namespace mm6::testing {
+// Dedicated headless integration seam. An empty override leaves the normal
+// MM6 new-game save guard closed. Never install this for a user session.
+void setNewGameSaveOverride(std::function<void()> callback);
+}
 
 void quickSaveGame();
 void quickLoadGame();

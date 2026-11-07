@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -24,6 +25,7 @@
 #include "Engine/MM6/MM6PrivateMapSource.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/MM6/MM6WorldSaveRuntime.h"
+#include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Party.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/ItemTable.h"
@@ -324,6 +326,64 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_ScopedSaveFeedsFirstOutdoorWorld) {
     EXPECT_EQ(engine->_currentLoadedMapId, firstMap);
     EXPECT_EQ(uCurrentlyLoadedLevelType, LEVEL_OUTDOOR);
     EXPECT_FALSE(engine->_pendingTransition.has_value());
+    EXPECT_FALSE(pOutdoor->faces.empty());
+    EXPECT_FALSE(pActors.empty());
+    EXPECT_EQ(vChests.size(), 20u);
+    EXPECT_EQ(window->nativeHandle(), nullptr);
+}
+
+// Runs the actual PartyCreation_OK -> saveNewGame -> gameLoop transition in a
+// dedicated headless process. The override writes only into TempProfile;
+// normal MM6 SaveLoad still rejects user sessions and reloads.
+GAME_TEST(MM6ZSaveHeadless, DISABLED_NewGameControlFlowReachesFirstFrame) {
+    const char *research = std::getenv("ENROTH_MM6_MAP_RESEARCH_ROOT");
+    if (!research || !std::filesystem::is_directory(research))
+        GTEST_SKIP() << "Set ENROTH_MM6_MAP_RESEARCH_ROOT to the ignored private F3 map source";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    TempProfile profile;
+    std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
+
+    mm6::testing::setNewGameSaveOverride([&] {
+        (void) mm6::saveNewGameMM6ScopedForTest(profile.root, research,
+            [](const Party &, const std::unordered_map<std::string, Blob> &,
+               const mm6::ChestTitleState &) {});
+    });
+    game.runGameRoutine([&] { chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>(); });
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    ASSERT_NE(pGUIWindow_CurrentMenu, nullptr);
+    ASSERT_EQ(pGUIWindow_CurrentMenu->eWindowType, WINDOW_PARTY_CREATION);
+    game.runGameRoutine([] {
+        for (Character &character : pParty->pCharacters) {
+            for (int order = 4; order <= 12 && character.GetSkillIdxByOrder(3) == SKILL_INVALID; ++order) {
+                const Skill skill = character.GetSkillIdxByOrder(order);
+                if (skill != SKILL_INVALID && !character.pActiveSkills[skill])
+                    character.pActiveSkills[skill] = CombinedSkillValue::novice();
+            }
+            if (character.GetSkillIdxByOrder(3) == SKILL_INVALID)
+                throw std::runtime_error("MM6 creation party lacks four skills");
+        }
+        for (int pass = 0; pass < 100 && CharacterCreation_GetUnspentAttributePointCount() > 0; ++pass) {
+            for (Character &character : pParty->pCharacters)
+                for (Attribute stat : allStatAttributes())
+                    character.IncreaseAttribute(stat);
+        }
+        if (CharacterCreation_GetUnspentAttributePointCount() != 0)
+            throw std::runtime_error("MM6 creation party could not spend attribute points");
+    });
+    game.pressGuiButton("PartyCreation_OK");
+    game.skipLoadingScreen();
+    game.tick(2);
+    game.runGameRoutine([&] { chestOptIn.reset(); });
+    mm6::testing::setNewGameSaveOverride({});
+
+    EXPECT_TRUE(std::filesystem::exists(profile.primary()));
+    EXPECT_EQ(pMapDeltas.size(), 67u);
+    EXPECT_TRUE(mm6::chestTitleState().ready);
+    EXPECT_EQ(engine->_currentLoadedMapId, pMapTable->GetMapInfo("oute3.odm"));
+    EXPECT_EQ(uCurrentlyLoadedLevelType, LEVEL_OUTDOOR);
+    EXPECT_EQ(current_screen_type, SCREEN_GAME);
     EXPECT_FALSE(pOutdoor->faces.empty());
     EXPECT_FALSE(pActors.empty());
     EXPECT_EQ(vChests.size(), 20u);

@@ -3083,6 +3083,8 @@ void pushSpellOrRangedAttack(SpellId spell,
                              SpellCastFlags flags,
                              Pid target) {
     mm6::requireVerifiedSpellEffect(engine->gameTitle(), spell, mm6::SpellEffectSource::PlayerQueue);
+    if (engine->gameTitle() == GameTitle::MM6)
+        mm6::requireVerifiedPlayerCastSkill(spell, static_cast<bool>(skill_value));
 
     if (pParty->bTurnBasedModeOn) {
         if (pTurnEngine->turn_stage == TE_WAIT ||

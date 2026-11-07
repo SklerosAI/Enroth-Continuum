@@ -49,6 +49,7 @@
 #include "Engine/TurnEngine/TurnEngine.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
+#include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
 #include "Engine/MM6/MM6PreEventCheckpointForTest.h"
 #include "Engine/MM6/MM6V5FirstMapLoadAbandonForTest.h"
@@ -116,6 +117,21 @@ static void setMinimapZoom(int zoom) {
         engine->config->settings.MinimapZoomOutdoor.setValue(zoom);
     }
     viewparams->uMinimapZoom = zoom;
+}
+
+/**
+ * Turns down an MM6 spellbook or quick cast of a spell whose MM6 effect is not verified, before the book closes or
+ * anything is queued.
+ *
+ * @param spell                         Spell the player is trying to cast.
+ * @return                              Whether the cast was turned down.
+ */
+static bool refuseUnverifiedMM6Spell(SpellId spell) {
+    if (engine->gameTitle() != GameTitle::MM6 || !mm6::shouldRefusePlayerSpell(spell))
+        return false;
+    engine->_statusBar->setEvent("This Might & Magic VI spell is not available yet");
+    pAudioPlayer->playUISound(SOUND_error);
+    return true;
 }
 
 Game::Game(PlatformApplication *application, std::shared_ptr<GameConfig> config) {
@@ -974,6 +990,8 @@ void Game::processQueuedMessages() {
                 if (!pParty->hasActiveCharacter() || pParty->activeCharacter().timeToRecovery) {
                     continue;
                 }
+                if (refuseUnverifiedMM6Spell(pParty->activeCharacter().uQuickSpell))
+                    continue;
                 Pid target = uMessage == UIMSG_CastQuickSpellAtActor ? Pid(OBJECT_Actor, uMessageParam) : Pid();
                 pushSpellOrRangedAttack(pParty->activeCharacter().uQuickSpell, pParty->activeCharacterIndex(),
                                         CombinedSkillValue::none(), ON_CAST_CastViaQuickSpell, target);
@@ -1271,6 +1289,8 @@ void Game::processQueuedMessages() {
                 SpellId selectedSpell = static_cast<SpellId>(uMessageParam);
                 if (character->bHaveSpell[selectedSpell] || engine->config->debug.AllMagic.value()) {
                     if (spellbookSelectedSpell == selectedSpell) {
+                        if (refuseUnverifiedMM6Spell(selectedSpell))
+                            continue;
                         pGUIWindow_CurrentMenu = nullptr;  // spellbook close
                         gameTimer->setPaused(false);
                         current_screen_type = SCREEN_GAME;

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <memory>
 #include <stdexcept>
 #include <utility>
@@ -15,6 +16,8 @@
 #include "Engine/Tables/MapTable.h"
 
 #include "GUI/GUIWindow.h"
+
+#include "Utility/String/Format.h"
 
 namespace {
 
@@ -112,3 +115,39 @@ GAME_TEST(MM6CombatHeadless, DISABLED_GoblinKingBreaksItem) {
     EXPECT_GT(brokenTape.back(), 0);
 }
 
+GAME_TEST(MM6CombatHeadless, DISABLED_CureWeaknessFromSpellbook) {
+    // A new Body caster knows Cure Weakness, casting it from the spellbook used to refuse and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto mpTape = charTapes.mps();
+    auto conditionTape = charTapes.conditions();
+    auto recoveringTape = charTapes.areRecovering();
+    enterFirstMapFromNewGame(game);
+
+    auto caster = std::ranges::find_if(pParty->pCharacters, [](const Character &character) {
+        return character.bHaveSpell[static_cast<SpellId>(67)];
+    });
+    ASSERT_NE(caster, pParty->pCharacters.end());
+    const int casterIndex = static_cast<int>(caster - pParty->pCharacters.begin());
+    const int targetIndex = (casterIndex + 1) % 4;
+    pParty->pCharacters[targetIndex].SetCondition(CONDITION_WEAK, false);
+    test.startTaping();
+
+    game.pressAndReleaseKey(static_cast<PlatformKey>(std::to_underlying(PlatformKey::KEY_DIGIT_1) + casterIndex));
+    game.tick();
+    game.pressGuiButton("Game_CastSpell");
+    game.tick();
+    game.pressGuiButton(fmt::format("SpellBook_School{}", std::to_underlying(MAGIC_SCHOOL_BODY)));
+    game.tick();
+    game.pressGuiButton("SpellBook_Spell0"); // Selects the spell.
+    game.tick();
+    game.pressGuiButton("SpellBook_Spell0"); // Casts it, the book closes and the target picker opens next frame.
+    game.tick(2);
+    game.pressGuiButton(fmt::format("CastSpell_Character{}", targetIndex + 1));
+    game.tick();
+
+    EXPECT_LT(mpTape.back()[casterIndex], mpTape.front()[casterIndex]);
+    EXPECT_EQ(conditionTape.front()[targetIndex], CONDITION_WEAK);
+    EXPECT_EQ(conditionTape.back()[targetIndex], CONDITION_GOOD);
+    EXPECT_FALSE(recoveringTape.front()[casterIndex]);
+    EXPECT_TRUE(recoveringTape.back()[casterIndex]);
+}

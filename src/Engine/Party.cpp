@@ -63,6 +63,10 @@ int Party::CountHirelings() {  // non hired followers
 // inlined
 //----- (mm6c::004858D0) --------------------------------------------------
 void Party::Zero() {
+    zero(true);
+}
+
+void Party::zero(bool resetMouseCursor) {
     height = engine ? engine->config->gameplay.PartyHeight.value() : 192;
     eyeLevel = engine ? engine->config->gameplay.PartyEyeLevel.value() : 160;
     radius = 37;
@@ -121,8 +125,9 @@ void Party::Zero() {
     alignment = PartyAlignment_Neutral;
     for (SpellBuff &buff : pPartyBuffs)
         buff.Reset();
-    // Detached save-staging tests construct Party without an initialized UI.
-    if (mouse)
+    // Constructing a detached Party must not reset the live mouse cursor.
+    // Explicit Zero()/Reset() preserve the existing live cursor reset.
+    if (resetMouseCursor && mouse)
         takeHoldingItem();
     else
         pPickedItem.Reset();

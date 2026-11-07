@@ -47,7 +47,7 @@ struct PartyTimeStruct {
 
 struct Party {
     Party() : playing_time(), last_regenerated() {
-        Zero();
+        zero(false);
     }
 
     void Zero();
@@ -385,6 +385,7 @@ struct Party {
     }
 
  private:
+    void zero(bool resetMouseCursor);
     int _activeCharacterIndex = -1;
 };
 

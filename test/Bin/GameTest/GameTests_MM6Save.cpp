@@ -42,6 +42,7 @@
 #include "GUI/GUIMessageQueue.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIGame.h"
+#include "Io/Mouse.h"
 
 namespace {
 
@@ -117,6 +118,21 @@ GAME_TEST(MM6ZSaveHeadless, FreshNpcBaselineMatchesLoadedMm6Tables) {
     EXPECT_EQ(baseline.stats().pProfessionChance[MAP_EMERALD_ISLAND].total,
               pNPCStats->pProfessionChance[MAP_EMERALD_ISLAND].total);
     EXPECT_TRUE(pNPCTopics[0].pText == priorTopic);
+}
+
+GAME_TEST(MM6ZSaveHeadless, DetachedPartyConstructionPreservesLiveCursor) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_TRUE(mouse);
+    const std::string previousName = mouse->cursor_name;
+    const int previousInitialized = mouse->bInitialized;
+    mouse->cursor_name = "detached-party-sentinel";
+    mouse->bInitialized = 1;
+    Party detached;
+    EXPECT_EQ(mouse->cursor_name, "detached-party-sentinel");
+    EXPECT_EQ(detached.pPickedItem.itemId, ITEM_NULL);
+    mouse->cursor_name = previousName;
+    mouse->bInitialized = previousInitialized;
 }
 
 GAME_TEST(MM6ZSaveHeadless, LoadedMapSourceMatchesPrivateResearch) {

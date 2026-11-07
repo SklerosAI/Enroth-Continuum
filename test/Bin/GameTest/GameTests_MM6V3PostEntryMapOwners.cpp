@@ -9,6 +9,7 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/MM6/MM6ActiveActorOutdoorDeltaCapture.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6ChestRuntimeProjection.h"
 #include "Engine/MM6/MM6OutdoorWire.h"
@@ -49,9 +50,21 @@ GAME_TEST(MM6V3PostEntryMapOwnersHeadless, DISABLED_FirstMapRetainedDDMMatchesLi
                 mm6::ScopedChestMapLoadOptIn chestOptIn;
                 DoPrepareWorld(/* bLoading = */ false, /* fullscreen = */ 1);
             }
-            const MM6OutdoorDeltaSnapshot retained = decodeMM6OutdoorDelta(Blob::view(
-                pOutdoor->mm6DeltaBytes.data(), pOutdoor->mm6DeltaBytes.size()));
-            if (retained.lastRespawnDay == 0 ||
+            const auto original = mm6::decodeOutdoorDelta(pOutdoor->mm6DeltaBytes);
+            const Blob patched = mm6::captureOutdoorDeltaWithActiveActors(
+                *pOutdoor, GameTitle::MM6);
+            const auto wire = mm6::decodeOutdoorDelta({
+                static_cast<const std::uint8_t *>(patched.data()), patched.size()});
+            const MM6OutdoorDeltaSnapshot retained = decodeMM6OutdoorDelta(patched);
+            const auto samePart = [&](mm6::OutdoorDeltaPart part) {
+                return std::ranges::equal(original.part(part), wire.part(part));
+            };
+            if (!samePart(mm6::OutdoorDeltaPart::Actors) ||
+                !samePart(mm6::OutdoorDeltaPart::Chests) ||
+                !samePart(mm6::OutdoorDeltaPart::PersistentBytes) ||
+                !samePart(mm6::OutdoorDeltaPart::Tail)) {
+                resultClass = "opaque-change";
+            } else if (retained.lastRespawnDay == 0 ||
                 retained.lastRespawnDay != static_cast<std::uint32_t>(pOutdoor->ddm.lastRespawnDay)) {
                 resultClass = "respawn-day";
             } else if (retained.fullyRevealedCells != pOutdoor->uFullyRevealedCellOnMap ||
@@ -78,7 +91,6 @@ GAME_TEST(MM6V3PostEntryMapOwnersHeadless, DISABLED_FirstMapRetainedDDMMatchesLi
                     }
                 }
                 if (resultClass == "pass") {
-                    const auto wire = mm6::decodeOutdoorDelta(pOutdoor->mm6DeltaBytes);
                     mm6::ChestRecordSet records{};
                     if (!mm6::copyChestRecords(wire.part(mm6::OutdoorDeltaPart::Chests), &records)) {
                         resultClass = "chest-wire";
@@ -94,8 +106,18 @@ GAME_TEST(MM6V3PostEntryMapOwnersHeadless, DISABLED_FirstMapRetainedDDMMatchesLi
                     }
                 }
             }
-        } catch (const std::exception &) {
-            resultClass = "world-preparation";
+        } catch (const std::exception &error) {
+            const std::string_view message = error.what();
+            if (message.find("ground item data") != std::string_view::npos)
+                resultClass = "unsupported-item-or-tail";
+            else if (message.find("sprite projection") != std::string_view::npos)
+                resultClass = "sprite-projection";
+            else if (message.find("chest data") != std::string_view::npos)
+                resultClass = "chest-state";
+            else if (message.find("actor identity") != std::string_view::npos)
+                resultClass = "actor-identity";
+            else
+                resultClass = "world-preparation";
         }
         completed = true;
     });

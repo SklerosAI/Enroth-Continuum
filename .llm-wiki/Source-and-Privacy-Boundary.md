@@ -10,6 +10,14 @@ The public wiki may summarize original project code, public project documents, a
 
 Never put GOG installers, extracted archives, game art, music, dialogue, video, proprietary guide text, saves, backups, local logs, private mod files, or private inventory reports into this wiki or another public Git location. Do not paste extracted text tables or per-asset catalogs. Private files can inform local implementation checks, but publish only original, high-level findings with source provenance and no redistributable game content.
 
+Before publishing a local branch, inspect both its current tree and every
+new commit reachable from it. Redacting a current Markdown page does not
+remove older text from Git history. The `mm6-mac-implementation` integration
+branch has local-only commits with earlier detailed private-derived notes;
+its current redactions do not authorize pushing that history to the public
+SklerosAI remote. Prepare and audit a publication branch separately before
+any push.
+
 The repository's `local-game-data/*` tree is ignored except its tracked README. The local status document names private workspaces and summarizes results, but those workspaces are not wiki source archives. Do not promote local paths or observations to a public functional claim without a current, reproducible check.
 
 The private companion knowledge base is `local-game-data/private-wiki/INDEX.md`. It and its MM6/MM7/MM8 pages are ignored and local only; Git does not back them up. Follow [Private Companion Wiki](Private-Companion-Wiki.md) for provenance, evidence levels and local backup checks.

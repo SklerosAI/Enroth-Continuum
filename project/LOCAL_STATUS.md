@@ -852,3 +852,8 @@ detached NPC, 67-map-buffer, timer, overlay and CHST stage shared with v1 field
 logic. Linked raw-runtime/world-runtime tests passed **14/14**, including a
 late invalid actor overlay that left input NPC/timer untouched. Live map,
 renderer and UI publication remain unresolved.
+
+Decoded v2 `RSTS` resistance and `BUFF` fields now have Party-copy adapters
+shared with the v1 byte route. The integrated linked codec, adapter, raw and
+world set passed **24/24**. Hireling/recovery join and a complete v2 session
+remain open.

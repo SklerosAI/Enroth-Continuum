@@ -111,11 +111,14 @@ load callback or `DoPrepareWorld(true)` at the game-loop boundary. It arms
 only after detached v5 preflight, clears pending transition/load flags/actions,
 pauses the timer and returns to Main Menu before input. Disposable headless
 fault children passed **1/1 each** after partial Party assignment and at the
-pre-event checkpoint; each reached a second menu Quick Load and re-staged the
-candidate without changing save bytes. The ordinary seven-child chain passed
-**1/1 per child**, and MM7 control **1/1**. This is an abandon policy, not a
-rollback: world globals may remain partial, and a complete second gameplay
-load is unproved. Normal MM6 SaveLoad/UI remains guarded.
+pre-event checkpoint. The re-stage-only retry claim is superseded: each
+child now completes a second full source-backed menu Quick Load in the same
+process, passes the pre-event native boundary, exact post-world owner agreement
+and a bounded turn/walk. Both pass **1/1** with candidate bytes unchanged. The
+ordinary seven-child chain passed **1/1 per child**, and MM7 control **1/1**.
+This is an abandon policy, not rollback: the first fault may leave partial
+globals, while the second load reconstructs exact first-map owners. Normal
+MM6 SaveLoad/UI, other maps and a general clean-world reset remain guarded.
 
 See also: [V4 Event Runtime](MM6-F4-EC6-V4-Event-Runtime.md),
 [V3 Post Entry Map and Pre Event](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md),

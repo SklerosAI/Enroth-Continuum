@@ -398,10 +398,12 @@ callback and world-preparation exceptions after detached v5 preflight. It
 returns to Main Menu before input and clears transition/load flags/actions;
 it does not roll back Party or other published world globals. Disposable
 partial-assignment and pre-event fault children each passed **1/1**, then
-re-staged the candidate through a second menu Quick Load in the same process.
-The ordinary seven-child chain and MM7 control still pass. Keep normal MM6
-SaveLoad/UI guarded until a complete recovery or process-isolation policy and
-real second gameplay load are proved. See the [v5 packet](../project/MM6_F4_EC6_V5_SPRITE_RUNTIME.md).
+completed a second full source-backed menu Quick Load in the same process,
+with exact post-world owner agreement and bounded turn/walk. This supersedes
+the earlier re-stage-only retry claim. The ordinary seven-child chain and MM7
+control still pass. The first failed attempt is abandoned, not rolled back;
+normal MM6 SaveLoad/UI, other maps and general clean-world reset remain
+guarded. See the [v5 packet](../project/MM6_F4_EC6_V5_SPRITE_RUNTIME.md).
 
 MM6 manual/quick save actions now refuse before side effects; active
 skill Compare/Set has a checked MM6-specific path. A read-only audit decoded

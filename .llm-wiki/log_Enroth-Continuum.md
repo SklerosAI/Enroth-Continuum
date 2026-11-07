@@ -1967,3 +1967,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Made represented v2 session preflight construct its timer and overlay list locally, alongside its fresh Party, so the selector no longer accepts unrelated live visual bases from a caller.
 - Linked raw runtime checks passed 12/12. Final live timer/overlay publication and graphical reload remain gated.
+
+## [2026-11-06] integrate | MM6 shared v2 bytes stage
+- by: T-Burton-ND via codex
+- Extracted the complete detached v2 field gate into a bytes-based stage and made native primary/backup selection call it, avoiding a second semantic path for disposable child-process checks.
+- Linked raw runtime checks passed 13/13. A temporary test stacked two full session results and exhausted the test thread stack; splitting the test restored the passing result. Live publication remains guarded.

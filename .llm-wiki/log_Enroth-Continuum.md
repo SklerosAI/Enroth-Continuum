@@ -2595,3 +2595,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Reconciled local and campaign summaries with the verified no-write normal-transition return probe. Its source-backed target floor agreed before Party placement and map events, then the partial world was abandoned to Main Menu.
 - The probe does not admit a returned map, production save or border travel. The scoped return packet and separate verification entry remain the detailed evidence.
+
+## [2026-11-07] update | MM6 visited return replay order
+- by: T-Burton-ND via codex
+- Audited current `DoPrepareWorld(false)` source order: world reset precedes target DDM consumption, EVRT must precede decoration preparation, and actor/sprite/decoration plus chest/NPC owners have later pre-event boundaries. A single post-load VIST publisher cannot safely satisfy them.
+- Qualified the earlier global-ledger summary: the return plan uses the v6 active snapshot, which may be stale after further play. Return must retain the latest global RNG and chest/artifact ledger rather than restore visited-map historical globals.
+- Kept publication and checkpoint gates false. Post-reset refusal abandons the partial world to Main Menu; production needs a durable checkpoint/reload or separately verified full rollback before a multi-stage return can proceed.

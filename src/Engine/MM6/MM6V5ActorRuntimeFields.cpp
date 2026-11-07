@@ -23,6 +23,7 @@ constexpr std::size_t MAX_ACTORS = 8192;
 constexpr std::size_t IMAGE_BYTES = sizeof(Actor_MM7);
 constexpr std::size_t RECORD_BYTES = IMAGE_BYTES + 4 * 3 * 4 + 8 * 3 * 4 +
     3 * 8 + 4 + 4 + 8 + 8;
+constexpr std::size_t MAX_NAME_BYTES = 255;
 
 void requireMM6(GameTitle title) {
     if (title != GameTitle::MM6)
@@ -126,14 +127,22 @@ Vec3f getVec(Reader *input) {
 }
 
 void putRecord(std::vector<std::uint8_t> *out, const Actor &actor,
-               std::size_t slot, GameTitle title) {
+               std::size_t slot, GameTitle title, bool indoor) {
     requireSafeVec(actor.pos);
     requireSafeVec(actor.velocity);
     requireSafeVec(actor.initialPosition);
     requireSafeVec(actor.guardingPosition);
     for (const ActorJob &job : actor.scheduledJobs)
         requireSafeVec(job.vPos);
-    const Actor_MM7 image = snapshotActorRuntimeImageForV5(actor, slot, title);
+    if (indoor && (actor.monsterInfo.name.size() > MAX_NAME_BYTES ||
+                   actor.monsterInfo.internalName.size() > MAX_NAME_BYTES))
+        throw std::runtime_error("MM6 IART actor runtime name exceeds bound");
+    Actor imageSource = actor;
+    if (indoor) {
+        imageSource.monsterInfo.name.clear();
+        imageSource.monsterInfo.internalName.clear();
+    }
+    const Actor_MM7 image = snapshotActorRuntimeImageForV5(imageSource, slot, title);
     Actor replay(static_cast<int>(slot));
     reconstruct(image, &replay);
     replay.monsterInfo.mm6Resistances = actor.monsterInfo.mm6Resistances;
@@ -150,7 +159,16 @@ void putRecord(std::vector<std::uint8_t> *out, const Actor &actor,
     replay.monsterInfo.recoveryTime = actor.monsterInfo.recoveryTime;
     replay.sectorId = actor.sectorId;
     replay.hostilityGroup = actor.hostilityGroup;
-    const Actor_MM7 repeated = snapshotActorRuntimeImageForV5(replay, slot, title);
+    if (indoor) {
+        replay.monsterInfo.name = actor.monsterInfo.name;
+        replay.monsterInfo.internalName = actor.monsterInfo.internalName;
+    }
+    Actor repeatSource = replay;
+    if (indoor) {
+        repeatSource.monsterInfo.name.clear();
+        repeatSource.monsterInfo.internalName.clear();
+    }
+    const Actor_MM7 repeated = snapshotActorRuntimeImageForV5(repeatSource, slot, title);
     if (std::memcmp(&image, &repeated, IMAGE_BYTES) != 0)
         throw std::runtime_error("MM6 ARTR actor image does not replay exactly");
     const auto *start = reinterpret_cast<const std::uint8_t *>(&image);
@@ -172,9 +190,16 @@ void putRecord(std::vector<std::uint8_t> *out, const Actor &actor,
     out->push_back(actor.donebloodsplat ? 1 : 0);
     out->push_back(0);
     put64(out, std::bit_cast<std::uint64_t>(actor.massDistortionTime.ticks()));
+    if (indoor) {
+        out->push_back(actor.monsterInfo.name.size());
+        out->insert(out->end(), actor.monsterInfo.name.begin(), actor.monsterInfo.name.end());
+        out->push_back(actor.monsterInfo.internalName.size());
+        out->insert(out->end(), actor.monsterInfo.internalName.begin(),
+                    actor.monsterInfo.internalName.end());
+    }
 }
 
-Actor getRecord(Reader *input, std::size_t slot) {
+Actor getRecord(Reader *input, std::size_t slot, bool indoor) {
     Actor_MM7 image{};
     const auto bytes = input->take(IMAGE_BYTES);
     std::memcpy(&image, bytes.data(), bytes.size());
@@ -209,6 +234,12 @@ Actor getRecord(Reader *input, std::size_t slot) {
     result.donebloodsplat = blood;
     result.massDistortionTime = Duration::fromTicks(
         std::bit_cast<std::int64_t>(input->u64()));
+    if (indoor) {
+        const auto display = input->take(input->u8());
+        result.monsterInfo.name.assign(display.begin(), display.end());
+        const auto internal = input->take(input->u8());
+        result.monsterInfo.internalName.assign(internal.begin(), internal.end());
+    }
     return result;
 }
 
@@ -244,7 +275,8 @@ SaveSection encodeActorRuntimeSectionAs(const ActorRuntimeSaveFields &fields,
     std::vector<std::uint8_t> bytes;
     const std::size_t extra = kind == ActorRuntimeSectionKind::IndoorV6 ? 4 : 0;
     bytes.reserve(2 + fields.mapName.size() + 4 + extra +
-                  fields.actors.size() * RECORD_BYTES);
+                  fields.actors.size() * (RECORD_BYTES +
+                  (kind == ActorRuntimeSectionKind::IndoorV6 ? 2 : 0)));
     bytes.push_back(VERSION);
     bytes.push_back(fields.mapName.size());
     bytes.insert(bytes.end(), fields.mapName.begin(), fields.mapName.end());
@@ -252,7 +284,8 @@ SaveSection encodeActorRuntimeSectionAs(const ActorRuntimeSaveFields &fields,
     if (kind == ActorRuntimeSectionKind::IndoorV6)
         put32(&bytes, fields.nativePrefixCount);
     for (std::size_t index = 0; index < fields.actors.size(); ++index)
-        putRecord(&bytes, fields.actors[index], index, title);
+        putRecord(&bytes, fields.actors[index], index, title,
+                  kind == ActorRuntimeSectionKind::IndoorV6);
     return {kind == ActorRuntimeSectionKind::OutdoorV5 ? OUTDOOR_TAG : INDOOR_TAG,
             true, std::move(bytes)};
 }
@@ -276,7 +309,8 @@ ActorRuntimeSaveFields decodeActorRuntimeSectionAs(
             section = &candidate;
         }
     if (!section || !section->required || section->payload.size() < 6 ||
-        section->payload.size() > 2 + 63 + 8 + MAX_ACTORS * RECORD_BYTES)
+        section->payload.size() >
+            2 + 63 + 8 + MAX_ACTORS * (RECORD_BYTES + 2 + 2 * MAX_NAME_BYTES))
         throw std::runtime_error("missing or unbounded MM6 ARTR section");
     Reader input(section->payload);
     if (input.u8() != VERSION)
@@ -290,11 +324,16 @@ ActorRuntimeSaveFields decodeActorRuntimeSectionAs(
         result.nativePrefixCount = input.u32();
     const std::size_t extra = kind == ActorRuntimeSectionKind::IndoorV6 ? 4 : 0;
     if (count > MAX_ACTORS || result.nativePrefixCount > count ||
-        section->payload.size() != 2 + name.size() + 4 + extra + count * RECORD_BYTES)
+        (kind == ActorRuntimeSectionKind::OutdoorV5 &&
+         section->payload.size() != 2 + name.size() + 4 + count * RECORD_BYTES) ||
+        (kind == ActorRuntimeSectionKind::IndoorV6 &&
+         section->payload.size() < 2 + name.size() + 4 + extra +
+                                   count * (RECORD_BYTES + 2)))
         throw std::runtime_error("MM6 ARTR count differs from payload");
     result.actors.reserve(count);
     for (std::uint32_t index = 0; index < count; ++index)
-        result.actors.push_back(getRecord(&input, index));
+        result.actors.push_back(getRecord(
+            &input, index, kind == ActorRuntimeSectionKind::IndoorV6));
     input.finish();
     if (encodeActorRuntimeSectionAs(result, kind, title) != *section)
         throw std::runtime_error("MM6 ARTR is not canonical");

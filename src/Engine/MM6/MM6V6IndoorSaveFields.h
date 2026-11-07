@@ -49,8 +49,8 @@ struct StagedV6IndoorSaveFields {
     std::vector<LevelDecoration> decorationReplay;
     std::vector<SpriteObject> spriteReplay;
     std::vector<Actor> actorReplay;
-    // Explicit admission gate: IART is detached only. Full actor publication,
-    // post-event equality and other world owners remain unproved.
+    // Explicit admission gate: the test-only IART/ISRT/IDRT replay is narrower
+    // than a complete indoor session and does not admit gameplay input.
     bool canEnterGameLoop() const { return false; }
 };
 

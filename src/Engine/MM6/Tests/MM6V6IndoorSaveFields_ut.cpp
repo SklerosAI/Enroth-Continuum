@@ -1,6 +1,7 @@
 #include <array>
 #include <bit>
 #include <cstring>
+#include <deque>
 #include <exception>
 #include <memory>
 #include <stdexcept>
@@ -17,6 +18,7 @@
 #include "Engine/MM6/MM6V6IndoorPreEventOwnerGate.h"
 #include "Engine/MM6/MM6V6PreEventIndoorDecorationReplayForTest.h"
 #include "Engine/MM6/MM6V6PreEventIndoorSpriteReplayForTest.h"
+#include "Engine/MM6/MM6V6PreEventIndoorActorReplayForTest.h"
 #include "Engine/Tables/ItemTable.h"
 #include "Engine/Tables/DecorationTable.h"
 #include "Engine/Snapshots/EntitySnapshots.h"
@@ -404,6 +406,8 @@ UNIT_TEST(MM6V6IndoorSaveFields, IndoorActorOwnerKeepsGeneratedFractionalTail) {
     actor.initialPosition = Vec3f(10, 20, 30);
     actor.pos = Vec3f(11.25f, 20.5f, 30.75f);
     actor.velocity = Vec3f(0.125f, -0.5f, 1.25f);
+    actor.monsterInfo.name = "Indoor Display";
+    actor.monsterInfo.internalName = "Indoor Internal";
     const auto fields = mm6::captureIndoorActorRuntime(
         "d0.blv", source, std::span(&actor, 1), GameTitle::MM6);
     EXPECT_EQ(fields.nativePrefixCount, 0u);
@@ -417,6 +421,8 @@ UNIT_TEST(MM6V6IndoorSaveFields, IndoorActorOwnerKeepsGeneratedFractionalTail) {
     ASSERT_EQ(replay.size(), 1u);
     EXPECT_EQ(std::bit_cast<std::uint32_t>(replay[0].pos.x),
               std::bit_cast<std::uint32_t>(actor.pos.x));
+    EXPECT_EQ(replay[0].monsterInfo.name, actor.monsterInfo.name);
+    EXPECT_EQ(replay[0].monsterInfo.internalName, actor.monsterInfo.internalName);
     replay.clear();
     mm6::applyIndoorActorRuntimeToDetachedList(
         decoded, "d0.blv", source, &replay, GameTitle::MM6);
@@ -427,6 +433,32 @@ UNIT_TEST(MM6V6IndoorSaveFields, IndoorActorOwnerKeepsGeneratedFractionalTail) {
     source.count = 1;
     EXPECT_THROW((void) mm6::stageIndoorActorRuntime(
         decoded, "d0.blv", source, GameTitle::MM6), std::exception);
+}
+
+UNIT_TEST(MM6V6IndoorSaveFields, IndoorActorPublicationRequiresPreEventContext) {
+    mm6::IndoorNativeSlotAnchor source{"d0.blv", 0, {}};
+    Actor actor(0);
+    actor.monsterInfo.id = static_cast<MonsterId>(7);
+    actor.monsterId = MONSTER_INVALID;
+    actor.monsterInfo.attackPreferences = MonsterAttackPreferences{};
+    actor.monsterInfo.mm6Resistances = mm6::MonsterResistances{1, 2, 3, 4, 5, 6};
+    const auto fields = mm6::captureIndoorActorRuntime(
+        "d0.blv", source, std::span(&actor, 1), GameTitle::MM6);
+    mm6::GeneratedNpcSaveFields generated;
+    generated.mapName = "d0.blv";
+    mm6::testing::ScopedV6PreEventIndoorActorReplayForTest scope(
+        GameTitle::MM6, fields, source, generated);
+    std::deque<Actor> rebuilt;
+    EXPECT_THROW((void) mm6::testing::runArmedV6PreEventIndoorActorReplayForTest(
+        mm6::testing::PreEventCheckpointResult::AbortToMainMenu,
+        rebuilt, &rebuilt, true, "d0.blv", GameTitle::MM6), std::exception);
+    EXPECT_FALSE(scope.published());
+    EXPECT_TRUE(mm6::testing::runArmedV6PreEventIndoorActorReplayForTest(
+        mm6::testing::PreEventCheckpointResult::Continue,
+        rebuilt, &rebuilt, true, "d0.blv", GameTitle::MM6));
+    EXPECT_TRUE(scope.published());
+    ASSERT_EQ(rebuilt.size(), 1u);
+    EXPECT_EQ(rebuilt.front().monsterInfo.id, actor.monsterInfo.id);
 }
 
 UNIT_TEST(MM6V6IndoorSaveFields, NativeAnchorCaptureRequiresMatchingIndoorPlan) {

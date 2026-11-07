@@ -27,6 +27,7 @@
 #include "Engine/MM6/MM6V6IndoorPreEventOwnerGate.h"
 #include "Engine/MM6/MM6V6PreEventIndoorDecorationReplayForTest.h"
 #include "Engine/MM6/MM6V6PreEventIndoorSpriteReplayForTest.h"
+#include "Engine/MM6/MM6V6PreEventIndoorActorReplayForTest.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
@@ -221,6 +222,7 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
     std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> worldCheckpoint;
     std::unique_ptr<mm6::testing::ScopedV6PreEventIndoorDecorationReplayForTest> liveReplay;
     std::unique_ptr<mm6::testing::ScopedV6PreEventIndoorSpriteReplayForTest> liveSpriteReplay;
+    std::unique_ptr<mm6::testing::ScopedV6PreEventIndoorActorReplayForTest> liveActorReplay;
     game.runGameRoutine([&] {
         try {
             checkpoint.reset(); // Tear down its game-thread-local scope here.
@@ -243,11 +245,15 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                 mm6::testing::ScopedV6PreEventIndoorSpriteReplayForTest>(
                     GameTitle::MM6, staged->saved.runtimeSprites,
                     staged->saved.sprites);
+            liveActorReplay = std::make_unique<
+                mm6::testing::ScopedV6PreEventIndoorActorReplayForTest>(
+                    GameTitle::MM6, staged->saved.runtimeActors,
+                    staged->saved.actors, staged->saved.generatedNpcs);
             mm6::ScopedChestMapLoadOptIn chestOptIn(true);
             DoPrepareWorld(true, 1);
             if (!worldCheckpoint->reachedMapLoad() || worldCheckpoint->reachedInput() ||
                 !eventRestore->restored() || !liveReplay->published() ||
-                !liveSpriteReplay->published() ||
+                !liveSpriteReplay->published() || !liveActorReplay->published() ||
                 engine->_currentLoadedMapId != map ||
                 uCurrentlyLoadedLevelType != LEVEL_INDOOR || !pIndoor->bLoaded)
                 throw std::runtime_error("MM6 v6 IDRT did not cross the post-world boundary");
@@ -265,11 +271,24 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                     staged->saved.runtimeSprites,
                     mm6::SpriteRuntimeSectionKind::IndoorV6, GameTitle::MM6))
                 throw std::runtime_error("MM6 v6 ISRT changed after map reload events");
+            mm6::requireGeneratedNpcActorAgreement(
+                staged->saved.generatedNpcs, pActors, mapName, GameTitle::MM6);
+            const std::vector<Actor> finalActors(pActors.begin(), pActors.end());
+            const auto observedActors = mm6::captureIndoorActorRuntime(
+                mapName, staged->saved.actors, finalActors, GameTitle::MM6);
+            if (mm6::encodeActorRuntimeSectionAs(
+                    observedActors, mm6::ActorRuntimeSectionKind::IndoorV6,
+                    GameTitle::MM6) !=
+                mm6::encodeActorRuntimeSectionAs(
+                    staged->saved.runtimeActors,
+                    mm6::ActorRuntimeSectionKind::IndoorV6, GameTitle::MM6))
+                throw std::runtime_error("MM6 v6 IART changed after map reload events");
         } catch (...) {
             worldError = std::current_exception();
         }
         liveReplay.reset();
         liveSpriteReplay.reset();
+        liveActorReplay.reset();
         worldCheckpoint.reset();
         eventRestore.reset();
         worldFinished = true;

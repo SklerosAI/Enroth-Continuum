@@ -185,8 +185,36 @@ The source order explains the remaining publication blocker: a normal
 location change calls `PrepareWorld(0)` and `DoPrepareWorld(false)`, while the
 test-only EVRT, V3 actor/GNPC/RNG and V5 actor/sprite/decoration replay hooks
 run only on `DoPrepareWorld(true)` fresh loads. A return needs a separately
-validated pre-event replay path for `false`, exact arrival and terrain proof,
+validated pre-event replay path for `false`, live arrival/terrain agreement,
 and rollback for a partially prepared target. No such hook was added here.
+
+## Source-backed detached return arrival
+
+[`stageVisitedOutdoorReturnArrival`](../src/Engine/MM6/MM6VisitedOutdoorReturnPlan.h)
+now obtains the target base through the admitted MM6 `LoadedMapSource`, joins
+the exact active/visited map pair and visited owner, and decodes its ODM before
+staging a Party copy. The [arrival helper](../src/Engine/MM6/MM6OutdoorReturnArrival.h)
+requires a cardinal border route to that target and eligible MM6 offer/flying
+state. It applies the original one-width coordinate wrap and samples the
+target height map with the engine's terrain triangle interpolation. It refuses
+nonfinite/out-of-bounds coordinates, corners, a wrong target, and any arrival
+whose Party radius overlaps a target model bounding box, where a model face
+could supersede terrain height. The copied Party receives the target position,
+zero velocity and fall-start height, matching the represented placement
+fields. No live Party, map cache, chest owner or save slot is changed.
+
+Three focused unit tests passed **3/3** for flat and sloped terrain, target
+identity, model-floor refusal and detached-only mutation. In the existing
+fresh-child outdoor v6 reader, a synthetic eligible Party copy crossed one
+cardinal edge into the visited source map; an eligible in-bounds copy refused
+without a staged arrival. The reader checked live Party/chest/cache owners
+remained unchanged. The fresh five-child seed, v4, v5 control, v6 writer and
+v6 reader chain passed **1/1 each**. The synthetic boundary pose was not
+reached by movement or a confirmation UI, and the visited map was not
+entered. `canPublish()` and `canWriteCheckpoint()` remain false. A return on
+`DoPrepareWorld(false)` still needs an owner publication order and rollback;
+ground placement also needs a live target-world comparison before travel can
+be offered.
 
 1. Choose a canonical production EC6 version, slot name and title-private profile root. Explicitly reject or migrate older autosave schemas; an existing v2 test seed cannot silently become a v5 production slot.
 2. Stage an exact detached old-map save for any admitted outdoor map at a safe point before travel UI effects. Include Party and character state, inventory/buffs/hirelings, UI/cursor/shops, NPC and generated links, RNG, active and visited map deltas, chests/artifacts, actor/sprite/decoration runtime, event variables and owner identities. The old-map checkpoint must contain a reload-safe in-bounds **Party copy** when the live border position lies outside the map edge; keep live Party untouched until commit.

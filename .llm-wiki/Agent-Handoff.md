@@ -33,8 +33,20 @@ The fresh v6 reader verified this both before and after active-world rebuild
 without changing Party, chest state or old-map cache; another five-child chain
 passed 1/1 in each process. Ordinary location change calls
 `DoPrepareWorld(false)`, but current test replay hooks run only on fresh
-`DoPrepareWorld(true)`. Prove arrival/terrain, a separate return replay path
-and failure rollback before publishing visited owners.
+`DoPrepareWorld(true)`. A separate return replay path and failure rollback
+remain necessary before publishing visited owners.
+
+The [detached return-arrival helper](MM6-F4-Border-Autosave-Transaction.md)
+now proves a narrow source-backed target terrain placement: exact visited
+owner and loaded target ODM, cardinal coordinate wrap, terrain triangle
+height, and model-floor exclusion. Three focused units passed; the existing
+fresh-child v6 reader passed in a fresh five-child chain after staging a
+synthetic eligible boundary Party and checking the live Party/chest/cache
+unchanged. The saved live Party had an offer-blocking flag, so the fixture
+cleared eligibility bits only on its detached copy. No map return occurred.
+The `DoPrepareWorld(false)` replay/publication order, live terrain comparison,
+rollback and durable travel result remain open; both write/publish gates are
+false.
 
 The [MM6 indoor v6 input cycle](MM6-F4-V6-Indoor-Input-Cycle.md) passed five
 fresh headless children through a real-loop turn/walk, atomic post-input

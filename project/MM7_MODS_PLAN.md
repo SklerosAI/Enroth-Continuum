@@ -21,8 +21,8 @@ Findings came from a source review of the installed Atlas and integration tree.
    Atlas neither captures the helper's stderr nor reads its log. Imported
    portraits are now re-encoded as PNG in source; surfacing mod log lines
    after the game exits remains open.
-5. The item tooltip prints AC only when `GetDamageDice()` is nonzero
-   (`UIPopup.cpp`), while the Atelier accepts a base AC of 0.
+5. Fixed in source: the item tooltip prints AC when the base AC or bonus AC is
+   nonzero (`UIPopup.cpp`), so a base AC of 0 with a positive bonus is visible.
 6. Party creation shows the custom PNG regardless of the selected face, while
    body art and voice still follow the original face.
 7. The mods are not testable. The mod directory is read once at item-table

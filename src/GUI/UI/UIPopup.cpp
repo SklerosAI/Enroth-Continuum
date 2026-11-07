@@ -473,7 +473,7 @@ void GameUI_DrawItemInfo(Item *inspect_item) {
         case ITEM_TYPE_BOOTS:
         case ITEM_TYPE_RING:
         case ITEM_TYPE_AMULET:
-            if (inspect_item->GetDamageDice())
+            if (inspect_item->GetDamageDice() || inspect_item->GetDamageMod())
                 text[1] = fmt::format("{}: +{}",
                                       localization->str(LSTR_ARMOR),
                                       inspect_item->GetDamageDice() + inspect_item->GetDamageMod());

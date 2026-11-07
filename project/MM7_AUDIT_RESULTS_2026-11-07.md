@@ -229,10 +229,12 @@ Defects:
    never been run on integration source.
 4. Medium, inherited: MM7 saves are not atomic (truncating `fopen "wb"`), a
    failed manual save or quicksave throws out of `saveGame` and ends the
-   process, a save with a valid header but corrupt body is listed and then
-   crashes on load, and Atlas reports a normal return even after a crash.
+   process, and a save with a valid header but corrupt body is listed and then
+   crashes on load. Atlas crash reporting was corrected in `f70627f9c` but
+   needs a launched-app check.
 5. Low-medium, fork: the spellbook Grandmaster popup row lost its `\t000`
-   indent reset (`UIPopup.cpp:1415-1422`). From code reading only.
+   indent reset (`UIPopup.cpp:1415-1422`). Restored in `f70627f9c`; a visual
+   comparison is still open.
 6. Low, fork: a failed house movie reload called `Unload()`, unpausing the game
    inside a house. Fixed for MM7 together with item 2.
 7. Low, fork: widened enum bounds (see A1 item 11), `SpawnEncounter` returns

@@ -331,6 +331,32 @@ UNIT_TEST(MM6V6IndoorSaveFields, IndoorSpriteOwnerPreservesFractionalStateAndNat
         decoded, "d0.blv", source, GameTitle::MM6), std::exception);
 }
 
+UNIT_TEST(MM6V6IndoorSaveFields, IndoorSpriteOwnerTracksReusedNativeFreeSlot) {
+    mm6::IndoorNativeSlotAnchor source{"d0.blv", 1,
+        std::vector<std::uint8_t>(100)};
+    SpriteObject spawned;
+    spawned.spriteId = SPRITE_PROJECTILE_AIR_BOLT;
+    spawned.uObjectDescID = 1;
+    spawned.initialPosition = Vec3f(1.25f, 2.5f, 3.75f);
+    const auto fields = mm6::captureIndoorSpriteRuntime(
+        "d0.blv", source, std::span(&spawned, 1), GameTitle::MM6);
+    EXPECT_EQ(fields.nativePrefixCount, 1u);
+    mm6::SaveContainer container;
+    container.sections.push_back(mm6::encodeSpriteRuntimeSectionAs(
+        fields, mm6::SpriteRuntimeSectionKind::IndoorV6, GameTitle::MM6));
+    const auto decoded = mm6::decodeSpriteRuntimeSectionAs(
+        container, mm6::SpriteRuntimeSectionKind::IndoorV6, GameTitle::MM6);
+    const auto replay = mm6::stageIndoorSpriteRuntime(
+        decoded, "d0.blv", source, GameTitle::MM6);
+    ASSERT_EQ(replay.size(), 1u);
+    EXPECT_EQ(replay[0].spriteId, spawned.spriteId);
+    EXPECT_EQ(std::bit_cast<std::uint32_t>(replay[0].initialPosition.x),
+              std::bit_cast<std::uint32_t>(spawned.initialPosition.x));
+    source.records[2] = 1; // An occupied source descriptor cannot be reused.
+    EXPECT_THROW((void) mm6::captureIndoorSpriteRuntime(
+        "d0.blv", source, std::span(&spawned, 1), GameTitle::MM6), std::exception);
+}
+
 UNIT_TEST(MM6V6IndoorSaveFields, NativeAnchorCaptureRequiresMatchingIndoorPlan) {
     mm6::StagedRawSessionFields represented;
     represented.indoorPlan.emplace();

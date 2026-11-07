@@ -145,20 +145,24 @@ bool sameSprite(const SpriteObject &lhs, const SpriteObject &rhs) {
         lhs._ticksPerParticle.ticks() == rhs._ticksPerParticle.ticks();
 }
 
+enum class AnchorPolicy { Strict, SyntheticAppend, ReusedFreeSlot };
+
 void requireNativeAnchor(const SpriteRuntimeRecord &record,
-                         bool requireInitialPosition = true) {
+                         AnchorPolicy policy = AnchorPolicy::Strict) {
     requireFinite(record.runtime.vPosition);
     requireFinite(record.runtime.vVelocity);
     requireFinite(record.runtime.initialPosition);
     if (std::to_underlying(record.runtime.containing_item.itemId) < 0 ||
         std::to_underlying(record.runtime.containing_item.itemId) > 580)
         throw std::runtime_error("MM6 SPRT item ID is outside title table");
+    if (policy == AnchorPolicy::ReusedFreeSlot)
+        return;
     const SpriteObject_MM7 native = projectMM6GroundItemRecord(record.nativeRecord);
     if (native.spriteId != std::to_underlying(record.runtime.spriteId))
         throw std::runtime_error("MM6 SPRT native sprite ID changed");
     if (native.objectDescId != record.runtime.uObjectDescID)
         throw std::runtime_error("MM6 SPRT native object descriptor changed");
-    if (requireInitialPosition &&
+    if (policy == AnchorPolicy::Strict &&
         native.initialPosition.toFloat() != record.runtime.initialPosition)
         throw std::runtime_error("MM6 SPRT native initial position changed");
     SpriteObject_MM7 projected{};
@@ -189,8 +193,8 @@ Vec3f getVec(Reader *input) {
 }
 
 void putRecord(std::vector<std::uint8_t> *out,
-               const SpriteRuntimeRecord &record, bool anchored) {
-    requireNativeAnchor(record, anchored);
+               const SpriteRuntimeRecord &record, AnchorPolicy policy) {
+    requireNativeAnchor(record, policy);
     requireFinite(record.runtime.vPosition);
     requireFinite(record.runtime.vVelocity);
     requireFinite(record.runtime.initialPosition);
@@ -316,9 +320,15 @@ SaveSection encodeSpriteRuntimeSectionAs(const SpriteRuntimeSaveFields &fields,
         put32(&bytes, fields.nativePrefixCount);
     for (std::size_t index = 0; index < fields.records.size(); ++index) {
         try {
-            putRecord(&bytes, fields.records[index],
-                      kind == SpriteRuntimeSectionKind::OutdoorV5 ||
-                      index < fields.nativePrefixCount);
+            AnchorPolicy policy = AnchorPolicy::Strict;
+            if (kind == SpriteRuntimeSectionKind::IndoorV6) {
+                if (index >= fields.nativePrefixCount)
+                    policy = AnchorPolicy::SyntheticAppend;
+                else if (projectMM6GroundItemRecord(
+                    fields.records[index].nativeRecord).objectDescId == 0)
+                    policy = AnchorPolicy::ReusedFreeSlot;
+            }
+            putRecord(&bytes, fields.records[index], policy);
         } catch (const std::exception &error) {
             if (kind == SpriteRuntimeSectionKind::IndoorV6)
                 throw std::runtime_error("MM6 ISRT " +

@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "Engine/Snapshots/EntitySnapshots.h"
+#include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
 
 #include "MM6V6IndoorSaveFields.h"
 
@@ -111,13 +112,17 @@ void applyIndoorSpriteRuntimeAfterMapReload(
     if (!afterEvent)
         throw std::runtime_error("MM6 ISRT lacks a replay destination");
     auto staged = stageIndoorSpriteRuntime(fields, mapName, source, title);
-    if (afterEvent->size() != staged.size())
-        throw std::runtime_error("MM6 ISRT post-event slot count differs");
-    for (std::size_t index = 0; index < staged.size(); ++index) {
-        if ((*afterEvent)[index].spriteId != staged[index].spriteId ||
-            (*afterEvent)[index].uObjectDescID != staged[index].uObjectDescID ||
-            (*afterEvent)[index].initialPosition != staged[index].initialPosition)
-            throw std::runtime_error("MM6 ISRT post-event native identity differs");
+    if (afterEvent->size() < source.count)
+        throw std::runtime_error("MM6 ISRT post-event list lacks native prefix");
+    for (std::size_t index = 0; index < source.count; ++index) {
+        const auto native = projectMM6GroundItemRecord(
+            std::span(source.records).subspan(index * NATIVE_WIDTH, NATIVE_WIDTH));
+        if (native.objectDescId == 0)
+            continue; // The loader may reuse this source-free slot.
+        if (std::to_underlying((*afterEvent)[index].spriteId) != native.spriteId ||
+            (*afterEvent)[index].uObjectDescID != native.objectDescId ||
+            (*afterEvent)[index].initialPosition != native.initialPosition.toFloat())
+            throw std::runtime_error("MM6 ISRT post-event occupied native slot differs");
     }
     afterEvent->swap(staged);
 }

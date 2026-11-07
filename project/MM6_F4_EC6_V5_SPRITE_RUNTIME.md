@@ -241,6 +241,19 @@ strict existing-primary/backup checks. Its test-only atomic seam passed two
 focused disposable outcome/collision units and MM7 control. The paused live
 candidate has not yet been written to a numbered native slot, and no normal
 Save UI route is open.
+The first engine-owned `V5FirstMapLoadAttempt` slice now holds the detached
+v5 graph and checks exact MM6 title, first-map identity and the disposable
+post-action candidate slot before any live publication. Its `Detached` →
+`Published` → `ChestApplied` phases require the same native DDM and saved CHST
+LCG/artifact owners. At `_461103_load_level_sub`, the attempt performs the
+first-map chest handoff directly from that source-bound context; other routes
+retain the guarded chest behavior. The first-map fresh-child test requires
+`ChestApplied` in its exact post-world check. The integrated seven-child chain
+passed **1/1 per child**, both full-retry fault children **1/1**, and MM7
+control **1/1**. This is a disposable test-slot slice. EVRT, actor/GNPC/RNG,
+ARTR, DECR and SPRT replay still depend on test-only hooks; the attempt does
+not yet own post-world commit/release or a production profile/slot decision.
+Normal MM6 SaveLoad/UI remains closed.
 
 See [v4 event runtime boundary](MM6_F4_EC6_V4_EVENT_RUNTIME.md),
 [active actor capture](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md) and

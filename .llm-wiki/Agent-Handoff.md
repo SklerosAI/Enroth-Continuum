@@ -417,6 +417,14 @@ control still pass. The first failed attempt is abandoned, not rolled back;
 normal MM6 SaveLoad/UI, other maps and general clean-world reset remain
 guarded. See the [v5 packet](../project/MM6_F4_EC6_V5_SPRITE_RUNTIME.md).
 
+The first `Engine`-owned v5 first-map attempt now owns the detached graph and
+performs a source-bound CHST handoff at `_461103_load_level_sub`. It requires
+exact MM6/oute3/disposable candidate identity and advances once through
+detached, published and chest-applied phases. The seven-child chain, both
+full-retry fault children and MM7 control pass. This is a test-slot slice;
+EVRT, actor/GNPC/RNG, ARTR/DECR/SPRT and post-world commit/release still need
+to move out of test hooks before normal SaveLoad/UI admission.
+
 MM6 manual/quick save actions now refuse before side effects; active
 skill Compare/Set has a checked MM6-specific path. A read-only audit decoded
 all 15 outdoor base/delta pairs, and the MM6 encounter parser now uses authored

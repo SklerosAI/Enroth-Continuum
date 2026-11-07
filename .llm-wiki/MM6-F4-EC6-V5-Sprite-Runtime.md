@@ -130,6 +130,14 @@ now stages exact startup-root and `saveNNN.ec6` identity plus strict prior
 primary/backup collision checks. Its test-only atomic outcome units passed
 **2/2** with MM7 Prs **1/1**. The live paused candidate is not yet connected
 to a numbered native slot or normal Save UI.
+An Engine-owned first-map v5 attempt now owns the staged graph and an exact
+MM6/oute3/disposable-slot phase. It moves from detached to published to chest
+applied only after the native DDM and saved CHST LCG/artifact owners agree;
+`_461103_load_level_sub` uses its direct chest handoff for that context. The
+seven-child disposable chain passed **1/1 each**, both full-retry fault
+children **1/1**, and MM7 control **1/1**. This is the first context slice:
+EVRT, actors/GNPC/RNG, ARTR/DECR/SPRT, and post-world lifecycle still use
+test hooks. Production profile/slot policy and normal SaveLoad/UI stay closed.
 
 See also: [V4 Event Runtime](MM6-F4-EC6-V4-Event-Runtime.md),
 [V3 Post Entry Map and Pre Event](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md),

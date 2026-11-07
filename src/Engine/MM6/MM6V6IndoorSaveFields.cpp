@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <memory>
 #include <stdexcept>
 #include <string_view>
 #include <utility>
@@ -225,19 +226,21 @@ StagedV6IndoorSaveFields stageV6IndoorSave(
     const GroundItemVerifier &verifyItem, const ItemTable &itemTable,
     std::size_t overlayTableCount, std::size_t tileTableCount,
     const IndoorBaseFaceReader &readPreEventFaces, GameTitle title) {
-    V6IndoorSaveFields saved = decodeV6IndoorSave(bytes, title);
-    const auto rawBytes = encodeRawSave(saved.raw, title);
-    StagedRawSessionFields represented = stageRawSessionFields(
+    auto saved = std::unique_ptr<V6IndoorSaveFields>(
+        new V6IndoorSaveFields(decodeV6IndoorSave(bytes, title)));
+    const auto rawBytes = encodeRawSave(saved->raw, title);
+    auto represented = std::unique_ptr<StagedRawSessionFields>(
+        new StagedRawSessionFields(stageRawSessionFields(
         rawBytes, freshNpcs, expectedNames, readBase, verifyItem, itemTable,
-        overlayTableCount, tileTableCount, title);
-    requireNativeJoin(saved, represented);
+        overlayTableCount, tileTableCount, title)));
+    requireNativeJoin(*saved, *represented);
     if (!readPreEventFaces)
         throw std::runtime_error("MM6 v6 indoor IFOV lacks pre-event face provenance");
-    const auto baseline = readPreEventFaces(represented.indoorPlan->mapName);
-    if (baseline.size() != represented.indoorPlan->base.faces.size())
+    const auto baseline = readPreEventFaces(represented->indoorPlan->mapName);
+    if (baseline.size() != represented->indoorPlan->base.faces.size())
         throw std::runtime_error("MM6 v6 indoor IFOV baseline differs from BLV face count");
-    (void) stageIndoorFaceOverrides(saved.faceOverrides, readPreEventFaces, title);
-    return {std::move(saved), std::move(represented)};
+    (void) stageIndoorFaceOverrides(saved->faceOverrides, readPreEventFaces, title);
+    return {std::move(*saved), std::move(*represented)};
 }
 
 } // namespace mm6

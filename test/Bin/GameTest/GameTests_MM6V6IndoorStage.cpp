@@ -92,7 +92,8 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
     ASSERT_EQ(window->nativeHandle(), nullptr);
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
     const auto originalSeed = seedBytes(profile);
-    auto raw = mm6::decodeRawSave(originalSeed, GameTitle::MM6);
+    auto raw = std::unique_ptr<mm6::RawSaveFields>(
+        new mm6::RawSaveFields(mm6::decodeRawSave(originalSeed, GameTitle::MM6)));
     const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
     const std::string mapName = firstIndoorMap(maps);
     const MapId map = pMapTable->GetMapInfo(mapName);
@@ -166,51 +167,53 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
     ASSERT_FALSE(activeDelta.empty());
 
     const std::string deltaName = mapName.substr(0, mapName.size() - 4) + ".dlv";
-    raw.metadata.header.mapFileName = mapName;
-    raw.chest.activeDeltaName = deltaName;
-    raw.chest.rawActiveDelta = activeDelta;
-    const auto it = std::find_if(raw.maps.deltas.begin(), raw.maps.deltas.end(),
+    raw->metadata.header.mapFileName = mapName;
+    raw->chest.activeDeltaName = deltaName;
+    raw->chest.rawActiveDelta = activeDelta;
+    const auto it = std::find_if(raw->maps.deltas.begin(), raw->maps.deltas.end(),
         [&deltaName](const mm6::SavedMapDelta &entry) { return entry.name == deltaName; });
-    ASSERT_NE(it, raw.maps.deltas.end());
+    ASSERT_NE(it, raw->maps.deltas.end());
     it->bytes = activeDelta;
-    const auto rawBytes = mm6::encodeRawSave(raw, GameTitle::MM6);
+    const auto rawBytes = mm6::encodeRawSave(*raw, GameTitle::MM6);
     const auto freshNpcs = mm6::loadNpcStaticBaseline(*engine->resources(), GameTitle::MM6);
     const auto verifyItem = [](std::int32_t id) {
         return id >= 1 && id <= 580 &&
             !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
     };
-    auto represented = mm6::stageRawSessionFields(
+    auto represented = std::unique_ptr<mm6::StagedRawSessionFields>(
+        new mm6::StagedRawSessionFields(mm6::stageRawSessionFields(
         rawBytes, freshNpcs, maps.expectedNames(),
         [&maps](std::string_view name) { return maps.readBase(name); },
         verifyItem, *pItemTable, pOverlayTable->overlays.size(),
-        pTileTable->tileCount(), GameTitle::MM6);
-    ASSERT_TRUE(represented.indoorPlan);
-    ASSERT_FALSE(represented.outdoorPlan);
+        pTileTable->tileCount(), GameTitle::MM6)));
+    ASSERT_TRUE(represented->indoorPlan);
+    ASSERT_FALSE(represented->outdoorPlan);
 
-    mm6::V6IndoorSaveFields saved;
-    saved.raw = std::move(raw);
-    saved.generatedNpcs = std::move(generated);
-    saved.gameplayRng = std::move(rng);
-    saved.eventRuntime = std::move(eventRuntime);
+    auto saved = std::make_unique<mm6::V6IndoorSaveFields>();
+    saved->raw = std::move(*raw);
+    saved->generatedNpcs = std::move(generated);
+    saved->gameplayRng = std::move(rng);
+    saved->eventRuntime = std::move(eventRuntime);
     mm6::captureV6IndoorNativeAnchors(
-        represented, &saved.actors, &saved.sprites, &saved.decorations);
+        *represented, &saved->actors, &saved->sprites, &saved->decorations);
     auto changed = preEventFaces;
     changed.front().attributes ^= 1u;
-    saved.faceOverrides.maps.push_back(*mm6::captureIndoorFaceOverrides(
+    saved->faceOverrides.maps.push_back(*mm6::captureIndoorFaceOverrides(
         mapName, preEventFaces, changed, GameTitle::MM6));
-    const auto candidate = mm6::encodeV6IndoorSave(saved, GameTitle::MM6);
+    const auto candidate = mm6::encodeV6IndoorSave(*saved, GameTitle::MM6);
     const auto readFaces = [&mapName, &preEventFaces](std::string_view requested) {
         if (requested != mapName)
             throw std::runtime_error("MM6 v6 indoor probe requested another face source");
         return preEventFaces;
     };
-    auto staged = mm6::stageV6IndoorSave(
+    auto staged = std::unique_ptr<mm6::StagedV6IndoorSaveFields>(
+        new mm6::StagedV6IndoorSaveFields(mm6::stageV6IndoorSave(
         candidate, freshNpcs, maps.expectedNames(),
         [&maps](std::string_view name) { return maps.readBase(name); },
         verifyItem, *pItemTable, pOverlayTable->overlays.size(),
-        pTileTable->tileCount(), readFaces, GameTitle::MM6);
-    ASSERT_TRUE(staged.represented.indoorPlan);
-    EXPECT_EQ(staged.saved.faceOverrides.maps.size(), 1u);
-    EXPECT_FALSE(staged.canEnterGameLoop());
+        pTileTable->tileCount(), readFaces, GameTitle::MM6)));
+    ASSERT_TRUE(staged->represented.indoorPlan);
+    EXPECT_EQ(staged->saved.faceOverrides.maps.size(), 1u);
+    EXPECT_FALSE(staged->canEnterGameLoop());
     EXPECT_EQ(seedBytes(profile), originalSeed);
 }

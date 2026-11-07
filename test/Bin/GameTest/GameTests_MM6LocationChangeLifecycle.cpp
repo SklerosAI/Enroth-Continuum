@@ -468,7 +468,14 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
                             engine->_pendingTransition ||
                             pPartyActionQueue->uNumActions)
                             throw std::runtime_error(
-                                "MM6 target pre-input source order differs");
+                                "MM6 target pre-input source order differs: paused=" +
+                                std::to_string(gameTimer->isPaused()) +
+                                " target=" + std::to_string(
+                                    engine->_currentLoadedMapId == target) +
+                                " pending=" + std::to_string(
+                                    bool(engine->_pendingTransition)) +
+                                " actions=" + std::to_string(
+                                    pPartyActionQueue->uNumActions));
                         targetV5BeforeInput =
                             mm6::testing::captureV5LaterOutdoorForTest(before);
                         targetPreInputCaptured = !targetV5BeforeInput.empty();

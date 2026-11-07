@@ -2692,3 +2692,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Ran the repository-owned one-command MM7 build under network denial against the current integration source. Nine arm64 media archives, the local-only engine build, link-input and system-library checks, and Atlas assembly passed.
 - The staged Atlas and helper passed strict code-signature checks and include 23 media notices. A bounded headless launch survived with a disposable profile. The candidate stays separate from the installed app pending graphical play and save/reload checks.
+
+## [2026-11-07] verify | Source-owned MM7 disposable save cycle
+- by: T-Burton-ND via codex
+- Built the local-only GameTest target and ran the exact MM7 disposable writer and fresh-process reader under network denial; each passed 1/1 with a byte-identical save slot. The owner-only temporary profile was removed.
+- The same source-linked GameTest passed focused MM7 controls 3/3. This is a headless first-map gate; graphical candidate save/reload remains open before the installed helper can switch to source-owned media libraries.

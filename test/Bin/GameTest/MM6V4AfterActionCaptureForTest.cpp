@@ -42,6 +42,7 @@
 #include "Engine/MM6/MM6V4OutdoorDecorationReplay.h"
 #include "Engine/MM6/MM6V4SaveFields.h"
 #include "Engine/MM6/MM6V5FullSessionPreflight.h"
+#include "Engine/MM6/MM6V5LiveSaveCapture.h"
 #include "Engine/MM6/MM6V5SaveFields.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Decoration.h"
@@ -163,6 +164,22 @@ static void writeAfterActionCandidateForTest(
         throw std::runtime_error("MM6 v4 after-action movement was not captured");
     if (afterReloadedInput)
         requireSecondMovement(previousBefore, fields.raw.core.party);
+    if (v5) {
+        const auto bytes = captureV5FirstMapLiveSession(sourceCandidate);
+        const auto validate = [](std::span<const std::uint8_t> proposed) {
+            requireV5FirstMapLiveSessionAgreement(proposed);
+        };
+        const std::string_view slot = afterReloadedInput ?
+            "candidate-v5-after-reload-input.ec6" : "candidate-v5-after-action.ec6";
+        writeAtomicV5SaveFileForTest(profile, slot, bytes, validate);
+        if (readFile(profile / "saves" / slot) != bytes ||
+            readFile(profile / "saves/candidate-v4.ec6") != sourceBefore ||
+            readFile(profile / "saves/autosave.ec6") != seedBefore ||
+            (afterReloadedInput &&
+             readFile(profile / "saves/candidate-v5-after-action.ec6") != previousBefore))
+            throw std::runtime_error("MM6 v5 atomic write changed another slot");
+        return;
+    }
     const auto durable = captureDurableFields(*pParty, GameTitle::MM6);
     fields.raw.bits = durable.bits;
     fields.raw.effects = durable.effects;
@@ -181,9 +198,7 @@ static void writeAfterActionCandidateForTest(
         throw std::runtime_error("MM6 v4 after-action cursor owner changed");
     fields.raw.heldItem = *held;
     fields.raw.shops = shopTitleState();
-    const Blob delta = v5 ? captureOutdoorDeltaWithNativeSpriteAnchors(
-        *pOutdoor, "oute3.odm", GameTitle::MM6) :
-        captureOutdoorDeltaWithActiveActors(*pOutdoor, GameTitle::MM6);
+    const Blob delta = captureOutdoorDeltaWithActiveActors(*pOutdoor, GameTitle::MM6);
     const auto *deltaBegin = static_cast<const std::uint8_t *>(delta.data());
     const std::vector<std::uint8_t> current(deltaBegin, deltaBegin + delta.size());
     const std::string activeName = "oute3.ddm";
@@ -201,8 +216,7 @@ static void writeAfterActionCandidateForTest(
             throw std::runtime_error("MM6 v4 after-action nonactive map cache changed");
     }
     const std::vector<Actor> actors(pActors.begin(), pActors.end());
-    if (!v5)
-        fields.activeActorPayload = encodeActiveActorSection(actors, GameTitle::MM6);
+    fields.activeActorPayload = encodeActiveActorSection(actors, GameTitle::MM6);
     fields.generatedNpcs = captureGeneratedNpcFields(
         pActors, *pNPCStats, "oute3.odm", GameTitle::MM6);
     const auto random = application->component<EngineRandomComponent>();
@@ -212,66 +226,18 @@ static void writeAfterActionCandidateForTest(
     event.lastRespawnDay = pOutdoor->ddm.lastRespawnDay;
     event.mapVars = engine->_persistentVariables.mapVars;
     event.decorVars = engine->_persistentVariables.decorVars;
-    if (!v5)
-        event.bindings = captureEventRuntimeDecorationBindings(pLevelDecorations,
-                                                                GameTitle::MM6);
-    std::vector<std::uint8_t> bytes;
-    if (v5) {
-        auto sprites = captureSpriteRuntimeFields(
-            "oute3.odm", current, pSpriteObjects, GameTitle::MM6);
-        auto actorRuntime = captureActorRuntimeFields(
-            "oute3.odm", saved.v3.activeActorPayload, actors, GameTitle::MM6);
-        auto decorationRuntime = captureDecorationRuntimeFields(
-            "oute3.odm", maps.readBase("oute3.odm"), event,
-            *pDecorationTable, pLevelDecorations, GameTitle::MM6);
-        const auto complete = std::unique_ptr<V5SaveFields>(
-            new V5SaveFields{std::move(saved), std::move(sprites),
-                             std::move(actorRuntime), std::move(decorationRuntime)});
-        bytes = encodeV5Save(*complete, GameTitle::MM6);
-    } else {
-        bytes = encodeV4Save(saved, GameTitle::MM6);
-    }
+    event.bindings = captureEventRuntimeDecorationBindings(pLevelDecorations,
+                                                            GameTitle::MM6);
+    const std::vector<std::uint8_t> bytes = encodeV4Save(saved, GameTitle::MM6);
 
     const auto validate = [&](std::span<const std::uint8_t> proposed) {
-        std::unique_ptr<V4FullSessionPreflight> checkedV4;
-        std::unique_ptr<V5FullSessionPreflight> checkedV5;
-        const V4FullSessionPreflight *checked = nullptr;
+        std::unique_ptr<V4FullSessionPreflight> checked;
         const auto readBase = [&maps](std::string_view name) { return maps.readBase(name); };
-        if (v5) {
-            checkedV5.reset(new V5FullSessionPreflight(stageV5FullSessionPreflight(
-                proposed, freshNpcs, maps.expectedNames(), readBase,
-                verifyItem, *pItemTable, pOverlayTable->overlays.size(),
-                pTileTable->tileCount(), pActors.size(), random->type(),
-                pLevelDecorations, *pDecorationTable, GameTitle::MM6)));
-            checked = &checkedV5->v4;
-            const auto liveSprites = captureSpriteRuntimeFields(
-                "oute3.odm", checked->saved.v3.raw.chest.rawActiveDelta,
-                pSpriteObjects, GameTitle::MM6);
-            if (encodeSpriteRuntimeSection(liveSprites, GameTitle::MM6) !=
-                encodeSpriteRuntimeSection(checkedV5->sprites, GameTitle::MM6))
-                throw std::runtime_error("MM6 v5 after-action live sprite owner changed");
-            const std::vector<Actor> liveActors(pActors.begin(), pActors.end());
-            const auto checkedActors = captureActorRuntimeFields(
-                "oute3.odm", checked->saved.v3.activeActorPayload,
-                liveActors, GameTitle::MM6);
-            if (encodeActorRuntimeSection(checkedActors, GameTitle::MM6) !=
-                encodeActorRuntimeSection(checkedV5->actors, GameTitle::MM6))
-                throw std::runtime_error("MM6 v5 after-action live actor owner changed");
-            const auto liveDecorations = captureDecorationRuntimeFields(
-                "oute3.odm", maps.readBase("oute3.odm"),
-                checked->activeEventRuntime, *pDecorationTable,
-                pLevelDecorations, GameTitle::MM6);
-            if (encodeDecorationRuntimeSection(liveDecorations, GameTitle::MM6) !=
-                encodeDecorationRuntimeSection(checkedV5->decorations, GameTitle::MM6))
-                throw std::runtime_error("MM6 v5 after-action live decoration owner changed");
-        } else {
-            checkedV4.reset(new V4FullSessionPreflight(stageV4FullSessionPreflight(
-                proposed, freshNpcs, maps.expectedNames(), readBase,
-                verifyItem, *pItemTable, pOverlayTable->overlays.size(),
-                pTileTable->tileCount(), pActors.size(), random->type(),
-                pLevelDecorations, GameTitle::MM6)));
-            checked = checkedV4.get();
-        }
+        checked.reset(new V4FullSessionPreflight(stageV4FullSessionPreflight(
+            proposed, freshNpcs, maps.expectedNames(), readBase,
+            verifyItem, *pItemTable, pOverlayTable->overlays.size(),
+            pTileTable->tileCount(), pActors.size(), random->type(),
+            pLevelDecorations, GameTitle::MM6)));
         const auto expectedEvents = capturePersistentEventBoundary(
             checked->v3.represented.persistentEvents, GameTitle::MM6);
         const auto liveWire = decodeOutdoorDelta(pOutdoor->mm6DeltaBytes);
@@ -280,25 +246,17 @@ static void writeAfterActionCandidateForTest(
             checked->activeEventRuntime.mapVars != engine->_persistentVariables.mapVars ||
             checked->activeEventRuntime.decorVars != engine->_persistentVariables.decorVars)
             throw std::runtime_error("MM6 v4 after-action event owner changed");
-        if (!v5)
-            requireFirstMapOutdoorDecorationReplay(
-                "oute3.odm", maps.readBase("oute3.odm"),
-                checked->activeEventRuntime, *pDecorationTable,
-                pLevelDecorations, GameTitle::MM6);
+        requireFirstMapOutdoorDecorationReplay(
+            "oute3.odm", maps.readBase("oute3.odm"),
+            checked->activeEventRuntime, *pDecorationTable,
+            pLevelDecorations, GameTitle::MM6);
     };
     validate(bytes);
-    const std::string_view slot = afterReloadedInput ?
-        "candidate-v5-after-reload-input.ec6" :
-        v5 ? "candidate-v5-after-action.ec6" : "candidate-v4-after-action.ec6";
-    if (v5)
-        writeAtomicV5SaveFileForTest(profile, slot, bytes, validate);
-    else
-        writeAtomicV4SaveFileForTest(profile, slot, bytes, validate);
+    const std::string_view slot = "candidate-v4-after-action.ec6";
+    writeAtomicV4SaveFileForTest(profile, slot, bytes, validate);
     if (readFile(profile / "saves" / slot) != bytes ||
         readFile(profile / "saves/candidate-v4.ec6") != sourceBefore ||
-        readFile(profile / "saves/autosave.ec6") != seedBefore ||
-        (afterReloadedInput &&
-         readFile(profile / "saves/candidate-v5-after-action.ec6") != previousBefore))
+        readFile(profile / "saves/autosave.ec6") != seedBefore)
         throw std::runtime_error("MM6 after-action atomic write changed another slot");
 }
 

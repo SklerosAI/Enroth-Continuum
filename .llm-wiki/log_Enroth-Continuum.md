@@ -2391,3 +2391,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The accepted original confirmation trace shows conditional rest/heal and food effects, independent coordinate wrapping and target ground-height recomputation. With zero food it skips healing; the inherited foot handler heals through its unconditional time-advance helper.
 - Updated the border transaction packet and wiki. Exact condition-ID equivalence and separate original cancel behavior remain unproved; live travel and production autosave remain closed.
+
+## [2026-11-07] analyze | MM7 pinned dependency licenses
+- by: T-Burton-ND via codex
+- Audited the five exact upstream dependency-source revisions and their primary license files, plus the cached FFmpeg archives' embedded configure/license strings. The upstream tag and release digest identify the cached Mac input, but its FFmpeg recipe permits automatic external-library detection and the ZIP lacks a full feature log.
+- Updated the build-input inventory and wiki with license sources and bundled-notice gaps. No replacement recipe or source copies were added in this pass; the local-only configure gate still refuses the incomplete offline build.

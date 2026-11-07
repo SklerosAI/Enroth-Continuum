@@ -93,6 +93,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Indoor Runtime](MM6-F4-Indoor-Runtime.md) — Bounded BLV/DLV projection, changed-state encoding and v2 detached indoor plan before slot selection
 - [MM6 F4 Map Save Fields](MM6-F4-Map-Save-Fields.md) — Bounded `.ec6` map-delta section, private F3 source reader and ground/chest item-marker validation
 - [MM6 F4 NPC State](MM6-F4-NPC-State.md) — `.ec6` RESC overlays fresh MM6 static NPC tables; loaded-resource headless check passes, while normal save/reload remains gated
+- [MM6 F4 Generated NPC Identity Save](MM6-F4-Generated-NPC-Identity-Save.md) — Detached GNPC actor/row capsule and unresolved gameplay RNG continuation policy
 - [MM6 F4 NPC Events](MM6-F4-NPC-Events.md) — Bounded topic/move state and MM6 global-script precedence over MM7 teacher IDs
 - [MM6 F4 Item Event Compare](MM6-F4-Item-Event-Compare.md) — Read-only inventory/held-item comparison and bounded item-write handoff
 - [MM6 F4 Item Event Writes](MM6-F4-Item-Event-Writes.md) — Retained reward/handoff topology and bounded Add/Subtract transaction limits

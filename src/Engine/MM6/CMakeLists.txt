@@ -59,6 +59,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6V5DecorationRuntimeFields.cpp MM6V5DecorationRuntimeFields.h
     MM6V5SaveFields.cpp MM6V5SaveFields.h
     MM6V5LiveSaveCapture.cpp MM6V5LiveSaveCapture.h
+    MM6V6IndoorSaveFields.cpp MM6V6IndoorSaveFields.h MM6IndoorFaceLiveOwner.h
     MM6ActiveActorOutdoorDeltaCapture.cpp MM6ActiveActorOutdoorDeltaCapture.h
     MM6IndoorWorldPlan.cpp MM6IndoorWorldPlan.h
     MM6WorldSaveRuntime.cpp MM6WorldSaveRuntime.h
@@ -228,6 +229,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6V5SpriteRuntimeFields_ut.cpp
         Tests/MM6V5ActorRuntimeFields_ut.cpp
         Tests/MM6V5DecorationRuntimeFields_ut.cpp
+        Tests/MM6V6IndoorSaveFields_ut.cpp
         Tests/MM6V5PreEventSpriteReplayForTest_ut.cpp
         Tests/MM6V5PreEventActorReplayForTest_ut.cpp
         Tests/MM6V5PreEventDecorationReplayForTest_ut.cpp

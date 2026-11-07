@@ -110,7 +110,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Beacon Renderer Contract](MM6-F4-Beacon-Renderer-Contract.md) — Checked texture creation and controlled cleanup required before live BEAC publication
 - [MM6 F4 Partial Stage Coordinator](MM6-F4-Partial-Stage-Coordinator.md) — Validated 67-map candidate with detached Party, active map, NPC/map and timer/overlay copies
 - [MM6 F4 New Game Autosave](MM6-F4-New-Game-Autosave.md) — Archive-backed v1 control and detached native v2 first-map candidate; live raw capture and normal save/reload stay guarded
-- [MM6 F4 Creation Item Seed](MM6-F4-Creation-Item-Seed.md) — Bounded raw starter records; one real headless v2 write and fresh-process read passed in a disposable profile
+- [MM6 F4 Creation Item Seed](MM6-F4-Creation-Item-Seed.md) — Bounded raw starter records; nine headless draws admitted 180/180 items and a disposable v2 write/read passed
 - [MM6 F4 Post Rebuild PID Slots](MM6-F4-Post-Rebuild-PID-Slots.md) — Read-only final actor/sprite slot agreement check; active saved VISU overlays remain blocked
 - [MM6 F4 Persistent Event Publication](MM6-F4-Persistent-Event-Publication.md) — Test-only zero generic arrays before map load and exact sidecar/array check after rebuild
 - [MM6 F4 Raw Child Publication Gate](MM6-F4-Raw-Child-Publication-Gate.md) — Read-only v2 owner joins with typed blockers before any live assignment

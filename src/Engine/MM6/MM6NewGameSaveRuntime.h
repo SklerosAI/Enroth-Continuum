@@ -21,7 +21,7 @@
 namespace mm6 {
 
 // Read a default .dlv/.ddm entry from the title-specific Games archive. The
-// caller must verify the archive and supply the signed 67-name MM6 manifest.
+// caller must verify the archive and supply a validated 67-name MM6 map set.
 using DefaultDeltaReader = std::function<Blob(std::string_view)>;
 
 constexpr std::string_view NEW_GAME_AUTOSAVE_SLOT = "autosave.ec6";

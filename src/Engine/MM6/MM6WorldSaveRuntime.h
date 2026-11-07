@@ -105,7 +105,7 @@ KnownSaveFields captureKnownShopGuildClockFields(const KnownSaveFields &seed,
                                                 GameTitle title);
 
 // The outdoor object has no filename. Check the current MM6 engine map ID
-// against the loaded MM6 map table, HEAD and the private 67-name delta set.
+// against the loaded MM6 map table, HEAD and the validated 67-name delta set.
 void validateOutdoorMapIdentity(MapId currentMapId, const MapTable &mapTable,
                                 std::string_view savedMapName,
                                 std::span<const std::string> expectedNames, GameTitle title);

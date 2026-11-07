@@ -38,6 +38,10 @@ The linked `MM6NewGameSaveRuntime.*` native suite passed **13/13** in 13.94 seco
 
 The test-only `saveNewGame()` callback path now restores its own map ID, arrival position, fall start, view angles and last-save selection if the callback throws. The failure-injection, ordinary guard and loaded-source comparison checks passed 3/3, and MM7 shop/guild entry controls passed 2/2. The callback still cannot make a later real `DoPrepareWorld()` failure atomic; the normal MM6 save guard remains closed.
 
+## Fresh-process slot stage — 2026-11-06
+
+Two separate monitored headless processes exercised the same disposable owner-only temporary profile. The first drove editable New Game through the test-only archive-backed save and first outdoor frame; the second opened that persisted `.ec6` from a fresh process, selected the primary without recovery, staged the represented Party/Character, NPC, 67-map and chest owners, and built the detached first-outdoor plan. It confirmed a nonempty first-character inventory and unchanged slot bytes. Both tests passed 1/1 with zero on-screen windows and no focus change; the temporary profile was removed afterward. This is stronger than a same-process read, but still does not commit the staged Party/world into a live game, exercise normal `loadGame()`, or prove the omitted save owners.
+
 Three focused native tests passed in a manually linked arm64 binary using the integrated v4 build libraries: an MM6 first-map autosave writes all 67 synthetic defaults and semantically preflights unchanged; MM7 title and wrong first map reject before delta reads or disk mutation; a malformed final default delta rejects after all 67 reads while preserving the previous autosave; and a corrupt primary selects a valid backup without mutation, then recovers the prior bytes. The existing atomic writer's fault-injection suite covers replacement failures separately. No proprietary game assets or MM6 process were opened.
 
 ## Before the live route can open

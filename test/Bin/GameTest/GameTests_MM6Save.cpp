@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -70,6 +71,24 @@ std::unordered_map<std::string, std::string> snapshotCache() {
     for (const auto &[name, blob] : pMapDeltas)
         snapshot.emplace(name, blob.str());
     return snapshot;
+}
+
+std::optional<std::filesystem::path> restartProfileRoot() {
+    const char *value = std::getenv("ENROTH_MM6_RESTART_PROFILE");
+    if (!value || !*value)
+        return std::nullopt;
+    const std::filesystem::path supplied(value);
+    if (!supplied.is_absolute() || !std::filesystem::is_directory(supplied))
+        throw std::runtime_error("MM6 restart profile must be an existing absolute directory");
+    const std::filesystem::path root = std::filesystem::canonical(supplied);
+    if (root.parent_path() != std::filesystem::canonical(std::filesystem::temp_directory_path()) ||
+        !root.filename().string().starts_with("mm6-restart-"))
+        throw std::runtime_error("MM6 restart profile must be a disposable system-temp directory");
+    constexpr auto otherPermissions = std::filesystem::perms::group_all |
+                                      std::filesystem::perms::others_all;
+    if ((std::filesystem::status(root).permissions() & otherPermissions) != std::filesystem::perms::none)
+        throw std::runtime_error("MM6 restart profile must be owner-only");
+    return root;
 }
 
 } // namespace
@@ -393,11 +412,15 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_ScopedSaveFeedsFirstOutdoorWorld) {
 GAME_TEST(MM6ZSaveHeadless, DISABLED_NewGameControlFlowReachesFirstFrame) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     ASSERT_EQ(window->nativeHandle(), nullptr);
-    TempProfile profile;
+    std::unique_ptr<TempProfile> temporary;
+    const auto restartRoot = restartProfileRoot();
+    if (!restartRoot)
+        temporary = std::make_unique<TempProfile>();
+    const std::filesystem::path profileRoot = restartRoot ? *restartRoot : temporary->root;
     std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
 
     mm6::testing::setNewGameSaveOverride([&] {
-        (void) mm6::saveNewGameMM6FromLoadedMapsScopedForTest(profile.root,
+        (void) mm6::saveNewGameMM6FromLoadedMapsScopedForTest(profileRoot,
             [](const Party &, const std::unordered_map<std::string, Blob> &,
                const mm6::ChestTitleState &) {});
     });
@@ -430,7 +453,7 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_NewGameControlFlowReachesFirstFrame) {
     game.runGameRoutine([&] { chestOptIn.reset(); });
     mm6::testing::setNewGameSaveOverride({});
 
-    EXPECT_TRUE(std::filesystem::exists(profile.primary()));
+    EXPECT_TRUE(std::filesystem::exists(profileRoot / "saves" / "autosave.ec6"));
     EXPECT_EQ(pMapDeltas.size(), 67u);
     EXPECT_TRUE(mm6::chestTitleState().ready);
     EXPECT_EQ(engine->_currentLoadedMapId, pMapTable->GetMapInfo("oute3.odm"));
@@ -439,5 +462,66 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_NewGameControlFlowReachesFirstFrame) {
     EXPECT_FALSE(pOutdoor->faces.empty());
     EXPECT_FALSE(pActors.empty());
     EXPECT_EQ(vChests.size(), 20u);
+    EXPECT_EQ(window->nativeHandle(), nullptr);
+}
+
+// Run in a new process after DISABLED_NewGameControlFlowReachesFirstFrame with
+// the same disposable ENROTH_MM6_RESTART_PROFILE. This stages only owned data;
+// it does not assign the saved Party or enter the live world.
+GAME_TEST(MM6ZSaveHeadless, DISABLED_RestartSlotStagesDetachedFirstMap) {
+    const auto profileRoot = restartProfileRoot();
+    if (!profileRoot)
+        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to a disposable system-temp directory";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    const std::filesystem::path primary = *profileRoot / "saves" / "autosave.ec6";
+    ASSERT_TRUE(std::filesystem::is_regular_file(primary));
+    const auto before = readFile(primary);
+
+    bool completed = false;
+    bool stagedCorrectly = false;
+    std::string error;
+    game.runGameRoutine([&] {
+        try {
+            const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
+            Party freshParty;
+            NPCStats freshNpcs{};
+            Timer freshTimer;
+            ActiveOverlayList freshOverlays;
+            const auto verifyItem = [](std::int32_t id) {
+                return id >= 1 && id <= 580 &&
+                    !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
+            };
+            auto staged = mm6::stageOfflineSaveSlotForTest(
+                *profileRoot, mm6::NEW_GAME_AUTOSAVE_SLOT, freshParty, freshNpcs,
+                freshTimer, freshOverlays, maps.expectedNames(),
+                [&maps](std::string_view name) { return maps.readBase(name); },
+                verifyItem, pOverlayTable->overlays.size(), GameTitle::MM6);
+            if (!staged)
+                throw std::runtime_error("MM6 restart slot was absent after first process");
+            int firstCharacterItems = 0;
+            for (const auto &entry : staged->staged.party.pCharacters[0].inventory.entries()) {
+                (void) entry;
+                ++firstCharacterItems;
+            }
+            const auto plan = mm6::prepareDetachedOutdoorWorldPlan(
+                staged->staged.worldAndVisuals, GameTitle::MM6);
+            stagedCorrectly = !staged->needsRecovery && staged->bytes == before &&
+                staged->staged.party.pos.z == 340 &&
+                staged->staged.worldAndVisuals.world.mapDeltas.size() == 67 &&
+                staged->staged.worldAndVisuals.chestTitle.ready &&
+                firstCharacterItems > 0 && plan.mapName == "oute3.odm" &&
+                !plan.vertices.empty() && !plan.spawnPoints.empty();
+        } catch (const std::exception &exception) {
+            error = exception.what();
+        }
+        completed = true;
+    });
+    for (int tick = 0; tick < 256 && !completed; ++tick)
+        game.tick();
+    ASSERT_TRUE(completed);
+    ASSERT_TRUE(error.empty()) << error;
+    EXPECT_TRUE(stagedCorrectly);
+    EXPECT_EQ(readFile(primary), before);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }

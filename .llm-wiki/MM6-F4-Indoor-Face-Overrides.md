@@ -55,4 +55,14 @@ test-only reader stages the candidate's chest owner under the existing scoped
 map-load gate; production chest loading and SaveLoad stay guarded.
 Actor/sprite owner publication and first input remain open.
 
+The current v6 manifest also requires `ISRT` full-list indoor sprite runtime
+state, so it has 27 required sections without IFOV or 28 with IFOV. Exact
+native `ISCR` bytes anchor the source prefix; only descriptor-zero free slots
+may be reused, while appended sprites use canonical synthetic images and
+exact runtime overlays. A v6-only item scalar overlay retains fields omitted
+by inherited snapshots without changing v5 outdoor SPRT or raw MM6 item
+provenance. Focused linked v5 sprite/v6 indoor checks passed **12/12**, and
+the disposable seed/writer/reader chain passed **1/1 each**. Live ISRT
+publication, actor runtime ownership and gameplay admission remain gated.
+
 See also: [MM6 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md), [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), and [implementation packet](../project/MM6_F4_INDOOR_FACE_OVERRIDE_SECTION.md).

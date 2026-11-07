@@ -77,4 +77,18 @@ the candidate's exact chest owner and arms the already bounded chest map-load
 scope. The production guard remains closed. Actor/sprite owner publication,
 first input, production SaveLoad and graphical face behavior remain open.
 
+V6 now also requires `ISRT`, an exact ordered indoor sprite runtime section
+over the unchanged native `ISCR` prefix. This brings the manifest to **27
+sections without IFOV or 28 with IFOV**. Native source-free slots may be
+reused only when their decoded object descriptor is zero; occupied source
+slots still require exact identity. Runtime-appended sprites have canonical
+synthetic native images and full runtime overlays. A v6-only 44-byte item
+scalar overlay preserves fields that the inherited sprite snapshot drops,
+including a non-potion item's potion-power field; the original raw 28-byte
+item provenance remains separate. The v5 outdoor SPRT wire format is
+unchanged. Focused v5 sprite/v6 indoor checks passed **12/12**, and the
+disposable v2 seed, v6 writer and fresh-child reader passed **1/1 each**.
+Live pre-event ISRT publication and post-world equality, actor runtime
+ownership, first input and production SaveLoad remain open.
+
 See [indoor face persistence gate](MM6_F4_INDOOR_FACE_PERSISTENCE_GATE.md), [known save sections](MM6_EC6_MAP_FIELDS_F4.md), and [atomic save](MM6_ATOMIC_SAVE_F4.md).

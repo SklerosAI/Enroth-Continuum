@@ -1,3 +1,4 @@
+#include <array>
 #include <memory>
 #include <stdexcept>
 #include <deque>
@@ -6,6 +7,7 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6PostMapGeneratedNpcLinks.h"
+#include "Engine/MM6/MM6NativeActorNpcPolicy.h"
 #include "Engine/Objects/MonsterEnumFunctions.h"
 
 namespace {
@@ -68,20 +70,37 @@ UNIT_TEST(MM6PostMapGeneratedNpcLinks, AcceptsContiguousGeneratedActorsAndFixedR
     EXPECT_EQ(npcs->pAdditionalNPC[0].name, "Generated");
 }
 
-UNIT_TEST(MM6PostMapGeneratedNpcLinks, SignedFixedPeasantSkipsGeneration) {
+UNIT_TEST(MM6PostMapGeneratedNpcLinks, NativeSignedMarkerClearsAfterMapLoad) {
     constexpr MonsterId peasantB = MONSTER_PEASANT_DWARF_FEMALE_A_B;
     auto npcs = std::make_unique<NPCStats>();
     generatedRow(npcs.get(), 0, peasantB);
     npcs->uNewlNPCBufPos = 1;
-    const std::vector<Actor> actors{actor(0, peasantB, -1),
-                                    actor(1, peasantB, 5000)};
+    std::vector<Actor> actors{actor(0, peasantB, -1),
+                              actor(1, peasantB, 5000)};
     const std::deque<Actor> source{actor(0, peasantB, -1),
                                    actor(1, peasantB, 0)};
     EXPECT_EQ(mm6::requirePreMapGeneratedNpcCapacity(
         source, *npcs, GameTitle::MM6), 1u);
+    EXPECT_TRUE(mm6::clearNoneligibleSignedActorNpc(peasantB, -1));
+    EXPECT_FALSE(mm6::clearNoneligibleSignedActorNpc(peasantB, 0));
+    EXPECT_FALSE(mm6::clearNoneligibleSignedActorNpc(static_cast<MonsterId>(40), -1));
+    EXPECT_THROW((void) mm6::requirePreMapGeneratedNpcCapacity(
+        std::deque<Actor>{actor(0, static_cast<MonsterId>(40), -1)},
+        *npcs, GameTitle::MM6), std::exception);
+    EXPECT_THROW((void) mm6::requirePreMapGeneratedNpcCapacity(
+        std::deque<Actor>{actor(0, static_cast<MonsterId>(40), 1)},
+        *npcs, GameTitle::MM6), std::exception);
+    EXPECT_THROW((void) mm6::requirePostMapGeneratedNpcLinks(
+        actors, *npcs, GameTitle::MM6), std::exception);
+    actors[0].npcId = 0;
+    EXPECT_THROW((void) mm6::requirePostMapGeneratedNpcLinks(
+        actors, *npcs, GameTitle::MM6), std::exception);
+    constexpr std::array<std::size_t, 1> cleared{0};
     EXPECT_EQ(mm6::requirePostMapGeneratedNpcLinks(
-        actors, *npcs, GameTitle::MM6), 1u);
-    EXPECT_EQ(actors[0].npcId, -1);
+        actors, *npcs, GameTitle::MM6, cleared), 1u);
+    actors[0].npcId = 5001;
+    EXPECT_THROW((void) mm6::requirePostMapGeneratedNpcLinks(
+        actors, *npcs, GameTitle::MM6, cleared), std::exception);
 }
 
 UNIT_TEST(MM6PostMapGeneratedNpcLinks, RejectsBrokenLinksAndRowsWithoutMutation) {

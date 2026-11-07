@@ -77,6 +77,7 @@
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6PostMapGeneratedNpcLinks.h"
+#include "Engine/MM6/MM6NativeActorNpcPolicy.h"
 #include "Engine/MM6/MM6PreEventCheckpointForTest.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6V3PreEventReplayForTest.h"
@@ -1142,17 +1143,29 @@ void Engine::_461103_load_level_sub() {
     pGameLoadingUI_ProgressBar->Progress();
     pParty->arenaState = ARENA_STATE_INITIAL;
     pParty->arenaLevel = ARENA_LEVEL_INVALID;
-    if (gameTitle() == GameTitle::MM6 &&
-        (mm6::testing::consumeV3GeneratedNpcBypassForTest(GameTitle::MM6) ||
-         mm6::testing::consumeV6IndoorGeneratedNpcBypassForTest(GameTitle::MM6))) {
+    const bool v3NpcBypass = gameTitle() == GameTitle::MM6 &&
+        mm6::testing::consumeV3GeneratedNpcBypassForTest(GameTitle::MM6);
+    const bool v6NpcBypass = gameTitle() == GameTitle::MM6 && !v3NpcBypass &&
+        mm6::testing::consumeV6IndoorGeneratedNpcBypassForTest(GameTitle::MM6);
+    if (v3NpcBypass || v6NpcBypass) {
         const std::vector<Actor> restoredActors(pActors.begin(), pActors.end());
-        mm6::requirePostMapGeneratedNpcLinks(restoredActors, *pNPCStats, gameTitle());
+        const std::vector<std::size_t> clearedNativeSlots = v6NpcBypass ?
+            mm6::testing::nativeClearedIndoorActorSlotsForTest(GameTitle::MM6) :
+            std::vector<std::size_t>{};
+        mm6::requirePostMapGeneratedNpcLinks(
+            restoredActors, *pNPCStats, gameTitle(), clearedNativeSlots);
     } else {
         if (gameTitle() == GameTitle::MM6)
             mm6::requirePreMapGeneratedNpcCapacity(pActors, *pNPCStats, gameTitle());
         pNPCStats->uNewlNPCBufPos = 0;
 
         for (Actor &actor : pActors) {
+            if (gameTitle() == GameTitle::MM6 &&
+                mm6::clearNoneligibleSignedActorNpc(
+                    actor.monsterInfo.id, actor.npcId)) {
+                actor.npcId = 0;
+                continue;
+            }
             MonsterTier tier = monsterTierForMonsterId(actor.monsterInfo.id);
             if (tier == MONSTER_TIER_A)
                 continue; // Weakest peasants are just peasants.

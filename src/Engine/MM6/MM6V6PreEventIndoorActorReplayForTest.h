@@ -13,8 +13,10 @@
 #include "Engine/GameTitle.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Tables/NPCTable.h"
+#include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
 
 #include "MM6GeneratedNpcSaveFields.h"
+#include "MM6NativeActorNpcPolicy.h"
 #include "MM6PreEventCheckpointForTest.h"
 #include "MM6PreEventGeneratedNpcReplay.h"
 #include "MM6V6IndoorSaveFields.h"
@@ -78,6 +80,7 @@ class ScopedV6PreEventIndoorActorReplayForTest {
         std::deque<Actor> *, NPCStats *, RandomEngineType, bool,
         std::string_view, GameTitle);
     friend bool consumeV6IndoorGeneratedNpcBypassForTest(GameTitle);
+    friend std::vector<std::size_t> nativeClearedIndoorActorSlotsForTest(GameTitle);
     friend void restoreV6IndoorRngBeforeMapLoadForTest(
         const std::function<void(const GameplayRandomState &)> &, GameTitle);
     friend void requireV6IndoorReplayBeforeMapLoadForTest(GameTitle);
@@ -120,8 +123,21 @@ inline bool runArmedV6PreEventIndoorActorReplayForTest(
     static_assert(std::is_nothrow_swappable_v<std::deque<Actor>>);
     static_assert(std::is_nothrow_swappable_v<std::array<NPCData, 100>>);
     if (scope->_publishGenerated) {
+        // IART holds the post-map value, while GNPC's pre-event row plan must
+        // see the original signed source marker. Rebuild that join in a
+        // detached copy; the published actor remains cleared.
+        std::deque<Actor> nativeJoin = desired;
+        constexpr std::size_t nativeWidth = 548;
+        for (std::size_t slot = 0; slot < scope->_source.count; ++slot) {
+            const auto native = projectMM6ActorRecord(
+                std::span(scope->_source.records).subspan(slot * nativeWidth, nativeWidth));
+            if (clearNoneligibleSignedActorNpc(
+                    static_cast<MonsterId>(native.monsterInfo.id), native.npcId) &&
+                desired[slot].npcId == 0)
+                nativeJoin[slot].npcId = native.npcId;
+        }
         const auto generated = stagePreEventGeneratedNpcReplay(
-            scope->_generated, scope->_rng, desired, *liveNpcs,
+            scope->_generated, scope->_rng, nativeJoin, *liveNpcs,
             loadedMapName, selectedRngType, title);
         auto rows = liveNpcs->pAdditionalNPC;
         for (std::size_t index = 0; index < generated.generatedCount; ++index)
@@ -145,6 +161,27 @@ inline bool consumeV6IndoorGeneratedNpcBypassForTest(GameTitle title) {
         return false;
     scope->_bypassConsumed = true;
     return true;
+}
+
+inline std::vector<std::size_t> nativeClearedIndoorActorSlotsForTest(GameTitle title) {
+    auto *scope = detail::activeV6IndoorActorReplayScope();
+    if (!scope)
+        return {};
+    if (title != GameTitle::MM6 || !scope->_published || !scope->_bypassConsumed)
+        throw std::runtime_error("MM6 native-cleared actor slots lack replay context");
+    constexpr std::size_t nativeWidth = 548;
+    std::vector<std::size_t> slots;
+    for (std::size_t slot = 0; slot < scope->_source.count; ++slot) {
+        const auto native = projectMM6ActorRecord(
+            std::span(scope->_source.records).subspan(slot * nativeWidth, nativeWidth));
+        if (clearNoneligibleSignedActorNpc(
+                static_cast<MonsterId>(native.monsterInfo.id), native.npcId)) {
+            if (scope->_fields.actors[slot].npcId != 0)
+                throw std::runtime_error("MM6 IART retained a native-cleared NPC marker");
+            slots.push_back(slot);
+        }
+    }
+    return slots;
 }
 
 inline void restoreV6IndoorRngBeforeMapLoadForTest(

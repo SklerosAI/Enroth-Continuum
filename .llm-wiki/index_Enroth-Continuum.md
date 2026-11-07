@@ -50,8 +50,9 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md) — Original MM6 indoor face targeting and linked negative DLV round trip; save/reload remains open
 - [MM6 F4 Indoor Face Overrides](MM6-F4-Indoor-Face-Overrides.md) — Indoor face and runtime owner gates, superseded by a bounded test-only first-input cycle
 - [MM6 F4 V6 Indoor Input Cycle](MM6-F4-V6-Indoor-Input-Cycle.md) — Three distinct indoor five-child replay chains pass with a bounded MM6 native door-motion trace
-- [MM6 F4 Indoor Source Sweep](MM6-F4-Indoor-Source-Sweep.md) — All retained indoor pairs round-trip; signed native actor link mapping permits a third test-only five-child replay chain
-- [MM6 F4 Signed Actor Dialogue Gate](MM6-F4-Signed-Actor-Dialogue-Gate.md) — Read-only pre-event fixture finds an interactable signed actor whose follower lookup refuses
+- [MM6 F4 Indoor Source Sweep](MM6-F4-Indoor-Source-Sweep.md) — All retained indoor pairs round-trip; a risk-ranked signed source marker receives a strict MM6 native-to-runtime join
+- [MM6 F4 Native Signed NPC Map Load](MM6-F4-Native-Signed-NPC-Map-Load.md) — Original MM6 source/executable trace proves an ineligible signed marker clears after map load; strict DLV/IART join
+- [MM6 F4 Signed Actor Dialogue Gate](MM6-F4-Signed-Actor-Dialogue-Gate.md) — Earlier pre-event follower refusal is transient; real dialogue acceptance remains open
 - [MM6 F4 V5 Later Outdoor](MM6-F4-V5-Later-Outdoor.md) — Second-map seven-process save cycle and no-write location-change lifecycle pass; border travel and normal autosave remain open
 - [MM6 F4 Outdoor Tile Selectors](MM6-F4-Outdoor-Tile-Selectors.md) — Original base-field trace, MM6-only terrain reconstruction and remaining seasonal art gap
 - [MM6 F4 Outdoor Walk Sound](MM6-F4-Outdoor-Walk-Sound.md) — Original 28-class raw-tileset sound dispatcher, retained tile identity and title-specific outdoor footsteps

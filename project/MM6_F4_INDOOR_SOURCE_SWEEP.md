@@ -21,21 +21,21 @@ owners after events and input, with exact native byte checks.
 The selector `ENROTH_MM6_V6_INDOOR_CASE=sweep-risk` ranks cases outside the
 first two fixtures by generic owner features and requires a distinct feature
 signature and exact default-delta codec. It contains no hardcoded map name.
-The selected case exposed a signed native actor `npcId`. MM6's
-`_461103_load_level_sub()` leaves every nonzero actor link below 5000 untouched
-when generating NPC rows, while the indoor source and IART owner preserve the
-native actor identity exactly. GNPC capture and pre/post-map validation now
-treat that signed link as a fixed actor link, not a generated row; an appended
-IART actor with a negative link still fails without a native anchor. No field
-is rewritten to zero and no follower row is synthesized.
+The selected case exposed a signed native actor `npcId`. The prior claim
+that this was a fixed follower link is **superseded** by the
+[native MM6 map-load trace](MM6_F4_NATIVE_SIGNED_NPC_MAP_LOAD.md): the original
+loader clears nonzero markers on ineligible actors before dialogue, while
+eligible markers generate positive one-based StreetNPC indices. The source
+actor is ineligible. The native DLV and IACR retain its exact signed bytes;
+the MM6 runtime actor becomes zero after the map-load policy. GNPC's pre-event
+row plan uses the source marker only in a detached copy, and IART accepts the
+strict signed-to-zero source join. A post-world writer checks that result.
 
-The focused real-loader pre-event fixture now passes **1/1** with exact signed
-identity and GNPC agreement. The additional case also passes the complete
-test-only five-child v6 seed, live writer, bounded input writer, and fresh-child
-replay chain, **1/1 per child**. This supersedes the earlier GNPC refusal.
-Negative IDs can address follower records elsewhere in the runtime, but this
-gate does not prove follower dialogue or hire/fire behavior for this source
-actor. Production MM6 SaveLoad and general indoor play remain closed.
+The pre-event identity fixture passes **1/1** and still demonstrates the
+transient unresolved follower lookup before the map-load step. The additional
+case passes the complete test-only five-child v6 chain, **1/1 per child**.
+Eligible nonzero StreetNPC generation and actual dialogue/hire-fire behavior
+remain unproved. Production MM6 SaveLoad and general indoor play remain closed.
 
 ## Checks and reproduction
 

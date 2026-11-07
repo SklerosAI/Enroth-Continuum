@@ -34,8 +34,8 @@ PreEventGeneratedNpcReplay stagePreEventGeneratedNpcReplay(
             monster > MONSTER_LAST)
             throw std::runtime_error("MM6 pre-event actor identity is invalid");
 
-        // Match _461103_load_level_sub(): signed nonzero links below 5000
-        // belong to the retained actor, never to the generated NPC rows.
+        // Native signed markers precede the map-load NPC policy; they do not
+        // consume the current GNPC row namespace.
         const bool skipped = monsterTierForMonsterId(monster) == MONSTER_TIER_A ||
             (actor.npcId != 0 && actor.npcId < 5000);
         if (skipped) {

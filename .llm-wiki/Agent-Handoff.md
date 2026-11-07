@@ -45,14 +45,16 @@ same five-child test cycle after MM6-only actor-resistance, null-decoration,
 and traced native door-motion fixes. The strict door gate preserves native
 geometry and all unowned DLV bytes; broader indoor saves remain open. An
 offline [indoor source sweep](MM6-F4-Indoor-Source-Sweep.md) parses and
-round-trips every retained BLV/DLV pair. A distinct risk-ranked case preserves
-its signed native actor identity outside generated-NPC rows and now passes the
-same five-child test-only v6 chain, for three accepted cases total. Appended
-actors lacking native signed anchors still fail closed. A read-only
-[signed actor dialogue preflight](MM6-F4-Signed-Actor-Dialogue-Gate.md) now finds
-that an interactable native actor has no matching follower roster address in
-the fresh profile, and `getNPCData()` refuses. No dialogue rule or roster
-mutation was changed. Production saves and general indoor play remain open.
+round-trips every retained BLV/DLV pair. A distinct risk-ranked case retains
+its signed native actor marker in DLV/IACR and passes the same five-child
+test-only chain, for three accepted cases total. The prior fixed-follower
+reading and pre-event dialogue blocker are **superseded** by the
+[original MM6 map-load trace](MM6-F4-Native-Signed-NPC-Map-Load.md): this
+ineligible actor's runtime marker is cleared to zero before gameplay. IART
+and the test-only GNPC replay now enforce the source-to-runtime join.
+Eligible nonzero StreetNPC generation refuses pending a title-specific row
+and positive dialogue mapping. A real post-world click/hire-fire check is
+still open. Production saves and general indoor play remain open.
 The one-command MM7
 [clean tracked-source build](MM7-Clean-Offline-Build.md)
 linked and packaged under network denial, but its staged helper has not passed

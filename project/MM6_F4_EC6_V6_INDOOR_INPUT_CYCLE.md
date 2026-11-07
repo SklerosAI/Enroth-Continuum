@@ -47,11 +47,13 @@ not establish all indoor maps or general save support.
 ## Third indoor source case
 
 The [all-source indoor sweep](MM6_F4_INDOOR_SOURCE_SWEEP.md) selected a
-risk-ranked case with a signed native actor `npcId`. MM6's map-load generator
-leaves that nonzero fixed link untouched. GNPC now excludes it from generated
-rows while IART retains exact native identity and refuses a signed appended
-actor without a native anchor. This case passed the same five separate
-headless children, **1/1 each**. Follower dialogue behavior remains unproved.
+risk-ranked case with a signed native actor `npcId`. The original MM6
+[map-load trace](MM6_F4_NATIVE_SIGNED_NPC_MAP_LOAD.md) supersedes the earlier
+fixed-link interpretation: this ineligible actor's runtime ID is cleared to
+zero after generation, while native DLV/IACR retain the signed source bytes.
+The test-only GNPC/IART join now enforces that transition. This case passed
+the same five separate headless children, **1/1 each**. Eligible StreetNPC
+generation and real dialogue/hire-fire behavior remain unproved.
 
 ## Source-backed transaction
 

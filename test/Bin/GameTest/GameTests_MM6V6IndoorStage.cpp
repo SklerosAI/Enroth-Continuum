@@ -27,6 +27,7 @@
 #include "Engine/MM6/MM6IndoorFaceLiveOwner.h"
 #include "Engine/MM6/MM6IndoorFaceOverrides.h"
 #include "Engine/MM6/MM6LoadedMapSource.h"
+#include "Engine/MM6/MM6NativeActorNpcPolicy.h"
 #include "Engine/MM6/MM6NpcStaticBaseline.h"
 #include "Engine/MM6/MM6PreEventCheckpointForTest.h"
 #include "Engine/MM6/MM6PersistentEventPublication.h"
@@ -304,9 +305,8 @@ GAME_TEST(MM6IndoorSourceSweep, DISABLED_RiskCasePreEventActorIdentity) {
               << (signedActorUnresolved ? "unresolved follower link; " : "follower link in range; ")
               << (signedActorResolvedAsFollower ? "follower lookup agrees" : "no follower lookup")
               << '\n';
-    // Characterize the present source/runtime mismatch without opening
-    // dialogue or mutating the follower roster. Change this gate when an
-    // independently proved MM6 interaction rule resolves it.
+    // This is a pre-map marker check. The MM6 map-load loop must clear this
+    // ineligible signed marker before any real interaction can occur.
     EXPECT_TRUE(interactableSignedActorUnresolved);
     EXPECT_TRUE(interactableSignedActorDialogueLookupRefused);
 }
@@ -429,6 +429,7 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
     std::vector<SpriteObject> postWorldSprites;
     std::vector<LevelDecoration> postWorldDecorations;
     std::vector<mm6::IndoorFaceState> postWorldFaces;
+    bool clearedSignedNativePostWorld = false;
 
     // A separate opt-in candidate observes the real NPC generation and map
     // reload boundary. The original fixture above remains a pre-event probe.
@@ -513,6 +514,19 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
                 if (uCurrentlyLoadedLevelType != LEVEL_INDOOR ||
                     engine->_currentLoadedMapId != map || !pIndoor->bLoaded)
                     throw std::runtime_error("MM6 v6 post-world writer lacked indoor world");
+                const auto nativeAtEntry = decodeMM6IndoorRuntimeDelta(
+                    Blob::view(activeDelta.data(), activeDelta.size()), parsedBase);
+                for (std::size_t slot = 0; slot < nativeAtEntry.actors.size(); ++slot) {
+                    const auto &nativeActor = nativeAtEntry.actors[slot];
+                    if (!mm6::clearNoneligibleSignedActorNpc(
+                            static_cast<MonsterId>(nativeActor.monsterInfo.id),
+                            nativeActor.npcId))
+                        continue;
+                    if (slot >= pActors.size() || pActors[slot].npcId != 0)
+                        throw std::runtime_error(
+                            "MM6 post-world actor retained an ineligible native NPC marker");
+                    clearedSignedNativePostWorld = true;
+                }
                 generated = mm6::captureGeneratedNpcFields(
                     pActors, *pNPCStats, mapName, GameTitle::MM6);
                 rng = mm6::captureGameplayRngFields(
@@ -550,6 +564,10 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
             rawBytes = mm6::encodeRawSave(*raw, GameTitle::MM6);
         }
     }
+
+    if (postWorldWriter && std::getenv("ENROTH_MM6_V6_INDOOR_CASE") &&
+        std::string_view(std::getenv("ENROTH_MM6_V6_INDOOR_CASE")) == "sweep-risk")
+        EXPECT_TRUE(clearedSignedNativePostWorld);
 
     bool stageFinished = false;
     std::exception_ptr stageError;

@@ -7,6 +7,7 @@
 #include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
 #include "Engine/Objects/MonsterEnumFunctions.h"
 
+#include "MM6NativeActorNpcPolicy.h"
 #include "MM6V6IndoorSaveFields.h"
 
 namespace mm6 {
@@ -32,8 +33,11 @@ void requireOccupiedNativeSlot(const Actor &runtime, const Actor_MM7 &native,
         runtime.npcId >= 5000 && runtime.npcId < 5100 &&
         isPeasant(runtime.monsterInfo.id) &&
         monsterTierForMonsterId(runtime.monsterInfo.id) != MONSTER_TIER_A;
+    const bool clearedSignedNative = runtime.npcId == 0 &&
+        clearNoneligibleSignedActorNpc(
+            static_cast<MonsterId>(native.monsterInfo.id), native.npcId);
     if (runtime.id != slot ||
-        (runtime.npcId != native.npcId && !generatedFromNative) ||
+        (runtime.npcId != native.npcId && !generatedFromNative && !clearedSignedNative) ||
         std::to_underlying(runtime.monsterId) != native.monsterId ||
         std::to_underlying(runtime.monsterInfo.id) != native.monsterInfo.id ||
         runtime.initialPosition != native.initialPosition.toFloat())

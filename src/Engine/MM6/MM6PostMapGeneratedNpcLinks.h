@@ -19,6 +19,7 @@ size_t requirePreMapGeneratedNpcCapacity(const std::deque<Actor> &actors,
 // Proves only the bounded actor-to-row link shape produced by
 // Engine::_461103_load_level_sub; no saved identity or grng state exists in EC6.
 size_t requirePostMapGeneratedNpcLinks(std::span<const Actor> actors,
-                                       const NPCStats &npcs, GameTitle title);
+                                       const NPCStats &npcs, GameTitle title,
+                                       std::span<const std::size_t> clearedNativeSlots = {});
 
 } // namespace mm6

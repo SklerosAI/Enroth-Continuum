@@ -1361,3 +1361,13 @@ the constructor-time partial-publication gap in those tests. The combined
 fresh seven-process chain passed **1/1 per child**, and MM7 control **1/1**.
 Global assignment and pre-event failures still need a safe transaction;
 production SaveLoad/UI remains closed.
+
+A pure first-map prepublication check now validates the detached staged
+event boundary and cursor/shop join before either fresh-child reader
+constructs replay scopes or assigns global owners. The linked seven-process
+chain again passed **1/1 per child**, with an MM7 control **1/1**. The later
+publication functions still revalidate, and global assignment or pre-event
+replay can fail after mutation; these need a game-loop-owned abort/recovery
+transaction. Manual Save also pauses the timer before `doSavegame`, while the
+current writer requires settled unpaused input. A paused-menu capture or
+pre-pause snapshot contract must be proved before wiring that button.

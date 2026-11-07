@@ -2431,3 +2431,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Replaced inifile-cpp, tcpp and nlohmann/json gitlinks with their exact pinned production headers and required JSON CMake files, retaining licenses and provenance while omitting test-only nested dependencies. All 72 copied upstream files matched pinned Git blob bytes; one ztd.text gitlink remains.
 - Standalone JSON CMake configure, focused header syntax, integrated cached-library arm64 MM7 link, 12 JSON/preprocessor units and a default-path headless MM7 control passed. The ztd license/fetch route and repository-owned static-library build are still open.
+
+## [2026-11-07] verify | Owned libdwarf backend source
+- by: T-Burton-ND via codex
+- Added cpptrace's exact pinned libdwarf-lite commit as tracked source with its original LGPL notices; all 132 archive files matched and the archive digest is recorded in its provenance note.
+- A standalone arm64 cpptrace/libdwarf build passed with the local source override and FetchContent disconnected. The integration CMake route still needs that override before a clean MM7 build can close the nested fetch.

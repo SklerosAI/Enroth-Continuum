@@ -304,6 +304,8 @@ UNIT_TEST(MM6V6IndoorSaveFields, IndoorSpriteOwnerPreservesFractionalStateAndNat
     EXPECT_EQ(detached[0].timeSinceCreated.ticks(), 70000);
     std::array<SpriteObject, 2> withAppend{live, live};
     withAppend[1].initialPosition = Vec3f(1.25f, 2.5f, -3.75f);
+    withAppend[1].containing_item.potionPower = 17;
+    withAppend[1].containing_item.goldAmount = 23;
     const auto appended = mm6::captureIndoorSpriteRuntime(
         "d0.blv", source, withAppend, GameTitle::MM6);
     EXPECT_EQ(appended.nativePrefixCount, 1u);
@@ -318,6 +320,8 @@ UNIT_TEST(MM6V6IndoorSaveFields, IndoorSpriteOwnerPreservesFractionalStateAndNat
     ASSERT_EQ(appendedReplay.size(), 2u);
     EXPECT_EQ(std::bit_cast<std::uint32_t>(appendedReplay[1].initialPosition.x),
               std::bit_cast<std::uint32_t>(withAppend[1].initialPosition.x));
+    EXPECT_EQ(appendedReplay[1].containing_item.potionPower, 17);
+    EXPECT_EQ(appendedReplay[1].containing_item.goldAmount, 23);
     EXPECT_EQ(mm6::encodeSpriteRuntimeSectionAs(
         appendedDecoded, mm6::SpriteRuntimeSectionKind::IndoorV6, GameTitle::MM6),
         appendedSection);

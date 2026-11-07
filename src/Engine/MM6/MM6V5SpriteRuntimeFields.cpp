@@ -23,6 +23,7 @@ constexpr std::uint8_t VERSION = 1;
 constexpr std::size_t MAX_SPRITES = 4096;
 constexpr std::size_t SNAPSHOT_BYTES = sizeof(SpriteObject_MM7);
 constexpr std::size_t RECORD_BYTES = 100 + SNAPSHOT_BYTES + 9 * 4 + 4 * 8 + 4 + 1 + 28;
+constexpr std::size_t INDOOR_ITEM_BYTES = 9 * 4 + 8;
 
 void requireMM6(GameTitle title) {
     if (title != GameTitle::MM6)
@@ -248,8 +249,52 @@ Vec3f getVec(Reader *input) {
     return result;
 }
 
+void copyExactItemScalars(const Item &source, Item *target) {
+    target->potionPower = source.potionPower;
+    target->goldAmount = source.goldAmount;
+    target->standardEnchantment = source.standardEnchantment;
+    target->standardEnchantmentStrength = source.standardEnchantmentStrength;
+    target->specialEnchantment = source.specialEnchantment;
+    target->numCharges = source.numCharges;
+    target->maxCharges = source.maxCharges;
+    target->flags = source.flags;
+    target->lichJarCharacterIndex = source.lichJarCharacterIndex;
+    target->enchantmentExpirationTime = source.enchantmentExpirationTime;
+}
+
+void putExactIndoorItem(std::vector<std::uint8_t> *out, const Item &item) {
+    put32(out, std::bit_cast<std::uint32_t>(item.potionPower));
+    put32(out, std::bit_cast<std::uint32_t>(item.goldAmount));
+    put32(out, std::bit_cast<std::uint32_t>(item.standardEnchantment ?
+        static_cast<std::int32_t>(std::to_underlying(*item.standardEnchantment)) : -1));
+    put32(out, std::bit_cast<std::uint32_t>(item.standardEnchantmentStrength));
+    put32(out, std::to_underlying(item.specialEnchantment));
+    put32(out, std::bit_cast<std::uint32_t>(item.numCharges));
+    put32(out, std::bit_cast<std::uint32_t>(item.maxCharges));
+    put32(out, std::to_underlying(item.flags));
+    put32(out, std::bit_cast<std::uint32_t>(item.lichJarCharacterIndex));
+    put64(out, std::bit_cast<std::uint64_t>(item.enchantmentExpirationTime.ticks()));
+}
+
+void getExactIndoorItem(Reader *input, Item *item) {
+    item->potionPower = std::bit_cast<std::int32_t>(input->u32());
+    item->goldAmount = std::bit_cast<std::int32_t>(input->u32());
+    const auto attribute = std::bit_cast<std::int32_t>(input->u32());
+    item->standardEnchantment = attribute == -1 ?
+        std::optional<Attribute>{} : std::optional<Attribute>(static_cast<Attribute>(attribute));
+    item->standardEnchantmentStrength = std::bit_cast<std::int32_t>(input->u32());
+    item->specialEnchantment = static_cast<ItemEnchantment>(input->u32());
+    item->numCharges = std::bit_cast<std::int32_t>(input->u32());
+    item->maxCharges = std::bit_cast<std::int32_t>(input->u32());
+    item->flags = ItemFlags(input->u32());
+    item->lichJarCharacterIndex = std::bit_cast<std::int32_t>(input->u32());
+    item->enchantmentExpirationTime = Time::fromTicks(
+        std::bit_cast<std::int64_t>(input->u64()));
+}
+
 void putRecord(std::vector<std::uint8_t> *out,
-               const SpriteRuntimeRecord &record, AnchorPolicy policy) {
+               const SpriteRuntimeRecord &record, AnchorPolicy policy,
+               bool indoor) {
     requireNativeAnchor(record, policy);
     requireFinite(record.runtime.vPosition);
     requireFinite(record.runtime.vVelocity);
@@ -267,6 +312,8 @@ void putRecord(std::vector<std::uint8_t> *out,
     restored._lastParticleTime = record.runtime._lastParticleTime;
     restored._ticksPerParticle = record.runtime._ticksPerParticle;
     restored.containing_item.mm6RawRecord = record.runtime.containing_item.mm6RawRecord;
+    if (indoor)
+        copyExactItemScalars(record.runtime.containing_item, &restored.containing_item);
     if (!sameSprite(restored, record.runtime))
         throw std::runtime_error("MM6 SPRT runtime " +
                                  std::string(firstSpriteMismatch(restored, record.runtime)) +
@@ -288,9 +335,11 @@ void putRecord(std::vector<std::uint8_t> *out,
                     record.runtime.containing_item.mm6RawRecord->end());
     else
         out->insert(out->end(), 28, 0);
+    if (indoor)
+        putExactIndoorItem(out, record.runtime.containing_item);
 }
 
-SpriteRuntimeRecord getRecord(Reader *input) {
+SpriteRuntimeRecord getRecord(Reader *input, bool indoor) {
     SpriteRuntimeRecord result;
     const auto native = input->take(100);
     std::copy(native.begin(), native.end(), result.nativeRecord.begin());
@@ -323,6 +372,8 @@ SpriteRuntimeRecord getRecord(Reader *input) {
         std::copy(raw.begin(), raw.end(), exact.begin());
         result.runtime.containing_item.mm6RawRecord = exact;
     }
+    if (indoor)
+        getExactIndoorItem(input, &result.runtime.containing_item);
     return result;
 }
 
@@ -369,7 +420,8 @@ SaveSection encodeSpriteRuntimeSectionAs(const SpriteRuntimeSaveFields &fields,
     std::vector<std::uint8_t> bytes;
     const std::size_t extra = kind == SpriteRuntimeSectionKind::IndoorV6 ? 4 : 0;
     bytes.reserve(2 + fields.mapName.size() + 4 + extra +
-                  fields.records.size() * RECORD_BYTES);
+                  fields.records.size() * (RECORD_BYTES +
+                  (kind == SpriteRuntimeSectionKind::IndoorV6 ? INDOOR_ITEM_BYTES : 0)));
     bytes.push_back(VERSION);
     bytes.push_back(fields.mapName.size());
     bytes.insert(bytes.end(), fields.mapName.begin(), fields.mapName.end());
@@ -386,7 +438,8 @@ SaveSection encodeSpriteRuntimeSectionAs(const SpriteRuntimeSaveFields &fields,
                     fields.records[index].nativeRecord).objectDescId == 0)
                     policy = AnchorPolicy::ReusedFreeSlot;
             }
-            putRecord(&bytes, fields.records[index], policy);
+            putRecord(&bytes, fields.records[index], policy,
+                      kind == SpriteRuntimeSectionKind::IndoorV6);
         } catch (const std::exception &error) {
             if (kind == SpriteRuntimeSectionKind::IndoorV6)
                 throw std::runtime_error("MM6 ISRT " +
@@ -419,7 +472,8 @@ SpriteRuntimeSaveFields decodeSpriteRuntimeSectionAs(
             section = &candidate;
         }
     if (!section || !section->required || section->payload.size() < 6 ||
-        section->payload.size() > 2 + 63 + 8 + MAX_SPRITES * RECORD_BYTES)
+        section->payload.size() >
+            2 + 63 + 8 + MAX_SPRITES * (RECORD_BYTES + INDOOR_ITEM_BYTES))
         throw std::runtime_error("missing or unbounded MM6 SPRT section");
     Reader input(section->payload);
     if (input.u8() != VERSION)
@@ -432,12 +486,15 @@ SpriteRuntimeSaveFields decodeSpriteRuntimeSectionAs(
     if (kind == SpriteRuntimeSectionKind::IndoorV6)
         result.nativePrefixCount = input.u32();
     const std::size_t extra = kind == SpriteRuntimeSectionKind::IndoorV6 ? 4 : 0;
+    const std::size_t recordBytes = RECORD_BYTES +
+        (kind == SpriteRuntimeSectionKind::IndoorV6 ? INDOOR_ITEM_BYTES : 0);
     if (count > MAX_SPRITES || result.nativePrefixCount > count ||
-        section->payload.size() != 2 + name.size() + 4 + extra + count * RECORD_BYTES)
+        section->payload.size() != 2 + name.size() + 4 + extra + count * recordBytes)
         throw std::runtime_error("MM6 SPRT count differs from payload");
     result.records.reserve(count);
     for (std::uint32_t index = 0; index < count; ++index)
-        result.records.push_back(getRecord(&input));
+        result.records.push_back(getRecord(
+            &input, kind == SpriteRuntimeSectionKind::IndoorV6));
     input.finish();
     if (encodeSpriteRuntimeSectionAs(result, kind, title) != *section)
         throw std::runtime_error("MM6 SPRT is not canonical");

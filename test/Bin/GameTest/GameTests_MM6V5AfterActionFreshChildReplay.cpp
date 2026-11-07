@@ -22,7 +22,7 @@
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Overlays.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
-#include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/MM6/MM6ChestTitleState.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6GeneratedNpcSaveFields.h"
 #include "Engine/MM6/MM6LoadedMapSource.h"
@@ -35,7 +35,6 @@
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/MM6/MM6V3FullSessionPreflight.h"
-#include "Engine/MM6/MM6V3PreEventReplayForTest.h"
 #include "Engine/MM6/MM6V4FullSessionPreflight.h"
 #include "Engine/MM6/MM6V4OutdoorDecorationReplay.h"
 #include "Engine/MM6/MM6V4SaveFields.h"
@@ -46,7 +45,6 @@
 #include "Engine/MM6/MM6V5LiveSaveCapture.h"
 #include "Engine/MM6/MM6V5ActorRuntimeFields.h"
 #include "Engine/MM6/MM6V5DecorationRuntimeFields.h"
-#include "Engine/MM6/MM6V5PreEventActorReplayForTest.h"
 #include "Engine/MM6/MM6V5PreEventDecorationReplayForTest.h"
 #include "Engine/MM6/MM6V5PreEventSpriteReplayForTest.h"
 #include "Engine/MM6/MM6V5SaveFields.h"
@@ -202,10 +200,7 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
     std::size_t expectedNativeActors = 0;
     std::size_t expectedActiveActors = 0;
     mm6::V5FullSessionPreflight *staged = nullptr;
-    std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
     std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
-    std::unique_ptr<mm6::testing::ScopedV3PreEventReplayForTest> replay;
-    std::unique_ptr<mm6::testing::ScopedV5PreEventActorReplayForTest> actorReplay;
     std::unique_ptr<mm6::testing::ScopedV5PreEventDecorationReplayForTest> decorationReplay;
     std::unique_ptr<mm6::testing::ScopedV5PreEventSpriteReplayForTest> spriteReplay;
     std::unique_ptr<mm6::testing::ScopedPostWorldAdmissionForTest> postWorld;
@@ -239,7 +234,6 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
             expectedNativeActors = staged->v4.v3.actorMap.activeMap.delta.actors.size();
             expectedActiveActors = staged->actors.actors.size();
 
-            chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>(true);
             checkpoint = std::make_unique<mm6::testing::ScopedPreEventCheckpointForTest>(
                 GameTitle::MM6, [&] {
                     checkpointRan = true;
@@ -255,11 +249,6 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
                         throw std::runtime_error("synthetic MM6 pre-event replay fault");
                     }
                 });
-            replay = std::make_unique<mm6::testing::ScopedV3PreEventReplayForTest>(
-                GameTitle::MM6, std::move(staged->v4.v3.actorMap));
-            actorReplay = std::make_unique<mm6::testing::ScopedV5PreEventActorReplayForTest>(
-                GameTitle::MM6, staged->actors,
-                staged->v4.saved.v3.activeActorPayload);
             decorationReplay = std::make_unique<mm6::testing::ScopedV5PreEventDecorationReplayForTest>(
                 GameTitle::MM6, staged->decorations);
             spriteReplay = std::make_unique<mm6::testing::ScopedV5PreEventSpriteReplayForTest>(
@@ -269,13 +258,10 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
                     postWorldRan = true;
                     try {
                         if (!checkpoint->reachedMapLoad() || checkpoint->reachedInput() ||
-                            !replay->published() || !replay->rngPublished() ||
-                            !actorReplay->published() || !decorationReplay->published() ||
-                            !spriteReplay->published() ||
-                            !engine->_mm6FirstMapLoadAttempt->eventRestored() ||
+                            !decorationReplay->published() || !spriteReplay->published() ||
                             !engine->_mm6FirstMapLoadAttempt ||
                             engine->_mm6FirstMapLoadAttempt->phase() !=
-                                mm6::V5FirstMapLoadAttempt::Phase::ChestApplied ||
+                                mm6::V5FirstMapLoadAttempt::Phase::RngRestored ||
                             pActors.size() != expectedActiveActors ||
                             expectedActiveActors < expectedNativeActors ||
                             engine->_currentLoadedMapId != pMapTable->GetMapInfo("oute3.odm") ||
@@ -345,10 +331,7 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
             postWorld.reset();
             spriteReplay.reset();
             decorationReplay.reset();
-            actorReplay.reset();
-            replay.reset();
             checkpoint.reset();
-            chestOptIn.reset();
             abandon.reset();
             engine->_mm6FirstMapLoadAttempt.reset();
             staged = nullptr;
@@ -408,10 +391,7 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
         postWorld.reset();
         spriteReplay.reset();
         decorationReplay.reset();
-        actorReplay.reset();
-        replay.reset();
         checkpoint.reset();
-        chestOptIn.reset();
         engine->_mm6FirstMapLoadAttempt.reset();
         staged = nullptr;
         mm6::testing::setMainMenuAutosaveQuickLoadOverride(false);

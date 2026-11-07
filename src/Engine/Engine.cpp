@@ -770,7 +770,10 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
             const auto checkpoint = mm6::testing::runArmedPreEventCheckpointForTest(GameTitle::MM6);
             if (checkpoint == mm6::testing::PreEventCheckpointResult::AbortToMainMenu)
                 throw mm6::testing::PreEventCheckpointAbortForTest();
-            const bool actorPublished = mm6::testing::runArmedV3PreEventReplayForTest(
+            const bool attemptActors = engine->_mm6FirstMapLoadAttempt != nullptr;
+            if (attemptActors)
+                engine->_mm6FirstMapLoadAttempt->publishActorsAtNativeMap(GameTitle::MM6);
+            const bool actorPublished = attemptActors || mm6::testing::runArmedV3PreEventReplayForTest(
                 checkpoint, pActors, &pActors, pNPCStats,
                 application->component<EngineRandomComponent>()->type(),
                 pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
@@ -780,7 +783,7 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
                 mm6::chestMapLoadOptedIn(), &mm6::chestTitleState(),
                 pOutdoor->mm6DeltaBytes,
                 GameTitle::MM6);
-            const bool dynamicActorPublished = mm6::testing::runArmedV5PreEventActorReplayForTest(
+            const bool dynamicActorPublished = attemptActors || mm6::testing::runArmedV5PreEventActorReplayForTest(
                 checkpoint, pActors, &pActors, actorPublished,
                 pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
                 GameTitle::MM6);
@@ -850,6 +853,8 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
 
     if (bLoading && engine->gameTitle() == GameTitle::MM6) {
         try {
+            if (engine->_mm6FirstMapLoadAttempt)
+                engine->_mm6FirstMapLoadAttempt->restoreRngBeforeEvents(GameTitle::MM6);
             mm6::testing::restoreV3RngBeforeMapLoadForTest(
                 [](const GameplayRandomState &state) {
                     application->component<EngineRandomComponent>()->restoreGameplayState(state);
@@ -1159,11 +1164,13 @@ void Engine::_461103_load_level_sub() {
     pGameLoadingUI_ProgressBar->Progress();
     pParty->arenaState = ARENA_STATE_INITIAL;
     pParty->arenaLevel = ARENA_LEVEL_INVALID;
-    const bool v3NpcBypass = gameTitle() == GameTitle::MM6 &&
+    const bool firstMapNpcs = firstMapChest &&
+        _mm6FirstMapLoadAttempt->keepGeneratedNpcsAtNativeMap(gameTitle());
+    const bool v3NpcBypass = gameTitle() == GameTitle::MM6 && !firstMapNpcs &&
         mm6::testing::consumeV3GeneratedNpcBypassForTest(GameTitle::MM6);
-    const bool v6NpcBypass = gameTitle() == GameTitle::MM6 && !v3NpcBypass &&
+    const bool v6NpcBypass = gameTitle() == GameTitle::MM6 && !firstMapNpcs && !v3NpcBypass &&
         mm6::testing::consumeV6IndoorGeneratedNpcBypassForTest(GameTitle::MM6);
-    if (v3NpcBypass || v6NpcBypass) {
+    if (firstMapNpcs || v3NpcBypass || v6NpcBypass) {
         const std::vector<Actor> restoredActors(pActors.begin(), pActors.end());
         const std::vector<std::size_t> clearedNativeSlots = v6NpcBypass ?
             mm6::testing::nativeClearedIndoorActorSlotsForTest(GameTitle::MM6) :

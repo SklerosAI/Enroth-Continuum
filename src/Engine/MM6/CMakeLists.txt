@@ -40,6 +40,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6PostMapGeneratedNpcLinks.cpp MM6PostMapGeneratedNpcLinks.h
     MM6GeneratedNpcSaveFields.cpp MM6GeneratedNpcSaveFields.h
     MM6PreEventGeneratedNpcReplay.cpp MM6PreEventGeneratedNpcReplay.h
+    MM6PreEventActorReplay.cpp MM6PreEventActorReplay.h
     MM6V3PreEventReplayForTest.cpp MM6V3PreEventReplayForTest.h
     MM6GameplayRngSaveFields.cpp MM6GameplayRngSaveFields.h
     MM6V3SaveFields.cpp MM6V3SaveFields.h

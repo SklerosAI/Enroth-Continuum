@@ -15,37 +15,10 @@
 
 #include "MM6PreEventCheckpointForTest.h"
 #include "MM6ChestTitleState.h"
+#include "MM6PreEventActorReplay.h"
 #include "MM6V3OutdoorActorMapAgreement.h"
 
 namespace mm6::testing {
-
-struct V3PreEventReplayPlan {
-    std::deque<Actor> actors;
-    std::array<NPCData, 100> generatedRows;
-    GameplayRandomState gameplayRng;
-    int generatedCount = 0;
-};
-
-// Detached final pre-event agreement. ACTR is authoritative for mutable actor
-// fields, while the rebuilt native DDM prefix must keep exact PID anchors.
-// GNPC must cover every generated peasant in the complete ACTR list.
-V3PreEventReplayPlan stageV3PreEventReplayForTest(
-    const std::vector<Actor> &savedActors,
-    const GeneratedNpcSaveFields &savedGenerated,
-    const GameplayRandomState &savedRng,
-    const std::deque<Actor> &rebuiltActors,
-    const NPCStats &freshNpcs,
-    std::string_view loadedMapName,
-    std::size_t nativeActorCount,
-    std::size_t runtimeActorCap,
-    RandomEngineType selectedRngType,
-    GameTitle title);
-
-// Commit only ACTR and GNPC before _461103. RNGS is restored later, after
-// chest/arena/decoration/cursor setup and immediately before OnMapReload.
-void publishV3PreEventReplayForTest(
-    V3PreEventReplayPlan plan, std::deque<Actor> *liveActors,
-    NPCStats *liveNpcs, GameTitle title);
 
 class ScopedV3PreEventReplayForTest;
 

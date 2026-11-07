@@ -59,7 +59,7 @@ UNIT_TEST(MM6V3PreEventReplayForTest, StagesCompleteActorListWithoutMutation) {
     active.push_back(Actor(1));
     active[1].monsterInfo.id = MONSTER_ANGEL_B;
     active[1].hp = 29;
-    auto plan = mm6::testing::stageV3PreEventReplayForTest(
+    auto plan = mm6::stagePreEventActorReplay(
         active, saved, rng, rebuilt, *freshNpcs, "oute3.odm", 1, 10,
         RANDOM_ENGINE_MERSENNE_TWISTER, GameTitle::MM6);
     EXPECT_EQ(rebuilt[0].npcId, 0);
@@ -67,7 +67,7 @@ UNIT_TEST(MM6V3PreEventReplayForTest, StagesCompleteActorListWithoutMutation) {
     EXPECT_EQ(plan.actors[0].hp, 41);
     EXPECT_EQ(plan.actors.size(), 2u);
 
-    mm6::testing::publishV3PreEventReplayForTest(
+    mm6::publishPreEventActorReplay(
         std::move(plan), &rebuilt, freshNpcs.get(), GameTitle::MM6);
     EXPECT_EQ(rebuilt[0].npcId, 5000);
     EXPECT_EQ(rebuilt[0].hp, 41);
@@ -83,27 +83,27 @@ UNIT_TEST(MM6V3PreEventReplayForTest, RejectsMissingStateAndPreservesOwners) {
     std::vector<Actor> active{actor(0, 5000)};
     const auto saved = generatedFields();
     const auto rng = randomState();
-    EXPECT_THROW((void) mm6::testing::stageV3PreEventReplayForTest(
+    EXPECT_THROW((void) mm6::stagePreEventActorReplay(
         active, {}, rng, rebuilt, *freshNpcs, "oute3.odm", 1, 10,
         RANDOM_ENGINE_MERSENNE_TWISTER, GameTitle::MM6), std::exception);
-    EXPECT_THROW((void) mm6::testing::stageV3PreEventReplayForTest(
+    EXPECT_THROW((void) mm6::stagePreEventActorReplay(
         active, saved, rng, rebuilt, *freshNpcs, "oute3.odm", 2, 10,
         RANDOM_ENGINE_MERSENNE_TWISTER, GameTitle::MM6), std::exception);
-    EXPECT_THROW((void) mm6::testing::stageV3PreEventReplayForTest(
+    EXPECT_THROW((void) mm6::stagePreEventActorReplay(
         active, saved, rng, rebuilt, *freshNpcs, "oute3.odm", 1, 10,
         RANDOM_ENGINE_SEQUENTIAL, GameTitle::MM6), std::exception);
     active[0].initialPosition.x = 1;
-    EXPECT_THROW((void) mm6::testing::stageV3PreEventReplayForTest(
+    EXPECT_THROW((void) mm6::stagePreEventActorReplay(
         active, saved, rng, rebuilt, *freshNpcs, "oute3.odm", 1, 10,
         RANDOM_ENGINE_MERSENNE_TWISTER, GameTitle::MM6), std::exception);
     EXPECT_EQ(rebuilt[0].npcId, 0);
     EXPECT_EQ(freshNpcs->uNewlNPCBufPos, 0);
 
     active[0].initialPosition.x = 0;
-    auto plan = mm6::testing::stageV3PreEventReplayForTest(
+    auto plan = mm6::stagePreEventActorReplay(
         active, saved, rng, rebuilt, *freshNpcs, "oute3.odm", 1, 10,
         RANDOM_ENGINE_MERSENNE_TWISTER, GameTitle::MM6);
-    EXPECT_THROW(mm6::testing::publishV3PreEventReplayForTest(
+    EXPECT_THROW(mm6::publishPreEventActorReplay(
         std::move(plan), &rebuilt, freshNpcs.get(), GameTitle::MM7),
         std::exception);
     EXPECT_EQ(rebuilt[0].npcId, 0);

@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstring>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -29,25 +30,34 @@ void put32(std::span<std::uint8_t> bytes, size_t offset, std::uint32_t value) {
 }
 
 void requireExactSpriteProjection(const SpriteObject &source,
-                                  const SpriteObject_MM7 &projected) {
+                                  const SpriteObject_MM7 &projected,
+                                  std::size_t slot) {
+    const std::string suffix = " at sprite slot " + std::to_string(slot);
     if (source.vPosition != projected.position.toFloat()) {
+        if (source.vPosition.x != projected.position.x ||
+            source.vPosition.y != projected.position.y)
+            throw std::runtime_error("MM6 DDM sprite XY is fractional" + suffix);
         // arrangeSpriteObjects() re-snaps pickable map objects after every
         // outdoor load. Recompute from the exact integer position that the
         // DDM will restore; a fractional height is safe only if it replays.
         SpriteObject replay;
         reconstruct(projected, &replay);
-        if (!replay.uObjectDescID ||
-            (replay.uAttributes & SPRITE_DROPPED_BY_PLAYER) || replay.IsUnpickable())
-            throw std::runtime_error("MM6 active-actor DDM sprite position projection would lose state");
+        if (!replay.uObjectDescID)
+            throw std::runtime_error("MM6 DDM sprite has no active descriptor" + suffix);
+        if (replay.uAttributes & SPRITE_DROPPED_BY_PLAYER)
+            throw std::runtime_error("MM6 DDM dropped sprite Z is fractional" + suffix);
+        if (replay.IsUnpickable())
+            throw std::runtime_error("MM6 DDM unpickable sprite Z is fractional" + suffix);
         bool onWater = false;
         int faceId = 0;
         replay.vPosition.z = ODM_GetFloorLevel(replay.vPosition, &onWater, &faceId);
         if (replay.vPosition != source.vPosition)
-            throw std::runtime_error("MM6 active-actor DDM sprite position projection would lose state");
+            throw std::runtime_error("MM6 DDM sprite floor snap differs" + suffix);
     }
-    if (source.vVelocity != projected.velocity.toFloat() ||
-        source.initialPosition != projected.initialPosition.toFloat())
-        throw std::runtime_error("MM6 active-actor DDM sprite position projection would lose state");
+    if (source.vVelocity != projected.velocity.toFloat())
+        throw std::runtime_error("MM6 DDM sprite velocity is fractional" + suffix);
+    if (source.initialPosition != projected.initialPosition.toFloat())
+        throw std::runtime_error("MM6 DDM sprite initial position is fractional" + suffix);
     if (source.uSectorID != projected.uSectorID ||
         source.timeSinceCreated.ticks() != projected.uTimeSinceCreated ||
         source.tempLifetime.ticks() != projected.tempLifetime)
@@ -99,7 +109,7 @@ Blob captureOutdoorDeltaWithActiveActors(const OutdoorLocation &location,
         const SpriteObject_MM7 native = projectMM6GroundItemRecord(record);
         SpriteObject_MM7 live{};
         snapshot(source, &live);
-        requireExactSpriteProjection(source, live);
+        requireExactSpriteProjection(source, live, slot);
         const auto *lhs = reinterpret_cast<const std::uint8_t *>(&live);
         const auto *rhs = reinterpret_cast<const std::uint8_t *>(&native);
         // MM6 item bytes 26..27 and the ground-item tail are retained opaque.

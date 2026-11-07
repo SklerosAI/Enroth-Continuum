@@ -1798,3 +1798,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A new isolated headless check joined party-creation `.ec6` staging to the actual New Sorpigal `DoPrepareWorld` path. Its first run found that the MM6 source NPC table supplies a signed no-house value rejected by `RESC`; the codec now round-trips that value and still rejects other out-of-range houses.
 - The joined save-to-world check passed 1/1 with actors and twenty chests after the correction; the original scoped rollback check passed 1/1, and focused NPC codec tests passed 5/5. All monitored runs had no visible game window or focus change. Normal game-loop SaveLoad, late world-failure rollback and durable save–quit–reload remain open.
+
+## [2026-11-06] verify | MM6 editable New Game reaches first outdoor frame
+- by: T-Burton-ND via codex
+- A source-backed MM6 starter-item branch replaced inherited MM7 grants in editable party creation; a test-only temporary-profile save callback let a dedicated headless test drive the real Main Menu, Create Party and `Game::loop()` transition into the first outdoor frame.
+- The monitored MM6 control-flow check passed 1/1 with no visible window or focus change. The ordinary MM6 save guard passed 1/1 and MM7 vendor house-entry controls passed 2/2. Normal MM6 save/load, late-world rollback and campaign play remain gated; the original Quick Start choice is still separate.

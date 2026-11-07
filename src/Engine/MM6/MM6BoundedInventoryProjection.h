@@ -9,28 +9,28 @@
 #include "Engine/Objects/Inventory.h"
 #include "Engine/Objects/ItemEnumFunctions.h"
 
-#include "MM6PlainItemProjection.h"
+#include "MM6BoundedItemProjection.h"
 #include "MM6RawInventoryFields.h"
 
 namespace mm6 {
 
 // An opt-in stage for source records whose referenced items all satisfy the
-// plain-item gate. Unknown and unreferenced physical records stay in raw.
-class PlainInventoryProjection {
+// bounded plain or standard-item gates. Unreferenced records stay in raw.
+class BoundedInventoryProjection {
  public:
-    PlainInventoryProjection(const PlainInventoryProjection &) = default;
-    PlainInventoryProjection(PlainInventoryProjection &&) = default;
-    PlainInventoryProjection &operator=(const PlainInventoryProjection &) = default;
-    PlainInventoryProjection &operator=(PlainInventoryProjection &&) = default;
+    BoundedInventoryProjection(const BoundedInventoryProjection &) = default;
+    BoundedInventoryProjection(BoundedInventoryProjection &&) = default;
+    BoundedInventoryProjection &operator=(const BoundedInventoryProjection &) = default;
+    BoundedInventoryProjection &operator=(BoundedInventoryProjection &&) = default;
 
     CharacterInventory &inventory() { return _inventory; }
     const CharacterInventory &inventory() const { return _inventory; }
 
  private:
-    PlainInventoryProjection() = default;
-    friend std::optional<RawCharacterInventory> capturePlainInventory(
-        const PlainInventoryProjection &, const ItemTable &, GameTitle);
-    friend std::optional<PlainInventoryProjection> stagePlainInventory(
+    BoundedInventoryProjection() = default;
+    friend std::optional<RawCharacterInventory> captureBoundedInventory(
+        const BoundedInventoryProjection &, const ItemTable &, GameTitle);
+    friend std::optional<BoundedInventoryProjection> stageBoundedInventory(
         const RawCharacterInventory &, const ItemTable &, GameTitle);
 
     CharacterInventory _inventory = CharacterInventory::forMM6();
@@ -40,8 +40,8 @@ class PlainInventoryProjection {
     std::array<ItemType, RAW_INVENTORY_ITEM_SLOTS> _originalTypes = {};
 };
 
-inline std::optional<RawCharacterInventory> capturePlainInventory(
-    const PlainInventoryProjection &projection, const ItemTable &table, GameTitle title) {
+inline std::optional<RawCharacterInventory> captureBoundedInventory(
+    const BoundedInventoryProjection &projection, const ItemTable &table, GameTitle title) {
     if (title != GameTitle::MM6 || pItemTable != &table || projection._inventory.capacity() != 138)
         return std::nullopt;
 
@@ -55,11 +55,11 @@ inline std::optional<RawCharacterInventory> capturePlainInventory(
         if (entry.zone() == INVENTORY_ZONE_EQUIPMENT && projection._originalSlots[index] != entry.slot())
             return std::nullopt;
 
-        auto item = stagePlainItem(projection._raw.items[index], table, title);
-        if (!item || item->sourceType != projection._originalTypes[index])
+        auto item = stageBoundedItem(projection._raw.items[index], table, title);
+        if (!item || boundedItemSourceType(*item) != projection._originalTypes[index])
             return std::nullopt;
-        item->item = *entry;
-        auto encoded = capturePlainItem(*item, table, title);
+        setBoundedItem(*item, *entry);
+        auto encoded = captureBoundedItem(*item, table, title);
         if (!encoded)
             return std::nullopt;
         result.items[index] = *encoded;
@@ -96,12 +96,12 @@ inline std::optional<RawCharacterInventory> capturePlainInventory(
     return result;
 }
 
-inline std::optional<PlainInventoryProjection> stagePlainInventory(
+inline std::optional<BoundedInventoryProjection> stageBoundedInventory(
     const RawCharacterInventory &raw, const ItemTable &table, GameTitle title) {
     if (title != GameTitle::MM6 || pItemTable != &table)
         return std::nullopt;
 
-    PlainInventoryProjection result;
+    BoundedInventoryProjection result;
     result._raw = raw;
     for (int cell = 0; cell < 126; ++cell) {
         const int value = std::bit_cast<std::int32_t>(raw.gridWords[cell]);
@@ -110,29 +110,31 @@ inline std::optional<PlainInventoryProjection> stagePlainInventory(
         const int index = value - 1;
         if (index < 0 || index >= 138 || result._originalZones[index] != INVENTORY_ZONE_INVALID)
             return std::nullopt;
-        auto item = stagePlainItem(raw.items[index], table, title);
-        if (!item || !result._inventory.tryRestoreAt(index, Pointi(cell % 14, cell / 14), item->item))
+        auto item = stageBoundedItem(raw.items[index], table, title);
+        if (!item || !result._inventory.tryRestoreAt(index, Pointi(cell % 14, cell / 14), boundedItem(*item)))
             return std::nullopt;
         result._originalZones[index] = INVENTORY_ZONE_GRID;
-        result._originalTypes[index] = item->sourceType;
+        result._originalTypes[index] = boundedItemSourceType(*item);
     }
     for (int slot = 0; slot < 16; ++slot) {
         const int value = std::bit_cast<std::int32_t>(raw.equipmentWords[slot]);
+        if (value < 0)
+            return std::nullopt;
         if (!value)
             continue;
         const int index = value - 1;
         if (index < 0 || index >= 138 || result._originalZones[index] != INVENTORY_ZONE_INVALID)
             return std::nullopt;
-        auto item = stagePlainItem(raw.items[index], table, title);
+        auto item = stageBoundedItem(raw.items[index], table, title);
         const ItemSlot bodySlot = static_cast<ItemSlot>(slot + 1);
-        if (!item || !result._inventory.tryRestoreAt(index, bodySlot, item->item))
+        if (!item || !result._inventory.tryRestoreAt(index, bodySlot, boundedItem(*item)))
             return std::nullopt;
         result._originalZones[index] = INVENTORY_ZONE_EQUIPMENT;
         result._originalSlots[index] = bodySlot;
-        result._originalTypes[index] = item->sourceType;
+        result._originalTypes[index] = boundedItemSourceType(*item);
     }
 
-    auto replay = capturePlainInventory(result, table, title);
+    auto replay = captureBoundedInventory(result, table, title);
     if (!replay || replay->gridWords != raw.gridWords ||
         replay->equipmentWords != raw.equipmentWords || replay->items != raw.items)
         return std::nullopt;

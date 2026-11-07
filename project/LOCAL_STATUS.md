@@ -664,13 +664,11 @@ Linked raw-item/inventory/projection checks passed **6/6**; a monitored MM6
 headless loaded-table category check passed **1/1** without a visible window
 or focus change. This does not make any item-bearing MM6 save route playable.
 
-A detached [plain inventory projection](MM6_F4_PLAIN_INVENTORY_PROJECTION.md)
-now stages one physical 138-slot MM6 character region with exact grid and
-equipment replay, retaining unreferenced raw records. It rejects unsupported
-item records, creation, removal and equipment changes. Linked focused checks
+The earlier detached [plain inventory projection](MM6_F4_PLAIN_INVENTORY_PROJECTION.md)
+staged one physical 138-slot MM6 character region with exact grid and
+equipment replay, retaining unreferenced raw records. Linked focused checks
 passed **8/8**; a monitored loaded-table MM6 headless footprint check passed
-**1/1** over 75 samples with no visible window or focus change. No live Party
-raw owner or normal MM6 SaveLoad route has been opened.
+**1/1** over 75 samples. Its API is superseded by the bounded stage below.
 
 The [standard item bonus map](MM6_F4_STANDARD_BONUS_MAP.md) now supplies the
 same source-backed 14-index mapping to the MM6 item-table loader and future
@@ -686,3 +684,11 @@ unit checks passed **3/3** and a monitored loaded-armor MM6 headless check
 **1/1** over 65 samples without a visible window or focus change. It has not
 been attached to a live inventory or verified against native nonzero saved
 items, armor effects, mods or normal SaveLoad.
+
+The current [bounded inventory projection](MM6_F4_BOUNDED_INVENTORY_PROJECTION.md)
+combines plain/gold and standard-enchanted equipment views for one physical
+138-slot character region while preserving every raw byte. Focused linked
+checks passed **7/7** and two monitored loaded-table MM6 headless checks
+**2/2** over 65 samples with no visible window or focus change. It remains
+detached from Party and normal SaveLoad; creation/removal and equipment
+changes still reject.

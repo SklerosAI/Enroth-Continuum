@@ -1,6 +1,6 @@
 # MM6 plain item projection — F4 bounded adapter
 
-Status, 2026-11-06: a detached `stagePlainItem`/`capturePlainItem` pair projects only plain MM6 records and gold from an exact `ItemRecord28`. A later [detached character-inventory stage](MM6_F4_PLAIN_INVENTORY_PROJECTION.md) uses it, but no live chest, Party, shop, cursor, ground or normal SaveLoad owner does.
+Status, 2026-11-06: a detached `stagePlainItem`/`capturePlainItem` pair projects only plain MM6 records and gold from an exact `ItemRecord28`. The current [bounded character-inventory stage](MM6_F4_BOUNDED_INVENTORY_PROJECTION.md) uses it alongside the standard-equipment view, but no live chest, Party, shop, cursor, ground or normal SaveLoad owner does.
 
 The retained F3-matched MM6 item table assigns source types independently of inherited MM7 numeric ID ranges. MM6 spell scrolls overlap the MM7 potion-ID band; the [existing consumable gate](MM6_F4_POTION_MATRIX.md) already protects live item-on-item use from that collision. The inherited `Item_MM7` snapshot chooses its bonus union by numeric ID, so a successful first-24-byte round trip alone is insufficient evidence of a correct MM6 gameplay view. The pinned [MMExtension item layout](https://github.com/GrayFace/MMExtension/blob/9d73c0ff0482bd231ea522f752f4fe9b26640925/Scripts/Structs/01%20common%20structs.lua#L508-L529) also distinguishes the 28-byte MM6 tail from MM7's added expiration field.
 

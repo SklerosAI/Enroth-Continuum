@@ -25,7 +25,7 @@
 #include "Engine/MM6/MM6Archive.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6EncounterMonster.h"
-#include "Engine/MM6/MM6PlainInventoryProjection.h"
+#include "Engine/MM6/MM6BoundedInventoryProjection.h"
 #include "Engine/MM6/MM6PlainItemProjection.h"
 #include "Engine/MM6/MM6StandardItemProjection.h"
 #include "Engine/MapEnumFunctions.h"
@@ -200,10 +200,10 @@ GAME_TEST(MM6Headless, PlainItemProjectionUsesMM6TableTypes) {
     for (int y = 0; y < scrollSize.h; ++y)
         for (int x = 0; x < scrollSize.w; ++x)
             inventoryRaw.gridWords[y * 14 + x] = (x == 0 && y == 0) ? 138 : 0xffffffffu;
-    auto projectedInventory = mm6::stagePlainInventory(inventoryRaw, *pItemTable, GameTitle::MM6);
+    auto projectedInventory = mm6::stageBoundedInventory(inventoryRaw, *pItemTable, GameTitle::MM6);
     ASSERT_TRUE(projectedInventory);
     EXPECT_EQ(projectedInventory->inventory().entry(137)->itemId, static_cast<ItemId>(221));
-    EXPECT_EQ(mm6::capturePlainInventory(*projectedInventory, *pItemTable, GameTitle::MM6), inventoryRaw);
+    EXPECT_EQ(mm6::captureBoundedInventory(*projectedInventory, *pItemTable, GameTitle::MM6), inventoryRaw);
 }
 
 GAME_TEST(MM6Headless, StandardItemProjectionUsesMM6ArmorTable) {
@@ -237,6 +237,21 @@ GAME_TEST(MM6Headless, StandardItemProjectionUsesMM6ArmorTable) {
     EXPECT_EQ(changed->bonusRaw(), 14);
     EXPECT_EQ(changed->bonusStrengthRaw(), 19);
     EXPECT_EQ((*changed)[26], 0x5a);
+
+    mm6::RawCharacterInventory inventoryRaw;
+    inventoryRaw.items[136] = raw;
+    inventoryRaw.equipmentWords[3] = 137;
+    auto inventory = mm6::stageBoundedInventory(inventoryRaw, *pItemTable, GameTitle::MM6);
+    ASSERT_TRUE(inventory);
+    EXPECT_EQ(inventory->inventory().entry(ITEM_SLOT_ARMOUR).index(), 136);
+    EXPECT_EQ(mm6::captureBoundedInventory(*inventory, *pItemTable, GameTitle::MM6), inventoryRaw);
+    inventory->inventory().entry(136)->standardEnchantment = ATTRIBUTE_RESIST_BODY;
+    inventory->inventory().entry(136)->standardEnchantmentStrength = 19;
+    auto changedInventory = mm6::captureBoundedInventory(*inventory, *pItemTable, GameTitle::MM6);
+    ASSERT_TRUE(changedInventory);
+    EXPECT_EQ(changedInventory->items[136].bonusRaw(), 14);
+    EXPECT_EQ(changedInventory->items[136].bonusStrengthRaw(), 19);
+    EXPECT_EQ(changedInventory->items[136][26], 0x5a);
 }
 
 GAME_TEST(MM6Headless, FirstOutdoorResourcePreflight) {

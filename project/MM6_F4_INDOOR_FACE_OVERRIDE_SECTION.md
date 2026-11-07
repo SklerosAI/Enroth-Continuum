@@ -116,4 +116,21 @@ units passed **18/18**. The post-world candidate still reuses seed Party/title
 owners and is **not** a complete live indoor session. `canEnterGameLoop` stays
 false; production SaveLoad, first input and graphical acceptance remain open.
 
+A newer, separately opted-in live-session test captures the represented raw
+Party/title/NPC/inventory/cursor/shop/chest/metadata/map owners together from
+one real indoor post-world callback. It detached-round-trips all 19 raw owner
+sections, then a fresh child publishes and recaptures those owners plus
+GNPC/RNG/EVRT/IART/ISRT/IDRT/IFOV after `onMapLoad`. The four separate
+headless children (seed, first-map v4, indoor v6 writer, fresh-child reader)
+passed **1/1 each**. The first strict runs exposed a loader-repaired door
+texture-delta mismatch and a missing pre-event HELD owner; the test now anchors
+door comparison to the real pre-event baseline and publishes the fully staged
+raw owners before the second indoor load. Chest raw provenance and remaining
+door geometry/reset/outline semantics still must match. This is one indoor
+map with a null renderer, no first input and no production SaveLoad; gameplay
+admission remains false. The next gate is a bounded first turn/walk in the
+fresh child, then a test-only atomic post-input candidate and another exact
+fresh-child replay. Unsupported active beacons or changed chest/door state
+must still refuse.
+
 See [indoor face persistence gate](MM6_F4_INDOOR_FACE_PERSISTENCE_GATE.md), [known save sections](MM6_EC6_MAP_FIELDS_F4.md), and [atomic save](MM6_ATOMIC_SAVE_F4.md).

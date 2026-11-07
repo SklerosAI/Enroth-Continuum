@@ -84,4 +84,14 @@ v6/GNPC/v3 units pass **18/18**. The candidate still reuses seed Party/title
 owners, so complete indoor session validation, gameplay admission, first
 input and production SaveLoad remain open.
 
+A separate strict live-session v6 mode now captures the represented raw
+Party/title/NPC/inventory/cursor/shop/chest/metadata/map owners at one real
+post-world callback. Four separate headless children (seed, first-map v4,
+indoor writer, fresh-child reader) pass **1/1 each**. The reader publishes and
+recaptures all 19 raw sections and GNPC/RNG/EVRT/IART/ISRT/IDRT/IFOV after
+`onMapLoad`. Native chest and door residuals remain strict, allowing only
+door face-delta words deliberately reconstructed from the loaded face base.
+This is one indoor map with a null renderer; first input, post-input save,
+production SaveLoad, other maps and graphical acceptance remain open.
+
 See also: [MM6 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md), [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), and [implementation packet](../project/MM6_F4_INDOOR_FACE_OVERRIDE_SECTION.md).

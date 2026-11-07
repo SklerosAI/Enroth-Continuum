@@ -19,9 +19,9 @@ The table below remains the historical 23-gitlink inventory; the current
 repository has **4 gitlinks**. The integration Mac MM7 target built with the
 first sixteen tracked source snapshots, using its existing cached prebuilt libraries;
 GoogleTest and `gtest_parallel` are optional test inputs.
-The latest three snapshots still need an integrated MM7 link after merge. The
-remaining gitlinks, nested fetches and prebuilt-library families still block
-a clean offline MM7 build.
+All nineteen source snapshots now pass an integrated cached-library arm64 MM7
+link. The remaining gitlinks, nested fetches and prebuilt-library recipe still
+block a clean offline MM7 build.
 
 On 2026-11-07, the five exact source revisions behind the nine prebuilt Mac
 archives were extracted from pinned GitHub commit archives into

@@ -100,6 +100,8 @@ The [child-process game-loop audit](../project/MM6_F4_CHILD_PROCESS_GAME_LOOP_HA
 
 For the MM7 source-autonomy gate, read the [build-input inventory](../project/MM7_SELF_CONTAINED_BUILD_INVENTORY.md) and [source-autonomy packet](../project/MM7_SELF_CONTAINED_SOURCE.md) before changing dependencies. The original inventory found 23 gitlinks; nineteen exact pinned dependencies are now tracked here, leaving 4 gitlinks. The five source families behind nine static archives from the OpenEnroth-hosted prebuilt ZIP are also tracked under `thirdparty/repo-source/` with exact archive checks and licenses, but their local recipes are not connected. Seven nested source fetches remain. FFmpeg auto-detection and bundled notice/static-link review remain open. An opt-in `EC_LOCAL_ONLY_CONFIGURE=ON` lane blocks configure-time fetches and fails with named missing repository-owned inputs/recipes; it is not a clean offline build. The existing MM7 helper must stay installed until a clean offline replacement passes launch and save/reload. Keep OpenEnroth history, LGPL notices and contributor credit.
 
+All nineteen owned former gitlinks now pass an integrated cached-library arm64 MM7 link. Atlas and direct Mac helper source use fresh Enroth Continuum MM7 data/profile defaults, but the installed app and private files have not moved. Older save roots contain distinct files with colliding names; follow the [runtime path cutover](MM7-Runtime-Path-Cutover.md) and never silently merge them. A headless MM7 control passed with an explicit existing private data path; the new default folder is not populated yet. Atlas bundle license metadata now correctly says LGPL-3.0-or-later and preserves OpenEnroth contributor credit.
+
 A disposable v1 two-process probe now drives the real MM6 Main Menu QuickLoad FSM through `Game::loop()`/private `gameLoop()` with explicit test-only load callbacks and chest opt-in. The writer and loader each passed 1/1 under the no-window monitor; the loader entered the first outdoor map, advanced movement and left the slot bytes unchanged. An MM7 all-map headless control passed 1/1 after the shared hooks. Production MM6 load, menu slots and complete v2 session publication remain guarded; the probe is not a playable campaign or rendered-frame proof.
 
 ## Current phase and gates (2026-11-06)
@@ -241,9 +243,13 @@ ISRT sprite publication also passes exact post-event recapture. Required
 IART actor ownership and pre-event publication pass focused units. A separate
 post-world indoor candidate and fresh-child reader now pass exact GNPC row,
 RNG and IART/ISRT/IDRT recapture after `OnMapReload`; both disposable chains
-pass 1/1 per child and focused units pass 18/18. The post-world candidate
-still uses seed Party/title owners, so complete live indoor validation,
-first input and gameplay admission remain open. Keep the
+pass 1/1 per child and focused units pass 18/18. A separate strict live-session
+mode then captured represented raw Party/title/NPC/inventory/cursor/shop/chest/
+metadata/map owners at one post-world callback; its seed, v4, v6 writer and
+fresh-child reader passed 1/1 each across four processes, with exact recapture
+of all 19 raw sections and GNPC/RNG/EVRT/IART/ISRT/IDRT/IFOV. This is one
+indoor map with a null renderer: first input, post-input save, production
+SaveLoad and gameplay admission remain open. Keep the
 protected MM7 helper and all private profiles untouched while these gates advance. See
 the [current status](../project/LOCAL_STATUS.md) for the exact evidence level.
 

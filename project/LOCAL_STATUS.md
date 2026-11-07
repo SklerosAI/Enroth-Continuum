@@ -40,7 +40,7 @@ records the original Mac build's 23 external gitlinks, nine linked static
 archives from one OpenEnroth-hosted dependency ZIP and seven nested fetches.
 Nineteen pinned source inputs are now tracked here with licenses and provenance,
 leaving 4 gitlinks. The first sixteen passed a cached-input arm64 MM7 build; the
-latest three passed exact-blob and focused syntax checks and await integrated linking.
+latest three passed exact-blob and focused syntax checks; all nineteen now pass an integrated cached-library arm64 MM7 link.
 The five source families behind the cached archive are also tracked at exact pinned
 revisions with original license files and archive hashes; they are not yet
 compiled by a repo-owned recipe.
@@ -54,7 +54,9 @@ submodule updates, the OpenEnroth dependency archive and nested fetches, then
 fails with named missing repository-owned sources and build recipes. A fresh
 AppleClang arm64 configure reached that refusal without downloading. Default
 configure and the installed MM7 helper remain unchanged; this does not yet
-prove a clean offline build.
+prove a clean offline build. Atlas and direct Mac helper source now default to
+Enroth Continuum MM7 data and a fresh profile; a collision-safe private
+cutover and visible launch/save/reload check remain open.
 
 ## MM6: implementation checkpoint, not yet playable
 
@@ -1239,3 +1241,13 @@ three-process chains pass **1/1 per child**, and focused v6/GNPC/v3 units
 pass **18/18**. The candidate still reuses seed Party/title owners rather
 than a complete live indoor session; gameplay admission stays false and
 production SaveLoad remains guarded.
+
+A separate strict indoor v6 live-session mode now captures the represented
+raw Party/title/NPC/inventory/cursor/shop/chest/metadata/map owners together
+after a real indoor world load. A disposable seed, first-map v4 writer,
+indoor v6 writer and fresh-child reader passed **1/1 each** in four headless
+processes. The reader recaptures all 19 raw sections and
+GNPC/RNG/EVRT/IART/ISRT/IDRT/IFOV exactly after map load. Native residual
+checks still require exact chest provenance and door geometry outside the
+loader's known face-delta repair. This is one indoor map with a null renderer,
+no first input and no production SaveLoad; gameplay admission remains false.

@@ -26,6 +26,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [Runtime Isolation](Runtime-Isolation.md) — Title-locked MM7 helper and staged Atlas sibling assembler; MM6/MM8 launch gates remain closed
 - [MM7 Self-Contained Source](MM7-Self-Contained-Source.md) — Nineteen former gitlinks and five Mac library source trees owned here; offline build and runtime identity gates remain
+- [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md) — Enroth Continuum MM7 source defaults and collision-safe private save migration before installed-app switch
 
 ## Agent work and open questions
 
@@ -43,7 +44,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 First Map Preflight](MM6-F4-First-Map-Preflight.md) — Detached resources, events, encounters and monitored in-memory outdoor load; durable save and gameplay remain open
 - [MM6 F4 Original No-Op Events](MM6-F4-Original-Noop-Events.md) — Linked MM6 executor advances past original no-op values 20, 27 and 28 while MM7 stays isolated
 - [MM6 F4 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md) — Original MM6 indoor face targeting and linked negative DLV round trip; save/reload remains open
-- [MM6 F4 Indoor Face Overrides](MM6-F4-Indoor-Face-Overrides.md) — IFOV, IDRT, ISRT and IART v6 owners; post-world replay passes while complete session and gameplay remain gated
+- [MM6 F4 Indoor Face Overrides](MM6-F4-Indoor-Face-Overrides.md) — Four-process live-session indoor replay passes; first input and production SaveLoad remain gated
 - [MM6 F4 V5 Later Outdoor](MM6-F4-V5-Later-Outdoor.md) — Second-map seven-process save cycle and no-write location-change lifecycle pass; border travel and normal autosave remain open
 - [MM6 F4 Outdoor Tile Selectors](MM6-F4-Outdoor-Tile-Selectors.md) — Original base-field trace, MM6-only terrain reconstruction and remaining seasonal art gap
 - [MM6 F4 Outdoor Walk Sound](MM6-F4-Outdoor-Walk-Sound.md) — Original 28-class raw-tileset sound dispatcher, retained tile identity and title-specific outdoor footsteps

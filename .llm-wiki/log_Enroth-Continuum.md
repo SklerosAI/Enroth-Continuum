@@ -2585,3 +2585,8 @@ Chronological record of wiki activity.
 - Added an opt-in, no-write `DoPrepareWorld(false)` probe that compares the loaded visited target terrain and full floor against the detached source-backed arrival, then aborts to Main Menu before Party placement, chest generation or map events.
 - A scope unit passed 1/1; fresh owner-only v2 seed, v4 baseline and return-probe children each passed 1/1. The fixture kept its one-shot scope armed through the loading screen after an initial early teardown reached the unchanged chest guard.
 - This establishes one target-world floor agreement, not a visited-owner publisher or rollback. The partial world is abandoned; chest handoff, actor/sprite/event restoration, post-event checks and durable travel remain gated.
+
+## [2026-11-07] update | MM6 return global status
+- by: T-Burton-ND via codex
+- Reconciled local and campaign summaries with the verified no-write normal-transition return probe. Its source-backed target floor agreed before Party placement and map events, then the partial world was abandoned to Main Menu.
+- The probe does not admit a returned map, production save or border travel. The scoped return packet and separate verification entry remain the detailed evidence.

@@ -33,6 +33,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md) — One-command clean tracked-source MM7 and Atlas build under network denial, with focused headless controls
 - [MM7 Disposable Save and Reload](MM7-Disposable-Save-Reload.md) — Isolated two-process headless disk save and normal-menu reload, repeated on current source-owned integration build
 - [MM7 Atomic Save File](MM7-Atomic-Save-File.md) — Isolated native-slot transaction, backup preflight and seven focused fault tests; production SaveLoad wiring remains open
+- [MM7 Level-Seven Artifacts](MM7-Level-Seven-Artifacts.md) — MM7 artifact flags, cap and indoor pickup payload fixed with focused GameTests; graphical pickup remains open
 - [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md) — Hidden OpenGL first-map world and HUD frame with no visible window or focus change; visible save/reload remains open
 - [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md) — Private MM7 paths, save migration and installed Release helper with system OpenGL linkage
 

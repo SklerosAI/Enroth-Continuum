@@ -122,6 +122,12 @@ Defects, inherited unless noted:
 10. Artifacts from level-7 treasure are neither marked found nor capped
     (`Item.cpp:234-252`). Reachable via level-7 chests in d09, d12, d27.
     Upstream #1988.
+    **Fixed in the integration tree on 2026-11-07:** MM7's level-7 picker now
+    marks its selection and honors the configured artifact cap. An indoor
+    spawned artifact retains its pickup item. Two focused MM7 GameTests passed,
+    along with seven atomic-save tests and three MM7 controls (12/12 total);
+    the MM6 startup/chest guard passed 1/1. The installed app and frozen MM7
+    baseline have not been replaced, and a real chest pickup remains to inspect.
 11. Smaller spell defects: the Day of the Gods event path is half-fixed
     (`Spells.cpp:800-815`, event 532 gives the wrong power), Spirit Lash
     drains mana out of range (`CastSpellInfo.cpp:946`), a scroll is consumed

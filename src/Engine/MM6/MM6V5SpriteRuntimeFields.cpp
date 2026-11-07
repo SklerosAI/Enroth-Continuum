@@ -312,10 +312,19 @@ SaveSection encodeSpriteRuntimeSectionAs(const SpriteRuntimeSaveFields &fields,
     put32(&bytes, fields.records.size());
     if (kind == SpriteRuntimeSectionKind::IndoorV6)
         put32(&bytes, fields.nativePrefixCount);
-    for (std::size_t index = 0; index < fields.records.size(); ++index)
-        putRecord(&bytes, fields.records[index],
-                  kind == SpriteRuntimeSectionKind::OutdoorV5 ||
-                  index < fields.nativePrefixCount);
+    for (std::size_t index = 0; index < fields.records.size(); ++index) {
+        try {
+            putRecord(&bytes, fields.records[index],
+                      kind == SpriteRuntimeSectionKind::OutdoorV5 ||
+                      index < fields.nativePrefixCount);
+        } catch (const std::exception &error) {
+            if (kind == SpriteRuntimeSectionKind::IndoorV6)
+                throw std::runtime_error("MM6 ISRT " +
+                    std::string(index < fields.nativePrefixCount ? "native" : "appended") +
+                    " sprite slot " + std::to_string(index) + ": " + error.what());
+            throw;
+        }
+    }
     return {kind == SpriteRuntimeSectionKind::OutdoorV5 ? OUTDOOR_TAG : INDOOR_TAG,
             true, std::move(bytes)};
 }

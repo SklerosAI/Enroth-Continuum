@@ -1852,3 +1852,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Captured an item-bearing MM6 chest in a hidden OpenGL first-map test. The local PNG was visually inspected; the chest panel and item icons rendered in the expected area. The monitored run passed 1/1 over 118 samples with no visible window or focus change; the PNG remains untracked.
 - Two separate monitored processes passed the temporary New Game write and three bounded post-reload frame gates (1/1 each), with no visible window or focus change. A linked combat transient rollback test passed 3/3. Production `loadGame()` and the complete `Game::gameLoop()` remain guarded.
+
+## [2026-11-06] integrate | MM6 v2 raw owner stage and turn rollback
+- by: T-Burton-ND via codex
+- Integrated a detached EC6 v2 stage that validates all 67 map bases and active CHST before constructing raw inventory, cursor and shop owners. Focused linked tests reported 11 passed and one optional private-fixture skip; no live owner was published.
+- Extended the first-map combat rollback to seven turn-engine scalars alongside its queue and other containers; linked late-fault/commit checks passed 3/3. Production MM6 SaveLoad and the complete world transaction remain guarded.

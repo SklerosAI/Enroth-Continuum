@@ -78,6 +78,8 @@
 #include "Io/Mouse.h"
 #include "Library/Platform/Application/PlatformApplication.h"
 
+#include "MM6V5LaterOutdoorCaptureForTest.h"
+
 namespace {
 
 std::filesystem::path ownerOnlyProfile() {
@@ -146,12 +148,21 @@ std::vector<LevelDecoration> sourceDecorations(const mm6::LoadedMapSource &maps,
 // A separate writer enters the non-start outdoor map from a strict disposable
 // source. Each fresh child first proves every saved owner before admitting
 // either an abort or one bounded input sequence.
-void runV5LaterOutdoorFreshChildReplay(EngineController &game, bool allowInput) {
-    const char *enable = std::getenv(allowInput ?
-        "ENROTH_MM6_V5_OUTE2_FIRST_INPUT_ENABLE" :
-        "ENROTH_MM6_V5_OUTE2_REPLAY_ENABLE");
-    if (!enable || std::string_view(enable) != (allowInput ?
-            "strict-v5-oute2-first-input" : "strict-v5-oute2"))
+enum class LaterReplayMode { AbortBeforeInput, FirstInput, SecondWrite };
+
+void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode mode) {
+    const bool allowInput = mode != LaterReplayMode::AbortBeforeInput;
+    const char *enable = std::getenv(
+        mode == LaterReplayMode::AbortBeforeInput ?
+            "ENROTH_MM6_V5_OUTE2_REPLAY_ENABLE" :
+        mode == LaterReplayMode::FirstInput ?
+            "ENROTH_MM6_V5_OUTE2_FIRST_INPUT_ENABLE" :
+            "ENROTH_MM6_V5_OUTE2_SECOND_WRITE_ENABLE");
+    const std::string_view expectedEnable =
+        mode == LaterReplayMode::AbortBeforeInput ? "strict-v5-oute2" :
+        mode == LaterReplayMode::FirstInput ? "strict-v5-oute2-first-input" :
+        "strict-v5-oute2-second-write";
+    if (!enable || std::string_view(enable) != expectedEnable)
         GTEST_SKIP() << "Run only after strict v5 writer and owner admission";
     const std::filesystem::path profile = ownerOnlyProfile();
     if (profile.empty())
@@ -175,6 +186,7 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, bool allowInput) 
     bool finalOwnersAgree = false;
     bool firstInputReached = false;
     bool movementApplied = false;
+    bool secondCandidateWritten = false;
     std::string finalOwnerError;
     std::size_t expectedNativeActors = 0;
     std::size_t expectedActiveActors = 0;
@@ -471,6 +483,11 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, bool allowInput) 
                     pPartyActionQueue->uNumActions == 0 &&
                     engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute2.odm") &&
                     !engine->_pendingTransition;
+                if (movementApplied && mode == LaterReplayMode::SecondWrite) {
+                    mm6::testing::writeV5LaterOutdoorAfterInputCandidateForTest(
+                        profile, v4Before, before);
+                    secondCandidateWritten = true;
+                }
             });
         }
         game.runGameRoutine([] {
@@ -499,6 +516,12 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, bool allowInput) 
         EXPECT_TRUE(firstInputReached);
         EXPECT_TRUE(movementApplied);
     }
+    if (mode == LaterReplayMode::SecondWrite) {
+        EXPECT_TRUE(secondCandidateWritten);
+        const auto second = profile / "saves/candidate-v5-oute2-after-input.ec6";
+        ASSERT_TRUE(std::filesystem::is_regular_file(second));
+        EXPECT_FALSE(slotBytes(second).empty());
+    }
     EXPECT_EQ(slotBytes(candidate), before);
     EXPECT_EQ(slotBytes(profile / "saves" / "candidate-v4.ec6"), v4Before);
     EXPECT_EQ(slotBytes(profile / "saves" / "autosave.ec6"), seedBefore);
@@ -506,9 +529,13 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, bool allowInput) 
 }
 
 GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorRestoresOwnersBeforeInputAndAborts) {
-    runV5LaterOutdoorFreshChildReplay(game, false);
+    runV5LaterOutdoorFreshChildReplay(game, LaterReplayMode::AbortBeforeInput);
 }
 
 GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorAdmitsBoundedFirstInput) {
-    runV5LaterOutdoorFreshChildReplay(game, true);
+    runV5LaterOutdoorFreshChildReplay(game, LaterReplayMode::FirstInput);
+}
+
+GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorWritesAfterReloadedInput) {
+    runV5LaterOutdoorFreshChildReplay(game, LaterReplayMode::SecondWrite);
 }

@@ -64,11 +64,14 @@
 #include "GUI/GUIWindow.h"
 #include "Library/Platform/Application/PlatformApplication.h"
 
+#include "MM6V5LaterOutdoorCaptureForTest.h"
+
 namespace {
 
 constexpr std::string_view TARGET_MAP = "oute2.odm";
 constexpr std::string_view TARGET_DELTA = "oute2.ddm";
 constexpr std::string_view TARGET_SLOT = "candidate-v5-oute2.ec6";
+constexpr std::string_view SECOND_SLOT = "candidate-v5-oute2-after-input.ec6";
 
 std::filesystem::path ownerOnlyProfile() {
     const char *value = std::getenv("ENROTH_MM6_RESTART_PROFILE");
@@ -112,18 +115,29 @@ std::vector<LevelDecoration> sourceDecorations(const mm6::LoadedMapSource &maps,
     return result;
 }
 
-std::vector<std::uint8_t> captureLaterOutdoor(std::span<const std::uint8_t> sourceV4) {
+std::vector<std::uint8_t> captureLaterOutdoor(
+    std::span<const std::uint8_t> sourceV4,
+    std::span<const std::uint8_t> previousV5 = {}) {
     if (engine->gameTitle() != GameTitle::MM6 ||
         uCurrentlyLoadedLevelType != LEVEL_OUTDOOR ||
         engine->_currentLoadedMapId != pMapTable->GetMapInfo(TARGET_MAP) ||
         engine->_pendingTransition || pPartyActionQueue->uNumActions)
         throw std::runtime_error("MM6 v5 later outdoor capture lacks settled map owners");
-    auto saved = std::unique_ptr<mm6::V4SaveFields>(
-        new mm6::V4SaveFields(mm6::decodeV4Save(sourceV4, GameTitle::MM6)));
-    if (saved->v3.raw.metadata.header.mapFileName != "oute3.odm" ||
-        saved->eventRuntime.maps.size() != 1 ||
-        saved->eventRuntime.maps[0].mapName != "oute3.odm")
-        throw std::runtime_error("MM6 later outdoor capture lacks strict first-map source");
+    std::unique_ptr<mm6::V5SaveFields> previous;
+    if (!previousV5.empty())
+        previous.reset(new mm6::V5SaveFields(
+            mm6::decodeV5Save(previousV5, GameTitle::MM6)));
+    auto saved = previous ?
+        std::unique_ptr<mm6::V4SaveFields>(
+            new mm6::V4SaveFields(std::move(previous->v4))) :
+        std::unique_ptr<mm6::V4SaveFields>(
+            new mm6::V4SaveFields(mm6::decodeV4Save(sourceV4, GameTitle::MM6)));
+    if (saved->eventRuntime.maps.size() != 1 ||
+        saved->v3.raw.metadata.header.mapFileName !=
+            (previous ? TARGET_MAP : "oute3.odm") ||
+        saved->eventRuntime.maps[0].mapName !=
+            (previous ? TARGET_MAP : "oute3.odm"))
+        throw std::runtime_error("MM6 later outdoor capture lacks exact prior map owner");
     mm6::requireRawV2RepresentableState(*pParty, {}, GameTitle::MM6);
     (void) mm6::stageRawCursorImagePlan(
         *pParty, mm6::rawHeldCursorState(GameTitle::MM6), *pItemTable, GameTitle::MM6);
@@ -132,7 +146,12 @@ std::vector<std::uint8_t> captureLaterOutdoor(std::span<const std::uint8_t> sour
         throw std::runtime_error("MM6 later outdoor map cache count differs");
 
     mm6::V3SaveFields &fields = saved->v3;
+    const auto priorPosition = fields.raw.core.party.position;
+    const auto priorYaw = fields.raw.core.party.viewYaw;
     fields.raw.core = mm6::captureCoreFields(*pParty, GameTitle::MM6);
+    if (previous && (fields.raw.core.party.position == priorPosition ||
+                     fields.raw.core.party.viewYaw == priorYaw))
+        throw std::runtime_error("MM6 later outdoor second capture lacks bounded input movement");
     const auto durable = mm6::captureDurableFields(*pParty, GameTitle::MM6);
     fields.raw.bits = durable.bits;
     fields.raw.effects = durable.effects;
@@ -172,20 +191,24 @@ std::vector<std::uint8_t> captureLaterOutdoor(std::span<const std::uint8_t> sour
     const std::vector<Actor> liveActors(pActors.begin(), pActors.end());
     const auto actors = mm6::canonicalActorsWithDerivedNamesRemoved(
         liveActors, *pMonsterStats, GameTitle::MM6);
-    fields.activeActorPayload = mm6::encodeActiveActorSection(actors, GameTitle::MM6);
+    if (!previous)
+        fields.activeActorPayload = mm6::encodeActiveActorSection(actors, GameTitle::MM6);
     fields.generatedNpcs = mm6::captureGeneratedNpcFields(
         pActors, *pNPCStats, TARGET_MAP, GameTitle::MM6);
     const auto random = application->component<EngineRandomComponent>();
     fields.gameplayRng = mm6::captureGameplayRngFields(*random, GameTitle::MM6);
-    mm6::EventRuntimeMapEntry event;
+    mm6::EventRuntimeMapEntry event = previous ?
+        saved->eventRuntime.maps[0] : mm6::EventRuntimeMapEntry{};
     event.mapName = TARGET_MAP;
     event.respawnCount = pOutdoor->ddm.respawnCount;
     event.lastRespawnDay = pOutdoor->ddm.lastRespawnDay;
     event.mapVars = engine->_persistentVariables.mapVars;
     event.decorVars = engine->_persistentVariables.decorVars;
-    auto baseDecorations = sourceDecorations(maps, TARGET_MAP);
-    event.bindings = mm6::captureEventRuntimeDecorationBindings(
-        baseDecorations, GameTitle::MM6);
+    if (!previous) {
+        auto baseDecorations = sourceDecorations(maps, TARGET_MAP);
+        event.bindings = mm6::captureEventRuntimeDecorationBindings(
+            baseDecorations, GameTitle::MM6);
+    }
     saved->eventRuntime.maps = {event};
 
     auto sprites = mm6::captureSpriteRuntimeFields(
@@ -202,8 +225,9 @@ std::vector<std::uint8_t> captureLaterOutdoor(std::span<const std::uint8_t> sour
 }
 
 void requireLaterOutdoorCandidate(std::span<const std::uint8_t> bytes,
-                                  std::span<const std::uint8_t> sourceV4) {
-    if (captureLaterOutdoor(sourceV4) !=
+                                  std::span<const std::uint8_t> sourceV4,
+                                  std::span<const std::uint8_t> previousV5 = {}) {
+    if (captureLaterOutdoor(sourceV4, previousV5) !=
         std::vector<std::uint8_t>(bytes.begin(), bytes.end()))
         throw std::runtime_error("MM6 later outdoor live owners changed before atomic write");
     const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
@@ -236,6 +260,37 @@ void requireLaterOutdoorCandidate(std::span<const std::uint8_t> bytes,
 }
 
 } // namespace
+
+void mm6::testing::writeV5LaterOutdoorAfterInputCandidateForTest(
+    const std::filesystem::path &profile,
+    std::span<const std::uint8_t> originalV4,
+    std::span<const std::uint8_t> previousV5) {
+    if (previousV5.empty() || gameTimer->isPaused() ||
+        engine->gameTitle() != GameTitle::MM6 ||
+        uCurrentlyLoadedLevelType != LEVEL_OUTDOOR ||
+        engine->_currentLoadedMapId != pMapTable->GetMapInfo(TARGET_MAP) ||
+        engine->_pendingTransition || pPartyActionQueue->uNumActions)
+        throw std::runtime_error("MM6 later outdoor second write lacks settled input");
+    const auto seedBefore = slotBytes(profile / "saves/autosave.ec6");
+    const auto originalBefore = slotBytes(profile / "saves/candidate-v4.ec6");
+    const auto previousBefore = slotBytes(profile / "saves/candidate-v5-oute2.ec6");
+    if (seedBefore.empty() || originalBefore !=
+            std::vector<std::uint8_t>(originalV4.begin(), originalV4.end()) ||
+        previousBefore !=
+            std::vector<std::uint8_t>(previousV5.begin(), previousV5.end()))
+        throw std::runtime_error("MM6 later outdoor second write changed a source slot");
+    const auto candidate = captureLaterOutdoor(originalV4, previousV5);
+    const auto validate = [&](std::span<const std::uint8_t> proposed) {
+        requireLaterOutdoorCandidate(proposed, originalV4, previousV5);
+    };
+    validate(candidate);
+    mm6::writeAtomicV5SaveFileForTest(profile, SECOND_SLOT, candidate, validate);
+    if (slotBytes(profile / "saves" / SECOND_SLOT) != candidate ||
+        slotBytes(profile / "saves/candidate-v5-oute2.ec6") != previousBefore ||
+        slotBytes(profile / "saves/candidate-v4.ec6") != originalBefore ||
+        slotBytes(profile / "saves/autosave.ec6") != seedBefore)
+        throw std::runtime_error("MM6 later outdoor second write changed another slot");
+}
 
 GAME_TEST(MM6V5LaterOutdoorHeadless, DISABLED_WritesDistinctSecondOutdoorCandidate) {
     const char *enable = std::getenv("ENROTH_MM6_V5_OUTE2_WRITE_ENABLE");

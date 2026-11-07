@@ -128,11 +128,12 @@ std::vector<LevelDecoration> sourceDecorations(const mm6::LoadedMapSource &maps,
 
 } // namespace
 
-// Run only after a separate strict post-entry v4 writer and owner admission
-// produce the exact disposable candidate-v4.ec6. This stays disabled while
-// no exact v4 slot exists. It never enables production SaveLoad or input.
-GAME_TEST(MM6V4FreshChildReplayHeadless, DISABLED_FreshQuickLoadRestoresBeforeEventsAndAborts) {
-    const char *enable = std::getenv("ENROTH_MM6_V4_REPLAY_ENABLE");
+// Both probes consume a candidate produced by a separate strict writer in an
+// owner-only disposable profile. The second probe reaches only a bounded
+// first input and movement step; neither opens production SaveLoad.
+void runV4FreshChildReplay(EngineController &game, bool allowInput) {
+    const char *enable = std::getenv(allowInput ? "ENROTH_MM6_V4_FIRST_INPUT_ENABLE" :
+                                                "ENROTH_MM6_V4_REPLAY_ENABLE");
     if (!enable || std::string_view(enable) != "strict-v4")
         GTEST_SKIP() << "Run only after strict v4 writer and owner admission";
     const std::filesystem::path profile = ownerOnlyProfile();
@@ -152,6 +153,8 @@ GAME_TEST(MM6V4FreshChildReplayHeadless, DISABLED_FreshQuickLoadRestoresBeforeEv
     bool freshMapBeforeReplay = false;
     bool postWorldRan = false;
     bool finalOwnersAgree = false;
+    bool firstInputReached = false;
+    bool movementApplied = false;
     std::string finalOwnerError;
     std::size_t expectedNativeActors = 0;
     std::size_t expectedActiveActors = 0;
@@ -327,7 +330,12 @@ GAME_TEST(MM6V4FreshChildReplayHeadless, DISABLED_FreshQuickLoadRestoresBeforeEv
                     } catch (const std::exception &error) {
                         finalOwnerError = error.what();
                     }
-                }, mm6::testing::PostWorldAdmissionResult::AbortToMainMenu);
+                    // A failing owner check must never admit the input loop.
+                    if (allowInput && !finalOwnersAgree)
+                        throw std::runtime_error("MM6 v4 first-input admission refused: " +
+                                                 finalOwnerError);
+                }, allowInput ? mm6::testing::PostWorldAdmissionResult::Continue :
+                                mm6::testing::PostWorldAdmissionResult::AbortToMainMenu);
             selected = true;
         });
         mm6::testing::setMainMenuAutosaveQuickLoadOverride(true);
@@ -335,7 +343,39 @@ GAME_TEST(MM6V4FreshChildReplayHeadless, DISABLED_FreshQuickLoadRestoresBeforeEv
     });
 
     game.skipLoadingScreen();
-    game.tick(2);
+    game.tick(allowInput ? 3 : 2);
+    if (allowInput && finalOwnersAgree) {
+        game.runGameRoutine([&] {
+            firstInputReached = checkpoint->reachedInput() &&
+                !gameTimer->isPaused() &&
+                !(engineFlags & ENGINE_SKIP_NEXT_WORLD_UPDATE) &&
+                !(engineFlags & ENGINE_SKIP_NEXT_USER_INPUT) &&
+                engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute3.odm") &&
+                uCurrentlyLoadedLevelType == LEVEL_OUTDOOR &&
+                !engine->_pendingTransition &&
+                pPartyActionQueue->uNumActions == 0;
+            if (firstInputReached) {
+                pPartyActionQueue->Add(PARTY_TurnLeft);
+                pPartyActionQueue->Add(PARTY_WalkForward);
+            }
+        });
+        if (firstInputReached) {
+            const auto beforePosition = pParty->pos;
+            const auto beforeYaw = pParty->_viewYaw;
+            game.tick(3);
+            game.runGameRoutine([&] {
+                movementApplied = pParty->pos != beforePosition &&
+                    pParty->_viewYaw != beforeYaw &&
+                    pPartyActionQueue->uNumActions == 0 &&
+                    engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute3.odm") &&
+                    !engine->_pendingTransition;
+            });
+        }
+        game.runGameRoutine([] {
+            uGameState = GAME_STATE_GAME_QUITTING_TO_MAIN_MENU;
+        });
+        game.tick(2);
+    }
     game.runGameRoutine([&] {
         postWorld.reset();
         replay.reset();
@@ -350,7 +390,21 @@ GAME_TEST(MM6V4FreshChildReplayHeadless, DISABLED_FreshQuickLoadRestoresBeforeEv
     EXPECT_TRUE(freshMapBeforeReplay);
     EXPECT_TRUE(postWorldRan);
     EXPECT_TRUE(finalOwnersAgree) << finalOwnerError;
+    if (allowInput) {
+        EXPECT_TRUE(firstInputReached);
+        EXPECT_TRUE(movementApplied);
+    } else {
+        EXPECT_FALSE(checkpointRan && firstInputReached);
+    }
     EXPECT_EQ(slotBytes(candidate), before);
     EXPECT_EQ(slotBytes(profile / "saves" / "autosave.ec6"), seedBefore);
     EXPECT_EQ(window->nativeHandle(), nullptr);
+}
+
+GAME_TEST(MM6V4FreshChildReplayHeadless, DISABLED_FreshQuickLoadRestoresBeforeEventsAndAborts) {
+    runV4FreshChildReplay(game, false);
+}
+
+GAME_TEST(MM6V4FirstInputHeadless, DISABLED_FreshQuickLoadMovesOnceInRealLoop) {
+    runV4FreshChildReplay(game, true);
 }

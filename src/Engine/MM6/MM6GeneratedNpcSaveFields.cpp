@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <limits>
 #include <stdexcept>
 #include <string_view>
 #include <utility>
@@ -116,7 +117,8 @@ GeneratedNpcSaveFields captureGeneratedNpcFields(
             throw std::runtime_error("invalid MM6 generated NPC actor source");
         if (actor.npcId < 5000)
             continue;
-        if (slot > UINT16_MAX || result.rows.size() >= MAX_ROWS ||
+        if (slot > std::numeric_limits<std::uint16_t>::max() ||
+            result.rows.size() >= MAX_ROWS ||
             actor.npcId != 5000 + result.rows.size())
             throw std::runtime_error("MM6 generated NPC links are not contiguous");
         result.rows.push_back({static_cast<std::uint16_t>(slot),

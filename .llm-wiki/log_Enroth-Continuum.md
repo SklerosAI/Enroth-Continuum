@@ -1902,3 +1902,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Joined decoded core, progress and supported physical inventory on one detached Party, rejecting divergent saved/raw images and unsupported late items without changing the baseline.
 - Focused linked raw-runtime, inventory and Antique checks passed 11/11. Resistance, buff, hireling, recovery and world owners remain outside this partial candidate; production MM6 loading stays guarded.
+
+## [2026-11-06] integrate | MM6 v2 detached world fields
+- by: T-Burton-ND via codex
+- Retained active map counts from the validated v2 pass and shared NPC/map-buffer staging with v1, adding detached timer, overlay and CHST owners.
+- Focused linked raw-runtime/world-runtime checks passed 14/14, including invalid actor-overlay rejection without input NPC/timer changes. Live map/resource publication remains open.

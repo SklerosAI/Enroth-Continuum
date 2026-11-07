@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <cstdint>
+#include <span>
 #include <string>
 
 #include "Testing/Game/GameTest.h"
@@ -6,7 +8,9 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
+#include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
 
 #include "GUI/GUIWindow.h"
@@ -39,7 +43,11 @@ GAME_TEST(MM7DisposableSave, DISABLED_WriteFreshProfile) {
     });
 
     ASSERT_TRUE(ufs->exists(slot));
-    EXPECT_GT(ufs->read(slot).size(), 1024u);
+    const Blob saved = ufs->read(slot);
+    EXPECT_GT(saved.size(), 1024u);
+    EXPECT_TRUE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saved.data()), saved.size()),
+        GameTitle::MM7, *pGames_LOD));
     EXPECT_EQ(pParty->uNumGold, savedGold);
 }
 

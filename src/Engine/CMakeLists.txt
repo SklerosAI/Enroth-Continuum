@@ -12,6 +12,7 @@ set(ENGINE_SOURCES
         Localization.cpp
         MapEnums.cpp
         MM7/MM7AtomicSaveFile.cpp
+        MM7/MM7SaveValidation.cpp
         Mods/PrivateMods.cpp
         Party.cpp
         PartyEnums.cpp
@@ -44,6 +45,7 @@ set(ENGINE_HEADERS
         MapEnumFunctions.h
         MapEnums.h
         MM7/MM7AtomicSaveFile.h
+        MM7/MM7SaveValidation.h
         Mods/PrivateMods.h
         Party.h
         PartyEnums.h
@@ -114,6 +116,7 @@ if(OE_BUILD_TESTS)
     set(TEST_ENGINE_SOURCES
             Tests/Mm7TextRu_ut.cpp
             MM7/Tests/MM7AtomicSaveFile_ut.cpp
+            MM7/Tests/MM7SaveValidation_ut.cpp
             Mods/PrivateMods_ut.cpp)
 
     add_library(test_engine OBJECT ${TEST_ENGINE_SOURCES})

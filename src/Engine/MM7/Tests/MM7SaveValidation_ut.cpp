@@ -1,0 +1,154 @@
+#include <cstdint>
+#include <string>
+
+#include "Testing/Unit/UnitTest.h"
+
+#include "Engine/MM7/MM7SaveValidation.h"
+#include "Engine/Objects/SpriteEnums.h"
+#include "Engine/Snapshots/CompositeSnapshots.h"
+#include "Engine/Snapshots/EntitySnapshots.h"
+
+#include "Library/Lod/LodReader.h"
+#include "Library/LodFormats/LodFormats.h"
+
+#include "Utility/Exception.h"
+
+namespace {
+
+std::string emptyDelta(bool indoor) {
+    const std::size_t prefix = sizeof(LocationHeader_MM7) + (indoor ? 875 : 2 * 88 * 11);
+    const std::size_t tail = sizeof(PersistentVariables_MM7) + sizeof(std::int64_t) + sizeof(MapWeather_MM7);
+    // Actor, sprite and chest vectors each have a zero count.
+    return std::string(prefix + 3 * sizeof(std::uint32_t) + tail, '\0');
+}
+
+void putUint32(std::string *data, std::size_t offset, std::uint32_t value) {
+    for (std::size_t byte = 0; byte < sizeof(value); ++byte)
+        (*data)[offset + byte] = static_cast<char>(value >> (8 * byte));
+}
+
+} // namespace
+
+UNIT_TEST(MM7SaveValidation, BoundedLODEntryRejectsDeclaredExpansion) {
+    Blob original = Blob::fromString("MM7 bounded decode");
+    Blob compressed = lod::encodeCompressed(original);
+    Blob decoded = mm7::detail::decodeBoundedSaveEntry(compressed);
+    EXPECT_EQ(decoded.str(), original.str());
+
+    std::string corrupted(compressed.str());
+    putUint32(&corrupted, 12, mm7::detail::maxDecodedSaveEntryBytes + 1);
+    EXPECT_THROW(mm7::detail::decodeBoundedSaveEntry(Blob::fromString(corrupted)), Exception);
+}
+
+UNIT_TEST(MM7SaveValidation, IndoorDeltaCountsAreBoundedBeforeDecode) {
+    std::string valid = emptyDelta(true);
+    EXPECT_TRUE(mm7::detail::hasBoundedDeltaRecords(Blob::fromString(valid), true, 0, 0));
+
+    const std::size_t actorCount = sizeof(LocationHeader_MM7) + 875;
+    std::string hugeCount = valid;
+    putUint32(&hugeCount, actorCount, 0xffffffffu);
+    EXPECT_FALSE(mm7::detail::hasBoundedDeltaRecords(Blob::fromString(hugeCount), true, 0, 0));
+
+    valid.pop_back();
+    EXPECT_FALSE(mm7::detail::hasBoundedDeltaRecords(Blob::fromString(valid), true, 0, 0));
+    EXPECT_FALSE(mm7::detail::hasBoundedDeltaRecords(Blob::fromString(emptyDelta(true)),
+                                                     true, 0, 0, 0, 1));
+}
+
+UNIT_TEST(MM7SaveValidation, OutdoorDeltaCountsAndTailAreExact) {
+    std::string valid = emptyDelta(false);
+    EXPECT_TRUE(mm7::detail::hasBoundedDeltaRecords(Blob::fromString(valid), false, 0, 0));
+
+    const std::size_t spriteCount = sizeof(LocationHeader_MM7) + 2 * 88 * 11 + sizeof(std::uint32_t);
+    std::string oversized = valid;
+    putUint32(&oversized, spriteCount, 10);
+    EXPECT_FALSE(mm7::detail::hasBoundedDeltaRecords(Blob::fromString(oversized), false, 0, 0));
+
+    valid.push_back('\0');
+    EXPECT_FALSE(mm7::detail::hasBoundedDeltaRecords(Blob::fromString(valid), false, 0, 0));
+}
+
+UNIT_TEST(MM7SaveValidation, ForeignTitleAndClosedGameArchiveRefuse) {
+    LodReader closedGamesLod;
+    const std::string bytes = "not a save";
+    const auto span = std::span<const std::uint8_t>(
+        reinterpret_cast<const std::uint8_t *>(bytes.data()), bytes.size());
+    EXPECT_FALSE(mm7::preflightNativeSaveStructure(span, GameTitle::MM6, closedGamesLod));
+    EXPECT_FALSE(mm7::preflightNativeSaveStructure(span, GameTitle::MM7, closedGamesLod));
+}
+
+UNIT_TEST(MM7SaveValidation, RejectsInvalidCharacterInventoryReferences) {
+    Character_MM7 character{};
+    EXPECT_TRUE(mm7::detail::hasSafeCharacterInventoryReferences(character));
+
+    character.inventoryMatrix[0] = 127;
+    EXPECT_FALSE(mm7::detail::hasSafeCharacterInventoryReferences(character));
+    character.inventoryMatrix[0] = 126;
+    EXPECT_TRUE(mm7::detail::hasSafeCharacterInventoryReferences(character));
+
+    character.equipment[0] = 127;
+    EXPECT_FALSE(mm7::detail::hasSafeCharacterInventoryReferences(character));
+    character.equipment[0] = 0;
+    character.inventoryItems[125].itemId = 800;
+    EXPECT_FALSE(mm7::detail::hasSafeCharacterInventoryReferences(character));
+}
+
+UNIT_TEST(MM7SaveValidation, RejectsInvalidChestTypesItemsAndGridReferences) {
+    Chest_MM7 chest{};
+    EXPECT_TRUE(mm7::detail::hasSafeChestReferences(chest));
+
+    chest.chestTypeId = 8;
+    EXPECT_FALSE(mm7::detail::hasSafeChestReferences(chest));
+    chest.chestTypeId = 0;
+    chest.inventoryMatrix[0] = 82;
+    EXPECT_FALSE(mm7::detail::hasSafeChestReferences(chest));
+    chest.inventoryMatrix[0] = 81;
+    EXPECT_TRUE(mm7::detail::hasSafeChestReferences(chest));
+    chest.inventoryMatrix[81] = 82; // Outside the active 9 x 9 grid.
+    EXPECT_TRUE(mm7::detail::hasSafeChestReferences(chest));
+    chest.items[139].itemId = 800;
+    EXPECT_TRUE(mm7::detail::hasSafeChestReferences(chest)); // Structural check only; live guard pending.
+    chest.items[80].itemId = 800;
+    EXPECT_FALSE(mm7::detail::hasSafeChestReferences(chest));
+    chest.items[80].itemId = 0;
+    chest.inventoryMatrix[0] = 82;
+    EXPECT_FALSE(mm7::detail::hasSafeChestReferences(chest));
+}
+
+UNIT_TEST(MM7SaveValidation, RejectsUnmappedNonMissileSpriteItems) {
+    OutdoorDelta_MM7 delta{};
+    SpriteObject_MM7 sprite{};
+    sprite.containing_item.itemId = 800;
+    delta.spriteObjects.push_back(sprite);
+    EXPECT_FALSE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+
+    delta.spriteObjects[0].uAttributes = static_cast<std::uint16_t>(SPRITE_MISSILE);
+    EXPECT_TRUE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+    delta.spriteObjects[0].uAttributes = 0;
+    delta.spriteObjects[0].containing_item.itemId = 799;
+    EXPECT_TRUE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+}
+
+UNIT_TEST(MM7SaveValidation, RejectsIndoorDoorOverflowAndInvalidIds) {
+    IndoorDelta_MM7 delta{};
+    BLVDoor_MM7 door{};
+    door.numVertices = 1;
+    door.numFaces = 1;
+    door.numSectors = 1;
+    door.numOffsets = 1;
+    delta.doors.push_back(door);
+    delta.doorsData = {0, 0, 0, 0, 0, 0, 0, 0};
+    EXPECT_TRUE(mm7::detail::hasSafeIndoorDeltaReferences(delta, 1, 1, 1));
+
+    delta.doorsData[1] = 1; // Face ID beyond the loaded map.
+    EXPECT_FALSE(mm7::detail::hasSafeIndoorDeltaReferences(delta, 1, 1, 1));
+    delta.doorsData[1] = 0;
+    delta.doors[0].numOffsets = 0;
+    EXPECT_FALSE(mm7::detail::hasSafeIndoorDeltaReferences(delta, 1, 1, 1));
+    delta.doors[0].numOffsets = 1;
+    delta.doorsData.pop_back();
+    EXPECT_FALSE(mm7::detail::hasSafeIndoorDeltaReferences(delta, 1, 1, 1));
+    delta.doorsData.push_back(0);
+    delta.doors.push_back(door); // The second door cannot reuse the first's data.
+    EXPECT_FALSE(mm7::detail::hasSafeIndoorDeltaReferences(delta, 1, 1, 1));
+}

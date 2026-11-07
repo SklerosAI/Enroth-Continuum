@@ -9,6 +9,8 @@
 #include <utility>
 
 #include "MM6AtomicSaveFile.h"
+#include "MM6CoreSaveRuntime.h"
+#include "MM6DurableSaveFields.h"
 
 namespace mm6 {
 namespace {
@@ -111,6 +113,16 @@ std::optional<StagedRawSaveSlot> preflightStagedRawSaveSlot(
     if (!staged)
         throw std::runtime_error("MM6 raw slot preflight did not stage selected candidate");
     return StagedRawSaveSlot{std::move(*staged), selected->needsRecovery};
+}
+
+StagedRawPartyInventories stageRawPartyCoreProgressInventory(
+    const Party &baseline, const StagedRawTitleOwners &owners,
+    const ItemTable &itemTable, GameTitle title) {
+    if (title != GameTitle::MM6 || owners.saved.inventory != owners.inventory)
+        throw std::runtime_error("MM6 raw Party stage has a foreign title or divergent inventory owner");
+    Party party = stageCoreParty(baseline, owners.saved.core, title);
+    party = stageDurableProgressParty(party, owners.saved.bits, owners.saved.effects, title);
+    return stageRawPartyInventories(party, owners.inventory, itemTable, title);
 }
 
 } // namespace mm6

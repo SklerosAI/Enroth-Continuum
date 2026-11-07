@@ -840,3 +840,9 @@ MM6 table confirms its value-only special contract. Integrated linked item,
 core and durable tests passed **23/23** with exact native record retention and
 late-failure rejection. Other special unions, potions and artifacts remain
 guarded; original-game effect comparison and live save/reload are still open.
+
+The v2 raw stage now composes decoded core, progress and supported physical
+inventory on one detached Party, rejecting divergent inventory images and a
+late unsupported fourth-character item before return. Focused linked raw
+runtime, inventory and Antique tests passed **11/11**. This is still a partial
+Party; normal MM6 SaveLoad and Atlas Play remain guarded.

@@ -8,6 +8,7 @@
 
 #include "MM6MapSaveValidation.h"
 #include "MM6RawHeldCursorOwner.h"
+#include "MM6RawPartyInventoryStage.h"
 
 namespace mm6 {
 
@@ -51,5 +52,12 @@ std::optional<StagedRawSaveSlot> preflightStagedRawSaveSlot(
     const std::filesystem::path &profileRoot, std::string_view slotName,
     std::span<const std::string> expectedNames, const MapBaseReader &readBase,
     const GroundItemVerifier &verifyItem, GameTitle title);
+
+// Join decoded core/progress fields and source-backed physical inventory on
+// one detached Party. Other v2 Party fields and all live owners remain outside
+// this bounded candidate. The saved/raw owner images must agree.
+StagedRawPartyInventories stageRawPartyCoreProgressInventory(
+    const Party &baseline, const StagedRawTitleOwners &owners,
+    const ItemTable &itemTable, GameTitle title);
 
 } // namespace mm6

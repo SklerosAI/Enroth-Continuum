@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -43,6 +44,22 @@ Blob syntheticBase(std::string_view name) {
 }
 
 bool validItem(std::int32_t id) { return id >= 1 && id <= 580; }
+
+struct ItemTableScope {
+    ItemTable *previous = pItemTable;
+    std::unique_ptr<ItemTable> table = std::make_unique<ItemTable>();
+
+    ItemTableScope() {
+        pItemTable = table.get();
+        const ItemId id = static_cast<ItemId>(10);
+        table->items[id].iconName = "raw-party-item";
+        table->items[id].type = static_cast<ItemType>(3);
+        table->items[id].rarity = RARITY_COMMON;
+        table->itemSizes[id] = Sizei(1, 1);
+    }
+
+    ~ItemTableScope() { pItemTable = previous; }
+};
 
 #ifndef _WIN32
 class TestProfile {
@@ -215,6 +232,45 @@ UNIT_TEST(MM6RawSaveRuntime, RejectsInvalidActiveItemReferencesAndTemplates) {
         [](std::int32_t id) { return id != 12; }, GameTitle::MM6), std::exception);
     EXPECT_THROW((void) mm6::stageRawTitleOwners(bytes, names, syntheticBase,
         [](std::int32_t id) { return id != 11; }, GameTitle::MM6), std::exception);
+}
+
+UNIT_TEST(MM6RawSaveRuntime, JoinsCoreProgressAndRawInventoryOnPartyCopy) {
+    ItemTableScope table;
+    auto fields = exampleRaw();
+    fields.core.party.gold = 123;
+    fields.bits.quest[0] = 1;
+    fields.effects.conditionTicks[2][7] = 42;
+    const auto names = namesOf(fields);
+    auto owners = mm6::stageRawTitleOwners(mm6::encodeRawSave(fields, GameTitle::MM6),
+        names, syntheticBase, validItem, GameTitle::MM6);
+    Party baseline;
+    baseline.uNumGold = 999;
+    auto joined = mm6::stageRawPartyCoreProgressInventory(
+        baseline, owners, *table.table, GameTitle::MM6);
+    EXPECT_EQ(joined.party.uNumGold, 123);
+    EXPECT_TRUE(joined.party._questBits.test(static_cast<QuestBit>(1)));
+    EXPECT_EQ(joined.party.pCharacters[2].conditions.get(static_cast<Condition>(7)).ticks(), 42);
+    EXPECT_EQ(joined.party.pCharacters[0].inventory.capacity(), 138);
+    ASSERT_TRUE(joined.party.pCharacters[0].inventory.entry(137));
+    EXPECT_EQ(joined.party.pCharacters[0].inventory.entry(137)->mm6RawRecord,
+              fields.inventory.characters[0].items[137]);
+    EXPECT_EQ(mm6::captureRawPartyInventories(joined, *table.table, GameTitle::MM6),
+              fields.inventory);
+    EXPECT_EQ(baseline.uNumGold, 999);
+    EXPECT_FALSE(baseline.pCharacters[0].inventory.entry(137));
+
+    EXPECT_THROW((void) mm6::stageRawPartyCoreProgressInventory(
+        baseline, owners, *table.table, GameTitle::MM7), std::exception);
+    owners.inventory.characters[3].items[137].setWord(0, 10);
+    owners.inventory.characters[3].items[137].setWord(12, 4);
+    owners.inventory.characters[3].gridWords[0] = 138;
+    EXPECT_THROW((void) mm6::stageRawPartyCoreProgressInventory(
+        baseline, owners, *table.table, GameTitle::MM6), std::exception);
+    owners.saved.inventory = owners.inventory;
+    EXPECT_THROW((void) mm6::stageRawPartyCoreProgressInventory(
+        baseline, owners, *table.table, GameTitle::MM6), std::exception);
+    EXPECT_EQ(baseline.uNumGold, 999);
+    EXPECT_FALSE(baseline.pCharacters[3].inventory.entry(137));
 }
 
 #ifndef _WIN32

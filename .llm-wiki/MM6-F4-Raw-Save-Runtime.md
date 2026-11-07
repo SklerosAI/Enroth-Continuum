@@ -17,6 +17,8 @@ Only after map validation does the function construct fresh `RawInventoryFields`
 
 `PART`/`CHAR` core fields and `QEST`/`EFFT` progress fields now have direct decoded-field Party-copy adapters shared with the v1 byte route. The core stage rechecks widths/ranges; the progress stage rechecks condition clocks and leaves physical inventory to the raw Party adapter. Their linked core/durable/raw-runtime suite passed **17/17** with direct-vs-v1 equivalence. A full v2 Party coordinator, remaining field families and live publication remain separate work.
 
+`stageRawPartyCoreProgressInventory` composes these three families on one detached Party. It requires the saved and staged physical inventory images to agree and rejects unsupported late item unions without changing the caller's baseline. The linked raw-runtime, raw Party inventory and Antique suites passed **11/11**, including a four-character raw recapture. Resistance, buffs, hirelings, recovery and other session/world owners are still outside this bounded result.
+
 This is still a raw owner candidate. It does not project every source item kind into `CharacterInventory`, reconstruct the active live world, include beacon state, or make the simultaneous Party/world/UI/commerce commit failure atomic. The existing v1 atomic/New Game route remains separate; v2 is not a production save or playable-campaign claim.
 
 The [detached Party inventory stage](MM6-F4-Raw-Party-Inventory-Stage.md) now projects the supported subset of `INVR` into all four 138-slot runtime inventories on a Party copy. It rejects unsupported nonzero item unions and rarity effects, and keeps the full raw owner for recapture. It does not close the remaining item semantics or live commit gates.

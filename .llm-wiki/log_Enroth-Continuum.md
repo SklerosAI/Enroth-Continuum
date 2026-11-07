@@ -2661,3 +2661,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Revised the paused MM6 plan to finish a normal first-map save/reload first, run an early staged graphical opening check, then add representative transitions before full offline and campaign coverage. Full campaign validation still gates Atlas MM6 Play.
 - Added a concise resume queue, focused-versus-milestone test cadence, narrow wiki updates, at most two independent code-changing agent lanes, and reuse under the ten-worktree cap. No runtime implementation or gameplay gate changed in this planning pass.
+
+## [2026-11-07] handoff | Exact paused MM6 resume gate
+- by: T-Burton-ND via codex
+- Added a tracked first-map resume runbook and disposable 13-process gate runner for the seven-child v5 chain, three fresh fault-setup children, two full-retry fault children and MM7 control. Verified runner syntax, filter names, local links, missing-path refusal and list output; the game chain itself remains unrun after the EVRT slice.
+- Updated plan, agent notes and wiki navigation to start from the runbook. An ignored local note holds machine-specific private paths; the 39-file private wiki was copied to a restricted same-disk backup and hash-checked. Normal MM6 SaveLoad and the MM6 goal remain paused.

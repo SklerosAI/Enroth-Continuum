@@ -2062,3 +2062,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added an MM6-only disposable abort result immediately after world preparation, before timer unpause or input. A fresh v1 writer and real Main Menu QuickLoad abort control passed 1/1 each; the slot stayed unchanged and an MM7 headless control passed 1/1.
 - Added a detached read-only v2 final-owner validator for map identity, actor/sprite PID anchors, persistent event bytes and generated chest/sidecar state. Three synthetic indoor/outdoor tests passed; the integrated hook and validator suite passed 8/8. V2 live publication and normal MM6 SaveLoad remain guarded.
+
+## [2026-11-07] verify | MM6 further reload admission blockers
+- by: T-Burton-ND via codex
+- The disposable v1 QuickLoad abort control now checks the complete idle pending-action observer at the post-world hook; separate fresh writer and abort processes passed 1/1 each.
+- A read-only generated-NPC link validator passed 3/3 synthetic checks after excluding the terminal profession row. It cannot prove unsaved generated identity/RNG or prevent the loader's pre-check pool overflow. The v2 child admission suite passed 3/3 and now names nonzero saved Armageddon timers that world preparation would clear.
+- The BEAC/IFOV audit found no sound final-face check without a verified pre-event base: `OnMapReload` runs before the hook. MM6 v2 publication, normal SaveLoad and Atlas Play remain guarded.

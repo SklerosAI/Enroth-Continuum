@@ -97,6 +97,13 @@ UNIT_TEST(MM6PlainItemProjection, GoldValueRoundTripAndUnsupportedUnionsReject) 
     projection->raw.setWord(4, 1);
     EXPECT_FALSE(mm6::capturePlainItem(*projection, table, GameTitle::MM6));
 
+    projection = mm6::stagePlainItem(raw, table, GameTitle::MM6);
+    ASSERT_TRUE(projection);
+    table.items[bottle].rarity = RARITY_ARTIFACT;
+    EXPECT_FALSE(mm6::stagePlainItem(projection->raw, table, GameTitle::MM6));
+    EXPECT_FALSE(mm6::capturePlainItem(*projection, table, GameTitle::MM6));
+    table.items[bottle].rarity = RARITY_COMMON;
+
     raw = {};
     raw.setWord(0, 135);
     raw.setWord(16, 3);

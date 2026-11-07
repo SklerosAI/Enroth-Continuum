@@ -67,7 +67,7 @@ The current [bounded inventory projection](MM6-F4-Bounded-Inventory-Projection.m
 
 The [four-character bounded inventory stage](MM6-F4-Bounded-Party-Inventory.md) composes those views into a complete-or-reject detached `RawInventoryFields` packet; linked checks passed **11/11**. Read-only live-owner audit found `Inventory::take`/`addAt`/`equipAt` and Party cursor/pickup paths copy `Item` values into new slots. A raw sidecar keyed only to a Party slot would lose provenance. Establish a transfer-safe raw owner before revising provisional `ITEM`/`HELD` or opening SaveLoad.
 
-The [item value provenance carrier](MM6-F4-Item-Value-Provenance.md) is the first transport piece: staged plain and common standard items carry their exact 28-byte source record through `Item` copies, and capture checks that record. Linked focused checks passed **13/13**, non-MM6 units **438/438**, MM7 headless save/load **1/1** and MM6 loaded-table headless **2/2** without focus/window intrusion. It does not yet define physical vacated-slot bytes, a unique item ID, live producers or final `INVR`/`HELD` commit.
+The [item value provenance carrier](MM6-F4-Item-Value-Provenance.md) is the first transport piece: staged common-rarity plain and standard items carry their exact 28-byte source record through `Item` copies, and capture checks that record. Linked focused checks passed **13/13**, non-MM6 units **438/438**, MM7 headless save/load **1/1** and MM6 loaded-table headless **2/2** without focus/window intrusion. A later plain-adapter rarity gate again passed **13/13** focused and **2/2** MM6 loaded-table headless checks. It does not yet define physical vacated-slot bytes, a unique item ID, live producers or final `INVR`/`HELD` commit.
 
 ## Authority and source order
 

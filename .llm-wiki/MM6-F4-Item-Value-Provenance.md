@@ -7,7 +7,7 @@ tags: [mm6, f4, item, provenance, transaction]
 
 # MM6 F4 Item Value Provenance
 
-The [implementation packet](../project/MM6_F4_ITEM_VALUE_PROVENANCE.md) records an optional 28-byte MM6 source record carried by the shared `Item` value and checked by the bounded plain and standard item adapters.
+The [implementation packet](../project/MM6_F4_ITEM_VALUE_PROVENANCE.md) records an optional 28-byte MM6 source record carried by the shared `Item` value and checked by the bounded common-rarity plain and standard item adapters.
 
 The field survives ordinary value copies in inventory and cursor paths, while `Item::Reset()` and MM7 wire reconstruction clear it. The adapters reject capture if the carrier is absent or changed. This establishes a source-byte transport primitive, not a complete live raw owner: physical slot clearing, item identity, creation, cross-context transfers, final `INVR`/`HELD` schema and normal SaveLoad remain open. The private local source check found no authentic nonzero MM6 saved-item sample.
 

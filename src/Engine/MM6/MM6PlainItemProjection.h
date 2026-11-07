@@ -31,6 +31,7 @@ inline std::optional<PlainItemProjection> stagePlainItem(
 
     const ItemData &data = table.items[static_cast<ItemId>(id)];
     if (data.iconName.empty() || data.type == ITEM_TYPE_INVALID ||
+        data.rarity != RARITY_COMMON ||
         (data.type != ITEM_TYPE_GOLD && raw.secondBonusRaw()))
         return std::nullopt;
 

@@ -36,7 +36,10 @@ existing output root and writes separate build logs under `logs/` there.
    `OE_USE_PREBUILT_DEPENDENCIES=OFF`, Release/arm64 and
    `EC_LOCAL_DEPS_PREFIX=<recipe-output>/prefix`. The local-only gate checked
    the report, archives, FFmpeg feature flags and notices, then resolved the
-   tracked cpptrace libdwarf source without FetchContent networking.
+   tracked cpptrace libdwarf source without FetchContent networking. The
+   one-command wrapper repeated this route from a fresh archive under the
+   same network denial, including an explicit Apple SDK for libpng's generated
+   source compile.
 4. The fresh `MM7` target linked. Its link command used the nine new static
    archives and no `deps_r8_master` path or ztd.text input. `otool -L` showed
    only Apple system libraries/frameworks, including system iconv.
@@ -51,8 +54,10 @@ existing output root and writes separate build logs under `logs/` there.
 The Apple SDK/toolchain, Python 3, CMake and Ninja are local tools. The owner's
 lawfully obtained MM7 files remain outside Git and outside the bundle. The
 clean archive had no Git metadata, so its build banner reported an unknown
-revision; an ordinary clone has Git metadata. The source build now gives the
-MM7 bundle a stable `0.1.0` version independent of the Git revision. This run did not test a remote
+revision without Git error output; an ordinary clone has Git metadata. The
+source build now gives the MM7 bundle a stable `0.1.0` version independent of
+the Git revision. The staged helper plist reported that version and Atlas
+passed strict code-signature verification. This run did not test a remote
 clone or install the staged bundle.
 
 ## Remaining gates

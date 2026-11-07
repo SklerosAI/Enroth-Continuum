@@ -20,6 +20,7 @@
 #include "Engine/MM6/MM6HeldItemSaveFields.h"
 #include "Engine/MM6/MM6LoadedMapSource.h"
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
+#include "Engine/MM6/MM6RawCursorImagePlan.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/MM6/MM6WorldSaveRuntime.h"
 #include "Engine/Objects/Actor.h"
@@ -32,6 +33,7 @@
 #include "Engine/Tables/OverlayTable.h"
 #include "GUI/GUIMessageQueue.h"
 #include "GUI/GUIWindow.h"
+#include "Io/Mouse.h"
 
 namespace {
 
@@ -78,7 +80,9 @@ GAME_TEST(MM6PostWorldAbortHeadless, DISABLED_V1ControlQuickLoadReturnsBeforeInp
     bool postWorld = false;
     bool beforeInput = false;
     bool idleActions = false;
+    bool arrowCursorReady = false;
     std::string actionError;
+    std::string cursorError;
     std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
     std::unique_ptr<mm6::testing::ScopedPostWorldAdmissionForTest> admission;
     game.runGameRoutine([&] {
@@ -130,6 +134,28 @@ GAME_TEST(MM6PostWorldAbortHeadless, DISABLED_V1ControlQuickLoadReturnsBeforeInp
                         idleActions = false;
                         actionError = error.what();
                     }
+                    try {
+                        const auto raw = mm6::freshRawHeldCursorOwner(GameTitle::MM6);
+                        if (!raw || !mouse)
+                            throw std::runtime_error("MM6 abort probe lacks cursor owner");
+                        const auto plan = mm6::stageRawCursorImagePlan(
+                            *pParty, *raw, *pItemTable, GameTitle::MM6);
+                        mm6::requirePostWorldEmptyCursorReady(
+                            plan, *pParty, *mouse,
+                            engine->config->graphics.AlwaysCustomCursor.value(),
+                            GameTitle::MM6);
+                        arrowCursorReady = true;
+                    } catch (const std::exception &error) {
+                        cursorError = error.what();
+                        cursorError += " custom=" + std::to_string(
+                            engine->config->graphics.AlwaysCustomCursor.value());
+                        cursorError += " initialized=" + std::to_string(mouse && mouse->bInitialized);
+                        cursorError += " name=" + (mouse ? mouse->cursor_name : "<null>");
+                        cursorError += " arrow=" + std::to_string(mouse && mouse->_arrowCursor);
+                        cursorError += " image=" + std::to_string(mouse && mouse->cursor_img != nullptr);
+                        cursorError += " offset=" + std::to_string(mouse ? mouse->pickedItemOffset.x : 0) +
+                            "," + std::to_string(mouse ? mouse->pickedItemOffset.y : 0);
+                    }
                 }, mm6::testing::PostWorldAdmissionResult::AbortToMainMenu);
             loaded = true;
         });
@@ -149,6 +175,7 @@ GAME_TEST(MM6PostWorldAbortHeadless, DISABLED_V1ControlQuickLoadReturnsBeforeInp
     EXPECT_TRUE(postWorld);
     EXPECT_TRUE(beforeInput);
     EXPECT_TRUE(idleActions) << actionError;
+    EXPECT_TRUE(arrowCursorReady) << cursorError;
     EXPECT_EQ(slotBytes(primary), before);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }

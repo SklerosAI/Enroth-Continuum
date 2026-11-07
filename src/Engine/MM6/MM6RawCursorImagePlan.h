@@ -10,6 +10,8 @@
 
 #include "MM6RawHeldCursorOwner.h"
 
+namespace Io { class Mouse; }
+
 namespace mm6 {
 
 enum class HeldCursorTint { Normal, Broken, Unidentified };
@@ -31,5 +33,11 @@ RawCursorImagePlan stageRawCursorImagePlan(const Party &party,
                                            const RawHeldCursorOwner &cursor,
                                            const ItemTable &itemTable,
                                            GameTitle title);
+
+// After world preparation resets the mouse, check the empty arrow or the
+// decoded custom arrow bitmap. A held item still needs an offset transaction.
+void requirePostWorldEmptyCursorReady(const RawCursorImagePlan &plan,
+                                      const Party &party, const Io::Mouse &pointer,
+                                      bool alwaysCustomCursor, GameTitle title);
 
 } // namespace mm6

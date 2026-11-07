@@ -3,6 +3,8 @@
 #include <stdexcept>
 
 #include "MM6BoundedItemProjection.h"
+#include "Engine/Graphics/Image.h"
+#include "Io/Mouse.h"
 
 namespace mm6 {
 namespace {
@@ -46,6 +48,30 @@ RawCursorImagePlan stageRawCursorImagePlan(const Party &party,
     const HeldCursorTint tint = item.IsBroken() ? HeldCursorTint::Broken :
         item.IsIdentified() ? HeldCursorTint::Normal : HeldCursorTint::Unidentified;
     return {true, item.itemId, iconName, tint, std::nullopt};
+}
+
+void requirePostWorldEmptyCursorReady(const RawCursorImagePlan &plan,
+                                      const Party &party, const Io::Mouse &pointer,
+                                      bool alwaysCustomCursor, GameTitle title) {
+    if (title != GameTitle::MM6 || plan.occupied ||
+        plan.itemId != ITEM_NULL || plan.iconName != "MICON1" ||
+        plan.tint != HeldCursorTint::Normal || !plan.pickedItemOffset ||
+        plan.pickedItemOffset->x || plan.pickedItemOffset->y ||
+        hasItemPayload(party.pPickedItem) || !pointer.bInitialized ||
+        pointer.cursor_name != "MICON1" || pointer.pickedItemOffset.x ||
+        pointer.pickedItemOffset.y)
+        throw std::runtime_error("MM6 post-world empty cursor owner differs");
+    if (!alwaysCustomCursor) {
+        if (!pointer._arrowCursor || pointer.cursor_img)
+            throw std::runtime_error("MM6 post-world native arrow cursor is not ready");
+    } else {
+        if (pointer._arrowCursor || !pointer.cursor_img ||
+            pointer.cursor_img->name() != "micon1")
+            throw std::runtime_error("MM6 post-world custom arrow cursor is not bound");
+        const RgbaImage &pixels = pointer.cursor_img->rgba();
+        if (!pixels || pixels.width() <= 0 || pixels.height() <= 0)
+            throw std::runtime_error("MM6 post-world custom arrow bitmap is empty");
+    }
 }
 
 } // namespace mm6

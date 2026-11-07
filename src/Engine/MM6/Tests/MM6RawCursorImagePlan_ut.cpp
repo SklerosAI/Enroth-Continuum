@@ -7,6 +7,7 @@
 
 #include "Engine/MM6/MM6RawCursorImagePlan.h"
 #include "Engine/MM6/MM6RawHeldPartyStage.h"
+#include "Io/Mouse.h"
 
 namespace {
 
@@ -61,6 +62,34 @@ UNIT_TEST(MM6RawCursorImagePlan, EmptyOwnerRequestsArrowAndZeroOffset) {
     ASSERT_TRUE(plan.pickedItemOffset);
     EXPECT_EQ(plan.pickedItemOffset->x, 0);
     EXPECT_EQ(plan.pickedItemOffset->y, 0);
+}
+
+UNIT_TEST(MM6RawCursorImagePlan, PostWorldEmptyCursorRequiresExactMouseState) {
+    TestItems items;
+    const auto cursor = *mm6::freshRawHeldCursorOwner(GameTitle::MM6);
+    Party party;
+    const auto plan = mm6::stageRawCursorImagePlan(party, cursor, *items.table, GameTitle::MM6);
+    Io::Mouse pointer;
+    pointer.bInitialized = true;
+    pointer.cursor_name = "MICON1";
+    pointer._arrowCursor = true;
+    EXPECT_NO_THROW(mm6::requirePostWorldEmptyCursorReady(
+        plan, party, pointer, false, GameTitle::MM6));
+    EXPECT_THROW(mm6::requirePostWorldEmptyCursorReady(
+        plan, party, pointer, true, GameTitle::MM6), std::exception);
+    EXPECT_THROW(mm6::requirePostWorldEmptyCursorReady(
+        plan, party, pointer, false, GameTitle::MM7), std::exception);
+    pointer.pickedItemOffset.x = -3;
+    EXPECT_THROW(mm6::requirePostWorldEmptyCursorReady(
+        plan, party, pointer, false, GameTitle::MM6), std::exception);
+    pointer.pickedItemOffset = {};
+    pointer._arrowCursor = false;
+    EXPECT_THROW(mm6::requirePostWorldEmptyCursorReady(
+        plan, party, pointer, false, GameTitle::MM6), std::exception);
+    pointer._arrowCursor = true;
+    party.pPickedItem.flags = ITEM_BROKEN;
+    EXPECT_THROW(mm6::requirePostWorldEmptyCursorReady(
+        plan, party, pointer, false, GameTitle::MM6), std::exception);
 }
 
 UNIT_TEST(MM6RawCursorImagePlan, RejectsMismatchAndUnsupportedTemplateWithoutMutation) {

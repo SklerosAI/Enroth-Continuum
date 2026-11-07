@@ -16,6 +16,9 @@
 #include "Engine/Objects/NPC.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/Actor.h"
+#include "Engine/SpawnPoint.h"
+#include "Engine/Data/MapData.h"
+#include "Engine/Tables/MapTable.h"
 #include "Engine/Objects/MonsterEnumFunctions.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Graphics/Indoor.h"
@@ -609,6 +612,35 @@ GAME_TEST(Issues, Issue1988_ArtifactLimitOnLevelSeven) {
     for (ItemId id : allSpawnableArtifacts())
         generated += pParty->isArtifactGenerated[id];
     EXPECT_EQ(generated, 2);
+}
+
+GAME_TEST(Issues, Issue1988_IndoorArtifactRetainsItem) {
+    game.startNewGame();
+    game.teleportTo(MAP_CASTLE_NAVAN, Vec3f(-3360, 10710, -1541), 90);
+    engine->config->gameplay.ArtifactLimit.setValue(0);
+    for (ItemId id : allSpawnableArtifacts())
+        pParty->isArtifactGenerated[id] = false;
+
+    MapData map = pMapTable->pInfos[MAP_CASTLE_NAVAN];
+    map.mapTreasureLevel = MAP_TREASURE_LEVEL_7;
+    SpawnPoint spawn;
+    spawn.type = OBJECT_Sprite;
+    spawn.treasureLevel = ITEM_TREASURE_LEVEL_7;
+    spawn.position = pParty->pos;
+    SpawnRandomTreasure(&map, &spawn);
+
+    ItemId generated = ITEM_NULL;
+    for (ItemId id : allSpawnableArtifacts()) {
+        if (pParty->isArtifactGenerated[id]) {
+            EXPECT_EQ(generated, ITEM_NULL);
+            generated = id;
+        }
+    }
+    ASSERT_NE(generated, ITEM_NULL);
+    bool found = false;
+    for (const SpriteObject &object : pSpriteObjects)
+        found |= object.uObjectDescID && object.containing_item.itemId == generated;
+    EXPECT_TRUE(found);
 }
 
 GAME_TEST(Issues, Issue675) {

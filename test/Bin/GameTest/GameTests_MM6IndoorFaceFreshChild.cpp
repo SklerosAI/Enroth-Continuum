@@ -21,6 +21,7 @@
 #include "Engine/Snapshots/MM6IndoorSnapshot.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Tables/MapTable.h"
+#include "Utility/String/Ascii.h"
 
 namespace {
 
@@ -79,7 +80,7 @@ IndoorSourceFaces loadIndoorSourceFaces() {
         const auto &name = projected.faceTextures[i];
         const auto end = std::find(name.begin(), name.end(), '\0');
         result.faces.push_back({projected.faces[i].attributes,
-                                std::string(name.begin(), end)});
+                                ascii::toLower(std::string_view(name.data(), end - name.begin()))});
     }
     return result;
 }

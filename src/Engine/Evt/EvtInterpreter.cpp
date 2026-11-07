@@ -16,7 +16,6 @@
 #include "Engine/Evt/MM6EventRules.h"
 #include "Engine/Evt/MM6EventVariables.h"
 #include "Engine/Evt/MM6AutonoteState.h"
-#include "Engine/Evt/MM6ConditionVariables.h"
 #include "Engine/Evt/MM6SkillEvent.h"
 #include "Engine/Evt/MM6MapByteState.h"
 #include "Engine/Evt/MM6QuestBitState.h"
@@ -29,6 +28,7 @@
 #include "Engine/Evt/MM6SpriteEvent.h"
 #include "Engine/Evt/MM6ItemEventCompare.h"
 #include "Engine/Evt/MM6ItemEventWrite.h"
+#include "Engine/Evt/MM6EventVariableDispatch.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Party.h"
 #include "Engine/Graphics/Indoor.h"
@@ -206,11 +206,6 @@ static bool isMM6MapByteVariable(EvtVariable variable) {
 static bool isMM6AutonoteVariable(EvtVariable variable) {
     return engine->gameTitle() == GameTitle::MM6 &&
            describeMM6Variable(std::to_underlying(variable)).family == MM6VariableFamily::Autonote;
-}
-
-static bool isMM6ConditionVariable(EvtVariable variable) {
-    return engine->gameTitle() == GameTitle::MM6 &&
-           mm6::isConditionVariable(std::to_underlying(variable));
 }
 
 static bool isMM6SkillVariable(EvtVariable variable) {
@@ -477,11 +472,16 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                     return {EVT_FLOW_JUMP, ir.target_step};
                 break;
             }
-            if (isMM6ConditionVariable(ir.data.variable_descr.type)) {
+            if (engine->gameTitle() == GameTitle::MM6 && mm6::isPartyEventVariable(std::to_underlying(ir.data.variable_descr.type))) {
+                if (mm6::comparePartyEventVariable(std::to_underlying(ir.data.variable_descr.type), ir.data.variable_descr.value))
+                    return {EVT_FLOW_JUMP, ir.target_step};
+                break;
+            }
+            if (engine->gameTitle() == GameTitle::MM6 &&
+                mm6::isCharacterEventVariable(EVENT_Compare, std::to_underlying(ir.data.variable_descr.type))) {
                 for (Character &character : iterateCharacters(_who, grng))
-                    if (mm6::compareCondition(character.conditions,
-                                              std::to_underlying(ir.data.variable_descr.type),
-                                              ir.data.variable_descr.value))
+                    if (mm6::compareCharacterEventVariable(character, std::to_underlying(ir.data.variable_descr.type),
+                                                           ir.data.variable_descr.value))
                         return {EVT_FLOW_JUMP, ir.target_step};
                 break;
             }
@@ -559,10 +559,15 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                 MM6QuestBitState(pParty->_questBits).add(16, ir.data.variable_descr.value);
                 break;
             }
-            if (isMM6ConditionVariable(ir.data.variable_descr.type)) {
+            if (engine->gameTitle() == GameTitle::MM6 && mm6::isPartyEventVariable(std::to_underlying(ir.data.variable_descr.type))) {
+                mm6::writePartyEventVariable(EVENT_Add, std::to_underlying(ir.data.variable_descr.type), ir.data.variable_descr.value);
+                break;
+            }
+            if (engine->gameTitle() == GameTitle::MM6 &&
+                mm6::isCharacterEventVariable(EVENT_Add, std::to_underlying(ir.data.variable_descr.type))) {
                 for (Character &character : iterateCharacters(_who, grng))
-                    mm6::addCondition(character, std::to_underlying(ir.data.variable_descr.type),
-                                      ir.data.variable_descr.value);
+                    mm6::writeCharacterEventVariable(character, EVENT_Add, std::to_underlying(ir.data.variable_descr.type),
+                                                     ir.data.variable_descr.value);
                 break;
             }
             if (isMM6AutonoteVariable(ir.data.variable_descr.type)) {
@@ -616,10 +621,15 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                 MM6QuestBitState(pParty->_questBits).subtract(16, ir.data.variable_descr.value);
                 break;
             }
-            if (isMM6ConditionVariable(ir.data.variable_descr.type)) {
+            if (engine->gameTitle() == GameTitle::MM6 && mm6::isPartyEventVariable(std::to_underlying(ir.data.variable_descr.type))) {
+                mm6::writePartyEventVariable(EVENT_Subtract, std::to_underlying(ir.data.variable_descr.type), ir.data.variable_descr.value);
+                break;
+            }
+            if (engine->gameTitle() == GameTitle::MM6 &&
+                mm6::isCharacterEventVariable(EVENT_Subtract, std::to_underlying(ir.data.variable_descr.type))) {
                 for (Character &character : iterateCharacters(_who, grng))
-                    mm6::subtractCondition(character, std::to_underlying(ir.data.variable_descr.type),
-                                           ir.data.variable_descr.value);
+                    mm6::writeCharacterEventVariable(character, EVENT_Subtract, std::to_underlying(ir.data.variable_descr.type),
+                                                     ir.data.variable_descr.value);
                 break;
             }
             if (isMM6AutonoteVariable(ir.data.variable_descr.type)) {
@@ -674,10 +684,15 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                 MM6QuestBitState(pParty->_questBits).set(16, ir.data.variable_descr.value);
                 break;
             }
-            if (isMM6ConditionVariable(ir.data.variable_descr.type)) {
+            if (engine->gameTitle() == GameTitle::MM6 && mm6::isPartyEventVariable(std::to_underlying(ir.data.variable_descr.type))) {
+                mm6::writePartyEventVariable(EVENT_Set, std::to_underlying(ir.data.variable_descr.type), ir.data.variable_descr.value);
+                break;
+            }
+            if (engine->gameTitle() == GameTitle::MM6 &&
+                mm6::isCharacterEventVariable(EVENT_Set, std::to_underlying(ir.data.variable_descr.type))) {
                 for (Character &character : iterateCharacters(_who, grng))
-                    mm6::setCondition(character, std::to_underlying(ir.data.variable_descr.type),
-                                      ir.data.variable_descr.value);
+                    mm6::writeCharacterEventVariable(character, EVENT_Set, std::to_underlying(ir.data.variable_descr.type),
+                                                     ir.data.variable_descr.value);
                 break;
             }
             if (isMM6SkillVariable(ir.data.variable_descr.type)) {

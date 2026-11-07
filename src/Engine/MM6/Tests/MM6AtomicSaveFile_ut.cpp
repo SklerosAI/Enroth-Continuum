@@ -517,6 +517,10 @@ UNIT_TEST(MM6AtomicSaveFile, V4TestWriterRequiresDisposablePathAndSemanticCallba
         ordinary.root(), "candidate-v4.ec6", candidate, accept), std::exception);
     mm6::writeAtomicV4SaveFileForTest(profile.root(), "candidate-v4.ec6", candidate, accept);
     EXPECT_EQ(read(slot), candidate);
+    const auto replacement = sampleV4(76);
+    mm6::writeAtomicV4SaveFileForTest(profile.root(), "candidate-v4.ec6", replacement, accept);
+    EXPECT_EQ(read(slot), replacement);
+    EXPECT_EQ(read(slot.string() + ".bak"), candidate);
 }
 
 UNIT_TEST(MM6AtomicSaveFile, V4ForeignPrimaryAndBackupRefuseBeforeMutation) {

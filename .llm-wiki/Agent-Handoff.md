@@ -112,6 +112,15 @@ backup, and passed independent fresh-child replay. Seed, v4, prior v5 writer,
 paused writer and reader each passed **1/1**; MM7 Prs passed **1/1**. Normal
 SaveLoad/UI and production slots remain closed.
 
+The [native first-map manual slot policy](MM6-F4-Native-First-Map-Slot-Policy.md)
+now requires an exact startup-supplied canonical MM6 root, `saveNNN.ec6`,
+full first-map v5 candidate validation and independently valid prior
+primary/backup bytes. It refuses ambiguous or foreign collisions before any
+write; a separate test-only native atomic seam reports confirmed,
+preflight-required and post-rename indeterminate outcomes. Two disposable
+units passed **2/2** and MM7 Prs **1/1**. Startup root handoff, real paused
+candidate-to-numbered-slot proof and normal SaveLoad/UI remain closed.
+
 The [MM6 indoor v6 input cycle](MM6-F4-V6-Indoor-Input-Cycle.md) passed five
 fresh headless children through a real-loop turn/walk, atomic post-input
 candidate and exact fresh-child replay. This is one test-only fixture;

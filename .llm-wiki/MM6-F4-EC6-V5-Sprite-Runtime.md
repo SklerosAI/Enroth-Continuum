@@ -125,6 +125,12 @@ This is an abandon policy, not rollback: the first fault may leave partial
 globals, while the second load reconstructs exact first-map owners. Normal
 MM6 SaveLoad/UI, other maps and a general clean-world reset remain guarded.
 
+A separate [native manual-slot policy](MM6-F4-Native-First-Map-Slot-Policy.md)
+now stages exact startup-root and `saveNNN.ec6` identity plus strict prior
+primary/backup collision checks. Its test-only atomic outcome units passed
+**2/2** with MM7 Prs **1/1**. The live paused candidate is not yet connected
+to a numbered native slot or normal Save UI.
+
 See also: [V4 Event Runtime](MM6-F4-EC6-V4-Event-Runtime.md),
 [V3 Post Entry Map and Pre Event](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md),
 [Agent Handoff](Agent-Handoff.md).

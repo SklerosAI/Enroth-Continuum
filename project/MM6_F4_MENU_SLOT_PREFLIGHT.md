@@ -59,3 +59,12 @@ result. An unconfirmed post-rename result requires read-only preflight. The
 resolved native MM6 profile root must come from startup, including an explicit
 user-path override, rather than a display string. Normal SaveLoad and menu
 listing remain closed.
+
+## Native first-map manual slot policy
+
+The [detached native slot policy](MM6_F4_NATIVE_FIRST_MAP_SLOT_POLICY.md)
+admits only an exact startup-supplied MM6 root and `saveNNN.ec6` name after
+first-map v5 semantic and existing primary/backup collision checks. Its
+test-only numbered-slot atomic seam passed two focused disposable units and
+MM7 control, classifying confirmed, preflight-required and indeterminate
+outcomes. It has no startup handoff or normal Save menu route yet.

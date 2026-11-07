@@ -235,6 +235,13 @@ partial after the first fault; the second load reconstructs exact owners for
 this first-map fixture. No normal MM6 SaveLoad/UI path arms it. Other maps,
 world transitions, and a general clean-world reset remain unproved.
 
+The [native first-map manual-slot policy](MM6_F4_NATIVE_FIRST_MAP_SLOT_POLICY.md)
+now stages an exact startup-supplied MM6 root and numbered `.ec6` slot with
+strict existing-primary/backup checks. Its test-only atomic seam passed two
+focused disposable outcome/collision units and MM7 control. The paused live
+candidate has not yet been written to a numbered native slot, and no normal
+Save UI route is open.
+
 See [v4 event runtime boundary](MM6_F4_EC6_V4_EVENT_RUNTIME.md),
 [active actor capture](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md) and
 [save specification](MM6_SAVE_SPEC.md).

@@ -1753,3 +1753,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Atlas now stores one MM6/MM7 vendor option, passes the exact MM7 flag only for Private mods, and labels MM6 as future-facing. The signed local bundle was installed with its previous version retained privately; the currently open window needs reopening for the new control.
 - Linked vendor-focused tests passed 16/16, non-MM6 controls 440/440, and a mod-enabled MM7 headless save/load smoke passed 1/1 without visible windows or focus change. The MM6 shop/purchase focused set passed 14/14; its live entry hook remains gated. No live shop-entry reroll was observed yet.
+
+## [2026-11-06] verify | MM7 vendor house-entry behavior
+- by: T-Burton-ND via codex
+- Two monitored headless game tests entered an actual MM7 weapon shop and magic guild with future refresh deadlines. Both regenerated stock on entry, then retained it on Buy-tab navigation (2/2); the monitor saw no on-screen window or focus change.
+- This closes the earlier missing headless entry check. Visible play-session acceptance and MM6 live vendor ownership remain open.

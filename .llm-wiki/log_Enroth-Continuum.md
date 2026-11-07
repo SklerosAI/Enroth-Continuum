@@ -2154,3 +2154,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Preserving the exact native resistance tuple and the valid zero descriptor let the disposable full-list first-map actor capture pass 1/1; linked actor checks passed 5/5 and an MM7 headless control passed 1/1. These results supersede the earlier guarded full-list refusal notes.
 - Chose detached ACTR coverage for all active actor slots because spawned-only SPAW cannot retain original-actor runtime changes. ACTR's linked unit suite passed 3/3, but actor items/buffs, live replay and a durable save–quit–reload remain open.
+
+## [2026-11-07] integrate | MM6 ACTR exact v3 manifest
+- by: T-Burton-ND via codex
+- A dedicated private-backed fresh-process ACTR full-list capture passed 1/1 with ramfs user state. The exact 22-section detached EC6 v3 manifest now requires ACTR instead of SPAW, plus GNPC/RNGS; linked v3/v2/ACTR checks passed 11/11.
+- The container is still not a gameplay save: ACTR/DDM baseline binding, actor items/buffs, no-respawn fresh-child replay, pre-event owner publication and a distinct v3 atomic disk route remain open.

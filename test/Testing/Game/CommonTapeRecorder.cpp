@@ -31,6 +31,10 @@ CommonTapeRecorder::CommonTapeRecorder(TestController *controller) : _controller
     assert(controller);
 }
 
+TestMultiTape<int> CommonTapeRecorder::musicPauses() {
+    return _controller->recordFunctionTape<int>(CALL_PAUSE_MUSIC);
+}
+
 TestTape<int64_t> CommonTapeRecorder::totalExperience() {
     return custom([] {
         int64_t result = 0;

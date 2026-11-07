@@ -1319,3 +1319,16 @@ GAME_TEST(Issues, Issue2950) {
     EXPECT_EQ(windowTape, tape(WINDOW_NULL, WINDOW_SPELL_BOOK, WINDOW_LLOYDS_BEACON));
     EXPECT_EQ(beaconTape, tape(false, true));
 }
+
+GAME_TEST(Prs, Pr2956) {
+    // Music must stop in a house even when its movie doesn't play. Game tests run with no_video on.
+    auto houseTape = tapes.house();
+    auto musicPauseTape = tapes.musicPauses();
+    game.startNewGame();
+    game.teleportTo(MAP_ERATHIA, Vec3f(-528, 5710, 1440), 90); // In front of the body guild's door.
+    test.startTaping();
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    EXPECT_EQ(houseTape, tape(HOUSE_BODY_GUILD_ERATHIA));
+    EXPECT_EQ(musicPauseTape.flatten(), tape(1));
+}

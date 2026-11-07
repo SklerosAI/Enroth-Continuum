@@ -87,6 +87,8 @@ void AudioPlayer::MusicStop() {
 }
 
 void AudioPlayer::MusicPause() {
+    if (engine->callObserver)
+        engine->callObserver->notify(CALL_PAUSE_MUSIC, 1);
     if (!pCurrentMusicTrack) {
         return;
     }

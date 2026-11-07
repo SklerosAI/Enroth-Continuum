@@ -800,6 +800,12 @@ std::optional<mm6::RoomMovieFrameProbe> mm6::probeRoomMovieFirstFrame(const Blob
     return result;
 }
 
+static void pauseForHouse() {
+    gameTimer->setPaused(true);
+    pAudioPlayer->pauseLooping();
+    pAudioPlayer->MusicPause();
+}
+
 void MPlayer::OpenHouseMovie(std::string_view pMovieName, bool bLoop) {
     (void)tryOpenHouseMovie(pMovieName, bLoop);
 }
@@ -808,6 +814,10 @@ bool MPlayer::tryOpenHouseMovie(std::string_view pMovieName, bool bLoop) {
     if (IsMoviePlaying()) {
         return false;
     }
+
+    const bool pauseOnlyForPlayableMovie = engine->gameTitle() == GameTitle::MM6;
+    if (!pauseOnlyForPlayableMovie)
+        pauseForHouse(); // MM7 stops time in a house even when its movie is off or missing.
 
     if (engine->config->debug.NoVideo.value())
         return false;
@@ -821,9 +831,8 @@ bool MPlayer::tryOpenHouseMovie(std::string_view pMovieName, bool bLoop) {
     if (!pMovie->LoadFromLOD(blob))
         return false;
 
-    gameTimer->setPaused(true);
-    pAudioPlayer->pauseLooping();
-    pAudioPlayer->MusicPause();
+    if (pauseOnlyForPlayableMovie)
+        pauseForHouse();
     pMovie_Track = std::dynamic_pointer_cast<IMovie>(pMovie);
     sInHouseMovie = pMovieName;
     return true;
@@ -866,13 +875,10 @@ void MPlayer::HouseMovieLoop() {
     } else {
         pMovie_Track = nullptr;
         Blob blob = LoadMovie(sInHouseMovie);
-        if (!blob) {
-            Unload();
-            return;
-        }
         std::shared_ptr<Movie> pMovie = std::make_shared<Movie>();
-        if (!pMovie->LoadFromLOD(blob)) {
-            Unload();
+        if (!blob || !pMovie->LoadFromLOD(blob)) {
+            if (engine->gameTitle() == GameTitle::MM6)
+                Unload();
             return;
         }
         pMovie_Track = std::dynamic_pointer_cast<IMovie>(pMovie);

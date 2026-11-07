@@ -2708,3 +2708,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added an MM7 native-slot helper with read-only primary/backup preflight, full-content validator callback, bounded same-directory writes, and directory sync. Seven synthetic fault and recovery tests passed under network denial.
 - The normal SaveLoad and menu paths still use the inherited writer; the helper is not yet a live durability fix. Full engine integration and graphical save/reload remain open pending the shared MM6 SaveLoad handoff.
+
+## [2026-11-07] verify | MM7 level-seven artifacts
+- by: T-Burton-ND via codex
+- Fixed MM7-only artifact flag and cap handling, and retained the item payload of an indoor spawned artifact. Two focused GameTests, seven atomic-save tests and three MM7 controls passed 12/12; an MM6 startup/chest guard passed 1/1.
+- Hidden title captures remained in the ignored local progress folder. Real pickup and staged graphical app checks remain open; the installed app and frozen MM7 baseline were not changed.

@@ -13,4 +13,6 @@ The accepted original item-picker trace writes the one-based bonus index and pos
 
 Focused standard-item, bonus-map and bounded-inventory checks passed 6/6 after the guard on a separate arm64 build. The boundary test exercises a value calculation at the largest safe strength, one-above rejection on import/edit, and artifact/relic exclusion. An earlier monitored headless MM6 check with a loaded armor template passed 1/1 over 65 samples without an on-screen window or focus change. The later [bounded inventory stage](MM6-F4-Bounded-Inventory-Projection.md) uses this view but does not attach it to Party, live equipment effects or normal SaveLoad. Native nonzero item evidence, title-specific artifact behavior, modded armor effects and save/reload remain open.
 
-See also: [Standard Bonus Map](MM6-F4-Standard-Bonus-Map.md), [Plain Item Projection](MM6-F4-Plain-Item-Projection.md), [Bounded Inventory Projection](MM6-F4-Bounded-Inventory-Projection.md), [Raw Item Authority](MM6-F4-Raw-Item-Authority.md).
+The [value provenance carrier](MM6-F4-Item-Value-Provenance.md) now follows this raw record through shared `Item` copies and is required on capture; integrated linked focused checks passed 13/13. This remains detached from live equipment.
+
+See also: [Standard Bonus Map](MM6-F4-Standard-Bonus-Map.md), [Plain Item Projection](MM6-F4-Plain-Item-Projection.md), [Item Value Provenance](MM6-F4-Item-Value-Provenance.md), [Bounded Inventory Projection](MM6-F4-Bounded-Inventory-Projection.md), [Raw Item Authority](MM6-F4-Raw-Item-Authority.md).

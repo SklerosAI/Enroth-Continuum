@@ -490,6 +490,7 @@ void snapshot(const Item &src, Item_MM7 *dst, ContextTag<ItemSlot> slot) {
 }
 
 void reconstruct(const Item_MM7 &src, Item *dst) {
+    dst->mm6RawRecord.reset();
     dst->itemId = static_cast<ItemId>(src.itemId);
     if (isPotion(dst->itemId)) {
         dst->potionPower = src.standardEnchantmentOrPotionPower;

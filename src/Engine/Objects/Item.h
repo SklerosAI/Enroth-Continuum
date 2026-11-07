@@ -4,6 +4,7 @@
 #include <optional>
 
 #include "Engine/Data/HouseEnums.h"
+#include "Engine/MM6/MM6ItemRecord28.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Objects/ItemEnumFunctions.h"
 #include "Engine/Objects/CharacterEnums.h"
@@ -149,6 +150,10 @@ struct Item {
     Time enchantmentExpirationTime; // Enchantment expiration time, if this item is temporarily enchanted. Note that
                                     // both special and attribute enchantments can be temporary, but in MM7 we only have
                                     // special temporary enchantments.
+
+    // MM6 source bytes follow this value through shared inventory/cursor copy paths.
+    // Physical slot/index tables remain owned by their title-specific container.
+    std::optional<mm6::ItemRecord28> mm6RawRecord;
 };
 
 std::string GetItemTextureFilename(ItemId item_id, int index, int shoulder);

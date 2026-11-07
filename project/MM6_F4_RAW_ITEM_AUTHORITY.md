@@ -12,6 +12,8 @@ A [detached plain-item projection](MM6_F4_PLAIN_ITEM_PROJECTION.md) now uses MM6
 
 A separate [standard-item projection](MM6_F4_STANDARD_ITEM_PROJECTION.md) uses the original equipment-type branch and centralized 14-index MM6 bonus map for positive-strength standard-enchanted records. It retains every source byte and rejects special bonuses and unsupported category/field changes. It is detached from the live character inventory and save transaction.
 
+The [value provenance carrier](MM6_F4_ITEM_VALUE_PROVENANCE.md) now attaches exact source bytes to staged plain and common standard-enchanted `Item` values, preserving those bytes through shared value copies. Capture rejects missing or substituted carriers, but no live producer, unique identity, physical slot-clear policy or all-context save commit is defined.
+
 ## Migration order
 
 1. Keep `ItemRecord28` as the exact byte value for source-proven 28-byte records. Retain context ownership: SHOP physical rows and chest/map sidecars have different lifetimes and mutation rules.

@@ -38,6 +38,7 @@ inline std::optional<PlainItemProjection> stagePlainItem(
     result.raw = raw;
     result.sourceType = data.type;
     result.item.itemId = static_cast<ItemId>(id);
+    result.item.mm6RawRecord = raw;
     result.item.numCharges = std::bit_cast<std::int32_t>(raw.chargesRaw());
     result.item.flags = ItemFlags(raw.conditionRaw());
     result.item.maxCharges = raw.maxChargesRaw();
@@ -55,6 +56,7 @@ inline std::optional<ItemRecord28> capturePlainItem(
     const std::uint32_t id = projection.raw.itemNumberRaw();
     const auto source = stagePlainItem(projection.raw, table, title);
     if (!source || source->sourceType != projection.sourceType ||
+        item.mm6RawRecord != projection.raw ||
         item.itemId != static_cast<ItemId>(id) ||
         item.potionPower || item.standardEnchantment || item.standardEnchantmentStrength ||
         item.specialEnchantment != ITEM_ENCHANTMENT_NULL ||

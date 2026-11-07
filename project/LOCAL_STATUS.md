@@ -699,3 +699,12 @@ checks passed **11/11**, including a late fourth-character rejection and an
 `INVR` codec round trip. Live inventory moves copy `Item` values between slots,
 so a Party-slot-only raw sidecar would lose provenance. The stage remains
 detached; no normal MM6 save route is open.
+
+The [item value provenance carrier](MM6_F4_ITEM_VALUE_PROVENANCE.md) now keeps
+the 28-byte MM6 source record with staged plain and common standard items
+through shared `Item` copies. Both bounded adapters reject absent or replaced
+carriers; MM7 reconstruction clears it. Linked focused checks passed **13/13**,
+general non-MM6 units **438/438**, an MM7 headless save/load control **1/1**
+and two loaded-table MM6 headless checks **2/2**, with no visible window or
+focus change. Physical slot mutation, unique item identity and final save
+ownership remain open.

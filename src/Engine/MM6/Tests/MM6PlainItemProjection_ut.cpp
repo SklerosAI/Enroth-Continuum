@@ -3,6 +3,20 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6PlainItemProjection.h"
+#include "Engine/Objects/Inventory.h"
+#include "Engine/Snapshots/EntitySnapshots.h"
+
+namespace {
+
+struct TableScope {
+    ItemTable *previous = pItemTable;
+    ItemTable table;
+
+    TableScope() { pItemTable = &table; }
+    ~TableScope() { pItemTable = previous; }
+};
+
+} // namespace
 
 UNIT_TEST(MM6PlainItemProjection, ScrollInInheritedPotionRangeKeepsRawIdentity) {
     ItemTable table;
@@ -25,6 +39,7 @@ UNIT_TEST(MM6PlainItemProjection, ScrollInInheritedPotionRangeKeepsRawIdentity) 
     EXPECT_EQ(projection->item.potionPower, 0);
     EXPECT_EQ(projection->item.numCharges, 7);
     EXPECT_EQ(projection->item.maxCharges, 9);
+    EXPECT_EQ(projection->item.mm6RawRecord, raw);
     EXPECT_EQ(mm6::capturePlainItem(*projection, table, GameTitle::MM6), raw);
 
     projection->item.flags = ItemFlags(0x80000003u);
@@ -39,6 +54,9 @@ UNIT_TEST(MM6PlainItemProjection, ScrollInInheritedPotionRangeKeepsRawIdentity) 
     EXPECT_FALSE(mm6::capturePlainItem(*projection, table, GameTitle::MM6));
     projection->item.numCharges = 7;
     projection->item.flags = ItemFlags(0x80000403u);
+    EXPECT_FALSE(mm6::capturePlainItem(*projection, table, GameTitle::MM6));
+    projection->item.flags = ItemFlags(0x80000003u);
+    projection->item.mm6RawRecord.reset();
     EXPECT_FALSE(mm6::capturePlainItem(*projection, table, GameTitle::MM6));
 }
 
@@ -91,4 +109,35 @@ UNIT_TEST(MM6PlainItemProjection, GoldValueRoundTripAndUnsupportedUnionsReject) 
     ASSERT_TRUE(updatedWand);
     EXPECT_EQ(updatedWand->word(16), 4);
     EXPECT_EQ((*updatedWand)[25], 6);
+}
+
+UNIT_TEST(MM6PlainItemProjection, RawRecordFollowsValueCopyAcrossInventories) {
+    TableScope scope;
+    const ItemId scroll = static_cast<ItemId>(221);
+    scope.table.items[scroll].iconName = "scroll";
+    scope.table.items[scroll].type = ITEM_TYPE_SPELL_SCROLL;
+    scope.table.itemSizes[scroll] = Sizei(1, 1);
+
+    mm6::ItemRecord28 raw;
+    raw.setWord(0, 221);
+    raw[26] = 0x5a;
+    auto staged = mm6::stagePlainItem(raw, scope.table, GameTitle::MM6);
+    ASSERT_TRUE(staged);
+
+    CharacterInventory source = CharacterInventory::forMM6();
+    CharacterInventory destination = CharacterInventory::forMM6();
+    ASSERT_TRUE(source.tryRestoreAt(137, Pointi(0, 0), staged->item));
+    Item carried = source.take(source.entry(137));
+    EXPECT_EQ(carried.mm6RawRecord, raw);
+    auto added = destination.tryAdd(Pointi(1, 0), carried);
+    ASSERT_TRUE(added);
+    EXPECT_EQ(added->mm6RawRecord, raw);
+
+    carried.Reset();
+    EXPECT_FALSE(carried.mm6RawRecord);
+    carried = *added;
+    Item_MM7 mm7 = {};
+    mm7.itemId = 1;
+    reconstruct(mm7, &carried);
+    EXPECT_FALSE(carried.mm6RawRecord);
 }

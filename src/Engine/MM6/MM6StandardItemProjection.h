@@ -53,6 +53,7 @@ inline std::optional<StandardItemProjection> stageStandardItem(
     result.raw = raw;
     result.sourceType = data.type;
     result.item.itemId = static_cast<ItemId>(id);
+    result.item.mm6RawRecord = raw;
     result.item.standardEnchantment = *attribute;
     result.item.standardEnchantmentStrength = strength;
     result.item.numCharges = std::bit_cast<std::int32_t>(raw.chargesRaw());
@@ -68,6 +69,7 @@ inline std::optional<ItemRecord28> captureStandardItem(
     const auto bonus = item.standardEnchantment
         ? standardBonusForAttribute(*item.standardEnchantment) : std::nullopt;
     if (!source || source->sourceType != projection.sourceType || !bonus ||
+        item.mm6RawRecord != projection.raw ||
         item.itemId != source->item.itemId ||
         !standardStrengthFitsValue(item.standardEnchantmentStrength,
                                    table.items[item.itemId].baseValue) ||

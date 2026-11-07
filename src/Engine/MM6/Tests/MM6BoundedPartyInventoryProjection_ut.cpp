@@ -63,6 +63,9 @@ UNIT_TEST(MM6BoundedPartyInventoryProjection, FourCharacterRawRoundTripAndAtomic
     const auto bytes = mm6::encodeSaveContainer({{mm6::encodeRawInventorySection(*captured)}});
     EXPECT_EQ(mm6::decodeRawInventorySection(mm6::decodeSaveContainer(bytes)), *captured);
 
+    projection->inventory(3).entry(137)->mm6RawRecord.reset();
+    EXPECT_FALSE(mm6::captureBoundedPartyInventory(*projection, *scope.table, GameTitle::MM6));
+    projection->inventory(3).entry(137)->mm6RawRecord = source.characters[3].items[137];
     projection->inventory(3).take(projection->inventory(3).entry(137));
     EXPECT_FALSE(mm6::captureBoundedPartyInventory(*projection, *scope.table, GameTitle::MM6));
     EXPECT_EQ(source, fourArmors());

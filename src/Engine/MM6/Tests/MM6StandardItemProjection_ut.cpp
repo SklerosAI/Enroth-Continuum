@@ -4,6 +4,7 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6StandardItemProjection.h"
+#include "Engine/Objects/Inventory.h"
 
 UNIT_TEST(MM6StandardItemProjection, ArmorBonusAndOpaqueTailRoundTrip) {
     ItemTable table;
@@ -25,6 +26,7 @@ UNIT_TEST(MM6StandardItemProjection, ArmorBonusAndOpaqueTailRoundTrip) {
     ASSERT_TRUE(projection->item.standardEnchantment);
     EXPECT_EQ(*projection->item.standardEnchantment, ATTRIBUTE_RESIST_AIR);
     EXPECT_EQ(projection->item.standardEnchantmentStrength, 7);
+    EXPECT_EQ(projection->item.mm6RawRecord, raw);
     EXPECT_EQ(mm6::captureStandardItem(*projection, table, GameTitle::MM6), raw);
 
     projection->item.standardEnchantment = ATTRIBUTE_RESIST_BODY;
@@ -38,6 +40,18 @@ UNIT_TEST(MM6StandardItemProjection, ArmorBonusAndOpaqueTailRoundTrip) {
     EXPECT_EQ((*changed)[24], 4);
     EXPECT_EQ((*changed)[26], 0x5a);
     EXPECT_EQ((*changed)[27], 0xa5);
+
+    CharacterInventory source = CharacterInventory::forMM6();
+    CharacterInventory destination = CharacterInventory::forMM6();
+    ASSERT_TRUE(source.tryRestoreAt(137, ITEM_SLOT_ARMOUR, projection->item));
+    Item carried = source.take(source.entry(137));
+    EXPECT_EQ(carried.mm6RawRecord, raw);
+    auto equipped = destination.tryEquip(ITEM_SLOT_ARMOUR, carried);
+    ASSERT_TRUE(equipped);
+    EXPECT_EQ(equipped->mm6RawRecord, raw);
+
+    projection->item.mm6RawRecord.reset();
+    EXPECT_FALSE(mm6::captureStandardItem(*projection, table, GameTitle::MM6));
 }
 
 UNIT_TEST(MM6StandardItemProjection, RejectsUnsupportedCategoryAndFields) {

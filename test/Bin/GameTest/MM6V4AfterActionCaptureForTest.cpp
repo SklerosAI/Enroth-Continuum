@@ -192,16 +192,21 @@ static void writeAfterActionCandidateForTest(
     event.lastRespawnDay = pOutdoor->ddm.lastRespawnDay;
     event.mapVars = engine->_persistentVariables.mapVars;
     event.decorVars = engine->_persistentVariables.decorVars;
-    event.bindings = captureEventRuntimeDecorationBindings(pLevelDecorations,
-                                                            GameTitle::MM6);
+    if (!v5)
+        event.bindings = captureEventRuntimeDecorationBindings(pLevelDecorations,
+                                                                GameTitle::MM6);
     std::vector<std::uint8_t> bytes;
     if (v5) {
         auto sprites = captureSpriteRuntimeFields(
             "oute3.odm", current, pSpriteObjects, GameTitle::MM6);
         auto actorRuntime = captureActorRuntimeFields(
             "oute3.odm", saved.v3.activeActorPayload, actors, GameTitle::MM6);
+        auto decorationRuntime = captureDecorationRuntimeFields(
+            "oute3.odm", maps.readBase("oute3.odm"), event,
+            *pDecorationTable, pLevelDecorations, GameTitle::MM6);
         const auto complete = std::unique_ptr<V5SaveFields>(
-            new V5SaveFields{std::move(saved), std::move(sprites), std::move(actorRuntime)});
+            new V5SaveFields{std::move(saved), std::move(sprites),
+                             std::move(actorRuntime), std::move(decorationRuntime)});
         bytes = encodeV5Save(*complete, GameTitle::MM6);
     } else {
         bytes = encodeV4Save(saved, GameTitle::MM6);
@@ -217,7 +222,7 @@ static void writeAfterActionCandidateForTest(
                 proposed, freshNpcs, maps.expectedNames(), readBase,
                 verifyItem, *pItemTable, pOverlayTable->overlays.size(),
                 pTileTable->tileCount(), pActors.size(), random->type(),
-                pLevelDecorations, GameTitle::MM6)));
+                pLevelDecorations, *pDecorationTable, GameTitle::MM6)));
             checked = &checkedV5->v4;
             const auto liveSprites = captureSpriteRuntimeFields(
                 "oute3.odm", checked->saved.v3.raw.chest.rawActiveDelta,
@@ -232,6 +237,13 @@ static void writeAfterActionCandidateForTest(
             if (encodeActorRuntimeSection(checkedActors, GameTitle::MM6) !=
                 encodeActorRuntimeSection(checkedV5->actors, GameTitle::MM6))
                 throw std::runtime_error("MM6 v5 after-action live actor owner changed");
+            const auto liveDecorations = captureDecorationRuntimeFields(
+                "oute3.odm", maps.readBase("oute3.odm"),
+                checked->activeEventRuntime, *pDecorationTable,
+                pLevelDecorations, GameTitle::MM6);
+            if (encodeDecorationRuntimeSection(liveDecorations, GameTitle::MM6) !=
+                encodeDecorationRuntimeSection(checkedV5->decorations, GameTitle::MM6))
+                throw std::runtime_error("MM6 v5 after-action live decoration owner changed");
         } else {
             checkedV4.reset(new V4FullSessionPreflight(stageV4FullSessionPreflight(
                 proposed, freshNpcs, maps.expectedNames(), readBase,
@@ -248,10 +260,11 @@ static void writeAfterActionCandidateForTest(
             checked->activeEventRuntime.mapVars != engine->_persistentVariables.mapVars ||
             checked->activeEventRuntime.decorVars != engine->_persistentVariables.decorVars)
             throw std::runtime_error("MM6 v4 after-action event owner changed");
-        requireFirstMapOutdoorDecorationReplay(
-            "oute3.odm", maps.readBase("oute3.odm"),
-            checked->activeEventRuntime, *pDecorationTable,
-            pLevelDecorations, GameTitle::MM6);
+        if (!v5)
+            requireFirstMapOutdoorDecorationReplay(
+                "oute3.odm", maps.readBase("oute3.odm"),
+                checked->activeEventRuntime, *pDecorationTable,
+                pLevelDecorations, GameTitle::MM6);
     };
     validate(bytes);
     const std::string_view slot = v5 ? "candidate-v5-after-action.ec6" :

@@ -15,7 +15,7 @@ add_library(engine_mm6_save_container STATIC MM6SaveContainer.cpp MM6SaveContain
     MM6ShopGuildClockFields.cpp MM6ShopGuildClockFields.h
     MM6ShopStockFields.cpp MM6ShopStockFields.h MM6ShopStockPurchase.h MM6ShopBoundedPurchase.h MM6ItemRecord28.h
     MM6PlainItemProjection.h MM6StandardBonusMap.h MM6StandardItemProjection.h
-    MM6BoundedItemProjection.h MM6BoundedInventoryProjection.h
+    MM6BoundedItemProjection.h MM6GroundItemProjection.h MM6BoundedInventoryProjection.h
     MM6BoundedPartyInventoryProjection.h
     MM6RawInventoryFields.cpp MM6RawInventoryFields.h
     MM6BeaconSaveFields.cpp MM6BeaconSaveFields.h
@@ -112,7 +112,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6ShopStockFields_ut.cpp Tests/MM6ShopBoundedPurchase_ut.cpp
         Tests/MM6ItemRecord28_ut.cpp Tests/MM6PlainItemProjection_ut.cpp
         Tests/MM6BoundedInventoryProjection_ut.cpp
-        Tests/MM6BoundedPartyInventoryProjection_ut.cpp Tests/MM6StandardBonusMap_ut.cpp
+        Tests/MM6BoundedPartyInventoryProjection_ut.cpp Tests/MM6GroundItemProjection_ut.cpp Tests/MM6StandardBonusMap_ut.cpp
         Tests/MM6StandardItemProjection_ut.cpp
         Tests/MM6RawInventoryFields_ut.cpp
         Tests/MM6KnownSaveFields_ut.cpp

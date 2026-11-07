@@ -1,0 +1,16 @@
+# MM6 ground item raw projection (detached F4 candidate)
+
+The MM6 indoor and outdoor delta readers retain each 100-byte sprite-object record in the raw map sidecar. The contained item occupies 28 bytes starting at byte 36. The inherited `Item_MM7` intermediary has a 36-byte item shape and its `reconstruct` path clears `Item::mm6RawRecord`; it also classifies potion and gold by MM7 numeric IDs. `arrangeSpriteObjects()` subsequently calls inherited `Item::postGenerate(ITEM_SOURCE_MAP)` on every active sprite before checking dropped or unpickable flags. Thus a successful map decode alone does not establish a reversible MM6 ground-item owner.
+
+`MM6GroundItemProjection.h` now offers a detached view of exactly one map record. It owns an immutable copy of all 100 source bytes, extracts the exact `ItemRecord28`, and stages a common-rarity, source-typed plain/gold or standard-enchanted item through the existing bounded adapter. A staged `Item` carries its original raw record. Removed sprite records and zero-item records retain all bytes without inventing an item. Capture writes only adapter-supported fields into a copy of the source record and retains all other sprite and item bytes. It rejects a substituted raw carrier, unsupported item mutation, foreign title, malformed length, invalid item ID, nonzero ground body location, potion type and any category the bounded adapter does not support.
+
+This helper does not change `pSpriteObjects`, map load, changed-state encoding, pickup, drop, monster loot or SaveLoad. It is a narrow raw-byte contract for future staging. The current map-item verifier still checks item IDs/templates only. Full map admission must validate each live item-bearing context against an MM6 projection and preserve its raw record through runtime ownership and delta capture.
+
+## Remaining live gates
+
+- Prove original MM6 ground pickup/removal, drop and newly generated ground-item byte mutations before implementing them. The existing `ItemInteraction()` path uses inherited MM7 quest-bit shortcuts and resets the source item through `Party::addItemToParty()`, while `SpriteObject::Remove()` only clears its object descriptor.
+- Give the active map a title-owned raw record per sprite, including removed and empty records. Stage item views before the MM7 snapshot reconstructor, and reconcile `postGenerate()` with source-proven MM6 generation rules. A raw sidecar alone cannot follow a live item after pickup.
+- Replace inherited monster loot, stealing and random treasure generation only after their MM6 item selection, category, gold/potion/charge and artifact rules are verified. Current `Actor::SetRandomGoldIfTheresNoItem()`, `Actor::LootActor()` and `Character::StealFromActor()` produce or move `Item` values without native 28-byte provenance.
+- Join ground, chest, inventory, cursor, shop and actor item owners in the complete `.ec6` save/load transaction. A detached item round trip does not permit a live item interaction or a playable campaign.
+
+Four synthetic unit cases check exact plain and standard round trips, a supported condition-bit edit with all other bytes retained, empty/removed opaque records, and rejection of foreign/malformed/unsupported inputs. The new translation unit passed arm64 C++23 syntax checking; linked tests and private-backed checks remain for integration.

@@ -113,6 +113,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Raw Item Authority](MM6-F4-Raw-Item-Authority.md) — Byte-preserving MM6 item owner for proven contexts; provisional ITEM/HELD schemas need revision
 - [MM6 F4 Raw Item Transfer Semantics](MM6-F4-Raw-Item-Transfer-Semantics.md) — Source-backed first-25-byte clears, full cursor/shop copies and still-open equipment/UI moves
 - [MM6 F4 Item Value Provenance](MM6-F4-Item-Value-Provenance.md) — Optional raw source record follows shared Item value copies; live ownership remains open
+- [MM6 F4 Ground Item Raw Projection](MM6-F4-Ground-Item-Raw-Projection.md) — Detached exact map sprite/item bytes with source-typed bounded view; live pickup and loot remain guarded
 - [MM6 F4 Raw Inventory Section](MM6-F4-Raw-Inventory-Section.md) — Detached INVR v1 preserves 138 physical item records and raw index words per character
 - [MM6 F4 Plain Item Projection](MM6-F4-Plain-Item-Projection.md) — Source-typed detached view of plain MM6 items and gold with exact raw record retained
 - [MM6 F4 Plain Inventory Projection](MM6-F4-Plain-Inventory-Projection.md) — Historical plain-only stage, superseded by the bounded inventory projection

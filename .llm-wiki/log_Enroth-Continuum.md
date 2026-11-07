@@ -1917,3 +1917,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated decoded `HIRE` and `RCVR` adapters, then composed all currently represented v2 Party fields on one detached copy. Reconciled the v2 owner-gap packet with the separate NPC/map/timer/CHST stage.
 - Focused linked raw/effect/hireling-recovery tests passed 12/12, including a late clock rejection without baseline mutation. BEAC/IFOV policy, cursor/shop, live map/UI and production SaveLoad remain open.
+
+## [2026-11-06] integrate | MM6 represented v2 session preflight
+- by: T-Burton-ND via codex
+- Joined native primary/backup selection to the represented Party and NPC/map/timer/CHST stages on detached copies. A late unsupported primary item now allows selection of a valid backup without disk repair.
+- Linked atomic/raw/effect/hireling checks passed 20/20, including both-invalid refusal and unchanged disk bytes. This remains an incomplete session, with no production MM6 menu/load admission.

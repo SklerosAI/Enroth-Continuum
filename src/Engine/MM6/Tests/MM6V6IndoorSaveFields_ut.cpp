@@ -11,6 +11,7 @@
 #include "Engine/MM6/MM6RawSaveFields.h"
 #include "Engine/MM6/MM6NpcStaticBaseline.h"
 #include "Engine/MM6/MM6V6IndoorSaveFields.h"
+#include "Engine/MM6/MM6V6IndoorPreEventOwnerGate.h"
 #include "Engine/Tables/ItemTable.h"
 #include "Library/Random/SequentialRandomEngine.h"
 #include "Utility/Memory/Blob.h"
@@ -209,7 +210,7 @@ UNIT_TEST(MM6V6IndoorSaveFields, ValidatedRawV2IndoorStageRefusesGameplay) {
     };
     ItemTableScope items;
     const auto npcs = freshNpcBaseline();
-    const auto staged = mm6::stageV6IndoorSave(
+    auto staged = mm6::stageV6IndoorSave(
         bytes, npcs, names, readBase,
         [](std::int32_t id) { return id >= 1 && id <= 580; },
         items.table, 5, 145, baseline, GameTitle::MM6);
@@ -217,6 +218,12 @@ UNIT_TEST(MM6V6IndoorSaveFields, ValidatedRawV2IndoorStageRefusesGameplay) {
     EXPECT_FALSE(staged.represented.outdoorPlan);
     EXPECT_FALSE(staged.canEnterGameLoop());
     EXPECT_EQ(staged.saved.actors.count, 0u);
+    EXPECT_NO_THROW(mm6::requireV6IndoorPreEventOwnerAgreement(
+        staged, "d0.blv", {}, {}, {}, GameTitle::MM6));
+    staged.saved.actors.count = 1;
+    EXPECT_THROW(mm6::requireV6IndoorPreEventOwnerAgreement(
+        staged, "d0.blv", {}, {}, {}, GameTitle::MM6), std::exception);
+    staged.saved.actors.count = 0;
 
     auto changed = source;
     changed.actors.count = 1;

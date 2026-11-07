@@ -23,6 +23,7 @@
 #include "Engine/MM6/MM6NpcStaticBaseline.h"
 #include "Engine/MM6/MM6PreEventCheckpointForTest.h"
 #include "Engine/MM6/MM6V6IndoorSaveFields.h"
+#include "Engine/MM6/MM6V6IndoorPreEventOwnerGate.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
@@ -136,6 +137,9 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                 pLevelDecorations, GameTitle::MM6);
             mm6::requireGeneratedNpcActorAgreement(
                 staged->saved.generatedNpcs, pActors, mapName, GameTitle::MM6);
+            mm6::requireV6IndoorPreEventOwnerAgreement(
+                *staged, mapName, pActors, pSpriteObjects, pLevelDecorations,
+                GameTitle::MM6);
         } catch (...) {
             stageError = std::current_exception();
         }

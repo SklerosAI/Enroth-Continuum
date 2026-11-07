@@ -198,7 +198,6 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
     std::size_t expectedActiveActors = 0;
     mm6::V5FullSessionPreflight *staged = nullptr;
     std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
-    std::unique_ptr<mm6::testing::ScopedEventRuntimeRestoreForTest> eventRuntime;
     std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
     std::unique_ptr<mm6::testing::ScopedV3PreEventReplayForTest> replay;
     std::unique_ptr<mm6::testing::ScopedV5PreEventActorReplayForTest> actorReplay;
@@ -236,8 +235,6 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
             expectedActiveActors = staged->actors.actors.size();
 
             chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>(true);
-            eventRuntime = std::make_unique<mm6::testing::ScopedEventRuntimeRestoreForTest>(
-                GameTitle::MM6, staged->v4.saved.eventRuntime);
             checkpoint = std::make_unique<mm6::testing::ScopedPreEventCheckpointForTest>(
                 GameTitle::MM6, [&] {
                     checkpointRan = true;
@@ -270,7 +267,7 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
                             !replay->published() || !replay->rngPublished() ||
                             !actorReplay->published() || !decorationReplay->published() ||
                             !spriteReplay->published() ||
-                            !eventRuntime->restored() ||
+                            !engine->_mm6FirstMapLoadAttempt->eventRestored() ||
                             !engine->_mm6FirstMapLoadAttempt ||
                             engine->_mm6FirstMapLoadAttempt->phase() !=
                                 mm6::V5FirstMapLoadAttempt::Phase::ChestApplied ||
@@ -346,7 +343,6 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
             actorReplay.reset();
             replay.reset();
             checkpoint.reset();
-            eventRuntime.reset();
             chestOptIn.reset();
             abandon.reset();
             engine->_mm6FirstMapLoadAttempt.reset();
@@ -408,7 +404,6 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
         actorReplay.reset();
         replay.reset();
         checkpoint.reset();
-        eventRuntime.reset();
         chestOptIn.reset();
         engine->_mm6FirstMapLoadAttempt.reset();
         staged = nullptr;

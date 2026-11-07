@@ -786,21 +786,25 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
                 GameTitle::MM6);
             const auto *eventRuntimeScope =
                 mm6::testing::detail::activeEventRuntimeRestoreScope();
+            const bool eventRuntimeRestored =
+                (eventRuntimeScope && eventRuntimeScope->restored()) ||
+                (engine->_mm6FirstMapLoadAttempt &&
+                 engine->_mm6FirstMapLoadAttempt->eventRestored());
             (void) mm6::testing::runArmedV6PreEventIndoorActorReplayForTest(
                 checkpoint, pActors, &pActors, pNPCStats,
                 application->component<EngineRandomComponent>()->type(),
-                eventRuntimeScope && eventRuntimeScope->restored(),
+                eventRuntimeRestored,
                 pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
                 GameTitle::MM6);
             (void) mm6::testing::runArmedV5PreEventDecorationReplayForTest(
                 checkpoint, pLevelDecorations, &pLevelDecorations,
                 actorPublished && dynamicActorPublished,
-                eventRuntimeScope && eventRuntimeScope->restored(),
+                eventRuntimeRestored,
                 pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
                 GameTitle::MM6);
             (void) mm6::testing::runArmedV6PreEventIndoorDecorationReplayForTest(
                 checkpoint, pLevelDecorations, &pLevelDecorations,
-                eventRuntimeScope && eventRuntimeScope->restored(),
+                eventRuntimeRestored,
                 pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
                 GameTitle::MM6);
             (void) mm6::testing::runArmedV5PreEventSpriteReplayForTest(
@@ -809,7 +813,7 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
                 pOutdoor->mm6DeltaBytes, GameTitle::MM6);
             (void) mm6::testing::runArmedV6PreEventIndoorSpriteReplayForTest(
                 checkpoint, pSpriteObjects, &pSpriteObjects,
-                eventRuntimeScope && eventRuntimeScope->restored(),
+                eventRuntimeRestored,
                 pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
                 GameTitle::MM6);
         } catch (...) {

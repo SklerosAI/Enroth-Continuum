@@ -14,6 +14,7 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
+#include "Engine/MM6/MM6V5FirstMapLoadAttempt.h"
 #include "Engine/MM6/MM6VisitedReturnPreEventProbeForTest.h"
 #include "Engine/AssetsManager.h"
 #include "Engine/Evt/Processor.h"
@@ -1884,11 +1885,19 @@ static void loadAndPrepareODMInternal(MapId mapid, bool bLoading) {
         }
         RespawnGlobalDecorations();
     }
-    if (bLoading && engine->gameTitle() == GameTitle::MM6)
-        (void) mm6::testing::runArmedEventRuntimeRestoreForTest(
-            GameTitle::MM6, mapFilename, pOutdoor->ddm.respawnCount,
-            pOutdoor->ddm.lastRespawnDay, outdoor_was_respawned,
-            &engine->_persistentVariables, pLevelDecorations);
+    if (bLoading && engine->gameTitle() == GameTitle::MM6) {
+        if (engine->_mm6FirstMapLoadAttempt)
+            engine->_mm6FirstMapLoadAttempt->restoreEventAtNativeMap(
+                mapFilename, pOutdoor->ddm.respawnCount,
+                pOutdoor->ddm.lastRespawnDay, outdoor_was_respawned,
+                &engine->_persistentVariables, pLevelDecorations,
+                GameTitle::MM6);
+        else
+            (void) mm6::testing::runArmedEventRuntimeRestoreForTest(
+                GameTitle::MM6, mapFilename, pOutdoor->ddm.respawnCount,
+                pOutdoor->ddm.lastRespawnDay, outdoor_was_respawned,
+                &engine->_persistentVariables, pLevelDecorations);
+    }
     pOutdoor->PrepareDecorations();
     arrangeSpriteObjects();
     pGameLoadingUI_ProgressBar->Progress();

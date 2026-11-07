@@ -1,6 +1,7 @@
 #include "MM6V5FirstMapLoadAttempt.h"
 
 #include <stdexcept>
+#include <type_traits>
 #include <utility>
 
 #include "Engine/Engine.h"
@@ -12,6 +13,7 @@
 
 #include "MM6ChestLiveOwnerAdapter.h"
 #include "MM6ChestSeedAndOwnership.h"
+#include "MM6EventRuntimeSaveFields.h"
 #include "MM6V5FirstMapLoadPreflight.h"
 #include "MM6V5FullSessionPreflight.h"
 
@@ -47,8 +49,29 @@ void V5FirstMapLoadAttempt::notePublished(GameTitle title) {
     _phase = Phase::Published;
 }
 
-bool V5FirstMapLoadAttempt::applyChestAtNativeMap(GameTitle title) {
+void V5FirstMapLoadAttempt::restoreEventAtNativeMap(
+    std::string_view mapName, int respawnCount, int lastRespawnDay,
+    bool wasRespawned, PersistentVariables *destination,
+    std::span<LevelDecoration> decorations, GameTitle title) {
     if (title != GameTitle::MM6 || _phase != Phase::Published ||
+        mapName != FIRST_MAP || wasRespawned || !destination ||
+        respawnCount < 0 || lastRespawnDay <= 0 || !pOutdoor ||
+        pOutdoor->mm6DeltaBytes !=
+            _staged->v4.saved.v3.raw.chest.rawActiveDelta)
+        throw std::runtime_error("MM6 first-map event restore lacks exact native owners");
+    const auto &entry = requireEventRuntimeMapEntry(
+        _staged->v4.saved.eventRuntime, mapName, respawnCount,
+        lastRespawnDay, decorations, title);
+    static_assert(std::is_nothrow_copy_assignable_v<PersistentVariables>);
+    PersistentVariables updated = *destination;
+    updated.mapVars = entry.mapVars;
+    updated.decorVars = entry.decorVars;
+    *destination = updated;
+    _phase = Phase::EventRestored;
+}
+
+bool V5FirstMapLoadAttempt::applyChestAtNativeMap(GameTitle title) {
+    if (title != GameTitle::MM6 || _phase != Phase::EventRestored ||
         !engine || engine->gameTitle() != title || !pMapTable || !pItemTable ||
         !pParty || !pOutdoor || uCurrentlyLoadedLevelType != LEVEL_OUTDOOR ||
         engine->_currentLoadedMapId != pMapTable->GetMapInfo(FIRST_MAP) ||

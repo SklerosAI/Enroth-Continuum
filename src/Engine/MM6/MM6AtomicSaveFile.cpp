@@ -16,11 +16,14 @@
 #endif
 
 #include "MM6KnownSaveFields.h"
+#include "MM6RawSaveFields.h"
 
 namespace mm6 {
 namespace {
 
 constexpr std::uintmax_t MAX_SAVE_BYTES = 64 * 1024 * 1024;
+
+enum class SlotSchema { KnownV1, RawV2 };
 
 class InvalidSaveFile : public std::runtime_error {
  public:
@@ -71,14 +74,21 @@ std::vector<std::uint8_t> readBoundedFile(const std::filesystem::path &path) {
 }
 
 std::vector<std::uint8_t> readValidatedFile(const std::filesystem::path &path,
+                                            SlotSchema schema,
                                             SaveHeaderFields *header = nullptr) {
     std::vector<std::uint8_t> bytes = readBoundedFile(path);
     try {
-        KnownSaveFields fields = decodeKnownSave(bytes);
-        if (header)
-            *header = std::move(fields.metadata.header);
+        if (schema == SlotSchema::KnownV1) {
+            KnownSaveFields fields = decodeKnownSave(bytes);
+            if (header)
+                *header = std::move(fields.metadata.header);
+        } else {
+            RawSaveFields fields = decodeRawSave(bytes, GameTitle::MM6);
+            if (header)
+                *header = std::move(fields.metadata.header);
+        }
     } catch (const std::runtime_error &) {
-        throw InvalidSaveFile("MM6 known save validation failed");
+        throw InvalidSaveFile("MM6 save schema validation failed");
     }
     return bytes;
 }
@@ -130,7 +140,7 @@ class TempSaveFile {
     TempSaveFile &operator=(const TempSaveFile &) = delete;
 
     void write(std::span<const std::uint8_t> bytes,
-               const detail::AtomicSaveFault &fault = {}) {
+               SlotSchema schema, const detail::AtomicSaveFault &fault = {}) {
         size_t offset = 0;
         while (offset < bytes.size()) {
             const size_t count = fault && offset == 0 ? 1 : bytes.size() - offset;
@@ -151,7 +161,7 @@ class TempSaveFile {
             throw std::system_error(errno, std::generic_category(), "close MM6 save temp");
         }
         _fd = -1;
-        if (readValidatedFile(_path) != std::vector<std::uint8_t>(bytes.begin(), bytes.end()))
+        if (readValidatedFile(_path, schema) != std::vector<std::uint8_t>(bytes.begin(), bytes.end()))
             throw std::runtime_error("MM6 save temp readback mismatch");
     }
 
@@ -167,9 +177,9 @@ class TempSaveFile {
 };
 
 void restoreBackup(const std::filesystem::path &directory, std::string_view slot,
-                   std::span<const std::uint8_t> bytes) {
+                   std::span<const std::uint8_t> bytes, SlotSchema schema) {
     TempSaveFile temp(directory, slot);
-    temp.write(bytes);
+    temp.write(bytes, schema);
     temp.replace(directory / std::string(slot));
     syncDirectory(directory);
 }
@@ -178,14 +188,18 @@ void restoreBackup(const std::filesystem::path &directory, std::string_view slot
 
 } // namespace
 
-void detail::writeAtomicSaveFile(const std::filesystem::path &profileRoot,
-                                 std::string_view slotName,
-                                 std::span<const std::uint8_t> container,
-                                 const AtomicSaveFault &fault) {
+static void writeAtomicSaveFileForSchema(const std::filesystem::path &profileRoot,
+                                         std::string_view slotName,
+                                         std::span<const std::uint8_t> container,
+                                         SlotSchema schema,
+                                         const detail::AtomicSaveFault &fault) {
 #ifdef _WIN32
     throw std::runtime_error("native atomic MM6 saves are unsupported on Windows");
 #else
-    (void) decodeKnownSave(container);
+    if (schema == SlotSchema::KnownV1)
+        (void) decodeKnownSave(container);
+    else
+        (void) decodeRawSave(container, GameTitle::MM6);
     const std::filesystem::path directory = savesDirectory(profileRoot, slotName);
     std::filesystem::create_directories(directory);
     const std::filesystem::path primary = directory / std::string(slotName);
@@ -193,35 +207,54 @@ void detail::writeAtomicSaveFile(const std::filesystem::path &profileRoot,
 
     std::optional<std::vector<std::uint8_t>> previous;
     if (regularFileExists(primary)) {
-        previous = readValidatedFile(primary);
+        previous = readValidatedFile(primary, schema);
     } else if (regularFileExists(backup)) {
         throw std::runtime_error("recover MM6 save backup before writing slot");
     }
 
     TempSaveFile next(directory, slotName);
     if (fault)
-        fault(AtomicSaveStep::BeforeTempWrite);
-    next.write(container, fault);
+        fault(detail::AtomicSaveStep::BeforeTempWrite);
+    next.write(container, schema, fault);
 
     if (previous) {
         TempSaveFile prior(directory, slotName);
-        prior.write(*previous);
+        prior.write(*previous, schema);
         if (fault)
-            fault(AtomicSaveStep::BeforeBackupReplace);
+            fault(detail::AtomicSaveStep::BeforeBackupReplace);
         prior.replace(backup);
         syncDirectory(directory);
     }
 
     if (fault)
-        fault(AtomicSaveStep::BeforePrimaryReplace);
+        fault(detail::AtomicSaveStep::BeforePrimaryReplace);
     next.replace(primary);
     syncDirectory(directory);
 #endif
 }
 
+void detail::writeAtomicSaveFile(const std::filesystem::path &profileRoot,
+                                 std::string_view slotName,
+                                 std::span<const std::uint8_t> container,
+                                 const AtomicSaveFault &fault) {
+    writeAtomicSaveFileForSchema(profileRoot, slotName, container, SlotSchema::KnownV1, fault);
+}
+
+void detail::writeAtomicRawSaveFile(const std::filesystem::path &profileRoot,
+                                    std::string_view slotName,
+                                    std::span<const std::uint8_t> container,
+                                    const AtomicSaveFault &fault) {
+    writeAtomicSaveFileForSchema(profileRoot, slotName, container, SlotSchema::RawV2, fault);
+}
+
 void writeAtomicSaveFile(const std::filesystem::path &profileRoot, std::string_view slotName,
                          std::span<const std::uint8_t> container) {
     detail::writeAtomicSaveFile(profileRoot, slotName, container, {});
+}
+
+void writeAtomicRawSaveFile(const std::filesystem::path &profileRoot, std::string_view slotName,
+                            std::span<const std::uint8_t> container) {
+    detail::writeAtomicRawSaveFile(profileRoot, slotName, container, {});
 }
 
 detail::SaveSlotRollbackSnapshot detail::snapshotSaveSlotForRollback(
@@ -263,7 +296,7 @@ void detail::restoreSaveSlotForRollback(const std::filesystem::path &profileRoot
                                 const std::optional<std::vector<std::uint8_t>> &bytes) {
         if (bytes) {
             TempSaveFile temp(directory, slotName);
-            temp.write(*bytes);
+            temp.write(*bytes, SlotSchema::KnownV1);
             temp.replace(path);
         } else if (regularFileExists(path)) {
             std::filesystem::remove(path);
@@ -275,8 +308,8 @@ void detail::restoreSaveSlotForRollback(const std::filesystem::path &profileRoot
 #endif
 }
 
-std::optional<std::vector<std::uint8_t>> loadRecoverableSaveFile(
-    const std::filesystem::path &profileRoot, std::string_view slotName) {
+static std::optional<std::vector<std::uint8_t>> loadRecoverableSaveFileForSchema(
+    const std::filesystem::path &profileRoot, std::string_view slotName, SlotSchema schema) {
 #ifdef _WIN32
     throw std::runtime_error("native atomic MM6 saves are unsupported on Windows");
 #else
@@ -285,7 +318,7 @@ std::optional<std::vector<std::uint8_t>> loadRecoverableSaveFile(
     const std::filesystem::path backup = directory / (std::string(slotName) + ".bak");
     if (regularFileExists(primary)) {
         try {
-            return readValidatedFile(primary);
+            return readValidatedFile(primary, schema);
         } catch (const InvalidSaveFile &) {
             if (!regularFileExists(backup))
                 throw;
@@ -293,15 +326,25 @@ std::optional<std::vector<std::uint8_t>> loadRecoverableSaveFile(
     } else if (!regularFileExists(backup)) {
         return std::nullopt;
     }
-    std::vector<std::uint8_t> recovered = readValidatedFile(backup);
-    restoreBackup(directory, slotName, recovered);
+    std::vector<std::uint8_t> recovered = readValidatedFile(backup, schema);
+    restoreBackup(directory, slotName, recovered, schema);
     return recovered;
 #endif
 }
 
-std::optional<SaveFileCandidate> preflightRecoverableSaveFile(
+std::optional<std::vector<std::uint8_t>> loadRecoverableSaveFile(
+    const std::filesystem::path &profileRoot, std::string_view slotName) {
+    return loadRecoverableSaveFileForSchema(profileRoot, slotName, SlotSchema::KnownV1);
+}
+
+std::optional<std::vector<std::uint8_t>> loadRecoverableRawSaveFile(
+    const std::filesystem::path &profileRoot, std::string_view slotName) {
+    return loadRecoverableSaveFileForSchema(profileRoot, slotName, SlotSchema::RawV2);
+}
+
+static std::optional<SaveFileCandidate> preflightRecoverableSaveFileForSchema(
     const std::filesystem::path &profileRoot, std::string_view slotName,
-    const SaveCandidateValidator &validate) {
+    const SaveCandidateValidator &validate, SlotSchema schema) {
 #ifdef _WIN32
     throw std::runtime_error("native MM6 save preflight is unsupported on Windows");
 #else
@@ -322,7 +365,7 @@ std::optional<SaveFileCandidate> preflightRecoverableSaveFile(
         foundCandidate = true;
         std::vector<std::uint8_t> bytes;
         try {
-            bytes = readValidatedFile(path);
+            bytes = readValidatedFile(path, schema);
         } catch (const InvalidSaveFile &) {
             continue;
         }
@@ -339,7 +382,22 @@ std::optional<SaveFileCandidate> preflightRecoverableSaveFile(
 #endif
 }
 
-std::vector<SaveSlotInfo> listKnownSaveSlots(const std::filesystem::path &profileRoot) {
+std::optional<SaveFileCandidate> preflightRecoverableSaveFile(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    const SaveCandidateValidator &validate) {
+    return preflightRecoverableSaveFileForSchema(profileRoot, slotName, validate,
+                                                 SlotSchema::KnownV1);
+}
+
+std::optional<SaveFileCandidate> preflightRecoverableRawSaveFile(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    const SaveCandidateValidator &validate) {
+    return preflightRecoverableSaveFileForSchema(profileRoot, slotName, validate,
+                                                 SlotSchema::RawV2);
+}
+
+static std::vector<SaveSlotInfo> listSaveSlotsForSchema(const std::filesystem::path &profileRoot,
+                                                        SlotSchema schema) {
 #ifdef _WIN32
     throw std::runtime_error("native MM6 save slots are unsupported on Windows");
 #else
@@ -363,7 +421,7 @@ std::vector<SaveSlotInfo> listKnownSaveSlots(const std::filesystem::path &profil
         SaveHeaderFields header;
         if (regularFileExists(primary)) {
             try {
-                (void) readValidatedFile(primary, &header);
+                (void) readValidatedFile(primary, schema, &header);
                 slots.push_back({name, std::move(header), false});
                 continue;
             } catch (const InvalidSaveFile &) {
@@ -372,7 +430,7 @@ std::vector<SaveSlotInfo> listKnownSaveSlots(const std::filesystem::path &profil
         }
         if (regularFileExists(backup)) {
             try {
-                (void) readValidatedFile(backup, &header);
+                (void) readValidatedFile(backup, schema, &header);
                 slots.push_back({name, std::move(header), true});
             } catch (const InvalidSaveFile &) {
                 // Do not present an unusable slot as playable.
@@ -381,6 +439,14 @@ std::vector<SaveSlotInfo> listKnownSaveSlots(const std::filesystem::path &profil
     }
     return slots;
 #endif
+}
+
+std::vector<SaveSlotInfo> listKnownSaveSlots(const std::filesystem::path &profileRoot) {
+    return listSaveSlotsForSchema(profileRoot, SlotSchema::KnownV1);
+}
+
+std::vector<SaveSlotInfo> listRawSaveSlots(const std::filesystem::path &profileRoot) {
+    return listSaveSlotsForSchema(profileRoot, SlotSchema::RawV2);
 }
 
 } // namespace mm6

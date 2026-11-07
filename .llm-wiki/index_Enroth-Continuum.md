@@ -132,7 +132,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 World Save Runtime](MM6-F4-World-Save-Runtime.md) — NPC and 67-map capture/staging with bounded active-map writer and outdoor identity join
 - [MM6 F4 Timed Buffs](MM6-F4-Timed-Buffs.md) — Bounded BUFF fields for party/character effects and open runtime/F5 checks
 - [MM6 F4 Hireling State](MM6-F4-Hireling-State.md) — HIRE party copies, sacrifice progress and bounded MM6 NPC lookup
-- [MM6 F4 Atomic Save File](MM6-F4-Atomic-Save-File.md) — Known-field `.ec6` replacement, read-only slot inventory and semantic load preflight
+- [MM6 F4 Atomic Save File](MM6-F4-Atomic-Save-File.md) — Schema-isolated v1/v2 `.ec6` replacement, read-only slot inventory and semantic load preflight
 - [MM6 F4 Save Remainder](MM6-F4-Save-Remainder.md) — Field, consumer and lifetime inventory after core/durable/metadata/NPC/MAPS, including raw resistance staging
 - [MM6 F4 Held Item](MM6-F4-Held-Item.md) — HELD section, MM6 icon preflight and cursor restoration boundary
 - [MM6 F4 Raw Held Item Section](MM6-F4-Raw-Held-Item-Section.md) — Detached HELD v2 exact cursor record, absent-tail policy and final-manifest gate

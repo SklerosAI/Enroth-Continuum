@@ -792,3 +792,9 @@ complete 67-map/base and active-sidecar validation. The integrated focused
 save/schema/map check passed **11 tests**; one optional private fixture test
 skipped because its paths were not supplied. V2 remains detached and is not
 used by the production MM6 SaveLoad path.
+
+The native `.ec6` disk helper now has schema-isolated v1 and v2 write, list,
+preflight and recovery APIs. The linked atomic-file suite passed **7/7**,
+including both cross-schema overwrite directions and v2 injected write
+failures. Structural v2 slot validity does not prove a playable save; normal
+MM6 SaveLoad and menu listing remain guarded.

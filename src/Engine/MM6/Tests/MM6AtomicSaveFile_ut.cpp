@@ -17,7 +17,9 @@
 
 #include "Engine/MM6/MM6AtomicSaveFile.h"
 #include "Engine/MM6/MM6KnownSaveFields.h"
+#include "Engine/MM6/MM6RawSaveFields.h"
 #include "Engine/MM6/MM6SaveContainer.h"
+#include "Engine/MM6/MM6ShopTitleState.h"
 
 namespace {
 
@@ -78,6 +80,41 @@ std::vector<std::uint8_t> malformedKnownSave(std::uint8_t marker) {
         }
     }
     throw std::runtime_error("missing synthetic MM6 HEAD section");
+}
+
+std::vector<std::uint8_t> sampleRaw(std::uint8_t marker) {
+    const mm6::KnownSaveFields old = mm6::decodeKnownSave(sample(marker));
+    mm6::RawSaveFields fields;
+    fields.core = old.core;
+    fields.bits = old.durable.bits;
+    fields.effects = old.durable.effects;
+    fields.inventory.ready = true;
+    fields.metadata = old.metadata;
+    fields.metadata.header.displayName = "Raw " + std::to_string(marker);
+    fields.maps = old.maps;
+    fields.npcs = old.npcs;
+    fields.resistances = old.resistances;
+    fields.buffs = old.buffs;
+    fields.hirelings = old.hirelings;
+    fields.recovery = old.recovery;
+    fields.chest = old.chest;
+    fields.shops = mm6::emptyNewGameShopTitleState(GameTitle::MM6);
+    fields.inventory.characters[0].items[137].setWord(0, 10);
+    fields.inventory.characters[0].items[137][27] = marker;
+    fields.inventory.characters[0].gridWords[0] = 138;
+    fields.heldItem.record[27] = marker;
+    return mm6::encodeRawSave(fields, GameTitle::MM6);
+}
+
+std::vector<std::uint8_t> malformedRawSave(std::uint8_t marker) {
+    mm6::SaveContainer container = mm6::decodeSaveContainer(sampleRaw(marker));
+    for (mm6::SaveSection &section : container.sections) {
+        if (section.tag == std::array{'H', 'E', 'A', 'D'}) {
+            section.payload[0] = 2;
+            return mm6::encodeSaveContainer(container);
+        }
+    }
+    throw std::runtime_error("missing synthetic MM6 raw HEAD section");
 }
 
 std::vector<std::uint8_t> read(const std::filesystem::path &path) {
@@ -242,5 +279,64 @@ UNIT_TEST(MM6AtomicSaveFile, SemanticLoadPreflightSelectsBackupWithoutDiskMutati
     EXPECT_EQ(candidate->bytes, old);
     EXPECT_TRUE(candidate->needsRecovery);
     EXPECT_FALSE(std::filesystem::exists(profile.save()));
+}
+
+UNIT_TEST(MM6AtomicSaveFile, RawV2SlotsAreAtomicAndSchemaIsolated) {
+    TestProfile legacy;
+    const auto legacyBytes = sample(20);
+    mm6::writeAtomicSaveFile(legacy.root(), "save001.ec6", legacyBytes);
+    EXPECT_THROW(mm6::writeAtomicRawSaveFile(legacy.root(), "save001.ec6", sampleRaw(21)), std::exception);
+    EXPECT_EQ(read(legacy.save()), legacyBytes);
+
+    TestProfile profile;
+    const auto first = sampleRaw(21);
+    const auto second = sampleRaw(22);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", first);
+    EXPECT_EQ(read(profile.save()), first);
+    EXPECT_THROW(mm6::writeAtomicSaveFile(profile.root(), "save001.ec6", sample(23)), std::exception);
+    EXPECT_EQ(read(profile.save()), first);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", second);
+    EXPECT_EQ(read(profile.save()), second);
+    EXPECT_EQ(read(profile.backup()), first);
+    EXPECT_THROW(mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", sample(24)), std::exception);
+    EXPECT_EQ(read(profile.save()), second);
+
+    const auto rawSlots = mm6::listRawSaveSlots(profile.root());
+    ASSERT_EQ(rawSlots.size(), 1u);
+    EXPECT_EQ(rawSlots[0].header.displayName, "Raw 22");
+    EXPECT_TRUE(mm6::listKnownSaveSlots(profile.root()).empty());
+    EXPECT_THROW((void) mm6::loadRecoverableSaveFile(profile.root(), "save001.ec6"), std::exception);
+
+    write(profile.save(), malformedRawSave(25));
+    const auto selected = mm6::preflightRecoverableRawSaveFile(
+        profile.root(), "save001.ec6", [](std::span<const std::uint8_t>) {});
+    ASSERT_TRUE(selected);
+    EXPECT_TRUE(selected->needsRecovery);
+    EXPECT_EQ(selected->bytes, first);
+    EXPECT_EQ(read(profile.save()), malformedRawSave(25));
+    EXPECT_EQ(mm6::loadRecoverableRawSaveFile(profile.root(), "save001.ec6"), first);
+    EXPECT_EQ(read(profile.save()), first);
+}
+
+UNIT_TEST(MM6AtomicSaveFile, RawV2WriteFaultsKeepPriorSlot) {
+    for (mm6::detail::AtomicSaveStep step : {
+             mm6::detail::AtomicSaveStep::BeforeTempWrite,
+             mm6::detail::AtomicSaveStep::AfterPartialTempWrite,
+             mm6::detail::AtomicSaveStep::BeforeBackupReplace,
+             mm6::detail::AtomicSaveStep::BeforePrimaryReplace}) {
+        TestProfile profile;
+        const auto first = sampleRaw(31);
+        const auto second = sampleRaw(32);
+        mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", first);
+        EXPECT_THROW(mm6::detail::writeAtomicRawSaveFile(profile.root(), "save001.ec6", second,
+            [step](mm6::detail::AtomicSaveStep reached) {
+                if (reached == step)
+                    throw std::runtime_error("injected MM6 raw write failure");
+            }), std::exception);
+        EXPECT_EQ(read(profile.save()), first);
+        EXPECT_EQ(mm6::loadRecoverableRawSaveFile(profile.root(), "save001.ec6"), first);
+        for (const auto &entry : std::filesystem::directory_iterator(profile.root() / "saves"))
+            EXPECT_FALSE(entry.path().filename().string().contains(".tmp."));
+    }
 }
 #endif

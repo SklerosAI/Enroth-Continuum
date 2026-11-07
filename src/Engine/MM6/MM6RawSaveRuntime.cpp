@@ -1,4 +1,5 @@
 #include "MM6RawSaveRuntime.h"
+#include "MM6RawV2Admission.h"
 
 #include <array>
 #include <bit>
@@ -82,7 +83,10 @@ RawSaveFields captureRawTitleOwners(const StagedRawTitleOwners &staged,
                                     std::span<const std::string> expectedNames,
                                     const MapBaseReader &readBase,
                                     const GroundItemVerifier &verifyItem,
+                                    const Party &sourceParty,
+                                    const IndoorFaceOverrides &observedIndoorFaces,
                                     GameTitle title) {
+    requireRawV2RepresentableState(sourceParty, observedIndoorFaces, title);
     if (title != GameTitle::MM6 || !verifyItem || !staged.inventory.ready ||
         !staged.shops.ready())
         throw std::runtime_error("MM6 raw capture requires ready title-local owners");
@@ -120,6 +124,7 @@ std::optional<StagedRawSaveSlot> preflightStagedRawSaveSlot(
 StagedRawPartyInventories stageRawPartyCoreProgressInventory(
     const Party &baseline, const StagedRawTitleOwners &owners,
     const ItemTable &itemTable, GameTitle title) {
+    requireRawV2NoBeacons(baseline, title);
     if (title != GameTitle::MM6 || owners.saved.inventory != owners.inventory)
         throw std::runtime_error("MM6 raw Party stage has a foreign title or divergent inventory owner");
     Party party = stageCoreParty(baseline, owners.saved.core, title);

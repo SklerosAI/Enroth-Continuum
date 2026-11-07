@@ -134,6 +134,10 @@ UNIT_TEST(MM6RawSaveFields, EverySectionMandatoryAndLateFailureLeavesDestination
     extra.sections.push_back({{'B', 'E', 'A', 'C'}, false, {1}});
     EXPECT_THROW((void) mm6::decodeRawSave(mm6::encodeSaveContainer(extra), GameTitle::MM6),
                  std::exception);
+    extra = baseline;
+    extra.sections.push_back({{'I', 'F', 'O', 'V'}, false, {1}});
+    EXPECT_THROW((void) mm6::decodeRawSave(mm6::encodeSaveContainer(extra), GameTitle::MM6),
+                 std::exception);
 
     mm6::RawSaveFields destination = exampleFields();
     destination.core.party.gold = 777;

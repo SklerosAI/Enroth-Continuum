@@ -12,6 +12,8 @@
 
 namespace mm6 {
 
+struct IndoorFaceOverrides;
+
 // Owned, detached v2 candidate. The inventory stays in physical MM6 form;
 // projection into CharacterInventory and publication to live globals are later
 // transactions. The cursor and shop are fresh title-local process owners.
@@ -33,11 +35,15 @@ StagedRawTitleOwners stageRawTitleOwners(
     GameTitle title);
 
 // Recompose a v2 candidate from detached owners after edits, including a
-// fresh 67-map/base and item-template pass. This does not write a file.
+// fresh 67-map/base and item-template pass. The caller must supply live Party
+// beacons and the verified indoor-face difference; neither fits v2. This does
+// not write a file.
 RawSaveFields captureRawTitleOwners(const StagedRawTitleOwners &staged,
                                     std::span<const std::string> expectedNames,
                                     const MapBaseReader &readBase,
                                     const GroundItemVerifier &verifyItem,
+                                    const Party &sourceParty,
+                                    const IndoorFaceOverrides &observedIndoorFaces,
                                     GameTitle title);
 
 struct StagedRawSaveSlot {

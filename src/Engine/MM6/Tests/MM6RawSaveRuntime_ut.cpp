@@ -13,6 +13,7 @@
 
 #include "Engine/MM6/MM6RawSaveRuntime.h"
 #include "Engine/MM6/MM6AtomicSaveFile.h"
+#include "Engine/MM6/MM6IndoorFaceOverrides.h"
 #include "Engine/MM6/MM6WorldSaveRuntime.h"
 #include "Engine/MM6/MM6RawSessionStage.h"
 #include "Engine/Pid.h"
@@ -145,6 +146,8 @@ UNIT_TEST(MM6RawSaveRuntime, StagesOwnedRawFamiliesAfterAllMapBases) {
     const auto fields = exampleRaw();
     const auto bytes = mm6::encodeRawSave(fields, GameTitle::MM6);
     const auto names = namesOf(fields);
+    Party sourceParty;
+    mm6::IndoorFaceOverrides observedFaces;
     auto staged = mm6::stageRawTitleOwners(bytes, names, syntheticBase, validItem, GameTitle::MM6);
     EXPECT_TRUE(staged.inventory.ready);
     EXPECT_TRUE(staged.shops.ready());
@@ -155,7 +158,8 @@ UNIT_TEST(MM6RawSaveRuntime, StagesOwnedRawFamiliesAfterAllMapBases) {
     EXPECT_EQ(staged.cursor.record[27], 0x7a);
     EXPECT_EQ(staged.shops.stock.records[123][27], 0x5b);
     EXPECT_EQ(mm6::encodeRawSave(mm6::captureRawTitleOwners(
-                                     staged, names, syntheticBase, validItem, GameTitle::MM6),
+                                     staged, names, syntheticBase, validItem,
+                                     sourceParty, observedFaces, GameTitle::MM6),
                                  GameTitle::MM6), bytes);
 
     staged.inventory.characters[1].items[31][27] = 0x33;
@@ -164,21 +168,45 @@ UNIT_TEST(MM6RawSaveRuntime, StagesOwnedRawFamiliesAfterAllMapBases) {
     ASSERT_TRUE(cleared);
     staged.cursor = *cleared;
     const auto changed = mm6::captureRawTitleOwners(
-        staged, names, syntheticBase, validItem, GameTitle::MM6);
+        staged, names, syntheticBase, validItem, sourceParty, observedFaces, GameTitle::MM6);
     EXPECT_EQ(changed.inventory.characters[1].items[31][27], 0x33);
     EXPECT_EQ(changed.shops.stock.records[123][27], 0x44);
     EXPECT_FALSE(changed.heldItem.present);
     EXPECT_EQ(changed.heldItem.record[27], 0x7a);
     EXPECT_NE(mm6::encodeRawSave(changed, GameTitle::MM6), bytes);
     EXPECT_THROW((void) mm6::captureRawTitleOwners(
-        staged, names, syntheticBase, validItem, GameTitle::MM7), std::exception);
+        staged, names, syntheticBase, validItem, sourceParty, observedFaces, GameTitle::MM7), std::exception);
     staged.shops.stock.records[123].setWord(0, 581);
     EXPECT_THROW((void) mm6::captureRawTitleOwners(
-        staged, names, syntheticBase, validItem, GameTitle::MM6), std::exception);
+        staged, names, syntheticBase, validItem, sourceParty, observedFaces, GameTitle::MM6), std::exception);
     staged.shops.stock.records[123].setWord(0, 12);
     staged.saved.maps.deltas.back().bytes.pop_back();
     EXPECT_THROW((void) mm6::captureRawTitleOwners(
-        staged, names, syntheticBase, validItem, GameTitle::MM6), std::exception);
+        staged, names, syntheticBase, validItem, sourceParty, observedFaces, GameTitle::MM6), std::exception);
+}
+
+UNIT_TEST(MM6RawSaveRuntime, RawV2AdmissionRejectsBeaconAndIndoorFaceState) {
+    ItemTableScope table;
+    const auto fields = exampleRaw();
+    const auto bytes = mm6::encodeRawSave(fields, GameTitle::MM6);
+    const auto names = namesOf(fields);
+    auto staged = mm6::stageRawTitleOwners(bytes, names, syntheticBase, validItem, GameTitle::MM6);
+    Party sourceParty;
+    mm6::IndoorFaceOverrides observedFaces;
+
+    sourceParty.pCharacters[0].vBeacons[0] = LloydBeacon{};
+    EXPECT_THROW((void) mm6::captureRawTitleOwners(
+        staged, names, syntheticBase, validItem, sourceParty, observedFaces, GameTitle::MM6),
+        std::exception);
+    EXPECT_THROW((void) mm6::stageRawPartyCoreProgressInventory(
+        sourceParty, staged, *table.table, GameTitle::MM6), std::exception);
+    sourceParty.pCharacters[0].vBeacons[0].reset();
+
+    observedFaces.maps.push_back(mm6::IndoorFaceMapOverrides{});
+    EXPECT_THROW((void) mm6::captureRawTitleOwners(
+        staged, names, syntheticBase, validItem, sourceParty, observedFaces, GameTitle::MM6),
+        std::exception);
+    EXPECT_EQ(mm6::encodeRawSave(staged.saved, GameTitle::MM6), bytes);
 }
 
 UNIT_TEST(MM6RawSaveRuntime, RejectsMapSetAndLateBaseWithoutPublishingOwners) {

@@ -47,9 +47,17 @@ NPC link to an actor whose native DDM link is zero. The v5-only reader now
 requires that exact native zero, a matching GNPC row and contiguous runtime
 link, exact ARTR owner, and unchanged ordered native actor/sprite anchors;
 the four-process chain passed after this source-backed check. Earlier save
-slots remained byte-identical. The next gate is bounded first input and a
-second save/reload. The writer's direct map setup is not a campaign travel
-transition, and the current checks do not establish later-map playability.
+slots remained byte-identical. A separate opt-in child then continued only
+after those owner checks, entered the real loop, applied a bounded turn and
+walk, and observed changed position and yaw with the action queue settled.
+Another child atomically wrote the changed v5 state to a distinct slot; a
+final fresh child reloaded that second slot and checked the same pre-event
+and post-world owners before aborting input. The full **seven-process**
+disposable chain passed **1/1 per child**; the prior v2, v4 and first oute2
+slots stayed byte-identical. The focused atomic suite passed **18/18**.
+The next gate is an actual campaign map transition and eventual production
+SaveLoad. The writer's direct map setup is not a campaign travel transition,
+and the current bounded checks do not establish later-map playability.
 
 See [v5 runtime ownership](MM6_F4_EC6_V5_SPRITE_RUNTIME.md),
 [local status](LOCAL_STATUS.md), and [the F4 path](plan.md).

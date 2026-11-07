@@ -33,10 +33,10 @@ load-time repair step. This supplies the missing timing anchor without
 publishing a live save. Indoor v6 must still bind that baseline and IFOV to
 the complete session transaction; older v1–v5 containers remain strict.
 
-An initial strict EC6 v6 indoor shell now stages a validated raw v2 indoor
+The first strict EC6 v6 indoor shell staged a validated raw v2 indoor
 session with GNPC/RNGS/EVRT, native indoor actor/sprite/decoration anchors and
-an optional nonempty IFOV section. It accepts 25 sections without changed
-faces or 26 with IFOV, preserves v1–v5 decoding, and sets
+an optional nonempty IFOV section. That initial shape accepted 25 sections
+without changed faces or 26 with IFOV, preserved v1–v5 decoding, and set
 `canEnterGameLoop=false`. Container, v6 stage and atomic-slot focused checks
 passed **25/25**. A separate real-data probe used a disposable v2 seed and
 loaded one retained BLV/DLV through the actual pre-event checkpoint. It
@@ -56,5 +56,18 @@ owners and detached IFOV precedence. The v2 seed remained unchanged, and the
 v6 slot existed only in the owner-only disposable profile. Both writer and
 reader keep `canEnterGameLoop=false`; live owner publication, first input,
 production SaveLoad and graphical face behavior remain open.
+
+The current v6 schema adds a required ordered `IDRT` decoration runtime
+section, so it now accepts **26 sections** without changed faces or **27 with
+IFOV**. It binds each live descriptor, flag word and event ordinal to the
+source BLV, EVRT and native IDCR slot; only those mutable fields can be
+reapplied to a detached pre-event decoration list. Descriptor zero is a valid
+indexed table sentinel when the source name resolves there, not an arbitrary
+missing descriptor. Focused linked v6 save-field checks passed **6/6**. The
+disposable v2 seed, v6 writer and independent fresh-child reader passed
+**1/1 each** with an intentional invisible-bit change and exact detached
+replay. Older v1–v5 manifests stay strict, and indoor v6 still refuses
+gameplay admission. Live pre-event IDRT publication and post-world agreement
+remain the next gate.
 
 See [indoor face persistence gate](MM6_F4_INDOOR_FACE_PERSISTENCE_GATE.md), [known save sections](MM6_EC6_MAP_FIELDS_F4.md), and [atomic save](MM6_ATOMIC_SAVE_F4.md).

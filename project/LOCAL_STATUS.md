@@ -1155,8 +1155,12 @@ passed **7/7**. A fourth fresh child now replays that candidate and checks its
 pre-event and post-world owners, then aborts before input; all four children
 passed **1/1** each. The v5-only final PID check binds a generated runtime NPC
 link to its native zero link, GNPC row and ARTR owner while keeping native
-actor and sprite slot anchors exact. First input, a second later-map save and
-campaign travel remain open.
+actor and sprite slot anchors exact. Three further children passed a bounded
+real-loop turn/walk with changed position/yaw, a distinct atomic second v5
+write, and an independent fresh-child replay of that second slot, each
+**1/1**. The full seven-process chain kept earlier slots byte-identical;
+focused atomic checks passed **18/18**. Actual campaign travel and production
+SaveLoad remain open.
 
 For indoor save design, a detached IFOV writer and fresh-child reader passed
 against retained private BLV/DLV data, and a separate headless map-load check

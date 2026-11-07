@@ -26,10 +26,10 @@ supersedes the earlier lack of a live pre-event base. The checks still do not
 write or publish a live indoor `.ec6` slot; indoor gameplay replay,
 texture/animation behavior and graphical acceptance remain open.
 
-A strict detached EC6 v6 indoor shell now stages raw v2 with GNPC/RNGS/EVRT,
-native actor/sprite/decoration anchors and optional nonempty IFOV. It accepts
-25 sections without changed faces or 26 with IFOV and explicitly refuses
-gameplay admission. The focused container, v6 stage and atomic suite passed
+A strict detached EC6 v6 indoor shell stages raw v2 with GNPC/RNGS/EVRT,
+native actor/sprite/decoration anchors and optional nonempty IFOV. Its first
+shape accepted 25 sections without changed faces or 26 with IFOV and refused
+gameplay admission. The initial focused container, v6 stage and atomic suite passed
 **25/25**. A fresh disposable v2 seed and separate real-data indoor v6 stage
 then passed **1/1** each. The stage used the actual pre-event face baseline,
 constructed a candidate only in memory, checked its native anchors and kept
@@ -39,5 +39,14 @@ sequence passed v2 seed, atomic indoor v6 writer and independent fresh-child
 reader at **1/1** each. The reader rebuilt the pre-event face base, re-staged
 the exact candidate and kept gameplay admission false. Live owner publication,
 first input and graphical acceptance remain open.
+
+The current v6 shape requires ordered `IDRT` runtime decoration ownership,
+making its manifest 26 sections without IFOV or 27 with IFOV. The descriptor,
+flags and event ordinal are bound to source BLV, EVRT and native IDCR slots;
+descriptor zero is accepted only as the source-backed table sentinel. A
+detached replay changes a controlled invisible bit while retaining all
+immutable slots. Focused linked checks passed **6/6**, and a new disposable
+three-process seed/writer/reader chain passed **1/1 each**. It still refuses
+gameplay; live pre-event application and post-world agreement remain open.
 
 See also: [MM6 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md), [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), and [implementation packet](../project/MM6_F4_INDOOR_FACE_OVERRIDE_SECTION.md).

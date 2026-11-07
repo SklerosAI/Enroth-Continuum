@@ -28,11 +28,15 @@ post-world checks, then aborts before input. The four-process v2 seed, v4
 baseline, oute2 writer and fresh-child reader passed **1/1** each in a
 disposable profile. A generated NPC receives a runtime link after native DDM
 load; the v5-only reader binds its native zero link to the exact GNPC row,
-ARTR owner and ordered actor/sprite PID anchors. Bounded first input and a
-second save remain open. The known-good seven-process first-map cycle passed
-again after its
-live capture moved into a no-write engine service. That API remains first-map
-only; production SaveLoad and Atlas Play remain closed.
+ARTR owner and ordered actor/sprite PID anchors. A bounded first-input child
+then turned and walked in the real loop, and a separate child wrote a second
+atomic oute2 v5 slot. An independent final child reloaded that second slot
+and checked exact represented owners before aborting input. All seven
+disposable processes passed **1/1** each, and earlier slots stayed unchanged;
+the focused atomic suite passed **18/18**. The known-good seven-process
+first-map cycle also passed after its live capture moved into a no-write
+engine service. That API remains first-map only. Actual campaign travel,
+production SaveLoad and Atlas Play remain closed.
 
 See also: [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), [MM6 F4 Save
 Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md), [Campaign

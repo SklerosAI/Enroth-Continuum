@@ -143,12 +143,15 @@ std::vector<LevelDecoration> sourceDecorations(const mm6::LoadedMapSource &maps,
 
 } // namespace
 
-// Run only after a separate writer has entered the non-start outdoor map
-// from a strict disposable source and atomically captured v5. This fresh
-// child verifies the second outdoor owner graph and aborts before input.
-GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorRestoresOwnersBeforeInputAndAborts) {
-    const char *enable = std::getenv("ENROTH_MM6_V5_OUTE2_REPLAY_ENABLE");
-    if (!enable || std::string_view(enable) != "strict-v5-oute2")
+// A separate writer enters the non-start outdoor map from a strict disposable
+// source. Each fresh child first proves every saved owner before admitting
+// either an abort or one bounded input sequence.
+void runV5LaterOutdoorFreshChildReplay(EngineController &game, bool allowInput) {
+    const char *enable = std::getenv(allowInput ?
+        "ENROTH_MM6_V5_OUTE2_FIRST_INPUT_ENABLE" :
+        "ENROTH_MM6_V5_OUTE2_REPLAY_ENABLE");
+    if (!enable || std::string_view(enable) != (allowInput ?
+            "strict-v5-oute2-first-input" : "strict-v5-oute2"))
         GTEST_SKIP() << "Run only after strict v5 writer and owner admission";
     const std::filesystem::path profile = ownerOnlyProfile();
     if (profile.empty())
@@ -170,6 +173,8 @@ GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorRestoresOwn
     bool freshMapBeforeReplay = false;
     bool postWorldRan = false;
     bool finalOwnersAgree = false;
+    bool firstInputReached = false;
+    bool movementApplied = false;
     std::string finalOwnerError;
     std::size_t expectedNativeActors = 0;
     std::size_t expectedActiveActors = 0;
@@ -428,7 +433,11 @@ GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorRestoresOwn
                     } catch (const std::exception &error) {
                         finalOwnerError = error.what();
                     }
-                }, mm6::testing::PostWorldAdmissionResult::AbortToMainMenu);
+                    if (allowInput && !finalOwnersAgree)
+                        throw std::runtime_error("MM6 later outdoor first-input admission refused: " +
+                                                 finalOwnerError);
+                }, allowInput ? mm6::testing::PostWorldAdmissionResult::Continue :
+                                mm6::testing::PostWorldAdmissionResult::AbortToMainMenu);
             selected = true;
         });
         mm6::testing::setMainMenuAutosaveQuickLoadOverride(true);
@@ -436,7 +445,39 @@ GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorRestoresOwn
     });
 
     game.skipLoadingScreen();
-    game.tick(2);
+    game.tick(allowInput ? 3 : 2);
+    if (allowInput && finalOwnersAgree) {
+        game.runGameRoutine([&] {
+            firstInputReached = checkpoint->reachedInput() &&
+                !gameTimer->isPaused() &&
+                !(engineFlags & ENGINE_SKIP_NEXT_WORLD_UPDATE) &&
+                !(engineFlags & ENGINE_SKIP_NEXT_USER_INPUT) &&
+                engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute2.odm") &&
+                uCurrentlyLoadedLevelType == LEVEL_OUTDOOR &&
+                !engine->_pendingTransition &&
+                pPartyActionQueue->uNumActions == 0;
+            if (firstInputReached) {
+                pPartyActionQueue->Add(PARTY_TurnLeft);
+                pPartyActionQueue->Add(PARTY_WalkForward);
+            }
+        });
+        if (firstInputReached) {
+            const auto beforePosition = pParty->pos;
+            const auto beforeYaw = pParty->_viewYaw;
+            game.tick(3);
+            game.runGameRoutine([&] {
+                movementApplied = pParty->pos != beforePosition &&
+                    pParty->_viewYaw != beforeYaw &&
+                    pPartyActionQueue->uNumActions == 0 &&
+                    engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute2.odm") &&
+                    !engine->_pendingTransition;
+            });
+        }
+        game.runGameRoutine([] {
+            uGameState = GAME_STATE_GAME_QUITTING_TO_MAIN_MENU;
+        });
+        game.tick(2);
+    }
     game.runGameRoutine([&] {
         postWorld.reset();
         spriteReplay.reset();
@@ -454,8 +495,20 @@ GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorRestoresOwn
     EXPECT_TRUE(freshMapBeforeReplay);
     EXPECT_TRUE(postWorldRan);
     EXPECT_TRUE(finalOwnersAgree) << finalOwnerError;
+    if (allowInput) {
+        EXPECT_TRUE(firstInputReached);
+        EXPECT_TRUE(movementApplied);
+    }
     EXPECT_EQ(slotBytes(candidate), before);
     EXPECT_EQ(slotBytes(profile / "saves" / "candidate-v4.ec6"), v4Before);
     EXPECT_EQ(slotBytes(profile / "saves" / "autosave.ec6"), seedBefore);
     EXPECT_EQ(window->nativeHandle(), nullptr);
+}
+
+GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorRestoresOwnersBeforeInputAndAborts) {
+    runV5LaterOutdoorFreshChildReplay(game, false);
+}
+
+GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorAdmitsBoundedFirstInput) {
+    runV5LaterOutdoorFreshChildReplay(game, true);
 }

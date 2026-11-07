@@ -4,6 +4,8 @@ Status: **test-only read-only admission** at integration `56eef00ca`; no owner a
 
 `inspectRawChildPublication()` rechecks that the decoded and staged physical inventories agree and that the detached Party can replay them; raw HELD, SHOP and SCLK agree with the decoded fields; Party HELD exactly matches the physical cursor and yields a data-only icon plan; UIST agrees with PART and the Party's active character; active VISU actor overlays and beacons are absent. It also rechecks byte-exact MAPS cache copies, RESC mutable NPC rows/groups, TIME/VISU values, CHST title state plus raw active delta, the bounded persistent bytes against the active map, and exactly one indoor/outdoor plan matching HEAD. A divergent represented owner throws before any assignment or disk repair. The synthetic unit tests exercise coherent blocked admission and late map, chest, shop, event and title mismatch failures.
 
+The caller must pass the loaded MM6 `pItemTable` as the item-table argument. The inventory replay adapter validates that the supplied table is the active title-local table; a detached synthetic table requires a scoped test pointer. The first integration-linked test exposed this fixture requirement, and the corrected focused suite passed 2/2.
+
 The returned `RawChildPublicationAdmission` contains the cursor image request and typed `RawChildPublicationBlocker` values. It cannot authorize `gameLoop()` yet. The blockers identify concrete missing destinations or checks:
 
 | Blocker family | Source-backed missing work |

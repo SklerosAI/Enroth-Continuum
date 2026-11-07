@@ -9,9 +9,18 @@
 #include "Engine/MM6/MM6ChestSaveFields.h"
 #include "Engine/MM6/MM6RawChildPublicationForTest.h"
 #include "Engine/MM6/MM6RawSessionStage.h"
+#include "Engine/EngineGlobals.h"
 #include "Engine/Objects/Inventory.h"
 
 namespace {
+
+struct ItemTableScope {
+    ItemTable table;
+    ItemTable *previous = pItemTable;
+
+    ItemTableScope() { pItemTable = &table; }
+    ~ItemTableScope() { pItemTable = previous; }
+};
 
 std::unique_ptr<mm6::StagedRawSessionFields> candidate() {
     auto staged = std::make_unique<mm6::StagedRawSessionFields>();
@@ -60,9 +69,9 @@ bool hasBlocker(const mm6::testing::RawChildPublicationAdmission &admission,
 
 UNIT_TEST(MM6RawChildPublicationForTest, CoherentRepresentedOwnersRemainBlockedBeforeWorldAndUi) {
     auto staged = candidate();
-    ItemTable items;
+    ItemTableScope items;
     const auto admission = mm6::testing::inspectRawChildPublication(
-        *staged, items, GameTitle::MM6);
+        *staged, items.table, GameTitle::MM6);
     EXPECT_FALSE(admission.canEnterGameLoop());
     EXPECT_FALSE(admission.cursorImage.occupied);
     EXPECT_TRUE(hasBlocker(admission,
@@ -73,7 +82,7 @@ UNIT_TEST(MM6RawChildPublicationForTest, CoherentRepresentedOwnersRemainBlockedB
         mm6::testing::RawChildPublicationBlocker::HeldItemOffsetUnresolved));
     staged->raw.activeCounts.chests = 1;
     staged->needsRecovery = true;
-    const auto changed = mm6::testing::inspectRawChildPublication(*staged, items, GameTitle::MM6);
+    const auto changed = mm6::testing::inspectRawChildPublication(*staged, items.table, GameTitle::MM6);
     EXPECT_TRUE(hasBlocker(changed,
         mm6::testing::RawChildPublicationBlocker::RebuiltObjectIdentityUnchecked));
     EXPECT_TRUE(hasBlocker(changed,
@@ -82,23 +91,23 @@ UNIT_TEST(MM6RawChildPublicationForTest, CoherentRepresentedOwnersRemainBlockedB
 
 UNIT_TEST(MM6RawChildPublicationForTest, RejectsLateOwnerDivergenceBeforeAdmission) {
     auto staged = candidate();
-    ItemTable items;
+    ItemTableScope items;
     staged->world.world.mapDeltas.at("synthetic0.dlv") = Blob::copy("bad", 3);
-    EXPECT_THROW((void) mm6::testing::inspectRawChildPublication(*staged, items, GameTitle::MM6),
+    EXPECT_THROW((void) mm6::testing::inspectRawChildPublication(*staged, items.table, GameTitle::MM6),
                  std::exception);
     staged = candidate();
     staged->world.chestTitle.lcgState = 17;
-    EXPECT_THROW((void) mm6::testing::inspectRawChildPublication(*staged, items, GameTitle::MM6),
+    EXPECT_THROW((void) mm6::testing::inspectRawChildPublication(*staged, items.table, GameTitle::MM6),
                  std::exception);
     staged = candidate();
     staged->raw.shops.clocks.deadlineWords[0] = 1;
-    EXPECT_THROW((void) mm6::testing::inspectRawChildPublication(*staged, items, GameTitle::MM6),
+    EXPECT_THROW((void) mm6::testing::inspectRawChildPublication(*staged, items.table, GameTitle::MM6),
                  std::exception);
     staged = candidate();
     staged->persistentEvents.mapBytes[0] = 1;
-    EXPECT_THROW((void) mm6::testing::inspectRawChildPublication(*staged, items, GameTitle::MM6),
+    EXPECT_THROW((void) mm6::testing::inspectRawChildPublication(*staged, items.table, GameTitle::MM6),
                  std::exception);
     staged = candidate();
-    EXPECT_THROW((void) mm6::testing::inspectRawChildPublication(*staged, items, GameTitle::MM7),
+    EXPECT_THROW((void) mm6::testing::inspectRawChildPublication(*staged, items.table, GameTitle::MM7),
                  std::exception);
 }

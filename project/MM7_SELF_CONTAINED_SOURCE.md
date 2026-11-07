@@ -1,6 +1,6 @@
 # MM7 source autonomy in SklerosAI
 
-Status: **planned; local arm64 inputs inventoried** (2026-11-06). The [build-input packet](MM7_SELF_CONTAINED_BUILD_INVENTORY.md) records the current cached artifacts, 23 gitlinks, seven nested fetched sources, provenance gaps and a phased migration. This is the owner's later MM7 repository-ownership gate, not a claim that a clean offline clone builds today.
+Status: **planned; local arm64 inputs inventoried** (2026-11-06). The [build-input packet](MM7_SELF_CONTAINED_BUILD_INVENTORY.md) records the current cached artifacts, 23 gitlinks, seven nested fetched sources, provenance gaps and a phased migration. The owner wants the Mac MM7 engine and every required non-system build input available from the SklerosAI repository itself. This is a later MM7 repository-ownership gate, not a claim that a clean offline clone builds today.
 
 ## Current boundary
 
@@ -16,6 +16,6 @@ A clean Mac build is not yet self-contained. `CMakeModules/Dependencies.cmake` d
 4. Make the build fail clearly when a required input is absent; it must not silently fetch from OpenEnroth or substitute a cached local library. Produce the arm64 `MM7.app` and stage Atlas from the clean SklerosAI checkout while offline, using the installed Apple toolchain/SDK.
 5. Check the app's title lock, notices and library links, then launch MM7 through Atlas, load an existing save, save again, quit and reload. Confirm the MM6/MM8 sibling slots and private profiles remain untouched.
 
-The completion claim means the **Mac MM7 engine and its build inputs** are owned by this repo. The Apple toolchain/SDK and the owner's lawfully obtained GOG game files remain external by design. Attribution to OpenEnroth is permanent provenance, not a build dependency.
+The completion claim means a fresh clone can configure, compile and package the **Mac MM7 engine and its required non-system build inputs** with networking disabled, without an OpenEnroth checkout, release archive, submodule origin or build-time URL. A retained `upstream` Git remote may still be used deliberately to review later changes; it is not consulted by the build. The Apple toolchain/SDK and the owner's lawfully obtained GOG game files remain external by design. OpenEnroth history, license, notices and contributor credit remain permanent provenance, not build dependencies.
 
 See [the implementation plan](plan.md) and [upstream relationship](UPSTREAM.md).

@@ -41,8 +41,13 @@ class ScopedV6PreEventIndoorActorReplayForTest {
         requireIndoorActorRuntimeSourceAgreement(
             _fields, _fields.mapName, _source, title);
         const std::deque<Actor> actors(_fields.actors.begin(), _fields.actors.end());
-        requireGeneratedNpcActorAgreement(
-            _generated, actors, _fields.mapName, title);
+        try {
+            requireGeneratedNpcActorAgreement(
+                _generated, actors, _fields.mapName, title);
+        } catch (const std::exception &error) {
+            throw std::runtime_error("MM6 v6 IART scoped GNPC join: " +
+                                     std::string(error.what()));
+        }
         detail::activeV6IndoorActorReplayScope() = this;
     }
 
@@ -86,8 +91,13 @@ inline bool runArmedV6PreEventIndoorActorReplayForTest(
     applyIndoorActorRuntimeToDetachedList(
         scope->_fields, loadedMapName, scope->_source, &detached, title);
     std::deque<Actor> desired(detached.begin(), detached.end());
-    requireGeneratedNpcActorAgreement(
-        scope->_generated, desired, loadedMapName, title);
+    try {
+        requireGeneratedNpcActorAgreement(
+            scope->_generated, desired, loadedMapName, title);
+    } catch (const std::exception &error) {
+        throw std::runtime_error("MM6 v6 IART pre-event GNPC join: " +
+                                 std::string(error.what()));
+    }
     static_assert(std::is_nothrow_swappable_v<std::deque<Actor>>);
     destination->swap(desired);
     scope->_pending = false;

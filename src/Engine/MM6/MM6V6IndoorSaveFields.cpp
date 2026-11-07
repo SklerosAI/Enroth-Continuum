@@ -274,8 +274,13 @@ StagedV6IndoorSaveFields stageV6IndoorSave(
         saved->runtimeActors, represented->indoorPlan->mapName,
         saved->actors, title);
     std::deque<Actor> actorLinks(actorReplay.begin(), actorReplay.end());
-    requireGeneratedNpcActorAgreement(
-        saved->generatedNpcs, actorLinks, represented->indoorPlan->mapName, title);
+    try {
+        requireGeneratedNpcActorAgreement(
+            saved->generatedNpcs, actorLinks, represented->indoorPlan->mapName, title);
+    } catch (const std::exception &error) {
+        throw std::runtime_error("MM6 v6 IART detached GNPC join: " +
+                                 std::string(error.what()));
+    }
     if (!readPreEventFaces)
         throw std::runtime_error("MM6 v6 indoor IFOV lacks pre-event face provenance");
     const auto baseline = readPreEventFaces(represented->indoorPlan->mapName);

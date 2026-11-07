@@ -142,8 +142,13 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                 staged->saved.eventRuntime, mapName,
                 pIndoor->dlv.respawnCount, pIndoor->dlv.lastRespawnDay,
                 pLevelDecorations, GameTitle::MM6);
-            mm6::requireGeneratedNpcActorAgreement(
-                staged->saved.generatedNpcs, pActors, mapName, GameTitle::MM6);
+            try {
+                mm6::requireGeneratedNpcActorAgreement(
+                    staged->saved.generatedNpcs, pActors, mapName, GameTitle::MM6);
+            } catch (const std::exception &error) {
+                throw std::runtime_error("MM6 v6 IART first-load GNPC join: " +
+                                         std::string(error.what()));
+            }
             mm6::requireV6IndoorPreEventOwnerAgreement(
                 *staged, mapName, pActors, pSpriteObjects, pLevelDecorations,
                 GameTitle::MM6);
@@ -271,8 +276,13 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                     staged->saved.runtimeSprites,
                     mm6::SpriteRuntimeSectionKind::IndoorV6, GameTitle::MM6))
                 throw std::runtime_error("MM6 v6 ISRT changed after map reload events");
-            mm6::requireGeneratedNpcActorAgreement(
-                staged->saved.generatedNpcs, pActors, mapName, GameTitle::MM6);
+            try {
+                mm6::requireGeneratedNpcActorAgreement(
+                    staged->saved.generatedNpcs, pActors, mapName, GameTitle::MM6);
+            } catch (const std::exception &error) {
+                throw std::runtime_error("MM6 v6 IART post-world GNPC join: " +
+                                         std::string(error.what()));
+            }
             const std::vector<Actor> finalActors(pActors.begin(), pActors.end());
             const auto observedActors = mm6::captureIndoorActorRuntime(
                 mapName, staged->saved.actors, finalActors, GameTitle::MM6);

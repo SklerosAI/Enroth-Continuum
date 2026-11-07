@@ -5,6 +5,7 @@
 #include <iterator>
 #include <memory>
 #include <stdexcept>
+#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -16,6 +17,7 @@
 #include "Engine/Graphics/Overlays.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/MM6/MM6HeldItemSaveFields.h"
 #include "Engine/MM6/MM6LoadedMapSource.h"
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
@@ -75,6 +77,8 @@ GAME_TEST(MM6PostWorldAbortHeadless, DISABLED_V1ControlQuickLoadReturnsBeforeInp
     bool loaded = false;
     bool postWorld = false;
     bool beforeInput = false;
+    bool idleActions = false;
+    std::string actionError;
     std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
     std::unique_ptr<mm6::testing::ScopedPostWorldAdmissionForTest> admission;
     game.runGameRoutine([&] {
@@ -116,6 +120,16 @@ GAME_TEST(MM6PostWorldAbortHeadless, DISABLED_V1ControlQuickLoadReturnsBeforeInp
                         uCurrentlyLoadedLevelType == LEVEL_OUTDOOR &&
                         !pActors.empty() && vChests.size() == 20 &&
                         pPartyActionQueue->uNumActions == 0;
+                    try {
+                        const auto actions = mm6::capturePendingActionStateForSave(GameTitle::MM6);
+                        (void) mm6::stageHeldCursorRestorePlan(
+                            mm6::captureHeldItem(*pParty, GameTitle::MM6),
+                            *pItemTable, actions, GameTitle::MM6);
+                        idleActions = true;
+                    } catch (const std::exception &error) {
+                        idleActions = false;
+                        actionError = error.what();
+                    }
                 }, mm6::testing::PostWorldAdmissionResult::AbortToMainMenu);
             loaded = true;
         });
@@ -134,6 +148,7 @@ GAME_TEST(MM6PostWorldAbortHeadless, DISABLED_V1ControlQuickLoadReturnsBeforeInp
     EXPECT_TRUE(loaded);
     EXPECT_TRUE(postWorld);
     EXPECT_TRUE(beforeInput);
+    EXPECT_TRUE(idleActions) << actionError;
     EXPECT_EQ(slotBytes(primary), before);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }

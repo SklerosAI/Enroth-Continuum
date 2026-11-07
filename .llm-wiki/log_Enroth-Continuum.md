@@ -2169,3 +2169,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a detached read-only join of exact v3, the validated 67 native map pairs, active HEAD/GNPC/CHST, a matching nonzero no-respawn DDM day, stable native actor anchors and ACTR capacity. Linked map/manifest/ACTR checks passed 10/10.
 - A positive synthetic case accepts changed HP in ACTR while DDM retains older bytes. No actors, NPCs, RNG, events or save slot are published; fresh-child replay remains open.
+
+## [2026-11-07] verify | MM6 pre-event fresh-child checkpoint
+- by: T-Burton-ND via codex
+- Added a test-only MM6 save-load checkpoint after map/actor rebuild and before NPC generation or map events, with a safe abort before timer unpause and input. Linked unit checks passed 4/4.
+- A disposable v2 starter writer and separate real Main Menu QuickLoad child passed 1/1 each; the child reached the checkpoint and aborted with the primary unchanged. An MM7 headless control passed 1/1. No ACTR/GNPC/RNG replay was published.

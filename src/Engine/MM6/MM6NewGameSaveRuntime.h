@@ -108,11 +108,11 @@ bool rollbackPublishedFirstMapCache(PublishedFirstMapCache *published,
 using FirstMapEntryProbe = std::function<void(
     const Party &, const std::unordered_map<std::string, Blob> &, const ChestTitleState &)>;
 
-// Scoped test seam for a first-map entry attempt. The probe observes the
-// staged Party and published map/chest owners. If it throws, the prior process
-// owners and exact primary/backup disk slot bytes are restored before rethrow.
-// The probe must not mutate unrelated process globals; real map loading needs
-// a broader rollback before this can be used as a production path.
+// Scoped test seam for a first-map entry attempt. The probe observes only
+// staged Party and map/chest candidates before any disk or process publication.
+// A probe failure therefore leaves the slot and published owners untouched.
+// The probe must not mutate unrelated process globals; real map loading still
+// needs a complete detached world and all-owner commit before live use.
 std::unique_ptr<PublishedFirstMapCache> runScopedFirstMapEntryForTest(
     const std::filesystem::path &profileRoot, const KnownSaveFields &seed,
     const Party &liveParty, const NPCStats &liveNpcs, const Timer &liveTimer,

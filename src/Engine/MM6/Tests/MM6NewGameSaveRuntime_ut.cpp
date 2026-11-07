@@ -283,7 +283,7 @@ UNIT_TEST(MM6NewGameSaveRuntime, CapturesAndPublishesFirstMapCacheOnlyAfterWrite
         published.get(), &cache, &titleChest, GameTitle::MM6));
 }
 
-UNIT_TEST(MM6NewGameSaveRuntime, ScopedEntryFailureRemovesNewSlotAndRestoresOwners) {
+UNIT_TEST(MM6NewGameSaveRuntime, ScopedEntryPrecommitFailureNeverPublishesSlotOrOwners) {
     TestProfile profile;
     const auto names = expectedNames();
     Party party;
@@ -315,6 +315,10 @@ UNIT_TEST(MM6NewGameSaveRuntime, ScopedEntryFailureRemovesNewSlotAndRestoresOwne
             EXPECT_EQ(stagedParty.pos.z, 340);
             EXPECT_EQ(published.size(), 67);
             EXPECT_EQ(publishedChest.lcgState, 0xabc12345u);
+            EXPECT_FALSE(std::filesystem::exists(profile.primary()));
+            EXPECT_EQ(cache.size(), 1);
+            EXPECT_EQ(cache.at("prior.ddm").str(), "prior cache");
+            EXPECT_EQ(chest.lcgState, 75u);
             throw std::runtime_error("synthetic map entry failure");
         }, GameTitle::MM6), std::exception);
     EXPECT_TRUE(observed);
@@ -326,7 +330,7 @@ UNIT_TEST(MM6NewGameSaveRuntime, ScopedEntryFailureRemovesNewSlotAndRestoresOwne
     EXPECT_EQ(chest.lcgState, 75u);
 }
 
-UNIT_TEST(MM6NewGameSaveRuntime, ScopedEntryFailureRestoresPriorPrimaryAndBackup) {
+UNIT_TEST(MM6NewGameSaveRuntime, ScopedEntryPrecommitFailurePreservesPriorPrimaryAndBackup) {
     TestProfile profile;
     const auto names = expectedNames();
     const auto write = [&](std::int64_t ticks) {
@@ -348,8 +352,14 @@ UNIT_TEST(MM6NewGameSaveRuntime, ScopedEntryFailureRestoresPriorPrimaryAndBackup
         profile.root(), seed(53), party, npcs, timer, overlays, names,
         defaultReader(), baseReader(), [](std::int32_t) { return true; }, 5,
         [] { return std::optional<std::uint32_t>(0xabc12345); }, &cache, &chest,
-        [](const Party &, const std::unordered_map<std::string, Blob> &,
-           const mm6::ChestTitleState &) { throw std::runtime_error("late entry failure"); },
+        [&](const Party &, const std::unordered_map<std::string, Blob> &,
+            const mm6::ChestTitleState &) {
+            EXPECT_EQ(readFile(profile.primary()), oldPrimary);
+            EXPECT_EQ(readFile(backupPath), oldBackup);
+            EXPECT_EQ(cache.size(), 1);
+            EXPECT_EQ(chest.lcgState, 75u);
+            throw std::runtime_error("precommit entry failure");
+        },
         GameTitle::MM6), std::exception);
     EXPECT_EQ(readFile(profile.primary()), oldPrimary);
     EXPECT_EQ(readFile(backupPath), oldBackup);

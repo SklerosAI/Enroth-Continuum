@@ -50,11 +50,22 @@ std::unique_ptr<PublishedFirstMapCache> saveNewGameMM6ScopedForTest(
         return id >= 1 && id <= 580 &&
             !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
     };
+    const FirstMapEntryProbe preCommitProbe = [&](const Party &staged,
+        const std::unordered_map<std::string, Blob> &candidateMapDeltas,
+        const ChestTitleState &candidateChest) {
+        probe(staged, candidateMapDeltas, candidateChest);
+        // Archive reads and detached staging have completed. If input or a
+        // queued action appeared during that work, refuse the save before the
+        // first disk write; leave the action queued for normal game handling.
+        const auto currentActions = capturePendingActionStateForSave(GameTitle::MM6);
+        (void) stageHeldCursorRestorePlan(captureHeldItem(*pParty, GameTitle::MM6),
+                                          *pItemTable, currentActions, GameTitle::MM6);
+    };
     return runScopedFirstMapEntryForTest(
         profileRoot, seed, *pParty, *pNPCStats, *gameTimer, *pActiveOverlayList,
         maps.expectedNames(), readDefault, readBase, verifyItem,
         pOverlayTable->overlays.size(), localChestSeedEntropy,
-        &pMapDeltas, &chestTitleState(), probe, GameTitle::MM6);
+        &pMapDeltas, &chestTitleState(), preCommitProbe, GameTitle::MM6);
 }
 
 } // namespace mm6

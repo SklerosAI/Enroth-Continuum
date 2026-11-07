@@ -26,6 +26,7 @@
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/ItemTable.h"
 #include "Engine/Tables/OverlayTable.h"
+#include "GUI/GUIMessageQueue.h"
 
 namespace {
 
@@ -78,6 +79,7 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
         bool failureCallback = false;
         bool success = false;
         bool rollbackExact = false;
+        bool queuedDuringPrecommitRejected = false;
         bool freshDiskStage = false;
         bool detachedOutdoorPlan = false;
         bool idleHeldCursorPlan = false;
@@ -219,6 +221,22 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
                 mm6::chestTitleState().ready == chestBeforeFailure.ready &&
                 mm6::chestTitleState().lcgState == chestBeforeFailure.lcgState &&
                 mm6::chestTitleState().generatedArtifactFlags == chestBeforeFailure.generatedArtifactFlags;
+            try {
+                (void) mm6::saveNewGameMM6ScopedForTest(profile.root, research,
+                    [&](const Party &, const std::unordered_map<std::string, Blob> &,
+                        const mm6::ChestTitleState &) {
+                        engine->_messageQueue->addMessageNextFrame(UIMSG_OpenInventory);
+                    });
+                result.error = "scoped MM6 save accepted a queued precommit action";
+            } catch (const std::runtime_error &) {
+                result.queuedDuringPrecommitRejected =
+                    engine->_messageQueue->hasPendingForSave() &&
+                    readFile(profile.primary()) == result.primaryBeforeFailure &&
+                    readFile(profile.backup()) == result.backupBeforeFailure &&
+                    snapshotCache() == cacheBeforeFailure &&
+                    mm6::chestTitleState().lcgState == chestBeforeFailure.lcgState;
+            }
+            engine->_messageQueue->clearAll();
         } catch (const std::exception &error) {
             result.error = error.what();
         }
@@ -241,5 +259,6 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
     EXPECT_EQ(result.primaryAfterFailure, result.primaryBeforeFailure);
     EXPECT_EQ(result.backupAfterFailure, result.backupBeforeFailure);
     EXPECT_TRUE(result.rollbackExact);
+    EXPECT_TRUE(result.queuedDuringPrecommitRejected);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }

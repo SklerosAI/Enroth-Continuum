@@ -219,13 +219,17 @@ std::unique_ptr<PublishedFirstMapCache> runScopedFirstMapEntryForTest(
     PreparedNewGameSession prepared = prepareOfflineNewGameSession(
         seed, liveParty, liveNpcs, liveTimer, liveOverlays, expectedNames,
         readDefaultDelta, readBase, verifyItem, overlayTableCount, chestEntropy, title);
+    // The observer may perform additional detached first-map checks, but it
+    // must finish before either the disk slot or process owners are published.
+    // No caller-controlled code runs in the write-and-swap interval below.
+    probe(prepared.staged.party, prepared.staged.worldAndVisuals.world.mapDeltas,
+          prepared.staged.worldAndVisuals.chestTitle);
     const detail::SaveSlotRollbackSnapshot priorSlot =
         detail::snapshotSaveSlotForRollback(profileRoot, NEW_GAME_AUTOSAVE_SLOT);
     std::unique_ptr<PublishedFirstMapCache> published;
     try {
         published = publishPreparedFirstMap(
             profileRoot, std::move(prepared), mapDeltas, titleChest);
-        probe(published->prepared.staged.party, *mapDeltas, *titleChest);
         return published;
     } catch (...) {
         if (published)

@@ -134,7 +134,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Held Item](MM6-F4-Held-Item.md) — HELD section, MM6 icon preflight and cursor restoration boundary
 - [MM6 F4 Raw Held Item Section](MM6-F4-Raw-Held-Item-Section.md) — Detached HELD v2 exact cursor record, absent-tail policy and final-manifest gate
 - [MM6 F4 Raw Cursor Owner](MM6-F4-Raw-Cursor-Owner.md) — Detached title-owned full-set and partial-clear cursor record, including empty tail bytes
-- [MM6 F4 Action Observation Stability](MM6-F4-Action-Observation-Stability.md) — idle-action capture timing and required map-entry commit boundary
+- [MM6 F4 Action Observation Stability](MM6-F4-Action-Observation-Stability.md) — precommit probe and final action recheck; real-world no-reentry commit still required
 - [MM6 F4 Recovery and Calendar](MM6-F4-Recovery-Calendar.md) — Required `.ec6` RCVR v3 state, 59 event clocks, Armageddon tuple, derived calendar and active-rest/turn guards
 - [Open Questions](Open-Questions.md) — F2-frozen source uncertainties and F3/F4/F5 resolution routes
 

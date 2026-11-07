@@ -16,4 +16,9 @@ std::unique_ptr<PublishedFirstMapCache> saveNewGameMM6ScopedForTest(
     const std::filesystem::path &privateMapResearchRoot,
     const FirstMapEntryProbe &probe);
 
+// Same bounded temporary-profile route, with names and map bytes obtained
+// only from the loaded MM6 game archive and map table.
+std::unique_ptr<PublishedFirstMapCache> saveNewGameMM6FromLoadedMapsScopedForTest(
+    const std::filesystem::path &profileRoot, const FirstMapEntryProbe &probe);
+
 } // namespace mm6

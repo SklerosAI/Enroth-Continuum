@@ -18,13 +18,16 @@
 
 #include "MM6ChestTitleState.h"
 #include "MM6HeldItemSaveFields.h"
+#include "MM6LoadedMapSource.h"
 #include "MM6PrivateMapSource.h"
 
 namespace mm6 {
 
-std::unique_ptr<PublishedFirstMapCache> saveNewGameMM6ScopedForTest(
-    const std::filesystem::path &profileRoot,
-    const std::filesystem::path &privateMapResearchRoot,
+namespace {
+
+std::unique_ptr<PublishedFirstMapCache> saveNewGameFromMapSource(
+    const std::filesystem::path &profileRoot, std::span<const std::string> expectedNames,
+    const DefaultDeltaReader &readDefault, const MapBaseReader &readBase,
     const FirstMapEntryProbe &probe) {
     if (!engine || engine->gameTitle() != GameTitle::MM6 || !pParty || !pNPCStats ||
         !gameTimer || !pActiveOverlayList || !pOverlayTable || !pMapTable ||
@@ -40,12 +43,9 @@ std::unique_ptr<PublishedFirstMapCache> saveNewGameMM6ScopedForTest(
     (void) stageHeldCursorRestorePlan(captureHeldItem(*pParty, GameTitle::MM6),
                                       *pItemTable, actions, GameTitle::MM6);
 
-    const PrivateMapSource maps(privateMapResearchRoot);
     const KnownSaveFields seed = captureFirstMapKnownSeed(
         *pParty, *pNPCStats, *gameTimer, *pActiveOverlayList, "New game",
         pOverlayTable->overlays.size(), GameTitle::MM6);
-    const auto readDefault = [](std::string_view name) { return pGames_LOD->read(name); };
-    const auto readBase = [&maps](std::string_view name) { return maps.readBase(name); };
     const auto verifyItem = [](std::int32_t id) {
         return id >= 1 && id <= 580 &&
             !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
@@ -63,9 +63,31 @@ std::unique_ptr<PublishedFirstMapCache> saveNewGameMM6ScopedForTest(
     };
     return runScopedFirstMapEntryForTest(
         profileRoot, seed, *pParty, *pNPCStats, *gameTimer, *pActiveOverlayList,
-        maps.expectedNames(), readDefault, readBase, verifyItem,
+        expectedNames, readDefault, readBase, verifyItem,
         pOverlayTable->overlays.size(), localChestSeedEntropy,
         &pMapDeltas, &chestTitleState(), preCommitProbe, GameTitle::MM6);
+}
+
+} // namespace
+
+std::unique_ptr<PublishedFirstMapCache> saveNewGameMM6ScopedForTest(
+    const std::filesystem::path &profileRoot,
+    const std::filesystem::path &privateMapResearchRoot,
+    const FirstMapEntryProbe &probe) {
+    const PrivateMapSource maps(privateMapResearchRoot);
+    return saveNewGameFromMapSource(profileRoot, maps.expectedNames(),
+        [](std::string_view name) { return pGames_LOD->read(name); },
+        [&maps](std::string_view name) { return maps.readBase(name); }, probe);
+}
+
+std::unique_ptr<PublishedFirstMapCache> saveNewGameMM6FromLoadedMapsScopedForTest(
+    const std::filesystem::path &profileRoot, const FirstMapEntryProbe &probe) {
+    if (!engine || !pGames_LOD || !pMapTable)
+        throw std::runtime_error("MM6 loaded-map save requires map resources");
+    const LoadedMapSource maps(*pGames_LOD, *pMapTable, engine->gameTitle());
+    return saveNewGameFromMapSource(profileRoot, maps.expectedNames(),
+        [&maps](std::string_view name) { return maps.readDefaultDelta(name); },
+        [&maps](std::string_view name) { return maps.readBase(name); }, probe);
 }
 
 } // namespace mm6

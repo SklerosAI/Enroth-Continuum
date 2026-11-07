@@ -21,12 +21,14 @@
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6KnownSaveFields.h"
 #include "Engine/MM6/MM6HeldItemSaveFields.h"
+#include "Engine/MM6/MM6LoadedMapSource.h"
 #include "Engine/MM6/MM6NewGameSaveRuntime.h"
 #include "Engine/MM6/MM6PrivateMapSource.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/MM6/MM6WorldSaveRuntime.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Party.h"
+#include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/ItemTable.h"
 #include "Engine/Tables/MapTable.h"
@@ -71,6 +73,59 @@ std::unordered_map<std::string, std::string> snapshotCache() {
 }
 
 } // namespace
+
+GAME_TEST(MM6ZSaveHeadless, LoadedMapSourceMatchesPrivateResearch) {
+    const char *research = std::getenv("ENROTH_MM6_MAP_RESEARCH_ROOT");
+    if (!research || !std::filesystem::is_directory(research))
+        GTEST_SKIP() << "Set ENROTH_MM6_MAP_RESEARCH_ROOT to the ignored private F3 map source";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    const mm6::PrivateMapSource privateMaps(research);
+    const mm6::LoadedMapSource loaded(*pGames_LOD, *pMapTable, GameTitle::MM6);
+    ASSERT_EQ(loaded.expectedNames().size(), privateMaps.expectedNames().size());
+    EXPECT_TRUE(std::equal(loaded.expectedNames().begin(), loaded.expectedNames().end(),
+                           privateMaps.expectedNames().begin()));
+    for (std::size_t index = 0; index < loaded.expectedNames().size(); ++index) {
+        const std::string &delta = loaded.expectedNames()[index];
+        const std::string base = delta.substr(0, delta.size() - 4) +
+            (delta.ends_with(".dlv") ? ".blv" : ".odm");
+        try {
+            const Blob original = loaded.readBase(base);
+            const Blob retained = privateMaps.readBase(base);
+            EXPECT_EQ(original.size(), retained.size());
+            EXPECT_TRUE(original.str() == retained.str());
+            EXPECT_FALSE(loaded.readDefaultDelta(delta).empty());
+        } catch (const std::exception &error) {
+            FAIL() << "MM6 loaded map source failed at pair " << index << ": " << error.what();
+            return;
+        }
+    }
+}
+
+GAME_TEST(MM6ZSaveHeadless, NewGameCallbackFailureRestoresPlacement) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const MapId priorMap = engine->_currentLoadedMapId;
+    const auto priorPosition = pParty->pos;
+    const auto priorFallStartZ = pParty->uFallStartZ;
+    const auto priorPitch = pParty->_viewPitch;
+    const auto priorYaw = pParty->_viewYaw;
+    const std::string originalSaveName = engine->_lastLoadedSaveFileName;
+    engine->_lastLoadedSaveFileName = "prior-test-slot";
+
+    mm6::testing::setNewGameSaveOverride([] { throw std::runtime_error("test callback failure"); });
+    EXPECT_THROW(saveNewGame(), std::runtime_error);
+    mm6::testing::setNewGameSaveOverride({});
+
+    EXPECT_EQ(engine->_currentLoadedMapId, priorMap);
+    EXPECT_EQ(pParty->pos.x, priorPosition.x);
+    EXPECT_EQ(pParty->pos.y, priorPosition.y);
+    EXPECT_EQ(pParty->pos.z, priorPosition.z);
+    EXPECT_EQ(pParty->uFallStartZ, priorFallStartZ);
+    EXPECT_EQ(pParty->_viewPitch, priorPitch);
+    EXPECT_EQ(pParty->_viewYaw, priorYaw);
+    EXPECT_EQ(engine->_lastLoadedSaveFileName, "prior-test-slot");
+    engine->_lastLoadedSaveFileName = originalSaveName;
+}
 
 GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
     const char *research = std::getenv("ENROTH_MM6_MAP_RESEARCH_ROOT");
@@ -336,16 +391,13 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_ScopedSaveFeedsFirstOutdoorWorld) {
 // dedicated headless process. The override writes only into TempProfile;
 // normal MM6 SaveLoad still rejects user sessions and reloads.
 GAME_TEST(MM6ZSaveHeadless, DISABLED_NewGameControlFlowReachesFirstFrame) {
-    const char *research = std::getenv("ENROTH_MM6_MAP_RESEARCH_ROOT");
-    if (!research || !std::filesystem::is_directory(research))
-        GTEST_SKIP() << "Set ENROTH_MM6_MAP_RESEARCH_ROOT to the ignored private F3 map source";
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     ASSERT_EQ(window->nativeHandle(), nullptr);
     TempProfile profile;
     std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
 
     mm6::testing::setNewGameSaveOverride([&] {
-        (void) mm6::saveNewGameMM6ScopedForTest(profile.root, research,
+        (void) mm6::saveNewGameMM6FromLoadedMapsScopedForTest(profile.root,
             [](const Party &, const std::unordered_map<std::string, Blob> &,
                const mm6::ChestTitleState &) {});
     });

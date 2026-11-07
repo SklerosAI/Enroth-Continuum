@@ -274,30 +274,43 @@ void saveNewGame() {
         throw std::runtime_error("MM6 new-game save is unavailable until the EC6 transaction is complete");
 
     if (engine->gameTitle() == GameTitle::MM6) {
-        engine->_currentLoadedMapId = pMapTable->GetMapInfo("oute3.odm");
-        // New Sorpigal's arrival point in the original MM6 coordinate system.
-        pParty->pos.x = -10178;
-        pParty->pos.y = -11206;
-        pParty->pos.z = 340;
-        pParty->uFallStartZ = 340;
-        pParty->_viewPitch = 0;
-        pParty->_viewYaw = 128;
-    } else {
-        engine->_currentLoadedMapId = MAP_EMERALD_ISLAND;
-        pParty->pos.x = 12552;
-        pParty->pos.y = 800;
-        pParty->pos.z = 193;
-        pParty->uFallStartZ = 193;
-        pParty->_viewPitch = 0;
-        pParty->_viewYaw = 512;
-    }
-    engine->_lastLoadedSaveFileName.clear(); // Otherwise the save menu would pre-select a save from a previous playthrough.
-
-    if (engine->gameTitle() == GameTitle::MM6) {
-        mm6NewGameSaveOverride();
+        const MapId priorMap = engine->_currentLoadedMapId;
+        const auto priorPosition = pParty->pos;
+        const auto priorFallStartZ = pParty->uFallStartZ;
+        const auto priorPitch = pParty->_viewPitch;
+        const auto priorYaw = pParty->_viewYaw;
+        std::string priorSaveName = engine->_lastLoadedSaveFileName;
+        try {
+            engine->_currentLoadedMapId = pMapTable->GetMapInfo("oute3.odm");
+            // New Sorpigal's arrival point in the original MM6 coordinate system.
+            pParty->pos.x = -10178;
+            pParty->pos.y = -11206;
+            pParty->pos.z = 340;
+            pParty->uFallStartZ = 340;
+            pParty->_viewPitch = 0;
+            pParty->_viewYaw = 128;
+            engine->_lastLoadedSaveFileName.clear();
+            mm6NewGameSaveOverride();
+        } catch (...) {
+            engine->_currentLoadedMapId = priorMap;
+            pParty->pos = priorPosition;
+            pParty->uFallStartZ = priorFallStartZ;
+            pParty->_viewPitch = priorPitch;
+            pParty->_viewYaw = priorYaw;
+            engine->_lastLoadedSaveFileName.swap(priorSaveName);
+            throw;
+        }
         return;
     }
 
+    engine->_currentLoadedMapId = MAP_EMERALD_ISLAND;
+    pParty->pos.x = 12552;
+    pParty->pos.y = 800;
+    pParty->pos.z = 193;
+    pParty->uFallStartZ = 193;
+    pParty->_viewPitch = 0;
+    pParty->_viewYaw = 512;
+    engine->_lastLoadedSaveFileName.clear(); // Otherwise the save menu would pre-select a save from a previous playthrough.
     saveGame(true, true, fmt::format("saves/{}", autosaveFileName), localization->str(LSTR_AUTOSAVE));
 }
 

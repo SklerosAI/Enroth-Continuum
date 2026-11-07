@@ -32,6 +32,12 @@ The linked `MM6NewGameSaveRuntime.*` native suite passed **13/13** in 13.94 seco
 
 `writeOfflineNewGameAutosave()` performs that full **known-field** validation before calling the existing native atomic writer with fixed `autosave.ec6` under an explicit absolute MM6 profile root. The writer creates and syncs a temporary file, validates readback, and replaces the primary with backup handling. No `.mm7` slot, user filesystem abstraction or MM7 snapshot is used. This is an offline/test API and is not called by `saveNewGame()`.
 
+## Loaded-archive source follow-up — 2026-11-06
+
+`LoadedMapSource` now derives the complete 67-pair map set from the loaded MM6 map table and Games archive, checks both members of each pair, and supplies decoded base maps plus default deltas without a private research directory. The two known indoor checksum exceptions go through the existing bounded indoor decoder. A monitored headless comparison matched every base and ordered delta name to the accepted private F3 source (1/1); the loaded-source temporary-profile New Game control flow reached the first outdoor frame without the research-root environment variable (1/1). This is a runtime input source, not a complete save transaction or permission to open the user-facing MM6 route.
+
+The test-only `saveNewGame()` callback path now restores its own map ID, arrival position, fall start, view angles and last-save selection if the callback throws. The failure-injection, ordinary guard and loaded-source comparison checks passed 3/3, and MM7 shop/guild entry controls passed 2/2. The callback still cannot make a later real `DoPrepareWorld()` failure atomic; the normal MM6 save guard remains closed.
+
 Three focused native tests passed in a manually linked arm64 binary using the integrated v4 build libraries: an MM6 first-map autosave writes all 67 synthetic defaults and semantically preflights unchanged; MM7 title and wrong first map reject before delta reads or disk mutation; a malformed final default delta rejects after all 67 reads while preserving the previous autosave; and a corrupt primary selects a valid backup without mutation, then recovers the prior bytes. The existing atomic writer's fault-injection suite covers replacement failures separately. No proprietary game assets or MM6 process were opened.
 
 ## Before the live route can open

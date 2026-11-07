@@ -13,4 +13,6 @@ The field survives ordinary value copies in inventory and cursor paths, while `I
 
 Linked focused checks passed 13/13; the rebuilt non-MM6 unit suite passed 438/438. Monitored headless controls passed MM7 save/load 1/1 and MM6 loaded-table item checks 2/2, without an on-screen window or focus change.
 
-See also: [Raw Item Authority](MM6-F4-Raw-Item-Authority.md), [Bounded Party Inventory](MM6-F4-Bounded-Party-Inventory.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).
+The [raw transfer audit](MM6-F4-Raw-Item-Transfer-Semantics.md) now identifies source paths where vacated physical records keep three tail bytes; the carrier alone does not publish those slot mutations.
+
+See also: [Raw Item Authority](MM6-F4-Raw-Item-Authority.md), [Raw Item Transfer Semantics](MM6-F4-Raw-Item-Transfer-Semantics.md), [Bounded Party Inventory](MM6-F4-Bounded-Party-Inventory.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

@@ -708,3 +708,9 @@ general non-MM6 units **438/438**, an MM7 headless save/load control **1/1**
 and two loaded-table MM6 headless checks **2/2**, with no visible window or
 focus change. Physical slot mutation, unique item identity and final save
 ownership remain open.
+
+A read-only [raw transfer audit](MM6_F4_RAW_ITEM_TRANSFER_SEMANTICS.md) proves
+specific first-25-byte backpack/cursor clears, full incoming cursor/shop
+copies and zero-ID allocation across all 138 physical slots. Equipment
+removal, general UI pickup and ground fallback remain unproved, so the
+detached carrier cannot yet drive live inventory movement or SaveLoad.

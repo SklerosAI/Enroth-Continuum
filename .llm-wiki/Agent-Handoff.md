@@ -69,6 +69,8 @@ The [four-character bounded inventory stage](MM6-F4-Bounded-Party-Inventory.md) 
 
 The [item value provenance carrier](MM6-F4-Item-Value-Provenance.md) is the first transport piece: staged common-rarity plain and standard items carry their exact 28-byte source record through `Item` copies, and capture checks that record. Linked focused checks passed **13/13**, non-MM6 units **438/438**, MM7 headless save/load **1/1** and MM6 loaded-table headless **2/2** without focus/window intrusion. A later plain-adapter rarity gate again passed **13/13** focused and **2/2** MM6 loaded-table headless checks. It does not yet define physical vacated-slot bytes, a unique item ID, live producers or final `INVR`/`HELD` commit.
 
+The [raw transfer source audit](MM6-F4-Raw-Item-Transfer-Semantics.md) proves first-25-byte clearing for a backpack item-event removal and held-item clear, full 28-byte incoming cursor and shop copies, and allocation by zero ID across all 138 physical records. Zero-ID tails remain authoritative. Equipment removal, general UI pickup and ground fallback are still unproved; use detached atomic raw transactions and do not infer them from `Inventory::take`.
+
 ## Authority and source order
 
 | Question | Start with | Supporting source |

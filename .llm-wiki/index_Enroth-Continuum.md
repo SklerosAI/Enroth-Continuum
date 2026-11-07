@@ -116,6 +116,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Post Rebuild PID Slots](MM6-F4-Post-Rebuild-PID-Slots.md) — Read-only final actor/sprite slot agreement check; active saved VISU overlays remain blocked
 - [MM6 F4 Persistent Event Publication](MM6-F4-Persistent-Event-Publication.md) — Test-only zero generic arrays before map load and exact sidecar/array check after rebuild
 - [MM6 F4 Raw Child Publication Gate](MM6-F4-Raw-Child-Publication-Gate.md) — Read-only v2 owner joins with typed blockers before any live assignment
+- [MM6 F4 Post-World Armageddon Resume](MM6-F4-Post-World-Armageddon-Resume.md) — Detached RCVR timer resume plan and final tuple check after world preparation
 - [MM6 F4 V2 QuickLoad Callback Gate](MM6-F4-V2-QuickLoad-Callback-Gate.md) — Disposable child catches the v2 load refusal and leaves slot and live owners unchanged
 - [MM6 F4 V2 Fresh-Child Owner Audit](MM6-F4-V2-Fresh-Child-Owner-Audit.md) — Full owner inventory and proposed post-world admission hook before first input
 - [MM6 F4 Post-World Abort Gate](MM6-F4-Post-World-Abort-Gate.md) — MM6-only disposable QuickLoad abort after world preparation, before timer/input; v2 publication remains guarded

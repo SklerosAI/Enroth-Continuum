@@ -31,6 +31,8 @@ The [BEAC/IFOV v2 admission policy](../project/MM6_F4_RAW_V2_BEAC_IFOV_ADMISSION
 
 The [raw cursor/shop handoff](MM6-F4-Raw-Cursor-Shop-Handoff.md) adds a detached `HELD`/`SHOP`/`SCLK` join and an exact equality check against decoded v2 fields. The represented-session preflight now calls that check before selecting a slot. The linked raw/schema/cursor-shop set passed **18/18**. This does not publish a live cursor image, shop service or UI state.
 
+The [fresh NPC baseline](MM6-F4-NPC-State.md) now parses the four MM6 NPCStats tables into a detached image without touching the process NPC topics. The v2 session preflight requires this typed baseline, then overlays saved mutable `RESC` rows; it cannot accept a borrowed live `NPCStats` from another title. Linked NPC/raw/outdoor checks passed **13/13**. Global NPC topics, generated NPCs and active dialogue state are still separate live owner gates. This supersedes the earlier allowance for caller-supplied arbitrary NPCStats in v2 session preflight.
+
 This is still a raw owner candidate. It does not project every source item kind into `CharacterInventory`, reconstruct the active live world, include beacon state, or make the simultaneous Party/world/UI/commerce commit failure atomic. The existing v1 atomic/New Game route remains separate; v2 is not a production save or playable-campaign claim.
 
 The [detached Party inventory stage](MM6-F4-Raw-Party-Inventory-Stage.md) now projects the supported subset of `INVR` into all four 138-slot runtime inventories on a Party copy. It rejects unsupported nonzero item unions and rarity effects, and keeps the full raw owner for recapture. It does not close the remaining item semantics or live commit gates.

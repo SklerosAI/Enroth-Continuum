@@ -12,7 +12,7 @@ namespace mm6 {
 
 std::optional<StagedRawSessionFields> preflightStagedRawSessionFields(
     const std::filesystem::path &profileRoot, std::string_view slotName,
-    const Party &freshParty, const NPCStats &freshNpcs, const Timer &freshTimer,
+    const Party &freshParty, const NpcStaticBaseline &freshNpcs, const Timer &freshTimer,
     const ActiveOverlayList &freshOverlays,
     std::span<const std::string> expectedNames, const MapBaseReader &readBase,
     const GroundItemVerifier &verifyItem, const ItemTable &itemTable,

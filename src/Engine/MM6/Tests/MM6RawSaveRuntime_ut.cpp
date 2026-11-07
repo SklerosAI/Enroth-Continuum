@@ -49,6 +49,16 @@ Blob syntheticBase(std::string_view name) {
 
 bool validItem(std::int32_t id) { return id >= 1 && id <= 580; }
 
+mm6::NpcStaticBaseline freshNpcBaseline() {
+    const auto table = [](std::string_view text) { return Blob::copy(text.data(), text.size()); };
+    return mm6::loadNpcStaticBaseline(
+        table("Header\r\nHeader\r\n1\tStatic Ada\t123\t0\t0\t0\t1\t2\t1\t7\t11\t12\t13\r\n"),
+        table("0\tNews\tunused\tTown news\r\n"),
+        table("Header\r\nAdam\tBeth\r\n"),
+        table("1\tProfession\t2\t100\tunused\tAction\tBenefit\tJoin\r\n"),
+        GameTitle::MM6);
+}
+
 struct ItemTableScope {
     ItemTable *previous = pItemTable;
     std::unique_ptr<ItemTable> table = std::make_unique<ItemTable>();
@@ -409,7 +419,7 @@ UNIT_TEST(MM6RawSaveRuntime, FullRepresentedPreflightFallsBackAfterLatePartyFail
     mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", badBytes);
 
     Party freshParty;
-    NPCStats freshNpcs;
+    const auto freshNpcs = freshNpcBaseline();
     Timer freshTimer;
     ActiveOverlayList freshOverlays;
     auto selected = mm6::preflightStagedRawSessionFields(
@@ -451,7 +461,7 @@ UNIT_TEST(MM6RawSaveRuntime, RawSessionPreflightPreparesOutdoorPlanBeforeSelecti
     mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", outdoorBytes);
 
     Party party;
-    NPCStats npcs;
+    const auto npcs = freshNpcBaseline();
     Timer timer;
     ActiveOverlayList overlays;
     // The raw MAPS pass accepts this synthetic base, while the outdoor plan

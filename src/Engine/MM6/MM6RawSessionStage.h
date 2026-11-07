@@ -24,12 +24,13 @@ struct StagedRawSessionFields {
 
 // Read-only v2 slot selection through every currently represented Party and
 // world field adapter, and checks raw HELD/SHOP/SCLK owner equality. The
-// supplied bases must come from a fresh MM6 session.
-// This remains incomplete: BEAC/IFOV admission, final actor/PID identity,
-// cursor/shop/UI publication and active-world construction are not staged.
+// NPC baseline is a freshly parsed MM6 table image; the Party, timer and
+// overlay bases must also come from a fresh MM6 session.
+// This remains incomplete: live UI/world publication, indoor construction,
+// final actor/PID identity and full BEAC/IFOV support are not staged.
 std::optional<StagedRawSessionFields> preflightStagedRawSessionFields(
     const std::filesystem::path &profileRoot, std::string_view slotName,
-    const Party &freshParty, const NPCStats &freshNpcs, const Timer &freshTimer,
+    const Party &freshParty, const NpcStaticBaseline &freshNpcs, const Timer &freshTimer,
     const ActiveOverlayList &freshOverlays,
     std::span<const std::string> expectedNames, const MapBaseReader &readBase,
     const GroundItemVerifier &verifyItem, const ItemTable &itemTable,

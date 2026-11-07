@@ -113,6 +113,8 @@ cpptrace/libdwarf built with a local source override and disconnected
 FetchContent. Wire that override in the integration CMake path before claiming
 the nested fetch closed.
 
+The [Mac dependency recipe](MM7-Mac-Dependency-Recipe.md) now builds five pinned source families into exactly nine arm64 static archives in a local prefix, with no dynamic libraries, local zlib selected by libpng, and FFmpeg GPL/version-3/nonfree modes disabled. A separate package-find probe found all five families in that prefix. This remains separate from the app link: the main local-only CMake lane still refuses missing source inputs/recipes, so do not claim a clean offline MM7 build or replace the installed helper.
+
 A disposable v1 two-process probe now drives the real MM6 Main Menu QuickLoad FSM through `Game::loop()`/private `gameLoop()` with explicit test-only load callbacks and chest opt-in. The writer and loader each passed 1/1 under the no-window monitor; the loader entered the first outdoor map, advanced movement and left the slot bytes unchanged. An MM7 all-map headless control passed 1/1 after the shared hooks. Production MM6 load, menu slots and complete v2 session publication remain guarded; the probe is not a playable campaign or rendered-frame proof.
 
 ## Current phase and gates (2026-11-06)

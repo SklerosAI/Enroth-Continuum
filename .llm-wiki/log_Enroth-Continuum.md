@@ -2446,3 +2446,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - From a clean tracked-source extraction, built the five pinned media source families to nine arm64 archives, configured and linked MM7, and staged a signed Atlas with 23 dependency notices, all under a network-denied macOS sandbox. The local-only route used tracked libdwarf and an opt-in Mac iconv adapter; the MM7 link command had no upstream archive or ztd input.
 - A freshly built MM7 headless GameTest control passed 1/1 against private data without bundling it. This did not test a remote clone, graphical play, save/quit/reload, installed-app cutover or binary distribution. The ordinary CMake path still has upstream fetch routes and the installed app remains unchanged.
+## [2026-11-07] verify | MM6 indoor v6 first-input cycle
+- by: T-Burton-ND via codex
+- A disposable five-child headless chain passed 1/1 per child: v2 seed, v4 baseline, genuine indoor live-session v6 writer, real-loop first turn/walk plus separate atomic post-input writer, and independent fresh-child replay. The writer checks Party/title/raw, GNPC/RNG/EVRT, IFOV and actor/sprite/decoration owners; the v2 seed and prior v6 slot remain byte-identical.
+- The test fixture derives a valid position from native BLV geometry. The post-input writer patches only newly revealed DLV visibility bits after strict live-outline checks. `canEnterGameLoop()` and production SaveLoad stay closed; general indoor campaign, graphics/audio and Atlas Play remain unaccepted.

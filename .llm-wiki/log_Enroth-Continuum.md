@@ -1823,3 +1823,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a later Mac MM7 gate for a clean offline build and Atlas package from this fork, with repository-owned pinned dependency source and a license inventory. The currently working MM7 helper and saves stay protected during migration.
 - The audit found the fork already owns MM7 engine source, while a clean build still uses an OpenEnroth-hosted prebuilt dependency download, 23 external submodules and possible configure-time fetches. Permanent OpenEnroth history, license, notices and contributor credit remain required.
+
+## [2026-11-06] integrate | MM6 shop, item and terrain primitives
+- by: T-Burton-ND via codex
+- Integrated a title-local raw SHOP/SCLK process owner, a detached all-four-character backpack item-event removal with native first-25-byte clear, and shared live/detached outdoor tile-ID mapping with bounded 127 by 127 preflight.
+- Focused linked world/item/shop tests passed 18/18. Two hidden MM6 processes wrote and re-entered the first outdoor world from one disposable EC6 profile (1/1 each), with no visible window or focus change; the profile was removed. Production house/event/save/load paths and failure-atomic outdoor publication remain guarded.

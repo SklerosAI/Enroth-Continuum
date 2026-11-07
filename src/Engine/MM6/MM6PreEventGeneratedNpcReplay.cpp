@@ -31,11 +31,13 @@ PreEventGeneratedNpcReplay stagePreEventGeneratedNpcReplay(
         const Actor &actor = rebuiltActors[slot];
         const MonsterId monster = actor.monsterInfo.id;
         if (actor.id != slot || monster < MONSTER_FIRST ||
-            monster > MONSTER_LAST || actor.npcId < 0)
+            monster > MONSTER_LAST)
             throw std::runtime_error("MM6 pre-event actor identity is invalid");
 
+        // Match _461103_load_level_sub(): signed nonzero links below 5000
+        // belong to the retained actor, never to the generated NPC rows.
         const bool skipped = monsterTierForMonsterId(monster) == MONSTER_TIER_A ||
-            (actor.npcId > 0 && actor.npcId < 5000);
+            (actor.npcId != 0 && actor.npcId < 5000);
         if (skipped) {
             if (actor.npcId >= 5000)
                 throw std::runtime_error("MM6 pre-event skipped actor has generated link");

@@ -68,6 +68,22 @@ UNIT_TEST(MM6PostMapGeneratedNpcLinks, AcceptsContiguousGeneratedActorsAndFixedR
     EXPECT_EQ(npcs->pAdditionalNPC[0].name, "Generated");
 }
 
+UNIT_TEST(MM6PostMapGeneratedNpcLinks, SignedFixedPeasantSkipsGeneration) {
+    constexpr MonsterId peasantB = MONSTER_PEASANT_DWARF_FEMALE_A_B;
+    auto npcs = std::make_unique<NPCStats>();
+    generatedRow(npcs.get(), 0, peasantB);
+    npcs->uNewlNPCBufPos = 1;
+    const std::vector<Actor> actors{actor(0, peasantB, -1),
+                                    actor(1, peasantB, 5000)};
+    const std::deque<Actor> source{actor(0, peasantB, -1),
+                                   actor(1, peasantB, 0)};
+    EXPECT_EQ(mm6::requirePreMapGeneratedNpcCapacity(
+        source, *npcs, GameTitle::MM6), 1u);
+    EXPECT_EQ(mm6::requirePostMapGeneratedNpcLinks(
+        actors, *npcs, GameTitle::MM6), 1u);
+    EXPECT_EQ(actors[0].npcId, -1);
+}
+
 UNIT_TEST(MM6PostMapGeneratedNpcLinks, RejectsBrokenLinksAndRowsWithoutMutation) {
     constexpr MonsterId peasantB = MONSTER_PEASANT_DWARF_FEMALE_A_B;
     auto npcs = std::make_unique<NPCStats>();

@@ -408,6 +408,10 @@ UNIT_TEST(MM6V6IndoorSaveFields, IndoorActorOwnerKeepsGeneratedFractionalTail) {
     actor.velocity = Vec3f(0.125f, -0.5f, 1.25f);
     actor.monsterInfo.name = "Indoor Display";
     actor.monsterInfo.internalName = "Indoor Internal";
+    actor.npcId = -1;
+    EXPECT_THROW((void) mm6::captureIndoorActorRuntime(
+        "d0.blv", source, std::span(&actor, 1), GameTitle::MM6), std::exception);
+    actor.npcId = 0;
     const auto fields = mm6::captureIndoorActorRuntime(
         "d0.blv", source, std::span(&actor, 1), GameTitle::MM6);
     EXPECT_EQ(fields.nativePrefixCount, 0u);

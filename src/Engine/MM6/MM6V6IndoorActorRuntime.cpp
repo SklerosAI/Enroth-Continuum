@@ -72,6 +72,9 @@ void requireIndoorActorRuntimeSourceAgreement(
             const auto native = projectMM6ActorRecord(
                 std::span(source.records).subspan(slot * NATIVE_WIDTH, NATIVE_WIDTH));
             requireOccupiedNativeSlot(fields.actors[slot], native, slot);
+        } else if (fields.actors[slot].npcId < 0) {
+            throw std::runtime_error(
+                "MM6 IART appended actor has no native signed NPC anchor");
         }
     }
     (void) encodeActorRuntimeSectionAs(

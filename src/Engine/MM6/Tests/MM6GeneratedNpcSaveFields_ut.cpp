@@ -55,6 +55,25 @@ UNIT_TEST(MM6GeneratedNpcSaveFields, DetachedIdentityRoundTripsAndBindsMap) {
         decoded, actors, "other.odm", GameTitle::MM6), std::exception);
 }
 
+UNIT_TEST(MM6GeneratedNpcSaveFields, SignedFixedActorDoesNotConsumeGeneratedRow) {
+    constexpr MonsterId peasantB = MONSTER_PEASANT_DWARF_FEMALE_A_B;
+    auto npcs = std::make_unique<NPCStats>();
+    row(npcs.get(), 0, peasantB);
+    npcs->uNewlNPCBufPos = 1;
+    std::deque<Actor> actors{actor(0, MONSTER_ANGEL_B, -1),
+                             actor(1, peasantB, 5000)};
+    const auto fields = mm6::captureGeneratedNpcFields(
+        actors, *npcs, "oute3.odm", GameTitle::MM6);
+    ASSERT_EQ(fields.rows.size(), 1u);
+    EXPECT_EQ(fields.rows.front().actorSlot, 1u);
+    EXPECT_NO_THROW(mm6::requireGeneratedNpcActorAgreement(
+        fields, actors, "oute3.odm", GameTitle::MM6));
+    EXPECT_EQ(actors.front().npcId, -1);
+    actors.front().id = 2;
+    EXPECT_THROW((void) mm6::captureGeneratedNpcFields(
+        actors, *npcs, "oute3.odm", GameTitle::MM6), std::exception);
+}
+
 UNIT_TEST(MM6GeneratedNpcSaveFields, RejectsLateRowAndActorDivergence) {
     constexpr MonsterId peasantB = MONSTER_PEASANT_DWARF_FEMALE_A_B;
     auto npcs = std::make_unique<NPCStats>();

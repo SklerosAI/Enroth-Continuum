@@ -180,8 +180,8 @@ GAME_TEST(MM6IndoorSourceSweep, DISABLED_AllRetainedPairsOffline) {
 }
 
 // Reconstruct the risk-ranked source through the real indoor loader, then
-// stop before map events. This records the current GNPC refusal without
-// staging a save or letting input run.
+// stop before map events. The native signed actor identity must be preserved
+// while GNPC capture excludes it from generated rows.
 GAME_TEST(MM6IndoorSourceSweep, DISABLED_RiskCasePreEventActorIdentity) {
     const char *enable = std::getenv("ENROTH_MM6_INDOOR_SWEEP_ENABLE");
     if (!enable || std::string_view(enable) != "strict-risk-pre-event")
@@ -211,7 +211,7 @@ GAME_TEST(MM6IndoorSourceSweep, DISABLED_RiskCasePreEventActorIdentity) {
     bool reached = false;
     bool aborted = false;
     bool exactNativeSignedActor = false;
-    bool generatedOwnerRefused = false;
+    bool generatedOwnerAccepted = false;
     std::exception_ptr probeError;
     std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
     game.runGameRoutine([&] {
@@ -238,14 +238,11 @@ GAME_TEST(MM6IndoorSourceSweep, DISABLED_RiskCasePreEventActorIdentity) {
                                     "MM6 indoor risk fixture changed signed actor identity");
                             exactNativeSignedActor = true;
                         }
-                    try {
-                        (void) mm6::captureGeneratedNpcFields(
-                            pActors, *pNPCStats, mapName, GameTitle::MM6);
-                    } catch (const std::runtime_error &error) {
-                        generatedOwnerRefused =
-                            std::string_view(error.what()) ==
-                            "invalid MM6 generated NPC actor source";
-                    }
+                    const auto generated = mm6::captureGeneratedNpcFields(
+                        pActors, *pNPCStats, mapName, GameTitle::MM6);
+                    mm6::requireGeneratedNpcActorAgreement(
+                        generated, pActors, mapName, GameTitle::MM6);
+                    generatedOwnerAccepted = true;
                 } catch (...) {
                     probeError = std::current_exception();
                 }
@@ -270,7 +267,7 @@ GAME_TEST(MM6IndoorSourceSweep, DISABLED_RiskCasePreEventActorIdentity) {
     if (probeError)
         std::rethrow_exception(probeError);
     EXPECT_TRUE(exactNativeSignedActor);
-    EXPECT_TRUE(generatedOwnerRefused);
+    EXPECT_TRUE(generatedOwnerAccepted);
 }
 
 // Run alone after the disposable v2 autosave seed. This constructs a v6

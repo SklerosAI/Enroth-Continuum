@@ -1278,9 +1278,8 @@ slot or changing live Party core. Actual edge movement, visited-map ownership
 and durable autosave remain gated.
 
 The [all-source indoor sweep](MM6_F4_INDOOR_SOURCE_SWEEP.md) parsed and exactly
-round-tripped every retained MM6 indoor BLV/default-DLV pair. A risk-ranked
-additional case passed a real-loader pre-event identity check but its full
-v6 writer correctly refused a signed actor NPC identity before candidate
-creation. The two established five-child indoor replay chains and an MM7
-control still passed. Negative actor NPC ID semantics and generated/follower
-owner joins must be proved before broadening general indoor saves.
+round-tripped every retained MM6 indoor BLV/default-DLV pair. The risk-ranked
+additional case now preserves its signed native actor identity outside the
+generated-NPC rows and passes a third five-child test-only v6 replay chain.
+All three chains and an MM7 control pass. Follower dialogue semantics,
+production SaveLoad and general indoor play remain open.

@@ -66,6 +66,25 @@ UNIT_TEST(MM6PreEventGeneratedNpcReplay, StagesExactEligibleAnchorsWithoutMutati
     EXPECT_EQ(freshNpcs->uNewlNPCBufPos, 0);
 }
 
+UNIT_TEST(MM6PreEventGeneratedNpcReplay, KeepsSignedFixedActorOutsideGeneratedRows) {
+    constexpr MonsterId peasantB = MONSTER_PEASANT_DWARF_FEMALE_A_B;
+    auto savedNpcs = std::make_unique<NPCStats>();
+    generatedRow(savedNpcs.get(), 0, peasantB);
+    savedNpcs->uNewlNPCBufPos = 1;
+    std::deque<Actor> finalActors{actor(0, MONSTER_ANGEL_B, -1),
+                                  actor(1, peasantB, 5000)};
+    const auto saved = mm6::captureGeneratedNpcFields(
+        finalActors, *savedNpcs, "oute3.odm", GameTitle::MM6);
+    finalActors[1].npcId = 0;
+    auto freshNpcs = std::make_unique<NPCStats>();
+    const auto plan = mm6::stagePreEventGeneratedNpcReplay(
+        saved, rngState(), finalActors, *freshNpcs, "oute3.odm",
+        RANDOM_ENGINE_MERSENNE_TWISTER, GameTitle::MM6);
+    EXPECT_EQ(plan.generatedCount, 1u);
+    EXPECT_EQ(finalActors[0].npcId, -1);
+    EXPECT_EQ(finalActors[1].npcId, 0);
+}
+
 UNIT_TEST(MM6PreEventGeneratedNpcReplay, RefusesRespawnAndWrongLoadContext) {
     constexpr MonsterId peasantB = MONSTER_PEASANT_DWARF_FEMALE_A_B;
     auto savedNpcs = std::make_unique<NPCStats>();

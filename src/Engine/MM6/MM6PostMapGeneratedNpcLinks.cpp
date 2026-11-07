@@ -35,13 +35,13 @@ size_t requirePostMapGeneratedNpcLinks(std::span<const Actor> actors,
     for (size_t index = 0; index < actors.size(); ++index) {
         const Actor &actor = actors[index];
         const MonsterId monster = actor.monsterInfo.id;
-        if (actor.id != index || monster < MONSTER_FIRST || monster > MONSTER_LAST ||
-            actor.npcId < 0)
+        if (actor.id != index || monster < MONSTER_FIRST || monster > MONSTER_LAST)
             throw std::runtime_error("MM6 post-map actor identity is invalid");
 
-        // These two cases are left untouched by the map-load generator.
+        // These two cases, including signed fixed links, are left untouched
+        // by the MM6 map-load generator.
         if (monsterTierForMonsterId(monster) == MONSTER_TIER_A ||
-            (actor.npcId > 0 && actor.npcId < 5000)) {
+            (actor.npcId != 0 && actor.npcId < 5000)) {
             if (actor.npcId >= 5000)
                 throw std::runtime_error("MM6 weak actor has a generated NPC link");
             continue;

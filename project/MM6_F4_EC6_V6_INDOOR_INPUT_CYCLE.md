@@ -1,7 +1,7 @@
 # MM6 EC6 v6 indoor first-input cycle
 
 Status, 2026-11-07: a **test-only, five-process, headless** indoor save/replay
-cycle passed for each of two distinct indoor source cases. Each child passed
+cycle passed for each of three distinct indoor source cases. Each child passed
 **1/1**: disposable
 v2 seed, v4 first-map baseline, v6 live indoor writer, real-loop first-input
 writer, and a fresh-child reader of the post-input v6 candidate. The earlier
@@ -43,6 +43,15 @@ the established door state/clock bytes, checks that
 all other native bytes remain identical, and decodes the result again. This
 is evidence for the two selected maps and three bounded input ticks; it does
 not establish all indoor maps or general save support.
+
+## Third indoor source case
+
+The [all-source indoor sweep](MM6_F4_INDOOR_SOURCE_SWEEP.md) selected a
+risk-ranked case with a signed native actor `npcId`. MM6's map-load generator
+leaves that nonzero fixed link untouched. GNPC now excludes it from generated
+rows while IART retains exact native identity and refuses a signed appended
+actor without a native anchor. This case passed the same five separate
+headless children, **1/1 each**. Follower dialogue behavior remains unproved.
 
 ## Source-backed transaction
 

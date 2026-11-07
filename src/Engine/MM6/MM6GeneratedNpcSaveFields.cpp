@@ -115,8 +115,11 @@ GeneratedNpcSaveFields captureGeneratedNpcFields(
     result.mapName = mapName;
     for (size_t slot = 0; slot < actors.size(); ++slot) {
         const Actor &actor = actors[slot];
-        if (actor.id != slot || actor.npcId < 0)
+        if (actor.id != slot)
             throw std::runtime_error("invalid MM6 generated NPC actor source");
+        // MM6's map-load generator leaves every nonzero link below 5000
+        // untouched. Signed native actor links are not generated NPC rows;
+        // their exact identity remains with the active actor source.
         if (actor.npcId < 5000)
             continue;
         if (slot > std::numeric_limits<std::uint16_t>::max() ||

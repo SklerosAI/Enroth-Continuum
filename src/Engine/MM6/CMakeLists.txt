@@ -261,6 +261,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6OutdoorBorderEligibility_ut.cpp
         Tests/MM6OutdoorBorderPrecommit_ut.cpp
         Tests/MM6OutdoorReturnArrival_ut.cpp
+        Tests/MM6MapEnumFunctions_ut.cpp
         Tests/MM6VisitedReturnPreEventProbeForTest_ut.cpp
         Tests/MM6TransitionAutosaveInterceptForTest_ut.cpp
         Tests/MM6V5OutdoorDecorationSource_ut.cpp

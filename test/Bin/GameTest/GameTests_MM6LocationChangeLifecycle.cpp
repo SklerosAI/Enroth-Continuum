@@ -392,7 +392,11 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
                 engine->_currentLoadedMapId == source;
         });
         if (transitionQueued) {
-            game.tick(3);
+            // The controller can yield while PrepareWorld is still on its
+            // loading screen, before _461103 resets the generated-NPC pool.
+            // Wait for that exact screen to finish before inspecting oute2.
+            game.skipLoadingScreen();
+            game.tick(2);
             game.runGameRoutine([&] {
                 const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable,
                                                 GameTitle::MM6);

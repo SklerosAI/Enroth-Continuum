@@ -2159,3 +2159,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A dedicated private-backed fresh-process ACTR full-list capture passed 1/1 with ramfs user state. The exact 22-section detached EC6 v3 manifest now requires ACTR instead of SPAW, plus GNPC/RNGS; linked v3/v2/ACTR checks passed 11/11.
 - The container is still not a gameplay save: ACTR/DDM baseline binding, actor items/buffs, no-respawn fresh-child replay, pre-event owner publication and a distinct v3 atomic disk route remain open.
+
+## [2026-11-07] stage | MM6 v3 atomic slot safety
+- by: T-Burton-ND via codex
+- Added a detached v3 atomic writer and read-only semantic preflight/list API. Recognizable foreign EC6 versions in either primary or backup refuse before v3 mutation or fallback; a required caller callback owns full gameplay validation. Linked atomic tests passed 11/11.
+- No production menu, mutating v3 load/backup repair or live save route was enabled. Legacy v1/v2 recovery remains unchanged and must not be used for a production v3 slot.

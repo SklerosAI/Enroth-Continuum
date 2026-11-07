@@ -1068,13 +1068,21 @@ has not run; it requires a separately admitted disposable v3 slot.
 A detached [EC6 v4 EVRT owner](MM6_F4_EC6_V4_EVENT_RUNTIME.md) now retains
 per-map exact 75-byte `mapVars` and 125-byte `decorVars` arrays with native
 respawn count/day anchors and source-order interactive-decoration bindings.
+EVRT inner payload **v2** now includes exact position bits, yaw and trigger
+range in each binding; the unpublished payload v1 refuses. A focused test
+rejects same-type decorations swapped in position.
 It leaves native DDM/DLV 200-byte event data independent in `MAPS`. The
 exact v4 container requires v3's 22 owners plus `EVRT` (23 sections); v1–v3
 decoders remain strict. A test-only MM6 restore scope validates no-respawn
 and exact map/header/bindings before copying arrays ahead of outdoor or
 indoor decoration preparation, with a pre-input abort on armed mismatch.
-Linked focused container/codec/restore checks passed **11/11** and an MM7
-headless control passed **1/1**. No v4 full-session preflight, disposable
-slot, fresh-child v4 reload or production SaveLoad/Atlas path exists.
-The current binding does not distinguish same-type decorations swapped in
-position, so exact identity remains a durable-admission gate.
+Linked focused container/codec/restore checks passed **12/12** and an MM7
+headless control passed **1/1**. A detached outdoor-only v4 full-session
+stage now joins active EVRT map/header/bindings with represented v3 owners
+and caller-supplied rebuilt decorations. Its linked positive and refusal
+suite passed **4/4**. A no-write
+first-map candidate passed **1/1** in a disposable fresh child after the
+v2 writer passed **1/1**, with the v2 primary unchanged. No v4 slot,
+fresh-child v4 reload or production SaveLoad/Atlas path exists. The
+stronger binding and no-write candidate do not establish durable
+decoration/event replay.

@@ -1,6 +1,7 @@
 #include "MM6EventRuntimeSaveFields.h"
 
 #include <algorithm>
+#include <bit>
 #include <cstddef>
 #include <limits>
 #include <stdexcept>
@@ -11,11 +12,12 @@ namespace mm6 {
 namespace {
 
 constexpr std::array<char, 4> TAG = {'E', 'V', 'R', 'T'};
-constexpr std::uint8_t VERSION = 1;
+constexpr std::uint8_t VERSION = 2;
 constexpr std::size_t MAX_MAPS = 67;
 constexpr std::size_t MAX_MAP_NAME = 63;
 constexpr std::size_t MAX_BINDINGS = 124;
-constexpr std::size_t MAX_ENTRY_PAYLOAD = 1 + MAX_MAP_NAME + 8 + 75 + 125 + 1 + MAX_BINDINGS * 9;
+constexpr std::size_t BINDING_PAYLOAD = 27;
+constexpr std::size_t MAX_ENTRY_PAYLOAD = 1 + MAX_MAP_NAME + 8 + 75 + 125 + 1 + MAX_BINDINGS * BINDING_PAYLOAD;
 constexpr std::size_t MAX_PAYLOAD = 2 + MAX_MAPS * MAX_ENTRY_PAYLOAD;
 
 void requireMM6(GameTitle title) {
@@ -124,7 +126,12 @@ std::vector<EventRuntimeDecorationBinding> captureEventRuntimeDecorationBindings
         result.push_back({static_cast<std::uint32_t>(index),
                           static_cast<std::uint16_t>(descriptor),
                           decoration.uCog,
-                          static_cast<std::uint8_t>(result.size())});
+                          static_cast<std::uint8_t>(result.size()),
+                          {std::bit_cast<std::uint32_t>(decoration.vPosition.x),
+                           std::bit_cast<std::uint32_t>(decoration.vPosition.y),
+                           std::bit_cast<std::uint32_t>(decoration.vPosition.z)},
+                          decoration._yawAngle,
+                          decoration.uTriggerRange});
     }
     return result;
 }
@@ -150,6 +157,10 @@ SaveSection encodeEventRuntimeSection(const EventRuntimeSaveFields &fields,
             put16(&payload, binding.descriptorId);
             put16(&payload, binding.cog);
             payload.push_back(binding.eventVarId);
+            for (std::uint32_t bits : binding.positionBits)
+                put32(&payload, bits);
+            put32(&payload, std::bit_cast<std::uint32_t>(binding.yawAngle));
+            put16(&payload, binding.triggerRange);
         }
     }
     return {TAG, true, std::move(payload)};
@@ -191,7 +202,16 @@ EventRuntimeSaveFields decodeEventRuntimeSection(const SaveContainer &container,
             throw std::runtime_error("MM6 EVRT binding count is invalid");
         entry.bindings.reserve(bindingCount);
         for (std::size_t binding = 0; binding < bindingCount; ++binding) {
-            entry.bindings.push_back({reader.u32(), reader.u16(), reader.u16(), reader.u8()});
+            EventRuntimeDecorationBinding decoded;
+            decoded.decorationIndex = reader.u32();
+            decoded.descriptorId = reader.u16();
+            decoded.cog = reader.u16();
+            decoded.eventVarId = reader.u8();
+            for (std::uint32_t &bits : decoded.positionBits)
+                bits = reader.u32();
+            decoded.yawAngle = std::bit_cast<std::int32_t>(reader.u32());
+            decoded.triggerRange = reader.u16();
+            entry.bindings.push_back(decoded);
         }
         result.maps.push_back(std::move(entry));
     }

@@ -1,6 +1,7 @@
 #include <array>
 #include <cstdint>
 #include <exception>
+#include <utility>
 #include <vector>
 
 #include "Testing/Unit/UnitTest.h"
@@ -91,7 +92,21 @@ UNIT_TEST(MM6EventRuntimeSaveFields, RejectsMalformedAndNoncanonicalPayload) {
     EXPECT_THROW((void) mm6::decodeEventRuntimeSection({{valid}, 4}, GameTitle::MM6),
                  std::exception);
     valid.payload.pop_back();
-    valid.payload[0] = 2;
+    valid.payload[0] = 1; // The unpublished v1 binding omitted exact position.
     EXPECT_THROW((void) mm6::decodeEventRuntimeSection({{valid}, 4}, GameTitle::MM6),
                  std::exception);
+}
+
+UNIT_TEST(MM6EventRuntimeSaveFields, RefusesSameTypeDecorationPositionSwap) {
+    std::vector<LevelDecoration> live(2);
+    live[0].uDecorationDescID = DECORATION_TRASH_HEAP_4;
+    live[1].uDecorationDescID = DECORATION_TRASH_HEAP_4;
+    live[0].vPosition.x = 100.25f;
+    live[1].vPosition.x = 200.5f;
+    const auto source = example(&live);
+    EXPECT_NO_THROW((void) mm6::requireEventRuntimeMapEntry(
+        source, "oute3.odm", 1, 5, live, GameTitle::MM6));
+    std::swap(live[0].vPosition, live[1].vPosition);
+    EXPECT_THROW((void) mm6::requireEventRuntimeMapEntry(
+        source, "oute3.odm", 1, 5, live, GameTitle::MM6), std::exception);
 }

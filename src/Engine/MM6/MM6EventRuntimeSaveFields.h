@@ -22,6 +22,9 @@ struct EventRuntimeDecorationBinding {
     std::uint16_t descriptorId = 0;
     std::uint16_t cog = 0;
     std::uint8_t eventVarId = 0;
+    std::array<std::uint32_t, 3> positionBits{};
+    std::int32_t yawAngle = 0;
+    std::uint16_t triggerRange = 0;
 
     bool operator==(const EventRuntimeDecorationBinding &) const = default;
 };

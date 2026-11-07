@@ -91,7 +91,8 @@ void requireEmptyInheritedCommerce(const Party &party) {
 void requireFirstMapLiveBoundary() {
     if (!engine || engine->gameTitle() != GameTitle::MM6 ||
         !pMapTable || !pParty || !pOutdoor || !pNPCStats || !pItemTable ||
-        !pOverlayTable || !pTileTable || !pGames_LOD || !gameTimer ||
+        !pDecorationTable || !pActiveOverlayList || !pOverlayTable ||
+        !pTileTable || !pGames_LOD || !gameTimer ||
         !application || !engine->resources() ||
         uCurrentlyLoadedLevelType != LEVEL_OUTDOOR ||
         engine->_currentLoadedMapId != pMapTable->GetMapInfo("oute3.odm") ||

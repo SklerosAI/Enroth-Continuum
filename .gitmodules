@@ -8,9 +8,6 @@
 [submodule "thirdparty/googletest"]
 	path = thirdparty/googletest
 	url = https://github.com/google/googletest.git
-[submodule "thirdparty/cli11"]
-	path = thirdparty/cli11
-	url = https://github.com/CLIUtils/CLI11.git
 [submodule "thirdparty/fmt"]
 	path = thirdparty/fmt
 	url = https://github.com/fmtlib/fmt.git
@@ -33,12 +30,6 @@
 [submodule "thirdparty/inifile_cpp"]
 	path = thirdparty/inifile_cpp
 	url = https://github.com/Rookfighter/inifile-cpp.git
-[submodule "thirdparty/small_vector"]
-	path = thirdparty/small_vector
-	url = https://github.com/gharveymn/small_vector.git
-[submodule "thirdparty/cmrc"]
-	path = thirdparty/cmrc
-	url = https://github.com/vector-of-bool/cmrc.git
 [submodule "thirdparty/gtest_parallel"]
 	path = thirdparty/gtest_parallel
 	url = https://github.com/google/gtest-parallel.git

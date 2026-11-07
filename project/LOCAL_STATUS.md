@@ -41,6 +41,12 @@ archives from one OpenEnroth-hosted dependency ZIP and seven nested fetches.
 This fork already owns the engine source and installed helper; a fresh offline
 build from only this repo remains a later gate. The dependency inventory made
 no change to the protected MM7 app, save profile or private game data.
+An opt-in `EC_LOCAL_ONLY_CONFIGURE=ON` lane now blocks configure-time
+submodule updates, the OpenEnroth dependency archive and nested fetches, then
+fails with named missing repository-owned sources and build recipes. A fresh
+AppleClang arm64 configure reached that refusal without downloading. Default
+configure and the installed MM7 helper remain unchanged; this does not yet
+prove a clean offline build.
 
 ## MM6: implementation checkpoint, not yet playable
 

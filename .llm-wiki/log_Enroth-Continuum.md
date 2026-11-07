@@ -2164,3 +2164,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a detached v3 atomic writer and read-only semantic preflight/list API. Recognizable foreign EC6 versions in either primary or backup refuse before v3 mutation or fallback; a required caller callback owns full gameplay validation. Linked atomic tests passed 11/11.
 - No production menu, mutating v3 load/backup repair or live save route was enabled. Legacy v1/v2 recovery remains unchanged and must not be used for a production v3 slot.
+
+## [2026-11-07] stage | MM6 v3 outdoor actor-map agreement
+- by: T-Burton-ND via codex
+- Added a detached read-only join of exact v3, the validated 67 native map pairs, active HEAD/GNPC/CHST, a matching nonzero no-respawn DDM day, stable native actor anchors and ACTR capacity. Linked map/manifest/ACTR checks passed 10/10.
+- A positive synthetic case accepts changed HP in ACTR while DDM retains older bytes. No actors, NPCs, RNG, events or save slot are published; fresh-child replay remains open.

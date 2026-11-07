@@ -227,9 +227,11 @@ flag bits and confirm flying state; integrated focused checks passed 11/11.
 The [border autosave audit](MM6-F4-Border-Autosave-Transaction.md) requires
 a durable old-map EC6 checkpoint, visited-map runtime owner and explicit
 failure recovery before replacing the no-write test intercept. Its later
-confirmation trace shows zero-food MM6 travel skips healing, unlike the
-inherited handler; conditional rest, food, coordinate wrap and target height
-must run only after durable save success.
+confirmation trace shows zero-food MM6 travel skips healing and insufficient
+food refreshes Weak timestamps even when already Weak, unlike the inherited
+handler. Distinct original cancel and rejection paths clamp coordinates and
+close UI without time, food, condition or map changes. Conditional rest, food,
+coordinate wrap and target height must run only after durable save success.
 For indoor v6,
 detached IFOV write/read, a real headless pre-`OnMapReload` face-base capture,
 strict synthetic v6 staging and a three-process disposable v2 seed, v6 writer

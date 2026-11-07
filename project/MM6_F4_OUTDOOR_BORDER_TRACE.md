@@ -10,7 +10,7 @@ Before showing travel, the caller also tests the low byte of Party flags and cla
 
 The current MM6 `getTravelDestination()` still returns no route, correctly preventing MM7 table access. This trace does not authorize replacing that guard: full confirmation dispatch, later state changes, corner cases and a nonzero native arrival sample need proof. In addition, current cross-map `startMapTransition()` autosaves before scheduling the move while MM6 `saveGame()` is guarded, so a route adapter alone would not make travel work.
 
-A later confirmation trace resolved the ordinary time/food/rest branch and coordinate wrap. The original skips full rest/heal at zero food, unlike the inherited MM7 foot handler; it recalculates target ground height after independently wrapping crossed axes. Exact condition-ID equivalence and the separate cancel branch remain unproved. The [autosave transaction packet](MM6_F4_BORDER_AUTOSAVE_TRANSACTION.md) records the safe order before enabling live travel.
+A later confirmation trace resolved the ordinary time/food/rest branch and coordinate wrap. The original skips full rest/heal at zero food, unlike the inherited MM7 foot handler; it refreshes Weak timestamps even when already present, independently wraps crossed axes and recalculates target ground height. The distinct original cancel and rejection paths clamp both axes, close travel UI and leave time, food and map unchanged. The [autosave transaction packet](MM6_F4_BORDER_AUTOSAVE_TRANSACTION.md) records the safe order before enabling live travel.
 
 ## Detached implementation
 

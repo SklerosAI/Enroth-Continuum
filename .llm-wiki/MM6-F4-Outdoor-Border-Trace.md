@@ -15,6 +15,6 @@ Full confirmation dispatch, later party-state changes, corner behavior and a nat
 
 An earlier ignored focused checker passed the accepted executable hash, route-helper/caller/confirmation structure, retained grid and current title guard. The later C++ checks used a headless unit build; no live travel or graphical MM6 launch occurred.
 
-The separate [border autosave transaction audit](MM6-F4-Border-Autosave-Transaction.md) lists the old-map durability, visited-map ownership and rollback gates before live travel.
+The separate [border autosave transaction audit](MM6-F4-Border-Autosave-Transaction.md) lists the old-map durability, visited-map ownership and rollback gates before live travel. The confirmation trace also shows zero-food travel skips healing, insufficient food refreshes each character's Weak timestamp even when already Weak, and the distinct cancel and rejection paths clamp coordinates and close the travel UI without changing time, food, conditions or map. The inherited MM7 foot handler differs on zero-food healing and existing-Weak refresh.
 
 See also: [Outdoor Title Boundary](MM6-F4-Outdoor-Title-Boundary.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md), [Border Autosave Transaction](MM6-F4-Border-Autosave-Transaction.md).

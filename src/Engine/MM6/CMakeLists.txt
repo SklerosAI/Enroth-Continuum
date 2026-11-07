@@ -108,6 +108,12 @@ target_link_libraries(engine_mm6_spawn_actor_section PUBLIC engine_serialization
 target_check_style(engine_mm6_spawn_actor_section)
 target_link_libraries(engine_mm6_save_runtime PUBLIC engine_mm6_spawn_actor_section)
 
+# Engine.cpp calls the guarded MM6 pre-event/runtime entry points even in
+# title-locked app targets. Keep their definitions in the runtime library and
+# make every app link that library; the hooks remain inert without a GameTest
+# scope and for MM7/MM8 titles.
+target_link_libraries(application PUBLIC engine_mm6_save_runtime)
+
 if(OE_BUILD_TESTS)
     add_library(test_engine_mm6_actual_stat_condition OBJECT Tests/MM6ActualStatCondition_ut.cpp)
     target_link_libraries(test_engine_mm6_actual_stat_condition PUBLIC testing_unit)

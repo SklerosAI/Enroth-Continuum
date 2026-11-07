@@ -660,4 +660,42 @@ UNIT_TEST(MM6AtomicSaveFile, V5FaultPreservesPreviousCandidate) {
     EXPECT_EQ(read(profile.root() / "saves/candidate-v5-after-action.ec6"), first);
     EXPECT_EQ(read(profile.root() / "saves/candidate-v5-after-action.ec6.bak"), first);
 }
+
+UNIT_TEST(MM6AtomicSaveFile, V5ReloadInputSlotIsSeparateAndAtomic) {
+    TestProfile profile("mm6-restart-");
+    const auto seed = sampleRaw(86);
+    const auto priorV4 = sampleV4(87);
+    const auto priorV5 = sampleV5(88);
+    const auto first = sampleV5(89);
+    const auto second = sampleV5(90);
+    const auto accept = [](std::span<const std::uint8_t> bytes) {
+        (void) mm6::decodeV5Save(bytes, GameTitle::MM6);
+    };
+    std::filesystem::create_directories(profile.root() / "saves");
+    write(profile.root() / "saves/autosave.ec6", seed);
+    write(profile.root() / "saves/candidate-v4.ec6", priorV4);
+    mm6::writeAtomicV5SaveFileForTest(
+        profile.root(), "candidate-v5-after-action.ec6", priorV5, accept);
+    const auto slot = profile.root() / "saves/candidate-v5-after-reload-input.ec6";
+    mm6::writeAtomicV5SaveFileForTest(
+        profile.root(), "candidate-v5-after-reload-input.ec6", first, accept);
+    EXPECT_EQ(read(slot), first);
+    EXPECT_THROW(mm6::detail::writeAtomicV5SaveFileForTest(
+        profile.root(), "candidate-v5-after-reload-input.ec6", second, accept,
+        [](mm6::detail::AtomicSaveStep step) {
+            if (step == mm6::detail::AtomicSaveStep::BeforePrimaryReplace)
+                throw std::runtime_error("v5 second-slot injected before replacement");
+        }), std::exception);
+    EXPECT_EQ(read(slot), first);
+    EXPECT_EQ(read(slot.string() + ".bak"), first);
+    EXPECT_EQ(read(profile.root() / "saves/candidate-v5-after-action.ec6"), priorV5);
+    EXPECT_EQ(read(profile.root() / "saves/candidate-v4.ec6"), priorV4);
+    EXPECT_EQ(read(profile.root() / "saves/autosave.ec6"), seed);
+    write(slot.string() + ".bak", priorV4);
+    EXPECT_THROW(mm6::writeAtomicV5SaveFileForTest(
+        profile.root(), "candidate-v5-after-reload-input.ec6", second, accept),
+        std::exception);
+    EXPECT_EQ(read(slot), first);
+    EXPECT_EQ(read(slot.string() + ".bak"), priorV4);
+}
 #endif

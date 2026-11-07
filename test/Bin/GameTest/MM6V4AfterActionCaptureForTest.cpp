@@ -100,12 +100,23 @@ void requireEmptyInheritedCommerce(const Party &party) {
             throw std::runtime_error("unrepresented inherited commerce");
 }
 
+[[gnu::noinline]] void requireSecondMovement(
+    std::span<const std::uint8_t> priorBytes,
+    const CorePartyFields &current) {
+    auto prior = std::make_unique<V5SaveFields>(
+        decodeV5Save(priorBytes, GameTitle::MM6));
+    if (current.position == prior->v4.v3.raw.core.party.position ||
+        current.viewYaw == prior->v4.v3.raw.core.party.viewYaw)
+        throw std::runtime_error("MM6 v5 second capture lacks reloaded input movement");
+}
+
 } // namespace
 
 static void writeAfterActionCandidateForTest(
     const std::filesystem::path &profile,
     std::span<const std::uint8_t> sourceCandidate,
-    bool v5) {
+    bool v5,
+    std::span<const std::uint8_t> previousV5 = {}) {
     if (engine->gameTitle() != GameTitle::MM6 ||
         uCurrentlyLoadedLevelType != LEVEL_OUTDOOR ||
         engine->_currentLoadedMapId != pMapTable->GetMapInfo("oute3.odm") ||
@@ -114,8 +125,15 @@ static void writeAfterActionCandidateForTest(
         throw std::runtime_error("MM6 v4 after-action capture lacks stable first-map input");
     const auto seedBefore = readFile(profile / "saves/autosave.ec6");
     const auto sourceBefore = readFile(profile / "saves/candidate-v4.ec6");
+    const bool afterReloadedInput = !previousV5.empty();
+    const auto previousBefore = afterReloadedInput ?
+        readFile(profile / "saves/candidate-v5-after-action.ec6") :
+        std::vector<std::uint8_t>{};
     if (seedBefore.empty() || !std::ranges::equal(sourceBefore, sourceCandidate))
         throw std::runtime_error("MM6 v4 after-action capture lacks original disposable slots");
+    if (afterReloadedInput && (!v5 || previousBefore.empty() ||
+        !std::ranges::equal(previousBefore, previousV5)))
+        throw std::runtime_error("MM6 v5 second capture lacks exact prior disposable slot");
 
     V4SaveFields saved = decodeV4Save(sourceCandidate, GameTitle::MM6);
     if (saved.v3.raw.metadata.header.mapFileName != "oute3.odm" ||
@@ -143,6 +161,8 @@ static void writeAfterActionCandidateForTest(
     if (fields.raw.core.party.position == oldPosition ||
         fields.raw.core.party.viewYaw == oldYaw)
         throw std::runtime_error("MM6 v4 after-action movement was not captured");
+    if (afterReloadedInput)
+        requireSecondMovement(previousBefore, fields.raw.core.party);
     const auto durable = captureDurableFields(*pParty, GameTitle::MM6);
     fields.raw.bits = durable.bits;
     fields.raw.effects = durable.effects;
@@ -267,15 +287,18 @@ static void writeAfterActionCandidateForTest(
                 pLevelDecorations, GameTitle::MM6);
     };
     validate(bytes);
-    const std::string_view slot = v5 ? "candidate-v5-after-action.ec6" :
-                                       "candidate-v4-after-action.ec6";
+    const std::string_view slot = afterReloadedInput ?
+        "candidate-v5-after-reload-input.ec6" :
+        v5 ? "candidate-v5-after-action.ec6" : "candidate-v4-after-action.ec6";
     if (v5)
         writeAtomicV5SaveFileForTest(profile, slot, bytes, validate);
     else
         writeAtomicV4SaveFileForTest(profile, slot, bytes, validate);
     if (readFile(profile / "saves" / slot) != bytes ||
         readFile(profile / "saves/candidate-v4.ec6") != sourceBefore ||
-        readFile(profile / "saves/autosave.ec6") != seedBefore)
+        readFile(profile / "saves/autosave.ec6") != seedBefore ||
+        (afterReloadedInput &&
+         readFile(profile / "saves/candidate-v5-after-action.ec6") != previousBefore))
         throw std::runtime_error("MM6 after-action atomic write changed another slot");
 }
 
@@ -289,6 +312,15 @@ void writeV5AfterActionCandidateForTest(
     const std::filesystem::path &profile,
     std::span<const std::uint8_t> sourceCandidate) {
     writeAfterActionCandidateForTest(profile, sourceCandidate, true);
+}
+
+void writeV5AfterReloadedInputCandidateForTest(
+    const std::filesystem::path &profile,
+    std::span<const std::uint8_t> originalV4,
+    std::span<const std::uint8_t> previousV5) {
+    if (previousV5.empty())
+        throw std::invalid_argument("MM6 v5 second capture requires prior candidate");
+    writeAfterActionCandidateForTest(profile, originalV4, true, previousV5);
 }
 
 } // namespace mm6::testing

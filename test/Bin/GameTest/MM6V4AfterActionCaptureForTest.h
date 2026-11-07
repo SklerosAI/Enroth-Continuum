@@ -15,5 +15,11 @@ void writeV4AfterActionCandidateForTest(
 void writeV5AfterActionCandidateForTest(
     const std::filesystem::path &profile,
     std::span<const std::uint8_t> sourceCandidate);
+// Called after one bounded input in a separate fresh child that reloaded the
+// prior v5 post-action candidate. Writes only a second disposable v5 slot.
+void writeV5AfterReloadedInputCandidateForTest(
+    const std::filesystem::path &profile,
+    std::span<const std::uint8_t> originalV4,
+    std::span<const std::uint8_t> previousV5);
 
 } // namespace mm6::testing

@@ -35,6 +35,15 @@ The active integration tree, protected MM7/MM8 baselines, an existing dirty
 checkout and checkouts containing ignored private local files were preserved.
 Do not merge unreviewed experimental branches solely to satisfy the cap.
 
+## Cross-agent coordination — 2026-11-07
+
+Use the tracked [agent communications protocol](../agent_comms/README.md) for
+Claude, Codex and subagent claims, handoffs and reviews. It is an asynchronous
+Git-mediated record: agents in separate worktrees must commit and synchronize
+their coordination files before relying on them. Keep source-file ownership
+narrow, do not use the main checkout for concurrent writes, and preserve the
+existing privacy boundary.
+
 ## Current integration checkpoint — 2026-11-07
 
 The [MM6 border transaction](MM6-F4-Border-Autosave-Transaction.md) now has

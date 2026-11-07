@@ -2351,3 +2351,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a pure five-by-three outdoor neighbor, coordinate-wrap and hireling-day calculator from the bounded original route trace. Four synthetic route checks and three transition-intercept controls passed 7/7 on the integration build.
 - Every candidate still refuses live travel; original party eligibility, exceptional edges, corner acceptance, confirmation and durable cross-map autosave remain unproved. No Atlas or installed app changed.
+
+## [2026-11-07] implement | Fourteen owned MM7 source inputs
+- by: T-Burton-ND via codex
+- Added the exact pinned LuaJIT source with full original COPYRIGHT and provenance: 232 original blobs/modes matched the gitlink commit. The owned CMake recipe now reads a recorded committer timestamp without nested Git; standalone arm64 LuaJIT and integration cached-input MM7 target builds passed, and the generated header matched the earlier Git-based output.
+- Nine gitlinks, nested fetches and prebuilt dependency recipes still block a clean offline clone. The installed MM7 helper and private saves were untouched.

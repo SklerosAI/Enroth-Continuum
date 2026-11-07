@@ -1803,3 +1803,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A source-backed MM6 starter-item branch replaced inherited MM7 grants in editable party creation; a test-only temporary-profile save callback let a dedicated headless test drive the real Main Menu, Create Party and `Game::loop()` transition into the first outdoor frame.
 - The monitored MM6 control-flow check passed 1/1 with no visible window or focus change. The ordinary MM6 save guard passed 1/1 and MM7 vendor house-entry controls passed 2/2. Normal MM6 save/load, late-world rollback and campaign play remain gated; the original Quick Start choice is still separate.
+
+## [2026-11-06] verify | MM6 loaded-archive first-map source
+- by: T-Burton-ND via codex
+- Added a title-locked map source that derives the complete MM6 map-pair set from the loaded Games archive and map table. A monitored private F3 comparison matched all 67 names and decoded bases; the temporary-profile New Game control flow reached its first outdoor frame without the research-root variable.
+- A callback-failure test verified restoration of the save function's map and placement fields. The ordinary guard and comparison controls passed 3/3, the older private-source rollback check passed 1/1, and MM7 vendor entries passed 2/2; all monitored runs had no visible window or focus change. Normal MM6 save/load and full world rollback remain gated.

@@ -26,6 +26,15 @@ struct StagedRawSessionFields {
     bool needsRecovery = false;
 };
 
+// Stage one already-read EC6 v2 candidate on detached owners. This is the
+// same semantic check used for each native primary/backup candidate and is
+// suitable for a disposable child-process probe before any disk recovery.
+StagedRawSessionFields stageRawSessionFields(
+    std::span<const std::uint8_t> bytes, const NpcStaticBaseline &freshNpcs,
+    std::span<const std::string> expectedNames, const MapBaseReader &readBase,
+    const GroundItemVerifier &verifyItem, const ItemTable &itemTable,
+    std::size_t overlayTableCount, std::size_t tileTableCount, GameTitle title);
+
 // Read-only v2 slot selection through every currently represented Party and
 // world field adapter, raw HELD/SHOP/SCLK owner equality, a bounded map-event
 // projection and the fail-closed saved actor-overlay policy. The

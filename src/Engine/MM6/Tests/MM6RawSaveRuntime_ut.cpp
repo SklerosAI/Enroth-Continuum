@@ -398,7 +398,6 @@ UNIT_TEST(MM6RawSaveRuntime, NativeSlotPreflightStagesSemanticBackupWithoutRepai
     EXPECT_EQ(selected->owners.inventory.characters[0].items[137].itemNumberRaw(), 10u);
     EXPECT_EQ(readBytes(profile.primary()), badBytes);
     EXPECT_EQ(readBytes(profile.backup()), goodBytes);
-
     writeBytes(profile.backup(), badBytes);
     EXPECT_THROW((void) mm6::preflightStagedRawSaveSlot(
         profile.root(), "save001.ec6", names, syntheticBase, validItem, GameTitle::MM6),
@@ -448,6 +447,27 @@ UNIT_TEST(MM6RawSaveRuntime, FullRepresentedPreflightFallsBackAfterLatePartyFail
         GameTitle::MM6), std::exception);
     EXPECT_EQ(readBytes(profile.primary()), badBytes);
     EXPECT_EQ(readBytes(profile.backup()), badBytes);
+}
+
+UNIT_TEST(MM6RawSaveRuntime, BytesStageUsesSameCompleteSemanticGate) {
+    ItemTableScope table;
+    auto fields = exampleRaw();
+    const auto names = namesOf(fields);
+    const auto bytes = mm6::encodeRawSave(fields, GameTitle::MM6);
+    const auto npcs = freshNpcBaseline();
+    auto staged = mm6::stageRawSessionFields(
+        bytes, npcs, names, syntheticBase, validItem,
+        *table.table, 5, 145, GameTitle::MM6);
+    EXPECT_FALSE(staged.needsRecovery);
+    ASSERT_TRUE(staged.indoorPlan);
+    EXPECT_EQ(staged.indoorPlan->mapName, "synthetic0.blv");
+    EXPECT_EQ(staged.world.world.mapDeltas.size(), 67);
+    EXPECT_EQ(mm6::encodeRawSave(staged.raw.saved, GameTitle::MM6), bytes);
+    fields.inventory.characters[0].items[137].setWord(12, 4);
+    EXPECT_THROW((void) mm6::stageRawSessionFields(
+        mm6::encodeRawSave(fields, GameTitle::MM6), npcs, names,
+        syntheticBase, validItem, *table.table, 5, 145, GameTitle::MM6),
+        std::exception);
 }
 
 UNIT_TEST(MM6RawSaveRuntime, RawSessionPreflightPreparesOutdoorPlanBeforeSelection) {

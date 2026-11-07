@@ -48,6 +48,14 @@ std::unordered_map<std::string, Blob> pMapDeltas;
 namespace {
 std::function<void()> mm6NewGameSaveOverride;
 std::function<void(std::string_view)> mm6LoadGameOverride;
+
+void reportUnavailableMM6SaveAction() {
+    MM_WARNING("MM6 save action refused before production EC6 admission");
+    if (engine->_statusBar)
+        engine->_statusBar->setEvent("Might & Magic VI saving is not available yet");
+    if (pAudioPlayer)
+        pAudioPlayer->playUISound(SOUND_error);
+}
 }
 
 void mm6::testing::setNewGameSaveOverride(std::function<void()> callback) {
@@ -259,6 +267,12 @@ void autoSave() {
 }
 
 void doSavegame(std::string fileName, std::string_view title) {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        // Keep the menu open and avoid allocating an MM7 slot or reporting a
+        // successful save until the complete EC6 live-owner route is admitted.
+        reportUnavailableMM6SaveAction();
+        return;
+    }
     assert(engine->_currentLoadedMapId != MAP_ARENA); // Not Arena.
 
     if (fileName.empty()) {
@@ -325,6 +339,11 @@ void saveNewGame() {
 }
 
 void quickSaveGame() {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        // A refused quicksave must not advance the rotating save index.
+        reportUnavailableMM6SaveAction();
+        return;
+    }
     assert(engine->_currentLoadedMapId != MAP_ARENA); // Not Arena.
 
     engine->config->gameplay.QuickSavesCount.cycleIncrement();
@@ -334,6 +353,13 @@ void quickSaveGame() {
 }
 
 void quickLoadGame() {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        // The normal MM6 load transaction is still guarded. Never inspect an
+        // inherited MM7 quicksave or claim a candidate is playable.
+        if (pAudioPlayer)
+            pAudioPlayer->playUISound(SOUND_error);
+        return;
+    }
     std::string fileName = getCurrentQuickSave();
 
     if (ufs->exists(fmt::format("saves/{}", fileName))) {
@@ -347,5 +373,7 @@ void quickLoadGame() {
 }
 
 std::string getCurrentQuickSave() {
-    return fmt::format("{}{}.mm7", quickSaveFileNamePrefix, engine->config->gameplay.QuickSavesCount.value());
+    const std::string_view extension = engine->gameTitle() == GameTitle::MM6 ? "ec6" : "mm7";
+    return fmt::format("{}{}.{}", quickSaveFileNamePrefix,
+                       engine->config->gameplay.QuickSavesCount.value(), extension);
 }

@@ -2537,3 +2537,8 @@ Chronological record of wiki activity.
 - Added a detached outdoor v6 candidate that keeps the active v5 sections and adds one required versioned `VIST` section for ordered per-map runtime capsules. Two source-backed outdoor capsules passed exact section round trip; the outer candidate preserved the active second-map v5 bytes with the first map visited.
 - A test-only hook captured the second map after `PrepareWorld` and before input; later actor motion correctly refused native ACTR narrowing. Malformed version, truncation, cross-map identity and active/visited collision each refused without weakening the native width guard.
 - Fresh owner-only v2 seed, v4 baseline and modified no-write location-change headless children passed 1/1 each; the disposable profile was removed. No v6 save was written or loaded. Production travel and SaveLoad stay closed pending publication, return/replay and durable-result policy.
+
+## [2026-11-07] update | MM6 visited-map status
+- by: T-Burton-ND via codex
+- Updated local and campaign status to supersede the earlier missing visited-section note after the detached outdoor v6 `VIST` round trip passed for two source-backed map capsules.
+- Kept v6 disk persistence, live return, durable checkpoint policy, production SaveLoad and border travel open.

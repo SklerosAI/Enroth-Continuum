@@ -2606,3 +2606,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a test-only first-map v5 outcome classifier and read-only primary/backup preflight restricted to the existing disposable candidate slots. A fault after primary rename and before directory sync is reported as unconfirmed unless independent bytes are verified; wrong-map or foreign-version occupants refuse without repair.
 - Two focused linked units passed 2/2, including the disposable post-rename fault and backup selection with unchanged disk bytes. MM7 headless control passed 1/1. Normal MM6 SaveLoad/UI remains closed.
+
+## [2026-11-07] verify | MM6 detached first-map load preflight
+- by: T-Burton-ND via codex
+- Extracted the source-backed first-map v5 load preflight from the fresh-child GameTest override into an MM6-only engine service. It validates title, version, HEAD map and source/owner graph before any global publication, disk write or menu action; both first-map fresh-child tests now use it.
+- A fresh seven-process disposable first-map v5 chain passed 1/1 in every child, and an MM7 headless control passed 1/1. The profile was removed. Test-only publication, production SaveLoad/UI and partial-world rollback remain closed.

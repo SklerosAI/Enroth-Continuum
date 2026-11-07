@@ -1668,3 +1668,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a raw-preserving standard-enchanted equipment projection for original template types 3–11, mapped one-based bonus indices and positive strength. It rejects special bonuses and unsupported field changes.
 - Focused map/projection unit checks passed 3/3 and a monitored loaded-armor MM6 headless check passed 1/1 over 65 samples. Native nonzero item evidence, live equipment effects, inventory ownership and SaveLoad remain open.
+
+## [2026-11-06] implement | Bounded MM6 character inventory view
+- by: T-Burton-ND via codex
+- Superseded the plain-only detached inventory stage with a 138-slot view that combines plain/gold items and standard-enchanted equipment while preserving source records and unreferenced bytes.
+- Focused linked unit checks passed 7/7 and two monitored loaded-table MM6 headless checks passed 2/2 over 65 samples without a visible window or focus change. Party raw ownership, full item movement and normal SaveLoad remain guarded.

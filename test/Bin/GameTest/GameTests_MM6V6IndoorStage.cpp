@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
+#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
@@ -175,43 +176,58 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
     ASSERT_NE(it, raw->maps.deltas.end());
     it->bytes = activeDelta;
     const auto rawBytes = mm6::encodeRawSave(*raw, GameTitle::MM6);
-    const auto freshNpcs = mm6::loadNpcStaticBaseline(*engine->resources(), GameTitle::MM6);
-    const auto verifyItem = [](std::int32_t id) {
-        return id >= 1 && id <= 580 &&
-            !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
-    };
-    auto represented = std::unique_ptr<mm6::StagedRawSessionFields>(
-        new mm6::StagedRawSessionFields(mm6::stageRawSessionFields(
-        rawBytes, freshNpcs, maps.expectedNames(),
-        [&maps](std::string_view name) { return maps.readBase(name); },
-        verifyItem, *pItemTable, pOverlayTable->overlays.size(),
-        pTileTable->tileCount(), GameTitle::MM6)));
-    ASSERT_TRUE(represented->indoorPlan);
-    ASSERT_FALSE(represented->outdoorPlan);
-
-    auto saved = std::make_unique<mm6::V6IndoorSaveFields>();
-    saved->raw = std::move(*raw);
-    saved->generatedNpcs = std::move(generated);
-    saved->gameplayRng = std::move(rng);
-    saved->eventRuntime = std::move(eventRuntime);
-    mm6::captureV6IndoorNativeAnchors(
-        *represented, &saved->actors, &saved->sprites, &saved->decorations);
-    auto changed = preEventFaces;
-    changed.front().attributes ^= 1u;
-    saved->faceOverrides.maps.push_back(*mm6::captureIndoorFaceOverrides(
-        mapName, preEventFaces, changed, GameTitle::MM6));
-    const auto candidate = mm6::encodeV6IndoorSave(*saved, GameTitle::MM6);
-    const auto readFaces = [&mapName, &preEventFaces](std::string_view requested) {
-        if (requested != mapName)
-            throw std::runtime_error("MM6 v6 indoor probe requested another face source");
-        return preEventFaces;
-    };
-    auto staged = std::unique_ptr<mm6::StagedV6IndoorSaveFields>(
-        new mm6::StagedV6IndoorSaveFields(mm6::stageV6IndoorSave(
-        candidate, freshNpcs, maps.expectedNames(),
-        [&maps](std::string_view name) { return maps.readBase(name); },
-        verifyItem, *pItemTable, pOverlayTable->overlays.size(),
-        pTileTable->tileCount(), readFaces, GameTitle::MM6)));
+    bool stageFinished = false;
+    std::exception_ptr stageError;
+    std::unique_ptr<mm6::StagedV6IndoorSaveFields> staged;
+    game.runGameRoutine([&] {
+        try {
+            const auto freshNpcs = mm6::loadNpcStaticBaseline(
+                *engine->resources(), GameTitle::MM6);
+            const auto verifyItem = [](std::int32_t id) {
+                return id >= 1 && id <= 580 &&
+                    !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
+            };
+            auto represented = std::unique_ptr<mm6::StagedRawSessionFields>(
+                new mm6::StagedRawSessionFields(mm6::stageRawSessionFields(
+                rawBytes, freshNpcs, maps.expectedNames(),
+                [&maps](std::string_view name) { return maps.readBase(name); },
+                verifyItem, *pItemTable, pOverlayTable->overlays.size(),
+                pTileTable->tileCount(), GameTitle::MM6)));
+            if (!represented->indoorPlan || represented->outdoorPlan)
+                throw std::runtime_error("MM6 v6 probe did not stage an indoor raw world");
+            auto saved = std::make_unique<mm6::V6IndoorSaveFields>();
+            saved->raw = std::move(*raw);
+            saved->generatedNpcs = std::move(generated);
+            saved->gameplayRng = std::move(rng);
+            saved->eventRuntime = std::move(eventRuntime);
+            mm6::captureV6IndoorNativeAnchors(
+                *represented, &saved->actors, &saved->sprites, &saved->decorations);
+            auto changed = preEventFaces;
+            changed.front().attributes ^= 1u;
+            saved->faceOverrides.maps.push_back(*mm6::captureIndoorFaceOverrides(
+                mapName, preEventFaces, changed, GameTitle::MM6));
+            const auto candidate = mm6::encodeV6IndoorSave(*saved, GameTitle::MM6);
+            const auto readFaces = [&mapName, &preEventFaces](std::string_view requested) {
+                if (requested != mapName)
+                    throw std::runtime_error("MM6 v6 probe requested another face source");
+                return preEventFaces;
+            };
+            staged.reset(new mm6::StagedV6IndoorSaveFields(mm6::stageV6IndoorSave(
+                candidate, freshNpcs, maps.expectedNames(),
+                [&maps](std::string_view name) { return maps.readBase(name); },
+                verifyItem, *pItemTable, pOverlayTable->overlays.size(),
+                pTileTable->tileCount(), readFaces, GameTitle::MM6)));
+        } catch (...) {
+            stageError = std::current_exception();
+        }
+        stageFinished = true;
+    });
+    for (int tick = 0; tick < 128 && !stageFinished; ++tick)
+        game.tick();
+    ASSERT_TRUE(stageFinished);
+    if (stageError)
+        std::rethrow_exception(stageError);
+    ASSERT_TRUE(staged);
     ASSERT_TRUE(staged->represented.indoorPlan);
     EXPECT_EQ(staged->saved.faceOverrides.maps.size(), 1u);
     EXPECT_FALSE(staged->canEnterGameLoop());

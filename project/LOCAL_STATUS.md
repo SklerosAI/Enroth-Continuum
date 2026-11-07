@@ -38,10 +38,10 @@ The current integration tree also builds a title-locked `MM7.app` and stages a s
 The [MM7 source-autonomy inventory](MM7_SELF_CONTAINED_BUILD_INVENTORY.md)
 records the original Mac build's 23 external gitlinks, nine linked static
 archives from one OpenEnroth-hosted dependency ZIP and seven nested fetches.
-Thirteen pinned source inputs are now tracked here with licenses and provenance,
-leaving 10 gitlinks. The cached-input arm64 MM7 target still builds.
+Fourteen pinned source inputs are now tracked here with licenses and provenance,
+leaving 9 gitlinks. The cached-input arm64 MM7 target still builds.
 GoogleTest and `gtest_parallel` are optional test inputs; the owned LuaJIT CMake
-recipe still derives its version from the separate LuaJIT source gitlink.
+recipe and source generate the same version header without nested Git.
 This fork already owns the engine source and installed helper; a fresh offline
 build from only this repo remains a later gate. The dependency inventory made
 no change to the protected MM7 app, save profile or private game data.
@@ -1178,9 +1178,11 @@ cross-map autosave remain guarded.
 
 A detached MM6 border calculator now returns a bounded neighboring grid map,
 wrapped arrival coordinates and hireling-adjusted travel time without reading
-or changing Party state. Its live offer remains unconditionally false while
-party eligibility, exceptional edges, corner acceptance and durable autosave
-remain unproved. Focused route and transition-intercept units passed **7/7**.
+or changing Party state. A separate pure MM6 predicate models the source-backed
+three-bit offer mask and zero-flying confirmation check; its live offer remains
+unconditionally false while later confirmation, corner acceptance and durable
+autosave remain unproved. Focused route, eligibility and intercept units
+passed **11/11**.
 
 For indoor save design, a detached IFOV writer and fresh-child reader passed
 against retained private BLV/DLV data, and a separate headless map-load check

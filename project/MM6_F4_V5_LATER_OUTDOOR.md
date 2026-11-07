@@ -74,9 +74,11 @@ confirmation, durable cross-map autosave or normal MM6 SaveLoad.
 
 A pure detached MM6 border calculator now proposes a five-by-three grid
 neighbor, offset-preserving wrapped arrival and hireling-adjusted days.
-It never offers live travel while original party eligibility, exceptional
-edges and corner acceptance remain unproved. Integrated focused route and
-autosave-intercept units passed **7/7**. The live title guard and normal
+It never offers live travel. A separate MM6-only pure predicate now models
+the source-backed three-bit offer mask and zero-flying confirmation check,
+while the rest of confirmation and corner acceptance remain open. Integrated
+focused route, eligibility and autosave-intercept units passed **11/11**.
+The live title guard and normal
 cross-map autosave remain closed; see the
 [border trace](MM6_F4_OUTDOOR_BORDER_TRACE.md).
 

@@ -39,8 +39,13 @@ fresh-child reader crashed before an owner result from large nested stack
 frames; heap-backed stage and PART decode fixed it. A four-process
 seed/baseline/post-action writer/fresh-child reader sequence passed **1/1**
 at each step. The reader checked represented owners after world preparation
-and aborted before input. No v5 first-input, second-write or production save
-route is open.
+and aborted before input. Separate strict first-input, second-write and second
+fresh-child reader tests also passed **1/1** each. The input test turned and
+walked in the real game loop; the writer atomically saved a distinct slot
+after changed position and yaw while earlier slots stayed byte-identical;
+the second reader checked exact represented owners and aborted before input.
+This is a seven-process first-map cycle, not production SaveLoad or campaign
+playability.
 
 See also: [V4 Event Runtime](MM6-F4-EC6-V4-Event-Runtime.md),
 [V3 Post Entry Map and Pre Event](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md),

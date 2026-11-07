@@ -6,7 +6,9 @@ shell passed focused linked checks **16/16**. A strict disposable v5 writer
 captured the moved first-map party and wrote a separate candidate (**1/1**)
 after v2 seed and v4 baseline controls each passed **1/1**. A stack-footprint
 fix let the separate fresh-child reader stage and restore the post-action
-candidate with exact owner checks (**1/1**), then abort before input.
+candidate with exact owner checks (**1/1**), then abort before input. A
+separate bounded first-input test turned and walked in the real game loop,
+and a second v5 write and another fresh-child pre-input reload passed.
 A bounded v4 first-map reload and real-loop turn/walk passed, but
 the attempted second v4 write refused before disk mutation when a live ground
 sprite had fractional X/Y position. The native 100-byte DDM sprite record
@@ -87,9 +89,15 @@ frames before an owner result; heap-backed stage and PART decode fixed that
 test path. A four-process v2 seed, v4 baseline, v5 post-action writer and
 fresh-child v5 reader sequence then passed **1/1** at each step. The reader
 checks represented owners after world preparation and aborts before input.
-The candidate existed only inside the owner-only disposable test profile and
-was cleaned when the sequence ended. V5 first input, second write, production
-SaveLoad and Atlas remain closed.
+Separate strict first-input, second-write and second fresh-child reader tests
+then passed **1/1** each, completing a seven-process first-map chain. The
+second writer requires changed position and yaw, writes a distinct atomic
+slot and checks the v2, v4 and first-v5 bytes unchanged. The second reader
+checks the new candidate against its prior v5 baseline and exact represented
+owners after world preparation, then aborts before input. All candidate
+files existed only inside the owner-only disposable test profile and were
+cleaned when the sequence ended. Production SaveLoad, indoor/later-map replay
+and Atlas remain closed.
 
 See [v4 event runtime boundary](MM6_F4_EC6_V4_EVENT_RUNTIME.md),
 [active actor capture](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md) and

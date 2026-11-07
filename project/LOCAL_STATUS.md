@@ -1118,5 +1118,11 @@ first fresh-child v5 reader crashed before an owner result from large nested
 stack frames. Heap-backed stage and PART decode fixed that test path. A
 fresh four-process v2 seed, v4 baseline, v5 post-action writer and v5 reader
 sequence passed **1/1** at each step; the reader checked represented owners
-after world preparation and aborted before input. No v5 first input, second
-write, production SaveLoad or Atlas route is accepted.
+after world preparation and aborted before input. Separate strict v5 first
+input, second-write and second fresh-child reader tests passed **1/1** each,
+completing a seven-process disposable first-map cycle. The first-input test
+turned and walked in the real game loop; the second writer required changed
+position and yaw, wrote a separate atomic slot and kept v2/v4/prior-v5 bytes
+unchanged; the second reader checked exact represented owners and aborted
+before input. Production SaveLoad, indoor/later-map replay and Atlas remain
+closed.

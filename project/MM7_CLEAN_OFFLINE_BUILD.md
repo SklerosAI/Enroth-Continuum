@@ -1,8 +1,8 @@
 # Mac MM7 build from owned source
 
-Status (2026-11-07): this local publication preview builds a staged MM7 Atlas
-from a fresh extraction of its tracked files with network access denied. It
-has not been pushed or installed and has not passed visible save/quit/reload.
+Status (2026-11-07): the published MM7 preview branch builds a staged Atlas
+from tracked source with network access denied. It has not been installed or
+passed visible save/quit/reload.
 
 Run `python3 tools/build_mm7_macos.py /absolute/new/output-directory` on
 Apple silicon. The wrapper requires local Python, CMake, Ninja, and Apple's
@@ -23,6 +23,18 @@ the retained OpenEnroth license, credits and upstream notes, plus 23 source
 notices for the owned media libraries. A bounded headless MM7 launch using an
 explicit private data path remained running for eight seconds. A foreign
 `--game mm6` request is rejected before initialization.
+
+A second proof used a fresh public GitHub clone of
+`codex/mm7-public-preview` at exact commit `d76afb51979f1e6dd809353fde95e0551d1fbf9f`.
+The clone used `--single-branch --depth 1 --no-recurse-submodules`; its sole
+remaining ztd.text gitlink was uninitialized. With networking denied, the
+same wrapper built the owned dependencies, compiled the MM7 helper and staged
+Atlas without consulting that gitlink or an OpenEnroth release. The helper
+and Atlas passed strict signature checks; the helper retained the expected
+bundle ID and `0.1.0` version, the app carried 23 media-library notices, and
+no game-data or save files were bundled. The temporary clone and its build
+output were removed after verification. This documentation follow-up changes
+no source files from the tested commit.
 
 This is a source and bounded runtime check, not full campaign acceptance. A
 visible launch from this staged app, sound, existing-save load, new save,

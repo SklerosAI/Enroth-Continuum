@@ -2195,3 +2195,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A stage marker in the no-write first-map v3 candidate confirmed that detached `stageV3FullSessionPreflight()` returned successfully. The candidate then refused at `persistent-event-join` (0/1), superseding the earlier `map-preflight` classification; the exact live event mismatch remains under audit.
 - The disposable v2 writer control passed 1/1. No v3 atomic write, production SaveLoad route, Atlas Play or first-input admission was enabled.
+
+## [2026-11-07] audit | MM6 v3 decoration event owner
+- by: T-Burton-ND via codex
+- A no-write first-map candidate confirmed native 200-byte event data and zero generic `mapVars`, then refused at `event-decor-bound-high` (0/1). The nonzero `decorVars` value is tied to an interactive decoration's assigned high `eventVarId`, not an unbound transient. This refines `event-legacy-decor` and the broad `persistent-event-join` classification; detached full-session preflight had passed.
+- Initial respawn calls `RespawnGlobalDecorations()` before `PrepareDecorations()` and fills `decorVars[0..123]`; a stamped no-respawn DDM reload skips that call. Some decoration event draws consume RNG. The mapping to native MM6 event bytes remains unproved, so zeroing the owner or writing a v3 slot is not admitted.

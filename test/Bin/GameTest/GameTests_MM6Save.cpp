@@ -26,6 +26,7 @@
 #include "Engine/MM6/MM6LoadedMapSource.h"
 #include "Engine/MM6/MM6NewGameSaveRuntime.h"
 #include "Engine/MM6/MM6NpcStaticBaseline.h"
+#include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
 #include "Engine/MM6/MM6PrivateMapSource.h"
 #include "Engine/MM6/MM6RawSessionStage.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
@@ -855,6 +856,85 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_RestartSlotThroughMainMenuGameLoop) {
     });
     EXPECT_TRUE(entered);
     EXPECT_TRUE(moved);
+    EXPECT_EQ(readFile(primary), before);
+    EXPECT_EQ(window->nativeHandle(), nullptr);
+}
+
+// Run alone after the v1 New Game writer made the disposable slot. This uses
+// the existing v1 callback solely to prove the real gameLoop hook order; it
+// does not admit v2 publication or change the normal MM6 loader.
+GAME_TEST(MM6ZSaveHeadless, DISABLED_PostWorldHookRunsBeforeFirstInput) {
+    const auto profileRoot = restartProfileRoot();
+    if (!profileRoot)
+        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to a disposable system-temp directory";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    const std::filesystem::path primary = *profileRoot / "saves" / "autosave.ec6";
+    ASSERT_TRUE(std::filesystem::is_regular_file(primary));
+    const auto before = readFile(primary);
+
+    bool loadCalled = false;
+    bool hookCalled = false;
+    bool sawPostWorldBeforeInput = false;
+    std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
+    std::unique_ptr<mm6::testing::ScopedPostWorldAdmissionForTest> admission;
+    game.runGameRoutine([&] {
+        mm6::testing::setLoadGameOverride([&](std::string_view fileName) {
+            if (fileName != mm6::NEW_GAME_AUTOSAVE_SLOT)
+                throw std::runtime_error("MM6 hook test selected another slot");
+            const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
+            Party freshParty;
+            NPCStats freshNpcs = *pNPCStats;
+            Timer freshTimer;
+            ActiveOverlayList freshOverlays;
+            const auto verifyItem = [](std::int32_t id) {
+                return id >= 1 && id <= 580 &&
+                    !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
+            };
+            auto staged = mm6::stageOfflineSaveSlotForTest(
+                *profileRoot, fileName, freshParty, freshNpcs, freshTimer,
+                freshOverlays, maps.expectedNames(),
+                [&maps](std::string_view name) { return maps.readBase(name); },
+                verifyItem, pOverlayTable->overlays.size(), GameTitle::MM6);
+            if (!staged || staged->needsRecovery || staged->bytes != before)
+                throw std::runtime_error("MM6 hook test did not stage its v1 slot");
+            *pParty = std::move(staged->staged.party);
+            *pNPCStats = std::move(staged->staged.worldAndVisuals.world.npcs);
+            *gameTimer = std::move(staged->staged.worldAndVisuals.visuals.timer);
+            *pActiveOverlayList = std::move(staged->staged.worldAndVisuals.visuals.overlays);
+            pMapDeltas = std::move(staged->staged.worldAndVisuals.world.mapDeltas);
+            mm6::chestTitleState() = std::move(staged->staged.worldAndVisuals.chestTitle);
+            engine->_pendingTransition = MapDestination(
+                pMapTable->GetMapInfo("oute3.odm"), MAP_START_POINT_PARTY);
+            engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
+            chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>();
+            admission = std::make_unique<mm6::testing::ScopedPostWorldAdmissionForTest>(
+                GameTitle::MM6, [&] {
+                    hookCalled = true;
+                    sawPostWorldBeforeInput = gameTimer->isPaused() &&
+                        !engine->_pendingTransition &&
+                        engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute3.odm") &&
+                        uCurrentlyLoadedLevelType == LEVEL_OUTDOOR &&
+                        !pActors.empty() && vChests.size() == 20 &&
+                        pPartyActionQueue->uNumActions == 0;
+                });
+            loadCalled = true;
+        });
+        mm6::testing::setMainMenuAutosaveQuickLoadOverride(true);
+        engine->_messageQueue->addMessageCurrentFrame(UIMSG_QuickLoad);
+    });
+
+    game.skipLoadingScreen();
+    game.tick(3);
+    game.runGameRoutine([&] {
+        admission.reset();
+        chestOptIn.reset();
+        mm6::testing::setMainMenuAutosaveQuickLoadOverride(false);
+        mm6::testing::setLoadGameOverride({});
+    });
+    EXPECT_TRUE(loadCalled);
+    EXPECT_TRUE(hookCalled);
+    EXPECT_TRUE(sawPostWorldBeforeInput);
     EXPECT_EQ(readFile(primary), before);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }

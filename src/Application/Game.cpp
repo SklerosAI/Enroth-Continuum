@@ -49,6 +49,7 @@
 #include "Engine/TurnEngine/TurnEngine.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
+#include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
 #include "Engine/Tables/MapTable.h"
 
 #include "GUI/GUIButton.h"
@@ -1531,6 +1532,8 @@ void Game::gameLoop() {
         pParty->bTurnBasedModeOn = false;  // Make sure turn engine and party turn based mode flag are in sync.
 
         DoPrepareWorld(bLoading, 1);
+        if (bLoading && engine->gameTitle() == GameTitle::MM6)
+            mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6);
         gameTimer->setPaused(false);
         engineFlags |= ENGINE_SKIP_NEXT_USER_INPUT;
         // uGame_if_0_else_ui_id__11_save__else_load__8_drawSpellInfoPopup__22_final_window__26_keymapOptions__2_options__28_videoOptions

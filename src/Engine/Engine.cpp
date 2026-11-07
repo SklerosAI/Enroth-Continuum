@@ -7,6 +7,7 @@
 #include <optional>
 #include <span>
 #include <unordered_set>
+#include <vector>
 
 #include "Engine/Engine.h"
 
@@ -77,6 +78,7 @@
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6PostMapGeneratedNpcLinks.h"
 #include "Engine/MM6/MM6PreEventCheckpointForTest.h"
+#include "Engine/MM6/MM6V3PreEventReplayForTest.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
@@ -97,6 +99,7 @@
 
 #include "Library/Logger/Logger.h"
 #include "Library/BuildInfo/BuildInfo.h"
+#include "Library/Platform/Application/PlatformApplication.h"
 
 #include "Utility/String/Transformations.h"
 
@@ -733,9 +736,19 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
     setNPCNamesOnLoad();
     if (bLoading && engine->gameTitle() == GameTitle::MM6) {
         try {
-            if (mm6::testing::runArmedPreEventCheckpointForTest(GameTitle::MM6) ==
-                mm6::testing::PreEventCheckpointResult::AbortToMainMenu)
+            const auto checkpoint = mm6::testing::runArmedPreEventCheckpointForTest(GameTitle::MM6);
+            if (checkpoint == mm6::testing::PreEventCheckpointResult::AbortToMainMenu)
                 throw mm6::testing::PreEventCheckpointAbortForTest();
+            (void) mm6::testing::runArmedV3PreEventReplayForTest(
+                checkpoint, pActors, &pActors, pNPCStats,
+                application->component<EngineRandomComponent>()->type(),
+                pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
+                std::max(0, engine->config->gameplay.MaxActors.value()),
+                nextActorReuseScanStart, engine->config->debug.NoActors.value(),
+                uCurrentlyLoadedLevelType == LEVEL_OUTDOOR,
+                mm6::chestMapLoadOptedIn(), &mm6::chestTitleState(),
+                pOutdoor->mm6DeltaBytes,
+                GameTitle::MM6);
         } catch (...) {
             // This test-only early exit precedes the usual progress release.
             // Leave no pending transition for the resumed main menu.
@@ -768,10 +781,26 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
             if (actor.monsterInfo.spell2Id == SPELL_SPIRIT_SPIRIT_LASH)
                 actor.monsterInfo.spell2Id = SPELL_SPIRIT_BLESS;
 
+    if (bLoading && engine->gameTitle() == GameTitle::MM6) {
+        try {
+            mm6::testing::restoreV3RngBeforeMapLoadForTest(
+                [](const GameplayRandomState &state) {
+                    application->component<EngineRandomComponent>()->restoreGameplayState(state);
+                },
+                &mm6::chestTitleState(), pOutdoor->mm6DeltaBytes,
+                GameTitle::MM6);
+            mm6::testing::requireV3ReplayBeforeMapLoadForTest(GameTitle::MM6);
+        } catch (...) {
+            engine->_pendingTransition.reset();
+            pGameLoadingUI_ProgressBar->Release();
+            throw;
+        }
+    }
     bDialogueUI_InitializeActor_NPC_ID = 0;
     engine->_pendingTransition.reset();
-    if (bLoading && engine->gameTitle() == GameTitle::MM6)
+    if (bLoading && engine->gameTitle() == GameTitle::MM6) {
         mm6::testing::notePreEventMapLoadForTest(GameTitle::MM6);
+    }
     onMapLoad();
 
     // OE fix - onMapLoad() above runs the reload event of d11.evt, which zeroes the inserted key count in map var 18
@@ -1054,28 +1083,34 @@ void Engine::_461103_load_level_sub() {
     pGameLoadingUI_ProgressBar->Progress();
     pParty->arenaState = ARENA_STATE_INITIAL;
     pParty->arenaLevel = ARENA_LEVEL_INVALID;
-    if (gameTitle() == GameTitle::MM6)
-        mm6::requirePreMapGeneratedNpcCapacity(pActors, *pNPCStats, gameTitle());
-    pNPCStats->uNewlNPCBufPos = 0;
+    if (gameTitle() == GameTitle::MM6 &&
+        mm6::testing::consumeV3GeneratedNpcBypassForTest(GameTitle::MM6)) {
+        const std::vector<Actor> restoredActors(pActors.begin(), pActors.end());
+        mm6::requirePostMapGeneratedNpcLinks(restoredActors, *pNPCStats, gameTitle());
+    } else {
+        if (gameTitle() == GameTitle::MM6)
+            mm6::requirePreMapGeneratedNpcCapacity(pActors, *pNPCStats, gameTitle());
+        pNPCStats->uNewlNPCBufPos = 0;
 
-    for (Actor &actor : pActors) {
-        MonsterTier tier = monsterTierForMonsterId(actor.monsterInfo.id);
-        if (tier == MONSTER_TIER_A)
-            continue; // Weakest peasants are just peasants.
+        for (Actor &actor : pActors) {
+            MonsterTier tier = monsterTierForMonsterId(actor.monsterInfo.id);
+            if (tier == MONSTER_TIER_A)
+                continue; // Weakest peasants are just peasants.
 
-        if (actor.npcId && actor.npcId < 5000)
-            continue;
+            if (actor.npcId && actor.npcId < 5000)
+                continue;
 
-        if (isPeasant(actor.monsterInfo.id)) {
-            pNPCStats->InitializeAdditionalNPCs(
-                &pNPCStats->pAdditionalNPC[pNPCStats->uNewlNPCBufPos],
-                actor.monsterInfo.id, HOUSE_INVALID, engine->_currentLoadedMapId);
-            actor.npcId = pNPCStats->uNewlNPCBufPos + 5000;
-            pNPCStats->uNewlNPCBufPos++;
-            continue;
+            if (isPeasant(actor.monsterInfo.id)) {
+                pNPCStats->InitializeAdditionalNPCs(
+                    &pNPCStats->pAdditionalNPC[pNPCStats->uNewlNPCBufPos],
+                    actor.monsterInfo.id, HOUSE_INVALID, engine->_currentLoadedMapId);
+                actor.npcId = pNPCStats->uNewlNPCBufPos + 5000;
+                pNPCStats->uNewlNPCBufPos++;
+                continue;
+            }
+
+            actor.npcId = 0;
         }
-
-        actor.npcId = 0;
     }
 
     pGameLoadingUI_ProgressBar->Progress();

@@ -1793,3 +1793,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - After integration, the MM6 chest open-owner suite passed 3/3, the MM6 stock and MM7 vendor unit controls passed 10/10, and the non-MM6 unit controls passed 440/440. Monitored MM7 weapon-shop and magic-guild headless entries passed 2/2 with the vendor mod enabled and no visible window or focus change.
 - The installed MM7 Atlas was not replaced; its playable helper and saves remain in place. MM6 live house/chest UI, normal save/load and launcher Play remain gated.
+
+## [2026-11-06] verify | MM6 saved NPC sentinel reaches first world
+- by: T-Burton-ND via codex
+- A new isolated headless check joined party-creation `.ec6` staging to the actual New Sorpigal `DoPrepareWorld` path. Its first run found that the MM6 source NPC table supplies a signed no-house value rejected by `RESC`; the codec now round-trips that value and still rejects other out-of-range houses.
+- The joined save-to-world check passed 1/1 with actors and twenty chests after the correction; the original scoped rollback check passed 1/1, and focused NPC codec tests passed 5/5. All monitored runs had no visible game window or focus change. Normal game-loop SaveLoad, late world-failure rollback and durable save–quit–reload remain open.

@@ -26,6 +26,16 @@ input. No visited-map publisher, in-session return or post-rename durable
 result policy exists. Checkpoint writing remains false; keep production travel
 and SaveLoad closed.
 
+A [read-only return plan](MM6-F4-Border-Autosave-Transaction.md) now joins
+the visited native DDM/runtime with the current active-map global chest LCG
+and artifact ledger. It refuses missing Party arrival and never publishes.
+The fresh v6 reader verified this both before and after active-world rebuild
+without changing Party, chest state or old-map cache; another five-child chain
+passed 1/1 in each process. Ordinary location change calls
+`DoPrepareWorld(false)`, but current test replay hooks run only on fresh
+`DoPrepareWorld(true)`. Prove arrival/terrain, a separate return replay path
+and failure rollback before publishing visited owners.
+
 The [MM6 indoor v6 input cycle](MM6-F4-V6-Indoor-Input-Cycle.md) passed five
 fresh headless children through a real-loop turn/walk, atomic post-input
 candidate and exact fresh-child replay. This is one test-only fixture;

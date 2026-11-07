@@ -160,6 +160,34 @@ visited-map publication transaction, real border confirmation, or durable
 success after a post-rename sync failure. Production checkpoint writing and
 travel remain closed.
 
+## Read-only visited-map return plan
+
+The [return plan](../src/Engine/MM6/MM6VisitedOutdoorReturnPlan.h) now stages
+the source-backed visited map as a detached owner. It takes the old map's
+native DDM and actor, NPC, event, sprite and decoration runtime from `VIST`,
+but builds the target CHST with the **current active-map** global chest LCG
+and artifact ledger plus the visited map's native DDM. Reusing the old map's
+CHST ledger could roll back global artifact generation after time spent in
+another map. The plan requires an exact active/visited map pair and source
+base; it refuses an absent Party arrival with a typed result. Even a bounded
+proposed arrival cannot authorize publication until source terrain and a
+failure-atomic runtime transaction are proved. `canPublish()` and
+`canWriteCheckpoint()` remain false.
+
+The outdoor v6 fresh child stages this plan during read-only preflight and
+again after rebuilding the active second map. It checks the current global
+ledger was retained and verifies Party core, global chest state and the stale
+first-map cache remained untouched. A fresh five-process headless chain (v2,
+v4, existing v5 control, v6 writer, v6 reader) passed **1/1 each** after this
+addition; the temporary profile was removed. This is not a returned map.
+
+The source order explains the remaining publication blocker: a normal
+location change calls `PrepareWorld(0)` and `DoPrepareWorld(false)`, while the
+test-only EVRT, V3 actor/GNPC/RNG and V5 actor/sprite/decoration replay hooks
+run only on `DoPrepareWorld(true)` fresh loads. A return needs a separately
+validated pre-event replay path for `false`, exact arrival and terrain proof,
+and rollback for a partially prepared target. No such hook was added here.
+
 1. Choose a canonical production EC6 version, slot name and title-private profile root. Explicitly reject or migrate older autosave schemas; an existing v2 test seed cannot silently become a v5 production slot.
 2. Stage an exact detached old-map save for any admitted outdoor map at a safe point before travel UI effects. Include Party and character state, inventory/buffs/hirelings, UI/cursor/shops, NPC and generated links, RNG, active and visited map deltas, chests/artifacts, actor/sprite/decoration runtime, event variables and owner identities. The old-map checkpoint must contain a reload-safe in-bounds **Party copy** when the live border position lies outside the map edge; keep live Party untouched until commit.
 3. Revalidate destination geometry, source-map archive identity, the three-bit offer mask and confirmation flying state. Stage target map/resource readiness and a no-reentry capture. Give the disk writer a semantic validator and a required success result.

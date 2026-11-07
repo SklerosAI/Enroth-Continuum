@@ -28,6 +28,7 @@ set(GAME_TEST_MAIN_HEADERS
 add_executable(OpenEnroth_GameTest ${GAME_TEST_MAIN_SOURCES} ${GAME_TEST_MAIN_HEADERS})
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Chest.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6CreationItemSeed.cpp)
+target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6NpcResourceIdentity.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6HudAudit.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6TopPanel.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6PortraitAlert.cpp)

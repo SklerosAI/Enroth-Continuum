@@ -318,6 +318,38 @@ UNIT_TEST(MM6AtomicSaveFile, RawV2SlotsAreAtomicAndSchemaIsolated) {
     EXPECT_EQ(read(profile.save()), first);
 }
 
+UNIT_TEST(MM6AtomicSaveFile, RawMenuPreflightUsesSameReadOnlyBackupSelection) {
+    TestProfile profile;
+    const auto first = sampleRaw(41);
+    const auto second = sampleRaw(42);
+    const auto excluded = sampleRaw(43);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", first);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", second);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save002.ec6", excluded);
+
+    EXPECT_THROW((void) mm6::listRawSaveSlotsWithPreflight(profile.root(), {}),
+                 std::exception);
+    const auto acceptOnlyFirst = [](std::span<const std::uint8_t> bytes) {
+        if (mm6::decodeRawSave(bytes, GameTitle::MM6).metadata.header.displayName != "Raw 41")
+            throw std::runtime_error("synthetic gameplay refusal");
+    };
+    const auto slots = mm6::listRawSaveSlotsWithPreflight(profile.root(), acceptOnlyFirst);
+    ASSERT_EQ(slots.size(), 1u);
+    EXPECT_EQ(slots[0].fileName, "save001.ec6");
+    EXPECT_EQ(slots[0].header.displayName, "Raw 41");
+    EXPECT_TRUE(slots[0].needsRecovery);
+    EXPECT_EQ(read(profile.save()), second);
+    EXPECT_EQ(read(profile.backup()), first);
+    EXPECT_EQ(read(profile.root() / "saves/save002.ec6"), excluded);
+
+    const auto all = mm6::listRawSaveSlotsWithPreflight(
+        profile.root(), [](std::span<const std::uint8_t>) {});
+    ASSERT_EQ(all.size(), 2u);
+    EXPECT_EQ(all[0].header.displayName, "Raw 42");
+    EXPECT_FALSE(all[0].needsRecovery);
+    EXPECT_EQ(all[1].header.displayName, "Raw 43");
+}
+
 UNIT_TEST(MM6AtomicSaveFile, RawV2WriteFaultsKeepPriorSlot) {
     for (mm6::detail::AtomicSaveStep step : {
              mm6::detail::AtomicSaveStep::BeforeTempWrite,

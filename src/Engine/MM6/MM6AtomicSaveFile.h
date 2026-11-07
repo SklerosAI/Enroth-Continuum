@@ -41,9 +41,9 @@ struct SaveSlotInfo {
     bool needsRecovery = false;
 };
 
-// Read-only inventory for a future MM6 save menu. Only known-section .ec6
-// primaries or recoverable backups are listed; malformed slots are omitted.
-// A recovery-needed entry must be loaded through loadRecoverableSaveFile.
+// Structural-only inventory. It is not a playable-slot list: a well-formed
+// .ec6 candidate can still fail the full gameplay stage. A recovery-needed
+// entry must be loaded through the matching recovery helper.
 std::vector<SaveSlotInfo> listKnownSaveSlots(const std::filesystem::path &profileRoot);
 std::vector<SaveSlotInfo> listRawSaveSlots(const std::filesystem::path &profileRoot);
 
@@ -63,6 +63,13 @@ std::optional<SaveFileCandidate> preflightRecoverableSaveFile(
 std::optional<SaveFileCandidate> preflightRecoverableRawSaveFile(
     const std::filesystem::path &profileRoot, std::string_view slotName,
     const SaveCandidateValidator &validate);
+
+// Read-only candidate inventory for a future MM6 load menu. Uses the same
+// semantic validator and primary/backup selection as the eventual load. The
+// caller must supply a complete gameplay admission validator before exposing
+// these entries in UI; a structural or partial validator is insufficient.
+std::vector<SaveSlotInfo> listRawSaveSlotsWithPreflight(
+    const std::filesystem::path &profileRoot, const SaveCandidateValidator &validate);
 
 namespace detail {
 

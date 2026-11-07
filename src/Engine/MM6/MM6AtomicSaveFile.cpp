@@ -377,7 +377,7 @@ static std::optional<SaveFileCandidate> preflightRecoverableSaveFileForSchema(
         return SaveFileCandidate{std::move(bytes), path == backup};
     }
     if (foundCandidate)
-        throw std::runtime_error("MM6 save slot has no semantically valid candidate");
+        throw InvalidSaveFile("MM6 save slot has no semantically valid candidate");
     return std::nullopt;
 #endif
 }
@@ -447,6 +447,26 @@ std::vector<SaveSlotInfo> listKnownSaveSlots(const std::filesystem::path &profil
 
 std::vector<SaveSlotInfo> listRawSaveSlots(const std::filesystem::path &profileRoot) {
     return listSaveSlotsForSchema(profileRoot, SlotSchema::RawV2);
+}
+
+std::vector<SaveSlotInfo> listRawSaveSlotsWithPreflight(
+    const std::filesystem::path &profileRoot, const SaveCandidateValidator &validate) {
+    if (!validate)
+        throw std::invalid_argument("MM6 save menu needs a semantic validator");
+    std::vector<SaveSlotInfo> result;
+    for (const SaveSlotInfo &slot : listRawSaveSlots(profileRoot)) {
+        try {
+            auto candidate = preflightRecoverableRawSaveFile(profileRoot, slot.fileName, validate);
+            if (!candidate)
+                continue;
+            RawSaveFields fields = decodeRawSave(candidate->bytes, GameTitle::MM6);
+            result.push_back({slot.fileName, std::move(fields.metadata.header),
+                              candidate->needsRecovery});
+        } catch (const InvalidSaveFile &) {
+            // Structural slots with no semantically admissible candidate stay hidden.
+        }
+    }
+    return result;
 }
 
 } // namespace mm6

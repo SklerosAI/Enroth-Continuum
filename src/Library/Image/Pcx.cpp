@@ -4,8 +4,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
-#include <algorithm>
 #include <memory>
+#include <vector>
 
 #include "Utility/Exception.h"
 
@@ -42,58 +42,44 @@ struct PCXHeader {
 #pragma pack(pop)
 
 typedef struct bstreamer {
-    const uint8_t *buffer, *buffer_end, *buffer_start;
+    const uint8_t *buffer, *buffer_end;
 } bstreamer;
 
-static void bs_init(bstreamer *bs, const uint8_t *buf, int buf_size) {
-    bs->buffer = bs->buffer_start = buf;
+static void bs_init(bstreamer *bs, const uint8_t *buf, size_t buf_size) {
+    bs->buffer = buf;
     bs->buffer_end = buf + buf_size;
 }
 
-static int bs_get_bytes_left(bstreamer *bs) {
+static size_t bs_get_bytes_left(const bstreamer *bs) {
     return bs->buffer_end - bs->buffer;
 }
 
-static unsigned int bs_get_byte(bstreamer *bs) {
-    unsigned int byte;
-    if (bs_get_bytes_left(bs) > 0) {
-        byte = bs->buffer[0];
-        bs->buffer++;
-        return byte;
+static bool pcx_rle_decode(bstreamer *bs, uint8_t *dst, size_t bytes_per_scanline, bool compressed) {
+    if (!compressed) {
+        if (bs_get_bytes_left(bs) < bytes_per_scanline)
+            return false;
+        memcpy(dst, bs->buffer, bytes_per_scanline);
+        bs->buffer += bytes_per_scanline;
+        return true;
     }
 
-    return 0;
-}
-
-static unsigned int bs_get_buffer(bstreamer *bs, uint8_t *dst, unsigned int size) {
-    int size_min = std::min((unsigned int)(bs->buffer_end - bs->buffer), size);
-    memcpy(dst, bs->buffer, size_min);
-    bs->buffer += size_min;
-    return size_min;
-}
-
-static int pcx_rle_decode(bstreamer *bs, uint8_t *dst, unsigned int bytes_per_scanline, int compressed) {
-    unsigned int i = 0;
-    unsigned char run, value;
-
-    if (bs_get_bytes_left(bs) < 1)
-        return -1;
-
-    if (compressed) {
-        while (i < bytes_per_scanline && bs_get_bytes_left(bs) > 0) {
-            run = 1;
-            value = bs_get_byte(bs);
-            if (value >= 0xc0 && bs_get_bytes_left(bs) > 0) {
-                run = value & 0x3f;
-                value = bs_get_byte(bs);
-            }
-            while (i < bytes_per_scanline && run--)
-                dst[i++] = value;
+    size_t filled = 0;
+    while (filled < bytes_per_scanline) {
+        if (!bs_get_bytes_left(bs))
+            return false;
+        const uint8_t marker = *bs->buffer++;
+        size_t run = 1;
+        uint8_t value = marker;
+        if (marker >= 0xc0) {
+            run = marker & 0x3f;
+            if (!run || !bs_get_bytes_left(bs) || run > bytes_per_scanline - filled)
+                return false;
+            value = *bs->buffer++;
         }
-    } else {
-        bs_get_buffer(bs, dst, bytes_per_scanline);
+        memset(dst + filled, value, run);
+        filled += run;
     }
-    return 0;
+    return true;
 }
 
 static Sizei headerSize(const PCXHeader *header) {
@@ -113,17 +99,23 @@ static const PCXHeader *decodeHeader(const Blob &data) {
     if (header->version < PCX_VERSION_2_5 || header->version == PCX_VERSION_NOT_VALID || header->version > PCX_VERSION_3_0)
         throw Exception("Invalid PCX version '{}' in '{}'", header->version, data.displayPath());
 
-    Sizei size = headerSize(header);
-    unsigned int bytes_per_scanline = header->nplanes * header->bytes_per_row;
+    if ((header->nplanes != 3 && header->nplanes != 1) || header->bpp != 8)
+        throw Exception("Unsupported PCX format in '{}', only 8-bit and 24-bit PCX images are supported", data.displayPath());
+    if (header->compression != 0 && header->compression != 1)
+        throw Exception("Unsupported PCX compression in '{}'", data.displayPath());
 
-    //corruption check
-    if (bytes_per_scanline < (size.w * header->bpp * header->nplanes + 7) / 8 ||
-        (!header->compression && bytes_per_scanline > (data.size() - sizeof(PCXHeader)) / size.h)) {
+    const Sizei size = headerSize(header);
+    constexpr uint64_t maxDecodedPixels = 16 * 1024 * 1024;
+    if (size.w <= 0 || size.h <= 0 || header->bytes_per_row <= 0 ||
+        static_cast<uint64_t>(size.w) * size.h > maxDecodedPixels ||
+        header->bytes_per_row < size.w) {
         throw Exception("PCX header corrupted in '{}'", data.displayPath());
     }
 
-    if ((header->nplanes != 3 && header->nplanes != 1) || header->bpp != 8)
-        throw Exception("Unsupported PCX format in '{}', only 8-bit and 24-bit PCX images are supported", data.displayPath());
+    const size_t bytesPerScanline = static_cast<size_t>(header->nplanes) * header->bytes_per_row;
+    const size_t payloadSize = data.size() - sizeof(PCXHeader);
+    if (!header->compression && bytesPerScanline > payloadSize / size.h)
+        throw Exception("PCX image data is truncated in '{}'", data.displayPath());
 
     return header;
 }
@@ -132,17 +124,16 @@ RgbaImage pcx::decode(const Blob &data) {
     const PCXHeader *header = decodeHeader(data);
 
     Sizei size = headerSize(header);
-    unsigned int bytes_per_scanline = header->nplanes * header->bytes_per_row;
+    size_t bytes_per_scanline = static_cast<size_t>(header->nplanes) * header->bytes_per_row;
 
     RgbaImage result = RgbaImage::uninitialized(size);
 
     bstreamer bs;
-    std::unique_ptr<uint8_t[], FreeDeleter> scanline(static_cast<uint8_t *>(malloc(bytes_per_scanline + 32)));
+    std::vector<uint8_t> scanline(bytes_per_scanline);
     bs_init(&bs, static_cast<const uint8_t *>(data.data()) + sizeof(PCXHeader), data.size() - sizeof(PCXHeader));
 
     for (int y = 0; y < size.h; y++) {
-        int ret = pcx_rle_decode(&bs, scanline.get(), bytes_per_scanline, header->compression);
-        if (ret < 0)
+        if (!pcx_rle_decode(&bs, scanline.data(), bytes_per_scanline, header->compression))
             throw Exception("PCX image data is corrupted in '{}'", data.displayPath());
 
         auto line = result[y];

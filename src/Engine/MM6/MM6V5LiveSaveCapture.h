@@ -9,14 +9,21 @@ namespace mm6 {
 
 struct V5FullSessionPreflight;
 
+enum class V5FirstMapCaptureBoundary {
+    SettledInput,
+    PausedSaveMenu,
+};
+
 // First-map outdoor capture only. The caller provides a fully validated v4
 // source whose native slots, ACTR and EVRT bindings are retained as anchors.
 // Both APIs are read-only: they neither publish globals nor write a save slot.
 // Refuse every owner the v5 schema cannot represent exactly.
 std::vector<std::uint8_t> captureV5FirstMapLiveSession(
-    std::span<const std::uint8_t> sourceV4);
+    std::span<const std::uint8_t> sourceV4,
+    V5FirstMapCaptureBoundary boundary = V5FirstMapCaptureBoundary::SettledInput);
 void requireV5FirstMapLiveSessionAgreement(
-    std::span<const std::uint8_t> candidateV5);
+    std::span<const std::uint8_t> candidateV5,
+    V5FirstMapCaptureBoundary boundary = V5FirstMapCaptureBoundary::SettledInput);
 
 // Read-only post-world check for a staged first-map v5 load. The caller still
 // owns pre-event publication, failure handling and input admission. This

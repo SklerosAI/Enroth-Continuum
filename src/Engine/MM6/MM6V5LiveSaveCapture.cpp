@@ -27,6 +27,7 @@
 #include "Engine/Tables/TileTable.h"
 #include "Engine/Timer.h"
 #include "GUI/GUIMessageQueue.h"
+#include "GUI/GUIWindow.h"
 #include "Io/Mouse.h"
 #include "Library/Platform/Application/PlatformApplication.h"
 
@@ -97,7 +98,7 @@ void requireEmptyInheritedCommerce(const Party &party) {
             throw std::runtime_error("MM6 v5 inherited commerce is not represented");
 }
 
-void requireFirstMapLiveBoundary() {
+void requireFirstMapLiveBoundary(V5FirstMapCaptureBoundary boundary) {
     if (!engine || engine->gameTitle() != GameTitle::MM6 ||
         !pMapTable || !pParty || !pOutdoor || !pNPCStats || !pItemTable ||
         !pDecorationTable || !pActiveOverlayList || !pOverlayTable ||
@@ -106,13 +107,27 @@ void requireFirstMapLiveBoundary() {
         uCurrentlyLoadedLevelType != LEVEL_OUTDOOR ||
         engine->_currentLoadedMapId != pMapTable->GetMapInfo("oute3.odm") ||
         engine->_pendingTransition || !pPartyActionQueue ||
-        pPartyActionQueue->uNumActions != 0 || gameTimer->isPaused())
-        throw std::runtime_error("MM6 v5 live capture requires settled first-map input");
+        pPartyActionQueue->uNumActions != 0)
+        throw std::runtime_error("MM6 v5 live capture requires settled first-map owners");
+    if (boundary == V5FirstMapCaptureBoundary::SettledInput) {
+        if (gameTimer->isPaused())
+            throw std::runtime_error("MM6 v5 live capture requires settled first-map input");
+    } else if (boundary == V5FirstMapCaptureBoundary::PausedSaveMenu) {
+        if (!gameTimer->isPaused() || current_screen_type != SCREEN_SAVEGAME ||
+            !pGUIWindow_CurrentMenu ||
+            pGUIWindow_CurrentMenu->eWindowType != WINDOW_SAVE ||
+            pGUIWindow_CurrentMenu->keyboard_input_status != WINDOW_INPUT_NONE ||
+            !engine->_messageQueue || engine->_messageQueue->hasPendingForSave())
+            throw std::runtime_error("MM6 v5 live capture requires idle paused Save menu");
+    } else {
+        throw std::runtime_error("MM6 v5 live capture has unknown boundary");
+    }
 }
 
 std::vector<std::uint8_t> captureUnchecked(
-    std::span<const std::uint8_t> sourceV4) {
-    requireFirstMapLiveBoundary();
+    std::span<const std::uint8_t> sourceV4,
+    V5FirstMapCaptureBoundary boundary) {
+    requireFirstMapLiveBoundary(boundary);
     V4SaveFields saved = decodeV4Save(sourceV4, GameTitle::MM6);
     if (saved.v3.raw.metadata.header.mapFileName != "oute3.odm" ||
         saved.eventRuntime.maps.size() != 1 ||
@@ -193,20 +208,22 @@ std::vector<std::uint8_t> captureUnchecked(
 } // namespace
 
 std::vector<std::uint8_t> captureV5FirstMapLiveSession(
-    std::span<const std::uint8_t> sourceV4) {
-    auto candidate = captureUnchecked(sourceV4);
-    requireV5FirstMapLiveSessionAgreement(candidate);
+    std::span<const std::uint8_t> sourceV4,
+    V5FirstMapCaptureBoundary boundary) {
+    auto candidate = captureUnchecked(sourceV4, boundary);
+    requireV5FirstMapLiveSessionAgreement(candidate, boundary);
     return candidate;
 }
 
 void requireV5FirstMapLiveSessionAgreement(
-    std::span<const std::uint8_t> candidateV5) {
-    requireFirstMapLiveBoundary();
+    std::span<const std::uint8_t> candidateV5,
+    V5FirstMapCaptureBoundary boundary) {
+    requireFirstMapLiveBoundary(boundary);
     auto saved = std::make_unique<V5SaveFields>(
         decodeV5Save(candidateV5, GameTitle::MM6));
     const std::vector<std::uint8_t> sourceV4 =
         encodeV4Save(saved->v4, GameTitle::MM6);
-    if (captureUnchecked(sourceV4) !=
+    if (captureUnchecked(sourceV4, boundary) !=
         std::vector<std::uint8_t>(candidateV5.begin(), candidateV5.end()))
         throw std::runtime_error("MM6 v5 candidate differs from exact live owners");
 

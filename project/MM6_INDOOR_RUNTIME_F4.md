@@ -23,6 +23,8 @@ The native unit target builds on arm64. `MM6IndoorSnapshot.*` has five focused t
 
 Synthetic linked arm64 tests passed **2/2** for a door with a real vertex reference, foreign title/owner/count failures, an in-memory saved-door edit, a separately valid but divergent CHST door reference, and an absent CHST vertex. The adjacent v2 outdoor plan test also passed (combined **3/3**). This did not read private maps or construct a live world. Door state scalars and coordinate offsets may differ between DLV and CHST; the plan checks topology, not which dynamic state should win. Texture/resource resolution, actor PID rebinding, IFOV replay and all-owner commit remain open.
 
+The represented v2 session preflight now requires this indoor plan before selecting a primary or backup. Integrated indoor/raw checks passed **12/12** and focused coordinator assertions **4/4**. This still does not construct or publish a live indoor map.
+
 ## Changed-state DLV encoder
 
 `encodeMM6IndoorRuntimeDelta` starts from the decoded DLV wire snapshot, changes only bounded MM6 fields, then reparses the result against the companion base. `encodeMM6IndoorChangedState` captures those fields from the active `IndoorLocation` and **copies its current `mm6DeltaBytes` sidecar first**. This means the map-variable lane's edits to the 200-byte persistent section are retained. The encoder does not read or write a game archive or save file; the MM6 SaveLoad transaction remains a separate integration step.

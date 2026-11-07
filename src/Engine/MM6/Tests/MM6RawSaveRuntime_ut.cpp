@@ -431,6 +431,8 @@ UNIT_TEST(MM6RawSaveRuntime, FullRepresentedPreflightFallsBackAfterLatePartyFail
     EXPECT_EQ(selected->party.party.pCharacters[0].inventory.entry(137)->itemId,
               static_cast<ItemId>(10));
     EXPECT_EQ(selected->world.world.mapDeltas.size(), 67);
+    ASSERT_TRUE(selected->indoorPlan);
+    EXPECT_EQ(selected->indoorPlan->mapName, "synthetic0.blv");
     EXPECT_FALSE(selected->outdoorPlan);
     EXPECT_EQ(readBytes(profile.primary()), badBytes);
     EXPECT_EQ(readBytes(profile.backup()), goodBytes);
@@ -469,6 +471,7 @@ UNIT_TEST(MM6RawSaveRuntime, RawSessionPreflightPreparesOutdoorPlanBeforeSelecti
         names, syntheticBase, validItem, *table.table, 5, 145, GameTitle::MM6);
     ASSERT_TRUE(selected);
     EXPECT_TRUE(selected->needsRecovery);
+    EXPECT_TRUE(selected->indoorPlan);
     EXPECT_FALSE(selected->outdoorPlan);
     EXPECT_EQ(readBytes(profile.primary()), outdoorBytes);
     EXPECT_EQ(readBytes(profile.backup()), indoorBytes);
@@ -485,6 +488,7 @@ UNIT_TEST(MM6RawSaveRuntime, RawSessionPreflightPreparesOutdoorPlanBeforeSelecti
         names, boundedBase, validItem, *table.table, 5, 145, GameTitle::MM6);
     ASSERT_TRUE(selected);
     EXPECT_FALSE(selected->needsRecovery);
+    EXPECT_FALSE(selected->indoorPlan);
     ASSERT_TRUE(selected->outdoorPlan);
     EXPECT_EQ(selected->outdoorPlan->mapName, "outside0.odm");
     EXPECT_EQ(selected->outdoorPlan->terrainTileIds.size(), 127 * 127);

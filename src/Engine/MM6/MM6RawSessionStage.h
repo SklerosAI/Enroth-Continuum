@@ -8,6 +8,7 @@
 #include <string_view>
 
 #include "MM6RawSaveRuntime.h"
+#include "MM6IndoorWorldPlan.h"
 #include "MM6WorldSaveRuntime.h"
 
 namespace mm6 {
@@ -16,8 +17,9 @@ struct StagedRawSessionFields {
     StagedRawTitleOwners raw;
     StagedRawPartyInventories party;
     StagedRawWorldAndVisuals world;
-    // Populated for outdoor slots from the validated MM6 base/delta pair.
-    // Indoor world construction and all live resource publication remain open.
+    // One plan is populated from the validated MM6 base/delta pair. These
+    // are CPU-only projections, not live world or resource publication.
+    std::optional<DetachedIndoorWorldPlan> indoorPlan;
     std::optional<DetachedOutdoorWorldPlan> outdoorPlan;
     bool needsRecovery = false;
 };
@@ -27,8 +29,8 @@ struct StagedRawSessionFields {
 // NPC baseline is a freshly parsed MM6 table image. The Party baseline is
 // constructed locally without resetting the live mouse cursor; timer and
 // overlay bases must come from a fresh MM6 session.
-// This remains incomplete: live UI/world publication, indoor construction,
-// final actor/PID identity and full BEAC/IFOV support are not staged.
+// This remains incomplete: live UI/world publication, final actor/PID
+// identity and full BEAC/IFOV support are not staged.
 std::optional<StagedRawSessionFields> preflightStagedRawSessionFields(
     const std::filesystem::path &profileRoot, std::string_view slotName,
     const NpcStaticBaseline &freshNpcs, const Timer &freshTimer,

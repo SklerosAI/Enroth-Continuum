@@ -30,12 +30,15 @@ std::optional<StagedRawSessionFields> preflightStagedRawSessionFields(
                 freshParty, raw, itemTable, title);
             StagedRawWorldAndVisuals world = stageRawWorldAndVisuals(
                 freshNpcs, freshTimer, freshOverlays, raw, overlayTableCount, title);
+            std::optional<DetachedIndoorWorldPlan> indoorPlan;
             std::optional<DetachedOutdoorWorldPlan> outdoorPlan;
             if (std::holds_alternative<StagedOutdoorMap>(raw.activeMap))
                 outdoorPlan = prepareDetachedRawOutdoorWorldPlan(raw, tileTableCount, title);
+            else
+                indoorPlan = prepareDetachedRawIndoorWorldPlan(raw, title);
             staged.emplace(StagedRawSessionFields{
                 std::move(raw), std::move(party), std::move(world),
-                std::move(outdoorPlan), false});
+                std::move(indoorPlan), std::move(outdoorPlan), false});
         });
     if (!selected)
         return std::nullopt;

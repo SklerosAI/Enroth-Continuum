@@ -90,7 +90,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Creation HP/SP Init Gate](MM6-F4-Creation-HP-SP-Init-Gate.md) — Original Quick Start refill order, MM6-only current-creation timing correction and remaining mana formula proof
 - [MM6 F4 Max-Mana Condition Trace](MM6-F4-Max-Mana-Condition-Trace.md) — Original outer SP formula, 17-condition priority correction and remaining item/skill helper checks
 - [MM6 F4 Quick Start](MM6-F4-Quick-Start.md) — Original static opening route and all skill dispatches; separate editable creation now passes hidden first-frame control flow, with Quick Start and normal save still gated
-- [MM6 F4 Indoor Runtime](MM6-F4-Indoor-Runtime.md) — Bounded BLV/DLV projection and changed-state encoding with retained opaque wire
+- [MM6 F4 Indoor Runtime](MM6-F4-Indoor-Runtime.md) — Bounded BLV/DLV projection, changed-state encoding and v2 detached indoor plan before slot selection
 - [MM6 F4 Map Save Fields](MM6-F4-Map-Save-Fields.md) — Bounded `.ec6` map-delta section, private F3 source reader and ground/chest item-marker validation
 - [MM6 F4 NPC State](MM6-F4-NPC-State.md) — `.ec6` RESC overlays fresh MM6 static NPC tables; loaded-resource headless check passes, while normal save/reload remains gated
 - [MM6 F4 NPC Events](MM6-F4-NPC-Events.md) — Bounded topic/move state and MM6 global-script precedence over MM7 teacher IDs

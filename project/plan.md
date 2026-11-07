@@ -790,6 +790,14 @@ This audit is for the owner's complete MM7 experience, not a public support prog
 
 The MM7 helper is already built from this fork's tracked engine source and bundled by Atlas. The self-contained gate addresses the remaining **build inputs**, rather than replacing that working helper during MM6 development. The [local arm64 build-input inventory](MM7_SELF_CONTAINED_BUILD_INVENTORY.md) maps the 23 gitlinks, nine linked prebuilt libraries, seven nested fetches and provenance gaps. An opt-in `EC_LOCAL_ONLY_CONFIGURE=ON` lane now blocks configure-time fetches and fails with named missing repository-owned inputs/recipes; it is a fail-closed scaffold, not an offline-build result. This remains a later repository-ownership milestone and does not delay MM6. Preserve the current playable MM7 app and save profile while changing dependency packaging.
 
+The owner reaffirmed that M7-A6 is a required eventual finish line for MM7.
+Audit the installed app's user-facing name, metadata, launcher text, CLI defaults,
+configuration, saves, caches and logs for inherited OpenEnroth paths or product
+identity. Use Enroth Continuum/MM7 identity and explicit private local paths
+for the finished Mac app. Historical source names may be migrated when safe;
+OpenEnroth links, authorship, license and notices remain in attribution and
+provenance. A self-contained build does not put original GOG game files in Git.
+
 The **Hall of Echoes** is a guided, opt-in export/import workflow, not a save converter. It reads a completed source character through a tested game-specific adapter, creates a versioned local character blueprint, and previews each destination mapping before writing a new destination party. Its conservative preset follows [ROADMAP.md](ROADMAP.md): level at most 5, skills at most Expert, one eligible piece of equipment per character, and a destination-specific gold cap. The preview must explain class, race, spell, item and skill mappings; any unsupported choice needs an explicit replacement or omission. Quest flags, keys, map discovery and other campaign state never transfer. Back up the source and destination saves, leave the source untouched, write the import into a fresh destination save, and verify that save loads and the campaign can progress. A transfer button remains unavailable until both campaign adapters and the destination import check pass. Start with one proven direction, then add the other paths deliberately; showing three cards is not a promise that all six transfer directions work.
 
 ## 19. Run log

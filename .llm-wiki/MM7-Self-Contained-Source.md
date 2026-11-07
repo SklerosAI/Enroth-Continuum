@@ -19,4 +19,11 @@ The phased route is to preserve OpenEnroth credit, record exact provenance and l
 
 The source migration remains incomplete. An optional `upstream` remote remains only for deliberate review of later source changes; OpenEnroth history, license, notices and authorship remain in the fork. Do not replace the known-good installed MM7 helper before the new build passes its play and save checks, and do not describe a cached local build as a clean offline build.
 
+The owner reaffirmed this as a required eventual MM7 finish line. The gate now
+also calls for an audit of user-facing app identity, bundle metadata, Atlas
+text, CLI defaults and local config/cache/log paths, so the installed helper
+uses Enroth Continuum/MM7 identity and private paths throughout. Historical
+OpenEnroth links and authorship remain in credits and source provenance;
+internal inherited symbol names can be migrated separately when safe.
+
 See also: [Runtime Isolation](Runtime-Isolation.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md), [Agent Handoff](Agent-Handoff.md).

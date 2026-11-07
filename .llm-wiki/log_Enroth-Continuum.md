@@ -1867,3 +1867,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated detached raw inventory projection across four MM6 party members and a rollback scope for the first-map persistent map/decor event arrays. The linked disk, inventory and event suite passed 13/13.
 - Reconciled the child-process handoff with the new v2 disk boundary and recorded a preferred one-campaign-per-child F4b route. Complete save staging, safe writes and first-frame checks remain required before Atlas Play.
+
+## [2026-11-06] integrate | MM6 semantic v2 slot preflight
+- by: T-Burton-ND via codex
+- Joined native v2 primary/backup selection to detached raw map, item, cursor and shop staging without disk repair or live owner mutation.
+- Focused linked raw-runtime and atomic-file tests passed 11/11, including semantic-primary rejection with valid-backup selection and both-invalid refusal. Full Party/world/UI staging remains open.

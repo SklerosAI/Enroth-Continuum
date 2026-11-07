@@ -38,9 +38,10 @@ The current integration tree also builds a title-locked `MM7.app` and stages a s
 The [MM7 source-autonomy inventory](MM7_SELF_CONTAINED_BUILD_INVENTORY.md)
 records the original Mac build's 23 external gitlinks, nine linked static
 archives from one OpenEnroth-hosted dependency ZIP and seven nested fetches.
-Sixteen pinned source inputs are now tracked here with licenses and provenance,
-leaving 7 gitlinks. The cached-input arm64 MM7 target still builds.
-The five source families behind that archive are also tracked at exact pinned
+Nineteen pinned source inputs are now tracked here with licenses and provenance,
+leaving 4 gitlinks. The first sixteen passed a cached-input arm64 MM7 build; the
+latest three passed exact-blob and focused syntax checks and await integrated linking.
+The five source families behind the cached archive are also tracked at exact pinned
 revisions with original license files and archive hashes; they are not yet
 compiled by a repo-owned recipe.
 GoogleTest and `gtest_parallel` are optional test inputs; the owned LuaJIT CMake

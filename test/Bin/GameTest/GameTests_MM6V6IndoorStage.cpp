@@ -1,0 +1,216 @@
+#include <algorithm>
+#include <cstdint>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <vector>
+
+#include "Testing/Game/GameTest.h"
+
+#include "Engine/Components/Random/EngineRandomComponent.h"
+#include "Engine/Engine.h"
+#include "Engine/EngineGlobals.h"
+#include "Engine/Graphics/Indoor.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
+#include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/MM6/MM6GeneratedNpcSaveFields.h"
+#include "Engine/MM6/MM6IndoorFaceLiveOwner.h"
+#include "Engine/MM6/MM6IndoorFaceOverrides.h"
+#include "Engine/MM6/MM6LoadedMapSource.h"
+#include "Engine/MM6/MM6NpcStaticBaseline.h"
+#include "Engine/MM6/MM6PreEventCheckpointForTest.h"
+#include "Engine/MM6/MM6RawSaveFields.h"
+#include "Engine/MM6/MM6V6IndoorSaveFields.h"
+#include "Engine/Objects/Actor.h"
+#include "Engine/Resources/LOD.h"
+#include "Engine/SaveLoad.h"
+#include "Engine/Tables/ItemTable.h"
+#include "Engine/Tables/MapTable.h"
+#include "Engine/Tables/NPCTable.h"
+#include "Engine/Tables/OverlayTable.h"
+#include "Engine/Tables/TileTable.h"
+#include "GUI/GUIWindow.h"
+#include "Library/Platform/Application/PlatformApplication.h"
+
+namespace {
+
+std::filesystem::path disposableProfile() {
+    const char *value = std::getenv("ENROTH_MM6_RESTART_PROFILE");
+    if (!value || !*value)
+        return {};
+    const std::filesystem::path supplied(value);
+    if (!supplied.is_absolute() || !std::filesystem::is_directory(supplied))
+        throw std::runtime_error("MM6 v6 indoor probe needs an absolute disposable profile");
+    const auto root = std::filesystem::canonical(supplied);
+    if (root.parent_path() != std::filesystem::canonical(std::filesystem::temp_directory_path()) ||
+        !root.filename().string().starts_with("mm6-restart-") ||
+        (std::filesystem::status(root).permissions() &
+         (std::filesystem::perms::group_all | std::filesystem::perms::others_all)) !=
+            std::filesystem::perms::none)
+        throw std::runtime_error("MM6 v6 indoor probe needs an owner-only system-temp profile");
+    return root;
+}
+
+std::vector<std::uint8_t> seedBytes(const std::filesystem::path &profile) {
+    const auto path = profile / "saves" / "autosave.ec6";
+    if (!std::filesystem::is_regular_file(path) || std::filesystem::is_symlink(path) ||
+        std::filesystem::file_size(path) > 64 * 1024 * 1024)
+        throw std::runtime_error("MM6 v6 indoor probe needs a bounded v2 seed slot");
+    std::ifstream input(path, std::ios::binary);
+    return {std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
+}
+
+std::string firstIndoorMap(const mm6::LoadedMapSource &maps) {
+    const auto names = maps.expectedNames();
+    const auto entry = std::find_if(names.begin(), names.end(), [](const std::string &name) {
+        return name.ends_with(".dlv");
+    });
+    if (entry == names.end())
+        throw std::runtime_error("MM6 v6 indoor probe lacks a source map pair");
+    return entry->substr(0, entry->size() - 4) + ".blv";
+}
+
+} // namespace
+
+// Run alone after the disposable v2 autosave seed. This constructs a v6
+// indoor candidate in memory using one real BLV/DLV and the actual pre-event
+// face checkpoint. Its native slot sections are provenance anchors only;
+// neither production SaveLoad nor gameplay admission is opened.
+GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached) {
+    const char *enable = std::getenv("ENROTH_MM6_V6_INDOOR_STAGE_ENABLE");
+    if (!enable || std::string_view(enable) != "strict-indoor-v6-stage")
+        GTEST_SKIP() << "Opt in after creating a disposable MM6 v2 seed";
+    const auto profile = disposableProfile();
+    if (profile.empty())
+        GTEST_SKIP() << "Set an owner-only system-temp MM6 restart profile";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    const auto originalSeed = seedBytes(profile);
+    auto raw = mm6::decodeRawSave(originalSeed, GameTitle::MM6);
+    const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
+    const std::string mapName = firstIndoorMap(maps);
+    const MapId map = pMapTable->GetMapInfo(mapName);
+    ASSERT_NE(map, MAP_INVALID);
+
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    ASSERT_NE(pGUIWindow_CurrentMenu, nullptr);
+    ASSERT_EQ(pGUIWindow_CurrentMenu->eWindowType, WINDOW_PARTY_CREATION);
+    pMapDeltas.clear();
+    for (const std::string &name : pGames_LOD->ls())
+        if (std::string_view(name).ends_with(".dlv") ||
+            std::string_view(name).ends_with(".ddm"))
+            pMapDeltas.emplace(name, Blob::copy(pGames_LOD->read(name)));
+
+    bool completed = false;
+    bool reached = false;
+    bool aborted = false;
+    std::vector<mm6::IndoorFaceState> preEventFaces;
+    std::vector<std::uint8_t> activeDelta;
+    mm6::GeneratedNpcSaveFields generated;
+    GameplayRandomState rng;
+    mm6::EventRuntimeSaveFields eventRuntime;
+    std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
+    const auto parsedBase = deserializeMM6IndoorBase(maps.readBase(mapName));
+    const auto projectedBase = projectMM6IndoorBase(parsedBase);
+    game.runGameRoutine([&] {
+        engine->_pendingTransition = MapDestination(map, MAP_START_POINT_PARTY);
+        engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
+        checkpoint = std::make_unique<mm6::testing::ScopedPreEventCheckpointForTest>(
+            GameTitle::MM6,
+            [&] {
+                if (uCurrentlyLoadedLevelType != LEVEL_INDOOR ||
+                    engine->_currentLoadedMapId != map || !pIndoor->bLoaded)
+                    throw std::runtime_error("MM6 v6 indoor checkpoint preceded map reconstruction");
+                preEventFaces = mm6::captureLiveIndoorFaceStates(
+                    *pIndoor, projectedBase, GameTitle::MM6);
+                activeDelta = pIndoor->mm6DeltaBytes;
+                generated = mm6::captureGeneratedNpcFields(
+                    pActors, *pNPCStats, mapName, GameTitle::MM6);
+                rng = mm6::captureGameplayRngFields(
+                    *application->component<EngineRandomComponent>(), GameTitle::MM6);
+                mm6::EventRuntimeMapEntry active;
+                active.mapName = mapName;
+                active.respawnCount = pIndoor->dlv.respawnCount;
+                active.lastRespawnDay = pIndoor->dlv.lastRespawnDay;
+                active.mapVars = engine->_persistentVariables.mapVars;
+                active.decorVars = engine->_persistentVariables.decorVars;
+                active.bindings = mm6::captureEventRuntimeDecorationBindings(
+                    pLevelDecorations, GameTitle::MM6);
+                eventRuntime.maps.push_back(std::move(active));
+                reached = true;
+            },
+            mm6::testing::PreEventCheckpointResult::AbortToMainMenu);
+        try {
+            mm6::ScopedChestMapLoadOptIn chestOptIn;
+            DoPrepareWorld(true, 1);
+        } catch (const mm6::testing::PreEventCheckpointAbortForTest &) {
+            aborted = true;
+        }
+        completed = true;
+    });
+    for (int tick = 0; tick < 128 && !completed; ++tick)
+        game.tick();
+    ASSERT_TRUE(completed);
+    ASSERT_TRUE(aborted);
+    ASSERT_TRUE(reached);
+    ASSERT_FALSE(checkpoint->reachedMapLoad());
+    ASSERT_FALSE(checkpoint->reachedInput());
+    ASSERT_FALSE(preEventFaces.empty());
+    ASSERT_FALSE(activeDelta.empty());
+
+    const std::string deltaName = mapName.substr(0, mapName.size() - 4) + ".dlv";
+    raw.metadata.header.mapFileName = mapName;
+    raw.chest.activeDeltaName = deltaName;
+    raw.chest.rawActiveDelta = activeDelta;
+    const auto it = std::find_if(raw.maps.deltas.begin(), raw.maps.deltas.end(),
+        [&deltaName](const mm6::SavedMapDelta &entry) { return entry.name == deltaName; });
+    ASSERT_NE(it, raw.maps.deltas.end());
+    it->bytes = activeDelta;
+    const auto rawBytes = mm6::encodeRawSave(raw, GameTitle::MM6);
+    const auto freshNpcs = mm6::loadNpcStaticBaseline(*engine->resources(), GameTitle::MM6);
+    const auto verifyItem = [](std::int32_t id) {
+        return id >= 1 && id <= 580 &&
+            !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
+    };
+    auto represented = mm6::stageRawSessionFields(
+        rawBytes, freshNpcs, maps.expectedNames(),
+        [&maps](std::string_view name) { return maps.readBase(name); },
+        verifyItem, *pItemTable, pOverlayTable->overlays.size(),
+        pTileTable->tileCount(), GameTitle::MM6);
+    ASSERT_TRUE(represented.indoorPlan);
+    ASSERT_FALSE(represented.outdoorPlan);
+
+    mm6::V6IndoorSaveFields saved;
+    saved.raw = std::move(raw);
+    saved.generatedNpcs = std::move(generated);
+    saved.gameplayRng = std::move(rng);
+    saved.eventRuntime = std::move(eventRuntime);
+    mm6::captureV6IndoorNativeAnchors(
+        represented, &saved.actors, &saved.sprites, &saved.decorations);
+    auto changed = preEventFaces;
+    changed.front().attributes ^= 1u;
+    saved.faceOverrides.maps.push_back(*mm6::captureIndoorFaceOverrides(
+        mapName, preEventFaces, changed, GameTitle::MM6));
+    const auto candidate = mm6::encodeV6IndoorSave(saved, GameTitle::MM6);
+    const auto readFaces = [&mapName, &preEventFaces](std::string_view requested) {
+        if (requested != mapName)
+            throw std::runtime_error("MM6 v6 indoor probe requested another face source");
+        return preEventFaces;
+    };
+    auto staged = mm6::stageV6IndoorSave(
+        candidate, freshNpcs, maps.expectedNames(),
+        [&maps](std::string_view name) { return maps.readBase(name); },
+        verifyItem, *pItemTable, pOverlayTable->overlays.size(),
+        pTileTable->tileCount(), readFaces, GameTitle::MM6);
+    ASSERT_TRUE(staged.represented.indoorPlan);
+    EXPECT_EQ(staged.saved.faceOverrides.maps.size(), 1u);
+    EXPECT_FALSE(staged.canEnterGameLoop());
+    EXPECT_EQ(seedBytes(profile), originalSeed);
+}

@@ -2455,3 +2455,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The Mac MM7 source now writes its own Enroth Continuum config and rotating log names, defaults the window title to Enroth Continuum MM7, prefers its private data root and new environment override, and retains read-only legacy config and override compatibility. MM6 and non-Mac defaults remain separate.
 - An isolated local-only arm64 MM7/GameTest build and integrated cached-library MM7/GameTest build linked. Focused MM7 and MM6 headless controls passed 1/1 each; disposable direct-helper checks covered legacy config and override handling. The installed app and saves were untouched, and visible candidate play/save remains open.
+
+## [2026-11-07] verify | MM7 hidden OpenGL first frame
+- by: T-Burton-ND via codex
+- An opt-in, exact-filter GameTest rendered a first-map MM7 world/HUD frame using private data and a hidden 640×480 OpenGL window. The test passed 1/1; 98 host samples found no visible test window or frontmost-app change, and a wrong-filter run rejected before SDL startup. The private capture remained outside Git.
+- The retained local-only build tree was used after copying the diagnostic source into its temporary extraction, which is marked modified; the staged Atlas and installed app were untouched. The frame shows consistently spaced portrait bars, with no source-backed reason to change their render positions. Visible candidate play, audio and save/reload remain open.

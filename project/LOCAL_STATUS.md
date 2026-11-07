@@ -36,8 +36,10 @@ The current integration tree also builds a title-locked `MM7.app` and stages a s
   alignment or ending coverage; the known-good MM7 build remains protected.
 
 The [MM7 source-autonomy inventory](MM7_SELF_CONTAINED_BUILD_INVENTORY.md)
-records the current Mac build's 23 external gitlinks, nine linked static
+records the original Mac build's 23 external gitlinks, nine linked static
 archives from one OpenEnroth-hosted dependency ZIP and seven nested fetches.
+Four pinned source inputs are now tracked here with licenses and provenance,
+leaving 19 gitlinks. The cached-input arm64 MM7 target still builds.
 This fork already owns the engine source and installed helper; a fresh offline
 build from only this repo remains a later gate. The dependency inventory made
 no change to the protected MM7 app, save profile or private game data.

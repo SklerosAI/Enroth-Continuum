@@ -2,19 +2,28 @@
 
 Status: **read-only local inventory**, 2026-11-06, Enroth Continuum source `9ae53a35a2e2af9dcff691386bb75c34e578c97a`. This records the existing Debug arm64 build and checked-out source. It is not a clean-clone or offline-build result. No dependency, game data, save or installed app was copied or changed.
 
+Migration update, 2026-11-07: `thirdparty/generator` is now an ordinary
+repository-owned source snapshot at its former gitlink revision. Its eleven
+original files matched that revision's Git blobs, and full CC0 `COPYING` and
+an Enroth provenance note are retained. A network-disconnected standalone
+configure/build/run of that source passed. The table below remains the
+historical 23-gitlink inventory; the current repository has **22 gitlinks**.
+The remaining nested fetches and prebuilt-library families still block a
+clean offline MM7 build.
+
 ## Evidence boundary
 
 The title-locked `MM7.app` is declared in [`src/Bin/OpenEnroth/CMakeLists.txt`](../src/Bin/OpenEnroth/CMakeLists.txt) and links this fork's `application` and library targets. Atlas stages an explicitly supplied helper; it is not an OpenEnroth release download. The inspected local cache is `build/CMakeCache.txt`: `Debug`, `arm64`, Ninja, `OE_USE_PREBUILT_DEPENDENCIES=ON`, `OE_BUILD_TESTS=ON`, `OE_BUILD_TOOLS=ON`. The exact `MM7.app/Contents/MacOS/MM7` rule in that build's `build.ninja` supplies the static-library inventory below. `otool -L` on the built MM7 executable lists Apple system libraries/frameworks and libc++, with no third-party dynamic library. Static libraries are build inputs incorporated into the executable, not separate app runtime files. Original MM7 data and local saves remain external and private.
 
 Three network boundaries are distinct:
 
-1. [`CMakeModules/Git.cmake`](../CMakeModules/Git.cmake) runs `git submodule update --init --recursive` unconditionally when Git is found during configure. This can contact the 23 Git origins in [`.gitmodules`](../.gitmodules), even if the requested target is only MM7. A failed update is not checked there.
+1. [`CMakeModules/Git.cmake`](../CMakeModules/Git.cmake) runs `git submodule update --init --recursive` unconditionally in the normal configure path when Git is found. This can contact the remaining 22 Git origins in [`.gitmodules`](../.gitmodules), even if the requested target is only MM7. A failed update is not checked there. The opt-in local-only configure path skips that update.
 2. [`CMakeModules/Dependencies.cmake`](../CMakeModules/Dependencies.cmake) downloads `https://github.com/OpenEnroth/OpenEnroth_Dependencies/releases/download/deps_r8_master/darwin_Debug_arm64.zip` if the marker ZIP is absent. The code does not specify an expected content hash; an existing ZIP skips download. `OE_USE_PREBUILT_DEPENDENCIES=OFF` instead requires ZLIB, FFmpeg, SDL3, OpenAL Soft and PNG to be found elsewhere and does not itself make the build repo-contained.
 3. The Mac [`thirdparty/CMakeLists.txt`](../thirdparty/CMakeLists.txt) includes cpptrace and ztd.text. cpptrace can fetch libdwarf-lite; ztd.text's own CMake fetches six projects by floating `main` branch. The seven cached `_deps/*-src` directories below show what this local configure resolved. Additional conditional ztd benchmark/docs fetches are present in its source but were not active in this build.
 
 ## Pinned Git submodules
 
-Each row is a gitlink recorded by this fork, with its origin in `.gitmodules`. The SHA is the full gitlink commit; the size is the checked-out tree in the existing integration checkout (`du -sk`, rounded MiB), **not** an expected Git pack size. License labels are readings of the checked-out file named after the semicolon; keep each full file and attribution when migrating. “App configure” means this Mac CMake path adds or includes the source even when the MM7 link itself uses only headers or a subset of its targets. `cpplint`, GoogleTest and `gtest_parallel` are style/test inputs, not required to link a production MM7-only target, but the current unconditional Git update still requests them.
+Each row was a gitlink recorded by the original inventory snapshot, with its origin then in `.gitmodules`. The SHA is the full former gitlink commit; the size is the checked-out tree at inventory time (`du -sk`, rounded MiB), **not** an expected Git pack size. The `generator` row is now repo-owned source at that same revision. License labels are readings of the checked-out file named after the semicolon; keep each full file and attribution when migrating. “App configure” means this Mac CMake path adds or includes the source even when the MM7 link itself uses only headers or a subset of its targets. `cpplint`, GoogleTest and `gtest_parallel` are style/test inputs, not required to link a production MM7-only target, but the current normal configure still requests them.
 
 | Path under `thirdparty/` | Origin in `.gitmodules` | Gitlink SHA | Local MiB | License evidence; role |
 | --- | --- | --- | ---: | --- |

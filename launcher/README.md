@@ -11,10 +11,13 @@ data path and user path. It does not package original Might & Magic data.
   play buttons, saves, and character transfer are still to be implemented.
 - The Vault lists MM7 saves and creates local backup copies.
 - The Atelier provides four static PNG party portraits (one per party slot),
-  one MM7 armor template AC override, and a Vanilla/Private mods switch.
+  one MM7 armor template AC override, an optional fresh-vendor-stock-on-entry
+  setting for MM6 and MM7, and a Vanilla/Private mods switch.
   Portraits replace the normal image in party creation and game play. Voices
   and special death and eradication art remain original. An armor AC change
   applies to every copy of that item type while the profile is active.
+  MM7's vendor option applies on the next Private mods launch. The MM6 choice
+  is retained locally for its future playable engine; MM6 shops are not live yet.
 
 ## Private data
 
@@ -32,6 +35,10 @@ folder only when the Private mods switch is on. The armor file format is:
 Use actual tab characters in the file. The Atelier writes the file for you.
 Invalid values are rejected and the original game values remain in use. The
 app keeps the active game data paths and mod switch in local macOS preferences.
+The vendor option is also stored in preferences and does not edit game archives
+or existing saves. When MM7 Private mods is active, Atlas passes
+`ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY=1` to its bundled engine. The corresponding
+MM6 engine setting is `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY=1` once MM6 launches.
 
 ## Local build
 

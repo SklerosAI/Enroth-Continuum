@@ -102,6 +102,8 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         else if action == "backup-saves" { backupSaves() }
         else if action == "mods-on" { preferences.set(true, forKey: "mods.mm7.enabled"); sendState(message: "MM7 private mods will apply at the next launch.") }
         else if action == "mods-off" { preferences.set(false, forKey: "mods.mm7.enabled"); sendState(message: "Vanilla MM7 will run at the next launch.") }
+        else if action == "vendor-refresh-on" { preferences.set(true, forKey: "mods.vendorRefreshOnEntry"); sendState(message: "Fresh vendor stock is saved for MM6 and MM7. MM7 applies on the next private-mods launch.") }
+        else if action == "vendor-refresh-off" { preferences.set(false, forKey: "mods.vendorRefreshOnEntry"); sendState(message: "Vendor stock will use its normal refresh schedule on the next launch.") }
         else if action.hasPrefix("choose-portrait-") {
             if let slot = Int(action.dropFirst("choose-portrait-".count)), (1...4).contains(slot) { choosePortrait(slot) }
         }
@@ -139,6 +141,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             "running": game?.isRunning ?? false,
             "modSupport": true,
             "modsEnabled": preferences.bool(forKey: "mods.mm7.enabled"),
+            "vendorRefreshOnEntry": preferences.bool(forKey: "mods.vendorRefreshOnEntry"),
             "portraits": (1...4).map { FileManager.default.fileExists(atPath: portraitURL($0).path) },
             "armor": ["saved": preferences.bool(forKey: "mods.mm7.armor.saved") &&
                          FileManager.default.fileExists(atPath: modRoot.appendingPathComponent("armor.tsv").path),
@@ -172,12 +175,17 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             let process = Process()
             process.executableURL = engine
             process.arguments = ["--data-path", dataPath.path, "--user-path", userPath.path]
+            var environment = ProcessInfo.processInfo.environment
+            environment.removeValue(forKey: "ENROTH_MM7_MOD_DIR")
+            environment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] = "0"
             if preferences.bool(forKey: "mods.mm7.enabled") {
                 try FileManager.default.createDirectory(at: modRoot, withIntermediateDirectories: true)
-                var environment = ProcessInfo.processInfo.environment
                 environment["ENROTH_MM7_MOD_DIR"] = modRoot.path
-                process.environment = environment
+                if preferences.bool(forKey: "mods.vendorRefreshOnEntry") {
+                    environment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] = "1"
+                }
             }
+            process.environment = environment
             process.terminationHandler = { [weak self] _ in
                 DispatchQueue.main.async {
                     self?.game = nil

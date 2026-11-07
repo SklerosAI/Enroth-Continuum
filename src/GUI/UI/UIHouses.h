@@ -135,6 +135,7 @@ class GUIWindow_House : public GUIWindow {
                      int topOptionShift = 0, bool denseSpacing = false) const;
 
     virtual void houseDialogueOptionSelected(DialogueId option);
+    virtual void onHouseEntered();
     virtual void houseSpecificDialogue();
     virtual std::vector<DialogueId> listDialogueOptions();
     virtual void updateDialogueOnEscape();

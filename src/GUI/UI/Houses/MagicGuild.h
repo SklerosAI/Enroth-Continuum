@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "GUI/UI/UIHouses.h"
+#include "VendorRefreshMod.h"
 
 class GUIWindow_MagicGuild : public GUIWindow_House {
  public:
@@ -10,11 +11,13 @@ class GUIWindow_MagicGuild : public GUIWindow_House {
     virtual ~GUIWindow_MagicGuild() {}
 
     virtual void houseDialogueOptionSelected(DialogueId option) override;
+    virtual void onHouseEntered() override;
     virtual void houseSpecificDialogue() override;
     virtual std::vector<DialogueId> listDialogueOptions() override;
     virtual void houseScreenClick() override;
 
  protected:
+    VendorRefreshVisit _vendorRefreshVisit;
     /**
      * @offset 0x4BC8D5
      */

@@ -19,6 +19,7 @@ set(GUI_UI_HOUSES_HEADERS
         Training.h
         Transport.h
         MM6TransportRules.h
+        VendorRefreshMod.h
         Bank.h
         Jail.h
         MagicGuild.h
@@ -32,7 +33,7 @@ target_check_style(gui_ui_houses)
 target_link_libraries(gui_ui_houses PUBLIC engine_graphics utility)
 
 if(OE_BUILD_TESTS)
-    add_library(test_gui_ui_houses_transport OBJECT Tests/MM6TransportRules_ut.cpp)
+    add_library(test_gui_ui_houses_transport OBJECT Tests/MM6TransportRules_ut.cpp Tests/VendorRefreshMod_ut.cpp)
     target_link_libraries(test_gui_ui_houses_transport PUBLIC testing_unit gui_ui_houses)
     target_check_style(test_gui_ui_houses_transport)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_gui_ui_houses_transport)

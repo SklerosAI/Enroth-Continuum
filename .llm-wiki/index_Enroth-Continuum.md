@@ -23,6 +23,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 ## Campaigns and runtime
 
 - [Campaign Status](Campaign-Status.md) — Dated MM6, MM7, and MM8 readiness
+- [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [Runtime Isolation](Runtime-Isolation.md) — Engine, profile, and launcher separation
 
 ## Agent work and open questions

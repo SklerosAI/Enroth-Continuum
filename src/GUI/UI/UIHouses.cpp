@@ -729,6 +729,10 @@ void createHouseUI(HouseId houseId) {
         break;
     }
 
+    // A new house window is created for each successful entry. Vendor mods
+    // refresh here, before the player can open either buying submenu.
+    window_SpeakInHouse->onHouseEntered();
+
     if (houseNpcs.size() == 1) {
         updateHouseNPCTopics(0);
     }
@@ -1171,6 +1175,8 @@ GUIWindow_House::~GUIWindow_House() {
 void GUIWindow_House::houseDialogueOptionSelected(DialogueId option) {
     _currentDialogue = option;
 }
+
+void GUIWindow_House::onHouseEntered() {}
 
 void GUIWindow_House::houseSpecificDialogue() {
     // Nothing

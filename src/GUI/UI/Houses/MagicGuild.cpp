@@ -1,5 +1,6 @@
 #include "MagicGuild.h"
 
+#include <cstdlib>
 #include <string>
 #include <stdexcept>
 #include <vector>
@@ -229,6 +230,18 @@ void GUIWindow_MagicGuild::houseDialogueOptionSelected(DialogueId option) {
     } else if (IsSkillLearningDialogue(option)) {
         learnSelectedSkill(GetLearningDialogueSkill(option));
     }
+}
+
+void GUIWindow_MagicGuild::onHouseEntered() {
+    if (buildingType() < HOUSE_TYPE_FIRE_GUILD || buildingType() > HOUSE_TYPE_DARK_GUILD)
+        return;
+    if (!_vendorRefreshVisit.takeMM7EntryRefresh(
+            engine->gameTitle(), std::getenv("ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY")))
+        return;
+
+    generateSpellBooksForGuild();
+    pParty->PartyTimes.guildNextRefreshTime[houseId()] =
+        pParty->GetPlayingTime() + Duration::fromDays(houseTable[houseId()].generation_interval_days);
 }
 
 void GUIWindow_MagicGuild::houseSpecificDialogue() {

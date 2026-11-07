@@ -4,6 +4,7 @@
 
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UIHouseEnums.h"
+#include "VendorRefreshMod.h"
 
 class GUIWindow_Shop : public GUIWindow_House {
  public:
@@ -11,6 +12,7 @@ class GUIWindow_Shop : public GUIWindow_House {
     virtual ~GUIWindow_Shop() {}
 
     virtual void houseDialogueOptionSelected(DialogueId option) override;
+    virtual void onHouseEntered() override;
     virtual void houseSpecificDialogue() override;
     virtual std::vector<DialogueId> listDialogueOptions() override;
     virtual void updateDialogueOnEscape() override;
@@ -23,6 +25,7 @@ class GUIWindow_Shop : public GUIWindow_House {
     void processStealingResult(int stealingResult, int fineToAdd);
 
  private:
+    VendorRefreshVisit _vendorRefreshVisit;
     void mainDialogue();
     void displayEquipmentDialogue();
     void sellDialogue();

@@ -768,6 +768,17 @@ void GUIWindow_Shop::houseSpecificDialogue() {
     }
 }
 
+void GUIWindow_Shop::onHouseEntered() {
+    if (!_vendorRefreshVisit.takeMM7EntryRefresh(
+            engine->gameTitle(), std::getenv("ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY")))
+        return;
+
+    generateShopItems(false);
+    generateShopItems(true);
+    pParty->PartyTimes.shopNextRefreshTime[houseId()] =
+        pParty->GetPlayingTime() + Duration::fromDays(houseTable[houseId()].generation_interval_days);
+}
+
 void GUIWindow_Shop::houseDialogueOptionSelected(DialogueId option) {
     _currentDialogue = option;
     if (option == DIALOGUE_SHOP_BUY_STANDARD || option == DIALOGUE_SHOP_BUY_SPECIAL) {

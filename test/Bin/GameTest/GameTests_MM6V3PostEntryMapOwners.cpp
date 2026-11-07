@@ -110,8 +110,12 @@ GAME_TEST(MM6V3PostEntryMapOwnersHeadless, DISABLED_FirstMapRetainedDDMMatchesLi
             const std::string_view message = error.what();
             if (message.find("ground item data") != std::string_view::npos)
                 resultClass = "unsupported-item-or-tail";
-            else if (message.find("sprite projection") != std::string_view::npos)
-                resultClass = "sprite-projection";
+            else if (message.find("sprite position projection") != std::string_view::npos)
+                resultClass = "sprite-position-loss";
+            else if (message.find("sprite scalar projection") != std::string_view::npos)
+                resultClass = "sprite-scalar-loss";
+            else if (message.find("sprite particle transient") != std::string_view::npos)
+                resultClass = "sprite-particle-transient";
             else if (message.find("chest data") != std::string_view::npos)
                 resultClass = "chest-state";
             else if (message.find("actor identity") != std::string_view::npos)

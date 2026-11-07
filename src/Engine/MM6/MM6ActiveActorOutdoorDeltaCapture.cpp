@@ -31,12 +31,14 @@ void requireExactSpriteProjection(const SpriteObject &source,
                                   const SpriteObject_MM7 &projected) {
     if (source.vPosition != projected.position.toFloat() ||
         source.vVelocity != projected.velocity.toFloat() ||
-        source.initialPosition != projected.initialPosition.toFloat() ||
-        source.uSectorID != projected.uSectorID ||
+        source.initialPosition != projected.initialPosition.toFloat())
+        throw std::runtime_error("MM6 active-actor DDM sprite position projection would lose state");
+    if (source.uSectorID != projected.uSectorID ||
         source.timeSinceCreated.ticks() != projected.uTimeSinceCreated ||
-        source.tempLifetime.ticks() != projected.tempLifetime ||
-        source._lastParticleTime.ticks() != 0 || source._ticksPerParticle != 2_ticks)
-        throw std::runtime_error("MM6 active-actor DDM sprite projection would lose runtime state");
+        source.tempLifetime.ticks() != projected.tempLifetime)
+        throw std::runtime_error("MM6 active-actor DDM sprite scalar projection would lose state");
+    if (source._lastParticleTime.ticks() != 0 || source._ticksPerParticle != 2_ticks)
+        throw std::runtime_error("MM6 active-actor DDM sprite particle transient is active");
 }
 
 } // namespace

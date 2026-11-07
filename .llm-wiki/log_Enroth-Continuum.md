@@ -1857,3 +1857,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated a detached EC6 v2 stage that validates all 67 map bases and active CHST before constructing raw inventory, cursor and shop owners. Focused linked tests reported 11 passed and one optional private-fixture skip; no live owner was published.
 - Extended the first-map combat rollback to seven turn-engine scalars alongside its queue and other containers; linked late-fault/commit checks passed 3/3. Production MM6 SaveLoad and the complete world transaction remain guarded.
+
+## [2026-11-06] integrate | MM6 v2 atomic slot boundary
+- by: T-Burton-ND via codex
+- Added separate v1 and v2 native `.ec6` write, list, preflight and recovery APIs. Cross-schema overwrites reject in both directions, with no implicit migration.
+- The linked atomic-file suite passed 7/7, including v2 backup recovery and four injected write faults. Structural validity does not establish campaign playability; normal MM6 SaveLoad remains guarded.

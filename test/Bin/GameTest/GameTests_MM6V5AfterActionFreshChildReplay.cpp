@@ -39,6 +39,7 @@
 #include "Engine/MM6/MM6V4OutdoorDecorationReplay.h"
 #include "Engine/MM6/MM6V4SaveFields.h"
 #include "Engine/MM6/MM6V5FullSessionPreflight.h"
+#include "Engine/MM6/MM6V5FirstMapLoadPreflight.h"
 #include "Engine/MM6/MM6V5LiveSaveCapture.h"
 #include "Engine/MM6/MM6V5ActorRuntimeFields.h"
 #include "Engine/MM6/MM6V5DecorationRuntimeFields.h"
@@ -129,25 +130,6 @@ mm6::CorePartyFields actionPartyFields(std::span<const std::uint8_t> bytes) {
     return decoded->v4.v3.raw.core.party;
 }
 
-std::vector<LevelDecoration> sourceDecorations(const mm6::LoadedMapSource &maps,
-                                               std::string_view mapName) {
-    const Blob baseBytes = maps.readBase(mapName);
-    auto source = std::make_unique<OutdoorLocation_MM7>();
-    deserializeMM6Outdoor(baseBytes, source.get());
-    std::vector<LevelDecoration> result(source->decorations.size());
-    if (source->decorationNames.size() != result.size())
-        throw std::runtime_error("MM6 v5 base decorations lack source names");
-    for (std::size_t i = 0; i < result.size(); ++i) {
-        reconstruct(source->decorations[i], &result[i]);
-        const auto &name = source->decorationNames[i];
-        const auto end = std::find(name.begin(), name.end(), '\0');
-        result[i].uDecorationDescID = pDecorationTable->decorationId(
-            std::string(name.begin(), end));
-        if (result[i].uDecorationDescID == DECORATION_NULL)
-            throw std::runtime_error("MM6 v5 base decoration name lacks a template");
-    }
-    return result;
-}
 
 } // namespace
 
@@ -210,21 +192,8 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
         mm6::testing::setLoadGameOverride([&](std::string_view requested) {
             if (requested != mm6::NEW_GAME_AUTOSAVE_SLOT)
                 throw std::runtime_error("MM6 v5 post-action replay selected another menu route");
-            const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
-            const mm6::NpcStaticBaseline freshNpcs =
-                mm6::loadNpcStaticBaseline(*engine->resources(), GameTitle::MM6);
-            const auto verifyItem = [](std::int32_t id) {
-                return id >= 1 && id <= 580 &&
-                    !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
-            };
-            auto rebuiltDecorations = sourceDecorations(maps, "oute3.odm");
-            auto candidateStage = mm6::stageV5FullSessionPreflightOnHeap(
-                before, freshNpcs, maps.expectedNames(),
-                [&maps](std::string_view name) { return maps.readBase(name); },
-                verifyItem, *pItemTable, pOverlayTable->overlays.size(),
-                pTileTable->tileCount(), engine->config->gameplay.MaxActors.value(),
-                application->component<EngineRandomComponent>()->type(),
-                rebuiltDecorations, *pDecorationTable, GameTitle::MM6);
+            auto candidateStage = mm6::stageV5FirstMapLoadPreflight(
+                before, GameTitle::MM6);
             if (candidateStage->v4.v3.actorMap.activeMap.mapName != "oute3.odm" ||
                 candidateStage->v4.saved.v3.raw.core.party.position != actionParty.position ||
                 candidateStage->v4.saved.v3.raw.core.party.viewYaw != actionParty.viewYaw ||

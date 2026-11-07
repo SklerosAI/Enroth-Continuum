@@ -14,6 +14,7 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
+#include "Engine/MM6/MM6Archive.h"
 #include "Engine/MM6/MM6IndoorFaceOverrides.h"
 #include "Engine/MM6/MM6LoadedMapSource.h"
 #include "Engine/Resources/LOD.h"
@@ -64,7 +65,7 @@ IndoorSourceFaces loadIndoorSourceFaces() {
     const std::string mapName = entry->substr(0, entry->size() - 4) + ".blv";
     const MM6IndoorSnapshot base = deserializeMM6IndoorBase(maps.readBase(mapName));
     const MM6IndoorRuntimeDelta delta = decodeMM6IndoorRuntimeDelta(
-        maps.readDefaultDelta(*entry), base);
+        decodeMM6ArchiveEntry(maps.readDefaultDelta(*entry)), base);
     const IndoorLocation_MM7 projected = projectMM6IndoorBase(base);
     if (projected.faces.empty() || projected.faces.size() != projected.faceTextures.size() ||
         delta.wire.section(MM6IndoorSectionKind::DoorRecords).count !=

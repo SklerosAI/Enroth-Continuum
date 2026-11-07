@@ -2,6 +2,22 @@
 
 This is a personal-machine validation note. It contains no game assets.
 
+## MM7 Atlas install — 2026-11-07
+
+- `/Applications/Enroth Continuum.app` now carries a single Release `MM7.app`
+  helper built from the integration tree's title-locked `MM7` target. It reads
+  `Game Data/MM7` and the `Profiles/MM7-Atlas` profile, which was seeded with
+  the previous profile's settings and every earlier MM7 save.
+- A visible main-display run of the Release helper replayed a recorded trace
+  that loads a save and plays input. It exited cleanly after 15 seconds. The
+  installed Atlas opened and stayed up. Automated screenshots of the visible
+  run were not possible without macOS Screen Recording permission.
+- The superseded Debug `OpenEnroth.app` helper, the upstream nightly DMG, the
+  `~/.openenroth` profile, the duplicate `Application Support/OpenEnroth` data
+  copy and the interim `Profiles/MM7` profile were deleted at the owner's
+  request. `OPENENROTH_MM7_PATH` in the private toolchain now points at
+  `Game Data/MM7`.
+
 ## MM6 update — 2026-11-06
 
 The historical MM6 snapshot below predates the current F4 work. The separate arm64 MM6 branch captures a test-only hidden OpenGL first-map frame with four portraits, health/mana bars, foliage, sky, buildings and road art. A fresh owner-only capture passed its scoped headless check without an on-screen window or focus change. Current pale terrain is likely a month-zero seasonal grass-to-snow mapping; original MM6 season behavior is still unproved. The editable New Game path reached its first outdoor frame in a dedicated hidden GameTest using a test-only temporary-profile `.ec6` save override and title-specific starter items. Its 67-map source now comes from the loaded MM6 archive and map table; a monitored private comparison matched all bases and names to the accepted F3 source. A second fresh headless process read the disposable `.ec6`, staged its represented owners and built a detached first-map plan without changing disk bytes. A detached native v2 first-map writer validates explicit physical inventory, cursor and fresh shop owners and atomically writes only an admitted candidate; synthetic linked checks passed 3/3. A bounded creation-item adapter produces raw records for supported fresh backpack grants in a detached Party copy. One deterministic private-backed headless run admitted all 20 starter items (16 plain, four standard-bonus) and wrote no save slot; other random draws and original-game byte parity remain unverified before the writer can be wired into New Game. The normal MM6 SaveLoad guard is still closed. The MM7 vendor mod control passed two real headless shop/guild entries after this change. MM6 still has no accepted playable campaign, normal save/load, live save–quit–relaunch–load cycle or Atlas Play button. The installed and frozen MM7 baseline remains separate.

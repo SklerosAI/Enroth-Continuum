@@ -45,11 +45,13 @@ The source defaults for a future MM7 Atlas build are
 `~/Library/Application Support/Enroth Continuum/Profiles/MM7-Atlas` profile.
 Atlas checks the same eight required MM7 archives as the engine before launch.
 An explicitly chosen data folder remains valid if it contains those archives.
-The existing installed app and its save location are unchanged by this source
-update. MM7 on macOS does not automatically copy saves from the data folder into
-the fresh profile; move existing saves only after comparing any colliding names
-and verifying local backups. Keep both older save locations until the new
-launch, save and reload cycle has passed.
+MM7 on macOS does not automatically copy saves from the data folder into the
+fresh profile. Copy older saves into `Profiles/MM7-Atlas/saves` by hand.
+
+The installed Atlas packages a Release build of the `MM7` target. Build it in a
+separate tree with `cmake -B build-release -S . -G Ninja -DCMAKE_BUILD_TYPE=Release
+-DOE_BUILD_TESTS=OFF`, then pass `--mm7-app build-release/src/Bin/OpenEnroth/MM7.app`.
+A Debug helper is about three times larger and noticeably slower.
 
 ## Local build
 

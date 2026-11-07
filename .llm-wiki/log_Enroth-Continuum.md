@@ -1832,3 +1832,8 @@ Chronological record of wiki activity.
 ## [2026-11-06] verify | MM7 all-map reconstruction after MM6 terrain change
 - by: T-Burton-ND via codex
 - A monitored MM7 headless control reconstructed the game map set after the shared outdoor tile-mapping extraction and passed 1/1. The monitor saw no visible game window or focus change. The installed MM7 app and saves were not modified.
+
+## [2026-11-06] integrate | MM6 staged live chest open
+- by: T-Burton-ND via codex
+- Routed MM6 `Chest::open` through the title-local first-open owner transaction for untrapped chests, committing the live chest, active raw sidecar and LCG together after GUI construction. MM6 trap and pickup paths remain guarded.
+- A fresh private-backed headless first-map test passed 1/1 after opening a chest and updating its GUI under NullRenderer; the host monitor saw no visible window or focus change. Production map/save entry and rendered chest pixels remain unproved.

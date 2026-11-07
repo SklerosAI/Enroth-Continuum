@@ -1828,3 +1828,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated a title-local raw SHOP/SCLK process owner, a detached all-four-character backpack item-event removal with native first-25-byte clear, and shared live/detached outdoor tile-ID mapping with bounded 127 by 127 preflight.
 - Focused linked world/item/shop tests passed 18/18. Two hidden MM6 processes wrote and re-entered the first outdoor world from one disposable EC6 profile (1/1 each), with no visible window or focus change; the profile was removed. Production house/event/save/load paths and failure-atomic outdoor publication remain guarded.
+
+## [2026-11-06] verify | MM7 all-map reconstruction after MM6 terrain change
+- by: T-Burton-ND via codex
+- A monitored MM7 headless control reconstructed the game map set after the shared outdoor tile-mapping extraction and passed 1/1. The monitor saw no visible game window or focus change. The installed MM7 app and saves were not modified.

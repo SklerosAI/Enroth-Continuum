@@ -2676,3 +2676,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added the tracked `agent_comms/` protocol for Claude, Codex and subagent model cards, narrow claims, append-only handoffs and reviews; it explicitly requires Git synchronization between separate worktrees.
 - Linked the protocol from the agent handoff and wiki index. It records high-level coordination only and preserves the project privacy boundary.
+
+## [2026-11-07] update | Worktree budget raised
+- by: T-Burton-ND via codex
+- Raised the explicit registered worktree cap from ten to fifteen in agent instructions, the pre-create checker and the current plan at the owner's direction. The checker reports 10/15 active worktrees.
+- Existing MM6 lanes and protected baselines remain in place; this policy change does not imply additional concurrent code-changing lanes.

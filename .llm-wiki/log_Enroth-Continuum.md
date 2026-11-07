@@ -1892,3 +1892,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added direct decoded-field Party-copy staging for v2 core and progress fields, sharing the existing v1 staging logic and leaving raw inventory to its separate adapter.
 - Linked core/durable/raw-runtime tests passed 17/17 with direct-vs-v1 equivalence and invalid-field rejection. A complete v2 session and production MM6 load remain open.
+
+## [2026-11-06] integrate | MM6 Antique item union
+- by: T-Burton-ND via codex
+- Added a narrow MM6 Antique ID 58 value-only projection to the byte-preserving raw item adapter, requiring the loaded table contract and allowing only bounded identified/broken flag edits.
+- Integrated item/core/durable tests passed 23/23. Other special IDs, potion unions and artifacts still reject; live item save/reload and original-game consumer comparison remain open.

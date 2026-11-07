@@ -138,3 +138,66 @@ UNIT_TEST(MM6ChestFirstOpenTransaction, RejectsTrapForeignTitleAndBadActionWitho
     EXPECT_EQ(input.record, original);
     EXPECT_EQ(input.lcgState, 8u);
 }
+
+UNIT_TEST(MM6ChestFirstOpenTransaction, NonGoldPickupCarriesExactRawCursorAndChestTail) {
+    TableScope table;
+    const auto types = chestTypes();
+    auto input = inputFor(200);
+    input.dchest = types;
+    auto opened = mm6::stageChestFirstOpenInteraction(input);
+    ASSERT_TRUE(opened);
+    input.record = opened->record;
+    input.lcgState = opened->nextLcgState;
+    input.gridPoint = itemPoint(input.record);
+    const auto beforeChest = input.record;
+    auto empty = mm6::freshRawHeldCursorOwner(GameTitle::MM6);
+    ASSERT_TRUE(empty);
+    auto picked = mm6::stageChestCursorPickup(input, *empty);
+    ASSERT_TRUE(picked);
+    EXPECT_TRUE(picked->chest.itemTaken);
+    EXPECT_FALSE(picked->chest.placed);
+    EXPECT_EQ(picked->chest.nextLcgState, opened->nextLcgState);
+    ASSERT_TRUE(picked->chest.heldItem.mm6RawRecord);
+    EXPECT_EQ(picked->cursor.record, *picked->chest.heldItem.mm6RawRecord);
+    EXPECT_EQ(picked->cursor.record[26], 0x5a);
+    EXPECT_EQ(mm6::readChest32(std::span(picked->chest.record).subspan(4, 28), 0), 0);
+    EXPECT_EQ(picked->chest.record[4 + 26], 0x5a);
+    EXPECT_EQ(input.record, beforeChest);
+    EXPECT_EQ(empty->record.itemNumberRaw(), 0u);
+}
+
+UNIT_TEST(MM6ChestFirstOpenTransaction, CursorJoinRejectsGoldOccupiedAndForeignOwners) {
+    TableScope table;
+    const auto types = chestTypes();
+    auto input = inputFor(200);
+    input.dchest = types;
+    auto opened = mm6::stageChestFirstOpenInteraction(input);
+    ASSERT_TRUE(opened);
+    input.record = opened->record;
+    input.gridPoint = itemPoint(input.record);
+    auto empty = mm6::freshRawHeldCursorOwner(GameTitle::MM6);
+    ASSERT_TRUE(empty);
+    const auto beforeChest = input.record;
+    const auto beforeCursor = *empty;
+
+    mm6::ItemRecord28 held;
+    held.setWord(0, 200);
+    auto occupied = mm6::stageRawHeldCursorSet(*empty, held, GameTitle::MM6);
+    ASSERT_TRUE(occupied);
+    EXPECT_FALSE(mm6::stageChestCursorPickup(input, *occupied));
+
+    auto foreign = *empty;
+    foreign.title = GameTitle::MM7;
+    EXPECT_FALSE(mm6::stageChestCursorPickup(input, foreign));
+    input.gridPoint = Pointi(9, 0);
+    EXPECT_FALSE(mm6::stageChestCursorPickup(input, *empty));
+    input.gridPoint = itemPoint(input.record);
+    input.record = inputFor(std::to_underlying(ITEM_GOLD_SMALL), 79).record;
+    auto goldOpen = mm6::stageChestFirstOpenInteraction(input);
+    ASSERT_TRUE(goldOpen);
+    input.record = goldOpen->record;
+    input.gridPoint = itemPoint(input.record);
+    EXPECT_FALSE(mm6::stageChestCursorPickup(input, *empty));
+    EXPECT_EQ(beforeCursor, *empty);
+    EXPECT_EQ(beforeChest, opened->record);
+}

@@ -68,7 +68,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Room Descriptors](MM6-F4-Room-Descriptors.md) — Private 119-room manifest, all 674 entry dispositions, 116 decoded room frames and one decoded event sound
 - [MM6 F4 Chest Generation](MM6-F4-Chest-Generation.md) — MM6 load guard; detached 28-byte record, safe direct artifact and first-open placement transactions; live projection/persistence gates
 - [MM6 F4 Chest Placement](MM6-F4-Chest-Placement.md) — Original 140-cell in-memory grid, detached seeded fit/placement model, save-grid gate
-- [MM6 F4 Chest Interaction Gate](MM6-F4-Chest-Interaction-Gate.md) — Opening, trap, UI, pickup and persistence consumers after detached generation
+- [MM6 F4 Chest Interaction Gate](MM6-F4-Chest-Interaction-Gate.md) — Headless open and detached raw-cursor pickup candidate; trap, live pickup and persistence remain gated
 - [MM6 F4 Chest Outer Plan](MM6-F4-Chest-Outer-Plan.md) — Source-order 20-chest marker, probability-carry, gold and delegated item stages
 - [MM6 F4 Chest Direct Artifact](MM6-F4-Chest-Direct-Artifact.md) — Original unsafe slot-index scan, bounded trace, explicit safe 30-ID policy option
 - [MM6 F4 Chest Grid Wire](MM6-F4-Chest-Grid-Wire.md) — Original MM6 full-record save copy proves 140 signed grid cells; detached MAPS round-trip, live guards remain

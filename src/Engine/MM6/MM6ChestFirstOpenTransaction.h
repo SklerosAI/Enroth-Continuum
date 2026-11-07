@@ -4,8 +4,10 @@
 #include <limits>
 #include <optional>
 #include <span>
+#include <utility>
 
 #include "Engine/MM6/MM6ChestRuntimeProjection.h"
+#include "Engine/MM6/MM6RawHeldCursorOwner.h"
 
 namespace mm6 {
 
@@ -99,6 +101,36 @@ inline std::optional<ChestFirstOpenResult> stageChestFirstOpenInteraction(
     result.record = *changed;
     result.itemTaken = true;
     return result;
+}
+
+struct ChestCursorPickupCandidate {
+    ChestFirstOpenResult chest;
+    RawHeldCursorOwner cursor;
+};
+
+// Join the existing open/pickup candidate to the exact 28-byte MM6 cursor
+// authority. Gold requires a separate credit transaction; an occupied cursor
+// and any item lacking its original raw record reject before either owner is
+// published. This remains detached from live Party, UI and map-sidecar owners.
+inline std::optional<ChestCursorPickupCandidate> stageChestCursorPickup(
+    const ChestFirstOpenInput &source, const RawHeldCursorOwner &cursor) {
+    if (source.title != GameTitle::MM6 || source.heldItem.itemId != ITEM_NULL ||
+        source.netGoldCredit || !validRawHeldCursorOwner(cursor, source.title) ||
+        cursor.record.itemNumberRaw())
+        return std::nullopt;
+    ChestFirstOpenInput input = source;
+    input.action = ChestInteractionAction::TakeGridItem;
+    const auto picked = stageChestFirstOpenInteraction(input);
+    if (!picked || !picked->itemTaken || picked->heldItem.itemId == ITEM_NULL ||
+        picked->heldItem.isGold() || !picked->heldItem.mm6RawRecord ||
+        picked->partyGold != source.partyGold)
+        return std::nullopt;
+    auto stagedCursor = stageRawHeldCursorSet(cursor, *picked->heldItem.mm6RawRecord,
+                                               source.title);
+    if (!stagedCursor || stagedCursor->record.itemNumberRaw() !=
+                             static_cast<std::uint32_t>(std::to_underlying(picked->heldItem.itemId)))
+        return std::nullopt;
+    return ChestCursorPickupCandidate{*picked, *stagedCursor};
 }
 
 }  // namespace mm6

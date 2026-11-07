@@ -1,13 +1,13 @@
 # MM6 chest interaction gate — F4 source audit
 
-Status: **current-source audit plus detached first-open transaction, 2026-11-06**. This records follow-on consumers of the MM6 chest generation work. It does not establish original-MM6 trap, net-gold sharing, presentation or save behavior, and no MM6 chest was opened on screen.
+Status: **headless first-open plus detached raw-cursor pickup, 2026-11-06**. This records follow-on consumers of the MM6 chest generation work. It does not establish original-MM6 trap, net-gold sharing, rendered presentation or save behavior.
 
 | Current consumer | MM6 obligation before a playable chest |
 | --- | --- |
-| `Chest::open` | It calls inherited `Chest::PlaceItems` when the initialized flag is clear, and may call it again through the `ChestTryPlaceItems` debug option. The MM6 first-placement model is detached; the original entry-side call and repeat policy need proof before this path can use it. The invalid chest-ID guard now checks the actual `vChests` length before indexing. |
+| `Chest::open` | After index validation, MM6 now uses the title-local staged open-only transaction for untrapped chests. It publishes live chest, active sidecar and LCG together after GUI construction; the repeat debug option remains disabled for MM6. A monitored first-map headless check passed, while rendered pixels remain open. |
 | Trap and disarm | The inherited path compares disarm score with twice map difficulty. The retained original MM6 chest-entry trace instead conditionally draws `RNG % 10`, compares `score + roll > 5 × map difficulty`, and on a trigger draws `RNG % 4`. A zero score skips the first draw. Damage, status, audio, geometry and outdoor positioning still need exact tracing before an effect can be committed. |
 | `GUIWindow_Chest` | The UI reads `chestTable` dimensions, pixel offset and texture name, then clips a 32-pixel-per-cell grid and draws inventory icons. An accepted original-MM6 executable trace identifies separate hardcoded 9×9 per-type placement/UI dimensions despite 14×10 metadata in `dchest.bin`; the original icon selector also needs title-specific proof and a rendered check. Do not substitute the metadata dimensions for the observed caller. |
-| Click and Grab Item | The inherited actions move held items, take grid items, credit gold, reposition the cursor, and optionally rerun `PlaceItems` after pickup. Verify MM6 gold/share, held-item, index and hidden-slot behavior with a nonzero chest before adopting these paths. |
+| Click and Grab Item | MM6 returns without mutation. A detached non-gold pickup now joins raw chest and 28-byte cursor records, but live cursor image, Party, sidecar and save publication still need one transaction. Gold/share and hidden-slot behavior remain open. |
 
 ## Detached first-open and one-item transaction
 
@@ -31,3 +31,6 @@ The retained manual describes disarming as a chance and says telekinesis can avo
 | Persistence | Taking or adding an item changes chest items, grid and flags. The [bounded runtime projection](MM6_F4_CHEST_RUNTIME_PROJECTION.md) and indoor/outdoor delta writers now round-trip synthetic changed grids and supported item bytes. The complete `.ec6` transaction, map reset and save–quit–load still need proof without replacing changes with baseline bytes. |
 
 The [placement packet](MM6_F4_CHEST_PLACEMENT.md) and [grid-wire packet](MM6_F4_CHEST_GRID_WIRE.md) establish the 140-cell record; the projection and [opt-in live-owner adapter](MM6_F4_CHEST_LIVE_OWNER_ADAPTER.md) add bounded sidecar/runtime round trips. The [caller packet](MM6_F4_CHEST_GENERATION_AUDIT.md) remains guarded. The [F4 save graph](MM6_F4_BUILD_GRAPH.md) still gates live `SaveLoad` and gameplay. No new runtime or original-game chest scenario was executed.
+## Later raw-cursor pickup join — 2026-11-06
+
+The detached `stageChestCursorPickup` composes the existing first-open pickup with the exact MM6 28-byte held-cursor owner. It accepts only a non-gold item and an empty, ready MM6 cursor; its result carries the changed chest record plus the full raw cursor record while retaining the chest slot's opaque tail. Linked focused chest/open/cursor checks passed 11/11. Live click handling still returns without mutation because cursor image creation, Party state, active sidecar and EC6 v2 save ownership are not yet one failure-safe transaction.

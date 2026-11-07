@@ -2073,3 +2073,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added an MM6-only eligible-actor count immediately before the map loader writes generated NPC rows, refusing maps that would exceed its fixed 100-row pool. MM7 keeps its inherited route.
 - The linked NPC/child-admission suites passed 7/7; loaded MM6 first-map and MM7 headless controls each passed 1/1. The refusal is after earlier map-load work and must abort the child. EC6 v2 still lacks generated NPC identities and game RNG state.
+
+## [2026-11-07] implement | MM6 semantic menu listing seam
+- by: T-Burton-ND via codex
+- Added a read-only v2 slot inventory that applies the caller's semantic validator through the same primary/backup preflight as loading, using the selected HEAD and recovery flag. Structural-only slots can be omitted; the visible MM6 load menu stays closed until a complete gameplay validator and production load route exist.
+- New synthetic selection/disk-immutability test added. Modified source and test translation units passed syntax checks in the isolated worktree; linked integration run is pending.

@@ -40,6 +40,19 @@ else()
         add_executable(OpenEnroth MACOSX_BUNDLE ${OpenEnroth_ICON} ${OpenEnroth_ASSETS_CAR} ${BIN_OPENENROTH_HEADERS} ${BIN_OPENENROTH_SOURCES})
         set_target_properties(OpenEnroth PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in)
 
+        # Atlas packages the playable MM7 runtime in its own immutable helper
+        # slot. Keep the general OpenEnroth binary available for development.
+        add_executable(MM7 MACOSX_BUNDLE ${OpenEnroth_ICON} ${OpenEnroth_ASSETS_CAR} ${BIN_OPENENROTH_HEADERS} ${BIN_OPENENROTH_SOURCES})
+        set_target_properties(MM7 PROPERTIES
+            MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in
+            MACOSX_BUNDLE_BUNDLE_NAME "Might and Magic VII"
+            MACOSX_BUNDLE_GUI_IDENTIFIER "org.sklerosai.enrothcontinuum.mm7"
+            MACOSX_BUNDLE_INFO_STRING "Personal Might and Magic VII runtime based on OpenEnroth."
+            MACOSX_BUNDLE_COPYRIGHT "OpenEnroth and Enroth Continuum contributors (LGPLv3)")
+        target_compile_definitions(MM7 PRIVATE EC_MM7_ONLY=1)
+        target_link_libraries(MM7 PUBLIC application library_cli library_platform_main library_stack_trace)
+        target_check_style(MM7)
+
         # The personal MM6 runtime is an independent sibling app. It never
         # selects MM7 data or profile paths, and the Atlas only stages it after
         # the separate MM6 play/save gate passes.

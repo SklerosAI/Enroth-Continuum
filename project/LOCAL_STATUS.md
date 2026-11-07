@@ -8,6 +8,8 @@ The historical MM6 snapshot below predates the current F4 work. The separate arm
 
 ## MM7: playable on this M2 Mac
 
+The current integration tree also builds a title-locked `MM7.app` and stages a signed Atlas with `Contents/Helpers/MM7.app`. A wrong-title helper was rejected without changing the previous staged app, and a reuse build retained an identical MM7 helper. This is a build-tree checkpoint; the installed Atlas still has the prior generic helper until a live launch and save check accepts the new bundle. The protected `mm7-isolated-runtime` baseline and both local save profiles remain untouched.
+
 - macOS 27.0.1, arm64. The fork's native OpenEnroth engine and The Atlas launcher
   build as arm64 and are installed together at `/Applications/Enroth Continuum.app`.
 - The installed app opens the three-campaign Atlas screen. The MM7 button

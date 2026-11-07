@@ -165,16 +165,16 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             sendState(message: "Choose a folder containing your MM7 ANIMS, DATA, MUSIC and SOUNDS directories.")
             return
         }
-        let engine = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/OpenEnroth.app/Contents/MacOS/OpenEnroth")
+        let engine = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/MM7.app/Contents/MacOS/MM7")
         guard FileManager.default.isExecutableFile(atPath: engine.path) else {
-            sendState(message: "The bundled OpenEnroth engine is missing.")
+            sendState(message: "The bundled MM7 engine is missing.")
             return
         }
         do {
             try FileManager.default.createDirectory(at: userPath, withIntermediateDirectories: true)
             let process = Process()
             process.executableURL = engine
-            process.arguments = ["--data-path", dataPath.path, "--user-path", userPath.path]
+            process.arguments = ["--game", "mm7", "--data-path", dataPath.path, "--user-path", userPath.path]
             var environment = ProcessInfo.processInfo.environment
             environment.removeValue(forKey: "ENROTH_MM7_MOD_DIR")
             environment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] = "0"

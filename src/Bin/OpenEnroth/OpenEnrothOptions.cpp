@@ -13,6 +13,10 @@
 OpenEnrothOptions OpenEnrothOptions::parse(int argc, char **argv) {
     OpenEnrothOptions result;
     std::unique_ptr<CliApp> app = std::make_unique<CliApp>();
+#if defined(EC_MM6_ONLY) && defined(EC_MM7_ONLY)
+#error "A title-locked app must select exactly one game"
+#endif
+
 #ifdef EC_MM6_ONLY
     std::string game = "mm6";
 #else
@@ -21,6 +25,8 @@ OpenEnrothOptions OpenEnrothOptions::parse(int argc, char **argv) {
 
 #ifdef EC_MM6_ONLY
     app->add_option("--game", game, "Game to launch: mm6 only.")->option_text("GAME");
+#elif defined(EC_MM7_ONLY)
+    app->add_option("--game", game, "Game to launch: mm7 only.")->option_text("GAME");
 #else
     app->add_option("--game", game, "Game to launch: mm6 or mm7. Defaults to mm7.")->option_text("GAME");
 #endif
@@ -72,6 +78,10 @@ OpenEnrothOptions OpenEnrothOptions::parse(int argc, char **argv) {
     if (game != "mm6")
         throw Exception("This MM6 app only accepts --game mm6.");
     result.gameTitle = GameTitle::MM6;
+#elif defined(EC_MM7_ONLY)
+    if (game != "mm7")
+        throw Exception("This MM7 app only accepts --game mm7.");
+    result.gameTitle = GameTitle::MM7;
 #else
     if (game == "mm6") {
         result.gameTitle = GameTitle::MM6;

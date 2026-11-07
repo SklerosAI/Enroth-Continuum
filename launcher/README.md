@@ -1,7 +1,7 @@
 # The Atlas on macOS
 
 `Enroth Continuum.app` is a local AppKit window containing an HTML interface.
-It launches this fork's bundled arm64 OpenEnroth engine with an explicit MM7
+It launches this fork's bundled, title-locked arm64 MM7 engine with an explicit MM7
 data path and user path. It does not package original Might & Magic data.
 
 ## Current behavior
@@ -42,13 +42,22 @@ MM6 engine setting is `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY=1` once MM6 launches.
 
 ## Local build
 
-Build the fork's `OpenEnroth` target first with CMake, then run
-`launcher/build.sh`. The build script creates `build/Atlas/Enroth Continuum.app`
-and includes the OpenEnroth GPL license, CREDITS, and upstream notes inside
-`Contents/Resources/Notices`. It uses the local Command Line Tools macOS 26.5
-SDK and `rsvg-convert` currently installed on this machine. The output is ad
-hoc signed for local use. To install, copy the verified app to
-`/Applications/Enroth Continuum.app`.
+Build the fork's `MM7` target with CMake, then run
+`launcher/build.sh --mm7-app build/src/Bin/OpenEnroth/MM7.app`. The assembler
+checks the bundle ID, arm64 executable and title lock before staging the
+signed app at `build/Atlas/Enroth Continuum.app`. Its helper is
+`Contents/Helpers/MM7.app`; it cannot launch MM6 data. The bundle includes
+the upstream license, CREDITS and upstream notes in
+`Contents/Resources/Notices`. A wrong-title helper or failed build leaves the
+previous staged Atlas intact. It uses the local Command Line Tools macOS 26.5
+SDK and `rsvg-convert` currently installed on this machine.
+
+For a future title update, pass `--reuse-from` with an existing Atlas and
+`--mm6-app` or `--mm8-app` only after that title passes its play and save gate.
+The assembler carries forward any existing sibling helper not replaced by an
+explicit input. It always writes a staged bundle, never directly to
+`/Applications`; install only after verifying the playable title's launch and
+save/load behavior.
 
 The source of OpenEnroth and its contributor history remain part of this
 fork. See [../CREDITS.md](../CREDITS.md) and [../project/UPSTREAM.md](../project/UPSTREAM.md).

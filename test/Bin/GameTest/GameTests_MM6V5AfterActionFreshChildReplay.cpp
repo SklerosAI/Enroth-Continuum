@@ -39,6 +39,7 @@
 #include "Engine/MM6/MM6V4OutdoorDecorationReplay.h"
 #include "Engine/MM6/MM6V4SaveFields.h"
 #include "Engine/MM6/MM6V5FullSessionPreflight.h"
+#include "Engine/MM6/MM6V5LiveSaveCapture.h"
 #include "Engine/MM6/MM6V5ActorRuntimeFields.h"
 #include "Engine/MM6/MM6V5DecorationRuntimeFields.h"
 #include "Engine/MM6/MM6V5PreEventActorReplayForTest.h"
@@ -196,7 +197,6 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
     std::string finalOwnerError;
     std::size_t expectedNativeActors = 0;
     std::size_t expectedActiveActors = 0;
-    mm6::GeneratedNpcSaveFields expectedGenerated;
     std::unique_ptr<mm6::V5FullSessionPreflight> staged;
     std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
     std::unique_ptr<mm6::testing::ScopedEventRuntimeRestoreForTest> eventRuntime;
@@ -234,7 +234,6 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
             staged = std::move(candidateStage);
             expectedNativeActors = staged->v4.v3.actorMap.activeMap.delta.actors.size();
             expectedActiveActors = staged->actors.actors.size();
-            expectedGenerated = staged->v4.saved.v3.generatedNpcs;
 
             *pParty = staged->v4.v3.represented.party.party;
             *pNPCStats = staged->v4.v3.represented.world.world.npcs;
@@ -292,107 +291,11 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
                             !gameTimer->isPaused() || engine->_pendingTransition ||
                             pPartyActionQueue->uNumActions != 0)
                             throw std::runtime_error("MM6 v5 post-action replay reached an unexpected world order");
-                        mm6::requireGeneratedNpcActorAgreement(
-                            expectedGenerated, pActors, "oute3.odm", GameTitle::MM6);
-                        const auto observedGenerated = mm6::captureGeneratedNpcFields(
-                            pActors, *pNPCStats, "oute3.odm", GameTitle::MM6);
-                        if (mm6::encodeGeneratedNpcSection(observedGenerated, GameTitle::MM6) !=
-                            mm6::encodeGeneratedNpcSection(expectedGenerated, GameTitle::MM6))
-                            throw std::runtime_error("MM6 v5 generated NPC rows changed after map events");
-                        const std::vector<Actor> finalActors(pActors.begin(), pActors.end());
-                        const auto finalActorRuntime = mm6::captureActorRuntimeFields(
-                            "oute3.odm", staged->v4.saved.v3.activeActorPayload,
-                            finalActors, GameTitle::MM6);
-                        if (mm6::encodeActorRuntimeSection(finalActorRuntime, GameTitle::MM6) !=
-                            mm6::encodeActorRuntimeSection(staged->actors, GameTitle::MM6))
-                            throw std::runtime_error("MM6 v5 ARTR changed after map events");
-                        const auto finalSprites = mm6::captureSpriteRuntimeFields(
-                            "oute3.odm", pOutdoor->mm6DeltaBytes, pSpriteObjects,
-                            GameTitle::MM6);
-                        if (mm6::encodeSpriteRuntimeSection(finalSprites, GameTitle::MM6) !=
-                            mm6::encodeSpriteRuntimeSection(staged->sprites, GameTitle::MM6))
-                            throw std::runtime_error("MM6 v5 SPRT changed after map events");
-                        if (engine->_persistentVariables.mapVars != staged->v4.activeEventRuntime.mapVars ||
-                            engine->_persistentVariables.decorVars != staged->v4.activeEventRuntime.decorVars)
-                            throw std::runtime_error("MM6 v5 EVRT arrays changed after map events");
-                        const mm6::LoadedMapSource loadedMaps(*pGames_LOD, *pMapTable,
-                                                               GameTitle::MM6);
-                        const auto finalDecorations = mm6::captureDecorationRuntimeFields(
-                            "oute3.odm", loadedMaps.readBase("oute3.odm"),
-                            staged->v4.activeEventRuntime, *pDecorationTable,
-                            pLevelDecorations, GameTitle::MM6);
-                        if (mm6::encodeDecorationRuntimeSection(finalDecorations, GameTitle::MM6) !=
-                            mm6::encodeDecorationRuntimeSection(staged->decorations, GameTitle::MM6))
-                            throw std::runtime_error("MM6 v5 DECR changed after map events");
-                        const auto outdoorWire = mm6::decodeOutdoorDelta(pOutdoor->mm6DeltaBytes);
-                        const auto nativeBytes = outdoorWire.part(mm6::OutdoorDeltaPart::PersistentBytes);
-                        const auto expectedNative = mm6::capturePersistentEventBoundary(
-                            staged->v4.v3.represented.persistentEvents, GameTitle::MM6);
-                        if (nativeBytes.size() != expectedNative.size() ||
-                            !std::equal(nativeBytes.begin(), nativeBytes.end(),
-                                        expectedNative.begin(), expectedNative.end()))
-                            throw std::runtime_error("MM6 v5 native event bytes changed after map events");
-                        const auto &savedRaw = staged->v4.saved.v3.raw;
-                        if (pMapTable->pInfos[engine->_currentLoadedMapId].fileName !=
-                                savedRaw.metadata.header.mapFileName ||
-                            !staged->v4.v3.represented.outdoorPlan ||
-                            staged->v4.v3.represented.outdoorPlan->mapName != "oute3.odm")
-                            throw std::runtime_error("MM6 v5 final map differs from HEAD");
-                        mm6::requireNoActiveSavedActorOverlays(
-                            savedRaw.metadata.overlays, GameTitle::MM6);
-                        mm6::requirePostRebuildPidSlotAgreement(
-                            *staged->v4.v3.represented.outdoorPlan, "oute3.odm",
-                            std::span<const Actor>(finalActors).first(expectedNativeActors),
-                            pSpriteObjects, GameTitle::MM6);
-                        const auto &chest = mm6::chestTitleState();
-                        if (!chest.ready || chest.lcgState != savedRaw.chest.lcgState ||
-                            chest.generatedArtifactFlags != savedRaw.chest.generatedArtifactFlags ||
-                            pOutdoor->mm6DeltaBytes != savedRaw.chest.rawActiveDelta ||
-                            vChests.size() != 20)
-                            throw std::runtime_error("MM6 v5 final CHST owner changed");
-                        mm6::ChestRecordSet chestRecords{};
-                        if (!mm6::copyChestRecords(outdoorWire.part(mm6::OutdoorDeltaPart::Chests),
-                                                   &chestRecords))
-                            throw std::runtime_error("MM6 v5 final chest section is incomplete");
-                        for (int index = 0; index < 20; ++index) {
-                            mm6::ChestRuntimeProjection projection{vChests[index], chestRecords[index]};
-                            const auto replayed = mm6::stageChestRuntimeRecord(
-                                GameTitle::MM6, projection);
-                            if (!replayed)
-                                throw std::runtime_error("MM6 v5 final chest projection refused at index " +
-                                                         std::to_string(index));
-                            if (*replayed != chestRecords[index])
-                                throw std::runtime_error("MM6 v5 final chest projection differed at index " +
-                                                         std::to_string(index));
-                        }
+                        mm6::requireV5FirstMapPostWorldAgreement(*staged);
                         const auto finalCore = mm6::captureCoreFields(*pParty, GameTitle::MM6);
-                        if (finalCore != savedRaw.core)
-                            throw std::runtime_error("MM6 v5 PART/CHAR owner changed after map events");
                         if (finalCore.party.position == baselineParty.position ||
                             finalCore.party.viewYaw == baselineParty.viewYaw)
                             throw std::runtime_error("MM6 v5 post-action movement was not restored");
-                        const auto durable = mm6::captureDurableFields(*pParty, GameTitle::MM6);
-                        if (durable.bits != savedRaw.bits || durable.effects != savedRaw.effects)
-                            throw std::runtime_error("MM6 v5 QEST/EFFT owner changed after map events");
-                        if (mm6::captureResistanceFields(*pParty, GameTitle::MM6) != savedRaw.resistances ||
-                            mm6::captureBuffFields(*pParty, GameTitle::MM6) != savedRaw.buffs ||
-                            mm6::captureRecoveryFields(*pParty, GameTitle::MM6) != savedRaw.recovery)
-                            throw std::runtime_error("MM6 v5 Party resistance, buff or recovery owner changed");
-                        if (mm6::encodeHirelingSection(
-                                mm6::captureHirelingFields(*pParty, GameTitle::MM6)) !=
-                            mm6::encodeHirelingSection(savedRaw.hirelings))
-                            throw std::runtime_error("MM6 v5 HIRE owner changed after map events");
-                        mm6::StagedRawPartyInventories liveInventories{*pParty, savedRaw.inventory};
-                        if (mm6::captureRawPartyInventories(liveInventories, *pItemTable,
-                                                             GameTitle::MM6) != savedRaw.inventory)
-                            throw std::runtime_error("MM6 v5 INVR owner changed after map events");
-                        mm6::requirePostWorldEmptyCursorReady(
-                            staged->v4.v3.cursorImage, *pParty, *mouse,
-                            engine->config->graphics.AlwaysCustomCursor.value(),
-                            GameTitle::MM6);
-                        mm6::requirePostWorldArmageddonResumeAgreement(
-                            *pParty, staged->v4.v3.armageddon, LEVEL_OUTDOOR,
-                            GameTitle::MM6);
                         finalOwnersAgree = true;
                     } catch (const std::exception &error) {
                         finalOwnerError = error.what();

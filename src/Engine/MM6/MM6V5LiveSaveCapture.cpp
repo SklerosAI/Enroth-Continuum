@@ -15,6 +15,7 @@
 #include "Engine/Graphics/Overlays.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Decoration.h"
+#include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
@@ -26,10 +27,13 @@
 #include "Engine/Tables/TileTable.h"
 #include "Engine/Timer.h"
 #include "GUI/GUIMessageQueue.h"
+#include "Io/Mouse.h"
 #include "Library/Platform/Application/PlatformApplication.h"
 
 #include "MM6ActiveActorOutdoorDeltaCapture.h"
 #include "MM6BuffSaveFields.h"
+#include "MM6ChestLiveOwnerAdapter.h"
+#include "MM6ChestRuntimeProjection.h"
 #include "MM6CoreSaveRuntime.h"
 #include "MM6DurableSaveFields.h"
 #include "MM6EventRuntimeSaveFields.h"
@@ -41,15 +45,20 @@
 #include "MM6NpcSaveFields.h"
 #include "MM6OutdoorWire.h"
 #include "MM6PersistentEventPublication.h"
+#include "MM6PostRebuildPidSlots.h"
 #include "MM6RawCursorImagePlan.h"
 #include "MM6RawCursorShopProcessOwner.h"
 #include "MM6RawPartyInventoryStage.h"
 #include "MM6RawV2Admission.h"
 #include "MM6RecoverySaveRuntime.h"
 #include "MM6ResistanceSaveFields.h"
+#include "MM6SavedActorPidPolicy.h"
 #include "MM6V4SaveFields.h"
 #include "MM6V5FullSessionPreflight.h"
 #include "MM6V5SaveFields.h"
+#include "MM6V5ActorRuntimeFields.h"
+#include "MM6V5DecorationRuntimeFields.h"
+#include "MM6V5SpriteRuntimeFields.h"
 
 namespace mm6 {
 namespace {
@@ -223,6 +232,120 @@ void requireV5FirstMapLiveSessionAgreement(
         staged->v4.activeEventRuntime.mapVars != engine->_persistentVariables.mapVars ||
         staged->v4.activeEventRuntime.decorVars != engine->_persistentVariables.decorVars)
         throw std::runtime_error("MM6 v5 live event owner changed");
+}
+
+void requireV5FirstMapPostWorldAgreement(
+    const V5FullSessionPreflight &staged) {
+    constexpr std::string_view mapName = "oute3.odm";
+    if (!engine || engine->gameTitle() != GameTitle::MM6 || !pMapTable ||
+        !pParty || !pOutdoor || !pNPCStats || !pItemTable ||
+        !pDecorationTable || !pTileTable || !mouse || !gameTimer ||
+        !pPartyActionQueue || !pGames_LOD ||
+        engine->_currentLoadedMapId != pMapTable->GetMapInfo(mapName) ||
+        uCurrentlyLoadedLevelType != LEVEL_OUTDOOR || !gameTimer->isPaused() ||
+        engine->_pendingTransition || pPartyActionQueue->uNumActions != 0 ||
+        staged.v4.v3.actorMap.activeMap.mapName != mapName ||
+        staged.v4.saved.v3.raw.metadata.header.mapFileName != mapName)
+        throw std::runtime_error("MM6 v5 post-world first-map boundary differs");
+
+    const std::size_t nativeCount =
+        staged.v4.v3.actorMap.activeMap.delta.actors.size();
+    const std::size_t activeCount = staged.actors.actors.size();
+    if (activeCount < nativeCount || pActors.size() != activeCount)
+        throw std::runtime_error("MM6 v5 post-world actor count differs");
+    const auto &expectedGenerated = staged.v4.saved.v3.generatedNpcs;
+    requireGeneratedNpcActorAgreement(expectedGenerated, pActors, mapName,
+                                      GameTitle::MM6);
+    const auto observedGenerated = captureGeneratedNpcFields(
+        pActors, *pNPCStats, mapName, GameTitle::MM6);
+    if (encodeGeneratedNpcSection(observedGenerated, GameTitle::MM6) !=
+        encodeGeneratedNpcSection(expectedGenerated, GameTitle::MM6))
+        throw std::runtime_error("MM6 v5 generated NPC rows changed after map events");
+
+    const std::vector<Actor> finalActors(pActors.begin(), pActors.end());
+    const auto finalActorRuntime = captureActorRuntimeFields(
+        mapName, staged.v4.saved.v3.activeActorPayload, finalActors,
+        GameTitle::MM6);
+    if (encodeActorRuntimeSection(finalActorRuntime, GameTitle::MM6) !=
+        encodeActorRuntimeSection(staged.actors, GameTitle::MM6))
+        throw std::runtime_error("MM6 v5 ARTR changed after map events");
+    const auto finalSprites = captureSpriteRuntimeFields(
+        mapName, pOutdoor->mm6DeltaBytes, pSpriteObjects, GameTitle::MM6);
+    if (encodeSpriteRuntimeSection(finalSprites, GameTitle::MM6) !=
+        encodeSpriteRuntimeSection(staged.sprites, GameTitle::MM6))
+        throw std::runtime_error("MM6 v5 SPRT changed after map events");
+
+    if (engine->_persistentVariables.mapVars !=
+            staged.v4.activeEventRuntime.mapVars ||
+        engine->_persistentVariables.decorVars !=
+            staged.v4.activeEventRuntime.decorVars)
+        throw std::runtime_error("MM6 v5 EVRT arrays changed after map events");
+    const LoadedMapSource loadedMaps(*pGames_LOD, *pMapTable, GameTitle::MM6);
+    const auto finalDecorations = captureDecorationRuntimeFields(
+        mapName, loadedMaps.readBase(mapName), staged.v4.activeEventRuntime,
+        *pDecorationTable, pLevelDecorations, GameTitle::MM6);
+    if (encodeDecorationRuntimeSection(finalDecorations, GameTitle::MM6) !=
+        encodeDecorationRuntimeSection(staged.decorations, GameTitle::MM6))
+        throw std::runtime_error("MM6 v5 DECR changed after map events");
+
+    const auto outdoorWire = decodeOutdoorDelta(pOutdoor->mm6DeltaBytes);
+    const auto nativeBytes = outdoorWire.part(OutdoorDeltaPart::PersistentBytes);
+    const auto expectedNative = capturePersistentEventBoundary(
+        staged.v4.v3.represented.persistentEvents, GameTitle::MM6);
+    if (nativeBytes.size() != expectedNative.size() ||
+        !std::equal(nativeBytes.begin(), nativeBytes.end(),
+                    expectedNative.begin(), expectedNative.end()))
+        throw std::runtime_error("MM6 v5 native event bytes changed after map events");
+
+    const auto &savedRaw = staged.v4.saved.v3.raw;
+    if (!staged.v4.v3.represented.outdoorPlan ||
+        staged.v4.v3.represented.outdoorPlan->mapName != mapName)
+        throw std::runtime_error("MM6 v5 final map differs from HEAD");
+    requireNoActiveSavedActorOverlays(savedRaw.metadata.overlays, GameTitle::MM6);
+    requirePostRebuildPidSlotAgreement(
+        *staged.v4.v3.represented.outdoorPlan, mapName,
+        std::span<const Actor>(finalActors).first(nativeCount), pSpriteObjects,
+        GameTitle::MM6);
+
+    const auto &chest = chestTitleState();
+    if (!chest.ready || chest.lcgState != savedRaw.chest.lcgState ||
+        chest.generatedArtifactFlags != savedRaw.chest.generatedArtifactFlags ||
+        pOutdoor->mm6DeltaBytes != savedRaw.chest.rawActiveDelta ||
+        vChests.size() != 20)
+        throw std::runtime_error("MM6 v5 final CHST owner changed");
+    ChestRecordSet chestRecords{};
+    if (!copyChestRecords(outdoorWire.part(OutdoorDeltaPart::Chests),
+                          &chestRecords))
+        throw std::runtime_error("MM6 v5 final chest section is incomplete");
+    for (int index = 0; index < 20; ++index) {
+        ChestRuntimeProjection projection{vChests[index], chestRecords[index]};
+        const auto replayed = stageChestRuntimeRecord(GameTitle::MM6, projection);
+        if (!replayed || *replayed != chestRecords[index])
+            throw std::runtime_error("MM6 v5 final chest projection differed");
+    }
+
+    if (captureCoreFields(*pParty, GameTitle::MM6) != savedRaw.core)
+        throw std::runtime_error("MM6 v5 PART/CHAR owner changed after map events");
+    const auto durable = captureDurableFields(*pParty, GameTitle::MM6);
+    if (durable.bits != savedRaw.bits || durable.effects != savedRaw.effects)
+        throw std::runtime_error("MM6 v5 QEST/EFFT owner changed after map events");
+    if (captureResistanceFields(*pParty, GameTitle::MM6) !=
+            savedRaw.resistances ||
+        captureBuffFields(*pParty, GameTitle::MM6) != savedRaw.buffs ||
+        captureRecoveryFields(*pParty, GameTitle::MM6) != savedRaw.recovery)
+        throw std::runtime_error("MM6 v5 Party resistance, buff or recovery owner changed");
+    if (encodeHirelingSection(captureHirelingFields(*pParty, GameTitle::MM6)) !=
+        encodeHirelingSection(savedRaw.hirelings))
+        throw std::runtime_error("MM6 v5 HIRE owner changed after map events");
+    StagedRawPartyInventories liveInventories{*pParty, savedRaw.inventory};
+    if (captureRawPartyInventories(liveInventories, *pItemTable,
+                                   GameTitle::MM6) != savedRaw.inventory)
+        throw std::runtime_error("MM6 v5 INVR owner changed after map events");
+    requirePostWorldEmptyCursorReady(
+        staged.v4.v3.cursorImage, *pParty, *mouse,
+        engine->config->graphics.AlwaysCustomCursor.value(), GameTitle::MM6);
+    requirePostWorldArmageddonResumeAgreement(
+        *pParty, staged.v4.v3.armageddon, LEVEL_OUTDOOR, GameTitle::MM6);
 }
 
 } // namespace mm6

@@ -2179,3 +2179,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a detached v3 stage joining ACTR/native map/CHST, represented Party/NPC/timer/event/inventory/cursor/shop owners, pre-event GNPC/RNG agreement and an Armageddon resume plan. Linked composed tests passed 8/8; no live or disk mutation occurs.
 - A private-backed post-entry retained-DDM probe refused at the live sprite header (0/1). Writer-side map capture must patch or prove those bytes before any v3 atomic file is written; resource and final post-world owner checks remain open.
+
+## [2026-11-07] verify | MM6 v3 map replay and pre-event seam
+- by: T-Burton-ND via codex
+- The bounded post-entry outdoor capture patches supported DDM reset, visibility and sprite headers while retaining opaque and original actor/chest bytes. Exact loader floor replay resolved the first-map fractional sprite position; the private-backed retained-DDM/live-owner probe passed 1/1, superseding the earlier header refusal.
+- A test-only ACTR/GNPC/RNGS scope now guards pre-event publication and ordering around chest handoff and map events. Linked replay/checkpoint checks passed 7/7; an ACTR/map/full-session regression group passed 9/9, disposable v2 writer and fresh-child abort controls passed 1/1 each, and an MM7 headless control passed 1/1.
+- A separate no-write full-session first-map candidate refused at public class `map-preflight` (0/1), with exact cause under audit; it guards unrepresented commerce/cursor state. A disabled strict-input-only v3 fresh-child GameTest exists but has not run without an admitted slot. No v3 slot was written and no production SaveLoad, Atlas Play or first-input admission is enabled. Complete writer joins and actor item/buff states remain open.

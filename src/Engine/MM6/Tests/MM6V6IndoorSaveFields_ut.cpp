@@ -13,6 +13,8 @@
 #include "Engine/MM6/MM6V6IndoorSaveFields.h"
 #include "Engine/MM6/MM6V6IndoorPreEventOwnerGate.h"
 #include "Engine/Tables/ItemTable.h"
+#include "Engine/Tables/DecorationTable.h"
+#include "Engine/Snapshots/EntitySnapshots.h"
 #include "Library/Random/SequentialRandomEngine.h"
 #include "Utility/Memory/Blob.h"
 
@@ -55,6 +57,7 @@ mm6::V6IndoorSaveFields candidate() {
     result.actors = {"d0.blv", 1, std::vector<std::uint8_t>(548, 0x11)};
     result.sprites = {"d0.blv", 2, std::vector<std::uint8_t>(200, 0x22)};
     result.decorations = {"d0.blv", 3, std::vector<std::uint8_t>(180, 0x33)};
+    result.runtimeDecorations = {"d0.blv", {{1, 0, 0}, {1, 0, 0}, {1, 0, 0}}};
     return result;
 }
 
@@ -110,6 +113,7 @@ mm6::V6IndoorSaveFields stagedCandidate() {
     fields.sprites.records.clear();
     fields.decorations.count = 0;
     fields.decorations.records.clear();
+    fields.runtimeDecorations.records.clear();
     return fields;
 }
 
@@ -123,17 +127,18 @@ struct ItemTableScope {
 
 } // namespace
 
-UNIT_TEST(MM6V6IndoorSaveFields, StrictTwentySixSectionRoundTrip) {
+UNIT_TEST(MM6V6IndoorSaveFields, StrictTwentySevenSectionRoundTrip) {
     const auto source = candidate();
     const auto bytes = mm6::encodeV6IndoorSave(source, GameTitle::MM6);
     const auto container = mm6::decodeSaveContainer(bytes);
     EXPECT_EQ(container.version, 6);
-    EXPECT_EQ(container.sections.size(), 26);
+    EXPECT_EQ(container.sections.size(), 27);
     const auto decoded = mm6::decodeV6IndoorSave(bytes, GameTitle::MM6);
     EXPECT_EQ(decoded.raw.metadata.header.mapFileName, "d0.blv");
     EXPECT_EQ(decoded.actors, source.actors);
     EXPECT_EQ(decoded.sprites, source.sprites);
     EXPECT_EQ(decoded.decorations, source.decorations);
+    EXPECT_EQ(decoded.runtimeDecorations, source.runtimeDecorations);
     EXPECT_EQ(mm6::encodeV6IndoorSave(decoded, GameTitle::MM6), bytes);
     EXPECT_THROW((void) mm6::decodeRawSave(bytes, GameTitle::MM6), std::exception);
     EXPECT_FALSE(mm6::StagedV6IndoorSaveFields{}.canEnterGameLoop());
@@ -164,6 +169,59 @@ UNIT_TEST(MM6V6IndoorSaveFields, RejectsMissingMismatchedAndMalformedOwners) {
     section(&container, {'I', 'F', 'O', 'V'}).required = true;
     EXPECT_THROW((void) mm6::decodeV6IndoorSave(
         mm6::encodeSaveContainer(container), GameTitle::MM6), std::exception);
+    container = mm6::decodeSaveContainer(
+        mm6::encodeV6IndoorSave(candidate(), GameTitle::MM6));
+    section(&container, {'I', 'D', 'R', 'T'}).payload.pop_back();
+    EXPECT_THROW((void) mm6::decodeV6IndoorSave(
+        mm6::encodeSaveContainer(container), GameTitle::MM6), std::exception);
+    container = mm6::decodeSaveContainer(
+        mm6::encodeV6IndoorSave(candidate(), GameTitle::MM6));
+    std::erase_if(container.sections, [](const mm6::SaveSection &part) {
+        return part.tag == std::array<char, 4>{'I', 'D', 'R', 'T'};
+    });
+    EXPECT_THROW((void) mm6::decodeV6IndoorSave(
+        mm6::encodeSaveContainer(container), GameTitle::MM6), std::exception);
+}
+
+UNIT_TEST(MM6V6IndoorSaveFields, DecorationRuntimeReplaysOnlyMutableSlots) {
+    auto base = std::make_unique<IndoorLocation_MM7>();
+    base->decorations.resize(1);
+    base->decorationNames.resize(1);
+    base->decorationNames[0][0] = 'd';
+    base->decorationNames[0][1] = 'e';
+    base->decorationNames[0][2] = 'c';
+    base->decorationNames[0][3] = '0';
+    base->decorationNames[0][4] = '1';
+    DecorationTable table;
+    table.decorations.resize(6);
+    table.decorations[4].internalName = "dec01";
+    mm6::EventRuntimeMapEntry event;
+    event.mapName = "d0.blv";
+    std::vector<LevelDecoration> live(1);
+    reconstruct(base->decorations[0], &live[0]);
+    live[0].uDecorationDescID = DECORATION_TRASH_HEAP_4;
+    live[0].eventVarId = base->decorations[0].eventVarId;
+    event.bindings = mm6::captureEventRuntimeDecorationBindings(
+        live, GameTitle::MM6);
+    live[0].uFlags |= LEVEL_DECORATION_INVISIBLE;
+    const auto fields = mm6::captureIndoorDecorationRuntime(
+        event.mapName, *base, event, table, live, GameTitle::MM6);
+    mm6::SaveContainer container;
+    container.sections.push_back(mm6::encodeIndoorDecorationRuntimeSection(
+        fields, GameTitle::MM6));
+    const auto decoded = mm6::decodeIndoorDecorationRuntimeSection(
+        container, GameTitle::MM6);
+    EXPECT_EQ(decoded, fields);
+    auto replay = mm6::stageIndoorDecorationRuntime(
+        decoded, *base, event, table, GameTitle::MM6);
+    EXPECT_EQ(replay[0].uFlags, live[0].uFlags);
+    replay[0].uFlags = {};
+    mm6::applyIndoorDecorationRuntimeAfterMapReload(
+        decoded, *base, event, table, &replay, GameTitle::MM6);
+    EXPECT_EQ(replay[0].uFlags, live[0].uFlags);
+    replay[0].vPosition.x += 1;
+    EXPECT_THROW(mm6::applyIndoorDecorationRuntimeAfterMapReload(
+        decoded, *base, event, table, &replay, GameTitle::MM6), std::exception);
 }
 
 UNIT_TEST(MM6V6IndoorSaveFields, NativeAnchorCaptureRequiresMatchingIndoorPlan) {
@@ -209,11 +267,12 @@ UNIT_TEST(MM6V6IndoorSaveFields, ValidatedRawV2IndoorStageRefusesGameplay) {
         return std::vector<mm6::IndoorFaceState>{};
     };
     ItemTableScope items;
+    DecorationTable decorations;
     const auto npcs = freshNpcBaseline();
     auto staged = mm6::stageV6IndoorSave(
         bytes, npcs, names, readBase,
         [](std::int32_t id) { return id >= 1 && id <= 580; },
-        items.table, 5, 145, baseline, GameTitle::MM6);
+        items.table, decorations, 5, 145, baseline, GameTitle::MM6);
     ASSERT_TRUE(staged.represented.indoorPlan);
     EXPECT_FALSE(staged.represented.outdoorPlan);
     EXPECT_FALSE(staged.canEnterGameLoop());
@@ -231,9 +290,9 @@ UNIT_TEST(MM6V6IndoorSaveFields, ValidatedRawV2IndoorStageRefusesGameplay) {
     EXPECT_THROW((void) mm6::stageV6IndoorSave(
         mm6::encodeV6IndoorSave(changed, GameTitle::MM6), npcs, names,
         readBase, [](std::int32_t id) { return id >= 1 && id <= 580; },
-        items.table, 5, 145, baseline, GameTitle::MM6), std::exception);
+        items.table, decorations, 5, 145, baseline, GameTitle::MM6), std::exception);
     EXPECT_THROW((void) mm6::stageV6IndoorSave(
         bytes, npcs, names, readBase,
         [](std::int32_t id) { return id >= 1 && id <= 580; },
-        items.table, 5, 145, {}, GameTitle::MM6), std::exception);
+        items.table, decorations, 5, 145, {}, GameTitle::MM6), std::exception);
 }

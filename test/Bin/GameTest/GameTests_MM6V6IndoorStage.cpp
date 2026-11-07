@@ -28,6 +28,7 @@
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/ItemTable.h"
+#include "Engine/Tables/DecorationTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/Tables/OverlayTable.h"
@@ -179,6 +180,22 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
             saved->eventRuntime = std::move(eventRuntime);
             mm6::captureV6IndoorNativeAnchors(
                 *represented, &saved->actors, &saved->sprites, &saved->decorations);
+            auto changedDecorations = pLevelDecorations;
+            if (changedDecorations.empty())
+                throw std::runtime_error("MM6 v6 IDRT probe has no decoration slot");
+            changedDecorations.front().uFlags = LevelDecorationFlags(
+                std::to_underlying(changedDecorations.front().uFlags) ^ 0x20u);
+            const auto event = std::find_if(saved->eventRuntime.maps.begin(),
+                                            saved->eventRuntime.maps.end(),
+                [&mapName](const mm6::EventRuntimeMapEntry &entry) {
+                    return entry.mapName == mapName;
+                });
+            if (event == saved->eventRuntime.maps.end())
+                throw std::runtime_error("MM6 v6 IDRT probe lacks active EVRT map");
+            saved->runtimeDecorations = mm6::captureIndoorDecorationRuntime(
+                mapName, represented->indoorPlan->base,
+                *event, *pDecorationTable,
+                changedDecorations, GameTitle::MM6);
             auto changed = preEventFaces;
             changed.front().attributes ^= 1u;
             saved->faceOverrides.maps.push_back(*mm6::captureIndoorFaceOverrides(
@@ -192,7 +209,8 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
             staged.reset(new mm6::StagedV6IndoorSaveFields(mm6::stageV6IndoorSave(
                 candidateBytes, freshNpcs, maps.expectedNames(),
                 [&maps](std::string_view name) { return maps.readBase(name); },
-                verifyItem, *pItemTable, pOverlayTable->overlays.size(),
+                verifyItem, *pItemTable, *pDecorationTable,
+                pOverlayTable->overlays.size(),
                 pTileTable->tileCount(), readFaces, GameTitle::MM6)));
         } catch (...) {
             stageError = std::current_exception();

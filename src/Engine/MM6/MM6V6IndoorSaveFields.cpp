@@ -17,12 +17,13 @@ namespace {
 constexpr std::array<char, 4> IACR = {'I', 'A', 'C', 'R'};
 constexpr std::array<char, 4> ISCR = {'I', 'S', 'C', 'R'};
 constexpr std::array<char, 4> IDCR = {'I', 'D', 'C', 'R'};
+constexpr std::array<char, 4> IDRT = {'I', 'D', 'R', 'T'};
 constexpr std::array<char, 4> IFOV = {'I', 'F', 'O', 'V'};
 constexpr std::array<char, 4> GNPC = {'G', 'N', 'P', 'C'};
 constexpr std::array<char, 4> RNGS = {'R', 'N', 'G', 'S'};
 constexpr std::array<char, 4> EVRT = {'E', 'V', 'R', 'T'};
-constexpr std::array<std::array<char, 4>, 7> NEW_TAGS = {
-    GNPC, RNGS, EVRT, IFOV, IACR, ISCR, IDCR};
+constexpr std::array<std::array<char, 4>, 8> NEW_TAGS = {
+    GNPC, RNGS, EVRT, IFOV, IACR, ISCR, IDCR, IDRT};
 constexpr std::size_t MAX_MAP_NAME = 63;
 constexpr std::size_t MAX_ACTORS = 8192;
 constexpr std::size_t MAX_SPRITES = 4096;
@@ -61,7 +62,7 @@ std::uint32_t read32(std::span<const std::uint8_t> bytes, std::size_t offset) {
 
 void requireManifest(const SaveContainer &container) {
     if (container.version != 6 ||
-        (container.sections.size() != 25 && container.sections.size() != 26))
+        (container.sections.size() != 26 && container.sections.size() != 27))
         throw std::runtime_error("MM6 v6 indoor save has an invalid section count");
     for (const auto &tag : NEW_TAGS) {
         const auto it = std::find_if(container.sections.begin(), container.sections.end(),
@@ -72,7 +73,7 @@ void requireManifest(const SaveContainer &container) {
     }
     const bool hasIfov = std::any_of(container.sections.begin(), container.sections.end(),
         [](const SaveSection &section) { return section.tag == IFOV; });
-    if (container.sections.size() != 25 + hasIfov)
+    if (container.sections.size() != 26 + hasIfov)
         throw std::runtime_error("MM6 v6 indoor save has an unexpected section");
 }
 
@@ -180,7 +181,8 @@ std::vector<std::uint8_t> encodeV6IndoorSave(const V6IndoorSaveFields &fields,
     const auto &mapName = fields.raw.metadata.header.mapFileName;
     requireMapName(mapName);
     if (fields.generatedNpcs.mapName != mapName || fields.actors.mapName != mapName ||
-        fields.sprites.mapName != mapName || fields.decorations.mapName != mapName)
+        fields.sprites.mapName != mapName || fields.decorations.mapName != mapName ||
+        fields.runtimeDecorations.mapName != mapName)
         throw std::runtime_error("MM6 v6 indoor owners differ from HEAD map");
     SaveContainer container = decodeSaveContainer(encodeRawSave(fields.raw, title));
     container.version = 6;
@@ -192,6 +194,8 @@ std::vector<std::uint8_t> encodeV6IndoorSave(const V6IndoorSaveFields &fields,
     container.sections.push_back(encodeAnchor(fields.actors, IACR, 548, MAX_ACTORS));
     container.sections.push_back(encodeAnchor(fields.sprites, ISCR, 100, MAX_SPRITES));
     container.sections.push_back(encodeAnchor(fields.decorations, IDCR, 60, MAX_DECORATIONS));
+    container.sections.push_back(encodeIndoorDecorationRuntimeSection(
+        fields.runtimeDecorations, title));
     requireManifest(container);
     return encodeSaveContainer(container);
 }
@@ -209,6 +213,7 @@ V6IndoorSaveFields decodeV6IndoorSave(std::span<const std::uint8_t> bytes,
     result.actors = decodeAnchor(container, IACR, 548, MAX_ACTORS);
     result.sprites = decodeAnchor(container, ISCR, 100, MAX_SPRITES);
     result.decorations = decodeAnchor(container, IDCR, 60, MAX_DECORATIONS);
+    result.runtimeDecorations = decodeIndoorDecorationRuntimeSection(container, title);
     container.version = 2;
     std::erase_if(container.sections, [](const SaveSection &section) {
         return isNewTag(section.tag);
@@ -224,6 +229,7 @@ StagedV6IndoorSaveFields stageV6IndoorSave(
     std::span<const std::uint8_t> bytes, const NpcStaticBaseline &freshNpcs,
     std::span<const std::string> expectedNames, const MapBaseReader &readBase,
     const GroundItemVerifier &verifyItem, const ItemTable &itemTable,
+    const DecorationTable &decorationTable,
     std::size_t overlayTableCount, std::size_t tileTableCount,
     const IndoorBaseFaceReader &readPreEventFaces, GameTitle title) {
     auto saved = std::unique_ptr<V6IndoorSaveFields>(
@@ -234,13 +240,24 @@ StagedV6IndoorSaveFields stageV6IndoorSave(
         rawBytes, freshNpcs, expectedNames, readBase, verifyItem, itemTable,
         overlayTableCount, tileTableCount, title)));
     requireNativeJoin(*saved, *represented);
+    const auto active = std::find_if(saved->eventRuntime.maps.begin(),
+                                    saved->eventRuntime.maps.end(),
+        [&represented](const EventRuntimeMapEntry &entry) {
+            return entry.mapName == represented->indoorPlan->mapName;
+        });
+    if (active == saved->eventRuntime.maps.end())
+        throw std::runtime_error("MM6 v6 IDRT lacks active EVRT owner");
+    auto decorationReplay = stageIndoorDecorationRuntime(
+        saved->runtimeDecorations, represented->indoorPlan->base,
+        *active, decorationTable, title);
     if (!readPreEventFaces)
         throw std::runtime_error("MM6 v6 indoor IFOV lacks pre-event face provenance");
     const auto baseline = readPreEventFaces(represented->indoorPlan->mapName);
     if (baseline.size() != represented->indoorPlan->base.faces.size())
         throw std::runtime_error("MM6 v6 indoor IFOV baseline differs from BLV face count");
     (void) stageIndoorFaceOverrides(saved->faceOverrides, readPreEventFaces, title);
-    return {std::move(*saved), std::move(*represented)};
+    return {std::move(*saved), std::move(*represented),
+            std::move(decorationReplay)};
 }
 
 } // namespace mm6

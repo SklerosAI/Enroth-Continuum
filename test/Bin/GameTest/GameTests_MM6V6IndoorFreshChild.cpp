@@ -30,6 +30,7 @@
 #include "Engine/Snapshots/MM6IndoorSnapshot.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Tables/ItemTable.h"
+#include "Engine/Tables/DecorationTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/OverlayTable.h"
 #include "Engine/Tables/TileTable.h"
@@ -129,7 +130,8 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
             staged.reset(new mm6::StagedV6IndoorSaveFields(mm6::stageV6IndoorSave(
                 before, freshNpcs, maps.expectedNames(),
                 [&maps](std::string_view name) { return maps.readBase(name); },
-                verifyItem, *pItemTable, pOverlayTable->overlays.size(),
+                verifyItem, *pItemTable, *pDecorationTable,
+                pOverlayTable->overlays.size(),
                 pTileTable->tileCount(), readFaces, GameTitle::MM6)));
             (void) mm6::requireEventRuntimeMapEntry(
                 staged->saved.eventRuntime, mapName,
@@ -155,6 +157,21 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
     EXPECT_FALSE(staged->represented.outdoorPlan);
     EXPECT_FALSE(staged->canEnterGameLoop());
     EXPECT_EQ(mm6::encodeV6IndoorSave(staged->saved, GameTitle::MM6), before);
+    auto afterDecorations = pLevelDecorations;
+    const auto event = std::find_if(staged->saved.eventRuntime.maps.begin(),
+                                   staged->saved.eventRuntime.maps.end(),
+        [&mapName](const mm6::EventRuntimeMapEntry &entry) {
+            return entry.mapName == mapName;
+        });
+    ASSERT_NE(event, staged->saved.eventRuntime.maps.end());
+    mm6::applyIndoorDecorationRuntimeAfterMapReload(
+        staged->saved.runtimeDecorations, staged->represented.indoorPlan->base,
+        *event, *pDecorationTable, &afterDecorations, GameTitle::MM6);
+    ASSERT_FALSE(afterDecorations.empty());
+    EXPECT_EQ(std::to_underlying(afterDecorations.front().uFlags),
+              (std::to_underlying(pLevelDecorations.front().uFlags) ^ 0x20u));
+    EXPECT_EQ(afterDecorations.front().uDecorationDescID,
+              staged->decorationReplay.front().uDecorationDescID);
     auto afterEvent = preEventFaces;
     mm6::applyIndoorFaceOverridesAfterMapReload(
         staged->saved.faceOverrides, mapName, &afterEvent, GameTitle::MM6);

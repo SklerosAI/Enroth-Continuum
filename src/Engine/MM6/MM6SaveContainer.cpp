@@ -21,7 +21,7 @@ constexpr size_t MAX_FILE_SIZE = 64 * 1024 * 1024;
 constexpr size_t MAX_SECTION_SIZE = 32 * 1024 * 1024;
 constexpr size_t MAX_SECTIONS = 32;
 
-constexpr std::array<std::array<char, 4>, 33> KNOWN_TAGS = {{
+constexpr std::array<std::array<char, 4>, 34> KNOWN_TAGS = {{
     {'H', 'E', 'A', 'D'}, {'P', 'A', 'R', 'T'}, {'T', 'I', 'M', 'E'}, {'C', 'H', 'A', 'R'},
     {'E', 'F', 'F', 'T'}, {'I', 'T', 'E', 'M'}, {'R', 'E', 'S', 'C'}, {'Q', 'E', 'S', 'T'},
     {'M', 'A', 'P', 'S'}, {'V', 'I', 'S', 'U'}, {'U', 'I', 'S', 'T'}, {'M', 'E', 'T', 'A'},
@@ -32,7 +32,7 @@ constexpr std::array<std::array<char, 4>, 33> KNOWN_TAGS = {{
     {'A', 'C', 'T', 'R'}, {'E', 'V', 'R', 'T'}, {'S', 'P', 'R', 'T'},
     {'A', 'R', 'T', 'R'},
     {'D', 'E', 'C', 'R'}, {'I', 'A', 'C', 'R'}, {'I', 'S', 'C', 'R'},
-    {'I', 'D', 'C', 'R'},
+    {'I', 'D', 'C', 'R'}, {'I', 'D', 'R', 'T'},
 }};
 
 constexpr std::array<std::uint32_t, 256> makeCrcTable() {

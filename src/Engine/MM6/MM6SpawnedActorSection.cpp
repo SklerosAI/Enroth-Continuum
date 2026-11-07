@@ -8,6 +8,7 @@
 #include <cstring>
 #include <limits>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -186,18 +187,28 @@ Actor_MM7 snapshotWithoutName(const Actor &src) {
 }
 
 void requireNoNarrowing(const Actor &source, const Actor &restored) {
-    if (source.pos != restored.pos || source.velocity != restored.velocity ||
-        source.initialPosition != restored.initialPosition ||
-        source.guardingPosition != restored.guardingPosition ||
-        source.sectorId != restored.sectorId ||
-        source.currentActionLength != restored.currentActionLength ||
-        source.currentActionTime != restored.currentActionTime ||
-        source.monsterInfo.recoveryTime != restored.monsterInfo.recoveryTime ||
-        source.hostilityGroup != restored.hostilityGroup)
-        throw std::runtime_error("MM6 spawned actor snapshot narrows runtime state");
+    const std::string slot = " at actor slot " + std::to_string(source.id);
+    if (source.pos != restored.pos)
+        throw std::runtime_error("MM6 ACTR position narrows" + slot);
+    if (source.velocity != restored.velocity)
+        throw std::runtime_error("MM6 ACTR velocity narrows" + slot);
+    if (source.initialPosition != restored.initialPosition)
+        throw std::runtime_error("MM6 ACTR initial position narrows" + slot);
+    if (source.guardingPosition != restored.guardingPosition)
+        throw std::runtime_error("MM6 ACTR guarding position narrows" + slot);
+    if (source.sectorId != restored.sectorId)
+        throw std::runtime_error("MM6 ACTR sector narrows" + slot);
+    if (source.currentActionLength != restored.currentActionLength)
+        throw std::runtime_error("MM6 ACTR action length narrows" + slot);
+    if (source.currentActionTime != restored.currentActionTime)
+        throw std::runtime_error("MM6 ACTR action time narrows" + slot);
+    if (source.monsterInfo.recoveryTime != restored.monsterInfo.recoveryTime)
+        throw std::runtime_error("MM6 ACTR recovery time narrows" + slot);
+    if (source.hostilityGroup != restored.hostilityGroup)
+        throw std::runtime_error("MM6 ACTR hostility group narrows" + slot);
     for (size_t i = 0; i < source.scheduledJobs.size(); ++i)
         if (source.scheduledJobs[i].vPos != restored.scheduledJobs[i].vPos)
-            throw std::runtime_error("MM6 spawned actor job position narrows runtime state");
+            throw std::runtime_error("MM6 ACTR job position narrows" + slot);
 }
 
 void requireSnapshotRoundTrip(const Actor &source, const Actor_MM7 &wire) {

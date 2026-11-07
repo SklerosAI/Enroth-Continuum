@@ -84,6 +84,7 @@
 #include "Engine/MM6/MM6V5PreEventDecorationReplayForTest.h"
 #include "Engine/MM6/MM6V6PreEventIndoorDecorationReplayForTest.h"
 #include "Engine/MM6/MM6V5PreEventSpriteReplayForTest.h"
+#include "Engine/MM6/MM6TransitionAutosaveInterceptForTest.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
@@ -1735,7 +1736,9 @@ void startMapTransition(const MapDestination &destination) {
 
     // pGameLoadingUI_ProgressBar->Initialize(GUIProgressBar::TYPE_None);
 
-    if (engine->_currentLoadedMapId != destination.map()) {
+    if (engine->_currentLoadedMapId != destination.map() &&
+        !mm6::testing::interceptTransitionAutosaveForTest(
+            engine->gameTitle(), engine->_currentLoadedMapId, destination.map())) {
         autoSave();
     }
 

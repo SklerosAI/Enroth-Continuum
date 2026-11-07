@@ -76,6 +76,7 @@
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6PostMapGeneratedNpcLinks.h"
+#include "Engine/MM6/MM6PreEventCheckpointForTest.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
@@ -730,6 +731,19 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
     repairClickableFaces(isMapIndoor(transitionMapId) ? std::span(pIndoor->faces) : std::span(pOutdoor->faces), engine->_localEventMap);
 
     setNPCNamesOnLoad();
+    if (bLoading && engine->gameTitle() == GameTitle::MM6) {
+        try {
+            if (mm6::testing::runArmedPreEventCheckpointForTest(GameTitle::MM6) ==
+                mm6::testing::PreEventCheckpointResult::AbortToMainMenu)
+                throw mm6::testing::PreEventCheckpointAbortForTest();
+        } catch (...) {
+            // This test-only early exit precedes the usual progress release.
+            // Leave no pending transition for the resumed main menu.
+            engine->_pendingTransition.reset();
+            pGameLoadingUI_ProgressBar->Release();
+            throw;
+        }
+    }
     engine->_461103_load_level_sub();
     if (engine->_currentLoadedMapId == MAP_BREEDING_ZONE || engine->_currentLoadedMapId == MAP_WALLS_OF_MIST) {
         // Monsters here give no exp and no gold, and their typed loot is replaced with untyped random
@@ -756,6 +770,8 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
 
     bDialogueUI_InitializeActor_NPC_ID = 0;
     engine->_pendingTransition.reset();
+    if (bLoading && engine->gameTitle() == GameTitle::MM6)
+        mm6::testing::notePreEventMapLoadForTest(GameTitle::MM6);
     onMapLoad();
 
     // OE fix - onMapLoad() above runs the reload event of d11.evt, which zeroes the inserted key count in map var 18

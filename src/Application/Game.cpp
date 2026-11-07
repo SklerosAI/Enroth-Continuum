@@ -50,6 +50,7 @@
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
+#include "Engine/MM6/MM6PreEventCheckpointForTest.h"
 #include "Engine/Tables/MapTable.h"
 
 #include "GUI/GUIButton.h"
@@ -1531,7 +1532,12 @@ void Game::gameLoop() {
         pTurnEngine->End(false);
         pParty->bTurnBasedModeOn = false;  // Make sure turn engine and party turn based mode flag are in sync.
 
-        DoPrepareWorld(bLoading, 1);
+        try {
+            DoPrepareWorld(bLoading, 1);
+        } catch (const mm6::testing::PreEventCheckpointAbortForTest &) {
+            uGameState = GAME_STATE_GAME_QUITTING_TO_MAIN_MENU;
+            return;
+        }
         if (bLoading && engine->gameTitle() == GameTitle::MM6 &&
             mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6) ==
                 mm6::testing::PostWorldAdmissionResult::AbortToMainMenu) {
@@ -1546,6 +1552,8 @@ void Game::gameLoop() {
 
         bool game_finished = false;
         do {
+            if (bLoading && engine->gameTitle() == GameTitle::MM6)
+                mm6::testing::notePreEventInputForTest(GameTitle::MM6);
             MessageLoopWithWait();
 
             engine->particle_engine->UpdateParticles();

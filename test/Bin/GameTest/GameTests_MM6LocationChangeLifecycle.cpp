@@ -43,6 +43,7 @@
 #include "Engine/MM6/MM6V6OutdoorSaveFields.h"
 #include "Engine/MM6/MM6VisitedOutdoorRuntimeOwner.h"
 #include "Engine/MM6/MM6TransitionAutosaveInterceptForTest.h"
+#include "Engine/MM6/MM6TransitionPostWorldCaptureForTest.h"
 #include "Engine/MM6/MM6V5OutdoorDecorationSource.h"
 #include "Engine/MM6/MM6OutdoorWire.h"
 #include "Engine/MM6/MM6ChestRuntimeProjection.h"
@@ -184,8 +185,10 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
     bool visitedV6RoundTrip = false;
     bool visitedTwoMapSectionRoundTrip = false;
     bool visitedV6FaultsRefused = false;
+    bool targetPreInputCaptured = false;
     int sourceGeneratedCursor = -1;
     std::vector<std::uint8_t> oldMapCacheBefore;
+    std::vector<std::uint8_t> targetV5BeforeInput;
     std::string finalOwnerError;
     std::size_t expectedNativeActors = 0;
     std::size_t expectedActiveActors = 0;
@@ -197,6 +200,8 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
     std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
     std::unique_ptr<mm6::testing::ScopedV3PreEventReplayForTest> replay;
     std::unique_ptr<mm6::testing::ScopedPostWorldAdmissionForTest> postWorld;
+    std::unique_ptr<mm6::testing::ScopedTransitionPostWorldCaptureForTest>
+        targetCapture;
     game.runGameRoutine([&] {
         mm6::testing::setLoadGameOverride([&](std::string_view requested) {
             if (requested != mm6::NEW_GAME_AUTOSAVE_SLOT)
@@ -455,6 +460,19 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
             eventRuntime.reset();
             chestOptIn.reset();
             chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>();
+            targetCapture = std::make_unique<
+                mm6::testing::ScopedTransitionPostWorldCaptureForTest>(
+                    GameTitle::MM6, target, [&] {
+                        if (!gameTimer->isPaused() ||
+                            engine->_currentLoadedMapId != target ||
+                            engine->_pendingTransition ||
+                            pPartyActionQueue->uNumActions)
+                            throw std::runtime_error(
+                                "MM6 target pre-input source order differs");
+                        targetV5BeforeInput =
+                            mm6::testing::captureV5LaterOutdoorForTest(before);
+                        targetPreInputCaptured = !targetV5BeforeInput.empty();
+                    });
             mm6::testing::ScopedTransitionAutosaveInterceptForTest intercept(
                 GameTitle::MM6, source, target);
             startMapTransition(MapDestination(target, MAP_START_POINT_PARTY));
@@ -516,8 +534,10 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
                         visitedOwner->nativeDelta.bytes ==
                             visitedOwner->chest.rawActiveDelta &&
                         oldNow == oldMapCacheBefore;
-                    const auto targetV5 =
-                        mm6::testing::captureV5LaterOutdoorForTest(before);
+                    if (!targetPreInputCaptured || !targetCapture->captured())
+                        throw std::runtime_error(
+                            "MM6 target v5 was not captured before input");
+                    const auto &targetV5 = targetV5BeforeInput;
                     const auto verifyItem = [](std::int32_t id) {
                         return id >= 1 && id <= 580 &&
                             !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
@@ -629,6 +649,7 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
     }
     game.runGameRoutine([&] {
         postWorld.reset();
+        targetCapture.reset();
         replay.reset();
         checkpoint.reset();
         eventRuntime.reset();
@@ -649,6 +670,7 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
     EXPECT_TRUE(visitedV6RoundTrip);
     EXPECT_TRUE(visitedTwoMapSectionRoundTrip);
     EXPECT_TRUE(visitedV6FaultsRefused);
+    EXPECT_TRUE(targetPreInputCaptured);
     EXPECT_TRUE(autosaveIntercepted);
     EXPECT_TRUE(transitionQueued);
     EXPECT_TRUE(targetMapReady);

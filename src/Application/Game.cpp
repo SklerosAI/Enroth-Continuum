@@ -50,6 +50,7 @@
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
+#include "Engine/MM6/MM6TransitionPostWorldCaptureForTest.h"
 #include "Engine/MM6/MM6PreEventCheckpointForTest.h"
 #include "Engine/Tables/MapTable.h"
 
@@ -1544,6 +1545,9 @@ void Game::gameLoop() {
             uGameState = GAME_STATE_GAME_QUITTING_TO_MAIN_MENU;
             return;
         }
+        if (engine->gameTitle() == GameTitle::MM6)
+            mm6::testing::runArmedTransitionPostWorldCaptureForTest(
+                GameTitle::MM6, engine->_currentLoadedMapId);
         gameTimer->setPaused(false);
         engineFlags |= ENGINE_SKIP_NEXT_USER_INPUT;
         // uGame_if_0_else_ui_id__11_save__else_load__8_drawSpellInfoPopup__22_final_window__26_keymapOptions__2_options__28_videoOptions

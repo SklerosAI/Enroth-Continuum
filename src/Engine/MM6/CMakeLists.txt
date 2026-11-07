@@ -59,6 +59,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6V5DecorationRuntimeFields.cpp MM6V5DecorationRuntimeFields.h
     MM6V5SaveFields.cpp MM6V5SaveFields.h
     MM6V6OutdoorSaveFields.cpp MM6V6OutdoorSaveFields.h MM6VisitedOutdoorRuntimeOwner.h
+    MM6TransitionPostWorldCaptureForTest.h
     MM6V5LiveSaveCapture.cpp MM6V5LiveSaveCapture.h
     MM6V6IndoorSaveFields.cpp MM6V6IndoorSaveFields.h MM6IndoorFaceLiveOwner.h
     MM6V6IndoorPreEventOwnerGate.cpp MM6V6IndoorPreEventOwnerGate.h

@@ -66,10 +66,17 @@ FsmAction MainMenuState::update() {
             transition = "exitGame";
             break;
         case UIMSG_QuickLoad: {
-            if (engine->gameTitle() == GameTitle::MM6 && mm6AutosaveQuickLoadOverride) {
-                engine->_pendingLoadFileName = "autosave.ec6";
-                SetCurrentMenuID(MENU_LoadingProcInMainMenu);
-                transition = "quickLoadGame";
+            if (engine->gameTitle() == GameTitle::MM6) {
+                if (mm6AutosaveQuickLoadOverride) {
+                    engine->_pendingLoadFileName = "autosave.ec6";
+                    SetCurrentMenuID(MENU_LoadingProcInMainMenu);
+                    transition = "quickLoadGame";
+                } else {
+                    // Normal MM6 loading has no publication/rollback route.
+                    // Do not probe a present .ec6 quicksave and queue it.
+                    MM_DEBUG("MM6 Main Menu QuickLoad refused before EC6 admission");
+                    pAudioPlayer->playUISound(SOUND_error);
+                }
                 break;
             }
             std::string fileName = getCurrentQuickSave();

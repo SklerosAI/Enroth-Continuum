@@ -2281,3 +2281,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A disposable v2 seed, atomic indoor v6 writer and independent fresh-child reader passed 1/1 each. The reader rebuilt the source DLV and pre-event face baseline, re-staged the exact v6 candidate and still refused gameplay admission; production SaveLoad remains closed.
 - A separate v2 seed, v4 baseline and strict second-outdoor-map v5 writer passed 1/1 each, producing its first isolated candidate. Exact native decoration row-0 and static-derived actor-name rules passed focused positive/refusal checks 7/7. Fresh-child later-map replay and campaign travel remain open.
+
+## [2026-11-07] verify | MM6 second outdoor fresh-child replay
+- by: T-Burton-ND via codex
+- A disposable four-process chain passed v2 seed, v4 baseline, strict oute2 v5 candidate write and independent fresh-child pre-input replay at 1/1 each. Prior slots remained byte-identical; the reader still aborts before gameplay input.
+- The first final owner gate exposed an expected native-zero to generated-NPC runtime link. A v5-only ordered PID check now binds that slot to exact GNPC and ARTR owners while retaining native actor and sprite anchors. First input, second save/reload, campaign travel and production MM6 SaveLoad remain open.

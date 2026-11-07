@@ -75,7 +75,7 @@ void setLoadGameOverride(std::function<void(std::string_view)> callback);
 // Route only a synthetic main-menu QuickLoad event to the disposable MM6
 // autosave. Normal MM6 slot listing and quickload remain guarded.
 void setMainMenuAutosaveQuickLoadOverride(bool enabled);
-}
+} // namespace mm6::testing
 
 void quickSaveGame();
 void quickLoadGame();

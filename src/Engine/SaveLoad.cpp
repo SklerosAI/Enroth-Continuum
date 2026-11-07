@@ -56,7 +56,7 @@ void reportUnavailableMM6SaveAction() {
     if (pAudioPlayer)
         pAudioPlayer->playUISound(SOUND_error);
 }
-}
+} // namespace
 
 void mm6::testing::setNewGameSaveOverride(std::function<void()> callback) {
     mm6NewGameSaveOverride = std::move(callback);

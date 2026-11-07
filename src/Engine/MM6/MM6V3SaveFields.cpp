@@ -5,12 +5,12 @@
 #include <stdexcept>
 #include <utility>
 
-#include "MM6SpawnedActorSection.h"
+#include "MM6ActiveActorSection.h"
 
 namespace mm6 {
 namespace {
 
-constexpr std::array<char, 4> SPAW_TAG = {'S', 'P', 'A', 'W'};
+constexpr std::array<char, 4> ACTR_TAG = {'A', 'C', 'T', 'R'};
 constexpr std::array<char, 4> GNPC_TAG = {'G', 'N', 'P', 'C'};
 constexpr std::array<char, 4> RNGS_TAG = {'R', 'N', 'G', 'S'};
 constexpr std::array<std::array<char, 4>, 22> REQUIRED_TAGS = {{
@@ -18,12 +18,12 @@ constexpr std::array<std::array<char, 4>, 22> REQUIRED_TAGS = {{
     {'I', 'N', 'V', 'R'}, {'H', 'E', 'A', 'D'}, {'T', 'I', 'M', 'E'}, {'U', 'I', 'S', 'T'},
     {'V', 'I', 'S', 'U'}, {'M', 'A', 'P', 'S'}, {'R', 'E', 'S', 'C'}, {'R', 'S', 'T', 'S'},
     {'H', 'E', 'L', 'D'}, {'B', 'U', 'F', 'F'}, {'H', 'I', 'R', 'E'}, {'R', 'C', 'V', 'R'},
-    {'C', 'H', 'S', 'T'}, {'S', 'C', 'L', 'K'}, {'S', 'H', 'O', 'P'}, SPAW_TAG,
+    {'C', 'H', 'S', 'T'}, {'S', 'C', 'L', 'K'}, {'S', 'H', 'O', 'P'}, ACTR_TAG,
     GNPC_TAG, RNGS_TAG,
 }};
 
 bool isNewTag(const std::array<char, 4> &tag) {
-    return tag == SPAW_TAG || tag == GNPC_TAG || tag == RNGS_TAG;
+    return tag == ACTR_TAG || tag == GNPC_TAG || tag == RNGS_TAG;
 }
 
 void checkSectionSet(const SaveContainer &container) {
@@ -40,23 +40,18 @@ void checkSectionSet(const SaveContainer &container) {
             throw std::runtime_error("MM6 v3 save is missing a required section");
 }
 
-void validateSpawnedOwner(std::span<const std::uint8_t> payload) {
-    if (payload.size() < 16)
-        throw std::runtime_error("MM6 v3 spawned actor section is truncated");
-    const size_t firstSlot = std::uint32_t(payload[8]) |
-        (std::uint32_t(payload[9]) << 8) | (std::uint32_t(payload[10]) << 16) |
-        (std::uint32_t(payload[11]) << 24);
-    const auto actors = decodeSpawnedActorSection(payload, firstSlot, GameTitle::MM6);
-    if (encodeSpawnedActorSection(actors, firstSlot, GameTitle::MM6) !=
+void validateActiveActorOwner(std::span<const std::uint8_t> payload) {
+    const auto actors = decodeActiveActorSection(payload, GameTitle::MM6);
+    if (encodeActiveActorSection(actors, GameTitle::MM6) !=
         std::vector<std::uint8_t>(payload.begin(), payload.end()))
-        throw std::runtime_error("MM6 v3 spawned actor section is not canonical");
+        throw std::runtime_error("MM6 v3 active actor section is not canonical");
 }
 
-const SaveSection &spawnedOwner(const SaveContainer &container) {
+const SaveSection &activeActorOwner(const SaveContainer &container) {
     const auto it = std::find_if(container.sections.begin(), container.sections.end(),
-                                 [](const SaveSection &section) { return section.tag == SPAW_TAG; });
+                                 [](const SaveSection &section) { return section.tag == ACTR_TAG; });
     if (it == container.sections.end())
-        throw std::runtime_error("MM6 v3 spawned actor section is missing");
+        throw std::runtime_error("MM6 v3 active actor section is missing");
     return *it;
 }
 
@@ -67,10 +62,10 @@ std::vector<std::uint8_t> encodeV3Save(const V3SaveFields &fields, GameTitle tit
         throw std::runtime_error("MM6 v3 save requires MM6 title");
     if (fields.generatedNpcs.mapName != fields.raw.metadata.header.mapFileName)
         throw std::runtime_error("MM6 v3 generated NPC map differs from HEAD");
-    validateSpawnedOwner(fields.spawnedActorPayload);
+    validateActiveActorOwner(fields.activeActorPayload);
     SaveContainer container = decodeSaveContainer(encodeRawSave(fields.raw, title));
     container.version = 3;
-    container.sections.push_back({SPAW_TAG, true, fields.spawnedActorPayload});
+    container.sections.push_back({ACTR_TAG, true, fields.activeActorPayload});
     container.sections.push_back(encodeGeneratedNpcSection(fields.generatedNpcs, title));
     container.sections.push_back(encodeGameplayRngSection(fields.gameplayRng, title));
     checkSectionSet(container);
@@ -82,10 +77,10 @@ V3SaveFields decodeV3Save(std::span<const std::uint8_t> bytes, GameTitle title) 
         throw std::runtime_error("MM6 v3 save requires MM6 title");
     SaveContainer container = decodeSaveContainer(bytes);
     checkSectionSet(container); // Reject other versions and shapes before owner decoding.
-    const SaveSection &spawned = spawnedOwner(container);
-    validateSpawnedOwner(spawned.payload);
+    const SaveSection &activeActors = activeActorOwner(container);
+    validateActiveActorOwner(activeActors.payload);
     V3SaveFields result;
-    result.spawnedActorPayload = spawned.payload;
+    result.activeActorPayload = activeActors.payload;
     result.generatedNpcs = decodeGeneratedNpcSection(container, title);
     result.gameplayRng = decodeGameplayRngSection(container, title);
 

@@ -9,6 +9,7 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6V3SaveFields.h"
+#include "Engine/MM6/MM6ActiveActorSection.h"
 #include "Engine/MM6/MM6SpawnedActorSection.h"
 #include "Engine/Objects/Actor.h"
 
@@ -33,13 +34,13 @@ mm6::V3SaveFields exampleFields() {
     fields.raw.npcs.activeCount = 399;
     fields.raw.recovery.playingTicks = 42;
     fields.raw.shops = mm6::emptyNewGameShopTitleState(GameTitle::MM6);
-    Actor spawned(38);
-    spawned.monsterInfo.id = static_cast<MonsterId>(7);
-    spawned.monsterId = static_cast<MonsterId>(12);
-    spawned.monsterInfo.mm6Resistances = mm6::MonsterResistances{1, 2, 3, 4, 5, 6};
-    spawned.monsterInfo.attackPreferences = MonsterAttackPreferences{};
-    const std::array<Actor, 1> actors{spawned};
-    fields.spawnedActorPayload = mm6::encodeSpawnedActorSection(actors, 38, GameTitle::MM6);
+    Actor actor(0);
+    actor.monsterInfo.id = static_cast<MonsterId>(7);
+    actor.monsterId = MONSTER_INVALID;
+    actor.monsterInfo.mm6Resistances = mm6::MonsterResistances{1, 2, 3, 4, 5, 6};
+    actor.monsterInfo.attackPreferences = MonsterAttackPreferences{};
+    const std::array<Actor, 1> actors{actor};
+    fields.activeActorPayload = mm6::encodeActiveActorSection(actors, GameTitle::MM6);
     fields.generatedNpcs.mapName = "o0.odm";
     fields.gameplayRng.type = RANDOM_ENGINE_SEQUENTIAL;
     fields.gameplayRng.sequentialState = 12345;
@@ -66,7 +67,7 @@ UNIT_TEST(MM6V3SaveFields, ExactTwentyTwoSectionRoundTripAndOldVersionRefusal) {
         EXPECT_TRUE(candidate.required);
     const auto decoded = mm6::decodeV3Save(bytes, GameTitle::MM6);
     EXPECT_EQ(decoded.generatedNpcs.mapName, source.generatedNpcs.mapName);
-    EXPECT_EQ(decoded.spawnedActorPayload, source.spawnedActorPayload);
+    EXPECT_EQ(decoded.activeActorPayload, source.activeActorPayload);
     EXPECT_EQ(decoded.gameplayRng, source.gameplayRng);
     EXPECT_EQ(mm6::encodeV3Save(decoded, GameTitle::MM6), bytes);
 
@@ -78,13 +79,13 @@ UNIT_TEST(MM6V3SaveFields, ExactTwentyTwoSectionRoundTripAndOldVersionRefusal) {
     EXPECT_THROW((void) mm6::encodeV3Save(source, GameTitle::MM7), std::exception);
 }
 
-UNIT_TEST(MM6V3SaveFields, CanonicalZeroSpawnRowsRoundTrip) {
+UNIT_TEST(MM6V3SaveFields, CanonicalZeroActiveActorsRoundTrip) {
     auto source = exampleFields();
     const std::array<Actor, 0> none{};
-    source.spawnedActorPayload = mm6::encodeSpawnedActorSection(none, 38, GameTitle::MM6);
+    source.activeActorPayload = mm6::encodeActiveActorSection(none, GameTitle::MM6);
     const auto bytes = mm6::encodeV3Save(source, GameTitle::MM6);
     const auto decoded = mm6::decodeV3Save(bytes, GameTitle::MM6);
-    EXPECT_EQ(decoded.spawnedActorPayload, source.spawnedActorPayload);
+    EXPECT_EQ(decoded.activeActorPayload, source.activeActorPayload);
     EXPECT_EQ(mm6::encodeV3Save(decoded, GameTitle::MM6), bytes);
 }
 
@@ -110,21 +111,35 @@ UNIT_TEST(MM6V3SaveFields, EverySectionRequiredAndExtrasReject) {
                  std::exception);
 }
 
-UNIT_TEST(MM6V3SaveFields, SpawnAndSidecarBoundsReject) {
+UNIT_TEST(MM6V3SaveFields, ActiveActorAndSidecarBoundsReject) {
     auto base = mm6::decodeSaveContainer(mm6::encodeV3Save(exampleFields(), GameTitle::MM6));
-    auto wrongVersion = section(&base, {'S', 'P', 'A', 'W'}).payload;
+    auto wrongVersion = section(&base, {'A', 'C', 'T', 'R'}).payload;
     wrongVersion[4] = 2;
-    auto wrongCount = section(&base, {'S', 'P', 'A', 'W'}).payload;
+    auto wrongCount = section(&base, {'A', 'C', 'T', 'R'}).payload;
     wrongCount[12] = 2;
-    auto trailing = section(&base, {'S', 'P', 'A', 'W'}).payload;
+    auto wrongFirstSlot = section(&base, {'A', 'C', 'T', 'R'}).payload;
+    wrongFirstSlot[8] = 1;
+    auto trailing = section(&base, {'A', 'C', 'T', 'R'}).payload;
     trailing.push_back(0);
     for (const std::vector<std::uint8_t> &invalid : {
-             std::vector<std::uint8_t>{1, 0, 0}, wrongVersion, wrongCount, trailing}) {
+             std::vector<std::uint8_t>{1, 0, 0}, wrongVersion, wrongCount,
+             wrongFirstSlot, trailing}) {
         auto changed = base;
-        section(&changed, {'S', 'P', 'A', 'W'}).payload = invalid;
+        section(&changed, {'A', 'C', 'T', 'R'}).payload = invalid;
         EXPECT_THROW((void) mm6::decodeV3Save(mm6::encodeSaveContainer(changed), GameTitle::MM6),
                      std::exception);
     }
+    auto oldTag = base;
+    section(&oldTag, {'A', 'C', 'T', 'R'}).tag = {'S', 'P', 'A', 'W'};
+    EXPECT_THROW((void) mm6::decodeV3Save(mm6::encodeSaveContainer(oldTag), GameTitle::MM6),
+                 std::exception);
+    auto oldPayload = base;
+    const auto actors = mm6::decodeActiveActorSection(
+        section(&base, {'A', 'C', 'T', 'R'}).payload, GameTitle::MM6);
+    section(&oldPayload, {'A', 'C', 'T', 'R'}).payload =
+        mm6::encodeSpawnedActorSection(actors, 0, GameTitle::MM6);
+    EXPECT_THROW((void) mm6::decodeV3Save(mm6::encodeSaveContainer(oldPayload), GameTitle::MM6),
+                 std::exception);
     auto changed = base;
     section(&changed, {'G', 'N', 'P', 'C'}).payload.resize(100000);
     EXPECT_THROW((void) mm6::decodeV3Save(mm6::encodeSaveContainer(changed), GameTitle::MM6),

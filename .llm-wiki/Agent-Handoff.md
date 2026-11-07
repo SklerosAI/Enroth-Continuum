@@ -32,6 +32,8 @@ A detached [pre-event GNPC/RNG agreement helper](MM6-F4-Pre-Event-GNPC-Replay.md
 
 The detached [SPAW v1 runtime section](MM6-F4-Spawned-Actor-Section.md) passed 4/4 linked unit checks and a private-backed, fresh-process first-map encode/decode/re-encode probe 1/1 with ramfs user state. It stores exact contiguous slots, MM6 resistances and runtime-only fields, and refuses actor items/buffs or narrowing. This proves a narrow pristine-spawn capture, not a durable post-entry save. It is not in strict v2, and baseline DDM state, live replay order and later mutated actor fields remain open.
 
+A detached [EC6 v3 exact manifest](MM6-F4-EC6-V3-Manifest.md) now requires the nineteen v2 owners plus SPAW, GNPC and RNGS. Linked v3/v2/SPAW suites passed 12/12. V1/v2 decoders remain strict; no v3 atomic slot, map-stage first-slot/no-respawn binding, pre-event publisher or production loader exists. The v2 bootstrap refusal remains in force.
+
 ## Read first
 
 1. Run `git status --short --branch`, `git worktree list`, and `git log -1 --oneline` in the checkout you intend to use. The branch and worktree descriptions below may drift.

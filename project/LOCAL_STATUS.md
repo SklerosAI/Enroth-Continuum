@@ -968,3 +968,10 @@ encoded, decoded and re-encoded its spawned actors **1/1** using ramfs user
 state, without writing a save. This is not yet a durable `.ec6` slot or a
 fresh-child replay, and later actor mutations remain outside the admitted
 subset.
+
+The detached [EC6 v3 manifest](MM6_F4_EC6_V3_MANIFEST.md) now requires
+exactly the nineteen v2 owners plus SPAW, GNPC and RNGS. Linked v3, v2
+regression and SPAW suites passed **12/12**. It validates each new payload
+and the GNPC/HEAD map join, but does not bind SPAW's first slot to the native
+DDM baseline, prove no-respawn replay, or expose a v3 atomic disk route.
+V1/v2 remain strict and cannot be silently loaded as v3.

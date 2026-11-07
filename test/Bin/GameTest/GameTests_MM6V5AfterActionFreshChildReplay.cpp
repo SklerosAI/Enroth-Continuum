@@ -191,6 +191,7 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
     bool secondLoadReached = false;
     bool secondAbandoned = false;
     bool menuRouteSafe = false;
+    bool retryingAfterFault = false;
     std::string finalOwnerError;
     std::size_t expectedNativeActors = 0;
     std::size_t expectedActiveActors = 0;
@@ -205,8 +206,7 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
     std::unique_ptr<mm6::testing::ScopedPostWorldAdmissionForTest> postWorld;
     std::unique_ptr<mm6::testing::ScopedV5FirstMapLoadAbandonForTest> abandon;
     std::unique_ptr<mm6::testing::ScopedV5FirstMapLoadAbandonForTest> secondAbandon;
-    game.runGameRoutine([&] {
-        mm6::testing::setLoadGameOverride([&](std::string_view requested) {
+    auto loadCandidate = [&](std::string_view requested) {
             if (requested != mm6::NEW_GAME_AUTOSAVE_SLOT)
                 throw std::runtime_error("MM6 v5 post-action replay selected another menu route");
             auto candidateStage = mm6::stageV5FirstMapLoadPreflight(
@@ -220,9 +220,11 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
             mm6::requireV5FirstMapPrepublicationAgreement(
                 *candidateStage, GameTitle::MM6);
             staged = std::move(candidateStage);
-            if (faultMode)
-                abandon = std::make_unique<mm6::testing::ScopedV5FirstMapLoadAbandonForTest>(
+            if (faultMode) {
+                auto &abortScope = retryingAfterFault ? secondAbandon : abandon;
+                abortScope = std::make_unique<mm6::testing::ScopedV5FirstMapLoadAbandonForTest>(
                     *staged, GameTitle::MM6);
+            }
             expectedNativeActors = staged->v4.v3.actorMap.activeMap.delta.actors.size();
             expectedActiveActors = staged->actors.actors.size();
 
@@ -239,7 +241,7 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
                         pActors.size() == expectedNativeActors &&
                         pNPCStats->uNewlNPCBufPos == 0 &&
                         pPartyActionQueue->uNumActions == 0;
-                    if (mode == V5ReplayMode::FaultAtPreEvent) {
+                    if (mode == V5ReplayMode::FaultAtPreEvent && !retryingAfterFault) {
                         faultInjected = true;
                         throw std::runtime_error("synthetic MM6 pre-event replay fault");
                     }
@@ -279,12 +281,12 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
                     } catch (const std::exception &error) {
                         finalOwnerError = error.what();
                     }
-                    return allowInput && finalOwnersAgree;
+                    return (allowInput || retryingAfterFault) && finalOwnersAgree;
                 });
             // Every throwing replay-scope constructor runs before the first
             // live owner assignment. Post-world callbacks execute later.
             *pParty = staged->v4.v3.represented.party.party;
-            if (mode == V5ReplayMode::FaultAfterPartyAssignment) {
+            if (mode == V5ReplayMode::FaultAfterPartyAssignment && !retryingAfterFault) {
                 faultInjected = true;
                 throw std::runtime_error("synthetic MM6 partial publication fault");
             }
@@ -305,7 +307,11 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
                 pMapTable->GetMapInfo("oute3.odm"), MAP_START_POINT_PARTY);
             engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
             selected = true;
-        });
+            if (retryingAfterFault)
+                secondLoadReached = true;
+    };
+    game.runGameRoutine([&] {
+        mm6::testing::setLoadGameOverride(loadCandidate);
         mm6::testing::setMainMenuAutosaveQuickLoadOverride(true);
         engine->_messageQueue->addMessageCurrentFrame(UIMSG_QuickLoad);
     });
@@ -332,20 +338,17 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
             eventRuntime.reset();
             chestOptIn.reset();
             abandon.reset();
-            mm6::testing::setLoadGameOverride([&](std::string_view requested) {
-                if (requested != mm6::NEW_GAME_AUTOSAVE_SLOT)
-                    throw std::runtime_error("MM6 abandon probe retried another menu slot");
-                auto again = mm6::stageV5FirstMapLoadPreflight(before, GameTitle::MM6);
-                secondAbandon = std::make_unique<mm6::testing::ScopedV5FirstMapLoadAbandonForTest>(
-                    *again, GameTitle::MM6);
-                secondLoadReached = true;
-                throw std::runtime_error("synthetic MM6 second menu load fault");
-            });
+            retryingAfterFault = true;
+            postWorldRan = false;
+            finalOwnersAgree = false;
+            finalOwnerError.clear();
+            mm6::testing::setLoadGameOverride(loadCandidate);
             engine->_messageQueue->addMessageCurrentFrame(UIMSG_QuickLoad);
         });
-        game.tick(2);
+        game.skipLoadingScreen();
+        game.tick(3);
     }
-    if (allowInput && finalOwnersAgree) {
+    if ((allowInput || faultMode) && finalOwnersAgree) {
         game.runGameRoutine([&] {
             firstInputReached = checkpoint->reachedInput() &&
                 !gameTimer->isPaused() &&
@@ -402,8 +405,14 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
         EXPECT_TRUE(firstAbandoned);
         EXPECT_TRUE(menuRouteSafe);
         EXPECT_TRUE(secondLoadReached);
-        EXPECT_TRUE(secondAbandoned);
-        EXPECT_FALSE(postWorldRan);
+        EXPECT_FALSE(secondAbandoned);
+        EXPECT_TRUE(selected);
+        EXPECT_TRUE(checkpointRan);
+        EXPECT_TRUE(freshMapBeforeReplay);
+        EXPECT_TRUE(postWorldRan);
+        EXPECT_TRUE(finalOwnersAgree) << finalOwnerError;
+        EXPECT_TRUE(firstInputReached);
+        EXPECT_TRUE(movementApplied);
         EXPECT_EQ(slotBytes(candidate), before);
         EXPECT_EQ(slotBytes(profile / "saves" / "candidate-v4.ec6"), baselineBefore);
         EXPECT_EQ(slotBytes(profile / "saves" / "autosave.ec6"), seedBefore);
@@ -443,10 +452,10 @@ GAME_TEST(MM6V5SecondWriteHeadless, DISABLED_PostReloadInputWritesDistinctCandid
     runV5AfterActionFreshChildReplay(game, V5ReplayMode::SecondWrite);
 }
 
-GAME_TEST(MM6V5FirstMapAbandonHeadless, DISABLED_PartialAssignmentReturnsToMenuAndCanRetry) {
+GAME_TEST(MM6V5FirstMapAbandonHeadless, DISABLED_PartialAssignmentThenFullReloadAndInput) {
     runV5AfterActionFreshChildReplay(game, V5ReplayMode::FaultAfterPartyAssignment);
 }
 
-GAME_TEST(MM6V5FirstMapAbandonHeadless, DISABLED_PreEventFaultReturnsToMenuAndCanRetry) {
+GAME_TEST(MM6V5FirstMapAbandonHeadless, DISABLED_PreEventFaultThenFullReloadAndInput) {
     runV5AfterActionFreshChildReplay(game, V5ReplayMode::FaultAtPreEvent);
 }

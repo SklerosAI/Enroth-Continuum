@@ -32,6 +32,7 @@ struct Fixture {
         fields.decorations.resize(1);
         reconstruct(base->decorations[0], &fields.decorations[0]);
         fields.decorations[0].uDecorationDescID = DECORATION_TRASH_HEAP_4;
+        fields.decorations[0].eventVarId = 0;
         event.mapName = "oute3.odm";
         event.bindings = mm6::captureEventRuntimeDecorationBindings(
             fields.decorations, GameTitle::MM6);
@@ -69,7 +70,7 @@ UNIT_TEST(MM6V5DecorationRuntimeFields, RefusesChangedSourceAnchorAndBadRuntimeS
         fixture.fields, "oute3.odm", *fixture.base, fixture.event,
         fixture.table, GameTitle::MM6), std::exception);
     fixture.fields.decorations[0].uDecorationDescID = DECORATION_TRASH_HEAP_4;
-    fixture.fields.decorations[0].eventVarId = -1;
+    fixture.fields.decorations[0].eventVarId = -76;
     EXPECT_THROW((void) mm6::encodeDecorationRuntimeSection(
         fixture.fields, GameTitle::MM6), std::exception);
 }

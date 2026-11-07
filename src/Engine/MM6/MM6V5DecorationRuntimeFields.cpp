@@ -71,7 +71,9 @@ void requireRuntimeFields(const LevelDecoration &decoration) {
     if (!std::isfinite(decoration.vPosition.x) ||
         !std::isfinite(decoration.vPosition.y) ||
         !std::isfinite(decoration.vPosition.z) ||
-        decoration.eventVarId < 0 || decoration.eventVarId >= 124)
+        // Reconstruct preserves the native unset sentinel as -75; only
+        // interactive no-event slots are assigned 0..123 by PrepareDecorations.
+        decoration.eventVarId < -75 || decoration.eventVarId >= 124)
         throw std::runtime_error("MM6 DECR has unsafe runtime field");
 }
 
@@ -214,6 +216,10 @@ void requireDecorationRuntimeBaseAgreement(
             throw std::runtime_error("MM6 DECR source descriptor lacks template");
         const LevelDecoration &runtime = fields.decorations[index];
         requireRuntimeFields(runtime);
+        LevelDecoration interactiveCheck = runtime;
+        if (!runtime.uEventID && interactiveCheck.IsInteractive() &&
+            runtime.eventVarId < 0)
+            throw std::runtime_error("MM6 DECR interactive event ordinal is unset");
         const auto descriptor = std::to_underlying(runtime.uDecorationDescID);
         if (descriptor <= 0 || static_cast<std::size_t>(descriptor) >= table.decorations.size())
             throw std::runtime_error("MM6 DECR runtime descriptor lacks template");

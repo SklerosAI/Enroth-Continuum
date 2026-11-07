@@ -2134,3 +2134,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated detached SPAW v1 with exact contiguous PID slots, MM6 resistances, runtime-only fields and a canonical empty form. Unsupported actor items/buffs and narrowing refuse. Linked unit tests passed 4/4.
 - A private-backed fresh-process headless first-map encode/decode/re-encode probe passed 1/1 with ramfs user state and no profile write. It did not save, quit, reload, or publish actors to the live world; strict v2 remains closed.
+
+## [2026-11-07] stage | MM6 exact EC6 v3 manifest
+- by: T-Burton-ND via codex
+- Integrated a detached exact 22-section v3 codec: nineteen v2 owners plus required SPAW, GNPC and RNGS. It validates canonical new payloads and GNPC/HEAD map identity while keeping v1/v2 strict. Linked v3/v2/SPAW suites passed 12/12.
+- SPAW-to-native-DDM slot binding, no-respawn map replay, pre-event owner publication, v3 atomic disk API and first-input admission remain open. No production loader or save route was enabled.

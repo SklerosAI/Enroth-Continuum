@@ -148,14 +148,18 @@ void restoreV3RngBeforeMapLoadForTest(
     if (!scope)
         return;
     if (title != GameTitle::MM6 || !scope->_published ||
-        !scope->_bypassConsumed || scope->_rngPublished || !restoreRng ||
-        !chestOwner || !chestOwner->ready ||
-        chestOwner->lcgState != scope->_agreement.saved.raw.chest.lcgState ||
-        chestOwner->generatedArtifactFlags !=
-            scope->_agreement.saved.raw.chest.generatedArtifactFlags ||
-        !std::ranges::equal(activeDelta,
+        !scope->_bypassConsumed || scope->_rngPublished || !restoreRng)
+        throw std::runtime_error("MM6 v3 replay order changed before RNGS restoration");
+    if (!chestOwner || !chestOwner->ready)
+        throw std::runtime_error("MM6 v3 chest readiness changed before RNGS restoration");
+    if (chestOwner->lcgState != scope->_agreement.saved.raw.chest.lcgState)
+        throw std::runtime_error("MM6 v3 chest LCG changed before RNGS restoration");
+    if (chestOwner->generatedArtifactFlags !=
+        scope->_agreement.saved.raw.chest.generatedArtifactFlags)
+        throw std::runtime_error("MM6 v3 chest artifact flags changed before RNGS restoration");
+    if (!std::ranges::equal(activeDelta,
             scope->_agreement.saved.raw.chest.rawActiveDelta))
-        throw std::runtime_error("MM6 v3 chest owner changed before RNGS restoration");
+        throw std::runtime_error("MM6 v3 chest DDM changed before RNGS restoration");
     restoreRng(scope->_agreement.saved.gameplayRng);
     scope->_rngPublished = true;
 }

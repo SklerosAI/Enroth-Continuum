@@ -786,3 +786,9 @@ The combat scope now also snapshots seven scalar fields of the turn engine
 alongside its queue. The revised integrated linked fault/commit suite passed
 **3/3**. Persistent events, outdoor resource/listener state and other live
 owners still prevent an all-owner load transaction.
+
+EC6 v2 now stages raw inventory, held-cursor and shop owners only after a
+complete 67-map/base and active-sidecar validation. The integrated focused
+save/schema/map check passed **11 tests**; one optional private fixture test
+skipped because its paths were not supplied. V2 remains detached and is not
+used by the production MM6 SaveLoad path.

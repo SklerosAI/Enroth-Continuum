@@ -14,4 +14,6 @@ Status: **synthetic, detached runtime candidate only** (2026-11-06). The coordin
 
 An isolated arm64 CMake build compiled the new runtime and test objects. A linked synthetic harness passed **7/7** tests: three new raw stage/capture cases plus four existing map-validation cases. The new cases cover high inventory slot and unreferenced record tails, raw cursor tail retention after clear, shop tail preservation, owner-edit capture, all-map acceptance, wrong title, wrong map set before reads, malformed last delta, absent base, active reference conflicts and item-template rejections. The existing private-backed 67-map test was not run in this isolated harness. No proprietary data entered Git.
 
+After integration, the native unit target linked and the focused raw runtime, map validation and raw schema set reported **11 passed, one skipped**. The skipped case requires optional decoded private fixture paths and was not needed for the synthetic owner contract. No production MM6 loader was opened.
+
 This stage does not yet map all native item kinds to usable `CharacterInventory` entries, reconstruct the live map, stage beacon state or complete a simultaneous Party/world/UI/commerce commit. It does not migrate v1 files or open the production save UI. Those gates remain in [the transaction checklist](../.llm-wiki/MM6-F4-Save-Transaction-Checklist.md).

@@ -102,11 +102,18 @@ codec retains runtime names that the inherited fixed actor image omits;
 the v5 outdoor ARTR wire remains unchanged. The manifest has **28 sections
 without IFOV or 29 with IFOV**. Focused v5 actor/v6 indoor checks passed
 **14/14**. A disposable seed, first-map baseline and indoor v6 writer passed
-**1/1 each**. The fresh-child reader remains **closed**: its pre-event IART
-publication and generated-NPC joins pass, but normal indoor map events add
-generated actor links after publication, so a post-world comparison against
-the pre-event candidate fails. A genuine post-world indoor save owner and
-strict replay policy are the next gate. No gameplay admission or normal
-SaveLoad was enabled.
+**1/1 each**. That first pre-event fixture could not prove post-world
+equality: normal indoor map events generate NPC links after publication.
+
+A separate genuine post-world writer now captures the generated-NPC pool,
+gameplay RNG, IART, ISRT and IDRT after the normal indoor map-load path. A
+strict MM6-only test scope publishes the saved NPC pool and actor list before
+events, restores RNG and bypasses only that scoped generated-NPC loop. Its
+fresh child recaptures exact GNPC row bytes, RNG, IART, ISRT and IDRT after
+`OnMapReload`, before input. Both disposable three-process chains (pre-event
+fixture and post-world candidate) passed **1/1 per child**; focused v6/GNPC/v3
+units passed **18/18**. The post-world candidate still reuses seed Party/title
+owners and is **not** a complete live indoor session. `canEnterGameLoop` stays
+false; production SaveLoad, first input and graphical acceptance remain open.
 
 See [indoor face persistence gate](MM6_F4_INDOOR_FACE_PERSISTENCE_GATE.md), [known save sections](MM6_EC6_MAP_FIELDS_F4.md), and [atomic save](MM6_ATOMIC_SAVE_F4.md).

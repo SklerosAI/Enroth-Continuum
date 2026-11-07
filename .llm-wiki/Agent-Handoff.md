@@ -233,10 +233,12 @@ strict synthetic v6 staging and a three-process disposable v2 seed, v6 writer
 and fresh-child reader pass. Required IDRT decoration fields now publish
 through an MM6-only pre-event test hook and recapture exactly after reload;
 ISRT sprite publication also passes exact post-event recapture. Required
-IART actor ownership and pre-event publication pass focused units and the
-indoor writer, but the fresh-child post-world GNPC join refuses because map
-events add generated links absent from the pre-event fixture. A genuine
-post-world candidate and strict replay remain before gameplay admission. Keep the
+IART actor ownership and pre-event publication pass focused units. A separate
+post-world indoor candidate and fresh-child reader now pass exact GNPC row,
+RNG and IART/ISRT/IDRT recapture after `OnMapReload`; both disposable chains
+pass 1/1 per child and focused units pass 18/18. The post-world candidate
+still uses seed Party/title owners, so complete live indoor validation,
+first input and gameplay admission remain open. Keep the
 protected MM7 helper and all private profiles untouched while these gates advance. See
 the [current status](../project/LOCAL_STATUS.md) for the exact evidence level.
 

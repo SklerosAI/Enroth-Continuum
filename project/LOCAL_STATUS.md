@@ -1227,9 +1227,11 @@ MM6-only pre-event scope published the full saved sprite list and recaptured
 exact ISRT after map events; focused v6 units passed **10/10** and the same
 three-process chain passed **1/1 each**. The new required IART indoor actor
 runtime section retains names and binds native actor identity; focused v5
-actor/v6 checks passed **14/14**. A disposable seed, first-map baseline and
-indoor writer passed **1/1 each**, but the fresh-child reader remains closed:
-normal map events add generated actor links after exact pre-event IART
-publication, so post-world GNPC comparison against that pre-event fixture
-fails. A genuine post-world candidate and strict replay are still needed;
-gameplay admission stays false.
+actor/v6 checks passed **14/14**. The first pre-event fixture could not
+prove post-world equality because normal map events generate NPC links.
+A separate post-world writer and fresh-child reader now pass exact GNPC row
+bytes, gameplay RNG and IART/ISRT/IDRT recapture before input. Both disposable
+three-process chains pass **1/1 per child**, and focused v6/GNPC/v3 units
+pass **18/18**. The candidate still reuses seed Party/title owners rather
+than a complete live indoor session; gameplay admission stays false and
+production SaveLoad remains guarded.

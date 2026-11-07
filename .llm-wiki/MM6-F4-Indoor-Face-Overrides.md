@@ -72,10 +72,16 @@ V6 now also requires `IART` exact indoor actor runtime over the `IACR`
 native prefix, including runtime actor names; its manifest has 28 sections
 without IFOV or 29 with IFOV. The v5 outdoor ARTR wire is unchanged.
 Focused v5 actor/v6 indoor checks passed **14/14**, and a disposable seed,
-first-map baseline and indoor writer passed **1/1 each**. The fresh-child
-reader remains closed: pre-event actor publication and generated-NPC joins
-pass, but normal indoor map events add generated links absent from this
-pre-event fixture. A post-world candidate and strict replay are needed
-before input or production SaveLoad.
+first-map baseline and indoor writer passed **1/1 each**. The initial
+pre-event fixture could not prove post-world equality because normal map
+events generate NPC links after publication. A separate genuine post-world
+writer now captures GNPC, RNG, IART, ISRT and IDRT after those events. A
+test-only fresh-child scope publishes the saved NPC pool and actor list,
+restores RNG and bypasses only the corresponding generated-NPC loop; exact
+GNPC row bytes, RNG and IART/ISRT/IDRT recapture pass after `OnMapReload`.
+Both disposable three-process chains pass **1/1 per child**, and focused
+v6/GNPC/v3 units pass **18/18**. The candidate still reuses seed Party/title
+owners, so complete indoor session validation, gameplay admission, first
+input and production SaveLoad remain open.
 
 See also: [MM6 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md), [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), and [implementation packet](../project/MM6_F4_INDOOR_FACE_OVERRIDE_SECTION.md).

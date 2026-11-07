@@ -1648,3 +1648,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added entry checks to inherited MM7 party and character snapshot/reconstruction and direct inventory reconstruction so MM6 or 138-slot state is rejected before destination mutation.
 - A focused MM6 headless test preserved sentinel fields and the final MM6 item slot after each rejection. Full monitored MM6 headless passed 51/51, an MM7 save/load game control 1/1, and the rebuilt non-MM6-prefix unit suite 438/438; live MM6 raw item ownership and SaveLoad remain gated.
+
+## [2026-11-06] implement | Detached MM6 plain item projection
+- by: T-Burton-ND via codex
+- Added a source-typed view for plain 28-byte MM6 item records and gold, retaining raw tail bytes and rejecting unmapped bonus unions. Capture permits only bounded identified/broken flags, wand charges, maximum charges and gold value changes.
+- Linked focused raw-item/inventory/projection checks passed 6/6 and a monitored loaded-table MM6 headless category check passed 1/1. The adapter remains detached from live item owners and normal SaveLoad.

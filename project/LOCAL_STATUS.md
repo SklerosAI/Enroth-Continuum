@@ -1281,7 +1281,11 @@ The [all-source indoor sweep](MM6_F4_INDOOR_SOURCE_SWEEP.md) parsed and exactly
 round-tripped every retained MM6 indoor BLV/default-DLV pair. The risk-ranked
 additional case now preserves its signed native actor identity outside the
 generated-NPC rows and passes a third five-child test-only v6 replay chain.
-All three chains and an MM7 control pass. Follower dialogue semantics,
+All three chains and an MM7 control pass. A later [signed actor dialogue
+preflight](MM6_F4_SIGNED_ACTOR_DIALOGUE_GATE.md) finds that the risk-ranked
+actor passes the interaction predicate but its signed follower lookup refuses
+in the fresh profile. A deliberate safe-address diagnostic failed 0/1; the
+read-only characterization passed 1/1. Production dialogue is unchanged;
 production SaveLoad and general indoor play remain open.
 
 The later [detached outdoor v6 visited-map schema](MM6_F4_BORDER_AUTOSAVE_TRANSACTION.md)

@@ -35,8 +35,12 @@ offline [indoor source sweep](MM6-F4-Indoor-Source-Sweep.md) parses and
 round-trips every retained BLV/DLV pair. A distinct risk-ranked case preserves
 its signed native actor identity outside generated-NPC rows and now passes the
 same five-child test-only v6 chain, for three accepted cases total. Appended
-actors lacking native signed anchors still fail closed. Follower dialogue
-semantics, production saves and general indoor play remain open. The one-command MM7
+actors lacking native signed anchors still fail closed. A read-only
+[signed actor dialogue preflight](MM6-F4-Signed-Actor-Dialogue-Gate.md) now finds
+that an interactable native actor has no matching follower roster address in
+the fresh profile, and `getNPCData()` refuses. No dialogue rule or roster
+mutation was changed. Production saves and general indoor play remain open.
+The one-command MM7
 [clean tracked-source build](MM7-Clean-Offline-Build.md)
 linked and packaged under network denial, but its staged helper has not passed
 graphical save/reload. A separate [hidden OpenGL GameTest](MM7-Offscreen-Frame-Capture.md)

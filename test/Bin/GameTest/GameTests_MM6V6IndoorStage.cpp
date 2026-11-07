@@ -21,6 +21,7 @@
 #include "Engine/SpawnPoint.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
+#include "Engine/Interaction.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6GeneratedNpcSaveFields.h"
 #include "Engine/MM6/MM6IndoorFaceLiveOwner.h"
@@ -33,6 +34,7 @@
 #include "Engine/MM6/MM6RawSaveFields.h"
 #include "Engine/MM6/MM6V6IndoorSaveFields.h"
 #include "Engine/Objects/Actor.h"
+#include "Engine/Objects/NPC.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/ItemTable.h"
@@ -212,6 +214,11 @@ GAME_TEST(MM6IndoorSourceSweep, DISABLED_RiskCasePreEventActorIdentity) {
     bool aborted = false;
     bool exactNativeSignedActor = false;
     bool generatedOwnerAccepted = false;
+    bool signedActorInteractable = false;
+    bool signedActorUnresolved = false;
+    bool interactableSignedActorUnresolved = false;
+    bool signedActorResolvedAsFollower = false;
+    bool interactableSignedActorDialogueLookupRefused = false;
     std::exception_ptr probeError;
     std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
     game.runGameRoutine([&] {
@@ -230,6 +237,8 @@ GAME_TEST(MM6IndoorSourceSweep, DISABLED_RiskCasePreEventActorIdentity) {
                     if (native.actors.size() > pActors.size())
                         throw std::runtime_error(
                             "MM6 indoor risk fixture lost native actor prefix");
+                    FlatHirelings roster;
+                    roster.Prepare();
                     for (std::size_t slot = 0; slot < native.actors.size(); ++slot)
                         if (native.actors[slot].npcId < 0) {
                             if (pActors[slot].id != slot ||
@@ -237,6 +246,28 @@ GAME_TEST(MM6IndoorSourceSweep, DISABLED_RiskCasePreEventActorIdentity) {
                                 throw std::runtime_error(
                                     "MM6 indoor risk fixture changed signed actor identity");
                             exactNativeSignedActor = true;
+                            const bool interactable = CanInteractWithActor(slot);
+                            signedActorInteractable |= interactable;
+                            try {
+                                const auto address = mm6::resolveNpcAddress(
+                                    pActors[slot].npcId, *pNPCStats, roster.Size());
+                                if (address.kind != mm6::NpcAddressKind::Follower ||
+                                    getNPCData(pActors[slot].npcId) != roster.Get(address.index) ||
+                                    getNPCType(pActors[slot].npcId) !=
+                                        (roster.IsFollower(address.index) ? NPC_TYPE_QUEST :
+                                                                            NPC_TYPE_HIREABLE))
+                                    throw std::runtime_error(
+                                        "MM6 signed actor follower dialogue lookup diverged");
+                                signedActorResolvedAsFollower = true;
+                            } catch (const std::out_of_range &) {
+                                signedActorUnresolved = true;
+                                interactableSignedActorUnresolved |= interactable;
+                                try {
+                                    (void) getNPCData(pActors[slot].npcId);
+                                } catch (const std::out_of_range &) {
+                                    interactableSignedActorDialogueLookupRefused |= interactable;
+                                }
+                            }
                         }
                     const auto generated = mm6::captureGeneratedNpcFields(
                         pActors, *pNPCStats, mapName, GameTitle::MM6);
@@ -268,6 +299,16 @@ GAME_TEST(MM6IndoorSourceSweep, DISABLED_RiskCasePreEventActorIdentity) {
         std::rethrow_exception(probeError);
     EXPECT_TRUE(exactNativeSignedActor);
     EXPECT_TRUE(generatedOwnerAccepted);
+    std::cout << "MM6 signed actor dialogue preflight: "
+              << (signedActorInteractable ? "interactable; " : "not interactable; ")
+              << (signedActorUnresolved ? "unresolved follower link; " : "follower link in range; ")
+              << (signedActorResolvedAsFollower ? "follower lookup agrees" : "no follower lookup")
+              << '\n';
+    // Characterize the present source/runtime mismatch without opening
+    // dialogue or mutating the follower roster. Change this gate when an
+    // independently proved MM6 interaction rule resolves it.
+    EXPECT_TRUE(interactableSignedActorUnresolved);
+    EXPECT_TRUE(interactableSignedActorDialogueLookupRefused);
 }
 
 // Run alone after the disposable v2 autosave seed. This constructs a v6

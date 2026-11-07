@@ -18,9 +18,6 @@
 [submodule "thirdparty/inifile_cpp"]
 	path = thirdparty/inifile_cpp
 	url = https://github.com/Rookfighter/inifile-cpp.git
-[submodule "thirdparty/luajit-cmake"]
-	path = thirdparty/luajit-cmake
-	url = https://github.com/zhaozg/luajit-cmake.git
 [submodule "thirdparty/lambda2"]
 	path = thirdparty/lambda2
 	url = https://github.com/boostorg/lambda2.git

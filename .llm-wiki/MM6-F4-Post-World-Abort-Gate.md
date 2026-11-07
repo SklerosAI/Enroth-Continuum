@@ -1,5 +1,5 @@
 ---
-type: note
+type: synthesis
 up: "[[MM6-F4-V2-Fresh-Child-Owner-Audit]]"
 tags: [mm6, f4, save, headless]
 ---
@@ -17,3 +17,5 @@ This is a control seam only. V2 publication still refuses in the load callback
 because resource, identity, event and transient owners have no complete
 pre-world join. Do not interpret this test hook as a v2 reload or campaign
 acceptance.
+
+See also: [V2 Fresh-Child Owner Audit](MM6-F4-V2-Fresh-Child-Owner-Audit.md), [Agent Handoff](Agent-Handoff.md).

@@ -878,3 +878,12 @@ The linked atomic/raw/effect/hireling set passed **20/20**. One structurally
 valid primary with an unsupported late item fell back to its valid backup;
 both-invalid candidates refused, and disk bytes stayed unchanged. This does
 not admit a playable slot or open normal MM6 loading.
+
+The MM6-only one-shot post-world test hook now supports a deliberate return to
+Main Menu immediately after `DoPrepareWorld(true)`, before timer unpause or
+input. Its linked hook suite passed **5/5**. In separate disposable headless
+processes, a v1 first-map writer and a real Main Menu QuickLoad abort control
+passed **1/1** each, with the slot unchanged; an MM7 headless control passed
+**1/1**. This verifies the abort edge only. The v2 callback still refuses
+before publication, and normal MM6 SaveLoad, menu loading and Atlas Play remain
+guarded. See [the post-world abort gate](MM6_F4_POST_WORLD_ABORT_GATE.md).

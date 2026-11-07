@@ -145,6 +145,39 @@ bool sameSprite(const SpriteObject &lhs, const SpriteObject &rhs) {
         lhs._ticksPerParticle.ticks() == rhs._ticksPerParticle.ticks();
 }
 
+std::string_view firstSpriteMismatch(const SpriteObject &lhs,
+                                     const SpriteObject &rhs) {
+    if (lhs.spriteId != rhs.spriteId) return "sprite ID";
+    if (lhs.uObjectDescID != rhs.uObjectDescID) return "object descriptor";
+    if (!sameVec(lhs.vPosition, rhs.vPosition)) return "position";
+    if (!sameVec(lhs.vVelocity, rhs.vVelocity)) return "velocity";
+    if (lhs.uFacing != rhs.uFacing) return "facing";
+    if (lhs.uAttributes != rhs.uAttributes) return "attributes";
+    if (lhs.uSectorID != rhs.uSectorID) return "sector";
+    if (lhs.timeSinceCreated.ticks() != rhs.timeSinceCreated.ticks()) return "age";
+    if (lhs.tempLifetime.ticks() != rhs.tempLifetime.ticks()) return "lifetime";
+    if (lhs.field_22_glow_radius_multiplier != rhs.field_22_glow_radius_multiplier)
+        return "glow radius";
+    if (!sameItem(lhs.containing_item, rhs.containing_item)) return "contained item";
+    if (lhs.uSpellID != rhs.uSpellID) return "spell ID";
+    if (lhs.spell_level != rhs.spell_level) return "spell level";
+    if (lhs.spell_skill != rhs.spell_skill) return "spell skill";
+    if (lhs.field_54 != rhs.field_54) return "field 54";
+    if (lhs.spell_caster_pid.packed() != rhs.spell_caster_pid.packed())
+        return "caster PID";
+    if (lhs.spell_target_pid.packed() != rhs.spell_target_pid.packed())
+        return "target PID";
+    if (lhs.field_60_distance_related_prolly_lod !=
+        rhs.field_60_distance_related_prolly_lod) return "field 60";
+    if (lhs.spellCasterAbility != rhs.spellCasterAbility) return "caster ability";
+    if (!sameVec(lhs.initialPosition, rhs.initialPosition)) return "initial position";
+    if (lhs._lastParticleTime.ticks() != rhs._lastParticleTime.ticks())
+        return "last particle time";
+    if (lhs._ticksPerParticle.ticks() != rhs._ticksPerParticle.ticks())
+        return "particle period";
+    return "unknown field";
+}
+
 enum class AnchorPolicy { Strict, SyntheticAppend, ReusedFreeSlot };
 
 void requireNativeAnchor(const SpriteRuntimeRecord &record,
@@ -212,7 +245,9 @@ void putRecord(std::vector<std::uint8_t> *out,
     restored._ticksPerParticle = record.runtime._ticksPerParticle;
     restored.containing_item.mm6RawRecord = record.runtime.containing_item.mm6RawRecord;
     if (!sameSprite(restored, record.runtime))
-        throw std::runtime_error("MM6 SPRT runtime field cannot round-trip");
+        throw std::runtime_error("MM6 SPRT runtime " +
+                                 std::string(firstSpriteMismatch(restored, record.runtime)) +
+                                 " cannot round-trip");
     out->insert(out->end(), record.nativeRecord.begin(), record.nativeRecord.end());
     const auto *start = reinterpret_cast<const std::uint8_t *>(&snapshotValue);
     out->insert(out->end(), start, start + SNAPSHOT_BYTES);

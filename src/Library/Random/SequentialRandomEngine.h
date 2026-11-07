@@ -26,6 +26,9 @@ class SequentialRandomEngine : public RandomEngine {
         _state = seed;
     }
 
+    unsigned state() const { return _state; }
+    void restoreState(unsigned state) { _state = state; }
+
  private:
     unsigned _state = 0; // Using unsigned here so that it wraps around safely.
 };

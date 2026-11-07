@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
 
 set(LIBRARY_RANDOM_SOURCES
-        RandomEngine.cpp)
+        RandomEngine.cpp
+        MersenneTwisterRandomEngine.cpp)
 
 set(LIBRARY_RANDOM_HEADERS
         MersenneTwisterRandomEngine.h

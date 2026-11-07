@@ -3,10 +3,12 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <deque>
 #include <limits>
 #include <stdexcept>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "Engine/Objects/MonsterEnumFunctions.h"
 

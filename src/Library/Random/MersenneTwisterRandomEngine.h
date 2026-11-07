@@ -2,6 +2,8 @@
 
 #include <cassert>
 #include <random>
+#include <string>
+#include <string_view>
 
 #include "RandomEngine.h"
 
@@ -31,6 +33,11 @@ class MersenneTwisterRandomEngine: public RandomEngine {
             _base.seed(seed);
         }
     }
+
+    // Versioned save codecs may retain the exact gameplay stream. The text
+    // is the standard mt19937 state representation, not an initial seed.
+    std::string stateText() const;
+    void restoreStateText(std::string_view state);
 
  private:
     std::mt19937 _base;

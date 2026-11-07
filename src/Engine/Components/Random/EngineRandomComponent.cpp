@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <memory>
+#include <stdexcept>
 
 #include "Engine/Random/Random.h"
 
@@ -60,6 +61,41 @@ void EngineRandomComponent::seed(int seed) {
     for (RandomEngineType type : _grngs.indices()) {
         _vrngs[type]->seed(seed);
         _grngs[type]->seed(seed);
+    }
+}
+
+GameplayRandomState EngineRandomComponent::captureGameplayState() const {
+    if (_type != RANDOM_ENGINE_MERSENNE_TWISTER && _type != RANDOM_ENGINE_SEQUENTIAL)
+        throw std::runtime_error("unsupported gameplay RNG type");
+    if (!_grngs[_type])
+        throw std::runtime_error("gameplay RNG is not installed");
+    GameplayRandomState result;
+    result.type = _type;
+    if (_type == RANDOM_ENGINE_MERSENNE_TWISTER) {
+        result.mtState = static_cast<MersenneTwisterRandomEngine *>(_grngs[_type].get())->stateText();
+    } else if (_type == RANDOM_ENGINE_SEQUENTIAL) {
+        result.sequentialState = static_cast<SequentialRandomEngine *>(_grngs[_type].get())->state();
+    } else {
+        throw std::runtime_error("unsupported gameplay RNG type");
+    }
+    return result;
+}
+
+void EngineRandomComponent::restoreGameplayState(const GameplayRandomState &state) {
+    if (_type != RANDOM_ENGINE_MERSENNE_TWISTER && _type != RANDOM_ENGINE_SEQUENTIAL)
+        throw std::runtime_error("unsupported gameplay RNG type");
+    if (!_grngs[_type] || state.type != _type)
+        throw std::runtime_error("gameplay RNG type differs from saved state");
+    if (_type == RANDOM_ENGINE_MERSENNE_TWISTER) {
+        if (state.sequentialState)
+            throw std::runtime_error("Mersenne Twister state has sequential data");
+        static_cast<MersenneTwisterRandomEngine *>(_grngs[_type].get())->restoreStateText(state.mtState);
+    } else if (_type == RANDOM_ENGINE_SEQUENTIAL) {
+        if (!state.mtState.empty())
+            throw std::runtime_error("sequential RNG state has Mersenne Twister data");
+        static_cast<SequentialRandomEngine *>(_grngs[_type].get())->restoreState(state.sequentialState);
+    } else {
+        throw std::runtime_error("unsupported gameplay RNG type");
     }
 }
 

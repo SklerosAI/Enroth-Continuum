@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <cstdint>
+#include <string>
 
 #include "Engine/Random/RandomEnums.h"
 
@@ -10,6 +12,14 @@
 
 class RandomEngine;
 class Platform;
+
+struct GameplayRandomState {
+    RandomEngineType type = RANDOM_ENGINE_MERSENNE_TWISTER;
+    std::string mtState;
+    std::uint32_t sequentialState = 0;
+
+    bool operator==(const GameplayRandomState &) const = default;
+};
 
 class EngineRandomComponent : public PlatformApplicationAware {
  public:
@@ -28,6 +38,11 @@ class EngineRandomComponent : public PlatformApplicationAware {
      * @param seed                      Seed to pass to `RandomEngine::seed`.
      */
     void seed(int seed);
+
+    // Captures/restores only the selected gameplay endpoint. Tracing wraps
+    // that same underlying engine, so it does not change the saved state.
+    GameplayRandomState captureGameplayState() const;
+    void restoreGameplayState(const GameplayRandomState &state);
 
  private:
     virtual void installNotify() override;

@@ -1351,3 +1351,13 @@ chain still passed **1/1 per child**, with an MM7 headless control **1/1**.
 This does not roll back the Party/NPC/timer/map-cache globals assigned before
 world preparation. A normal load still needs a fully staged precommit bundle
 and a safe partial-world failure policy before SaveLoad/UI can open.
+
+A first-map v5 disposable writer service now stages from exact live MM6
+owners, validates the detached candidate and prior slot, and classifies the
+atomic result without opening a normal save path. Its focused writer/atomic
+units passed **3/3**. The two first-map fresh-child readers now construct
+all replay scopes before assigning Party/NPC/timer/map-cache globals, closing
+the constructor-time partial-publication gap in those tests. The combined
+fresh seven-process chain passed **1/1 per child**, and MM7 control **1/1**.
+Global assignment and pre-event failures still need a safe transaction;
+production SaveLoad/UI remains closed.

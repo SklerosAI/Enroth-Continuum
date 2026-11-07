@@ -2331,3 +2331,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Converted exact pinned `fmt`, `spdlog` and `sol2` gitlinks to tracked source, preserving their original license and provenance materials. All 978 original files matched pinned Git blobs; standalone AppleClang source build/runs passed, as did the cached-input arm64 Mac MM7 target.
 - Thirteen gitlinks, nested source fetches and prebuilt dependency recipes still block a clean offline clone. GLM and ImGui full-tree license details, plus other ambiguous inputs, remain under review. The installed app and private saves were not replaced.
+
+## [2026-11-07] verify | MM6 live indoor sprite replay
+- by: T-Burton-ND via codex
+- Added an MM6-only one-shot pre-event scope that publishes the exact ISRT full sprite list after indoor world preparation. The fresh-child reader required exact ISRT recapture after map events and aborted before input; the disposable v2 seed, v6 writer and reader passed 1/1 each.
+- Focused linked v6 checks passed 10/10. Indoor actor runtime ownership, first input, production SaveLoad and graphical acceptance remain open.

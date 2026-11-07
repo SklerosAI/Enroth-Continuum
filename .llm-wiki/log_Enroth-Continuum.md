@@ -2616,3 +2616,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The first-map test-only post-world decision now maps false or a validation exception to abort-to-Main-Menu before timer unpause or input. The one-shot unit suite passed 6/6, the fresh seven-child v5 replay chain passed 1/1 in every child, and MM7 control passed 1/1.
 - Pre-world Party/NPC/timer/map-cache assignment still lacks a complete rollback transaction. Normal MM6 SaveLoad/UI and production admission remain closed.
+
+## [2026-11-07] verify | MM6 first-map writer and replay scope order
+- by: T-Burton-ND via codex
+- Added an MM6 first-map, owner-only disposable v5 writer service that stages exact live owners, validates candidate/prior bytes, and reports committed, preflight-required or indeterminate atomic outcomes. Focused writer/atomic units passed 3/3.
+- Both fresh-child first-map readers now construct test replay scopes before global assignment. The combined fresh seven-process chain passed 1/1 in every child, and MM7 control passed 1/1. This closes constructor-time partial publication in the tests; assignment/pre-event rollback and normal MM6 SaveLoad/UI remain open.

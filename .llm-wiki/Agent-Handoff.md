@@ -393,6 +393,16 @@ Assignment and pre-event replay failures remain open. Manual Save pauses the
 timer before `doSavegame`; settled-input capture needs a paused-save contract
 before that normal route can call it.
 
+The MM6 first-map load's test-only armed abandon policy now catches load
+callback and world-preparation exceptions after detached v5 preflight. It
+returns to Main Menu before input and clears transition/load flags/actions;
+it does not roll back Party or other published world globals. Disposable
+partial-assignment and pre-event fault children each passed **1/1**, then
+re-staged the candidate through a second menu Quick Load in the same process.
+The ordinary seven-child chain and MM7 control still pass. Keep normal MM6
+SaveLoad/UI guarded until a complete recovery or process-isolation policy and
+real second gameplay load are proved. See the [v5 packet](../project/MM6_F4_EC6_V5_SPRITE_RUNTIME.md).
+
 MM6 manual/quick save actions now refuse before side effects; active
 skill Compare/Set has a checked MM6-specific path. A read-only audit decoded
 all 15 outdoor base/delta pairs, and the MM6 encounter parser now uses authored

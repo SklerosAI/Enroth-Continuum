@@ -202,6 +202,20 @@ Normal `doSavegame`, Save menu routing, profile selection, durable result
 handling, load publication recovery and UI success/error behavior remain
 closed. No later outdoor or indoor capture is implied.
 
+An MM6-only armed **test transaction** now catches exceptions from the
+first-map load callback and `DoPrepareWorld(true)` at the game-loop boundary,
+but only after detached v5 preflight and prepublication agreement. On a fault
+it clears the pending transition and save-load/input flags, pauses the timer,
+empties queued party actions, and returns to Main Menu before input. Disposable
+headless probes inject a fault after Party assignment and a second fault at
+the pre-event checkpoint. Each passes **1/1** and triggers a second menu Quick
+Load that re-stages the same candidate in the same process; the source slot
+bytes remain unchanged. The ordinary seven-child v5 chain still passes
+**1/1 per child**, and MM7 control passes **1/1**. This is **abandonment, not
+rollback**: previously assigned Party and other world globals may remain
+partial. No normal MM6 SaveLoad/UI path arms it, and returning to Main Menu
+does not yet prove a complete second gameplay load or a clean world reset.
+
 See [v4 event runtime boundary](MM6_F4_EC6_V4_EVENT_RUNTIME.md),
 [active actor capture](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md) and
 [save specification](MM6_SAVE_SPEC.md).

@@ -159,17 +159,29 @@ UNIT_TEST(MM6V4FullSessionPreflight, JoinsExactActiveMapAndEventOwner) {
     EXPECT_EQ(staged.saved.eventRuntime, fields.eventRuntime);
 }
 
-UNIT_TEST(MM6V4FullSessionPreflight, RefusesStaleHeaderAndDecorationShape) {
+UNIT_TEST(MM6V4FullSessionPreflight, RefusesStaleHeader) {
     ItemTableScope items;
     const auto npcs = freshNpcs();
     auto fields = exampleFields();
     std::vector<LevelDecoration> decorations;
     fields.eventRuntime.maps[0].lastRespawnDay = 2;
     EXPECT_THROW((void) stage(fields, npcs, *items.table, decorations), std::exception);
-    fields = exampleFields();
+}
+
+UNIT_TEST(MM6V4FullSessionPreflight, RefusesDecorationShape) {
+    ItemTableScope items;
+    const auto npcs = freshNpcs();
+    const auto fields = exampleFields();
+    std::vector<LevelDecoration> decorations;
     decorations.resize(1);
     EXPECT_THROW((void) stage(fields, npcs, *items.table, decorations), std::exception);
-    decorations.clear();
+}
+
+UNIT_TEST(MM6V4FullSessionPreflight, RefusesForeignTitle) {
+    ItemTableScope items;
+    const auto npcs = freshNpcs();
+    const auto fields = exampleFields();
+    std::vector<LevelDecoration> decorations;
     EXPECT_THROW((void) stage(fields, npcs, *items.table, decorations, GameTitle::MM7),
                  std::exception);
 }

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -33,6 +34,7 @@
 #include "Engine/MM6/MM6LoadedMapSource.h"
 #include "Engine/MM6/MM6NpcStaticBaseline.h"
 #include "Engine/MM6/MM6NpcSaveFields.h"
+#include "Engine/MM6/MM6OutdoorBorderPrecommit.h"
 #include "Engine/MM6/MM6OutdoorWire.h"
 #include "Engine/MM6/MM6PersistentEventPublication.h"
 #include "Engine/MM6/MM6RawCursorImagePlan.h"
@@ -117,7 +119,8 @@ std::vector<LevelDecoration> sourceDecorations(const mm6::LoadedMapSource &maps,
 
 std::vector<std::uint8_t> captureLaterOutdoor(
     std::span<const std::uint8_t> sourceV4,
-    std::span<const std::uint8_t> previousV5 = {}) {
+    std::span<const std::uint8_t> previousV5 = {},
+    const Party *partyOverride = nullptr) {
     if (engine->gameTitle() != GameTitle::MM6 ||
         uCurrentlyLoadedLevelType != LEVEL_OUTDOOR ||
         engine->_currentLoadedMapId != pMapTable->GetMapInfo(TARGET_MAP) ||
@@ -138,9 +141,10 @@ std::vector<std::uint8_t> captureLaterOutdoor(
         saved->eventRuntime.maps[0].mapName !=
             (previous ? TARGET_MAP : "oute3.odm"))
         throw std::runtime_error("MM6 later outdoor capture lacks exact prior map owner");
-    mm6::requireRawV2RepresentableState(*pParty, {}, GameTitle::MM6);
+    const Party &savedParty = partyOverride ? *partyOverride : *pParty;
+    mm6::requireRawV2RepresentableState(savedParty, {}, GameTitle::MM6);
     (void) mm6::stageRawCursorImagePlan(
-        *pParty, mm6::rawHeldCursorState(GameTitle::MM6), *pItemTable, GameTitle::MM6);
+        savedParty, mm6::rawHeldCursorState(GameTitle::MM6), *pItemTable, GameTitle::MM6);
     const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
     if (pMapDeltas.size() != maps.expectedNames().size())
         throw std::runtime_error("MM6 later outdoor map cache count differs");
@@ -148,22 +152,22 @@ std::vector<std::uint8_t> captureLaterOutdoor(
     mm6::V3SaveFields &fields = saved->v3;
     const auto priorPosition = fields.raw.core.party.position;
     const auto priorYaw = fields.raw.core.party.viewYaw;
-    fields.raw.core = mm6::captureCoreFields(*pParty, GameTitle::MM6);
+    fields.raw.core = mm6::captureCoreFields(savedParty, GameTitle::MM6);
     if (previous && (fields.raw.core.party.position == priorPosition ||
                      fields.raw.core.party.viewYaw == priorYaw))
         throw std::runtime_error("MM6 later outdoor second capture lacks bounded input movement");
-    const auto durable = mm6::captureDurableFields(*pParty, GameTitle::MM6);
+    const auto durable = mm6::captureDurableFields(savedParty, GameTitle::MM6);
     fields.raw.bits = durable.bits;
     fields.raw.effects = durable.effects;
     fields.raw.inventory = mm6::captureRawPartyInventories(
-        {*pParty, fields.raw.inventory}, *pItemTable, GameTitle::MM6);
+        {savedParty, fields.raw.inventory}, *pItemTable, GameTitle::MM6);
     fields.raw.metadata = mm6::captureMetadata(
         fields.raw.metadata.header.displayName, GameTitle::MM6);
     fields.raw.npcs = mm6::captureNpcFields(*pNPCStats, GameTitle::MM6);
-    fields.raw.resistances = mm6::captureResistanceFields(*pParty, GameTitle::MM6);
-    fields.raw.buffs = mm6::captureBuffFields(*pParty, GameTitle::MM6);
-    fields.raw.hirelings = mm6::captureHirelingFields(*pParty, GameTitle::MM6);
-    fields.raw.recovery = mm6::captureRecoveryFields(*pParty, GameTitle::MM6);
+    fields.raw.resistances = mm6::captureResistanceFields(savedParty, GameTitle::MM6);
+    fields.raw.buffs = mm6::captureBuffFields(savedParty, GameTitle::MM6);
+    fields.raw.hirelings = mm6::captureHirelingFields(savedParty, GameTitle::MM6);
+    fields.raw.recovery = mm6::captureRecoveryFields(savedParty, GameTitle::MM6);
     const auto held = mm6::captureRawHeldCursor(
         mm6::rawHeldCursorState(GameTitle::MM6), GameTitle::MM6);
     if (!held)
@@ -226,8 +230,9 @@ std::vector<std::uint8_t> captureLaterOutdoor(
 
 void requireLaterOutdoorCandidate(std::span<const std::uint8_t> bytes,
                                   std::span<const std::uint8_t> sourceV4,
-                                  std::span<const std::uint8_t> previousV5 = {}) {
-    if (captureLaterOutdoor(sourceV4, previousV5) !=
+                                  std::span<const std::uint8_t> previousV5 = {},
+                                  const Party *partyOverride = nullptr) {
+    if (captureLaterOutdoor(sourceV4, previousV5, partyOverride) !=
         std::vector<std::uint8_t>(bytes.begin(), bytes.end()))
         throw std::runtime_error("MM6 later outdoor live owners changed before atomic write");
     const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
@@ -257,6 +262,46 @@ void requireLaterOutdoorCandidate(std::span<const std::uint8_t> bytes,
         stage->v4.activeEventRuntime.mapVars != engine->_persistentVariables.mapVars ||
         stage->v4.activeEventRuntime.decorVars != engine->_persistentVariables.decorVars)
         throw std::runtime_error("MM6 later outdoor event owners changed");
+}
+
+void requireDetachedBorderOldMapCandidate(std::span<const std::uint8_t> sourceV4) {
+    const auto liveCoreBefore = mm6::captureCoreFields(*pParty, GameTitle::MM6);
+    auto borderSource = std::make_unique<Party>(*pParty);
+    // This is a test-only cardinal crossing position on the loaded second
+    // outdoor map. The real movement/confirmation route stays closed.
+    borderSource->pos.x = -mm6::MM6_OUTDOOR_BORDER_EDGE - 1;
+    borderSource->pos.y = std::clamp(borderSource->pos.y,
+                                     -mm6::MM6_OUTDOOR_BORDER_EDGE,
+                                      mm6::MM6_OUTDOOR_BORDER_EDGE);
+    auto border = mm6::stageBorderOldMapParty(
+        GameTitle::MM6, TARGET_MAP, *borderSource, {});
+    if (!border.destination || !border.oldMapParty ||
+        border.refusal != mm6::BorderPrecommitRefusal::MissingWorldAndSourceProof ||
+        border.canWriteCheckpoint() ||
+        border.oldMapParty->pos.x != -mm6::MM6_OUTDOOR_BORDER_EDGE ||
+        borderSource->pos.x != -mm6::MM6_OUTDOOR_BORDER_EDGE - 1)
+        throw std::runtime_error("MM6 detached border Party stage was not bounded");
+
+    const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
+    if (pMapTable->GetMapInfo(border.destination->destinationMap) == MAP_INVALID ||
+        maps.readBase(TARGET_MAP).size() == 0 ||
+        maps.readBase(border.destination->destinationMap).size() == 0)
+        throw std::runtime_error("MM6 border candidate lacks source/destination archive identity");
+
+    const auto checkpoint = captureLaterOutdoor(sourceV4, {}, border.oldMapParty.get());
+    requireLaterOutdoorCandidate(checkpoint, sourceV4, {}, border.oldMapParty.get());
+    auto decoded = std::make_unique<mm6::V5SaveFields>(
+        mm6::decodeV5Save(checkpoint, GameTitle::MM6));
+    const std::array<float, 3> savedPosition{
+        border.oldMapParty->pos.x, border.oldMapParty->pos.y,
+        border.oldMapParty->pos.z};
+    const std::array<float, 3> outsidePosition{
+        borderSource->pos.x, borderSource->pos.y, borderSource->pos.z};
+    if (decoded->v4.v3.raw.metadata.header.mapFileName != TARGET_MAP ||
+        decoded->v4.v3.raw.core.party.position != savedPosition ||
+        decoded->v4.v3.raw.core.party.position == outsidePosition ||
+        mm6::captureCoreFields(*pParty, GameTitle::MM6) != liveCoreBefore)
+        throw std::runtime_error("MM6 border old-map candidate changed Party or map owner");
 }
 
 } // namespace
@@ -362,6 +407,11 @@ GAME_TEST(MM6V5LaterOutdoorHeadless, DISABLED_WritesDistinctSecondOutdoorCandida
                 slotBytes(profile / "saves/candidate-v4.ec6") != sourceV4 ||
                 slotBytes(profile / "saves/autosave.ec6") != seedBefore)
                 throw std::runtime_error("MM6 later outdoor atomic write changed another slot");
+            requireDetachedBorderOldMapCandidate(sourceV4);
+            if (slotBytes(profile / "saves" / TARGET_SLOT) != candidate ||
+                slotBytes(profile / "saves/candidate-v4.ec6") != sourceV4 ||
+                slotBytes(profile / "saves/autosave.ec6") != seedBefore)
+                throw std::runtime_error("MM6 detached border candidate wrote a save slot");
             completed = true;
         } catch (const std::exception &error) {
             refusal = error.what();

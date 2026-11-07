@@ -26,7 +26,7 @@ namespace {
 
 constexpr std::string_view slotName = "indoor-ifov-probe.ec6";
 
-std::filesystem::path ownerOnlyProfile() {
+std::filesystem::path ownerOnlyProfile(bool createSaves) {
     const char *value = std::getenv("ENROTH_MM6_RESTART_PROFILE");
     if (!value || !*value)
         return {};
@@ -41,6 +41,11 @@ std::filesystem::path ownerOnlyProfile() {
             std::filesystem::perms::none)
         throw std::runtime_error("MM6 indoor probe needs an owner-only system-temp profile");
     const std::filesystem::path saves = root / "saves";
+    if (createSaves && !std::filesystem::exists(saves)) {
+        std::filesystem::create_directory(saves);
+        std::filesystem::permissions(saves, std::filesystem::perms::owner_all,
+                                     std::filesystem::perm_options::replace);
+    }
     if (!std::filesystem::is_directory(saves) || std::filesystem::is_symlink(saves) ||
         std::filesystem::canonical(saves).parent_path() != root)
         throw std::runtime_error("MM6 indoor probe needs a local saves directory");
@@ -109,7 +114,7 @@ GAME_TEST(MM6IndoorFaceFreshChild, DISABLED_WriteSourceAnchoredFaceOwner) {
     const char *enable = std::getenv("ENROTH_MM6_INDOOR_IFOV_WRITE_ENABLE");
     if (!enable || std::string_view(enable) != "strict-indoor-ifov")
         GTEST_SKIP() << "Opt in to the disposable indoor face writer";
-    const auto profile = ownerOnlyProfile();
+    const auto profile = ownerOnlyProfile(true);
     if (profile.empty())
         GTEST_SKIP() << "Set an owner-only system-temp MM6 restart profile";
     requireHeadless();
@@ -147,7 +152,7 @@ GAME_TEST(MM6IndoorFaceFreshChild, DISABLED_ReadSourceAnchoredFaceOwner) {
     const char *enable = std::getenv("ENROTH_MM6_INDOOR_IFOV_READ_ENABLE");
     if (!enable || std::string_view(enable) != "strict-indoor-ifov")
         GTEST_SKIP() << "Opt in to the disposable indoor face reader";
-    const auto profile = ownerOnlyProfile();
+    const auto profile = ownerOnlyProfile(false);
     if (profile.empty())
         GTEST_SKIP() << "Set an owner-only system-temp MM6 restart profile";
     requireHeadless();

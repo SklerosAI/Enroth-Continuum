@@ -48,6 +48,7 @@
 #include "Engine/Timer.h"
 #include "Engine/TurnEngine/TurnEngine.h"
 #include "Engine/MapEnumFunctions.h"
+#include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/Tables/MapTable.h"
 
 #include "GUI/GUIButton.h"
@@ -181,6 +182,8 @@ bool Game::loop() {
             }
             break;
         } else if (GetCurrentMenuID() == MENU_NEWGAME) {
+            if (engine->gameTitle() == GameTitle::MM6)
+                mm6::resetRawCursorShopProcessOwners(GameTitle::MM6);
             pActiveOverlayList->Reset();
             if (!PartyCreationUI_Loop()) {
                 break;

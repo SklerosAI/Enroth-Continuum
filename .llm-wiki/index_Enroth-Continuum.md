@@ -25,7 +25,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [Campaign Status](Campaign-Status.md) — Dated MM6, MM7, and MM8 readiness
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [Runtime Isolation](Runtime-Isolation.md) — Title-locked MM7 helper and staged Atlas sibling assembler; MM6/MM8 launch gates remain closed
-- [MM7 Self-Contained Source](MM7-Self-Contained-Source.md) — Local arm64 dependency inventory and later clean offline Mac build from SklerosAI source, with OpenEnroth credit retained
+- [MM7 Self-Contained Source](MM7-Self-Contained-Source.md) — Later clean, network-denied Mac build from SklerosAI-owned source and build inputs, with OpenEnroth credit retained
 
 ## Agent work and open questions
 
@@ -100,6 +100,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Provisional v1 eighteen-section assembly and separate v2 raw inventory/held/shop candidate; live commit stays gated
 - [MM6 F4 Raw Save Runtime](MM6-F4-Raw-Save-Runtime.md) — EC6 v2 bytes and native-slot preflight share fresh baselines, checked world plans and owner gates; live publication remains gated
 - [MM6 F4 Raw Cursor Shop Handoff](MM6-F4-Raw-Cursor-Shop-Handoff.md) — Detached v2 HELD/SHOP/SCLK owner equality before future live publication
+- [MM6 F4 Raw Cursor and Shop Process Owner](MM6-F4-Raw-Cursor-Shop-Process-Owner.md) — Title-gated process cursor, paired raw shop publication and bounded native service readers
 - [MM6 F4 Raw Party Inventory Stage](MM6-F4-Raw-Party-Inventory-Stage.md) — Detached four-character item projection for supported MM6 raw records, with byte-preserving capture and fail-closed unions
 - [MM6 F4 Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md) — Current live-owner gaps, raw item/SHOP/BEAC boundaries and atomic commit gates
 - [MM6 F4 Chest EC6 Transaction](MM6-F4-Chest-EC6-Transaction.md) — Required title-local chest state, raw active-delta sidecar and first-map movement audit

@@ -591,15 +591,13 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_RawV2RestartSlotStagesDetachedSession) {
             const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
             const mm6::NpcStaticBaseline freshNpcs =
                 mm6::loadNpcStaticBaseline(*engine->resources(), GameTitle::MM6);
-            Timer freshTimer;
-            ActiveOverlayList freshOverlays;
             const auto verifyItem = [](std::int32_t id) {
                 return id >= 1 && id <= 580 &&
                     !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
             };
             auto staged = mm6::preflightStagedRawSessionFields(
                 *profileRoot, mm6::NEW_GAME_AUTOSAVE_SLOT, freshNpcs,
-                freshTimer, freshOverlays, maps.expectedNames(),
+                maps.expectedNames(),
                 [&maps](std::string_view name) { return maps.readBase(name); },
                 verifyItem, *pItemTable, pOverlayTable->overlays.size(),
                 pTileTable->tileCount(), GameTitle::MM6);

@@ -2082,4 +2082,9 @@ Chronological record of wiki activity.
 ## [2026-11-07] implement | MM6 semantic menu listing seam
 - by: T-Burton-ND via codex
 - Added a read-only v2 slot inventory that applies the caller's semantic validator through the same primary/backup preflight as loading, using the selected HEAD and recovery flag. Structural-only slots can be omitted; the visible MM6 load menu stays closed until a complete gameplay validator and production load route exist.
-- New synthetic selection/disk-immutability test added. Modified source and test translation units passed syntax checks in the isolated worktree; linked integration run is pending.
+- New synthetic selection/disk-immutability test added. The linked atomic-file suite passed 8/8 in integration.
+
+## [2026-11-07] stage | MM6 generated NPC identity capsule
+- by: T-Burton-ND via codex
+- Added a detached, bounded `GNPC` section candidate for the active map's generated NPC rows and actor anchors, with read-only final actor agreement. The strict nineteen-section EC6 v2 decoder still rejects it; no live save/load path is opened.
+- AppleClang syntax checks passed for the new source and tests in the isolated worktree; linked integration validation remains pending. The gameplay RNG has no state snapshot API, so generated-row publication and RNG continuation remain unresolved.

@@ -2139,3 +2139,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated a detached exact 22-section v3 codec: nineteen v2 owners plus required SPAW, GNPC and RNGS. It validates canonical new payloads and GNPC/HEAD map identity while keeping v1/v2 strict. Linked v3/v2/SPAW suites passed 12/12.
 - SPAW-to-native-DDM slot binding, no-respawn map replay, pre-event owner publication, v3 atomic disk API and first-input admission remain open. No production loader or save route was enabled.
+
+## [2026-11-07] audit | MM6 original actor save loss
+- by: T-Burton-ND via codex
+- Source audit found the existing native DDM writer rejects post-spawn actor counts and, even with counts reconciled, copies only selected original-actor runtime fields. A spawned-only section cannot preserve later original-actor mutations.
+- A disposable full-list first-map runtime capture refused with `missing-mm6-resistance` (0/1), while the appended-spawn-only probe remains 1/1. The detached 22-section v3 manifest is therefore structural only; full active-actor provenance or exhaustive refusal remains required before live save/load.

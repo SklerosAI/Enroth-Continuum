@@ -2341,3 +2341,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added exact pinned GoogleTest and `gtest_parallel` snapshots with their original licenses and provenance. All 252 original files matched pinned Git blobs; a standalone AppleClang GoogleTest build/test and the parallel runner passed, as did the integration Mac MM7 target build.
 - Eleven gitlinks, seven nested fetches and prebuilt dependency recipes still block a clean offline clone. The optional cpplint snapshot contains a GPLv2 sample and was deferred for license review. The installed MM7 app and private saves were not replaced.
+
+## [2026-11-07] implement | Thirteen owned MM7 source inputs
+- by: T-Burton-ND via codex
+- Added the exact pinned `luajit-cmake` recipe with its MIT license and provenance. All 24 original files matched Git blobs; a standalone AppleClang LuaJIT build and the integration cached-input MM7 target build passed.
+- Ten gitlinks remain. The recipe still derives a version through `git show` in the separate LuaJIT source gitlink; that step must be replaced before owning LuaJIT as ordinary source. Nested fetches and prebuilt dependency recipes still block a clean offline clone. The installed app and private saves were not replaced.

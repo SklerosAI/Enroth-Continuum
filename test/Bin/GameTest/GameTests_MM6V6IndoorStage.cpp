@@ -227,11 +227,22 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
                                 // seed belongs to an outdoor map, so this disposable
                                 // indoor fixture must take the map's actual start
                                 // marker before OnMapReload or first input.
-                                const auto placement =
-                                    engine->_pendingTransition->resolvePlacement();
-                                if (!placement || !pIndoor->GetSector(placement->pos))
+                                std::optional<PartyPlacement> placement;
+                                for (MapStartPoint start : {
+                                        MAP_START_POINT_PARTY, MAP_START_POINT_NORTH,
+                                        MAP_START_POINT_SOUTH, MAP_START_POINT_EAST,
+                                        MAP_START_POINT_WEST}) {
+                                    auto candidate = MapDestination(map, start).resolvePlacement();
+                                    if (candidate && pIndoor->GetSector(candidate->pos) &&
+                                        pIndoor->GetSector(candidate->pos +
+                                            Vec3f(0, 0, pParty->eyeLevel))) {
+                                        placement = std::move(candidate);
+                                        break;
+                                    }
+                                }
+                                if (!placement)
                                     throw std::runtime_error(
-                                        "MM6 v6 indoor fixture lacks a valid Party Start");
+                                        "MM6 v6 indoor fixture lacks a valid native entrance");
                                 placeParty(*placement);
                                 if (!pIndoor->GetSector(pParty->pos) ||
                                     !pIndoor->GetSector(

@@ -2465,3 +2465,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a dedicated Mac MM7 wrapper that builds tracked media sources, selects the local-only CMake lane, verifies the nine archive link inputs and system-only dynamic links, and stages Atlas in a fresh output directory.
 - A fresh tracked-source extraction completed that command under network denial. The arm64 helper and staged app passed strict signature checks with valid bundle versions; no private game files or saves were bundled. The shared CMake default and installed app remain unchanged pending wider regression and visible save/reload checks.
+
+## [2026-11-07] update | Public branch history gate
+- by: T-Burton-ND via codex
+- Redacted owner-specific MM6 inventory summaries in the current tree while preserving actionable engine constants. The local integration branch still has earlier detailed notes in Git history.
+- Recorded that publication requires a separate history-aware audit; the redactions alone do not authorize pushing the integration branch to the public SklerosAI remote.

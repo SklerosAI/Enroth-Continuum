@@ -2301,3 +2301,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Connected the guarded MM6 runtime library to the app link closure required by Engine.cpp. The build-tree arm64 `MM7` target linked successfully, `file` identified an arm64 Mach-O executable, and the focused MM7 headless control passed 1/1.
 - This used the existing cached prebuilt dependencies and does not prove a clean offline clone or replace the installed MM7 helper.
+
+## [2026-11-07] verify | MM6 live indoor decoration replay
+- by: T-Burton-ND via codex
+- Added an MM6-only one-shot pre-event IDRT application and strict post-`OnMapReload` recapture in the disposable indoor v6 reader. After staging the candidate's exact chest owner under the existing test-only map-load scope, the v2 seed, v6 writer and fresh-child reader passed 1/1 each; focused linked v6 checks passed 7/7.
+- Indoor sprite/actor owners, gameplay admission, production SaveLoad and graphical face acceptance remain open. The test scope does not open normal MM6 chest loading.

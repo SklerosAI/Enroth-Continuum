@@ -1813,3 +1813,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Two separate hidden GameTest processes shared a disposable owner-only temporary profile. Editable New Game wrote a partial `.ec6` and reached the first outdoor frame; a fresh process selected and staged that persisted slot into detached Party, world and chest owners, built the first-map plan, and confirmed the slot bytes were unchanged.
 - The write and fresh-process stage each passed 1/1 with no on-screen window or focus change; the ordinary temporary-profile path also passed 1/1, and the disposable shared profile was removed. Normal MM6 `loadGame()`, all-owner commit and save–quit–relaunch–play remain open.
+
+## [2026-11-06] verify | MM6 fresh-process world reload and item capacity
+- by: T-Burton-ND via codex
+- An isolated fresh-process GameTest staged a persisted partial EC6 from a disposable profile, published represented owners in the test process, and entered the first outdoor world with actors and twenty chests. The rebuilt monitored run passed 1/1 with no visible window, focus change or disk mutation.
+- Provisional ITEM v1 now accepts logical indices 0–137 and stages a 138-slot MM6 inventory from a fresh 126-slot Party. Focused linked save tests passed 36/36. Native item bytes, all-owner rollback and production MM6 SaveLoad remain guarded.

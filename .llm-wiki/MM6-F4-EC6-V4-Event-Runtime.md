@@ -38,12 +38,18 @@ Linked focused container, codec and restore checks passed **12/12**, and
 an MM7 headless control passed **1/1**. A detached outdoor-only v4
 full-session stage now joins v3 owners with active EVRT map/header/bindings
 using caller-supplied rebuilt decorations. Its linked positive and refusal
-suite passed **4/4**. A no-write
-first-map candidate passed **1/1** in a disposable fresh child after a v2
-writer control passed **1/1**; the v2 primary was unchanged. There is no v4
-disposable slot or fresh-child v4
-reload; no production save, load or Atlas Play is enabled. Writer-side
-complete capture and final event/RNG agreement remain open.
+suite passed **5/5** after a heap-backed preflight fix. A strict opt-in
+three-process first-map sequence passed **1/1** for each separate process:
+v2 seed, atomic v4 candidate writer, and fresh-child Main Menu QuickLoad
+replay. The reader checked exact EVRT arrays, native event bytes, decoration
+flags, ACTR/GNPC/RNGS, CHST item provenance and represented Party/cursor/
+recovery owners before aborting to Main Menu without input. The v2 seed and
+v4 candidate were unchanged. Marker-free chest replay uses a test-only
+validated projection to attach MM6 raw item records while preserving saved
+CHST LCG and DDM bytes. Focused full-session/atomic checks passed **8/8**,
+chest route checks passed **8** with one private-reference skip, and an MM7
+headless control passed **1/1**. First-input admission, a post-action second
+write, indoor/later-map replay and production SaveLoad/Atlas remain closed.
 
 See also: [V3 Post Entry Map and Pre Event](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md),
 [V3 Full Session Preflight](MM6-F4-EC6-V3-Full-Session-Preflight.md),

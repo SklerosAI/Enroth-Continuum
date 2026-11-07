@@ -4,10 +4,11 @@ Status, 2026-11-07: detached `EVRT` section and test-only pre-decoration
 restore seam. Linked focused container, codec and restore checks passed
 **12/12** after the decoration-identity revision; an MM7 headless control
 passed **1/1**. The detached outdoor-only v4 full-session suite passed
-**4/4**. A
-no-write first-map candidate passed **1/1** in a disposable fresh child
-after a v2 writer control passed **1/1**, with the v2 primary unchanged.
-No v4 slot, production SaveLoad route or Atlas Play exists.
+**5/5**. A strict three-process sequence passed **1/1** at each step:
+disposable v2 seed, atomic first-map v4 candidate write, and fresh-child
+Main Menu QuickLoad replay with exact owner checks before input. The v2
+primary remained unchanged. No production SaveLoad route, first-input
+admission or Atlas Play exists.
 
 ## Why this owner exists
 
@@ -54,10 +55,12 @@ bindings. It returns staged copies without publishing live owners. The
 caller must supply decorations from the same validated base/delta; the
 stage does not independently reconstruct them. Indoor maps, slot selection
 and live publication are outside its contract. Its positive and refusal
-linked cases passed **4/4**. A no-write
-first-map candidate passed **1/1** in a disposable fresh child. It assembled
-and preflighted a candidate in memory and left the v2 primary unchanged;
-it did not write or reload a v4 slot.
+linked cases passed **5/5** after a heap-backed preflight fix. A no-write
+first-map candidate passed **1/1**. A later strict, opt-in writer placed a v4
+candidate in a separate owner-only system temporary profile, preserving the
+v2 seed. It uses the atomic temp/fsync/backup/readback boundary and requires
+semantic preflight; foreign-version primary or backup files refuse before
+mutation.
 
 `ScopedEventRuntimeRestoreForTest` holds fully decoded fields in a sole
 MM6 test context. On a save-load path, outdoor and indoor loaders call it
@@ -73,12 +76,21 @@ The linked checks cover canonical section and v4 manifest round trips,
 foreign/missing/stale owner refusals, high array slots, same-type position
 swap refusal, exact one-shot nonrespawn restore, mutation-free mismatch
 refusal and title isolation.
-These are synthetic/linked checks, not a fresh-child v4 reload. The next
-gate is complete writer-side owner capture and broader live-owner checks,
-then a disposable v4
-write and fresh-child replay with final event/RNG and
-first-input checks. Actor item/buff support and other existing save gates
-remain open.
+
+The strict fresh-child reader passed **1/1** after the separate writer. It
+staged the candidate from source-backed first-map decorations, restored EVRT
+before decoration preparation and ACTR/GNPC/RNGS before map events, then
+checked exact event arrays, native event bytes, decoration flags, actors,
+generated NPCs, chest item provenance, Party, cursor and recovery owners.
+It aborted to Main Menu before input and did not change either slot. The
+marker-free chest replay uses a test-only validated projection that preserves
+saved CHST LCG and DDM bytes while attaching the raw MM6 item records needed
+for subsequent exact capture. Focused v4 full-session/atomic checks passed
+**8/8**, chest route checks passed **8** with one private-reference skip, and
+an MM7 headless control passed **1/1**. This proves one disposable first-map
+reload boundary, not a gameplay save cycle. The next gate is first-input
+admission and a second save after a bounded action. Actor item/buff support,
+indoor and later-map replay, production SaveLoad and Atlas remain open.
 
 See [v3 post-entry map and pre-event seam](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md),
 [v3 full-session preflight](MM6_F4_EC6_V3_FULL_SESSION_PREFLIGHT.md),

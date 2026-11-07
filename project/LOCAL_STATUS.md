@@ -1080,9 +1080,14 @@ Linked focused container/codec/restore checks passed **12/12** and an MM7
 headless control passed **1/1**. A detached outdoor-only v4 full-session
 stage now joins active EVRT map/header/bindings with represented v3 owners
 and caller-supplied rebuilt decorations. Its linked positive and refusal
-suite passed **4/4**. A no-write
-first-map candidate passed **1/1** in a disposable fresh child after the
-v2 writer passed **1/1**, with the v2 primary unchanged. No v4 slot,
-fresh-child v4 reload or production SaveLoad/Atlas path exists. The
-stronger binding and no-write candidate do not establish durable
-decoration/event replay.
+suite passed **5/5** after heap-backed preflight staging. A strict opt-in
+three-process first-map sequence now passes: disposable v2 seed **1/1**,
+atomic v4 candidate writer **1/1**, and fresh-child Main Menu QuickLoad
+replay **1/1**. The reader checks source-backed decoration flags, EVRT arrays,
+native event bytes, ACTR/GNPC/RNGS, chest item provenance and represented
+session owners, then aborts before input. The v2 primary and v4 candidate
+remain unchanged. Focused v4 full-session/atomic checks passed **8/8**,
+chest route checks passed **8** with one private-reference skip, and an MM7
+headless control passed **1/1**. This is a test-only first-map save/reload
+boundary; first-input admission, a post-action second write, indoor/later-map
+replay, production SaveLoad and Atlas remain closed.

@@ -292,8 +292,12 @@ GAME_TEST(MM6V4FreshChildReplayHeadless, DISABLED_FreshQuickLoadRestoresBeforeEv
                             mm6::ChestRuntimeProjection projection{vChests[index], chestRecords[index]};
                             const auto replayed = mm6::stageChestRuntimeRecord(
                                 GameTitle::MM6, projection);
-                            if (!replayed || *replayed != chestRecords[index])
-                                throw std::runtime_error("MM6 v4 final chest projection changed");
+                            if (!replayed)
+                                throw std::runtime_error("MM6 v4 final chest projection refused at index " +
+                                                         std::to_string(index));
+                            if (*replayed != chestRecords[index])
+                                throw std::runtime_error("MM6 v4 final chest projection differed at index " +
+                                                         std::to_string(index));
                         }
                         if (mm6::captureCoreFields(*pParty, GameTitle::MM6) != savedRaw.core)
                             throw std::runtime_error("MM6 v4 PART/CHAR owner changed after map events");

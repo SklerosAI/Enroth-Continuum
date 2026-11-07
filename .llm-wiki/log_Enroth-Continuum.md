@@ -2376,3 +2376,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added exact pinned cpptrace top-level MIT source: 209 original blobs/modes matched, standalone alternate-backend arm64 build and cached-input integration MM7 target passed. Its production Mac libdwarf-lite fetch remains unowned; seven gitlinks remain.
 - The upstream dependency release API publishes the same digest and size as this Mac's cached arm64 ZIP. Its tagged Git tree pins FFmpeg, libpng, OpenAL Soft, SDL and zlib-ng; the inventory records those commits and a build-script reference. Source license review and an original repo-owned recipe remain open. The installed app and private saves were untouched.
+
+## [2026-11-07] analyze | MM6 border autosave transaction
+- by: T-Burton-ND via codex
+- Audited the two inherited autosave entry points, paused travel-dialogue capture, disposable-only v5 atomic writer and the no-write location-change test. The test proves map switching but leaves old-map cache and disk state unchanged.
+- Added a source-backed transaction packet and wiki page: complete detached old-map/visited-map owners, a reload-safe Party copy, validated durable write, postcommit travel effects and failure recovery are required before live MM6 border travel. No runtime code or private data changed.

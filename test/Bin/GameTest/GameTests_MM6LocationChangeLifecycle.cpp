@@ -171,6 +171,7 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
     bool autosaveIntercepted = false;
     bool targetMapReady = false;
     bool movementApplied = false;
+    int sourceGeneratedCursor = -1;
     std::vector<std::uint8_t> oldMapCacheBefore;
     std::string finalOwnerError;
     std::size_t expectedNativeActors = 0;
@@ -377,6 +378,7 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
             const Blob &oldCache = pMapDeltas.at("oute3.ddm");
             const auto *oldBegin = static_cast<const std::uint8_t *>(oldCache.data());
             oldMapCacheBefore.assign(oldBegin, oldBegin + oldCache.size());
+            sourceGeneratedCursor = pNPCStats->uNewlNPCBufPos;
             chestOptIn.reset();
             chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>();
             mm6::testing::ScopedTransitionAutosaveInterceptForTest intercept(
@@ -400,6 +402,15 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
                 const auto *oldBegin = static_cast<const std::uint8_t *>(oldCache.data());
                 const std::vector<std::uint8_t> oldNow(
                     oldBegin, oldBegin + oldCache.size());
+                std::size_t linkedGenerated = 0;
+                for (const Actor &actor : pActors)
+                    linkedGenerated += actor.npcId >= 5000;
+                if (linkedGenerated != static_cast<std::size_t>(pNPCStats->uNewlNPCBufPos))
+                    throw std::runtime_error(
+                        "MM6 location-change GNPC cursor mismatch: source " +
+                        std::to_string(sourceGeneratedCursor) + ", target " +
+                        std::to_string(pNPCStats->uNewlNPCBufPos) + ", linked " +
+                        std::to_string(linkedGenerated));
                 const auto generated = mm6::captureGeneratedNpcFields(
                     pActors, *pNPCStats, "oute2.odm", GameTitle::MM6);
                 mm6::requireGeneratedNpcActorAgreement(

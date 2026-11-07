@@ -20,6 +20,7 @@
 #include "Engine/Graphics/Overlays.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/MM6/MM6AtomicSaveFile.h"
 #include "Engine/MM6/MM6ActiveActorOutdoorDeltaCapture.h"
 #include "Engine/MM6/MM6ActiveActorSection.h"
 #include "Engine/MM6/MM6BuffSaveFields.h"
@@ -47,6 +48,7 @@
 #include "Engine/MM6/MM6EventRuntimeSaveFields.h"
 #include "Engine/MM6/MM6V4FullSessionPreflight.h"
 #include "Engine/MM6/MM6V4SaveFields.h"
+#include "Engine/MM6/MM6V4OutdoorDecorationReplay.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/Decoration.h"
@@ -55,6 +57,7 @@
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/ItemTable.h"
+#include "Engine/Tables/DecorationTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/Tables/OverlayTable.h"
@@ -126,9 +129,10 @@ void requireEmptyInheritedCommerce(const Party &party) {
 
 } // namespace
 
-// Candidate-only probe in the disposable v2 restart child. It captures the
-// real post-entry first map and runs the complete detached v4 semantic stage.
-// No v4 file is written and production SaveLoad remains guarded.
+// Candidate-only probe in the disposable v2 restart child. With the exact
+// strict-v4 opt-in it writes only a separate disposable candidate-v4 slot,
+// after source-backed decoration and full-session semantic checks. This does
+// not admit the slot to production SaveLoad or prove fresh-child replay.
 GAME_TEST(MM6V4PostEntryCandidateHeadless, DISABLED_FirstMapFullSessionPreflight) {
     const std::filesystem::path profile = disposableProfile();
     if (profile.empty())
@@ -138,6 +142,12 @@ GAME_TEST(MM6V4PostEntryCandidateHeadless, DISABLED_FirstMapFullSessionPreflight
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
     const auto before = slotBytes(profile / "saves" / "autosave.ec6");
     ASSERT_FALSE(before.empty());
+    const char *writeFlag = std::getenv("ENROTH_MM6_V4_WRITE_ENABLE");
+    if (writeFlag && *writeFlag && std::string_view(writeFlag) != "strict-v4")
+        throw std::runtime_error("MM6 v4 writer requires exact strict-v4 opt-in");
+    const bool writeEnabled = writeFlag && std::string_view(writeFlag) == "strict-v4";
+    const std::filesystem::path candidatePath = profile / "saves" / "candidate-v4.ec6";
+    const auto beforeCandidate = slotBytes(candidatePath);
 
     bool entered = false;
     bool preflightPassed = false;
@@ -283,6 +293,30 @@ GAME_TEST(MM6V4PostEntryCandidateHeadless, DISABLED_FirstMapFullSessionPreflight
                             preflight.activeEventRuntime.decorVars !=
                                 engine->_persistentVariables.decorVars)
                             throw std::runtime_error("event runtime bytes changed");
+                        if (writeEnabled) {
+                            stage = "decoration-replay";
+                            mm6::requireFirstMapOutdoorDecorationReplay(
+                                "oute3.odm", maps.readBase("oute3.odm"),
+                                preflight.activeEventRuntime, *pDecorationTable,
+                                pLevelDecorations, GameTitle::MM6);
+                            stage = "atomic-write";
+                            const auto validate = [&](std::span<const std::uint8_t> proposed) {
+                                const auto checked = mm6::stageV4FullSessionPreflight(
+                                    proposed, freshNpcs, maps.expectedNames(),
+                                    [&maps](std::string_view name) { return maps.readBase(name); },
+                                    verifyItem, *pItemTable, pOverlayTable->overlays.size(),
+                                    pTileTable->tileCount(), pActors.size(), random->type(),
+                                    pLevelDecorations, GameTitle::MM6);
+                                mm6::requireFirstMapOutdoorDecorationReplay(
+                                    "oute3.odm", maps.readBase("oute3.odm"),
+                                    checked.activeEventRuntime, *pDecorationTable,
+                                    pLevelDecorations, GameTitle::MM6);
+                            };
+                            mm6::writeAtomicV4SaveFileForTest(
+                                profile, "candidate-v4.ec6", bytes, validate);
+                            if (slotBytes(candidatePath) != bytes)
+                                throw std::runtime_error("v4 candidate readback differs");
+                        }
                         preflightPassed = true;
                         refusalClass = "pass";
                     } catch (const std::exception &error) {
@@ -353,5 +387,9 @@ GAME_TEST(MM6V4PostEntryCandidateHeadless, DISABLED_FirstMapFullSessionPreflight
     EXPECT_TRUE(entered);
     EXPECT_TRUE(preflightPassed) << refusalClass;
     EXPECT_EQ(slotBytes(profile / "saves" / "autosave.ec6"), before);
+    if (!writeEnabled)
+        EXPECT_EQ(slotBytes(candidatePath), beforeCandidate);
+    else
+        EXPECT_FALSE(slotBytes(candidatePath).empty());
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }

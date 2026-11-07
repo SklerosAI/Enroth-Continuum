@@ -11,6 +11,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/AssetsManager.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/BspRenderer.h"
@@ -978,6 +979,12 @@ void loadAndPrepareBLV(MapId mapid, bool bLoading) {
         }
         RespawnGlobalDecorations();
     }
+
+    if (bLoading && engine->gameTitle() == GameTitle::MM6)
+        (void) mm6::testing::runArmedEventRuntimeRestoreForTest(
+            GameTitle::MM6, mapFilename, pIndoor->dlv.respawnCount,
+            pIndoor->dlv.lastRespawnDay, indoor_was_respawned,
+            &engine->_persistentVariables, pLevelDecorations);
 
     BLV_InitialiseDoors();
 

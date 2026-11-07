@@ -13,6 +13,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/AssetsManager.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Camera.h"
@@ -1836,7 +1837,7 @@ void UpdateActors_ODM() {
 /**
  * @offset 0x47A384
  */
-static void loadAndPrepareODMInternal(MapId mapid) {
+static void loadAndPrepareODMInternal(MapId mapid, bool bLoading) {
     assert(mapid >= MAP_FIRST && mapid <= MAP_LAST);
     if (engine->gameTitle() == GameTitle::MM6)
         assert(pMapTable->pInfos[mapid].fileName.ends_with(".odm"));
@@ -1877,6 +1878,11 @@ static void loadAndPrepareODMInternal(MapId mapid) {
         }
         RespawnGlobalDecorations();
     }
+    if (bLoading && engine->gameTitle() == GameTitle::MM6)
+        (void) mm6::testing::runArmedEventRuntimeRestoreForTest(
+            GameTitle::MM6, mapFilename, pOutdoor->ddm.respawnCount,
+            pOutdoor->ddm.lastRespawnDay, outdoor_was_respawned,
+            &engine->_persistentVariables, pLevelDecorations);
     pOutdoor->PrepareDecorations();
     arrangeSpriteObjects();
     pGameLoadingUI_ProgressBar->Progress();
@@ -1894,7 +1900,7 @@ void loadAndPrepareODM(MapId mapid, bool bLoading) {
     pGameLoadingUI_ProgressBar->Reset(8);
     uCurrentlyLoadedLevelType = LEVEL_OUTDOOR;
 
-    loadAndPrepareODMInternal(mapid);
+    loadAndPrepareODMInternal(mapid, bLoading);
     if (!bLoading) {
         if (std::optional<PartyPlacement> placement = engine->_pendingTransition->resolvePlacement())
             placeParty(*placement);

@@ -78,6 +78,7 @@
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6PostMapGeneratedNpcLinks.h"
 #include "Engine/MM6/MM6PreEventCheckpointForTest.h"
+#include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6V3PreEventReplayForTest.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Resources/EngineFileSystem.h"
@@ -724,10 +725,19 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
 
     engine->_currentLoadedMapId = transitionMapId;
 
-    if (isMapIndoor(transitionMapId)) {
-        loadAndPrepareBLV(transitionMapId, bLoading);
-    } else {
-        loadAndPrepareODM(transitionMapId, bLoading);
+    try {
+        if (isMapIndoor(transitionMapId)) {
+            loadAndPrepareBLV(transitionMapId, bLoading);
+        } else {
+            loadAndPrepareODM(transitionMapId, bLoading);
+        }
+    } catch (const mm6::testing::EventRuntimeRestoreRefusalForTest &) {
+        // This test-only refusal precedes the ordinary pre-event checkpoint.
+        // Clear the pending load before returning to Main Menu, without
+        // allowing a partially prepared MM6 map to process events or input.
+        engine->_pendingTransition.reset();
+        pGameLoadingUI_ProgressBar->Release();
+        throw mm6::testing::PreEventCheckpointAbortForTest();
     }
 
     // After the load, because the map delta overwrites face attributes.

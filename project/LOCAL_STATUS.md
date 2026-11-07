@@ -1324,3 +1324,12 @@ seed, v4, v5 write/replay, first input, second write/replay chain passed
 preparation for a future first-map production save/load transaction, not an
 admitted MM6 slot or normal menu action. Atomic result/recovery policy and
 normal SaveLoad/UI routing remain open.
+
+A test-only first-map v5 atomic outcome policy now distinguishes an exact
+committed primary/backup state from a refusal before primary replacement and
+an unconfirmed new primary after a later failure. Read-only preflight checks
+the two existing disposable candidate slots, rejects foreign version or
+wrong-map occupants, and selects a valid primary or backup without repair.
+A post-primary-rename, pre-directory-sync fault was exercised with disk bytes
+observed; focused linked units passed **2/2**, and the MM7 headless control
+passed **1/1**. Normal MM6 SaveLoad and menu listing remain closed.

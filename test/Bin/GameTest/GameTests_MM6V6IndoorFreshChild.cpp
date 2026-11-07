@@ -412,12 +412,13 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                         !engine->_pendingTransition;
                     if (movementApplied && writeAfterInput) {
                         try {
-                            mm6::testing::requireV6IndoorNativeResidualsForTest(
-                                parsedBase, preEventDoorsData);
+                            const auto visibleDelta =
+                                mm6::testing::captureV6IndoorVisibleDeltaForTest(
+                                    parsedBase, preEventDoorsData);
                             auto saved = std::make_unique<mm6::V6IndoorSaveFields>(
                                 staged->saved);
                             saved->raw = *mm6::testing::captureV6IndoorLiveRawOwnersForTest(
-                                staged->saved.raw, mapName);
+                                staged->saved.raw, mapName, visibleDelta);
                             saved->generatedNpcs = mm6::captureGeneratedNpcFields(
                                 pActors, *pNPCStats, mapName, GameTitle::MM6);
                             saved->gameplayRng = mm6::captureGameplayRngFields(

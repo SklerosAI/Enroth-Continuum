@@ -58,16 +58,33 @@ inline void requireV6IndoorRawSectionsEqualForTest(
 // a changed chest, door, outline, or reset counter needs a new exact owner.
 inline void requireV6IndoorNativeResidualsForTest(
     const MM6IndoorSnapshot &base,
-    std::span<const std::int16_t> preEventDoorsData) {
+    std::span<const std::int16_t> preEventDoorsData,
+    bool allowNewVisibleOutlines = false) {
     if (!pIndoor || pIndoor->mm6DeltaBytes.empty())
         throw std::runtime_error("MM6 v6 indoor residual check lacks DLV sidecar");
     auto native = decodeMM6IndoorRuntimeDelta(
         Blob::view(pIndoor->mm6DeltaBytes.data(), pIndoor->mm6DeltaBytes.size()), base);
     if (pIndoor->dlv.respawnCount < 0 || pIndoor->dlv.lastRespawnDay < 0 ||
         native.respawnCount != static_cast<std::uint32_t>(pIndoor->dlv.respawnCount) ||
-        native.lastRespawnDay != static_cast<std::uint32_t>(pIndoor->dlv.lastRespawnDay) ||
-        native.visibleOutlines != pIndoor->_visible_outlines)
-        throw std::runtime_error("MM6 v6 indoor DLV reset or outline owner changed");
+        native.lastRespawnDay != static_cast<std::uint32_t>(pIndoor->dlv.lastRespawnDay))
+        throw std::runtime_error("MM6 v6 indoor DLV reset owner changed");
+    if (native.visibleOutlines != pIndoor->_visible_outlines) {
+        if (!allowNewVisibleOutlines)
+            throw std::runtime_error("MM6 v6 indoor DLV outline owner changed");
+        for (std::size_t i = 0; i < native.visibleOutlines.size() * 8; ++i) {
+            const auto mask = static_cast<std::uint8_t>(1u << (7 - i % 8));
+            const bool oldBit = static_cast<std::uint8_t>(
+                native.visibleOutlines[i / 8]) & mask;
+            const bool liveBit = static_cast<std::uint8_t>(
+                pIndoor->_visible_outlines[i / 8]) & mask;
+            if ((oldBit && !liveBit) ||
+                (liveBit && !oldBit &&
+                 (i >= pIndoor->mapOutlines.size() ||
+                  !(pIndoor->mapOutlines[i].uFlags & 1))))
+                throw std::runtime_error(
+                    "MM6 v6 indoor outline change lacks live map visibility");
+        }
+    }
     if (native.chests.size() != vChests.size())
         throw std::runtime_error("MM6 v6 indoor DLV chest count changed");
     if (native.doors.size() != pIndoor->doors.size())
@@ -128,10 +145,35 @@ inline void requireV6IndoorNativeResidualsForTest(
     }
 }
 
+// Indoor minimap drawing reveals native outline bits during real input. Patch
+// only the DLV visibility section after the strict residual gate above; all
+// opaque DLV bytes and other source sections stay verbatim.
+inline std::vector<std::uint8_t> captureV6IndoorVisibleDeltaForTest(
+    const MM6IndoorSnapshot &base,
+    std::span<const std::int16_t> preEventDoorsData) {
+    requireV6IndoorNativeResidualsForTest(base, preEventDoorsData, true);
+    auto native = decodeMM6IndoorRuntimeDelta(
+        Blob::view(pIndoor->mm6DeltaBytes.data(), pIndoor->mm6DeltaBytes.size()), base);
+    native.wire.replaceSection(MM6IndoorSectionKind::Visibility,
+        Blob::copy(pIndoor->_visible_outlines.data(),
+                   pIndoor->_visible_outlines.size()));
+    const Blob encoded = serializeMM6Indoor(native.wire);
+    const auto *data = static_cast<const std::uint8_t *>(encoded.data());
+    std::vector<std::uint8_t> result(data, data + encoded.size());
+    const auto verified = decodeMM6IndoorRuntimeDelta(
+        Blob::view(result.data(), result.size()), base);
+    if (verified.visibleOutlines != pIndoor->_visible_outlines ||
+        verified.respawnCount != native.respawnCount ||
+        verified.lastRespawnDay != native.lastRespawnDay)
+        throw std::runtime_error("MM6 v6 indoor outline DLV patch did not round-trip");
+    return result;
+}
+
 // Read all v2 title owners from one settled indoor game-thread callback. The
 // native DLV remains a source anchor; v6 owns actor/sprite/decoration dynamics.
 inline std::unique_ptr<RawSaveFields> captureV6IndoorLiveRawOwnersForTest(
-    const RawSaveFields &source, std::string_view mapName) {
+    const RawSaveFields &source, std::string_view mapName,
+    std::span<const std::uint8_t> activeDeltaOverride = {}) {
     if (!engine || engine->gameTitle() != GameTitle::MM6 || !pIndoor || !pParty ||
         !pNPCStats || !pItemTable || !pMapTable || !pPartyActionQueue ||
         pPartyActionQueue->uNumActions != 0 || pMapDeltas.empty() ||
@@ -170,8 +212,10 @@ inline std::unique_ptr<RawSaveFields> captureV6IndoorLiveRawOwnersForTest(
     result->shops = shopTitleState();
 
     const std::string deltaName = std::string(mapName.substr(0, mapName.size() - 4)) + ".dlv";
+    const std::span<const std::uint8_t> activeDelta = activeDeltaOverride.empty() ?
+        std::span<const std::uint8_t>(pIndoor->mm6DeltaBytes) : activeDeltaOverride;
     result->chest = captureChestSaveFields(
-        chestTitleState(), deltaName, pIndoor->mm6DeltaBytes, GameTitle::MM6);
+        chestTitleState(), deltaName, activeDelta, GameTitle::MM6);
     bool foundActive = false;
     for (auto &entry : result->maps.deltas) {
         const auto cached = pMapDeltas.find(entry.name);
@@ -183,7 +227,7 @@ inline std::unique_ptr<RawSaveFields> captureV6IndoorLiveRawOwnersForTest(
             if (foundActive)
                 throw std::runtime_error("MM6 v6 live raw map cache repeats active delta");
             foundActive = true;
-            entry.bytes = pIndoor->mm6DeltaBytes;
+            entry.bytes.assign(activeDelta.begin(), activeDelta.end());
         } else if (entry.bytes != bytes) {
             throw std::runtime_error("MM6 v6 nonactive map cache changed");
         }

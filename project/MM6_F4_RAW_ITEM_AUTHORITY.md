@@ -12,6 +12,8 @@ A [detached plain-item projection](MM6_F4_PLAIN_ITEM_PROJECTION.md) now uses MM6
 
 A separate [standard-item projection](MM6_F4_STANDARD_ITEM_PROJECTION.md) uses the original equipment-type branch and centralized 14-index MM6 bonus map for positive-strength standard-enchanted records. It retains every source byte and rejects special bonuses and unsupported category/field changes. It is detached from the live character inventory and save transaction.
 
+An [Antique-only special projection](MM6_F4_ANTIQUE_ITEM_PROJECTION.md) now accepts one source-backed second-bonus ID in the detached four-character stage. It requires the MM6 table's tenfold value-only row and a safe common weapon/equipment type, keeps the exact 28-byte source record, and rejects every other special ID. Original-executable pricing and live inventory/save observation remain separate gates.
+
 The [value provenance carrier](MM6_F4_ITEM_VALUE_PROVENANCE.md) now attaches exact source bytes to staged plain and common standard-enchanted `Item` values, preserving those bytes through shared value copies. Capture rejects missing or substituted carriers, but no live producer, unique identity, physical slot-clear policy or all-context save commit is defined.
 
 The later [raw transfer source audit](MM6_F4_RAW_ITEM_TRANSFER_SEMANTICS.md) proves first-25-byte clears in selected backpack and cursor paths, full incoming cursor/shop copies, and zero-ID free-slot selection across all 138 records. These are bounded operation rules, not permission to route general UI pickup, equip or ground drop through the existing runtime `Inventory::take`.

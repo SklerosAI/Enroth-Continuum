@@ -10,7 +10,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 ## Navigation and conventions
 
 - [Home](Home_Enroth-Continuum.md) — Curated entry point
-- [Agent Handoff](Agent-Handoff.md) — Current gates, authority, checkout roles, integration and evidence protocol
+- [Agent Handoff](Agent-Handoff.md) — Fast MM6 resume pointer, current gates, checkout roles and evidence protocol
 - [Schema](SCHEMA_Enroth-Continuum.md) — Page, link, log, and ingest rules
 - [Log](log_Enroth-Continuum.md) — Chronological operations
 - [Edge Types](Edge-Types.md) — CRC template's typed relation vocabulary

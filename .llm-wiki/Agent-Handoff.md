@@ -8,6 +8,21 @@ tags: [handoff, agents, mm6]
 
 This page is the starting brief for future Codex agents working in parallel on Enroth Continuum; recheck its dated status against the authoritative files before acting.
 
+## Fast resume pointer — 2026-11-07
+
+The MM6 implementation goal is paused. The next accepted work is to run the
+seven-child first-map v5 chain, both full-retry fault children and MM7 control
+against the already compiled Engine event-restore slice; it has not yet passed
+those replay checks. If that succeeds, complete the remaining actor/NPC/RNG,
+sprite/decoration and post-world phases in the same Engine-owned first-map
+attempt. Then connect paused Save, native numbered-slot policy and normal UI
+to a fresh-process save/reload, followed by the early graphical F5a check.
+Normal MM6 SaveLoad, visited-map return and Atlas MM6 Play remain closed.
+See [plan section 18.1](../project/plan.md) for the F4b → F5a → F4d → F4c →
+F5b → F6 sequence and risk-based test cadence. Open only the linked packet
+for the current gate; the historical entries below remain available when a
+specific contradiction or regression calls for them.
+
 ## Worktree budget — 2026-11-07
 
 The repository has a **10-worktree cap**, including the main integration

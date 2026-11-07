@@ -462,7 +462,7 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
             chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>();
             targetCapture = std::make_unique<
                 mm6::testing::ScopedTransitionPostWorldCaptureForTest>(
-                    GameTitle::MM6, target, [&] {
+                    GameTitle::MM6, target, [&, target] {
                         if (!gameTimer->isPaused() ||
                             engine->_currentLoadedMapId != target ||
                             engine->_pendingTransition ||

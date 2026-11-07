@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string_view>
 
 #include "Library/Logger/LogEnums.h"
 
@@ -17,7 +18,9 @@ class LogStarter {
     LogStarter();
     ~LogStarter();
 
-    void initialize(FileSystem *userFs, LogLevel logLevel); // Set log level & finalize logger init.
+    // Set log level and finalize logger init. Existing callers keep the legacy name.
+    void initialize(FileSystem *userFs, LogLevel logLevel,
+                    std::string_view logPath = "logs/openenroth.log");
 
     DistLogSink *rootSink() const;
 

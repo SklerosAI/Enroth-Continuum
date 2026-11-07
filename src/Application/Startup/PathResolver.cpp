@@ -36,10 +36,12 @@ static const std::vector<std::string_view> mm6ValidateList = {
 
 struct PathResolutionConfig {
     const char *overrideEnvKey = nullptr;
+    const char *preferredOverrideEnvKey = nullptr;
     const std::vector<const char *> registryKeys;
 
-    constexpr PathResolutionConfig(const char* overrideEnvKey, std::initializer_list<const char*> registryKeys)
-        : overrideEnvKey(overrideEnvKey), registryKeys(registryKeys) {}
+    constexpr PathResolutionConfig(const char* overrideEnvKey, std::initializer_list<const char*> registryKeys,
+                                   const char* preferredOverrideEnvKey = nullptr)
+        : overrideEnvKey(overrideEnvKey), preferredOverrideEnvKey(preferredOverrideEnvKey), registryKeys(registryKeys) {}
 };
 
 static const PathResolutionConfig mm6Config = {
@@ -63,7 +65,8 @@ static const PathResolutionConfig mm7Config = {
         "HKEY_LOCAL_MACHINE/SOFTWARE/WOW6432Node/GOG.com/Games/1207658916/Path",
         "HKEY_LOCAL_MACHINE/SOFTWARE/WOW6432Node/GOG.com/GOGMM7/PATH",
         "HKEY_LOCAL_MACHINE/SOFTWARE/WOW6432Node/New World Computing/Might and Magic VII/1.0/AppPath"
-    }
+    },
+    mm7PreferredPathOverrideKey
 };
 
 static const PathResolutionConfig mm8Config = {
@@ -77,7 +80,17 @@ static const PathResolutionConfig mm8Config = {
 };
 
 static std::vector<Path> resolvePaths(Environment *environment, const PathResolutionConfig &config,
-                                      [[maybe_unused]] std::string_view macSupportPath) {
+                                      [[maybe_unused]] std::string_view macSupportPath,
+                                      [[maybe_unused]] bool preferMacSupportPath = false) {
+#ifdef __APPLE__
+    if (config.preferredOverrideEnvKey) {
+        std::string preferredPath = environment->getenv(config.preferredOverrideEnvKey);
+        if (!preferredPath.empty()) {
+            MM_INFO("Path override provided, '{}={}'.", config.preferredOverrideEnvKey, preferredPath);
+            return {Path(std::move(preferredPath))};
+        }
+    }
+#endif
     // If we have a path override then it'll be the only path we'll check.
     std::string envPath = environment->getenv(config.overrideEnvKey);
     if (!envPath.empty()) {
@@ -87,7 +100,17 @@ static std::vector<Path> resolvePaths(Environment *environment, const PathResolu
 
     std::vector<Path> result;
 
-    // Otherwise we check PWD first.
+#ifdef __APPLE__
+    auto appendMacSupportPath = [&] {
+        std::string home = environment->path(PATH_HOME);
+        if (!home.empty())
+            result.push_back(Path(std::move(home)) / "Library/Application Support" / macSupportPath);
+    };
+    if (preferMacSupportPath)
+        appendMacSupportPath();
+#endif
+
+    // MM7 on macOS prefers its private data root; other paths retain PWD first.
     result.push_back(fs::cwd());
 
     // Then we check paths from registry on Windows,...
@@ -114,9 +137,8 @@ static std::vector<Path> resolvePaths(Environment *environment, const PathResolu
 
 #ifdef __APPLE__
     // ...or Library/Application Support in home on macOS.
-    std::string home = environment->path(PATH_HOME);
-    if (!home.empty())
-        result.push_back(Path(std::move(home)) / "Library/Application Support" / macSupportPath);
+    if (!preferMacSupportPath)
+        appendMacSupportPath();
 #endif
 
     return result;
@@ -127,7 +149,7 @@ std::vector<Path> resolveMm6Paths(Environment *environment) {
 }
 
 std::vector<Path> resolveMm7Paths(Environment *environment) {
-    return resolvePaths(environment, mm7Config, "Enroth Continuum/Game Data/MM7");
+    return resolvePaths(environment, mm7Config, "Enroth Continuum/Game Data/MM7", true);
 }
 
 std::vector<Path> resolveMm8Paths(Environment *environment) {

@@ -57,7 +57,17 @@
 
 #include "PathResolver.h"
 
-constexpr std::string_view configName = "openenroth.ini";
+constexpr std::string_view legacyConfigName = "openenroth.ini";
+constexpr std::string_view mm7MacConfigName = "enroth-continuum-mm7.ini";
+constexpr std::string_view mm7MacLogName = "logs/enroth-continuum-mm7.log";
+
+static std::string_view configNameForTitle(GameTitle title) {
+#if defined(__APPLE__)
+    if (title == GameTitle::MM7)
+        return mm7MacConfigName;
+#endif
+    return legacyConfigName;
+}
 
 // Installed only by the explicitly opted-in, isolated GameTest. SDL still
 // owns a real hidden OpenGL window/context, but game code cannot reveal/raise
@@ -115,9 +125,17 @@ void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUse
 
     // Init config.
     _config = std::make_shared<GameConfig>();
-    if (ufs->exists(configName)) {
-        _config->load(ufs->openForReading(configName).get());
-        MM_INFO("Configuration file '{}' loaded!", ufs->displayPath(configName));
+    const std::string_view configName = configNameForTitle(_options.gameTitle);
+    std::string_view loadConfigName = configName;
+#if defined(__APPLE__)
+    // An explicitly selected older MM7 profile can still supply its config.
+    // Save only the new name; do not modify or import the old profile.
+    if (_options.gameTitle == GameTitle::MM7 && !ufs->exists(configName) && ufs->exists(legacyConfigName))
+        loadConfigName = legacyConfigName;
+#endif
+    if (ufs->exists(loadConfigName)) {
+        _config->load(ufs->openForReading(loadConfigName).get());
+        MM_INFO("Configuration file '{}' loaded!", ufs->displayPath(loadConfigName));
     } else {
         _config->reset();
 #ifdef OE_DISTRIBUTION_BUILD
@@ -125,6 +143,10 @@ void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUse
 #endif
         MM_INFO("Could not read configuration file '{}'! Loaded default configuration instead!", ufs->displayPath(configName));
     }
+#if defined(__APPLE__)
+    if (_options.gameTitle == GameTitle::MM7 && _config->window.Title.value() == "OpenEnroth")
+        _config->window.Title.setValue("Enroth Continuum MM7");
+#endif
     MM_INFO("Built in resource override is {}.", _config->debug.OverrideBuiltInResources.value() ? "enabled" : "disabled");
 
     // Patch config.
@@ -145,7 +167,12 @@ void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUse
     }
 
     // Finish logger init now that we have user fs and know the desired log level.
-    _logStarter.initialize(ufs, _options.logLevel ? *_options.logLevel : _config->debug.LogLevel.value());
+    std::string_view logName = "logs/openenroth.log";
+#if defined(__APPLE__)
+    if (_options.gameTitle == GameTitle::MM7)
+        logName = mm7MacLogName;
+#endif
+    _logStarter.initialize(ufs, _options.logLevel ? *_options.logLevel : _config->debug.LogLevel.value(), logName);
 
     // Resolve data path, create data fs.
     // TODO(captainurist): actually move datapath to config?
@@ -348,6 +375,7 @@ void GameStarter::run() {
         _game->run();
 
         _application->component<GameWindowHandler>()->UpdateConfigFromWindow(_config.get());
+        const std::string_view configName = configNameForTitle(_options.gameTitle);
         _config->save(ufs->openForWriting(configName).get());
         MM_INFO("Configuration file '{}' saved!", ufs->displayPath(configName));
     } catch (const std::exception &e) {

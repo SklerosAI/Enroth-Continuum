@@ -9,6 +9,7 @@ class Environment;
 
 constexpr char mm6PathOverrideKey[] = "OPENENROTH_MM6_PATH";
 constexpr char mm7PathOverrideKey[] = "OPENENROTH_MM7_PATH";
+constexpr char mm7PreferredPathOverrideKey[] = "ENROTH_CONTINUUM_MM7_PATH";
 constexpr char mm8PathOverrideKey[] = "OPENENROTH_MM8_PATH";
 
 std::vector<Path> resolveMm6Paths(Environment *environment);

@@ -13,16 +13,17 @@
 
 namespace mm6 {
 
-// The four combat owners changed at the start of DoPrepareWorld. The caller
-// supplies the live containers, so this scope does not access MM7 globals.
+// The combat owners changed at the start of DoPrepareWorld and the scalar
+// state of the same turn engine. The caller supplies the live owners, so this
+// scope does not access MM7 globals.
 struct FirstMapCombatTransientOwners {
     std::vector<AttackDescription> *attacks = nullptr;
-    std::vector<TurnBased_QueueElem> *turnQueue = nullptr;
+    stru262_TurnBased *turnEngine = nullptr;
     std::vector<Pid> *nearActorTargets = nullptr;
     std::vector<unsigned int> *nearActorIds = nullptr;
 
     bool complete() const noexcept {
-        return attacks && turnQueue && nearActorTargets && nearActorIds;
+        return attacks && turnEngine && nearActorTargets && nearActorIds;
     }
 };
 
@@ -41,8 +42,10 @@ class ScopedFirstMapCombatTransients {
         static_assert(std::is_nothrow_swappable_v<std::vector<TurnBased_QueueElem>>);
         static_assert(std::is_nothrow_swappable_v<std::vector<Pid>>);
         static_assert(std::is_nothrow_swappable_v<std::vector<unsigned int>>);
+        static_assert(std::is_nothrow_copy_assignable_v<Duration>);
+        static_assert(std::is_nothrow_copy_assignable_v<TurnEngineFlags>);
 
-        std::vector<TurnBased_QueueElem> nextQueue = *owners.turnQueue;
+        std::vector<TurnBased_QueueElem> nextQueue = owners.turnEngine->pQueue;
         std::erase_if(nextQueue, [](const TurnBased_QueueElem &entry) {
             return entry.uPackedID.type() == OBJECT_Actor;
         });
@@ -51,11 +54,12 @@ class ScopedFirstMapCombatTransients {
         nextTargets.resize(maxActors, Pid());
         nextIds.resize(maxActors);
 
+        _priorTurnEngine = captureTurnEngine(*owners.turnEngine);
         _priorAttacks.swap(*owners.attacks);
-        _priorQueue.swap(*owners.turnQueue);
+        _priorQueue.swap(owners.turnEngine->pQueue);
         _priorTargets.swap(*owners.nearActorTargets);
         _priorIds.swap(*owners.nearActorIds);
-        owners.turnQueue->swap(nextQueue);
+        owners.turnEngine->pQueue.swap(nextQueue);
         owners.nearActorTargets->swap(nextTargets);
         owners.nearActorIds->swap(nextIds);
         _active = true;
@@ -70,15 +74,44 @@ class ScopedFirstMapCombatTransients {
             return;
         _priorIds.swap(*_owners.nearActorIds);
         _priorTargets.swap(*_owners.nearActorTargets);
-        _priorQueue.swap(*_owners.turnQueue);
+        _priorQueue.swap(_owners.turnEngine->pQueue);
         _priorAttacks.swap(*_owners.attacks);
+        restoreTurnEngine(*_owners.turnEngine, _priorTurnEngine);
         _active = false;
     }
 
     void commit() noexcept { _active = false; }
 
  private:
+    struct TurnEngineScalars {
+        int turnsCount = 0;
+        TurnEngineStep stage = TE_NONE;
+        Duration aiTimer;
+        int initiative = 0;
+        int actionPoints = 0;
+        TurnEngineFlags flags;
+        int pendingActions = 0;
+    };
+
+    static TurnEngineScalars captureTurnEngine(const stru262_TurnBased &engine) noexcept {
+        return {engine.turns_count, engine.turn_stage, engine.ai_turn_timer,
+                engine.turn_initiative, engine.uActionPointsLeft, engine.flags,
+                engine.pending_actions};
+    }
+
+    static void restoreTurnEngine(stru262_TurnBased &engine,
+                                  const TurnEngineScalars &state) noexcept {
+        engine.turns_count = state.turnsCount;
+        engine.turn_stage = state.stage;
+        engine.ai_turn_timer = state.aiTimer;
+        engine.turn_initiative = state.initiative;
+        engine.uActionPointsLeft = state.actionPoints;
+        engine.flags = state.flags;
+        engine.pending_actions = state.pendingActions;
+    }
+
     FirstMapCombatTransientOwners _owners;
+    TurnEngineScalars _priorTurnEngine;
     std::vector<AttackDescription> _priorAttacks;
     std::vector<TurnBased_QueueElem> _priorQueue;
     std::vector<Pid> _priorTargets;

@@ -1708,3 +1708,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a fixed 32-byte `HELD` v2 candidate that keeps the entire 28-byte MM6 cursor record for present and absent states. Absent records require the native-cleared 25-byte prefix and retain the three opaque trailing bytes.
 - Synthetic linked codec tests passed 3/3 for exact round trips, malformed and foreign-title rejection before mutation, and v1/v2 incompatibility. The live known-save manifest remains on v1; raw cursor ownership, coordinated inventory migration and full-session commit remain open.
+
+## [2026-11-06] implement | Detached MM6 bounded shop purchase
+- by: T-Burton-ND via codex
+- Added a detached, already-paid stock-to-backpack transaction that carries the complete 28-byte pre-sale record in `Item`, stages insertion in a copied MM6 inventory, and publishes it with the source-slot partial clear only after all checks pass. It rejects unsupported rarity/category unions, wrong title or table, invalid footprints and full backpacks without changing either owner.
+- The new synthetic unit translation passed arm64 C++23 syntax checking; linked tests were not run in the isolated worktree. The live house, stock lifecycle and required `SHOP` save section remain guarded. The shop packet and wiki page record the source contract and limits.

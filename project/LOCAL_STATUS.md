@@ -750,3 +750,5 @@ Separate hidden processes wrote a temporary `.ec6` and re-entered the first
 outdoor world from it (**1/1** each, no visible window or focus change). None
 of these changes opens production house/event/save/load paths or proves a
 failure-atomic outdoor/resource commit. The temporary profile was removed.
+An MM7 all-map reconstruction control passed **1/1** after the shared terrain
+mapping extraction, also without a visible window or focus change.

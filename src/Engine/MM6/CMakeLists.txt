@@ -221,6 +221,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6V4SaveFields_ut.cpp
         Tests/MM6V4FullSessionPreflight_ut.cpp
         Tests/MM6V5SpriteRuntimeFields_ut.cpp
+        Tests/MM6V5PreEventSpriteReplayForTest_ut.cpp
         Tests/MM6V4OutdoorDecorationReplay_ut.cpp
         Tests/MM6IndoorWorldPlan_ut.cpp
         Tests/MM6HirelingRecoveryV2Stage_ut.cpp

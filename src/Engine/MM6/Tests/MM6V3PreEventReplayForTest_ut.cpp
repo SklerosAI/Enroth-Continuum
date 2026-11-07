@@ -18,6 +18,8 @@ constexpr MonsterId PEASANT = MONSTER_PEASANT_DWARF_FEMALE_A_B;
 Actor actor(int slot, int npcId) {
     Actor result(slot);
     result.monsterInfo.id = PEASANT;
+    result.monsterInfo.attackPreferences = MonsterAttackPreferences{};
+    result.monsterInfo.mm6Resistances = mm6::MonsterResistances{1, 2, 3, 4, 5, 6};
     result.npcId = npcId;
     return result;
 }

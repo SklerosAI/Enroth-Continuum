@@ -327,9 +327,12 @@ GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorRestoresOwn
                                                          std::string(field) + " differs at slot " +
                                                          std::to_string(slot));
                             };
-                            if (saved.npcId != sidecar.npcId ||
-                                saved.npcId != live.npcId)
-                                refuse("NPC ID");
+                            if (saved.npcId != sidecar.npcId)
+                                refuse("native versus sidecar NPC ID");
+                            if (saved.npcId != live.npcId)
+                                refuse(live.npcId >= 5000 ?
+                                       "native versus generated runtime NPC ID" :
+                                       "native versus static runtime NPC ID");
                             if (saved.monsterId != sidecar.monsterId ||
                                 saved.monsterId != std::to_underlying(live.monsterId))
                                 refuse("monster ID");

@@ -2093,3 +2093,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a detached, bounded `GNPC` section candidate for the active map's generated NPC rows and actor anchors, with read-only final actor agreement. The strict nineteen-section EC6 v2 decoder still rejects it; no live save/load path is opened.
 - AppleClang syntax checks passed for the new source and tests in the isolated worktree; linked integration validation remains pending. The gameplay RNG has no state snapshot API, so generated-row publication and RNG continuation remain unresolved.
+
+## [2026-11-07] verify | MM6 v2 first-map bootstrap refuses respawn
+- by: T-Burton-ND via codex
+- A native v2 first-map writer and disposable fresh-child Main Menu QuickLoad each passed 1/1. The child rebuilt the first outdoor map, checked the actual empty cursor and aborted before input with the source slot unchanged.
+- The strict final-owner validator refused saved-versus-live actor slots because the pre-entry DDM triggers initial encounter spawning. The changed-state writer cannot yet encode the added actors, so a durable populated-map save remains open. The detached GNPC suite passed 3/3 in integration; its strict v2 admission remains closed.

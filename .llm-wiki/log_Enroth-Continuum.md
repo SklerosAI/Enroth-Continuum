@@ -2260,3 +2260,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Routed active MM6 skill Compare and Set through a title-specific checked adapter. It maps the 31 source skill slots, including Learning, without the colliding MM7 event-variable enum; unsupported Add/Subtract and invalid or Grandmaster Set values refuse before mutation.
 - Focused skill, variable and private-corpus framing units passed 15/15, a null-renderer MM6 interpreter scenario passed 1/1, and an MM7 headless control passed 1/1. Visible quest outcomes, broader training behavior and production MM6 save/load remain open.
+
+## [2026-11-07] verify | MM6 outdoor and indoor save gates
+- by: T-Burton-ND via codex
+- Read-only headless checks decoded all 15 outdoor source pairs and validated reachable encounter families across all 67 maps. A direct second-outdoor-map world load passed 1/1 after correcting MM6 encounter stem columns; the production resolver remains strict. A separate test-only later-map atomic slot passed within an 18/18 atomic suite, but no later-map candidate/replay exists.
+- Strict detached indoor v6 schema and container checks passed within a 25/25 focused suite. A real private-data indoor stage probe was added but crashed before an assertion, so live indoor stage/write/replay remains open.
+- The no-write v5 first-map live capture moved into engine code, and the corrected v2-seed seven-process disposable save/reload/input chain passed again at 1/1 per child. Production MM6 SaveLoad and Atlas Play remain gated.

@@ -2,9 +2,11 @@
 
 - Owner: Codex
 - Branch/worktree: `mm6-mac-implementation` main integration checkout
-- Files owned: MM7-only maintenance files unless an active MM6 claim owns a
-  shared file; current committed change was `src/Media/MediaPlayer.cpp` and
-  its focused test support.
+- Files owned for current MM7 follow-up: `src/Engine/Mods/PrivateMods.{h,cpp}`,
+  `src/Engine/AssetsManager.{h,cpp}`, `src/Engine/Objects/TalkAnimation.h`,
+  MM7 portrait draws in `UIGame.cpp`, `UIPopup.cpp`, `UIPartyCreation.cpp`, and
+  `launcher/AtlasApp.swift` / `launcher/Atlas/index.html`. The portrait slice
+  was integrated at `b6a1515c3`; coordinate before further edits to these paths.
 - Purpose: repair isolated MM7 regressions, verify the Release helper no
   longer links XQuartz, and prepare reviewable follow-up fixes.
 - Started: 2026-11-07

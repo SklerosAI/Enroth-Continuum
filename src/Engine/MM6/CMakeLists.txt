@@ -81,7 +81,8 @@ target_link_libraries(engine_mm6_outdoor_actor_append PUBLIC engine_mm6_outdoor_
 target_check_style(engine_mm6_outdoor_actor_append)
 
 add_library(engine_mm6_spawn_actor_section STATIC
-    MM6SpawnedActorSection.cpp MM6SpawnedActorSection.h)
+    MM6SpawnedActorSection.cpp MM6SpawnedActorSection.h
+    MM6ActiveActorSection.cpp MM6ActiveActorSection.h)
 target_link_libraries(engine_mm6_spawn_actor_section PUBLIC engine_serialization)
 target_check_style(engine_mm6_spawn_actor_section)
 target_link_libraries(engine_mm6_save_runtime PUBLIC engine_mm6_spawn_actor_section)
@@ -222,7 +223,8 @@ if(OE_BUILD_TESTS)
     target_check_style(test_engine_mm6_outdoor_actor_append)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_outdoor_actor_append)
 
-    add_library(test_engine_mm6_spawn_actor_section OBJECT Tests/MM6SpawnedActorSection_ut.cpp)
+    add_library(test_engine_mm6_spawn_actor_section OBJECT Tests/MM6SpawnedActorSection_ut.cpp
+        Tests/MM6ActiveActorSection_ut.cpp)
     target_link_libraries(test_engine_mm6_spawn_actor_section PUBLIC testing_unit engine_mm6_spawn_actor_section)
     target_check_style(test_engine_mm6_spawn_actor_section)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_spawn_actor_section)

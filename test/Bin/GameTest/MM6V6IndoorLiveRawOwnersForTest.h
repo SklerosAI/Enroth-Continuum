@@ -16,6 +16,7 @@
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/MM6/MM6BuffSaveFields.h"
 #include "Engine/MM6/MM6ChestSaveFields.h"
+#include "Engine/MM6/MM6ChestRuntimeProjection.h"
 #include "Engine/MM6/MM6CoreSaveRuntime.h"
 #include "Engine/MM6/MM6DurableSaveFields.h"
 #include "Engine/MM6/MM6HirelingSaveRuntime.h"
@@ -70,10 +71,18 @@ inline void requireV6IndoorNativeResidualsForTest(
         native.doors.size() != pIndoor->doors.size() ||
         native.doorsData != pIndoor->doorsData)
         throw std::runtime_error("MM6 v6 indoor DLV chest or door shape changed");
+    const auto &chestBytes = native.wire.section(MM6IndoorSectionKind::Chests).bytes;
     for (std::size_t slot = 0; slot < native.chests.size(); ++slot) {
-        Chest_MM7 live{};
-        snapshot(vChests[slot], &live);
-        if (std::memcmp(&live, &native.chests[slot], sizeof(live)) != 0)
+        ChestRecord record{};
+        const auto *start = static_cast<const std::uint8_t *>(chestBytes.data());
+        std::copy_n(start + 4 + slot * record.size(), record.size(), record.begin());
+        auto projection = stageChestRuntimeProjection(
+            GameTitle::MM6, record, static_cast<int>(slot));
+        if (!projection)
+            throw std::runtime_error("MM6 v6 indoor chest DLV cannot stage exactly");
+        projection->chest = vChests[slot];
+        const auto recaptured = stageChestRuntimeRecord(GameTitle::MM6, *projection);
+        if (!recaptured || *recaptured != record)
             throw std::runtime_error("MM6 v6 indoor chest runtime lacks exact DLV owner");
     }
     for (std::size_t slot = 0; slot < native.doors.size(); ++slot) {

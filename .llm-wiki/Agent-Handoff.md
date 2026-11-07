@@ -97,6 +97,15 @@ does not repair files or open production SaveLoad/UI. The next normal-save
 gate must resolve durable outcome, full semantic preflight and world rollback
 without reporting an uncertain write as successful.
 
+The normal MM6 Main Menu QuickLoad now refuses before probing even a present
+`.ec6` quicksave; a disposable RAM user-file fixture passed **1/1** with no
+load transition, and MM7 control passed **1/1**. The test-only autosave
+override remains. The [menu slot packet](MM6-F4-Menu-Slot-Preflight.md)
+records the remaining UI gate: MM6 needs a semantic `.ec6` list and complete
+load handoff; the current manual-save menu pauses the timer but the proven
+first-map writer capture requires unpaused input. Keep normal SaveLoad/UI
+closed until those boundaries are proved.
+
 The [MM6 indoor v6 input cycle](MM6-F4-V6-Indoor-Input-Cycle.md) passed five
 fresh headless children through a real-loop turn/walk, atomic post-input
 candidate and exact fresh-child replay. This is one test-only fixture;

@@ -25,3 +25,29 @@ until that same validator and production `loadGame()` branch are ready.
 
 The native profile root remains separate from the MM7 `ufs` saves folder.
 Original game data and saves remain outside Git.
+
+## Normal UI route and QuickLoad guard
+
+`UISaveLoad.cpp` still returns an empty MM6 load list before its MM7 `.mm7`
+decoder. The MM6 Main Menu QuickLoad handler now refuses normal requests
+before it probes a possible `quicksaveN.ec6` file or queues a load. Its
+explicit test-only `autosave.ec6` override remains available for disposable
+fresh-child replay. A focused headless test put a `.ec6` quicksave marker in
+GameTest's isolated user RAM filesystem, with an owner-only system-temp
+profile as its opt-in gate. The menu stayed in place, no load callback ran or
+pending filename appeared, and the marker remained unchanged (**1/1**).
+An MM7 headless control passed **1/1**. The native temp profile was removed.
+
+The next UI change needs a separate MM6 `.ec6` semantic slot inventory; the
+MM7 `SaveGameLite_MM7` parser, `.mm7` autosave name and free-slot allocator
+must stay on the MM7 branch. A selected MM6 slot must pass the complete
+read-only load transaction before `LoadSlotState` queues a loading transition,
+and a failed publication must not fall through into `Game::gameLoop()`.
+Manual Save cannot call the current first-map writer from the existing save
+menu: `GameMenu::MenuLoop()` pauses the timer, while the proven live capture
+requires unpaused settled input. Prove a paused-menu capture or a pre-pause
+candidate with an exact owner recheck before changing that route. Only a
+confirmed atomic result may close the menu or report success; an unconfirmed
+post-rename result requires read-only preflight. The resolved native MM6
+profile root must come from startup, including an explicit user-path override,
+not from a display string. Normal SaveLoad and menu listing remain closed.

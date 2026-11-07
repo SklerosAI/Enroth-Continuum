@@ -44,13 +44,15 @@ latest three passed exact-blob and focused syntax checks; all nineteen now pass 
 Three more former gitlinks now supply scoped, byte-verified production headers
 for INI, preprocessing and JSON, leaving only ztd.text. The cached-library MM7
 link, 12 focused JSON/preprocessor units and a headless MM7 control passed
-after that conversion. Nested fetches and the prebuilt-library recipe remain.
+after that conversion. The nested ztd fetches and prebuilt-library integration remain.
 The exact cpptrace libdwarf-lite source is also tracked with LGPL notices;
 its standalone arm64 backend built with FetchContent disconnected. Integration
 still needs to point cpptrace at this local source.
-The five source families behind the cached archive are also tracked at exact pinned
-revisions with original license files and archive hashes; they are not yet
-compiled by a repo-owned recipe.
+The five source families behind the cached archive are tracked at exact pinned
+revisions with original license files and archive hashes. An original local
+recipe built all nine static arm64 archives from them, copied notices and
+passed an isolated CMake package-find probe. The MM7 target has not yet
+linked against that output; the local-only CMake lane still refuses.
 GoogleTest and `gtest_parallel` are optional test inputs; the owned LuaJIT CMake
 recipe and source generate the same version header without nested Git.
 This fork already owns the engine source and installed helper; a fresh offline

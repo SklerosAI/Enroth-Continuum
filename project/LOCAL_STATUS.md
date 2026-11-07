@@ -808,3 +808,9 @@ Neither adapter is wired into a production MM6 load. A source audit proposes
 one MM6 campaign per child process to avoid rollback to a prior live session;
 it still requires a complete v2 candidate, durable saves and a checked first
 frame. See [the handoff audit](MM6_F4_CHILD_PROCESS_GAME_LOOP_HANDOFF.md).
+
+The v2 disk selector now feeds the detached raw map/item/owner stage without
+repairing a selected backup. A linked synthetic test rejected a semantically
+invalid primary and selected the valid backup with both files unchanged; the
+raw-runtime plus atomic-file suite passed **11/11**. The result is not a full
+Party/world/UI candidate and cannot enter normal MM6 SaveLoad or the menu.

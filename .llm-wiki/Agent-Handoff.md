@@ -32,6 +32,8 @@ The [EC6 v2 raw runtime stage](MM6-F4-Raw-Save-Runtime.md) now validates all 67 
 
 The native `.ec6` file boundary now has separate v1 and v2 writer, lister, read-only semantic preflight and recovery APIs. Seven focused linked tests passed, including both cross-version overwrite directions and v2 write faults. This is structural disk handling only; production MM6 SaveLoad remains closed until full candidate staging and safe publication are proved. The v1 rollback snapshot helper is v1-only.
 
+The v2 slot selector is now joined to the raw runtime stage through `preflightStagedRawSaveSlot`: it can reject a structurally valid but semantically bad primary and return a valid backup's detached owners without repairing either disk file. Focused raw-runtime plus atomic-file checks passed 11/11. This still omits full Party/world/UI/beacon staging, so it must not supply MM6 menu eligibility or trigger a live load.
+
 The [child-process game-loop audit](../project/MM6_F4_CHILD_PROCESS_GAME_LOOP_HANDOFF.md) identifies a possible single-campaign MM6 child route. It could remove rollback to a prior live session only if in-game loads and menu returns start a new child or stay unavailable; complete v2 staging, safe disk saves and first-frame validation still apply. The first-map persistent map/decor event arrays now have a detached rollback scope, but it is not installed around `DoPrepareWorld`. Integrated focused disk/inventory/event tests passed 13/13.
 
 ## Current phase and gates (2026-11-06)

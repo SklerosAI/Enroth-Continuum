@@ -4,8 +4,11 @@
 #include <bit>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <stdexcept>
 #include <utility>
+
+#include "MM6AtomicSaveFile.h"
 
 namespace mm6 {
 namespace {
@@ -90,6 +93,24 @@ RawSaveFields captureRawTitleOwners(const StagedRawTitleOwners &staged,
     auto validated = decodeRawSaveWithActiveMapCounts(
         encodeRawSave(result, title), expectedNames, readBase, verifyItem, title);
     return std::move(validated.raw);
+}
+
+std::optional<StagedRawSaveSlot> preflightStagedRawSaveSlot(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    std::span<const std::string> expectedNames, const MapBaseReader &readBase,
+    const GroundItemVerifier &verifyItem, GameTitle title) {
+    if (title != GameTitle::MM6 || !verifyItem)
+        throw std::runtime_error("MM6 raw slot preflight requires a title and item verifier");
+    std::optional<StagedRawTitleOwners> staged;
+    const auto selected = preflightRecoverableRawSaveFile(
+        profileRoot, slotName, [&](std::span<const std::uint8_t> bytes) {
+            staged = stageRawTitleOwners(bytes, expectedNames, readBase, verifyItem, title);
+        });
+    if (!selected)
+        return std::nullopt;
+    if (!staged)
+        throw std::runtime_error("MM6 raw slot preflight did not stage selected candidate");
+    return StagedRawSaveSlot{std::move(*staged), selected->needsRecovery};
 }
 
 } // namespace mm6

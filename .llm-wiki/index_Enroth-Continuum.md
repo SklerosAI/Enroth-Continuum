@@ -98,7 +98,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Item Event Writes](MM6-F4-Item-Event-Writes.md) — Retained reward/handoff topology and bounded Add/Subtract transaction limits
 - [MM6 F4 Item Event PE](MM6-F4-Item-Event-PE.md) — Original executable dispatch, bounded Add/Subtract and remaining cursor/artifact gates
 - [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Provisional v1 eighteen-section assembly and separate v2 raw inventory/held/shop candidate; live commit stays gated
-- [MM6 F4 Raw Save Runtime](MM6-F4-Raw-Save-Runtime.md) — EC6 v2 raw inventory, cursor and shop owners stage after 67-map/base validation; live publication remains gated
+- [MM6 F4 Raw Save Runtime](MM6-F4-Raw-Save-Runtime.md) — EC6 v2 slot preflight and raw inventory, cursor and shop staging after 67-map/base validation; live publication remains gated
 - [MM6 F4 Raw Party Inventory Stage](MM6-F4-Raw-Party-Inventory-Stage.md) — Detached four-character item projection for supported MM6 raw records, with byte-preserving capture and fail-closed unions
 - [MM6 F4 Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md) — Current live-owner gaps, raw item/SHOP/BEAC boundaries and atomic commit gates
 - [MM6 F4 Chest EC6 Transaction](MM6-F4-Chest-EC6-Transaction.md) — Required title-local chest state, raw active-delta sidecar and first-map movement audit

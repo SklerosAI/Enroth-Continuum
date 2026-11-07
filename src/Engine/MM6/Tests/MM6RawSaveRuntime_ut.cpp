@@ -1,5 +1,7 @@
 #include <algorithm>
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -9,6 +11,11 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6RawSaveRuntime.h"
+#include "Engine/MM6/MM6AtomicSaveFile.h"
+
+#ifndef _WIN32
+#include <cstdlib>
+#endif
 
 namespace {
 
@@ -36,6 +43,42 @@ Blob syntheticBase(std::string_view name) {
 }
 
 bool validItem(std::int32_t id) { return id >= 1 && id <= 580; }
+
+#ifndef _WIN32
+class TestProfile {
+ public:
+    TestProfile() {
+        std::string pattern = (std::filesystem::temp_directory_path() / "mm6-raw-slot-XXXXXX").string();
+        if (!::mkdtemp(pattern.data()))
+            throw std::runtime_error("cannot create MM6 raw slot test profile");
+        _root = pattern;
+    }
+
+    ~TestProfile() {
+        std::error_code error;
+        std::filesystem::remove_all(_root, error);
+    }
+
+    const std::filesystem::path &root() const { return _root; }
+    std::filesystem::path primary() const { return _root / "saves" / "save001.ec6"; }
+    std::filesystem::path backup() const { return _root / "saves" / "save001.ec6.bak"; }
+
+ private:
+    std::filesystem::path _root;
+};
+
+void writeBytes(const std::filesystem::path &path, std::span<const std::uint8_t> bytes) {
+    std::ofstream file(path, std::ios::binary | std::ios::trunc);
+    file.write(reinterpret_cast<const char *>(bytes.data()), bytes.size());
+    if (!file)
+        throw std::runtime_error("cannot write MM6 raw slot test bytes");
+}
+
+std::vector<std::uint8_t> readBytes(const std::filesystem::path &path) {
+    std::ifstream file(path, std::ios::binary);
+    return {std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
+}
+#endif
 
 mm6::RawSaveFields exampleRaw() {
     mm6::RawSaveFields fields;
@@ -173,3 +216,37 @@ UNIT_TEST(MM6RawSaveRuntime, RejectsInvalidActiveItemReferencesAndTemplates) {
     EXPECT_THROW((void) mm6::stageRawTitleOwners(bytes, names, syntheticBase,
         [](std::int32_t id) { return id != 11; }, GameTitle::MM6), std::exception);
 }
+
+#ifndef _WIN32
+UNIT_TEST(MM6RawSaveRuntime, NativeSlotPreflightStagesSemanticBackupWithoutRepair) {
+    TestProfile profile;
+    auto good = exampleRaw();
+    const auto names = namesOf(good);
+    const auto goodBytes = mm6::encodeRawSave(good, GameTitle::MM6);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", goodBytes);
+
+    auto bad = good;
+    bad.inventory.characters[0].items[137].setWord(0, 581);
+    const auto badBytes = mm6::encodeRawSave(bad, GameTitle::MM6);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", badBytes);
+    auto selected = mm6::preflightStagedRawSaveSlot(
+        profile.root(), "save001.ec6", names, syntheticBase, validItem, GameTitle::MM6);
+    ASSERT_TRUE(selected);
+    EXPECT_TRUE(selected->needsRecovery);
+    EXPECT_EQ(selected->owners.inventory.characters[0].items[137].itemNumberRaw(), 10u);
+    EXPECT_EQ(readBytes(profile.primary()), badBytes);
+    EXPECT_EQ(readBytes(profile.backup()), goodBytes);
+
+    writeBytes(profile.backup(), badBytes);
+    EXPECT_THROW((void) mm6::preflightStagedRawSaveSlot(
+        profile.root(), "save001.ec6", names, syntheticBase, validItem, GameTitle::MM6),
+        std::exception);
+    EXPECT_EQ(readBytes(profile.primary()), badBytes);
+    EXPECT_EQ(readBytes(profile.backup()), badBytes);
+    EXPECT_THROW((void) mm6::preflightStagedRawSaveSlot(
+        profile.root(), "save001.ec6", names, syntheticBase, validItem, GameTitle::MM7),
+        std::exception);
+    EXPECT_FALSE(mm6::preflightStagedRawSaveSlot(
+        profile.root(), "save002.ec6", names, syntheticBase, validItem, GameTitle::MM6));
+}
+#endif

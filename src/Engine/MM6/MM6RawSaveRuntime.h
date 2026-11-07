@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <filesystem>
+#include <optional>
 #include <span>
 #include <string>
 
@@ -35,5 +37,19 @@ RawSaveFields captureRawTitleOwners(const StagedRawTitleOwners &staged,
                                     const MapBaseReader &readBase,
                                     const GroundItemVerifier &verifyItem,
                                     GameTitle title);
+
+struct StagedRawSaveSlot {
+    StagedRawTitleOwners owners;
+    bool needsRecovery = false;
+};
+
+// Select a native v2 primary or backup and stage its map, item, cursor and shop
+// owners before any disk repair or live mutation. The selected candidate is
+// still incomplete as a playable session; callers must validate and stage all
+// remaining owners before deciding whether to restore a backup.
+std::optional<StagedRawSaveSlot> preflightStagedRawSaveSlot(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    std::span<const std::string> expectedNames, const MapBaseReader &readBase,
+    const GroundItemVerifier &verifyItem, GameTitle title);
 
 } // namespace mm6

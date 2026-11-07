@@ -2500,6 +2500,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a pure MM6 cardinal-border stage that clones Party, clamps only the old-map copy's X/Y to the original boundary, and returns typed refusals for invalid title, route, party state or unverified corners. It always refuses a disk checkpoint until source, world and durable-write owners are proved.
 - The rebuilt integration unit target passed 11/11 focused border checks, including three new precommit cases. No production travel, autosave, map-cache write or private file operation was enabled.
+
 ## [2026-11-07] verify | MM6 bounded indoor door motion replay
 - by: T-Burton-ND via codex
 - Corrected the earlier phase claim: native door motion matches at pre-event and post-world admission; an already-moving door advances during bounded input ticks. An MM6-only test scope records source door actions and updates, and the strict residual gate requires changed motion and door words to match that trace.
@@ -2514,3 +2515,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a bounded opt-in headless sweep of every retained indoor BLV/DLV pair. All parsed, preserved native wire bytes, and passed exact default-delta changed-state encoding; high-level variants were classified without publishing map names or per-map inventories.
 - A risk-ranked additional source passed a real-loader pre-event fixture showing that a signed native actor NPC anchor survives reconstruction and is refused by the current GNPC owner. The full v6 writer stopped before candidate creation. The two accepted indoor five-child chains remained 10/10, and an MM7 control passed 1/1; general indoor play and production MM6 SaveLoad remain gated.
+
+## [2026-11-07] update | MM6 cross-map readiness summary
+- by: T-Burton-ND via codex
+- Updated local and campaign status after the second-outdoor no-write border candidate and all-source indoor codec sweep. The former passed a three-process disposable chain; the latter exposed a signed actor NPC identity that blocks a risk-ranked third v6 writer.
+- Kept production autosave, live travel, general indoor replay and Atlas MM6 Play closed pending durable visited-map owners and identity semantics.

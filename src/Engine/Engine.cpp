@@ -83,6 +83,7 @@
 #include "Engine/MM6/MM6V5PreEventActorReplayForTest.h"
 #include "Engine/MM6/MM6V5PreEventDecorationReplayForTest.h"
 #include "Engine/MM6/MM6V6PreEventIndoorDecorationReplayForTest.h"
+#include "Engine/MM6/MM6V6PreEventIndoorSpriteReplayForTest.h"
 #include "Engine/MM6/MM6V5PreEventSpriteReplayForTest.h"
 #include "Engine/MM6/MM6TransitionAutosaveInterceptForTest.h"
 #include "Engine/Tables/MapTable.h"
@@ -785,6 +786,11 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
                 checkpoint, pSpriteObjects, &pSpriteObjects, actorPublished,
                 pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
                 pOutdoor->mm6DeltaBytes, GameTitle::MM6);
+            (void) mm6::testing::runArmedV6PreEventIndoorSpriteReplayForTest(
+                checkpoint, pSpriteObjects, &pSpriteObjects,
+                eventRuntimeScope && eventRuntimeScope->restored(),
+                pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
+                GameTitle::MM6);
         } catch (...) {
             // This test-only early exit precedes the usual progress release.
             // Leave no pending transition for the resumed main menu.

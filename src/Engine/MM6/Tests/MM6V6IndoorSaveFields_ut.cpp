@@ -16,6 +16,7 @@
 #include "Engine/MM6/MM6V6IndoorSaveFields.h"
 #include "Engine/MM6/MM6V6IndoorPreEventOwnerGate.h"
 #include "Engine/MM6/MM6V6PreEventIndoorDecorationReplayForTest.h"
+#include "Engine/MM6/MM6V6PreEventIndoorSpriteReplayForTest.h"
 #include "Engine/Tables/ItemTable.h"
 #include "Engine/Tables/DecorationTable.h"
 #include "Engine/Snapshots/EntitySnapshots.h"
@@ -359,6 +360,31 @@ UNIT_TEST(MM6V6IndoorSaveFields, IndoorSpriteOwnerTracksReusedNativeFreeSlot) {
     source.records[2] = 1; // An occupied source descriptor cannot be reused.
     EXPECT_THROW((void) mm6::captureIndoorSpriteRuntime(
         "d0.blv", source, std::span(&spawned, 1), GameTitle::MM6), std::exception);
+}
+
+UNIT_TEST(MM6V6IndoorSaveFields, IndoorSpritePublicationRequiresPreEventContext) {
+    mm6::IndoorNativeSlotAnchor source{"d0.blv", 0, {}};
+    std::vector<SpriteObject> saved(1);
+    saved[0].spriteId = SPRITE_PROJECTILE_AIR_BOLT;
+    saved[0].uObjectDescID = 1;
+    const auto fields = mm6::captureIndoorSpriteRuntime(
+        "d0.blv", source, saved, GameTitle::MM6);
+    mm6::testing::ScopedV6PreEventIndoorSpriteReplayForTest scope(
+        GameTitle::MM6, fields, source);
+    std::vector<SpriteObject> rebuilt;
+    EXPECT_THROW((void) mm6::testing::runArmedV6PreEventIndoorSpriteReplayForTest(
+        mm6::testing::PreEventCheckpointResult::AbortToMainMenu,
+        rebuilt, &rebuilt, true, "d0.blv", GameTitle::MM6), std::exception);
+    EXPECT_FALSE(scope.published());
+    EXPECT_TRUE(mm6::testing::runArmedV6PreEventIndoorSpriteReplayForTest(
+        mm6::testing::PreEventCheckpointResult::Continue,
+        rebuilt, &rebuilt, true, "d0.blv", GameTitle::MM6));
+    EXPECT_TRUE(scope.published());
+    ASSERT_EQ(rebuilt.size(), 1u);
+    EXPECT_EQ(rebuilt[0].spriteId, saved[0].spriteId);
+    EXPECT_THROW((void) mm6::testing::runArmedV6PreEventIndoorSpriteReplayForTest(
+        mm6::testing::PreEventCheckpointResult::Continue,
+        rebuilt, &rebuilt, true, "d0.blv", GameTitle::MM6), std::exception);
 }
 
 UNIT_TEST(MM6V6IndoorSaveFields, NativeAnchorCaptureRequiresMatchingIndoorPlan) {

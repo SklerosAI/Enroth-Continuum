@@ -64,6 +64,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6V6IndoorDecorationRuntime.cpp MM6V6IndoorDecorationRuntime.h
     MM6V6IndoorSpriteRuntime.cpp MM6V6IndoorSpriteRuntime.h
     MM6V6PreEventIndoorDecorationReplayForTest.h
+    MM6V6PreEventIndoorSpriteReplayForTest.h
     MM6ActiveActorOutdoorDeltaCapture.cpp MM6ActiveActorOutdoorDeltaCapture.h
     MM6IndoorWorldPlan.cpp MM6IndoorWorldPlan.h
     MM6WorldSaveRuntime.cpp MM6WorldSaveRuntime.h

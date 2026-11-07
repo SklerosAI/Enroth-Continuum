@@ -2552,3 +2552,9 @@ Chronological record of wiki activity.
 - Added an exact owner-only test slot with atomic v6 shell checks and required active/visited semantic validation. Malformed, cross-map and injected pre-primary-rename faults refused without changing existing slots before the admitted write.
 - A fresh child read the v6 slot through read-only preflight, rebuilt the active outdoor map using the existing v5 replay, revalidated the visited map against source, and aborted before input. The visited owner was not published to the live map cache.
 - Five separate headless children passed 1/1 each: v2 seed, v4 baseline, pre-existing v5 control, v6 writer, v6 reader. Both v6 processes kept the v5 control byte-identical; the disposable profile was removed. Production travel/save, old-map return and post-rename durable-result policy remain closed.
+
+## [2026-11-07] verify | MM6 visited return plan refusal
+- by: T-Burton-ND via codex
+- Staged a read-only return plan from the source-backed visited map, keeping the current active-map global chest LCG/artifact ledger while selecting the visited native DDM and runtime owners. Missing Party arrival produces a typed refusal; publication and checkpoint writing stay false.
+- The fresh-child v6 reader checked the plan before and after active-map rebuild without changing Party, global chest state or the old-map cache. A fresh five-child seed, v4, existing v5 control, v6 writer and v6 reader chain passed 1/1 in every process; the disposable profile was removed.
+- Normal location change calls `DoPrepareWorld(false)`, while the existing test replay hooks run only on fresh `DoPrepareWorld(true)`. Arrival/terrain, safe return replay and rollback must be proved before publishing visited state.

@@ -887,3 +887,11 @@ passed **1/1** each, with the slot unchanged; an MM7 headless control passed
 **1/1**. This verifies the abort edge only. The v2 callback still refuses
 before publication, and normal MM6 SaveLoad, menu loading and Atlas Play remain
 guarded. See [the post-world abort gate](MM6_F4_POST_WORLD_ABORT_GATE.md).
+
+A new read-only v2 [post-world owner validator](MM6_F4_POST_WORLD_OWNER_VALIDATOR.md)
+compares final map identity, actor/sprite PID slots, persistent event bytes and
+generated chest/sidecar state against the detached selected candidate. Its
+three synthetic indoor/outdoor tests passed, and the combined linked
+post-world hook/validator set passed **8/8** after integration. It is not
+connected to the v2 QuickLoad callback; the remaining NPC, renderer/UI,
+BEAC/IFOV, action and recovery owners still block live publication.

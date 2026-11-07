@@ -117,6 +117,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 V2 QuickLoad Callback Gate](MM6-F4-V2-QuickLoad-Callback-Gate.md) — Disposable child catches the v2 load refusal and leaves slot and live owners unchanged
 - [MM6 F4 V2 Fresh-Child Owner Audit](MM6-F4-V2-Fresh-Child-Owner-Audit.md) — Full owner inventory and proposed post-world admission hook before first input
 - [MM6 F4 Post-World Abort Gate](MM6-F4-Post-World-Abort-Gate.md) — MM6-only disposable QuickLoad abort after world preparation, before timer/input; v2 publication remains guarded
+- [MM6 F4 Post-World Owner Validator](MM6-F4-Post-World-Owner-Validator.md) — Read-only final map, PID, event and chest agreement for a v2 candidate; live admission remains guarded
 - [MM6 F4 NPC Resource Identity](MM6-F4-NPC-Resource-Identity.md) — Read-only static NPC/topic source join with generated-NPC and RNG blockers
 - [MM6 F4 First-Map World Rollback](MM6-F4-First-Map-World-Rollback.md) — Detached terrain preflight, combat containers/turn scalars rollback and temporary `.ec6` reentry pass; full-world rollback remains guarded
 - [MM6 F4 Shop Save Key Matrix](MM6-F4-Shop-Save-Key-Matrix.md) — Retained house-type join versus inherited MM7 shop, guild and bounty save owner ranges

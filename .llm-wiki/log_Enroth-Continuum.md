@@ -2057,3 +2057,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Moved the large fresh NPC baseline and extra probe snapshots to heap storage after a repeatable GameTest thread-stack crash, preserving the baseline reference API.
 - Focused NPC/raw-session suites passed 18/18 and the private-backed null-renderer resource identity probe passed 1/1. Generated NPC identity and game RNG remain blockers for live publication.
+
+## [2026-11-07] integrate | MM6 post-world abort and owner agreement
+- by: T-Burton-ND via codex
+- Added an MM6-only disposable abort result immediately after world preparation, before timer unpause or input. A fresh v1 writer and real Main Menu QuickLoad abort control passed 1/1 each; the slot stayed unchanged and an MM7 headless control passed 1/1.
+- Added a detached read-only v2 final-owner validator for map identity, actor/sprite PID anchors, persistent event bytes and generated chest/sidecar state. Three synthetic indoor/outdoor tests passed; the integrated hook and validator suite passed 8/8. V2 live publication and normal MM6 SaveLoad remain guarded.

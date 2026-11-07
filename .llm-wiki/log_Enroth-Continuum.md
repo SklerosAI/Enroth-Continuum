@@ -1882,3 +1882,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A disposable v1 writer and separate loader reached the real MM6 Main Menu QuickLoad to `Game::loop()`/`gameLoop()` route through explicit test-only overrides. Each monitored process passed 1/1 with no visible window or focus change; the loader checked world entry, movement and unchanged slot bytes.
 - The MM7 all-map headless control passed 1/1 after shared hook integration. Normal MM6 SaveLoad/menu and complete v2 publication remain guarded.
+
+## [2026-11-06] ingest | MM7 self-contained build inputs
+- by: T-Burton-ND via codex
+- Recorded the cached arm64 MM7 build's 23 external gitlinks, nine linked static archives and seven nested source fetches in a public source-autonomy inventory. The current prebuilt ZIP lacks complete source/license provenance; ztd-family terms and FFmpeg build configuration require review before any source snapshot.
+- No dependency, GOG file, save or installed app changed. The known-good MM7 helper remains in place; a clean offline build from this repo is still a later acceptance gate.

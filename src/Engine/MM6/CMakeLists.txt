@@ -71,7 +71,8 @@ target_link_libraries(engine_mm6_save_runtime PUBLIC engine_mm6_save_container e
     engine engine_components_random library_json)
 target_check_style(engine_mm6_save_runtime)
 
-add_library(engine_mm6_outdoor_wire STATIC MM6OutdoorWire.cpp MM6OutdoorWire.h)
+add_library(engine_mm6_outdoor_wire STATIC MM6OutdoorWire.cpp MM6OutdoorWire.h
+    MM6NativeActorResistanceBytes.h)
 target_check_style(engine_mm6_outdoor_wire)
 
 add_library(engine_mm6_outdoor_actor_append STATIC
@@ -210,7 +211,8 @@ if(OE_BUILD_TESTS)
     target_check_style(test_engine_mm6_atomic_save)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_atomic_save)
 
-    add_library(test_engine_mm6_outdoor_wire OBJECT Tests/MM6OutdoorWire_ut.cpp)
+    add_library(test_engine_mm6_outdoor_wire OBJECT Tests/MM6OutdoorWire_ut.cpp
+        Tests/MM6NativeActorResistanceBytes_ut.cpp)
     target_link_libraries(test_engine_mm6_outdoor_wire PUBLIC testing_unit engine_mm6_outdoor_wire)
     target_check_style(test_engine_mm6_outdoor_wire)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_outdoor_wire)

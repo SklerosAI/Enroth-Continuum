@@ -48,6 +48,7 @@
 #include "Engine/Graphics/BspRenderer.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6Archive.h"
+#include "Engine/MM6/MM6NativeActorResistanceBytes.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
@@ -527,10 +528,16 @@ void OutdoorLocation::Load(std::string_view filename, int days_played, int respa
         weather = MapWeather{};
         reconstruct(delta.fullyRevealedCells, &uFullyRevealedCellOnMap);
         reconstruct(delta.partiallyRevealedCells, &uPartiallyRevealedCellOnMap);
+        const auto actorResistances = mm6::decodeNativeActorResistanceBytes(
+            delta.wire, delta.actors.size(), GameTitle::MM6);
         reconstruct(delta.actors, &pActors);
         nextActorReuseScanStart = 0;
-        for (size_t i = 0; i < pActors.size(); ++i)
+        for (size_t i = 0; i < pActors.size(); ++i) {
             pActors[i].id = i;
+            const auto &res = actorResistances[i];
+            pActors[i].monsterInfo.mm6Resistances = mm6::MonsterResistances{
+                res[0], res[1], res[2], res[3], res[4], res[5]};
+        }
         reconstruct(delta.spriteObjects, &pSpriteObjects);
         vChests.resize(delta.chests.size());
         for (size_t i = 0; i < delta.chests.size(); ++i)

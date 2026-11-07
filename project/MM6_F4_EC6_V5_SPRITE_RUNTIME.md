@@ -99,6 +99,15 @@ files existed only inside the owner-only disposable test profile and were
 cleaned when the sequence ended. Production SaveLoad, indoor/later-map replay
 and Atlas remain closed.
 
+The first-map post-action live capture has since moved from its disposable
+GameTest helper into `MM6V5LiveSaveCapture.{h,cpp}`. Its no-write APIs require
+the settled MM6 first-map input boundary, a validated v4 source, exact v5
+live-owner recapture and full-session preflight before returning candidate
+bytes. The test helper retains only the owner-only atomic-slot wrapper. The
+corrected v2-seed seven-process chain passed again after this extraction,
+each child 1/1. This is reusable engine code, but it is still first-map-only
+and no production SaveLoad entry point calls it.
+
 See [v4 event runtime boundary](MM6_F4_EC6_V4_EVENT_RUNTIME.md),
 [active actor capture](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md) and
 [save specification](MM6_SAVE_SPEC.md).

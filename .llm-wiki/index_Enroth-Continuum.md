@@ -22,7 +22,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 
 ## Campaigns and runtime
 
-- [Campaign Status](Campaign-Status.md) — Dated MM6, MM7, and MM8 readiness
+- [Campaign Status](Campaign-Status.md) — Dated MM6, MM7, and MM8 readiness, including the bounded v5 first-map cycle
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [Runtime Isolation](Runtime-Isolation.md) — Title-locked MM7 helper and staged Atlas sibling assembler; MM6/MM8 launch gates remain closed
 - [MM7 Self-Contained Source](MM7-Self-Contained-Source.md) — Opt-in fail-closed local-only configure gate added; pinned source/recipes and clean offline Mac build remain open, with OpenEnroth credit retained
@@ -43,7 +43,8 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 First Map Preflight](MM6-F4-First-Map-Preflight.md) — Detached resources, events, encounters and monitored in-memory outdoor load; durable save and gameplay remain open
 - [MM6 F4 Original No-Op Events](MM6-F4-Original-Noop-Events.md) — Linked MM6 executor advances past original no-op values 20, 27 and 28 while MM7 stays isolated
 - [MM6 F4 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md) — Original MM6 indoor face targeting and linked negative DLV round trip; save/reload remains open
-- [MM6 F4 Indoor Face Overrides](MM6-F4-Indoor-Face-Overrides.md) — Detached IFOV section retains changed face fields after reload events; live wiring remains gated
+- [MM6 F4 Indoor Face Overrides](MM6-F4-Indoor-Face-Overrides.md) — Detached IFOV write/read, real pre-event face-base capture and strict v6 shell; live indoor save remains gated
+- [MM6 F4 V5 Later Outdoor](MM6-F4-V5-Later-Outdoor.md) — All outdoor sources decode, second-map headless load passes, and later-map save/replay remains open
 - [MM6 F4 Outdoor Tile Selectors](MM6-F4-Outdoor-Tile-Selectors.md) — Original base-field trace, MM6-only terrain reconstruction and remaining seasonal art gap
 - [MM6 F4 Outdoor Walk Sound](MM6-F4-Outdoor-Walk-Sound.md) — Original 28-class raw-tileset sound dispatcher, retained tile identity and title-specific outdoor footsteps
 - [MM6 F4 Terrain Schema Audit](MM6-F4-Terrain-Schema-Audit.md) — Global tile ID remains the exact MM6 art key; original seasonal remapping is still unproved

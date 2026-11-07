@@ -1126,3 +1126,37 @@ position and yaw, wrote a separate atomic slot and kept v2/v4/prior-v5 bytes
 unchanged; the second reader checked exact represented owners and aborted
 before input. Production SaveLoad, indoor/later-map replay and Atlas remain
 closed.
+
+The next MM6 integration checks remain bounded. The normal manual and quick
+save entry points now refuse unsupported MM6 saves before allocating a slot,
+advancing the quick-save counter or reporting success; a headless check passed
+**1/1**. This is a safety guard, not production `.ec6` writing. Active MM6
+skill-event Compare and Set operations now use a title-specific 31-skill
+adapter, including Learning; focused linked checks passed **15/15**, a
+headless interpreter scenario **1/1**, and an MM7 headless control **1/1**.
+Add/Subtract and invalid or Grandmaster Set values remain refused.
+
+For the next map boundary, read-only headless checks decoded all **15**
+shipped outdoor base/delta pairs. V5's detached replay preflight now admits
+those exact outdoor identities without changing older schema rules; focused
+checks passed **3/3**. A direct second-outdoor-map load exposed a wrong MM6
+encounter-table column: the map parser used display labels where the engine
+requires authored monster stems. The MM6-only column fix and a synthetic
+table check passed **1/1**, and the seven-process first-map v5 chain still
+passed. The direct second-map world load then passed in a hidden headless
+process (**1/1**), and the reachability-aware loaded-table check passed
+across all **67** maps (**1/1**). The one authored encounter family without a
+ranked monster is unreachable by both random chance and decoded spawn
+references; the resolver remains strict. A test-only oute2 atomic slot passed
+isolation checks, but no later-map candidate or fresh-child replay exists yet.
+
+For indoor save design, a detached IFOV writer and fresh-child reader passed
+against retained private BLV/DLV data, and a separate headless map-load check
+captured the real face baseline immediately before `OnMapReload` (**1/1**).
+These checks do not publish a live indoor save. A strict, detached indoor v6
+shell now stages raw v2 with native owner anchors and optional IFOV while
+explicitly refusing gameplay admission; its focused container/stage/atomic
+suite passed **25/25**. A private real-data stage, live write and fresh-child
+replay remain open. The first-map v5 no-write capture was extracted into an
+engine service and the corrected seven-process disposable chain passed again,
+each child **1/1**. The installed MM7 helper and its profile remain untouched.

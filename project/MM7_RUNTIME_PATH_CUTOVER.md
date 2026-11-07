@@ -1,6 +1,6 @@
 # MM7 Mac runtime path cutover
 
-Status: **source defaults staged; installed app and private files unchanged** (2026-11-07). This packet covers a collision-safe move from inherited OpenEnroth local paths to Enroth Continuum's own MM7 data and profile paths. It does not make the clean offline build or character transfer complete.
+Status: **source defaults staged; private game data copied and verified; installed app and saves unchanged** (2026-11-07). This packet covers a collision-safe move from inherited OpenEnroth local paths to Enroth Continuum's own MM7 data and profile paths. It does not make the clean offline build or character transfer complete.
 
 ## Source state
 
@@ -19,6 +19,6 @@ The older local MM7 save locations contain distinct saves with colliding names. 
 4. Build and stage a candidate Atlas/helper separately from the installed app. With the new paths, check a headless MM7 control, visible launch and map rendering, audio/video, existing save load, new save, quit, relaunch and reload. Confirm the MM6 and MM8 sibling slots and private profiles are untouched.
 5. Only after those checks, switch the installed app and its saved data preference. Preserve the old app and roots until a later real play check succeeds. Roll back by restoring the old app/preference; leave all save folders intact.
 
-The source-only path change passed Swift type checking, a cached-library arm64 `MM7` and GameTest build, and an MM7 headless control using an explicit existing private data path. The new default data folder is not populated yet, so the default-path launch is not claimed as working. No installed app or private save was moved in this pass.
+The source path change passed Swift type checking and a cached-library arm64 `MM7` and GameTest build. Extracted MM7 game data was copied privately to the new default folder and every regular file was byte-verified against the original; the original remains intact. A headless MM7 control then passed through the new default path. The installed app, preferences and private saves were not moved, so visible launch and save/reload through a candidate app remain open.
 
 See [MM7 source autonomy](MM7_SELF_CONTAINED_SOURCE.md), [runtime isolation](../.llm-wiki/Runtime-Isolation.md), [credits](../CREDITS.md) and [upstream relationship](UPSTREAM.md).

@@ -57,6 +57,9 @@ configure and the installed MM7 helper remain unchanged; this does not yet
 prove a clean offline build. Atlas and direct Mac helper source now default to
 Enroth Continuum MM7 data and a fresh profile; a collision-safe private
 cutover and visible launch/save/reload check remain open.
+The new private MM7 data root now holds a byte-verified copy of the existing
+extracted game data, with the original retained. A headless MM7 control passes
+through that default. Existing saves and the installed app remain unmoved.
 
 ## MM6: implementation checkpoint, not yet playable
 

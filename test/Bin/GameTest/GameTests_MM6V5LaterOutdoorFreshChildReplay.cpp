@@ -317,8 +317,33 @@ GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorRestoresOwn
                             throw std::runtime_error("MM6 v5 final map differs from HEAD");
                         mm6::requireNoActiveSavedActorOverlays(
                             savedRaw.metadata.overlays, GameTitle::MM6);
+                        const auto &pidPlan = *staged->v4.v3.represented.outdoorPlan;
+                        for (std::size_t slot = 0; slot < expectedNativeActors; ++slot) {
+                            const auto &saved = pidPlan.savedDelta.actors[slot];
+                            const auto &sidecar = pidPlan.activeSidecar.actors[slot];
+                            const Actor &live = finalActors[slot];
+                            const auto refuse = [slot](std::string_view field) {
+                                throw std::runtime_error("MM6 later outdoor PID " +
+                                                         std::string(field) + " differs at slot " +
+                                                         std::to_string(slot));
+                            };
+                            if (saved.npcId != sidecar.npcId ||
+                                saved.npcId != live.npcId)
+                                refuse("NPC ID");
+                            if (saved.monsterId != sidecar.monsterId ||
+                                saved.monsterId != std::to_underlying(live.monsterId))
+                                refuse("monster ID");
+                            if (saved.monsterInfo.id != sidecar.monsterInfo.id ||
+                                saved.monsterInfo.id != std::to_underlying(live.monsterInfo.id))
+                                refuse("monster info ID");
+                            if (saved.initialPosition != sidecar.initialPosition ||
+                                saved.initialPosition.toFloat() != live.initialPosition)
+                                refuse("initial position");
+                            if (live.id != slot)
+                                refuse("runtime slot ID");
+                        }
                         mm6::requirePostRebuildPidSlotAgreement(
-                            *staged->v4.v3.represented.outdoorPlan, "oute2.odm",
+                            pidPlan, "oute2.odm",
                             std::span<const Actor>(finalActors).first(expectedNativeActors),
                             pSpriteObjects, GameTitle::MM6);
                         const auto &chest = mm6::chestTitleState();

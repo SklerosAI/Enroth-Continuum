@@ -273,6 +273,23 @@ void requireDisposableV5Destination(const std::filesystem::path &profileRoot,
     requireDisposableV4Destination(profileRoot, "candidate-v4.ec6");
 }
 
+void requireV5FirstMapPolicyInput(GameTitle title, std::string_view slotName,
+                                  const SaveCandidateValidator &validate) {
+    if (title != GameTitle::MM6 ||
+        (slotName != "candidate-v5-after-action.ec6" &&
+         slotName != "candidate-v5-after-reload-input.ec6"))
+        throw std::invalid_argument("MM6 first-map v5 policy requires its title and slot");
+    if (!validate)
+        throw std::invalid_argument("MM6 first-map v5 policy needs semantic validation");
+}
+
+void validateV5FirstMapCandidate(std::span<const std::uint8_t> bytes,
+                                 const SaveCandidateValidator &validate) {
+    if (decodeV5SlotShell(bytes).mapFileName != "oute3.odm")
+        throw std::runtime_error("MM6 first-map v5 slot has another map");
+    validate(bytes);
+}
+
 void requireDisposableV6OutdoorDestination(
     const std::filesystem::path &profileRoot, std::string_view slotName) {
     if (slotName != "candidate-v6-outdoor.ec6")
@@ -424,6 +441,8 @@ static void writeAtomicSaveFileForSchema(const std::filesystem::path &profileRoo
     if (fault)
         fault(detail::AtomicSaveStep::BeforePrimaryReplace);
     next.replace(primary);
+    if (fault)
+        fault(detail::AtomicSaveStep::AfterPrimaryReplaceBeforeDirectorySync);
     syncDirectory(directory);
 #endif
 }
@@ -528,6 +547,41 @@ void writeAtomicV5SaveFileForTest(
     const SaveCandidateValidator &validate) {
     detail::writeAtomicV5SaveFileForTest(profileRoot, slotName, container,
                                          validate, {});
+}
+
+V5FirstMapWriteResult assessV5FirstMapWriteResultForTest(
+    GameTitle title, std::string_view slotName,
+    std::span<const std::uint8_t> proposed,
+    const V5FirstMapSlotState &before, const V5FirstMapSlotState &after,
+    bool writerReturned, const SaveCandidateValidator &validate) {
+    requireV5FirstMapPolicyInput(title, slotName, validate);
+    validateV5FirstMapCandidate(proposed, validate);
+    const auto requireState = [&](const V5FirstMapSlotState &state) {
+        if (state.primary)
+            validateV5FirstMapCandidate(*state.primary, validate);
+        if (state.backup)
+            validateV5FirstMapCandidate(*state.backup, validate);
+    };
+    requireState(before);
+    requireState(after);
+    if (!before.primary && before.backup)
+        throw std::runtime_error("MM6 v5 backup-only slot needs read-only preflight");
+
+    const auto expectedBackup = before.primary ? before.primary : before.backup;
+    if (after.backup != before.backup && after.backup != expectedBackup)
+        throw std::runtime_error("MM6 v5 backup changed outside atomic policy");
+    const bool candidateIsPrimary = after.primary &&
+        std::ranges::equal(*after.primary, proposed);
+    if (writerReturned) {
+        if (!candidateIsPrimary || after.backup != expectedBackup)
+            throw std::runtime_error("MM6 v5 successful writer has unexpected slot bytes");
+        return V5FirstMapWriteResult::Committed;
+    }
+    if (after.primary == before.primary)
+        return V5FirstMapWriteResult::NoNewPrimaryNeedsPreflight;
+    if (candidateIsPrimary && after.backup == expectedBackup)
+        return V5FirstMapWriteResult::NewPrimaryUnconfirmedNeedsPreflight;
+    throw std::runtime_error("MM6 v5 failed writer has unexpected slot bytes");
 }
 
 void detail::writeAtomicV6OutdoorSaveFileForTest(
@@ -706,6 +760,35 @@ std::optional<SaveFileCandidate> preflightRecoverableV3SaveFile(
     rejectForeignSlotFiles(profileRoot, slotName, 3);
     return preflightRecoverableSaveFileForSchema(profileRoot, slotName, validate,
                                                  SlotSchema::FullV3);
+}
+
+std::optional<SaveFileCandidate> preflightRecoverableV5FirstMapSaveFileForTest(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    GameTitle title, const SaveCandidateValidator &validate) {
+    requireV5FirstMapPolicyInput(title, slotName, validate);
+    requireDisposableV5Destination(profileRoot, slotName);
+    rejectForeignSlotFiles(profileRoot, slotName, 5);
+    const auto directory = savesDirectory(profileRoot, slotName);
+    for (const std::filesystem::path &path : {
+             directory / std::string(slotName),
+             directory / (std::string(slotName) + ".bak")}) {
+        if (!regularFileExists(path))
+            continue;
+        SaveHeaderFields header;
+        try {
+            (void) readValidatedFile(path, SlotSchema::FullV5, &header);
+        } catch (const InvalidSaveFile &) {
+            continue; // A damaged candidate may fall back to a valid backup.
+        }
+        if (header.mapFileName != "oute3.odm")
+            throw std::runtime_error("MM6 first-map v5 slot contains another map");
+    }
+    return preflightRecoverableSaveFileForSchema(
+        profileRoot, slotName,
+        [&](std::span<const std::uint8_t> bytes) {
+            validateV5FirstMapCandidate(bytes, validate);
+        },
+        SlotSchema::FullV5);
 }
 
 std::optional<SaveFileCandidate> preflightRecoverableV6OutdoorSaveFileForTest(

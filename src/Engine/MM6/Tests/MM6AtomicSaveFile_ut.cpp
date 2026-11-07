@@ -171,6 +171,21 @@ std::vector<std::uint8_t> sampleV5(std::uint8_t marker) {
     return mm6::encodeV5Save(fields, GameTitle::MM6);
 }
 
+std::vector<std::uint8_t> sampleFirstMapV5(std::uint8_t marker) {
+    auto fields = mm6::decodeV5Save(sampleV5(marker), GameTitle::MM6);
+    fields.v4.v3.raw.metadata.header.mapFileName = "oute3.odm";
+    fields.v4.v3.raw.chest.activeDeltaName = "oute3.ddm";
+    fields.v4.v3.generatedNpcs.mapName = "oute3.odm";
+    for (auto &entry : fields.v4.v3.raw.maps.deltas)
+        if (entry.name == "o0.ddm")
+            entry.name = "oute3.ddm";
+    fields.v4.eventRuntime.maps[0].mapName = "oute3.odm";
+    fields.sprites.mapName = "oute3.odm";
+    fields.actors.mapName = "oute3.odm";
+    fields.decorations.mapName = "oute3.odm";
+    return mm6::encodeV5Save(fields, GameTitle::MM6);
+}
+
 std::vector<std::uint8_t> read(const std::filesystem::path &path) {
     std::ifstream file(path, std::ios::binary);
     return {std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
@@ -659,6 +674,93 @@ UNIT_TEST(MM6AtomicSaveFile, V5FaultPreservesPreviousCandidate) {
         }), std::exception);
     EXPECT_EQ(read(profile.root() / "saves/candidate-v5-after-action.ec6"), first);
     EXPECT_EQ(read(profile.root() / "saves/candidate-v5-after-action.ec6.bak"), first);
+}
+
+UNIT_TEST(MM6AtomicSaveFile, V5FirstMapResultPolicyNeverConfusesFailedRenameWithSuccess) {
+    const auto first = sampleFirstMapV5(101);
+    const auto next = sampleFirstMapV5(102);
+    const auto accept = [](std::span<const std::uint8_t> bytes) {
+        (void) mm6::decodeV5Save(bytes, GameTitle::MM6);
+    };
+    mm6::V5FirstMapSlotState before;
+    before.primary = first;
+    mm6::V5FirstMapSlotState noNew = before;
+    noNew.backup = first;
+    mm6::V5FirstMapSlotState newPrimary;
+    newPrimary.primary = next;
+    newPrimary.backup = first;
+    using Result = mm6::V5FirstMapWriteResult;
+    EXPECT_EQ(mm6::assessV5FirstMapWriteResultForTest(
+        GameTitle::MM6, "candidate-v5-after-action.ec6", next,
+        before, noNew, false, accept), Result::NoNewPrimaryNeedsPreflight);
+    EXPECT_EQ(mm6::assessV5FirstMapWriteResultForTest(
+        GameTitle::MM6, "candidate-v5-after-action.ec6", next,
+        before, newPrimary, false, accept),
+        Result::NewPrimaryUnconfirmedNeedsPreflight);
+    EXPECT_EQ(mm6::assessV5FirstMapWriteResultForTest(
+        GameTitle::MM6, "candidate-v5-after-action.ec6", next,
+        before, newPrimary, true, accept), Result::Committed);
+    EXPECT_THROW((void) mm6::assessV5FirstMapWriteResultForTest(
+        GameTitle::MM7, "candidate-v5-after-action.ec6", next,
+        before, newPrimary, true, accept), std::exception);
+    EXPECT_THROW((void) mm6::assessV5FirstMapWriteResultForTest(
+        GameTitle::MM6, "autosave.ec6", next,
+        before, newPrimary, true, accept), std::exception);
+    EXPECT_THROW((void) mm6::assessV5FirstMapWriteResultForTest(
+        GameTitle::MM6, "candidate-v5-after-action.ec6", sampleV5(103),
+        before, newPrimary, true, accept), std::exception);
+    newPrimary.backup = next;
+    EXPECT_THROW((void) mm6::assessV5FirstMapWriteResultForTest(
+        GameTitle::MM6, "candidate-v5-after-action.ec6", next,
+        before, newPrimary, true, accept), std::exception);
+}
+
+UNIT_TEST(MM6AtomicSaveFile, V5FirstMapPostRenameFaultNeedsReadOnlyPreflight) {
+    TestProfile profile("mm6-restart-");
+    constexpr std::string_view slotName = "candidate-v5-after-action.ec6";
+    const auto slot = profile.root() / "saves" / slotName;
+    const auto first = sampleFirstMapV5(104);
+    const auto next = sampleFirstMapV5(105);
+    const auto accept = [](std::span<const std::uint8_t> bytes) {
+        (void) mm6::decodeV5Save(bytes, GameTitle::MM6);
+    };
+    mm6::writeAtomicV5SaveFileForTest(profile.root(), slotName, first, accept);
+    mm6::V5FirstMapSlotState before;
+    before.primary = read(slot);
+    EXPECT_THROW(mm6::detail::writeAtomicV5SaveFileForTest(
+        profile.root(), slotName, next, accept,
+        [](mm6::detail::AtomicSaveStep step) {
+            if (step == mm6::detail::AtomicSaveStep::AfterPrimaryReplaceBeforeDirectorySync)
+                throw std::runtime_error("injected post-rename sync uncertainty");
+        }), std::exception);
+    mm6::V5FirstMapSlotState after;
+    after.primary = read(slot);
+    after.backup = read(slot.string() + ".bak");
+    EXPECT_EQ(mm6::assessV5FirstMapWriteResultForTest(
+        GameTitle::MM6, slotName, next, before, after, false, accept),
+        mm6::V5FirstMapWriteResult::NewPrimaryUnconfirmedNeedsPreflight);
+    const auto selected = mm6::preflightRecoverableV5FirstMapSaveFileForTest(
+        profile.root(), slotName, GameTitle::MM6, accept);
+    ASSERT_TRUE(selected);
+    EXPECT_FALSE(selected->needsRecovery);
+    EXPECT_EQ(selected->bytes, next);
+    EXPECT_EQ(read(slot), next);
+    EXPECT_EQ(read(slot.string() + ".bak"), first);
+
+    const std::vector<std::uint8_t> damaged{1, 2, 3};
+    write(slot, damaged);
+    const auto backupSelected = mm6::preflightRecoverableV5FirstMapSaveFileForTest(
+        profile.root(), slotName, GameTitle::MM6, accept);
+    ASSERT_TRUE(backupSelected);
+    EXPECT_TRUE(backupSelected->needsRecovery);
+    EXPECT_EQ(backupSelected->bytes, first);
+    EXPECT_EQ(read(slot), damaged);
+    EXPECT_EQ(read(slot.string() + ".bak"), first);
+
+    write(slot.string() + ".bak", sampleV5(106));
+    EXPECT_THROW((void) mm6::preflightRecoverableV5FirstMapSaveFileForTest(
+        profile.root(), slotName, GameTitle::MM6, accept), std::exception);
+    EXPECT_EQ(read(slot), damaged);
 }
 
 UNIT_TEST(MM6AtomicSaveFile, V5ReloadInputSlotIsSeparateAndAtomic) {

@@ -85,6 +85,37 @@ void writeAtomicV5SaveFileForTest(const std::filesystem::path &profileRoot,
                                   std::string_view slotName,
                                   std::span<const std::uint8_t> container,
                                   const SaveCandidateValidator &validate);
+
+// First-map v5 result policy for the two existing disposable candidate slots.
+// The caller supplies exact observed primary/backup bytes before and after an
+// atomic attempt, plus whether the writer returned normally. A failed write
+// never reports success: a new primary after failure needs independent
+// read-only preflight before any retry or gameplay admission.
+struct V5FirstMapSlotState {
+    std::optional<std::vector<std::uint8_t>> primary;
+    std::optional<std::vector<std::uint8_t>> backup;
+};
+
+enum class V5FirstMapWriteResult {
+    NoNewPrimaryNeedsPreflight,
+    Committed,
+    NewPrimaryUnconfirmedNeedsPreflight,
+};
+
+V5FirstMapWriteResult assessV5FirstMapWriteResultForTest(
+    GameTitle title, std::string_view slotName,
+    std::span<const std::uint8_t> proposed,
+    const V5FirstMapSlotState &before,
+    const V5FirstMapSlotState &after,
+    bool writerReturned,
+    const SaveCandidateValidator &validate);
+
+// Select a valid first-map primary or backup without repairing disk. A
+// recognizable foreign version or valid v5 file for another map blocks the
+// entire slot. Neither this API nor the result policy enters normal SaveLoad.
+std::optional<SaveFileCandidate> preflightRecoverableV5FirstMapSaveFileForTest(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    GameTitle title, const SaveCandidateValidator &validate);
 // Outdoor v6 is a detached test candidate with active v5 plus VIST. Only the
 // exact disposable slot is admitted; both write and read need a full semantic
 // callback. Neither function publishes a world or repairs a save slot.
@@ -129,6 +160,7 @@ enum class AtomicSaveStep {
     AfterPartialTempWrite,
     BeforeBackupReplace,
     BeforePrimaryReplace,
+    AfterPrimaryReplaceBeforeDirectorySync,
 };
 using AtomicSaveFault = std::function<void(AtomicSaveStep)>;
 

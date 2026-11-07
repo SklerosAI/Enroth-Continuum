@@ -2200,3 +2200,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A no-write first-map candidate confirmed native 200-byte event data and zero generic `mapVars`, then refused at `event-decor-bound-high` (0/1). The nonzero `decorVars` value is tied to an interactive decoration's assigned high `eventVarId`, not an unbound transient. This refines `event-legacy-decor` and the broad `persistent-event-join` classification; detached full-session preflight had passed.
 - Initial respawn calls `RespawnGlobalDecorations()` before `PrepareDecorations()` and fills `decorVars[0..123]`; a stamped no-respawn DDM reload skips that call. Some decoration event draws consume RNG. The mapping to native MM6 event bytes remains unproved, so zeroing the owner or writing a v3 slot is not admitted.
+
+## [2026-11-07] stage | MM6 EC6 v4 event runtime owner
+- by: T-Burton-ND via codex
+- Added detached `EVRT` for exact per-map 75-byte `mapVars` and 125-byte `decorVars`, native respawn anchors and source-order decoration bindings, independent of native DDM/DLV event bytes. The exact v4 manifest is v3's 22 required sections plus EVRT; v1–v3 remain strict.
+- Added an MM6 test-only, no-respawn restore seam before indoor/outdoor decoration preparation, with a safe pre-input abort on mismatch. Linked container/codec/restore checks passed 11/11 and an MM7 headless control passed 1/1.
+- Current binding fields cannot distinguish same-type decorations swapped in position. No v4 full-session preflight, disposable slot, fresh-child replay, production SaveLoad or Atlas Play exists; strengthen exact identity before durable admission.

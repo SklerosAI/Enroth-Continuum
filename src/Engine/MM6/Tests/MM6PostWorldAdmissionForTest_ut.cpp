@@ -71,6 +71,30 @@ UNIT_TEST(MM6PostWorldAdmissionForTest, ExplicitAbortConsumesWithoutThrowing) {
               mm6::testing::PostWorldAdmissionResult::Unarmed);
 }
 
+UNIT_TEST(MM6PostWorldAdmissionForTest, FailClosedDecisionAbortsOnRefusalOrException) {
+    using mm6::testing::FailClosedDecisionTag;
+    using mm6::testing::PostWorldAdmissionResult;
+    using mm6::testing::ScopedPostWorldAdmissionForTest;
+    for (int mode = 0; mode < 3; ++mode) {
+        int calls = 0;
+        ScopedPostWorldAdmissionForTest scope(GameTitle::MM6, FailClosedDecisionTag{},
+                                              [&] {
+            ++calls;
+            if (mode == 2)
+                throw std::runtime_error("synthetic post-world fault");
+            return mode == 0;
+        });
+        EXPECT_EQ(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6),
+                  mode == 0 ? PostWorldAdmissionResult::Continue :
+                              PostWorldAdmissionResult::AbortToMainMenu);
+        EXPECT_EQ(calls, 1);
+        EXPECT_THROW(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6),
+                     std::exception);
+    }
+    EXPECT_EQ(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6),
+              PostWorldAdmissionResult::Unarmed);
+}
+
 UNIT_TEST(MM6PostWorldAdmissionForTest, ScopeTeardownClearsUnusedCallback) {
     int calls = 0;
     EXPECT_THROW(mm6::testing::ScopedPostWorldAdmissionForTest(

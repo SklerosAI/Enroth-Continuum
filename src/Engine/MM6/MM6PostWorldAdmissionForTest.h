@@ -16,6 +16,8 @@ enum class PostWorldAdmissionResult {
     AbortToMainMenu,
 };
 
+struct FailClosedDecisionTag {};
+
 namespace detail {
 
 inline ScopedPostWorldAdmissionForTest *&activePostWorldAdmissionScope() {
@@ -28,8 +30,9 @@ inline ScopedPostWorldAdmissionForTest *&activePostWorldAdmissionScope() {
 // Arm only in a disposable MM6 child's test load callback, on the game thread.
 // The scope stays alive until after Game::gameLoop has rebuilt the world. It
 // clears a pending callback on teardown and cannot be nested or copied. An
-// explicit AbortToMainMenu result is consumed by Game::gameLoop before timer
-// unpause and its first input loop; no unarmed or foreign-title call can abort.
+// explicit AbortToMainMenu result, or a refused fail-closed decision, is
+// consumed by Game::gameLoop before timer unpause and its first input loop;
+// no unarmed or foreign-title call can abort.
 class ScopedPostWorldAdmissionForTest {
  public:
     ScopedPostWorldAdmissionForTest(GameTitle title, std::function<void()> callback,
@@ -40,6 +43,17 @@ class ScopedPostWorldAdmissionForTest {
             (result != PostWorldAdmissionResult::Continue &&
              result != PostWorldAdmissionResult::AbortToMainMenu))
             throw std::runtime_error("MM6 post-world test admission requires a sole callback");
+        detail::activePostWorldAdmissionScope() = this;
+    }
+
+    // A post-world load decision can refuse input without throwing through
+    // Game::gameLoop. A failed/throwing validator always aborts to Main Menu.
+    ScopedPostWorldAdmissionForTest(GameTitle title, FailClosedDecisionTag,
+                                    std::function<bool()> validator)
+        : _decision(std::move(validator)) {
+        if (title != GameTitle::MM6 || !_decision ||
+            detail::activePostWorldAdmissionScope())
+            throw std::runtime_error("MM6 post-world decision requires a sole validator");
         detail::activePostWorldAdmissionScope() = this;
     }
 
@@ -54,15 +68,16 @@ class ScopedPostWorldAdmissionForTest {
  private:
     friend PostWorldAdmissionResult runArmedPostWorldAdmissionForTest(GameTitle title);
     std::function<void()> _callback;
+    std::function<bool()> _decision;
     PostWorldAdmissionResult _result;
     bool _pending = true;
 };
 
 // Called only after DoPrepareWorld(true), before timer unpause/input. A thrown
-// callback still propagates; use an explicit AbortToMainMenu result for a
-// passing refusal test. Consume before invoking it so neither a reentrant
-// call nor a caught failure can run it twice. A second run while the scope
-// remains installed fails closed.
+// legacy callback still propagates; the decision overload converts refusal
+// and exception to AbortToMainMenu. Consume before invoking either so neither
+// a reentrant call nor a caught failure can run it twice. A second run while
+// the scope remains installed fails closed.
 inline PostWorldAdmissionResult runArmedPostWorldAdmissionForTest(GameTitle title) {
     ScopedPostWorldAdmissionForTest *scope = detail::activePostWorldAdmissionScope();
     if (!scope)
@@ -72,6 +87,15 @@ inline PostWorldAdmissionResult runArmedPostWorldAdmissionForTest(GameTitle titl
     if (!scope->_pending)
         throw std::runtime_error("MM6 post-world test admission was already consumed");
     scope->_pending = false;
+    auto decision = std::move(scope->_decision);
+    if (decision) {
+        try {
+            return decision() ? PostWorldAdmissionResult::Continue :
+                                PostWorldAdmissionResult::AbortToMainMenu;
+        } catch (...) {
+            return PostWorldAdmissionResult::AbortToMainMenu;
+        }
+    }
     auto callback = std::move(scope->_callback);
     callback();
     return scope->_result;

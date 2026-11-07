@@ -245,7 +245,7 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
             spriteReplay = std::make_unique<mm6::testing::ScopedV5PreEventSpriteReplayForTest>(
                 GameTitle::MM6, staged->sprites);
             postWorld = std::make_unique<mm6::testing::ScopedPostWorldAdmissionForTest>(
-                GameTitle::MM6, [&] {
+                GameTitle::MM6, mm6::testing::FailClosedDecisionTag{}, [&] {
                     postWorldRan = true;
                     try {
                         if (!checkpoint->reachedMapLoad() || checkpoint->reachedInput() ||
@@ -270,11 +270,8 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
                     } catch (const std::exception &error) {
                         finalOwnerError = error.what();
                     }
-                    if (allowInput && !finalOwnersAgree)
-                        throw std::runtime_error("MM6 v5 first-input admission refused: " +
-                                                 finalOwnerError);
-                }, allowInput ? mm6::testing::PostWorldAdmissionResult::Continue :
-                                mm6::testing::PostWorldAdmissionResult::AbortToMainMenu);
+                    return allowInput && finalOwnersAgree;
+                });
             selected = true;
         });
         mm6::testing::setMainMenuAutosaveQuickLoadOverride(true);

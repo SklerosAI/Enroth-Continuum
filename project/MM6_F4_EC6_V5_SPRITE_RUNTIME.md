@@ -135,6 +135,18 @@ first-map cycle passed **1/1 per process** after integration, and an MM7
 headless control passed **1/1**. Normal SaveLoad/UI, publication rollback and
 durable slot recovery remain closed.
 
+The test-only post-world admission hook now accepts a one-shot fail-closed
+decision. The first-map fresh-child replay returns `AbortToMainMenu` when its
+exact owner check refuses or throws; `Game::gameLoop` consumes that result after
+world preparation but before timer unpause or the first input step. The
+integration unit filter passed **6/6**, the disposable seven-child first-map
+chain **1/1 per child**, and the MM7 headless control **1/1**. This covers a
+post-world refusal only. The current GameTest still assigns Party, NPC, timer,
+map-cache and other globals before constructing every pre-event replay scope;
+an exception during that preworld publication could leave partial live state.
+Normal SaveLoad/UI and production gameplay admission remain guarded until a
+detached precommit bundle and abort/rollback policy cover that earlier edge.
+
 See [v4 event runtime boundary](MM6_F4_EC6_V4_EVENT_RUNTIME.md),
 [active actor capture](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md) and
 [save specification](MM6_SAVE_SPEC.md).

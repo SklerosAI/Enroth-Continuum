@@ -358,7 +358,17 @@ Label evidence precisely: **inventory** means found/indexed; **parse** means bou
 
 The latest 2026-11-07 integration checkpoint is the [seven-process disposable
 v5 first-map cycle](../project/MM6_F4_EC6_V5_SPRITE_RUNTIME.md), not production
-SaveLoad. MM6 manual/quick save actions now refuse before side effects; active
+SaveLoad.
+
+The fresh-child first-map test has a one-shot fail-closed post-world decision:
+exact owner refusal or validator exception returns to Main Menu before timer
+unpause/input. Integration passed admission units **6/6**, the seven-child
+v5 chain **1/1 each**, and MM7 control **1/1**. This remains test-only;
+preworld global assignment can precede a throwing replay-scope constructor.
+Build a fully detached precommit bundle and a preworld failure policy before
+opening normal SaveLoad/UI. See the [v5 packet](../project/MM6_F4_EC6_V5_SPRITE_RUNTIME.md).
+
+MM6 manual/quick save actions now refuse before side effects; active
 skill Compare/Set has a checked MM6-specific path. A read-only audit decoded
 all 15 outdoor base/delta pairs, and the MM6 encounter parser now uses authored
 monster stems. A direct hidden second-outdoor world load and all-67 reachable

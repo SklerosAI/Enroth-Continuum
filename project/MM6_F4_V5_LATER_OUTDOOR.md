@@ -1,9 +1,9 @@
 # MM6 v5 later-outdoor admission
 
 Status, 2026-11-07: the source and direct world-load gates passed for the
-shipped outdoor maps, and a first test-only later-map `.ec6` candidate passed
-an atomic write. Fresh-child later-map replay has not passed. Production MM6
-SaveLoad and Atlas Play remain closed.
+shipped outdoor maps. A test-only later-map `.ec6` candidate passed an atomic
+write and a separate fresh-child replay. That reader aborts before input;
+production MM6 SaveLoad and Atlas Play remain closed.
 
 The v5 outdoor preflight, runtime actor/sprite/decoration replay scopes and
 map identity check now admit the exact 15 shipped outdoor grid names. They
@@ -38,11 +38,18 @@ mutated names still refuse and live actors are untouched. Focused source,
 DECR and actor-name checks passed **7/7**. The first-map v5 capture API remains
 first-map only.
 
-The next gate is an independent fresh-child oute2 reader with exact pre-event
-and post-world owner checks, then bounded first input and a second save/reload.
-The writer's direct map setup is not a campaign travel transition. A direct
-map load, source audits and one atomic candidate cannot establish later-map
-playability.
+A separate fresh child selected the oute2 candidate, replayed represented
+owners before map events, checked them again after world preparation, and
+aborted before input. In a disposable profile the v2 seed, v4 baseline, oute2
+writer and fresh-child reader each passed **1/1**. The reader's first strict
+PID check refused one native-to-runtime NPC ID: map setup assigns a generated
+NPC link to an actor whose native DDM link is zero. The v5-only reader now
+requires that exact native zero, a matching GNPC row and contiguous runtime
+link, exact ARTR owner, and unchanged ordered native actor/sprite anchors;
+the four-process chain passed after this source-backed check. Earlier save
+slots remained byte-identical. The next gate is bounded first input and a
+second save/reload. The writer's direct map setup is not a campaign travel
+transition, and the current checks do not establish later-map playability.
 
 See [v5 runtime ownership](MM6_F4_EC6_V5_SPRITE_RUNTIME.md),
 [local status](LOCAL_STATUS.md), and [the F4 path](plan.md).

@@ -23,8 +23,14 @@ A fresh v2 seed, v4 baseline and strict oute2 v5 writer then passed **1/1**
 per child, producing a separate candidate while leaving prior slots unchanged.
 The writer binds native decoration row 0 and clears only static-derived actor
 names in a detached copy; focused positive/refusal checks passed **7/7**.
-Fresh-child oute2 replay, first input and second save remain open. The
-known-good seven-process first-map cycle passed again after its
+An independent fresh-child oute2 reader now passes its strict pre-event and
+post-world checks, then aborts before input. The four-process v2 seed, v4
+baseline, oute2 writer and fresh-child reader passed **1/1** each in a
+disposable profile. A generated NPC receives a runtime link after native DDM
+load; the v5-only reader binds its native zero link to the exact GNPC row,
+ARTR owner and ordered actor/sprite PID anchors. Bounded first input and a
+second save remain open. The known-good seven-process first-map cycle passed
+again after its
 live capture moved into a no-write engine service. That API remains first-map
 only; production SaveLoad and Atlas Play remain closed.
 

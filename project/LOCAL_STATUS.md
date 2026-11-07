@@ -1151,7 +1151,12 @@ references; the resolver remains strict. A test-only oute2 atomic slot passed
 isolation checks, then a fresh v2 seed, v4 baseline and strict oute2 v5 writer
 passed **1/1** each. The writer accepted one separate candidate after exact
 native decoration row-0 and static-derived actor-name handling; focused checks
-passed **7/7**. No fresh-child oute2 replay or campaign travel has passed.
+passed **7/7**. A fourth fresh child now replays that candidate and checks its
+pre-event and post-world owners, then aborts before input; all four children
+passed **1/1** each. The v5-only final PID check binds a generated runtime NPC
+link to its native zero link, GNPC row and ARTR owner while keeping native
+actor and sprite slot anchors exact. First input, a second later-map save and
+campaign travel remain open.
 
 For indoor save design, a detached IFOV writer and fresh-child reader passed
 against retained private BLV/DLV data, and a separate headless map-load check
@@ -1162,8 +1167,8 @@ explicitly refusing gameplay admission; its focused container/stage/atomic
 suite passed **25/25**. A fresh v2 seed and separate real-data indoor v6 stage
 then passed **1/1** each headlessly: the stage built an in-memory candidate
 from a loaded BLV/DLV and pre-event face baseline, verified native owner
-anchors, kept the seed bytes unchanged and refused gameplay admission. An
-A later three-process disposable sequence passed v2 seed, atomic indoor v6
+anchors, kept the seed bytes unchanged and refused gameplay admission. A
+later three-process disposable sequence passed v2 seed, atomic indoor v6
 writer and independent fresh-child reader at **1/1** each. The reader rebuilt
 the DLV/pre-event face baseline and re-staged the exact candidate; it still
 refuses gameplay admission. Live indoor owner publication and first input

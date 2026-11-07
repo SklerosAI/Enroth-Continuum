@@ -44,7 +44,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Original No-Op Events](MM6-F4-Original-Noop-Events.md) — Linked MM6 executor advances past original no-op values 20, 27 and 28 while MM7 stays isolated
 - [MM6 F4 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md) — Original MM6 indoor face targeting and linked negative DLV round trip; save/reload remains open
 - [MM6 F4 Indoor Face Overrides](MM6-F4-Indoor-Face-Overrides.md) — Detached IFOV, real pre-event face base and test-only v6 writer/reader; gameplay admission remains gated
-- [MM6 F4 V5 Later Outdoor](MM6-F4-V5-Later-Outdoor.md) — All outdoor sources decode, second-map headless load and first disposable v5 write pass; replay remains open
+- [MM6 F4 V5 Later Outdoor](MM6-F4-V5-Later-Outdoor.md) — All outdoor sources decode; second-map load, atomic write and fresh-child pre-input replay pass
 - [MM6 F4 Outdoor Tile Selectors](MM6-F4-Outdoor-Tile-Selectors.md) — Original base-field trace, MM6-only terrain reconstruction and remaining seasonal art gap
 - [MM6 F4 Outdoor Walk Sound](MM6-F4-Outdoor-Walk-Sound.md) — Original 28-class raw-tileset sound dispatcher, retained tile identity and title-specific outdoor footsteps
 - [MM6 F4 Terrain Schema Audit](MM6-F4-Terrain-Schema-Audit.md) — Global tile ID remains the exact MM6 art key; original seasonal remapping is still unproved

@@ -59,14 +59,20 @@ std::uint32_t read32(std::span<const std::uint8_t> bytes, std::size_t offset) {
 }
 
 void requireManifest(const SaveContainer &container) {
-    if (container.version != 6 || container.sections.size() != 26)
-        throw std::runtime_error("MM6 v6 indoor save requires twenty-six exact sections");
+    if (container.version != 6 ||
+        (container.sections.size() != 25 && container.sections.size() != 26))
+        throw std::runtime_error("MM6 v6 indoor save has an invalid section count");
     for (const auto &tag : NEW_TAGS) {
         const auto it = std::find_if(container.sections.begin(), container.sections.end(),
             [&tag](const SaveSection &section) { return section.tag == tag; });
-        if (it == container.sections.end() || it->required != (tag != IFOV))
+        if ((tag != IFOV && it == container.sections.end()) ||
+            (it != container.sections.end() && it->required != (tag != IFOV)))
             throw std::runtime_error("MM6 v6 indoor save lacks a required owner");
     }
+    const bool hasIfov = std::any_of(container.sections.begin(), container.sections.end(),
+        [](const SaveSection &section) { return section.tag == IFOV; });
+    if (container.sections.size() != 25 + hasIfov)
+        throw std::runtime_error("MM6 v6 indoor save has an unexpected section");
 }
 
 SaveSection encodeAnchor(const IndoorNativeSlotAnchor &owner,
@@ -180,7 +186,8 @@ std::vector<std::uint8_t> encodeV6IndoorSave(const V6IndoorSaveFields &fields,
     container.sections.push_back(encodeGeneratedNpcSection(fields.generatedNpcs, title));
     container.sections.push_back(encodeGameplayRngSection(fields.gameplayRng, title));
     container.sections.push_back(encodeEventRuntimeSection(fields.eventRuntime, title));
-    container.sections.push_back(encodeIndoorFaceOverrideSection(fields.faceOverrides));
+    if (!fields.faceOverrides.maps.empty())
+        container.sections.push_back(encodeIndoorFaceOverrideSection(fields.faceOverrides));
     container.sections.push_back(encodeAnchor(fields.actors, IACR, 548, MAX_ACTORS));
     container.sections.push_back(encodeAnchor(fields.sprites, ISCR, 100, MAX_SPRITES));
     container.sections.push_back(encodeAnchor(fields.decorations, IDCR, 60, MAX_DECORATIONS));

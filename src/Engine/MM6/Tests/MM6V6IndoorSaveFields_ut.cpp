@@ -8,7 +8,9 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6RawSaveFields.h"
+#include "Engine/MM6/MM6NpcStaticBaseline.h"
 #include "Engine/MM6/MM6V6IndoorSaveFields.h"
+#include "Engine/Tables/ItemTable.h"
 #include "Library/Random/SequentialRandomEngine.h"
 #include "Utility/Memory/Blob.h"
 
@@ -44,6 +46,10 @@ mm6::V6IndoorSaveFields candidate() {
     event.mapName = "d0.blv";
     event.lastRespawnDay = 5;
     result.eventRuntime.maps.push_back(event);
+    const std::vector<mm6::IndoorFaceState> base{{1, "stone"}};
+    const std::vector<mm6::IndoorFaceState> changed{{2, "stone"}};
+    result.faceOverrides.maps.push_back(*mm6::captureIndoorFaceOverrides(
+        "d0.blv", base, changed, GameTitle::MM6));
     result.actors = {"d0.blv", 1, std::vector<std::uint8_t>(548, 0x11)};
     result.sprites = {"d0.blv", 2, std::vector<std::uint8_t>(200, 0x22)};
     result.decorations = {"d0.blv", 3, std::vector<std::uint8_t>(180, 0x33)};
@@ -56,6 +62,53 @@ mm6::SaveSection &section(mm6::SaveContainer *container,
         if (item.tag == tag)
             return item;
     throw std::runtime_error("MM6 v6 fixture section is absent");
+}
+
+std::vector<std::uint8_t> indoorBase() {
+    std::vector<std::uint8_t> bytes(136 + 10 * 4, 0);
+    bytes[136 + 4 * 4] = 200;
+    return bytes;
+}
+
+std::vector<std::uint8_t> indoorDelta() {
+    std::vector<std::uint8_t> bytes(8 + 875 + 3 * 4 + 200 * 80 + 200 + 56, 0);
+    bytes[4] = 5; // Native last-respawn day agrees with EVRT.
+    return bytes;
+}
+
+std::vector<std::uint8_t> outdoorBase() {
+    return std::vector<std::uint8_t>(160 + 16 + 3 * 128 * 128 + 4 + 4 + 4 + 128 * 128 * 4 + 4, 0);
+}
+
+std::vector<std::uint8_t> outdoorDelta() {
+    return std::vector<std::uint8_t>(8 + 2 * 88 * 11 + 3 * 4 + 200 + 56, 0);
+}
+
+mm6::NpcStaticBaseline freshNpcBaseline() {
+    const auto table = [](std::string_view value) {
+        return Blob::copy(value.data(), value.size());
+    };
+    return mm6::loadNpcStaticBaseline(
+        table("Header\r\nHeader\r\n1\tStatic Ada\t123\t0\t0\t0\t1\t2\t1\t7\t11\t12\t13\r\n"),
+        table("0\tNews\tunused\tTown news\r\n"),
+        table("Header\r\nAdam\tBeth\r\n"),
+        table("1\tProfession\t2\t100\tunused\tAction\tBenefit\tJoin\r\n"),
+        GameTitle::MM6);
+}
+
+mm6::V6IndoorSaveFields stagedCandidate() {
+    auto fields = candidate();
+    fields.faceOverrides.maps.clear();
+    for (auto &delta : fields.raw.maps.deltas)
+        delta.bytes = delta.name.ends_with(".dlv") ? indoorDelta() : outdoorDelta();
+    fields.raw.chest.rawActiveDelta = indoorDelta();
+    fields.actors.count = 0;
+    fields.actors.records.clear();
+    fields.sprites.count = 0;
+    fields.sprites.records.clear();
+    fields.decorations.count = 0;
+    fields.decorations.records.clear();
+    return fields;
 }
 
 } // namespace
@@ -128,4 +181,43 @@ UNIT_TEST(MM6V6IndoorSaveFields, NativeAnchorCaptureRequiresMatchingIndoorPlan) 
     represented.indoorPlan->savedDelta.wire.sections[0].count = 1;
     EXPECT_THROW(mm6::captureV6IndoorNativeAnchors(
         represented, &actors, &sprites, &decorations), std::exception);
+}
+
+UNIT_TEST(MM6V6IndoorSaveFields, ValidatedRawV2IndoorStageRefusesGameplay) {
+    const auto source = stagedCandidate();
+    const auto bytes = mm6::encodeV6IndoorSave(source, GameTitle::MM6);
+    std::vector<std::string> names;
+    for (const auto &delta : source.raw.maps.deltas)
+        names.push_back(delta.name);
+    const auto readBase = [](std::string_view name) {
+        const auto bytes = name.ends_with(".blv") ? indoorBase() : outdoorBase();
+        return Blob::copy(bytes.data(), bytes.size());
+    };
+    const auto baseline = [](std::string_view name) {
+        if (name != "d0.blv")
+            throw std::runtime_error("fixture requested another face base");
+        return std::vector<mm6::IndoorFaceState>{};
+    };
+    ItemTable items;
+    const auto npcs = freshNpcBaseline();
+    const auto staged = mm6::stageV6IndoorSave(
+        bytes, npcs, names, readBase,
+        [](std::int32_t id) { return id >= 1 && id <= 580; },
+        items, 5, 145, baseline, GameTitle::MM6);
+    ASSERT_TRUE(staged.represented.indoorPlan);
+    EXPECT_FALSE(staged.represented.outdoorPlan);
+    EXPECT_FALSE(staged.canEnterGameLoop());
+    EXPECT_EQ(staged.saved.actors.count, 0u);
+
+    auto changed = source;
+    changed.actors.count = 1;
+    changed.actors.records.assign(548, 0);
+    EXPECT_THROW((void) mm6::stageV6IndoorSave(
+        mm6::encodeV6IndoorSave(changed, GameTitle::MM6), npcs, names,
+        readBase, [](std::int32_t id) { return id >= 1 && id <= 580; },
+        items, 5, 145, baseline, GameTitle::MM6), std::exception);
+    EXPECT_THROW((void) mm6::stageV6IndoorSave(
+        bytes, npcs, names, readBase,
+        [](std::int32_t id) { return id >= 1 && id <= 580; },
+        items, 5, 145, {}, GameTitle::MM6), std::exception);
 }

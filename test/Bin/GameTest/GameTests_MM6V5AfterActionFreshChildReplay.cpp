@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <filesystem>
+#include <functional>
 #include <fstream>
 #include <iterator>
 #include <memory>
@@ -67,6 +68,8 @@
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Snapshots/EntitySnapshots.h"
 #include "Engine/Objects/Actor.h"
+#include "Engine/Objects/Character.h"
+#include "Engine/Objects/ItemEnumFunctions.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
 #include "Engine/Resources/LOD.h"
@@ -140,17 +143,19 @@ mm6::CorePartyFields actionPartyFields(std::span<const std::uint8_t> bytes) {
 // movement step after every saved owner has passed the existing replay gate.
 enum class V5ReplayMode {
     AbortBeforeInput, FirstInput, SecondWrite,
-    FaultAfterPartyAssignment, FaultAtPreEvent,
+    FaultAfterPartyAssignment, FaultAtPreEvent, PlayerInput,
 };
 
-void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode) {
+void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
+                                      std::function<void()> playerInput = {}) {
     const bool faultMode = mode == V5ReplayMode::FaultAfterPartyAssignment ||
                            mode == V5ReplayMode::FaultAtPreEvent;
     const bool allowInput = mode == V5ReplayMode::FirstInput ||
-                            mode == V5ReplayMode::SecondWrite;
+                            mode == V5ReplayMode::SecondWrite ||
+                            mode == V5ReplayMode::PlayerInput;
     const char *enableName = mode == V5ReplayMode::AbortBeforeInput ?
         "ENROTH_MM6_V5_AFTER_ACTION_REPLAY_ENABLE" :
-        mode == V5ReplayMode::FirstInput ?
+        mode == V5ReplayMode::FirstInput || mode == V5ReplayMode::PlayerInput ?
             "ENROTH_MM6_V5_FIRST_INPUT_ENABLE" :
             mode == V5ReplayMode::SecondWrite ?
                 "ENROTH_MM6_V5_SECOND_WRITE_ENABLE" :
@@ -367,12 +372,14 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
                 uCurrentlyLoadedLevelType == LEVEL_OUTDOOR &&
                 !engine->_pendingTransition &&
                 pPartyActionQueue->uNumActions == 0;
-            if (firstInputReached) {
+            if (firstInputReached && mode != V5ReplayMode::PlayerInput) {
                 pPartyActionQueue->Add(PARTY_TurnLeft);
                 pPartyActionQueue->Add(PARTY_WalkForward);
             }
         });
-        if (firstInputReached) {
+        if (firstInputReached && mode == V5ReplayMode::PlayerInput) {
+            playerInput();
+        } else if (firstInputReached) {
             const auto beforePosition = pParty->pos;
             const auto beforeYaw = pParty->_viewYaw;
             game.tick(3);
@@ -436,7 +443,8 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
     EXPECT_TRUE(finalOwnersAgree) << finalOwnerError;
     if (allowInput) {
         EXPECT_TRUE(firstInputReached);
-        EXPECT_TRUE(movementApplied);
+        if (mode != V5ReplayMode::PlayerInput)
+            EXPECT_TRUE(movementApplied);
     }
     if (mode == V5ReplayMode::SecondWrite) {
         EXPECT_TRUE(secondCandidateWritten);
@@ -468,4 +476,81 @@ GAME_TEST(MM6V5FirstMapAbandonHeadless, DISABLED_PartialAssignmentThenFullReload
 
 GAME_TEST(MM6V5FirstMapAbandonHeadless, DISABLED_PreEventFaultThenFullReloadAndInput) {
     runV5AfterActionFreshChildReplay(game, V5ReplayMode::FaultAtPreEvent);
+}
+
+// Equipping a backpack item made the MM6 inventory capture refuse the session.
+GAME_TEST(MM6V5PaperdollHeadless, DISABLED_BackpackItemStaysEquippedThroughInventoryCapture) {
+    runV5AfterActionFreshChildReplay(game, V5ReplayMode::PlayerInput, [&] {
+        int characterIndex = -1;
+        int recordIndex = -1;
+        Pointi cell;
+        ItemSlot slot = ITEM_SLOT_INVALID;
+        for (int i = 0; i < 4 && characterIndex < 0; i++) {
+            const Character &character = pParty->pCharacters[i];
+            for (InventoryConstEntry entry : character.inventory.entries()) {
+                const ItemType type = entry->type();
+                if (entry.zone() != INVENTORY_ZONE_GRID || type < ITEM_TYPE_SINGLE_HANDED || type > ITEM_TYPE_AMULET ||
+                    type == ITEM_TYPE_SHIELD || type == ITEM_TYPE_RING)
+                    continue;
+                const ItemSlot target = type == ITEM_TYPE_SINGLE_HANDED ? ITEM_SLOT_MAIN_HAND : itemSlotsForItemType(type)[0];
+                const Skill skill = entry->skill();
+                if (character.inventory.entry(target) || (type == ITEM_TYPE_TWO_HANDED && character.inventory.entry(ITEM_SLOT_OFF_HAND)) ||
+                    (skill != SKILL_CLUB && skill != SKILL_MISC && !character.pActiveSkills[skill]))
+                    continue;
+                characterIndex = i;
+                recordIndex = entry.index();
+                cell = entry.geometry().topLeft();
+                slot = target;
+                break;
+            }
+        }
+        ASSERT_GE(characterIndex, 0);
+        const ItemId itemId = pParty->pCharacters[characterIndex].inventory.entry(recordIndex)->itemId;
+        const std::unique_ptr<mm6::V5SaveFields> saved(new mm6::V5SaveFields(mm6::decodeV5Save(
+            slotBytes(postActionCandidateInProfile(ownerOnlyProfile())), GameTitle::MM6)));
+
+        test.startTaping();
+        auto equipped = charTapes.custom(characterIndex, [slot](const Character &character) {
+            InventoryConstEntry entry = character.inventory.entry(slot);
+            return entry ? entry->itemId : ITEM_NULL;
+        });
+        auto backpack = charTapes.custom(characterIndex, [cell](const Character &character) {
+            InventoryConstEntry entry = character.inventory.entry(cell);
+            return entry ? entry->itemId : ITEM_NULL;
+        });
+        auto held = tapes.custom([] { return pParty->pPickedItem.itemId; });
+        auto rawHeld = tapes.custom([] { return mm6::rawHeldCursorState(GameTitle::MM6).record.itemNumberRaw(); });
+
+        game.goToInventory(characterIndex);
+
+        game.pressAndReleaseButton(BUTTON_LEFT, 14 + 32 * cell.x + 8, 17 + 32 * cell.y + 8);
+        game.tick();
+        game.pressAndReleaseButton(BUTTON_LEFT, 520, 150);
+        game.tick();
+        test.stopTaping();
+
+        EXPECT_EQ(backpack, tape(itemId, ITEM_NULL));
+        EXPECT_EQ(held, tape(ITEM_NULL, itemId, ITEM_NULL));
+        EXPECT_EQ(rawHeld, tape(0u, static_cast<std::uint32_t>(std::to_underlying(itemId)), 0u));
+        EXPECT_EQ(equipped, tape(ITEM_NULL, itemId));
+
+        auto live = std::make_unique<mm6::StagedRawPartyInventories>();
+        live->party = *pParty;
+        live->raw = saved->v4.v3.raw.inventory;
+        const mm6::RawInventoryFields captured = mm6::captureRawPartyInventories(*live, *pItemTable, GameTitle::MM6);
+        const mm6::RawCharacterInventory &raw = captured.characters[characterIndex];
+        const int equippedIndex = static_cast<int>(raw.equipmentWords[std::to_underlying(slot) - 1]) - 1;
+        ASSERT_GE(equippedIndex, 0);
+        EXPECT_EQ(raw.items[equippedIndex].itemNumberRaw(), static_cast<std::uint32_t>(std::to_underlying(itemId)));
+        EXPECT_EQ(raw.items[equippedIndex].bodyLocationRaw(), std::to_underlying(slot));
+        if (equippedIndex != recordIndex)
+            EXPECT_EQ(raw.items[recordIndex].itemNumberRaw(), 0u);
+        const std::unique_ptr<mm6::StagedRawPartyInventories> restaged(new mm6::StagedRawPartyInventories(
+            mm6::stageRawPartyInventories(*pParty, captured, *pItemTable, GameTitle::MM6)));
+        InventoryConstEntry restagedEntry = restaged->party.pCharacters[characterIndex].inventory.entry(slot);
+        ASSERT_TRUE(restagedEntry);
+        EXPECT_EQ(restagedEntry->itemId, itemId);
+        EXPECT_NO_THROW((void) mm6::stageRawCursorImagePlan(*pParty, mm6::rawHeldCursorState(GameTitle::MM6),
+                                                             *pItemTable, GameTitle::MM6));
+    });
 }

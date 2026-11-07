@@ -17,6 +17,7 @@
 #include "Engine/Graphics/Viewport.h"
 #include "Engine/Graphics/Image.h"
 #include "Engine/Localization.h"
+#include "Engine/MM6/MM6PaperdollEquip.h"
 #include "Engine/Party.h"
 #include "Engine/Data/AwardEnumFunctions.h"
 #include "Engine/Spells/CastSpellInfo.h"
@@ -1712,6 +1713,11 @@ void OnPaperdollLeftClick() {
     }
 
     ItemId pickeditem = pParty->pPickedItem.itemId;
+
+    if (pParty->pPickedItem.itemId != ITEM_NULL && engine->gameTitle() == GameTitle::MM6) {
+        mm6::onPaperdollLeftClickWithHeldItem();
+        return;
+    }
 
     if (pParty->pPickedItem.itemId != ITEM_NULL) {  // hold item
         pEquipType = pParty->pPickedItem.type();

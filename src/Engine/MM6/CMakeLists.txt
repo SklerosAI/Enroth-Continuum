@@ -88,6 +88,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6PostWorldOwnerValidator.cpp MM6PostWorldOwnerValidator.h
     MM6RawCursorShopStage.cpp MM6RawCursorShopStage.h
     MM6RawCursorShopProcessOwner.cpp MM6RawCursorShopProcessOwner.h
+    MM6PaperdollEquip.cpp MM6PaperdollEquip.h
     MM6RawHeldPartyStage.cpp MM6RawHeldPartyStage.h
     MM6RawCursorImagePlan.cpp MM6RawCursorImagePlan.h
     MM6RawSessionStage.cpp MM6RawSessionStage.h

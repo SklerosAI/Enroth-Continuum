@@ -18,4 +18,19 @@ The separate v1/v2 `preflightRecoverableSaveFile` and `preflightRecoverableRawSa
 
 The linked arm64 unit build passed all seven focused atomic-save tests: five retained v1 cases and two v2 cases covering both cross-schema overwrite directions, v2 backup/preflight/recovery, and four injected write failures. No game process or original installation was opened. See [the implementation note](../project/MM6_ATOMIC_SAVE_F4.md) for the exact sequence and open gates.
 
+A later **test-only first-map v5 policy** classifies an atomic attempt from
+validated before/after primary and backup bytes. A normal writer return with
+the proposed primary and expected backup is committed; a failed call with an
+unchanged primary has no new primary; a failed call after primary rename has
+an **unconfirmed** new primary. Both failed states require read-only preflight
+before further action. The new fault seam injects the last case between
+primary rename and directory sync. A title/map/slot-locked v5 preflight
+chooses a valid primary or backup without repair, rejects wrong-map and
+recognizable foreign-version occupants, and reports `needsRecovery`. Focused
+units passed **2/2**, including a disposable post-rename fault and a damaged
+primary selecting its intact backup; MM7 control passed **1/1**. No production
+save, load, menu listing or rollback was enabled. See the
+[first-map v5 packet](../project/MM6_F4_EC6_V5_SPRITE_RUNTIME.md) for the
+separate live-owner checks.
+
 See also: [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), [MM6 Save Spec Source](Source-MM6-Save-Spec.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

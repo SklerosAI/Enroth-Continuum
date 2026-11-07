@@ -30,6 +30,40 @@ This is the disk-read half of a future MM6 SaveLoad adapter. The caller must pas
 
 The v2 list and recovery helpers establish structural integrity, not campaign playability. A future live loader must use read-only v2 preflight with full map/base and owner staging before any backup repair or live publication. The v2 candidate is still detached; none of these APIs is called from normal MM6 SaveLoad or the load menu.
 
+## First-map v5 result and read-only recovery policy
+
+The existing disposable v5 writer now has a fault-injection point immediately
+after primary rename and before directory sync. A failed call at that point
+can leave the proposed bytes as a readable primary without proving the
+directory update durable. The new read-only
+`assessV5FirstMapWriteResultForTest` compares validated primary/backup bytes
+before and after an attempt. It reports `Committed` only if the writer returned
+normally and the exact proposed primary and expected prior backup are present.
+After an exception, an unchanged primary is `NoNewPrimaryNeedsPreflight`; a
+new proposed primary is `NewPrimaryUnconfirmedNeedsPreflight`. Neither failed
+outcome authorizes a success message, automatic retry, or gameplay admission.
+Unexpected changes or invalid candidates refuse.
+
+The policy accepts only MM6, the first outdoor map in the v5 `HEAD`, and the
+two existing first-map v5 candidate slot names. Its required semantic callback
+must check the full source and owner graph; a decoder-only callback is enough
+for the synthetic unit fixture but not for a future live load. The matching
+`preflightRecoverableV5FirstMapSaveFileForTest` selects primary or backup
+read-only, returns whether recovery would be needed, and rejects a recognizable
+foreign EC6 version or a valid v5 occupant for another map. A damaged primary
+may fall back to a valid first-map backup, leaving both disk files untouched.
+The result policy and preflight are test-only; normal SaveLoad and UI remain
+closed, and no production slot or rollback procedure has been admitted.
+
+Two focused linked units passed **2/2** after integration. They exercise
+the three result states and wrong-title/map/slot/backup refusals, plus an
+owner-only disposable post-rename fault, read-only selection of the new
+primary, and backup selection after deliberate primary corruption without
+disk repair. An MM7 headless control passed **1/1**. The staged first-map
+v5 live capture and post-world owner validator remain separate prerequisites;
+the [v5 packet](MM6_F4_EC6_V5_SPRITE_RUNTIME.md) records their seven-child
+game-loop evidence.
+
 ## Offline verification
 
 The linked arm64 unit target built and all seven focused atomic-save tests passed. The original five cover v1 initial write/replacement, backup recovery, malformed candidates, invalid destination, fault injection, slot listing and semantic preflight. The two v2 tests cover both directions of cross-schema overwrite rejection, v2 backup and read-only preflight, structural recovery, and four injected write failures that preserve the prior slot. No game process or original game installation was opened for these tests.

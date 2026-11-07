@@ -76,6 +76,15 @@ to Main Menu until a durable checkpoint/reload or full rollback exists. No
 publisher was added; both gates remain false. See the packet for the exact
 multi-stage owner order and respawn policy question.
 
+The [MM6 atomic file policy](MM6-F4-Atomic-Save-File.md) now classifies a
+first-map v5 write that fails after primary rename as unconfirmed, even if the
+new bytes are readable. A fault between rename and directory sync, plus
+read-only primary/backup selection, passed two focused units; MM7 control
+passed. This accepts only existing disposable first-map candidate slots and
+does not repair files or open production SaveLoad/UI. The next normal-save
+gate must resolve durable outcome, full semantic preflight and world rollback
+without reporting an uncertain write as successful.
+
 The [MM6 indoor v6 input cycle](MM6-F4-V6-Indoor-Input-Cycle.md) passed five
 fresh headless children through a real-loop turn/walk, atomic post-input
 candidate and exact fresh-child replay. This is one test-only fixture;

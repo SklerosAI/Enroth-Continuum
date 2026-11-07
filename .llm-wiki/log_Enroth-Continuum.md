@@ -2586,6 +2586,11 @@ Chronological record of wiki activity.
 - A scope unit passed 1/1; fresh owner-only v2 seed, v4 baseline and return-probe children each passed 1/1. The fixture kept its one-shot scope armed through the loading screen after an initial early teardown reached the unchanged chest guard.
 - This establishes one target-world floor agreement, not a visited-owner publisher or rollback. The partial world is abandoned; chest handoff, actor/sprite/event restoration, post-event checks and durable travel remain gated.
 
+## [2026-11-07] verify | MM6 first-map post-world owner service
+- by: T-Burton-ND via codex
+- Moved exact first-map v5 post-world owner agreement into a read-only MM6 engine service while leaving test-only publication and production SaveLoad closed. An initial extracted guard read a moved actor owner and failed the fourth child; the corrected service uses the pre-move count and still-owned save metadata.
+- The fresh seven-child first-map v5 chain then passed 1/1 in every child, and an MM7 headless control passed 1/1. The disposable profile was removed. Atomic production result policy and normal save/load UI remain open.
+
 ## [2026-11-07] update | MM6 return global status
 - by: T-Burton-ND via codex
 - Reconciled local and campaign summaries with the verified no-write normal-transition return probe. Its source-backed target floor agreed before Party placement and map events, then the partial world was abandoned to Main Menu.

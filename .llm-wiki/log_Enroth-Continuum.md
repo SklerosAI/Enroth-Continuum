@@ -2484,3 +2484,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A second distinct indoor map passed deterministic v2 seed, v4 baseline and v6 live-session writer in separate headless children. Restored MM6 native actor resistance bytes during indoor reconstruction and skipped a verified empty null-decoration render slot; the focused resistance tests passed 2/2.
 - The original first-indoor five-child cycle and an MM7 headless control still passed. The second-map fresh-child input gate refused before input because door motion differs from the retained native DLV. No second-map post-input save or replay was accepted; production MM6 SaveLoad remains closed.
+
+## [2026-11-07] verify | Public MM7 remote-clone build
+- by: T-Burton-ND via codex
+- A fresh shallow clone of the public SklerosAI MM7 preview at code commit `d76afb519`, without initialized submodules, completed the one-command arm64 MM7 and Atlas build under network denial. Both staged app signatures passed, 23 notices were present, and no private data or saves entered the bundle.
+- The branch received a documentation-only update at `c0f5eab63`, verified on the remote. The installed Atlas and personal saves remain unchanged; visible staged-app play and save/reload remain open.

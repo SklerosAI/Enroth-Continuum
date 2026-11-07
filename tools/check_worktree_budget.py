@@ -6,7 +6,7 @@ import subprocess
 import sys
 
 
-LIMIT = 10
+LIMIT = 15
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 

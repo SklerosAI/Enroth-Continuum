@@ -2037,3 +2037,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a read-only exact owner-join inspector with typed blockers, plus a disabled fresh-child test that invokes the v2 load callback and catches refusal before any live assignment or game-loop entry. The first synthetic run exposed an unbound active item-table fixture; corrected linked checks passed 2/2.
 - A disposable three-process integration run passed the native v2 writer, fresh-process reader and caught callback 1/1 each. The slot and sampled live owners stayed unchanged; normal MM6 SaveLoad, Main Menu QuickLoad and Atlas Play remain guarded.
+
+## [2026-11-07] verify | MM6 starter item draw sweep
+- by: T-Burton-ND via codex
+- Added a strict deterministic seed input to the disabled no-disk, null-renderer Create Party probe and sampled nine separate loaded-table draws without saving a profile.
+- All 180 sampled items passed the bounded raw seed (155 plain, 25 standard-bonus); two seeds repeated with identical aggregate counts. Two seeds were rerun from integration and passed. Other draws and original-game record parity remain unproved.

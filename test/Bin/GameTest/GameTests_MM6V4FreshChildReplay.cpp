@@ -232,6 +232,7 @@ GAME_TEST(MM6V4FreshChildReplayHeadless, DISABLED_FreshQuickLoadRestoresBeforeEv
                             !replay->published() || !replay->rngPublished() ||
                             !eventRuntime->restored() ||
                             pActors.size() != expectedActiveActors ||
+                            expectedActiveActors < expectedNativeActors ||
                             engine->_currentLoadedMapId != pMapTable->GetMapInfo("oute3.odm") ||
                             uCurrentlyLoadedLevelType != LEVEL_OUTDOOR ||
                             !gameTimer->isPaused() || engine->_pendingTransition ||
@@ -275,7 +276,8 @@ GAME_TEST(MM6V4FreshChildReplayHeadless, DISABLED_FreshQuickLoadRestoresBeforeEv
                             savedRaw.metadata.overlays, GameTitle::MM6);
                         mm6::requirePostRebuildPidSlotAgreement(
                             *staged->v3.represented.outdoorPlan, "oute3.odm",
-                            finalActors, pSpriteObjects, GameTitle::MM6);
+                            std::span<const Actor>(finalActors).first(expectedNativeActors),
+                            pSpriteObjects, GameTitle::MM6);
                         const auto &chest = mm6::chestTitleState();
                         if (!chest.ready || chest.lcgState != savedRaw.chest.lcgState ||
                             chest.generatedArtifactFlags != savedRaw.chest.generatedArtifactFlags ||

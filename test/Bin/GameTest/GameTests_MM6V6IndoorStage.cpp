@@ -58,8 +58,10 @@ std::string firstIndoorMap(const mm6::LoadedMapSource &maps) {
 // neither production SaveLoad nor gameplay admission is opened.
 GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached) {
     const char *enable = std::getenv("ENROTH_MM6_V6_INDOOR_STAGE_ENABLE");
+    const bool postWorldWriter = enable &&
+        std::string_view(enable) == "strict-indoor-v6-postworld-write";
     const bool writeCandidate = enable &&
-        std::string_view(enable) == "strict-indoor-v6-write";
+        (std::string_view(enable) == "strict-indoor-v6-write" || postWorldWriter);
     if (!enable || (!writeCandidate &&
                     std::string_view(enable) != "strict-indoor-v6-stage"))
         GTEST_SKIP() << "Opt in after creating a disposable MM6 v2 seed";
@@ -153,6 +155,57 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
     ASSERT_NE(it, raw->maps.deltas.end());
     it->bytes = activeDelta;
     const auto rawBytes = mm6::encodeRawSave(*raw, GameTitle::MM6);
+
+    // A separate opt-in candidate observes the real NPC generation and map
+    // reload boundary. The original fixture above remains a pre-event probe.
+    if (postWorldWriter) {
+        bool worldFinished = false;
+        std::exception_ptr worldError;
+        game.runGameRoutine([&] {
+            try {
+                checkpoint.reset();
+                const auto freshNpcs = mm6::loadNpcStaticBaseline(
+                    *engine->resources(), GameTitle::MM6);
+                const auto verifyItem = [](std::int32_t id) {
+                    return id >= 1 && id <= 580 &&
+                        !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
+                };
+                auto represented = std::unique_ptr<mm6::StagedRawSessionFields>(
+                    new mm6::StagedRawSessionFields(mm6::stageRawSessionFields(
+                        rawBytes, freshNpcs, maps.expectedNames(),
+                        [&maps](std::string_view name) { return maps.readBase(name); },
+                        verifyItem, *pItemTable, pOverlayTable->overlays.size(),
+                        pTileTable->tileCount(), GameTitle::MM6)));
+                *pParty = represented->party.party;
+                mm6::chestTitleState() = represented->world.chestTitle;
+                engine->_pendingTransition = MapDestination(map, MAP_START_POINT_PARTY);
+                engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
+                mm6::ScopedChestMapLoadOptIn chestOptIn(true);
+                DoPrepareWorld(true, 1);
+                if (uCurrentlyLoadedLevelType != LEVEL_INDOOR ||
+                    engine->_currentLoadedMapId != map || !pIndoor->bLoaded)
+                    throw std::runtime_error("MM6 v6 post-world writer lacked indoor world");
+                generated = mm6::captureGeneratedNpcFields(
+                    pActors, *pNPCStats, mapName, GameTitle::MM6);
+                rng = mm6::captureGameplayRngFields(
+                    *application->component<EngineRandomComponent>(), GameTitle::MM6);
+                auto &active = eventRuntime.maps.front();
+                active.mapVars = engine->_persistentVariables.mapVars;
+                active.decorVars = engine->_persistentVariables.decorVars;
+                active.bindings = mm6::captureEventRuntimeDecorationBindings(
+                    pLevelDecorations, GameTitle::MM6);
+            } catch (...) {
+                worldError = std::current_exception();
+            }
+            worldFinished = true;
+        });
+        for (int tick = 0; tick < 128 && !worldFinished; ++tick)
+            game.tick();
+        ASSERT_TRUE(worldFinished);
+        if (worldError)
+            std::rethrow_exception(worldError);
+    }
+
     bool stageFinished = false;
     std::exception_ptr stageError;
     std::unique_ptr<mm6::StagedV6IndoorSaveFields> staged;
@@ -188,8 +241,9 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
             auto changedDecorations = pLevelDecorations;
             if (changedDecorations.empty())
                 throw std::runtime_error("MM6 v6 IDRT probe has no decoration slot");
-            changedDecorations.front().uFlags = LevelDecorationFlags(
-                std::to_underlying(changedDecorations.front().uFlags) ^ 0x20u);
+            if (!postWorldWriter)
+                changedDecorations.front().uFlags = LevelDecorationFlags(
+                    std::to_underlying(changedDecorations.front().uFlags) ^ 0x20u);
             const auto event = std::find_if(saved->eventRuntime.maps.begin(),
                                             saved->eventRuntime.maps.end(),
                 [&mapName](const mm6::EventRuntimeMapEntry &entry) {
@@ -201,10 +255,15 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
                 mapName, represented->indoorPlan->base,
                 *event, *pDecorationTable,
                 changedDecorations, GameTitle::MM6);
-            auto changed = preEventFaces;
-            changed.front().attributes ^= 1u;
-            saved->faceOverrides.maps.push_back(*mm6::captureIndoorFaceOverrides(
-                mapName, preEventFaces, changed, GameTitle::MM6));
+            auto changed = postWorldWriter
+                ? mm6::captureLiveIndoorFaceStates(
+                    *pIndoor, projectedBase, GameTitle::MM6)
+                : preEventFaces;
+            if (!postWorldWriter)
+                changed.front().attributes ^= 1u;
+            if (auto overrides = mm6::captureIndoorFaceOverrides(
+                    mapName, preEventFaces, changed, GameTitle::MM6))
+                saved->faceOverrides.maps.push_back(std::move(*overrides));
             candidateBytes = mm6::encodeV6IndoorSave(*saved, GameTitle::MM6);
             const auto readFaces = [&mapName, &preEventFaces](std::string_view requested) {
                 if (requested != mapName)
@@ -229,13 +288,18 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
         std::rethrow_exception(stageError);
     ASSERT_TRUE(staged);
     ASSERT_TRUE(staged->represented.indoorPlan);
-    EXPECT_EQ(staged->saved.faceOverrides.maps.size(), 1u);
+    if (!postWorldWriter)
+        EXPECT_EQ(staged->saved.faceOverrides.maps.size(), 1u);
     EXPECT_FALSE(staged->canEnterGameLoop());
     EXPECT_EQ(mm6::testing::readIndoorProbeSlot(profile, "autosave.ec6"), originalSeed);
     if (writeCandidate) {
-        mm6::testing::writeIndoorProbeCandidate(profile, candidateBytes);
+        mm6::testing::writeIndoorProbeCandidate(
+            profile, candidateBytes,
+            postWorldWriter ? mm6::testing::V6_INDOOR_POSTWORLD_PROBE_SLOT :
+                              mm6::testing::V6_INDOOR_PROBE_SLOT);
         EXPECT_EQ(mm6::testing::readIndoorProbeSlot(
-            profile, mm6::testing::V6_INDOOR_PROBE_SLOT), candidateBytes);
+            profile, postWorldWriter ? mm6::testing::V6_INDOOR_POSTWORLD_PROBE_SLOT :
+                                       mm6::testing::V6_INDOOR_PROBE_SLOT), candidateBytes);
         EXPECT_EQ(mm6::testing::readIndoorProbeSlot(profile, "autosave.ec6"), originalSeed);
     }
 }

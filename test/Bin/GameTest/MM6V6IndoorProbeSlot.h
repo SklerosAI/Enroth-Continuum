@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iterator>
 #include <stdexcept>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -18,6 +19,8 @@
 namespace mm6::testing {
 
 inline constexpr std::string_view V6_INDOOR_PROBE_SLOT = "candidate-v6-indoor.ec6";
+inline constexpr std::string_view V6_INDOOR_POSTWORLD_PROBE_SLOT =
+    "candidate-v6-indoor-postworld.ec6";
 
 inline std::filesystem::path indoorProbeProfile() {
     const char *value = std::getenv("ENROTH_MM6_RESTART_PROFILE");
@@ -42,7 +45,8 @@ inline std::filesystem::path indoorProbeProfile() {
 
 inline std::vector<std::uint8_t> readIndoorProbeSlot(
     const std::filesystem::path &profile, std::string_view name) {
-    if (name != "autosave.ec6" && name != V6_INDOOR_PROBE_SLOT)
+    if (name != "autosave.ec6" && name != V6_INDOOR_PROBE_SLOT &&
+        name != V6_INDOOR_POSTWORLD_PROBE_SLOT)
         throw std::runtime_error("MM6 v6 indoor probe requested another slot");
     const auto path = profile / "saves" / name;
     if (!std::filesystem::is_regular_file(path) || std::filesystem::is_symlink(path) ||
@@ -57,13 +61,16 @@ inline std::vector<std::uint8_t> readIndoorProbeSlot(
 // Test-only atomic write to a separate, disposable slot. The published bytes
 // are already staged as a v6 candidate; no production save routing is used.
 inline void writeIndoorProbeCandidate(const std::filesystem::path &profile,
-                                      const std::vector<std::uint8_t> &bytes) {
+                                      const std::vector<std::uint8_t> &bytes,
+                                      std::string_view name = V6_INDOOR_PROBE_SLOT) {
 #if defined(_WIN32)
     throw std::runtime_error("MM6 v6 disposable atomic probe requires POSIX");
 #else
     const auto saves = profile / "saves";
-    const auto primary = saves / V6_INDOOR_PROBE_SLOT;
-    const auto pending = saves / "candidate-v6-indoor.pending";
+    if (name != V6_INDOOR_PROBE_SLOT && name != V6_INDOOR_POSTWORLD_PROBE_SLOT)
+        throw std::runtime_error("MM6 v6 indoor probe refused an unknown slot");
+    const auto primary = saves / name;
+    const auto pending = saves / (std::string(name) + ".pending");
     if (bytes.empty() || std::filesystem::exists(primary) ||
         std::filesystem::exists(pending))
         throw std::runtime_error("MM6 v6 indoor probe slot is occupied or empty");

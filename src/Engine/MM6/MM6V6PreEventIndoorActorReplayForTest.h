@@ -1,17 +1,23 @@
 #pragma once
 
+#include <array>
+#include <cstddef>
 #include <deque>
+#include <functional>
 #include <stdexcept>
 #include <string_view>
+#include <type_traits>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
 #include "Engine/GameTitle.h"
 #include "Engine/Objects/Actor.h"
+#include "Engine/Tables/NPCTable.h"
 
 #include "MM6GeneratedNpcSaveFields.h"
 #include "MM6PreEventCheckpointForTest.h"
+#include "MM6PreEventGeneratedNpcReplay.h"
 #include "MM6V6IndoorSaveFields.h"
 
 namespace mm6::testing {
@@ -32,9 +38,11 @@ class ScopedV6PreEventIndoorActorReplayForTest {
  public:
     ScopedV6PreEventIndoorActorReplayForTest(
         GameTitle title, ActorRuntimeSaveFields fields,
-        IndoorNativeSlotAnchor source, GeneratedNpcSaveFields generated)
+        IndoorNativeSlotAnchor source, GeneratedNpcSaveFields generated,
+        GameplayRandomState rng, bool publishGenerated)
         : _fields(std::move(fields)), _source(std::move(source)),
-          _generated(std::move(generated)) {
+          _generated(std::move(generated)), _rng(std::move(rng)),
+          _publishGenerated(publishGenerated) {
         if (title != GameTitle::MM6 ||
             detail::activeV6IndoorActorReplayScope())
             throw std::runtime_error("MM6 v6 IART requires a sole title-local replay scope");
@@ -62,29 +70,41 @@ class ScopedV6PreEventIndoorActorReplayForTest {
     }
 
     bool published() const { return _published; }
+    bool generatedBypassConsumed() const { return _bypassConsumed; }
+    bool rngPublished() const { return _rngPublished; }
 
  private:
     friend bool runArmedV6PreEventIndoorActorReplayForTest(
         PreEventCheckpointResult, const std::deque<Actor> &,
-        std::deque<Actor> *, bool, std::string_view, GameTitle);
+        std::deque<Actor> *, NPCStats *, RandomEngineType, bool,
+        std::string_view, GameTitle);
+    friend bool consumeV6IndoorGeneratedNpcBypassForTest(GameTitle);
+    friend void restoreV6IndoorRngBeforeMapLoadForTest(
+        const std::function<void(const GameplayRandomState &)> &, GameTitle);
+    friend void requireV6IndoorReplayBeforeMapLoadForTest(GameTitle);
 
     ActorRuntimeSaveFields _fields;
     IndoorNativeSlotAnchor _source;
     GeneratedNpcSaveFields _generated;
+    GameplayRandomState _rng;
+    bool _publishGenerated = false;
     bool _pending = true;
     bool _published = false;
+    bool _bypassConsumed = false;
+    bool _rngPublished = false;
 };
 
 inline bool runArmedV6PreEventIndoorActorReplayForTest(
     PreEventCheckpointResult checkpoint,
     const std::deque<Actor> &rebuilt, std::deque<Actor> *destination,
+    NPCStats *liveNpcs, RandomEngineType selectedRngType,
     bool eventRuntimeRestored, std::string_view loadedMapName,
     GameTitle title) {
     auto *scope = detail::activeV6IndoorActorReplayScope();
     if (!scope)
         return false;
     if (title != GameTitle::MM6 || checkpoint != PreEventCheckpointResult::Continue ||
-        !scope->_pending || !eventRuntimeRestored || !destination ||
+        !scope->_pending || !eventRuntimeRestored || !destination || !liveNpcs ||
         destination != &rebuilt || loadedMapName != scope->_fields.mapName)
         throw std::runtime_error("MM6 v6 IART lacks exact pre-event context");
     std::vector<Actor> detached(rebuilt.begin(), rebuilt.end());
@@ -99,10 +119,56 @@ inline bool runArmedV6PreEventIndoorActorReplayForTest(
                                  std::string(error.what()));
     }
     static_assert(std::is_nothrow_swappable_v<std::deque<Actor>>);
+    static_assert(std::is_nothrow_swappable_v<std::array<NPCData, 100>>);
+    if (scope->_publishGenerated) {
+        const auto generated = stagePreEventGeneratedNpcReplay(
+            scope->_generated, scope->_rng, desired, *liveNpcs,
+            loadedMapName, selectedRngType, title);
+        auto rows = liveNpcs->pAdditionalNPC;
+        for (std::size_t index = 0; index < generated.generatedCount; ++index)
+            rows[index] = generated.generated.rows[index].npc;
+        liveNpcs->pAdditionalNPC.swap(rows);
+        liveNpcs->uNewlNPCBufPos = static_cast<int>(generated.generatedCount);
+    }
     destination->swap(desired);
     scope->_pending = false;
     scope->_published = true;
     return true;
+}
+
+inline bool consumeV6IndoorGeneratedNpcBypassForTest(GameTitle title) {
+    auto *scope = detail::activeV6IndoorActorReplayScope();
+    if (!scope)
+        return false;
+    if (title != GameTitle::MM6 || !scope->_published || scope->_bypassConsumed)
+        throw std::runtime_error("MM6 v6 indoor GNPC bypass lacks one published owner");
+    if (!scope->_publishGenerated)
+        return false;
+    scope->_bypassConsumed = true;
+    return true;
+}
+
+inline void restoreV6IndoorRngBeforeMapLoadForTest(
+    const std::function<void(const GameplayRandomState &)> &restore,
+    GameTitle title) {
+    auto *scope = detail::activeV6IndoorActorReplayScope();
+    if (!scope)
+        return;
+    if (!scope->_publishGenerated)
+        return;
+    if (title != GameTitle::MM6 || !scope->_published ||
+        !scope->_bypassConsumed || scope->_rngPublished || !restore)
+        throw std::runtime_error("MM6 v6 indoor RNG restore lacks a published GNPC owner");
+    restore(scope->_rng);
+    scope->_rngPublished = true;
+}
+
+inline void requireV6IndoorReplayBeforeMapLoadForTest(GameTitle title) {
+    auto *scope = detail::activeV6IndoorActorReplayScope();
+    if (scope && scope->_publishGenerated &&
+        (title != GameTitle::MM6 || !scope->_published ||
+                  !scope->_bypassConsumed || !scope->_rngPublished))
+        throw std::runtime_error("MM6 v6 indoor replay is incomplete before map reload");
 }
 
 } // namespace mm6::testing

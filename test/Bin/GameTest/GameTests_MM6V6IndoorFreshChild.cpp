@@ -12,6 +12,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Components/Random/EngineRandomComponent.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
@@ -39,6 +40,7 @@
 #include "Engine/Tables/OverlayTable.h"
 #include "Engine/Tables/TileTable.h"
 #include "GUI/GUIWindow.h"
+#include "Library/Platform/Application/PlatformApplication.h"
 
 #include "MM6V6IndoorProbeSlot.h"
 
@@ -49,7 +51,10 @@
 // after events. It never admits input or calls production SaveLoad.
 GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents) {
     const char *enable = std::getenv("ENROTH_MM6_V6_INDOOR_READER_ENABLE");
-    if (!enable || std::string_view(enable) != "strict-indoor-v6-reader")
+    const bool postWorldReader = enable &&
+        std::string_view(enable) == "strict-indoor-v6-postworld-reader";
+    if (!enable || (std::string_view(enable) != "strict-indoor-v6-reader" &&
+                    !postWorldReader))
         GTEST_SKIP() << "Run after strict disposable v6 indoor writer";
     const auto profile = mm6::testing::indoorProbeProfile();
     if (profile.empty())
@@ -58,7 +63,8 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
     ASSERT_EQ(window->nativeHandle(), nullptr);
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
     const auto before = mm6::testing::readIndoorProbeSlot(
-        profile, mm6::testing::V6_INDOOR_PROBE_SLOT);
+        profile, postWorldReader ? mm6::testing::V6_INDOOR_POSTWORLD_PROBE_SLOT :
+                                   mm6::testing::V6_INDOOR_PROBE_SLOT);
     const auto seedBefore = mm6::testing::readIndoorProbeSlot(profile, "autosave.ec6");
     auto decoded = std::unique_ptr<mm6::V6IndoorSaveFields>(
         new mm6::V6IndoorSaveFields(mm6::decodeV6IndoorSave(before, GameTitle::MM6)));
@@ -142,12 +148,20 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                 staged->saved.eventRuntime, mapName,
                 pIndoor->dlv.respawnCount, pIndoor->dlv.lastRespawnDay,
                 pLevelDecorations, GameTitle::MM6);
-            try {
-                mm6::requireGeneratedNpcActorAgreement(
-                    staged->saved.generatedNpcs, pActors, mapName, GameTitle::MM6);
-            } catch (const std::exception &error) {
-                throw std::runtime_error("MM6 v6 IART first-load GNPC join: " +
-                                         std::string(error.what()));
+            if (postWorldReader) {
+                if (pNPCStats->uNewlNPCBufPos != 0 ||
+                    std::any_of(pActors.begin(), pActors.end(),
+                        [](const Actor &actor) { return actor.npcId >= 5000; }))
+                    throw std::runtime_error(
+                        "MM6 v6 first-load actor base already generated NPC links");
+            } else {
+                try {
+                    mm6::requireGeneratedNpcActorAgreement(
+                        staged->saved.generatedNpcs, pActors, mapName, GameTitle::MM6);
+                } catch (const std::exception &error) {
+                    throw std::runtime_error("MM6 v6 IART first-load GNPC join: " +
+                                             std::string(error.what()));
+                }
             }
             mm6::requireV6IndoorPreEventOwnerAgreement(
                 *staged, mapName, pActors, pSpriteObjects, pLevelDecorations,
@@ -178,8 +192,9 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
         staged->saved.runtimeDecorations, staged->represented.indoorPlan->base,
         *event, *pDecorationTable, &afterDecorations, GameTitle::MM6);
     ASSERT_FALSE(afterDecorations.empty());
-    EXPECT_EQ(std::to_underlying(afterDecorations.front().uFlags),
-              (std::to_underlying(pLevelDecorations.front().uFlags) ^ 0x20u));
+    if (!postWorldReader)
+        EXPECT_EQ(std::to_underlying(afterDecorations.front().uFlags),
+                  (std::to_underlying(pLevelDecorations.front().uFlags) ^ 0x20u));
     EXPECT_EQ(afterDecorations.front().uDecorationDescID,
               staged->decorationReplay.front().uDecorationDescID);
     auto afterSprites = pSpriteObjects;
@@ -209,9 +224,11 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
     auto afterEvent = preEventFaces;
     mm6::applyIndoorFaceOverridesAfterMapReload(
         staged->saved.faceOverrides, mapName, &afterEvent, GameTitle::MM6);
-    EXPECT_EQ(afterEvent.front().attributes, preEventFaces.front().attributes ^ 1u);
+    if (!postWorldReader)
+        EXPECT_EQ(afterEvent.front().attributes, preEventFaces.front().attributes ^ 1u);
     EXPECT_EQ(mm6::testing::readIndoorProbeSlot(
-        profile, mm6::testing::V6_INDOOR_PROBE_SLOT), before);
+        profile, postWorldReader ? mm6::testing::V6_INDOOR_POSTWORLD_PROBE_SLOT :
+                                   mm6::testing::V6_INDOOR_PROBE_SLOT), before);
     EXPECT_EQ(mm6::testing::readIndoorProbeSlot(profile, "autosave.ec6"), seedBefore);
 
     // Rebuild from the same immutable candidate a second time. The first
@@ -253,12 +270,16 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
             liveActorReplay = std::make_unique<
                 mm6::testing::ScopedV6PreEventIndoorActorReplayForTest>(
                     GameTitle::MM6, staged->saved.runtimeActors,
-                    staged->saved.actors, staged->saved.generatedNpcs);
+                    staged->saved.actors, staged->saved.generatedNpcs,
+                    staged->saved.gameplayRng, postWorldReader);
             mm6::ScopedChestMapLoadOptIn chestOptIn(true);
             DoPrepareWorld(true, 1);
             if (!worldCheckpoint->reachedMapLoad() || worldCheckpoint->reachedInput() ||
                 !eventRestore->restored() || !liveReplay->published() ||
                 !liveSpriteReplay->published() || !liveActorReplay->published() ||
+                (postWorldReader &&
+                 (!liveActorReplay->generatedBypassConsumed() ||
+                  !liveActorReplay->rngPublished())) ||
                 engine->_currentLoadedMapId != map ||
                 uCurrentlyLoadedLevelType != LEVEL_INDOOR || !pIndoor->bLoaded)
                 throw std::runtime_error("MM6 v6 IDRT did not cross the post-world boundary");
@@ -276,23 +297,38 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                     staged->saved.runtimeSprites,
                     mm6::SpriteRuntimeSectionKind::IndoorV6, GameTitle::MM6))
                 throw std::runtime_error("MM6 v6 ISRT changed after map reload events");
-            try {
-                mm6::requireGeneratedNpcActorAgreement(
-                    staged->saved.generatedNpcs, pActors, mapName, GameTitle::MM6);
-            } catch (const std::exception &error) {
-                throw std::runtime_error("MM6 v6 IART post-world GNPC join: " +
-                                         std::string(error.what()));
+            if (postWorldReader) {
+                try {
+                    mm6::requireGeneratedNpcActorAgreement(
+                        staged->saved.generatedNpcs, pActors, mapName, GameTitle::MM6);
+                } catch (const std::exception &error) {
+                    throw std::runtime_error("MM6 v6 IART post-world GNPC join: " +
+                                             std::string(error.what()));
+                }
+                const auto liveGenerated = mm6::captureGeneratedNpcFields(
+                    pActors, *pNPCStats, mapName, GameTitle::MM6);
+                if (mm6::encodeGeneratedNpcSection(liveGenerated, GameTitle::MM6).payload !=
+                    mm6::encodeGeneratedNpcSection(
+                        staged->saved.generatedNpcs, GameTitle::MM6).payload)
+                    throw std::runtime_error(
+                        "MM6 v6 post-world generated NPC records differ");
+                const auto liveRng = mm6::captureGameplayRngFields(
+                    *application->component<EngineRandomComponent>(), GameTitle::MM6);
+                if (mm6::encodeGameplayRngSection(liveRng, GameTitle::MM6).payload !=
+                    mm6::encodeGameplayRngSection(
+                        staged->saved.gameplayRng, GameTitle::MM6).payload)
+                    throw std::runtime_error("MM6 v6 post-world gameplay RNG differs");
+                const std::vector<Actor> finalActors(pActors.begin(), pActors.end());
+                const auto observedActors = mm6::captureIndoorActorRuntime(
+                    mapName, staged->saved.actors, finalActors, GameTitle::MM6);
+                if (mm6::encodeActorRuntimeSectionAs(
+                        observedActors, mm6::ActorRuntimeSectionKind::IndoorV6,
+                        GameTitle::MM6) !=
+                    mm6::encodeActorRuntimeSectionAs(
+                        staged->saved.runtimeActors,
+                        mm6::ActorRuntimeSectionKind::IndoorV6, GameTitle::MM6))
+                    throw std::runtime_error("MM6 v6 IART changed after map reload events");
             }
-            const std::vector<Actor> finalActors(pActors.begin(), pActors.end());
-            const auto observedActors = mm6::captureIndoorActorRuntime(
-                mapName, staged->saved.actors, finalActors, GameTitle::MM6);
-            if (mm6::encodeActorRuntimeSectionAs(
-                    observedActors, mm6::ActorRuntimeSectionKind::IndoorV6,
-                    GameTitle::MM6) !=
-                mm6::encodeActorRuntimeSectionAs(
-                    staged->saved.runtimeActors,
-                    mm6::ActorRuntimeSectionKind::IndoorV6, GameTitle::MM6))
-                throw std::runtime_error("MM6 v6 IART changed after map reload events");
         } catch (...) {
             worldError = std::current_exception();
         }
@@ -309,6 +345,7 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
     if (worldError)
         std::rethrow_exception(worldError);
     EXPECT_EQ(mm6::testing::readIndoorProbeSlot(
-        profile, mm6::testing::V6_INDOOR_PROBE_SLOT), before);
+        profile, postWorldReader ? mm6::testing::V6_INDOOR_POSTWORLD_PROBE_SLOT :
+                                   mm6::testing::V6_INDOOR_PROBE_SLOT), before);
     EXPECT_EQ(mm6::testing::readIndoorProbeSlot(profile, "autosave.ec6"), seedBefore);
 }

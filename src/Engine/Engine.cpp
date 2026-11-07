@@ -773,7 +773,8 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
             const auto *eventRuntimeScope =
                 mm6::testing::detail::activeEventRuntimeRestoreScope();
             (void) mm6::testing::runArmedV6PreEventIndoorActorReplayForTest(
-                checkpoint, pActors, &pActors,
+                checkpoint, pActors, &pActors, pNPCStats,
+                application->component<EngineRandomComponent>()->type(),
                 eventRuntimeScope && eventRuntimeScope->restored(),
                 pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
                 GameTitle::MM6);
@@ -838,6 +839,11 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
                 &mm6::chestTitleState(), pOutdoor->mm6DeltaBytes,
                 GameTitle::MM6);
             mm6::testing::requireV3ReplayBeforeMapLoadForTest(GameTitle::MM6);
+            mm6::testing::restoreV6IndoorRngBeforeMapLoadForTest(
+                [](const GameplayRandomState &state) {
+                    application->component<EngineRandomComponent>()->restoreGameplayState(state);
+                }, GameTitle::MM6);
+            mm6::testing::requireV6IndoorReplayBeforeMapLoadForTest(GameTitle::MM6);
         } catch (...) {
             engine->_pendingTransition.reset();
             pGameLoadingUI_ProgressBar->Release();
@@ -1132,7 +1138,8 @@ void Engine::_461103_load_level_sub() {
     pParty->arenaState = ARENA_STATE_INITIAL;
     pParty->arenaLevel = ARENA_LEVEL_INVALID;
     if (gameTitle() == GameTitle::MM6 &&
-        mm6::testing::consumeV3GeneratedNpcBypassForTest(GameTitle::MM6)) {
+        (mm6::testing::consumeV3GeneratedNpcBypassForTest(GameTitle::MM6) ||
+         mm6::testing::consumeV6IndoorGeneratedNpcBypassForTest(GameTitle::MM6))) {
         const std::vector<Actor> restoredActors(pActors.begin(), pActors.end());
         mm6::requirePostMapGeneratedNpcLinks(restoredActors, *pNPCStats, gameTitle());
     } else {

@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
+#include "Engine/Objects/MonsterEnumFunctions.h"
 
 #include "MM6V6IndoorSaveFields.h"
 
@@ -24,7 +25,15 @@ void requireSourceShape(std::string_view mapName,
 
 void requireOccupiedNativeSlot(const Actor &runtime, const Actor_MM7 &native,
                                std::size_t slot) {
-    if (runtime.id != slot || runtime.npcId != native.npcId ||
+    // The map loader assigns generated peasant links after restoring the
+    // native actor records. The v6 GNPC join validates each such link and its
+    // row; IACR still anchors the native identity that preceded generation.
+    const bool generatedFromNative = native.npcId == 0 &&
+        runtime.npcId >= 5000 && runtime.npcId < 5100 &&
+        isPeasant(runtime.monsterInfo.id) &&
+        monsterTierForMonsterId(runtime.monsterInfo.id) != MONSTER_TIER_A;
+    if (runtime.id != slot ||
+        (runtime.npcId != native.npcId && !generatedFromNative) ||
         std::to_underlying(runtime.monsterId) != native.monsterId ||
         std::to_underlying(runtime.monsterInfo.id) != native.monsterInfo.id ||
         runtime.initialPosition != native.initialPosition.toFloat())

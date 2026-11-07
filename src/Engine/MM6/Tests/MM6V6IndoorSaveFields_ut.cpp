@@ -446,17 +446,31 @@ UNIT_TEST(MM6V6IndoorSaveFields, IndoorActorPublicationRequiresPreEventContext) 
         "d0.blv", source, std::span(&actor, 1), GameTitle::MM6);
     mm6::GeneratedNpcSaveFields generated;
     generated.mapName = "d0.blv";
+    GameplayRandomState rng;
+    rng.type = RANDOM_ENGINE_SEQUENTIAL;
+    SequentialRandomEngine sequential;
+    sequential.seed(22);
+    rng.sequentialState = sequential.state();
+    NPCStats liveNpcs;
     mm6::testing::ScopedV6PreEventIndoorActorReplayForTest scope(
-        GameTitle::MM6, fields, source, generated);
+        GameTitle::MM6, fields, source, generated, rng, true);
     std::deque<Actor> rebuilt;
     EXPECT_THROW((void) mm6::testing::runArmedV6PreEventIndoorActorReplayForTest(
         mm6::testing::PreEventCheckpointResult::AbortToMainMenu,
-        rebuilt, &rebuilt, true, "d0.blv", GameTitle::MM6), std::exception);
+        rebuilt, &rebuilt, &liveNpcs, RANDOM_ENGINE_SEQUENTIAL,
+        true, "d0.blv", GameTitle::MM6), std::exception);
     EXPECT_FALSE(scope.published());
     EXPECT_TRUE(mm6::testing::runArmedV6PreEventIndoorActorReplayForTest(
         mm6::testing::PreEventCheckpointResult::Continue,
-        rebuilt, &rebuilt, true, "d0.blv", GameTitle::MM6));
+        rebuilt, &rebuilt, &liveNpcs, RANDOM_ENGINE_SEQUENTIAL,
+        true, "d0.blv", GameTitle::MM6));
     EXPECT_TRUE(scope.published());
+    EXPECT_TRUE(mm6::testing::consumeV6IndoorGeneratedNpcBypassForTest(GameTitle::MM6));
+    EXPECT_THROW(mm6::testing::requireV6IndoorReplayBeforeMapLoadForTest(GameTitle::MM6),
+                 std::exception);
+    mm6::testing::restoreV6IndoorRngBeforeMapLoadForTest(
+        [](const GameplayRandomState &) {}, GameTitle::MM6);
+    EXPECT_NO_THROW(mm6::testing::requireV6IndoorReplayBeforeMapLoadForTest(GameTitle::MM6));
     ASSERT_EQ(rebuilt.size(), 1u);
     EXPECT_EQ(rebuilt.front().monsterInfo.id, actor.monsterInfo.id);
 }

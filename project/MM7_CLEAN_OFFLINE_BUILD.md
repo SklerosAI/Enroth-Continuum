@@ -28,8 +28,8 @@ campaign acceptance result.
    and Atlas passed strict code-signature checks; no proprietary game data
    was bundled. A bounded headless launch found the separate private MM7 data
    path and stayed alive at the menu. A fresh local-only GameTest target passed
-   the focused MM7 `Prs.Pr2354` control 1/1 against the owner's private data,
-   still with network access denied.
+   the focused MM7 `Prs.Pr2354` control 1/1 and the Russian-text suite
+   13/13 against the owner's private data, still with network access denied.
 
 The Apple SDK/toolchain, Python 3, CMake and Ninja are local tools. The owner's
 lawfully obtained MM7 files remain outside Git and outside the bundle. The

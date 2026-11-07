@@ -18,7 +18,7 @@ of the unresolved ztd.text fetch path. The clean MM7 target linked against the
 nine local archives, the staged Atlas and helper passed code-signature checks,
 and no private game files were bundled. A bounded headless startup found the
 private MM7 data root; a freshly built MM7 headless GameTest control passed
-1/1. All build, package and control steps ran with network access denied.
+1/1 and the Russian-text suite passed 13/13. All build, package and control steps ran with network access denied.
 
 This is a clean **tracked-source extraction**, not a remote Git clone. It did
 not test visible gameplay, audio, save/quit/reload, install or a complete MM7

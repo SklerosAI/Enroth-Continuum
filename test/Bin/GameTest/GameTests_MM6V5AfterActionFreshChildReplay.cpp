@@ -38,6 +38,8 @@
 #include "Engine/MM6/MM6V4OutdoorDecorationReplay.h"
 #include "Engine/MM6/MM6V4SaveFields.h"
 #include "Engine/MM6/MM6V5FullSessionPreflight.h"
+#include "Engine/MM6/MM6V5ActorRuntimeFields.h"
+#include "Engine/MM6/MM6V5PreEventActorReplayForTest.h"
 #include "Engine/MM6/MM6V5PreEventSpriteReplayForTest.h"
 #include "Engine/MM6/MM6V5SaveFields.h"
 #include "Engine/MM6/MM6V5SpriteRuntimeFields.h"
@@ -171,6 +173,7 @@ GAME_TEST(MM6V5AfterActionFreshChildReplayHeadless, DISABLED_PostActionQuickLoad
     std::unique_ptr<mm6::testing::ScopedEventRuntimeRestoreForTest> eventRuntime;
     std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
     std::unique_ptr<mm6::testing::ScopedV3PreEventReplayForTest> replay;
+    std::unique_ptr<mm6::testing::ScopedV5PreEventActorReplayForTest> actorReplay;
     std::unique_ptr<mm6::testing::ScopedV5PreEventSpriteReplayForTest> spriteReplay;
     std::unique_ptr<mm6::testing::ScopedPostWorldAdmissionForTest> postWorld;
     game.runGameRoutine([&] {
@@ -201,7 +204,7 @@ GAME_TEST(MM6V5AfterActionFreshChildReplayHeadless, DISABLED_PostActionQuickLoad
                 throw std::runtime_error("MM6 v5 post-action replay has no exact first-map candidate");
             staged = std::move(candidateStage);
             expectedNativeActors = staged->v4.v3.actorMap.activeMap.delta.actors.size();
-            expectedActiveActors = staged->v4.v3.actorMap.activeActors.size();
+            expectedActiveActors = staged->actors.actors.size();
             expectedGenerated = staged->v4.saved.v3.generatedNpcs;
 
             *pParty = staged->v4.v3.represented.party.party;
@@ -237,6 +240,9 @@ GAME_TEST(MM6V5AfterActionFreshChildReplayHeadless, DISABLED_PostActionQuickLoad
                 });
             replay = std::make_unique<mm6::testing::ScopedV3PreEventReplayForTest>(
                 GameTitle::MM6, std::move(staged->v4.v3.actorMap));
+            actorReplay = std::make_unique<mm6::testing::ScopedV5PreEventActorReplayForTest>(
+                GameTitle::MM6, staged->actors,
+                staged->v4.saved.v3.activeActorPayload);
             spriteReplay = std::make_unique<mm6::testing::ScopedV5PreEventSpriteReplayForTest>(
                 GameTitle::MM6, staged->sprites);
             postWorld = std::make_unique<mm6::testing::ScopedPostWorldAdmissionForTest>(
@@ -245,7 +251,7 @@ GAME_TEST(MM6V5AfterActionFreshChildReplayHeadless, DISABLED_PostActionQuickLoad
                     try {
                         if (!checkpoint->reachedMapLoad() || checkpoint->reachedInput() ||
                             !replay->published() || !replay->rngPublished() ||
-                            !spriteReplay->published() ||
+                            !actorReplay->published() || !spriteReplay->published() ||
                             !eventRuntime->restored() ||
                             pActors.size() != expectedActiveActors ||
                             expectedActiveActors < expectedNativeActors ||
@@ -262,9 +268,12 @@ GAME_TEST(MM6V5AfterActionFreshChildReplayHeadless, DISABLED_PostActionQuickLoad
                             mm6::encodeGeneratedNpcSection(expectedGenerated, GameTitle::MM6))
                             throw std::runtime_error("MM6 v5 generated NPC rows changed after map events");
                         const std::vector<Actor> finalActors(pActors.begin(), pActors.end());
-                        if (mm6::encodeActiveActorSection(finalActors, GameTitle::MM6) !=
-                            staged->v4.saved.v3.activeActorPayload)
-                            throw std::runtime_error("MM6 v5 ACTR changed after map events");
+                        const auto finalActorRuntime = mm6::captureActorRuntimeFields(
+                            "oute3.odm", staged->v4.saved.v3.activeActorPayload,
+                            finalActors, GameTitle::MM6);
+                        if (mm6::encodeActorRuntimeSection(finalActorRuntime, GameTitle::MM6) !=
+                            mm6::encodeActorRuntimeSection(staged->actors, GameTitle::MM6))
+                            throw std::runtime_error("MM6 v5 ARTR changed after map events");
                         const auto finalSprites = mm6::captureSpriteRuntimeFields(
                             "oute3.odm", pOutdoor->mm6DeltaBytes, pSpriteObjects,
                             GameTitle::MM6);
@@ -365,6 +374,7 @@ GAME_TEST(MM6V5AfterActionFreshChildReplayHeadless, DISABLED_PostActionQuickLoad
     game.runGameRoutine([&] {
         postWorld.reset();
         spriteReplay.reset();
+        actorReplay.reset();
         replay.reset();
         checkpoint.reset();
         eventRuntime.reset();

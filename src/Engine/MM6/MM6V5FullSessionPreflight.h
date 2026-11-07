@@ -6,6 +6,7 @@
 #include <string>
 
 #include "MM6V4FullSessionPreflight.h"
+#include "MM6V5ActorRuntimeFields.h"
 #include "MM6V5SpriteRuntimeFields.h"
 
 namespace mm6 {
@@ -15,6 +16,7 @@ namespace mm6 {
 // same retained native DDM, without projecting its float coordinates into it.
 struct V5FullSessionPreflight {
     V4FullSessionPreflight v4;
+    ActorRuntimeSaveFields actors;
     SpriteRuntimeSaveFields sprites;
 };
 

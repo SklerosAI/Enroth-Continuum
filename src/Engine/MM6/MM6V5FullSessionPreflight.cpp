@@ -34,12 +34,16 @@ V5FullSessionPreflight stageV5FullSessionPreflight(
         runtimeActorCap, selectedRngType, rebuiltDecorations, title));
     const std::string &mapName = v4->v3.actorMap.activeMap.mapName;
     const auto &nativeDelta = v4->saved.v3.raw.chest.rawActiveDelta;
-    if (mapName != "oute3.odm" || saved->sprites.mapName != mapName ||
+    if (mapName != "oute3.odm" || saved->actors.mapName != mapName ||
+        saved->actors.actors.size() != v4->v3.actorMap.activeActors.size() ||
+        saved->sprites.mapName != mapName ||
         saved->sprites.records.size() != v4->v3.actorMap.activeMap.delta.spriteObjects.size())
-        throw std::runtime_error("MM6 v5 SPRT lacks an exact first-map native slot list");
+        throw std::runtime_error("MM6 v5 runtime owners lack exact first-map slot lists");
+    requireActorRuntimeBaselineAgreement(
+        saved->actors, mapName, v4->saved.v3.activeActorPayload, title);
     requireSpriteRuntimeNativeAgreement(
         saved->sprites, mapName, nativeDelta, title);
-    return {std::move(*v4), std::move(saved->sprites)};
+    return {std::move(*v4), std::move(saved->actors), std::move(saved->sprites)};
 }
 
 } // namespace mm6

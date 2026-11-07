@@ -2381,3 +2381,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Audited the two inherited autosave entry points, paused travel-dialogue capture, disposable-only v5 atomic writer and the no-write location-change test. The test proves map switching but leaves old-map cache and disk state unchanged.
 - Added a source-backed transaction packet and wiki page: complete detached old-map/visited-map owners, a reload-safe Party copy, validated durable write, postcommit travel effects and failure recovery are required before live MM6 border travel. No runtime code or private data changed.
+
+## [2026-11-07] verify | MM6 post-world indoor replay
+- by: T-Burton-ND via codex
+- Added a separate genuine post-world indoor v6 candidate and test-only pre-event GNPC pool/RNG handoff. The fresh child checks exact GNPC row bytes, RNG and IART/ISRT/IDRT after map events. The earlier pre-event fixture remains a distinct bounded gate.
+- Both disposable three-process chains passed 1/1 per child in integration; focused v6/GNPC/v3 units passed 18/18 and an MM7 headless control passed 1/1. The candidate still reuses seed Party/title owners; gameplay admission and production SaveLoad remain closed.

@@ -13,6 +13,7 @@
 #include "Engine/Components/Random/EngineRandomComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/PartyPlacement.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
@@ -217,7 +218,32 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
                 engine->_pendingTransition = MapDestination(map, MAP_START_POINT_PARTY);
                 engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
                 mm6::ScopedChestMapLoadOptIn chestOptIn(true);
+                std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> placementCheckpoint;
+                if (liveSessionWriter) {
+                    placementCheckpoint = std::make_unique<
+                        mm6::testing::ScopedPreEventCheckpointForTest>(
+                            GameTitle::MM6, [&] {
+                                // A loaded save preserves its Party position. The v2
+                                // seed belongs to an outdoor map, so this disposable
+                                // indoor fixture must take the map's actual start
+                                // marker before OnMapReload or first input.
+                                const auto placement =
+                                    engine->_pendingTransition->resolvePlacement();
+                                if (!placement || !pIndoor->GetSector(placement->pos))
+                                    throw std::runtime_error(
+                                        "MM6 v6 indoor fixture lacks a valid Party Start");
+                                placeParty(*placement);
+                                if (!pIndoor->GetSector(pParty->pos) ||
+                                    !pIndoor->GetSector(
+                                        pParty->pos + Vec3f(0, 0, pParty->eyeLevel)))
+                                    throw std::runtime_error(
+                                        "MM6 v6 indoor fixture Party Start has no eye sector");
+                            });
+                }
                 DoPrepareWorld(true, 1);
+                if (liveSessionWriter && !placementCheckpoint->reachedMapLoad())
+                    throw std::runtime_error(
+                        "MM6 v6 indoor fixture missed Party Start checkpoint");
                 if (uCurrentlyLoadedLevelType != LEVEL_INDOOR ||
                     engine->_currentLoadedMapId != map || !pIndoor->bLoaded)
                     throw std::runtime_error("MM6 v6 post-world writer lacked indoor world");

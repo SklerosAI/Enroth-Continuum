@@ -102,9 +102,12 @@ The normal MM6 Main Menu QuickLoad now refuses before probing even a present
 load transition, and MM7 control passed **1/1**. The test-only autosave
 override remains. The [menu slot packet](MM6-F4-Menu-Slot-Preflight.md)
 records the remaining UI gate: MM6 needs a semantic `.ec6` list and complete
-load handoff; the current manual-save menu pauses the timer but the proven
-first-map writer capture requires unpaused input. Keep normal SaveLoad/UI
-closed until those boundaries are proved.
+load handoff. A read-only `PausedSaveMenu` v5 capture now accepts exact
+first-map owners in the real paused Save window after bounded movement; its
+fresh headless child passed **1/1**, the unpaused seven-child chain **7/7**
+and MM7 Prs **1/1**. The earlier paused-timer capture blocker is superseded,
+but the writer still calls the unpaused default. Normal SaveLoad/UI and
+production slots remain closed.
 
 The [MM6 indoor v6 input cycle](MM6-F4-V6-Indoor-Input-Cycle.md) passed five
 fresh headless children through a real-loop turn/walk, atomic post-input

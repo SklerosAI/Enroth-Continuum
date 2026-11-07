@@ -95,8 +95,16 @@ persistent events and raw cursor/SHOP agreement on the detached stage before
 both fresh-child readers construct replay scopes or assign globals. The
 integration seven-child chain passed **1/1 each** and MM7 control **1/1**.
 Late assignment and pre-event replay failures still lack a complete recovery
-policy. Manual Save pauses the timer before `doSavegame`, so settled-input
-capture also needs an explicit paused-save contract before normal wiring.
+policy. The earlier paused-timer capture blocker is **superseded** for the
+exact first map: `MM6V5LiveSaveCapture` now has a read-only `PausedSaveMenu`
+contract requiring the actual paused Save window, idle UI queue and no text
+input, in addition to its existing title/map/source and exact-owner checks.
+A fresh owner-only headless child entered that window after bounded movement
+and passed detached capture/recapture **1/1**; the default unpaused contract
+refused there. The established unpaused v5 chain passed **7/7** and MM7 Prs
+**1/1**. The writer service still calls the unpaused default; normal
+`doSavegame`, production slots and UI remain closed. See the
+[project packet](../project/MM6_F4_EC6_V5_SPRITE_RUNTIME.md).
 
 See also: [V4 Event Runtime](MM6-F4-EC6-V4-Event-Runtime.md),
 [V3 Post Entry Map and Pre Event](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md),

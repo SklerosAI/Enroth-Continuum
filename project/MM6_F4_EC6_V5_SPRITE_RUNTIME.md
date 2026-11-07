@@ -173,9 +173,34 @@ cursor/SHOP join before either fresh-child reader constructs replay scopes or
 assigns globals. The integrated seven-child chain passed **1/1 per process**
 and MM7 control **1/1**. Publication still repeats some validation after live
 assignment and may fail during assignment or pre-event replay. A complete
-failure policy is required before a normal menu load. Manual Save pauses the
-timer before `doSavegame`, so the current settled-input capture cannot be
-wired directly into that route without an explicit paused-save contract.
+failure policy is required before a normal menu load.
+
+## Paused manual Save capture boundary
+
+`GameMenu::MenuLoop()` pauses `gameTimer` before constructing the menu, and
+`UIMSG_Game_OpenSaveGameDialog` then selects `SCREEN_SAVEGAME` and constructs
+`GUIWindow_Save`. The v5 live capture now has an explicit MM6-only
+`PausedSaveMenu` boundary in `MM6V5LiveSaveCapture`. It keeps the exact title,
+loaded first map, source-v4, no-transition, idle Party action, owner-recapture
+and detached semantic preflight checks. It additionally requires the paused
+timer, the actual Save screen/window, no active or confirmed text input, and
+no pending message in either UI queue. The existing default `SettledInput`
+boundary still requires an unpaused timer. The same selected boundary is
+checked again during candidate agreement.
+
+In a fresh owner-only headless child, the existing v4 first-map replay reached
+input, performed bounded turn/walk, entered the real Save window with Escape
+and the Save button, then captured and recaptured a detached v5 candidate.
+The default unpaused API refused at that window and the paused candidate
+refused the default agreement API. The seed and v4 files remained unchanged;
+this test wrote no new slot. The focused child passed **1/1**, the established
+unpaused seven-child v5 cycle passed **7/7**, and MM7 Prs passed **1/1**.
+
+The paused capture API is a read-only seam. `MM6V5FirstMapSaveWriter` still
+selects the unpaused default and only accepts owner-only disposable slots.
+Normal `doSavegame`, Save menu routing, profile selection, durable result
+handling, load publication recovery and UI success/error behavior remain
+closed. No later outdoor or indoor capture is implied.
 
 See [v4 event runtime boundary](MM6_F4_EC6_V4_EVENT_RUNTIME.md),
 [active actor capture](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md) and

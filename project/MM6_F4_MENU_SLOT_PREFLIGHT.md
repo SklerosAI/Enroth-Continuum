@@ -43,11 +43,15 @@ MM7 `SaveGameLite_MM7` parser, `.mm7` autosave name and free-slot allocator
 must stay on the MM7 branch. A selected MM6 slot must pass the complete
 read-only load transaction before `LoadSlotState` queues a loading transition,
 and a failed publication must not fall through into `Game::gameLoop()`.
-Manual Save cannot call the current first-map writer from the existing save
-menu: `GameMenu::MenuLoop()` pauses the timer, while the proven live capture
-requires unpaused settled input. Prove a paused-menu capture or a pre-pause
-candidate with an exact owner recheck before changing that route. Only a
-confirmed atomic result may close the menu or report success; an unconfirmed
-post-rename result requires read-only preflight. The resolved native MM6
-profile root must come from startup, including an explicit user-path override,
+The earlier paused-timer capture blocker is superseded for the exact first
+map: the read-only v5 engine capture now has a `PausedSaveMenu` boundary that
+requires the actual paused Save window and an idle UI queue, then recaptures
+the exact live owners. A real-menu headless child passed **1/1**; the unpaused
+v5 chain passed **7/7** and MM7 control **1/1**. The disposable writer still
+calls the unpaused default, and normal `doSavegame`/UI remains guarded. A
+future normal route must select the paused contract, preserve the title/map
+and owner-only slot checks, and report success only for a confirmed atomic
+result. An unconfirmed post-rename result requires read-only preflight. The
+resolved native MM6 profile root must come from startup, including an explicit
+user-path override,
 not from a display string. Normal SaveLoad and menu listing remain closed.

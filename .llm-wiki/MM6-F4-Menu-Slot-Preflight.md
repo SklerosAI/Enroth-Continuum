@@ -23,8 +23,10 @@ Normal MM6 Main Menu QuickLoad now refuses before checking a present
 headless disposable test with a UFS-visible RAM marker passed **1/1**: no
 loading transition, pending filename or load callback, and unchanged marker.
 MM7 control passed **1/1**. The [packet](../project/MM6_F4_MENU_SLOT_PREFLIGHT.md)
-also records the next UI seam: MM6 needs its own semantic `.ec6` inventory,
-while the existing manual-save menu pauses the timer and therefore cannot
-call the unpaused first-map capture directly. Normal save/load stays closed.
+records the next UI seam: MM6 needs its own semantic `.ec6` inventory. The
+prior paused-timer blocker is **superseded** by the exact first-map
+`PausedSaveMenu` capture contract, verified in a real-menu headless child
+**1/1** with the unpaused chain **7/7** and MM7 control **1/1**. The
+disposable writer still uses settled input; normal save/load stays closed.
 
 See also: [Raw Save Runtime](MM6-F4-Raw-Save-Runtime.md), [V2 Fresh-Child Owner Audit](MM6-F4-V2-Fresh-Child-Owner-Audit.md).

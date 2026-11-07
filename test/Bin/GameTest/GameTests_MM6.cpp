@@ -25,6 +25,7 @@
 #include "Engine/MM6/MM6Archive.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6EncounterMonster.h"
+#include "Engine/MM6/MM6PlainItemProjection.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/mm7_data.h"
 #include "Engine/Objects/Chest.h"
@@ -157,6 +158,34 @@ GAME_TEST(MM6Headless, OriginalCharacterItemCapacity) {
     EXPECT_THROW(reconstruct(*inheritedParty, pParty), std::runtime_error);
     EXPECT_EQ(pParty->uNumGold, 4242);
     EXPECT_EQ(pParty->pCharacters[0].inventory.entry(137)->itemId, item.itemId);
+}
+
+GAME_TEST(MM6Headless, PlainItemProjectionUsesMM6TableTypes) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_TRUE(pItemTable);
+
+    mm6::ItemRecord28 raw;
+    raw.setWord(0, 221); // MM6 scroll in the inherited MM7 potion-ID range.
+    auto scroll = mm6::stagePlainItem(raw, *pItemTable, GameTitle::MM6);
+    ASSERT_TRUE(scroll);
+    EXPECT_EQ(scroll->sourceType, ITEM_TYPE_SPELL_SCROLL);
+    EXPECT_EQ(scroll->item.potionPower, 0);
+    EXPECT_EQ(mm6::capturePlainItem(*scroll, *pItemTable, GameTitle::MM6), raw);
+
+    raw.setWord(0, 164);
+    auto bottle = mm6::stagePlainItem(raw, *pItemTable, GameTitle::MM6);
+    ASSERT_TRUE(bottle);
+    EXPECT_EQ(bottle->sourceType, ITEM_TYPE_POTION);
+    raw.setWord(4, 12);
+    EXPECT_FALSE(mm6::stagePlainItem(raw, *pItemTable, GameTitle::MM6));
+
+    raw.setWord(0, 197);
+    raw.setWord(4, 0);
+    raw.setWord(12, 79);
+    auto gold = mm6::stagePlainItem(raw, *pItemTable, GameTitle::MM6);
+    ASSERT_TRUE(gold);
+    EXPECT_EQ(gold->sourceType, ITEM_TYPE_GOLD);
+    EXPECT_EQ(gold->item.goldAmount, 79);
 }
 
 GAME_TEST(MM6Headless, FirstOutdoorResourcePreflight) {

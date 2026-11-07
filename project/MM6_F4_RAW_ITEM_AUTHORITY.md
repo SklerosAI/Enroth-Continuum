@@ -6,7 +6,9 @@ The accepted original-executable shop trace transfers all 28 bytes on purchase a
 
 The provisional `.ec6` `ITEM` v1 and `HELD` v1 fields are logical snapshots of the current `Item` runtime. `MM6DurableSaveFields::DurableItem` stores separate potion/gold/enchantment scalars, flags and an eight-byte expiration; `MM6DurableSaveRuntime` captures them from `Item` and reconstructs a new `Item`. `MM6HeldItemSaveFields` does the same for the cursor. Neither logical form contains original MM6 byte 26 or 27, and the added expiration has no source in a 28-byte MM6 record. Their current-runtime round trips do not prove native MM6 item fidelity. `MM6ChestRuntimeProjection` keeps the full raw 28-byte chest record as a sidecar but only checks a 24-byte `Item_MM7` projection. The shop, chest and future inventory/held/ground adapters must therefore not treat `Item_MM7` as the byte authority.
 
-A follow-up [detached INVR section](MM6_F4_RAW_INVENTORY_SECTION.md) preserves the 138 physical item slots, 126 grid words and 16 equipment words described by the pinned MMExtension MM6 layout. A read-only original-executable trace confirms the 138-slot allocator, so MM6 party reset now uses 138 runtime inventory records while MM7 remains at 126. INVR remains outside live Party raw ownership, the known-save manifest and native-save import.
+A follow-up [detached INVR section](MM6_F4_RAW_INVENTORY_SECTION.md) preserves the 138 physical item slots, 126 grid words and 16 equipment words described by the pinned MMExtension MM6 layout. A read-only original-executable trace confirms the 138-slot allocator, so MM6 party zeroing and reset now use 138 runtime inventory records while MM7 remains at 126. INVR remains outside live Party raw ownership, the known-save manifest and native-save import.
+
+A [detached plain-item projection](MM6_F4_PLAIN_ITEM_PROJECTION.md) now uses MM6 item-table types instead of MM7 numeric potion ranges, retains the original 28-byte record and accepts only fields with a bounded view. It rejects nonzero bonus unions pending source proof and has no live owner or SaveLoad route.
 
 ## Migration order
 

@@ -55,6 +55,8 @@ The [raw item authority decision](MM6-F4-Raw-Item-Authority.md) adds an exact 28
 
 The newer [raw INVR section](MM6-F4-Raw-Inventory-Section.md) preserves the pinned MMExtension MM6 physical layout of 138 items, 126 grid words and 16 equipment words per character. An accepted-original-executable trace confirms the free-item path can allocate across all 138 records. MM6 party zeroing, including reset, now configures 138 runtime slots, while MM7 remains at 126; a monitored headless test inserts into the final MM6 slot. The inherited MM7 party and character serializers reject MM6/138-slot state at their entry points before destination mutation. INVR remains detached from the raw Party owner and outside the eighteen-section known-save manifest. The latest full monitored MM6 headless suite passed **51/51** over 1,504 samples, an MM7 save/load control **1/1**, and rebuilt non-MM6-prefix unit checks **438/438**, without an on-screen window or focus change. The earlier focused INVR **5/5** and private-backed MM6/LOD **347/347** checks also passed. Resolve live raw-byte ownership and ITEM v1 supersession before opening SaveLoad.
 
+The later [plain-item projection](MM6-F4-Plain-Item-Projection.md) is a detached source-typed view for zero-bonus MM6 items and gold, retaining all raw bytes and rejecting unsupported unions. It addresses the inherited MM7 potion-ID collision for the view only; no chest, inventory, held, ground, shop or normal SaveLoad owner uses it. Linked focused unit checks passed **6/6**, and a monitored MM6 headless category check passed **1/1** without a visible window or focus change.
+
 ## Authority and source order
 
 | Question | Start with | Supporting source |

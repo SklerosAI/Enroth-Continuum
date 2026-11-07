@@ -656,3 +656,10 @@ the direct inventory reconstruction path has the same capacity guard. The
 updated focused test checks sentinels after rejection. The full MM6 headless
 suite passed **51/51** over 1,504 monitored samples, an MM7 save/load control
 passed **1/1**, and rebuilt non-MM6-prefix unit checks passed **438/438**.
+
+An opt-in, detached [plain-item projection](MM6_F4_PLAIN_ITEM_PROJECTION.md)
+now reads MM6 item-table types for zero-bonus records and gold while retaining
+all 28 original bytes. It rejects unmapped bonus unions and has no live owner.
+Linked raw-item/inventory/projection checks passed **6/6**; a monitored MM6
+headless loaded-table category check passed **1/1** without a visible window
+or focus change. This does not make any item-bearing MM6 save route playable.

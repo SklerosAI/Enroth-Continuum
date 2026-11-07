@@ -211,17 +211,19 @@ macOS writes crash reports and saved state by bundle ID.
 
 Defects:
 
-1. **High, fork build.** The Release helper installed on 2026-11-07 linked
-   XQuartz `/opt/X11/lib/libGL.1.dylib`, because the Release configure found
-   `/usr/X11R6/lib/libGL.dylib`. Removing XQuartz would stop MM7 launching.
-   Fix in progress: pin `OPENGL_gl_LIBRARY` and GLU to the SDK OpenGL framework,
-   rebuild, check with `otool -L` before installing.
+1. **Fixed, fork build.** The earlier Release helper linked XQuartz
+   `/opt/X11/lib/libGL.1.dylib`. The replacement Release helper uses the Apple
+   OpenGL framework, has no `/opt/X11` link, and passed staged and installed
+   code-signature checks. The installed Atlas launched MM7 to the title menu
+   and returned normally on 2026-11-07. A future source-built dependency
+   cutover remains separate.
 2. **High for tests, medium for play, fork-introduced.** Commit `0b3b47e6d`
    moved the house pause after the `no_video` and decode checks
    (`src/Media/MediaPlayer.cpp`), undoing upstream PR #2956. MM7 houses stopped
-   pausing time and music when the movie is off or missing. Fix in progress
-   with a new `Prs.Pr2956` game test. `Issues.Issue840` passes either way
-   because it does not tape the pause.
+   pausing time and music when the movie is off or missing. Fixed in
+   `c11c2c1f9`; `Prs.Pr2956`, `Issues.Issue840` and `Prs.Pr2354` passed 3/3
+   together after the follow-up MM7 changes. `Issues.Issue840` alone does not
+   tape the pause.
 3. Medium, M7-A6: the helper statically links SDL3, FFmpeg, OpenAL, libpng and
    zlib from OpenEnroth-hosted prebuilt dependency releases, and their notices
    are not bundled. `tools/build_mm7_macos.py` and the tracked snapshots on
@@ -231,7 +233,7 @@ Defects:
    failed manual save or quicksave throws out of `saveGame` and ends the
    process, and a save with a valid header but corrupt body is listed and then
    crashes on load. Atlas crash reporting was corrected in `f70627f9c` but
-   needs a launched-app check.
+   its nonzero-exit path still needs a launched-app check.
 5. Low-medium, fork: the spellbook Grandmaster popup row lost its `\t000`
    indent reset (`UIPopup.cpp:1415-1422`). Restored in `f70627f9c`; a visual
    comparison is still open.
@@ -251,6 +253,5 @@ fullscreen uses an SDL Space on display 0, no HiDPI flag is set. Upstream
 #1201 (HiDPI) and #2171 (window size after a fullscreen toggle) still apply.
 #1920 is avoided by Atlas passing `--data-path`. #1591 (signing) still applies.
 
-Tests: `Prs.Pr2956` for the pause, a corrupt-save load test, an unwritable
-save test, a spellbook popup screenshot comparison, and a manual launch with
-XQuartz hidden after the rebuild.
+Remaining tests: corrupt-save load, unwritable save, spellbook popup screenshot,
+an Atlas nonzero-exit message, and an explicit run with XQuartz unavailable.

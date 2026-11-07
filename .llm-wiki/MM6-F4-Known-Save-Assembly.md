@@ -19,7 +19,9 @@ Every `PART`, `CHAR`, `QEST`, `EFFT`, `ITEM`, `HEAD`, `TIME`, `UIST`, `VISU`, `M
 
 `MM6RawSaveFields` assembles a separate nineteen-section v2 candidate: it replaces logical `ITEM` with exact four-character `INVR` images, replaces logical `HELD` v1 with raw `HELD` v2, and requires physical `SHOP` alongside `SCLK`. The remaining sixteen section families carry forward, with `QEST` and `EFFT` reused independently of the v1 `ITEM` codec. Both candidates share cross-field clock, active-character, 67-map and active-delta checks. Every v2 section is required; missing, optional, duplicate, extra or mixed v1/v2 section shapes reject before publication. Decode stages the entire record and assigns the destination only after all codecs and cross-checks pass. The title argument must be MM6.
 
-The v1 known-save decoder explicitly requires container v1. Existing atomic slot reading and New Game autosave still use that provisional v1 path; the v2 candidate does not silently migrate old files or become a live save. V2 still needs beacon state, owner staging, expected map-key/base validation and one global commit transaction before SaveLoad integration. Synthetic linked tests passed four new v2 cases plus the nine v1 known-save and three container cases; no private game file was used.
+The v1 known-save decoder explicitly requires container v1. Existing atomic slot reading and New Game autosave still use that provisional v1 path; the v2 candidate does not silently migrate old files or become a live save. V2 still needs beacon state, remaining owner staging and one global commit transaction before SaveLoad integration. Synthetic linked tests passed four new v2 cases plus the nine v1 known-save and three container cases; no private game file was used.
+
+The next [detached raw stage](MM6-F4-Raw-Save-Runtime.md) now validates v2 against all 67 expected MM6 map bases and constructs fresh physical inventory, cursor and shop owners. It remains outside the normal slot and live commit routes.
 
 See also: [F4 Offline Seams](MM6-F4-Offline-Seams.md), [NPC State](MM6-F4-NPC-State.md), [F2 Save Fields](Source-MM6-Save-Field-Register-F2.md).
 

@@ -104,6 +104,39 @@ ValidatedMapPair validateMapPair(const SavedMapDelta &delta, const MapBaseReader
     }
 }
 
+struct ValidatedMapSet {
+    SavedActiveMapCounts active;
+    StagedActiveMap activeMap;
+};
+
+ValidatedMapSet validateMapSet(const MapSaveFields &maps,
+                               const SaveMetadataFields &metadata,
+                               const ChestSaveFields &chest,
+                               std::span<const std::string> expectedNames,
+                               const MapBaseReader &readBase,
+                               const GroundItemVerifier &verifyGroundItem) {
+    if (!readBase || !verifyGroundItem)
+        throw std::runtime_error("MM6 map save lacks a base or item-template reader");
+    validateExpectedMapNames(maps, expectedNames);
+    const std::string &mapName = metadata.header.mapFileName;
+    const std::string activeDelta = mapName.substr(0, mapName.size() - 4) +
+                                    (mapName.ends_with(".blv") ? ".dlv" : ".ddm");
+    SavedActiveMapCounts active;
+    std::optional<StagedActiveMap> activeMap;
+    for (const SavedMapDelta &delta : maps.deltas) {
+        const bool isActive = delta.name == activeDelta;
+        ValidatedMapPair validated = validateMapPair(delta, readBase, verifyGroundItem, isActive,
+                                                     chest.rawActiveDelta);
+        if (isActive) {
+            active = validated.counts;
+            activeMap = std::move(validated.activeMap);
+        }
+    }
+    if (!activeMap)
+        throw std::runtime_error("MM6 active map was not in the validated delta set");
+    return {active, std::move(*activeMap)};
+}
+
 } // namespace
 
 ValidatedKnownMapSave decodeKnownSaveWithActiveMapCounts(
@@ -112,24 +145,19 @@ ValidatedKnownMapSave decodeKnownSaveWithActiveMapCounts(
     if (!readBase || !verifyGroundItem)
         throw std::runtime_error("MM6 map save lacks a base or item-template reader");
     KnownSaveFields candidate = decodeKnownSave(bytes);
-    validateExpectedMapNames(candidate.maps, expectedNames);
-    const std::string &mapName = candidate.metadata.header.mapFileName;
-    const std::string activeDelta = mapName.substr(0, mapName.size() - 4) +
-                                    (mapName.ends_with(".blv") ? ".dlv" : ".ddm");
-    SavedActiveMapCounts active;
-    std::optional<StagedActiveMap> activeMap;
-    for (const SavedMapDelta &delta : candidate.maps.deltas) {
-        const bool isActive = delta.name == activeDelta;
-        ValidatedMapPair validated = validateMapPair(delta, readBase, verifyGroundItem, isActive,
-                                                     candidate.chest.rawActiveDelta);
-        if (isActive) {
-            active = validated.counts;
-            activeMap = std::move(validated.activeMap);
-        }
-    }
-    if (!activeMap)
-        throw std::runtime_error("MM6 active map was not in the validated delta set");
-    return {std::move(candidate), active, std::move(*activeMap)};
+    ValidatedMapSet validated = validateMapSet(candidate.maps, candidate.metadata, candidate.chest,
+                                               expectedNames, readBase, verifyGroundItem);
+    return {std::move(candidate), validated.active, std::move(validated.activeMap)};
+}
+
+ValidatedRawMapSave decodeRawSaveWithActiveMapCounts(
+    std::span<const std::uint8_t> bytes, std::span<const std::string> expectedNames,
+    const MapBaseReader &readBase, const GroundItemVerifier &verifyGroundItem,
+    GameTitle title) {
+    RawSaveFields candidate = decodeRawSave(bytes, title);
+    ValidatedMapSet validated = validateMapSet(candidate.maps, candidate.metadata, candidate.chest,
+                                               expectedNames, readBase, verifyGroundItem);
+    return {std::move(candidate), validated.active, std::move(validated.activeMap)};
 }
 
 KnownSaveFields decodeKnownSaveWithMapBases(std::span<const std::uint8_t> bytes,

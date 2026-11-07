@@ -10,6 +10,7 @@
 
 #include "MM6KnownSaveFields.h"
 #include "MM6OutdoorWire.h"
+#include "MM6RawSaveFields.h"
 
 #include "Engine/Snapshots/MM6IndoorSnapshot.h"
 #include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
@@ -54,6 +55,12 @@ struct ValidatedKnownMapSave {
     StagedActiveMap activeMap;
 };
 
+struct ValidatedRawMapSave {
+    RawSaveFields raw;
+    SavedActiveMapCounts active;
+    StagedActiveMap activeMap;
+};
+
 // Return the projected active delta's record counts from the same validated
 // 67-map pass. The active CHST raw sidecar is decoded against that same base
 // and checked for record shape and item IDs. These are saved-record bounds,
@@ -61,6 +68,13 @@ struct ValidatedKnownMapSave {
 ValidatedKnownMapSave decodeKnownSaveWithActiveMapCounts(
     std::span<const std::uint8_t> bytes, std::span<const std::string> expectedNames,
     const MapBaseReader &readBase, const GroundItemVerifier &verifyGroundItem);
+
+// The v2 raw manifest uses the same 67-base and active-CHST checks as v1.
+// Decoding, base reads and item-template checks all finish before return.
+ValidatedRawMapSave decodeRawSaveWithActiveMapCounts(
+    std::span<const std::uint8_t> bytes, std::span<const std::string> expectedNames,
+    const MapBaseReader &readBase, const GroundItemVerifier &verifyGroundItem,
+    GameTitle title);
 
 // Decode every known EC6 section, check all 67 expected names, and validate
 // every delta against its corresponding base before returning candidate state.

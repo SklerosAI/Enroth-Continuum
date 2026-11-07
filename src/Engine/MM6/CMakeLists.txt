@@ -36,6 +36,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6HeldItemSaveRuntime.cpp MM6BuffSaveRuntime.cpp MM6HirelingSaveRuntime.cpp
     MM6RecoverySaveRuntime.cpp MM6MapSaveValidation.cpp MM6MapSaveValidation.h
     MM6WorldSaveRuntime.cpp MM6WorldSaveRuntime.h
+    MM6RawSaveRuntime.cpp MM6RawSaveRuntime.h
     MM6NewGameSaveRuntime.cpp MM6NewGameSaveRuntime.h
     MM6FirstMapWorldTransaction.h
     MM6FirstMapPlacementTransaction.h
@@ -131,6 +132,7 @@ if(OE_BUILD_TESTS)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_save_container)
 
     add_library(test_engine_mm6_save_runtime OBJECT Tests/MM6MapSaveValidation_ut.cpp
+        Tests/MM6RawSaveRuntime_ut.cpp
         Tests/MM6BeaconSaveFields_ut.cpp
         Tests/MM6PrivateMapSource_ut.cpp Tests/MM6WorldSaveRuntime_ut.cpp
         Tests/MM6NewGameSaveRuntime_ut.cpp

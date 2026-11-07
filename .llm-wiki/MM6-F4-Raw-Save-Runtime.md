@@ -1,0 +1,20 @@
+---
+type: synthesis
+up: "[[MM6-F4-Offline-Seams]]"
+related: ["[[MM6-F4-Known-Save-Assembly]]", "[[MM6-F4-Map-Save-Fields]]", "[[MM6-F4-Save-Transaction-Checklist]]"]
+tags: [mm6, f4, save, raw-items]
+---
+
+# MM6 F4 Raw Save Runtime
+
+The [raw owner staging packet](../project/MM6_EC6_RAW_RUNTIME_STAGE_F4.md) describes the first detached runtime join for the nineteen-section EC6 v2 candidate.
+
+`stageRawTitleOwners` requires explicit MM6 title selection and a source-specific 67-name set, base reader and item-template verifier. It decodes the exact v2 manifest, validates every saved map delta against its supplied MM6 base, checks active `CHST` sidecar shape, and retains an owned active indoor or outdoor candidate. The same map pass now serves the v1 and v2 decoders, so their base checks cannot drift independently.
+
+Only after map validation does the function construct fresh `RawInventoryFields`, `RawHeldCursorOwner` and `ShopTitleState` values. Referenced backpack/equipment records, a present cursor and nonempty physical shop records must point to accepted MM6 item templates. Grid/equipment indices must stay within the 138-record inventory and cannot reuse a source record; negative grid footprint cells must identify a positive anchor. Unreferenced inventory records and zero-ID shop records retain all 28 native bytes, including opaque tails. No process global, live `Party`, file or profile is changed. `captureRawTitleOwners` overlays detached owner edits onto the staged candidate and repeats item and 67-map/base validation before returning fields for EC6 encoding.
+
+This is still a raw owner candidate. It does not project every source item kind into `CharacterInventory`, reconstruct the active live world, include beacon state, or make the simultaneous Party/world/UI/commerce commit failure atomic. The existing v1 atomic/New Game route remains separate; v2 is not a production save or playable-campaign claim.
+
+Synthetic Mac tests passed three new raw owner cases and four existing map validation cases. They cover byte-preserving round trip, raw cursor clear, owner edits, wrong title, wrong map set before any base read, late malformed delta, missing base, invalid active references and rejected item templates. No private game file was read.
+
+See also: [Known Save Assembly](MM6-F4-Known-Save-Assembly.md), [Map Save Fields](MM6-F4-Map-Save-Fields.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

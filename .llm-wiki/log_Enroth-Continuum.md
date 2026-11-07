@@ -2450,3 +2450,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A disposable five-child headless chain passed 1/1 per child: v2 seed, v4 baseline, genuine indoor live-session v6 writer, real-loop first turn/walk plus separate atomic post-input writer, and independent fresh-child replay. The writer checks Party/title/raw, GNPC/RNG/EVRT, IFOV and actor/sprite/decoration owners; the v2 seed and prior v6 slot remain byte-identical.
 - The test fixture derives a valid position from native BLV geometry. The post-input writer patches only newly revealed DLV visibility bits after strict live-outline checks. `canEnterGameLoop()` and production SaveLoad stay closed; general indoor campaign, graphics/audio and Atlas Play remain unaccepted.
+
+## [2026-11-07] verify | Separate Mac MM7 runtime identity
+- by: T-Burton-ND via codex
+- The Mac MM7 source now writes its own Enroth Continuum config and rotating log names, defaults the window title to Enroth Continuum MM7, prefers its private data root and new environment override, and retains read-only legacy config and override compatibility. MM6 and non-Mac defaults remain separate.
+- An isolated local-only arm64 MM7/GameTest build and integrated cached-library MM7/GameTest build linked. Focused MM7 and MM6 headless controls passed 1/1 each; disposable direct-helper checks covered legacy config and override handling. The installed app and saves were untouched, and visible candidate play/save remains open.

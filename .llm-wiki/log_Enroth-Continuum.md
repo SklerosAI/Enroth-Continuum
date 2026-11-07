@@ -2326,3 +2326,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added required v6-only ISRT full-list sprite runtime state over exact native ISCR anchors, including source-free slot reuse, appended sprites, raw item provenance and an exact scalar overlay for Item fields omitted by inherited snapshot rules. V5 outdoor SPRT bytes remain unchanged.
 - Focused linked v5 sprite/v6 indoor checks passed 12/12, and a disposable v2 seed, v6 atomic writer and independent fresh-child reader passed 1/1 each. Live ISRT publication, actor runtime owners, gameplay admission and production SaveLoad remain open.
+
+## [2026-11-07] implement | Ten owned MM7 source inputs
+- by: T-Burton-ND via codex
+- Converted exact pinned `fmt`, `spdlog` and `sol2` gitlinks to tracked source, preserving their original license and provenance materials. All 978 original files matched pinned Git blobs; standalone AppleClang source build/runs passed, as did the cached-input arm64 Mac MM7 target.
+- Thirteen gitlinks, nested source fetches and prebuilt dependency recipes still block a clean offline clone. GLM and ImGui full-tree license details, plus other ambiguous inputs, remain under review. The installed app and private saves were not replaced.

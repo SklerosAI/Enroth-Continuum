@@ -18,14 +18,16 @@ GAME_TEST(MM6ZNpcResourceHeadless, DISABLED_LoadedResourcesMatchFreshNpcIdentity
     ASSERT_NE(engine->resources(), nullptr);
     ASSERT_NE(pNPCStats, nullptr);
 
-    const auto baseline = mm6::loadNpcStaticBaseline(*engine->resources(), GameTitle::MM6);
-    const auto saved = mm6::captureNpcFields(*pNPCStats, GameTitle::MM6);
-    auto staged = std::make_unique<NPCStats>(baseline.stats());
-    staged->pNPCData = saved.npcData;
-    staged->pGroups = saved.groups;
-    staged->uNumNewNPCs = saved.activeCount;
+    const auto baseline = std::make_unique<mm6::NpcStaticBaseline>(
+        mm6::loadNpcStaticBaseline(*engine->resources(), GameTitle::MM6));
+    const auto saved = std::make_unique<mm6::NpcSaveFields>(
+        mm6::captureNpcFields(*pNPCStats, GameTitle::MM6));
+    auto staged = std::make_unique<NPCStats>(baseline->stats());
+    staged->pNPCData = saved->npcData;
+    staged->pGroups = saved->groups;
+    staged->uNumNewNPCs = saved->activeCount;
     const auto plan = mm6::inspectNpcResourceIdentity(
-        *engine->resources(), baseline, saved, *staged, *pNPCStats, pNPCTopics, GameTitle::MM6);
+        *engine->resources(), *baseline, *saved, *staged, *pNPCStats, pNPCTopics, GameTitle::MM6);
     EXPECT_FALSE(plan.canPublishNpcState());
     EXPECT_NE(std::find(plan.blockers.begin(), plan.blockers.end(),
                         mm6::NpcResourceIdentityBlocker::GeneratedNpcIdentityAfterMapLoad),

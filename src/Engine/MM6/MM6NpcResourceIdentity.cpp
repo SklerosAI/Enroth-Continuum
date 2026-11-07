@@ -1,5 +1,6 @@
 #include "MM6NpcResourceIdentity.h"
 
+#include <memory>
 #include <stdexcept>
 #include <string_view>
 #include <utility>
@@ -70,11 +71,11 @@ NpcResourceIdentityPlan inspectNpcResourceIdentity(
     std::span<const NPCTopic> liveTopics, GameTitle title) {
     if (title != GameTitle::MM6 || liveTopics.size() != 789)
         throw std::runtime_error("MM6 NPC resource identity requires title-local topics");
-    const NpcStaticBaseline fresh = loadNpcStaticBaseline(
-        inputs.npcData, inputs.npcNews, inputs.npcNames, inputs.npcProfessions, title);
-    requireSameStaticTables(baseline.stats(), fresh.stats());
-    requireSameStaticTables(staged, fresh.stats());
-    requireSameStaticTables(live, fresh.stats());
+    const auto fresh = std::make_unique<NpcStaticBaseline>(loadNpcStaticBaseline(
+        inputs.npcData, inputs.npcNews, inputs.npcNames, inputs.npcProfessions, title));
+    requireSameStaticTables(baseline.stats(), fresh->stats());
+    requireSameStaticTables(staged, fresh->stats());
+    requireSameStaticTables(live, fresh->stats());
     if (encodeNpcSection(captureNpcFields(staged, title)).payload !=
         encodeNpcSection(saved).payload)
         throw std::runtime_error("MM6 staged NPC mutable state differs from RESC");

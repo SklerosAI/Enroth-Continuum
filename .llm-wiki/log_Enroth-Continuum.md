@@ -2436,3 +2436,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added cpptrace's exact pinned libdwarf-lite commit as tracked source with its original LGPL notices; all 132 archive files matched and the archive digest is recorded in its provenance note.
 - A standalone arm64 cpptrace/libdwarf build passed with the local source override and FetchContent disconnected. The integration CMake route still needs that override before a clean MM7 build can close the nested fetch.
+
+## [2026-11-07] verify | Local Mac media-library recipe
+- by: T-Burton-ND via codex
+- Added an original Enroth Continuum recipe for the five pinned repository-owned media sources. A native Release run built exactly nine arm64 static archives with no dynamic libraries; libpng selected local zlib, FFmpeg GPL/version-3/nonfree modes were disabled, and 23 license/notice files were copied.
+- A fresh CMake package-find probe resolved the new prefix. The MM7 app link, clean offline clone and binary distribution review remain open, and the installed helper was untouched.

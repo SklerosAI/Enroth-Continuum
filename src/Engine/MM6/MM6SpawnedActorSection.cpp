@@ -216,7 +216,7 @@ void requireSnapshotRoundTrip(const Actor &source, const Actor_MM7 &wire) {
 std::vector<std::uint8_t> encodeSpawnedActorSection(
     std::span<const Actor> actors, size_t firstSlot, GameTitle title) {
     if (title != GameTitle::MM6 || firstSlot > MAX_ACTOR_SLOTS ||
-        actors.empty() || actors.size() > MAX_ACTOR_SLOTS - firstSlot ||
+        actors.size() > MAX_ACTOR_SLOTS - firstSlot ||
         actors.size() > (MAX_SECTION_BYTES - HEADER_BYTES) / RECORD_BYTES)
         throw std::runtime_error("MM6 spawned actor section has invalid title or slot count");
     std::vector<std::uint8_t> bytes(HEADER_BYTES + actors.size() * RECORD_BYTES);
@@ -250,7 +250,7 @@ std::vector<Actor> decodeSpawnedActorSection(
         throw std::runtime_error("invalid MM6 spawned actor section header");
     const size_t firstSlot = read32(bytes, 8);
     const size_t count = read32(bytes, 12);
-    if (firstSlot != expectedFirstSlot || count == 0 || firstSlot > MAX_ACTOR_SLOTS ||
+    if (firstSlot != expectedFirstSlot || firstSlot > MAX_ACTOR_SLOTS ||
         count > MAX_ACTOR_SLOTS - firstSlot ||
         count > (MAX_SECTION_BYTES - HEADER_BYTES) / RECORD_BYTES ||
         bytes.size() != HEADER_BYTES + count * RECORD_BYTES)

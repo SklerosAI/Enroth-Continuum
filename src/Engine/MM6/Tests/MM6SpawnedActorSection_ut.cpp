@@ -81,3 +81,14 @@ UNIT_TEST(MM6SpawnedActorSection, RefusesBadFramingAndTitle) {
     bytes[16 + offsetof(Actor_MM7, items)] = 1;
     EXPECT_THROW((void) mm6::decodeSpawnedActorSection(bytes, 38, GameTitle::MM6), std::exception);
 }
+
+UNIT_TEST(MM6SpawnedActorSection, CanonicalEmptyRowsRetainBaselineSlot) {
+    const std::array<Actor, 0> none{};
+    const std::vector<std::uint8_t> bytes = mm6::encodeSpawnedActorSection(none, 38, GameTitle::MM6);
+    EXPECT_EQ(bytes.size(), 16);
+    EXPECT_TRUE(mm6::decodeSpawnedActorSection(bytes, 38, GameTitle::MM6).empty());
+    EXPECT_THROW((void) mm6::decodeSpawnedActorSection(bytes, 39, GameTitle::MM6), std::exception);
+    std::vector<std::uint8_t> noncanonical = bytes;
+    noncanonical.push_back(0);
+    EXPECT_THROW((void) mm6::decodeSpawnedActorSection(noncanonical, 38, GameTitle::MM6), std::exception);
+}

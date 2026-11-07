@@ -1026,3 +1026,11 @@ events. Linked unit checks passed **4/4**. A disposable native v2 writer
 and separate real Main Menu QuickLoad child passed **1/1** each; the child
 aborted before timer/input with its source slot unchanged. An MM7 headless
 control passed **1/1**. No v3 ACTR/GNPC/RNG replay is enabled yet.
+
+A detached [v3 full-session preflight](MM6_F4_EC6_V3_FULL_SESSION_PREFLIGHT.md)
+now joins exact ACTR/map/CHST with represented Party/NPC/timer/event/
+inventory/cursor/shop owners, pre-event GNPC/RNG agreement and a post-world
+Armageddon plan. Linked focused suites passed **8/8**; no live owner or
+slot is mutated. A private-backed first-map retained-DDM check refused
+at `sprite-header`, so the current raw sidecar cannot be copied blindly into
+a post-entry v3 file.

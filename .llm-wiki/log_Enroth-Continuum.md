@@ -1663,3 +1663,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Centralized the 14 original one-based MM6 item-bonus indices and shared runtime attributes, including electricity/cold/poison to air/water/body, and made the MM6 item-table loader use that array.
 - The private-backed MM6/LOD aggregate passed 352/352, non-MM6-prefix unit checks 438/438 and a monitored loaded-table MM6 headless control 1/1. The plain raw-item adapter still rejects nonzero bonuses pending strength/category semantics.
+
+## [2026-11-06] implement | Detached MM6 standard equipment view
+- by: T-Burton-ND via codex
+- Added a raw-preserving standard-enchanted equipment projection for original template types 3–11, mapped one-based bonus indices and positive strength. It rejects special bonuses and unsupported field changes.
+- Focused map/projection unit checks passed 3/3 and a monitored loaded-armor MM6 headless check passed 1/1 over 65 samples. Native nonzero item evidence, live equipment effects, inventory ownership and SaveLoad remain open.

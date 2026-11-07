@@ -22,6 +22,7 @@ V5FullSessionPreflight stageV5FullSessionPreflight(
     std::size_t runtimeActorCap,
     RandomEngineType selectedRngType,
     std::span<LevelDecoration> rebuiltDecorations,
+    const DecorationTable &decorationTable,
     GameTitle title) {
     if (title != GameTitle::MM6)
         throw std::runtime_error("MM6 v5 full-session preflight requires MM6 title");
@@ -36,14 +37,19 @@ V5FullSessionPreflight stageV5FullSessionPreflight(
     const auto &nativeDelta = v4->saved.v3.raw.chest.rawActiveDelta;
     if (mapName != "oute3.odm" || saved->actors.mapName != mapName ||
         saved->actors.actors.size() != v4->v3.actorMap.activeActors.size() ||
+        saved->decorations.mapName != mapName ||
         saved->sprites.mapName != mapName ||
         saved->sprites.records.size() != v4->v3.actorMap.activeMap.delta.spriteObjects.size())
         throw std::runtime_error("MM6 v5 runtime owners lack exact first-map slot lists");
     requireActorRuntimeBaselineAgreement(
         saved->actors, mapName, v4->saved.v3.activeActorPayload, title);
+    requireDecorationRuntimeBaseAgreement(
+        saved->decorations, mapName, readBase(mapName),
+        v4->activeEventRuntime, decorationTable, title);
     requireSpriteRuntimeNativeAgreement(
         saved->sprites, mapName, nativeDelta, title);
-    return {std::move(*v4), std::move(saved->actors), std::move(saved->sprites)};
+    return {std::move(*v4), std::move(saved->actors),
+            std::move(saved->decorations), std::move(saved->sprites)};
 }
 
 } // namespace mm6

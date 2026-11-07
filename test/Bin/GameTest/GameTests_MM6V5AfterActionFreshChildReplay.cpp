@@ -39,7 +39,9 @@
 #include "Engine/MM6/MM6V4SaveFields.h"
 #include "Engine/MM6/MM6V5FullSessionPreflight.h"
 #include "Engine/MM6/MM6V5ActorRuntimeFields.h"
+#include "Engine/MM6/MM6V5DecorationRuntimeFields.h"
 #include "Engine/MM6/MM6V5PreEventActorReplayForTest.h"
+#include "Engine/MM6/MM6V5PreEventDecorationReplayForTest.h"
 #include "Engine/MM6/MM6V5PreEventSpriteReplayForTest.h"
 #include "Engine/MM6/MM6V5SaveFields.h"
 #include "Engine/MM6/MM6V5SpriteRuntimeFields.h"
@@ -174,6 +176,7 @@ GAME_TEST(MM6V5AfterActionFreshChildReplayHeadless, DISABLED_PostActionQuickLoad
     std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
     std::unique_ptr<mm6::testing::ScopedV3PreEventReplayForTest> replay;
     std::unique_ptr<mm6::testing::ScopedV5PreEventActorReplayForTest> actorReplay;
+    std::unique_ptr<mm6::testing::ScopedV5PreEventDecorationReplayForTest> decorationReplay;
     std::unique_ptr<mm6::testing::ScopedV5PreEventSpriteReplayForTest> spriteReplay;
     std::unique_ptr<mm6::testing::ScopedPostWorldAdmissionForTest> postWorld;
     game.runGameRoutine([&] {
@@ -195,7 +198,7 @@ GAME_TEST(MM6V5AfterActionFreshChildReplayHeadless, DISABLED_PostActionQuickLoad
                     verifyItem, *pItemTable, pOverlayTable->overlays.size(),
                     pTileTable->tileCount(), engine->config->gameplay.MaxActors.value(),
                     application->component<EngineRandomComponent>()->type(),
-                    rebuiltDecorations, GameTitle::MM6));
+                    rebuiltDecorations, *pDecorationTable, GameTitle::MM6));
             if (candidateStage->v4.v3.actorMap.activeMap.mapName != "oute3.odm" ||
                 candidateStage->v4.saved.v3.raw.core.party.position != actionParty.position ||
                 candidateStage->v4.saved.v3.raw.core.party.viewYaw != actionParty.viewYaw ||
@@ -243,6 +246,8 @@ GAME_TEST(MM6V5AfterActionFreshChildReplayHeadless, DISABLED_PostActionQuickLoad
             actorReplay = std::make_unique<mm6::testing::ScopedV5PreEventActorReplayForTest>(
                 GameTitle::MM6, staged->actors,
                 staged->v4.saved.v3.activeActorPayload);
+            decorationReplay = std::make_unique<mm6::testing::ScopedV5PreEventDecorationReplayForTest>(
+                GameTitle::MM6, staged->decorations);
             spriteReplay = std::make_unique<mm6::testing::ScopedV5PreEventSpriteReplayForTest>(
                 GameTitle::MM6, staged->sprites);
             postWorld = std::make_unique<mm6::testing::ScopedPostWorldAdmissionForTest>(
@@ -251,7 +256,8 @@ GAME_TEST(MM6V5AfterActionFreshChildReplayHeadless, DISABLED_PostActionQuickLoad
                     try {
                         if (!checkpoint->reachedMapLoad() || checkpoint->reachedInput() ||
                             !replay->published() || !replay->rngPublished() ||
-                            !actorReplay->published() || !spriteReplay->published() ||
+                            !actorReplay->published() || !decorationReplay->published() ||
+                            !spriteReplay->published() ||
                             !eventRuntime->restored() ||
                             pActors.size() != expectedActiveActors ||
                             expectedActiveActors < expectedNativeActors ||
@@ -285,10 +291,13 @@ GAME_TEST(MM6V5AfterActionFreshChildReplayHeadless, DISABLED_PostActionQuickLoad
                             throw std::runtime_error("MM6 v5 EVRT arrays changed after map events");
                         const mm6::LoadedMapSource loadedMaps(*pGames_LOD, *pMapTable,
                                                                GameTitle::MM6);
-                        mm6::requireFirstMapOutdoorDecorationReplay(
+                        const auto finalDecorations = mm6::captureDecorationRuntimeFields(
                             "oute3.odm", loadedMaps.readBase("oute3.odm"),
                             staged->v4.activeEventRuntime, *pDecorationTable,
                             pLevelDecorations, GameTitle::MM6);
+                        if (mm6::encodeDecorationRuntimeSection(finalDecorations, GameTitle::MM6) !=
+                            mm6::encodeDecorationRuntimeSection(staged->decorations, GameTitle::MM6))
+                            throw std::runtime_error("MM6 v5 DECR changed after map events");
                         const auto outdoorWire = mm6::decodeOutdoorDelta(pOutdoor->mm6DeltaBytes);
                         const auto nativeBytes = outdoorWire.part(mm6::OutdoorDeltaPart::PersistentBytes);
                         const auto expectedNative = mm6::capturePersistentEventBoundary(
@@ -374,6 +383,7 @@ GAME_TEST(MM6V5AfterActionFreshChildReplayHeadless, DISABLED_PostActionQuickLoad
     game.runGameRoutine([&] {
         postWorld.reset();
         spriteReplay.reset();
+        decorationReplay.reset();
         actorReplay.reset();
         replay.reset();
         checkpoint.reset();

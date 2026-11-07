@@ -7,7 +7,10 @@
 
 #include "MM6V4FullSessionPreflight.h"
 #include "MM6V5ActorRuntimeFields.h"
+#include "MM6V5DecorationRuntimeFields.h"
 #include "MM6V5SpriteRuntimeFields.h"
+
+struct DecorationTable;
 
 namespace mm6 {
 
@@ -17,6 +20,7 @@ namespace mm6 {
 struct V5FullSessionPreflight {
     V4FullSessionPreflight v4;
     ActorRuntimeSaveFields actors;
+    DecorationRuntimeSaveFields decorations;
     SpriteRuntimeSaveFields sprites;
 };
 
@@ -32,6 +36,7 @@ V5FullSessionPreflight stageV5FullSessionPreflight(
     std::size_t runtimeActorCap,
     RandomEngineType selectedRngType,
     std::span<LevelDecoration> rebuiltDecorations,
+    const DecorationTable &decorationTable,
     GameTitle title);
 
 } // namespace mm6

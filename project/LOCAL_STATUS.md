@@ -759,3 +759,12 @@ updated its GUI under NullRenderer and verified its raw sidecar and runtime
 chest publication (**1/1**, zero visible windows and no focus change). MM6
 traps and pickup remain guarded; production map entry and SaveLoad remain
 closed. This does not establish rendered chest pixels or campaign play.
+
+The next integrated linked save/preflight gate passed **31/31**, including the
+new detached archive-backed New Game precommit case and separate EC6 v2 raw
+inventory/held/shop candidate. Two fresh monitored MM6 processes wrote a
+disposable partial New Game slot and reentered its first outdoor world; the
+second advanced timer, actor AI, queued turn/walk and draw (**1/1** each,
+zero visible windows and no focus change). The disposable profile was removed.
+An MM7 all-map reconstruction control passed **1/1**. EC6 v2 remains offline;
+normal MM6 SaveLoad and all-owner world publication are still guarded.

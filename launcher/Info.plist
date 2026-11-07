@@ -13,5 +13,5 @@
   <key>CFBundleVersion</key><string>1</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>NSHighResolutionCapable</key><true/>
-  <key>NSHumanReadableCopyright</key><string>OpenEnroth contributors; GPL-3.0. Enroth Continuum by SklerosAI.</string>
+  <key>NSHumanReadableCopyright</key><string>OpenEnroth and Enroth Continuum contributors; LGPL-3.0-or-later.</string>
 </dict></plist>

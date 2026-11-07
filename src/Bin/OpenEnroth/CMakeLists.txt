@@ -40,6 +40,21 @@ else()
         add_executable(OpenEnroth MACOSX_BUNDLE ${OpenEnroth_ICON} ${OpenEnroth_ASSETS_CAR} ${BIN_OPENENROTH_HEADERS} ${BIN_OPENENROTH_SOURCES})
         set_target_properties(OpenEnroth PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in)
 
+        # Atlas stages this repository's MM7 engine in its own helper slot.
+        add_executable(MM7 MACOSX_BUNDLE ${OpenEnroth_ICON} ${OpenEnroth_ASSETS_CAR} ${BIN_OPENENROTH_HEADERS} ${BIN_OPENENROTH_SOURCES})
+        set_target_properties(MM7 PROPERTIES
+            MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in
+            MACOSX_BUNDLE_BUNDLE_NAME "Enroth Continuum MM7"
+            MACOSX_BUNDLE_BUNDLE_VERSION "0.1.0"
+            MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1.0"
+            MACOSX_BUNDLE_LONG_VERSION_STRING "Enroth Continuum MM7 0.1.0"
+            MACOSX_BUNDLE_GUI_IDENTIFIER "org.sklerosai.enrothcontinuum.mm7"
+            MACOSX_BUNDLE_INFO_STRING "Personal Might and Magic VII runtime based on OpenEnroth."
+            MACOSX_BUNDLE_COPYRIGHT "OpenEnroth and Enroth Continuum contributors (LGPL-3.0-or-later)")
+        target_compile_definitions(MM7 PRIVATE EC_MM7_ONLY=1)
+        target_link_libraries(MM7 PUBLIC application library_cli library_platform_main library_stack_trace)
+        target_check_style(MM7)
+
         # Can't make install on OSX due to signing, dmg generation, etc
     else ()
         add_executable(OpenEnroth ${BIN_OPENENROTH_HEADERS} ${BIN_OPENENROTH_SOURCES})

@@ -21,6 +21,11 @@ OpenEnrothOptions OpenEnrothOptions::parse(int argc, char **argv) {
     OpenEnrothOptions result;
     std::unique_ptr<CliApp> app = std::make_unique<CliApp>();
 
+#ifdef EC_MM7_ONLY
+    std::string game = "mm7";
+    app->add_option("--game", game, "Game to launch: mm7 only.")->option_text("GAME");
+#endif
+
     std::optional<bool> portable;
     app->add_option(
         "--data-path", result.dataPath,
@@ -67,6 +72,11 @@ OpenEnrothOptions OpenEnrothOptions::parse(int argc, char **argv) {
     retrace->set_help_flag("-h,--help", "Print help and exit."); // This places --help last in the command list.
 
     app->parse(argc, argv, result.helpPrinted);
+
+#ifdef EC_MM7_ONLY
+    if (game != "mm7")
+        throw Exception("This MM7 app only accepts --game mm7.");
+#endif
 
     if (!portable && fs::exists(".portable"))
         portable = true;

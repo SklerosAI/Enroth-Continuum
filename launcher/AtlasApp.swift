@@ -12,7 +12,8 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
     private let preferences = UserDefaults.standard
 
     private var userPath: URL {
-        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".openenroth", isDirectory: true)
+        FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/Enroth Continuum/Profiles/MM7-Atlas", isDirectory: true)
     }
 
     private var modRoot: URL {
@@ -26,7 +27,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         }
         if title == "mm7" {
             return FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent("Library/Application Support/OpenEnroth", isDirectory: true)
+                .appendingPathComponent("Library/Application Support/Enroth Continuum/Game Data/MM7", isDirectory: true)
         }
         if title == "mm6" {
             return FileManager.default.homeDirectoryForCurrentUser
@@ -162,22 +163,27 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             sendState(message: "Choose a folder containing your MM7 ANIMS, DATA, MUSIC and SOUNDS directories.")
             return
         }
-        let engine = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/OpenEnroth.app/Contents/MacOS/OpenEnroth")
+        let engine = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/MM7.app/Contents/MacOS/MM7")
         guard FileManager.default.isExecutableFile(atPath: engine.path) else {
-            sendState(message: "The bundled OpenEnroth engine is missing.")
+            sendState(message: "The bundled MM7 engine is missing.")
             return
         }
         do {
             try FileManager.default.createDirectory(at: userPath, withIntermediateDirectories: true)
             let process = Process()
             process.executableURL = engine
-            process.arguments = ["--data-path", dataPath.path, "--user-path", userPath.path]
+            process.arguments = ["--game", "mm7", "--data-path", dataPath.path, "--user-path", userPath.path]
+            var environment = ProcessInfo.processInfo.environment
+            environment.removeValue(forKey: "ENROTH_MM7_MOD_DIR")
+            environment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] = "0"
             if preferences.bool(forKey: "mods.mm7.enabled") {
                 try FileManager.default.createDirectory(at: modRoot, withIntermediateDirectories: true)
-                var environment = ProcessInfo.processInfo.environment
                 environment["ENROTH_MM7_MOD_DIR"] = modRoot.path
-                process.environment = environment
+                if preferences.bool(forKey: "mods.vendorRefreshOnEntry") {
+                    environment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] = "1"
+                }
             }
+            process.environment = environment
             process.terminationHandler = { [weak self] _ in
                 DispatchQueue.main.async {
                     self?.game = nil

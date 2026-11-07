@@ -54,7 +54,12 @@
 
 #include "PathResolver.h"
 
+#if defined(__APPLE__)
+constexpr std::string_view configName = "enroth-continuum-mm7.ini";
+constexpr std::string_view legacyConfigName = "openenroth.ini";
+#else
 constexpr std::string_view configName = "openenroth.ini";
+#endif
 
 GameStarter::GameStarter(GameStarterOptions options): _options(std::move(options)) {
     // Note: basic logging is initialized in LogStarter constructor, so it's safe to log here.
@@ -79,9 +84,16 @@ void GameStarter::initialize() {
 
     // Init config.
     _config = std::make_shared<GameConfig>();
-    if (ufs->exists(configName)) {
-        _config->load(ufs->openForReading(configName).get());
-        MM_INFO("Configuration file '{}' loaded!", ufs->displayPath(configName));
+    std::string_view loadConfigName = configName;
+#if defined(__APPLE__)
+    // An explicitly selected legacy profile can supply its old config once;
+    // future writes use only this fork's file name.
+    if (!ufs->exists(configName) && ufs->exists(legacyConfigName))
+        loadConfigName = legacyConfigName;
+#endif
+    if (ufs->exists(loadConfigName)) {
+        _config->load(ufs->openForReading(loadConfigName).get());
+        MM_INFO("Configuration file '{}' loaded!", ufs->displayPath(loadConfigName));
     } else {
         _config->reset();
 #ifdef OE_DISTRIBUTION_BUILD
@@ -89,6 +101,10 @@ void GameStarter::initialize() {
 #endif
         MM_INFO("Could not read configuration file '{}'! Loaded default configuration instead!", ufs->displayPath(configName));
     }
+#if defined(__APPLE__)
+    if (_config->window.Title.value() == "OpenEnroth")
+        _config->window.Title.setValue("Enroth Continuum MM7");
+#endif
     MM_INFO("Built in resource override is {}.", _config->debug.OverrideBuiltInResources.value() ? "enabled" : "disabled");
 
     // Patch config.
@@ -108,8 +124,10 @@ void GameStarter::initialize() {
     MM_INFO("Using data path '{}'.", _options.dataPath); // Can't use dfs->displayPath("") b/c it'll show "embedded://"...
 
     // Migrate saves if needed. We don't migrate anything else.
+#if !defined(__APPLE__)
     if (!_options.ramFsUserData && _options.dataPath.normalized() != _options.userPath.normalized())
         migrateSaves();
+#endif
 
     // Create platform.
     if (_options.headless) {

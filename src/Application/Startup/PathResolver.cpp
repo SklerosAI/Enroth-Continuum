@@ -116,7 +116,21 @@ std::vector<Path> resolveMm6Paths(Environment *environment) {
 }
 
 std::vector<Path> resolveMm7Paths(Environment *environment) {
+#ifdef __APPLE__
+    std::string enrothOverride = environment->getenv(mm7EnrothPathOverrideKey);
+    if (!enrothOverride.empty())
+        return {Path(std::move(enrothOverride))};
+    // Retain an explicit legacy override, then prefer this fork's private data.
+    if (!environment->getenv(mm7PathOverrideKey).empty())
+        return resolvePaths(environment, mm7Config);
+    std::vector<Path> paths = resolvePaths(environment, mm7Config);
+    std::string home = environment->path(PATH_HOME);
+    if (!home.empty())
+        paths.insert(paths.begin(), Path(std::move(home)) / "Library/Application Support/Enroth Continuum/Game Data/MM7");
+    return paths;
+#else
     return resolvePaths(environment, mm7Config);
+#endif
 }
 
 std::vector<Path> resolveMm8Paths(Environment *environment) {
@@ -145,7 +159,9 @@ Path resolveMm7UserPath(Environment *environment) {
     return Path(std::move(savedGames)) / "OpenEnroth";
 #elif __ANDROID__
     return Path(environment->path(PATH_ANDROID_STORAGE_INTERNAL)) / ".openenroth";
-#else // Mac & linux
+#elif __APPLE__
+    return Path(environment->path(PATH_HOME)) / "Library/Application Support/Enroth Continuum/Profiles/MM7-Atlas";
+#else // Linux and other Unix-like hosts
     return Path(environment->path(PATH_HOME)) / ".openenroth";
 #endif
 }

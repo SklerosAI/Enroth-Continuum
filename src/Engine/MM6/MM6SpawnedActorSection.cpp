@@ -71,7 +71,8 @@ bool emptyBuff(const SpellBuff &buff) {
 void requireSupportedActor(const Actor &actor, size_t slot) {
     if (actor.id != slot || !actor.monsterInfo.mm6Resistances ||
         actor.monsterInfo.id < MONSTER_FIRST || actor.monsterInfo.id > MONSTER_LAST ||
-        actor.monsterId < MONSTER_FIRST || actor.monsterId > MONSTER_LAST)
+        (actor.monsterId != MONSTER_INVALID &&
+         (actor.monsterId < MONSTER_FIRST || actor.monsterId > MONSTER_LAST)))
         throw std::runtime_error("MM6 spawned actor has invalid slot or monster identity");
     if (!std::all_of(actor.items.begin(), actor.items.end(), emptyItem) ||
         !std::all_of(actor.buffs.begin(), actor.buffs.end(), emptyBuff))
@@ -263,8 +264,9 @@ std::vector<Actor> decodeSpawnedActorSection(
         std::memcpy(&wire, record.data(), sizeof(wire));
         if (wire.monsterInfo.id < std::to_underlying(MONSTER_FIRST) ||
             wire.monsterInfo.id > std::to_underlying(MONSTER_LAST) ||
-            wire.monsterId < std::to_underlying(MONSTER_FIRST) ||
-            wire.monsterId > std::to_underlying(MONSTER_LAST) ||
+            (wire.monsterId != std::to_underlying(MONSTER_INVALID) &&
+             (wire.monsterId < std::to_underlying(MONSTER_FIRST) ||
+              wire.monsterId > std::to_underlying(MONSTER_LAST))) ||
             record[sizeof(wire) + 6] > 1 || record[sizeof(wire) + 7] != 0)
             throw std::runtime_error("MM6 spawned actor record has invalid identity or flags");
         requirePristineWireItemsAndBuffs(wire);

@@ -16,6 +16,9 @@ struct StagedRawSessionFields {
     StagedRawTitleOwners raw;
     StagedRawPartyInventories party;
     StagedRawWorldAndVisuals world;
+    // Populated for outdoor slots from the validated MM6 base/delta pair.
+    // Indoor world construction and all live resource publication remain open.
+    std::optional<DetachedOutdoorWorldPlan> outdoorPlan;
     bool needsRecovery = false;
 };
 
@@ -29,6 +32,6 @@ std::optional<StagedRawSessionFields> preflightStagedRawSessionFields(
     const ActiveOverlayList &freshOverlays,
     std::span<const std::string> expectedNames, const MapBaseReader &readBase,
     const GroundItemVerifier &verifyItem, const ItemTable &itemTable,
-    std::size_t overlayTableCount, GameTitle title);
+    std::size_t overlayTableCount, std::size_t tileTableCount, GameTitle title);
 
 } // namespace mm6

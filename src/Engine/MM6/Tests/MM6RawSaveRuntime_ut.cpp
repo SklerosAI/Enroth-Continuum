@@ -386,7 +386,7 @@ UNIT_TEST(MM6RawSaveRuntime, FullRepresentedPreflightFallsBackAfterLatePartyFail
     ActiveOverlayList freshOverlays;
     auto selected = mm6::preflightStagedRawSessionFields(
         profile.root(), "save001.ec6", freshParty, freshNpcs, freshTimer,
-        freshOverlays, names, syntheticBase, validItem, *table.table, 5,
+        freshOverlays, names, syntheticBase, validItem, *table.table, 5, 145,
         GameTitle::MM6);
     ASSERT_TRUE(selected);
     EXPECT_TRUE(selected->needsRecovery);
@@ -394,6 +394,7 @@ UNIT_TEST(MM6RawSaveRuntime, FullRepresentedPreflightFallsBackAfterLatePartyFail
     EXPECT_EQ(selected->party.party.pCharacters[0].inventory.entry(137)->itemId,
               static_cast<ItemId>(10));
     EXPECT_EQ(selected->world.world.mapDeltas.size(), 67);
+    EXPECT_FALSE(selected->outdoorPlan);
     EXPECT_EQ(readBytes(profile.primary()), badBytes);
     EXPECT_EQ(readBytes(profile.backup()), goodBytes);
     EXPECT_FALSE(freshParty.pCharacters[0].inventory.entry(137));
@@ -401,9 +402,57 @@ UNIT_TEST(MM6RawSaveRuntime, FullRepresentedPreflightFallsBackAfterLatePartyFail
     writeBytes(profile.backup(), badBytes);
     EXPECT_THROW((void) mm6::preflightStagedRawSessionFields(
         profile.root(), "save001.ec6", freshParty, freshNpcs, freshTimer,
-        freshOverlays, names, syntheticBase, validItem, *table.table, 5,
+        freshOverlays, names, syntheticBase, validItem, *table.table, 5, 145,
         GameTitle::MM6), std::exception);
     EXPECT_EQ(readBytes(profile.primary()), badBytes);
     EXPECT_EQ(readBytes(profile.backup()), badBytes);
+}
+
+UNIT_TEST(MM6RawSaveRuntime, RawSessionPreflightPreparesOutdoorPlanBeforeSelection) {
+    ItemTableScope table;
+    TestProfile profile;
+    auto indoor = exampleRaw();
+    const auto names = namesOf(indoor);
+    const auto indoorBytes = mm6::encodeRawSave(indoor, GameTitle::MM6);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", indoorBytes);
+    auto outdoor = indoor;
+    outdoor.metadata.header.mapFileName = "outside0.odm";
+    outdoor.chest.activeDeltaName = "outside0.ddm";
+    outdoor.chest.rawActiveDelta = outdoorDelta();
+    const auto outdoorBytes = mm6::encodeRawSave(outdoor, GameTitle::MM6);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", outdoorBytes);
+
+    Party party;
+    NPCStats npcs;
+    Timer timer;
+    ActiveOverlayList overlays;
+    // The raw MAPS pass accepts this synthetic base, while the outdoor plan
+    // rejects its zero tile selectors. Slot selection must fall back to the
+    // indoor backup without repairing either file.
+    auto selected = mm6::preflightStagedRawSessionFields(
+        profile.root(), "save001.ec6", party, npcs, timer, overlays,
+        names, syntheticBase, validItem, *table.table, 5, 145, GameTitle::MM6);
+    ASSERT_TRUE(selected);
+    EXPECT_TRUE(selected->needsRecovery);
+    EXPECT_FALSE(selected->outdoorPlan);
+    EXPECT_EQ(readBytes(profile.primary()), outdoorBytes);
+    EXPECT_EQ(readBytes(profile.backup()), indoorBytes);
+
+    const auto boundedBase = [](std::string_view name) {
+        auto bytes = name.ends_with(".blv") ? indoorBase() : outdoorBase();
+        if (name.ends_with(".odm"))
+            for (std::size_t i = 0; i < 4; ++i)
+                bytes[160 + i * 4 + 2] = static_cast<std::uint8_t>(1 + i * 36);
+        return Blob::copy(bytes.data(), bytes.size());
+    };
+    selected = mm6::preflightStagedRawSessionFields(
+        profile.root(), "save001.ec6", party, npcs, timer, overlays,
+        names, boundedBase, validItem, *table.table, 5, 145, GameTitle::MM6);
+    ASSERT_TRUE(selected);
+    EXPECT_FALSE(selected->needsRecovery);
+    ASSERT_TRUE(selected->outdoorPlan);
+    EXPECT_EQ(selected->outdoorPlan->mapName, "outside0.odm");
+    EXPECT_EQ(selected->outdoorPlan->terrainTileIds.size(), 127 * 127);
+    EXPECT_EQ(readBytes(profile.primary()), outdoorBytes);
 }
 #endif

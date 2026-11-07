@@ -197,18 +197,20 @@ StagedKnownSession stageKnownSession(
     return {std::move(staged), std::move(worldAndVisuals), clocks};
 }
 
-DetachedOutdoorWorldPlan prepareDetachedOutdoorWorldPlan(
-    const StagedKnownWorldAndVisuals &staged, std::size_t tileTableCount,
-    GameTitle title) {
+namespace {
+
+DetachedOutdoorWorldPlan prepareDetachedOutdoorWorldPlanFromOwners(
+    const StagedActiveMap &activeMap, std::string_view savedMapName,
+    std::string_view chestDeltaName, std::span<const std::uint8_t> rawActiveDelta,
+    std::size_t tileTableCount, GameTitle title) {
     requireMM6(title);
     if (tileTableCount == 0 || tileTableCount > std::size_t(std::numeric_limits<std::int16_t>::max()) + 1)
         throw std::runtime_error("MM6 detached outdoor plan requires a bounded tile table");
-    const auto *active = std::get_if<StagedOutdoorMap>(&staged.activeMap);
-    if (!active || active->mapName != staged.known.metadata.header.mapFileName ||
+    const auto *active = std::get_if<StagedOutdoorMap>(&activeMap);
+    if (!active || active->mapName != savedMapName ||
         !active->mapName.ends_with(".odm") ||
-        staged.known.chest.activeDeltaName !=
+        chestDeltaName !=
             active->mapName.substr(0, active->mapName.size() - 4) + ".ddm" ||
-        staged.rawActiveDelta != staged.known.chest.rawActiveDelta ||
         active->base.bytes.empty())
         throw std::runtime_error("MM6 detached outdoor plan lacks matching active owners");
 
@@ -217,7 +219,7 @@ DetachedOutdoorWorldPlan prepareDetachedOutdoorWorldPlan(
     deserializeMM6Outdoor(Blob::view(active->base.bytes.data(), active->base.bytes.size()), &plan.base);
     plan.savedDelta = active->delta;
     plan.activeSidecar = decodeMM6OutdoorDelta(
-        Blob::view(staged.rawActiveDelta.data(), staged.rawActiveDelta.size()));
+        Blob::view(rawActiveDelta.data(), rawActiveDelta.size()));
     if (plan.base.models.size() != active->base.modelCount ||
         active->base.modelFaces.size() != plan.base.models.size() ||
         plan.base.modelExtras.size() != plan.base.models.size() ||
@@ -283,6 +285,26 @@ DetachedOutdoorWorldPlan prepareDetachedOutdoorWorldPlan(
         }
     }
     return plan;
+}
+
+} // namespace
+
+DetachedOutdoorWorldPlan prepareDetachedOutdoorWorldPlan(
+    const StagedKnownWorldAndVisuals &staged, std::size_t tileTableCount,
+    GameTitle title) {
+    if (staged.rawActiveDelta != staged.known.chest.rawActiveDelta)
+        throw std::runtime_error("MM6 detached outdoor plan has a divergent chest sidecar");
+    return prepareDetachedOutdoorWorldPlanFromOwners(
+        staged.activeMap, staged.known.metadata.header.mapFileName,
+        staged.known.chest.activeDeltaName, staged.rawActiveDelta, tileTableCount, title);
+}
+
+DetachedOutdoorWorldPlan prepareDetachedRawOutdoorWorldPlan(
+    const StagedRawTitleOwners &raw, std::size_t tileTableCount, GameTitle title) {
+    return prepareDetachedOutdoorWorldPlanFromOwners(
+        raw.activeMap, raw.saved.metadata.header.mapFileName,
+        raw.saved.chest.activeDeltaName, raw.saved.chest.rawActiveDelta,
+        tileTableCount, title);
 }
 
 KnownSaveFields captureKnownShopGuildClockFields(const KnownSaveFields &seed,

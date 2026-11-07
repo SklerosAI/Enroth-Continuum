@@ -86,6 +86,12 @@ DetachedOutdoorWorldPlan prepareDetachedOutdoorWorldPlan(
     const StagedKnownWorldAndVisuals &staged, std::size_t tileTableCount,
     GameTitle title);
 
+// The v2 raw owner stage keeps the same validated active map and CHST delta.
+// Prepare its outdoor geometry directly; no v1 save re-decode or live map
+// publication is involved. Texture/resource resolution remains a later gate.
+DetachedOutdoorWorldPlan prepareDetachedRawOutdoorWorldPlan(
+    const StagedRawTitleOwners &raw, std::size_t tileTableCount, GameTitle title);
+
 // Validate the entire current known-section set and all 67 base/delta pairs,
 // then stage map/NPC buffers, the typed active map and paused timer/overlays
 // on detached copies. This is partial: Party, active-map reconstruction and

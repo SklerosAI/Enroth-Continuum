@@ -11,6 +11,7 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6WorldSaveRuntime.h"
+#include "Engine/MM6/MM6RawSaveRuntime.h"
 #include "Engine/MM6/MM6CoreSaveRuntime.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/LocationFunctions.h"
@@ -160,6 +161,48 @@ Blob syntheticBase(std::string_view name) {
 }
 
 } // namespace
+
+UNIT_TEST(MM6WorldSaveRuntime, PreparesRawV2OutdoorGeometryFromValidatedOwners) {
+    mm6::KnownSaveFields seed = seedFields();
+    seed.metadata.header.mapFileName = "o0.odm";
+    seed.chest.activeDeltaName = "o0.ddm";
+    seed.chest.rawActiveDelta = minimalOutdoorDelta();
+    const auto names = expectedNames();
+    for (const std::string &name : names)
+        seed.maps.deltas.push_back({name, name.ends_with(".dlv") ?
+            minimalIndoorDelta() : minimalOutdoorDelta()});
+
+    mm6::RawSaveFields rawFields;
+    rawFields.core = seed.core;
+    rawFields.metadata = seed.metadata;
+    rawFields.maps = seed.maps;
+    rawFields.npcs = seed.npcs;
+    rawFields.recovery = seed.recovery;
+    rawFields.chest = seed.chest;
+    rawFields.inventory.ready = true;
+    rawFields.shops = mm6::emptyNewGameShopTitleState(GameTitle::MM6);
+    const auto readBase = [](std::string_view name) {
+        const auto bytes = name == "o0.odm" ? outdoorBaseWithTriangle() :
+            (name.ends_with(".odm") ? minimalOutdoorBase() : minimalIndoorBase());
+        return Blob::copy(bytes.data(), bytes.size());
+    };
+    auto raw = mm6::stageRawTitleOwners(mm6::encodeRawSave(rawFields, GameTitle::MM6),
+        names, readBase, [](std::int32_t) { return true; }, GameTitle::MM6);
+    auto plan = mm6::prepareDetachedRawOutdoorWorldPlan(raw, 145, GameTitle::MM6);
+    EXPECT_EQ(plan.mapName, "o0.odm");
+    EXPECT_EQ(plan.vertices.size(), 3);
+    EXPECT_EQ(plan.faceVertexIds[0], std::vector<std::size_t>({0, 1, 2}));
+    EXPECT_EQ(plan.terrainTileIds[3], 109);
+    EXPECT_EQ(plan.activeSidecar.wire.bytes, rawFields.chest.rawActiveDelta);
+    EXPECT_THROW((void) mm6::prepareDetachedRawOutdoorWorldPlan(raw, 145, GameTitle::MM7),
+                 std::exception);
+    EXPECT_THROW((void) mm6::prepareDetachedRawOutdoorWorldPlan(raw, 144, GameTitle::MM6),
+                 std::exception);
+    raw.saved.chest.activeDeltaName = "o1.ddm";
+    EXPECT_THROW((void) mm6::prepareDetachedRawOutdoorWorldPlan(raw, 145, GameTitle::MM6),
+                 std::exception);
+    EXPECT_EQ(plan.terrainTileIds[3], 109);
+}
 
 UNIT_TEST(MM6WorldSaveRuntime, PreparesDetachedOutdoorGeometryWithoutLiveWorld) {
     mm6::KnownSaveFields source = seedFields();

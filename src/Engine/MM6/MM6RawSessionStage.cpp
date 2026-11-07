@@ -15,7 +15,7 @@ std::optional<StagedRawSessionFields> preflightStagedRawSessionFields(
     const ActiveOverlayList &freshOverlays,
     std::span<const std::string> expectedNames, const MapBaseReader &readBase,
     const GroundItemVerifier &verifyItem, const ItemTable &itemTable,
-    std::size_t overlayTableCount, GameTitle title) {
+    std::size_t overlayTableCount, std::size_t tileTableCount, GameTitle title) {
     if (title != GameTitle::MM6)
         throw std::runtime_error("MM6 raw session preflight requires the MM6 title");
     std::optional<StagedRawSessionFields> staged;
@@ -27,8 +27,12 @@ std::optional<StagedRawSessionFields> preflightStagedRawSessionFields(
                 freshParty, raw, itemTable, title);
             StagedRawWorldAndVisuals world = stageRawWorldAndVisuals(
                 freshNpcs, freshTimer, freshOverlays, raw, overlayTableCount, title);
+            std::optional<DetachedOutdoorWorldPlan> outdoorPlan;
+            if (std::holds_alternative<StagedOutdoorMap>(raw.activeMap))
+                outdoorPlan = prepareDetachedRawOutdoorWorldPlan(raw, tileTableCount, title);
             staged.emplace(StagedRawSessionFields{
-                std::move(raw), std::move(party), std::move(world), false});
+                std::move(raw), std::move(party), std::move(world),
+                std::move(outdoorPlan), false});
         });
     if (!selected)
         return std::nullopt;

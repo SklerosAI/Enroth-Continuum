@@ -1982,3 +1982,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Clarified the owner's later MM7 finish line: a fresh, network-denied arm64 build and Atlas stage from SklerosAI-owned source and required non-system build inputs, with no OpenEnroth build-time URL, checkout, release archive, submodule origin or local dependency cache.
 - OpenEnroth history, LGPL license, notices and contributor credit remain permanent provenance. The Apple toolchain and private GOG game data remain external. This is a plan update, not an offline-build result or a change to the installed MM7 helper.
+
+## [2026-11-06] integrate | MM6 native v2 first-map candidate
+- by: T-Burton-ND via codex
+- Integrated a detached nineteen-section first-map writer that joins the existing New Game seed with explicit raw inventory, held cursor and empty shop owners, validates source Party replay and all map bases, and writes only an admitted v2 candidate atomically.
+- The linked synthetic writer suite passed 3/3, including an exact native v2 disk round trip. Live starter-item raw provenance, full-session publication and production MM6 SaveLoad remain gated.

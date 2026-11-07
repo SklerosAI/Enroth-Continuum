@@ -944,3 +944,10 @@ respawn day, and re-decodes its result. Linked synthetic checks passed
 **3/3**. The disposable v2 writer and guarded fresh-child QuickLoad still
 passed **1/1** each. Full native record capture from runtime actors remains
 open; this codec is not yet a durable post-entry save.
+
+The [spawned-actor owner decision](MM6_F4_SPAWNED_ACTOR_OWNER_DECISION.md)
+selects a versioned, title-specific EC6 runtime section candidate for new
+exact-slot actors. The present 548-byte MM6 projection omits major native
+regions and `SpawnEncounter` retains no complete native-record provenance.
+This decision adds no live save/load route; the detached section must prove
+complete runtime field round-trips and join a no-respawn fresh-child reload.

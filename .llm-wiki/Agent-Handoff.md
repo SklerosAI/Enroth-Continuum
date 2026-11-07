@@ -26,6 +26,8 @@ The detached [RNGS gameplay capsule](MM6-F4-Gameplay-RNG-Save.md) now snapshots 
 
 A detached [native DDM actor append codec](MM6-F4-Outdoor-Actor-Append.md) passed 3/3 linked structural checks. It inserts complete supplied 548-byte records after original actors, preserves all suffix bytes, checks slot anchors and marks the respawn day, accepting a zero or already matching source day. There is no full native capture adapter for new runtime actors, so the durable post-entry save remains blocked. The disposable v2 writer and fresh-child guarded refusal still passed 1/1 each after integration.
 
+The next actor path is a [versioned MM6 runtime owner candidate](MM6-F4-Spawned-Actor-Owner-Decision.md) for newly spawned exact PID slots, because the current native projection omits major 548-byte regions and spawn does not retain native-record provenance. This is a design choice only; no production manifest or first-input admission is enabled. Audit and round-trip every runtime field before joining it with GNPC/RNG and a no-respawn child load.
+
 ## Read first
 
 1. Run `git status --short --branch`, `git worktree list`, and `git log -1 --oneline` in the checkout you intend to use. The branch and worktree descriptions below may drift.

@@ -2079,6 +2079,11 @@ Chronological record of wiki activity.
 - Added a read-only post-world check for an empty Party/HELD cursor and the actual initialized native or custom `micon1` mouse state. The custom path decodes nonempty CPU pixels; occupied offset and GPU drawing remain open.
 - Linked cursor tests passed 5/5; separate disposable v1 writer and real QuickLoad abort processes passed 1/1 each, with an MM7 headless control 1/1. The separately integrated read-only native menu preflight list passed its atomic-file suite 8/8 but is not wired to the visible MM6 menu.
 
+## [2026-11-07] stage | MM6 Armageddon post-world resume plan
+- by: T-Burton-ND via codex
+- Added a read-only `RCVR` timer-resume plan that requires the final outdoor map, zero reset timer, unchanged damage/force tuple and matching Party clock, plus a separate final agreement check. Source and test translation units passed AppleClang syntax checks; linked tests and a v2 child handoff are pending.
+- No live Party assignment, normal MM6 SaveLoad, or Atlas launch was enabled. The existing pre-world blocker remains until all-owner post-world publication can use this plan.
+
 ## [2026-11-07] implement | MM6 semantic menu listing seam
 - by: T-Burton-ND via codex
 - Added a read-only v2 slot inventory that applies the caller's semantic validator through the same primary/backup preflight as loading, using the selected HEAD and recovery flag. Structural-only slots can be omitted; the visible MM6 load menu stays closed until a complete gameplay validator and production load route exist.

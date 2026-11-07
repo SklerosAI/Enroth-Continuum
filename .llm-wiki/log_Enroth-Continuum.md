@@ -2671,3 +2671,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via claude
 - Fixed the gate runner's temporary profile prefix, which every MM6 restart child refused. The runner then passed the Engine event-restore slice: seven main children, five fault-setup and full-retry children and MM7 control, each 1/1 in a fresh process.
 - Resumed MM6 implementation with parallel lanes for the remaining first-map attempt phases and normal Save/Load wiring. Normal MM6 SaveLoad and Atlas MM6 Play remain closed.
+
+## [2026-11-07] create | Cross-agent coordination protocol
+- by: T-Burton-ND via codex
+- Added the tracked `agent_comms/` protocol for Claude, Codex and subagent model cards, narrow claims, append-only handoffs and reviews; it explicitly requires Git synchronization between separate worktrees.
+- Linked the protocol from the agent handoff and wiki index. It records high-level coordination only and preserves the project privacy boundary.

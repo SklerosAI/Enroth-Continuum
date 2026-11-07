@@ -10,11 +10,12 @@ data path and user path. It does not package original Might & Magic data.
 - MM6 and MM8 cards detect locally extracted core data. Their engine adapters,
   play buttons, saves, and character transfer are still to be implemented.
 - The Vault lists MM7 saves and creates local backup copies.
-- The Atelier provides four static PNG party portraits (one per party slot),
+- The Atelier provides private portrait moods for four party positions,
   one MM7 armor template AC override, an optional fresh-vendor-stock-on-entry
   setting for MM6 and MM7, and a Vanilla/Private mods switch.
-  Portraits replace the normal image in party creation and game play. Voices
-  and special death and eradication art remain original. An armor AC change
+  Portrait moods can replace normal, condition and reaction art in party creation
+  and game play. Voices and body art remain original; death and eradication art
+  remain original unless their own mood PNGs are supplied. An armor AC change
   applies to every copy of that item type while the profile is active.
   MM7's vendor option applies on the next Private mods launch. The MM6 choice
   is retained locally for its future playable engine; MM6 shops are not live yet.
@@ -23,11 +24,19 @@ data path and user path. It does not package original Might & Magic data.
 
 Game data, saves, backups, and mod files stay in the user's home folder.
 The launcher never writes game archives. The mod folder is
-`~/Library/Application Support/Enroth Continuum/Mods/MM7` and contains up to
-four `portrait-N.png` files and an `armor.tsv` file. The engine reads that
-folder only when the Private mods switch is on. Use **Open mods folder** in
+`~/Library/Application Support/Enroth Continuum/Mods/MM7` and may contain
+`portraits/<slot>/<mood>.png`, legacy `portrait-N.png`, and `armor.tsv`. Supported
+moods are normal, talk, smile, sad, hurt, pain, afraid, cast, sleep, unconscious,
+weak, cursed, drunk, insane, sick, paralyzed, stone, zombie, dead and eradicated.
+Each slot needs a valid normal PNG; the legacy file supplies normal when the new
+file is absent or invalid. Optional missing moods use normal, with pain using
+hurt and unconscious using sleep first. Dead and eradicated keep original art
+when their own PNG is absent. The engine reads that folder only when the
+Private mods switch is on. Use **Open mods folder** in
 the Atelier to inspect or edit these files. Atlas converts imported portraits
-to PNG before placing them there. Other files in this folder are not loaded.
+to PNG before placing them there. The Atelier can import a folder of named mood
+PNGs for one party position. Imported changes take effect on the next launch.
+Other files in this folder are not loaded.
 The armor file format is:
 
 ```text

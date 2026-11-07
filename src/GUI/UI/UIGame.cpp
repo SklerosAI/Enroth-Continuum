@@ -1237,6 +1237,14 @@ void GameUI_DrawPortraits() {
         Character *pPlayer = &pParty->pCharacters[i];
         if (pPlayer->IsEradicated()) {
             pPortrait = game_ui_player_face_eradicated;
+            bool invisible = pParty->pPartyBuffs[PARTY_BUFF_INVISIBILITY].Active();
+            Pointi position = hudPortraitFacePosition(engine->gameTitle(), i,
+                {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i] + (invisible ? 0 : 1), 387});
+            if (GraphicsImage *custom = assets->getCustomPortrait(i, PORTRAIT_ERADICATED, CONDITION_ERADICATED)) {
+                render->DrawQuad2D(custom, Recti(Pointi(), custom->size()), Recti(position, pPortrait->size()),
+                                   invisible ? colorTable.MediumGrey : colorTable.White);
+                continue;
+            }
             if (pParty->pPartyBuffs[PARTY_BUFF_INVISIBILITY].Active())
                 render->DrawQuad2D(pPortrait, hudPortraitFacePosition(engine->gameTitle(), i,
                     {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i], 387}), colorTable.MediumGrey); // was 388
@@ -1247,6 +1255,14 @@ void GameUI_DrawPortraits() {
         }
         if (pPlayer->IsDead()) {
             pPortrait = game_ui_player_face_dead;
+            bool invisible = pParty->pPartyBuffs[PARTY_BUFF_INVISIBILITY].Active();
+            Pointi position = hudPortraitFacePosition(engine->gameTitle(), i,
+                {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i] + (invisible ? 0 : 1), 388});
+            if (GraphicsImage *custom = assets->getCustomPortrait(i, PORTRAIT_DEAD, CONDITION_DEAD)) {
+                render->DrawQuad2D(custom, Recti(Pointi(), custom->size()), Recti(position, pPortrait->size()),
+                                   invisible ? colorTable.MediumGrey : colorTable.White);
+                continue;
+            }
             if (pParty->pPartyBuffs[PARTY_BUFF_INVISIBILITY].Active())
                 render->DrawQuad2D(pPortrait, hudPortraitFacePosition(engine->gameTitle(), i,
                     {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i], 388}), colorTable.MediumGrey);
@@ -1272,7 +1288,8 @@ void GameUI_DrawPortraits() {
             bool invisible = pParty->pPartyBuffs[PARTY_BUFF_INVISIBILITY].Active();
             Pointi position = hudPortraitFacePosition(engine->gameTitle(), i,
                 {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i] + (invisible ? 0 : 1), 388});
-            if (GraphicsImage *custom = assets->getCustomPortrait(i))
+            PortraitId modPortrait = pPlayer->portrait == PORTRAIT_TALK ? pPlayer->talkAnimation.currentPortrait() : pPlayer->portrait;
+            if (GraphicsImage *custom = assets->getCustomPortrait(i, modPortrait, pPlayer->GetMajorConditionIdx()))
                 render->DrawQuad2D(custom, Recti(Pointi(), custom->size()), Recti(position, pPortrait->size()),
                                    invisible ? colorTable.MediumGrey : colorTable.White);
             else

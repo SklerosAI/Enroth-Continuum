@@ -1,15 +1,20 @@
 import AppKit
 import Foundation
+import ImageIO
 import UniformTypeIdentifiers
 import WebKit
 
 private let gameTitles = ["mm6", "mm7", "mm8"]
+private let portraitMoods = ["normal", "talk", "smile", "sad", "hurt", "pain", "afraid", "cast",
+                             "sleep", "unconscious", "weak", "cursed", "drunk", "insane", "sick",
+                             "paralyzed", "stone", "zombie", "dead", "eradicated"]
 
 final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavigationDelegate {
     private var window: NSWindow!
     private var webView: WKWebView!
     private var game: Process?
     private let preferences = UserDefaults.standard
+    private var portraitPreviewCache: [URL: (Date, String)] = [:]
 
     private var supportPath: URL {
         FileManager.default.homeDirectoryForCurrentUser
@@ -119,6 +124,21 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         else if action.hasPrefix("clear-portrait-") {
             if let slot = Int(action.dropFirst("clear-portrait-".count)), (1...4).contains(slot) { clearPortrait(slot) }
         }
+        else if action.hasPrefix("choose-mood-") || action.hasPrefix("clear-mood-") {
+            let parts = action.split(separator: "-")
+            if parts.count == 4, let slot = Int(parts[2]), (1...4).contains(slot) {
+                let mood = String(parts[3])
+                if portraitMoods.contains(mood) {
+                    if parts[0] == "choose" { choosePortrait(slot, mood: mood) }
+                    else { clearPortrait(slot, mood: mood) }
+                }
+            }
+        }
+        else if action.hasPrefix("import-moods-") {
+            if let slot = Int(action.dropFirst("import-moods-".count)), (1...4).contains(slot) {
+                importPortraitFolder(slot)
+            }
+        }
         else if action.hasPrefix("armor:") { saveArmor(action) }
         else if action == "clear-armor" { clearArmor() }
         else if action.hasPrefix("choose-data-") {
@@ -151,7 +171,20 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             "modSupport": true,
             "modsEnabled": preferences.bool(forKey: "mods.mm7.enabled"),
             "vendorRefreshOnEntry": preferences.bool(forKey: "mods.vendorRefreshOnEntry"),
-            "portraits": (1...4).map { FileManager.default.fileExists(atPath: portraitURL($0).path) },
+            "portraits": (1...4).map { validPortraitURL($0, mood: "normal") != nil },
+            "portraitNormalFiles": (1...4).map { portraitExists($0, mood: "normal") },
+            "legacyPortraits": (1...4).map { FileManager.default.fileExists(atPath: portraitURL($0).path) },
+            "newNormalPortraits": (1...4).map { FileManager.default.fileExists(atPath: portraitURL($0, mood: "normal").path) },
+            "portraitMoods": (1...4).map { slot in
+                let normalReady = validPortraitURL(slot, mood: "normal") != nil
+                return Dictionary(uniqueKeysWithValues: portraitMoods.map { mood in
+                    let valid = validPortraitURL(slot, mood: mood) != nil
+                    return (mood, ["ready": valid && normalReady,
+                            "valid": valid,
+                            "exists": portraitExists(slot, mood: mood),
+                            "preview": portraitPreview(slot, mood: mood) ?? ""] as [String: Any])
+                })
+            },
             "armor": ["saved": preferences.bool(forKey: "mods.mm7.armor.saved") &&
                          FileManager.default.fileExists(atPath: modRoot.appendingPathComponent("armor.tsv").path),
                       "id": preferences.integer(forKey: "mods.mm7.armor.id"),
@@ -162,6 +195,32 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         guard let json = try? JSONSerialization.data(withJSONObject: state),
               let source = String(data: json, encoding: .utf8) else { return }
         webView.evaluateJavaScript("window.Atlas.receive(\(source))", completionHandler: nil)
+    }
+
+    private func modWarnings(since startedAt: Date) -> [String] {
+        let folder = userPath.appendingPathComponent("logs", isDirectory: true)
+        let files = (try? FileManager.default.contentsOfDirectory(at: folder,
+            includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey])) ?? []
+        let recent = files.filter { file in
+            guard file.lastPathComponent.hasPrefix("enroth-continuum-mm7_"), file.pathExtension == "log",
+                  let values = try? file.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey]),
+                  let changed = values.contentModificationDate, changed >= startedAt.addingTimeInterval(-2),
+                  let size = values.fileSize, size <= 4 * 1024 * 1024 else { return false }
+            return true
+        }.sorted { left, right in
+            let a = (try? left.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+            let b = (try? right.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+            return a > b
+        }
+        guard let log = recent.first, let contents = try? String(contentsOf: log, encoding: .utf8) else { return [] }
+        var warnings: [String] = []
+        if contents.contains("Ignoring invalid MM7 portrait") {
+            warnings.append("One or more portrait PNGs were ignored. Use PNG files 32–512 pixels wide and high, under 4 MB.")
+        }
+        if contents.contains("Ignoring private armor overrides") {
+            warnings.append("The armor override was ignored. Check armor.tsv or clear it in the Atelier.")
+        }
+        return warnings
     }
 
     private func playMM7() {
@@ -195,15 +254,19 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
                 }
             }
             process.environment = environment
+            let startedAt = Date()
             process.terminationHandler = { [weak self] finished in
                 DispatchQueue.main.async {
-                    self?.game = nil
-                    self?.window.makeKeyAndOrderFront(nil)
+                    guard let self else { return }
+                    self.game = nil
+                    self.window.makeKeyAndOrderFront(nil)
                     NSApp.activate(ignoringOtherApps: true)
+                    let warnings = self.modWarnings(since: startedAt)
+                    let warningText = warnings.isEmpty ? "" : "\n" + warnings.joined(separator: "\n")
                     if finished.terminationReason == .exit && finished.terminationStatus == 0 {
-                        self?.sendState(message: "Returned from MM7. Your saves remain on this Mac.")
+                        self.sendState(message: "Returned from MM7. Your saves remain on this Mac." + warningText)
                     } else {
-                        self?.sendState(message: "MM7 exited unexpectedly. Check your latest save before continuing.")
+                        self.sendState(message: "MM7 exited unexpectedly. Check your latest save before continuing." + warningText)
                     }
                 }
             }
@@ -234,15 +297,62 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         }
     }
 
-    private func portraitURL(_ slot: Int) -> URL {
-        modRoot.appendingPathComponent("portrait-\(slot).png")
+    private func portraitURL(_ slot: Int, mood: String? = nil) -> URL {
+        guard let mood else { return modRoot.appendingPathComponent("portrait-\(slot).png") }
+        return modRoot.appendingPathComponent("portraits/\(slot)/\(mood).png")
+    }
+
+    private func portraitExists(_ slot: Int, mood: String) -> Bool {
+        FileManager.default.fileExists(atPath: portraitURL(slot, mood: mood).path) ||
+            (mood == "normal" && FileManager.default.fileExists(atPath: portraitURL(slot).path))
+    }
+
+    private func validPortraitURL(_ slot: Int, mood: String) -> URL? {
+        var candidates = [portraitURL(slot, mood: mood)]
+        if mood == "normal" { candidates.append(portraitURL(slot)) }
+        for url in candidates {
+            guard let values = try? url.resourceValues(forKeys: [.fileSizeKey]),
+                  let size = values.fileSize, size > 0, size <= 4 * 1024 * 1024,
+                  let source = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
+                  (CGImageSourceGetType(source) as String?) == UTType.png.identifier,
+                  let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+                  let width = properties[kCGImagePropertyPixelWidth] as? Int,
+                  let height = properties[kCGImagePropertyPixelHeight] as? Int,
+                  (32...512).contains(width), (32...512).contains(height) else { continue }
+            return url
+        }
+        return nil
+    }
+
+    private func portraitPreview(_ slot: Int, mood: String) -> String? {
+        guard let url = validPortraitURL(slot, mood: mood),
+              let changed = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate else { return nil }
+        if let cached = portraitPreviewCache[url], cached.0 == changed { return cached.1 }
+        guard let image = NSImage(contentsOf: url) else { return nil }
+        guard let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 48, pixelsHigh: 48,
+                                            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
+                                            isPlanar: false, colorSpaceName: .deviceRGB,
+                                            bytesPerRow: 0, bitsPerPixel: 0),
+              let context = NSGraphicsContext(bitmapImageRep: bitmap) else { return nil }
+        if let pixels = bitmap.bitmapData {
+            memset(pixels, 0, bitmap.bytesPerRow * bitmap.pixelsHigh)
+        }
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = context
+        image.draw(in: NSRect(x: 0, y: 0, width: 48, height: 48))
+        context.flushGraphics()
+        NSGraphicsContext.restoreGraphicsState()
+        guard let data = bitmap.representation(using: .png, properties: [:]) else { return nil }
+        let preview = "data:image/png;base64," + data.base64EncodedString()
+        portraitPreviewCache[url] = (changed, preview)
+        return preview
     }
 
     private func openMM7Mods() {
         do {
             try FileManager.default.createDirectory(at: modRoot, withIntermediateDirectories: true)
             if NSWorkspace.shared.open(modRoot) {
-                sendState(message: "Opened the local MM7 mods folder. Supported files: portrait-1.png through portrait-4.png and armor.tsv.")
+                sendState(message: "Opened MM7 mods. Portrait moods live in portraits/<slot>/<mood>.png; legacy portrait-1.png through portrait-4.png still work.")
             } else {
                 sendState(message: "Could not open the local MM7 mods folder in Finder.")
             }
@@ -251,35 +361,82 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         }
     }
 
-    private func choosePortrait(_ slot: Int) {
+    private func choosePortrait(_ slot: Int, mood: String? = nil) {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.png]
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
-        panel.message = "Choose a PNG portrait for MM7 party member \(slot)."
+        panel.message = "Choose a PNG \(mood ?? "normal") portrait for MM7 party member \(slot)."
         guard panel.runModal() == .OK, let source = panel.url else { return }
         do {
-            let data = try Data(contentsOf: source)
-            guard data.count <= 4 * 1024 * 1024, let image = NSBitmapImageRep(data: data),
-                  (32...512).contains(image.pixelsWide), (32...512).contains(image.pixelsHigh),
-                  let png = image.representation(using: .png, properties: [:]), png.count <= 4 * 1024 * 1024 else {
+            guard let png = normalizedPortraitPNG(from: source) else {
                 sendState(message: "Choose a valid PNG between 32 and 512 pixels in each dimension, under 4 MB.")
                 return
             }
-            try FileManager.default.createDirectory(at: modRoot, withIntermediateDirectories: true)
-            try png.write(to: portraitURL(slot), options: .atomic)
-            sendState(message: "Portrait \(slot) is ready for the next modded MM7 launch.")
+            let destination = portraitURL(slot, mood: mood)
+            try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try png.write(to: destination, options: .atomic)
+            sendState(message: "Portrait \(slot) \(mood ?? "normal") is ready for the next modded MM7 launch.")
         } catch {
             sendState(message: "Could not add portrait: \(error.localizedDescription)")
         }
     }
 
-    private func clearPortrait(_ slot: Int) {
+    private func normalizedPortraitPNG(from source: URL) -> Data? {
+        guard let values = try? source.resourceValues(forKeys: [.fileSizeKey]),
+              let size = values.fileSize, size > 0, size <= 4 * 1024 * 1024,
+              let imageSource = CGImageSourceCreateWithURL(source as CFURL,
+                  [kCGImageSourceShouldCache: false] as CFDictionary),
+              (CGImageSourceGetType(imageSource) as String?) == UTType.png.identifier,
+              let properties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil) as? [CFString: Any],
+              let width = properties[kCGImagePropertyPixelWidth] as? Int,
+              let height = properties[kCGImagePropertyPixelHeight] as? Int,
+              (32...512).contains(width), (32...512).contains(height),
+              let data = try? Data(contentsOf: source),
+              let image = NSBitmapImageRep(data: data),
+              let png = image.representation(using: .png, properties: [:]),
+              png.count <= 4 * 1024 * 1024 else { return nil }
+        return png
+    }
+
+    private func importPortraitFolder(_ slot: Int) {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.message = "Choose a folder of named MM7 mood PNGs for party member \(slot)."
+        guard panel.runModal() == .OK, let folder = panel.url else { return }
         do {
-            if FileManager.default.fileExists(atPath: portraitURL(slot).path) {
-                try FileManager.default.removeItem(at: portraitURL(slot))
+            let names = try FileManager.default.contentsOfDirectory(atPath: folder.path)
+            let lookup = Dictionary(names.map { ($0.lowercased(), $0) }, uniquingKeysWith: { first, _ in first })
+            let targetFolder = modRoot.appendingPathComponent("portraits/\(slot)", isDirectory: true)
+            var imported = 0
+            var rejected = 0
+            for mood in portraitMoods {
+                guard let name = lookup["\(mood).png"] else { continue }
+                let source = folder.appendingPathComponent(name)
+                guard let png = normalizedPortraitPNG(from: source) else { rejected += 1; continue }
+                do {
+                    try FileManager.default.createDirectory(at: targetFolder, withIntermediateDirectories: true)
+                    try png.write(to: targetFolder.appendingPathComponent("\(mood).png"), options: .atomic)
+                    imported += 1
+                } catch {
+                    rejected += 1
+                }
             }
-            sendState(message: "Portrait \(slot) will use the original art.")
+            sendState(message: "Imported \(imported) mood PNGs for party member \(slot). \(rejected) invalid files skipped. Changes apply next launch.")
+        } catch {
+            sendState(message: "Could not import portrait folder: \(error.localizedDescription)")
+        }
+    }
+
+    private func clearPortrait(_ slot: Int, mood: String? = nil) {
+        do {
+            let destination = portraitURL(slot, mood: mood)
+            if FileManager.default.fileExists(atPath: destination.path) {
+                try FileManager.default.removeItem(at: destination)
+            }
+            sendState(message: "Portrait \(slot) \(mood ?? "normal") cleared for the next MM7 launch.")
         } catch {
             sendState(message: "Could not remove portrait: \(error.localizedDescription)")
         }

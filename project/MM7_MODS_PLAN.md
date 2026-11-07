@@ -1,34 +1,33 @@
 # MM7 private mods: troubleshooting and next design
 
-Status: **planned, 2026-11-07**. The larger mod designs remain scheduled after
-MM6 is playable and after the MM7 inherited-engine audit. The small fixes
-marked below are implemented in source but need an installed Atlas check.
+Status: **Design A implemented in source, 2026-11-07; staged graphical and
+installed Atlas checks remain open**. The equipment design remains planned.
+The earlier small fixes are implemented in source but need an installed Atlas check.
 Findings came from a source review of the installed Atlas and integration tree.
 
 ## Defects in the current mods
 
 1. Fixed in source: clearing the armor override now deletes `armor.tsv` and
    all four related preference keys (`launcher/AtlasApp.swift` `clearArmor`).
-2. One custom portrait PNG replaces every non-dead face frame
+2. Fixed in source: one custom portrait PNG previously replaced every non-dead face frame
    (`src/GUI/UI/UIGame.cpp` `GameUI_DrawPortraits`). Sleep, unconscious,
-   paralysis, stone, damage reactions and the zombie swap become invisible.
-   Design A replaces this.
-3. The quick-record popup on a portrait right-click draws the original face
+   paralysis, stone, damage reactions and the zombie swap became invisible.
+   Design A now selects an optional mood PNG or falls back to normal art.
+3. Fixed in source: the quick-record popup on a portrait right-click drew the original face
    (`src/GUI/UI/UIPopup.cpp` `GameUI_CharacterQuickRecord_Draw`). All face
    drawing should go through one resolver.
-4. Mod errors are invisible. The engine only logs warnings
-   (`src/Engine/AssetsManager.cpp`, `src/Engine/Tables/ItemTable.cpp`), and
-   Atlas neither captures the helper's stderr nor reads its log. Imported
-   portraits are now re-encoded as PNG in source; surfacing mod log lines
-   after the game exits remains open.
+4. Fixed in source: Atlas now reads bounded portrait and armor warnings from
+   the current local MM7 log after the game exits. The engine emits fixed
+   warning messages without private paths. A concurrent MM7 process using the
+   same profile can make this report ambiguous.
 5. Fixed in source: the item tooltip prints AC when the base AC or bonus AC is
    nonzero (`UIPopup.cpp`), so a base AC of 0 with a positive bonus is visible.
 6. Party creation shows the custom PNG regardless of the selected face, while
    body art and voice still follow the original face.
-7. The mods are not testable. The mod directory is read once at item-table
-   init and cached for portraits, the vendor game tests skip unless an
-   environment variable is set, and custom images have an empty `name()` so
-   the HUD texture tape cannot see them.
+7. Partly fixed: custom portrait images now have stable names, and synthetic
+   PNG unit tests cover mood mapping, fallback and legacy acceptance. The mod
+   directory is still read once at startup; HUD input/tape and offscreen visual
+   checks remain open.
 8. Fixed in source: `getCustomPortrait` and the armor override now require an
    MM7 title. A bonus-AC override also raises item break resistance.
 
@@ -47,16 +46,20 @@ textures per character. Conditions pick a portrait through
   insane, sick, paralyzed, stone, zombie, dead, eradicated. Each mood covers a
   fixed group of `PortraitId` values.
 - Fallbacks: pain to hurt, unconscious to sleep, anything else to normal. Dead
-  and eradicated fall back to the original art. A slot is custom only when
-  `normal.png` exists. The legacy `portrait-N.png` is read as `normal`.
-- Engine: a new `src/Engine/Mods/PrivateMods.{h,cpp}` loads the images and
-  maps `PortraitId` to a mood. One `partyFaceImage(i)` serves the HUD, the
-  quick-record popup and party creation. Nothing loads when mods are off.
-- Atelier: each slot expands into a grid of mood tiles with thumbnails, an
-  "Import folder…" action that maps files by name, and per-mood Choose/Clear.
-- Tests: solid-color PNGs in a temp mod directory. Rest the party by input and
-  tape the HUD textures and portraits. Right-click a portrait and check the
-  popup face. A disabled offscreen capture test renders one frame per mood.
+  and eradicated fall back to the original art. A slot is custom only when a
+  valid `normal.png` or legacy `portrait-N.png` exists. The new normal file has
+  priority; an invalid one falls back to a valid legacy file.
+- Engine: `src/Engine/Mods/PrivateMods.{h,cpp}` loads the images and maps
+  `PortraitId` and the zombie condition to a mood. The same resolver serves
+  the HUD, quick-record popup and party creation. Nothing loads when mods are off.
+- Atelier: each slot expands into a grid of mood tiles with local thumbnails,
+  an "Import mood folder…" action that maps files by name, and per-mood Choose/Clear.
+- Verified so far: synthetic PNGs in a temporary mod directory pass the mood
+  mapping and legacy/fallback tests 2/2. The focused MM7 control passed 3/3.
+  A hidden OpenGL first-map capture showed the custom normal image in the HUD:
+  red-dominant pixels in the first portrait region changed from 0 to 3702
+  with a synthetic red PNG. The temporary screenshots were deleted. A HUD
+  input/tape, right-click popup and visible staged Atlas run remain open.
 
 ## Design B: single-item equipment override
 
@@ -87,6 +90,7 @@ Recommended defaults first.
 
 - A condition without its own PNG falls back to the custom normal face, with
   dead and eradicated keeping the original art.
-- Talking alternates between talk and normal.
+- Talking uses normal art for the closed-mouth pose and talk art for the
+  three open-mouth poses selected by the original talk animation.
 - Version 1 overrides AC only. Weapon damage follows later.
 - A modded item shows no marker in its name.

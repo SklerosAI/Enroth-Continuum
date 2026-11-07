@@ -3,7 +3,6 @@
 #include <cassert>
 #include <cstdlib>
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -11,17 +10,14 @@
 #include "Engine/Graphics/ImageLoader.h"
 #include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Sprites.h"
+#include "Engine/Mods/PrivateMods.h"
 #include "Engine/Resources/ResourceManager.h"
-
-#include "Library/Image/Png.h"
-
-#include "GUI/GUIFont.h"
 
 #include "Library/Logger/Logger.h"
 
+#include "GUI/GUIFont.h"
+
 #include "Utility/String/Ascii.h"
-#include "Utility/Memory/Blob.h"
-#include "Utility/System/Fs.h"
 
 AssetsManager *assets = new AssetsManager();
 
@@ -59,9 +55,8 @@ void AssetsManager::releaseAllTextures() {
             image->releaseRenderId();
     if (mm6SelectionFrame)
         mm6SelectionFrame->releaseRenderId();
-    for (const auto &portrait : customPortraits)
-        if (portrait)
-            portrait->releaseRenderId();
+    if (customPortraits)
+        customPortraits->releaseRenderIds();
 
     ReloadFonts();
 }
@@ -114,7 +109,7 @@ GraphicsImage *AssetsManager::getMM6SelectionFrame() {
     return mm6SelectionFrame.get();
 }
 
-GraphicsImage *AssetsManager::getCustomPortrait(int partySlot) {
+GraphicsImage *AssetsManager::getCustomPortrait(int partySlot, PortraitId portrait, Condition condition) {
     if (!engine || engine->gameTitle() != GameTitle::MM7)
         return nullptr;
     if (partySlot < 0 || partySlot >= 4)
@@ -124,26 +119,11 @@ GraphicsImage *AssetsManager::getCustomPortrait(int partySlot) {
         customPortraitsLoaded = true;
         const char *directory = std::getenv("ENROTH_MM7_MOD_DIR");
         if (directory && *directory) {
-            for (int i = 0; i < 4; ++i) {
-                Path path(std::string(directory) + "/portrait-" + std::to_string(i + 1) + ".png");
-                if (!fs::exists(path))
-                    continue;
-                try {
-                    Blob data = Blob::fromFile(path);
-                    if (data.size() > 4 * 1024 * 1024)
-                        throw std::runtime_error("portrait exceeds 4 MB");
-                    RgbaImage portrait = png::decode(data);
-                    if (portrait.width() < 32 || portrait.height() < 32 || portrait.width() > 512 || portrait.height() > 512)
-                        throw std::runtime_error("portrait dimensions must be 32-512 pixels");
-                    customPortraits[i] = GraphicsImage::Create(std::move(portrait));
-                    MM_INFO("Loaded private portrait override for party slot {}.", i + 1);
-                } catch (const std::exception &error) {
-                    MM_WARNING("Ignoring portrait override for party slot {}: {}", i + 1, error.what());
-                }
-            }
+            customPortraits = std::make_unique<mm7::mods::PrivatePortraits>();
+            customPortraits->load(Path(directory));
         }
     }
-    return customPortraits[partySlot].get();
+    return customPortraits ? customPortraits->get(partySlot, portrait, condition) : nullptr;
 }
 
 GraphicsImage *AssetsManager::getImage_Buff(std::string_view name) {

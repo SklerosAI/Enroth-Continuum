@@ -44,9 +44,16 @@
     .secondary { padding:9px 13px;border-radius:7px;background:#24444a;color:#e9ddc9;border:1px solid #86a09a;white-space:nowrap }.secondary:hover { background:#34565b }
     .rule-grid { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:18px }.rule { background:#1f3c40;border-radius:8px;padding:17px;border:1px solid #67837b6b }.rule b { display:block;color:#efc78d;font:27px Georgia,serif }.rule span { font-size:11px;color:#c7d0c7 }
     .slot-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px }.slot { min-height:90px;border:1px dashed #7c9187;border-radius:9px;display:grid;place-content:center;text-align:center;color:#bcc9c2;font-size:12px }.slot b { font:22px Georgia,serif;color:#d3b47f }
+    .slot img { width:48px;height:48px;object-fit:cover;margin:4px auto;border-radius:4px }
     .slot button { margin:9px 12px 0;padding:6px 8px;border:1px solid #819890;border-radius:6px;background:#2e4a4c;color:#e9dbc7;font-size:11px }.slot .clear { background:transparent;border:0;color:#e4be89;text-decoration:underline;margin:2px 0 0 }
+    .mood-group { margin-top:14px;border:1px solid #66807e88;border-radius:9px;padding:12px;background:#0d252b }
+    .mood-group summary { cursor:pointer;color:#f0c98f;font:17px Georgia,serif }
+    .mood-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;margin-top:12px }
+    .mood-tile { min-height:130px;border:1px solid #66807e88;border-radius:8px;padding:9px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;font-size:11px;color:#c5d3c9 }
+    .mood-tile img { width:48px;height:48px;object-fit:cover;border-radius:4px }.mood-tile button { padding:4px 6px;background:#24444a;color:#e9ddc9;border:1px solid #86a09a;border-radius:5px;font-size:11px }
+    .mood-tile .clear { background:transparent;border:0;color:#e4be89;text-decoration:underline }
     .armor-fields { display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin-top:15px }.armor-fields label { display:grid;gap:6px;color:#c5d3c9;font-size:12px }.armor-fields input,.armor-fields select { color:#f4e7d1;background:#0e242a;border:1px solid #7f9b90;border-radius:6px;padding:9px 10px;font:14px -apple-system,BlinkMacSystemFont,sans-serif;min-height:39px }.armor-fields input { width:88px }.armor-fields select { width:255px }
-    .notice { min-height:25px;color:#d9bd8d;font-size:12px;letter-spacing:.01em;margin-top:13px }
+    .notice { min-height:25px;color:#d9bd8d;font-size:12px;letter-spacing:.01em;margin-top:13px;white-space:pre-line }
     .save-list { list-style:none;margin:10px 0 0;padding:0 }.save-list li { display:flex;justify-content:space-between;border-top:1px solid #a9bbb332;padding:11px 0;font-size:13px }.save-list time { color:#aab8b1 }
     @media(max-width:1040px){.shell{grid-template-columns:200px minmax(0,1fr)}main{padding:26px}.cards{gap:9px}.card{padding:15px}}
     @media(max-width:850px){.cards{grid-template-columns:1fr}.card{min-height:190px}.roman{margin-bottom:10px}.card h3{min-height:0}.rule-grid{grid-template-columns:repeat(2,1fr)}}
@@ -80,9 +87,10 @@
     <div id="atelier" class="view"><div class="pagehero"><span class="eyebrow">The Atelier</span><h1>Make it yours.</h1><p>A private workshop for portraits, equipment and vendor stock. Changes stay on this Mac and leave the original game archives untouched.</p></div>
       <div class="panel"><span class="pill good" id="mod-mode">Current play mode · Vanilla</span><h3>MM7 mod profile</h3><p>Portraits, armor AC and vendor stock preferences are read from this Mac when MM7 starts. Your GOG archives and existing saves are left intact.</p>
         <div class="row"><div><strong>Active profile</strong><p>Switch between your local changes and the original game values for the next launch.</p></div><button class="secondary" id="mod-toggle">Use private mods</button></div>
-        <div class="row"><div><strong>Local MM7 mods folder</strong><p>Open the folder to inspect or edit supported files: portrait-1.png through portrait-4.png and armor.tsv. Other files are not loaded yet.</p></div><button class="secondary" id="open-mm7-mods">Open mods folder</button></div>
+        <div class="row"><div><strong>Local MM7 mods folder</strong><p>Open local files in Finder. Portrait moods use portraits/&lt;slot&gt;/&lt;mood&gt;.png; legacy portrait-1.png through portrait-4.png and armor.tsv still work.</p></div><button class="secondary" id="open-mm7-mods">Open mods folder</button></div>
         <div class="slot-grid" id="portrait-slots"></div>
-        <div class="row"><div><strong>Custom party portraits</strong><p>One PNG for each party position. Static art replaces normal expressions; original voices, death and eradication art remain.</p></div><span class="pill good">Supported in MM7</span></div>
+        <div id="portrait-moods"></div>
+        <div class="row"><div><strong>Custom party portraits</strong><p>Choose a normal PNG for each party position, then add optional reactions and condition art below. Missing moods use normal art; dead and eradicated keep original art unless you add them. Voices and body art still follow the original face.</p></div><span class="pill good">Supported in MM7</span></div>
         <div class="row"><div><strong>Armor template AC</strong><p>Changes every copy of the chosen armor type while this profile is active.</p><div class="armor-fields"><label>Armor type<select id="armor-id"><option value="66">Leather Armor · 66</option><option value="67">Studded Leather · 67</option><option value="68">Officer's Leather · 68</option><option value="69">Regnan Leather · 69</option><option value="70">Royal Leather · 70</option><option value="71">Chain Mail · 71</option><option value="72">Steel Chain Mail · 72</option><option value="73">Fine Chain Mail · 73</option><option value="74">Resplendent Chain · 74</option><option value="75">Golden Chain Mail · 75</option><option value="76">Plate Armor · 76</option><option value="77">Splendid Plate · 77</option><option value="78">Noble Plate · 78</option></select></label><label>Base AC<input id="armor-base" type="number" min="0" max="100" value="4"></label><label>Bonus AC<input id="armor-bonus" type="number" min="0" max="100" value="0"></label><button class="secondary" id="save-armor">Save AC</button><button class="secondary" id="clear-armor" hidden>Use original AC</button></div></div><span class="pill good" id="armor-status">No override saved</span></div>
         <div class="row"><div><strong>Fresh vendor stock on entry · MM6 + MM7</strong><p>Re-randomize shops and guilds each time you enter. MM7 uses this on the next Private mods launch. The MM6 choice is saved for its future playable engine.</p><span class="pill" id="vendor-refresh-status">Off</span></div><button class="secondary" id="vendor-refresh-toggle">Turn on</button></div>
       </div>
@@ -106,6 +114,7 @@
 <script>
   const send = action => window.webkit?.messageHandlers?.atlas?.postMessage(action);
   const titles = {mm6:'MM6',mm7:'MM7',mm8:'MM8'};
+  const portraitMoods = ['talk','smile','sad','hurt','pain','afraid','cast','sleep','unconscious','weak','cursed','drunk','insane','sick','paralyzed','stone','zombie','dead','eradicated'];
   let current = 'campaigns';
   function show(name) {
     current=name; document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===name));
@@ -126,11 +135,39 @@
     safeText('vendor-refresh-status',state.vendorRefreshOnEntry?(state.modsEnabled?'On for next MM7 launch · MM6 queued':'Saved · enable Private mods for MM7'):'Off · normal refresh schedule');
     const slots=document.getElementById('portrait-slots');slots.replaceChildren();
     for(let index=1;index<=4;index++){
-      const slot=document.createElement('div'),label=document.createElement('b'),stateText=document.createElement('span'),choose=document.createElement('button');
-      slot.className='slot';label.textContent=['I','II','III','IV'][index-1];stateText.textContent=state.portraits[index-1]?'Custom PNG ready':'Original portrait';choose.textContent=state.portraits[index-1]?'Replace PNG':'Choose PNG';
-      choose.addEventListener('click',()=>send('choose-portrait-'+index));slot.append(label,stateText,choose);
-      if(state.portraits[index-1]){const clear=document.createElement('button');clear.className='clear';clear.textContent='Use original';clear.addEventListener('click',()=>send('clear-portrait-'+index));slot.append(clear)}
+      const slot=document.createElement('div'),label=document.createElement('b'),stateText=document.createElement('span'),choose=document.createElement('button'),preview=document.createElement('img');
+      slot.className='slot';label.textContent=['I','II','III','IV'][index-1];stateText.textContent=state.portraits[index-1]?'Custom PNG ready':state.portraitNormalFiles?.[index-1]?'Invalid PNG':'Original portrait';choose.textContent=state.portraitNormalFiles?.[index-1]?'Replace PNG':'Choose PNG';
+      preview.alt='Party position '+index+' normal portrait';
+      const previewURL=state.portraitMoods?.[index-1]?.normal?.preview;
+      if(previewURL)preview.src=previewURL;else preview.hidden=true;
+      choose.addEventListener('click',()=>send('choose-mood-'+index+'-normal'));slot.append(label,preview,stateText,choose);
+      if(state.portraitNormalFiles?.[index-1]){
+        const clear=document.createElement('button');clear.className='clear';
+        const hasNew=!!state.newNormalPortraits?.[index-1];
+        clear.textContent=hasNew?'Clear new PNG':state.legacyPortraits?.[index-1]?'Use original':'Clear PNG';
+        clear.addEventListener('click',()=>send(hasNew?'clear-mood-'+index+'-normal':'clear-portrait-'+index));slot.append(clear)
+      }
       slots.append(slot);
+    }
+    const moodGroups=document.getElementById('portrait-moods');
+    const expanded=[...moodGroups.querySelectorAll('details')].map(group=>group.open);
+    moodGroups.replaceChildren();
+    for(let index=1;index<=4;index++){
+      const group=document.createElement('details'),summary=document.createElement('summary'),grid=document.createElement('div');
+      group.className='mood-group';group.open=!!expanded[index-1];summary.textContent='Party position '+['I','II','III','IV'][index-1]+' · optional moods';grid.className='mood-grid';
+      const importButton=document.createElement('button');importButton.className='secondary';importButton.textContent='Import mood folder…';importButton.addEventListener('click',()=>send('import-moods-'+index));
+      for(const mood of portraitMoods){
+        const status=state.portraitMoods?.[index-1]?.[mood]||{ready:false,valid:false,exists:false,preview:''};
+        const tile=document.createElement('div'),label=document.createElement('strong'),preview=document.createElement('img'),choose=document.createElement('button'),note=document.createElement('span');
+        tile.className='mood-tile';label.textContent=mood;preview.alt=status.ready?mood+' portrait':'No '+mood+' portrait';
+        if(status.preview)preview.src=status.preview;else preview.hidden=true;
+        choose.textContent=status.exists?'Replace':'Choose PNG';choose.addEventListener('click',()=>send('choose-mood-'+index+'-'+mood));
+        note.textContent=status.ready?'Ready':status.valid?'Needs normal PNG':status.exists?'Invalid PNG':'Uses normal art';
+        tile.append(label,preview,note,choose);
+        if(status.exists){const clear=document.createElement('button');clear.className='clear';clear.textContent='Clear';clear.addEventListener('click',()=>send('clear-mood-'+index+'-'+mood));tile.append(clear)}
+        grid.append(tile);
+      }
+      group.append(summary,importButton,grid);moodGroups.append(group);
     }
     document.getElementById('clear-armor').hidden=!state.armor.saved;
     safeText('armor-status',state.armor.saved?'Saved · applies next launch':'No override saved');

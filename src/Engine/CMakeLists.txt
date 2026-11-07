@@ -11,6 +11,7 @@ set(ENGINE_SOURCES
         Interaction.cpp
         Localization.cpp
         MapEnums.cpp
+        Mods/PrivateMods.cpp
         Party.cpp
         PartyEnums.cpp
         PartyPlacement.cpp
@@ -41,6 +42,7 @@ set(ENGINE_HEADERS
         LocationInfo.h
         MapEnumFunctions.h
         MapEnums.h
+        Mods/PrivateMods.h
         Party.h
         PartyEnums.h
         PartyPlacement.h
@@ -108,7 +110,8 @@ add_subdirectory(TurnEngine)
 
 if(OE_BUILD_TESTS)
     set(TEST_ENGINE_SOURCES
-            Tests/Mm7TextRu_ut.cpp)
+            Tests/Mm7TextRu_ut.cpp
+            Mods/PrivateMods_ut.cpp)
 
     add_library(test_engine OBJECT ${TEST_ENGINE_SOURCES})
     target_link_libraries(test_engine PUBLIC testing_unit engine)

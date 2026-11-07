@@ -1,6 +1,6 @@
 #pragma once
 
-#include <array>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <memory>
@@ -8,6 +8,9 @@
 #include "GUI/GUIFont.h"
 
 class GraphicsImage;
+enum class Condition : uint32_t;
+enum class PortraitId : uint16_t;
+namespace mm7::mods { class PrivatePortraits; }
 
 class AssetsManager {
  public:
@@ -26,8 +29,8 @@ class AssetsManager {
     GraphicsImage *getIcon(std::string_view name);
     /** Decodes MM6's palette-zero aframe1 sprite for the two-dimensional portrait UI. */
     GraphicsImage *getMM6SelectionFrame();
-    /** Local, per-party-slot PNG override. Returns nullptr when vanilla mode is selected or the image is invalid. */
-    GraphicsImage *getCustomPortrait(int partySlot);
+    /** MM7-only local portrait, with condition fallback. Null retains the original art. */
+    GraphicsImage *getCustomPortrait(int partySlot, PortraitId portrait, Condition condition);
     GraphicsImage *getImage_Buff(std::string_view name);
 
     GraphicsImage *getBitmap(std::string_view name, bool generated = false);
@@ -55,7 +58,7 @@ class AssetsManager {
     std::unordered_map<std::string, std::unique_ptr<GraphicsImage>> bitmaps;
     std::unordered_map<std::string, std::unique_ptr<GraphicsImage>> sprites;
     std::unordered_map<std::string, std::unique_ptr<GraphicsImage>> images;
-    std::array<std::unique_ptr<GraphicsImage>, 4> customPortraits;
+    std::unique_ptr<mm7::mods::PrivatePortraits> customPortraits;
     std::unique_ptr<GraphicsImage> mm6SelectionFrame;
     bool customPortraitsLoaded = false;
 };

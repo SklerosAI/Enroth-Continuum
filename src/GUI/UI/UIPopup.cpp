@@ -1665,7 +1665,12 @@ void GameUI_CharacterQuickRecord_Draw(Recti window, int characterIndex) {
         v13 = game_ui_player_faces[characterIndex][faceTextureIndex - 1];
     }
 
-    render->DrawQuad2D(v13, {window.x + 24, window.y + 24});
+    Pointi portraitPosition(window.x + 24, window.y + 24);
+    PortraitId modPortrait = player->portrait == PORTRAIT_TALK ? player->talkAnimation.currentPortrait() : player->portrait;
+    if (GraphicsImage *custom = assets->getCustomPortrait(characterIndex, modPortrait, player->GetMajorConditionIdx()))
+        render->DrawQuad2D(custom, Recti(Pointi(), custom->size()), Recti(portraitPosition, v13->size()));
+    else
+        render->DrawQuad2D(v13, portraitPosition);
 
     // TODO(captainurist): do a 2nd rewrite here
     auto str =

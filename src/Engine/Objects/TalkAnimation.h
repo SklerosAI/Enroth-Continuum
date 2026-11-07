@@ -10,6 +10,7 @@ class TalkAnimation {
     void update(Duration dt);
 
     int currentFrameIndex() const;
+    PortraitId currentPortrait() const { return _currentPortrait; }
 
  private:
     PortraitId _currentPortrait = PORTRAIT_INVALID;

@@ -347,7 +347,7 @@ void GUIWindow_PartyCreation::Update() {
     for (int i = 0; i < 4; ++i) {
         GraphicsImage *original = ui_partycreation_portraits[pParty->pCharacters[i].uCurrentFace];
         Pointi position(17 + 159 * i, 35);
-        if (GraphicsImage *custom = assets->getCustomPortrait(i))
+        if (GraphicsImage *custom = assets->getCustomPortrait(i, PORTRAIT_NORMAL, CONDITION_GOOD))
             render->DrawQuad2D(custom, Recti(Pointi(), custom->size()), Recti(position, original->size()));
         else
             render->DrawQuad2D(original, position);

@@ -1847,3 +1847,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Joined one non-gold chest pickup candidate to the exact 28-byte MM6 held-cursor owner, preserving source item tails and rejecting gold, occupied cursor, foreign title and malformed grid before publication.
 - Linked focused chest/open/cursor checks passed 11/11. Live MM6 click pickup, gold settlement, sidecar and save publication remain guarded.
+
+## [2026-11-06] verify | MM6 hidden chest and reload gates
+- by: T-Burton-ND via codex
+- Captured an item-bearing MM6 chest in a hidden OpenGL first-map test. The local PNG was visually inspected; the chest panel and item icons rendered in the expected area. The monitored run passed 1/1 over 118 samples with no visible window or focus change; the PNG remains untracked.
+- Two separate monitored processes passed the temporary New Game write and three bounded post-reload frame gates (1/1 each), with no visible window or focus change. A linked combat transient rollback test passed 3/3. Production `loadGame()` and the complete `Game::gameLoop()` remain guarded.

@@ -167,6 +167,16 @@ precommit and post-rename faults; a fresh seven-child owner-only v5 chain
 passed **7/7**, and an MM7 headless control passed **1/1**. Normal SaveLoad,
 menu UI and production slot admission remain closed.
 
+An MM6 first-map prepublication service now rechecks the still-detached
+staged graph's title and map, zero-owned persistent event boundary, and raw
+cursor/SHOP join before either fresh-child reader constructs replay scopes or
+assigns globals. The integrated seven-child chain passed **1/1 per process**
+and MM7 control **1/1**. Publication still repeats some validation after live
+assignment and may fail during assignment or pre-event replay. A complete
+failure policy is required before a normal menu load. Manual Save pauses the
+timer before `doSavegame`, so the current settled-input capture cannot be
+wired directly into that route without an explicit paused-save contract.
+
 See [v4 event runtime boundary](MM6_F4_EC6_V4_EVENT_RUNTIME.md),
 [active actor capture](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md) and
 [save specification](MM6_SAVE_SPEC.md).

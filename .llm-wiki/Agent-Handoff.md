@@ -374,6 +374,13 @@ pass. Live assignment or pre-event replay can fail after mutation. Build a
 fully detached precommit bundle and a preworld failure policy before
 opening normal SaveLoad/UI. See the [v5 packet](../project/MM6_F4_EC6_V5_SPRITE_RUNTIME.md).
 
+The first-map prepublication service now rechecks detached title/map,
+persistent-event and cursor/SHOP joins before scope construction or live
+assignment; the integrated seven-child chain and MM7 control still pass.
+Assignment and pre-event replay failures remain open. Manual Save pauses the
+timer before `doSavegame`; settled-input capture needs a paused-save contract
+before that normal route can call it.
+
 MM6 manual/quick save actions now refuse before side effects; active
 skill Compare/Set has a checked MM6-specific path. A read-only audit decoded
 all 15 outdoor base/delta pairs, and the MM6 encounter parser now uses authored

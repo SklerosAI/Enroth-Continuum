@@ -90,6 +90,14 @@ profile slots, SaveLoad and UI remain closed. The
 [project packet](../project/MM6_F4_EC6_V5_SPRITE_RUNTIME.md)
 records the exact seam.
 
+The first-map prepublication service now rechecks title/map, zero-owned
+persistent events and raw cursor/SHOP agreement on the detached stage before
+both fresh-child readers construct replay scopes or assign globals. The
+integration seven-child chain passed **1/1 each** and MM7 control **1/1**.
+Late assignment and pre-event replay failures still lack a complete recovery
+policy. Manual Save pauses the timer before `doSavegame`, so settled-input
+capture also needs an explicit paused-save contract before normal wiring.
+
 See also: [V4 Event Runtime](MM6-F4-EC6-V4-Event-Runtime.md),
 [V3 Post Entry Map and Pre Event](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md),
 [Agent Handoff](Agent-Handoff.md).

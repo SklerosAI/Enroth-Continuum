@@ -671,3 +671,10 @@ item records, creation, removal and equipment changes. Linked focused checks
 passed **8/8**; a monitored loaded-table MM6 headless footprint check passed
 **1/1** over 75 samples with no visible window or focus change. No live Party
 raw owner or normal MM6 SaveLoad route has been opened.
+
+The [standard item bonus map](MM6_F4_STANDARD_BONUS_MAP.md) now supplies the
+same source-backed 14-index mapping to the MM6 item-table loader and future
+raw-item adapters. The private-backed MM6/LOD suite passed **352/352** and
+rebuilt non-MM6-prefix unit checks **438/438**. A loaded-table MM6 headless
+control passed **1/1** over 64 samples with no visible window or focus change.
+Nonzero bonus projection is still gated on strength and category behavior.

@@ -59,6 +59,8 @@ The later [plain-item projection](MM6-F4-Plain-Item-Projection.md) is a detached
 
 The newer [plain inventory projection](MM6-F4-Plain-Inventory-Projection.md) stages one physical character region into a 138-slot runtime inventory only when referenced items pass that plain-item gate and grid/equipment words replay exactly. The raw sidecar retains unreferenced records and opaque bytes. Capture permits a grid move and bounded item-field edits, but rejects item removal/creation and equipment changes. Linked focused tests passed **8/8** and a monitored loaded-table MM6 headless footprint check **1/1** over 75 samples without focus/window intrusion. Party ownership and SaveLoad remain closed.
 
+The [standard bonus map](MM6-F4-Standard-Bonus-Map.md) now centralizes the 14 original MM6 one-based item-bonus indices and their runtime attributes, including electricity/cold/poison to air/water/body. The MM6 item-table loader uses the same array. Rebuilt private-backed MM6/LOD checks passed **352/352**, non-MM6-prefix unit checks **438/438**, and a monitored loaded-table MM6 headless check **1/1** without window/focus intrusion. The plain item adapter still rejects nonzero bonuses; category and strength semantics remain open.
+
 ## Authority and source order
 
 | Question | Start with | Supporting source |

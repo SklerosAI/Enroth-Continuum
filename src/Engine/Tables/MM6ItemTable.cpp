@@ -1,5 +1,7 @@
 #include "ItemTable.h"
 
+#include "Engine/MM6/MM6StandardBonusMap.h"
+
 #include <array>
 #include <cctype>
 #include <map>
@@ -26,12 +28,7 @@
 
 void ItemTable::InitializeMm6(ResourceManager *resourceManager) {
     MM_INFO("Loading MM6 item enchantments.");
-    const std::array<Attribute, 14> attributes = {
-        ATTRIBUTE_MIGHT, ATTRIBUTE_INTELLIGENCE, ATTRIBUTE_PERSONALITY, ATTRIBUTE_ENDURANCE,
-        ATTRIBUTE_ACCURACY, ATTRIBUTE_SPEED, ATTRIBUTE_LUCK, ATTRIBUTE_HEALTH, ATTRIBUTE_MANA,
-        ATTRIBUTE_AC_BONUS, ATTRIBUTE_RESIST_FIRE, ATTRIBUTE_RESIST_AIR, ATTRIBUTE_RESIST_WATER,
-        ATTRIBUTE_RESIST_BODY
-    };
+    constexpr auto &attributes = mm6::kStandardBonusAttributes;
 
     Blob standardBlob = resourceManager->eventsData("stditems.txt");
     std::vector<std::string_view> standardLines = split(standardBlob.str()).by("\r\n");

@@ -114,6 +114,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Raw Inventory Section](MM6-F4-Raw-Inventory-Section.md) — Detached INVR v1 preserves 138 physical item records and raw index words per character
 - [MM6 F4 Plain Item Projection](MM6-F4-Plain-Item-Projection.md) — Source-typed detached view of plain MM6 items and gold with exact raw record retained
 - [MM6 F4 Plain Inventory Projection](MM6-F4-Plain-Inventory-Projection.md) — Detached 138-slot character inventory stage with exact raw grid and equipment replay
+- [MM6 F4 Standard Bonus Map](MM6-F4-Standard-Bonus-Map.md) — Source-backed 14-index standard item bonus map shared with the MM6 table loader
 - [MM6 F4 Shop Purchase-Write Gate](MM6-F4-Shop-Purchase-Write-Gate.md) — Linked 28-byte purchase mutation and detached physical SHOP section; live service owner remains open
 - [MM6 F4 Shop Shared-Edge Refresh](MM6-F4-Shop-Shared-Edge-Refresh.md) — Linked original stock/deadline arbitration and failure-atomic detached refresh seam; live service remains gated
 - [MM6 F4 Shop Shared Row Access Audit](MM6-F4-Shop-Shared-Row-Access-Audit.md) — Direct source access families and remaining indirect-writer, nonzero-save and item-conversion blockers

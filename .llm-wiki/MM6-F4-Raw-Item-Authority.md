@@ -31,4 +31,4 @@ Do not infer original MM6 byte 26 from MM7's lich-jar index or synthesize MM7 ex
 
 Revisit the ownership split if original inventory/held/ground evidence shows a different record size or lifecycle, or if a checked full conversion proves that a raw sidecar is unnecessary for a specific category. Any final manifest change needs nonzero round trips and before-mutation rejection tests.
 
-See also: [Shop Item Conversion Gate](MM6-F4-Shop-Item-Record-Conversion-Gate.md), [Chest Runtime Projection](MM6-F4-Chest-Runtime-Projection.md), [Raw Inventory Section](MM6-F4-Raw-Inventory-Section.md), [Plain Item Projection](MM6-F4-Plain-Item-Projection.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).
+See also: [Shop Item Conversion Gate](MM6-F4-Shop-Item-Record-Conversion-Gate.md), [Chest Runtime Projection](MM6-F4-Chest-Runtime-Projection.md), [Raw Inventory Section](MM6-F4-Raw-Inventory-Section.md), [Plain Item Projection](MM6-F4-Plain-Item-Projection.md), [Standard Bonus Map](MM6-F4-Standard-Bonus-Map.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

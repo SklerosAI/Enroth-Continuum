@@ -1932,3 +1932,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added fail-closed raw v2 capture checks for occupied beacons and observed indoor face overrides, and rejected beacon-bearing Party baselines during detached staging. The strict nineteen-section decoder continues to reject BEAC/IFOV extras.
 - Integrated raw/world/schema checks passed 16/16. The caller must still compute IFOV from a verified base; this does not admit production save/load.
+
+## [2026-11-06] integrate | MM6 v2 cursor and shop join
+- by: T-Burton-ND via codex
+- Integrated a detached equality check for decoded HELD, SHOP and SCLK owners, then required it within represented v2 session preflight before slot selection. The new wiki handoff page records the remaining live publication boundary.
+- Linked raw/schema/cursor-shop checks passed 18/18. Live cursor image, house services, UI and production MM6 SaveLoad remain gated.

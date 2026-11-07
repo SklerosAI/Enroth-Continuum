@@ -22,6 +22,8 @@
 #include "Engine/MM6/MM6LoadedMapSource.h"
 #include "Engine/MM6/MM6NpcStaticBaseline.h"
 #include "Engine/MM6/MM6PreEventCheckpointForTest.h"
+#include "Engine/MM6/MM6PersistentEventPublication.h"
+#include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/MM6/MM6RawSaveFields.h"
 #include "Engine/MM6/MM6V6IndoorSaveFields.h"
 #include "Engine/Objects/Actor.h"
@@ -33,6 +35,8 @@
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/Tables/OverlayTable.h"
 #include "Engine/Tables/TileTable.h"
+#include "Engine/Timer.h"
+#include "Engine/Graphics/Overlays.h"
 #include "GUI/GUIWindow.h"
 #include "Library/Platform/Application/PlatformApplication.h"
 
@@ -194,6 +198,22 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
                         pTileTable->tileCount(), GameTitle::MM6)));
                 *pParty = represented->party.party;
                 mm6::chestTitleState() = represented->world.chestTitle;
+                if (liveSessionWriter) {
+                    *pNPCStats = represented->world.world.npcs;
+                    *gameTimer = represented->world.visuals.timer;
+                    *pActiveOverlayList = represented->world.visuals.overlays;
+                    pMapDeltas.clear();
+                    for (const auto &[name, blob] : represented->world.world.mapDeltas)
+                        pMapDeltas.emplace(name, Blob::copy(blob));
+                    mm6::publishFreshChildPersistentEventZeros(
+                        &engine->_persistentVariables,
+                        represented->persistentEvents, GameTitle::MM6);
+                    mm6::publishRawCursorShopOwners(
+                        &mm6::rawHeldCursorState(GameTitle::MM6),
+                        &mm6::shopTitleState(), represented->raw.saved,
+                        {represented->raw.cursor, represented->raw.shops},
+                        GameTitle::MM6);
+                }
                 engine->_pendingTransition = MapDestination(map, MAP_START_POINT_PARTY);
                 engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
                 mm6::ScopedChestMapLoadOptIn chestOptIn(true);

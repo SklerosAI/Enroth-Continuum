@@ -1046,9 +1046,12 @@ live vector. The private-backed first-map retained-DDM/live-owner headless
 probe passed **1/1**, superseding its earlier `sprite-header` and
 `sprite-position-loss` refusals. This does not write a v3 slot or prove
 later maps and mutations. A separate no-write full-session first-map
-candidate currently refuses at public class `map-preflight` (**0/1**); its exact
-cause remains under audit. The candidate guards unrepresented commerce
-and cursor state and attempts no atomic write. Writer-side complete
+candidate passed detached `stageV3FullSessionPreflight()` and then refused
+at `persistent-event-join` (**0/1**), superseding its earlier
+`map-preflight` classification. The exact live event mismatch remains
+under audit. A disposable v2 writer passed **1/1** as the control. The
+candidate guards unrepresented commerce and cursor state and attempts
+no atomic write. Writer-side complete
 session joins, BEAC/IFOV
 policy, actor item/buff coverage, fresh-child v3 replay, final post-world
 owner checks and production SaveLoad/Atlas admission remain open.

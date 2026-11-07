@@ -30,11 +30,13 @@ against live reset, visibility, sprite, chest and opaque owners. It does not
 write a v3 slot, leave and reload the map, or prove later map/item mutations.
 
 A separate no-write full-session candidate probe now attempts the complete
-detached v3 semantic stage after first-map entry. Its first run refused at
-public class `map-preflight` (**0/1**). The exact map-owner cause is not established;
-the passing retained-DDM/live-owner probe does not supersede this broader
-refusal. The candidate also guards against unrepresented commerce and cursor
-state. No v3 atomic write was attempted.
+detached v3 semantic stage after first-map entry. A stage marker confirms
+that `stageV3FullSessionPreflight()` returned successfully, then the candidate
+refused at `persistent-event-join` (**0/1**). This supersedes the earlier
+`map-preflight` classification. The exact persistent-event mismatch is still
+under audit; the passing detached preflight does not admit the live session.
+The candidate also guards against unrepresented commerce and cursor state.
+No v3 atomic write was attempted.
 
 ## Before map events
 
@@ -62,7 +64,7 @@ slot exists. Its presence is a test harness, not replay evidence.
 
 ## Next admission work
 
-Before a disposable v3 write, resolve the broader `map-preflight` refusal, join the
+Before a disposable v3 write, resolve the live `persistent-event-join` refusal, join the
 bounded map capture with all live v3 session owners, prove writer-side
 BEAC/IFOV policy and pass the required semantic callback. Then use a fresh
 child to stage v3, publish all pre-event

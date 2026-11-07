@@ -20,10 +20,12 @@ position and applying the loader's floor step reproduces the live position.
 The private-backed first-map retained-DDM/live-owner probe passed **1/1**.
 It does not prove later maps, item mutations or a save–quit–reload.
 
-A separate no-write first-map full-session v3 candidate currently refuses
-at public class `map-preflight` (**0/1**). Its exact cause remains under audit; it
-also guards unrepresented commerce and cursor state. The passing narrow map
-probe does not admit the broader session or open an atomic write.
+A separate no-write first-map full-session v3 candidate passed detached
+`stageV3FullSessionPreflight()` and then refused at
+`persistent-event-join` (**0/1**). This supersedes the earlier
+`map-preflight` classification; the exact live persistent-event mismatch is
+under audit. The candidate also guards unrepresented commerce and cursor
+state. Neither passing stage opens an atomic write.
 
 The test-only pre-event scope validates the staged v3 map/ACTR/GNPC/RNG
 agreement and unchanged chest/active-DDM owners, publishes actors and

@@ -1,12 +1,12 @@
 # MM7 source autonomy in SklerosAI
 
-Status: **planned** (2026-11-06). This is the owner's later MM7 repository-ownership gate, not a claim that a clean offline clone builds today.
+Status: **planned; local arm64 inputs inventoried** (2026-11-06). The [build-input packet](MM7_SELF_CONTAINED_BUILD_INVENTORY.md) records the current cached artifacts, 23 gitlinks, seven nested fetched sources, provenance gaps and a phased migration. This is the owner's later MM7 repository-ownership gate, not a claim that a clean offline clone builds today.
 
 ## Current boundary
 
 The `MM7` target and Atlas helper are compiled from Enroth Continuum's own forked source. Atlas stages an explicitly supplied, title-locked `MM7.app`; it does not download or run an OpenEnroth release binary. OpenEnroth's Git history, LGPL license, notices and contributor credit remain part of the fork.
 
-A clean Mac build is not yet self-contained. `CMakeModules/Dependencies.cmake` downloads a versioned archive from `OpenEnroth/OpenEnroth_Dependencies` when the prebuilt cache is absent. The checkout also has 23 externally hosted Git submodules, and the non-prebuilt route may fetch additional source at configure time. Cached local dependencies hide those requirements on this Mac. The upstream Git remote is optional for reviewed synchronization; it is not a runtime input.
+A clean Mac build is not yet self-contained. `CMakeModules/Dependencies.cmake` downloads a versioned archive from `OpenEnroth/OpenEnroth_Dependencies` when the prebuilt cache is absent. Configure also runs an unconditional recursive update for 23 externally hosted Git submodules, and cpptrace/ztd.text fetch seven more source repositories in the observed Mac build. Cached local dependencies hide those requirements on this Mac. The upstream Git remote is optional for reviewed synchronization; it is not a runtime input.
 
 ## Migration gate
 

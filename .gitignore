@@ -68,3 +68,8 @@ local.properties
 # `git add -f` for game data, saves, installers, or derived asset archives.
 /local-game-data/*
 !/local-game-data/README.md
+
+# Local-only real-time mailbox shared by agents on this Mac. Keep its protocol
+# tracked, but never commit live messages or acknowledgements.
+/agent_comms/live/*
+!/agent_comms/live/README.md

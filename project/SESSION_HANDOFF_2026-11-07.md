@@ -147,7 +147,7 @@ commit as you go) and exact file ownership.
 
 | Item | Ready after | Files it would own |
 | --- | --- | --- |
-| Wire Lane T's visited-map owners into map transitions, border travel and indoor entry/exit, with the MM6 `isMapIndoor` call sites | T, A, B merged | `Engine.cpp` transition paths, `Outdoor.cpp` `getTravelDestination`, `Game.cpp` travel handlers, MM6 save sections |
+| Wire Lane T's visited-map owners into map transitions, border travel and indoor entry/exit, with the MM6 `isMapIndoor` call sites. Add an MM6 preflight before `onMapLeave()` in `UIMSG_OnIndoorEntryExit` (it runs map-leave events before `startMapTransition()` refuses), then enable Codex C1's MM6 Yes button | T, A, B, C1 merged | `Engine.cpp` transition paths, `Outdoor.cpp` `getTravelDestination`, `Game.cpp` travel handlers, MM6 save sections |
 | House NPC dialogue and quest topic (if Lane H stops before its step 4) | H merged | MM6 house window, `UIDialogue.cpp`, `NPCTopics.cpp` dispatches |
 | MM6 shop stock, prices, buy and sell, guild spellbook stock | I and H merged | new `MM6Shop*` UI and engine files |
 | Transport menu and departure | wiring item above, H merged | `Houses/Transport.cpp` MM6 branch |
@@ -156,6 +156,9 @@ commit as you go) and exact file ownership.
 | F5a staged graphical opening check | F4b gate passes with Lane B's normal Save/Load section | none, capture and report only |
 | MM7 audit combat fixes: Break Weapon inversion, Divine Intervention recovery, lich immunity, Divine Restoration target, archer projectile token, monster ability slots | S merged, coordinate with Codex in `agent_comms/` first | `Character.cpp`, `CastSpellInfo.cpp`, `Monsters.cpp`, `Actor.cpp` MM7 paths |
 | MM7 save robustness: atomic writes via Codex's helper, in-game error on a bad save, Atlas exit-status check | B merged, coordinate with Codex | `SaveLoad.cpp`, `UISaveLoad.cpp`, `launcher/AtlasApp.swift` |
+| MM6 calendar start year 1165 (not 1168) as a title-aware start year passed to time conversion, plus MM6 birth years against their base, and reputation variable 215 with a new party field and save section | A, B merged | `Time.h` callers, `Party.cpp`, MM6 save section |
+| MM7 native save validator and root context for Codex's atomic writer (see its 22:59 UTC message) | B merged | Codex, detached first |
+| MM6 give-item (opcode 41) via the MM6 item generator and drop-item (opcode 34), plus an MM6 portrait sparkle icon mapping | S merged | new MM6 item generator files, interpreter dispatch |
 | MM8: its own data inventory, engine adapter and save checks, per plan §18 "After MM6" | MM6 and MM7 work above finished (owner instruction) | the reserved `mm8-isolated` worktree on `mm8-isolated-runtime` |
 
 ## Worktrees (11 registered, cap is 10)

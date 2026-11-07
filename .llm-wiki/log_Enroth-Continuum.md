@@ -1718,3 +1718,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Linked the detached raw-cursor codec and bounded shop purchase into the integration unit binary. The current MM6 item-focused set passed 20/20 and the non-MM6 control suite passed 438/438.
 - Updated the shop source packet and wiki to close the pending linked-test item. Native nonzero item evidence, live service ownership and coordinated save admission remain open.
+
+## [2026-11-06] implement | MM6 chest item raw carrier
+- by: T-Burton-ND via codex
+- Occupied resolved chest items now receive their exact 28-byte source record after bounded reconstruction. A copied pickup Item retains that carrier; chest capture rejects missing, changed or wrong-slot raw records and unsupported item field changes before writing.
+- The two affected test translations passed isolated arm64 C++23 syntax checking; linked integration tests remain pending. Live chest interaction, native changed-save semantics and coordinated `.ec6` publication stay gated.

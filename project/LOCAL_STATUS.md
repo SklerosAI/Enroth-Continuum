@@ -1011,3 +1011,11 @@ primary and backup checked for recognizable foreign EC6 versions before
 v3 fallback or mutation. The linked atomic suite passed **11/11** across
 new v3 and existing v1/v2 cases. No production MM6 menu, backup repair or
 live save/load route uses it yet.
+
+A detached [v3 outdoor actor-map agreement](MM6_F4_EC6_V3_OUTDOOR_ACTOR_MAP.md)
+now joins exact v3, the validated 67-map set, active HEAD/GNPC/CHST and
+ACTR. Linked map/manifest/ACTR suites passed **10/10**. It requires a
+matching nonzero DDM/sidecar day that will not respawn on load, stable
+native actor anchors and an ACTR count within the runtime cap. Mutable
+actor HP may differ from DDM; ACTR is the proposed owner. The helper is
+read-only and does not establish live replay or first-input readiness.

@@ -42,6 +42,8 @@ The detached [ACTR v1 full-list section](MM6-F4-Active-Actor-Section.md) passed 
 
 The detached [v3 atomic boundary](MM6-F4-EC6-V3-Atomic-Boundary.md) passed the linked atomic suite 11/11. It adds a required semantic callback for v3 write/read-only preflight/list and refuses recognizable foreign-version primary or backup before v3 mutation or fallback. It does not repair a backup, expose a production MM6 menu, or call live SaveLoad. Existing v1/v2 recovery APIs retain a mixed-schema hazard if manually combined files are fed to them; use only v3 API for any future production v3 route.
 
+The detached [v3 outdoor actor-map agreement](MM6-F4-EC6-V3-Outdoor-Actor-Map.md) passed linked map/manifest/ACTR checks 10/10. It validates all 67 native map pairs, active HEAD/GNPC/CHST identity, a matching nonzero no-respawn day, stable native actor anchors and ACTR runtime cap; changed HP may live in ACTR. It publishes nothing. Pre-event ACTR/GNPC/RNG replay and final owner checks remain open.
+
 ## Read first
 
 1. Run `git status --short --branch`, `git worktree list`, and `git log -1 --oneline` in the checkout you intend to use. The branch and worktree descriptions below may drift.

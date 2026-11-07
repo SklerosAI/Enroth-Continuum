@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <array>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <exception>
@@ -14,6 +16,7 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/PartyPlacement.h"
+#include "Engine/SpawnPoint.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
@@ -54,6 +57,68 @@ std::string firstIndoorMap(const mm6::LoadedMapSource &maps) {
     if (entry == names.end())
         throw std::runtime_error("MM6 v6 indoor probe lacks a source map pair");
     return entry->substr(0, entry->size() - 4) + ".blv";
+}
+
+// Select only a point derived from the loaded BLV and verified by the same
+// sector/floor queries used by real indoor movement. This fallback is a
+// disposable fixture when a map has no named arrival decoration.
+std::optional<PartyPlacement> nativeIndoorFixturePlacement() {
+    constexpr std::array<std::pair<int, Vec3f>, 4> directions = {{
+        {0, Vec3f(128, 0, 0)}, {512, Vec3f(0, 128, 0)},
+        {1024, Vec3f(-128, 0, 0)}, {1536, Vec3f(0, -128, 0)},
+    }};
+    const auto tryPoint = [&directions](Vec3f point) -> std::optional<PartyPlacement> {
+        const int sector = pIndoor->GetSector(point);
+        if (!sector)
+            return std::nullopt;
+        int face = -1;
+        const float floor = BLV_GetFloorLevel(point, sector, &face);
+        if (face < 0 || !std::isfinite(floor) || floor <= -30000)
+            return std::nullopt;
+        point.z = floor;
+        if (!pIndoor->GetSector(point) ||
+            !pIndoor->GetSector(point + Vec3f(0, 0, pParty->eyeLevel)))
+            return std::nullopt;
+        for (const auto &[yaw, step] : directions) {
+            const Vec3f ahead = point + step;
+            const int nextSector = pIndoor->GetSector(ahead);
+            if (!nextSector ||
+                !pIndoor->GetSector(ahead + Vec3f(0, 0, pParty->eyeLevel)))
+                continue;
+            const float nextFloor = BLV_GetFloorLevel(ahead, nextSector);
+            if (std::isfinite(nextFloor) && nextFloor > -30000 &&
+                std::abs(nextFloor - floor) <= 128)
+                return PartyPlacement(point, yaw, 0, 0);
+        }
+        return std::nullopt;
+    };
+    for (const SpawnPoint &spawn : pIndoor->pSpawnPoints)
+        if (auto placement = tryPoint(spawn.position))
+            return placement;
+    for (const BLVSector &sector : pIndoor->sectors) {
+        for (std::uint16_t id : sector.floorIds) {
+            if (id >= pIndoor->faces.size())
+                continue;
+            const BLVFace &face = pIndoor->faces[id];
+            if (face.Ethereal() || face.vertexIds.size() < 3)
+                continue;
+            for (std::size_t index = 2; index < face.vertexIds.size(); ++index) {
+                const int a = face.vertexIds[0];
+                const int b = face.vertexIds[index - 1];
+                const int c = face.vertexIds[index];
+                if (a < 0 || b < 0 || c < 0 ||
+                    static_cast<std::size_t>(a) >= pIndoor->vertices.size() ||
+                    static_cast<std::size_t>(b) >= pIndoor->vertices.size() ||
+                    static_cast<std::size_t>(c) >= pIndoor->vertices.size())
+                    continue;
+                const Vec3f center = (pIndoor->vertices[a] +
+                    pIndoor->vertices[b] + pIndoor->vertices[c]) / 3.0f;
+                if (auto placement = tryPoint(center))
+                    return placement;
+            }
+        }
+    }
+    return std::nullopt;
 }
 
 } // namespace
@@ -241,8 +306,10 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
                                     }
                                 }
                                 if (!placement)
+                                    placement = nativeIndoorFixturePlacement();
+                                if (!placement)
                                     throw std::runtime_error(
-                                        "MM6 v6 indoor fixture lacks a valid native entrance");
+                                        "MM6 v6 indoor fixture lacks a verified native floor point");
                                 placeParty(*placement);
                                 if (!pIndoor->GetSector(pParty->pos) ||
                                     !pIndoor->GetSector(

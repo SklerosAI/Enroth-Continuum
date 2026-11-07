@@ -12,5 +12,8 @@ namespace mm6::testing {
 void writeV4AfterActionCandidateForTest(
     const std::filesystem::path &profile,
     std::span<const std::uint8_t> sourceCandidate);
+void writeV5AfterActionCandidateForTest(
+    const std::filesystem::path &profile,
+    std::span<const std::uint8_t> sourceCandidate);
 
 } // namespace mm6::testing

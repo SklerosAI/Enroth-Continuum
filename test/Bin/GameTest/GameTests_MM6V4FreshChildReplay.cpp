@@ -134,12 +134,15 @@ std::vector<LevelDecoration> sourceDecorations(const mm6::LoadedMapSource &maps,
 // owner-only disposable profile. The second probe reaches only a bounded
 // first input and movement step; neither opens production SaveLoad.
 void runV4FreshChildReplay(EngineController &game, bool allowInput,
-                           bool writeAfterAction = false) {
-    const char *enable = std::getenv(writeAfterAction ?
+                           bool writeAfterAction = false,
+                           bool writeV5AfterAction = false) {
+    const char *enable = std::getenv(writeV5AfterAction ?
+        "ENROTH_MM6_V5_AFTER_ACTION_WRITE_ENABLE" : writeAfterAction ?
         "ENROTH_MM6_V4_AFTER_ACTION_WRITE_ENABLE" :
         allowInput ? "ENROTH_MM6_V4_FIRST_INPUT_ENABLE" :
                      "ENROTH_MM6_V4_REPLAY_ENABLE");
-    const std::string_view required = writeAfterAction ? "strict-v4-after-action" : "strict-v4";
+    const std::string_view required = writeV5AfterAction ?
+        "strict-v5-after-action" : writeAfterAction ? "strict-v4-after-action" : "strict-v4";
     if (!enable || std::string_view(enable) != required)
         GTEST_SKIP() << "Run only after strict v4 writer and owner admission";
     const std::filesystem::path profile = ownerOnlyProfile();
@@ -377,6 +380,8 @@ void runV4FreshChildReplay(EngineController &game, bool allowInput,
                     !engine->_pendingTransition;
                 if (writeAfterAction && movementApplied)
                     mm6::testing::writeV4AfterActionCandidateForTest(profile, before);
+                if (writeV5AfterAction && movementApplied)
+                    mm6::testing::writeV5AfterActionCandidateForTest(profile, before);
             });
         }
         game.runGameRoutine([] {
@@ -408,6 +413,8 @@ void runV4FreshChildReplay(EngineController &game, bool allowInput,
     EXPECT_EQ(slotBytes(profile / "saves" / "autosave.ec6"), seedBefore);
     if (writeAfterAction)
         EXPECT_FALSE(slotBytes(profile / "saves/candidate-v4-after-action.ec6").empty());
+    if (writeV5AfterAction)
+        EXPECT_FALSE(slotBytes(profile / "saves/candidate-v5-after-action.ec6").empty());
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }
 
@@ -421,4 +428,8 @@ GAME_TEST(MM6V4FirstInputHeadless, DISABLED_FreshQuickLoadMovesOnceInRealLoop) {
 
 GAME_TEST(MM6V4AfterActionWriterHeadless, DISABLED_FreshQuickLoadWritesMovedPartyCandidate) {
     runV4FreshChildReplay(game, true, true);
+}
+
+GAME_TEST(MM6V5AfterActionWriterHeadless, DISABLED_FreshQuickLoadWritesExactMovedPartyAndSprites) {
+    runV4FreshChildReplay(game, true, false, true);
 }

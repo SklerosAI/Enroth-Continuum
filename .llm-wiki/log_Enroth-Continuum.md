@@ -2052,3 +2052,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a one-shot MM6-only test callback immediately after `DoPrepareWorld(true)` and before timer unpause/input, with scoped teardown and unchanged unarmed paths.
 - Four linked unit checks passed; a disposable v1 Main Menu reload observed the real hook before input with its slot unchanged (1/1), and an MM7 headless control passed 1/1. V2 final-owner checks are not armed yet. The separate NPC resource runtime probe exposed a stack crash now under investigation.
+
+## [2026-11-07] verify | MM6 loaded NPC resource identity
+- by: T-Burton-ND via codex
+- Moved the large fresh NPC baseline and extra probe snapshots to heap storage after a repeatable GameTest thread-stack crash, preserving the baseline reference API.
+- Focused NPC/raw-session suites passed 18/18 and the private-backed null-renderer resource identity probe passed 1/1. Generated NPC identity and game RNG remain blockers for live publication.

@@ -1758,3 +1758,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Two monitored headless game tests entered an actual MM7 weapon shop and magic guild with future refresh deadlines. Both regenerated stock on entry, then retained it on Buy-tab navigation (2/2); the monitor saw no on-screen window or focus change.
 - This closes the earlier missing headless entry check. Visible play-session acceptance and MM6 live vendor ownership remain open.
+
+## [2026-11-06] stage | Title-locked MM7 Atlas sibling
+- by: T-Burton-ND via codex
+- Added an arm64 `MM7.app` target that rejects MM6, and changed the Atlas build to validate explicit title helpers before staging a signed `MM7.app` sibling. The launcher points to that title-locked helper; MM6/MM8 Play remain disabled.
+- The staged build passed signature verification; a wrong-title helper failed before changing the prior output, and a reuse build retained an identical MM7 helper. The installed Atlas was left intact pending a live launch/save check; the protected MM7 baseline and profiles were not changed.

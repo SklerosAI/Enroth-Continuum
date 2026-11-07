@@ -2641,3 +2641,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a test-only MM6 first-map scope that catches armed load-callback and world-preparation failures, clears pending state and abandons to Main Menu before input. Fresh seed, v4, v5 writer, partial-assignment fault and pre-event fault children each passed 1/1; both fault cases staged a second attempt.
 - The unarmed seven-child first-map v5 chain remained 7/7 and MM7 control passed 1/1. This is an abandon policy without rollback of already published globals; normal MM6 SaveLoad/UI remains closed.
+
+## [2026-11-07] verify | MM6 paused writer and full load retry
+- by: T-Burton-ND via codex
+- A real paused Save-menu test wrote an owner-only disposable first-map v5 candidate through the strict writer. Fresh seed, v4, prior v5 primary, paused write and independent fresh-child replay children each passed 1/1; exact primary/backup bytes were checked, and MM7 control passed 1/1.
+- Both armed fault cases then completed a second full source-backed first-map load with exact post-world owner validation and bounded turn/walk after the abandoned attempt; each passed 1/1 with unchanged save bytes. This remains test-only and is not rollback or normal SaveLoad/UI admission.

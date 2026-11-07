@@ -798,3 +798,13 @@ preflight and recovery APIs. The linked atomic-file suite passed **7/7**,
 including both cross-schema overwrite directions and v2 injected write
 failures. Structural v2 slot validity does not prove a playable save; normal
 MM6 SaveLoad and menu listing remain guarded.
+
+The detached v2 Party inventory adapter now stages supported plain and
+standard equipment across all four characters, preserving native record
+tails; nonzero potion, special and artifact unions still reject. A separate
+first-map rollback scope covers the 75 map and 125 decoration event-variable
+bytes. The integrated linked disk/inventory/event suite passed **13/13**.
+Neither adapter is wired into a production MM6 load. A source audit proposes
+one MM6 campaign per child process to avoid rollback to a prior live session;
+it still requires a complete v2 candidate, durable saves and a checked first
+frame. See [the handoff audit](MM6_F4_CHILD_PROCESS_GAME_LOOP_HANDOFF.md).

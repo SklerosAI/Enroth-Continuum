@@ -72,5 +72,13 @@ while the strict chest generation guard remains in place. This validates a
 test-only lifecycle and does **not** implement border eligibility, travel
 confirmation, durable cross-map autosave or normal MM6 SaveLoad.
 
+A pure detached MM6 border calculator now proposes a five-by-three grid
+neighbor, offset-preserving wrapped arrival and hireling-adjusted days.
+It never offers live travel while original party eligibility, exceptional
+edges and corner acceptance remain unproved. Integrated focused route and
+autosave-intercept units passed **7/7**. The live title guard and normal
+cross-map autosave remain closed; see the
+[border trace](MM6_F4_OUTDOOR_BORDER_TRACE.md).
+
 See [v5 runtime ownership](MM6_F4_EC6_V5_SPRITE_RUNTIME.md),
 [local status](LOCAL_STATUS.md), and [the F4 path](plan.md).

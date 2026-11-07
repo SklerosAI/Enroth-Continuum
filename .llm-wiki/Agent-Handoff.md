@@ -98,7 +98,7 @@ The raw item adapter now accepts one source-bounded special union, MM6 Antique I
 
 The [child-process game-loop audit](../project/MM6_F4_CHILD_PROCESS_GAME_LOOP_HANDOFF.md) identifies a possible single-campaign MM6 child route. It could remove rollback to a prior live session only if in-game loads and menu returns start a new child or stay unavailable; complete v2 staging, safe disk saves and first-frame validation still apply. The first-map persistent map/decor event arrays now have a detached rollback scope, but it is not installed around `DoPrepareWorld`. Integrated focused disk/inventory/event tests passed 13/13.
 
-For the later MM7 source-autonomy gate, read the [build-input inventory](../project/MM7_SELF_CONTAINED_BUILD_INVENTORY.md) and [source-autonomy packet](../project/MM7_SELF_CONTAINED_SOURCE.md) before changing dependencies. The original inventory found 23 gitlinks; twelve exact pinned dependencies are now tracked here, leaving 11 gitlinks, nine static archives from the OpenEnroth-hosted prebuilt ZIP and seven nested source fetches. License and FFmpeg build provenance gaps remain. An opt-in `EC_LOCAL_ONLY_CONFIGURE=ON` lane blocks configure-time fetches and fails with named missing repository-owned inputs/recipes; it is not a clean offline build. The existing MM7 helper comes from this fork and must stay installed until a clean offline replacement passes launch and save/reload. Keep OpenEnroth history, LGPL notices and contributor credit.
+For the later MM7 source-autonomy gate, read the [build-input inventory](../project/MM7_SELF_CONTAINED_BUILD_INVENTORY.md) and [source-autonomy packet](../project/MM7_SELF_CONTAINED_SOURCE.md) before changing dependencies. The original inventory found 23 gitlinks; thirteen exact pinned dependencies are now tracked here, leaving 10 gitlinks, nine static archives from the OpenEnroth-hosted prebuilt ZIP and seven nested source fetches. License and FFmpeg build provenance gaps remain. An opt-in `EC_LOCAL_ONLY_CONFIGURE=ON` lane blocks configure-time fetches and fails with named missing repository-owned inputs/recipes; it is not a clean offline build. The existing MM7 helper comes from this fork and must stay installed until a clean offline replacement passes launch and save/reload. Keep OpenEnroth history, LGPL notices and contributor credit.
 
 A disposable v1 two-process probe now drives the real MM6 Main Menu QuickLoad FSM through `Game::loop()`/private `gameLoop()` with explicit test-only load callbacks and chest opt-in. The writer and loader each passed 1/1 under the no-window monitor; the loader entered the first outdoor map, advanced movement and left the slot bytes unchanged. An MM7 all-map headless control passed 1/1 after the shared hooks. Production MM6 load, menu slots and complete v2 session publication remain guarded; the probe is not a playable campaign or rendered-frame proof.
 
@@ -220,7 +220,9 @@ NPC linkage is checked against GNPC, ARTR and ordered native PID slots;
 actual border travel and production SaveLoad remain open. A separate
 three-process location-change lifecycle check passes real world transition
 and bounded target input under a one-shot test-only no-write autosave
-intercept; it does not implement border UI or durable autosave. For indoor v6,
+intercept; it does not implement border UI or durable autosave. The pure MM6
+border calculator computes grid geometry and travel days but always refuses
+live offers; integrated focused checks passed 7/7. For indoor v6,
 detached IFOV write/read, a real headless pre-`OnMapReload` face-base capture,
 strict synthetic v6 staging and a three-process disposable v2 seed, v6 writer
 and fresh-child reader pass. Required IDRT decoration fields now publish

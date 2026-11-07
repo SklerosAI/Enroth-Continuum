@@ -1,8 +1,8 @@
 # MM6 generated NPC identity save candidate
 
-Status, 2026-11-07: detached, versioned `GNPC` section with focused synthetic
-checks; **not** in the strict nineteen-section EC6 v2 manifest and not a live
-save/load route. The current source and linked integration results outrank this
+Status, 2026-11-07: detached, versioned `GNPC` section with **3/3 linked
+synthetic integration checks**; **not** in the strict nineteen-section EC6 v2
+manifest and not a live save/load route. The current source and linked results outrank this
 packet. No private NPC names, saves or map contents are recorded here.
 
 ## Why v2 cannot preserve identity
@@ -29,6 +29,9 @@ rows. The container recognizes `GNPC` as a known required tag, while
 `decodeRawSave()` still rejects it as an extra v2 section. This keeps every
 existing v2 slot's meaning unchanged.
 
+The linked suite covers a round trip with map/actor binding, late row/actor
+divergence, malformed record refusal and the strict v2 extra-section boundary.
+
 The standalone GNPC capsule has no live-restore semantics yet. To admit a
 future version, join it to `HEAD` and the active map actor snapshot, stage all
 rows on a detached NPC owner, and restore them at a source-backed point before
@@ -41,18 +44,22 @@ new version until that order is proved in a fresh child.
 `Engine::MM7_Initialize()` seeds both RNG endpoints from the platform clock.
 The default gameplay engine is Mersenne Twister; test/debug sessions can select
 the sequential engine, and optional tracing wraps the gameplay endpoint.
-`RandomEngine` provides `seed`, draws and `peek`, but no state capture/restore;
-`EngineRandomComponent` owns both concrete gameplay engines and switches the
-global pointer. Recording only a seed or peeking one result cannot reconstruct
-the current generator state after arbitrary draws. GNPC is an identity capsule,
-not an RNG snapshot.
+The base `RandomEngine` interface provides `seed`, draws and `peek`; the
+selected concrete engine is owned by `EngineRandomComponent`. Its new
+capture/restore seam records the full current engine state, whereas an initial
+seed or one peek cannot reconstruct it after arbitrary draws. GNPC is an
+identity capsule; RNGS owns the separate gameplay stream.
 
-The safe next policy is explicit: either add a versioned, bounded snapshot for
-the selected gameplay RNG implementation and prove that restoration and
-generated-row publication precede any replay-sensitive map event, or document
-and test an intentional fresh-entropy fork policy for every affected event and
-first-frame outcome. Until one policy is verified, a nonempty generated pool
-remains a v2 reload refusal. Do not borrow the separate chest LCG as `grng`.
+The detached [RNGS candidate](MM6_F4_GAMEPLAY_RNG_SAVE.md) now supplies exact
+capture/restore for the selected gameplay engine and a bounded save section.
+It does not establish the **load order**: the inherited map loader regenerates
+NPCs and runs `onMapLoad()` before the post-world hook. Restoring saved RNG
+state only at that hook would preserve later draws but cannot undo any event
+that already consumed the fresh stream or saw different NPC rows. A future
+load must either publish the saved rows and restore the relevant RNG state
+before replay-sensitive events, or document and test a deliberate alternate
+entropy policy for those events. Until one is verified, a nonempty generated
+pool remains a v2 reload refusal. Do not borrow chest LCG as `grng`.
 
 See [the post-map link gate](MM6_F4_POST_MAP_GENERATED_NPC_LINKS.md),
 [the raw v2 owner gap](MM6_F4_V2_FULL_SESSION_OWNER_GAP.md), and

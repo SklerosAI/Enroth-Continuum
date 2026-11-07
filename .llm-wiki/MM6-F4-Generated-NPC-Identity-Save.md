@@ -15,13 +15,14 @@ The bounded codec retains map name, at most 100 complete logical NPC rows,
 and strictly ordered actor slot/monster anchors. It rejects malformed fields
 before return and offers a read-only post-map actor-link comparison. The
 container recognizes its tag, but the exact EC6 v2 nineteen-section decoder
-still rejects `GNPC`; no existing slot gains an unproved new meaning. Linked
-synthetic validation is pending integration.
+still rejects `GNPC`; no existing slot gains an unproved new meaning. The
+linked synthetic integration suite passed 3/3.
 
 `GNPC` does not save the gameplay RNG. The generator uses `grng` for names,
-portraits, reputation and professions before `onMapLoad()`. Current RNG APIs
-cannot snapshot state after arbitrary draws. A future save version needs a
-proved RNG continuation or an explicit tested fresh-entropy policy, plus a
+portraits, reputation and professions before `onMapLoad()`. A detached
+[RNGS capsule](MM6-F4-Gameplay-RNG-Save.md) now captures exact engine state,
+but a future save version still needs a proved publication order or an
+explicit tested fresh-entropy policy, plus a
 row-restore point before replay-sensitive events. No live MM6 SaveLoad or
 first-input admission follows from this detached codec.
 

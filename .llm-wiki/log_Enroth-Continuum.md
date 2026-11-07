@@ -1937,3 +1937,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated a detached equality check for decoded HELD, SHOP and SCLK owners, then required it within represented v2 session preflight before slot selection. The new wiki handoff page records the remaining live publication boundary.
 - Linked raw/schema/cursor-shop checks passed 18/18. Live cursor image, house services, UI and production MM6 SaveLoad remain gated.
+
+## [2026-11-06] integrate | MM6 fresh NPC baseline
+- by: T-Burton-ND via codex
+- Added a detached MM6 NPC static-table loader and required its typed result in v2 session preflight, so saved RESC rows cannot inherit static data from an unrelated live NPCStats. The loader leaves global NPC topics untouched.
+- Linked NPC/raw/outdoor checks passed 13/13. Global dialogue topics, generated NPCs, live world/UI publication and production MM6 load remain gated.

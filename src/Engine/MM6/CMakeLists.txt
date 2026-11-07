@@ -36,6 +36,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6HeldItemSaveRuntime.cpp MM6BuffSaveRuntime.cpp MM6HirelingSaveRuntime.cpp MM6HirelingSaveRuntime.h
     MM6RecoverySaveRuntime.cpp MM6RecoverySaveRuntime.h MM6MapSaveValidation.cpp MM6MapSaveValidation.h
     MM6NpcStaticBaseline.cpp MM6NpcStaticBaseline.h
+    MM6IndoorWorldPlan.cpp MM6IndoorWorldPlan.h
     MM6WorldSaveRuntime.cpp MM6WorldSaveRuntime.h
     MM6RawSaveRuntime.cpp MM6RawSaveRuntime.h
     MM6RawCursorShopStage.cpp MM6RawCursorShopStage.h
@@ -146,6 +147,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6PrivateMapSource_ut.cpp Tests/MM6WorldSaveRuntime_ut.cpp
         Tests/MM6NewGameSaveRuntime_ut.cpp
         Tests/MM6NpcStaticBaseline_ut.cpp
+        Tests/MM6IndoorWorldPlan_ut.cpp
         Tests/MM6HirelingRecoveryV2Stage_ut.cpp
         Tests/MM6FirstMapCombatTransientTransaction_ut.cpp
         Tests/MM6FirstMapPersistentEventTransaction_ut.cpp)

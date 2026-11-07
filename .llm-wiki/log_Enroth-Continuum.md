@@ -2336,3 +2336,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added an MM6-only one-shot pre-event scope that publishes the exact ISRT full sprite list after indoor world preparation. The fresh-child reader required exact ISRT recapture after map events and aborted before input; the disposable v2 seed, v6 writer and reader passed 1/1 each.
 - Focused linked v6 checks passed 10/10. Indoor actor runtime ownership, first input, production SaveLoad and graphical acceptance remain open.
+
+## [2026-11-07] implement | Twelve owned MM7 source inputs
+- by: T-Burton-ND via codex
+- Added exact pinned GoogleTest and `gtest_parallel` snapshots with their original licenses and provenance. All 252 original files matched pinned Git blobs; a standalone AppleClang GoogleTest build/test and the parallel runner passed, as did the integration Mac MM7 target build.
+- Eleven gitlinks, seven nested fetches and prebuilt dependency recipes still block a clean offline clone. The optional cpplint snapshot contains a GPLv2 sample and was deferred for license review. The installed MM7 app and private saves were not replaced.

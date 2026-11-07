@@ -12,6 +12,8 @@ A third fresh null-renderer process exercised the v2 test-only load callback aga
 
 The one-shot MM6-only test hook now runs after `DoPrepareWorld(true)` and before timer unpause or first input. Four unit checks passed, and a disposable v1 Main Menu reload control passed 1/1 through the real hook with its slot unchanged; MM7 headless control passed 1/1. The v2 callback does not yet arm this hook with complete final-owner checks, so its Main Menu QuickLoad action remains closed.
 
+A read-only NPC resource identity probe now matches the loaded MM6 static tables and global dialogue topics in a fresh null-renderer process (1/1). The first run hit a test-thread stack edge; heap-owning the large baseline and extra snapshots resolved it, and focused NPC/raw-session tests passed 18/18. Generated NPC identity and game RNG are still outside the saved owner contract.
+
 ## MM7: playable on this M2 Mac
 
 The current integration tree also builds a title-locked `MM7.app` and stages a signed Atlas with `Contents/Helpers/MM7.app`. A wrong-title helper was rejected without changing the previous staged app, and a reuse build retained an identical MM7 helper. This is a build-tree checkpoint; the installed Atlas still has the prior generic helper until a live launch and save check accepts the new bundle. The protected `mm7-isolated-runtime` baseline and both local save profiles remain untouched.

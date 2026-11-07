@@ -14,7 +14,7 @@ The active `mm6-mac-implementation` integration branch has a native EC6 v2 first
 
 A later third fresh headless process passed the [caught v2 load callback gate](MM6-F4-V2-QuickLoad-Callback-Gate.md): exact primary bytes staged, typed publication blockers reported, normal MM6 load guard restored, sampled live owners and slot unchanged. This test invokes the callback directly and does not queue Main Menu QuickLoad. The [full fresh-child owner audit](MM6-F4-V2-Fresh-Child-Owner-Audit.md) identifies the final resource/event/identity checks that must be armed in the post-world hook before any game-loop input.
 
-The one-shot MM6-only test hook now exists directly after `DoPrepareWorld(true)`. Four unit checks and a disposable v1 Main Menu reload control passed; MM7 headless control passed. The v2 callback still does not arm it with complete final-owner checks, so the audit's remaining resource, event and identity gates still apply. A new NPC resource identity helper passed synthetic checks but its first private-backed headless invocation hit a stack crash under investigation; do not treat that resource gate as verified yet.
+The one-shot MM6-only test hook now exists directly after `DoPrepareWorld(true)`. Four unit checks and a disposable v1 Main Menu reload control passed; MM7 headless control passed. The v2 callback still does not arm it with complete final-owner checks, so the audit's remaining resource, event and identity gates still apply. The NPC resource identity helper now passes a private-backed null-renderer check after large baseline snapshots were moved off the test stack. Generated NPC identity and game RNG remain unresolved.
 
 ## Read first
 

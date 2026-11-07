@@ -208,7 +208,8 @@ if(OE_BUILD_TESTS)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_save_runtime)
 
     add_library(test_engine_mm6_atomic_save OBJECT Tests/MM6AtomicSaveFile_ut.cpp)
-    target_link_libraries(test_engine_mm6_atomic_save PUBLIC testing_unit engine_mm6_atomic_save)
+    target_link_libraries(test_engine_mm6_atomic_save PUBLIC testing_unit engine_mm6_atomic_save
+        engine_mm6_save_runtime)
     target_check_style(test_engine_mm6_atomic_save)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_atomic_save)
 

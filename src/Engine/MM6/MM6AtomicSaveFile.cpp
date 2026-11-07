@@ -1,6 +1,9 @@
 #include "MM6AtomicSaveFile.h"
 
+#include <algorithm>
+#include <array>
 #include <cerrno>
+#include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <set>
@@ -23,7 +26,7 @@ namespace {
 
 constexpr std::uintmax_t MAX_SAVE_BYTES = 64 * 1024 * 1024;
 
-enum class SlotSchema { KnownV1, RawV2 };
+enum class SlotSchema { KnownV1, RawV2, FullV3 };
 
 class InvalidSaveFile : public std::runtime_error {
  public:
@@ -57,6 +60,32 @@ bool regularFileExists(const std::filesystem::path &path) {
     return true;
 }
 
+// The atomic layer owns only the v3 envelope and its v2-compatible HEAD.
+// ACTR/GNPC/RNGS payload semantics belong to the required caller validator.
+SaveHeaderFields decodeV3SlotShell(std::span<const std::uint8_t> bytes) {
+    SaveContainer container = decodeSaveContainer(bytes);
+    constexpr std::array<std::array<char, 4>, 3> extraTags = {{
+        {'A', 'C', 'T', 'R'}, {'G', 'N', 'P', 'C'}, {'R', 'N', 'G', 'S'},
+    }};
+    if (container.version != 3 || container.sections.size() != 22)
+        throw std::runtime_error("MM6 v3 slot has wrong version or section count");
+    SaveContainer raw;
+    raw.version = 2;
+    for (const SaveSection &section : container.sections) {
+        if (!section.required)
+            throw std::runtime_error("MM6 v3 slot has an optional section");
+        if (std::find(extraTags.begin(), extraTags.end(), section.tag) == extraTags.end())
+            raw.sections.push_back(section);
+    }
+    if (raw.sections.size() != 19)
+        throw std::runtime_error("MM6 v3 slot lacks one of its required owner sections");
+    for (const auto &tag : extraTags)
+        if (std::none_of(container.sections.begin(), container.sections.end(),
+                         [&tag](const SaveSection &section) { return section.tag == tag; }))
+            throw std::runtime_error("MM6 v3 slot lacks an active owner section");
+    return decodeRawSave(encodeSaveContainer(raw), GameTitle::MM6).metadata.header;
+}
+
 std::vector<std::uint8_t> readBoundedFile(const std::filesystem::path &path) {
     const std::uintmax_t fileSize = std::filesystem::file_size(path);
     if (fileSize > MAX_SAVE_BYTES)
@@ -82,15 +111,52 @@ std::vector<std::uint8_t> readValidatedFile(const std::filesystem::path &path,
             KnownSaveFields fields = decodeKnownSave(bytes);
             if (header)
                 *header = std::move(fields.metadata.header);
-        } else {
+        } else if (schema == SlotSchema::RawV2) {
             RawSaveFields fields = decodeRawSave(bytes, GameTitle::MM6);
             if (header)
                 *header = std::move(fields.metadata.header);
+        } else {
+            if (header)
+                *header = decodeV3SlotShell(bytes);
+            else
+                (void) decodeV3SlotShell(bytes);
         }
     } catch (const std::runtime_error &) {
         throw InvalidSaveFile("MM6 save schema validation failed");
     }
     return bytes;
+}
+
+// A v3 operation must not replace a valid or partially damaged older EC6
+// container under the same basename. Inspect both files before any recovery
+// or write; a bad checksum still leaves the versioned header recognizable.
+void rejectForeignV3SlotFiles(const std::filesystem::path &profileRoot,
+                              std::string_view slotName) {
+    const std::filesystem::path directory = savesDirectory(profileRoot, slotName);
+    const std::filesystem::file_status status = std::filesystem::symlink_status(directory);
+    if (status.type() == std::filesystem::file_type::not_found)
+        return;
+    if (!std::filesystem::is_directory(status))
+        throw std::runtime_error("MM6 v3 saves path is not a native directory");
+    constexpr std::array<std::uint8_t, 8> magic = {'E', 'C', '6', 'S', 'A', 'V', 'E', 0};
+    for (const std::filesystem::path &path : {
+             directory / std::string(slotName),
+             directory / (std::string(slotName) + ".bak")}) {
+        if (!regularFileExists(path))
+            continue;
+        std::ifstream input(path, std::ios::binary);
+        if (!input)
+            throw std::runtime_error("cannot inspect MM6 v3 save file");
+        std::array<std::uint8_t, 10> prefix{};
+        if (!input.read(reinterpret_cast<char *>(prefix.data()), prefix.size()))
+            continue; // Truncated file: normal v3 preflight decides recovery.
+        if (std::equal(magic.begin(), magic.end(), prefix.begin())) {
+            const std::uint16_t version = std::uint16_t(prefix[8]) |
+                                          (std::uint16_t(prefix[9]) << 8);
+            if (version != 3)
+                throw std::runtime_error("MM6 v3 slot contains a foreign EC6 version");
+        }
+    }
 }
 
 std::optional<std::string> slotNameFromFile(std::string name) {
@@ -198,8 +264,10 @@ static void writeAtomicSaveFileForSchema(const std::filesystem::path &profileRoo
 #else
     if (schema == SlotSchema::KnownV1)
         (void) decodeKnownSave(container);
-    else
+    else if (schema == SlotSchema::RawV2)
         (void) decodeRawSave(container, GameTitle::MM6);
+    else
+        (void) decodeV3SlotShell(container);
     const std::filesystem::path directory = savesDirectory(profileRoot, slotName);
     std::filesystem::create_directories(directory);
     const std::filesystem::path primary = directory / std::string(slotName);
@@ -255,6 +323,26 @@ void writeAtomicSaveFile(const std::filesystem::path &profileRoot, std::string_v
 void writeAtomicRawSaveFile(const std::filesystem::path &profileRoot, std::string_view slotName,
                             std::span<const std::uint8_t> container) {
     detail::writeAtomicRawSaveFile(profileRoot, slotName, container, {});
+}
+
+void detail::writeAtomicV3SaveFile(const std::filesystem::path &profileRoot,
+                                   std::string_view slotName,
+                                   std::span<const std::uint8_t> container,
+                                   const SaveCandidateValidator &validate,
+                                   const AtomicSaveFault &fault) {
+    if (!validate)
+        throw std::invalid_argument("MM6 v3 write needs a semantic validator");
+    (void) decodeV3SlotShell(container);
+    validate(container);
+    rejectForeignV3SlotFiles(profileRoot, slotName);
+    writeAtomicSaveFileForSchema(profileRoot, slotName, container, SlotSchema::FullV3, fault);
+}
+
+void writeAtomicV3SaveFile(const std::filesystem::path &profileRoot,
+                           std::string_view slotName,
+                           std::span<const std::uint8_t> container,
+                           const SaveCandidateValidator &validate) {
+    detail::writeAtomicV3SaveFile(profileRoot, slotName, container, validate, {});
 }
 
 detail::SaveSlotRollbackSnapshot detail::snapshotSaveSlotForRollback(
@@ -396,6 +484,16 @@ std::optional<SaveFileCandidate> preflightRecoverableRawSaveFile(
                                                  SlotSchema::RawV2);
 }
 
+std::optional<SaveFileCandidate> preflightRecoverableV3SaveFile(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    const SaveCandidateValidator &validate) {
+    if (!validate)
+        throw std::invalid_argument("MM6 v3 preflight needs a semantic validator");
+    rejectForeignV3SlotFiles(profileRoot, slotName);
+    return preflightRecoverableSaveFileForSchema(profileRoot, slotName, validate,
+                                                 SlotSchema::FullV3);
+}
+
 static std::vector<SaveSlotInfo> listSaveSlotsForSchema(const std::filesystem::path &profileRoot,
                                                         SlotSchema schema) {
 #ifdef _WIN32
@@ -447,6 +545,26 @@ std::vector<SaveSlotInfo> listKnownSaveSlots(const std::filesystem::path &profil
 
 std::vector<SaveSlotInfo> listRawSaveSlots(const std::filesystem::path &profileRoot) {
     return listSaveSlotsForSchema(profileRoot, SlotSchema::RawV2);
+}
+
+std::vector<SaveSlotInfo> listV3SaveSlotsWithPreflight(
+    const std::filesystem::path &profileRoot, const SaveCandidateValidator &validate) {
+    if (!validate)
+        throw std::invalid_argument("MM6 v3 slot list needs a semantic validator");
+    std::vector<SaveSlotInfo> result;
+    for (const SaveSlotInfo &slot : listSaveSlotsForSchema(profileRoot, SlotSchema::FullV3)) {
+        try {
+            auto candidate = preflightRecoverableV3SaveFile(profileRoot, slot.fileName, validate);
+            if (!candidate)
+                continue;
+            SaveHeaderFields header = decodeV3SlotShell(candidate->bytes);
+            result.push_back({slot.fileName, std::move(header),
+                              candidate->needsRecovery});
+        } catch (const InvalidSaveFile &) {
+            // A structural candidate that fails gameplay preflight stays hidden.
+        }
+    }
+    return result;
 }
 
 std::vector<SaveSlotInfo> listRawSaveSlotsWithPreflight(

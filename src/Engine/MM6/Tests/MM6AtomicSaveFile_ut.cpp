@@ -16,10 +16,13 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6AtomicSaveFile.h"
+#include "Engine/MM6/MM6ActiveActorSection.h"
 #include "Engine/MM6/MM6KnownSaveFields.h"
 #include "Engine/MM6/MM6RawSaveFields.h"
 #include "Engine/MM6/MM6SaveContainer.h"
 #include "Engine/MM6/MM6ShopTitleState.h"
+#include "Engine/MM6/MM6V3SaveFields.h"
+#include "Engine/Objects/Actor.h"
 
 namespace {
 
@@ -115,6 +118,18 @@ std::vector<std::uint8_t> malformedRawSave(std::uint8_t marker) {
         }
     }
     throw std::runtime_error("missing synthetic MM6 raw HEAD section");
+}
+
+std::vector<std::uint8_t> sampleV3(std::uint8_t marker) {
+    mm6::V3SaveFields fields;
+    fields.raw = mm6::decodeRawSave(sampleRaw(marker), GameTitle::MM6);
+    fields.raw.metadata.header.displayName = "V3 " + std::to_string(marker);
+    const std::array<Actor, 0> actors{};
+    fields.activeActorPayload = mm6::encodeActiveActorSection(actors, GameTitle::MM6);
+    fields.generatedNpcs.mapName = fields.raw.metadata.header.mapFileName;
+    fields.gameplayRng.type = RANDOM_ENGINE_SEQUENTIAL;
+    fields.gameplayRng.sequentialState = marker;
+    return mm6::encodeV3Save(fields, GameTitle::MM6);
 }
 
 std::vector<std::uint8_t> read(const std::filesystem::path &path) {
@@ -370,5 +385,101 @@ UNIT_TEST(MM6AtomicSaveFile, RawV2WriteFaultsKeepPriorSlot) {
         for (const auto &entry : std::filesystem::directory_iterator(profile.root() / "saves"))
             EXPECT_FALSE(entry.path().filename().string().contains(".tmp."));
     }
+}
+
+UNIT_TEST(MM6AtomicSaveFile, V3SemanticPreflightAndListingStayReadOnly) {
+    TestProfile profile;
+    const auto first = sampleV3(41);
+    const auto second = sampleV3(42);
+    const auto excluded = sampleV3(43);
+    const mm6::SaveCandidateValidator acceptAll = [](std::span<const std::uint8_t>) {};
+    mm6::writeAtomicV3SaveFile(profile.root(), "save001.ec6", first, acceptAll);
+    mm6::writeAtomicV3SaveFile(profile.root(), "save001.ec6", second, acceptAll);
+    mm6::writeAtomicV3SaveFile(profile.root(), "save002.ec6", excluded, acceptAll);
+    EXPECT_THROW((void) mm6::preflightRecoverableV3SaveFile(
+        profile.root(), "save001.ec6", {}), std::exception);
+    EXPECT_THROW((void) mm6::listV3SaveSlotsWithPreflight(profile.root(), {}),
+                 std::exception);
+    const mm6::SaveCandidateValidator acceptOnlyFirst = [](std::span<const std::uint8_t> bytes) {
+        if (mm6::decodeV3Save(bytes, GameTitle::MM6).raw.metadata.header.displayName != "V3 41")
+            throw std::runtime_error("synthetic semantic refusal");
+    };
+    const auto selected = mm6::preflightRecoverableV3SaveFile(
+        profile.root(), "save001.ec6", acceptOnlyFirst);
+    ASSERT_TRUE(selected);
+    EXPECT_EQ(selected->bytes, first);
+    EXPECT_TRUE(selected->needsRecovery);
+    const auto slots = mm6::listV3SaveSlotsWithPreflight(profile.root(), acceptOnlyFirst);
+    ASSERT_EQ(slots.size(), 1u);
+    EXPECT_EQ(slots[0].fileName, "save001.ec6");
+    EXPECT_EQ(slots[0].header.displayName, "V3 41");
+    EXPECT_TRUE(slots[0].needsRecovery);
+    EXPECT_EQ(read(profile.save()), second);
+    EXPECT_EQ(read(profile.backup()), first);
+    EXPECT_EQ(read(profile.root() / "saves/save002.ec6"), excluded);
+    EXPECT_TRUE(mm6::listRawSaveSlotsWithPreflight(profile.root(), acceptAll).empty());
+
+    auto damaged = second;
+    damaged.back() ^= 1; // Same v3 header, invalid section checksum.
+    write(profile.save(), damaged);
+    const auto recoveredCandidate = mm6::preflightRecoverableV3SaveFile(
+        profile.root(), "save001.ec6", acceptAll);
+    ASSERT_TRUE(recoveredCandidate);
+    EXPECT_EQ(recoveredCandidate->bytes, first);
+    EXPECT_TRUE(recoveredCandidate->needsRecovery);
+    EXPECT_EQ(read(profile.save()), damaged); // No automatic repair during preflight.
+}
+
+UNIT_TEST(MM6AtomicSaveFile, V3ForeignVersionsRefuseBeforeDiskMutation) {
+    const mm6::SaveCandidateValidator accept = [](std::span<const std::uint8_t>) {};
+    const auto v3 = sampleV3(51);
+    const auto v2 = sampleRaw(52);
+    const auto v1 = sample(53);
+    for (const auto &foreign : {v1, v2}) {
+        TestProfile profile;
+        std::filesystem::create_directories(profile.root() / "saves");
+        write(profile.save(), foreign);
+        EXPECT_THROW(mm6::writeAtomicV3SaveFile(profile.root(), "save001.ec6", v3, accept),
+                     std::exception);
+        EXPECT_THROW((void) mm6::preflightRecoverableV3SaveFile(
+            profile.root(), "save001.ec6", accept), std::exception);
+        EXPECT_EQ(read(profile.save()), foreign);
+    }
+    TestProfile mixed;
+    mm6::writeAtomicV3SaveFile(mixed.root(), "save001.ec6", v3, accept);
+    write(mixed.backup(), v2);
+    EXPECT_THROW(mm6::writeAtomicV3SaveFile(mixed.root(), "save001.ec6", sampleV3(54), accept),
+                 std::exception);
+    EXPECT_THROW((void) mm6::preflightRecoverableV3SaveFile(
+        mixed.root(), "save001.ec6", accept), std::exception);
+    EXPECT_EQ(read(mixed.save()), v3);
+    EXPECT_EQ(read(mixed.backup()), v2);
+}
+
+UNIT_TEST(MM6AtomicSaveFile, V3FaultLeavesPriorSlotAndRejectsOldWriter) {
+    TestProfile profile;
+    const mm6::SaveCandidateValidator accept = [](std::span<const std::uint8_t>) {};
+    const auto first = sampleV3(61);
+    const auto second = sampleV3(62);
+    mm6::writeAtomicV3SaveFile(profile.root(), "save001.ec6", first, accept);
+    EXPECT_THROW(mm6::writeAtomicV3SaveFile(profile.root(), "save001.ec6", second, {}),
+                 std::exception);
+    EXPECT_THROW(mm6::writeAtomicV3SaveFile(profile.root(), "save001.ec6", second,
+        [](std::span<const std::uint8_t>) {
+            throw std::runtime_error("synthetic semantic refusal");
+        }), std::exception);
+    EXPECT_EQ(read(profile.save()), first);
+    EXPECT_THROW(mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", sampleRaw(63)),
+                 std::exception);
+    EXPECT_THROW(mm6::writeAtomicSaveFile(profile.root(), "save001.ec6", sample(64)),
+                 std::exception);
+    EXPECT_THROW(mm6::detail::writeAtomicV3SaveFile(
+        profile.root(), "save001.ec6", second, accept,
+        [](mm6::detail::AtomicSaveStep step) {
+            if (step == mm6::detail::AtomicSaveStep::BeforePrimaryReplace)
+                throw std::runtime_error("injected v3 write failure");
+        }), std::exception);
+    EXPECT_EQ(read(profile.save()), first);
+    EXPECT_EQ(read(profile.backup()), first);
 }
 #endif

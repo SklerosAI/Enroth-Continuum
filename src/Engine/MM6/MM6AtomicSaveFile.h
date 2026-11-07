@@ -64,6 +64,20 @@ std::optional<SaveFileCandidate> preflightRecoverableRawSaveFile(
     const std::filesystem::path &profileRoot, std::string_view slotName,
     const SaveCandidateValidator &validate);
 
+// Detached EC6 v3 boundary. The validator must stage every gameplay owner,
+// not merely decode the 22-section manifest. V3 refuses a recognizable
+// foreign-version primary or backup before any write or recovery; the read
+// and list paths do not repair disk.
+void writeAtomicV3SaveFile(const std::filesystem::path &profileRoot,
+                           std::string_view slotName,
+                           std::span<const std::uint8_t> container,
+                           const SaveCandidateValidator &validate);
+std::optional<SaveFileCandidate> preflightRecoverableV3SaveFile(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    const SaveCandidateValidator &validate);
+std::vector<SaveSlotInfo> listV3SaveSlotsWithPreflight(
+    const std::filesystem::path &profileRoot, const SaveCandidateValidator &validate);
+
 // Read-only candidate inventory for a future MM6 load menu. Uses the same
 // semantic validator and primary/backup selection as the eventual load. The
 // caller must supply a complete gameplay admission validator before exposing
@@ -100,6 +114,10 @@ void writeAtomicSaveFile(const std::filesystem::path &profileRoot, std::string_v
                          std::span<const std::uint8_t> container, const AtomicSaveFault &fault);
 void writeAtomicRawSaveFile(const std::filesystem::path &profileRoot, std::string_view slotName,
                             std::span<const std::uint8_t> container, const AtomicSaveFault &fault);
+void writeAtomicV3SaveFile(const std::filesystem::path &profileRoot, std::string_view slotName,
+                           std::span<const std::uint8_t> container,
+                           const SaveCandidateValidator &validate,
+                           const AtomicSaveFault &fault);
 
 } // namespace detail
 } // namespace mm6

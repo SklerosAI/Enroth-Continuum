@@ -2509,3 +2509,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Updated the status summary to reflect the published MM7 branch's fresh remote-clone offline build, two distinct five-child MM6 indoor input/replay fixtures, and the detached border Party stage's linked 11/11 check.
 - Kept visible staged MM7 play/save, production MM6 SaveLoad, general indoor maps, live border travel and MM6 Atlas Play open.
+
+## [2026-11-07] verify | MM6 all-source indoor sweep
+- by: T-Burton-ND via codex
+- Added a bounded opt-in headless sweep of every retained indoor BLV/DLV pair. All parsed, preserved native wire bytes, and passed exact default-delta changed-state encoding; high-level variants were classified without publishing map names or per-map inventories.
+- A risk-ranked additional source passed a real-loader pre-event fixture showing that a signed native actor NPC anchor survives reconstruction and is refused by the current GNPC owner. The full v6 writer stopped before candidate creation. The two accepted indoor five-child chains remained 10/10, and an MM7 control passed 1/1; general indoor play and production MM6 SaveLoad remain gated.

@@ -16,6 +16,7 @@
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/MM6/MM6DoorMotionTraceForTest.h"
 #include "Engine/MM6/MM6EventRuntimeSaveFields.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6GeneratedNpcSaveFields.h"
@@ -128,6 +129,7 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                     *pIndoor, projectedBase, GameTitle::MM6);
                 preEventDoorsData = pIndoor->doorsData;
                 rebuiltDelta = pIndoor->mm6DeltaBytes;
+                mm6::testing::requireV6IndoorDoorMotionForTest(parsedBase);
                 captured = true;
             },
             mm6::testing::PreEventCheckpointResult::AbortToMainMenu);
@@ -275,6 +277,8 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
         std::unique_ptr<mm6::testing::ScopedV6PreEventIndoorDecorationReplayForTest> decorations;
         std::unique_ptr<mm6::testing::ScopedV6PreEventIndoorSpriteReplayForTest> sprites;
         std::unique_ptr<mm6::testing::ScopedV6PreEventIndoorActorReplayForTest> actors;
+        std::unique_ptr<mm6::testing::ScopedDoorMotionTraceForTest> doorTrace;
+        std::vector<mm6::testing::V6DoorMotionEventForTest> doorMotionEvents;
         std::unique_ptr<mm6::testing::ScopedPostWorldAdmissionForTest> admission;
         game.runGameRoutine([&] {
             checkpoint.reset();
@@ -304,6 +308,7 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                     GameTitle::MM6, staged->saved.eventRuntime);
                 preEvent = std::make_unique<mm6::testing::ScopedPreEventCheckpointForTest>(
                     GameTitle::MM6, [&] {
+                        mm6::testing::requireV6IndoorDoorMotionForTest(parsedBase);
                         mm6::requireV6IndoorPreEventOwnerAgreement(
                             *staged, mapName, pActors, pSpriteObjects,
                             pLevelDecorations, GameTitle::MM6);
@@ -320,6 +325,11 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                         GameTitle::MM6, staged->saved.runtimeActors,
                         staged->saved.actors, staged->saved.generatedNpcs,
                         staged->saved.gameplayRng, true);
+                doorTrace = std::make_unique<mm6::testing::ScopedDoorMotionTraceForTest>(
+                    GameTitle::MM6, [&](const BLVDoor &door) {
+                        mm6::testing::recordV6IndoorDoorMotionForTest(
+                            &doorMotionEvents, door);
+                    });
                 admission = std::make_unique<mm6::testing::ScopedPostWorldAdmissionForTest>(
                     GameTitle::MM6, [&] {
                         if (!preEvent->reachedMapLoad() || preEvent->reachedInput() ||
@@ -332,7 +342,7 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                             engine->_pendingTransition || pPartyActionQueue->uNumActions != 0)
                             throw std::runtime_error("MM6 v6 indoor input reached unexpected world order");
                         mm6::testing::requireV6IndoorNativeResidualsForTest(
-                            parsedBase, preEventDoorsData);
+                            parsedBase, preEventDoorsData, false, doorMotionEvents);
                         const auto raw = mm6::testing::captureV6IndoorLiveRawOwnersForTest(
                             staged->saved.raw, mapName);
                         mm6::testing::requireV6IndoorRawSectionsEqualForTest(
@@ -412,13 +422,13 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                         !engine->_pendingTransition;
                     if (movementApplied && writeAfterInput) {
                         try {
-                            const auto visibleDelta =
-                                mm6::testing::captureV6IndoorVisibleDeltaForTest(
-                                    parsedBase, preEventDoorsData);
+                            const auto observedDelta =
+                                mm6::testing::captureV6IndoorObservedDeltaForTest(
+                                    parsedBase, preEventDoorsData, doorMotionEvents);
                             auto saved = std::make_unique<mm6::V6IndoorSaveFields>(
                                 staged->saved);
                             saved->raw = *mm6::testing::captureV6IndoorLiveRawOwnersForTest(
-                                staged->saved.raw, mapName, visibleDelta);
+                                staged->saved.raw, mapName, observedDelta);
                             saved->generatedNpcs = mm6::captureGeneratedNpcFields(
                                 pActors, *pNPCStats, mapName, GameTitle::MM6);
                             saved->gameplayRng = mm6::captureGameplayRngFields(
@@ -496,6 +506,7 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
         }
         game.runGameRoutine([&] {
             admission.reset();
+            doorTrace.reset();
             decorations.reset();
             sprites.reset();
             actors.reset();
@@ -542,6 +553,7 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
     std::unique_ptr<mm6::testing::ScopedV6PreEventIndoorDecorationReplayForTest> liveReplay;
     std::unique_ptr<mm6::testing::ScopedV6PreEventIndoorSpriteReplayForTest> liveSpriteReplay;
     std::unique_ptr<mm6::testing::ScopedV6PreEventIndoorActorReplayForTest> liveActorReplay;
+    std::vector<mm6::testing::V6DoorMotionEventForTest> doorMotionEvents;
     game.runGameRoutine([&] {
         try {
             checkpoint.reset(); // Tear down its game-thread-local scope here.
@@ -566,6 +578,7 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                 GameTitle::MM6, staged->saved.eventRuntime);
             worldCheckpoint = std::make_unique<mm6::testing::ScopedPreEventCheckpointForTest>(
                 GameTitle::MM6, [&] {
+                    mm6::testing::requireV6IndoorDoorMotionForTest(parsedBase);
                     mm6::requireV6IndoorPreEventOwnerAgreement(
                         *staged, mapName, pActors, pSpriteObjects, pLevelDecorations,
                         GameTitle::MM6);
@@ -582,6 +595,11 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
                     GameTitle::MM6, staged->saved.runtimeActors,
                     staged->saved.actors, staged->saved.generatedNpcs,
                     staged->saved.gameplayRng, postWorldReader);
+            mm6::testing::ScopedDoorMotionTraceForTest doorTrace(
+                GameTitle::MM6, [&](const BLVDoor &door) {
+                    mm6::testing::recordV6IndoorDoorMotionForTest(
+                        &doorMotionEvents, door);
+                });
             mm6::ScopedChestMapLoadOptIn chestOptIn(true);
             DoPrepareWorld(true, 1);
             if (!worldCheckpoint->reachedMapLoad() || worldCheckpoint->reachedInput() ||
@@ -610,7 +628,7 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
             if (postWorldReader) {
                 if (liveSessionReader) {
                     mm6::testing::requireV6IndoorNativeResidualsForTest(
-                        parsedBase, preEventDoorsData);
+                        parsedBase, preEventDoorsData, false, doorMotionEvents);
                     const auto observedRaw = mm6::testing::captureV6IndoorLiveRawOwnersForTest(
                         staged->saved.raw, mapName);
                     mm6::testing::requireV6IndoorRawSectionsEqualForTest(

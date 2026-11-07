@@ -53,13 +53,55 @@ inline void requireV6IndoorRawSectionsEqualForTest(
     }
 }
 
+struct V6DoorMotionEventForTest {
+    std::size_t slot;
+    BLVDoor_MM7 after;
+    std::vector<std::int16_t> doorsData;
+};
+
+inline void recordV6IndoorDoorMotionForTest(
+    std::vector<V6DoorMotionEventForTest> *events, const BLVDoor &door) {
+    if (!events || !pIndoor || events->size() >= 512)
+        throw std::runtime_error("MM6 v6 indoor door motion trace exceeded native bounds");
+    const auto current = std::find_if(pIndoor->doors.begin(), pIndoor->doors.end(),
+        [&door](const BLVDoor &entry) { return &entry == &door; });
+    if (current == pIndoor->doors.end())
+        throw std::runtime_error("MM6 v6 indoor door motion trace lost native slot");
+    BLVDoor_MM7 after{};
+    snapshot(door, &after);
+    events->push_back({
+        static_cast<std::size_t>(current - pIndoor->doors.begin()),
+        after, pIndoor->doorsData});
+}
+
 // IART, ISRT, IDRT, IFOV, and EVRT own their separate mutable state. Every
 // remaining live DLV field must still equal its retained native sidecar here;
 // a changed chest, door, outline, or reset counter needs a new exact owner.
+inline void requireV6IndoorDoorMotionForTest(const MM6IndoorSnapshot &base) {
+    if (!pIndoor || pIndoor->mm6DeltaBytes.empty())
+        throw std::runtime_error("MM6 v6 indoor door check lacks DLV sidecar");
+    auto native = decodeMM6IndoorRuntimeDelta(
+        Blob::view(pIndoor->mm6DeltaBytes.data(), pIndoor->mm6DeltaBytes.size()), base);
+    if (native.doors.size() != pIndoor->doors.size())
+        throw std::runtime_error("MM6 v6 indoor pre-event door count changed");
+    for (std::size_t slot = 0; slot < native.doors.size(); ++slot) {
+        BLVDoor_MM7 live{};
+        snapshot(pIndoor->doors[slot], &live);
+        const auto &source = native.doors[slot];
+        if (live.timeSinceTriggered != source.timeSinceTriggered && live.state != source.state)
+            throw std::runtime_error("MM6 v6 indoor pre-event door state and clock changed");
+        if (live.timeSinceTriggered != source.timeSinceTriggered)
+            throw std::runtime_error("MM6 v6 indoor pre-event door clock changed");
+        if (live.state != source.state)
+            throw std::runtime_error("MM6 v6 indoor pre-event door state changed");
+    }
+}
+
 inline void requireV6IndoorNativeResidualsForTest(
     const MM6IndoorSnapshot &base,
     std::span<const std::int16_t> preEventDoorsData,
-    bool allowNewVisibleOutlines = false) {
+    bool allowNewVisibleOutlines = false,
+    std::span<const V6DoorMotionEventForTest> doorMotionEvents = {}) {
     if (!pIndoor || pIndoor->mm6DeltaBytes.empty())
         throw std::runtime_error("MM6 v6 indoor residual check lacks DLV sidecar");
     auto native = decodeMM6IndoorRuntimeDelta(
@@ -89,10 +131,13 @@ inline void requireV6IndoorNativeResidualsForTest(
         throw std::runtime_error("MM6 v6 indoor DLV chest count changed");
     if (native.doors.size() != pIndoor->doors.size())
         throw std::runtime_error("MM6 v6 indoor DLV door count changed");
-    if (native.doorsData.size() != preEventDoorsData.size() ||
-        !std::equal(preEventDoorsData.begin(), preEventDoorsData.end(),
-                    pIndoor->doorsData.begin(), pIndoor->doorsData.end()))
-        throw std::runtime_error("MM6 v6 indoor door words changed after pre-event load");
+    if (native.doorsData.size() != preEventDoorsData.size())
+        throw std::runtime_error("MM6 v6 indoor door word count changed");
+    if (!std::equal(preEventDoorsData.begin(), preEventDoorsData.end(),
+                    pIndoor->doorsData.begin(), pIndoor->doorsData.end()) &&
+        (doorMotionEvents.empty() ||
+         doorMotionEvents.back().doorsData != pIndoor->doorsData))
+        throw std::runtime_error("MM6 v6 indoor door words lack traced source update");
     std::size_t cursor = 0;
     for (const BLVDoor_MM7 &door : native.doors) {
         const std::size_t identifiers = std::size_t(door.numVertices) +
@@ -141,24 +186,41 @@ inline void requireV6IndoorNativeResidualsForTest(
             live.numSectors != source.numSectors || live.numOffsets != source.numOffsets)
             throw std::runtime_error("MM6 v6 indoor door geometry lacks exact DLV owner");
         if (live.timeSinceTriggered != source.timeSinceTriggered ||
-            live.state != source.state)
-            throw std::runtime_error("MM6 v6 indoor door motion lacks exact DLV owner");
+            live.state != source.state) {
+            const auto event = std::find_if(doorMotionEvents.rbegin(),
+                doorMotionEvents.rend(), [slot](const V6DoorMotionEventForTest &entry) {
+                    return entry.slot == slot;
+                });
+            if (event == doorMotionEvents.rend())
+                throw std::runtime_error(
+                    "MM6 v6 indoor door motion lacks traced source update");
+            if (live.timeSinceTriggered != event->after.timeSinceTriggered ||
+                live.state != event->after.state)
+                throw std::runtime_error(
+                    "MM6 v6 indoor door motion changed after traced source update");
+        }
     }
 }
 
-// Indoor minimap drawing reveals native outline bits during real input. Patch
-// only the DLV visibility section after the strict residual gate above; all
-// opaque DLV bytes and other source sections stay verbatim.
-inline std::vector<std::uint8_t> captureV6IndoorVisibleDeltaForTest(
+// Indoor minimap drawing reveals native outline bits during real input, and
+// moving doors advance under BLV_UpdateDoors. Patch only those exact native
+// fields after checking every other DLV owner and tracing source updates.
+inline std::vector<std::uint8_t> captureV6IndoorObservedDeltaForTest(
     const MM6IndoorSnapshot &base,
-    std::span<const std::int16_t> preEventDoorsData) {
-    requireV6IndoorNativeResidualsForTest(base, preEventDoorsData, true);
+    std::span<const std::int16_t> preEventDoorsData,
+    std::span<const V6DoorMotionEventForTest> doorMotionEvents = {}) {
+    requireV6IndoorNativeResidualsForTest(
+        base, preEventDoorsData, true, doorMotionEvents);
     auto native = decodeMM6IndoorRuntimeDelta(
         Blob::view(pIndoor->mm6DeltaBytes.data(), pIndoor->mm6DeltaBytes.size()), base);
-    native.wire.replaceSection(MM6IndoorSectionKind::Visibility,
-        Blob::copy(pIndoor->_visible_outlines.data(),
-                   pIndoor->_visible_outlines.size()));
-    const Blob encoded = serializeMM6Indoor(native.wire);
+    native.visibleOutlines = pIndoor->_visible_outlines;
+    for (std::size_t slot = 0; slot < native.doors.size(); ++slot) {
+        BLVDoor_MM7 live{};
+        snapshot(pIndoor->doors[slot], &live);
+        native.doors[slot].timeSinceTriggered = live.timeSinceTriggered;
+        native.doors[slot].state = live.state;
+    }
+    const Blob encoded = encodeMM6IndoorRuntimeDelta(native, base);
     const auto *data = static_cast<const std::uint8_t *>(encoded.data());
     std::vector<std::uint8_t> result(data, data + encoded.size());
     const auto verified = decodeMM6IndoorRuntimeDelta(
@@ -166,7 +228,30 @@ inline std::vector<std::uint8_t> captureV6IndoorVisibleDeltaForTest(
     if (verified.visibleOutlines != pIndoor->_visible_outlines ||
         verified.respawnCount != native.respawnCount ||
         verified.lastRespawnDay != native.lastRespawnDay)
-        throw std::runtime_error("MM6 v6 indoor outline DLV patch did not round-trip");
+        throw std::runtime_error("MM6 v6 indoor motion DLV patch did not round-trip");
+    for (std::size_t slot = 0; slot < native.doors.size(); ++slot)
+        if (verified.doors[slot].state != native.doors[slot].state ||
+            verified.doors[slot].timeSinceTriggered !=
+                native.doors[slot].timeSinceTriggered)
+            throw std::runtime_error("MM6 v6 indoor door DLV patch did not round-trip");
+    for (const MM6IndoorSection &section : native.wire.sections) {
+        const Blob &after = verified.wire.section(section.kind).bytes;
+        if (after.size() != section.bytes.size())
+            throw std::runtime_error("MM6 v6 indoor DLV patch changed section length");
+        if (section.kind == MM6IndoorSectionKind::Visibility)
+            continue;
+        const auto *beforeBytes = static_cast<const std::uint8_t *>(section.bytes.data());
+        const auto *afterBytes = static_cast<const std::uint8_t *>(after.data());
+        for (std::size_t offset = 0; offset < after.size(); ++offset) {
+            const std::size_t word = offset % 80;
+            const bool ownedDoorMotion =
+                section.kind == MM6IndoorSectionKind::DoorRecords &&
+                ((word >= 8 && word < 12) || (word >= 76 && word < 80));
+            if (!ownedDoorMotion && beforeBytes[offset] != afterBytes[offset])
+                throw std::runtime_error(
+                    "MM6 v6 indoor DLV patch changed unowned native bytes");
+        }
+    }
     return result;
 }
 

@@ -1,7 +1,8 @@
 # MM6 EC6 v6 indoor first-input cycle
 
 Status, 2026-11-07: a **test-only, five-process, headless** indoor save/replay
-cycle passed on the integration build. Each child passed **1/1**: disposable
+cycle passed for each of two distinct indoor source cases. Each child passed
+**1/1**: disposable
 v2 seed, v4 first-map baseline, v6 live indoor writer, real-loop first-input
 writer, and a fresh-child reader of the post-input v6 candidate. The earlier
 four-process chain with a read-only first-input child also passed **1/1 per
@@ -28,15 +29,20 @@ strict refusal. The focused resistance suite passed **2/2**, the original
 first-indoor five-process cycle passed **1/1 per child**, and the MM7 headless
 `Prs.Pr2354` control passed **1/1** after the changes.
 
-The second map's fresh-child first-input process then **refused before input**:
-its post-world door motion state differs from the retained DLV while door
-geometry and array shape remain exact. The current v6 candidate has no proven
-owner or replay rule for that changed state. No post-input second-map slot or
-reader result was produced. Determine whether the difference arises from map
-events or loader normalization, capture only supported door state/time fields
-with an exact native round trip, and require saved/live agreement before
-trying input again. Do not relax the residual check or infer general indoor
-playability from the writer pass.
+The second case now also passes the fresh-child first-input/post-input writer
+and a distinct fresh-child reader of that post-input candidate, **1/1 each**.
+The second pre-event checkpoint and post-world admission confirm native DLV
+door state and clock still match after `BLV_InitialiseDoors` and map reload.
+The selected door is already moving; `BLV_UpdateDoors` advances its motion
+during the bounded input ticks. Reload door-action calls did not change its
+state or clock in this case. An MM6-only test scope records the resulting door
+state, clock and door-word array at each source action or update. The strict
+residual gate accepts a changed door only when its live motion and door words
+match that trace. The post-input writer patches only native DLV visibility and
+the established door state/clock bytes, checks that
+all other native bytes remain identical, and decodes the result again. This
+is evidence for the two selected maps and three bounded input ticks; it does
+not establish all indoor maps or general save support.
 
 ## Source-backed transaction
 
@@ -49,8 +55,9 @@ playability from the writer pass.
 2. The first-input child reconstructs the source DLV and pre-event face base,
    stages the immutable live-session candidate, and uses the Main Menu
    QuickLoad route into the real `Game::gameLoop`. The one-shot post-world
-   callback requires exact raw sections, native chest/door/reset residuals,
-   GNPC and RNG, and IART/ISRT/IDRT recapture before it permits input. It then
+   callback requires exact raw sections, native chest/reset residuals, native
+   door geometry and either original or traced door motion, GNPC and RNG, and
+   IART/ISRT/IDRT recapture before it permits input. It then
    queues one left turn and one forward walk for three bounded ticks and
    requires both yaw and position to change with an empty action queue.
 3. The post-input writer captures every represented owner from that settled
@@ -72,18 +79,21 @@ The real-loop minimap may reveal outlines while turning or walking.
 `_visible_outlines` changes through the indoor minimap and map-book paths;
 the DLV reset counters do not change during these ticks. The post-input
 capture permits only monotonic newly visible bits backed by live map-outline
-flags, replaces exactly the native DLV Visibility section, and verifies the
-patched DLV decodes with the same reset values. Chest records, doors and
-opaque DLV sections remain source anchored. This is a v6 test capture rule,
-not a change to older v1–v5 formats.
+flags. Moving doors are admitted only after a source-native action/update
+trace matches the live state, clock and door-word array. The bounded writer
+changes the DLV Visibility section and the door record's state/clock words,
+then verifies the decoded values and byte identity of every other field.
+Chest records, door geometry and opaque DLV sections remain source anchored.
+This is a v6 test capture rule, not a change to older v1–v5 formats.
 
 ## Reproduction and boundaries
 
-The accepted first-case sequence uses five separate `OpenEnroth_GameTest` child processes, each
+Each accepted source case uses five separate `OpenEnroth_GameTest` child processes, each
 with `--game mm6 --headless`, private local `--data-path` and `--rules-path`,
 `--test-path test/Data`, and a fresh 0700 system-temp profile containing a
 0700 `saves/` directory. The disabled tests require explicit environment
 opt-ins. The writer uses `ENROTH_MM6_V6_INDOOR_STAGE_ENABLE=strict-indoor-v6-live-session-write`;
+the second source case also sets `ENROTH_MM6_V6_INDOOR_CASE=second`;
 the input writer and final reader use
 `ENROTH_MM6_V6_INDOOR_READER_ENABLE=strict-indoor-v6-first-input-writer` and
 `strict-indoor-v6-after-input-reader`, respectively. The source of truth is

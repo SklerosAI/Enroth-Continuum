@@ -14,9 +14,10 @@ The [MM6 indoor v6 input cycle](MM6-F4-V6-Indoor-Input-Cycle.md) passed five
 fresh headless children through a real-loop turn/walk, atomic post-input
 candidate and exact fresh-child replay. This is one test-only fixture;
 production MM6 SaveLoad, graphical indoor play and Atlas MM6 Play remain
-closed. A [second indoor case](MM6-F4-V6-Indoor-Input-Cycle.md) passes its
-live-session writer after MM6-only actor-resistance and null-decoration fixes,
-then refuses fresh-child input on a changed door-motion owner. The dedicated
+closed. A [second indoor case](MM6-F4-V6-Indoor-Input-Cycle.md) now passes the
+same five-child test cycle after MM6-only actor-resistance, null-decoration,
+and traced native door-motion fixes. The strict door gate preserves native
+geometry and all unowned DLV bytes; broader indoor saves remain open. The dedicated
 one-command MM7 [clean tracked-source build](MM7-Clean-Offline-Build.md)
 linked and packaged under network denial, but its staged helper has not passed
 graphical save/reload. A separate [hidden OpenGL GameTest](MM7-Offscreen-Frame-Capture.md)

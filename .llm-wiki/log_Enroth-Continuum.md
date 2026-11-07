@@ -2042,3 +2042,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a strict deterministic seed input to the disabled no-disk, null-renderer Create Party probe and sampled nine separate loaded-table draws without saving a profile.
 - All 180 sampled items passed the bounded raw seed (155 plain, 25 standard-bonus); two seeds repeated with identical aggregate counts. Two seeds were rerun from integration and passed. Other draws and original-game record parity remain unproved.
+
+## [2026-11-07] integrate | MM6 NPC resource identity gate
+- by: T-Burton-ND via codex
+- Added a read-only source join across six loaded MM6 NPC resources, the fresh baseline, staged and live static tables, global topics and mutable RESC fields. Generated NPC identities and game RNG remain explicit blockers.
+- Two linked synthetic tests passed. A private loaded-table runtime check and final post-map NPC identity remain open; no live owner was changed.

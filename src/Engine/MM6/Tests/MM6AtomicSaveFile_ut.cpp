@@ -521,6 +521,11 @@ UNIT_TEST(MM6AtomicSaveFile, V4TestWriterRequiresDisposablePathAndSemanticCallba
     mm6::writeAtomicV4SaveFileForTest(profile.root(), "candidate-v4.ec6", replacement, accept);
     EXPECT_EQ(read(slot), replacement);
     EXPECT_EQ(read(slot.string() + ".bak"), candidate);
+    const auto afterAction = profile.root() / "saves/candidate-v4-after-action.ec6";
+    mm6::writeAtomicV4SaveFileForTest(
+        profile.root(), "candidate-v4-after-action.ec6", candidate, accept);
+    EXPECT_EQ(read(afterAction), candidate);
+    EXPECT_EQ(read(slot), replacement); // Separate test slots cannot overwrite each other.
 }
 
 UNIT_TEST(MM6AtomicSaveFile, V4ForeignPrimaryAndBackupRefuseBeforeMutation) {

@@ -73,7 +73,8 @@ void writeAtomicV3SaveFile(const std::filesystem::path &profileRoot,
                            std::span<const std::uint8_t> container,
                            const SaveCandidateValidator &validate);
 
-// Test-only v4 candidate writer. It accepts only candidate-v4.ec6 in an
+// Test-only v4 candidate writer. It accepts only candidate-v4.ec6 or
+// candidate-v4-after-action.ec6 in an
 // owner-only mm6-restart-* directory immediately under the system temp root.
 // The required callback must stage all live v4 owners before any file change.
 void writeAtomicV4SaveFileForTest(const std::filesystem::path &profileRoot,

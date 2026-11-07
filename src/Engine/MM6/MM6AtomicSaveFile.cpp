@@ -185,7 +185,9 @@ void rejectForeignSlotFiles(const std::filesystem::path &profileRoot,
 
 void requireDisposableV4Destination(const std::filesystem::path &profileRoot,
                                     std::string_view slotName) {
-    if (slotName != "candidate-v4.ec6" || !profileRoot.is_absolute() ||
+    if ((slotName != "candidate-v4.ec6" &&
+         slotName != "candidate-v4-after-action.ec6") ||
+        !profileRoot.is_absolute() ||
         profileRoot.lexically_normal() != profileRoot ||
         std::filesystem::is_symlink(std::filesystem::symlink_status(profileRoot)))
         throw std::invalid_argument("MM6 v4 test writer requires its disposable slot");

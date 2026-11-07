@@ -2316,3 +2316,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A disposable three-process chain passed v2 seed, strict first-map v4 admission and a fresh-child real `GAME_STATE_CHANGE_LOCATION`/`PrepareWorld` transition into the second outdoor map at 1/1 each. Target map owner/cache checks and bounded input passed; a one-shot MM6-only test autosave intercept left every profile save file byte-identical. Focused intercept units passed 3/3.
 - The target load exposed stale derived chest positions carried from the source map. MM6 now clears that field before target chest reconstruction while preserving the strict generation guard. Border routing, travel UI, durable autosave, production SaveLoad and campaign play remain open.
+
+## [2026-11-07] implement | Seven owned MM7 source inputs
+- by: T-Burton-ND via codex
+- Added exact pinned, license-preserving snapshots for `small_vector`, `cmrc` and `cli11` alongside the four earlier inputs. All 379 newly copied original files matched pinned Git blobs; a standalone AppleClang C++20 build/run passed, and the cached-input Mac MM7 target linked.
+- Sixteen gitlinks, nested source fetches and prebuilt dependency families still block a clean offline clone. The installed MM7 app and private saves were not replaced.

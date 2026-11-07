@@ -11,7 +11,15 @@ Three linked synthetic tests passed, including full v2 candidate composition.
 This removes the missing raw-carrier
 obstacle for supported starter draws only. It rejects unsupported specials,
 potions, artifacts, equipment placement and any seeded Item whose decoded
-logical fields differ. Native original-game byte parity, actual loaded-table
+logical fields differ. Native original-game byte parity, further loaded-table
 creation outcomes, all-owner first-map commit and fresh-process live reload
 remain open. Do not open the normal MM6 New Game or SaveLoad guards based on
 this seed alone.
+
+The later isolated loaded-table Create Party GameTest passed twice with
+sequential RNG: the complete Party and all **20/20** starter items passed the
+adapter (**16 plain, 4 standard-bonus, zero rejected**). The null-platform
+test wrote no save slot and host monitors observed no on-screen game window or
+focus change. This samples one deterministic creation draw; other possible
+ring outcomes and original native record parity remain unproved. See the
+implementation packet for the test seam and exact limits.

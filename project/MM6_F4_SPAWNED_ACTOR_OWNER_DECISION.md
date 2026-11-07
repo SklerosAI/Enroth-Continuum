@@ -4,6 +4,9 @@ Status, 2026-11-07: choose a versioned, MM6-only EC6 runtime actor owner
 candidate for newly spawned outdoor actors. This is a design direction, not
 an admitted save version or a live writer/loader. Unsupported actor fields
 must cause an explicit refusal until their round-trip behavior is proved.
+The later [baseline actor audit](MM6_F4_BASELINE_ACTOR_SAVE_AUDIT.md) shows
+that spawned-only ownership is insufficient for durable gameplay saves;
+the actor scope must be revisited before live promotion.
 
 The current native DDM decoder projects selected fields from each 548-byte
 actor record into `Actor`. It omits the 196..419 buff/status/item region,

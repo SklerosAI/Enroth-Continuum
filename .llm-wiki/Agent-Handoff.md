@@ -34,6 +34,8 @@ The detached [SPAW v1 runtime section](MM6-F4-Spawned-Actor-Section.md) passed 4
 
 A detached [EC6 v3 exact manifest](MM6-F4-EC6-V3-Manifest.md) now requires the nineteen v2 owners plus SPAW, GNPC and RNGS. Linked v3/v2/SPAW suites passed 12/12. V1/v2 decoders remain strict; no v3 atomic slot, map-stage first-slot/no-respawn binding, pre-event publisher or production loader exists. The v2 bootstrap refusal remains in force.
 
+The [baseline actor save audit](MM6-F4-Baseline-Actor-Save-Audit.md) supersedes any implication that spawned-only SPAW plus v3 is enough for gameplay saves: the DDM writer omits original actor mutations, and a fresh-process full-list runtime capture refused `missing-mm6-resistance` (0/1). The appended-spawn-only probe remains 1/1. Do not promote v3 to a disk or live route until a full active actor owner or strict baseline replay-equivalence refusal is proved.
+
 ## Read first
 
 1. Run `git status --short --branch`, `git worktree list`, and `git log -1 --oneline` in the checkout you intend to use. The branch and worktree descriptions below may drift.

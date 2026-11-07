@@ -12,6 +12,10 @@ describes a detached exact EC6 v3 container: the nineteen strict v2 owners
 plus required SPAW, GNPC and RNGS. Its linked v3/v2/SPAW focused suites
 passed 12/12. V1/v2 readers retain their old meanings and v3 rejects them.
 
+The later [baseline actor audit](MM6-F4-Baseline-Actor-Save-Audit.md) shows
+that SPAW-only v3 cannot preserve changed original actors. Treat this as a
+structural candidate and revisit the actor owner before any live promotion.
+
 The SPAW owner is validated for canonical wire shape, including zero rows;
 GNPC and RNGS use their bounded version-one codecs, and GNPC must name the
 HEAD map. The manifest does not bind SPAW's first slot to the native active

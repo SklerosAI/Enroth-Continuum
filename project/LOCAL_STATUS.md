@@ -975,3 +975,11 @@ regression and SPAW suites passed **12/12**. It validates each new payload
 and the GNPC/HEAD map join, but does not bind SPAW's first slot to the native
 DDM baseline, prove no-respawn replay, or expose a v3 atomic disk route.
 V1/v2 remain strict and cannot be silently loaded as v3.
+
+A [baseline actor save audit](MM6_F4_BASELINE_ACTOR_SAVE_AUDIT.md) found that
+the DDM writer omits significant changed runtime fields for original actors.
+A disposable full-list runtime capture refused `missing-mm6-resistance`
+(**0/1**) because the native baseline projection lacks that optional field;
+the spawned-only capture remains **1/1**. SPAW-only v3 is therefore a
+structural candidate, not a durable gameplay schema. Exact baseline actor
+provenance or an exhaustive refusal gate is required before live use.

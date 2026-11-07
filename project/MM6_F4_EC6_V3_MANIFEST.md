@@ -5,6 +5,11 @@ regression and SPAW suites passed **12/12** in integration. No atomic slot
 writer/reader, menu route, game-loop publication or first-input admission
 uses this version yet.
 
+The later [baseline actor audit](MM6_F4_BASELINE_ACTOR_SAVE_AUDIT.md) shows
+that a spawned-only SPAW owner cannot preserve original actors' runtime
+mutations. This exact manifest is a structural candidate, **not** the final
+durable gameplay schema; revisit its actor owner before live promotion.
+
 The exact required set has the existing nineteen v2 owners plus `SPAW`,
 `GNPC` and `RNGS`: `PART CHAR QEST EFFT INVR HEAD TIME UIST VISU MAPS RESC
 RSTS HELD BUFF HIRE RCVR CHST SCLK SHOP SPAW GNPC RNGS`. Every section is

@@ -11,6 +11,9 @@ decided_at: 2026-11-07
 This decision gives newly spawned MM6 outdoor actors an exact-slot,
 versioned EC6 runtime owner candidate. See the
 [source-backed design packet](../project/MM6_F4_SPAWNED_ACTOR_OWNER_DECISION.md).
+The later [baseline actor audit](MM6-F4-Baseline-Actor-Save-Audit.md) narrows
+this decision: spawned-only coverage cannot support durable gameplay saves.
+Revisit the actor scope before a live manifest or loader is admitted.
 
 ## Question
 

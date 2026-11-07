@@ -1942,3 +1942,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a detached MM6 NPC static-table loader and required its typed result in v2 session preflight, so saved RESC rows cannot inherit static data from an unrelated live NPCStats. The loader leaves global NPC topics untouched.
 - Linked NPC/raw/outdoor checks passed 13/13. Global dialogue topics, generated NPCs, live world/UI publication and production MM6 load remain gated.
+
+## [2026-11-06] verify | MM6 loaded NPC baseline
+- by: T-Burton-ND via codex
+- Added a null-platform MM6 check that builds the fresh v2 NPC baseline from the selected private ResourceManager and compares its static NPC rows and profession totals with the initialized MM6 tables without printing or storing source content.
+- The private-backed headless check passed 1/1; an initial assertion incorrectly equated the active source count to the full fixed array size and was corrected. Dialogue, generated NPC state and graphical acceptance remain open.

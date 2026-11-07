@@ -15,4 +15,6 @@ This owner is not attached to `Party`. `Party::takeHoldingItem()` resets the sha
 
 The synthetic focused tests validate exact byte retention, MM6 title isolation, invalid-owner rejection and late staging without source mutation. They are code-level evidence only, not a live cursor or saved-campaign check.
 
+The later [cursor/shop handoff](MM6-F4-Raw-Cursor-Shop-Handoff.md) checks this owner against decoded `HELD` v2 and the separate `SHOP`/`SCLK` owner before any live publication.
+
 See also: [Raw Held Item Section](MM6-F4-Raw-Held-Item-Section.md), [Raw Item Transfer Semantics](MM6-F4-Raw-Item-Transfer-Semantics.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

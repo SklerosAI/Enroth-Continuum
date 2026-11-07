@@ -23,6 +23,7 @@
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
 #include "Engine/MM6/MM6PostWorldOwnerValidator.h"
 #include "Engine/MM6/MM6RawChildPublicationForTest.h"
+#include "Engine/MM6/MM6RawCursorImagePlan.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/MM6/MM6RawSessionStage.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
@@ -39,6 +40,7 @@
 #include "Engine/Tables/TileTable.h"
 #include "Engine/Timer.h"
 #include "GUI/GUIMessageQueue.h"
+#include "Io/Mouse.h"
 
 namespace {
 
@@ -70,7 +72,7 @@ std::vector<std::uint8_t> slotBytes(const std::filesystem::path &path) {
 // The only publication is inside this disposable process, and the one-shot
 // hook always aborts before timer unpause or input. Production SaveLoad stays
 // guarded even when all represented owners match.
-GAME_TEST(MM6RawV2FirstMapHeadless, DISABLED_QuickLoadPublishesThenAbortsBeforeInput) {
+GAME_TEST(MM6RawV2FirstMapHeadless, DISABLED_BootstrapQuickLoadRefusesRespawnBeforeInput) {
     const std::filesystem::path profile = disposableProfile();
     if (profile.empty())
         GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to an owner-only v2 profile";
@@ -86,7 +88,9 @@ GAME_TEST(MM6RawV2FirstMapHeadless, DISABLED_QuickLoadPublishesThenAbortsBeforeI
     bool postWorldRan = false;
     bool rebuiltFirstMap = false;
     bool finalOwnerCheckPassed = false;
+    bool cursorReady = false;
     std::string finalOwnerRefusal;
+    std::string cursorRefusal;
     std::unique_ptr<mm6::StagedRawSessionFields> staged;
     std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
     std::unique_ptr<mm6::testing::ScopedPostWorldAdmissionForTest> admission;
@@ -155,6 +159,27 @@ GAME_TEST(MM6RawV2FirstMapHeadless, DISABLED_QuickLoadPublishesThenAbortsBeforeI
                         finalOwnerCheckPassed = true;
                     } catch (const std::exception &error) {
                         finalOwnerRefusal = error.what();
+                        const auto &plan = *staged->outdoorPlan;
+                        finalOwnerRefusal += " actors saved/sidecar/live=" +
+                            std::to_string(plan.savedDelta.actors.size()) + "/" +
+                            std::to_string(plan.activeSidecar.actors.size()) + "/" +
+                            std::to_string(pActors.size());
+                        finalOwnerRefusal += " sprites saved/sidecar/live=" +
+                            std::to_string(plan.savedDelta.spriteObjects.size()) + "/" +
+                            std::to_string(plan.activeSidecar.spriteObjects.size()) + "/" +
+                            std::to_string(pSpriteObjects.size());
+                    }
+                    try {
+                        const auto cursorPlan = mm6::stageRawCursorImagePlan(
+                            *pParty, mm6::rawHeldCursorState(GameTitle::MM6),
+                            *pItemTable, GameTitle::MM6);
+                        mm6::requirePostWorldEmptyCursorReady(
+                            cursorPlan, *pParty, *mouse,
+                            engine->config->graphics.AlwaysCustomCursor.value(),
+                            GameTitle::MM6);
+                        cursorReady = true;
+                    } catch (const std::exception &error) {
+                        cursorRefusal = error.what();
                     }
                 }, mm6::testing::PostWorldAdmissionResult::AbortToMainMenu);
             callbackRan = true;
@@ -174,7 +199,10 @@ GAME_TEST(MM6RawV2FirstMapHeadless, DISABLED_QuickLoadPublishesThenAbortsBeforeI
     EXPECT_TRUE(callbackRan);
     EXPECT_TRUE(postWorldRan);
     EXPECT_TRUE(rebuiltFirstMap);
-    EXPECT_TRUE(finalOwnerCheckPassed) << finalOwnerRefusal;
+    EXPECT_FALSE(finalOwnerCheckPassed);
+    EXPECT_TRUE(finalOwnerRefusal.starts_with("MM6 rebuilt PID slot counts differ"))
+        << finalOwnerRefusal;
+    EXPECT_TRUE(cursorReady) << cursorRefusal;
     EXPECT_EQ(slotBytes(primary), before);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }

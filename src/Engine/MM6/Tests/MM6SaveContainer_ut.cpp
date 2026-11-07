@@ -26,7 +26,7 @@ UNIT_TEST(MM6SaveContainer, RejectsWrongTitleVersionAndDamage) {
     EXPECT_THROW((void) mm6::decodeSaveContainer(wrongTitle), std::exception);
 
     std::vector<std::uint8_t> future = good;
-    future[8] = 2;
+    future[8] = 3;
     EXPECT_THROW((void) mm6::decodeSaveContainer(future), std::exception);
 
     std::vector<std::uint8_t> truncated = good;

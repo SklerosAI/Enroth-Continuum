@@ -93,13 +93,15 @@ void validateItem(const DurableItem &item) {
     }
 }
 
-void validate(const DurableSaveFields &fields) {
-    for (const auto &conditions : fields.effects.conditionTicks)
+void validateEffects(const DurableEffects &effects) {
+    for (const auto &conditions : effects.conditionTicks)
         for (std::int64_t ticks : conditions)
             if (ticks < 0)
                 throw std::runtime_error("negative MM6 condition timestamp");
+}
 
-    for (const auto &inventory : fields.inventory.characters) {
+void validateInventory(const DurableInventory &inventoryFields) {
+    for (const auto &inventory : inventoryFields.characters) {
         if (inventory.size() > 138)
             throw std::runtime_error("MM6 character inventory exceeds count limit");
         std::array<bool, 138> recordSeen{};
@@ -235,29 +237,47 @@ DurableInventory decodeItems(std::span<const std::uint8_t> bytes) {
 } // namespace
 
 std::array<SaveSection, 3> encodeDurableSections(const DurableSaveFields &fields) {
-    validate(fields);
-    return {SaveSection{QEST_TAG, true, encodeBits(fields.bits)},
-            SaveSection{EFFT_TAG, true, encodeEffects(fields.effects)},
+    validateInventory(fields.inventory);
+    auto progress = encodeDurableProgressSections(fields.bits, fields.effects);
+    return {std::move(progress[0]), std::move(progress[1]),
             SaveSection{ITEM_TAG, true, encodeItems(fields.inventory)}};
 }
 
-DurableSaveFields decodeDurableSections(const SaveContainer &container) {
+std::array<SaveSection, 2> encodeDurableProgressSections(
+    const DurableBits &bits, const DurableEffects &effects) {
+    validateEffects(effects);
+    return {SaveSection{QEST_TAG, true, encodeBits(bits)},
+            SaveSection{EFFT_TAG, true, encodeEffects(effects)}};
+}
+
+std::pair<DurableBits, DurableEffects> decodeDurableProgressSections(
+    const SaveContainer &container) {
     const SaveSection *quest = nullptr;
     const SaveSection *effects = nullptr;
-    const SaveSection *items = nullptr;
     for (const SaveSection &section : container.sections) {
         if (section.tag == QEST_TAG) quest = &section;
         if (section.tag == EFFT_TAG) effects = &section;
-        if (section.tag == ITEM_TAG) items = &section;
     }
-    if (!quest || !effects || !items || !quest->required || !effects->required || !items->required)
-        throw std::runtime_error("MM6 durable save fields are missing or optional");
+    if (!quest || !effects || !quest->required || !effects->required)
+        throw std::runtime_error("MM6 progress save fields are missing or optional");
+    DurableBits bits = decodeBits(quest->payload);
+    DurableEffects conditions = decodeEffects(effects->payload);
+    validateEffects(conditions);
+    return {std::move(bits), std::move(conditions)};
+}
 
+DurableSaveFields decodeDurableSections(const SaveContainer &container) {
+    const SaveSection *items = nullptr;
+    for (const SaveSection &section : container.sections)
+        if (section.tag == ITEM_TAG) items = &section;
+    if (!items || !items->required)
+        throw std::runtime_error("MM6 logical item save field is missing or optional");
+    auto [bits, effects] = decodeDurableProgressSections(container);
     DurableSaveFields result;
-    result.bits = decodeBits(quest->payload);
-    result.effects = decodeEffects(effects->payload);
+    result.bits = std::move(bits);
+    result.effects = std::move(effects);
     result.inventory = decodeItems(items->payload);
-    validate(result);
+    validateInventory(result.inventory);
     return result;
 }
 

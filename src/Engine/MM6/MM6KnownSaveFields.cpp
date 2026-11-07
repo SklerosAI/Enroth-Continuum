@@ -9,6 +9,8 @@
 #include <utility>
 #include <vector>
 
+#include "MM6SaveCrossFields.h"
+
 namespace mm6 {
 namespace {
 
@@ -21,7 +23,7 @@ constexpr std::array<std::array<char, 4>, 18> REQUIRED_TAGS = {{
 }};
 
 void checkSectionSet(const SaveContainer &container) {
-    if (container.sections.size() != REQUIRED_TAGS.size())
+    if (container.version != 1 || container.sections.size() != REQUIRED_TAGS.size())
         throw std::runtime_error("MM6 known save requires exactly eighteen sections (SCLK required)");
     for (const SaveSection &section : container.sections) {
         if (!section.required ||
@@ -35,21 +37,8 @@ void checkSectionSet(const SaveContainer &container) {
 }
 
 void checkCrossFields(const KnownSaveFields &fields) {
-    validateMetadataAgainstCore(fields.metadata, fields.core);
-    validateRecoveryAgainstCore(fields.recovery, fields.core);
-    if (fields.maps.deltas.size() != 67)
-        throw std::runtime_error("MM6 known save requires 67 map deltas");
-
-    const std::string &mapName = fields.metadata.header.mapFileName;
-    if (mapName.size() < 4)
-        throw std::runtime_error("invalid MM6 active map name");
-    const std::string deltaName = mapName.substr(0, mapName.size() - 4) +
-        (mapName.ends_with(".blv") ? ".dlv" : ".ddm");
-    if (fields.chest.activeDeltaName != deltaName)
-        throw std::runtime_error("MM6 CHST sidecar name disagrees with active map");
-    if (std::none_of(fields.maps.deltas.begin(), fields.maps.deltas.end(),
-                     [&deltaName](const SavedMapDelta &delta) { return delta.name == deltaName; }))
-        throw std::runtime_error("MM6 active map has no saved delta companion");
+    validateSharedSaveCrossFields(fields.core, fields.metadata, fields.maps,
+                                  fields.recovery, fields.chest);
 }
 
 } // namespace

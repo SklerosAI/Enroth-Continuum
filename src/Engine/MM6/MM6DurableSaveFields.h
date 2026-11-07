@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdint>
 #include <span>
+#include <utility>
 #include <vector>
 
 #include "Engine/GameTitle.h"
@@ -65,6 +66,14 @@ struct DurableSaveFields {
 
     bool operator==(const DurableSaveFields &) const = default;
 };
+
+/** Encode shared QEST/EFFT fields without the provisional logical ITEM section. */
+std::array<SaveSection, 2> encodeDurableProgressSections(
+    const DurableBits &bits, const DurableEffects &effects);
+
+/** Decode shared QEST/EFFT fields for the raw v2 manifest. */
+std::pair<DurableBits, DurableEffects> decodeDurableProgressSections(
+    const SaveContainer &container);
 
 /** Encode three required, versioned QEST/EFFT/ITEM sections. */
 std::array<SaveSection, 3> encodeDurableSections(const DurableSaveFields &fields);

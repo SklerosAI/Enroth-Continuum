@@ -21,6 +21,7 @@ struct SaveSection {
 
 struct SaveContainer {
     std::vector<SaveSection> sections;
+    std::uint16_t version = 1;
 
     bool operator==(const SaveContainer &) const = default;
 };

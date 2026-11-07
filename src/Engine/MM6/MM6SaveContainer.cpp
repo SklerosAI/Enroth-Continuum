@@ -13,7 +13,8 @@ namespace mm6 {
 namespace {
 
 constexpr std::array<std::uint8_t, 8> MAGIC = {'E', 'C', '6', 'S', 'A', 'V', 'E', 0};
-constexpr std::uint16_t VERSION = 1;
+constexpr std::uint16_t MIN_VERSION = 1;
+constexpr std::uint16_t MAX_VERSION = 2;
 constexpr size_t HEADER_SIZE = 24;
 constexpr size_t SECTION_HEADER_SIZE = 16;
 constexpr size_t MAX_FILE_SIZE = 64 * 1024 * 1024;
@@ -93,7 +94,8 @@ bool knownTag(const std::array<char, 4> &tag) {
 } // namespace
 
 std::vector<std::uint8_t> encodeSaveContainer(const SaveContainer &container) {
-    if (container.sections.empty() || container.sections.size() > MAX_SECTIONS)
+    if (container.version < MIN_VERSION || container.version > MAX_VERSION ||
+        container.sections.empty() || container.sections.size() > MAX_SECTIONS)
         throw std::runtime_error("MM6 save container has invalid section count");
 
     size_t totalSize = HEADER_SIZE;
@@ -110,7 +112,7 @@ std::vector<std::uint8_t> encodeSaveContainer(const SaveContainer &container) {
     std::vector<std::uint8_t> bytes;
     bytes.reserve(totalSize);
     bytes.insert(bytes.end(), MAGIC.begin(), MAGIC.end());
-    write16(&bytes, VERSION);
+    write16(&bytes, container.version);
     write16(&bytes, 0); // Container flags are reserved.
     write16(&bytes, container.sections.size());
     write16(&bytes, 0); // Reserved.
@@ -135,7 +137,8 @@ SaveContainer decodeSaveContainer(std::span<const std::uint8_t> bytes) {
         throw std::runtime_error("MM6 save container has invalid size");
     if (!std::equal(MAGIC.begin(), MAGIC.end(), bytes.begin()))
         throw std::runtime_error("wrong save title or container signature");
-    if (read16(bytes, 8) != VERSION)
+    const std::uint16_t version = read16(bytes, 8);
+    if (version < MIN_VERSION || version > MAX_VERSION)
         throw std::runtime_error("unsupported MM6 save version");
     if (read16(bytes, 10) != 0 || read16(bytes, 14) != 0)
         throw std::runtime_error("MM6 save container has nonzero reserved header fields");
@@ -147,6 +150,7 @@ SaveContainer decodeSaveContainer(std::span<const std::uint8_t> bytes) {
         throw std::runtime_error("MM6 save container checksum mismatch");
 
     SaveContainer result;
+    result.version = version;
     result.sections.reserve(sectionCount);
     std::set<std::array<char, 4>> tags;
     size_t offset = HEADER_SIZE;

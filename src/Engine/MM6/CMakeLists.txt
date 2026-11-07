@@ -22,7 +22,8 @@ add_library(engine_mm6_save_container STATIC MM6SaveContainer.cpp MM6SaveContain
     MM6RawInventoryFields.cpp MM6RawInventoryFields.h
     MM6BeaconSaveFields.cpp MM6BeaconSaveFields.h
     MM6ShopRefreshBoundary.cpp MM6ShopRefreshBoundary.h
-    MM6KnownSaveFields.cpp MM6KnownSaveFields.h)
+    MM6SaveCrossFields.h MM6KnownSaveFields.cpp MM6KnownSaveFields.h
+    MM6RawSaveFields.cpp MM6RawSaveFields.h)
 target_check_style(engine_mm6_save_container)
 
 add_library(engine_mm6_atomic_save STATIC MM6AtomicSaveFile.cpp MM6AtomicSaveFile.h)
@@ -120,6 +121,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6BoundedPartyInventoryProjection_ut.cpp Tests/MM6GroundItemProjection_ut.cpp Tests/MM6StandardBonusMap_ut.cpp
         Tests/MM6StandardItemProjection_ut.cpp
         Tests/MM6RawInventoryFields_ut.cpp
+        Tests/MM6RawSaveFields_ut.cpp
         Tests/MM6BackpackItemEventRemoval_ut.cpp
         Tests/MM6KnownSaveFields_ut.cpp
         Tests/MM6PotionCombinations_ut.cpp)

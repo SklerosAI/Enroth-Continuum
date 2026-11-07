@@ -25,7 +25,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [Campaign Status](Campaign-Status.md) — Dated MM6, MM7, and MM8 readiness, including the bounded v5 first-map cycle
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [Runtime Isolation](Runtime-Isolation.md) — Title-locked MM7 helper and staged Atlas sibling assembler; MM6/MM8 launch gates remain closed
-- [MM7 Self-Contained Source](MM7-Self-Contained-Source.md) — Nineteen former gitlinks and five Mac library source trees owned here; offline build and runtime identity gates remain
+- [MM7 Self-Contained Source](MM7-Self-Contained-Source.md) — Twenty-two former gitlinks and five Mac library source trees owned here; offline build and runtime identity gates remain
 - [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md) — Enroth Continuum MM7 source defaults and collision-safe private save migration before installed-app switch
 
 ## Agent work and open questions

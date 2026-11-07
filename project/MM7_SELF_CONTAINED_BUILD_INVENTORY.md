@@ -16,12 +16,26 @@ Network-disconnected standalone source builds/runs passed for the first sixteen
 snapshots. The latest three passed exact Git blob/mode comparison and focused
 syntax checks in an isolated worktree.
 The table below remains the historical 23-gitlink inventory; the current
-repository has **4 gitlinks**. The integration Mac MM7 target built with the
+repository has **1 gitlink**. The integration Mac MM7 target built with the
 first sixteen tracked source snapshots, using its existing cached prebuilt libraries;
 GoogleTest and `gtest_parallel` are optional test inputs.
-All nineteen source snapshots now pass an integrated cached-library arm64 MM7
-link. The remaining gitlinks, nested fetches and prebuilt-library recipe still
-block a clean offline MM7 build.
+All nineteen full source snapshots and three scoped production-source copies
+now pass an integrated cached-library arm64 MM7 link. The remaining ztd.text
+gitlink, nested fetches and prebuilt-library recipe still block a clean offline
+MM7 build.
+
+The former `inifile_cpp`, `tcpp` and `nlohmann_json` gitlinks are now scoped
+production-source copies. Their required headers, JSON CMake files, original
+licenses, per-file license mapping where applicable, and provenance notes are
+tracked; examples, tests and test-only nested Catch2/GPL code were omitted.
+All 72 copied upstream files matched their pinned Git blob bytes. A focused
+AppleClang header syntax check and standalone JSON CMake configure passed;
+the integrated cached-library MM7 link, 12 JSON/preprocessor units and one
+headless MM7 control through the new private default data path also passed.
+The single remaining gitlink is `ztd_text`. Its pinned source and several
+fetched relatives have ambiguous non-commercial wording; the Mac local-only
+lane is evaluating a title-compatible owned encoding adapter rather than
+copying those trees wholesale.
 
 On 2026-11-07, the five exact source revisions behind the nine prebuilt Mac
 archives were extracted from pinned GitHub commit archives into
@@ -40,7 +54,7 @@ The title-locked `MM7.app` is declared in [`src/Bin/OpenEnroth/CMakeLists.txt`](
 
 Three network boundaries are distinct:
 
-1. [`CMakeModules/Git.cmake`](../CMakeModules/Git.cmake) runs `git submodule update --init --recursive` unconditionally in the normal configure path when Git is found. This can contact the remaining 4 Git origins in [`.gitmodules`](../.gitmodules), even if the requested target is only MM7. A failed update is not checked there. The opt-in local-only configure path skips that update.
+1. [`CMakeModules/Git.cmake`](../CMakeModules/Git.cmake) runs `git submodule update --init --recursive` unconditionally in the normal configure path when Git is found. This can contact the remaining ztd.text Git origin in [`.gitmodules`](../.gitmodules), even if the requested target is only MM7. A failed update is not checked there. The opt-in local-only configure path skips that update.
 2. [`CMakeModules/Dependencies.cmake`](../CMakeModules/Dependencies.cmake) downloads `https://github.com/OpenEnroth/OpenEnroth_Dependencies/releases/download/deps_r8_master/darwin_Debug_arm64.zip` if the marker ZIP is absent. The code does not specify an expected content hash; an existing ZIP skips download. `OE_USE_PREBUILT_DEPENDENCIES=OFF` instead requires ZLIB, FFmpeg, SDL3, OpenAL Soft and PNG to be found elsewhere and does not itself make the build repo-contained.
 3. The Mac [`thirdparty/CMakeLists.txt`](../thirdparty/CMakeLists.txt) includes cpptrace and ztd.text. cpptrace can fetch libdwarf-lite; ztd.text's own CMake fetches six projects by floating `main` branch. The seven cached `_deps/*-src` directories below show what this local configure resolved. Additional conditional ztd benchmark/docs fetches are present in its source but were not active in this build.
 

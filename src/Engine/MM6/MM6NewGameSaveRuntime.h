@@ -108,6 +108,14 @@ bool rollbackPublishedFirstMapCache(PublishedFirstMapCache *published,
 using FirstMapEntryProbe = std::function<void(
     const Party &, const std::unordered_map<std::string, Blob> &, const ChestTitleState &)>;
 
+// A scoped writer for an already validated detached candidate. The precommit
+// observer runs before the disk/cache/CHST publication and may reject without
+// changing those owners. This still does not commit the active outdoor world.
+std::unique_ptr<PublishedFirstMapCache> publishPreparedFirstMapForTest(
+    const std::filesystem::path &profileRoot, PreparedNewGameSession prepared,
+    std::unordered_map<std::string, Blob> *mapDeltas, ChestTitleState *titleChest,
+    const FirstMapEntryProbe &probe, GameTitle title);
+
 // Scoped test seam for a first-map entry attempt. The probe observes only
 // staged Party and map/chest candidates before any disk or process publication.
 // A probe failure therefore leaves the slot and published owners untouched.

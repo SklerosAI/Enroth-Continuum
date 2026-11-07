@@ -4,6 +4,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string_view>
+#include <utility>
 
 #include "Engine/Engine.h"
 #include "Engine/Graphics/Overlays.h"
@@ -14,6 +15,7 @@
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/Tables/OverlayTable.h"
+#include "Engine/Tables/TileTable.h"
 #include "Engine/Timer.h"
 
 #include "MM6ChestTitleState.h"
@@ -25,14 +27,13 @@ namespace mm6 {
 
 namespace {
 
-std::unique_ptr<PublishedFirstMapCache> saveNewGameFromMapSource(
-    const std::filesystem::path &profileRoot, std::span<const std::string> expectedNames,
-    const DefaultDeltaReader &readDefault, const MapBaseReader &readBase,
-    const FirstMapEntryProbe &probe) {
+PreparedNewGameSession prepareNewGameFromMapSource(
+    std::span<const std::string> expectedNames, const DefaultDeltaReader &readDefault,
+    const MapBaseReader &readBase) {
     if (!engine || engine->gameTitle() != GameTitle::MM6 || !pParty || !pNPCStats ||
         !gameTimer || !pActiveOverlayList || !pOverlayTable || !pMapTable ||
-        !pGames_LOD || !pItemTable || !probe)
-        throw std::runtime_error("MM6 scoped new-game save requires a loaded MM6 runtime");
+        !pGames_LOD || !pItemTable)
+        throw std::runtime_error("MM6 new-game preparation requires a loaded MM6 runtime");
     const MapId firstMap = pMapTable->GetMapInfo(NEW_GAME_FIRST_MAP);
     if (firstMap == MAP_INVALID || !pGames_LOD->exists(NEW_GAME_FIRST_MAP))
         throw std::runtime_error("MM6 scoped new-game save lacks New Sorpigal map identity");
@@ -50,6 +51,17 @@ std::unique_ptr<PublishedFirstMapCache> saveNewGameFromMapSource(
         return id >= 1 && id <= 580 &&
             !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
     };
+    return prepareOfflineNewGameSession(
+        seed, *pParty, *pNPCStats, *gameTimer, *pActiveOverlayList,
+        expectedNames, readDefault, readBase, verifyItem,
+        pOverlayTable->overlays.size(), localChestSeedEntropy, GameTitle::MM6);
+}
+
+std::unique_ptr<PublishedFirstMapCache> publishScopedNewGameForTest(
+    const std::filesystem::path &profileRoot, PreparedNewGameSession prepared,
+    const FirstMapEntryProbe &probe) {
+    if (!probe)
+        throw std::runtime_error("MM6 scoped new-game save requires a precommit probe");
     const FirstMapEntryProbe preCommitProbe = [&](const Party &staged,
         const std::unordered_map<std::string, Blob> &candidateMapDeltas,
         const ChestTitleState &candidateChest) {
@@ -61,11 +73,9 @@ std::unique_ptr<PublishedFirstMapCache> saveNewGameFromMapSource(
         (void) stageHeldCursorRestorePlan(captureHeldItem(*pParty, GameTitle::MM6),
                                           *pItemTable, currentActions, GameTitle::MM6);
     };
-    return runScopedFirstMapEntryForTest(
-        profileRoot, seed, *pParty, *pNPCStats, *gameTimer, *pActiveOverlayList,
-        expectedNames, readDefault, readBase, verifyItem,
-        pOverlayTable->overlays.size(), localChestSeedEntropy,
-        &pMapDeltas, &chestTitleState(), preCommitProbe, GameTitle::MM6);
+    return publishPreparedFirstMapForTest(
+        profileRoot, std::move(prepared), &pMapDeltas, &chestTitleState(),
+        preCommitProbe, GameTitle::MM6);
 }
 
 } // namespace
@@ -74,20 +84,34 @@ std::unique_ptr<PublishedFirstMapCache> saveNewGameMM6ScopedForTest(
     const std::filesystem::path &profileRoot,
     const std::filesystem::path &privateMapResearchRoot,
     const FirstMapEntryProbe &probe) {
+    if (!probe)
+        throw std::runtime_error("MM6 scoped new-game save requires a precommit probe");
     const PrivateMapSource maps(privateMapResearchRoot);
-    return saveNewGameFromMapSource(profileRoot, maps.expectedNames(),
+    PreparedNewGameSession prepared = prepareNewGameFromMapSource(maps.expectedNames(),
         [](std::string_view name) { return pGames_LOD->read(name); },
-        [&maps](std::string_view name) { return maps.readBase(name); }, probe);
+        [&maps](std::string_view name) { return maps.readBase(name); });
+    return publishScopedNewGameForTest(profileRoot, std::move(prepared), probe);
+}
+
+PreparedLoadedFirstMap prepareNewGameMM6FromLoadedMaps() {
+    if (!engine || !pGames_LOD || !pMapTable || !pTileTable)
+        throw std::runtime_error("MM6 loaded-map preparation requires map and tile resources");
+    const LoadedMapSource maps(*pGames_LOD, *pMapTable, engine->gameTitle());
+    PreparedNewGameSession session = prepareNewGameFromMapSource(
+        maps.expectedNames(),
+        [&maps](std::string_view name) { return maps.readDefaultDelta(name); },
+        [&maps](std::string_view name) { return maps.readBase(name); });
+    DetachedOutdoorWorldPlan outdoor = prepareDetachedOutdoorWorldPlan(
+        session.staged.worldAndVisuals, pTileTable->tileCount(), GameTitle::MM6);
+    return {std::move(session), std::move(outdoor)};
 }
 
 std::unique_ptr<PublishedFirstMapCache> saveNewGameMM6FromLoadedMapsScopedForTest(
     const std::filesystem::path &profileRoot, const FirstMapEntryProbe &probe) {
-    if (!engine || !pGames_LOD || !pMapTable)
-        throw std::runtime_error("MM6 loaded-map save requires map resources");
-    const LoadedMapSource maps(*pGames_LOD, *pMapTable, engine->gameTitle());
-    return saveNewGameFromMapSource(profileRoot, maps.expectedNames(),
-        [&maps](std::string_view name) { return maps.readDefaultDelta(name); },
-        [&maps](std::string_view name) { return maps.readBase(name); }, probe);
+    if (!probe)
+        throw std::runtime_error("MM6 scoped new-game save requires a precommit probe");
+    PreparedLoadedFirstMap prepared = prepareNewGameMM6FromLoadedMaps();
+    return publishScopedNewGameForTest(profileRoot, std::move(prepared.session), probe);
 }
 
 } // namespace mm6

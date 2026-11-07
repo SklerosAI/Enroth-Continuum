@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #ifndef _WIN32
@@ -326,6 +327,64 @@ UNIT_TEST(MM6NewGameSaveRuntime, ScopedEntryPrecommitFailureNeverPublishesSlotOr
     EXPECT_FALSE(std::filesystem::exists(profile.primary()));
     EXPECT_FALSE(std::filesystem::exists(profile.primary().string() + ".bak"));
     EXPECT_EQ(cache.size(), 1);
+    EXPECT_EQ(cache.at("prior.ddm").str(), "prior cache");
+    EXPECT_EQ(chest.lcgState, 75u);
+}
+
+UNIT_TEST(MM6NewGameSaveRuntime, PreparedFirstMapPublishesOnlyAfterProbe) {
+    TestProfile profile;
+    const auto names = expectedNames();
+    Party party;
+    NPCStats npcs{};
+    Timer timer;
+    ActiveOverlayList overlays;
+    int mapReads = 0;
+    const auto readDefault = [&](std::string_view name) {
+        ++mapReads;
+        return defaultReader()(name);
+    };
+    const auto prepare = [&] {
+        return mm6::prepareOfflineNewGameSession(
+            seed(61), party, npcs, timer, overlays, names,
+            readDefault, baseReader(), [](std::int32_t) { return true; }, 5,
+            [] { return std::optional<std::uint32_t>(0x12345678); }, GameTitle::MM6);
+    };
+    std::unordered_map<std::string, Blob> cache;
+    cache.emplace("prior.ddm", Blob::fromString("prior cache"));
+    mm6::ChestTitleState chest{true, 75, {}};
+    auto prepared = prepare();
+    EXPECT_EQ(mapReads, 67);
+    EXPECT_THROW((void) mm6::publishPreparedFirstMapForTest(
+        profile.root(), std::move(prepared), &cache, &chest,
+        [&](const Party &, const std::unordered_map<std::string, Blob> &candidate,
+            const mm6::ChestTitleState &candidateChest) {
+            EXPECT_EQ(candidate.size(), 67);
+            EXPECT_EQ(candidateChest.lcgState, 0x12345678u);
+            EXPECT_FALSE(std::filesystem::exists(profile.primary()));
+            EXPECT_EQ(cache.at("prior.ddm").str(), "prior cache");
+            EXPECT_EQ(chest.lcgState, 75u);
+            throw std::runtime_error("reject detached first map");
+        }, GameTitle::MM6), std::exception);
+    EXPECT_EQ(mapReads, 67);
+    EXPECT_FALSE(std::filesystem::exists(profile.primary()));
+    EXPECT_EQ(cache.at("prior.ddm").str(), "prior cache");
+    EXPECT_EQ(chest.lcgState, 75u);
+
+    prepared = prepare();
+    EXPECT_EQ(mapReads, 134);
+    auto published = mm6::publishPreparedFirstMapForTest(
+        profile.root(), std::move(prepared), &cache, &chest,
+        [&](const Party &, const std::unordered_map<std::string, Blob> &candidate,
+            const mm6::ChestTitleState &) {
+            EXPECT_EQ(candidate.size(), 67);
+            EXPECT_FALSE(std::filesystem::exists(profile.primary()));
+        }, GameTitle::MM6);
+    EXPECT_EQ(mapReads, 134);
+    EXPECT_EQ(readFile(profile.primary()), published->prepared.bytes);
+    EXPECT_EQ(cache.size(), 67);
+    EXPECT_EQ(chest.lcgState, 0x12345678u);
+    EXPECT_TRUE(mm6::rollbackPublishedFirstMapCache(
+        published.get(), &cache, &chest, GameTitle::MM6));
     EXPECT_EQ(cache.at("prior.ddm").str(), "prior cache");
     EXPECT_EQ(chest.lcgState, 75u);
 }

@@ -219,6 +219,16 @@ std::unique_ptr<PublishedFirstMapCache> runScopedFirstMapEntryForTest(
     PreparedNewGameSession prepared = prepareOfflineNewGameSession(
         seed, liveParty, liveNpcs, liveTimer, liveOverlays, expectedNames,
         readDefaultDelta, readBase, verifyItem, overlayTableCount, chestEntropy, title);
+    return publishPreparedFirstMapForTest(profileRoot, std::move(prepared),
+                                          mapDeltas, titleChest, probe, title);
+}
+
+std::unique_ptr<PublishedFirstMapCache> publishPreparedFirstMapForTest(
+    const std::filesystem::path &profileRoot, PreparedNewGameSession prepared,
+    std::unordered_map<std::string, Blob> *mapDeltas, ChestTitleState *titleChest,
+    const FirstMapEntryProbe &probe, GameTitle title) {
+    if (title != GameTitle::MM6 || !mapDeltas || !titleChest || !probe)
+        throw std::runtime_error("MM6 scoped first-map entry lacks title-local owners or probe");
     // The observer may perform additional detached first-map checks, but it
     // must finish before either the disk slot or process owners are published.
     // No caller-controlled code runs in the write-and-swap interval below.

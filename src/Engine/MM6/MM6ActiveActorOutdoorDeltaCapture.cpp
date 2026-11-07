@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Graphics/LocationFunctions.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/SpriteObject.h"
@@ -29,8 +30,22 @@ void put32(std::span<std::uint8_t> bytes, size_t offset, std::uint32_t value) {
 
 void requireExactSpriteProjection(const SpriteObject &source,
                                   const SpriteObject_MM7 &projected) {
-    if (source.vPosition != projected.position.toFloat() ||
-        source.vVelocity != projected.velocity.toFloat() ||
+    if (source.vPosition != projected.position.toFloat()) {
+        // arrangeSpriteObjects() re-snaps pickable map objects after every
+        // outdoor load. Recompute from the exact integer position that the
+        // DDM will restore; a fractional height is safe only if it replays.
+        SpriteObject replay;
+        reconstruct(projected, &replay);
+        if (!replay.uObjectDescID ||
+            (replay.uAttributes & SPRITE_DROPPED_BY_PLAYER) || replay.IsUnpickable())
+            throw std::runtime_error("MM6 active-actor DDM sprite position projection would lose state");
+        bool onWater = false;
+        int faceId = 0;
+        replay.vPosition.z = ODM_GetFloorLevel(replay.vPosition, &onWater, &faceId);
+        if (replay.vPosition != source.vPosition)
+            throw std::runtime_error("MM6 active-actor DDM sprite position projection would lose state");
+    }
+    if (source.vVelocity != projected.velocity.toFloat() ||
         source.initialPosition != projected.initialPosition.toFloat())
         throw std::runtime_error("MM6 active-actor DDM sprite position projection would lose state");
     if (source.uSectorID != projected.uSectorID ||

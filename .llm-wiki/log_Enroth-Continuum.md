@@ -2149,3 +2149,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The MM6 outdoor loader now assigns each reconstructed actor its own six resistance bytes from the retained native DDM record. A focused differing-per-actor helper passed 1/1; the MM7 path was not changed.
 - The disposable full-list actor probe advanced beyond missing resistance and still refused at a baseline actor identity condition (0/1). A narrower classifier identifies `baseline-descriptor-monster`; it remains under audit. No live save route was opened.
+
+## [2026-11-07] decide | MM6 full active actor owner
+- by: T-Burton-ND via codex
+- Preserving the exact native resistance tuple and the valid zero descriptor let the disposable full-list first-map actor capture pass 1/1; linked actor checks passed 5/5 and an MM7 headless control passed 1/1. These results supersede the earlier guarded full-list refusal notes.
+- Chose detached ACTR coverage for all active actor slots because spawned-only SPAW cannot retain original-actor runtime changes. ACTR's linked unit suite passed 3/3, but actor items/buffs, live replay and a durable save–quit–reload remain open.

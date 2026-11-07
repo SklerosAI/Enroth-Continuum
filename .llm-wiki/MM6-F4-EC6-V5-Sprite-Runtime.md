@@ -59,6 +59,14 @@ Production SaveLoad, menu listing, failure rollback and gameplay admission
 remain closed. See the [source-backed packet](../project/MM6_F4_EC6_V5_SPRITE_RUNTIME.md)
 for the exact boundary.
 
+The detached first-map v5 load preflight is also an MM6 engine service now.
+It checks title, version, first-map `HEAD`, loaded source decorations and the
+full generic v5 source/native/runtime owner graph **before** the test assigns
+Party, NPC, timer or map-cache globals and prepares the world. Both fresh-child
+tests call the same service. The fresh seven-child disposable cycle passed
+**1/1 per process** after this change; MM7 control passed **1/1**. The service
+does not publish a world, write or recover a slot, or admit normal gameplay.
+
 See also: [V4 Event Runtime](MM6-F4-EC6-V4-Event-Runtime.md),
 [V3 Post Entry Map and Pre Event](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md),
 [Agent Handoff](Agent-Handoff.md).

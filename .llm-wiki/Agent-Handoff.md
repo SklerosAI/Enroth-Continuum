@@ -76,6 +76,14 @@ to Main Menu until a durable checkpoint/reload or full rollback exists. No
 publisher was added; both gates remain false. See the packet for the exact
 multi-stage owner order and respawn policy question.
 
+Both first-map v5 fresh-child tests now call a detached MM6 load preflight
+service before publishing any globals. It verifies title, v5/first-map `HEAD`,
+loaded source decoration templates and generic source/runtime owners; the
+subsequent one-shot replay and post-world admission remain test-only. The
+seven-child disposable cycle and MM7 control passed after extraction. A
+normal-load transaction still needs title-private slot selection, durable
+recovery decision, publication/rollback and UI wiring.
+
 The [MM6 atomic file policy](MM6-F4-Atomic-Save-File.md) now classifies a
 first-map v5 write that fails after primary rename as unconfirmed, even if the
 new bytes are readable. A fault between rename and directory sync, plus

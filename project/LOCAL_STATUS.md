@@ -1369,8 +1369,8 @@ chain again passed **1/1 per child**, with an MM7 control **1/1**. The later
 publication functions still revalidate, and global assignment or pre-event
 replay can fail after mutation; these need a game-loop-owned abort/recovery
 transaction. Manual Save pauses the timer before `doSavegame`; the later
-read-only paused-menu capture below supersedes the missing capture-contract
-part of this status, but no writer is wired to that menu.
+paused-menu capture below supersedes the missing capture-contract part of
+this status, but normal `doSavegame` remains guarded.
 
 Main Menu Quick Load now refuses an ordinary MM6 request before probing a
 present `.ec6` quicksave or queuing an unsupported load; the existing
@@ -1390,12 +1390,23 @@ after this shared capture change, and MM7 control passed **1/1**. This proves
 read-only capture at the paused menu, not normal `doSavegame` publication,
 production slot policy or load recovery.
 
+The paused-menu contract now feeds the existing **test-only**, owner-only v5
+writer. In a fresh disposable profile, seed, v4, an existing v5 primary,
+real Save-menu write with exact primary/backup checks, and independent
+fresh-child replay each passed **1/1**. MM7 control passed **1/1**. This
+proves a candidate written from the paused menu can be replayed, while
+normal `doSavegame`, production slot naming and UI success state remain
+closed.
+
 A test-only armed MM6 first-map load scope now catches failures during the
 load callback or world preparation in `Game::gameLoop`, clears pending load
 and transition state, pauses the timer, and abandons the partial world to
 Main Menu before input. Fresh disposable seed, v4 and v5 writer children
 passed **1/1 each**, followed by injected partial-assignment and pre-event
-fault children at **1/1 each**; each fault case could stage a second attempt.
+fault children at **1/1 each**. A later stronger fixture completed a second
+source-backed first-map load, exact post-world owner agreement and bounded
+turn/walk after each abandoned attempt, again **1/1 for both fault cases**,
+with save bytes unchanged.
 The ordinary unarmed seven-child v5 chain still passed **7/7**, and MM7
 control passed **1/1** after the shared game-loop change. This is not a
 rollback: already published globals may remain unsafe. Normal MM6 load/UI

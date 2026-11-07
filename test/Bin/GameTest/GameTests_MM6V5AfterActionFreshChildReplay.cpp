@@ -41,6 +41,7 @@
 #include "Engine/MM6/MM6V5FullSessionPreflight.h"
 #include "Engine/MM6/MM6V5FirstMapLoadPreflight.h"
 #include "Engine/MM6/MM6V5FirstMapLoadAbandonForTest.h"
+#include "Engine/MM6/MM6V5FirstMapLoadAttempt.h"
 #include "Engine/MM6/MM6V5LiveSaveCapture.h"
 #include "Engine/MM6/MM6V5ActorRuntimeFields.h"
 #include "Engine/MM6/MM6V5DecorationRuntimeFields.h"
@@ -195,7 +196,7 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
     std::string finalOwnerError;
     std::size_t expectedNativeActors = 0;
     std::size_t expectedActiveActors = 0;
-    std::unique_ptr<mm6::V5FullSessionPreflight> staged;
+    mm6::V5FullSessionPreflight *staged = nullptr;
     std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
     std::unique_ptr<mm6::testing::ScopedEventRuntimeRestoreForTest> eventRuntime;
     std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
@@ -219,7 +220,13 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
                 throw std::runtime_error("MM6 v5 post-action replay has no exact first-map candidate");
             mm6::requireV5FirstMapPrepublicationAgreement(
                 *candidateStage, GameTitle::MM6);
-            staged = std::move(candidateStage);
+            if (engine->_mm6FirstMapLoadAttempt)
+                throw std::runtime_error("MM6 first-map load attempt was not released");
+            engine->_mm6FirstMapLoadAttempt =
+                std::make_unique<mm6::V5FirstMapLoadAttempt>(
+                    std::move(candidateStage), candidate.filename().string(),
+                    GameTitle::MM6);
+            staged = &engine->_mm6FirstMapLoadAttempt->staged();
             if (faultMode) {
                 auto &abortScope = retryingAfterFault ? secondAbandon : abandon;
                 abortScope = std::make_unique<mm6::testing::ScopedV5FirstMapLoadAbandonForTest>(
@@ -264,6 +271,9 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
                             !actorReplay->published() || !decorationReplay->published() ||
                             !spriteReplay->published() ||
                             !eventRuntime->restored() ||
+                            !engine->_mm6FirstMapLoadAttempt ||
+                            engine->_mm6FirstMapLoadAttempt->phase() !=
+                                mm6::V5FirstMapLoadAttempt::Phase::ChestApplied ||
                             pActors.size() != expectedActiveActors ||
                             expectedActiveActors < expectedNativeActors ||
                             engine->_currentLoadedMapId != pMapTable->GetMapInfo("oute3.odm") ||
@@ -306,6 +316,7 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
             engine->_pendingTransition = MapDestination(
                 pMapTable->GetMapInfo("oute3.odm"), MAP_START_POINT_PARTY);
             engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
+            engine->_mm6FirstMapLoadAttempt->notePublished(GameTitle::MM6);
             selected = true;
             if (retryingAfterFault)
                 secondLoadReached = true;
@@ -338,6 +349,8 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
             eventRuntime.reset();
             chestOptIn.reset();
             abandon.reset();
+            engine->_mm6FirstMapLoadAttempt.reset();
+            staged = nullptr;
             retryingAfterFault = true;
             postWorldRan = false;
             finalOwnersAgree = false;
@@ -397,6 +410,8 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
         checkpoint.reset();
         eventRuntime.reset();
         chestOptIn.reset();
+        engine->_mm6FirstMapLoadAttempt.reset();
+        staged = nullptr;
         mm6::testing::setMainMenuAutosaveQuickLoadOverride(false);
         mm6::testing::setLoadGameOverride({});
     });

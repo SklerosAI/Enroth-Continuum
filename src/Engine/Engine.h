@@ -65,6 +65,8 @@ struct PersistentVariables {
     std::array<unsigned char, 125> decorVars;
 };
 
+namespace mm6 { class V5FirstMapLoadAttempt; }
+
 class Engine {
  public:
     explicit Engine(std::shared_ptr<GameConfig> config, OverlaySystem &overlaySystem, GameTitle gameTitle = GameTitle::MM7);
@@ -157,6 +159,7 @@ class Engine {
     std::optional<MapDestination> _pendingTransition; // Set while a map change is in flight, consumed by the loaders.
     std::string _lastLoadedSaveFileName; // File name of the last loaded savegame, pre-selected in the save & load menus.
     std::string _pendingLoadFileName; // Savegame to load when the main menu FSM exits into the game loop.
+    std::unique_ptr<mm6::V5FirstMapLoadAttempt> _mm6FirstMapLoadAttempt;
     OverlaySystem &_overlaySystem;
 
     std::unique_ptr<GUIMessageQueue> _messageQueue;

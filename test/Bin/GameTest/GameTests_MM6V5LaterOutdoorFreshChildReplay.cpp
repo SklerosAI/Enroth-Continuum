@@ -427,17 +427,26 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
                                         *pDecorationTable, std::nullopt,
                                         GameTitle::MM6)));
                             auto boundaryParty = std::make_unique<Party>(*pParty);
+                            // The saved active Party may carry an offer-blocking
+                            // state. This fixture models an eligible border
+                            // attempt only on a detached copy.
+                            boundaryParty->uFlags &= ~(
+                                PARTY_FLAG_WATER_DAMAGE | PARTY_FLAG_AIRBORNE |
+                                PARTY_FLAG_STANDING_ON_WATER);
+                            boundaryParty->bFlying = 0;
                             boundaryParty->pos.x = 0;
                             boundaryParty->pos.y = -mm6::MM6_OUTDOOR_BORDER_EDGE - 1;
                             auto returnArrival = mm6::stageVisitedOutdoorReturnArrival(
                                 *visitedSaved, "oute2.odm", "oute3.odm",
                                 sourceMaps, *pDecorationTable,
                                 *boundaryParty, GameTitle::MM6);
+                            auto inBoundsParty = std::make_unique<Party>(*boundaryParty);
+                            inBoundsParty->pos.y = 0;
                             const auto invalidArrival =
                                 mm6::stageVisitedOutdoorReturnArrival(
                                     *visitedSaved, "oute2.odm", "oute3.odm",
                                     sourceMaps,
-                                    *pDecorationTable, *pParty, GameTitle::MM6);
+                                    *pDecorationTable, *inBoundsParty, GameTitle::MM6);
                             returnArrivalStayedDetached =
                                 returnArrival.refusal ==
                                     mm6::OutdoorReturnArrivalRefusal::None &&

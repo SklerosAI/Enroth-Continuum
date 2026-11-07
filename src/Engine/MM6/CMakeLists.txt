@@ -103,6 +103,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6FirstMapPersistentEventTransaction.h
     MM6OutdoorBorderTravel.h
     MM6OutdoorBorderEligibility.h
+    MM6OutdoorBorderConfirmation.h
     MM6ScopedNewGameSave.cpp MM6ScopedNewGameSave.h
     MM6LoadedMapSource.cpp MM6LoadedMapSource.h
     MM6PrivateMapSource.cpp MM6PrivateMapSource.h)
@@ -263,6 +264,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6OutdoorBorderTravel_ut.cpp
         Tests/MM6OutdoorBorderEligibility_ut.cpp
         Tests/MM6OutdoorBorderPrecommit_ut.cpp
+        Tests/MM6OutdoorBorderConfirmation_ut.cpp
         Tests/MM6OutdoorReturnArrival_ut.cpp
         Tests/MM6VisitedOwnerFixtures.h
         Tests/MM6VisitedIndoorRuntimeOwner_ut.cpp

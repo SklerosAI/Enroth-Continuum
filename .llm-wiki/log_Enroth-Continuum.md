@@ -1977,3 +1977,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated the title-gated raw cursor/shop process owner and cleared both owners at MM6 child startup and each New Game request; paired publication and live shop/cursor UI remain guarded.
 - The focused linked raw-session, cursor/shop and process-owner tests passed 21/21. Private MM6 null-platform checks passed 2/2 and an MM7 headless save/load control passed 1/1. The disabled v2 restart probe compiled but awaits an admitted real v2 slot.
+
+## [2026-11-06] update | MM7 self-contained repository gate
+- by: T-Burton-ND via codex
+- Clarified the owner's later MM7 finish line: a fresh, network-denied arm64 build and Atlas stage from SklerosAI-owned source and required non-system build inputs, with no OpenEnroth build-time URL, checkout, release archive, submodule origin or local dependency cache.
+- OpenEnroth history, LGPL license, notices and contributor credit remain permanent provenance. The Apple toolchain and private GOG game data remain external. This is a plan update, not an offline-build result or a change to the installed MM7 helper.

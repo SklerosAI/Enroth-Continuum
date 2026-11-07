@@ -917,3 +917,15 @@ and complete v2 publication remain open. A read-only
 atomic-file suite **8/8**, selecting only semantically accepted native
 primary/backup candidates without disk mutation; the visible MM6 load menu
 stays empty until a complete gameplay validator and loader exist.
+
+A disposable native v2 first-map writer and fresh-child real Main Menu
+QuickLoad control now pass **1/1** each. The child published only represented
+owners in its test process, rebuilt the first outdoor map, verified the empty
+cursor, and aborted before input with the source slot unchanged. The final
+PID-slot validator refused as designed: the saved pre-entry DDM has an initial
+respawn marker, so encounter spawning adds actors after its saved actor
+section is loaded. The current changed-state writer cannot encode that added
+actor count. See [the bootstrap/respawn gate](MM6_F4_RAW_V2_BOOTSTRAP_RESPAWN.md).
+The detached GNPC identity capsule passes **3/3** linked checks, but it is
+still outside the strict v2 manifest and does not yet make generated NPC or
+game RNG state durable.

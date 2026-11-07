@@ -20,6 +20,8 @@ The refreshed v1 abort control also checked idle pending actions at the hook (fr
 
 An [empty-cursor post-world check](MM6-F4-Raw-Cursor-Owner.md) now accepts the actual initialized native arrow or decoded custom `micon1` bitmap after world preparation, and rejects stale Party item payload and pickup offset. The focused suite passed 5/5 and a disposable v1 Main Menu QuickLoad abort control passed 1/1; occupied cursor and GPU presentation remain open. A separate [read-only menu preflight list](MM6-F4-Menu-Slot-Preflight.md) passed its linked atomic-file suite 8/8, but the visible MM6 menu stays empty until the complete v2 gameplay validator and production load route exist.
 
+The [v2 bootstrap QuickLoad control](MM6-F4-Raw-V2-Bootstrap-Respawn.md) now reaches the real Main Menu and first outdoor world in a disposable fresh child, then refuses the saved/final actor-slot mismatch and aborts before input (writer and child 1/1 each). Initial DDM respawn triggers encounter spawning after saved actors are loaded. Do not weaken the strict PID validator to pass this pre-entry slot: the next durable gate is a post-entry populated-map save and no-respawn reload, including newly spawned actor records. The detached [GNPC capsule](MM6-F4-Generated-NPC-Identity-Save.md) passed 3/3 linked checks but is not in the v2 manifest.
+
 ## Read first
 
 1. Run `git status --short --branch`, `git worktree list`, and `git log -1 --oneline` in the checkout you intend to use. The branch and worktree descriptions below may drift.

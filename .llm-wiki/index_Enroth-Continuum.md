@@ -119,6 +119,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Post-World Armageddon Resume](MM6-F4-Post-World-Armageddon-Resume.md) — Detached RCVR timer resume plan and final tuple check after world preparation
 - [MM6 F4 V2 QuickLoad Callback Gate](MM6-F4-V2-QuickLoad-Callback-Gate.md) — Disposable child catches the v2 load refusal and leaves slot and live owners unchanged
 - [MM6 F4 V2 Fresh-Child Owner Audit](MM6-F4-V2-Fresh-Child-Owner-Audit.md) — Full owner inventory and proposed post-world admission hook before first input
+- [MM6 F4 Raw V2 Bootstrap Respawn](MM6-F4-Raw-V2-Bootstrap-Respawn.md) — Fresh-child v2 QuickLoad reaches first map but initial encounter spawning defeats strict saved actor-slot equality
 - [MM6 F4 Post-World Abort Gate](MM6-F4-Post-World-Abort-Gate.md) — MM6-only disposable QuickLoad abort after world preparation, before timer/input; v2 publication remains guarded
 - [MM6 F4 Post-World Owner Validator](MM6-F4-Post-World-Owner-Validator.md) — Read-only final map, PID, event and chest agreement for a v2 candidate; live admission remains guarded
 - [MM6 F4 NPC Resource Identity](MM6-F4-NPC-Resource-Identity.md) — Read-only static NPC/topic source join with generated-NPC and RNG blockers

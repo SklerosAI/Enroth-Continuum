@@ -80,6 +80,7 @@
 #include "Engine/MM6/MM6PreEventCheckpointForTest.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6V3PreEventReplayForTest.h"
+#include "Engine/MM6/MM6V5PreEventSpriteReplayForTest.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
@@ -749,7 +750,7 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
             const auto checkpoint = mm6::testing::runArmedPreEventCheckpointForTest(GameTitle::MM6);
             if (checkpoint == mm6::testing::PreEventCheckpointResult::AbortToMainMenu)
                 throw mm6::testing::PreEventCheckpointAbortForTest();
-            (void) mm6::testing::runArmedV3PreEventReplayForTest(
+            const bool actorPublished = mm6::testing::runArmedV3PreEventReplayForTest(
                 checkpoint, pActors, &pActors, pNPCStats,
                 application->component<EngineRandomComponent>()->type(),
                 pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
@@ -759,6 +760,10 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
                 mm6::chestMapLoadOptedIn(), &mm6::chestTitleState(),
                 pOutdoor->mm6DeltaBytes,
                 GameTitle::MM6);
+            (void) mm6::testing::runArmedV5PreEventSpriteReplayForTest(
+                checkpoint, pSpriteObjects, &pSpriteObjects, actorPublished,
+                pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
+                pOutdoor->mm6DeltaBytes, GameTitle::MM6);
         } catch (...) {
             // This test-only early exit precedes the usual progress release.
             // Leave no pending transition for the resumed main menu.

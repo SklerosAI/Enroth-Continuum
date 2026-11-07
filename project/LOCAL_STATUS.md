@@ -1164,6 +1164,16 @@ write, and an independent fresh-child replay of that second slot, each
 focused atomic checks passed **18/18**. Actual campaign travel and production
 SaveLoad remain open.
 
+A separate disposable v2 seed, v4 baseline and fresh-child location-change
+test passed **1/1 per child**. It used a single exact MM6-only test intercept
+for cross-map autosave, then completed the real location-change state and
+target `PrepareWorld`, checked the target owner/cache graph, and applied
+bounded input. Every disposable save file stayed byte-identical; intercept
+units passed **3/3**. MM6 clears derived chest positions before reconstructing
+a different outdoor map, preventing a stale source-map position from failing
+the strict target chest join. Border routing, travel confirmation and normal
+cross-map autosave remain guarded.
+
 For indoor save design, a detached IFOV writer and fresh-child reader passed
 against retained private BLV/DLV data, and a separate headless map-load check
 captured the real face baseline immediately before `OnMapReload` (**1/1**).

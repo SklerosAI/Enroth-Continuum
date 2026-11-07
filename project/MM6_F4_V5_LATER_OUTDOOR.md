@@ -55,9 +55,22 @@ final fresh child reloaded that second slot and checked the same pre-event
 and post-world owners before aborting input. The full **seven-process**
 disposable chain passed **1/1 per child**; the prior v2, v4 and first oute2
 slots stayed byte-identical. The focused atomic suite passed **18/18**.
-The next gate is an actual campaign map transition and eventual production
-SaveLoad. The writer's direct map setup is not a campaign travel transition,
-and the current bounded checks do not establish later-map playability.
+The writer's direct map setup is not a campaign travel transition, and the
+bounded save cycle does not establish later-map playability.
+
+A separate disposable **three-process** location-change check now passes
+**1/1 per child**: v2 seed, strict first-map v4 candidate, then a fresh child
+loads that candidate, reaches input, calls the real `startMapTransition` and
+completes `GAME_STATE_CHANGE_LOCATION`/`PrepareWorld` into oute2. It verifies
+the target map, actor/sprite/chest/decoration/NPC and old-map cache graph,
+then applies a bounded turn and walk. An exact MM6-only test scope intercepts
+the single transition autosave; every file in the disposable save profile
+remains byte-identical. Focused intercept units passed **3/3**. The first
+target load exposed reused chest positions from the source map: MM6 now
+clears that derived position before reconstructing each target-map chest,
+while the strict chest generation guard remains in place. This validates a
+test-only lifecycle and does **not** implement border eligibility, travel
+confirmation, durable cross-map autosave or normal MM6 SaveLoad.
 
 See [v5 runtime ownership](MM6_F4_EC6_V5_SPRITE_RUNTIME.md),
 [local status](LOCAL_STATUS.md), and [the F4 path](plan.md).

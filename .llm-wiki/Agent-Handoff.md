@@ -217,7 +217,10 @@ encounter check now pass. The [later-map packet](MM6-F4-V5-Later-Outdoor.md)
 records a seven-process disposable oute2 v5 cycle: first write/read, bounded
 real-loop input, second atomic write and fresh-child read all pass. Generated
 NPC linkage is checked against GNPC, ARTR and ordered native PID slots;
-actual map travel and production SaveLoad remain open. For indoor v6,
+actual border travel and production SaveLoad remain open. A separate
+three-process location-change lifecycle check passes real world transition
+and bounded target input under a one-shot test-only no-write autosave
+intercept; it does not implement border UI or durable autosave. For indoor v6,
 detached IFOV write/read, a real headless pre-`OnMapReload` face-base capture,
 strict synthetic v6 staging and a three-process disposable v2 seed, v6 writer
 and fresh-child reader pass. Required IDRT decoration fields now publish

@@ -38,6 +38,15 @@ first-map cycle also passed after its live capture moved into a no-write
 engine service. That API remains first-map only. Actual campaign travel,
 production SaveLoad and Atlas Play remain closed.
 
+A separate three-process disposable lifecycle check now passes strict
+first-map admission, one exact test-only autosave intercept, real
+`GAME_STATE_CHANGE_LOCATION`/`PrepareWorld` into oute2, target owner/cache
+checks and bounded input. Every disposable save file stays byte-identical;
+focused intercept units passed **3/3**. MM6 clears stale derived chest
+positions when reconstructing a different outdoor map, preserving the strict
+target chest join. This test does not provide border travel UI or durable
+autosave; those and normal SaveLoad remain guarded.
+
 See also: [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), [MM6 F4 Save
 Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md), [Campaign
 Status](Campaign-Status.md), and [Agent Handoff](Agent-Handoff.md).

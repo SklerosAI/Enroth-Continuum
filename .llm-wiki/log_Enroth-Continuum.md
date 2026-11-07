@@ -2346,3 +2346,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added the exact pinned `luajit-cmake` recipe with its MIT license and provenance. All 24 original files matched Git blobs; a standalone AppleClang LuaJIT build and the integration cached-input MM7 target build passed.
 - Ten gitlinks remain. The recipe still derives a version through `git show` in the separate LuaJIT source gitlink; that step must be replaced before owning LuaJIT as ordinary source. Nested fetches and prebuilt dependency recipes still block a clean offline clone. The installed app and private saves were not replaced.
+
+## [2026-11-07] implement | Detached MM6 border candidate
+- by: T-Burton-ND via codex
+- Added a pure five-by-three outdoor neighbor, coordinate-wrap and hireling-day calculator from the bounded original route trace. Four synthetic route checks and three transition-intercept controls passed 7/7 on the integration build.
+- Every candidate still refuses live travel; original party eligibility, exceptional edges, corner acceptance, confirmation and durable cross-map autosave remain unproved. No Atlas or installed app changed.

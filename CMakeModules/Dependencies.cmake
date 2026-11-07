@@ -169,19 +169,30 @@ endfunction()
 
 function(require_repository_owned_dependencies)
     set(MISSING_INPUTS)
+    if(APPLE AND EC_LOCAL_ONLY_CONFIGURE AND EC_MM7_MAC_ICONV_ADAPTER)
+        set(LOCAL_MAC_ENCODING ON)
+    else()
+        set(LOCAL_MAC_ENCODING OFF)
+    endif()
     if(EXISTS "${CMAKE_SOURCE_DIR}/.gitmodules")
         file(STRINGS "${CMAKE_SOURCE_DIR}/.gitmodules" SUBMODULE_LINES
              REGEX "^[ \t]*path[ \t]*=")
         foreach(LINE IN LISTS SUBMODULE_LINES)
             string(REGEX REPLACE "^[ \t]*path[ \t]*=[ \t]*" "" RELATIVE_PATH "${LINE}")
+            if(LOCAL_MAC_ENCODING AND RELATIVE_PATH STREQUAL "thirdparty/ztd_text")
+                continue()
+            endif()
             list(APPEND MISSING_INPUTS "${RELATIVE_PATH} (external gitlink)")
         endforeach()
     endif()
 
     set(LOCAL_SOURCE_ROOT "${CMAKE_SOURCE_DIR}/thirdparty/repo-source")
-    foreach(NAME IN ITEMS SDL3 openal-soft ffmpeg libpng zlib-ng
-                          libdwarf-lite ztd-cmake ztd-idk ztd-inline-containers
-                          ztd-encoding-tables ztd-cuneicode ztd-platform)
+    set(REQUIRED_SOURCE_NAMES SDL3 openal-soft ffmpeg libpng zlib-ng libdwarf-lite)
+    if(NOT LOCAL_MAC_ENCODING)
+        list(APPEND REQUIRED_SOURCE_NAMES ztd-cmake ztd-idk ztd-inline-containers
+                                          ztd-encoding-tables ztd-cuneicode ztd-platform)
+    endif()
+    foreach(NAME IN LISTS REQUIRED_SOURCE_NAMES)
         file(GLOB SOURCE_ENTRIES "${LOCAL_SOURCE_ROOT}/${NAME}/*")
         if(NOT SOURCE_ENTRIES)
             list(APPEND MISSING_INPUTS "thirdparty/repo-source/${NAME}")

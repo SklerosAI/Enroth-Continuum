@@ -40,6 +40,9 @@ records the original Mac build's 23 external gitlinks, nine linked static
 archives from one OpenEnroth-hosted dependency ZIP and seven nested fetches.
 Sixteen pinned source inputs are now tracked here with licenses and provenance,
 leaving 7 gitlinks. The cached-input arm64 MM7 target still builds.
+The five source families behind that archive are also tracked at exact pinned
+revisions with original license files and archive hashes; they are not yet
+compiled by a repo-owned recipe.
 GoogleTest and `gtest_parallel` are optional test inputs; the owned LuaJIT CMake
 recipe and source generate the same version header without nested Git.
 This fork already owns the engine source and installed helper; a fresh offline

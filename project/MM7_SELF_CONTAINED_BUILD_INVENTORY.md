@@ -19,6 +19,17 @@ GoogleTest and `gtest_parallel` are optional test inputs.
 The remaining gitlinks, nested fetches and prebuilt-library families still
 block a clean offline MM7 build.
 
+On 2026-11-07, the five exact source revisions behind the nine prebuilt Mac
+archives were extracted from pinned GitHub commit archives into
+[`thirdparty/repo-source/`](../thirdparty/repo-source/README.md) as ordinary
+tracked files. [`SOURCES.json`](../thirdparty/repo-source/SOURCES.json) records
+the commits, source origins, archive SHA-256 values and primary license files.
+All 11,835 regular archive files matched the extracted bytes; 84 files ignored
+by inherited patterns were force-added so the tracked set is complete. Git
+attributes disable text normalization for this source tree. These sources are
+not connected to the build yet; the existing cached prebuilt archive remains
+the current MM7 link input, and the local-only gate still refuses to configure.
+
 ## Evidence boundary
 
 The title-locked `MM7.app` is declared in [`src/Bin/OpenEnroth/CMakeLists.txt`](../src/Bin/OpenEnroth/CMakeLists.txt) and links this fork's `application` and library targets. Atlas stages an explicitly supplied helper; it is not an OpenEnroth release download. The inspected local cache is `build/CMakeCache.txt`: `Debug`, `arm64`, Ninja, `OE_USE_PREBUILT_DEPENDENCIES=ON`, `OE_BUILD_TESTS=ON`, `OE_BUILD_TOOLS=ON`. The exact `MM7.app/Contents/MacOS/MM7` rule in that build's `build.ninja` supplies the static-library inventory below. `otool -L` on the built MM7 executable lists Apple system libraries/frameworks and libc++, with no third-party dynamic library. Static libraries are build inputs incorporated into the executable, not separate app runtime files. Original MM7 data and local saves remain external and private.

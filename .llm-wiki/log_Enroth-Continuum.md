@@ -2238,3 +2238,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added an opt-in `EC_LOCAL_ONLY_CONFIGURE=ON` path that skips recursive submodule update, forbids the OpenEnroth prebuilt archive, disconnects nested FetchContent and fails with named missing repository-owned source/recipe inputs. A fresh arm64 AppleClang configure reached that refusal without a download; the normal path and installed MM7 helper remain unchanged.
 - This is a fail-closed migration scaffold, not a successful offline MM7 build. Pinned sources, provenance/license review, local build recipes and private Atlas data/profile migration remain open.
+
+## [2026-11-07] verify | MM6 v5 actor and sprite owners
+- by: T-Burton-ND via codex
+- Revised the still-unpublished v5 manifest to require full-list exact ARTR and SPRT over unchanged v4 ACTR/native DDM anchors. Linked codec, pre-event scope and atomic checks passed 11/11; older v1–v4 decoders remain strict.
+- A post-action writer preserved fractional actor and sprite state, then refused before disk mutation because a decoration flag changed during gameplay. V4 EVRT does not own every final decoration flag. An ordered v5 decoration owner is under audit; no v5 slot or fresh-child reload passed.

@@ -1693,3 +1693,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A fresh owner-only hidden capture passed 1/1 over 105 samples without an on-screen window or focus change. Source tracing and a temporary terrain-only image support current month-0 grass-to-snow remapping as the likely cause of pale ground.
 - Original MM6 seasonal behavior and per-pixel tile ownership remain unproved, so rendering code was unchanged. A later isolated diagnostic observed a final frontmost-app change; graphical runs stopped and its temporary files were removed.
+
+## [2026-11-06] guard | MM6 plain item rarity boundary
+- by: T-Burton-ND via codex
+- The bounded plain/gold adapter now rejects non-common source templates before staging or recapturing an item; inherited artifact/relic effects are outside this view.
+- Linked focused checks passed 13/13 and two loaded-table MM6 headless checks passed 2/2 over 76 samples without visible windows or focus change. Live item producers, native nonzero records and SaveLoad remain gated.

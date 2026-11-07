@@ -65,7 +65,8 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6ScopedNewGameSave.cpp MM6ScopedNewGameSave.h
     MM6LoadedMapSource.cpp MM6LoadedMapSource.h
     MM6PrivateMapSource.cpp MM6PrivateMapSource.h)
-target_link_libraries(engine_mm6_save_runtime PUBLIC engine_mm6_save_container engine_mm6_atomic_save engine library_json)
+target_link_libraries(engine_mm6_save_runtime PUBLIC engine_mm6_save_container engine_mm6_atomic_save
+    engine engine_components_random library_json)
 target_check_style(engine_mm6_save_runtime)
 
 add_library(engine_mm6_outdoor_wire STATIC MM6OutdoorWire.cpp MM6OutdoorWire.h)

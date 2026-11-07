@@ -1887,3 +1887,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Recorded the cached arm64 MM7 build's 23 external gitlinks, nine linked static archives and seven nested source fetches in a public source-autonomy inventory. The current prebuilt ZIP lacks complete source/license provenance; ztd-family terms and FFmpeg build configuration require review before any source snapshot.
 - No dependency, GOG file, save or installed app changed. The known-good MM7 helper remains in place; a clean offline build from this repo is still a later acceptance gate.
+
+## [2026-11-06] integrate | MM6 decoded Party field adapters
+- by: T-Burton-ND via codex
+- Added direct decoded-field Party-copy staging for v2 core and progress fields, sharing the existing v1 staging logic and leaving raw inventory to its separate adapter.
+- Linked core/durable/raw-runtime tests passed 17/17 with direct-vs-v1 equivalence and invalid-field rejection. A complete v2 session and production MM6 load remain open.

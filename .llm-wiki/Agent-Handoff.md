@@ -8,6 +8,10 @@ tags: [handoff, agents, mm6]
 
 This page is the starting brief for future Codex agents working in parallel on Enroth Continuum; recheck its dated status against the authoritative files before acting.
 
+## Current F4 checkpoint — 2026-11-06
+
+The active `mm6-mac-implementation` integration branch has a native EC6 v2 first-map candidate writer, bounded creation-item seed, complete detached v2 session preflight, title-local raw cursor/shop process owners, and detached held-item/image and post-rebuild PID checks. In an owner-only disposable profile, a test-only headless New Game process wrote a v2 `autosave.ec6` from one sampled real creation Party; a fresh headless child selected and staged it read-only. Both integration GameTests passed 1/1. The [v2 restart packet](../project/MM6_F4_RAW_V2_HEADLESS_RESTART.md), [creation seed page](MM6-F4-Creation-Item-Seed.md), [raw save runtime](MM6-F4-Raw-Save-Runtime.md), [cursor owner](MM6-F4-Raw-Cursor-Owner.md), and [post-rebuild PID slot page](MM6-F4-Post-Rebuild-PID-Slots.md) define the exact boundaries. Normal MM6 SaveLoad, game-loop v2 publication, Atlas Play and graphical campaign acceptance remain guarded. Other random starter draws and original-game native record parity remain unverified. The MM7 baseline remains protected. For the owner's later MM7 source-autonomy goal, see [MM7 Self-Contained Source](MM7-Self-Contained-Source.md); its clean offline build remains planned.
+
 ## Read first
 
 1. Run `git status --short --branch`, `git worktree list`, and `git log -1 --oneline` in the checkout you intend to use. The branch and worktree descriptions below may drift.

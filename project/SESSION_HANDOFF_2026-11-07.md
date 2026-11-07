@@ -156,6 +156,7 @@ commit as you go) and exact file ownership.
 | F5a staged graphical opening check | F4b gate passes with Lane B's normal Save/Load section | none, capture and report only |
 | MM7 audit combat fixes: Break Weapon inversion, Divine Intervention recovery, lich immunity, Divine Restoration target, archer projectile token, monster ability slots | S merged, coordinate with Codex in `agent_comms/` first | `Character.cpp`, `CastSpellInfo.cpp`, `Monsters.cpp`, `Actor.cpp` MM7 paths |
 | MM7 save robustness: atomic writes via Codex's helper, in-game error on a bad save, Atlas exit-status check | B merged, coordinate with Codex | `SaveLoad.cpp`, `UISaveLoad.cpp`, `launcher/AtlasApp.swift` |
+| MM8: its own data inventory, engine adapter and save checks, per plan §18 "After MM6" | MM6 and MM7 work above finished (owner instruction) | the reserved `mm8-isolated` worktree on `mm8-isolated-runtime` |
 
 ## Worktrees (11 registered, cap is 10)
 

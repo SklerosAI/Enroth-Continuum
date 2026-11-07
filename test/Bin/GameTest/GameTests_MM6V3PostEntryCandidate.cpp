@@ -83,6 +83,42 @@ std::vector<std::uint8_t> slotBytes(const std::filesystem::path &path) {
     return {std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
 }
 
+bool hasItemPayload(const Item &item) {
+    return item.itemId != ITEM_NULL || item.potionPower || item.goldAmount ||
+           item.standardEnchantment || item.standardEnchantmentStrength ||
+           item.specialEnchantment != ITEM_ENCHANTMENT_NULL || item.numCharges ||
+           item.maxCharges || item.flags || item.lichJarCharacterIndex != -1 ||
+           item.enchantmentExpirationTime.ticks() || item.mm6RawRecord;
+}
+
+void requireEmptyInheritedCommerce(const Party &party) {
+    // The physical SHOP/SCLK title owner is captured separately. The older
+    // MM7-indexed Party arrays cannot be silently interpreted as MM6 houses.
+    for (HouseId id : party.standartItemsInShops.indices()) {
+        if (party.PartyTimes.shopNextRefreshTime[id].ticks() ||
+            party.PartyTimes.shopBanTimes[id].ticks() || party.InTheShopFlags[id])
+            throw std::runtime_error("unrepresented inherited commerce");
+        for (const Item &item : party.standartItemsInShops[id])
+            if (hasItemPayload(item))
+                throw std::runtime_error("unrepresented inherited commerce");
+        for (const Item &item : party.specialItemsInShops[id])
+            if (hasItemPayload(item))
+                throw std::runtime_error("unrepresented inherited commerce");
+    }
+    for (HouseId id : party.spellBooksInGuilds.indices()) {
+        if (party.PartyTimes.guildNextRefreshTime[id].ticks())
+            throw std::runtime_error("unrepresented inherited commerce");
+        for (const Item &item : party.spellBooksInGuilds[id])
+            if (hasItemPayload(item))
+                throw std::runtime_error("unrepresented inherited commerce");
+    }
+    for (HouseId id : party.PartyTimes.bountyHuntNextGenTime.indices())
+        if (party.PartyTimes.bountyHuntNextGenTime[id].ticks() ||
+            party.monster_id_for_hunting[id] != MONSTER_INVALID ||
+            party.monster_for_hunting_killed[id])
+            throw std::runtime_error("unrepresented inherited commerce");
+}
+
 } // namespace
 
 // Candidate-only probe in the disposable v2 restart child. It captures the
@@ -155,6 +191,10 @@ GAME_TEST(MM6V3PostEntryCandidateHeadless, DISABLED_FirstMapFullSessionPreflight
                                 !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
                         };
                         mm6::requireRawV2RepresentableState(*pParty, {}, GameTitle::MM6);
+                        requireEmptyInheritedCommerce(*pParty);
+                        (void) mm6::stageRawCursorImagePlan(
+                            *pParty, mm6::rawHeldCursorState(GameTitle::MM6),
+                            *pItemTable, GameTitle::MM6);
                         if (uCurrentlyLoadedLevelType != LEVEL_OUTDOOR ||
                             engine->_currentLoadedMapId != pMapTable->GetMapInfo("oute3.odm") ||
                             pMapDeltas.size() != maps.expectedNames().size())
@@ -227,6 +267,8 @@ GAME_TEST(MM6V3PostEntryCandidateHeadless, DISABLED_FirstMapFullSessionPreflight
                             refusalClass = "inventory";
                         else if (message.find("ground item") != std::string_view::npos)
                             refusalClass = "ground-item";
+                        else if (message.find("commerce") != std::string_view::npos)
+                            refusalClass = "commerce";
                         else if (message.find("map") != std::string_view::npos ||
                                  message.find("DDM") != std::string_view::npos)
                             refusalClass = "map";

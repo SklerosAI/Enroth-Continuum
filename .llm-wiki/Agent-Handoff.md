@@ -71,6 +71,8 @@ The [item value provenance carrier](MM6-F4-Item-Value-Provenance.md) is the firs
 
 The [raw transfer source audit](MM6-F4-Raw-Item-Transfer-Semantics.md) proves first-25-byte clearing for a backpack item-event removal and held-item clear, full 28-byte incoming cursor and shop copies, and allocation by zero ID across all 138 physical records. Zero-ID tails remain authoritative. Equipment removal, general UI pickup and ground fallback are still unproved; use detached atomic raw transactions and do not infer them from `Inventory::take`.
 
+The detached [raw HELD v2 packet](MM6-F4-Raw-Held-Item-Section.md) retains all 28 native cursor bytes even when the item ID is zero; native clear leaves the final three bytes in place. Its synthetic linked tests pass **3/3**. It is not in `KnownSaveFields` or the live route. A future agent must establish a separate raw cursor owner for absent bytes, coordinate the final `ITEM`/`HELD` manifest revision, and publish the cursor image only after complete owner commit. The existing post-load click-offset reset remains intentional.
+
 ## Authority and source order
 
 | Question | Start with | Supporting source |

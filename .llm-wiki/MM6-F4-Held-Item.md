@@ -18,4 +18,6 @@ Two standalone C++ tests pass empty/present round-trip and malformed/wrong-title
 
 The [action-observation stability audit](MM6-F4-Action-Observation-Stability.md) records why the idle probe alone cannot protect a map-entry callback after disk/cache publication. A production route needs an enforced no-reentry safe point or complete action/UI rollback.
 
+The later [raw HELD v2 candidate](MM6-F4-Raw-Held-Item-Section.md) is detached from this live route. It keeps the complete 28-byte native cursor record even when absent, preserving the three bytes left behind by the original clear operation. The current v1 known-save decoder still rejects v2; the final manifest must revise `ITEM` and `HELD` together.
+
 See also: [Save Remainder](MM6-F4-Save-Remainder.md), [Inventory Restore](../project/MM6_F4_INVENTORY_RESTORE.md), [Cursor and Action Gate](../project/MM6_F4_HELD_CURSOR_ACTION_GATE.md), [Action Observation Stability](MM6-F4-Action-Observation-Stability.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

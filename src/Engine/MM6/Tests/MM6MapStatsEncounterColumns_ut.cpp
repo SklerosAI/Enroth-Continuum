@@ -11,6 +11,8 @@ UNIT_TEST(MM6MapStatsEncounterColumns, UsesInternalStemsRatherThanDisplayLabels)
     cells[0] = "1";
     cells[1] = "Later Outdoor";
     cells[2] = "OutE2.Odm";
+    for (std::size_t index = 3; index <= 12; ++index)
+        cells[index] = "0";
     cells[5] = "672";
     cells[8] = "2";
     cells[13] = "PeasantM3";

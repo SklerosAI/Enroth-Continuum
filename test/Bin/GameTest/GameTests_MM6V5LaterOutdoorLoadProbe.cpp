@@ -40,16 +40,18 @@ GAME_TEST(MM6V5LaterOutdoorHeadless, DISABLED_DirectSecondOutdoorLoadProbe) {
     mm6::resetChestTitleState(&mm6::chestTitleState());
     ASSERT_TRUE(mm6::restoreChestTitleState(
         GameTitle::MM6, &mm6::chestTitleState(), 0x12345678u, {}));
-    bool loaded = false;
+    bool prepared = false;
     game.runGameRoutine([&] {
         engine->_pendingTransition = MapDestination(mapId, MAP_START_POINT_PARTY);
         mm6::ScopedChestMapLoadOptIn chestOptIn;
         DoPrepareWorld(/* bLoading = */ false, /* fullscreen = */ 1);
-        loaded = engine->_currentLoadedMapId == mapId &&
-            uCurrentlyLoadedLevelType == LEVEL_OUTDOOR &&
-            !engine->_pendingTransition && !pOutdoor->mm6DeltaBytes.empty() &&
-            vChests.size() == 20;
+        prepared = true;
     });
-    EXPECT_TRUE(loaded);
+    EXPECT_TRUE(prepared);
+    EXPECT_EQ(engine->_currentLoadedMapId, mapId);
+    EXPECT_EQ(uCurrentlyLoadedLevelType, LEVEL_OUTDOOR);
+    EXPECT_FALSE(engine->_pendingTransition);
+    EXPECT_FALSE(pOutdoor->mm6DeltaBytes.empty());
+    EXPECT_EQ(vChests.size(), 20);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }

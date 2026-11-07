@@ -60,13 +60,19 @@ void requireFirstMapOutdoorDecorationReplay(
     for (std::size_t index = 0; index < expected.size(); ++index) {
         const LevelDecoration &one = expected[index];
         const LevelDecoration &two = live[index];
-        if (one.uDecorationDescID != two.uDecorationDescID ||
-            one.uFlags != two.uFlags || one.vPosition != two.vPosition ||
-            one._yawAngle != two._yawAngle || one.uCog != two.uCog ||
-            one.uEventID != two.uEventID ||
-            one.uTriggerRange != two.uTriggerRange ||
-            one.eventVarId != two.eventVarId)
-            throw std::runtime_error("MM6 first-map decoration flags or identity changed");
+        const auto reject = [index](std::string_view field) {
+            throw std::runtime_error("MM6 first-map decoration " +
+                                     std::string(field) + " changed at slot " +
+                                     std::to_string(index));
+        };
+        if (one.uDecorationDescID != two.uDecorationDescID) reject("descriptor");
+        if (one.uFlags != two.uFlags) reject("flags");
+        if (one.vPosition != two.vPosition) reject("position");
+        if (one._yawAngle != two._yawAngle) reject("yaw");
+        if (one.uCog != two.uCog) reject("cog");
+        if (one.uEventID != two.uEventID) reject("event id");
+        if (one.uTriggerRange != two.uTriggerRange) reject("trigger range");
+        if (one.eventVarId != two.eventVarId) reject("event var id");
     }
 }
 

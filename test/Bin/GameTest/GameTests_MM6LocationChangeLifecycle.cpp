@@ -383,6 +383,13 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
             sourceHadChestPosition = std::any_of(
                 vChests.begin(), vChests.end(),
                 [](const Chest &chest) { return chest.position.has_value(); });
+            // The source save's one-shot ACTR/GNPC/RNGS and EVRT scopes have
+            // completed their owner checks. A normal later map transition
+            // must generate its own NPC rows rather than re-consume them.
+            postWorld.reset();
+            replay.reset();
+            checkpoint.reset();
+            eventRuntime.reset();
             chestOptIn.reset();
             chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>();
             mm6::testing::ScopedTransitionAutosaveInterceptForTest intercept(

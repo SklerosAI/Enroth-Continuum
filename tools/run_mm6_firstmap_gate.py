@@ -113,14 +113,14 @@ def main():
         print("GameTest binary is missing; build the target first.", file=sys.stderr)
         return 2
 
-    with tempfile.TemporaryDirectory(prefix="mm6-firstmap-gate-") as first:
+    with tempfile.TemporaryDirectory(prefix="mm6-restart-gate-") as first:
         profile = Path(first)
         os.chmod(profile, 0o700)
         for name, flag, value in SEVEN_CHILD_CHAIN:
             if not run_child(name, flag, value, profile,
                              paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"]):
                 return 1
-    with tempfile.TemporaryDirectory(prefix="mm6-firstmap-fault-") as second:
+    with tempfile.TemporaryDirectory(prefix="mm6-restart-fault-") as second:
         profile = Path(second)
         os.chmod(profile, 0o700)
         for name, flag, value in [SEED, V4, V5_WRITE, *FAULT_CHILDREN]:

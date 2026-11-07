@@ -31,9 +31,10 @@ Read [plan §18.1](plan.md) for the F4b → F5a → F4d → F4c → F5b → F6 o
 `89fc3b913` introduced the Engine-owned `mm6::V5FirstMapLoadAttempt` and an
 exact first-map chest handoff. Its fresh seven-child v5 chain passed **7/7**,
 both full-retry fault children passed **1/1**, and MM7 control passed **1/1**.
-`0d017c115` then moved first-map EVRT restoration into that attempt. The
-GameTest and UnitTest targets **built**, but its fresh-process replay and
-fault checks were not run before the pause. Treat this slice as unverified.
+`0d017c115` then moved first-map EVRT restoration into that attempt. On
+2026-11-07 the gate runner passed it: seven main children **7/7**, three
+fault-setup and two full-retry fault children **5/5**, and MM7 control
+**1/1**, each in a fresh process.
 
 Relevant source entry points:
 

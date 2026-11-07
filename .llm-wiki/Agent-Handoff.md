@@ -10,10 +10,9 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 ## Fast resume pointer — 2026-11-07
 
-The MM6 implementation goal is paused. The next accepted work is to run the
-seven-child first-map v5 chain, both full-retry fault children and MM7 control
-against the already compiled Engine event-restore slice; it has not yet passed
-those replay checks. If that succeeds, complete the remaining actor/NPC/RNG,
+The MM6 implementation goal resumed on 2026-11-07. The Engine event-restore
+slice passed the seven-child first-map v5 chain, both full-retry fault
+children and MM7 control in fresh processes. Next, complete the remaining actor/NPC/RNG,
 sprite/decoration and post-world phases in the same Engine-owned first-map
 attempt. Then connect paused Save, native numbered-slot policy and normal UI
 to a fresh-process save/reload, followed by the early graphical F5a check.

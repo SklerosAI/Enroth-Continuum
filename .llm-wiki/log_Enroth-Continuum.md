@@ -2223,3 +2223,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A separate strict fresh-child test reused the exact v4 pre-input owner admission, continued into the real null-renderer game loop, reached first input, turned and walked once, then quit. The disposable v2 seed and v4 candidate remained unchanged; the three-process seed, writer and first-input run each passed 1/1.
 - This proves bounded input after one first-map reload. A post-action second write/reload, indoor/later-map support and production SaveLoad/Atlas remain open.
+
+## [2026-11-07] audit | MM6 post-action sprite save boundary
+- by: T-Burton-ND via codex
+- The strict second v4 writer refused before disk mutation after bounded movement: a live ground sprite had fractional X/Y coordinates that native integer DDM cannot preserve. This is a genuine gameplay state, so v4 retains its refusal; the disabled post-action reader has not run.
+- Added a source-backed v5 `SPRT` design gate for exact full-list runtime sprite fields, stable native DDM slot anchors and MM6 item provenance. It keeps native ground bytes separate, restores after object arrangement and before map events, and rejects unsupported mutations. No v5 slot or implementation was accepted in this audit.

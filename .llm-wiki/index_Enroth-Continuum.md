@@ -92,7 +92,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Quick Start](MM6-F4-Quick-Start.md) — Original static opening route and all skill dispatches; separate editable creation now passes hidden first-frame control flow, with Quick Start and normal save still gated
 - [MM6 F4 Indoor Runtime](MM6-F4-Indoor-Runtime.md) — Bounded BLV/DLV projection and changed-state encoding with retained opaque wire
 - [MM6 F4 Map Save Fields](MM6-F4-Map-Save-Fields.md) — Bounded `.ec6` map-delta section, private F3 source reader and ground/chest item-marker validation
-- [MM6 F4 NPC State](MM6-F4-NPC-State.md) — `.ec6` RESC preserves the source no-house sentinel; joined first-map check passes, while normal save/reload remains gated
+- [MM6 F4 NPC State](MM6-F4-NPC-State.md) — `.ec6` RESC overlays fresh MM6 static NPC tables; loaded-resource headless check passes, while normal save/reload remains gated
 - [MM6 F4 NPC Events](MM6-F4-NPC-Events.md) — Bounded topic/move state and MM6 global-script precedence over MM7 teacher IDs
 - [MM6 F4 Item Event Compare](MM6-F4-Item-Event-Compare.md) — Read-only inventory/held-item comparison and bounded item-write handoff
 - [MM6 F4 Item Event Writes](MM6-F4-Item-Event-Writes.md) — Retained reward/handoff topology and bounded Add/Subtract transaction limits

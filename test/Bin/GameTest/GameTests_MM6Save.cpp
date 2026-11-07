@@ -25,6 +25,7 @@
 #include "Engine/MM6/MM6HeldItemSaveFields.h"
 #include "Engine/MM6/MM6LoadedMapSource.h"
 #include "Engine/MM6/MM6NewGameSaveRuntime.h"
+#include "Engine/MM6/MM6NpcStaticBaseline.h"
 #include "Engine/MM6/MM6PrivateMapSource.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/MM6/MM6WorldSaveRuntime.h"
@@ -96,6 +97,27 @@ std::optional<std::filesystem::path> restartProfileRoot() {
 }
 
 } // namespace
+
+GAME_TEST(MM6ZSaveHeadless, FreshNpcBaselineMatchesLoadedMm6Tables) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(engine->resources(), nullptr);
+    ASSERT_NE(pNPCStats, nullptr);
+    const std::string priorTopic = pNPCTopics[0].pText;
+    const auto baseline = mm6::loadNpcStaticBaseline(*engine->resources(), GameTitle::MM6);
+    EXPECT_GT(baseline.stats().uNumNewNPCs, 0);
+    EXPECT_LE(baseline.stats().uNumNewNPCs, pNPCStats->pOriginalNPCData.size());
+    for (std::size_t i = 1; i < baseline.stats().pOriginalNPCData.size(); ++i) {
+        const NPCData &fresh = baseline.stats().pOriginalNPCData[i];
+        const NPCData &loaded = pNPCStats->pOriginalNPCData[i];
+        EXPECT_TRUE(fresh.name == loaded.name) << i;
+        EXPECT_EQ(fresh.portraitId, loaded.portraitId) << i;
+        EXPECT_EQ(fresh.profession, loaded.profession) << i;
+    }
+    EXPECT_EQ(baseline.stats().pProfessionChance[MAP_EMERALD_ISLAND].total,
+              pNPCStats->pProfessionChance[MAP_EMERALD_ISLAND].total);
+    EXPECT_TRUE(pNPCTopics[0].pText == priorTopic);
+}
 
 GAME_TEST(MM6ZSaveHeadless, LoadedMapSourceMatchesPrivateResearch) {
     const char *research = std::getenv("ENROTH_MM6_MAP_RESEARCH_ROOT");

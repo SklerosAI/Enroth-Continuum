@@ -14,6 +14,14 @@ launch of that candidate survived at startup with a disposable user profile.
 This candidate remains staged separately from the installed Release helper
 until graphical play and save/reload checks pass.
 
+The same local-only engine tree was reconfigured under network denial to
+build `OpenEnroth_GameTest`. Its disposable MM7 writer and fresh-process
+reader passed 1/1 each against an owner-only temporary profile; the slot was
+byte-identical after reload and the temporary profile was removed. Focused
+`Prs.Pr2956`, `Issues.Issue840` and `Prs.Pr2354` controls passed 3/3 through
+that source-linked test binary. This is headless evidence and does not replace
+the candidate's graphical save/reload gate.
+
 ## Proven route
 
 For a fresh local build, run the repository-owned one-command wrapper with a

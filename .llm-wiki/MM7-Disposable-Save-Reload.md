@@ -21,6 +21,11 @@ MM7 headless controls still passed 2/2.
 This is a null-renderer GameTest using locally built dependencies, not a
 visible run of the staged Atlas helper or an installed-app save check. It
 covers one first-map fixture, not an existing personal save or the campaign.
+The current integration source repeated the gate with its own source-linked
+GameTest under network denial on 2026-11-07: writer and reader passed 1/1 each,
+the disposable slot was byte-identical after reload, and focused MM7 controls
+passed 3/3. The temporary profile was removed. This newer result does not
+change the graphical or campaign limits.
 The [hidden OpenGL frame gate](MM7-Offscreen-Frame-Capture.md) separately
 proved rendering without disk save/reload. The [runtime cutover](MM7-Runtime-Path-Cutover.md)
 still requires collision-safe review and visible candidate play before any

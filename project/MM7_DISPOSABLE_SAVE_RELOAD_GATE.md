@@ -28,6 +28,13 @@ and staged Atlas bundle were not changed. The test binary was rebuilt in the
 already marked, diagnostic-modified temporary source extraction; it is not a
 new pristine-source proof.
 
+The same gate passed again on 2026-11-07 through a GameTest linked to nine
+tracked-source media archives in the current integration build: writer 1/1,
+reader 1/1, and byte-identical `save000.mm7` after reload. The gate used an
+owner-only system-temp profile and removed it afterward. Three focused MM7
+controls passed in that build. The staged source-built Atlas remains separate
+from the installed helper pending graphical save/reload.
+
 This gate proves a bounded fresh-process disk save/reload for one first-map
 fixture in the local-only test engine. It does not test the staged Atlas helper,
 visible window and input, sound, an existing personal save, extended gameplay

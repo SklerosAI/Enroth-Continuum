@@ -11,6 +11,10 @@
   helper passed strict code-signature checks; its dynamic links were Apple
   system paths only. A bounded headless startup survived with a disposable
   user profile, which was removed after the run.
+- Follow-up check: enabled the local-only GameTest target under network denial.
+  Its exact MM7 disposable writer and fresh-process reader passed 1/1 each,
+  and the save slot remained byte-identical. Focused MM7 controls passed 3/3.
+  The owner-only temporary profile was removed.
 - Candidate: `Atlas/Enroth Continuum.app` inside the output root. It remains
   staged, separate from the installed cached-library Release helper.
 - Next safe action: graphical launch of this candidate, followed by a

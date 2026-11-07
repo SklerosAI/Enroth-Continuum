@@ -230,7 +230,10 @@ Defects:
    against integration source under network denial and staged a separate Atlas
    with all nine local archives and 23 media notices. Link-input and
    system-library checks passed; a bounded headless menu launch survived.
-   Graphical play and save/reload remain before an installed-app cutover.
+   The source-linked GameTest then passed the disposable fresh-process save
+   and reload 1/1 each with byte-identical slot contents, plus focused MM7
+   controls 3/3. Graphical play and save/reload remain before an installed-app
+   cutover.
 4. Medium, inherited: MM7 saves are not atomic (truncating `fopen "wb"`), a
    failed manual save or quicksave throws out of `saveGame` and ends the
    process, and a save with a valid header but corrupt body is listed and then

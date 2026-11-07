@@ -1,5 +1,6 @@
 #include "MM6NpcStaticBaseline.h"
 
+#include <memory>
 #include <stdexcept>
 #include <utility>
 
@@ -12,9 +13,9 @@ NpcStaticBaseline loadNpcStaticBaseline(const Blob &npcData, const Blob &npcNews
                                         GameTitle title) {
     if (title != GameTitle::MM6)
         throw std::runtime_error("MM6 NPC baseline requires MM6 title");
-    NPCStats fresh{};
-    fresh.InitializeMm6Static(npcData, npcNews, npcNames, npcProfs);
-    if (fresh.uNumNewNPCs <= 0 || fresh.uNumNewNPCs > fresh.pOriginalNPCData.size())
+    auto fresh = std::make_unique<NPCStats>();
+    fresh->InitializeMm6Static(npcData, npcNews, npcNames, npcProfs);
+    if (fresh->uNumNewNPCs <= 0 || fresh->uNumNewNPCs > fresh->pOriginalNPCData.size())
         throw std::runtime_error("MM6 NPC baseline has invalid static row count");
     return NpcStaticBaseline(std::move(fresh));
 }

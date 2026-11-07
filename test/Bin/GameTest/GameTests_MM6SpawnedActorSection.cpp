@@ -39,6 +39,9 @@ std::string_view refusalClass(std::string_view message) {
 }
 
 std::string_view identityClass(std::span<const Actor> actors, size_t baselineCount) {
+    bool baselineDescriptorZero = false;
+    bool baselineDescriptorOtherInvalid = false;
+    bool baselineDescriptorCanAct = false;
     for (size_t slot = 0; slot < actors.size(); ++slot) {
         const Actor &actor = actors[slot];
         const bool baseline = slot < baselineCount;
@@ -46,9 +49,19 @@ std::string_view identityClass(std::span<const Actor> actors, size_t baselineCou
             return baseline ? "baseline-slot" : "spawned-slot";
         if (actor.monsterInfo.id < MONSTER_FIRST || actor.monsterInfo.id > MONSTER_LAST)
             return baseline ? "baseline-embedded-monster" : "spawned-embedded-monster";
-        if (actor.monsterId < MONSTER_FIRST || actor.monsterId > MONSTER_LAST)
-            return baseline ? "baseline-descriptor-monster" : "spawned-descriptor-monster";
+        if (actor.monsterId < MONSTER_FIRST || actor.monsterId > MONSTER_LAST) {
+            if (!baseline)
+                return "spawned-descriptor-monster";
+            baselineDescriptorZero |= actor.monsterId == MONSTER_INVALID;
+            baselineDescriptorOtherInvalid |= actor.monsterId != MONSTER_INVALID;
+            baselineDescriptorCanAct |= actor.CanAct();
+        }
     }
+    if (baselineDescriptorOtherInvalid)
+        return "baseline-descriptor-out-of-range";
+    if (baselineDescriptorZero)
+        return baselineDescriptorCanAct ? "baseline-descriptor-zero-can-act" :
+                                          "baseline-descriptor-zero-inactive";
     return "identity";
 }
 

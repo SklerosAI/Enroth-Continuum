@@ -207,6 +207,7 @@ void runMM6LocationChangeLifecycle(EngineController &game, bool writeV6,
     bool v6CandidateWritten = false;
     bool v6AtomicFaultRefused = false;
     bool returnTransitionQueued = false;
+    bool returnProbeReached = false;
     bool returnPreEventAgreed = false;
     std::vector<std::uint8_t> v6CandidateBytes;
     int sourceGeneratedCursor = -1;
@@ -809,8 +810,16 @@ void runMM6LocationChangeLifecycle(EngineController &game, bool writeV6,
                         engine->_pendingTransition &&
                         engine->_pendingTransition->map() == targetMap;
                 });
-                if (returnTransitionQueued)
+                if (returnTransitionQueued) {
+                    // The location-change loading screen may yield before
+                    // PrepareWorld. Keep the one-shot scope armed until the
+                    // intercepted return actually reaches the target.
+                    game.skipLoadingScreen();
                     game.tick(2);
+                    game.runGameRoutine([&] {
+                        returnProbeReached = returnProbe->reached();
+                    });
+                }
             }
         }
         if (!probeReturn) {
@@ -851,6 +860,7 @@ void runMM6LocationChangeLifecycle(EngineController &game, bool writeV6,
     EXPECT_TRUE(movementApplied);
     if (probeReturn) {
         EXPECT_TRUE(returnTransitionQueued);
+        EXPECT_TRUE(returnProbeReached);
         EXPECT_TRUE(returnPreEventAgreed);
         EXPECT_EQ(profileSaveBytes(profile), allSavesBefore);
     }

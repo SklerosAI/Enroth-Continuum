@@ -27,7 +27,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [Campaign Status](Campaign-Status.md) — Dated MM6, MM7, and MM8 readiness, including first-map v5 save/load gates, outdoor v6 staging and the no-write return probe
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [Runtime Isolation](Runtime-Isolation.md) — Title-locked MM7 helper and staged Atlas sibling assembler; MM6/MM8 launch gates remain closed
-- [MM7 Self-Contained Source](MM7-Self-Contained-Source.md) — Tracked Mac source and remaining default-build, graphical, save and identity gates
+- [MM7 Self-Contained Source](MM7-Self-Contained-Source.md) — Tracked Mac source, verified integration candidate and remaining graphical, save and identity gates
 - [MM7 Mac Dependency Recipe](MM7-Mac-Dependency-Recipe.md) — Five tracked media-library sources build to nine static arm64 archives
 - [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md) — One-command clean tracked-source MM7 and Atlas build under network denial, with focused headless controls
 - [MM7 Disposable Save and Reload](MM7-Disposable-Save-Reload.md) — Isolated two-process headless disk save and normal-menu reload using the local-only GameTest

@@ -31,6 +31,8 @@ The dedicated [`tools/build_mm7_macos.py`](../tools/build_mm7_macos.py) command 
 
 The one-command Mac MM7 build route is proven from a clean extraction of the published preview, including a fresh shallow remote clone with uninitialized submodules; shared CMake defaults and the installed source-built dependency cutover remain incomplete. An optional `upstream` remote remains only for deliberate review of later source changes; OpenEnroth history, license, notices and authorship remain in the fork. Keep the installed MM7 helper until a replacement from the source-owned dependency recipe passes play and save checks, and do not describe a cached local build as a clean offline build.
 
+On 2026-11-07 the same wrapper also passed against the current integration source under network denial. It built all nine local media archives, verified their MM7 link inputs and system-only dynamic libraries, staged 23 media notices, and passed strict signatures on the helper and Atlas. A bounded headless candidate launch survived with a disposable profile. The source-built Atlas remains staged; graphical play and save/reload are still needed before replacing the installed cached-library helper.
+
 The owner reaffirmed this as a required eventual MM7 finish line. The gate now
 also calls for an audit of user-facing app identity, bundle metadata, Atlas
 text, CLI defaults and local config/cache/log paths, so the installed helper

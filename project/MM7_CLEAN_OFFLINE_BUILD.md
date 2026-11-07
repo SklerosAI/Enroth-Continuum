@@ -5,6 +5,15 @@ the Mac MM7 helper and a staged Atlas bundle with network access denied. This
 is a build and bounded headless runtime result, not an installed-app or full
 campaign acceptance result.
 
+The current integration checkout also ran the one-command route under network
+denial on 2026-11-07, using a new output root outside the repository. All nine
+tracked-source media archives built; the local-only MM7 target linked them,
+passed the wrapper's link-input and system-library checks, and staged Atlas
+with 23 media notices. Both staged app signatures passed. A bounded headless
+launch of that candidate survived at startup with a disposable user profile.
+This candidate remains staged separately from the installed Release helper
+until graphical play and save/reload checks pass.
+
 ## Proven route
 
 For a fresh local build, run the repository-owned one-command wrapper with a

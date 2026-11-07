@@ -224,11 +224,13 @@ Defects:
    `c11c2c1f9`; `Prs.Pr2956`, `Issues.Issue840` and `Prs.Pr2354` passed 3/3
    together after the follow-up MM7 changes. `Issues.Issue840` alone does not
    tape the pause.
-3. Medium, M7-A6: the helper statically links SDL3, FFmpeg, OpenAL, libpng and
-   zlib from OpenEnroth-hosted prebuilt dependency releases, and their notices
-   are not bundled. `tools/build_mm7_macos.py` and the tracked snapshots on
-   integration are identical to `codex/mm7-public-preview`, but that route has
-   never been run on integration source.
+3. Medium, M7-A6: the installed helper still statically links SDL3, FFmpeg,
+   OpenAL, libpng and zlib from OpenEnroth-hosted prebuilt dependency releases,
+   without their source notices. On 2026-11-07 the tracked-source recipe ran
+   against integration source under network denial and staged a separate Atlas
+   with all nine local archives and 23 media notices. Link-input and
+   system-library checks passed; a bounded headless menu launch survived.
+   Graphical play and save/reload remain before an installed-app cutover.
 4. Medium, inherited: MM7 saves are not atomic (truncating `fopen "wb"`), a
    failed manual save or quicksave throws out of `saveGame` and ends the
    process, and a save with a valid header but corrupt body is listed and then

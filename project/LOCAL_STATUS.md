@@ -8,6 +8,8 @@ The historical MM6 snapshot below predates the current F4 work. The separate arm
 
 A later disposable two-process test now wrote a native v2 first-map `autosave.ec6` from the sampled real creation Party, then selected and staged it read-only in a fresh null-renderer MM6 process. Both linked tests passed 1/1 in the integration build; the owner-only system-temp profile was removed. This does not publish all v2 owners into `gameLoop()` or open production MM6 loading.
 
+A third fresh null-renderer process exercised the v2 test-only load callback against that exact slot. The read-only admission gate named missing world/resource owners and refused publication; sampled live owners and disk bytes stayed unchanged. All three processes passed 1/1 in the integration build. The Main Menu QuickLoad event remains gated because the current void callback would otherwise continue into `gameLoop()` before a complete post-world admission hook exists.
+
 ## MM7: playable on this M2 Mac
 
 The current integration tree also builds a title-locked `MM7.app` and stages a signed Atlas with `Contents/Helpers/MM7.app`. A wrong-title helper was rejected without changing the previous staged app, and a reuse build retained an identical MM7 helper. This is a build-tree checkpoint; the installed Atlas still has the prior generic helper until a live launch and save check accepts the new bundle. The protected `mm7-isolated-runtime` baseline and both local save profiles remain untouched.

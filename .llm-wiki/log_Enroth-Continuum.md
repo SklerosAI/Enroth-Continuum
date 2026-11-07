@@ -2032,3 +2032,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a test-only MM6 pre-map zero-array handoff and exact post-map sidecar/generic-array check for the proved persistent event bytes. Active VISU and unsupported variables remain blocked.
 - Both linked synthetic tests passed. Legitimate reload-event writes may conservatively refuse until their replay semantics are proved; production SaveLoad remains closed.
+
+## [2026-11-07] integrate | MM6 v2 child admission and callback refusal
+- by: T-Burton-ND via codex
+- Added a read-only exact owner-join inspector with typed blockers, plus a disabled fresh-child test that invokes the v2 load callback and catches refusal before any live assignment or game-loop entry. The first synthetic run exposed an unbound active item-table fixture; corrected linked checks passed 2/2.
+- A disposable three-process integration run passed the native v2 writer, fresh-process reader and caught callback 1/1 each. The slot and sampled live owners stayed unchanged; normal MM6 SaveLoad, Main Menu QuickLoad and Atlas Play remain guarded.

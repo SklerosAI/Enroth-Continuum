@@ -2321,3 +2321,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added exact pinned, license-preserving snapshots for `small_vector`, `cmrc` and `cli11` alongside the four earlier inputs. All 379 newly copied original files matched pinned Git blobs; a standalone AppleClang C++20 build/run passed, and the cached-input Mac MM7 target linked.
 - Sixteen gitlinks, nested source fetches and prebuilt dependency families still block a clean offline clone. The installed MM7 app and private saves were not replaced.
+
+## [2026-11-07] verify | MM6 detached indoor sprite ownership
+- by: T-Burton-ND via codex
+- Added required v6-only ISRT full-list sprite runtime state over exact native ISCR anchors, including source-free slot reuse, appended sprites, raw item provenance and an exact scalar overlay for Item fields omitted by inherited snapshot rules. V5 outdoor SPRT bytes remain unchanged.
+- Focused linked v5 sprite/v6 indoor checks passed 12/12, and a disposable v2 seed, v6 atomic writer and independent fresh-child reader passed 1/1 each. Live ISRT publication, actor runtime owners, gameplay admission and production SaveLoad remain open.

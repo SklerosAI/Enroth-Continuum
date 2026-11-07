@@ -27,6 +27,13 @@ The current integration tree also builds a title-locked `MM7.app` and stages a s
   opening and save/reload check does not establish later map, rule, quest,
   alignment or ending coverage; the known-good MM7 build remains protected.
 
+The [MM7 source-autonomy inventory](MM7_SELF_CONTAINED_BUILD_INVENTORY.md)
+records the current Mac build's 23 external gitlinks, nine linked static
+archives from one OpenEnroth-hosted dependency ZIP and seven nested fetches.
+This fork already owns the engine source and installed helper; a fresh offline
+build from only this repo remains a later gate. The dependency inventory made
+no change to the protected MM7 app, save profile or private game data.
+
 ## MM6: implementation checkpoint, not yet playable
 
 - Owned offline GOG installers were extracted into private, local folders under

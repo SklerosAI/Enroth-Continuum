@@ -27,10 +27,10 @@ A later [detached bounded purchase transaction](../src/Engine/MM6/MM6ShopBounded
 
 ## Conclusion
 
-A [detached MM6 helper](../src/Engine/MM6/MM6ShopStockPurchase.h) models the proved full-record copy and partial source clear. A raw [physical stock owner](../src/Engine/MM6/MM6ShopStockFields.h) and isolated `SHOP` v1 section preserve all 1,440 records without splitting the alias. Their earlier integrated focused unit suites passed **6/6** together and the private-backed MM6/LOD gate **331/331**. The newer bounded item handoff has a syntax-checked synthetic unit translation but no linked run yet. The required known-save manifest still rejects `SHOP`: no live MM6 service writer or owner lifecycle exists, and an ID-only field would lose data. The existing `SCLK` refresh-deadline section and normal MM6 SaveLoad guard remain as they are.
+A [detached MM6 helper](../src/Engine/MM6/MM6ShopStockPurchase.h) models the proved full-record copy and partial source clear. A raw [physical stock owner](../src/Engine/MM6/MM6ShopStockFields.h) and isolated `SHOP` v1 section preserve all 1,440 records without splitting the alias. Their earlier integrated focused unit suites passed **6/6** together and the private-backed MM6/LOD gate **331/331**. The bounded purchase handoff's four linked synthetic tests passed after integration; the combined current MM6 item-focused set passed **20/20**, and non-MM6 unit controls passed **438/438**. The required known-save manifest still rejects `SHOP`: no live MM6 service writer or owner lifecycle exists, and an ID-only field would lose data. The existing `SCLK` refresh-deadline section and normal MM6 SaveLoad guard remain as they are.
 
 ## Open follow-ups
 
-Run the new bounded-purchase linked tests, trace any other writers/readers at the shared edge, inspect a nonzero owner-local native save, then define the live MM6-keyed owner lifecycle and nonzero/late-failure tests across actual services and disk publication. Keep bounty and ban state outside this stock contract.
+Trace any other writers/readers at the shared edge, inspect a nonzero owner-local native save, then define the live MM6-keyed owner lifecycle and nonzero/late-failure tests across actual services and disk publication. Keep bounty and ban state outside this stock contract.
 
 See also: [Shop Stock Tuple and Autosave](MM6-F4-Shop-Stock-Tuple-and-Autosave.md), [Shop Shared-Edge Refresh](MM6-F4-Shop-Shared-Edge-Refresh.md), [Shop Owner Field Gate](MM6-F4-Shop-Owner-Field-Gate.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

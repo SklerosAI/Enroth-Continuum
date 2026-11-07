@@ -1688,3 +1688,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added an optional 28-byte MM6 raw record to shared `Item` values; bounded plain and common standard adapters attach it and reject missing or replaced provenance on capture. MM7 wire reconstruction clears it.
 - Linked focused checks passed 13/13, general non-MM6 units 438/438, monitored MM7 headless save/load 1/1 and MM6 loaded-table headless 2/2 without visible windows or focus changes. Physical slot clearing, unique item identity, live item producers and final SaveLoad remain open.
+
+## [2026-11-06] update | First-map pale terrain diagnostic
+- by: T-Burton-ND via codex
+- A fresh owner-only hidden capture passed 1/1 over 105 samples without an on-screen window or focus change. Source tracing and a temporary terrain-only image support current month-0 grass-to-snow remapping as the likely cause of pale ground.
+- Original MM6 seasonal behavior and per-pixel tile ownership remain unproved, so rendering code was unchanged. A later isolated diagnostic observed a final frontmost-app change; graphical runs stopped and its temporary files were removed.

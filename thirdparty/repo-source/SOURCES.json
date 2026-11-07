@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "retrieved_utc_date": "2026-11-07",
+  "method": "GitHub commit archive, extracted without changing source files",
+  "sources": [
+    {
+      "path": "SDL3",
+      "repository": "https://github.com/libsdl-org/SDL",
+      "commit": "a96677bdf6b4acb84af4ec294e5f60a4e8cbbe03",
+      "archive_sha256": "9f3a6dabc12c5f04894e0a70359ac448eb9cbe4065fde09e0ab4cf013ff39dd9",
+      "primary_license_file": "LICENSE.txt"
+    },
+    {
+      "path": "ffmpeg",
+      "repository": "https://github.com/FFmpeg/FFmpeg",
+      "commit": "e3a61e91030696348b56361bdf80ea358aef4a19",
+      "archive_sha256": "056cc3674e69d0e44ae85d8ee6ade11364fc584c2406e5f5d9cfb771e77f5ead",
+      "primary_license_file": "LICENSE.md"
+    },
+    {
+      "path": "libpng",
+      "repository": "https://github.com/pnggroup/libpng",
+      "commit": "f5e92d76973a7a53f517579bc95d61483bf108c0",
+      "archive_sha256": "3689d30176661b821ce02c92baf801050bc3849d3428ff99c8afeb1ef4390c8c",
+      "primary_license_file": "LICENSE"
+    },
+    {
+      "path": "openal-soft",
+      "repository": "https://github.com/kcat/openal-soft",
+      "commit": "dc7d7054a5b4f3bec1dc23a42fd616a0847af948",
+      "archive_sha256": "dd733d74c33b106b90f83a0e0e9917b39aa401162ff8da23d7948615dcb92ef7",
+      "primary_license_file": "COPYING"
+    },
+    {
+      "path": "zlib-ng",
+      "repository": "https://github.com/zlib-ng/zlib-ng",
+      "commit": "12731092979c6d07f42da27da673a9f6c7b13586",
+      "archive_sha256": "a0d2a5d122c84b56a793a1553a9c3327fb2eb7469bf7a86b79e3c7be5d92e8d6",
+      "primary_license_file": "LICENSE.md"
+    }
+  ]
+}

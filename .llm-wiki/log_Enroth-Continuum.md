@@ -2098,3 +2098,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A native v2 first-map writer and disposable fresh-child Main Menu QuickLoad each passed 1/1. The child rebuilt the first outdoor map, checked the actual empty cursor and aborted before input with the source slot unchanged.
 - The strict final-owner validator refused saved-versus-live actor slots because the pre-entry DDM triggers initial encounter spawning. The changed-state writer cannot yet encode the added actors, so a durable populated-map save remains open. The detached GNPC suite passed 3/3 in integration; its strict v2 admission remains closed.
+
+## [2026-11-07] verify | MM6 GNPC and stage RNGS continuation
+- by: T-Burton-ND via codex
+- Integration's linked `MM6GeneratedNpcSaveFields.*` suite passed 3/3, superseding the earlier pending GNPC note.
+- Added exact gameplay RNG capture/restore for the selected Mersenne Twister or sequential engine, plus a bounded detached `RNGS` section; strict EC6 v2 still rejects it. AppleClang syntax, targeted style checks and a standalone MT continuation/refusal probe passed; linked RNGS tests remain pending.
+- A complete save version and pre-event generated-row/RNG publication order remain open. The earlier statement that no RNG snapshot API exists is superseded by the detached API; no live MM6 load calls it.

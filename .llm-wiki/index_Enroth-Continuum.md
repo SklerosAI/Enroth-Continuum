@@ -110,7 +110,8 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Beacon Renderer Contract](MM6-F4-Beacon-Renderer-Contract.md) — Checked texture creation and controlled cleanup required before live BEAC publication
 - [MM6 F4 Partial Stage Coordinator](MM6-F4-Partial-Stage-Coordinator.md) — Validated 67-map candidate with detached Party, active map, NPC/map and timer/overlay copies
 - [MM6 F4 New Game Autosave](MM6-F4-New-Game-Autosave.md) — Archive-backed v1 control and detached native v2 first-map candidate; live raw capture and normal save/reload stay guarded
-- [MM6 F4 Creation Item Seed](MM6-F4-Creation-Item-Seed.md) — Bounded, exact-replay native raw records for fresh backpack grants; real random-ring outcomes remain to probe
+- [MM6 F4 Creation Item Seed](MM6-F4-Creation-Item-Seed.md) — Bounded native raw records for fresh grants; one headless loaded-table draw admitted all 20 items
+- [MM6 F4 Post Rebuild PID Slots](MM6-F4-Post-Rebuild-PID-Slots.md) — Read-only final actor/sprite slot agreement check; active saved VISU overlays remain blocked
 - [MM6 F4 First-Map World Rollback](MM6-F4-First-Map-World-Rollback.md) — Detached terrain preflight, combat containers/turn scalars rollback and temporary `.ec6` reentry pass; full-world rollback remains guarded
 - [MM6 F4 Shop Save Key Matrix](MM6-F4-Shop-Save-Key-Matrix.md) — Retained house-type join versus inherited MM7 shop, guild and bounty save owner ranges
 - [MM6 F4 Shop Guild Clock Save](MM6-F4-Shop-Guild-Clock-Save.md) — SCLK v1 preserves 68 unique original-MM6 shop and guild refresh deadline words
@@ -141,7 +142,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Save Remainder](MM6-F4-Save-Remainder.md) — Field, consumer and lifetime inventory after core/durable/metadata/NPC/MAPS, including raw resistance staging
 - [MM6 F4 Held Item](MM6-F4-Held-Item.md) — HELD section, MM6 icon preflight and cursor restoration boundary
 - [MM6 F4 Raw Held Item Section](MM6-F4-Raw-Held-Item-Section.md) — Detached HELD v2 exact cursor record, absent-tail policy and final-manifest gate
-- [MM6 F4 Raw Cursor Owner](MM6-F4-Raw-Cursor-Owner.md) — Detached 28-byte cursor owner and exact held-item projection onto a Party copy; live UI publication remains open
+- [MM6 F4 Raw Cursor Owner](MM6-F4-Raw-Cursor-Owner.md) — Detached 28-byte cursor owner, Party projection and icon/tint plan; occupied pickup offset and live UI remain open
 - [MM6 F4 Action Observation Stability](MM6-F4-Action-Observation-Stability.md) — precommit probe and final action recheck; real-world no-reentry commit still required
 - [MM6 F4 Recovery and Calendar](MM6-F4-Recovery-Calendar.md) — Required `.ec6` RCVR v3 state, 59 event clocks, Armageddon tuple, derived calendar and active-rest/turn guards
 - [Open Questions](Open-Questions.md) — F2-frozen source uncertainties and F3/F4/F5 resolution routes

@@ -1,4 +1,13 @@
-# MM6 creation item seed handoff
+---
+type: synthesis
+up: "[[MM6-F4-New-Game-Autosave]]"
+related: ["[[MM6-F4-Raw-Save-Runtime]]", "[[MM6-F4-Raw-Cursor-Owner]]"]
+tags: [mm6, f4, new-game, inventory]
+---
+
+# MM6 Creation Item Seed
+
+This page records the bounded adapter for fresh MM6 starter items and its headless loaded-table check.
 
 The [source-backed implementation packet](../project/MM6_F4_CREATION_ITEM_SEED.md)
 records the detached adapter added after the native v2 first-map candidate.
@@ -23,3 +32,5 @@ test wrote no save slot and host monitors observed no on-screen game window or
 focus change. This samples one deterministic creation draw; other possible
 ring outcomes and original native record parity remain unproved. See the
 implementation packet for the test seam and exact limits.
+
+See also: [New Game Autosave](MM6-F4-New-Game-Autosave.md), [Raw Save Runtime](MM6-F4-Raw-Save-Runtime.md), [Raw Cursor Owner](MM6-F4-Raw-Cursor-Owner.md).

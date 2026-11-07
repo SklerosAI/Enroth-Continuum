@@ -17,4 +17,6 @@ The synthetic focused tests validate exact byte retention, MM6 title isolation, 
 
 The later [cursor/shop handoff](MM6-F4-Raw-Cursor-Shop-Handoff.md) checks this owner against decoded `HELD` v2 and the separate `SHOP`/`SCLK` owner before any live publication.
 
+The [detached cursor image plan](../project/MM6_F4_RAW_CURSOR_IMAGE_PLAN.md) derives a template icon name and broken/identified tint only after exact raw/Party held-item replay. An occupied pickup offset is unresolved because EC6 v2 does not store it. The plan neither resolves an asset nor changes the live mouse cursor; a full-session commit still needs to choose and verify that visible placement.
+
 See also: [Raw Held Item Section](MM6-F4-Raw-Held-Item-Section.md), [Raw Item Transfer Semantics](MM6-F4-Raw-Item-Transfer-Semantics.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

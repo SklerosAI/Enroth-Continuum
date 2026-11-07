@@ -2228,3 +2228,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The strict second v4 writer refused before disk mutation after bounded movement: a live ground sprite had fractional X/Y coordinates that native integer DDM cannot preserve. This is a genuine gameplay state, so v4 retains its refusal; the disabled post-action reader has not run.
 - Added a source-backed v5 `SPRT` design gate for exact full-list runtime sprite fields, stable native DDM slot anchors and MM6 item provenance. It keeps native ground bytes separate, restores after object arrangement and before map events, and rejects unsupported mutations. No v5 slot or implementation was accepted in this audit.
+
+## [2026-11-07] stage | MM6 detached v5 sprite manifest
+- by: T-Burton-ND via codex
+- Added a detached full-list SPRT codec with exact float bits, widened runtime timers, ordered native 100-byte slot anchors and strict MM6 item provenance. V5 requires v4's 23 owners plus SPRT; v1–v4 remain strict.
+- Focused fractional round-trip, malformed/provenance refusal and older-version isolation checks passed 3/3. No live v5 capture, atomic slot, fresh-child reload or production route is enabled.

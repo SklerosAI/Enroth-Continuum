@@ -12,6 +12,8 @@
 
 namespace mm6 {
 
+inline constexpr float MM6_OUTDOOR_BORDER_EDGE = 22528.0f;
+
 // This is a detached geometric candidate, not permission to display travel or
 // change maps. The caller must also prove the active map's archive identity.
 struct BorderTravelCandidate {
@@ -70,7 +72,7 @@ struct BorderTravelAssessment {
     if (!std::isfinite(partyX) || !std::isfinite(partyY))
         return {.refusal = BorderTravelRefusal::InvalidCoordinates};
 
-    constexpr float edge = 22528.0f;
+    constexpr float edge = MM6_OUTDOOR_BORDER_EDGE;
     constexpr float width = edge * 2;
     const int columnChange = partyX < -edge ? -1 : (partyX > edge ? 1 : 0);
     const int rowChange = partyY < -edge ? 1 : (partyY > edge ? -1 : 0);

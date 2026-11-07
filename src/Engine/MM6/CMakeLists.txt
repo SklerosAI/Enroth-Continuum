@@ -251,6 +251,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6V5LaterOutdoorReplay_ut.cpp
         Tests/MM6OutdoorBorderTravel_ut.cpp
         Tests/MM6OutdoorBorderEligibility_ut.cpp
+        Tests/MM6OutdoorBorderPrecommit_ut.cpp
         Tests/MM6TransitionAutosaveInterceptForTest_ut.cpp
         Tests/MM6V5OutdoorDecorationSource_ut.cpp
         Tests/MM6V5DerivedActorNames_ut.cpp

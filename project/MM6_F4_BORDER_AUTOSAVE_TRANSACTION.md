@@ -19,6 +19,20 @@ This differs materially from inherited [`UIMSG_OnTravelByFoot`](../src/Applicati
 
 ## Required transaction shape
 
+The detached [`stageBorderOldMapParty`](../src/Engine/MM6/MM6OutdoorBorderPrecommit.h)
+now establishes one narrow precommit owner: for an MM6 cardinal geometric
+candidate with the original offer flags clear and no flying, it copies the
+Party and clamps only that copy's X/Y coordinates to the original border
+bounds. The live Party, destination, disk and map cache are untouched. Wrong
+title, invalid route, disallowed state and unverified corner crossing return
+typed refusals without a copy. Even a staged copy returns
+`MissingWorldAndSourceProof` and `canWriteCheckpoint() == false`: it has no
+source archive/terrain agreement, active and visited map owners, or durable
+write result. This is not a complete old-map checkpoint or a live confirmation
+handler. Focused new code compiled with the integration unit-test flags; the
+linked new tests remain pending integration. Existing route/eligibility
+controls passed 8/8 against the current integration binary.
+
 1. Choose a canonical production EC6 version, slot name and title-private profile root. Explicitly reject or migrate older autosave schemas; an existing v2 test seed cannot silently become a v5 production slot.
 2. Stage an exact detached old-map save for any admitted outdoor map at a safe point before travel UI effects. Include Party and character state, inventory/buffs/hirelings, UI/cursor/shops, NPC and generated links, RNG, active and visited map deltas, chests/artifacts, actor/sprite/decoration runtime, event variables and owner identities. The old-map checkpoint must contain a reload-safe in-bounds **Party copy** when the live border position lies outside the map edge; keep live Party untouched until commit.
 3. Revalidate destination geometry, source-map archive identity, the three-bit offer mask and confirmation flying state. Stage target map/resource readiness and a no-reentry capture. Give the disk writer a semantic validator and a required success result.

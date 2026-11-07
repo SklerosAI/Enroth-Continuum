@@ -276,8 +276,11 @@ live offers. A separate pure predicate models the three source-backed offer
 flag bits and confirm flying state; integrated focused checks passed 11/11.
 The [border autosave audit](MM6-F4-Border-Autosave-Transaction.md) requires
 a durable old-map EC6 checkpoint, visited-map runtime owner and explicit
-failure recovery before replacing the no-write test intercept. Its later
-confirmation trace shows zero-food MM6 travel skips healing and insufficient
+failure recovery before replacing the no-write test intercept. A new
+detached Party stage clamps only a copied X/Y position for a cardinal MM6
+candidate and always refuses a disk checkpoint until source/world owners are
+proved; its new unit source passed syntax checks, with linked tests pending.
+The original confirmation trace shows zero-food MM6 travel skips healing and insufficient
 food refreshes Weak timestamps even when already Weak, unlike the inherited
 handler. Distinct original cancel and rejection paths clamp coordinates and
 close UI without time, food, condition or map changes. Conditional rest, food,

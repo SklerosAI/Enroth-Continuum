@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
@@ -48,6 +49,7 @@
 #include "Engine/MM6/MM6V3SaveFields.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
+#include "Engine/Objects/Decoration.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
 #include "Engine/Resources/LOD.h"
@@ -120,6 +122,23 @@ void requireEmptyInheritedCommerce(const Party &party) {
             party.monster_id_for_hunting[id] != MONSTER_INVALID ||
             party.monster_for_hunting_killed[id])
             throw std::runtime_error("unrepresented inherited commerce");
+}
+
+std::string_view decorOwnerClass(const PersistentVariables &state) {
+    std::array<bool, 125> assigned{};
+    for (LevelDecoration &decoration : pLevelDecorations)
+        if (!decoration.uEventID && decoration.IsInteractive() &&
+            decoration.eventVarId >= 0 && decoration.eventVarId < 124)
+            assigned[decoration.eventVarId] = true;
+    bool boundHigh = false;
+    for (size_t index = 0; index < state.decorVars.size(); ++index) {
+        if (!state.decorVars[index])
+            continue;
+        if (!assigned[index])
+            return "event-decor-unbound";
+        boundHigh |= index >= 119;
+    }
+    return boundHigh ? "event-decor-bound-high" : "event-decor-bound-low";
 }
 
 } // namespace
@@ -270,7 +289,8 @@ GAME_TEST(MM6V3PostEntryCandidateHeadless, DISABLED_FirstMapFullSessionPreflight
                             throw std::runtime_error("event legacy map owner changed");
                         if (std::ranges::any_of(engine->_persistentVariables.decorVars,
                                                 [](std::uint8_t value) { return value != 0; }))
-                            throw std::runtime_error("event legacy decor owner changed");
+                            throw std::runtime_error(std::string(
+                                decorOwnerClass(engine->_persistentVariables)));
                         mm6::requirePostMapPersistentEvents(
                             preflight.represented.persistentEvents, pOutdoor->mm6DeltaBytes,
                             engine->_persistentVariables, GameTitle::MM6);
@@ -283,8 +303,8 @@ GAME_TEST(MM6V3PostEntryCandidateHeadless, DISABLED_FirstMapFullSessionPreflight
                                 refusalClass = "event-delta";
                             else if (message.find("legacy map") != std::string_view::npos)
                                 refusalClass = "event-legacy-map";
-                            else if (message.find("legacy decor") != std::string_view::npos)
-                                refusalClass = "event-legacy-decor";
+                            else if (message.starts_with("event-decor-"))
+                                refusalClass = message;
                             else
                                 refusalClass = "persistent-event-join";
                         } else {

@@ -42,10 +42,8 @@ std::filesystem::path ownerOnlyProfile() {
         throw std::runtime_error("MM6 indoor probe needs an owner-only system-temp profile");
     const std::filesystem::path saves = root / "saves";
     if (!std::filesystem::is_directory(saves) || std::filesystem::is_symlink(saves) ||
-        (std::filesystem::status(saves).permissions() &
-         (std::filesystem::perms::group_all | std::filesystem::perms::others_all)) !=
-            std::filesystem::perms::none)
-        throw std::runtime_error("MM6 indoor probe needs an owner-only saves directory");
+        std::filesystem::canonical(saves).parent_path() != root)
+        throw std::runtime_error("MM6 indoor probe needs a local saves directory");
     return root;
 }
 

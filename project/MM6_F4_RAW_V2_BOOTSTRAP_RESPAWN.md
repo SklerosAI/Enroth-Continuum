@@ -31,7 +31,10 @@ it without repeating initial spawn. The current
 record-count changes, and the native MM6 actor projection does not encode all
 548 bytes of a new record. A bounded actor append/serialization contract or
 an explicitly versioned engine-native actor owner is required before the
-post-entry save can be accepted. Generated NPC identities, gameplay RNG,
+post-entry save can be accepted. A detached
+[native actor append codec](MM6_F4_OUTDOOR_ACTOR_APPEND.md) now handles the
+bounded structural splice when complete 548-byte records are supplied, but
+cannot capture those records from spawned runtime actors. Generated NPC identities, gameplay RNG,
 event/chest state and full resource/UI admission still need their own joins.
 Do not relax the strict post-world PID check merely to pass the bootstrap
 slot; that would not establish save–quit–reload fidelity.

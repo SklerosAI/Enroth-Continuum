@@ -936,3 +936,11 @@ a draw. Together with GNPC, the focused linked suites passed **5/5** and an
 MM7 headless control passed **1/1** after the shared RNG code changed. The
 strict v2 manifest still rejects both extra sections, and restoring RNG only
 after map events would be too late for generated identities or event effects.
+
+A detached [outdoor actor append codec](MM6_F4_OUTDOOR_ACTOR_APPEND.md) now
+accepts complete native 548-byte records for newly spawned slots, preserves
+original DDM records and opaque suffix bytes, updates actor count and
+respawn day, and re-decodes its result. Linked synthetic checks passed
+**3/3**. The disposable v2 writer and guarded fresh-child QuickLoad still
+passed **1/1** each. Full native record capture from runtime actors remains
+open; this codec is not yet a durable post-entry save.

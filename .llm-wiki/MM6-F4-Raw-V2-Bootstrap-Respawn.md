@@ -22,6 +22,8 @@ not proof of playable v2 reload.
 The current MM6 changed-state writer rejects new actor counts, and the native
 actor projection cannot synthesize all bytes of spawned records. A durable
 post-entry actor owner and no-respawn reload contract are the next gates.
+The [detached actor append codec](MM6-F4-Outdoor-Actor-Append.md) solves only
+the bounded native DDM splice for complete supplied records.
 Generated NPC/RNG, chest/event and resource/UI admission remain separate.
 
 See also: [Post-World Owner Validator](MM6-F4-Post-World-Owner-Validator.md), [Raw Save Runtime](MM6-F4-Raw-Save-Runtime.md), [Agent Handoff](Agent-Handoff.md).

@@ -22,6 +22,8 @@ An [empty-cursor post-world check](MM6-F4-Raw-Cursor-Owner.md) now accepts the a
 
 The [v2 bootstrap QuickLoad control](MM6-F4-Raw-V2-Bootstrap-Respawn.md) now reaches the real Main Menu and first outdoor world in a disposable fresh child, then refuses the saved/final actor-slot mismatch and aborts before input (writer and child 1/1 each). Initial DDM respawn triggers encounter spawning after saved actors are loaded. Do not weaken the strict PID validator to pass this pre-entry slot: the next durable gate is a post-entry populated-map save and no-respawn reload, including newly spawned actor records. The detached [GNPC capsule](MM6-F4-Generated-NPC-Identity-Save.md) passed 3/3 linked checks but is not in the v2 manifest.
 
+The detached [RNGS gameplay capsule](MM6-F4-Gameplay-RNG-Save.md) now snapshots and restores the selected MT or sequential stream. RNGS/GNPC linked checks passed 5/5 and an MM7 headless control passed 1/1. Neither capsule is in the exact v2 manifest; a future load must publish saved generated rows and RNG at a proved point before replay-sensitive events.
+
 ## Read first
 
 1. Run `git status --short --branch`, `git worktree list`, and `git log -1 --oneline` in the checkout you intend to use. The branch and worktree descriptions below may drift.

@@ -929,3 +929,10 @@ actor count. See [the bootstrap/respawn gate](MM6_F4_RAW_V2_BOOTSTRAP_RESPAWN.md
 The detached GNPC identity capsule passes **3/3** linked checks, but it is
 still outside the strict v2 manifest and does not yet make generated NPC or
 game RNG state durable.
+
+A detached versioned [gameplay RNG capsule](MM6_F4_GAMEPLAY_RNG_SAVE.md) now
+captures and restores the selected MT or sequential engine without consuming
+a draw. Together with GNPC, the focused linked suites passed **5/5** and an
+MM7 headless control passed **1/1** after the shared RNG code changed. The
+strict v2 manifest still rejects both extra sections, and restoring RNG only
+after map events would be too late for generated identities or event effects.

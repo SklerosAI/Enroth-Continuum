@@ -17,8 +17,9 @@ into a temporary engine before restore; the sequential test engine retains its
 gameplay engine even when tracing is enabled and refuses a type mismatch on
 restore. The versioned section validates malformed state and is recognized by
 the container, while strict EC6 v2 rejects it as an extra tag. `vrng` remains
-visual-only and is not in this gameplay capsule. Syntax, style and a standalone
-MT continuation check passed; linked integration validation is pending.
+visual-only and is not in this gameplay capsule. Syntax, style, a standalone
+MT continuation check and the linked RNGS/GNPC integration suite (5/5)
+passed; an MM7 headless control passed 1/1. Live continuation is unverified.
 
 The unresolved gate is **when** to restore. NPC generation and `onMapLoad()`
 run before the post-world hook; a late RNG restore cannot undo a random event

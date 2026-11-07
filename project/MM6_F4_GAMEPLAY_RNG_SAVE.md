@@ -2,7 +2,9 @@
 
 Status, 2026-11-07: detached `RNGS` version-one section and concrete gameplay
 engine snapshot/restore seam. It is **not** in the strict EC6 v2 manifest and
-is not called by live MM6 SaveLoad. Linked integration checks are pending.
+is not called by live MM6 SaveLoad. The linked RNGS/GNPC suites passed **5/5**
+in integration; an MM7 headless control passed **1/1** after the shared RNG
+change.
 
 ## State and wire contract
 
@@ -28,8 +30,9 @@ Focused synthetic tests cover MT continuation after prior draws, failure-
 atomic bad-text restore, sequential continuation, malformed section refusal,
 wrong-title refusal and the current v2 extra-section boundary. The changed
 source/test translation units passed AppleClang syntax checks and targeted
-cpplint; a standalone compiled MT continuation probe passed. Linked unit and
-fresh-child checks remain pending integration.
+cpplint; a standalone compiled MT continuation probe passed. Linked focused
+checks passed in integration; a fresh-child save/reload of RNG continuation
+has not.
 
 ## Publication order still open
 

@@ -48,4 +48,13 @@ on the established game thread resolved that test-only stack boundary. It
 still sets `canEnterGameLoop=false`; atomic v6 write, fresh-child replay and
 graphical face behavior remain open.
 
+A subsequent opt-in three-process sequence passed: disposable v2 seed,
+atomic test-only `candidate-v6-indoor.ec6` writer, and an independent fresh
+child reader, each **1/1**. The reader rebuilt the source DLV and pre-event
+face base, re-staged the exact v6 bytes and checked the represented event/NPC
+owners and detached IFOV precedence. The v2 seed remained unchanged, and the
+v6 slot existed only in the owner-only disposable profile. Both writer and
+reader keep `canEnterGameLoop=false`; live owner publication, first input,
+production SaveLoad and graphical face behavior remain open.
+
 See [indoor face persistence gate](MM6_F4_INDOOR_FACE_PERSISTENCE_GATE.md), [known save sections](MM6_EC6_MAP_FIELDS_F4.md), and [atomic save](MM6_ATOMIC_SAVE_F4.md).

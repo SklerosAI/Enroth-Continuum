@@ -1148,7 +1148,10 @@ process (**1/1**), and the reachability-aware loaded-table check passed
 across all **67** maps (**1/1**). The one authored encounter family without a
 ranked monster is unreachable by both random chance and decoded spawn
 references; the resolver remains strict. A test-only oute2 atomic slot passed
-isolation checks, but no later-map candidate or fresh-child replay exists yet.
+isolation checks, then a fresh v2 seed, v4 baseline and strict oute2 v5 writer
+passed **1/1** each. The writer accepted one separate candidate after exact
+native decoration row-0 and static-derived actor-name handling; focused checks
+passed **7/7**. No fresh-child oute2 replay or campaign travel has passed.
 
 For indoor save design, a detached IFOV writer and fresh-child reader passed
 against retained private BLV/DLV data, and a separate headless map-load check
@@ -1160,7 +1163,10 @@ suite passed **25/25**. A fresh v2 seed and separate real-data indoor v6 stage
 then passed **1/1** each headlessly: the stage built an in-memory candidate
 from a loaded BLV/DLV and pre-event face baseline, verified native owner
 anchors, kept the seed bytes unchanged and refused gameplay admission. An
-atomic v6 write and fresh-child replay remain open. The first-map v5 no-write
-capture was extracted into an engine service and the corrected seven-process
-disposable chain passed again,
-each child **1/1**. The installed MM7 helper and its profile remain untouched.
+A later three-process disposable sequence passed v2 seed, atomic indoor v6
+writer and independent fresh-child reader at **1/1** each. The reader rebuilt
+the DLV/pre-event face baseline and re-staged the exact candidate; it still
+refuses gameplay admission. Live indoor owner publication and first input
+remain open. The first-map v5 no-write capture was extracted into an engine
+service and the corrected seven-process disposable chain passed again, each
+child **1/1**. The installed MM7 helper and its profile remain untouched.

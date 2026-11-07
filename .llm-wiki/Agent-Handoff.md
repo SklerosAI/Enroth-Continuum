@@ -214,10 +214,12 @@ skill Compare/Set has a checked MM6-specific path. A read-only audit decoded
 all 15 outdoor base/delta pairs, and the MM6 encounter parser now uses authored
 monster stems. A direct hidden second-outdoor world load and all-67 reachable
 encounter check now pass. The [later-map packet](MM6-F4-V5-Later-Outdoor.md)
-records the still-open oute2 candidate and fresh-child route. For indoor v6,
+records a first strict disposable oute2 v5 candidate and the still-open
+fresh-child route. For indoor v6,
 detached IFOV write/read, a real headless pre-`OnMapReload` face-base capture,
-strict synthetic v6 staging and a separate real-data detached v6 stage pass;
-gameplay admission remains false and no indoor v6 `.ec6` was written. Keep the
+strict synthetic v6 staging and a three-process disposable v2 seed, v6 writer
+and fresh-child reader pass; gameplay admission remains false and no live
+indoor owner publication has passed. Keep the
 protected MM7 helper and all private profiles untouched while these gates advance. See
 the [current status](../project/LOCAL_STATUS.md) for the exact evidence level.
 

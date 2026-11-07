@@ -1,8 +1,9 @@
 # MM6 v5 later-outdoor admission
 
 Status, 2026-11-07: the source and direct world-load gates passed for the
-shipped outdoor maps; no later-map `.ec6` candidate or fresh-child replay has
-passed. Production MM6 SaveLoad and Atlas Play remain closed.
+shipped outdoor maps, and a first test-only later-map `.ec6` candidate passed
+an atomic write. Fresh-child later-map replay has not passed. Production MM6
+SaveLoad and Atlas Play remain closed.
 
 The v5 outdoor preflight, runtime actor/sprite/decoration replay scopes and
 map identity check now admit the exact 15 shipped outdoor grid names. They
@@ -24,13 +25,24 @@ headless gate therefore validates every *reachable* encounter family against
 the loaded monster/descriptors (1/1); production lookup remains strict and
 does not invent a special name alias.
 
-A separate owner-only, test-only `candidate-v5-oute2.ec6` slot is reserved;
-its atomic isolation check passed with the rest of the atomic suite (18/18).
-It does not write a candidate yet. The next gate needs an oute2-specific
-native DDM/actor/EVRT source anchor, exact live-owner capture, atomic write,
-fresh-child pre-event replay, first input and second save/reload. The existing
-first-map capture API remains first-map only. A direct map load and bounded
-source audits cannot establish cross-map campaign play.
+A separate owner-only, test-only `candidate-v5-oute2.ec6` slot passed atomic
+isolation checks with the rest of the atomic suite (18/18). The first strict
+writer then passed after separate disposable v2 seed and v4 baseline children,
+each **1/1**. It captured oute2-specific native DDM/actor/EVRT anchors and
+full represented owners, rechecked the candidate before an atomic write, and
+kept the earlier slots unchanged. An authored native decoration ID 0 is now
+accepted only when its name matches row 0 of the loaded MM6 decoration table;
+unknown or mismatched identities still refuse. Spawned actor names are cleared
+only in a detached capture copy when both match the loaded static monster row;
+mutated names still refuse and live actors are untouched. Focused source,
+DECR and actor-name checks passed **7/7**. The first-map v5 capture API remains
+first-map only.
+
+The next gate is an independent fresh-child oute2 reader with exact pre-event
+and post-world owner checks, then bounded first input and a second save/reload.
+The writer's direct map setup is not a campaign travel transition. A direct
+map load, source audits and one atomic candidate cannot establish later-map
+playability.
 
 See [v5 runtime ownership](MM6_F4_EC6_V5_SPRITE_RUNTIME.md),
 [local status](LOCAL_STATUS.md), and [the F4 path](plan.md).

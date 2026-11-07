@@ -2441,3 +2441,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added an original Enroth Continuum recipe for the five pinned repository-owned media sources. A native Release run built exactly nine arm64 static archives with no dynamic libraries; libpng selected local zlib, FFmpeg GPL/version-3/nonfree modes were disabled, and 23 license/notice files were copied.
 - A fresh CMake package-find probe resolved the new prefix. The MM7 app link, clean offline clone and binary distribution review remain open, and the installed helper was untouched.
+
+## [2026-11-07] verify | Clean network-denied Mac MM7 build
+- by: T-Burton-ND via codex
+- From a clean tracked-source extraction, built the five pinned media source families to nine arm64 archives, configured and linked MM7, and staged a signed Atlas with 23 dependency notices, all under a network-denied macOS sandbox. The local-only route used tracked libdwarf and an opt-in Mac iconv adapter; the MM7 link command had no upstream archive or ztd input.
+- A freshly built MM7 headless GameTest control passed 1/1 against private data without bundling it. This did not test a remote clone, graphical play, save/quit/reload, installed-app cutover or binary distribution. The ordinary CMake path still has upstream fetch routes and the installed app remains unchanged.

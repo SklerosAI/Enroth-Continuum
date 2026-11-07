@@ -220,8 +220,9 @@ NPC linkage is checked against GNPC, ARTR and ordered native PID slots;
 actual map travel and production SaveLoad remain open. For indoor v6,
 detached IFOV write/read, a real headless pre-`OnMapReload` face-base capture,
 strict synthetic v6 staging and a three-process disposable v2 seed, v6 writer
-and fresh-child reader pass; gameplay admission remains false and no live
-indoor owner publication has passed. Keep the
+and fresh-child reader pass. Required IDRT decoration fields now publish
+through an MM6-only pre-event test hook and recapture exactly after reload;
+actor/sprite owners and gameplay admission remain gated. Keep the
 protected MM7 helper and all private profiles untouched while these gates advance. See
 the [current status](../project/LOCAL_STATUS.md) for the exact evidence level.
 

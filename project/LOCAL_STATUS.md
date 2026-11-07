@@ -1179,3 +1179,12 @@ refuses gameplay admission. Live indoor owner publication and first input
 remain open. The first-map v5 no-write capture was extracted into an engine
 service and the corrected seven-process disposable chain passed again, each
 child **1/1**. The installed MM7 helper and its profile remain untouched.
+
+The current indoor v6 manifest also requires ordered IDRT decoration runtime
+state, bringing it to 26 sections without IFOV or 27 with IFOV. A test-only
+MM6 pre-event hook applied exact staged decoration fields before map events,
+and the fresh-child reader recaptured them after reload. A disposable v2
+seed, v6 writer and reader passed **1/1 each**, and focused linked v6 checks
+passed **7/7**. The reader stages exact candidate chest state under a scoped
+test gate; normal MM6 chest loading and SaveLoad remain guarded. Actor/sprite
+publication, indoor first input and graphical acceptance remain open.

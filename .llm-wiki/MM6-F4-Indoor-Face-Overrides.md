@@ -47,6 +47,12 @@ descriptor zero is accepted only as the source-backed table sentinel. A
 detached replay changes a controlled invisible bit while retaining all
 immutable slots. Focused linked checks passed **6/6**, and a new disposable
 three-process seed/writer/reader chain passed **1/1 each**. It still refuses
-gameplay; live pre-event application and post-world agreement remain open.
+gameplay. A later MM6-only one-shot pre-event hook applies staged IDRT mutable
+fields to the live indoor decoration list, and the fresh child requires exact
+IDRT recapture after `OnMapReload`. The disposable v2 seed, v6 writer and
+reader passed **1/1 each**, with focused linked v6 checks **7/7**. The
+test-only reader stages the candidate's chest owner under the existing scoped
+map-load gate; production chest loading and SaveLoad stay guarded.
+Actor/sprite owner publication and first input remain open.
 
 See also: [MM6 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md), [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), and [implementation packet](../project/MM6_F4_INDOOR_FACE_OVERRIDE_SECTION.md).

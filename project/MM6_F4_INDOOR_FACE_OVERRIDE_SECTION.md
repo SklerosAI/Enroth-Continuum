@@ -67,7 +67,14 @@ missing descriptor. Focused linked v6 save-field checks passed **6/6**. The
 disposable v2 seed, v6 writer and independent fresh-child reader passed
 **1/1 each** with an intentional invisible-bit change and exact detached
 replay. Older v1–v5 manifests stay strict, and indoor v6 still refuses
-gameplay admission. Live pre-event IDRT publication and post-world agreement
-remain the next gate.
+gameplay admission. A new MM6-only one-shot hook applied staged IDRT mutable
+fields to live indoor decorations after world preparation and before
+`OnMapReload`. A fresh-child reader then recaptured IDRT after map events and
+required exact byte equality; the same disposable three-process chain passed
+**1/1 each**, with focused linked v6 checks **7/7**. Its first attempt hit
+the existing MM6 chest-generation guard, so the test-only reader now stages
+the candidate's exact chest owner and arms the already bounded chest map-load
+scope. The production guard remains closed. Actor/sprite owner publication,
+first input, production SaveLoad and graphical face behavior remain open.
 
 See [indoor face persistence gate](MM6_F4_INDOOR_FACE_PERSISTENCE_GATE.md), [known save sections](MM6_EC6_MAP_FIELDS_F4.md), and [atomic save](MM6_ATOMIC_SAVE_F4.md).

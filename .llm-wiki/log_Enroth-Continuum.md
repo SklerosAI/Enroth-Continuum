@@ -1872,3 +1872,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Joined native v2 primary/backup selection to detached raw map, item, cursor and shop staging without disk repair or live owner mutation.
 - Focused linked raw-runtime and atomic-file tests passed 11/11, including semantic-primary rejection with valid-backup selection and both-invalid refusal. Full Party/world/UI staging remains open.
+
+## [2026-11-06] update | EC6 v2 assembly handoff
+- by: T-Burton-ND via codex
+- Corrected the assembly packet and wiki after the native v2 slot boundary landed: structural v2 write/list/preflight exists, while the test-only New Game writer remains v1.
+- Detached Party inventory and semantic backup selection are available, but the complete live session and normal MM6 menu/load route remain guarded.

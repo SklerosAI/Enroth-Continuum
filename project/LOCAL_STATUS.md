@@ -8,7 +8,9 @@ The historical MM6 snapshot below predates the current F4 work. The separate arm
 
 A later disposable two-process test wrote a native v2 first-map `autosave.ec6` from the sampled real creation Party, then selected and staged it read-only in a fresh null-renderer MM6 process. Both linked tests passed 1/1 in the integration build; the owner-only system-temp profile was removed. A separate bounded nine-seed headless sweep admitted all 180 sampled starter items (155 plain, 25 standard-bonus) without a save slot; this does not cover every random draw or original-game record parity. None of these checks publishes all v2 owners into `gameLoop()` or opens production MM6 loading.
 
-A third fresh null-renderer process exercised the v2 test-only load callback against that exact slot. The read-only admission gate named missing world/resource owners and refused publication; sampled live owners and disk bytes stayed unchanged. All three processes passed 1/1 in the integration build. The Main Menu QuickLoad event remains gated because the current void callback would otherwise continue into `gameLoop()` before a complete post-world admission hook exists.
+A third fresh null-renderer process exercised the v2 test-only load callback against that exact slot. The read-only admission gate named missing world/resource owners and refused publication; sampled live owners and disk bytes stayed unchanged. All three processes passed 1/1 in the integration build. The Main Menu QuickLoad event remains gated because the current void callback would otherwise continue into `gameLoop()` before complete final-owner validation can arm the post-world hook.
+
+The one-shot MM6-only test hook now runs after `DoPrepareWorld(true)` and before timer unpause or first input. Four unit checks passed, and a disposable v1 Main Menu reload control passed 1/1 through the real hook with its slot unchanged; MM7 headless control passed 1/1. The v2 callback does not yet arm this hook with complete final-owner checks, so its Main Menu QuickLoad action remains closed.
 
 ## MM7: playable on this M2 Mac
 

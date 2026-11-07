@@ -137,6 +137,7 @@ GAME_TEST(MM6V3PostEntryCandidateHeadless, DISABLED_FirstMapFullSessionPreflight
     bool entered = false;
     bool preflightPassed = false;
     std::string refusalClass = "not-entered";
+    std::string stage = "capture";
     std::unique_ptr<mm6::StagedRawSessionFields> staged;
     std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
     std::unique_ptr<mm6::testing::ScopedPostWorldAdmissionForTest> admission;
@@ -245,13 +246,16 @@ GAME_TEST(MM6V3PostEntryCandidateHeadless, DISABLED_FirstMapFullSessionPreflight
                             pActors, *pNPCStats, "oute3.odm", GameTitle::MM6);
                         const auto random = application->component<EngineRandomComponent>();
                         fields.gameplayRng = mm6::captureGameplayRngFields(*random, GameTitle::MM6);
+                        stage = "encode";
                         const auto bytes = mm6::encodeV3Save(fields, GameTitle::MM6);
+                        stage = "full-session-preflight";
                         const auto preflight = mm6::stageV3FullSessionPreflight(
                             bytes, freshNpcs, maps.expectedNames(),
                             [&maps](std::string_view name) { return maps.readBase(name); },
                             verifyItem, *pItemTable, pOverlayTable->overlays.size(),
                             pTileTable->tileCount(), pActors.size(), random->type(),
                             GameTitle::MM6);
+                        stage = "persistent-event-join";
                         mm6::requirePostMapPersistentEvents(
                             preflight.represented.persistentEvents, pOutdoor->mm6DeltaBytes,
                             engine->_persistentVariables, GameTitle::MM6);
@@ -259,7 +263,9 @@ GAME_TEST(MM6V3PostEntryCandidateHeadless, DISABLED_FirstMapFullSessionPreflight
                         refusalClass = "pass";
                     } catch (const std::exception &error) {
                         const std::string_view message = error.what();
-                        if (message.find("generated NPC") != std::string_view::npos ||
+                        if (stage == "persistent-event-join")
+                            refusalClass = "persistent-event-join";
+                        else if (message.find("generated NPC") != std::string_view::npos ||
                             message.find("GNPC") != std::string_view::npos)
                             refusalClass = "generated-npc";
                         else if (message.find("inventory") != std::string_view::npos ||

@@ -67,10 +67,12 @@ inline void requireV6IndoorNativeResidualsForTest(
         native.lastRespawnDay != static_cast<std::uint32_t>(pIndoor->dlv.lastRespawnDay) ||
         native.visibleOutlines != pIndoor->_visible_outlines)
         throw std::runtime_error("MM6 v6 indoor DLV reset or outline owner changed");
-    if (native.chests.size() != vChests.size() ||
-        native.doors.size() != pIndoor->doors.size() ||
-        native.doorsData != pIndoor->doorsData)
-        throw std::runtime_error("MM6 v6 indoor DLV chest or door shape changed");
+    if (native.chests.size() != vChests.size())
+        throw std::runtime_error("MM6 v6 indoor DLV chest count changed");
+    if (native.doors.size() != pIndoor->doors.size())
+        throw std::runtime_error("MM6 v6 indoor DLV door count changed");
+    if (native.doorsData != pIndoor->doorsData)
+        throw std::runtime_error("MM6 v6 indoor DLV door geometry words changed");
     const auto &chestBytes = native.wire.section(MM6IndoorSectionKind::Chests).bytes;
     for (std::size_t slot = 0; slot < native.chests.size(); ++slot) {
         ChestRecord record{};

@@ -124,7 +124,7 @@ The link also uses `_deps/libdwarf-build/.../libdwarf.a`, four ztd-family static
 
 ## Nested configure-time source fetches observed locally
 
-The cpptrace route uses the exact libdwarf-lite SHA in `thirdparty/cpptrace/cmake/OptionVariables.cmake`; the six ztd repositories are specified as floating `main` in `thirdparty/ztd_text/CMakeLists.txt`. The SHA below is only the current cached checkout, so it is **not a durable pin** until this fork owns it. Sizes are local checked-out source trees. Some ztd-family license files use the same non-commercial/commercial wording as ztd.text; audit the exact terms and notices before vendoring.
+The cpptrace route uses the exact libdwarf-lite SHA in `thirdparty/cpptrace/cmake/OptionVariables.cmake`; that source is now tracked under `thirdparty/repo-source/libdwarf-lite` with original LGPL notices. The six ztd repositories are specified as floating `main` in `thirdparty/ztd_text/CMakeLists.txt`. The libdwarf-lite SHA is now a durable repo-owned pin; the six ztd SHAs are only cached checkouts and remain unowned. Sizes are local checked-out source trees. Some ztd-family license files use the same non-commercial/commercial wording as ztd.text; audit the exact terms and notices before vendoring.
 
 | Cached source under `build/_deps/` | Current SHA | Local MiB | Origin / local license evidence |
 | --- | --- | ---: | --- |
@@ -135,6 +135,14 @@ The cpptrace route uses the exact libdwarf-lite SHA in `thirdparty/cpptrace/cmak
 | `ztd.encoding_tables-src` | `c0c5de5a45dee2fc3a8a3c6831d7070acae435ad` | 3.2 | `soasis/encoding_tables`, floating `main`; `LICENSE.md` needs review |
 | `ztd.cuneicode-src` | `8ed6b88ee41a0edc398db8dbc53d61a6bf6a8f8f` | 5.2 | `soasis/cuneicode`, floating `main`; `LICENSE.md` and `NOTICE` |
 | `ztd.platform-src` | `d03b15049adb00ffb67c0f46b888f2a611ecf21f` | 0.3 | `soasis/platform`, floating `main`; `LICENSE.md` |
+
+The exact libdwarf-lite source archive is now tracked with its original
+`COPYING`, LGPL text and copyright files. All 132 regular source files were
+byte-compared against the pinned archive; its SHA-256 is in the provenance
+note. A standalone arm64 cpptrace/libdwarf build passed with
+`FETCHCONTENT_SOURCE_DIR_LIBDWARF` pointing to this local tree and
+`FETCHCONTENT_FULLY_DISCONNECTED=ON`. The production CMake route still needs
+that override before a clean build can close the fetch.
 
 ## Migration sequence and acceptance
 

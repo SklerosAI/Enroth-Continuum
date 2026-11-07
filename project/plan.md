@@ -429,14 +429,11 @@ If it fails, try these in order:
    ```
 
    Then reconfigure. Use `darwin_RelWithDebInfo_arm64.zip` for the packaging tree.
-2. **The libdwarf FetchContent clone fails.** Clone it yourself:
-
-   ```bash
-   git clone https://github.com/jeremy-rifkin/libdwarf-lite.git ~/enroth-tools/src/libdwarf-lite
-   git -C ~/enroth-tools/src/libdwarf-lite checkout 5dfb2cd2aacf2bf473e5bfea79e41289f88b3a5f
-   ```
-
-   Then reconfigure with `-DFETCHCONTENT_SOURCE_DIR_LIBDWARF=$HOME/enroth-tools/src/libdwarf-lite`. Once one configure has succeeded, `-DFETCHCONTENT_FULLY_DISCONNECTED=ON` stops further network fetches.
+2. **The libdwarf FetchContent clone fails.** Use the pinned source now owned
+   under `thirdparty/repo-source/libdwarf-lite` and reconfigure with
+   `-DFETCHCONTENT_SOURCE_DIR_LIBDWARF=$PWD/thirdparty/repo-source/libdwarf-lite`
+   and `-DFETCHCONTENT_FULLY_DISCONNECTED=ON`. This is a local source override;
+   the normal integration CMake path still needs to set it automatically.
 3. **CMake 4 policy errors in a submodule:** add `-DCMAKE_POLICY_VERSION_MINIMUM=3.5`. If errors remain, switch the venv to `cmake==3.31.*`.
 4. **Compiler or SDK detection errors:** add `-DCMAKE_OSX_SYSROOT="$(xcrun --show-sdk-path)"`. If it's still wrong, run `sudo xcode-select -s /Library/Developer/CommandLineTools`.
 5. **`check_tidy` setup complains that clang-tidy is missing:** fix the venv first. Use `-DOE_CHECK_TIDY=OFF` only to unblock a play build, never for a change that's going upstream.

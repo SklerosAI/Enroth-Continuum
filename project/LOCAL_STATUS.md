@@ -45,6 +45,9 @@ Three more former gitlinks now supply scoped, byte-verified production headers
 for INI, preprocessing and JSON, leaving only ztd.text. The cached-library MM7
 link, 12 focused JSON/preprocessor units and a headless MM7 control passed
 after that conversion. Nested fetches and the prebuilt-library recipe remain.
+The exact cpptrace libdwarf-lite source is also tracked with LGPL notices;
+its standalone arm64 backend built with FetchContent disconnected. Integration
+still needs to point cpptrace at this local source.
 The five source families behind the cached archive are also tracked at exact pinned
 revisions with original license files and archive hashes; they are not yet
 compiled by a repo-owned recipe.

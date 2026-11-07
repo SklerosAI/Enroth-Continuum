@@ -108,6 +108,10 @@ MM7 link, 12 focused JSON/preprocessor units and default-path headless control
 pass. The ztd.text license/fetch strategy and five library build recipes remain
 the next local-only build work; do not copy non-commercial ztd source into the
 public fork without resolving its terms.
+The pinned LGPL libdwarf-lite source is also tracked here; standalone arm64
+cpptrace/libdwarf built with a local source override and disconnected
+FetchContent. Wire that override in the integration CMake path before claiming
+the nested fetch closed.
 
 A disposable v1 two-process probe now drives the real MM6 Main Menu QuickLoad FSM through `Game::loop()`/private `gameLoop()` with explicit test-only load callbacks and chest opt-in. The writer and loader each passed 1/1 under the no-window monitor; the loader entered the first outdoor map, advanced movement and left the slot bytes unchanged. An MM7 all-map headless control passed 1/1 after the shared hooks. Production MM6 load, menu slots and complete v2 session publication remain guarded; the probe is not a playable campaign or rendered-frame proof.
 

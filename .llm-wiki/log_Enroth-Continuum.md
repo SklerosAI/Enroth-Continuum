@@ -2611,3 +2611,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Extracted the source-backed first-map v5 load preflight from the fresh-child GameTest override into an MM6-only engine service. It validates title, version, HEAD map and source/owner graph before any global publication, disk write or menu action; both first-map fresh-child tests now use it.
 - A fresh seven-process disposable first-map v5 chain passed 1/1 in every child, and an MM7 headless control passed 1/1. The profile was removed. Test-only publication, production SaveLoad/UI and partial-world rollback remain closed.
+
+## [2026-11-07] verify | MM6 post-world refusal gate
+- by: T-Burton-ND via codex
+- The first-map test-only post-world decision now maps false or a validation exception to abort-to-Main-Menu before timer unpause or input. The one-shot unit suite passed 6/6, the fresh seven-child v5 replay chain passed 1/1 in every child, and MM7 control passed 1/1.
+- Pre-world Party/NPC/timer/map-cache assignment still lacks a complete rollback transaction. Normal MM6 SaveLoad/UI and production admission remain closed.

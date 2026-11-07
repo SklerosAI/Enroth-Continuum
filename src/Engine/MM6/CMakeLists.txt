@@ -235,6 +235,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6V5PreEventDecorationReplayForTest_ut.cpp
         Tests/MM6V5LaterOutdoorReplay_ut.cpp
         Tests/MM6V5OutdoorDecorationSource_ut.cpp
+        Tests/MM6V5DerivedActorNames_ut.cpp
         Tests/MM6MapStatsEncounterColumns_ut.cpp
         Tests/MM6V4OutdoorDecorationReplay_ut.cpp
         Tests/MM6IndoorWorldPlan_ut.cpp

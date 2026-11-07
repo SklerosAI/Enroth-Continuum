@@ -26,6 +26,7 @@
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6CoreSaveRuntime.h"
 #include "Engine/MM6/MM6DurableSaveFields.h"
+#include "Engine/MM6/MM6V5DerivedActorNames.h"
 #include "Engine/MM6/MM6GameplayRngSaveFields.h"
 #include "Engine/MM6/MM6GeneratedNpcSaveFields.h"
 #include "Engine/MM6/MM6HirelingSaveRuntime.h"
@@ -168,7 +169,9 @@ std::vector<std::uint8_t> captureLaterOutdoor(std::span<const std::uint8_t> sour
         else if (entry.bytes != bytes)
             throw std::runtime_error("MM6 later outdoor nonactive map cache changed");
     }
-    const std::vector<Actor> actors(pActors.begin(), pActors.end());
+    const std::vector<Actor> liveActors(pActors.begin(), pActors.end());
+    const auto actors = mm6::canonicalActorsWithDerivedNamesRemoved(
+        liveActors, *pMonsterStats, GameTitle::MM6);
     fields.activeActorPayload = mm6::encodeActiveActorSection(actors, GameTitle::MM6);
     fields.generatedNpcs = mm6::captureGeneratedNpcFields(
         pActors, *pNPCStats, TARGET_MAP, GameTitle::MM6);

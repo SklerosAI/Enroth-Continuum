@@ -1962,3 +1962,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added detached MM6 persistent-event byte staging and a fail-closed active saved actor-overlay policy, then required both before v2 primary/backup selection. Unsupported event bytes or an active overlay can fall back to a valid backup without disk repair.
 - The joined raw/event/PID/indoor/NPC/cursor-shop unit set passed 24/24. Live event arrays, final actor identity and production MM6 loading remain gated.
+
+## [2026-11-06] integrate | MM6 fresh visual baselines
+- by: T-Burton-ND via codex
+- Made represented v2 session preflight construct its timer and overlay list locally, alongside its fresh Party, so the selector no longer accepts unrelated live visual bases from a caller.
+- Linked raw runtime checks passed 12/12. Final live timer/overlay publication and graphical reload remain gated.

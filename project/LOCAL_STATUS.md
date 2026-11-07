@@ -1333,3 +1333,13 @@ wrong-map occupants, and selects a valid primary or backup without repair.
 A post-primary-rename, pre-directory-sync fault was exercised with disk bytes
 observed; focused linked units passed **2/2**, and the MM7 headless control
 passed **1/1**. Normal MM6 SaveLoad and menu listing remain closed.
+
+The detached first-map v5 source-backed load preflight has also moved from
+the fresh-child GameTest override into an MM6-only engine service. It checks
+the MM6 title and v5 first-map HEAD before materializing source decorations
+and all generic v5 owner/source joins, then returns a detached graph without
+changing Party, NPCs, map cache, disk or UI. Both first-map fresh-child tests
+now call that service. The seven-process disposable chain again passed
+**1/1 per child**, with an MM7 headless control **1/1**. Test-only publication
+scopes, input admission, normal SaveLoad/UI and partial-world rollback remain
+open work.

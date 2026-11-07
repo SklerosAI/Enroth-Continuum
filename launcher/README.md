@@ -60,8 +60,21 @@ signed app at `build/Atlas/Enroth Continuum.app`. Its helper is
 `Contents/Helpers/MM7.app`; it cannot launch MM6 data. The bundle includes
 the upstream license, CREDITS and upstream notes in
 `Contents/Resources/Notices`. A wrong-title helper or failed build leaves the
-previous staged Atlas intact. It uses the local Command Line Tools macOS 26.5
-SDK and `rsvg-convert` currently installed on this machine.
+previous staged Atlas intact. It locates the installed Apple SDK and Swift
+compiler through `xcrun`, and packages the tracked `AtlasIcon.icns`, generated
+from the editable `AtlasIcon.svg`. Packaging does not require Homebrew or SVG
+conversion tools. If the icon art changes, regenerate and review the tracked
+ICNS before committing the artwork.
+
+When staging an MM7 helper linked to the repository-owned media libraries,
+pass `--mm7-deps-build-root` with the output directory from
+[`build_mm7_macos_dependencies.py`](../tools/build_mm7_macos_dependencies.py).
+The assembler checks the report's source pins and hashes of all nine static
+archives and copied source notices, then includes those notices in
+`Contents/Resources/Notices/MM7-Media`. This option is explicit because an
+older cached-library helper cannot be identified as a source-built helper from
+its bundle metadata alone. Keep the recipe output available until the staged
+Atlas is assembled.
 
 For a future title update, pass `--reuse-from` with an existing Atlas and
 `--mm6-app` or `--mm8-app` only after that title passes its play and save gate.

@@ -1,11 +1,15 @@
+#include <algorithm>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 #include "Testing/Game/GameTest.h"
 
@@ -17,7 +21,11 @@
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6CreationItemSeed.h"
 #include "Engine/MM6/MM6LoadedMapSource.h"
+#include "Engine/MM6/MM6NpcStaticBaseline.h"
+#include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/MM6/MM6RawNewGameSaveRuntime.h"
+#include "Engine/MM6/MM6RawChildPublicationForTest.h"
+#include "Engine/MM6/MM6RawSessionStage.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Party.h"
@@ -28,6 +36,7 @@
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/Tables/OverlayTable.h"
+#include "Engine/Tables/TileTable.h"
 #include "Engine/Timer.h"
 #include "GUI/GUIWindow.h"
 
@@ -35,7 +44,7 @@
 
 namespace {
 
-std::optional<std::filesystem::path> disposableV2RestartProfile() {
+std::optional<std::filesystem::path> disposableV2RestartProfile(bool requireEmpty = true) {
     const char *value = std::getenv("ENROTH_MM6_RESTART_PROFILE");
     if (!value || !*value)
         return std::nullopt;
@@ -51,10 +60,17 @@ std::optional<std::filesystem::path> disposableV2RestartProfile() {
     if ((std::filesystem::status(root).permissions() & otherPermissions) !=
         std::filesystem::perms::none)
         throw std::runtime_error("MM6 v2 writer requires an owner-only profile");
-    if (std::filesystem::exists(root / "saves" / "autosave.ec6") ||
-        std::filesystem::exists(root / "saves" / "autosave.ec6.bak"))
+    if (requireEmpty && (std::filesystem::exists(root / "saves" / "autosave.ec6") ||
+                         std::filesystem::exists(root / "saves" / "autosave.ec6.bak")))
         throw std::runtime_error("MM6 v2 writer requires an empty restart slot");
     return root;
+}
+
+std::vector<std::uint8_t> readDisposableSlot(const std::filesystem::path &profile) {
+    std::ifstream input(profile / "saves" / "autosave.ec6", std::ios::binary);
+    if (!input)
+        throw std::runtime_error("MM6 v2 restart slot is missing");
+    return {std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
 }
 
 void completeEditableMM6Party() {
@@ -256,5 +272,115 @@ GAME_TEST(MM6ZCreationItemSeedHeadless, DISABLED_WriteRealStarterV2RestartSlot) 
     EXPECT_TRUE(std::filesystem::is_regular_file(*profile / "saves" / "autosave.ec6"));
     EXPECT_FALSE(std::filesystem::exists(*profile / "saves" / "autosave.ec6.bak"));
     EXPECT_FALSE(ufs->exists("saves"));
+    EXPECT_EQ(window->nativeHandle(), nullptr);
+}
+
+// This is the callback that a future disposable Main Menu QuickLoad route may
+// install. It is exercised directly and caught here: Game::gameLoop currently
+// continues unconditionally after a successful void load override, so a live
+// QuickLoad event must remain closed until complete v2 publication exists.
+GAME_TEST(MM6ZCreationItemSeedHeadless, DISABLED_V2QuickLoadCallbackRejectsBeforePublish) {
+    const auto profile = disposableV2RestartProfile(false);
+    if (!profile)
+        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to a populated owner-only system-temp directory";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    const auto beforeSlot = readDisposableSlot(*profile);
+    ASSERT_FALSE(beforeSlot.empty());
+
+    bool callbackCalled = false;
+    bool exactV2Admitted = false;
+    bool publicationRejected = false;
+    bool blockersPresent = false;
+    bool normalGuardClosed = false;
+    bool liveUnchanged = false;
+    std::string error;
+    game.runGameRoutine([&] {
+        const Party beforeParty = *pParty;
+        const auto beforeCursor = mm6::rawHeldCursorState(GameTitle::MM6);
+        const auto beforeShops = mm6::shopTitleState();
+        const auto beforeChest = mm6::chestTitleState();
+        const std::size_t beforeMapCount = pMapDeltas.size();
+        mm6::testing::setLoadGameOverride([&](std::string_view fileName) {
+            callbackCalled = true;
+            if (fileName != mm6::NEW_GAME_AUTOSAVE_SLOT)
+                throw std::runtime_error("MM6 v2 callback selected another slot");
+            const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
+            const mm6::NpcStaticBaseline freshNpcs =
+                mm6::loadNpcStaticBaseline(*engine->resources(), GameTitle::MM6);
+            const auto verifyItem = [](std::int32_t id) {
+                return id >= 1 && id <= 580 &&
+                    !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
+            };
+            auto staged = mm6::preflightStagedRawSessionFields(
+                *profile, fileName, freshNpcs, maps.expectedNames(),
+                [&maps](std::string_view name) { return maps.readBase(name); },
+                verifyItem, *pItemTable, pOverlayTable->overlays.size(),
+                pTileTable->tileCount(), GameTitle::MM6);
+            if (!staged || staged->needsRecovery || !staged->outdoorPlan ||
+                staged->indoorPlan || staged->outdoorPlan->mapName != "oute3.odm" ||
+                mm6::encodeRawSave(staged->raw.saved, GameTitle::MM6) != beforeSlot)
+                throw std::runtime_error("MM6 v2 callback did not admit the exact primary slot");
+            exactV2Admitted = true;
+
+            const auto admission = mm6::testing::inspectRawChildPublication(
+                *staged, *pItemTable, GameTitle::MM6);
+            blockersPresent = std::find(admission.blockers.begin(), admission.blockers.end(),
+                mm6::testing::RawChildPublicationBlocker::MouseAssetNotResolved) !=
+                    admission.blockers.end() &&
+                std::find(admission.blockers.begin(), admission.blockers.end(),
+                    mm6::testing::RawChildPublicationBlocker::ActiveWorldResourcesNotBound) !=
+                    admission.blockers.end();
+            if (admission.canEnterGameLoop())
+                throw std::runtime_error("MM6 v2 callback unexpectedly admitted live entry");
+            // No live assignment occurs. A caught refusal also prevents the
+            // caller from ever returning to Game::gameLoop in this test.
+            throw std::runtime_error("MM6 v2 publication gate remains closed");
+        });
+        try {
+            loadGame(mm6::NEW_GAME_AUTOSAVE_SLOT);
+        } catch (const std::exception &exception) {
+            publicationRejected = std::string_view(exception.what()) ==
+                "MM6 v2 publication gate remains closed";
+            if (!publicationRejected)
+                error = exception.what();
+        }
+        mm6::testing::setLoadGameOverride({});
+        try {
+            loadGame(mm6::NEW_GAME_AUTOSAVE_SLOT);
+        } catch (const std::runtime_error &exception) {
+            normalGuardClosed = std::string_view(exception.what()) ==
+                "MM6 save loading is unavailable until the EC6 transaction is complete";
+        }
+        const auto &afterChest = mm6::chestTitleState();
+        bool partyUnchanged = pParty->pos == beforeParty.pos &&
+            pParty->GetGold() == beforeParty.GetGold() &&
+            pParty->GetFood() == beforeParty.GetFood() &&
+            pParty->pPickedItem.itemId == beforeParty.pPickedItem.itemId;
+        for (std::size_t character = 0; character < pParty->pCharacters.size(); ++character) {
+            const Character &before = beforeParty.pCharacters[character];
+            const Character &after = pParty->pCharacters[character];
+            partyUnchanged = partyUnchanged && before.name == after.name &&
+                before.classType == after.classType && before.uLevel == after.uLevel &&
+                before.inventory.size() == after.inventory.size();
+        }
+        liveUnchanged = partyUnchanged &&
+            mm6::rawHeldCursorState(GameTitle::MM6) == beforeCursor &&
+            mm6::shopTitleState() == beforeShops &&
+            afterChest.ready == beforeChest.ready &&
+            afterChest.lcgState == beforeChest.lcgState &&
+            afterChest.generatedArtifactFlags == beforeChest.generatedArtifactFlags &&
+            pMapDeltas.size() == beforeMapCount;
+    });
+
+    EXPECT_TRUE(error.empty()) << error;
+    EXPECT_TRUE(callbackCalled);
+    EXPECT_TRUE(exactV2Admitted);
+    EXPECT_TRUE(publicationRejected);
+    EXPECT_TRUE(blockersPresent);
+    EXPECT_TRUE(normalGuardClosed);
+    EXPECT_TRUE(liveUnchanged);
+    EXPECT_EQ(readDisposableSlot(*profile), beforeSlot);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }

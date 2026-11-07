@@ -2646,3 +2646,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A real paused Save-menu test wrote an owner-only disposable first-map v5 candidate through the strict writer. Fresh seed, v4, prior v5 primary, paused write and independent fresh-child replay children each passed 1/1; exact primary/backup bytes were checked, and MM7 control passed 1/1.
 - Both armed fault cases then completed a second full source-backed first-map load with exact post-world owner validation and bounded turn/walk after the abandoned attempt; each passed 1/1 with unchanged save bytes. This remains test-only and is not rollback or normal SaveLoad/UI admission.
+
+## [2026-11-07] verify | MM6 native slot and engine-owned chest attempt
+- by: T-Burton-ND via codex
+- Integrated a strict, test-only first-map numbered `.ec6` slot policy. Focused atomic outcome/collision units passed 2/2 and MM7 control passed 1/1; production Save UI remains closed.
+- Moved the first-map v5 detached graph and exact chest handoff into an Engine-owned attempt. A fresh disposable seven-child replay passed 7/7, both full-retry fault children passed 1/1, and MM7 control passed 1/1. Event, actor/NPC/RNG and post-world lifecycle remain test-hook owned; no playable MM6 load is claimed.

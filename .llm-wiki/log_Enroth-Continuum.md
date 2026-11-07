@@ -2426,3 +2426,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Copied the existing extracted MM7 data into the new local Enroth Continuum default folder and verified every regular file byte-for-byte against the retained original. No private files or detailed inventory entered Git.
 - The rebuilt headless MM7 control discovered that new default path and passed 1/1. Existing saves, preferences and the installed app remain unmoved; collision-safe save migration and visible candidate-app checks remain open.
+
+## [2026-11-07] verify | Scoped MM7 production headers
+- by: T-Burton-ND via codex
+- Replaced inifile-cpp, tcpp and nlohmann/json gitlinks with their exact pinned production headers and required JSON CMake files, retaining licenses and provenance while omitting test-only nested dependencies. All 72 copied upstream files matched pinned Git blob bytes; one ztd.text gitlink remains.
+- Standalone JSON CMake configure, focused header syntax, integrated cached-library arm64 MM7 link, 12 JSON/preprocessor units and a default-path headless MM7 control passed. The ztd license/fetch route and repository-owned static-library build are still open.

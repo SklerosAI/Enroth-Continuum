@@ -2460,3 +2460,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - An opt-in, exact-filter GameTest rendered a first-map MM7 world/HUD frame using private data and a hidden 640×480 OpenGL window. The test passed 1/1; 98 host samples found no visible test window or frontmost-app change, and a wrong-filter run rejected before SDL startup. The private capture remained outside Git.
 - The retained local-only build tree was used after copying the diagnostic source into its temporary extraction, which is marked modified; the staged Atlas and installed app were untouched. The frame shows consistently spaced portrait bars, with no source-backed reason to change their render positions. Visible candidate play, audio and save/reload remain open.
+
+## [2026-11-07] verify | One-command Mac MM7 offline build
+- by: T-Burton-ND via codex
+- Added a dedicated Mac MM7 wrapper that builds tracked media sources, selects the local-only CMake lane, verifies the nine archive link inputs and system-only dynamic links, and stages Atlas in a fresh output directory.
+- A fresh tracked-source extraction completed that command under network denial. The arm64 helper and staged app passed strict signature checks with valid bundle versions; no private game files or saves were bundled. The shared CMake default and installed app remain unchanged pending wider regression and visible save/reload checks.

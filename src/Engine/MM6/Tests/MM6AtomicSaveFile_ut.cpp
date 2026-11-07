@@ -717,6 +717,10 @@ UNIT_TEST(MM6AtomicSaveFile, V5LaterOutdoorSlotIsSeparateAndRejectsForeignSlots)
     mm6::writeAtomicV5SaveFileForTest(
         profile.root(), "candidate-v5-oute2.ec6", later, accept);
     EXPECT_EQ(read(profile.root() / "saves/candidate-v5-oute2.ec6"), later);
+    mm6::writeAtomicV5SaveFileForTest(
+        profile.root(), "candidate-v5-oute2-after-input.ec6", later, accept);
+    EXPECT_EQ(read(profile.root() / "saves/candidate-v5-oute2-after-input.ec6"), later);
+    EXPECT_EQ(read(profile.root() / "saves/candidate-v5-oute2.ec6"), later);
     EXPECT_EQ(read(profile.root() / "saves/autosave.ec6"), seed);
     EXPECT_EQ(read(profile.root() / "saves/candidate-v4.ec6"), priorV4);
 }

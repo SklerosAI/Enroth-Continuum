@@ -248,7 +248,8 @@ void requireDisposableV5Destination(const std::filesystem::path &profileRoot,
                                     std::string_view slotName) {
     if (slotName != "candidate-v5-after-action.ec6" &&
         slotName != "candidate-v5-after-reload-input.ec6" &&
-        slotName != "candidate-v5-oute2.ec6")
+        slotName != "candidate-v5-oute2.ec6" &&
+        slotName != "candidate-v5-oute2-after-input.ec6")
         throw std::invalid_argument("MM6 v5 test writer requires its own candidate slot");
     // Same owner-only, direct system-temp profile proof as the v4 route.
     requireDisposableV4Destination(profileRoot, "candidate-v4.ec6");

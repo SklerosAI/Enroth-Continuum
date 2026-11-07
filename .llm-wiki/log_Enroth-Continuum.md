@@ -2636,3 +2636,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added an explicit read-only MM6 first-map paused Save-menu capture boundary with idle UI, timer and exact live-owner checks. Fresh disposable seed, v4 and real Escape-to-Save-menu capture children passed 1/1 each without a slot write; the existing unpaused seven-child v5 cycle passed 7/7 and MM7 control passed 1/1.
 - This supersedes the missing paused-menu capture contract, but normal `doSavegame`, production slots and load recovery remain closed.
+
+## [2026-11-07] verify | MM6 armed first-map load abandonment
+- by: T-Burton-ND via codex
+- Added a test-only MM6 first-map scope that catches armed load-callback and world-preparation failures, clears pending state and abandons to Main Menu before input. Fresh seed, v4, v5 writer, partial-assignment fault and pre-event fault children each passed 1/1; both fault cases staged a second attempt.
+- The unarmed seven-child first-map v5 chain remained 7/7 and MM7 control passed 1/1. This is an abandon policy without rollback of already published globals; normal MM6 SaveLoad/UI remains closed.

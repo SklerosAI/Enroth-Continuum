@@ -12,7 +12,9 @@ remain authoritative.
    work. Include the commit, files owned, checks run, remaining blocker, and
    privacy note.
 4. Put review results in `reviews/`; do not overwrite another agent's handoff.
-5. Commit coordination updates separately from code changes when practical.
+5. Use `messages/` for a direct asynchronous question or reply, then copy any
+   durable decision into a handoff or claim.
+6. Commit coordination updates separately from code changes when practical.
 
 For concurrent worktrees, commit the handoff or claim and have the receiving
 agent fetch/rebase before relying on it. A file in one worktree is not live
@@ -36,4 +38,5 @@ use the main checkout as a shared write location for concurrent source edits.
 - `claims/` — one active claim per lane, named `<agent>-<scope>.md`.
 - `handoffs/` — append-only task handoffs, named with ISO date and scope.
 - `reviews/` — review notes tied to a commit or branch.
+- `messages/` — Git-mediated direct messages between named agents.
 

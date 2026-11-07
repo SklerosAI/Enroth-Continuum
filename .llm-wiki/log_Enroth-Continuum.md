@@ -2119,3 +2119,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The live outdoor loader stamps its active raw sidecar before encounter spawning. The detached actor append codec now accepts a zero or matching source respawn day, rejects a conflicting day, and still requires a positive target day. Linked focused tests passed 3/3.
 - The complete spawned-actor native record and durable post-entry save remain open.
+
+## [2026-11-07] decide | MM6 spawned actor save owner route
+- by: T-Burton-ND via codex
+- Chose a detached, versioned MM6 EC6 runtime actor owner candidate for newly spawned exact PID slots. The present native 548-byte projection omits major state regions, and encounter spawning retains no complete native-record provenance.
+- This is a design boundary, not a live manifest or loader. Unsupported actor states must refuse; a post-entry no-respawn fresh-child round-trip and pre-event GNPC/RNG publication remain required.

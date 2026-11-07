@@ -5,6 +5,8 @@
 #include <string>
 #include <utility>
 
+#include "Engine/Snapshots/EntitySnapshots.h"
+
 namespace mm6 {
 
 void requireV6IndoorPreEventOwnerAgreement(
@@ -48,9 +50,14 @@ void requireV6IndoorPreEventOwnerAgreement(
     for (std::size_t index = 0; index < liveDecorations.size(); ++index) {
         const LevelDecoration &live = liveDecorations[index];
         const LevelDecoration_MM7 &native = plan.base.decorations[index];
-        if (live.vPosition != native.vPosition.toFloat() ||
-            live._yawAngle != native._yawAngle || live.uEventID != native.uEventID ||
-            live.uTriggerRange != native.uTriggerRange)
+        LevelDecoration reconstructed;
+        reconstruct(native, &reconstructed);
+        // A zero native yaw uses field_1A's degree fallback in the engine's
+        // own reconstruction; the raw _yawAngle word is not the live identity.
+        if (live.vPosition != reconstructed.vPosition ||
+            live._yawAngle != reconstructed._yawAngle ||
+            live.uEventID != reconstructed.uEventID ||
+            live.uTriggerRange != reconstructed.uTriggerRange)
             throw std::runtime_error("MM6 v6 pre-event decoration identity differs at slot " +
                                      std::to_string(index));
     }

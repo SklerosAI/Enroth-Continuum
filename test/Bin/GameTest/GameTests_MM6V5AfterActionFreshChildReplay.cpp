@@ -310,8 +310,9 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
         engine->_messageQueue->addMessageCurrentFrame(UIMSG_QuickLoad);
     });
 
-    // A load-callback fault can abandon before a loading screen exists.
-    if (!faultMode)
+    // The partial-assignment fault can abandon before a loading screen exists.
+    // The pre-event fault still needs the ordinary headless loading-screen step.
+    if (mode != V5ReplayMode::FaultAfterPartyAssignment)
         game.skipLoadingScreen();
     game.tick(allowInput ? 3 : 2);
     if (faultMode) {

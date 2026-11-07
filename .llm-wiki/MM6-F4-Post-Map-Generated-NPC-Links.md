@@ -13,6 +13,12 @@ preparation. It verifies contiguous links, the 100-row bound, cursor agreement
 and the generated row fields set by the loader. Three synthetic tests cover
 mixed actor classes and late refusals without mutation.
 
+The MM6 loader now counts eligible actors before its first generated-row write
+and refuses more than the fixed 100-row pool. A focused boundary test passed,
+bringing the linked suite to 4/4; loaded MM6 first-map and MM7 headless
+controls each passed 1/1. The refusal occurs after earlier map-load work, so
+the child must still abort.
+
 This does not establish saved NPC identity or restore the game RNG stream.
 EC6 v2 lacks both, and the existing post-rebuild PID check conservatively
 rejects generated actor IDs that differ from saved pre-generation anchors.

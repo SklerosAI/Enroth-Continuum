@@ -899,8 +899,10 @@ BEAC/IFOV, action and recovery owners still block live publication.
 The final generated-NPC link check now rejects broken actor to generated-row
 links, pool overrun and malformed rows without mutating them. Its integrated
 synthetic suite passed **3/3**. This proves link shape only: v2 does not save
-generated NPC identities or game RNG, and the map loader currently writes its
-100-row generated pool without a pre-write capacity check. A separate v2
+generated NPC identities or game RNG. The MM6 loader now refuses a map that
+would overrun its 100-row pool before the first generated-row write; the
+linked NPC suite passed **4/4**, and loaded MM6 first-map plus MM7 headless
+controls passed **1/1** each. A separate v2
 admission guard identifies nonzero saved Armageddon timers that world
 preparation would clear; the linked child-publication suite passed **3/3**.
 Neither check opens MM6 SaveLoad or first-frame input.

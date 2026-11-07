@@ -7,8 +7,11 @@ game-loop publication wiring. No private NPC names or records are in Git.
 actors. It skips tier-A actors and fixed NPC links below 5000. For eligible
 peasants it writes one `pAdditionalNPC` row using `grng`, links the actor to
 `5000 + cursor`, and increments the cursor. Other eligible actors lose their
-NPC link. The fixed 100-row generated pool is written without an explicit
-capacity check in that loader.
+NPC link. The inherited loader wrote the fixed 100-row generated pool without
+a capacity check. The MM6 path now counts eligible rebuilt actors immediately
+before resetting the cursor or writing a generated row and refuses a map
+needing more than 100 rows. MM7 retains its prior route. Other map-load owners
+have already changed at this point, so a refusal must abort the child.
 
 `requirePostMapGeneratedNpcLinks()` checks the final actor IDs and monster
 range, contiguous generated links, pool capacity and cursor agreement. It also
@@ -16,6 +19,10 @@ requires each linked generated row to have the name, portrait, sex, profession,
 house and join fields that the generator sets. It reads the final owners only;
 it does not draw RNG, create NPCs, or change actors. Three synthetic unit tests
 cover valid mixed actors, wrong title/link/row, missing actor and pool overflow.
+The separate pre-write capacity test accepts exactly 100 eligible actors,
+refuses 101 before a row change, and excludes fixed links. All four linked
+checks passed in integration. A loaded MM6 first-map headless control and an
+MM7 headless control each passed 1/1 after the guard was wired.
 
 This check proves **link shape**, not identity preservation. EC6 v2 stores
 mutable `RESC` rows but no `pAdditionalNPC` records or `grng` state. A fresh

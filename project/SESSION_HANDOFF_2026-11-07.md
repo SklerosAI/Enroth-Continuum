@@ -103,6 +103,23 @@ was compiled together, and no lane's tests are known to pass at this snapshot.
   it a bug), the lane uses each spell's own element, one line to revert. Open:
   MM6 party death, inherited monster AI, monster missiles, other elements and
   spells, the second-attack bonus, the MM6 portrait animation mapping.
+- **I, inventory: done, not yet merged** (lane commits `ce7a49bba`,
+  `2cf8cf000`, `a7fbbe933`, `c858984b9`). Capture writes each item's raw
+  28-byte record at its current record and slot, so moves between backpack and
+  paperdoll, slot and record changes, arrivals and removals save. A vacated
+  record clears bytes 0-24 and keeps 25-27. `Party::setHoldingItem` and
+  `takeHoldingItem` keep the raw HELD owner in step through one-line MM6
+  dispatches. MM6 paperdoll rules in new `MM6PaperdollEquip.{h,cpp}` from the
+  original executable: no race, alignment, spear or wetsuit checks, club and
+  misc need no skill, ring placement and ring-6 swap, three record-leaking
+  original cases refuse. Lane B needs no capture change. New child
+  `MM6V5PaperdollHeadless.DISABLED_BackpackItemStaysEquippedThroughInventoryCapture`
+  runs after SEED, V4 and V5_WRITE with `ENROTH_MM6_V5_FIRST_INPUT_ENABLE`,
+  passes 1/1 and fails with the fix reverted. Unit suite passes after one
+  test was updated for allowed removal. MM7 `Prs.Pr2354` 1/1. Full gate and
+  full MM7 suite not run. Open: tail bytes of reused records, consume and sell
+  removal untraced, backpack swap with an item in hand, auto-placement order,
+  items with no raw record still refuse a save.
 - **G, MM6 item generator and give-item: started** in the old Lane E
   worktree on branch `mm6-f4d-item-generator`.
 

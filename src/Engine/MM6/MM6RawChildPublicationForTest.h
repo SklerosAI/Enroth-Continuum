@@ -16,6 +16,7 @@ namespace mm6::testing {
 
 enum class RawChildPublicationBlocker {
     BackupNeedsRecovery,
+    WorldPrepareClearsArmageddonTimer,
     HeldItemOffsetUnresolved,
     MouseAssetNotResolved,
     NpcStaticResourcesNotBound,

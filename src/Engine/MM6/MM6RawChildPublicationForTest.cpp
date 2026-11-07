@@ -96,9 +96,18 @@ RawChildPublicationAdmission inspectRawChildPublication(
     admission.cursorImage = stageRawCursorImagePlan(
         staged.party.party, staged.raw.cursor, itemTable, title);
     requireMatchingWorld(staged, title);
+    if (staged.party.party.armageddon_timer.ticks() !=
+        staged.raw.saved.recovery.armageddonTimerTicks)
+        throw std::runtime_error("MM6 child Party Armageddon timer differs from v2 RCVR");
 
     if (staged.needsRecovery)
         admission.blockers.push_back(RawChildPublicationBlocker::BackupNeedsRecovery);
+    // DoPrepareWorld(true) resets the cursor/world and clears this Party timer.
+    // Until a checked post-world restore exists, loading a nonzero value loses
+    // saved recovery state before the first input frame.
+    if (staged.party.party.armageddon_timer.ticks())
+        admission.blockers.push_back(
+            RawChildPublicationBlocker::WorldPrepareClearsArmageddonTimer);
     if (admission.cursorImage.occupied && !admission.cursorImage.pickedItemOffset)
         admission.blockers.push_back(RawChildPublicationBlocker::HeldItemOffsetUnresolved);
     admission.blockers.push_back(RawChildPublicationBlocker::MouseAssetNotResolved);

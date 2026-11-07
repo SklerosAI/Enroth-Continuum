@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
+#include <utility>
 
 #include "Testing/Unit/UnitTest.h"
 
@@ -110,4 +111,18 @@ UNIT_TEST(MM6RawChildPublicationForTest, RejectsLateOwnerDivergenceBeforeAdmissi
     staged = candidate();
     EXPECT_THROW((void) mm6::testing::inspectRawChildPublication(*staged, items.table, GameTitle::MM7),
                  std::exception);
+}
+
+UNIT_TEST(MM6RawChildPublicationForTest, NonzeroRecoveryTimerNeedsPostWorldRestore) {
+    auto staged = candidate();
+    ItemTableScope items;
+    staged->raw.saved.recovery.armageddonTimerTicks = 256;
+    EXPECT_THROW((void) mm6::testing::inspectRawChildPublication(
+        *staged, items.table, GameTitle::MM6), std::exception);
+    staged->party.party.armageddon_timer = Duration::fromTicks(256);
+    const auto admission = mm6::testing::inspectRawChildPublication(
+        *staged, items.table, GameTitle::MM6);
+    EXPECT_TRUE(hasBlocker(admission,
+        mm6::testing::RawChildPublicationBlocker::WorldPrepareClearsArmageddonTimer));
+    EXPECT_FALSE(admission.canEnterGameLoop());
 }

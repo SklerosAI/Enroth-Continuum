@@ -18,9 +18,9 @@
 namespace mm6 {
 
 // V6 starts a separate indoor branch from v2. These three exact native slot
-// anchors establish BLV/DLV provenance. IDRT and ISRT own mutable decoration
-// and sprite state. Actor runtime ownership and a complete live replay
-// transaction are still required before any v6 slot can enter gameplay.
+// anchors establish BLV/DLV provenance. IDRT, ISRT and IART own mutable
+// decoration, sprite and actor state. A complete live replay transaction
+// is still required before any v6 slot can enter gameplay.
 struct IndoorNativeSlotAnchor {
     std::string mapName;
     std::uint32_t count = 0;

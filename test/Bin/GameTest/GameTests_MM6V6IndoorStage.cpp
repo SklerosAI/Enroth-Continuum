@@ -54,8 +54,8 @@ std::string firstIndoorMap(const mm6::LoadedMapSource &maps) {
 
 // Run alone after the disposable v2 autosave seed. This constructs a v6
 // indoor candidate in memory using one real BLV/DLV and the actual pre-event
-// face checkpoint. Its native slot sections are provenance anchors only;
-// neither production SaveLoad nor gameplay admission is opened.
+// face checkpoint. A separate opt-in path captures genuine post-world owners.
+// Neither production SaveLoad nor gameplay admission is opened.
 GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached) {
     const char *enable = std::getenv("ENROTH_MM6_V6_INDOOR_STAGE_ENABLE");
     const bool postWorldWriter = enable &&

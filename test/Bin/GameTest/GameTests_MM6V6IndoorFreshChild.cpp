@@ -47,8 +47,9 @@
 // Run only after the strict v6 disposable writer, in a distinct child. It
 // reconstructs the saved DLV through the real indoor loader and observes its
 // pre-OnMapReload face base, then re-stages every detached v6 owner. A second
-// bounded load publishes only IDRT before OnMapReload and checks equality
-// after events. It never admits input or calls production SaveLoad.
+// bounded load publishes IDRT, ISRT and IART before OnMapReload. The post-world
+// mode also restores GNPC and RNGS, then checks exact owners after events.
+// It never admits input or calls production SaveLoad.
 GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents) {
     const char *enable = std::getenv("ENROTH_MM6_V6_INDOOR_READER_ENABLE");
     const bool postWorldReader = enable &&

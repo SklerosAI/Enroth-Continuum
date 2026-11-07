@@ -158,7 +158,7 @@ UNIT_TEST(MM6V6IndoorSaveFields, RejectsMissingMismatchedAndMalformedOwners) {
     source.sprites.mapName = "oute3.odm";
     EXPECT_THROW((void) mm6::encodeV6IndoorSave(source, GameTitle::MM6), std::exception);
     source = candidate();
-    source.actors.records.pop_back();
+    source.actors.records.push_back(0);
     EXPECT_THROW((void) mm6::encodeV6IndoorSave(source, GameTitle::MM6), std::exception);
     source = candidate();
     EXPECT_THROW((void) mm6::encodeV6IndoorSave(source, GameTitle::MM7), std::exception);

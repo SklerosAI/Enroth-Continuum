@@ -2311,3 +2311,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Converted exact pinned `fast_float`, `magic_enum` and `mio` gitlinks into tracked source, retaining all original license files and provenance notes. All 112 original files matched pinned Git blobs; a network-disconnected standalone AppleClang C++20 build/run passed.
 - The integration Mac MM7 target linked against the four tracked snapshots with existing cached prebuilt libraries. Nineteen gitlinks, nested fetches and prebuilt-library source recipes remain; a clean offline MM7 build is not yet possible. The installed app and saves were not replaced.
+
+## [2026-11-07] verify | MM6 no-write location-change lifecycle
+- by: T-Burton-ND via codex
+- A disposable three-process chain passed v2 seed, strict first-map v4 admission and a fresh-child real `GAME_STATE_CHANGE_LOCATION`/`PrepareWorld` transition into the second outdoor map at 1/1 each. Target map owner/cache checks and bounded input passed; a one-shot MM6-only test autosave intercept left every profile save file byte-identical. Focused intercept units passed 3/3.
+- The target load exposed stale derived chest positions carried from the source map. MM6 now clears that field before target chest reconstruction while preserving the strict generation guard. Border routing, travel UI, durable autosave, production SaveLoad and campaign play remain open.

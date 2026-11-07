@@ -57,8 +57,12 @@ write/publish gates are false.
 
 The [first-map outdoor v5 cycle](MM6-F4-EC6-V5-Sprite-Runtime.md) now has
 read-only live capture and exact post-world owner validation in an MM6 engine
-service. A fresh seven-child disposable chain passed 1/1 in every child after
-the post-world extraction, and an MM7 control passed 1/1. The test still owns
+service. Its separate first-map writer service composes exact settled-input
+capture, detached first-map semantic validation and owner-only disposable
+atomic writes; it classifies post-rename failures as indeterminate even when
+the new primary is readable. Focused writer/atomic units passed 3/3 and the
+modified GameTest writer passed a fresh seven-child chain 7/7 with MM7
+headless control 1/1. The test still owns
 pre-event publication scopes and the bounded input decision; normal MM6
 SaveLoad, `.ec6` menu listing, failure rollback and production admission stay
 closed. Do not infer general later-map or indoor save support from this seam.

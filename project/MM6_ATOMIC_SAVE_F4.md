@@ -55,6 +55,14 @@ may fall back to a valid first-map backup, leaving both disk files untouched.
 The result policy and preflight are test-only; normal SaveLoad and UI remain
 closed, and no production slot or rollback procedure has been admitted.
 
+The MM6 first-map live writer service now composes exact settled-input v5
+capture, detached first-map semantic validation, this disposable atomic
+writer and the before/after result policy. It reports a post-rename exception
+as indeterminate even if the candidate is the readable primary. A precommit
+refusal leaves the prior primary and backup unchanged in the focused unit;
+a confirmed write leaves the exact proposed primary and prior primary backup.
+This remains an owner-only disposable-slot service, not a normal save route.
+
 Two focused linked units passed **2/2** after integration. They exercise
 the three result states and wrong-title/map/slot/backup refusals, plus an
 owner-only disposable post-rename fault, read-only selection of the new

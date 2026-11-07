@@ -33,4 +33,12 @@ save, load, menu listing or rollback was enabled. See the
 [first-map v5 packet](../project/MM6_F4_EC6_V5_SPRITE_RUNTIME.md) for the
 separate live-owner checks.
 
+The separate first-map live writer service now composes the existing
+settled-input capture, detached first-map semantic validation, disposable
+atomic write and exact before/after result policy. A post-rename exception
+remains indeterminate even when the new primary is readable. Focused
+writer/atomic units passed **3/3**, and its GameTest caller passed a fresh
+owner-only first-map v5 chain **7/7**; MM7 headless control passed **1/1**.
+Neither service admits normal slots or changes SaveLoad/UI.
+
 See also: [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), [MM6 Save Spec Source](Source-MM6-Save-Spec.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

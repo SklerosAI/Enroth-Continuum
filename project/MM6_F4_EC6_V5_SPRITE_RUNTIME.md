@@ -150,6 +150,23 @@ throw after mutation, leaving partial state. Normal SaveLoad/UI and production
 gameplay admission remain guarded until a detached precommit bundle and
 abort/rollback policy cover those earlier edges.
 
+The first-map live writer now has a separate MM6 engine service,
+`MM6V5FirstMapSaveWriter.{h,cpp}`. It calls the settled-input capture above,
+checks the exact candidate and prior slot through detached first-map v5
+preflight, then uses the existing owner-only disposable atomic writer. It
+compares exact primary/backup bytes before and after the attempt. A normal
+atomic return with the expected bytes is `Committed`; a precommit failure
+with unchanged primary requires preflight; a post-rename failure is
+`IndeterminateNeedsPreflight` even when the new primary is readable. An
+unexpected post-attempt state is likewise indeterminate. The service accepts
+only MM6, first-map `HEAD`, a source-anchored v4 input and the two existing
+disposable v5 candidate slot names. It does not route to a normal profile.
+The first-map GameTest writer now calls this service. Focused writer/atomic
+units passed **3/3**, including exact primary/backup states under injected
+precommit and post-rename faults; a fresh seven-child owner-only v5 chain
+passed **7/7**, and an MM7 headless control passed **1/1**. Normal SaveLoad,
+menu UI and production slot admission remain closed.
+
 See [v4 event runtime boundary](MM6_F4_EC6_V4_EVENT_RUNTIME.md),
 [active actor capture](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md) and
 [save specification](MM6_SAVE_SPEC.md).

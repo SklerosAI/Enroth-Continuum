@@ -78,6 +78,18 @@ seven-child chain passed **1/1 per child** with MM7 control **1/1**. Assignment
 or pre-event publication can still fail after mutation. Detached precommit
 and failure recovery must precede normal MM6 SaveLoad/UI admission.
 
+The [first-map writer service](../src/Engine/MM6/MM6V5FirstMapSaveWriter.cpp)
+now combines settled-input live capture, detached semantic preflight and the
+owner-only disposable atomic v5 writer. It snapshots primary/backup before
+and after the attempt, reporting `Committed` only after a normal return and
+exact slot result. Precommit refusal requires preflight; a post-rename fault
+remains indeterminate even if the new primary can be read. Focused writer and
+atomic units passed **3/3**; the modified GameTest writer passed a fresh
+seven-child first-map chain **7/7** with MM7 headless control **1/1**. Normal
+profile slots, SaveLoad and UI remain closed. The
+[project packet](../project/MM6_F4_EC6_V5_SPRITE_RUNTIME.md)
+records the exact seam.
+
 See also: [V4 Event Runtime](MM6-F4-EC6-V4-Event-Runtime.md),
 [V3 Post Entry Map and Pre Event](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md),
 [Agent Handoff](Agent-Handoff.md).

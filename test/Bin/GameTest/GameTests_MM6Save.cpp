@@ -35,6 +35,7 @@
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/Tables/OverlayTable.h"
+#include "Engine/Tables/TileTable.h"
 #include "GUI/GUIMessageQueue.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIGame.h"
@@ -245,7 +246,7 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
                 readFile(profile.primary()) == result.primaryBeforeFailure;
             if (staged) {
                 const auto plan = mm6::prepareDetachedOutdoorWorldPlan(
-                    staged->staged.worldAndVisuals, GameTitle::MM6);
+                    staged->staged.worldAndVisuals, pTileTable->tileCount(), GameTitle::MM6);
                 result.detachedOutdoorPlan = plan.mapName == "oute3.odm" &&
                     !plan.base.models.empty() && !plan.faceVertexIds.empty() &&
                     !plan.vertices.empty() &&
@@ -506,7 +507,7 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_RestartSlotStagesDetachedFirstMap) {
                 ++firstCharacterItems;
             }
             const auto plan = mm6::prepareDetachedOutdoorWorldPlan(
-                staged->staged.worldAndVisuals, GameTitle::MM6);
+                staged->staged.worldAndVisuals, pTileTable->tileCount(), GameTitle::MM6);
             stagedCorrectly = !staged->needsRecovery && staged->bytes == before &&
                 staged->staged.party.pos.z == 340 &&
                 staged->staged.worldAndVisuals.world.mapDeltas.size() == 67 &&
@@ -568,7 +569,7 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_RestartSlotEntersFirstOutdoorWorld) {
             if (!staged || staged->needsRecovery)
                 throw std::runtime_error("MM6 restart slot did not stage a primary candidate");
             const auto plan = mm6::prepareDetachedOutdoorWorldPlan(
-                staged->staged.worldAndVisuals, GameTitle::MM6);
+                staged->staged.worldAndVisuals, pTileTable->tileCount(), GameTitle::MM6);
             if (plan.mapName != "oute3.odm")
                 throw std::runtime_error("MM6 restart slot selected another first map");
 

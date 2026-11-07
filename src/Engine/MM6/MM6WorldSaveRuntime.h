@@ -61,6 +61,10 @@ struct DetachedOutdoorWorldPlan {
     // Pure runtime values; no asset or title-global table lookup is involved.
     std::vector<Vec3f> vertices;
     std::vector<SpawnPoint> spawnPoints;
+    // The 127x127 terrain cells resolved through the ODM's four MM6 global
+    // tile selectors. Own this projection before a live OutdoorTerrain uses
+    // the process tile table; row stride is 127 here, 128 in base.tileMap.
+    std::vector<std::int16_t> terrainTileIds;
     // Face references flattened across models in source order. These are
     // validated global vertex indices for a later target-explicit builder.
     std::vector<std::vector<std::size_t>> faceVertexIds;
@@ -70,7 +74,8 @@ struct DetachedOutdoorWorldPlan {
 // CHST sidecar. Rejects invalid model/face/spawn topology before any live
 // OutdoorLocation, asset, listener, renderer or global collection is touched.
 DetachedOutdoorWorldPlan prepareDetachedOutdoorWorldPlan(
-    const StagedKnownWorldAndVisuals &staged, GameTitle title);
+    const StagedKnownWorldAndVisuals &staged, std::size_t tileTableCount,
+    GameTitle title);
 
 // Validate the entire current known-section set and all 67 base/delta pairs,
 // then stage map/NPC buffers, the typed active map and paused timer/overlays

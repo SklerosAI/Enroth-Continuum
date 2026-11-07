@@ -11,6 +11,7 @@
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/LocationFunctions.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Graphics/OutdoorTileProjection.h"
 #include "Engine/Engine.h"
 #include "Engine/Pid.h"
 #include "Engine/Tables/MapTable.h"
@@ -177,8 +178,11 @@ StagedKnownSession stageKnownSession(
 }
 
 DetachedOutdoorWorldPlan prepareDetachedOutdoorWorldPlan(
-    const StagedKnownWorldAndVisuals &staged, GameTitle title) {
+    const StagedKnownWorldAndVisuals &staged, std::size_t tileTableCount,
+    GameTitle title) {
     requireMM6(title);
+    if (tileTableCount == 0 || tileTableCount > std::size_t(std::numeric_limits<std::int16_t>::max()) + 1)
+        throw std::runtime_error("MM6 detached outdoor plan requires a bounded tile table");
     const auto *active = std::get_if<StagedOutdoorMap>(&staged.activeMap);
     if (!active || active->mapName != staged.known.metadata.header.mapFileName ||
         !active->mapName.ends_with(".odm") ||
@@ -241,6 +245,22 @@ DetachedOutdoorWorldPlan prepareDetachedOutdoorWorldPlan(
         SpawnPoint runtime;
         reconstruct(spawn, &runtime);
         plan.spawnPoints.push_back(runtime);
+    }
+    std::array<int, 4> tileBases;
+    for (std::size_t i = 0; i < tileBases.size(); ++i) {
+        const int baseId = plan.base.tileTypes[i].tileId;
+        if (baseId == 0 || std::size_t(baseId) + 36 > tileTableCount)
+            throw std::runtime_error("MM6 detached outdoor tile selector is invalid");
+        tileBases[i] = baseId;
+    }
+    plan.terrainTileIds.reserve(127 * 127);
+    for (int y = 0; y < 127; ++y) {
+        for (int x = 0; x < 127; ++x) {
+            const int tileId = outdoorGlobalTileId(tileBases, plan.base.tileMap[y * 128 + x]);
+            if (std::size_t(tileId) >= tileTableCount)
+                throw std::runtime_error("MM6 detached outdoor tile ID exceeds the loaded table");
+            plan.terrainTileIds.push_back(static_cast<std::int16_t>(tileId));
+        }
     }
     return plan;
 }

@@ -105,11 +105,19 @@ std::vector<std::uint8_t> minimalOutdoorBase() {
 
 std::vector<std::uint8_t> outdoorBaseWithTriangle() {
     constexpr std::size_t header = 160 + 16 + 3 * 128 * 128;
+    constexpr std::size_t tileMap = 160 + 16 + 128 * 128;
     constexpr std::size_t modelExtra = header + 4 + 188;
     constexpr std::size_t face = modelExtra + 3 * 12;
     std::vector<std::uint8_t> bytes(header + 4 + 188 + 3 * 12 + 308 + 2 + 10 +
                                     4 + 4 + 128 * 128 * 4 + 4 + 20, 0);
     bytes[header] = 1; // One model.
+    for (std::size_t i = 0; i < 4; ++i)
+        bytes[160 + i * 4 + 2] = 1 + i * 36; // Four bounded MM6 global tile selectors.
+    bytes[tileMap] = 90;
+    bytes[tileMap + 1] = 126;
+    bytes[tileMap + 2] = 162;
+    bytes[tileMap + 3] = 198;
+    bytes[tileMap + 128] = 234; // Reserved local ID resolves to the default tile.
     bytes[header + 4 + 68] = 3; // Three local vertices.
     bytes[header + 4 + 76] = 1; // One face.
     bytes[face + 302] = 3; // Face uses all three vertices.
@@ -174,7 +182,7 @@ UNIT_TEST(MM6WorldSaveRuntime, PreparesDetachedOutdoorGeometryWithoutLiveWorld) 
     auto staged = mm6::stageKnownWorldAndVisuals(
         npcs, timer, overlays, encoded, names, readBase,
         [](std::int32_t) { return true; }, 5, GameTitle::MM6);
-    auto plan = mm6::prepareDetachedOutdoorWorldPlan(staged, GameTitle::MM6);
+    auto plan = mm6::prepareDetachedOutdoorWorldPlan(staged, 145, GameTitle::MM6);
     EXPECT_EQ(plan.mapName, "o0.odm");
     EXPECT_EQ(plan.base.models.size(), 1);
     EXPECT_EQ(plan.base.modelExtras[0].vertices.size(), 3);
@@ -186,22 +194,34 @@ UNIT_TEST(MM6WorldSaveRuntime, PreparesDetachedOutdoorGeometryWithoutLiveWorld) 
     EXPECT_EQ(plan.spawnPoints[0].radius, 8);
     EXPECT_EQ(plan.spawnPoints[0].type, OBJECT_Actor);
     EXPECT_EQ(plan.spawnPoints[0].monsterIndex, 5);
+    ASSERT_EQ(plan.terrainTileIds.size(), 127 * 127);
+    EXPECT_EQ(plan.terrainTileIds[0], 1);
+    EXPECT_EQ(plan.terrainTileIds[1], 37);
+    EXPECT_EQ(plan.terrainTileIds[2], 73);
+    EXPECT_EQ(plan.terrainTileIds[3], 109);
+    EXPECT_EQ(plan.terrainTileIds[127], 0);
     EXPECT_EQ(plan.activeSidecar.wire.bytes, source.chest.rawActiveDelta);
     EXPECT_EQ(plan.savedDelta.wire.bytes, source.chest.rawActiveDelta);
     EXPECT_EQ(npcs.uNumNewNPCs, 0);
 
-    EXPECT_THROW((void) mm6::prepareDetachedOutdoorWorldPlan(staged, GameTitle::MM7), std::exception);
+    EXPECT_THROW((void) mm6::prepareDetachedOutdoorWorldPlan(staged, 145, GameTitle::MM7), std::exception);
+    EXPECT_THROW((void) mm6::prepareDetachedOutdoorWorldPlan(staged, 144, GameTitle::MM6), std::exception);
+    EXPECT_THROW((void) mm6::prepareDetachedOutdoorWorldPlan(staged, 0, GameTitle::MM6), std::exception);
     auto &active = std::get<mm6::StagedOutdoorMap>(staged.activeMap);
     active.base.faceBytes(0, 0)[32] = 3; // Late topology fault after base and sidecar decoding.
-    EXPECT_THROW((void) mm6::prepareDetachedOutdoorWorldPlan(staged, GameTitle::MM6), std::exception);
+    EXPECT_THROW((void) mm6::prepareDetachedOutdoorWorldPlan(staged, 145, GameTitle::MM6), std::exception);
     EXPECT_EQ(plan.faceVertexIds[0], std::vector<std::size_t>({0, 1, 2}));
     EXPECT_EQ(staged.rawActiveDelta, source.chest.rawActiveDelta);
     active.base.faceBytes(0, 0)[32] = 0;
     active.base.bytes[active.base.bytes.size() - 20 + 14] = 9;
-    EXPECT_THROW((void) mm6::prepareDetachedOutdoorWorldPlan(staged, GameTitle::MM6), std::exception);
+    EXPECT_THROW((void) mm6::prepareDetachedOutdoorWorldPlan(staged, 145, GameTitle::MM6), std::exception);
     active.base.bytes[active.base.bytes.size() - 20 + 14] = std::to_underlying(OBJECT_Actor);
+    active.base.bytes[160 + 2] = 0; // A late terrain fault leaves the prior plan intact.
+    EXPECT_THROW((void) mm6::prepareDetachedOutdoorWorldPlan(staged, 145, GameTitle::MM6), std::exception);
+    EXPECT_EQ(plan.terrainTileIds[3], 109);
+    active.base.bytes[160 + 2] = 1;
     staged.rawActiveDelta[0] = 9;
-    EXPECT_THROW((void) mm6::prepareDetachedOutdoorWorldPlan(staged, GameTitle::MM6), std::exception);
+    EXPECT_THROW((void) mm6::prepareDetachedOutdoorWorldPlan(staged, 145, GameTitle::MM6), std::exception);
 }
 
 UNIT_TEST(MM6WorldSaveRuntime, CapturesAndStagesNonzeroNpcAndCurrentMapOnCopies) {

@@ -38,6 +38,9 @@
 #include "Engine/MM6/MM6V4FullSessionPreflight.h"
 #include "Engine/MM6/MM6V4OutdoorDecorationReplay.h"
 #include "Engine/MM6/MM6V4SaveFields.h"
+#include "Engine/MM6/MM6V5FullSessionPreflight.h"
+#include "Engine/MM6/MM6V5LiveSaveCapture.h"
+#include "Engine/MM6/MM6VisitedOutdoorRuntimeOwner.h"
 #include "Engine/MM6/MM6TransitionAutosaveInterceptForTest.h"
 #include "Engine/MM6/MM6V5OutdoorDecorationSource.h"
 #include "Engine/MM6/MM6OutdoorWire.h"
@@ -172,6 +175,9 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
     bool targetMapReady = false;
     bool movementApplied = false;
     bool sourceHadChestPosition = false;
+    bool visitedOwnerStaged = false;
+    bool visitedOwnerSurvivedTransition = false;
+    bool visitedFaultsRefused = false;
     int sourceGeneratedCursor = -1;
     std::vector<std::uint8_t> oldMapCacheBefore;
     std::string finalOwnerError;
@@ -179,6 +185,7 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
     std::size_t expectedActiveActors = 0;
     mm6::GeneratedNpcSaveFields expectedGenerated;
     std::unique_ptr<mm6::V4FullSessionPreflight> staged;
+    std::unique_ptr<mm6::VisitedOutdoorRuntimeOwner> visitedOwner;
     std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
     std::unique_ptr<mm6::testing::ScopedEventRuntimeRestoreForTest> eventRuntime;
     std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
@@ -376,6 +383,56 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
                 target != MAP_INVALID;
             if (!firstInputReached)
                 return;
+            // Capture and preflight a complete source-map v5 candidate while
+            // its runtime owners are still live. This remains in memory.
+            const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable,
+                                            GameTitle::MM6);
+            const mm6::NpcStaticBaseline freshNpcs =
+                mm6::loadNpcStaticBaseline(*engine->resources(), GameTitle::MM6);
+            const auto verifyItem = [](std::int32_t id) {
+                return id >= 1 && id <= 580 &&
+                    !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
+            };
+            auto rebuilt = sourceDecorations(maps, "oute3.odm");
+            const auto sourceV5 = mm6::captureV5FirstMapLiveSession(before);
+            auto sourceStage = mm6::stageV5FullSessionPreflightOnHeap(
+                sourceV5, freshNpcs, maps.expectedNames(),
+                [&maps](std::string_view name) { return maps.readBase(name); },
+                verifyItem, *pItemTable, pOverlayTable->overlays.size(),
+                pTileTable->tileCount(), pActors.size(),
+                application->component<EngineRandomComponent>()->type(),
+                rebuilt, *pDecorationTable, GameTitle::MM6);
+            visitedOwner = std::make_unique<mm6::VisitedOutdoorRuntimeOwner>(
+                mm6::stageVisitedOutdoorRuntimeOwner(
+                    *sourceStage, "oute3.odm", maps.readBase("oute3.odm"),
+                    *pDecorationTable, GameTitle::MM6));
+            visitedOwnerStaged = !visitedOwner->canWriteCheckpoint();
+            auto refuses = [&](auto &&mutate, auto &&restore) {
+                mutate();
+                bool refused = false;
+                try {
+                    mm6::requireVisitedOutdoorRuntimeOwner(
+                        *visitedOwner, "oute3.odm", maps.readBase("oute3.odm"),
+                        *pDecorationTable, GameTitle::MM6);
+                } catch (const std::exception &) {
+                    refused = true;
+                }
+                restore();
+                return refused;
+            };
+            const auto nativeByte = visitedOwner->nativeDelta.bytes.front();
+            const bool deltaRefused = refuses(
+                [&] { visitedOwner->nativeDelta.bytes.front() ^= 1; },
+                [&] { visitedOwner->nativeDelta.bytes.front() = nativeByte; });
+            const bool eventRefused = refuses(
+                [&] { visitedOwner->event.mapName = "wrong.odm"; },
+                [&] { visitedOwner->event.mapName = "oute3.odm"; });
+            const bool spriteRefused = refuses(
+                [&] { visitedOwner->sprites.mapName = "wrong.odm"; },
+                [&] { visitedOwner->sprites.mapName = "oute3.odm"; });
+            visitedFaultsRefused = deltaRefused && eventRefused && spriteRefused;
+            if (!visitedOwnerStaged || !visitedFaultsRefused)
+                throw std::runtime_error("MM6 visited outdoor owner gate refused");
             const Blob &oldCache = pMapDeltas.at("oute3.ddm");
             const auto *oldBegin = static_cast<const std::uint8_t *>(oldCache.data());
             oldMapCacheBefore.assign(oldBegin, oldBegin + oldCache.size());
@@ -445,6 +502,14 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
                     oldNow == oldMapCacheBefore &&
                     mm6::chestTitleState().ready;
                 if (targetMapReady) {
+                    mm6::requireVisitedOutdoorRuntimeOwner(
+                        *visitedOwner, "oute3.odm", maps.readBase("oute3.odm"),
+                        *pDecorationTable, GameTitle::MM6);
+                    visitedOwnerSurvivedTransition =
+                        !visitedOwner->canWriteCheckpoint() &&
+                        visitedOwner->nativeDelta.bytes ==
+                            visitedOwner->chest.rawActiveDelta &&
+                        oldNow == oldMapCacheBefore;
                     pPartyActionQueue->Add(PARTY_TurnLeft);
                     pPartyActionQueue->Add(PARTY_WalkForward);
                 }
@@ -483,6 +548,9 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
     EXPECT_TRUE(finalOwnersAgree) << finalOwnerError;
     EXPECT_TRUE(firstInputReached);
     EXPECT_TRUE(sourceHadChestPosition);
+    EXPECT_TRUE(visitedOwnerStaged);
+    EXPECT_TRUE(visitedFaultsRefused);
+    EXPECT_TRUE(visitedOwnerSurvivedTransition);
     EXPECT_TRUE(autosaveIntercepted);
     EXPECT_TRUE(transitionQueued);
     EXPECT_TRUE(targetMapReady);

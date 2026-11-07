@@ -1778,3 +1778,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The linked save/world unit suite passed 14/14 after integration. A monitored private-data headless GameTest passed 1/1 with a next-frame GUI action introduced during precommit; the prior disk slot, map cache and CHST stayed intact, and the monitor observed no visible game window or focus change.
 - These checks do not prove active outdoor entry, a production no-reentry commit, or save–quit–reload. Normal MM6 SaveLoad stays guarded.
+
+## [2026-11-06] implement | MM6 chest open owner transaction
+- by: T-Burton-ND via codex
+- An opt-in untrapped first-open stage now joins a selected runtime chest, the active indoor/outdoor map sidecar and the title-local LCG with rollback on stale or invalid owners. A reopened chest keeps its placed record and LCG; world position is retained.
+- Linked arm64 synthetic tests passed 3/3, including indoor and outdoor owner paths. The normal event/UI and pickup route remains guarded, so no playable chest or graphical result is claimed.

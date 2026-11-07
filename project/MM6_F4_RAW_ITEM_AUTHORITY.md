@@ -10,6 +10,8 @@ A follow-up [detached INVR section](MM6_F4_RAW_INVENTORY_SECTION.md) preserves t
 
 A [detached plain-item projection](MM6_F4_PLAIN_ITEM_PROJECTION.md) now uses MM6 item-table types instead of MM7 numeric potion ranges, retains the original 28-byte record and accepts only fields with a bounded view. It rejects nonzero bonus unions pending source proof and has no live owner or SaveLoad route.
 
+A separate [standard-item projection](MM6_F4_STANDARD_ITEM_PROJECTION.md) uses the original equipment-type branch and centralized 14-index MM6 bonus map for positive-strength standard-enchanted records. It retains every source byte and rejects special bonuses and unsupported category/field changes. It is detached from the live character inventory and save transaction.
+
 ## Migration order
 
 1. Keep `ItemRecord28` as the exact byte value for source-proven 28-byte records. Retain context ownership: SHOP physical rows and chest/map sidecars have different lifetimes and mutation rules.

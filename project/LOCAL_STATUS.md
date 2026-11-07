@@ -677,4 +677,12 @@ same source-backed 14-index mapping to the MM6 item-table loader and future
 raw-item adapters. The private-backed MM6/LOD suite passed **352/352** and
 rebuilt non-MM6-prefix unit checks **438/438**. A loaded-table MM6 headless
 control passed **1/1** over 64 samples with no visible window or focus change.
-Nonzero bonus projection is still gated on strength and category behavior.
+Live nonzero bonus use is still gated on effect and strength bounds.
+
+A later [detached standard-item projection](MM6_F4_STANDARD_ITEM_PROJECTION.md)
+can stage source-typed MM6 equipment with a mapped standard bonus and positive
+strength while preserving the exact 28-byte raw record. Focused map/projection
+unit checks passed **3/3** and a monitored loaded-armor MM6 headless check
+**1/1** over 65 samples without a visible window or focus change. It has not
+been attached to a live inventory or verified against native nonzero saved
+items, armor effects, mods or normal SaveLoad.

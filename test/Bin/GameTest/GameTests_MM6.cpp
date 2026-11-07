@@ -27,6 +27,7 @@
 #include "Engine/MM6/MM6EncounterMonster.h"
 #include "Engine/MM6/MM6PlainInventoryProjection.h"
 #include "Engine/MM6/MM6PlainItemProjection.h"
+#include "Engine/MM6/MM6StandardItemProjection.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/mm7_data.h"
 #include "Engine/Objects/Chest.h"
@@ -203,6 +204,39 @@ GAME_TEST(MM6Headless, PlainItemProjectionUsesMM6TableTypes) {
     ASSERT_TRUE(projectedInventory);
     EXPECT_EQ(projectedInventory->inventory().entry(137)->itemId, static_cast<ItemId>(221));
     EXPECT_EQ(mm6::capturePlainInventory(*projectedInventory, *pItemTable, GameTitle::MM6), inventoryRaw);
+}
+
+GAME_TEST(MM6Headless, StandardItemProjectionUsesMM6ArmorTable) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_TRUE(pItemTable);
+    ItemId armor = ITEM_NULL;
+    for (ItemId id : pItemTable->items.indices()) {
+        if (std::to_underlying(id) <= 580 && pItemTable->items[id].type == ITEM_TYPE_ARMOUR &&
+            !pItemTable->items[id].iconName.empty()) {
+            armor = id;
+            break;
+        }
+    }
+    ASSERT_NE(armor, ITEM_NULL);
+
+    mm6::ItemRecord28 raw;
+    raw.setWord(0, std::to_underlying(armor));
+    raw.setWord(4, 12); // MM6 electricity -> runtime air resistance.
+    raw.setWord(8, 7);
+    raw.setWord(20, 1);
+    raw[26] = 0x5a;
+    auto projection = mm6::stageStandardItem(raw, *pItemTable, GameTitle::MM6);
+    ASSERT_TRUE(projection);
+    ASSERT_TRUE(projection->item.standardEnchantment);
+    EXPECT_EQ(*projection->item.standardEnchantment, ATTRIBUTE_RESIST_AIR);
+    EXPECT_EQ(mm6::captureStandardItem(*projection, *pItemTable, GameTitle::MM6), raw);
+    projection->item.standardEnchantment = ATTRIBUTE_RESIST_BODY;
+    projection->item.standardEnchantmentStrength = 19;
+    auto changed = mm6::captureStandardItem(*projection, *pItemTable, GameTitle::MM6);
+    ASSERT_TRUE(changed);
+    EXPECT_EQ(changed->bonusRaw(), 14);
+    EXPECT_EQ(changed->bonusStrengthRaw(), 19);
+    EXPECT_EQ((*changed)[26], 0x5a);
 }
 
 GAME_TEST(MM6Headless, FirstOutdoorResourcePreflight) {

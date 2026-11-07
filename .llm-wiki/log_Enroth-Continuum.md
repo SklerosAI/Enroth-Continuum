@@ -1703,3 +1703,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A read-only accepted-original-executable audit found first-25-byte clears for a bounded backpack-removal path and cursor clear, full incoming cursor/shop copies, and allocation by zero item ID across 138 physical records. Zero-ID tails remain authoritative.
 - Equipment removal, ordinary UI pickup and ground fallback remain unproved. Recorded a detached all-owner transaction design; no live code, private game bytes or GUI process was changed.
+
+## [2026-11-06] implement | Detached MM6 raw held cursor section
+- by: T-Burton-ND via codex
+- Added a fixed 32-byte `HELD` v2 candidate that keeps the entire 28-byte MM6 cursor record for present and absent states. Absent records require the native-cleared 25-byte prefix and retain the three opaque trailing bytes.
+- Synthetic linked codec tests passed 3/3 for exact round trips, malformed and foreign-title rejection before mutation, and v1/v2 incompatibility. The live known-save manifest remains on v1; raw cursor ownership, coordinated inventory migration and full-session commit remain open.

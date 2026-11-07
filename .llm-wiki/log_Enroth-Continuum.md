@@ -2243,3 +2243,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Revised the still-unpublished v5 manifest to require full-list exact ARTR and SPRT over unchanged v4 ACTR/native DDM anchors. Linked codec, pre-event scope and atomic checks passed 11/11; older v1–v4 decoders remain strict.
 - A post-action writer preserved fractional actor and sprite state, then refused before disk mutation because a decoration flag changed during gameplay. V4 EVRT does not own every final decoration flag. An ordered v5 decoration owner is under audit; no v5 slot or fresh-child reload passed.
+
+## [2026-11-07] verify | MM6 v5 post-action first-map reload
+- by: T-Burton-ND via codex
+- Added exact ordered DECR runtime decoration ownership to the still test-only v5 schema; its 26 required sections now include SPRT, ARTR and DECR over the v4 baseline. Focused linked codec, pre-event scope and atomic checks passed 16/16, superseding the prior decoration-flag refusal.
+- A strict disposable four-process sequence passed v2 seed, v4 baseline, v5 post-action writer and fresh-child v5 reader at 1/1 each. The reader checked represented owners after world preparation and aborted before input; source slots stayed unchanged. The first reader crashed from large stack frames before owner checks, and heap-backed stage/PART decode fixed that test path.
+- V5 first input, a second post-reload write, indoor/later-map support, production SaveLoad and Atlas remain open. This is not campaign playability.

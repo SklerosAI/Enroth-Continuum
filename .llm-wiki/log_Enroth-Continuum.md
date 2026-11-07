@@ -1808,3 +1808,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a title-locked map source that derives the complete MM6 map-pair set from the loaded Games archive and map table. A monitored private F3 comparison matched all 67 names and decoded bases; the temporary-profile New Game control flow reached its first outdoor frame without the research-root variable.
 - A callback-failure test verified restoration of the save function's map and placement fields. The ordinary guard and comparison controls passed 3/3, the older private-source rollback check passed 1/1, and MM7 vendor entries passed 2/2; all monitored runs had no visible window or focus change. Normal MM6 save/load and full world rollback remain gated.
+
+## [2026-11-06] verify | MM6 fresh-process EC6 stage
+- by: T-Burton-ND via codex
+- Two separate hidden GameTest processes shared a disposable owner-only temporary profile. Editable New Game wrote a partial `.ec6` and reached the first outdoor frame; a fresh process selected and staged that persisted slot into detached Party, world and chest owners, built the first-map plan, and confirmed the slot bytes were unchanged.
+- The write and fresh-process stage each passed 1/1 with no on-screen window or focus change; the ordinary temporary-profile path also passed 1/1, and the disposable shared profile was removed. Normal MM6 `loadGame()`, all-owner commit and save–quit–relaunch–play remain open.

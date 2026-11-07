@@ -11,15 +11,20 @@
 namespace mm6 {
 namespace {
 
-constexpr std::array<char, 4> TAG = {'S', 'P', 'R', 'T'};
+constexpr std::array<char, 4> SPRT = {'S', 'P', 'R', 'T'};
+constexpr std::array<char, 4> ARTR = {'A', 'R', 'T', 'R'};
 
 void requireManifest(const SaveContainer &container) {
-    if (container.version != 5 || container.sections.size() != 24 ||
+    if (container.version != 5 || container.sections.size() != 25 ||
         std::count_if(container.sections.begin(), container.sections.end(),
                       [](const SaveSection &section) {
-                          return section.tag == TAG && section.required;
+                          return section.tag == SPRT && section.required;
+                      }) != 1 ||
+        std::count_if(container.sections.begin(), container.sections.end(),
+                      [](const SaveSection &section) {
+                          return section.tag == ARTR && section.required;
                       }) != 1)
-        throw std::runtime_error("MM6 v5 requires twenty-four exact sections");
+        throw std::runtime_error("MM6 v5 requires twenty-five exact sections");
 }
 
 void requireNativeJoin(const V5SaveFields &fields, GameTitle title) {
@@ -39,6 +44,8 @@ void requireNativeJoin(const V5SaveFields &fields, GameTitle title) {
         throw std::runtime_error("MM6 v5 native MAPS and CHST anchors differ");
     requireSpriteRuntimeNativeAgreement(fields.sprites, mapName,
                                         chest.rawActiveDelta, title);
+    requireActorRuntimeBaselineAgreement(fields.actors, mapName,
+                                         fields.v4.v3.activeActorPayload, title);
 }
 
 } // namespace
@@ -50,6 +57,7 @@ std::vector<std::uint8_t> encodeV5Save(const V5SaveFields &fields, GameTitle tit
     SaveContainer container = decodeSaveContainer(encodeV4Save(fields.v4, title));
     container.version = 5;
     container.sections.push_back(encodeSpriteRuntimeSection(fields.sprites, title));
+    container.sections.push_back(encodeActorRuntimeSection(fields.actors, title));
     requireManifest(container);
     return encodeSaveContainer(container);
 }
@@ -61,9 +69,10 @@ V5SaveFields decodeV5Save(std::span<const std::uint8_t> bytes, GameTitle title) 
     requireManifest(container);
     V5SaveFields result;
     result.sprites = decodeSpriteRuntimeSection(container, title);
+    result.actors = decodeActorRuntimeSection(container, title);
     container.version = 4;
     std::erase_if(container.sections, [](const SaveSection &section) {
-        return section.tag == TAG;
+        return section.tag == SPRT || section.tag == ARTR;
     });
     result.v4 = decodeV4Save(encodeSaveContainer(container), title);
     requireNativeJoin(result, title);

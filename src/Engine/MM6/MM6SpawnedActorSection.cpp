@@ -225,6 +225,17 @@ void requireSnapshotRoundTrip(const Actor &source, const Actor_MM7 &wire) {
 
 } // namespace
 
+Actor_MM7 snapshotActorRuntimeImageForV5(const Actor &actor,
+                                         std::size_t slot, GameTitle title) {
+    if (title != GameTitle::MM6)
+        throw std::runtime_error("MM6 ARTR image requires MM6 title");
+    requireSupportedActor(actor, slot);
+    if (!actor.monsterInfo.name.empty() ||
+        !actor.monsterInfo.internalName.empty())
+        throw std::runtime_error("MM6 ARTR cannot store actor runtime names");
+    return snapshotWithoutName(actor);
+}
+
 std::vector<std::uint8_t> encodeSpawnedActorSection(
     std::span<const Actor> actors, size_t firstSlot, GameTitle title) {
     if (title != GameTitle::MM6 || firstSlot > MAX_ACTOR_SLOTS ||

@@ -8,6 +8,7 @@
 #include "Engine/GameTitle.h"
 
 class Actor;
+struct Actor_MM7;
 
 namespace mm6 {
 
@@ -19,5 +20,10 @@ std::vector<std::uint8_t> encodeSpawnedActorSection(
 // Exact slots are assigned only in the returned vector. No world is mutated.
 std::vector<Actor> decodeSpawnedActorSection(
     std::span<const std::uint8_t> bytes, size_t expectedFirstSlot, GameTitle title);
+
+// V5's detached runtime image shares ACTR's exact scalar projection, but its
+// separate ARTR section carries fields this native-shaped image narrows.
+Actor_MM7 snapshotActorRuntimeImageForV5(const Actor &actor,
+                                         std::size_t slot, GameTitle title);
 
 } // namespace mm6

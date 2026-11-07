@@ -164,6 +164,9 @@ std::vector<std::uint8_t> sampleV5(std::uint8_t marker) {
     fields.v4.eventRuntime.maps.push_back(event);
     fields.sprites = mm6::captureSpriteRuntimeFields(
         "o0.odm", native, std::span<const SpriteObject>{}, GameTitle::MM6);
+    fields.actors = mm6::captureActorRuntimeFields(
+        "o0.odm", fields.v4.v3.activeActorPayload,
+        std::span<const Actor>{}, GameTitle::MM6);
     return mm6::encodeV5Save(fields, GameTitle::MM6);
 }
 

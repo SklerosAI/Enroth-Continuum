@@ -115,13 +115,16 @@ UNIT_TEST(MM6V5SpriteRuntimeFields, RejectsNonfiniteGeometryAndItemWithoutProven
         {v4WithNative(fixture.native), fields}, GameTitle::MM6), std::exception);
 }
 
-UNIT_TEST(MM6V5SpriteRuntimeFields, ExactTwentyFourSectionManifestAndOlderIsolation) {
+UNIT_TEST(MM6V5SpriteRuntimeFields, ExactTwentyFiveSectionManifestAndOlderIsolation) {
     Fixture fixture;
-    mm6::V5SaveFields fields{v4WithNative(fixture.native), fixture.capture()};
+    mm6::V5SaveFields fields{v4WithNative(fixture.native), fixture.capture(), {}};
+    fields.actors = mm6::captureActorRuntimeFields(
+        "o0.odm", fields.v4.v3.activeActorPayload,
+        std::span<const Actor>{}, GameTitle::MM6);
     const auto bytes = mm6::encodeV5Save(fields, GameTitle::MM6);
     const auto container = mm6::decodeSaveContainer(bytes);
     EXPECT_EQ(container.version, 5);
-    EXPECT_EQ(container.sections.size(), 24);
+    EXPECT_EQ(container.sections.size(), 25);
     const auto decoded = mm6::decodeV5Save(bytes, GameTitle::MM6);
     EXPECT_EQ(mm6::encodeV5Save(decoded, GameTitle::MM6), bytes);
     EXPECT_THROW((void) mm6::decodeV4Save(bytes, GameTitle::MM6), std::exception);

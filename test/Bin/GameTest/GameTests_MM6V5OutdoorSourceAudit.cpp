@@ -27,13 +27,14 @@ GAME_TEST(MM6V5OutdoorSourceHeadless, AllShippedOutdoorPairsDecode) {
             name += column;
             name += row;
             name += ".odm";
+            SCOPED_TRACE(name);
             ASSERT_TRUE(mm6::isMM6OutdoorMapName(name));
             ASSERT_NE(pMapTable->GetMapInfo(name), MAP_INVALID);
             const std::string deltaName = name.substr(0, 5) + ".ddm";
             ASSERT_EQ(std::count(maps.expectedNames().begin(),
                                  maps.expectedNames().end(), deltaName), 1);
             const auto base = std::make_unique<OutdoorLocation_MM7>();
-            deserializeMM6Outdoor(maps.readBase(name), base.get());
+            ASSERT_NO_THROW(deserializeMM6Outdoor(maps.readBase(name), base.get()));
             const auto delta = decodeMM6OutdoorDelta(maps.readDefaultDelta(deltaName));
             EXPECT_EQ(base->decorations.size(), base->decorationNames.size());
             EXPECT_EQ(delta.chests.size(), 20);

@@ -2401,3 +2401,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Bounded original confirmation evidence identifies Weak as the insufficient-food condition and shows that its clock refreshes even when already Weak. The inherited condition setter would skip that refresh.
 - Original cancel and rejection both clamp coordinates and close the travel UI without changing time, food, conditions or map. Updated the source packets, topical wiki pages and agent handoff. Production travel and autosave remain gated.
+
+## [2026-11-07] implement | Pinned Mac MM7 library sources
+- by: T-Burton-ND via codex
+- Added the exact FFmpeg, SDL3, OpenAL Soft, libpng and zlib-ng source revisions selected by the historical Mac dependency release. The tracked manifest records origin commits and archive hashes; all 11,835 regular archive files were byte-compared, including 84 files initially hidden by ignore rules.
+- Updated the source-autonomy packet, inventory, status and wiki. No source-build recipe is connected yet; the cached-input MM7 link, local-only refusal and installed app remain unchanged.

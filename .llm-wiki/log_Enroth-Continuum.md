@@ -1653,3 +1653,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a source-typed view for plain 28-byte MM6 item records and gold, retaining raw tail bytes and rejecting unmapped bonus unions. Capture permits only bounded identified/broken flags, wand charges, maximum charges and gold value changes.
 - Linked focused raw-item/inventory/projection checks passed 6/6 and a monitored loaded-table MM6 headless category check passed 1/1. The adapter remains detached from live item owners and normal SaveLoad.
+
+## [2026-11-06] implement | Detached MM6 plain character inventory
+- by: T-Burton-ND via codex
+- Added a bounded stage from physical MM6 item, grid and equipment records into one 138-slot runtime inventory. It preserves unreferenced raw bytes, requires exact index-table replay and pins source types; capture permits grid moves and bounded item changes but rejects missing, new or newly equipped records.
+- Linked focused checks passed 8/8 and a monitored loaded-table MM6 headless footprint check passed 1/1 over 75 samples. Party ownership, full item semantics and normal SaveLoad remain gated.

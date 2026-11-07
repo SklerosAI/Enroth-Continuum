@@ -1,0 +1,2 @@
+# Keep the upstream snapshot's exact Git blobs, including CRLF source files.
+* -text

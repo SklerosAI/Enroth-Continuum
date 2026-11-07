@@ -302,6 +302,38 @@ UNIT_TEST(MM6RawSaveRuntime, StagesWorldAndVisualOwnersAfterValidatedRawMap) {
     EXPECT_FALSE(liveTimer.isPaused());
 }
 
+UNIT_TEST(MM6RawSaveRuntime, StagesAllRepresentedPartyFieldsBeforeLateClockFailure) {
+    ItemTableScope table;
+    auto fields = exampleRaw();
+    fields.core.party.gold = 123;
+    fields.resistances.characters[1].base[0] = -17;
+    fields.buffs.party[0].expireTicks = 100;
+    fields.buffs.party[0].power = 3;
+    fields.hirelings.displayNames[0] = "Mira";
+    fields.recovery.daysWithoutRest = 2;
+    const auto names = namesOf(fields);
+    auto owners = mm6::stageRawTitleOwners(mm6::encodeRawSave(fields, GameTitle::MM6),
+        names, syntheticBase, validItem, GameTitle::MM6);
+    Party baseline;
+    baseline.uNumGold = 999;
+    auto staged = mm6::stageRawPartyRepresentedFields(
+        baseline, owners, *table.table, GameTitle::MM6);
+    EXPECT_EQ(staged.party.uNumGold, 123);
+    EXPECT_EQ(mm6::captureResistanceFields(staged.party, GameTitle::MM6), fields.resistances);
+    EXPECT_EQ(mm6::captureBuffFields(staged.party, GameTitle::MM6), fields.buffs);
+    EXPECT_EQ(staged.party.pHireling1Name, "Mira");
+    EXPECT_EQ(staged.party.days_played_without_rest, 2);
+    EXPECT_EQ(mm6::captureRawPartyInventories(staged, *table.table, GameTitle::MM6),
+              fields.inventory);
+
+    owners.saved.recovery.playingTicks = 41;
+    EXPECT_THROW((void) mm6::stageRawPartyRepresentedFields(
+        baseline, owners, *table.table, GameTitle::MM6), std::exception);
+    EXPECT_EQ(baseline.uNumGold, 999);
+    EXPECT_TRUE(baseline.pHireling1Name.empty());
+    EXPECT_FALSE(baseline.pCharacters[0].inventory.entry(137));
+}
+
 #ifndef _WIN32
 UNIT_TEST(MM6RawSaveRuntime, NativeSlotPreflightStagesSemanticBackupWithoutRepair) {
     TestProfile profile;

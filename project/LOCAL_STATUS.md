@@ -855,5 +855,11 @@ renderer and UI publication remain unresolved.
 
 Decoded v2 `RSTS` resistance and `BUFF` fields now have Party-copy adapters
 shared with the v1 byte route. The integrated linked codec, adapter, raw and
-world set passed **24/24**. Hireling/recovery join and a complete v2 session
-remain open.
+world set passed **24/24**. A complete v2 session remains open.
+
+Decoded v2 `HIRE` and `RCVR` adapters now join the other represented Party
+fields on one detached copy. Focused raw/effect/hireling-recovery checks passed
+**12/12**, including late recovery-clock rejection without baseline mutation.
+The [full-session owner-gap packet](MM6_F4_V2_FULL_SESSION_OWNER_GAP.md) now
+separates this Party stage from NPC/map/timer/CHST staging and lists the
+remaining BEAC/IFOV, cursor/shop, active-world and UI admission gates.

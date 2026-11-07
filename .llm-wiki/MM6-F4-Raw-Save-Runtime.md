@@ -21,6 +21,8 @@ Only after map validation does the function construct fresh `RawInventoryFields`
 
 The raw stage also retains active actor/sprite/chest counts from the 67-map pass. `stageRawWorldAndVisuals` then shares the v1 NPC/map buffer adapter and stages timer, overlays and CHST on copies. Focused linked raw-runtime/world-runtime tests passed **14/14**, including a late invalid saved actor overlay with prior NPC/timer unchanged. This stage requires an intact validated raw candidate; it does not reconstruct or publish the live map, UI image or renderer resources.
 
+`stageRawPartyRepresentedFields` now continues the Party copy through decoded resistance (`RSTS`), buffs, hirelings and recovery (`RCVR`) after core/progress/raw inventory. Focused linked raw/effect/hireling-recovery checks passed **12/12**, including a late recovery clock mismatch with the baseline untouched. All currently represented Party families can stage, but the result still lacks beacon, cursor/shop and live UI/world ownership; no complete v2 session coordinator or production load exists.
+
 This is still a raw owner candidate. It does not project every source item kind into `CharacterInventory`, reconstruct the active live world, include beacon state, or make the simultaneous Party/world/UI/commerce commit failure atomic. The existing v1 atomic/New Game route remains separate; v2 is not a production save or playable-campaign claim.
 
 The [detached Party inventory stage](MM6-F4-Raw-Party-Inventory-Stage.md) now projects the supported subset of `INVR` into all four 138-slot runtime inventories on a Party copy. It rejects unsupported nonzero item unions and rarity effects, and keeps the full raw owner for recapture. It does not close the remaining item semantics or live commit gates.

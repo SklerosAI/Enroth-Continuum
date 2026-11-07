@@ -11,6 +11,8 @@
 #include "MM6AtomicSaveFile.h"
 #include "MM6CoreSaveRuntime.h"
 #include "MM6DurableSaveFields.h"
+#include "MM6HirelingSaveRuntime.h"
+#include "MM6RecoverySaveRuntime.h"
 
 namespace mm6 {
 namespace {
@@ -123,6 +125,18 @@ StagedRawPartyInventories stageRawPartyCoreProgressInventory(
     Party party = stageCoreParty(baseline, owners.saved.core, title);
     party = stageDurableProgressParty(party, owners.saved.bits, owners.saved.effects, title);
     return stageRawPartyInventories(party, owners.inventory, itemTable, title);
+}
+
+StagedRawPartyInventories stageRawPartyRepresentedFields(
+    const Party &baseline, const StagedRawTitleOwners &owners,
+    const ItemTable &itemTable, GameTitle title) {
+    StagedRawPartyInventories staged = stageRawPartyCoreProgressInventory(
+        baseline, owners, itemTable, title);
+    staged.party = stageResistanceParty(staged.party, owners.saved.resistances, title);
+    staged.party = stageBuffParty(staged.party, owners.saved.buffs, title);
+    staged.party = stageHirelingParty(staged.party, owners.saved.hirelings, title);
+    staged.party = stageRecoveryParty(staged.party, owners.saved.recovery, title);
+    return staged;
 }
 
 } // namespace mm6

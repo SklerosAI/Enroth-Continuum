@@ -40,7 +40,9 @@ That bounded join is now `stageRawPartyCoreProgressInventory`: it composes core,
 
 The validated v2 raw stage now retains active map actor/sprite/chest counts, and `stageRawWorldAndVisuals` shares v1 NPC/map buffer staging while adding detached timer, overlay and CHST owners. Linked raw-runtime/world-runtime tests passed 14/14, including invalid saved actor overlay rejection with prior NPC/timer unchanged. This is a staged field set, not live map/resource reconstruction or PID rebinding.
 
-Decoded `RSTS` resistance and `BUFF` fields now stage onto Party copies through shared v1/v2 adapters. Their integrated linked codec/adapter/raw/world set passed 24/24. The `RESC` tag is NPC state, not resistance. Hireling/recovery adapters and the final v2 Party coordinator remain open.
+Decoded `RSTS` resistance and `BUFF` fields now stage onto Party copies through shared v1/v2 adapters. Their integrated linked codec/adapter/raw/world set passed 24/24. The `RESC` tag is NPC state, not resistance. Complete v2 Party/session admission remains open.
+
+Decoded `HIRE` and `RCVR` adapters are now integrated too. `stageRawPartyRepresentedFields` composes all currently represented v2 Party families on one copy; focused raw/effect/hireling-recovery checks passed 12/12, including a late clock rejection with baseline unchanged. The [full-session owner-gap packet](../project/MM6_F4_V2_FULL_SESSION_OWNER_GAP.md) is reconciled with the separate v2 NPC/map/timer/CHST stage. Neither stage joins a complete live session, BEAC/IFOV policy or final active world/UI publication.
 
 The raw item adapter now accepts one source-bounded special union, MM6 Antique ID 58, as a value-only projection with its exact 28-byte carrier. It requires the title-local table's type/chance/value contract and permits only bounded identified/broken flag edits on capture. The integrated item/core/durable set passed 23/23. Other special IDs, potion unions and artifacts still reject; an original-executable consumer check and live item save/reload remain open.
 

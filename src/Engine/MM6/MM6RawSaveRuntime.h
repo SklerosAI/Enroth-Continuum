@@ -61,4 +61,11 @@ StagedRawPartyInventories stageRawPartyCoreProgressInventory(
     const Party &baseline, const StagedRawTitleOwners &owners,
     const ItemTable &itemTable, GameTitle title);
 
+// Continue the same detached Party with all currently represented v2 field
+// families: RSTS, BUFF, HIRE and RCVR. Raw cursor, commerce, beacons and live
+// world/UI owners remain separate; this is not a complete load candidate.
+StagedRawPartyInventories stageRawPartyRepresentedFields(
+    const Party &baseline, const StagedRawTitleOwners &owners,
+    const ItemTable &itemTable, GameTitle title);
+
 } // namespace mm6

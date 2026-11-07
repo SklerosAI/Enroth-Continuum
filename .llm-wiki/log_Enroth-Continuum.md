@@ -2697,3 +2697,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Built the local-only GameTest target and ran the exact MM7 disposable writer and fresh-process reader under network denial; each passed 1/1 with a byte-identical save slot. The owner-only temporary profile was removed.
 - The same source-linked GameTest passed focused MM7 controls 3/3. This is a headless first-map gate; graphical candidate save/reload remains open before the installed helper can switch to source-owned media libraries.
+
+## [2026-11-07] verify | MM7 private portrait moods
+- by: T-Burton-ND via codex
+- Added a local MM7-only mood PNG resolver, legacy normal fallback, named portrait textures, HUD and quick-record wiring, and Atlas per-mood previews, import and bounded warning display. Clearing a new normal PNG preserves any legacy file.
+- Source-linked portrait tests passed 2/2 and focused MM7 controls 3/3. A hidden OpenGL first-map capture confirmed the synthetic custom portrait in the HUD; temporary captures were deleted.
+- Staged and code-signature-checked a source-owned arm64 Atlas candidate, then ran a bounded headless startup with a disposable profile. Visible Atlas use, quick-record behavior and graphical save/reload remain open; the candidate was not installed.

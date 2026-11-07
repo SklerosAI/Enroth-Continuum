@@ -951,3 +951,11 @@ exact-slot actors. The present 548-byte MM6 projection omits major native
 regions and `SpawnEncounter` retains no complete native-record provenance.
 This decision adds no live save/load route; the detached section must prove
 complete runtime field round-trips and join a no-respawn fresh-child reload.
+
+A detached [pre-event GNPC/RNG agreement helper](MM6_F4_PRE_EVENT_GNPC_REPLAY.md)
+now validates the active map, selected RNG type, fresh NPC cursor and exact
+actor-to-generated-row anchors without mutation; linked checks passed
+**2/2**. `DoPrepareWorld` generates rows and consumes RNG before
+`onMapLoad()` events, so the eventual v3 replay must branch around only that
+generation loop, retain the subroutine's other work, and publish saved
+GNPC/RNG before events. No live hook is installed.

@@ -28,6 +28,8 @@ A detached [native DDM actor append codec](MM6-F4-Outdoor-Actor-Append.md) passe
 
 The next actor path is a [versioned MM6 runtime owner candidate](MM6-F4-Spawned-Actor-Owner-Decision.md) for newly spawned exact PID slots, because the current native projection omits major 548-byte regions and spawn does not retain native-record provenance. This is a design choice only; no production manifest or first-input admission is enabled. Audit and round-trip every runtime field before joining it with GNPC/RNG and a no-respawn child load.
 
+A detached [pre-event GNPC/RNG agreement helper](MM6-F4-Pre-Event-GNPC-Replay.md) passed 2/2 linked checks. The source order is map/actor rebuild, deterministic NPC names, generated-row loop with `grng` draws, then `onMapLoad()` events. Future replay must reconcile spawned actors first, bypass only the generated-row loop inside `_461103_load_level_sub()` while retaining its other work, and publish saved GNPC/RNGS before map events. No hook or live assignment exists yet.
+
 ## Read first
 
 1. Run `git status --short --branch`, `git worktree list`, and `git log -1 --oneline` in the checkout you intend to use. The branch and worktree descriptions below may drift.

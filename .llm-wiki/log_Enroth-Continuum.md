@@ -1997,3 +1997,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a detached MM6-only adapter that constructs canonical physical records for supported fresh backpack grants, retains their indices and footprints, and requires exact full-inventory replay before a native v2 New Game candidate can use them.
 - Linked creation-item, v2 writer and held-Party suites passed 9/9. Original-game creation-record parity and real loaded-table random-ring outcomes remain unverified; the production New Game and SaveLoad guards stay closed.
+
+## [2026-11-06] integrate | MM6 held item joins v2 selection
+- by: T-Burton-ND via codex
+- Joined exact raw HELD projection into the full detached v2 Party stage before native primary/backup slot selection. An unsupported occupied cursor rejects a candidate while a valid backup remains read-only selectable.
+- Linked raw-session and held-Party suites passed 17/17. Visible mouse image and full live owner publication remain gated.

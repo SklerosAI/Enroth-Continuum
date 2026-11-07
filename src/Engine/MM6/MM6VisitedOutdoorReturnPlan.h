@@ -10,7 +10,10 @@
 #include "Engine/PartyPlacement.h"
 
 #include "MM6OutdoorBorderTravel.h"
+#include "MM6OutdoorReturnArrival.h"
+#include "MM6LoadedMapSource.h"
 #include "MM6V6OutdoorSaveFields.h"
+#include "Engine/Snapshots/MM6OutdoorSnapshot.h"
 
 namespace mm6 {
 
@@ -64,6 +67,21 @@ inline VisitedOutdoorReturnPlan stageVisitedOutdoorReturnPlan(
             std::move(returnChest), arrival,
             arrival ? VisitedOutdoorReturnRefusal::UnprovedTerrainAndPublication :
                       VisitedOutdoorReturnRefusal::MissingArrival};
+}
+
+// Validate the active/visited owner and source archive before decoding terrain.
+// This returns only a detached Party copy. No map or save publisher consumes it.
+[[nodiscard]] inline OutdoorReturnArrival stageVisitedOutdoorReturnArrival(
+    const V6OutdoorSaveFields &saved, std::string_view activeMap,
+    std::string_view targetMap, const LoadedMapSource &source,
+    const DecorationTable &decorationTable, const Party &party, GameTitle title) {
+    const Blob targetBase = source.readBase(targetMap);
+    (void) stageVisitedOutdoorReturnPlan(saved, activeMap, targetMap, targetBase,
+                                        decorationTable, std::nullopt, title);
+    auto base = std::make_unique<OutdoorLocation_MM7>();
+    deserializeMM6Outdoor(targetBase, base.get());
+    return stageDetachedOutdoorReturnArrival(title, activeMap, targetMap,
+                                             *base, party);
 }
 
 } // namespace mm6

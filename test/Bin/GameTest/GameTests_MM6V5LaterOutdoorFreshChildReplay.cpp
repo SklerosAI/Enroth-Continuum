@@ -232,6 +232,7 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
     bool visitedPostWorldValidated = false;
     bool returnPlanRefusedWithoutArrival = false;
     bool returnPlanStayedDetached = false;
+    bool returnArrivalStayedDetached = false;
     std::string finalOwnerError;
     std::size_t expectedNativeActors = 0;
     std::size_t expectedActiveActors = 0;
@@ -425,6 +426,31 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
                                         sourceMaps.readBase("oute3.odm"),
                                         *pDecorationTable, std::nullopt,
                                         GameTitle::MM6)));
+                            auto boundaryParty = std::make_unique<Party>(*pParty);
+                            boundaryParty->pos.x = 0;
+                            boundaryParty->pos.y = -mm6::MM6_OUTDOOR_BORDER_EDGE - 1;
+                            auto returnArrival = mm6::stageVisitedOutdoorReturnArrival(
+                                *visitedSaved, "oute2.odm", "oute3.odm",
+                                sourceMaps, *pDecorationTable,
+                                *boundaryParty, GameTitle::MM6);
+                            const auto invalidArrival =
+                                mm6::stageVisitedOutdoorReturnArrival(
+                                    *visitedSaved, "oute2.odm", "oute3.odm",
+                                    sourceMaps,
+                                    *pDecorationTable, *pParty, GameTitle::MM6);
+                            returnArrivalStayedDetached =
+                                returnArrival.refusal ==
+                                    mm6::OutdoorReturnArrivalRefusal::None &&
+                                returnArrival.detachedParty &&
+                                returnArrival.placement &&
+                                returnArrival.detachedParty->pos ==
+                                    Vec3f(0, mm6::MM6_OUTDOOR_BORDER_EDGE - 1,
+                                          returnArrival.placement->pos.z) &&
+                                invalidArrival.refusal ==
+                                    mm6::OutdoorReturnArrivalRefusal::InvalidRoute &&
+                                !invalidArrival.detachedParty &&
+                                !returnArrival.canPublish() &&
+                                !returnArrival.canWriteCheckpoint();
                             const Blob &oldCacheAfter = pMapDeltas.at("oute3.ddm");
                             const auto *afterBegin = static_cast<const std::uint8_t *>(
                                 oldCacheAfter.data());
@@ -440,6 +466,7 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
                                     chestBefore.lcgState &&
                                 mm6::chestTitleState().generatedArtifactFlags ==
                                     chestBefore.generatedArtifactFlags &&
+                                returnArrivalStayedDetached &&
                                 std::vector<std::uint8_t>(
                                     afterBegin, afterBegin + oldCacheAfter.size()) ==
                                     cacheBefore;
@@ -678,6 +705,7 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
         EXPECT_TRUE(visitedPostWorldValidated);
         EXPECT_TRUE(returnPlanRefusedWithoutArrival);
         EXPECT_TRUE(returnPlanStayedDetached);
+        EXPECT_TRUE(returnArrivalStayedDetached);
     }
     if (allowInput) {
         EXPECT_TRUE(firstInputReached);

@@ -19,8 +19,9 @@
   The rebuilt Release `MM7.app` links Apple's OpenGL framework with no
   XQuartz dynamic library. Staged and installed bundles passed code-signature
   verification. The installed Atlas launched MM7 to the title menu and
-  returned normally. The previous installed app bundle is retained under
-  ignored `local-game-data/app-backups/`.
+  returned normally. A controlled force-quit at the title menu showed the
+  abnormal-exit warning in Atlas. The previous installed app bundle is
+  retained under ignored `local-game-data/app-backups/`.
 - Remaining: MM7 save atomicity and corrupt-save handling involve `SaveLoad*`
   and `UISaveLoad.cpp`, which the active MM6 normal-save lane owns. Combat
   defects in `Character.cpp` and `CastSpellInfo.cpp` likewise overlap the

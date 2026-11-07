@@ -232,8 +232,10 @@ Defects:
 4. Medium, inherited: MM7 saves are not atomic (truncating `fopen "wb"`), a
    failed manual save or quicksave throws out of `saveGame` and ends the
    process, and a save with a valid header but corrupt body is listed and then
-   crashes on load. Atlas crash reporting was corrected in `f70627f9c` but
-   its nonzero-exit path still needs a launched-app check.
+   crashes on load. Atlas crash reporting was corrected in `f70627f9c` and
+   its abnormal-exit warning appeared after a controlled force-quit at the
+   title menu. Ordinary Exit returned the normal message. Save failure and
+   corrupt-body handling remain open.
 5. Low-medium, fork: the spellbook Grandmaster popup row lost its `\t000`
    indent reset (`UIPopup.cpp:1415-1422`). Restored in `f70627f9c`; a visual
    comparison is still open.
@@ -254,4 +256,4 @@ fullscreen uses an SDL Space on display 0, no HiDPI flag is set. Upstream
 #1920 is avoided by Atlas passing `--data-path`. #1591 (signing) still applies.
 
 Remaining tests: corrupt-save load, unwritable save, spellbook popup screenshot,
-an Atlas nonzero-exit message, and an explicit run with XQuartz unavailable.
+and an explicit run with XQuartz unavailable.

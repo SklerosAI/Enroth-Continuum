@@ -716,3 +716,12 @@ specific first-25-byte backpack/cursor clears, full incoming cursor/shop
 copies and zero-ID allocation across all 138 physical slots. Equipment
 removal, general UI pickup and ground fallback remain unproved, so the
 detached carrier cannot yet drive live inventory movement or SaveLoad.
+
+The latest MM6 [NPC save-field correction](MM6_EC6_NPC_FIELDS_F4.md) preserves
+the source `-1` no-house value copied during party creation. A fresh-process
+headless check now writes a temporary `.ec6`, publishes the 67-map cache and
+CHST state, and enters New Sorpigal through `DoPrepareWorld` with actors and
+twenty chests (**1/1**, no visible window or focus change). The prior scoped
+save rollback check still passes **1/1**, and focused NPC codec tests pass
+**5/5**. This does not open the normal MM6 new-game/save/load route or prove
+late world-failure rollback, durable reload or campaign playability.

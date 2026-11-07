@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <exception>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "Testing/Unit/UnitTest.h"
@@ -32,6 +33,7 @@ mm6::NpcSaveFields exampleFields() {
     npc.sex = SEX_FEMALE;
     npc.hasUsedAbility = -4;
     npc.newsTopic = 99;
+    fields.npcData[69].house = static_cast<HouseId>(-1); // Source table's no-house sentinel.
     fields.groups[50] = 65535;
     return fields;
 }
@@ -47,6 +49,7 @@ UNIT_TEST(MM6NpcSaveFields, RoundTripsAllRuntimeFieldsAndOpaqueBits) {
     std::vector<std::uint8_t> bytes = saveBytes(fields);
     mm6::NpcSaveFields decoded = mm6::decodeNpcSection(mm6::decodeSaveContainer(bytes));
     EXPECT_EQ(mm6::encodeNpcSection(decoded), mm6::encodeNpcSection(fields));
+    EXPECT_EQ(std::to_underlying(decoded.npcData[69].house), -1);
 
     mm6::NpcSaveFields destination;
     mm6::loadNpcFieldsBeforeMutation(bytes, &destination);
@@ -103,6 +106,11 @@ UNIT_TEST(MM6NpcSaveFields, RejectsInvalidCountsVersionAndTrailingData) {
     EXPECT_THROW((void) mm6::encodeNpcSection(invalid), std::exception);
     invalid = exampleFields();
     invalid.npcData[70].name = std::string(1025, 'X');
+    EXPECT_THROW((void) mm6::encodeNpcSection(invalid), std::exception);
+    invalid = exampleFields();
+    invalid.npcData[70].house = static_cast<HouseId>(-2);
+    EXPECT_THROW((void) mm6::encodeNpcSection(invalid), std::exception);
+    invalid.npcData[70].house = static_cast<HouseId>(558);
     EXPECT_THROW((void) mm6::encodeNpcSection(invalid), std::exception);
 }
 

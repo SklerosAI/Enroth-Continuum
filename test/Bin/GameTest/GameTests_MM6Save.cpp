@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdlib>
 #include <cstdint>
 #include <filesystem>
@@ -16,6 +17,7 @@
 #include "Engine/Graphics/Overlays.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
+#include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6KnownSaveFields.h"
 #include "Engine/MM6/MM6HeldItemSaveFields.h"
 #include "Engine/MM6/MM6NewGameSaveRuntime.h"
@@ -25,8 +27,11 @@
 #include "Engine/Party.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/ItemTable.h"
+#include "Engine/Tables/MapTable.h"
+#include "Engine/Tables/NPCTable.h"
 #include "Engine/Tables/OverlayTable.h"
 #include "GUI/GUIMessageQueue.h"
+#include "GUI/GUIWindow.h"
 
 namespace {
 
@@ -260,5 +265,67 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
     EXPECT_EQ(result.backupAfterFailure, result.backupBeforeFailure);
     EXPECT_TRUE(result.rollbackExact);
     EXPECT_TRUE(result.queuedDuringPrecommitRejected);
+    EXPECT_EQ(window->nativeHandle(), nullptr);
+}
+
+// Run alone in a fresh headless process. DoPrepareWorld changes renderer and
+// process-global owners that the scoped .ec6 writer cannot yet roll back.
+GAME_TEST(MM6ZSaveHeadless, DISABLED_ScopedSaveFeedsFirstOutdoorWorld) {
+    const char *research = std::getenv("ENROTH_MM6_MAP_RESEARCH_ROOT");
+    if (!research || !std::filesystem::is_directory(research))
+        GTEST_SKIP() << "Set ENROTH_MM6_MAP_RESEARCH_ROOT to the ignored private F3 map source";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    const MapId firstMap = pMapTable->GetMapInfo("oute3.odm");
+    ASSERT_NE(firstMap, MAP_INVALID);
+    TempProfile profile;
+
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    ASSERT_NE(pGUIWindow_CurrentMenu, nullptr);
+    ASSERT_EQ(pGUIWindow_CurrentMenu->eWindowType, WINDOW_PARTY_CREATION);
+
+    bool completed = false;
+    bool hadNoHouseNpc = false;
+    std::string error;
+    game.runGameRoutine([&] {
+        try {
+            pParty->Reset();
+            for (Character &character : pParty->pCharacters)
+                character.name = "Hero";
+            pActiveOverlayList->Reset();
+            pMapDeltas.clear();
+            mm6::resetChestTitleState(&mm6::chestTitleState());
+            hadNoHouseNpc = std::any_of(pNPCStats->pNPCData.begin(), pNPCStats->pNPCData.end(),
+                [](const NPCData &npc) { return std::to_underlying(npc.house) == -1; });
+            (void) mm6::saveNewGameMM6ScopedForTest(profile.root, research,
+                [](const Party &, const std::unordered_map<std::string, Blob> &,
+                   const mm6::ChestTitleState &) {});
+            engine->_pendingTransition = MapDestination(firstMap, MAP_START_POINT_PARTY);
+            {
+                mm6::ScopedChestMapLoadOptIn chestOptIn;
+                DoPrepareWorld(/* bLoading = */ false, /* fullscreen = */ 1);
+            }
+        } catch (const std::exception &exception) {
+            error = exception.what();
+        }
+        completed = true;
+    });
+    for (int tick = 0; tick < 256 && !completed; ++tick)
+        game.tick();
+
+    ASSERT_TRUE(completed);
+    ASSERT_TRUE(error.empty()) << error;
+    EXPECT_TRUE(hadNoHouseNpc);
+    EXPECT_TRUE(std::filesystem::exists(profile.primary()));
+    EXPECT_EQ(pMapDeltas.size(), 67u);
+    EXPECT_TRUE(mm6::chestTitleState().ready);
+    EXPECT_EQ(engine->_currentLoadedMapId, firstMap);
+    EXPECT_EQ(uCurrentlyLoadedLevelType, LEVEL_OUTDOOR);
+    EXPECT_FALSE(engine->_pendingTransition.has_value());
+    EXPECT_FALSE(pOutdoor->faces.empty());
+    EXPECT_FALSE(pActors.empty());
+    EXPECT_EQ(vChests.size(), 20u);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }

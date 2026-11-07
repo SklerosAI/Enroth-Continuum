@@ -91,7 +91,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Quick Start](MM6-F4-Quick-Start.md) — Static opening route, starter skill paths, face-derived animation sound and bounded first-map trigger audit; random item, full map-entry and save gates remain
 - [MM6 F4 Indoor Runtime](MM6-F4-Indoor-Runtime.md) — Bounded BLV/DLV projection and changed-state encoding with retained opaque wire
 - [MM6 F4 Map Save Fields](MM6-F4-Map-Save-Fields.md) — Bounded `.ec6` map-delta section, private F3 source reader and ground/chest item-marker validation
-- [MM6 F4 NPC State](MM6-F4-NPC-State.md) — Bounded `.ec6` RESC NPC/group fields and copy-staging with open gameplay semantics
+- [MM6 F4 NPC State](MM6-F4-NPC-State.md) — `.ec6` RESC preserves the source no-house sentinel; joined first-map check passes, while normal save/reload remains gated
 - [MM6 F4 NPC Events](MM6-F4-NPC-Events.md) — Bounded topic/move state and MM6 global-script precedence over MM7 teacher IDs
 - [MM6 F4 Item Event Compare](MM6-F4-Item-Event-Compare.md) — Read-only inventory/held-item comparison and bounded item-write handoff
 - [MM6 F4 Item Event Writes](MM6-F4-Item-Event-Writes.md) — Retained reward/handoff topology and bounded Add/Subtract transaction limits
@@ -105,7 +105,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Beacon Renderer Contract](MM6-F4-Beacon-Renderer-Contract.md) — Checked texture creation and controlled cleanup required before live BEAC publication
 - [MM6 F4 Partial Stage Coordinator](MM6-F4-Partial-Stage-Coordinator.md) — Validated 67-map candidate with detached Party, active map, NPC/map and timer/overlay copies
 - [MM6 F4 New Game Autosave](MM6-F4-New-Game-Autosave.md) — Offline `oute3.odm` known-field candidate and atomic `.ec6` autosave with live guard retained
-- [MM6 F4 First-Map World Rollback](MM6-F4-First-Map-World-Rollback.md) — Outdoor-entry owner audit and joined collection/DDM scratch rollback; full loader remains guarded
+- [MM6 F4 First-Map World Rollback](MM6-F4-First-Map-World-Rollback.md) — Temporary `.ec6` to New Sorpigal passes headlessly; full-world rollback and normal SaveLoad remain guarded
 - [MM6 F4 Shop Save Key Matrix](MM6-F4-Shop-Save-Key-Matrix.md) — Retained house-type join versus inherited MM7 shop, guild and bounty save owner ranges
 - [MM6 F4 Shop Guild Clock Save](MM6-F4-Shop-Guild-Clock-Save.md) — SCLK v1 preserves 68 unique original-MM6 shop and guild refresh deadline words
 - [MM6 F4 Shop Refresh PE Trace](MM6-F4-Shop-Refresh-PE-Trace.md) — Original row-keyed refresh and raw Party-block save proof, with stock tuple boundary still open

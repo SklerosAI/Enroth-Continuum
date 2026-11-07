@@ -69,8 +69,9 @@ void put32(std::vector<std::uint8_t> *bytes, std::uint32_t value) {
 }
 
 void validateNpc(const NPCData &npc) {
+    // MM6's source NPC table uses -1 for a character with no house.
     if (npc.name.size() > MAX_NAME_BYTES || npc.name.find('\0') != std::string::npos ||
-        std::to_underlying(npc.sex) > 1 || std::to_underlying(npc.house) < 0 ||
+        std::to_underlying(npc.sex) > 1 || std::to_underlying(npc.house) < -1 ||
         std::to_underlying(npc.house) > std::to_underlying(HOUSE_MM6_LAST) ||
         std::to_underlying(npc.profession) < 0 ||
         std::to_underlying(npc.profession) > std::to_underlying(NPC_PROFESSION_MM6_LAST))
@@ -117,7 +118,7 @@ NPCData decodeNpc(Reader *reader) {
     npc.flags = NpcFlags(reader->u32());
     npc.fame = std::bit_cast<std::int32_t>(reader->u32());
     npc.rep = std::bit_cast<std::int32_t>(reader->u32());
-    npc.house = static_cast<HouseId>(reader->u32());
+    npc.house = static_cast<HouseId>(std::bit_cast<std::int32_t>(reader->u32()));
     npc.profession = static_cast<NpcProfession>(reader->u32());
     npc.greetingIndex = std::bit_cast<std::int32_t>(reader->u32());
     const std::uint8_t canJoin = reader->u8();

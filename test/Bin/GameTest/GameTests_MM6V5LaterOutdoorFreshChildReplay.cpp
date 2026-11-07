@@ -194,10 +194,15 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
     ASSERT_EQ(window->nativeHandle(), nullptr);
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
     const auto wireBefore = slotBytes(candidate);
-    const auto before = v6Read ?
-        mm6::encodeV5Save(
-            mm6::decodeV6OutdoorSave(wireBefore, GameTitle::MM6).active,
-            GameTitle::MM6) : wireBefore;
+    std::vector<std::uint8_t> before;
+    if (v6Read) {
+        const auto outer = std::unique_ptr<mm6::V6OutdoorSaveFields>(
+            new mm6::V6OutdoorSaveFields(
+                mm6::decodeV6OutdoorSave(wireBefore, GameTitle::MM6)));
+        before = mm6::encodeV5Save(outer->active, GameTitle::MM6);
+    } else {
+        before = wireBefore;
+    }
     const auto priorV5Before = v6Read ? std::vector<std::uint8_t>{} :
         slotBytes(profile / "saves" / "candidate-v5-oute2.ec6");
     const auto v4Before = slotBytes(profile / "saves" / "candidate-v4.ec6");
@@ -252,8 +257,9 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
             std::unique_ptr<mm6::V5FullSessionPreflight> selectedV6Stage;
             if (v6Read) {
                 const auto validateVisited = [&](std::span<const std::uint8_t> proposed) {
-                    auto outer = std::make_unique<mm6::V6OutdoorSaveFields>(
-                        mm6::decodeV6OutdoorSave(proposed, GameTitle::MM6));
+                    auto outer = std::unique_ptr<mm6::V6OutdoorSaveFields>(
+                        new mm6::V6OutdoorSaveFields(
+                            mm6::decodeV6OutdoorSave(proposed, GameTitle::MM6)));
                     if (outer->visited.size() != 1 ||
                         outer->visited.front().mapName != "oute3.odm" ||
                         mm6::encodeV5Save(outer->active, GameTitle::MM6) != before)
@@ -286,8 +292,8 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
                     selectedFile->bytes != wireBefore)
                     throw std::runtime_error(
                         "MM6 outdoor v6 fresh-child slot selection differs");
-                visitedSaved = std::make_unique<mm6::V6OutdoorSaveFields>(
-                    mm6::decodeV6OutdoorSave(selectedFile->bytes, GameTitle::MM6));
+                visitedSaved.reset(new mm6::V6OutdoorSaveFields(
+                    mm6::decodeV6OutdoorSave(selectedFile->bytes, GameTitle::MM6)));
                 visitedPreflighted = true;
             }
             auto rebuiltDecorations = sourceDecorations(maps, "oute2.odm");

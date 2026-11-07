@@ -99,6 +99,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Item Event Compare](MM6-F4-Item-Event-Compare.md) — Read-only inventory/held-item comparison and bounded item-write handoff
 - [MM6 F4 Item Event Writes](MM6-F4-Item-Event-Writes.md) — Retained reward/handoff topology and bounded Add/Subtract transaction limits
 - [MM6 F4 Item Event PE](MM6-F4-Item-Event-PE.md) — Original executable dispatch, bounded Add/Subtract and remaining cursor/artifact gates
+- [MM6 F4 Skill Event Variables](MM6-F4-Skill-Event-Variables.md) — Title-specific active Compare and Set skill operands with explicit MM7 isolation; visible quest and production save checks remain open
 - [MM6 F4 Known Save Assembly](MM6-F4-Known-Save-Assembly.md) — Provisional v1 eighteen-section assembly and separate v2 raw inventory/held/shop candidate; live commit stays gated
 - [MM6 F4 Raw Save Runtime](MM6-F4-Raw-Save-Runtime.md) — EC6 v2 bytes and native-slot preflight share fresh baselines, checked world plans and owner gates; live publication remains gated
 - [MM6 F4 Menu Slot Preflight](MM6-F4-Menu-Slot-Preflight.md) — Read-only semantic primary/backup listing seam; visible MM6 load menu remains closed

@@ -2027,3 +2027,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a current handoff checkpoint linking the native v2 first-map write/fresh-process read evidence, detached owner gates and the later MM7 self-contained source milestone.
 - Normal MM6 gameplay reload, graphical acceptance and Atlas Play remain guarded; the protected MM7 baseline is unchanged.
+
+## [2026-11-07] integrate | MM6 persistent event child gate
+- by: T-Burton-ND via codex
+- Added a test-only MM6 pre-map zero-array handoff and exact post-map sidecar/generic-array check for the proved persistent event bytes. Active VISU and unsupported variables remain blocked.
+- Both linked synthetic tests passed. Legitimate reload-event writes may conservatively refuse until their replay semantics are proved; production SaveLoad remains closed.

@@ -2291,3 +2291,13 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Converted the pinned CC0 `thirdparty/generator` gitlink into ordinary tracked source at the same revision, with its full original license and a provenance note. Eleven original file blobs matched exactly; a network-disconnected standalone configure/build/run passed.
 - The integration build reconfigured against the tracked source and linked its MM6 unit/game-test targets. Twenty-two external gitlinks, nested fetches and prebuilt-library source recipes remain; clean offline MM7 build is still blocked. A separate MM7 production target link check exposed missing MM6 test-hook symbols and is under repair before this build is treated as validated.
+
+## [2026-11-07] verify | MM6 second outdoor save cycle and indoor IDRT
+- by: T-Burton-ND via codex
+- A disposable seven-process second-outdoor-map chain passed first candidate write/read, bounded real-loop turn/walk, distinct atomic second write and fresh-child second read, with v2 seed and v4 baseline. Each child passed 1/1; earlier slots stayed byte-identical and focused atomic checks passed 18/18. Direct map setup is not campaign travel, and production SaveLoad remains closed.
+- Indoor v6 now requires ordered IDRT decoration runtime state, bound to source BLV/EVRT/IDCR anchors. Focused linked checks passed 6/6, and a fresh v2 seed, v6 writer and independent reader passed 1/1 each with a controlled detached decoration change. Gameplay admission remains false; a first live publication probe refused at the existing MM6 chest map-load guard.
+
+## [2026-11-07] verify | MM7 app link after MM6 runtime change
+- by: T-Burton-ND via codex
+- Connected the guarded MM6 runtime library to the app link closure required by Engine.cpp. The build-tree arm64 `MM7` target linked successfully, `file` identified an arm64 Mach-O executable, and the focused MM7 headless control passed 1/1.
+- This used the existing cached prebuilt dependencies and does not prove a clean offline clone or replace the installed MM7 helper.

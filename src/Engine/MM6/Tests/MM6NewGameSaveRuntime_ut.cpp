@@ -421,6 +421,83 @@ UNIT_TEST(MM6NewGameSaveRuntime, WorldCollectionScratchRollsBackLateFault) {
     EXPECT_EQ(decorations.size(), 9);
 }
 
+UNIT_TEST(MM6NewGameSaveRuntime, OutdoorDeltaAndCollectionsRollBackAsOneScope) {
+    std::deque<Actor> actors(1);
+    actors[0].id = 77;
+    std::vector<SpriteObject> sprites(2);
+    std::vector<Chest> chests(3);
+    std::vector<LevelDecoration> decorations(4);
+    LocationInfo location;
+    location.lastRespawnDay = 9;
+    std::vector<uint8_t> wire = {1, 2, 3};
+    Time lastVisit = Time::fromTicks(123);
+    MapWeather weather;
+    weather.skyTextureName = "prior sky";
+    mm6::FirstMapDiscoveryGrid fully = {};
+    fully[2][3] = 11;
+    mm6::FirstMapDiscoveryGrid partially = {};
+    partially[4][5] = 22;
+    size_t actorReuseCursor = 31;
+    mm6::FirstMapOutdoorDeltaOwners delta{&location, &wire, &lastVisit, &weather,
+                                            &fully, &partially, &actorReuseCursor};
+
+    mm6::FirstMapOutdoorDeltaOwners incomplete = delta;
+    incomplete.weather = nullptr;
+    EXPECT_THROW((void) mm6::ScopedFirstMapWorldCollections(
+        GameTitle::MM6, &actors, &sprites, &chests, &decorations, &incomplete), std::exception);
+    EXPECT_EQ(actors[0].id, 77);
+    EXPECT_EQ(wire.size(), 3);
+
+    try {
+        mm6::ScopedFirstMapWorldCollections scratch(
+            GameTitle::MM6, &actors, &sprites, &chests, &decorations, &delta);
+        EXPECT_TRUE(actors.empty());
+        EXPECT_TRUE(wire.empty());
+        EXPECT_TRUE(weather.skyTextureName.empty());
+        actors.resize(5);
+        sprites.resize(6);
+        chests.resize(7);
+        decorations.resize(8);
+        location.lastRespawnDay = 99;
+        wire = {9, 8};
+        lastVisit = Time::fromTicks(999);
+        weather.skyTextureName = "new sky";
+        fully[2][3] = 33;
+        partially[4][5] = 44;
+        actorReuseCursor = 0;
+        throw std::runtime_error("synthetic late outdoor DDM fault");
+    } catch (const std::runtime_error &) {
+    }
+    EXPECT_EQ(actors.size(), 1);
+    EXPECT_EQ(actors[0].id, 77);
+    EXPECT_EQ(sprites.size(), 2);
+    EXPECT_EQ(chests.size(), 3);
+    EXPECT_EQ(decorations.size(), 4);
+    EXPECT_EQ(location.lastRespawnDay, 9);
+    EXPECT_EQ(wire, (std::vector<uint8_t>{1, 2, 3}));
+    EXPECT_EQ(lastVisit, Time::fromTicks(123));
+    EXPECT_EQ(weather.skyTextureName, "prior sky");
+    EXPECT_EQ(fully[2][3], 11);
+    EXPECT_EQ(partially[4][5], 22);
+    EXPECT_EQ(actorReuseCursor, 31);
+
+    {
+        mm6::ScopedFirstMapWorldCollections scratch(
+            GameTitle::MM6, &actors, &sprites, &chests, &decorations, &delta);
+        actors.resize(6);
+        location.lastRespawnDay = 12;
+        wire = {7};
+        weather.skyTextureName = "committed sky";
+        actorReuseCursor = 4;
+        scratch.commit();
+    }
+    EXPECT_EQ(actors.size(), 6);
+    EXPECT_EQ(location.lastRespawnDay, 12);
+    EXPECT_EQ(wire, (std::vector<uint8_t>{7}));
+    EXPECT_EQ(weather.skyTextureName, "committed sky");
+    EXPECT_EQ(actorReuseCursor, 4);
+}
+
 UNIT_TEST(MM6NewGameSaveRuntime, PlacementAndLocalEventsRollBackLateFault) {
     Party live;
     live.pos = Vec3f(10, 20, 30);

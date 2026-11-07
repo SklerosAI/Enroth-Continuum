@@ -1783,3 +1783,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - An opt-in untrapped first-open stage now joins a selected runtime chest, the active indoor/outdoor map sidecar and the title-local LCG with rollback on stale or invalid owners. A reopened chest keeps its placed record and LCG; world position is retained.
 - Linked arm64 synthetic tests passed 3/3, including indoor and outdoor owner paths. The normal event/UI and pickup route remains guarded, so no playable chest or graphical result is claimed.
+
+## [2026-11-06] implement | MM6 vendor visit guard
+- by: T-Burton-ND via codex
+- Added an MM6-only per-window guard for the optional vendor entry refresh. A successful shop or guild refresh consumes one visit; failure allows retry and submenu redraws cannot reroll stock in the same window. The normal deadline route and MM7 behavior are unchanged.
+- Linked stock and MM7 control tests passed 10/10. Atlas currently launches only MM7, so the MM6 setting remains saved for a future title-owned house and save route.

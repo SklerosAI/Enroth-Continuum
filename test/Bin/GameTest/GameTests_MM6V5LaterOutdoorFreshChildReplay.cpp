@@ -99,13 +99,17 @@ std::filesystem::path ownerOnlyProfile() {
     return root;
 }
 
-std::filesystem::path laterCandidateInProfile(const std::filesystem::path &profile) {
-    const std::filesystem::path supplied = profile / "saves" / "candidate-v5-oute2.ec6";
+std::filesystem::path laterCandidateInProfile(const std::filesystem::path &profile,
+                                              std::string_view slot) {
+    if (slot != "candidate-v5-oute2.ec6" &&
+        slot != "candidate-v5-oute2-after-input.ec6")
+        throw std::runtime_error("MM6 v5 later outdoor replay has no admitted slot");
+    const std::filesystem::path supplied = profile / "saves" / std::string(slot);
     if (!std::filesystem::is_regular_file(supplied))
         throw std::runtime_error("MM6 v5 later outdoor replay needs an existing absolute candidate");
     const std::filesystem::path candidate = std::filesystem::canonical(supplied);
     if (candidate.parent_path() != std::filesystem::canonical(profile / "saves") ||
-        candidate.filename() != "candidate-v5-oute2.ec6")
+        candidate.filename().string() != slot)
         throw std::runtime_error("MM6 v5 later outdoor replay candidate must be a separate profile save");
     return candidate;
 }
@@ -148,36 +152,50 @@ std::vector<LevelDecoration> sourceDecorations(const mm6::LoadedMapSource &maps,
 // A separate writer enters the non-start outdoor map from a strict disposable
 // source. Each fresh child first proves every saved owner before admitting
 // either an abort or one bounded input sequence.
-enum class LaterReplayMode { AbortBeforeInput, FirstInput, SecondWrite };
+enum class LaterReplayMode { AbortBeforeInput, FirstInput, SecondWrite, SecondReplay };
 
 void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode mode) {
-    const bool allowInput = mode != LaterReplayMode::AbortBeforeInput;
+    const bool allowInput = mode == LaterReplayMode::FirstInput ||
+                            mode == LaterReplayMode::SecondWrite;
+    const bool secondReplay = mode == LaterReplayMode::SecondReplay;
     const char *enable = std::getenv(
         mode == LaterReplayMode::AbortBeforeInput ?
             "ENROTH_MM6_V5_OUTE2_REPLAY_ENABLE" :
         mode == LaterReplayMode::FirstInput ?
             "ENROTH_MM6_V5_OUTE2_FIRST_INPUT_ENABLE" :
-            "ENROTH_MM6_V5_OUTE2_SECOND_WRITE_ENABLE");
+        mode == LaterReplayMode::SecondWrite ?
+            "ENROTH_MM6_V5_OUTE2_SECOND_WRITE_ENABLE" :
+            "ENROTH_MM6_V5_OUTE2_SECOND_REPLAY_ENABLE");
     const std::string_view expectedEnable =
         mode == LaterReplayMode::AbortBeforeInput ? "strict-v5-oute2" :
         mode == LaterReplayMode::FirstInput ? "strict-v5-oute2-first-input" :
-        "strict-v5-oute2-second-write";
+        mode == LaterReplayMode::SecondWrite ? "strict-v5-oute2-second-write" :
+        "strict-v5-oute2-second-replay";
     if (!enable || std::string_view(enable) != expectedEnable)
         GTEST_SKIP() << "Run only after strict v5 writer and owner admission";
     const std::filesystem::path profile = ownerOnlyProfile();
     if (profile.empty())
         GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to an owner-only profile";
-    const std::filesystem::path candidate = laterCandidateInProfile(profile);
+    const std::filesystem::path candidate = laterCandidateInProfile(
+        profile, secondReplay ? "candidate-v5-oute2-after-input.ec6" :
+                                "candidate-v5-oute2.ec6");
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     ASSERT_EQ(window->nativeHandle(), nullptr);
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
     const auto before = slotBytes(candidate);
+    const auto priorV5Before = slotBytes(profile / "saves" / "candidate-v5-oute2.ec6");
     const auto v4Before = slotBytes(profile / "saves" / "candidate-v4.ec6");
     const auto seedBefore = slotBytes(profile / "saves" / "autosave.ec6");
     ASSERT_FALSE(before.empty());
+    ASSERT_FALSE(priorV5Before.empty());
     ASSERT_FALSE(v4Before.empty());
     ASSERT_FALSE(seedBefore.empty());
     const auto actionParty = actionPartyFields(before);
+    if (secondReplay) {
+        const auto priorParty = actionPartyFields(priorV5Before);
+        ASSERT_NE(actionParty.position, priorParty.position);
+        ASSERT_NE(actionParty.viewYaw, priorParty.viewYaw);
+    }
 
     bool selected = false;
     bool checkpointRan = false;
@@ -523,6 +541,7 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
         EXPECT_FALSE(slotBytes(second).empty());
     }
     EXPECT_EQ(slotBytes(candidate), before);
+    EXPECT_EQ(slotBytes(profile / "saves" / "candidate-v5-oute2.ec6"), priorV5Before);
     EXPECT_EQ(slotBytes(profile / "saves" / "candidate-v4.ec6"), v4Before);
     EXPECT_EQ(slotBytes(profile / "saves" / "autosave.ec6"), seedBefore);
     EXPECT_EQ(window->nativeHandle(), nullptr);
@@ -538,4 +557,8 @@ GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorAdmitsBound
 
 GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorWritesAfterReloadedInput) {
     runV5LaterOutdoorFreshChildReplay(game, LaterReplayMode::SecondWrite);
+}
+
+GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorAfterInputRestoresOwnersInNewChild) {
+    runV5LaterOutdoorFreshChildReplay(game, LaterReplayMode::SecondReplay);
 }

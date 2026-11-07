@@ -7,6 +7,23 @@ campaign acceptance result.
 
 ## Proven route
 
+For a fresh local build, run the repository-owned one-command wrapper with a
+new absolute output directory outside `/Applications`:
+
+```sh
+python3 tools/build_mm7_macos.py /absolute/new/mm7-build \
+  --cmake /absolute/path/to/cmake \
+  --ninja /absolute/path/to/ninja \
+  --jobs 4
+```
+
+If CMake and Ninja are in `PATH`, their options may be omitted. The wrapper
+checks source/tool availability, builds the tracked dependency recipe, uses the
+local-only CMake/iconv route, verifies the MM7 link inputs and system dynamic
+libraries, then stages `Atlas/Enroth Continuum.app` with source notices. It
+does not install the app, touch saves or include game data. It refuses an
+existing output root and writes separate build logs under `logs/` there.
+
 1. `git archive HEAD` supplied a fresh source directory with no Git metadata,
    submodule checkout, build cache or dependency release ZIP. No private game
    data entered that directory.
@@ -34,7 +51,8 @@ campaign acceptance result.
 The Apple SDK/toolchain, Python 3, CMake and Ninja are local tools. The owner's
 lawfully obtained MM7 files remain outside Git and outside the bundle. The
 clean archive had no Git metadata, so its build banner reported an unknown
-revision; an ordinary clone has Git metadata. This run did not test a remote
+revision; an ordinary clone has Git metadata. The source build now gives the
+MM7 bundle a stable `0.1.0` version independent of the Git revision. This run did not test a remote
 clone or install the staged bundle.
 
 ## Remaining gates

@@ -46,6 +46,9 @@ else()
         set_target_properties(MM7 PROPERTIES
             MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in
             MACOSX_BUNDLE_BUNDLE_NAME "Enroth Continuum MM7"
+            MACOSX_BUNDLE_BUNDLE_VERSION "0.1.0"
+            MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1.0"
+            MACOSX_BUNDLE_LONG_VERSION_STRING "Enroth Continuum MM7 0.1.0"
             MACOSX_BUNDLE_GUI_IDENTIFIER "org.sklerosai.enrothcontinuum.mm7"
             MACOSX_BUNDLE_INFO_STRING "Personal Might and Magic VII runtime based on OpenEnroth."
             MACOSX_BUNDLE_COPYRIGHT "OpenEnroth and Enroth Continuum contributors (LGPL-3.0-or-later)")

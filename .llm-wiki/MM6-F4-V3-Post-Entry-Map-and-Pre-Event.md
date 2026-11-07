@@ -31,7 +31,9 @@ calls `RespawnGlobalDecorations()` before
 `PrepareDecorations()`, filling generic `decorVars[0..123]`; a stamped
 no-respawn DDM reload skips that call. Some event draws consume RNG, and
 no exact mapping to MM6's native 200 event bytes is proved. Zeroing the
-generic values would lose live state.
+generic values would lose live state. The later detached
+[v4 EVRT owner](MM6-F4-EC6-V4-Event-Runtime.md) retains those arrays
+independently; it has not enabled a durable v4 save.
 The candidate also guards unrepresented commerce and cursor state. Neither
 passing stage opens an atomic write.
 

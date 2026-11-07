@@ -54,6 +54,10 @@ A disabled strict-input-only v3 fresh-child replay GameTest exists, but it has n
 
 Source order explains the current `event-decor-bound-high` refusal: initial respawn calls `RespawnGlobalDecorations()` before `PrepareDecorations()`, filling generic `decorVars[0..123]`; a stamped no-respawn DDM reload skips that call. The observed nonzero value belongs to an interactive decoration's assigned high `eventVarId`. Some decoration event draws consume RNG. An exact MM6 native-200-byte mapping is unproved, so neither zeroing the live owner nor writing a v3 slot is admitted.
 
+The later detached [EC6 v4 EVRT owner](MM6-F4-EC6-V4-Event-Runtime.md) retains exact per-map 75-byte `mapVars` and 125-byte `decorVars`, native respawn count/day anchors and source-order decoration bindings, independent of native DDM/DLV event bytes. V4 requires the v3 22 owners plus EVRT (23 exact tags); v1–v3 stay strict. A test-only scope restores the two inherited arrays after no-respawn map load and before outdoor/indoor decoration preparation, refusing safely before events/input on mismatch. Linked container/codec/restore checks passed 11/11 and an MM7 headless control passed 1/1. No v4 full-session preflight, disposable slot, fresh-child reload or production SaveLoad/Atlas route exists. Do not promote the passing codec/restore tests to a durable game-save claim.
+
+Before durable v4 admission, strengthen EVRT decoration identity: the current index/descriptor/cog/slot binding does not distinguish two same-type decorations swapped in position. V4 full-session and candidate tests are still pending.
+
 ## Read first
 
 1. Run `git status --short --branch`, `git worktree list`, and `git log -1 --oneline` in the checkout you intend to use. The branch and worktree descriptions below may drift.

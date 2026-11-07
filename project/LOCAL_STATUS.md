@@ -1064,3 +1064,17 @@ policy, actor item/buff coverage, fresh-child v3 replay, final post-world
 owner checks and production SaveLoad/Atlas admission remain open.
 A disabled strict-input-only v3 fresh-child replay GameTest is present but
 has not run; it requires a separately admitted disposable v3 slot.
+
+A detached [EC6 v4 EVRT owner](MM6_F4_EC6_V4_EVENT_RUNTIME.md) now retains
+per-map exact 75-byte `mapVars` and 125-byte `decorVars` arrays with native
+respawn count/day anchors and source-order interactive-decoration bindings.
+It leaves native DDM/DLV 200-byte event data independent in `MAPS`. The
+exact v4 container requires v3's 22 owners plus `EVRT` (23 sections); v1–v3
+decoders remain strict. A test-only MM6 restore scope validates no-respawn
+and exact map/header/bindings before copying arrays ahead of outdoor or
+indoor decoration preparation, with a pre-input abort on armed mismatch.
+Linked focused container/codec/restore checks passed **11/11** and an MM7
+headless control passed **1/1**. No v4 full-session preflight, disposable
+slot, fresh-child v4 reload or production SaveLoad/Atlas path exists.
+The current binding does not distinguish same-type decorations swapped in
+position, so exact identity remains a durable-admission gate.

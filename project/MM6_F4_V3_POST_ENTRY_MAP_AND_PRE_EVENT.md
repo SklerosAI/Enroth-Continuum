@@ -47,6 +47,10 @@ not been proved. The detached preflight does not admit the live session.
 The candidate also guards against unrepresented commerce and cursor state.
 No v3 atomic write was attempted.
 
+A later detached [v4 EVRT owner](MM6_F4_EC6_V4_EVENT_RUNTIME.md) retains the
+generic runtime arrays independently of native event bytes. It has no
+full-session preflight or durable slot yet.
+
 ## Before map events
 
 `ScopedV3PreEventReplayForTest` is a test-only context around the existing

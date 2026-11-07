@@ -13,6 +13,7 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/MM6/MM6ActiveActorSection.h"
 #include "Engine/MM6/MM6OutdoorWire.h"
 #include "Engine/MM6/MM6SpawnedActorSection.h"
 #include "Engine/Objects/Actor.h"
@@ -105,14 +106,19 @@ void exerciseFirstMapActorCapture(EngineController &game, bool allActors) {
                 resultClass = "missing-baseline-slots";
             } else {
                 try {
-                    const size_t firstSlot = allActors ? 0 : sidecar.actorCount;
-                    const auto appended = std::span(live).subspan(firstSlot);
-                    const auto bytes = mm6::encodeSpawnedActorSection(
-                        appended, firstSlot, GameTitle::MM6);
-                    const auto replay = mm6::decodeSpawnedActorSection(
-                        bytes, firstSlot, GameTitle::MM6);
-                    captured = mm6::encodeSpawnedActorSection(
-                        replay, firstSlot, GameTitle::MM6) == bytes;
+                    if (allActors) {
+                        const auto bytes = mm6::encodeActiveActorSection(live, GameTitle::MM6);
+                        const auto replay = mm6::decodeActiveActorSection(bytes, GameTitle::MM6);
+                        captured = mm6::encodeActiveActorSection(replay, GameTitle::MM6) == bytes;
+                    } else {
+                        const auto appended = std::span(live).subspan(sidecar.actorCount);
+                        const auto bytes = mm6::encodeSpawnedActorSection(
+                            appended, sidecar.actorCount, GameTitle::MM6);
+                        const auto replay = mm6::decodeSpawnedActorSection(
+                            bytes, sidecar.actorCount, GameTitle::MM6);
+                        captured = mm6::encodeSpawnedActorSection(
+                            replay, sidecar.actorCount, GameTitle::MM6) == bytes;
+                    }
                     resultClass = captured ? "pass" : "replay-mismatch";
                 } catch (const std::exception &error) {
                     const bool lacksMM6Resistance = allActors && std::any_of(

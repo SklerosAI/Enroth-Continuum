@@ -16,4 +16,10 @@ struct V5FullSessionPreflight;
 std::unique_ptr<V5FullSessionPreflight> stageV5FirstMapLoadPreflight(
     std::span<const std::uint8_t> bytes, GameTitle title);
 
+// Recheck the two publication joins that otherwise validate after live
+// Party/NPC/timer assignment. Call while the staged graph is still detached,
+// before moving any of its owners into replay scopes or globals.
+void requireV5FirstMapPrepublicationAgreement(
+    const V5FullSessionPreflight &staged, GameTitle title);
+
 } // namespace mm6

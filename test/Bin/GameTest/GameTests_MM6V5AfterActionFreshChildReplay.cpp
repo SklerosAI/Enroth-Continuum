@@ -200,6 +200,8 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
                 candidateStage->v4.v3.armageddon.timerTicks != 0 ||
                 candidateStage->v4.v3.cursorImage.occupied)
                 throw std::runtime_error("MM6 v5 post-action replay has no exact first-map candidate");
+            mm6::requireV5FirstMapPrepublicationAgreement(
+                *candidateStage, GameTitle::MM6);
             staged = std::move(candidateStage);
             expectedNativeActors = staged->v4.v3.actorMap.activeMap.delta.actors.size();
             expectedActiveActors = staged->actors.actors.size();

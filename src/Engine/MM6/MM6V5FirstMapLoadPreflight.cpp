@@ -22,6 +22,8 @@
 
 #include "MM6LoadedMapSource.h"
 #include "MM6NpcStaticBaseline.h"
+#include "MM6PersistentEventBoundary.h"
+#include "MM6RawCursorShopStage.h"
 #include "MM6SaveMetadata.h"
 #include "MM6V5FullSessionPreflight.h"
 
@@ -84,6 +86,22 @@ std::unique_ptr<V5FullSessionPreflight> stageV5FirstMapLoadPreflight(
         staged->v4.v3.represented.outdoorPlan->mapName != FIRST_MAP)
         throw std::runtime_error("MM6 v5 first-map load lacks exact active owners");
     return staged;
+}
+
+void requireV5FirstMapPrepublicationAgreement(
+    const V5FullSessionPreflight &staged, GameTitle title) {
+    if (title != GameTitle::MM6 ||
+        staged.v4.v3.actorMap.activeMap.mapName != FIRST_MAP ||
+        staged.v4.saved.v3.raw.metadata.header.mapFileName != FIRST_MAP ||
+        !staged.v4.v3.represented.outdoorPlan ||
+        staged.v4.v3.represented.outdoorPlan->mapName != FIRST_MAP)
+        throw std::runtime_error("MM6 v5 prepublication lacks exact first-map owners");
+    (void) capturePersistentEventBoundary(
+        staged.v4.v3.represented.persistentEvents, title);
+    validateRawCursorShopJoin(
+        staged.v4.v3.represented.raw.saved,
+        staged.v4.v3.represented.raw.cursor,
+        staged.v4.v3.represented.raw.shops, title);
 }
 
 } // namespace mm6

@@ -70,7 +70,7 @@ capsule: exact native DDM and chest delta, ACTR anchor, ARTR actors, GNPC rows,
 SPRT slots, DECR decorations and EVRT entry. Its validator requires one exact
 map identity across those owners, equal MAPS/CHST native bytes, actor and
 sprite anchor agreement, and decoration agreement with the loaded source base.
-It has no encoder or production publisher and always refuses checkpoint write.
+It has no production publisher and always refuses checkpoint write.
 
 The [no-write location-change fixture](../test/Bin/GameTest/GameTests_MM6LocationChangeLifecycle.cpp)
 now captures a full first-map v5 candidate at settled input, preflights it
@@ -86,10 +86,45 @@ the transition fixture.
 This proves that the source owner can be retained while another outdoor map
 loads. It does **not** encode visited runtime into EC6 v5, restore it on an
 in-session return, prove a second-map border confirmation, or establish a
-durable old-map checkpoint. A future schema must carry per-map runtime and
-native anchors together, then prove return and fresh-child replay. The
+durable old-map checkpoint. The detached outdoor v6 schema below now carries
+per-map runtime and native anchors, but return and fresh-child replay remain
+unproved. The
 post-rename sync-failure result also needs a defined commit/recovery policy
 before live travel can rely on a write.
+
+## Detached outdoor v6 visited-map schema
+
+[`V6OutdoorSaveFields`](../src/Engine/MM6/MM6V6OutdoorSaveFields.h) is a
+**no-write** EC6 v6 outdoor candidate. Its first 26 sections are the exact
+active outdoor v5 payload. A required, versioned `VIST` section adds ordered
+prior-map capsules; each entry owns one native DDM, chest record, ACTR anchor,
+GNPC rows, EVRT entry, ARTR actors, SPRT sprites and DECR decorations. The
+codec bounds count and lengths, rejects duplicates or unsorted maps, refuses
+an active/visited map collision and canonicalizes every inner owner. It does
+not change v5 or indoor v6 manifests. Source-base decoration agreement is a
+separate admission check after decode; a successful wire parse alone cannot
+publish a returned map.
+
+The no-write location-change fixture captures the first-map capsule at
+settled input, then uses an MM6-only test scope in `PrepareWorld` to capture
+the second-map v5 owner **after map preparation and before first input**.
+Capturing the latter after two ordinary ticks was correctly refused because
+an actor position had become fractional and could not fit the native ACTR
+anchor; the width guard was retained. The fixture round-trips a `VIST` section
+with both source-backed map capsules, then wraps the first map as visited
+beside the second map's active v5 data. Decode/re-encode is exact, and the
+peeled active v5 bytes are identical to the input. Bad VIST version,
+truncation, changed outer map identity and active/visited collision refuse.
+The linked headless run passed **1/1** after a fresh v2 seed and v4 baseline
+had each passed **1/1** in the same owner-only disposable profile. The
+temporary profile was removed. No v6 file was written.
+
+This establishes a bounded wire shape for two maps, not a complete checkpoint
+transaction. The old live `pMapDeltas` entry still stays stale on transition;
+there is no v6 active/visited publication, in-session return, fresh-child v6
+reload, atomic v6 writer, or post-rename durability policy. The border
+precommit flag remains false, and production MM6 travel and SaveLoad remain
+guarded.
 
 1. Choose a canonical production EC6 version, slot name and title-private profile root. Explicitly reject or migrate older autosave schemas; an existing v2 test seed cannot silently become a v5 production slot.
 2. Stage an exact detached old-map save for any admitted outdoor map at a safe point before travel UI effects. Include Party and character state, inventory/buffs/hirelings, UI/cursor/shops, NPC and generated links, RNG, active and visited map deltas, chests/artifacts, actor/sprite/decoration runtime, event variables and owner identities. The old-map checkpoint must contain a reload-safe in-bounds **Party copy** when the live border position lies outside the map edge; keep live Party untouched until commit.

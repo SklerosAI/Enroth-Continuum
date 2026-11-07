@@ -21,11 +21,19 @@ The private-backed first-map retained-DDM/live-owner probe passed **1/1**.
 It does not prove later maps, item mutations or a save–quit–reload.
 
 A separate no-write first-map full-session v3 candidate passed detached
-`stageV3FullSessionPreflight()` and then refused at
-`persistent-event-join` (**0/1**). This supersedes the earlier
-`map-preflight` classification; the exact live persistent-event mismatch is
-under audit. The candidate also guards unrepresented commerce and cursor
-state. Neither passing stage opens an atomic write.
+`stageV3FullSessionPreflight()`. The event classifier then confirmed exact
+native event bytes and zero generic `mapVars`, but found inherited generic
+`decorVars` nonzero after map load: `event-decor-bound-high` (**0/1**).
+That value is bound to an interactive decoration's assigned high
+`eventVarId`, not an unbound transient. This supersedes `event-legacy-decor`,
+`map-preflight` and broad `persistent-event-join` classes. Initial respawn
+calls `RespawnGlobalDecorations()` before
+`PrepareDecorations()`, filling generic `decorVars[0..123]`; a stamped
+no-respawn DDM reload skips that call. Some event draws consume RNG, and
+no exact mapping to MM6's native 200 event bytes is proved. Zeroing the
+generic values would lose live state.
+The candidate also guards unrepresented commerce and cursor state. Neither
+passing stage opens an atomic write.
 
 The test-only pre-event scope validates the staged v3 map/ACTR/GNPC/RNG
 agreement and unchanged chest/active-DDM owners, publishes actors and

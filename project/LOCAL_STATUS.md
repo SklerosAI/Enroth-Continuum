@@ -1046,13 +1046,20 @@ live vector. The private-backed first-map retained-DDM/live-owner headless
 probe passed **1/1**, superseding its earlier `sprite-header` and
 `sprite-position-loss` refusals. This does not write a v3 slot or prove
 later maps and mutations. A separate no-write full-session first-map
-candidate passed detached `stageV3FullSessionPreflight()` and then refused
-at `persistent-event-join` (**0/1**), superseding its earlier
-`map-preflight` classification. The exact live event mismatch remains
-under audit. A disposable v2 writer passed **1/1** as the control. The
-candidate guards unrepresented commerce and cursor state and attempts
-no atomic write. Writer-side complete
-session joins, BEAC/IFOV
+candidate passed detached `stageV3FullSessionPreflight()`. The event
+classifier confirmed exact native 200-byte event data and zero generic
+`mapVars`, then refused because inherited generic `decorVars` were nonzero
+after map load: `event-decor-bound-high` (**0/1**). The nonzero value is
+bound to an interactive decoration's assigned high `eventVarId`, rather
+than an unbound transient. This supersedes earlier `event-legacy-decor`,
+`map-preflight` and broad `persistent-event-join` classifications. Initial
+respawn calls `RespawnGlobalDecorations()` before `PrepareDecorations()`,
+filling generic `decorVars[0..123]`; the stamped no-respawn DDM reload
+skips that call. Some event draws consume RNG. No exact mapping to native
+200 event bytes is proved, and zeroing the generic owner would lose state.
+A disposable v2 writer passed **1/1** as the control. The candidate guards
+unrepresented commerce and cursor state and attempts
+no atomic write. Writer-side complete session joins, BEAC/IFOV
 policy, actor item/buff coverage, fresh-child v3 replay, final post-world
 owner checks and production SaveLoad/Atlas admission remain open.
 A disabled strict-input-only v3 fresh-child replay GameTest is present but

@@ -31,10 +31,19 @@ write a v3 slot, leave and reload the map, or prove later map/item mutations.
 
 A separate no-write full-session candidate probe now attempts the complete
 detached v3 semantic stage after first-map entry. A stage marker confirms
-that `stageV3FullSessionPreflight()` returned successfully, then the candidate
-refused at `persistent-event-join` (**0/1**). This supersedes the earlier
-`map-preflight` classification. The exact persistent-event mismatch is still
-under audit; the passing detached preflight does not admit the live session.
+that `stageV3FullSessionPreflight()` returned successfully. The later event
+classifier confirmed exact active native 200-byte event data and zero generic
+`mapVars`, then refused because inherited generic `decorVars` were nonzero
+after map load: `event-decor-bound-high` (**0/1**). The nonzero value is bound
+to an interactive decoration's assigned high `eventVarId`, rather than an
+unbound transient. This supersedes the earlier `event-legacy-decor`,
+`map-preflight` and broad `persistent-event-join` classes. Source order
+explains the divergence: first entry with a zero respawn day calls
+`RespawnGlobalDecorations()` before `PrepareDecorations()`, filling the
+generic `decorVars[0..123]`; some decoration event draws consume RNG. A
+stamped no-respawn DDM reload skips that call. Zeroing these values would
+lose live state, while an exact mapping to MM6's native 200 event bytes has
+not been proved. The detached preflight does not admit the live session.
 The candidate also guards against unrepresented commerce and cursor state.
 No v3 atomic write was attempted.
 
@@ -64,7 +73,7 @@ slot exists. Its presence is a test harness, not replay evidence.
 
 ## Next admission work
 
-Before a disposable v3 write, resolve the live `persistent-event-join` refusal, join the
+Before a disposable v3 write, resolve the live `event-decor-bound-high` refusal, join the
 bounded map capture with all live v3 session owners, prove writer-side
 BEAC/IFOV policy and pass the required semantic callback. Then use a fresh
 child to stage v3, publish all pre-event

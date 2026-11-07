@@ -31,4 +31,8 @@ proved rendering without disk save/reload. The [runtime cutover](MM7-Runtime-Pat
 still requires collision-safe review and visible candidate play before any
 installed-app change. No proprietary data, saves or hashes entered Git.
 
-See also: [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [Agent Handoff](Agent-Handoff.md).
+An [isolated native-slot helper](MM7-Atomic-Save-File.md) now passes synthetic
+fault tests. This disposable cycle still exercised the inherited SaveLoad
+writer; the helper is not yet wired into normal MM7 saves or loads.
+
+See also: [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [MM7 Atomic Save File](MM7-Atomic-Save-File.md), [Agent Handoff](Agent-Handoff.md).

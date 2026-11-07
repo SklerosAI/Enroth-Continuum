@@ -1748,3 +1748,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added an MM7-only, exact opt-in environment rule to regenerate both shop tiers or magic-guild books when a new vendor window opens. A per-window guard and normal future deadline prevent submenu rerolls; default schedule and MM6 preview stay unchanged.
 - Focused visit/title policy tests and touched source translations passed arm64 syntax checking in an isolated worktree. Linked and live-entry checks remain pending integration; the Atlas supplies the launch flag only for private-mod mode.
+
+## [2026-11-06] verify | Vendor mod integration and local Atlas
+- by: T-Burton-ND via codex
+- Atlas now stores one MM6/MM7 vendor option, passes the exact MM7 flag only for Private mods, and labels MM6 as future-facing. The signed local bundle was installed with its previous version retained privately; the currently open window needs reopening for the new control.
+- Linked vendor-focused tests passed 16/16, non-MM6 controls 440/440, and a mod-enabled MM7 headless save/load smoke passed 1/1 without visible windows or focus change. The MM6 shop/purchase focused set passed 14/14; its live entry hook remains gated. No live shop-entry reroll was observed yet.

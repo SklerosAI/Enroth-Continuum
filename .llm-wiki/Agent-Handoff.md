@@ -10,6 +10,16 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 ## Current integration checkpoint — 2026-11-07
 
+The [MM6 border transaction](MM6-F4-Border-Autosave-Transaction.md) now has
+an in-memory visited outdoor owner staged from a source-backed first-map v5
+preflight. It retains native delta/chest, actor, generated NPC, sprite,
+decoration and event owners across a test-only no-write transition to a second
+outdoor map. Fresh v2 seed, v4 baseline and modified lifecycle children each
+passed 1/1; wrong native delta, event map and sprite map refused. This owner
+has no v5 visited-map disk section or return publisher, and checkpoint writing
+stays false. Prove per-map persistence, in-session return, old-map fresh-child
+replay and durable-result policy before live border travel.
+
 The [MM6 indoor v6 input cycle](MM6-F4-V6-Indoor-Input-Cycle.md) passed five
 fresh headless children through a real-loop turn/walk, atomic post-input
 candidate and exact fresh-child replay. This is one test-only fixture;

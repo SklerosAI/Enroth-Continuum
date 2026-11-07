@@ -9,7 +9,7 @@ Status: **read-only design audit; no production travel save** (2026-11-07). This
 - Creating [`GUIWindow_Transition`](../src/GUI/UI/UITransition.cpp) pauses the timer. The existing [`captureV5FirstMapLiveSession`](../src/Engine/MM6/MM6V5LiveSaveCapture.cpp) requires a settled, unpaused first-map state. It cannot simply be called from a paused travel confirmation or a later outdoor map.
 - MM6 [`saveGame`](../src/Engine/SaveLoad.cpp) throws before writing. The inherited `autoSave()` returns void; its MM7 write path can swallow an autosave disk failure. MM6 travel needs a required success result before changing Party, map cache, food, time, UI or pending transition. Do not route it through the MM7 `createSaveData(false)` path, which mutates map/cache state while preparing a save.
 - [`writeAtomicV5SaveFileForTest`](../src/Engine/MM6/MM6AtomicSaveFile.cpp) is restricted to named candidates in owner-only disposable profiles. It validates a v5 shell and semantic callback, rejects foreign-version primary/backup files, validates prior same-version files and uses write, sync, readback and rename. Its fault tests do not make it a production autosave API. A failure after primary rename may leave a valid new primary despite a reported sync error; a backup may change before primary replacement. Define a clear durable-result and recovery policy before using that sequence in gameplay.
-- The current v5 container has singular active-map actor, sprite and decoration runtime sections. A later-map save could lose runtime owners from a previously visited map unless a visited-map representation or lossless native-delta projection parks them. The no-write transition check confirms the old `pMapDeltas` entry remains unchanged across the transition, so an in-session return can be stale.
+- The current v5 container has singular active-map actor, sprite and decoration runtime sections. A later-map save could lose runtime owners from a previously visited map unless a visited-map representation or lossless native-delta projection parks them. The no-write transition check confirms the old `pMapDeltas` entry remains unchanged across the transition, so an in-session return can be stale. A detached in-memory owner now survives that test transition, but has no v5 disk section or live return publisher.
 
 ## Original confirmation effects
 
@@ -61,6 +61,35 @@ terrain safety at the clamped coordinate, visited-map runtime preservation,
 old-map reload from this candidate, or a durable-write outcome. The
 `canWriteCheckpoint()` gate remains false, and MM6 travel/production SaveLoad
 remain closed.
+
+## Detached visited outdoor owner across one transition
+
+[`VisitedOutdoorRuntimeOwner`](../src/Engine/MM6/MM6VisitedOutdoorRuntimeOwner.h)
+copies one **already preflighted** MM6 outdoor source map into an in-memory
+capsule: exact native DDM and chest delta, ACTR anchor, ARTR actors, GNPC rows,
+SPRT slots, DECR decorations and EVRT entry. Its validator requires one exact
+map identity across those owners, equal MAPS/CHST native bytes, actor and
+sprite anchor agreement, and decoration agreement with the loaded source base.
+It has no encoder or production publisher and always refuses checkpoint write.
+
+The [no-write location-change fixture](../test/Bin/GameTest/GameTests_MM6LocationChangeLifecycle.cpp)
+now captures a full first-map v5 candidate at settled input, preflights it
+against the loaded MM6 source and stages this capsule before crossing to the
+second outdoor map. After the intercepted transition, it revalidates the
+detached old-map owner and confirms the live old-map cache stayed unchanged.
+Injected native-delta, event-map and sprite-map faults each refuse. In a fresh
+owner-only disposable profile, the v2 seed, v4 baseline and modified
+location-change processes each passed **1/1** headlessly; the profile was
+removed. The source candidate was held in memory and no slot was written by
+the transition fixture.
+
+This proves that the source owner can be retained while another outdoor map
+loads. It does **not** encode visited runtime into EC6 v5, restore it on an
+in-session return, prove a second-map border confirmation, or establish a
+durable old-map checkpoint. A future schema must carry per-map runtime and
+native anchors together, then prove return and fresh-child replay. The
+post-rename sync-failure result also needs a defined commit/recovery policy
+before live travel can rely on a write.
 
 1. Choose a canonical production EC6 version, slot name and title-private profile root. Explicitly reject or migrate older autosave schemas; an existing v2 test seed cannot silently become a v5 production slot.
 2. Stage an exact detached old-map save for any admitted outdoor map at a safe point before travel UI effects. Include Party and character state, inventory/buffs/hirelings, UI/cursor/shops, NPC and generated links, RNG, active and visited map deltas, chests/artifacts, actor/sprite/decoration runtime, event variables and owner identities. The old-map checkpoint must contain a reload-safe in-bounds **Party copy** when the live border position lies outside the map edge; keep live Party untouched until commit.

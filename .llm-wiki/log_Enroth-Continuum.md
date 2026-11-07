@@ -2144,3 +2144,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Source audit found the existing native DDM writer rejects post-spawn actor counts and, even with counts reconciled, copies only selected original-actor runtime fields. A spawned-only section cannot preserve later original-actor mutations.
 - A disposable full-list first-map runtime capture refused with `missing-mm6-resistance` (0/1), while the appended-spawn-only probe remains 1/1. The detached 22-section v3 manifest is therefore structural only; full active-actor provenance or exhaustive refusal remains required before live save/load.
+
+## [2026-11-07] integrate | MM6 native actor resistance provenance
+- by: T-Burton-ND via codex
+- The MM6 outdoor loader now assigns each reconstructed actor its own six resistance bytes from the retained native DDM record. A focused differing-per-actor helper passed 1/1; the MM7 path was not changed.
+- The disposable full-list actor probe advanced beyond missing resistance and still refused at a baseline actor identity condition (0/1). A narrower classifier identifies `baseline-descriptor-monster`; it remains under audit. No live save route was opened.

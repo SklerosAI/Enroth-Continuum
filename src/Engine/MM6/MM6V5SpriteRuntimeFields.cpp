@@ -122,6 +122,27 @@ bool sameItem(const Item &lhs, const Item &rhs) {
         lhs.mm6RawRecord == rhs.mm6RawRecord;
 }
 
+std::string_view firstItemMismatch(const Item &lhs, const Item &rhs) {
+    if (lhs.itemId != rhs.itemId) return "ID";
+    if (lhs.potionPower != rhs.potionPower) return "potion power";
+    if (lhs.goldAmount != rhs.goldAmount) return "gold amount";
+    if (lhs.standardEnchantment != rhs.standardEnchantment)
+        return "standard enchantment";
+    if (lhs.standardEnchantmentStrength != rhs.standardEnchantmentStrength)
+        return "standard enchantment strength";
+    if (lhs.specialEnchantment != rhs.specialEnchantment)
+        return "special enchantment";
+    if (lhs.numCharges != rhs.numCharges) return "charges";
+    if (lhs.maxCharges != rhs.maxCharges) return "maximum charges";
+    if (lhs.flags != rhs.flags) return "flags";
+    if (lhs.lichJarCharacterIndex != rhs.lichJarCharacterIndex)
+        return "jar character index";
+    if (lhs.enchantmentExpirationTime.ticks() !=
+        rhs.enchantmentExpirationTime.ticks()) return "enchantment expiration";
+    if (lhs.mm6RawRecord != rhs.mm6RawRecord) return "MM6 raw record";
+    return "unknown field";
+}
+
 bool sameSprite(const SpriteObject &lhs, const SpriteObject &rhs) {
     return lhs.spriteId == rhs.spriteId &&
         lhs.uObjectDescID == rhs.uObjectDescID &&
@@ -145,8 +166,8 @@ bool sameSprite(const SpriteObject &lhs, const SpriteObject &rhs) {
         lhs._ticksPerParticle.ticks() == rhs._ticksPerParticle.ticks();
 }
 
-std::string_view firstSpriteMismatch(const SpriteObject &lhs,
-                                     const SpriteObject &rhs) {
+std::string firstSpriteMismatch(const SpriteObject &lhs,
+                                const SpriteObject &rhs) {
     if (lhs.spriteId != rhs.spriteId) return "sprite ID";
     if (lhs.uObjectDescID != rhs.uObjectDescID) return "object descriptor";
     if (!sameVec(lhs.vPosition, rhs.vPosition)) return "position";
@@ -158,7 +179,9 @@ std::string_view firstSpriteMismatch(const SpriteObject &lhs,
     if (lhs.tempLifetime.ticks() != rhs.tempLifetime.ticks()) return "lifetime";
     if (lhs.field_22_glow_radius_multiplier != rhs.field_22_glow_radius_multiplier)
         return "glow radius";
-    if (!sameItem(lhs.containing_item, rhs.containing_item)) return "contained item";
+    if (!sameItem(lhs.containing_item, rhs.containing_item))
+        return std::string("contained item ") +
+               std::string(firstItemMismatch(lhs.containing_item, rhs.containing_item));
     if (lhs.uSpellID != rhs.uSpellID) return "spell ID";
     if (lhs.spell_level != rhs.spell_level) return "spell level";
     if (lhs.spell_skill != rhs.spell_skill) return "spell skill";

@@ -1723,3 +1723,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Occupied resolved chest items now receive their exact 28-byte source record after bounded reconstruction. A copied pickup Item retains that carrier; chest capture rejects missing, changed or wrong-slot raw records and unsupported item field changes before writing.
 - The two affected test translations passed isolated arm64 C++23 syntax checking; linked integration tests remain pending. Live chest interaction, native changed-save semantics and coordinated `.ec6` publication stay gated.
+
+## [2026-11-06] implement | Detached MM6 raw cursor owner
+- by: T-Burton-ND via codex
+- Added a title-tagged ready owner that stages full 28-byte cursor sets and first-25-byte clears while retaining the absent tail. It bridges the detached `HELD` v2 value and rejects occupied or malformed source state; live Party and SaveLoad remain untouched.
+- The new synthetic unit translation passed C++23 syntax checking and a standalone arm64 owner driver passed. Linked tests and all-owner live transaction remain open.

@@ -39,6 +39,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6NpcResourceIdentity.cpp MM6NpcResourceIdentity.h
     MM6PostMapGeneratedNpcLinks.cpp MM6PostMapGeneratedNpcLinks.h
     MM6GeneratedNpcSaveFields.cpp MM6GeneratedNpcSaveFields.h
+    MM6PreEventGeneratedNpcReplay.cpp MM6PreEventGeneratedNpcReplay.h
     MM6GameplayRngSaveFields.cpp MM6GameplayRngSaveFields.h
     MM6IndoorWorldPlan.cpp MM6IndoorWorldPlan.h
     MM6WorldSaveRuntime.cpp MM6WorldSaveRuntime.h
@@ -186,6 +187,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6NpcResourceIdentity_ut.cpp
         Tests/MM6PostMapGeneratedNpcLinks_ut.cpp
         Tests/MM6GeneratedNpcSaveFields_ut.cpp
+        Tests/MM6PreEventGeneratedNpcReplay_ut.cpp
         Tests/MM6GameplayRngSaveFields_ut.cpp
         Tests/MM6IndoorWorldPlan_ut.cpp
         Tests/MM6HirelingRecoveryV2Stage_ut.cpp

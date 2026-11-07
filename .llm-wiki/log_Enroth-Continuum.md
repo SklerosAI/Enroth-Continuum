@@ -2621,3 +2621,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added an MM6 first-map, owner-only disposable v5 writer service that stages exact live owners, validates candidate/prior bytes, and reports committed, preflight-required or indeterminate atomic outcomes. Focused writer/atomic units passed 3/3.
 - Both fresh-child first-map readers now construct test replay scopes before global assignment. The combined fresh seven-process chain passed 1/1 in every child, and MM7 control passed 1/1. This closes constructor-time partial publication in the tests; assignment/pre-event rollback and normal MM6 SaveLoad/UI remain open.
+
+## [2026-11-07] verify | MM6 first-map prepublication checks
+- by: T-Burton-ND via codex
+- Added a pure event-boundary and cursor/shop prepublication check on the detached first-map v5 stage. Both fresh-child readers call it before replay-scope construction or global assignment. The linked fresh seven-child chain passed 1/1 in every child and MM7 control passed 1/1.
+- Source-order review found that manual Save pauses the timer before calling `doSavegame`, while the current live writer requires settled unpaused input. Assignment/pre-event recovery and a paused-menu capture contract remain necessary before normal MM6 SaveLoad/UI admission.

@@ -391,8 +391,10 @@ static void writeAtomicSaveFileForSchema(const std::filesystem::path &profileRoo
         (void) decodeV3SlotShell(container);
     else if (schema == SlotSchema::FullV4)
         (void) decodeV4SlotShell(container);
-    else
+    else if (schema == SlotSchema::FullV5)
         (void) decodeV5SlotShell(container);
+    else
+        (void) decodeV6OutdoorSlotShell(container);
     const std::filesystem::path directory = savesDirectory(profileRoot, slotName);
     std::filesystem::create_directories(directory);
     const std::filesystem::path primary = directory / std::string(slotName);

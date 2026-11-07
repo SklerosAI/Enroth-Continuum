@@ -2114,3 +2114,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated a detached bounded native DDM actor-section splice. It accepts complete supplied records, preserves original actor and opaque suffix bytes, validates slot anchors and updates actor count and respawn day. The linked codec suite passed 3/3.
 - A disposable native v2 writer and fresh-child guarded refusal still passed 1/1 each. A full native capture adapter for newly spawned runtime actors is absent; no durable post-entry save or production route was enabled.
+
+## [2026-11-07] correct | MM6 stamped outdoor respawn day
+- by: T-Burton-ND via codex
+- The live outdoor loader stamps its active raw sidecar before encounter spawning. The detached actor append codec now accepts a zero or matching source respawn day, rejects a conflicting day, and still requires a positive target day. Linked focused tests passed 3/3.
+- The complete spawned-actor native record and durable post-entry save remain open.

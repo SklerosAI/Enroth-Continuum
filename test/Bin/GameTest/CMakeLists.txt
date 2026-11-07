@@ -48,6 +48,7 @@ target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6V5OutdoorSourceAudit.cpp
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6V5LaterOutdoorLoadProbe.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6IndoorPreEventFaceOwner.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6V6IndoorStage.cpp)
+target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6V5LaterOutdoorCandidate.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6NpcResourceIdentity.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6HudAudit.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6TopPanel.cpp)

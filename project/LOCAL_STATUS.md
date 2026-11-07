@@ -1368,9 +1368,9 @@ constructs replay scopes or assigns global owners. The linked seven-process
 chain again passed **1/1 per child**, with an MM7 control **1/1**. The later
 publication functions still revalidate, and global assignment or pre-event
 replay can fail after mutation; these need a game-loop-owned abort/recovery
-transaction. Manual Save also pauses the timer before `doSavegame`, while the
-current writer requires settled unpaused input. A paused-menu capture or
-pre-pause snapshot contract must be proved before wiring that button.
+transaction. Manual Save pauses the timer before `doSavegame`; the later
+read-only paused-menu capture below supersedes the missing capture-contract
+part of this status, but no writer is wired to that menu.
 
 Main Menu Quick Load now refuses an ordinary MM6 request before probing a
 present `.ec6` quicksave or queuing an unsupported load; the existing
@@ -1379,4 +1379,13 @@ A focused headless test created a visible marker in GameTest's isolated user
 filesystem and passed **1/1** with no pending load or menu transition; MM7
 control passed **1/1**. The broader UI audit keeps MM6 load listing empty
 until source-backed slot preflight, publication and failure recovery are
-joined. Manual Save still needs a paused-menu capture contract.
+joined. A paused-menu capture alone does not admit a Save action.
+
+An explicit MM6 first-map `PausedSaveMenu` capture contract now requires a
+paused timer, the real idle Save screen and window, no text input or queued
+UI message, and the same strict live-owner checks. A fresh disposable seed,
+v4 and real Escape-to-Save-menu capture chain passed **1/1 per child** without
+writing a slot; the existing unpaused seven-child v5 chain passed **7/7**
+after this shared capture change, and MM7 control passed **1/1**. This proves
+read-only capture at the paused menu, not normal `doSavegame` publication,
+production slot policy or load recovery.

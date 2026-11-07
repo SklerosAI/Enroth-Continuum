@@ -47,7 +47,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6PersistentEventBoundary.h
     MM6RawPartyInventoryStage.cpp MM6RawPartyInventoryStage.h
     MM6NewGameSaveRuntime.cpp MM6NewGameSaveRuntime.h
-    MM6RawNewGameSaveRuntime.cpp MM6RawNewGameSaveRuntime.h
+    MM6RawNewGameSaveRuntime.cpp MM6RawNewGameSaveRuntime.h MM6CreationItemSeed.h
     MM6FirstMapWorldTransaction.h
     MM6FirstMapPlacementTransaction.h
     MM6FirstMapCombatTransientTransaction.h
@@ -71,6 +71,11 @@ if(OE_BUILD_TESTS)
     target_link_libraries(test_engine_mm6_creation_vitals PUBLIC testing_unit)
     target_check_style(test_engine_mm6_creation_vitals)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_creation_vitals)
+
+    add_library(test_engine_mm6_creation_item_seed OBJECT Tests/MM6CreationItemSeed_ut.cpp)
+    target_link_libraries(test_engine_mm6_creation_item_seed PUBLIC testing_unit engine_mm6_save_runtime)
+    target_check_style(test_engine_mm6_creation_item_seed)
+    target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_creation_item_seed)
 
     add_library(test_engine_mm6_voice_sound OBJECT Tests/MM6VoiceSound_ut.cpp)
     target_link_libraries(test_engine_mm6_voice_sound PUBLIC testing_unit)

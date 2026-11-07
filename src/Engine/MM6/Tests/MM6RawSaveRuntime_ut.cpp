@@ -425,11 +425,9 @@ UNIT_TEST(MM6RawSaveRuntime, FullRepresentedPreflightFallsBackAfterLatePartyFail
     mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", badBytes);
 
     const auto freshNpcs = freshNpcBaseline();
-    Timer freshTimer;
-    ActiveOverlayList freshOverlays;
     auto selected = mm6::preflightStagedRawSessionFields(
-        profile.root(), "save001.ec6", freshNpcs, freshTimer,
-        freshOverlays, names, syntheticBase, validItem, *table.table, 5, 145,
+        profile.root(), "save001.ec6", freshNpcs,
+        names, syntheticBase, validItem, *table.table, 5, 145,
         GameTitle::MM6);
     ASSERT_TRUE(selected);
     EXPECT_TRUE(selected->needsRecovery);
@@ -445,8 +443,8 @@ UNIT_TEST(MM6RawSaveRuntime, FullRepresentedPreflightFallsBackAfterLatePartyFail
 
     writeBytes(profile.backup(), badBytes);
     EXPECT_THROW((void) mm6::preflightStagedRawSessionFields(
-        profile.root(), "save001.ec6", freshNpcs, freshTimer,
-        freshOverlays, names, syntheticBase, validItem, *table.table, 5, 145,
+        profile.root(), "save001.ec6", freshNpcs,
+        names, syntheticBase, validItem, *table.table, 5, 145,
         GameTitle::MM6), std::exception);
     EXPECT_EQ(readBytes(profile.primary()), badBytes);
     EXPECT_EQ(readBytes(profile.backup()), badBytes);
@@ -467,13 +465,11 @@ UNIT_TEST(MM6RawSaveRuntime, RawSessionPreflightPreparesOutdoorPlanBeforeSelecti
     mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", outdoorBytes);
 
     const auto npcs = freshNpcBaseline();
-    Timer timer;
-    ActiveOverlayList overlays;
     // The raw MAPS pass accepts this synthetic base, while the outdoor plan
     // rejects its zero tile selectors. Slot selection must fall back to the
     // indoor backup without repairing either file.
     auto selected = mm6::preflightStagedRawSessionFields(
-        profile.root(), "save001.ec6", npcs, timer, overlays,
+        profile.root(), "save001.ec6", npcs,
         names, syntheticBase, validItem, *table.table, 5, 145, GameTitle::MM6);
     ASSERT_TRUE(selected);
     EXPECT_TRUE(selected->needsRecovery);
@@ -490,7 +486,7 @@ UNIT_TEST(MM6RawSaveRuntime, RawSessionPreflightPreparesOutdoorPlanBeforeSelecti
         return Blob::copy(bytes.data(), bytes.size());
     };
     selected = mm6::preflightStagedRawSessionFields(
-        profile.root(), "save001.ec6", npcs, timer, overlays,
+        profile.root(), "save001.ec6", npcs,
         names, boundedBase, validItem, *table.table, 5, 145, GameTitle::MM6);
     ASSERT_TRUE(selected);
     EXPECT_FALSE(selected->needsRecovery);
@@ -516,10 +512,8 @@ UNIT_TEST(MM6RawSaveRuntime, RawSessionPreflightRejectsOpaqueEventBytesBeforeSel
     mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", badBytes);
 
     const auto npcs = freshNpcBaseline();
-    Timer timer;
-    ActiveOverlayList overlays;
     auto selected = mm6::preflightStagedRawSessionFields(
-        profile.root(), "save001.ec6", npcs, timer, overlays,
+        profile.root(), "save001.ec6", npcs,
         names, syntheticBase, validItem, *table.table, 5, 145, GameTitle::MM6);
     ASSERT_TRUE(selected);
     EXPECT_TRUE(selected->needsRecovery);
@@ -544,10 +538,8 @@ UNIT_TEST(MM6RawSaveRuntime, RawSessionPreflightRejectsActiveActorOverlayBeforeS
     mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", badBytes);
 
     const auto npcs = freshNpcBaseline();
-    Timer timer;
-    ActiveOverlayList overlays;
     auto selected = mm6::preflightStagedRawSessionFields(
-        profile.root(), "save001.ec6", npcs, timer, overlays,
+        profile.root(), "save001.ec6", npcs,
         names, syntheticBase, validItem, *table.table, 5, 145, GameTitle::MM6);
     ASSERT_TRUE(selected);
     EXPECT_TRUE(selected->needsRecovery);

@@ -37,6 +37,8 @@ The v2 coordinator now constructs its own empty Party baseline instead of accept
 
 The same preflight now stages the proved MM6 map-variable bytes and requires inactive saved actor overlays. Unsupported upper event bytes or an active actor overlay make a primary ineligible before selection, allowing a valid backup without disk repair. The persistent/raw suite passed **13/13**, and focused actor-policy/coordinator checks passed **4/4**. Neither result establishes live decoration variables or final actor identity.
 
+The represented v2 coordinator now constructs its own fresh timer and fifty-overlay list as well as its cursor-neutral Party baseline. All saved timer/overlay fields are applied to those copies, so no caller-supplied live timer or overlay state is accepted. The linked raw runtime suite passed **12/12** after this interface change. This strengthens detachment but does not prove final live timer/UI publication.
+
 This is still a raw owner candidate. It does not project every source item kind into `CharacterInventory`, reconstruct the active live world, include beacon state, or make the simultaneous Party/world/UI/commerce commit failure atomic. The existing v1 atomic/New Game route remains separate; v2 is not a production save or playable-campaign claim.
 
 The [detached Party inventory stage](MM6-F4-Raw-Party-Inventory-Stage.md) now projects the supported subset of `INVR` into all four 138-slot runtime inventories on a Party copy. It rejects unsupported nonzero item unions and rarity effects, and keeps the full raw owner for recapture. It does not close the remaining item semantics or live commit gates.

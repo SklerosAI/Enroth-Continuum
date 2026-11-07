@@ -13,14 +13,15 @@ namespace mm6 {
 
 std::optional<StagedRawSessionFields> preflightStagedRawSessionFields(
     const std::filesystem::path &profileRoot, std::string_view slotName,
-    const NpcStaticBaseline &freshNpcs, const Timer &freshTimer,
-    const ActiveOverlayList &freshOverlays,
+    const NpcStaticBaseline &freshNpcs,
     std::span<const std::string> expectedNames, const MapBaseReader &readBase,
     const GroundItemVerifier &verifyItem, const ItemTable &itemTable,
     std::size_t overlayTableCount, std::size_t tileTableCount, GameTitle title) {
     if (title != GameTitle::MM6)
         throw std::runtime_error("MM6 raw session preflight requires the MM6 title");
     Party freshParty;
+    Timer freshTimer;
+    ActiveOverlayList freshOverlays;
     std::optional<StagedRawSessionFields> staged;
     const auto selected = preflightRecoverableRawSaveFile(
         profileRoot, slotName, [&](std::span<const std::uint8_t> bytes) {

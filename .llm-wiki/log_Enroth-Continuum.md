@@ -1733,3 +1733,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a source-typed, fail-closed projection retaining each complete 100-byte map sprite record and exact 28-byte contained item, including opaque empty/removed records. Capture changes only bounded item fields on a copy.
 - Four synthetic cases passed arm64 C++23 syntax checking; linked integration remains pending. Live map pickup/drop, monster loot, generation and SaveLoad remain guarded while original ground mutation rules and cross-owner transfer are unproved.
+
+## [2026-11-06] implement | Joint MM6 physical shop purchase
+- by: T-Burton-ND via codex
+- Added a detached already-paid transaction across one explicit physical SHOP slot, all four raw character inventories and the selected runtime buyer inventory. It checks baseline raw/runtime agreement, writes the full purchased record and grid to the exact free buyer slot, partially clears stock and replays the resulting raw owner before no-throw publication.
+- Synthetic tests cover source-tail retention, zero-ID destination-tail replacement, last physical slot, character isolation, a full backpack, malformed ownership and runtime drift. The isolated test translation passed C++23 syntax checking; linked and private-backed checks remain for integration. Live house payment, stock lifecycle and required save admission remain guarded.

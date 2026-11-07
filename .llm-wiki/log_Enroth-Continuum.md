@@ -2174,3 +2174,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a test-only MM6 save-load checkpoint after map/actor rebuild and before NPC generation or map events, with a safe abort before timer unpause and input. Linked unit checks passed 4/4.
 - A disposable v2 starter writer and separate real Main Menu QuickLoad child passed 1/1 each; the child reached the checkpoint and aborted with the primary unchanged. An MM7 headless control passed 1/1. No ACTR/GNPC/RNG replay was published.
+
+## [2026-11-07] stage | MM6 v3 full-session preflight
+- by: T-Burton-ND via codex
+- Added a detached v3 stage joining ACTR/native map/CHST, represented Party/NPC/timer/event/inventory/cursor/shop owners, pre-event GNPC/RNG agreement and an Armageddon resume plan. Linked composed tests passed 8/8; no live or disk mutation occurs.
+- A private-backed post-entry retained-DDM probe refused at the live sprite header (0/1). Writer-side map capture must patch or prove those bytes before any v3 atomic file is written; resource and final post-world owner checks remain open.

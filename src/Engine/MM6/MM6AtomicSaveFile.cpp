@@ -26,7 +26,7 @@ namespace {
 
 constexpr std::uintmax_t MAX_SAVE_BYTES = 64 * 1024 * 1024;
 
-enum class SlotSchema { KnownV1, RawV2, FullV3, FullV4 };
+enum class SlotSchema { KnownV1, RawV2, FullV3, FullV4, FullV5 };
 
 class InvalidSaveFile : public std::runtime_error {
  public:
@@ -104,6 +104,22 @@ SaveHeaderFields decodeV4SlotShell(std::span<const std::uint8_t> bytes) {
     return decodeV3SlotShell(encodeSaveContainer(container));
 }
 
+SaveHeaderFields decodeV5SlotShell(std::span<const std::uint8_t> bytes) {
+    SaveContainer container = decodeSaveContainer(bytes);
+    constexpr std::array<char, 4> spriteTag = {'S', 'P', 'R', 'T'};
+    if (container.version != 5 || container.sections.size() != 24)
+        throw std::runtime_error("MM6 v5 slot has wrong version or section count");
+    const auto sprites = std::find_if(container.sections.begin(), container.sections.end(),
+                                      [&spriteTag](const SaveSection &section) {
+                                          return section.tag == spriteTag;
+                                      });
+    if (sprites == container.sections.end() || !sprites->required)
+        throw std::runtime_error("MM6 v5 slot lacks required SPRT");
+    container.sections.erase(sprites);
+    container.version = 4;
+    return decodeV4SlotShell(encodeSaveContainer(container));
+}
+
 std::vector<std::uint8_t> readBoundedFile(const std::filesystem::path &path) {
     const std::uintmax_t fileSize = std::filesystem::file_size(path);
     if (fileSize > MAX_SAVE_BYTES)
@@ -138,11 +154,16 @@ std::vector<std::uint8_t> readValidatedFile(const std::filesystem::path &path,
                 *header = decodeV3SlotShell(bytes);
             else
                 (void) decodeV3SlotShell(bytes);
-        } else {
+        } else if (schema == SlotSchema::FullV4) {
             if (header)
                 *header = decodeV4SlotShell(bytes);
             else
                 (void) decodeV4SlotShell(bytes);
+        } else {
+            if (header)
+                *header = decodeV5SlotShell(bytes);
+            else
+                (void) decodeV5SlotShell(bytes);
         }
     } catch (const std::runtime_error &) {
         throw InvalidSaveFile("MM6 save schema validation failed");
@@ -205,6 +226,14 @@ void requireDisposableV4Destination(const std::filesystem::path &profileRoot,
     if (savesStatus.type() != std::filesystem::file_type::not_found &&
         !std::filesystem::is_directory(savesStatus))
         throw std::invalid_argument("MM6 v4 test saves path is not a native directory");
+}
+
+void requireDisposableV5Destination(const std::filesystem::path &profileRoot,
+                                    std::string_view slotName) {
+    if (slotName != "candidate-v5-after-action.ec6")
+        throw std::invalid_argument("MM6 v5 test writer requires its own candidate slot");
+    // Same owner-only, direct system-temp profile proof as the v4 route.
+    requireDisposableV4Destination(profileRoot, "candidate-v4.ec6");
 }
 
 std::optional<std::string> slotNameFromFile(std::string name) {
@@ -316,8 +345,10 @@ static void writeAtomicSaveFileForSchema(const std::filesystem::path &profileRoo
         (void) decodeRawSave(container, GameTitle::MM6);
     else if (schema == SlotSchema::FullV3)
         (void) decodeV3SlotShell(container);
-    else
+    else if (schema == SlotSchema::FullV4)
         (void) decodeV4SlotShell(container);
+    else
+        (void) decodeV5SlotShell(container);
     const std::filesystem::path directory = savesDirectory(profileRoot, slotName);
     std::filesystem::create_directories(directory);
     const std::filesystem::path primary = directory / std::string(slotName);
@@ -421,6 +452,35 @@ void writeAtomicV4SaveFileForTest(
     std::span<const std::uint8_t> container,
     const SaveCandidateValidator &validate) {
     detail::writeAtomicV4SaveFileForTest(profileRoot, slotName, container,
+                                         validate, {});
+}
+
+void detail::writeAtomicV5SaveFileForTest(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    std::span<const std::uint8_t> container,
+    const SaveCandidateValidator &validate, const AtomicSaveFault &fault) {
+    if (!validate)
+        throw std::invalid_argument("MM6 v5 test write needs a semantic validator");
+    requireDisposableV5Destination(profileRoot, slotName);
+    (void) decodeV5SlotShell(container);
+    validate(container);
+    rejectForeignSlotFiles(profileRoot, slotName, 5);
+    const std::filesystem::path directory = savesDirectory(profileRoot, slotName);
+    for (const std::filesystem::path &path : {
+             directory / std::string(slotName),
+             directory / (std::string(slotName) + ".bak")}) {
+        if (regularFileExists(path))
+            validate(readValidatedFile(path, SlotSchema::FullV5));
+    }
+    writeAtomicSaveFileForSchema(profileRoot, slotName, container,
+                                 SlotSchema::FullV5, fault);
+}
+
+void writeAtomicV5SaveFileForTest(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    std::span<const std::uint8_t> container,
+    const SaveCandidateValidator &validate) {
+    detail::writeAtomicV5SaveFileForTest(profileRoot, slotName, container,
                                          validate, {});
 }
 

@@ -81,6 +81,10 @@ void writeAtomicV4SaveFileForTest(const std::filesystem::path &profileRoot,
                                   std::string_view slotName,
                                   std::span<const std::uint8_t> container,
                                   const SaveCandidateValidator &validate);
+void writeAtomicV5SaveFileForTest(const std::filesystem::path &profileRoot,
+                                  std::string_view slotName,
+                                  std::span<const std::uint8_t> container,
+                                  const SaveCandidateValidator &validate);
 std::optional<SaveFileCandidate> preflightRecoverableV3SaveFile(
     const std::filesystem::path &profileRoot, std::string_view slotName,
     const SaveCandidateValidator &validate);
@@ -128,6 +132,11 @@ void writeAtomicV3SaveFile(const std::filesystem::path &profileRoot, std::string
                            const SaveCandidateValidator &validate,
                            const AtomicSaveFault &fault);
 void writeAtomicV4SaveFileForTest(const std::filesystem::path &profileRoot,
+                                  std::string_view slotName,
+                                  std::span<const std::uint8_t> container,
+                                  const SaveCandidateValidator &validate,
+                                  const AtomicSaveFault &fault);
+void writeAtomicV5SaveFileForTest(const std::filesystem::path &profileRoot,
                                   std::string_view slotName,
                                   std::span<const std::uint8_t> container,
                                   const SaveCandidateValidator &validate,

@@ -23,6 +23,7 @@
 #include "Engine/MM6/MM6ShopTitleState.h"
 #include "Engine/MM6/MM6V3SaveFields.h"
 #include "Engine/MM6/MM6V4SaveFields.h"
+#include "Engine/MM6/MM6V5SaveFields.h"
 #include "Engine/Objects/Actor.h"
 
 namespace {
@@ -143,6 +144,27 @@ std::vector<std::uint8_t> sampleV4(std::uint8_t marker) {
     entry.lastRespawnDay = 1;
     fields.eventRuntime.maps.push_back(entry);
     return mm6::encodeV4Save(fields, GameTitle::MM6);
+}
+
+std::vector<std::uint8_t> sampleV5(std::uint8_t marker) {
+    mm6::V5SaveFields fields;
+    fields.v4.v3 = mm6::decodeV3Save(sampleV3(marker), GameTitle::MM6);
+    std::vector<std::uint8_t> native(8 + 2 * 88 * 11 + 3 * 4 + 200 + 56);
+    fields.v4.v3.raw.metadata.header.mapFileName = "o0.odm";
+    fields.v4.v3.raw.chest.activeDeltaName = "o0.ddm";
+    fields.v4.v3.raw.chest.rawActiveDelta = native;
+    fields.v4.v3.generatedNpcs.mapName = "o0.odm";
+    for (auto &entry : fields.v4.v3.raw.maps.deltas)
+        if (entry.name == "o0.ddm")
+            entry.bytes = native;
+    mm6::EventRuntimeMapEntry event;
+    event.mapName = "o0.odm";
+    event.respawnCount = 1;
+    event.lastRespawnDay = 1;
+    fields.v4.eventRuntime.maps.push_back(event);
+    fields.sprites = mm6::captureSpriteRuntimeFields(
+        "o0.odm", native, std::span<const SpriteObject>{}, GameTitle::MM6);
+    return mm6::encodeV5Save(fields, GameTitle::MM6);
 }
 
 std::vector<std::uint8_t> read(const std::filesystem::path &path) {
@@ -581,5 +603,57 @@ UNIT_TEST(MM6AtomicSaveFile, V4FaultPreservesCandidateAndV2Seed) {
         if (std::filesystem::exists(slot.string() + ".bak"))
             EXPECT_EQ(read(slot.string() + ".bak"), first);
     }
+}
+
+UNIT_TEST(MM6AtomicSaveFile, V5AfterActionSlotKeepsOtherVersionsAndBackup) {
+    TestProfile profile("mm6-restart-");
+    const auto slot = profile.root() / "saves/candidate-v5-after-action.ec6";
+    const auto seed = sampleRaw(80);
+    const auto priorV4 = sampleV4(81);
+    const auto first = sampleV5(82);
+    const auto second = sampleV5(83);
+    const auto accept = [](std::span<const std::uint8_t> bytes) {
+        (void) mm6::decodeV5Save(bytes, GameTitle::MM6);
+    };
+    std::filesystem::create_directories(slot.parent_path());
+    write(profile.root() / "saves/autosave.ec6", seed);
+    write(profile.root() / "saves/candidate-v4.ec6", priorV4);
+    EXPECT_THROW(mm6::writeAtomicV5SaveFileForTest(
+        profile.root(), "candidate-v4.ec6", first, accept), std::exception);
+    EXPECT_THROW(mm6::writeAtomicV5SaveFileForTest(
+        profile.root(), "candidate-v5-after-action.ec6", first, {}), std::exception);
+    mm6::writeAtomicV5SaveFileForTest(
+        profile.root(), "candidate-v5-after-action.ec6", first, accept);
+    EXPECT_EQ(read(slot), first);
+    mm6::writeAtomicV5SaveFileForTest(
+        profile.root(), "candidate-v5-after-action.ec6", second, accept);
+    EXPECT_EQ(read(slot), second);
+    EXPECT_EQ(read(slot.string() + ".bak"), first);
+    EXPECT_EQ(read(profile.root() / "saves/autosave.ec6"), seed);
+    EXPECT_EQ(read(profile.root() / "saves/candidate-v4.ec6"), priorV4);
+    write(slot.string() + ".bak", priorV4);
+    EXPECT_THROW(mm6::writeAtomicV5SaveFileForTest(
+        profile.root(), "candidate-v5-after-action.ec6", first, accept), std::exception);
+    EXPECT_EQ(read(slot), second);
+    EXPECT_EQ(read(slot.string() + ".bak"), priorV4);
+}
+
+UNIT_TEST(MM6AtomicSaveFile, V5FaultPreservesPreviousCandidate) {
+    TestProfile profile("mm6-restart-");
+    const auto first = sampleV5(84);
+    const auto second = sampleV5(85);
+    const auto accept = [](std::span<const std::uint8_t> bytes) {
+        (void) mm6::decodeV5Save(bytes, GameTitle::MM6);
+    };
+    mm6::writeAtomicV5SaveFileForTest(
+        profile.root(), "candidate-v5-after-action.ec6", first, accept);
+    EXPECT_THROW(mm6::detail::writeAtomicV5SaveFileForTest(
+        profile.root(), "candidate-v5-after-action.ec6", second, accept,
+        [](mm6::detail::AtomicSaveStep step) {
+            if (step == mm6::detail::AtomicSaveStep::BeforePrimaryReplace)
+                throw std::runtime_error("v5 injected before replacement");
+        }), std::exception);
+    EXPECT_EQ(read(profile.root() / "saves/candidate-v5-after-action.ec6"), first);
+    EXPECT_EQ(read(profile.root() / "saves/candidate-v5-after-action.ec6.bak"), first);
 }
 #endif

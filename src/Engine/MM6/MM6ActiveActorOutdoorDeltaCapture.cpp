@@ -20,6 +20,7 @@
 #include "MM6ChestRuntimeProjection.h"
 #include "MM6ChestLiveOwnerAdapter.h"
 #include "MM6OutdoorWire.h"
+#include "MM6V5SpriteRuntimeFields.h"
 
 namespace mm6 {
 namespace {
@@ -68,8 +69,9 @@ void requireExactSpriteProjection(const SpriteObject &source,
 
 } // namespace
 
-Blob captureOutdoorDeltaWithActiveActors(const OutdoorLocation &location,
-                                         GameTitle title) {
+static Blob captureOutdoorDeltaImpl(const OutdoorLocation &location,
+                                    std::string_view spriteMapName,
+                                    GameTitle title) {
     if (title != GameTitle::MM6 || pOutdoor != &location ||
         uCurrentlyLoadedLevelType != LEVEL_OUTDOOR || location.mm6DeltaBytes.empty() ||
         location.ddm.respawnCount < 0 || location.ddm.lastRespawnDay <= 0)
@@ -102,23 +104,28 @@ Blob captureOutdoorDeltaWithActiveActors(const OutdoorLocation &location,
     std::memcpy(visibility.data() + 88 * 11,
                 location.uPartiallyRevealedCellOnMap.data(), 88 * 11);
 
-    auto ground = wire.part(OutdoorDeltaPart::GroundItems).subspan(4);
-    for (size_t slot = 0; slot < pSpriteObjects.size(); ++slot) {
-        const SpriteObject &source = pSpriteObjects[slot];
-        auto record = ground.subspan(slot * 100, 100);
-        const SpriteObject_MM7 native = projectMM6GroundItemRecord(record);
-        SpriteObject_MM7 live{};
-        snapshot(source, &live);
-        requireExactSpriteProjection(source, live, slot);
-        const auto *lhs = reinterpret_cast<const std::uint8_t *>(&live);
-        const auto *rhs = reinterpret_cast<const std::uint8_t *>(&native);
-        // MM6 item bytes 26..27 and the ground-item tail are retained opaque.
-        // The current runtime does not own an exact MM6 item record here.
-        if (std::memcmp(lhs + 36, rhs + 36, 26) ||
-            std::memcmp(lhs + 72, rhs + 72, 36))
-            throw std::runtime_error("MM6 active-actor outdoor capture has changed ground item data");
-        std::memcpy(record.data(), lhs, 24);
-        std::memcpy(record.data() + 26, lhs + 26, 10);
+    if (!spriteMapName.empty()) {
+        (void) captureSpriteRuntimeFields(spriteMapName, wire.bytes,
+                                          pSpriteObjects, title);
+    } else {
+        auto ground = wire.part(OutdoorDeltaPart::GroundItems).subspan(4);
+        for (size_t slot = 0; slot < pSpriteObjects.size(); ++slot) {
+            const SpriteObject &source = pSpriteObjects[slot];
+            auto record = ground.subspan(slot * 100, 100);
+            const SpriteObject_MM7 native = projectMM6GroundItemRecord(record);
+            SpriteObject_MM7 live{};
+            snapshot(source, &live);
+            requireExactSpriteProjection(source, live, slot);
+            const auto *lhs = reinterpret_cast<const std::uint8_t *>(&live);
+            const auto *rhs = reinterpret_cast<const std::uint8_t *>(&native);
+            // MM6 item bytes 26..27 and the ground-item tail are retained opaque.
+            // The current runtime does not own an exact MM6 item record here.
+            if (std::memcmp(lhs + 36, rhs + 36, 26) ||
+                std::memcmp(lhs + 72, rhs + 72, 36))
+                throw std::runtime_error("MM6 active-actor outdoor capture has changed ground item data");
+            std::memcpy(record.data(), lhs, 24);
+            std::memcpy(record.data() + 26, lhs + 26, 10);
+        }
     }
 
     const auto chests = wire.part(OutdoorDeltaPart::Chests);
@@ -135,6 +142,18 @@ Blob captureOutdoorDeltaWithActiveActors(const OutdoorLocation &location,
     std::vector<std::uint8_t> encoded = encodeOutdoorDelta(wire);
     (void) decodeMM6OutdoorDelta(Blob::view(encoded.data(), encoded.size()));
     return Blob::copy(encoded.data(), encoded.size());
+}
+
+Blob captureOutdoorDeltaWithActiveActors(const OutdoorLocation &location,
+                                         GameTitle title) {
+    return captureOutdoorDeltaImpl(location, {}, title);
+}
+
+Blob captureOutdoorDeltaWithNativeSpriteAnchors(
+    const OutdoorLocation &location, std::string_view mapName, GameTitle title) {
+    if (mapName.empty())
+        throw std::runtime_error("MM6 v5 native sprite capture needs a map name");
+    return captureOutdoorDeltaImpl(location, mapName, title);
 }
 
 } // namespace mm6

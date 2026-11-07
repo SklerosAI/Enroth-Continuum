@@ -1738,3 +1738,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a detached already-paid transaction across one explicit physical SHOP slot, all four raw character inventories and the selected runtime buyer inventory. It checks baseline raw/runtime agreement, writes the full purchased record and grid to the exact free buyer slot, partially clears stock and replays the resulting raw owner before no-throw publication.
 - Synthetic tests cover source-tail retention, zero-ID destination-tail replacement, last physical slot, character isolation, a full backpack, malformed ownership and runtime drift. The isolated test translation passed C++23 syntax checking; linked and private-backed checks remain for integration. Live house payment, stock lifecycle and required save admission remain guarded.
+
+## [2026-11-06] implement | Optional MM6 vendor entry refresh
+- by: T-Burton-ND via codex
+- Added a title-local `OnEntry` policy to the detached MM6 shop/guild refresh boundary, preserving the default strict deadline policy, two-bank shop order, shared row/deadline and copy-stage rollback.
+- The intended mod flag is `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY=1`; repeated-entry, title isolation and generator-failure tests passed arm64 C++23 syntax checking. Linked integration and the live MM6 house hook remain open, so the mod does not yet change MM6 gameplay.

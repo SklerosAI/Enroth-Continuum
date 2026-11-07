@@ -104,7 +104,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Beacon and Thumbnail Save](MM6-F4-Beacon-Visual-Save.md) — Linked filename-keyed BEAC v1 preserves image bytes and prepares owned CPU pixels while GPU publication remains guarded
 - [MM6 F4 Beacon Renderer Contract](MM6-F4-Beacon-Renderer-Contract.md) — Checked texture creation and controlled cleanup required before live BEAC publication
 - [MM6 F4 Partial Stage Coordinator](MM6-F4-Partial-Stage-Coordinator.md) — Validated 67-map candidate with detached Party, active map, NPC/map and timer/overlay copies
-- [MM6 F4 New Game Autosave](MM6-F4-New-Game-Autosave.md) — Archive-backed New Game and fresh-process detached `.ec6` stage pass; live save/reload stays guarded
+- [MM6 F4 New Game Autosave](MM6-F4-New-Game-Autosave.md) — Archive-backed New Game and isolated fresh-process `.ec6` world entry pass; normal save/reload stays guarded
 - [MM6 F4 First-Map World Rollback](MM6-F4-First-Map-World-Rollback.md) — Temporary `.ec6` to New Sorpigal passes headlessly; full-world rollback and normal SaveLoad remain guarded
 - [MM6 F4 Shop Save Key Matrix](MM6-F4-Shop-Save-Key-Matrix.md) — Retained house-type join versus inherited MM7 shop, guild and bounty save owner ranges
 - [MM6 F4 Shop Guild Clock Save](MM6-F4-Shop-Guild-Clock-Save.md) — SCLK v1 preserves 68 unique original-MM6 shop and guild refresh deadline words
@@ -120,7 +120,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Plain Item Projection](MM6-F4-Plain-Item-Projection.md) — Source-typed detached view of plain MM6 items and gold with exact raw record retained
 - [MM6 F4 Plain Inventory Projection](MM6-F4-Plain-Inventory-Projection.md) — Historical plain-only stage, superseded by the bounded inventory projection
 - [MM6 F4 Bounded Inventory Projection](MM6-F4-Bounded-Inventory-Projection.md) — Current detached 138-slot character inventory stage for plain and standard-bonus records
-- [MM6 F4 Bounded Party Inventory](MM6-F4-Bounded-Party-Inventory.md) — All-four-character raw inventory stage and atomic detached capture; live item provenance remains open
+- [MM6 F4 Bounded Party Inventory](MM6-F4-Bounded-Party-Inventory.md) — All-four-character raw stage plus provisional ITEM v1 capacity correction; live item provenance remains open
 - [MM6 F4 Standard Bonus Map](MM6-F4-Standard-Bonus-Map.md) — Source-backed 14-index standard item bonus map shared with the MM6 table loader
 - [MM6 F4 Standard Item Projection](MM6-F4-Standard-Item-Projection.md) — Detached common-equipment bonus view with raw preservation and safe value arithmetic
 - [MM6 F4 Shop Purchase-Write Gate](MM6-F4-Shop-Purchase-Write-Gate.md) — Linked 28-byte purchase mutation, detached physical SHOP section and joint stock/raw-buyer handoff; live service owner remains open

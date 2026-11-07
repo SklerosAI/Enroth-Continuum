@@ -649,8 +649,9 @@ monitored headless test placed an item in the final MM6 slot and verified that
 the inherited MM7 snapshot rejects this inventory before writing. The full MM6
 headless suite passed **51/51** over 1,513 monitored samples without a visible
 window or focus change, and
-the MM7 control passed **1/1**. Provisional ITEM v1 still cannot save the extra
-slots or raw bytes, so normal MM6 SaveLoad remains guarded.
+the MM7 control passed **1/1**. Provisional ITEM v1 can now save the extra
+logical slots, but still loses native raw bytes, so normal MM6 SaveLoad remains
+guarded.
 
 The inherited MM7 party and character serializers now reject MM6 party or
 138-slot character state at their entry points before destination mutation;
@@ -725,3 +726,16 @@ twenty chests (**1/1**, no visible window or focus change). The prior scoped
 save rollback check still passes **1/1**, and focused NPC codec tests pass
 **5/5**. This does not open the normal MM6 new-game/save/load route or prove
 late world-failure rollback, durable reload or campaign playability.
+
+A further isolated fresh-process GameTest now stages a persisted partial `.ec6`
+from a disposable profile, publishes represented Party/NPC/timer/overlay/map
+cache/chest owners in that test process, and re-enters the first outdoor map
+through `DoPrepareWorld` with actors and twenty chests. The rebuilt monitored
+probe passed **1/1** without a visible window or focus change; disk bytes stayed
+unchanged. Staging uses the loaded MM6 NPC table as the base because static
+name pools are not saved. This is not production `loadGame()`, a complete-owner
+transaction, rendered-state proof or playable campaign. Provisional `ITEM` v1
+now supports the existing 138-slot MM6 runtime inventory, including index 137
+from a fresh 126-slot Party; focused durable-field tests passed **5/5** and
+related save tests **31/31**. Native item bytes and slot transfer semantics
+remain outside that provisional codec.

@@ -33,7 +33,7 @@ struct DurableEffects {
 };
 
 struct DurableItem {
-    std::uint8_t sourceIndex = 0; // Original CharacterInventory record index, 0..125.
+    std::uint8_t sourceIndex = 0; // MM6 CharacterInventory record index, 0..137.
     std::uint8_t zone = 0;        // 1 grid, 2 equipment.
     std::uint8_t x = 0;
     std::uint8_t y = 0;

@@ -66,7 +66,7 @@ DurableSaveFields captureDurableFields(const Party &party, GameTitle title) {
                 character.conditions.get(static_cast<Condition>(condition)).ticks();
 
         for (InventoryConstEntry entry : character.inventory.entries()) {
-            if (entry.index() >= 126)
+            if (entry.index() >= 138)
                 throw std::runtime_error("MM6 inventory record index exceeds save limit");
             DurableItem item;
             item.sourceIndex = entry.index();
@@ -126,7 +126,7 @@ Party stageDurableParty(const Party &live, std::span<const std::uint8_t> bytes, 
     applyBitsAndConditions(fields, &staged);
     for (size_t index = 0; index < staged.pCharacters.size(); ++index) {
         CharacterInventory &inventory = staged.pCharacters[index].inventory;
-        inventory.clear();
+        inventory = CharacterInventory::forMM6();
         for (const DurableItem &source : fields.inventory.characters[index]) {
             if (source.itemId < 1 || source.itemId > 580 ||
                 source.standardEnchantment > std::to_underlying(ATTRIBUTE_LAST_ENCHANTABLE) ||

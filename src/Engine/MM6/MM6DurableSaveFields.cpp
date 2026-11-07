@@ -17,7 +17,7 @@ constexpr std::uint8_t VERSION = 1;
 constexpr size_t QEST_SIZE = 1 + 64 + 26 + 4 * 64 + 4 * 64;
 constexpr size_t EFFT_SIZE = 1 + 4 * 19 * 8;
 constexpr size_t ITEM_RECORD_SIZE = 49;
-constexpr size_t MAX_ITEM_SIZE = 2 + 4 * (1 + 126 * ITEM_RECORD_SIZE);
+constexpr size_t MAX_ITEM_SIZE = 2 + 4 * (1 + 138 * ITEM_RECORD_SIZE);
 
 class Reader {
  public:
@@ -77,7 +77,7 @@ void putBytes(std::vector<std::uint8_t> *bytes, const std::array<std::uint8_t, N
 }
 
 void validateItem(const DurableItem &item) {
-    if (item.sourceIndex >= 126 || item.itemId <= 0 || item.itemId > 65535 ||
+    if (item.sourceIndex >= 138 || item.itemId <= 0 || item.itemId > 65535 ||
         item.standardEnchantment < -1 || item.standardEnchantment > 255 ||
         item.specialEnchantment > 65535 || item.charges < 0 || item.maxCharges < 0 ||
         item.expirationTicks < 0)
@@ -100,9 +100,9 @@ void validate(const DurableSaveFields &fields) {
                 throw std::runtime_error("negative MM6 condition timestamp");
 
     for (const auto &inventory : fields.inventory.characters) {
-        if (inventory.size() > 126)
+        if (inventory.size() > 138)
             throw std::runtime_error("MM6 character inventory exceeds count limit");
-        std::array<bool, 126> recordSeen{};
+        std::array<bool, 138> recordSeen{};
         std::array<bool, 17> slotSeen{};
         for (const DurableItem &item : inventory) {
             validateItem(item);
@@ -205,7 +205,7 @@ DurableInventory decodeItems(std::span<const std::uint8_t> bytes) {
     DurableInventory result;
     for (auto &inventory : result.characters) {
         const size_t count = reader.u8();
-        if (count > 126)
+        if (count > 138)
             throw std::runtime_error("MM6 inventory count exceeds limit");
         inventory.reserve(count);
         for (size_t i = 0; i < count; ++i) {

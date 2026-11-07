@@ -13,4 +13,6 @@ Each character must satisfy the [bounded inventory projection](MM6-F4-Bounded-In
 
 The [item value carrier](MM6-F4-Item-Value-Provenance.md) now retains raw source bytes across ordinary shared `Item` copies, but this detached stage still rejects moved or removed records until physical slot mutation and complete owner semantics are defined.
 
+The provisional known-save `ITEM` v1 codec now accepts logical records at indices **0–137**, matching the existing MM6 runtime capacity. A fresh default Party starts with 126-slot inventories, so `stageDurableParty()` replaces each staged inventory with a 138-slot MM6 owner before restoring items. A focused encode/decode and fresh-Party stage test passes for index 137 and rejects 138. This fixes a capacity mismatch only: `ITEM` v1 still loses native 28-byte record provenance and is not the final physical `INVR` schema or a reason to open normal MM6 SaveLoad.
+
 See also: [Raw Inventory Section](MM6-F4-Raw-Inventory-Section.md), [Bounded Inventory Projection](MM6-F4-Bounded-Inventory-Projection.md), [Item Value Provenance](MM6-F4-Item-Value-Provenance.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

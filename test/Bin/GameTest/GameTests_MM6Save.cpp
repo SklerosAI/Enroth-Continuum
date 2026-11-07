@@ -37,6 +37,7 @@
 #include "Engine/Tables/OverlayTable.h"
 #include "GUI/GUIMessageQueue.h"
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/UIGame.h"
 
 namespace {
 
@@ -522,6 +523,84 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_RestartSlotStagesDetachedFirstMap) {
     ASSERT_TRUE(completed);
     ASSERT_TRUE(error.empty()) << error;
     EXPECT_TRUE(stagedCorrectly);
+    EXPECT_EQ(readFile(primary), before);
+    EXPECT_EQ(window->nativeHandle(), nullptr);
+}
+
+// Run in a disposable fresh process after the two tests above. This probes
+// live reentry from the partial new-game slot; it must never become loadGame's
+// production commit path without completing every owner and rollback gate.
+GAME_TEST(MM6ZSaveHeadless, DISABLED_RestartSlotEntersFirstOutdoorWorld) {
+    const auto profileRoot = restartProfileRoot();
+    if (!profileRoot)
+        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to a disposable system-temp directory";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    ASSERT_NE(pGUIWindow_CurrentMenu, nullptr);
+    ASSERT_EQ(pGUIWindow_CurrentMenu->eWindowType, WINDOW_PARTY_CREATION);
+    const std::filesystem::path primary = *profileRoot / "saves" / "autosave.ec6";
+    ASSERT_TRUE(std::filesystem::is_regular_file(primary));
+    const auto before = readFile(primary);
+
+    bool completed = false;
+    bool enteredWorld = false;
+    std::string error;
+    game.runGameRoutine([&] {
+        try {
+            const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
+            Party freshParty;
+            // Saved NPC fields overlay the freshly loaded source tables;
+            // name pools and other static resources are not EC6 fields.
+            NPCStats freshNpcs = *pNPCStats;
+            Timer freshTimer;
+            ActiveOverlayList freshOverlays;
+            const auto verifyItem = [](std::int32_t id) {
+                return id >= 1 && id <= 580 &&
+                    !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
+            };
+            auto staged = mm6::stageOfflineSaveSlotForTest(
+                *profileRoot, mm6::NEW_GAME_AUTOSAVE_SLOT, freshParty, freshNpcs,
+                freshTimer, freshOverlays, maps.expectedNames(),
+                [&maps](std::string_view name) { return maps.readBase(name); },
+                verifyItem, pOverlayTable->overlays.size(), GameTitle::MM6);
+            if (!staged || staged->needsRecovery)
+                throw std::runtime_error("MM6 restart slot did not stage a primary candidate");
+            const auto plan = mm6::prepareDetachedOutdoorWorldPlan(
+                staged->staged.worldAndVisuals, GameTitle::MM6);
+            if (plan.mapName != "oute3.odm")
+                throw std::runtime_error("MM6 restart slot selected another first map");
+
+            *pParty = std::move(staged->staged.party);
+            *pNPCStats = std::move(staged->staged.worldAndVisuals.world.npcs);
+            *gameTimer = std::move(staged->staged.worldAndVisuals.visuals.timer);
+            *pActiveOverlayList = std::move(staged->staged.worldAndVisuals.visuals.overlays);
+            pMapDeltas = std::move(staged->staged.worldAndVisuals.world.mapDeltas);
+            mm6::chestTitleState() = std::move(staged->staged.worldAndVisuals.chestTitle);
+            GameUI_LoadPlayerPortraitsAndVoices();
+            current_screen_type = SCREEN_GAME;
+            engine->_pendingTransition = MapDestination(
+                pMapTable->GetMapInfo("oute3.odm"), MAP_START_POINT_PARTY);
+            engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
+            {
+                mm6::ScopedChestMapLoadOptIn chestOptIn;
+                DoPrepareWorld(/* bLoading = */ true, /* fullscreen = */ 1);
+            }
+            enteredWorld = engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute3.odm") &&
+                uCurrentlyLoadedLevelType == LEVEL_OUTDOOR && !pOutdoor->faces.empty() &&
+                !pActors.empty() && vChests.size() == 20 && pMapDeltas.size() == 67 &&
+                mm6::chestTitleState().ready && pParty->pos.z == 340;
+        } catch (const std::exception &exception) {
+            error = exception.what();
+        }
+        completed = true;
+    });
+    for (int tick = 0; tick < 256 && !completed; ++tick)
+        game.tick();
+    ASSERT_TRUE(completed);
+    ASSERT_TRUE(error.empty()) << error;
+    EXPECT_TRUE(enteredWorld);
     EXPECT_EQ(readFile(primary), before);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }

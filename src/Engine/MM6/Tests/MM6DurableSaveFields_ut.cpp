@@ -7,6 +7,7 @@
 #include "Engine/MM6/MM6DurableSaveFields.h"
 #include "Engine/MM6/MM6ItemIconGuard.h"
 #include "Engine/Objects/Inventory.h"
+#include "Engine/Party.h"
 #include "Engine/Tables/ItemTable.h"
 
 namespace {
@@ -60,6 +61,46 @@ UNIT_TEST(MM6DurableSaveFields, BitConditionAndItemRoundTrip) {
     mm6::DurableSaveFields destination;
     mm6::loadDurableFieldsBeforeMutation(bytes, &destination);
     EXPECT_EQ(destination, source);
+}
+
+UNIT_TEST(MM6DurableSaveFields, HighestMM6RecordStagesFromFreshParty) {
+    ItemTable localTable;
+    ItemTable *previous = pItemTable;
+    struct RestoreTable {
+        ItemTable *previous;
+        ~RestoreTable() { pItemTable = previous; }
+    } restore{previous};
+    pItemTable = &localTable;
+    localTable.items[ITEM_CRUDE_LONGSWORD].iconName = "present";
+    localTable.itemSizes[ITEM_CRUDE_LONGSWORD] = Sizei(2, 1);
+
+    Party source;
+    source.pCharacters[0].inventory = CharacterInventory::forMM6();
+    Item item;
+    item.itemId = ITEM_CRUDE_LONGSWORD;
+    ASSERT_TRUE(source.pCharacters[0].inventory.tryRestoreAt(137, Pointi(0, 0), item));
+    const mm6::DurableSaveFields fields = mm6::captureDurableFields(source, GameTitle::MM6);
+    ASSERT_EQ(fields.inventory.characters[0].size(), 1u);
+    EXPECT_EQ(fields.inventory.characters[0][0].sourceIndex, 137);
+    const auto bytes = mm6::encodeSaveContainer(containerFor(fields));
+    EXPECT_EQ(mm6::decodeDurableSections(mm6::decodeSaveContainer(bytes)), fields);
+
+    Party fresh;
+    ASSERT_EQ(fresh.pCharacters[0].inventory.capacity(), 126);
+    Party staged = mm6::stageDurableParty(fresh, bytes, GameTitle::MM6);
+    EXPECT_EQ(fresh.pCharacters[0].inventory.capacity(), 126);
+    EXPECT_EQ(staged.pCharacters[0].inventory.capacity(), 138);
+    bool retainedHighRecord = false;
+    for (const auto &entry : staged.pCharacters[0].inventory.entries())
+        retainedHighRecord |= entry.index() == 137 && entry->itemId == ITEM_CRUDE_LONGSWORD;
+    EXPECT_TRUE(retainedHighRecord);
+
+    mm6::DurableSaveFields outOfRange = fields;
+    outOfRange.inventory.characters[0][0].sourceIndex = 138;
+    EXPECT_THROW((void) mm6::encodeDurableSections(outOfRange), std::exception);
+    mm6::SaveContainer malformed = containerFor(fields);
+    malformed.sections[2].payload[2] = 139;
+    EXPECT_THROW((void) mm6::decodeDurableSections(malformed), std::exception);
 }
 
 UNIT_TEST(MM6DurableSaveFields, RejectsInvalidFieldsBeforeDestinationMutation) {

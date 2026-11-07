@@ -45,6 +45,8 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6V3SaveFields.cpp MM6V3SaveFields.h
     MM6V3OutdoorActorMapAgreement.cpp MM6V3OutdoorActorMapAgreement.h
     MM6V3FullSessionPreflight.cpp MM6V3FullSessionPreflight.h
+    MM6EventRuntimeSaveFields.cpp MM6EventRuntimeSaveFields.h
+    MM6V4SaveFields.cpp MM6V4SaveFields.h
     MM6ActiveActorOutdoorDeltaCapture.cpp MM6ActiveActorOutdoorDeltaCapture.h
     MM6IndoorWorldPlan.cpp MM6IndoorWorldPlan.h
     MM6WorldSaveRuntime.cpp MM6WorldSaveRuntime.h
@@ -207,6 +209,8 @@ if(OE_BUILD_TESTS)
         Tests/MM6V3SaveFields_ut.cpp
         Tests/MM6V3OutdoorActorMapAgreement_ut.cpp
         Tests/MM6V3FullSessionPreflight_ut.cpp
+        Tests/MM6EventRuntimeSaveFields_ut.cpp
+        Tests/MM6V4SaveFields_ut.cpp
         Tests/MM6IndoorWorldPlan_ut.cpp
         Tests/MM6HirelingRecoveryV2Stage_ut.cpp
         Tests/MM6FirstMapCombatTransientTransaction_ut.cpp

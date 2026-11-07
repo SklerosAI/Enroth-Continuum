@@ -2470,3 +2470,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Redacted owner-specific MM6 inventory summaries in the current tree while preserving actionable engine constants. The local integration branch still has earlier detailed notes in Git history.
 - Recorded that publication requires a separate history-aware audit; the redactions alone do not authorize pushing the integration branch to the public SklerosAI remote.
+
+## [2026-11-07] verify | Disposable MM7 save and reload
+- by: T-Burton-ND via codex
+- Added exact-filter, headless MM7 GameTests with a marked owner-only temporary disk profile. The local-only writer and separate fresh-process normal-menu reader each passed 1/1; the loaded map and test-only Party state matched and the save bytes stayed unchanged.
+- Wrong-filter and unexpected-profile-entry checks refused before startup, and two ordinary MM7 headless controls passed. All disposable profiles were removed. This does not accept the staged Atlas helper or visible play/save/reload.

@@ -13,6 +13,7 @@
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MM6/MM6Archive.h"
+#include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6IndoorFaceLiveOwner.h"
 #include "Engine/MM6/MM6IndoorFaceOverrides.h"
 #include "Engine/MM6/MM6LoadedMapSource.h"
@@ -23,6 +24,7 @@
 #include "Engine/Snapshots/MM6IndoorSnapshot.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Tables/MapTable.h"
+#include "GUI/GUIWindow.h"
 
 namespace {
 
@@ -58,6 +60,10 @@ GAME_TEST(MM6IndoorPreEventFaceOwner, DISABLED_CapturesRebuiltFaceBaselineBefore
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     ASSERT_EQ(window->nativeHandle(), nullptr);
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    ASSERT_NE(pGUIWindow_CurrentMenu, nullptr);
+    ASSERT_EQ(pGUIWindow_CurrentMenu->eWindowType, WINDOW_PARTY_CREATION);
     const Source source = indoorSource();
     const MapId map = pMapTable->GetMapInfo(source.name);
     ASSERT_NE(map, MAP_INVALID);
@@ -75,7 +81,6 @@ GAME_TEST(MM6IndoorPreEventFaceOwner, DISABLED_CapturesRebuiltFaceBaselineBefore
     std::vector<mm6::IndoorFaceState> baseline;
     std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
     game.runGameRoutine([&] {
-        pParty->Reset();
         engine->_pendingTransition = MapDestination(map, MAP_START_POINT_PARTY);
         engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
         checkpoint = std::make_unique<mm6::testing::ScopedPreEventCheckpointForTest>(
@@ -93,6 +98,7 @@ GAME_TEST(MM6IndoorPreEventFaceOwner, DISABLED_CapturesRebuiltFaceBaselineBefore
             },
             mm6::testing::PreEventCheckpointResult::AbortToMainMenu);
         try {
+            mm6::ScopedChestMapLoadOptIn chestOptIn;
             DoPrepareWorld(true, 1);
         } catch (const mm6::testing::PreEventCheckpointAbortForTest &) {
             aborted = true;

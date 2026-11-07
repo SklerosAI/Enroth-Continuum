@@ -26,6 +26,14 @@ The pinned source-license audit identified primary licenses and bundled-componen
 6. Atlas and direct Mac helper source now use explicit private Enroth Continuum MM7 data and fresh profile defaults, including Vault and transfer paths. Before switching the installed app, copy and hash-check the owner's existing data and distinct save roots locally under the [collision-safe cutover](MM7_RUNTIME_PATH_CUTOVER.md); retain legacy roots for rollback. Do not put proprietary files or saves in Git.
 7. Audit the installed app's user-facing name, bundle metadata, Atlas text, CLI defaults, configuration, caches, logs and save paths. Present the finished Mac helper as Enroth Continuum/MM7 and migrate inherited OpenEnroth runtime locations without losing existing saves. Keep historical OpenEnroth names in attribution and provenance; internal source identifiers can be renamed separately when safe.
 
+The clean public source preview is published at the SklerosAI remote as
+`codex/mm7-public-preview` (commit `d76afb519`). It descends from the public
+MM7 baseline, contains owned dependency source and MM7 Mac build, launcher and
+runtime changes, and excludes the integration branch's MM6 research history.
+A fresh tracked-source extraction of that preview completed the one-command
+MM7 and Atlas build with networking denied. A separate remote clone, visible
+staged-app save/reload and installed-app cutover remain open.
+
 The completion claim means a fresh clone can configure, compile and package the **Mac MM7 engine and its required non-system build inputs** with networking disabled, without an OpenEnroth checkout, release archive, submodule origin or build-time URL. Atlas and MM7 use Enroth Continuum's explicit private data/profile paths for launch, saves and transfer. A retained `upstream` Git remote may still be used deliberately to review later changes; it is not consulted by the build or runtime. The Apple toolchain/SDK and the owner's lawfully obtained GOG game files remain external by design. OpenEnroth history, license, notices and contributor credit remain permanent provenance, not build dependencies.
 
 See [the implementation plan](plan.md) and [upstream relationship](UPSTREAM.md).

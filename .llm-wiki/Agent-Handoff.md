@@ -28,6 +28,10 @@ The integration branch is local and contains older commits with detailed
 private-derived research notes. Current-tree redactions do not clean Git
 history. Follow the [source and privacy boundary](Source-and-Privacy-Boundary.md)
 and audit a separate publication branch before pushing to the public remote.
+The separate MM7-only `codex/mm7-public-preview` branch has now been audited,
+built from a clean tracked-source extraction under network denial, and pushed
+to the SklerosAI remote at `d76afb519`; it excludes the integration branch's
+MM6 research history. Its staged app has not replaced the installed helper.
 
 ## Current F4 checkpoint — 2026-11-06
 

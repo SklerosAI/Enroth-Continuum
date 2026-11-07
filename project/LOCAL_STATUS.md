@@ -863,3 +863,10 @@ fields on one detached copy. Focused raw/effect/hireling-recovery checks passed
 The [full-session owner-gap packet](MM6_F4_V2_FULL_SESSION_OWNER_GAP.md) now
 separates this Party stage from NPC/map/timer/CHST staging and lists the
 remaining BEAC/IFOV, cursor/shop, active-world and UI admission gates.
+
+A read-only v2 session-field coordinator now selects the native primary or
+backup only after represented Party and NPC/map/timer/CHST staging succeeds.
+The linked atomic/raw/effect/hireling set passed **20/20**. One structurally
+valid primary with an unsupported late item fell back to its valid backup;
+both-invalid candidates refused, and disk bytes stayed unchanged. This does
+not admit a playable slot or open normal MM6 loading.

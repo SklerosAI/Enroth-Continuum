@@ -37,6 +37,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6RecoverySaveRuntime.cpp MM6RecoverySaveRuntime.h MM6MapSaveValidation.cpp MM6MapSaveValidation.h
     MM6WorldSaveRuntime.cpp MM6WorldSaveRuntime.h
     MM6RawSaveRuntime.cpp MM6RawSaveRuntime.h
+    MM6RawSessionStage.cpp MM6RawSessionStage.h
     MM6RawPartyInventoryStage.cpp MM6RawPartyInventoryStage.h
     MM6NewGameSaveRuntime.cpp MM6NewGameSaveRuntime.h
     MM6FirstMapWorldTransaction.h

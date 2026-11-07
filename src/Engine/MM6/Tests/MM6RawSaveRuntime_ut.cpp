@@ -14,6 +14,7 @@
 #include "Engine/MM6/MM6RawSaveRuntime.h"
 #include "Engine/MM6/MM6AtomicSaveFile.h"
 #include "Engine/MM6/MM6WorldSaveRuntime.h"
+#include "Engine/MM6/MM6RawSessionStage.h"
 #include "Engine/Pid.h"
 
 #ifndef _WIN32
@@ -365,5 +366,44 @@ UNIT_TEST(MM6RawSaveRuntime, NativeSlotPreflightStagesSemanticBackupWithoutRepai
         std::exception);
     EXPECT_FALSE(mm6::preflightStagedRawSaveSlot(
         profile.root(), "save002.ec6", names, syntheticBase, validItem, GameTitle::MM6));
+}
+
+UNIT_TEST(MM6RawSaveRuntime, FullRepresentedPreflightFallsBackAfterLatePartyFailure) {
+    ItemTableScope table;
+    TestProfile profile;
+    const auto good = exampleRaw();
+    const auto names = namesOf(good);
+    const auto goodBytes = mm6::encodeRawSave(good, GameTitle::MM6);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", goodBytes);
+    auto bad = good;
+    bad.inventory.characters[0].items[137].setWord(12, 4);
+    const auto badBytes = mm6::encodeRawSave(bad, GameTitle::MM6);
+    mm6::writeAtomicRawSaveFile(profile.root(), "save001.ec6", badBytes);
+
+    Party freshParty;
+    NPCStats freshNpcs;
+    Timer freshTimer;
+    ActiveOverlayList freshOverlays;
+    auto selected = mm6::preflightStagedRawSessionFields(
+        profile.root(), "save001.ec6", freshParty, freshNpcs, freshTimer,
+        freshOverlays, names, syntheticBase, validItem, *table.table, 5,
+        GameTitle::MM6);
+    ASSERT_TRUE(selected);
+    EXPECT_TRUE(selected->needsRecovery);
+    ASSERT_TRUE(selected->party.party.pCharacters[0].inventory.entry(137));
+    EXPECT_EQ(selected->party.party.pCharacters[0].inventory.entry(137)->itemId,
+              static_cast<ItemId>(10));
+    EXPECT_EQ(selected->world.world.mapDeltas.size(), 67);
+    EXPECT_EQ(readBytes(profile.primary()), badBytes);
+    EXPECT_EQ(readBytes(profile.backup()), goodBytes);
+    EXPECT_FALSE(freshParty.pCharacters[0].inventory.entry(137));
+
+    writeBytes(profile.backup(), badBytes);
+    EXPECT_THROW((void) mm6::preflightStagedRawSessionFields(
+        profile.root(), "save001.ec6", freshParty, freshNpcs, freshTimer,
+        freshOverlays, names, syntheticBase, validItem, *table.table, 5,
+        GameTitle::MM6), std::exception);
+    EXPECT_EQ(readBytes(profile.primary()), badBytes);
+    EXPECT_EQ(readBytes(profile.backup()), badBytes);
 }
 #endif

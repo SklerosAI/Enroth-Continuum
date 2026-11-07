@@ -587,6 +587,30 @@ GAME_TEST(Issues, Issue674) {
     EXPECT_EQ(healthTape.delta(), +5);
 }
 
+GAME_TEST(Issues, Issue1988_ArtifactLimitOnLevelSeven) {
+    game.startNewGame();
+    engine->config->gameplay.ArtifactLimit.setValue(2);
+
+    Item first;
+    ASSERT_TRUE(first.GenerateArtifact());
+    EXPECT_TRUE(isSpawnableArtifact(first.itemId));
+    EXPECT_TRUE(pParty->isArtifactGenerated[first.itemId]);
+
+    Item second;
+    ASSERT_TRUE(second.GenerateArtifact());
+    EXPECT_TRUE(isSpawnableArtifact(second.itemId));
+    EXPECT_NE(second.itemId, first.itemId);
+    EXPECT_TRUE(pParty->isArtifactGenerated[second.itemId]);
+
+    Item third;
+    EXPECT_FALSE(third.GenerateArtifact());
+    EXPECT_EQ(third.itemId, ITEM_NULL);
+    int generated = 0;
+    for (ItemId id : allSpawnableArtifacts())
+        generated += pParty->isArtifactGenerated[id];
+    EXPECT_EQ(generated, 2);
+}
+
 GAME_TEST(Issues, Issue675) {
     // generateItem used to generate invalid enchantments outside of the [0, 24] range in some cases.
     // Also, generateItem used to assert.

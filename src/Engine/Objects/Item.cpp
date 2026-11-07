@@ -232,19 +232,27 @@ std::string Item::GetIdentifiedName() const {
 
 //----- (004505CC) --------------------------------------------------------
 bool Item::GenerateArtifact() {
-    signed int uNumArtifactsNotGenerated;  // esi@1
+    int uNumArtifactsNotGenerated;  // esi@1
+    int artifactsGenerated = 0;
     std::array<ItemId, 32> artifacts_list;
 
     artifacts_list.fill(ITEM_NULL);
     uNumArtifactsNotGenerated = 0;
 
-    for (ItemId i : allSpawnableArtifacts())
-        if (!pParty->isArtifactGenerated[i])
+    for (ItemId i : allSpawnableArtifacts()) {
+        if (pParty->isArtifactGenerated[i]) {
+            ++artifactsGenerated;
+        } else {
             artifacts_list[uNumArtifactsNotGenerated++] = i;
+        }
+    }
 
     Reset();
-    if (uNumArtifactsNotGenerated) {
+    const int artifactLimit = engine->config->gameplay.ArtifactLimit.value();
+    if (uNumArtifactsNotGenerated &&
+        (artifactLimit == 0 || artifactsGenerated < artifactLimit)) {
         itemId = artifacts_list[grng->random(uNumArtifactsNotGenerated)];
+        pParty->isArtifactGenerated[itemId] = true;
         return true;
     } else {
         return false;

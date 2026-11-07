@@ -38,7 +38,14 @@ session with GNPC/RNGS/EVRT, native indoor actor/sprite/decoration anchors and
 an optional nonempty IFOV section. It accepts 25 sections without changed
 faces or 26 with IFOV, preserves v1–v5 decoding, and sets
 `canEnterGameLoop=false`. Container, v6 stage and atomic-slot focused checks
-passed **25/25**. This is detached synthetic staging; a real private indoor
-stage probe, live save/write and fresh-child replay are still open.
+passed **25/25**. A separate real-data probe used a disposable v2 seed and
+loaded one retained BLV/DLV through the actual pre-event checkpoint. It
+constructed an indoor v6 candidate in memory, validated its native owner
+anchors and controlled IFOV change, and kept the seed bytes unchanged; both
+headless children passed **1/1**. Its first attempt crashed on the narrow
+GTest-thread stack while staging large raw owners. Running the detached stage
+on the established game thread resolved that test-only stack boundary. It
+still sets `canEnterGameLoop=false`; atomic v6 write, fresh-child replay and
+graphical face behavior remain open.
 
 See [indoor face persistence gate](MM6_F4_INDOOR_FACE_PERSISTENCE_GATE.md), [known save sections](MM6_EC6_MAP_FIELDS_F4.md), and [atomic save](MM6_ATOMIC_SAVE_F4.md).

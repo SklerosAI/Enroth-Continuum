@@ -1156,7 +1156,11 @@ captured the real face baseline immediately before `OnMapReload` (**1/1**).
 These checks do not publish a live indoor save. A strict, detached indoor v6
 shell now stages raw v2 with native owner anchors and optional IFOV while
 explicitly refusing gameplay admission; its focused container/stage/atomic
-suite passed **25/25**. A private real-data stage, live write and fresh-child
-replay remain open. The first-map v5 no-write capture was extracted into an
-engine service and the corrected seven-process disposable chain passed again,
+suite passed **25/25**. A fresh v2 seed and separate real-data indoor v6 stage
+then passed **1/1** each headlessly: the stage built an in-memory candidate
+from a loaded BLV/DLV and pre-event face baseline, verified native owner
+anchors, kept the seed bytes unchanged and refused gameplay admission. An
+atomic v6 write and fresh-child replay remain open. The first-map v5 no-write
+capture was extracted into an engine service and the corrected seven-process
+disposable chain passed again,
 each child **1/1**. The installed MM7 helper and its profile remain untouched.

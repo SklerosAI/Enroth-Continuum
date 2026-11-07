@@ -30,7 +30,11 @@ A strict detached EC6 v6 indoor shell now stages raw v2 with GNPC/RNGS/EVRT,
 native actor/sprite/decoration anchors and optional nonempty IFOV. It accepts
 25 sections without changed faces or 26 with IFOV and explicitly refuses
 gameplay admission. The focused container, v6 stage and atomic suite passed
-**25/25**. This supersedes the earlier open schema design but leaves real
-private-data staging, live write and fresh-child indoor replay unproved.
+**25/25**. A fresh disposable v2 seed and separate real-data indoor v6 stage
+then passed **1/1** each. The stage used the actual pre-event face baseline,
+constructed a candidate only in memory, checked its native anchors and kept
+seed bytes unchanged. The earlier test-thread stack crash was resolved by
+staging on the established game thread. Atomic v6 write, live publication,
+fresh-child indoor replay and graphical acceptance remain open.
 
 See also: [MM6 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md), [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), and [implementation packet](../project/MM6_F4_INDOOR_FACE_OVERRIDE_SECTION.md).

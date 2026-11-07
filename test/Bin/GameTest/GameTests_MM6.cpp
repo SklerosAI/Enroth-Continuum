@@ -25,6 +25,7 @@
 #include "Engine/MM6/MM6Archive.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6EncounterMonster.h"
+#include "Engine/MM6/MM6PlainInventoryProjection.h"
 #include "Engine/MM6/MM6PlainItemProjection.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/mm7_data.h"
@@ -186,6 +187,22 @@ GAME_TEST(MM6Headless, PlainItemProjectionUsesMM6TableTypes) {
     ASSERT_TRUE(gold);
     EXPECT_EQ(gold->sourceType, ITEM_TYPE_GOLD);
     EXPECT_EQ(gold->item.goldAmount, 79);
+
+    mm6::RawCharacterInventory inventoryRaw;
+    inventoryRaw.items[137].setWord(0, 221);
+    inventoryRaw.items[137][27] = 0xa5;
+    const Sizei scrollSize = pItemTable->itemSizes[static_cast<ItemId>(221)];
+    ASSERT_GT(scrollSize.w, 0);
+    ASSERT_GT(scrollSize.h, 0);
+    ASSERT_LE(scrollSize.w, 14);
+    ASSERT_LE(scrollSize.h, 9);
+    for (int y = 0; y < scrollSize.h; ++y)
+        for (int x = 0; x < scrollSize.w; ++x)
+            inventoryRaw.gridWords[y * 14 + x] = (x == 0 && y == 0) ? 138 : 0xffffffffu;
+    auto projectedInventory = mm6::stagePlainInventory(inventoryRaw, *pItemTable, GameTitle::MM6);
+    ASSERT_TRUE(projectedInventory);
+    EXPECT_EQ(projectedInventory->inventory().entry(137)->itemId, static_cast<ItemId>(221));
+    EXPECT_EQ(mm6::capturePlainInventory(*projectedInventory, *pItemTable, GameTitle::MM6), inventoryRaw);
 }
 
 GAME_TEST(MM6Headless, FirstOutdoorResourcePreflight) {

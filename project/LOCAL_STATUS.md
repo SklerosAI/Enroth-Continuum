@@ -663,3 +663,11 @@ all 28 original bytes. It rejects unmapped bonus unions and has no live owner.
 Linked raw-item/inventory/projection checks passed **6/6**; a monitored MM6
 headless loaded-table category check passed **1/1** without a visible window
 or focus change. This does not make any item-bearing MM6 save route playable.
+
+A detached [plain inventory projection](MM6_F4_PLAIN_INVENTORY_PROJECTION.md)
+now stages one physical 138-slot MM6 character region with exact grid and
+equipment replay, retaining unreferenced raw records. It rejects unsupported
+item records, creation, removal and equipment changes. Linked focused checks
+passed **8/8**; a monitored loaded-table MM6 headless footprint check passed
+**1/1** over 75 samples with no visible window or focus change. No live Party
+raw owner or normal MM6 SaveLoad route has been opened.

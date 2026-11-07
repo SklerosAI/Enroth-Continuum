@@ -2406,3 +2406,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added the exact FFmpeg, SDL3, OpenAL Soft, libpng and zlib-ng source revisions selected by the historical Mac dependency release. The tracked manifest records origin commits and archive hashes; all 11,835 regular archive files were byte-compared, including 84 files initially hidden by ignore rules.
 - Updated the source-autonomy packet, inventory, status and wiki. No source-build recipe is connected yet; the cached-input MM7 link, local-only refusal and installed app remain unchanged.
+
+## [2026-11-07] verify | Nineteen owned MM7 source inputs
+- by: T-Burton-ND via codex
+- Converted pinned GLM, Dear ImGui and optional cpplint gitlinks to tracked source. All 2,007 original Git blobs and modes match their former submodule commits; upstream licenses, bundled notices and Enroth provenance notes remain. Four gitlinks remain.
+- Focused GLM and Dear ImGui C++ syntax checks and cpplint Python syntax passed in an isolated worktree. The latest three inputs still need an integrated MM7 link after merge. Nested fetches and the prebuilt dependency archive still block a clean offline build; installed apps and private profiles were untouched.

@@ -33,4 +33,13 @@ focus change. This samples one deterministic creation draw; other possible
 ring outcomes and original native record parity remain unproved. See the
 implementation packet for the test seam and exact limits.
 
+The subsequent two-process native v2 test wrote the sampled real creation
+Party to `autosave.ec6` under a validated owner-only disposable system-temp
+profile, then selected and staged that exact slot in a fresh null-renderer
+process without publishing live owners or changing disk bytes. Writer and
+reader each passed **1/1**; host monitors saw zero on-screen game windows and
+no focus change (28 and 11 samples). The temporary profile was removed.
+Live v2 publication, gameplay reload, original item-record byte parity and
+other random creation draws remain open.
+
 See also: [New Game Autosave](MM6-F4-New-Game-Autosave.md), [Raw Save Runtime](MM6-F4-Raw-Save-Runtime.md), [Raw Cursor Owner](MM6-F4-Raw-Cursor-Owner.md).

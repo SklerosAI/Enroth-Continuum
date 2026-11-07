@@ -1269,3 +1269,18 @@ copies and clamps an old-map Party position without changing live state.
 Its focused linked border suite passed **11/11**. It always refuses a disk
 checkpoint; visited-map runtime ownership, durable write outcomes and live
 border travel remain open.
+
+The [second-outdoor no-write border candidate](MM6_F4_BORDER_AUTOSAVE_TRANSACTION.md)
+then passed a fresh three-process seed, v4 baseline and later-outdoor writer
+chain (**1/1 each**). It checked an in-memory old-map Party copy and v5
+owner agreement against a synthetic edge position without writing a border
+slot or changing live Party core. Actual edge movement, visited-map ownership
+and durable autosave remain gated.
+
+The [all-source indoor sweep](MM6_F4_INDOOR_SOURCE_SWEEP.md) parsed and exactly
+round-tripped every retained MM6 indoor BLV/default-DLV pair. A risk-ranked
+additional case passed a real-loader pre-event identity check but its full
+v6 writer correctly refused a signed actor NPC identity before candidate
+creation. The two established five-child indoor replay chains and an MM7
+control still passed. Negative actor NPC ID semantics and generated/follower
+owner joins must be proved before broadening general indoor saves.

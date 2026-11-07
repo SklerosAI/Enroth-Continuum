@@ -13,11 +13,12 @@ durable. The current DDM writer rejects actor count changes and copies only
 selected changed runtime fields from original actors into retained native
 records. Other actor changes can be omitted.
 
-A disposable fresh-process headless full-list capture using the current
-runtime section refused with `missing-mm6-resistance` (0/1); the spawned-only
-first-map capture passed 1/1. The baseline native projection does not fill
-that optional runtime resistance field for every actor. This is a guarded
-finding, not a reason to invent default values.
+A disposable fresh-process headless full-list capture initially refused with
+`missing-mm6-resistance`. The MM6 loader now restores the exact six-byte
+tuple from each native actor record; its focused test passed 1/1. The same
+full-list probe advanced to an `identity` refusal (0/1), still under audit;
+the spawned-only first-map capture passed 1/1. No default resistance or
+relaxed actor identity was used.
 
 The [detached v3 manifest](MM6-F4-EC6-V3-Manifest.md) remains a container
 candidate only. A full active-actor owner with exact native provenance, or

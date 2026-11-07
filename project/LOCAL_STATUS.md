@@ -983,3 +983,9 @@ A disposable full-list runtime capture refused `missing-mm6-resistance`
 the spawned-only capture remains **1/1**. SPAW-only v3 is therefore a
 structural candidate, not a durable gameplay schema. Exact baseline actor
 provenance or an exhaustive refusal gate is required before live use.
+
+The MM6 outdoor loader now restores each baseline actor's exact six native
+resistance bytes after reconstruction; a focused two-actor override test
+passed **1/1**. The full-list headless capture progressed beyond its
+`missing-mm6-resistance` refusal and now stops at `identity` (**0/1**),
+under source audit. The spawned-only capture remains the proven narrow case.

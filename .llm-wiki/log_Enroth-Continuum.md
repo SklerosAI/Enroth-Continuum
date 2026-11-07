@@ -2212,3 +2212,9 @@ Chronological record of wiki activity.
 - EVRT inner payload v2 adds exact position bits, yaw and trigger range to each decoration binding and rejects unpublished v1. A focused same-type position-swap case now refuses; linked container/codec/restore checks passed 12/12, superseding the earlier identity gap.
 - A detached outdoor-only v4 full-session stage joins the represented v3 owners with active EVRT map, respawn anchors and caller-supplied rebuilt decorations. Its linked positive/refusal suite passed 4/4. A disposable v2 writer and fresh-child no-write v4 candidate each passed 1/1 with the v2 primary unchanged.
 - No v4 slot was written or reloaded. Writer-side complete capture, final live-owner checks, production SaveLoad and Atlas Play remain closed.
+
+## [2026-11-07] verify | MM6 disposable v4 first-map reload
+- by: T-Burton-ND via codex
+- A strict opt-in sequence passed in three separate headless processes: v2 seed, atomic v4 candidate writer, and fresh-child Main Menu QuickLoad reader, each 1/1. The reader checked source-backed decoration flags, exact event arrays/native bytes, ACTR/GNPC/RNGS, chest item provenance and represented session owners, then aborted before input; both slots were unchanged.
+- Marker-free replay now uses a test-only validated chest projection that preserves the saved CHST LCG and DDM bytes while attaching exact MM6 raw item records. Focused chest route checks passed 8 with one private-reference skip; focused v4 full-session/atomic checks passed 8/8 and an MM7 headless control passed 1/1.
+- This is one disposable first-map reload boundary. First input, a post-action second write, indoor/later-map reload and production SaveLoad/Atlas remain closed.

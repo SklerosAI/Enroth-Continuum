@@ -1658,3 +1658,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a bounded stage from physical MM6 item, grid and equipment records into one 138-slot runtime inventory. It preserves unreferenced raw bytes, requires exact index-table replay and pins source types; capture permits grid moves and bounded item changes but rejects missing, new or newly equipped records.
 - Linked focused checks passed 8/8 and a monitored loaded-table MM6 headless footprint check passed 1/1 over 75 samples. Party ownership, full item semantics and normal SaveLoad remain gated.
+
+## [2026-11-06] implement | MM6 standard bonus index map
+- by: T-Burton-ND via codex
+- Centralized the 14 original one-based MM6 item-bonus indices and shared runtime attributes, including electricity/cold/poison to air/water/body, and made the MM6 item-table loader use that array.
+- The private-backed MM6/LOD aggregate passed 352/352, non-MM6-prefix unit checks 438/438 and a monitored loaded-table MM6 headless control 1/1. The plain raw-item adapter still rejects nonzero bonuses pending strength/category semantics.

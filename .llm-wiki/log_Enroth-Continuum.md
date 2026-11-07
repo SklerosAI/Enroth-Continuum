@@ -2558,3 +2558,8 @@ Chronological record of wiki activity.
 - Staged a read-only return plan from the source-backed visited map, keeping the current active-map global chest LCG/artifact ledger while selecting the visited native DDM and runtime owners. Missing Party arrival produces a typed refusal; publication and checkpoint writing stay false.
 - The fresh-child v6 reader checked the plan before and after active-map rebuild without changing Party, global chest state or the old-map cache. A fresh five-child seed, v4, existing v5 control, v6 writer and v6 reader chain passed 1/1 in every process; the disposable profile was removed.
 - Normal location change calls `DoPrepareWorld(false)`, while the existing test replay hooks run only on fresh `DoPrepareWorld(true)`. Arrival/terrain, safe return replay and rollback must be proved before publishing visited state.
+
+## [2026-11-07] correct | MM6 native signed actor NPC load
+- by: T-Burton-ND via codex
+- Corrected the earlier fixed negative follower-link interpretation. GrayFace's MM6 structure reference and a bounded owner-only executable trace show that an ineligible native actor's nonzero NPC marker is cleared during map load; eligible nonzero markers use a separate positive StreetNPC index. Exact private actor and executable details remain in the ignored local research packet.
+- Added an MM6-only signed-to-zero runtime rule while preserving original DLV/IACR bytes, plus a strict IART and test-only GNPC replay join. Eligible nonzero StreetNPC generation refuses pending its title-specific mapping. Three indoor five-child chains passed 15/15, focused units 13/13, risk pre-event and all-source sweep 1/1 each, and MM7 control 1/1. Real dialogue/hire-fire, general indoor play and production SaveLoad remain open.

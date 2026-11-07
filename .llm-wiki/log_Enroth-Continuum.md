@@ -1683,3 +1683,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The detached standard-equipment adapter now rejects artifact/relic templates and bonus strengths that would overflow the shared integer price calculation, including multiplication before addition. No live equipment or MM7 path changed.
 - A separate arm64 build passed focused standard-item, bonus-map and bounded-inventory checks 6/6. Native item evidence, title-specific artifact effects and modded armor gameplay remain open.
+
+## [2026-11-06] implement | MM6 item value provenance carrier
+- by: T-Burton-ND via codex
+- Added an optional 28-byte MM6 raw record to shared `Item` values; bounded plain and common standard adapters attach it and reject missing or replaced provenance on capture. MM7 wire reconstruction clears it.
+- Linked focused checks passed 13/13, general non-MM6 units 438/438, monitored MM7 headless save/load 1/1 and MM6 loaded-table headless 2/2 without visible windows or focus changes. Physical slot clearing, unique item identity, live item producers and final SaveLoad remain open.

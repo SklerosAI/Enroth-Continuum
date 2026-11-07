@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -29,6 +31,7 @@
 #include "Engine/MM6/MM6LoadedMapSource.h"
 #include "Engine/MM6/MM6NpcStaticBaseline.h"
 #include "Engine/MM6/MM6NpcSaveFields.h"
+#include "Engine/MM6/MM6OutdoorWire.h"
 #include "Engine/MM6/MM6PersistentEventPublication.h"
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
 #include "Engine/MM6/MM6PostWorldOwnerValidator.h"
@@ -256,6 +259,18 @@ GAME_TEST(MM6V3PostEntryCandidateHeadless, DISABLED_FirstMapFullSessionPreflight
                             pTileTable->tileCount(), pActors.size(), random->type(),
                             GameTitle::MM6);
                         stage = "persistent-event-join";
+                        const auto expectedEvents = mm6::capturePersistentEventBoundary(
+                            preflight.represented.persistentEvents, GameTitle::MM6);
+                        const auto liveWire = mm6::decodeOutdoorDelta(pOutdoor->mm6DeltaBytes);
+                        const auto liveEvents = liveWire.part(mm6::OutdoorDeltaPart::PersistentBytes);
+                        if (!std::ranges::equal(expectedEvents, liveEvents))
+                            throw std::runtime_error("event delta bytes changed");
+                        if (std::ranges::any_of(engine->_persistentVariables.mapVars,
+                                                [](std::uint8_t value) { return value != 0; }))
+                            throw std::runtime_error("event legacy map owner changed");
+                        if (std::ranges::any_of(engine->_persistentVariables.decorVars,
+                                                [](std::uint8_t value) { return value != 0; }))
+                            throw std::runtime_error("event legacy decor owner changed");
                         mm6::requirePostMapPersistentEvents(
                             preflight.represented.persistentEvents, pOutdoor->mm6DeltaBytes,
                             engine->_persistentVariables, GameTitle::MM6);
@@ -263,9 +278,16 @@ GAME_TEST(MM6V3PostEntryCandidateHeadless, DISABLED_FirstMapFullSessionPreflight
                         refusalClass = "pass";
                     } catch (const std::exception &error) {
                         const std::string_view message = error.what();
-                        if (stage == "persistent-event-join")
-                            refusalClass = "persistent-event-join";
-                        else if (message.find("generated NPC") != std::string_view::npos ||
+                        if (stage == "persistent-event-join") {
+                            if (message.find("delta bytes") != std::string_view::npos)
+                                refusalClass = "event-delta";
+                            else if (message.find("legacy map") != std::string_view::npos)
+                                refusalClass = "event-legacy-map";
+                            else if (message.find("legacy decor") != std::string_view::npos)
+                                refusalClass = "event-legacy-decor";
+                            else
+                                refusalClass = "persistent-event-join";
+                        } else if (message.find("generated NPC") != std::string_view::npos ||
                             message.find("GNPC") != std::string_view::npos)
                             refusalClass = "generated-npc";
                         else if (message.find("inventory") != std::string_view::npos ||

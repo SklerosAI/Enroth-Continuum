@@ -1283,3 +1283,12 @@ additional case now preserves its signed native actor identity outside the
 generated-NPC rows and passes a third five-child test-only v6 replay chain.
 All three chains and an MM7 control pass. Follower dialogue semantics,
 production SaveLoad and general indoor play remain open.
+
+The later [detached outdoor v6 visited-map schema](MM6_F4_BORDER_AUTOSAVE_TRANSACTION.md)
+supersedes the missing-section part of the border notes above. A no-write
+three-process transition fixture round-tripped first- and second-map runtime
+capsules in versioned `VIST` while preserving the active v5 bytes; malformed
+and cross-map data refused. The second-map capsule was captured after world
+preparation and before input. No v6 file was written or loaded, and live
+return, durable result policy, production SaveLoad and border travel remain
+closed.

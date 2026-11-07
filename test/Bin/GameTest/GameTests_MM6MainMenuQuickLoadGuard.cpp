@@ -57,9 +57,13 @@ GAME_TEST(MM6MainMenuQuickLoadGuard, DISABLED_PresentDisposableEc6SlotStaysInMen
     const std::string fileName = getCurrentQuickSave();
     ASSERT_TRUE(fileName.ends_with(".ec6"));
     const auto directory = profile / "saves";
-    ASSERT_FALSE(std::filesystem::exists(directory));
-    std::filesystem::create_directory(directory);
+    const bool madeDirectory = !std::filesystem::exists(directory);
+    if (madeDirectory)
+        std::filesystem::create_directory(directory);
+    ASSERT_TRUE(std::filesystem::is_directory(directory));
+    ASSERT_FALSE(std::filesystem::is_symlink(std::filesystem::symlink_status(directory)));
     const auto slot = directory / fileName;
+    ASSERT_FALSE(std::filesystem::exists(slot));
     constexpr std::array<char, 4> marker = {'E', 'C', '6', '!'};
     {
         std::ofstream output(slot, std::ios::binary);
@@ -88,5 +92,6 @@ GAME_TEST(MM6MainMenuQuickLoadGuard, DISABLED_PresentDisposableEc6SlotStaysInMen
     EXPECT_TRUE(ufs->exists("saves/" + fileName));
     EXPECT_EQ(std::filesystem::file_size(slot), marker.size());
     std::filesystem::remove(slot);
-    std::filesystem::remove(directory);
+    if (madeDirectory)
+        std::filesystem::remove(directory);
 }

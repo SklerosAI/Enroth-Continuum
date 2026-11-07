@@ -183,6 +183,12 @@ void writeAtomicV5SaveFileForTest(const std::filesystem::path &profileRoot,
                                   std::span<const std::uint8_t> container,
                                   const SaveCandidateValidator &validate,
                                   const AtomicSaveFault &fault);
+// Low-level fault seam for the separate native first-map slot policy. It does
+// not establish an authorized profile root; the policy must do that first.
+void writeAtomicV5FirstMapNativeSaveFileForTest(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    std::span<const std::uint8_t> container,
+    const SaveCandidateValidator &validate, const AtomicSaveFault &fault);
 void writeAtomicV6OutdoorSaveFileForTest(
     const std::filesystem::path &profileRoot, std::string_view slotName,
     std::span<const std::uint8_t> container,

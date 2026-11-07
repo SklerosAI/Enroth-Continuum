@@ -17,6 +17,7 @@
 
 #include "Engine/MM6/MM6AtomicSaveFile.h"
 #include "Engine/MM6/MM6V5FirstMapSaveWriter.h"
+#include "Engine/MM6/MM6V5FirstMapNativeSlotPolicy.h"
 #include "Engine/MM6/MM6ActiveActorSection.h"
 #include "Engine/MM6/MM6KnownSaveFields.h"
 #include "Engine/MM6/MM6RawSaveFields.h"
@@ -200,6 +201,101 @@ void write(const std::filesystem::path &path, const std::vector<std::uint8_t> &b
 } // namespace
 
 #ifndef _WIN32
+UNIT_TEST(MM6AtomicSaveFile, NativeFirstMapSlotRefusesRootAndCollision) {
+    TestProfile profile;
+    const auto root = std::filesystem::canonical(profile.root());
+    const mm6::V5FirstMapNativeRoot binding{root, root};
+    const auto first = sampleFirstMapV5(120);
+    const auto otherMap = sampleV5(121);
+    const auto accept = [](std::span<const std::uint8_t>) {};
+    const auto slot = root / "saves/save001.ec6";
+    const auto backup = root / "saves/save001.ec6.bak";
+    const auto stage = [&](const mm6::V5FirstMapNativeRoot &source,
+                           std::string_view name = "save001.ec6",
+                           GameTitle title = GameTitle::MM6) {
+        return mm6::preflightV5FirstMapNativeWriteSlot(
+            source, name, first, title, accept);
+    };
+    EXPECT_FALSE(stage(binding).primary);
+    EXPECT_THROW((void) stage({root, root / "other"}), std::exception);
+    EXPECT_THROW((void) stage(binding, "quicksave0.ec6"), std::exception);
+    EXPECT_THROW((void) stage(binding, "save001.mm7"), std::exception);
+    EXPECT_THROW((void) stage(binding, "save001.ec6", GameTitle::MM7), std::exception);
+    EXPECT_THROW((void) mm6::preflightV5FirstMapNativeWriteSlot(
+        binding, "save001.ec6", first, GameTitle::MM6, {}), std::exception);
+    EXPECT_FALSE(std::filesystem::exists(root / "saves"));
+
+    std::filesystem::create_directory(root / "saves");
+    write(slot, sampleV4(122));
+    EXPECT_THROW((void) stage(binding), std::exception);
+    EXPECT_EQ(read(slot), sampleV4(122));
+    write(slot, otherMap);
+    EXPECT_THROW((void) stage(binding), std::exception);
+    EXPECT_EQ(read(slot), otherMap);
+    write(slot, {1, 2, 3});
+    EXPECT_THROW((void) stage(binding), std::exception);
+    EXPECT_EQ(read(slot), (std::vector<std::uint8_t>{1, 2, 3}));
+    std::filesystem::remove(slot);
+    write(backup, first);
+    EXPECT_THROW((void) stage(binding), std::exception);
+    EXPECT_EQ(read(backup), first);
+    std::filesystem::remove(backup);
+    write(slot, first);
+    EXPECT_EQ(stage(binding).primary, first);
+    EXPECT_FALSE(stage(binding).backup);
+    write(backup, {1, 2, 3});
+    EXPECT_THROW((void) stage(binding), std::exception);
+    EXPECT_EQ(read(slot), first);
+    EXPECT_EQ(read(backup), (std::vector<std::uint8_t>{1, 2, 3}));
+    std::filesystem::remove(backup);
+    std::filesystem::remove(slot);
+    std::filesystem::remove(root / "saves");
+    std::filesystem::create_directory_symlink(root, root / "saves");
+    EXPECT_THROW((void) stage(binding), std::exception);
+}
+
+UNIT_TEST(MM6AtomicSaveFile, NativeFirstMapSlotClassifiesAtomicFaults) {
+    TestProfile profile;
+    const auto root = std::filesystem::canonical(profile.root());
+    const mm6::V5FirstMapNativeRoot binding{root, root};
+    const auto first = sampleFirstMapV5(123);
+    const auto next = sampleFirstMapV5(124);
+    const auto uncertain = sampleFirstMapV5(125);
+    const auto accept = [](std::span<const std::uint8_t>) {};
+    const auto slot = root / "saves/save001.ec6";
+    const auto backup = root / "saves/save001.ec6.bak";
+    using Outcome = mm6::V5FirstMapSaveOutcome;
+    EXPECT_EQ(mm6::writeV5FirstMapNativeCandidateForTest(
+        binding, "save001.ec6", first, GameTitle::MM6, accept),
+        Outcome::Committed);
+    EXPECT_EQ(read(slot), first);
+    EXPECT_FALSE(std::filesystem::exists(backup));
+
+    EXPECT_EQ(mm6::writeV5FirstMapNativeCandidateForTest(
+        binding, "save001.ec6", next, GameTitle::MM6, accept,
+        [](mm6::detail::AtomicSaveStep step) {
+            if (step == mm6::detail::AtomicSaveStep::BeforePrimaryReplace)
+                throw std::runtime_error("injected precommit fault");
+        }), Outcome::NoNewPrimaryNeedsPreflight);
+    EXPECT_EQ(read(slot), first);
+    EXPECT_EQ(read(backup), first);
+
+    EXPECT_EQ(mm6::writeV5FirstMapNativeCandidateForTest(
+        binding, "save001.ec6", next, GameTitle::MM6, accept),
+        Outcome::Committed);
+    EXPECT_EQ(read(slot), next);
+    EXPECT_EQ(read(backup), first);
+
+    EXPECT_EQ(mm6::writeV5FirstMapNativeCandidateForTest(
+        binding, "save001.ec6", uncertain, GameTitle::MM6, accept,
+        [](mm6::detail::AtomicSaveStep step) {
+            if (step == mm6::detail::AtomicSaveStep::AfterPrimaryReplaceBeforeDirectorySync)
+                throw std::runtime_error("injected post-rename fault");
+        }), Outcome::IndeterminateNeedsPreflight);
+    EXPECT_EQ(read(slot), uncertain);
+    EXPECT_EQ(read(backup), next);
+}
+
 UNIT_TEST(MM6AtomicSaveFile, InitialReplaceAndRecoverPrevious) {
     TestProfile profile;
     std::vector<std::uint8_t> old = sample(1);

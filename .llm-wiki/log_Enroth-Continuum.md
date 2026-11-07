@@ -1877,3 +1877,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Corrected the assembly packet and wiki after the native v2 slot boundary landed: structural v2 write/list/preflight exists, while the test-only New Game writer remains v1.
 - Detached Party inventory and semantic backup selection are available, but the complete live session and normal MM6 menu/load route remain guarded.
+
+## [2026-11-06] verify | MM6 real game-loop load probe
+- by: T-Burton-ND via codex
+- A disposable v1 writer and separate loader reached the real MM6 Main Menu QuickLoad to `Game::loop()`/`gameLoop()` route through explicit test-only overrides. Each monitored process passed 1/1 with no visible window or focus change; the loader checked world entry, movement and unchanged slot bytes.
+- The MM7 all-map headless control passed 1/1 after shared hook integration. Normal MM6 SaveLoad/menu and complete v2 publication remain guarded.

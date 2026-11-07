@@ -739,3 +739,14 @@ now supports the existing 138-slot MM6 runtime inventory, including index 137
 from a fresh 126-slot Party; focused durable-field tests passed **5/5** and
 related save tests **31/31**. Native item bytes and slot transfer semantics
 remain outside that provisional codec.
+
+Three further MM6 F4 primitives are integrated: a title-local raw SHOP/SCLK
+process owner with detached joint stage and no-throw publication; a bounded
+four-character backpack item-event removal that clears physical bytes 0–24
+and occupied grid cells while preserving opaque tails; and a detached 127×127
+outdoor tile-ID projection that shares its local-to-global mapping with the
+live terrain loader. Focused linked world/item/shop tests passed **18/18**.
+Separate hidden processes wrote a temporary `.ec6` and re-entered the first
+outdoor world from it (**1/1** each, no visible window or focus change). None
+of these changes opens production house/event/save/load paths or proves a
+failure-atomic outdoor/resource commit. The temporary profile was removed.

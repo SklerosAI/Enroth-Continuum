@@ -106,7 +106,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Beacon Renderer Contract](MM6-F4-Beacon-Renderer-Contract.md) — Checked texture creation and controlled cleanup required before live BEAC publication
 - [MM6 F4 Partial Stage Coordinator](MM6-F4-Partial-Stage-Coordinator.md) — Validated 67-map candidate with detached Party, active map, NPC/map and timer/overlay copies
 - [MM6 F4 New Game Autosave](MM6-F4-New-Game-Autosave.md) — Archive-backed New Game and isolated fresh-process `.ec6` world entry pass; normal save/reload stays guarded
-- [MM6 F4 First-Map World Rollback](MM6-F4-First-Map-World-Rollback.md) — Temporary `.ec6` to New Sorpigal passes headlessly; full-world rollback and normal SaveLoad remain guarded
+- [MM6 F4 First-Map World Rollback](MM6-F4-First-Map-World-Rollback.md) — Detached terrain ID preflight and temporary `.ec6` world reentry pass; full-world rollback remains guarded
 - [MM6 F4 Shop Save Key Matrix](MM6-F4-Shop-Save-Key-Matrix.md) — Retained house-type join versus inherited MM7 shop, guild and bounty save owner ranges
 - [MM6 F4 Shop Guild Clock Save](MM6-F4-Shop-Guild-Clock-Save.md) — SCLK v1 preserves 68 unique original-MM6 shop and guild refresh deadline words
 - [MM6 F4 Shop Refresh PE Trace](MM6-F4-Shop-Refresh-PE-Trace.md) — Original row-keyed refresh and raw Party-block save proof, with stock tuple boundary still open
@@ -114,7 +114,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Shop Owner Field Gate](MM6-F4-Shop-Owner-Field-Gate.md) — Title-local stock/clock process owner passes detached staging; house and known-save wiring remain gated
 - [MM6 F4 Shop Item Record Conversion Gate](MM6-F4-Shop-Item-Record-Conversion-Gate.md) — Original 28-byte stock fields cannot yet map reversibly into the inherited 36-byte MM7 item
 - [MM6 F4 Raw Item Authority](MM6-F4-Raw-Item-Authority.md) — Byte-preserving MM6 item owner for proven contexts; provisional ITEM/HELD schemas need revision
-- [MM6 F4 Raw Item Transfer Semantics](MM6-F4-Raw-Item-Transfer-Semantics.md) — Source-backed first-25-byte clears, full cursor/shop copies and still-open equipment/UI moves
+- [MM6 F4 Raw Item Transfer Semantics](MM6-F4-Raw-Item-Transfer-Semantics.md) — Detached four-owner backpack item-event removal preserves raw tails; equipment/UI moves remain open
 - [MM6 F4 Item Value Provenance](MM6-F4-Item-Value-Provenance.md) — Optional raw source record follows shared Item value copies; live ownership remains open
 - [MM6 F4 Ground Item Raw Projection](MM6-F4-Ground-Item-Raw-Projection.md) — Detached exact map sprite/item bytes with source-typed bounded view; live pickup and loot remain guarded
 - [MM6 F4 Raw Inventory Section](MM6-F4-Raw-Inventory-Section.md) — Detached INVR v1 preserves 138 physical item records and raw index words per character

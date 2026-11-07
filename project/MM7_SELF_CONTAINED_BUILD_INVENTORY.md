@@ -4,14 +4,16 @@ Status: **read-only local inventory**, 2026-11-06, Enroth Continuum source `9ae5
 
 Migration update, 2026-11-07: `thirdparty/generator`, `fast_float`,
 `magic_enum`, `mio`, `small_vector`, `cmrc`, `cli11`, `fmt`, `spdlog`, `sol2`,
-`googletest`, `gtest_parallel`, `luajit-cmake` and `luajit`
+`googletest`, `gtest_parallel`, `luajit-cmake`, `luajit` and `lambda2`
 are now ordinary repository-owned source snapshots at their former gitlink
-revisions. Their original files matched the pinned Git blobs (1,988 files
-across the fourteen snapshots), and full original licenses and Enroth provenance
-notes are retained.
+revisions. Their original files matched the pinned Git blobs (2,023 files
+across the fifteen snapshots), and full licenses and Enroth provenance
+notes are retained. Boost.Lambda2's pinned tree named BSL-1.0 but lacked
+its full text; the official Boost license text is separately added and
+identified in its provenance note.
 Network-disconnected standalone source builds/runs passed.
 The table below remains the historical 23-gitlink inventory; the current
-repository has **9 gitlinks**. The integration Mac MM7 target builds with the
+repository has **8 gitlinks**. The integration Mac MM7 target builds with the
 tracked source snapshots, using its existing cached prebuilt libraries;
 GoogleTest and `gtest_parallel` are optional test inputs.
 The remaining gitlinks, nested fetches and prebuilt-library families still
@@ -23,13 +25,13 @@ The title-locked `MM7.app` is declared in [`src/Bin/OpenEnroth/CMakeLists.txt`](
 
 Three network boundaries are distinct:
 
-1. [`CMakeModules/Git.cmake`](../CMakeModules/Git.cmake) runs `git submodule update --init --recursive` unconditionally in the normal configure path when Git is found. This can contact the remaining 9 Git origins in [`.gitmodules`](../.gitmodules), even if the requested target is only MM7. A failed update is not checked there. The opt-in local-only configure path skips that update.
+1. [`CMakeModules/Git.cmake`](../CMakeModules/Git.cmake) runs `git submodule update --init --recursive` unconditionally in the normal configure path when Git is found. This can contact the remaining 8 Git origins in [`.gitmodules`](../.gitmodules), even if the requested target is only MM7. A failed update is not checked there. The opt-in local-only configure path skips that update.
 2. [`CMakeModules/Dependencies.cmake`](../CMakeModules/Dependencies.cmake) downloads `https://github.com/OpenEnroth/OpenEnroth_Dependencies/releases/download/deps_r8_master/darwin_Debug_arm64.zip` if the marker ZIP is absent. The code does not specify an expected content hash; an existing ZIP skips download. `OE_USE_PREBUILT_DEPENDENCIES=OFF` instead requires ZLIB, FFmpeg, SDL3, OpenAL Soft and PNG to be found elsewhere and does not itself make the build repo-contained.
 3. The Mac [`thirdparty/CMakeLists.txt`](../thirdparty/CMakeLists.txt) includes cpptrace and ztd.text. cpptrace can fetch libdwarf-lite; ztd.text's own CMake fetches six projects by floating `main` branch. The seven cached `_deps/*-src` directories below show what this local configure resolved. Additional conditional ztd benchmark/docs fetches are present in its source but were not active in this build.
 
 ## Pinned Git submodules
 
-Each row was a gitlink recorded by the original inventory snapshot, with its origin then in `.gitmodules`. The SHA is the full former gitlink commit; the size is the checked-out tree at inventory time (`du -sk`, rounded MiB), **not** an expected Git pack size. The fourteen rows named in the migration update are now repo-owned source at those same revisions. License labels are readings of the checked-out file named after the semicolon; keep each full file and attribution when migrating. “App configure” means this Mac CMake path adds or includes the source even when the MM7 link itself uses only headers or a subset of its targets. `cpplint`, GoogleTest and `gtest_parallel` are style/test inputs, not required to link a production MM7-only target, but the current normal configure still requests them. The owned LuaJIT CMake recipe reads a recorded committer timestamp from the owned LuaJIT source, producing the same generated version header without a nested Git repository.
+Each row was a gitlink recorded by the original inventory snapshot, with its origin then in `.gitmodules`. The SHA is the full former gitlink commit; the size is the checked-out tree at inventory time (`du -sk`, rounded MiB), **not** an expected Git pack size. The fifteen rows named in the migration update are now repo-owned source at those same revisions. License labels are readings of the checked-out file named after the semicolon; keep each full file and attribution when migrating. “App configure” means this Mac CMake path adds or includes the source even when the MM7 link itself uses only headers or a subset of its targets. `cpplint`, GoogleTest and `gtest_parallel` are style/test inputs, not required to link a production MM7-only target, but the current normal configure still requests them. The owned LuaJIT CMake recipe reads a recorded committer timestamp from the owned LuaJIT source, producing the same generated version header without a nested Git repository.
 
 | Path under `thirdparty/` | Origin in `.gitmodules` | Gitlink SHA | Local MiB | License evidence; role |
 | --- | --- | --- | ---: | --- |
@@ -45,7 +47,7 @@ Each row was a gitlink recorded by the original inventory snapshot, with its ori
 | `gtest_parallel` | `google/gtest-parallel` | `96f4f904922f9bf66689e749c40f314845baaac8` | 0.1 | Apache-2.0; `LICENSE`; test runner scripts |
 | `imgui/imgui` | `ocornut/imgui` | `b48d1afbe8ee8b238e2961dc363a949dd7304e23` | 8.9 | MIT; `LICENSE.txt`; linked through tracked ImGui wrapper |
 | `inifile_cpp` | `Rookfighter/inifile-cpp` | `7bb1ec3534768e0d1fd9893d01027468b72af5ec` | 4.8 | MIT; `LICENSE.txt`; app configure/header target |
-| `lambda2` | `boostorg/lambda2` | `dddfec608515f5a4f51f86d9b8efc01c7ad816cc` | 0.2 | BSL-1.0; `doc/lambda2/copyright.adoc`; utility target |
+| `lambda2` | `boostorg/lambda2` | `dddfec608515f5a4f51f86d9b8efc01c7ad816cc` | 0.2 | BSL-1.0; `doc/lambda2/copyright.adoc` names it; full `LICENSE_1_0.txt` added separately from official Boost source; utility target |
 | `luajit` | `LuaJIT/LuaJIT` | `97813fb924edf822455f91a5fbbdfdb349e5984f` | 4.7 | MIT-style; `COPYRIGHT`; linked app archive |
 | `luajit-cmake` | `zhaozg/luajit-cmake` | `64462217e05164b46ca44c10ed1d12918eee8fa5` | 0.2 | MIT; `LICENSE`; LuaJIT build recipe |
 | `magic_enum` | `Neargye/magic_enum` | `d01a4f90a63444e910e66c796b93df25abffcfe0` | 0.9 | MIT; `LICENSE`; app configure/header target |

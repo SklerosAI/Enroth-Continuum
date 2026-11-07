@@ -79,7 +79,16 @@ inline void requireV6IndoorNativeResidualsForTest(
     for (std::size_t slot = 0; slot < native.doors.size(); ++slot) {
         BLVDoor_MM7 live{};
         snapshot(pIndoor->doors[slot], &live);
-        if (std::memcmp(&live, &native.doors[slot], sizeof(live)) != 0)
+        const auto &source = native.doors[slot];
+        // Native pointer words and padding are retained verbatim in the DLV;
+        // the loader reconstructs their runtime aliases from doorsData.
+        if (live.attributes != source.attributes || live.doorId != source.doorId ||
+            live.timeSinceTriggered != source.timeSinceTriggered ||
+            live.direction != source.direction || live.moveLength != source.moveLength ||
+            live.openSpeed != source.openSpeed || live.closeSpeed != source.closeSpeed ||
+            live.numVertices != source.numVertices || live.numFaces != source.numFaces ||
+            live.numSectors != source.numSectors || live.numOffsets != source.numOffsets ||
+            live.state != source.state)
             throw std::runtime_error("MM6 v6 indoor door runtime lacks exact DLV owner");
     }
 }

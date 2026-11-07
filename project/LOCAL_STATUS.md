@@ -4,7 +4,7 @@ This is a personal-machine validation note. It contains no game assets.
 
 ## MM6 update — 2026-11-06
 
-The historical MM6 snapshot below predates the current F4 work. The separate arm64 MM6 branch now passes **44/44** monitored headless game tests and captures a test-only hidden OpenGL first-map frame without an on-screen window or focus change. Four portraits, aligned health/mana bars, source-color foliage, sky and buildings render. Authored MM6 map tile selector bases removed an inherited cyan/red placeholder; ground then rendered black because land and water were allocated to the same GPU texture unit. A title-scoped renderer fix is in progress. MM6 still has no accepted playable campaign, normal save/load, real save–quit–relaunch–load cycle or Atlas Play button. The installed and frozen MM7 baseline remains separate.
+The historical MM6 snapshot below predates the current F4 work. The separate arm64 MM6 branch captures a test-only hidden OpenGL first-map frame with four portraits, health/mana bars, foliage, sky, buildings and road art. A fresh owner-only capture passed its scoped headless check without an on-screen window or focus change. Current pale terrain is likely a month-zero seasonal grass-to-snow mapping; original MM6 season behavior is still unproved. The latest integrated bounded raw item and cursor candidates pass 20/20 focused linked tests, with 438/438 non-MM6 unit controls. MM6 still has no accepted playable campaign, normal save/load, real save–quit–relaunch–load cycle or Atlas Play button. The installed and frozen MM7 baseline remains separate.
 
 ## MM7: playable on this M2 Mac
 

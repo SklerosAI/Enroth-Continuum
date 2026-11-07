@@ -235,21 +235,25 @@ void requireV5FirstMapLiveSessionAgreement(
 }
 
 void requireV5FirstMapPostWorldAgreement(
-    const V5FullSessionPreflight &staged) {
+    const V5FullSessionPreflight &staged, std::size_t expectedNativeActors) {
     constexpr std::string_view mapName = "oute3.odm";
     if (!engine || engine->gameTitle() != GameTitle::MM6 || !pMapTable ||
         !pParty || !pOutdoor || !pNPCStats || !pItemTable ||
-        !pDecorationTable || !pTileTable || !mouse || !gameTimer ||
-        !pPartyActionQueue || !pGames_LOD ||
-        engine->_currentLoadedMapId != pMapTable->GetMapInfo(mapName) ||
-        uCurrentlyLoadedLevelType != LEVEL_OUTDOOR || !gameTimer->isPaused() ||
-        engine->_pendingTransition || pPartyActionQueue->uNumActions != 0 ||
-        staged.v4.v3.actorMap.activeMap.mapName != mapName ||
-        staged.v4.saved.v3.raw.metadata.header.mapFileName != mapName)
-        throw std::runtime_error("MM6 v5 post-world first-map boundary differs");
+        !pDecorationTable || !mouse || !gameTimer ||
+        !pPartyActionQueue || !pGames_LOD)
+        throw std::runtime_error("MM6 v5 post-world resources unavailable");
+    if (engine->_currentLoadedMapId != pMapTable->GetMapInfo(mapName) ||
+        uCurrentlyLoadedLevelType != LEVEL_OUTDOOR)
+        throw std::runtime_error("MM6 v5 post-world loaded map differs");
+    if (!gameTimer->isPaused() || engine->_pendingTransition ||
+        pPartyActionQueue->uNumActions != 0)
+        throw std::runtime_error("MM6 v5 post-world input boundary differs");
+    if (staged.v4.saved.v3.raw.metadata.header.mapFileName != mapName)
+        throw std::runtime_error("MM6 v5 post-world staged map differs");
 
-    const std::size_t nativeCount =
-        staged.v4.v3.actorMap.activeMap.delta.actors.size();
+    // The test-only pre-event replay scope already owns the moved actor-map
+    // baseline. Its native count was captured before that move.
+    const std::size_t nativeCount = expectedNativeActors;
     const std::size_t activeCount = staged.actors.actors.size();
     if (activeCount < nativeCount || pActors.size() != activeCount)
         throw std::runtime_error("MM6 v5 post-world actor count differs");

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <span>
 #include <vector>
@@ -21,6 +22,6 @@ void requireV5FirstMapLiveSessionAgreement(
 // owns pre-event publication, failure handling and input admission. This
 // function never opens a production MM6 save or changes the live world.
 void requireV5FirstMapPostWorldAgreement(
-    const V5FullSessionPreflight &staged);
+    const V5FullSessionPreflight &staged, std::size_t expectedNativeActors);
 
 } // namespace mm6

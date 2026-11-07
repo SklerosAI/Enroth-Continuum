@@ -291,7 +291,8 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode)
                             !gameTimer->isPaused() || engine->_pendingTransition ||
                             pPartyActionQueue->uNumActions != 0)
                             throw std::runtime_error("MM6 v5 post-action replay reached an unexpected world order");
-                        mm6::requireV5FirstMapPostWorldAgreement(*staged);
+                        mm6::requireV5FirstMapPostWorldAgreement(
+                            *staged, expectedNativeActors);
                         const auto finalCore = mm6::captureCoreFields(*pParty, GameTitle::MM6);
                         if (finalCore.party.position == baselineParty.position ||
                             finalCore.party.viewYaw == baselineParty.viewYaw)

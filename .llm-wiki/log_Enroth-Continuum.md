@@ -2286,3 +2286,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A disposable four-process chain passed v2 seed, v4 baseline, strict oute2 v5 candidate write and independent fresh-child pre-input replay at 1/1 each. Prior slots remained byte-identical; the reader still aborts before gameplay input.
 - The first final owner gate exposed an expected native-zero to generated-NPC runtime link. A v5-only ordered PID check now binds that slot to exact GNPC and ARTR owners while retaining native actor and sprite anchors. First input, second save/reload, campaign travel and production MM6 SaveLoad remain open.
+
+## [2026-11-07] implement | MM7 first repo-owned dependency
+- by: T-Burton-ND via codex
+- Converted the pinned CC0 `thirdparty/generator` gitlink into ordinary tracked source at the same revision, with its full original license and a provenance note. Eleven original file blobs matched exactly; a network-disconnected standalone configure/build/run passed.
+- The integration build reconfigured against the tracked source and linked its MM6 unit/game-test targets. Twenty-two external gitlinks, nested fetches and prebuilt-library source recipes remain; clean offline MM7 build is still blocked. A separate MM7 production target link check exposed missing MM6 test-hook symbols and is under repair before this build is treated as validated.

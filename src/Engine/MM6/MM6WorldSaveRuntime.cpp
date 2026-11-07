@@ -162,6 +162,14 @@ StagedRawWorldAndVisuals stageRawWorldAndVisuals(
             std::move(rawActiveDelta)};
 }
 
+StagedRawWorldAndVisuals stageRawWorldAndVisuals(
+    const NpcStaticBaseline &baseline, const Timer &liveTimer,
+    const ActiveOverlayList &liveOverlays, const StagedRawTitleOwners &raw,
+    std::size_t overlayTableCount, GameTitle title) {
+    return stageRawWorldAndVisuals(baseline.stats(), liveTimer, liveOverlays,
+                                   raw, overlayTableCount, title);
+}
+
 StagedKnownSession stageKnownSession(
     const Party &liveParty, const NPCStats &liveNpcs, const Timer &liveTimer,
     const ActiveOverlayList &liveOverlays, std::span<const std::uint8_t> bytes,

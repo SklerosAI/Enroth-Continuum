@@ -10,6 +10,7 @@
 
 #include "MM6KnownSaveFields.h"
 #include "MM6MapSaveValidation.h"
+#include "MM6NpcStaticBaseline.h"
 
 #include "Engine/GameTitle.h"
 #include "Engine/MapEnums.h"
@@ -107,6 +108,13 @@ StagedKnownWorldAndVisuals stageKnownWorldAndVisuals(
 // raw stage's saved fields and active counts intact. No live owner is assigned.
 StagedRawWorldAndVisuals stageRawWorldAndVisuals(
     const NPCStats &liveNpcs, const Timer &liveTimer,
+    const ActiveOverlayList &liveOverlays, const StagedRawTitleOwners &raw,
+    std::size_t overlayTableCount, GameTitle title);
+
+// V2 detached load from a freshly parsed MM6 NPC source-table baseline. The
+// baseline type cannot be constructed from an unrelated live NPCStats.
+StagedRawWorldAndVisuals stageRawWorldAndVisuals(
+    const NpcStaticBaseline &baseline, const Timer &liveTimer,
     const ActiveOverlayList &liveOverlays, const StagedRawTitleOwners &raw,
     std::size_t overlayTableCount, GameTitle title);
 

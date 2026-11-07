@@ -174,9 +174,32 @@ void NPCStats::Initialize(ResourceManager *resourceManager) {
 }
 
 void NPCStats::InitializeMm6(ResourceManager *resourceManager) {
+    InitializeMm6Static(resourceManager->eventsData("npcdata.txt"),
+                        resourceManager->eventsData("npcnews.txt"),
+                        resourceManager->eventsData("npcnames.txt"),
+                        resourceManager->eventsData("npcprof.txt"));
+
+    Blob npcText = resourceManager->eventsData("npctext.txt");
+    for (std::string_view line : split(npcText.str()).by("\r\n").skip("")) {
+        std::array<std::string_view, 2> cells = split(line).by('\t');
+        int id = 0;
+        if (tryDeserialize(cells[0], &id) && id >= 1 && id <= pNPCTopics.size())
+            pNPCTopics[id - 1].pText = unquote(cells[1]);
+    }
+
+    Blob npcTopics = resourceManager->eventsData("npctopic.txt");
+    for (std::string_view line : split(npcTopics.str()).by("\r\n").skip("")) {
+        std::array<std::string_view, 2> cells = split(line).by('\t');
+        int id = 0;
+        if (tryDeserialize(cells[0], &id) && id >= 1 && id < pNPCTopics.size())
+            pNPCTopics[id].pTopic = unquote(cells[1]);
+    }
+}
+
+void NPCStats::InitializeMm6Static(const Blob &npcData, const Blob &npcNews,
+                                   const Blob &npcNames, const Blob &npcProfs) {
     pOriginalNPCData.fill(NPCData());
     pProfessionChance.fill({});
-    Blob npcData = resourceManager->eventsData("npcdata.txt");
     for (std::string_view line : split(npcData.str()).by("\r\n").drop(2).skip("")) {
         std::array<std::string_view, 14> cells = split(line).by('\t');
         int id = 0;
@@ -196,23 +219,6 @@ void NPCStats::InitializeMm6(ResourceManager *resourceManager) {
         uNumNewNPCs = std::max(uNumNewNPCs, id + 1);
     }
 
-    Blob npcText = resourceManager->eventsData("npctext.txt");
-    for (std::string_view line : split(npcText.str()).by("\r\n").skip("")) {
-        std::array<std::string_view, 2> cells = split(line).by('\t');
-        int id = 0;
-        if (tryDeserialize(cells[0], &id) && id >= 1 && id <= pNPCTopics.size())
-            pNPCTopics[id - 1].pText = unquote(cells[1]);
-    }
-
-    Blob npcTopics = resourceManager->eventsData("npctopic.txt");
-    for (std::string_view line : split(npcTopics.str()).by("\r\n").skip("")) {
-        std::array<std::string_view, 2> cells = split(line).by('\t');
-        int id = 0;
-        if (tryDeserialize(cells[0], &id) && id >= 1 && id < pNPCTopics.size())
-            pNPCTopics[id].pTopic = unquote(cells[1]);
-    }
-
-    Blob npcNews = resourceManager->eventsData("npcnews.txt");
     for (std::string_view line : split(npcNews.str()).by("\r\n").skip("")) {
         std::array<std::string_view, 4> cells = split(line).by('\t');
         int id = 0;
@@ -220,9 +226,8 @@ void NPCStats::InitializeMm6(ResourceManager *resourceManager) {
             pCatchPhrases[id] = unquote(cells[3]);
     }
 
-    InitializeNPCNames(resourceManager->eventsData("npcnames.txt"));
+    InitializeNPCNames(npcNames);
 
-    Blob npcProfs = resourceManager->eventsData("npcprof.txt");
     for (std::string_view line : split(npcProfs.str()).by("\r\n").skip("")) {
         std::array<std::string_view, 8> cells = split(line).by('\t');
         int id = 0;

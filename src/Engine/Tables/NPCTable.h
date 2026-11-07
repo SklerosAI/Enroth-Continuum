@@ -93,6 +93,10 @@ struct NPCGreeting {
 struct NPCStats {
     void Initialize(ResourceManager *resourceManager);
     void InitializeMm6(ResourceManager *resourceManager);
+    // Populate only NPCStats-owned MM6 static tables. Does not write the
+    // process-wide pNPCTopics table, so it can seed a detached save candidate.
+    void InitializeMm6Static(const Blob &npcData, const Blob &npcNews,
+                             const Blob &npcNames, const Blob &npcProfs);
     void InitializeNPCNames(const Blob &npcNames);
     void InitializeNPCProfs(const Blob &npcProfs);
     void InitializeNPCText(const Blob &npcText);

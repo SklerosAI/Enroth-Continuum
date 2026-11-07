@@ -13,4 +13,6 @@ The schema stores all 501 mutable NPC slots, 51 group words and the runtime acti
 
 The retained MM6 icons copy has no `npcgroup.txt`, and the current MM6 table loader does not import one; group defaults and event mutation still need reconciliation. `pAdditionalNPC`, transient counters, hireling copies, profession behavior and NPC sacrifice clocks are outside this payload. The joined party-creation save-to-first-map headless check now passes, but normal SaveLoad integration, late-failure rollback, save/quit/relaunch and graphical NPC checks remain open.
 
+The [detached static baseline packet](../project/MM6_EC6_NPC_BASELINE_F4.md) adds a v2 world-stage overload that starts from freshly parsed MM6 NPC-owned source tables rather than copying an unrelated live `NPCStats`. It shares the MM6 table parser but does not write global `pNPCTopics`; saved `RESC` rows and groups overlay the detached baseline. The v2 session coordinator still calls the older live-NPC overload, so this seam does not yet close the production load path. Global topics, generated NPCs and transient counters remain separate owners.
+
 See also: [F4 Offline Seams](MM6-F4-Offline-Seams.md), [F2 NPC Profession](Source-MM6-NPC-Profession-F2.md), [F2 Save Fields](Source-MM6-Save-Field-Register-F2.md).

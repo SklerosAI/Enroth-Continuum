@@ -1,0 +1,11 @@
+# MM6 static NPC baseline for detached v2 loads
+
+`stageRawWorldAndVisuals()` previously copied a caller's live `NPCStats` and overlaid `RESC` rows and groups. `RESC` contains the 501 mutable NPC records, 51 group words and active count; it does not carry the source NPC names, random name pool, profession prices/text/chances or news phrases. A fresh-process load could therefore inherit tables from an unrelated active title or session.
+
+The new `loadNpcStaticBaseline()` parses four MM6 `eventsData` tables (`npcdata.txt`, `npcnews.txt`, `npcnames.txt`, `npcprof.txt`) into a new, detached `NPCStats`. `NPCStats::InitializeMm6Static()` shares the source parser with ordinary MM6 initialization while omitting its writes to global `pNPCTopics`. The v2 world-stage overload accepts only the resulting `NpcStaticBaseline` wrapper, then overlays `RESC` and copies the 67 saved map deltas. It leaves the baseline and all live owners unchanged. The existing caller-supplied `NPCStats` overload remains for current v1/legacy callers; the v2 session coordinator has not yet switched to the new overload.
+
+The synthetic linked arm64 test checks static names, profession chance and news from the MM6 baseline, mutable NPC/group values from the saved v2 candidate, input immutability, foreign-title rejection and the existing v2 world stage. It passed 3/3 focused tests. It does not use or publish proprietary files.
+
+`pNPCTopics` is a process-wide array outside `NPCStats`; current `InitializeMm6()` still populates it. Generated `pAdditionalNPC`, transient counters and NPC-related global name cache have no v2 persistence contract. An all-owner load must decide how to initialize/restore these, then pass a fresh baseline into the session coordinator before opening SaveLoad or menu admission. Real MM6 table and dialogue behavior still require a private-backed, headless check and later graphical F5 validation.
+
+The factory's explicit-title guard does not authenticate the contents of caller-supplied blobs. The ResourceManager overload must be called with the MM6 resource manager after title/profile selection; the synthetic test establishes parser and owner separation, not proprietary table provenance.

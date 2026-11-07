@@ -1952,3 +1952,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Made temporary Party construction avoid live mouse reset, while explicit Party Zero/Reset retain that behavior, and made v2 session preflight construct its own fresh Party instead of accepting a caller's live state.
 - Focused raw/NPC units passed 12/12, private MM6 null-platform checks 2/2 and MM7 headless control 1/1. Full live owner publication remains guarded.
+
+## [2026-11-06] integrate | MM6 v2 indoor plan preflight
+- by: T-Burton-ND via codex
+- Added a detached indoor BLV/DLV/CHST plan with checked door references and required it before v2 primary/backup selection. Indoor and outdoor candidates now each have a CPU plan without publishing a live world.
+- Linked indoor/raw checks passed 12/12, with focused coordinator assertions 4/4. Actor identity, textures, IFOV replay and production MM6 loading remain gated.

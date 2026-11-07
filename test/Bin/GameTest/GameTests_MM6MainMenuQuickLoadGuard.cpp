@@ -1,7 +1,5 @@
-#include <array>
 #include <cstdlib>
 #include <filesystem>
-#include <fstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -16,6 +14,7 @@
 #include "GUI/GUIMessageQueue.h"
 #include "GUI/GUIWindow.h"
 #include "Library/Platform/Application/PlatformApplication.h"
+#include "Utility/Memory/Blob.h"
 
 namespace {
 
@@ -53,25 +52,17 @@ GAME_TEST(MM6MainMenuQuickLoadGuard, DISABLED_PresentDisposableEc6SlotStaysInMen
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
     ASSERT_EQ(GetCurrentMenuID(), MENU_MAIN);
     ASSERT_TRUE(engine->_pendingLoadFileName.empty());
+    // GameTest mounts user saves in an isolated RAM filesystem even when the
+    // child also has an owner-only native scratch profile for gate selection.
+    ASSERT_TRUE(ufs->displayPath("").starts_with("ramfs://"));
 
     const std::string fileName = getCurrentQuickSave();
     ASSERT_TRUE(fileName.ends_with(".ec6"));
-    const auto directory = profile / "saves";
-    const bool madeDirectory = !std::filesystem::exists(directory);
-    if (madeDirectory)
-        std::filesystem::create_directory(directory);
-    ASSERT_TRUE(std::filesystem::is_directory(directory));
-    ASSERT_FALSE(std::filesystem::is_symlink(std::filesystem::symlink_status(directory)));
-    const auto slot = directory / fileName;
-    ASSERT_FALSE(std::filesystem::exists(slot));
-    constexpr std::array<char, 4> marker = {'E', 'C', '6', '!'};
-    {
-        std::ofstream output(slot, std::ios::binary);
-        ASSERT_TRUE(output.good());
-        output.write(marker.data(), marker.size());
-        ASSERT_TRUE(output.good());
-    }
-    ASSERT_TRUE(ufs->exists("saves/" + fileName));
+    const std::string slot = "saves/" + fileName;
+    ASSERT_FALSE(ufs->exists(slot));
+    constexpr std::string_view marker = "EC6!";
+    ufs->write(slot, Blob::copy(marker.data(), marker.size()));
+    ASSERT_TRUE(ufs->exists(slot));
 
     bool loadCalled = false;
     game.runGameRoutine([&] {
@@ -89,9 +80,8 @@ GAME_TEST(MM6MainMenuQuickLoadGuard, DISABLED_PresentDisposableEc6SlotStaysInMen
     EXPECT_FALSE(loadCalled);
     EXPECT_TRUE(engine->_pendingLoadFileName.empty());
     EXPECT_EQ(GetCurrentMenuID(), MENU_MAIN);
-    EXPECT_TRUE(ufs->exists("saves/" + fileName));
-    EXPECT_EQ(std::filesystem::file_size(slot), marker.size());
-    std::filesystem::remove(slot);
-    if (madeDirectory)
-        std::filesystem::remove(directory);
+    EXPECT_TRUE(ufs->exists(slot));
+    const Blob observed = ufs->read(slot);
+    EXPECT_EQ(observed.str(), marker);
+    ufs->remove(slot);
 }

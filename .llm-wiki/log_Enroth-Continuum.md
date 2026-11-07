@@ -2626,3 +2626,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a pure event-boundary and cursor/shop prepublication check on the detached first-map v5 stage. Both fresh-child readers call it before replay-scope construction or global assignment. The linked fresh seven-child chain passed 1/1 in every child and MM7 control passed 1/1.
 - Source-order review found that manual Save pauses the timer before calling `doSavegame`, while the current live writer requires settled unpaused input. Assignment/pre-event recovery and a paused-menu capture contract remain necessary before normal MM6 SaveLoad/UI admission.
+
+## [2026-11-07] verify | MM6 Main Menu Quick Load refusal
+- by: T-Burton-ND via codex
+- Added an MM6-only Main Menu Quick Load refusal after the existing test override and before checking a present `.ec6` quicksave. A disposable headless test put that filename in GameTest's isolated user filesystem and passed 1/1 without queuing a load or changing menus; MM7 control passed 1/1.
+- Normal MM6 load listing and SaveLoad remain guarded until a complete source-backed publication and failure recovery route exists.

@@ -26,8 +26,11 @@ mm6::EventRuntimeSaveFields example(std::vector<LevelDecoration> *decorations) {
     entry.respawnCount = 1;
     entry.lastRespawnDay = 5;
     entry.mapVars[4] = 9;
+    entry.mapVars[74] = 17;
     entry.decorVars[0] = 16;
     entry.decorVars[1] = 12;
+    entry.decorVars[123] = 31;
+    entry.decorVars[124] = 7;
     entry.bindings = mm6::captureEventRuntimeDecorationBindings(
         *decorations, GameTitle::MM6);
     return {{entry}};

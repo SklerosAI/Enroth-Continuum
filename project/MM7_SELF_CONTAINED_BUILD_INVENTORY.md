@@ -4,16 +4,16 @@ Status: **read-only local inventory**, 2026-11-06, Enroth Continuum source `9ae5
 
 Migration update, 2026-11-07: `thirdparty/generator`, `fast_float`,
 `magic_enum`, `mio`, `small_vector`, `cmrc`, `cli11`, `fmt`, `spdlog`, `sol2`,
-`googletest`, `gtest_parallel`, `luajit-cmake`, `luajit` and `lambda2`
+`googletest`, `gtest_parallel`, `luajit-cmake`, `luajit`, `lambda2` and `cpptrace`
 are now ordinary repository-owned source snapshots at their former gitlink
-revisions. Their original files matched the pinned Git blobs (2,023 files
-across the fifteen snapshots), and full licenses and Enroth provenance
+revisions. Their original files matched the pinned Git blobs (2,232 files
+across the sixteen snapshots), and full licenses and Enroth provenance
 notes are retained. Boost.Lambda2's pinned tree named BSL-1.0 but lacked
 its full text; the official Boost license text is separately added and
 identified in its provenance note.
 Network-disconnected standalone source builds/runs passed.
 The table below remains the historical 23-gitlink inventory; the current
-repository has **8 gitlinks**. The integration Mac MM7 target builds with the
+repository has **7 gitlinks**. The integration Mac MM7 target builds with the
 tracked source snapshots, using its existing cached prebuilt libraries;
 GoogleTest and `gtest_parallel` are optional test inputs.
 The remaining gitlinks, nested fetches and prebuilt-library families still
@@ -25,13 +25,13 @@ The title-locked `MM7.app` is declared in [`src/Bin/OpenEnroth/CMakeLists.txt`](
 
 Three network boundaries are distinct:
 
-1. [`CMakeModules/Git.cmake`](../CMakeModules/Git.cmake) runs `git submodule update --init --recursive` unconditionally in the normal configure path when Git is found. This can contact the remaining 8 Git origins in [`.gitmodules`](../.gitmodules), even if the requested target is only MM7. A failed update is not checked there. The opt-in local-only configure path skips that update.
+1. [`CMakeModules/Git.cmake`](../CMakeModules/Git.cmake) runs `git submodule update --init --recursive` unconditionally in the normal configure path when Git is found. This can contact the remaining 7 Git origins in [`.gitmodules`](../.gitmodules), even if the requested target is only MM7. A failed update is not checked there. The opt-in local-only configure path skips that update.
 2. [`CMakeModules/Dependencies.cmake`](../CMakeModules/Dependencies.cmake) downloads `https://github.com/OpenEnroth/OpenEnroth_Dependencies/releases/download/deps_r8_master/darwin_Debug_arm64.zip` if the marker ZIP is absent. The code does not specify an expected content hash; an existing ZIP skips download. `OE_USE_PREBUILT_DEPENDENCIES=OFF` instead requires ZLIB, FFmpeg, SDL3, OpenAL Soft and PNG to be found elsewhere and does not itself make the build repo-contained.
 3. The Mac [`thirdparty/CMakeLists.txt`](../thirdparty/CMakeLists.txt) includes cpptrace and ztd.text. cpptrace can fetch libdwarf-lite; ztd.text's own CMake fetches six projects by floating `main` branch. The seven cached `_deps/*-src` directories below show what this local configure resolved. Additional conditional ztd benchmark/docs fetches are present in its source but were not active in this build.
 
 ## Pinned Git submodules
 
-Each row was a gitlink recorded by the original inventory snapshot, with its origin then in `.gitmodules`. The SHA is the full former gitlink commit; the size is the checked-out tree at inventory time (`du -sk`, rounded MiB), **not** an expected Git pack size. The fifteen rows named in the migration update are now repo-owned source at those same revisions. License labels are readings of the checked-out file named after the semicolon; keep each full file and attribution when migrating. “App configure” means this Mac CMake path adds or includes the source even when the MM7 link itself uses only headers or a subset of its targets. `cpplint`, GoogleTest and `gtest_parallel` are style/test inputs, not required to link a production MM7-only target, but the current normal configure still requests them. The owned LuaJIT CMake recipe reads a recorded committer timestamp from the owned LuaJIT source, producing the same generated version header without a nested Git repository.
+Each row was a gitlink recorded by the original inventory snapshot, with its origin then in `.gitmodules`. The SHA is the full former gitlink commit; the size is the checked-out tree at inventory time (`du -sk`, rounded MiB), **not** an expected Git pack size. The sixteen rows named in the migration update are now repo-owned source at those same revisions. License labels are readings of the checked-out file named after the semicolon; keep each full file and attribution when migrating. “App configure” means this Mac CMake path adds or includes the source even when the MM7 link itself uses only headers or a subset of its targets. `cpplint`, GoogleTest and `gtest_parallel` are style/test inputs, not required to link a production MM7-only target, but the current normal configure still requests them. The owned LuaJIT CMake recipe reads a recorded committer timestamp from the owned LuaJIT source, producing the same generated version header without a nested Git repository.
 
 | Path under `thirdparty/` | Origin in `.gitmodules` | Gitlink SHA | Local MiB | License evidence; role |
 | --- | --- | --- | ---: | --- |
@@ -63,7 +63,17 @@ The 23 checked-out trees total about **126 MiB**. `thirdparty/glad` and the ImGu
 
 ## Prebuilt arm64 archive actually used
 
-The local `darwin_Debug_arm64.zip` is **21,714,289 bytes** (SHA-256 `1f109947f8d3fa9e20194ff9109f1f7e1a3bd12ed045cda33818c2fd09b90329`); its containing extracted directory is about **102 MiB including the ZIP**. This hash identifies this Mac's cached file, not an upstream expected digest. The MM7 link rule uses all nine archives below from it. Headers/configs report SDL3 3.2.22, OpenAL Soft 1.24.3, libpng 1.6.44 and zlib-ng compatibility header `1.3.1.zlib-ng`; FFmpeg headers report library version series `avcodec 61.3.100`, `avformat 61.1.100`, `avutil 59.8.100`, `swscale 8.1.100`, `swresample 5.1.100`. Exact source revisions, build options and complete license/notice bundle are **not present in the local ZIP**. `include/SDL3/SDL_copying.h` alone is not a complete archive provenance record; FFmpeg's effective license depends on its build configuration. Recreate these from pinned source/recipes and review them before any repository-owned source snapshot or redistribution.
+The local `darwin_Debug_arm64.zip` is **21,714,289 bytes** (SHA-256 `1f109947f8d3fa9e20194ff9109f1f7e1a3bd12ed045cda33818c2fd09b90329`); its containing extracted directory is about **102 MiB including the ZIP**. The [upstream release API](https://api.github.com/repos/OpenEnroth/OpenEnroth_Dependencies/releases/tags/deps_r8_master) publishes the same size and digest for that exact asset, independently identifying the cached ZIP. The MM7 link rule uses all nine archives below from it. Headers/configs report SDL3 3.2.22, OpenAL Soft 1.24.3, libpng 1.6.44 and zlib-ng compatibility header `1.3.1.zlib-ng`; FFmpeg headers report library version series `avcodec 61.3.100`, `avformat 61.1.100`, `avutil 59.8.100`, `swscale 8.1.100`, `swresample 5.1.100`. Exact source revisions, build options and complete license/notice bundle are **not inside the ZIP**. `include/SDL3/SDL_copying.h` alone is not a complete archive provenance record; FFmpeg's effective license depends on its build configuration. Recreate these from pinned source/recipes and review them before any repository-owned source snapshot or redistribution.
+
+The [upstream dependency tag](https://api.github.com/repos/OpenEnroth/OpenEnroth_Dependencies/git/refs/tags/deps_r8_master) resolves to commit `866c037e528bb38ee286874f107fb488dd9fb354`. Its [Git tree](https://api.github.com/repos/OpenEnroth/OpenEnroth_Dependencies/git/trees/866c037e528bb38ee286874f107fb488dd9fb354?recursive=1) pins the five source families below; its [build script](https://github.com/OpenEnroth/OpenEnroth_Dependencies/blob/deps_r8_master/scripts/build_all.sh) records the Mac arm64 deployment target and build options. The FFmpeg recipe disables GPL, version-3 and nonfree components and selects specific media codecs and containers. This is a reproducible starting point, **not** a completed license review or repo-owned build. The dependency-recipe repository has no top-level license; write an original Enroth Continuum recipe from the pinned facts rather than copying its script.
+
+| Family | Upstream dependency tag gitlink |
+| --- | --- |
+| FFmpeg | `e3a61e91030696348b56361bdf80ea358aef4a19` |
+| libpng | `f5e92d76973a7a53f517579bc95d61483bf108c0` |
+| OpenAL Soft | `dc7d7054a5b4f3bec1dc23a42fd616a0847af948` |
+| SDL | `a96677bdf6b4acb84af4ec294e5f60a4e8cbbe03` |
+| zlib-ng | `12731092979c6d07f42da27da673a9f6c7b13586` |
 
 | Archive in `lib/` | Bytes | Local MiB | Source family / evidence |
 | --- | ---: | ---: | --- |
@@ -96,7 +106,7 @@ The cpptrace route uses the exact libdwarf-lite SHA in `thirdparty/cpptrace/cmak
 ## Migration sequence and acceptance
 
 1. **Freeze the working MM7 baseline.** Record the title-locked source commit, app binary hash, current arm64 archive hash above, toolchain/SDK, and a private backup of the current profile/save. Leave the protected MM7 worktree and installed Atlas helper alone.
-2. **Resolve provenance and license records before copying.** Obtain source revisions and build recipes for all five prebuilt families, especially FFmpeg configuration and any transitive codecs. Review ztd-family license/NOTICE wording and libdwarf LGPL obligations. Decide whether to retain each source or replace its use. Record original URL, exact commit/archive digest, license and any patches for every chosen input.
+2. **Resolve provenance and license records before copying.** The upstream dependency tag now identifies revisions and a recipe starting point for all five prebuilt families; independently review source licenses/notices, FFmpeg's effective configuration and any transitive codecs. Review ztd-family license/NOTICE wording and libdwarf LGPL obligations. Decide whether to retain each source or replace its use. Record original URL, exact commit/archive digest, license and any patches for every chosen input.
 3. **Own the source inputs in this repo.** Add pinned source snapshots with licenses/notices and a machine-readable provenance manifest; include the 20 Mac app-configure submodule sources and seven nested fetches. Keep optional style/test inputs separately identified. Replace `CMakeModules/Git.cmake`'s unconditional update and all active `FetchContent` fetches with local-only paths; fail clearly on a missing input. A clean worktree with network disabled must not contact any OpenEnroth or other hosting service.
 4. **Build the five archive families locally.** Replace the release ZIP route with repo-owned, pinned source recipes for SDL3, OpenAL Soft, FFmpeg, libpng and zlib-ng. Set explicit CMake target paths/options and record the new outputs and license notices. Preserve the existing Mac linkage and decode/audio/render behavior; do not substitute a Homebrew cache or silently fall back to `/usr/X11R6` (the current Debug CMake cache's `PNG_LIBRARY_RELEASE` points there despite its Debug archive selection).
 5. **Prove from a clean clone.** With empty build/cache directories and network denied, configure Debug and a distribution configuration with tests/tools off as appropriate, build `MM7.app`, check architecture, `otool -L`, package notices and exact build-input manifest. Stage Atlas with the new helper only after an isolated MM7 launch, existing-save load, new save, quit/relaunch/load and graphical checks pass. Keep MM6/MM8 sibling apps and profiles untouched.

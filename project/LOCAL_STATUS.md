@@ -895,3 +895,12 @@ three synthetic indoor/outdoor tests passed, and the combined linked
 post-world hook/validator set passed **8/8** after integration. It is not
 connected to the v2 QuickLoad callback; the remaining NPC, renderer/UI,
 BEAC/IFOV, action and recovery owners still block live publication.
+
+The final generated-NPC link check now rejects broken actor to generated-row
+links, pool overrun and malformed rows without mutating them. Its integrated
+synthetic suite passed **3/3**. This proves link shape only: v2 does not save
+generated NPC identities or game RNG, and the map loader currently writes its
+100-row generated pool without a pre-write capacity check. A separate v2
+admission guard identifies nonzero saved Armageddon timers that world
+preparation would clear; the linked child-publication suite passed **3/3**.
+Neither check opens MM6 SaveLoad or first-frame input.

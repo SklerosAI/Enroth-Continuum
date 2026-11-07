@@ -18,6 +18,11 @@ paused timer, actors, chests, cleared transition and empty action queue, asks
 for abort, and the test verifies the slot bytes remain unchanged. Run it alone
 in a fresh null-renderer child and end that process after its assertions.
 
+The integrated control now also samples the complete pending-action observer
+at that hook and requires the held-cursor restore plan to see idle spell, turn,
+rest, GUI-message, movement and attack state. Separate disposable writer and
+abort processes passed **1/1** each. This is a v1 control, not a v2 owner join.
+
 This control does **not** publish a v2 session. The v2 callback test remains
 read-only and refuses before live assignment. The detached v2 admission still
 reports unresolved mouse image, NPC static resources, active world resources,

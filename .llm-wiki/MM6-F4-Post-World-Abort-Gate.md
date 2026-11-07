@@ -12,6 +12,8 @@ the timer/input loop. An unarmed load and MM7 cannot request this result.
 The separate disabled v1 fresh-child QuickLoad control exercises the actual
 menu/game-loop edge and checks that the slot bytes remain unchanged. See
 [the source-backed gate packet](../project/MM6_F4_POST_WORLD_ABORT_GATE.md).
+The refreshed control also verifies the existing pending-action observer is
+idle at the hook; fresh writer and abort processes passed 1/1 each.
 
 This is a control seam only. V2 publication still refuses in the load callback
 because resource, identity, event and transient owners have no complete

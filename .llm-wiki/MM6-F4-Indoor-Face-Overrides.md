@@ -13,4 +13,10 @@ IFOV is keyed by canonical `.blv` map name and bounded face index. It stores onl
 
 The defined fork order is BLV/DLV reconstruction, map `OnMapReload`, then saved IFOV fields. Saved changed fields win; untouched fields retain script effects. Detached capture, full-container staging and application reject malformed or duplicate entries, a different base, and late failure before destination mutation. Three focused linked arm64 unit tests passed. Live texture identity capture, animated faces, retained-map `.ec6` replay and graphical acceptance remain open.
 
+The v2 post-world audit found no safe final-face shortcut: `onMapLoad()` runs
+`OnMapReload` before the hook, and the strict nineteen-section candidate carries
+neither observed IFOV nor a verified pre-event face base. Final faces alone
+cannot separate script edits from unsaved player edits. See the [raw v2
+admission packet](../project/MM6_F4_RAW_V2_BEAC_IFOV_ADMISSION.md).
+
 See also: [MM6 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md), [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), and [implementation packet](../project/MM6_F4_INDOOR_FACE_OVERRIDE_SECTION.md).

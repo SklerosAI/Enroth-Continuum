@@ -7,3 +7,14 @@ The current EC6 v2 candidate has exactly nineteen required sections. [MM6RawSave
 The caller must compute the IFOV candidate against the verified pre-`OnMapReload` indoor base before passing it to capture. Passing a fabricated empty candidate would violate the capture contract; this helper cannot inspect live faces by itself. Direct `encodeRawSave()` remains a structural codec for supplied fields and is not a live-state capture API. The policy does not admit BEAC/IFOV into v2, publish renderer textures, make an indoor face override playable, or open production SaveLoad/menu.
 
 Next, a complete v2 session coordinator must either prove both states empty at its capture boundary or version a manifest that carries them and joins BEAC renderer/IFOV post-reload publication. Until then, active beacons and changed indoor faces fail closed for the nineteen-section candidate.
+
+Post-world audit, 2026-11-07: `DoPrepareWorld()` runs `onMapLoad()` before the
+one-shot admission hook. `OnMapReload` can itself change face attributes and
+texture names there. A check of final faces alone cannot distinguish intended
+script replay from an omitted saved IFOV edit. The v2 staged/post-world views
+carry neither a source-observed IFOV nor the verified pre-event face base.
+Therefore no final-face validator is admitted yet. The next gate is source-
+backed live IFOV capture before encode, followed by a versioned manifest or a
+proved-empty capture and an independently derived expected post-reload state.
+The existing no-beacon check is already present; repeating it at the hook
+would not prove source capture.

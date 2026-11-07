@@ -18,7 +18,7 @@ The returned `RawChildPublicationAdmission` contains the cursor image request an
 | Persistent events | The pre-map 200-byte projection is not proof of the post-map sidecar or generic event arrays. The separate zero-owner/post-world checks must bracket the actual map load. |
 | Beacon and indoor-face images | V2 rejects active BEAC/IFOV state; a future format and renderer/face publication path are still needed before general sessions. |
 | Timers, triggers, actions and UI | TIME/VISU fields are represented, but event trigger lists, turn/attack/spell queues, windows, portraits and transient action policy need the fresh-child reset and verification. |
-| Post-world admission | `Game::gameLoop()` calls `DoPrepareWorld(true)`, unpauses the timer, then enters `MessageLoopWithWait` without an intervening admission hook. Any future live v2 load must check rebuilt owners before that first message/input loop. |
+| Post-world admission | A one-shot MM6-only **test hook** now runs after `DoPrepareWorld(true)` and can abort before timer unpause or `MessageLoopWithWait`. V2 does not arm it with complete final-owner checks; production has no admission path. |
 
 The test-only gate is intentionally an admission coordinator, not a partial publisher: assigning a subset of these globals would leave the fresh child able to advance with missing owners. The separate GameTest callback may stage v2, call this gate, observe a named refusal, and stop before `gameLoop()` continues. Normal MM6 SaveLoad, its slot list and Atlas Play remain guarded. A future checked publisher requires resource and post-world evidence; process isolation protects a prior campaign only if the failed child terminates.
 

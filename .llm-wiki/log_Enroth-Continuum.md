@@ -2002,3 +2002,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Joined exact raw HELD projection into the full detached v2 Party stage before native primary/backup slot selection. An unsupported occupied cursor rejects a candidate while a valid backup remains read-only selectable.
 - Linked raw-session and held-Party suites passed 17/17. Visible mouse image and full live owner publication remain gated.
+
+## [2026-11-06] verify | MM6 real creation item seed
+- by: T-Burton-ND via codex
+- Added and ran a null-renderer Create Party probe against the owner's loaded MM6 tables without writing a save slot or recording private item content.
+- One deterministic draw admitted all 20 starter items (16 plain and four standard-bonus); the full Party passed. Other random draws and native original-game record parity remain unverified.

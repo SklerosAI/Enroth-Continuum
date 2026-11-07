@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -47,6 +48,7 @@
 #include "Engine/MM6/MM6V5PreEventSpriteReplayForTest.h"
 #include "Engine/MM6/MM6V5SaveFields.h"
 #include "Engine/MM6/MM6V6OutdoorSaveFields.h"
+#include "Engine/MM6/MM6VisitedOutdoorReturnPlan.h"
 #include "Engine/MM6/MM6V5OutdoorDecorationSource.h"
 #include "Engine/MM6/MM6V5SpriteRuntimeFields.h"
 #include "Engine/MM6/MM6OutdoorWire.h"
@@ -228,6 +230,8 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
     bool secondCandidateWritten = false;
     bool visitedPreflighted = false;
     bool visitedPostWorldValidated = false;
+    bool returnPlanRefusedWithoutArrival = false;
+    bool returnPlanStayedDetached = false;
     std::string finalOwnerError;
     std::size_t expectedNativeActors = 0;
     std::size_t expectedActiveActors = 0;
@@ -268,6 +272,30 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
                         outer->visited.front(), "oute3.odm",
                         maps.readBase("oute3.odm"), *pDecorationTable,
                         GameTitle::MM6);
+                    auto returnPlan = std::unique_ptr<mm6::VisitedOutdoorReturnPlan>(
+                        new mm6::VisitedOutdoorReturnPlan(
+                            mm6::stageVisitedOutdoorReturnPlan(
+                                *outer, "oute2.odm", "oute3.odm",
+                                maps.readBase("oute3.odm"), *pDecorationTable,
+                                std::nullopt, GameTitle::MM6)));
+                    const auto &currentChest = outer->active.v4.v3.raw.chest;
+                    returnPlanRefusedWithoutArrival =
+                        returnPlan->refusal ==
+                            mm6::VisitedOutdoorReturnRefusal::MissingArrival &&
+                        !returnPlan->canPublish() &&
+                        !returnPlan->canWriteCheckpoint() &&
+                        returnPlan->visited.nativeDelta ==
+                            outer->visited.front().nativeDelta &&
+                        returnPlan->returnChest.activeDeltaName ==
+                            outer->visited.front().nativeDelta.name &&
+                        returnPlan->returnChest.rawActiveDelta ==
+                            outer->visited.front().nativeDelta.bytes &&
+                        returnPlan->returnChest.lcgState == currentChest.lcgState &&
+                        returnPlan->returnChest.generatedArtifactFlags ==
+                            currentChest.generatedArtifactFlags;
+                    if (!returnPlanRefusedWithoutArrival)
+                        throw std::runtime_error(
+                            "MM6 visited return plan did not refuse missing arrival");
                     auto rebuiltActive = sourceDecorations(maps, "oute2.odm");
                     selectedV6Stage = mm6::stageV5FullSessionPreflightOnHeap(
                         mm6::encodeV5Save(outer->active, GameTitle::MM6),
@@ -382,6 +410,42 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
                                 sourceMaps.readBase("oute3.odm"),
                                 *pDecorationTable, GameTitle::MM6);
                             visitedPostWorldValidated = true;
+                            const auto coreBefore =
+                                mm6::captureCoreFields(*pParty, GameTitle::MM6);
+                            const auto chestBefore = mm6::chestTitleState();
+                            const Blob &oldCache = pMapDeltas.at("oute3.ddm");
+                            const auto *oldBegin = static_cast<const std::uint8_t *>(
+                                oldCache.data());
+                            const std::vector<std::uint8_t> cacheBefore(
+                                oldBegin, oldBegin + oldCache.size());
+                            auto returnPlan = std::unique_ptr<mm6::VisitedOutdoorReturnPlan>(
+                                new mm6::VisitedOutdoorReturnPlan(
+                                    mm6::stageVisitedOutdoorReturnPlan(
+                                        *visitedSaved, "oute2.odm", "oute3.odm",
+                                        sourceMaps.readBase("oute3.odm"),
+                                        *pDecorationTable, std::nullopt,
+                                        GameTitle::MM6)));
+                            const Blob &oldCacheAfter = pMapDeltas.at("oute3.ddm");
+                            const auto *afterBegin = static_cast<const std::uint8_t *>(
+                                oldCacheAfter.data());
+                            returnPlanStayedDetached =
+                                returnPlan->refusal ==
+                                    mm6::VisitedOutdoorReturnRefusal::MissingArrival &&
+                                !returnPlan->canPublish() &&
+                                !returnPlan->canWriteCheckpoint() &&
+                                mm6::captureCoreFields(*pParty, GameTitle::MM6) ==
+                                    coreBefore &&
+                                mm6::chestTitleState().ready == chestBefore.ready &&
+                                mm6::chestTitleState().lcgState ==
+                                    chestBefore.lcgState &&
+                                mm6::chestTitleState().generatedArtifactFlags ==
+                                    chestBefore.generatedArtifactFlags &&
+                                std::vector<std::uint8_t>(
+                                    afterBegin, afterBegin + oldCacheAfter.size()) ==
+                                    cacheBefore;
+                            if (!returnPlanStayedDetached)
+                                throw std::runtime_error(
+                                    "MM6 visited return plan changed live owners");
                         }
                         mm6::requireGeneratedNpcActorAgreement(
                             expectedGenerated, pActors, "oute2.odm", GameTitle::MM6);
@@ -612,6 +676,8 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
     if (v6Read) {
         EXPECT_TRUE(visitedPreflighted);
         EXPECT_TRUE(visitedPostWorldValidated);
+        EXPECT_TRUE(returnPlanRefusedWithoutArrival);
+        EXPECT_TRUE(returnPlanStayedDetached);
     }
     if (allowInput) {
         EXPECT_TRUE(firstInputReached);

@@ -14,7 +14,9 @@ before generated NPC creation and `onMapLoad()` events.
 Its linked unit checks passed 4/4. A disposable v2 starter writer and
 separate real Main Menu QuickLoad child passed 1/1 each; the child observed
 the fresh pre-event state and aborted before timer unpause or input without
-changing its slot. An MM7 headless control passed 1/1. No ACTR/GNPC/RNG
-owner was published, and no v3 gameplay session was admitted.
+changing its slot. An MM7 headless control passed 1/1. A later
+[test-only v3 scope](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md) now uses the
+checkpoint for guarded ACTR/GNPC/RNG publication; no v3 gameplay session
+was admitted.
 
 See also: [Pre Event GNPC Replay](MM6-F4-Pre-Event-GNPC-Replay.md), [EC6 V3 Outdoor Actor Map](MM6-F4-EC6-V3-Outdoor-Actor-Map.md), [Post-World Abort Gate](MM6-F4-Post-World-Abort-Gate.md).

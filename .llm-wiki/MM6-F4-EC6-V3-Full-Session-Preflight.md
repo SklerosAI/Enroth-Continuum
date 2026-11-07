@@ -15,7 +15,9 @@ then checks pre-event GNPC/RNG anchors and prepares Armageddon resume.
 Linked full-session/map/pre-event suites passed 8/8. Wrong schema/title,
 actor/NPC/RNG mismatch and occupied cursor without pickup offset refuse.
 The helper publishes nothing and does not read, repair or write a slot.
-Live resource/UI/event agreement and complete post-entry map capture remain
-open before fresh-child admission.
+Live resource/UI/event agreement and a complete v3 writer join remain open
+before fresh-child admission. A later
+[bounded first-map map capture](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md)
+passed its headless live-owner check but did not write a v3 slot.
 
 See also: [EC6 V3 Outdoor Actor Map](MM6-F4-EC6-V3-Outdoor-Actor-Map.md), [Pre Event GNPC Replay](MM6-F4-Pre-Event-GNPC-Replay.md), [EC6 V3 Atomic Boundary](MM6-F4-EC6-V3-Atomic-Boundary.md).

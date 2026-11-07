@@ -1022,15 +1022,35 @@ read-only and does not establish live replay or first-input readiness.
 
 A test-only [pre-event checkpoint](MM6_F4_PRE_EVENT_CHECKPOINT.md) now
 runs after MM6 map/actor rebuild and before generated NPC creation or map
-events. Linked unit checks passed **4/4**. A disposable native v2 writer
-and separate real Main Menu QuickLoad child passed **1/1** each; the child
-aborted before timer/input with its source slot unchanged. An MM7 headless
-control passed **1/1**. No v3 ACTR/GNPC/RNG replay is enabled yet.
+events. A scoped test-only ACTR/GNPC/RNGS replay now checks the staged
+v3 owners and chest/active-DDM stability, publishes actors and generated
+rows, bypasses only generated-row creation, and restores RNG before map
+events. Linked replay/checkpoint checks passed **7/7**. A disposable
+native v2 writer and separate real Main Menu QuickLoad abort child passed
+**1/1** each after integration; the child still aborts before timer/input
+with its slot unchanged. An MM7 headless control passed **1/1**. No
+production v3 load caller or first-input admission is enabled.
 
 A detached [v3 full-session preflight](MM6_F4_EC6_V3_FULL_SESSION_PREFLIGHT.md)
-now joins exact ACTR/map/CHST with represented Party/NPC/timer/event/
+joins exact ACTR/map/CHST with represented Party/NPC/timer/event/
 inventory/cursor/shop owners, pre-event GNPC/RNG agreement and a post-world
-Armageddon plan. Linked focused suites passed **8/8**; no live owner or
-slot is mutated. A private-backed first-map retained-DDM check refused
-at `sprite-header`, so the current raw sidecar cannot be copied blindly into
-a post-entry v3 file.
+Armageddon plan. Its composed suite passed **8/8**, and a later linked
+ACTR/map/full-session regression group passed **9/9**. No live owner or
+slot is mutated.
+
+The [v3 post-entry map and pre-event seam](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md)
+now patches only supported DDM reset, visibility and sprite header fields,
+retaining actor/chest/opaque bytes. A fractional sprite position is accepted
+only when exact reconstruction and the loader's floor step reproduce the
+live vector. The private-backed first-map retained-DDM/live-owner headless
+probe passed **1/1**, superseding its earlier `sprite-header` and
+`sprite-position-loss` refusals. This does not write a v3 slot or prove
+later maps and mutations. A separate no-write full-session first-map
+candidate currently refuses at public class `map-preflight` (**0/1**); its exact
+cause remains under audit. The candidate guards unrepresented commerce
+and cursor state and attempts no atomic write. Writer-side complete
+session joins, BEAC/IFOV
+policy, actor item/buff coverage, fresh-child v3 replay, final post-world
+owner checks and production SaveLoad/Atlas admission remain open.
+A disabled strict-input-only v3 fresh-child replay GameTest is present but
+has not run; it requires a separately admitted disposable v3 slot.

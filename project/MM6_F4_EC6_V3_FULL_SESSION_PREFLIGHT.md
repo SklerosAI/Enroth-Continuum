@@ -19,5 +19,8 @@ slot, mutate Party/world/NPC/RNG, prove resource/UI publication, or compare
 final post-world event and actor owners. The current implementation runs
 the 67-map validation twice through the composed v2 and v3 stages; this is
 safe but a later consolidation may reduce work after correctness is proved.
-Writer-side BEAC/IFOV emptiness and exact live map sprite, visibility and
-chest capture remain required before a post-entry v3 file may be written.
+Writer-side BEAC/IFOV policy and a complete live-owner join remain required
+before a post-entry v3 file may be written. A later
+[bounded first-map outdoor capture](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md)
+passed its live-owner probe but has not written a v3 slot or covered later
+map/item mutations.

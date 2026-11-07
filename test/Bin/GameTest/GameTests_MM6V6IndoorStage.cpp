@@ -37,6 +37,7 @@
 #include "Library/Platform/Application/PlatformApplication.h"
 
 #include "MM6V6IndoorProbeSlot.h"
+#include "MM6V6IndoorLiveRawOwnersForTest.h"
 
 namespace {
 
@@ -58,10 +59,17 @@ std::string firstIndoorMap(const mm6::LoadedMapSource &maps) {
 // Neither production SaveLoad nor gameplay admission is opened.
 GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached) {
     const char *enable = std::getenv("ENROTH_MM6_V6_INDOOR_STAGE_ENABLE");
+    const bool liveSessionWriter = enable &&
+        std::string_view(enable) == "strict-indoor-v6-live-session-write";
     const bool postWorldWriter = enable &&
-        std::string_view(enable) == "strict-indoor-v6-postworld-write";
+        (std::string_view(enable) == "strict-indoor-v6-postworld-write" ||
+         liveSessionWriter);
     const bool writeCandidate = enable &&
         (std::string_view(enable) == "strict-indoor-v6-write" || postWorldWriter);
+    const std::string_view candidateSlot = liveSessionWriter ?
+        mm6::testing::V6_INDOOR_LIVE_SESSION_PROBE_SLOT :
+        postWorldWriter ? mm6::testing::V6_INDOOR_POSTWORLD_PROBE_SLOT :
+                          mm6::testing::V6_INDOOR_PROBE_SLOT;
     if (!enable || (!writeCandidate &&
                     std::string_view(enable) != "strict-indoor-v6-stage"))
         GTEST_SKIP() << "Opt in after creating a disposable MM6 v2 seed";
@@ -154,7 +162,13 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
         [&deltaName](const mm6::SavedMapDelta &entry) { return entry.name == deltaName; });
     ASSERT_NE(it, raw->maps.deltas.end());
     it->bytes = activeDelta;
-    const auto rawBytes = mm6::encodeRawSave(*raw, GameTitle::MM6);
+    auto rawBytes = mm6::encodeRawSave(*raw, GameTitle::MM6);
+
+    std::unique_ptr<mm6::RawSaveFields> postWorldRaw;
+    std::vector<Actor> postWorldActors;
+    std::vector<SpriteObject> postWorldSprites;
+    std::vector<LevelDecoration> postWorldDecorations;
+    std::vector<mm6::IndoorFaceState> postWorldFaces;
 
     // A separate opt-in candidate observes the real NPC generation and map
     // reload boundary. The original fixture above remains a pre-event probe.
@@ -194,6 +208,16 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
                 active.decorVars = engine->_persistentVariables.decorVars;
                 active.bindings = mm6::captureEventRuntimeDecorationBindings(
                     pLevelDecorations, GameTitle::MM6);
+                if (liveSessionWriter) {
+                    mm6::testing::requireV6IndoorNativeResidualsForTest(parsedBase);
+                    postWorldRaw = mm6::testing::captureV6IndoorLiveRawOwnersForTest(
+                        *raw, mapName);
+                }
+                postWorldActors.assign(pActors.begin(), pActors.end());
+                postWorldSprites = pSpriteObjects;
+                postWorldDecorations = pLevelDecorations;
+                postWorldFaces = mm6::captureLiveIndoorFaceStates(
+                    *pIndoor, projectedBase, GameTitle::MM6);
             } catch (...) {
                 worldError = std::current_exception();
             }
@@ -204,6 +228,12 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
         ASSERT_TRUE(worldFinished);
         if (worldError)
             std::rethrow_exception(worldError);
+        if (liveSessionWriter) {
+            if (!postWorldRaw)
+                throw std::runtime_error("MM6 v6 post-world raw owners were not captured");
+            *raw = std::move(*postWorldRaw);
+            rawBytes = mm6::encodeRawSave(*raw, GameTitle::MM6);
+        }
     }
 
     bool stageFinished = false;
@@ -226,6 +256,10 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
                 pTileTable->tileCount(), GameTitle::MM6)));
             if (!represented->indoorPlan || represented->outdoorPlan)
                 throw std::runtime_error("MM6 v6 probe did not stage an indoor raw world");
+            if (liveSessionWriter)
+                mm6::testing::requireV6IndoorDetachedRawRoundTripForTest(
+                    *raw, *represented, *pItemTable,
+                    pOverlayTable->overlays.size());
             auto saved = std::make_unique<mm6::V6IndoorSaveFields>();
             saved->raw = std::move(*raw);
             saved->generatedNpcs = std::move(generated);
@@ -233,12 +267,15 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
             saved->eventRuntime = std::move(eventRuntime);
             mm6::captureV6IndoorNativeAnchors(
                 *represented, &saved->actors, &saved->sprites, &saved->decorations);
-            const std::vector<Actor> liveActors(pActors.begin(), pActors.end());
+            const std::vector<Actor> liveActors = postWorldWriter ?
+                postWorldActors : std::vector<Actor>(pActors.begin(), pActors.end());
             saved->runtimeActors = mm6::captureIndoorActorRuntime(
                 mapName, saved->actors, liveActors, GameTitle::MM6);
             saved->runtimeSprites = mm6::captureIndoorSpriteRuntime(
-                mapName, saved->sprites, pSpriteObjects, GameTitle::MM6);
-            auto changedDecorations = pLevelDecorations;
+                mapName, saved->sprites,
+                postWorldWriter ? postWorldSprites : pSpriteObjects, GameTitle::MM6);
+            auto changedDecorations = postWorldWriter ?
+                postWorldDecorations : pLevelDecorations;
             if (changedDecorations.empty())
                 throw std::runtime_error("MM6 v6 IDRT probe has no decoration slot");
             if (!postWorldWriter)
@@ -255,10 +292,7 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
                 mapName, represented->indoorPlan->base,
                 *event, *pDecorationTable,
                 changedDecorations, GameTitle::MM6);
-            auto changed = postWorldWriter
-                ? mm6::captureLiveIndoorFaceStates(
-                    *pIndoor, projectedBase, GameTitle::MM6)
-                : preEventFaces;
+            auto changed = postWorldWriter ? postWorldFaces : preEventFaces;
             if (!postWorldWriter)
                 changed.front().attributes ^= 1u;
             if (auto overrides = mm6::captureIndoorFaceOverrides(
@@ -276,6 +310,10 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
                 verifyItem, *pItemTable, *pDecorationTable,
                 pOverlayTable->overlays.size(),
                 pTileTable->tileCount(), readFaces, GameTitle::MM6)));
+            if (liveSessionWriter)
+                mm6::testing::requireV6IndoorDetachedRawRoundTripForTest(
+                    staged->saved.raw, staged->represented, *pItemTable,
+                    pOverlayTable->overlays.size());
         } catch (...) {
             stageError = std::current_exception();
         }
@@ -293,13 +331,9 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
     EXPECT_FALSE(staged->canEnterGameLoop());
     EXPECT_EQ(mm6::testing::readIndoorProbeSlot(profile, "autosave.ec6"), originalSeed);
     if (writeCandidate) {
-        mm6::testing::writeIndoorProbeCandidate(
-            profile, candidateBytes,
-            postWorldWriter ? mm6::testing::V6_INDOOR_POSTWORLD_PROBE_SLOT :
-                              mm6::testing::V6_INDOOR_PROBE_SLOT);
+        mm6::testing::writeIndoorProbeCandidate(profile, candidateBytes, candidateSlot);
         EXPECT_EQ(mm6::testing::readIndoorProbeSlot(
-            profile, postWorldWriter ? mm6::testing::V6_INDOOR_POSTWORLD_PROBE_SLOT :
-                                       mm6::testing::V6_INDOOR_PROBE_SLOT), candidateBytes);
+            profile, candidateSlot), candidateBytes);
         EXPECT_EQ(mm6::testing::readIndoorProbeSlot(profile, "autosave.ec6"), originalSeed);
     }
 }

@@ -47,6 +47,8 @@ GAME_TEST(MM6V5LaterOutdoorHeadless, DISABLED_DirectSecondOutdoorLoadProbe) {
         DoPrepareWorld(/* bLoading = */ false, /* fullscreen = */ 1);
         prepared = true;
     });
+    for (int tick = 0; tick < 256 && !prepared; ++tick)
+        game.tick();
     EXPECT_TRUE(prepared);
     EXPECT_EQ(engine->_currentLoadedMapId, mapId);
     EXPECT_EQ(uCurrentlyLoadedLevelType, LEVEL_OUTDOOR);

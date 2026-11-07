@@ -74,6 +74,7 @@ GAME_TEST(MM6V5OutdoorSourceHeadless, AllMapEncounterStemsResolve) {
                     name += ' ';
                     name += static_cast<char>('A' + rank);
                 }
+                SCOPED_TRACE(name);
                 const MonsterId id = mm6::resolveEncounterMonster(
                     GameTitle::MM6, *pMonsterStats, name);
                 ASSERT_NE(id, MONSTER_INVALID);

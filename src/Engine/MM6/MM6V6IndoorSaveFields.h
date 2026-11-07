@@ -11,14 +11,15 @@
 #include "MM6GeneratedNpcSaveFields.h"
 #include "MM6IndoorFaceOverrides.h"
 #include "MM6V6IndoorDecorationRuntime.h"
+#include "MM6V6IndoorSpriteRuntime.h"
 #include "MM6RawSessionStage.h"
 
 namespace mm6 {
 
 // V6 starts a separate indoor branch from v2. These three exact native slot
-// anchors establish BLV/DLV provenance. IDRT owns the mutable decoration
-// fields; actor and sprite runtime owners and a live replay transaction are
-// still required before any v6 slot can enter gameplay.
+// anchors establish BLV/DLV provenance. IDRT and ISRT own mutable decoration
+// and sprite state. Actor runtime ownership and a complete live replay
+// transaction are still required before any v6 slot can enter gameplay.
 struct IndoorNativeSlotAnchor {
     std::string mapName;
     std::uint32_t count = 0;
@@ -37,14 +38,16 @@ struct V6IndoorSaveFields {
     IndoorNativeSlotAnchor sprites;
     IndoorNativeSlotAnchor decorations;
     IndoorDecorationRuntimeFields runtimeDecorations;
+    SpriteRuntimeSaveFields runtimeSprites;
 };
 
 struct StagedV6IndoorSaveFields {
     V6IndoorSaveFields saved;
     StagedRawSessionFields represented;
     std::vector<LevelDecoration> decorationReplay;
-    // Explicit admission gate: actors and sprites still lack exact indoor
-    // mutable owners, and no post-event live replay is proved.
+    std::vector<SpriteObject> spriteReplay;
+    // Explicit admission gate: actors still lack an exact indoor mutable
+    // owner, and sprite/post-event live replay is not proved.
     bool canEnterGameLoop() const { return false; }
 };
 

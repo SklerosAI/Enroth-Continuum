@@ -175,6 +175,18 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
               (std::to_underlying(pLevelDecorations.front().uFlags) ^ 0x20u));
     EXPECT_EQ(afterDecorations.front().uDecorationDescID,
               staged->decorationReplay.front().uDecorationDescID);
+    auto afterSprites = pSpriteObjects;
+    mm6::applyIndoorSpriteRuntimeAfterMapReload(
+        staged->saved.runtimeSprites, mapName, staged->saved.sprites,
+        &afterSprites, GameTitle::MM6);
+    ASSERT_EQ(afterSprites.size(), staged->spriteReplay.size());
+    const auto detachedSprites = mm6::captureIndoorSpriteRuntime(
+        mapName, staged->saved.sprites, afterSprites, GameTitle::MM6);
+    EXPECT_EQ(mm6::encodeSpriteRuntimeSectionAs(
+        detachedSprites, mm6::SpriteRuntimeSectionKind::IndoorV6, GameTitle::MM6),
+        mm6::encodeSpriteRuntimeSectionAs(
+        staged->saved.runtimeSprites, mm6::SpriteRuntimeSectionKind::IndoorV6,
+        GameTitle::MM6));
     auto afterEvent = preEventFaces;
     mm6::applyIndoorFaceOverridesAfterMapReload(
         staged->saved.faceOverrides, mapName, &afterEvent, GameTitle::MM6);

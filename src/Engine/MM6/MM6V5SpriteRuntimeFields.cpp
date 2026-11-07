@@ -17,7 +17,8 @@
 namespace mm6 {
 namespace {
 
-constexpr std::array<char, 4> TAG = {'S', 'P', 'R', 'T'};
+constexpr std::array<char, 4> OUTDOOR_TAG = {'S', 'P', 'R', 'T'};
+constexpr std::array<char, 4> INDOOR_TAG = {'I', 'S', 'R', 'T'};
 constexpr std::uint8_t VERSION = 1;
 constexpr std::size_t MAX_SPRITES = 4096;
 constexpr std::size_t SNAPSHOT_BYTES = sizeof(SpriteObject_MM7);
@@ -28,8 +29,10 @@ void requireMM6(GameTitle title) {
         throw std::runtime_error("MM6 SPRT requires MM6 title");
 }
 
-void requireMapName(std::string_view name) {
-    if (name.empty() || name.size() > 63 || !name.ends_with(".odm") ||
+void requireMapName(std::string_view name, SpriteRuntimeSectionKind kind) {
+    const std::string_view suffix = kind == SpriteRuntimeSectionKind::OutdoorV5 ?
+        ".odm" : ".blv";
+    if (name.empty() || name.size() > 63 || !name.ends_with(suffix) ||
         !std::all_of(name.begin(), name.end(), [](unsigned char c) {
             return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
                 c == '_' || c == '.';
@@ -263,7 +266,7 @@ SpriteRuntimeSaveFields captureSpriteRuntimeFields(
     std::string_view mapName, std::span<const std::uint8_t> nativeDelta,
     std::span<const SpriteObject> live, GameTitle title) {
     requireMM6(title);
-    requireMapName(mapName);
+    requireMapName(mapName, SpriteRuntimeSectionKind::OutdoorV5);
     const auto wire = decodeOutdoorDelta(nativeDelta);
     if (live.size() != wire.groundItemCount || live.size() > MAX_SPRITES)
         throw std::runtime_error("MM6 SPRT live slot count differs from native DDM");
@@ -284,8 +287,14 @@ SpriteRuntimeSaveFields captureSpriteRuntimeFields(
 
 SaveSection encodeSpriteRuntimeSection(const SpriteRuntimeSaveFields &fields,
                                        GameTitle title) {
+    return encodeSpriteRuntimeSectionAs(fields, SpriteRuntimeSectionKind::OutdoorV5, title);
+}
+
+SaveSection encodeSpriteRuntimeSectionAs(const SpriteRuntimeSaveFields &fields,
+                                         SpriteRuntimeSectionKind kind,
+                                         GameTitle title) {
     requireMM6(title);
-    requireMapName(fields.mapName);
+    requireMapName(fields.mapName, kind);
     if (fields.records.size() > MAX_SPRITES)
         throw std::runtime_error("MM6 SPRT exceeds bounded full-list count");
     std::vector<std::uint8_t> bytes;
@@ -296,15 +305,25 @@ SaveSection encodeSpriteRuntimeSection(const SpriteRuntimeSaveFields &fields,
     put32(&bytes, fields.records.size());
     for (const SpriteRuntimeRecord &record : fields.records)
         putRecord(&bytes, record);
-    return {TAG, true, std::move(bytes)};
+    return {kind == SpriteRuntimeSectionKind::OutdoorV5 ? OUTDOOR_TAG : INDOOR_TAG,
+            true, std::move(bytes)};
 }
 
 SpriteRuntimeSaveFields decodeSpriteRuntimeSection(const SaveContainer &container,
                                                    GameTitle title) {
+    return decodeSpriteRuntimeSectionAs(container, SpriteRuntimeSectionKind::OutdoorV5,
+                                        title);
+}
+
+SpriteRuntimeSaveFields decodeSpriteRuntimeSectionAs(
+    const SaveContainer &container, SpriteRuntimeSectionKind kind,
+    GameTitle title) {
     requireMM6(title);
+    const auto &tag = kind == SpriteRuntimeSectionKind::OutdoorV5 ?
+        OUTDOOR_TAG : INDOOR_TAG;
     const SaveSection *section = nullptr;
     for (const SaveSection &candidate : container.sections)
-        if (candidate.tag == TAG) {
+        if (candidate.tag == tag) {
             if (section)
                 throw std::runtime_error("duplicate MM6 SPRT section");
             section = &candidate;
@@ -318,7 +337,7 @@ SpriteRuntimeSaveFields decodeSpriteRuntimeSection(const SaveContainer &containe
     const auto name = input.take(input.u8());
     SpriteRuntimeSaveFields result;
     result.mapName.assign(name.begin(), name.end());
-    requireMapName(result.mapName);
+    requireMapName(result.mapName, kind);
     const std::uint32_t count = input.u32();
     if (count > MAX_SPRITES ||
         section->payload.size() != 2 + name.size() + 4 + count * RECORD_BYTES)
@@ -327,7 +346,7 @@ SpriteRuntimeSaveFields decodeSpriteRuntimeSection(const SaveContainer &containe
     for (std::uint32_t index = 0; index < count; ++index)
         result.records.push_back(getRecord(&input));
     input.finish();
-    if (encodeSpriteRuntimeSection(result, title) != *section)
+    if (encodeSpriteRuntimeSectionAs(result, kind, title) != *section)
         throw std::runtime_error("MM6 SPRT is not canonical");
     return result;
 }

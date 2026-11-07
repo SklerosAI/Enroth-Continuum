@@ -180,6 +180,8 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
             saved->eventRuntime = std::move(eventRuntime);
             mm6::captureV6IndoorNativeAnchors(
                 *represented, &saved->actors, &saved->sprites, &saved->decorations);
+            saved->runtimeSprites = mm6::captureIndoorSpriteRuntime(
+                mapName, saved->sprites, pSpriteObjects, GameTitle::MM6);
             auto changedDecorations = pLevelDecorations;
             if (changedDecorations.empty())
                 throw std::runtime_error("MM6 v6 IDRT probe has no decoration slot");

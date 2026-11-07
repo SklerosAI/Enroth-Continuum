@@ -27,6 +27,17 @@ struct SpriteRuntimeSaveFields {
     std::vector<SpriteRuntimeRecord> records;
 };
 
+enum class SpriteRuntimeSectionKind { OutdoorV5, IndoorV6 };
+
+// Share the exact per-sprite image/float/item codec without changing the
+// published v5 SPRT map or tag contract. Indoor v6 uses a distinct ISRT tag.
+SaveSection encodeSpriteRuntimeSectionAs(
+    const SpriteRuntimeSaveFields &fields, SpriteRuntimeSectionKind kind,
+    GameTitle title);
+SpriteRuntimeSaveFields decodeSpriteRuntimeSectionAs(
+    const SaveContainer &container, SpriteRuntimeSectionKind kind,
+    GameTitle title);
+
 SpriteRuntimeSaveFields captureSpriteRuntimeFields(
     std::string_view mapName, std::span<const std::uint8_t> nativeDelta,
     std::span<const SpriteObject> live, GameTitle title);

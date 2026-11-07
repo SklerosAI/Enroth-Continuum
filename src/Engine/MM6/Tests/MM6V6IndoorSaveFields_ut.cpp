@@ -1,5 +1,8 @@
 #include <array>
+#include <bit>
+#include <cstring>
 #include <exception>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -56,9 +59,10 @@ mm6::V6IndoorSaveFields candidate() {
     result.faceOverrides.maps.push_back(*mm6::captureIndoorFaceOverrides(
         "d0.blv", base, changed, GameTitle::MM6));
     result.actors = {"d0.blv", 1, std::vector<std::uint8_t>(548, 0x11)};
-    result.sprites = {"d0.blv", 2, std::vector<std::uint8_t>(200, 0x22)};
+    result.sprites = {"d0.blv", 0, {}};
     result.decorations = {"d0.blv", 3, std::vector<std::uint8_t>(180, 0x33)};
     result.runtimeDecorations = {"d0.blv", {{1, 0, 0}, {1, 0, 0}, {1, 0, 0}}};
+    result.runtimeSprites.mapName = "d0.blv";
     return result;
 }
 
@@ -128,18 +132,19 @@ struct ItemTableScope {
 
 } // namespace
 
-UNIT_TEST(MM6V6IndoorSaveFields, StrictTwentySevenSectionRoundTrip) {
+UNIT_TEST(MM6V6IndoorSaveFields, StrictTwentyEightSectionRoundTrip) {
     const auto source = candidate();
     const auto bytes = mm6::encodeV6IndoorSave(source, GameTitle::MM6);
     const auto container = mm6::decodeSaveContainer(bytes);
     EXPECT_EQ(container.version, 6);
-    EXPECT_EQ(container.sections.size(), 27);
+    EXPECT_EQ(container.sections.size(), 28);
     const auto decoded = mm6::decodeV6IndoorSave(bytes, GameTitle::MM6);
     EXPECT_EQ(decoded.raw.metadata.header.mapFileName, "d0.blv");
     EXPECT_EQ(decoded.actors, source.actors);
     EXPECT_EQ(decoded.sprites, source.sprites);
     EXPECT_EQ(decoded.decorations, source.decorations);
     EXPECT_EQ(decoded.runtimeDecorations, source.runtimeDecorations);
+    EXPECT_EQ(decoded.runtimeSprites.mapName, source.runtimeSprites.mapName);
     EXPECT_EQ(mm6::encodeV6IndoorSave(decoded, GameTitle::MM6), bytes);
     EXPECT_THROW((void) mm6::decodeRawSave(bytes, GameTitle::MM6), std::exception);
     EXPECT_FALSE(mm6::StagedV6IndoorSaveFields{}.canEnterGameLoop());
@@ -173,6 +178,11 @@ UNIT_TEST(MM6V6IndoorSaveFields, RejectsMissingMismatchedAndMalformedOwners) {
     container = mm6::decodeSaveContainer(
         mm6::encodeV6IndoorSave(candidate(), GameTitle::MM6));
     section(&container, {'I', 'D', 'R', 'T'}).payload.pop_back();
+    EXPECT_THROW((void) mm6::decodeV6IndoorSave(
+        mm6::encodeSaveContainer(container), GameTitle::MM6), std::exception);
+    container = mm6::decodeSaveContainer(
+        mm6::encodeV6IndoorSave(candidate(), GameTitle::MM6));
+    section(&container, {'I', 'S', 'R', 'T'}).payload.pop_back();
     EXPECT_THROW((void) mm6::decodeV6IndoorSave(
         mm6::encodeSaveContainer(container), GameTitle::MM6), std::exception);
     container = mm6::decodeSaveContainer(
@@ -264,6 +274,42 @@ UNIT_TEST(MM6V6IndoorSaveFields, IndoorDecorationPublicationRequiresExactPreEven
     EXPECT_THROW((void) mm6::testing::runArmedV6PreEventIndoorDecorationReplayForTest(
         mm6::testing::PreEventCheckpointResult::Continue,
         live, &live, true, "d0.blv", GameTitle::MM6), std::exception);
+}
+
+UNIT_TEST(MM6V6IndoorSaveFields, IndoorSpriteOwnerPreservesFractionalStateAndNativeItem) {
+    SpriteObject live;
+    live.vPosition = Vec3f(1.25f, -2.5f, 3.75f);
+    live.vVelocity = Vec3f(0.25f, 0.5f, -0.75f);
+    live.timeSinceCreated = Duration::fromTicks(70000);
+    mm6::IndoorNativeSlotAnchor source{"d0.blv", 1,
+        std::vector<std::uint8_t>(100)};
+    SpriteObject_MM7 projected{};
+    snapshot(live, &projected);
+    std::memcpy(source.records.data(), &projected, 36);
+    std::memcpy(source.records.data() + 36, &projected.containing_item, 28);
+    std::memcpy(source.records.data() + 64,
+                reinterpret_cast<const std::uint8_t *>(&projected) + 72, 36);
+    const auto captured = mm6::captureIndoorSpriteRuntime(
+        "d0.blv", source, std::span(&live, 1), GameTitle::MM6);
+    mm6::SaveContainer container;
+    container.sections.push_back(mm6::encodeSpriteRuntimeSectionAs(
+        captured, mm6::SpriteRuntimeSectionKind::IndoorV6, GameTitle::MM6));
+    const auto decoded = mm6::decodeSpriteRuntimeSectionAs(
+        container, mm6::SpriteRuntimeSectionKind::IndoorV6, GameTitle::MM6);
+    auto detached = mm6::stageIndoorSpriteRuntime(
+        decoded, "d0.blv", source, GameTitle::MM6);
+    ASSERT_EQ(detached.size(), 1u);
+    EXPECT_EQ(std::bit_cast<std::uint32_t>(detached[0].vPosition.x),
+              std::bit_cast<std::uint32_t>(live.vPosition.x));
+    EXPECT_EQ(detached[0].timeSinceCreated.ticks(), 70000);
+    detached[0].vPosition.x = 0;
+    mm6::applyIndoorSpriteRuntimeAfterMapReload(
+        decoded, "d0.blv", source, &detached, GameTitle::MM6);
+    EXPECT_EQ(std::bit_cast<std::uint32_t>(detached[0].vPosition.x),
+              std::bit_cast<std::uint32_t>(live.vPosition.x));
+    source.records[0] ^= 1;
+    EXPECT_THROW((void) mm6::stageIndoorSpriteRuntime(
+        decoded, "d0.blv", source, GameTitle::MM6), std::exception);
 }
 
 UNIT_TEST(MM6V6IndoorSaveFields, NativeAnchorCaptureRequiresMatchingIndoorPlan) {

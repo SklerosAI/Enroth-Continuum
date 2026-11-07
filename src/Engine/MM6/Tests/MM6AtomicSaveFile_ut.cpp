@@ -22,15 +22,17 @@
 #include "Engine/MM6/MM6SaveContainer.h"
 #include "Engine/MM6/MM6ShopTitleState.h"
 #include "Engine/MM6/MM6V3SaveFields.h"
+#include "Engine/MM6/MM6V4SaveFields.h"
 #include "Engine/Objects/Actor.h"
 
 namespace {
 
 class TestProfile {
  public:
-    TestProfile() {
+    explicit TestProfile(std::string_view prefix = "mm6-atomic-") {
 #ifndef _WIN32
-        std::string pattern = (std::filesystem::temp_directory_path() / "mm6-atomic-XXXXXX").string();
+        std::string pattern = (std::filesystem::temp_directory_path() /
+                               (std::string(prefix) + "XXXXXX")).string();
         char *result = ::mkdtemp(pattern.data());
         if (!result)
             throw std::runtime_error("cannot create MM6 test profile");
@@ -130,6 +132,17 @@ std::vector<std::uint8_t> sampleV3(std::uint8_t marker) {
     fields.gameplayRng.type = RANDOM_ENGINE_SEQUENTIAL;
     fields.gameplayRng.sequentialState = marker;
     return mm6::encodeV3Save(fields, GameTitle::MM6);
+}
+
+std::vector<std::uint8_t> sampleV4(std::uint8_t marker) {
+    mm6::V4SaveFields fields;
+    fields.v3 = mm6::decodeV3Save(sampleV3(marker), GameTitle::MM6);
+    mm6::EventRuntimeMapEntry entry;
+    entry.mapName = "d0.blv";
+    entry.respawnCount = 1;
+    entry.lastRespawnDay = 1;
+    fields.eventRuntime.maps.push_back(entry);
+    return mm6::encodeV4Save(fields, GameTitle::MM6);
 }
 
 std::vector<std::uint8_t> read(const std::filesystem::path &path) {
@@ -481,5 +494,83 @@ UNIT_TEST(MM6AtomicSaveFile, V3FaultLeavesPriorSlotAndRejectsOldWriter) {
         }), std::exception);
     EXPECT_EQ(read(profile.save()), first);
     EXPECT_EQ(read(profile.backup()), first);
+}
+
+UNIT_TEST(MM6AtomicSaveFile, V4TestWriterRequiresDisposablePathAndSemanticCallback) {
+    TestProfile profile("mm6-restart-");
+    const auto candidate = sampleV4(70);
+    const auto slot = profile.root() / "saves/candidate-v4.ec6";
+    const auto accept = [](std::span<const std::uint8_t> bytes) {
+        (void) mm6::decodeV4Save(bytes, GameTitle::MM6);
+    };
+    EXPECT_THROW(mm6::writeAtomicV4SaveFileForTest(
+        profile.root(), "candidate-v4.ec6", candidate, {}), std::exception);
+    EXPECT_THROW(mm6::writeAtomicV4SaveFileForTest(
+        profile.root(), "autosave.ec6", candidate, accept), std::exception);
+    EXPECT_THROW(mm6::writeAtomicV4SaveFileForTest(
+        profile.root(), "candidate-v4.ec6", candidate,
+        [](std::span<const std::uint8_t>) { throw std::runtime_error("semantic refusal"); }),
+        std::exception);
+    EXPECT_FALSE(std::filesystem::exists(slot));
+    TestProfile ordinary;
+    EXPECT_THROW(mm6::writeAtomicV4SaveFileForTest(
+        ordinary.root(), "candidate-v4.ec6", candidate, accept), std::exception);
+    mm6::writeAtomicV4SaveFileForTest(profile.root(), "candidate-v4.ec6", candidate, accept);
+    EXPECT_EQ(read(slot), candidate);
+}
+
+UNIT_TEST(MM6AtomicSaveFile, V4ForeignPrimaryAndBackupRefuseBeforeMutation) {
+    const auto candidate = sampleV4(71);
+    const auto foreign = sampleRaw(72);
+    const auto accept = [](std::span<const std::uint8_t> bytes) {
+        (void) mm6::decodeV4Save(bytes, GameTitle::MM6);
+    };
+    for (bool foreignBackup : {false, true}) {
+        TestProfile profile("mm6-restart-");
+        const auto slot = profile.root() / "saves/candidate-v4.ec6";
+        std::filesystem::create_directories(slot.parent_path());
+        if (foreignBackup) {
+            write(slot, candidate);
+            write(slot.string() + ".bak", foreign);
+        } else {
+            write(slot, foreign);
+        }
+        const auto oldPrimary = read(slot);
+        const auto oldBackup = read(slot.string() + ".bak");
+        EXPECT_THROW(mm6::writeAtomicV4SaveFileForTest(
+            profile.root(), "candidate-v4.ec6", candidate, accept), std::exception);
+        EXPECT_EQ(read(slot), oldPrimary);
+        EXPECT_EQ(read(slot.string() + ".bak"), oldBackup);
+    }
+}
+
+UNIT_TEST(MM6AtomicSaveFile, V4FaultPreservesCandidateAndV2Seed) {
+    const auto accept = [](std::span<const std::uint8_t> bytes) {
+        (void) mm6::decodeV4Save(bytes, GameTitle::MM6);
+    };
+    for (mm6::detail::AtomicSaveStep step : {
+             mm6::detail::AtomicSaveStep::BeforeTempWrite,
+             mm6::detail::AtomicSaveStep::AfterPartialTempWrite,
+             mm6::detail::AtomicSaveStep::BeforeBackupReplace,
+             mm6::detail::AtomicSaveStep::BeforePrimaryReplace}) {
+        TestProfile profile("mm6-restart-");
+        const auto slot = profile.root() / "saves/candidate-v4.ec6";
+        const auto seed = sampleRaw(73);
+        const auto first = sampleV4(74);
+        const auto next = sampleV4(75);
+        std::filesystem::create_directories(slot.parent_path());
+        write(profile.root() / "saves/autosave.ec6", seed);
+        mm6::writeAtomicV4SaveFileForTest(profile.root(), "candidate-v4.ec6", first, accept);
+        EXPECT_THROW(mm6::detail::writeAtomicV4SaveFileForTest(
+            profile.root(), "candidate-v4.ec6", next, accept,
+            [step](mm6::detail::AtomicSaveStep reached) {
+                if (reached == step)
+                    throw std::runtime_error("injected v4 write failure");
+            }), std::exception);
+        EXPECT_EQ(read(slot), first);
+        EXPECT_EQ(read(profile.root() / "saves/autosave.ec6"), seed);
+        if (std::filesystem::exists(slot.string() + ".bak"))
+            EXPECT_EQ(read(slot.string() + ".bak"), first);
+    }
 }
 #endif

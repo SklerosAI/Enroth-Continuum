@@ -27,7 +27,7 @@
 #include "Engine/MM6/MM6NpcStaticBaseline.h"
 #include "Engine/MM6/MM6PersistentEventPublication.h"
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
-#include "Engine/MM6/MM6PostWorldOwnerValidator.h"
+#include "Engine/MM6/MM6PostRebuildPidSlots.h"
 #include "Engine/MM6/MM6PreEventCheckpointForTest.h"
 #include "Engine/MM6/MM6RawCursorImagePlan.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
@@ -48,6 +48,7 @@
 #include "Engine/MM6/MM6HirelingSaveRuntime.h"
 #include "Engine/MM6/MM6RecoverySaveRuntime.h"
 #include "Engine/MM6/MM6RawPartyInventoryStage.h"
+#include "Engine/MM6/MM6SavedActorPidPolicy.h"
 #include "Engine/Snapshots/MM6OutdoorSnapshot.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Snapshots/EntitySnapshots.h"
@@ -207,7 +208,7 @@ GAME_TEST(MM6V4FreshChildReplayHeadless, DISABLED_FreshQuickLoadRestoresBeforeEv
             engine->_pendingTransition = MapDestination(
                 pMapTable->GetMapInfo("oute3.odm"), MAP_START_POINT_PARTY);
             engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
-            chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>();
+            chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>(true);
             eventRuntime = std::make_unique<mm6::testing::ScopedEventRuntimeRestoreForTest>(
                 GameTitle::MM6, staged->saved.eventRuntime);
             checkpoint = std::make_unique<mm6::testing::ScopedPreEventCheckpointForTest>(
@@ -231,6 +232,8 @@ GAME_TEST(MM6V4FreshChildReplayHeadless, DISABLED_FreshQuickLoadRestoresBeforeEv
                             !replay->published() || !replay->rngPublished() ||
                             !eventRuntime->restored() ||
                             pActors.size() != expectedActiveActors ||
+                            engine->_currentLoadedMapId != pMapTable->GetMapInfo("oute3.odm") ||
+                            uCurrentlyLoadedLevelType != LEVEL_OUTDOOR ||
                             !gameTimer->isPaused() || engine->_pendingTransition ||
                             pPartyActionQueue->uNumActions != 0)
                             throw std::runtime_error("MM6 v4 replay reached an unexpected world order");
@@ -262,17 +265,34 @@ GAME_TEST(MM6V4FreshChildReplayHeadless, DISABLED_FreshQuickLoadRestoresBeforeEv
                             !std::equal(nativeBytes.begin(), nativeBytes.end(),
                                         expectedNative.begin(), expectedNative.end()))
                             throw std::runtime_error("MM6 v4 native event bytes changed after map events");
-                        auto legacyPersistent = engine->_persistentVariables;
-                        legacyPersistent.mapVars.fill(0);
-                        legacyPersistent.decorVars.fill(0);
-                        const mm6::PostWorldOwnerView owners{
-                            engine->_currentLoadedMapId, uCurrentlyLoadedLevelType,
-                            pMapTable, pItemTable, finalActors, pSpriteObjects, vChests,
-                            pOutdoor->mm6DeltaBytes, &legacyPersistent,
-                            &mm6::chestTitleState()};
-                        mm6::requireRawV2PostWorldOwnerAgreement(
-                            staged->v3.represented, owners, GameTitle::MM6);
                         const auto &savedRaw = staged->saved.v3.raw;
+                        if (pMapTable->pInfos[engine->_currentLoadedMapId].fileName !=
+                                savedRaw.metadata.header.mapFileName ||
+                            !staged->v3.represented.outdoorPlan ||
+                            staged->v3.represented.outdoorPlan->mapName != "oute3.odm")
+                            throw std::runtime_error("MM6 v4 final map differs from HEAD");
+                        mm6::requireNoActiveSavedActorOverlays(
+                            savedRaw.metadata.overlays, GameTitle::MM6);
+                        mm6::requirePostRebuildPidSlotAgreement(
+                            *staged->v3.represented.outdoorPlan, "oute3.odm",
+                            finalActors, pSpriteObjects, GameTitle::MM6);
+                        const auto &chest = mm6::chestTitleState();
+                        if (!chest.ready || chest.lcgState != savedRaw.chest.lcgState ||
+                            chest.generatedArtifactFlags != savedRaw.chest.generatedArtifactFlags ||
+                            pOutdoor->mm6DeltaBytes != savedRaw.chest.rawActiveDelta ||
+                            vChests.size() != 20)
+                            throw std::runtime_error("MM6 v4 final CHST owner changed");
+                        mm6::ChestRecordSet chestRecords{};
+                        if (!mm6::copyChestRecords(outdoorWire.part(mm6::OutdoorDeltaPart::Chests),
+                                                   &chestRecords))
+                            throw std::runtime_error("MM6 v4 final chest section is incomplete");
+                        for (int index = 0; index < 20; ++index) {
+                            mm6::ChestRuntimeProjection projection{vChests[index], chestRecords[index]};
+                            const auto replayed = mm6::stageChestRuntimeRecord(
+                                GameTitle::MM6, projection);
+                            if (!replayed || *replayed != chestRecords[index])
+                                throw std::runtime_error("MM6 v4 final chest projection changed");
+                        }
                         if (mm6::captureCoreFields(*pParty, GameTitle::MM6) != savedRaw.core)
                             throw std::runtime_error("MM6 v4 PART/CHAR owner changed after map events");
                         const auto durable = mm6::captureDurableFields(*pParty, GameTitle::MM6);

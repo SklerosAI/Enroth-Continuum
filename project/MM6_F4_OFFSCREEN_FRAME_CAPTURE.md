@@ -1,6 +1,6 @@
 # MM6 F4 offscreen first-map frame capture
 
-Status: **monitored hidden OpenGL capture passes with four visible party portraits; outdoor color/terrain and normal new-game entry remain open** (2026-11-06). This is a test-only macOS diagnostic. It does not enable the guarded MM6 new-game or chest path, change MM7 startup, or place a proprietary screenshot in Git.
+Status: **monitored hidden OpenGL world and chest captures pass; normal new-game entry remains guarded** (2026-11-06). This is a test-only macOS diagnostic. It does not change MM7 startup or place a proprietary screenshot in Git.
 
 ## Capture contract
 
@@ -17,6 +17,8 @@ The same custom linked binary passed the MM7 `Inventory.Initialization` headless
 The first world draw aborted at `SpriteFrameTable::InitializeSprite` when the MM6 `pfemsta` frame requested an unsuffixed sprite that the retained archive does not contain. The retained MM6 `dsft.bin` frame points to a seven-character directional texture prefix; the retained sprite archive contains its numbered octants. An aggregate check of all **981** eligible seven-character directional prefixes in that table found a numbered zero-octant entry for every prefix and no unsuffixed exact entry. The inherited `Sprites.cpp` path appended an octant only when the prefix length was **less than** seven. It now appends at seven for MM6 only; MM7 retains its original condition. A focused MM6 headless sprite test passed **1/1** with all eight octant pointers nonnull and no window/focus change. This correction is based on the retained original table/archive relationship; the accepted executable's sprite-loading branch was not independently reconstructed here.
 
 ## What the captured pixels show
+
+The same isolated hidden test now accepts an optional second temporary PNG path for a first-open chest. It selects an untrapped item-bearing chest when available, opens it through the MM6 live owner transaction, renders the chest screen, checks that more than 10,000 pixels differ from the outdoor frame, and closes the GUI before engine teardown. The integrated hidden run passed **1/1** over 118 host samples with no visible window or focus change. The private capture was visually inspected: the chest panel and item icons occupy the expected area alongside the four-character HUD. The PNG remains local and untracked. This establishes only one rendered chest layout; trap, click pickup, persistence and campaign play remain guarded.
 
 The earlier diagnostic had black party portrait ovals because the test read the framebuffer **before** `OpenGLRenderer::flushAndScale` submitted its queued portrait quads. The portrait-load call had already run. This was a capture-order error, not evidence of a missing MM6 portrait resource. The corrected image has four colored portraits and visible selected-character framing. The test checks chromatic pixels in each inner face region so this omission cannot silently recur.
 

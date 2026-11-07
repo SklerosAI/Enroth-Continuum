@@ -24,8 +24,10 @@
 #include "Engine/Snapshots/MM6OutdoorSnapshot.h"
 #include "Engine/Tables/TileTable.h"
 #include "Engine/Tables/MapTable.h"
+#include "Engine/Timer.h"
 
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/UIChest.h"
 #include "GUI/UI/UIGame.h"
 
 #include "Library/Image/Png.h"
@@ -223,4 +225,69 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_FirstOutdoorCapture) {
     FileOutputStream output{Path(capturePath)};
     output.write(png::encode(frame));
     output.close();
+
+    // Optional second private capture of the MM6 first-open chest screen.
+    // The hidden test keeps the GUI in scope only while the engine is alive.
+    if (const char *chestPath = std::getenv("MM6_OFFSCREEN_CHEST_CAPTURE_PATH")) {
+        const std::string_view chestDestination(chestPath);
+        ASSERT_TRUE(chestDestination.starts_with("/tmp/") ||
+                    chestDestination.starts_with("/private/tmp/"));
+        ASSERT_TRUE(Path(chestPath).isNormalized());
+        ASSERT_EQ(Path(chestPath).extension(), ".png");
+        int chestIndex = -1;
+        int emptyFallback = -1;
+        for (int index = 0; index < static_cast<int>(vChests.size()); ++index) {
+            if (!vChests[index].Trapped() && !vChests[index].Initialized()) {
+                if (emptyFallback < 0)
+                    emptyFallback = index;
+                Chest_MM7 raw{};
+                snapshot(vChests[index], &raw);
+                if (std::any_of(raw.items.begin(), raw.items.end(), [](const Item_MM7 &item) {
+                        return item.itemId > 0;
+                    })) {
+                    chestIndex = index;
+                    break;
+                }
+            }
+        }
+        if (chestIndex < 0)
+            chestIndex = emptyFallback;
+        ASSERT_GE(chestIndex, 0);
+        RgbaImage chestFrame;
+        bool opened = false;
+        game.runGameRoutine([&] {
+            try {
+                pParty->setActiveCharacterIndex(0);
+                opened = Chest::open(chestIndex, Pid::dummy());
+                if (opened) {
+                    render->ClearTarget(Color(0, 0, 0));
+                    engine->drawWorld();
+                    engine->drawHUD();
+                    render->flushAndScale();
+                    engine->drawOverlay();
+                    chestFrame = render->MakeFullScreenshot();
+                }
+            } catch (...) {
+                pGUIWindow_CurrentChest.reset();
+                current_screen_type = SCREEN_GAME;
+                gameTimer->setPaused(false);
+                throw;
+            }
+            pGUIWindow_CurrentChest.reset();
+            current_screen_type = SCREEN_GAME;
+            gameTimer->setPaused(false);
+        });
+        ASSERT_TRUE(opened);
+        ASSERT_EQ(chestFrame.size(), frame.size());
+        size_t changedChestPixels = 0;
+        for (int y = 0; y < frame.height(); ++y)
+            for (int x = 0; x < frame.width(); ++x)
+                changedChestPixels += frame[y][x] != chestFrame[y][x];
+        EXPECT_GT(changedChestPixels, 10000u);
+        EXPECT_FALSE(window->isVisible());
+        EXPECT_FALSE(window->grabsMouse());
+        FileOutputStream chestOutput{Path(chestPath)};
+        chestOutput.write(png::encode(chestFrame));
+        chestOutput.close();
+    }
 }

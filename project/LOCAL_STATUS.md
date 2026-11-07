@@ -768,3 +768,16 @@ second advanced timer, actor AI, queued turn/walk and draw (**1/1** each,
 zero visible windows and no focus change). The disposable profile was removed.
 An MM7 all-map reconstruction control passed **1/1**. EC6 v2 remains offline;
 normal MM6 SaveLoad and all-owner world publication are still guarded.
+
+A hidden OpenGL first-map test also captured an item-bearing MM6 chest after
+the title-local live open transaction. The monitored run passed **1/1** over
+118 samples with no visible window or focus change; visual inspection found
+the chest panel and item icons in the expected region. Its temporary PNG is
+untracked. Live trap, pickup, persistence and campaign play remain guarded.
+
+The latest fresh-process reload check passed a second monitored two-process
+sequence (**1/1** per process) and covered the first world-update skip, then
+the input skip with queued actions held, then a movement/draw frame that drained
+them. A separate scoped combat-transient reset now stages four pre-load
+containers and passed **3/3** linked rollback/commit tests. Neither is wired
+into production `loadGame()` or a complete `Game::gameLoop()` handoff.

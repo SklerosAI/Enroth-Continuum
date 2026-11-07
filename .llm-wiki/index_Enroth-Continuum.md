@@ -39,7 +39,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Main Menu Assets](MM6-F4-Main-Menu-Assets.md) — MM6 title overlay lookups and geometry candidate; graphical acceptance pending
 - [MM6 F4 HUD Resources](MM6-F4-HUD-Resources.md) — Title-specific HUD art and original-PE vital-bar coordinates; hidden bar alignment verified, full visual acceptance pending
 - [MM6 F4 UI Resource Blockers](MM6-F4-UI-Resource-Blockers.md) — First-frame resource matrix and corrected sprite-frame palette/timing; selected-portrait animation remains
-- [MM6 F4 Offscreen Render Capture](MM6-F4-Offscreen-Render-Capture.md) — Hidden OpenGL first-map frame with portraits, aligned bars, source-color foliage and land/road art; visual fidelity remains open
+- [MM6 F4 Offscreen Render Capture](MM6-F4-Offscreen-Render-Capture.md) — Hidden OpenGL first-map and item-filled chest captures with no focus change; full visual fidelity remains open
 - [MM6 F4 First Map Preflight](MM6-F4-First-Map-Preflight.md) — Detached resources, events, encounters and monitored in-memory outdoor load; durable save and gameplay remain open
 - [MM6 F4 Original No-Op Events](MM6-F4-Original-Noop-Events.md) — Linked MM6 executor advances past original no-op values 20, 27 and 28 while MM7 stays isolated
 - [MM6 F4 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md) — Original MM6 indoor face targeting and linked negative DLV round trip; save/reload remains open
@@ -106,7 +106,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Beacon Renderer Contract](MM6-F4-Beacon-Renderer-Contract.md) — Checked texture creation and controlled cleanup required before live BEAC publication
 - [MM6 F4 Partial Stage Coordinator](MM6-F4-Partial-Stage-Coordinator.md) — Validated 67-map candidate with detached Party, active map, NPC/map and timer/overlay copies
 - [MM6 F4 New Game Autosave](MM6-F4-New-Game-Autosave.md) — Archive-backed New Game and isolated fresh-process `.ec6` world entry pass; normal save/reload stays guarded
-- [MM6 F4 First-Map World Rollback](MM6-F4-First-Map-World-Rollback.md) — Detached terrain ID preflight and temporary `.ec6` world reentry pass; full-world rollback remains guarded
+- [MM6 F4 First-Map World Rollback](MM6-F4-First-Map-World-Rollback.md) — Detached terrain preflight, four-owner combat rollback and temporary `.ec6` reentry pass; full-world rollback remains guarded
 - [MM6 F4 Shop Save Key Matrix](MM6-F4-Shop-Save-Key-Matrix.md) — Retained house-type join versus inherited MM7 shop, guild and bounty save owner ranges
 - [MM6 F4 Shop Guild Clock Save](MM6-F4-Shop-Guild-Clock-Save.md) — SCLK v1 preserves 68 unique original-MM6 shop and guild refresh deadline words
 - [MM6 F4 Shop Refresh PE Trace](MM6-F4-Shop-Refresh-PE-Trace.md) — Original row-keyed refresh and raw Party-block save proof, with stock tuple boundary still open

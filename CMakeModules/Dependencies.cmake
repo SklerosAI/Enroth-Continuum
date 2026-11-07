@@ -1,5 +1,8 @@
 
 function(download_prebuilt_dependencies TAG FILE_NAME TARGET_DIR OUT_STATUS_VAR)
+    if(EC_LOCAL_ONLY_CONFIGURE)
+        message(FATAL_ERROR "EC_LOCAL_ONLY_CONFIGURE forbids the OpenEnroth dependency archive; repository-owned SDL3, OpenAL Soft, FFmpeg, libpng and zlib-ng builds are required")
+    endif()
     set(SOURCE_URL "https://github.com/OpenEnroth/OpenEnroth_Dependencies/releases/download/${TAG}/${FILE_NAME}")
     set(TARGET_PATH "${TARGET_DIR}/${FILE_NAME}")
     message(STATUS "Downloading ${SOURCE_URL} to ${TARGET_PATH}...")
@@ -36,6 +39,38 @@ function(download_prebuilt_dependencies TAG FILE_NAME TARGET_DIR OUT_STATUS_VAR)
     set(${OUT_STATUS_VAR} 0 PARENT_SCOPE)
 endfunction()
 
+# This gate deliberately fails until pinned source snapshots and their build
+# recipes are committed. A system package or a stale build cache must not make
+# a clean-clone, network-denied build appear self-contained.
+function(require_repository_owned_dependencies)
+    set(MISSING_INPUTS)
+    file(STRINGS "${CMAKE_SOURCE_DIR}/.gitmodules" SUBMODULE_LINES
+         REGEX "^[ \t]*path[ \t]*=")
+    foreach(LINE IN LISTS SUBMODULE_LINES)
+        string(REGEX REPLACE "^[ \t]*path[ \t]*=[ \t]*" "" RELATIVE_PATH "${LINE}")
+        file(GLOB SOURCE_ENTRIES "${CMAKE_SOURCE_DIR}/${RELATIVE_PATH}/*")
+        if(NOT SOURCE_ENTRIES)
+            list(APPEND MISSING_INPUTS "${RELATIVE_PATH} (gitlink source)")
+        endif()
+    endforeach()
+
+    set(LOCAL_SOURCE_ROOT "${CMAKE_SOURCE_DIR}/thirdparty/repo-source")
+    foreach(NAME IN ITEMS SDL3 openal-soft ffmpeg libpng zlib-ng
+                          libdwarf-lite ztd-cmake ztd-idk ztd-inline-containers
+                          ztd-encoding-tables ztd-cuneicode ztd-platform)
+        file(GLOB SOURCE_ENTRIES "${LOCAL_SOURCE_ROOT}/${NAME}/*")
+        if(NOT SOURCE_ENTRIES)
+            list(APPEND MISSING_INPUTS "thirdparty/repo-source/${NAME}")
+        endif()
+    endforeach()
+    if(MISSING_INPUTS)
+        list(JOIN MISSING_INPUTS "\n  - " MISSING_MESSAGE)
+        message(FATAL_ERROR "EC_LOCAL_ONLY_CONFIGURE missing repository-owned source inputs:\n  - ${MISSING_MESSAGE}")
+    endif()
+
+    message(FATAL_ERROR "EC_LOCAL_ONLY_CONFIGURE found source directories, but repository-owned recipes for SDL3, OpenAL Soft, FFmpeg, libpng and zlib-ng are not connected; refusing system-library fallback")
+endfunction()
+
 function(print_library_found_message LIBRARY TARGET_NAME INCLUDE_DIR)
     if(NOT "${TARGET_NAME}" STREQUAL "")
         get_target_property(TARGET_INCLUDE_DIR "${TARGET_NAME}" INTERFACE_INCLUDE_DIRECTORIES)
@@ -49,6 +84,12 @@ function(print_library_found_message LIBRARY TARGET_NAME INCLUDE_DIR)
 endfunction()
 
 macro(resolve_dependencies) # Intentionally a macro - we want set() to work in parent scope.
+    if(EC_LOCAL_ONLY_CONFIGURE)
+        if(OE_USE_PREBUILT_DEPENDENCIES)
+            message(FATAL_ERROR "EC_LOCAL_ONLY_CONFIGURE requires OE_USE_PREBUILT_DEPENDENCIES=OFF; the OpenEnroth dependency archive is forbidden")
+        endif()
+        require_repository_owned_dependencies()
+    endif()
     if(OE_USE_PREBUILT_DEPENDENCIES)
         # "r8" is version as set in yml files in OpenEnroth_Dependencies, "master" is a branch name. This way it's
         # possible to test with dependencies built from different branches of the OpenEnroth_Dependencies repo.

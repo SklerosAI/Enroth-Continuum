@@ -2047,3 +2047,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a read-only source join across six loaded MM6 NPC resources, the fresh baseline, staged and live static tables, global topics and mutable RESC fields. Generated NPC identities and game RNG remain explicit blockers.
 - Two linked synthetic tests passed. A private loaded-table runtime check and final post-map NPC identity remain open; no live owner was changed.
+
+## [2026-11-07] verify | MM6 post-world test hook order
+- by: T-Burton-ND via codex
+- Added a one-shot MM6-only test callback immediately after `DoPrepareWorld(true)` and before timer unpause/input, with scoped teardown and unchanged unarmed paths.
+- Four linked unit checks passed; a disposable v1 Main Menu reload observed the real hook before input with its slot unchanged (1/1), and an MM7 headless control passed 1/1. V2 final-owner checks are not armed yet. The separate NPC resource runtime probe exposed a stack crash now under investigation.

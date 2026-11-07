@@ -1288,11 +1288,18 @@ transient diagnostic. All three chains, focused units and MM7 control pass.
 Eligible StreetNPC generation, real dialogue/hire-fire checks,
 production SaveLoad and general indoor play remain open.
 
-The later [detached outdoor v6 visited-map schema](MM6_F4_BORDER_AUTOSAVE_TRANSACTION.md)
-supersedes the missing-section part of the border notes above. A no-write
-three-process transition fixture round-tripped first- and second-map runtime
-capsules in versioned `VIST` while preserving the active v5 bytes; malformed
-and cross-map data refused. The second-map capsule was captured after world
-preparation and before input. No v6 file was written or loaded, and live
-return, durable result policy, production SaveLoad and border travel remain
-closed.
+The later [detached outdoor v6 visited-map work](MM6_F4_BORDER_AUTOSAVE_TRANSACTION.md)
+supersedes the missing-section part of the border notes above. Versioned
+`VIST` holds a source-backed visited-map runtime owner beside the active v5
+state. An owner-only atomic v6 writer and independent fresh-child reader
+passed a five-process disposable headless chain, each child **1/1**. The
+reader rebuilt the active map, checked the visited owner against its source,
+and stopped before input without publishing that owner to the live cache.
+Malformed and cross-map candidates refused, and an injected pre-replacement
+fault left existing slots unchanged. A read-only return plan retained the
+current global chest/artifact ledger. A detached arrival helper then staged a
+copied Party across a cardinal edge, sampled target terrain, and refused
+model-floor overlap; focused units passed **3/3** and the five-child chain
+passed again. This did not execute real border movement or enter the old map.
+`DoPrepareWorld(false)` replay, target-world agreement, rollback, durable
+result policy, production SaveLoad and border travel remain closed.

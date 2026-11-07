@@ -46,6 +46,7 @@
 #include "Engine/MM6/MM6V5PreEventSpriteReplayForTest.h"
 #include "Engine/MM6/MM6V5SaveFields.h"
 #include "Engine/MM6/MM6V5SpriteRuntimeFields.h"
+#include "MM6V4AfterActionCaptureForTest.h"
 #include "Engine/MM6/MM6OutdoorWire.h"
 #include "Engine/MM6/MM6ChestRuntimeProjection.h"
 #include "Engine/MM6/MM6ChestLiveOwnerAdapter.h"
@@ -152,10 +153,19 @@ std::vector<LevelDecoration> sourceDecorations(const mm6::LoadedMapSource &maps,
 // Both probes consume the separate post-action candidate in an owner-only
 // disposable profile. The continuation admits only one bounded input and
 // movement step after every saved owner has passed the existing replay gate.
-void runV5AfterActionFreshChildReplay(EngineController &game, bool allowInput) {
-    const char *enable = std::getenv(allowInput ? "ENROTH_MM6_V5_FIRST_INPUT_ENABLE" :
-                                                "ENROTH_MM6_V5_AFTER_ACTION_REPLAY_ENABLE");
-    if (!enable || std::string_view(enable) != "strict-v5-after-action")
+enum class V5ReplayMode { AbortBeforeInput, FirstInput, SecondWrite };
+
+void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode) {
+    const bool allowInput = mode != V5ReplayMode::AbortBeforeInput;
+    const char *enableName = mode == V5ReplayMode::AbortBeforeInput ?
+        "ENROTH_MM6_V5_AFTER_ACTION_REPLAY_ENABLE" :
+        mode == V5ReplayMode::FirstInput ?
+            "ENROTH_MM6_V5_FIRST_INPUT_ENABLE" :
+            "ENROTH_MM6_V5_SECOND_WRITE_ENABLE";
+    const char *enable = std::getenv(enableName);
+    const std::string_view expectedEnable = mode == V5ReplayMode::SecondWrite ?
+        "strict-v5-second-write" : "strict-v5-after-action";
+    if (!enable || std::string_view(enable) != expectedEnable)
         GTEST_SKIP() << "Run only after strict v5 writer and owner admission";
     const std::filesystem::path profile = ownerOnlyProfile();
     if (profile.empty())
@@ -182,6 +192,7 @@ void runV5AfterActionFreshChildReplay(EngineController &game, bool allowInput) {
     bool finalOwnersAgree = false;
     bool firstInputReached = false;
     bool movementApplied = false;
+    bool secondCandidateWritten = false;
     std::string finalOwnerError;
     std::size_t expectedNativeActors = 0;
     std::size_t expectedActiveActors = 0;
@@ -424,6 +435,11 @@ void runV5AfterActionFreshChildReplay(EngineController &game, bool allowInput) {
                     pPartyActionQueue->uNumActions == 0 &&
                     engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute3.odm") &&
                     !engine->_pendingTransition;
+                if (movementApplied && mode == V5ReplayMode::SecondWrite) {
+                    mm6::testing::writeV5AfterReloadedInputCandidateForTest(
+                        profile, baselineBefore, before);
+                    secondCandidateWritten = true;
+                }
             });
         }
         game.runGameRoutine([] {
@@ -452,6 +468,12 @@ void runV5AfterActionFreshChildReplay(EngineController &game, bool allowInput) {
         EXPECT_TRUE(firstInputReached);
         EXPECT_TRUE(movementApplied);
     }
+    if (mode == V5ReplayMode::SecondWrite) {
+        EXPECT_TRUE(secondCandidateWritten);
+        const auto secondCandidate = profile / "saves" / "candidate-v5-after-reload-input.ec6";
+        ASSERT_TRUE(std::filesystem::is_regular_file(secondCandidate));
+        EXPECT_FALSE(slotBytes(secondCandidate).empty());
+    }
     EXPECT_EQ(slotBytes(candidate), before);
     EXPECT_EQ(slotBytes(profile / "saves" / "candidate-v4.ec6"), baselineBefore);
     EXPECT_EQ(slotBytes(profile / "saves" / "autosave.ec6"), seedBefore);
@@ -459,9 +481,13 @@ void runV5AfterActionFreshChildReplay(EngineController &game, bool allowInput) {
 }
 
 GAME_TEST(MM6V5AfterActionFreshChildReplayHeadless, DISABLED_PostActionQuickLoadRestoresSpritesBeforeInputAndAborts) {
-    runV5AfterActionFreshChildReplay(game, false);
+    runV5AfterActionFreshChildReplay(game, V5ReplayMode::AbortBeforeInput);
 }
 
 GAME_TEST(MM6V5FirstInputHeadless, DISABLED_PostActionQuickLoadMovesOnceInRealLoop) {
-    runV5AfterActionFreshChildReplay(game, true);
+    runV5AfterActionFreshChildReplay(game, V5ReplayMode::FirstInput);
+}
+
+GAME_TEST(MM6V5SecondWriteHeadless, DISABLED_PostReloadInputWritesDistinctCandidate) {
+    runV5AfterActionFreshChildReplay(game, V5ReplayMode::SecondWrite);
 }

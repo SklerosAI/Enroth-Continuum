@@ -50,6 +50,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md) — Original MM6 indoor face targeting and linked negative DLV round trip; save/reload remains open
 - [MM6 F4 Indoor Face Overrides](MM6-F4-Indoor-Face-Overrides.md) — Indoor face and runtime owner gates, superseded by a bounded test-only first-input cycle
 - [MM6 F4 V6 Indoor Input Cycle](MM6-F4-V6-Indoor-Input-Cycle.md) — Two distinct indoor five-child replay chains pass with a bounded MM6 native door-motion trace
+- [MM6 F4 Indoor Source Sweep](MM6-F4-Indoor-Source-Sweep.md) — All retained indoor pairs round-trip; a risk-ranked signed actor NPC anchor reaches a strict pre-event GNPC refusal
 - [MM6 F4 V5 Later Outdoor](MM6-F4-V5-Later-Outdoor.md) — Second-map seven-process save cycle and no-write location-change lifecycle pass; border travel and normal autosave remain open
 - [MM6 F4 Outdoor Tile Selectors](MM6-F4-Outdoor-Tile-Selectors.md) — Original base-field trace, MM6-only terrain reconstruction and remaining seasonal art gap
 - [MM6 F4 Outdoor Walk Sound](MM6-F4-Outdoor-Walk-Sound.md) — Original 28-class raw-tileset sound dispatcher, retained tile identity and title-specific outdoor footsteps

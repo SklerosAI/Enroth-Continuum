@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <exception>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -47,6 +48,7 @@
 
 #include "MM6V6IndoorProbeSlot.h"
 #include "MM6V6IndoorLiveRawOwnersForTest.h"
+#include "MM6IndoorSourceSweepForTest.h"
 
 namespace {
 
@@ -54,8 +56,11 @@ std::string indoorProbeMap(const mm6::LoadedMapSource &maps) {
     const char *caseValue = std::getenv("ENROTH_MM6_V6_INDOOR_CASE");
     const std::string_view selected = caseValue ? std::string_view(caseValue) :
                                                  std::string_view("first");
+    if (selected == "sweep-risk")
+        return mm6::testing::highestRiskAdditionalIndoorCaseForTest(
+            mm6::testing::sweepRetainedIndoorSourcesForTest(maps)).baseName;
     if (selected != "first" && selected != "second")
-        throw std::runtime_error("MM6 v6 indoor probe requires first or second case");
+        throw std::runtime_error("MM6 v6 indoor probe requires first, second or sweep-risk case");
     const auto names = maps.expectedNames();
     const int ordinal = selected == "second" ? 2 : 1;
     auto entry = names.begin();
@@ -136,6 +141,137 @@ std::optional<PartyPlacement> nativeIndoorFixturePlacement() {
 }
 
 } // namespace
+
+// Parse every retained MM6 indoor base/delta pair and classify only generic
+// engine ownership features. Do not print source names, dimensions or counts.
+GAME_TEST(MM6IndoorSourceSweep, DISABLED_AllRetainedPairsOffline) {
+    const char *enable = std::getenv("ENROTH_MM6_INDOOR_SWEEP_ENABLE");
+    if (!enable || std::string_view(enable) != "strict-offline-indoor-sweep")
+        GTEST_SKIP() << "Opt in to the private local MM6 indoor source sweep";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
+    const auto sweep = mm6::testing::sweepRetainedIndoorSourcesForTest(maps);
+    ASSERT_GT(sweep.variants.size(), 1u);
+    const auto &candidate =
+        mm6::testing::highestRiskAdditionalIndoorCaseForTest(sweep);
+    ASSERT_GE(candidate.ordinal, 2u);
+    ASSERT_TRUE(candidate.exactDefaultDeltaRoundTrip);
+    std::cout << "MM6 indoor source sweep: all retained pairs parsed; "
+              << (sweep.hasCodecRefusal ? "changed-state codec has refusals; " :
+                                          "changed-state codec exact; ")
+              << (sweep.hasInitiallyMovingDoor ? "initial door motion present; " :
+                                                 "initial door motion absent; ")
+              << (sweep.hasPrevisibleOutlines ? "saved visibility present; " :
+                                                "saved visibility absent; ")
+              << (sweep.hasNegativeActorNpcSource ?
+                  "signed actor NPC source present; " :
+                  "signed actor NPC source absent; ")
+              << (sweep.hasMultiActiveDoor ? "multiple door anchors present; " :
+                                             "multiple door anchors absent; ")
+              << (sweep.hasActorRecords ? "actor records present; " :
+                                          "actor records absent; ")
+              << (sweep.hasGroundRecords ? "ground records present; " :
+                                           "ground records absent; ")
+              << (sweep.hasPersistentBytes ? "persistent bytes set; " :
+                                            "persistent bytes clear; ")
+              << "distinct risk fixture selected\n";
+}
+
+// Reconstruct the risk-ranked source through the real indoor loader, then
+// stop before map events. This records the current GNPC refusal without
+// staging a save or letting input run.
+GAME_TEST(MM6IndoorSourceSweep, DISABLED_RiskCasePreEventActorIdentity) {
+    const char *enable = std::getenv("ENROTH_MM6_INDOOR_SWEEP_ENABLE");
+    if (!enable || std::string_view(enable) != "strict-risk-pre-event")
+        GTEST_SKIP() << "Opt in to the source-ranked MM6 indoor actor gate";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
+    const auto sweep = mm6::testing::sweepRetainedIndoorSourcesForTest(maps);
+    const std::string mapName =
+        mm6::testing::highestRiskAdditionalIndoorCaseForTest(sweep).baseName;
+    const MapId map = pMapTable->GetMapInfo(mapName);
+    ASSERT_NE(map, MAP_INVALID);
+    const auto parsedBase = deserializeMM6IndoorBase(maps.readBase(mapName));
+
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    ASSERT_NE(pGUIWindow_CurrentMenu, nullptr);
+    ASSERT_EQ(pGUIWindow_CurrentMenu->eWindowType, WINDOW_PARTY_CREATION);
+    pMapDeltas.clear();
+    for (const std::string &name : pGames_LOD->ls())
+        if (std::string_view(name).ends_with(".dlv") ||
+            std::string_view(name).ends_with(".ddm"))
+            pMapDeltas.emplace(name, Blob::copy(pGames_LOD->read(name)));
+
+    bool completed = false;
+    bool reached = false;
+    bool aborted = false;
+    bool exactNativeSignedActor = false;
+    bool generatedOwnerRefused = false;
+    std::exception_ptr probeError;
+    std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
+    game.runGameRoutine([&] {
+        engine->_pendingTransition = MapDestination(map, MAP_START_POINT_PARTY);
+        engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
+        checkpoint = std::make_unique<mm6::testing::ScopedPreEventCheckpointForTest>(
+            GameTitle::MM6, [&] {
+                try {
+                    if (uCurrentlyLoadedLevelType != LEVEL_INDOOR ||
+                        engine->_currentLoadedMapId != map || !pIndoor->bLoaded)
+                        throw std::runtime_error(
+                            "MM6 indoor risk fixture preceded world reconstruction");
+                    const auto native = decodeMM6IndoorRuntimeDelta(
+                        Blob::view(pIndoor->mm6DeltaBytes.data(),
+                                   pIndoor->mm6DeltaBytes.size()), parsedBase);
+                    if (native.actors.size() > pActors.size())
+                        throw std::runtime_error(
+                            "MM6 indoor risk fixture lost native actor prefix");
+                    for (std::size_t slot = 0; slot < native.actors.size(); ++slot)
+                        if (native.actors[slot].npcId < 0) {
+                            if (pActors[slot].id != slot ||
+                                pActors[slot].npcId != native.actors[slot].npcId)
+                                throw std::runtime_error(
+                                    "MM6 indoor risk fixture changed signed actor identity");
+                            exactNativeSignedActor = true;
+                        }
+                    try {
+                        (void) mm6::captureGeneratedNpcFields(
+                            pActors, *pNPCStats, mapName, GameTitle::MM6);
+                    } catch (const std::runtime_error &error) {
+                        generatedOwnerRefused =
+                            std::string_view(error.what()) ==
+                            "invalid MM6 generated NPC actor source";
+                    }
+                } catch (...) {
+                    probeError = std::current_exception();
+                }
+                reached = true;
+            },
+            mm6::testing::PreEventCheckpointResult::AbortToMainMenu);
+        try {
+            mm6::ScopedChestMapLoadOptIn chestOptIn;
+            DoPrepareWorld(true, 1);
+        } catch (const mm6::testing::PreEventCheckpointAbortForTest &) {
+            aborted = true;
+        }
+        completed = true;
+    });
+    for (int tick = 0; tick < 128 && !completed; ++tick)
+        game.tick();
+    ASSERT_TRUE(completed);
+    ASSERT_TRUE(reached);
+    ASSERT_TRUE(aborted);
+    ASSERT_FALSE(checkpoint->reachedMapLoad());
+    ASSERT_FALSE(checkpoint->reachedInput());
+    if (probeError)
+        std::rethrow_exception(probeError);
+    EXPECT_TRUE(exactNativeSignedActor);
+    EXPECT_TRUE(generatedOwnerRefused);
+}
 
 // Run alone after the disposable v2 autosave seed. This constructs a v6
 // indoor candidate in memory using one real BLV/DLV and the actual pre-event

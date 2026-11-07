@@ -109,3 +109,6 @@ cross-map travel, complete campaign rules, graphical view, audio playback,
 and the Atlas MM6 Play action remain unaccepted. No private assets, save
 bytes, or per-map inventory are part of this packet. MM7 and MM8 runtimes
 and profiles remain separate.
+
+A later [all-source indoor sweep](MM6_F4_INDOOR_SOURCE_SWEEP.md) validates the
+retained default pairs and records the next strict GNPC actor-identity gate.

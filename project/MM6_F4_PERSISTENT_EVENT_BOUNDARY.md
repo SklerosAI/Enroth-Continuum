@@ -1,0 +1,11 @@
+# MM6 F4 persistent event boundary
+
+Status: **detached, fail-closed staging only**. This is not live publication or a complete map-state transaction.
+
+The MM6 DLV/DDM persistent section has 200 bytes. The current event interpreter routes the proved MM6 EVT ID range 105–175 through `MM6MapByteState`, which addresses bytes 0–70 of the retained `mm6DeltaBytes` sidecar (`src/Engine/Evt/EvtInterpreter.cpp` and `src/Engine/Evt/MM6MapByteState.cpp`). Indoor and outdoor map loaders retain the decoded delta bytes in their MM6 sidecars (`src/Engine/Graphics/Indoor.cpp` and `Outdoor.cpp`).
+
+The inherited `PersistentVariables` live owner has `mapVars[75]` and `decorVars[125]` (`src/Engine/Engine.h`). There are live generic consumers: decoration visibility reads `decorVars` in both map renderers; `EVENT_ChangeEvent` writes it; outdoor flight and water-walk update it. `Engine.cpp` also reads/writes `mapVars` for a special event. The sum of those array widths equals the wire section width, but neither source nor the shipped zero-filled baseline establishes that MM6 uses the same split or index meanings. Copying all 200 bytes into those arrays would publish unproved state.
+
+`MM6PersistentEventBoundary.h` therefore stages **only** bytes 0–70 into a detached `mapBytes` array and initializes the inherited live-array shape to zero. It admits a section only when bytes 71–199 are zero. Its inverse capture preserves the proved bytes and rejects any nonzero write in either inherited array. These checks prevent a save/reload path from silently losing an unproved byte or accepting a generic live mutation whose MM6 wire address is unknown. The stage requires a previously validated `StagedActiveMap`; it separately checks the persistent section width and title. It does not assign `engine->_persistentVariables` or alter `mm6DeltaBytes`.
+
+Synthetic indoor/outdoor tests cover the byte-0 and byte-70 round trip; nonzero bytes at 71, 75, or 199; title mismatch; malformed/missing sections; and writes to either generic array. The tests establish the adapter policy, not the missing MM6 semantics. Before production publication, prove the addresses and reset/persistence rules for decoration event state and outdoor buff overlays, then reconcile these owners with `mm6DeltaBytes` in the full staged transaction. Existing guards remain in force.

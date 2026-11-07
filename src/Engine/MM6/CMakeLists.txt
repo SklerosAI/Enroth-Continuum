@@ -41,6 +41,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6RawSaveRuntime.cpp MM6RawSaveRuntime.h
     MM6RawCursorShopStage.cpp MM6RawCursorShopStage.h
     MM6RawSessionStage.cpp MM6RawSessionStage.h
+    MM6PersistentEventBoundary.h
     MM6RawPartyInventoryStage.cpp MM6RawPartyInventoryStage.h
     MM6NewGameSaveRuntime.cpp MM6NewGameSaveRuntime.h
     MM6FirstMapWorldTransaction.h
@@ -138,7 +139,7 @@ if(OE_BUILD_TESTS)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_save_container)
 
     add_library(test_engine_mm6_save_runtime OBJECT Tests/MM6MapSaveValidation_ut.cpp
-        Tests/MM6RawSaveRuntime_ut.cpp
+        Tests/MM6RawSaveRuntime_ut.cpp Tests/MM6PersistentEventBoundary_ut.cpp
         Tests/MM6RawPartyInventoryStage_ut.cpp
         Tests/MM6RawCursorShopStage_ut.cpp
         Tests/MM6DecodedEffectPartyStage_ut.cpp

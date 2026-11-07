@@ -2,6 +2,7 @@
 
 #include <bit>
 #include <cstdint>
+#include <limits>
 #include <optional>
 
 #include "Engine/GameTitle.h"
@@ -21,18 +22,31 @@ struct StandardItemProjection {
     ItemType sourceType = ITEM_TYPE_INVALID;
 };
 
+// The shared Item::GetValue() evaluates baseValue + 100 * strength in int.
+// Keep both imported and edited bonuses inside that representable range.
+inline bool standardStrengthFitsValue(std::int32_t strength, int baseValue) {
+    if (strength <= 0 || strength > std::numeric_limits<int>::max() / 100)
+        return false;
+    const std::int64_t value = static_cast<std::int64_t>(baseValue) +
+                               100 * static_cast<std::int64_t>(strength);
+    return value >= std::numeric_limits<int>::min() &&
+           value <= std::numeric_limits<int>::max();
+}
+
 inline std::optional<StandardItemProjection> stageStandardItem(
     const ItemRecord28 &raw, const ItemTable &table, GameTitle title) {
     const std::uint32_t id = raw.itemNumberRaw();
     const auto attribute = attributeForStandardBonus(raw.bonusRaw());
     const std::int32_t strength = std::bit_cast<std::int32_t>(raw.bonusStrengthRaw());
-    if (title != GameTitle::MM6 || id < 1 || id > 580 || !attribute || strength <= 0 ||
+    if (title != GameTitle::MM6 || id < 1 || id > 580 || !attribute ||
         raw.secondBonusRaw())
         return std::nullopt;
 
     const ItemData &data = table.items[static_cast<ItemId>(id)];
-    if (data.iconName.empty() || data.type < ITEM_TYPE_FIRST_NORMAL_ENCHANTABLE ||
-        data.type > ITEM_TYPE_LAST_NORMAL_ENCHANTABLE)
+    if (data.iconName.empty() || data.rarity != RARITY_COMMON ||
+        data.type < ITEM_TYPE_FIRST_NORMAL_ENCHANTABLE ||
+        data.type > ITEM_TYPE_LAST_NORMAL_ENCHANTABLE ||
+        !standardStrengthFitsValue(strength, data.baseValue))
         return std::nullopt;
 
     StandardItemProjection result;
@@ -54,7 +68,9 @@ inline std::optional<ItemRecord28> captureStandardItem(
     const auto bonus = item.standardEnchantment
         ? standardBonusForAttribute(*item.standardEnchantment) : std::nullopt;
     if (!source || source->sourceType != projection.sourceType || !bonus ||
-        item.itemId != source->item.itemId || item.standardEnchantmentStrength <= 0 ||
+        item.itemId != source->item.itemId ||
+        !standardStrengthFitsValue(item.standardEnchantmentStrength,
+                                   table.items[item.itemId].baseValue) ||
         item.potionPower || item.goldAmount || item.specialEnchantment != ITEM_ENCHANTMENT_NULL ||
         item.numCharges != source->item.numCharges || item.maxCharges != source->item.maxCharges ||
         item.lichJarCharacterIndex != -1 || item.enchantmentExpirationTime.ticks() ||

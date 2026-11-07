@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <limits>
 
 #include "Testing/Unit/UnitTest.h"
 
@@ -71,4 +72,45 @@ UNIT_TEST(MM6StandardItemProjection, RejectsUnsupportedCategoryAndFields) {
     raw.setWord(8, 5);
     raw.setWord(12, 3);
     EXPECT_FALSE(mm6::stageStandardItem(raw, table, GameTitle::MM6));
+}
+
+UNIT_TEST(MM6StandardItemProjection, RejectsUnsafeStrengthAndNoncommonTemplate) {
+    ItemTable table;
+    const ItemId armor = static_cast<ItemId>(10);
+    table.items[armor].iconName = "armor";
+    table.items[armor].type = ITEM_TYPE_ARMOUR;
+    table.items[armor].baseValue = 100;
+    mm6::ItemRecord28 raw;
+    raw.setWord(0, 10);
+    raw.setWord(4, 1);
+    const int maximum = (std::numeric_limits<int>::max() - 100) / 100;
+    raw.setWord(8, maximum);
+
+    auto projection = mm6::stageStandardItem(raw, table, GameTitle::MM6);
+    ASSERT_TRUE(projection);
+    EXPECT_EQ(mm6::captureStandardItem(*projection, table, GameTitle::MM6), raw);
+    ItemTable *previous = pItemTable;
+    pItemTable = &table;
+    EXPECT_EQ(projection->item.GetValue(), 100 + 100 * maximum);
+    pItemTable = previous;
+    projection->item.standardEnchantmentStrength = maximum + 1;
+    EXPECT_FALSE(mm6::captureStandardItem(*projection, table, GameTitle::MM6));
+    raw.setWord(8, maximum + 1);
+    EXPECT_FALSE(mm6::stageStandardItem(raw, table, GameTitle::MM6));
+
+    table.items[armor].baseValue = -100;
+    raw.setWord(8, std::numeric_limits<int>::max() / 100 + 1);
+    EXPECT_FALSE(mm6::stageStandardItem(raw, table, GameTitle::MM6));
+    table.items[armor].baseValue = 100;
+
+    raw.setWord(8, 7);
+    table.items[armor].rarity = RARITY_ARTIFACT;
+    EXPECT_FALSE(mm6::stageStandardItem(raw, table, GameTitle::MM6));
+    table.items[armor].rarity = RARITY_RELIC;
+    EXPECT_FALSE(mm6::stageStandardItem(raw, table, GameTitle::MM6));
+    table.items[armor].rarity = RARITY_COMMON;
+    projection = mm6::stageStandardItem(raw, table, GameTitle::MM6);
+    ASSERT_TRUE(projection);
+    table.items[armor].rarity = RARITY_ARTIFACT;
+    EXPECT_FALSE(mm6::captureStandardItem(*projection, table, GameTitle::MM6));
 }

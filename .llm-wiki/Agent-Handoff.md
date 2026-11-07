@@ -16,12 +16,15 @@ capsules, retaining native delta/chest, actor, generated NPC, sprite,
 decoration and event owners; the outer v6 candidate preserves the active
 second-map v5 bytes while holding the first map as visited. A test-only
 `PrepareWorld` hook captures the target before input, when native ACTR is
-still representable. Fresh v2 seed, v4 baseline and modified no-write
-location-change children each passed 1/1; malformed and cross-map owners
-refused. No v6 file was written. There is no visited-map publisher,
-in-session return, fresh-child v6 replay, atomic v6 writer or durable-result
-policy. Checkpoint writing remains false; keep production travel and SaveLoad
-closed.
+still representable. A disposable atomic v6 writer and fresh-child reader now
+pass a five-process headless chain: v2 seed, v4 baseline, pre-existing v5
+control, v6 write and v6 read each passed 1/1. Malformed, cross-map and
+injected pre-primary-rename faults refused before the admitted write; the v5
+control remained byte-identical. The fresh child rebuilt the active second
+map, validated the visited first-map owner against source, and aborted before
+input. No visited-map publisher, in-session return or post-rename durable
+result policy exists. Checkpoint writing remains false; keep production travel
+and SaveLoad closed.
 
 The [MM6 indoor v6 input cycle](MM6-F4-V6-Indoor-Input-Cycle.md) passed five
 fresh headless children through a real-loop turn/walk, atomic post-input

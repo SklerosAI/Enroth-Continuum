@@ -95,7 +95,7 @@ before live travel can rely on a write.
 ## Detached outdoor v6 visited-map schema
 
 [`V6OutdoorSaveFields`](../src/Engine/MM6/MM6V6OutdoorSaveFields.h) is a
-**no-write** EC6 v6 outdoor candidate. Its first 26 sections are the exact
+test-only EC6 v6 outdoor candidate. Its first 26 sections are the exact
 active outdoor v5 payload. A required, versioned `VIST` section adds ordered
 prior-map capsules; each entry owns one native DDM, chest record, ACTR anchor,
 GNPC rows, EVRT entry, ARTR actors, SPRT sprites and DECR decorations. The
@@ -121,10 +121,44 @@ temporary profile was removed. No v6 file was written.
 
 This establishes a bounded wire shape for two maps, not a complete checkpoint
 transaction. The old live `pMapDeltas` entry still stays stale on transition;
-there is no v6 active/visited publication, in-session return, fresh-child v6
-reload, atomic v6 writer, or post-rename durability policy. The border
+there is no v6 visited-map publication or in-session return. The border
 precommit flag remains false, and production MM6 travel and SaveLoad remain
 guarded.
+
+## Disposable outdoor v6 write and fresh-child read
+
+The [atomic save helper](../src/Engine/MM6/MM6AtomicSaveFile.cpp) now admits
+only `candidate-v6-outdoor.ec6` in an owner-only `mm6-restart-*` system-temp
+profile. It checks the exact 27-section v6 outdoor shell, requires a semantic
+callback for both active and visited maps, refuses foreign-version primary or
+backup files, validates existing same-version slots and uses the existing
+bounded write, sync, readback and rename sequence. Its matching preflight
+selects a primary or backup read-only and also requires full semantic
+validation. Neither path publishes a map, repairs a backup or enters normal
+MM6 SaveLoad.
+
+The [opt-in writer](../test/Bin/GameTest/GameTests_MM6LocationChangeLifecycle.cpp)
+builds the v6 candidate from the pre-input second-map v5 and the detached
+first-map owner. Before the successful write, malformed VIST and cross-map
+candidates refuse, and an injected fault just before primary replacement
+leaves every source slot unchanged. After writing, the exact v6 primary passes
+read-only preflight. The [fresh-child reader](../test/Bin/GameTest/GameTests_MM6V5LaterOutdoorFreshChildReplay.cpp)
+decodes v6 and stages the active v5 through the existing full source-backed
+outdoor replay. It validates the visited owner against its source base before
+any world publication, then checks it again after the active map rebuild;
+the child aborts before input. The visited owner remains detached and is not
+published into `pMapDeltas`.
+
+In a fresh owner-only disposable profile, five separate headless processes
+passed **1/1 each**: v2 seed, v4 baseline, an existing second-map v5 control
+writer, outdoor v6 writer, and outdoor v6 fresh-child reader. The v6 writer
+and reader required the v5 control slot and compared its exact bytes after
+their work; the seed and v4 files also stayed unchanged. The profile was
+removed. This proves a test-only v6 disk round trip for one active and one
+visited outdoor map. It does **not** prove a returned old-map world, a
+visited-map publication transaction, real border confirmation, or durable
+success after a post-rename sync failure. Production checkpoint writing and
+travel remain closed.
 
 1. Choose a canonical production EC6 version, slot name and title-private profile root. Explicitly reject or migrate older autosave schemas; an existing v2 test seed cannot silently become a v5 production slot.
 2. Stage an exact detached old-map save for any admitted outdoor map at a safe point before travel UI effects. Include Party and character state, inventory/buffs/hirelings, UI/cursor/shops, NPC and generated links, RNG, active and visited map deltas, chests/artifacts, actor/sprite/decoration runtime, event variables and owner identities. The old-map checkpoint must contain a reload-safe in-bounds **Party copy** when the live border position lies outside the map edge; keep live Party untouched until commit.

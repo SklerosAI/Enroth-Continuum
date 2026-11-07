@@ -1255,3 +1255,17 @@ GNPC/RNG/EVRT/IART/ISRT/IDRT/IFOV exactly after map load. Native residual
 checks still require exact chest provenance and door geometry outside the
 loader's known face-delta repair. This is one indoor map with a null renderer,
 no first input and no production SaveLoad; gameplay admission remains false.
+
+As of 2026-11-07, the later [v6 indoor input packet](MM6_F4_EC6_V6_INDOOR_INPUT_CYCLE.md)
+supersedes that first-map-only status: two distinct indoor source cases each
+passed a five-process, headless seed, live writer, bounded input writer and
+fresh-child post-input replay chain. MM6 indoor actor resistance restoration,
+empty decoration handling and test-only door-motion/visibility capture were
+verified with focused checks and an MM7 control. Production MM6 SaveLoad,
+general indoor maps, graphical play and Atlas MM6 Play remain closed.
+
+The [detached border precommit stage](MM6_F4_BORDER_AUTOSAVE_TRANSACTION.md)
+copies and clamps an old-map Party position without changing live state.
+Its focused linked border suite passed **11/11**. It always refuses a disk
+checkpoint; visited-map runtime ownership, durable write outcomes and live
+border travel remain open.

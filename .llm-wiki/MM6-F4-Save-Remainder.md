@@ -24,6 +24,8 @@ The exhaustive [field, consumer and lifetime matrix](../project/MM6_SAVE_REMAIND
 
 `RSTS` is a versioned, exact-size, required section. Full-container title/CRC validation and field decoding finish before the destination is assigned; runtime staging changes only a party copy. The full arm64 unit target linked and two focused Google Test cases passed signed round-trip and malformed/wrong-title no-mutation checks. The runtime adapter compiled, but there was no MM6 process launch. The partial known-save manifest now requires `RSTS`; the complete transaction still needs the remaining state.
 
+For v2 decoded candidates, a direct `ResistanceSaveFields` overload applies the same fixed 88 signed values to a Party copy. The preexisting byte path delegates to that overload after decoding. A focused linked test showed equivalent results and foreign-title refusal. `RSTS` remains distinct from NPC-state `RESC`; resistance gameplay mapping and live SaveLoad remain open.
+
 Next agents should read the full [project matrix](../project/MM6_SAVE_REMAINDER_F4.md) before selecting a field family, check for new ownership of the whole-save assembler, and keep SaveLoad disabled until mandatory sections and atomic recovery are integrated. The retained F3 reports remain ignored and private.
 
 See also: [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), [MM6 Save Field Register](Source-MM6-Save-Field-Register-F2.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

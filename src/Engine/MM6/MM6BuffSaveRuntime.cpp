@@ -45,10 +45,9 @@ BuffSaveFields captureBuffFields(const Party &party, GameTitle title) {
     return fields;
 }
 
-Party stageBuffParty(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title) {
+Party stageBuffParty(const Party &live, const BuffSaveFields &fields, GameTitle title) {
     requireMM6(title);
-    BuffSaveFields fields;
-    loadBuffFieldsBeforeMutation(bytes, &fields);
+    (void) encodeBuffSection(fields); // Validate every decoded field before copying the Party.
     Party staged = live;
     for (size_t index = 0; index < fields.party.size(); ++index)
         apply(fields.party[index], &staged.pPartyBuffs[static_cast<PartyBuff>(index)]);
@@ -57,6 +56,13 @@ Party stageBuffParty(const Party &live, std::span<const std::uint8_t> bytes, Gam
             apply(fields.characters[player][index],
                   &staged.pCharacters[player].pCharacterBuffs[static_cast<CharacterBuff>(index)]);
     return staged;
+}
+
+Party stageBuffParty(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title) {
+    requireMM6(title);
+    BuffSaveFields fields;
+    loadBuffFieldsBeforeMutation(bytes, &fields);
+    return stageBuffParty(live, fields, title);
 }
 
 } // namespace mm6

@@ -35,6 +35,7 @@ BuffSaveFields decodeBuffSection(const SaveContainer &container);
 void loadBuffFieldsBeforeMutation(std::span<const std::uint8_t> bytes, BuffSaveFields *destination);
 
 BuffSaveFields captureBuffFields(const Party &party, GameTitle title);
+Party stageBuffParty(const Party &live, const BuffSaveFields &fields, GameTitle title);
 Party stageBuffParty(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title);
 
 } // namespace mm6

@@ -36,6 +36,7 @@ void loadResistanceFieldsBeforeMutation(std::span<const std::uint8_t> bytes,
 
 /** Capture/stage all live resistance fields with MM6 title guards and copy semantics. */
 ResistanceSaveFields captureResistanceFields(const Party &party, GameTitle title);
+Party stageResistanceParty(const Party &live, const ResistanceSaveFields &fields, GameTitle title);
 Party stageResistanceParty(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title);
 
 } // namespace mm6

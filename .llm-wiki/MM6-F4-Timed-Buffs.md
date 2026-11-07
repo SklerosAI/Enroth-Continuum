@@ -11,6 +11,8 @@ The [buff field packet](../project/MM6_EC6_BUFF_FIELDS_F4.md) documents a title-
 
 It records 20 party and 4×24 character slots, including expiration, power, mastery, overlay ID, caster and the `isGM` flag. The current NPC Wind/Water Master path sets `isGM` on a Master-level buff, so the flag must survive even though MM6 characters have no Grandmaster skill. Malformed counts, ticks, mastery, caster and overlay indexes reject before output mutation. Staging changes a party copy without calling overlay-mutating buff methods.
 
+A decoded `BuffSaveFields` overload now supports v2 Party-copy staging. It runs the existing 116-slot encoder validation before copying, then applies the same members as the v1 byte path. The byte path delegates to it after container decode. Three focused linked tests across this and `RSTS` confirm v1/v2 equivalence and a malformed final character buff refusing staging without input mutation. This is detached staging; live SaveLoad remains gated.
+
 The existing `EFFT` section owns condition clocks; the F3 logical effect grouping did not specify original buff wire widths. The integrated partial known-save assembly now requires `BUFF`. Overlay reference consistency with `VISU`, exact MM6 effect semantics, initialized-party runtime testing, SaveLoad integration and F5 save/relaunch remain open.
 
 `SpellBuff::Reset` uses a nonzero overlay ID as a one-based index into the 50 runtime slots. The `BUFF` codec bounds that ID, but an animation can finish or a slot can be reused before a longer buff expires. An active buff does not prove its `VISU` slot is still active; future staging needs reset/replacement checks rather than a false mandatory-active join.

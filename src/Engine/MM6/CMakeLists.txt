@@ -136,6 +136,7 @@ if(OE_BUILD_TESTS)
     add_library(test_engine_mm6_save_runtime OBJECT Tests/MM6MapSaveValidation_ut.cpp
         Tests/MM6RawSaveRuntime_ut.cpp
         Tests/MM6RawPartyInventoryStage_ut.cpp
+        Tests/MM6DecodedEffectPartyStage_ut.cpp
         Tests/MM6AntiqueItemProjection_ut.cpp
         Tests/MM6BeaconSaveFields_ut.cpp
         Tests/MM6PrivateMapSource_ut.cpp Tests/MM6WorldSaveRuntime_ut.cpp

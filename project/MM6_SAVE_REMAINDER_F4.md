@@ -44,7 +44,11 @@ Read this beside [the save-field register](MM6_SAVE_FIELD_REGISTER_F2.md), [the 
 
 `MM6ResistanceSaveFields.*` encodes one required `RSTS` section: version 1, four characters, eleven channels, reserved zero, then 22 little-endian signed 16-bit values per character (base first, bonus second). The decoder requires exact 180-byte payload and rejects missing/optional/duplicate/malformed values. `captureResistanceFields` and `stageResistanceParty` require the active MM6 title; staging decodes the full title-tagged container before copying the party and changing only those 88 scalars. MM7's serializer remains separate. The section is deliberately raw: preservation of current fields is proved; which MM6 channels should contribute to damage is not.
 
+A decoded-field `stageResistanceParty` overload now applies the same 88 scalars to a Party copy for an already validated v2 save candidate. The existing byte overload decodes its container and delegates to it. Each decoded value is already a signed 16-bit member of a fixed four-by-eleven structure, so there is no narrower range to validate. Both paths keep the MM6/active-engine title gate and leave the input Party unchanged. The v2 container still carries the `RSTS` field; `RESC` separately stores NPC state.
+
 Two focused C++ tests passed in the linked arm64 `OpenEnroth_UnitTest` binary. They cover signed extremes, exact round-trip, valid-container malformed shape and length, optional-section rejection, wrong title, and destination immutability. Runtime capture/stage compiled as part of the full unit target, but no game launch or integrated map test occurred. The partial known-save assembler now requires `RSTS`; the complete transaction still needs the remaining state.
+
+The decoded-field follow-up passed a linked synthetic v1-byte versus v2-field Party-stage equivalence check, including signed extremes and a foreign-title refusal. It does not change the live SaveLoad gate.
 
 ## Whole-save completion order
 

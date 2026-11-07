@@ -49,10 +49,8 @@ ResistanceSaveFields captureResistanceFields(const Party &party, GameTitle title
     return fields;
 }
 
-Party stageResistanceParty(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title) {
+Party stageResistanceParty(const Party &live, const ResistanceSaveFields &fields, GameTitle title) {
     requireMM6(title, false);
-    ResistanceSaveFields fields;
-    loadResistanceFieldsBeforeMutation(bytes, &fields);
     Party staged = live;
     for (size_t characterIndex = 0; characterIndex < fields.characters.size(); ++characterIndex) {
         Character &target = staged.pCharacters[characterIndex];
@@ -63,6 +61,13 @@ Party stageResistanceParty(const Party &live, std::span<const std::uint8_t> byte
         }
     }
     return staged;
+}
+
+Party stageResistanceParty(const Party &live, std::span<const std::uint8_t> bytes, GameTitle title) {
+    requireMM6(title, false);
+    ResistanceSaveFields fields;
+    loadResistanceFieldsBeforeMutation(bytes, &fields);
+    return stageResistanceParty(live, fields, title);
 }
 
 } // namespace mm6

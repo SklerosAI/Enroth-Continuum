@@ -1019,3 +1019,10 @@ matching nonzero DDM/sidecar day that will not respawn on load, stable
 native actor anchors and an ACTR count within the runtime cap. Mutable
 actor HP may differ from DDM; ACTR is the proposed owner. The helper is
 read-only and does not establish live replay or first-input readiness.
+
+A test-only [pre-event checkpoint](MM6_F4_PRE_EVENT_CHECKPOINT.md) now
+runs after MM6 map/actor rebuild and before generated NPC creation or map
+events. Linked unit checks passed **4/4**. A disposable native v2 writer
+and separate real Main Menu QuickLoad child passed **1/1** each; the child
+aborted before timer/input with its source slot unchanged. An MM7 headless
+control passed **1/1**. No v3 ACTR/GNPC/RNG replay is enabled yet.

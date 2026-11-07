@@ -44,6 +44,8 @@ The detached [v3 atomic boundary](MM6-F4-EC6-V3-Atomic-Boundary.md) passed the l
 
 The detached [v3 outdoor actor-map agreement](MM6-F4-EC6-V3-Outdoor-Actor-Map.md) passed linked map/manifest/ACTR checks 10/10. It validates all 67 native map pairs, active HEAD/GNPC/CHST identity, a matching nonzero no-respawn day, stable native actor anchors and ACTR runtime cap; changed HP may live in ACTR. It publishes nothing. Pre-event ACTR/GNPC/RNG replay and final owner checks remain open.
 
+A test-only [pre-event checkpoint](MM6-F4-Pre-Event-Checkpoint.md) now runs after map/actor rebuild and deterministic NPC names but before generated-row creation and `onMapLoad()` events. Its linked unit suite passed 4/4; a disposable v2 writer and separate real Main Menu QuickLoad child passed 1/1 each, aborting before timer/input with the slot unchanged. An MM7 headless control passed 1/1. No v3 ACTR/GNPC/RNG replay or production admission is enabled.
+
 ## Read first
 
 1. Run `git status --short --branch`, `git worktree list`, and `git log -1 --oneline` in the checkout you intend to use. The branch and worktree descriptions below may drift.

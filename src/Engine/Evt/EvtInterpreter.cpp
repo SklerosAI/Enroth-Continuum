@@ -17,6 +17,7 @@
 #include "Engine/Evt/MM6EventVariables.h"
 #include "Engine/Evt/MM6AutonoteState.h"
 #include "Engine/Evt/MM6ConditionVariables.h"
+#include "Engine/Evt/MM6SkillEvent.h"
 #include "Engine/Evt/MM6MapByteState.h"
 #include "Engine/Evt/MM6QuestBitState.h"
 #include "Engine/Evt/MM6DayOfYear.h"
@@ -210,6 +211,11 @@ static bool isMM6AutonoteVariable(EvtVariable variable) {
 static bool isMM6ConditionVariable(EvtVariable variable) {
     return engine->gameTitle() == GameTitle::MM6 &&
            mm6::isConditionVariable(std::to_underlying(variable));
+}
+
+static bool isMM6SkillVariable(EvtVariable variable) {
+    return engine->gameTitle() == GameTitle::MM6 &&
+           mm6::isSkillVariable(std::to_underlying(variable));
 }
 
 static MM6AutonoteState mm6AutonoteState() {
@@ -479,6 +485,13 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                         return {EVT_FLOW_JUMP, ir.target_step};
                 break;
             }
+            if (isMM6SkillVariable(ir.data.variable_descr.type)) {
+                for (Character &character : iterateCharacters(_who, grng))
+                    if (mm6::compareEventSkill(character, std::to_underlying(ir.data.variable_descr.type),
+                                               ir.data.variable_descr.value, GameTitle::MM6))
+                        return {EVT_FLOW_JUMP, ir.target_step};
+                break;
+            }
             if (isMM6AutonoteVariable(ir.data.variable_descr.type)) {
                 if (mm6AutonoteState().compare(std::to_underlying(ir.data.variable_descr.type),
                                                ir.data.variable_descr.value))
@@ -665,6 +678,12 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                 for (Character &character : iterateCharacters(_who, grng))
                     mm6::setCondition(character, std::to_underlying(ir.data.variable_descr.type),
                                       ir.data.variable_descr.value);
+                break;
+            }
+            if (isMM6SkillVariable(ir.data.variable_descr.type)) {
+                for (Character &character : iterateCharacters(_who, grng))
+                    mm6::setEventSkill(character, std::to_underlying(ir.data.variable_descr.type),
+                                       ir.data.variable_descr.value, GameTitle::MM6);
                 break;
             }
             if (isMM6AutonoteVariable(ir.data.variable_descr.type)) {

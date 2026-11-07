@@ -6,6 +6,7 @@ set(ENGINE_EVENTS_SOURCES
         EvtProgram.cpp
         EvtVariables.cpp
         MM6ConditionVariables.cpp
+        MM6SkillEvent.cpp
         MM6MapByteState.cpp
         MM6AutonoteState.cpp
         MM6QuestBitState.cpp
@@ -31,6 +32,7 @@ set(ENGINE_EVENTS_HEADERS
         MM6EventRules.h
         MM6EventVariables.h
         MM6ConditionVariables.h
+        MM6SkillEvent.h
         MM6MapByteState.h
         MM6AutonoteState.h
         MM6QuestBitState.h
@@ -60,7 +62,8 @@ if(OE_BUILD_TESTS)
         Tests/MM6NpcEventState_ut.cpp
         Tests/MM6ItemEventCompare_ut.cpp
         Tests/MM6ItemEventWrite_ut.cpp
-        Tests/MM6ConditionVariables_ut.cpp)
+        Tests/MM6ConditionVariables_ut.cpp
+        Tests/MM6SkillEvent_ut.cpp)
     target_link_libraries(test_engine_events PUBLIC testing_unit engine_events)
     target_check_style(test_engine_events)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_events)

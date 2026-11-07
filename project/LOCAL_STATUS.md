@@ -1343,3 +1343,11 @@ now call that service. The seven-process disposable chain again passed
 **1/1 per child**, with an MM7 headless control **1/1**. Test-only publication
 scopes, input admission, normal SaveLoad/UI and partial-world rollback remain
 open work.
+
+The first-map test-only post-world decision now fails closed: false or a
+validation exception requests abort to Main Menu before timer unpause or
+input. Focused one-shot units passed **6/6**; the fresh seven-process v5
+chain still passed **1/1 per child**, with an MM7 headless control **1/1**.
+This does not roll back the Party/NPC/timer/map-cache globals assigned before
+world preparation. A normal load still needs a fully staged precommit bundle
+and a safe partial-world failure policy before SaveLoad/UI can open.

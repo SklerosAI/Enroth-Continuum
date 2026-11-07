@@ -75,6 +75,10 @@ The [upstream dependency tag](https://api.github.com/repos/OpenEnroth/OpenEnroth
 | SDL | `a96677bdf6b4acb84af4ec294e5f60a4e8cbbe03` |
 | zlib-ng | `12731092979c6d07f42da27da673a9f6c7b13586` |
 
+The exact pinned sources identify these primary license files: [FFmpeg `LICENSE.md`](https://github.com/FFmpeg/FFmpeg/blob/e3a61e91030696348b56361bdf80ea358aef4a19/LICENSE.md) and `COPYING.LGPLv2.1` (default combined LGPL-2.1-or-later), [libpng `LICENSE`](https://github.com/pnggroup/libpng/blob/f5e92d76973a7a53f517579bc95d61483bf108c0/LICENSE) (PNG Reference Library License v2), [OpenAL Soft `COPYING`](https://github.com/kcat/openal-soft/blob/dc7d7054a5b4f3bec1dc23a42fd616a0847af948/COPYING) (Library GPL v2), [SDL `LICENSE.txt`](https://github.com/libsdl-org/SDL/blob/a96677bdf6b4acb84af4ec294e5f60a4e8cbbe03/LICENSE.txt) (zlib-style) and [zlib-ng `LICENSE.md`](https://github.com/zlib-ng/zlib-ng/blob/12731092979c6d07f42da27da673a9f6c7b13586/LICENSE.md) (zlib-style). OpenAL Soft and SDL also bundle components with separate notices, including pffft/fmt and HIDAPI/Khronos headers. The cached FFmpeg archives each embed the same configure string and an LGPL-2.1-or-later license identifier; the string includes `--disable-gpl`, `--disable-version3` and `--disable-nonfree`. This is evidence for the observed build, not a complete static-link distribution review.
+
+The tagged FFmpeg recipe does **not** disable automatic external-library detection, and the archive lacks `config.h` or a build log. Exact effective external features therefore cannot be reconstructed solely from the script and ZIP. Pin the full source/toolchain inputs and validate the rebuilt feature manifest and license/notice package before replacing the cached archive.
+
 | Archive in `lib/` | Bytes | Local MiB | Source family / evidence |
 | --- | ---: | ---: | --- |
 | `libSDL3.a` | 12,745,104 | 12.15 | SDL3; `include/SDL3/SDL_version.h` |

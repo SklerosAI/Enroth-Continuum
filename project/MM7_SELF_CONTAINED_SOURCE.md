@@ -12,6 +12,8 @@ The owned top-level cpptrace snapshot includes its MIT license, but its current 
 
 The upstream dependency release now supplies an official digest matching this Mac's cached arm64 ZIP, and its tagged Git tree pins the five source families behind the nine prebuilt archives. The [inventory](MM7_SELF_CONTAINED_BUILD_INVENTORY.md) records the exact commits and build-script reference. Those facts make a repository-owned recipe feasible; source licenses, notices and FFmpeg's effective build configuration still need review. Do not copy the upstream dependency script: its repository has no top-level license.
 
+The exact pinned source-license audit identified primary licenses and bundled-component notices, but no replacement recipe was committed. The cached FFmpeg archives report LGPL-2.1-or-later and the tagged build disables GPL, version-3 and nonfree features. Its recipe still allows automatic external-library detection and the ZIP lacks a configuration log, so a new source build must pin and verify its effective feature set and distribution notices before it can replace the cached archives.
+
 ## Migration gate
 
 1. Freeze the working MM7 source revision, installed helper, save/profile backup and build hashes. Keep Atlas pointed at the known-good helper until the replacement passes launch and save/load checks.

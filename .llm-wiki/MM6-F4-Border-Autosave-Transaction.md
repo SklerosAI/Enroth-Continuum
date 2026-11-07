@@ -15,4 +15,6 @@ The next transaction must capture complete old-map and visited-map owners in a d
 
 The current v5 schema has one active-map runtime set. Saving after entering a later map can discard prior-map actor/sprite/decoration runtime unless a visited-map owner or exact native projection retains it. A fresh-child cycle must reload both the target and old-map checkpoint and verify all owner families, plus an in-session return. Invalid/cancelled/flying/corner cases must perform no write. This remains a design audit: no production MM6 travel save or gameplay admission exists.
 
+The original confirmation trace also establishes conditional rest: any food triggers full rest/heal, insufficient food adds a condition and no-rest day before food is floored at zero, and zero food skips healing. It wraps each crossed coordinate and recomputes target ground height. The inherited foot handler calls a time-advance helper that also heals even with zero food and lacks MM6 coordinate wrapping. The condition ID and independent original cancel branch still need proof. The source packet records the full transaction order before any live implementation.
+
 See also: [Outdoor Border Trace](MM6-F4-Outdoor-Border-Trace.md), [V5 Later Outdoor](MM6-F4-V5-Later-Outdoor.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

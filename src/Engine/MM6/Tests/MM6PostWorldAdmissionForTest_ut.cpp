@@ -7,8 +7,10 @@
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
 
 UNIT_TEST(MM6PostWorldAdmissionForTest, UnarmedMM6AndMM7RemainUnchanged) {
-    EXPECT_FALSE(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6));
-    EXPECT_FALSE(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM7));
+    EXPECT_EQ(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6),
+              mm6::testing::PostWorldAdmissionResult::Unarmed);
+    EXPECT_EQ(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM7),
+              mm6::testing::PostWorldAdmissionResult::Unarmed);
 }
 
 UNIT_TEST(MM6PostWorldAdmissionForTest, RunsOnceAfterWorldAndBeforeInputStep) {
@@ -24,13 +26,15 @@ UNIT_TEST(MM6PostWorldAdmissionForTest, RunsOnceAfterWorldAndBeforeInputStep) {
         EXPECT_THROW(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM7),
                      std::exception);
         worldPrepared = true;
-        EXPECT_TRUE(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6));
+        EXPECT_EQ(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6),
+                  mm6::testing::PostWorldAdmissionResult::Continue);
         EXPECT_THROW(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6),
                      std::exception);
         inputStarted = true;
     }
     EXPECT_EQ(calls, 1);
-    EXPECT_FALSE(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6));
+    EXPECT_EQ(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6),
+              mm6::testing::PostWorldAdmissionResult::Unarmed);
 }
 
 UNIT_TEST(MM6PostWorldAdmissionForTest, RefusalConsumesAndStopsBeforeInputStep) {
@@ -51,6 +55,22 @@ UNIT_TEST(MM6PostWorldAdmissionForTest, RefusalConsumesAndStopsBeforeInputStep) 
     EXPECT_FALSE(inputStarted);
 }
 
+UNIT_TEST(MM6PostWorldAdmissionForTest, ExplicitAbortConsumesWithoutThrowing) {
+    int calls = 0;
+    {
+        mm6::testing::ScopedPostWorldAdmissionForTest scope(
+            GameTitle::MM6, [&] { ++calls; },
+            mm6::testing::PostWorldAdmissionResult::AbortToMainMenu);
+        EXPECT_EQ(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6),
+                  mm6::testing::PostWorldAdmissionResult::AbortToMainMenu);
+        EXPECT_THROW(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6),
+                     std::exception);
+    }
+    EXPECT_EQ(calls, 1);
+    EXPECT_EQ(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6),
+              mm6::testing::PostWorldAdmissionResult::Unarmed);
+}
+
 UNIT_TEST(MM6PostWorldAdmissionForTest, ScopeTeardownClearsUnusedCallback) {
     int calls = 0;
     EXPECT_THROW(mm6::testing::ScopedPostWorldAdmissionForTest(
@@ -64,6 +84,7 @@ UNIT_TEST(MM6PostWorldAdmissionForTest, ScopeTeardownClearsUnusedCallback) {
         EXPECT_THROW(mm6::testing::ScopedPostWorldAdmissionForTest(
             GameTitle::MM6, [&] { ++calls; }), std::exception);
     }
-    EXPECT_FALSE(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6));
+    EXPECT_EQ(mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6),
+              mm6::testing::PostWorldAdmissionResult::Unarmed);
     EXPECT_EQ(calls, 0);
 }

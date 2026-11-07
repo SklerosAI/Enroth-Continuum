@@ -198,6 +198,8 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
     game.runGameRoutine([&] {
         try {
             checkpoint.reset(); // Tear down its game-thread-local scope here.
+            *pParty = staged->represented.party.party;
+            mm6::chestTitleState() = staged->represented.world.chestTitle;
             engine->_pendingTransition = MapDestination(map, MAP_START_POINT_PARTY);
             engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
             eventRestore = std::make_unique<mm6::testing::ScopedEventRuntimeRestoreForTest>(
@@ -211,7 +213,7 @@ GAME_TEST(MM6V6IndoorFreshChild, DISABLED_RestagesSeparateCandidateBeforeEvents)
             liveReplay = std::make_unique<
                 mm6::testing::ScopedV6PreEventIndoorDecorationReplayForTest>(
                     GameTitle::MM6, mapName, staged->decorationReplay);
-            mm6::ScopedChestMapLoadOptIn chestOptIn;
+            mm6::ScopedChestMapLoadOptIn chestOptIn(true);
             DoPrepareWorld(true, 1);
             if (!worldCheckpoint->reachedMapLoad() || worldCheckpoint->reachedInput() ||
                 !eventRestore->restored() || !liveReplay->published() ||

@@ -1,6 +1,8 @@
 #include <algorithm>
+#include <array>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "Testing/Game/GameTest.h"
 
@@ -8,7 +10,9 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/MM6/MM6Archive.h"
 #include "Engine/MM6/MM6LoadedMapSource.h"
+#include "Engine/MM6/MM6EncounterMonster.h"
 #include "Engine/MM6/MM6V5OutdoorMapIdentity.h"
+#include "Engine/Objects/Monsters.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
@@ -44,4 +48,39 @@ GAME_TEST(MM6V5OutdoorSourceHeadless, AllShippedOutdoorPairsDecode) {
             ++admitted;
         }
     EXPECT_EQ(admitted, 15);
+}
+
+// Check the authored encounter stems in every loaded map table row against
+// the title's monster and descriptor tables. No source rows are published.
+GAME_TEST(MM6V5OutdoorSourceHeadless, AllMapEncounterStemsResolve) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    int checked = 0;
+    for (MapId mapId : pMapTable->pInfos.indices()) {
+        const MapData &map = pMapTable->pInfos[mapId];
+        if (map.fileName.empty())
+            continue;
+        SCOPED_TRACE(map.fileName);
+        const std::array<std::pair<const std::string *, int>, 3> encounters{{
+            {&map.encounter1MonsterInternalName, map.Dif_M1},
+            {&map.encounter2MonsterInternalName, map.Dif_M2},
+            {&map.encounter3MonsterInternalName, map.Dif_M3},
+        }};
+        for (const auto &[stem, difficulty] : encounters) {
+            if (stem->empty() || *stem == "0")
+                continue;
+            for (int rank = 0; rank < (difficulty ? 3 : 1); ++rank) {
+                std::string name = *stem;
+                if (difficulty) {
+                    name += ' ';
+                    name += static_cast<char>('A' + rank);
+                }
+                const MonsterId id = mm6::resolveEncounterMonster(
+                    GameTitle::MM6, *pMonsterStats, name);
+                ASSERT_NE(id, MONSTER_INVALID);
+                ASSERT_FALSE(pMonsterList->monsters[id].internalMonsterName.empty());
+                ++checked;
+            }
+        }
+    }
+    EXPECT_GT(checked, 0);
 }

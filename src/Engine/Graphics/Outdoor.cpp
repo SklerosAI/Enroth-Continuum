@@ -541,8 +541,13 @@ void OutdoorLocation::Load(std::string_view filename, int days_played, int respa
         }
         reconstruct(delta.spriteObjects, &pSpriteObjects);
         vChests.resize(delta.chests.size());
-        for (size_t i = 0; i < delta.chests.size(); ++i)
+        for (size_t i = 0; i < delta.chests.size(); ++i) {
+            // This location's position is derived later from its own chest
+            // events. Reusing the vector must not carry the previous map's
+            // position into the pre-generation MM6 chest/sidecar join.
+            vChests[i].position.reset();
             reconstruct(delta.chests[i], &vChests[i], tags::context<int>(i));
+        }
 
         if (respawnInitial || respawnTimed) {
             ddm.lastRespawnDay = days_played;

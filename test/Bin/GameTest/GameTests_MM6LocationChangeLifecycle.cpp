@@ -171,6 +171,7 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
     bool autosaveIntercepted = false;
     bool targetMapReady = false;
     bool movementApplied = false;
+    bool sourceHadChestPosition = false;
     int sourceGeneratedCursor = -1;
     std::vector<std::uint8_t> oldMapCacheBefore;
     std::string finalOwnerError;
@@ -379,6 +380,9 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
             const auto *oldBegin = static_cast<const std::uint8_t *>(oldCache.data());
             oldMapCacheBefore.assign(oldBegin, oldBegin + oldCache.size());
             sourceGeneratedCursor = pNPCStats->uNewlNPCBufPos;
+            sourceHadChestPosition = std::any_of(
+                vChests.begin(), vChests.end(),
+                [](const Chest &chest) { return chest.position.has_value(); });
             chestOptIn.reset();
             chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>();
             mm6::testing::ScopedTransitionAutosaveInterceptForTest intercept(
@@ -471,6 +475,7 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
     EXPECT_TRUE(postWorldRan);
     EXPECT_TRUE(finalOwnersAgree) << finalOwnerError;
     EXPECT_TRUE(firstInputReached);
+    EXPECT_TRUE(sourceHadChestPosition);
     EXPECT_TRUE(autosaveIntercepted);
     EXPECT_TRUE(transitionQueued);
     EXPECT_TRUE(targetMapReady);

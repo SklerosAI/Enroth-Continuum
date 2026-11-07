@@ -814,3 +814,11 @@ repairing a selected backup. A linked synthetic test rejected a semantically
 invalid primary and selected the valid backup with both files unchanged; the
 raw-runtime plus atomic-file suite passed **11/11**. The result is not a full
 Party/world/UI candidate and cannot enter normal MM6 SaveLoad or the menu.
+
+A separate disposable v1 test now reaches the real MM6 Main Menu QuickLoad to
+`Game::loop()`/`gameLoop()` load route through explicit test-only callbacks.
+Fresh writer and loader processes passed **1/1** each under the host monitor
+with no visible window or focus change; the loader checked first-map entry,
+movement and unchanged slot bytes. The MM7 all-map headless control passed
+**1/1** afterward. Production MM6 loading and menu slots stay guarded, and
+this is not a complete v2 load or graphical campaign check.

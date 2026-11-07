@@ -107,7 +107,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Beacon and Thumbnail Save](MM6-F4-Beacon-Visual-Save.md) — Linked filename-keyed BEAC v1 preserves image bytes and prepares owned CPU pixels while GPU publication remains guarded
 - [MM6 F4 Beacon Renderer Contract](MM6-F4-Beacon-Renderer-Contract.md) — Checked texture creation and controlled cleanup required before live BEAC publication
 - [MM6 F4 Partial Stage Coordinator](MM6-F4-Partial-Stage-Coordinator.md) — Validated 67-map candidate with detached Party, active map, NPC/map and timer/overlay copies
-- [MM6 F4 New Game Autosave](MM6-F4-New-Game-Autosave.md) — Archive-backed New Game and isolated fresh-process `.ec6` world entry pass; normal save/reload stays guarded
+- [MM6 F4 New Game Autosave](MM6-F4-New-Game-Autosave.md) — Archive-backed New Game and test-only fresh-process Main Menu/game-loop reload pass; normal save/reload stays guarded
 - [MM6 F4 First-Map World Rollback](MM6-F4-First-Map-World-Rollback.md) — Detached terrain preflight, combat containers/turn scalars rollback and temporary `.ec6` reentry pass; full-world rollback remains guarded
 - [MM6 F4 Shop Save Key Matrix](MM6-F4-Shop-Save-Key-Matrix.md) — Retained house-type join versus inherited MM7 shop, guild and bounty save owner ranges
 - [MM6 F4 Shop Guild Clock Save](MM6-F4-Shop-Guild-Clock-Save.md) — SCLK v1 preserves 68 unique original-MM6 shop and guild refresh deadline words

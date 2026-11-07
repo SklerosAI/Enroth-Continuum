@@ -40,6 +40,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6WorldSaveRuntime.cpp MM6WorldSaveRuntime.h
     MM6RawSaveRuntime.cpp MM6RawSaveRuntime.h
     MM6SavedActorPidPolicy.h
+    MM6PostRebuildPidSlots.cpp MM6PostRebuildPidSlots.h
     MM6RawCursorShopStage.cpp MM6RawCursorShopStage.h
     MM6RawCursorShopProcessOwner.cpp MM6RawCursorShopProcessOwner.h
     MM6RawHeldPartyStage.cpp MM6RawHeldPartyStage.h
@@ -156,6 +157,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6RawHeldPartyStage_ut.cpp
         Tests/MM6RawCursorImagePlan_ut.cpp
         Tests/MM6SavedActorPidPolicy_ut.cpp
+        Tests/MM6PostRebuildPidSlots_ut.cpp
         Tests/MM6DecodedEffectPartyStage_ut.cpp
         Tests/MM6AntiqueItemProjection_ut.cpp
         Tests/MM6BeaconSaveFields_ut.cpp

@@ -1957,3 +1957,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a detached indoor BLV/DLV/CHST plan with checked door references and required it before v2 primary/backup selection. Indoor and outdoor candidates now each have a CPU plan without publishing a live world.
 - Linked indoor/raw checks passed 12/12, with focused coordinator assertions 4/4. Actor identity, textures, IFOV replay and production MM6 loading remain gated.
+
+## [2026-11-06] integrate | MM6 v2 event and actor gates
+- by: T-Burton-ND via codex
+- Added detached MM6 persistent-event byte staging and a fail-closed active saved actor-overlay policy, then required both before v2 primary/backup selection. Unsupported event bytes or an active overlay can fall back to a valid backup without disk repair.
+- The joined raw/event/PID/indoor/NPC/cursor-shop unit set passed 24/24. Live event arrays, final actor identity and production MM6 loading remain gated.

@@ -1713,3 +1713,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a detached, already-paid stock-to-backpack transaction that carries the complete 28-byte pre-sale record in `Item`, stages insertion in a copied MM6 inventory, and publishes it with the source-slot partial clear only after all checks pass. It rejects unsupported rarity/category unions, wrong title or table, invalid footprints and full backpacks without changing either owner.
 - The new synthetic unit translation passed arm64 C++23 syntax checking; linked tests were not run in the isolated worktree. The live house, stock lifecycle and required `SHOP` save section remain guarded. The shop packet and wiki page record the source contract and limits.
+
+## [2026-11-06] verify | Integrated MM6 item contracts
+- by: T-Burton-ND via codex
+- Linked the detached raw-cursor codec and bounded shop purchase into the integration unit binary. The current MM6 item-focused set passed 20/20 and the non-MM6 control suite passed 438/438.
+- Updated the shop source packet and wiki to close the pending linked-test item. Native nonzero item evidence, live service ownership and coordinated save admission remain open.

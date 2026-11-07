@@ -20,6 +20,8 @@ For the first-map save blocker, read the [new-game autosave seam](MM6-F4-New-Gam
 
 ## Current phase and gates (2026-11-06)
 
+The local Atlas now has a shared MM6/MM7 [vendor refresh mod toggle](MM7-Vendor-Refresh-Mod.md). Its installed MM7 engine rerolls stock on a new shop or guild entry; linked policy and mod-enabled headless save/load checks pass, and two monitored headless game tests exercised actual weapon-shop and magic-guild entry with no Buy-tab reroll. A visible play-session check remains open. MM6's matching [entry policy](MM6-F4-Shop-Shared-Edge-Refresh.md) is detached because no live MM6 vendor route or complete `SHOP` save owner exists. The earlier MM7 baseline worktree remains protected. The latest [raw item authority](MM6-F4-Raw-Item-Authority.md) slices now include chest, ground, cursor and joint shop-to-buyer transfer candidates, but `ITEM`/`HELD` known-save revision and all-owner live commit are still open.
+
 | Area | Evidence-backed state | Next gate |
 | --- | --- | --- |
 | MM7 personal baseline | An independent arm64 MM7 source/app and profile have launched graphically, loaded an existing save, and returned to Atlas. The full campaign audit is still **planned**. | M7-A0 protects and rechecks this baseline before the separate M7-A1–A5 audit. |

@@ -2480,3 +2480,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Built a separate branch from the public SklerosAI MM7 baseline, carrying owned dependency sources and MM7 Mac build, launcher and runtime changes without the local MM6 research history. A clean tracked-source archive completed the one-command MM7 and Atlas build under network denial.
 - Audited the new commit paths for private game data and preserved OpenEnroth license and credit. Pushed `codex/mm7-public-preview` and verified remote SHA `d76afb519`; installed Atlas and personal saves remain untouched.
+## [2026-11-07] verify | MM6 second indoor source case
+- by: T-Burton-ND via codex
+- A second distinct indoor map passed deterministic v2 seed, v4 baseline and v6 live-session writer in separate headless children. Restored MM6 native actor resistance bytes during indoor reconstruction and skipped a verified empty null-decoration render slot; the focused resistance tests passed 2/2.
+- The original first-indoor five-child cycle and an MM7 headless control still passed. The second-map fresh-child input gate refused before input because door motion differs from the retained native DLV. No second-map post-input save or replay was accepted; production MM6 SaveLoad remains closed.

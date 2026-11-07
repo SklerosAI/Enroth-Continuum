@@ -1768,3 +1768,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Moved the scoped first-map observer before `.ec6` disk/cache/CHST publication and added a final pending-action check after detached preflight. A newly queued action now rejects the write before publication and remains queued for normal handling.
 - Updated synthetic failure checks and added a headless next-frame GUI-action injection. Four touched C++ translations passed arm64 syntax checks; linked tests remain for integration. Real active-world staging, an enforced no-reentry commit and normal MM6 SaveLoad remain gated.
+
+## [2026-11-06] implement | Joined MM6 first-map DDM rollback
+- by: T-Burton-ND via codex
+- Extended the bounded first-map collection scratch to protect the live outdoor DDM metadata/wire, last-visit time, map weather, discovery grids and actor reuse cursor in the same rollback scope, without constructing or copying the listener-bearing outdoor object.
+- The synthetic late-fault case verifies all eleven owners restore together, incomplete bindings reject before mutation, and explicit commit retains new values. The changed test translation unit passed arm64 C++23 syntax checking; linked execution and the full outdoor loader remain gated.

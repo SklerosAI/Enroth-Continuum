@@ -1907,3 +1907,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Retained active map counts from the validated v2 pass and shared NPC/map-buffer staging with v1, adding detached timer, overlay and CHST owners.
 - Focused linked raw-runtime/world-runtime checks passed 14/14, including invalid actor-overlay rejection without input NPC/timer changes. Live map/resource publication remains open.
+
+## [2026-11-06] integrate | MM6 decoded resistance and buff stages
+- by: T-Burton-ND via codex
+- Added direct decoded-field Party-copy adapters for v2 `RSTS` and `BUFF`, sharing v1 staging semantics; `RESC` remains the NPC-state tag.
+- The integrated linked codec/adapter/raw/world set passed 24/24. Hireling/recovery and the complete live session remain open.

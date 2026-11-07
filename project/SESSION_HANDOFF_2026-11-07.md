@@ -136,6 +136,27 @@ fix them in a dedicated MM7 audit branch once a worktree is free.
   Intervention recovery, lich immunity, Divine Restoration target, archer
   projectile token first).
 
+## Backlog for new lanes
+
+Standing owner instruction: when a lane finishes and is integrated, start the
+next ready item below without waiting to be asked. Keep the number of running
+lanes within the three build slots, the 10-worktree cap and the account usage
+limit. Each new lane gets its own worktree from the current integration head,
+the shared lane rules (`enroth-build`, `enroth-capture`, MM6-owned files,
+commit as you go) and exact file ownership.
+
+| Item | Ready after | Files it would own |
+| --- | --- | --- |
+| Wire Lane T's visited-map owners into map transitions, border travel and indoor entry/exit, with the MM6 `isMapIndoor` call sites | T, A, B merged | `Engine.cpp` transition paths, `Outdoor.cpp` `getTravelDestination`, `Game.cpp` travel handlers, MM6 save sections |
+| House NPC dialogue and quest topic (if Lane H stops before its step 4) | H merged | MM6 house window, `UIDialogue.cpp`, `NPCTopics.cpp` dispatches |
+| MM6 shop stock, prices, buy and sell, guild spellbook stock | I and H merged | new `MM6Shop*` UI and engine files |
+| Transport menu and departure | wiring item above, H merged | `Houses/Transport.cpp` MM6 branch |
+| Party death and respawn wiring from Codex C2 | C2, H, B, S merged | one `Game.cpp` dispatch |
+| Remaining MM6 spells, monster missiles, Magic and Energy damage, turn mode | S merged | MM6 spell and combat files |
+| F5a staged graphical opening check | F4b gate passes with Lane B's normal Save/Load section | none, capture and report only |
+| MM7 audit combat fixes: Break Weapon inversion, Divine Intervention recovery, lich immunity, Divine Restoration target, archer projectile token, monster ability slots | S merged, coordinate with Codex in `agent_comms/` first | `Character.cpp`, `CastSpellInfo.cpp`, `Monsters.cpp`, `Actor.cpp` MM7 paths |
+| MM7 save robustness: atomic writes via Codex's helper, in-game error on a bad save, Atlas exit-status check | B merged, coordinate with Codex | `SaveLoad.cpp`, `UISaveLoad.cpp`, `launcher/AtlasApp.swift` |
+
 ## Worktrees (11 registered, cap is 10)
 
 Main checkout, `mm7-frozen` (`mm7-isolated-runtime`), `mm8-isolated`

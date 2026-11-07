@@ -6,6 +6,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/MM6/MM6Archive.h"
 #include "Engine/MM6/MM6LoadedMapSource.h"
 #include "Engine/MM6/MM6V5OutdoorMapIdentity.h"
 #include "Engine/Resources/LOD.h"
@@ -36,7 +37,8 @@ GAME_TEST(MM6V5OutdoorSourceHeadless, AllShippedOutdoorPairsDecode) {
             const auto base = std::make_unique<OutdoorLocation_MM7>();
             ASSERT_NO_THROW(deserializeMM6Outdoor(maps.readBase(name), base.get()));
             MM6OutdoorDeltaSnapshot delta;
-            ASSERT_NO_THROW(delta = decodeMM6OutdoorDelta(maps.readDefaultDelta(deltaName)));
+            ASSERT_NO_THROW(delta = decodeMM6OutdoorDelta(
+                mm6::decodeMM6ArchiveEntry(maps.readDefaultDelta(deltaName))));
             EXPECT_EQ(base->decorations.size(), base->decorationNames.size());
             EXPECT_EQ(delta.chests.size(), 20);
             ++admitted;

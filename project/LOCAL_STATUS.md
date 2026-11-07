@@ -1105,12 +1105,18 @@ The first attempted post-action v4 writer refused before a second slot was
 written: a gameplay-updated ground sprite had fractional X/Y coordinates
 that the integer native DDM sprite record cannot preserve. The v4 guard is
 retained. An exact full-list runtime sprite owner, bound to native slots and
-MM6 raw item provenance, is under design for a later schema; waiting for
+MM6 raw item provenance, was needed for a later schema; waiting for
 sprites to settle is not a general save strategy. See the
-[v5 sprite-runtime gate](MM6_F4_EC6_V5_SPRITE_RUNTIME.md). The post-action reader is
-disabled and unrun pending a valid candidate.
-Detached v5 SPRT/ARTR full-list codecs, exact 25-section manifest, test-only
-pre-event scopes and atomic candidate shell pass **11/11** focused checks.
-The attempted v5 post-action writer retained dynamic actor/sprite state but
-reached a later exact decoration-flag refusal before writing a slot. An
-ordered decoration runtime owner is under audit; no v5 reload has run.
+[v5 sprite-runtime gate](MM6_F4_EC6_V5_SPRITE_RUNTIME.md) for the implemented
+test-only path.
+Detached v5 SPRT/ARTR/DECR full-list codecs, exact 26-section manifest,
+test-only pre-event scopes and atomic candidate shell pass **16/16** focused
+checks. After a source-backed first-124 decoration ordinal fix, the strict
+disposable v5 post-action writer passed **1/1** following v2 seed and v4
+baseline controls (**1/1** each), preserving those source slots. The
+first fresh-child v5 reader crashed before an owner result from large nested
+stack frames. Heap-backed stage and PART decode fixed that test path. A
+fresh four-process v2 seed, v4 baseline, v5 post-action writer and v5 reader
+sequence passed **1/1** at each step; the reader checked represented owners
+after world preparation and aborted before input. No v5 first input, second
+write, production SaveLoad or Atlas route is accepted.

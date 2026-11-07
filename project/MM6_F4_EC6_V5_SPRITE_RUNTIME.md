@@ -1,8 +1,12 @@
-# MM6 EC6 v5 runtime actor and sprite owners
+# MM6 EC6 v5 runtime actor, sprite and decoration owners
 
-Status, 2026-11-07: detached v5 `SPRT` and `ARTR` full-list codecs, exact
-25-section manifest, test-only pre-event scopes and atomic candidate shell
-passed focused linked checks **11/11**. No v5 slot or live replay yet.
+Status, 2026-11-07: detached v5 `SPRT`, `ARTR` and `DECR` full-list codecs,
+exact 26-section manifest, test-only pre-event scopes and atomic candidate
+shell passed focused linked checks **16/16**. A strict disposable v5 writer
+captured the moved first-map party and wrote a separate candidate (**1/1**)
+after v2 seed and v4 baseline controls each passed **1/1**. A stack-footprint
+fix let the separate fresh-child reader stage and restore the post-action
+candidate with exact owner checks (**1/1**), then abort before input.
 A bounded v4 first-map reload and real-loop turn/walk passed, but
 the attempted second v4 write refused before disk mutation when a live ground
 sprite had fractional X/Y position. The native 100-byte DDM sprite record
@@ -33,8 +37,8 @@ events. Check the full sprite list again after events and before input.
 
 ## Conservative v5 contract
 
-1. Required `SPRT` and `ARTR` sections now wrap v4's 23 sections in an exact
-   25-section v5 manifest. V1 through v4 decoders and refusal behavior remain
+1. Required `SPRT`, `ARTR` and `DECR` sections now wrap v4's 23 sections in an exact
+   26-section v5 manifest. V1 through v4 decoders and refusal behavior remain
    strict; linked manifest and atomic checks passed.
 2. The detached codec encodes every live sprite in ordered PID slot sequence, with exact float
    bits for all three vectors, every runtime scalar and timer, particle
@@ -54,7 +58,13 @@ events. Check the full sprite list again after events and before input.
    movement, the v5 writer passed SPRT capture but ACTR v1 refused a
    fractional actor position; the new ARTR path retains that state without
    weakening ACTR v1.
-6. Stage fully and validate before test-only publication. A mismatch aborts
+6. `DECR` owns ordered runtime decorations, including changed flags,
+   descriptors and event ordinals. It binds immutable position, yaw, cog,
+   event and trigger fields to the decoded base ODM; EVRT binds the first
+   124 eligible event ordinals, while later entries retain the native unset
+   value. The test-only overlay follows `PrepareDecorations()` and precedes
+   map-event registration.
+7. Stage fully and validate before test-only publication. A mismatch aborts
    before events/input; normal MM6 and all MM7 routes remain unarmed.
 
 ## Verification gates
@@ -69,13 +79,17 @@ events. Check the full sprite list again after events and before input.
   source files. Only after this passes consider production save/load admission,
   indoor and cross-map work.
 
-The first live v5 post-action writer with ARTR and SPRT now reaches a later
-strict refusal: a decoration flag changed during gameplay, while v4 EVRT
-records event arrays and bindings but not all final decoration flags. No v5
-slot was written. A separate ordered decoration runtime owner is under
-audit; it must bind stable base identities and restore after decoration
-preparation but before map-event registration. The v5 manifest is still
-unpublished and may gain this required owner before any accepted slot.
+The first v5 writer with ARTR/SPRT refused at a changed decoration flag.
+After adding source-bound DECR and correcting the first-124 ordinal rule,
+the strict post-action writer passed and preserved the v2 seed and v4
+baseline bytes. The first fresh-child reader crashed from large nested stack
+frames before an owner result; heap-backed stage and PART decode fixed that
+test path. A four-process v2 seed, v4 baseline, v5 post-action writer and
+fresh-child v5 reader sequence then passed **1/1** at each step. The reader
+checks represented owners after world preparation and aborts before input.
+The candidate existed only inside the owner-only disposable test profile and
+was cleaned when the sequence ended. V5 first input, second write, production
+SaveLoad and Atlas remain closed.
 
 See [v4 event runtime boundary](MM6_F4_EC6_V4_EVENT_RUNTIME.md),
 [active actor capture](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md) and

@@ -20,19 +20,27 @@ Waiting for rest cannot guarantee exact coordinates.
 
 The detached `SPRT` section is a full ordered runtime snapshot with exact
 float bits and all supported fields. `ARTR` similarly owns exact ordered
-runtime actors while v4 ACTR remains a source-bound baseline. The current
-v5 manifest requires v4's 23 sections plus SPRT and ARTR (25 total), while
-v1–v4 stay strict. Linked codec, pre-event scope and atomic checks passed
-**11/11**. Native `MAPS`/`CHST` retain original
+runtime actors while v4 ACTR remains a source-bound baseline. `DECR` owns
+ordered runtime decorations, including changed flags and descriptors, while
+binding stable fields to the base ODM and EVRT's first 124 event ordinals.
+The current v5 manifest requires v4's 23 sections plus SPRT, ARTR and DECR
+(26 total), while v1–v4 stay strict. Linked codec, pre-event scope and atomic
+checks passed **16/16**. Native `MAPS`/`CHST` retain original
 100-byte ground records and opaque MM6 item bytes as separate source anchors.
 An initial conservative policy refuses slot reuse, compaction, append and
 unproved item mutations. Outdoor loading arranges sprites before the
 pre-event checkpoint; stage and publish SPRT after arrangement, before map
 events, then compare the entire live list before input. The first post-action
-v5 writer with actor/sprite owners reached a later strict refusal: a
-decoration flag changed during gameplay, and EVRT does not record all final
-flags. An ordered decoration runtime owner is under audit. No v5 slot or
-fresh-child replay is accepted yet.
+v5 writer with actor/sprite owners first refused a changed decoration flag.
+After adding DECR and the source-backed first-124 ordinal rule, a strict
+disposable post-action v5 candidate writer passed **1/1**, following v2 and
+v4 controls (**1/1** each), with source slots unchanged. The first
+fresh-child reader crashed before an owner result from large nested stack
+frames; heap-backed stage and PART decode fixed it. A four-process
+seed/baseline/post-action writer/fresh-child reader sequence passed **1/1**
+at each step. The reader checked represented owners after world preparation
+and aborted before input. No v5 first-input, second-write or production save
+route is open.
 
 See also: [V4 Event Runtime](MM6-F4-EC6-V4-Event-Runtime.md),
 [V3 Post Entry Map and Pre Event](MM6-F4-V3-Post-Entry-Map-and-Pre-Event.md),

@@ -2276,3 +2276,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Reaffirmed M7-A6 as a required eventual MM7 gate: Mac source and required non-system build inputs must come from this repository, and a clean offline build and Atlas save/reload must pass before replacing the known-good helper.
 - Added user-facing app identity, bundle metadata, CLI/config/cache/log and legacy profile-path audit to the migration packet. OpenEnroth links, history, license and notices remain permanent credit; original GOG files and saves remain private outside Git.
+
+## [2026-11-07] verify | MM6 indoor reader and later outdoor writer
+- by: T-Burton-ND via codex
+- A disposable v2 seed, atomic indoor v6 writer and independent fresh-child reader passed 1/1 each. The reader rebuilt the source DLV and pre-event face baseline, re-staged the exact v6 candidate and still refused gameplay admission; production SaveLoad remains closed.
+- A separate v2 seed, v4 baseline and strict second-outdoor-map v5 writer passed 1/1 each, producing its first isolated candidate. Exact native decoration row-0 and static-derived actor-name rules passed focused positive/refusal checks 7/7. Fresh-child later-map replay and campaign travel remain open.

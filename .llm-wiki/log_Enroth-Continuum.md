@@ -2499,3 +2499,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Corrected the earlier phase claim: native door motion matches at pre-event and post-world admission; an already-moving door advances during bounded input ticks. An MM6-only test scope records source door actions and updates, and the strict residual gate requires changed motion and door words to match that trace.
 - The post-input v6 test writer patches only native visibility and verified door state/clock bytes, preserving all unowned DLV bytes. Two distinct indoor source cases each passed the full five-child headless chain, 1/1 per child; an MM7 headless control passed 1/1. Production MM6 SaveLoad and general indoor play remain closed.
+
+## [2026-11-07] update | Campaign status after source and replay gates
+- by: T-Burton-ND via codex
+- Updated the status summary to reflect the published MM7 branch's fresh remote-clone offline build, two distinct five-child MM6 indoor input/replay fixtures, and the detached border Party stage's linked 11/11 check.
+- Kept visible staged MM7 play/save, production MM6 SaveLoad, general indoor maps, live border travel and MM6 Atlas Play open.

@@ -280,6 +280,16 @@ GAME_TEST(MM6V3PostEntryCandidateHeadless, DISABLED_FirstMapFullSessionPreflight
                             refusalClass = "active-ddm";
                         else if (message.find("actor map") != std::string_view::npos)
                             refusalClass = "actor-map";
+                        else if (message.find("represented world differs") != std::string_view::npos)
+                            refusalClass = "represented-map-join";
+                        else if (message.find("invalid item template") != std::string_view::npos)
+                            refusalClass = "map-item-template";
+                        else if (message.find("missing a base map") != std::string_view::npos)
+                            refusalClass = "map-base";
+                        else if (message.find("record shape") != std::string_view::npos)
+                            refusalClass = "map-record-shape";
+                        else if (message.find("saved delta") != std::string_view::npos)
+                            refusalClass = "map-delta-set";
                         else if (message.find("MAPS") != std::string_view::npos)
                             refusalClass = "maps-section";
                         else if (message.find("map") != std::string_view::npos)

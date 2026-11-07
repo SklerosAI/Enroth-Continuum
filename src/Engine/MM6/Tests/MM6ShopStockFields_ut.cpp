@@ -239,3 +239,64 @@ UNIT_TEST(MM6ShopStockFields, EntryModGeneratorFailureLeavesBothOwnersUnchanged)
     EXPECT_EQ(*stock, beforeStock);
     EXPECT_EQ(clocks, beforeClocks);
 }
+
+UNIT_TEST(MM6ShopStockFields, EntryVisitGuardRerollsOncePerShopWindow) {
+    auto stock = std::make_unique<mm6::ShopStockFields>();
+    stock->ready = true;
+    mm6::ShopGuildClockFields clocks;
+    clocks.ready = true;
+    int firstRuns = 0;
+    int secondRuns = 0;
+    const mm6::ShopStockGenerator first = [&](mm6::ShopStockFields &) { ++firstRuns; };
+    const mm6::ShopStockGenerator second = [&](mm6::ShopStockFields &) { ++secondRuns; };
+
+    mm6::ShopRefreshVisit firstVisit;
+    EXPECT_FALSE(firstVisit.refreshShopOnEntry(stock.get(), &clocks, 47, 1, 100,
+                                              first, second, GameTitle::MM6,
+                                              mm6::ShopRefreshPolicy::WhenExpired));
+    EXPECT_TRUE(firstVisit.refreshShopOnEntry(stock.get(), &clocks, 47, 1, 100,
+                                             first, second, GameTitle::MM6,
+                                             mm6::ShopRefreshPolicy::OnEntry));
+    EXPECT_FALSE(firstVisit.refreshShopOnEntry(stock.get(), &clocks, 47, 2, 200,
+                                              first, second, GameTitle::MM6,
+                                              mm6::ShopRefreshPolicy::OnEntry));
+    EXPECT_EQ(firstRuns, 1);
+    EXPECT_EQ(secondRuns, 1);
+    EXPECT_EQ(clocks.deadlineWords[mm6::shopClockSlot(47)], 100);
+
+    mm6::ShopRefreshVisit nextVisit;
+    EXPECT_TRUE(nextVisit.refreshShopOnEntry(stock.get(), &clocks, 47, 2, 200,
+                                            first, second, GameTitle::MM6,
+                                            mm6::ShopRefreshPolicy::OnEntry));
+    EXPECT_EQ(firstRuns, 2);
+    EXPECT_EQ(secondRuns, 2);
+    EXPECT_EQ(clocks.deadlineWords[mm6::shopClockSlot(47)], 200);
+}
+
+UNIT_TEST(MM6ShopStockFields, EntryVisitGuardRetriesFailedGuildAndRejectsForeignTitle) {
+    auto stock = std::make_unique<mm6::ShopStockFields>();
+    stock->ready = true;
+    mm6::ShopGuildClockFields clocks;
+    clocks.ready = true;
+    mm6::ShopRefreshVisit visit;
+    const mm6::ShopStockGenerator fail = [](mm6::ShopStockFields &) {
+        throw std::runtime_error("synthetic guild generation failure");
+    };
+    int calls = 0;
+    const mm6::ShopStockGenerator succeed = [&](mm6::ShopStockFields &) { ++calls; };
+    EXPECT_THROW(visit.refreshGuildOnEntry(stock.get(), &clocks, 119, 1, 100,
+                                           fail, GameTitle::MM6,
+                                           mm6::ShopRefreshPolicy::OnEntry), std::runtime_error);
+    EXPECT_EQ(clocks.deadlineWords[mm6::guildClockSlot(119)], 0);
+    EXPECT_THROW(visit.refreshGuildOnEntry(stock.get(), &clocks, 119, 1, 100,
+                                           succeed, GameTitle::MM7,
+                                           mm6::ShopRefreshPolicy::OnEntry), std::runtime_error);
+    EXPECT_TRUE(visit.refreshGuildOnEntry(stock.get(), &clocks, 119, 1, 100,
+                                          succeed, GameTitle::MM6,
+                                          mm6::ShopRefreshPolicy::OnEntry));
+    EXPECT_FALSE(visit.refreshGuildOnEntry(stock.get(), &clocks, 119, 2, 200,
+                                           succeed, GameTitle::MM6,
+                                           mm6::ShopRefreshPolicy::OnEntry));
+    EXPECT_EQ(calls, 1);
+    EXPECT_EQ(clocks.deadlineWords[mm6::guildClockSlot(119)], 100);
+}

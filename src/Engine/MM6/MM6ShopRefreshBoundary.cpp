@@ -102,4 +102,39 @@ bool refreshGuildStockIfExpired(ShopStockFields *stock, ShopGuildClockFields *cl
                                      guild, title, ShopRefreshPolicy::WhenExpired);
 }
 
+bool ShopRefreshVisit::refreshShopOnEntry(ShopStockFields *stock, ShopGuildClockFields *clocks,
+                                          unsigned shopRow, std::uint64_t now,
+                                          std::uint64_t nextDeadline,
+                                          const ShopStockGenerator &firstBank,
+                                          const ShopStockGenerator &secondBank, GameTitle title,
+                                          ShopRefreshPolicy policy) {
+    if (title != GameTitle::MM6)
+        throw std::runtime_error("MM6 shop visit requires MM6 title");
+    requirePolicy(policy);
+    if (_entryHandled || policy == ShopRefreshPolicy::WhenExpired)
+        return false;
+    const bool changed = refreshShopStockForEntry(stock, clocks, shopRow, now, nextDeadline,
+                                                   firstBank, secondBank, title, policy);
+    if (changed)
+        _entryHandled = true;
+    return changed;
+}
+
+bool ShopRefreshVisit::refreshGuildOnEntry(ShopStockFields *stock, ShopGuildClockFields *clocks,
+                                           unsigned guildRow, std::uint64_t now,
+                                           std::uint64_t nextDeadline,
+                                           const ShopStockGenerator &guild, GameTitle title,
+                                           ShopRefreshPolicy policy) {
+    if (title != GameTitle::MM6)
+        throw std::runtime_error("MM6 guild visit requires MM6 title");
+    requirePolicy(policy);
+    if (_entryHandled || policy == ShopRefreshPolicy::WhenExpired)
+        return false;
+    const bool changed = refreshGuildStockForEntry(stock, clocks, guildRow, now, nextDeadline,
+                                                    guild, title, policy);
+    if (changed)
+        _entryHandled = true;
+    return changed;
+}
+
 } // namespace mm6

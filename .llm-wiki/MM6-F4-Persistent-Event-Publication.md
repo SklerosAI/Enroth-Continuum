@@ -11,4 +11,4 @@ The [implementation packet](../project/MM6_F4_PERSISTENT_EVENT_PUBLICATION.md) a
 
 The reload sequence runs `onMapLoad()` after reconstruction, so a legitimate event write can make this gate refuse the slot. The split and meaning of the upper 129 bytes, decoration state, event replay, trigger lists and whole-session effects remain unproved. Active VISU remains blocked. The v2 fresh-child coordinator must run the post-map check against the actual sidecar before enabling controls; detached preflight alone is insufficient.
 
-See the [detached persistent-event boundary packet](../project/MM6_F4_PERSISTENT_EVENT_BOUNDARY.md).
+See also: [Raw Save Runtime](MM6-F4-Raw-Save-Runtime.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md), and the [detached persistent-event boundary packet](../project/MM6_F4_PERSISTENT_EVENT_BOUNDARY.md).

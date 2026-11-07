@@ -112,6 +112,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 New Game Autosave](MM6-F4-New-Game-Autosave.md) — Archive-backed v1 control and detached native v2 first-map candidate; live raw capture and normal save/reload stay guarded
 - [MM6 F4 Creation Item Seed](MM6-F4-Creation-Item-Seed.md) — Bounded raw starter records; one real headless v2 write and fresh-process read passed in a disposable profile
 - [MM6 F4 Post Rebuild PID Slots](MM6-F4-Post-Rebuild-PID-Slots.md) — Read-only final actor/sprite slot agreement check; active saved VISU overlays remain blocked
+- [MM6 F4 Persistent Event Publication](MM6-F4-Persistent-Event-Publication.md) — Test-only zero generic arrays before map load and exact sidecar/array check after rebuild
 - [MM6 F4 First-Map World Rollback](MM6-F4-First-Map-World-Rollback.md) — Detached terrain preflight, combat containers/turn scalars rollback and temporary `.ec6` reentry pass; full-world rollback remains guarded
 - [MM6 F4 Shop Save Key Matrix](MM6-F4-Shop-Save-Key-Matrix.md) — Retained house-type join versus inherited MM7 shop, guild and bounty save owner ranges
 - [MM6 F4 Shop Guild Clock Save](MM6-F4-Shop-Guild-Clock-Save.md) — SCLK v1 preserves 68 unique original-MM6 shop and guild refresh deadline words

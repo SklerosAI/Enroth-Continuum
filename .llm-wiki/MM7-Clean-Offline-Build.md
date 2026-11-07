@@ -45,4 +45,8 @@ first-map frame using a GameTest rebuilt in that temporary extraction after
 copying newer test/startup files. The extraction was marked modified for that
 diagnostic; the earlier clean build and staged Atlas evidence above are separate.
 
-See also: [MM7 Self-Contained Source](MM7-Self-Contained-Source.md), [MM7 Mac Dependency Recipe](MM7-Mac-Dependency-Recipe.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [Agent Handoff](Agent-Handoff.md).
+The later [disposable save/reload gate](MM7-Disposable-Save-Reload.md) used a
+locally linked GameTest in two fresh headless processes. It did not exercise
+the staged Atlas helper.
+
+See also: [MM7 Self-Contained Source](MM7-Self-Contained-Source.md), [MM7 Mac Dependency Recipe](MM7-Mac-Dependency-Recipe.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [MM7 Disposable Save and Reload](MM7-Disposable-Save-Reload.md), [Agent Handoff](Agent-Handoff.md).

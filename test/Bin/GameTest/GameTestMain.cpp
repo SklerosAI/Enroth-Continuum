@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <filesystem>
+#include <fstream>
 #include <string>
 #include <string_view>
 
@@ -33,6 +35,46 @@ bool isMm6OnlyFilter(std::string_view filter) {
         if (!pattern.starts_with("MM6"))
             return false;
     return true;
+}
+
+void validateDisposableMm7Profile(GameTestOptions *opts, bool writer) {
+    namespace fs = std::filesystem;
+    const fs::path supplied(opts->userPath.str());
+    if (!supplied.is_absolute() || !fs::is_directory(supplied))
+        throw Exception("MM7 save gate requires an absolute disposable profile directory.");
+    const fs::path root = fs::canonical(supplied);
+    if (root.parent_path() != fs::canonical(fs::temp_directory_path()) ||
+        !root.filename().string().starts_with("mm7-save-gate-") ||
+        (fs::status(root).permissions() & (fs::perms::group_all | fs::perms::others_all)) != fs::perms::none)
+        throw Exception("MM7 save gate requires an owner-only system-temp profile.");
+    const fs::path markerPath = root / ".ec-mm7-disposable-save-gate";
+    if (!fs::is_regular_file(markerPath) || fs::is_symlink(markerPath))
+        throw Exception("MM7 save gate profile marker is missing or invalid.");
+    std::ifstream marker(markerPath);
+    std::string value;
+    if (!std::getline(marker, value) || value != "EnrothContinuum-MM7-save-gate-v1")
+        throw Exception("MM7 save gate profile marker is missing or invalid.");
+    for (const fs::directory_entry &entry : fs::directory_iterator(root)) {
+        const std::string name = entry.path().filename().string();
+        if (entry.is_symlink() ||
+            (writer && name != ".ec-mm7-disposable-save-gate") ||
+            (!writer && name != ".ec-mm7-disposable-save-gate" &&
+             name != "enroth-continuum-mm7.ini" && name != "saves"))
+            throw Exception("MM7 save gate profile contains an unexpected entry.");
+    }
+    if (!writer) {
+        const fs::path saves = root / "saves";
+        if (!fs::is_directory(saves) || fs::is_symlink(saves) ||
+            !fs::is_regular_file(saves / "save000.mm7") || fs::is_symlink(saves / "save000.mm7"))
+            throw Exception("MM7 save gate profile has no regular candidate save.");
+        for (const fs::directory_entry &entry : fs::directory_iterator(saves)) {
+            const std::string name = entry.path().filename().string();
+            if (!entry.is_regular_file() || entry.is_symlink() ||
+                (name != "save000.mm7" && name != "autosave.mm7"))
+                throw Exception("MM7 save gate profile contains an unexpected save.");
+        }
+    }
+    opts->userPath = Path(root.string());
 }
 } // anonymous namespace
 
@@ -69,6 +111,14 @@ int platformMain(int argc, char **argv) {
              !GTEST_FLAG_GET(also_run_disabled_tests))) {
             throw Exception("--offscreen-gl requires the title's isolated disabled first-frame test filter.");
         }
+        const bool mm7SaveWriter = GTEST_FLAG_GET(filter) == "MM7DisposableSave.DISABLED_WriteFreshProfile";
+        const bool mm7SaveReader = GTEST_FLAG_GET(filter) == "MM7DisposableSave.DISABLED_ReloadFreshProcess";
+        if (opts.disposableMm7Profile || mm7SaveWriter || mm7SaveReader) {
+            if (!opts.disposableMm7Profile || !(mm7SaveWriter || mm7SaveReader) ||
+                !GTEST_FLAG_GET(also_run_disabled_tests))
+                throw Exception("MM7 disposable save gate requires its exact disabled test filter and temporary profile.");
+            validateDisposableMm7Profile(&opts, mm7SaveWriter);
+        }
         if (opts.listRequested)
             return RUN_ALL_TESTS();
 
@@ -84,7 +134,7 @@ int platformMain(int argc, char **argv) {
         int exitCode = 0;
         starter.runInstrumented([&] (EngineController *game) {
             NativeFileSystem tfs(opts.testPath);
-            TestController test(game, &tfs, opts.speed);
+            TestController test(game, &tfs, opts.speed, opts.disposableMm7Profile, mm7SaveReader);
             GameTest::init(game, &test);
             exitCode = RUN_ALL_TESTS();
         });

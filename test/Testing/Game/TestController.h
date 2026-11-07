@@ -18,7 +18,8 @@ class EngineController;
 
 class TestController {
  public:
-    TestController(EngineController *controller, FileSystem *tfs, float playbackSpeed);
+    TestController(EngineController *controller, FileSystem *tfs, float playbackSpeed,
+                   bool disposableMm7Profile = false, bool preserveDisposableMm7Save = false);
     ~TestController();
 
     void loadGameFromTestData(std::string_view name);
@@ -58,6 +59,8 @@ class TestController {
     EngineController *_controller;
     FileSystem *_tfs;
     float _playbackSpeed;
+    bool _disposableMm7Profile = false;
+    bool _preserveDisposableMm7Save = false;
     TestCallObserver _callObserver;
     std::vector<std::function<void()>> _tapeCallbacks;
 };

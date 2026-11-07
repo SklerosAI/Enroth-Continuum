@@ -18,7 +18,10 @@ closed. The dedicated one-command MM7 [clean tracked-source build](MM7-Clean-Off
 linked and packaged under network denial, but its staged helper has not passed
 graphical save/reload. A separate [hidden OpenGL GameTest](MM7-Offscreen-Frame-Capture.md)
 rendered a first-map world/HUD frame without a visible window or focus change;
-it did not exercise the staged app or disk saves. Continue using the protected
+it did not exercise the staged app or disk saves. A separate
+[disposable two-process save gate](MM7-Disposable-Save-Reload.md) passed through
+the normal MM7 disk writer and Load menu in headless GameTest; it did not run
+the staged helper or an existing personal save. Continue using the protected
 installed MM7 app for play.
 
 The integration branch is local and contains older commits with detailed

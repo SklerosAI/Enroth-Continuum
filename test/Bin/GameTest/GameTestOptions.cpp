@@ -29,6 +29,10 @@ GameTestOptions GameTestOptions::parse(int argc, char **argv) {
         "--rules-path", result.rulesPath,
         "Private MM6 rules directory to copy into the in-memory test profile.")
         ->check(CLI::ExistingDirectory)->option_text("PATH")->group(otherOptions);
+    app->add_option(
+        "--mm7-disposable-profile", result.userPath,
+        "Owner-only temporary MM7 profile for the isolated save/reload gate.")
+        ->check(CLI::ExistingDirectory)->option_text("PATH")->group(otherOptions);
     app->add_flag(
         "--headless", result.headless,
         "Run in headless mode.")->group(otherOptions);
@@ -54,6 +58,13 @@ GameTestOptions GameTestOptions::parse(int argc, char **argv) {
     app->allow_extras();
 
     app->parse(argc, argv, result.helpPrinted);
+
+    if (!result.userPath.isEmpty()) {
+        if (game != "mm7" || !result.headless || result.offscreenCapture || result.dataPath.isEmpty())
+            throw Exception("--mm7-disposable-profile requires MM7, --headless and explicit --data-path.");
+        result.disposableMm7Profile = true;
+        result.ramFsUserData = false;
+    }
 
     if (game == "mm6") {
         result.gameTitle = GameTitle::MM6;

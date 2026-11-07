@@ -2074,6 +2074,11 @@ Chronological record of wiki activity.
 - Added an MM6-only eligible-actor count immediately before the map loader writes generated NPC rows, refusing maps that would exceed its fixed 100-row pool. MM7 keeps its inherited route.
 - The linked NPC/child-admission suites passed 7/7; loaded MM6 first-map and MM7 headless controls each passed 1/1. The refusal is after earlier map-load work and must abort the child. EC6 v2 still lacks generated NPC identities and game RNG state.
 
+## [2026-11-07] integrate | MM6 empty cursor after world prepare
+- by: T-Burton-ND via codex
+- Added a read-only post-world check for an empty Party/HELD cursor and the actual initialized native or custom `micon1` mouse state. The custom path decodes nonempty CPU pixels; occupied offset and GPU drawing remain open.
+- Linked cursor tests passed 5/5; separate disposable v1 writer and real QuickLoad abort processes passed 1/1 each, with an MM7 headless control 1/1. The separately integrated read-only native menu preflight list passed its atomic-file suite 8/8 but is not wired to the visible MM6 menu.
+
 ## [2026-11-07] implement | MM6 semantic menu listing seam
 - by: T-Burton-ND via codex
 - Added a read-only v2 slot inventory that applies the caller's semantic validator through the same primary/backup preflight as loading, using the selected HEAD and recovery flag. Structural-only slots can be omitted; the visible MM6 load menu stays closed until a complete gameplay validator and production load route exist.

@@ -2687,3 +2687,8 @@ Chronological record of wiki activity.
 - Fixed isolated MM7 launcher and mod controls, restored the spellbook indent and zero-base armor bonus tooltip, and checked the focused MM7 GameTest set 3/3. The temporary Atlas exposed and opened the local mods folder.
 - Rebuilt the Release MM7 helper against Apple's OpenGL framework, staged and installed a signed Atlas, and launched MM7 visibly to its title menu before returning normally. The prior installed app remains in an ignored local backup; the private data and save profile were not rewritten by installation.
 - Recorded shared-file MM6 lane overlap for sequential integration. MM7 save durability, source-owned media-library cutover, additional mods and graphical tooltip checks remain open.
+
+## [2026-11-07] verify | Source-owned MM7 integration candidate
+- by: T-Burton-ND via codex
+- Ran the repository-owned one-command MM7 build under network denial against the current integration source. Nine arm64 media archives, the local-only engine build, link-input and system-library checks, and Atlas assembly passed.
+- The staged Atlas and helper passed strict code-signature checks and include 23 media notices. A bounded headless launch survived with a disposable profile. The candidate stays separate from the installed app pending graphical play and save/reload checks.

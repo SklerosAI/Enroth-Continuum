@@ -47,15 +47,25 @@ std::unordered_map<std::string, Blob> pMapDeltas;
 
 namespace {
 std::function<void()> mm6NewGameSaveOverride;
+std::function<void(std::string_view)> mm6LoadGameOverride;
 }
 
 void mm6::testing::setNewGameSaveOverride(std::function<void()> callback) {
     mm6NewGameSaveOverride = std::move(callback);
 }
 
+void mm6::testing::setLoadGameOverride(std::function<void(std::string_view)> callback) {
+    mm6LoadGameOverride = std::move(callback);
+}
+
 void loadGame(std::string_view fileName) {
-    if (engine->gameTitle() == GameTitle::MM6)
+    if (engine->gameTitle() == GameTitle::MM6) {
+        if (mm6LoadGameOverride) {
+            mm6LoadGameOverride(fileName);
+            return;
+        }
         throw std::runtime_error("MM6 save loading is unavailable until the EC6 transaction is complete");
+    }
 
     std::string path = fmt::format("saves/{}", fileName);
     if (!ufs->exists(path)) {

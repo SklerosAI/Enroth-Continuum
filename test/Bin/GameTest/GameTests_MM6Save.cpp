@@ -677,3 +677,91 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_RestartSlotEntersFirstOutdoorWorld) {
     EXPECT_EQ(readFile(primary), before);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }
+
+// Run alone after DISABLED_NewGameControlFlowReachesFirstFrame wrote the slot
+// into the same disposable profile. This enters Game::gameLoop through the real
+// Main Menu QuickLoad FSM edge, with only its MM6 slot/load body overridden.
+// Normal MM6 slot listing and production loadGame remain guarded.
+GAME_TEST(MM6ZSaveHeadless, DISABLED_RestartSlotThroughMainMenuGameLoop) {
+    const auto profileRoot = restartProfileRoot();
+    if (!profileRoot)
+        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to a disposable system-temp directory";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    const std::filesystem::path primary = *profileRoot / "saves" / "autosave.ec6";
+    ASSERT_TRUE(std::filesystem::is_regular_file(primary));
+    const auto before = readFile(primary);
+
+    bool loadCalled = false;
+    std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
+    game.runGameRoutine([&] {
+        mm6::testing::setLoadGameOverride([&](std::string_view fileName) {
+            if (fileName != mm6::NEW_GAME_AUTOSAVE_SLOT)
+                throw std::runtime_error("MM6 test load selected another slot");
+            const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
+            Party freshParty;
+            NPCStats freshNpcs = *pNPCStats;
+            Timer freshTimer;
+            ActiveOverlayList freshOverlays;
+            const auto verifyItem = [](std::int32_t id) {
+                return id >= 1 && id <= 580 &&
+                    !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
+            };
+            auto staged = mm6::stageOfflineSaveSlotForTest(
+                *profileRoot, fileName, freshParty, freshNpcs, freshTimer,
+                freshOverlays, maps.expectedNames(),
+                [&maps](std::string_view name) { return maps.readBase(name); },
+                verifyItem, pOverlayTable->overlays.size(), GameTitle::MM6);
+            if (!staged || staged->needsRecovery || staged->bytes != before)
+                throw std::runtime_error("MM6 test load did not stage the primary slot");
+            const auto plan = mm6::prepareDetachedOutdoorWorldPlan(
+                staged->staged.worldAndVisuals, pTileTable->tileCount(), GameTitle::MM6);
+            if (plan.mapName != "oute3.odm")
+                throw std::runtime_error("MM6 test load selected another first map");
+
+            *pParty = std::move(staged->staged.party);
+            *pNPCStats = std::move(staged->staged.worldAndVisuals.world.npcs);
+            *gameTimer = std::move(staged->staged.worldAndVisuals.visuals.timer);
+            *pActiveOverlayList = std::move(staged->staged.worldAndVisuals.visuals.overlays);
+            pMapDeltas = std::move(staged->staged.worldAndVisuals.world.mapDeltas);
+            mm6::chestTitleState() = std::move(staged->staged.worldAndVisuals.chestTitle);
+            engine->_pendingTransition = MapDestination(
+                pMapTable->GetMapInfo("oute3.odm"), MAP_START_POINT_PARTY);
+            engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
+            chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>();
+            loadCalled = true;
+        });
+        mm6::testing::setMainMenuAutosaveQuickLoadOverride(true);
+        engine->_messageQueue->addMessageCurrentFrame(UIMSG_QuickLoad);
+    });
+
+    game.skipLoadingScreen();
+    game.tick(3);
+    const bool entered = loadCalled && GetCurrentMenuID() == MENU_NONE &&
+        engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute3.odm") &&
+        uCurrentlyLoadedLevelType == LEVEL_OUTDOOR && !pOutdoor->faces.empty() &&
+        !pActors.empty() && vChests.size() == 20 &&
+        !(engineFlags & ENGINE_SKIP_NEXT_WORLD_UPDATE) &&
+        !(engineFlags & ENGINE_SKIP_NEXT_USER_INPUT) &&
+        !engine->_pendingTransition.has_value();
+    const Vec3f initialPos = pParty->pos;
+    const int initialYaw = pParty->_viewYaw;
+    game.runGameRoutine([] {
+        pPartyActionQueue->Add(PARTY_TurnLeft);
+        pPartyActionQueue->Add(PARTY_WalkForward);
+    });
+    game.tick(3);
+    const bool moved = pParty->pos != initialPos && pParty->_viewYaw != initialYaw &&
+        pPartyActionQueue->uNumActions == 0 &&
+        engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute3.odm");
+
+    game.runGameRoutine([&] {
+        mm6::testing::setMainMenuAutosaveQuickLoadOverride(false);
+        mm6::testing::setLoadGameOverride({});
+        chestOptIn.reset();
+    });
+    EXPECT_TRUE(entered);
+    EXPECT_TRUE(moved);
+    EXPECT_EQ(readFile(primary), before);
+    EXPECT_EQ(window->nativeHandle(), nullptr);
+}

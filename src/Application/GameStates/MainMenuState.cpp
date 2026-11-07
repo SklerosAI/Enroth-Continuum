@@ -13,6 +13,14 @@
 #include <memory>
 #include <string>
 
+namespace {
+bool mm6AutosaveQuickLoadOverride = false;
+}
+
+void mm6::testing::setMainMenuAutosaveQuickLoadOverride(bool enabled) {
+    mm6AutosaveQuickLoadOverride = enabled;
+}
+
 MainMenuState::MainMenuState() {
 }
 
@@ -58,6 +66,12 @@ FsmAction MainMenuState::update() {
             transition = "exitGame";
             break;
         case UIMSG_QuickLoad: {
+            if (engine->gameTitle() == GameTitle::MM6 && mm6AutosaveQuickLoadOverride) {
+                engine->_pendingLoadFileName = "autosave.ec6";
+                SetCurrentMenuID(MENU_LoadingProcInMainMenu);
+                transition = "quickLoadGame";
+                break;
+            }
             std::string fileName = getCurrentQuickSave();
             if (ufs->exists(fmt::format("saves/{}", fileName))) {
                 pAudioPlayer->playUISound(SOUND_StartMainChoice02);

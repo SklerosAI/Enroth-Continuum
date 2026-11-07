@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -31,6 +32,7 @@
 #include "Engine/Graphics/ParticleEngine.h"
 #include "Engine/Random/Random.h"
 #include "Engine/TurnEngine/TurnEngine.h"
+#include "Engine/mm7_data.h"
 
 #include "Media/Audio/AudioPlayer.h"
 
@@ -1427,4 +1429,26 @@ GAME_TEST(Issues, Issue1497b) {
 
     EXPECT_EQ(pickerTape, tape(false)); // Target picker never opened.
     EXPECT_EQ(buffTape.frontBack(), tape(false, true)); // The shot paralyzed the goblin under the cursor.
+}
+
+GAME_TEST(MM7TurnQueue, LoadedActorTenStartsInInitialQueue) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_GT(pActors.size(), 10u);
+
+    // Actor 10 is a real actor in the loaded first map, not a sentinel.
+    Actor &actor = pActors[10];
+    actor.aiState = Standing;
+    actor.attributes |= ACTOR_NEARBY;
+    ASSERT_TRUE(actor.CanAct());
+    ai_near_actors_ids = {10};
+    ai_arrays_size = 1;
+    ai_near_actors_targets_pid.resize(pActors.size());
+    ai_near_actors_targets_pid[10] = Pid::character(0);
+
+    pTurnEngine->Start();
+    EXPECT_TRUE(std::ranges::any_of(pTurnEngine->pQueue, [](const TurnBased_QueueElem &element) {
+        return element.uPackedID == Pid(OBJECT_Actor, 10);
+    }));
+    EXPECT_TRUE(actor.attributes & ACTOR_STAND_IN_QUEUE);
 }

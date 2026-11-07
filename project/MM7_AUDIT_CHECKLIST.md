@@ -1,6 +1,9 @@
 # MM7 engine audit checklist
 
-Status: **planned, not yet started**. The currently verified MM7 baseline is an
+Status: **A0-A2 offline/source audit completed; gameplay acceptance remains open**
+([results](MM7_AUDIT_RESULTS_2026-11-07.md)). The checkboxes below cover the
+full audit and remain open where a static review cannot prove runtime behavior.
+The currently verified MM7 baseline is an
 arm64 graphical launch on Emerald Island, a saved game loaded after relaunch,
 and a return to The Atlas. That is a useful protected baseline, not proof of
 complete campaign play. This checklist applies to the owner's private MM7

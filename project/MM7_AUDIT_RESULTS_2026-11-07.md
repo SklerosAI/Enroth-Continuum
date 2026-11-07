@@ -262,3 +262,13 @@ fullscreen uses an SDL Space on display 0, no HiDPI flag is set. Upstream
 
 Remaining tests: corrupt-save load, unwritable save, spellbook popup screenshot,
 and an explicit run with XQuartz unavailable.
+
+## Follow-up after the A2 snapshot
+
+The inherited `TurnEngine.cpp` actor-ID-10 skip in A2a item 12 was removed in
+the integration candidate on 2026-11-07. A new real first-map actor test failed
+before the one-line change because actor 10 was absent from the initial turn
+queue, then passed after the change. The combined focused MM7 set passed 6/6,
+and an MM6 startup/chest guard passed 1/1. This proves the initial queue case;
+representative turn-based combat play remains open. Claude's MM6 worktrees did
+not have changes in `TurnEngine.cpp` or the test file when this fix began.

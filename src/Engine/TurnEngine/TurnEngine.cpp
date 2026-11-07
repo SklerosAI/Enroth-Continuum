@@ -133,7 +133,6 @@ void stru262_TurnBased::Start() {
     }
 
     for (int i = 0; i < ai_arrays_size; ++i) {
-        if (ai_near_actors_ids[i] == 10) continue;
         if (pActors[ai_near_actors_ids[i]].CanAct()) {
             if (pActors[ai_near_actors_ids[i]].ActorNearby()) {
                 pActors[ai_near_actors_ids[i]].attributes |=

@@ -5,6 +5,13 @@ cmake_policy(SET CMP0144 NEW)
 
 project("OpenEnroth")
 
+# Opt-in migration gate for a future repository-owned Mac build. Define this
+# before Git.cmake, whose normal configure path updates submodules.
+option(EC_LOCAL_ONLY_CONFIGURE "Require repository-owned inputs and do not fetch during configure" OFF)
+if(EC_LOCAL_ONLY_CONFIGURE)
+    set(FETCHCONTENT_FULLY_DISCONNECTED ON CACHE BOOL "Do not fetch nested source dependencies" FORCE)
+endif()
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # For clang-tidy and IDEs.
@@ -21,7 +28,7 @@ include(CheckLinkerFlag)
 include(Assertions)
 
 # Defaults.
-if (CMAKE_BUILD_TYPE)
+if (CMAKE_BUILD_TYPE AND NOT EC_LOCAL_ONLY_CONFIGURE)
     set(OE_USE_PREBUILT_DEPENDENCIES_DEFAULT ON)
 else()
     set(OE_USE_PREBUILT_DEPENDENCIES_DEFAULT OFF)

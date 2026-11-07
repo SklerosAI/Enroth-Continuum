@@ -1312,3 +1312,13 @@ generation or map events. A scope unit passed **1/1**; fresh disposable seed,
 v4 and return-probe children passed **1/1 each**. This establishes one
 target-floor agreement, not a full visited-owner replay, rollback or
 production return route.
+
+The first-map v5 fresh-child post-world owner agreement has been extracted
+from its GameTest callback into an MM6-only read-only engine service. The
+test still owns publication scopes and the admission decision. After a
+move-ownership guard was corrected, the established seven-process disposable
+seed, v4, v5 write/replay, first input, second write/replay chain passed
+**1/1 in every child**; an MM7 headless control passed **1/1**. This is a
+preparation for a future first-map production save/load transaction, not an
+admitted MM6 slot or normal menu action. Atomic result/recovery policy and
+normal SaveLoad/UI routing remain open.

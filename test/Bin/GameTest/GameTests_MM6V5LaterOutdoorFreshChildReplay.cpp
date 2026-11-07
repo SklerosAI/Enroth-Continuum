@@ -22,6 +22,7 @@
 #include "Engine/Graphics/Overlays.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/MM6/MM6AtomicSaveFile.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6GeneratedNpcSaveFields.h"
 #include "Engine/MM6/MM6LoadedMapSource.h"
@@ -45,6 +46,7 @@
 #include "Engine/MM6/MM6V5PreEventDecorationReplayForTest.h"
 #include "Engine/MM6/MM6V5PreEventSpriteReplayForTest.h"
 #include "Engine/MM6/MM6V5SaveFields.h"
+#include "Engine/MM6/MM6V6OutdoorSaveFields.h"
 #include "Engine/MM6/MM6V5OutdoorDecorationSource.h"
 #include "Engine/MM6/MM6V5SpriteRuntimeFields.h"
 #include "Engine/MM6/MM6OutdoorWire.h"
@@ -102,7 +104,8 @@ std::filesystem::path ownerOnlyProfile() {
 std::filesystem::path laterCandidateInProfile(const std::filesystem::path &profile,
                                               std::string_view slot) {
     if (slot != "candidate-v5-oute2.ec6" &&
-        slot != "candidate-v5-oute2-after-input.ec6")
+        slot != "candidate-v5-oute2-after-input.ec6" &&
+        slot != "candidate-v6-outdoor.ec6")
         throw std::runtime_error("MM6 v5 later outdoor replay has no admitted slot");
     const std::filesystem::path supplied = profile / "saves" / std::string(slot);
     if (!std::filesystem::is_regular_file(supplied))
@@ -152,12 +155,15 @@ std::vector<LevelDecoration> sourceDecorations(const mm6::LoadedMapSource &maps,
 // A separate writer enters the non-start outdoor map from a strict disposable
 // source. Each fresh child first proves every saved owner before admitting
 // either an abort or one bounded input sequence.
-enum class LaterReplayMode { AbortBeforeInput, FirstInput, SecondWrite, SecondReplay };
+enum class LaterReplayMode {
+    AbortBeforeInput, FirstInput, SecondWrite, SecondReplay, V6VisitedRead
+};
 
 void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode mode) {
     const bool allowInput = mode == LaterReplayMode::FirstInput ||
                             mode == LaterReplayMode::SecondWrite;
     const bool secondReplay = mode == LaterReplayMode::SecondReplay;
+    const bool v6Read = mode == LaterReplayMode::V6VisitedRead;
     const char *enable = std::getenv(
         mode == LaterReplayMode::AbortBeforeInput ?
             "ENROTH_MM6_V5_OUTE2_REPLAY_ENABLE" :
@@ -165,29 +171,40 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
             "ENROTH_MM6_V5_OUTE2_FIRST_INPUT_ENABLE" :
         mode == LaterReplayMode::SecondWrite ?
             "ENROTH_MM6_V5_OUTE2_SECOND_WRITE_ENABLE" :
-            "ENROTH_MM6_V5_OUTE2_SECOND_REPLAY_ENABLE");
+        mode == LaterReplayMode::SecondReplay ?
+            "ENROTH_MM6_V5_OUTE2_SECOND_REPLAY_ENABLE" :
+            "ENROTH_MM6_V6_OUTDOOR_REPLAY_ENABLE");
     const std::string_view expectedEnable =
         mode == LaterReplayMode::AbortBeforeInput ? "strict-v5-oute2" :
         mode == LaterReplayMode::FirstInput ? "strict-v5-oute2-first-input" :
         mode == LaterReplayMode::SecondWrite ? "strict-v5-oute2-second-write" :
-        "strict-v5-oute2-second-replay";
+        mode == LaterReplayMode::SecondReplay ?
+            "strict-v5-oute2-second-replay" :
+            "strict-v6-outdoor-replay";
     if (!enable || std::string_view(enable) != expectedEnable)
         GTEST_SKIP() << "Run only after strict v5 writer and owner admission";
     const std::filesystem::path profile = ownerOnlyProfile();
     if (profile.empty())
         GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to an owner-only profile";
     const std::filesystem::path candidate = laterCandidateInProfile(
-        profile, secondReplay ? "candidate-v5-oute2-after-input.ec6" :
+        profile, v6Read ? "candidate-v6-outdoor.ec6" :
+                 secondReplay ? "candidate-v5-oute2-after-input.ec6" :
                                 "candidate-v5-oute2.ec6");
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     ASSERT_EQ(window->nativeHandle(), nullptr);
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
-    const auto before = slotBytes(candidate);
-    const auto priorV5Before = slotBytes(profile / "saves" / "candidate-v5-oute2.ec6");
+    const auto wireBefore = slotBytes(candidate);
+    const auto before = v6Read ?
+        mm6::encodeV5Save(
+            mm6::decodeV6OutdoorSave(wireBefore, GameTitle::MM6).active,
+            GameTitle::MM6) : wireBefore;
+    const auto priorV5Before = v6Read ? std::vector<std::uint8_t>{} :
+        slotBytes(profile / "saves" / "candidate-v5-oute2.ec6");
     const auto v4Before = slotBytes(profile / "saves" / "candidate-v4.ec6");
     const auto seedBefore = slotBytes(profile / "saves" / "autosave.ec6");
     ASSERT_FALSE(before.empty());
-    ASSERT_FALSE(priorV5Before.empty());
+    if (!v6Read)
+        ASSERT_FALSE(priorV5Before.empty());
     ASSERT_FALSE(v4Before.empty());
     ASSERT_FALSE(seedBefore.empty());
     const auto actionParty = actionPartyFields(before);
@@ -205,11 +222,14 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
     bool firstInputReached = false;
     bool movementApplied = false;
     bool secondCandidateWritten = false;
+    bool visitedPreflighted = false;
+    bool visitedPostWorldValidated = false;
     std::string finalOwnerError;
     std::size_t expectedNativeActors = 0;
     std::size_t expectedActiveActors = 0;
     mm6::GeneratedNpcSaveFields expectedGenerated;
     std::unique_ptr<mm6::V5FullSessionPreflight> staged;
+    std::unique_ptr<mm6::V6OutdoorSaveFields> visitedSaved;
     std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
     std::unique_ptr<mm6::testing::ScopedEventRuntimeRestoreForTest> eventRuntime;
     std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
@@ -229,8 +249,50 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
                 return id >= 1 && id <= 580 &&
                     !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
             };
+            std::unique_ptr<mm6::V5FullSessionPreflight> selectedV6Stage;
+            if (v6Read) {
+                const auto validateVisited = [&](std::span<const std::uint8_t> proposed) {
+                    auto outer = std::make_unique<mm6::V6OutdoorSaveFields>(
+                        mm6::decodeV6OutdoorSave(proposed, GameTitle::MM6));
+                    if (outer->visited.size() != 1 ||
+                        outer->visited.front().mapName != "oute3.odm" ||
+                        mm6::encodeV5Save(outer->active, GameTitle::MM6) != before)
+                        throw std::runtime_error(
+                            "MM6 outdoor v6 fresh-child map set differs");
+                    mm6::requireVisitedOutdoorRuntimeOwner(
+                        outer->visited.front(), "oute3.odm",
+                        maps.readBase("oute3.odm"), *pDecorationTable,
+                        GameTitle::MM6);
+                    auto rebuiltActive = sourceDecorations(maps, "oute2.odm");
+                    selectedV6Stage = mm6::stageV5FullSessionPreflightOnHeap(
+                        mm6::encodeV5Save(outer->active, GameTitle::MM6),
+                        freshNpcs, maps.expectedNames(),
+                        [&maps](std::string_view name) {
+                            return maps.readBase(name);
+                        }, verifyItem, *pItemTable,
+                        pOverlayTable->overlays.size(), pTileTable->tileCount(),
+                        engine->config->gameplay.MaxActors.value(),
+                        application->component<EngineRandomComponent>()->type(),
+                        rebuiltActive, *pDecorationTable, GameTitle::MM6);
+                    if (selectedV6Stage->v4.v3.actorMap.activeMap.mapName !=
+                        "oute2.odm")
+                        throw std::runtime_error(
+                            "MM6 outdoor v6 active source map differs");
+                };
+                const auto selectedFile =
+                    mm6::preflightRecoverableV6OutdoorSaveFileForTest(
+                        profile, "candidate-v6-outdoor.ec6", validateVisited);
+                if (!selectedFile || selectedFile->needsRecovery ||
+                    selectedFile->bytes != wireBefore)
+                    throw std::runtime_error(
+                        "MM6 outdoor v6 fresh-child slot selection differs");
+                visitedSaved = std::make_unique<mm6::V6OutdoorSaveFields>(
+                    mm6::decodeV6OutdoorSave(selectedFile->bytes, GameTitle::MM6));
+                visitedPreflighted = true;
+            }
             auto rebuiltDecorations = sourceDecorations(maps, "oute2.odm");
-            auto candidateStage = mm6::stageV5FullSessionPreflightOnHeap(
+            auto candidateStage = v6Read ? std::move(selectedV6Stage) :
+                mm6::stageV5FullSessionPreflightOnHeap(
                 before, freshNpcs, maps.expectedNames(),
                 [&maps](std::string_view name) { return maps.readBase(name); },
                 verifyItem, *pItemTable, pOverlayTable->overlays.size(),
@@ -304,6 +366,18 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
                             !gameTimer->isPaused() || engine->_pendingTransition ||
                             pPartyActionQueue->uNumActions != 0)
                             throw std::runtime_error("MM6 v5 later outdoor replay reached an unexpected world order");
+                        if (v6Read) {
+                            if (!visitedSaved || !visitedPreflighted)
+                                throw std::runtime_error(
+                                    "MM6 outdoor v6 visited owner was not staged");
+                            const mm6::LoadedMapSource sourceMaps(
+                                *pGames_LOD, *pMapTable, GameTitle::MM6);
+                            mm6::requireVisitedOutdoorRuntimeOwner(
+                                visitedSaved->visited.front(), "oute3.odm",
+                                sourceMaps.readBase("oute3.odm"),
+                                *pDecorationTable, GameTitle::MM6);
+                            visitedPostWorldValidated = true;
+                        }
                         mm6::requireGeneratedNpcActorAgreement(
                             expectedGenerated, pActors, "oute2.odm", GameTitle::MM6);
                         const auto observedGenerated = mm6::captureGeneratedNpcFields(
@@ -530,6 +604,10 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
     EXPECT_TRUE(freshMapBeforeReplay);
     EXPECT_TRUE(postWorldRan);
     EXPECT_TRUE(finalOwnersAgree) << finalOwnerError;
+    if (v6Read) {
+        EXPECT_TRUE(visitedPreflighted);
+        EXPECT_TRUE(visitedPostWorldValidated);
+    }
     if (allowInput) {
         EXPECT_TRUE(firstInputReached);
         EXPECT_TRUE(movementApplied);
@@ -540,8 +618,9 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
         ASSERT_TRUE(std::filesystem::is_regular_file(second));
         EXPECT_FALSE(slotBytes(second).empty());
     }
-    EXPECT_EQ(slotBytes(candidate), before);
-    EXPECT_EQ(slotBytes(profile / "saves" / "candidate-v5-oute2.ec6"), priorV5Before);
+    EXPECT_EQ(slotBytes(candidate), wireBefore);
+    if (!v6Read)
+        EXPECT_EQ(slotBytes(profile / "saves" / "candidate-v5-oute2.ec6"), priorV5Before);
     EXPECT_EQ(slotBytes(profile / "saves" / "candidate-v4.ec6"), v4Before);
     EXPECT_EQ(slotBytes(profile / "saves" / "autosave.ec6"), seedBefore);
     EXPECT_EQ(window->nativeHandle(), nullptr);
@@ -561,4 +640,8 @@ GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorWritesAfter
 
 GAME_TEST(MM6V5LaterOutdoorFreshChildHeadless, DISABLED_SecondOutdoorAfterInputRestoresOwnersInNewChild) {
     runV5LaterOutdoorFreshChildReplay(game, LaterReplayMode::SecondReplay);
+}
+
+GAME_TEST(MM6OutdoorV6FreshChildHeadless, DISABLED_ActiveAndVisitedOwnersStageBeforeInputAndAbort) {
+    runV5LaterOutdoorFreshChildReplay(game, LaterReplayMode::V6VisitedRead);
 }

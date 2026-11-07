@@ -49,6 +49,7 @@
 #include "Engine/MM6/MM6ChestRuntimeProjection.h"
 #include "Engine/MM6/MM6ChestLiveOwnerAdapter.h"
 #include "Engine/MM6/MM6ActiveActorSection.h"
+#include "Engine/MM6/MM6AtomicSaveFile.h"
 #include "Engine/MM6/MM6CoreSaveRuntime.h"
 #include "Engine/MM6/MM6DurableSaveFields.h"
 #include "Engine/MM6/MM6ResistanceSaveFields.h"
@@ -151,9 +152,13 @@ std::vector<LevelDecoration> sourceDecorations(const mm6::LoadedMapSource &maps,
 // This test enters an accepted first-map session, then drives the real
 // location-change state machine with one exact autosave interception. It is
 // a lifecycle probe, not border travel or a production save path.
-GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWithoutDiskWrite) {
-    const char *enable = std::getenv("ENROTH_MM6_LOCATION_CHANGE_ENABLE");
-    if (!enable || std::string_view(enable) != "strict-mm6-location-change")
+void runMM6LocationChangeLifecycle(EngineController &game, bool writeV6) {
+    const char *enable = std::getenv(writeV6 ?
+        "ENROTH_MM6_V6_OUTDOOR_WRITE_ENABLE" :
+        "ENROTH_MM6_LOCATION_CHANGE_ENABLE");
+    if (!enable || std::string_view(enable) !=
+            (writeV6 ? "strict-v6-outdoor-write" :
+                       "strict-mm6-location-change"))
         GTEST_SKIP() << "Run only after strict v4 writer and owner admission";
     const std::filesystem::path profile = ownerOnlyProfile();
     if (profile.empty())
@@ -186,6 +191,9 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
     bool visitedTwoMapSectionRoundTrip = false;
     bool visitedV6FaultsRefused = false;
     bool targetPreInputCaptured = false;
+    bool v6CandidateWritten = false;
+    bool v6AtomicFaultRefused = false;
+    std::vector<std::uint8_t> v6CandidateBytes;
     int sourceGeneratedCursor = -1;
     std::vector<std::uint8_t> oldMapCacheBefore;
     std::vector<std::uint8_t> targetV5BeforeInput;
@@ -632,6 +640,84 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
                         !visitedV6FaultsRefused)
                         throw std::runtime_error(
                             "MM6 visited outdoor v6 candidate refused");
+                    if (writeV6) {
+                        constexpr std::string_view slot =
+                            "candidate-v6-outdoor.ec6";
+                        const auto validate = [&](std::span<const std::uint8_t> proposed) {
+                            auto outer = std::make_unique<mm6::V6OutdoorSaveFields>(
+                                mm6::decodeV6OutdoorSave(proposed, GameTitle::MM6));
+                            if (outer->visited.size() != 1 ||
+                                outer->visited.front().mapName != "oute3.odm" ||
+                                mm6::encodeV5Save(outer->active, GameTitle::MM6) !=
+                                    targetV5 ||
+                                mm6::encodeVisitedOutdoorSection(
+                                    outer->visited, GameTitle::MM6) !=
+                                mm6::encodeVisitedOutdoorSection(
+                                    std::span<const mm6::VisitedOutdoorRuntimeOwner>(
+                                        visitedOwner.get(), 1), GameTitle::MM6))
+                                throw std::runtime_error(
+                                    "MM6 outdoor v6 writer owners differ");
+                            mm6::requireVisitedOutdoorRuntimeOwner(
+                                outer->visited.front(), "oute3.odm",
+                                maps.readBase("oute3.odm"), *pDecorationTable,
+                                GameTitle::MM6);
+                            auto activeDecorations = sourceDecorations(maps, "oute2.odm");
+                            auto activeStage = mm6::stageV5FullSessionPreflightOnHeap(
+                                mm6::encodeV5Save(outer->active, GameTitle::MM6),
+                                mm6::loadNpcStaticBaseline(
+                                    *engine->resources(), GameTitle::MM6),
+                                maps.expectedNames(),
+                                [&maps](std::string_view name) {
+                                    return maps.readBase(name);
+                                }, verifyItem, *pItemTable,
+                                pOverlayTable->overlays.size(),
+                                pTileTable->tileCount(), pActors.size(),
+                                application->component<EngineRandomComponent>()->type(),
+                                activeDecorations, *pDecorationTable,
+                                GameTitle::MM6);
+                            if (activeStage->v4.v3.actorMap.activeMap.mapName !=
+                                "oute2.odm")
+                                throw std::runtime_error(
+                                    "MM6 outdoor v6 active source map differs");
+                        };
+                        const bool malformedRefused = refuses([&] {
+                            mm6::writeAtomicV6OutdoorSaveFileForTest(
+                                profile, slot, badVersion, validate);
+                        });
+                        const bool crossMapRefusedBeforeWrite = refuses([&] {
+                            mm6::writeAtomicV6OutdoorSaveFileForTest(
+                                profile, slot, crossMapBytes, validate);
+                        });
+                        const bool injectedFaultRefused = refuses([&] {
+                            mm6::detail::writeAtomicV6OutdoorSaveFileForTest(
+                                profile, slot, candidate, validate,
+                                [](mm6::detail::AtomicSaveStep step) {
+                                    if (step == mm6::detail::AtomicSaveStep::BeforePrimaryReplace)
+                                        throw std::runtime_error(
+                                            "MM6 v6 injected precommit refusal");
+                                });
+                        });
+                        v6AtomicFaultRefused = malformedRefused &&
+                            crossMapRefusedBeforeWrite &&
+                            injectedFaultRefused &&
+                            profileSaveBytes(profile) == allSavesBefore;
+                        if (!v6AtomicFaultRefused)
+                            throw std::runtime_error(
+                                "MM6 outdoor v6 fault changed a source slot");
+                        mm6::writeAtomicV6OutdoorSaveFileForTest(
+                            profile, slot, candidate, validate);
+                        const auto stagedFile =
+                            mm6::preflightRecoverableV6OutdoorSaveFileForTest(
+                                profile, slot, validate);
+                        v6CandidateWritten = stagedFile &&
+                            !stagedFile->needsRecovery &&
+                            stagedFile->bytes == candidate &&
+                            slotBytes(profile / "saves" / slot) == candidate;
+                        if (!v6CandidateWritten)
+                            throw std::runtime_error(
+                                "MM6 outdoor v6 candidate readback differs");
+                        v6CandidateBytes = candidate;
+                    }
                     pPartyActionQueue->Add(PARTY_TurnLeft);
                     pPartyActionQueue->Add(PARTY_WalkForward);
                 }
@@ -682,8 +768,27 @@ GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWitho
     EXPECT_TRUE(transitionQueued);
     EXPECT_TRUE(targetMapReady);
     EXPECT_TRUE(movementApplied);
+    if (writeV6) {
+        EXPECT_TRUE(v6AtomicFaultRefused);
+        EXPECT_TRUE(v6CandidateWritten);
+        auto remaining = profileSaveBytes(profile);
+        const auto written = remaining.find("candidate-v6-outdoor.ec6");
+        ASSERT_NE(written, remaining.end());
+        EXPECT_EQ(written->second, v6CandidateBytes);
+        remaining.erase(written);
+        EXPECT_EQ(remaining, allSavesBefore);
+    } else {
+        EXPECT_EQ(profileSaveBytes(profile), allSavesBefore);
+    }
     EXPECT_EQ(slotBytes(candidate), before);
     EXPECT_EQ(slotBytes(profile / "saves" / "autosave.ec6"), seedBefore);
-    EXPECT_EQ(profileSaveBytes(profile), allSavesBefore);
     EXPECT_EQ(window->nativeHandle(), nullptr);
+}
+
+GAME_TEST(MM6LocationChangeLifecycleHeadless, DISABLED_FirstOutdoorToSecondWithoutDiskWrite) {
+    runMM6LocationChangeLifecycle(game, false);
+}
+
+GAME_TEST(MM6OutdoorV6Headless, DISABLED_WritesActiveAndVisitedCandidate) {
+    runMM6LocationChangeLifecycle(game, true);
 }

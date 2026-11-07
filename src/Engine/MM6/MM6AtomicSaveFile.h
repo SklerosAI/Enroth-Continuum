@@ -85,6 +85,16 @@ void writeAtomicV5SaveFileForTest(const std::filesystem::path &profileRoot,
                                   std::string_view slotName,
                                   std::span<const std::uint8_t> container,
                                   const SaveCandidateValidator &validate);
+// Outdoor v6 is a detached test candidate with active v5 plus VIST. Only the
+// exact disposable slot is admitted; both write and read need a full semantic
+// callback. Neither function publishes a world or repairs a save slot.
+void writeAtomicV6OutdoorSaveFileForTest(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    std::span<const std::uint8_t> container,
+    const SaveCandidateValidator &validate);
+std::optional<SaveFileCandidate> preflightRecoverableV6OutdoorSaveFileForTest(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    const SaveCandidateValidator &validate);
 std::optional<SaveFileCandidate> preflightRecoverableV3SaveFile(
     const std::filesystem::path &profileRoot, std::string_view slotName,
     const SaveCandidateValidator &validate);
@@ -141,6 +151,10 @@ void writeAtomicV5SaveFileForTest(const std::filesystem::path &profileRoot,
                                   std::span<const std::uint8_t> container,
                                   const SaveCandidateValidator &validate,
                                   const AtomicSaveFault &fault);
+void writeAtomicV6OutdoorSaveFileForTest(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    std::span<const std::uint8_t> container,
+    const SaveCandidateValidator &validate, const AtomicSaveFault &fault);
 
 } // namespace detail
 } // namespace mm6

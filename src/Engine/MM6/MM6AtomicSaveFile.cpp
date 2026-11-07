@@ -26,7 +26,7 @@ namespace {
 
 constexpr std::uintmax_t MAX_SAVE_BYTES = 64 * 1024 * 1024;
 
-enum class SlotSchema { KnownV1, RawV2, FullV3, FullV4, FullV5 };
+enum class SlotSchema { KnownV1, RawV2, FullV3, FullV4, FullV5, FullV6Outdoor };
 
 class InvalidSaveFile : public std::runtime_error {
  public:
@@ -136,6 +136,19 @@ SaveHeaderFields decodeV5SlotShell(std::span<const std::uint8_t> bytes) {
     return decodeV4SlotShell(encodeSaveContainer(container));
 }
 
+SaveHeaderFields decodeV6OutdoorSlotShell(std::span<const std::uint8_t> bytes) {
+    SaveContainer container = decodeSaveContainer(bytes);
+    constexpr std::array<char, 4> visitedTag = {'V', 'I', 'S', 'T'};
+    if (container.version != 6 || container.sections.size() != 27 ||
+        container.sections.back().tag != visitedTag ||
+        !container.sections.back().required)
+        throw std::runtime_error("MM6 outdoor v6 slot lacks exact VIST shell");
+    container.sections.pop_back();
+    container.version = 5;
+    // The caller must then decode VIST and validate both maps against source.
+    return decodeV5SlotShell(encodeSaveContainer(container));
+}
+
 std::vector<std::uint8_t> readBoundedFile(const std::filesystem::path &path) {
     const std::uintmax_t fileSize = std::filesystem::file_size(path);
     if (fileSize > MAX_SAVE_BYTES)
@@ -175,11 +188,16 @@ std::vector<std::uint8_t> readValidatedFile(const std::filesystem::path &path,
                 *header = decodeV4SlotShell(bytes);
             else
                 (void) decodeV4SlotShell(bytes);
-        } else {
+        } else if (schema == SlotSchema::FullV5) {
             if (header)
                 *header = decodeV5SlotShell(bytes);
             else
                 (void) decodeV5SlotShell(bytes);
+        } else {
+            if (header)
+                *header = decodeV6OutdoorSlotShell(bytes);
+            else
+                (void) decodeV6OutdoorSlotShell(bytes);
         }
     } catch (const std::runtime_error &) {
         throw InvalidSaveFile("MM6 save schema validation failed");
@@ -252,6 +270,13 @@ void requireDisposableV5Destination(const std::filesystem::path &profileRoot,
         slotName != "candidate-v5-oute2-after-input.ec6")
         throw std::invalid_argument("MM6 v5 test writer requires its own candidate slot");
     // Same owner-only, direct system-temp profile proof as the v4 route.
+    requireDisposableV4Destination(profileRoot, "candidate-v4.ec6");
+}
+
+void requireDisposableV6OutdoorDestination(
+    const std::filesystem::path &profileRoot, std::string_view slotName) {
+    if (slotName != "candidate-v6-outdoor.ec6")
+        throw std::invalid_argument("MM6 outdoor v6 test writer requires its own slot");
     requireDisposableV4Destination(profileRoot, "candidate-v4.ec6");
 }
 
@@ -503,6 +528,35 @@ void writeAtomicV5SaveFileForTest(
                                          validate, {});
 }
 
+void detail::writeAtomicV6OutdoorSaveFileForTest(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    std::span<const std::uint8_t> container,
+    const SaveCandidateValidator &validate, const AtomicSaveFault &fault) {
+    if (!validate)
+        throw std::invalid_argument("MM6 outdoor v6 write needs a semantic validator");
+    requireDisposableV6OutdoorDestination(profileRoot, slotName);
+    (void) decodeV6OutdoorSlotShell(container);
+    validate(container);
+    rejectForeignSlotFiles(profileRoot, slotName, 6);
+    const std::filesystem::path directory = savesDirectory(profileRoot, slotName);
+    for (const std::filesystem::path &path : {
+             directory / std::string(slotName),
+             directory / (std::string(slotName) + ".bak")}) {
+        if (regularFileExists(path))
+            validate(readValidatedFile(path, SlotSchema::FullV6Outdoor));
+    }
+    writeAtomicSaveFileForSchema(profileRoot, slotName, container,
+                                 SlotSchema::FullV6Outdoor, fault);
+}
+
+void writeAtomicV6OutdoorSaveFileForTest(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    std::span<const std::uint8_t> container,
+    const SaveCandidateValidator &validate) {
+    detail::writeAtomicV6OutdoorSaveFileForTest(profileRoot, slotName,
+                                                container, validate, {});
+}
+
 detail::SaveSlotRollbackSnapshot detail::snapshotSaveSlotForRollback(
     const std::filesystem::path &profileRoot, std::string_view slotName) {
 #ifdef _WIN32
@@ -650,6 +704,17 @@ std::optional<SaveFileCandidate> preflightRecoverableV3SaveFile(
     rejectForeignSlotFiles(profileRoot, slotName, 3);
     return preflightRecoverableSaveFileForSchema(profileRoot, slotName, validate,
                                                  SlotSchema::FullV3);
+}
+
+std::optional<SaveFileCandidate> preflightRecoverableV6OutdoorSaveFileForTest(
+    const std::filesystem::path &profileRoot, std::string_view slotName,
+    const SaveCandidateValidator &validate) {
+    if (!validate)
+        throw std::invalid_argument("MM6 outdoor v6 preflight needs semantic validation");
+    requireDisposableV6OutdoorDestination(profileRoot, slotName);
+    rejectForeignSlotFiles(profileRoot, slotName, 6);
+    return preflightRecoverableSaveFileForSchema(
+        profileRoot, slotName, validate, SlotSchema::FullV6Outdoor);
 }
 
 static std::vector<SaveSlotInfo> listSaveSlotsForSchema(const std::filesystem::path &profileRoot,

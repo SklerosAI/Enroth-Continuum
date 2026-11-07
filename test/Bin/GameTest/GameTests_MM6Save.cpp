@@ -607,43 +607,73 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_RestartSlotEntersFirstOutdoorWorld) {
     EXPECT_EQ(readFile(primary), before);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 
-    // Run the same timer/AI/input/draw subsystems used by Game::gameLoop on
-    // the freshly restored world. The parent test loop still belongs to party
+    // Exercise the first two control gates of Game::gameLoop after loading,
+    // then the movement frame. The parent test loop still belongs to party
     // creation: this is not a production loadGame or gameLoop acceptance test.
     const Vec3f initialPos = pParty->pos;
     const int initialYaw = pParty->_viewYaw;
-    bool stepped = false;
-    bool moved = false;
+    bool firstFrameCorrect = false;
+    bool secondFrameCorrect = false;
+    bool movementFrameCorrect = false;
     std::string stepError;
-    game.runGameRoutine([] { gameTimer->setPaused(false); });
-    game.tick(2);
-    game.runGameRoutine([&] {
-        try {
-            gameTimer->tick();
-            current_screen_type = SCREEN_GAME;
-            uGameState = GAME_STATE_PLAYING;
-            onTimer();
-            Actor::UpdateActorAI();
-            pPartyActionQueue->Reset();
-            pPartyActionQueue->Add(PARTY_TurnLeft);
-            pPartyActionQueue->Add(PARTY_WalkForward);
-            UpdateUserInput_and_MapSpecificStuff();
-            engine->Draw();
-            moved = pParty->_viewYaw != initialYaw && pParty->pos != initialPos &&
-                pPartyActionQueue->uNumActions == 0 &&
-                engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute3.odm") &&
-                !engine->_pendingTransition.has_value();
-        } catch (const std::exception &exception) {
-            stepError = exception.what();
-        }
-        gameTimer->setPaused(true);
-        stepped = true;
+    game.runGameRoutine([] {
+        gameTimer->setPaused(false);
+        engineFlags |= ENGINE_SKIP_NEXT_WORLD_UPDATE | ENGINE_SKIP_NEXT_USER_INPUT;
+        pPartyActionQueue->Reset();
     });
-    for (int tick = 0; tick < 256 && !stepped; ++tick)
-        game.tick();
-    ASSERT_TRUE(stepped);
+    for (int phase = 0; phase < 3; ++phase) {
+        bool stepped = false;
+        game.tick(2);
+        game.runGameRoutine([&, phase] {
+            try {
+                if (phase == 1) {
+                    pPartyActionQueue->Add(PARTY_TurnLeft);
+                    pPartyActionQueue->Add(PARTY_WalkForward);
+                }
+                gameTimer->tick();
+                current_screen_type = SCREEN_GAME;
+                uGameState = GAME_STATE_PLAYING;
+                onTimer();
+                if (engineFlags & ENGINE_SKIP_NEXT_WORLD_UPDATE) {
+                    engineFlags &= ~ENGINE_SKIP_NEXT_WORLD_UPDATE;
+                } else {
+                    Actor::UpdateActorAI();
+                    UpdateUserInput_and_MapSpecificStuff();
+                }
+                engine->Draw();
+                const bool sameWorld =
+                    engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute3.odm") &&
+                    !engine->_pendingTransition.has_value();
+                if (phase == 0) {
+                    firstFrameCorrect = sameWorld && pParty->pos == initialPos &&
+                        pParty->_viewYaw == initialYaw &&
+                        !(engineFlags & ENGINE_SKIP_NEXT_WORLD_UPDATE) &&
+                        (engineFlags & ENGINE_SKIP_NEXT_USER_INPUT);
+                } else if (phase == 1) {
+                    secondFrameCorrect = sameWorld && pParty->pos == initialPos &&
+                        pParty->_viewYaw == initialYaw &&
+                        !(engineFlags & ENGINE_SKIP_NEXT_USER_INPUT) &&
+                        pPartyActionQueue->uNumActions == 2;
+                } else {
+                    movementFrameCorrect = sameWorld && pParty->pos != initialPos &&
+                        pParty->_viewYaw != initialYaw &&
+                        pPartyActionQueue->uNumActions == 0;
+                }
+            } catch (const std::exception &exception) {
+                stepError = exception.what();
+            }
+            stepped = true;
+        });
+        for (int tick = 0; tick < 256 && !stepped; ++tick)
+            game.tick();
+        ASSERT_TRUE(stepped);
+        ASSERT_TRUE(stepError.empty()) << stepError;
+    }
+    game.runGameRoutine([] { gameTimer->setPaused(true); });
     ASSERT_TRUE(stepError.empty()) << stepError;
-    EXPECT_TRUE(moved);
+    EXPECT_TRUE(firstFrameCorrect);
+    EXPECT_TRUE(secondFrameCorrect);
+    EXPECT_TRUE(movementFrameCorrect);
     EXPECT_EQ(readFile(primary), before);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }

@@ -68,8 +68,12 @@ GAME_TEST(MM6V3PostEntryMapOwnersHeadless, DISABLED_FirstMapRetainedDDMMatchesLi
                     snapshot(pSpriteObjects[slot], &live);
                     const auto *lhs = reinterpret_cast<const std::uint8_t *>(&live);
                     const auto *rhs = reinterpret_cast<const std::uint8_t *>(&retained.spriteObjects[slot]);
-                    if (std::memcmp(lhs, rhs, 24) || std::memcmp(lhs + 26, rhs + 26, 36)) {
-                        resultClass = "sprite-state";
+                    if (std::memcmp(lhs, rhs, 24) || std::memcmp(lhs + 26, rhs + 26, 10)) {
+                        resultClass = "sprite-header";
+                        break;
+                    }
+                    if (std::memcmp(lhs + 36, rhs + 36, 26)) {
+                        resultClass = "sprite-item";
                         break;
                     }
                 }

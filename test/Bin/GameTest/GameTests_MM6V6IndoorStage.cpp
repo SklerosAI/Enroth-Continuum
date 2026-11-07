@@ -2,9 +2,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <exception>
-#include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -38,33 +35,9 @@
 #include "GUI/GUIWindow.h"
 #include "Library/Platform/Application/PlatformApplication.h"
 
+#include "MM6V6IndoorProbeSlot.h"
+
 namespace {
-
-std::filesystem::path disposableProfile() {
-    const char *value = std::getenv("ENROTH_MM6_RESTART_PROFILE");
-    if (!value || !*value)
-        return {};
-    const std::filesystem::path supplied(value);
-    if (!supplied.is_absolute() || !std::filesystem::is_directory(supplied))
-        throw std::runtime_error("MM6 v6 indoor probe needs an absolute disposable profile");
-    const auto root = std::filesystem::canonical(supplied);
-    if (root.parent_path() != std::filesystem::canonical(std::filesystem::temp_directory_path()) ||
-        !root.filename().string().starts_with("mm6-restart-") ||
-        (std::filesystem::status(root).permissions() &
-         (std::filesystem::perms::group_all | std::filesystem::perms::others_all)) !=
-            std::filesystem::perms::none)
-        throw std::runtime_error("MM6 v6 indoor probe needs an owner-only system-temp profile");
-    return root;
-}
-
-std::vector<std::uint8_t> seedBytes(const std::filesystem::path &profile) {
-    const auto path = profile / "saves" / "autosave.ec6";
-    if (!std::filesystem::is_regular_file(path) || std::filesystem::is_symlink(path) ||
-        std::filesystem::file_size(path) > 64 * 1024 * 1024)
-        throw std::runtime_error("MM6 v6 indoor probe needs a bounded v2 seed slot");
-    std::ifstream input(path, std::ios::binary);
-    return {std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
-}
 
 std::string firstIndoorMap(const mm6::LoadedMapSource &maps) {
     const auto names = maps.expectedNames();
@@ -84,15 +57,18 @@ std::string firstIndoorMap(const mm6::LoadedMapSource &maps) {
 // neither production SaveLoad nor gameplay admission is opened.
 GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached) {
     const char *enable = std::getenv("ENROTH_MM6_V6_INDOOR_STAGE_ENABLE");
-    if (!enable || std::string_view(enable) != "strict-indoor-v6-stage")
+    const bool writeCandidate = enable &&
+        std::string_view(enable) == "strict-indoor-v6-write";
+    if (!enable || (!writeCandidate &&
+                    std::string_view(enable) != "strict-indoor-v6-stage"))
         GTEST_SKIP() << "Opt in after creating a disposable MM6 v2 seed";
-    const auto profile = disposableProfile();
+    const auto profile = mm6::testing::indoorProbeProfile();
     if (profile.empty())
         GTEST_SKIP() << "Set an owner-only system-temp MM6 restart profile";
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     ASSERT_EQ(window->nativeHandle(), nullptr);
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
-    const auto originalSeed = seedBytes(profile);
+    const auto originalSeed = mm6::testing::readIndoorProbeSlot(profile, "autosave.ec6");
     auto raw = std::unique_ptr<mm6::RawSaveFields>(
         new mm6::RawSaveFields(mm6::decodeRawSave(originalSeed, GameTitle::MM6)));
     const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
@@ -179,6 +155,7 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
     bool stageFinished = false;
     std::exception_ptr stageError;
     std::unique_ptr<mm6::StagedV6IndoorSaveFields> staged;
+    std::vector<std::uint8_t> candidateBytes;
     game.runGameRoutine([&] {
         try {
             const auto freshNpcs = mm6::loadNpcStaticBaseline(
@@ -206,14 +183,14 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
             changed.front().attributes ^= 1u;
             saved->faceOverrides.maps.push_back(*mm6::captureIndoorFaceOverrides(
                 mapName, preEventFaces, changed, GameTitle::MM6));
-            const auto candidate = mm6::encodeV6IndoorSave(*saved, GameTitle::MM6);
+            candidateBytes = mm6::encodeV6IndoorSave(*saved, GameTitle::MM6);
             const auto readFaces = [&mapName, &preEventFaces](std::string_view requested) {
                 if (requested != mapName)
                     throw std::runtime_error("MM6 v6 probe requested another face source");
                 return preEventFaces;
             };
             staged.reset(new mm6::StagedV6IndoorSaveFields(mm6::stageV6IndoorSave(
-                candidate, freshNpcs, maps.expectedNames(),
+                candidateBytes, freshNpcs, maps.expectedNames(),
                 [&maps](std::string_view name) { return maps.readBase(name); },
                 verifyItem, *pItemTable, pOverlayTable->overlays.size(),
                 pTileTable->tileCount(), readFaces, GameTitle::MM6)));
@@ -231,5 +208,11 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
     ASSERT_TRUE(staged->represented.indoorPlan);
     EXPECT_EQ(staged->saved.faceOverrides.maps.size(), 1u);
     EXPECT_FALSE(staged->canEnterGameLoop());
-    EXPECT_EQ(seedBytes(profile), originalSeed);
+    EXPECT_EQ(mm6::testing::readIndoorProbeSlot(profile, "autosave.ec6"), originalSeed);
+    if (writeCandidate) {
+        mm6::testing::writeIndoorProbeCandidate(profile, candidateBytes);
+        EXPECT_EQ(mm6::testing::readIndoorProbeSlot(
+            profile, mm6::testing::V6_INDOOR_PROBE_SLOT), candidateBytes);
+        EXPECT_EQ(mm6::testing::readIndoorProbeSlot(profile, "autosave.ec6"), originalSeed);
+    }
 }

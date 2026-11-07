@@ -5,9 +5,10 @@ The detached spawned-only SPAW v1 and exact EC6 v3 manifest are **not** a
 durable post-entry actor save design yet. A fresh-process first-map probe
 that attempted to encode the full active actor list initially refused with
 `missing-mm6-resistance`. After exact native resistance restoration, the
-same probe advanced and refused with `identity` (**0/1**); the
-appended-spawn-only capture passed **1/1**. The probe used ramfs user state
-and wrote no profile.
+same probe advanced to `baseline-descriptor-zero-can-act`. The runtime codec
+now preserves that valid zero descriptor exactly and refuses other invalid
+IDs; the full-list probe then passed **1/1**. The appended-spawn-only capture
+also passed **1/1**. Both probes used ramfs user state and wrote no profile.
 
 `encodeMM6OutdoorChangedState()` currently requires live actor count equal
 to the native DDM actor count, so it cannot write a map after encounter
@@ -22,8 +23,14 @@ native actor record and assigns the exact tuple after reconstruction. The
 focused helper test passed **1/1** with differing per-actor values; MM7's
 route is unchanged. The field offsets match the pinned public
 [MM6 editor record layout](https://github.com/angeld29/mm8leveleditor/blob/bf3b8c4a86100635a5fc6ff53fac6e4e0af5cb53/src/org/gamenet/application/mm8leveleditor/data/mm6/Creature.java#L83-L88).
-The remaining `identity` refusal is under source audit; no monster or slot
-check has been relaxed.
+The later zero descriptor case is not an inert slot: engine paths can let it
+act, and some scripted interactions explicitly handle the invalid descriptor.
+The codec admits only the exact `MONSTER_INVALID` sentinel with a valid
+embedded monster identity and a canonical replay. The linked actor suite
+passed **5/5**. These corrections enable a full-list capture candidate;
+they do not solve the DDM writer's omitted gameplay mutations or prove a
+fresh-child reload. See the
+[full active-actor decision](MM6_F4_ACTIVE_ACTOR_OWNER_DECISION.md).
 
 Before any v3 disk or live route, prove an exact baseline actor owner or a
 strict replay-equivalence gate that refuses every unsupported runtime

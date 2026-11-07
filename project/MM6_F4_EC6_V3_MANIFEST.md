@@ -8,7 +8,9 @@ uses this version yet.
 The later [baseline actor audit](MM6_F4_BASELINE_ACTOR_SAVE_AUDIT.md) shows
 that a spawned-only SPAW owner cannot preserve original actors' runtime
 mutations. This exact manifest is a structural candidate, **not** the final
-durable gameplay schema; revisit its actor owner before live promotion.
+durable gameplay schema. The [active-actor decision](MM6_F4_ACTIVE_ACTOR_OWNER_DECISION.md)
+replaces SPAW with full-list ACTR in the proposed next manifest before live
+promotion; the current code has not yet made that revision.
 
 The exact required set has the existing nineteen v2 owners plus `SPAW`,
 `GNPC` and `RNGS`: `PART CHAR QEST EFFT INVR HEAD TIME UIST VISU MAPS RESC

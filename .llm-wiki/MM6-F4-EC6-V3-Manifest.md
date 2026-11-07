@@ -14,7 +14,8 @@ passed 12/12. V1/v2 readers retain their old meanings and v3 rejects them.
 
 The later [baseline actor audit](MM6-F4-Baseline-Actor-Save-Audit.md) shows
 that SPAW-only v3 cannot preserve changed original actors. Treat this as a
-structural candidate and revisit the actor owner before any live promotion.
+structural candidate. The [active-actor decision](MM6-F4-Active-Actor-Owner-Decision.md)
+calls for replacing SPAW with full-list ACTR before any live promotion.
 
 The SPAW owner is validated for canonical wire shape, including zero rows;
 GNPC and RNGS use their bounded version-one codecs, and GNPC must name the

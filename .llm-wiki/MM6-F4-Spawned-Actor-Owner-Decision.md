@@ -4,6 +4,7 @@ up: "[[MM6-F4-V2-Fresh-Child-Owner-Audit]]"
 related: ["[[MM6-F4-Raw-V2-Bootstrap-Respawn]]", "[[MM6-F4-Outdoor-Actor-Append]]"]
 tags: [mm6, f4, save, actor, decision]
 decided_at: 2026-11-07
+superseded_by: "[[MM6-F4-Active-Actor-Owner-Decision]]"
 ---
 
 # MM6 F4 Spawned Actor Owner Decision
@@ -14,6 +15,8 @@ versioned EC6 runtime owner candidate. See the
 The later [baseline actor audit](MM6-F4-Baseline-Actor-Save-Audit.md) narrows
 this decision: spawned-only coverage cannot support durable gameplay saves.
 Revisit the actor scope before a live manifest or loader is admitted.
+The [full active-actor decision](MM6-F4-Active-Actor-Owner-Decision.md)
+supersedes this spawned-only candidate for durable saves.
 
 ## Question
 

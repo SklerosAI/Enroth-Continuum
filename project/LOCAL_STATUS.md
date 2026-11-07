@@ -987,5 +987,11 @@ provenance or an exhaustive refusal gate is required before live use.
 The MM6 outdoor loader now restores each baseline actor's exact six native
 resistance bytes after reconstruction; a focused two-actor override test
 passed **1/1**. The full-list headless capture progressed beyond its
-`missing-mm6-resistance` refusal and now stops at `identity` (**0/1**),
-under source audit. The spawned-only capture remains the proven narrow case.
+`missing-mm6-resistance` refusal and identified a zero descriptor on an
+actor that can still act. The codec now round-trips that exact sentinel
+while rejecting other invalid identities; its linked suite passed **5/5**.
+The full-list first-map capture passed **1/1** without a profile write,
+and an MM7 headless control passed **1/1** after the MM6-only loader change.
+The [active-actor decision](MM6_F4_ACTIVE_ACTOR_OWNER_DECISION.md) calls for
+full-list ACTR replacing SPAW in the candidate manifest. Actor items/buffs,
+live replay and durable save–quit–reload remain open.

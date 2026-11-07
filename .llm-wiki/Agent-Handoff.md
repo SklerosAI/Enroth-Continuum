@@ -36,7 +36,7 @@ A detached [EC6 v3 exact manifest](MM6-F4-EC6-V3-Manifest.md) now requires the n
 
 The [baseline actor save audit](MM6-F4-Baseline-Actor-Save-Audit.md) supersedes any implication that spawned-only SPAW plus v3 is enough for gameplay saves: the DDM writer omits original actor mutations, and the first fresh-process full-list runtime capture refused `missing-mm6-resistance` (0/1). The appended-spawn-only probe remains 1/1. Do not promote v3 to a disk or live route until a full active actor owner or strict baseline replay-equivalence refusal is proved.
 
-Exact per-actor MM6 native resistance bytes are now assigned after DDM actor reconstruction; the focused helper passed 1/1. The full-list headless probe moved from `missing-mm6-resistance` to an `identity` refusal (0/1), now under source audit. The original actor save gap remains; do not relax monster/slot checks to pass the probe.
+Exact per-actor MM6 native resistance bytes are now assigned after DDM actor reconstruction; the focused helper passed 1/1. The full-list headless probe moved from missing resistance to a zero descriptor on an actor that can act; the codec now preserves only this exact sentinel with a valid embedded identity and canonical replay. Its linked suite passed 5/5, the full-list first-map capture passed 1/1 and an MM7 headless control passed 1/1. The [active-actor owner decision](MM6-F4-Active-Actor-Owner-Decision.md) now calls for full-list ACTR replacing spawned-only SPAW before v3 live promotion. Actor items/buffs and fresh-child replay remain open.
 
 ## Read first
 

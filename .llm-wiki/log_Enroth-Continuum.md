@@ -1862,3 +1862,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added separate v1 and v2 native `.ec6` write, list, preflight and recovery APIs. Cross-schema overwrites reject in both directions, with no implicit migration.
 - The linked atomic-file suite passed 7/7, including v2 backup recovery and four injected write faults. Structural validity does not establish campaign playability; normal MM6 SaveLoad remains guarded.
+
+## [2026-11-06] integrate | MM6 inventory and event owners
+- by: T-Burton-ND via codex
+- Integrated detached raw inventory projection across four MM6 party members and a rollback scope for the first-map persistent map/decor event arrays. The linked disk, inventory and event suite passed 13/13.
+- Reconciled the child-process handoff with the new v2 disk boundary and recorded a preferred one-campaign-per-child F4b route. Complete save staging, safe writes and first-frame checks remain required before Atlas Play.

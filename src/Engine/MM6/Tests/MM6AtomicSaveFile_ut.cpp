@@ -16,6 +16,7 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6AtomicSaveFile.h"
+#include "Engine/MM6/MM6V5FirstMapSaveWriter.h"
 #include "Engine/MM6/MM6ActiveActorSection.h"
 #include "Engine/MM6/MM6KnownSaveFields.h"
 #include "Engine/MM6/MM6RawSaveFields.h"
@@ -826,4 +827,57 @@ UNIT_TEST(MM6AtomicSaveFile, V5LaterOutdoorSlotIsSeparateAndRejectsForeignSlots)
     EXPECT_EQ(read(profile.root() / "saves/autosave.ec6"), seed);
     EXPECT_EQ(read(profile.root() / "saves/candidate-v4.ec6"), priorV4);
 }
+
+UNIT_TEST(MM6AtomicSaveFile, FirstMapWriterClassifiesAtomicOutcomes) {
+    TestProfile profile("mm6-restart-");
+    constexpr std::string_view slotName = "candidate-v5-after-action.ec6";
+    const auto slot = profile.root() / "saves" / slotName;
+    const auto first = sampleFirstMapV5(111);
+    const auto next = sampleFirstMapV5(112);
+    const auto uncertain = sampleFirstMapV5(113);
+    const auto validate = [](std::span<const std::uint8_t> bytes) {
+        (void) mm6::decodeV5Save(bytes, GameTitle::MM6);
+    };
+    using Outcome = mm6::V5FirstMapSaveOutcome;
+
+    EXPECT_EQ(mm6::detail::writeV5FirstMapCandidateForTest(
+        profile.root(), slotName, first, GameTitle::MM6, validate, {}),
+        Outcome::Committed);
+    EXPECT_EQ(read(slot), first);
+    const auto backup = slot.string() + ".bak";
+    EXPECT_FALSE(std::filesystem::exists(backup));
+
+    EXPECT_EQ(mm6::detail::writeV5FirstMapCandidateForTest(
+        profile.root(), slotName, next, GameTitle::MM6, validate,
+        [](mm6::detail::AtomicSaveStep step) {
+            if (step == mm6::detail::AtomicSaveStep::BeforeTempWrite)
+                throw std::runtime_error("injected precommit refusal");
+        }), Outcome::NoNewPrimaryNeedsPreflight);
+    EXPECT_EQ(read(slot), first);
+    EXPECT_FALSE(std::filesystem::exists(backup));
+
+    EXPECT_EQ(mm6::detail::writeV5FirstMapCandidateForTest(
+        profile.root(), slotName, next, GameTitle::MM6, validate, {}),
+        Outcome::Committed);
+    EXPECT_EQ(read(slot), next);
+    EXPECT_EQ(read(backup), first);
+
+    EXPECT_EQ(mm6::detail::writeV5FirstMapCandidateForTest(
+        profile.root(), slotName, uncertain, GameTitle::MM6, validate,
+        [](mm6::detail::AtomicSaveStep step) {
+            if (step == mm6::detail::AtomicSaveStep::AfterPrimaryReplaceBeforeDirectorySync)
+                throw std::runtime_error("injected post-rename uncertainty");
+        }), Outcome::IndeterminateNeedsPreflight);
+    EXPECT_EQ(read(slot), uncertain);
+    EXPECT_EQ(read(backup), next);
+    EXPECT_THROW((void) mm6::detail::writeV5FirstMapCandidateForTest(
+        profile.root(), slotName, next, GameTitle::MM7, validate, {}),
+        std::exception);
+    EXPECT_THROW((void) mm6::detail::writeV5FirstMapCandidateForTest(
+        profile.root(), slotName, sampleV5(114), GameTitle::MM6,
+        validate, {}), std::exception);
+    EXPECT_EQ(read(slot), uncertain);
+    EXPECT_EQ(read(backup), next);
+}
+
 #endif

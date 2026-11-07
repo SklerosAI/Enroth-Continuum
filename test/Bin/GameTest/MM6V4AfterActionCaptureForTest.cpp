@@ -20,6 +20,7 @@
 #include "Engine/MM6/MM6ActiveActorOutdoorDeltaCapture.h"
 #include "Engine/MM6/MM6ActiveActorSection.h"
 #include "Engine/MM6/MM6AtomicSaveFile.h"
+#include "Engine/MM6/MM6V5FirstMapSaveWriter.h"
 #include "Engine/MM6/MM6BuffSaveFields.h"
 #include "Engine/MM6/MM6CoreSaveRuntime.h"
 #include "Engine/MM6/MM6DurableSaveFields.h"
@@ -42,7 +43,6 @@
 #include "Engine/MM6/MM6V4OutdoorDecorationReplay.h"
 #include "Engine/MM6/MM6V4SaveFields.h"
 #include "Engine/MM6/MM6V5FullSessionPreflight.h"
-#include "Engine/MM6/MM6V5LiveSaveCapture.h"
 #include "Engine/MM6/MM6V5SaveFields.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Decoration.h"
@@ -165,13 +165,13 @@ static void writeAfterActionCandidateForTest(
     if (afterReloadedInput)
         requireSecondMovement(previousBefore, fields.raw.core.party);
     if (v5) {
-        const auto bytes = captureV5FirstMapLiveSession(sourceCandidate);
-        const auto validate = [](std::span<const std::uint8_t> proposed) {
-            requireV5FirstMapLiveSessionAgreement(proposed);
-        };
         const std::string_view slot = afterReloadedInput ?
             "candidate-v5-after-reload-input.ec6" : "candidate-v5-after-action.ec6";
-        writeAtomicV5SaveFileForTest(profile, slot, bytes, validate);
+        const auto attempt = writeV5FirstMapLiveSaveForTest(
+            profile, slot, sourceCandidate, GameTitle::MM6);
+        if (attempt.outcome != V5FirstMapSaveOutcome::Committed)
+            throw std::runtime_error("MM6 v5 first-map save is not durably confirmed");
+        const auto &bytes = attempt.candidate;
         if (readFile(profile / "saves" / slot) != bytes ||
             readFile(profile / "saves/candidate-v4.ec6") != sourceBefore ||
             readFile(profile / "saves/autosave.ec6") != seedBefore ||

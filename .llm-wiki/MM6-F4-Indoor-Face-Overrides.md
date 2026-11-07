@@ -62,7 +62,10 @@ may be reused, while appended sprites use canonical synthetic images and
 exact runtime overlays. A v6-only item scalar overlay retains fields omitted
 by inherited snapshots without changing v5 outdoor SPRT or raw MM6 item
 provenance. Focused linked v5 sprite/v6 indoor checks passed **12/12**, and
-the disposable seed/writer/reader chain passed **1/1 each**. Live ISRT
-publication, actor runtime ownership and gameplay admission remain gated.
+the disposable seed/writer/reader chain passed **1/1 each**. An MM6-only
+one-shot pre-event scope now publishes the full saved sprite list; the fresh
+child recaptures exact ISRT after `OnMapReload`, before input. Focused v6
+checks passed **10/10**, and the three-process chain passed **1/1 each**
+again. Actor runtime ownership and gameplay admission remain gated.
 
 See also: [MM6 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md), [MM6 F4 Offline Seams](MM6-F4-Offline-Seams.md), and [implementation packet](../project/MM6_F4_INDOOR_FACE_OVERRIDE_SECTION.md).

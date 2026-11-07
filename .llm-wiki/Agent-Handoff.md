@@ -232,7 +232,8 @@ the [current status](../project/LOCAL_STATUS.md) for the exact evidence level.
 The indoor v6 manifest now also requires full-list ISRT sprite runtime
 ownership, anchored to ISCR native slots while preserving source-free reuse
 and appended sprites. Detached writer/fresh-child reader and focused units
-pass; live pre-event ISRT publication and actor runtime owners remain open.
+pass; an MM6-only pre-event hook now publishes ISRT and checks exact
+post-event recapture. Actor runtime owners remain open.
 
 Continue the [F4 build graph](../project/MM6_F4_BUILD_GRAPH.md) from the [offline seam register](MM6-F4-Offline-Seams.md): complete active opcode/variable effects, spell/item/monster and class rules, title-specific houses/media, live 67-map world capture and remaining save fields. The partial `.ec6` assembler currently requires eighteen sections with detached world/timer/overlay staging, CHST and title-local shop/guild refresh clocks; live outdoor stale-object identity, MM6 chest generation and changed-grid save/reload, active turn/rest state, shop stock/ban/bounty state, generated NPCs, HIRE/RESC identity, raw bonus-byte MM6 semantics, beacon map/image state and the final all-owner SaveLoad transaction remain open. Use the [save transaction checklist](MM6-F4-Save-Transaction-Checklist.md) for the commit order. Retained map base/delta validation already passes offline. Keep MM6 book learning, scroll casting, guild stock, travel payment/departure and the game launch gated where rules are unproved. Run native and private checks, update the public packet and ignored private evidence, then consider graphical F5 only after the offline campaign gate. Protect MM7 and reserved MM8; do not enable MM6/MM8 Play or transfer based on the staged target or a parser pass.
 

@@ -1206,5 +1206,8 @@ runtime ownership, taking the required count to 27 without IFOV or 28 with
 IFOV. It preserves exact ISCR native prefix records, source-free slot reuse,
 appended runtime sprites and MM6 item provenance with a v6-only scalar
 overlay. Focused v5 sprite/v6 indoor units passed **12/12** and the
-disposable seed/writer/fresh-child reader passed **1/1 each**. Live ISRT
-publication and actor owners remain open; gameplay admission stays false.
+disposable seed/writer/fresh-child reader passed **1/1 each**. A later
+MM6-only pre-event scope published the full saved sprite list and recaptured
+exact ISRT after map events; focused v6 units passed **10/10** and the same
+three-process chain passed **1/1 each**. Actor owners remain open;
+gameplay admission stays false.

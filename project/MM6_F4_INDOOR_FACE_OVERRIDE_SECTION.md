@@ -88,7 +88,12 @@ including a non-potion item's potion-power field; the original raw 28-byte
 item provenance remains separate. The v5 outdoor SPRT wire format is
 unchanged. Focused v5 sprite/v6 indoor checks passed **12/12**, and the
 disposable v2 seed, v6 writer and fresh-child reader passed **1/1 each**.
-Live pre-event ISRT publication and post-world equality, actor runtime
-ownership, first input and production SaveLoad remain open.
+A new MM6-only one-shot hook now publishes the exact saved ISRT sprite list
+after indoor world preparation and before `OnMapReload`. The independent
+fresh-child reader requires the hook to run and recaptures equal ISRT bytes
+after map events, before any input. Focused v6 tests passed **10/10**, and
+the disposable seed/writer/reader chain passed **1/1 each** again. The
+remaining indoor actor runtime owner, first input, production SaveLoad and
+graphical acceptance remain open.
 
 See [indoor face persistence gate](MM6_F4_INDOOR_FACE_PERSISTENCE_GATE.md), [known save sections](MM6_EC6_MAP_FIELDS_F4.md), and [atomic save](MM6_ATOMIC_SAVE_F4.md).

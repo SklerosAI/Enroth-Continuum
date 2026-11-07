@@ -38,7 +38,7 @@ GAME_TEST(MM6V5OutdoorSourceHeadless, AllShippedOutdoorPairsDecode) {
             ASSERT_NO_THROW(deserializeMM6Outdoor(maps.readBase(name), base.get()));
             MM6OutdoorDeltaSnapshot delta;
             ASSERT_NO_THROW(delta = decodeMM6OutdoorDelta(
-                mm6::decodeMM6ArchiveEntry(maps.readDefaultDelta(deltaName))));
+                decodeMM6ArchiveEntry(maps.readDefaultDelta(deltaName))));
             EXPECT_EQ(base->decorations.size(), base->decorationNames.size());
             EXPECT_EQ(delta.chests.size(), 20);
             ++admitted;

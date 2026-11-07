@@ -10,3 +10,6 @@ text eol=lf
 *.vcxproj text eol=crlf
 *.vcxproj.filters text eol=crlf
 *.vcxproj.user text eol=crlf
+
+# Preserve the pinned LuaJIT source blobs, including upstream CRLF scripts.
+thirdparty/luajit/** -text

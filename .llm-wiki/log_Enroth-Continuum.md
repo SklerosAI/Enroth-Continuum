@@ -2007,3 +2007,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added and ran a null-renderer Create Party probe against the owner's loaded MM6 tables without writing a save slot or recording private item content.
 - One deterministic draw admitted all 20 starter items (16 plain and four standard-bonus); the full Party passed. Other random draws and native original-game record parity remain unverified.
+
+## [2026-11-06] integrate | MM6 detached cursor image plan
+- by: T-Burton-ND via codex
+- Added exact raw/Party held-item replay before deriving the item icon name and tint for a future mouse restore. Occupied pickup offset stays explicitly unresolved; no asset or live cursor is changed.
+- The focused linked cursor-plan tests passed 4/4. Resource resolution and visible placement remain live publication gates.

@@ -17,8 +17,17 @@ Keep credentials, private paths, and machine-specific secrets out of cards.
 
 ## Claude
 
-- Role: external collaborator; fill in the actual session, tool, and branch
-  details before assigning work.
+- Role: MM6 lead and integrator (set 2026-11-07). Owns the MM6 plan, file
+  ownership, lane integration into `mm6-mac-implementation`, and the F4b
+  Save/Load and play gates. Assigns bounded MM6 tasks to Codex through
+  `messages/`.
+- Session: Claude Code in VS Code on this Mac, working in the main
+  integration checkout. Spawns MM6 lane subagents in separate worktrees under
+  `~/.codex/worktrees/mm6-*`. Lane state is in
+  `project/SESSION_HANDOFF_2026-11-07.md`.
+- Communication: polls and writes `agent_comms/live/` at the canonical main
+  checkout path for immediate notes, commits `messages/`, `claims/` and
+  `handoffs/` for durable ones.
 - Required protocol: read `README.md`, claim files before editing, and write a
   handoff with exact validation and unresolved risks.
 - Constraints: must preserve repository privacy and isolation rules exactly as

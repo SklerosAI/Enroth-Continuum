@@ -119,16 +119,18 @@ fix them in a dedicated MM7 audit branch once a worktree is free.
   (seeded with the previous settings and all earlier saves). The old helper,
   `~/.openenroth`, `Application Support/OpenEnroth`, `Profiles/MM7` and the
   nightly DMG were deleted.
-- Known defect in that install: it links XQuartz `libGL`. In progress:
-  `build-release` is reconfigured with the SDK OpenGL framework for GL and GLU
-  and with ccache. Rebuild with `ENROTH_BUILD_DIR=build-release enroth-build MM7`,
-  assemble with `launcher/build.sh --mm7-app build-release/src/Bin/OpenEnroth/MM7.app
-  --output build-release/Atlas/"Enroth Continuum.app"`, check `otool -L` shows
-  no `/opt/X11`, then replace the installed app.
-- The MM7 house pause fix landed as `c11c2c1f9` (with `Prs.Pr2956`). The
-  pre-fix binary passed `Issues.Issue840`, which does not tape the pause. The
-  installed helper predates the fix, so the next Release rebuild carries both
-  the pause fix and the OpenGL framework link.
+- The first Release install linked XQuartz `libGL`. Codex rebuilt the helper
+  against Apple's OpenGL framework and reinstalled it at 15:36. `otool -L`
+  shows no `/opt/X11` link. Codex also staged a network-denied, source-owned
+  Atlas outside the repo at
+  `~/enroth-tools/builds/mm7-integration-20261107/`, not installed, pending a
+  graphical play and save/reload check (see `agent_comms/live/` notes and
+  `agent_comms/handoffs/codex-mm7-*`).
+- The MM7 house pause fix landed as `c11c2c1f9` (with `Prs.Pr2956`) at 15:11,
+  before the 15:36 reinstall. The pre-fix binary passed `Issues.Issue840`,
+  which does not tape the pause.
+- Codex also fixed two A2c findings: the spellbook Grandmaster row and the
+  zero-base AC tooltip (`f70627f9c`, `f3f08539c`).
 - Remaining MM7 audit fixes: see the ranked lists in
   `MM7_AUDIT_RESULTS_2026-11-07.md` (Break Weapon inversion, Divine
   Intervention recovery, lich immunity, Divine Restoration target, archer
@@ -153,6 +155,6 @@ integrated. Their ignored private files are archived under
    tests it added, `check_style`, commit in the lane with a full message,
    rebase onto `mm6-mac-implementation`, merge, rerun the first-map gate.
 3. Then E, A, B, I, H, S in that order, same procedure.
-4. Rebuild the Release `MM7.app` from the integration tree after the lanes
-   that touch shared code have merged, check `otool -L`, reinstall the Atlas.
+4. After the lanes that touch shared code merge, coordinate the next MM7
+   helper rebuild with Codex, which owns the MM7 Atlas build and cutover.
 5. Keep this file and the MM7 audit results current as work lands.

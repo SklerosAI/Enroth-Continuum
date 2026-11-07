@@ -38,6 +38,20 @@ std::string_view refusalClass(std::string_view message) {
     return "other-refusal";
 }
 
+std::string_view identityClass(std::span<const Actor> actors, size_t baselineCount) {
+    for (size_t slot = 0; slot < actors.size(); ++slot) {
+        const Actor &actor = actors[slot];
+        const bool baseline = slot < baselineCount;
+        if (actor.id != slot)
+            return baseline ? "baseline-slot" : "spawned-slot";
+        if (actor.monsterInfo.id < MONSTER_FIRST || actor.monsterInfo.id > MONSTER_LAST)
+            return baseline ? "baseline-embedded-monster" : "spawned-embedded-monster";
+        if (actor.monsterId < MONSTER_FIRST || actor.monsterId > MONSTER_LAST)
+            return baseline ? "baseline-descriptor-monster" : "spawned-descriptor-monster";
+    }
+    return "identity";
+}
+
 } // namespace
 
 namespace {
@@ -93,6 +107,8 @@ void exerciseFirstMapActorCapture(EngineController &game, bool allActors) {
                             return !actor.monsterInfo.mm6Resistances;
                         });
                     resultClass = lacksMM6Resistance ? "missing-mm6-resistance" : refusalClass(error.what());
+                    if (allActors && resultClass == "identity")
+                        resultClass = identityClass(live, sidecar.actorCount);
                 }
             }
         } catch (const std::exception &) {

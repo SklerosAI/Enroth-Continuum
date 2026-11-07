@@ -7,6 +7,24 @@
 
 namespace mm6 {
 
+size_t requirePreMapGeneratedNpcCapacity(const std::deque<Actor> &actors,
+                                         const NPCStats &npcs, GameTitle title) {
+    if (title != GameTitle::MM6)
+        throw std::runtime_error("MM6 generated NPC preflight requires MM6 title");
+    size_t needed = 0;
+    for (const Actor &actor : actors) {
+        const MonsterId monster = actor.monsterInfo.id;
+        if (monster < MONSTER_FIRST || monster > MONSTER_LAST)
+            throw std::runtime_error("MM6 generated NPC preflight has invalid monster");
+        if (monsterTierForMonsterId(monster) == MONSTER_TIER_A ||
+            (actor.npcId && actor.npcId < 5000))
+            continue;
+        if (isPeasant(monster) && ++needed > npcs.pAdditionalNPC.size())
+            throw std::runtime_error("MM6 generated NPC pool would overflow");
+    }
+    return needed;
+}
+
 size_t requirePostMapGeneratedNpcLinks(std::span<const Actor> actors,
                                        const NPCStats &npcs, GameTitle title) {
     if (title != GameTitle::MM6 || npcs.uNewlNPCBufPos < 0 ||

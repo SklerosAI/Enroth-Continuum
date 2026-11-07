@@ -1,5 +1,6 @@
 #include <memory>
 #include <stdexcept>
+#include <deque>
 #include <vector>
 
 #include "Testing/Unit/UnitTest.h"
@@ -28,6 +29,26 @@ void generatedRow(NPCStats *npcs, int index, MonsterId monster) {
 }
 
 } // namespace
+
+UNIT_TEST(MM6PostMapGeneratedNpcLinks, PreMapPoolCapacityRejectsBeforeFirstWrite) {
+    constexpr MonsterId peasantB = MONSTER_PEASANT_DWARF_FEMALE_A_B;
+    auto npcs = std::make_unique<NPCStats>();
+    npcs->uNewlNPCBufPos = 7;
+    npcs->pAdditionalNPC[0].name = "Prior";
+    std::deque<Actor> actors;
+    for (int index = 0; index < 100; ++index)
+        actors.push_back(actor(index, peasantB, 0));
+    EXPECT_EQ(mm6::requirePreMapGeneratedNpcCapacity(actors, *npcs, GameTitle::MM6), 100u);
+    actors.push_back(actor(100, peasantB, 0));
+    EXPECT_THROW((void) mm6::requirePreMapGeneratedNpcCapacity(
+        actors, *npcs, GameTitle::MM6), std::exception);
+    EXPECT_EQ(npcs->uNewlNPCBufPos, 7);
+    EXPECT_EQ(npcs->pAdditionalNPC[0].name, "Prior");
+    actors.back().npcId = 12;
+    EXPECT_EQ(mm6::requirePreMapGeneratedNpcCapacity(actors, *npcs, GameTitle::MM6), 100u);
+    EXPECT_THROW((void) mm6::requirePreMapGeneratedNpcCapacity(
+        actors, *npcs, GameTitle::MM7), std::exception);
+}
 
 UNIT_TEST(MM6PostMapGeneratedNpcLinks, AcceptsContiguousGeneratedActorsAndFixedRows) {
     constexpr MonsterId peasantB = MONSTER_PEASANT_DWARF_FEMALE_A_B;

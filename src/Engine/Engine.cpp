@@ -75,6 +75,7 @@
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/MM6/MM6PostMapGeneratedNpcLinks.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
@@ -1037,6 +1038,8 @@ void Engine::_461103_load_level_sub() {
     pGameLoadingUI_ProgressBar->Progress();
     pParty->arenaState = ARENA_STATE_INITIAL;
     pParty->arenaLevel = ARENA_LEVEL_INVALID;
+    if (gameTitle() == GameTitle::MM6)
+        mm6::requirePreMapGeneratedNpcCapacity(pActors, *pNPCStats, gameTitle());
     pNPCStats->uNewlNPCBufPos = 0;
 
     for (Actor &actor : pActors) {

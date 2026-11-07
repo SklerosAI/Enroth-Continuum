@@ -59,6 +59,7 @@ target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6PortraitAlert.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6PortraitSelection.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6DrawGUI.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6OffscreenFrame.cpp)
+target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM7OffscreenFrame.cpp)
 target_link_libraries(OpenEnroth_GameTest PUBLIC application testing_game library_cli library_platform_main library_stack_trace
         engine_mm6_save_runtime engine_mm6_spawn_actor_section)
 

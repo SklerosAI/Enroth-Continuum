@@ -34,7 +34,7 @@ GameTestOptions GameTestOptions::parse(int argc, char **argv) {
         "Run in headless mode.")->group(otherOptions);
     app->add_flag(
         "--offscreen-gl", result.offscreenCapture,
-        "Run the isolated MM6 frame-capture test using a hidden SDL OpenGL window.")->group(otherOptions);
+        "Run an isolated MM6 or MM7 frame-capture test using a hidden SDL OpenGL window.")->group(otherOptions);
     app->add_option(
         "--speed", result.speed,
         "Playback speed, default is infinite, use '1.0' for realtime playback.")->option_text("SPEED");
@@ -71,8 +71,16 @@ GameTestOptions GameTestOptions::parse(int argc, char **argv) {
             throw Exception("MM6 game tests require an explicit --rules-path.");
     } else if (game != "mm7") {
         throw Exception("Unsupported game '{}'; choose mm6 or mm7.", game);
-    } else if (!result.rulesPath.isEmpty() || result.offscreenCapture) {
-        throw Exception("--rules-path and --offscreen-gl are only supported for MM6 game tests.");
+    } else if (!result.rulesPath.isEmpty()) {
+        throw Exception("--rules-path is only supported for MM6 game tests.");
+    } else if (result.offscreenCapture) {
+        if (result.headless)
+            throw Exception("Choose either --headless or --offscreen-gl.");
+#if !defined(__APPLE__)
+        throw Exception("MM7 --offscreen-gl is currently supported only on macOS.");
+#endif
+        if (result.dataPath.isEmpty() && !result.helpPrinted && !result.listRequested)
+            throw Exception("MM7 offscreen game tests require an explicit --data-path.");
     }
 
     if (!result.listRequested && !result.helpPrinted && !testPath)

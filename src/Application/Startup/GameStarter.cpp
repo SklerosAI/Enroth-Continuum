@@ -156,8 +156,9 @@ void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUse
         _config->graphics.Lightness.setValue(1.0f);
     }
     if (_options.offscreenCapture) {
-        if (_options.headless || _options.gameTitle != GameTitle::MM6)
-            throw Exception("Offscreen capture requires a non-headless MM6 test");
+        if (_options.headless || (_options.gameTitle != GameTitle::MM6 &&
+                                  _options.gameTitle != GameTitle::MM7))
+            throw Exception("Offscreen capture requires a non-headless MM6 or MM7 test");
         _config->graphics.Renderer.setValue(RENDERER_OPENGL);
         _config->window.Mode.setValue(WINDOW_MODE_WINDOWED);
         _config->window.Width.setValue(640);

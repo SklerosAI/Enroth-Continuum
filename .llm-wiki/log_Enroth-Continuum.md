@@ -2361,3 +2361,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - An accepted original-executable trace resolved the offer caller's three low Party flag bits as water damage, airborne and standing on water; confirmation separately refuses nonzero flying state. Added pure MM6-only predicates without wiring live travel.
 - Four eligibility, four route and three autosave-intercept focused checks passed 11/11 on the integration build. Full confirmation, corner acceptance, durable autosave and MM6 game-loop travel remain gated.
+
+## [2026-11-07] verify | MM6 indoor actor replay boundary
+- by: T-Burton-ND via codex
+- Added required v6 IART actor runtime state bound to native IACR identity, retaining runtime names while leaving v5 outdoor ARTR unchanged. Focused v5 actor/v6 indoor checks passed 14/14; disposable seed, first-map baseline and indoor v6 writer passed 1/1 each.
+- The fresh-child reader remains closed. Pre-event IART publication and generated-NPC joins pass, but normal indoor map events generate links absent from the pre-event candidate, so its strict post-world join fails. A genuine post-world candidate and replay policy are needed before input or production SaveLoad.

@@ -2366,3 +2366,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added required v6 IART actor runtime state bound to native IACR identity, retaining runtime names while leaving v5 outdoor ARTR unchanged. Focused v5 actor/v6 indoor checks passed 14/14; disposable seed, first-map baseline and indoor v6 writer passed 1/1 each.
 - The fresh-child reader remains closed. Pre-event IART publication and generated-NPC joins pass, but normal indoor map events generate links absent from the pre-event candidate, so its strict post-world join fails. A genuine post-world candidate and replay policy are needed before input or production SaveLoad.
+
+## [2026-11-07] implement | Fifteen owned MM7 source inputs
+- by: T-Burton-ND via codex
+- Added the exact pinned Boost.Lambda2 source: all 35 original blobs and modes matched its former gitlink. Its pinned documentation names BSL-1.0; an unmodified full license from the official Boost URL was added as separately identified metadata. Standalone arm64 checks and the integration cached-input MM7 target build passed.
+- Eight gitlinks, nested fetches and prebuilt dependency recipes still block a clean offline clone. The installed helper and private saves were untouched.

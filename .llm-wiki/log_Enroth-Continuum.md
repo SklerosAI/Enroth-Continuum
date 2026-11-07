@@ -1743,3 +1743,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a title-local `OnEntry` policy to the detached MM6 shop/guild refresh boundary, preserving the default strict deadline policy, two-bank shop order, shared row/deadline and copy-stage rollback.
 - The intended mod flag is `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY=1`; repeated-entry, title isolation and generator-failure tests passed arm64 C++23 syntax checking. Linked integration and the live MM6 house hook remain open, so the mod does not yet change MM6 gameplay.
+
+## [2026-11-06] implement | Optional MM7 vendor refresh on entry
+- by: T-Burton-ND via codex
+- Added an MM7-only, exact opt-in environment rule to regenerate both shop tiers or magic-guild books when a new vendor window opens. A per-window guard and normal future deadline prevent submenu rerolls; default schedule and MM6 preview stay unchanged.
+- Focused visit/title policy tests and touched source translations passed arm64 syntax checking in an isolated worktree. Linked and live-entry checks remain pending integration; the Atlas supplies the launch flag only for private-mod mode.

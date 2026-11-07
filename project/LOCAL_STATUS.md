@@ -906,3 +906,14 @@ controls passed **1/1** each. A separate v2
 admission guard identifies nonzero saved Armageddon timers that world
 preparation would clear; the linked child-publication suite passed **3/3**.
 Neither check opens MM6 SaveLoad or first-frame input.
+
+The empty-cursor post-world check now validates the actual MM6 mouse after
+world preparation in native-arrow or custom-bitmap mode; the latter decodes
+nonempty CPU pixels. The focused cursor suite passed **5/5**, the disposable
+v1 writer and Main Menu QuickLoad abort processes passed **1/1** each, and an
+MM7 headless control passed **1/1**. Occupied item offset, GPU presentation
+and complete v2 publication remain open. A read-only
+[menu preflight list](MM6_F4_MENU_SLOT_PREFLIGHT.md) also passed its linked
+atomic-file suite **8/8**, selecting only semantically accepted native
+primary/backup candidates without disk mutation; the visible MM6 load menu
+stays empty until a complete gameplay validator and loader exist.

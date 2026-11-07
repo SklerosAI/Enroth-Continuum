@@ -19,4 +19,11 @@ The later [cursor/shop handoff](MM6-F4-Raw-Cursor-Shop-Handoff.md) checks this o
 
 The [detached cursor image plan](../project/MM6_F4_RAW_CURSOR_IMAGE_PLAN.md) derives a template icon name and broken/identified tint only after exact raw/Party held-item replay. An occupied pickup offset is unresolved because EC6 v2 does not store it. The plan neither resolves an asset nor changes the live mouse cursor; a full-session commit still needs to choose and verify that visible placement.
 
+For an empty cursor only, a post-world check now compares the plan with the
+actual mouse state after world preparation. It accepts either the native arrow
+or a decoded nonempty custom `micon1` bitmap, with zero pickup offset and no
+stale Party item payload. Focused checks pass 5/5 and a disposable v1 Main
+Menu QuickLoad control passes 1/1. Occupied cursor and GPU presentation remain
+open; the v2 child loader does not yet call this gate.
+
 See also: [Raw Held Item Section](MM6-F4-Raw-Held-Item-Section.md), [Raw Item Transfer Semantics](MM6-F4-Raw-Item-Transfer-Semantics.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

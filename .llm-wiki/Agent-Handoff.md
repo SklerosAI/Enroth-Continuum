@@ -18,6 +18,8 @@ The one-shot MM6-only test hook now exists directly after `DoPrepareWorld(true)`
 
 The refreshed v1 abort control also checked idle pending actions at the hook (fresh writer and abort processes 1/1 each). A [generated NPC link gate](MM6-F4-Post-Map-Generated-NPC-Links.md) passes 4/4 synthetic checks, including a pre-write 100-row MM6 loader bound; loaded MM6 first-map and MM7 headless controls pass 1/1 each. V2 still does not save generated identities/RNG. The child-publication suite passes 3/3 and now explicitly blocks a nonzero saved Armageddon timer that `DoPrepareWorld` would clear. The BEAC/IFOV post-world audit found no safe final-face shortcut because `OnMapReload` runs before that hook without a verified pre-event face baseline. These checks still do not arm v2 publication.
 
+An [empty-cursor post-world check](MM6-F4-Raw-Cursor-Owner.md) now accepts the actual initialized native arrow or decoded custom `micon1` bitmap after world preparation, and rejects stale Party item payload and pickup offset. The focused suite passed 5/5 and a disposable v1 Main Menu QuickLoad abort control passed 1/1; occupied cursor and GPU presentation remain open. A separate [read-only menu preflight list](MM6-F4-Menu-Slot-Preflight.md) passed its linked atomic-file suite 8/8, but the visible MM6 menu stays empty until the complete v2 gameplay validator and production load route exist.
+
 ## Read first
 
 1. Run `git status --short --branch`, `git worktree list`, and `git log -1 --oneline` in the checkout you intend to use. The branch and worktree descriptions below may drift.

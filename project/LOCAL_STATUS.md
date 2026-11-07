@@ -1411,3 +1411,17 @@ The ordinary unarmed seven-child v5 chain still passed **7/7**, and MM7
 control passed **1/1** after the shared game-loop change. This is not a
 rollback: already published globals may remain unsafe. Normal MM6 load/UI
 remains closed until a production recovery transaction is proved.
+
+An MM6-only native first-map slot policy now stages an exact startup-supplied
+profile root and numbered `saveNNN.ec6` identity, refusing foreign versions,
+wrong maps, collisions and symlinks before test-only atomic writing. Focused
+outcome/collision units passed **2/2**, with MM7 control **1/1**. The paused
+live candidate is not yet connected to a numbered production slot or Save UI.
+
+The Engine now owns the detached first-map v5 load graph and its exact
+MM6/first-map/disposable-slot identity through a source-bound chest handoff.
+The attempt advances from detached to published to chest-applied only after
+native map and saved chest owners agree. The fresh seven-child replay chain
+passed **7/7**, both full-retry fault children **1/1**, and MM7 control
+**1/1**. Event, actor, NPC, RNG and post-world lifecycle still use test-only
+hooks; this is not normal MM6 SaveLoad or production profile admission.

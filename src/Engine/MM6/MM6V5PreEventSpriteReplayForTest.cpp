@@ -8,6 +8,7 @@
 #include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
 
 #include "MM6OutdoorWire.h"
+#include "MM6V5OutdoorMapIdentity.h"
 
 namespace mm6::testing {
 
@@ -15,8 +16,8 @@ ScopedV5PreEventSpriteReplayForTest::ScopedV5PreEventSpriteReplayForTest(
     GameTitle title, SpriteRuntimeSaveFields fields)
     : _fields(std::move(fields)) {
     if (title != GameTitle::MM6 || detail::activeV5SpriteReplayScope() ||
-        _fields.mapName != "oute3.odm" || _fields.records.empty())
-        throw std::runtime_error("MM6 v5 sprite replay needs one staged first-map owner");
+        !isMM6OutdoorMapName(_fields.mapName) || _fields.records.empty())
+        throw std::runtime_error("MM6 v5 sprite replay needs one staged outdoor owner");
     detail::activeV5SpriteReplayScope() = this;
 }
 

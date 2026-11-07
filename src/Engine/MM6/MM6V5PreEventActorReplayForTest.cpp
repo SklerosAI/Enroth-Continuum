@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "MM6ActiveActorSection.h"
+#include "MM6V5OutdoorMapIdentity.h"
 
 namespace mm6::testing {
 
@@ -13,8 +14,8 @@ ScopedV5PreEventActorReplayForTest::ScopedV5PreEventActorReplayForTest(
     std::vector<std::uint8_t> baselineActr)
     : _fields(std::move(fields)), _baselineActr(std::move(baselineActr)) {
     if (title != GameTitle::MM6 || detail::activeV5ActorReplayScope() ||
-        _fields.mapName != "oute3.odm" || _fields.actors.empty())
-        throw std::runtime_error("MM6 v5 actor replay needs one staged first-map owner");
+        !isMM6OutdoorMapName(_fields.mapName) || _fields.actors.empty())
+        throw std::runtime_error("MM6 v5 actor replay needs one staged outdoor owner");
     requireActorRuntimeBaselineAgreement(
         _fields, _fields.mapName, _baselineActr, title);
     detail::activeV5ActorReplayScope() = this;

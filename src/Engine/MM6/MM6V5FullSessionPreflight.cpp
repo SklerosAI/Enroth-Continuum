@@ -7,6 +7,7 @@
 
 #include "MM6V4SaveFields.h"
 #include "MM6V5SaveFields.h"
+#include "MM6V5OutdoorMapIdentity.h"
 
 namespace mm6 {
 
@@ -37,12 +38,12 @@ std::unique_ptr<V5FullSessionPreflight> stageV5FullSessionPreflightOnHeap(
         runtimeActorCap, selectedRngType, rebuiltDecorations, title)));
     const std::string &mapName = v4->v3.actorMap.activeMap.mapName;
     const auto &nativeDelta = v4->saved.v3.raw.chest.rawActiveDelta;
-    if (mapName != "oute3.odm" || saved->actors.mapName != mapName ||
+    if (!isMM6OutdoorMapName(mapName) || saved->actors.mapName != mapName ||
         saved->actors.actors.size() != v4->v3.actorMap.activeActors.size() ||
         saved->decorations.mapName != mapName ||
         saved->sprites.mapName != mapName ||
         saved->sprites.records.size() != v4->v3.actorMap.activeMap.delta.spriteObjects.size())
-        throw std::runtime_error("MM6 v5 runtime owners lack exact first-map slot lists");
+        throw std::runtime_error("MM6 v5 runtime owners lack exact outdoor slot lists");
     requireActorRuntimeBaselineAgreement(
         saved->actors, mapName, v4->saved.v3.activeActorPayload, title);
     requireDecorationRuntimeBaseAgreement(

@@ -13,6 +13,8 @@
 #include "Engine/Snapshots/MM6OutdoorSnapshot.h"
 #include "Engine/Tables/DecorationTable.h"
 
+#include "MM6V5OutdoorMapIdentity.h"
+
 namespace mm6 {
 namespace {
 
@@ -184,8 +186,8 @@ void requireDecorationRuntimeBaseAgreement(
     const DecorationTable &table, GameTitle title) {
     requireMM6(title);
     requireMapName(mapName);
-    if (mapName != "oute3.odm")
-        throw std::runtime_error("MM6 DECR source replay requires first outdoor map");
+    if (!isMM6OutdoorMapName(mapName))
+        throw std::runtime_error("MM6 DECR source replay requires a shipped outdoor map");
     if (fields.mapName != mapName || events.mapName != mapName || decodedBase.empty())
         throw std::runtime_error("MM6 DECR lacks active source map join");
     OutdoorLocation_MM7 base;
@@ -199,7 +201,7 @@ void requireDecorationRuntimeBaseAgreement(
     const DecorationTable &table, GameTitle title) {
     requireMM6(title);
     requireMapName(mapName);
-    if (mapName != "oute3.odm" || fields.mapName != mapName ||
+    if (!isMM6OutdoorMapName(mapName) || fields.mapName != mapName ||
         events.mapName != mapName)
         throw std::runtime_error("MM6 DECR lacks active source map join");
     if (base.decorations.size() != fields.decorations.size() ||

@@ -5,14 +5,16 @@
 #include <type_traits>
 #include <utility>
 
+#include "MM6V5OutdoorMapIdentity.h"
+
 namespace mm6::testing {
 
 ScopedV5PreEventDecorationReplayForTest::ScopedV5PreEventDecorationReplayForTest(
     GameTitle title, DecorationRuntimeSaveFields fields)
     : _fields(std::move(fields)) {
     if (title != GameTitle::MM6 || detail::activeV5DecorationReplayScope() ||
-        _fields.mapName != "oute3.odm" || _fields.decorations.empty())
-        throw std::runtime_error("MM6 v5 decoration replay needs one staged first-map owner");
+        !isMM6OutdoorMapName(_fields.mapName) || _fields.decorations.empty())
+        throw std::runtime_error("MM6 v5 decoration replay needs one staged outdoor owner");
     detail::activeV5DecorationReplayScope() = this;
 }
 

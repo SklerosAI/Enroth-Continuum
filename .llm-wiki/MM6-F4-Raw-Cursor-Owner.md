@@ -1,0 +1,18 @@
+---
+type: synthesis
+up: "[[MM6-F4-Raw-Held-Item-Section]]"
+related: ["[[MM6-F4-Raw-Item-Transfer-Semantics]]", "[[MM6-F4-Save-Transaction-Checklist]]"]
+tags: [mm6, f4, save, cursor, raw-item]
+---
+
+# MM6 F4 Raw Cursor Owner
+
+The detached MM6 cursor owner retains the original 28-byte record even when the visible shared `Item` is empty.
+
+The [source packet](../project/MM6_F4_RAW_CURSOR_OWNER.md) defines its bounded copy and clear contract. It starts ready with zero bytes, copies all 28 bytes on a set into an empty cursor, and clears only bytes 0–24 while retaining the final three. The owner and `HELD` v2 value are separately staged; a later failed check leaves the source owner unchanged. Occupied-cursor relocation is outside this helper because it also needs an inventory or ground destination.
+
+This owner is not attached to `Party`. `Party::takeHoldingItem()` resets the shared item, `Party::setHoldingItem()` publishes a mouse icon and may move an older item, and event rollback directly restores `pPickedItem`. Those paths and the current `HELD` v1 `KnownSaveFields` assembly must be revised as one all-owner transaction before live save/load. A present v1 cursor cannot be losslessly converted to the raw v2 record.
+
+The synthetic focused tests validate exact byte retention, MM6 title isolation, invalid-owner rejection and late staging without source mutation. They are code-level evidence only, not a live cursor or saved-campaign check.
+
+See also: [Raw Held Item Section](MM6-F4-Raw-Held-Item-Section.md), [Raw Item Transfer Semantics](MM6-F4-Raw-Item-Transfer-Semantics.md), [Save Transaction Checklist](MM6-F4-Save-Transaction-Checklist.md).

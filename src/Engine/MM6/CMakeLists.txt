@@ -7,7 +7,7 @@ add_library(engine_mm6_save_container STATIC MM6SaveContainer.cpp MM6SaveContain
     MM6NpcSaveFields.cpp MM6NpcSaveFields.h
     MM6ResistanceSaveFields.cpp MM6ResistanceSaveFields.h
     MM6HeldItemSaveFields.cpp MM6HeldItemSaveFields.h
-    MM6RawHeldItemSaveFields.cpp MM6RawHeldItemSaveFields.h
+    MM6RawHeldItemSaveFields.cpp MM6RawHeldItemSaveFields.h MM6RawHeldCursorOwner.h
     MM6BuffSaveFields.cpp MM6BuffSaveFields.h
     MM6HirelingSaveFields.cpp MM6HirelingSaveFields.h
     MM6RecoverySaveFields.cpp MM6RecoverySaveFields.h
@@ -104,7 +104,7 @@ if(OE_BUILD_TESTS)
     add_library(test_engine_mm6_save_container OBJECT Tests/MM6SaveContainer_ut.cpp Tests/MM6CoreSaveFields_ut.cpp
         Tests/MM6DurableSaveFields_ut.cpp Tests/MM6MapSaveFields_ut.cpp Tests/MM6SaveMetadata_ut.cpp
         Tests/MM6NpcSaveFields_ut.cpp Tests/MM6ResistanceSaveFields_ut.cpp
-        Tests/MM6HeldItemSaveFields_ut.cpp Tests/MM6RawHeldItemSaveFields_ut.cpp
+        Tests/MM6HeldItemSaveFields_ut.cpp Tests/MM6RawHeldItemSaveFields_ut.cpp Tests/MM6RawHeldCursorOwner_ut.cpp
         Tests/MM6BuffSaveFields_ut.cpp
         Tests/MM6IndoorFaceOverrides_ut.cpp
         Tests/MM6HirelingSaveFields_ut.cpp Tests/MM6RecoverySaveFields_ut.cpp

@@ -111,7 +111,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Shop Guild Clock Save](MM6-F4-Shop-Guild-Clock-Save.md) — SCLK v1 preserves 68 unique original-MM6 shop and guild refresh deadline words
 - [MM6 F4 Shop Refresh PE Trace](MM6-F4-Shop-Refresh-PE-Trace.md) — Original row-keyed refresh and raw Party-block save proof, with stock tuple boundary still open
 - [MM6 F4 Shop Stock Tuple and Autosave](MM6-F4-Shop-Stock-Tuple-and-Autosave.md) — Two original stock banks, zero-ID display read and current cross-map save dependency
-- [MM6 F4 Shop Owner Field Gate](MM6-F4-Shop-Owner-Field-Gate.md) — Why SCLK is the only complete proved commerce field and stock still lacks a safe keyed owner
+- [MM6 F4 Shop Owner Field Gate](MM6-F4-Shop-Owner-Field-Gate.md) — Title-local stock/clock process owner passes detached staging; house and known-save wiring remain gated
 - [MM6 F4 Shop Item Record Conversion Gate](MM6-F4-Shop-Item-Record-Conversion-Gate.md) — Original 28-byte stock fields cannot yet map reversibly into the inherited 36-byte MM7 item
 - [MM6 F4 Raw Item Authority](MM6-F4-Raw-Item-Authority.md) — Byte-preserving MM6 item owner for proven contexts; provisional ITEM/HELD schemas need revision
 - [MM6 F4 Raw Item Transfer Semantics](MM6-F4-Raw-Item-Transfer-Semantics.md) — Source-backed first-25-byte clears, full cursor/shop copies and still-open equipment/UI moves

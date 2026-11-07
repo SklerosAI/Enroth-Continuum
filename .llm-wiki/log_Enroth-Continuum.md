@@ -2218,3 +2218,8 @@ Chronological record of wiki activity.
 - A strict opt-in sequence passed in three separate headless processes: v2 seed, atomic v4 candidate writer, and fresh-child Main Menu QuickLoad reader, each 1/1. The reader checked source-backed decoration flags, exact event arrays/native bytes, ACTR/GNPC/RNGS, chest item provenance and represented session owners, then aborted before input; both slots were unchanged.
 - Marker-free replay now uses a test-only validated chest projection that preserves the saved CHST LCG and DDM bytes while attaching exact MM6 raw item records. Focused chest route checks passed 8 with one private-reference skip; focused v4 full-session/atomic checks passed 8/8 and an MM7 headless control passed 1/1.
 - This is one disposable first-map reload boundary. First input, a post-action second write, indoor/later-map reload and production SaveLoad/Atlas remain closed.
+
+## [2026-11-07] verify | MM6 bounded first input after v4 reload
+- by: T-Burton-ND via codex
+- A separate strict fresh-child test reused the exact v4 pre-input owner admission, continued into the real null-renderer game loop, reached first input, turned and walked once, then quit. The disposable v2 seed and v4 candidate remained unchanged; the three-process seed, writer and first-input run each passed 1/1.
+- This proves bounded input after one first-map reload. A post-action second write/reload, indoor/later-map support and production SaveLoad/Atlas remain open.

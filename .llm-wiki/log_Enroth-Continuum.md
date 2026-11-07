@@ -1897,3 +1897,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a narrow MM6 Antique ID 58 value-only projection to the byte-preserving raw item adapter, requiring the loaded table contract and allowing only bounded identified/broken flag edits.
 - Integrated item/core/durable tests passed 23/23. Other special IDs, potion unions and artifacts still reject; live item save/reload and original-game consumer comparison remain open.
+
+## [2026-11-06] integrate | MM6 partial v2 Party join
+- by: T-Burton-ND via codex
+- Joined decoded core, progress and supported physical inventory on one detached Party, rejecting divergent saved/raw images and unsupported late items without changing the baseline.
+- Focused linked raw-runtime, inventory and Antique checks passed 11/11. Resistance, buff, hireling, recovery and world owners remain outside this partial candidate; production MM6 loading stays guarded.

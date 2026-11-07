@@ -9,6 +9,7 @@
 
 #include "Engine/MM6/MM6CoreSaveFields.h"
 #include "Engine/MM6/MM6RecoverySaveFields.h"
+#include "Engine/MM6/MM6RecoverySaveRuntime.h"
 #include "Engine/Party.h"
 
 namespace {
@@ -116,6 +117,58 @@ UNIT_TEST(MM6RecoverySaveFields, CapturesAndStagesArmageddonTupleOnDetachedParty
     EXPECT_EQ(prior->armageddon_timer.ticks(), 9);
     EXPECT_EQ(prior->armageddonDamage, 99);
     EXPECT_EQ(prior->armageddonForceCount, 99);
+}
+
+UNIT_TEST(MM6RecoverySaveFields, PostWorldArmageddonResumePlanChecksCoupledState) {
+    const mm6::RecoverySaveFields fields = example();
+    auto postWorld = std::make_unique<Party>();
+    postWorld->playing_time = Time::fromTicks(fields.playingTicks);
+    postWorld->armageddonDamage = fields.armageddonDamage;
+    postWorld->armageddonForceCount = fields.armageddonForceCount;
+
+    const auto plan = mm6::preparePostWorldArmageddonResume(
+        *postWorld, fields, LEVEL_OUTDOOR, GameTitle::MM6);
+    EXPECT_EQ(plan.timerTicks, fields.armageddonTimerTicks);
+    EXPECT_EQ(plan.damage, fields.armageddonDamage);
+    EXPECT_EQ(plan.forceCount, fields.armageddonForceCount);
+    EXPECT_EQ(postWorld->armageddon_timer.ticks(), 0);
+    EXPECT_EQ(postWorld->armageddonDamage, fields.armageddonDamage);
+    EXPECT_THROW(mm6::requirePostWorldArmageddonResumeAgreement(
+        *postWorld, plan, LEVEL_OUTDOOR, GameTitle::MM6), std::exception);
+    postWorld->armageddon_timer = Duration::fromTicks(plan.timerTicks);
+    EXPECT_NO_THROW(mm6::requirePostWorldArmageddonResumeAgreement(
+        *postWorld, plan, LEVEL_OUTDOOR, GameTitle::MM6));
+    EXPECT_THROW(mm6::requirePostWorldArmageddonResumeAgreement(
+        *postWorld, plan, LEVEL_INDOOR, GameTitle::MM6), std::exception);
+    postWorld->armageddon_timer = 0_ticks;
+
+    EXPECT_THROW((void) mm6::preparePostWorldArmageddonResume(
+        *postWorld, fields, LEVEL_INDOOR, GameTitle::MM6), std::exception);
+    mm6::RecoverySaveFields quiet = fields;
+    quiet.armageddonTimerTicks = 0;
+    const auto indoor = mm6::preparePostWorldArmageddonResume(
+        *postWorld, quiet, LEVEL_INDOOR, GameTitle::MM6);
+    EXPECT_EQ(indoor.timerTicks, 0);
+    EXPECT_NO_THROW(mm6::requirePostWorldArmageddonResumeAgreement(
+        *postWorld, indoor, LEVEL_INDOOR, GameTitle::MM6));
+    EXPECT_THROW((void) mm6::preparePostWorldArmageddonResume(
+        *postWorld, fields, LEVEL_OUTDOOR, GameTitle::MM7), std::exception);
+    postWorld->armageddonDamage++;
+    EXPECT_THROW((void) mm6::preparePostWorldArmageddonResume(
+        *postWorld, fields, LEVEL_OUTDOOR, GameTitle::MM6), std::exception);
+    postWorld->armageddonDamage--;
+    postWorld->armageddonForceCount++;
+    EXPECT_THROW((void) mm6::preparePostWorldArmageddonResume(
+        *postWorld, fields, LEVEL_OUTDOOR, GameTitle::MM6), std::exception);
+    postWorld->armageddonForceCount--;
+    postWorld->armageddon_timer = Duration::fromTicks(1);
+    EXPECT_THROW((void) mm6::preparePostWorldArmageddonResume(
+        *postWorld, fields, LEVEL_OUTDOOR, GameTitle::MM6), std::exception);
+    postWorld->armageddon_timer = 0_ticks;
+    postWorld->playing_time += Duration::fromTicks(1);
+    EXPECT_THROW((void) mm6::preparePostWorldArmageddonResume(
+        *postWorld, fields, LEVEL_OUTDOOR, GameTitle::MM6), std::exception);
+    EXPECT_EQ(postWorld->armageddon_timer.ticks(), 0);
 }
 
 UNIT_TEST(MM6RecoverySaveFields, RejectsInvalidBeforeMutation) {

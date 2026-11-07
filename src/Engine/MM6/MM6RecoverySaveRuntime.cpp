@@ -128,4 +128,33 @@ Party stageRecoveryParty(const Party &live, const RecoverySaveFields &fields, Ga
     return staged;
 }
 
+PostWorldArmageddonResumePlan preparePostWorldArmageddonResume(
+    const Party &postWorld, const RecoverySaveFields &saved,
+    LevelType finalLevel, GameTitle title) {
+    requireSafeMM6State(postWorld, title, false);
+    (void) encodeRecoverySection(saved);
+    if ((finalLevel != LEVEL_INDOOR && finalLevel != LEVEL_OUTDOOR) ||
+        (saved.armageddonTimerTicks && finalLevel != LEVEL_OUTDOOR))
+        throw std::runtime_error("MM6 post-world Armageddon needs a valid outdoor map");
+    if (postWorld.playing_time.ticks() != saved.playingTicks ||
+        postWorld.armageddon_timer.ticks() != 0 ||
+        postWorld.armageddonDamage != saved.armageddonDamage ||
+        postWorld.armageddonForceCount != saved.armageddonForceCount)
+        throw std::runtime_error("MM6 post-world Armageddon owners differ from RCVR");
+    return {finalLevel, saved.playingTicks, saved.armageddonTimerTicks,
+            saved.armageddonDamage, saved.armageddonForceCount};
+}
+
+void requirePostWorldArmageddonResumeAgreement(
+    const Party &finalParty, const PostWorldArmageddonResumePlan &plan,
+    LevelType finalLevel, GameTitle title) {
+    requireSafeMM6State(finalParty, title, false);
+    if (finalLevel != plan.levelType ||
+        finalParty.playing_time.ticks() != plan.playingTicks ||
+        finalParty.armageddon_timer.ticks() != plan.timerTicks ||
+        finalParty.armageddonDamage != plan.damage ||
+        finalParty.armageddonForceCount != plan.forceCount)
+        throw std::runtime_error("MM6 post-world Armageddon resume differs from RCVR");
+}
+
 } // namespace mm6

@@ -1987,3 +1987,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated a detached nineteen-section first-map writer that joins the existing New Game seed with explicit raw inventory, held cursor and empty shop owners, validates source Party replay and all map bases, and writes only an admitted v2 candidate atomically.
 - The linked synthetic writer suite passed 3/3, including an exact native v2 disk round trip. Live starter-item raw provenance, full-session publication and production MM6 SaveLoad remain gated.
+
+## [2026-11-06] integrate | MM6 detached held Party item
+- by: T-Burton-ND via codex
+- Added a bounded, exact-replay projection from the physical v2 HELD cursor onto a detached Party copy, including an empty-cursor clear. No live Party, mouse image or shop owner changes.
+- Both arm64 test targets linked and the focused held-Party suite passed 3/3. Full-session and visible cursor publication remain gated.

@@ -1673,3 +1673,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Superseded the plain-only detached inventory stage with a 138-slot view that combines plain/gold items and standard-enchanted equipment while preserving source records and unreferenced bytes.
 - Focused linked unit checks passed 7/7 and two monitored loaded-table MM6 headless checks passed 2/2 over 65 samples without a visible window or focus change. Party raw ownership, full item movement and normal SaveLoad remain guarded.
+
+## [2026-11-06] implement | Four-character MM6 raw inventory stage
+- by: T-Burton-ND via codex
+- Composed four bounded character views into a detached all-or-nothing stage and capture of `RawInventoryFields`; late fourth-character failure leaves the source alone and prevents partial output.
+- Focused linked checks passed 11/11, including final-slot standard armor, opaque bytes and `INVR` encode/decode. Live inventory copies item values across slots, so transfer-safe raw provenance and a revised final save manifest remain required.

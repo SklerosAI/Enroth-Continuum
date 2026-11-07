@@ -2411,3 +2411,13 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Converted pinned GLM, Dear ImGui and optional cpplint gitlinks to tracked source. All 2,007 original Git blobs and modes match their former submodule commits; upstream licenses, bundled notices and Enroth provenance notes remain. Four gitlinks remain.
 - Focused GLM and Dear ImGui C++ syntax checks and cpplint Python syntax passed in an isolated worktree. The latest three inputs still need an integrated MM7 link after merge. Nested fetches and the prebuilt dependency archive still block a clean offline build; installed apps and private profiles were untouched.
+
+## [2026-11-07] verify | MM7 owned paths and integrated source
+- by: T-Burton-ND via codex
+- All nineteen owned former gitlinks linked into the arm64 MM7 target with the existing cached libraries. Atlas and direct Mac helper source now default to fresh Enroth Continuum MM7 data/profile roots, validate required archives and prevent implicit Mac save copying. Swift type checking, MM7/GameTest linking and a headless MM7 control with an explicit existing private data path passed.
+- Corrected Atlas license metadata to LGPL-3.0-or-later and labeled the helper Enroth Continuum MM7 while retaining OpenEnroth attribution. Added a collision-safe private cutover packet; the installed app and save/data files were not moved, and clean offline building remains open.
+
+## [2026-11-07] verify | MM6 indoor live-session replay
+- by: T-Burton-ND via codex
+- Added a strict test-only raw-owner capture after a real indoor world load. Four separate headless children passed 1/1 each: seed, first-map v4, indoor v6 live-session writer and fresh-child reader. The reader checked all represented raw sections and post-world actor, sprite, NPC, RNG and event state.
+- The gate retains native chest/door residual checks and allows only the loader's source-backed face-delta repair. This covers one indoor map with a null renderer; first input, production SaveLoad and gameplay admission remain closed.

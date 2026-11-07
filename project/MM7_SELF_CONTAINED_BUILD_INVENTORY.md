@@ -20,9 +20,10 @@ repository has **1 gitlink**. The integration Mac MM7 target built with the
 first sixteen tracked source snapshots, using its existing cached prebuilt libraries;
 GoogleTest and `gtest_parallel` are optional test inputs.
 All nineteen full source snapshots and three scoped production-source copies
-now pass an integrated cached-library arm64 MM7 link. The remaining ztd.text
-gitlink, nested fetches and prebuilt-library recipe still block a clean offline
-MM7 build.
+now pass an integrated cached-library arm64 MM7 link. The remaining ztd.text gitlink and normal upstream download route still
+block the ordinary configure path. The opt-in Mac local-only lane has since
+built from a clean tracked-source extraction with network access denied; see
+[the build packet](MM7_CLEAN_OFFLINE_BUILD.md).
 
 The former `inifile_cpp`, `tcpp` and `nlohmann_json` gitlinks are now scoped
 production-source copies. Their required headers, JSON CMake files, original
@@ -44,9 +45,9 @@ tracked files. [`SOURCES.json`](../thirdparty/repo-source/SOURCES.json) records
 the commits, source origins, archive SHA-256 values and primary license files.
 All 11,835 regular archive files matched the extracted bytes; 84 files ignored
 by inherited patterns were force-added so the tracked set is complete. Git
-attributes disable text normalization for this source tree. These sources are
-not connected to the build yet; the existing cached prebuilt archive remains
-the current MM7 link input, and the local-only gate still refuses to configure.
+attributes disable text normalization for this source tree. These sources now feed an original local recipe; the opt-in local-only MM7
+link uses its nine arm64 archives and bypasses the upstream ZIP. The normal
+CMake path still uses the cached prebuilt archive.
 
 ## Evidence boundary
 

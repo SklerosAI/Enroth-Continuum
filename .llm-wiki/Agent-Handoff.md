@@ -10,7 +10,7 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 ## Current F4 checkpoint — 2026-11-06
 
-The active `mm6-mac-implementation` integration branch has a native EC6 v2 first-map candidate writer, bounded creation-item seed, complete detached v2 session preflight, title-local raw cursor/shop process owners, and detached held-item/image and post-rebuild PID checks. In an owner-only disposable profile, a test-only headless New Game process wrote a v2 `autosave.ec6` from one sampled real creation Party; a fresh headless child selected and staged it read-only. Both integration GameTests passed 1/1. The [v2 restart packet](../project/MM6_F4_RAW_V2_HEADLESS_RESTART.md), [creation seed page](MM6-F4-Creation-Item-Seed.md), [raw save runtime](MM6-F4-Raw-Save-Runtime.md), [cursor owner](MM6-F4-Raw-Cursor-Owner.md), and [post-rebuild PID slot page](MM6-F4-Post-Rebuild-PID-Slots.md) define the exact boundaries. Normal MM6 SaveLoad, game-loop v2 publication, Atlas Play and graphical campaign acceptance remain guarded. Other random starter draws and original-game native record parity remain unverified. The MM7 baseline remains protected. For the owner's later MM7 source-autonomy goal, see [MM7 Self-Contained Source](MM7-Self-Contained-Source.md); its clean offline build remains planned.
+The active `mm6-mac-implementation` integration branch has a native EC6 v2 first-map candidate writer, bounded creation-item seed, complete detached v2 session preflight, title-local raw cursor/shop process owners, and detached held-item/image and post-rebuild PID checks. In an owner-only disposable profile, a test-only headless New Game process wrote a v2 `autosave.ec6` from one sampled real creation Party; a fresh headless child selected and staged it read-only. Both integration GameTests passed 1/1. The [v2 restart packet](../project/MM6_F4_RAW_V2_HEADLESS_RESTART.md), [creation seed page](MM6-F4-Creation-Item-Seed.md), [raw save runtime](MM6-F4-Raw-Save-Runtime.md), [cursor owner](MM6-F4-Raw-Cursor-Owner.md), and [post-rebuild PID slot page](MM6-F4-Post-Rebuild-PID-Slots.md) define the exact boundaries. Normal MM6 SaveLoad, game-loop v2 publication, Atlas Play and graphical campaign acceptance remain guarded. Other random starter draws and original-game native record parity remain unverified. The MM7 baseline remains protected. For the owner's later MM7 source-autonomy goal, see [MM7 Self-Contained Source](MM7-Self-Contained-Source.md); its opt-in clean tracked-source build now passes, while installed-app cutover remains open.
 
 A later third fresh headless process passed the [caught v2 load callback gate](MM6-F4-V2-QuickLoad-Callback-Gate.md): exact primary bytes staged, typed publication blockers reported, normal MM6 load guard restored, sampled live owners and slot unchanged. This test invokes the callback directly and does not queue Main Menu QuickLoad. The [full fresh-child owner audit](MM6-F4-V2-Fresh-Child-Owner-Audit.md) identifies the final resource/event/identity checks that must be armed in the post-world hook before any game-loop input.
 
@@ -98,22 +98,23 @@ The raw item adapter now accepts one source-bounded special union, MM6 Antique I
 
 The [child-process game-loop audit](../project/MM6_F4_CHILD_PROCESS_GAME_LOOP_HANDOFF.md) identifies a possible single-campaign MM6 child route. It could remove rollback to a prior live session only if in-game loads and menu returns start a new child or stay unavailable; complete v2 staging, safe disk saves and first-frame validation still apply. The first-map persistent map/decor event arrays now have a detached rollback scope, but it is not installed around `DoPrepareWorld`. Integrated focused disk/inventory/event tests passed 13/13.
 
-For the MM7 source-autonomy gate, read the [build-input inventory](../project/MM7_SELF_CONTAINED_BUILD_INVENTORY.md) and [source-autonomy packet](../project/MM7_SELF_CONTAINED_SOURCE.md) before changing dependencies. The original inventory found 23 gitlinks; nineteen exact pinned full snapshots and three scoped production-source copies are tracked here, leaving one ztd.text gitlink. The five source families behind nine static archives from the OpenEnroth-hosted prebuilt ZIP are also tracked under `thirdparty/repo-source/` with exact archive checks and licenses. An original local recipe built all nine arm64 archives and passed a package-find probe, but its output is not connected to the MM7 target. Seven nested source fetches remain. The new recipe disables FFmpeg autodetection and copies source notices; binary distribution and static-link review remain open. An opt-in `EC_LOCAL_ONLY_CONFIGURE=ON` lane blocks configure-time fetches and fails with named missing repository-owned inputs/recipes; it is not a clean offline build. The existing MM7 helper must stay installed until a clean offline replacement passes launch and save/reload. Keep OpenEnroth history, LGPL notices and contributor credit.
-
-All nineteen owned former gitlinks now pass an integrated cached-library arm64 MM7 link. Atlas and direct Mac helper source use fresh Enroth Continuum MM7 data/profile defaults, but the installed app and private files have not moved. Older save roots contain distinct files with colliding names; follow the [runtime path cutover](MM7-Runtime-Path-Cutover.md) and never silently merge them. A private byte-verified copy now populates the new default data folder; a headless MM7 control passes through that default. Saves and installed app remain unmoved. Atlas bundle license metadata now correctly says LGPL-3.0-or-later and preserves OpenEnroth contributor credit.
-
-Three further gitlinks now have scoped, byte-verified production-source copies
-for INI, tcpp and JSON, leaving only ztd.text. The integrated cached-library
-MM7 link, 12 focused JSON/preprocessor units and default-path headless control
-pass. The ztd.text license/fetch strategy and five library build recipes remain
-the next local-only build work; do not copy non-commercial ztd source into the
-public fork without resolving its terms.
-The pinned LGPL libdwarf-lite source is also tracked here; standalone arm64
-cpptrace/libdwarf built with a local source override and disconnected
-FetchContent. Wire that override in the integration CMake path before claiming
-the nested fetch closed.
-
-The [Mac dependency recipe](MM7-Mac-Dependency-Recipe.md) now builds five pinned source families into exactly nine arm64 static archives in a local prefix, with no dynamic libraries, local zlib selected by libpng, and FFmpeg GPL/version-3/nonfree modes disabled. A separate package-find probe found all five families in that prefix. This remains separate from the app link: the main local-only CMake lane still refuses missing source inputs/recipes, so do not claim a clean offline MM7 build or replace the installed helper.
+For MM7 source autonomy, read the [clean offline build](MM7-Clean-Offline-Build.md),
+[build-input inventory](../project/MM7_SELF_CONTAINED_BUILD_INVENTORY.md),
+[source-autonomy packet](../project/MM7_SELF_CONTAINED_SOURCE.md) and
+[runtime cutover](MM7-Runtime-Path-Cutover.md). Twenty-two former gitlinks and
+five Mac media source families are tracked with licenses and provenance. The
+single remaining ztd.text gitlink is bypassed only in the opt-in Mac local-only
+lane through an original Apple iconv adapter; full legacy/CJK parity remains
+open. Tracked libdwarf and the nine freshly built arm64 archives linked a clean
+MM7 target from a source-only extraction with network access denied. Atlas
+staged the exact helper, tracked icon and 23 notices; code signatures passed,
+and a freshly built headless MM7 control passed 1/1. This proves a clean
+tracked-source build, not a remote clone or graphical/save acceptance. Ordinary
+CMake still contains an OpenEnroth dependency URL and recursive submodule
+update. Do not replace the installed MM7 app or merge colliding legacy save
+roots until visible launch/save/reload and collision review pass. The new
+private data root is byte-verified; original data and saves remain private.
+Preserve OpenEnroth history, LGPL notices and contributor credit.
 
 A disposable v1 two-process probe now drives the real MM6 Main Menu QuickLoad FSM through `Game::loop()`/private `gameLoop()` with explicit test-only load callbacks and chest opt-in. The writer and loader each passed 1/1 under the no-window monitor; the loader entered the first outdoor map, advanced movement and left the slot bytes unchanged. An MM7 all-map headless control passed 1/1 after the shared hooks. Production MM6 load, menu slots and complete v2 session publication remain guarded; the probe is not a playable campaign or rendered-frame proof.
 

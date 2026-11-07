@@ -2,8 +2,9 @@
 
 Status (2026-11-07): an original, opt-in source-build recipe is staged in
 [`tools/build_mm7_macos_dependencies.py`](../tools/build_mm7_macos_dependencies.py).
-It is not connected to the main CMake `EC_LOCAL_ONLY_CONFIGURE` lane yet, and
-does not replace the installed MM7 helper or the cached prebuilt archive.
+It is connected to the opt-in CMake `EC_LOCAL_ONLY_CONFIGURE` lane and passed
+a clean tracked-source build under network denial. It does not replace the
+installed MM7 helper or the ordinary build's cached prebuilt archive.
 
 The recipe checks the five commit pins in
 [`thirdparty/repo-source/SOURCES.json`](../thirdparty/repo-source/SOURCES.json),
@@ -40,9 +41,10 @@ local output, with no dynamic libraries and 23 copied license/notice files.
 libpng's CMake cache selected the just-built local zlib archive and headers;
 FFmpeg's generated `config.h` reported GPL, version-3 and nonfree disabled. A
 fresh isolated CMake package-find probe resolved ZLIB, PNG, SDL3, OpenAL Soft
-and the five FFmpeg libraries from this prefix. A linked MM7 app built against
-these new archives, runtime decode/audio/render checks, a clean offline clone,
-and binary distribution review remain separate gates. The normal CMake path
+and the five FFmpeg libraries from this prefix. A clean tracked-source extraction now links an MM7 helper against these
+archives under network denial; a focused headless MM7 control passed. Visible
+decode/audio/render behavior, a remote clone and binary distribution review
+remain separate gates. The normal CMake path
 still uses its cached prebuilt library archive.
 
 ## Opt-in CMake lane
@@ -63,11 +65,11 @@ cmake -S . -B build/mm7-local-only \
   -DCMAKE_OSX_ARCHITECTURES=arm64
 ```
 
-The current checkout still has a ztd.text gitlink and six nested ztd source
-requirements, so this command intentionally stops with those named inputs.
-It does not fetch them or substitute a system package. A bounded synthetic
-source-tree configure resolved the five media packages from the local prefix
-and cpptrace's libdwarf source from the supplied local path, with FetchContent
-disconnected. Wrong build-type, absent-prefix and changed-archive-hash probes
-failed closed. A real clean-clone MM7 app build awaits the ztd replacement and
-further linked validation.
+Add `-DEC_MM7_MAC_ICONV_ADAPTER=ON` for the opt-in Mac MM7 route. It uses an
+original system-iconv adapter for the production UTF-8, Windows-1251 and ASCII
+call sites and bypasses the unresolved ztd gitlink/nested fetches. A fresh
+tracked-source configure, MM7 link and Atlas package passed under network
+denial with this option. Without it, the gate still fails closed on ztd inputs.
+Wrong build-type, absent-prefix and changed-archive-hash probes also failed
+closed. Full legacy/CJK encoding parity, remote-clone repetition and graphical
+play/save checks remain open.

@@ -36,39 +36,25 @@ The current integration tree also builds a title-locked `MM7.app` and stages a s
   alignment or ending coverage; the known-good MM7 build remains protected.
 
 The [MM7 source-autonomy inventory](MM7_SELF_CONTAINED_BUILD_INVENTORY.md)
-records the original Mac build's 23 external gitlinks, nine linked static
-archives from one OpenEnroth-hosted dependency ZIP and seven nested fetches.
-Nineteen full pinned source snapshots and three scoped production-source copies
-are tracked here with licenses and provenance, leaving only ztd.text as a gitlink. The first sixteen passed a cached-input arm64 MM7 build; the
-latest three passed exact-blob and focused syntax checks; all nineteen now pass an integrated cached-library arm64 MM7 link.
-Three more former gitlinks now supply scoped, byte-verified production headers
-for INI, preprocessing and JSON, leaving only ztd.text. The cached-library MM7
-link, 12 focused JSON/preprocessor units and a headless MM7 control passed
-after that conversion. The nested ztd fetches and prebuilt-library integration remain.
-The exact cpptrace libdwarf-lite source is also tracked with LGPL notices;
-its standalone arm64 backend built with FetchContent disconnected. Integration
-still needs to point cpptrace at this local source.
-The five source families behind the cached archive are tracked at exact pinned
-revisions with original license files and archive hashes. An original local
-recipe built all nine static arm64 archives from them, copied notices and
-passed an isolated CMake package-find probe. The MM7 target has not yet
-linked against that output; the local-only CMake lane still refuses.
-GoogleTest and `gtest_parallel` are optional test inputs; the owned LuaJIT CMake
-recipe and source generate the same version header without nested Git.
-This fork already owns the engine source and installed helper; a fresh offline
-build from only this repo remains a later gate. The dependency inventory made
-no change to the protected MM7 app, save profile or private game data.
-An opt-in `EC_LOCAL_ONLY_CONFIGURE=ON` lane now blocks configure-time
-submodule updates, the OpenEnroth dependency archive and nested fetches, then
-fails with named missing repository-owned sources and build recipes. A fresh
-AppleClang arm64 configure reached that refusal without downloading. Default
-configure and the installed MM7 helper remain unchanged; this does not yet
-prove a clean offline build. Atlas and direct Mac helper source now default to
-Enroth Continuum MM7 data and a fresh profile; a collision-safe private
-cutover and visible launch/save/reload check remain open.
-The new private MM7 data root now holds a byte-verified copy of the existing
-extracted game data, with the original retained. A headless MM7 control passes
-through that default. Existing saves and the installed app remain unmoved.
+records the original 23 gitlinks, nine prebuilt static libraries and seven
+nested fetches. Nineteen full pinned snapshots, three scoped production-source
+copies and five pinned Mac media-library source trees are tracked with original
+licenses and provenance; ztd.text remains the single gitlink for non-local-only
+builds. The original [media-library recipe](MM7_LOCAL_DEPENDENCY_RECIPE.md)
+built nine arm64 static archives with copied notices.
+
+The [clean offline build packet](MM7_CLEAN_OFFLINE_BUILD.md) now records a fresh
+tracked-source extraction in which a network-denied sandbox built the nine
+media archives, configured and linked the arm64 MM7 target, and staged a signed
+Atlas with 23 dependency notices and no private game data. The opt-in
+`EC_LOCAL_ONLY_CONFIGURE=ON` path validated all local archive hashes/source
+pins, used tracked libdwarf and a scoped Mac iconv adapter, and avoided the
+OpenEnroth dependency ZIP and ztd fetch path. A freshly built headless MM7
+GameTest control passed 1/1 against the private default data root. The
+ordinary CMake path still references the upstream download, and this was a
+source archive rather than a remote clone. Visible play, save/quit/reload,
+installed-app cutover and binary distribution review remain open. The existing
+MM7 installation and distinct legacy save roots remain untouched.
 
 ## MM6: implementation checkpoint, not yet playable
 

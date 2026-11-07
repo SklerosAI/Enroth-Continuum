@@ -6,6 +6,7 @@
 #include <string>
 #include <system_error>
 #include <utility>
+#include <vector>
 
 #ifndef _WIN32
 #include <fcntl.h>
@@ -18,7 +19,7 @@ namespace {
 constexpr std::uintmax_t MAX_SAVE_BYTES = 64 * 1024 * 1024;
 
 class InvalidSaveCandidate : public std::runtime_error {
-public:
+ public:
   using std::runtime_error::runtime_error;
 };
 
@@ -102,7 +103,7 @@ void syncDirectory(const std::filesystem::path &directory) {
 }
 
 class TempSaveFile {
-public:
+ public:
   TempSaveFile(const std::filesystem::path &directory,
                std::string_view slotName) {
     std::string pattern =
@@ -161,7 +162,7 @@ public:
     _path.clear();
   }
 
-private:
+ private:
   std::filesystem::path _path;
   int _fd = -1;
 };
@@ -225,8 +226,10 @@ void detail::writeAtomicSaveSlot(const std::filesystem::path &profileRoot,
   } else if (directoryExists && regularFileExists(backup)) {
     throw std::runtime_error("recover MM7 save backup before writing slot");
   }
-  if (!directoryExists)
+  if (!directoryExists) {
     std::filesystem::create_directory(directory);
+    syncDirectory(profileRoot); // Persist saves/ in its parent before the first slot.
+  }
   TempSaveFile next(directory, slotName);
   if (fault)
     fault(AtomicSaveStep::BeforeTempWrite);

@@ -18,7 +18,7 @@ namespace {
 
 #ifndef _WIN32
 class TestProfile {
-public:
+ public:
   TestProfile() {
     std::string pattern =
         (std::filesystem::temp_directory_path() / "mm7-atomic-XXXXXX").string();
@@ -39,7 +39,7 @@ public:
     return _root / "saves/save001.mm7.bak";
   }
 
-private:
+ private:
   std::filesystem::path _root;
 };
 

@@ -698,4 +698,26 @@ UNIT_TEST(MM6AtomicSaveFile, V5ReloadInputSlotIsSeparateAndAtomic) {
     EXPECT_EQ(read(slot), first);
     EXPECT_EQ(read(slot.string() + ".bak"), priorV4);
 }
+
+UNIT_TEST(MM6AtomicSaveFile, V5LaterOutdoorSlotIsSeparateAndRejectsForeignSlots) {
+    TestProfile profile("mm6-restart-");
+    const auto seed = sampleRaw(91);
+    const auto priorV4 = sampleV4(92);
+    const auto later = sampleV5(93);
+    const auto accept = [](std::span<const std::uint8_t> bytes) {
+        (void) mm6::decodeV5Save(bytes, GameTitle::MM6);
+    };
+    std::filesystem::create_directories(profile.root() / "saves");
+    write(profile.root() / "saves/autosave.ec6", seed);
+    write(profile.root() / "saves/candidate-v4.ec6", priorV4);
+    EXPECT_THROW(mm6::writeAtomicV5SaveFileForTest(
+        profile.root(), "autosave.ec6", later, accept), std::exception);
+    EXPECT_THROW(mm6::writeAtomicV5SaveFileForTest(
+        profile.root(), "candidate-v5-oute3.ec6", later, accept), std::exception);
+    mm6::writeAtomicV5SaveFileForTest(
+        profile.root(), "candidate-v5-oute2.ec6", later, accept);
+    EXPECT_EQ(read(profile.root() / "saves/candidate-v5-oute2.ec6"), later);
+    EXPECT_EQ(read(profile.root() / "saves/autosave.ec6"), seed);
+    EXPECT_EQ(read(profile.root() / "saves/candidate-v4.ec6"), priorV4);
+}
 #endif

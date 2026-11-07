@@ -194,23 +194,6 @@ GAME_TEST(MM6V5SecondFreshChildReplayHeadless, DISABLED_SecondQuickLoadRestoresO
             expectedActiveActors = staged->actors.actors.size();
             expectedGenerated = staged->v4.saved.v3.generatedNpcs;
 
-            *pParty = staged->v4.v3.represented.party.party;
-            *pNPCStats = staged->v4.v3.represented.world.world.npcs;
-            *gameTimer = staged->v4.v3.represented.world.visuals.timer;
-            *pActiveOverlayList = staged->v4.v3.represented.world.visuals.overlays;
-            pMapDeltas = std::move(staged->v4.v3.represented.world.world.mapDeltas);
-            mm6::chestTitleState() = staged->v4.v3.represented.world.chestTitle;
-            mm6::publishFreshChildPersistentEventZeros(
-                &engine->_persistentVariables,
-                staged->v4.v3.represented.persistentEvents, GameTitle::MM6);
-            mm6::publishRawCursorShopOwners(
-                &mm6::rawHeldCursorState(GameTitle::MM6), &mm6::shopTitleState(),
-                staged->v4.v3.represented.raw.saved,
-                {std::move(staged->v4.v3.represented.raw.cursor),
-                 std::move(staged->v4.v3.represented.raw.shops)}, GameTitle::MM6);
-            engine->_pendingTransition = MapDestination(
-                pMapTable->GetMapInfo("oute3.odm"), MAP_START_POINT_PARTY);
-            engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
             chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>(true);
             eventRuntime = std::make_unique<mm6::testing::ScopedEventRuntimeRestoreForTest>(
                 GameTitle::MM6, staged->v4.saved.eventRuntime);
@@ -356,6 +339,25 @@ GAME_TEST(MM6V5SecondFreshChildReplayHeadless, DISABLED_SecondQuickLoadRestoresO
                         finalOwnerError = error.what();
                     }
                 }, mm6::testing::PostWorldAdmissionResult::AbortToMainMenu);
+            // Scope validation must complete before any live world owner is
+            // assigned. The callback itself runs only after world preparation.
+            *pParty = staged->v4.v3.represented.party.party;
+            *pNPCStats = staged->v4.v3.represented.world.world.npcs;
+            *gameTimer = staged->v4.v3.represented.world.visuals.timer;
+            *pActiveOverlayList = staged->v4.v3.represented.world.visuals.overlays;
+            pMapDeltas = std::move(staged->v4.v3.represented.world.world.mapDeltas);
+            mm6::chestTitleState() = staged->v4.v3.represented.world.chestTitle;
+            mm6::publishFreshChildPersistentEventZeros(
+                &engine->_persistentVariables,
+                staged->v4.v3.represented.persistentEvents, GameTitle::MM6);
+            mm6::publishRawCursorShopOwners(
+                &mm6::rawHeldCursorState(GameTitle::MM6), &mm6::shopTitleState(),
+                staged->v4.v3.represented.raw.saved,
+                {std::move(staged->v4.v3.represented.raw.cursor),
+                 std::move(staged->v4.v3.represented.raw.shops)}, GameTitle::MM6);
+            engine->_pendingTransition = MapDestination(
+                pMapTable->GetMapInfo("oute3.odm"), MAP_START_POINT_PARTY);
+            engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
             selected = true;
         });
         mm6::testing::setMainMenuAutosaveQuickLoadOverride(true);

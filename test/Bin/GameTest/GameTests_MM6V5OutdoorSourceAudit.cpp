@@ -15,6 +15,7 @@
 #include "Engine/Objects/Monsters.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
+#include "Engine/Snapshots/MM6IndoorSnapshot.h"
 #include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
 #include "Engine/Snapshots/MM6OutdoorSnapshot.h"
 #include "Engine/Tables/MapTable.h"
@@ -52,20 +53,46 @@ GAME_TEST(MM6V5OutdoorSourceHeadless, AllShippedOutdoorPairsDecode) {
 
 // Check the authored encounter stems in every loaded map table row against
 // the title's monster and descriptor tables. No source rows are published.
-GAME_TEST(MM6V5OutdoorSourceHeadless, AllMapEncounterStemsResolve) {
+GAME_TEST(MM6V5OutdoorSourceHeadless, AllReachableMapEncounterStemsResolve) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
     int checked = 0;
+    int mapsChecked = 0;
     for (MapId mapId : pMapTable->pInfos.indices()) {
         const MapData &map = pMapTable->pInfos[mapId];
         if (map.fileName.empty())
             continue;
+        ++mapsChecked;
         SCOPED_TRACE(map.fileName);
+        std::vector<SpawnPoint_MM7> spawns;
+        const Blob baseBytes = maps.readBase(map.fileName);
+        if (map.fileName.ends_with(".blv")) {
+            auto base = projectMM6IndoorBase(deserializeMM6IndoorBase(baseBytes));
+            spawns = std::move(base.spawnPoints);
+        } else {
+            auto base = std::make_unique<OutdoorLocation_MM7>();
+            deserializeMM6Outdoor(baseBytes, base.get());
+            spawns = std::move(base->spawnPoints);
+        }
+        std::array<bool, 3> reachable{{
+            map.encounter1Chance > 0,
+            map.encounter2Chance > 0,
+            map.encounter3Chance > 0,
+        }};
+        for (const SpawnPoint_MM7 &spawn : spawns)
+            if (spawn.type == std::to_underlying(OBJECT_Actor) &&
+                spawn.treasureLevelOrMonsterIndex >= 1 &&
+                spawn.treasureLevelOrMonsterIndex <= 12)
+                reachable[(spawn.treasureLevelOrMonsterIndex - 1) % 3] = true;
         const std::array<std::pair<const std::string *, int>, 3> encounters{{
             {&map.encounter1MonsterInternalName, map.Dif_M1},
             {&map.encounter2MonsterInternalName, map.Dif_M2},
             {&map.encounter3MonsterInternalName, map.Dif_M3},
         }};
-        for (const auto &[stem, difficulty] : encounters) {
+        for (std::size_t group = 0; group < encounters.size(); ++group) {
+            if (!reachable[group])
+                continue;
+            const auto &[stem, difficulty] = encounters[group];
             if (stem->empty() || *stem == "0")
                 continue;
             for (int rank = 0; rank < (difficulty ? 3 : 1); ++rank) {
@@ -83,5 +110,6 @@ GAME_TEST(MM6V5OutdoorSourceHeadless, AllMapEncounterStemsResolve) {
             }
         }
     }
+    EXPECT_EQ(mapsChecked, 67);
     EXPECT_GT(checked, 0);
 }

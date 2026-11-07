@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iterator>
 #include <memory>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -114,6 +115,18 @@ std::vector<std::uint8_t> slotBytes(const std::filesystem::path &path) {
     return {std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
 }
 
+mm6::CorePartyFields baselinePartyFields(std::span<const std::uint8_t> bytes) {
+    const auto decoded = std::unique_ptr<mm6::V4SaveFields>(
+        new mm6::V4SaveFields(mm6::decodeV4Save(bytes, GameTitle::MM6)));
+    return decoded->v3.raw.core.party;
+}
+
+mm6::CorePartyFields actionPartyFields(std::span<const std::uint8_t> bytes) {
+    const auto decoded = std::unique_ptr<mm6::V5SaveFields>(
+        new mm6::V5SaveFields(mm6::decodeV5Save(bytes, GameTitle::MM6)));
+    return decoded->v4.v3.raw.core.party;
+}
+
 std::vector<LevelDecoration> sourceDecorations(const mm6::LoadedMapSource &maps,
                                                std::string_view mapName) {
     const Blob baseBytes = maps.readBase(mapName);
@@ -156,8 +169,8 @@ GAME_TEST(MM6V5AfterActionFreshChildReplayHeadless, DISABLED_PostActionQuickLoad
     ASSERT_FALSE(before.empty());
     ASSERT_FALSE(baselineBefore.empty());
     ASSERT_FALSE(seedBefore.empty());
-    const auto baselineParty = mm6::decodeV4Save(baselineBefore, GameTitle::MM6).v3.raw.core.party;
-    const auto actionParty = mm6::decodeV5Save(before, GameTitle::MM6).v4.v3.raw.core.party;
+    const auto baselineParty = baselinePartyFields(baselineBefore);
+    const auto actionParty = actionPartyFields(before);
     ASSERT_NE(actionParty.position, baselineParty.position);
     ASSERT_NE(actionParty.viewYaw, baselineParty.viewYaw);
 
@@ -191,14 +204,13 @@ GAME_TEST(MM6V5AfterActionFreshChildReplayHeadless, DISABLED_PostActionQuickLoad
                     !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
             };
             auto rebuiltDecorations = sourceDecorations(maps, "oute3.odm");
-            auto candidateStage = std::make_unique<mm6::V5FullSessionPreflight>(
-                mm6::stageV5FullSessionPreflight(
-                    before, freshNpcs, maps.expectedNames(),
-                    [&maps](std::string_view name) { return maps.readBase(name); },
-                    verifyItem, *pItemTable, pOverlayTable->overlays.size(),
-                    pTileTable->tileCount(), engine->config->gameplay.MaxActors.value(),
-                    application->component<EngineRandomComponent>()->type(),
-                    rebuiltDecorations, *pDecorationTable, GameTitle::MM6));
+            auto candidateStage = mm6::stageV5FullSessionPreflightOnHeap(
+                before, freshNpcs, maps.expectedNames(),
+                [&maps](std::string_view name) { return maps.readBase(name); },
+                verifyItem, *pItemTable, pOverlayTable->overlays.size(),
+                pTileTable->tileCount(), engine->config->gameplay.MaxActors.value(),
+                application->component<EngineRandomComponent>()->type(),
+                rebuiltDecorations, *pDecorationTable, GameTitle::MM6);
             if (candidateStage->v4.v3.actorMap.activeMap.mapName != "oute3.odm" ||
                 candidateStage->v4.saved.v3.raw.core.party.position != actionParty.position ||
                 candidateStage->v4.saved.v3.raw.core.party.viewYaw != actionParty.viewYaw ||

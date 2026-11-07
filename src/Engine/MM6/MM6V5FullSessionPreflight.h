@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <span>
 #include <string>
 
@@ -25,6 +26,23 @@ struct V5FullSessionPreflight {
 };
 
 V5FullSessionPreflight stageV5FullSessionPreflight(
+    std::span<const std::uint8_t> bytes,
+    const NpcStaticBaseline &freshNpcs,
+    std::span<const std::string> expectedNames,
+    const MapBaseReader &readBase,
+    const GroundItemVerifier &verifyItem,
+    const ItemTable &itemTable,
+    std::size_t overlayTableCount,
+    std::size_t tileTableCount,
+    std::size_t runtimeActorCap,
+    RandomEngineType selectedRngType,
+    std::span<LevelDecoration> rebuiltDecorations,
+    const DecorationTable &decorationTable,
+    GameTitle title);
+
+// Same detached validation with the large composed owner graph allocated
+// directly on the heap for fresh game-thread child processes.
+std::unique_ptr<V5FullSessionPreflight> stageV5FullSessionPreflightOnHeap(
     std::span<const std::uint8_t> bytes,
     const NpcStaticBaseline &freshNpcs,
     std::span<const std::string> expectedNames,

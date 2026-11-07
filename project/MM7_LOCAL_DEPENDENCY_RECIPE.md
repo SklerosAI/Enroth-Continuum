@@ -43,5 +43,31 @@ fresh isolated CMake package-find probe resolved ZLIB, PNG, SDL3, OpenAL Soft
 and the five FFmpeg libraries from this prefix. A linked MM7 app built against
 these new archives, runtime decode/audio/render checks, a clean offline clone,
 and binary distribution review remain separate gates. The normal CMake path
-still uses its cached prebuilt library archive, and the local-only path still
-refuses other missing source inputs and recipes.
+still uses its cached prebuilt library archive.
+
+## Opt-in CMake lane
+
+The `EC_LOCAL_ONLY_CONFIGURE=ON` path accepts the recipe's `prefix/` through
+`EC_LOCAL_DEPS_PREFIX`. It checks the report, pinned source revisions, all nine
+archive hashes and arm64 slices, the FFmpeg configuration hash/license flags,
+and every copied notice before setting exact CMake package paths. It also
+points cpptrace's libdwarf FetchContent source override to the separately
+tracked `libdwarf-lite/` snapshot. The normal build path is unchanged.
+
+```sh
+cmake -S . -B build/mm7-local-only \
+  -DEC_LOCAL_ONLY_CONFIGURE=ON \
+  -DEC_LOCAL_DEPS_PREFIX=/absolute/path/to/build/mm7-repo-deps-release/prefix \
+  -DOE_USE_PREBUILT_DEPENDENCIES=OFF \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_OSX_ARCHITECTURES=arm64
+```
+
+The current checkout still has a ztd.text gitlink and six nested ztd source
+requirements, so this command intentionally stops with those named inputs.
+It does not fetch them or substitute a system package. A bounded synthetic
+source-tree configure resolved the five media packages from the local prefix
+and cpptrace's libdwarf source from the supplied local path, with FetchContent
+disconnected. Wrong build-type, absent-prefix and changed-archive-hash probes
+failed closed. A real clean-clone MM7 app build awaits the ztd replacement and
+further linked validation.

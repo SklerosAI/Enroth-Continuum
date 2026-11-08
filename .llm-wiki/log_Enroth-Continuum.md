@@ -2739,3 +2739,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Bounded the held item, reachable shop and guild stock cells, and actor loot fields in detached MM7 preflight. Two synthetic tests failed before the correction; the revised validator and atomic helper batch passed 22/22. Unused shop houses and weapon/armor tail cells remain accepted for compatibility.
 - A disposable fresh-save writer now checks that malformed thumbnails and inactive beacon images do not reject an otherwise valid native save. Both checks failed before the correction; writer and fresh-process reader passed afterward. Production SaveLoad is still unwired to the MM7 atomic helper, and legacy/modded-save compatibility remains open.
+
+## [2026-11-07] verify | MM7 save candidate integrated across titles
+- by: T-Burton-ND via codex
+- Rebased and fast-forwarded the MM7 PCX guard, detached save preflight and shared chest reconstruction guard into the MM6 integration tree. The A/B combined GameTest and UnitTest build passed, along with 22/22 MM7 validator/atomic tests, 5/5 PCX/chest units and a disposable MM7 writer plus fresh-process reader.
+- The seven-child MM6 first-map chain, three full-retry fault children, paperdoll and normal Save/Load children, and MM7 control all passed under network denial. The MM7 preflight remains detached from production SaveLoad pending full semantics, a native profile root and live save/load ownership decisions.

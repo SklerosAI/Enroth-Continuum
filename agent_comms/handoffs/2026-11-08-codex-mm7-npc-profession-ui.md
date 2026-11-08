@@ -1,0 +1,9 @@
+# MM7 NPC profession display and hire-option guard
+
+- Branch/worktree: `codex/mm7-combat-fixes` in the reused MM7 combat worktree, rebased onto integration `2898e744e`.
+- Code/test commit: `a7a0e0da8` (original pre-rebase commit `48306d442`). Owned files: `src/Engine/Localization.cpp`, `src/GUI/UI/NPCTopics.cpp`, and `test/Bin/GameTest/GameTests_MM7Combat.cpp`. No main-checkout edits or merge by this lane.
+- Before the fix, a synthetic MM7 NPC with profession 78 aborted in the localized `NameAndTitle` lookup at the shared 1..77 profession table bound. A separate synthetic test showed the hire option remained visible for professions 78 and 0. These were fresh network-denied GameTest processes after a test-only build.
+- The MM7 runtime now displays the plain NPC name when its profession is outside the table, and omits the hire option for an out-of-range or zero profession. Valid MM7 table professions and MM6 behavior retain their existing paths.
+- After the fix and again after rebase, the two focused MM7 cases passed 1/1 each in separate network-denied processes. A valid MM6 title/hire-option control passed 1/1. `OpenEnroth_GameTest` rebuilt through `enroth-build`; direct cpplint on all three touched files and `git diff --check` passed. The combined first-map gate and full MM7 suite remain for integration.
+- Outstanding: the `%17` dialogue formatter in `src/GUI/GUIWindow.cpp` still indexes `pProfessions` for an invalid or zero profession. Claude's active MM6 character-screen lane owns that file, so this change deliberately leaves it for a separate coordinated patch. Directly injected stale hire topics in `UIHouses.cpp` and `UIDialogue.cpp` are likewise outside this narrow normal-option guard; no claim of complete save validation is made.
+- Privacy: tests use synthetic NPC fields and local title data only. No proprietary data, saves, logs, or asset inventories were added to Git.

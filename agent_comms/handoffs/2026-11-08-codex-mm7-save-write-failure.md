@@ -1,0 +1,10 @@
+# MM7 save write-failure handling handoff
+
+- Owner/recipient: Codex MM7 save-failure lane to Codex integration lead.
+- Branch/worktree: `codex/mm7-audit-integration` in the reused `mm7-save-atomic` worktree, based on integration `975ed6000`.
+- Code commit: `20cf22a69`. Only `src/Engine/SaveLoad.cpp` and `test/Bin/GameTest/GameTests_MM7DisposableSave.cpp` changed.
+- Result: MM7 `saveGame` now returns its existing empty-header failure result for a user-filesystem write exception on manual, quick or auto saves. The manual Save menu stays open and shows localized Error with an error sound. Quicksave restores its prior rotating index and withholds saved feedback on failure. A capture exception still propagates, but the quick index is restored. MM6 early save guards are unchanged.
+- Pre-fix proof: the test-only, scoped proxy filesystem threw only on `saves/` writes. Both focused MM7 tests failed before the fix: manual and quick writes threw; neither displayed Error, and the quick index advanced from 4 to 0. The proxy restored the original user filesystem before the test returned.
+- Checks after fix: network-denied `OpenEnroth_GameTest` build passed. The two focused failure cases passed 2/2; MM6 save-dispatch and startup/chest guards passed 2/2; existing successful MM7 manual overwrite and quicksave/quickload controls passed 2/2. Scoped cpplint on both edited files and `git diff --check` passed. The GameTest lane was released to the NPC UI lane through the local bridge.
+- Limits: `createSaveData` still updates the live map visit time, compacts sprites and replaces global map deltas before `ufs->write`. Native writing still opens an existing slot with `wb`; a failed write may truncate it. This slice does not roll back capture state, connect the MM7 atomic helper or its partial semantic validator, or claim disk durability. A full combined MM6/MM7 gate remains for integration.
+- Privacy: only synthetic RAM-profile failure injection and high-level local results are recorded; no private saves, data or logs were added to Git.

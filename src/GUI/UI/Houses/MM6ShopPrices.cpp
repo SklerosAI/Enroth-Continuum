@@ -5,7 +5,9 @@
 #include <stdexcept>
 
 #include "Engine/Data/ItemData.h"
+#include "Engine/MM6/MM6ItemGenerator.h"
 #include "Engine/Objects/Character.h"
+#include "Engine/Objects/Item.h"
 #include "Engine/Objects/NPCEnums.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/ItemTable.h"
@@ -72,6 +74,21 @@ int mm6::itemValue(const ItemRecord28 &record, const ItemTable &table) {
     return stored > 10 ? base + stored : base * stored;
 }
 
+int mm6::itemValue(const Item &item, const ItemTable &table) {
+    if (item.mm6RawRecord)
+        return itemValue(*item.mm6RawRecord, table);
+    if (table.items[item.itemId].type == ITEM_TYPE_POTION)
+        throw std::runtime_error("MM6 item value of a potion needs its original record");
+    ItemRecord28 record;
+    record.setWord(0, std::to_underlying(item.itemId));
+    if (item.standardEnchantment) {
+        record.setWord(4, 1);
+        record.setWord(8, item.standardEnchantmentStrength);
+    }
+    record.setWord(12, std::to_underlying(item.specialEnchantment));
+    return itemValue(record, table);
+}
+
 int mm6::itemBuyPrice(int value, float multiplier, int merchant) {
     const int full = static_cast<int>(value * static_cast<double>(multiplier));
     return std::max(1, std::max((100 - merchant) * full / 100, value));
@@ -101,13 +118,12 @@ bool mm6::shopTradesItem(int houseId, ItemId item, const ItemData &data) {
     const int id = std::to_underlying(item);
     if ((id >= 430 && id < 436) || id > 445)
         return false;
-    // The original table loader stores an unknown or missing type as the one-handed weapon code.
-    const int type = data.type == ITEM_TYPE_MISC ? std::to_underlying(ITEM_TYPE_SINGLE_HANDED) : std::to_underlying(data.type);
+    const int type = detail::originalItemTypeCode(data.type);
     if (houseId < 15)
         return type >= std::to_underlying(ITEM_TYPE_SINGLE_HANDED) && type <= std::to_underlying(ITEM_TYPE_BOW);
     if (houseId < 29)
         return type >= std::to_underlying(ITEM_TYPE_ARMOUR) && type <= std::to_underlying(ITEM_TYPE_BOOTS);
     if (houseId < 42)
-        return data.skill == SKILL_MISC;
+        return detail::originalItemSkillCode(data.skill) == 13;
     return houseId < 48;
 }

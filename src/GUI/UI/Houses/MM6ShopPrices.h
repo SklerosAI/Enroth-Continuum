@@ -5,6 +5,7 @@
 #include "Engine/Objects/ItemEnums.h"
 
 class Character;
+struct Item;
 struct ItemData;
 struct ItemTable;
 
@@ -41,6 +42,16 @@ int merchantPercent(const Character &character);
  * @return                              Item value in gold.
  */
 int itemValue(const ItemRecord28 &record, const ItemTable &table);
+
+/**
+ * MM6 item value of a live item. Uses the item's original record when it has one, otherwise its bonus fields. A potion
+ * without a record has no known value and throws.
+ *
+ * @param item                          Item to value.
+ * @param table                         MM6 item table.
+ * @return                              Item value in gold.
+ */
+int itemValue(const Item &item, const ItemTable &table);
 
 /**
  * @param value                         Item value.

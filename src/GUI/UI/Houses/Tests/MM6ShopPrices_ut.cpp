@@ -5,6 +5,7 @@
 #include "GUI/UI/Houses/MM6ShopPrices.h"
 
 #include "Engine/Data/ItemData.h"
+#include "Engine/Objects/Item.h"
 #include "Engine/Tables/ItemTable.h"
 
 static mm6::ItemRecord28 record(int item, int bonus, int strength, int special) {
@@ -83,8 +84,31 @@ UNIT_TEST(MM6ShopPrices, ItemValue) {
     EXPECT_THROW(mm6::itemValue(record(5, 0, 0, 60), table), std::runtime_error);
 }
 
+UNIT_TEST(MM6ShopPrices, LiveItemValue) {
+    // A live item is valued from its original record when it has one, otherwise from its bonus fields.
+    ItemTable table;
+    table.items[static_cast<ItemId>(5)].baseValue = 40;
+    table.items[static_cast<ItemId>(6)].type = ITEM_TYPE_POTION;
+    table.specialEnchantments[static_cast<ItemEnchantment>(3)].valueAdd = 500;
+    Item item;
+    item.itemId = static_cast<ItemId>(5);
+    EXPECT_EQ(mm6::itemValue(item, table), 40);
+    item.standardEnchantment = ATTRIBUTE_MIGHT;
+    item.standardEnchantmentStrength = 3;
+    EXPECT_EQ(mm6::itemValue(item, table), 340);
+    item.standardEnchantment.reset();
+    item.specialEnchantment = static_cast<ItemEnchantment>(3);
+    EXPECT_EQ(mm6::itemValue(item, table), 540);
+    item.mm6RawRecord = record(5, 0, 0, 0);
+    EXPECT_EQ(mm6::itemValue(item, table), 40);
+
+    Item potion;
+    potion.itemId = static_cast<ItemId>(6);
+    EXPECT_THROW(mm6::itemValue(potion, table), std::runtime_error);
+}
+
 UNIT_TEST(MM6ShopPrices, ShopTradesItem) {
-    // Shops deal in items by house id band, an untyped item counts as a weapon, and a few item ids are never taken.
+    // Shops deal in items by house id band, an untyped item goes only to general stores, and a few item ids are never taken.
     ItemData sword;
     sword.type = ITEM_TYPE_SINGLE_HANDED;
     sword.skill = SKILL_SWORD;
@@ -101,7 +125,9 @@ UNIT_TEST(MM6ShopPrices, ShopTradesItem) {
     const ItemId id = static_cast<ItemId>(10);
     EXPECT_TRUE(mm6::shopTradesItem(1, id, sword));
     EXPECT_FALSE(mm6::shopTradesItem(1, id, helm));
-    EXPECT_TRUE(mm6::shopTradesItem(14, id, untyped));
+    EXPECT_FALSE(mm6::shopTradesItem(14, id, untyped));
+    EXPECT_FALSE(mm6::shopTradesItem(28, id, untyped));
+    EXPECT_TRUE(mm6::shopTradesItem(42, id, untyped));
     EXPECT_FALSE(mm6::shopTradesItem(15, id, sword));
     EXPECT_TRUE(mm6::shopTradesItem(28, id, helm));
     EXPECT_FALSE(mm6::shopTradesItem(29, id, sword));

@@ -1,0 +1,11 @@
+# MM7 native profile-root startup context handoff
+
+- Owner/recipient: Codex MM7 native-root lane to Codex integration lead.
+- Branch/worktree: `codex/mm7-combat-fixes` in reused combat worktree, rebased on integration `77b5373ab` (including the hired-NPC profession preflight).
+- Code commit: `48ae16f19`; files: `src/Application/Startup/GameStarter.cpp`, `src/Engine/MM7/MM7AtomicSaveFile.{h,cpp}`, and focused existing MM7 atomic, disposable-save, RAM and MM6 startup tests.
+- Result: after `initUserFs`, MM7 startup stores a canonical absolute native user path for a read-only optional `mm7::startupNativeProfileRoot()` accessor. RAM and other-title startups clear it. Relative paths, a direct root symlink, or a non-directory are refused; a not-yet-created root stays unavailable until native creation. Reads recheck that the stored path remains a canonical ordinary directory. Constructor failure and normal destruction clear the context. Legitimate symlink ancestors are canonicalized.
+- Pre-fix proof: removing only the new GameStarter handoff call, then building and running the disposable native writer made its new `ASSERT_TRUE(nativeRoot)` fail before any save write. The call was restored and the same writer plus fresh-process reader passed 1/1 each. The first disposable fixture was recreated after the red process wrote its config.
+- Focused checks: MM7 atomic/root/RAM group passed 10/10; MM6 startup/chest control passed 1/1. Rebuilt and repeated both after rebasing and after lifecycle cleanup. Scoped cpplint on all seven changed source/test files and `git diff --check` passed.
+- Combined gate: network-denied full MM6 first-map gate passed all 25 child checks plus overall PASS; full MM7 headless suite passed 474 tests with 2 skipped out of 476 (3 disabled). Only documentation changed during those runs.
+- Documentation: wiki/index `b5fee3030`; separately committed wiki log `29953c677`. The GameTest lane was released to Claude through the local bridge.
+- Limit: this only supplies context for future wiring. Production SaveLoad/UI still use the inherited paths; no live atomic-save or race-free pathname claim is made. The existing atomic helper's root/path policy was not widened. No private files, saves or logs were committed.

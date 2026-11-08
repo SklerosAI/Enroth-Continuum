@@ -10,21 +10,34 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 ## Fast resume pointer — 2026-11-07
 
-Claude integrated Codex's C1 Cancel-only MM6 indoor dialog and C2 detached party-death model; both still require live transaction/dispatch gates. Codex's MM7 PCX guard, detached save preflight with actor/item bounds, and shared chest guard are now in the MM6 integration tree. The preflight is not a production validator. See [candidate scope and proof limits](MM6-Transition-And-Death-Candidates.md) and [MM7 atomic save limits](MM7-Atomic-Save-File.md); Claude remains the MM6 integration lead.
+Reconciled with source at integration `ef8f0a3ee`. MM6 F4b is partly closed.
+The Engine first-map load attempt owns every replay phase through post-world
+agreement, and `Game::gameLoop` releases it before first input or abandons to
+the main menu. The normal MM6 Save menu writes numbered `saveNNN.ec6` slots
+atomically, and the Load menu lists only loadable numbered slots. Production
+load is in progress in Lane L: only test code constructs the attempt and arms
+saving, and production `loadGame()` still refuses MM6. F5a has not started.
+The first-map gate runner, with its fault, paperdoll and normal Save/Load
+children and the MM7 control, passed after those merges.
 
-The MM6 implementation goal resumed on 2026-11-07. The Engine first-map
-attempt and the MM6 Save/Load menu lanes have merged. Their combined seven-child
-chain, three full-retry faults, paperdoll and normal Save/Load children, and MM7
-control passed on the MM7 save integration branch. A separate production load lane is connecting numbered-slot
-attempt construction, owner publication, `loadGame()` and post-release save
-arming. Normal MM6 reload, visited-map return and Atlas MM6 Play remain closed
-until that route and the later campaign gates pass.
+The F4d lanes merged MM6 event variables, house entry with temple heal and
+NPC topics, paperdoll equip and inventory capture, first-map combat, the MM6
+item generator, and detached transition owners with border rest. Codex's C1
+Cancel-only indoor dialog and C2 detached party-death model are integrated
+but not wired (see [candidate scope and proof limits](MM6-Transition-And-Death-Candidates.md)).
+No cross-map move works live. Codex's MM7 PCX guard, detached save preflight
+and shared chest guard are also in the tree. The preflight is not a production
+validator (see [MM7 atomic save limits](MM7-Atomic-Save-File.md)). Claude
+remains the MM6 integration lead.
+
 Use the [exact resume runbook](../project/MM6_RESUME_HANDOFF.md) and its
-disposable gate runner. See [plan section 18.1](../project/plan.md) for the
-F4b → F5a → F4d → F4c → F5b → F6 sequence and risk-based test cadence.
-Open only the linked packet for the current gate; the historical entries
-below remain available when a specific contradiction or regression calls for
-them.
+disposable gate runner, and the per-row evidence in the
+[implementation checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md). The
+lane record is in [the session handoff](../project/SESSION_HANDOFF_2026-11-07.md).
+See [plan section 18.1](../project/plan.md) for the F4b → F5a → F4d → F4c →
+F5b → F6 sequence and risk-based test cadence. Open only the linked packet for
+the current gate. The historical entries below remain available when a
+specific contradiction or regression calls for them.
 
 ## Worktree budget — 2026-11-07
 

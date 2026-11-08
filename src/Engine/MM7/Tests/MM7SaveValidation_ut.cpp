@@ -93,6 +93,42 @@ UNIT_TEST(MM7SaveValidation, RejectsInvalidCharacterInventoryReferences) {
     EXPECT_FALSE(mm7::detail::hasSafeCharacterInventoryReferences(character));
 }
 
+UNIT_TEST(MM7SaveValidation, RejectsInvalidHeldShopAndGuildItems) {
+    Party_MM7 party{};
+    EXPECT_TRUE(mm7::detail::hasSafePartyInventoryReferences(party));
+
+    party.pickedItem.itemId = 799;
+    party.standartItemsInShops[0][0].itemId = 1;
+    party.specialItemsInShops[50][11].itemId = 799;
+    party.spellBooksInGuilds[31][11].itemId = 1;
+    EXPECT_TRUE(mm7::detail::hasSafePartyInventoryReferences(party));
+
+    party.pickedItem.itemId = 800;
+    EXPECT_FALSE(mm7::detail::hasSafePartyInventoryReferences(party));
+    party.pickedItem.itemId = 0;
+    party.standartItemsInShops[0][0].itemId = 800;
+    EXPECT_FALSE(mm7::detail::hasSafePartyInventoryReferences(party));
+    party.standartItemsInShops[0][0].itemId = 0;
+    party.specialItemsInShops[50][11].itemId = 800;
+    EXPECT_FALSE(mm7::detail::hasSafePartyInventoryReferences(party));
+    party.specialItemsInShops[50][11].itemId = 0;
+    party.spellBooksInGuilds[31][11].itemId = 800;
+    EXPECT_FALSE(mm7::detail::hasSafePartyInventoryReferences(party));
+    party.spellBooksInGuilds[31][11].itemId = 0;
+
+    party.standartItemsInShops[0][5].itemId = 800; // Last active weapon slot.
+    EXPECT_FALSE(mm7::detail::hasSafePartyInventoryReferences(party));
+    party.standartItemsInShops[0][5].itemId = 0;
+    party.specialItemsInShops[14][7].itemId = 800; // Last active armor slot.
+    EXPECT_FALSE(mm7::detail::hasSafePartyInventoryReferences(party));
+    party.specialItemsInShops[14][7].itemId = 0;
+
+    party.standartItemsInShops[0][6].itemId = 800; // Weapon shop tail.
+    party.specialItemsInShops[14][8].itemId = 800; // Armor shop tail.
+    party.specialItemsInShops[51][11].itemId = 800; // Unused house.
+    EXPECT_TRUE(mm7::detail::hasSafePartyInventoryReferences(party));
+}
+
 UNIT_TEST(MM7SaveValidation, RejectsInvalidPartyAndCharacterEnums) {
     Party_MM7 party{};
     EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
@@ -279,6 +315,30 @@ UNIT_TEST(MM7SaveValidation, RejectsInvalidActorReferenceBounds) {
     delta.actors[0].monsterId = 277;
     indoor.actors = delta.actors;
     EXPECT_FALSE(mm7::detail::hasSafeIndoorDeltaReferences(indoor, 0, 0, 0));
+}
+
+UNIT_TEST(MM7SaveValidation, RejectsInvalidActorLootItems) {
+    OutdoorDelta_MM7 delta{};
+    Actor_MM7 actor{};
+    actor.monsterInfo.id = 1;
+    actor.carriedItemId = 799;
+    actor.items[0].itemId = 1;
+    actor.items[1].itemId = 1;
+    actor.items[3].itemId = 799;
+    delta.actors.push_back(actor);
+    EXPECT_TRUE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+
+    delta.actors[0].carriedItemId = 800;
+    EXPECT_FALSE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+    delta.actors[0].carriedItemId = 0;
+    delta.actors[0].items[0].itemId = 800;
+    EXPECT_FALSE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+    delta.actors[0].items[0].itemId = 0;
+    delta.actors[0].items[1].itemId = 800;
+    EXPECT_FALSE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+    delta.actors[0].items[1].itemId = 0;
+    delta.actors[0].items[3].itemId = 800;
+    EXPECT_FALSE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
 }
 
 UNIT_TEST(MM7SaveValidation, RejectsIndoorDoorOverflowAndInvalidIds) {

@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstdint>
+#include <memory>
 #include <span>
 #include <string>
 
@@ -12,6 +13,7 @@
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
+#include "Engine/Snapshots/CompositeSnapshots.h"
 
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UISaveLoad.h"
@@ -47,6 +49,27 @@ GAME_TEST(MM7DisposableSave, DISABLED_WriteFreshProfile) {
     EXPECT_GT(saved.size(), 1024u);
     EXPECT_TRUE(mm7::preflightNativeSaveStructure(
         std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saved.data()), saved.size()),
+        GameTitle::MM7, *pGames_LOD));
+
+    auto badThumbnail = std::make_unique<SaveGame_MM7>();
+    deserialize(saved, badThumbnail.get());
+    badThumbnail->thumbnail = Blob::fromString("invalid PCX thumbnail");
+    Blob thumbnailCandidate;
+    serialize(*badThumbnail, &thumbnailCandidate);
+    EXPECT_TRUE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(thumbnailCandidate.data()),
+                                      thumbnailCandidate.size()),
+        GameTitle::MM7, *pGames_LOD));
+
+    auto inactiveBeacon = std::make_unique<SaveGame_MM7>();
+    deserialize(saved, inactiveBeacon.get());
+    ASSERT_EQ(inactiveBeacon->party.characters[0].installedBeacons[0].beaconTime, 0);
+    inactiveBeacon->lloydImages[{0, 0}] = Blob::fromString("invalid inactive beacon PCX");
+    Blob beaconCandidate;
+    serialize(*inactiveBeacon, &beaconCandidate);
+    EXPECT_TRUE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(beaconCandidate.data()),
+                                      beaconCandidate.size()),
         GameTitle::MM7, *pGames_LOD));
     EXPECT_EQ(pParty->uNumGold, savedGold);
 }

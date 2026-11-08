@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 
+#include "Engine/Data/HouseEnums.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Objects/MonsterEnums.h"
 #include "Engine/Objects/SpriteEnums.h"
@@ -86,6 +87,10 @@ bool safeActorReferences(const std::vector<Actor_MM7> &actors) {
                monsterId <= std::to_underlying(MONSTER_LAST) &&
                actor.monsterId >= std::to_underlying(MONSTER_INVALID) &&
                actor.monsterId <= std::to_underlying(MONSTER_LAST) &&
+               validItemId(actor.carriedItemId) &&
+               validItemId(actor.items[0].itemId) &&
+               validItemId(actor.items[1].itemId) &&
+               validItemId(actor.items[3].itemId) &&
                actor.uniqueNameIndex >= 0 && actor.uniqueNameIndex <= 30 &&
                (hostilityGroup <= std::to_underlying(MONSTER_TYPE_LAST) ||
                 hostilityGroup == 9999);
@@ -235,6 +240,36 @@ bool detail::hasSafeChestReferences(const Chest_MM7 &chest) {
 }
 
 bool detail::hasSafePartyInventoryReferences(const Party_MM7 &party) {
+    const auto safeShopRows = [](const auto &rows) {
+        for (std::size_t row = 0; row < rows.size(); ++row) {
+            const HouseId house = static_cast<HouseId>(row + std::to_underlying(HOUSE_FIRST_SHOP));
+            switch (house) {
+                case HOUSE_13: case HOUSE_14: case HOUSE_27: case HOUSE_28:
+                case HOUSE_39: case HOUSE_40: case HOUSE_41: case HOUSE_52:
+                    continue; // These house IDs are unused in MM7.
+                default:
+                    break;
+            }
+            const std::size_t activeSlots = house < HOUSE_FIRST_ARMOR_SHOP ? 6 :
+                                            house < HOUSE_FIRST_MAGIC_SHOP ? 8 : 12;
+            for (std::size_t slot = 0; slot < activeSlots; ++slot)
+                if (!validItemId(rows[row][slot].itemId))
+                    return false;
+        }
+        return true;
+    };
+    const auto safeGuildRows = [](const auto &rows) {
+        return std::all_of(rows.begin(), rows.end(), [](const auto &row) {
+            return std::all_of(row.begin(), row.end(), [](const Item_MM7 &item) {
+                return validItemId(item.itemId);
+            });
+        });
+    };
+    if (!validItemId(party.pickedItem.itemId) ||
+        !safeShopRows(party.standartItemsInShops) ||
+        !safeShopRows(party.specialItemsInShops) ||
+        !safeGuildRows(party.spellBooksInGuilds))
+        return false;
     return std::all_of(party.characters.begin(), party.characters.end(),
                        [](const Character_MM7 &character) {
                            return hasSafeCharacterInventoryReferences(character);
@@ -337,18 +372,18 @@ bool preflightNativeSaveStructure(std::span<const std::uint8_t> bytes,
             !detail::hasSafePartySemanticReferences(save->party))
             return false;
 
-        // The current menu tolerates a bad thumbnail; this detached preflight
-        // uses the stricter policy until legacy-save compatibility is checked.
-        (void) pcx::decode(save->thumbnail);
+        // The load menu tolerates a bad thumbnail and the runtime does not
+        // decode it when reconstructing the active game state.
         for (int player = 0; player < 4; ++player) {
             for (int beacon = 0; beacon < 5; ++beacon) {
                 const auto key = std::pair(player, beacon);
                 const bool active = save->party.characters[player].installedBeacons[beacon].beaconTime != 0;
                 const auto image = save->lloydImages.find(key);
-                if (active && image == save->lloydImages.end())
-                    return false;
-                if (image != save->lloydImages.end())
+                if (active) {
+                    if (image == save->lloydImages.end())
+                        return false;
                     (void) pcx::decode(image->second);
+                }
             }
         }
         for (const auto &[name, delta] : save->mapDeltas)

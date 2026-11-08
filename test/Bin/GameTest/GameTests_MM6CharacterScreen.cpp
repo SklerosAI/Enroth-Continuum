@@ -13,6 +13,7 @@
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/MapTable.h"
 
+#include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
 
 static void completeEditableMM6Party() {
@@ -56,6 +57,37 @@ static void enterFirstMapFromNewGame(EngineController &game) {
     mm6::testing::setNewGameSaveOverride({});
     ASSERT_EQ(engine->_currentLoadedMapId, pMapTable->GetMapInfo("oute3.odm"));
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
+}
+
+static void clickCharacterScreenButton(EngineController &game, GUIButton *button) {
+    game.pressAndReleaseButton(BUTTON_LEFT, button->rect.topLeft() + Pointi(56, 16)); // The right end of the oval in the 64x32 button picture.
+    game.tick();
+}
+
+GAME_TEST(MM6CharacterScreenHeadless, DISABLED_TabsOpenByKeyAndButton) {
+    // The character screen buttons had MM7 positions and placeholder-sized hit boxes, so clicking the right end of an MM6
+    // button picture did nothing.
+    // Run alone in a fresh MM6 headless process.
+    auto screenTape = tapes.screen();
+    auto tabTape = tapes.custom([] { return current_character_screen_window; });
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_I);
+    game.tick(2); // The key queues the character screen for the next frame.
+    for (PlatformKey key : {PlatformKey::KEY_C, PlatformKey::KEY_S, PlatformKey::KEY_A, PlatformKey::KEY_I}) {
+        game.pressAndReleaseKey(key);
+        game.tick();
+    }
+    for (GUIButton *button : {pCharacterScreen_StatsBtn, pCharacterScreen_SkillsBtn, pCharacterScreen_AwardsBtn, pCharacterScreen_InventoryBtn})
+        clickCharacterScreenButton(game, button);
+    clickCharacterScreenButton(game, pCharacterScreen_ExitBtn);
+    game.tick(); // The exit button press draws its pressed picture, then closes the screen on the next frame.
+
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHARACTERS, SCREEN_GAME));
+    EXPECT_EQ(tabTape, tape(WINDOW_CHARACTER_STATS, WINDOW_CHARACTER_INVENTORY,
+                            WINDOW_CHARACTER_STATS, WINDOW_CHARACTER_SKILLS, WINDOW_CHARACTER_AWARDS, WINDOW_CHARACTER_INVENTORY,
+                            WINDOW_CHARACTER_STATS, WINDOW_CHARACTER_SKILLS, WINDOW_CHARACTER_AWARDS, WINDOW_CHARACTER_INVENTORY));
 }
 
 GAME_TEST(MM6CharacterScreenHeadless, DISABLED_TabKeyRightAfterInventoryKey) {

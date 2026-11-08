@@ -1,6 +1,7 @@
 # MM6 implementation checklist
 
-Status: **F4 offline implementation in progress, 2026-11-06**. This is the public, asset-free
+Status: **F4 in progress, engine table and merged-slice register reconciled
+with source on 2026-11-07** (integration `ef8f0a3ee`). This is the public, asset-free
 index. The exhaustive per-file and per-row catalog is private at
 `local-game-data/mm6/research-2026-11-05/catalog.json` and is ignored by Git.
 An inventoried row is not an implemented game rule. Check an item only when a
@@ -460,7 +461,10 @@ that requirement.
   their argument meanings unverified. The owned scripts confirm respective
   payload lengths of 5, 2 and 1 bytes. Opcode 20 occurs seven times in
   `znwc.evt`; 27 and 28 occur once each in `d09.evt`. Determine field meanings
-  and game behavior before implementing them.
+  and game behavior before implementing them. Update 2026-11-07: the enum now
+  carries `EVENT_MM6_Opcode20`, `27` and `28`, and the interpreter advances
+  past them without effect as the original dispatcher does
+  (`MM6OriginalNoopEvent.AdvancesWithoutEffect`). Other operands stay open.
 - [x] Compare all 14,477 active EVT record frames against the current C++
   parser's MM6 minimum sizes, missing cases and known fixed-width consumers.
   The reproducible `scripts/mm6_probe_event_parser.py` records 318 certain
@@ -698,7 +702,10 @@ that requirement.
   shapes and bitmap-name matches are stronger evidence for the active scripts.
 - [ ] Determine the exact two field meanings and side effects of MM6 opcode
   12, implement its title-specific parser/executor, and identify how MM6
-  invokes movies outside these active map events.
+  invokes movies outside these active map events. Update 2026-11-07: opcode 12
+  now parses and runs as an MM6 outdoor texture operation
+  (`EvtInstruction.cpp`, `EvtInterpreter.cpp`). Its visible effect and the
+  movie triggers stay unverified.
 - [ ] Compare one low, middle and high record of every ID family and every
   structure boundary with MM7. Record incompatible assumptions explicitly.
 - [x] Record the retained MM6 class and skill IDs, source row widths, known
@@ -710,9 +717,9 @@ that requirement.
 
 ## Engine and campaign behavior
 
-The current MM6 branch is a format adapter, not a complete engine. Source
-review points to these concrete inherited MM7 assumptions to remove or prove
-correct before the F4 readiness gate:
+The current MM6 branch is not a complete engine. The table below was
+reconciled with source on 2026-11-07, after the F4b and F4d lanes merged. Each
+row names what runs, the source or test that backs it, and what stays open:
 
 The draft [F4 offline build graph](MM6_F4_BUILD_GRAPH.md) orders these seams by
 dependency; it must be reconciled with the F3 original-file report before any
@@ -721,23 +728,87 @@ runtime implementation phase begins.
 | Runtime area | Current evidence | Required MM6 work |
 | --- | --- | --- |
 | Startup and resources | `Engine.cpp` still enters `MM6_Initialize`, `MM7_LoadLods` and `MM7_Initialize` | Audit each initializer and make title-specific asset, layout and rule paths explicit |
-| Items | `MM6ItemTable.cpp` reads MM6 tables but still populates shared special/artifact bonus maps. MM6 scrolls, books and messages occupy the inherited MM7 scroll, book and artifact ID bands respectively. | Replace all title-specific item-kind, spell mapping and bonus assumptions; verify every MM6 item ID, special effect, potion recipe, enchantment and equipment rule. |
-| Spells | MM6 spell names differ from inherited numeric labels at 49 of 99 IDs under a strict lexical check; 27 IDs have different mana triples, and 11 nonphysical MM6 damage tags currently fall back to physical. | Implement MM6's own 99 spell definitions and effects across every school and mastery, including the linked MM6 scroll/book/wand mappings. |
-| Chests | MM6 `dchest.bin` declares 14×10 layout metadata; `ChestTable.cpp` currently hardcodes eight 9×9 MM7 layouts. The 4,204-byte MM6 delta chest record has 140 28-byte item slots followed by 140 signed grid cells; the accepted original executable copies the full record into changed map output. | Connect the proved 140-cell wire to live MM6 inventory, load MM6 chest dimensions/images, and verify placement, opening and changed-state save/reload without changing MM7 chests. |
-| Outdoor maps | `MM6OutdoorSnapshot.cpp` maps MM6 data into MM7 structures. Offline probes confirm all 15 base/delta layouts; all 921 owned model headers declare zero BSP nodes. `OutdoorLocation::Load` still deserializes `OutdoorDelta_MM7`. | Implement MM6 delta decoding and reconstruction; prove geometry, collision, decoration, spawn, events and persistence across all 15 maps. |
-| Indoor maps | `IndoorLocation::Load` decodes both `.blv` and `.dlv` as `IndoorLocation_MM7` / `IndoorDelta_MM7`; no MM6 indoor snapshot reader exists. Offline probes now confirm all 52 MM6 base and delta section layouts, including MM6's shorter header and record sizes. | Implement MM6 decoding, reconstruction, respawn and delta persistence for all 52 interiors; do not reuse MM7's 40-byte delta header or per-face/per-sprite attribute arrays. |
-| Events | The offline parser audit finds at least 318 deterministic record failures across opcodes 12, 19, 20, 24, 26, 27 and 28. MM6 opcode 12 is a two-field bitmap operation in all 12 active records, while the inherited parser treats it as `EVENT_ShowMovie`. | Implement MM6-specific parsing and semantics, then cover every active opcode and event variable. Do not equate parse coverage with campaign correctness. |
-| Event variables | 4,285 active compare/add/subtract/set records use 127 IDs. MM6's 100 map-byte IDs begin at 105, while the inherited MM7 map-variable range begins at 123 and has only 75 entries. MM6 skill, condition, resistance and party-state IDs also collide with different inherited names; `EvtVariables.cpp` has no title branch. | Decode and execute MM6 variables through a separate table and storage/save layout; verify event effects and persistence across the campaign. |
-| Event text | Seven MM6 mouseover IDs exceed their `.str` count without a house-name override. Opcode 5 has 56 uses with an unverified operand; `EVENT_InputString` has 19 uses but its interpreter path currently asserts. | Resolve MM6 hint, location and input-dialog behavior against shipped scripts; keep all map text accessible. |
-| Houses and media | MM6 uses 116 room animation IDs, but none of the corresponding MM7 `pAnimatedRooms` video names appears in the MM6 video indexes; seven `dsounds.bin` names are absent from the sound archive index. All 12 map music IDs have MP3 files. | Implement MM6 room descriptors, reconcile sound aliases/missing names, identify movie triggers, and verify house and map playback. |
+| Items | `MM6ItemTable.cpp` reads MM6 tables but still populates shared special/artifact bonus maps. MM6 scrolls, books and messages occupy the inherited MM7 scroll, book and artifact ID bands. The full MM6 random item generator is traced from the original in [`MM6ItemGenerator.cpp`](../src/Engine/MM6/MM6ItemGenerator.cpp) (`MM6ItemGenerator_ut.cpp`). Chest any-item rolls and event opcode 41 use it. | Replace the remaining item-kind, spell mapping and bonus assumptions. MM6 special-bonus effects in the runtime, potion recipes and item use stay open. Verify every MM6 item ID and equipment rule. |
+| Inventory and equipment | MM6 paperdoll rules from the original executable live in [`MM6PaperdollEquip.cpp`](../src/Engine/MM6/MM6PaperdollEquip.cpp), dispatched from `UICharacter.cpp`. Inventory capture writes each item's raw 28-byte record at its current record and slot, so moves, arrivals and removals save ([bounded inventory packet](MM6_F4_BOUNDED_INVENTORY_PROJECTION.md)). `Party::setHoldingItem` and `takeHoldingItem` keep the raw HELD owner in step. Backed by the gate child `MM6V5PaperdollHeadless.DISABLED_BackpackItemStaysEquippedThroughInventoryCapture`. | Consume and sell removal are untraced. Tail bytes of reused records, backpack swap with an item in hand and auto-placement order stay open. Items with no raw record still refuse a save. |
+| Spells | MM6 spell names differ from inherited numeric labels at 49 of 99 IDs under a strict lexical check. 27 IDs have different mana triples. [`MM6SpellEffectGuard.h`](../src/Engine/MM6/MM6SpellEffectGuard.h) admits player casts of ID 67 (Cure Weakness) from the spellbook and quick cast, and monster casts of IDs 2, 4, 18 and 24. Every other regular ID refuses, the spellbook with a status message. Scroll, NPC and temple casts refuse before queueing ([spell dispatch packet](MM6_F4_SPELL_EFFECT_DISPATCH.md)). | Implement MM6's own 99 spell definitions and effects across every school and mastery, including the linked MM6 scroll/book/wand mappings. First Aid, Power Cure, the other timed cures, Shield and Heroism are implemented but stay behind the guard. |
+| Combat | Party, monster and monster-on-monster hits run an MM6 preflight before any state or RNG changes ([`MM6CombatRules.h`](../src/Engine/MM6/MM6CombatRules.h)). Characters take Electricity and Cold with the original halving rolls. Monster spells 2, 4, 18 and 24 fly as single projectiles with original monster damage ([`MM6MonsterSpellEffect.h`](../src/Engine/MM6/MM6MonsterSpellEffect.h)). The `BrkItem` special attack runs in an MM6 helper. Backed by three opt-in `DISABLED_` tests in `GameTests_MM6Combat.cpp`, each run alone. | Monster-side Electricity and Cold, Poison, Magic and Energy stay closed. Inherited monster AI, monster missiles, other special attacks, turn mode, the second-attack bonus and the MM6 portrait animation mapping stay open. The each-spell-element choice over vanilla's all-Fire is an owner decision. |
+| Chests | MM6 `dchest.bin` declares 14×10 layout metadata, read through `mm6::chestTypeLayout` in `Chest.cpp`. The 4,204-byte MM6 delta chest record has 140 28-byte item slots followed by 140 signed grid cells. The first-map load attempt applies the saved chest owners at `_461103_load_level_sub`. Chest any-item rolls go through the MM6 generator (`MM6ChestCallerAdapter.h`). | Prove placement, opening and changed-state save/reload on maps other than the first, without changing MM7 chests. |
+| Outdoor maps | `OutdoorLocation::Load` has an MM6 branch that decodes the base map with `deserializeMM6Outdoor` and the delta with `decodeMM6OutdoorDelta` (`Outdoor.cpp`). All 15 shipped pairs decode (`MM6V5OutdoorSourceHeadless.AllShippedOutdoorPairsDecode`). Only the first map is reachable in play. One later map, `oute2.odm`, has a direct world-load probe (`MM6V5LaterOutdoorHeadless.DISABLED_DirectSecondOutdoorLoadProbe`). | The 200 persistent bytes and tail still have no verified mapping. Prove geometry, collision, decoration, spawn, events and persistence across all 15 maps through real travel. |
+| Indoor maps | `IndoorLocation::Load` has an MM6 branch that decodes `.blv` and `.dlv` through `MM6IndoorSnapshot` (`Indoor.cpp`). Indoor maps load only in test fixtures, the v6 indoor children, because no live transition reaches them. | Respawn and delta persistence through real indoor entry and exit for all 52 interiors. |
+| Events | All 68 active EVT resources parse under the MM6 reader (`MM6EventFraming.AllActiveRetainedResources`, [framing packet](MM6_F4_EVENT_FRAMING.md)). Opcodes 12 and 24 are MM6 outdoor facet operations, 26 is an MM6 question, 20, 27 and 28 advance without effect (`MM6OriginalNoopEvent.AdvancesWithoutEffect`), 11 and 23 use the MM6 indoor face index, 39 and 40 go through `MM6NpcEventState`, and 41 uses `MM6GiveItemEvent.cpp`. | Opcode 34 (summon item) still runs the MM7 path. Opcode 21 casts stay behind the spell guard. Cover every remaining active opcode and do not equate parse coverage with campaign correctness. |
+| Event variables | `describeMM6Variable` classifies all MM6 IDs ([`MM6EventVariables.h`](../src/Engine/Evt/MM6EventVariables.h)). MM6 dispatch files run quest bits, item in hand, gold, day of year, skills, map bytes 105-175, autonote, character bits, flying, month, resistances 46-55, NPC in party 214, day counters 216-221, hireling 223, circus prizes 224, skill points 225 and all condition writes 87-104 ([`MM6EventVariableDispatch.cpp`](../src/Engine/Evt/MM6EventVariableDispatch.cpp), `MM6EventVariables.InterpreterUsesMM6ResistanceSkillPointHireAndConditionStorage`). IDs 1-45 use the inherited executor behind MM6 value checks. | Reputation 215 needs a party field and a save section. Map bytes above 175 refuse. Condition writes skip protection and health changes, which the original effect still has to confirm. MM6 starts in year 1165, not 1168. Save/reload of event state is open. |
+| Event text | Seven MM6 mouseover IDs exceed their `.str` count without a house-name override. Opcode 5 has 56 uses with an unverified operand. The 19 opcode-26 records now run as MM6 questions through `startMM6QuestionDialogue`. | Resolve MM6 hint and location behavior against shipped scripts, keep all map text accessible. |
+| Houses and media | House entry runs through `mm6EnterHouse` and the MM6 house screen in [`MM6House.cpp`](../src/GUI/UI/Houses/MM6House.cpp), with room media from [`MM6RoomDescriptors.cpp`](../src/GUI/UI/MM6RoomDescriptors.cpp). Entry refuses before state changes when a table, manifest, icon or movie is missing. Resident NPC topics run. Backed by `MM6Houses.EnterAndExit` and `MM6Houses.HouseNpcTopic`. Seven `dsounds.bin` names are absent from the sound archive index. | No house sound plays. Opening hours, hiring topics, save/reload of house state and a visual check of the screen stay open. Reconcile sound aliases and identify movie triggers. |
 | Character UI | `UIPartyCreation.cpp` allocates nine class icons and 22 portraits and draws MM7 classes including Monk and Thief | Build MM6 custom party and Quick Start paths, portraits, six classes and skills |
 | Other UI screens | [Screen register](MM6_UI_SCREEN_AUDIT_F2.md) maps named current screen IDs; `UIGame.cpp` uses MM7 decoration-topic base 380 and `UICharacter.cpp` retains MM6-artifact assertion branches | Reconcile MM6 books, dialogue, rest, paperdoll, hints, menus, options and ending visuals with title-specific data; inspect each in F5 |
-| Services | `Training.cpp` indexes MM6 house IDs 79–88 into an MM7-only 89–98 cap table; `Temple.cpp` retains MM7 restrictions; seven generic MM6 NPC profession IDs alias inherited MM7 effects | Branch training, temple and NPC service eligibility and effects by title; test at/around level, condition and profession-ID boundaries |
-| Save/load | `SaveLoad.cpp` always serializes `SaveGame_MM7` and `IndoorDelta_MM7` / `OutdoorDelta_MM7`; file names and the `UISaveLoad.cpp` list filter require `.mm7` | Define, write, list and reload versioned MM6 saves and map deltas in the MM6 profile; leave MM7 saves readable in the MM7 profile |
+| Services | The MM6 house screen lists each proprietor's services from `houseServiceOptions`. Temple heal follows the original per-temple rules in [`MM6Temple.cpp`](../src/GUI/UI/Houses/MM6Temple.cpp) (`MM6Temple_ut.cpp`, `MM6Houses.TempleHeal`). Every other service, training included, refuses without changing the party (`MM6Houses.UnimplementedServiceRefuses`). MM6 never reaches the inherited `Training.cpp` cap table or `Temple.cpp`. Seven generic MM6 NPC profession IDs still alias inherited MM7 effects. | Training (merchant discount untraced), donate, heal audio, shops, guilds, banks and taverns. Test each at its level, condition and profession-ID boundaries. |
+| Transport | `Transport.cpp` has an MM6 branch and `selectTransportMenu` plans the routes, but the MM6 house screen never builds the transport window, so neither is reachable. | Build the MM6 transport menu and departure after the map transition wiring. |
+| Save/load | The MM6 Save menu writes the selected or first free `saveNNN.ec6` into the native MM6 profile through the slot policy and atomic writer, once a load route has armed the session ([`MM6FirstMapManualSave.h`](../src/Engine/MM6/MM6FirstMapManualSave.h), [`MM6SaveLoadMenu.h`](../src/GUI/UI/MM6SaveLoadMenu.h)). The Load menu lists only loadable MM6 slots. Backed by the gate children `MM6V5NormalSaveMenuHeadless.DISABLED_SaveMenuWritesNumberedFirstMapSlot` and `MM6V5NormalLoadMenuHeadless.DISABLED_LoadMenuListsAndLoadsNumberedFirstMapSlot`. The first-map load attempt owns every phase through `PostWorldAgreed`, and `Game::gameLoop` releases it or abandons to the main menu ([`MM6V5FirstMapLoadAttempt.h`](../src/Engine/MM6/MM6V5FirstMapLoadAttempt.h), fault child `MM6V5FirstMapAbandonHeadless.DISABLED_PostWorldMismatchThenFullReloadAndInput`). | Only test code constructs the attempt and arms saving. Production `loadGame()` throws for MM6 without a test override (`SaveLoad.cpp`). Lane L owns numbered-slot attempt construction, production publication, the `loadGame()` route and arming save after release. Quicksave, quickload, autosave, in-game load and saves of any map other than the first stay refused. |
+| Transitions | Detached pieces only: title-aware `isMapIndoor` and `isMapOutdoor` (`MapEnumFunctions.h`, `MM6MapEnumFunctions_ut.cpp`), visited-map cache, visited indoor owner, `VIST` v2 session codec, border confirmation on a Party copy, `encodeMM6ArchiveEntry`, `restAndHealDetachedParty` (`MM6BorderRest.ConfirmationRestsOnlyTheCopy`) and the four border hirelings. The MM6 indoor transition dialog is Cancel-only (`MM6TransitionDialog.cpp`). `getTravelDestination` returns nothing for MM6, world preparation in `Engine.cpp` still calls the MM7 `isMapIndoor(MapId)`, and `startMapTransition` still calls `autoSave()`, which throws for MM6. | Wire the pieces per the [transition wiring plan](MM6_TRANSITION_WIRING_PLAN.md). Later-map and indoor live capture are missing. Two per-character fields the trip zeroes are unmapped and regeneration catch-up after the jump is unchecked. |
+| Death and recovery | Party death and respawn are modelled detached in [`MM6PartyDeath.cpp`](../src/Engine/MM6/MM6PartyDeath.cpp) (`MM6PartyDeath_ut.cpp`). `Game.cpp` still respawns a dead MM6 party with the MM7 rule. | Wire the model into one `Game.cpp` dispatch after production load lands. |
 | Launcher | Installed Atlas has only MM7 Play | Stage independent `MM6.app` beside verified `MM7.app`; preserve MM7 on install |
 
 This table is a source-derived gap register, not a claim that these are the only
 differences. Continue cross-file review and update it when evidence changes.
+The Startup, Character UI, Other UI and Launcher rows were not rechecked on
+2026-11-07.
+
+### Merged F4b and F4d slices, 2026-11-07
+
+Each checked item names the test that proves it. The lane reports and their
+test counts are in [the session handoff](SESSION_HANDOFF_2026-11-07.md). Tests
+marked `DISABLED_` are opt-in children that `tools/run_mm6_firstmap_gate.py`
+or a single-test run enables, they do not run in the default suite.
+
+- [x] The Engine first-map attempt owns EVRT, actors, generated NPCs,
+  decorations, sprites, the chest handoff and RNG in native order, and checks
+  the prepared world before first input. A refused check abandons to the main
+  menu. Source: `MM6V5FirstMapLoadAttempt.{h,cpp}`, `Game.cpp`. Test: gate
+  fault child `MM6V5FirstMapAbandonHeadless.DISABLED_PostWorldMismatchThenFullReloadAndInput`.
+- [ ] A production route constructs the attempt from a numbered slot and
+  publishes it through `loadGame()`. Only test code constructs it today (Lane L).
+- [x] The normal Save menu writes a numbered `saveNNN.ec6` slot atomically and
+  keeps the old slot byte-identical on a refused or failed write. Test:
+  `MM6V5NormalSaveMenuHeadless.DISABLED_SaveMenuWritesNumberedFirstMapSlot`.
+- [x] The Load menu lists only loadable numbered slots of the native MM6
+  profile and hides malformed and foreign files. Test:
+  `MM6V5NormalLoadMenuHeadless.DISABLED_LoadMenuListsAndLoadsNumberedFirstMapSlot`.
+  That child loads the slot through test-only replay scopes, not through
+  production `loadGame()`.
+- [ ] Save is armed after a production load releases the attempt, and a
+  New Game → save → fresh-process load → save again chain passes through the
+  menus. This closes F4b (Lane L).
+- [x] Event variables 46-55, 214, 216-221, 223-225 and condition writes 87-104
+  run from MM6 dispatch. Test:
+  `MM6EventVariables.InterpreterUsesMM6ResistanceSkillPointHireAndConditionStorage`
+  and the unit tests under `src/Engine/Evt/Tests/`. Variable 215 stays refused.
+- [x] Opcode 41 rolls through the MM6 item generator and moves a held item to
+  the active character first. Test:
+  `MM6GiveItemEvent.RollsOnMM6GeneratorAndMovesHeldItemToActiveCharacter`.
+  Ground drop for a full party and save/reload of the result stay open.
+- [x] MM6 houses open their own screen, list resident NPC topics and run the
+  temple heal. Other services refuse. Tests: `MM6Houses.EnterAndExit`,
+  `MM6Houses.UnimplementedServiceRefuses`, `MM6Houses.TempleHeal`,
+  `MM6Houses.HouseNpcTopic`, `MM6Temple_ut.cpp`.
+- [x] Backpack and paperdoll moves save with the MM6 equip rules. Test: gate
+  child `MM6V5PaperdollHeadless.DISABLED_BackpackItemStaysEquippedThroughInventoryCapture`.
+- [x] First-map combat runs to completion: monster spells 2, 4, 18 and 24 hit
+  the party, the Goblin King's `BrkItem` breaks an item and Cure Weakness casts
+  from the spellbook. Tests: `MM6CombatHeadless.DISABLED_FirstMapMonsterSpellsHitParty`,
+  `MM6CombatHeadless.DISABLED_GoblinKingBreaksItem`,
+  `MM6CombatHeadless.DISABLED_CureWeaknessFromSpellbook`.
+- [x] The detached transition owners pass their unit tests: map type helpers,
+  visited-map cache and `VIST` codec, visited indoor owner, border
+  confirmation, archive encoder (`MM6Archive.ShippedDeltasRoundTrip`) and the
+  Cancel-only indoor dialog (`MM6TransitionDialog_ut.cpp`). A border trip rests
+  a Party copy and leaves the live party alone
+  (`MM6BorderRest.ConfirmationRestsOnlyTheCopy`).
+- [ ] Wire the transition owners into border travel, indoor entry and exit,
+  and the save, per the [wiring plan](MM6_TRANSITION_WIRING_PLAN.md). Then
+  enable the indoor dialog's Yes button.
+- [x] The party death model passes detached (`MM6PartyDeath_ut.cpp`).
+- [ ] Wire MM6 party death and respawn into `Game.cpp`.
+- [ ] F5a staged graphical opening check. Not started.
 
 - [ ] Startup, title, credits, options, UI scale, input and intro videos. The
   MM6 reference card describes a New Game choice between custom party and

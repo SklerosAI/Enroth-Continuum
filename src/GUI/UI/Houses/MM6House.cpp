@@ -3,6 +3,7 @@
 #include <exception>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "Engine/AssetsManager.h"
@@ -31,6 +32,14 @@
 
 static bool isResidentNpc(const NPCData &npc, HouseId houseId) {
     return npc.house == houseId && !(npc.flags & NPC_HIRED);
+}
+
+/**
+ * @param hour                          Hour of the day, 0 to 23.
+ * @return                              The hour on MM6's 12-hour clock, and whether it's pm. MM6 keeps 12 as 12 am.
+ */
+static std::pair<int, bool> amPmHour(int hour) {
+    return hour > 12 ? std::pair(hour - 12, true) : std::pair(hour, false);
 }
 
 static bool hasResidentNpc(HouseId houseId) {
@@ -232,6 +241,14 @@ bool mm6EnterHouse(HouseId houseId) {
         } else {
             engine->_statusBar->setEvent("This place is unavailable.");
         }
+        return false;
+    }
+    if (!mm6::isHouseOpen(entry.openHour, entry.closeHour, pParty->GetPlayingTime().toCivilTime().hour)) {
+        const auto [open, openPm] = amPmHour(*entry.openHour);
+        const auto [close, closePm] = amPmHour(*entry.closeHour);
+        engine->_statusBar->setEvent(LSTR_THIS_PLACE_IS_OPEN_FROM_DS_TO_DS, open, localization->amPm(openPm), close, localization->amPm(closePm));
+        if (pParty->hasActiveCharacter())
+            pParty->activeCharacter().playReaction(SPEECH_STORE_CLOSED);
         return false;
     }
     const mm6::HousePresentationState presentation = mm6::planHousePresentation(GameTitle::MM6, *houses, id);

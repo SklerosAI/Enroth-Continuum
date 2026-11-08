@@ -72,6 +72,12 @@ static void enterThroughDoor(EngineController &game, Vec3f position, int viewYaw
     game.tick();
 }
 
+static void waitUntilHour(EngineController &game, int hour) {
+    // The party stands still while game time passes.
+    while (pParty->GetPlayingTime().toCivilTime().hour != hour)
+        game.tick();
+}
+
 static std::vector<int> setQuestBits() {
     // Every set quest bit, so that a tape shows a bit that changes and the ones that don't.
     std::vector<int> result;
@@ -201,6 +207,7 @@ GAME_TEST(MM6Houses, HouseNpcTopic) {
     auto goldTape = tapes.gold();
     auto screenTape = tapes.screen();
     startMM6NewGame(game);
+    waitUntilHour(game, 10); // The Town Hall opens at 10 am.
     test.startTaping();
     enterThroughDoor(game, kTownHallDoor, 180);
     game.pressGuiButton("House_Npc0"); // Frank Fairchild.
@@ -214,6 +221,24 @@ GAME_TEST(MM6Houses, HouseNpcTopic) {
     ASSERT_EQ(message.opcode, EVENT_ShowMessage);
     EXPECT_EQ(textTape, tape(std::string(), pNPCTopics[message.data.text_id - 1].pText));
     EXPECT_EQ(goldTape.size(), 1);
+}
+
+GAME_TEST(MM6Houses, ClosedHouse) {
+    // The Town Hall turns the party away at 9 am with its opening hours, and lets it in once it opens at 10 am.
+    auto screenTape = tapes.screen();
+    auto houseTape = tapes.house();
+    auto statusTape = tapes.statusBar();
+    auto portraitTape = charTapes.portrait(0);
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kTownHallDoor, 180);
+    ASSERT_EQ(screenTape, tape(SCREEN_GAME));
+    waitUntilHour(game, 10);
+    enterThroughDoor(game, kTownHallDoor, 180);
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
+    EXPECT_EQ(houseTape, tape(HOUSE_INVALID, static_cast<HouseId>(89)));
+    EXPECT_CONTAINS(statusTape, localization->format(LSTR_THIS_PLACE_IS_OPEN_FROM_DS_TO_DS, 10, localization->amPm(false), 2, localization->amPm(true)));
+    EXPECT_CONTAINS(portraitTape, PORTRAIT_NO); // The store closed reaction.
 }
 
 GAME_TEST(MM6Houses, GeneralStoreSell) {

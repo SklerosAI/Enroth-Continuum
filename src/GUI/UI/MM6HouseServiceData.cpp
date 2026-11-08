@@ -115,6 +115,16 @@ HouseEntryPlan planHouseEntry(const HouseServiceData &houses, int houseId) {
             iconName, house.openHour, house.closeHour};
 }
 
+bool isHouseOpen(std::optional<int> openHour, std::optional<int> closeHour, int hour) {
+    if (!openHour || !closeHour)
+        return true;
+    const int lastHour = *closeHour - 1;
+    const unsigned now = hour; // The original compares unsigned, so a close hour of 0 keeps a house open all day.
+    if (lastHour > *openHour)
+        return now >= static_cast<unsigned>(*openHour) && now <= static_cast<unsigned>(lastHour);
+    return now >= static_cast<unsigned>(*openHour) || now <= static_cast<unsigned>(lastHour);
+}
+
 HousePresentationState planHousePresentation(GameTitle title, const HouseServiceData &houses, int houseId) {
     if (title != GameTitle::MM6)
         throw std::runtime_error("MM6 house presentation requires the MM6 title");

@@ -61,6 +61,16 @@ struct HouseEntryPlan {
 // A pre-entry candidate. It does not open the room or mutate the party/UI.
 HouseEntryPlan planHouseEntry(const HouseServiceData &houses, int houseId);
 
+/**
+ * @param openHour                      House's open hour from 2DEvents.txt, `std::nullopt` for a house without hours.
+ * @param closeHour                     House's close hour from 2DEvents.txt.
+ * @param hour                          Current hour of the day.
+ * @return                              Whether the house lets the party in. A house is open from the start of its open
+ *                                      hour to the end of the hour before its close hour, across midnight when the
+ *                                      close hour doesn't come after the open hour.
+ */
+bool isHouseOpen(std::optional<int> openHour, std::optional<int> closeHour, int hour);
+
 struct HousePresentationState {
     int houseId = 0;
     std::string videoName;

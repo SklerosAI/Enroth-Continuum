@@ -625,3 +625,17 @@ TEST(MM6HouseServiceData, DecodesOneActiveMM6EventSoundWithoutPlayback) {
     AudioBufferDataSource malformed(Blob::fromString("not a sound"));
     EXPECT_FALSE(malformed.Open());
 }
+
+TEST(MM6HouseServiceData, OpeningHours) {
+    // An MM6 house closes at the start of its close hour, and wraps past midnight when the close hour comes first.
+    EXPECT_TRUE(mm6::isHouseOpen(std::nullopt, std::nullopt, 3));
+    EXPECT_FALSE(mm6::isHouseOpen(10, 14, 9));
+    EXPECT_TRUE(mm6::isHouseOpen(10, 14, 10));
+    EXPECT_TRUE(mm6::isHouseOpen(10, 14, 13));
+    EXPECT_FALSE(mm6::isHouseOpen(10, 14, 14));
+    EXPECT_TRUE(mm6::isHouseOpen(18, 6, 23));
+    EXPECT_TRUE(mm6::isHouseOpen(18, 6, 5));
+    EXPECT_FALSE(mm6::isHouseOpen(18, 6, 6));
+    EXPECT_FALSE(mm6::isHouseOpen(18, 6, 17));
+    EXPECT_TRUE(mm6::isHouseOpen(22, 0, 12));
+}

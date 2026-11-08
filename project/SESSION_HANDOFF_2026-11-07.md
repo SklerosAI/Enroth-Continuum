@@ -231,6 +231,17 @@ was compiled together, and no lane's tests are known to pass at this snapshot.
   save after release, and a gate section proving save, fresh-process load and
   save again through the menus. This closes F4b.
 
+- **Lanes started after G and P merged:** K, house services phase 2
+  (training, donate, opening hours, hiring topics, original menus), in the old
+  E/G worktree on `mm6-f4d-house-services-2`. Y, MM6 calendar start year 1165
+  and birth years, in the old S/P worktree on `mm6-f4d-calendar`. D,
+  documentation reconciliation with no builds, in a new worktree
+  `mm6-docs-reconcile`. Worktrees are at 10.
+- **MM7 regression under investigation:** `Issues.Issue735d` desyncs in the
+  full MM7 suite, most likely from Codex's actor-ten turn-queue fix
+  (`73feee2b2`) without a retrace. Codex was asked to confirm and retrace
+  (`agent_comms/messages/2026-11-08T01-30-00Z--...issue735d-desync.md`).
+
 The merge order is now "as lanes complete", resolving shared-file overlaps at
 cherry-pick time, because finished lanes shouldn't wait on unfinished ones.
 

@@ -238,6 +238,15 @@ was compiled together, and no lane's tests are known to pass at this snapshot.
   21/21, gate passed. Open: hover price text and merchant speech, second bank
   shelf layout untraced, theft and bans, guild Learn, potions without raw
   records refuse to sell, and save coverage of the shop owner (asked of Lane L).
+- **Y, calendar: merged** as `ebf96bc0b`, `847c4fb3c`, plus the lead's
+  `08b15acec` (MM6 branch of `ChangeClass`, Codex notified). MM6 starts in
+  1165 and rolls birth years from 1144, both from the original executable,
+  through a runtime `gameStartingYear` set in the MM6 startup block and an
+  explicit year for MM6-only code. Tests: unit 1066 passed, two new disabled
+  MM6 calendar game tests (year on the status bar and calendar book, new party
+  ages), MM7 date tests 5/5 with no desync, gate passed. Found: pressing I or
+  C in the MM6 character screen hits an out-of-bounds assert in
+  `OnButtonClick3::Update` because MM6 lacks the MM7 paperdoll button textures.
 - **L, F4b production load: started** in the old A worktree on branch
   `mm6-f4b-production-load`: numbered-slot attempt construction, production
   owner publication with a test fault point at the partial-assignment

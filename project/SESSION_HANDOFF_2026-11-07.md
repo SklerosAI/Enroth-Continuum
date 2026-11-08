@@ -195,6 +195,21 @@ was compiled together, and no lane's tests are known to pass at this snapshot.
 - The worktree budget script now says 15 (`1172e1197`). The owner told this
   session to keep 10, so lanes stay at 10 or fewer until the owner confirms.
 
+- **A and B merged:** A as `ada8472ce`, `1718775f6`, `954796bc5`, B as
+  `0070ac3a9`, `1089d12a3`, `36a05341c`. Conflicts resolved by keeping both
+  sides: the v5 replay test enum gained both `FaultAtPostWorld` (A) and
+  `PlayerInput` (I), the GUI CMake list both `MM6TransitionDialog` (C1) and
+  `MM6SaveLoadMenu` (B), and the gate runner keeps the paperdoll and normal
+  Save/Load sections with one MM7 control at the end. `7e9f386a8` adds
+  `ENROTH_GATE_CHILD_TIMEOUT`. The B worktree was retired. Combined
+  verification of A and B is next.
+- **L, F4b production load: started** in the old A worktree on branch
+  `mm6-f4b-production-load`: numbered-slot attempt construction, production
+  owner publication with a test fault point at the partial-assignment
+  boundary (integrator decision), the production MM6 `loadGame()` route, arming
+  save after release, and a gate section proving save, fresh-process load and
+  save again through the menus. This closes F4b.
+
 The merge order is now "as lanes complete", resolving shared-file overlaps at
 cherry-pick time, because finished lanes shouldn't wait on unfinished ones.
 

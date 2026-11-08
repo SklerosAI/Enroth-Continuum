@@ -590,6 +590,10 @@ void arrangeSpriteObjects() {
     for (SpriteObject &object : pSpriteObjects) {
         if (!object.uObjectDescID)
             continue;
+        if (engine->gameTitle() == GameTitle::MM7 && object.uObjectDescID >= pObjectTable->pObjects.size()) {
+            object.uObjectDescID = 0;
+            continue;
+        }
         object.containing_item.postGenerate(ITEM_SOURCE_MAP);
         if ((object.uAttributes & SPRITE_DROPPED_BY_PLAYER) || object.IsUnpickable())
             continue;
@@ -1119,6 +1123,11 @@ void applySpellSpriteDamage(unsigned int uLayingItemID, Pid pid) {
 
 void UpdateObjects() {
     for (unsigned i = 0; i < pSpriteObjects.size(); ++i) {
+        if (engine->gameTitle() == GameTitle::MM7 && pSpriteObjects[i].uObjectDescID != 0 &&
+            pSpriteObjects[i].uObjectDescID >= pObjectTable->pObjects.size()) {
+            pSpriteObjects[i].uObjectDescID = 0;
+            continue;
+        }
         if (pSpriteObjects[i].uAttributes & SPRITE_SKIP_A_FRAME) {
             pSpriteObjects[i].uAttributes &= ~SPRITE_SKIP_A_FRAME;
         } else {

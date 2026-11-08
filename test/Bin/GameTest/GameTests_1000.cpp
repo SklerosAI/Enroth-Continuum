@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstddef>
+#include <limits>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -16,6 +17,7 @@
 
 #include "Engine/Tables/TextureFrameTable.h"
 #include "Engine/Tables/NPCTable.h"
+#include "Engine/Tables/ObjectTable.h"
 #include "Engine/Interaction.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
@@ -34,6 +36,7 @@
 #include "Engine/Spells/SpellBuff.h"
 #include "Engine/PriceCalculator.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Graphics/ParticleEngine.h"
 #include "Engine/Random/Random.h"
 #include "Engine/TurnEngine/TurnEngine.h"
@@ -1695,6 +1698,98 @@ GAME_TEST(MM6SpriteDamage, NumericArrowStillTraversesDamagePath) {
 
     (void) Actor::DamageMonsterFromParty(projectile, actorId, Vec3f());
     EXPECT_TRUE(target.attributes & ACTOR_ACTIVE);
+}
+
+namespace {
+
+struct ScopedDescriptorTestSprites {
+    std::vector<SpriteObject> original;
+
+    ScopedDescriptorTestSprites() { original.swap(pSpriteObjects); }
+    ~ScopedDescriptorTestSprites() { original.swap(pSpriteObjects); }
+};
+
+} // namespace
+
+GAME_TEST(MM7SpriteDescriptor, QuarantinesInvalidDroppedSpriteBeforeArrange) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_LT(pObjectTable->pObjects.size(), std::numeric_limits<std::uint16_t>::max());
+
+    game.runGameRoutine([] {
+        ScopedDescriptorTestSprites scopedSprites;
+        SpriteObject &sprite = pSpriteObjects.emplace_back();
+        sprite.uObjectDescID = std::numeric_limits<std::uint16_t>::max();
+        sprite.uAttributes = SPRITE_DROPPED_BY_PLAYER;
+        arrangeSpriteObjects();
+        EXPECT_EQ(sprite.uObjectDescID, 0);
+    });
+}
+
+GAME_TEST(MM7SpriteDescriptor, QuarantinesInvalidSpriteBeforeArrangeLookup) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_LT(pObjectTable->pObjects.size(), std::numeric_limits<std::uint16_t>::max());
+
+    game.runGameRoutine([] {
+        ScopedDescriptorTestSprites scopedSprites;
+        SpriteObject &sprite = pSpriteObjects.emplace_back();
+        sprite.uObjectDescID = std::numeric_limits<std::uint16_t>::max();
+        arrangeSpriteObjects();
+        EXPECT_EQ(sprite.uObjectDescID, 0);
+    });
+}
+
+GAME_TEST(MM7SpriteDescriptor, QuarantinesInvalidBeforeSkipFrame) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_LT(pObjectTable->pObjects.size(), std::numeric_limits<std::uint16_t>::max());
+
+    game.runGameRoutine([] {
+        ScopedDescriptorTestSprites scopedSprites;
+        SpriteObject &sprite = pSpriteObjects.emplace_back();
+        sprite.uObjectDescID = std::numeric_limits<std::uint16_t>::max();
+        sprite.uAttributes = SPRITE_SKIP_A_FRAME;
+        UpdateObjects();
+        EXPECT_EQ(sprite.uObjectDescID, 0);
+    });
+}
+
+GAME_TEST(MM7SpriteDescriptor, PreservesFreeAndValidDescriptors) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_GT(pObjectTable->pObjects.size(), 1u);
+
+    game.runGameRoutine([] {
+        ScopedDescriptorTestSprites scopedSprites;
+        SpriteObject &free = pSpriteObjects.emplace_back();
+        free.uAttributes = SPRITE_SKIP_A_FRAME;
+        SpriteObject &valid = pSpriteObjects.emplace_back();
+        valid.uObjectDescID = 1;
+        valid.uAttributes = SPRITE_SKIP_A_FRAME | SPRITE_DROPPED_BY_PLAYER;
+        arrangeSpriteObjects();
+        EXPECT_EQ(pSpriteObjects[0].uObjectDescID, 0);
+        EXPECT_EQ(pSpriteObjects[1].uObjectDescID, 1);
+        UpdateObjects();
+        EXPECT_EQ(pSpriteObjects[0].uObjectDescID, 0);
+        EXPECT_EQ(pSpriteObjects[1].uObjectDescID, 1);
+    });
+}
+
+GAME_TEST(MM6SpriteDescriptor, RetainsOriginalDroppedAndSkipFrameBehavior) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_LT(pObjectTable->pObjects.size(), std::numeric_limits<std::uint16_t>::max());
+
+    game.runGameRoutine([] {
+        ScopedDescriptorTestSprites scopedSprites;
+        SpriteObject &sprite = pSpriteObjects.emplace_back();
+        sprite.uObjectDescID = std::numeric_limits<std::uint16_t>::max();
+        sprite.uAttributes = SPRITE_DROPPED_BY_PLAYER | SPRITE_SKIP_A_FRAME;
+        arrangeSpriteObjects();
+        EXPECT_EQ(sprite.uObjectDescID, std::numeric_limits<std::uint16_t>::max());
+        UpdateObjects();
+        EXPECT_EQ(sprite.uObjectDescID, std::numeric_limits<std::uint16_t>::max());
+    });
 }
 
 GAME_TEST(MM7MonsterSpell, SecondSlotProjectileCarriesAbility) {

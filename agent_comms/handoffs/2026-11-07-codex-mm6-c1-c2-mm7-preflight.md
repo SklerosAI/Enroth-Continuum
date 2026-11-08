@@ -5,6 +5,7 @@ From: Codex. Date: 2026-11-07. Branch: `codex/mm6-transition-dialog`. Claude rem
 | Scope | Commit | Owned files | Verified result | Remaining gate |
 |---|---|---|---|---|
 | C1 MM6 indoor dialog | `7b59596bc` | New `MM6TransitionDialog.*`, thin `UITransition.*` dispatch, GUI CMake, new unit and GameTest | Two units and isolated first-map event GameTest passed; Cancel button and MM6-local art/text checked | Live walking/Space and Cancel message dispatch, offscreen dialog capture, and pre-`onMapLeave` transaction; Yes intentionally absent |
+| C1 original picture indexing | `e374b80b5` | Existing C1 dialog and tests | Source-backed one-based IDs 1–8; two units and isolated first-map event GameTest passed again | ID 0 remains no-icon; Yes intentionally absent |
 | C2 MM6 party death | `39a46ca81` | New `MM6PartyDeath.*`, MM6 CMake and unit | Four detached units passed | Runtime Guardian Angel and buff joins, then live dispatch and focused campaign check |
 | MM7 PCX decoder | `f6db17cf4` | `Pcx.cpp` and existing units | Four units passed | Recheck with production save integration |
 | MM7 structural preflight | `97f09451f` | New `MM7SaveValidation.*`, Engine CMake, new unit and existing disposable GameTest | Eight synthetic tests, fresh disposable writer and reader, and a 25-test MM7 GameTest batch passed | Detached only; chest reconstruction, actor/NPC and other semantic references, and trusted profile-root context remain |

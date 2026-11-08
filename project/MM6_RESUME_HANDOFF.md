@@ -1,59 +1,78 @@
 # MM6 first-map resume handoff — 2026-11-07
 
-This is the bounded next gate for a new session or agent. It records the paused
-state and the exact check to run; it does not claim a playable MM6 campaign.
-Read [plan §18.1](plan.md) for the F4b → F5a → F4d → F4c → F5b → F6 order.
+This is the bounded next gate for a new session or agent. It records the
+current F4b state and the exact check to run. It does not claim a playable MM6
+campaign. Read [plan §18.1](plan.md) for the F4b → F5a → F4d → F4c → F5b → F6
+order. Updated 2026-11-07 at integration `ef8f0a3ee`, after the F4b and F4d
+lanes merged. The lane-by-lane record is in
+[the session handoff](SESSION_HANDOFF_2026-11-07.md).
 
 ## Start from the right checkout
 
 - Use the `mm6-mac-implementation` integration checkout reported by
   `git worktree list`. Check `git status --short --branch` before editing. The
   old `mm6-ec6-transaction` checkout is not the integration tree.
-- The implementation goal is paused. At the pause, the integration tree was
-  clean. The latest code-changing commit is `0d017c115`; subsequent commits
-  update planning, handoff and worktree policy. Do not push the local MM6
-  integration history to the public remote without the separate privacy audit
-  in [Source and Privacy Boundary](../.llm-wiki/Source-and-Privacy-Boundary.md).
-- Ten Git worktrees were registered at the pause. For parallel code work, use
+- The implementation goal resumed on 2026-11-07 with parallel lanes. Do not
+  push the local MM6 integration history to the public remote without the
+  separate privacy audit in
+  [Source and Privacy Boundary](../.llm-wiki/Source-and-Privacy-Boundary.md).
+- The repository cap is 15 registered worktrees. The owner asked this session
+  to stay at 10 or fewer until confirmed. Run
   `python3 tools/check_worktree_budget.py` before creating another and follow
-  the [agent notes](../AGENTS.md). One agent can work in the integration tree.
+  the [agent notes](../AGENTS.md). Code-changing lanes use their own worktrees,
+  never the integration checkout.
 - Private game data, rules, saves and evidence live outside tracked Git. Find
   local evidence through the ignored `local-game-data/private-wiki/INDEX.md`.
   The ignored `mm6/RESUME_LOCAL_PATHS_2026-11-07.md` there has the exact
   machine-specific environment exports. Never copy its contents or raw game
   files into this tracked handoff.
-- The ignored private wiki was copied to a local, access-restricted backup and
-  all **39 files** matched a tree hash on 2026-11-07. This is a same-disk
-  recovery copy, not a cloud or external-drive backup.
 
 ## Exact code state
 
-`89fc3b913` introduced the Engine-owned `mm6::V5FirstMapLoadAttempt` and an
-exact first-map chest handoff. Its fresh seven-child v5 chain passed **7/7**,
-both full-retry fault children passed **1/1**, and MM7 control passed **1/1**.
-`0d017c115` then moved first-map EVRT restoration into that attempt. On
-2026-11-07 the gate runner passed it: seven main children **7/7**, three
-fault-setup and two full-retry fault children **5/5**, and MM7 control
-**1/1**, each in a fresh process.
+F4b is partly closed. What runs:
+
+- **First-map load attempt.** `mm6::V5FirstMapLoadAttempt` owns every replay
+  phase: `Detached`, `Published`, `EventRestored`, `WorldPublished`,
+  `ChestApplied`, `GeneratedNpcsKept`, `RngRestored` and `PostWorldAgreed`.
+  Actors, generated NPCs, decorations and sprites are swapped in as one
+  once-only phase before map events. `mm6::releaseV5FirstMapLoadAttempt()`
+  runs the post-world check from `Game::gameLoop` before first input and
+  abandons to the main menu on refusal.
+- **Save menu.** The normal MM6 Save menu writes the selected or first free
+  `saveNNN.ec6` into the native MM6 profile through the numbered-slot policy
+  and the atomic writer. A refused or failed write keeps the menu open with a
+  status message and leaves the old slot byte-identical.
+- **Load menu listing.** The Load menu lists only loadable numbered slots of
+  the native MM6 profile and hides malformed, backup-only, other-map and
+  foreign files. In-game load is refused.
+
+What does not run yet:
+
+- **Production load (in progress, Lane L).** Only test code constructs the
+  attempt, and it admits only the disposable candidate slot. Production
+  `loadGame()` throws for MM6 without a test override. The Load menu child
+  loads its slot through test-only replay scopes. Manual saving is armed only
+  by test code after a test-only load route. Lane L, on branch
+  `mm6-f4b-production-load`, owns numbered-slot attempt construction,
+  production owner publication with a test fault point at the
+  partial-assignment boundary (an integrator decision), the production
+  `loadGame()` route, arming save after release and a gate section proving
+  save, fresh-process load and save again through the menus. That closes F4b.
+- **Production New Game save, quicksave, quickload, autosave, cross-map
+  travel and saves of any map other than the first** stay refused.
+- **F5a** has not started.
 
 Relevant source entry points:
 
 | Concern | Source |
 | --- | --- |
-| Attempt identity, phase and exact slot/map guards | [`MM6V5FirstMapLoadAttempt.h`](../src/Engine/MM6/MM6V5FirstMapLoadAttempt.h), [`MM6V5FirstMapLoadAttempt.cpp`](../src/Engine/MM6/MM6V5FirstMapLoadAttempt.cpp) |
-| Engine ownership and lifecycle | [`Engine.h`](../src/Engine/Engine.h), [`Engine.cpp`](../src/Engine/Engine.cpp) |
-| Native outdoor EVRT and chest order | [`Outdoor.cpp`](../src/Engine/Graphics/Outdoor.cpp), [`MM6EventRuntimeSaveFields.cpp`](../src/Engine/MM6/MM6EventRuntimeSaveFields.cpp) |
-| Disposable replay and two fault retries | [`GameTests_MM6V5AfterActionFreshChildReplay.cpp`](../test/Bin/GameTest/GameTests_MM6V5AfterActionFreshChildReplay.cpp) |
-| Existing save writer and numbered-slot boundaries | [`MM6V5FirstMapSaveWriter.cpp`](../src/Engine/MM6/MM6V5FirstMapSaveWriter.cpp), [native slot packet](MM6_F4_NATIVE_FIRST_MAP_SLOT_POLICY.md) |
+| Attempt phases, release and abandon | [`MM6V5FirstMapLoadAttempt.h`](../src/Engine/MM6/MM6V5FirstMapLoadAttempt.h), [`MM6V5FirstMapLoadAttempt.cpp`](../src/Engine/MM6/MM6V5FirstMapLoadAttempt.cpp), `Game::gameLoop` in [`Game.cpp`](../src/Application/Game.cpp) |
+| Engine ownership and world preparation | [`Engine.h`](../src/Engine/Engine.h), [`Engine.cpp`](../src/Engine/Engine.cpp), [`Outdoor.cpp`](../src/Engine/Graphics/Outdoor.cpp) |
+| Save and Load menus | [`MM6FirstMapManualSave.h`](../src/Engine/MM6/MM6FirstMapManualSave.h), [`MM6SaveLoadMenu.h`](../src/GUI/UI/MM6SaveLoadMenu.h), MM6 branches of [`SaveLoad.cpp`](../src/Engine/SaveLoad.cpp) and [`UISaveLoad.cpp`](../src/GUI/UI/UISaveLoad.cpp) |
+| Slot policy and writer | [`MM6V5FirstMapNativeSlotPolicy.h`](../src/Engine/MM6/MM6V5FirstMapNativeSlotPolicy.h), [`MM6V5FirstMapSaveWriter.cpp`](../src/Engine/MM6/MM6V5FirstMapSaveWriter.cpp), [native slot packet](MM6_F4_NATIVE_FIRST_MAP_SLOT_POLICY.md) |
+| Gate children | [`GameTests_MM6V5AfterActionFreshChildReplay.cpp`](../test/Bin/GameTest/GameTests_MM6V5AfterActionFreshChildReplay.cpp), [`GameTests_MM6V4FreshChildReplay.cpp`](../test/Bin/GameTest/GameTests_MM6V4FreshChildReplay.cpp), [`GameTests_MM6V5NormalLoadMenu.cpp`](../test/Bin/GameTest/GameTests_MM6V5NormalLoadMenu.cpp) |
 
-The attempt is currently restricted to MM6, the first outdoor map and one
-disposable v5 candidate name. Its phases are `Detached → Published →
-EventRestored → ChestApplied`; `Abandoned` is a refusal state. Pre-event
-actor/generated-NPC/RNG, sprite and decoration replay, post-world admission,
-and input decision still involve test-only scopes. Normal SaveLoad/UI must not
-construct or admit the attempt yet. MM7's route remains separate.
-
-## First action on resume: validate the compiled EVRT slice
+## The gate
 
 Set `MM6_DATA_PATH`, `MM6_RULES_PATH` and `MM7_DATA_PATH` in the shell to the
 existing **private local** directories, then run from the integration checkout:
@@ -63,39 +82,50 @@ python3 tools/run_mm6_firstmap_gate.py --list
 python3 tools/run_mm6_firstmap_gate.py
 ```
 
-The runner builds `OpenEnroth_GameTest` with the project CMake, creates
-owner-only disposable profiles, runs the seven first-map v5 children in order,
-then a fresh three-child setup and both full-retry fault children, and finally
-the MM7 `Prs.Pr2354` control. Every child is a separate process. It requires
-one passing test per child and refuses skipped tests; it removes temporary
-profiles when done. It does not launch a foreground window, use a production
-save, or replace the installed Atlas. The precise filters and opt-in values
-are in the runner, so future agents need not reconstruct a long command list.
+The runner builds `OpenEnroth_GameTest` with the project CMake (it refuses a
+Homebrew CMake), then runs four fresh profiles in order:
 
-**Acceptance:** all seven main children, all five setup/fault children and the
-MM7 control pass. If one fails, retain the failure name and last output locally;
-inspect only its source path and the attempt's phase/order. Do not loosen an
-identity guard or open SaveLoad to make the test green. A passing run verifies
-this slice only; it does not prove normal saves, later maps or a campaign.
+1. The seven-child first-map v5 chain.
+2. Seed, v4 and v5 setup children, then three full-retry fault children:
+   partial assignment, pre-event fault and post-world mismatch.
+3. The same setup, then the paperdoll child.
+4. Seed and v4, then the normal Save menu child and the normal Load menu child.
 
-## Next implementation decisions after a pass
+It ends with the MM7 `Prs.Pr2354` control. Every child is a separate process
+and must report one passing test. Skipped tests count as failures. Temporary
+owner-only profiles are removed afterward. Under load, raise the per-child
+timeout with `ENROTH_GATE_CHILD_TIMEOUT`. The Save and Load menu children
+already get at least 1500 s. The runner never launches a foreground window,
+writes a production save or replaces the installed Atlas.
 
-1. Move pre-event actor and generated-NPC/RNG replay from disposable scopes
-   into the same Engine-owned attempt, with source-bound identity and a single
-   phase transition before map events.
-2. Move decoration and sprite replay into that attempt in the native source
-   order. Require once-only publication and reject a changed native anchor.
-3. Let the attempt own exact post-world validation and release before first
-   input. Keep the fail-closed abandon-to-menu path for partial world failures;
-   this is not a general rollback.
-4. Connect the already tested paused Save capture and numbered `.ec6` slot
-   policy to normal UI and a fresh-process normal save/reload. Only then run
-   the early staged graphical F5a opening check. A one-map success remains a
-   preview, not Atlas MM6 Play.
+The full gate passed after the A and B merges, with the MM7 save candidate
+integrated (see the [wiki log](../.llm-wiki/log_Enroth-Continuum.md)). The G
+and P lanes reported a passing gate after each of their commits.
 
-For each integrated transaction milestone, run the direct changed-path test,
-the seven-child chain, the relevant fault children and MM7 control. Broader
-suites belong at major readiness gates or when a specific regression appears.
-Update the focused [v5 packet](MM6_F4_EC6_V5_SPRITE_RUNTIME.md),
-[wiki handoff](../.llm-wiki/Agent-Handoff.md), index and separate wiki log
-after significant verified work; routine edits need no duplicate status prose.
+**Acceptance:** every child and the MM7 control pass. If one fails, keep the
+failure name and last output locally, then inspect only its source path and
+the attempt's phase and order. Do not loosen an identity guard or open
+SaveLoad to make the test green. A pass verifies the first-map route only. It
+does not prove later maps, travel or a campaign.
+
+## Next steps
+
+1. Integrate Lane L when it reports, then rerun the full gate with its new
+   section. F4b closes when New Game → bounded play → Save menu → fresh-process
+   Load menu → bounded play → save again passes through the production route.
+2. Run F5a, the staged graphical opening check, before broadening the
+   campaign. It needs no code ownership, only a capture and a report.
+3. Then the F4d backlog in the session handoff: transition wiring per the
+   [wiring plan](MM6_TRANSITION_WIRING_PLAN.md), party death wiring, shops and
+   guilds (Lane M was started), house NPC hiring, transport, calendar start
+   year and reputation, and the remaining spells and combat once Codex hands
+   back the shared combat files.
+
+For each integrated milestone, run the changed-path test, the full gate and
+the MM7 control. Broader suites belong at major readiness gates or when a
+specific regression appears. The current per-row evidence is in the
+[implementation checklist](MM6_IMPLEMENTATION_CHECKLIST.md). Update the focused
+[v5 packet](MM6_F4_EC6_V5_SPRITE_RUNTIME.md), the
+[wiki handoff](../.llm-wiki/Agent-Handoff.md), the index and a separate wiki
+log after significant verified work. Routine edits need no duplicate status
+prose.

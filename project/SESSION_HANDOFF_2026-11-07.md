@@ -103,6 +103,12 @@ was compiled together, and no lane's tests are known to pass at this snapshot.
   it a bug), the lane uses each spell's own element, one line to revert. Open:
   MM6 party death, inherited monster AI, monster missiles, other elements and
   spells, the second-attack bonus, the MM6 portrait animation mapping.
+- **T, transition owners: done, not yet merged** (lane commits
+  `91d50de34`, `d600846b2`, `d9e392f0b`, `6f6aa1038`). Title-aware map type
+  helpers, visited-indoor owner, visited-map cache with a `VIST` v2 session
+  codec, and the border confirmation transaction, all detached. Unit suite
+  1028 passed, revert check confirmed. Wiring plan and blockers:
+  [MM6_TRANSITION_WIRING_PLAN.md](MM6_TRANSITION_WIRING_PLAN.md).
 - **I, inventory: done, not yet merged** (lane commits `ce7a49bba`,
   `2cf8cf000`, `a7fbbe933`, `c858984b9`). Capture writes each item's raw
   28-byte record at its current record and slot, so moves between backpack and
@@ -196,7 +202,7 @@ commit as you go) and exact file ownership.
 
 | Item | Ready after | Files it would own |
 | --- | --- | --- |
-| Wire Lane T's visited-map owners into map transitions, border travel and indoor entry/exit, with the MM6 `isMapIndoor` call sites. Add an MM6 preflight before `onMapLeave()` in `UIMSG_OnIndoorEntryExit` (it runs map-leave events before `startMapTransition()` refuses), then enable Codex C1's MM6 Yes button | T, A, B, C1 merged | `Engine.cpp` transition paths, `Outdoor.cpp` `getTravelDestination`, `Game.cpp` travel handlers, MM6 save sections |
+| Wire Lane T's visited-map owners (plan: `MM6_TRANSITION_WIRING_PLAN.md`) into map transitions, border travel and indoor entry/exit, with the MM6 `isMapIndoor` call sites. Add an MM6 preflight before `onMapLeave()` in `UIMSG_OnIndoorEntryExit` (it runs map-leave events before `startMapTransition()` refuses), then enable Codex C1's MM6 Yes button | T, A, B, C1 merged | `Engine.cpp` transition paths, `Outdoor.cpp` `getTravelDestination`, `Game.cpp` travel handlers, MM6 save sections |
 | House NPC dialogue and quest topic (if Lane H stops before its step 4) | H merged | MM6 house window, `UIDialogue.cpp`, `NPCTopics.cpp` dispatches |
 | MM6 shop stock, prices, buy and sell, guild spellbook stock | I and H merged | new `MM6Shop*` UI and engine files |
 | Transport menu and departure | wiring item above, H merged | `Houses/Transport.cpp` MM6 branch |

@@ -193,10 +193,13 @@ void GUIWindow_MM6House::healActiveCharacter() {
     const int price = mm6::templeHealPrice(character, _house.value.value_or(0));
     if (pParty->GetGold() < price) {
         engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_GENERAL_NOT_ENOUGH_GOLD);
         return;
     }
     pParty->TakeGold(price);
     mm6::templeHeal(house, &character);
+    pAudioPlayer->playExclusiveSound(SOUND_heal);
+    character.playReaction(SPEECH_TEMPLE_HEAL);
 }
 
 std::string GUIWindow_MM6House::serviceLabel(mm6::HouseServiceOption option) const {

@@ -170,6 +170,8 @@ GAME_TEST(MM6Houses, TempleHeal) {
     auto goldTape = tapes.gold();
     auto screenTape = tapes.screen();
     auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+    auto soundsTape = tapes.sounds();
+    auto portraitTape = charTapes.portrait(0);
     startMM6NewGame(game);
     pParty->pCharacters[0].SetCondition(CONDITION_POISON_WEAK, 0);
     pParty->pCharacters[0].health = 1;
@@ -190,6 +192,8 @@ GAME_TEST(MM6Houses, TempleHeal) {
     EXPECT_EQ(eradicatedTape, tape(true));
     EXPECT_EQ(healthTape, tape(std::vector<int>{1, 1}, std::vector<int>{pParty->pCharacters[0].GetMaxHealth(), 1}));
     EXPECT_EQ(goldTape, tape(200, 190));
+    EXPECT_CONTAINS(soundsTape.flatten(), SOUND_heal);
+    EXPECT_CONTAINS(portraitTape, PORTRAIT_WIDE_SMILE); // The temple heal reaction.
     const std::string donate = localization->str(LSTR_DONATE);
     const std::string heal = fmt::format("{} 10 {}", localization->str(LSTR_HEAL), localization->str(LSTR_GOLD));
     EXPECT_EQ(optionsTape, tape(std::vector<std::string>{}, std::vector<std::string>{heal, donate}, std::vector<std::string>{donate},
@@ -221,6 +225,28 @@ GAME_TEST(MM6Houses, HouseNpcTopic) {
     ASSERT_EQ(message.opcode, EVENT_ShowMessage);
     EXPECT_EQ(textTape, tape(std::string(), pNPCTopics[message.data.text_id - 1].pText));
     EXPECT_EQ(goldTape.size(), 1);
+}
+
+GAME_TEST(MM6Houses, TempleHealWithoutGold) {
+    // New Sorpigal Temple refuses a heal the party can't pay for, with the not enough gold line and the priest's sound.
+    auto poisonedTape = tapes.custom([] { return pParty->pCharacters[0].conditions.has(CONDITION_POISON_WEAK); });
+    auto goldTape = tapes.gold();
+    auto statusTape = tapes.statusBar();
+    auto soundsTape = tapes.sounds();
+    startMM6NewGame(game);
+    pParty->pCharacters[0].SetCondition(CONDITION_POISON_WEAK, 0);
+    pParty->SetGold(5);
+    test.startTaping();
+    enterThroughDoor(game, kTempleDoor, 90);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+    game.tick();
+    game.pressGuiButton("HouseDialogue_Option0"); // Heal for 10 gold.
+    game.tick();
+    EXPECT_EQ(poisonedTape, tape(true));
+    EXPECT_EQ(goldTape, tape(5));
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD));
+    EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(31702));
+    EXPECT_MISSES(soundsTape.flatten(), SOUND_heal);
 }
 
 GAME_TEST(MM6Houses, ClosedHouse) {

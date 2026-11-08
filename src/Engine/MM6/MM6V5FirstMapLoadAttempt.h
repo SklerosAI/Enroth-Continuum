@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <span>
 #include <string_view>
@@ -35,9 +36,6 @@ class V5FirstMapLoadAttempt {
         PostWorldAgreed
     };
 
-    V5FirstMapLoadAttempt(std::unique_ptr<V5FullSessionPreflight> staged,
-                          std::string_view slotName, GameTitle title);
-
     /**
      * Stages a first-map v5 slot and checks it before anything is published.
      *
@@ -56,7 +54,15 @@ class V5FirstMapLoadAttempt {
     V5FullSessionPreflight &staged();
     const V5FullSessionPreflight &staged() const;
     Phase phase() const { return _phase; }
-    void notePublished(GameTitle title);
+
+    /**
+     * Publishes the staged party, NPC, timer, overlay, map delta, chest, persistent event, cursor and shop owners and
+     * requests the first map with a savegame load. Called once, with this attempt on the engine and before world
+     * preparation. Owners published before a throw stay partial.
+     *
+     * @param title                     Must be MM6.
+     */
+    void publishOwners(GameTitle title);
     void restoreEventAtNativeMap(std::string_view mapName, int respawnCount,
                                  int lastRespawnDay, bool wasRespawned,
                                  PersistentVariables *destination,
@@ -99,6 +105,9 @@ class V5FirstMapLoadAttempt {
     void requirePostWorldAgreement(GameTitle title);
 
  private:
+    V5FirstMapLoadAttempt(std::unique_ptr<V5FullSessionPreflight> staged,
+                          std::string_view slotName, GameTitle title);
+    void notePublished(GameTitle title);
     bool chestOwnersUnchanged() const;
 
     std::unique_ptr<V5FullSessionPreflight> _staged;
@@ -120,5 +129,13 @@ bool releaseV5FirstMapLoadAttempt();
  * @return                              Whether an attempt was in flight.
  */
 bool abandonV5FirstMapLoadAttempt() noexcept;
+
+namespace testing {
+/**
+ * @param fault                         Called by every owner publication after the party is assigned and before the
+ *                                      other owners. Empty to clear it.
+ */
+void setPartyPublicationFaultForTest(std::function<void()> fault);
+} // namespace testing
 
 } // namespace mm6

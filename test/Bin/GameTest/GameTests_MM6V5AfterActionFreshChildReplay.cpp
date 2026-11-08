@@ -204,22 +204,18 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
     auto loadCandidate = [&](std::string_view requested) {
             if (requested != mm6::NEW_GAME_AUTOSAVE_SLOT)
                 throw std::runtime_error("MM6 v5 post-action replay selected another menu route");
-            auto candidateStage = mm6::stageV5FirstMapLoadPreflight(
-                before, GameTitle::MM6);
-            if (candidateStage->v4.v3.actorMap.activeMap.mapName != "oute3.odm" ||
-                candidateStage->v4.saved.v3.raw.core.party.position != actionParty.position ||
-                candidateStage->v4.saved.v3.raw.core.party.viewYaw != actionParty.viewYaw ||
-                candidateStage->v4.v3.armageddon.timerTicks != 0 ||
-                candidateStage->v4.v3.cursorImage.occupied)
+            auto attempt = mm6::V5FirstMapLoadAttempt::fromNativeSlot(
+                before, candidate.filename().string(), GameTitle::MM6);
+            const auto &candidateStage = attempt->staged();
+            if (candidateStage.v4.v3.actorMap.activeMap.mapName != "oute3.odm" ||
+                candidateStage.v4.saved.v3.raw.core.party.position != actionParty.position ||
+                candidateStage.v4.saved.v3.raw.core.party.viewYaw != actionParty.viewYaw ||
+                candidateStage.v4.v3.armageddon.timerTicks != 0 ||
+                candidateStage.v4.v3.cursorImage.occupied)
                 throw std::runtime_error("MM6 v5 post-action replay has no exact first-map candidate");
-            mm6::requireV5FirstMapPrepublicationAgreement(
-                *candidateStage, GameTitle::MM6);
             if (engine->_mm6FirstMapLoadAttempt)
                 throw std::runtime_error("MM6 first-map load attempt was not released");
-            engine->_mm6FirstMapLoadAttempt =
-                std::make_unique<mm6::V5FirstMapLoadAttempt>(
-                    std::move(candidateStage), candidate.filename().string(),
-                    GameTitle::MM6);
+            engine->_mm6FirstMapLoadAttempt = std::move(attempt);
             staged = &engine->_mm6FirstMapLoadAttempt->staged();
             expectedNativeActors = staged->v4.v3.actorMap.activeMap.delta.actors.size();
             expectedActiveActors = staged->actors.actors.size();
@@ -268,33 +264,20 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
                 });
             // Every throwing replay-scope constructor runs before the first
             // live owner assignment. Post-world callbacks execute later.
-            *pParty = staged->v4.v3.represented.party.party;
-            if (mode == V5ReplayMode::FaultAfterPartyAssignment && !retryingAfterFault) {
-                faultInjected = true;
-                throw std::runtime_error("synthetic MM6 partial publication fault");
-            }
-            *pNPCStats = staged->v4.v3.represented.world.world.npcs;
-            *gameTimer = staged->v4.v3.represented.world.visuals.timer;
-            *pActiveOverlayList = staged->v4.v3.represented.world.visuals.overlays;
-            pMapDeltas = std::move(staged->v4.v3.represented.world.world.mapDeltas);
-            mm6::chestTitleState() = staged->v4.v3.represented.world.chestTitle;
-            mm6::publishFreshChildPersistentEventZeros(
-                &engine->_persistentVariables,
-                staged->v4.v3.represented.persistentEvents, GameTitle::MM6);
-            mm6::publishRawCursorShopOwners(
-                &mm6::rawHeldCursorState(GameTitle::MM6), &mm6::shopTitleState(),
-                staged->v4.v3.represented.raw.saved,
-                {std::move(staged->v4.v3.represented.raw.cursor),
-                 std::move(staged->v4.v3.represented.raw.shops)}, GameTitle::MM6);
-            engine->_pendingTransition = MapDestination(
-                pMapTable->GetMapInfo("oute3.odm"), MAP_START_POINT_PARTY);
-            engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
-            engine->_mm6FirstMapLoadAttempt->notePublished(GameTitle::MM6);
+            engine->_mm6FirstMapLoadAttempt->publishOwners(GameTitle::MM6);
             selected = true;
             if (retryingAfterFault)
                 secondLoadReached = true;
     };
     game.runGameRoutine([&] {
+        if (mode == V5ReplayMode::FaultAfterPartyAssignment) {
+            mm6::testing::setPartyPublicationFaultForTest([&] {
+                if (retryingAfterFault)
+                    return;
+                faultInjected = true;
+                throw std::runtime_error("synthetic MM6 partial publication fault");
+            });
+        }
         mm6::testing::setLoadGameOverride(loadCandidate);
         mm6::testing::setMainMenuAutosaveQuickLoadOverride(true);
         engine->_messageQueue->addMessageCurrentFrame(UIMSG_QuickLoad);
@@ -374,6 +357,7 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
         staged = nullptr;
         mm6::testing::setMainMenuAutosaveQuickLoadOverride(false);
         mm6::testing::setLoadGameOverride({});
+        mm6::testing::setPartyPublicationFaultForTest({});
     });
     EXPECT_FALSE(attemptOutlivedLoad);
     if (faultMode) {

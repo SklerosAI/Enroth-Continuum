@@ -22,6 +22,7 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
 #include "Engine/MM6/MM6ActualStatCondition.h"
+#include "Engine/MM6/MM6Calendar.h"
 #include "Engine/MM6/MM6CombatRules.h"
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
@@ -3176,7 +3177,7 @@ void Character::ChangeClass(Class cls) {
         classType = cls;
         uLevel = 1;
         experience = 251ll + grng->random(100);
-        uBirthYear = 1147 - grng->random(6);
+        uBirthYear = mm6::characterBirthYearBase - grng->random(6);
         for (Skill skill : allVisibleSkills())
             setSkillValue(skill, CombinedSkillValue());
         const auto &codes = mm6::creationRules().startingSkills[mm6::classFamily(classId)];

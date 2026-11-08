@@ -59,7 +59,11 @@ MM7_CONTROL = "Prs.Pr2354"
 PASS_LINE = re.compile(r"\[\s*PASSED\s*\]\s+1 test\b")
 
 
-def run_child(name, flag, value, profile, data, rules=None, timeout=240):
+CHILD_TIMEOUT = int(os.environ.get("ENROTH_GATE_CHILD_TIMEOUT", "240"))
+
+
+def run_child(name, flag, value, profile, data, rules=None, timeout=None):
+    timeout = max(timeout or 0, CHILD_TIMEOUT)
     env = os.environ.copy()
     for key in list(env):
         if key.startswith("ENROTH_MM6_V") or key == "ENROTH_MM6_RESTART_PROFILE":

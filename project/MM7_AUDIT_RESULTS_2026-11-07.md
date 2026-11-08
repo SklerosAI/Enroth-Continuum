@@ -125,6 +125,10 @@ Defects, inherited unless noted:
 6. Monster spell and projectile damage use the wrong ability slot
    (`Actor.cpp:274, 354`, `a4` ignored). Rows 18, 23, 24, 35, 36, 211-213.
    Meteor Shower always centres on the party.
+   **Ability stamp fixed in the integration tree at `387b97a59`:** the selected
+   spell slot now reaches projectile, Meteor Shower, Sparks and Sharpmetal
+   sprites. Three MM7 GameTests failed before the fix and passed after it;
+   three MM6 combat controls passed. Meteor Shower positioning remains open.
 7. Death explosions use attack-1 dice and type (`SpriteObject.cpp:825`,
    `Actor.cpp:1220`), and the parser drops the damage type. Nine rows.
 8. Multi-target monster attacks are parsed but never applied. Ten rows.
@@ -166,10 +170,12 @@ Defects, inherited unless noted:
 15. Stale or not applicable: #1485 (exists as `regen_stacking`), #1246, part
     of #496. #2982, #2278 and #2268 need a run.
 
-The five defect tests failed on the preceding source. Six focused MM7 GameTests
-passed after the fixes, including the unarmed Break Weapon control. Three MM6
-combat children passed in separate processes. The full MM6 first-map gate and
-MM7 control remain pending for this branch.
+The five branch defect tests failed on the preceding source. Six focused MM7
+GameTests passed after the fixes, including the unarmed Break Weapon control.
+Three MM6 combat children passed in separate processes. The integrated monster
+ability stamp had three failing MM7 tests before its fix and passed 3/3 after
+it, with three MM6 combat children passing. The combined full MM6 first-map
+gate and full MM7 headless suite remain pending.
 
 The branch GameTests cover the first five test targets above. Remaining tests
 that would close open defects: rows 24 and 35 slot-2 spells, a golem death

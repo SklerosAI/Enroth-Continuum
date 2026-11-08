@@ -2769,3 +2769,9 @@ Chronological record of wiki activity.
 - MM7 `Ener` now parses as Energy in both monster attack fields, and event Day of the Gods Master and Grandmaster powers match ordinary casts while durations stay unchanged. Synthetic pre-fix failures and focused green/MM6 controls established both corrections.
 - A controlled Energy-only source reversal made `Issues.Issue403_970` pass where corrected Energy failed. The public trace retrace changed only RNG checkpoints and was byte-stable on repeat; the map transition and four Armor Class assertions remain.
 - On the combined candidate, the network-denied MM6 first-map gate passed and the full MM7 headless suite passed 469 tests with 2 skipped out of 471. The Day of the Gods candidate awaits integration; graphical and installed-helper checks remain open.
+
+## [2026-11-07] verify | MM7 native profile-root startup context
+- by: T-Burton-ND via codex
+- Added an MM7-only startup handoff of the resolved native user path to a read-only optional atomic-save context. RAM and other-title starts clear it; relative and direct-symlink roots are refused, while a canonical native directory is rechecked when read.
+- A disposable native writer failed with only the handoff omitted, then the writer and fresh-process reader passed. Ten focused MM7 atomic/root tests and the MM6 startup control passed under network denial.
+- On the combined source, the MM6 first-map gate passed all 25 child checks and the full MM7 headless suite passed 474 tests with 2 skipped out of 476. The context remains a candidate pending integration; production SaveLoad is unwired and no live atomic-write claim follows.

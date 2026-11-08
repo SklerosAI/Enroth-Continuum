@@ -142,6 +142,25 @@ was compiled together, and no lane's tests are known to pass at this snapshot.
 - **G, MM6 item generator and give-item: started** in the old Lane E
   worktree on branch `mm6-f4d-item-generator`.
 
+- **A, first-map attempt phases: done, not yet merged** (lane commits
+  `03c55ddd9`, `15cf3af77`, `71bab617f`). Attempt phases are now Detached,
+  Published, EventRestored, WorldPublished, ChestApplied, GeneratedNpcsKept,
+  RngRestored, PostWorldAgreed. Actors, generated NPC rows, decorations and
+  sprites are staged in native order against rebuilt anchors and swapped in
+  as one once-only phase. Generated NPCs and RNG restore move into the
+  attempt. `mm6::releaseV5FirstMapLoadAttempt()` runs the post-world check
+  from `Game::gameLoop` after `DoPrepareWorld` and abandons to the main menu on
+  refusal. `MM6V5FirstMapLoadAbandonForTest.*` is deleted. New fault child
+  `MM6V5FirstMapAbandonHeadless.DISABLED_PostWorldMismatchThenFullReloadAndInput`
+  is in the gate runner. Gate per step: 7/7 chain, 5/5 then 6/6 setup and
+  fault, MM7 1/1, with a 1200 s scratch timeout under load. Revert checks
+  fail as expected. Lane B's three entry points are not done: numbered-slot
+  attempt construction (proposed `fromNativeSlot(bytes, name, title)`),
+  production owner publication (changes what the partial-assignment fault
+  child tests, needs an integrator decision on that seam), and arming save
+  after release (encode before release drops the attempt, or add a post-release
+  hook). Note: CMake picked a Homebrew Python for `check_style` in that lane's
+  build dir.
 - **B, normal Save and Load menus: done, not yet merged** (lane commits
   `dde1a40d6` SaveLoad namespace style fix, `e9a4d5441`, `d7f7ece32`). The
   Save menu writes the selected or first free `saveNNN.ec6` into the native

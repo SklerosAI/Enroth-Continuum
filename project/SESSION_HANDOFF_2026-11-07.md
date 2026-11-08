@@ -126,6 +126,19 @@ was compiled together, and no lane's tests are known to pass at this snapshot.
   full MM7 suite not run. Open: tail bytes of reused records, consume and sell
   removal untraced, backpack swap with an item in hand, auto-placement order,
   items with no raw record still refuse a save.
+- **H, house services: done, not yet merged** (lane commits `66598df4d`,
+  `353023478`, `d5402de3c`, `4e26b0a28`). House entry refuses cleanly on any
+  missing table, manifest, icon or movie before state changes. A room with an
+  NPC opens even without movie or portrait. The MM6 house screen lists the
+  proprietor's services from `houseServiceOptions` and resident NPC topics.
+  Temple heal follows the original: per-temple restrictions by house ID, price
+  Val x condition multiplier x (condition start day mod 7, plus 1). Other
+  services refuse without changing the party. Party creation no longer flags
+  MM6 NPC 3 as hired (an MM7-only assumption that hid an MM6 town hall NPC).
+  Tests: 4/4 MM6 house game tests (two fail with the fix reverted), 26/26 MM6
+  batch, unit suite clean, 29/29 MM7 house tests. Open: training (discount
+  helper untraced), donate, heal audio, opening hours, exact service menus,
+  hiring topics, save/reload of house state, visual check of the screen.
 - **G, MM6 item generator and give-item: started** in the old Lane E
   worktree on branch `mm6-f4d-item-generator`.
 

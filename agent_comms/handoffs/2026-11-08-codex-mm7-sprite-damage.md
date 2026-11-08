@@ -1,0 +1,9 @@
+# MM7 saved party projectile damage guard
+
+- Branch/worktree: `codex/mm7-combat-fixes` in the reused MM7 combat worktree, rebased onto integration `17d98e58c` after the staged save-capture merge. This lane did not merge main.
+- Code/test commit: see this handoff's parent commit. Owned files: `src/Engine/Objects/Actor.cpp` and `test/Bin/GameTest/GameTests_1000.cpp`.
+- Pre-fix behavioral proof: a synthetic character-cast sprite with `uSpellID` 255 reached `Actor::DamageMonsterFromParty` and aborted on the `pSpellStats->pInfos` indexed array (libc++ out-of-bounds assertion, exit 134). A valid MM7 Fire Bolt plus arrow 100, projectile 101 and blaster 102 control passed 1/1. An MM6 arrow 100 control passed 1/1 in a separate process.
+- Fix: for MM7 only, reject a character-cast sprite whose spell ID is outside regular spells 1..99 and the three explicit projectile IDs 100..102. Return zero before setting the target's active/nearby attributes. The MM6 path and valid MM7 spell/projectile paths are unchanged.
+- Post-fix proof: rebuilt `OpenEnroth_GameTest` through the shared `enroth-build` throttle with network denied, both before and after the rebase. `MM7SpriteDamage.*` passed 2/2, including target HP and activation checks, on the rebased build. `MM6SpriteDamage.NumericArrowStillTraversesDamagePath` passed 1/1 in a separate network-denied process. Direct cpplint on both touched files and `git diff --check` passed before rebase. Combined MM6 first-map and full MM7 gates remain for integration.
+- Remaining scope: actor spell-slot IDs and sprite-to-character damage are separate saved spell-ID routes. This guard does not validate them or detached save bodies.
+- Privacy: tests use synthetic in-memory objects; no proprietary game data, saves, local logs or asset inventories were committed.

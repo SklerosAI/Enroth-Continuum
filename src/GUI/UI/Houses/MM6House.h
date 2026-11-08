@@ -28,7 +28,7 @@ class GUIWindow_MM6House : public GUIWindow_House {
     /**
      * @param index                     Index into the proprietor's service list.
      */
-    void selectService(int index);
+    virtual void selectService(int index);
 
     /**
      * Rebuilds the topic buttons of the NPC the party is talking to. A topic's event can change them.
@@ -45,7 +45,16 @@ class GUIWindow_MM6House : public GUIWindow_House {
      *
      * @return                          Whether the party stays in the house.
      */
-    bool goBack();
+    virtual bool goBack();
+
+ protected:
+    bool isProprietorSelected() const;
+    void clearOptionButtons();
+    void showServiceButtons();
+    void drawOptionLabels(const std::vector<std::string> &labels);
+
+    const mm6::HouseServiceRow &_house;
+    std::vector<mm6::HouseServiceOption> _services;
 
  private:
     struct Resident {
@@ -55,18 +64,13 @@ class GUIWindow_MM6House : public GUIWindow_House {
         std::string title;
     };
 
-    void clearOptionButtons();
     void showResidentButtons();
-    void showServiceButtons();
     void healActiveCharacter();
     std::string serviceLabel(mm6::HouseServiceOption option) const;
-    void drawOptionLabels(const std::vector<std::string> &labels);
 
-    const mm6::HouseServiceRow &_house;
     GraphicsImage *_panel = nullptr;
     GraphicsImage *_exit = nullptr;
     std::vector<Resident> _residents;
-    std::vector<mm6::HouseServiceOption> _services;
     std::vector<GUIButton *> _optionButtons;
     int _selected = -1;
 };

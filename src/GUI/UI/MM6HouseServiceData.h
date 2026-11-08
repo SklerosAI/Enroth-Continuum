@@ -80,6 +80,7 @@ enum class HouseServiceOption {
     SellItems,
     IdentifyItems,
     RepairItems,
+    BuySpecialItems,
     BuySpells,
     LearnSkills,
     Deposit,

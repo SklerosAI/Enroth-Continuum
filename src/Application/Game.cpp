@@ -213,6 +213,7 @@ bool Game::loop() {
             pParty->pPickedItem.itemId = ITEM_NULL;
 
             if (engine->gameTitle() == GameTitle::MM6) {
+                mm6::publishShopTitleState(&mm6::shopTitleState(), mm6::emptyNewGameShopTitleState(GameTitle::MM6), GameTitle::MM6);
                 engine->_pendingTransition = MapDestination(pMapTable->GetMapInfo("oute3.odm"), MAP_START_POINT_PARTY);
                 bFlashQuestBook = false;
             } else {

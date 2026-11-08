@@ -6,6 +6,7 @@ set(GUI_UI_HOUSES_SOURCES
         Training.cpp
         Transport.cpp
         MM6House.cpp
+        MM6Shop.cpp
         MM6ShopPrices.cpp
         MM6ShopStock.cpp
         MM6Temple.cpp
@@ -23,6 +24,7 @@ set(GUI_UI_HOUSES_HEADERS
         Training.h
         Transport.h
         MM6House.h
+        MM6Shop.h
         MM6ShopPrices.h
         MM6ShopStock.h
         MM6Temple.h

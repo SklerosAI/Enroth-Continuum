@@ -20,6 +20,7 @@
 #include "GUI/GUIMessageQueue.h"
 #include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/UIStatusBar.h"
+#include "GUI/UI/Houses/MM6Shop.h"
 #include "GUI/UI/Houses/MM6Temple.h"
 
 #include "Library/Logger/Logger.h"
@@ -142,6 +143,10 @@ bool GUIWindow_MM6House::goBack() {
     return true;
 }
 
+bool GUIWindow_MM6House::isProprietorSelected() const {
+    return _selected != -1 && !_residents[_selected].npc;
+}
+
 void GUIWindow_MM6House::clearOptionButtons() {
     for (GUIButton *button : _optionButtons)
         button->Release();
@@ -247,7 +252,12 @@ bool mm6EnterHouse(HouseId houseId) {
 void mm6CreateHouseUI(HouseId houseId) {
     const mm6::HousePresentationState presentation =
         mm6::planHousePresentation(GameTitle::MM6, mm6::houseServiceData(), std::to_underlying(houseId));
-    window_SpeakInHouse = std::make_unique<GUIWindow_MM6House>(houseId, presentation);
+    const mm6::HouseServiceFamily family = mm6::houseServiceData().at(std::to_underlying(houseId)).family;
+    if (family == mm6::HouseServiceFamily::Shop || family == mm6::HouseServiceFamily::MagicGuild) {
+        window_SpeakInHouse = std::make_unique<GUIWindow_MM6Shop>(houseId, presentation);
+    } else {
+        window_SpeakInHouse = std::make_unique<GUIWindow_MM6House>(houseId, presentation);
+    }
 }
 
 void mm6SelectHouseTopic(DialogueId topic) {

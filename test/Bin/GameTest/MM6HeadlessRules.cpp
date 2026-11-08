@@ -17,7 +17,7 @@ void seedMm6HeadlessRules(const FileSystem &source, FileSystem *destination) {
     if (!destination)
         throw Exception("MM6 headless rule destination is missing.");
 
-    // Preflight all eight whitelisted files before writing any into ramfs.
+    // Preflight all whitelisted files before writing any into ramfs.
     std::array<Blob, mm6HeadlessRuleNames.size()> staged;
     for (size_t i = 0; i < mm6HeadlessRuleNames.size(); ++i) {
         std::string_view name = mm6HeadlessRuleNames[i];

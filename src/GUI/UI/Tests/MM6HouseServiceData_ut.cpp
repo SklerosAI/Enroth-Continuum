@@ -503,8 +503,9 @@ TEST(MM6HouseServiceData, ServiceOptionsFollowHouseFamilyAndType) {
     // A proprietor lists the services of their house's family, or of their house type for the other houses.
     using enum mm6::HouseServiceOption;
     using Options = std::vector<mm6::HouseServiceOption>;
-    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_WEAPON_SHOP), Options({BuyItems, SellItems, IdentifyItems, RepairItems}));
-    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_GENERAL_STORE), Options({BuyItems, SellItems, IdentifyItems, RepairItems}));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_WEAPON_SHOP), Options({BuyItems, SellItems, IdentifyItems, RepairItems, BuySpecialItems}));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_MAGIC_SHOP), Options({BuyItems, SellItems, IdentifyItems, RepairItems, BuySpecialItems}));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_GENERAL_STORE), Options({BuyItems, SellItems}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_ELEMENTAL_GUILD), Options({BuySpells, LearnSkills}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_STABLE), Options());
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_TEMPLE), Options({TempleHeal, TempleDonate}));

@@ -9,19 +9,24 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/MM6/MM6ShopStockIdentity.h"
+#include "Engine/MM6/MM6ShopTitleState.h"
 #include "Engine/Localization.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Party.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
+#include "Engine/Tables/HouseTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/mm7_data.h"
 
 #include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/ItemGrid.h"
 #include "GUI/UI/UIHouses.h"
+#include "GUI/UI/Houses/MM6Shop.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -86,9 +91,37 @@ static std::vector<std::string> houseOptionLabels() {
     return result;
 }
 
+static std::vector<int> shopStock(int house) {
+    // Item ids in both stock banks of a shop.
+    std::vector<int> result;
+    for (mm6::ShopStockBank bank : {mm6::ShopStockBank::First, mm6::ShopStockBank::Second})
+        for (int slot = 0; slot < 12; ++slot)
+            result.push_back(mm6::shopTitleState().stock.records[mm6::shopStockRecordIndex(bank, house, slot, GameTitle::MM6)].itemNumberRaw());
+    return result;
+}
+
+static std::vector<int> guildStock(int house) {
+    // Item ids in a spell guild's stock.
+    std::vector<int> result;
+    for (int slot = 0; slot < 12; ++slot)
+        result.push_back(mm6::shopTitleState().stock.records[mm6::guildStockRecordIndex(house, slot, GameTitle::MM6)].itemNumberRaw());
+    return result;
+}
+
+static std::vector<int> backpackItems(int character) {
+    // Item ids in a character's backpack, in inventory order.
+    std::vector<int> result;
+    for (InventoryConstEntry entry : pParty->pCharacters[character].inventory.entries())
+        if (entry.zone() == INVENTORY_ZONE_GRID)
+            result.push_back(std::to_underlying(entry->itemId));
+    return result;
+}
+
 static const Vec3f kTempleDoor(-9744, -1862, 700); // New Sorpigal Temple, facing north.
 static const Vec3f kWeaponShopDoor(-8422, -7392, 300); // Weapon shop, facing east.
 static const Vec3f kTownHallDoor(-11090, -6536, 300); // Town Hall, facing west.
+static const Vec3f kGeneralStoreDoor(-10333, -8532, 300); // General store, facing south.
+static const Vec3f kGuildDoor(-5384, -1276, 700); // Elemental guild.
 
 GAME_TEST(MM6Houses, EnterAndExit) {
     // Space at a New Sorpigal house door opens its house screen, and Exit returns the party to the world.
@@ -113,8 +146,8 @@ GAME_TEST(MM6Houses, UnimplementedServiceRefuses) {
     auto itemsTape = tapes.totalItemCount();
     startMM6NewGame(game);
     test.startTaping();
-    enterThroughDoor(game, kWeaponShopDoor, 0);
-    game.pressGuiButton("HouseDialogue_Option0"); // Buy Items.
+    enterThroughDoor(game, kGuildDoor, 1536);
+    game.pressGuiButton("HouseDialogue_Option1"); // Learn.
     game.tick();
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
     EXPECT_CONTAINS(statusTape, "This service is not available yet.");
@@ -180,4 +213,88 @@ GAME_TEST(MM6Houses, HouseNpcTopic) {
     ASSERT_EQ(message.opcode, EVENT_ShowMessage);
     EXPECT_EQ(textTape, tape(std::string(), pNPCTopics[message.data.text_id - 1].pText));
     EXPECT_EQ(goldTape.size(), 1);
+}
+
+GAME_TEST(MM6Houses, GeneralStoreSell) {
+    // The New Sorpigal general store buys an item from the active character's backpack and pays half the sell price.
+    auto goldTape = tapes.gold();
+    auto backpackTape = tapes.custom([] { return backpackItems(0); });
+    auto otherBackpackTape = tapes.custom([] { return backpackItems(1); });
+    auto screenTape = tapes.screen();
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kGeneralStoreDoor, 1536);
+    game.pressGuiButton("HouseDialogue_Option1"); // Sell Items.
+    game.tick();
+    InventoryEntry sold;
+    for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+        if (entry.zone() == INVENTORY_ZONE_GRID && !sold)
+            sold = entry;
+    ASSERT_TRUE(sold);
+    game.pressAndReleaseButton(BUTTON_LEFT, mapFromInventoryGrid(sold.geometry().topLeft(), Pointi(14, 17)) + Pointi(16, 16));
+    game.tick();
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
+    EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66}, std::vector<int>{1, 15, 23, 66}));
+    EXPECT_EQ(otherBackpackTape.size(), 1);
+    EXPECT_EQ(goldTape, tape(200, 312));
+}
+
+GAME_TEST(MM6Houses, WeaponShopBuyAndSellBack) {
+    // The New Sorpigal weapon shop sells an item from its generated stock for gold, and buys it back for less.
+    auto goldTape = tapes.gold();
+    auto stockTape = tapes.custom([] { return shopStock(1); });
+    auto backpackTape = tapes.custom([] { return backpackItems(0); });
+    auto otherBackpackTape = tapes.custom([] { return backpackItems(1); });
+    auto clockTape = tapes.custom([] { return mm6::shopTitleState().clocks.deadlineWords[mm6::shopClockSlot(1)] != 0; });
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kWeaponShopDoor, 0);
+    game.pressGuiButton("HouseDialogue_Option0"); // Buy Items.
+    game.tick();
+    GUIWindow_MM6Shop *shop = dynamic_cast<GUIWindow_MM6Shop *>(window_SpeakInHouse.get());
+    ASSERT_NE(shop, nullptr);
+    game.pressAndReleaseButton(BUTTON_LEFT, shop->stockItemRect(0).center());
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    game.pressGuiButton("HouseDialogue_Option1"); // Sell Items.
+    game.tick();
+    InventoryEntry bought;
+    for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+        if (entry.zone() == INVENTORY_ZONE_GRID && entry->mm6RawRecord)
+            bought = entry;
+    ASSERT_TRUE(bought);
+    game.pressAndReleaseButton(BUTTON_LEFT, mapFromInventoryGrid(bought.geometry().topLeft(), Pointi(14, 17)) + Pointi(16, 16));
+    game.tick();
+    const std::vector<int> generated = {50, 55, 31, 1, 20, 24, 0, 0, 0, 0, 0, 0, 20, 20, 16, 20, 17, 15, 0, 0, 0, 0, 0, 0};
+    std::vector<int> afterSale = generated;
+    afterSale[0] = 0;
+    EXPECT_EQ(stockTape, tape(std::vector<int>(24, 0), generated, afterSale));
+    EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66}, std::vector<int>{124, 1, 15, 23, 66, 50},
+                                 std::vector<int>{124, 1, 15, 23, 66}));
+    EXPECT_EQ(otherBackpackTape.size(), 1);
+    EXPECT_EQ(goldTape, tape(200, 125, 139));
+    EXPECT_EQ(clockTape, tape(false, true));
+}
+
+GAME_TEST(MM6Houses, GuildBuySpellbook) {
+    // A New Sorpigal spell guild sells a spellbook from its generated stock for gold.
+    auto goldTape = tapes.gold();
+    auto stockTape = tapes.custom([] { return guildStock(137); });
+    auto backpackTape = tapes.custom([] { return backpackItems(0); });
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kGuildDoor, 1536);
+    game.pressGuiButton("HouseDialogue_Option0"); // Buy Spells.
+    game.tick();
+    GUIWindow_MM6Shop *guild = dynamic_cast<GUIWindow_MM6Shop *>(window_SpeakInHouse.get());
+    ASSERT_NE(guild, nullptr);
+    game.pressAndReleaseButton(BUTTON_LEFT, guild->stockItemRect(0).center());
+    game.tick();
+    const std::vector<int> generated = {322, 322, 301, 336, 333, 301, 313, 333, 314, 300, 325, 314};
+    std::vector<int> afterSale = generated;
+    afterSale[0] = 0;
+    EXPECT_EQ(stockTape, tape(std::vector<int>(12, 0), generated, afterSale));
+    EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66}, std::vector<int>{124, 1, 15, 23, 66, 322}));
+    EXPECT_EQ(goldTape, tape(200, 50));
 }

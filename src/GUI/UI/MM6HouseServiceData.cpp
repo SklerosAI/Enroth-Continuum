@@ -133,7 +133,9 @@ std::vector<HouseServiceOption> houseServiceOptions(HouseType type) {
     using enum HouseServiceOption;
     switch (houseServiceFamily(type)) {
         case HouseServiceFamily::Shop:
-            return {BuyItems, SellItems, IdentifyItems, RepairItems};
+            if (type == HOUSE_TYPE_GENERAL_STORE)
+                return {BuyItems, SellItems};
+            return {BuyItems, SellItems, IdentifyItems, RepairItems, BuySpecialItems};
         case HouseServiceFamily::MagicGuild:
             return {BuySpells, LearnSkills};
         case HouseServiceFamily::Transport:
@@ -164,6 +166,7 @@ LstrId houseServiceOptionLabel(HouseServiceOption option) {
         case HouseServiceOption::SellItems: return static_cast<LstrId>(540);     // "Sell Items"
         case HouseServiceOption::IdentifyItems: return static_cast<LstrId>(541); // "Identify Items"
         case HouseServiceOption::RepairItems: return static_cast<LstrId>(542);   // "Repair Items"
+        case HouseServiceOption::BuySpecialItems: return static_cast<LstrId>(543); // "Special Items"
         case HouseServiceOption::BuySpells: return static_cast<LstrId>(400);     // "Buy Spells"
         case HouseServiceOption::LearnSkills: return static_cast<LstrId>(535);   // "Learn"
         case HouseServiceOption::Deposit: return static_cast<LstrId>(60);        // "Deposit"

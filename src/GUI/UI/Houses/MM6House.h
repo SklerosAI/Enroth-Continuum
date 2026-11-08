@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "GUI/UI/UIHouseEnums.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/MM6HouseServiceData.h"
 
@@ -73,6 +74,7 @@ class GUIWindow_MM6House : public GUIWindow_House {
     std::vector<Resident> _residents;
     std::vector<GUIButton *> _optionButtons;
     int _selected = -1;
+    bool _trainingTimePassed = false;
 };
 
 /**
@@ -103,3 +105,11 @@ void mm6SelectHouseTopic(DialogueId topic);
  * @return                              The MM6 house window, or `nullptr` if the party isn't in an MM6 house.
  */
 GUIWindow_MM6House *mm6HouseWindow();
+
+/**
+ * Plays one of the room's proprietor sounds. Rooms without a sound group stay silent.
+ *
+ * @param houseId                       MM6 house id.
+ * @param type                          Which of the room's sounds to play.
+ */
+void mm6PlayHouseSound(HouseId houseId, HouseSoundType type);

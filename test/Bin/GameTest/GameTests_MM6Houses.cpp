@@ -122,6 +122,7 @@ static const Vec3f kWeaponShopDoor(-8422, -7392, 300); // Weapon shop, facing ea
 static const Vec3f kTownHallDoor(-11090, -6536, 300); // Town Hall, facing west.
 static const Vec3f kGeneralStoreDoor(-10333, -8532, 300); // General store, facing south.
 static const Vec3f kGuildDoor(-5384, -1276, 700); // Elemental guild.
+static const Vec3f kTrainingDoor(-13874, -7032, 300); // Training Grounds, facing west.
 
 GAME_TEST(MM6Houses, EnterAndExit) {
     // Space at a New Sorpigal house door opens its house screen, and Exit returns the party to the world.
@@ -297,4 +298,48 @@ GAME_TEST(MM6Houses, GuildBuySpellbook) {
     EXPECT_EQ(stockTape, tape(std::vector<int>(12, 0), generated, afterSale));
     EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66}, std::vector<int>{124, 1, 15, 23, 66, 322}));
     EXPECT_EQ(goldTape, tape(200, 50));
+}
+
+GAME_TEST(MM6Houses, Training) {
+    // New Sorpigal Training Grounds trains two characters for gold, and only the first level of the visit moves time.
+    auto levelsTape = charTapes.levels();
+    auto experienceTape = charTapes.experiences();
+    auto skillPointsTape = charTapes.custom([](const Character &character) { return character.uSkillPoints; });
+    auto goldTape = tapes.gold();
+    auto dayHourTape = tapes.custom([] {
+        const CivilTime time = pParty->GetPlayingTime().toCivilTime();
+        return std::pair(time.day, time.hour);
+    });
+    auto soundsTape = tapes.sounds();
+    auto statusTape = tapes.statusBar();
+    auto screenTape = tapes.screen();
+    auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+    startMM6NewGame(game);
+    pParty->pCharacters[0].experience = 1000;
+    pParty->pCharacters[1].experience = 1000;
+    test.startTaping();
+    enterThroughDoor(game, kTrainingDoor, 180);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+    game.tick();
+    game.pressGuiButton("HouseDialogue_Option0"); // Train.
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_2);
+    game.tick();
+    game.pressGuiButton("HouseDialogue_Option0");
+    game.tick();
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
+    EXPECT_EQ(levelsTape, tape({1, 1, 1, 1}, {2, 1, 1, 1}, {2, 2, 1, 1}));
+    EXPECT_EQ(experienceTape.size(), 1);
+    EXPECT_EQ(skillPointsTape.delta(), tape(5, 5, 0, 0));
+    EXPECT_EQ(goldTape, tape(200, 190, 180));
+    EXPECT_EQ(dayHourTape, tape(std::pair(1, 9), std::pair(9, 9)));
+    const std::string &first = pParty->pCharacters[0].name;
+    const std::string &second = pParty->pCharacters[1].name;
+    EXPECT_CONTAINS(statusTape, localization->format(LSTR_S_IS_NOW_LEVEL_LU_AND_HAS_EARNED_LU, first, 2, 5));
+    EXPECT_CONTAINS(statusTape, localization->format(LSTR_S_IS_NOW_LEVEL_LU_AND_HAS_EARNED_LU, second, 2, 5));
+    const std::string train = localization->format(LSTR_TRAIN_TO_LEVEL_D_FOR_D_GOLD, 2, 10);
+    const std::string needMore = localization->format(LSTR_YOU_NEED_D_MORE_EXPERIENCE_TO_TRAIN_TO, 2000, 3);
+    EXPECT_EQ(optionsTape, tape(std::vector<std::string>{}, std::vector<std::string>{train}, std::vector<std::string>{needMore},
+                                std::vector<std::string>{train}, std::vector<std::string>{needMore}));
+    EXPECT_EQ(soundsTape.flatten(), tape(SOUND_gold01, static_cast<SoundId>(30702), SOUND_gold01, static_cast<SoundId>(30702))); // Paying, then the trainer.
 }

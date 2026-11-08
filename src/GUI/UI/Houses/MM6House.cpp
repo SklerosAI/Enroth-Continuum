@@ -22,9 +22,11 @@
 #include "GUI/UI/UIStatusBar.h"
 #include "GUI/UI/Houses/MM6Shop.h"
 #include "GUI/UI/Houses/MM6Temple.h"
+#include "GUI/UI/Houses/MM6Training.h"
 
 #include "Library/Logger/Logger.h"
 
+#include "Media/Audio/AudioPlayer.h"
 #include "Media/MediaPlayer.h"
 
 static bool isResidentNpc(const NPCData &npc, HouseId houseId) {
@@ -111,6 +113,10 @@ void GUIWindow_MM6House::selectService(int index) {
         healActiveCharacter();
         return;
     }
+    if (_services[index] == mm6::HouseServiceOption::Train) {
+        mm6::trainActiveCharacter(std::to_underlying(houseId()), _house.value.value_or(0), &_trainingTimePassed);
+        return;
+    }
     engine->_statusBar->setEvent("This service is not available yet.");
 }
 
@@ -185,6 +191,8 @@ void GUIWindow_MM6House::healActiveCharacter() {
 }
 
 std::string GUIWindow_MM6House::serviceLabel(mm6::HouseServiceOption option) const {
+    if (option == mm6::HouseServiceOption::Train)
+        return pParty->hasActiveCharacter() ? mm6::trainingLabel(std::to_underlying(houseId()), pParty->activeCharacter(), _house.value.value_or(0)) : std::string();
     if (option != mm6::HouseServiceOption::TempleHeal)
         return localization->str(mm6::houseServiceOptionLabel(option));
     if (!pParty->hasActiveCharacter() || !mm6::templeOffersHeal(std::to_underlying(houseId()), pParty->activeCharacter()))
@@ -273,4 +281,10 @@ GUIWindow_MM6House *mm6HouseWindow() {
     if (engine->gameTitle() != GameTitle::MM6)
         return nullptr;
     return dynamic_cast<GUIWindow_MM6House *>(window_SpeakInHouse.get());
+}
+
+void mm6PlayHouseSound(HouseId houseId, HouseSoundType type) {
+    const mm6::HouseServiceRow &house = mm6::houseServiceData().at(std::to_underlying(houseId));
+    if (house.room.room && house.room.room->soundGroup)
+        pAudioPlayer->playHouseSound(static_cast<SoundId>(30000 + 100 * house.room.room->soundGroup + std::to_underlying(type)), true);
 }

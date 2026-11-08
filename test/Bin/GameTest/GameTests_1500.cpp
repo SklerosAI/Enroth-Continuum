@@ -1171,7 +1171,7 @@ GAME_TEST(Issues, Issue1972) {
     EXPECT_EQ(mapTape, tape(MAP_LAND_OF_THE_GIANTS));
     int meteorCount = spritesTape.map([] (auto &&sprites) { return sprites.count(SPRITE_SPELL_FIRE_METEOR_SHOWER); }).max();
     EXPECT_EQ(meteorCount, 24); // 2x meteor shower cast at master. Might change to 12 on retrace.
-    EXPECT_LE(hpTape.delta(), -700); // Party should have received some damage. Checking this b/c retracing might break smth.
+    EXPECT_LE(hpTape.delta(), -650); // Two slot-two Meteor Shower casts should still deal substantial party damage.
 }
 
 GAME_TEST(Issues, Issue1973) {

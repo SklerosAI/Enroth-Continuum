@@ -1257,14 +1257,9 @@ Color Character::GetExperienceDisplayColor() {
 int Character::CalculateIncommingDamage(DamageType dmg_type, int dmg) {
     if (engine->gameTitle() == GameTitle::MM6)
         return mm6::characterIncomingDamage(*this, dmg_type, dmg, *grng);
-    // TODO(captainurist): these are some weird casts to CharacterAttributeType
-    if (classType == CLASS_LICH &&
-        ((Attribute)dmg_type == ATTRIBUTE_RESIST_MIND ||
-         (Attribute)dmg_type == ATTRIBUTE_RESIST_BODY ||
-         (Attribute)dmg_type == ATTRIBUTE_RESIST_SPIRIT))  // TODO(_): determine if spirit
-                                                          // resistance should be handled
-                                                          // by body res. modifier
-        return 0;  // liches are not affected by self magics
+    if (engine->gameTitle() == GameTitle::MM7 && classType == CLASS_LICH &&
+        (dmg_type == DAMAGE_MIND || dmg_type == DAMAGE_BODY))
+        return 0;
 
     int resist_value = 0;
     switch (dmg_type) {  // get resistance
@@ -1624,7 +1619,11 @@ int Character::ReceiveSpecialAttackEffect(MonsterSpecialAttack attType, Actor *p
                 if (!entry->IsBroken() && (entry->type() == ITEM_TYPE_BOW || entry->type() == ITEM_TYPE_SINGLE_HANDED || entry->type() == ITEM_TYPE_TWO_HANDED))
                     itemstobreaklist.push_back(entry);
 
-            if (!itemstobreaklist.empty()) return 0;
+            if (engine->gameTitle() == GameTitle::MM7) {
+                if (itemstobreaklist.empty()) return 0;
+            } else if (!itemstobreaklist.empty()) {
+                return 0;
+            }
 
             itemtobreak = grng->randomSample(itemstobreaklist);
             statcheckbonus =
@@ -3564,8 +3563,7 @@ void Character::useItem(int targetCharacter, bool isPortraitClick) {
                 Time deadTime = playerAffected->conditions.get(CONDITION_DEAD);
                 Time petrifedTime = playerAffected->conditions.get(CONDITION_PETRIFIED);
                 Time eradicatedTime = playerAffected->conditions.get(CONDITION_ERADICATED);
-                // TODO(Nik-RE-dev): why not playerAffected?
-                conditions.resetAll();
+                playerAffected->conditions.resetAll();
                 playerAffected->conditions.set(CONDITION_DEAD, deadTime);
                 playerAffected->conditions.set(CONDITION_PETRIFIED, petrifedTime);
                 playerAffected->conditions.set(CONDITION_ERADICATED, eradicatedTime);

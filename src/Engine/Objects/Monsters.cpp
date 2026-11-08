@@ -149,11 +149,9 @@ void ParseDamage(std::string_view damage_str, uint8_t *dice_rolls,
 
 //----- (00454E3A) --------------------------------------------------------
 MonsterProjectile ParseMissleAttackType(std::string_view missle_attack_str) {
-    // TODO(captainurist): this is broken, we get "FireAr" for flaming arrow here.
-
     if (ascii::noCaseEquals(missle_attack_str, "ARROW"))
         return MONSTER_PROJECTILE_ARROW;
-    else if (ascii::noCaseEquals(missle_attack_str, "ARROWF"))
+    else if (ascii::noCaseEquals(missle_attack_str, "ARROWF") || ascii::noCaseEquals(missle_attack_str, "FireAr"))
         return MONSTER_PROJECTILE_FLAMING_ARROW;
     else if (ascii::noCaseEquals(missle_attack_str, "FIRE"))
         return MONSTER_PROJECTILE_FIRE_BOLT;

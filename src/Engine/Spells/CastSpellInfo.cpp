@@ -2676,7 +2676,10 @@ void CastSpellInfoHelpers::castSpell() {
                     } else {
                         pPlayer->sAgeModifier = pPlayer->sAgeModifier + 10;
                     }
-                    recoveryTime = 5_ticks * spell_level;
+                    if (engine->gameTitle() == GameTitle::MM7)
+                        recoveryTime -= 5_ticks * spell_level;
+                    else
+                        recoveryTime = 5_ticks * spell_level;
                     ++pPlayer->uNumDivineInterventionCastsThisDay;
                     break;
                 }

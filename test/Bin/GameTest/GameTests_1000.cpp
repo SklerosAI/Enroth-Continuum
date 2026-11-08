@@ -1510,6 +1510,43 @@ static std::size_t firstFreeMonsterSpellSpriteSlot() {
     return pSpriteObjects.size();
 }
 
+static void prepareInvalidSavedMonsterSpell(EngineController &game, int spellNumber, AIState attackState) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_GT(pActors.size(), 10u);
+
+    Actor &actor = pActors[10];
+    actor.pos = pParty->pos + Vec3f(100, 0, 0);
+    actor.aiState = attackState;
+    actor.currentActionTime = 0_ticks;
+    actor.currentActionLength = 0_ticks;
+    actor.monsterInfo.hostilityType = HOSTILITY_LONG;
+    actor.monsterInfo.recoveryTime = 0_ticks;
+    actor.monsterInfo.spell1Id = static_cast<SpellId>(spellNumber);
+    actor.monsterInfo.spell2Id = static_cast<SpellId>(spellNumber);
+    actor.monsterInfo.spell1UseChance = 0;
+    actor.monsterInfo.spell2UseChance = 0;
+    ASSERT_TRUE(actor.CanAct());
+}
+
+GAME_TEST(MM7MonsterSpell, RejectsSavedSpell100InRanged3Completion) {
+    prepareInvalidSavedMonsterSpell(game, 100, AttackingRanged3);
+    Actor::MakeActorAIList_ODM();
+    ASSERT_TRUE(pActors[10].attributes & ACTOR_FULL_AI_STATE);
+
+    game.tick();
+    EXPECT_NE(pActors[10].aiState, AttackingRanged3);
+}
+
+GAME_TEST(MM7MonsterSpell, RejectsSavedSpell255InRanged4Completion) {
+    prepareInvalidSavedMonsterSpell(game, 255, AttackingRanged4);
+    Actor::MakeActorAIList_ODM();
+    ASSERT_TRUE(pActors[10].attributes & ACTOR_FULL_AI_STATE);
+
+    game.tick();
+    EXPECT_NE(pActors[10].aiState, AttackingRanged4);
+}
+
 GAME_TEST(MM7MonsterSpell, SecondSlotProjectileCarriesAbility) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
     game.startNewGame();

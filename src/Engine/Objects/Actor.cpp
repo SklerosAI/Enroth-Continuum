@@ -33,6 +33,7 @@
 #include "Engine/SpellFxRenderer.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Spells/CastSpellInfo.h"
+#include "Engine/Spells/SpellEnumFunctions.h"
 #include "Engine/Spells/Spells.h"
 #include "Engine/AttackList.h"
 #include "Engine/Tables/ItemTable.h"
@@ -223,6 +224,8 @@ void Actor::SetRandomGoldIfTheresNoItem() {
 void Actor::AI_SpellAttack(unsigned int uActorID, AIDirection *pDir,
                            SpellId uSpellID, ActorAbility a4, CombinedSkillValue uSkillMastery) {
     mm6::requireVerifiedSpellEffect(engine->gameTitle(), uSpellID, mm6::SpellEffectSource::Monster);
+    if (engine->gameTitle() == GameTitle::MM7 && !isRegularSpell(uSpellID))
+        return;
 
     Duration spellLength;
 

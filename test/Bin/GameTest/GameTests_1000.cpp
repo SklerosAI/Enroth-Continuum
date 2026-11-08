@@ -29,6 +29,8 @@
 #include "Engine/Engine.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
+#include "Engine/Spells/Spells.h"
+#include "Engine/Spells/SpellBuff.h"
 #include "Engine/PriceCalculator.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/ParticleEngine.h"
@@ -1549,4 +1551,20 @@ GAME_TEST(MM7MonsterSpell, SecondSlotSpraysCarryAbility) {
         EXPECT_EQ(pSpriteObjects[slot].uSpellID, spell);
         EXPECT_EQ(pSpriteObjects[slot].spellCasterAbility, ABILITY_SPELL2);
     }
+}
+
+GAME_TEST(MM7EventSpell, DayOfTheGodsPowerMatchesOrdinaryCast) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+
+    const Time start = pParty->GetPlayingTime();
+    SpellBuff &buff = pParty->pPartyBuffs[PARTY_BUFF_DAY_OF_GODS];
+    eventCastSpell(SPELL_LIGHT_DAY_OF_THE_GODS, MASTERY_MASTER, 10, Vec3f(), Vec3f());
+    EXPECT_EQ(buff.power, 50);
+    EXPECT_EQ(buff.expireTime, start + Duration::fromHours(40));
+
+    buff.Reset();
+    eventCastSpell(SPELL_LIGHT_DAY_OF_THE_GODS, MASTERY_GRANDMASTER, 10, Vec3f(), Vec3f());
+    EXPECT_EQ(buff.power, 60);
+    EXPECT_EQ(buff.expireTime, start + Duration::fromHours(50));
 }

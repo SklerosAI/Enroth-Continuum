@@ -798,7 +798,7 @@ void eventCastSpell(SpellId uSpellID, Mastery skillMastery, int skillLevel, Vec3
             pAudioPlayer->playSpellSound(uSpellID, false, SOUND_MODE_EXCLUSIVE);
             break;
         case SPELL_LIGHT_DAY_OF_THE_GODS:
-            // Spell lengths for master and grandmaster were mixed up
+            // Match the ordinary cast's power at each mastery.
             switch (skillMastery) {
                 case MASTERY_EXPERT:
                     spell_length = Duration::fromHours(3 * skillLevel);
@@ -806,11 +806,11 @@ void eventCastSpell(SpellId uSpellID, Mastery skillMastery, int skillLevel, Vec3
                     break;
                 case MASTERY_MASTER:
                     spell_length = Duration::fromHours(4 * skillLevel);
-                    spell_power = 5 * skillLevel + 10;
+                    spell_power = 4 * skillLevel + 10;
                     break;
                 case MASTERY_GRANDMASTER:
                     spell_length = Duration::fromHours(5 * skillLevel);
-                    spell_power = 4 * skillLevel + 10;
+                    spell_power = 5 * skillLevel + 10;
                     break;
                 default:
                     break;

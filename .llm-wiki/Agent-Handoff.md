@@ -10,11 +10,12 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 ## Fast resume pointer — 2026-11-07
 
-Claude integrated Codex's C1 Cancel-only MM6 indoor dialog and C2 detached party-death model; both still require live transaction/dispatch gates. Codex's separate MM7 save preflight, actor/item bounds and chest guard are on `codex/mm7-audit-integration`, rebased onto the MM6 integration tree and awaiting final cross-title verification. The preflight is not a production validator. See [candidate scope and proof limits](MM6-Transition-And-Death-Candidates.md) and [MM7 atomic save limits](MM7-Atomic-Save-File.md); Claude remains the MM6 integration lead.
+Claude integrated Codex's C1 Cancel-only MM6 indoor dialog and C2 detached party-death model; both still require live transaction/dispatch gates. Codex's MM7 PCX guard, detached save preflight with actor/item bounds, and shared chest guard are now in the MM6 integration tree. The preflight is not a production validator. See [candidate scope and proof limits](MM6-Transition-And-Death-Candidates.md) and [MM7 atomic save limits](MM7-Atomic-Save-File.md); Claude remains the MM6 integration lead.
 
 The MM6 implementation goal resumed on 2026-11-07. The Engine first-map
-attempt and the MM6 Save/Load menu lanes have merged; their combined gate is
-being verified. A separate production load lane is connecting numbered-slot
+attempt and the MM6 Save/Load menu lanes have merged. Their combined seven-child
+chain, three full-retry faults, paperdoll and normal Save/Load children, and MM7
+control passed on the MM7 save integration branch. A separate production load lane is connecting numbered-slot
 attempt construction, owner publication, `loadGame()` and post-release save
 arming. Normal MM6 reload, visited-map return and Atlas MM6 Play remain closed
 until that route and the later campaign gates pass.

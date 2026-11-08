@@ -4,6 +4,7 @@
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
+#include "Engine/Localization.h"
 #include "Engine/Party.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Character.h"
@@ -11,6 +12,8 @@
 #include "Engine/Objects/MonsterEnums.h"
 #include "Engine/Objects/Monsters.h"
 #include "Engine/Spells/Spells.h"
+#include "Engine/Tables/NPCTable.h"
+#include "GUI/UI/NPCTopics.h"
 #include "Library/Geometry/Rect.h"
 
 MonsterProjectile ParseMissleAttackType(std::string_view missle_attack_str);
@@ -63,6 +66,48 @@ GAME_TEST(MM6Popup, RegularMonsterSpellRenders) {
     auto [width, height] = MonsterPopup_Draw(actorId, nullptr);
     EXPECT_GT(width, 0);
     EXPECT_GT(height, 0);
+}
+
+GAME_TEST(MM7NpcProfession, InvalidTitleFallsBackToName) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+
+    NPCData npc;
+    npc.name = "Synthetic NPC";
+    npc.profession = static_cast<NpcProfession>(78); // First index beyond the shared profession table.
+    EXPECT_EQ(NameAndTitle(&npc), npc.name);
+
+    npc.profession = NPC_PROFESSION_NONE; // Quest NPCs can have no profession.
+    EXPECT_EQ(NameAndTitle(&npc), npc.name);
+    npc.profession = NPC_PROFESSION_SMITH;
+    EXPECT_NE(NameAndTitle(&npc), npc.name);
+}
+
+GAME_TEST(MM7NpcProfession, InvalidProfessionHasNoHireOption) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+
+    NPCData npc;
+    npc.name = "Synthetic NPC";
+    npc.canJoin = true;
+    npc.profession = static_cast<NpcProfession>(78);
+    EXPECT_TRUE(prepareScriptedNPCDialogueTopics(&npc).empty());
+
+    npc.profession = NPC_PROFESSION_NONE;
+    EXPECT_TRUE(prepareScriptedNPCDialogueTopics(&npc).empty());
+    npc.profession = NPC_PROFESSION_SMITH;
+    EXPECT_EQ(prepareScriptedNPCDialogueTopics(&npc).front(), DIALOGUE_13_hiring_related);
+}
+
+GAME_TEST(MM6NpcProfession, ValidTitleAndHireOptionRemain) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+
+    NPCData npc;
+    npc.name = "Synthetic NPC";
+    npc.canJoin = true;
+    npc.profession = NPC_PROFESSION_SMITH;
+    EXPECT_NE(NameAndTitle(&npc), npc.name);
+    EXPECT_EQ(prepareScriptedNPCDialogueTopics(&npc).front(), DIALOGUE_13_hiring_related);
 }
 
 GAME_TEST(MM7Combat, BreakWeaponAffectsEquippedSword) {

@@ -593,7 +593,9 @@ std::string npcDialogueOptionString(DialogueId topic, NPCData *npcData) {
 std::vector<DialogueId> prepareScriptedNPCDialogueTopics(NPCData *npcData) {
     std::vector<DialogueId> optionList;
 
-    if (npcData->canJoin) {
+    const bool invalidMm7Profession = engine && engine->gameTitle() == GameTitle::MM7 &&
+        (npcData->profession < NPC_PROFESSION_FIRST || npcData->profession > NPC_PROFESSION_LAST);
+    if (npcData->canJoin && !invalidMm7Profession) {
         optionList.push_back(DIALOGUE_13_hiring_related);
     }
 

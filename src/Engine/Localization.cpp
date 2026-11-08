@@ -1396,6 +1396,10 @@ std::string NameAndTitle(std::string_view name, Class class_type) {
 
 
 std::string NameAndTitle(std::string_view name, NpcProfession profession) {
+    if (engine && engine->gameTitle() == GameTitle::MM7 &&
+        (profession < NPC_PROFESSION_FIRST || profession > NPC_PROFESSION_LAST))
+        return std::string(name);
+
     return NameAndTitle(
         name,
         localization->npcProfessionName(profession)

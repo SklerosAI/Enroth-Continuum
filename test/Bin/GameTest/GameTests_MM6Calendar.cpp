@@ -79,3 +79,26 @@ GAME_TEST(MM6CalendarHeadless, DISABLED_NewGameCalendarShowsYear) {
     EXPECT_CONTAINS(text, "Month\t100:\t1101 - January");
     EXPECT_CONTAINS(text, "Year\t100:\t1101165");
 }
+
+GAME_TEST(MM6CalendarHeadless, DISABLED_NewPartyAges) {
+    // A new MM6 party is 21 to 26 years old.
+    // Run alone in a fresh MM6 headless process.
+    auto textTape = tapes.allGUIWindowsText();
+    auto screenTape = tapes.screen();
+    auto activeTape = tapes.activeCharacterIndex();
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    game.pressGuiButton("Game_Character1"); // The active character, opens the stats page.
+    game.tick();
+    for (PlatformKey key : {PlatformKey::KEY_DIGIT_2, PlatformKey::KEY_DIGIT_3, PlatformKey::KEY_DIGIT_4}) {
+        game.pressAndReleaseKey(key);
+        game.tick();
+    }
+
+    EXPECT_EQ(screenTape, tape(SCREEN_CHARACTERS));
+    EXPECT_EQ(activeTape, tape(0, 1, 2, 3));
+    auto ages = textTape.flatten().filter([](const std::string &line) { return line.starts_with("Age"); });
+    EXPECT_EQ(ages, tape(std::string("Age\f65535\t11022\f00000 / 22\n"), std::string("Age\f65535\t11024\f00000 / 24\n"),
+                         std::string("Age\f65535\t11022\f00000 / 22\n"), std::string("Age\f65535\t11026\f00000 / 26\n")));
+}

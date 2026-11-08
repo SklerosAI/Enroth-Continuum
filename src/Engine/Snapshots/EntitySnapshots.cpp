@@ -1735,7 +1735,21 @@ void reconstruct(const Chest_MM7 &src, ChestInventory *dst, ContextTag<int> ches
 
     std::array<bool, 140> processed = {{}};
     std::array<Item, 140> items;
-    reconstruct(src.items, &items);
+    for (size_t index = 0; index < items.size(); index++) {
+        const int32_t itemId = src.items[index].itemId;
+        if (itemId == std::to_underlying(ITEM_NULL))
+            continue;
+        const bool randomMarker = itemId >= std::to_underlying(ITEM_FIRST_RANDOM) &&
+                                  itemId <= std::to_underlying(ITEM_LAST_RANDOM);
+        const bool regularItem = itemId >= std::to_underlying(ITEM_FIRST_VALID) &&
+                                 itemId <= std::to_underlying(ITEM_LAST_VALID);
+        if (!randomMarker && !regularItem) {
+            // Native chest records can contain random loot markers and stale IDs.
+            MM_WARNING("Invalid item ID in chest #{} record {}, itemId={}", *chestId, index, itemId);
+            continue;
+        }
+        reconstruct(src.items[index], &items[index]);
+    }
 
     // Serialized chest inventory can be terribly broken, so we just check pretty much everything there is to check,
     // and just log errors.
@@ -1749,8 +1763,8 @@ void reconstruct(const Chest_MM7 &src, ChestInventory *dst, ContextTag<int> ches
             index--;
 
             if (index > maxIndex) {
-                MM_WARNING("Invalid item reference in chest #{} item grid, itemId={}, index={}, pos=({},{})",
-                           *chestId, std::to_underlying(items[index].itemId), index, x, y);
+                MM_WARNING("Invalid item reference in chest #{} item grid, index={}, pos=({},{})",
+                           *chestId, index, x, y);
                 continue;
             }
 

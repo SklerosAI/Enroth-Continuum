@@ -56,9 +56,11 @@ void InteractWithActor(int id) {
     Actor::AI_FaceObject(id, Pid::character(0), 0);
     if (pActors[id].npcId) {
         engine->_messageQueue->addMessageCurrentFrame(UIMSG_StartNPCDialogue, id, 0);
-    } else if (pNPCStats->pGroups[pActors[id].group]) {
-        if (!pNPCStats->pCatchPhrases[pNPCStats->pGroups[pActors[id].group]].empty()) {
-            branchless_dialogue_str = pNPCStats->pCatchPhrases[pNPCStats->pGroups[pActors[id].group]];
+    } else if (pActors[id].group < pNPCStats->pGroups.size()) {
+        const auto phraseIndex = pNPCStats->pGroups[pActors[id].group];
+        if (phraseIndex && phraseIndex < pNPCStats->pCatchPhrases.size() &&
+            !pNPCStats->pCatchPhrases[phraseIndex].empty()) {
+            branchless_dialogue_str = pNPCStats->pCatchPhrases[phraseIndex];
             startBranchlessDialogue(EVENT_Invalid, std::nullopt);
         }
     }

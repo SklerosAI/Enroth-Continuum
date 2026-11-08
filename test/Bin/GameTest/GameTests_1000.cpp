@@ -15,6 +15,7 @@
 
 #include "Engine/Tables/TextureFrameTable.h"
 #include "Engine/Tables/NPCTable.h"
+#include "Engine/Interaction.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Objects/NPC.h"
@@ -1451,4 +1452,43 @@ GAME_TEST(MM7TurnQueue, LoadedActorTenStartsInInitialQueue) {
         return element.uPackedID == Pid(OBJECT_Actor, 10);
     }));
     EXPECT_TRUE(actor.attributes & ACTOR_STAND_IN_QUEUE);
+}
+
+static Actor &makeFirstMapActorInteractableForGroupTest() {
+    Actor &actor = pActors[10];
+    actor.npcId = 0;
+    actor.aiState = Standing;
+    actor.attributes &= ~ACTOR_AGGRESSOR;
+    actor.buffs[ACTOR_BUFF_BERSERK].Reset();
+    actor.buffs[ACTOR_BUFF_STONED].Reset();
+    actor.buffs[ACTOR_BUFF_PARALYZED].Reset();
+    actor.buffs[ACTOR_BUFF_CHARM].expireTime = Time::fromTicks(1);
+    return actor;
+}
+
+GAME_TEST(MM7ActorGroupDialogue, RejectsGroupBeyondNewsTable) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_GT(pActors.size(), 10u);
+    Actor &actor = makeFirstMapActorInteractableForGroupTest();
+    actor.group = pNPCStats->pGroups.size();
+    ASSERT_TRUE(CanInteractWithActor(10));
+    ASSERT_EQ(pGUIWindow_BranchlessDialogue, nullptr);
+
+    InteractWithActor(10);
+    EXPECT_EQ(pGUIWindow_BranchlessDialogue, nullptr);
+}
+
+GAME_TEST(MM7ActorGroupDialogue, RejectsPhraseBeyondTextTable) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_GT(pActors.size(), 10u);
+    Actor &actor = makeFirstMapActorInteractableForGroupTest();
+    actor.group = pNPCStats->pGroups.size() - 1;
+    pNPCStats->pGroups[actor.group] = pNPCStats->pCatchPhrases.size();
+    ASSERT_TRUE(CanInteractWithActor(10));
+    ASSERT_EQ(pGUIWindow_BranchlessDialogue, nullptr);
+
+    InteractWithActor(10);
+    EXPECT_EQ(pGUIWindow_BranchlessDialogue, nullptr);
 }

@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstdint>
+#include <filesystem>
 #include <memory>
 #include <span>
 #include <string>
@@ -10,6 +11,7 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MM7/MM7SaveValidation.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
@@ -32,6 +34,9 @@ constexpr int savedGold = 12345;
 // profile is a marked owner-only temp directory, persisted between processes.
 GAME_TEST(MM7DisposableSave, DISABLED_WriteFreshProfile) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    const auto nativeRoot = mm7::startupNativeProfileRoot();
+    ASSERT_TRUE(nativeRoot);
+    EXPECT_EQ(*nativeRoot, std::filesystem::canonical(std::filesystem::path(ufs->displayPath(""))));
     ASSERT_EQ(window->nativeHandle(), nullptr);
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
     ASSERT_FALSE(ufs->exists(slot));
@@ -76,6 +81,9 @@ GAME_TEST(MM7DisposableSave, DISABLED_WriteFreshProfile) {
 
 GAME_TEST(MM7DisposableSave, DISABLED_ReloadFreshProcess) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    const auto nativeRoot = mm7::startupNativeProfileRoot();
+    ASSERT_TRUE(nativeRoot);
+    EXPECT_EQ(*nativeRoot, std::filesystem::canonical(std::filesystem::path(ufs->displayPath(""))));
     ASSERT_EQ(window->nativeHandle(), nullptr);
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
     ASSERT_TRUE(ufs->exists(slot));

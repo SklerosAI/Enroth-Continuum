@@ -27,6 +27,7 @@
 #include "Engine/AssetsManager.h"
 #include "Engine/Party.h"
 #include "Engine/Engine.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Spells/Spells.h"
@@ -59,6 +60,11 @@ static bool characterHasJar(int charIndex, int jarIndex) {
 }
 
 // 1000
+
+GAME_TEST(MM7NativeProfileRoot, RamStartupHasNoNativeRoot) {
+    EXPECT_EQ(engine->gameTitle(), GameTitle::MM7);
+    EXPECT_FALSE(mm7::startupNativeProfileRoot());
+}
 
 GAME_TEST(Issues, Issue1004) {
     // Collisions: Can walk right through the bridge on Emerald Isle

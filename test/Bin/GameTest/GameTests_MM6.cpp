@@ -23,6 +23,7 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Graphics/OutdoorSkyResources.h"
 #include "Engine/MM6/MM6Archive.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6EncounterMonster.h"
 #include "Engine/MM6/MM6BoundedInventoryProjection.h"
@@ -93,6 +94,7 @@ T *platformLeaf(T *value) {
 
 GAME_TEST(MM6Headless, StartupAndChestGuard) {
     EXPECT_EQ(engine->gameTitle(), GameTitle::MM6);
+    EXPECT_FALSE(mm7::startupNativeProfileRoot());
     EXPECT_NE(dynamic_cast<NullPlatform *>(platformLeaf(platform)), nullptr);
     EXPECT_NE(dynamic_cast<NullEventLoop *>(platformLeaf(eventLoop)), nullptr);
     EXPECT_NE(dynamic_cast<NullWindow *>(platformLeaf(window)), nullptr);

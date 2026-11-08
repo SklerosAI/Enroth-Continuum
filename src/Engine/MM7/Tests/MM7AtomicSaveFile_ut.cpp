@@ -43,6 +43,13 @@ class TestProfile {
   std::filesystem::path _root;
 };
 
+class StartupRootReset {
+ public:
+  ~StartupRootReset() {
+    mm7::setStartupNativeProfileRoot(GameTitle::MM7, true, {});
+  }
+};
+
 std::vector<std::uint8_t> sample(std::uint8_t marker) {
   return {'M', marker, static_cast<std::uint8_t>('M' ^ marker)};
 }
@@ -76,6 +83,50 @@ size_t tempCount(const std::filesystem::path &directory) {
 } // namespace
 
 #ifndef _WIN32
+UNIT_TEST(MM7AtomicSaveFile, StartupRootRequiresNativeMm7Directory) {
+  StartupRootReset reset;
+  TestProfile profile;
+  const auto canonical = std::filesystem::canonical(profile.root());
+
+  mm7::setStartupNativeProfileRoot(GameTitle::MM7, false, profile.root());
+  EXPECT_EQ(mm7::startupNativeProfileRoot(), canonical);
+  mm7::setStartupNativeProfileRoot(GameTitle::MM7, true, profile.root());
+  EXPECT_FALSE(mm7::startupNativeProfileRoot());
+  mm7::setStartupNativeProfileRoot(GameTitle::MM6, false, profile.root());
+  EXPECT_FALSE(mm7::startupNativeProfileRoot());
+  mm7::setStartupNativeProfileRoot(GameTitle::MM7, false, "relative-profile");
+  EXPECT_FALSE(mm7::startupNativeProfileRoot());
+
+  const auto symlink = profile.root() / "linked-profile";
+  std::filesystem::create_directory_symlink(profile.root(), symlink);
+  mm7::setStartupNativeProfileRoot(GameTitle::MM7, false, symlink);
+  EXPECT_FALSE(mm7::startupNativeProfileRoot());
+
+  const auto nested = profile.root() / "nested";
+  std::filesystem::create_directory(nested);
+  std::filesystem::create_directory(nested / "profile");
+  const auto parentLink = profile.root() / "linked-parent";
+  std::filesystem::create_directory_symlink(nested, parentLink);
+  mm7::setStartupNativeProfileRoot(GameTitle::MM7, false,
+                                  parentLink / "profile");
+  EXPECT_EQ(mm7::startupNativeProfileRoot(),
+            std::filesystem::canonical(nested / "profile"));
+}
+
+UNIT_TEST(MM7AtomicSaveFile, StartupRootRechecksLateDirectoryAndSymlink) {
+  StartupRootReset reset;
+  TestProfile profile;
+  const auto future = profile.root() / "future-profile";
+
+  mm7::setStartupNativeProfileRoot(GameTitle::MM7, false, future);
+  EXPECT_FALSE(mm7::startupNativeProfileRoot());
+  std::filesystem::create_directory(future);
+  EXPECT_EQ(mm7::startupNativeProfileRoot(), std::filesystem::canonical(future));
+  std::filesystem::remove(future);
+  std::filesystem::create_directory_symlink(profile.root(), future);
+  EXPECT_FALSE(mm7::startupNativeProfileRoot());
+}
+
 UNIT_TEST(MM7AtomicSaveFile, NewAndOverwrittenSlotPreserveOnePriorPrimary) {
   TestProfile profile;
   const auto first = sample(1);

@@ -8,7 +8,17 @@
 #include <string_view>
 #include <vector>
 
+#include "Engine/GameTitle.h"
+
 namespace mm7 {
+
+// Startup supplies the resolved user path after initializing its user filesystem.
+// RAM and other titles clear the context. The read-only result is available only
+// while that path is still an ordinary native directory; callers must not use
+// the result as authority to bypass the atomic file helper's own path checks.
+void setStartupNativeProfileRoot(GameTitle title, bool ramFsUserData,
+                                 const std::filesystem::path &userPath);
+std::optional<std::filesystem::path> startupNativeProfileRoot();
 
 // Content validation is supplied by the caller so the native file transaction
 // cannot accidentally admit a save after checking only its lightweight header.

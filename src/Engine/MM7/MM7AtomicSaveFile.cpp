@@ -17,6 +17,7 @@ namespace mm7 {
 namespace {
 
 constexpr std::uintmax_t MAX_SAVE_BYTES = 64 * 1024 * 1024;
+std::optional<std::filesystem::path> startupRoot;
 
 class InvalidSaveCandidate : public std::runtime_error {
  public:
@@ -169,6 +170,42 @@ class TempSaveFile {
 #endif
 
 } // namespace
+
+void setStartupNativeProfileRoot(GameTitle title, bool ramFsUserData,
+                                 const std::filesystem::path &userPath) {
+  startupRoot.reset();
+  if (title != GameTitle::MM7 || ramFsUserData || userPath.empty() ||
+      !userPath.is_absolute() || userPath != userPath.lexically_normal())
+    return;
+
+  std::error_code error;
+  const std::filesystem::file_status status =
+      std::filesystem::symlink_status(userPath, error);
+  if ((error && error != std::errc::no_such_file_or_directory) ||
+      std::filesystem::is_symlink(status) ||
+      (std::filesystem::exists(status) && !std::filesystem::is_directory(status)))
+    return;
+
+  const std::filesystem::path canonical =
+      std::filesystem::weakly_canonical(userPath, error);
+  if (!error && canonical.is_absolute())
+    startupRoot = canonical;
+}
+
+std::optional<std::filesystem::path> startupNativeProfileRoot() {
+  if (!startupRoot)
+    return std::nullopt;
+  std::error_code error;
+  const std::filesystem::file_status status =
+      std::filesystem::symlink_status(*startupRoot, error);
+  if (error || !std::filesystem::is_directory(status))
+    return std::nullopt;
+  const std::filesystem::path canonical =
+      std::filesystem::canonical(*startupRoot, error);
+  if (error || canonical != *startupRoot)
+    return std::nullopt;
+  return startupRoot;
+}
 
 std::optional<SaveFileCandidate>
 preflightSaveSlot(const std::filesystem::path &profileRoot,

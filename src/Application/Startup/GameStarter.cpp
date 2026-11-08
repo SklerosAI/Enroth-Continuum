@@ -19,6 +19,7 @@
 #include "Engine/MM6/MM6Calendar.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Graphics/Renderer/RendererFactory.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
@@ -109,6 +110,7 @@ GameStarter::GameStarter(GameStarterOptions options, std::function<void(FileSyst
     try {
         initialize(prepareUserFs);
     } catch (const std::exception &e) {
+        mm7::setStartupNativeProfileRoot(GameTitle::MM7, true, {});
         MM_CRITICAL("Terminated with exception: {}", e.what());
         throw;
     }
@@ -127,6 +129,8 @@ void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUse
     resolveUserPath(_environment.get(), &_options);
     _fsStarter.initUserFs(_options.ramFsUserData, _options.userPath);
     MM_INFO("Using user path '{}'.", ufs->displayPath(""));
+    mm7::setStartupNativeProfileRoot(_options.gameTitle, _options.ramFsUserData,
+                                    std::filesystem::path(_options.userPath.native()));
     if (_options.gameTitle == GameTitle::MM6)
         mm6::setStartupNativeProfileRoot(_options.ramFsUserData, std::filesystem::path(_options.userPath.native()));
     if (prepareUserFs)
@@ -295,6 +299,7 @@ void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUse
 
 GameStarter::~GameStarter() {
     _application->removeComponent<EngineControlComponent>(); // Join the control thread first.
+    mm7::setStartupNativeProfileRoot(GameTitle::MM7, true, {});
 
     _game.reset();
     _engine.reset();

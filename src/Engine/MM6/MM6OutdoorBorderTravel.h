@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -9,6 +10,7 @@
 
 #include "Engine/GameTitle.h"
 #include "Engine/MM6/MM6V5OutdoorMapIdentity.h"
+#include "Engine/Objects/NPCEnums.h"
 
 namespace mm6 {
 
@@ -31,6 +33,17 @@ struct BorderTravelHirelings {
     bool pathfinder = false;
     bool explorer = false;
 };
+
+/**
+ * @param isHired                       Whether a hireling with the given profession is in the party, as
+ *                                      `CheckHiredNPCSpeciality` answers it.
+ * @return                              The hirelings that shorten MM6 border travel. They are the MM6 Guide, Tracker,
+ *                                      Pathfinder and Explorer, the same profession IDs as in MM7.
+ */
+[[nodiscard]] inline BorderTravelHirelings borderTravelHirelings(const std::function<bool(NpcProfession)> &isHired) {
+    return {.guide = isHired(NPC_PROFESSION_GUIDE), .tracker = isHired(NPC_PROFESSION_TRACKER),
+            .pathfinder = isHired(NPC_PROFESSION_PATHFINDER), .explorer = isHired(NPC_PROFESSION_EXPLORER)};
+}
 
 enum class BorderTravelRefusal {
     WrongTitle,

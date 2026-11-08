@@ -1,5 +1,7 @@
 #include <limits>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "Testing/Unit/UnitTest.h"
 
@@ -96,4 +98,24 @@ UNIT_TEST(MM6OutdoorBorderTravel, AppliesBoundedHirelingReductionsWithoutMutatio
     EXPECT_EQ(y, -22529);
     EXPECT_TRUE(all.guide && all.tracker && all.pathfinder && all.explorer);
     EXPECT_FALSE(assessment.mayOffer());
+}
+
+UNIT_TEST(MM6OutdoorBorderTravel, HirelingsAreGuideTrackerPathfinderAndExplorer) {
+    // Border travel is shortened by the MM6 Guide, Tracker, Pathfinder and Explorer, rows 5, 6, 7 and 44 of npcprof.txt.
+    std::vector<int> asked;
+    const mm6::BorderTravelHirelings none = mm6::borderTravelHirelings([&](NpcProfession profession) {
+        asked.push_back(std::to_underlying(profession));
+        return false;
+    });
+    EXPECT_EQ(asked, (std::vector<int>{5, 6, 7, 44}));
+    EXPECT_EQ(mm6::borderTravelDays(none), 5);
+
+    const auto hiring = [](NpcProfession hired) {
+        return mm6::borderTravelHirelings([hired](NpcProfession profession) { return profession == hired; });
+    };
+    EXPECT_EQ(mm6::borderTravelDays(hiring(NPC_PROFESSION_GUIDE)), 4);
+    EXPECT_EQ(mm6::borderTravelDays(hiring(NPC_PROFESSION_TRACKER)), 3);
+    EXPECT_EQ(mm6::borderTravelDays(hiring(NPC_PROFESSION_PATHFINDER)), 2);
+    EXPECT_EQ(mm6::borderTravelDays(hiring(NPC_PROFESSION_EXPLORER)), 4);
+    EXPECT_EQ(mm6::borderTravelDays(hiring(NPC_PROFESSION_SAILOR)), 5);
 }

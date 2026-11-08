@@ -247,13 +247,22 @@ was compiled together, and no lane's tests are known to pass at this snapshot.
   ages), MM7 date tests 5/5 with no desync, gate passed. Found: pressing I or
   C in the MM6 character screen hits an out-of-bounds assert in
   `OnButtonClick3::Update` because MM6 lacks the MM7 paperdoll button textures.
-- **L, F4b production load: started** in the old A worktree on branch
-  `mm6-f4b-production-load`: numbered-slot attempt construction, production
-  owner publication with a test fault point at the partial-assignment
-  boundary (integrator decision), the production MM6 `loadGame()` route, arming
-  save after release, and a gate section proving save, fresh-process load and
-  save again through the menus. This closes F4b.
-
+- **L, F4b production load: merged, F4b closed headlessly** as
+  `0138f6dbb`, `822abaf52`, `daec00dca`, `7a43be243`, `09a0e4baa`.
+  `V5FirstMapLoadAttempt::fromNativeSlot` admits `saveNNN.ec6` names,
+  `publishOwners` owns publication with a test fault point at the
+  partial-assignment boundary, the MM6 branch of `loadGame()` calls
+  `mm6::loadFirstMapManualSlot`, read or staging failures return to the main
+  menu through `mm6::abandonMainMenuLoad()` (a `Game.cpp` catch change to
+  review), and release arms manual saving after the post-world check. The
+  normal Save/Load gate section now proves: seed and v4, Save menu writes
+  `save000.ec6`, a fresh process loads it through the Load menu on the
+  production route and walks one step with saving armed, and another fresh
+  process loads it, walks and saves over it (old primary becomes `.bak`).
+  Lane gate: 23/23 children plus `Prs.Pr2354`, MM7 save/load controls 16/16,
+  unit 1054/1054, revert checks fail as expected. Not proven: production New
+  Game (the session still comes from the v4 seed chain). Open risk: the
+  post-world check has no shop comparison.
 - **Lanes started after G and P merged:** K, house services phase 2
   (training, donate, opening hours, hiring topics, original menus), in the old
   E/G worktree on `mm6-f4d-house-services-2`. Y, MM6 calendar start year 1165

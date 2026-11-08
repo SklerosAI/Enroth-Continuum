@@ -209,6 +209,78 @@ UNIT_TEST(MM7SaveValidation, RejectsUnmappedNonMissileSpriteItems) {
     EXPECT_TRUE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
 }
 
+UNIT_TEST(MM7SaveValidation, AcceptsActorReferenceBoundsInBothDeltaKinds) {
+    Actor_MM7 actor{};
+    actor.monsterInfo.id = 1;
+    actor.monsterId = 0; // Scripted actors can have no table monster ID.
+    actor.uniqueNameIndex = 0;
+    actor.hostilityGroup = 0; // Derive from monster type.
+
+    IndoorDelta_MM7 indoor{};
+    OutdoorDelta_MM7 outdoor{};
+    indoor.actors.push_back(actor);
+    outdoor.actors.push_back(actor);
+    EXPECT_TRUE(mm7::detail::hasSafeIndoorDeltaReferences(indoor, 0, 0, 0));
+    EXPECT_TRUE(mm7::detail::hasSafeOutdoorDeltaReferences(outdoor));
+
+    indoor.actors[0].monsterId = 1;
+    outdoor.actors[0].monsterId = 1;
+    EXPECT_TRUE(mm7::detail::hasSafeIndoorDeltaReferences(indoor, 0, 0, 0));
+    EXPECT_TRUE(mm7::detail::hasSafeOutdoorDeltaReferences(outdoor));
+
+    indoor.actors[0].monsterInfo.id = 276;
+    indoor.actors[0].monsterId = 276;
+    indoor.actors[0].uniqueNameIndex = 30;
+    indoor.actors[0].hostilityGroup = 92;
+    outdoor.actors[0] = indoor.actors[0];
+    EXPECT_TRUE(mm7::detail::hasSafeIndoorDeltaReferences(indoor, 0, 0, 0));
+    EXPECT_TRUE(mm7::detail::hasSafeOutdoorDeltaReferences(outdoor));
+
+    indoor.actors[0].hostilityGroup = 9999; // Party ally sentinel.
+    outdoor.actors[0].hostilityGroup = 9999;
+    EXPECT_TRUE(mm7::detail::hasSafeIndoorDeltaReferences(indoor, 0, 0, 0));
+    EXPECT_TRUE(mm7::detail::hasSafeOutdoorDeltaReferences(outdoor));
+}
+
+UNIT_TEST(MM7SaveValidation, RejectsInvalidActorReferenceBounds) {
+    OutdoorDelta_MM7 delta{};
+    Actor_MM7 actor{};
+    actor.monsterInfo.id = 1;
+    delta.actors.push_back(actor);
+    EXPECT_TRUE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+
+    delta.actors[0].monsterInfo.id = 0;
+    EXPECT_FALSE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+    delta.actors[0].monsterInfo.id = 277;
+    EXPECT_FALSE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+    delta.actors[0].monsterInfo.id = 1;
+
+    delta.actors[0].monsterId = -1;
+    EXPECT_FALSE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+    delta.actors[0].monsterId = 277;
+    EXPECT_FALSE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+    delta.actors[0].monsterId = 0;
+
+    delta.actors[0].uniqueNameIndex = -1;
+    EXPECT_FALSE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+    delta.actors[0].uniqueNameIndex = 31;
+    EXPECT_FALSE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+    delta.actors[0].uniqueNameIndex = 0;
+
+    delta.actors[0].hostilityGroup = 93;
+    EXPECT_FALSE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+    delta.actors[0].hostilityGroup = 9998;
+    EXPECT_FALSE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+    delta.actors[0].hostilityGroup = 10000;
+    EXPECT_FALSE(mm7::detail::hasSafeOutdoorDeltaReferences(delta));
+
+    IndoorDelta_MM7 indoor{};
+    delta.actors[0].hostilityGroup = 0;
+    delta.actors[0].monsterId = 277;
+    indoor.actors = delta.actors;
+    EXPECT_FALSE(mm7::detail::hasSafeIndoorDeltaReferences(indoor, 0, 0, 0));
+}
+
 UNIT_TEST(MM7SaveValidation, RejectsIndoorDoorOverflowAndInvalidIds) {
     IndoorDelta_MM7 delta{};
     BLVDoor_MM7 door{};

@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "Engine/Objects/ItemEnums.h"
+#include "Engine/Objects/MonsterEnums.h"
 #include "Engine/Objects/SpriteEnums.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Spells/SpellEnums.h"
@@ -77,9 +78,24 @@ bool safeSpriteItemReferences(const std::vector<SpriteObject_MM7> &sprites) {
     });
 }
 
+bool safeActorReferences(const std::vector<Actor_MM7> &actors) {
+    return std::all_of(actors.begin(), actors.end(), [](const Actor_MM7 &actor) {
+        const std::uint16_t monsterId = actor.monsterInfo.id;
+        const std::uint32_t hostilityGroup = actor.hostilityGroup;
+        return monsterId >= std::to_underlying(MONSTER_FIRST) &&
+               monsterId <= std::to_underlying(MONSTER_LAST) &&
+               actor.monsterId >= std::to_underlying(MONSTER_INVALID) &&
+               actor.monsterId <= std::to_underlying(MONSTER_LAST) &&
+               actor.uniqueNameIndex >= 0 && actor.uniqueNameIndex <= 30 &&
+               (hostilityGroup <= std::to_underlying(MONSTER_TYPE_LAST) ||
+                hostilityGroup == 9999);
+    });
+}
+
 template<class Delta>
 bool safeCommonDeltaReferences(const Delta &delta) {
-    return safeSpriteItemReferences(delta.spriteObjects) &&
+    return safeActorReferences(delta.actors) &&
+           safeSpriteItemReferences(delta.spriteObjects) &&
            std::all_of(delta.chests.begin(), delta.chests.end(),
                        [](const Chest_MM7 &chest) { return detail::hasSafeChestReferences(chest); });
 }
@@ -209,8 +225,8 @@ bool detail::hasSafeChestReferences(const Chest_MM7 &chest) {
     if (chest.chestTypeId >= 8)
         return false;
     // MM7 chests use a 9 x 9 active grid. Unreferenced raw item records can
-    // contain stale IDs, including in fresh saves. Reconstruction currently
-    // stashes these records, so this check alone cannot admit a live load.
+    // contain stale IDs, including in fresh saves. Reconstruction drops
+    // invalid raw IDs but preserves valid random markers outside the grid.
     return std::all_of(chest.inventoryMatrix.begin(), chest.inventoryMatrix.begin() + 81,
                        [&chest](std::int16_t index) {
                            return index <= 0 ||

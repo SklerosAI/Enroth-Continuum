@@ -16,6 +16,7 @@
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/Localization.h"
+#include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Timer.h"
@@ -67,17 +68,14 @@ void mm6::testing::setLoadGameOverride(std::function<void(std::string_view)> cal
     mm6LoadGameOverride = std::move(callback);
 }
 
-bool mm6::testing::hasLoadGameOverride() {
-    return static_cast<bool>(mm6LoadGameOverride);
-}
-
 void loadGame(std::string_view fileName) {
     if (engine->gameTitle() == GameTitle::MM6) {
         if (mm6LoadGameOverride) {
             mm6LoadGameOverride(fileName);
-            return;
+        } else {
+            mm6::loadFirstMapManualSlot(fileName);
         }
-        throw std::runtime_error("MM6 save loading is unavailable until the EC6 transaction is complete");
+        return;
     }
 
     std::string path = fmt::format("saves/{}", fileName);

@@ -68,6 +68,23 @@ std::vector<SaveSlotInfo> listFirstMapManualSlots();
  */
 std::vector<std::uint8_t> readFirstMapManualSlot(std::string_view fileName);
 
+/**
+ * @param fileName                      Slot selected in the main-menu Load menu.
+ * @return                              Whether `loadFirstMapManualSlot` can take it: a numbered slot, with a native
+ *                                      MM6 profile root to read it from.
+ */
+bool mayLoadFirstMapManualSlot(std::string_view fileName);
+
+/**
+ * Starts the main-menu load of a numbered first-map slot. Reads and stages the slot, puts the load attempt on the
+ * engine and publishes its owners. World preparation and the attempt's release follow in the game loop. The slot
+ * file is only read.
+ *
+ * @param fileName                      Listed `saveNNN.ec6` slot. Throws when it can't be loaded, the caller then
+ *                                      abandons the load.
+ */
+void loadFirstMapManualSlot(std::string_view fileName);
+
 namespace testing {
 /**
  * GameTest stand-in for the startup root, which a RAM user filesystem leaves absent.

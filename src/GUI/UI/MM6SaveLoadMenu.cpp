@@ -71,9 +71,9 @@ void mm6SaveFromMenu(std::string_view fileName, std::string_view title) {
 }
 
 bool mm6MayLoadFromMainMenu(std::string_view fileName) {
-    if (mm6::testing::hasLoadGameOverride())
+    if (mm6::mayLoadFirstMapManualSlot(fileName))
         return true;
-    MM_WARNING("MM6 slot '{}' was not loaded, MM6 loading is not available yet", fileName);
+    MM_WARNING("MM6 slot '{}' was not loaded, it is not a numbered slot of the MM6 profile", fileName);
     if (pAudioPlayer)
         pAudioPlayer->playUISound(SOUND_error);
     return false;

@@ -12,6 +12,7 @@
 #include "Library/Logger/Logger.h"
 
 #include "MM6V4SaveFields.h"
+#include "MM6V5FirstMapLoadAttempt.h"
 #include "MM6V5FirstMapLoadPreflight.h"
 #include "MM6V5FullSessionPreflight.h"
 #include "MM6V5FirstMapNativeSlotPolicy.h"
@@ -114,6 +115,23 @@ std::vector<std::uint8_t> readFirstMapManualSlot(std::string_view fileName) {
     if (!root)
         throw std::runtime_error("MM6 save load has no profile root");
     return readV5FirstMapNativeLoadSlot({*root, *root}, fileName, GameTitle::MM6, firstMapValidator());
+}
+
+bool mayLoadFirstMapManualSlot(std::string_view fileName) {
+    return profileRoot() && isNumberedV5FirstMapSlot(fileName);
+}
+
+void loadFirstMapManualSlot(std::string_view fileName) {
+    if (!engine || engine->gameTitle() != GameTitle::MM6 || engine->_mm6FirstMapLoadAttempt)
+        throw std::runtime_error("MM6 slot load needs a fresh MM6 session");
+    try {
+        engine->_mm6FirstMapLoadAttempt = V5FirstMapLoadAttempt::fromNativeSlot(readFirstMapManualSlot(fileName), fileName, GameTitle::MM6);
+        engine->_mm6FirstMapLoadAttempt->publishOwners(GameTitle::MM6);
+    } catch (const std::exception &e) {
+        MM_ERROR("MM6 slot '{}' was not loaded: {}", fileName, e.what());
+        throw;
+    }
+    engine->_lastLoadedSaveFileName = fileName;
 }
 
 void testing::setNativeProfileRootForTest(std::optional<std::filesystem::path> root) {

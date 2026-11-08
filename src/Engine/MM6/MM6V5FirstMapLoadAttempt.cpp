@@ -233,6 +233,12 @@ bool releaseV5FirstMapLoadAttempt() {
 bool abandonV5FirstMapLoadAttempt() noexcept {
     if (!engine || !engine->_mm6FirstMapLoadAttempt)
         return false;
+    return abandonMainMenuLoad();
+}
+
+bool abandonMainMenuLoad() noexcept {
+    if (!engine || engine->gameTitle() != GameTitle::MM6)
+        return false;
     engine->_mm6FirstMapLoadAttempt.reset();
     engine->_pendingTransition.reset();
     engineFlags &= ~(ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE | ENGINE_SKIP_NEXT_USER_INPUT);

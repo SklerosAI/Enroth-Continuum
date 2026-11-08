@@ -67,11 +67,10 @@ namespace mm6::testing {
 // MM6 new-game save guard closed. Never install this for a user session.
 void setNewGameSaveOverride(std::function<void()> callback);
 
-// Fresh-process GameTest seam. When absent, loadGame still rejects MM6 before
-// touching a live owner. The callback must stage and validate its disposable
-// slot before publication; it must never be installed for a user session.
+// Fresh-process GameTest seam. When present, it replaces the numbered-slot MM6
+// load. The callback must stage and validate its disposable slot before
+// publication; it must never be installed for a user session.
 void setLoadGameOverride(std::function<void(std::string_view)> callback);
-bool hasLoadGameOverride();
 
 // Route only a synthetic main-menu QuickLoad event to the disposable MM6
 // autosave. Normal MM6 quickload remains guarded.

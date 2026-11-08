@@ -21,7 +21,7 @@ namespace mm6 {
 /**
  * Engine-owned first-map v5 load context. It owns the detached graph, replays EVRT, actors, generated NPCs,
  * decorations, sprites, the chest handoff and RNGS in native load order, and checks the prepared world before the
- * first input frame. It lives for one load. No normal SaveLoad route may construct this context yet.
+ * first input frame. It lives for one load, started by the main-menu Load of a numbered slot.
  */
 class V5FirstMapLoadAttempt {
  public:
@@ -129,6 +129,14 @@ bool releaseV5FirstMapLoadAttempt();
  * @return                              Whether an attempt was in flight.
  */
 bool abandonV5FirstMapLoadAttempt() noexcept;
+
+/**
+ * Sends a failed MM6 main-menu load back to the main menu before any input, world update or save, dropping its
+ * first-map load attempt if it got as far as putting one on the engine.
+ *
+ * @return                              Whether the running title is MM6. Otherwise nothing changes.
+ */
+bool abandonMainMenuLoad() noexcept;
 
 namespace testing {
 /**

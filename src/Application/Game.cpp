@@ -1548,7 +1548,7 @@ void Game::gameLoop() {
         try {
             loadGame(std::exchange(engine->_pendingLoadFileName, {}));
         } catch (...) {
-            if (mm6::abandonV5FirstMapLoadAttempt())
+            if (mm6::abandonMainMenuLoad())
                 return;
             throw;
         }

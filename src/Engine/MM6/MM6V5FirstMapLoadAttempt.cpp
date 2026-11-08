@@ -32,10 +32,12 @@
 #include "MM6ChestSeedAndOwnership.h"
 #include "MM6ChestTitleState.h"
 #include "MM6EventRuntimeSaveFields.h"
+#include "MM6FirstMapManualSave.h"
 #include "MM6PersistentEventPublication.h"
 #include "MM6PreEventActorReplay.h"
 #include "MM6RawCursorShopProcessOwner.h"
 #include "MM6ShopTitleState.h"
+#include "MM6V4SaveFields.h"
 #include "MM6V5ActorRuntimeFields.h"
 #include "MM6V5DecorationRuntimeFields.h"
 #include "MM6V5SpriteRuntimeFields.h"
@@ -220,9 +222,12 @@ bool V5FirstMapLoadAttempt::chestOwnersUnchanged() const {
 bool releaseV5FirstMapLoadAttempt() {
     assert(engine && engine->_mm6FirstMapLoadAttempt);
     try {
-        engine->_mm6FirstMapLoadAttempt->requirePostWorldAgreement(engine->gameTitle());
+        V5FirstMapLoadAttempt &attempt = *engine->_mm6FirstMapLoadAttempt;
+        attempt.requirePostWorldAgreement(engine->gameTitle());
+        armFirstMapManualSave(encodeV4Save(attempt.staged().v4.saved, GameTitle::MM6), GameTitle::MM6);
     } catch (const std::exception &error) {
         MM_ERROR("MM6 first-map load refused before first input: {}", error.what());
+        disarmFirstMapManualSave();
         abandonV5FirstMapLoadAttempt();
         return false;
     }

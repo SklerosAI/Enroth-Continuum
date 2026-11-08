@@ -115,8 +115,9 @@ class V5FirstMapLoadAttempt {
 };
 
 /**
- * Checks the world the engine's first-map load attempt prepared against its staged owners, then drops the attempt.
- * Called after world preparation and before the first input frame. A refused check abandons the load instead.
+ * Checks the world the engine's first-map load attempt prepared against its staged owners, arms manual saving with
+ * the slot's v4 anchor, then drops the attempt. Called after world preparation and before the first input frame. A
+ * refused check abandons the load instead.
  *
  * @return                              Whether the prepared world was admitted.
  */

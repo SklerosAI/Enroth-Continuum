@@ -3019,6 +3019,12 @@ int Actor::DamageMonsterFromParty(Pid a1, unsigned int uActorID_Monster, const V
     if (pMonster->IsNotAlive()) return 0;
     if (engine->gameTitle() == GameTitle::MM6)
         mm6::requireVerifiedPartyAttack(*character, projectileSprite);
+    if (engine->gameTitle() == GameTitle::MM7 && projectileSprite &&
+        !isRegularSpell(projectileSprite->uSpellID) &&
+        projectileSprite->uSpellID != SPELL_BOW_ARROW &&
+        projectileSprite->uSpellID != SPELL_101 &&
+        projectileSprite->uSpellID != SPELL_BLASTER_PROJECTILE)
+        return 0;
 
     pMonster->attributes |= ACTOR_NEARBY | ACTOR_ACTIVE;
     if (pMonster->aiState == Fleeing) pMonster->attributes |= ACTOR_FLEEING;

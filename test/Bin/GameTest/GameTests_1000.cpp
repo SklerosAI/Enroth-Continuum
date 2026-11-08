@@ -1595,6 +1595,69 @@ GAME_TEST(MM6MonsterSpell, NumericFireBoltRemainsSelectable) {
     EXPECT_EQ(actor.special_ability_use_check(0), ABILITY_SPELL1);
 }
 
+static Pid appendSyntheticPartyProjectile(SpellId spell) {
+    pSpriteObjects.emplace_back();
+    SpriteObject &sprite = pSpriteObjects.back();
+    sprite.uSpellID = spell;
+    sprite.spell_caster_pid = Pid(OBJECT_Character, 0);
+    sprite.vPosition = pParty->pos;
+    sprite.spell_level = 1;
+    sprite.spell_skill = MASTERY_NOVICE;
+    return Pid(OBJECT_Sprite, pSpriteObjects.size() - 1);
+}
+
+GAME_TEST(MM7SpriteDamage, RejectsSavedSpell255BeforeTargetMutation) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_GT(pActors.size(), 10u);
+
+    Actor &target = pActors[10];
+    target.aiState = Standing;
+    target.hp = 10000;
+    target.monsterInfo.hp = 10000;
+    target.attributes &= ~(ACTOR_ACTIVE | ACTOR_NEARBY);
+    const Pid projectile = appendSyntheticPartyProjectile(static_cast<SpellId>(255));
+
+    EXPECT_EQ(Actor::DamageMonsterFromParty(projectile, 10, Vec3f()), 0);
+    EXPECT_EQ(target.hp, 10000);
+    EXPECT_FALSE(target.attributes & (ACTOR_ACTIVE | ACTOR_NEARBY));
+}
+
+GAME_TEST(MM7SpriteDamage, KeepsRegularSpellAndArrowFlameBlasterProjectiles) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_GT(pActors.size(), 10u);
+
+    Actor &target = pActors[10];
+    target.monsterInfo.hp = 10000;
+    for (SpellId spell : {SPELL_FIRE_FIRE_BOLT, SPELL_BOW_ARROW, SPELL_101, SPELL_BLASTER_PROJECTILE}) {
+        target.aiState = Standing;
+        target.hp = 10000;
+        target.attributes &= ~(ACTOR_ACTIVE | ACTOR_NEARBY);
+        const Pid projectile = appendSyntheticPartyProjectile(spell);
+
+        (void) Actor::DamageMonsterFromParty(projectile, 10, Vec3f());
+        EXPECT_TRUE(target.attributes & ACTOR_ACTIVE);
+    }
+}
+
+GAME_TEST(MM6SpriteDamage, NumericArrowStillTraversesDamagePath) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    pActors.emplace_back();
+    const unsigned actorId = pActors.size() - 1;
+    Actor &target = pActors[actorId];
+    target.aiState = Standing;
+    target.monsterId = MONSTER_GOBLIN_A;
+    target.monsterInfo.id = MONSTER_GOBLIN_A;
+    target.monsterInfo.hp = 10000;
+    target.hp = 10000;
+    target.attributes &= ~(ACTOR_ACTIVE | ACTOR_NEARBY);
+    const Pid projectile = appendSyntheticPartyProjectile(SPELL_BOW_ARROW);
+
+    (void) Actor::DamageMonsterFromParty(projectile, actorId, Vec3f());
+    EXPECT_TRUE(target.attributes & ACTOR_ACTIVE);
+}
+
 GAME_TEST(MM7MonsterSpell, SecondSlotProjectileCarriesAbility) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
     game.startNewGame();

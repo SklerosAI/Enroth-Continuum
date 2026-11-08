@@ -14,6 +14,7 @@
 #include "Engine/Data/HouseEnums.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Objects/MonsterEnums.h"
+#include "Engine/Objects/NPCEnums.h"
 #include "Engine/Objects/SpriteEnums.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Spells/SpellEnums.h"
@@ -278,6 +279,15 @@ bool detail::hasSafePartyInventoryReferences(const Party_MM7 &party) {
 
 bool detail::hasSafePartySemanticReferences(const Party_MM7 &party) {
     if (party.alignment > 2)
+        return false;
+
+    // Only named hirelings join the flattened roster. Empty slots can retain
+    // stale profession bytes and are not used by the live hireling consumers.
+    if (!std::all_of(party.hirelings.begin(), party.hirelings.end(),
+                     [](const NPCData_MM7 &hireling) {
+                         return !hireling.name.value ||
+                                hireling.profession <= std::to_underlying(NPC_PROFESSION_LAST);
+                     }))
         return false;
 
     const int arenaQuest = party.field_7B5_in_arena_quest;

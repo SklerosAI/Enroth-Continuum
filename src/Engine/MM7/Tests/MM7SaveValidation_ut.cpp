@@ -1,9 +1,11 @@
 #include <cstdint>
 #include <string>
+#include <utility>
 
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM7/MM7SaveValidation.h"
+#include "Engine/Objects/NPCEnums.h"
 #include "Engine/Objects/SpriteEnums.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Snapshots/EntitySnapshots.h"
@@ -168,6 +170,27 @@ UNIT_TEST(MM7SaveValidation, RejectsInvalidPartyAndCharacterEnums) {
     EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
     character.quickSpell = 0; // SPELL_NONE is the fresh-character default.
     EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+}
+
+UNIT_TEST(MM7SaveValidation, ChecksOnlyNamedHirelingProfessionBounds) {
+    Party_MM7 party{};
+    const std::uint32_t lastProfession = std::to_underlying(NPC_PROFESSION_LAST);
+
+    party.hirelings[0].profession = lastProfession + 1;
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party)); // Inactive slot retains stale data.
+
+    party.hirelings[0].name.value = 1;
+    party.hirelings[0].profession = std::to_underlying(NPC_PROFESSION_NONE);
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+    party.hirelings[0].profession = lastProfession;
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+    party.hirelings[0].profession = lastProfession + 1;
+    EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
+
+    party.hirelings[0].name.value = 0;
+    party.hirelings[1].name.value = 1;
+    party.hirelings[1].profession = lastProfession + 1;
+    EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
 }
 
 UNIT_TEST(MM7SaveValidation, AcceptsZombieFacesAndRejectsOutOfRangeFaceOrVoice) {

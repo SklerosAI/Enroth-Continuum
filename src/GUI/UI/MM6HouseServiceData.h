@@ -3,10 +3,12 @@
 #include <array>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "Engine/Data/HouseEnumFunctions.h"
 #include "Engine/Data/SoundEnums.h"
 #include "Engine/GameTitle.h"
+#include "Engine/LocalizationEnums.h"
 
 #include "GUI/UI/MM6RoomDescriptors.h"
 #include "GUI/UI/Houses/MM6TransportRules.h"
@@ -69,6 +71,35 @@ struct HousePresentationState {
 // A display-only MM6 room. Blank and terminal entries, and other titles,
 // cannot activate the house preview window.
 HousePresentationState planHousePresentation(GameTitle title, const HouseServiceData &houses, int houseId);
+
+enum class HouseServiceOption {
+    TempleHeal,
+    TempleDonate,
+    Train,
+    BuyItems,
+    SellItems,
+    IdentifyItems,
+    RepairItems,
+    BuySpells,
+    LearnSkills,
+    Deposit,
+    Withdraw,
+    HaveADrink
+};
+
+/**
+ * @param type                          Parsed MM6 house type.
+ * @return                              Services the proprietor of a house of this type lists, in menu order. Transport
+ *                                      houses list none here, their routes come from `selectTransportMenu`.
+ */
+std::vector<HouseServiceOption> houseServiceOptions(HouseType type);
+
+/**
+ * @param option                        House service.
+ * @return                              Id of the service's label in MM6's global.txt. Many of these ids hold other
+ *                                      strings in MM7's global.txt.
+ */
+LstrId houseServiceOptionLabel(HouseServiceOption option);
 
 struct TransportMenuData {
     std::array<std::optional<TransportRoute>, 3> routes;

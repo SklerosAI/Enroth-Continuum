@@ -499,6 +499,23 @@ TEST(MM6HouseServiceData, PreviewExitSkipsLegacyDialogueAndCharacterAdvanceOnlyF
     EXPECT_FALSE(isMM6HousePresentationScreen(GameTitle::MM7, SCREEN_HOUSE));
 }
 
+TEST(MM6HouseServiceData, ServiceOptionsFollowHouseFamilyAndType) {
+    // A proprietor lists the services of their house's family, or of their house type for the other houses.
+    using enum mm6::HouseServiceOption;
+    using Options = std::vector<mm6::HouseServiceOption>;
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_WEAPON_SHOP), Options({BuyItems, SellItems, IdentifyItems, RepairItems}));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_GENERAL_STORE), Options({BuyItems, SellItems, IdentifyItems, RepairItems}));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_ELEMENTAL_GUILD), Options({BuySpells, LearnSkills}));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_STABLE), Options());
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_TEMPLE), Options({TempleHeal, TempleDonate}));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_TRAINING_GROUND), Options({Train}));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_BANK), Options({Deposit, Withdraw}));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_TAVERN), Options({HaveADrink}));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_HOUSE), Options());
+    EXPECT_EQ(mm6::houseServiceOptionLabel(TempleHeal), LSTR_HEAL);
+    EXPECT_EQ(mm6::houseServiceOptionLabel(Deposit), LSTR_DEPOSIT);
+}
+
 TEST(MM6HouseServiceData, StagesOnlyF3MatchedMM6GreetingCandidatesWithoutPlayback) {
     const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
     const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");

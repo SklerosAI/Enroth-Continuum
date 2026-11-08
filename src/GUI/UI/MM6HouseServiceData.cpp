@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "Engine/Tables/HouseTable.h"
 #include "Engine/Engine.h"
@@ -126,6 +127,50 @@ HousePresentationState planHousePresentation(GameTitle title, const HouseService
         ? std::optional<SoundId>(static_cast<SoundId>(30000 + 100 * entry.room->soundGroup + 1))
         : std::nullopt;
     return {houseId, entry.room->videoName, entry.proprietorIconName, candidateGreeting};
+}
+
+std::vector<HouseServiceOption> houseServiceOptions(HouseType type) {
+    using enum HouseServiceOption;
+    switch (houseServiceFamily(type)) {
+        case HouseServiceFamily::Shop:
+            return {BuyItems, SellItems, IdentifyItems, RepairItems};
+        case HouseServiceFamily::MagicGuild:
+            return {BuySpells, LearnSkills};
+        case HouseServiceFamily::Transport:
+            return {};
+        case HouseServiceFamily::Other:
+            break;
+    }
+    switch (type) {
+        case HOUSE_TYPE_TEMPLE:
+            return {TempleHeal, TempleDonate};
+        case HOUSE_TYPE_TRAINING_GROUND:
+            return {Train};
+        case HOUSE_TYPE_BANK:
+            return {Deposit, Withdraw};
+        case HOUSE_TYPE_TAVERN:
+            return {HaveADrink};
+        default:
+            return {};
+    }
+}
+
+LstrId houseServiceOptionLabel(HouseServiceOption option) {
+    switch (option) {
+        case HouseServiceOption::TempleHeal: return static_cast<LstrId>(104);    // "Heal"
+        case HouseServiceOption::TempleDonate: return static_cast<LstrId>(68);   // "Donate"
+        case HouseServiceOption::Train: return static_cast<LstrId>(228);         // "Train"
+        case HouseServiceOption::BuyItems: return static_cast<LstrId>(539);      // "Buy Items"
+        case HouseServiceOption::SellItems: return static_cast<LstrId>(540);     // "Sell Items"
+        case HouseServiceOption::IdentifyItems: return static_cast<LstrId>(541); // "Identify Items"
+        case HouseServiceOption::RepairItems: return static_cast<LstrId>(542);   // "Repair Items"
+        case HouseServiceOption::BuySpells: return static_cast<LstrId>(400);     // "Buy Spells"
+        case HouseServiceOption::LearnSkills: return static_cast<LstrId>(535);   // "Learn"
+        case HouseServiceOption::Deposit: return static_cast<LstrId>(60);        // "Deposit"
+        case HouseServiceOption::Withdraw: return static_cast<LstrId>(244);      // "Withdraw"
+        case HouseServiceOption::HaveADrink: return static_cast<LstrId>(398);    // "Have a Drink"
+    }
+    throw std::runtime_error("Unknown MM6 house service option");
 }
 
 bool TransportMenuData::hasAvailableRoute() const {

@@ -340,6 +340,27 @@ UNIT_TEST(MM7SaveValidation, RejectsInvalidActorReferenceBounds) {
     EXPECT_FALSE(mm7::detail::hasSafeIndoorDeltaReferences(indoor, 0, 0, 0));
 }
 
+UNIT_TEST(MM7SaveValidation, RejectsInvalidNonnegativeActorNpcIdsInBothDeltas) {
+    Actor_MM7 actor{};
+    actor.monsterInfo.id = 1;
+    IndoorDelta_MM7 indoor{};
+    OutdoorDelta_MM7 outdoor{};
+    indoor.actors.push_back(actor);
+    outdoor.actors.push_back(actor);
+
+    auto expectBoth = [&](int npcId, bool safe) {
+        indoor.actors[0].npcId = npcId;
+        outdoor.actors[0].npcId = npcId;
+        EXPECT_EQ(mm7::detail::hasSafeIndoorDeltaReferences(indoor, 0, 0, 0), safe) << npcId;
+        EXPECT_EQ(mm7::detail::hasSafeOutdoorDeltaReferences(outdoor), safe) << npcId;
+    };
+
+    for (int npcId : {-1, 0, 500, 5000, 5099})
+        expectBoth(npcId, true);
+    for (int npcId : {501, 4999, 5100, 32767})
+        expectBoth(npcId, false);
+}
+
 UNIT_TEST(MM7SaveValidation, RejectsInvalidActorLootItems) {
     OutdoorDelta_MM7 delta{};
     Actor_MM7 actor{};

@@ -80,6 +80,11 @@ bool safeSpriteItemReferences(const std::vector<SpriteObject_MM7> &sprites) {
     });
 }
 
+bool safeActorNpcId(std::int16_t npcId) {
+    // Negative IDs index the dynamic follower roster, whose size is not in the delta.
+    return npcId < 501 || (npcId >= 5000 && npcId < 5100);
+}
+
 bool safeActorReferences(const std::vector<Actor_MM7> &actors) {
     return std::all_of(actors.begin(), actors.end(), [](const Actor_MM7 &actor) {
         const std::uint16_t monsterId = actor.monsterInfo.id;
@@ -88,6 +93,7 @@ bool safeActorReferences(const std::vector<Actor_MM7> &actors) {
                monsterId <= std::to_underlying(MONSTER_LAST) &&
                actor.monsterId >= std::to_underlying(MONSTER_INVALID) &&
                actor.monsterId <= std::to_underlying(MONSTER_LAST) &&
+               safeActorNpcId(actor.npcId) &&
                validItemId(actor.carriedItemId) &&
                validItemId(actor.items[0].itemId) &&
                validItemId(actor.items[1].itemId) &&

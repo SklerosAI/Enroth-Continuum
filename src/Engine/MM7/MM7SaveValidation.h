@@ -42,7 +42,9 @@ bool hasBoundedDeltaRecords(const Blob &decoded, bool indoor,
                             std::size_t doorCount = 0, std::size_t doorDataBytes = 0);
 
 // Check selected references in inventories, the active chest grid, actors,
-// sprites and indoor doors. Other semantic owners remain outside this preflight.
+// sprites and indoor doors. Actor NPC IDs reject invalid nonnegative table and
+// generated-row indices; negative follower IDs await roster-aware validation.
+// Other semantic owners remain outside this preflight.
 // Chest reconstruction filters invalid raw item IDs and preserves valid random
 // markers; other semantic owners still keep this from being a full validator.
 bool hasSafeCharacterInventoryReferences(const Character_MM7 &character);

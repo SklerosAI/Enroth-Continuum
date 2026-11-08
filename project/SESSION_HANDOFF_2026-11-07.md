@@ -213,6 +213,17 @@ was compiled together, and no lane's tests are known to pass at this snapshot.
   give. Tests: unit 1025 passed, MM6 3/3, gate passed after each commit,
   revert check fails as expected. Open: ground drop when the party is full,
   MM6 special bonus effects in the runtime, save/reload of a give result.
+- **P, transition prerequisites: merged** as `6f26236ab`, `63ada1199`,
+  `9512ec2f4`, `df471bb87`. `encodeMM6ArchiveEntry` (all 67 shipped deltas
+  round-trip, not byte-identical to the original deflate), the four border
+  hirelings proven as Guide, Tracker, Pathfinder and Explorer,
+  `mm6::restAndHealDetachedParty` resting a copy through a scoped `pParty`
+  swap, and a correction from the original: a border trip always rests, then
+  rests again with food, so a starving party arrives healed but Weak. The day
+  rollover does not double count. Tests: unit 1054 passed, two MM6 border rest
+  tests, MM7 rest tests 1226a/b/c, gate passed, revert checks fail. Open: two
+  per-character fields the trip zeroes are unmapped, regeneration catch-up
+  after the jump is unchecked.
 - **L, F4b production load: started** in the old A worktree on branch
   `mm6-f4b-production-load`: numbered-slot attempt construction, production
   owner publication with a test fault point at the partial-assignment

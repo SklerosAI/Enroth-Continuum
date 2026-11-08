@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstddef>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -1491,4 +1492,61 @@ GAME_TEST(MM7ActorGroupDialogue, RejectsPhraseBeyondTextTable) {
 
     InteractWithActor(10);
     EXPECT_EQ(pGUIWindow_BranchlessDialogue, nullptr);
+}
+
+static std::size_t firstFreeMonsterSpellSpriteSlot() {
+    for (std::size_t i = 0; i < pSpriteObjects.size(); ++i) {
+        if (!pSpriteObjects[i].uObjectDescID)
+            return i;
+    }
+    return pSpriteObjects.size();
+}
+
+GAME_TEST(MM7MonsterSpell, SecondSlotProjectileCarriesAbility) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_GT(pActors.size(), 10u);
+
+    AIDirection direction;
+    Actor::GetDirectionInfo(pActors[10].pos, pParty->pos, &direction);
+    std::size_t slot = firstFreeMonsterSpellSpriteSlot();
+    Actor::AI_SpellAttack(10, &direction, SPELL_FIRE_FIRE_BOLT, ABILITY_SPELL2,
+                          CombinedSkillValue(10, MASTERY_EXPERT));
+
+    ASSERT_LT(slot, pSpriteObjects.size());
+    EXPECT_EQ(pSpriteObjects[slot].uSpellID, SPELL_FIRE_FIRE_BOLT);
+    EXPECT_EQ(pSpriteObjects[slot].spellCasterAbility, ABILITY_SPELL2);
+}
+
+GAME_TEST(MM7MonsterSpell, SecondSlotMeteorCarriesAbility) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_GT(pActors.size(), 10u);
+
+    AIDirection direction;
+    Actor::GetDirectionInfo(pActors[10].pos, pParty->pos, &direction);
+    std::size_t slot = firstFreeMonsterSpellSpriteSlot();
+    Actor::AI_SpellAttack(10, &direction, SPELL_FIRE_METEOR_SHOWER, ABILITY_SPELL2,
+                          CombinedSkillValue(10, MASTERY_EXPERT));
+
+    ASSERT_LT(slot, pSpriteObjects.size());
+    EXPECT_EQ(pSpriteObjects[slot].uSpellID, SPELL_FIRE_METEOR_SHOWER);
+    EXPECT_EQ(pSpriteObjects[slot].spellCasterAbility, ABILITY_SPELL2);
+}
+
+GAME_TEST(MM7MonsterSpell, SecondSlotSpraysCarryAbility) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_GT(pActors.size(), 10u);
+
+    AIDirection direction;
+    Actor::GetDirectionInfo(pActors[10].pos, pParty->pos, &direction);
+    for (SpellId spell : {SPELL_AIR_SPARKS, SPELL_DARK_SHARPMETAL}) {
+        std::size_t slot = firstFreeMonsterSpellSpriteSlot();
+        Actor::AI_SpellAttack(10, &direction, spell, ABILITY_SPELL2,
+                              CombinedSkillValue(10, MASTERY_EXPERT));
+        ASSERT_LT(slot, pSpriteObjects.size());
+        EXPECT_EQ(pSpriteObjects[slot].uSpellID, spell);
+        EXPECT_EQ(pSpriteObjects[slot].spellCasterAbility, ABILITY_SPELL2);
+    }
 }

@@ -258,7 +258,7 @@ void Actor::AI_SpellAttack(unsigned int uActorID, AIDirection *pDir,
         sprite.spell_caster_pid = Pid(OBJECT_Actor, uActorID);
         sprite.spell_target_pid = Pid();
         sprite.field_60_distance_related_prolly_lod = distancemod;
-        sprite.spellCasterAbility = ABILITY_SPELL1;
+        sprite.spellCasterAbility = engine->gameTitle() == GameTitle::MM6 ? ABILITY_SPELL1 : a4;
 
         spriteId = sprite.Create(pDir->uYawAngle, pDir->uPitchAngle, pObjectTable->pObjects[sprite.uObjectDescID].uSpeed, 0);
         if (spriteId != -1) {
@@ -362,7 +362,7 @@ void Actor::AI_SpellAttack(unsigned int uActorID, AIDirection *pDir,
                 sprite.spell_target_pid = Pid();
                 sprite.uFacing = yaw;
                 sprite.field_60_distance_related_prolly_lod = distancemod;
-                sprite.spellCasterAbility = ABILITY_SPELL1;
+                sprite.spellCasterAbility = a4;
 
                 spriteId = sprite.Create(yaw, pitch, pObjectTable->pObjects[sprite.uObjectDescID].uSpeed, 0);
                 j = grng->random(1024) - 512;
@@ -409,6 +409,7 @@ void Actor::AI_SpellAttack(unsigned int uActorID, AIDirection *pDir,
             sprite.timeSinceCreated = 0_ticks;
             sprite.spell_target_pid = Pid();
             sprite.field_60_distance_related_prolly_lod = 3;
+            sprite.spellCasterAbility = a4;
 
             int spell_spray_angle_start = ONE_THIRD_PI / -2;
             int spell_spray_angle_end = ONE_THIRD_PI / 2;
@@ -665,6 +666,7 @@ void Actor::AI_SpellAttack(unsigned int uActorID, AIDirection *pDir,
             sprite.timeSinceCreated = 0_ticks;
             sprite.spell_target_pid = Pid();
             sprite.field_60_distance_related_prolly_lod = 3;
+            sprite.spellCasterAbility = a4;
 
             int spell_spray_angle_start = ONE_THIRD_PI / -2;
             int spell_spray_angle_end = ONE_THIRD_PI / 2;

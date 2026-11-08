@@ -49,11 +49,17 @@ PAPERDOLL_CHILDREN = [
     ("MM6V5PaperdollHeadless.DISABLED_BackpackItemStaysEquippedThroughInventoryCapture",
      "ENROTH_MM6_V5_FIRST_INPUT_ENABLE", "strict-v5-after-action"),
 ]
+NORMAL_SAVE_LOAD = [
+    ("MM6V5NormalSaveMenuHeadless.DISABLED_SaveMenuWritesNumberedFirstMapSlot",
+     "ENROTH_MM6_V5_NORMAL_SAVE_ENABLE", "strict-v5-normal-save"),
+    ("MM6V5NormalLoadMenuHeadless.DISABLED_LoadMenuListsAndLoadsNumberedFirstMapSlot",
+     "ENROTH_MM6_V5_NORMAL_LOAD_ENABLE", "strict-v5-normal-load"),
+]
 MM7_CONTROL = "Prs.Pr2354"
 PASS_LINE = re.compile(r"\[\s*PASSED\s*\]\s+1 test\b")
 
 
-def run_child(name, flag, value, profile, data, rules=None):
+def run_child(name, flag, value, profile, data, rules=None, timeout=240):
     env = os.environ.copy()
     for key in list(env):
         if key.startswith("ENROTH_MM6_V") or key == "ENROTH_MM6_RESTART_PROFILE":
@@ -73,7 +79,7 @@ def run_child(name, flag, value, profile, data, rules=None):
     try:
         result = subprocess.run(command, cwd=ROOT, env=env,
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                text=True, timeout=240, check=False)
+                                text=True, timeout=timeout, check=False)
     except subprocess.TimeoutExpired:
         print(f"FAIL {name}: timed out", file=sys.stderr)
         return False
@@ -97,6 +103,8 @@ def main():
             print("fault-retry:", name)
         for name, _, _ in PAPERDOLL_CHILDREN:
             print("paperdoll:", name)
+        for name, _, _ in NORMAL_SAVE_LOAD:
+            print("normal save/load:", name)
         print("MM7 control:", MM7_CONTROL)
         return 0
 
@@ -142,10 +150,22 @@ def main():
             if not run_child(name, flag, value, profile,
                              paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"]):
                 return 1
+    with tempfile.TemporaryDirectory(prefix="mm6-restart-normal-") as third:
+        profile = Path(third)
+        os.chmod(profile, 0o700)
+        for name, flag, value in [SEED, V4]:
+            if not run_child(name, flag, value, profile,
+                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"]):
+                return 1
+        # Every save and every menu listing stages complete first-map sessions.
+        for name, flag, value in NORMAL_SAVE_LOAD:
+            if not run_child(name, flag, value, profile,
+                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+                return 1
     if not run_child(MM7_CONTROL, None, None, ROOT,
                      paths["MM7_DATA_PATH"]):
         return 1
-    print("PASS: seven-child MM6 chain, all full-retry fault children, the paperdoll child, and MM7 control")
+    print("PASS: seven-child MM6 chain, all full-retry fault children, the paperdoll child, normal Save/Load menus, and MM7 control")
     return 0
 
 

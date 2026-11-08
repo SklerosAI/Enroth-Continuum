@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "MM6V4SaveFields.h"
 #include "MM6V5FirstMapLoadPreflight.h"
@@ -17,11 +18,6 @@
 
 namespace mm6 {
 namespace {
-
-bool isNumberedSlot(std::string_view slotName) {
-    return slotName.size() == 11 && slotName.starts_with("save") && slotName.ends_with(".ec6") &&
-           std::ranges::all_of(slotName.substr(4, 3), [](char digit) { return digit >= '0' && digit <= '9'; });
-}
 
 void requireNativeRoot(const V5FirstMapNativeRoot &root, GameTitle title,
                        const SaveCandidateValidator &validate) {
@@ -45,7 +41,7 @@ void requireNativeRoot(const V5FirstMapNativeRoot &root, GameTitle title,
 void requireNativeRootAndSlot(const V5FirstMapNativeRoot &root,
                               std::string_view slotName, GameTitle title,
                               const SaveCandidateValidator &validate) {
-    if (!isNumberedSlot(slotName))
+    if (!isNumberedV5FirstMapSlot(slotName))
         throw std::invalid_argument("MM6 native first-map write needs numbered title-private slot");
     requireNativeRoot(root, title, validate);
 }
@@ -94,6 +90,11 @@ V5FirstMapSaveOutcome classify(const V5FirstMapSlotState &before,
 }
 
 } // namespace
+
+bool isNumberedV5FirstMapSlot(std::string_view slotName) {
+    return slotName.size() == 11 && slotName.starts_with("save") && slotName.ends_with(".ec6") &&
+           std::ranges::all_of(slotName.substr(4, 3), [](char digit) { return digit >= '0' && digit <= '9'; });
+}
 
 V5FirstMapSlotState preflightV5FirstMapNativeWriteSlot(
     const V5FirstMapNativeRoot &root, std::string_view slotName,
@@ -158,7 +159,7 @@ std::vector<SaveSlotInfo> listV5FirstMapNativeSlots(
         std::string name = entry.path().filename().string();
         if (name.ends_with(".bak"))
             name.resize(name.size() - 4);
-        if (isNumberedSlot(name))
+        if (isNumberedV5FirstMapSlot(name))
             names.insert(std::move(name));
     }
     std::vector<SaveSlotInfo> result;

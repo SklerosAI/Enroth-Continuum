@@ -20,6 +20,12 @@ struct V5FirstMapNativeRoot {
     std::filesystem::path requestedRoot;
 };
 
+/**
+ * @param slotName                      File name to check.
+ * @return                              Whether it names a numbered manual slot, `saveNNN.ec6`.
+ */
+bool isNumberedV5FirstMapSlot(std::string_view slotName);
+
 // Read-only admission for one numbered manual slot. All existing primary and
 // backup files must be exact, semantically valid first-map v5 candidates;
 // damaged, foreign-version, other-map and backup-only slots refuse writes.

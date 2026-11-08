@@ -37,6 +37,18 @@ class V5FirstMapLoadAttempt {
 
     V5FirstMapLoadAttempt(std::unique_ptr<V5FullSessionPreflight> staged,
                           std::string_view slotName, GameTitle title);
+
+    /**
+     * Stages a first-map v5 slot and checks it before anything is published.
+     *
+     * @param slotBytes                 Validated primary bytes of the slot.
+     * @param slotName                  A numbered `saveNNN.ec6` slot, or the disposable test candidate.
+     * @param title                     Must be MM6.
+     * @return                          Detached attempt. Throws `std::invalid_argument` for another slot name or
+     *                                  title, and `std::runtime_error` when the slot can't be staged.
+     */
+    static std::unique_ptr<V5FirstMapLoadAttempt> fromNativeSlot(std::span<const std::uint8_t> slotBytes,
+                                                                 std::string_view slotName, GameTitle title);
     ~V5FirstMapLoadAttempt();
     V5FirstMapLoadAttempt(const V5FirstMapLoadAttempt &) = delete;
     V5FirstMapLoadAttempt &operator=(const V5FirstMapLoadAttempt &) = delete;

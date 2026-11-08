@@ -33,6 +33,7 @@
 #include "MM6V5DecorationRuntimeFields.h"
 #include "MM6V5SpriteRuntimeFields.h"
 #include "MM6V5FirstMapLoadPreflight.h"
+#include "MM6V5FirstMapNativeSlotPolicy.h"
 #include "MM6V5LiveSaveCapture.h"
 #include "MM6V5FullSessionPreflight.h"
 
@@ -42,15 +43,18 @@ namespace {
 constexpr std::string_view FIRST_MAP = "oute3.odm";
 constexpr std::string_view TEST_SLOT = "candidate-v5-after-action.ec6";
 
+bool admitsSlot(std::string_view slotName, GameTitle title) {
+    return title == GameTitle::MM6 && (slotName == TEST_SLOT || isNumberedV5FirstMapSlot(slotName));
+}
+
 } // namespace
 
 V5FirstMapLoadAttempt::V5FirstMapLoadAttempt(
     std::unique_ptr<V5FullSessionPreflight> staged,
     std::string_view slotName, GameTitle title)
     : _staged(std::move(staged)) {
-    if (title != GameTitle::MM6 || slotName != TEST_SLOT || !_staged ||
-        !engine || engine->gameTitle() != title)
-        throw std::runtime_error("MM6 first-map load attempt lacks exact test slot/title");
+    if (!admitsSlot(slotName, title) || !_staged || !engine || engine->gameTitle() != title)
+        throw std::runtime_error("MM6 first-map load attempt lacks an admitted slot/title");
     requireV5FirstMapPrepublicationAgreement(*_staged, title);
     const auto &actorMap = _staged->v4.v3.actorMap;
     if (actorMap.activeMap.mapName != FIRST_MAP || _staged->actors.mapName != FIRST_MAP ||
@@ -66,6 +70,14 @@ V5FirstMapLoadAttempt::V5FirstMapLoadAttempt(
 }
 
 V5FirstMapLoadAttempt::~V5FirstMapLoadAttempt() = default;
+
+std::unique_ptr<V5FirstMapLoadAttempt> V5FirstMapLoadAttempt::fromNativeSlot(
+    std::span<const std::uint8_t> slotBytes, std::string_view slotName, GameTitle title) {
+    if (!admitsSlot(slotName, title))
+        throw std::invalid_argument("MM6 first-map load needs a numbered MM6 slot");
+    auto staged = stageV5FirstMapLoadPreflight(slotBytes, title);
+    return std::make_unique<V5FirstMapLoadAttempt>(std::move(staged), slotName, title);
+}
 
 V5FullSessionPreflight &V5FirstMapLoadAttempt::staged() { return *_staged; }
 const V5FullSessionPreflight &V5FirstMapLoadAttempt::staged() const { return *_staged; }

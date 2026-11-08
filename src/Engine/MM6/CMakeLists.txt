@@ -235,6 +235,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6SavedActorPidPolicy_ut.cpp
         Tests/MM6PostRebuildPidSlots_ut.cpp
         Tests/MM6PostWorldAdmissionForTest_ut.cpp
+        Tests/MM6V5FirstMapLoadAttempt_ut.cpp
         Tests/MM6PreEventCheckpointForTest_ut.cpp
         Tests/MM6PostWorldOwnerValidator_ut.cpp
         Tests/MM6DecodedEffectPartyStage_ut.cpp

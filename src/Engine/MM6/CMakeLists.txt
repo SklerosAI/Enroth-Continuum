@@ -284,7 +284,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6HirelingRecoveryV2Stage_ut.cpp
         Tests/MM6FirstMapCombatTransientTransaction_ut.cpp
         Tests/MM6FirstMapPersistentEventTransaction_ut.cpp)
-    target_sources(test_engine_mm6_save_runtime PRIVATE Tests/MM6PartyDeath_ut.cpp)
+    target_sources(test_engine_mm6_save_runtime PRIVATE Tests/MM6PartyDeath_ut.cpp Tests/MM6Archive_ut.cpp)
     target_link_libraries(test_engine_mm6_save_runtime PUBLIC testing_unit engine_mm6_save_runtime)
     target_check_style(test_engine_mm6_save_runtime)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_save_runtime)

@@ -1,5 +1,6 @@
 #include "MM6Archive.h"
 
+#include <array>
 #include <cstdint>
 
 #include "Library/Binary/CommonSerialization.h"
@@ -28,4 +29,13 @@ Blob decodeMM6ArchiveEntry(const Blob &source) {
         throw Exception("MM6 archive entry '{}' exceeds the 64 MiB size limit", source.displayPath());
 
     return zlib::uncompress(source.subBlob(8, compressedSize), decompressedSize).withDisplayPath(source.displayPath());
+}
+
+Blob encodeMM6ArchiveEntry(const Blob &source) {
+    if (source.empty() || source.size() > 64 * 1024 * 1024)
+        throw Exception("MM6 archive entry '{}' has unsupported size {}", source.displayPath(), source.size());
+
+    Blob compressed = zlib::compress(source);
+    const std::array<uint32_t, 2> header = {static_cast<uint32_t>(compressed.size()), static_cast<uint32_t>(source.size())};
+    return Blob::concat(Blob::view(header.data(), sizeof(header)), compressed).withDisplayPath(source.displayPath());
 }

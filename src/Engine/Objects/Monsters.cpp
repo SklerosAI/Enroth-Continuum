@@ -108,10 +108,7 @@ static DamageType ParseAttackType(std::string_view damage_type_str) {
         {"Body",   DAMAGE_BODY},
         {"Light",  DAMAGE_LIGHT},
         {"Dark",   DAMAGE_DARK},
-        // TODO(captainurist): "Ener" should map to DAMAGE_ENERGY but the original parser only inspected the
-        // first letter, so it collided with "Earth". Preserving the buggy mapping so existing trace tests
-        // still pass; fix-and-retrace separately.
-        {"Ener",   DAMAGE_EARTH},
+        {"Ener",   DAMAGE_ENERGY},
     };
     return valueOr(damageTypeMap, damage_type_str, DAMAGE_PHYSICAL);
 }

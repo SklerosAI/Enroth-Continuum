@@ -23,6 +23,7 @@
 #include "GUI/GUIButton.h"
 #include "GUI/GUIFont.h"
 #include "GUI/GUIMessageQueue.h"
+#include "GUI/UI/MM6SaveLoadMenu.h"
 
 #include "Library/Image/Pcx.h"
 #include "Library/Logger/Logger.h"
@@ -48,10 +49,8 @@ static GraphicsImage *scrollstop = nullptr;
 static std::vector<SavegameSlot> loadMenuSlots() {
     std::vector<SavegameSlot> result;
 
-    // The MM6 profile uses .ec6. Do not present or inspect MM7 saves until
-    // the title-specific slot reader is wired to the complete EC6 transaction.
     if (engine->gameTitle() == GameTitle::MM6)
-        return result;
+        return mm6LoadMenuSlots();
 
     if (!ufs->exists("saves"))
         return result;

@@ -24,6 +24,7 @@
 
 #include "GUI/GUIButton.h"
 #include "GUI/GUIMessageQueue.h"
+#include "GUI/UI/MM6SaveLoadMenu.h"
 #include "GUI/UI/UIGame.h"
 #include "GUI/UI/UISaveLoad.h"
 #include "GUI/UI/UIStatusBar.h"
@@ -126,6 +127,10 @@ void Menu::EventLoop() {
                 saveLoadMenu()->slotClicked(param, param2);
                 continue;
             case UIMSG_LoadGame:
+                if (engine->gameTitle() == GameTitle::MM6) {
+                    mm6RefuseInGameLoad();
+                    continue;
+                }
                 if (saveLoadMenu()->hasSelectedSlot()) {
                     loadGame(saveLoadMenu()->selectedSlot().fileName);
                     uGameState = GAME_STATE_LOADING_GAME;

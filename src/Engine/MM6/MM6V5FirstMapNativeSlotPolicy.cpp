@@ -1,24 +1,32 @@
 #include "MM6V5FirstMapNativeSlotPolicy.h"
 
+#include <algorithm>
 #include <memory>
+#include <optional>
 #include <ranges>
+#include <set>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
+#include "MM6V4SaveFields.h"
+#include "MM6V5FirstMapLoadPreflight.h"
+#include "MM6V5FullSessionPreflight.h"
+#include "MM6V5LiveSaveCapture.h"
 #include "MM6V5SaveFields.h"
 
 namespace mm6 {
 namespace {
 
-void requireNativeRootAndSlot(const V5FirstMapNativeRoot &root,
-                              std::string_view slotName, GameTitle title,
-                              const SaveCandidateValidator &validate) {
-    if (title != GameTitle::MM6 || !validate || slotName.size() != 11 ||
-        !slotName.starts_with("save") || !slotName.ends_with(".ec6") ||
-        slotName[4] < '0' || slotName[4] > '9' ||
-        slotName[5] < '0' || slotName[5] > '9' ||
-        slotName[6] < '0' || slotName[6] > '9')
-        throw std::invalid_argument("MM6 native first-map write needs numbered title-private slot");
+bool isNumberedSlot(std::string_view slotName) {
+    return slotName.size() == 11 && slotName.starts_with("save") && slotName.ends_with(".ec6") &&
+           std::ranges::all_of(slotName.substr(4, 3), [](char digit) { return digit >= '0' && digit <= '9'; });
+}
+
+void requireNativeRoot(const V5FirstMapNativeRoot &root, GameTitle title,
+                       const SaveCandidateValidator &validate) {
+    if (title != GameTitle::MM6 || !validate)
+        throw std::invalid_argument("MM6 native first-map slot needs its title and validator");
     const auto &path = root.requestedRoot;
     if (!path.is_absolute() || path.empty() ||
         path.lexically_normal() != path ||
@@ -32,6 +40,14 @@ void requireNativeRootAndSlot(const V5FirstMapNativeRoot &root,
         (!std::filesystem::is_directory(status) ||
          std::filesystem::canonical(saves) != saves))
         throw std::invalid_argument("MM6 native saves path must be a native directory");
+}
+
+void requireNativeRootAndSlot(const V5FirstMapNativeRoot &root,
+                              std::string_view slotName, GameTitle title,
+                              const SaveCandidateValidator &validate) {
+    if (!isNumberedSlot(slotName))
+        throw std::invalid_argument("MM6 native first-map write needs numbered title-private slot");
+    requireNativeRoot(root, title, validate);
 }
 
 void validateFirstMapV5(std::span<const std::uint8_t> bytes,
@@ -111,6 +127,62 @@ V5FirstMapSaveOutcome writeV5FirstMapNativeCandidateForTest(
     } catch (...) {
         return V5FirstMapSaveOutcome::IndeterminateNeedsPreflight;
     }
+}
+
+V5FirstMapSaveAttempt writeV5FirstMapNativeLiveSave(
+    const V5FirstMapNativeRoot &root, std::string_view slotName,
+    std::span<const std::uint8_t> sourceV4, std::string_view displayName,
+    GameTitle title, const detail::AtomicSaveFault &fault) {
+    const SaveCandidateValidator validate = [title](std::span<const std::uint8_t> bytes) {
+        (void) stageV5FirstMapLoadPreflight(bytes, title);
+    };
+    requireNativeRootAndSlot(root, slotName, title, validate);
+    const auto source = std::unique_ptr<V4SaveFields>(new V4SaveFields(decodeV4Save(sourceV4, title)));
+    source->v3.raw.metadata.header.displayName = displayName;
+    auto candidate = captureV5FirstMapLiveSession(
+        encodeV4Save(*source, title), V5FirstMapCaptureBoundary::PausedSaveMenu);
+    const V5FirstMapSaveOutcome outcome = writeV5FirstMapNativeCandidateForTest(
+        root, slotName, candidate, title, validate, fault);
+    return {std::move(candidate), outcome};
+}
+
+std::vector<SaveSlotInfo> listV5FirstMapNativeSlots(
+    const V5FirstMapNativeRoot &root, GameTitle title,
+    const SaveCandidateValidator &validate) {
+    requireNativeRoot(root, title, validate);
+    const auto saves = root.requestedRoot / "saves";
+    if (!std::filesystem::exists(std::filesystem::symlink_status(saves)))
+        return {};
+    std::set<std::string> names;
+    for (const auto &entry : std::filesystem::directory_iterator(saves)) {
+        std::string name = entry.path().filename().string();
+        if (name.ends_with(".bak"))
+            name.resize(name.size() - 4);
+        if (isNumberedSlot(name))
+            names.insert(std::move(name));
+    }
+    std::vector<SaveSlotInfo> result;
+    for (const std::string &name : names) {
+        try {
+            const auto bytes = readV5FirstMapNativeLoadSlot(root, name, title, validate);
+            const auto saved = std::unique_ptr<V5SaveFields>(new V5SaveFields(decodeV5Save(bytes, title)));
+            result.push_back({name, saved->v4.v3.raw.metadata.header, false});
+        } catch (const std::exception &) {
+            // A slot that cannot be loaded as it is stays out of the menu.
+        }
+    }
+    return result;
+}
+
+std::vector<std::uint8_t> readV5FirstMapNativeLoadSlot(
+    const V5FirstMapNativeRoot &root, std::string_view slotName,
+    GameTitle title, const SaveCandidateValidator &validate) {
+    requireNativeRootAndSlot(root, slotName, title, validate);
+    auto state = snapshot(root.requestedRoot, slotName);
+    validatePrior(state, validate);
+    if (!state.primary)
+        throw std::runtime_error("MM6 native first-map slot has no primary");
+    return std::move(*state.primary);
 }
 
 } // namespace mm6

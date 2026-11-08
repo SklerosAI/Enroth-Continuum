@@ -1,5 +1,6 @@
 #include "GameStarter.h"
 
+#include <filesystem>
 #include <utility>
 #include <string>
 #include <vector>
@@ -13,6 +14,7 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/EngineIocContainer.h"
+#include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Graphics/Renderer/RendererFactory.h"
@@ -120,6 +122,8 @@ void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUse
     resolveUserPath(_environment.get(), &_options);
     _fsStarter.initUserFs(_options.ramFsUserData, _options.userPath);
     MM_INFO("Using user path '{}'.", ufs->displayPath(""));
+    if (_options.gameTitle == GameTitle::MM6)
+        mm6::setStartupNativeProfileRoot(_options.ramFsUserData, std::filesystem::path(_options.userPath.native()));
     if (prepareUserFs)
         prepareUserFs(ufs);
 

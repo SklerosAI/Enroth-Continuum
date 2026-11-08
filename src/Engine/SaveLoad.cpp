@@ -33,6 +33,7 @@
 #include "Engine/Spells/CastSpellInfo.h"
 
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/MM6SaveLoadMenu.h"
 #include "GUI/UI/UIGame.h"
 #include "GUI/UI/UIStatusBar.h"
 
@@ -64,6 +65,10 @@ void mm6::testing::setNewGameSaveOverride(std::function<void()> callback) {
 
 void mm6::testing::setLoadGameOverride(std::function<void(std::string_view)> callback) {
     mm6LoadGameOverride = std::move(callback);
+}
+
+bool mm6::testing::hasLoadGameOverride() {
+    return static_cast<bool>(mm6LoadGameOverride);
 }
 
 void loadGame(std::string_view fileName) {
@@ -268,9 +273,7 @@ void autoSave() {
 
 void doSavegame(std::string fileName, std::string_view title) {
     if (engine->gameTitle() == GameTitle::MM6) {
-        // Keep the menu open and avoid allocating an MM7 slot or reporting a
-        // successful save until the complete EC6 live-owner route is admitted.
-        reportUnavailableMM6SaveAction();
+        mm6SaveFromMenu(fileName, title);
         return;
     }
     assert(engine->_currentLoadedMapId != MAP_ARENA); // Not Arena.

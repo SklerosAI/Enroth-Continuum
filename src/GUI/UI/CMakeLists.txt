@@ -16,6 +16,7 @@ set(GUI_UI_SOURCES
         MM6HouseServiceData.cpp
         MM6RoomDescriptors.cpp
         MM6TransitionDialog.cpp
+        MM6SaveLoadMenu.cpp
         UIInventory.cpp
         UIMainMenu.cpp
         UIPartyCreation.cpp
@@ -45,6 +46,7 @@ set(GUI_UI_HEADERS
         MM6HouseServiceData.h
         MM6RoomDescriptors.h
         MM6TransitionDialog.h
+        MM6SaveLoadMenu.h
         MainMenuResources.h
         UIInventory.h
         UIMainMenu.h

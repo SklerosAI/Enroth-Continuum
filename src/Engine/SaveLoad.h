@@ -71,9 +71,10 @@ void setNewGameSaveOverride(std::function<void()> callback);
 // touching a live owner. The callback must stage and validate its disposable
 // slot before publication; it must never be installed for a user session.
 void setLoadGameOverride(std::function<void(std::string_view)> callback);
+bool hasLoadGameOverride();
 
 // Route only a synthetic main-menu QuickLoad event to the disposable MM6
-// autosave. Normal MM6 slot listing and quickload remain guarded.
+// autosave. Normal MM6 quickload remains guarded.
 void setMainMenuAutosaveQuickLoadOverride(bool enabled);
 } // namespace mm6::testing
 

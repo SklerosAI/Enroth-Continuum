@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <exception>
@@ -7,6 +8,7 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #ifndef _WIN32
@@ -294,6 +296,49 @@ UNIT_TEST(MM6AtomicSaveFile, NativeFirstMapSlotClassifiesAtomicFaults) {
         }), Outcome::IndeterminateNeedsPreflight);
     EXPECT_EQ(read(slot), uncertain);
     EXPECT_EQ(read(backup), next);
+}
+
+UNIT_TEST(MM6AtomicSaveFile, NativeFirstMapSlotListShowsOnlyLoadableNumberedSlots) {
+    // The MM6 load menu lists only numbered first-map slots it can load as they are.
+    TestProfile profile;
+    const auto root = std::filesystem::canonical(profile.root());
+    const mm6::V5FirstMapNativeRoot binding{root, root};
+    const auto first = sampleFirstMapV5(126);
+    const auto rejectMarker = sampleFirstMapV5(127);
+    const auto validate = [&](std::span<const std::uint8_t> bytes) {
+        if (std::ranges::equal(bytes, rejectMarker))
+            throw std::runtime_error("semantic refusal");
+    };
+    EXPECT_TRUE(mm6::listV5FirstMapNativeSlots(binding, GameTitle::MM6, validate).empty());
+
+    std::filesystem::create_directory(root / "saves");
+    write(root / "saves/save000.ec6", first);
+    write(root / "saves/save001.mm7", first);
+    write(root / "saves/save002.ec6", {1, 2, 3});
+    write(root / "saves/save003.ec6", sampleV5(128));
+    write(root / "saves/save004.ec6.bak", first);
+    write(root / "saves/save005.ec6", rejectMarker);
+    write(root / "saves/autosave.ec6", first);
+    write(root / "saves/save006.ec6", first);
+    write(root / "saves/save006.ec6.bak", {1, 2, 3});
+
+    const auto slots = mm6::listV5FirstMapNativeSlots(binding, GameTitle::MM6, validate);
+    ASSERT_EQ(slots.size(), 1);
+    EXPECT_EQ(slots[0].fileName, "save000.ec6");
+    EXPECT_EQ(slots[0].header.mapFileName, "oute3.odm");
+    EXPECT_FALSE(slots[0].needsRecovery);
+    EXPECT_EQ(mm6::readV5FirstMapNativeLoadSlot(binding, "save000.ec6", GameTitle::MM6, validate), first);
+    for (std::string_view refused : {"save002.ec6", "save003.ec6", "save004.ec6", "save005.ec6", "save006.ec6",
+                                     "save007.ec6", "autosave.ec6", "save001.mm7"})
+        EXPECT_THROW((void) mm6::readV5FirstMapNativeLoadSlot(binding, refused, GameTitle::MM6, validate),
+                     std::exception) << refused;
+    EXPECT_THROW((void) mm6::listV5FirstMapNativeSlots(binding, GameTitle::MM7, validate), std::exception);
+    EXPECT_THROW((void) mm6::listV5FirstMapNativeSlots({root, root / "saves"}, GameTitle::MM6, validate),
+                 std::exception);
+    EXPECT_EQ(read(root / "saves/save000.ec6"), first);
+    EXPECT_EQ(read(root / "saves/save002.ec6"), (std::vector<std::uint8_t>{1, 2, 3}));
+    EXPECT_EQ(read(root / "saves/save004.ec6.bak"), first);
+    EXPECT_FALSE(std::filesystem::exists(root / "saves/save004.ec6"));
 }
 
 UNIT_TEST(MM6AtomicSaveFile, InitialReplaceAndRecoverPrevious) {

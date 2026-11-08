@@ -7,6 +7,7 @@
 #include "Engine/Timer.h"
 #include "GUI/GUIMessageQueue.h"
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/MM6SaveLoadMenu.h"
 #include "GUI/UI/UISaveLoad.h"
 #include "Io/Mouse.h"
 
@@ -30,6 +31,8 @@ FsmAction LoadSlotState::update() {
         switch (message) {
         case UIMSG_LoadGame: {
             if (!_uiLoadSaveSlot->hasSelectedSlot())
+                break;
+            if (engine->gameTitle() == GameTitle::MM6 && !mm6MayLoadFromMainMenu(_uiLoadSaveSlot->selectedSlot().fileName))
                 break;
             engine->_pendingLoadFileName = _uiLoadSaveSlot->selectedSlot().fileName;
             SetCurrentMenuID(MENU_LoadingProcInMainMenu);

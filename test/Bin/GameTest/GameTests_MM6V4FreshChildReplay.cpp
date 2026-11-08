@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <iterator>
 #include <memory>
 #include <stdexcept>
@@ -22,6 +23,7 @@
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Overlays.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
+#include "Engine/Localization.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6GeneratedNpcSaveFields.h"
@@ -39,7 +41,11 @@
 #include "Engine/MM6/MM6V4FullSessionPreflight.h"
 #include "Engine/MM6/MM6V4OutdoorDecorationReplay.h"
 #include "Engine/MM6/MM6V4SaveFields.h"
+#include "Engine/MM6/MM6FirstMapManualSave.h"
+#include "Engine/MM6/MM6V5FirstMapLoadPreflight.h"
+#include "Engine/MM6/MM6V5FullSessionPreflight.h"
 #include "Engine/MM6/MM6V5LiveSaveCapture.h"
+#include "Engine/MM6/MM6V5SaveFields.h"
 #include "Engine/MM6/MM6V5FirstMapSaveWriter.h"
 #include "Engine/MM6/MM6OutdoorWire.h"
 #include "Engine/MM6/MM6ChestRuntimeProjection.h"
@@ -69,6 +75,7 @@
 #include "Engine/Tables/TileTable.h"
 #include "GUI/GUIMessageQueue.h"
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/UISaveLoad.h"
 #include "Io/Mouse.h"
 #include "Library/Platform/Application/PlatformApplication.h"
 
@@ -139,15 +146,16 @@ void runV4FreshChildReplay(EngineController &game, bool allowInput,
                            bool writeAfterAction = false,
                            bool writeV5AfterAction = false,
                            bool checkPausedSaveMenu = false,
-                           bool writePausedSaveMenu = false) {
-    const char *enable = std::getenv(writePausedSaveMenu ?
+                           bool writePausedSaveMenu = false,
+                           const std::function<void()> &afterMovement = {}) {
+    const char *enable = std::getenv(afterMovement ? "ENROTH_MM6_V5_NORMAL_SAVE_ENABLE" : writePausedSaveMenu ?
         "ENROTH_MM6_V5_PAUSED_SAVE_WRITE_ENABLE" : checkPausedSaveMenu ?
         "ENROTH_MM6_V5_PAUSED_SAVE_CAPTURE_ENABLE" : writeV5AfterAction ?
         "ENROTH_MM6_V5_AFTER_ACTION_WRITE_ENABLE" : writeAfterAction ?
         "ENROTH_MM6_V4_AFTER_ACTION_WRITE_ENABLE" :
         allowInput ? "ENROTH_MM6_V4_FIRST_INPUT_ENABLE" :
                      "ENROTH_MM6_V4_REPLAY_ENABLE");
-    const std::string_view required = writePausedSaveMenu ?
+    const std::string_view required = afterMovement ? "strict-v5-normal-save" : writePausedSaveMenu ?
         "strict-v5-paused-write" : checkPausedSaveMenu ?
         "strict-v5-paused-save" : writeV5AfterAction ?
         "strict-v5-after-action" : writeAfterAction ? "strict-v4-after-action" : "strict-v4";
@@ -446,6 +454,8 @@ void runV4FreshChildReplay(EngineController &game, bool allowInput,
                 }
             });
         }
+        if (afterMovement && movementApplied)
+            afterMovement();
         game.runGameRoutine([] {
             uGameState = GAME_STATE_GAME_QUITTING_TO_MAIN_MENU;
         });
@@ -510,4 +520,95 @@ GAME_TEST(MM6V5PausedSaveCaptureHeadless, DISABLED_RealSaveMenuCapturesExactFirs
 
 GAME_TEST(MM6V5PausedSaveWriterHeadless, DISABLED_RealSaveMenuWritesExactDisposableSlot) {
     runV4FreshChildReplay(game, true, false, false, false, true);
+}
+
+GAME_TEST(MM6V5NormalSaveMenuHeadless, DISABLED_SaveMenuWritesNumberedFirstMapSlot) {
+    // The MM6 Save menu writes a numbered first-map slot, refuses a held item and keeps the slot on a failed write.
+    const std::filesystem::path profile = ownerOnlyProfile();
+    const std::filesystem::path slot = profile / "saves/save000.ec6";
+    const std::filesystem::path backup = profile / "saves/save000.ec6.bak";
+    auto statusTape = tapes.statusBar();
+    bool saved = false;
+    runV4FreshChildReplay(game, true, false, false, false, false, [&] {
+        const auto anchor = slotBytes(profile / "saves/candidate-v4.ec6");
+        ASSERT_FALSE(std::filesystem::exists(slot));
+        mm6::CorePartyFields liveParty;
+        game.runGameRoutine([&] {
+            mm6::testing::setNativeProfileRootForTest(profile);
+            mm6::armFirstMapManualSave(anchor, GameTitle::MM6);
+            liveParty = mm6::captureCoreFields(*pParty, GameTitle::MM6).party;
+        });
+        test.startTaping();
+        const auto openSaveMenu = [&] {
+            game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+            game.tick(2);
+            game.pressGuiButton("GameMenu_SaveGame");
+            game.tick(2);
+        };
+
+        openSaveMenu();
+        ASSERT_EQ(saveLoadMenu()->slots().size(), 1); // Only the new save slot.
+        game.doubleClickGuiButton("SaveMenu_Slot0");
+        game.tick();
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+        game.pressAndReleaseKey(PlatformKey::KEY_B);
+        game.tick();
+        Item held;
+        held.itemId = static_cast<ItemId>(1);
+        game.runGameRoutine([&] { pParty->setHoldingItem(held); });
+        game.pressGuiButton("SaveMenu_Save");
+        game.tick(3); // The button animates for a frame, then posts the save for the next one.
+        EXPECT_FALSE(std::filesystem::exists(slot));
+        EXPECT_EQ(current_screen_type, SCREEN_SAVEGAME);
+        EXPECT_CONTAINS(statusTape, "This game can't be saved here yet");
+
+        game.runGameRoutine([] { (void) pParty->takeHoldingItem(); });
+        game.pressGuiButton("SaveMenu_Save");
+        game.tick(3); // The button animates for a frame, then posts the save for the next one.
+        ASSERT_TRUE(std::filesystem::is_regular_file(slot));
+        EXPECT_FALSE(std::filesystem::exists(backup));
+        EXPECT_EQ(current_screen_type, SCREEN_GAME);
+        EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
+        const auto first = slotBytes(slot);
+        game.runGameRoutine([&] {
+            const auto decoded = std::unique_ptr<mm6::V5SaveFields>(new mm6::V5SaveFields(mm6::decodeV5Save(first, GameTitle::MM6)));
+            EXPECT_EQ(decoded->v4.v3.raw.metadata.header.displayName, "ab");
+            EXPECT_EQ(decoded->v4.v3.raw.metadata.header.mapFileName, "oute3.odm");
+            EXPECT_EQ(decoded->v4.v3.raw.core.party.position, liveParty.position);
+            EXPECT_EQ(decoded->v4.v3.raw.core.party.viewYaw, liveParty.viewYaw);
+            EXPECT_NO_THROW((void) mm6::stageV5FirstMapLoadPreflight(first, GameTitle::MM6));
+        });
+
+        mm6::testing::setManualSaveFaultForTest([](mm6::detail::AtomicSaveStep step) {
+            if (step == mm6::detail::AtomicSaveStep::BeforePrimaryReplace)
+                throw std::runtime_error("injected MM6 save fault");
+        });
+        openSaveMenu();
+        ASSERT_EQ(saveLoadMenu()->slots().size(), 2);
+        EXPECT_EQ(saveLoadMenu()->slots()[1].fileName, "save000.ec6");
+        EXPECT_EQ(saveLoadMenu()->slots()[1].header.name, "ab");
+        game.pressGuiButton("SaveMenu_Slot1");
+        game.tick();
+        game.pressGuiButton("SaveMenu_Save");
+        game.tick(3); // The button animates for a frame, then posts the save for the next one.
+        EXPECT_EQ(slotBytes(slot), first);
+        EXPECT_EQ(slotBytes(backup), first);
+        EXPECT_EQ(current_screen_type, SCREEN_SAVEGAME);
+        EXPECT_CONTAINS(statusTape, "Save failed, the slot was not changed");
+
+        mm6::testing::setManualSaveFaultForTest({});
+        game.pressGuiButton("SaveMenu_Save");
+        game.tick(3); // The button animates for a frame, then posts the save for the next one.
+        EXPECT_EQ(current_screen_type, SCREEN_GAME);
+        EXPECT_NE(slotBytes(slot), first);
+        EXPECT_EQ(slotBytes(backup), first);
+        saved = true;
+    });
+    game.runGameRoutine([] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+    if (!::testing::Test::IsSkipped())
+        EXPECT_TRUE(saved);
 }

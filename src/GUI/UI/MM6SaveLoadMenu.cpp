@@ -1,0 +1,84 @@
+#include "GUI/UI/MM6SaveLoadMenu.h"
+
+#include <algorithm>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+#include "Engine/Engine.h"
+#include "Engine/EngineGlobals.h"
+#include "Engine/Localization.h"
+#include "Engine/MM6/MM6FirstMapManualSave.h"
+#include "Engine/SaveLoad.h"
+#include "Engine/Timer.h"
+
+#include "GUI/GUIWindow.h"
+#include "GUI/UI/UIStatusBar.h"
+
+#include "Media/Audio/AudioPlayer.h"
+
+#include "Library/Logger/Logger.h"
+
+#include "Utility/String/Ascii.h"
+
+static void reportMM6MenuRefusal(std::string_view message) {
+    MM_WARNING("MM6 save menu: {}", message);
+    if (engine->_statusBar)
+        engine->_statusBar->setEvent(message);
+    if (pAudioPlayer)
+        pAudioPlayer->playUISound(SOUND_error);
+}
+
+std::vector<SavegameSlot> mm6LoadMenuSlots() {
+    std::vector<SavegameSlot> result;
+    for (const mm6::SaveSlotInfo &info : mm6::listFirstMapManualSlots()) {
+        SavegameSlot slot;
+        slot.fileName = info.fileName;
+        slot.header.name = info.header.displayName;
+        slot.header.locationName = info.header.mapFileName;
+        slot.header.playingTime = Time::fromTicks(info.header.playingTicks);
+        result.push_back(std::move(slot));
+    }
+    std::ranges::sort(result, [](const SavegameSlot &l, const SavegameSlot &r) {
+        if (int result = ascii::noCaseCompare(l.header.name, r.header.name))
+            return result < 0;
+        return l.fileName < r.fileName;
+    });
+    return result;
+}
+
+void mm6SaveFromMenu(std::string_view fileName, std::string_view title) {
+    switch (mm6::saveFirstMapManualSlot(fileName, title).outcome) {
+    case mm6::MANUAL_SAVE_COMMITTED:
+        GUI_UpdateWindows();
+        pGUIWindow_CurrentMenu = nullptr;
+        current_screen_type = SCREEN_GAME;
+        gameTimer->setPaused(false);
+        engine->_statusBar->setEvent(LSTR_GAME_SAVED);
+        break;
+    case mm6::MANUAL_SAVE_NOT_WRITTEN:
+        reportMM6MenuRefusal("Save failed, the slot was not changed");
+        break;
+    case mm6::MANUAL_SAVE_UNCONFIRMED:
+        reportMM6MenuRefusal("Save could not be confirmed, check the slot before saving again");
+        break;
+    case mm6::MANUAL_SAVE_REFUSED:
+        reportMM6MenuRefusal(mm6::isFirstMapManualSaveArmed() ? "This game can't be saved here yet" :
+                                                                 "Might & Magic VI saving is not available yet");
+        break;
+    }
+}
+
+bool mm6MayLoadFromMainMenu(std::string_view fileName) {
+    if (mm6::testing::hasLoadGameOverride())
+        return true;
+    MM_WARNING("MM6 slot '{}' was not loaded, MM6 loading is not available yet", fileName);
+    if (pAudioPlayer)
+        pAudioPlayer->playUISound(SOUND_error);
+    return false;
+}
+
+void mm6RefuseInGameLoad() {
+    reportMM6MenuRefusal("Load this game from the main menu");
+}

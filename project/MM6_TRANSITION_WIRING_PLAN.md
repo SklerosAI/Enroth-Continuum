@@ -25,8 +25,8 @@ wired yet, so no MM6 cross-map move works live. The backlog item in
 - `MM6OutdoorBorderConfirmation.h`: `stageBorderConfirmation(title,
   sourceMap, offered, const Party &, hirelings, fullRest)` on a Party copy.
   Refuses flying, a changed route and corners. Advances hireling-adjusted
-  days, rests only with food, sets every Weak clock and bumps the no-rest
-  counter once if food runs short, floors food at zero, wraps the arrival and
+  days with a full rest, rests again with food, sets every Weak clock and
+  bumps the no-rest counter once if food runs short, floors food at zero, wraps the arrival and
   returns the characters that need the Weak voice line. Rules come from the
   tracked trace packets.
 
@@ -79,18 +79,19 @@ engine-lifetime `mm6::VisitedMapCache`. MM7 paths stay byte-identical.
 
 ## Blockers to clear first
 
-- No MM6 archive encoder exists (`decodeMM6ArchiveEntry` only).
-  `pMapDeltas` holds encoded entries, so `encodeMM6ArchiveEntry(Blob)` is
-  needed.
-- `Party::restAndHeal` writes through the `pParty` global instead of `this`,
-  and max HP/SP read buffs from the global party. A copy-safe version is
-  needed.
+- Cleared: `encodeMM6ArchiveEntry(Blob)` in `MM6Archive.h` re-encodes a
+  native delta for `pMapDeltas`.
+- Cleared: `mm6::restAndHealDetachedParty(Party &)` in `MM6PartyRest.h` rests
+  a party copy and leaves the live party alone. Pass it as the `fullRest`
+  callback of `stageBorderConfirmation`.
 - Only first-map outdoor live capture exists. Later-map outdoor and indoor
   live capture are needed.
-- The original's four hireling indices (5, 6, 7, 44) are not proven to be
-  Guide, Tracker, Pathfinder and Explorer.
-- The per-frame day rollover may add to the no-rest counter again after the
-  multi-day jump. Check at wiring time.
+- Cleared: the original's four hireling indices are Guide, Tracker,
+  Pathfinder and Explorer. Build the hirelings with
+  `mm6::borderTravelHirelings(CheckHiredNPCSpeciality)`.
+- Cleared: the per-frame day rollover compares the time before and after one
+  frame, so it doesn't count the trip's days again once the confirmed party
+  is moved into `*pParty`.
 - Only the outdoor return plan exists, and neither owner kind is published.
   `canPublish()` and `canWriteCheckpoint()` stay false.
 - Inferred, not run: the Weak timestamp uses the post-jump time, following the

@@ -21,7 +21,7 @@ namespace mm6 {
  */
 struct BorderConfirmationEffects {
     int travelDays = 0;
-    bool fullRest = false; // The party rests only when it has any food at all.
+    bool extraRest = false; // The trip itself always rests the party, it rests once more when it has any food.
     bool weak = false; // Not enough food for every travel day.
     int foodAfter = 0;
 
@@ -36,7 +36,7 @@ struct BorderConfirmationEffects {
 [[nodiscard]] inline BorderConfirmationEffects borderConfirmationEffects(int food, int travelDays) {
     BorderConfirmationEffects effects;
     effects.travelDays = travelDays;
-    effects.fullRest = food > 0;
+    effects.extraRest = food > 0;
     effects.weak = food < travelDays;
     effects.foodAfter = std::max(0, food - travelDays);
     return effects;
@@ -62,16 +62,17 @@ struct BorderConfirmation {
 };
 
 /**
- * Applies the MM6 border confirmation to a copy of the party: the trip's days pass, the party rests if it has any
- * food, gets Weak if it doesn't have enough, and arrives at the wrapped position. The live party, the map and the
- * world are never touched. The arrival Z is left to the target map's placement.
+ * Applies the MM6 border confirmation to a copy of the party: the trip's days pass with a full rest even without food,
+ * the party rests again if it has any food, gets Weak if it doesn't have enough, and arrives at the wrapped position.
+ * The live party, the map and the world are never touched. The arrival Z is left to the target map's placement.
  *
  * @param title                         Game title, only MM6 is accepted.
  * @param sourceMap                     Outdoor map the party is leaving.
  * @param offered                       Crossing that the travel dialogue offered.
  * @param party                         Live party, only read.
  * @param hirelings                     Hireling professions that shorten the trip.
- * @param fullRest                      Full rest and heal of the given party. It must not touch any other party.
+ * @param fullRest                      Full rest and heal of the given party, `restAndHealDetachedParty` in the game.
+ *                                      It must not touch any other party.
  * @return                              The party copy with every effect applied, or a refusal.
  */
 [[nodiscard]] inline BorderConfirmation stageBorderConfirmation(
@@ -103,8 +104,11 @@ struct BorderConfirmation {
     copy.uCurrentDayOfMonth = time.day - 1;
     copy.uCurrentMonth = time.month - 1;
     copy.uCurrentYear = time.year;
+    copy.pHirelings[0].hasUsedAbility = false;
+    copy.pHirelings[1].hasUsedAbility = false;
+    fullRest(copy);
 
-    if (result.effects.fullRest)
+    if (result.effects.extraRest)
         fullRest(copy);
     if (result.effects.weak) {
         for (std::size_t i = 0; i < copy.pCharacters.size(); ++i) {

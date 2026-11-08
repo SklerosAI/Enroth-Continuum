@@ -19,7 +19,7 @@ static mm6::BorderTravelCandidate offeredFrom(const Party &party) {
 }
 
 UNIT_TEST(MM6OutdoorBorderConfirmation, FoodDecidesRestAndWeakness) {
-    // The party rests only when it has any food, and gets Weak when the food doesn't last the whole trip.
+    // The party rests once more when it has any food, and gets Weak when the food doesn't last the whole trip.
     EXPECT_EQ(mm6::borderConfirmationEffects(0, 5), (mm6::BorderConfirmationEffects{5, false, true, 0}));
     EXPECT_EQ(mm6::borderConfirmationEffects(3, 5), (mm6::BorderConfirmationEffects{5, true, true, 0}));
     EXPECT_EQ(mm6::borderConfirmationEffects(5, 5), (mm6::BorderConfirmationEffects{5, true, false, 0}));
@@ -27,26 +27,36 @@ UNIT_TEST(MM6OutdoorBorderConfirmation, FoodDecidesRestAndWeakness) {
     EXPECT_EQ(mm6::borderConfirmationEffects(1, 1), (mm6::BorderConfirmationEffects{1, true, false, 0}));
 }
 
-UNIT_TEST(MM6OutdoorBorderConfirmation, ZeroFoodDoesNotHeal) {
-    // The inherited foot travel handler healed a party that had no food at all.
+UNIT_TEST(MM6OutdoorBorderConfirmation, ZeroFoodStillHeals) {
+    // The trip rests the party even without food, then the hungry party gets Weak.
     const auto live = partyAtEastEdge(0);
     const Time weakSince = Time() + Duration::fromDays(3);
     live->pCharacters[0].conditions.set(CONDITION_WEAK, weakSince);
     live->pCharacters[1].health = 1;
+    live->pHirelings[1].hasUsedAbility = 1;
     int rests = 0;
+    const auto rest = [&](Party &party) {
+        ++rests;
+        for (Character &character : party.pCharacters) {
+            character.conditions.reset(CONDITION_WEAK);
+            character.health = 50;
+        }
+        party.days_played_without_rest = 0;
+    };
     const auto confirmed = mm6::stageBorderConfirmation(GameTitle::MM6, "outc2.odm", offeredFrom(*live), *live, {},
-                                                        [&](Party &) { ++rests; });
+                                                        rest);
     ASSERT_EQ(confirmed.refusal, mm6::BorderConfirmationRefusal::None);
     ASSERT_NE(confirmed.party, nullptr);
     Party &party = *confirmed.party;
     const Time arrived = live->GetPlayingTime() + Duration::fromDays(5);
-    EXPECT_EQ(rests, 0);
+    EXPECT_EQ(rests, 1);
     EXPECT_EQ(party.GetPlayingTime(), arrived);
-    EXPECT_EQ(party.pCharacters[1].health, 1);
+    EXPECT_EQ(party.pCharacters[1].health, 50);
+    EXPECT_EQ(party.pHirelings[1].hasUsedAbility, 0);
     for (const Character &character : party.pCharacters)
         EXPECT_EQ(character.conditions.get(CONDITION_WEAK), arrived);
-    EXPECT_EQ(confirmed.weakReactions, (std::vector<int>{1, 2, 3}));
-    EXPECT_EQ(party.days_played_without_rest, 3);
+    EXPECT_EQ(confirmed.weakReactions, (std::vector<int>{0, 1, 2, 3}));
+    EXPECT_EQ(party.days_played_without_rest, 1);
     EXPECT_EQ(party.uNumFoodRations, 0);
     EXPECT_EQ(party.pos.x, -22527);
     EXPECT_EQ(party.pos.y, 77);
@@ -55,6 +65,8 @@ UNIT_TEST(MM6OutdoorBorderConfirmation, ZeroFoodDoesNotHeal) {
 
     EXPECT_EQ(live->pCharacters[0].conditions.get(CONDITION_WEAK), weakSince);
     EXPECT_FALSE(live->pCharacters[1].conditions.has(CONDITION_WEAK));
+    EXPECT_EQ(live->pCharacters[1].health, 1);
+    EXPECT_EQ(live->pHirelings[1].hasUsedAbility, 1);
     EXPECT_EQ(live->GetPlayingTime(), Time() + Duration::fromDays(10));
     EXPECT_EQ(live->pos.x, 22529);
     EXPECT_EQ(live->days_played_without_rest, 2);
@@ -92,7 +104,7 @@ UNIT_TEST(MM6OutdoorBorderConfirmation, EnoughFoodRestsWithoutWeakness) {
                                                         hirelings, [&](Party &) { ++rests; });
     ASSERT_EQ(confirmed.refusal, mm6::BorderConfirmationRefusal::None);
     Party &party = *confirmed.party;
-    EXPECT_EQ(rests, 1);
+    EXPECT_EQ(rests, 2);
     EXPECT_EQ(confirmed.effects.travelDays, 3);
     EXPECT_EQ(party.GetPlayingTime(), live->GetPlayingTime() + Duration::fromDays(3));
     EXPECT_EQ(party.uNumFoodRations, 7);

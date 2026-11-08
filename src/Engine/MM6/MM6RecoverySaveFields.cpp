@@ -10,6 +10,7 @@
 
 #include "Core/Time/Time.h"
 
+#include "MM6Calendar.h"
 #include "MM6CoreSaveFields.h"
 
 namespace mm6 {
@@ -159,7 +160,7 @@ void loadRecoveryBeforeMutation(std::span<const std::uint8_t> bytes,
 
 RecoveryCalendar calendarForPlayingTicks(std::int64_t playingTicks) {
     validateClock(playingTicks);
-    CivilTime civil = Time::fromTicks(playingTicks).toCivilTime();
+    CivilTime civil = Time::fromTicks(playingTicks).toCivilTime(calendarStartingYear);
     return {civil.year, civil.month - 1, civil.week - 1, civil.day - 1,
             civil.hour, civil.minute, civil.second};
 }

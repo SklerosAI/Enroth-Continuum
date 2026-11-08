@@ -4,7 +4,10 @@
 
 #include "Duration.h"
 
-const int gameStartingYear = 1168;
+/**
+ * Year since the Silence in which a new game starts. MM7 starts in 1168, other titles set their year once at startup.
+ */
+inline int gameStartingYear = 1168;
 
 struct CivilTime {
     int year = 0; // Since the Silence.
@@ -58,9 +61,13 @@ class Time {
     int toMonths() const { return toWeeks() / 4; }
     int toYears() const { return toMonths() / 12; }
 
-    CivilTime toCivilTime() const {
+    /**
+     * @param startingYear              Year since the Silence of the zero time.
+     * @return                          Calendar date and time of day.
+     */
+    CivilTime toCivilTime(int startingYear = gameStartingYear) const {
         CivilTime result;
-        result.year = gameStartingYear + toYears();
+        result.year = startingYear + toYears();
         result.month = 1 + toMonths() % 12;
         result.week = 1 + toWeeks() % 4;
         result.day = 1 + toDays() % 28;

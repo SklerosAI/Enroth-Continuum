@@ -52,7 +52,7 @@ UNIT_TEST(MM6RecoverySaveFields, RoundTripClockAndDerivedCalendar) {
     EXPECT_EQ(destination.armageddonForceCount, -4);
 
     mm6::RecoveryCalendar calendar = mm6::calendarForPlayingTicks(fields.playingTicks);
-    EXPECT_EQ(calendar.year, 1168);
+    EXPECT_EQ(calendar.year, 1165);
     EXPECT_EQ(calendar.month, 0);
     EXPECT_EQ(calendar.week, 0);
     EXPECT_EQ(calendar.day, 0);

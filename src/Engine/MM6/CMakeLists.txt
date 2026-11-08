@@ -10,7 +10,7 @@ add_library(engine_mm6_save_container STATIC MM6SaveContainer.cpp MM6SaveContain
     MM6RawHeldItemSaveFields.cpp MM6RawHeldItemSaveFields.h MM6RawHeldCursorOwner.h
     MM6BuffSaveFields.cpp MM6BuffSaveFields.h
     MM6HirelingSaveFields.cpp MM6HirelingSaveFields.h
-    MM6RecoverySaveFields.cpp MM6RecoverySaveFields.h
+    MM6RecoverySaveFields.cpp MM6RecoverySaveFields.h MM6Calendar.h
     MM6ChestSaveFields.cpp MM6ChestSaveFields.h
     MM6ShopGuildClockFields.cpp MM6ShopGuildClockFields.h
     MM6ShopStockFields.cpp MM6ShopStockFields.h MM6ShopTitleState.h
@@ -206,7 +206,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6HeldItemSaveFields_ut.cpp Tests/MM6RawHeldItemSaveFields_ut.cpp Tests/MM6RawHeldCursorOwner_ut.cpp
         Tests/MM6BuffSaveFields_ut.cpp
         Tests/MM6IndoorFaceOverrides_ut.cpp
-        Tests/MM6HirelingSaveFields_ut.cpp Tests/MM6RecoverySaveFields_ut.cpp
+        Tests/MM6HirelingSaveFields_ut.cpp Tests/MM6RecoverySaveFields_ut.cpp Tests/MM6Calendar_ut.cpp
         Tests/MM6ChestSaveFields_ut.cpp Tests/MM6ShopGuildClockFields_ut.cpp
         Tests/MM6ShopStockFields_ut.cpp Tests/MM6ShopBoundedPurchase_ut.cpp
         Tests/MM6ShopPhysicalPurchase_ut.cpp

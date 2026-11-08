@@ -11,9 +11,12 @@
 #include "Application/GameWindowHandler.h"
 #include "Application/GameTraceHandler.h"
 
+#include "Core/Time/Time.h"
+
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/EngineIocContainer.h"
+#include "Engine/MM6/MM6Calendar.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/Resources/EngineFileSystem.h"
@@ -112,8 +115,10 @@ GameStarter::GameStarter(GameStarterOptions options, std::function<void(FileSyst
 }
 
 void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUserFs) {
-    if (_options.gameTitle == GameTitle::MM6)
+    if (_options.gameTitle == GameTitle::MM6) {
         mm6::resetRawCursorShopProcessOwners(GameTitle::MM6);
+        gameStartingYear = mm6::calendarStartingYear;
+    }
 
     // Init environment.
     _environment = Environment::createStandardEnvironment();

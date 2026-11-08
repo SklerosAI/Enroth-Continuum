@@ -2734,3 +2734,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - An accepted-original-executable call-site check superseded the first C1 icon-index assumption: MM6 picture IDs 1–8 select the eight-entry icon table after subtracting one, and zero is a no-icon sentinel.
 - Corrected the detached dialog's icon selection and first-map expectation. Two focused units and the isolated headless first-map dialog test passed again; Yes remains unavailable until the pre-map-leave transaction exists.
+
+## [2026-11-07] verify | MM7 saved item and image admission
+- by: T-Burton-ND via codex
+- Bounded the held item, reachable shop and guild stock cells, and actor loot fields in detached MM7 preflight. Two synthetic tests failed before the correction; the revised validator and atomic helper batch passed 22/22. Unused shop houses and weapon/armor tail cells remain accepted for compatibility.
+- A disposable fresh-save writer now checks that malformed thumbnails and inactive beacon images do not reject an otherwise valid native save. Both checks failed before the correction; writer and fresh-process reader passed afterward. Production SaveLoad is still unwired to the MM7 atomic helper, and legacy/modded-save compatibility remains open.

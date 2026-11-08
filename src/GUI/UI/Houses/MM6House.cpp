@@ -1,0 +1,266 @@
+#include "MM6House.h"
+
+#include <exception>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "Engine/AssetsManager.h"
+#include "Engine/Engine.h"
+#include "Engine/Localization.h"
+#include "Engine/mm7_data.h"
+#include "Engine/Graphics/Renderer/Renderer.h"
+#include "Engine/Resources/ResourceManager.h"
+#include "Engine/Party.h"
+#include "Engine/Tables/HouseTable.h"
+#include "Engine/Tables/NPCTable.h"
+
+#include "GUI/GUIButton.h"
+#include "GUI/GUIFont.h"
+#include "GUI/GUIMessageQueue.h"
+#include "GUI/UI/NPCTopics.h"
+#include "GUI/UI/UIStatusBar.h"
+#include "GUI/UI/Houses/MM6Temple.h"
+
+#include "Library/Logger/Logger.h"
+
+#include "Media/MediaPlayer.h"
+
+static bool isResidentNpc(const NPCData &npc, HouseId houseId) {
+    return npc.house == houseId && !(npc.flags & NPC_HIRED);
+}
+
+static bool hasResidentNpc(HouseId houseId) {
+    for (int i = 1; i < pNPCStats->uNumNewNPCs; ++i)
+        if (isResidentNpc(pNPCStats->pNPCData[i], houseId))
+            return true;
+    return false;
+}
+
+GUIWindow_MM6House::GUIWindow_MM6House(HouseId houseId, const mm6::HousePresentationState &presentation)
+    : GUIWindow_House(houseId), _house(mm6::houseServiceData().at(std::to_underlying(houseId))) {
+    _panel = assets->getIcon("backevt");
+    _exit = assets->getIcon("buttexi1");
+    if (presentation.proprietorIconName)
+        _residents.push_back({nullptr, assets->getIcon(*presentation.proprietorIconName),
+                              houseTable[houseId].pProprieterName, houseTable[houseId].pProprieterTitle});
+    for (int i = 1; i < pNPCStats->uNumNewNPCs; ++i) {
+        NPCData &npc = pNPCStats->pNPCData[i];
+        if (isResidentNpc(npc, houseId))
+            _residents.push_back({&npc, assets->getIcon(fmt::format("npc{:03}", npc.portraitId)), npc.name, ""});
+    }
+    _services = mm6::houseServiceOptions(_house.type);
+
+    CreateCharacterButtons();
+    if (_residents.size() == 1) {
+        selectResident(0);
+    } else {
+        showResidentButtons();
+    }
+}
+
+void GUIWindow_MM6House::Update() {
+    const Recti sidePanel(SIDE_TEXT_BOX_POS_X, 0, SIDE_TEXT_BOX_WIDTH, render->GetRenderDimensions().h);
+    render->DrawQuad2D(_panel, {477, 0});
+    render->DrawQuad2D(_exit, {471, 445});
+    DrawTitleText(assets->pFontCreate.get(), 0, 4, colorTable.White, houseTable[houseId()].name, 3, sidePanel);
+
+    if (_selected == -1) {
+        for (size_t i = 0; i < _residents.size(); ++i) {
+            const Pointi position(pNPCPortraits_x[_residents.size() - 1][i], pNPCPortraits_y[_residents.size() - 1][i]);
+            render->DrawQuad2D(_residents[i].icon, position);
+        }
+    } else {
+        const Resident &resident = _residents[_selected];
+        render->DrawQuad2D(resident.icon, {pNPCPortraits_x[0][0], pNPCPortraits_y[0][0]});
+        DrawTitleText(assets->pFontCreate.get(), 0, SIDE_TEXT_BOX_POS_Y, colorTable.EasternBlue,
+                      resident.npc ? NameAndTitle(resident.npc) : NameAndTitle(resident.name, resident.title), 3, sidePanel);
+
+        std::vector<std::string> labels;
+        for (GUIButton *button : _optionButtons) {
+            if (resident.npc) {
+                labels.push_back(npcDialogueOptionString(static_cast<DialogueId>(button->msg_param), resident.npc));
+            } else {
+                labels.push_back(serviceLabel(_services[button->msg_param]));
+            }
+        }
+        drawOptionLabels(labels);
+    }
+
+    DrawDialoguePanel(current_npc_text);
+}
+
+void GUIWindow_MM6House::selectResident(int index) {
+    if (index < 0 || index >= static_cast<int>(_residents.size()))
+        return;
+    current_npc_text.clear();
+    _selected = index;
+    if (_residents[index].npc) {
+        refreshTopics();
+    } else {
+        clearOptionButtons();
+        showServiceButtons();
+    }
+}
+
+void GUIWindow_MM6House::selectService(int index) {
+    if (_selected == -1 || _residents[_selected].npc || index < 0 || index >= static_cast<int>(_services.size()))
+        return;
+    if (_services[index] == mm6::HouseServiceOption::TempleHeal) {
+        healActiveCharacter();
+        return;
+    }
+    engine->_statusBar->setEvent("This service is not available yet.");
+}
+
+void GUIWindow_MM6House::refreshTopics() {
+    NPCData *npc = selectedNpc();
+    if (!npc)
+        return;
+    clearOptionButtons();
+    int row = 0;
+    for (DialogueId topic : prepareScriptedNPCDialogueTopics(npc)) {
+        if (topic < DIALOGUE_SCRIPTED_LINE_1 || topic > DIALOGUE_SCRIPTED_LINE_6)
+            continue;
+        _optionButtons.push_back(CreateButton(fmt::format("HouseNpcDialogue_Option{}", row), {480, 160 + 30 * row}, {140, 30},
+                                              BUTTON_TYPE_NORMAL, 0, UIMSG_SelectHouseNPCDialogueOption, std::to_underlying(topic)));
+        ++row;
+    }
+}
+
+NPCData *GUIWindow_MM6House::selectedNpc() const {
+    return _selected == -1 ? nullptr : _residents[_selected].npc;
+}
+
+bool GUIWindow_MM6House::goBack() {
+    current_npc_text.clear();
+    if (_selected == -1 || _residents.size() < 2)
+        return false;
+    _selected = -1;
+    clearOptionButtons();
+    showResidentButtons();
+    return true;
+}
+
+void GUIWindow_MM6House::clearOptionButtons() {
+    for (GUIButton *button : _optionButtons)
+        button->Release();
+    _optionButtons.clear();
+}
+
+void GUIWindow_MM6House::showResidentButtons() {
+    for (size_t i = 0; i < _residents.size(); ++i) {
+        const Pointi position(pNPCPortraits_x[_residents.size() - 1][i], pNPCPortraits_y[_residents.size() - 1][i]);
+        _optionButtons.push_back(CreateButton(fmt::format("House_Npc{}", i), position, {63, 73}, BUTTON_TYPE_NORMAL, 0,
+                                              UIMSG_ClickHouseNPCPortrait, i, INPUT_ACTION_INVALID,
+                                              localization->format(LSTR_CONVERSE_WITH_S, _residents[i].name)));
+    }
+}
+
+void GUIWindow_MM6House::showServiceButtons() {
+    for (size_t i = 0; i < _services.size(); ++i)
+        _optionButtons.push_back(CreateButton(fmt::format("HouseDialogue_Option{}", i), {480, 160 + 30 * static_cast<int>(i)}, {140, 30},
+                                              BUTTON_TYPE_NORMAL, 0, UIMSG_SelectProprietorDialogueOption, i));
+}
+
+void GUIWindow_MM6House::healActiveCharacter() {
+    if (!pParty->hasActiveCharacter())
+        return;
+    Character &character = pParty->activeCharacter();
+    const int house = std::to_underlying(houseId());
+    if (!mm6::templeOffersHeal(house, character))
+        return;
+    const int price = mm6::templeHealPrice(character, _house.value.value_or(0));
+    if (pParty->GetGold() < price) {
+        engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
+        return;
+    }
+    pParty->TakeGold(price);
+    mm6::templeHeal(house, &character);
+}
+
+std::string GUIWindow_MM6House::serviceLabel(mm6::HouseServiceOption option) const {
+    if (option != mm6::HouseServiceOption::TempleHeal)
+        return localization->str(mm6::houseServiceOptionLabel(option));
+    if (!pParty->hasActiveCharacter() || !mm6::templeOffersHeal(std::to_underlying(houseId()), pParty->activeCharacter()))
+        return {};
+    const int price = mm6::templeHealPrice(pParty->activeCharacter(), _house.value.value_or(0));
+    return fmt::format("{} {} {}", localization->str(mm6::houseServiceOptionLabel(option)), price, localization->str(LSTR_GOLD));
+}
+
+void GUIWindow_MM6House::drawOptionLabels(const std::vector<std::string> &labels) {
+    const Recti sidePanel(SIDE_TEXT_BOX_POS_X, 0, SIDE_TEXT_BOX_WIDTH, render->GetRenderDimensions().h);
+    for (size_t i = 0; i < labels.size(); ++i) {
+        GUIButton *button = _optionButtons[i];
+        if (labels[i].empty()) {
+            button->rect.h = 0;
+            continue;
+        }
+        button->rect.h = 30;
+        button->label = labels[i];
+        DrawTitleText(assets->pFontArrus.get(), 0, button->rect.y, colorTable.White, labels[i], 3, sidePanel);
+    }
+}
+
+bool mm6EnterHouse(HouseId houseId) {
+    const int id = std::to_underlying(houseId);
+    const mm6::HouseServiceData *houses = nullptr;
+    try {
+        houses = &mm6::houseServiceData();
+    } catch (const std::exception &e) {
+        MM_WARNING("MM6 house {} refused: {}", id, e.what());
+        engine->_statusBar->setEvent("This place is unavailable.");
+        return false;
+    }
+    const mm6::HouseEntryPlan entry = mm6::planHouseEntry(*houses, id);
+    if (entry.kind != mm6::HouseEntryKind::TableBacked) {
+        if (entry.kind == mm6::HouseEntryKind::Terminal) {
+            engine->_statusBar->setEvent("This passage is unavailable.");
+        } else {
+            engine->_statusBar->setEvent("This place is unavailable.");
+        }
+        return false;
+    }
+    const mm6::HousePresentationState presentation = mm6::planHousePresentation(GameTitle::MM6, *houses, id);
+    const bool iconMissing = entry.proprietorIconName && engine->resources()->iconSize(*entry.proprietorIconName).isEmpty();
+    if (iconMissing || !pMediaPlayer->hasHouseMoviePayload(presentation.videoName)) {
+        MM_WARNING("MM6 house {} refused: its room media is unavailable", id);
+        engine->_statusBar->setEvent("This place is unavailable.");
+        return false;
+    }
+    if (pMediaPlayer->IsMoviePlaying())
+        return false;
+
+    engine->_statusBar->clearAll();
+    engine->_messageQueue->clear();
+    current_npc_text.clear();
+    houseNpcs.clear();
+    currentHouseNpc = -1;
+    uCurrentHouse_Animation = 0; // The MM7 jail sentinel in event dispatch must not remap this house.
+    if (!pMediaPlayer->tryOpenHouseMovie(presentation.videoName, true) && !presentation.proprietorIconName && !hasResidentNpc(houseId)) {
+        engine->_statusBar->setEvent("This place is unavailable.");
+        return false;
+    }
+    return true;
+}
+
+void mm6CreateHouseUI(HouseId houseId) {
+    const mm6::HousePresentationState presentation =
+        mm6::planHousePresentation(GameTitle::MM6, mm6::houseServiceData(), std::to_underlying(houseId));
+    window_SpeakInHouse = std::make_unique<GUIWindow_MM6House>(houseId, presentation);
+}
+
+void mm6SelectHouseTopic(DialogueId topic) {
+    NPCData *npc = mm6HouseWindow()->selectedNpc();
+    if (!npc || topic < DIALOGUE_SCRIPTED_LINE_1 || topic > DIALOGUE_SCRIPTED_LINE_6)
+        return;
+    handleScriptedNPCTopicSelection(topic, npc);
+    if (GUIWindow_MM6House *house = mm6HouseWindow())
+        house->refreshTopics(); // The event may have closed the house.
+}
+
+GUIWindow_MM6House *mm6HouseWindow() {
+    if (engine->gameTitle() != GameTitle::MM6)
+        return nullptr;
+    return dynamic_cast<GUIWindow_MM6House *>(window_SpeakInHouse.get());
+}

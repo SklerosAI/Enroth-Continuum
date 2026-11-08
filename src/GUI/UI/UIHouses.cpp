@@ -32,7 +32,6 @@
 #include "GUI/UI/UIDialogue.h"
 #include "GUI/UI/UIGame.h"
 #include "GUI/UI/UIStatusBar.h"
-#include "GUI/UI/MM6HouseServiceData.h"
 #include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/Houses/MagicGuild.h"
 #include "GUI/UI/Houses/Bank.h"
@@ -42,6 +41,7 @@
 #include "GUI/UI/Houses/Training.h"
 #include "GUI/UI/Houses/Transport.h"
 #include "GUI/UI/Houses/MercenaryGuild.h"
+#include "GUI/UI/Houses/MM6House.h"
 #include "GUI/UI/Houses/TownHall.h"
 #include "GUI/UI/Houses/Shops.h"
 
@@ -292,40 +292,8 @@ static constexpr IndexedArray<const char *, HOUSE_TYPE_WEAPON_SHOP, HOUSE_TYPE_M
 }};
 
 bool enterHouse(HouseId uHouseID) {
-    if (engine->gameTitle() == GameTitle::MM6) {
-        // Keep MM6 service actions out of the inherited MM7 house path.
-        const mm6::HouseEntryPlan entry = mm6::planHouseEntry(
-            mm6::houseServiceData(), std::to_underlying(uHouseID));
-        if (entry.kind != mm6::HouseEntryKind::TableBacked) {
-            if (entry.kind == mm6::HouseEntryKind::Terminal)
-                engine->_statusBar->setEvent("This passage is unavailable.");
-            else
-                engine->_statusBar->setEvent("This place is unavailable.");
-            return false;
-        }
-        const mm6::HousePresentationState presentation = mm6::planHousePresentation(
-            GameTitle::MM6, mm6::houseServiceData(), std::to_underlying(uHouseID));
-        if (entry.proprietorIconName &&
-            engine->resources()->iconSize(*entry.proprietorIconName).isEmpty())
-            throw std::runtime_error("MM6 house proprietor icon is unavailable");
-        if (!pMediaPlayer->hasHouseMoviePayload(presentation.videoName))
-            throw std::runtime_error("MM6 house room movie is unavailable");
-        if (pMediaPlayer->IsMoviePlaying())
-            return false;
-
-        engine->_statusBar->clearAll();
-        engine->_messageQueue->clear();
-        current_npc_text.clear();
-        houseNpcs.clear();
-        currentHouseNpc = -1;
-        uCurrentHouse_Animation = 0; // The MM7 jail sentinel in event dispatch must not remap this house.
-        if (!pMediaPlayer->tryOpenHouseMovie(presentation.videoName, true) &&
-            !presentation.proprietorIconName) {
-            engine->_statusBar->setEvent("This place is unavailable.");
-            return false;
-        }
-        return true;
-    }
+    if (engine->gameTitle() == GameTitle::MM6)
+        return mm6EnterHouse(uHouseID);
 
     engine->_statusBar->clearAll();
     engine->_messageQueue->clear();
@@ -497,6 +465,11 @@ void NPCHireableDialogPrepare() {
 }
 
 void selectHouseNPCDialogueOption(DialogueId topic) {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        mm6SelectHouseTopic(topic);
+        return;
+    }
+
     NPCData *pCurrentNPCInfo = houseNpcs[currentHouseNpc].npc;
 
     if (topic >= DIALOGUE_SCRIPTED_LINE_1 && topic <= DIALOGUE_SCRIPTED_LINE_6) {
@@ -548,6 +521,11 @@ void selectHouseNPCDialogueOption(DialogueId topic) {
 }
 
 void updateHouseNPCTopics(int npc) {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        mm6HouseWindow()->selectResident(npc);
+        return;
+    }
+
     int num_menu_buttons = 0;
 
     currentHouseNpc = npc;
@@ -577,6 +555,11 @@ void updateHouseNPCTopics(int npc) {
 }
 
 void selectProprietorDialogueOption(DialogueId option) {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        mm6HouseWindow()->selectService(std::to_underlying(option));
+        return;
+    }
+
     if (!pDialogueWindow || !pDialogueWindow->pNumPresenceButton) {
         return;
     }
@@ -636,40 +619,9 @@ void houseDialogueGoBackToTop() {
     while (houseDialogueGoBack()) {}
 }
 
-namespace {
-
-class GUIWindow_MM6HousePresentation final : public GUIWindow_House {
- public:
-    GUIWindow_MM6HousePresentation(HouseId houseId, const mm6::HousePresentationState &presentation)
-        : GUIWindow_House(houseId) {
-        _panel = assets->getIcon("backevt");
-        _exit = assets->getIcon("buttexi1");
-        if (presentation.proprietorIconName)
-            _portrait = assets->getIcon(*presentation.proprietorIconName);
-    }
-
-    void Update() override {
-        render->DrawQuad2D(_panel, {477, 0});
-        render->DrawQuad2D(_exit, {471, 445});
-        if (_portrait) {
-            const Pointi position{pNPCPortraits_x[0][0], pNPCPortraits_y[0][0]};
-            render->DrawQuad2D(_portrait, position);
-        }
-    }
-
- private:
-    GraphicsImage *_panel = nullptr;
-    GraphicsImage *_exit = nullptr;
-    GraphicsImage *_portrait = nullptr;
-};
-
-} // namespace
-
 void createHouseUI(HouseId houseId) {
     if (engine->gameTitle() == GameTitle::MM6) {
-        const mm6::HousePresentationState presentation = mm6::planHousePresentation(
-            GameTitle::MM6, mm6::houseServiceData(), std::to_underlying(houseId));
-        window_SpeakInHouse = std::make_unique<GUIWindow_MM6HousePresentation>(houseId, presentation);
+        mm6CreateHouseUI(houseId);
         return;
     }
     switch (houseTable[houseId].uType) {
@@ -1126,7 +1078,7 @@ GUIWindow_House::GUIWindow_House(HouseId houseId) : GUIWindow(WINDOW_HOUSE_INTER
 
     current_screen_type = SCREEN_HOUSE;
     if (engine->gameTitle() == GameTitle::MM6) {
-        pBtn_ExitCancel = CreateButton({471, 445}, {169, 35}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0,
+        pBtn_ExitCancel = CreateButton("House_Exit", {471, 445}, {169, 35}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0,
                                        INPUT_ACTION_INVALID, "Exit", {assets->getIcon("buttexi1")});
         return;
     }

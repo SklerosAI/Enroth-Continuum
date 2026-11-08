@@ -1,0 +1,183 @@
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+#include "Testing/Game/GameTest.h"
+
+#include "Engine/Engine.h"
+#include "Engine/EngineGlobals.h"
+#include "Engine/Evt/EvtProgram.h"
+#include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/Localization.h"
+#include "Engine/Objects/CharacterEnumFunctions.h"
+#include "Engine/Objects/Chest.h"
+#include "Engine/Party.h"
+#include "Engine/Resources/LOD.h"
+#include "Engine/SaveLoad.h"
+#include "Engine/Tables/MapTable.h"
+#include "Engine/Tables/NPCTable.h"
+#include "Engine/mm7_data.h"
+
+#include "GUI/GUIButton.h"
+#include "GUI/GUIWindow.h"
+#include "GUI/UI/UIHouses.h"
+
+#include "Utility/Memory/Blob.h"
+
+static void startMM6NewGame(EngineController &game) {
+    // MM6 has no new-game save yet, so the override seeds the map deltas and chest state from the game archives.
+    std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
+    mm6::testing::setNewGameSaveOverride([] {
+        pMapDeltas.clear();
+        for (const std::string &name : pGames_LOD->ls())
+            if (name.ends_with(".dlv") || name.ends_with(".ddm"))
+                pMapDeltas.emplace(name, Blob::copy(pGames_LOD->read(name)));
+        mm6::resetChestTitleState(&mm6::chestTitleState());
+        if (!mm6::restoreChestTitleState(GameTitle::MM6, &mm6::chestTitleState(), 0x12345678u, {}))
+            throw std::runtime_error("MM6 chest title state did not restore");
+    });
+    game.runGameRoutine([&] { chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>(); });
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    game.runGameRoutine([] {
+        for (Character &character : pParty->pCharacters) {
+            for (int order = 4; order <= 12 && character.GetSkillIdxByOrder(3) == SKILL_INVALID; ++order) {
+                const Skill skill = character.GetSkillIdxByOrder(order);
+                if (skill != SKILL_INVALID && !character.pActiveSkills[skill])
+                    character.pActiveSkills[skill] = CombinedSkillValue::novice();
+            }
+        }
+        for (int pass = 0; pass < 100 && CharacterCreation_GetUnspentAttributePointCount() > 0; ++pass)
+            for (Character &character : pParty->pCharacters)
+                for (Attribute stat : allStatAttributes())
+                    character.IncreaseAttribute(stat);
+    });
+    game.pressGuiButton("PartyCreation_OK");
+    game.skipLoadingScreen();
+    game.tick(2);
+    game.runGameRoutine([&] { chestOptIn.reset(); });
+    mm6::testing::setNewGameSaveOverride({});
+}
+
+static void enterThroughDoor(EngineController &game, Vec3f position, int viewYaw) {
+    // Same map teleport, then Space at the door in front of the party.
+    game.teleportTo(engine->_currentLoadedMapId, position, viewYaw);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+}
+
+static std::vector<int> setQuestBits() {
+    // Every set quest bit, so that a tape shows a bit that changes and the ones that don't.
+    std::vector<int> result;
+    for (int bit = std::to_underlying(QBIT_FIRST); bit <= std::to_underlying(QBIT_LAST); ++bit)
+        if (pParty->_questBits[static_cast<QuestBit>(bit)])
+            result.push_back(bit);
+    return result;
+}
+
+static std::vector<std::string> houseOptionLabels() {
+    // The service and topic lines the house screen shows, without the hidden ones.
+    std::vector<std::string> result;
+    if (window_SpeakInHouse)
+        for (GUIButton *button : window_SpeakInHouse->vButtons)
+            if (button->id.contains("Dialogue_Option") && button->rect.h > 0)
+                result.push_back(button->label);
+    return result;
+}
+
+static const Vec3f kTempleDoor(-9744, -1862, 700); // New Sorpigal Temple, facing north.
+static const Vec3f kWeaponShopDoor(-8422, -7392, 300); // Weapon shop, facing east.
+static const Vec3f kTownHallDoor(-11090, -6536, 300); // Town Hall, facing west.
+
+GAME_TEST(MM6Houses, EnterAndExit) {
+    // Space at a New Sorpigal house door opens its house screen, and Exit returns the party to the world.
+    auto screenTape = tapes.screen();
+    auto houseTape = tapes.house();
+    auto mapTape = tapes.map();
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kTempleDoor, 90);
+    game.pressGuiButton("House_Exit");
+    game.tick();
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE, SCREEN_GAME));
+    EXPECT_EQ(houseTape, tape(HOUSE_INVALID, static_cast<HouseId>(69), HOUSE_INVALID));
+    EXPECT_EQ(mapTape, tape(pMapTable->GetMapInfo("oute3.odm")));
+}
+
+GAME_TEST(MM6Houses, UnimplementedServiceRefuses) {
+    // A service the MM6 house screen doesn't implement is listed, and choosing it refuses without touching the party.
+    auto screenTape = tapes.screen();
+    auto statusTape = tapes.statusBar();
+    auto goldTape = tapes.gold();
+    auto itemsTape = tapes.totalItemCount();
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kWeaponShopDoor, 0);
+    game.pressGuiButton("HouseDialogue_Option0"); // Buy Items.
+    game.tick();
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
+    EXPECT_CONTAINS(statusTape, "This service is not available yet.");
+    EXPECT_EQ(goldTape.size(), 1);
+    EXPECT_EQ(itemsTape.size(), 1);
+}
+
+GAME_TEST(MM6Houses, TempleHeal) {
+    // New Sorpigal Temple heals a poisoned character for gold, and doesn't offer to heal an eradicated one.
+    auto poisonedTape = tapes.custom([] { return pParty->pCharacters[0].conditions.has(CONDITION_POISON_WEAK); });
+    auto eradicatedTape = tapes.custom([] { return pParty->pCharacters[1].conditions.has(CONDITION_ERADICATED); });
+    auto healthTape = tapes.custom([] { return std::vector<int>{pParty->pCharacters[0].health, pParty->pCharacters[1].health}; });
+    auto goldTape = tapes.gold();
+    auto screenTape = tapes.screen();
+    auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+    startMM6NewGame(game);
+    pParty->pCharacters[0].SetCondition(CONDITION_POISON_WEAK, 0);
+    pParty->pCharacters[0].health = 1;
+    pParty->pCharacters[1].SetCondition(CONDITION_ERADICATED, 0);
+    pParty->pCharacters[1].health = 1;
+    test.startTaping();
+    enterThroughDoor(game, kTempleDoor, 90);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_2);
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+    game.tick();
+    game.pressGuiButton("HouseDialogue_Option0"); // Heal.
+    game.tick();
+    game.pressGuiButton("House_Exit");
+    game.tick();
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE, SCREEN_GAME));
+    EXPECT_EQ(poisonedTape, tape(true, false));
+    EXPECT_EQ(eradicatedTape, tape(true));
+    EXPECT_EQ(healthTape, tape(std::vector<int>{1, 1}, std::vector<int>{pParty->pCharacters[0].GetMaxHealth(), 1}));
+    EXPECT_EQ(goldTape, tape(200, 190));
+    const std::string donate = localization->str(LSTR_DONATE);
+    const std::string heal = fmt::format("{} 10 {}", localization->str(LSTR_HEAL), localization->str(LSTR_GOLD));
+    EXPECT_EQ(optionsTape, tape(std::vector<std::string>{}, std::vector<std::string>{heal, donate}, std::vector<std::string>{donate},
+                                std::vector<std::string>{heal, donate}, std::vector<std::string>{donate}, std::vector<std::string>{}));
+}
+
+GAME_TEST(MM6Houses, HouseNpcTopic) {
+    // Frank in the Town Hall can be picked, and his topic sets a quest bit, replaces itself and shows its text.
+    auto questBitsTape = tapes.custom([] { return setQuestBits(); });
+    auto topicsTape = tapes.custom([] {
+        const NPCData &frank = pNPCStats->pNPCData[3];
+        return std::vector<unsigned>{frank.dialogue_1_evt_id, frank.dialogue_2_evt_id, frank.dialogue_3_evt_id};
+    });
+    auto textTape = tapes.custom([] { return current_npc_text; });
+    auto goldTape = tapes.gold();
+    auto screenTape = tapes.screen();
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kTownHallDoor, 180);
+    game.pressGuiButton("House_Npc0"); // Frank Fairchild.
+    game.tick();
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
+    EXPECT_EQ(questBitsTape, tape(std::vector<int>{1, 2, 3, 4, 5, 6}, std::vector<int>{1, 2, 3, 4, 5, 6, 138}));
+    EXPECT_EQ(topicsTape, tape(std::vector<unsigned>{324, 326, 0}, std::vector<unsigned>{325, 326, 0}));
+    const EvtInstruction &message = engine->_globalEventMap.function(324).front();
+    ASSERT_EQ(message.opcode, EVENT_ShowMessage);
+    EXPECT_EQ(textTape, tape(std::string(), pNPCTopics[message.data.text_id - 1].pText));
+    EXPECT_EQ(goldTape.size(), 1);
+}

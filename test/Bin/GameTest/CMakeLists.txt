@@ -21,7 +21,8 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM6MonthEvent.cpp
         GameTests_MM6SkillEvent.cpp
         GameTests_MM6OriginalNoopEvent.cpp
-        GameTests_MM6Save.cpp)
+        GameTests_MM6Save.cpp
+        GameTests_MM6Houses.cpp)
 set(GAME_TEST_MAIN_HEADERS
         GameTestCommon.h
         GameTestOptions.h

@@ -2757,3 +2757,9 @@ Chronological record of wiki activity.
   under network denial, including the unarmed Break Weapon control. Three MM6 combat children passed separately.
 - The new combat audit page records title boundaries, an MM6 legacy Break Weapon risk, and the pending full first-map,
   live archer and graphical checks. The fix remains on an isolated branch pending integration.
+
+## [2026-11-07] verify | Combined MM7 combat and monster spell gates
+- by: T-Burton-ND via codex
+- The earlier pending first-map claim is superseded: on the combined combat branch, the full MM6 first-map gate passed its seven-child chain, retry faults, paperdoll, normal Save/Load, production load/resave and MM7 controls under network denial.
+- The full MM7 headless suite passed 467 tests with 2 skipped out of 469. The integrated monster second-spell ability fix required stable retraces of two public JSON fixtures; their sound, map and 24-meteor assertions remain, and the corrected slot-two damage still exceeds the independent 650-point party damage floor.
+- Branch integration, live flaming archer observation, graphical acceptance and installed helper update remain open. The MM6 legacy unarmed Break Weapon path is unchanged.

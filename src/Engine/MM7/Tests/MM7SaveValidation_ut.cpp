@@ -1,3 +1,4 @@
+#include <array>
 #include <cstdint>
 #include <string>
 #include <utility>
@@ -9,6 +10,7 @@
 #include "Engine/Objects/SpriteEnums.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Snapshots/EntitySnapshots.h"
+#include "Engine/Tables/NPCTable.h"
 
 #include "Library/Lod/LodReader.h"
 #include "Library/LodFormats/LodFormats.h"
@@ -191,6 +193,24 @@ UNIT_TEST(MM7SaveValidation, ChecksOnlyNamedHirelingProfessionBounds) {
     party.hirelings[1].name.value = 1;
     party.hirelings[1].profession = lastProfession + 1;
     EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
+}
+
+UNIT_TEST(MM7SaveValidation, RejectsOutOfRangeHiredNpcProfessionWithoutSavedName) {
+    std::array<NPCData_MM7, 501> npcData{};
+    npcData[3].name.value = 0; // Static NPC names are restored from the table after load.
+    npcData[3].flags = std::to_underlying(NPC_HIRED);
+    npcData[3].profession = 78;
+    EXPECT_FALSE(mm7::detail::hasSafeHiredNpcProfessions(npcData));
+
+    npcData[3].profession = 77;
+    EXPECT_TRUE(mm7::detail::hasSafeHiredNpcProfessions(npcData));
+    npcData[3].profession = 0;
+    EXPECT_TRUE(mm7::detail::hasSafeHiredNpcProfessions(npcData));
+
+    npcData[3].flags = 0;
+    npcData[3].profession = 78;
+    npcData[500].profession = 0xffffffffu; // Unhired and unreferenced in this fixture.
+    EXPECT_TRUE(mm7::detail::hasSafeHiredNpcProfessions(npcData));
 }
 
 UNIT_TEST(MM7SaveValidation, AcceptsZombieFacesAndRejectsOutOfRangeFaceOrVoice) {

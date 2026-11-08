@@ -12,6 +12,7 @@ class LodReader;
 struct Character_MM7;
 struct Chest_MM7;
 struct IndoorDelta_MM7;
+struct NPCData_MM7;
 struct OutdoorDelta_MM7;
 struct Party_MM7;
 
@@ -20,11 +21,10 @@ namespace mm7 {
 // Detached structural preflight for the MM7 native save format. The supplied
 // Games LOD must be the already selected MM7 game-data archive. This checks
 // file framing, required image payloads and map-delta decoding, but not every
-// semantic reference used by later live reconstruction. It deliberately
-// rejects a missing or corrupt thumbnail even though the current menu can
-// display a save with one; legacy-save compatibility needs a separate check.
-// It cannot alone be
-// used as the atomic writer's complete SaveBytesValidator callback.
+// semantic reference used by later live reconstruction. It tolerates a corrupt
+// thumbnail, matching the current load menu; legacy-save compatibility still
+// needs a separate check. It cannot alone be used as the atomic writer's
+// complete SaveBytesValidator callback.
 bool preflightNativeSaveStructure(std::span<const std::uint8_t> bytes,
                                   GameTitle title, const LodReader &gamesLod);
 
@@ -53,6 +53,9 @@ bool hasSafePartyInventoryReferences(const Party_MM7 &party);
 // Check bounded MM7 party, named-hireling, character and active-beacon enum references before
 // the live reconstruction uses them as switch values or array indices.
 bool hasSafePartySemanticReferences(const Party_MM7 &party);
+// Check saved npcdata.bin professions on hired rows only. Unhired house-linked
+// rows need separate validation; profession zero remains a stored sentinel.
+bool hasSafeHiredNpcProfessions(std::span<const NPCData_MM7> npcData);
 bool hasSafeIndoorDeltaReferences(const IndoorDelta_MM7 &delta,
                                    std::size_t vertexCount, std::size_t faceCount,
                                    std::size_t sectorCount);

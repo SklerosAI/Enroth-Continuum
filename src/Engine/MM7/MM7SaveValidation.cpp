@@ -18,6 +18,7 @@
 #include "Engine/Objects/SpriteEnums.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Spells/SpellEnums.h"
+#include "Engine/Tables/NPCTable.h"
 
 #include "GUI/GUIDialogues.h"
 
@@ -327,6 +328,13 @@ bool detail::hasSafePartySemanticReferences(const Party_MM7 &party) {
                        });
 }
 
+bool detail::hasSafeHiredNpcProfessions(std::span<const NPCData_MM7> npcData) {
+    return std::all_of(npcData.begin(), npcData.end(), [](const NPCData_MM7 &npc) {
+        return !(npc.flags & std::to_underlying(NPC_HIRED)) ||
+               npc.profession <= std::to_underlying(NPC_PROFESSION_LAST);
+    });
+}
+
 bool detail::hasSafeIndoorDeltaReferences(const IndoorDelta_MM7 &delta,
                                           std::size_t vertexCount, std::size_t faceCount,
                                           std::size_t sectorCount) {
@@ -385,7 +393,8 @@ bool preflightNativeSaveStructure(std::span<const std::uint8_t> bytes,
         if (!save->mapDeltas.contains(currentDelta))
             return false;
         if (!detail::hasSafePartyInventoryReferences(save->party) ||
-            !detail::hasSafePartySemanticReferences(save->party))
+            !detail::hasSafePartySemanticReferences(save->party) ||
+            !detail::hasSafeHiredNpcProfessions(save->npcData))
             return false;
 
         // The load menu tolerates a bad thumbnail and the runtime does not

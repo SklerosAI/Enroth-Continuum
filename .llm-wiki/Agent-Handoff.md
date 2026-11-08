@@ -10,6 +10,8 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 ## Fast resume pointer — 2026-11-07
 
+Codex's parallel C1/C2 candidates are on `codex/mm6-transition-dialog`: the MM6 indoor dialog offers Cancel only until a pre-map-leave transition preflight exists, and the party-death model remains detached. A separate MM7 structural save preflight on that branch is not a production validator. See [candidate scope and proof limits](MM6-Transition-And-Death-Candidates.md) and [MM7 atomic save limits](MM7-Atomic-Save-File.md); Claude remains the MM6 integration lead.
+
 The MM6 implementation goal resumed on 2026-11-07. The Engine event-restore
 slice passed the seven-child first-map v5 chain, both full-retry fault
 children and MM7 control in fresh processes. Next, complete the remaining actor/NPC/RNG,

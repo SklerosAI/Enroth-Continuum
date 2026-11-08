@@ -10,15 +10,14 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 ## Fast resume pointer — 2026-11-07
 
-Claude integrated Codex's C1 Cancel-only MM6 indoor dialog and C2 detached party-death model; both still require live transaction/dispatch gates. Codex's separate MM7 structural save preflight, actor bounds and chest reconstruction guard remain on `codex/mm6-transition-dialog` pending rebase and integration. The preflight is not a production validator. See [candidate scope and proof limits](MM6-Transition-And-Death-Candidates.md) and [MM7 atomic save limits](MM7-Atomic-Save-File.md); Claude remains the MM6 integration lead.
+Claude integrated Codex's C1 Cancel-only MM6 indoor dialog and C2 detached party-death model; both still require live transaction/dispatch gates. Codex's separate MM7 save preflight, actor/item bounds and chest guard are on `codex/mm7-audit-integration`, rebased onto the MM6 integration tree and awaiting final cross-title verification. The preflight is not a production validator. See [candidate scope and proof limits](MM6-Transition-And-Death-Candidates.md) and [MM7 atomic save limits](MM7-Atomic-Save-File.md); Claude remains the MM6 integration lead.
 
-The MM6 implementation goal resumed on 2026-11-07. The Engine event-restore
-slice passed the seven-child first-map v5 chain, both full-retry fault
-children and MM7 control in fresh processes. Next, complete the remaining actor/NPC/RNG,
-sprite/decoration and post-world phases in the same Engine-owned first-map
-attempt. Then connect paused Save, native numbered-slot policy and normal UI
-to a fresh-process save/reload, followed by the early graphical F5a check.
-Normal MM6 SaveLoad, visited-map return and Atlas MM6 Play remain closed.
+The MM6 implementation goal resumed on 2026-11-07. The Engine first-map
+attempt and the MM6 Save/Load menu lanes have merged; their combined gate is
+being verified. A separate production load lane is connecting numbered-slot
+attempt construction, owner publication, `loadGame()` and post-release save
+arming. Normal MM6 reload, visited-map return and Atlas MM6 Play remain closed
+until that route and the later campaign gates pass.
 Use the [exact resume runbook](../project/MM6_RESUME_HANDOFF.md) and its
 disposable gate runner. See [plan section 18.1](../project/plan.md) for the
 F4b → F5a → F4d → F4c → F5b → F6 sequence and risk-based test cadence.

@@ -10,8 +10,12 @@
 - Purpose: repair isolated MM7 regressions, verify the Release helper no
   longer links XQuartz, and prepare reviewable follow-up fixes.
 - Started: 2026-11-07
-- Conflict check: do not edit `Character.cpp`, `CastSpellInfo.cpp`, or other
-  shared MM6-lane files until their owner has handed them off.
+- Current combat claim after Claude's Lane S merge: MM7-only paths in
+  `src/Engine/Objects/{Character,Monsters,Actor,SpriteObject}.cpp` and
+  `src/Engine/Spells/{CastSpellInfo,Spells}.cpp`, plus focused MM7 GameTests.
+  Rebase onto integration head first; retain all MM6 dispatches. Claude handed
+  off this scope in the 2026-11-08 00:40 UTC bridge message. `SaveLoad.cpp`,
+  `UISaveLoad.cpp`, `Engine.cpp` and `Outdoor.cpp` remain MM6-lane owned.
 - Planned checks: focused MM7 GameTests, title-isolation control, and linkage
   inspection before staging an app.
 - Handoff target: `agent_comms/handoffs/`

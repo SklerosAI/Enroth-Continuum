@@ -55,7 +55,7 @@ NORMAL_SAVE_LOAD = [
     ("MM6V5NormalLoadMenuHeadless.DISABLED_LoadMenuListsAndLoadsNumberedFirstMapSlot",
      "ENROTH_MM6_V5_NORMAL_LOAD_ENABLE", "strict-v5-normal-load"),
 ]
-MM7_CONTROL = "Prs.Pr2354"
+MM7_CONTROLS = ["Prs.Pr2354", "Prs.Pr2956", "Issues.Issue840"]
 PASS_LINE = re.compile(r"\[\s*PASSED\s*\]\s+1 test\b")
 
 
@@ -109,7 +109,8 @@ def main():
             print("paperdoll:", name)
         for name, _, _ in NORMAL_SAVE_LOAD:
             print("normal save/load:", name)
-        print("MM7 control:", MM7_CONTROL)
+        for name in MM7_CONTROLS:
+            print("MM7 control:", name)
         return 0
 
     paths = {}
@@ -166,10 +167,10 @@ def main():
             if not run_child(name, flag, value, profile,
                              paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
                 return 1
-    if not run_child(MM7_CONTROL, None, None, ROOT,
-                     paths["MM7_DATA_PATH"]):
-        return 1
-    print("PASS: seven-child MM6 chain, all full-retry fault children, the paperdoll child, normal Save/Load menus, and MM7 control")
+    for name in MM7_CONTROLS:
+        if not run_child(name, None, None, ROOT, paths["MM7_DATA_PATH"]):
+            return 1
+    print("PASS: seven-child MM6 chain, all full-retry fault children, the paperdoll child, normal Save/Load menus, and the MM7 controls")
     return 0
 
 

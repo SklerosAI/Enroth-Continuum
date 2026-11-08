@@ -21,9 +21,18 @@ Five ranked MM7 gameplay defects have focused headless regressions and fixes on 
 Each of the five branch defect tests failed on the preceding source. The fixed MM7 combat GameTest suite passed **6/6** under network denial,
 including the unarmed Break Weapon control. Three MM6 combat children passed separately in fresh processes.
 The three integrated monster-spell GameTests failed on the preceding source and passed **3/3** after its fix; three MM6 combat children also passed.
-The combined full MM6 first-map gate and full MM7 headless suite are still pending. The parser test checks the token
-rather than observing an archer fire in live combat. No graphical acceptance or installed helper update follows from
-these tests.
+
+On the combined source, the full MM6 first-map gate passed its seven-child chain, retry fault children,
+paperdoll, normal Save/Load and production load/resave, plus MM7 controls. The full MM7 headless suite
+passed **467 tests with 2 skipped** out of 469. These were network-denied headless runs; the MM6 gate
+overlapped other agents' GameTests but ran its own children sequentially.
+
+The integrated monster ability stamp changed two existing MM7 trace outcomes. `Issues.Issue1524` needed
+new RNG states, and `Issues.Issue1972` needed new end HP. The two JSON retraces were stable on repeat.
+The corrected slot-two damage reduced the party's total HP by 689 rather than the old first-slot result
+of 934. The `Issue1972` independent damage floor now requires at least 650 damage; its map and 24-meteor
+checks remain. The parser test checks the token rather than observing an archer fire in live combat.
+No graphical acceptance or installed helper update follows from these tests.
 
 Title checks retain MM6's existing Break Weapon and Divine Intervention behavior. The MM6 direct-use guard blocks the
 Divine Restoration potion before the shared case. If MM6 Break Weapon is admitted for an unarmed target, its old

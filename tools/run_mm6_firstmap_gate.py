@@ -43,6 +43,10 @@ FAULT_CHILDREN = [
     ("MM6V5FirstMapAbandonHeadless.DISABLED_PreEventFaultThenFullReloadAndInput",
      "ENROTH_MM6_V5_ABANDON_ENABLE", "strict-v5-abandon"),
 ]
+PAPERDOLL_CHILDREN = [
+    ("MM6V5PaperdollHeadless.DISABLED_BackpackItemStaysEquippedThroughInventoryCapture",
+     "ENROTH_MM6_V5_FIRST_INPUT_ENABLE", "strict-v5-after-action"),
+]
 MM7_CONTROL = "Prs.Pr2354"
 PASS_LINE = re.compile(r"\[\s*PASSED\s*\]\s+1 test\b")
 
@@ -89,6 +93,8 @@ def main():
             print("seven-child:", name)
         for name, _, _ in FAULT_CHILDREN:
             print("fault-retry:", name)
+        for name, _, _ in PAPERDOLL_CHILDREN:
+            print("paperdoll:", name)
         print("MM7 control:", MM7_CONTROL)
         return 0
 
@@ -127,10 +133,17 @@ def main():
             if not run_child(name, flag, value, profile,
                              paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"]):
                 return 1
+    with tempfile.TemporaryDirectory(prefix="mm6-restart-paperdoll-") as third:
+        profile = Path(third)
+        os.chmod(profile, 0o700)
+        for name, flag, value in [SEED, V4, V5_WRITE, *PAPERDOLL_CHILDREN]:
+            if not run_child(name, flag, value, profile,
+                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"]):
+                return 1
     if not run_child(MM7_CONTROL, None, None, ROOT,
                      paths["MM7_DATA_PATH"]):
         return 1
-    print("PASS: seven-child MM6 chain, both full-retry fault children, and MM7 control")
+    print("PASS: seven-child MM6 chain, both full-retry fault children, the paperdoll child, and MM7 control")
     return 0
 
 

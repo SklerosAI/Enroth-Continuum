@@ -2775,3 +2775,9 @@ Chronological record of wiki activity.
 - Added an MM7-only startup handoff of the resolved native user path to a read-only optional atomic-save context. RAM and other-title starts clear it; relative and direct-symlink roots are refused, while a canonical native directory is rechecked when read.
 - A disposable native writer failed with only the handoff omitted, then the writer and fresh-process reader passed. Ten focused MM7 atomic/root tests and the MM6 startup control passed under network denial.
 - On the combined source, the MM6 first-map gate passed all 25 child checks and the full MM7 headless suite passed 474 tests with 2 skipped out of 476. The context remains a candidate pending integration; production SaveLoad is unwired and no live atomic-write claim follows.
+
+## [2026-11-07] verify | MM7 staged save capture candidate
+- by: T-Burton-ND via codex
+- Moved current-delta visit stamping and sprite filtering into a staged MM7 snapshot, with live visit time, sprite compaction and map-cache publication only after the user-filesystem write returns. Public in-memory `createSaveData` no longer changes those live owners.
+- Synthetic failing-write and standalone-capture tests failed before the change. Afterward, four focused MM7 capture/write-failure tests and two MM6 title controls passed under network denial, including after rebase onto the monster-spell selection fix. The old and new active outdoor delta bytes matched after normalizing only three uninitialized reserved header fields; a live first-sprite pointer stayed stable after success.
+- This candidate does not wire native atomic writes, roll back `saveNewGame` map/Party setup, or prove disk durability. A write that throws after applying bytes remains uncertain. The combined first-map and full MM7 gates await integration.

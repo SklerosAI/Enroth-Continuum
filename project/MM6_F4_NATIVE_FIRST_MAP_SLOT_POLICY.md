@@ -4,6 +4,8 @@ Status, 2026-11-07: detached first-map v5 policy and test-only atomic seam.
 Normal `doSavegame`, menu listing, native startup-root handoff and production
 profile writes remain guarded.
 
+Update, 2026-11-07: normal `doSavegame` and menu listing now use this policy. The MM6 Save menu writes the selected or first free `saveNNN.ec6` through it and the atomic writer, and startup hands over the native profile root through `mm6::setStartupNativeProfileRoot`. Saving is armed only after a load route admits the session, and today only test code arms it.
+
 `MM6V5FirstMapNativeSlotPolicy` accepts a caller-supplied pair: the native MM6
 profile root resolved at startup, including an explicit `--user-path` override,
 and the requested root. It requires exact equality, an absolute normalized

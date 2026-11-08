@@ -2,6 +2,8 @@
 
 Status: F4 pure menu data join, 2026-11-06. MM6 house entry and transport departure remain guarded. No travel was performed.
 
+Update, 2026-11-07: MM6 house entry is open, but the MM6 house screen lists no transport routes and never builds the transport window. `selectTransportMenu` still has no non-test caller and no travel was performed.
+
 The accepted F3 private transport manifest has 21 houses with three slots each. The retained `2devents.txt` has exactly 21 stable/boat service rows, and their IDs match the manifest house set exactly. All 21 have a validated room descriptor with a file-backed MM6 movie name. This join is based on parsed type labels and the owner-only room/transport manifests; the MM7 contiguous stable/boat ID ranges are not used.
 
 `mm6::selectTransportMenu` takes a decoded MM6 house service table, transport rules, a house ID and a weekday index. It requires a transport service family, a usable MM6 room, a matching manifest entry and weekday 0–6. It returns three optional copies of the already checked F3 route descriptors. Blank, special and ambiguous slots, routes absent on that weekday, and unproved quest-bit-gated routes remain empty. The selector has no access to party gold, time, position, SaveLoad, UI windows, media or sound. It does not map the original one-based Games LOD position to a destination until the guarded caller performs that separate check.

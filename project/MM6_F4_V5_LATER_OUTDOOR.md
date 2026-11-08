@@ -5,6 +5,8 @@ shipped outdoor maps. A test-only later-map `.ec6` candidate passed an atomic
 write and a separate fresh-child replay. That reader aborts before input;
 production MM6 SaveLoad and Atlas Play remain closed.
 
+Update, 2026-11-07: **the world-load claim above is narrower than it reads.** All 15 outdoor pairs decode (`MM6V5OutdoorSourceHeadless.AllShippedOutdoorPairsDecode`) and every reachable encounter stem on the 67 maps resolves (`AllReachableMapEncounterStemsResolve`), but only `oute2.odm` had a direct world preparation (`MM6V5LaterOutdoorHeadless.DISABLED_DirectSecondOutdoorLoadProbe`). The other 13 later outdoor maps have not been loaded as worlds. The border confirmation that the paragraphs below call open now exists detached in [`MM6OutdoorBorderConfirmation.h`](../src/Engine/MM6/MM6OutdoorBorderConfirmation.h), still without a live caller.
+
 The v5 outdoor preflight, runtime actor/sprite/decoration replay scopes and
 map identity check now admit the exact 15 shipped outdoor grid names. They
 retain title, slot, source-map and native-anchor checks; v1–v4 rules are not

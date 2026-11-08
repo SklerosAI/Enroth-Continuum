@@ -2,6 +2,8 @@
 
 Status: **bounded original route proof and detached calculator; live adapter remains gated** (2026-11-07). A read-only trace used the staged original executable reconciled to its accepted F3 hash and the retained 67-map manifest. Exact executable addresses, map names and assertions remain in ignored owner-local research. No original installation was opened.
 
+Update, 2026-11-07: a later executable read corrected the zero-food claim below. The trip's time advance always rests and heals, then rests again with food, so a starving party arrives healed but Weak. The confirmation transaction now exists detached in [`MM6OutdoorBorderConfirmation.h`](../src/Engine/MM6/MM6OutdoorBorderConfirmation.h), with `restAndHealDetachedParty` and the four proven border hirelings. `getTravelDestination` still returns no route for MM6.
+
 ## Proved route shape
 
 The original outdoor crossing path checks both party axes against the map edge. Its helper derives a neighboring outdoor filename from a five-column, three-row coordinate encoded in the current filename. It moves the column for an east or west crossing and the row for a north or south crossing, rejects candidates outside the grid, and can change **both** at a corner. All 15 outdoor entries in the accepted retained map manifest occupy this grid. This is a geometric filename route, not the inherited MM7 destination table.

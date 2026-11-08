@@ -2,6 +2,8 @@
 
 Status: F4 offline source/decoder, 2026-11-06. The global MM6 `enterHouse` guard remains closed. No MM6 room, house service, movie or NPC portrait has been observed in play.
 
+Update, 2026-11-07: the MM6 house entry gate is open. Entry and the MM6 house screen read room media through these descriptors ([`MM6RoomDescriptors.cpp`](../src/GUI/UI/MM6RoomDescriptors.cpp)) and refuse before state changes when the manifest or a movie is missing. No room has been visually observed.
+
 The accepted F3 corrected PE v2 report contains 119 MM6 house-movie descriptors. Its source identity is pinned by the F3 gate hash registry. Of the retained `2devents.txt` house rows, 526 have numeric room IDs and 31 have a blank room field. The numeric rows use 116 distinct IDs in 1–118; all 116 have file-backed names that match the accepted MM6 video index. The F3 row zero has no file-backed name. The tracked exporter checks the accepted report hash, the retained house-table hash and the complete room-reference set before writing an owner-only mode-0600 `house-rooms.json` in the local MM6 profile `rules` directory. It never reads the original installation, and no descriptor values are tracked in Git.
 
 `mm6::decodeRoomDescriptors` checks manifest shape, exact 0–118 ID order, bounded scalar fields, case-insensitive unique alphanumeric video names, and a reserved empty name at row zero. It produces a title-specific 119-entry source for later UI work. It is not currently loaded by the game or substituted for the inherited MM7 `pAnimatedRooms`; this keeps the existing house entry gate effective.

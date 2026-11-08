@@ -2,6 +2,8 @@
 
 Status: **six title-specific condition effects implemented behind the closed cast gate** (2026-11-06). The cohort consists of retained MM6 IDs 40, 49, 57, 60, 64 and 67: petrification, curse, fear, paralysis, insanity and weakness. This is a bounded condition-state rule, not live spell casting.
 
+Update, 2026-11-07: ID 67, Cure Weakness, now passes the cast gate from the spellbook and quick cast (`MM6CombatHeadless.DISABLED_CureWeaknessFromSpellbook`). The other five IDs stay behind the gate. See the [spell dispatch packet](MM6_F4_SPELL_EFFECT_DISPATCH.md).
+
 ## Cohort proof
 
 Each ID has a one-character target and the same three mastery-specific, per-skill condition-age window in the F3-matched retained spell table and the visually reviewed private guide matrix. `scripts/mm6_f4_export_timed_cure_rules.py` checks all six identities, target kinds, condition terms, rank windows, guide review flags and the accepted F3 `spells.txt` source hash before writing one mode-0600 private `rules/timed-cures.json` profile manifest. The exact windows, per-ID guide locators and source transcriptions remain in ignored local data. The native loader checks the exact six-ID set, source fingerprints, three bounded ordered windows and atomic replacement on failure.

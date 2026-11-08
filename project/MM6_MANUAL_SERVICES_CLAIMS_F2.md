@@ -2,6 +2,8 @@
 
 Status: **source audit and acceptance specification, not an MM6 runtime result** (2026-11-05). The owned PDFs and detailed claim ledger remain ignored under `local-game-data/mm6/research-2026-11-05/`. This packet records only small, nonredistributable behavioral summaries. It did not reopen original game archives, launch partial MM6, or change the engine. It complements [party creation](MM6_CREATION_F2.md), [transport](MM6_TRANSPORT_FIELDS_F2.md), and [campaign guide claims](MM6_CAMPAIGN_GUIDE_CLAIMS_F2.md).
 
+Update, 2026-11-07: three current-source observations in the table below no longer hold. The MM6 Load menu does not deserialize `SaveGameLite_MM7`. `loadMenuSlots` returns `mm6LoadMenuSlots()`, which lists only loadable numbered `.ec6` slots of the native MM6 profile and is empty without a profile root ([`MM6SaveLoadMenu.h`](../src/GUI/UI/MM6SaveLoadMenu.h)). The MM6 New Game branch of `saveNewGame` throws unless a test override is set, so no initial autosave is written. MM6 houses no longer reach `Temple.cpp` or the `Training.cpp` cap table: the temple heal follows [`MM6Temple.h`](../src/GUI/UI/Houses/MM6Temple.h) and training refuses. The documented rules and acceptance checks are unchanged.
+
 ## Review denominator and limits
 
 | Source | Checked scope | Direct visual check | Limit |

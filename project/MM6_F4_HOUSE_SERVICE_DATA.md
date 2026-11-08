@@ -2,6 +2,8 @@
 
 Status: F4 read-only table decoder, 2026-11-06. The MM6 `enterHouse` guard remains closed. No shop, guild, transport, NPC, movie or sound service has been enabled.
 
+Update, 2026-11-07: the MM6 `enterHouse` guard is open. The house screen lists services from this table through `houseServiceOptions`, and the temple heal is the only working service. See the [house service gate](MM6_F4_HOUSE_SERVICE_GATE.md).
+
 The retained F3-matched `2devents.txt` has 557 numbered house rows. MM6 columns `Val`, `A`, `C`, `Open` and `Closed` do not form the same service schema as MM7. `Val` is a numeric value in 153 rows, including fractional values. `A` contains descriptive stock/skill text in 123 rows; it is not a numeric MM7 skill-price multiplier. `C` is populated in 89 rows, of which 20 contain nonnumeric notes (including route/arena forms). Hours occur as a pair in 153 rows. The existing MM6 `initializeHouses` deliberately zeroes the MM7 `flt_24` field and cannot retain the text in `A` or the nonnumeric part of `C`.
 
 `mm6::decodeHouseServiceData` now parses the retained table into a separate, read-only 557-row collection. It preserves the raw `A` and `C` text, bounded `Val` and hours, title-specific parsed house type and service family, and a copy of the matched 119-room descriptor or an explicit blank-room disposition. It rejects missing or reordered IDs, unknown type labels, out-of-range room/value/hour fields, incomplete hour pairs and malformed table size before returning a candidate. It uses the previously validated `selectHouseRoom` join; it never invokes MM7 numeric shop/guild ID ranges, stock generation, pricing, dialogue, media or SaveLoad.

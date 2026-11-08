@@ -3,6 +3,8 @@
 Status, 2026-11-07: detached native listing seam only. The visible MM6 load
 menu remains empty; normal MM6 `loadGame()` and Atlas Play remain guarded.
 
+Update, 2026-11-07: the visible MM6 Load menu now lists numbered first-map `.ec6` slots through `mm6LoadMenuSlots()` and `listFirstMapManualSlots()` ([`MM6FirstMapManualSave.h`](../src/Engine/MM6/MM6FirstMapManualSave.h)), hiding malformed, backup-only, other-map and foreign files. In-game load is refused, and production `loadGame()` still throws for MM6 without a test override.
+
 `listRawSaveSlots()` proves only the EC6 v2 container and field syntax. It can
 show a slot whose inventory, map or runtime owners fail later staging. The new
 `listRawSaveSlotsWithPreflight(profile, validate)` enumerates only those

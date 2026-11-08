@@ -2,6 +2,8 @@
 
 Status: F4 display-only MM6 house route, 2026-11-06. The path is compiled and offline-tested; no MM6 process or house screen has been visually observed.
 
+Update, 2026-11-07: **superseded.** The display-only window was replaced by the MM6 house screen in [`MM6House.cpp`](../src/GUI/UI/Houses/MM6House.cpp), which lists services and resident NPC topics. See the [house service gate](MM6_F4_HOUSE_SERVICE_GATE.md). The icon and movie checks below still run before entry. The screen has not been visually observed.
+
 The accepted MM6 room descriptor includes an `npc_picture` field. Referenced descriptors with a nonzero picture ID resolve to an `npc` icon name in the retained MM6 icons directory using the engine's existing minimum-three-digit name convention. An unreferenced descriptor has a candidate icon name absent from the retained index; it is not on a table-backed entry route. The active `SpeakInHouse` ledger includes rooms both with and without proprietor pictures; exact joins remain in ignored private evidence.
 
 `planHouseEntry` carries an optional title-specific proprietor icon name from the MM6 room descriptor. It never substitutes an MM7 room or NPC ID. The MM6 `enterHouse` branch checks icon metadata and movie payload availability before any inherited house state. A missing icon or movie rejects; a zero picture ID has no proprietor icon request. The display-only window now loads and draws the proprietor icon when one exists.

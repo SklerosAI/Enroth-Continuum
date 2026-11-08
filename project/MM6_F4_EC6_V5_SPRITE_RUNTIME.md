@@ -255,6 +255,20 @@ ARTR, DECR and SPRT replay still depend on test-only hooks; the attempt does
 not yet own post-world commit/release or a production profile/slot decision.
 Normal MM6 SaveLoad/UI remains closed.
 
+Update, 2026-11-07: the attempt now owns every replay phase. Its phases are
+`Detached`, `Published`, `EventRestored`, `WorldPublished`, `ChestApplied`,
+`GeneratedNpcsKept`, `RngRestored` and `PostWorldAgreed`. ARTR, GNPC, DECR and
+SPRT lists are staged against rebuilt native anchors and swapped in as one
+once-only phase, and `mm6::releaseV5FirstMapLoadAttempt()` runs the post-world
+check from `Game::gameLoop` and abandons to the main menu on refusal
+([`MM6V5FirstMapLoadAttempt.h`](../src/Engine/MM6/MM6V5FirstMapLoadAttempt.h)).
+The gate's fault child
+`MM6V5FirstMapAbandonHeadless.DISABLED_PostWorldMismatchThenFullReloadAndInput`
+covers the refusal. Only the test child constructs the attempt, and it admits
+only the disposable candidate slot. The normal Save menu now writes numbered
+slots and the Load menu lists them, but production load from a numbered slot,
+owner publication and arming save after release are still open.
+
 See [v4 event runtime boundary](MM6_F4_EC6_V4_EVENT_RUNTIME.md),
 [active actor capture](MM6_F4_V3_POST_ENTRY_MAP_AND_PRE_EVENT.md) and
 [save specification](MM6_SAVE_SPEC.md).

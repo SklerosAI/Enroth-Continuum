@@ -155,7 +155,7 @@ Defects, inherited unless noted:
     before the outcome (`Character.cpp:4654`), wand recovery uses the novice
     row for the cast but the expert row for display (`Character.cpp:1849`),
     the Meteor Shower damage formula changed in `a304b867b`.
-    **Verified correction pending integration:** the MM7 event Master and
+    **Fixed in the integration tree at `fe8d5d50f`:** the MM7 event Master and
     Grandmaster Day of the Gods powers now match ordinary casts (`4 * level +
     10` and `5 * level + 10`); their 4-hour and 5-hour per-level durations
     remain. The level-10 test failed on both power values before repair and
@@ -193,15 +193,15 @@ paperdoll, normal Save/Load, production load/resave and MM7 controls. The
 full MM7 headless suite passed 467 tests with 2 skipped out of 469 under
 network denial. Graphical acceptance and installed helper update remain open.
 
-The later combined Energy and Day of the Gods candidate passed the full MM6
+The later combined Energy and Day of the Gods source passed the full MM6
 first-map gate and a network-denied MM7 headless suite with 469 passing and 2
 skipped out of 471. The Energy correction caused `Issues.Issue403_970` to
 diverge at a public trace RNG checkpoint. An energy-only build reproduced the
 failure; temporarily restoring the old Earth mapping passed the focused test.
 The corrected-source retrace changed only RNG checkpoints and was byte-stable
 on repeat. The Shoals-to-Lincoln map transition and four Armor Class checks
-remain in the test. The candidate's Day of the Gods fix and trace update
-await integration; no graphical or installed-app claim follows.
+remain in the test. The Day of the Gods fix and trace update are integrated;
+no graphical or installed-app claim follows.
 
 The branch GameTests cover the first five test targets above. Remaining tests
 that would close open defects: rows 24 and 35 slot-2 spells, a golem death

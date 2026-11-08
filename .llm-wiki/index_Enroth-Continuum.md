@@ -37,7 +37,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Atomic Save File](MM7-Atomic-Save-File.md) — Native-slot helper, detached item and actor preflight, guarded chest reconstruction; production SaveLoad wiring remains open
 - [MM6 Transition and Death Candidates](MM6-Transition-And-Death-Candidates.md) — Cancel-only MM6 indoor dialog and detached death model with explicit live integration gates
 - [MM7 Level-Seven Artifacts](MM7-Level-Seven-Artifacts.md) — MM7 artifact flags, cap and indoor pickup payload fixed with focused GameTests; graphical pickup remains open
-- [MM7 Combat Audit Fixes](MM7-Combat-Audit-Fixes.md) — Integrated combat, monster spell and Energy parser fixes; verified event Day of the Gods candidate. Combined MM6 first-map and 469/471 MM7 headless gates passed
+- [MM7 Combat Audit Fixes](MM7-Combat-Audit-Fixes.md) — Integrated combat, monster spell, Energy parser and event Day of the Gods fixes. Combined MM6 first-map and 469/471 MM7 headless gates passed
 - [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md) — Hidden OpenGL first-map world and HUD frame with no visible window or focus change; visible save/reload remains open
 - [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md) — Private MM7 paths, save migration and installed Release helper with system OpenGL linkage
 

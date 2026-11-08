@@ -7,7 +7,7 @@ tags: [mm7, combat, spells, items, audit]
 
 # MM7 Combat Audit Fixes
 
-Five ranked MM7 gameplay defects have focused headless regressions and fixes integrated on `mm6-mac-implementation` at `f77d8de31`. The monster second-spell ability and Energy parser fixes are also integrated. The event Day of the Gods correction is verified on `codex/mm7-combat-fixes` and awaits integration.
+Five ranked MM7 gameplay defects have focused headless regressions and fixes integrated on `mm6-mac-implementation` at `f77d8de31`. The monster second-spell ability, Energy parser and event Day of the Gods fixes are also integrated; the latter landed at `fe8d5d50f`.
 
 | Defect | Verified change |
 | --- | --- |
@@ -29,7 +29,7 @@ paperdoll, normal Save/Load and production load/resave, plus MM7 controls. The f
 passed **467 tests with 2 skipped** out of 469. These were network-denied headless runs; the MM6 gate
 overlapped other agents' GameTests but ran its own children sequentially.
 
-The Energy parser's synthetic MM7 primary and secondary `Ener` assertions failed before repair and passed with Earth and MM6 controls afterward. The Day of the Gods event test failed at level 10 on the two swapped power values, then passed with both duration assertions. On the combined Energy and Day of the Gods source, the full MM6 first-map gate passed its seven-child chain, retry faults, paperdoll, normal Save/Load, production load/resave, and MM7 controls. The full network-denied MM7 headless suite passed **469 tests with 2 skipped** out of 471. The Day of the Gods branch and this audit update still await integration.
+The Energy parser's synthetic MM7 primary and secondary `Ener` assertions failed before repair and passed with Earth and MM6 controls afterward. The Day of the Gods event test failed at level 10 on the two swapped power values, then passed with both duration assertions. On the combined Energy and Day of the Gods source, the full MM6 first-map gate passed its seven-child chain, retry faults, paperdoll, normal Save/Load, production load/resave, and MM7 controls. The full network-denied MM7 headless suite passed **469 tests with 2 skipped** out of 471. Both fixes and this audit update are integrated.
 
 The Energy correction intentionally changed `Issues.Issue403_970`: the energy-only integration head failed its old RNG checkpoints at 4100 ms, while a controlled one-line reversal to the old Earth mapping passed. A retrace of the public fixture changed only 108 RNG checkpoints and was byte-stable on repeat. The test still asserts Shoals-to-Lincoln transition and all four Armor Class values. This is a source-caused trace update, not a workaround for a private-data mismatch.
 

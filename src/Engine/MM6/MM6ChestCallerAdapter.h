@@ -2,12 +2,11 @@
 
 #include <array>
 #include <cstdint>
-#include <limits>
 #include <optional>
-#include <type_traits>
 #include <utility>
 
 #include "Engine/MM6/MM6ChestItemFinalizer.h"
+#include "Engine/MM6/MM6ItemGenerator.h"
 #include "Engine/Tables/ItemTable.h"
 
 namespace mm6 {
@@ -75,69 +74,7 @@ inline std::optional<ChestFinalizedItem> stageChestAnyFromItemTable(
     GameTitle title, ItemTreasureLevel tier, const ItemTable &table,
     const std::array<std::uint8_t, 30> &generatedArtifactFlags,
     std::uint32_t rngState) {
-    if (title != GameTitle::MM6)
-        return std::nullopt;
-    const int level = std::to_underlying(tier);
-    if (level < 1 || level > 6)
-        return std::nullopt;
-
-    std::array<int, 399> weights{};
-    for (int id = 1; id <= 399; ++id)
-        weights[id - 1] = table.items[static_cast<ItemId>(id)].uChanceByTreasureLvl[tier];
-    const auto base = pickChestBaseItemId(title, tier, weights, generatedArtifactFlags, rngState);
-    if (!base)
-        return std::nullopt;
-    if (base->itemId >= 400)
-        return finalizeChestAnyItem(title, tier, *base, {}, {});
-
-    const auto mappedId = mm6ChestItemId(title, base->itemId);
-    if (!mappedId)
-        return std::nullopt;
-    const ItemData &data = table.items[*mappedId];
-    const int type = std::to_underlying(data.type);
-    if (type < 0 || type > std::to_underlying(ITEM_TYPE_MISC) ||
-        data.identifyAndRepairDifficulty < 0 || data.damageMod < 0 ||
-        data.damageMod > std::numeric_limits<std::uint8_t>::max())
-        return std::nullopt;
-    ChestItemTemplateFields itemTemplate{
-        base->itemId, data.type, data.identifyAndRepairDifficulty != 0,
-        static_cast<std::uint8_t>(data.damageMod)};
-
-    ChestItemFinalizationRules rules{};
-    for (int i = 0; i < 6; ++i) {
-        const auto rowTier = static_cast<ItemTreasureLevel>(i + 1);
-        if (table.specialEnchantmentChanceForWeapons[rowTier] > 100 ||
-            table.standardEnchantmentChanceForEquipment[rowTier] > 100 ||
-            table.specialEnchantmentChanceForEquipment[rowTier] > 100)
-            return std::nullopt;
-        rules.weaponSpecialChance[i] = table.specialEnchantmentChanceForWeapons[rowTier];
-        rules.equipmentStandardChance[i] = table.standardEnchantmentChanceForEquipment[rowTier];
-        // MM6's retained second equipment row is a separate chance, not the
-        // cumulative MM7 field described by the shared ItemTable comment.
-        rules.equipmentSpecialChance[i] = table.specialEnchantmentChanceForEquipment[rowTier];
-        const auto range = table.standardEnchantmentRangeByTreasureLevel[rowTier];
-        rules.standardStrengthRange[i] = {range.front(), range.back()};
-    }
-    static constexpr std::array<Attribute, 14> attributes = {
-        ATTRIBUTE_MIGHT, ATTRIBUTE_INTELLIGENCE, ATTRIBUTE_PERSONALITY, ATTRIBUTE_ENDURANCE,
-        ATTRIBUTE_ACCURACY, ATTRIBUTE_SPEED, ATTRIBUTE_LUCK, ATTRIBUTE_HEALTH, ATTRIBUTE_MANA,
-        ATTRIBUTE_AC_BONUS, ATTRIBUTE_RESIST_FIRE, ATTRIBUTE_RESIST_AIR, ATTRIBUTE_RESIST_WATER,
-        ATTRIBUTE_RESIST_BODY};
-    if (type >= std::to_underlying(ITEM_TYPE_ARMOUR) &&
-        type <= std::to_underlying(ITEM_TYPE_AMULET)) {
-        for (int i = 0; i < 14; ++i)
-            rules.standardAttributeWeightsForType[i] =
-                table.standardEnchantments[attributes[i]].chanceByItemType[data.type];
-    }
-    if (type <= std::to_underlying(ITEM_TYPE_AMULET)) {
-        for (int i = 0; i < 59; ++i) {
-            const auto &row = table.specialEnchantments[static_cast<ItemEnchantment>(i + 1)];
-            rules.specialChancesForType[i] = {
-                row.enchantmentLevel,
-                static_cast<int>(row.chanceByItemType[data.type])};
-        }
-    }
-    return finalizeChestAnyItem(title, tier, *base, itemTemplate, rules);
+    return generateItem(title, table, tier, RANDOM_ITEM_ANY, generatedArtifactFlags, rngState);
 }
 
 }  // namespace mm6

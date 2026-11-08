@@ -24,7 +24,7 @@ struct ChestItemFinalizationRules {
     std::array<int, 6> equipmentSpecialChance = {};
     std::array<std::pair<int, int>, 6> standardStrengthRange = {};
     std::array<int, 14> standardAttributeWeightsForType = {};
-    std::array<ChestSpecialChance, 59> specialChancesForType = {};
+    std::array<ChestSpecialChance, 58> specialChancesForType = {}; // The original loads 59 special rows but scans only 58.
 };
 
 struct ChestItemTemplateFields {
@@ -49,37 +49,21 @@ struct ChestFinalizedItem {
     std::array<std::uint8_t, 30> generatedArtifactFlags = {};
 };
 
-inline std::optional<ChestFinalizedItem> finalizeChestAnyItem(
-    GameTitle title, ItemTreasureLevel treasureLevel,
-    const ChestBaseItemPick &base, const ChestItemTemplateFields &itemTemplate,
-    const ChestItemFinalizationRules &rules) {
-    if (title != GameTitle::MM6)
-        return std::nullopt;
+/**
+ * Post-ID stage of the original MM6 random item generator, shared by every requested item kind. Writes the identified
+ * flag, then draws a weapon special bonus, an equipment standard or special bonus, or wand charges.
+ *
+ * @param treasureLevel                 Treasure level 1..6.
+ * @param picked                        Item ID, RNG state, draw count and artifact flags after the base-ID stage.
+ * @param itemTemplate                  Template fields of the picked regular item.
+ * @param rules                         Treasure and bonus tables for the picked item's type.
+ * @return                              Finalized item, or `std::nullopt` for malformed rows or a zero-weight draw.
+ */
+inline std::optional<ChestFinalizedItem> finalizeRegularItem(
+    ItemTreasureLevel treasureLevel, const ChestFinalizedItem &picked,
+    const ChestItemTemplateFields &itemTemplate, const ChestItemFinalizationRules &rules) {
     const int tier = std::to_underlying(treasureLevel);
-    if (tier < 1 || tier > 6 || base.drawsConsumed < 2)
-        return std::nullopt;
-
-    int generatedCount = 0;
-    for (std::uint8_t flag : base.generatedArtifactFlags) {
-        if (flag > 1)
-            return std::nullopt;
-        generatedCount += flag;
-    }
-
-    ChestFinalizedItem result;
-    result.itemId = base.itemId;
-    result.nextRngState = base.nextRngState;
-    result.drawsConsumed = base.drawsConsumed;
-    result.generatedArtifactFlags = base.generatedArtifactFlags;
-
-    if (base.itemId >= 400 && base.itemId <= 429) {
-        if (tier != 6 || base.drawsConsumed != 2 || generatedCount > 13 ||
-            !base.generatedArtifactFlags[base.itemId - 400])
-            return std::nullopt;
-        return result;  // The original artifact success exits before regular field writes.
-    }
-    if (base.itemId < 1 || base.itemId > 399 || itemTemplate.itemId != base.itemId ||
-        base.drawsConsumed != (tier == 6 ? 3 : 2))
+    if (tier < 1 || tier > 6 || picked.itemId < 1 || picked.itemId > 399 || itemTemplate.itemId != picked.itemId)
         return std::nullopt;
 
     const int type = std::to_underlying(itemTemplate.type);
@@ -107,6 +91,7 @@ inline std::optional<ChestFinalizedItem> finalizeChestAnyItem(
             return std::nullopt;
     }
 
+    ChestFinalizedItem result = picked;
     // The original item table checks a nonzero identification difficulty.
     result.flags = itemTemplate.requiresIdentification ? 0u : 1u;
     auto draw = [&result]() {
@@ -128,7 +113,7 @@ inline std::optional<ChestFinalizedItem> finalizeChestAnyItem(
             return false;
         const int roll = draw() % static_cast<int>(total);
         int cumulative = 0;
-        for (int i = 0; i < 59; ++i) {
+        for (int i = 0; i < static_cast<int>(rules.specialChancesForType.size()); ++i) {
             const ChestSpecialChance &chance = rules.specialChancesForType[i];
             const int code = chance.levelCode;
             const bool eligible = (tier == 3 && (code == 0 || code == 1)) ||
@@ -178,6 +163,40 @@ inline std::optional<ChestFinalizedItem> finalizeChestAnyItem(
         result.numCharges = itemTemplate.wandChargeBase + draw() % 6;
     }
     return result;
+}
+
+inline std::optional<ChestFinalizedItem> finalizeChestAnyItem(
+    GameTitle title, ItemTreasureLevel treasureLevel,
+    const ChestBaseItemPick &base, const ChestItemTemplateFields &itemTemplate,
+    const ChestItemFinalizationRules &rules) {
+    if (title != GameTitle::MM6)
+        return std::nullopt;
+    const int tier = std::to_underlying(treasureLevel);
+    if (tier < 1 || tier > 6 || base.drawsConsumed < 2)
+        return std::nullopt;
+
+    int generatedCount = 0;
+    for (std::uint8_t flag : base.generatedArtifactFlags) {
+        if (flag > 1)
+            return std::nullopt;
+        generatedCount += flag;
+    }
+
+    ChestFinalizedItem result;
+    result.itemId = base.itemId;
+    result.nextRngState = base.nextRngState;
+    result.drawsConsumed = base.drawsConsumed;
+    result.generatedArtifactFlags = base.generatedArtifactFlags;
+
+    if (base.itemId >= 400 && base.itemId <= 429) {
+        if (tier != 6 || base.drawsConsumed != 2 || generatedCount > 13 ||
+            !base.generatedArtifactFlags[base.itemId - 400])
+            return std::nullopt;
+        return result;  // The original artifact success exits before regular field writes.
+    }
+    if (base.drawsConsumed != (tier == 6 ? 3 : 2))
+        return std::nullopt;
+    return finalizeRegularItem(treasureLevel, result, itemTemplate, rules);
 }
 
 }  // namespace mm6

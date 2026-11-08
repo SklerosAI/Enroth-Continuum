@@ -909,6 +909,11 @@ std::pair<int, int> MonsterPopup_Draw(unsigned int uActorID, Recti* pWindow) {
     std::string spell1Str, spell2Str, spell3Str; // 1 is in-line with spellTitleStr (only non-extended), 2 and 3 own lines
     int spellX = extended ? X_RIGHT_INDENTED : X_RIGHT_DEFAULT_SPELLS;
     if (master_level) {
+        auto popupSpellName = [](SpellId id) -> const std::string & {
+            if (id < SPELL_FIRST_REGULAR || id > SPELL_LAST_REGULAR)
+                return localization->str(LSTR_UNKNOWN_VALUE);
+            return pSpellStats->pInfos[id].pShortName;
+        };
         if (monsterInfo.spell1Id == SPELL_NONE && monsterInfo.spell2Id == SPELL_NONE) {
             spell1Str = localization->str(LSTR_NONE);
             spellX = X_RIGHT_DATA;
@@ -918,15 +923,15 @@ std::pair<int, int> MonsterPopup_Draw(unsigned int uActorID, Recti* pWindow) {
         }
         if (monsterInfo.spell1Id != SPELL_NONE) {
             if (extended)
-                spell2Str = fmt::format("{} {}", pSpellStats->pInfos[monsterInfo.spell1Id].pShortName, localization->skillValueShortString(monsterInfo.spell1SkillMastery));
+                spell2Str = fmt::format("{} {}", popupSpellName(monsterInfo.spell1Id), localization->skillValueShortString(monsterInfo.spell1SkillMastery));
             else
-                spell1Str = pSpellStats->pInfos[monsterInfo.spell1Id].pShortName;
+                spell1Str = popupSpellName(monsterInfo.spell1Id);
         }
         if (monsterInfo.spell2Id != SPELL_NONE) {
             if (extended)
-                spell3Str = fmt::format("{} {}", pSpellStats->pInfos[monsterInfo.spell2Id].pShortName, localization->skillValueShortString(monsterInfo.spell2SkillMastery));
+                spell3Str = fmt::format("{} {}", popupSpellName(monsterInfo.spell2Id), localization->skillValueShortString(monsterInfo.spell2SkillMastery));
             else
-                spell2Str = pSpellStats->pInfos[monsterInfo.spell2Id].pShortName;
+                spell2Str = popupSpellName(monsterInfo.spell2Id);
         }
     } else {
         spell1Str = localization->str(LSTR_UNKNOWN_VALUE);

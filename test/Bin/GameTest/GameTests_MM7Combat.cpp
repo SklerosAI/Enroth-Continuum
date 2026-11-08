@@ -1,15 +1,69 @@
 #include <string_view>
+#include <utility>
 
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
 #include "Engine/Party.h"
+#include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Character.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Objects/MonsterEnums.h"
 #include "Engine/Objects/Monsters.h"
+#include "Engine/Spells/Spells.h"
+#include "Library/Geometry/Rect.h"
 
 MonsterProjectile ParseMissleAttackType(std::string_view missle_attack_str);
+std::pair<int, int> MonsterPopup_Draw(unsigned int uActorID, Recti* pWindow);
+
+GAME_TEST(MM7Combat, MonsterPopupBoundsInactiveSpellIds) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_FALSE(pActors.empty());
+
+    Actor &actor = pActors[0];
+    actor.aiState = AIState::Standing;
+    actor.monsterInfo.spell1Id = static_cast<SpellId>(255);
+    actor.monsterInfo.spell1UseChance = 0;
+    actor.monsterInfo.spell2Id = static_cast<SpellId>(254);
+    actor.monsterInfo.spell2UseChance = 0;
+    engine->config->debug.FullMonsterID.setValue(true);
+
+    auto [width, height] = MonsterPopup_Draw(0, nullptr);
+    EXPECT_GT(width, 0);
+    EXPECT_GT(height, 0);
+}
+
+GAME_TEST(MM7Combat, MonsterPopupKeepsRegularSpellNames) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_FALSE(pActors.empty());
+
+    Actor &actor = pActors[0];
+    actor.monsterInfo.spell1Id = SPELL_FIRE_FIRE_BOLT;
+    actor.monsterInfo.spell2Id = SPELL_AIR_SPARKS;
+    engine->config->debug.FullMonsterID.setValue(true);
+
+    EXPECT_FALSE(pSpellStats->pInfos[SPELL_FIRE_FIRE_BOLT].pShortName.empty());
+    EXPECT_FALSE(pSpellStats->pInfos[SPELL_AIR_SPARKS].pShortName.empty());
+    auto [width, height] = MonsterPopup_Draw(0, nullptr);
+    EXPECT_GT(width, 0);
+    EXPECT_GT(height, 0);
+}
+
+GAME_TEST(MM6Popup, RegularMonsterSpellRenders) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    pActors.emplace_back();
+    const unsigned int actorId = pActors.size() - 1;
+
+    pActors[actorId].monsterInfo.spell1Id = SPELL_FIRE_FIRE_BOLT;
+    pActors[actorId].monsterInfo.spell2Id = SPELL_NONE;
+    engine->config->debug.FullMonsterID.setValue(true);
+
+    auto [width, height] = MonsterPopup_Draw(actorId, nullptr);
+    EXPECT_GT(width, 0);
+    EXPECT_GT(height, 0);
+}
 
 GAME_TEST(MM7Combat, BreakWeaponAffectsEquippedSword) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);

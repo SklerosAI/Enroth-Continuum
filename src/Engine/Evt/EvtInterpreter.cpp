@@ -28,6 +28,7 @@
 #include "Engine/Evt/MM6SpriteEvent.h"
 #include "Engine/Evt/MM6ItemEventCompare.h"
 #include "Engine/Evt/MM6ItemEventWrite.h"
+#include "Engine/Evt/MM6GiveItemEvent.h"
 #include "Engine/Evt/MM6EventVariableDispatch.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
@@ -922,6 +923,11 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         case EVENT_GiveItem:
         {
+            if (engine->gameTitle() == GameTitle::MM6) {
+                mm6::giveEventItem(ir.data.give_item_descr.treasure_level, ir.data.give_item_descr.treasure_type,
+                                   ir.data.give_item_descr.item_id);
+                break;
+            }
             Item item;
             item.Reset();
             pItemTable->generateItem(ir.data.give_item_descr.treasure_level, ir.data.give_item_descr.treasure_type, &item);

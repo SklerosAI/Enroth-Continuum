@@ -23,6 +23,7 @@ set(ENGINE_EVENTS_SOURCES
         MM6DayCounterEvent.cpp
         MM6CircusPrizeEvent.cpp
         MM6EventVariableDispatch.cpp
+        MM6GiveItemEvent.cpp
         EvtInterpreter.cpp
         Processor.cpp)
 
@@ -54,11 +55,12 @@ set(ENGINE_EVENTS_HEADERS
         MM6DayCounterEvent.h
         MM6CircusPrizeEvent.h
         MM6EventVariableDispatch.h
+        MM6GiveItemEvent.h
         Processor.h
         EvtEnumFunctions.h)
 
 add_library(engine_events STATIC ${ENGINE_EVENTS_SOURCES} ${ENGINE_EVENTS_HEADERS})
-target_link_libraries(engine_events PUBLIC engine tl::generator)
+target_link_libraries(engine_events PUBLIC engine engine_mm6_item_generator tl::generator)
 target_check_style(engine_events)
 
 if(OE_BUILD_TESTS)

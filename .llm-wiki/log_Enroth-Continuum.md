@@ -2713,3 +2713,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Fixed MM7-only artifact flag and cap handling, and retained the item payload of an indoor spawned artifact. Two focused GameTests, seven atomic-save tests and three MM7 controls passed 12/12; an MM6 startup/chest guard passed 1/1.
 - Hidden title captures remained in the ignored local progress folder. Real pickup and staged graphical app checks remain open; the installed app and frozen MM7 baseline were not changed.
+
+## [2026-11-07] verify | MM6 C1 C2 and MM7 preflight candidates
+- by: T-Burton-ND via codex
+- Added a Cancel-only MM6 indoor transition dialog candidate and detached party-death model; two dialog units, four death units and the isolated first-map dialog GameTest passed. Claude retained the live MM6 transition preflight and death-dispatch gates.
+- Hardened PCX decoding and added a detached MM7 native-save structural preflight. Four PCX units, eight preflight synthetic tests, a fresh disposable writer/reader and a 25-test MM7 GameTest batch passed. Chest reconstruction and remaining semantic references block production validator wiring.
+- The seven-child MM6 first-map chain, both full-retry fault children and MM7 control passed. The branch handoff records exact commits and unproved graphical and input paths; installed Atlas and protected title baselines were untouched.

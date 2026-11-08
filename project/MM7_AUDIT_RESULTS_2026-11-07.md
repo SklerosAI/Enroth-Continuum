@@ -101,25 +101,25 @@ Defects, inherited unless noted:
    Weapons never break, and an unarmed target reaches `randomSample` on an
    empty list, which asserts. Monsters 57, 80, 112, 207, 212. Upstream
    regression from `3d3802a8f`.
-   **Fixed on `codex/mm7-combat-fixes`, pending integration:** MM7 now selects
+   **Fixed in the integration tree at `f77d8de31`:** MM7 now selects
    eligible weapons and returns safely for an unarmed target. The old MM6 path
    remains with Claude's MM6 rule lane.
 2. Divine Intervention recovery (`CastSpellInfo.cpp:2679`) sets
    `5_ticks * spell_level` instead of subtracting it from the base, so higher
    skill lengthens recovery. Changed in `fdce3b207`.
-   **Fixed on `codex/mm7-combat-fixes`, pending integration:** MM7 subtracts
+   **Fixed in the integration tree at `f77d8de31`:** MM7 subtracts
    the skill reduction from its base recovery. The MM6 branch is unchanged.
 3. Lich immunity to Mind and Body never fires (`Character.cpp:1258-1264`
    compares a `DamageType` cast to `Attribute`). The UI still shows immunity.
-   **Fixed on `codex/mm7-combat-fixes`, pending integration:** MM7 liches take
+   **Fixed in the integration tree at `f77d8de31`:** MM7 liches take
    zero Mind and Body damage. Spirit immunity remains unverified.
 4. Divine Restoration resets conditions on the drinker instead of the target
    (`Character.cpp:3561`).
-   **Fixed on `codex/mm7-combat-fixes`, pending integration:** The potion clears
+   **Fixed in the integration tree at `f77d8de31`:** The potion clears
    the chosen target's removable conditions while preserving the drinker's.
 5. Archer monsters never fire fire arrows: the parser has no case for that
    projectile token (`Monsters.cpp:151`). Upstream #2144.
-   **Fixed on `codex/mm7-combat-fixes`, pending integration:** `FireAr` now
+   **Fixed in the integration tree at `f77d8de31`:** `FireAr` now
    decodes as a flaming arrow. A live archer firing check remains open.
 
 6. Monster spell and projectile damage use the wrong ability slot
@@ -182,8 +182,7 @@ it, with three MM6 combat children passing. On the combined branch, the full
 MM6 first-map gate passed its seven-child chain, retry fault children,
 paperdoll, normal Save/Load, production load/resave and MM7 controls. The
 full MM7 headless suite passed 467 tests with 2 skipped out of 469 under
-network denial. Branch integration, graphical acceptance and installed
-helper update remain open.
+network denial. Graphical acceptance and installed helper update remain open.
 
 The branch GameTests cover the first five test targets above. Remaining tests
 that would close open defects: rows 24 and 35 slot-2 spells, a golem death

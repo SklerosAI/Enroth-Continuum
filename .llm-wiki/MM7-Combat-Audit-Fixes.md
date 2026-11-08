@@ -7,7 +7,7 @@ tags: [mm7, combat, spells, items, audit]
 
 # MM7 Combat Audit Fixes
 
-Five ranked MM7 gameplay defects have focused headless regressions and fixes on `codex/mm7-combat-fixes`, pending integration. The monster second-spell ability fix is already integrated on `mm6-mac-implementation`.
+Five ranked MM7 gameplay defects have focused headless regressions and fixes integrated on `mm6-mac-implementation` at `f77d8de31`. The monster second-spell ability fix is also integrated.
 
 | Defect | Verified change |
 | --- | --- |

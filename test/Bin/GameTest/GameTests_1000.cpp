@@ -1595,6 +1595,45 @@ GAME_TEST(MM6MonsterSpell, NumericFireBoltRemainsSelectable) {
     EXPECT_EQ(actor.special_ability_use_check(0), ABILITY_SPELL1);
 }
 
+GAME_TEST(MM7MonsterSpellDamage, SavedFirstSpell100HasNoDamage) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+
+    Actor actor;
+    actor.monsterInfo.spell1Id = static_cast<SpellId>(100);
+    actor.monsterInfo.spell1UseChance = 0;
+    actor.monsterInfo.spell1SkillMastery = CombinedSkillValue(10, MASTERY_EXPERT);
+    EXPECT_EQ(actor._43B3E0_CalcDamage(ABILITY_SPELL1), 0);
+    EXPECT_EQ(actor.abilityDamageType(ABILITY_SPELL1), DAMAGE_PHYSICAL);
+}
+
+GAME_TEST(MM7MonsterSpellDamage, SavedSecondSpell255HasPhysicalFallback) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+
+    Actor actor;
+    actor.monsterInfo.spell2Id = static_cast<SpellId>(255);
+    actor.monsterInfo.spell2UseChance = 0;
+    actor.monsterInfo.spell2SkillMastery = CombinedSkillValue(10, MASTERY_EXPERT);
+    EXPECT_EQ(actor.abilityDamageType(ABILITY_SPELL2), DAMAGE_PHYSICAL);
+    EXPECT_EQ(actor._43B3E0_CalcDamage(ABILITY_SPELL2), 0);
+}
+
+GAME_TEST(MM7MonsterSpellDamage, ValidFireBoltKeepsDamageAndType) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+
+    Actor actor;
+    actor.monsterInfo.spell1Id = SPELL_FIRE_FIRE_BOLT;
+    actor.monsterInfo.spell2Id = SPELL_FIRE_FIRE_BOLT;
+    actor.monsterInfo.spell1SkillMastery = CombinedSkillValue(10, MASTERY_EXPERT);
+    actor.monsterInfo.spell2SkillMastery = CombinedSkillValue(10, MASTERY_EXPERT);
+    EXPECT_GT(actor._43B3E0_CalcDamage(ABILITY_SPELL1), 0);
+    EXPECT_GT(actor._43B3E0_CalcDamage(ABILITY_SPELL2), 0);
+    EXPECT_EQ(actor.abilityDamageType(ABILITY_SPELL1), DAMAGE_FIRE);
+    EXPECT_EQ(actor.abilityDamageType(ABILITY_SPELL2), DAMAGE_FIRE);
+}
+
 static Pid appendSyntheticPartyProjectile(SpellId spell) {
     pSpriteObjects.emplace_back();
     SpriteObject &sprite = pSpriteObjects.back();

@@ -1220,21 +1220,16 @@ int Actor::_43B3E0_CalcDamage(ActorAbility dmgSource) {
             damageBonus = this->monsterInfo.attack2DamageBonus;
             break;
         case ABILITY_SPELL1:
-            spellID = this->monsterInfo.spell1Id;
-            skill = this->monsterInfo.spell1SkillMastery;
-            skillLevel = skill.level();
-            skillMastery = skill.mastery();
-            if (engine->gameTitle() == GameTitle::MM6)
-                return mm6::monsterSpellDamage(this->monsterInfo, spellID, skill, *grng);
-            return CalcSpellDamage(spellID, skillLevel, skillMastery, 0);
-            break;
         case ABILITY_SPELL2:
-            spellID = this->monsterInfo.spell2Id;
-            skill = this->monsterInfo.spell2SkillMastery;
+            spellID = dmgSource == ABILITY_SPELL1 ? this->monsterInfo.spell1Id : this->monsterInfo.spell2Id;
+            skill = dmgSource == ABILITY_SPELL1 ? this->monsterInfo.spell1SkillMastery : this->monsterInfo.spell2SkillMastery;
             skillLevel = skill.level();
             skillMastery = skill.mastery();
+            if (dmgSource == ABILITY_SPELL1 && engine->gameTitle() == GameTitle::MM6)
+                return mm6::monsterSpellDamage(this->monsterInfo, spellID, skill, *grng);
+            if (engine->gameTitle() == GameTitle::MM7 && !isRegularSpell(spellID))
+                return 0;
             return CalcSpellDamage(spellID, skillLevel, skillMastery, 0);
-            break;
         case ABILITY_SPECIAL:
             damageDiceRolls = this->monsterInfo.specialAbilityDamageDiceRolls;
             damageDiceSides = this->monsterInfo.specialAbilityDamageDiceSides;
@@ -1258,7 +1253,10 @@ DamageType Actor::abilityDamageType(ActorAbility ability) const {
             return monsterInfo.attack2Type;
         case ABILITY_SPELL1:
         case ABILITY_SPELL2: {
-            const SpellInfo &spell = pSpellStats->pInfos[ability == ABILITY_SPELL1 ? monsterInfo.spell1Id : monsterInfo.spell2Id];
+            SpellId spellId = ability == ABILITY_SPELL1 ? monsterInfo.spell1Id : monsterInfo.spell2Id;
+            if (engine->gameTitle() == GameTitle::MM7 && !isRegularSpell(spellId))
+                return DAMAGE_PHYSICAL;
+            const SpellInfo &spell = pSpellStats->pInfos[spellId];
             if (engine->gameTitle() == GameTitle::MM6)
                 return mm6::monsterSpellDamageType(spell.mm6DamageTag);
             return spell.damageType;

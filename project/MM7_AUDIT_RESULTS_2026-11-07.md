@@ -155,6 +155,11 @@ Defects, inherited unless noted:
     before the outcome (`Character.cpp:4654`), wand recovery uses the novice
     row for the cast but the expert row for display (`Character.cpp:1849`),
     the Meteor Shower damage formula changed in `a304b867b`.
+    **Verified correction pending integration:** the MM7 event Master and
+    Grandmaster Day of the Gods powers now match ordinary casts (`4 * level +
+    10` and `5 * level + 10`); their 4-hour and 5-hour per-level durations
+    remain. The level-10 test failed on both power values before repair and
+    passed afterward. MM6 refuses this event source before the shared case.
 12. Monster buffs and targeting: monster Haste and Day of Protection are never
     read, the Hour of Power hit check reads the Shield buff's power
     (`Character.cpp:4549`), energy attacks deal Earth damage
@@ -162,6 +167,10 @@ Defects, inherited unless noted:
     (`Actor.cpp:2089`), turn mode skips actor index 10 (`TurnEngine.cpp:136`),
     the indoor summon floor check looks like a decompile leftover
     (`Actor.cpp:2414`).
+    **Energy parser fixed in the integration tree:** MM7 `Ener` in both monster
+    attack fields now maps to Energy (12), while `Earth` remains Earth (3).
+    The synthetic test failed on both `Ener` fields before repair and passed
+    with Earth and MM6 parser controls afterward; the MM6 parser is separate.
 13. Items and professions: two enchantment families add no elemental damage
     (`Item.cpp:71-130`), artifacts 530, 531 and 536 lack their described
     effects, the Squire profession does nothing and Sage lacks its identify
@@ -183,6 +192,16 @@ MM6 first-map gate passed its seven-child chain, retry fault children,
 paperdoll, normal Save/Load, production load/resave and MM7 controls. The
 full MM7 headless suite passed 467 tests with 2 skipped out of 469 under
 network denial. Graphical acceptance and installed helper update remain open.
+
+The later combined Energy and Day of the Gods candidate passed the full MM6
+first-map gate and a network-denied MM7 headless suite with 469 passing and 2
+skipped out of 471. The Energy correction caused `Issues.Issue403_970` to
+diverge at a public trace RNG checkpoint. An energy-only build reproduced the
+failure; temporarily restoring the old Earth mapping passed the focused test.
+The corrected-source retrace changed only RNG checkpoints and was byte-stable
+on repeat. The Shoals-to-Lincoln map transition and four Armor Class checks
+remain in the test. The candidate's Day of the Gods fix and trace update
+await integration; no graphical or installed-app claim follows.
 
 The branch GameTests cover the first five test targets above. Remaining tests
 that would close open defects: rows 24 and 35 slot-2 spells, a golem death

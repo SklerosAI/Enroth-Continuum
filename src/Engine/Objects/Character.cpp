@@ -4186,6 +4186,10 @@ void DamageCharacterFromMonster(Pid uObjID, ActorAbility dmgSource, signed int t
         SpriteObject *spritefrom = &pSpriteObjects[spriteId];
         ObjectType uActorType = spritefrom->spell_caster_pid.type();
         int uActorID = spritefrom->spell_caster_pid.id();
+        if (engine->gameTitle() == GameTitle::MM7 && uActorType != OBJECT_Actor &&
+            !isRegularSpell(spritefrom->uSpellID) &&
+            !(uActorType == OBJECT_Character && spritefrom->uSpellID == SPELL_BOW_ARROW))
+            return;
 
         if (uActorType == OBJECT_Sprite) {
             Character *playerPtr;  // eax@81

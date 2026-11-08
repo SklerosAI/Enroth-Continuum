@@ -11,6 +11,7 @@
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Objects/MonsterEnums.h"
 #include "Engine/Objects/Monsters.h"
+#include "Engine/Objects/SpriteObject.h"
 #include "Engine/Spells/Spells.h"
 #include "Engine/Tables/NPCTable.h"
 #include "GUI/UI/NPCTopics.h"
@@ -108,6 +109,59 @@ GAME_TEST(MM6NpcProfession, ValidTitleAndHireOptionRemain) {
     npc.profession = NPC_PROFESSION_SMITH;
     EXPECT_NE(NameAndTitle(&npc), npc.name);
     EXPECT_EQ(prepareScriptedNPCDialogueTopics(&npc).front(), DIALOGUE_13_hiring_related);
+}
+
+static Pid appendCharacterDamageSprite(SpellId spell, Pid caster) {
+    pSpriteObjects.emplace_back();
+    SpriteObject &sprite = pSpriteObjects.back();
+    sprite.uSpellID = spell;
+    sprite.spell_caster_pid = caster;
+    sprite.spell_level = 1;
+    sprite.spell_skill = MASTERY_NOVICE;
+    return Pid(OBJECT_Sprite, pSpriteObjects.size() - 1);
+}
+
+GAME_TEST(MM7CharacterSpriteDamage, RejectsSavedSpell255BeforePartyMutation) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+
+    Character &target = pParty->pCharacters[0];
+    target.health = 10000;
+    target.conditions.set(CONDITION_SLEEP, Time::fromTicks(1));
+    const Pid projectile = appendCharacterDamageSprite(static_cast<SpellId>(255), Pid(OBJECT_Sprite, 1000));
+
+    DamageCharacterFromMonster(projectile, ABILITY_SPELL1, 0);
+    EXPECT_EQ(target.health, 10000);
+    EXPECT_TRUE(target.conditions.has(CONDITION_SLEEP));
+}
+
+GAME_TEST(MM7CharacterSpriteDamage, KeepsRegularSpellAndCharacterArrow) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+
+    Character &target = pParty->pCharacters[0];
+    target.health = 10000;
+    for (auto [spell, caster] : {
+             std::pair{SPELL_FIRE_FIRE_BOLT, Pid(OBJECT_Sprite, 1000)},
+             std::pair{SPELL_BOW_ARROW, Pid(OBJECT_Character, 0)}}) {
+        target.conditions.set(CONDITION_SLEEP, Time::fromTicks(1));
+        const Pid projectile = appendCharacterDamageSprite(spell, caster);
+
+        DamageCharacterFromMonster(projectile, ABILITY_SPELL1, 0);
+        EXPECT_FALSE(target.conditions.has(CONDITION_SLEEP));
+    }
+}
+
+GAME_TEST(MM6CharacterSpriteDamage, NumericCharacterArrowStillTraversesDamagePath) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+
+    Character &target = pParty->pCharacters[0];
+    target.health = 10000;
+    target.conditions.set(CONDITION_SLEEP, Time::fromTicks(1));
+    const Pid projectile = appendCharacterDamageSprite(SPELL_BOW_ARROW, Pid(OBJECT_Character, 0));
+
+    DamageCharacterFromMonster(projectile, ABILITY_SPELL1, 0);
+    EXPECT_FALSE(target.conditions.has(CONDITION_SLEEP));
 }
 
 GAME_TEST(MM7Combat, BreakWeaponAffectsEquippedSword) {

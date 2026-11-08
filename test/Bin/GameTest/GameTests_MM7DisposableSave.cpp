@@ -1,23 +1,28 @@
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Localization.h"
 #include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/MM7/MM7AtomicSaveFile.h"
+#include "Engine/Objects/SpriteObject.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
+#include "Engine/Tables/MapTable.h"
 #include "Engine/Timer.h"
 
 #include "GUI/GUIWindow.h"
@@ -26,6 +31,8 @@
 
 #include "Library/FileSystem/Interface/FileSystem.h"
 #include "Library/FileSystem/Proxy/ProxyFileSystem.h"
+#include "Library/LodFormats/LodFormats.h"
+#include "Library/Snapshots/SnapshotSerialization.h"
 
 #include "Utility/String/Format.h"
 
@@ -63,7 +70,123 @@ class ScopedFailingSaveWrite {
     FileSystem *_original;
     FailingSaveWriteFileSystem _failing;
 };
+
+std::string prepareOutdoorCaptureProbe() {
+    pOutdoor->lastVisitTime = Time::fromTicks(pParty->GetPlayingTime().ticks() - 1);
+    pSpriteObjects.emplace_back(); // A free slot that save compaction would remove.
+    std::string deltaName = pMapTable->pInfos[engine->_currentLoadedMapId].fileName;
+    deltaName[deltaName.size() - 3] = 'd';
+    pMapDeltas[deltaName] = Blob::fromString("prior delta sentinel");
+    return deltaName;
+}
+
+class ScopedLegacyOutdoorDelta {
+ public:
+    ScopedLegacyOutdoorDelta() : _oldVisit(pOutdoor->lastVisitTime) {
+        std::vector<SpriteObject> compacted = pSpriteObjects;
+        _originalSprites.swap(pSpriteObjects);
+        pSpriteObjects.swap(compacted);
+        pOutdoor->lastVisitTime = pParty->GetPlayingTime();
+        CompactLayingItemsList();
+    }
+
+    ~ScopedLegacyOutdoorDelta() {
+        pSpriteObjects.swap(_originalSprites);
+        pOutdoor->lastVisitTime = _oldVisit;
+    }
+
+    ScopedLegacyOutdoorDelta(const ScopedLegacyOutdoorDelta &) = delete;
+    ScopedLegacyOutdoorDelta &operator=(const ScopedLegacyOutdoorDelta &) = delete;
+
+ private:
+    Time _oldVisit;
+    std::vector<SpriteObject> _originalSprites;
+};
 } // namespace
+
+GAME_TEST(MM7SaveCapture, FailedWriteLeavesLiveStateUntouched) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_EQ(uCurrentlyLoadedLevelType, LEVEL_OUTDOOR);
+    const std::string deltaName = prepareOutdoorCaptureProbe();
+    const Time oldVisit = pOutdoor->lastVisitTime;
+    const size_t oldSpriteCount = pSpriteObjects.size();
+
+    game.runGameRoutine([] {
+        ScopedFailingSaveWrite failingWrite;
+        EXPECT_TRUE(saveGame(false, false, "saves/capture-failure.mm7", "Failed capture").locationName.empty());
+    });
+
+    EXPECT_EQ(pOutdoor->lastVisitTime, oldVisit);
+    EXPECT_EQ(pSpriteObjects.size(), oldSpriteCount);
+    ASSERT_FALSE(pSpriteObjects.empty());
+    EXPECT_EQ(pSpriteObjects.back().uObjectDescID, 0);
+    const bool cacheUnchanged = pMapDeltas.at(deltaName).str() == "prior delta sentinel";
+    EXPECT_TRUE(cacheUnchanged);
+    EXPECT_FALSE(ufs->exists("saves/capture-failure.mm7"));
+}
+
+GAME_TEST(MM7SaveCapture, SuccessfulWriteCommitsStagedStateAndSameBytes) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_EQ(uCurrentlyLoadedLevelType, LEVEL_OUTDOOR);
+    const std::string deltaName = prepareOutdoorCaptureProbe();
+    const Time oldVisit = pOutdoor->lastVisitTime;
+    const size_t oldSpriteCount = pSpriteObjects.size();
+    const size_t liveSpriteCount = std::count_if(pSpriteObjects.begin(), pSpriteObjects.end(),
+                                                [](const SpriteObject &sprite) { return sprite.uObjectDescID != 0; });
+    ASSERT_FALSE(pSpriteObjects.empty());
+    const SpriteObject *firstSprite = &pSpriteObjects.front();
+    Blob legacyDelta;
+    Blob captured;
+    SaveGameHeader header;
+    game.runGameRoutine([&] {
+        {
+            ScopedLegacyOutdoorDelta legacy;
+            serialize(*pOutdoor, &legacyDelta, tags::via<OutdoorDelta_MM7>);
+        }
+        captured = createSaveData(false, "Committed capture").second;
+        EXPECT_EQ(pOutdoor->lastVisitTime, oldVisit);
+        EXPECT_EQ(pSpriteObjects.size(), oldSpriteCount);
+        const bool cacheUnchanged = pMapDeltas.at(deltaName).str() == "prior delta sentinel";
+        EXPECT_TRUE(cacheUnchanged);
+        header = saveGame(false, false, "saves/capture-success.mm7", "Committed capture");
+    });
+    ASSERT_FALSE(header.locationName.empty());
+    ASSERT_TRUE(ufs->exists("saves/capture-success.mm7"));
+    const Blob saved = ufs->read("saves/capture-success.mm7");
+    EXPECT_TRUE(saved.str() == captured.str());
+    EXPECT_EQ(pOutdoor->lastVisitTime, pParty->GetPlayingTime());
+    EXPECT_EQ(pSpriteObjects.size(), liveSpriteCount);
+    EXPECT_EQ(&pSpriteObjects.front(), firstSprite);
+
+    auto decoded = std::make_unique<SaveGame_MM7>();
+    deserialize(saved, decoded.get());
+    auto mapBase = std::make_unique<OutdoorLocation_MM7>();
+    deserialize(lod::decodeMaybeCompressed(pGames_LOD->read(header.locationName)), mapBase.get());
+    auto activeDelta = std::make_unique<OutdoorDelta_MM7>();
+    const Blob activeDeltaBytes = lod::decodeMaybeCompressed(decoded->mapDeltas.at(deltaName));
+    std::string currentBytes(activeDeltaBytes.str());
+    std::string legacyBytes(legacyDelta.str());
+    ASSERT_GE(currentBytes.size(), sizeof(LocationHeader_MM7));
+    ASSERT_GE(legacyBytes.size(), sizeof(LocationHeader_MM7));
+    // The old tags::via path leaves field_1C, field_20 and field_24 (offsets 28-39) uninitialized.
+    constexpr size_t reservedStart = offsetof(LocationHeader_MM7, field_1C);
+    for (size_t i = reservedStart; i < sizeof(LocationHeader_MM7); ++i) {
+        currentBytes[i] = 0;
+        legacyBytes[i] = 0;
+    }
+    if (currentBytes != legacyBytes) {
+        const auto [current, legacy] = std::mismatch(currentBytes.begin(), currentBytes.end(),
+                                                     legacyBytes.begin(), legacyBytes.end());
+        ADD_FAILURE() << "active delta differs at offset " << (current - currentBytes.begin())
+                      << ", current size " << currentBytes.size() << ", legacy size " << legacyBytes.size();
+    }
+    deserialize(activeDeltaBytes, activeDelta.get(), tags::context(*mapBase));
+    EXPECT_EQ(activeDelta->lastVisitTime, pParty->GetPlayingTime().ticks());
+    EXPECT_EQ(activeDelta->spriteObjects.size(), liveSpriteCount);
+    EXPECT_TRUE(pMapDeltas.at(deltaName).str() == decoded->mapDeltas.at(deltaName).str());
+}
 
 GAME_TEST(MM7SaveFailure, ManualWriteFailureKeepsSaveMenu) {
     game.startNewGame();

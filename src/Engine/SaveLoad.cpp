@@ -1,5 +1,6 @@
 #include "SaveLoad.h"
 
+#include <algorithm>
 #include <cassert>
 #include <functional>
 #include <unordered_map>
@@ -7,6 +8,7 @@
 #include <string_view>
 #include <memory>
 #include <stdexcept>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -184,9 +186,27 @@ void loadGame(std::string_view fileName) {
     bFlashHistoryBook = false;
 }
 
-std::pair<SaveGameHeader, Blob> createSaveData(bool resetWorld, std::string_view title) {
-    if (engine->gameTitle() == GameTitle::MM6)
-        throw std::runtime_error("MM6 save encoding is unavailable until the EC6 transaction is complete");
+namespace {
+struct StagedSaveData {
+    SaveGameHeader header;
+    Blob blob;
+    std::unordered_map<std::string, Blob> mapDeltas;
+    Time *liveVisitTime = nullptr;
+    Time visitTime;
+
+    void commit() noexcept {
+        static_assert(std::is_nothrow_copy_assignable_v<SpriteObject>);
+        static_assert(std::is_nothrow_destructible_v<SpriteObject>);
+        if (liveVisitTime) {
+            *liveVisitTime = visitTime;
+            CompactLayingItemsList();
+        }
+        pMapDeltas.swap(mapDeltas);
+    }
+};
+
+StagedSaveData stageSaveData(bool resetWorld, std::string_view title) {
+    StagedSaveData staged;
 
     std::string currentMapName = pMapTable->pInfos[engine->_currentLoadedMapId].fileName;
 
@@ -213,19 +233,23 @@ std::pair<SaveGameHeader, Blob> createSaveData(bool resetWorld, std::string_view
         for (const auto &[key, value] : pMapDeltas)
             state.mapDeltas[key] = Blob::share(value);
 
-        if (uCurrentlyLoadedLevelType == LEVEL_INDOOR) {
-            pIndoor->lastVisitTime = pParty->GetPlayingTime();
-        } else {
-            pOutdoor->lastVisitTime = pParty->GetPlayingTime();
-        }
-        CompactLayingItemsList();
-
+        staged.visitTime = pParty->GetPlayingTime();
         Blob uncompressed;
         if (uCurrentlyLoadedLevelType == LEVEL_INDOOR) {
-            serialize(*pIndoor, &uncompressed, tags::via<IndoorDelta_MM7>);
+            staged.liveVisitTime = &pIndoor->lastVisitTime;
+            IndoorDelta_MM7 delta{};
+            snapshot(*pIndoor, &delta);
+            delta.lastVisitTime = staged.visitTime.ticks();
+            std::erase_if(delta.spriteObjects, [](const SpriteObject_MM7 &sprite) { return !sprite.objectDescId; });
+            serialize(delta, &uncompressed);
         } else {
             assert(uCurrentlyLoadedLevelType == LEVEL_OUTDOOR);
-            serialize(*pOutdoor, &uncompressed, tags::via<OutdoorDelta_MM7>);
+            staged.liveVisitTime = &pOutdoor->lastVisitTime;
+            OutdoorDelta_MM7 delta{};
+            snapshot(*pOutdoor, &delta);
+            delta.lastVisitTime = staged.visitTime.ticks();
+            std::erase_if(delta.spriteObjects, [](const SpriteObject_MM7 &sprite) { return !sprite.objectDescId; });
+            serialize(delta, &uncompressed);
         }
 
         std::string deltaName = currentMapName;
@@ -240,10 +264,19 @@ std::pair<SaveGameHeader, Blob> createSaveData(bool resetWorld, std::string_view
     Blob blob;
     serialize(state, &blob, tags::via<SaveGame_MM7>);
 
-    // Update pMapDeltas global with new state.
-    pMapDeltas = std::move(state.mapDeltas);
+    staged.header = std::move(state.header);
+    staged.blob = std::move(blob);
+    staged.mapDeltas = std::move(state.mapDeltas);
+    return staged;
+}
+} // namespace
 
-    return {state.header, std::move(blob)};
+std::pair<SaveGameHeader, Blob> createSaveData(bool resetWorld, std::string_view title) {
+    if (engine->gameTitle() == GameTitle::MM6)
+        throw std::runtime_error("MM6 save encoding is unavailable until the EC6 transaction is complete");
+
+    StagedSaveData staged = stageSaveData(resetWorld, title);
+    return {std::move(staged.header), std::move(staged.blob)};
 }
 
 SaveGameHeader saveGame(bool isAutoSave, bool resetWorld, std::string_view path, std::string_view title) {
@@ -257,16 +290,17 @@ SaveGameHeader saveGame(bool isAutoSave, bool resetWorld, std::string_view path,
         return {};
     }
 
-    auto [header, blob] = createSaveData(resetWorld, title);
+    StagedSaveData staged = stageSaveData(resetWorld, title);
 
     try {
-        ufs->write(path, blob);
+        ufs->write(path, staged.blob);
     } catch (const std::exception &e) {
         MM_WARNING("saveGame: failed to write {}: {}", isAutoSave ? "autosave" : "save", e.what());
         return {};
     }
 
-    return header;
+    staged.commit();
+    return std::move(staged.header);
 }
 
 void autoSave() {

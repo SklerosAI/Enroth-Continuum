@@ -203,6 +203,16 @@ was compiled together, and no lane's tests are known to pass at this snapshot.
   Save/Load sections with one MM7 control at the end. `7e9f386a8` adds
   `ENROTH_GATE_CHILD_TIMEOUT`. The B worktree was retired. Combined
   verification of A and B is next.
+- **G, item generator and give-item: merged** as `120b4bc1b`, `39551aed3`,
+  `133970cf3` (lane `fcaa2c4eb`, `c0611d0ec`, `dafb22b3a`). Full MM6 random
+  item generator traced from the original, chest any-item path routed through
+  it, original 58-row special-bonus scan restored in the chest finalizer.
+  Opcode 41 always rolls and then replaces only the item number for a fixed
+  ID, then relocates a held item to the active character first. Shipped MM6
+  scripts: 80 well-formed GiveItem records, levels 1-6, no tier-6 any-item
+  give. Tests: unit 1025 passed, MM6 3/3, gate passed after each commit,
+  revert check fails as expected. Open: ground drop when the party is full,
+  MM6 special bonus effects in the runtime, save/reload of a give result.
 - **L, F4b production load: started** in the old A worktree on branch
   `mm6-f4b-production-load`: numbered-slot attempt construction, production
   owner publication with a test fault point at the partial-assignment

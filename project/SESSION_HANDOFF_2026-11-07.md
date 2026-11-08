@@ -142,6 +142,23 @@ was compiled together, and no lane's tests are known to pass at this snapshot.
 - **G, MM6 item generator and give-item: started** in the old Lane E
   worktree on branch `mm6-f4d-item-generator`.
 
+- **B, normal Save and Load menus: done, not yet merged** (lane commits
+  `dde1a40d6` SaveLoad namespace style fix, `e9a4d5441`, `d7f7ece32`). The
+  Save menu writes the selected or first free `saveNNN.ec6` into the native
+  MM6 profile through the slot policy and atomic writer, once a load route has
+  armed the session. A refused or failed write keeps the menu open with a
+  status message and leaves the old slot byte-identical. The Load list reads
+  only the native MM6 profile and hides malformed, backup-only, other-map and
+  foreign files. In-game load is refused, and main-menu load needs a load
+  route. New MM6 files: `MM6FirstMapManualSave.*`, `src/GUI/UI/MM6SaveLoadMenu.*`,
+  slot policy additions. New gate section: seed, v4, Save menu child, Load
+  menu child, each a fresh process. Tests: unit 1011/1011, both new children
+  1/1, MM7 save/load controls 17/17, revert check done after commit. Under
+  load the gate needed 1500 s per child. Hooks needed from Lane A: an attempt
+  that accepts numbered slots, a production publication entry for `loadGame()`,
+  and a point to arm saving after post-world release. Limit: bounded play and
+  the save run in a child that reloaded the v4 slot, because production New
+  Game is still closed.
 - **Merged in one pass, verification build pending:** T (`cf17a2680`..
   `1bbed7ce6`), S (`d52bd57e2`..`4f7aa2a11`), I (`fe6a666f6`..`7b9248970`),
   H (`0a545307b`..`e0252b962`), Codex C2 (`d251707cb`) and C1 (`21b0c04e8`,

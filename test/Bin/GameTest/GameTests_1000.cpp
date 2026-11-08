@@ -1547,6 +1547,54 @@ GAME_TEST(MM7MonsterSpell, RejectsSavedSpell255InRanged4Completion) {
     EXPECT_NE(pActors[10].aiState, AttackingRanged4);
 }
 
+GAME_TEST(MM7MonsterSpell, InvalidSavedSpellsFallBackToMeleeSelection) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+
+    Actor actor;
+    actor.monsterInfo.specialAbilityType = MONSTER_SPECIAL_ABILITY_NONE;
+    actor.monsterInfo.spell1Id = static_cast<SpellId>(255);
+    actor.monsterInfo.spell1UseChance = 100;
+    actor.monsterInfo.spell2Id = static_cast<SpellId>(100);
+    actor.monsterInfo.spell2UseChance = 100;
+    actor.monsterInfo.attack2Chance = 0;
+
+    EXPECT_EQ(actor.special_ability_use_check(0), ABILITY_ATTACK1);
+}
+
+GAME_TEST(MM7MonsterSpell, RegularFireBoltRemainsSelectable) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+
+    Actor actor;
+    actor.monsterInfo.specialAbilityType = MONSTER_SPECIAL_ABILITY_NONE;
+    actor.monsterInfo.spell1Id = SPELL_FIRE_FIRE_BOLT;
+    actor.monsterInfo.spell1UseChance = 100;
+    actor.monsterInfo.spell2Id = SPELL_NONE;
+    actor.monsterInfo.spell2UseChance = 0;
+    actor.monsterInfo.attack2Chance = 0;
+
+    EXPECT_EQ(actor.special_ability_use_check(0), ABILITY_SPELL1);
+    actor.monsterInfo.spell1Id = static_cast<SpellId>(255);
+    actor.monsterInfo.spell2Id = SPELL_FIRE_FIRE_BOLT;
+    actor.monsterInfo.spell2UseChance = 100;
+    EXPECT_EQ(actor.special_ability_use_check(0), ABILITY_SPELL2);
+}
+
+GAME_TEST(MM6MonsterSpell, NumericFireBoltRemainsSelectable) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+
+    Actor actor;
+    actor.monsterInfo.specialAbilityType = MONSTER_SPECIAL_ABILITY_NONE;
+    actor.monsterInfo.spell1Id = SPELL_FIRE_FIRE_BOLT;
+    actor.monsterInfo.spell1UseChance = 100;
+    actor.monsterInfo.spell2Id = SPELL_NONE;
+    actor.monsterInfo.spell2UseChance = 0;
+    actor.monsterInfo.attack2Chance = 0;
+
+    EXPECT_EQ(actor.special_ability_use_check(0), ABILITY_SPELL1);
+}
+
 GAME_TEST(MM7MonsterSpell, SecondSlotProjectileCarriesAbility) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
     game.startNewGame();

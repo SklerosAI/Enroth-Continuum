@@ -3639,6 +3639,9 @@ void Actor::LootActor() {
 
 //----- (00427102) --------------------------------------------------------
 bool Actor::_427102_IsOkToCastSpell(SpellId spell) {
+    if (engine->gameTitle() == GameTitle::MM7 && !isRegularSpell(spell))
+        return false;
+
     switch (spell) {
         case SPELL_BODY_POWER_CURE: { // TODO(pskelton): Only cure below half health?
             if (this->hp >= this->monsterInfo.hp) return false;

@@ -108,6 +108,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6OutdoorBorderConfirmation.h
     MM6ScopedNewGameSave.cpp MM6ScopedNewGameSave.h
     MM6PartyDeath.cpp MM6PartyDeath.h
+    MM6PartyRest.cpp MM6PartyRest.h
     MM6LoadedMapSource.cpp MM6LoadedMapSource.h
     MM6PrivateMapSource.cpp MM6PrivateMapSource.h)
 target_link_libraries(engine_mm6_save_runtime PUBLIC engine_mm6_save_container engine_mm6_atomic_save

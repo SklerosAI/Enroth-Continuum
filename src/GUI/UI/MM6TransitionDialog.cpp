@@ -31,8 +31,8 @@ namespace mm6 {
 TransitionDialogPlan planIndoorTransition(GameTitle title, HouseId houseId,
                                           unsigned exitPictureId,
                                           std::string_view transitionText) {
-    // Original MM6 executable table at VA 0x4beffc, confirmed against the
-    // retained icon archive. The MM7 table has different indices and names.
+    // The original MM6 executable uses one-based picture IDs to select this
+    // eight-entry table. The MM7 table has different indices and names.
     static constexpr std::array<std::string_view, 8> icons = {
         "castle", "dungeon", "idoor", "isecdoor",
         "istairdn", "istairup", "itrap", "outside"
@@ -40,14 +40,15 @@ TransitionDialogPlan planIndoorTransition(GameTitle title, HouseId houseId,
 
     if (title != GameTitle::MM6)
         throw std::invalid_argument("MM6 transition plan needs the MM6 title");
-    if (exitPictureId >= icons.size())
+    if (exitPictureId > icons.size())
         throw std::invalid_argument("MM6 transition picture ID is out of range");
     if (houseId == HOUSE_INVALID && exitPictureId == 0)
         throw std::invalid_argument("MM6 event has no transition dialog");
     if (houseId != HOUSE_INVALID && transitionText.empty())
         throw std::invalid_argument("MM6 transition text row is missing");
 
-    return {"backevt", icons[exitPictureId], "buttyes2", "buttesc2",
+    return {"backevt", exitPictureId ? icons[exitPictureId - 1] : std::string_view{},
+            "buttyes2", "buttesc2",
             houseId == HOUSE_INVALID ? 0 : std::to_underlying(houseId)};
 }
 
@@ -76,7 +77,7 @@ void GUIWindow_IndoorEntryExit::initializeMM6(HouseId transitionHouse, unsigned 
     try {
         const mm6::TransitionDialogPlan plan = mm6::planIndoorTransition(
             GameTitle::MM6, transitionHouse, exitPictureId, transitionText);
-        transition_ui_icon = assets->getIcon(plan.destinationIcon);
+        transition_ui_icon = plan.destinationIcon.empty() ? nullptr : assets->getIcon(plan.destinationIcon);
         _transitionStringId = plan.transitionStringId;
 
         if (transitionHouse != HOUSE_INVALID) {
@@ -91,8 +92,7 @@ void GUIWindow_IndoorEntryExit::initializeMM6(HouseId transitionHouse, unsigned 
     }
     _mm6Unsupported = refused;
     if (refused) {
-        // Two active MM6 events use unproved picture ID 8. Missing or invalid
-        // local house data also keeps the transition closed.
+        // Missing or invalid local house data keeps the transition closed.
         transition_ui_icon = nullptr;
     }
     // The live Yes handler calls onMapLeave() before its MM6 save guard.
@@ -105,7 +105,7 @@ void GUIWindow_IndoorEntryExit::initializeMM6(HouseId transitionHouse, unsigned 
 
 void GUIWindow_IndoorEntryExit::updateMM6() {
     render->DrawQuad2D(_dialogueBackground, {477, 0});
-    if (!_mm6Unsupported)
+    if (transition_ui_icon)
         render->DrawQuad2D(transition_ui_icon, {pNPCPortraits_x[0][0], pNPCPortraits_y[0][0]});
     render->DrawQuad2D(ui_buttdesc2, {556, 445});
 

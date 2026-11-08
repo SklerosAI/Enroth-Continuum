@@ -101,7 +101,7 @@ GAME_TEST(MM6Transition, DISABLED_FirstMapEntranceDialogAndGuard) {
     ASSERT_TRUE(opened);
     ASSERT_EQ(current_screen_type, SCREEN_INPUT_BLV);
     ASSERT_NE(transition_ui_icon, nullptr);
-    EXPECT_EQ(transition_ui_icon->name(), "istairup");
+    EXPECT_EQ(transition_ui_icon->name(), "istairdn");
     EXPECT_GT(transition_ui_icon->width(), 0);
     EXPECT_GT(transition_ui_icon->height(), 0);
     const auto hasButton = [](std::string_view name) {

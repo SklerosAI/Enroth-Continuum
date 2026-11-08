@@ -15,9 +15,9 @@ struct TransitionDialogPlan {
     int transitionStringId = 0;
 };
 
-// Exit-picture indices come from the retained MM6 executable's eight-pointer
-// table, not the MM7 pHouse_ExitPictures array. Text is supplied from the
-// currently loaded title's trans.txt; this helper never copies game prose.
+// One-based exit-picture IDs select the retained MM6 executable's eight-pointer
+// table; zero means no icon. This is not the MM7 pHouse_ExitPictures array.
+// Text comes from the loaded title's trans.txt; this helper never copies prose.
 TransitionDialogPlan planIndoorTransition(GameTitle title, HouseId houseId,
                                           unsigned exitPictureId,
                                           std::string_view transitionText);

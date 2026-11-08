@@ -93,6 +93,86 @@ UNIT_TEST(MM7SaveValidation, RejectsInvalidCharacterInventoryReferences) {
     EXPECT_FALSE(mm7::detail::hasSafeCharacterInventoryReferences(character));
 }
 
+UNIT_TEST(MM7SaveValidation, RejectsInvalidPartyAndCharacterEnums) {
+    Party_MM7 party{};
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+
+    party.alignment = 3;
+    EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
+    party.alignment = 2;
+    party.field_7B5_in_arena_quest = -1;
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+    party.field_7B5_in_arena_quest = 85;
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+    party.field_7B5_in_arena_quest = 88;
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+    party.field_7B5_in_arena_quest = 89;
+    EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
+    party.field_7B5_in_arena_quest = 0;
+
+    Character_MM7 &character = party.characters[0];
+    character.sex = 2;
+    EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
+    character.sex = 1;
+    character.classType = 36;
+    EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
+    character.classType = 35;
+    character.lastOpenedSpellbookPage = 9;
+    EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
+    character.lastOpenedSpellbookPage = -1;
+    EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
+    character.lastOpenedSpellbookPage = 8;
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+
+    character.quickSpell = 1;
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+    character.quickSpell = 99;
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+    character.quickSpell = 100; // Projectile IDs are not selectable quick spells.
+    EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
+    character.quickSpell = 0; // SPELL_NONE is the fresh-character default.
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+}
+
+UNIT_TEST(MM7SaveValidation, AcceptsZombieFacesAndRejectsOutOfRangeFaceOrVoice) {
+    Party_MM7 party{};
+    Character_MM7 &character = party.characters[0];
+    character.currentFace = 23;
+    character.voiceId = 24;
+    character.prevFace = 24;
+    character.prevVoiceId = 23;
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+
+    character.currentFace = 25;
+    EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
+    character.currentFace = 24;
+    character.voiceId = 25;
+    EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
+    character.voiceId = 24;
+    character.prevFace = -1;
+    EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
+    character.prevFace = 23;
+    character.prevVoiceId = 25;
+    EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
+}
+
+UNIT_TEST(MM7SaveValidation, ChecksOnlyActiveBeaconMapIndices) {
+    Party_MM7 party{};
+    LloydBeacon_MM7 &beacon = party.characters[0].installedBeacons[0];
+    beacon.mapIndexInGamesLod = 0xffff;
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+
+    beacon.beaconTime = 1;
+    beacon.mapIndexInGamesLod = 0;
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+    beacon.mapIndexInGamesLod = 75;
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+    beacon.mapIndexInGamesLod = 76;
+    EXPECT_FALSE(mm7::detail::hasSafePartySemanticReferences(party));
+    beacon.beaconTime = 0;
+    EXPECT_TRUE(mm7::detail::hasSafePartySemanticReferences(party));
+}
+
 UNIT_TEST(MM7SaveValidation, RejectsInvalidChestTypesItemsAndGridReferences) {
     Chest_MM7 chest{};
     EXPECT_TRUE(mm7::detail::hasSafeChestReferences(chest));

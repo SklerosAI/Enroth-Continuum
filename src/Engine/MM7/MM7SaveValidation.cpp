@@ -14,6 +14,9 @@
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Objects/SpriteEnums.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
+#include "Engine/Spells/SpellEnums.h"
+
+#include "GUI/GUIDialogues.h"
 
 #include "Library/Image/Pcx.h"
 #include "Library/Lod/LodReader.h"
@@ -222,6 +225,41 @@ bool detail::hasSafePartyInventoryReferences(const Party_MM7 &party) {
                        });
 }
 
+bool detail::hasSafePartySemanticReferences(const Party_MM7 &party) {
+    if (party.alignment > 2)
+        return false;
+
+    const int arenaQuest = party.field_7B5_in_arena_quest;
+    if (arenaQuest != -1 && arenaQuest != 0 &&
+        (arenaQuest < std::to_underlying(DIALOGUE_ARENA_SELECT_PAGE) ||
+         arenaQuest > std::to_underlying(DIALOGUE_ARENA_SELECT_LORD)))
+        return false;
+
+    return std::all_of(party.characters.begin(), party.characters.end(),
+                       [](const Character_MM7 &character) {
+                           // The selected face and voice can temporarily be
+                           // 23 or 24 for a zombie; MM7's tables have 25 slots.
+                           if (character.sex > 1 || character.classType > 35 ||
+                               character.currentFace >= 25 || character.voiceId >= 25 ||
+                               character.prevFace < 0 || character.prevFace >= 25 ||
+                               character.prevVoiceId < 0 || character.prevVoiceId >= 25 ||
+                               character.lastOpenedSpellbookPage < 0 ||
+                               character.lastOpenedSpellbookPage > std::to_underlying(MAGIC_SCHOOL_LAST) ||
+                               (character.quickSpell != std::to_underlying(SPELL_NONE) &&
+                                (character.quickSpell < std::to_underlying(SPELL_FIRST_REGULAR) ||
+                                 character.quickSpell > std::to_underlying(SPELL_LAST_REGULAR))))
+                               return false;
+
+                           return std::all_of(character.installedBeacons.begin(),
+                                              character.installedBeacons.end(),
+                                              [](const LloydBeacon_MM7 &beacon) {
+                                                  // Inactive slots may retain stale map indices.
+                                                  return beacon.beaconTime == 0 ||
+                                                         beacon.mapIndexInGamesLod <= 75;
+                                              });
+                       });
+}
+
 bool detail::hasSafeIndoorDeltaReferences(const IndoorDelta_MM7 &delta,
                                           std::size_t vertexCount, std::size_t faceCount,
                                           std::size_t sectorCount) {
@@ -279,7 +317,8 @@ bool preflightNativeSaveStructure(std::span<const std::uint8_t> bytes,
         currentDelta[currentDelta.size() - 3] = 'd';
         if (!save->mapDeltas.contains(currentDelta))
             return false;
-        if (!detail::hasSafePartyInventoryReferences(save->party))
+        if (!detail::hasSafePartyInventoryReferences(save->party) ||
+            !detail::hasSafePartySemanticReferences(save->party))
             return false;
 
         // The current menu tolerates a bad thumbnail; this detached preflight

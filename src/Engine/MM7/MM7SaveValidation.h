@@ -48,6 +48,9 @@ bool hasBoundedDeltaRecords(const Blob &decoded, bool indoor,
 bool hasSafeCharacterInventoryReferences(const Character_MM7 &character);
 bool hasSafeChestReferences(const Chest_MM7 &chest);
 bool hasSafePartyInventoryReferences(const Party_MM7 &party);
+// Check bounded MM7 party, character and active-beacon enum references before
+// the live reconstruction uses them as switch values or array indices.
+bool hasSafePartySemanticReferences(const Party_MM7 &party);
 bool hasSafeIndoorDeltaReferences(const IndoorDelta_MM7 &delta,
                                    std::size_t vertexCount, std::size_t faceCount,
                                    std::size_t sectorCount);

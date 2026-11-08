@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <memory>
 #include <span>
+#include <stdexcept>
 #include <string>
 
 #include "Testing/Game/GameTest.h"
@@ -10,17 +11,21 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
+#include "Engine/Localization.h"
 #include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/MM7/MM7AtomicSaveFile.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
+#include "Engine/Timer.h"
 
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UISaveLoad.h"
+#include "GUI/UI/UIStatusBar.h"
 
 #include "Library/FileSystem/Interface/FileSystem.h"
+#include "Library/FileSystem/Proxy/ProxyFileSystem.h"
 
 #include "Utility/String/Format.h"
 
@@ -28,6 +33,71 @@ namespace {
 constexpr std::string_view slot = "saves/save000.mm7";
 constexpr std::string_view fileName = "save000.mm7";
 constexpr int savedGold = 12345;
+
+class FailingSaveWriteFileSystem final : public ProxyFileSystem {
+ public:
+    using ProxyFileSystem::ProxyFileSystem;
+
+ private:
+    void _write(FileSystemPathView path, const Blob &data) override {
+        if (path.string().starts_with("saves/"))
+            throw std::runtime_error("injected MM7 save write failure");
+        ProxyFileSystem::_write(path, data);
+    }
+};
+
+class ScopedFailingSaveWrite {
+ public:
+    ScopedFailingSaveWrite() : _original(ufs), _failing(_original) {
+        ufs = &_failing;
+    }
+
+    ~ScopedFailingSaveWrite() {
+        ufs = _original;
+    }
+
+    ScopedFailingSaveWrite(const ScopedFailingSaveWrite &) = delete;
+    ScopedFailingSaveWrite &operator=(const ScopedFailingSaveWrite &) = delete;
+
+ private:
+    FileSystem *_original;
+    FailingSaveWriteFileSystem _failing;
+};
+} // namespace
+
+GAME_TEST(MM7SaveFailure, ManualWriteFailureKeepsSaveMenu) {
+    game.startNewGame();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressGuiButton("GameMenu_SaveGame");
+    game.tick(2);
+    ASSERT_EQ(current_screen_type, SCREEN_SAVEGAME);
+    const bool wasPaused = gameTimer->isPaused();
+
+    game.runGameRoutine([] {
+        ScopedFailingSaveWrite failingWrite;
+        EXPECT_NO_THROW(doSavegame("save000.mm7", "Failed save"));
+    });
+
+    EXPECT_EQ(current_screen_type, SCREEN_SAVEGAME);
+    EXPECT_EQ(gameTimer->isPaused(), wasPaused);
+    EXPECT_EQ(engine->_statusBar->get(), localization->str(LSTR_ERROR));
+    EXPECT_FALSE(ufs->exists(slot));
+}
+
+GAME_TEST(MM7SaveFailure, QuickWriteFailureKeepsSlotAndReportsError) {
+    game.startNewGame();
+    const int previousSlot = engine->config->gameplay.QuickSavesCount.value();
+
+    game.runGameRoutine([] {
+        ScopedFailingSaveWrite failingWrite;
+        EXPECT_NO_THROW(quickSaveGame());
+    });
+
+    EXPECT_EQ(engine->config->gameplay.QuickSavesCount.value(), previousSlot);
+    EXPECT_EQ(engine->_statusBar->get(), localization->str(LSTR_ERROR));
+    for (int i = 0; i < 5; ++i)
+        EXPECT_FALSE(ufs->exists(fmt::format("saves/quicksave{}.mm7", i)));
 }
 
 // These two tests require --mm7-disposable-profile and exact filters. The

@@ -58,6 +58,13 @@ void reportUnavailableMM6SaveAction() {
     if (pAudioPlayer)
         pAudioPlayer->playUISound(SOUND_error);
 }
+
+void reportFailedMM7SaveAction() {
+    if (engine->_statusBar)
+        engine->_statusBar->setEvent(LSTR_ERROR);
+    if (pAudioPlayer)
+        pAudioPlayer->playUISound(SOUND_error);
+}
 } // namespace
 
 void mm6::testing::setNewGameSaveOverride(std::function<void()> callback) {
@@ -255,11 +262,8 @@ SaveGameHeader saveGame(bool isAutoSave, bool resetWorld, std::string_view path,
     try {
         ufs->write(path, blob);
     } catch (const std::exception &e) {
-        if (isAutoSave) {
-            MM_WARNING("saveGame: failed to write autosave: {}", e.what());
-            return {};
-        }
-        throw;
+        MM_WARNING("saveGame: failed to write {}: {}", isAutoSave ? "autosave" : "save", e.what());
+        return {};
     }
 
     return header;
@@ -284,7 +288,10 @@ void doSavegame(std::string fileName, std::string_view title) {
         }
     }
 
-    saveGame(false, false, fmt::format("saves/{}", fileName), title);
+    if (saveGame(false, false, fmt::format("saves/{}", fileName), title).locationName.empty()) {
+        reportFailedMM7SaveAction();
+        return;
+    }
 
     GUI_UpdateWindows();
     pGUIWindow_CurrentMenu = nullptr;
@@ -347,8 +354,20 @@ void quickSaveGame() {
     }
     assert(engine->_currentLoadedMapId != MAP_ARENA); // Not Arena.
 
-    engine->config->gameplay.QuickSavesCount.cycleIncrement();
-    saveGame(false, false, fmt::format("saves/{}", getCurrentQuickSave()), localization->str(LSTR_QUICKSAVE));
+    auto &quickSaveIndex = engine->config->gameplay.QuickSavesCount;
+    const int previousIndex = quickSaveIndex.value();
+    quickSaveIndex.cycleIncrement();
+    try {
+        if (saveGame(false, false, fmt::format("saves/{}", getCurrentQuickSave()),
+                     localization->str(LSTR_QUICKSAVE)).locationName.empty()) {
+            quickSaveIndex.setValue(previousIndex);
+            reportFailedMM7SaveAction();
+            return;
+        }
+    } catch (...) {
+        quickSaveIndex.setValue(previousIndex);
+        throw;
+    }
     engine->_statusBar->setEvent(LSTR_GAME_SAVED);
     pAudioPlayer->playUISound(SOUND_StartMainChoice02);
 }

@@ -2750,3 +2750,10 @@ Chronological record of wiki activity.
 - Read source and tests at integration `ef8f0a3ee` and rewrote the MM6 checklist engine table, adding inventory, combat, transport, transitions and death rows and a dated register of merged slices with the test behind each. Production load, save arming, transition and death wiring and F5a stay unchecked.
 - Added dated status lines to 16 packets whose claims contradicted source, among them the variable guard, condition variables, transport manifest, later-outdoor world-load scope, manual services claims and the v5 attempt packet. History was kept as written.
 - Rewrote the MM6 resume runbook and plan section 18.1 checkpoint and budget paragraphs for the current F4b state, then refreshed the wiki resume pointer and index. Documentation only, nothing was built or run.
+
+## [2026-11-07] verify | MM7 combat audit fixes
+- by: T-Burton-ND via codex
+- Five ranked MM7 combat, spell and potion defects failed focused GameTests before repair. The fixed suite passed 6/6
+  under network denial, including the unarmed Break Weapon control. Three MM6 combat children passed separately.
+- The new combat audit page records title boundaries, an MM6 legacy Break Weapon risk, and the pending full first-map,
+  live archer and graphical checks. The fix remains on an isolated branch pending integration.

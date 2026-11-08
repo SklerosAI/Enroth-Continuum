@@ -142,6 +142,23 @@ was compiled together, and no lane's tests are known to pass at this snapshot.
 - **G, MM6 item generator and give-item: started** in the old Lane E
   worktree on branch `mm6-f4d-item-generator`.
 
+- **Merged in one pass, verification build pending:** T (`cf17a2680`..
+  `1bbed7ce6`), S (`d52bd57e2`..`4f7aa2a11`), I (`fe6a666f6`..`7b9248970`),
+  H (`0a545307b`..`e0252b962`), Codex C2 (`d251707cb`) and C1 (`21b0c04e8`,
+  `363d5eee3`), all cherry-picked cleanly. The paperdoll child joined the
+  gate runner (`5198aedbb`). The T and H worktrees were retired.
+- **P, transition prerequisites: started** in the old S worktree on branch
+  `mm6-f4d-transition-prereqs`: MM6 archive encoder, copy-safe rest and heal,
+  hireling identity proof, day rollover check.
+- **M, shops and guilds: started** in the old I worktree on branch
+  `mm6-f4d-shops`: prices, shop screens, stock and refresh, guild spellbooks.
+- **Codex now owns** the shared combat files (`Character.cpp`,
+  `CastSpellInfo.cpp`, `Monsters.cpp`, `Actor.cpp`, `SpriteObject.cpp`,
+  `Spells.cpp`) for the MM7 audit combat fixes, so a second MM6 combat lane
+  waits until those land.
+- The worktree budget script now says 15 (`1172e1197`). The owner told this
+  session to keep 10, so lanes stay at 10 or fewer until the owner confirms.
+
 The merge order is now "as lanes complete", resolving shared-file overlaps at
 cherry-pick time, because finished lanes shouldn't wait on unfinished ones.
 

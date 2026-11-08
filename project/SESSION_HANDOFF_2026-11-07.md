@@ -242,6 +242,15 @@ was compiled together, and no lane's tests are known to pass at this snapshot.
   (`73feee2b2`) without a retrace. Codex was asked to confirm and retrace
   (`agent_comms/messages/2026-11-08T01-30-00Z--...issue735d-desync.md`).
 
+- **Combined verification after E, T, S, I, H, C1, C2, A, B, G, P, D
+  (2026-11-08 ~02:00 UTC, head before `59b2fa7c3`):** unit 1065 passed (45
+  private skips), enabled MM6 game tests 29/29, every disabled MM6 test run
+  alone passed (transition, three combat, border rest rollover), the full
+  first-map gate passed in 381 s (22 children including the paperdoll and the
+  normal Save and Load menu children, plus `Prs.Pr2354`), full MM7 headless
+  suite 454 passed with one failure, `Issues.Issue735d` (with Codex).
+  Reusable script: the session scratchpad `verify-integration.sh`.
+
 The merge order is now "as lanes complete", resolving shared-file overlaps at
 cherry-pick time, because finished lanes shouldn't wait on unfinished ones.
 

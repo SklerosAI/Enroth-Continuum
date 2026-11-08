@@ -54,6 +54,8 @@ NORMAL_SAVE_LOAD = [
      "ENROTH_MM6_V5_NORMAL_SAVE_ENABLE", "strict-v5-normal-save"),
     ("MM6V5NormalLoadMenuHeadless.DISABLED_LoadMenuListsAndLoadsNumberedFirstMapSlot",
      "ENROTH_MM6_V5_NORMAL_LOAD_ENABLE", "strict-v5-normal-load"),
+    ("MM6V5NormalLoadMenuHeadless.DISABLED_LoadedSlotSavesAgainThroughSaveMenu",
+     "ENROTH_MM6_V5_NORMAL_RESAVE_ENABLE", "strict-v5-normal-resave"),
 ]
 MM7_CONTROLS = ["Prs.Pr2354", "Prs.Pr2956", "Issues.Issue840"]
 PASS_LINE = re.compile(r"\[\s*PASSED\s*\]\s+1 test\b")
@@ -162,7 +164,8 @@ def main():
             if not run_child(name, flag, value, profile,
                              paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"]):
                 return 1
-        # Every save and every menu listing stages complete first-map sessions.
+        # Every save and every menu listing stages complete first-map sessions. The Load menu child and the resave
+        # child load save000.ec6 through the production main-menu load, each in a fresh process.
         for name, flag, value in NORMAL_SAVE_LOAD:
             if not run_child(name, flag, value, profile,
                              paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
@@ -170,7 +173,8 @@ def main():
     for name in MM7_CONTROLS:
         if not run_child(name, None, None, ROOT, paths["MM7_DATA_PATH"]):
             return 1
-    print("PASS: seven-child MM6 chain, all full-retry fault children, the paperdoll child, normal Save/Load menus, and the MM7 controls")
+    print("PASS: seven-child MM6 chain, all full-retry fault children, the paperdoll child, normal Save/Load menus with a "
+          "production load and resave, and the MM7 controls")
     return 0
 
 

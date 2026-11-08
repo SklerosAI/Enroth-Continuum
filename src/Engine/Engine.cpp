@@ -741,7 +741,7 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
     engine->_currentLoadedMapId = transitionMapId;
 
     try {
-        if (isMapIndoor(transitionMapId)) {
+        if (isMapIndoor(engine->gameTitle(), transitionMapId)) {
             loadAndPrepareBLV(transitionMapId, bLoading);
         } else {
             loadAndPrepareODM(transitionMapId, bLoading);
@@ -762,7 +762,7 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
     }
 
     // After the load, because the map delta overwrites face attributes.
-    repairClickableFaces(isMapIndoor(transitionMapId) ? std::span(pIndoor->faces) : std::span(pOutdoor->faces), engine->_localEventMap);
+    repairClickableFaces(isMapIndoor(engine->gameTitle(), transitionMapId) ? std::span(pIndoor->faces) : std::span(pOutdoor->faces), engine->_localEventMap);
 
     setNPCNamesOnLoad();
     if (bLoading && engine->gameTitle() == GameTitle::MM6) {

@@ -1846,10 +1846,7 @@ void UpdateActors_ODM() {
  */
 static void loadAndPrepareODMInternal(MapId mapid, bool bLoading) {
     assert(mapid >= MAP_FIRST && mapid <= MAP_LAST);
-    if (engine->gameTitle() == GameTitle::MM6)
-        assert(pMapTable->pInfos[mapid].fileName.ends_with(".odm"));
-    else
-        assert(isMapOutdoor(mapid));
+    assert(isMapOutdoor(engine->gameTitle(), mapid));
 
     MapData *mapData;
     bool outdoor_was_respawned;

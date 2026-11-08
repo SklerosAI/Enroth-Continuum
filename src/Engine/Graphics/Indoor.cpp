@@ -938,7 +938,7 @@ void BLV_UpdateActors() {
 }
 
 void loadAndPrepareBLV(MapId mapid, bool bLoading) {
-    assert(isMapIndoor(mapid));
+    assert(isMapIndoor(engine->gameTitle(), mapid));
 
     unsigned int respawn_interval;  // ebx@1
     MapData *mapData;              // edi@9

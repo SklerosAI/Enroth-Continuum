@@ -260,8 +260,8 @@ GAME_TEST(MM6Headless, FirstOutdoorResourcePreflight) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     const MapId firstMap = pMapTable->GetMapInfo("oute3.odm");
     ASSERT_NE(firstMap, MAP_INVALID);
-    EXPECT_TRUE(isMapOutdoor(firstMap));
-    EXPECT_FALSE(isMapIndoor(firstMap));
+    EXPECT_TRUE(isMapOutdoor(GameTitle::MM6, firstMap));
+    EXPECT_FALSE(isMapIndoor(GameTitle::MM6, firstMap));
     EXPECT_FALSE(isHirelingsBlockedOnMap(GameTitle::MM6, firstMap));
     EXPECT_EQ(pMapTable->pInfos[firstMap].fileName, "oute3.odm");
     ASSERT_TRUE(pGames_LOD->exists("oute3.odm"));
@@ -315,6 +315,24 @@ GAME_TEST(MM6Headless, FirstOutdoorResourcePreflight) {
     const std::string_view sky(base.skyTexture.data(), terminator - base.skyTexture.begin());
     EXPECT_EQ(mm6OutdoorBaseSky(GameTitle::MM6, sky), "plansky2");
     EXPECT_EQ(engine->resources()->bitmapSize(sky), Sizei(256, 256));
+}
+
+GAME_TEST(MM6Headless, MapClassificationMatchesMapFiles) {
+    // MM6 outdoor maps 7 and 8 were classified as indoor and took the BLV loader.
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    int outdoor = 0;
+    int indoor = 0;
+    for (MapId map : pMapTable->pInfos.indices()) {
+        const std::string &fileName = pMapTable->pInfos[map].fileName;
+        EXPECT_EQ(isMapOutdoor(engine->gameTitle(), map), fileName.ends_with(".odm")) << std::to_underlying(map);
+        EXPECT_EQ(isMapIndoor(engine->gameTitle(), map), fileName.ends_with(".blv")) << std::to_underlying(map);
+        outdoor += fileName.ends_with(".odm");
+        indoor += fileName.ends_with(".blv");
+    }
+    EXPECT_EQ(outdoor, 15);
+    EXPECT_EQ(indoor, 52);
+    EXPECT_EQ(pMapTable->pInfos[static_cast<MapId>(7)].fileName, "outc1.odm");
+    EXPECT_EQ(pMapTable->pInfos[static_cast<MapId>(8)].fileName, "outc2.odm");
 }
 
 GAME_TEST(MM6Headless, FirstOutdoorTileSelectors) {

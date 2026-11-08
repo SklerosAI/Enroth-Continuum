@@ -1,9 +1,9 @@
 #include "MM6V5PreEventDecorationReplayForTest.h"
 
-#include <cstddef>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "MM6V5OutdoorMapIdentity.h"
 
@@ -36,20 +36,10 @@ bool runArmedV5PreEventDecorationReplayForTest(
         return false;
     if (title != GameTitle::MM6 || checkpoint != PreEventCheckpointResult::Continue ||
         !scope->_pending || !actorPublished || !eventRuntimeRestored ||
-        !destination || destination != &rebuilt ||
-        loadedMapName != scope->_fields.mapName ||
-        rebuilt.size() != scope->_fields.decorations.size())
+        !destination || destination != &rebuilt)
         throw std::runtime_error("MM6 v5 decoration replay lacks an exact pre-event context");
-    for (std::size_t slot = 0; slot < rebuilt.size(); ++slot) {
-        const LevelDecoration &native = rebuilt[slot];
-        const LevelDecoration &saved = scope->_fields.decorations[slot];
-        if (native.vPosition != saved.vPosition ||
-            native._yawAngle != saved._yawAngle || native.uCog != saved.uCog ||
-            native.uEventID != saved.uEventID ||
-            native.uTriggerRange != saved.uTriggerRange)
-            throw std::runtime_error("MM6 v5 decoration source slot changed before DECR");
-    }
-    std::vector<LevelDecoration> restored = scope->_fields.decorations;
+    std::vector<LevelDecoration> restored = stageDecorationRuntimeReplay(
+        scope->_fields, rebuilt, loadedMapName, title);
     static_assert(std::is_nothrow_swappable_v<std::vector<LevelDecoration>>);
     destination->swap(restored);
     scope->_pending = false;

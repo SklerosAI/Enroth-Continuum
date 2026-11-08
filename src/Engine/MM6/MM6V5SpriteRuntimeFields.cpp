@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "Engine/Snapshots/EntitySnapshots.h"
 #include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
@@ -518,6 +519,32 @@ void requireSpriteRuntimeNativeAgreement(
             throw std::runtime_error("MM6 SPRT native slot anchor differs");
         requireNativeAnchor(fields.records[index]);
     }
+}
+
+std::vector<SpriteObject> stageSpriteRuntimeReplay(
+    const SpriteRuntimeSaveFields &fields, std::span<const SpriteObject> rebuilt,
+    std::string_view mapName, std::span<const std::uint8_t> nativeDelta, GameTitle title) {
+    if (rebuilt.size() != fields.records.size())
+        throw std::runtime_error("MM6 v5 sprite replay lacks an exact native map context");
+    requireSpriteRuntimeNativeAgreement(fields, mapName, nativeDelta, title);
+    const OutdoorDeltaWire wire = decodeOutdoorDelta(nativeDelta);
+    const auto ground = wire.part(OutdoorDeltaPart::GroundItems).subspan(4);
+
+    std::vector<SpriteObject> saved;
+    saved.reserve(fields.records.size());
+    for (std::size_t slot = 0; slot < fields.records.size(); ++slot) {
+        const auto native = projectMM6GroundItemRecord(ground.subspan(slot * 100, 100));
+        const SpriteObject &restored = fields.records[slot].runtime;
+        const auto sameAnchor = [&](const SpriteObject &sprite) {
+            return std::to_underlying(sprite.spriteId) == native.spriteId &&
+                sprite.uObjectDescID == native.objectDescId &&
+                sprite.initialPosition == native.initialPosition.toFloat();
+        };
+        if (!sameAnchor(rebuilt[slot]) || !sameAnchor(restored))
+            throw std::runtime_error("MM6 v5 sprite PID anchor differs from native DDM");
+        saved.push_back(restored);
+    }
+    return saved;
 }
 
 } // namespace mm6

@@ -18,9 +18,9 @@ struct LevelDecoration;
 namespace mm6 {
 
 /**
- * Engine-owned first-map v5 load context. It owns the detached graph and replays EVRT, actors, generated NPCs, the
- * chest handoff and RNGS in native load order. Decoration and sprite replay still use disposable test hooks. No
- * normal SaveLoad route may construct this context yet.
+ * Engine-owned first-map v5 load context. It owns the detached graph and replays EVRT, actors, generated NPCs,
+ * decorations, sprites, the chest handoff and RNGS in native load order. No normal SaveLoad route may construct this
+ * context yet.
  */
 class V5FirstMapLoadAttempt {
  public:
@@ -28,7 +28,7 @@ class V5FirstMapLoadAttempt {
         Detached,
         Published,
         EventRestored,
-        ActorsPublished,
+        WorldPublished,
         ChestApplied,
         GeneratedNpcsKept,
         RngRestored,
@@ -55,12 +55,13 @@ class V5FirstMapLoadAttempt {
     }
 
     /**
-     * Replaces the rebuilt native actors with the saved ARTR list and publishes the saved GNPC rows, after checking
-     * the rebuilt DDM anchors, the ACTR baseline and the chest owners. Called once, before `_461103_load_level_sub`.
+     * Replaces the rebuilt native actors, generated NPC rows, decorations and sprites with the saved ARTR, GNPC, DECR
+     * and SPRT lists. Every list is staged against its rebuilt native anchors and the unchanged chest owners before
+     * any of them is swapped in. Called once, before `_461103_load_level_sub`.
      *
      * @param title                     Must be MM6.
      */
-    void publishActorsAtNativeMap(GameTitle title);
+    void publishWorldAtNativeMap(GameTitle title);
     bool applyChestAtNativeMap(GameTitle title);
 
     /**

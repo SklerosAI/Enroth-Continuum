@@ -6,12 +6,15 @@
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "Engine/Components/Random/EngineRandomComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Objects/Actor.h"
+#include "Engine/Objects/Decoration.h"
+#include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/ItemTable.h"
 #include "Engine/Tables/MapTable.h"
@@ -24,6 +27,8 @@
 #include "MM6EventRuntimeSaveFields.h"
 #include "MM6PreEventActorReplay.h"
 #include "MM6V5ActorRuntimeFields.h"
+#include "MM6V5DecorationRuntimeFields.h"
+#include "MM6V5SpriteRuntimeFields.h"
 #include "MM6V5FirstMapLoadPreflight.h"
 #include "MM6V5FullSessionPreflight.h"
 
@@ -50,6 +55,10 @@ V5FirstMapLoadAttempt::V5FirstMapLoadAttempt(
     requirePreEventActorReplaySource(actorMap, title);
     requireActorRuntimeBaselineAgreement(_staged->actors, FIRST_MAP,
                                          _staged->v4.saved.v3.activeActorPayload, title);
+    if (_staged->decorations.mapName != FIRST_MAP || _staged->decorations.decorations.empty())
+        throw std::runtime_error("MM6 first-map load attempt decoration owner differs from HEAD");
+    requireSpriteRuntimeNativeAgreement(_staged->sprites, FIRST_MAP,
+                                        _staged->v4.saved.v3.raw.chest.rawActiveDelta, title);
 }
 
 V5FirstMapLoadAttempt::~V5FirstMapLoadAttempt() = default;
@@ -87,27 +96,36 @@ void V5FirstMapLoadAttempt::restoreEventAtNativeMap(
     _phase = Phase::EventRestored;
 }
 
-void V5FirstMapLoadAttempt::publishActorsAtNativeMap(GameTitle title) {
+void V5FirstMapLoadAttempt::publishWorldAtNativeMap(GameTitle title) {
     if (title != GameTitle::MM6 || _phase != Phase::EventRestored ||
         !engine || engine->gameTitle() != title || !pMapTable || !pNPCStats ||
         engine->_currentLoadedMapId != pMapTable->GetMapInfo(FIRST_MAP) ||
         nextActorReuseScanStart != 0 || engine->config->debug.NoActors.value() ||
-        !chestOwnersUnchanged())
-        throw std::runtime_error("MM6 first-map actor replay lacks exact native owners");
+        engine->config->debug.NoDecorations.value() || !chestOwnersUnchanged())
+        throw std::runtime_error("MM6 first-map world replay lacks exact native owners");
     const auto &actorMap = _staged->v4.v3.actorMap;
-    PreEventActorReplayPlan plan = stagePreEventActorReplay(
+    PreEventActorReplayPlan actors = stagePreEventActorReplay(
         actorMap.activeActors, actorMap.saved.generatedNpcs, actorMap.saved.gameplayRng,
         pActors, *pNPCStats, FIRST_MAP, actorMap.activeMap.delta.actors.size(),
         std::max(0, engine->config->gameplay.MaxActors.value()),
         application->component<EngineRandomComponent>()->type(), title);
-    std::deque<Actor> runtime(_staged->actors.actors.begin(), _staged->actors.actors.end());
-    plan.actors.swap(runtime);
-    publishPreEventActorReplay(std::move(plan), &pActors, pNPCStats, title);
-    _phase = Phase::ActorsPublished;
+    std::deque<Actor> runtimeActors(_staged->actors.actors.begin(), _staged->actors.actors.end());
+    actors.actors.swap(runtimeActors);
+    std::vector<LevelDecoration> decorations = stageDecorationRuntimeReplay(
+        _staged->decorations, pLevelDecorations, FIRST_MAP, title);
+    std::vector<SpriteObject> sprites = stageSpriteRuntimeReplay(
+        _staged->sprites, pSpriteObjects, FIRST_MAP, pOutdoor->mm6DeltaBytes, title);
+
+    static_assert(std::is_nothrow_swappable_v<std::vector<LevelDecoration>>);
+    static_assert(std::is_nothrow_swappable_v<std::vector<SpriteObject>>);
+    publishPreEventActorReplay(std::move(actors), &pActors, pNPCStats, title);
+    pLevelDecorations.swap(decorations);
+    pSpriteObjects.swap(sprites);
+    _phase = Phase::WorldPublished;
 }
 
 bool V5FirstMapLoadAttempt::applyChestAtNativeMap(GameTitle title) {
-    if (title != GameTitle::MM6 || _phase != Phase::ActorsPublished ||
+    if (title != GameTitle::MM6 || _phase != Phase::WorldPublished ||
         !engine || engine->gameTitle() != title || !pMapTable || !pItemTable ||
         !pParty || engine->_currentLoadedMapId != pMapTable->GetMapInfo(FIRST_MAP) ||
         !chestOwnersUnchanged())

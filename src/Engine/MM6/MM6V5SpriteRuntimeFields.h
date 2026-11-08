@@ -52,4 +52,18 @@ void requireSpriteRuntimeNativeAgreement(
     const SpriteRuntimeSaveFields &fields, std::string_view mapName,
     std::span<const std::uint8_t> nativeDelta, GameTitle title);
 
+/**
+ * @param fields                        Saved SPRT list.
+ * @param rebuilt                       Sprites the native map load rebuilt, after `arrangeSpriteObjects`.
+ * @param mapName                       File name of the loaded map.
+ * @param nativeDelta                   Live native DDM bytes of the loaded map.
+ * @param title                         Must be MM6.
+ * @return                              Copy of the saved runtime sprites. Throws unless every saved record matches the
+ *                                      native DDM, and both the rebuilt and the saved sprite of each slot keep its
+ *                                      native sprite, object descriptor and initial position.
+ */
+std::vector<SpriteObject> stageSpriteRuntimeReplay(
+    const SpriteRuntimeSaveFields &fields, std::span<const SpriteObject> rebuilt,
+    std::string_view mapName, std::span<const std::uint8_t> nativeDelta, GameTitle title);
+
 } // namespace mm6

@@ -770,10 +770,10 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
             const auto checkpoint = mm6::testing::runArmedPreEventCheckpointForTest(GameTitle::MM6);
             if (checkpoint == mm6::testing::PreEventCheckpointResult::AbortToMainMenu)
                 throw mm6::testing::PreEventCheckpointAbortForTest();
-            const bool attemptActors = engine->_mm6FirstMapLoadAttempt != nullptr;
-            if (attemptActors)
-                engine->_mm6FirstMapLoadAttempt->publishActorsAtNativeMap(GameTitle::MM6);
-            const bool actorPublished = attemptActors || mm6::testing::runArmedV3PreEventReplayForTest(
+            const bool firstMapAttempt = engine->_mm6FirstMapLoadAttempt != nullptr;
+            if (firstMapAttempt)
+                engine->_mm6FirstMapLoadAttempt->publishWorldAtNativeMap(GameTitle::MM6);
+            const bool actorPublished = firstMapAttempt || mm6::testing::runArmedV3PreEventReplayForTest(
                 checkpoint, pActors, &pActors, pNPCStats,
                 application->component<EngineRandomComponent>()->type(),
                 pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
@@ -783,7 +783,7 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
                 mm6::chestMapLoadOptedIn(), &mm6::chestTitleState(),
                 pOutdoor->mm6DeltaBytes,
                 GameTitle::MM6);
-            const bool dynamicActorPublished = attemptActors || mm6::testing::runArmedV5PreEventActorReplayForTest(
+            const bool dynamicActorPublished = firstMapAttempt || mm6::testing::runArmedV5PreEventActorReplayForTest(
                 checkpoint, pActors, &pActors, actorPublished,
                 pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
                 GameTitle::MM6);

@@ -45,8 +45,6 @@
 #include "Engine/MM6/MM6V5LiveSaveCapture.h"
 #include "Engine/MM6/MM6V5ActorRuntimeFields.h"
 #include "Engine/MM6/MM6V5DecorationRuntimeFields.h"
-#include "Engine/MM6/MM6V5PreEventDecorationReplayForTest.h"
-#include "Engine/MM6/MM6V5PreEventSpriteReplayForTest.h"
 #include "Engine/MM6/MM6V5SaveFields.h"
 #include "Engine/MM6/MM6V5SpriteRuntimeFields.h"
 #include "MM6V4AfterActionCaptureForTest.h"
@@ -201,8 +199,6 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
     std::size_t expectedActiveActors = 0;
     mm6::V5FullSessionPreflight *staged = nullptr;
     std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
-    std::unique_ptr<mm6::testing::ScopedV5PreEventDecorationReplayForTest> decorationReplay;
-    std::unique_ptr<mm6::testing::ScopedV5PreEventSpriteReplayForTest> spriteReplay;
     std::unique_ptr<mm6::testing::ScopedPostWorldAdmissionForTest> postWorld;
     std::unique_ptr<mm6::testing::ScopedV5FirstMapLoadAbandonForTest> abandon;
     std::unique_ptr<mm6::testing::ScopedV5FirstMapLoadAbandonForTest> secondAbandon;
@@ -249,16 +245,11 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
                         throw std::runtime_error("synthetic MM6 pre-event replay fault");
                     }
                 });
-            decorationReplay = std::make_unique<mm6::testing::ScopedV5PreEventDecorationReplayForTest>(
-                GameTitle::MM6, staged->decorations);
-            spriteReplay = std::make_unique<mm6::testing::ScopedV5PreEventSpriteReplayForTest>(
-                GameTitle::MM6, staged->sprites);
             postWorld = std::make_unique<mm6::testing::ScopedPostWorldAdmissionForTest>(
                 GameTitle::MM6, mm6::testing::FailClosedDecisionTag{}, [&] {
                     postWorldRan = true;
                     try {
                         if (!checkpoint->reachedMapLoad() || checkpoint->reachedInput() ||
-                            !decorationReplay->published() || !spriteReplay->published() ||
                             !engine->_mm6FirstMapLoadAttempt ||
                             engine->_mm6FirstMapLoadAttempt->phase() !=
                                 mm6::V5FirstMapLoadAttempt::Phase::RngRestored ||
@@ -329,8 +320,6 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
                                  ENGINE_SKIP_NEXT_WORLD_UPDATE |
                                  ENGINE_SKIP_NEXT_USER_INPUT));
             postWorld.reset();
-            spriteReplay.reset();
-            decorationReplay.reset();
             checkpoint.reset();
             abandon.reset();
             engine->_mm6FirstMapLoadAttempt.reset();
@@ -389,8 +378,6 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
         secondAbandon.reset();
         abandon.reset();
         postWorld.reset();
-        spriteReplay.reset();
-        decorationReplay.reset();
         checkpoint.reset();
         engine->_mm6FirstMapLoadAttempt.reset();
         staged = nullptr;

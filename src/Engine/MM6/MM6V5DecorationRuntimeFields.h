@@ -43,4 +43,17 @@ void requireDecorationRuntimeBaseAgreement(
     const OutdoorLocation_MM7 &base, const EventRuntimeMapEntry &events,
     const DecorationTable &table, GameTitle title);
 
+/**
+ * @param fields                        Saved DECR list.
+ * @param rebuilt                       Decorations the native map load rebuilt, after `PrepareDecorations`.
+ * @param mapName                       File name of the loaded map.
+ * @param title                         Must be MM6.
+ * @return                              Copy of the saved decoration list. Throws if the map or count differs, or if
+ *                                      a slot's position, yaw, cog, event or trigger range differs from the rebuilt
+ *                                      native decoration.
+ */
+std::vector<LevelDecoration> stageDecorationRuntimeReplay(
+    const DecorationRuntimeSaveFields &fields, std::span<const LevelDecoration> rebuilt,
+    std::string_view mapName, GameTitle title);
+
 } // namespace mm6

@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "Engine/Snapshots/EntitySnapshots.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
@@ -246,6 +247,24 @@ void requireDecorationRuntimeBaseAgreement(
             throw std::runtime_error("MM6 DECR event ordinal differs from source preparation at slot " +
                                      std::to_string(index));
     }
+}
+
+std::vector<LevelDecoration> stageDecorationRuntimeReplay(
+    const DecorationRuntimeSaveFields &fields, std::span<const LevelDecoration> rebuilt,
+    std::string_view mapName, GameTitle title) {
+    if (title != GameTitle::MM6 || fields.mapName != mapName ||
+        rebuilt.size() != fields.decorations.size())
+        throw std::runtime_error("MM6 v5 decoration replay lacks an exact pre-event context");
+    for (std::size_t slot = 0; slot < rebuilt.size(); ++slot) {
+        const LevelDecoration &native = rebuilt[slot];
+        const LevelDecoration &saved = fields.decorations[slot];
+        if (native.vPosition != saved.vPosition ||
+            native._yawAngle != saved._yawAngle || native.uCog != saved.uCog ||
+            native.uEventID != saved.uEventID ||
+            native.uTriggerRange != saved.uTriggerRange)
+            throw std::runtime_error("MM6 v5 decoration source slot changed before DECR");
+    }
+    return fields.decorations;
 }
 
 } // namespace mm6

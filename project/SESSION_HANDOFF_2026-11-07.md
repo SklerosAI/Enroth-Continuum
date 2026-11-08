@@ -329,16 +329,19 @@ commit as you go) and exact file ownership.
 | MM6 give-item (opcode 41) via the MM6 item generator and drop-item (opcode 34), plus an MM6 portrait sparkle icon mapping | S merged | new MM6 item generator files, interpreter dispatch |
 | MM8: its own data inventory, engine adapter and save checks, per plan §18 "After MM6" | MM6 and MM7 work above finished (owner instruction) | the reserved `mm8-isolated` worktree on `mm8-isolated-runtime` |
 
-## Worktrees (11 registered, cap is 10)
+## Worktrees
 
-Main checkout, `mm7-frozen` (`mm7-isolated-runtime`), `mm8-isolated`
-(`mm8-isolated-runtime`, fully merged, removal was refused by the safety
-classifier and needs explicit owner approval), the seven lane worktrees above,
-and Codex's `mm7-save-atomic` (branch `codex/mm7-artifact-cap`, clean,
-integrated by subject). Codex was asked to reuse or retire it. Seven older
-worktrees were retired this session after confirming their commits were
-integrated. Their ignored private files are archived under
-`local-game-data/worktree-archive-2026-11-07/`.
+Check live state with `git worktree list` and `python3 tools/check_worktree_budget.py`.
+The script allows 15 since `1172e1197`, but the owner told this session to
+keep 10, so lanes stay at 10 or fewer until the owner confirms the change.
+Protected and reserved: the main checkout, `mm7-frozen`
+(`mm7-isolated-runtime`) and `mm8-isolated` (`mm8-isolated-runtime`, fully
+merged, its removal was refused by the safety classifier). Codex keeps
+`mm7-save-atomic` and `mm7-combat-fixes`. Lane worktrees are reused for new
+lanes by switching to a new branch from the integration head, and retired with
+`git worktree remove --force` once their commits are merged and they hold no
+private ignored files. Ignored private files from retired worktrees are
+archived under `local-game-data/worktree-archive-2026-11-07/`.
 
 ## Next steps for whoever resumes
 

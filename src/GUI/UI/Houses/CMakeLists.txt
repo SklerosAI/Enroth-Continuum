@@ -7,6 +7,7 @@ set(GUI_UI_HOUSES_SOURCES
         Transport.cpp
         MM6House.cpp
         MM6ShopPrices.cpp
+        MM6ShopStock.cpp
         MM6Temple.cpp
         MM6TransportRules.cpp
         Bank.cpp
@@ -23,6 +24,7 @@ set(GUI_UI_HOUSES_HEADERS
         Transport.h
         MM6House.h
         MM6ShopPrices.h
+        MM6ShopStock.h
         MM6Temple.h
         MM6TransportRules.h
         VendorRefreshMod.h
@@ -39,7 +41,7 @@ target_check_style(gui_ui_houses)
 target_link_libraries(gui_ui_houses PUBLIC engine_graphics utility)
 
 if(OE_BUILD_TESTS)
-    add_library(test_gui_ui_houses_transport OBJECT Tests/MM6ShopPrices_ut.cpp Tests/MM6Temple_ut.cpp Tests/MM6TransportRules_ut.cpp Tests/VendorRefreshMod_ut.cpp)
+    add_library(test_gui_ui_houses_transport OBJECT Tests/MM6ShopPrices_ut.cpp Tests/MM6ShopStock_ut.cpp Tests/MM6Temple_ut.cpp Tests/MM6TransportRules_ut.cpp Tests/VendorRefreshMod_ut.cpp)
     target_link_libraries(test_gui_ui_houses_transport PUBLIC testing_unit gui_ui_houses)
     target_check_style(test_gui_ui_houses_transport)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_gui_ui_houses_transport)

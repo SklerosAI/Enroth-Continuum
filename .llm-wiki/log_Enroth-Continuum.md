@@ -2744,3 +2744,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Rebased and fast-forwarded the MM7 PCX guard, detached save preflight and shared chest reconstruction guard into the MM6 integration tree. The A/B combined GameTest and UnitTest build passed, along with 22/22 MM7 validator/atomic tests, 5/5 PCX/chest units and a disposable MM7 writer plus fresh-process reader.
 - The seven-child MM6 first-map chain, three full-retry fault children, paperdoll and normal Save/Load children, and MM7 control all passed under network denial. The MM7 preflight remains detached from production SaveLoad pending full semantics, a native profile root and live save/load ownership decisions.
+
+## [2026-11-07] update | MM6 docs reconciled with merged F4b and F4d source
+- by: T-Burton-ND via claude-code
+- Read source and tests at integration `ef8f0a3ee` and rewrote the MM6 checklist engine table, adding inventory, combat, transport, transitions and death rows and a dated register of merged slices with the test behind each. Production load, save arming, transition and death wiring and F5a stay unchecked.
+- Added dated status lines to 16 packets whose claims contradicted source, among them the variable guard, condition variables, transport manifest, later-outdoor world-load scope, manual services claims and the v5 attempt packet. History was kept as written.
+- Rewrote the MM6 resume runbook and plan section 18.1 checkpoint and budget paragraphs for the current F4b state, then refreshed the wiki resume pointer and index. Documentation only, nothing was built or run.

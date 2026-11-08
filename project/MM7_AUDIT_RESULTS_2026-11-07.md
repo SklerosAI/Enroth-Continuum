@@ -101,15 +101,27 @@ Defects, inherited unless noted:
    Weapons never break, and an unarmed target reaches `randomSample` on an
    empty list, which asserts. Monsters 57, 80, 112, 207, 212. Upstream
    regression from `3d3802a8f`.
+   **Fixed on `codex/mm7-combat-fixes`, pending integration:** MM7 now selects
+   eligible weapons and returns safely for an unarmed target. The old MM6 path
+   remains with Claude's MM6 rule lane.
 2. Divine Intervention recovery (`CastSpellInfo.cpp:2679`) sets
    `5_ticks * spell_level` instead of subtracting it from the base, so higher
    skill lengthens recovery. Changed in `fdce3b207`.
+   **Fixed on `codex/mm7-combat-fixes`, pending integration:** MM7 subtracts
+   the skill reduction from its base recovery. The MM6 branch is unchanged.
 3. Lich immunity to Mind and Body never fires (`Character.cpp:1258-1264`
    compares a `DamageType` cast to `Attribute`). The UI still shows immunity.
+   **Fixed on `codex/mm7-combat-fixes`, pending integration:** MM7 liches take
+   zero Mind and Body damage. Spirit immunity remains unverified.
 4. Divine Restoration resets conditions on the drinker instead of the target
    (`Character.cpp:3561`).
+   **Fixed on `codex/mm7-combat-fixes`, pending integration:** The potion clears
+   the chosen target's removable conditions while preserving the drinker's.
 5. Archer monsters never fire fire arrows: the parser has no case for that
    projectile token (`Monsters.cpp:151`). Upstream #2144.
+   **Fixed on `codex/mm7-combat-fixes`, pending integration:** `FireAr` now
+   decodes as a flaming arrow. A live archer firing check remains open.
+
 6. Monster spell and projectile damage use the wrong ability slot
    (`Actor.cpp:274, 354`, `a4` ignored). Rows 18, 23, 24, 35, 36, 211-213.
    Meteor Shower always centres on the party.
@@ -154,10 +166,14 @@ Defects, inherited unless noted:
 15. Stale or not applicable: #1485 (exists as `regen_stacking`), #1246, part
     of #496. #2982, #2278 and #2268 need a run.
 
-Tests that would close them: Break Weapon against armed and unarmed parties,
-Divine Intervention recovery, a lich hit by Mind and Body spells, Divine
-Restoration on a non-active cursed character, archer projectile IDs, rows 24
-and 35 slot-2 spells, a golem death explosion, multi-target melee, Fate on a
+The five defect tests failed on the preceding source. Six focused MM7 GameTests
+passed after the fixes, including the unarmed Break Weapon control. Three MM6
+combat children passed in separate processes. The full MM6 first-map gate and
+MM7 control remain pending for this branch.
+
+The branch GameTests cover the first five test targets above. Remaining tests
+that would close open defects: rows 24 and 35 slot-2 spells, a golem death
+explosion, multi-target melee, Fate on a
 character and on a monster, a level-7 chest artifact flag, the event 532
 pedestal, Spirit Lash out of range, a cancelled scroll, Squire and Sage
 effects, the two teacher requirements, zombie clearing paths, and #2502.

@@ -2763,3 +2763,9 @@ Chronological record of wiki activity.
 - The earlier pending first-map claim is superseded: on the combined combat branch, the full MM6 first-map gate passed its seven-child chain, retry faults, paperdoll, normal Save/Load, production load/resave and MM7 controls under network denial.
 - The full MM7 headless suite passed 467 tests with 2 skipped out of 469. The integrated monster second-spell ability fix required stable retraces of two public JSON fixtures; their sound, map and 24-meteor assertions remain, and the corrected slot-two damage still exceeds the independent 650-point party damage floor.
 - Branch integration, live flaming archer observation, graphical acceptance and installed helper update remain open. The MM6 legacy unarmed Break Weapon path is unchanged.
+
+## [2026-11-07] verify | MM7 Energy and Day of the Gods audit fixes
+- by: T-Burton-ND via codex
+- MM7 `Ener` now parses as Energy in both monster attack fields, and event Day of the Gods Master and Grandmaster powers match ordinary casts while durations stay unchanged. Synthetic pre-fix failures and focused green/MM6 controls established both corrections.
+- A controlled Energy-only source reversal made `Issues.Issue403_970` pass where corrected Energy failed. The public trace retrace changed only RNG checkpoints and was byte-stable on repeat; the map transition and four Armor Class assertions remain.
+- On the combined candidate, the network-denied MM6 first-map gate passed and the full MM7 headless suite passed 469 tests with 2 skipped out of 471. The Day of the Gods candidate awaits integration; graphical and installed-helper checks remain open.

@@ -1,6 +1,7 @@
 #include "MM6V5FirstMapLoadAttempt.h"
 
 #include <algorithm>
+#include <cassert>
 #include <deque>
 #include <memory>
 #include <stdexcept>
@@ -19,7 +20,9 @@
 #include "Engine/Tables/ItemTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
+#include "Engine/Timer.h"
 
+#include "Library/Logger/Logger.h"
 #include "Library/Platform/Application/PlatformApplication.h"
 
 #include "MM6ChestLiveOwnerAdapter.h"
@@ -30,6 +33,7 @@
 #include "MM6V5DecorationRuntimeFields.h"
 #include "MM6V5SpriteRuntimeFields.h"
 #include "MM6V5FirstMapLoadPreflight.h"
+#include "MM6V5LiveSaveCapture.h"
 #include "MM6V5FullSessionPreflight.h"
 
 namespace mm6 {
@@ -155,6 +159,13 @@ void V5FirstMapLoadAttempt::restoreRngBeforeEvents(GameTitle title) {
     _phase = Phase::RngRestored;
 }
 
+void V5FirstMapLoadAttempt::requirePostWorldAgreement(GameTitle title) {
+    if (title != GameTitle::MM6 || _phase != Phase::RngRestored)
+        throw std::runtime_error("MM6 first-map post-world check is out of phase");
+    requireV5FirstMapPostWorldAgreement(*_staged, _staged->v4.v3.actorMap.activeMap.delta.actors.size());
+    _phase = Phase::PostWorldAgreed;
+}
+
 bool V5FirstMapLoadAttempt::chestOwnersUnchanged() const {
     const auto &chest = _staged->v4.saved.v3.raw.chest;
     return pOutdoor && uCurrentlyLoadedLevelType == LEVEL_OUTDOOR &&
@@ -162,6 +173,31 @@ bool V5FirstMapLoadAttempt::chestOwnersUnchanged() const {
            chestTitleState().ready &&
            chestTitleState().lcgState == chest.lcgState &&
            chestTitleState().generatedArtifactFlags == chest.generatedArtifactFlags;
+}
+
+bool releaseV5FirstMapLoadAttempt() {
+    assert(engine && engine->_mm6FirstMapLoadAttempt);
+    try {
+        engine->_mm6FirstMapLoadAttempt->requirePostWorldAgreement(engine->gameTitle());
+    } catch (const std::exception &error) {
+        MM_ERROR("MM6 first-map load refused before first input: {}", error.what());
+        abandonV5FirstMapLoadAttempt();
+        return false;
+    }
+    engine->_mm6FirstMapLoadAttempt.reset();
+    return true;
+}
+
+bool abandonV5FirstMapLoadAttempt() noexcept {
+    if (!engine || !engine->_mm6FirstMapLoadAttempt)
+        return false;
+    engine->_mm6FirstMapLoadAttempt.reset();
+    engine->_pendingTransition.reset();
+    engineFlags &= ~(ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE | ENGINE_SKIP_NEXT_USER_INPUT);
+    gameTimer->setPaused(true);
+    pPartyActionQueue->uNumActions = 0;
+    uGameState = GAME_STATE_GAME_QUITTING_TO_MAIN_MENU;
+    return true;
 }
 
 } // namespace mm6

@@ -42,6 +42,8 @@ FAULT_CHILDREN = [
      "ENROTH_MM6_V5_ABANDON_ENABLE", "strict-v5-abandon"),
     ("MM6V5FirstMapAbandonHeadless.DISABLED_PreEventFaultThenFullReloadAndInput",
      "ENROTH_MM6_V5_ABANDON_ENABLE", "strict-v5-abandon"),
+    ("MM6V5FirstMapAbandonHeadless.DISABLED_PostWorldMismatchThenFullReloadAndInput",
+     "ENROTH_MM6_V5_ABANDON_ENABLE", "strict-v5-abandon"),
 ]
 PAPERDOLL_CHILDREN = [
     ("MM6V5PaperdollHeadless.DISABLED_BackpackItemStaysEquippedThroughInventoryCapture",
@@ -143,7 +145,7 @@ def main():
     if not run_child(MM7_CONTROL, None, None, ROOT,
                      paths["MM7_DATA_PATH"]):
         return 1
-    print("PASS: seven-child MM6 chain, both full-retry fault children, the paperdoll child, and MM7 control")
+    print("PASS: seven-child MM6 chain, all full-retry fault children, the paperdoll child, and MM7 control")
     return 0
 
 

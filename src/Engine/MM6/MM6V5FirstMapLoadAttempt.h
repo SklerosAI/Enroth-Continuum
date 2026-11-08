@@ -18,9 +18,9 @@ struct LevelDecoration;
 namespace mm6 {
 
 /**
- * Engine-owned first-map v5 load context. It owns the detached graph and replays EVRT, actors, generated NPCs,
- * decorations, sprites, the chest handoff and RNGS in native load order. No normal SaveLoad route may construct this
- * context yet.
+ * Engine-owned first-map v5 load context. It owns the detached graph, replays EVRT, actors, generated NPCs,
+ * decorations, sprites, the chest handoff and RNGS in native load order, and checks the prepared world before the
+ * first input frame. It lives for one load. No normal SaveLoad route may construct this context yet.
  */
 class V5FirstMapLoadAttempt {
  public:
@@ -32,7 +32,7 @@ class V5FirstMapLoadAttempt {
         ChestApplied,
         GeneratedNpcsKept,
         RngRestored,
-        Abandoned
+        PostWorldAgreed
     };
 
     V5FirstMapLoadAttempt(std::unique_ptr<V5FullSessionPreflight> staged,
@@ -51,7 +51,7 @@ class V5FirstMapLoadAttempt {
                                  std::span<LevelDecoration> decorations,
                                  GameTitle title);
     bool eventRestored() const {
-        return _phase >= Phase::EventRestored && _phase != Phase::Abandoned;
+        return _phase >= Phase::EventRestored;
     }
 
     /**
@@ -77,7 +77,14 @@ class V5FirstMapLoadAttempt {
      * @param title                     Must be MM6.
      */
     void restoreRngBeforeEvents(GameTitle title);
-    void abandon() noexcept { _phase = Phase::Abandoned; }
+
+    /**
+     * Checks every represented owner of the prepared world against the staged graph. Called once, after map events
+     * and before the first input frame. Throws on any difference.
+     *
+     * @param title                     Must be MM6.
+     */
+    void requirePostWorldAgreement(GameTitle title);
 
  private:
     bool chestOwnersUnchanged() const;
@@ -85,5 +92,21 @@ class V5FirstMapLoadAttempt {
     std::unique_ptr<V5FullSessionPreflight> _staged;
     Phase _phase = Phase::Detached;
 };
+
+/**
+ * Checks the world the engine's first-map load attempt prepared against its staged owners, then drops the attempt.
+ * Called after world preparation and before the first input frame. A refused check abandons the load instead.
+ *
+ * @return                              Whether the prepared world was admitted.
+ */
+bool releaseV5FirstMapLoadAttempt();
+
+/**
+ * Drops the engine's failed first-map load attempt and sends the game loop back to the main menu before any input,
+ * world update or save. This is not a rollback, owners published before the failure stay partial.
+ *
+ * @return                              Whether an attempt was in flight.
+ */
+bool abandonV5FirstMapLoadAttempt() noexcept;
 
 } // namespace mm6

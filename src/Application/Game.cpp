@@ -52,7 +52,7 @@
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
 #include "Engine/MM6/MM6PreEventCheckpointForTest.h"
-#include "Engine/MM6/MM6V5FirstMapLoadAbandonForTest.h"
+#include "Engine/MM6/MM6V5FirstMapLoadAttempt.h"
 #include "Engine/Tables/MapTable.h"
 
 #include "GUI/GUIButton.h"
@@ -1544,7 +1544,7 @@ void Game::gameLoop() {
         try {
             loadGame(std::exchange(engine->_pendingLoadFileName, {}));
         } catch (...) {
-            if (mm6::testing::abandonV5FirstMapLoadFailureForTest())
+            if (mm6::abandonV5FirstMapLoadAttempt())
                 return;
             throw;
         }
@@ -1565,13 +1565,16 @@ void Game::gameLoop() {
         try {
             DoPrepareWorld(bLoading, 1);
         } catch (const mm6::testing::PreEventCheckpointAbortForTest &) {
+            mm6::abandonV5FirstMapLoadAttempt();
             uGameState = GAME_STATE_GAME_QUITTING_TO_MAIN_MENU;
             return;
         } catch (...) {
-            if (bLoading && mm6::testing::abandonV5FirstMapLoadFailureForTest())
+            if (bLoading && mm6::abandonV5FirstMapLoadAttempt())
                 return;
             throw;
         }
+        if (bLoading && engine->_mm6FirstMapLoadAttempt && !mm6::releaseV5FirstMapLoadAttempt())
+            return;
         if (bLoading && engine->gameTitle() == GameTitle::MM6 &&
             mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6) ==
                 mm6::testing::PostWorldAdmissionResult::AbortToMainMenu) {

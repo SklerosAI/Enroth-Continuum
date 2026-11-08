@@ -40,7 +40,6 @@
 #include "Engine/MM6/MM6V4SaveFields.h"
 #include "Engine/MM6/MM6V5FullSessionPreflight.h"
 #include "Engine/MM6/MM6V5FirstMapLoadPreflight.h"
-#include "Engine/MM6/MM6V5FirstMapLoadAbandonForTest.h"
 #include "Engine/MM6/MM6V5FirstMapLoadAttempt.h"
 #include "Engine/MM6/MM6V5LiveSaveCapture.h"
 #include "Engine/MM6/MM6V5ActorRuntimeFields.h"
@@ -139,13 +138,14 @@ mm6::CorePartyFields actionPartyFields(std::span<const std::uint8_t> bytes) {
 // movement step after every saved owner has passed the existing replay gate.
 enum class V5ReplayMode {
     AbortBeforeInput, FirstInput, SecondWrite,
-    FaultAfterPartyAssignment, FaultAtPreEvent, PlayerInput,
+    FaultAfterPartyAssignment, FaultAtPreEvent, FaultAtPostWorld, PlayerInput,
 };
 
 void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
                                       std::function<void()> playerInput = {}) {
     const bool faultMode = mode == V5ReplayMode::FaultAfterPartyAssignment ||
-                           mode == V5ReplayMode::FaultAtPreEvent;
+                           mode == V5ReplayMode::FaultAtPreEvent ||
+                           mode == V5ReplayMode::FaultAtPostWorld;
     const bool allowInput = mode == V5ReplayMode::FirstInput ||
                             mode == V5ReplayMode::SecondWrite ||
                             mode == V5ReplayMode::PlayerInput;
@@ -190,18 +190,17 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
     bool secondCandidateWritten = false;
     bool faultInjected = false;
     bool firstAbandoned = false;
+    bool firstPostWorldRan = false;
     bool secondLoadReached = false;
-    bool secondAbandoned = false;
     bool menuRouteSafe = false;
     bool retryingAfterFault = false;
+    bool attemptOutlivedLoad = true;
     std::string finalOwnerError;
     std::size_t expectedNativeActors = 0;
     std::size_t expectedActiveActors = 0;
     mm6::V5FullSessionPreflight *staged = nullptr;
     std::unique_ptr<mm6::testing::ScopedPreEventCheckpointForTest> checkpoint;
     std::unique_ptr<mm6::testing::ScopedPostWorldAdmissionForTest> postWorld;
-    std::unique_ptr<mm6::testing::ScopedV5FirstMapLoadAbandonForTest> abandon;
-    std::unique_ptr<mm6::testing::ScopedV5FirstMapLoadAbandonForTest> secondAbandon;
     auto loadCandidate = [&](std::string_view requested) {
             if (requested != mm6::NEW_GAME_AUTOSAVE_SLOT)
                 throw std::runtime_error("MM6 v5 post-action replay selected another menu route");
@@ -222,11 +221,6 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
                     std::move(candidateStage), candidate.filename().string(),
                     GameTitle::MM6);
             staged = &engine->_mm6FirstMapLoadAttempt->staged();
-            if (faultMode) {
-                auto &abortScope = retryingAfterFault ? secondAbandon : abandon;
-                abortScope = std::make_unique<mm6::testing::ScopedV5FirstMapLoadAbandonForTest>(
-                    *staged, GameTitle::MM6);
-            }
             expectedNativeActors = staged->v4.v3.actorMap.activeMap.delta.actors.size();
             expectedActiveActors = staged->actors.actors.size();
 
@@ -244,15 +238,17 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
                         faultInjected = true;
                         throw std::runtime_error("synthetic MM6 pre-event replay fault");
                     }
+                    if (mode == V5ReplayMode::FaultAtPostWorld && !retryingAfterFault) {
+                        faultInjected = true;
+                        pParty->uNumGold += 1;
+                    }
                 });
             postWorld = std::make_unique<mm6::testing::ScopedPostWorldAdmissionForTest>(
                 GameTitle::MM6, mm6::testing::FailClosedDecisionTag{}, [&] {
                     postWorldRan = true;
                     try {
                         if (!checkpoint->reachedMapLoad() || checkpoint->reachedInput() ||
-                            !engine->_mm6FirstMapLoadAttempt ||
-                            engine->_mm6FirstMapLoadAttempt->phase() !=
-                                mm6::V5FirstMapLoadAttempt::Phase::RngRestored ||
+                            engine->_mm6FirstMapLoadAttempt ||
                             pActors.size() != expectedActiveActors ||
                             expectedActiveActors < expectedNativeActors ||
                             engine->_currentLoadedMapId != pMapTable->GetMapInfo("oute3.odm") ||
@@ -260,8 +256,6 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
                             !gameTimer->isPaused() || engine->_pendingTransition ||
                             pPartyActionQueue->uNumActions != 0)
                             throw std::runtime_error("MM6 v5 post-action replay reached an unexpected world order");
-                        mm6::requireV5FirstMapPostWorldAgreement(
-                            *staged, expectedNativeActors);
                         const auto finalCore = mm6::captureCoreFields(*pParty, GameTitle::MM6);
                         if (finalCore.party.position == baselineParty.position ||
                             finalCore.party.viewYaw == baselineParty.viewYaw)
@@ -313,7 +307,8 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
     game.tick(allowInput ? 3 : 2);
     if (faultMode) {
         game.runGameRoutine([&] {
-            firstAbandoned = abandon && abandon->abandoned();
+            firstAbandoned = !engine->_mm6FirstMapLoadAttempt;
+            firstPostWorldRan = postWorldRan;
             menuRouteSafe = !engine->_pendingTransition && gameTimer->isPaused() &&
                 pPartyActionQueue->uNumActions == 0 &&
                 !(engineFlags & (ENGINE_LOADING_SAVEGAME |
@@ -321,8 +316,6 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
                                  ENGINE_SKIP_NEXT_USER_INPUT));
             postWorld.reset();
             checkpoint.reset();
-            abandon.reset();
-            engine->_mm6FirstMapLoadAttempt.reset();
             staged = nullptr;
             retryingAfterFault = true;
             postWorldRan = false;
@@ -374,22 +367,21 @@ void runV5AfterActionFreshChildReplay(EngineController &game, V5ReplayMode mode,
         game.tick(2);
     }
     game.runGameRoutine([&] {
-        secondAbandoned = secondAbandon && secondAbandon->abandoned();
-        secondAbandon.reset();
-        abandon.reset();
         postWorld.reset();
         checkpoint.reset();
+        attemptOutlivedLoad = engine->_mm6FirstMapLoadAttempt != nullptr;
         engine->_mm6FirstMapLoadAttempt.reset();
         staged = nullptr;
         mm6::testing::setMainMenuAutosaveQuickLoadOverride(false);
         mm6::testing::setLoadGameOverride({});
     });
+    EXPECT_FALSE(attemptOutlivedLoad);
     if (faultMode) {
         EXPECT_TRUE(faultInjected);
         EXPECT_TRUE(firstAbandoned);
+        EXPECT_FALSE(firstPostWorldRan);
         EXPECT_TRUE(menuRouteSafe);
         EXPECT_TRUE(secondLoadReached);
-        EXPECT_FALSE(secondAbandoned);
         EXPECT_TRUE(selected);
         EXPECT_TRUE(checkpointRan);
         EXPECT_TRUE(freshMapBeforeReplay);
@@ -443,6 +435,10 @@ GAME_TEST(MM6V5FirstMapAbandonHeadless, DISABLED_PartialAssignmentThenFullReload
 
 GAME_TEST(MM6V5FirstMapAbandonHeadless, DISABLED_PreEventFaultThenFullReloadAndInput) {
     runV5AfterActionFreshChildReplay(game, V5ReplayMode::FaultAtPreEvent);
+}
+
+GAME_TEST(MM6V5FirstMapAbandonHeadless, DISABLED_PostWorldMismatchThenFullReloadAndInput) {
+    runV5AfterActionFreshChildReplay(game, V5ReplayMode::FaultAtPostWorld);
 }
 
 // Equipping a backpack item made the MM6 inventory capture refuse the session.

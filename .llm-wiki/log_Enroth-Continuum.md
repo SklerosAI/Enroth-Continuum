@@ -2724,7 +2724,13 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Bounded saved Party alignment, arena state, character class, sex, portrait/voice, spellbook page and quick spell, plus active beacon map indices in the detached MM7 preflight. Eleven focused tests passed; a fresh disposable writer and reader passed in separate processes.
 - Peer review found no source-proven false reject for the fresh fixture. Actor/NPC references, stale chest records, archive identity and legacy-save compatibility remain open before atomic-save validator admission.
+
 ## [2026-11-07] verify | MM7 actor preflight and chest reconstruction
 - by: T-Burton-ND via codex
 - The detached MM7 preflight now bounds selected actor IDs, names and hostility groups in both map-delta kinds. Thirteen focused tests and a fresh disposable writer/reader passed under network denial.
 - Chest reconstruction now filters invalid raw IDs while retaining valid random-loot markers and checks active grid references before item access. A synthetic chest unit, MM6 first-map chest route and fresh disposable MM7 writer/reader passed. The candidate remains detached pending full semantic validation and normal SaveLoad wiring.
+
+## [2026-11-07] update | MM6 transition picture indexing
+- by: T-Burton-ND via codex
+- An accepted-original-executable call-site check superseded the first C1 icon-index assumption: MM6 picture IDs 1–8 select the eight-entry icon table after subtracting one, and zero is a no-icon sentinel.
+- Corrected the detached dialog's icon selection and first-map expectation. Two focused units and the isolated headless first-map dialog test passed again; Yes remains unavailable until the pre-map-leave transaction exists.

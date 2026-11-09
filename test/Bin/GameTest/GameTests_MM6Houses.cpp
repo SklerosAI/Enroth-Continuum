@@ -73,9 +73,13 @@ static void enterThroughDoor(EngineController &game, Vec3f position, int viewYaw
 }
 
 static void waitUntilHour(EngineController &game, int hour) {
-    // The party stands still while game time passes.
-    while (pParty->GetPlayingTime().toCivilTime().hour != hour)
+    // The party stands still while game time passes. A frame is 3 game seconds, so a day is 28800 frames.
+    for (int frame = 0; frame < 28800; ++frame) {
+        if (pParty->GetPlayingTime().toCivilTime().hour == hour)
+            return;
         game.tick();
+    }
+    FAIL() << "Game time didn't reach " << hour << ":00 within a day";
 }
 
 static std::vector<int> setQuestBits() {

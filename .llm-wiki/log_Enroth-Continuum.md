@@ -2870,3 +2870,9 @@ Chronological record of wiki activity.
 - Routed MM6 cloaks to retained specific or generic art at native item-table positions, behind the base figure. The MM7 cloak and collar path remains intact.
 - The integrated MM6 character suite passed 13/13, including resource and hit-area checks for specific and generic cloaks; the MM7 inventory control passed 1/1. A hidden cloak capture passed 1/1 with changed paperdoll pixels and no visible window or focus change in 124 monitor samples. Temporary PNGs stayed outside Git.
 - Inherited panel art, original alignment and visible input/save acceptance remain open.
+
+## [2026-11-09] verify | MM6 right-panel border route
+- by: T-Burton-ND via codex
+- Removed the absent MM7-only neutral border request from MM6; character, house, dialogue and transition consumers skip its empty pointer while their existing backgrounds remain.
+- Integrated focused MM6 character/house checks passed 14/14, the MM7 inventory control passed 1/1, and the hidden capture passed 1/1 over 87 monitor samples without a visible window or focus change. Its log no longer requested that border.
+- Other UI icon requests, original alignment and visible input/save acceptance remain open.

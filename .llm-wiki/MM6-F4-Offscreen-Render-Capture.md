@@ -25,3 +25,11 @@ The retained MM6 archive uses `wtrtyl` and `wtrdr*`, without MM7 `HDWTR` frames.
 A fresh first-map capture passed 1/1 over 105 samples without a visible window or focus change. The current pale ground differs from that earlier missing-water patch: the diagnostic begins in month 0, the current outdoor loader applies seasonal terrain, and the current season map selects snow for grass in months 11, 0 and 1. A temporary terrain-only image showed pale ground before buildings or HUD. Winter remapping is therefore the likely source of these pixels, but per-pixel tile ownership and original MM6 seasonal behavior remain unproved. No runtime change was made. A later isolated diagnostic's monitor saw a final frontmost-app change, so further graphical runs stopped and temporary files were removed.
 
 On 2026-11-09 the opt-in hidden test gained a character-window capture. A macOS SDL background-app hint is set before platform initialization for this mode. The integrated fresh-process run passed 1/1; a local monitor saw zero visible game windows and no frontmost-app change across 199 samples. Isolated rendering produced pixels inside all five proposed MM6 button rectangles, and switching tabs changed the strip. The capture remains private and temporary. Inherited paperdoll and strip art requests still miss the MM6 archive, so this is a diagnostic rather than F5a visual acceptance; normal New Game input and original button coordinates remain unverified.
+
+The later MM6-specific body/arm route supersedes the missing-base-paperdoll
+part of that diagnosis. All twelve face layouts and fixed hand art resolve in
+focused checks (4/4), and a fresh hidden capture passed 1/1. Its remaining
+character-screen warning concerns an inherited panel resource. A local pixel
+comparison changed the intended right panel while leaving the left panel
+unchanged. Equipped-item layers and original alignment still need review;
+the temporary PNGs remain private. See the [public capture packet](../project/MM6_F4_OFFSCREEN_FRAME_CAPTURE.md).

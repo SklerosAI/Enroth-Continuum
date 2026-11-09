@@ -37,3 +37,12 @@ stats changes the strip. The integrated fresh-process run passed 1/1 with no
 sampled visible window or focus change. This does not establish original
 coordinates or complete visual correctness: inherited MM7 paperdoll and strip
 requests still name art absent from MM6. See the [offscreen packet](../project/MM6_F4_OFFSCREEN_FRAME_CAPTURE.md).
+
+The base paperdoll claim above is superseded by the 2026-11-09 title-specific
+body and arm route. Its twelve face layouts follow the public
+[MMExtension MM6 paperdoll table](https://github.com/GrayFace/MMExtension/blob/9d73c0ff0482bd231ea522f752f4fe9b26640925/Misc/Paper%20Doll/mm6/PaperDol.txt).
+The focused MM6 character checks passed 4/4 and the MM7 inventory control
+passed 1/1. The hidden character capture passed 1/1 and changed only the
+right-panel pixels compared with the earlier local capture. A separate
+inherited panel lookup still fails; equipped-item layers and original tab
+placement have not been accepted. See the [updated offscreen packet](../project/MM6_F4_OFFSCREEN_FRAME_CAPTURE.md).

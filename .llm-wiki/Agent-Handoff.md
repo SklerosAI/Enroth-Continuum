@@ -31,8 +31,10 @@ skipped two and left three disabled tests unrun on 2026-11-09. The owner tempora
 consolidating committed work and reducing worktrees before new feature work.
 The MM6 character record tabs now pass three headless checks and the full
 25-child first-map gate. An isolated hidden render confirms pixels in all five
-proposed button rectangles, but missing inherited paperdoll/strip art and
-visual placement remain open for F5a. The summoner-preflight checkpoint branch
+proposed button rectangles. A later MM6-specific base-paperdoll route passed
+four focused character checks, one MM7 inventory control and a hidden capture.
+Equipped-item layers, a separate inherited panel lookup and visual placement
+remain open for F5a. The summoner-preflight checkpoint branch
 retains its ref. The arbiter, endings,
 messenger, Alice house and pickup checks now pass as five MM7 campaign
 GameTests. The raid case remains disabled.

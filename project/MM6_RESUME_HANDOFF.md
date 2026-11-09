@@ -12,6 +12,13 @@ specific art names. Three headless checks cover archive-backed icon names, key a
 navigation, and the adjacent-frame key race. The full first-map gate passed
 25/25 after integration. Exact visual placement remains for F5a.
 
+The later MM6 base paperdoll slice resolves body, arm and hand art for all
+twelve faces. Four focused character checks and one MM7 inventory control
+passed; a fresh hidden character capture passed 1/1. Equipped-item layers,
+the remaining inherited panel resource, exact tab placement and visible
+input/save verification remain F5a work. This does not change the 25-child
+first-map result or open a normal New Game route.
+
 ## Start from the right checkout
 
 - Use the `master` integration checkout reported by `git worktree list`.
@@ -59,8 +66,9 @@ What does not run yet:
 
 - **Production New Game save, quicksave, quickload, autosave, cross-map
   travel and saves of any map other than the first** stay refused.
-- **F5a** has a hidden character-window diagnostic, but missing inherited
-  paperdoll/strip art and visible opening remain open.
+- **F5a** has a hidden character-window diagnostic with title-specific base
+  body and arms. Equipped-item layers, a separate inherited panel resource,
+  exact placement and visible opening remain open.
 
 Relevant source entry points:
 

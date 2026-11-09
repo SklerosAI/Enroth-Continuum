@@ -1038,8 +1038,9 @@ void CharacterUI_DrawPaperdoll(Character *player) {
     } else {
         // bow
         if (InventoryEntry bow = player->inventory.entry(ITEM_SLOT_BOW)) {
-            item_X = pPaperdoll_BodyX + paperdoll_Weapon[bodyType][2][0] - pItemTable->items[bow->itemId].paperdollAnchorOffset.x;
-            item_Y = pPaperdoll_BodyY + paperdoll_Weapon[bodyType][2][1] - pItemTable->items[bow->itemId].paperdollAnchorOffset.y;
+            const Pointi position = pItemTable->items[bow->itemId].paperdollAnchorOffset;
+            item_X = isMM6 ? position.x : pPaperdoll_BodyX + paperdoll_Weapon[bodyType][2][0] - position.x;
+            item_Y = isMM6 ? position.y : pPaperdoll_BodyY + paperdoll_Weapon[bodyType][2][1] - position.y;
 
             CharacterUI_DrawItem(item_X, item_Y, bow.get(), bow.index(), nullptr, !bRingsShownInCharScreen);
         }
@@ -1205,11 +1206,12 @@ void CharacterUI_DrawPaperdoll(Character *player) {
 
         // main hand's item
         if (itemMainHand) {
-            item_X = pPaperdoll_BodyX + paperdoll_Weapon[bodyType][1][0] - pItemTable->items[itemMainHand->itemId].paperdollAnchorOffset.x;
-            item_Y = pPaperdoll_BodyY + paperdoll_Weapon[bodyType][1][1] - pItemTable->items[itemMainHand->itemId].paperdollAnchorOffset.y;
+            const Pointi position = pItemTable->items[itemMainHand->itemId].paperdollAnchorOffset;
+            item_X = isMM6 ? position.x : pPaperdoll_BodyX + paperdoll_Weapon[bodyType][1][0] - position.x;
+            item_Y = isMM6 ? position.y : pPaperdoll_BodyY + paperdoll_Weapon[bodyType][1][1] - position.y;
 
             GraphicsImage *texture = nullptr;
-            if (itemMainHand->itemId == ITEM_BLASTER)
+            if (!isMM6 && itemMainHand->itemId == ITEM_BLASTER)
                 texture = assets->getIcon("item64v1");
 
             CharacterUI_DrawItem(item_X, item_Y, itemMainHand.get(), itemMainHand.index(), texture, !bRingsShownInCharScreen);
@@ -1217,34 +1219,15 @@ void CharacterUI_DrawPaperdoll(Character *player) {
 
         // offhand's item
         if (itemOffHand) {
-            item_X = pPaperdoll_BodyX + paperdoll_Weapon[bodyType][0][0] - pItemTable->items[itemOffHand->itemId].paperdollAnchorOffset.x;
-            item_Y = pPaperdoll_BodyY + paperdoll_Weapon[bodyType][0][1] - pItemTable->items[itemOffHand->itemId].paperdollAnchorOffset.y;
-
-            /*
-             * MM6 artifacts.
-             * These cases should never execute in MM7 as we have spell books in these positions.
-             * Also MM6 doesn't have variable size paperdoll's so cordinates need to account pPaperdoll_BodyX/Y.
-             */
-            if (itemOffHand->skill() == SKILL_DAGGER || itemOffHand->skill() == SKILL_SWORD) {
-                switch (itemOffHand->itemId) {
-                    case ITEM_SPELLBOOK_TORCH_LIGHT: // Mordred
-                        item_X = 596;
-                        item_Y = 86;
-                        assert(false);
-                        break;
-                    case ITEM_SPELLBOOK_FIRE_AURA: // Excalibur
-                        item_X = 596;
-                        item_Y = 28;
-                        assert(false);
-                        break;
-                    case ITEM_SPELLBOOK_JUMP: // Hades
-                        item_X = 595;
-                        item_Y = 33;
-                        assert(false);
-                        break;
-                    default:
-                        break;
-                }
+            const Pointi position = pItemTable->items[itemOffHand->itemId].paperdollAnchorOffset;
+            if (isMM6) {
+                const Pointi mm6Position = itemOffHand->skill() == SKILL_DAGGER || itemOffHand->skill() == SKILL_SWORD ?
+                    mm6::paperdollOffhandPosition(itemOffHand->GetIconName(), position) : position;
+                item_X = mm6Position.x;
+                item_Y = mm6Position.y;
+            } else {
+                item_X = pPaperdoll_BodyX + paperdoll_Weapon[bodyType][0][0] - position.x;
+                item_Y = pPaperdoll_BodyY + paperdoll_Weapon[bodyType][0][1] - position.y;
             }
 
             CharacterUI_DrawItem(item_X, item_Y, itemOffHand.get(), itemOffHand.index(), nullptr, !bRingsShownInCharScreen);

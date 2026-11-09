@@ -137,6 +137,43 @@ GAME_TEST(MM6CharacterScreenHeadless, ArmorLayersCoverMM6ItemsAndArchive) {
     EXPECT_GT(armorCount, 0);
 }
 
+GAME_TEST(MM6CharacterScreenHeadless, WeaponPositionsFitMM6Paperdoll) {
+    int itemCount = 0;
+    for (ItemId id : pItemTable->items.indices()) {
+        const ItemData &item = pItemTable->items[id];
+        if (item.iconName.empty() ||
+            (item.type != ITEM_TYPE_SINGLE_HANDED && item.type != ITEM_TYPE_TWO_HANDED &&
+             item.type != ITEM_TYPE_BOW && item.type != ITEM_TYPE_SHIELD && item.type != ITEM_TYPE_WAND))
+            continue;
+        ++itemCount;
+        SCOPED_TRACE(std::to_underlying(id));
+        EXPECT_GE(item.paperdollAnchorOffset.x, 468);
+        EXPECT_LT(item.paperdollAnchorOffset.x, 640);
+        EXPECT_GE(item.paperdollAnchorOffset.y, 0);
+        EXPECT_LT(item.paperdollAnchorOffset.y, 345);
+        const Sizei size = engine->resources()->iconSize(item.iconName);
+        EXPECT_GT(size.w, 0);
+        EXPECT_GT(size.h, 0);
+        if (item.type == ITEM_TYPE_SINGLE_HANDED && (item.skill == SKILL_DAGGER || item.skill == SKILL_SWORD)) {
+            bool hasPublicOffhandOffset = false;
+            for (const mm6::PaperdollOffhandArt &art : mm6::kPaperdollOffhandArt)
+                hasPublicOffhandOffset |= ascii::noCaseEquals(art.itemPicture, item.iconName);
+            EXPECT_TRUE(hasPublicOffhandOffset || ascii::noCaseEquals(item.iconName, "dagger1") ||
+                        ascii::noCaseEquals(item.iconName, "dagger2"));
+            const Pointi offhand = mm6::paperdollOffhandPosition(item.iconName, item.paperdollAnchorOffset);
+            EXPECT_GE(offhand.x, 468);
+            EXPECT_LT(offhand.x, 640);
+            EXPECT_GE(offhand.y, 0);
+            EXPECT_LT(offhand.y, 345);
+        }
+    }
+    EXPECT_GT(itemCount, 0);
+    EXPECT_EQ(mm6::paperdollOffhandPosition("ldagger3", {504, 60}), Pointi(596, 86));
+    EXPECT_EQ(mm6::paperdollOffhandPosition("brsword3", {503, 1}), Pointi(596, 28));
+    EXPECT_EQ(mm6::paperdollOffhandPosition("lsword5", {502, 8}), Pointi(595, 33));
+    EXPECT_EQ(mm6::paperdollOffhandPosition("dagger1", {504, 81}), Pointi(595, 107));
+}
+
 GAME_TEST(MM6CharacterScreenHeadless, TabsOpenByKeyAndButton) {
     // The character screen buttons had MM7 positions and placeholder-sized hit boxes, so clicking the right end of an MM6
     // button picture did nothing.
@@ -187,6 +224,75 @@ GAME_TEST(MM6CharacterScreenHeadless, EquippedArmorHasPaperdollHitArea) {
         for (int x = 468; x < 640; ++x)
             clickablePixels += equipmentHitMap.query({x, y}, -1) == armor.index();
     EXPECT_GT(clickablePixels, 100u);
+}
+
+GAME_TEST(MM6CharacterScreenHeadless, EquippedArtifactOffhandHasPaperdollHitArea) {
+    enterFirstMapFromNewGame(game);
+    constexpr ItemId swordId = static_cast<ItemId>(1);
+    constexpr ItemId artifactId = static_cast<ItemId>(400);
+    ASSERT_TRUE(ascii::noCaseEquals(pItemTable->items[swordId].iconName, "lsword1"));
+    ASSERT_TRUE(ascii::noCaseEquals(pItemTable->items[artifactId].iconName, "ldagger3"));
+    ASSERT_EQ(pItemTable->items[artifactId].skill, SKILL_DAGGER);
+    game.runGameRoutine([&] {
+        auto &inventory = pParty->pCharacters[0].inventory;
+        for (ItemSlot slot : {ITEM_SLOT_MAIN_HAND, ITEM_SLOT_OFF_HAND})
+            if (InventoryEntry old = inventory.entry(slot))
+                inventory.take(old);
+        inventory.equip(ITEM_SLOT_MAIN_HAND, Item(swordId));
+        inventory.equip(ITEM_SLOT_OFF_HAND, Item(artifactId));
+    });
+    auto &inventory = pParty->pCharacters[0].inventory;
+    const InventoryEntry sword = inventory.entry(ITEM_SLOT_MAIN_HAND);
+    const InventoryEntry artifact = inventory.entry(ITEM_SLOT_OFF_HAND);
+    ASSERT_TRUE(sword);
+    ASSERT_TRUE(artifact);
+
+    game.goToInventory(0);
+    game.tick();
+    size_t swordPixels = 0;
+    size_t artifactPixels = 0;
+    for (int y = 0; y < 300; ++y)
+        for (int x = 468; x < 640; ++x) {
+            const int hit = equipmentHitMap.query({x, y}, -1);
+            swordPixels += hit == sword.index();
+            artifactPixels += hit == artifact.index();
+        }
+    EXPECT_GT(swordPixels, 100u);
+    EXPECT_GT(artifactPixels, 100u);
+}
+
+GAME_TEST(MM6CharacterScreenHeadless, EquippedBowAndShieldHavePaperdollHitAreas) {
+    enterFirstMapFromNewGame(game);
+    constexpr ItemId bowId = static_cast<ItemId>(42);
+    constexpr ItemId shieldId = static_cast<ItemId>(79);
+    ASSERT_TRUE(ascii::noCaseEquals(pItemTable->items[bowId].iconName, "bow1"));
+    ASSERT_TRUE(ascii::noCaseEquals(pItemTable->items[shieldId].iconName, "lshield1"));
+    game.runGameRoutine([&] {
+        auto &inventory = pParty->pCharacters[0].inventory;
+        for (ItemSlot slot : {ITEM_SLOT_BOW, ITEM_SLOT_OFF_HAND})
+            if (InventoryEntry old = inventory.entry(slot))
+                inventory.take(old);
+        inventory.equip(ITEM_SLOT_BOW, Item(bowId));
+        inventory.equip(ITEM_SLOT_OFF_HAND, Item(shieldId));
+    });
+    auto &inventory = pParty->pCharacters[0].inventory;
+    const InventoryEntry bow = inventory.entry(ITEM_SLOT_BOW);
+    const InventoryEntry shield = inventory.entry(ITEM_SLOT_OFF_HAND);
+    ASSERT_TRUE(bow);
+    ASSERT_TRUE(shield);
+
+    game.goToInventory(0);
+    game.tick();
+    size_t bowPixels = 0;
+    size_t shieldPixels = 0;
+    for (int y = 0; y < 300; ++y)
+        for (int x = 468; x < 640; ++x) {
+            const int hit = equipmentHitMap.query({x, y}, -1);
+            bowPixels += hit == bow.index();
+            shieldPixels += hit == shield.index();
+        }
+    EXPECT_GT(bowPixels, 100u);
+    EXPECT_GT(shieldPixels, 100u);
 }
 
 GAME_TEST(MM6CharacterScreenHeadless, TabKeyRightAfterInventoryKey) {

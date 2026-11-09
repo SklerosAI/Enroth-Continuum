@@ -363,6 +363,34 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_FirstOutdoorCapture) {
             armorOutput.close();
         }
 
+        if (const char *weaponPath = std::getenv("MM6_OFFSCREEN_WEAPON_CAPTURE_PATH")) {
+            const std::string_view weaponDestination(weaponPath);
+            ASSERT_TRUE(weaponDestination.starts_with("/tmp/") ||
+                        weaponDestination.starts_with("/private/tmp/"));
+            ASSERT_TRUE(Path(weaponPath).isNormalized());
+            ASSERT_EQ(Path(weaponPath).extension(), ".png");
+
+            const RgbaImage beforeWeapons = captureCharacter();
+            game.runGameRoutine([] {
+                auto &inventory = pParty->activeCharacter().inventory;
+                for (ItemSlot slot : {ITEM_SLOT_MAIN_HAND, ITEM_SLOT_OFF_HAND})
+                    if (InventoryEntry old = inventory.entry(slot))
+                        inventory.take(old);
+                inventory.equip(ITEM_SLOT_MAIN_HAND, Item(static_cast<ItemId>(1)));
+                inventory.equip(ITEM_SLOT_OFF_HAND, Item(static_cast<ItemId>(400)));
+            });
+            const RgbaImage weaponFrame = captureCharacter();
+            ASSERT_EQ(weaponFrame.size(), beforeWeapons.size());
+            size_t changedPaperdollPixels = 0;
+            for (int y = 0; y < 300; ++y)
+                for (int x = 468; x < 640; ++x)
+                    changedPaperdollPixels += beforeWeapons[y][x] != weaponFrame[y][x];
+            EXPECT_GT(changedPaperdollPixels, 250u);
+            FileOutputStream weaponOutput{Path(weaponPath)};
+            weaponOutput.write(png::encode(weaponFrame));
+            weaponOutput.close();
+        }
+
         RgbaImage buttonsOnly;
         game.runGameRoutine([&] {
             render->ClearTarget(Color(0, 0, 0));

@@ -18,7 +18,7 @@ struct ItemData {
     std::string description = ""; // Item description that's shown on right click.
     int baseValue = 0; // Item's base value in gold coins.
     SpriteId spriteId = SPRITE_NULL; // Sprite id that's used when item is dropped.
-    Pointi paperdollAnchorOffset; // Paperdoll offset for the item sprite when equipped, relative to the item type-specific anchor point.
+    Pointi paperdollAnchorOffset; // MM7: offset from a type-specific anchor. MM6: absolute 640x480 paperdoll position from items.txt.
     ItemType type = ITEM_TYPE_INVALID; // Item type. Is never `ITEM_TYPE_INVALID` for items in the game.
     Skill skill = SKILL_INVALID; // Skill associated with the item. Is never `SKILL_INVALID` for items in the game.
     int damageDice = 0; // Damage dice, base AC for armor.

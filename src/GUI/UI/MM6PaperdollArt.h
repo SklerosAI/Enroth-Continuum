@@ -84,4 +84,30 @@ inline const PaperdollArmorArt *paperdollArmorArt(std::string_view itemPicture) 
     return nullptr;
 }
 
+struct PaperdollOffhandArt {
+    std::string_view itemPicture;
+    Pointi offset;
+};
+
+// Dual-wield item offsets from the pinned MM6 PaperDol.txt table. The second
+// hand anchor is (91, 26) from the paperdoll origin (481, 0).
+inline constexpr std::array<PaperdollOffhandArt, 20> kPaperdollOffhandArt = {{
+    {"lsword1", {19, 6}}, {"lsword2", {22, 8}}, {"lsword3", {26, 9}},
+    {"lsword4", {25, 3}}, {"lsword5", {23, 7}}, {"lswordR", {23, 7}},
+    {"brsword1", {25, 17}}, {"brsword2", {22, 15}}, {"brsword3", {24, 2}},
+    {"brswordA", {24, 2}}, {"cutlass1", {23, 3}}, {"cutlass2", {26, 13}},
+    {"cutlass3", {22, 13}}, {"dagger3", {26, 68}}, {"dagger4", {30, 83}},
+    {"dagger5", {24, 80}}, {"ldagger1", {24, 43}}, {"ldagger2", {26, 48}},
+    {"ldagger3", {24, 60}}, {"ldaggerA", {24, 60}},
+}};
+
+inline Pointi paperdollOffhandPosition(std::string_view itemPicture, Pointi itemTablePosition) {
+    for (const PaperdollOffhandArt &art : kPaperdollOffhandArt)
+        if (ascii::noCaseEquals(art.itemPicture, itemPicture))
+            return {481 + 91 + art.offset.x, 26 + art.offset.y};
+    // Two ordinary dagger pictures have no override in PaperDol.txt. Translate
+    // their original absolute Items.txt position by the same extra-hand anchor.
+    return itemTablePosition + Pointi(91, 26);
+}
+
 }  // namespace mm6

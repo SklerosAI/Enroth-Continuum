@@ -123,6 +123,31 @@ GAME_TEST(MM7NpcProfession, InvalidProfessionHasNoHireOption) {
     EXPECT_EQ(prepareScriptedNPCDialogueTopics(&npc).front(), DIALOGUE_13_hiring_related);
 }
 
+GAME_TEST(MM7NpcProfession, SquireAndSageApplyDocumentedSkillBonuses) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+
+    Character &character = pParty->pCharacters[0];
+    for (Skill skill : allArmorSkills())
+        character.setSkillValue(skill, CombinedSkillValue::novice(4));
+    for (Skill skill : allWeaponSkills())
+        character.setSkillValue(skill, CombinedSkillValue::novice(4));
+    character.setSkillValue(SKILL_ITEM_ID, CombinedSkillValue::novice(4));
+    character.setSkillValue(SKILL_MONSTER_ID, CombinedSkillValue::novice(4));
+
+    pParty->pHirelings[0].profession = NPC_PROFESSION_SQUIRE;
+    for (Skill skill : allArmorSkills())
+        EXPECT_EQ(character.getActualSkillValue(skill).level(), 6) << std::to_underlying(skill);
+    for (Skill skill : allWeaponSkills())
+        EXPECT_EQ(character.getActualSkillValue(skill).level(), 6) << std::to_underlying(skill);
+    EXPECT_EQ(character.getActualSkillValue(SKILL_ITEM_ID).level(), 4);
+    EXPECT_EQ(character.getActualSkillValue(SKILL_MONSTER_ID).level(), 4);
+
+    pParty->pHirelings[0].profession = NPC_PROFESSION_SAGE;
+    EXPECT_EQ(character.getActualSkillValue(SKILL_ITEM_ID).level(), 10);
+    EXPECT_EQ(character.getActualSkillValue(SKILL_MONSTER_ID).level(), 10);
+}
+
 GAME_TEST(MM6NpcProfession, ValidTitleAndHireOptionRemain) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
 

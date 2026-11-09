@@ -2649,10 +2649,25 @@ int Character::actualSkillLevel(Skill skill) const {
     int base = getSkillValue(skill).level();
 
     int bonus = 0;
+    if (engine->gameTitle() == GameTitle::MM7 && CheckHiredNPCSpeciality(NPC_PROFESSION_SQUIRE)) {
+        for (Skill squireSkill : allArmorSkills()) {
+            if (skill == squireSkill) {
+                bonus += 2;
+                break;
+            }
+        }
+        for (Skill squireSkill : allWeaponSkills()) {
+            if (skill == squireSkill) {
+                bonus += 2;
+                break;
+            }
+        }
+    }
+
     switch (skill) {
         case SKILL_MONSTER_ID: {
             if (CheckHiredNPCSpeciality(NPC_PROFESSION_HUNTER)) bonus = 6;
-            if (CheckHiredNPCSpeciality(NPC_PROFESSION_SAGE)) bonus += 6;
+            if (engine->gameTitle() == GameTitle::MM7 && CheckHiredNPCSpeciality(NPC_PROFESSION_SAGE)) bonus += 6;
             bonus += GetItemsBonus(ATTRIBUTE_SKILL_MONSTER_ID);
         } break;
 
@@ -2770,6 +2785,7 @@ int Character::actualSkillLevel(Skill skill) const {
         } break;
 
         case SKILL_ITEM_ID:
+            if (engine->gameTitle() == GameTitle::MM7 && CheckHiredNPCSpeciality(NPC_PROFESSION_SAGE)) bonus += 6;
             bonus += GetItemsBonus(ATTRIBUTE_SKILL_ITEM_ID);
             break;
         case SKILL_MEDITATION:

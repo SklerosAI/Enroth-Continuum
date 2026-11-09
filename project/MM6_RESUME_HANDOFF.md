@@ -7,6 +7,11 @@ order. Updated 2026-11-09 after production first-map load, map classification,
 house services and the character-tab crash guard reached integration. The lane-by-lane record is in
 [the session handoff](SESSION_HANDOFF_2026-11-07.md).
 
+The MM6 character record now uses its own five tab/exit buttons and title
+specific art names. Three headless checks cover archive-backed icon names, key and button
+navigation, and the adjacent-frame key race. The full first-map gate passed
+25/25 after integration. Exact visual placement remains for F5a.
+
 ## Start from the right checkout
 
 - Use the `mm6-mac-implementation` integration checkout reported by

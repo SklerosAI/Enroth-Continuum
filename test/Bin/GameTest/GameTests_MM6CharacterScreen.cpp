@@ -62,7 +62,7 @@ static void enterFirstMapFromNewGame(EngineController &game) {
 }
 
 static void clickCharacterScreenButton(EngineController &game, GUIButton *button) {
-    game.pressAndReleaseButton(BUTTON_LEFT, button->rect.topLeft() + Pointi(56, 16)); // The right end of the oval in the 64x32 button picture.
+    game.pressAndReleaseButton(BUTTON_LEFT, button->rect.topLeft() + Pointi(56, 16)); // The right side of the proposed button rectangle.
     game.tick();
 }
 

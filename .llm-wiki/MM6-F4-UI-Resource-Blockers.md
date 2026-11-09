@@ -23,3 +23,10 @@ The MM6 sprite-frame row layout has 16-bit flags, light radius at offset 46, pal
 The separate `GameTests_MM6DrawGUI.cpp` fixture is disabled by default and must run alone in a fresh process. It stages first-map deltas and a deterministic MM6 chest owner in memory, enters the scoped first outdoor world, and calls `Engine::DrawGUI` through the null renderer. Its initial failure was a test-only missing outer-loop portrait-load call; adding `GameUI_LoadPlayerPortraitsAndVoices` in the same order as `Game::gameLoop` resolved the null portrait texture. The monitored isolated case passed **1/1** across 116 samples, with zero onscreen windows and no focus change. This validates completion of the active ordinary first-map draw route, not rendered pixels, input, secondary screens, or the normal MM6 new-game guard.
 
 An explicit hidden OpenGL followup now captures pixels without taking focus or showing a window. Its [offscreen capture page](MM6-F4-Offscreen-Render-Capture.md) records the test guard and corrected 2D flush order. Four colored portraits now appear; the prior black ovals came from reading before queued quads were submitted. Corrected sprite-frame palettes render green and red trees as their original art specifies. The cyan/red ground or water region is still wrong. The frame is diagnostic; visual correctness and normal new-game entry remain open.
+
+The MM6 character record now creates title-specific stats, skills, inventory,
+awards and exit buttons. Fourteen normal, pressed and active icon names resolved
+in the local MM6 archive. Focused headless key, button and adjacent-frame
+navigation checks passed 3/3, and the full first-map gate passed 25/25 after
+integration, including MM7 controls. The click test checks the right side of
+each proposed button rectangle; exact art placement remains for F5a.

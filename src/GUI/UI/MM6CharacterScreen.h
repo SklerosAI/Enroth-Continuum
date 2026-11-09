@@ -8,7 +8,7 @@ class GUIWindow;
 class GraphicsImage;
 
 /**
- * Creates the MM6 stats, skills, inventory, awards and exit buttons at their original positions and stores them in
+ * Creates the MM6 stats, skills, inventory, awards and exit buttons at proposed positions and stores them in
  * the shared `pCharacterScreen_*Btn` pointers. Each button carries its normal and pressed MM6 art.
  *
  * @param window                        Character screen window.

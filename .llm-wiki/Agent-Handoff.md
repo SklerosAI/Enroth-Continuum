@@ -29,9 +29,11 @@ cover death-explosion special damage, out-of-range Spirit Lash mana handling,
 novice-row wand recovery, Fate's one-use hit modifiers, and Squire/Sage skill bonuses. The full MM7 headless suite passed 504 tests,
 skipped two and left three disabled tests unrun on 2026-11-09. The owner temporarily prioritized
 consolidating committed work and reducing worktrees before new feature work.
-Unfinished character-screen UI and summoner-preflight checkpoint branches
-retain their refs. The arbiter, endings, messenger, Alice house and pickup
-checks now pass as five MM7 campaign GameTests. The raid case remains disabled.
+The MM6 character record tabs now pass three headless checks and the full
+25-child first-map gate; visual placement remains open for F5a. The
+summoner-preflight checkpoint branch retains its ref. The arbiter, endings,
+messenger, Alice house and pickup checks now pass as five MM7 campaign
+GameTests. The raid case remains disabled.
 The inherited MM6 pickup rule for IDs 506 and 455 is now title-gated so an
 MM7 pickup cannot set the raid completion bits.
 

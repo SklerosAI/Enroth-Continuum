@@ -31,6 +31,7 @@
 #include "GUI/GUIButton.h"
 #include "GUI/GUIMessageQueue.h"
 #include "GUI/UI/ItemGrid.h"
+#include "GUI/UI/MM6CharacterScreen.h"
 #include "GUI/UI/UIInventory.h"
 
 #include "Io/Mouse.h"
@@ -545,28 +546,32 @@ GUIWindow_CharacterRecord::GUIWindow_CharacterRecord(ScreenType screen)
     CharacterUI_LoadPaperdollTextures();
     current_screen_type = screen;
 
-    pCharacterScreen_StatsBtn = CreateButton(pViewport.topLeft() + Pointi(12, 308),
-                                             paperdoll_dbrds[9]->size(), BUTTON_TYPE_NORMAL, 0,
-                                             UIMSG_ClickStatsBtn, 0, INPUT_ACTION_OPEN_STATS, localization->str(LSTR_STATS),
-                                             {{paperdoll_dbrds[10], paperdoll_dbrds[9]}});
-    pCharacterScreen_SkillsBtn = CreateButton(pViewport.topLeft() + Pointi(102, 308),
-                                              paperdoll_dbrds[7]->size(), BUTTON_TYPE_NORMAL, 0,
-                                              UIMSG_ClickSkillsBtn, 0, INPUT_ACTION_OPEN_SKILLS, localization->str(LSTR_SKILLS),
-                                              {{paperdoll_dbrds[8], paperdoll_dbrds[7]}});
-    pCharacterScreen_InventoryBtn = CreateButton(pViewport.topLeft() + Pointi(192, 308),
-                                                 paperdoll_dbrds[5]->size(), BUTTON_TYPE_NORMAL, 0,
-                                                 UIMSG_ClickInventoryBtn, 0, INPUT_ACTION_OPEN_INVENTORY,
-                                                 localization->str(LSTR_INVENTORY),
-                                                 {{paperdoll_dbrds[6], paperdoll_dbrds[5]}});
-    pCharacterScreen_AwardsBtn = CreateButton(pViewport.topLeft() + Pointi(282, 308),
-                                              paperdoll_dbrds[3]->size(), BUTTON_TYPE_NORMAL, 0,
-                                              UIMSG_ClickAwardsBtn, 0, INPUT_ACTION_OPEN_AWARDS, localization->str(LSTR_AWARDS),
-                                              {{paperdoll_dbrds[4], paperdoll_dbrds[3]}});
-    pCharacterScreen_ExitBtn = CreateButton(pViewport.topLeft() + Pointi(371, 308),
-                                            paperdoll_dbrds[1]->size(), BUTTON_TYPE_NORMAL, 0,
-                                            UIMSG_ClickExitCharacterWindowBtn, 0, INPUT_ACTION_INVALID,
-                                            localization->str(LSTR_EXIT_DIALOGUE),
-                                            {{paperdoll_dbrds[2], paperdoll_dbrds[1]}});
+    if (engine->gameTitle() == GameTitle::MM6) {
+        createMM6CharacterScreenButtons(this);
+    } else {
+        pCharacterScreen_StatsBtn = CreateButton(pViewport.topLeft() + Pointi(12, 308),
+                                                 paperdoll_dbrds[9]->size(), BUTTON_TYPE_NORMAL, 0,
+                                                 UIMSG_ClickStatsBtn, 0, INPUT_ACTION_OPEN_STATS, localization->str(LSTR_STATS),
+                                                 {{paperdoll_dbrds[10], paperdoll_dbrds[9]}});
+        pCharacterScreen_SkillsBtn = CreateButton(pViewport.topLeft() + Pointi(102, 308),
+                                                  paperdoll_dbrds[7]->size(), BUTTON_TYPE_NORMAL, 0,
+                                                  UIMSG_ClickSkillsBtn, 0, INPUT_ACTION_OPEN_SKILLS, localization->str(LSTR_SKILLS),
+                                                  {{paperdoll_dbrds[8], paperdoll_dbrds[7]}});
+        pCharacterScreen_InventoryBtn = CreateButton(pViewport.topLeft() + Pointi(192, 308),
+                                                     paperdoll_dbrds[5]->size(), BUTTON_TYPE_NORMAL, 0,
+                                                     UIMSG_ClickInventoryBtn, 0, INPUT_ACTION_OPEN_INVENTORY,
+                                                     localization->str(LSTR_INVENTORY),
+                                                     {{paperdoll_dbrds[6], paperdoll_dbrds[5]}});
+        pCharacterScreen_AwardsBtn = CreateButton(pViewport.topLeft() + Pointi(282, 308),
+                                                  paperdoll_dbrds[3]->size(), BUTTON_TYPE_NORMAL, 0,
+                                                  UIMSG_ClickAwardsBtn, 0, INPUT_ACTION_OPEN_AWARDS, localization->str(LSTR_AWARDS),
+                                                  {{paperdoll_dbrds[4], paperdoll_dbrds[3]}});
+        pCharacterScreen_ExitBtn = CreateButton(pViewport.topLeft() + Pointi(371, 308),
+                                                paperdoll_dbrds[1]->size(), BUTTON_TYPE_NORMAL, 0,
+                                                UIMSG_ClickExitCharacterWindowBtn, 0, INPUT_ACTION_INVALID,
+                                                localization->str(LSTR_EXIT_DIALOGUE),
+                                                {{paperdoll_dbrds[2], paperdoll_dbrds[1]}});
+    }
     CreateButton({0, 0}, {476, 345}, BUTTON_TYPE_NORMAL, 122, UIMSG_InventoryLeftClick, 0);
     pCharacterScreen_DetalizBtn = CreateButton({600, 300}, {30, 30}, BUTTON_TYPE_NORMAL, 0,
         UIMSG_ChangeDetaliz, 0, INPUT_ACTION_INVALID, localization->str(LSTR_DETAIL_TOGGLE));
@@ -627,7 +632,8 @@ void GUIWindow_CharacterRecord::Update() {
             CharacterUI_ReleaseButtons();
             releaseAwardsScrollBar();
             CharacterUI_StatsTab_Draw(player);
-            render->DrawQuad2D(assets->getIcon("ib-cd1-d"), pCharacterScreen_StatsBtn->rect.topLeft());
+            if (engine->gameTitle() != GameTitle::MM6)
+                render->DrawQuad2D(assets->getIcon("ib-cd1-d"), pCharacterScreen_StatsBtn->rect.topLeft());
             break;
         }
         case WINDOW_CHARACTER_SKILLS: {
@@ -637,27 +643,33 @@ void GUIWindow_CharacterRecord::Update() {
             }
             releaseAwardsScrollBar();
             CharacterUI_SkillsTab_Draw(player);
-            render->DrawQuad2D(assets->getIcon("ib-cd2-d"), pCharacterScreen_SkillsBtn->rect.topLeft());
+            if (engine->gameTitle() != GameTitle::MM6)
+                render->DrawQuad2D(assets->getIcon("ib-cd2-d"), pCharacterScreen_SkillsBtn->rect.topLeft());
             break;
         }
         case WINDOW_CHARACTER_AWARDS: {
             CharacterUI_ReleaseButtons();
             createAwardsScrollBar();
             CharacterUI_AwardsTab_Draw(player);
-            render->DrawQuad2D(assets->getIcon("ib-cd4-d"), pCharacterScreen_AwardsBtn->rect.topLeft());
+            if (engine->gameTitle() != GameTitle::MM6)
+                render->DrawQuad2D(assets->getIcon("ib-cd4-d"), pCharacterScreen_AwardsBtn->rect.topLeft());
             break;
         }
         case WINDOW_CHARACTER_INVENTORY: {
             CharacterUI_ReleaseButtons();
             releaseAwardsScrollBar();
             CharacterUI_InventoryTab_Draw(player, false);
-            render->DrawQuad2D(assets->getIcon("ib-cd3-d"), pCharacterScreen_InventoryBtn->rect.topLeft());
+            if (engine->gameTitle() != GameTitle::MM6)
+                render->DrawQuad2D(assets->getIcon("ib-cd3-d"), pCharacterScreen_InventoryBtn->rect.topLeft());
             break;
         }
         default:
             assert(false);
             break;
     }
+
+    if (engine->gameTitle() == GameTitle::MM6)
+        drawMM6CharacterScreenButtons(current_character_screen_window);
 
     if (bRingsShownInCharScreen)
         CharacterUI_DrawPaperdollWithRingOverlay(player);

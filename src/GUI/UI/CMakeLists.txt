@@ -6,6 +6,7 @@ set(GUI_UI_SOURCES
         UISpellbook.cpp
         UIBooks.cpp
         UICharacter.cpp
+        MM6CharacterScreen.cpp
         UIChest.cpp
         UICredits.cpp
         UIDialogue.cpp
@@ -35,6 +36,7 @@ set(GUI_UI_HEADERS
         UISpellbook.h
         UIBooks.h
         UICharacter.h
+        MM6CharacterScreen.h
         UIChest.h
         UICredits.h
         UIDialogue.h

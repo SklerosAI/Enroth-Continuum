@@ -1,3 +1,4 @@
+#include <array>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -10,6 +11,7 @@
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Party.h"
+#include "Engine/Resources/ResourceManager.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/MapTable.h"
 
@@ -64,7 +66,19 @@ static void clickCharacterScreenButton(EngineController &game, GUIButton *button
     game.tick();
 }
 
-GAME_TEST(MM6CharacterScreenHeadless, DISABLED_TabsOpenByKeyAndButton) {
+GAME_TEST(MM6CharacterScreenHeadless, ButtonArtExistsInMM6Archive) {
+    for (std::string_view name : std::array<std::string_view, 14>{
+             "buttsta1", "buttsta2", "stat_hot", "buttski1", "buttski2", "skil_hot",
+             "buttinv1", "buttinv2", "equi_hot", "buttawa1", "buttawa2", "awar_hot",
+             "buttexi1", "buttexi2"}) {
+        SCOPED_TRACE(name);
+        Sizei size = engine->resources()->iconSize(name);
+        EXPECT_GT(size.w, 0);
+        EXPECT_GT(size.h, 0);
+    }
+}
+
+GAME_TEST(MM6CharacterScreenHeadless, TabsOpenByKeyAndButton) {
     // The character screen buttons had MM7 positions and placeholder-sized hit boxes, so clicking the right end of an MM6
     // button picture did nothing.
     // Run alone in a fresh MM6 headless process.
@@ -90,7 +104,7 @@ GAME_TEST(MM6CharacterScreenHeadless, DISABLED_TabsOpenByKeyAndButton) {
                             WINDOW_CHARACTER_STATS, WINDOW_CHARACTER_SKILLS, WINDOW_CHARACTER_AWARDS, WINDOW_CHARACTER_INVENTORY));
 }
 
-GAME_TEST(MM6CharacterScreenHeadless, DISABLED_TabKeyRightAfterInventoryKey) {
+GAME_TEST(MM6CharacterScreenHeadless, TabKeyRightAfterInventoryKey) {
     // Pressing C on the frame after I, before the character screen opened, crashed on a freed tab button.
     // Run alone in a fresh MM6 headless process.
     auto screenTape = tapes.screen();

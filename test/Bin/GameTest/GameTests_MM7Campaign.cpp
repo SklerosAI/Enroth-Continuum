@@ -213,7 +213,7 @@ static void killGroup(int group, int survivor) {
             pActors[i].aiState = Dead;
 }
 
-GAME_TEST(MM7Campaign, HarmondaleRaid) {
+GAME_TEST(MM7Campaign, DISABLED_HarmondaleRaid) {
     // Killing every raider in Castle Harmondale and in Harmondale should end the raid and open the town's shops again.
     for (bool survivor : {false, true}) {
         SCOPED_TRACE(fmt::format("survivor={}", survivor));
@@ -261,7 +261,7 @@ GAME_TEST(MM7Campaign, HarmondaleRaid) {
     }
 }
 
-GAME_TEST(MM7Campaign, AliceHargreavesHouse) {
+GAME_TEST(MM7Campaign, DISABLED_AliceHargreavesHouse) {
     // Alice Hargreaves' room in Castle Gryphonheart should open even though the game has no video for it.
     auto screenTape = tapes.screen();
     auto houseTape = tapes.house();

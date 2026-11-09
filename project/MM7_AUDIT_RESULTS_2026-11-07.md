@@ -112,7 +112,9 @@ Defects, inherited unless noted:
 3. Lich immunity to Mind and Body never fires (`Character.cpp:1258-1264`
    compares a `DamageType` cast to `Attribute`). The UI still shows immunity.
    **Fixed in the integration tree at `f77d8de31`:** MM7 liches take
-   zero Mind and Body damage. Spirit immunity remains unverified.
+   zero Mind and Body damage. A 2026-11-09 source-and-rule review confirmed
+   that Spirit is intentionally not immune; the existing regression therefore
+   correctly covers Mind and Body only.
 4. Divine Restoration resets conditions on the drinker instead of the target
    (`Character.cpp:3561`).
    **Fixed in the integration tree at `f77d8de31`:** The potion clears
@@ -132,9 +134,15 @@ Defects, inherited unless noted:
    retraced on the combined source and remained byte-stable on repeat.
    Correct slot-two damage changed `Issue1972`'s total party HP loss from
    934 to 689; its independent check now requires at least 650 damage while
-   its map and 24-meteor assertions remain. Meteor Shower positioning remains open.
+   its map and 24-meteor assertions remain. A 2026-11-09 review found the
+   enemy Meteor Shower's party-centred position is its intended sole target,
+   not an outstanding positioning defect.
 7. Death explosions use attack-1 dice and type (`SpriteObject.cpp:825`,
    `Actor.cpp:1220`), and the parser drops the damage type. Nine rows.
+   **Fixed in the integration tree at `b1760b19e`:** MM7 death explosions
+   use their parsed special-damage dice and type; MM6 retains attack-1.
+   The public Magog replay was retraced for the two newly consumed RNG draws
+   and was byte-stable across three runs (`c81540e7d`).
 8. Multi-target monster attacks are parsed but never applied. Ten rows.
 9. Fate is broken: the character buff is never read, and on a monster it
    raises the monster's own hit chance (`CastSpellInfo.cpp:1686`,
@@ -160,6 +168,11 @@ Defects, inherited unless noted:
     10` and `5 * level + 10`); their 4-hour and 5-hour per-level durations
     remain. The level-10 test failed on both power values before repair and
     passed afterward. MM6 refuses this event source before the shared case.
+    **Further fixed on 2026-11-09:** Spirit Lash now retains mana and uses
+    failure recovery when its target is out of range (`be9a160bc`), and a
+    charged wand uses the novice spell-recovery row consistently
+    (`59ead390d`). Cancelled-scroll consumption and charge-spend ordering
+    remain open.
 12. Monster buffs and targeting: monster Haste and Day of Protection are never
     read, the Hour of Power hit check reads the Shield buff's power
     (`Character.cpp:4549`), energy attacks deal Earth damage
@@ -204,10 +217,9 @@ remain in the test. The Day of the Gods fix and trace update are integrated;
 no graphical or installed-app claim follows.
 
 The branch GameTests cover the first five test targets above. Remaining tests
-that would close open defects: rows 24 and 35 slot-2 spells, a golem death
-explosion, multi-target melee, Fate on a
+that would close open defects: rows 24 and 35 slot-2 spells, multi-target melee, Fate on a
 character and on a monster, a level-7 chest artifact flag, the event 532
-pedestal, Spirit Lash out of range, a cancelled scroll, Squire and Sage
+pedestal, a cancelled scroll, Squire and Sage
 effects, the two teacher requirements, zombie clearing paths, and #2502.
 
 ## A2b campaign and events (done)

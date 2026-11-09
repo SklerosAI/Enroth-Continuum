@@ -7,7 +7,7 @@ tags: [mm7, combat, spells, items, audit]
 
 # MM7 Combat Audit Fixes
 
-Five ranked MM7 gameplay defects have focused headless regressions and fixes integrated on `mm6-mac-implementation` at `f77d8de31`. The monster second-spell ability, Energy parser and event Day of the Gods fixes are also integrated; the latter landed at `fe8d5d50f`.
+Five ranked MM7 gameplay defects have focused headless regressions and fixes integrated on `mm6-mac-implementation` at `f77d8de31`. The monster second-spell ability, Energy parser and event Day of the Gods fixes are also integrated; the latter landed at `fe8d5d50f`. Later MM7-only repairs at `59ead390d` add death-explosion special damage, out-of-range Spirit Lash failure handling, and consistent novice-row wand recovery.
 
 | Defect | Verified change |
 | --- | --- |
@@ -19,6 +19,9 @@ Five ranked MM7 gameplay defects have focused headless regressions and fixes int
 | Monster second-spell ability | Projectile, Meteor Shower, Sparks and Sharpmetal sprites carry the selected spell ability. The MM6 single-projectile path keeps its existing first-slot stamp. |
 | Monster Energy attacks | MM7 `Ener` in either attack field parses as Energy (12), while `Earth` remains Earth (3). The separate MM6 parser is unchanged. |
 | Event Day of the Gods | MM7 event Master and Grandmaster power now follows the ordinary cast: `4 * level + 10` and `5 * level + 10`; the existing `4 * level` and `5 * level` hour durations remain. MM6 refuses this event source before the shared case. |
+| Death explosion damage | MM7 applies the parsed special-damage dice and type; MM6 retains attack-1. The public Magog replay was deterministically retraced for the new RNG draws. |
+| Spirit Lash range failure | An out-of-range target no longer spends mana and uses failure recovery. |
+| Wand recovery | Charged MM7 wands use the novice spell-recovery row for both cast behavior and displayed timing. |
 
 Each of the five branch defect tests failed on the preceding source. The fixed MM7 combat GameTest suite passed **6/6** under network denial,
 including the unarmed Break Weapon control. Three MM6 combat children passed separately in fresh processes.
@@ -42,8 +45,8 @@ No graphical acceptance or installed helper update follows from these tests.
 
 Title checks retain MM6's existing Break Weapon and Divine Intervention behavior. The MM6 direct-use guard blocks the
 Divine Restoration potion before the shared case. If MM6 Break Weapon is admitted for an unarmed target, its old
-empty-list path can still assert. Claude owns that MM6 rule. MM7 lich Spirit immunity remains an unresolved rule
-decision, so this fix covers only Mind and Body. The monster second-spell tests check projectile ability stamps; Meteor Shower positioning remains open. Other ranked combat defects in the
+empty-list path can still assert. Claude owns that MM6 rule. MM7 liches intentionally resist Mind and Body, not Spirit.
+The enemy Meteor Shower party-centred target matches the AI's sole target; neither is an actionable defect. Other ranked combat defects in the
 [audit results](../project/MM7_AUDIT_RESULTS_2026-11-07.md) remain open.
 
 See also: [Campaign Status](Campaign-Status.md), [MM7 Level-Seven Artifacts](MM7-Level-Seven-Artifacts.md), [Agent Handoff](Agent-Handoff.md).

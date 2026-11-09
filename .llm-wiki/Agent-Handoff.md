@@ -10,7 +10,7 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 ## Fast resume pointer — 2026-11-09
 
-Reconciled with source and headless tests at integration `3d8520992`. MM6 F4b
+Reconciled with source and headless tests at integration `59ead390d`. MM6 F4b
 is closed for a seeded first-map session: the normal Save menu writes numbered
 `saveNNN.ec6` slots atomically, production `loadGame()` accepts those slots
 through the Load menu, and fresh processes loaded, moved and saved again with
@@ -22,10 +22,12 @@ The integrated F4d scope includes event variables, inventory and paperdoll,
 bounded first-map combat, the item generator, house entry and services, and
 title-aware map classification. The C1 indoor dialog and C2 party-death model
 remain detached from live travel/death wiring; no cross-map move works live.
-The MM7 sprite descriptor guard is integrated, while the detached save
-preflight is still not a production validator (see [MM7 atomic save limits](MM7-Atomic-Save-File.md)).
-The full MM7 headless suite passed 497 tests, skipped two and left three
-disabled tests unrun on 2026-11-09. The owner temporarily prioritized
+The MM7 sprite descriptor guard is integrated. Native MM7 SaveLoad now
+preflights before live deserialization and writes profile slots atomically;
+the disposable two-process save/reload gate passed. Recent MM7 repairs also
+cover death-explosion special damage, out-of-range Spirit Lash mana handling,
+and novice-row wand recovery. The full MM7 headless suite passed 500 tests,
+skipped two and left three disabled tests unrun on 2026-11-09. The owner temporarily prioritized
 consolidating committed work and reducing worktrees before new feature work.
 Unfinished character-screen UI, MM7 campaign-test and summoner-preflight
 checkpoint branches retain their refs and are not merged as completed fixes.

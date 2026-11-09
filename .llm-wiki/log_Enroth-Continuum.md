@@ -2834,3 +2834,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Integrated MM6-specific stats, skills, inventory, awards and exit buttons. Three focused headless checks passed for archive-backed art names, key and button navigation, and the adjacent-frame key race.
 - The full 25-child MM6 first-map gate passed after integration, including three MM7 controls. Exact graphical button placement remains open for F5a.
+
+## [2026-11-09] verify | MM6 hidden character window
+- by: T-Burton-ND via codex
+- Extended the opt-in hidden OpenGL diagnostic to render the MM6 inventory and stats character tabs. All five proposed button rectangles contained rendered icon pixels; the integrated isolated test passed 1/1.
+- Set SDL's macOS background-app hint before offscreen platform initialization. A local monitor saw no visible game window or focus change in 199 samples. The three focused MM6 character checks and one MM7 headless control also passed.
+- The character window still requests inherited art missing from MM6. Original button placement, full visual correctness and normal visible New Game input remain open.

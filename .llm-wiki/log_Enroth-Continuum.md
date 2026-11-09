@@ -2864,3 +2864,9 @@ Chronological record of wiki activity.
 - Routed active MM6 boots to native item-table positions and helms and belts to retained equipped art from the pinned public paperdoll table. The MM7 drawing path remains unchanged.
 - The integrated MM6 character suite passed 11/11, including a combined clickable wearable check; an MM7 inventory control passed 1/1. A hidden wearable capture changed the paperdoll region and passed 1/1 with no visible window or focus change in 103 monitor samples. Temporary PNGs stayed outside Git.
 - Cloaks, inherited panel art, original alignment and visible input/save acceptance remain open.
+
+## [2026-11-09] verify | MM6 cloak paperdoll art
+- by: T-Burton-ND via codex
+- Routed MM6 cloaks to retained specific or generic art at native item-table positions, behind the base figure. The MM7 cloak and collar path remains intact.
+- The integrated MM6 character suite passed 13/13, including resource and hit-area checks for specific and generic cloaks; the MM7 inventory control passed 1/1. A hidden cloak capture passed 1/1 with changed paperdoll pixels and no visible window or focus change in 124 monitor samples. Temporary PNGs stayed outside Git.
+- Inherited panel art, original alignment and visible input/save acceptance remain open.

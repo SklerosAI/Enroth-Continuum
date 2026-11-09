@@ -33,10 +33,12 @@ void ItemInteraction(int item_id) {
         // TODO(captainurist): #mm6 remnant. MM6 sets bits 184 and 185 when the party picks up the Devil Plans (506) and the
         //                     Dragon Claw (455), the seer's quest items. Vanilla MM7 kept the code with MM7's items 506
         //                     and 455, while its scripts use these bits for the Harmondale raid.
-        if (pSpriteObjects[item_id].containing_item.itemId == ITEM_ARTIFACT_SPLITTER) {
+        if (engine->gameTitle() == GameTitle::MM6 &&
+            pSpriteObjects[item_id].containing_item.itemId == ITEM_ARTIFACT_SPLITTER) {
             pParty->_questBits.set(QBIT_CASTLE_HARMONDALE_RAIDERS_KILLED);
         }
-        if (pSpriteObjects[item_id].containing_item.itemId == ITEM_SPELLBOOK_REMOVE_FEAR) {
+        if (engine->gameTitle() == GameTitle::MM6 &&
+            pSpriteObjects[item_id].containing_item.itemId == ITEM_SPELLBOOK_REMOVE_FEAR) {
             pParty->_questBits.set(QBIT_HARMONDALE_RAIDERS_KILLED);
         }
         if (!pParty->addItemToParty(&pSpriteObjects[item_id].containing_item)) {

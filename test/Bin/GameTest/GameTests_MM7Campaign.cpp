@@ -7,6 +7,7 @@
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
+#include "Engine/Interaction.h"
 #include "Engine/MapEnums.h"
 #include "Engine/Party.h"
 #include "GUI/UI/UIStatusBar.h"
@@ -14,6 +15,7 @@
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Decoration.h"
+#include "Engine/Objects/SpriteObject.h"
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "GUI/GUIButton.h"
@@ -275,4 +277,17 @@ GAME_TEST(MM7Campaign, DISABLED_AliceHargreavesHouse) {
     std::printf("DIAG status=%s\n", engine->_statusBar->get().c_str());
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
     EXPECT_EQ(houseTape, tape(HOUSE_INVALID, HOUSE_CASTLE_GRYPHONHEART_ALICE_HARGREAVES));
+}
+
+GAME_TEST(MM7Campaign, LootDoesNotCompleteHarmondaleRaid) {
+    game.startNewGame();
+    for (ItemId item : {ITEM_ARTIFACT_SPLITTER, ITEM_SPELLBOOK_REMOVE_FEAR}) {
+        pSpriteObjects.clear();
+        SpriteObject sprite;
+        sprite.containing_item = Item(item);
+        pSpriteObjects.push_back(sprite);
+        game.runGameRoutine([] { ItemInteraction(0); });
+        EXPECT_FALSE(pParty->_questBits[QBIT_CASTLE_HARMONDALE_RAIDERS_KILLED]);
+        EXPECT_FALSE(pParty->_questBits[QBIT_HARMONDALE_RAIDERS_KILLED]);
+    }
 }

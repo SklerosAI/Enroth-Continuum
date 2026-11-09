@@ -481,13 +481,14 @@ void OnButtonClick::Update() {
     delete this;
 }
 
+OnButtonClick3::OnButtonClick3(WindowType windowType, Pointi position, Sizei dimensions, GUIButton *button) :
+    GUIWindow(windowType, position, dimensions),
+    _pressedTexture(button->vTextures[1]) {}
+
 void OnButtonClick3::Update() {
     pAudioPlayer->playUISound(SOUND_StartMainChoice02);
 
-    render->DrawQuad2D(_button->vTextures[1], frameRect.topLeft());
-    if (!sHint.empty()) {
-        _button->DrawLabel(sHint, assets->pFontCreate.get(), colorTable.White);
-    }
+    render->DrawQuad2D(_pressedTexture, frameRect.topLeft());
 
     delete this;
 }

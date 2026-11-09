@@ -72,6 +72,7 @@ target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Combat.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6GiveItemEvent.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6BorderRest.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Calendar.cpp)
+target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6CharacterScreen.cpp)
 target_link_libraries(OpenEnroth_GameTest PUBLIC application testing_game library_cli library_platform_main library_stack_trace
         engine_mm6_save_runtime engine_mm6_spawn_actor_section)
 

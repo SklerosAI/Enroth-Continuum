@@ -137,15 +137,12 @@ class OnButtonClick : public GUIWindow {
 
 class OnButtonClick3 : public GUIWindow {
  public:
-    OnButtonClick3(WindowType windowType, Pointi position, Sizei dimensions, GUIButton *button, std::string_view hint = {}) :
-        GUIWindow(windowType, position, dimensions, hint),
-        _button(button)
-    {}
+    OnButtonClick3(WindowType windowType, Pointi position, Sizei dimensions, GUIButton *button);
 
     virtual void Update() override;
 
  private:
-    GUIButton *_button = nullptr;
+    GraphicsImage *_pressedTexture = nullptr; // A window switch on the same frame can free the button before Update().
 };
 
 class OnSaveLoad : public GUIWindow {

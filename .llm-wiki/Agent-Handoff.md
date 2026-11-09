@@ -32,6 +32,8 @@ consolidating committed work and reducing worktrees before new feature work.
 Unfinished character-screen UI and summoner-preflight checkpoint branches
 retain their refs. Three MM7 campaign GameTests now pass on the integration
 tree; the raid and Alice house cases remain disabled with known failures.
+The inherited MM6 pickup rule for IDs 506 and 455 is now title-gated so an
+MM7 pickup cannot set the raid completion bits; four MM7 campaign tests pass.
 
 Use the [updated resume runbook](../project/MM6_RESUME_HANDOFF.md) and its
 disposable gate runner, and the per-row evidence in the

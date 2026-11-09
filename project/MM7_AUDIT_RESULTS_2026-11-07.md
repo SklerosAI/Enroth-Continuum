@@ -266,6 +266,9 @@ Risks, all inherited:
    Harmondale doors until every group-9 raider in d29 and out02 is dead.
    The candidate test failed to set the castle completion bit after marking
    group-9 actors dead; map/group ownership needs further investigation.
+   A separate MM6 item-pickup remnant also set MM7 raid bits 184 and 185
+   when picking up item IDs 506 and 455. That path is now MM6-only
+   (`99757a31d`); the focused MM7 pickup regression passed.
 3. The arbiter messenger waits about 112 game days after the castle is rebuilt
    (`out02:110`, `out02:211`). The 112/113-day boundary passed headlessly.
 4. `d26:448` SpeakInHouse 440 points at an empty house row (type INVALID).

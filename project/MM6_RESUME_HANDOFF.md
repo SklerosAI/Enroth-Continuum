@@ -48,6 +48,13 @@ monitored hidden cloak capture passed 1/1 each. The monitor sampled 124 times
 without a visible window or focus change. The inherited panel lookup, exact
 alignment and visible input/save acceptance remain open.
 
+The inherited `ib-mb-A` right-panel border is MM7-specific and is no longer
+requested for MM6. All MM6 consumers skip the absent border. The integrated
+character/house checks passed 14/14, the MM7 inventory control passed 1/1,
+and a hidden character capture passed 1/1 over 87 samples without a visible
+window or focus change. The log no longer requests that border. Other UI icon
+requests, original alignment and visible input/save acceptance remain open.
+
 ## Start from the right checkout
 
 - Use the `master` integration checkout reported by `git worktree list`.
@@ -148,10 +155,10 @@ does not prove later maps, travel or a campaign.
 
 ## Next steps
 
-1. Continue F5a by resolving the inherited character-screen panel lookup,
-   then compare the staged graphical opening and paperdoll alignment with the
-   original and check visible input and save/reload when the display is
-   available. Keep the hidden capture separate from visible acceptance.
+1. Continue F5a by comparing the staged graphical opening and paperdoll
+   alignment with the original, resolving remaining title-specific UI icons,
+   and checking visible input and save/reload when the display is available.
+   Keep the hidden capture separate from visible acceptance.
 2. Then the F4d backlog in the session handoff: transition wiring per the
    [wiring plan](MM6_TRANSITION_WIRING_PLAN.md), party death wiring, shops and
    guilds (Lane M was started), house NPC hiring, transport, calendar start

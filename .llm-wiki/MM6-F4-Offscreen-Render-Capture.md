@@ -62,3 +62,10 @@ difference; 124 monitor samples saw no visible window or focus change. The
 focused MM6 character suite passed 13/13, including specific and generic
 cloak hit areas, and the MM7 inventory control passed 1/1. Temporary PNGs
 remain private. Original alignment and visible input/save remain unverified.
+
+The next hidden character capture ran after removing the MM7-only neutral
+right-panel border request from MM6. It passed 1/1 over 87 monitor samples,
+with no visible window or focus change; the log no longer requested
+`ib-mb-A`. The integrated MM6 character/house checks passed 14/14 and the MM7
+inventory control passed 1/1. The temporary images remained outside Git.
+Original alignment and visible input/save are still unverified.

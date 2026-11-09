@@ -80,3 +80,12 @@ the MM7 inventory control and monitored hidden cloak capture passed 1/1 each.
 The monitor saw no visible window or focus change. The inherited panel lookup,
 original alignment and visible input/save remain open. The earlier cloak-open
 claims on this page are superseded; see the [capture packet](../project/MM6_F4_OFFSCREEN_FRAME_CAPTURE.md).
+
+The later character-panel pass removed the MM6 `ib-mb-A` request. The
+[public MMExtension paperdoll module](https://github.com/GrayFace/MMExtension/blob/9d73c0ff0482bd231ea522f752f4fe9b26640925/Scripts/Modules/PaperDoll.lua)
+adds the neutral border only for MM7. MM6 draw consumers now skip the empty
+shared border pointer. The integrated MM6 character/house checks passed
+14/14, the MM7 inventory control passed 1/1, and the monitored hidden capture
+passed 1/1 over 87 samples without a visible window or focus change. The
+hidden log no longer requested `ib-mb-A`. Earlier panel-open claims above are
+superseded. Other missing UI icons and original alignment remain open.

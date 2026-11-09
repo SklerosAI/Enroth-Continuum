@@ -2840,3 +2840,9 @@ Chronological record of wiki activity.
 - Extended the opt-in hidden OpenGL diagnostic to render the MM6 inventory and stats character tabs. All five proposed button rectangles contained rendered icon pixels; the integrated isolated test passed 1/1.
 - Set SDL's macOS background-app hint before offscreen platform initialization. A local monitor saw no visible game window or focus change in 199 samples. The three focused MM6 character checks and one MM7 headless control also passed.
 - The character window still requests inherited art missing from MM6. Original button placement, full visual correctness and normal visible New Game input remain open.
+
+## [2026-11-09] verify | MM6 base paperdoll art
+- by: T-Burton-ND via codex
+- Integrated MM6-specific body and arm names and positions for twelve faces from a pinned public MMExtension paperdoll table. Four focused archive-backed character tests and one MM7 inventory control passed.
+- A fresh hidden character capture passed 1/1. The intended right panel changed against the earlier local capture, with no change in the left panel. A monitored hidden run showed no visible game window or focus change. Private PNGs stayed outside Git.
+- Superseded the missing-base-paperdoll claim. Equipped-item layers, a separate inherited panel lookup, original placement and visible input/save acceptance remain open.

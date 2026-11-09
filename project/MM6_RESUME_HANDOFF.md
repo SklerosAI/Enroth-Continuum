@@ -177,17 +177,41 @@ does not prove later maps, travel or a campaign.
 
 ## Next steps
 
-1. Continue F5a with the isolated profile staged by
+The pause checkpoint is integration `20e6f3491`, clean and pushed. The clean
+`codex/mm6-notes-book` worker branch contains the same Quest runtime change
+and is ready for the next code slice; find it with `git worktree list`.
+
+1. Finish the MM6 Notes page resource route in
+   `src/GUI/UI/Books/AutonotesBook.cpp`. The retained `note_bg` is 360×300;
+   the identity-matched original draws it at (47,22). Its previous/next tabs
+   use the same MM6 art and positions as Quest. The original has five native
+   category tab pairs at x415 active/x418 inactive, with y values
+   118/153/188/223/258. The retained notes table has no `teacher` rows,
+   while the inherited screen creates a sixth Instructors tab. Confirm the
+   five icon-to-category meanings from the original route before replacing
+   the inherited tabs; keep original assets and detailed traces local. Then
+   run the focused fresh-process book check (which currently passes but logs
+   missing Notes and Map art) and MM7 `Issues.Issue2903` as the title control:
+
+   ```sh
+   build/test/Bin/GameTest/OpenEnroth_GameTest --game mm6 --headless --data-path "$MM6_DATA_PATH" --rules-path "$MM6_RULES_PATH" --test-path test/data --gtest_also_run_disabled_tests --gtest_filter=MM6CalendarHeadless.DISABLED_FirstMapHudBooksOpenAndClose --gtest_brief=1 --log-level=error
+   ```
+
+   Accept Notes only when its native resources resolve and the real first-map
+   buttons still open and close; a passing test with missing-icon logs is not
+   visual acceptance. Map remains a separate art/layout slice.
+2. Continue F5a with the isolated profile staged by
    `python3 -B tools/run_mm6_firstmap_gate.py --stage-f5a-profile`. Select
    Load, compare the visible opening and paperdoll alignment with the
    original, exercise input and Save/quit/relaunch/Load, and record defects.
-   Production New Game remains guarded. Keep hidden captures separate from
-   visible acceptance and delete the temporary profile after the check.
-2. Then the F4d backlog in the session handoff: transition wiring per the
+   The on-screen check has not run and awaits the owner's answer because it
+   may take focus. Production New Game remains guarded. Keep hidden captures
+   separate from visible acceptance and delete the temporary profile after
+   the check.
+3. Then the F4d backlog in the session handoff: transition wiring per the
    [wiring plan](MM6_TRANSITION_WIRING_PLAN.md), party death wiring, shops and
-   guilds (Lane M was started), house NPC hiring, transport, calendar start
-   year and reputation, and the remaining spells and combat once Codex hands
-   back the shared combat files.
+   guilds, house NPC hiring, transport, reputation, and the remaining spells
+   and combat.
 
 For each local edit, run the changed-path test; run the full first-map gate at
 transaction milestones and the MM7 control after shared-core changes. Broader

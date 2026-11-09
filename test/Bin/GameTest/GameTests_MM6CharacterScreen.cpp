@@ -14,11 +14,15 @@
 #include "Engine/Party.h"
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/SaveLoad.h"
+#include "Engine/Tables/ItemTable.h"
 #include "Engine/Tables/MapTable.h"
 
 #include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/MM6PaperdollArt.h"
+#include "GUI/UI/UICharacter.h"
+
+#include "Utility/String/Ascii.h"
 
 static void completeEditableMM6Party() {
     for (Character &character : pParty->pCharacters) {
@@ -107,6 +111,32 @@ GAME_TEST(MM6CharacterScreenHeadless, PaperdollBaseArtExistsInMM6Archive) {
     }
 }
 
+GAME_TEST(MM6CharacterScreenHeadless, ArmorLayersCoverMM6ItemsAndArchive) {
+    const Sizei background = engine->resources()->iconSize("BACKDOLL");
+    for (const mm6::PaperdollArmorArt &art : mm6::kPaperdollArmorArt) {
+        SCOPED_TRACE(art.itemPicture);
+        for (const mm6::PaperdollLayer &layer : {art.body, art.arm1, art.arm2}) {
+            const Sizei size = engine->resources()->iconSize(layer.image);
+            EXPECT_GT(size.w, 0);
+            EXPECT_GT(size.h, 0);
+            EXPECT_GE(layer.offset.x, 0);
+            EXPECT_GE(layer.offset.y, 0);
+            EXPECT_LE(layer.offset.x + size.w, background.w);
+            EXPECT_LE(layer.offset.y + size.h, background.h);
+        }
+    }
+
+    int armorCount = 0;
+    for (ItemId id : pItemTable->items.indices()) {
+        const ItemData &item = pItemTable->items[id];
+        if (item.type != ITEM_TYPE_ARMOUR || item.iconName.empty())
+            continue;
+        ++armorCount;
+        EXPECT_NE(mm6::paperdollArmorArt(item.iconName), nullptr) << std::to_underlying(id);
+    }
+    EXPECT_GT(armorCount, 0);
+}
+
 GAME_TEST(MM6CharacterScreenHeadless, TabsOpenByKeyAndButton) {
     // The character screen buttons had MM7 positions and placeholder-sized hit boxes, so clicking the right end of an MM6
     // button picture did nothing.
@@ -131,6 +161,32 @@ GAME_TEST(MM6CharacterScreenHeadless, TabsOpenByKeyAndButton) {
     EXPECT_EQ(tabTape, tape(WINDOW_CHARACTER_STATS, WINDOW_CHARACTER_INVENTORY,
                             WINDOW_CHARACTER_STATS, WINDOW_CHARACTER_SKILLS, WINDOW_CHARACTER_AWARDS, WINDOW_CHARACTER_INVENTORY,
                             WINDOW_CHARACTER_STATS, WINDOW_CHARACTER_SKILLS, WINDOW_CHARACTER_AWARDS, WINDOW_CHARACTER_INVENTORY));
+}
+
+GAME_TEST(MM6CharacterScreenHeadless, EquippedArmorHasPaperdollHitArea) {
+    enterFirstMapFromNewGame(game);
+    ItemId armorId = ITEM_NULL;
+    for (ItemId id : pItemTable->items.indices()) {
+        const ItemData &item = pItemTable->items[id];
+        if (item.type == ITEM_TYPE_ARMOUR && ascii::noCaseEquals(item.iconName, "lr1icon")) {
+            armorId = id;
+            break;
+        }
+    }
+    ASSERT_NE(armorId, ITEM_NULL);
+    game.runGameRoutine([&] {
+        pParty->pCharacters[0].inventory.equip(ITEM_SLOT_ARMOUR, Item(armorId));
+    });
+    const InventoryEntry armor = pParty->pCharacters[0].inventory.entry(ITEM_SLOT_ARMOUR);
+    ASSERT_TRUE(armor);
+
+    game.goToInventory(0);
+    game.tick();
+    size_t clickablePixels = 0;
+    for (int y = 0; y < 300; ++y)
+        for (int x = 468; x < 640; ++x)
+            clickablePixels += equipmentHitMap.query({x, y}, -1) == armor.index();
+    EXPECT_GT(clickablePixels, 100u);
 }
 
 GAME_TEST(MM6CharacterScreenHeadless, TabKeyRightAfterInventoryKey) {

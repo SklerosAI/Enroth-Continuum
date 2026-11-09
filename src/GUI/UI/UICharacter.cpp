@@ -1003,6 +1003,11 @@ void CharacterUI_DrawPaperdoll(Character *player) {
     InventoryEntry itemMainHand = player->inventory.entry(ITEM_SLOT_MAIN_HAND);
     InventoryEntry itemOffHand = player->inventory.entry(ITEM_SLOT_OFF_HAND);
     bool bTwoHandedGrip = itemMainHand && (itemMainHand->type() == ITEM_TYPE_TWO_HANDED || itemMainHand->skill() == SKILL_SPEAR && !itemOffHand);
+    const mm6::PaperdollArmorArt *mm6ArmorArt = nullptr;
+    if (isMM6) {
+        if (InventoryEntry armor = player->inventory.entry(ITEM_SLOT_ARMOUR))
+            mm6ArmorArt = mm6::paperdollArmorArt(armor->GetIconName());
+    }
 
     // Aqua-Lung
     if (!isMM6 && player->hasUnderwaterSuitEquipped()) {
@@ -1057,7 +1062,7 @@ void CharacterUI_DrawPaperdoll(Character *player) {
             Pointi(pPaperdoll_BodyX, pPaperdoll_BodyY));
 
         // armor
-        if (InventoryEntry armor = player->inventory.entry(ITEM_SLOT_ARMOUR)) {
+        if (InventoryEntry armor = player->inventory.entry(ITEM_SLOT_ARMOUR); !isMM6 && armor) {
             index = valueOr(paperdoll_armor_indexByType, armor->itemId, -1);
             if (index != -1) {
                 item_X = pPaperdoll_BodyX + paperdoll_Armor_Coord[bodyType][index][0];
@@ -1086,15 +1091,37 @@ void CharacterUI_DrawPaperdoll(Character *player) {
             }
         }
 
+        // MM6 armor has a front body layer drawn over the boots, then a pose-specific arm.
+        if (mm6ArmorArt) {
+            InventoryEntry armor = player->inventory.entry(ITEM_SLOT_ARMOUR);
+            const auto &layer = mm6ArmorArt->body;
+            CharacterUI_DrawItem(pPaperdoll_BodyX + layer.offset.x, pPaperdoll_BodyY + layer.offset.y,
+                                 armor.get(), armor.index(), assets->getIcon(layer.image), !bRingsShownInCharScreen);
+        }
+
         // offhand depending on grip
         if (!bTwoHandedGrip) {
-            item_X = pPaperdoll_BodyX + (isMM6 ? mm6Art->arm1Offset.x : pPaperdoll_LeftHand[bodyType][0]);
-            item_Y = pPaperdoll_BodyY + (isMM6 ? mm6Art->arm1Offset.y : pPaperdoll_LeftHand[bodyType][1]);
-            render->DrawQuad2D(paperdoll_dlads[uPlayerID], {item_X, item_Y});
+            if (mm6ArmorArt) {
+                const auto &layer = mm6ArmorArt->arm1;
+                InventoryEntry armor = player->inventory.entry(ITEM_SLOT_ARMOUR);
+                CharacterUI_DrawItem(pPaperdoll_BodyX + layer.offset.x, pPaperdoll_BodyY + layer.offset.y,
+                                     armor.get(), armor.index(), assets->getIcon(layer.image), !bRingsShownInCharScreen);
+            } else {
+                item_X = pPaperdoll_BodyX + (isMM6 ? mm6Art->arm1Offset.x : pPaperdoll_LeftHand[bodyType][0]);
+                item_Y = pPaperdoll_BodyY + (isMM6 ? mm6Art->arm1Offset.y : pPaperdoll_LeftHand[bodyType][1]);
+                render->DrawQuad2D(paperdoll_dlads[uPlayerID], {item_X, item_Y});
+            }
         } else {
-            item_X = pPaperdoll_BodyX + (isMM6 ? mm6Art->arm2Offset.x : pPaperdoll_SecondLeftHand[bodyType][0]);
-            item_Y = pPaperdoll_BodyY + (isMM6 ? mm6Art->arm2Offset.y : pPaperdoll_SecondLeftHand[bodyType][1]);
-            render->DrawQuad2D(paperdoll_dlaus[uPlayerID], {item_X, item_Y});
+            if (mm6ArmorArt) {
+                const auto &layer = mm6ArmorArt->arm2;
+                InventoryEntry armor = player->inventory.entry(ITEM_SLOT_ARMOUR);
+                CharacterUI_DrawItem(pPaperdoll_BodyX + layer.offset.x, pPaperdoll_BodyY + layer.offset.y,
+                                     armor.get(), armor.index(), assets->getIcon(layer.image), !bRingsShownInCharScreen);
+            } else {
+                item_X = pPaperdoll_BodyX + (isMM6 ? mm6Art->arm2Offset.x : pPaperdoll_SecondLeftHand[bodyType][0]);
+                item_Y = pPaperdoll_BodyY + (isMM6 ? mm6Art->arm2Offset.y : pPaperdoll_SecondLeftHand[bodyType][1]);
+                render->DrawQuad2D(paperdoll_dlaus[uPlayerID], {item_X, item_Y});
+            }
         }
 
         // belt
@@ -1114,7 +1141,7 @@ void CharacterUI_DrawPaperdoll(Character *player) {
         }
 
         // armor's shoulders
-        if (InventoryEntry armor = player->inventory.entry(ITEM_SLOT_ARMOUR)) {
+        if (InventoryEntry armor = player->inventory.entry(ITEM_SLOT_ARMOUR); !isMM6 && armor) {
             index = valueOr(paperdoll_armor_indexByType, armor->itemId, -1);
             if (index != -1) {
                 GraphicsImage *texture = nullptr;

@@ -22,6 +22,7 @@
 #include "Engine/SaveLoad.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Snapshots/MM6OutdoorSnapshot.h"
+#include "Engine/Tables/ItemTable.h"
 #include "Engine/Tables/TileTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Timer.h"
@@ -36,6 +37,7 @@
 #include "Library/Image/Png.h"
 
 #include "Utility/Memory/Blob.h"
+#include "Utility/String/Ascii.h"
 #include "Utility/Streams/FileOutputStream.h"
 #include "Utility/System/Path.h"
 
@@ -328,6 +330,38 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_FirstOutdoorCapture) {
         FileOutputStream characterOutput{Path(characterPath)};
         characterOutput.write(png::encode(inventoryFrame));
         characterOutput.close();
+
+        if (const char *armorPath = std::getenv("MM6_OFFSCREEN_ARMOR_CAPTURE_PATH")) {
+            const std::string_view armorDestination(armorPath);
+            ASSERT_TRUE(armorDestination.starts_with("/tmp/") ||
+                        armorDestination.starts_with("/private/tmp/"));
+            ASSERT_TRUE(Path(armorPath).isNormalized());
+            ASSERT_EQ(Path(armorPath).extension(), ".png");
+
+            ItemId armorId = ITEM_NULL;
+            for (ItemId id : pItemTable->items.indices()) {
+                if (ascii::noCaseEquals(pItemTable->items[id].iconName, "lr1icon") &&
+                    pItemTable->items[id].type == ITEM_TYPE_ARMOUR) {
+                    armorId = id;
+                    break;
+                }
+            }
+            ASSERT_NE(armorId, ITEM_NULL);
+            game.runGameRoutine([&] {
+                pParty->activeCharacter().inventory.equip(ITEM_SLOT_ARMOUR, Item(armorId));
+            });
+            ASSERT_TRUE(pParty->activeCharacter().inventory.entry(ITEM_SLOT_ARMOUR));
+            const RgbaImage armorFrame = captureCharacter();
+            ASSERT_EQ(armorFrame.size(), inventoryFrame.size());
+            size_t changedPaperdollPixels = 0;
+            for (int y = 0; y < 300; ++y)
+                for (int x = 468; x < 640; ++x)
+                    changedPaperdollPixels += inventoryFrame[y][x] != armorFrame[y][x];
+            EXPECT_GT(changedPaperdollPixels, 250u);
+            FileOutputStream armorOutput{Path(armorPath)};
+            armorOutput.write(png::encode(armorFrame));
+            armorOutput.close();
+        }
 
         RgbaImage buttonsOnly;
         game.runGameRoutine([&] {

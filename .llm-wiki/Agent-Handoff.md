@@ -10,7 +10,7 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 ## Fast resume pointer — 2026-11-09
 
-Reconciled with source and headless tests at integration `dbd5dfba5`. MM6 F4b
+Reconciled with source and headless tests at integration `926dce8db`. MM6 F4b
 is closed for a seeded first-map session: the normal Save menu writes numbered
 `saveNNN.ec6` slots atomically, production `loadGame()` accepts those slots
 through the Load menu, and fresh processes loaded, moved and saved again with

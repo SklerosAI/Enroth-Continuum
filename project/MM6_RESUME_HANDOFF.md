@@ -14,9 +14,9 @@ navigation, and the adjacent-frame key race. The full first-map gate passed
 
 ## Start from the right checkout
 
-- Use the `mm6-mac-implementation` integration checkout reported by
-  `git worktree list`. Check `git status --short --branch` before editing. The
-  old `mm6-ec6-transaction` checkout is not the integration tree.
+- Use the `master` integration checkout reported by `git worktree list`.
+  Check `git status --short --branch` before editing. Older MM6 branch refs
+  are historical checkpoints, not the active integration tree.
 - The implementation goal resumed on 2026-11-07 with parallel lanes. Do not
   push the local MM6 integration history to the public remote without the
   separate privacy audit in

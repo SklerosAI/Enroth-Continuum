@@ -10,7 +10,7 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 ## Fast resume pointer — 2026-11-09
 
-Reconciled with source and headless tests at integration `926dce8db`. MM6 F4b
+Reconciled with source and headless tests at integration `e7fe97d35`. MM6 F4b
 is closed for a seeded first-map session: the normal Save menu writes numbered
 `saveNNN.ec6` slots atomically, production `loadGame()` accepts those slots
 through the Load menu, and fresh processes loaded, moved and saved again with
@@ -30,8 +30,10 @@ novice-row wand recovery, Fate's one-use hit modifiers, and Squire/Sage skill bo
 skipped two and left three disabled tests unrun on 2026-11-09. The owner temporarily prioritized
 consolidating committed work and reducing worktrees before new feature work.
 The MM6 character record tabs now pass three headless checks and the full
-25-child first-map gate; visual placement remains open for F5a. The
-summoner-preflight checkpoint branch retains its ref. The arbiter, endings,
+25-child first-map gate. An isolated hidden render confirms pixels in all five
+proposed button rectangles, but missing inherited paperdoll/strip art and
+visual placement remain open for F5a. The summoner-preflight checkpoint branch
+retains its ref. The arbiter, endings,
 messenger, Alice house and pickup checks now pass as five MM7 campaign
 GameTests. The raid case remains disabled.
 The inherited MM6 pickup rule for IDs 506 and 455 is now title-gated so an

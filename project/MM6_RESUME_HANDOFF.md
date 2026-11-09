@@ -59,7 +59,8 @@ What does not run yet:
 
 - **Production New Game save, quicksave, quickload, autosave, cross-map
   travel and saves of any map other than the first** stay refused.
-- **F5a** has not started.
+- **F5a** has a hidden character-window diagnostic, but missing inherited
+  paperdoll/strip art and visible opening remain open.
 
 Relevant source entry points:
 
@@ -109,8 +110,9 @@ does not prove later maps, travel or a campaign.
 
 ## Next steps
 
-1. Run F5a, the staged graphical opening check, before broadening the
-   campaign. It needs no code ownership, only a capture and a report.
+1. Continue F5a by resolving the missing MM6 character-screen resources,
+   then inspect the staged graphical opening and save/reload with the display
+   available. Keep the hidden capture separate from visible acceptance.
 2. Then the F4d backlog in the session handoff: transition wiring per the
    [wiring plan](MM6_TRANSITION_WIRING_PLAN.md), party death wiring, shops and
    guilds (Lane M was started), house NPC hiring, transport, calendar start

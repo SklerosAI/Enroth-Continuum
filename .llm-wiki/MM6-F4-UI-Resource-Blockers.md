@@ -30,3 +30,10 @@ in the local MM6 archive. Focused headless key, button and adjacent-frame
 navigation checks passed 3/3, and the full first-map gate passed 25/25 after
 integration, including MM7 controls. The click test checks the right side of
 each proposed button rectangle; exact art placement remains for F5a.
+
+A hidden OpenGL diagnostic now renders the inventory character window and
+checks nonblank pixels in all five proposed button rectangles; switching to
+stats changes the strip. The integrated fresh-process run passed 1/1 with no
+sampled visible window or focus change. This does not establish original
+coordinates or complete visual correctness: inherited MM7 paperdoll and strip
+requests still name art absent from MM6. See the [offscreen packet](../project/MM6_F4_OFFSCREEN_FRAME_CAPTURE.md).

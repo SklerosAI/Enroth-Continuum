@@ -32,6 +32,12 @@ The earlier large cyan/red ground region has been removed. A monitored MM7 `Inve
 
 Next: verify MM6 seasonal and shoreline appearance against original behavior, then reassess the remaining small pale highlights. The six-frame selected-portrait animation, a foreground frame, actual party finalization and input acceptance remain separate gates.
 
+### Character record diagnostic, 2026-11-09
+
+The same isolated test accepts an optional `MM6_OFFSCREEN_CHARACTER_CAPTURE_PATH` under `/tmp` or `/private/tmp`. After the scoped first-map load it constructs the MM6 character window, renders inventory and stats states, and checks that all five proposed tab/exit rectangles contain icon pixels in an isolated hidden render. The inventory capture remains local and untracked. This is a rendered-resource check, not proof of original button coordinates, normal New Game input or a complete character screen.
+
+SDL's macOS background-app hint is now set before SDL initialization for the opt-in offscreen mode. The integrated test passed 1/1 in a fresh process; a local monitor sampled 199 times and saw no visible game window or frontmost-app change. Focused MM6 character checks passed 3/3 and the MM7 headless control passed 1/1. The character window still requests inherited paperdoll and strip art absent from the MM6 archive. Resolve those title-specific resources before accepting F5a character-screen visuals.
+
 ### Current first-map seasonal diagnostic, 2026-11-06
 
 A fresh hidden first-map frame passed **1/1** over 105 monitor samples with zero on-screen windows and no focus change; its private PNG was shared only with the owner. A read-only source trace found the diagnostic party begins at month 0, seasonal graphics are enabled, outdoor load applies `changeSeason(month, title)`, and the current seasonal map sends grass to snow in months 11, 0 and 1. A temporary terrain-only image showed the pale foreground before buildings or HUD were drawn. This supports winter remapping as the likely cause of the current pale ground, distinct from the earlier missing-water white patch. No per-pixel tile identity or original MM6 seasonal behavior was proven, so no runtime season change was made. A later isolated diagnostic's monitor observed a final frontmost-app PID change despite zero visible game windows; graphical runs stopped at that boundary, and the temporary diagnostics were removed.

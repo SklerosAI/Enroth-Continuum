@@ -129,6 +129,7 @@ static const Vec3f kTownHallDoor(-11090, -6536, 300); // Town Hall, facing west.
 static const Vec3f kGeneralStoreDoor(-10333, -8532, 300); // General store, facing south.
 static const Vec3f kGuildDoor(-5384, -1276, 700); // Elemental guild.
 static const Vec3f kTrainingDoor(-13874, -7032, 300); // Training Grounds, facing west.
+static const Vec3f kTavernDoor(-8784, -8690, 300); // A Lonely Knight, facing east.
 
 GAME_TEST(MM6Houses, EnterAndExit) {
     // Space at a New Sorpigal house door opens its house screen, and Exit returns the party to the world.
@@ -393,4 +394,19 @@ GAME_TEST(MM6Houses, Training) {
     EXPECT_EQ(optionsTape, tape(std::vector<std::string>{}, std::vector<std::string>{train}, std::vector<std::string>{needMore},
                                 std::vector<std::string>{train}, std::vector<std::string>{needMore}));
     EXPECT_EQ(soundsTape.flatten(), tape(SOUND_gold01, static_cast<SoundId>(30702), SOUND_gold01, static_cast<SoundId>(30702))); // Paying, then the trainer.
+}
+
+GAME_TEST(MM6Houses, TavernMenu) {
+    // A Lonely Knight lists a room and packs with their prices, a drink and a tip, in the original order.
+    auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+    auto screenTape = tapes.screen();
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kTavernDoor, 0);
+    game.pressGuiButton("House_Npc0"); // The proprietor, the tavern has a resident NPC too.
+    game.tick();
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
+    const std::vector<std::string> menu = {localization->format(LSTR_RENT_ROOM_FOR_D_GOLD, 3), localization->format(LSTR_FILL_PACKS_TO_D_DAYS_FOR_D_GOLD, 6, 2),
+                                           localization->str(LSTR_HAVE_A_DRINK), localization->str(static_cast<LstrId>(399))};
+    EXPECT_EQ(optionsTape, tape(std::vector<std::string>{}, menu));
 }

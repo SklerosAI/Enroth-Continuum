@@ -95,7 +95,10 @@ enum class HouseServiceOption {
     LearnSkills,
     Deposit,
     Withdraw,
-    HaveADrink
+    RentRoom,
+    FillPacks,
+    HaveADrink,
+    TipBarkeep
 };
 
 /**

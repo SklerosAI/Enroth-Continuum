@@ -161,7 +161,7 @@ std::vector<HouseServiceOption> houseServiceOptions(HouseType type) {
         case HOUSE_TYPE_BANK:
             return {Deposit, Withdraw};
         case HOUSE_TYPE_TAVERN:
-            return {HaveADrink};
+            return {RentRoom, FillPacks, HaveADrink, TipBarkeep};
         default:
             return {};
     }
@@ -181,7 +181,10 @@ LstrId houseServiceOptionLabel(HouseServiceOption option) {
         case HouseServiceOption::LearnSkills: return static_cast<LstrId>(535);   // "Learn"
         case HouseServiceOption::Deposit: return static_cast<LstrId>(60);        // "Deposit"
         case HouseServiceOption::Withdraw: return static_cast<LstrId>(244);      // "Withdraw"
+        case HouseServiceOption::RentRoom: return static_cast<LstrId>(178);      // "Rent Room for %d gold"
+        case HouseServiceOption::FillPacks: return static_cast<LstrId>(86);      // "Fill Packs to %d days for %d gold"
         case HouseServiceOption::HaveADrink: return static_cast<LstrId>(398);    // "Have a Drink"
+        case HouseServiceOption::TipBarkeep: return static_cast<LstrId>(399);    // "Tip Barkeep"
     }
     throw std::runtime_error("Unknown MM6 house service option");
 }

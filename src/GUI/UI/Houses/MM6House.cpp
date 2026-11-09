@@ -22,6 +22,8 @@
 #include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/UIStatusBar.h"
 #include "GUI/UI/Houses/MM6Shop.h"
+#include "GUI/UI/Houses/MM6ShopPrices.h"
+#include "GUI/UI/Houses/MM6Tavern.h"
 #include "GUI/UI/Houses/MM6Temple.h"
 #include "GUI/UI/Houses/MM6Training.h"
 
@@ -205,6 +207,15 @@ void GUIWindow_MM6House::healActiveCharacter() {
 std::string GUIWindow_MM6House::serviceLabel(mm6::HouseServiceOption option) const {
     if (option == mm6::HouseServiceOption::Train)
         return pParty->hasActiveCharacter() ? mm6::trainingLabel(std::to_underlying(houseId()), pParty->activeCharacter(), _house.value.value_or(0)) : std::string();
+    if (option == mm6::HouseServiceOption::RentRoom || option == mm6::HouseServiceOption::FillPacks) {
+        if (!pParty->hasActiveCharacter())
+            return {};
+        const float value = _house.value.value_or(0);
+        const int merchant = mm6::merchantPercent(pParty->activeCharacter());
+        if (option == mm6::HouseServiceOption::RentRoom)
+            return localization->format(mm6::houseServiceOptionLabel(option), mm6::tavernRoomPrice(value, merchant));
+        return localization->format(mm6::houseServiceOptionLabel(option), static_cast<int>(value), mm6::tavernFoodPrice(value, merchant));
+    }
     if (option != mm6::HouseServiceOption::TempleHeal)
         return localization->str(mm6::houseServiceOptionLabel(option));
     if (!pParty->hasActiveCharacter() || !mm6::templeOffersHeal(std::to_underlying(houseId()), pParty->activeCharacter()))

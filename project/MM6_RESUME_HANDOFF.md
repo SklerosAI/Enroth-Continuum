@@ -177,9 +177,11 @@ does not prove later maps, travel or a campaign.
 
 ## Next steps
 
-The pause checkpoint is integration `20e6f3491`, clean and pushed. The clean
-`codex/mm6-notes-book` worker branch contains the same Quest runtime change
-and is ready for the next code slice; find it with `git worktree list`.
+The last verified Quest milestone is integration `20e6f3491`. At this pause,
+integration `master` is clean and pushed with this handoff; resume from its
+current HEAD. The clean `codex/mm6-notes-book` worker branch contains the same
+Quest runtime change and is ready for the next code slice; find it with
+`git worktree list`.
 
 1. Finish the MM6 Notes page resource route in
    `src/GUI/UI/Books/AutonotesBook.cpp`. The retained `note_bg` is 360×300;

@@ -47,7 +47,8 @@ struct SaveGameLite {
 /** Runtime storage for map deltas from the currently loaded save. */
 extern std::unordered_map<std::string, Blob> pMapDeltas;
 
-void loadGame(std::string_view fileName);
+// Returns false when a save cannot be safely admitted without changing the live game state.
+bool loadGame(std::string_view fileName);
 std::pair<SaveGameHeader, Blob> createSaveData(bool resetWorld, std::string_view title);
 SaveGameHeader saveGame(bool isAutoSave, bool resetWorld, std::string_view path, std::string_view title = {});
 void autoSave();

@@ -223,6 +223,36 @@ GAME_TEST(MM7SaveFailure, QuickWriteFailureKeepsSlotAndReportsError) {
         EXPECT_FALSE(ufs->exists(fmt::format("saves/quicksave{}.mm7", i)));
 }
 
+GAME_TEST(MM7LoadAdmission, CorruptBodyRefusesBeforeLiveStateChanges) {
+    constexpr std::string_view corruptPath = "saves/corrupt-body.mm7";
+    constexpr std::string_view corruptName = "corrupt-body.mm7";
+
+    game.startNewGame();
+    const int originalGold = pParty->uNumGold;
+    const std::string originalLastLoaded = engine->_lastLoadedSaveFileName;
+
+    auto corrupt = std::make_unique<SaveGame_MM7>();
+    deserialize(game.saveGame(), corrupt.get());
+    corrupt->party.characters[0].quickSpell = 100; // A valid header with a body that would use an invalid spell ID.
+    Blob corruptBytes;
+    serialize(*corrupt, &corruptBytes);
+    ufs->write(corruptPath, corruptBytes);
+
+    EXPECT_FALSE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(corruptBytes.data()), corruptBytes.size()),
+        GameTitle::MM7, *pGames_LOD));
+
+    bool admitted = true;
+    game.runGameRoutine([&] {
+        admitted = loadGame(corruptName);
+    });
+
+    EXPECT_FALSE(admitted);
+    EXPECT_EQ(pParty->uNumGold, originalGold);
+    EXPECT_EQ(engine->_lastLoadedSaveFileName, originalLastLoaded);
+    EXPECT_EQ(engine->_statusBar->get(), localization->str(LSTR_ERROR));
+}
+
 // These two tests require --mm7-disposable-profile and exact filters. The
 // profile is a marked owner-only temp directory, persisted between processes.
 GAME_TEST(MM7DisposableSave, DISABLED_WriteFreshProfile) {

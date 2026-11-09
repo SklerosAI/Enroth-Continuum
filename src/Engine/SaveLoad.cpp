@@ -99,22 +99,36 @@ void mm6::testing::setLoadGameOverride(std::function<void(std::string_view)> cal
     mm6LoadGameOverride = std::move(callback);
 }
 
-void loadGame(std::string_view fileName) {
+bool loadGame(std::string_view fileName) {
     if (engine->gameTitle() == GameTitle::MM6) {
         if (mm6LoadGameOverride) {
             mm6LoadGameOverride(fileName);
         } else {
             mm6::loadFirstMapManualSlot(fileName);
         }
-        return;
+        return true;
     }
 
     std::string path = fmt::format("saves/{}", fileName);
     if (!ufs->exists(path)) {
         pAudioPlayer->playUISound(SOUND_error);
         MM_WARNING("loadGame: '{}' doesn't exist", fileName);
-        return;
+        return false;
     }
+
+    // Deserialize and inspect a detached copy before altering any live state. The
+    // load menu intentionally accepts a damaged thumbnail, so this is the first
+    // point at which a valid-header save with an unsafe body can be refused.
+    const Blob saveBytes = Blob::copy(ufs->read(path));
+    if (!pGames_LOD || !pGames_LOD->isOpen() ||
+        !mm7::preflightNativeSaveStructure(
+            std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saveBytes.data()), saveBytes.size()),
+            GameTitle::MM7, *pGames_LOD)) {
+        MM_WARNING("loadGame: '{}' failed MM7 structural save admission", fileName);
+        reportFailedMM7SaveAction();
+        return false;
+    }
+
     engine->_lastLoadedSaveFileName = fileName;
 
     // TODO(captainurist): remained from Party::Reset, doesn't really belong here (or in Party::Reset).
@@ -125,9 +139,8 @@ void loadGame(std::string_view fileName) {
         pParty->bTurnBasedModeOn = false;
     }
 
-    // Blob::copy below detaches from the underlying file so subsequent saves to the same path are not blocked.
     SaveGame state;
-    deserialize(Blob::copy(ufs->read(path)), &state, tags::via<SaveGame_MM7>);
+    deserialize(saveBytes, &state, tags::via<SaveGame_MM7>);
 
     // Move loaded state to global variables.
     *pParty = std::move(state.party);
@@ -206,6 +219,7 @@ void loadGame(std::string_view fileName) {
     bFlashQuestBook = false;
     bFlashAutonotesBook = false;
     bFlashHistoryBook = false;
+    return true;
 }
 
 namespace {
@@ -438,14 +452,16 @@ void quickLoadGame() {
     }
     std::string fileName = getCurrentQuickSave();
 
-    if (ufs->exists(fmt::format("saves/{}", fileName))) {
-        loadGame(fileName);
-        uGameState = GAME_STATE_LOADING_GAME;
-        pAudioPlayer->playUISound(SOUND_StartMainChoice02);
-    } else {
+    if (!ufs->exists(fmt::format("saves/{}", fileName))) {
         MM_ERROR("QuickLoadGame:: No quick save could be found!");
         pAudioPlayer->playUISound(SOUND_error);
+        return;
     }
+
+    if (!loadGame(fileName))
+        return;
+    uGameState = GAME_STATE_LOADING_GAME;
+    pAudioPlayer->playUISound(SOUND_StartMainChoice02);
 }
 
 std::string getCurrentQuickSave() {

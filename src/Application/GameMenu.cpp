@@ -132,8 +132,8 @@ void Menu::EventLoop() {
                     continue;
                 }
                 if (saveLoadMenu()->hasSelectedSlot()) {
-                    loadGame(saveLoadMenu()->selectedSlot().fileName);
-                    uGameState = GAME_STATE_LOADING_GAME;
+                    if (loadGame(saveLoadMenu()->selectedSlot().fileName))
+                        uGameState = GAME_STATE_LOADING_GAME;
                 }
                 continue;
             case UIMSG_SaveGame: {

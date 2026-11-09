@@ -19,6 +19,8 @@
 #include "Engine/Resources/LOD.h"
 #include "Engine/Localization.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
+#include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Timer.h"
@@ -66,6 +68,26 @@ void reportFailedMM7SaveAction() {
         engine->_statusBar->setEvent(LSTR_ERROR);
     if (pAudioPlayer)
         pAudioPlayer->playUISound(SOUND_error);
+}
+
+bool writeMm7Save(std::string_view path, const Blob &bytes) {
+    const auto profileRoot = mm7::startupNativeProfileRoot();
+    constexpr std::string_view savesPrefix = "saves/";
+    if (!profileRoot || !path.starts_with(savesPrefix) || path.size() == savesPrefix.size() ||
+        !pGames_LOD || !pGames_LOD->isOpen()) {
+        ufs->write(path, bytes);
+        return true;
+    }
+
+    const std::string_view slotName = path.substr(savesPrefix.size());
+    const auto validate = [](std::span<const std::uint8_t> candidate) {
+        return mm7::preflightNativeSaveStructure(candidate, GameTitle::MM7, *pGames_LOD);
+    };
+    mm7::writeAtomicSaveSlot(*profileRoot, slotName,
+                             std::span<const std::uint8_t>(
+                                 static_cast<const std::uint8_t *>(bytes.data()), bytes.size()),
+                             validate);
+    return true;
 }
 } // namespace
 
@@ -293,7 +315,7 @@ SaveGameHeader saveGame(bool isAutoSave, bool resetWorld, std::string_view path,
     StagedSaveData staged = stageSaveData(resetWorld, title);
 
     try {
-        ufs->write(path, staged.blob);
+        writeMm7Save(path, staged.blob);
     } catch (const std::exception &e) {
         MM_WARNING("saveGame: failed to write {}: {}", isAutoSave ? "autosave" : "save", e.what());
         return {};

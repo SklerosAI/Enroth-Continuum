@@ -70,7 +70,7 @@ void validateDisposableMm7Profile(GameTestOptions *opts, bool writer) {
         for (const fs::directory_entry &entry : fs::directory_iterator(saves)) {
             const std::string name = entry.path().filename().string();
             if (!entry.is_regular_file() || entry.is_symlink() ||
-                (name != "save000.mm7" && name != "autosave.mm7"))
+                (name != "save000.mm7" && name != "save000.mm7.bak" && name != "autosave.mm7"))
                 throw Exception("MM7 save gate profile contains an unexpected save.");
         }
     }

@@ -240,11 +240,16 @@ GAME_TEST(MM7DisposableSave, DISABLED_WriteFreshProfile) {
     game.runGameRoutine([] {
         pParty->uNumGold = savedGold;
         saveGame(false, false, slot, "Disposable MM7 save gate");
+        pParty->uNumGold = savedGold + 1;
+        saveGame(false, false, slot, "Disposable MM7 resave gate");
     });
 
     ASSERT_TRUE(ufs->exists(slot));
+    ASSERT_TRUE(ufs->exists("saves/save000.mm7.bak"));
     const Blob saved = ufs->read(slot);
+    const Blob backup = ufs->read("saves/save000.mm7.bak");
     EXPECT_GT(saved.size(), 1024u);
+    EXPECT_GT(backup.size(), 1024u);
     EXPECT_TRUE(mm7::preflightNativeSaveStructure(
         std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saved.data()), saved.size()),
         GameTitle::MM7, *pGames_LOD));
@@ -269,7 +274,11 @@ GAME_TEST(MM7DisposableSave, DISABLED_WriteFreshProfile) {
         std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(beaconCandidate.data()),
                                       beaconCandidate.size()),
         GameTitle::MM7, *pGames_LOD));
-    EXPECT_EQ(pParty->uNumGold, savedGold);
+    EXPECT_EQ(pParty->uNumGold, savedGold + 1);
+
+    auto backupState = std::make_unique<SaveGame_MM7>();
+    deserialize(backup, backupState.get());
+    EXPECT_EQ(backupState->party.numGold, savedGold);
 }
 
 GAME_TEST(MM7DisposableSave, DISABLED_ReloadFreshProcess) {
@@ -303,6 +312,6 @@ GAME_TEST(MM7DisposableSave, DISABLED_ReloadFreshProcess) {
     EXPECT_EQ(current_screen_type, SCREEN_GAME);
     EXPECT_EQ(engine->_currentLoadedMapId, MAP_EMERALD_ISLAND);
     EXPECT_EQ(engine->_lastLoadedSaveFileName, fileName);
-    EXPECT_EQ(pParty->uNumGold, savedGold);
+    EXPECT_EQ(pParty->uNumGold, savedGold + 1);
     EXPECT_EQ(ufs->read(slot).size(), savedSize);
 }

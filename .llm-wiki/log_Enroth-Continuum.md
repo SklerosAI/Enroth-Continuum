@@ -2852,3 +2852,9 @@ Chronological record of wiki activity.
 - Routed active MM6 armor item pictures to the retained body and arm layers in the pinned public MMExtension table. Four extra public variant rows without original archive art were excluded. The integrated focused MM6 character suite passed 6/6, including a clickable armor overlay; an MM7 inventory control passed 1/1.
 - An opt-in hidden armor capture changed the right paperdoll region from the bare frame and passed 1/1. The monitor saw no visible game window or focus change in 117 samples; temporary PNGs stayed outside Git.
 - Other equipment categories, the inherited panel lookup, original alignment and visible input/save acceptance remain open.
+
+## [2026-11-09] verify | MM6 paperdoll weapon positions
+- by: T-Burton-ND via codex
+- Corrected MM6 main-hand, bow and shield placement to use native item-table screen positions, and routed dual-wielded swords and daggers through the pinned public extra-hand table. Removed three inherited MM6 artifact assertions. Two ordinary daggers use an inferred translated position pending original-frame comparison.
+- The integrated MM6 character suite passed 9/9, including clickable weapon, artifact offhand, bow and shield checks; an MM7 inventory control passed 1/1. A hidden equipped-weapon capture passed 1/1 with a changed paperdoll region, no visible window and no focus change in 129 monitor samples. Private PNGs stayed outside Git.
+- Other equipment art, inherited panel lookup, exact alignment and visible input/save acceptance remain open.

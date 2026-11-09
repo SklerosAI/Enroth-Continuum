@@ -55,6 +55,13 @@ and a hidden character capture passed 1/1 over 87 samples without a visible
 window or focus change. The log no longer requests that border. Other UI icon
 requests, original alignment and visible input/save acceptance remain open.
 
+The MM6 selected-portrait HUD now cycles through six retained sprite frames
+with the UI animation clock and per-frame palettes. In integration, two
+focused MM6 checks, four MM7 controls and a monitored hidden two-frame render
+passed; the monitor saw no visible window or focus change in 98 samples.
+Party creation still uses the first frame. Original visible timing and
+alignment remain unverified.
+
 ## Start from the right checkout
 
 - Use the `master` integration checkout reported by `git worktree list`.

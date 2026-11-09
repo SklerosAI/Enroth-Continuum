@@ -89,3 +89,12 @@ shared border pointer. The integrated MM6 character/house checks passed
 passed 1/1 over 87 samples without a visible window or focus change. The
 hidden log no longer requested `ib-mb-A`. Earlier panel-open claims above are
 superseded. Other missing UI icons and original alignment remain open.
+
+The later MM6 selected-portrait route now chooses all six retained `aframe`
+images from the UI animation clock and decodes each through its recorded
+palette. This supersedes the first-frame-only HUD claim above. Two focused
+MM6 checks and four MM7 controls passed in the integrated checkout. A hidden
+two-frame render comparison passed 1/1 over 98 monitor samples without a
+visible window or focus change. The MM6 party-creation frame remains static;
+visible timing and original alignment are still unverified. See the
+[capture packet](../project/MM6_F4_OFFSCREEN_FRAME_CAPTURE.md).

@@ -10,7 +10,7 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 ## Fast resume pointer — 2026-11-09
 
-Reconciled with source and headless tests at integration `386ab13b5`. MM6 F4b
+Reconciled with source and headless tests at integration `d54eb9fbd`. MM6 F4b
 is closed for a seeded first-map session: the normal Save menu writes numbered
 `saveNNN.ec6` slots atomically, production `loadGame()` accepts those slots
 through the Load menu, and fresh processes loaded, moved and saved again with
@@ -47,8 +47,12 @@ placement remain open for F5a. The opt-in first-map gate runner now stages an
 owner-only temporary profile for a visible F5a **Load** check. Five
 fresh-process seed, save and Load checks passed in the integration checkout;
 the staged MM6 app was built, but no visible result has been recorded.
-Production New Game remains guarded. The summoner-preflight checkpoint branch
-retains its ref. The arbiter, endings,
+Production New Game remains guarded. A later MM6 HUD selection animation
+slice now cycles through six retained frames. They are
+decoded with their recorded palettes and selected by the UI clock. Two
+focused MM6 checks, four MM7 controls and a monitored hidden two-frame render
+passed; original visible timing and placement remain open. The
+summoner-preflight checkpoint branch retains its ref. The arbiter, endings,
 messenger, Alice house and pickup checks now pass as five MM7 campaign
 GameTests. The raid case remains disabled.
 The inherited MM6 pickup rule for IDs 506 and 455 is now title-gated so an

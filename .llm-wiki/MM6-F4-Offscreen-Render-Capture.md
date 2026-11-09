@@ -77,3 +77,10 @@ fresh-process seed, save and Load checks passed in the integration checkout.
 This prepares a visible **Load** check without touching the normal MM6
 profile. Production New Game remains guarded; no visible F5a result has been
 recorded. See the [resume handoff](../project/MM6_RESUME_HANDOFF.md).
+
+An opt-in selected-portrait animation check drew frames at UI-clock ticks
+zero and eight into a hidden target and required changed pixels in the oval
+region. The integrated capture passed 1/1 over 98 monitor samples with no
+visible window or focus change; two focused MM6 checks and four MM7 controls
+also passed. The images stayed local. This is a bounded rendered animation
+check, not visible timing or original alignment acceptance.

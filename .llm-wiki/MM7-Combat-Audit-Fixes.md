@@ -22,6 +22,7 @@ Five ranked MM7 gameplay defects have focused headless regressions and fixes int
 | Death explosion damage | MM7 applies the parsed special-damage dice and type; MM6 retains attack-1. The public Magog replay was deterministically retraced for the new RNG draws. |
 | Spirit Lash range failure | An out-of-range target no longer spends mana and uses failure recovery. |
 | Wand recovery | Charged MM7 wands use the novice spell-recovery row for both cast behavior and displayed timing. |
+| Fate | MM7 character Fate adds its documented one-use hit bonus; monster Fate subtracts its one-use hit chance. MM6 keeps its prior actor behavior. |
 
 Each of the five branch defect tests failed on the preceding source. The fixed MM7 combat GameTest suite passed **6/6** under network denial,
 including the unarmed Break Weapon control. Three MM6 combat children passed separately in fresh processes.

@@ -144,9 +144,15 @@ Defects, inherited unless noted:
    The public Magog replay was retraced for the two newly consumed RNG draws
    and was byte-stable across three runs (`c81540e7d`).
 8. Multi-target monster attacks are parsed but never applied. Ten rows.
+   **Audit claim superseded on 2026-11-09:** `Shot x2` and `Shot x3` already
+   route through `Actor::AI_RangedAttack` as the stacked and spread projectile
+   patterns respectively. No runtime repair is warranted.
 9. Fate is broken: the character buff is never read, and on a monster it
    raises the monster's own hit chance (`CastSpellInfo.cpp:1686`,
    `Actor.cpp:3707, 3727`).
+   **Fixed in the integration tree at `6a9ea5261`:** MM7 character Fate
+   applies its documented one-use hit bonus, while monster Fate subtracts its
+   one-use hit chance. The MM6 actor behavior remains unchanged.
 10. Artifacts from level-7 treasure are neither marked found nor capped
     (`Item.cpp:234-252`). Reachable via level-7 chests in d09, d12, d27.
     Upstream #1988.
@@ -217,8 +223,7 @@ remain in the test. The Day of the Gods fix and trace update are integrated;
 no graphical or installed-app claim follows.
 
 The branch GameTests cover the first five test targets above. Remaining tests
-that would close open defects: rows 24 and 35 slot-2 spells, multi-target melee, Fate on a
-character and on a monster, a level-7 chest artifact flag, the event 532
+that would close open defects: rows 24 and 35 slot-2 spells, a level-7 chest artifact flag, the event 532
 pedestal, a cancelled scroll, Squire and Sage
 effects, the two teacher requirements, zombie clearing paths, and #2502.
 

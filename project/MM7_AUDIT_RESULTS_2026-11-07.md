@@ -179,6 +179,9 @@ Defects, inherited unless noted:
     charged wand uses the novice spell-recovery row consistently
     (`59ead390d`). Cancelled-scroll consumption and charge-spend ordering
     remain open.
+    **Further fixed on 2026-11-09:** MM7 Squire contributes +2 to every
+    weapon and armor skill, and Sage contributes +6 to Item ID and Monster ID
+    (`dbd5dfba5`). These title-specific bonuses leave MM6 unchanged.
 12. Monster buffs and targeting: monster Haste and Day of Protection are never
     read, the Hour of Power hit check reads the Shield buff's power
     (`Character.cpp:4549`), energy attacks deal Earth damage

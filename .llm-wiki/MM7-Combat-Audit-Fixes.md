@@ -23,6 +23,7 @@ Five ranked MM7 gameplay defects have focused headless regressions and fixes int
 | Spirit Lash range failure | An out-of-range target no longer spends mana and uses failure recovery. |
 | Wand recovery | Charged MM7 wands use the novice spell-recovery row for both cast behavior and displayed timing. |
 | Fate | MM7 character Fate adds its documented one-use hit bonus; monster Fate subtracts its one-use hit chance. MM6 keeps its prior actor behavior. |
+| Squire and Sage | MM7 Squire adds +2 to each weapon and armor skill; Sage adds +6 to both Item ID and Monster ID. MM6 remains unchanged. |
 
 Each of the five branch defect tests failed on the preceding source. The fixed MM7 combat GameTest suite passed **6/6** under network denial,
 including the unarmed Break Weapon control. Three MM6 combat children passed separately in fresh processes.

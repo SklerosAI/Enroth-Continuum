@@ -2876,3 +2876,9 @@ Chronological record of wiki activity.
 - Removed the absent MM7-only neutral border request from MM6; character, house, dialogue and transition consumers skip its empty pointer while their existing backgrounds remain.
 - Integrated focused MM6 character/house checks passed 14/14, the MM7 inventory control passed 1/1, and the hidden capture passed 1/1 over 87 monitor samples without a visible window or focus change. Its log no longer requested that border.
 - Other UI icon requests, original alignment and visible input/save acceptance remain open.
+
+## [2026-11-09] verify | MM6 F5a Load staging
+- by: T-Burton-ND via codex
+- Added an opt-in gate-runner mode that builds current GameTest and MM6 app targets, prepares an owner-only temporary first-map profile, and prints an isolated visible launch command and cleanup path.
+- In the integration checkout, five fresh-process seed, save and Load checks passed; the staged profile contains a numbered first-map slot and local rules. No normal MM6 profile or installed app was changed.
+- Production New Game remains guarded. A visible opening, input and save/reload check has not run; hidden render evidence remains separate.

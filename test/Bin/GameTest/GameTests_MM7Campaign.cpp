@@ -263,20 +263,18 @@ GAME_TEST(MM7Campaign, DISABLED_HarmondaleRaid) {
     }
 }
 
-GAME_TEST(MM7Campaign, DISABLED_AliceHargreavesHouse) {
+GAME_TEST(MM7Campaign, AliceHargreavesHouse) {
     // Alice Hargreaves' room in Castle Gryphonheart should open even though the game has no video for it.
-    auto screenTape = tapes.screen();
-    auto houseTape = tapes.house();
-    engine->config->debug.NoVideo.setValue(false);
     game.startNewGame();
+    engine->config->debug.NoVideo.setValue(false);
     pParty->_questBits.set(QBIT_ALICE_HARGREAVES_CAPTURE_ACTIVE);
     game.teleportTo(MAP_CASTLE_GRYPHONHEART, Vec3f(-6752, -4750, 1387), 270); // In front of her door.
-    test.startTaping();
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();
-    std::printf("DIAG status=%s\n", engine->_statusBar->get().c_str());
-    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
-    EXPECT_EQ(houseTape, tape(HOUSE_INVALID, HOUSE_CASTLE_GRYPHONHEART_ALICE_HARGREAVES));
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_NE(window_SpeakInHouse, nullptr);
+    EXPECT_EQ(window_SpeakInHouse->houseId(), HOUSE_CASTLE_GRYPHONHEART_ALICE_HARGREAVES);
 }
 
 GAME_TEST(MM7Campaign, LootDoesNotCompleteHarmondaleRaid) {

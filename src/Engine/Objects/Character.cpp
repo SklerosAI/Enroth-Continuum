@@ -1852,7 +1852,7 @@ Duration Character::GetAttackRecoveryTime(bool attackUsesBow) const {
             if (weapon->isWand()) {
                 if (engine->gameTitle() == GameTitle::MM6)
                     throw std::runtime_error("MM6 wand spell and recovery rules are not implemented");
-                weapon_recovery = pSpellDatas[spellForWand(weapon->itemId)].recovery_per_skill[MASTERY_EXPERT];
+                weapon_recovery = pSpellDatas[spellForWand(weapon->itemId)].recovery_per_skill[MASTERY_NOVICE];
             } else {
                 weapon_recovery = base_recovery_times_per_weapon_type[weapon->skill()];
             }

@@ -26,6 +26,7 @@
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
+#include "Engine/Spells/Spells.h"
 
 #include "GUI/GUIProgressBar.h"
 #include "GUI/GUIWindow.h"
@@ -179,6 +180,21 @@ GAME_TEST(Issues, Issue2022) {
     EXPECT_EQ(scrollTape, tape(0, 1)); // Still on the cursor.
     EXPECT_CONTAINS(soundsTape.flatten(), SOUND_error);
     EXPECT_CONTAINS(statusTape, "That player is not active");
+}
+
+GAME_TEST(MM7Combat, WandRecoveryUsesNoviceSpellRow) {
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+
+    Character &character = pParty->pCharacters[0];
+    character.inventory.clear();
+    character.pActiveSkills[SKILL_ARMSMASTER] = CombinedSkillValue::none();
+    Item wand(ITEM_ARCANE_WAND_OF_PARALYZING);
+    wand.numCharges = wand.maxCharges = 1;
+    character.inventory.equip(ITEM_SLOT_MAIN_HAND, wand);
+
+    EXPECT_EQ(character.GetAttackRecoveryTime(false),
+              pSpellDatas[SPELL_LIGHT_PARALYZE].recovery_per_skill[MASTERY_NOVICE]);
 }
 
 GAME_TEST(Issues, Issue2061) {

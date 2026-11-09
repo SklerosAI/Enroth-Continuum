@@ -2812,3 +2812,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Restored MM7 Squire's +2 weapon/armor-skill coverage and Sage's +6 Item ID and Monster ID bonuses behind a title guard. The MM7 regression and an independent MM6 profession control passed after a fresh GameTest build.
 - The cancelled-scroll investigation identified the queued-use and inline Escape ownership path, but no end-to-end targeted cancellation could be reproduced headlessly. All experimental restoration code was reverted; scroll consumption and wand charge ordering remain open.
+
+## [2026-11-09] verify | MM7 combined repair gate
+- by: T-Burton-ND via codex
+- After the Fate and Squire/Sage integrations, the full MM7 headless suite passed 504 tests with two skipped. This is a headless regression gate, not a graphical or campaign-playability claim.

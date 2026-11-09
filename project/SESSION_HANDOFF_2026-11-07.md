@@ -1,5 +1,10 @@
 # Session handoff — 2026-11-07 (parallel MM6 lanes and MM7 audit)
 
+Historical lane record. The 2026-11-09 [MM6 resume handoff](MM6_RESUME_HANDOFF.md),
+[plan checkpoint](plan.md#181-mm6-implementation-path) and
+[agent handoff](../.llm-wiki/Agent-Handoff.md) supersede its old production-load,
+worktree-count and active-lane claims. Keep this file for per-lane evidence.
+
 Purpose: let a fresh session or a different model pick up the orchestration
 without the chat transcript. Update this file as lanes report. Authority order
 stays as in `AGENTS.md`: source and tests over packets, packets over this file.

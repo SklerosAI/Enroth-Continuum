@@ -8,29 +8,29 @@ tags: [handoff, agents, mm6]
 
 This page is the starting brief for future Codex agents working in parallel on Enroth Continuum; recheck its dated status against the authoritative files before acting.
 
-## Fast resume pointer — 2026-11-07
+## Fast resume pointer — 2026-11-09
 
-Reconciled with source at integration `ef8f0a3ee`. MM6 F4b is partly closed.
-The Engine first-map load attempt owns every replay phase through post-world
-agreement, and `Game::gameLoop` releases it before first input or abandons to
-the main menu. The normal MM6 Save menu writes numbered `saveNNN.ec6` slots
-atomically, and the Load menu lists only loadable numbered slots. Production
-load is in progress in Lane L: only test code constructs the attempt and arms
-saving, and production `loadGame()` still refuses MM6. F5a has not started.
-The first-map gate runner, with its fault, paperdoll and normal Save/Load
-children and the MM7 control, passed after those merges.
+Reconciled with source and headless tests at integration `3d8520992`. MM6 F4b
+is closed for a seeded first-map session: the normal Save menu writes numbered
+`saveNNN.ec6` slots atomically, production `loadGame()` accepts those slots
+through the Load menu, and fresh processes loaded, moved and saved again with
+backup rotation. The full first-map gate passed 25 child checks, including
+three MM7 controls. Production New Game saving, later maps and F5a graphical
+play remain unproved; no playable MM6 campaign claim follows.
 
-The F4d lanes merged MM6 event variables, house entry with temple heal and
-NPC topics, paperdoll equip and inventory capture, first-map combat, the MM6
-item generator, and detached transition owners with border rest. Codex's C1
-Cancel-only indoor dialog and C2 detached party-death model are integrated
-but not wired (see [candidate scope and proof limits](MM6-Transition-And-Death-Candidates.md)).
-No cross-map move works live. Codex's MM7 PCX guard, detached save preflight
-and shared chest guard are also in the tree. The preflight is not a production
-validator (see [MM7 atomic save limits](MM7-Atomic-Save-File.md)). Claude
-remains the MM6 integration lead.
+The integrated F4d scope includes event variables, inventory and paperdoll,
+bounded first-map combat, the item generator, house entry and services, and
+title-aware map classification. The C1 indoor dialog and C2 party-death model
+remain detached from live travel/death wiring; no cross-map move works live.
+The MM7 sprite descriptor guard is integrated, while the detached save
+preflight is still not a production validator (see [MM7 atomic save limits](MM7-Atomic-Save-File.md)).
+The full MM7 headless suite passed 497 tests, skipped two and left three
+disabled tests unrun on 2026-11-09. The owner temporarily prioritized
+consolidating committed work and reducing worktrees before new feature work.
+Unfinished character-screen UI, MM7 campaign-test and summoner-preflight
+checkpoint branches retain their refs and are not merged as completed fixes.
 
-Use the [exact resume runbook](../project/MM6_RESUME_HANDOFF.md) and its
+Use the [updated resume runbook](../project/MM6_RESUME_HANDOFF.md) and its
 disposable gate runner, and the per-row evidence in the
 [implementation checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md). The
 lane record is in [the session handoff](../project/SESSION_HANDOFF_2026-11-07.md).

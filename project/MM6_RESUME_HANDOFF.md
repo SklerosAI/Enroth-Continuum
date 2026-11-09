@@ -1,10 +1,10 @@
-# MM6 first-map resume handoff — 2026-11-07
+# MM6 first-map resume handoff — 2026-11-09
 
 This is the bounded next gate for a new session or agent. It records the
 current F4b state and the exact check to run. It does not claim a playable MM6
 campaign. Read [plan §18.1](plan.md) for the F4b → F5a → F4d → F4c → F5b → F6
-order. Updated 2026-11-07 at integration `ef8f0a3ee`, after the F4b and F4d
-lanes merged. The lane-by-lane record is in
+order. Updated 2026-11-09 after production first-map load, map classification,
+house services and the character-tab crash guard reached integration. The lane-by-lane record is in
 [the session handoff](SESSION_HANDOFF_2026-11-07.md).
 
 ## Start from the right checkout
@@ -29,7 +29,7 @@ lanes merged. The lane-by-lane record is in
 
 ## Exact code state
 
-F4b is partly closed. What runs:
+F4b is closed headlessly for the seeded first-map session. What runs:
 
 - **First-map load attempt.** `mm6::V5FirstMapLoadAttempt` owns every replay
   phase: `Detached`, `Published`, `EventRestored`, `WorldPublished`,
@@ -45,19 +45,14 @@ F4b is partly closed. What runs:
 - **Load menu listing.** The Load menu lists only loadable numbered slots of
   the native MM6 profile and hides malformed, backup-only, other-map and
   foreign files. In-game load is refused.
+- **Production first-map load and resave.** The MM6 branch of `loadGame()`
+  admits numbered first-map slots through `mm6::loadFirstMapManualSlot`.
+  Fresh processes load through the normal menu, move and save again; the old
+  primary becomes `.bak`. The full gate passed 25 child checks on 2026-11-09,
+  including three MM7 controls.
 
 What does not run yet:
 
-- **Production load (in progress, Lane L).** Only test code constructs the
-  attempt, and it admits only the disposable candidate slot. Production
-  `loadGame()` throws for MM6 without a test override. The Load menu child
-  loads its slot through test-only replay scopes. Manual saving is armed only
-  by test code after a test-only load route. Lane L, on branch
-  `mm6-f4b-production-load`, owns numbered-slot attempt construction,
-  production owner publication with a test fault point at the
-  partial-assignment boundary (an integrator decision), the production
-  `loadGame()` route, arming save after release and a gate section proving
-  save, fresh-process load and save again through the menus. That closes F4b.
 - **Production New Game save, quicksave, quickload, autosave, cross-map
   travel and saves of any map other than the first** stay refused.
 - **F5a** has not started.
@@ -91,7 +86,7 @@ Homebrew CMake), then runs four fresh profiles in order:
 3. The same setup, then the paperdoll child.
 4. Seed and v4, then the normal Save menu child and the normal Load menu child.
 
-It ends with the MM7 `Prs.Pr2354` control. Every child is a separate process
+It ends with three MM7 controls. Every child is a separate process
 and must report one passing test. Skipped tests count as failures. Temporary
 owner-only profiles are removed afterward. Under load, raise the per-child
 timeout with `ENROTH_GATE_CHILD_TIMEOUT`. The Save and Load menu children
@@ -110,12 +105,9 @@ does not prove later maps, travel or a campaign.
 
 ## Next steps
 
-1. Integrate Lane L when it reports, then rerun the full gate with its new
-   section. F4b closes when New Game → bounded play → Save menu → fresh-process
-   Load menu → bounded play → save again passes through the production route.
-2. Run F5a, the staged graphical opening check, before broadening the
+1. Run F5a, the staged graphical opening check, before broadening the
    campaign. It needs no code ownership, only a capture and a report.
-3. Then the F4d backlog in the session handoff: transition wiring per the
+2. Then the F4d backlog in the session handoff: transition wiring per the
    [wiring plan](MM6_TRANSITION_WIRING_PLAN.md), party death wiring, shops and
    guilds (Lane M was started), house NPC hiring, transport, calendar start
    year and reputation, and the remaining spells and combat once Codex hands

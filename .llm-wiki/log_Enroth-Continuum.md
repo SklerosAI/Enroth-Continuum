@@ -2796,3 +2796,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Opening the local MM7 mods folder now creates a `README.md` only when it is absent. The guide records portrait limits, the MM7 private-mod switch, and the existing 32-row `armor.tsv` format without creating an active override or touching game data and saves.
 - Atlas source passed macOS Swift type checking. The local guide is outside Git and does not broaden the engine beyond portraits and armor templates.
+
+## [2026-11-09] verify | MM7 save and combat repair checkpoint
+- by: T-Burton-ND via codex
+- Integrated native MM7 atomic SaveLoad wiring and admission-before-deserialization, then verified the disposable writer and fresh-process reader. Added MM7 death-explosion special damage, Spirit Lash out-of-range failure handling, and novice-row wand recovery with focused regressions.
+- The death-explosion repair required a deterministic public Magog trace retrace containing only RNG checkpoint updates. The full MM7 headless suite passed 500 tests with two skipped; no private data, saves, binaries or installed application changes were committed.
+- A source-and-rule review closed two false-positive audit items: liches intentionally resist Mind and Body rather than Spirit, and enemy Meteor Shower targets the party as its sole AI target. Cancelled-scroll consumption, wand charge ordering, Fate, multi-target attacks and campaign proof remain open.

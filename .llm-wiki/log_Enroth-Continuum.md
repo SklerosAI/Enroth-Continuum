@@ -2846,3 +2846,9 @@ Chronological record of wiki activity.
 - Integrated MM6-specific body and arm names and positions for twelve faces from a pinned public MMExtension paperdoll table. Four focused archive-backed character tests and one MM7 inventory control passed.
 - A fresh hidden character capture passed 1/1. The intended right panel changed against the earlier local capture, with no change in the left panel. A monitored hidden run showed no visible game window or focus change. Private PNGs stayed outside Git.
 - Superseded the missing-base-paperdoll claim. Equipped-item layers, a separate inherited panel lookup, original placement and visible input/save acceptance remain open.
+
+## [2026-11-09] verify | MM6 armor paperdoll layers
+- by: T-Burton-ND via codex
+- Routed active MM6 armor item pictures to the retained body and arm layers in the pinned public MMExtension table. Four extra public variant rows without original archive art were excluded. The integrated focused MM6 character suite passed 6/6, including a clickable armor overlay; an MM7 inventory control passed 1/1.
+- An opt-in hidden armor capture changed the right paperdoll region from the bare frame and passed 1/1. The monitor saw no visible game window or focus change in 117 samples; temporary PNGs stayed outside Git.
+- Other equipment categories, the inherited panel lookup, original alignment and visible input/save acceptance remain open.

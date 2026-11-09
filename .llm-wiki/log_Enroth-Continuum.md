@@ -2816,3 +2816,8 @@ Chronological record of wiki activity.
 ## [2026-11-09] verify | MM7 combined repair gate
 - by: T-Burton-ND via codex
 - After the Fate and Squire/Sage integrations, the full MM7 headless suite passed 504 tests with two skipped. This is a headless regression gate, not a graphical or campaign-playability claim.
+
+## [2026-11-09] verify | MM7 campaign test checkpoint
+- by: T-Burton-ND via codex
+- Rebased the earlier campaign test candidate onto current integration. Arbiter choice, both ending handoffs and messenger timing passed as three focused headless GameTests.
+- The Harmondale raid test failed its castle completion bit, and the Alice Hargreaves house test could not complete its map transition in the test harness. Both cases remain explicitly disabled for investigation. This does not prove a continuous playable campaign or visible ending.

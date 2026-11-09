@@ -234,8 +234,9 @@ effects, the two teacher requirements, zombie clearing paths, and #2502.
 
 2026-11-09 runtime checkpoint: three headless GameTests on current integrated
 source passed for both arbiter alignments, both ending handoffs and the
-messenger's 112/113-day boundary. The raid and Alice Hargreaves house cases
-remain disabled after reproducible failures; these tests do not establish a
+messenger's 112/113-day boundary. A later headless test also verified that
+Alice Hargreaves' room opens without its missing room video (`505fbaec6`).
+Only the raid case remains disabled; these tests do not establish a
 continuous campaign from a new game or visible ending playback.
 
 - All 77 scripts (76 maps plus `global.evt`) framed: 16,699 records, 47

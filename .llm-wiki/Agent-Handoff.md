@@ -30,10 +30,10 @@ novice-row wand recovery, Fate's one-use hit modifiers, and Squire/Sage skill bo
 skipped two and left three disabled tests unrun on 2026-11-09. The owner temporarily prioritized
 consolidating committed work and reducing worktrees before new feature work.
 Unfinished character-screen UI and summoner-preflight checkpoint branches
-retain their refs. Three MM7 campaign GameTests now pass on the integration
-tree; the raid and Alice house cases remain disabled with known failures.
+retain their refs. The arbiter, endings, messenger, Alice house and pickup
+checks now pass as five MM7 campaign GameTests. The raid case remains disabled.
 The inherited MM6 pickup rule for IDs 506 and 455 is now title-gated so an
-MM7 pickup cannot set the raid completion bits; four MM7 campaign tests pass.
+MM7 pickup cannot set the raid completion bits.
 
 Use the [updated resume runbook](../project/MM6_RESUME_HANDOFF.md) and its
 disposable gate runner, and the per-row evidence in the

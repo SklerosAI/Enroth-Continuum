@@ -351,14 +351,53 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
     private func openMM7Mods() {
         do {
             try FileManager.default.createDirectory(at: modRoot, withIntermediateDirectories: true)
+            try createModGuideIfNeeded()
             if NSWorkspace.shared.open(modRoot) {
-                sendState(message: "Opened MM7 mods. Portrait moods live in portraits/<slot>/<mood>.png; legacy portrait-1.png through portrait-4.png still work.")
+                sendState(message: "Opened MM7 mods. README.md describes supported local files and armor.tsv can hold up to 32 armor overrides.")
             } else {
                 sendState(message: "Could not open the local MM7 mods folder in Finder.")
             }
         } catch {
             sendState(message: "Could not open MM7 mods folder: \(error.localizedDescription)")
         }
+    }
+
+    private func createModGuideIfNeeded() throws {
+        let guide = modRoot.appendingPathComponent("README.md")
+        guard !FileManager.default.fileExists(atPath: guide.path) else { return }
+        let contents = """
+        # Enroth Continuum MM7 local mods
+
+        This folder is local to this Mac. It is not copied into game archives,
+        saves, the Enroth Continuum repository, or cloud services. Enable
+        **Private mods** in The Atlas before launching MM7 for these files to apply.
+
+        ## Portraits
+
+        Put a PNG for each party position at `portraits/<slot>/normal.png`, where
+        `<slot>` is 1 through 4. Optional mood PNGs use the same folder, for
+        example `portraits/1/talk.png` or `portraits/1/hurt.png`. Images must be
+        PNG, 32 to 512 pixels on each side, and at most 4 MB. The Atelier can
+        import and validate these files. Legacy `portrait-1.png` through
+        `portrait-4.png` remain supported.
+
+        ## Armor templates
+
+        `armor.tsv` can contain up to 32 overrides. Each non-comment row has
+        exactly three tab-separated fields: item ID, base AC, and bonus AC.
+        Values must be armor item IDs and AC values from 0 through 100. Invalid
+        rows cause the engine to ignore the whole file and retain original values.
+
+        ```text
+        # item_id<TAB>base_ac<TAB>bonus_ac
+        66<TAB>20<TAB>3
+        76<TAB>35<TAB>5
+        ```
+
+        Other files are currently ignored by the engine. Keep original game data
+        and existing saves outside this folder.
+        """
+        try contents.write(to: guide, atomically: true, encoding: .utf8)
     }
 
     private func choosePortrait(_ slot: Int, mood: String? = nil) {

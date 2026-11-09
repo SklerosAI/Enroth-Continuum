@@ -36,7 +36,9 @@ Private mods switch is on. Use **Open mods folder** in
 the Atelier to inspect or edit these files. Atlas converts imported portraits
 to PNG before placing them there. The Atelier can import a folder of named mood
 PNGs for one party position. Imported changes take effect on the next launch.
-Other files in this folder are not loaded.
+On its first use, **Open mods folder** creates a local `README.md` that records
+the supported layouts and a multi-row armor example. It never overwrites an
+existing guide. Other files in this folder are not loaded.
 The armor file format is:
 
 ```text
@@ -44,8 +46,9 @@ The armor file format is:
 66<TAB>20<TAB>3
 ```
 
-Use actual tab characters in the file. The Atelier writes the file for you.
-Invalid values are rejected and the original game values remain in use. The
+Use actual tab characters in the file. The Atelier writes a one-row file for you;
+hand-edited files may contain up to 32 valid armor rows. Invalid values are rejected
+and the original game values remain in use. The
 app keeps the active game data paths and mod switch in local macOS preferences.
 The vendor option is also stored in preferences and does not edit game archives
 or existing saves. When MM7 Private mods is active, Atlas passes

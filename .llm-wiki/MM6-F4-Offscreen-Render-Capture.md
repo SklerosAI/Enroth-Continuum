@@ -41,3 +41,10 @@ that the paperdoll region changes from the bare frame; the active armor also
 has a headless clickable hit area. This is a rendered armor checkpoint, not a
 comparison with original art alignment or coverage of the other equipment
 categories. Both PNGs remain temporary and private.
+
+An optional weapon PNG now captures a main-hand sword and an MM6 artifact in
+the offhand after a preceding character frame. The integrated hidden test
+passed 1/1, with a required paperdoll pixel difference and 129 monitor
+samples showing no visible game window or focus change. Focused headless
+checks establish clickable weapon, bow and shield areas. These temporary
+captures do not prove exact original alignment or a visible input/save route.

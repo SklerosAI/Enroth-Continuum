@@ -26,6 +26,14 @@ armor capture passed 1/1 each. Four public variant rows absent from the
 original archive are not requested. Other equipment layers, the inherited
 panel lookup, exact alignment and visible input/save acceptance remain open.
 
+The next MM6 paperdoll slice uses native item-table positions for main-hand
+weapons, bows and shields and public extra-hand offsets for dual wielding.
+Three inherited artifact assertions were removed. The integrated character
+suite passed 9/9; an MM7 inventory control and monitored hidden weapon
+capture passed 1/1 each. Two ordinary daggers use an inferred translated
+offhand position pending original-frame comparison. Boots, helms, cloaks,
+belts, panel art and visible input/save acceptance remain open.
+
 ## Start from the right checkout
 
 - Use the `master` integration checkout reported by `git worktree list`.
@@ -74,8 +82,9 @@ What does not run yet:
 - **Production New Game save, quicksave, quickload, autosave, cross-map
   travel and saves of any map other than the first** stay refused.
 - **F5a** has a hidden character-window diagnostic with title-specific base
-  body, arms and ordinary armor layers. Other equipment layers, a separate
-  inherited panel resource, exact placement and visible opening remain open.
+  body, arms, ordinary armor and weapon positions. Boots, helms, cloaks,
+  belts, a separate inherited panel resource, exact placement and visible
+  opening remain open.
 
 Relevant source entry points:
 

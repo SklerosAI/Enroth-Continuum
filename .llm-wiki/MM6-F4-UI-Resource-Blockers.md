@@ -54,5 +54,12 @@ original archive art and were excluded. The integrated character suite passed
 6/6, including a click-area check for equipped armor. An MM7 inventory control
 and the monitored hidden armor capture each passed 1/1. The latter changed
 pixels in the paperdoll region without showing a window or changing focus.
+The next MM6-only route uses native item-table screen positions for main-hand
+weapons, bows and shields, with public dual-wield offsets for swords and
+daggers. Two daggers without public overrides use a translated native
+position as an inferred fallback. The three inherited MM6 artifact-ID
+assertions are gone. The integrated character suite passed 9/9, including
+weapon and shield hit areas; the MM7 inventory control and hidden weapon
+capture passed 1/1 each. The monitor saw no visible window or focus change.
 Other equipment categories, panel art, exact placement and visible play remain
 open; see the [capture packet](../project/MM6_F4_OFFSCREEN_FRAME_CAPTURE.md).

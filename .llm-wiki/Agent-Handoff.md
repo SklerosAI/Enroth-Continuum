@@ -34,9 +34,11 @@ The MM6 character record tabs now pass three headless checks and the full
 proposed button rectangles. A later MM6-specific base-paperdoll route passed
 four focused character checks, one MM7 inventory control and a hidden capture.
 The later armor route passed six focused MM6 character checks, an MM7
-inventory control and a monitored hidden armor capture. Other equipment
-layers, a separate inherited panel lookup and visual placement remain open
-for F5a. The summoner-preflight checkpoint branch
+inventory control and a monitored hidden armor capture. The following
+weapon route passed nine MM6 character checks, an MM7 inventory control and
+a monitored hidden weapon capture; three inherited MM6 artifact assertions
+were removed. Boots, helms, cloaks, belts, a separate inherited panel lookup
+and visual placement remain open for F5a. The summoner-preflight checkpoint branch
 retains its ref. The arbiter, endings,
 messenger, Alice house and pickup checks now pass as five MM7 campaign
 GameTests. The raid case remains disabled.

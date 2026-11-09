@@ -52,8 +52,8 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 F4 Headless Harness](MM6-F4-Headless-Harness.md) — Title-selected null-platform smoke; no-window first run found a private-rule startup dependency
 - [MM6 F4 Main Menu Assets](MM6-F4-Main-Menu-Assets.md) — MM6 title overlay lookups and geometry candidate; graphical acceptance pending
 - [MM6 F4 HUD Resources](MM6-F4-HUD-Resources.md) — Title-specific HUD art and original-PE vital-bar coordinates; hidden bar alignment verified, full visual acceptance pending
-- [MM6 F4 UI Resource Blockers](MM6-F4-UI-Resource-Blockers.md) — First-frame resources and MM6 character tabs; base and armor paperdoll art resolve while other equipment, panel art, placement and portrait animation remain open
-- [MM6 F4 Offscreen Render Capture](MM6-F4-Offscreen-Render-Capture.md) — Hidden OpenGL world, chest and character diagnostics, including an equipped armor frame; full visual fidelity remains open
+- [MM6 F4 UI Resource Blockers](MM6-F4-UI-Resource-Blockers.md) — First-frame resources and MM6 character tabs; base, armor and weapon paperdoll routes resolve while other equipment, panel art and placement remain open
+- [MM6 F4 Offscreen Render Capture](MM6-F4-Offscreen-Render-Capture.md) — Hidden OpenGL world, chest and character diagnostics, including equipped armor and weapon frames; full visual fidelity remains open
 - [MM6 F4 First Map Preflight](MM6-F4-First-Map-Preflight.md) — Detached resources, events, encounters and monitored in-memory outdoor load; durable save and gameplay remain open
 - [MM6 F4 Original No-Op Events](MM6-F4-Original-Noop-Events.md) — Linked MM6 executor advances past original no-op values 20, 27 and 28 while MM7 stays isolated
 - [MM6 F4 Indoor Facet Events](MM6-F4-Indoor-Facet-Events.md) — Original MM6 indoor face targeting and linked negative DLV round trip; save/reload remains open

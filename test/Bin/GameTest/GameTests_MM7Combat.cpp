@@ -13,13 +13,35 @@
 #include "Engine/Objects/MonsterEnums.h"
 #include "Engine/Objects/Monsters.h"
 #include "Engine/Objects/SpriteObject.h"
+#include "Engine/Spells/CastSpellInfo.h"
 #include "Engine/Spells/Spells.h"
 #include "Engine/Tables/NPCTable.h"
 #include "GUI/UI/NPCTopics.h"
+#include "GUI/UI/UIStatusBar.h"
 #include "Library/Geometry/Rect.h"
 
 MonsterProjectile ParseMissleAttackType(std::string_view missle_attack_str);
 std::pair<int, int> MonsterPopup_Draw(unsigned int uActorID, Recti* pWindow);
+
+GAME_TEST(MM7Combat, SpiritLashOutOfRangeDoesNotSpendMana) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_GT(pActors.size(), 10u);
+
+    Character &caster = pParty->pCharacters[0];
+    caster.setSkillValue(SKILL_SPIRIT, CombinedSkillValue(10, MASTERY_MASTER));
+    caster.mana = 100;
+
+    Actor &target = pActors[10];
+    target.pos = pParty->pos + Vec3f(10000, 0, 0); // Beyond Spirit Lash's melee-only range.
+    ASSERT_TRUE(target.CanBeDamaged());
+
+    pushSpellOrRangedAttack(SPELL_SPIRIT_SPIRIT_LASH, 0, CombinedSkillValue::none(), 0, Pid(OBJECT_Actor, 10));
+    game.tick();
+
+    EXPECT_EQ(caster.mana, 100);
+    EXPECT_EQ(engine->_statusBar->get(), "Spell failed");
+}
 
 GAME_TEST(MM7Combat, MonsterPopupBoundsInactiveSpellIds) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);

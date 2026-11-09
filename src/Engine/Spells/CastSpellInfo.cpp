@@ -946,8 +946,7 @@ void CastSpellInfoHelpers::castSpell() {
                         Actor::DamageMonsterFromParty(Pid(OBJECT_Sprite, pSpellSprite.Create(0, 0, 0, 0)), monster_id, Vec3f());
                     } else {
                         spellFailed(pCastSpell, LSTR_SPELL_FAILED);
-                        pPlayer->SpendMana(uRequiredMana); // decrease mana on failure
-                        setSpellRecovery(pCastSpell, recoveryTime);
+                        setSpellRecovery(pCastSpell, failureRecoveryTime);
                         continue;
                     }
                     break;

@@ -2787,3 +2787,7 @@ Chronological record of wiki activity.
 - Source at integration `3d8520992` admits numbered MM6 first-map slots through production `loadGame()`; the fresh-process Save, Load, movement and resave chain with backup rotation passed. Production New Game saving, later maps and F5a graphical play remain open.
 - The full first-map gate passed 25 child checks including three MM7 controls. The full MM7 headless suite passed 497 tests, skipped two and left three disabled. Focused lint on changed integration files passed; repository-wide `check_style` still reports inherited MM6 and mod-file errors.
 - Updated the plan checkpoint, resume runbook, session-handoff supersession note and wiki index. Unfinished MM6 character-screen UI, MM7 campaign-test and summoner-preflight branches remain checkpoints rather than merged fixes.
+
+## [2026-11-09] update | Restore ten-worktree cap
+- by: T-Burton-ND via codex
+- Restored the registered-worktree limit to ten in the agent instructions, budget checker and current MM6/wiki handoffs. The checker reported 3/10 after consolidation cleanup.

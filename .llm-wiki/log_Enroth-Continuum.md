@@ -2807,3 +2807,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Fixed MM7 Fate so a character receives the documented one-use hit bonus and a monster receives the corresponding one-use hit penalty; the two focused assertions failed before the repair and passed afterward, while MM6 retains its existing behavior.
 - Superseded the stale multi-target defect: parsed `Shot x2` and `Shot x3` already execute as stacked and spread projectiles through the established ranged-attack path. No code change was made for that claim.
+
+## [2026-11-09] verify | MM7 Squire and Sage bonuses
+- by: T-Burton-ND via codex
+- Restored MM7 Squire's +2 weapon/armor-skill coverage and Sage's +6 Item ID and Monster ID bonuses behind a title guard. The MM7 regression and an independent MM6 profession control passed after a fresh GameTest build.
+- The cancelled-scroll investigation identified the queued-use and inline Escape ownership path, but no end-to-end targeted cancellation could be reproduced headlessly. All experimental restoration code was reverted; scroll consumption and wand charge ordering remain open.

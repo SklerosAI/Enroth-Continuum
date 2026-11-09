@@ -203,6 +203,13 @@ void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUse
 #endif
 
     // Create platform.
+    // SDL's Cocoa backend can activate a command-line game-test process even
+    // when its OpenGL window stays hidden. Set this before SDL_Init so the
+    // opt-in offscreen diagnostic leaves the frontmost app alone.
+#if defined(__APPLE__)
+    if (_options.offscreenCapture)
+        _environment->setenv("SDL_MAC_BACKGROUND_APP", "1");
+#endif
     if (_options.headless) {
         _platform = std::make_unique<NullPlatform>(NullPlatformOptions());
     } else {

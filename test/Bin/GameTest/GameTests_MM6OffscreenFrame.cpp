@@ -27,7 +27,10 @@
 #include "Engine/Timer.h"
 
 #include "GUI/GUIWindow.h"
+#include "GUI/GUIButton.h"
+#include "GUI/UI/MM6CharacterScreen.h"
 #include "GUI/UI/UIChest.h"
+#include "GUI/UI/UICharacter.h"
 #include "GUI/UI/UIGame.h"
 
 #include "Library/Image/Png.h"
@@ -289,5 +292,77 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_FirstOutdoorCapture) {
         FileOutputStream chestOutput{Path(chestPath)};
         chestOutput.write(png::encode(chestFrame));
         chestOutput.close();
+    }
+
+    // Optional diagnostic for the MM6 character record. Compare two tab
+    // states in the hidden framebuffer, then keep one local capture for F5a.
+    if (const char *characterPath = std::getenv("MM6_OFFSCREEN_CHARACTER_CAPTURE_PATH")) {
+        const std::string_view characterDestination(characterPath);
+        ASSERT_TRUE(characterDestination.starts_with("/tmp/") ||
+                    characterDestination.starts_with("/private/tmp/"));
+        ASSERT_TRUE(Path(characterPath).isNormalized());
+        ASSERT_EQ(Path(characterPath).extension(), ".png");
+
+        game.runGameRoutine([] {
+            pParty->setActiveCharacterIndex(0);
+            pGUIWindow_CurrentMenu = std::make_unique<GUIWindow_CharacterRecord>(SCREEN_CHARACTERS);
+            static_cast<GUIWindow_CharacterRecord *>(pGUIWindow_CurrentMenu.get())->ShowInventoryTab();
+        });
+        ASSERT_EQ(current_screen_type, SCREEN_CHARACTERS);
+        ASSERT_EQ(current_character_screen_window, WINDOW_CHARACTER_INVENTORY);
+
+        auto captureCharacter = [&] {
+            RgbaImage result;
+            game.runGameRoutine([&] {
+                render->ClearTarget(Color(0, 0, 0));
+                engine->drawWorld();
+                engine->drawHUD();
+                render->flushAndScale();
+                engine->drawOverlay();
+                result = render->MakeFullScreenshot();
+            });
+            return result;
+        };
+        const RgbaImage inventoryFrame = captureCharacter();
+        ASSERT_EQ(inventoryFrame.size(), frame.size());
+        FileOutputStream characterOutput{Path(characterPath)};
+        characterOutput.write(png::encode(inventoryFrame));
+        characterOutput.close();
+
+        RgbaImage buttonsOnly;
+        game.runGameRoutine([&] {
+            render->ClearTarget(Color(0, 0, 0));
+            render->BeginScene2D();
+            drawMM6CharacterScreenButtons(WINDOW_CHARACTER_INVENTORY);
+            render->flushAndScale();
+            buttonsOnly = render->MakeFullScreenshot();
+        });
+        ASSERT_EQ(buttonsOnly.size(), frame.size());
+        for (GUIButton *button : {pCharacterScreen_StatsBtn, pCharacterScreen_SkillsBtn,
+                                  pCharacterScreen_InventoryBtn, pCharacterScreen_AwardsBtn,
+                                  pCharacterScreen_ExitBtn}) {
+            ASSERT_NE(button, nullptr);
+            size_t visiblePixels = 0;
+            for (int y = button->rect.y; y < button->rect.y + button->rect.h; ++y)
+                for (int x = button->rect.x; x < button->rect.x + button->rect.w; ++x) {
+                    const Color pixel = buttonsOnly[y][x];
+                    visiblePixels += pixel.r || pixel.g || pixel.b;
+                }
+            EXPECT_GT(visiblePixels, 100u);
+        }
+
+        game.runGameRoutine([] {
+            static_cast<GUIWindow_CharacterRecord *>(pGUIWindow_CurrentMenu.get())->ShowStatsTab();
+        });
+        ASSERT_EQ(current_character_screen_window, WINDOW_CHARACTER_STATS);
+        const RgbaImage statsFrame = captureCharacter();
+        ASSERT_EQ(statsFrame.size(), inventoryFrame.size());
+        size_t changedButtonPixels = 0;
+        for (int y = 318; y < 351; ++y)
+            for (int x = 22; x < 469; ++x)
+                changedButtonPixels += inventoryFrame[y][x] != statsFrame[y][x];
+        EXPECT_GT(changedButtonPixels, 100u);
+        EXPECT_FALSE(window->isVisible());
+        EXPECT_FALSE(window->grabsMouse());
     }
 }

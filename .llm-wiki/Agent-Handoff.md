@@ -33,6 +33,9 @@ The MM6 character record tabs now pass three headless checks and the full
 25-child first-map gate. An isolated hidden render confirms pixels in all five
 proposed button rectangles. A later MM6-specific base-paperdoll route passed
 four focused character checks, one MM7 inventory control and a hidden capture.
+The implementation checklist's older runtime table was reconciled on 2026-11-09
+with the integrated first-map Load, creation, house services and title-aware
+map classification. This was a status correction, not a new runtime gate.
 The later armor route passed six focused MM6 character checks, an MM7
 inventory control and a monitored hidden armor capture. The following
 weapon route passed nine MM6 character checks, an MM7 inventory control and

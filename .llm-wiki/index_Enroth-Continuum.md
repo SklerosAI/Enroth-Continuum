@@ -13,7 +13,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [Agent Handoff](Agent-Handoff.md) — Current pointer: MM6 F4b and character tabs pass headless gates; MM7 campaign checks and remaining graphical gates
 - [Agent communications](../agent_comms/README.md) — Cross-model claims, handoffs, reviews and model-card protocol
 - [MM6 Resume Runbook](../project/MM6_RESUME_HANDOFF.md) — Current first-map production Save/Load scope, gate runner and next graphical check
-- [MM6 Implementation Checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md) — Per-row MM6 evidence, engine gap table and the merged F4b/F4d slice register with backing tests
+- [MM6 Implementation Checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md) — Source-reconciled MM6 runtime status, remaining gaps and the F4b/F4d slice register with backing tests
 - [MM6 Session Handoff 2026-11-07](../project/SESSION_HANDOFF_2026-11-07.md) — Parallel lane reports, merge record and ready-ordered backlog
 - [Schema](SCHEMA_Enroth-Continuum.md) — Page, link, log, and ingest rules
 - [Log](log_Enroth-Continuum.md) — Chronological operations

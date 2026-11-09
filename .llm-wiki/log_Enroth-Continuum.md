@@ -2825,3 +2825,7 @@ Chronological record of wiki activity.
 ## [2026-11-09] fix | MM7 raid bit pickup guard
 - by: T-Burton-ND via codex
 - Restricted an inherited MM6 item-pickup rule to MM6: MM7 pickup of IDs 506 and 455 no longer sets Harmondale raid bits 184 and 185. A focused MM7 pickup test and all four active MM7 campaign tests passed. The actual raider-kill completion route remains unverified.
+
+## [2026-11-09] verify | Alice Hargreaves house route
+- by: T-Burton-ND via codex
+- Superseded the earlier failed Alice house test: enabling videos before headless new-game startup caused the loading helper failure. Enabling videos afterward verified that the missing room video does not prevent entry; the five active MM7 campaign tests passed. Only the raid test remains disabled.

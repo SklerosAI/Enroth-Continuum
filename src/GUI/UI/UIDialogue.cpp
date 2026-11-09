@@ -168,7 +168,8 @@ void GUIWindow_Dialogue::Update() {
     NPCData *pNPC = getNPCData(speakingNpcId);
     NpcType npcType = getNPCType(speakingNpcId);
     render->DrawQuad2D(_dialogueBackground, {477, 0});
-    render->DrawQuad2D(game_ui_right_panel_frame, {468, 0});
+    if (game_ui_right_panel_frame)
+        render->DrawQuad2D(game_ui_right_panel_frame, {468, 0});
     render->DrawQuad2D(game_ui_evtnpc, {pNPCPortraits_x[0][0] - 4, pNPCPortraits_y[0][0] - 4});
     render->DrawQuad2D(houseNpcs[0].icon, {pNPCPortraits_x[0][0], pNPCPortraits_y[0][0]});
 

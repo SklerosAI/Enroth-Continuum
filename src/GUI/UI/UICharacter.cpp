@@ -1297,7 +1297,8 @@ void CharacterUI_DrawPaperdoll(Character *player) {
     if (!bRingsShownInCharScreen)
         render->DrawQuad2D(ui_character_inventory_magnification_glass, {603, 299});
 
-    render->DrawQuad2D(game_ui_right_panel_frame, {468, 0});
+    if (game_ui_right_panel_frame)
+        render->DrawQuad2D(game_ui_right_panel_frame, {468, 0});
 }
 
 //----- (0041A2D1) --------------------------------------------------------
@@ -1387,7 +1388,8 @@ void CharacterUI_DrawPaperdollWithRingOverlay(Character *player) {
     CharacterUI_DrawPaperdoll(player);
 
     render->DrawQuad2D(ui_character_inventory_paperdoll_rings_background, {473, 0});
-    render->DrawQuad2D(game_ui_right_panel_frame, {468, 0});
+    if (game_ui_right_panel_frame)
+        render->DrawQuad2D(game_ui_right_panel_frame, {468, 0});
     render->DrawQuad2D(ui_exit_cancel_button_background, pCharacterScreen_DetalizBtn->rect.topLeft());
 
     for (unsigned i = 0; i < 6; ++i) {

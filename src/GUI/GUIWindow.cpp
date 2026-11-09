@@ -663,7 +663,8 @@ void SetUserInterface(PartyAlignment align) {
         game_ui_leftframe = assets->getIcon(frames.left);
         game_ui_statusbar = assets->getIcon(hudStatusBarIcon(engine->gameTitle(), "IB-Foot-a.pcx"));
 
-        game_ui_right_panel_frame = assets->getIcon("ib-mb-A");
+        // The neutral IB-Mb border is MM7 art; MM6 draws its own panel backgrounds.
+        game_ui_right_panel_frame = engine->gameTitle() == GameTitle::MM6 ? nullptr : assets->getIcon("ib-mb-A");
         game_ui_minimap_frame = engine->gameTitle() == GameTitle::MM6 ? nullptr :
                                 assets->getIcon("ib-autmask-a");
         game_ui_minimap_compass = assets->getIcon(navigation.compass);

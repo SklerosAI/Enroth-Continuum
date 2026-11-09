@@ -904,7 +904,8 @@ void GUIWindow_House::houseDialogManager() {
     Recti pWindow = this->frameRect;
     pWindow.w -= 18;
     render->DrawQuad2D(_dialogueBackground, {477, 0});
-    render->DrawQuad2D(game_ui_right_panel_frame, {468, 0});
+    if (game_ui_right_panel_frame)
+        render->DrawQuad2D(game_ui_right_panel_frame, {468, 0});
 
     if (currentHouseNpc == -1 || houseNpcs[currentHouseNpc].type != HOUSE_TRANSITION) {
         // Draw house title

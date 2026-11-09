@@ -818,7 +818,8 @@ void GameUI_DrawLifeManaBars() {
 
 //----- (0041B3B6) --------------------------------------------------------
 void GameUI_DrawRightPanel() {
-    render->DrawQuad2D(game_ui_right_panel_frame, {pViewport.x + pViewport.w - 1, 0});
+    if (game_ui_right_panel_frame)
+        render->DrawQuad2D(game_ui_right_panel_frame, {pViewport.x + pViewport.w - 1, 0});
 }
 
 //----- (0041B3E2) --------------------------------------------------------

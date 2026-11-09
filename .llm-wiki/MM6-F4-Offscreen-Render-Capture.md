@@ -48,3 +48,10 @@ passed 1/1, with a required paperdoll pixel difference and 129 monitor
 samples showing no visible game window or focus change. Focused headless
 checks establish clickable weapon, bow and shield areas. These temporary
 captures do not prove exact original alignment or a visible input/save route.
+
+An optional wearable PNG now adds one boot, helm and belt to the hidden MM6
+character frame. The integrated capture passed 1/1 with a required paperdoll
+pixel difference; 103 monitor samples showed no visible game window or focus
+change. Headless click-area and retained-resource checks passed within the
+11/11 MM6 character suite. The PNG remains temporary and private. Cloak
+rendering and original visual alignment remain unaccepted.

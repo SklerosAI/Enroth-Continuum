@@ -31,8 +31,15 @@ weapons, bows and shields and public extra-hand offsets for dual wielding.
 Three inherited artifact assertions were removed. The integrated character
 suite passed 9/9; an MM7 inventory control and monitored hidden weapon
 capture passed 1/1 each. Two ordinary daggers use an inferred translated
-offhand position pending original-frame comparison. Boots, helms, cloaks,
-belts, panel art and visible input/save acceptance remain open.
+offhand position pending original-frame comparison. The wearable route is
+recorded below; cloaks, panel art and visible input/save acceptance remain open.
+
+Boots, helms and belts now use MM6 item positions and retained art, with
+public paperdoll substitutions for helms and belts. The integrated MM6
+character suite passed 11/11, an MM7 inventory control passed 1/1, and a
+hidden wearable capture passed 1/1 without a sampled visible window or focus
+change. Cloaks, panel art, exact alignment and visible input/save acceptance
+remain open.
 
 ## Start from the right checkout
 
@@ -82,9 +89,9 @@ What does not run yet:
 - **Production New Game save, quicksave, quickload, autosave, cross-map
   travel and saves of any map other than the first** stay refused.
 - **F5a** has a hidden character-window diagnostic with title-specific base
-  body, arms, ordinary armor and weapon positions. Boots, helms, cloaks,
-  belts, a separate inherited panel resource, exact placement and visible
-  opening remain open.
+  body, arms, armor, weapon positions, boots, helms and belts. Cloaks, a
+  separate inherited panel resource, exact placement and visible opening
+  remain open.
 
 Relevant source entry points:
 

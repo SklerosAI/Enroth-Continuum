@@ -63,3 +63,11 @@ weapon and shield hit areas; the MM7 inventory control and hidden weapon
 capture passed 1/1 each. The monitor saw no visible window or focus change.
 Other equipment categories, panel art, exact placement and visible play remain
 open; see the [capture packet](../project/MM6_F4_OFFSCREEN_FRAME_CAPTURE.md).
+
+The subsequent MM6-only wearable route uses native item-table positions for
+boots, helms and belts, with public PaperDol image substitutions for helms
+and belts. All active retained items in these categories resolved. The
+integrated character suite passed 11/11, including a combined clickable
+wearable check; the MM7 inventory control and hidden wearable capture passed
+1/1 each. The monitor saw no visible window or focus change. Cloaks, panel
+art, original alignment and visible input/save remain open.

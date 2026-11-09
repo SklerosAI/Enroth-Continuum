@@ -2829,3 +2829,8 @@ Chronological record of wiki activity.
 ## [2026-11-09] verify | Alice Hargreaves house route
 - by: T-Burton-ND via codex
 - Superseded the earlier failed Alice house test: enabling videos before headless new-game startup caused the loading helper failure. Enabling videos afterward verified that the missing room video does not prevent entry; the five active MM7 campaign tests passed. Only the raid test remains disabled.
+
+## [2026-11-09] verify | MM6 character record tabs
+- by: T-Burton-ND via codex
+- Integrated MM6-specific stats, skills, inventory, awards and exit buttons. Three focused headless checks passed for archive-backed art names, key and button navigation, and the adjacent-frame key race.
+- The full 25-child MM6 first-map gate passed after integration, including three MM7 controls. Exact graphical button placement remains open for F5a.

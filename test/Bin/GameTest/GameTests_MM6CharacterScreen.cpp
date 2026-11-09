@@ -210,6 +210,37 @@ GAME_TEST(MM6CharacterScreenHeadless, WearableImagesCoverMM6ItemsAndArchive) {
     EXPECT_GT(beltsCount, 0);
 }
 
+GAME_TEST(MM6CharacterScreenHeadless, CloakImagesCoverMM6ItemsAndArchive) {
+    for (const mm6::PaperdollPicture &picture : mm6::kPaperdollCloakArt) {
+        SCOPED_TRACE(picture.itemPicture);
+        const Sizei size = engine->resources()->iconSize(picture.equippedImage);
+        EXPECT_GT(size.w, 0);
+        EXPECT_GT(size.h, 0);
+    }
+    const Sizei genericSize = engine->resources()->iconSize("nwcapeb");
+    EXPECT_GT(genericSize.w, 0);
+    EXPECT_GT(genericSize.h, 0);
+
+    int cloakCount = 0;
+    for (ItemId id : pItemTable->items.indices()) {
+        const ItemData &item = pItemTable->items[id];
+        if (item.type != ITEM_TYPE_CLOAK || item.iconName.empty())
+            continue;
+        ++cloakCount;
+        SCOPED_TRACE(std::to_underlying(id));
+        const std::string_view image = mm6::paperdollCloakImage(item.iconName);
+        const Sizei size = engine->resources()->iconSize(image);
+        EXPECT_GT(size.w, 0);
+        EXPECT_GT(size.h, 0);
+        EXPECT_GE(item.paperdollAnchorOffset.x, 468);
+        EXPECT_LT(item.paperdollAnchorOffset.x, 640);
+        EXPECT_GE(item.paperdollAnchorOffset.y, 0);
+        EXPECT_LT(item.paperdollAnchorOffset.y, 345);
+    }
+    EXPECT_GT(cloakCount, 0);
+    EXPECT_EQ(mm6::paperdollCloakImage("nwcapea"), "nwcapeb");
+}
+
 GAME_TEST(MM6CharacterScreenHeadless, TabsOpenByKeyAndButton) {
     // The character screen buttons had MM7 positions and placeholder-sized hit boxes, so clicking the right end of an MM6
     // button picture did nothing.
@@ -371,6 +402,37 @@ GAME_TEST(MM6CharacterScreenHeadless, EquippedBootsHelmAndBeltHavePaperdollHitAr
     EXPECT_GT(helmPixels, 100u);
     EXPECT_GT(beltPixels, 100u);
     EXPECT_GT(bootsPixels, 100u);
+}
+
+GAME_TEST(MM6CharacterScreenHeadless, EquippedCloaksHavePaperdollHitAreas) {
+    enterFirstMapFromNewGame(game);
+    game.goToInventory(0);
+    for (std::string_view icon : {"cape1a", "nwcapea"}) {
+        ItemId cloakId = ITEM_NULL;
+        for (ItemId id : pItemTable->items.indices()) {
+            const ItemData &item = pItemTable->items[id];
+            if (item.type == ITEM_TYPE_CLOAK && ascii::noCaseEquals(item.iconName, icon)) {
+                cloakId = id;
+                break;
+            }
+        }
+        SCOPED_TRACE(icon);
+        ASSERT_NE(cloakId, ITEM_NULL);
+        game.runGameRoutine([&] {
+            auto &inventory = pParty->pCharacters[0].inventory;
+            if (InventoryEntry old = inventory.entry(ITEM_SLOT_CLOAK))
+                inventory.take(old);
+            inventory.equip(ITEM_SLOT_CLOAK, Item(cloakId));
+        });
+        const InventoryEntry cloak = pParty->pCharacters[0].inventory.entry(ITEM_SLOT_CLOAK);
+        ASSERT_TRUE(cloak);
+        game.tick();
+        size_t clickablePixels = 0;
+        for (int y = 0; y < 345; ++y)
+            for (int x = 468; x < 640; ++x)
+                clickablePixels += equipmentHitMap.query({x, y}, -1) == cloak.index();
+        EXPECT_GT(clickablePixels, 100u);
+    }
 }
 
 GAME_TEST(MM6CharacterScreenHeadless, TabKeyRightAfterInventoryKey) {

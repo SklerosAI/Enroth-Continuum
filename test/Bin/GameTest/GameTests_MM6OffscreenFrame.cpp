@@ -420,6 +420,41 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_FirstOutdoorCapture) {
             wearableOutput.close();
         }
 
+        if (const char *cloakPath = std::getenv("MM6_OFFSCREEN_CLOAK_CAPTURE_PATH")) {
+            const std::string_view cloakDestination(cloakPath);
+            ASSERT_TRUE(cloakDestination.starts_with("/tmp/") ||
+                        cloakDestination.starts_with("/private/tmp/"));
+            ASSERT_TRUE(Path(cloakPath).isNormalized());
+            ASSERT_EQ(Path(cloakPath).extension(), ".png");
+
+            ItemId cloakId = ITEM_NULL;
+            for (ItemId id : pItemTable->items.indices()) {
+                const ItemData &item = pItemTable->items[id];
+                if (item.type == ITEM_TYPE_CLOAK && ascii::noCaseEquals(item.iconName, "cape1a")) {
+                    cloakId = id;
+                    break;
+                }
+            }
+            ASSERT_NE(cloakId, ITEM_NULL);
+            const RgbaImage beforeCloak = captureCharacter();
+            game.runGameRoutine([&] {
+                auto &inventory = pParty->activeCharacter().inventory;
+                if (InventoryEntry old = inventory.entry(ITEM_SLOT_CLOAK))
+                    inventory.take(old);
+                inventory.equip(ITEM_SLOT_CLOAK, Item(cloakId));
+            });
+            const RgbaImage cloakFrame = captureCharacter();
+            ASSERT_EQ(cloakFrame.size(), beforeCloak.size());
+            size_t changedPaperdollPixels = 0;
+            for (int y = 0; y < 345; ++y)
+                for (int x = 468; x < 640; ++x)
+                    changedPaperdollPixels += beforeCloak[y][x] != cloakFrame[y][x];
+            EXPECT_GT(changedPaperdollPixels, 250u);
+            FileOutputStream cloakOutput{Path(cloakPath)};
+            cloakOutput.write(png::encode(cloakFrame));
+            cloakOutput.close();
+        }
+
         RgbaImage buttonsOnly;
         game.runGameRoutine([&] {
             render->ClearTarget(Color(0, 0, 0));

@@ -129,6 +129,10 @@ inline constexpr std::array<PaperdollPicture, 5> kPaperdollBeltArt = {{
     {"belt1a", "BELT1B"}, {"belt2a", "BELT2B"}, {"belt3a", "BELT3B"},
     {"belt4a", "BELT4B"}, {"belt5a", "BELT5B"},
 }};
+inline constexpr std::array<PaperdollPicture, 5> kPaperdollCloakArt = {{
+    {"cape1a", "cape1b"}, {"cape2a", "cape2b"}, {"cape3a", "cape3b"},
+    {"cape4a", "cape4b"}, {"cape5a", "cape5b"},
+}};
 
 template <std::size_t N>
 inline std::string_view paperdollEquippedImage(std::string_view itemPicture,
@@ -137,6 +141,13 @@ inline std::string_view paperdollEquippedImage(std::string_view itemPicture,
         if (ascii::noCaseEquals(picture.itemPicture, itemPicture))
             return picture.equippedImage;
     return {};
+}
+
+inline std::string_view paperdollCloakImage(std::string_view itemPicture) {
+    const std::string_view specific = paperdollEquippedImage(itemPicture, kPaperdollCloakArt);
+    // PaperDol.txt's earlier :Cloak:if:Cloak row supplies the generic image;
+    // its later named cape rows take precedence when present.
+    return specific.empty() ? "nwcapeb" : specific;
 }
 
 }  // namespace mm6

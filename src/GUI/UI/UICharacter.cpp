@@ -1047,13 +1047,20 @@ void CharacterUI_DrawPaperdoll(Character *player) {
 
         // cloak
         if (InventoryEntry cloak = player->inventory.entry(ITEM_SLOT_CLOAK)) {
-            index = valueOr(paperdoll_cloak_indexByType, cloak->itemId, -1);
-            if (index != -1) {
-                item_X = pPaperdoll_BodyX + paperdoll_Cloak[bodyType][index][0];
-                item_Y = pPaperdoll_BodyY + paperdoll_Cloak[bodyType][index][1];
+            if (isMM6) {
+                const ItemData &data = pItemTable->items[cloak->itemId];
+                const std::string_view image = mm6::paperdollCloakImage(data.iconName);
+                CharacterUI_DrawItem(data.paperdollAnchorOffset.x, data.paperdollAnchorOffset.y,
+                                     cloak.get(), cloak.index(), assets->getIcon(image), !bRingsShownInCharScreen);
+            } else {
+                index = valueOr(paperdoll_cloak_indexByType, cloak->itemId, -1);
+                if (index != -1) {
+                    item_X = pPaperdoll_BodyX + paperdoll_Cloak[bodyType][index][0];
+                    item_Y = pPaperdoll_BodyY + paperdoll_Cloak[bodyType][index][1];
 
-                GraphicsImage *texture = paperdoll_cloak_texture[bodyType][index];
-                CharacterUI_DrawItem(item_X, item_Y, cloak.get(), cloak.index(), texture, !bRingsShownInCharScreen);
+                    GraphicsImage *texture = paperdoll_cloak_texture[bodyType][index];
+                    CharacterUI_DrawItem(item_X, item_Y, cloak.get(), cloak.index(), texture, !bRingsShownInCharScreen);
+                }
             }
         }
 
@@ -1190,7 +1197,7 @@ void CharacterUI_DrawPaperdoll(Character *player) {
         }
 
         // cloak's collar
-        if (InventoryEntry cloak = player->inventory.entry(ITEM_SLOT_CLOAK)) {
+        if (InventoryEntry cloak = player->inventory.entry(ITEM_SLOT_CLOAK); !isMM6 && cloak) {
             index = valueOr(paperdoll_cloak_indexByType, cloak->itemId, -1);
             if (index != -1) {
                 // leather cloak has no collar

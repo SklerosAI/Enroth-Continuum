@@ -2791,3 +2791,8 @@ Chronological record of wiki activity.
 ## [2026-11-09] update | Restore ten-worktree cap
 - by: T-Burton-ND via codex
 - Restored the registered-worktree limit to ten in the agent instructions, budget checker and current MM6/wiki handoffs. The checker reported 3/10 after consolidation cleanup.
+
+## [2026-11-09] update | Atlas local MM7 mod guide
+- by: T-Burton-ND via codex
+- Opening the local MM7 mods folder now creates a `README.md` only when it is absent. The guide records portrait limits, the MM7 private-mod switch, and the existing 32-row `armor.tsv` format without creating an active override or touching game data and saves.
+- Atlas source passed macOS Swift type checking. The local guide is outside Git and does not broaden the engine beyond portraits and armor templates.

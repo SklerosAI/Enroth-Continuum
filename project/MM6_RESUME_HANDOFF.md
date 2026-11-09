@@ -62,6 +62,13 @@ passed; the monitor saw no visible window or focus change in 98 samples.
 Party creation still uses the first frame. Original visible timing and
 alignment remain unverified.
 
+The first-map HUD's four baked book controls now open and close through a
+fresh-process headless check. The common MM6 book frame and exit tab, plus
+the Quest page background and navigation tabs, use original source-traced
+positions and retained MM6 art. The integrated MM6 book and Calendar checks
+passed 1/1 each; an MM7 quest-book control passed 1/1. Notes and Map still
+request inherited art, and visible page layout remains open for F5a.
+
 ## Start from the right checkout
 
 - Use the `master` integration checkout reported by `git worktree list`.

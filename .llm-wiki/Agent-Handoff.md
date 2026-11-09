@@ -55,7 +55,10 @@ slice now cycles through six retained frames. They are
 decoded with their recorded palettes and selected by the UI clock. Two
 focused MM6 checks, four MM7 controls and a monitored hidden two-frame render
 passed; original visible timing and placement remain open. The
-summoner-preflight checkpoint branch retains its ref. The arbiter, endings,
+first-map HUD books now open and close headlessly through their baked controls
+and the MM6 exit tab. The common book frame and Quest page use native art and
+original source-traced positions; Notes and Map art and visible acceptance
+remain open. The summoner-preflight checkpoint branch retains its ref. The arbiter, endings,
 messenger, Alice house and pickup checks now pass as five MM7 campaign
 GameTests. The raid case remains disabled.
 The inherited MM6 pickup rule for IDs 506 and 455 is now title-gated so an

@@ -391,6 +391,35 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_FirstOutdoorCapture) {
             weaponOutput.close();
         }
 
+        if (const char *wearablePath = std::getenv("MM6_OFFSCREEN_WEARABLE_CAPTURE_PATH")) {
+            const std::string_view wearableDestination(wearablePath);
+            ASSERT_TRUE(wearableDestination.starts_with("/tmp/") ||
+                        wearableDestination.starts_with("/private/tmp/"));
+            ASSERT_TRUE(Path(wearablePath).isNormalized());
+            ASSERT_EQ(Path(wearablePath).extension(), ".png");
+
+            const RgbaImage beforeWearables = captureCharacter();
+            game.runGameRoutine([] {
+                auto &inventory = pParty->activeCharacter().inventory;
+                for (ItemSlot slot : {ITEM_SLOT_HELMET, ITEM_SLOT_BELT, ITEM_SLOT_BOOTS})
+                    if (InventoryEntry old = inventory.entry(slot))
+                        inventory.take(old);
+                inventory.equip(ITEM_SLOT_HELMET, Item(static_cast<ItemId>(89)));
+                inventory.equip(ITEM_SLOT_BELT, Item(static_cast<ItemId>(100)));
+                inventory.equip(ITEM_SLOT_BOOTS, Item(static_cast<ItemId>(115)));
+            });
+            const RgbaImage wearableFrame = captureCharacter();
+            ASSERT_EQ(wearableFrame.size(), beforeWearables.size());
+            size_t changedPaperdollPixels = 0;
+            for (int y = 0; y < 345; ++y)
+                for (int x = 468; x < 640; ++x)
+                    changedPaperdollPixels += beforeWearables[y][x] != wearableFrame[y][x];
+            EXPECT_GT(changedPaperdollPixels, 250u);
+            FileOutputStream wearableOutput{Path(wearablePath)};
+            wearableOutput.write(png::encode(wearableFrame));
+            wearableOutput.close();
+        }
+
         RgbaImage buttonsOnly;
         game.runGameRoutine([&] {
             render->ClearTarget(Color(0, 0, 0));

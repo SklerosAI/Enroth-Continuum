@@ -1062,6 +1062,17 @@ void CharacterUI_DrawPaperdoll(Character *player) {
             Pointi(pPaperdoll_BodyX, pPaperdoll_BodyY) + mm6Art->bodyOffset :
             Pointi(pPaperdoll_BodyX, pPaperdoll_BodyY));
 
+        // MM6 helmet art is behind armor in its paperdoll draw order.
+        if (isMM6) {
+            if (InventoryEntry helm = player->inventory.entry(ITEM_SLOT_HELMET)) {
+                const ItemData &data = pItemTable->items[helm->itemId];
+                const std::string_view image = mm6::paperdollEquippedImage(data.iconName, mm6::kPaperdollHelmArt);
+                if (!image.empty())
+                    CharacterUI_DrawItem(data.paperdollAnchorOffset.x, data.paperdollAnchorOffset.y,
+                                         helm.get(), helm.index(), assets->getIcon(image), !bRingsShownInCharScreen);
+            }
+        }
+
         // armor
         if (InventoryEntry armor = player->inventory.entry(ITEM_SLOT_ARMOUR); !isMM6 && armor) {
             index = valueOr(paperdoll_armor_indexByType, armor->itemId, -1);
@@ -1076,19 +1087,25 @@ void CharacterUI_DrawPaperdoll(Character *player) {
 
         // boots
         if (InventoryEntry boots = player->inventory.entry(ITEM_SLOT_BOOTS)) {
-            index = valueOr(paperdoll_boots_indexByType, boots->itemId, -1);
-            if (index != -1) {
-                item_X = pPaperdoll_BodyX + paperdoll_Boot[bodyType][index][0];
-                item_Y = pPaperdoll_BodyY + paperdoll_Boot[bodyType][index][1];
+            if (isMM6) {
+                const ItemData &data = pItemTable->items[boots->itemId];
+                CharacterUI_DrawItem(data.paperdollAnchorOffset.x, data.paperdollAnchorOffset.y,
+                                     boots.get(), boots.index(), nullptr, !bRingsShownInCharScreen);
+            } else {
+                index = valueOr(paperdoll_boots_indexByType, boots->itemId, -1);
+                if (index != -1) {
+                    item_X = pPaperdoll_BodyX + paperdoll_Boot[bodyType][index][0];
+                    item_Y = pPaperdoll_BodyY + paperdoll_Boot[bodyType][index][1];
 
-                GraphicsImage *texture = nullptr;
-                if (boots->itemId == ITEM_ARTIFACT_HERMES_SANDALS) {
-                    texture = paperdoll_flying_feet[player->uCurrentFace];
-                } else {
-                    texture = paperdoll_boots_texture[bodyType][index];
+                    GraphicsImage *texture = nullptr;
+                    if (boots->itemId == ITEM_ARTIFACT_HERMES_SANDALS) {
+                        texture = paperdoll_flying_feet[player->uCurrentFace];
+                    } else {
+                        texture = paperdoll_boots_texture[bodyType][index];
+                    }
+
+                    CharacterUI_DrawItem(item_X, item_Y, boots.get(), boots.index(), texture, !bRingsShownInCharScreen);
                 }
-
-                CharacterUI_DrawItem(item_X, item_Y, boots.get(), boots.index(), texture, !bRingsShownInCharScreen);
             }
         }
 
@@ -1127,17 +1144,25 @@ void CharacterUI_DrawPaperdoll(Character *player) {
 
         // belt
         if (InventoryEntry belt = player->inventory.entry(ITEM_SLOT_BELT)) {
-            index = valueOr(paperdoll_belt_indexByType, belt->itemId, -1);
-            if (index != -1) {
-                item_X = pPaperdoll_BodyX + paperdoll_Belt[bodyType][index][0];
-                item_Y = pPaperdoll_BodyY + paperdoll_Belt[bodyType][index][1];
-                GraphicsImage *texture = nullptr;
-                if (index == 5) // Titan's Belt has dwarf textures.
-                    texture = paperdoll_belt_texture[bodyType][index];
-                else
-                    texture = paperdoll_belt_texture[humanBodyType(bodyType)][index];
+            if (isMM6) {
+                const ItemData &data = pItemTable->items[belt->itemId];
+                const std::string_view image = mm6::paperdollEquippedImage(data.iconName, mm6::kPaperdollBeltArt);
+                if (!image.empty())
+                    CharacterUI_DrawItem(data.paperdollAnchorOffset.x, data.paperdollAnchorOffset.y,
+                                         belt.get(), belt.index(), assets->getIcon(image), !bRingsShownInCharScreen);
+            } else {
+                index = valueOr(paperdoll_belt_indexByType, belt->itemId, -1);
+                if (index != -1) {
+                    item_X = pPaperdoll_BodyX + paperdoll_Belt[bodyType][index][0];
+                    item_Y = pPaperdoll_BodyY + paperdoll_Belt[bodyType][index][1];
+                    GraphicsImage *texture = nullptr;
+                    if (index == 5) // Titan's Belt has dwarf textures.
+                        texture = paperdoll_belt_texture[bodyType][index];
+                    else
+                        texture = paperdoll_belt_texture[humanBodyType(bodyType)][index];
 
-                CharacterUI_DrawItem(item_X, item_Y, belt.get(), belt.index(), texture, !bRingsShownInCharScreen);
+                    CharacterUI_DrawItem(item_X, item_Y, belt.get(), belt.index(), texture, !bRingsShownInCharScreen);
+                }
             }
         }
 
@@ -1188,7 +1213,7 @@ void CharacterUI_DrawPaperdoll(Character *player) {
         }
 
         // helm
-        if (InventoryEntry helm = player->inventory.entry(ITEM_SLOT_HELMET)) {
+        if (InventoryEntry helm = player->inventory.entry(ITEM_SLOT_HELMET); !isMM6 && helm) {
             index = valueOr(paperdoll_helm_indexByType, helm->itemId, -1);
             if (index != -1) {
                 item_X = pPaperdoll_BodyX + paperdoll_Helm[bodyType][index][0];

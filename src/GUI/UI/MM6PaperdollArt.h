@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -108,6 +109,34 @@ inline Pointi paperdollOffhandPosition(std::string_view itemPicture, Pointi item
     // Two ordinary dagger pictures have no override in PaperDol.txt. Translate
     // their original absolute Items.txt position by the same extra-hand anchor.
     return itemTablePosition + Pointi(91, 26);
+}
+
+struct PaperdollPicture {
+    std::string_view itemPicture;
+    std::string_view equippedImage;
+};
+
+// The MM6 PaperDol.txt helmet and belt rows change the image, while their
+// blank X/Y fields retain the absolute position from Items.txt.
+inline constexpr std::array<PaperdollPicture, 13> kPaperdollHelmArt = {{
+    {"helm1", "helm1"}, {"hlm2icon", "helm2"}, {"hlm3icon", "helm3"},
+    {"hlm4icon", "helm4"}, {"hlm5icon", "helm5"}, {"hat1a", "hat1b"},
+    {"hat2a", "hat2b"}, {"hat3a", "hat3b"}, {"crown1a", "crown1b"},
+    {"crown2a", "crown2b"}, {"crown3a", "crown3b"},
+    {"crownAa", "crownAb"}, {"crownRa", "crownRb"},
+}};
+inline constexpr std::array<PaperdollPicture, 5> kPaperdollBeltArt = {{
+    {"belt1a", "BELT1B"}, {"belt2a", "BELT2B"}, {"belt3a", "BELT3B"},
+    {"belt4a", "BELT4B"}, {"belt5a", "BELT5B"},
+}};
+
+template <std::size_t N>
+inline std::string_view paperdollEquippedImage(std::string_view itemPicture,
+                                               const std::array<PaperdollPicture, N> &art) {
+    for (const PaperdollPicture &picture : art)
+        if (ascii::noCaseEquals(picture.itemPicture, itemPicture))
+            return picture.equippedImage;
+    return {};
 }
 
 }  // namespace mm6

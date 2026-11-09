@@ -174,6 +174,42 @@ GAME_TEST(MM6CharacterScreenHeadless, WeaponPositionsFitMM6Paperdoll) {
     EXPECT_EQ(mm6::paperdollOffhandPosition("dagger1", {504, 81}), Pointi(595, 107));
 }
 
+GAME_TEST(MM6CharacterScreenHeadless, WearableImagesCoverMM6ItemsAndArchive) {
+    int bootsCount = 0;
+    int helmsCount = 0;
+    int beltsCount = 0;
+    for (ItemId id : pItemTable->items.indices()) {
+        const ItemData &item = pItemTable->items[id];
+        if (item.iconName.empty())
+            continue;
+        std::string_view image;
+        if (item.type == ITEM_TYPE_BOOTS) {
+            ++bootsCount;
+            image = item.iconName;
+        } else if (item.type == ITEM_TYPE_HELMET) {
+            ++helmsCount;
+            image = mm6::paperdollEquippedImage(item.iconName, mm6::kPaperdollHelmArt);
+        } else if (item.type == ITEM_TYPE_BELT) {
+            ++beltsCount;
+            image = mm6::paperdollEquippedImage(item.iconName, mm6::kPaperdollBeltArt);
+        } else {
+            continue;
+        }
+        SCOPED_TRACE(std::to_underlying(id));
+        ASSERT_FALSE(image.empty());
+        const Sizei size = engine->resources()->iconSize(image);
+        EXPECT_GT(size.w, 0);
+        EXPECT_GT(size.h, 0);
+        EXPECT_GE(item.paperdollAnchorOffset.x, 468);
+        EXPECT_LT(item.paperdollAnchorOffset.x, 640);
+        EXPECT_GE(item.paperdollAnchorOffset.y, 0);
+        EXPECT_LT(item.paperdollAnchorOffset.y, 345);
+    }
+    EXPECT_GT(bootsCount, 0);
+    EXPECT_GT(helmsCount, 0);
+    EXPECT_GT(beltsCount, 0);
+}
+
 GAME_TEST(MM6CharacterScreenHeadless, TabsOpenByKeyAndButton) {
     // The character screen buttons had MM7 positions and placeholder-sized hit boxes, so clicking the right end of an MM6
     // button picture did nothing.
@@ -293,6 +329,48 @@ GAME_TEST(MM6CharacterScreenHeadless, EquippedBowAndShieldHavePaperdollHitAreas)
         }
     EXPECT_GT(bowPixels, 100u);
     EXPECT_GT(shieldPixels, 100u);
+}
+
+GAME_TEST(MM6CharacterScreenHeadless, EquippedBootsHelmAndBeltHavePaperdollHitAreas) {
+    enterFirstMapFromNewGame(game);
+    constexpr ItemId helmId = static_cast<ItemId>(89);
+    constexpr ItemId beltId = static_cast<ItemId>(100);
+    constexpr ItemId bootsId = static_cast<ItemId>(115);
+    ASSERT_TRUE(ascii::noCaseEquals(pItemTable->items[helmId].iconName, "helm1"));
+    ASSERT_TRUE(ascii::noCaseEquals(pItemTable->items[beltId].iconName, "belt1a"));
+    ASSERT_TRUE(ascii::noCaseEquals(pItemTable->items[bootsId].iconName, "boots1"));
+    game.runGameRoutine([&] {
+        auto &inventory = pParty->pCharacters[0].inventory;
+        for (ItemSlot slot : {ITEM_SLOT_HELMET, ITEM_SLOT_BELT, ITEM_SLOT_BOOTS})
+            if (InventoryEntry old = inventory.entry(slot))
+                inventory.take(old);
+        inventory.equip(ITEM_SLOT_HELMET, Item(helmId));
+        inventory.equip(ITEM_SLOT_BELT, Item(beltId));
+        inventory.equip(ITEM_SLOT_BOOTS, Item(bootsId));
+    });
+    auto &inventory = pParty->pCharacters[0].inventory;
+    const InventoryEntry helm = inventory.entry(ITEM_SLOT_HELMET);
+    const InventoryEntry belt = inventory.entry(ITEM_SLOT_BELT);
+    const InventoryEntry boots = inventory.entry(ITEM_SLOT_BOOTS);
+    ASSERT_TRUE(helm);
+    ASSERT_TRUE(belt);
+    ASSERT_TRUE(boots);
+
+    game.goToInventory(0);
+    game.tick();
+    size_t helmPixels = 0;
+    size_t beltPixels = 0;
+    size_t bootsPixels = 0;
+    for (int y = 0; y < 345; ++y)
+        for (int x = 468; x < 640; ++x) {
+            const int hit = equipmentHitMap.query({x, y}, -1);
+            helmPixels += hit == helm.index();
+            beltPixels += hit == belt.index();
+            bootsPixels += hit == boots.index();
+        }
+    EXPECT_GT(helmPixels, 100u);
+    EXPECT_GT(beltPixels, 100u);
+    EXPECT_GT(bootsPixels, 100u);
 }
 
 GAME_TEST(MM6CharacterScreenHeadless, TabKeyRightAfterInventoryKey) {

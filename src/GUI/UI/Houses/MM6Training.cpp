@@ -8,38 +8,15 @@
 #include "Engine/Engine.h"
 #include "Engine/Localization.h"
 #include "Engine/Objects/Character.h"
-#include "Engine/Objects/NPCEnums.h"
 #include "Engine/Party.h"
-#include "Engine/Tables/NPCTable.h"
 
 #include "GUI/UI/UIHouseEnums.h"
 #include "GUI/UI/UIStatusBar.h"
 #include "GUI/UI/Houses/MM6House.h"
+#include "GUI/UI/Houses/MM6ShopPrices.h"
 
 static constexpr int HOUSE_FIRST_MM6_TRAINING_HALL = 79;
 static constexpr std::array<int, 10> trainingHallMaxLevels = {15, 60, 40, 65535, 20, 100, 200, 30, 80, 50};
-
-static bool hasHiredProfession(NpcProfession profession) {
-    for (int i = 0; i < pNPCStats->uNumNewNPCs; ++i)
-        if (pNPCStats->pNPCData[i].profession == profession && (pNPCStats->pNPCData[i].flags & NPC_HIRED))
-            return true;
-    return pParty->pHirelings[0].profession == profession || pParty->pHirelings[1].profession == profession;
-}
-
-static int hirelingMerchantPoints() {
-    int result = 0;
-    if (hasHiredProfession(NPC_PROFESSION_TRADER))
-        result += 4;
-    if (hasHiredProfession(NPC_PROFESSION_MERCHANT))
-        result += 6;
-    if (hasHiredProfession(NPC_PROFESSION_GYPSY))
-        result += 3;
-    if (hasHiredProfession(NPC_PROFESSION_DIPLOMAT)) // Negotiator in MM6.
-        result += 4;
-    if (hasHiredProfession(NPC_PROFESSION_DUPER))
-        result += 8;
-    return result;
-}
 
 /**
  * @param hour                          Hour of the day.
@@ -47,21 +24,6 @@ static int hirelingMerchantPoints() {
  */
 static int hoursUntil5am(int hour) {
     return hour < 5 ? 5 - hour : 29 - hour;
-}
-
-/**
- * MM6 merchant percentage. Unlike MM7, reputation plays no part and the result has no upper limit.
- *
- * @param character                     Character who pays.
- * @return                              Percentage taken off the price, with the party's merchant hirelings counted.
- */
-static int merchantPercent(const Character &character) {
-    const CombinedSkillValue merchant = character.getSkillValue(SKILL_MERCHANT);
-    const int points = merchant.level() + hirelingMerchantPoints();
-    if (points == 0)
-        return 0;
-    const int multiplier = merchant.mastery() == MASTERY_MASTER ? 5 : merchant.mastery() == MASTERY_EXPERT ? 4 : 3;
-    return multiplier * points + 7;
 }
 
 int mm6::trainingMaxLevel(int houseId) {
@@ -86,7 +48,7 @@ std::string mm6::trainingLabel(int houseId, const Character &character, float va
     const int64_t required = trainingExperience(character.uLevel);
     if (static_cast<int64_t>(character.experience) < required)
         return localization->format(LSTR_YOU_NEED_D_MORE_EXPERIENCE_TO_TRAIN_TO, static_cast<int>(required - character.experience), character.uLevel + 1);
-    return localization->format(LSTR_TRAIN_TO_LEVEL_D_FOR_D_GOLD, character.uLevel + 1, trainingPrice(character, value, merchantPercent(character)));
+    return localization->format(LSTR_TRAIN_TO_LEVEL_D_FOR_D_GOLD, character.uLevel + 1, trainingPrice(character, value, mm6::merchantPercent(character)));
 }
 
 void mm6::trainActiveCharacter(int houseId, float value, bool *timePassed) {
@@ -98,7 +60,7 @@ void mm6::trainActiveCharacter(int houseId, float value, bool *timePassed) {
         mm6PlayHouseSound(house, HOUSE_SOUND_TRAINING_CANT_TRAIN);
         return;
     }
-    const int price = trainingPrice(character, value, merchantPercent(character));
+    const int price = trainingPrice(character, value, mm6::merchantPercent(character));
     if (pParty->GetGold() < price) {
         engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
         mm6PlayHouseSound(house, HOUSE_SOUND_TRAINING_NOT_ENOUGH_GOLD);

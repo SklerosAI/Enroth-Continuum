@@ -2781,3 +2781,9 @@ Chronological record of wiki activity.
 - Moved current-delta visit stamping and sprite filtering into a staged MM7 snapshot, with live visit time, sprite compaction and map-cache publication only after the user-filesystem write returns. Public in-memory `createSaveData` no longer changes those live owners.
 - Synthetic failing-write and standalone-capture tests failed before the change. Afterward, four focused MM7 capture/write-failure tests and two MM6 title controls passed under network denial, including after rebase onto the monster-spell selection fix. The old and new active outdoor delta bytes matched after normalizing only three uninitialized reserved header fields; a live first-sprite pointer stayed stable after success.
 - This candidate does not wire native atomic writes, roll back `saveNewGame` map/Party setup, or prove disk durability. A write that throws after applying bytes remains uncertain. The combined first-map and full MM7 gates await integration.
+
+## [2026-11-09] update | MM6 first-map consolidation checkpoint
+- by: T-Burton-ND via codex
+- Source at integration `3d8520992` admits numbered MM6 first-map slots through production `loadGame()`; the fresh-process Save, Load, movement and resave chain with backup rotation passed. Production New Game saving, later maps and F5a graphical play remain open.
+- The full first-map gate passed 25 child checks including three MM7 controls. The full MM7 headless suite passed 497 tests, skipped two and left three disabled. Focused lint on changed integration files passed; repository-wide `check_style` still reports inherited MM6 and mod-file errors.
+- Updated the plan checkpoint, resume runbook, session-handoff supersession note and wiki index. Unfinished MM6 character-screen UI, MM7 campaign-test and summoner-preflight branches remain checkpoints rather than merged fixes.

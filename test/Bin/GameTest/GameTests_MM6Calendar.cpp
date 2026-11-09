@@ -1,6 +1,9 @@
+#include <array>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
+#include <utility>
 
 #include "Testing/Game/GameTest.h"
 
@@ -10,6 +13,7 @@
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Party.h"
+#include "Engine/Resources/ResourceManager.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/MapTable.h"
 
@@ -78,6 +82,35 @@ GAME_TEST(MM6CalendarHeadless, DISABLED_NewGameCalendarShowsYear) {
     EXPECT_CONTAINS(text, "Day\t100:\t1101 - Monday");
     EXPECT_CONTAINS(text, "Month\t100:\t1101 - January");
     EXPECT_CONTAINS(text, "Year\t100:\t1101165");
+}
+
+GAME_TEST(MM6CalendarHeadless, DISABLED_FirstMapHudBooksOpenAndClose) {
+    // Exercise the four baked MM6 book hit boxes through the real game loop.
+    // Run alone because the scoped New Game route publishes process-global owners.
+    enterFirstMapFromNewGame(game);
+    EXPECT_EQ(engine->resources()->iconSize("book"), Sizei(460, 344));
+    EXPECT_EQ(engine->resources()->iconSize("quest_bg"), Sizei(360, 300));
+    EXPECT_EQ(engine->resources()->iconSize("tabexit"), Sizei(55, 17));
+    for (std::string_view icon : {"tab--on", "tab--off", "tab+on", "tab+off"}) {
+        SCOPED_TRACE(icon);
+        EXPECT_GT(engine->resources()->iconSize(icon).w, 0);
+        EXPECT_GT(engine->resources()->iconSize(icon).h, 0);
+    }
+    for (const auto &[button, windowType] : std::array{
+             std::pair{"Game_QuestBook", WINDOW_QUEST_BOOK},
+             std::pair{"Game_NotesBook", WINDOW_AUTONOTES_BOOK},
+             std::pair{"Game_MapBook", WINDOW_MAPS_BOOK},
+             std::pair{"Game_EventsBook", WINDOW_CALENDAR_BOOK}}) {
+        SCOPED_TRACE(button);
+        game.pressGuiButton(button);
+        game.tick();
+        ASSERT_EQ(current_screen_type, SCREEN_BOOKS);
+        ASSERT_NE(pGUIWindow_CurrentMenu, nullptr);
+        EXPECT_EQ(pGUIWindow_CurrentMenu->eWindowType, windowType);
+        game.pressAndReleaseButton(BUTTON_LEFT, {382, 340}); // MM6's native exit tab.
+        game.tick();
+        EXPECT_EQ(current_screen_type, SCREEN_GAME);
+    }
 }
 
 GAME_TEST(MM6CalendarHeadless, DISABLED_NewPartyAges) {

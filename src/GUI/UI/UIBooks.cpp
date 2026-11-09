@@ -23,9 +23,22 @@ GUIWindow_Book::~GUIWindow_Book() {
 
 GUIWindow_Book::GUIWindow_Book() : GUIWindow(WINDOW_BOOK, {0, 0}, render->GetRenderDimensions()) {
     initializeFonts();
-    CreateButton({475, 445}, {158, 34}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0, INPUT_ACTION_INVALID, localization->str(LSTR_EXIT_DIALOGUE));
+    if (engine->gameTitle() == GameTitle::MM6)
+        CreateButton({360, 332}, {54, 16}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0, INPUT_ACTION_INVALID, localization->str(LSTR_EXIT_DIALOGUE));
+    else
+        CreateButton({475, 445}, {158, 34}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0, INPUT_ACTION_INVALID, localization->str(LSTR_EXIT_DIALOGUE));
     current_screen_type = SCREEN_BOOKS;
     gameTimer->setPaused(true);
+}
+
+void GUIWindow_Book::drawExitButton() {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        // The original MM6 book frame and exit tab are drawn at these screen positions.
+        render->DrawQuad2D(assets->getIcon("book"), {8, 8});
+        render->DrawQuad2D(assets->getIcon("tabexit"), {360, 332});
+    } else {
+        render->DrawQuad2D(ui_exit_cancel_button_background, {471, 445});
+    }
 }
 
 void GUIWindow_Book::initializeFonts() {

@@ -76,7 +76,7 @@ GUIWindow_AutonotesBook::GUIWindow_AutonotesBook() : GUIWindow_Book() {
 }
 
 void GUIWindow_AutonotesBook::Update() {
-    render->DrawQuad2D(ui_exit_cancel_button_background, {471, 445});
+    drawExitButton();
 
     int pTextHeight;
     bool noteTypeChanged = false;

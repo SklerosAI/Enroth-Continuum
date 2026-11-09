@@ -82,7 +82,7 @@ GUIWindow_LloydsBook::GUIWindow_LloydsBook(Pid casterPid, SpellCastFlags castFla
 }
 
 void GUIWindow_LloydsBook::Update() {
-    render->DrawQuad2D(ui_exit_cancel_button_background, {471, 445});
+    drawExitButton();
 
     Character *pPlayer = &pParty->pCharacters[_casterPid.id()];
     render->DrawQuad2D(ui_book_lloyds_backgrounds[_recallingBeacon ? 1 : 0], {8, 8});

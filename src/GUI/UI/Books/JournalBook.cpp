@@ -58,7 +58,7 @@ GUIWindow_JournalBook::GUIWindow_JournalBook() {
 }
 
 void GUIWindow_JournalBook::Update() {
-    render->DrawQuad2D(ui_exit_cancel_button_background, {471, 445});
+    drawExitButton();
 
     render->DrawQuad2D(ui_book_journal_background, pViewport.topLeft());
     if ((_bookButtonClicked && _bookButtonAction == BOOK_PREV_PAGE) || !_currentIdx) {

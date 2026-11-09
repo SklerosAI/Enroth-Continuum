@@ -65,7 +65,7 @@ GUIWindow_MapBook::GUIWindow_MapBook() {
 }
 
 void GUIWindow_MapBook::Update() {
-    render->DrawQuad2D(ui_exit_cancel_button_background, {471, 445});
+    drawExitButton();
     render->DrawQuad2D(ui_book_map_background, pViewport.topLeft());
 
     auto [minX, maxX] = viewparams->GetMapViewMinMaxX();

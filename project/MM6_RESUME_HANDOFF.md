@@ -102,10 +102,18 @@ What does not run yet:
 
 - **Production New Game save, quicksave, quickload, autosave, cross-map
   travel and saves of any map other than the first** stay refused.
-- **F5a** has a hidden character-window diagnostic with title-specific base
-  body, arms, armor, weapon positions, boots, helms and belts. Cloaks, a
-  separate inherited panel resource, exact placement and visible opening
-  remain open.
+- **F5a** has hidden world and character-window diagnostics with title-specific
+  paperdoll equipment and the inherited right-panel border request resolved.
+  Other UI icons, original alignment and visible opening remain open.
+
+The opt-in `tools/run_mm6_firstmap_gate.py --stage-f5a-profile` mode builds
+the GameTest and MM6 app, runs five fresh-process seed, save and Load checks,
+then retains a mode-0700 system-temporary MM6 profile with one loadable
+`save000.ec6` slot and local rules. Supply private `MM6_DATA_PATH` and
+`MM6_RULES_PATH` environment variables. It prints the exact MM6 app command
+using `--data-path` and `--user-path`, plus the temporary profile cleanup
+command. This is a prepared **Load** check; production New Game is still
+guarded, and no visible F5a result has been recorded.
 
 Relevant source entry points:
 
@@ -155,19 +163,22 @@ does not prove later maps, travel or a campaign.
 
 ## Next steps
 
-1. Continue F5a by comparing the staged graphical opening and paperdoll
-   alignment with the original, resolving remaining title-specific UI icons,
-   and checking visible input and save/reload when the display is available.
-   Keep the hidden capture separate from visible acceptance.
+1. Continue F5a with the isolated profile staged by
+   `python3 -B tools/run_mm6_firstmap_gate.py --stage-f5a-profile`. Select
+   Load, compare the visible opening and paperdoll alignment with the
+   original, exercise input and Save/quit/relaunch/Load, and record defects.
+   Production New Game remains guarded. Keep hidden captures separate from
+   visible acceptance and delete the temporary profile after the check.
 2. Then the F4d backlog in the session handoff: transition wiring per the
    [wiring plan](MM6_TRANSITION_WIRING_PLAN.md), party death wiring, shops and
    guilds (Lane M was started), house NPC hiring, transport, calendar start
    year and reputation, and the remaining spells and combat once Codex hands
    back the shared combat files.
 
-For each integrated milestone, run the changed-path test, the full gate and
-the MM7 control. Broader suites belong at major readiness gates or when a
-specific regression appears. The current per-row evidence is in the
+For each local edit, run the changed-path test; run the full first-map gate at
+transaction milestones and the MM7 control after shared-core changes. Broader
+suites belong at major readiness gates or when a specific regression appears.
+The current per-row evidence is in the
 [implementation checklist](MM6_IMPLEMENTATION_CHECKLIST.md). Update the focused
 [v5 packet](MM6_F4_EC6_V5_SPRITE_RUNTIME.md), the
 [wiki handoff](../.llm-wiki/Agent-Handoff.md), the index and a separate wiki

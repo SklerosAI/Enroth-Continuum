@@ -808,7 +808,10 @@ or a single-test run enables, they do not run in the default suite.
   enable the indoor dialog's Yes button.
 - [x] The party death model passes detached (`MM6PartyDeath_ut.cpp`).
 - [ ] Wire MM6 party death and respawn into `Game.cpp`.
-- [ ] F5a staged graphical opening check. Not started.
+- [ ] F5a staged graphical opening check. Hidden world and character captures
+  pass, and a disposable first-map Load profile can be staged through five
+  fresh-process checks. Visible opening, input and save/reload remain unverified;
+  production New Game is guarded.
 
 - [ ] Startup, title, credits, options, UI scale, input and intro videos. The
   MM6 reference card describes a New Game choice between custom party and

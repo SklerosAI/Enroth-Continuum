@@ -69,3 +69,11 @@ with no visible window or focus change; the log no longer requested
 `ib-mb-A`. The integrated MM6 character/house checks passed 14/14 and the MM7
 inventory control passed 1/1. The temporary images remained outside Git.
 Original alignment and visible input/save are still unverified.
+
+The separate F5a preparation mode in
+[`run_mm6_firstmap_gate.py`](../tools/run_mm6_firstmap_gate.py) creates an
+owner-only temporary profile and prints the MM6 app launch command. Its five
+fresh-process seed, save and Load checks passed in the integration checkout.
+This prepares a visible **Load** check without touching the normal MM6
+profile. Production New Game remains guarded; no visible F5a result has been
+recorded. See the [resume handoff](../project/MM6_RESUME_HANDOFF.md).

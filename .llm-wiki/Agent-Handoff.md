@@ -10,7 +10,7 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 ## Fast resume pointer — 2026-11-09
 
-Reconciled with source and headless tests at integration `15243e6c5`. MM6 F4b
+Reconciled with source and headless tests at integration `386ab13b5`. MM6 F4b
 is closed for a seeded first-map session: the normal Save menu writes numbered
 `saveNNN.ec6` slots atomically, production `loadGame()` accepts those slots
 through the Load menu, and fresh processes loaded, moved and saved again with
@@ -43,7 +43,11 @@ cloak route passed thirteen MM6 character checks, an MM7 inventory control
 and a monitored hidden capture. The later panel pass removed the MM7-only
 `ib-mb-A` request for MM6 and passed fourteen focused MM6 checks, an MM7
 control and a monitored hidden capture. Other UI icons and exact visual
-placement remain open for F5a. The summoner-preflight checkpoint branch
+placement remain open for F5a. The opt-in first-map gate runner now stages an
+owner-only temporary profile for a visible F5a **Load** check. Five
+fresh-process seed, save and Load checks passed in the integration checkout;
+the staged MM6 app was built, but no visible result has been recorded.
+Production New Game remains guarded. The summoner-preflight checkpoint branch
 retains its ref. The arbiter, endings,
 messenger, Alice house and pickup checks now pass as five MM7 campaign
 GameTests. The raid case remains disabled.

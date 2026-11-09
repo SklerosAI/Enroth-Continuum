@@ -55,3 +55,10 @@ pixel difference; 103 monitor samples showed no visible game window or focus
 change. Headless click-area and retained-resource checks passed within the
 11/11 MM6 character suite. The PNG remains temporary and private. Cloak
 rendering and original visual alignment remain unaccepted.
+
+An optional cloak PNG now adds one equipped cape to the hidden MM6 character
+frame. The integrated capture passed 1/1 with a required paperdoll pixel
+difference; 124 monitor samples saw no visible window or focus change. The
+focused MM6 character suite passed 13/13, including specific and generic
+cloak hit areas, and the MM7 inventory control passed 1/1. Temporary PNGs
+remain private. Original alignment and visible input/save remain unverified.

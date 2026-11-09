@@ -71,3 +71,12 @@ integrated character suite passed 11/11, including a combined clickable
 wearable check; the MM7 inventory control and hidden wearable capture passed
 1/1 each. The monitor saw no visible window or focus change. Cloaks, panel
 art, original alignment and visible input/save remain open.
+
+The MM6-only cloak route now draws retained cape art or a generic cloak image
+behind the base figure at native item-table positions. Two public variant
+images absent from the installed archive are excluded. The integrated MM6
+character suite passed 13/13, including specific and generic cloak hit areas;
+the MM7 inventory control and monitored hidden cloak capture passed 1/1 each.
+The monitor saw no visible window or focus change. The inherited panel lookup,
+original alignment and visible input/save remain open. The earlier cloak-open
+claims on this page are superseded; see the [capture packet](../project/MM6_F4_OFFSCREEN_FRAME_CAPTURE.md).

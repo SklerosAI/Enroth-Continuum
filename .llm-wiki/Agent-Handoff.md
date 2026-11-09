@@ -10,7 +10,7 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 ## Fast resume pointer — 2026-11-09
 
-Reconciled with source and headless tests at integration `e7fe97d35`. MM6 F4b
+Reconciled with source and headless tests at integration `47b3514c2`. MM6 F4b
 is closed for a seeded first-map session: the normal Save menu writes numbered
 `saveNNN.ec6` slots atomically, production `loadGame()` accepts those slots
 through the Load menu, and fresh processes loaded, moved and saved again with
@@ -38,8 +38,10 @@ inventory control and a monitored hidden armor capture. The following
 weapon route passed nine MM6 character checks, an MM7 inventory control and
 a monitored hidden weapon capture; three inherited MM6 artifact assertions
 were removed. A later wearable route passed eleven MM6 character checks,
-an MM7 inventory control and a monitored hidden capture. Cloaks, a separate
-inherited panel lookup and visual placement remain open for F5a. The summoner-preflight checkpoint branch
+an MM7 inventory control and a monitored hidden capture. The subsequent
+cloak route passed thirteen MM6 character checks, an MM7 inventory control
+and a monitored hidden capture. The inherited panel lookup and exact visual
+placement remain open for F5a. The summoner-preflight checkpoint branch
 retains its ref. The arbiter, endings,
 messenger, Alice house and pickup checks now pass as five MM7 campaign
 GameTests. The raid case remains disabled.

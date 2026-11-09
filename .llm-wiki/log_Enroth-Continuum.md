@@ -2821,3 +2821,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Rebased the earlier campaign test candidate onto current integration. Arbiter choice, both ending handoffs and messenger timing passed as three focused headless GameTests.
 - The Harmondale raid test failed its castle completion bit, and the Alice Hargreaves house test could not complete its map transition in the test harness. Both cases remain explicitly disabled for investigation. This does not prove a continuous playable campaign or visible ending.
+
+## [2026-11-09] fix | MM7 raid bit pickup guard
+- by: T-Burton-ND via codex
+- Restricted an inherited MM6 item-pickup rule to MM6: MM7 pickup of IDs 506 and 455 no longer sets Harmondale raid bits 184 and 185. A focused MM7 pickup test and all four active MM7 campaign tests passed. The actual raider-kill completion route remains unverified.

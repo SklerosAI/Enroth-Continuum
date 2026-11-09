@@ -232,6 +232,12 @@ effects, the two teacher requirements, zombie clearing paths, and #2502.
 
 ## A2b campaign and events (done)
 
+2026-11-09 runtime checkpoint: three headless GameTests on current integrated
+source passed for both arbiter alignments, both ending handoffs and the
+messenger's 112/113-day boundary. The raid and Alice Hargreaves house cases
+remain disabled after reproducible failures; these tests do not establish a
+continuous campaign from a new game or visible ending playback.
+
 - All 77 scripts (76 maps plus `global.evt`) framed: 16,699 records, 47
   opcodes, 0 framing errors, 0 broken jump targets, 0 missing MoveToMap targets
   (271 records), 0 missing ShowMovie names (8 records).
@@ -252,14 +258,16 @@ effects, the two teacher requirements, zombie clearing paths, and #2502.
 
 Risks, all inherited:
 
-1. Neither ending is proven at runtime and no game test covers one. Path:
+1. Both ending handoffs now pass focused headless GameTests. Path:
    `global:170` or `global:172` checks item 605, plays the ending, then
    SpeakInHouse 600/601 opens the game-over window. On close the game
    autosaves and returns to Harmondale (`Game.cpp:902-917`).
 2. Harmondale raid soft-lock risk (upstream #1665): qbit 183 locks the
    Harmondale doors until every group-9 raider in d29 and out02 is dead.
+   The candidate test failed to set the castle completion bit after marking
+   group-9 actors dead; map/group ownership needs further investigation.
 3. The arbiter messenger waits about 112 game days after the castle is rebuilt
-   (`out02:110`, `out02:211`). Deliberate in vanilla, verify at runtime.
+   (`out02:110`, `out02:211`). The 112/113-day boundary passed headlessly.
 4. `d26:448` SpeakInHouse 440 points at an empty house row (type INVALID).
 5. Known vanilla script bugs (upstream #673): qbits 40, 56 and 197 are read
    but never set. Oracle bits 229, 237 and 241 are never set. Bit-reset

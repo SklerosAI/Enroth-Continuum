@@ -10,7 +10,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 ## Navigation and conventions
 
 - [Home](Home_Enroth-Continuum.md) — Curated entry point
-- [Agent Handoff](Agent-Handoff.md) — Current consolidation pointer: MM6 F4b closed headlessly, remaining campaign gates, MM7 controls and checkpoint branches
+- [Agent Handoff](Agent-Handoff.md) — Current consolidation pointer: MM6 F4b closed headlessly, three MM7 campaign tests pass, and remaining gates and checkpoint branches
 - [Agent communications](../agent_comms/README.md) — Cross-model claims, handoffs, reviews and model-card protocol
 - [MM6 Resume Runbook](../project/MM6_RESUME_HANDOFF.md) — Current first-map production Save/Load scope, gate runner and next graphical check
 - [MM6 Implementation Checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md) — Per-row MM6 evidence, engine gap table and the merged F4b/F4d slice register with backing tests

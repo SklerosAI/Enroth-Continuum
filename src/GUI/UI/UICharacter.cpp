@@ -4,6 +4,7 @@
 #include <array>
 #include <cstdio>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -32,6 +33,7 @@
 #include "GUI/GUIMessageQueue.h"
 #include "GUI/UI/ItemGrid.h"
 #include "GUI/UI/MM6CharacterScreen.h"
+#include "GUI/UI/MM6PaperdollArt.h"
 #include "GUI/UI/UIInventory.h"
 
 #include "Io/Mouse.h"
@@ -983,8 +985,14 @@ void CharacterUI_DrawPaperdoll(Character *player) {
     int item_X;
     int item_Y;
 
+    const bool isMM6 = engine->gameTitle() == GameTitle::MM6;
     bool isDwarf = player->GetRace() == RACE_DWARF;
-    BodyType bodyType = player->bodyType();
+    BodyType bodyType = isMM6 ?
+        (mm6::isFemininePortraitFace(player->uCurrentFace) ? BODY_TYPE_HUMAN_FEMALE : BODY_TYPE_HUMAN_MALE) :
+        player->bodyType();
+    const auto mm6Art = isMM6 ? mm6::paperdollBaseArt(player->uCurrentFace) : std::nullopt;
+    if (isMM6 && !mm6Art)
+        return;
 
     int uPlayerID = pParty->getCharacterIdInParty(player);
 
@@ -997,7 +1005,7 @@ void CharacterUI_DrawPaperdoll(Character *player) {
     bool bTwoHandedGrip = itemMainHand && (itemMainHand->type() == ITEM_TYPE_TWO_HANDED || itemMainHand->skill() == SKILL_SPEAR && !itemOffHand);
 
     // Aqua-Lung
-    if (player->hasUnderwaterSuitEquipped()) {
+    if (!isMM6 && player->hasUnderwaterSuitEquipped()) {
         // TODO(captainurist): need to also z-draw arms and wrists.
         render->DrawQuad2D(paperdoll_dbods[uPlayerID], {pPaperdoll_BodyX, pPaperdoll_BodyY});
         if (!bRingsShownInCharScreen)
@@ -1044,7 +1052,9 @@ void CharacterUI_DrawPaperdoll(Character *player) {
         }
 
         // paperdoll
-        render->DrawQuad2D(paperdoll_dbods[uPlayerID], {pPaperdoll_BodyX, pPaperdoll_BodyY});
+        render->DrawQuad2D(paperdoll_dbods[uPlayerID], isMM6 ?
+            Pointi(pPaperdoll_BodyX, pPaperdoll_BodyY) + mm6Art->bodyOffset :
+            Pointi(pPaperdoll_BodyX, pPaperdoll_BodyY));
 
         // armor
         if (InventoryEntry armor = player->inventory.entry(ITEM_SLOT_ARMOUR)) {
@@ -1078,12 +1088,12 @@ void CharacterUI_DrawPaperdoll(Character *player) {
 
         // offhand depending on grip
         if (!bTwoHandedGrip) {
-            item_X = pPaperdoll_BodyX + pPaperdoll_LeftHand[bodyType][0];
-            item_Y = pPaperdoll_BodyY + pPaperdoll_LeftHand[bodyType][1];
+            item_X = pPaperdoll_BodyX + (isMM6 ? mm6Art->arm1Offset.x : pPaperdoll_LeftHand[bodyType][0]);
+            item_Y = pPaperdoll_BodyY + (isMM6 ? mm6Art->arm1Offset.y : pPaperdoll_LeftHand[bodyType][1]);
             render->DrawQuad2D(paperdoll_dlads[uPlayerID], {item_X, item_Y});
         } else {
-            item_X = pPaperdoll_BodyX + pPaperdoll_SecondLeftHand[bodyType][0];
-            item_Y = pPaperdoll_BodyY + pPaperdoll_SecondLeftHand[bodyType][1];
+            item_X = pPaperdoll_BodyX + (isMM6 ? mm6Art->arm2Offset.x : pPaperdoll_SecondLeftHand[bodyType][0]);
+            item_Y = pPaperdoll_BodyY + (isMM6 ? mm6Art->arm2Offset.y : pPaperdoll_SecondLeftHand[bodyType][1]);
             render->DrawQuad2D(paperdoll_dlaus[uPlayerID], {item_X, item_Y});
         }
 
@@ -1214,24 +1224,31 @@ void CharacterUI_DrawPaperdoll(Character *player) {
         }
     }
 
-    // mainhand's wrist
-    {
-        item_X = pPaperdoll_BodyX + pPaperdoll_RightHand[bodyType][0];
-        item_Y = pPaperdoll_BodyY + pPaperdoll_RightHand[bodyType][1];
+    // MM6 uses fixed hand art and positions from its own paperdoll layout.
+    if (isMM6) {
+        render->DrawQuad2D(assets->getIcon("LEFTHAND"), {pPaperdoll_BodyX + 32, pPaperdoll_BodyY + 160});
+        if (itemOffHand && !itemOffHand->isShield())
+            render->DrawQuad2D(assets->getIcon("RTHAND"), {pPaperdoll_BodyX + 125, pPaperdoll_BodyY + 186});
+    } else {
+        // mainhand's wrist
+        {
+            item_X = pPaperdoll_BodyX + pPaperdoll_RightHand[bodyType][0];
+            item_Y = pPaperdoll_BodyY + pPaperdoll_RightHand[bodyType][1];
 
-        render->DrawQuad2D(paperdoll_drhs[uPlayerID], {item_X, item_Y});
-    }
+            render->DrawQuad2D(paperdoll_drhs[uPlayerID], {item_X, item_Y});
+        }
 
-    // offhand's wrist
-    if (bTwoHandedGrip) {
-        item_X = pPaperdoll_BodyX + pPaperdoll_SecondLeftHand[bodyType][0];
-        item_Y = pPaperdoll_BodyY + pPaperdoll_SecondLeftHand[bodyType][1];
+        // offhand's wrist
+        if (bTwoHandedGrip) {
+            item_X = pPaperdoll_BodyX + pPaperdoll_SecondLeftHand[bodyType][0];
+            item_Y = pPaperdoll_BodyY + pPaperdoll_SecondLeftHand[bodyType][1];
 
-        render->DrawQuad2D(paperdoll_dlhus[uPlayerID], {item_X, item_Y});
-    } else if (!itemOffHand || itemOffHand && !itemOffHand->isShield()) {
-        item_X = pPaperdoll_BodyX + pPaperdollLeftEmptyHand[bodyType][0];
-        item_Y = pPaperdoll_BodyY + pPaperdollLeftEmptyHand[bodyType][1];
-        render->DrawQuad2D(paperdoll_dlhs[uPlayerID], {item_X, item_Y});
+            render->DrawQuad2D(paperdoll_dlhus[uPlayerID], {item_X, item_Y});
+        } else if (!itemOffHand || itemOffHand && !itemOffHand->isShield()) {
+            item_X = pPaperdoll_BodyX + pPaperdollLeftEmptyHand[bodyType][0];
+            item_Y = pPaperdoll_BodyY + pPaperdollLeftEmptyHand[bodyType][1];
+            render->DrawQuad2D(paperdoll_dlhs[uPlayerID], {item_X, item_Y});
+        }
     }
 
     // magnifying glass
@@ -1357,7 +1374,7 @@ void CharacterUI_LoadPaperdollTextures() {
     ui_character_inventory_paperdoll_rings_background = assets->getIcon("BACKHAND");
 
     for (int i = 0; i < pParty->pCharacters.size(); ++i) {
-        if (pParty->pCharacters[i].hasUnderwaterSuitEquipped()) {
+        if (engine->gameTitle() != GameTitle::MM6 && pParty->pCharacters[i].hasUnderwaterSuitEquipped()) {
             WetsuitOn(i);
         } else {
             WetsuitOff(i);
@@ -1674,6 +1691,16 @@ void WetsuitOn(int characterIndex) {
 
 void WetsuitOff(int characterIndex) {
     Character *player = &pParty->pCharacters[characterIndex];
+
+    if (engine->gameTitle() == GameTitle::MM6) {
+        const auto art = mm6::paperdollBaseArt(player->uCurrentFace);
+        if (!art)
+            throw std::invalid_argument("MM6 paperdoll requires a valid portrait face");
+        paperdoll_dbods[characterIndex] = assets->getIcon(art->body);
+        paperdoll_dlads[characterIndex] = assets->getIcon(art->arm1);
+        paperdoll_dlaus[characterIndex] = assets->getIcon(art->arm2);
+        return;
+    }
 
     paperdoll_dbods[characterIndex] = assets->getIcon(dbod_texnames_by_face[player->uCurrentFace]);
     paperdoll_dlads[characterIndex] = assets->getIcon(dlad_texnames_by_face[player->uCurrentFace]);

@@ -37,6 +37,7 @@ set(GUI_UI_HEADERS
         UIBooks.h
         UICharacter.h
         MM6CharacterScreen.h
+        MM6PaperdollArt.h
         UIChest.h
         UICredits.h
         UIDialogue.h

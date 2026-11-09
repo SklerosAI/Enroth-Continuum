@@ -2,6 +2,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include "Testing/Game/GameTest.h"
 
@@ -17,6 +18,7 @@
 
 #include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/MM6PaperdollArt.h"
 
 static void completeEditableMM6Party() {
     for (Character &character : pParty->pCharacters) {
@@ -73,6 +75,33 @@ GAME_TEST(MM6CharacterScreenHeadless, ButtonArtExistsInMM6Archive) {
              "buttexi1", "buttexi2"}) {
         SCOPED_TRACE(name);
         Sizei size = engine->resources()->iconSize(name);
+        EXPECT_GT(size.w, 0);
+        EXPECT_GT(size.h, 0);
+    }
+}
+
+GAME_TEST(MM6CharacterScreenHeadless, PaperdollBaseArtExistsInMM6Archive) {
+    const Sizei background = engine->resources()->iconSize("BACKDOLL");
+    ASSERT_GT(background.w, 0);
+    ASSERT_GT(background.h, 0);
+    for (int face = 0; face < mm6::kPortraitFaceCount; ++face) {
+        SCOPED_TRACE(face);
+        const auto art = mm6::paperdollBaseArt(face);
+        ASSERT_TRUE(art.has_value());
+        for (const auto &[name, offset] : {std::pair{art->body, art->bodyOffset},
+                                          std::pair{art->arm1, art->arm1Offset},
+                                          std::pair{art->arm2, art->arm2Offset}}) {
+            const Sizei size = engine->resources()->iconSize(name);
+            EXPECT_GT(size.w, 0) << name;
+            EXPECT_GT(size.h, 0) << name;
+            EXPECT_GE(offset.x, 0);
+            EXPECT_GE(offset.y, 0);
+            EXPECT_LE(offset.x + size.w, background.w) << name;
+            EXPECT_LE(offset.y + size.h, background.h) << name;
+        }
+    }
+    for (std::string_view name : {"LEFTHAND", "RTHAND"}) {
+        const Sizei size = engine->resources()->iconSize(name);
         EXPECT_GT(size.w, 0);
         EXPECT_GT(size.h, 0);
     }

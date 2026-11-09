@@ -31,5 +31,13 @@ part of that diagnosis. All twelve face layouts and fixed hand art resolve in
 focused checks (4/4), and a fresh hidden capture passed 1/1. Its remaining
 character-screen warning concerns an inherited panel resource. A local pixel
 comparison changed the intended right panel while leaving the left panel
-unchanged. Equipped-item layers and original alignment still need review;
+unchanged. Other equipped-item layers and original alignment still need review;
 the temporary PNGs remain private. See the [public capture packet](../project/MM6_F4_OFFSCREEN_FRAME_CAPTURE.md).
+
+An optional second character PNG now captures one equipped MM6 armor item in
+the hidden OpenGL frame. The integrated run passed 1/1, with 117 monitor
+samples and no visible game window or focus change. A pixel assertion checks
+that the paperdoll region changes from the bare frame; the active armor also
+has a headless clickable hit area. This is a rendered armor checkpoint, not a
+comparison with original art alignment or coverage of the other equipment
+categories. Both PNGs remain temporary and private.

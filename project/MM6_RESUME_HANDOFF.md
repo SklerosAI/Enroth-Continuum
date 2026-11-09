@@ -14,10 +14,17 @@ navigation, and the adjacent-frame key race. The full first-map gate passed
 
 The later MM6 base paperdoll slice resolves body, arm and hand art for all
 twelve faces. Four focused character checks and one MM7 inventory control
-passed; a fresh hidden character capture passed 1/1. Equipped-item layers,
+passed; a fresh hidden character capture passed 1/1. Other equipped-item layers,
 the remaining inherited panel resource, exact tab placement and visible
 input/save verification remain F5a work. This does not change the 25-child
 first-map result or open a normal New Game route.
+
+The next armor slice maps every active MM6 armor template to retained body and
+arm layers. The integrated MM6 character suite passed 6/6, including a
+clickable equipped-armor area; an MM7 inventory control and a monitored hidden
+armor capture passed 1/1 each. Four public variant rows absent from the
+original archive are not requested. Other equipment layers, the inherited
+panel lookup, exact alignment and visible input/save acceptance remain open.
 
 ## Start from the right checkout
 
@@ -67,8 +74,8 @@ What does not run yet:
 - **Production New Game save, quicksave, quickload, autosave, cross-map
   travel and saves of any map other than the first** stay refused.
 - **F5a** has a hidden character-window diagnostic with title-specific base
-  body and arms. Equipped-item layers, a separate inherited panel resource,
-  exact placement and visible opening remain open.
+  body, arms and ordinary armor layers. Other equipment layers, a separate
+  inherited panel resource, exact placement and visible opening remain open.
 
 Relevant source entry points:
 

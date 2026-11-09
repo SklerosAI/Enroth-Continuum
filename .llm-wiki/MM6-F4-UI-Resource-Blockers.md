@@ -44,5 +44,15 @@ body and arm route. Its twelve face layouts follow the public
 The focused MM6 character checks passed 4/4 and the MM7 inventory control
 passed 1/1. The hidden character capture passed 1/1 and changed only the
 right-panel pixels compared with the earlier local capture. A separate
-inherited panel lookup still fails; equipped-item layers and original tab
+inherited panel lookup still fails; other equipped-item layers and original tab
 placement have not been accepted. See the [updated offscreen packet](../project/MM6_F4_OFFSCREEN_FRAME_CAPTURE.md).
+
+The next title-specific layer selects MM6 armor body and arm art by the active
+item picture. All active MM6 armor templates matched thirteen retained layer
+sets from the public MMExtension table; four extra public variant rows lacked
+original archive art and were excluded. The integrated character suite passed
+6/6, including a click-area check for equipped armor. An MM7 inventory control
+and the monitored hidden armor capture each passed 1/1. The latter changed
+pixels in the paperdoll region without showing a window or changing focus.
+Other equipment categories, panel art, exact placement and visible play remain
+open; see the [capture packet](../project/MM6_F4_OFFSCREEN_FRAME_CAPTURE.md).

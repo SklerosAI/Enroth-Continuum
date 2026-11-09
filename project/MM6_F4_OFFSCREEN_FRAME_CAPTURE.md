@@ -42,7 +42,13 @@ SDL's macOS background-app hint is now set before SDL initialization for the opt
 
 The character window now selects MM6 body and arm art by face, using a title-specific layout derived from the public [MMExtension MM6 paperdoll table](https://github.com/GrayFace/MMExtension/blob/9d73c0ff0482bd231ea522f752f4fe9b26640925/Misc/Paper%20Doll/mm6/PaperDol.txt). MM7 keeps its existing art and layout path. The focused archive-backed character checks passed 4/4, including all twelve face layouts, and an MM7 inventory control passed 1/1. A fresh hidden character capture passed 1/1; its only remaining character-screen missing-resource warning was for a separate inherited panel resource. The changed right-panel pixels were compared locally against the prior capture; both PNGs remain outside Git. This supersedes the earlier blanket claim that the character paperdoll body and arms are missing.
 
-The base figure is a resource and hidden-render checkpoint, not visual acceptance. Equipped-item layers, the remaining panel resource, original tab placement and a visible input/save check remain open for F5a. The hidden capture showed no visible game window or focus change in the monitored worker run.
+The base figure is a resource and hidden-render checkpoint, not visual acceptance. The armor layer route is recorded below; other equipment layers, the remaining panel resource, original tab placement and a visible input/save check remain open for F5a. The hidden capture showed no visible game window or focus change in the monitored worker run.
+
+### MM6 armor paperdoll layers, 2026-11-09
+
+The MM6 character window now chooses body and arm armor layers from the item picture and positions in the same public MMExtension table. All active MM6 armor templates map to the thirteen layer sets present in the retained archive; four extra variant rows in that public table lack original archive art and are not requested. The MM7 armor path is unchanged. The integrated focused MM6 character suite passed 6/6, including an equipped-armor hit-area check; an MM7 inventory control passed 1/1.
+
+The opt-in hidden test can also write a separate temporary armor capture with `MM6_OFFSCREEN_ARMOR_CAPTURE_PATH`. It equips one ordinary armor item after the bare character frame, verifies a substantial pixel change in the paperdoll region, and writes only under `/tmp` or `/private/tmp`. The integrated hidden run passed 1/1 over 117 monitor samples with no visible game window or focus change. This proves a bounded rendered armor change and clickable overlay, not original alignment or complete equipment visuals. Boots, helmets, cloaks, belts, weapons, the inherited panel lookup and visible input/save acceptance remain F5a work.
 
 ### Current first-map seasonal diagnostic, 2026-11-06
 

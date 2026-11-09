@@ -26,7 +26,7 @@ The MM7 sprite descriptor guard is integrated. Native MM7 SaveLoad now
 preflights before live deserialization and writes profile slots atomically;
 the disposable two-process save/reload gate passed. Recent MM7 repairs also
 cover death-explosion special damage, out-of-range Spirit Lash mana handling,
-novice-row wand recovery, Fate's one-use hit modifiers, and Squire/Sage skill bonuses. The full MM7 headless suite passed 500 tests,
+novice-row wand recovery, Fate's one-use hit modifiers, and Squire/Sage skill bonuses. The full MM7 headless suite passed 504 tests,
 skipped two and left three disabled tests unrun on 2026-11-09. The owner temporarily prioritized
 consolidating committed work and reducing worktrees before new feature work.
 Unfinished character-screen UI, MM7 campaign-test and summoner-preflight

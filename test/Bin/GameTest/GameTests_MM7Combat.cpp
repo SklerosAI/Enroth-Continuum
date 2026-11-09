@@ -3,6 +3,7 @@
 
 #include "Testing/Game/GameTest.h"
 
+#include "Engine/AttackList.h"
 #include "Engine/Engine.h"
 #include "Engine/Localization.h"
 #include "Engine/Party.h"
@@ -252,4 +253,30 @@ GAME_TEST(MM7Combat, DivineInterventionRecoveryFallsWithLightSkill) {
     Duration lowSkillRecovery = recoveryAtLevel(1);
     Duration highSkillRecovery = recoveryAtLevel(10);
     EXPECT_GT(lowSkillRecovery, highSkillRecovery);
+}
+
+GAME_TEST(MM7Combat, DeathExplosionUsesSpecialDamage) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_FALSE(pActors.empty());
+
+    pSpriteObjects.clear();
+    attackList.clear();
+    Actor &actor = pActors[0];
+    actor.monsterInfo.specialAbilityDamageDiceRolls = 0;
+    actor.monsterInfo.specialAbilityDamageDiceSides = 0;
+    actor.monsterInfo.specialAbilityDamageDiceBonus = 37;
+    actor.monsterInfo.field_3C_some_special_attack = std::to_underlying(DAMAGE_FIRE);
+
+    EXPECT_EQ(actor._43B3E0_CalcDamage(ABILITY_SPECIAL), 37);
+    EXPECT_EQ(actor.abilityDamageType(ABILITY_SPECIAL), DAMAGE_FIRE);
+
+    Actor::Explode(0);
+    ASSERT_EQ(pSpriteObjects.size(), 1u);
+    EXPECT_EQ(pSpriteObjects[0].spellCasterAbility, ABILITY_SPECIAL);
+    processSpellImpact(0, Pid());
+
+    ASSERT_EQ(attackList.size(), 1u);
+    EXPECT_EQ(attackList[0].attackSpecial, ABILITY_SPECIAL);
+    attackList.clear();
 }

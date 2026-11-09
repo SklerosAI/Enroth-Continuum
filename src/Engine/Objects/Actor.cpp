@@ -1231,9 +1231,13 @@ int Actor::_43B3E0_CalcDamage(ActorAbility dmgSource) {
                 return 0;
             return CalcSpellDamage(spellID, skillLevel, skillMastery, 0);
         case ABILITY_SPECIAL:
+            // MM6 retains its inherited no-damage special path. MM7 death explosions use the parsed special dice.
+            if (engine->gameTitle() != GameTitle::MM7)
+                return 0;
             damageDiceRolls = this->monsterInfo.specialAbilityDamageDiceRolls;
             damageDiceSides = this->monsterInfo.specialAbilityDamageDiceSides;
             damageBonus = this->monsterInfo.specialAbilityDamageDiceBonus;
+            break;
         default:
             return 0;
     }

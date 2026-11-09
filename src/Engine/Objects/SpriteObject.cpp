@@ -831,7 +831,8 @@ bool processSpellImpact(unsigned int uLayingItemID, Pid pid) {
             }
             object->spellSpriteStop();
             pushAoeAttack(Pid(OBJECT_Sprite, uLayingItemID), engine->config->gameplay.AoeDamageDistance.value(),
-                    pSpriteObjects[uLayingItemID].vPosition, ABILITY_ATTACK1);
+                    pSpriteObjects[uLayingItemID].vPosition,
+                    engine->gameTitle() == GameTitle::MM7 ? ABILITY_SPECIAL : ABILITY_ATTACK1);
             if (objectData->uFlags & OBJECT_DESC_TRAIL_PARTICLE) {
                 trail_particle_generator.GenerateTrailParticles(object->vPosition.x, object->vPosition.y, object->vPosition.z,
                                                                 objectData->uParticleTrailColor);

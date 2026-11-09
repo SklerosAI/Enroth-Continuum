@@ -2894,3 +2894,9 @@ Chronological record of wiki activity.
 - Reconciled seven stale runtime-table rows with current creation, character UI, house service, event-year, map-classification and production first-map Load paths. No runtime code changed.
 - Re-ran the existing headless all-map, all-month terrain texture check: 1/1 passed. It confirms bounded texture resources, not original seasonal appearance.
 - F5a visible input/save acceptance, production New Game and later-map travel remain open.
+
+## [2026-11-09] verify | MM6 first-map Quest book and exit tab
+- by: T-Burton-ND via codex
+- Routed the common MM6 book frame and exit tab, plus Quest background and page tabs, through retained MM6 art at positions traced from the identity-matched original executable. MM7 retains its existing book path.
+- The integrated fresh-process HUD book and Calendar checks passed 1/1 each; the MM7 quest-book control passed 1/1. All four MM6 HUD books opened and closed through the native exit hit box.
+- Notes and Map still request inherited art, and visible book appearance, sound and save/input acceptance remain open for F5a.

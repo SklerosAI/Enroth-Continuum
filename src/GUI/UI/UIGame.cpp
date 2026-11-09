@@ -1173,12 +1173,13 @@ void GameUI_WritePointedObjectStatusString() {
 void GameUI_DrawCharacterSelectionFrame() {
     if (pParty->hasActiveCharacter()) {
         const int index = pParty->activeCharacterIndex();
-        const Sizei frameSize = engine->gameTitle() == GameTitle::MM6 && game_ui_player_selection_frame ?
-            game_ui_player_selection_frame->size() : Sizei();
+        GraphicsImage *selection = engine->gameTitle() == GameTitle::MM6 ?
+            assets->getMM6SelectionFrame(animTimer->time()) : game_ui_player_selection_frame;
+        const Sizei frameSize = engine->gameTitle() == GameTitle::MM6 && selection ? selection->size() : Sizei();
         const Pointi position = hudPortraitSelectionPosition(engine->gameTitle(), index,
             frameSize,
             {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[index] - 9, 380});
-        render->DrawQuad2D(game_ui_player_selection_frame, position);
+        render->DrawQuad2D(selection, position);
     }
 }
 

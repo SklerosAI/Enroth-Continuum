@@ -53,8 +53,8 @@ void AssetsManager::releaseAllTextures() {
     for (auto *cache : {&images, &bitmaps, &sprites})
         for (const auto &[name, image] : *cache)
             image->releaseRenderId();
-    if (mm6SelectionFrame)
-        mm6SelectionFrame->releaseRenderId();
+    for (const auto &[name, image] : mm6SelectionFrames)
+        image->releaseRenderId();
     if (customPortraits)
         customPortraits->releaseRenderIds();
 
@@ -62,10 +62,11 @@ void AssetsManager::releaseAllTextures() {
 }
 
 void AssetsManager::releaseImage(GraphicsImage *image) {
-    if (mm6SelectionFrame.get() == image) {
-        mm6SelectionFrame.reset();
-        return;
-    }
+    for (auto it = mm6SelectionFrames.begin(); it != mm6SelectionFrames.end(); ++it)
+        if (it->second.get() == image) {
+            mm6SelectionFrames.erase(it);
+            return;
+        }
     for (auto *cache : {&images, &bitmaps, &sprites}) {
         auto pos = cache->find(image->name());
         if (pos != cache->end() && pos->second.get() == image) {
@@ -88,25 +89,30 @@ GraphicsImage *AssetsManager::getIcon(std::string_view name) {
 }
 
 GraphicsImage *AssetsManager::getMM6SelectionFrame() {
+    return getMM6SelectionFrame(Duration());
+}
+
+GraphicsImage *AssetsManager::getMM6SelectionFrame(Duration elapsed) {
     if (engine->gameTitle() != GameTitle::MM6)
         return nullptr;
-    if (!mm6SelectionFrame) {
-        RgbaImage image = engine->resources()->sprite("aframe1");
-        if (!image)
-            return nullptr;
-        // MM6's aframe1 frame records palette 2 in dsft.bin. The regular sprite
-        // image stores indices in red for billboards; the 2D HUD needs colors.
-        const int frameId = pSpriteFrameTable->FastFindSprite("aframe1");
-        if (frameId <= 0)
-            return nullptr;
-        const Palette palette = engine->resources()->palette(pSpriteFrameTable->pSpriteSFrames[frameId].paletteId);
-        for (Color &pixel : image.pixels()) {
-            if (pixel.a)
-                pixel = palette.colors[pixel.r];
-        }
-        mm6SelectionFrame = GraphicsImage::Create(std::move(image));
+    const int frameId = pSpriteFrameTable->FastFindSprite("aframe1");
+    if (frameId <= 0)
+        return nullptr;
+    const SpriteFrame *frame = pSpriteFrameTable->GetFrame(frameId, elapsed);
+    const std::string name = ascii::toLower(frame->textureName);
+    if (auto it = mm6SelectionFrames.find(name); it != mm6SelectionFrames.end())
+        return it->second.get();
+
+    RgbaImage image = engine->resources()->sprite(name);
+    if (!image)
+        return nullptr;
+    // Sprite decoding keeps palette indices in red for billboards; 2D HUD art needs colors.
+    const Palette palette = engine->resources()->palette(frame->paletteId);
+    for (Color &pixel : image.pixels()) {
+        if (pixel.a)
+            pixel = palette.colors[pixel.r];
     }
-    return mm6SelectionFrame.get();
+    return mm6SelectionFrames.emplace(name, GraphicsImage::Create(std::move(image))).first->second.get();
 }
 
 GraphicsImage *AssetsManager::getCustomPortrait(int partySlot, PortraitId portrait, Condition condition) {

@@ -227,6 +227,36 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_FirstOutdoorCapture) {
         EXPECT_GT(chromaticPixels, 250u) << "portrait center " << center;
     }
 
+    if (const char *check = std::getenv("MM6_OFFSCREEN_SELECTION_ANIMATION_CHECK");
+        check && std::string_view(check) == "1") {
+        RgbaImage firstSelection;
+        RgbaImage secondSelection;
+        game.runGameRoutine([&] {
+            const Duration priorTime = animTimer->time();
+            const bool priorPaused = animTimer->isPaused();
+            pParty->setActiveCharacterIndex(0);
+            auto captureSelection = [&](Duration time) {
+                animTimer->restorePausedSimulationTime(time);
+                render->ClearTarget(Color(0, 0, 0));
+                render->BeginScene2D();
+                GameUI_DrawCharacterSelectionFrame();
+                render->flushAndScale();
+                return render->MakeFullScreenshot();
+            };
+            firstSelection = captureSelection(0_ticks);
+            secondSelection = captureSelection(8_ticks);
+            animTimer->restorePausedSimulationTime(priorTime);
+            animTimer->setPaused(priorPaused);
+        });
+        ASSERT_EQ(firstSelection.size(), frame.size());
+        ASSERT_EQ(secondSelection.size(), frame.size());
+        size_t changedSelectionPixels = 0;
+        for (int y = 377; y < 468; ++y)
+            for (int x = 16; x < 85; ++x)
+                changedSelectionPixels += firstSelection[y][x] != secondSelection[y][x];
+        EXPECT_GT(changedSelectionPixels, 10u);
+    }
+
     FileOutputStream output{Path(capturePath)};
     output.write(png::encode(frame));
     output.close();

@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <memory>
 
+#include "Core/Time/Duration.h"
 #include "GUI/GUIFont.h"
 
 class GraphicsImage;
@@ -27,8 +28,9 @@ class AssetsManager {
     void releaseImage(GraphicsImage *image);
 
     GraphicsImage *getIcon(std::string_view name);
-    /** Decodes MM6's palette-zero aframe1 sprite for the two-dimensional portrait UI. */
+    /** Decodes MM6's selected-portrait sprite for the two-dimensional UI. */
     GraphicsImage *getMM6SelectionFrame();
+    GraphicsImage *getMM6SelectionFrame(Duration elapsed);
     /** MM7-only local portrait, with condition fallback. Null retains the original art. */
     GraphicsImage *getCustomPortrait(int partySlot, PortraitId portrait, Condition condition);
     GraphicsImage *getImage_Buff(std::string_view name);
@@ -59,7 +61,7 @@ class AssetsManager {
     std::unordered_map<std::string, std::unique_ptr<GraphicsImage>> sprites;
     std::unordered_map<std::string, std::unique_ptr<GraphicsImage>> images;
     std::unique_ptr<mm7::mods::PrivatePortraits> customPortraits;
-    std::unique_ptr<GraphicsImage> mm6SelectionFrame;
+    std::unordered_map<std::string, std::unique_ptr<GraphicsImage>> mm6SelectionFrames;
     bool customPortraitsLoaded = false;
 };
 

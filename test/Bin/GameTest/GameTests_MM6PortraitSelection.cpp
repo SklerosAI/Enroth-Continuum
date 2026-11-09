@@ -1,3 +1,5 @@
+#include <array>
+
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/AssetsManager.h"
@@ -37,26 +39,36 @@ GAME_TEST(MM6PortraitSelection, OriginalPaletteAndFrameCycle) {
     EXPECT_EQ(pSpriteFrameTable->GetFrame(id, Duration::fromTicks(48)), &frame);
     EXPECT_EQ(engine->resources()->spriteSize("aframe1"), Sizei(69, 91));
 
-    GraphicsImage *selection = assets->getMM6SelectionFrame();
-    ASSERT_NE(selection, nullptr);
-    EXPECT_EQ(assets->getMM6SelectionFrame(), selection);
-    const RgbaImage &decoded = selection->rgba();
-    RgbaImage indexed = engine->resources()->sprite("aframe1");
-    const Palette palette = engine->resources()->palette(frame.paletteId);
-    ASSERT_EQ(decoded.size(), indexed.size());
-    int opaque = 0;
-    int transparent = 0;
-    for (size_t i = 0; i < indexed.pixels().size(); ++i) {
-        const Color source = indexed.pixels()[i];
-        const Color result = decoded.pixels()[i];
-        if (source.a == 0) {
-            EXPECT_EQ(result.a, 0);
-            ++transparent;
-        } else {
-            EXPECT_EQ(result, palette.colors[source.r]);
-            ++opaque;
+    std::array<GraphicsImage *, 6> selectionFrames = {};
+    for (int index = 0; index < 6; ++index) {
+        SCOPED_TRACE(index);
+        const Duration time = Duration::fromTicks(index * 8);
+        const SpriteFrame *selectedFrame = pSpriteFrameTable->GetFrame(id, time);
+        GraphicsImage *selection = assets->getMM6SelectionFrame(time);
+        ASSERT_NE(selection, nullptr);
+        selectionFrames[index] = selection;
+        EXPECT_EQ(assets->getMM6SelectionFrame(time + Duration::fromTicks(48)), selection);
+        const RgbaImage &decoded = selection->rgba();
+        RgbaImage indexed = engine->resources()->sprite(selectedFrame->textureName);
+        const Palette palette = engine->resources()->palette(selectedFrame->paletteId);
+        ASSERT_EQ(decoded.size(), indexed.size());
+        int opaque = 0;
+        int transparent = 0;
+        for (size_t i = 0; i < indexed.pixels().size(); ++i) {
+            const Color source = indexed.pixels()[i];
+            const Color result = decoded.pixels()[i];
+            if (source.a == 0) {
+                EXPECT_EQ(result.a, 0);
+                ++transparent;
+            } else {
+                EXPECT_EQ(result, palette.colors[source.r]);
+                ++opaque;
+            }
         }
+        EXPECT_GT(opaque, 0);
+        EXPECT_GT(transparent, 0);
     }
-    EXPECT_GT(opaque, 0);
-    EXPECT_GT(transparent, 0);
+    EXPECT_EQ(assets->getMM6SelectionFrame(), selectionFrames.front());
+    for (int index = 1; index < 6; ++index)
+        EXPECT_NE(selectionFrames[index], selectionFrames[index - 1]);
 }

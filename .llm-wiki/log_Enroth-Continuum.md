@@ -2882,3 +2882,9 @@ Chronological record of wiki activity.
 - Added an opt-in gate-runner mode that builds current GameTest and MM6 app targets, prepares an owner-only temporary first-map profile, and prints an isolated visible launch command and cleanup path.
 - In the integration checkout, five fresh-process seed, save and Load checks passed; the staged profile contains a numbered first-map slot and local rules. No normal MM6 profile or installed app was changed.
 - Production New Game remains guarded. A visible opening, input and save/reload check has not run; hidden render evidence remains separate.
+
+## [2026-11-09] verify | MM6 selected-portrait animation
+- by: T-Burton-ND via codex
+- Routed the MM6 HUD selection frame through the six retained sprite frames using the UI animation clock and each frame's palette. MM7 selection art and MM6 party creation retain their prior paths.
+- Integrated focused MM6 checks passed 2/2 and MM7 controls passed 4/4. A hidden two-frame render check passed 1/1 with changed oval pixels and no visible window or focus change over 98 monitor samples; temporary captures stayed outside Git.
+- Original animation timing and alignment on a visible display remain unverified.

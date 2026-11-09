@@ -16,8 +16,7 @@ house services and the character-tab crash guard reached integration. The lane-b
   push the local MM6 integration history to the public remote without the
   separate privacy audit in
   [Source and Privacy Boundary](../.llm-wiki/Source-and-Privacy-Boundary.md).
-- The repository cap is 15 registered worktrees. The owner asked this session
-  to stay at 10 or fewer until confirmed. Run
+- The repository cap is 10 registered worktrees. Run
   `python3 tools/check_worktree_budget.py` before creating another and follow
   the [agent notes](../AGENTS.md). Code-changing lanes use their own worktrees,
   never the integration checkout.

@@ -41,7 +41,7 @@ specific contradiction or regression calls for them.
 
 ## Worktree budget — 2026-11-07
 
-The repository has a **15-worktree cap**, including the main integration
+The repository has a **10-worktree cap**, including the main integration
 checkout and protected baselines. Run `python3 tools/check_worktree_budget.py`
 before creating a worktree. At the cap, reuse one or reconcile and remove a
 finished checkout first. A cleanup reduced 89 registered worktrees to 10;

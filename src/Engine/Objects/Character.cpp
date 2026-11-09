@@ -4528,6 +4528,12 @@ bool Character::characterHitOrMiss(Actor *pActor, int distancemod, int skillmod)
     else
         attBonus = this->GetActualAttack(false);  // melee
 
+    if (engine->gameTitle() == GameTitle::MM7 &&
+        pCharacterBuffs[CHARACTER_BUFF_FATE].Active()) {
+        attBonus += pCharacterBuffs[CHARACTER_BUFF_FATE].power;
+        pCharacterBuffs[CHARACTER_BUFF_FATE].Reset();
+    }
+
     int attPositiveMod =
         skillmod + grng->random(effectiveActorArmor + 2 * attBonus + 30);  // positive effects to hit on attack
 

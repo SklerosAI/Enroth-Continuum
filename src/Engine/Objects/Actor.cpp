@@ -3759,7 +3759,10 @@ bool Actor::ActorHitOrMiss(Character *pPlayer) {
         this->buffs[ACTOR_BUFF_BLESS].power > v3)
         v3 = this->buffs[ACTOR_BUFF_BLESS].power;
     if (this->buffs[ACTOR_BUFF_FATE].Active()) {
-        v3 += this->buffs[ACTOR_BUFF_FATE].power;
+        if (engine->gameTitle() == GameTitle::MM7)
+            v3 -= this->buffs[ACTOR_BUFF_FATE].power;
+        else
+            v3 += this->buffs[ACTOR_BUFF_FATE].power;
         this->buffs[ACTOR_BUFF_FATE].Reset();
     }
     v4 = pPlayer->GetActualAC() + 2 * this->monsterInfo.level + 10;

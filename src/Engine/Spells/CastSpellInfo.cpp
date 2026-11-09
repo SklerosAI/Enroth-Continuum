@@ -1684,19 +1684,19 @@ void CastSpellInfoHelpers::castSpell() {
 
                 case SPELL_SPIRIT_FATE:
                 {
-                    int spell_power;
+                    int spell_power = 20;
                     switch (spell_mastery) {
                         case MASTERY_NOVICE:
-                            spell_power = spell_level;
+                            spell_power += spell_level;
                             break;
                         case MASTERY_EXPERT:
-                            spell_power = 2 * spell_level;
+                            spell_power += 2 * spell_level;
                             break;
                         case MASTERY_MASTER:
-                            spell_power = 4 * spell_level;
+                            spell_power += 4 * spell_level;
                             break;
                         case MASTERY_GRANDMASTER:
-                            spell_power = 6 * spell_level;
+                            spell_power += 6 * spell_level;
                             break;
                         default:
                             assert(false);

@@ -302,3 +302,38 @@ GAME_TEST(MM7Combat, DeathExplosionUsesSpecialDamage) {
     EXPECT_EQ(attackList[0].attackSpecial, ABILITY_SPECIAL);
     attackList.clear();
 }
+
+GAME_TEST(MM7Combat, FateImprovesCharacterAndHindersMonsterHit) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_FALSE(pActors.empty());
+
+    Character &character = pParty->pCharacters[0];
+    Actor &actor = pActors[0];
+    actor.monsterInfo.ac = 1000;
+
+    character.pCharacterBuffs[CHARACTER_BUFF_FATE]
+        .Apply(pParty->GetPlayingTime() + Duration::fromMinutes(5), MASTERY_NOVICE, 10000, 0, -1);
+    EXPECT_TRUE(character.characterHitOrMiss(&actor, 3, 0));
+    EXPECT_TRUE(character.pCharacterBuffs[CHARACTER_BUFF_FATE].Inactive());
+
+    actor.buffs[ACTOR_BUFF_FATE]
+        .Apply(pParty->GetPlayingTime() + Duration::fromMinutes(5), MASTERY_NOVICE, 10000, 0, -1);
+    EXPECT_FALSE(actor.ActorHitOrMiss(&character));
+    EXPECT_TRUE(actor.buffs[ACTOR_BUFF_FATE].Inactive());
+}
+
+GAME_TEST(MM7Combat, FateUsesDocumentedBasePower) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+    ASSERT_FALSE(pActors.empty());
+
+    Character &caster = pParty->pCharacters[0];
+    caster.setSkillValue(SKILL_SPIRIT, CombinedSkillValue(3, MASTERY_EXPERT));
+    caster.mana = 100;
+
+    pushSpellOrRangedAttack(SPELL_SPIRIT_FATE, 0, CombinedSkillValue::none(), 0, Pid(OBJECT_Actor, 0));
+    game.tick();
+
+    EXPECT_EQ(pActors[0].buffs[ACTOR_BUFF_FATE].power, 26); // 20 + 2 * Spirit skill.
+}

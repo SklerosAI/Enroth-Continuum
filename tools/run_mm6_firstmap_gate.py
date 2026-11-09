@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -18,6 +19,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 GAME_TEST = ROOT / "build/test/Bin/GameTest/OpenEnroth_GameTest"
+MM6_APP = ROOT / "build/src/Bin/OpenEnroth/MM6.app/Contents/MacOS/MM6"
 
 SEED = ("MM6ZCreationItemSeedHeadless.DISABLED_WriteRealStarterV2RestartSlot", None, None)
 V4 = ("MM6V4PostEntryCandidateHeadless.DISABLED_FirstMapFullSessionPreflight",
@@ -100,7 +102,9 @@ def run_child(name, flag, value, profile, data, rules=None, timeout=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--list", action="store_true", help="show the gate without building or using private data")
-    parser.add_argument("--skip-build", action="store_true", help="use the existing GameTest binary")
+    parser.add_argument("--skip-build", action="store_true", help="use existing GameTest and MM6 app binaries")
+    parser.add_argument("--stage-f5a-profile", action="store_true",
+                        help="prepare and retain an isolated first-map Load slot for a later visible MM6 check")
     args = parser.parse_args()
     if args.list:
         for name, _, _ in SEVEN_CHILD_CHAIN:
@@ -116,7 +120,9 @@ def main():
         return 0
 
     paths = {}
-    for key in ("MM6_DATA_PATH", "MM6_RULES_PATH", "MM7_DATA_PATH"):
+    required_paths = ("MM6_DATA_PATH", "MM6_RULES_PATH") if args.stage_f5a_profile else (
+        "MM6_DATA_PATH", "MM6_RULES_PATH", "MM7_DATA_PATH")
+    for key in required_paths:
         value = os.environ.get(key)
         if not value or not Path(value).is_dir():
             print(f"Set {key} to an existing private directory.", file=sys.stderr)
@@ -128,13 +134,41 @@ def main():
         if not cmake or cmake.startswith("/opt/homebrew/"):
             print("Provide the project CMake toolchain outside Homebrew.", file=sys.stderr)
             return 2
-        result = subprocess.run([cmake, "--build", "build", "--target",
-                                 "OpenEnroth_GameTest", "--parallel", "4"], cwd=ROOT)
+        targets = ["OpenEnroth_GameTest", "MM6"] if args.stage_f5a_profile else ["OpenEnroth_GameTest"]
+        result = subprocess.run([cmake, "--build", "build", "--target", *targets, "--parallel", "4"], cwd=ROOT)
         if result.returncode:
             return result.returncode
     if not GAME_TEST.is_file():
         print("GameTest binary is missing; build the target first.", file=sys.stderr)
         return 2
+    if args.stage_f5a_profile:
+        if not MM6_APP.is_file():
+            print("MM6 app binary is missing; build the MM6 target first.", file=sys.stderr)
+            return 2
+        profile = Path(tempfile.mkdtemp(prefix="mm6-restart-f5a-"))
+        os.chmod(profile, 0o700)
+        staged = False
+        try:
+            for name, flag, value in [SEED, V4, V5_WRITE, NORMAL_SAVE_LOAD[0], NORMAL_SAVE_LOAD[1]]:
+                if not run_child(name, flag, value, profile,
+                                 paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+                    return 1
+            slot = profile / "saves/save000.ec6"
+            if not slot.is_file() or not slot.stat().st_size:
+                print("The staged first-map slot is absent or empty.", file=sys.stderr)
+                return 1
+            shutil.copytree(paths["MM6_RULES_PATH"], profile / "rules")
+            staged = True
+        finally:
+            if not staged:
+                shutil.rmtree(profile)
+        print("PASS: isolated first-map slot and fresh-process Load menu check")
+        print("Production MM6 New Game remains guarded; select Load and save000.ec6 for the visible check.")
+        print("Profile:", profile)
+        print("Launch:", shlex.join([str(MM6_APP), "--data-path", str(paths["MM6_DATA_PATH"]),
+                                    "--user-path", str(profile)]))
+        print("Delete this temporary profile after the check:", shlex.join(["rm", "-r", str(profile)]))
+        return 0
 
     with tempfile.TemporaryDirectory(prefix="mm6-restart-gate-") as first:
         profile = Path(first)

@@ -2888,3 +2888,9 @@ Chronological record of wiki activity.
 - Routed the MM6 HUD selection frame through the six retained sprite frames using the UI animation clock and each frame's palette. MM7 selection art and MM6 party creation retain their prior paths.
 - Integrated focused MM6 checks passed 2/2 and MM7 controls passed 4/4. A hidden two-frame render check passed 1/1 with changed oval pixels and no visible window or focus change over 98 monitor samples; temporary captures stayed outside Git.
 - Original animation timing and alignment on a visible display remain unverified.
+
+## [2026-11-09] update | MM6 implementation checklist status
+- by: T-Burton-ND via codex
+- Reconciled seven stale runtime-table rows with current creation, character UI, house service, event-year, map-classification and production first-map Load paths. No runtime code changed.
+- Re-ran the existing headless all-map, all-month terrain texture check: 1/1 passed. It confirms bounded texture resources, not original seasonal appearance.
+- F5a visible input/save acceptance, production New Game and later-map travel remain open.

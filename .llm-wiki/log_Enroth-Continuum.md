@@ -2802,3 +2802,8 @@ Chronological record of wiki activity.
 - Integrated native MM7 atomic SaveLoad wiring and admission-before-deserialization, then verified the disposable writer and fresh-process reader. Added MM7 death-explosion special damage, Spirit Lash out-of-range failure handling, and novice-row wand recovery with focused regressions.
 - The death-explosion repair required a deterministic public Magog trace retrace containing only RNG checkpoint updates. The full MM7 headless suite passed 500 tests with two skipped; no private data, saves, binaries or installed application changes were committed.
 - A source-and-rule review closed two false-positive audit items: liches intentionally resist Mind and Body rather than Spirit, and enemy Meteor Shower targets the party as its sole AI target. Cancelled-scroll consumption, wand charge ordering, Fate, multi-target attacks and campaign proof remain open.
+
+## [2026-11-09] verify | MM7 Fate and multi-target audit
+- by: T-Burton-ND via codex
+- Fixed MM7 Fate so a character receives the documented one-use hit bonus and a monster receives the corresponding one-use hit penalty; the two focused assertions failed before the repair and passed afterward, while MM6 retains its existing behavior.
+- Superseded the stale multi-target defect: parsed `Shot x2` and `Shot x3` already execute as stacked and spread projectiles through the established ranged-attack path. No code change was made for that claim.

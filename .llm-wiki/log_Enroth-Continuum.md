@@ -2922,3 +2922,9 @@ Chronological record of wiki activity.
 ## [2026-11-10] update | Superseded raid handoff claim
 - by: T-Burton-ND via codex
 - Marked the earlier five-test MM7 campaign and disabled-raid statement as a dated checkpoint at `6671348dc`; the page's fast resume pointer carries the integrated six-test result.
+
+## [2026-11-10] verify | MM7 Castle opening path
+- by: T-Burton-ND via codex
+- Updated the current campaign and handoff pages at `36789ff56` after the input-driven Castle Harmondale goblin, exit and Butler hand-in test reached integration.
+- The Castle test and raid control rebuilt and passed 2/2 on integration source. The test distinguishes pre-exit, exit-prompt and accepted map-leave timing; it does not prove continuous human combat or a completed campaign.
+- Recorded that the final signed staged Atlas was rebuilt, but Mac lock prevented its visible smoke. No installed app or normal profile changed during that build.

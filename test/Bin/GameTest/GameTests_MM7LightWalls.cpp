@@ -1,23 +1,37 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <filesystem>
 #include <numbers>
+#include <span>
+#include <string_view>
 #include <utility>
 
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
+#include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MapEnums.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
+#include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Party.h"
+#include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/Resources/LOD.h"
+#include "Engine/SaveLoad.h"
 #include "Engine/Tables/NPCTable.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UIRest.h"
+#include "GUI/UI/UISaveLoad.h"
 
 namespace {
+
+constexpr std::string_view checkpointSlot = "saves/save000.mm7";
+constexpr std::string_view checkpointFileName = "save000.mm7";
 
 std::pair<Vec3f, int> approachFace(const BLVFace &face) {
     Vec3f position = face.boundingBox.center() + 150 * face.facePlane.normal;
@@ -26,9 +40,7 @@ std::pair<Vec3f, int> approachFace(const BLVFace &face) {
     return {position, yaw};
 }
 
-}  // namespace
-
-GAME_TEST(MM7LightWalls, LightRoute) {
+void runLightRoute(EngineController &game, TestController &test, CommonTapeRecorder &tapes) {
     // Light choice, city entry, the Walls quest, and its no-kill hand-in all run through their own interactions.
     game.startNewGame();
     engine->config->debug.NoDamage.setValue(true);
@@ -162,6 +174,86 @@ GAME_TEST(MM7LightWalls, LightRoute) {
     EXPECT_EQ(guildTape, tape(false, true));
     EXPECT_CONTAINS(mapTape, MAP_CELESTE);
     EXPECT_CONTAINS(mapTape, MAP_WALLS_OF_MIST);
+    test.stopTaping();
+}
+
+}  // namespace
+
+GAME_TEST(MM7LightWalls, LightRoute) {
+    runLightRoute(game, test, tapes);
+}
+
+// These disabled tests require GameTestMain's exact-filter disposable MM7 profile gate.
+GAME_TEST(MM7LightWalls, DISABLED_WriteFreshCheckpoint) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    const auto profileRoot = mm7::startupNativeProfileRoot();
+    ASSERT_TRUE(profileRoot);
+    ASSERT_EQ(*profileRoot, std::filesystem::canonical(std::filesystem::path(ufs->displayPath(""))));
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    ASSERT_FALSE(ufs->exists(checkpointSlot));
+
+    runLightRoute(game, test, tapes);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    ASSERT_FALSE(::testing::Test::HasFailure());
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_CASTLE_LAMBENT);
+    ASSERT_TRUE(pParty->_questBits[QBIT_LIGHT_PATH]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_WALLS_OF_MIST_PASSED]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_LIGHT_GUILD_JOINED]);
+    for (int i = 0; i < 4 && current_screen_type != SCREEN_GAME; i++) {
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+    }
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    game.runGameRoutine([] {
+        saveGame(false, false, checkpointSlot, "Light Walls checkpoint");
+    });
+
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = ufs->read(checkpointSlot);
+    ASSERT_GT(saved.size(), 1024u);
+    ASSERT_TRUE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saved.data()), saved.size()),
+        GameTitle::MM7, *pGames_LOD));
+}
+
+GAME_TEST(MM7LightWalls, DISABLED_ReloadFreshCheckpoint) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    const auto profileRoot = mm7::startupNativeProfileRoot();
+    ASSERT_TRUE(profileRoot);
+    ASSERT_EQ(*profileRoot, std::filesystem::canonical(std::filesystem::path(ufs->displayPath(""))));
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = Blob::copy(ufs->read(checkpointSlot));
+    ASSERT_GT(saved.size(), 1024u);
+
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(3);
+    ASSERT_EQ(current_screen_type, SCREEN_LOADGAME);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto found = std::find_if(slots.begin(), slots.end(), [](const SavegameSlot &entry) {
+        return entry.fileName == checkpointFileName;
+    });
+    ASSERT_NE(found, slots.end());
+    const int index = static_cast<int>(found - slots.begin());
+    ASSERT_LT(index, 7);
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", index));
+    game.tick(2);
+    ASSERT_EQ(saveLoadMenu()->selectedSlot().fileName, checkpointFileName);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick(2);
+
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_CASTLE_LAMBENT);
+    ASSERT_EQ(engine->_lastLoadedSaveFileName, checkpointFileName);
+    EXPECT_TRUE(pParty->_questBits[QBIT_LIGHT_PATH]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_DARK_PATH]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_WALLS_OF_MIST_ACTIVE]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_WALLS_OF_MIST_PASSED]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_LIGHT_GUILD_JOINED]);
+    EXPECT_TRUE(ufs->read(checkpointSlot).str() == saved.str());
 }
 
 GAME_TEST(MM7LightWalls, ThroneClosedAtDawn) {

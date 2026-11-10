@@ -116,8 +116,10 @@ int platformMain(int argc, char **argv) {
         const bool mm7SaveReader = GTEST_FLAG_GET(filter) == "MM7DisposableSave.DISABLED_ReloadFreshProcess";
         const bool mm7CastleWriter = GTEST_FLAG_GET(filter) == "MM7CastleRebuild.DISABLED_WriteFreshCheckpoint";
         const bool mm7CastleReader = GTEST_FLAG_GET(filter) == "MM7CastleRebuild.DISABLED_ReloadFreshCheckpoint";
-        const bool mm7Writer = mm7SaveWriter || mm7CastleWriter;
-        const bool mm7Reader = mm7SaveReader || mm7CastleReader;
+        const bool mm7LightWriter = GTEST_FLAG_GET(filter) == "MM7LightWalls.DISABLED_WriteFreshCheckpoint";
+        const bool mm7LightReader = GTEST_FLAG_GET(filter) == "MM7LightWalls.DISABLED_ReloadFreshCheckpoint";
+        const bool mm7Writer = mm7SaveWriter || mm7CastleWriter || mm7LightWriter;
+        const bool mm7Reader = mm7SaveReader || mm7CastleReader || mm7LightReader;
         if (opts.disposableMm7Profile || mm7Writer || mm7Reader) {
             if (!opts.disposableMm7Profile || !(mm7Writer || mm7Reader) ||
                 !GTEST_FLAG_GET(also_run_disabled_tests))

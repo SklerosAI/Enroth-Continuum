@@ -2958,3 +2958,9 @@ Chronological record of wiki activity.
 - Updated the playtest-recording page and index at `0b080b0bc` after independent static review found and closed relaunch, readiness, warning, final-video and external-volume handoff races.
 - A synthetic wrong-device session was rejected and a matching-device session stopped cleanly. The final separate Atlas stage rebuilt with valid signatures, source notices and bundled source-matching script and page.
 - Live screen video, macOS permission, external removal and installed-app acceptance remain open under headless-only authorization.
+
+## [2026-11-10] verify | MM7 Light city and Walls positive route
+- by: T-Burton-ND via codex
+- Updated campaign status, handoff and index at `3c0718585` after the new Light-route and dawn closed-throne GameTests integrated; the focused integrated run passed 4/4 including arbiter and issue controls.
+- The route exercises daytime throne access, three Walls pedestal inputs, map exit and quest hand-in. The protected-group-kill branch is still open: the focused loaded map had no eligible group-1 actor, and read-only event review found no scripted spawn or remap for that group.
+- A narrow original base/delta group-semantics check and fresh-process chapter checkpoint remain open. No private event scripts, saves, logs or asset inventories entered Git.

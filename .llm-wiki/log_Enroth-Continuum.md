@@ -2940,3 +2940,9 @@ Chronological record of wiki activity.
 - Updated campaign and handoff status at `376dec830` after the exact-filter disposable checkpoint code reached integration and the integrated GameTest target compiled.
 - Before the owner's runtime window ended, the branch writer and fresh-process reader passed 1/1 each, the older disposable pair passed 1/1 each, malformed profile/filter cases rejected, and the slot bytes stayed unchanged after Load.
 - The integrated runtime rerun and extracted one-missing rescue case await renewed authorization. No installed app or normal profile was used for the checkpoint.
+
+## [2026-11-10] verify | Integrated MM7 scavenger and castle save gates
+- by: T-Burton-ND via codex
+- Updated campaign status, handoff, disposable-save page and index at `245271125` after the integrated Castle checkpoint writer/reader and one-missing case passed headlessly, with unchanged slot digest.
+- Recorded the integrated scavenger Judge/ship case 1/1 and ship controls 2/2, while real item acquisition, Light campaign path and later save boundaries remain open.
+- Added a local passive endgame playtest collector plan to the audit checklist. Built-in Ctrl+Shift+R traces remain short repro evidence because recording reloads the session and redirects saves to memory. Private outputs stay outside Git.

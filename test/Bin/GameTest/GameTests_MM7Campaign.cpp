@@ -6,6 +6,7 @@
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
+#include "Engine/Graphics/LocationFunctions.h"
 #include "Engine/Interaction.h"
 #include "Engine/MapEnums.h"
 #include "Engine/Party.h"
@@ -201,17 +202,22 @@ GAME_TEST(MM7Campaign, HarmondaleRaid) {
         pParty->_questBits.set(QBIT_MERCENARY_GUILD_QUEST_FAILED);
         test.startTaping();
         game.teleportTo(MAP_CASTLE_HARMONDALE, Vec3f(-3770, 1664, 0), 0);
-        ASSERT_TRUE(std::ranges::any_of(pActors, [](const Actor &actor) { return actor.group == 9; }));
+        ASSERT_FALSE(Actor::isActorKilled(KILL_CHECK_GROUPID, 9, 0));
         killGroup(9, -1);
+        ASSERT_TRUE(Actor::isActorKilled(KILL_CHECK_GROUPID, 9, 0));
         game.tick(199);
         EXPECT_FALSE(pParty->_questBits[QBIT_CASTLE_HARMONDALE_RAIDERS_KILLED]);
         game.tick(3);
         ASSERT_EQ(engine->_currentLoadedMapId, MAP_CASTLE_HARMONDALE);
         ASSERT_TRUE(pParty->_questBits[QBIT_CASTLE_HARMONDALE_RAIDERS_KILLED]);
         game.teleportTo(MAP_HARMONDALE, Vec3f(-6472, 14750, 32), 90); // In front of the weapon shop door.
-        auto firstRaider = std::ranges::find_if(pActors, [](const Actor &actor) { return actor.group == 9; });
+        const bool alert = GetAlertStatus();
+        auto firstRaider = std::ranges::find_if(pActors, [alert](Actor &actor) {
+            return actor.group == 9 && !!(actor.attributes & ACTOR_UNKNOW7) == alert && !actor.IsNotAlive();
+        });
         ASSERT_NE(firstRaider, pActors.end());
         killGroup(9, survivor ? static_cast<int>(std::distance(pActors.begin(), firstRaider)) : -1);
+        ASSERT_EQ(Actor::isActorKilled(KILL_CHECK_GROUPID, 9, 0), !survivor);
         game.tick(202);
         ASSERT_EQ(engine->_currentLoadedMapId, MAP_HARMONDALE);
         game.teleportTo(MAP_HARMONDALE, Vec3f(-6472, 14750, 32), 90);

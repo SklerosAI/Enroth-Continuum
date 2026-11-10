@@ -94,8 +94,7 @@ check_destination() {
     return 0
 }
 
-# Saves must be unchanged across two reads and again after the copy. Logs are
-# cumulative best-effort copies, since an active engine may keep writing them.
+# Saves must be unchanged across two reads and again after the copy.
 snapshot() {
     local source="$1" category="$2" stable="$3" key old hash before after copied tmp target ext now
     [[ -f "$source" && ! -L "$source" ]] || return 0
@@ -140,11 +139,66 @@ snapshot() {
     event snapshot "$category"
 }
 
+# Logs are append-only byte ranges. A new inode, shorter file or changed prefix
+# starts a new range at byte zero, covering common rotation/truncation cases.
+capture_log() {
+    local source="$1" key state_file identity size prefix prefix_len old_identity old_size old_prefix old_prefix_len
+    local start length tmp copied target after_identity after_size comparison_prefix
+    [[ -f "$source" && ! -L "$source" ]] || return 0
+    key=$(printf '%s' "$source" | shasum -a 256 | awk '{print $1}')
+    state_file="$session/state/$key.logstate"
+    identity=$(stat -f '%d:%i' "$source" 2>/dev/null) || return 0
+    size=$(stat -f '%z' "$source" 2>/dev/null) || return 0
+    prefix_len="$size"
+    (( prefix_len <= 4096 )) || prefix_len=4096
+    if (( prefix_len > 0 )); then
+        prefix=$(head -c "$prefix_len" "$source" | shasum -a 256 | awk '{print $1}') || return 0
+    else
+        prefix=$(printf '' | shasum -a 256 | awk '{print $1}')
+    fi
+    old_identity=""; old_size=0; old_prefix=""; old_prefix_len=0
+    if [[ -f "$state_file" ]]; then
+        IFS='|' read -r old_identity old_size old_prefix old_prefix_len < "$state_file" || true
+    fi
+    if (( old_prefix_len > 0 )); then
+        comparison_prefix=$(head -c "$old_prefix_len" "$source" | shasum -a 256 | awk '{print $1}') || return 0
+    else
+        comparison_prefix=$(printf '' | shasum -a 256 | awk '{print $1}')
+    fi
+    if [[ "$old_identity" != "$identity" || "$size" -lt "$old_size" || "$comparison_prefix" != "$old_prefix" ]]; then
+        [[ -z "$old_identity" ]] || event log-reset "Log rotated or truncated; starting a new byte range."
+        start=0
+    else
+        start="$old_size"
+    fi
+    length=$((size - start))
+    (( length > 0 )) || return 0
+    check_destination || return 1
+    tmp=$(mktemp "$session/.incoming.XXXXXX") || return 1
+    # head bounds the copy to the measured size even if the live log grows.
+    (tail -c "+$((start + 1))" "$source" | head -c "$length" > "$tmp") 2>/dev/null || true
+    copied=$(stat -f '%z' "$tmp" 2>/dev/null) || copied=0
+    after_identity=$(stat -f '%d:%i' "$source" 2>/dev/null) || after_identity=""
+    after_size=$(stat -f '%z' "$source" 2>/dev/null) || after_size=0
+    if [[ "$copied" -ne "$length" || "$after_identity" != "$identity" || "$after_size" -lt "$size" ]]; then
+        unlink "$tmp" 2>/dev/null || true
+        return 0
+    fi
+    check_destination || { unlink "$tmp" 2>/dev/null || true; return 1; }
+    sequence=$((sequence + 1))
+    target="$session/logs/$(stamp)-$(printf '%06d' "$sequence").log.part"
+    mv "$tmp" "$target"
+    printf '%s\tlogs\t%s\t%s\t%s\t%s\t%s\n' "$(utc)" "$source" "$target" "$(sha "$target")" "$start" "$length" >> "$session/snapshots.tsv"
+    printf '%s|%s|%s|%s\n' "$identity" "$size" "$prefix" "$prefix_len" > "$state_file.tmp"
+    mv "$state_file.tmp" "$state_file"
+    event log-delta "Recorded $length changed log bytes."
+}
+
 capture_once() {
     local path
     if [[ -d "$profile/logs" ]]; then
         while IFS= read -r -d '' path; do
-            snapshot "$path" logs no || return 1
+            capture_log "$path" || return 1
         done < <(find "$profile/logs" -maxdepth 1 -type f -name 'enroth-continuum-mm7*.log' -print0 2>/dev/null)
     fi
     if [[ -d "$profile/saves" ]]; then

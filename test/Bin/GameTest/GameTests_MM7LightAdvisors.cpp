@@ -33,8 +33,6 @@ void leaveHouse(EngineController &game) {
     }
 }
 
-// All three advisers move to these houses after the Walls hand-in. The route to
-// that hand-in is covered by MM7LightWalls.LightRoute; this fixture starts at L5.
 void seedAdvisors() {
     pParty->_questBits.set(QBIT_LIGHT_PATH);
     pParty->_questBits.set(QBIT_LIGHT_GUILD_JOINED);
@@ -48,6 +46,12 @@ void seedAdvisors() {
 GAME_TEST(MM7LightAdvisors, AltarPiecesRequireBoth) {
     game.startNewGame();
     seedAdvisors();
+    auto activeTape = tapes.questBit(QBIT_ALTAR_PIECES_LIGHT_ACTIVE);
+    auto finishedTape = tapes.questBit(QBIT_ALTAR_PIECES_LIGHT_FINISHED);
+    auto lightPieceTape = tapes.hasItem(ITEM_QUEST_ALTAR_PIECE_LIGHT);
+    auto darkPieceTape = tapes.hasItem(ITEM_QUEST_ALTAR_PIECE_DARK);
+    auto topicTape = tapes.custom([] { return pNPCStats->pNPCData[80].dialogue_1_evt_id; });
+    test.startTaping();
     game.teleportTo(MAP_CELESTE, Vec3f(-158, 7624, 1), 0);
     auto door = std::ranges::find_if(pIndoor->faces, [](const BLVFace &face) { return face.eventId == 420 && face.Clickable(); });
     ASSERT_NE(door, pIndoor->faces.end());
@@ -91,11 +95,20 @@ GAME_TEST(MM7LightAdvisors, AltarPiecesRequireBoth) {
     EXPECT_FALSE(pParty->_questBits[QBIT_ALTAR_PIECES_LIGHT_ACTIVE]);
     EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_ALTAR_PIECE_LIGHT));
     EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_ALTAR_PIECE_DARK));
+    EXPECT_EQ(activeTape, tape(false, true, false));
+    EXPECT_EQ(finishedTape, tape(false, true));
+    EXPECT_EQ(lightPieceTape, tape(false, true, false));
+    EXPECT_EQ(darkPieceTape, tape(false, true, false));
+    EXPECT_EQ(topicTape, tape(147u, 148u, 0u));
 }
 
 GAME_TEST(MM7LightAdvisors, WineCellarRequiresVampireFlag) {
     game.startNewGame();
     seedAdvisors();
+    auto activeTape = tapes.questBit(QBIT_WINE_CELLAR_ACTIVE);
+    auto finishedTape = tapes.questBit(QBIT_WINE_CELLAR_FINISHED);
+    auto vampireTape = tapes.questBit(QBIT_WINE_CELLAR_VAMPIRE_KILLED);
+    test.startTaping();
     game.teleportTo(MAP_CELESTE, Vec3f(-158, 7624, 1), 0);
     auto door = std::ranges::find_if(pIndoor->faces, [](const BLVFace &face) { return face.eventId == 421 && face.Clickable(); });
     ASSERT_NE(door, pIndoor->faces.end());
@@ -122,9 +135,7 @@ GAME_TEST(MM7LightAdvisors, WineCellarRequiresVampireFlag) {
     EXPECT_TRUE(pParty->_questBits[QBIT_WINE_CELLAR_ACTIVE]);
     leaveHouse(game);
 
-    // The Wine Cellar exit can set this bit without an actual kill. Keep the
-    // fixture explicit; this tests only the adviser hand-in, not combat.
-    pParty->_questBits.set(QBIT_WINE_CELLAR_VAMPIRE_KILLED);
+    pParty->_questBits.set(QBIT_WINE_CELLAR_VAMPIRE_KILLED); // The Wine Cellar exit can set this without a kill.
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();
     ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
@@ -132,11 +143,18 @@ GAME_TEST(MM7LightAdvisors, WineCellarRequiresVampireFlag) {
     game.tick();
     EXPECT_TRUE(pParty->_questBits[QBIT_WINE_CELLAR_FINISHED]);
     EXPECT_FALSE(pParty->_questBits[QBIT_WINE_CELLAR_ACTIVE]);
+    EXPECT_EQ(activeTape, tape(false, true, false));
+    EXPECT_EQ(finishedTape, tape(false, true));
+    EXPECT_EQ(vampireTape, tape(false, true));
 }
 
 GAME_TEST(MM7LightAdvisors, SoulJarsRequireCase) {
     game.startNewGame();
     seedAdvisors();
+    auto activeTape = tapes.questBit(QBIT_SOUL_JARS_LIGHT_ACTIVE);
+    auto finishedTape = tapes.questBit(QBIT_SOUL_JARS_LIGHT_FINISHED);
+    auto caseTape = tapes.hasItem(ITEM_QUEST_CASE_OF_SOUL_JARS);
+    test.startTaping();
     game.teleportTo(MAP_CELESTE, Vec3f(-158, 7624, 1), 0);
     auto door = std::ranges::find_if(pIndoor->faces, [](const BLVFace &face) { return face.eventId == 422 && face.Clickable(); });
     ASSERT_NE(door, pIndoor->faces.end());
@@ -172,4 +190,7 @@ GAME_TEST(MM7LightAdvisors, SoulJarsRequireCase) {
     EXPECT_TRUE(pParty->_questBits[QBIT_SOUL_JARS_LIGHT_FINISHED]);
     EXPECT_FALSE(pParty->_questBits[QBIT_SOUL_JARS_LIGHT_ACTIVE]);
     EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_CASE_OF_SOUL_JARS));
+    EXPECT_EQ(activeTape, tape(false, true, false));
+    EXPECT_EQ(finishedTape, tape(false, true));
+    EXPECT_EQ(caseTape, tape(false, true, false));
 }

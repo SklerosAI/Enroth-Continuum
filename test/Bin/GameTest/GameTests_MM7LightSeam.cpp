@@ -111,19 +111,17 @@ bool selectNpcEvent(EngineController &game, int npcId, unsigned int eventId) {
     return true;
 }
 
-void runLightPitSeam(EngineController &game) {
+void runLightPitSeam(EngineController &game, TestController &test) {
     game.startNewGame();
     engine->config->debug.NoDamage.setValue(true);
-    // The earlier Walls traversal and other two advisor outcomes are fixtures.
     pParty->_questBits.set(QBIT_LIGHT_PATH);
     pParty->_questBits.set(QBIT_WALLS_OF_MIST_PASSED);
     pParty->_questBits.set(QBIT_WINE_CELLAR_FINISHED);
     pParty->_questBits.set(QBIT_SOUL_JARS_LIGHT_FINISHED);
     ASSERT_EQ(pNPCStats->pNPCData[80].dialogue_1_evt_id, 147);
     ASSERT_EQ(pNPCStats->pNPCData[80].dialogue_2_evt_id, 149);
+    test.startTaping();
 
-    // The Walls completion bit is fixtured; the offer and hand-in are real
-    // NPC interactions that place the advisors in Celeste.
     openThroneRoom(game, 79);
     ASSERT_FALSE(::testing::Test::HasFatalFailure());
     ASSERT_TRUE(selectNpcEvent(game, 79, 145));
@@ -142,7 +140,6 @@ void runLightPitSeam(EngineController &game) {
     ASSERT_TRUE(selectNpcEvent(game, 80, 147));
     ASSERT_TRUE(pParty->_questBits[QBIT_ALTAR_PIECES_LIGHT_ACTIVE]);
     leaveHouse(game);
-    // Acquisition is a fixture; both actual NPC interactions are input driven.
     pParty->pCharacters[0].inventory.add(Item(ITEM_QUEST_ALTAR_PIECE_LIGHT));
     pParty->pCharacters[0].inventory.add(Item(ITEM_QUEST_ALTAR_PIECE_DARK));
     openCelesteHouse(game, HOUSE_CELESTE_HOSTEL_1, 80);
@@ -172,7 +169,6 @@ void runLightPitSeam(EngineController &game) {
     game.skipLoadingScreen();
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_SMALL_HOUSE);
 
-    // The separate MM7PitCubeAcquisition test covers combat and corpse loot.
     pParty->pCharacters[0].inventory.add(Item(ITEM_QUEST_CONTROL_CUBE));
     openCelesteHouse(game, HOUSE_CELESTE_HOSTEL_4, 83);
     ASSERT_FALSE(::testing::Test::HasFatalFailure());
@@ -207,17 +203,32 @@ void assertDisposableHeadlessProfile() {
 }  // namespace
 
 GAME_TEST(MM7LightSeam, PitToXenofexInMemory) {
-    runLightPitSeam(game);
+    auto wallsActiveTape = tapes.questBit(QBIT_WALLS_OF_MIST_ACTIVE);
+    auto altarTape = tapes.questBit(QBIT_ALTAR_PIECES_LIGHT_FINISHED);
+    auto tolbertiTape = tapes.questBit(QBIT_TOLBERTI_ASSASSINATED);
+    auto xenofexTape = tapes.questBit(QBIT_XENOFEX_LIGHT_ACTIVE);
+    auto houseTape = tapes.custom([] { return pNPCStats->pNPCData[80].house; });
+    auto firstTopicTape = tapes.custom([] { return pNPCStats->pNPCData[80].dialogue_1_evt_id; });
+    auto secondTopicTape = tapes.custom([] { return pNPCStats->pNPCData[80].dialogue_2_evt_id; });
+    auto fourthTopicTape = tapes.custom([] { return pNPCStats->pNPCData[80].dialogue_4_evt_id; });
+    runLightPitSeam(game, test);
     ASSERT_FALSE(::testing::Test::HasFatalFailure());
     requestXenofex(game);
+    EXPECT_EQ(wallsActiveTape, tape(false, true, false));
+    EXPECT_EQ(altarTape, tape(false, true));
+    EXPECT_EQ(tolbertiTape, tape(false, true));
+    EXPECT_EQ(xenofexTape, tape(false, true));
+    EXPECT_EQ(houseTape, tape(HOUSE_INVALID, HOUSE_CELESTE_HOSTEL_1, HOUSE_CASTLE_LAMBENT_THRONE_ROOM));
+    EXPECT_EQ(firstTopicTape, tape(147u, 148u, 0u));
+    EXPECT_EQ(secondTopicTape, tape(149u, 150u));
+    EXPECT_EQ(fourthTopicTape, tape(0u, 223u));
 }
 
-// These disabled tests require GameTestMain's exact-filter disposable profile gate.
 GAME_TEST(MM7LightSeam, DISABLED_WriteFreshCheckpoint) {
     assertDisposableHeadlessProfile();
     ASSERT_FALSE(::testing::Test::HasFatalFailure());
     ASSERT_FALSE(ufs->exists(checkpointSlot));
-    runLightPitSeam(game);
+    runLightPitSeam(game, test);
     ASSERT_FALSE(::testing::Test::HasFatalFailure());
     ASSERT_FALSE(::testing::Test::HasFailure());
     game.runGameRoutine([] {

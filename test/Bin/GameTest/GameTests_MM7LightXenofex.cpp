@@ -28,7 +28,6 @@ std::pair<Vec3f, int> approachFace(const BLVFace &face) {
 }
 
 void seedPostAltarLightPath() {
-    // Light alignment, Walls and altar pieces are covered by earlier tests.
     pParty->_questBits.set(QBIT_LIGHT_PATH);
     pParty->_questBits.set(QBIT_LIGHT_GUILD_JOINED);
     pParty->_questBits.set(QBIT_ALTAR_PIECES_LIGHT_FINISHED);
@@ -82,6 +81,9 @@ bool selectAdvisorEvent(EngineController &game, unsigned int eventId) {
 GAME_TEST(MM7LightXenofex, QuestTopicRequiresAssassination) {
     game.startNewGame();
     seedPostAltarLightPath();
+    auto activeTape = tapes.questBit(QBIT_XENOFEX_LIGHT_ACTIVE);
+    auto topicTape = tapes.custom([] { return pNPCStats->pNPCData[80].dialogue_2_evt_id; });
+    test.startTaping();
     openThroneRoom(game);
     ASSERT_FALSE(::testing::Test::HasFatalFailure());
     ASSERT_EQ(pNPCStats->pNPCData[80].dialogue_1_evt_id, 149);
@@ -95,6 +97,8 @@ GAME_TEST(MM7LightXenofex, QuestTopicRequiresAssassination) {
     ASSERT_TRUE(selectAdvisorEvent(game, 149));
     EXPECT_TRUE(pParty->_questBits[QBIT_XENOFEX_LIGHT_ACTIVE]);
     EXPECT_FALSE(pParty->_questBits[QBIT_XENOFEX_QUEST_FINISHED]);
+    EXPECT_EQ(activeTape, tape(false, true));
+    EXPECT_EQ(topicTape, tape(149u, 150u));
 }
 
 GAME_TEST(MM7LightXenofex, MapLeaveHandInAndEnding) {
@@ -102,14 +106,22 @@ GAME_TEST(MM7LightXenofex, MapLeaveHandInAndEnding) {
     engine->config->debug.NoDamage.setValue(true);
     seedPostAltarLightPath();
     pParty->_questBits.set(QBIT_TOLBERTI_ASSASSINATED);
+    auto activeTape = tapes.questBit(QBIT_XENOFEX_LIGHT_ACTIVE);
+    auto killedTape = tapes.questBit(QBIT_XENOFEX_KILLED);
+    auto finishedTape = tapes.questBit(QBIT_XENOFEX_QUEST_FINISHED);
+    auto finalTaskTape = tapes.questBit(QBIT_OSCILLATION_OVERTHRUSTER_LIGHT_ACTIVE);
+    auto topicTape = tapes.custom([] { return pNPCStats->pNPCData[80].dialogue_2_evt_id; });
+    auto goldTape = tapes.gold();
+    auto heldItemTape = tapes.custom([] { return pParty->pPickedItem.itemId == ITEM_QUEST_OSCILLATION_OVERTHRUSTER; });
+    auto certificateTape = tapes.custom([] { return ufs->exists("MM7_Win.Pcx"); });
+    auto autosaveTape = tapes.custom([] { return ufs->exists("saves/autosave.mm7"); });
+    test.startTaping();
     openThroneRoom(game);
     ASSERT_FALSE(::testing::Test::HasFatalFailure());
     ASSERT_TRUE(selectAdvisorEvent(game, 149));
     ASSERT_TRUE(pParty->_questBits[QBIT_XENOFEX_LIGHT_ACTIVE]);
     leaveHouse(game);
 
-    // Travel and the encounter are fixtures. Changing maps still runs the
-    // production Colony Zod OnMapLeave event in the real MM7 event data.
     game.teleportTo(MAP_COLONY_ZOD, Vec3f(-1849, 6726, 934), 0);
     ASSERT_FALSE(pActors.empty());
     ASSERT_FALSE(pActors[0].IsNotAlive());
@@ -119,7 +131,7 @@ GAME_TEST(MM7LightXenofex, MapLeaveHandInAndEnding) {
 
     game.teleportTo(MAP_COLONY_ZOD, Vec3f(-1849, 6726, 934), 0);
     ASSERT_FALSE(pActors.empty());
-    Actor::Die(0);  // Fixture the outcome, not a player attack or encounter.
+    Actor::Die(0);
     ASSERT_TRUE(pActors[0].IsNotAlive());
     game.teleportTo(MAP_LAND_OF_THE_GIANTS, Vec3f(), 0);
     ASSERT_TRUE(pParty->_questBits[QBIT_XENOFEX_KILLED]);
@@ -127,16 +139,13 @@ GAME_TEST(MM7LightXenofex, MapLeaveHandInAndEnding) {
 
     openThroneRoom(game);
     ASSERT_FALSE(::testing::Test::HasFatalFailure());
-    int goldBeforeHandIn = pParty->GetGold();
     ASSERT_TRUE(selectAdvisorEvent(game, 150));
     EXPECT_TRUE(pParty->_questBits[QBIT_XENOFEX_QUEST_FINISHED]);
     EXPECT_FALSE(pParty->_questBits[QBIT_XENOFEX_LIGHT_ACTIVE]);
-    EXPECT_EQ(pParty->GetGold() - goldBeforeHandIn, 50000);
+    EXPECT_EQ(goldTape.delta(), 50000);
     EXPECT_EQ(current_screen_type, SCREEN_HOUSE);
     EXPECT_EQ(window_SpeakInHouse->houseId(), HOUSE_CASTLE_LAMBENT_THRONE_ROOM);
 
-    // The L8 script must unlock the final-task topic. This deliberately does
-    // not assign dialogue_2_evt_id, unlike MM7Campaign.Endings.
     ASSERT_EQ(pNPCStats->pNPCData[80].dialogue_2_evt_id, 169);
     leaveHouse(game);
     openThroneRoom(game);
@@ -160,9 +169,8 @@ GAME_TEST(MM7LightXenofex, MapLeaveHandInAndEnding) {
     EXPECT_FALSE(ufs->exists("saves/autosave.mm7"));
     EXPECT_EQ(engine->_currentLoadedMapId, MAP_CASTLE_LAMBENT);
 
-    // L10-L14 acquisition is verified in MM7OverthrusterRoute as a separate
-    // chapter slice. The item is fixtured in the held state that Lincoln grants.
     pParty->setHoldingItem(Item(ITEM_QUEST_OSCILLATION_OVERTHRUSTER));
+    game.tick();
     ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_QUEST_OSCILLATION_OVERTHRUSTER);
     ASSERT_TRUE(selectAdvisorEvent(game, 170));
     game.tick(2);
@@ -178,4 +186,12 @@ GAME_TEST(MM7LightXenofex, MapLeaveHandInAndEnding) {
     EXPECT_EQ(engine->_currentLoadedMapId, MAP_HARMONDALE);
     EXPECT_EQ(pParty->pos, Vec3f(-17331, 12547, 465));
     EXPECT_TRUE(ufs->exists("saves/autosave.mm7"));
+    EXPECT_EQ(activeTape, tape(false, true, false));
+    EXPECT_EQ(killedTape, tape(false, true));
+    EXPECT_EQ(finishedTape, tape(false, true));
+    EXPECT_EQ(finalTaskTape, tape(false, true));
+    EXPECT_EQ(topicTape, tape(149u, 150u, 169u, 170u, 0u));
+    EXPECT_EQ(heldItemTape, tape(false, true, false));
+    EXPECT_EQ(certificateTape, tape(false, true));
+    EXPECT_EQ(autosaveTape, tape(true, false, true));
 }

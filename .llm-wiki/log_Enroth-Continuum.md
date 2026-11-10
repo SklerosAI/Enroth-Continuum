@@ -2946,3 +2946,9 @@ Chronological record of wiki activity.
 - Updated campaign status, handoff, disposable-save page and index at `245271125` after the integrated Castle checkpoint writer/reader and one-missing case passed headlessly, with unchanged slot digest.
 - Recorded the integrated scavenger Judge/ship case 1/1 and ship controls 2/2, while real item acquisition, Light campaign path and later save boundaries remain open.
 - Added a local passive endgame playtest collector plan to the audit checklist. Built-in Ctrl+Shift+R traces remain short repro evidence because recording reloads the session and redirects saves to memory. Private outputs stay outside Git.
+
+## [2026-11-10] verify | Staged MM7 playtest recording control
+- by: T-Burton-ND via codex
+- Added the playtest-recording page, current handoff and index links at `69a38a469` after Atlas gained a recording toggle, external-folder picker and local storage/RAM warnings.
+- The passive Bash recorder passed synthetic save, log, note, stop, low-space, destination and PID checks; the separate staged Atlas assembled with notices, verified signatures and a script matching tracked source bytes. No game, video capture or GUI run occurred under headless-only authorization.
+- Actual macOS Screen Recording permission, Atlas lifecycle, external-drive behavior and installed-app cutover remain open. Private capture output stays outside Git and cloud services.

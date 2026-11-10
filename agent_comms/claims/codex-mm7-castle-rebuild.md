@@ -8,3 +8,4 @@
 - Conflict check: Claude owns other W4 campaign cases. This lane will not edit existing campaign or Castle test files.
 - Planned checks: focused MM7 GameTests and changed-file style validation. A fresh-process Save/Load checkpoint will be attempted or handed off with an exact boundary.
 - Handoff target: Claude planning lead and Codex integration through a dated file in `agent_comms/handoffs/`.
+- Status: interaction test integrated on `master` 2026-11-10; file ownership released for the separate Save/Load checkpoint. O8–O10 working-gate closure still awaits that checkpoint.

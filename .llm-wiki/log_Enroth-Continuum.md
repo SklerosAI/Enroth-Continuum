@@ -2976,3 +2976,10 @@ Chronological record of wiki activity.
 - Updated campaign status, save-gate page, handoff and index at `5567d6de3` after the integrated Light chapter production Save writer and fresh-process normal Load reader passed 1/1 each with unchanged slot digest and persistent quest/guild state.
 - The refactored Light route and dawn throne controls passed 2/2. The separate Walls group audit found an unreachable failure branch in tested local data and no source-backed runtime fix; this supersedes the open-checkpoint and plausible-blocker language above.
 - Advisor tasks, later Light routes, the Overthruster checkpoint and owner-attended graphical acceptance remain open. No private saves, logs, raw scripts or captures entered Git.
+
+## [2026-11-10] verify | MM7 Light advisors and assassination integration
+- by: T-Burton-ND via codex
+- Updated campaign status, handoff, index and coordination board at `b06a549cf` after the L5 advisor and L6-L7 assassination GameTests reached integration.
+- The integrated GameTest target built and the combined advisor, assassination, Light route and dawn controls passed 7/7 headlessly. Prior quest state and quest items are fixtures; Xenofex, real acquisition, Pit combat, uninterrupted chapter continuity, Overthruster, its fresh-process checkpoint and the ending remain open.
+- The owner currently permits headless checks only. The Atlas recording control is staged and signed, with live video, external-drive and installed-app acceptance still open.
+

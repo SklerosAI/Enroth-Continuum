@@ -3024,3 +3024,9 @@ Chronological record of wiki activity.
 - The integrated GameTest built. Fire Aura cancel/complete, 11 existing spell/scroll cases and the Light route passed 13/13 headlessly. A marked disposable production Save writer and separate fresh-process normal Load reader passed 1/1 each with unchanged slot bytes.
 - Actor- and character-target scroll cancellation remains open. The installed Atlas has not been launched since the headless swap.
 
+## [2026-11-10] verify | MM7 Light Pit-to-Xenofex durable seam
+- by: T-Burton-ND via codex
+- Updated the save-gate, campaign, handoff and index pages at `05febe0c6` after the reviewed Pit-to-Xenofex seam reached integration.
+- The integrated in-memory seam and two Xenofex controls passed 3/3. A marked disposable production Save writer and separate fresh-process normal Load reader passed 1/1 each with unchanged slot bytes; the reader selected NPC80's surviving Xenofex topic through UI.
+- NPC80's house and topic came from clicked Walls, altar and Tolberti hand-ins. Earlier quest outcomes, altar items and cube remain fixtures, so the continuous campaign chain is still open.
+

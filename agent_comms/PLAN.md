@@ -16,7 +16,7 @@ a visible check of the current candidate.
 | --- | --- | --- | --- |
 | W1 | Current integrated source builds into a staged app. Title lock and signature hold. A headless fresh-process Save/quit/relaunch/Load passes on that build in an isolated profile. | Codex lane B (`codex/mm7-candidate-validation`) | Passed 2026-11-10 (staged build, Save and fresh-process Load 1/1 each) |
 | W2 | The disabled Harmondale raid test runs and passes, with the quest route fixed if needed. | Codex lane A (`codex/mm7-raid-route`) | Passed on integrated source; campaign controls 6/6 |
-| W3 | One owner-attended visible session of the current installed candidate on the main display (checklist below). | Codex runs it when authorized, owner attends | Earlier staged session passed durable Save/Load; installed signed build still needs visible smoke, audio, ordinary NPC and monster fight. Owner currently authorizes headless checks only. |
+| W3 | One owner-attended visible session of the current installed candidate on the main display (session S1 below). | Codex runs it when authorized, owner attends | Earlier staged session passed durable Save/Load; installed signed build still needs visible smoke, audio, ordinary NPC and monster fight. Owner currently authorizes headless checks only. |
 | W4 | Every main-quest transition from New Game through the shared opening and the Light branch to its ending is exercised through input by a GameTest against the real data, plus fresh-process Save/Load across the chapter boundaries. | Claude coordinates; Codex takes independent code scopes | Castle opening/rebuild and Light Walls fresh-process checkpoints, scavenger Judge/ship, Light city/Walls, three advisor hand-ins, assassination request/cube hand-in and Xenofex map-leave/hand-in passed on integrated source; nine focused Light controls passed together. Real advisor-item and cube acquisition, Xenofex/Pit combat, retrieved-item ending and later save boundary remain open. Four Overthruster route cases plus two wetsuit/Shoals controls and two Xenofex cases passed 8/8 together on integrated source. The later final-link test proves natural L8-to-L9 topic unlock, no-item refusal and held-item fixture ending; it passed 7/7 with the Overthruster cases. The Walls group-1 negative branch is unreachable in tested local data and is not a success-path blocker. |
 | W5 | Candidate replaces the installed MM7 under The Atlas. The old app stays as a restorable backup. The installed copy relaunches and loads a new durable save. | Codex root | Signed candidate installed headlessly after owner authorization; prior app backed up, profile and saves untouched. Relaunch/Load acceptance awaits graphical authorization. |
 | W6 | Defects found in W1-W5 that block a player are fixed and their scenario rerun. Non-blocking finds go to the stage 3 audit queue. | Whichever lane is free | Ongoing |
@@ -28,18 +28,31 @@ Open owner decision: whether the ending also needs a human playthrough, or
 whether the test chain plus W3 and visible spot checks at chapter boundaries
 is enough. Until the owner decides, plan for the test chain and spot checks.
 
-### W3 visible session checklist
+### Owner session S1 — closes W3, W5 and the recorder's first run
 
-One launch, batched, so the owner gives display time once.
+The staged W3 session already passed launch, opening movie, New Game, input,
+focus and pause, a shop purchase, a spell, and named Save then fresh-process
+Load. What is left fits in one sitting of about 20 minutes on the main
+display, on the installed app with the normal profile, because that is what
+W5 accepts.
 
-1. Launch the staged candidate from the staged Atlas. Title screen draws and the opening movie plays with sound.
-2. New Game, party creation with keyboard and trackpad. Enter Emerald Island.
-3. Movement with keyboard, turning with mouse. Talk to an NPC, enter a shop and buy something, cast a spell, fight one monster.
-4. Music and sound effects audible (owner confirms, a device opening is not proof).
-5. Window focus loss and return, pause and resume.
-6. Save to a new slot through the menu. Quit to The Atlas.
-7. Relaunch, Load that slot. Position, inventory, gold and the bought item match.
-8. One hidden-capture or screen grab per step via `enroth-capture`, kept out of Git. Compatibility with older saves is optional because the owner is not attached to them.
+Before: Codex records the modification times of the normal MM7 profile files
+and saves, checks at least 4 GiB free on the recording volume, and takes a
+capture of each step with `enroth-capture`.
+
+1. Open the installed Atlas. Turn on Record gameplay with a local
+   destination. Grant macOS Screen Recording if asked.
+2. Play MM7. Owner confirms the title music is audible.
+3. New Game or Load. On Emerald Island talk to a roaming NPC (not the guide)
+   and fight one monster to death. Owner confirms combat sound effects.
+4. Save to a new named slot. Exit to The Atlas. The recorder stops by itself.
+5. Play MM7 again, Load that slot. Party, position and inventory match.
+6. Exit and close every window. Codex checks at a high level that the
+   recording folder has video, log ranges and a save snapshot, that nothing
+   landed in the repository, and which normal profile files changed (only
+   the new save, its backup rotation and the ini are expected).
+
+Pass closes W3 and W5. A failure becomes the top of the defect queue.
 
 ### W4 campaign path
 

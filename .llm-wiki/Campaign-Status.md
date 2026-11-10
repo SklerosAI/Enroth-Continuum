@@ -48,8 +48,14 @@ as fixtures. The Overthruster tests now cover throne request, wetsuit chest
 collection, Avlee and Lincoln suit gates, Shoals entry, unpowered pedestal,
 console activation, item retrieval and exit. Four new cases and the two
 wetsuit/Shoals controls plus two Xenofex cases passed 8/8 together on
-integration source. Natural L8-to-L9 unlock, an uninterrupted chapter route,
-L15 with the retrieved item and its fresh-process checkpoint remain open.
+integration source. An uninterrupted chapter route, L15 with the retrieved
+item and its fresh-process checkpoint remain open.
+The subsequent integrated final-link test passed with the existing Xenofex and
+ending controls 3/3, and with the Overthruster cases 7/7. It proves the real
+Xenofex hand-in unlocks the second NPC topic for L9, the request activates
+the final task, a no-item hand-in stays in the throne room, and a held-item
+Overthruster fixture is consumed for the ending. It does not yet link the
+retrieved item from Lincoln to that hand-in or prove a fresh-process reload.
 
 ## Historical snapshot — 2026-11-07
 

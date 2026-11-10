@@ -2900,3 +2900,9 @@ Chronological record of wiki activity.
 - Routed the common MM6 book frame and exit tab, plus Quest background and page tabs, through retained MM6 art at positions traced from the identity-matched original executable. MM7 retains its existing book path.
 - The integrated fresh-process HUD book and Calendar checks passed 1/1 each; the MM7 quest-book control passed 1/1. All four MM6 HUD books opened and closed through the native exit hit box.
 - Notes and Map still request inherited art, and visible book appearance, sound and save/input acceptance remain open for F5a.
+
+## [2026-11-10] update | November 9 progress and resume gates
+- by: T-Burton-ND via codex
+- Added a dated progress table from the November 9 integration commits, current source handoff and verified headless gates. It separates MM6 first-map Save/Load, UI and F5a staging from MM7 save/combat and campaign-test work.
+- Updated the campaign snapshot and fast resume pointer at wiki commit `7e1493acf`; retained the older campaign table as an explicitly superseded historical record.
+- The next MM6 code slice is Notes in the clean `codex/mm6-notes-book` checkout, followed by Map art and visible F5a Load/input/save acceptance. Production New Game and general campaign play remain unproved.

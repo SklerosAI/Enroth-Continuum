@@ -287,24 +287,36 @@ GAME_TEST(MM7LightWalls, DISABLED_ReloadFreshCheckpoint) {
 }
 
 GAME_TEST(MM7LightWalls, ThroneClosedAtDawn) {
-    // A Light-path party reaches the Lambent throne door before its daytime opening hour.
-    engine->config->debug.NoActors.setValue(true); // No monster can interrupt the wait.
-    game.startNewGame();
-    pParty->_questBits.set(QBIT_LIGHT_PATH); // The alignment route is exercised by LightRoute.
-    game.pressAndReleaseKey(PlatformKey::KEY_R);
-    game.tick();
-    ASSERT_EQ(current_screen_type, SCREEN_REST);
-    game.pressGuiButton("Rest_WaitTillDawn");
-    game.tick();
-    for (int i = 0; i < 200 && currentRestType == REST_WAIT; i++)
+    for (bool dawn : {true, false}) {
+        SCOPED_TRACE(fmt::format("dawn={}", dawn));
+        test.prepareForNextTest();
+        engine->config->debug.NoActors.setValue(true);
+        game.startNewGame();
+        pParty->_questBits.set(QBIT_LIGHT_PATH);
+        if (dawn) {
+            game.pressAndReleaseKey(PlatformKey::KEY_R);
+            game.tick();
+            ASSERT_EQ(current_screen_type, SCREEN_REST);
+            game.pressGuiButton("Rest_WaitTillDawn");
+            game.tick();
+            for (int i = 0; i < 200 && currentRestType == REST_WAIT; i++)
+                game.tick();
+            ASSERT_EQ(currentRestType, REST_NONE);
+            ASSERT_EQ(pParty->GetPlayingTime().toCivilTime().hour, 5);
+            game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+            game.tick();
+        } else {
+            ASSERT_GT(pParty->GetPlayingTime().toCivilTime().hour, 5);
+        }
+        game.teleportTo(MAP_CASTLE_LAMBENT, Vec3f(-3456, 12700, 1115), 90);
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
         game.tick();
-    ASSERT_EQ(currentRestType, REST_NONE);
-    ASSERT_EQ(pParty->GetPlayingTime().toCivilTime().hour, 5);
-    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
-    game.tick();
-    game.teleportTo(MAP_CASTLE_LAMBENT, Vec3f(-3456, 12700, 1115), 90);
-    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
-    game.tick();
-    EXPECT_EQ(current_screen_type, SCREEN_GAME);
-    EXPECT_FALSE(pParty->_questBits[QBIT_WALLS_OF_MIST_ACTIVE]);
+        if (dawn) {
+            EXPECT_EQ(current_screen_type, SCREEN_GAME);
+        } else {
+            ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+            EXPECT_EQ(window_SpeakInHouse->houseId(), HOUSE_CASTLE_LAMBENT_THRONE_ROOM);
+        }
+        EXPECT_FALSE(pParty->_questBits[QBIT_WALLS_OF_MIST_ACTIVE]);
+    }
 }

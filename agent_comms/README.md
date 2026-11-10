@@ -35,6 +35,7 @@ use the main checkout as a shared write location for concurrent source edits.
 
 - `MODEL_CARDS.md` — capabilities and operating constraints for each agent.
 - `CURRENT_WORK.md` — short shared task board.
+- `PLAN.md` — the coordination lead's living plan and gate rows.
 - `claims/` — one active claim per lane, named `<agent>-<scope>.md`.
 - `handoffs/` — append-only task handoffs, named with ISO date and scope.
 - `reviews/` — review notes tied to a commit or branch.

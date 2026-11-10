@@ -2918,3 +2918,7 @@ Chronological record of wiki activity.
 - Updated campaign, save-gate and agent-handoff pages at `a36c4aaea` after the Harmondale raid test integrated and all six current MM7 campaign GameTests passed on integration source.
 - Recorded the staged Atlas visible New Game, purchase, spell, disposable named Save/reload and copied older-save Load checks, with the later fail-closed profile-path fix integrated and its Swift checks passing.
 - Kept the remaining W3 audio, ordinary NPC and monster checks, main-quest path, rebuilt visible candidate and installed cutover explicit. Private saves, screenshots and raw logs stayed outside Git.
+
+## [2026-11-10] update | Superseded raid handoff claim
+- by: T-Burton-ND via codex
+- Marked the earlier five-test MM7 campaign and disabled-raid statement as a dated checkpoint at `6671348dc`; the page's fast resume pointer carries the integrated six-test result.

@@ -2989,3 +2989,9 @@ Chronological record of wiki activity.
 - The integrated GameTest built and the focused Light controls passed 9/9. Xenofex request gating, map-leave alive/dead and UI hand-in work; travel and kill remain fixtures.
 - Installed the signed recording candidate headlessly, retained the prior app as a local rollback copy, verified installed source hashes and deep signature, and left profiles and saves untouched. Post-install launch, real recording, external-drive behavior and graphical Save/Load remain open under headless-only authorization.
 
+## [2026-11-10] verify | MM7 Overthruster route integration
+- by: T-Burton-ND via codex
+- Updated campaign status, handoff, index and coordination plan at `6b6f6d782` after the Overthruster L10-L14 test integrated.
+- The integrated GameTest built and four new route cases with two wetsuit/Shoals controls and two Xenofex cases passed 8/8 headlessly. The cases cover chest suit collection, travel gates, Lincoln console and pedestal retrieval, and exit with the held item.
+- L8-to-L9 natural unlock, a continuous route, L15 hand-in with the retrieved item and the fresh-process checkpoint remain open; two independent code lanes are addressing adjacent gaps. No graphical run or normal-profile write occurred.
+

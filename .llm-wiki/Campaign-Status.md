@@ -27,6 +27,13 @@ video, external-drive behavior and installed-app launch remain unverified.
 This tooling does not advance campaign
 playability by itself.
 
+The MM7 item-target scroll cancellation fix is integrated. It returns the
+pending scroll on Escape and still consumes it after a successful item pick.
+Its focused scroll, spell and Light controls passed 13/13 on integration
+source, followed by a fresh-process disposable Save/Load pair 1/1 each with
+unchanged slot bytes. Actor- and character-target cancellation remains open.
+See [the scroll check](MM7-Scroll-Cancel.md).
+
 The later input-driven Light city and Walls of Mist positive quest route and
 the dawn closed-throne control are integrated. The two new tests passed 2/2;
 with the arbiter and related issue controls, the integrated focused run passed

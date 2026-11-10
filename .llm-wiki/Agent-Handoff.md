@@ -96,6 +96,11 @@ Writer and reader passed 1/1 each with unchanged slot digest. The focused
 retrieval, Xenofex/finale and wetsuit/Shoals controls passed 6/6. Earlier
 chapter state is fixtured, and the installed app remains unlaunched after the
 headless swap. The owner's headless-only instruction remains current.
+The reviewed item-target scroll cancellation fix is integrated. Its focused
+scroll, spell and Light controls passed 13/13, and the MM7 disposable Save
+writer and fresh-process reader passed 1/1 each with unchanged slot bytes
+after the shared engine change. Actor- and character-target scroll cancellation
+remains open. See [the scroll check](MM7-Scroll-Cancel.md).
 
 At MM7-first resumption, integration `master` was clean and pushed at
 `f4d1b8065`; this is a historical checkpoint, not the current head. The [November 9 progress table](Progress-2026-11-09.md)

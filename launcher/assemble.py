@@ -143,7 +143,8 @@ def assemble(output: Path, helpers: dict[str, Path], mm7_deps_build_root: Path |
         cache.mkdir(parents=True, exist_ok=True)
         run(swiftc, "-O", "-sdk", sdk, "-module-cache-path", cache,
             "-framework", "AppKit", "-framework", "WebKit",
-            ROOT / "launcher/AtlasApp.swift", "-o", contents / "MacOS/EnrothContinuum")
+            ROOT / "launcher/AtlasApp.swift", ROOT / "launcher/MM7ProfilePath.swift",
+            "-o", contents / "MacOS/EnrothContinuum")
         shutil.copy2(ROOT / "launcher/Info.plist", contents / "Info.plist")
         shutil.copy2(ROOT / "launcher/Atlas/index.html", contents / "Resources/Atlas/index.html")
         for source in (ROOT / "LICENSE", ROOT / "CREDITS.md", ROOT / "project/UPSTREAM.md"):

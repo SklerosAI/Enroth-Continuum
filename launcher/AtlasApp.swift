@@ -1,5 +1,4 @@
 import AppKit
-import Darwin
 import Foundation
 import ImageIO
 import UniformTypeIdentifiers
@@ -11,7 +10,6 @@ private let portraitMoods = ["normal", "talk", "smile", "sad", "hurt", "pain", "
                              "paralyzed", "stone", "zombie", "dead", "eradicated"]
 
 final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavigationDelegate {
-    private let isolatedMM7ProfileKey = "ENROTH_CONTINUUM_MM7_DISPOSABLE_PROFILE"
     private var window: NSWindow!
     private var webView: WKWebView!
     private var game: Process?
@@ -23,27 +21,8 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             .appendingPathComponent("Library/Application Support/Enroth Continuum", isDirectory: true)
     }
 
-    private var userPath: URL {
-        isolatedMM7Profile ?? supportPath.appendingPathComponent("Profiles/MM7-Atlas", isDirectory: true)
-    }
-
-    private var isolatedMM7Profile: URL? {
-        guard let raw = ProcessInfo.processInfo.environment[isolatedMM7ProfileKey], raw.hasPrefix("/") else { return nil }
-        let candidate = URL(fileURLWithPath: raw, isDirectory: true).standardizedFileURL
-        let resolved = candidate.resolvingSymlinksInPath()
-        let temp = FileManager.default.temporaryDirectory.resolvingSymlinksInPath()
-        guard candidate.path == resolved.path,
-              resolved.deletingLastPathComponent().path == temp.path,
-              resolved.lastPathComponent.hasPrefix("mm7-visible-gate-") else { return nil }
-        guard let attributes = try? FileManager.default.attributesOfItem(atPath: resolved.path),
-              attributes[.type] as? FileAttributeType == .typeDirectory,
-              let owner = attributes[.ownerAccountID] as? NSNumber,
-              owner.intValue == Int(getuid()),
-              let permissions = attributes[.posixPermissions] as? NSNumber,
-              permissions.intValue & 0o777 == 0o700 else { return nil }
-        let marker = resolved.appendingPathComponent(".ec-mm7-visible-gate")
-        guard (try? String(contentsOf: marker, encoding: .utf8)) == "EnrothContinuum-MM7-visible-gate-v1\n" else { return nil }
-        return resolved
+    private func resolvedUserPath() -> URL? {
+        MM7ProfilePath.resolve(environment: ProcessInfo.processInfo.environment, supportPath: supportPath)
     }
 
     private var modRoot: URL {
@@ -132,7 +111,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         guard let action = message.body as? String else { return }
         if action == "refresh" { sendState() }
         else if action == "play-mm7" { playMM7() }
-        else if action == "open-saves" { NSWorkspace.shared.open(userPath.appendingPathComponent("saves", isDirectory: true)) }
+        else if action == "open-saves" { openSaves() }
         else if action == "open-mm7-mods" { openMM7Mods() }
         else if action == "backup-saves" { backupSaves() }
         else if action == "mods-on" { preferences.set(true, forKey: "mods.mm7.enabled"); sendState(message: "MM7 private mods will apply at the next launch.") }
@@ -169,7 +148,8 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
     }
 
     private func saveNames() -> [[String: String]] {
-        let folder = userPath.appendingPathComponent("saves", isDirectory: true)
+        guard let profilePath = resolvedUserPath() else { return [] }
+        let folder = profilePath.appendingPathComponent("saves", isDirectory: true)
         let files = (try? FileManager.default.contentsOfDirectory(at: folder,
             includingPropertiesForKeys: [.contentModificationDateKey], options: [.skipsHiddenFiles])) ?? []
         return files.filter { $0.pathExtension.lowercased() == "mm7" }
@@ -218,8 +198,8 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         webView.evaluateJavaScript("window.Atlas.receive(\(source))", completionHandler: nil)
     }
 
-    private func modWarnings(since startedAt: Date) -> [String] {
-        let folder = userPath.appendingPathComponent("logs", isDirectory: true)
+    private func modWarnings(since startedAt: Date, profilePath: URL) -> [String] {
+        let folder = profilePath.appendingPathComponent("logs", isDirectory: true)
         let files = (try? FileManager.default.contentsOfDirectory(at: folder,
             includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey])) ?? []
         let recent = files.filter { file in
@@ -245,7 +225,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
     }
 
     private func playMM7() {
-        if ProcessInfo.processInfo.environment[isolatedMM7ProfileKey] != nil && isolatedMM7Profile == nil {
+        guard let profilePath = resolvedUserPath() else {
             sendState(message: "The disposable MM7 profile is invalid; MM7 was not launched.")
             return
         }
@@ -264,10 +244,10 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             return
         }
         do {
-            try FileManager.default.createDirectory(at: userPath, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(at: profilePath, withIntermediateDirectories: true)
             let process = Process()
             process.executableURL = engine
-            process.arguments = ["--game", "mm7", "--data-path", dataPath.path, "--user-path", userPath.path]
+            process.arguments = ["--game", "mm7", "--data-path", dataPath.path, "--user-path", profilePath.path]
             var environment = ProcessInfo.processInfo.environment
             environment.removeValue(forKey: "ENROTH_MM7_MOD_DIR")
             environment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] = "0"
@@ -286,7 +266,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
                     self.game = nil
                     self.window.makeKeyAndOrderFront(nil)
                     NSApp.activate(ignoringOtherApps: true)
-                    let warnings = self.modWarnings(since: startedAt)
+                    let warnings = self.modWarnings(since: startedAt, profilePath: profilePath)
                     let warningText = warnings.isEmpty ? "" : "\n" + warnings.joined(separator: "\n")
                     if finished.terminationReason == .exit && finished.terminationStatus == 0 {
                         self.sendState(message: "Returned from MM7. Your saves remain on this Mac." + warningText)
@@ -304,6 +284,14 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         } catch {
             sendState(message: "Could not open MM7: \(error.localizedDescription)")
         }
+    }
+
+    private func openSaves() {
+        guard let profilePath = resolvedUserPath() else {
+            sendState(message: "The disposable MM7 profile is invalid; saves were not opened.")
+            return
+        }
+        NSWorkspace.shared.open(profilePath.appendingPathComponent("saves", isDirectory: true))
     }
 
     private func chooseData(for title: String) {
@@ -544,7 +532,11 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
     }
 
     private func backupSaves() {
-        let source = userPath.appendingPathComponent("saves", isDirectory: true)
+        guard let profilePath = resolvedUserPath() else {
+            sendState(message: "The disposable MM7 profile is invalid; saves were not backed up.")
+            return
+        }
+        let source = profilePath.appendingPathComponent("saves", isDirectory: true)
         guard FileManager.default.fileExists(atPath: source.path) else {
             sendState(message: "There are no saves to back up yet.")
             return
@@ -568,8 +560,13 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
     }
 }
 
-let app = NSApplication.shared
-let delegate = AtlasApp()
-app.delegate = delegate
-app.setActivationPolicy(.regular)
-app.run()
+@main
+struct AtlasEntry {
+    static func main() {
+        let app = NSApplication.shared
+        let delegate = AtlasApp()
+        app.delegate = delegate
+        app.setActivationPolicy(.regular)
+        app.run()
+    }
+}

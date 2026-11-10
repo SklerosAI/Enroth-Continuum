@@ -3036,3 +3036,9 @@ Chronological record of wiki activity.
 - The full style check passed. The four scroll cases, 11 existing spell/scroll cases and Light route passed 16/16. A marked disposable production Save writer and separate fresh-process normal Load reader passed 1/1 each with unchanged slot bytes.
 - The full integrated MM7 headless GameTest binary passed 533 tests with two skipped and 11 disabled unrun. The unit suite passed 1,087 with 45 skipped. Other targeting exits and installed-app graphical acceptance remain open.
 
+## [2026-11-10] update | MM7 rolling playtest replay
+- by: T-Burton-ND via codex
+- Replaced unbounded per-session video chunks with two alternating 60-second rolling chunks and an intentional `Command-Shift-R` clip request in Atlas.
+- The Bash synthetic check preserved two rolling chunks into one unique private clip directory; source chunks remained intact. The Atlas hotkey source typechecked and compiled with Carbon.
+- The active private MM7 profile restored `1` through `4` for party selection and maps laptop alternatives `E`/`F` to fly up/down and `J`/`K` to look up/down. No MM7 or macOS screen recording was launched.
+

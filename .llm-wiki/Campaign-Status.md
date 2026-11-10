@@ -42,8 +42,14 @@ integrated source: production Save writer and fresh-process normal Load reader
 The three advisor hand-in checks and assassination request/cube hand-in are
 also integrated. The focused combined Light run passed 7/7. These tests use
 fixture quest items and bits around input-driven dialogue and doors. Real
-item acquisition, Xenofex, hostile Pit combat/cube loot, an uninterrupted
-chapter route, Overthruster and its fresh-process checkpoint remain open.
+item acquisition and hostile Pit combat/cube loot remain open. Xenofex request,
+alive/dead map-leave and hand-in are integrated, with travel and actor death
+as fixtures. The Overthruster tests now cover throne request, wetsuit chest
+collection, Avlee and Lincoln suit gates, Shoals entry, unpowered pedestal,
+console activation, item retrieval and exit. Four new cases and the two
+wetsuit/Shoals controls plus two Xenofex cases passed 8/8 together on
+integration source. Natural L8-to-L9 unlock, an uninterrupted chapter route,
+L15 with the retrieved item and its fresh-process checkpoint remain open.
 
 ## Historical snapshot — 2026-11-07
 

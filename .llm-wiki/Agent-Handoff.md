@@ -59,10 +59,19 @@ cover Robert's advisor gate, the request, Pit door transition and cube
 hand-in. Xenofex coverage gates the request on the assassination result,
 checks map-leave with its actor alive versus a fixture death, and completes
 the throne hand-in. Fixtures provide prior quest state, items, travel and the
-Xenofex kill. Real item acquisition, Xenofex and Pit combat/cube loot,
-uninterrupted continuity and the later Overthruster checkpoint remain open.
+Xenofex kill. Real advisor-item and cube acquisition, Xenofex and Pit
+combat/cube loot, uninterrupted continuity and the later Overthruster
+checkpoint remain open.
 Read the dated handoffs under
 `agent_comms/handoffs/` before extending these tests.
+The later four Overthruster cases are integrated. Together with two wetsuit/
+Shoals controls and the two Xenofex cases, they passed 8/8 on integrated
+source. The test collects suits through chest input, checks the Avlee and
+Lincoln suit gates, enters Lincoln, powers its console and retrieves the
+Overthruster before exiting to Shoals with the item. L8 completion/topic169
+and the later chapter starting state are fixtures; natural L8-to-L9 unlock,
+L15 hand-in with the retrieved item, fresh-process checkpoint and full
+continuity remain open. See the Overthruster handoff in `agent_comms/handoffs/`.
 
 At MM7-first resumption, integration `master` was clean and pushed at
 `f4d1b8065`; this is a historical checkpoint, not the current head. The [November 9 progress table](Progress-2026-11-09.md)

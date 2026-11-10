@@ -1,11 +1,14 @@
-# Current work board
+# Current work board — 2026-11-10
 
-Update this board only for active, cross-agent work. Link detailed evidence in
-the matching claim or handoff. Keep this page concise.
+The owner's [delivery order](../.llm-wiki/Current-Delivery-Order.md) is MM7
+working, MM6 working, full MM7 audit, full MM6 audit. This board records
+current lanes; older messages and handoffs remain historical evidence.
+Claude Code may take the planning and coordination lead when the owner starts it.
 
 | Lane | Owner | Scope | State | Next coordination point |
 | --- | --- | --- | --- | --- |
-| MM6 lead and integration | Claude | MM6 plan, file ownership, one-at-a-time lane integration, F4b Save/Load and play gates | Active | Integration order and gate in `messages/2026-11-07T22-23-28Z--from-claude-mm6-lead--to-codex--mm6-assignment.md` |
-| MM6 lanes | Claude lanes | See `project/SESSION_HANDOFF_2026-11-07.md` | E, T, S, I, H merged. A and B still running. New lanes G (item generator), P (transition prerequisites) and M (shops) running. | Lanes merge as they complete. Merges are announced in `agent_comms/live/` |
-| MM6 C1 transition dialog, C2 party death model | Codex | Assigned in `messages/2026-11-07T22-23-28Z--from-claude-mm6-lead--to-codex--mm6-assignment.md` | Merged as `21b0c04e8`, `363d5eee3` (C1) and `d251707cb` (C2) | Live Accept waits for the transition wiring lane. C2 `Game.cpp` dispatch after Lane B. |
-| MM7 maintenance and MM7 combat audit fixes | Codex | Portraits, Atlas mod controls, staged helper, atomic save helper and validator, artifact fix, chest guard, and now the shared combat files for MM7-path audit fixes | Active | SaveLoad/UISaveLoad stay with MM6 Lane B until handed off |
+| MM7 raid route | Codex subagent | Disabled raider-kill GameTest and quest completion behavior | Active in a separate worktree | Report branch/commit, focused checks and any shared-file conflict before integration |
+| MM7 candidate validation | Codex subagent | Isolated current build, Save/quit/relaunch/Load gate and safe Atlas cutover preparation | Active in a separate worktree | Preserve installed baseline and normal profile; coordinate before visible focus or shared SaveLoad edits |
+| MM7 integration and priority record | Codex root | Review lanes, integrate one at a time, maintain the four-stage delivery order | Active | Share reviewed outcomes through `agent_comms/` and update this board |
+| Planning and coordination lead | Claude Code | Sequence remaining MM7 working gate and later MM6/audit work | Pending owner launch | Read this board and the current delivery-order wiki page; claim non-overlapping scope |
+| MM6 implementation | Unassigned | Existing first-map progress and Notes worktree retained | Queued after MM7 working gate | Resume from `project/MM6_RESUME_HANDOFF.md` after MM7 acceptance |

@@ -1,6 +1,6 @@
 # Enroth Continuum: implementation plan
 
-Status: **MM6 implementation revision 12, 2026-11-07; implementation resumed**. Sections 1–17 preserve the original MM7 execution plan; see [LOCAL_STATUS.md](LOCAL_STATUS.md) for its completed baseline and measured results. Section 18.1 is the MM6 implementation path and now separates an early graphical opening check from full campaign validation. Section 18.2 plans a separate, in-depth MM7 engine audit; the current MM7 launch and save/load check is a protected baseline, not evidence of full-campaign coverage. Every environment fact in section 3 was checked on this Mac on 2026-11-04. Recheck it before acting on it.
+Status: **Delivery order revised 2026-11-10; MM7 working is the current priority**. The owner's order is MM7 completely working, then MM6 working, then the full MM7 audit, then the full MM6 audit; see the [current delivery order](../.llm-wiki/Current-Delivery-Order.md). Sections 1–17 preserve the original MM7 execution plan; see [LOCAL_STATUS.md](LOCAL_STATUS.md) for its completed baseline and measured results. Section 18.1 is the MM6 implementation path and separates an early graphical opening check from full campaign validation. Section 18.2 plans a separate, in-depth MM7 engine audit; the current MM7 launch and save/load check is a protected baseline, not evidence of full-campaign coverage. Every environment fact in section 3 was checked on this Mac on 2026-11-04. Recheck it before acting on it.
 
 ## 0. Ground rules for this plan
 
@@ -43,7 +43,7 @@ The owner should be able to do all of this:
 
 Record the macOS version, fork SHA, installer version and test outcomes, and commit none of the game content. If the playable fork is established early and the Goal remains active, begin the narrow MM7 mod compatibility work in section 17: custom party portraits first, then armor stat overrides. Report the exact point reached even if the stretch work is unfinished.
 
-The MM7 baseline, installed Atlas and first personal MM7 mod overrides are recorded in [LOCAL_STATUS.md](LOCAL_STATUS.md). **The next engine goal is MM6 in this fork**, using the owner's private GOG files on this Mac. MM8 and cross-game legacy transfer follow MM6; optional Mac polish, packaging and Skleros integration do not block it. The original campaigns must stay playable without fork features.
+The MM7 baseline, installed Atlas and first personal MM7 mod overrides are recorded in [LOCAL_STATUS.md](LOCAL_STATUS.md). **The current delivery priority is MM7 completely working, then MM6 working, then the full MM7 and MM6 audits in that order.** This 2026-11-10 owner direction supersedes the earlier MM6-next sentence; the MM6 implementation work already completed remains available for its turn. MM8 and cross-game legacy transfer follow these priorities; optional Mac polish, packaging and Skleros integration do not block them. The original campaigns must stay playable without fork features.
 
 ## 3. Verified environment (2026-11-04)
 
@@ -700,7 +700,7 @@ This is the first extension to attempt if MM7 works quickly and the active Goal 
 
 ## 18. Work after the MM7 baseline
 
-Phase F is the next engine goal. Phases D and E remain optional work that can be scheduled separately; their older labels do not set the execution order.
+The 2026-11-10 [delivery order](../.llm-wiki/Current-Delivery-Order.md) governs sequencing across titles: MM7 working, MM6 working, full MM7 audit, full MM6 audit. The historical phase descriptions below still define title-local gates. Phases D and E remain optional work that can be scheduled separately; their older labels do not set the execution order.
 
 **Phase D, optional personal Mac quality.** Fix only the problems that affect the owner's play. Candidates:
 
@@ -723,7 +723,7 @@ If a generic engine fix is useful upstream, consider contributing it after it wo
 
 The agent must not see hidden game state, and normal play must be unchanged when the bridge is off. **Gate 4:** a repeatable Mac sidecar run (load → observe → act → save → reload), plus a normal session with the bridge disabled.
 
-**Phase F, three sibling campaign implementations (active MM6 work).** Preserve a frozen, independently buildable MM7 runtime based on OpenEnroth and its verified installed app. Copy that source baseline into a separate MM6 development/runtime tree, then replace title-specific assumptions there. Reserve the same sibling slot for MM8. Audit MM7 with the same data-to-engine and campaign-to-ending rigor as MM6 before calling the trilogy fully functional. All three campaigns are intended to become fully functional at the same time, with no title replacing another. The fork may diverge from OpenEnroth while retaining its copyright notices, license, Git history and visible credit. Broader mods and legacy transfer remain later phases.
+**Phase F, three sibling campaign implementations (MM6 work queued behind the MM7 working gate).** Preserve a frozen, independently buildable MM7 runtime based on OpenEnroth and its verified installed app. Copy that source baseline into a separate MM6 development/runtime tree, then replace title-specific assumptions there. Reserve the same sibling slot for MM8. Audit MM7 with the same data-to-engine and campaign-to-ending rigor as MM6 before calling the trilogy fully functional. All three campaigns are intended to become fully functional at the same time, with no title replacing another. The fork may diverge from OpenEnroth while retaining its copyright notices, license, Git history and visible credit. Broader mods and legacy transfer remain later phases.
 
 ### 18.1 MM6 implementation path
 

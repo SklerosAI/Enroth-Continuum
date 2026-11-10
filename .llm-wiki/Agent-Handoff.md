@@ -10,14 +10,19 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 ## Fast resume pointer — 2026-11-10
 
-At the 2026-11-10 check, integration `master` was clean and pushed at
-`d2f6c4e3b`; the implementation goal was paused at the owner's request.
-Resume with the [November 9 progress and next-step table](Progress-2026-11-09.md),
-then the [MM6 resume runbook](../project/MM6_RESUME_HANDOFF.md). The clean
-`codex/mm6-notes-book` worktree is the next code checkout. Recheck its state
-and the ten-worktree budget before editing. Notes, Map and visible F5a remain
-the immediate MM6 sequence; MM7 campaign acceptance and MM8 implementation
-remain separate.
+The owner's [current delivery order](Current-Delivery-Order.md) is MM7 working,
+then MM6 working, then the full MM7 audit, then the full MM6 audit. This
+supersedes the MM6-first sequence below. Codex's current MM7 lanes cover the
+disabled raid route and a staged current-candidate build/save check. Claude
+Code may take the planning and coordination lead when it rejoins; use
+`agent_comms/` and keep code file ownership distinct.
+
+At MM7-first resumption, integration `master` was clean and pushed at
+`f4d1b8065`. The [November 9 progress table](Progress-2026-11-09.md)
+preserves the earlier work, while the [MM6 resume runbook](../project/MM6_RESUME_HANDOFF.md)
+and clean `codex/mm6-notes-book` worktree remain queued for stage 2. Recheck
+Git state and the ten-worktree budget before editing. Notes, Map and visible
+F5a are the first MM6 tasks when that stage begins; MM8 remains separate.
 
 Reconciled with source and headless tests at integration `d54eb9fbd`. MM6 F4b
 is closed for a seeded first-map session: the normal Save menu writes numbered

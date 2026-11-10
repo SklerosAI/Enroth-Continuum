@@ -8,6 +8,8 @@ tags: [mm6, mm7, mm8, status]
 
 The campaigns have distinct readiness levels. This 2026-11-10 snapshot supersedes the historical 2026-11-07 table below; it is not a claim that every title is playable.
 
+The owner's [current delivery order](Current-Delivery-Order.md) puts MM7 working first, MM6 working second, and the full title audits after both working gates. The next-gate cells below describe title-local gaps, not a competing cross-title priority order.
+
 ## Current snapshot — 2026-11-10
 
 | Game | Verified state | Next acceptance gate |

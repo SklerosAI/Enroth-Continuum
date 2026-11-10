@@ -10,7 +10,8 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 ## Navigation and conventions
 
 - [Home](Home_Enroth-Continuum.md) — Curated entry point
-- [Agent Handoff](Agent-Handoff.md) — Current pause pointer, next MM6 Notes checkout and title-specific acceptance gates
+- [Agent Handoff](Agent-Handoff.md) — Current MM7-first pointer, working-title gates and historical MM6 handoff
+- [Current Delivery Order](Current-Delivery-Order.md) — Owner's MM7 working → MM6 working → full MM7 audit → full MM6 audit sequence and coordination rules
 - [November 9 Progress](Progress-2026-11-09.md) — Dated integrated MM6/MM7 work and priority-ordered resume steps
 - [Agent communications](../agent_comms/README.md) — Cross-model claims, handoffs, reviews and model-card protocol
 - [MM6 Resume Runbook](../project/MM6_RESUME_HANDOFF.md) — Current first-map production Save/Load scope, gate runner and next graphical check

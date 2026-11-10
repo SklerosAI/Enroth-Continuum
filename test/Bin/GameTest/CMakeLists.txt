@@ -24,6 +24,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7LightAssassination.cpp
         GameTests_MM7OverthrusterRoute.cpp
         GameTests_MM7PitCubeAcquisition.cpp
+        GameTests_MM7XenofexCombat.cpp
         GameTests_MM7Scrolls.cpp
         GameTests_MM6.cpp
         GameTests_MM6CharacterBitEvent.cpp

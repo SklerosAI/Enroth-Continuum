@@ -69,6 +69,9 @@ GAME_TEST(MM7CastlePath, Goblins) {
                 actor.aiState = Dead;
         ASSERT_EQ(Actor::isActorKilled(KILL_CHECK_GROUPID, 5, 0), !survivor);
         game.teleportTo(MAP_CASTLE_HARMONDALE, pParty->pos, 180);
+        ASSERT_FALSE(pParty->_questBits[QBIT_CASTLE_HARMONDALE_GOBLINS_KILLED]);
+        ASSERT_FALSE(pParty->_questBits[QBIT_CASTLE_HARMONDALE_REPAIR_ACTIVE]);
+        ASSERT_FALSE(pParty->pCharacters[0]._achievedAwardsBits[AWARD_HARMONDALE_CASTLE_CLEARED]);
         game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
         game.tick();
         ASSERT_EQ(current_screen_type, SCREEN_INPUT_BLV);

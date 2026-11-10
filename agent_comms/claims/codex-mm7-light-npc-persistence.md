@@ -6,4 +6,4 @@
 - File owned: `test/Bin/GameTest/GameTests_MM7LightWalls.cpp`. Any NPC save/load source edit requires a proven defect and renewed coordination with the integration lead.
 - Goal: compare the NPC house and topic fields produced by the Walls hand-in before production Save and after normal fresh-process Load in the exact marked disposable-profile gate.
 - Boundary: no Claude scroll files, GUI, normal profile, private data or raw logs in Git.
-- Status: active. Prior Light Walls and checkpoint claims explicitly released this test file.
+- Status: complete at code commit `cb9c9bba3`. File ownership released for integration review. Prior Light Walls and checkpoint claims explicitly released this test file.

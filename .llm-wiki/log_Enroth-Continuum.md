@@ -3006,3 +3006,9 @@ Chronological record of wiki activity.
 - Recorded the owner's requested instant reroll for artifact-eligible high-level chest and monster loot across MM6, MM7 and MM8 in the cross-game roadmap and MM7 mod list at `af53b5bad`.
 - This is a future optional mod only. Behavior, interface, implementation and validation remain undecided.
 
+## [2026-11-10] verify | MM7 Overthruster fresh-process checkpoint
+- by: T-Burton-ND via codex
+- Updated the save-gate page, campaign status, handoff and index at `3ddbc5724` after the exact-filter Overthruster writer/reader reached integration.
+- The integrated GameTest built. A production Save writer after Lincoln retrieval and Shoals exit and a separate-process normal Load reader passed 1/1 each in a marked temporary profile. The slot digest was unchanged and the held item, four suits and Light/retrieval bits persisted. Focused related controls passed 6/6.
+- Earlier Light state remains a fixture. An uninterrupted campaign, installed-app graphical Save/Load and full audit remain open. The owner currently permits headless checks only.
+

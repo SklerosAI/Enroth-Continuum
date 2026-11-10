@@ -96,11 +96,61 @@ Ordered by how badly a player is blocked. A lane takes the top item when free.
 
 ## Stage 2 — MM6 working (queued)
 
-Resume from `project/MM6_RESUME_HANDOFF.md` and the retained
-`codex/mm6-notes-book` worktree. Order: Notes and Map books, visible F5a Load
-and input check, production New Game, live travel, party death, then campaign
-progression and endings. Every shared-core change reruns the MM7 controls and
-the W1 save/reload check so stage 1 stays closed.
+Drafted 2026-11-10 by a read-only planning pass, with its key source claims
+spot-checked by Claude. Source facts that shape it: production MM6 New Game
+ends in an uncaught throw right after party creation (`saveNewGame()` in
+`src/Engine/SaveLoad.cpp`). `getTravelDestination()` returns nothing for MM6,
+and every cross-map path calls `autoSave()`, which throws for MM6. Only one
+MM6 player spell (67) is verified. The MM6 finale still runs MM7's game-over
+path to Harmondale. `codex/mm6-notes-book` has no commits that are not
+already in `master`, so its scope restarts from `master`.
+
+| Row | Evidence that closes it | Size |
+| --- | --- | --- |
+| M1 | Production New Game with no test override or test anchor: party creation by input, first map, Save, fresh-process Load, move, Save with backup rotation. Children of `tools/run_mm6_firstmap_gate.py`. Headless. | 1-2 weeks |
+| M2 | Live travel: border walk out and back, indoor entry and exit, transport. Save on a later outdoor map and an indoor map, fresh-process Load restores chests, dead monsters and doors on the active and the parked map. `autoSave` never throws for MM6. Headless. | 3-6 weeks |
+| M3 | Party death and respawn by MM6 rules, in-game Load, quick and autosave work or refuse cleanly. Headless. | 1 week |
+| M4 | Main-quest path GameTests from New Game to the MM6 finale, input-driven, with fresh-process checkpoints at chapter boundaries. The finale never enters an MM7 map. Combat-outcome fixtures allowed as in W4. Headless. | 6-12+ weeks, narrowed by the probes |
+| M5 | Owner sessions: (a) F5a Load profile with HUD, books, paperdoll and Save/quit/relaunch/Load, (b) the S1-style session on MM6 including travel and a dungeon, (c) spot checks at M4 checkpoints and the ending. Visible. | Owner hours |
+| M6 | Atlas install of a sibling MM6 helper with its own profile. Installed MM6 relaunches and loads. MM7's helper, profile and saves unchanged and MM7 still loads. | 3-5 days |
+| M7 | MM7 stays working. After every merge touching a shared-core file: `--gtest_filter='MM7*:VendorRefreshIntegration.*'`, the MM7 controls in the first-map gate, and the separate-process writer and reader pairs (W1, castle rebuild, Walls). At milestones the full headless suite. | Continuous |
+| M8 | Player-blocking defects from M1-M7 fixed and rerun. Others go to stage 4. | Ongoing |
+
+Critical path: M1, M2, then M4 chapter by chapter, M4 finale, M5b and c, M6.
+M5a can run whenever the owner gives display time. M3 runs alongside M2.
+
+Shared-core files that only one lane may hold at a time, each merge followed
+by M7: `src/Application/Game.cpp`, `src/Engine/Engine.cpp`,
+`src/Engine/SaveLoad.cpp`, `src/Engine/Graphics/Outdoor.cpp`,
+`src/Engine/Graphics/Indoor.cpp`, `src/Engine/Evt/EvtInterpreter.cpp`,
+`src/GUI/UI/UIHouses.cpp`, `src/GUI/UI/Houses/Transport.cpp`,
+`src/GUI/UI/UISaveLoad.cpp`, `src/GUI/UI/UITransition.cpp`,
+`src/GUI/UI/NPCTopics.cpp`, `src/GUI/UI/Books/*.cpp`,
+`src/Application/GameOver.cpp`, `src/GUI/UI/UIGameOver.cpp`.
+
+First code scopes, two at a time:
+
+1. S-NG, production New Game (M1). `saveNewGame()`'s MM6 branch,
+   `src/Engine/MM6/MM6FirstMapManualSave.*`, a new MM6 New Game session
+   module, a new `GameTests_MM6NewGame.cpp`, the gate runner. Not `Game.cpp`.
+2. S-SWEEP, map, event and monster sweep (test only, DISABLED by default).
+   Loads every MM6 map headless, runs one frame and the on-load events, and
+   counts throws and missing assets into a Git-ignored folder. No `src/`.
+3. S-BORDER, live border travel within a session (M2 part 1). A new MM6 map
+   transition module plus hooks in `Outdoor.cpp`, `Game.cpp` and `Engine.cpp`.
+4. S-BOOKS, Notes and Map books (M5a prerequisite), with `Issues.Issue2903`
+   as the MM7 control.
+
+Start S-NG with S-SWEEP, then S-BORDER with S-BOOKS. S-NG and S-BORDER both
+touch shared core, so they merge one at a time with M7 between.
+
+Risks to retire early, read-only where possible: main-quest dependence on
+unverified spells (R1), unresolved event opcodes and variables on main-quest
+maps (R2), later maps only loaded in fixtures (R3, S-SWEEP), save coverage
+past the first map (R4), unverified monster spells on main-quest maps (R5),
+NPC topic misrouting (R6), whether every main-quest map is reachable on foot
+or by required boat (R7), MM7's ending path (R8, confirmed), and missing shop,
+guild and trainer services (R9).
 
 ## Stages 3 and 4 — audits (queued)
 

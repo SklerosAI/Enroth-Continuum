@@ -8,7 +8,16 @@ tags: [handoff, agents, mm6]
 
 This page is the starting brief for future Codex agents working in parallel on Enroth Continuum; recheck its dated status against the authoritative files before acting.
 
-## Fast resume pointer — 2026-11-09
+## Fast resume pointer — 2026-11-10
+
+At the 2026-11-10 check, integration `master` was clean and pushed at
+`d2f6c4e3b`; the implementation goal was paused at the owner's request.
+Resume with the [November 9 progress and next-step table](Progress-2026-11-09.md),
+then the [MM6 resume runbook](../project/MM6_RESUME_HANDOFF.md). The clean
+`codex/mm6-notes-book` worktree is the next code checkout. Recheck its state
+and the ten-worktree budget before editing. Notes, Map and visible F5a remain
+the immediate MM6 sequence; MM7 campaign acceptance and MM8 implementation
+remain separate.
 
 Reconciled with source and headless tests at integration `d54eb9fbd`. MM6 F4b
 is closed for a seeded first-map session: the normal Save menu writes numbered
@@ -27,8 +36,7 @@ preflights before live deserialization and writes profile slots atomically;
 the disposable two-process save/reload gate passed. Recent MM7 repairs also
 cover death-explosion special damage, out-of-range Spirit Lash mana handling,
 novice-row wand recovery, Fate's one-use hit modifiers, and Squire/Sage skill bonuses. The full MM7 headless suite passed 504 tests,
-skipped two and left three disabled tests unrun on 2026-11-09. The owner temporarily prioritized
-consolidating committed work and reducing worktrees before new feature work.
+skipped two and left three disabled tests unrun on 2026-11-09.
 The MM6 character record tabs now pass three headless checks and the full
 25-child first-map gate. An isolated hidden render confirms pixels in all five
 proposed button rectangles. A later MM6-specific base-paperdoll route passed

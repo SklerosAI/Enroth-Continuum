@@ -10,7 +10,8 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 ## Navigation and conventions
 
 - [Home](Home_Enroth-Continuum.md) — Curated entry point
-- [Agent Handoff](Agent-Handoff.md) — Current pointer: MM6 F4b and character tabs pass headless gates; MM7 campaign checks and remaining graphical gates
+- [Agent Handoff](Agent-Handoff.md) — Current pause pointer, next MM6 Notes checkout and title-specific acceptance gates
+- [November 9 Progress](Progress-2026-11-09.md) — Dated integrated MM6/MM7 work and priority-ordered resume steps
 - [Agent communications](../agent_comms/README.md) — Cross-model claims, handoffs, reviews and model-card protocol
 - [MM6 Resume Runbook](../project/MM6_RESUME_HANDOFF.md) — Current first-map production Save/Load scope, gate runner and next graphical check
 - [MM6 Implementation Checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md) — Source-reconciled MM6 runtime status, remaining gaps and the F4b/F4d slice register with backing tests
@@ -26,7 +27,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 
 ## Campaigns and runtime
 
-- [Campaign Status](Campaign-Status.md) — Dated MM6, MM7, and MM8 readiness, including first-map v5 save/load gates, outdoor v6 staging and the no-write return probe
+- [Campaign Status](Campaign-Status.md) — Current MM6, MM7 and MM8 readiness with the superseded 2026-11-07 snapshot preserved
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [MM7 Private Portrait Mod](MM7-Private-Portrait-Mod.md) — Local mood PNG layout, shared MM7 portrait resolver, Atlas controls, and verified hidden HUD capture
 - [Runtime Isolation](Runtime-Isolation.md) — Title-locked MM7 helper and staged Atlas sibling assembler; MM6/MM8 launch gates remain closed

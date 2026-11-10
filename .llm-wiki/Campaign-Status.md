@@ -6,7 +6,21 @@ tags: [mm6, mm7, mm8, status]
 
 # Campaign Status
 
-The campaigns are at different readiness levels as of the 2026-11-07 local status note; later runtime checks may supersede this page.
+The campaigns have distinct readiness levels. This 2026-11-10 snapshot supersedes the historical 2026-11-07 table below; it is not a claim that every title is playable.
+
+## Current snapshot — 2026-11-10
+
+| Game | Verified state | Next acceptance gate |
+| --- | --- | --- |
+| MM7 | The earlier installed baseline passed a graphical launch and save/reload on the owner's Mac. The November 9 atomic-save, load-preflight and combat repairs reached integration; the full headless suite passed 504 tests with two skipped before later campaign-test work. Five active campaign GameTests then passed. | Finish the disabled raid case and visible staged-candidate save/reload; continue the [campaign audit](../project/MM7_AUDIT_CHECKLIST.md) through representative regions and an ending. |
+| MM6 | A seeded first-map session can Save to and Load from numbered native slots; the full headless gate passed 25 children, including three MM7 controls. Character paperdoll, portrait animation and Quest book slices passed focused and hidden checks. | Complete Notes and Map art, then the staged visible F5a Load/input/save check. Production New Game, live travel and campaign completion remain guarded. |
+| MM8 | Private data is staged for local detection; the runtime is reserved. | Build and verify an isolated MM8 engine, save route and graphical session before any Play action. |
+
+See the [November 9 progress table](Progress-2026-11-09.md) and [MM6 resume handoff](../project/MM6_RESUME_HANDOFF.md) for exact checks and next source paths. Raw captures and game data stay local.
+
+## Historical snapshot — 2026-11-07
+
+The following table is retained as a dated record. Its claims that normal MM6 Save/Load remained closed were superseded by the November 9 first-map integration.
 
 | Game | Observed state | Remaining evidence |
 | --- | --- | --- |

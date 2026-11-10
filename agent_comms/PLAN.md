@@ -14,17 +14,19 @@ a visible check of the current candidate.
 
 | Row | Evidence that closes it | Owner | State |
 | --- | --- | --- | --- |
-| W1 | Current integrated source builds into a staged app. Title lock and signature hold. A headless fresh-process Save/quit/relaunch/Load passes on that build in an isolated profile. | Codex lane B (`codex/mm7-candidate-validation`) | Active |
+| W1 | Current integrated source builds into a staged app. Title lock and signature hold. A headless fresh-process Save/quit/relaunch/Load passes on that build in an isolated profile. | Codex lane B (`codex/mm7-candidate-validation`) | Passed 2026-11-10 (staged build, Save and fresh-process Load 1/1 each) |
 | W2 | The disabled Harmondale raid test runs and passes, with the quest route fixed if needed. | Codex lane A (`codex/mm7-raid-route`) | Active |
-| W3 | One owner-attended visible session of the staged candidate on the main display (checklist below). | Lane B runs it, Claude drafts the checklist, owner attends | Waiting on W1 |
-| W4 | Every main-quest transition from New Game through both endings is exercised through input by a GameTest against the real data, plus fresh-process Save/Load across the chapter boundaries. | Claude, next free code lane | Mapping in progress (read-only) |
+| W3 | One owner-attended visible session of the staged candidate on the main display (checklist below). | Lane B runs it, Claude drafts the checklist, owner attends | Blocked until staged Atlas Play can target a temporary profile. Lane B is adding that override. |
+| W4 | Every main-quest transition from New Game through the shared opening and the Light branch to its ending is exercised through input by a GameTest against the real data, plus fresh-process Save/Load across the chapter boundaries. | Claude, `claude/mm7-campaign-path` in `mm7-save-durability` once a code lane frees | Mapped, waiting for a lane |
 | W5 | Candidate replaces the installed MM7 under The Atlas. The old app and normal profile stay as a restorable backup. The installed copy relaunches and loads an existing save. | Lane B | Waiting on W3 |
 | W6 | Defects found in W1-W5 that block a player are fixed and their scenario rerun. Non-blocking finds go to the stage 3 audit queue. | Whichever lane is free | Ongoing |
 
-Open owner decision for W4: whether "progression through an ending" also
-needs a human playthrough, or whether the input-driven test chain plus the W3
-visible session and visible spot checks at chapter boundaries is enough.
-Until the owner decides, plan for the test chain and the spot checks.
+W4 scope, decided 2026-11-10: the owner's gate says "an ending", so stage 1
+covers the shared opening and one branch (Light) to its ending. The Dark
+branch, both-ending parity and optional regions move to the stage 3 audit.
+Open owner decision: whether the ending also needs a human playthrough, or
+whether the test chain plus W3 and visible spot checks at chapter boundaries
+is enough. Until the owner decides, plan for the test chain and spot checks.
 
 ### W3 visible session checklist
 
@@ -42,11 +44,33 @@ One launch, batched, so the owner gives display time once.
 
 ### W4 campaign path
 
-A read-only mapping of the main-quest transitions against existing tests is
-running. Its public-safe result (quest-bit and map enum names only) will be
-appended here. Known so far: the arbiter choice, the messenger timing and both
-ending hand-ins are input-tested in `GameTests_MM7Campaign.cpp`. The opening
-through the castle rebuild and the two act-two task chains are not.
+A read-only mapping (2026-11-10) of the private decoded campaign scripts
+against every MM7 GameTest found 37 main-quest transitions across the opening
+and both branches. 11 are exercised through input, 3 only by recorded traces
+and 23 not at all. The detailed map is Git-ignored under
+`local-game-data/mm7/working-gate-2026-11-10/`.
+
+Covered through input: the opening start and ship departure, the castle
+timer and arbiter messenger, the judge pick-up and arbiter choice, and the
+final hand-in on each branch. Uncovered on every playthrough: the first castle
+visit through the rebuild (O5-O10). That stretch has a whole-group kill check
+that runs on map exit, the same mechanism the disabled raid test is stuck on.
+
+Stage 1 test scopes, in order. Each is one GameTest sized like `ArbiterChoice`.
+
+1. Castle goblins (O5-O7), all killed versus one survivor. Shares the
+   group-kill check with W2, so it starts after lane A's fix lands.
+2. Castle rebuild (O8-O10), all story NPCs gathered versus one missing.
+3. Emerald Island scavenger hunt (O2), every delivery bit taped.
+4. Light city entry and Walls of Mist (L1-L4), no kill versus one kill of the
+   protected group, plus the daytime-only throne room.
+5. Light advisor tasks and Xenofex (L5, L8).
+6. Light assassination task (L6-L7).
+7. Overthruster retrieval (L10-L14), including a party member without a
+   wetsuit.
+
+Fresh-process Save/Load checkpoints go after scopes 2, 4 and 7. Stage 3
+takes the Dark branch scopes (D1-D10) and judge-swap and full-hireling cases.
 
 New campaign-path tests start after lane A integrates, because lane A owns
 `GameTests_MM7Campaign.cpp` until then.
@@ -77,8 +101,8 @@ defect queue's non-blocking items. Stage 4 works through
 - Two code-changing lanes at most while both Codex lanes are active. Claude
   takes a code lane only when one frees.
 - Ten registered worktrees at most. Reuse a merged worktree before creating one.
-- Keep at least 10 GB free on disk. On 2026-11-10 at 09:55 local there was
-  12 GiB free with load near 13, so build-heavy work needs space freed first.
+- Keep at least 10 GB free on disk. Codex freed 2.3 GiB of merged build
+  output on 2026-11-10, leaving 14 GiB free.
 - Integrate reviewed commits into `master` one at a time. Codex root
   integrates, Claude reviews lane output before it goes in.
 - Game data, saves, captures and detailed traces stay out of Git.

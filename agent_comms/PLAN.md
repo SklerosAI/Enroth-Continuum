@@ -145,8 +145,8 @@ Ordered by how badly a player is blocked. A lane takes the top item when free.
    - Continuous chained Light run and real quest-item acquisition, after
      that. Needs a chain mode in the disposable-profile gate.
 2. Cancelled item-target spell scroll is consumed anyway (`src/Engine/Objects/Character.cpp`, the open TODO at the scroll cast). Player-facing item loss, not blocking. Fixed on `claude/mm7-scroll-cancel` at `401d8e2a4`, reviewed, waiting for integration.
-3. Actor- and character-target scrolls (Fire Bolt and similar) still lose the scroll when targeting is cancelled. Same family, not blocking.
-4. `master` fails full `check_style` on files no recent lane touched: missing includes in `src/Engine/Mods/PrivateMods.cpp` and `src/Engine/Objects/Chest.cpp`, a using-directive in `src/Engine/Mods/PrivateMods_ut.cpp`. Small, should go in before more lanes merge.
+3. Actor- and character-target scrolls (Fire Bolt and similar) still lose the scroll when targeting is cancelled. Fixed on `claude/mm7-actor-scroll-cancel` at `9ed8a074a`, reviewed. One inventory-screen test is being added before integration.
+4. `master` failed full `check_style` with 75 errors in about 55 files, mostly MM6. Fixed on `claude/master-style-fix` at `349e55d62`, reviewed, waiting for integration.
 
 ## Stage 2 — MM6 working (queued)
 
@@ -229,6 +229,14 @@ main quest spans 26 maps plus the global script.
   traces from the executable.
 - **Not a problem:** event opcodes 5, 20, 27 and 28 on the main quest, and
   opcode 26 questions.
+
+Runtime confirmation (throwaway probe, 2026-11-10, nothing committed). The
+three dungeons with unconditional script-cast timers all throw on schedule:
+Castle Alamos (`cd1`), the Free Haven Sewer (`sewer`) and the Control Center
+(`sci-fi`), at about 20, 10 and 3 seconds after entering. Two load findings
+for M2: the sewer only loads with actors off, because generated NPCs
+overflow the pool. And a transition from the first map into a map with
+chests refuses, because the previous map's chest positions are still loaded.
 
 Revised M4 build order: reputation executor, event CastSpell and damage
 kinds starting with the three timers, monster missiles and spells, house

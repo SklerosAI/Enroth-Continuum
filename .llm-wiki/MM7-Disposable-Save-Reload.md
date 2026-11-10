@@ -31,8 +31,28 @@ proved rendering without disk save/reload. The [runtime cutover](MM7-Runtime-Pat
 still requires collision-safe review and visible candidate play before any
 installed-app change. No proprietary data, saves or hashes entered Git.
 
-An [isolated native-slot helper](MM7-Atomic-Save-File.md) now passes synthetic
-fault tests. This disposable cycle still exercised the inherited SaveLoad
-writer; the helper is not yet wired into normal MM7 saves or loads.
+The previous paragraph records the 2026-11-07 state. The later native-slot
+helper and load preflight were integrated on 2026-11-09; see the
+[current campaign status](Campaign-Status.md) for the newer acceptance boundary.
 
-See also: [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [MM7 Atomic Save File](MM7-Atomic-Save-File.md), [Agent Handoff](Agent-Handoff.md).
+## Current staged-candidate gate — 2026-11-10
+
+The integrated-source headless writer and fresh-process reader each passed
+1/1 with a disposable owner-only MM7 profile. A staged Atlas then launched
+MM7 into a marked temporary profile. In visible play, a newly named party
+saved through the menu, quit, relaunched through Atlas and loaded the named
+slot. A bought shield and the reduced gold total survived another
+fresh-process Load. A copy of an existing installed-baseline save also loaded
+in the disposable profile. Captures, save files and checksums stayed outside
+Git. The original normal-profile saves were not loaded or written.
+
+The Atlas disposable-profile code was reviewed and integrated after that
+visible run. Its final resolver refuses a set-invalid override for Play and
+save actions; the current integrated Swift resolver check and optimized Atlas
+compile passed. A rebuilt staged app still needs a visible check. One
+accidental direct launch during the earlier visible session modified the
+normal profile's settings file; prior bytes were unavailable, so it was
+preserved. The accidental new log was removed. This gate does not establish
+full campaign completion or installed-app cutover.
+
+See also: [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [MM7 Atomic Save File](MM7-Atomic-Save-File.md), [Campaign Status](Campaign-Status.md), [Agent Handoff](Agent-Handoff.md).

@@ -12,13 +12,19 @@ This page is the starting brief for future Codex agents working in parallel on E
 
 The owner's [current delivery order](Current-Delivery-Order.md) is MM7 working,
 then MM6 working, then the full MM7 audit, then the full MM6 audit. This
-supersedes the MM6-first sequence below. Codex's current MM7 lanes cover the
-disabled raid route and a staged current-candidate build/save check. Claude
-Code may take the planning and coordination lead when it rejoins; use
-`agent_comms/` and keep code file ownership distinct.
+supersedes the MM6-first sequence below. Claude Code is the planning and
+coordination lead through `agent_comms/PLAN.md`; Codex integrates reviewed
+lanes. The MM7 raid test and fail-closed Atlas disposable-profile path are
+integrated as of 2026-11-10. The integrated campaign GameTests pass 6/6, and
+the visible staged candidate passed durable Save/Load with a purchased shield
+and gold intact plus a copied older save. The visible run preceded the final
+Atlas profile-path fix; rebuild before further visible checks or installation.
+Ordinary NPC talk, one monster fight, owner audio confirmation, main-quest
+path coverage and installed-app cutover remain open. See the current
+[campaign status](Campaign-Status.md) and [MM7 save gate](MM7-Disposable-Save-Reload.md).
 
 At MM7-first resumption, integration `master` was clean and pushed at
-`f4d1b8065`. The [November 9 progress table](Progress-2026-11-09.md)
+`f4d1b8065`; this is a historical checkpoint, not the current head. The [November 9 progress table](Progress-2026-11-09.md)
 preserves the earlier work, while the [MM6 resume runbook](../project/MM6_RESUME_HANDOFF.md)
 and clean `codex/mm6-notes-book` worktree remain queued for stage 2. Recheck
 Git state and the ten-worktree budget before editing. Notes, Map and visible

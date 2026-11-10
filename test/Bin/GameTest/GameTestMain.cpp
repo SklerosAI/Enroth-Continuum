@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <array>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -37,7 +39,35 @@ bool isMm6OnlyFilter(std::string_view filter) {
     return true;
 }
 
-void validateDisposableMm7Profile(GameTestOptions *opts, bool writer) {
+struct Mm7ProfileGate {
+    std::string_view filter;
+    bool writer;
+    bool preserveSave;
+    int chapter;
+};
+
+constexpr std::array<Mm7ProfileGate, 18> mm7ProfileGates = {{
+    {"MM7DisposableSave.DISABLED_WriteFreshProfile", true, false, -1},
+    {"MM7DisposableSave.DISABLED_ReloadFreshProcess", false, true, -1},
+    {"MM7CastleRebuild.DISABLED_WriteFreshCheckpoint", true, false, -1},
+    {"MM7CastleRebuild.DISABLED_ReloadFreshCheckpoint", false, true, -1},
+    {"MM7LightWalls.DISABLED_WriteFreshCheckpoint", true, false, -1},
+    {"MM7LightWalls.DISABLED_ReloadFreshCheckpoint", false, true, -1},
+    {"MM7OverthrusterRoute.DISABLED_WriteFreshCheckpoint", true, false, -1},
+    {"MM7OverthrusterRoute.DISABLED_ReloadFreshCheckpoint", false, true, -1},
+    {"MM7LightSeam.DISABLED_WriteFreshCheckpoint", true, false, -1},
+    {"MM7LightSeam.DISABLED_ReloadFreshCheckpoint", false, true, -1},
+    {"MM7CampaignChain.DISABLED_Chapter0", true, false, 0},
+    {"MM7CampaignChain.DISABLED_Chapter1", false, true, 1},
+    {"MM7CampaignChain.DISABLED_Chapter2", false, true, 2},
+    {"MM7CampaignChain.DISABLED_Chapter3", false, true, 3},
+    {"MM7CampaignChain.DISABLED_Chapter4", false, true, 4},
+    {"MM7CampaignChain.DISABLED_Chapter5", false, true, 5},
+    {"MM7CampaignChain.DISABLED_Chapter6", false, true, 6},
+    {"MM7CampaignChain.DISABLED_Chapter7", false, true, 7},
+}};
+
+void validateDisposableMm7Profile(GameTestOptions *opts, const Mm7ProfileGate &gate) {
     namespace fs = std::filesystem;
     const fs::path supplied(opts->userPath.str());
     if (!supplied.is_absolute() || !fs::is_directory(supplied))
@@ -57,21 +87,29 @@ void validateDisposableMm7Profile(GameTestOptions *opts, bool writer) {
     for (const fs::directory_entry &entry : fs::directory_iterator(root)) {
         const std::string name = entry.path().filename().string();
         if (entry.is_symlink() ||
-            (writer && name != ".ec-mm7-disposable-save-gate") ||
-            (!writer && name != ".ec-mm7-disposable-save-gate" &&
+            (gate.writer && name != ".ec-mm7-disposable-save-gate") ||
+            (!gate.writer && name != ".ec-mm7-disposable-save-gate" &&
              name != "enroth-continuum-mm7.ini" && name != "saves"))
             throw Exception("MM7 save gate profile contains an unexpected entry.");
     }
-    if (!writer) {
+    if (!gate.writer) {
         const fs::path saves = root / "saves";
+        const std::string candidate = gate.chapter > 0 ? fmt::format("save{:03}.mm7", gate.chapter - 1) : "save000.mm7";
         if (!fs::is_directory(saves) || fs::is_symlink(saves) ||
-            !fs::is_regular_file(saves / "save000.mm7") || fs::is_symlink(saves / "save000.mm7"))
+            !fs::is_regular_file(saves / candidate) || fs::is_symlink(saves / candidate))
             throw Exception("MM7 save gate profile has no regular candidate save.");
         for (const fs::directory_entry &entry : fs::directory_iterator(saves)) {
             const std::string name = entry.path().filename().string();
-            if (!entry.is_regular_file() || entry.is_symlink() ||
-                (name != "save000.mm7" && name != "save000.mm7.bak" &&
-                 name != "autosave.mm7" && name != "autosave.mm7.bak"))
+            bool allowed = name == "autosave.mm7" || name == "autosave.mm7.bak";
+            if (gate.chapter >= 0) {
+                for (int chapter = 0; chapter <= gate.chapter; ++chapter) {
+                    const std::string slot = fmt::format("save{:03}.mm7", chapter);
+                    allowed |= name == slot || name == slot + ".bak";
+                }
+            } else {
+                allowed |= name == "save000.mm7" || name == "save000.mm7.bak";
+            }
+            if (!entry.is_regular_file() || entry.is_symlink() || !allowed)
                 throw Exception("MM7 save gate profile contains an unexpected save.");
         }
     }
@@ -112,23 +150,16 @@ int platformMain(int argc, char **argv) {
              !GTEST_FLAG_GET(also_run_disabled_tests))) {
             throw Exception("--offscreen-gl requires the title's isolated disabled first-frame test filter.");
         }
-        const bool mm7SaveWriter = GTEST_FLAG_GET(filter) == "MM7DisposableSave.DISABLED_WriteFreshProfile";
-        const bool mm7SaveReader = GTEST_FLAG_GET(filter) == "MM7DisposableSave.DISABLED_ReloadFreshProcess";
-        const bool mm7CastleWriter = GTEST_FLAG_GET(filter) == "MM7CastleRebuild.DISABLED_WriteFreshCheckpoint";
-        const bool mm7CastleReader = GTEST_FLAG_GET(filter) == "MM7CastleRebuild.DISABLED_ReloadFreshCheckpoint";
-        const bool mm7LightWriter = GTEST_FLAG_GET(filter) == "MM7LightWalls.DISABLED_WriteFreshCheckpoint";
-        const bool mm7LightReader = GTEST_FLAG_GET(filter) == "MM7LightWalls.DISABLED_ReloadFreshCheckpoint";
-        const bool mm7OverthrusterWriter = GTEST_FLAG_GET(filter) == "MM7OverthrusterRoute.DISABLED_WriteFreshCheckpoint";
-        const bool mm7OverthrusterReader = GTEST_FLAG_GET(filter) == "MM7OverthrusterRoute.DISABLED_ReloadFreshCheckpoint";
-        const bool mm7LightSeamWriter = GTEST_FLAG_GET(filter) == "MM7LightSeam.DISABLED_WriteFreshCheckpoint";
-        const bool mm7LightSeamReader = GTEST_FLAG_GET(filter) == "MM7LightSeam.DISABLED_ReloadFreshCheckpoint";
-        const bool mm7Writer = mm7SaveWriter || mm7CastleWriter || mm7LightWriter || mm7OverthrusterWriter || mm7LightSeamWriter;
-        const bool mm7Reader = mm7SaveReader || mm7CastleReader || mm7LightReader || mm7OverthrusterReader || mm7LightSeamReader;
-        if (opts.disposableMm7Profile || mm7Writer || mm7Reader) {
-            if (!opts.disposableMm7Profile || !(mm7Writer || mm7Reader) ||
+        const std::string filter = GTEST_FLAG_GET(filter);
+        auto gate = std::ranges::find_if(mm7ProfileGates, [&filter](const Mm7ProfileGate &entry) {
+            return filter == entry.filter;
+        });
+        const bool hasMm7ProfileGate = gate != mm7ProfileGates.end();
+        if (opts.disposableMm7Profile || hasMm7ProfileGate) {
+            if (!opts.disposableMm7Profile || !hasMm7ProfileGate ||
                 !GTEST_FLAG_GET(also_run_disabled_tests))
                 throw Exception("MM7 disposable save gate requires its exact disabled test filter and temporary profile.");
-            validateDisposableMm7Profile(&opts, mm7Writer);
+            validateDisposableMm7Profile(&opts, *gate);
         }
         if (opts.listRequested)
             return RUN_ALL_TESTS();
@@ -145,7 +176,8 @@ int platformMain(int argc, char **argv) {
         int exitCode = 0;
         starter.runInstrumented([&] (EngineController *game) {
             NativeFileSystem tfs(opts.testPath);
-            TestController test(game, &tfs, opts.speed, opts.disposableMm7Profile, mm7Reader);
+            TestController test(game, &tfs, opts.speed, opts.disposableMm7Profile,
+                                hasMm7ProfileGate && gate->preserveSave);
             GameTest::init(game, &test);
             exitCode = RUN_ALL_TESTS();
         });

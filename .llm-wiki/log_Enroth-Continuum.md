@@ -3012,3 +3012,9 @@ Chronological record of wiki activity.
 - The integrated GameTest built. A production Save writer after Lincoln retrieval and Shoals exit and a separate-process normal Load reader passed 1/1 each in a marked temporary profile. The slot digest was unchanged and the held item, four suits and Light/retrieval bits persisted. Focused related controls passed 6/6.
 - Earlier Light state remains a fixture. An uninterrupted campaign, installed-app graphical Save/Load and full audit remain open. The owner currently permits headless checks only.
 
+## [2026-11-10] verify | MM7 Light Walls NPC persistence seam
+- by: T-Burton-ND via codex
+- Corrected the save-gate, campaign and handoff pages at `f401713d7` after the Walls NPC seam test reached integration.
+- The integrated Light route, dawn and three advisor controls passed 5/5. The marked disposable production Save writer and separate fresh-process normal Load reader passed 1/1 each, with unchanged slot bytes.
+- The successful throne hand-in cleared NPC79's first topic before Save. NPC79–83 house and relevant topic fields survived Load and two following frames. This supersedes the earlier inference that Load reset the field; later chapter continuity remains open.
+

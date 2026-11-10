@@ -33,6 +33,21 @@ namespace {
 constexpr std::string_view checkpointSlot = "saves/save000.mm7";
 constexpr std::string_view checkpointFileName = "save000.mm7";
 
+void expectPostWallsNpcSeam() {
+    EXPECT_EQ(pNPCStats->pNPCData[79].house, HOUSE_CASTLE_LAMBENT_THRONE_ROOM);
+    EXPECT_EQ(pNPCStats->pNPCData[79].dialogue_1_evt_id, 0);
+    EXPECT_EQ(pNPCStats->pNPCData[79].dialogue_2_evt_id, 259);
+    EXPECT_EQ(pNPCStats->pNPCData[80].house, HOUSE_CELESTE_HOSTEL_1);
+    EXPECT_EQ(pNPCStats->pNPCData[80].dialogue_1_evt_id, 147);
+    EXPECT_EQ(pNPCStats->pNPCData[80].dialogue_2_evt_id, 149);
+    EXPECT_EQ(pNPCStats->pNPCData[81].house, HOUSE_CELESTE_HOSTEL_2);
+    EXPECT_EQ(pNPCStats->pNPCData[81].dialogue_1_evt_id, 151);
+    EXPECT_EQ(pNPCStats->pNPCData[82].house, HOUSE_CELESTE_HOSTEL_3);
+    EXPECT_EQ(pNPCStats->pNPCData[82].dialogue_1_evt_id, 153);
+    EXPECT_EQ(pNPCStats->pNPCData[83].house, HOUSE_CELESTE_HOSTEL_4);
+    EXPECT_EQ(pNPCStats->pNPCData[83].dialogue_1_evt_id, 155);
+}
+
 std::pair<Vec3f, int> approachFace(const BLVFace &face) {
     Vec3f position = face.boundingBox.center() + 150 * face.facePlane.normal;
     position.z = face.boundingBox.z1;
@@ -49,6 +64,11 @@ void runLightRoute(EngineController &game, TestController &test, CommonTapeRecor
     auto passedTape = tapes.questBit(QBIT_WALLS_OF_MIST_PASSED);
     auto guildTape = tapes.questBit(QBIT_LIGHT_GUILD_JOINED);
     auto mapTape = tapes.map();
+    auto advisorHousesTape = tapes.custom([] {
+        return std::array{pNPCStats->pNPCData[80].house, pNPCStats->pNPCData[81].house,
+                          pNPCStats->pNPCData[82].house, pNPCStats->pNPCData[83].house};
+    });
+    auto throneTopicTape = tapes.custom([] { return pNPCStats->pNPCData[79].dialogue_1_evt_id; });
     pParty->_questBits.set(QBIT_ARBITER_MESSENGER_MET);
     pParty->_questBits.set(QBIT_ARBITER_CHOICE_ACTIVE);
     pNPCStats->pNPCData[77].house = HOUSE_TAVERN_BRACADA_DESERT;
@@ -168,10 +188,16 @@ void runLightRoute(EngineController &game, TestController &test, CommonTapeRecor
     EXPECT_FALSE(pParty->_questBits[QBIT_WALLS_OF_MIST_ACTIVE]);
     EXPECT_TRUE(pParty->_questBits[QBIT_WALLS_OF_MIST_PASSED]);
     EXPECT_TRUE(pParty->_questBits[QBIT_LIGHT_GUILD_JOINED]);
+    expectPostWallsNpcSeam();
     EXPECT_EQ(lightTape, tape(false, true));
     EXPECT_EQ(activeTape, tape(false, true, false));
     EXPECT_EQ(passedTape, tape(false, true));
     EXPECT_EQ(guildTape, tape(false, true));
+    constexpr std::array postWallsHouses = {HOUSE_CELESTE_HOSTEL_1, HOUSE_CELESTE_HOSTEL_2,
+                                            HOUSE_CELESTE_HOSTEL_3, HOUSE_CELESTE_HOSTEL_4};
+    EXPECT_CONTAINS(advisorHousesTape, postWallsHouses);
+    EXPECT_CONTAINS(throneTopicTape, 146u);
+    EXPECT_CONTAINS(throneTopicTape, 0u);
     EXPECT_CONTAINS(mapTape, MAP_CELESTE);
     EXPECT_CONTAINS(mapTape, MAP_WALLS_OF_MIST);
     test.stopTaping();
@@ -200,6 +226,8 @@ GAME_TEST(MM7LightWalls, DISABLED_WriteFreshCheckpoint) {
     ASSERT_TRUE(pParty->_questBits[QBIT_LIGHT_PATH]);
     ASSERT_TRUE(pParty->_questBits[QBIT_WALLS_OF_MIST_PASSED]);
     ASSERT_TRUE(pParty->_questBits[QBIT_LIGHT_GUILD_JOINED]);
+    expectPostWallsNpcSeam();
+    ASSERT_FALSE(::testing::Test::HasFailure());
     for (int i = 0; i < 4 && current_screen_type != SCREEN_GAME; i++) {
         game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
         game.tick();
@@ -243,7 +271,9 @@ GAME_TEST(MM7LightWalls, DISABLED_ReloadFreshCheckpoint) {
     ASSERT_EQ(saveLoadMenu()->selectedSlot().fileName, checkpointFileName);
     game.pressGuiButton("LoadMenu_Load");
     game.skipLoadingScreen();
+    expectPostWallsNpcSeam();
     game.tick(2);
+    expectPostWallsNpcSeam();
 
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_CASTLE_LAMBENT);

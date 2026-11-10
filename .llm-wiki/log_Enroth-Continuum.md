@@ -2970,3 +2970,9 @@ Chronological record of wiki activity.
 - Corrected the campaign status and handoff at `9a7ff29b3`: the group-1 kill check is a failure branch that skips the quest-pass write, not a requirement for success. This supersedes the plausible-blocker wording in the preceding Light-route log entry.
 - A fresh normal-entry headless probe and local base/delta review found no initial group-1 actor or spawn point and no scripted summon/remap. The successful no-kill route remains proven; the negative branch may be unreachable in the shipped initial state.
 - Original group semantics and the fresh-process Light chapter checkpoint remain open. No private raw event content or asset inventory entered Git.
+
+## [2026-11-10] verify | MM7 Light Walls fresh-process checkpoint
+- by: T-Burton-ND via codex
+- Updated campaign status, save-gate page, handoff and index at `5567d6de3` after the integrated Light chapter production Save writer and fresh-process normal Load reader passed 1/1 each with unchanged slot digest and persistent quest/guild state.
+- The refactored Light route and dawn throne controls passed 2/2. The separate Walls group audit found an unreachable failure branch in tested local data and no source-backed runtime fix; this supersedes the open-checkpoint and plausible-blocker language above.
+- Advisor tasks, later Light routes, the Overthruster checkpoint and owner-attended graphical acceptance remain open. No private saves, logs, raw scripts or captures entered Git.

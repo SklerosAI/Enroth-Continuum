@@ -2995,3 +2995,9 @@ Chronological record of wiki activity.
 - The integrated GameTest built and four new route cases with two wetsuit/Shoals controls and two Xenofex cases passed 8/8 headlessly. The cases cover chest suit collection, travel gates, Lincoln console and pedestal retrieval, and exit with the held item.
 - L8-to-L9 natural unlock, a continuous route, L15 hand-in with the retrieved item and the fresh-process checkpoint remain open; two independent code lanes are addressing adjacent gaps. No graphical run or normal-profile write occurred.
 
+## [2026-11-10] verify | MM7 Light final-task topic and ending link
+- by: T-Burton-ND via codex
+- Updated campaign status, handoff and coordination plan at `aa761dccd` after the final-link test reached integration.
+- The integrated GameTest built; Xenofex, Overthruster and ending focused controls passed 7/7. Actual Xenofex hand-in unlocked NPC80's second topic, L9 UI selection activated the final task, a no-item L15 attempt refused, and a held Overthruster fixture completed the game-over/certificate/autosave sequence.
+- The held item matches Lincoln's retrieval state but was injected in this test. A real post-retrieval fresh-process checkpoint and uninterrupted chapter continuity remain open. The test ran headlessly with an in-memory user filesystem.
+

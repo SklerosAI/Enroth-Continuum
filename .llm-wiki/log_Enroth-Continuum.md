@@ -2928,3 +2928,9 @@ Chronological record of wiki activity.
 - Updated the current campaign and handoff pages at `36789ff56` after the input-driven Castle Harmondale goblin, exit and Butler hand-in test reached integration.
 - The Castle test and raid control rebuilt and passed 2/2 on integration source. The test distinguishes pre-exit, exit-prompt and accepted map-leave timing; it does not prove continuous human combat or a completed campaign.
 - Recorded that the final signed staged Atlas was rebuilt, but Mac lock prevented its visible smoke. No installed app or normal profile changed during that build.
+
+## [2026-11-10] verify | MM7 Castle rebuild interactions
+- by: T-Burton-ND via codex
+- Updated the campaign status, handoff and index at `e471fd628` after the Stone City rescue and Castle rebuild interaction test reached integration.
+- The rebuild, Castle opening and raid focused tests built and passed 3/3 on integration source. The positive case rescues seven named dwarves; one missing blocks the king's rebuild reward.
+- Kept the fresh-process Save/Load checkpoint after rebuild explicitly open. The staged final-build visible smoke is still blocked by Mac lock.

@@ -78,6 +78,11 @@ cases 7/7. It asserts the real Xenofex hand-in changes NPC 80's second topic
 to 169, selects L9 through UI, rejects a no-item hand-in, then completes the
 ending with a held Overthruster fixture. The separate Lincoln case yields a
 held item; the two slices are not yet joined by a fresh-process checkpoint.
+The later Pit cube acquisition test is integrated and passed with its no-cube
+control 2/2. It uses real attack-key combat, viewport corpse picking/clicking
+and advisor hand-in, with party-only combat strength and positioning fixtures.
+It does not prove natural walking through the room or a continuous New Game to
+ending run. See the dated Pit cube handoff in `agent_comms/handoffs/`.
 
 At MM7-first resumption, integration `master` was clean and pushed at
 `f4d1b8065`; this is a historical checkpoint, not the current head. The [November 9 progress table](Progress-2026-11-09.md)

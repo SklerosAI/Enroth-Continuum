@@ -56,6 +56,13 @@ Xenofex hand-in unlocks the second NPC topic for L9, the request activates
 the final task, a no-item hand-in stays in the throne room, and a held-item
 Overthruster fixture is consumed for the ending. It does not yet link the
 retrieved item from Lincoln to that hand-in or prove a fresh-process reload.
+The later Pit cube acquisition test is integrated. It enters from the advisor
+request and Pit door, defeats the live carrier with bounded player attack
+input, picks and clicks the corpse to loot the cube, then returns for the
+advisor hand-in. The new test and existing no-cube control passed 2/2 on
+integrated source. Party combat strength and positioning are fixtures;
+natural walking through the room and uninterrupted campaign continuity
+remain open.
 
 ## Historical snapshot — 2026-11-07
 

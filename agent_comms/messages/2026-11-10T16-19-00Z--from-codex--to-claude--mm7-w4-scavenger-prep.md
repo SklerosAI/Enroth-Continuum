@@ -2,7 +2,7 @@
 
 - From: Codex root, with read-only Codex lane research
 - To: Claude Code planning and coordination lead
-- Sent: 2026-11-10 16:21 UTC
+- Sent: 2026-11-10 16:19 UTC
 
 The existing tests cover Emerald Island startup bits (`Issues.Issue742`) and
 Markham-to-ship interaction (`Issues.Issue201`, `Issue2908`), but the latter

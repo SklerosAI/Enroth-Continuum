@@ -10,7 +10,9 @@
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/MapEnums.h"
 #include "Engine/Objects/Actor.h"
+#include "Engine/Objects/ItemEnums.h"
 #include "Engine/Party.h"
+#include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Tables/NPCTable.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/NPCTopics.h"
@@ -95,7 +97,7 @@ GAME_TEST(MM7LightXenofex, QuestTopicRequiresAssassination) {
     EXPECT_FALSE(pParty->_questBits[QBIT_XENOFEX_QUEST_FINISHED]);
 }
 
-GAME_TEST(MM7LightXenofex, MapLeaveAndHandIn) {
+GAME_TEST(MM7LightXenofex, MapLeaveHandInAndEnding) {
     game.startNewGame();
     engine->config->debug.NoDamage.setValue(true);
     seedPostAltarLightPath();
@@ -132,4 +134,48 @@ GAME_TEST(MM7LightXenofex, MapLeaveAndHandIn) {
     EXPECT_EQ(pParty->GetGold() - goldBeforeHandIn, 50000);
     EXPECT_EQ(current_screen_type, SCREEN_HOUSE);
     EXPECT_EQ(window_SpeakInHouse->houseId(), HOUSE_CASTLE_LAMBENT_THRONE_ROOM);
+
+    // The L8 script must unlock the final-task topic. This deliberately does
+    // not assign dialogue_2_evt_id, unlike MM7Campaign.Endings.
+    ASSERT_EQ(pNPCStats->pNPCData[80].dialogue_2_evt_id, 169);
+    leaveHouse(game);
+    openThroneRoom(game);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    ASSERT_TRUE(selectAdvisorEvent(game, 169));
+    ASSERT_TRUE(pParty->_questBits[QBIT_OSCILLATION_OVERTHRUSTER_LIGHT_ACTIVE]);
+    ASSERT_EQ(pNPCStats->pNPCData[80].dialogue_2_evt_id, 170);
+
+    leaveHouse(game);
+    openThroneRoom(game);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    ASSERT_FALSE(pParty->hasItem(ITEM_QUEST_OSCILLATION_OVERTHRUSTER));
+    ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    ufs->remove("saves/autosave.mm7");
+    ufs->remove("MM7_Win.Pcx");
+    ASSERT_TRUE(selectAdvisorEvent(game, 170));
+    EXPECT_EQ(current_screen_type, SCREEN_HOUSE);
+    EXPECT_TRUE(pParty->_questBits[QBIT_OSCILLATION_OVERTHRUSTER_LIGHT_ACTIVE]);
+    EXPECT_EQ(pNPCStats->pNPCData[80].dialogue_2_evt_id, 170);
+    EXPECT_FALSE(ufs->exists("MM7_Win.Pcx"));
+    EXPECT_FALSE(ufs->exists("saves/autosave.mm7"));
+    EXPECT_EQ(engine->_currentLoadedMapId, MAP_CASTLE_LAMBENT);
+
+    // L10-L14 acquisition is verified in MM7OverthrusterRoute as a separate
+    // chapter slice. The item is fixtured in the held state that Lincoln grants.
+    pParty->setHoldingItem(Item(ITEM_QUEST_OSCILLATION_OVERTHRUSTER));
+    ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_QUEST_OSCILLATION_OVERTHRUSTER);
+    ASSERT_TRUE(selectAdvisorEvent(game, 170));
+    game.tick(2);
+    EXPECT_EQ(current_screen_type, SCREEN_GAMEOVER_WINDOW);
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_OSCILLATION_OVERTHRUSTER));
+    EXPECT_TRUE(ufs->exists("MM7_Win.Pcx"));
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    EXPECT_EQ(current_screen_type, SCREEN_GAME);
+    EXPECT_EQ(engine->_currentLoadedMapId, MAP_HARMONDALE);
+    EXPECT_EQ(pParty->pos, Vec3f(-17331, 12547, 465));
+    EXPECT_TRUE(ufs->exists("saves/autosave.mm7"));
 }

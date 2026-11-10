@@ -151,16 +151,46 @@ First code scopes, two at a time:
 4. S-BOOKS, Notes and Map books (M5a prerequisite), with `Issues.Issue2903`
    as the MM7 control.
 
-Start S-NG with S-SWEEP, then S-BORDER with S-BOOKS. S-NG and S-BORDER both
+Start S-NG with S-SWEEP, then S-BORDER with S-BOOKS. The reputation
+executor is small and independent of all four and can fill any free slot. S-NG and S-BORDER both
 touch shared core, so they merge one at a time with M7 between.
 
-Risks to retire early, read-only where possible: main-quest dependence on
-unverified spells (R1), unresolved event opcodes and variables on main-quest
-maps (R2), later maps only loaded in fixtures (R3, S-SWEEP), save coverage
-past the first map (R4), unverified monster spells on main-quest maps (R5),
-NPC topic misrouting (R6), whether every main-quest map is reachable on foot
-or by required boat (R7), MM7's ending path (R8, confirmed), and missing shop,
-guild and trainer services (R9).
+Risk probe results (read-only, 2026-11-10, throw sites spot-checked by
+Claude). The detailed map is Git-ignored under `local-game-data/mm6/`. The
+main quest spans 26 maps plus the global script.
+
+- **Reputation variable (215) has no MM6 executor.** 24 main-quest event
+  records throw on it, covering every council reward and the traitor step.
+  Smallest fix with the biggest payoff, so it becomes the first M4 scope.
+- **Monster combat is the largest M4 item.** Every MM6 monster missile launch
+  throws, and ranged monsters stand on 21 of the 26 maps. 12 unverified
+  monster spells appear on the path. Poison, magic and energy attack labels
+  and most special attacks throw on hit. The first map is clean.
+- **Event spells and damage.** Event CastSpell always throws for MM6, with six
+  spell IDs on the path. Most event ReceiveDamage kinds throw. Three
+  unconditional timers throw shortly after entering their dungeons.
+- **Party spells.** Flight (21) and water walking (27) look required, one for
+  a plateau house and one for an island dungeon whose only boat is gated
+  behind a later step. Flight also needs the event cast that punishes flying
+  on some outdoor maps. A throwaway test at the plateau edge should confirm.
+- **Travel.** Most of the path is reachable on foot from the first map. Four
+  boat routes are required, one of them a quest-gated special route. Three
+  dungeons are entered through house exits with quest-bit restrictions,
+  which the MM6 house screen does not support yet.
+- **NPC topics route correctly.** One quest NPC sits in a house no script
+  enters, and one scripted NPC conversation uses a dialogue window with no
+  MM6 branch. Both need a runtime probe.
+- **Engine rules with no script writer:** three quest bits the original
+  executable sets (a stable reward, the finale gate, a reactor door) need
+  traces from the executable.
+- **Not a problem:** event opcodes 5, 20, 27 and 28 on the main quest, and
+  opcode 26 questions.
+
+Revised M4 build order: reputation executor, event CastSpell and damage
+kinds starting with the three timers, monster missiles and spells, house
+exits and boat routes on top of M2, flight and water walking, the MM6 finale,
+then the executable-only quest rules. S-SWEEP should also fire each map's
+timer and trap events once.
 
 ## Stages 3 and 4 — audits (queued)
 

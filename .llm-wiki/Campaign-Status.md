@@ -26,6 +26,17 @@ bundle passed headless checks, while live video, external-drive behavior and
 installed-app use remain unverified. This tooling does not advance campaign
 playability by itself.
 
+The later input-driven Light city and Walls of Mist positive quest route and
+the dawn closed-throne control are integrated. The two new tests passed 2/2;
+with the arbiter and related issue controls, the integrated focused run passed
+4/4. The route reaches the daytime throne, completes the three pedestal
+interactions, exits and hands in the quest. The protected-group-kill branch
+and a fresh-process Save/Load checkpoint after this chapter remain open; the
+loaded Walls map had no eligible actor for that kill condition in the focused
+probe. A read-only local event review found no scripted group-1 summon or
+remap, making this a plausible quest blocker on this fork; original base/delta
+group semantics and a real qualifying kill still need verification.
+
 ## Historical snapshot — 2026-11-07
 
 The following table is retained as a dated record. Its claims that normal MM6 Save/Load remained closed were superseded by the November 9 first-map integration.

@@ -28,7 +28,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 
 ## Campaigns and runtime
 
-- [Campaign Status](Campaign-Status.md) — Current MM6, MM7 and MM8 readiness, including integrated Castle and scavenger coverage, staged visible gate and remaining gaps
+- [Campaign Status](Campaign-Status.md) — Current MM6, MM7 and MM8 readiness, including integrated Castle, scavenger and Light Walls coverage and remaining gates
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [MM7 Private Portrait Mod](MM7-Private-Portrait-Mod.md) — Local mood PNG layout, shared MM7 portrait resolver, Atlas controls, and verified hidden HUD capture
 - [Runtime Isolation](Runtime-Isolation.md) — Title-locked MM7 helper and staged Atlas sibling assembler; MM6/MM8 launch gates remain closed

@@ -39,6 +39,14 @@ is integrated into a separately staged, signed Atlas with a recording toggle
 and external-folder picker. Synthetic Bash checks and headless bundle checks
 passed; no actual video or Atlas recording lifecycle was exercised, and the
 installed app is unchanged. The owner currently authorizes headless checks only.
+The later Light city/Walls positive route and dawn closed-throne control are
+integrated; the new pair passed 2/2 and the focused integrated run including
+arbiter and issue controls passed 4/4. The Walls protected-group-kill branch
+remains open because no eligible group-1 actor was loaded in the focused
+probe. Read-only event review found no later scripted spawn or remap for that
+group, so this may block the original kill condition on the fork; native
+base/delta group semantics still need a focused check. A fresh-process
+checkpoint after this Light chapter is also open.
 
 At MM7-first resumption, integration `master` was clean and pushed at
 `f4d1b8065`; this is a historical checkpoint, not the current head. The [November 9 progress table](Progress-2026-11-09.md)

@@ -51,6 +51,11 @@ unreachable in the tested local data, so no runtime group change is justified;
 the successful quest path is unaffected. The Light chapter's production Save
 writer and fresh-process normal Load reader passed 1/1 each on integrated
 source with persistent Light/Walls/guild state and an unchanged slot digest.
+The later NPC seam check also passed on integration source: the throne
+hand-in clears NPC79's first topic before Save, and NPC79–83 house and topic
+fields persist across fresh Load and two frames. Its focused route/advisor
+run passed 5/5 and its disposable writer and reader passed 1/1 each. The
+older suggestion that Load reset the topic is superseded.
 This supersedes the earlier plausible-blocker and open-checkpoint readings.
 The later Light advisor, assassination and Xenofex test files are integrated
 and the focused combined Light run passed 9/9. The advisor cases cover altar-piece,

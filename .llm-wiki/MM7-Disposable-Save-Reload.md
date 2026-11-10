@@ -75,9 +75,13 @@ wrote a normal MM7 slot. A separate fresh headless child selected that slot
 through the normal Load menu. Writer and reader passed 1/1 each; persistent
 Light, Walls and guild bits, map and selected slot matched, and the slot digest
 was unchanged. The refactored Light route and dawn closed-throne controls also
-passed 2/2. A transient NPC dialogue field was not used as a persistence
-assertion because the branch gate observed it reset after Load. This remains
-a bounded chapter checkpoint, not an end-to-end visible campaign.
+passed 2/2. A later integrated seam check found that the successful throne
+hand-in itself clears NPC79's first topic before Save; fresh Load preserves
+the cleared value. NPC79–83 house and relevant topic fields matched before
+Save, immediately after normal fresh-process Load and after two map frames.
+The revised Light route and three advisor controls passed 5/5, and the
+disposable writer and reader passed 1/1 each with unchanged slot bytes. This
+remains a bounded chapter checkpoint, not an end-to-end visible campaign.
 
 ## Overthruster retrieval checkpoint — 2026-11-10
 

@@ -39,6 +39,10 @@ unreachable in the tested local data; no runtime fix is justified, and the
 successful route is unaffected. The later Light chapter checkpoint passed on
 integrated source: production Save writer and fresh-process normal Load reader
 1/1 each, persistent Light/Walls/guild bits intact and slot digest unchanged.
+The follow-up NPC seam check established that the throne hand-in clears its
+first topic before Save. NPC79–83 house and relevant topic fields persist
+through fresh-process Load and two subsequent frames. The revised Light route
+and advisor controls passed 5/5, with writer and reader 1/1 each.
 The three advisor hand-in checks and assassination request/cube hand-in are
 also integrated. The focused combined Light run passed 7/7. These tests use
 fixture quest items and bits around input-driven dialogue and doors. Real

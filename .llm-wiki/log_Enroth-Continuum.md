@@ -2952,3 +2952,9 @@ Chronological record of wiki activity.
 - Added the playtest-recording page, current handoff and index links at `69a38a469` after Atlas gained a recording toggle, external-folder picker and local storage/RAM warnings.
 - The passive Bash recorder passed synthetic save, log, note, stop, low-space, destination and PID checks; the separate staged Atlas assembled with notices, verified signatures and a script matching tracked source bytes. No game, video capture or GUI run occurred under headless-only authorization.
 - Actual macOS Screen Recording permission, Atlas lifecycle, external-drive behavior and installed-app cutover remain open. Private capture output stays outside Git and cloud services.
+
+## [2026-11-10] verify | MM7 recorder lifecycle and volume guards
+- by: T-Burton-ND via codex
+- Updated the playtest-recording page and index at `0b080b0bc` after independent static review found and closed relaunch, readiness, warning, final-video and external-volume handoff races.
+- A synthetic wrong-device session was rejected and a matching-device session stopped cleanly. The final separate Atlas stage rebuilt with valid signatures, source notices and bundled source-matching script and page.
+- Live screen video, macOS permission, external removal and installed-app acceptance remain open under headless-only authorization.

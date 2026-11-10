@@ -92,7 +92,17 @@ New campaign-path tests start after lane A integrates, because lane A owns
 Ordered by how badly a player is blocked. A lane takes the top item when free.
 
 1. Any defect found by W1, W3 or W4.
-2. Cancelled item-target spell scroll is consumed anyway (`src/Engine/Objects/Character.cpp`, the open TODO at the scroll cast). Player-facing item loss, not blocking. Found by Codex read-only triage.
+   - **W4 seams and NPC topic persistence (assigned to Codex, 2026-11-10).**
+     A fresh Load reportedly resets the Light throne NPC's dialogue event ID.
+     Topics are serialized, so this is a map-load script or a save/load
+     defect. Until shown otherwise it blocks stage 1. The same lane tapes the
+     three fixtured seams (adviser houses, Robert's house, NPC 80's topic) where
+     the game produces them and checks they survive a fresh Load. See
+     `reviews/2026-11-10-claude-mm7-w4-path-tests.md` F1.
+   - W4 test hardening, review findings F2-F6, after the seams.
+   - Continuous chained Light run and real quest-item acquisition, after
+     that. Needs a chain mode in the disposable-profile gate.
+2. Cancelled item-target spell scroll is consumed anyway (`src/Engine/Objects/Character.cpp`, the open TODO at the scroll cast). Player-facing item loss, not blocking. Claude lane `claude/mm7-scroll-cancel`, active.
 
 ## Stage 2 — MM6 working (queued)
 

@@ -87,6 +87,50 @@ takes the Dark branch scopes (D1-D10) and judge-swap and full-hireling cases.
 New campaign-path tests start after lane A integrates, because lane A owns
 `GameTests_MM7Campaign.cpp` until then.
 
+### W4 continuous chain (proposal, 2026-11-10)
+
+The F1 seams are closed (`codex/mm7-light-npc-persistence` and
+`codex/mm7-light-pit-xenofex-seam`, both reviewed). Each chapter now works
+from its own setup and its hand-off survives a fresh process. The last W4
+piece is one continuous run where every chapter starts from the previous
+chapter's real save.
+
+**Harness (one lane, holds `GameTestMain.cpp`).**
+- Replace the growing exact-filter list with one table of chapter tests.
+- Add a chain mode to the marked disposable profile. A chain chapter starts
+  only when exactly the previous chapter's slot is present, loads it through
+  the normal Load menu, plays, and saves to its own numbered slot. Chapter 0
+  starts from New Game. Every other gate rule stays: marked owner-only temp
+  profile, exact filters, fail closed.
+- `tools/run_mm7_campaign_chain.py` creates the profile, runs the chapters in
+  order one process each, stops at the first failure, reports per-chapter
+  results and removes the profile. Nothing private is written to Git.
+
+**Chapters (one or two lanes, after the harness).** Each reuses the existing
+chapter helpers and closes with tapes that assert the next chapter's entry
+state.
+
+| Chapter | From | To |
+| --- | --- | --- |
+| C0 | New Game | Scavenger hand-ins and ship to Harmondale |
+| C1 | Harmondale arrival | Castle goblins cleared and the butler's repair request |
+| C2 | Repair request | Stone City rescue and castle rebuilt |
+| C3 | Castle rebuilt | Messenger after the long rest, judge, Light chosen |
+| C4 | Light chosen | Celeste, Walls hand-in |
+| C5 | Walls hand-in | Three adviser hand-ins and the Tolberti cube hand-in |
+| C6 | Xenofex request | Xenofex hand-in and the final task |
+| C7 | Final task | Overthruster retrieved and the Light ending |
+
+Rules for chain chapters. No quest bit, NPC field or map writes at a chapter
+start, since all of it must come from the loaded save. Item acquisition and
+kills may stay fixtures where no acquisition test exists yet, each named in
+the chapter's first comment and listed in the handoff. Party strength gets
+one documented fixture in C0 instead of per-test writes. Teleports between
+maps are allowed for now and listed, because real travel is stage 3 breadth.
+
+Order: the harness lane first. Then C0-C3 and C4-C7 as two lanes, which only
+share the harness table.
+
 ### Stage 1 defect queue
 
 Ordered by how badly a player is blocked. A lane takes the top item when free.

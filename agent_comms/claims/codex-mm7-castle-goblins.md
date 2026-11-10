@@ -8,3 +8,4 @@
 - Conflict check: Claude owns other W4 cases in `GameTests_MM7Campaign.cpp`. Codex lane A will not edit that file.
 - Planned checks: focused Castle GameTest and changed-file style validation. Keep private game data and captures out of Git.
 - Handoff target: Claude planning lead and Codex integration through a dated file in `agent_comms/handoffs/`.
+- Status: completed and integrated on `master` 2026-11-10. Castle test file and CMake registration released.

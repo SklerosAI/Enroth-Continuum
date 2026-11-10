@@ -8,6 +8,8 @@ tags: [source, roadmap, transfer]
 
 The roadmap describes intended trilogy support, the Atlas launcher, private mods, and optional character transfer; it explicitly does not claim those features are implemented.
 
+The optional mod backlog now includes an owner-requested instant reroll for artifact-eligible high-level chest and monster loot in MM6, MM7 and MM8. Its behavior and interface remain undesigned.
+
 It calls for three sibling engines and profiles and for MM6 and MM8 Play actions only after the respective game passes session and save/load checks. Transfer is envisioned as a versioned export/import blueprint into a fresh destination save. A possible conservative preset caps imported heroes at level 5 and Expert skills, allows one eligible item per character and capped gold, and excludes quest and map state. These are future design choices, not runtime behavior.
 
 Authority: [project/ROADMAP.md](../project/ROADMAP.md), reviewed 2026-11-05. The detailed plan may refine the gates; recheck it before implementation claims.

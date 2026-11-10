@@ -94,3 +94,7 @@ Recommended defaults first.
   three open-mouth poses selected by the original talk animation.
 - Version 1 overrides AC only. Weapon damage follows later.
 - A modded item shows no marker in its name.
+
+## Future trilogy mod request
+
+- Instant reroll of artifact-eligible high-level chest and monster loot in MM6, MM7 and MM8. Planning entry only. Design and implementation are deferred; see [the cross-game roadmap](ROADMAP.md#optional-mod-backlog).

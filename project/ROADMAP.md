@@ -53,3 +53,7 @@ The Hall of Echoes will preview a versioned character blueprint and destination
 mapping before a fresh destination save is created. It will keep source saves
 untouched and leave transfer unavailable until both games and their adapters
 have passed play, export, import, and save/load checks.
+
+## Optional mod backlog
+
+- **Instant loot reroll (MM6, MM7, MM8):** Allow the player to reroll artifact-eligible high-level chest and monster loot instantly. This is a requested future mod for all three games. Its behavior and interface are not designed yet.

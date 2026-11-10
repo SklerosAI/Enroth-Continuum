@@ -30,12 +30,13 @@ The later input-driven Light city and Walls of Mist positive quest route and
 the dawn closed-throne control are integrated. The two new tests passed 2/2;
 with the arbiter and related issue controls, the integrated focused run passed
 4/4. The route reaches the daytime throne, completes the three pedestal
-interactions, exits and hands in the quest. The protected-group-kill branch
-and a fresh-process Save/Load checkpoint after this chapter remain open; the
-loaded Walls map had no eligible actor for that kill condition in the focused
-probe. A read-only local event review found no scripted group-1 summon or
-remap, making this a plausible quest blocker on this fork; original base/delta
-group semantics and a real qualifying kill still need verification.
+interactions, exits and hands in the quest. The group-1 kill check is a
+failure branch: a qualifying kill skips the quest-pass bit, while the no-kill
+path sets it. A fresh-entry probe and local base/delta check found no group-1
+actor, spawn point, scripted summon or remap, so that negative branch may be
+unreachable in the shipped initial state. This does not block the proven
+successful route. Its original semantics and a fresh-process Save/Load
+checkpoint after this chapter remain open.
 
 ## Historical snapshot — 2026-11-07
 

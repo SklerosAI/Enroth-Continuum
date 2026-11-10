@@ -2964,3 +2964,9 @@ Chronological record of wiki activity.
 - Updated campaign status, handoff and index at `3c0718585` after the new Light-route and dawn closed-throne GameTests integrated; the focused integrated run passed 4/4 including arbiter and issue controls.
 - The route exercises daytime throne access, three Walls pedestal inputs, map exit and quest hand-in. The protected-group-kill branch is still open: the focused loaded map had no eligible group-1 actor, and read-only event review found no scripted spawn or remap for that group.
 - A narrow original base/delta group-semantics check and fresh-process chapter checkpoint remain open. No private event scripts, saves, logs or asset inventories entered Git.
+
+## [2026-11-10] update | Correct Walls protected-group branch reading
+- by: T-Burton-ND via codex
+- Corrected the campaign status and handoff at `9a7ff29b3`: the group-1 kill check is a failure branch that skips the quest-pass write, not a requirement for success. This supersedes the plausible-blocker wording in the preceding Light-route log entry.
+- A fresh normal-entry headless probe and local base/delta review found no initial group-1 actor or spawn point and no scripted summon/remap. The successful no-kill route remains proven; the negative branch may be unreachable in the shipped initial state.
+- Original group semantics and the fresh-process Light chapter checkpoint remain open. No private raw event content or asset inventory entered Git.

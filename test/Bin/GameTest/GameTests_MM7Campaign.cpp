@@ -1,8 +1,7 @@
 #include <algorithm>
-#include <cstdio>
+#include <iterator>
 #include <string_view>
 #include <utility>
-#include <vector>
 
 #include "Testing/Game/GameTest.h"
 
@@ -10,9 +9,6 @@
 #include "Engine/Interaction.h"
 #include "Engine/MapEnums.h"
 #include "Engine/Party.h"
-#include "GUI/UI/UIStatusBar.h"
-#include "Engine/Graphics/Indoor.h"
-#include "Engine/Graphics/Outdoor.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Decoration.h"
 #include "Engine/Objects/SpriteObject.h"
@@ -23,32 +19,6 @@
 #include "GUI/UI/UIGameOver.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UIRest.h"
-#include "Engine/Graphics/LocationFunctions.h"
-
-static void dumpFaces(EngineController &game, MapId map, std::vector<int> events) {
-    game.teleportTo(map, Vec3f(0, 0, 0), 0);
-    std::vector<BLVFace> &faces = uCurrentlyLoadedLevelType == LEVEL_INDOOR ? pIndoor->faces : pOutdoor->faces;
-    for (const BLVFace &face : faces) {
-        for (int e : events) {
-            if (face.eventId != e)
-                continue;
-            const BBoxf &b = face.boundingBox;
-            std::printf("PROBE map=%d event=%d face=%d bbox=(%.0f..%.0f, %.0f..%.0f, %.0f..%.0f) n=(%.2f,%.2f,%.2f)\n",
-                        static_cast<int>(map), e, face.faceId, b.x1, b.x2, b.y1, b.y2, b.z1, b.z2,
-                        face.facePlane.normal.x, face.facePlane.normal.y, face.facePlane.normal.z);
-        }
-    }
-    for (size_t i = 0; i < pLevelDecorations.size(); i++)
-        for (int e : events)
-            if (pLevelDecorations[i].uEventID == e)
-                std::printf("PROBE map=%d event=%d deco=%zu pos=(%.0f,%.0f,%.0f)\n", static_cast<int>(map), e, i,
-                            pLevelDecorations[i].vPosition.x, pLevelDecorations[i].vPosition.y, pLevelDecorations[i].vPosition.z);
-    for (size_t i = 0; i < pActors.size(); i++) {
-        if (pActors[i].group == 9)
-            std::printf("PROBE map=%d actor=%zu group9 pos=(%.0f,%.0f,%.0f) state=%d\n", static_cast<int>(map), i,
-                        pActors[i].pos.x, pActors[i].pos.y, pActors[i].pos.z, static_cast<int>(pActors[i].aiState));
-    }
-}
 
 GAME_TEST(MM7Campaign, ArbiterChoice) {
     for (bool light : {true, false}) {
@@ -215,7 +185,7 @@ static void killGroup(int group, int survivor) {
             pActors[i].aiState = Dead;
 }
 
-GAME_TEST(MM7Campaign, DISABLED_HarmondaleRaid) {
+GAME_TEST(MM7Campaign, HarmondaleRaid) {
     // Killing every raider in Castle Harmondale and in Harmondale should end the raid and open the town's shops again.
     for (bool survivor : {false, true}) {
         SCOPED_TRACE(fmt::format("survivor={}", survivor));
@@ -225,41 +195,34 @@ GAME_TEST(MM7Campaign, DISABLED_HarmondaleRaid) {
         auto townTape = tapes.questBit(QBIT_HARMONDALE_RAIDERS_KILLED);
         auto finishedTape = tapes.questBit(QBIT_MALWICK_QUESTS_FINISHED);
         auto houseTape = tapes.house();
-        auto statusTape = tapes.statusBar();
         game.startNewGame();
+        engine->config->debug.NoDamage.setValue(true);
         pParty->_questBits.set(QBIT_MALWICK_FIREBALL_WAND_ACCEPTED);
         pParty->_questBits.set(QBIT_MERCENARY_GUILD_QUEST_FAILED);
         test.startTaping();
         game.teleportTo(MAP_CASTLE_HARMONDALE, Vec3f(-3770, 1664, 0), 0);
-        std::printf("DIAG before kill actors=%zu map=%d g9=%d\n", pActors.size(), (int)engine->_currentLoadedMapId, (int)std::count_if(pActors.begin(), pActors.end(), [](Actor &a) { return a.group == 9; }));
+        ASSERT_TRUE(std::ranges::any_of(pActors, [](const Actor &actor) { return actor.group == 9; }));
         killGroup(9, -1);
-        int castleTicks = 0;
-        while (!pParty->_questBits[QBIT_CASTLE_HARMONDALE_RAIDERS_KILLED] && castleTicks < 2000) {
-            game.tick();
-            castleTicks++;
-        }
-        {
-            int total = 0, dead = 0;
-            for (Actor &a : pActors) if (a.group == 9) { total++; if (a.IsNotAlive()) dead++; else std::printf("DIAG alive state=%d attr=%x\n", (int)a.aiState, (unsigned)a.attributes); }
-            std::printf("DIAG d29 total=%d dead=%d alert=%d\n", total, dead, (int)GetAlertStatus());
-        }
+        game.tick(199);
+        EXPECT_FALSE(pParty->_questBits[QBIT_CASTLE_HARMONDALE_RAIDERS_KILLED]);
+        game.tick(3);
+        ASSERT_EQ(engine->_currentLoadedMapId, MAP_CASTLE_HARMONDALE);
+        ASSERT_TRUE(pParty->_questBits[QBIT_CASTLE_HARMONDALE_RAIDERS_KILLED]);
         game.teleportTo(MAP_HARMONDALE, Vec3f(-6472, 14750, 32), 90); // In front of the weapon shop door.
-        killGroup(9, survivor ? 9 : -1);
-        int townTicks = 0;
-        while (!pParty->_questBits[QBIT_HARMONDALE_RAIDERS_KILLED] && townTicks < 2000) {
-            game.tick();
-            townTicks++;
-        }
-        std::printf("DIAG castleTicks=%d townTicks=%d\n", castleTicks, townTicks);
+        auto firstRaider = std::ranges::find_if(pActors, [](const Actor &actor) { return actor.group == 9; });
+        ASSERT_NE(firstRaider, pActors.end());
+        killGroup(9, survivor ? static_cast<int>(std::distance(pActors.begin(), firstRaider)) : -1);
+        game.tick(202);
+        ASSERT_EQ(engine->_currentLoadedMapId, MAP_HARMONDALE);
         game.teleportTo(MAP_HARMONDALE, Vec3f(-6472, 14750, 32), 90);
         game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
         game.tick();
-        std::printf("DIAG house=%d status=%s\n", window_SpeakInHouse ? (int)window_SpeakInHouse->houseId() : -1, engine->_statusBar->get().c_str());
 
         EXPECT_EQ(raidTape, survivor ? tape(true) : tape(true, false));
         EXPECT_EQ(castleTape, tape(false, true));
         EXPECT_EQ(townTape, survivor ? tape(false) : tape(false, true));
         EXPECT_EQ(finishedTape, survivor ? tape(false) : tape(false, true));
+        EXPECT_EQ(houseTape, survivor ? tape(HOUSE_INVALID) : tape(HOUSE_INVALID, HOUSE_WEAPON_SHOP_HARMONDALE));
     }
 }
 

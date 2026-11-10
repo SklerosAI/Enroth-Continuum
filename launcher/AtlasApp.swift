@@ -450,10 +450,14 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
                     let warnings = self.modWarnings(since: startedAt, profilePath: profilePath)
                     let warningText = warnings.isEmpty ? "" : "\n" + warnings.joined(separator: "\n")
                     let recordingText = self.recordingSession.map { " Recording session: \($0.path)" } ?? ""
+                    let recordingWarning = self.recordingSession.flatMap { session in
+                        FileManager.default.fileExists(atPath: session.appendingPathComponent("warnings.txt").path)
+                            ? " Check that session's warnings.txt before relying on the capture." : nil
+                    } ?? ""
                     if finished.terminationReason == .exit && finished.terminationStatus == 0 {
-                        self.sendState(message: "Returned from MM7. Your saves remain on this Mac." + recordingText + warningText)
+                        self.sendState(message: "Returned from MM7. Your saves remain on this Mac." + recordingText + recordingWarning + warningText)
                     } else {
-                        self.sendState(message: "MM7 exited unexpectedly. Check your latest save before continuing." + recordingText + warningText)
+                        self.sendState(message: "MM7 exited unexpectedly. Check your latest save before continuing." + recordingText + recordingWarning + warningText)
                     }
                 }
             }

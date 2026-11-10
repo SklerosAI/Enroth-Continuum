@@ -30,6 +30,8 @@ device() { stat -f '%d' "$1" 2>/dev/null; }
 check_private_destination() {
     local parent="$1" candidate="$2" repo
     if repo=$(git -C "$parent" rev-parse --show-toplevel 2>/dev/null); then
+        [[ "$candidate" == "$repo/local-game-data/"* ]] ||
+            fail "a destination inside Git must be under ignored local-game-data"
         git -C "$repo" check-ignore -q -- "$candidate" ||
             fail "destination is in a tracked Git area; choose ignored local-game-data or a location outside Git"
     fi

@@ -14,11 +14,13 @@
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
+#include "Engine/Graphics/Vis.h"
 #include "Engine/MapEnums.h"
 #include "Engine/MM7/MM7AtomicSaveFile.h"
 #include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Party.h"
+#include "Engine/Pid.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
@@ -47,8 +49,14 @@ void leaveHouse(EngineController &game) {
     }
 }
 
+struct LincolnInteractionResult {
+    bool pickedTarget = false;
+    bool effect = false;
+};
+
 template <typename Predicate>
-bool interactWithLincolnEvent(EngineController &game, int eventId, Predicate done) {
+LincolnInteractionResult interactWithLincolnEvent(EngineController &game, int eventId, Predicate done) {
+    bool pickedTarget = false;
     auto safeFloor = [](Vec3f position) {
         int sector = pIndoor->GetSector(position);
         int floorFace = -1;
@@ -59,6 +67,7 @@ bool interactWithLincolnEvent(EngineController &game, int eventId, Predicate don
     for (const BLVFace &face : pIndoor->faces) {
         if (face.eventId != eventId || !face.Clickable())
             continue;
+        const int faceIndex = &face - pIndoor->faces.data();
         if (std::abs(face.facePlane.normal.z) > 0.5f) {
             for (const auto &[offset, yaw] : std::array{
                      std::pair{Vec3f(300, 0, 50), 180}, std::pair{Vec3f(-300, 0, 50), 0},
@@ -68,11 +77,12 @@ bool interactWithLincolnEvent(EngineController &game, int eventId, Predicate don
                     continue;
                 game.teleportTo(MAP_LINCOLN, position, yaw, -45);
                 try {
-                    game.pointMouseAtFace(&face - pIndoor->faces.data());
+                    game.pointMouseAtFace(faceIndex);
+                    pickedTarget |= engine->PickMouseForInteraction().pid == Pid::face(faceIndex);
                     game.pressAndReleaseButton(BUTTON_LEFT);
                     game.tick();
                     if (done())
-                        return true;
+                        return {pickedTarget, true};
                 } catch (const Exception &) {
                 }
             }
@@ -87,22 +97,26 @@ bool interactWithLincolnEvent(EngineController &game, int eventId, Predicate don
                 if (distance < 0)
                     yaw += 180;
                 game.teleportTo(MAP_LINCOLN, position, yaw);
+                pickedTarget |= engine->PickKeyboard(engine->config->gameplay.KeyboardInteractionDepth.value(),
+                                                     &vis_decoration_noevent_filter, &vis_door_filter).pid ==
+                                Pid::face(faceIndex);
                 game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
                 game.tick();
                 if (done())
-                    return true;
+                    return {pickedTarget, true};
                 try {
-                    game.pointMouseAtFace(&face - pIndoor->faces.data());
+                    game.pointMouseAtFace(faceIndex);
+                    pickedTarget |= engine->PickMouseForInteraction().pid == Pid::face(faceIndex);
                     game.pressAndReleaseButton(BUTTON_LEFT);
                     game.tick();
                     if (done())
-                        return true;
+                        return {pickedTarget, true};
                 } catch (const Exception &) {
                 }
             }
         }
     }
-    return false;
+    return {pickedTarget, false};
 }
 
 }  // namespace
@@ -253,30 +267,40 @@ static void runLincolnRetrievalAndExit(EngineController &game, TestController &t
     game.teleportTo(MAP_LINCOLN, Vec3f(2100, -960, 219), 180); // Existing Lincoln plate-test anchor.
     test.startTaping();
     ASSERT_EQ(engine->_persistentVariables.mapVars[2], 0);
-    ASSERT_FALSE(interactWithLincolnEvent(game, 376, [] {
+    const auto unpowered = interactWithLincolnEvent(game, 376, [] {
         return pParty->_questBits[QBIT_OSCILLATION_OVERTHRUSTER_TAKEN];
-    }));
+    });
+    ASSERT_TRUE(unpowered.pickedTarget);
+    ASSERT_FALSE(unpowered.effect);
     ASSERT_FALSE(pParty->hasItem(ITEM_QUEST_OSCILLATION_OVERTHRUSTER));
-    ASSERT_TRUE(interactWithLincolnEvent(game, 475, [] {
+    const auto console = interactWithLincolnEvent(game, 475, [] {
         return engine->_persistentVariables.mapVars[2] == 1;
-    }));
+    });
+    ASSERT_TRUE(console.pickedTarget);
+    ASSERT_TRUE(console.effect);
     ASSERT_FALSE(pParty->_questBits[QBIT_OSCILLATION_OVERTHRUSTER_TAKEN]);
-    ASSERT_TRUE(interactWithLincolnEvent(game, 376, [] {
+    const auto retrieval = interactWithLincolnEvent(game, 376, [] {
         return pParty->_questBits[QBIT_OSCILLATION_OVERTHRUSTER_TAKEN];
-    }));
+    });
+    ASSERT_TRUE(retrieval.pickedTarget);
+    ASSERT_TRUE(retrieval.effect);
     ASSERT_TRUE(pParty->hasItem(ITEM_QUEST_OSCILLATION_OVERTHRUSTER) ||
                 pParty->pPickedItem.itemId == ITEM_QUEST_OSCILLATION_OVERTHRUSTER);
     ASSERT_TRUE(pParty->_questBits[QBIT_ORACLE_RECOVERS_OSCILLATION_OVERTHRUSTER]);
 
     ASSERT_FALSE(pParty->pCharacters[3].hasUnderwaterSuitEquipped());
-    ASSERT_FALSE(interactWithLincolnEvent(game, 501, [] {
+    const auto unsuited = interactWithLincolnEvent(game, 501, [] {
         return current_screen_type == SCREEN_INPUT_BLV;
-    }));
+    });
+    ASSERT_TRUE(unsuited.pickedTarget);
+    ASSERT_FALSE(unsuited.effect);
     EXPECT_EQ(engine->_currentLoadedMapId, MAP_LINCOLN);
     pParty->pCharacters[3].inventory.equip(ITEM_SLOT_ARMOUR, Item(ITEM_QUEST_WETSUIT));
-    ASSERT_TRUE(interactWithLincolnEvent(game, 501, [] {
+    const auto suited = interactWithLincolnEvent(game, 501, [] {
         return current_screen_type == SCREEN_INPUT_BLV;
-    }));
+    });
+    ASSERT_TRUE(suited.pickedTarget);
+    ASSERT_TRUE(suited.effect);
     game.pressGuiButton("Transition_Yes");
     game.skipLoadingScreen();
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_SHOALS);

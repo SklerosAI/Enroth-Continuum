@@ -80,6 +80,27 @@ GAME_TEST(MM7LightAssassination, RobertDoorRequiresAdvisors) {
     }
 }
 
+GAME_TEST(MM7LightAssassination, AdvisorPortraitIndex) {
+    game.startNewGame();
+    pParty->_questBits.set(QBIT_LIGHT_PATH);
+    pNPCStats->pNPCData[80].house = HOUSE_CELESTE_HOSTEL_4;
+    pNPCStats->pNPCData[83].house = HOUSE_CELESTE_HOSTEL_4;
+
+    openAdvisorHouse(game);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    auto advisor = std::ranges::find_if(houseNpcs, [](const HouseNpcDesc &npc) {
+        return npc.npc == &pNPCStats->pNPCData[83];
+    });
+    ASSERT_NE(advisor, houseNpcs.end());
+    ASSERT_GE(houseNpcs.size(), 2u);
+    const auto index = advisor - houseNpcs.begin();
+    ASSERT_EQ(index, 1);
+    game.pressGuiButton(fmt::format("House_Npc{}", index));
+    game.tick();
+    ASSERT_GE(currentHouseNpc, 0);
+    EXPECT_EQ(houseNpcs[currentHouseNpc].npc, &pNPCStats->pNPCData[83]);
+}
+
 GAME_TEST(MM7LightAssassination, RequestAndHandIn) {
     for (bool hasCube : {false, true}) {
         SCOPED_TRACE(fmt::format("hasCube={}", hasCube));
@@ -103,7 +124,7 @@ GAME_TEST(MM7LightAssassination, RequestAndHandIn) {
         });
         ASSERT_NE(advisor, houseNpcs.end());
         if (houseNpcs.size() > 1) {
-            game.pressGuiButton(fmt::format("House_Npc{}", advisor - houseNpcs.begin() + 1));
+            game.pressGuiButton(fmt::format("House_Npc{}", advisor - houseNpcs.begin()));
             game.tick();
         }
         ASSERT_EQ(pNPCStats->pNPCData[83].dialogue_1_evt_id, 155);

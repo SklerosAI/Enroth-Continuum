@@ -79,7 +79,7 @@ GAME_TEST(MM7PitCubeAcquisition, KillLootAndHandIn) {
     });
     ASSERT_NE(advisor, houseNpcs.end());
     if (houseNpcs.size() > 1) {
-        game.pressGuiButton(fmt::format("House_Npc{}", advisor - houseNpcs.begin() + 1));
+        game.pressGuiButton(fmt::format("House_Npc{}", advisor - houseNpcs.begin()));
         game.tick();
     }
     ASSERT_EQ(pNPCStats->pNPCData[83].dialogue_1_evt_id, 155);

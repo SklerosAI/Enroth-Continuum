@@ -103,8 +103,12 @@ chapter's real save.
   starts from New Game. Every other gate rule stays: marked owner-only temp
   profile, exact filters, fail closed.
 - `tools/run_mm7_campaign_chain.py` creates the profile, runs the chapters in
-  order one process each, stops at the first failure, reports per-chapter
-  results and removes the profile. Nothing private is written to Git.
+  order one process each, stops at the first failure and reports per-chapter
+  results. It keeps every chapter's slot. A chapter starts only when its
+  predecessor's slot is present and no later chapter's slot exists. Kept
+  slots let a failed chapter rerun from its predecessor and serve the visible
+  spot checks at chapter boundaries. The profile stays outside Git, and the
+  runner removes it only when asked.
 
 **Chapters (one or two lanes, after the harness).** Each reuses the existing
 chapter helpers and closes with tapes that assert the next chapter's entry

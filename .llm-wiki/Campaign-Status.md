@@ -38,7 +38,11 @@ unreachable in the tested local data; no runtime fix is justified, and the
 successful route is unaffected. The later Light chapter checkpoint passed on
 integrated source: production Save writer and fresh-process normal Load reader
 1/1 each, persistent Light/Walls/guild bits intact and slot digest unchanged.
-Advisor tasks and later chapter boundaries remain open.
+The three advisor hand-in checks and assassination request/cube hand-in are
+also integrated. The focused combined Light run passed 7/7. These tests use
+fixture quest items and bits around input-driven dialogue and doors. Real
+item acquisition, Xenofex, hostile Pit combat/cube loot, an uninterrupted
+chapter route, Overthruster and its fresh-process checkpoint remain open.
 
 ## Historical snapshot — 2026-11-07
 

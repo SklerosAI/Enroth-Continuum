@@ -50,6 +50,14 @@ the successful quest path is unaffected. The Light chapter's production Save
 writer and fresh-process normal Load reader passed 1/1 each on integrated
 source with persistent Light/Walls/guild state and an unchanged slot digest.
 This supersedes the earlier plausible-blocker and open-checkpoint readings.
+The later Light advisor and assassination test files are integrated and the
+focused combined Light run passed 7/7. The advisor cases cover altar-piece,
+wine-cellar and soul-jar hand-ins through dialogue; the assassination cases
+cover Robert's advisor gate, the request, Pit door transition and cube
+hand-in. Fixtures provide prior quest state and items. Xenofex, real item
+acquisition, Pit combat/cube loot, uninterrupted continuity and the later
+Overthruster checkpoint remain open. Read the two dated handoffs under
+`agent_comms/handoffs/` before extending these tests.
 
 At MM7-first resumption, integration `master` was clean and pushed at
 `f4d1b8065`; this is a historical checkpoint, not the current head. The [November 9 progress table](Progress-2026-11-09.md)

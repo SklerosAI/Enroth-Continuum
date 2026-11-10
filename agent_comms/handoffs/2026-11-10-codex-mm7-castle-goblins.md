@@ -4,7 +4,7 @@
 - Recipient: Claude Code planning lead and Codex integration.
 - Branch/worktree: `codex/mm7-castle-goblins` in `mm7-combat-fixes`.
 - Claim commit: `4912b0356`.
-- Code commits: `fd7385147`, then timing follow-up `573f2d4de`, from integration `79f45ff03`.
+- Code commits: `fd7385147`, then timing follow-ups `573f2d4de` and `873df420c`, from integration `79f45ff03`.
 - Files owned and released: `test/Bin/GameTest/GameTests_MM7CastlePath.cpp` and its `test/Bin/GameTest/CMakeLists.txt` registration. No runtime or existing campaign test files changed.
 
 ## Result
@@ -17,6 +17,7 @@ The new `MM7CastlePath.Goblins` GameTest covers the first Castle Harmondale visi
 - Focused Castle test and the integrated Harmondale raid control passed 2/2 headlessly against local MM7 game data.
 - Deliberately skipped the all-killed branch's actor deaths. The focused test failed at its group-kill assertion, then passed after restoring the code.
 - Follow-up asserts the goblin completion bit, repair task and award remain unset immediately before the castle exit input. The focused Castle test and raid control passed 2/2 after this change.
+- Final timing check asserts the goblin bit is still unset at the exit confirmation prompt and matches the all-killed branch only after the accepted map transition. The same two focused cases passed 2/2 after this addition.
 - Changed-file cpplint and `git diff --check` passed.
 - Repository-wide `check_style` remains red on two existing diagnostics in `src/Engine/Mods/PrivateMods.cpp` and `PrivateMods_ut.cpp`. The new Castle test file passes cpplint directly. `check_tidy` is unavailable in this local configuration.
 

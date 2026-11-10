@@ -60,7 +60,9 @@ GAME_TEST(MM7LightAdvisors, AltarPiecesRequireBoth) {
     ASSERT_EQ(houseNpcs.size(), 1);
     ASSERT_EQ(houseNpcs[0].npc, &pNPCStats->pNPCData[80]);
     ASSERT_EQ(pNPCStats->pNPCData[80].dialogue_1_evt_id, 147);
-    ASSERT_EQ(prepareScriptedNPCDialogueTopics(&pNPCStats->pNPCData[80]).front(), DIALOGUE_SCRIPTED_LINE_1);
+    const auto topics = prepareScriptedNPCDialogueTopics(&pNPCStats->pNPCData[80]);
+    ASSERT_FALSE(topics.empty());
+    ASSERT_EQ(topics.front(), DIALOGUE_SCRIPTED_LINE_1);
     game.pressGuiButton("HouseNpcDialogue_Option0");
     game.tick();
     ASSERT_TRUE(pParty->_questBits[QBIT_ALTAR_PIECES_LIGHT_ACTIVE]);

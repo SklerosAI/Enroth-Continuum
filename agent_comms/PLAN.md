@@ -145,7 +145,7 @@ Ordered by how badly a player is blocked. A lane takes the top item when free.
    - Continuous chained Light run and real quest-item acquisition, after
      that. Needs a chain mode in the disposable-profile gate.
 2. Cancelled item-target spell scroll is consumed anyway (`src/Engine/Objects/Character.cpp`, the open TODO at the scroll cast). Player-facing item loss, not blocking. Fixed on `claude/mm7-scroll-cancel` at `401d8e2a4`, reviewed, waiting for integration.
-3. Actor- and character-target scrolls (Fire Bolt and similar) still lose the scroll when targeting is cancelled. Fixed on `claude/mm7-actor-scroll-cancel` at `9ed8a074a`, reviewed. One inventory-screen test is being added before integration.
+3. Actor- and character-target scrolls (Fire Bolt and similar) still lose the scroll when targeting is cancelled. Fixed on `claude/mm7-actor-scroll-cancel` (`9ed8a074a`, `1fba84a61`), reviewed, waiting for integration. Other targeting exits still use the scroll up, which goes to the stage 3 queue.
 4. `master` failed full `check_style` with 75 errors in about 55 files, mostly MM6. Fixed on `claude/master-style-fix` at `349e55d62`, reviewed, waiting for integration.
 
 ## Stage 2 — MM6 working (queued)

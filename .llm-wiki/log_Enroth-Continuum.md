@@ -3018,3 +3018,9 @@ Chronological record of wiki activity.
 - The integrated Light route, dawn and three advisor controls passed 5/5. The marked disposable production Save writer and separate fresh-process normal Load reader passed 1/1 each, with unchanged slot bytes.
 - The successful throne hand-in cleared NPC79's first topic before Save. NPC79–83 house and relevant topic fields survived Load and two following frames. This supersedes the earlier inference that Load reset the field; later chapter continuity remains open.
 
+## [2026-11-10] verify | MM7 item-target scroll cancellation
+- by: T-Burton-ND via codex
+- Created the scroll cancellation page and updated campaign status, handoff and index at `4a7e390ef` after the reviewed engine fix reached integration.
+- The integrated GameTest built. Fire Aura cancel/complete, 11 existing spell/scroll cases and the Light route passed 13/13 headlessly. A marked disposable production Save writer and separate fresh-process normal Load reader passed 1/1 each with unchanged slot bytes.
+- Actor- and character-target scroll cancellation remains open. The installed Atlas has not been launched since the headless swap.
+

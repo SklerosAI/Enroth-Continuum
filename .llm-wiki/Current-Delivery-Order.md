@@ -16,7 +16,7 @@ The owner set this order on 2026-11-10 for the personal Mac project; it supersed
 | 3 | **Run the full MM7 audit.** | Complete the title's [audit checklist](../project/MM7_AUDIT_CHECKLIST.md), including broader rules, maps, optional branches, mods and Mac interface checks beyond the working path; record defects and repairs with appropriate runtime evidence. |
 | 4 | **Run the full MM6 audit.** | Complete the [MM6 implementation checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md) and full campaign coverage beyond the working path, with original-behavior comparisons where needed. |
 
-The working gates establish actual use of the current build; the later audits establish breadth. A headless suite, parser inventory or title screen does not close a working gate by itself. The verified installed MM7 baseline remains protected until the current candidate passes its own visible save/reload check. The [November 9 progress table](Progress-2026-11-09.md) is still useful for task facts, but its MM6-first next-step order is superseded by this page.
+The working gates establish actual use of the current build; the later audits establish breadth. A headless suite, parser inventory or title screen does not close a working gate by itself. After the owner authorized reinstalling Atlas, the prior installed MM7 app was retained as a local rollback copy and the signed candidate installed headlessly. Its visible launch and save/reload check remain open. The [November 9 progress table](Progress-2026-11-09.md) is still useful for task facts, but its MM6-first next-step order is superseded by this page.
 
 ## Coordination
 

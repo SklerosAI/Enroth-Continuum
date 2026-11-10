@@ -2,6 +2,17 @@
 
 This is a personal-machine validation note. It contains no game assets.
 
+## Atlas headless reinstall — 2026-11-10
+
+After the owner authorized reinstalling Atlas, the signed MM7 recording
+candidate was installed at `/Applications/Enroth Continuum.app` without
+launching it. The previous app was moved to an Application Support rollback
+directory. The installed page and Bash recorder hashes match tracked source,
+the bundle and title-locked MM7 helper pass deep signature verification, and
+no normal save or profile was changed. The owner currently permits headless
+checks only, so post-install launch, media, Save/Load and real recording remain
+unverified. The November 7 install below is historical.
+
 ## MM7 Atlas install — 2026-11-07
 
 - `/Applications/Enroth Continuum.app` now carries a single Release `MM7.app`

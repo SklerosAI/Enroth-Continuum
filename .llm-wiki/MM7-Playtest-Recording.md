@@ -7,13 +7,13 @@ tags: [mm7, audit, mac, recording]
 
 # MM7 Playtest Recording
 
-A staged Atlas can start a passive, private recorder alongside an owner-played MM7 session; its live video and launcher lifecycle remain unverified.
+The installed Atlas can start a passive, private recorder alongside an owner-played MM7 session; its live video and launcher lifecycle remain unverified.
 
-## Verified source and staging — 2026-11-10
+## Verified source, staging and headless install — 2026-11-10
 
 The Atlas has a persistent **Record gameplay** toggle and a folder picker for local or external storage. When enabled, Play launches the bundled Bash recorder after the MM7 process starts; the recorder watches that PID and ends after game exit. It records timed display video, incremental engine-log byte ranges, stable changed-save snapshots, checksums, timestamps and optional owner notes in a unique session folder. The selected drive is pinned, Git-contained output is limited to ignored `local-game-data/`, and capture stops before the destination falls below 2 GiB free. Atlas warns below 4 GiB free and when the macOS memory-free reading is below 10%. An in-session recorder failure leaves MM7 running; a prelaunch destination failure blocks Play until corrected or recording is turned off.
 
-The Bash 3.2 script passed synthetic checks for paths with spaces, notes/stop, changing-save deferral, log append/rotation/truncation, tracked-destination refusal, low-space stop and watched-PID exit. The staged Atlas assembled, its signature and helper signature verified, and its packaged script matched the tracked source hash. Swift typechecking and page JavaScript syntax checks passed. No MM7 or screen-capture process was run for this feature under the owner's current headless-only authorization. The staged bundle is separate from the installed app.
+The Bash 3.2 script passed synthetic checks for paths with spaces, notes/stop, changing-save deferral, log append/rotation/truncation, tracked-destination refusal, low-space stop and watched-PID exit. The staged Atlas assembled, its signature and helper signature verified, and its packaged script matched the tracked source hash. Swift typechecking and page JavaScript syntax checks passed. No MM7 or screen-capture process was run for this feature under the owner's current headless-only authorization.
 
 A later independent static review found and closed quick-relaunch, early-ready,
 warning-suppression, final-video-status and drive-remount races. Atlas now
@@ -22,6 +22,13 @@ recording finalizes, checks the selected volume ID across the Bash handoff and
 reports uncertain final video. A synthetic wrong-volume attempt was rejected;
 the matching-volume session started and stopped. The hardened stage was
 rebuilt and its signatures, notices, page and packaged script rechecked.
+
+After the owner authorized reinstalling Atlas, the signed recording candidate
+was installed headlessly at `/Applications/Enroth Continuum.app`. The prior
+bundle was moved to a local rollback directory under Application Support;
+profiles and saves were not changed. The installed page and Bash script hashes
+match tracked source, and the installed bundle passes deep signature
+verification. No launch or actual capture has been observed after this swap.
 
 The first live gate is to enable recording on a disposable profile, choose an owner-approved destination, grant macOS Screen Recording permission if requested, play briefly, quit, and inspect video, incremental logs, final status and unchanged original saves. External-drive removal and low-memory warnings need later owner-attended checks. Display video can include other windows; system/game audio is not captured. Raw video, saves, logs and notes stay outside Git and cloud services.
 

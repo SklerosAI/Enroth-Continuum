@@ -28,17 +28,19 @@ source (1/1 plus ship controls 2/2); it fixtures the delivered items, so
 acquisition and a post-departure fresh-process checkpoint remain open. The
 visible staged candidate passed durable Save/Load with a purchased shield
 and gold intact plus a copied older save. The visible run preceded the final
-Atlas profile-path fix; the current rebuilt staged app is signed but its
-visible smoke awaits renewed graphical authorization. The owner currently
-authorizes headless checks only. Do not install it before that check.
+Atlas profile-path fix. The owner later authorized an Atlas reinstall, so the
+signed recording candidate was installed headlessly with the prior app kept
+as a local rollback copy. The installed candidate has not been launched or
+visually checked; the owner currently authorizes headless checks only.
 Ordinary NPC talk, one monster fight, owner audio confirmation, main-quest
-path coverage and installed-app cutover remain open. See the current
+path coverage and post-install launch/Save/Load acceptance remain open. See the current
 [campaign status](Campaign-Status.md) and [MM7 save gate](MM7-Disposable-Save-Reload.md).
 For the later endgame audit, the [passive playtest recorder](MM7-Playtest-Recording.md)
-is integrated into a separately staged, signed Atlas with a recording toggle
+is integrated into the installed, signed Atlas with a recording toggle
 and external-folder picker. Synthetic Bash checks and headless bundle checks
-passed; no actual video or Atlas recording lifecycle was exercised, and the
-installed app is unchanged. The owner currently authorizes headless checks only.
+passed; no actual video or Atlas recording lifecycle was exercised. The
+installed page and script hashes match tracked source; headless checks do not
+prove the launcher runs. The owner currently authorizes headless checks only.
 The later Light city/Walls positive route and dawn closed-throne control are
 integrated; the new pair passed 2/2 and the focused integrated run including
 arbiter and issue controls passed 4/4. The Walls group-1 kill check is a
@@ -50,13 +52,16 @@ the successful quest path is unaffected. The Light chapter's production Save
 writer and fresh-process normal Load reader passed 1/1 each on integrated
 source with persistent Light/Walls/guild state and an unchanged slot digest.
 This supersedes the earlier plausible-blocker and open-checkpoint readings.
-The later Light advisor and assassination test files are integrated and the
-focused combined Light run passed 7/7. The advisor cases cover altar-piece,
+The later Light advisor, assassination and Xenofex test files are integrated
+and the focused combined Light run passed 9/9. The advisor cases cover altar-piece,
 wine-cellar and soul-jar hand-ins through dialogue; the assassination cases
 cover Robert's advisor gate, the request, Pit door transition and cube
-hand-in. Fixtures provide prior quest state and items. Xenofex, real item
-acquisition, Pit combat/cube loot, uninterrupted continuity and the later
-Overthruster checkpoint remain open. Read the two dated handoffs under
+hand-in. Xenofex coverage gates the request on the assassination result,
+checks map-leave with its actor alive versus a fixture death, and completes
+the throne hand-in. Fixtures provide prior quest state, items, travel and the
+Xenofex kill. Real item acquisition, Xenofex and Pit combat/cube loot,
+uninterrupted continuity and the later Overthruster checkpoint remain open.
+Read the dated handoffs under
 `agent_comms/handoffs/` before extending these tests.
 
 At MM7-first resumption, integration `master` was clean and pushed at

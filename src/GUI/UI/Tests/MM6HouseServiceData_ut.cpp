@@ -1,3 +1,7 @@
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -13,10 +17,6 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 #include "GUI/UI/MM6HouseServiceData.h"
 #include "GUI/UI/UIHouses.h"

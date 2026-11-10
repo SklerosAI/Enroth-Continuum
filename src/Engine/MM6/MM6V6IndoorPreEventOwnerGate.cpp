@@ -1,9 +1,11 @@
 #include "MM6V6IndoorPreEventOwnerGate.h"
 
 #include <algorithm>
+#include <deque>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "Engine/Snapshots/EntitySnapshots.h"
 

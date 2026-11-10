@@ -1,6 +1,7 @@
 #include "Engine/Mods/PrivateMods.h"
 
 #include <array>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>

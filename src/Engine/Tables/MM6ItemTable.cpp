@@ -1,7 +1,3 @@
-#include "ItemTable.h"
-
-#include "Engine/MM6/MM6StandardBonusMap.h"
-
 #include <array>
 #include <cctype>
 #include <map>
@@ -10,6 +6,9 @@
 #include <utility>
 #include <vector>
 
+#include "Engine/Tables/ItemTable.h"
+
+#include "Engine/MM6/MM6StandardBonusMap.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/ResourceManager.h"
 

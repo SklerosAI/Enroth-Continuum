@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "Engine/Objects/Character.h"
 #include "Engine/Tables/MapTable.h"

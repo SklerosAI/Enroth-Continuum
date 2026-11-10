@@ -12,8 +12,7 @@
 
 namespace {
 
-using Matrix = std::array<std::array<std::string, mm6::PotionCombinations::COUNT>,
-                          mm6::PotionCombinations::COUNT>;
+using Matrix = std::array<std::array<std::string, mm6::PotionCombinations::COUNT>, mm6::PotionCombinations::COUNT>;
 
 Matrix exampleMatrix() {
     Matrix matrix;

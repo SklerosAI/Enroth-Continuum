@@ -5,8 +5,10 @@
 #include <deque>
 #include <memory>
 #include <stdexcept>
+#include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "Engine/Snapshots/MM6IndoorSnapshot.h"
 
@@ -25,8 +27,7 @@ constexpr std::array<char, 4> IFOV = {'I', 'F', 'O', 'V'};
 constexpr std::array<char, 4> GNPC = {'G', 'N', 'P', 'C'};
 constexpr std::array<char, 4> RNGS = {'R', 'N', 'G', 'S'};
 constexpr std::array<char, 4> EVRT = {'E', 'V', 'R', 'T'};
-constexpr std::array<std::array<char, 4>, 10> NEW_TAGS = {
-    GNPC, RNGS, EVRT, IFOV, IACR, ISCR, IDCR, IDRT, ISRT, IART};
+constexpr std::array<std::array<char, 4>, 10> NEW_TAGS = {GNPC, RNGS, EVRT, IFOV, IACR, ISCR, IDCR, IDRT, ISRT, IART};
 constexpr std::size_t MAX_MAP_NAME = 63;
 constexpr std::size_t MAX_ACTORS = 8192;
 constexpr std::size_t MAX_SPRITES = 4096;

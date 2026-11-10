@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "Engine/Snapshots/EntitySnapshots.h"
 
@@ -21,8 +22,7 @@ constexpr std::array<char, 4> INDOOR_TAG = {'I', 'A', 'R', 'T'};
 constexpr std::uint8_t VERSION = 1;
 constexpr std::size_t MAX_ACTORS = 8192;
 constexpr std::size_t IMAGE_BYTES = sizeof(Actor_MM7);
-constexpr std::size_t RECORD_BYTES = IMAGE_BYTES + 4 * 3 * 4 + 8 * 3 * 4 +
-    3 * 8 + 4 + 4 + 8 + 8;
+constexpr std::size_t RECORD_BYTES = IMAGE_BYTES + 4 * 3 * 4 + 8 * 3 * 4 + 3 * 8 + 4 + 4 + 8 + 8;
 constexpr std::size_t MAX_NAME_BYTES = 255;
 
 void requireMM6(GameTitle title) {

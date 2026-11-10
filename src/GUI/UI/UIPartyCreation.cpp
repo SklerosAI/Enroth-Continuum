@@ -850,98 +850,100 @@ bool PartyCreationUI_LoopInternal() {
 
             if (engine->gameTitle() == GameTitle::MM6) {
                 grantMM6StartingSkillItem(&pParty->pCharacters[i], j);
-            } else switch (j) {
-            case SKILL_STAFF:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_STAFF));
-                break;
-            case SKILL_SWORD:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_CRUDE_LONGSWORD));
-                break;
-            case SKILL_DAGGER:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_DAGGER));
-                break;
-            case SKILL_AXE:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_CRUDE_AXE));
-                break;
-            case SKILL_SPEAR:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_CRUDE_SPEAR));
-                break;
-            case SKILL_BOW:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_CROSSBOW));
-                break;
-            case SKILL_MACE:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_MACE));
-                break;
-            case SKILL_BLASTER:
-                MM_ERROR("No blasters at startup :p");
-                break;
-            case SKILL_SHIELD:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_WOODEN_BUCKLER));
-                break;
-            case SKILL_LEATHER:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_LEATHER_ARMOR));
-                break;
-            case SKILL_CHAIN:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_CHAIN_MAIL));
-                break;
-            case SKILL_PLATE:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_PLATE_ARMOR));
-                break;
-            case SKILL_FIRE:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_SPELLBOOK_FIRE_BOLT));
-                pParty->pCharacters[i].bHaveSpell[SPELL_FIRE_TORCH_LIGHT] = true;
-                break;
-            case SKILL_AIR:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_SPELLBOOK_FEATHER_FALL));
-                pParty->pCharacters[i].bHaveSpell[SPELL_AIR_WIZARD_EYE] = true;
-                break;
-            case SKILL_WATER:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_SPELLBOOK_POISON_SPRAY));
-                pParty->pCharacters[i].bHaveSpell[SPELL_WATER_AWAKEN] = true;
-                break;
-            case SKILL_EARTH:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_SPELLBOOK_SLOW));
-                pParty->pCharacters[i].bHaveSpell[SPELL_EARTH_STUN] = true;
-                break;
-            case SKILL_SPIRIT:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_SPELLBOOK_BLESS));
-                pParty->pCharacters[i].bHaveSpell[SPELL_SPIRIT_DETECT_LIFE] = true;
-                break;
-            case SKILL_MIND:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_SPELLBOOK_MIND_BLAST));
-                pParty->pCharacters[i].bHaveSpell[SPELL_MIND_REMOVE_FEAR] = true;
-                break;
-            case SKILL_BODY:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_SPELLBOOK_HEAL));
-                pParty->pCharacters[i].bHaveSpell[SPELL_BODY_CURE_WEAKNESS] = true;
-                break;
-            case SKILL_LIGHT:
-            case SKILL_DARK:
-                MM_ERROR("No light/dark magic at startup");
-                break;
-            case SKILL_DIPLOMACY:
-                MM_ERROR("No diplomacy in mm7 (yet)");
-                break;
-            case SKILL_ITEM_ID:
-            case SKILL_REPAIR:
-            case SKILL_MEDITATION:
-            case SKILL_PERCEPTION:
-            case SKILL_TRAP_DISARM:
-            case SKILL_LEARNING:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_POTION_BOTTLE));
-                pParty->pCharacters[i].inventory.add(Item(grng->randomSample(allLevel1Reagents())));
-                break;
-            case SKILL_DODGE:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_LEATHER_BOOTS));
-                break;
-            case SKILL_UNARMED:
-                pParty->pCharacters[i].inventory.add(Item(ITEM_GAUNTLETS));
-                break;
-            case SKILL_CLUB:
-                // pParty->pCharacters[i].inventory.add(Item(ITEM_CLUB));
-                break;
-            default:
-                break;
+            } else {
+                switch (j) {
+                case SKILL_STAFF:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_STAFF));
+                    break;
+                case SKILL_SWORD:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_CRUDE_LONGSWORD));
+                    break;
+                case SKILL_DAGGER:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_DAGGER));
+                    break;
+                case SKILL_AXE:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_CRUDE_AXE));
+                    break;
+                case SKILL_SPEAR:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_CRUDE_SPEAR));
+                    break;
+                case SKILL_BOW:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_CROSSBOW));
+                    break;
+                case SKILL_MACE:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_MACE));
+                    break;
+                case SKILL_BLASTER:
+                    MM_ERROR("No blasters at startup :p");
+                    break;
+                case SKILL_SHIELD:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_WOODEN_BUCKLER));
+                    break;
+                case SKILL_LEATHER:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_LEATHER_ARMOR));
+                    break;
+                case SKILL_CHAIN:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_CHAIN_MAIL));
+                    break;
+                case SKILL_PLATE:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_PLATE_ARMOR));
+                    break;
+                case SKILL_FIRE:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_SPELLBOOK_FIRE_BOLT));
+                    pParty->pCharacters[i].bHaveSpell[SPELL_FIRE_TORCH_LIGHT] = true;
+                    break;
+                case SKILL_AIR:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_SPELLBOOK_FEATHER_FALL));
+                    pParty->pCharacters[i].bHaveSpell[SPELL_AIR_WIZARD_EYE] = true;
+                    break;
+                case SKILL_WATER:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_SPELLBOOK_POISON_SPRAY));
+                    pParty->pCharacters[i].bHaveSpell[SPELL_WATER_AWAKEN] = true;
+                    break;
+                case SKILL_EARTH:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_SPELLBOOK_SLOW));
+                    pParty->pCharacters[i].bHaveSpell[SPELL_EARTH_STUN] = true;
+                    break;
+                case SKILL_SPIRIT:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_SPELLBOOK_BLESS));
+                    pParty->pCharacters[i].bHaveSpell[SPELL_SPIRIT_DETECT_LIFE] = true;
+                    break;
+                case SKILL_MIND:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_SPELLBOOK_MIND_BLAST));
+                    pParty->pCharacters[i].bHaveSpell[SPELL_MIND_REMOVE_FEAR] = true;
+                    break;
+                case SKILL_BODY:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_SPELLBOOK_HEAL));
+                    pParty->pCharacters[i].bHaveSpell[SPELL_BODY_CURE_WEAKNESS] = true;
+                    break;
+                case SKILL_LIGHT:
+                case SKILL_DARK:
+                    MM_ERROR("No light/dark magic at startup");
+                    break;
+                case SKILL_DIPLOMACY:
+                    MM_ERROR("No diplomacy in mm7 (yet)");
+                    break;
+                case SKILL_ITEM_ID:
+                case SKILL_REPAIR:
+                case SKILL_MEDITATION:
+                case SKILL_PERCEPTION:
+                case SKILL_TRAP_DISARM:
+                case SKILL_LEARNING:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_POTION_BOTTLE));
+                    pParty->pCharacters[i].inventory.add(Item(grng->randomSample(allLevel1Reagents())));
+                    break;
+                case SKILL_DODGE:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_LEATHER_BOOTS));
+                    break;
+                case SKILL_UNARMED:
+                    pParty->pCharacters[i].inventory.add(Item(ITEM_GAUNTLETS));
+                    break;
+                case SKILL_CLUB:
+                    // pParty->pCharacters[i].inventory.add(Item(ITEM_CLUB));
+                    break;
+                default:
+                    break;
+                }
             }
 
             for (InventoryEntry entry : pParty->pCharacters[i].inventory.entries())

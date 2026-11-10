@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <memory>
 
 #include "MM6NewGameSaveRuntime.h"
 

@@ -11,8 +11,7 @@
 
 namespace mm6 {
 
-using BoundedItemProjection = std::variant<PlainItemProjection, StandardItemProjection,
-                                           AntiqueItemProjection>;
+using BoundedItemProjection = std::variant<PlainItemProjection, StandardItemProjection, AntiqueItemProjection>;
 
 inline std::optional<BoundedItemProjection> stageBoundedItem(
     const ItemRecord28 &raw, const ItemTable &table, GameTitle title) {

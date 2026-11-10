@@ -1,6 +1,7 @@
 #include "MM6RawCursorImagePlan.h"
 
 #include <stdexcept>
+#include <string>
 
 #include "MM6BoundedItemProjection.h"
 #include "Engine/Graphics/Image.h"

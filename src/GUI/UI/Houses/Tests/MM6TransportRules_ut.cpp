@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iterator>
 #include <string>
+#include <utility>
 
 #include "Testing/Unit/UnitTest.h"
 

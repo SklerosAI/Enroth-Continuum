@@ -4,6 +4,7 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "Testing/Unit/UnitTest.h"
@@ -125,7 +126,6 @@ UNIT_TEST(MM6BeaconSaveFields, PreparesCpuImagesBeforeRendererPublication) {
     staged.beacons[0][0].reset();
     staged.thumbnailRgba.pop_back();
     EXPECT_THROW((void) mm6::prepareBeaconPixels(staged), std::exception);
-
 }
 
 UNIT_TEST(MM6BeaconSaveFields, RejectsMalformedImageAndMapBeforeMutation) {

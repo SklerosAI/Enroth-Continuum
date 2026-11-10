@@ -1,8 +1,10 @@
 #include "MM6V5PreEventActorReplayForTest.h"
 
+#include <deque>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "MM6ActiveActorSection.h"
 #include "MM6V5OutdoorMapIdentity.h"

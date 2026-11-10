@@ -40,7 +40,8 @@ class PortraitTestDirectory {
 }  // namespace
 
 UNIT_TEST(MM7PrivatePortraits, MoodMapping) {
-    using namespace mm7::mods;
+    using mm7::mods::PortraitMood;
+    using mm7::mods::portraitMood;
     EXPECT_EQ(portraitMood(PORTRAIT_NORMAL, CONDITION_GOOD), PortraitMood::Normal);
     EXPECT_EQ(portraitMood(PORTRAIT_NORMAL, CONDITION_ZOMBIE), PortraitMood::Zombie);
     EXPECT_EQ(portraitMood(PORTRAIT_TALK, CONDITION_GOOD), PortraitMood::Normal);

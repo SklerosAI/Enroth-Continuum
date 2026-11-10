@@ -35,7 +35,7 @@ std::optional<int> unsignedId(std::string_view value) {
             return std::nullopt;
     int result = 0;
     auto parsed = std::from_chars(value.data(), value.data() + value.size(), result);
-    return parsed.ec == std::errc{} && parsed.ptr == value.data() + value.size()
+    return parsed.ec == std::errc() && parsed.ptr == value.data() + value.size()
         ? std::optional<int>(result) : std::nullopt;
 }
 

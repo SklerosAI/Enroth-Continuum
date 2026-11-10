@@ -4,6 +4,7 @@
 #include <array>
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 #include "MM6SaveCrossFields.h"
 

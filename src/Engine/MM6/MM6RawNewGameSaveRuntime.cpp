@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "Engine/Objects/Inventory.h"
 #include "MM6Archive.h"

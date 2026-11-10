@@ -155,7 +155,7 @@ UNIT_TEST(MM6HeldItemSaveFields, DetachedCursorIntentRequiresIdleActionsAndLoade
     items.items[id].iconName.clear();
     EXPECT_THROW((void) mm6::stageHeldCursorRestorePlan(held, items, idle, GameTitle::MM6), std::exception);
     EXPECT_EQ(staged.iconName, "held501");
-    EXPECT_FALSE(items.items[id].iconName == "held501");
+    EXPECT_NE(items.items[id].iconName, "held501");
 }
 
 UNIT_TEST(MM6HeldItemSaveFields, PendingUiQueryIncludesCurrentAndNextFrame) {

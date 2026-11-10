@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "Engine/Snapshots/EntitySnapshots.h"
 #include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"

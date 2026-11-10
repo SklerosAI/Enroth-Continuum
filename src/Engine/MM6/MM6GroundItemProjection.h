@@ -17,14 +17,14 @@ namespace mm6 {
 // The MM6 map wire owns a 100-byte sprite record with an exact 28-byte item
 // at byte 36. This detached view never reconstructs it through Item_MM7.
 class GroundItemProjection {
-public:
+ public:
     explicit GroundItemProjection(std::array<std::uint8_t, 100> sourceRecord)
         : _sourceRecord(sourceRecord) {}
 
     const std::array<std::uint8_t, 100> &sourceRecord() const { return _sourceRecord; }
     std::optional<BoundedItemProjection> item;
 
-private:
+ private:
     std::array<std::uint8_t, 100> _sourceRecord;
 };
 

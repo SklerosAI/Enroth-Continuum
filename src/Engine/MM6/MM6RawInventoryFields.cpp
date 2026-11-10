@@ -12,8 +12,7 @@ namespace {
 
 constexpr std::array<char, 4> TAG = {'I', 'N', 'V', 'R'};
 constexpr std::uint8_t VERSION = 1;
-constexpr std::size_t CHARACTER_BYTES = RAW_INVENTORY_ITEM_SLOTS * 28 +
-                                         (RAW_INVENTORY_GRID_CELLS + RAW_INVENTORY_EQUIPMENT_SLOTS) * 4;
+constexpr std::size_t CHARACTER_BYTES = RAW_INVENTORY_ITEM_SLOTS * 28 + (RAW_INVENTORY_GRID_CELLS + RAW_INVENTORY_EQUIPMENT_SLOTS) * 4;
 constexpr std::size_t PAYLOAD_BYTES = 4 + 4 * CHARACTER_BYTES;
 static_assert(PAYLOAD_BYTES == 17732);
 

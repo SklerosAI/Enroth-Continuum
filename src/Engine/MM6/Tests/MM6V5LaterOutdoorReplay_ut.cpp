@@ -1,5 +1,7 @@
 #include <array>
+#include <deque>
 #include <exception>
+#include <string>
 #include <vector>
 
 #include "Testing/Unit/UnitTest.h"

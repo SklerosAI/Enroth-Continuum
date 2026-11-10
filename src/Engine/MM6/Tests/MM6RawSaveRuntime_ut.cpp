@@ -541,9 +541,10 @@ UNIT_TEST(MM6RawSaveRuntime, RawSessionPreflightPreparesOutdoorPlanBeforeSelecti
 
     const auto boundedBase = [](std::string_view name) {
         auto bytes = name.ends_with(".blv") ? indoorBase() : outdoorBase();
-        if (name.ends_with(".odm"))
+        if (name.ends_with(".odm")) {
             for (std::size_t i = 0; i < 4; ++i)
                 bytes[160 + i * 4 + 2] = static_cast<std::uint8_t>(1 + i * 36);
+        }
         return Blob::copy(bytes.data(), bytes.size());
     };
     selected = mm6::preflightStagedRawSessionFields(

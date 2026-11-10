@@ -1,5 +1,6 @@
 #include <array>
 #include <stdexcept>
+#include <vector>
 
 #include "Testing/Unit/UnitTest.h"
 

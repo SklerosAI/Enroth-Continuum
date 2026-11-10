@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Engine/Objects/CombinedSkillValue.h"
-
 #include <string_view>
 
+#include "Engine/Objects/CombinedSkillValue.h"
 #include "Utility/String/Ascii.h"
 #include "Utility/String/Transformations.h"
 

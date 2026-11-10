@@ -2,6 +2,7 @@
 
 #include <deque>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 #include "MM6RawCursorShopStage.h"

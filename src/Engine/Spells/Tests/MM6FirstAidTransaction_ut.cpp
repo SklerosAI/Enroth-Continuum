@@ -4,6 +4,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include "Testing/Unit/UnitTest.h"
 

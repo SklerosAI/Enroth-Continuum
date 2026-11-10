@@ -1,7 +1,9 @@
 #include "MM6CharacterScreen.h"
 
 #include <array>
+#include <string>
 #include <string_view>
+#include <vector>
 
 #include "Engine/AssetsManager.h"
 #include "Engine/Graphics/Renderer/Renderer.h"

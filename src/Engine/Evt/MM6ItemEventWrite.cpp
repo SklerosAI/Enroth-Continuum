@@ -1,6 +1,7 @@
 #include "Engine/Evt/MM6ItemEventWrite.h"
 
 #include <stdexcept>
+#include <vector>
 
 #include "Engine/Tables/ItemTable.h"
 

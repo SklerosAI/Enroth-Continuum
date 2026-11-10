@@ -1,6 +1,7 @@
 #include "MM6PostMapGeneratedNpcLinks.h"
 
 #include <algorithm>
+#include <deque>
 #include <stdexcept>
 #include <utility>
 

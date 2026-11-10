@@ -13,6 +13,11 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
     private var window: NSWindow!
     private var webView: WKWebView!
     private var game: Process?
+    private var recorder: Process?
+    private var recordingSession: URL?
+    private var recordingMonitor: Timer?
+    private var recordingWarningShown = false
+    private var memoryWarningShown = false
     private let preferences = UserDefaults.standard
     private var portraitPreviewCache: [URL: (Date, String)] = [:]
 
@@ -27,6 +32,19 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
 
     private var modRoot: URL {
         supportPath.appendingPathComponent("Mods/MM7", isDirectory: true)
+    }
+
+    private var recordingBasePath: URL {
+        if let chosen = preferences.string(forKey: "recording.mm7.path") {
+            return URL(fileURLWithPath: chosen, isDirectory: true)
+        }
+        return supportPath.appendingPathComponent("Recordings/MM7", isDirectory: true)
+    }
+
+    private var recordingEnabled: Bool { preferences.bool(forKey: "recording.mm7.enabled") }
+
+    private var recordingScript: URL? {
+        Bundle.main.url(forResource: "mm7_playtest_capture", withExtension: "sh", subdirectory: "Atlas")
     }
 
     private func dataPath(for title: String) -> URL? {
@@ -111,6 +129,16 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         guard let action = message.body as? String else { return }
         if action == "refresh" { sendState() }
         else if action == "play-mm7" { playMM7() }
+        else if action == "record-on" { preferences.set(true, forKey: "recording.mm7.enabled"); sendState(message: "Gameplay recording will start with the next MM7 launch.") }
+        else if action == "record-off" { preferences.set(false, forKey: "recording.mm7.enabled"); sendState(message: "Gameplay recording is off for the next launch.") }
+        else if action == "choose-record-folder" { chooseRecordingFolder() }
+        else if action == "open-record-folder" {
+            if FileManager.default.fileExists(atPath: recordingBasePath.path) {
+                NSWorkspace.shared.open(recordingBasePath)
+            } else {
+                sendState(message: "The recording folder is unavailable. Reconnect the external drive or choose another folder.")
+            }
+        }
         else if action == "open-saves" { openSaves() }
         else if action == "open-mm7-mods" { openMM7Mods() }
         else if action == "backup-saves" { backupSaves() }
@@ -169,6 +197,9 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             "paths": Dictionary(uniqueKeysWithValues: gameTitles.map { ($0, dataPath(for: $0)?.path ?? "") }),
             "saves": saveNames(),
             "running": game?.isRunning ?? false,
+            "recordingEnabled": recordingEnabled,
+            "recordingPath": recordingBasePath.path,
+            "recordingSession": recordingSession?.path ?? preferences.string(forKey: "recording.mm7.latestSession") ?? "",
             "modSupport": true,
             "modsEnabled": preferences.bool(forKey: "mods.mm7.enabled"),
             "vendorRefreshOnEntry": preferences.bool(forKey: "mods.vendorRefreshOnEntry"),
@@ -224,6 +255,150 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         return warnings
     }
 
+    private func chooseRecordingFolder() {
+        guard game?.isRunning != true else { return }
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Use for recordings"
+        panel.message = "Choose a local folder or an external drive folder for private MM7 recordings."
+        if panel.runModal() == .OK, let folder = panel.url {
+            preferences.set(folder.standardizedFileURL.path, forKey: "recording.mm7.path")
+            sendState(message: "MM7 recordings will go to the chosen folder.")
+        }
+    }
+
+    private func freeStorageMiB(at folder: URL) -> Int? {
+        guard let attributes = try? FileManager.default.attributesOfFileSystem(forPath: folder.path),
+              let bytes = attributes[.systemFreeSize] as? NSNumber else { return nil }
+        return bytes.int64Value > 0 ? Int(bytes.int64Value / 1_048_576) : nil
+    }
+
+    private func recordingPreflight(profilePath: URL, dataPath: URL) -> String? {
+        guard recordingScript != nil else { return "The bundled gameplay recorder is missing." }
+        let folder = recordingBasePath
+        if preferences.string(forKey: "recording.mm7.path") == nil {
+            do { try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true) }
+            catch { return "Could not create the local recording folder: \(error.localizedDescription)" }
+        }
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: folder.path, isDirectory: &isDirectory),
+              isDirectory.boolValue, FileManager.default.isWritableFile(atPath: folder.path) else {
+            return "The recording folder is unavailable or unwritable. Reconnect the external drive or choose another folder."
+        }
+        let destination = folder.resolvingSymlinksInPath().standardizedFileURL.path + "/"
+        for protected in [profilePath, dataPath] {
+            let path = protected.resolvingSymlinksInPath().standardizedFileURL.path + "/"
+            if destination.hasPrefix(path) {
+                return "Choose a recording folder outside the MM7 profile and game data folders."
+            }
+        }
+        guard let free = freeStorageMiB(at: folder) else {
+            return "Could not check free storage on the recording drive."
+        }
+        if free < 2_048 { return "The recording drive has less than 2 GB free. Choose another folder before recording." }
+        return nil
+    }
+
+    private func showRecordingWarning(_ detail: String) {
+        let alert = NSAlert()
+        alert.messageText = "Gameplay recording warning"
+        alert.informativeText = detail
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "OK")
+        NSApp.activate(ignoringOtherApps: true)
+        alert.runModal()
+    }
+
+    private func startRecorder(profilePath: URL, gameProcess: Process) throws {
+        guard let script = recordingScript else { throw NSError(domain: "AtlasRecording", code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "The bundled gameplay recorder is missing."]) }
+        let stamp = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: "-")
+        let session = recordingBasePath.appendingPathComponent("mm7-playtest-\(stamp)-\(UUID().uuidString.prefix(8))", isDirectory: true)
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/bash")
+        process.arguments = [script.path, "start", "--profile", profilePath.path,
+                             "--session", session.path, "--app", Bundle.main.bundleURL.path,
+                             "--game-pid", String(gameProcess.processIdentifier), "--video",
+                             "--display", "1", "--min-free-mib", "2048"]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        try process.run()
+        recorder = process
+        recordingSession = session
+        preferences.set(session.path, forKey: "recording.mm7.latestSession")
+        recordingWarningShown = false
+        memoryWarningShown = false
+        recordingMonitor?.invalidate()
+        recordingMonitor = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
+            self?.checkRecordingHealth()
+        }
+    }
+
+    private func stopRecorder() {
+        recordingMonitor?.invalidate()
+        recordingMonitor = nil
+        guard let session = recordingSession, let script = recordingScript else { return }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/bash")
+        process.arguments = [script.path, "stop", "--session", session.path]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        try? process.run()
+        recorder = nil
+    }
+
+    private func checkRecordingHealth() {
+        guard game?.isRunning == true, let session = recordingSession else { return }
+        let free = freeStorageMiB(at: recordingBasePath)
+        if !recordingWarningShown {
+            if free == nil {
+                recordingWarningShown = true
+                showRecordingWarning("The recording drive is unavailable. MM7 can continue, but the recorder may have stopped.")
+            } else if let free, free < 4_096 {
+                recordingWarningShown = true
+                showRecordingWarning("The recording drive has under 4 GB free. The recorder will stop at 2 GB to protect the drive; MM7 can continue.")
+            } else if recorder?.isRunning != true {
+                recordingWarningShown = true
+                showRecordingWarning("The recorder stopped before MM7 closed. Check the session folder before relying on this recording.")
+            }
+        }
+        let warningFile = session.appendingPathComponent("warnings.txt")
+        if !recordingWarningShown, FileManager.default.fileExists(atPath: warningFile.path) {
+            recordingWarningShown = true
+            showRecordingWarning("The recorder reported a problem. Check warnings.txt in the session folder; MM7 can continue.")
+        }
+        if !memoryWarningShown {
+            DispatchQueue.global(qos: .utility).async { [weak self] in
+                guard let self, let percent = self.memoryFreePercent(), percent < 10 else { return }
+                DispatchQueue.main.async {
+                    guard self.game?.isRunning == true, !self.memoryWarningShown else { return }
+                    self.memoryWarningShown = true
+                    self.showRecordingWarning("System memory is below 10% free. Save your game soon and close other apps if performance drops.")
+                }
+            }
+        }
+    }
+
+    private func memoryFreePercent() -> Int? {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/memory_pressure")
+        process.arguments = ["-Q"]
+        let output = Pipe()
+        process.standardOutput = output
+        process.standardError = FileHandle.nullDevice
+        guard (try? process.run()) != nil else { return nil }
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0,
+              let text = String(data: data, encoding: .utf8),
+              let match = text.range(of: "System-wide memory free percentage: ") else { return nil }
+        let tail = text[match.upperBound...]
+        return Int(tail.prefix(while: { $0.isNumber }))
+    }
+
     private func playMM7() {
         guard let profilePath = resolvedUserPath() else {
             sendState(message: "The disposable MM7 profile is invalid; MM7 was not launched.")
@@ -241,6 +416,11 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         let engine = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/MM7.app/Contents/MacOS/MM7")
         guard FileManager.default.isExecutableFile(atPath: engine.path) else {
             sendState(message: "The bundled MM7 engine is missing.")
+            return
+        }
+        let shouldRecord = recordingEnabled
+        if shouldRecord, let issue = recordingPreflight(profilePath: profilePath, dataPath: dataPath) {
+            sendState(message: issue)
             return
         }
         do {
@@ -263,21 +443,31 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             process.terminationHandler = { [weak self] finished in
                 DispatchQueue.main.async {
                     guard let self else { return }
+                    self.stopRecorder()
                     self.game = nil
                     self.window.makeKeyAndOrderFront(nil)
                     NSApp.activate(ignoringOtherApps: true)
                     let warnings = self.modWarnings(since: startedAt, profilePath: profilePath)
                     let warningText = warnings.isEmpty ? "" : "\n" + warnings.joined(separator: "\n")
+                    let recordingText = self.recordingSession.map { " Recording session: \($0.path)" } ?? ""
                     if finished.terminationReason == .exit && finished.terminationStatus == 0 {
-                        self.sendState(message: "Returned from MM7. Your saves remain on this Mac." + warningText)
+                        self.sendState(message: "Returned from MM7. Your saves remain on this Mac." + recordingText + warningText)
                     } else {
-                        self.sendState(message: "MM7 exited unexpectedly. Check your latest save before continuing." + warningText)
+                        self.sendState(message: "MM7 exited unexpectedly. Check your latest save before continuing." + recordingText + warningText)
                     }
                 }
             }
             try process.run()
             game = process
-            sendState(message: "Opening MM7…")
+            recordingSession = nil
+            if shouldRecord {
+                do {
+                    try startRecorder(profilePath: profilePath, gameProcess: process)
+                } catch {
+                    showRecordingWarning("MM7 opened, but recording could not start: \(error.localizedDescription)")
+                }
+            }
+            sendState(message: shouldRecord && recorder?.isRunning == true ? "Opening MM7 with gameplay recording…" : "Opening MM7…")
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 NSRunningApplication(processIdentifier: process.processIdentifier)?.activate()
             }

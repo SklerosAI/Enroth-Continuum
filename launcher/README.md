@@ -7,6 +7,13 @@ data path and user path. It does not package original Might & Magic data.
 ## Current behavior
 
 - MM7 launches, saves, exits, and reloads through The Atlas.
+- Optional **Record gameplay** starts a local passive MM7 session recorder with
+  Play. Choose an existing folder on this Mac or an external drive before
+  launching. The recorder writes screen video, game logs and stable save
+  snapshots there; Atlas warns when recording storage or system memory runs
+  low. Recording stops when MM7 exits, while normal gameplay and saves stay
+  in the MM7 profile. The first screen recording may require macOS Screen
+  Recording permission.
 - MM6 and MM8 cards detect locally extracted core data. Their engine adapters,
   play buttons, saves, and character transfer are still to be implemented.
 - The Vault lists MM7 saves and creates local backup copies.

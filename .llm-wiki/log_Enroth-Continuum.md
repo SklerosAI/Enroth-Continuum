@@ -2906,3 +2906,9 @@ Chronological record of wiki activity.
 - Added a dated progress table from the November 9 integration commits, current source handoff and verified headless gates. It separates MM6 first-map Save/Load, UI and F5a staging from MM7 save/combat and campaign-test work.
 - Updated the campaign snapshot and fast resume pointer at wiki commit `7e1493acf`; retained the older campaign table as an explicitly superseded historical record.
 - The next MM6 code slice is Notes in the clean `codex/mm6-notes-book` checkout, followed by Map art and visible F5a Load/input/save acceptance. Production New Game and general campaign play remain unproved.
+
+## [2026-11-10] update | Owner's MM7-first delivery order
+- by: T-Burton-ND via codex
+- Recorded the owner's sequence at `19a0feab2`: MM7 completely working, MM6 working, full MM7 audit, then full MM6 audit. The previous MM6-first task ordering is marked superseded, while its completed work remains valid.
+- Updated the wiki index, campaign status, agent handoff, implementation plan and current cross-agent board. Claude Code may take the planning/coordination lead when it rejoins; two independent MM7 lanes now cover the raid route and current-candidate validation.
+- Working gates require visible runtime and durable saves; broad title audits remain separate later stages. Protected title baselines and private game data remain outside this coordination change.

@@ -75,9 +75,11 @@ GAME_TEST(MM7CastlePath, Goblins) {
         game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
         game.tick();
         ASSERT_EQ(current_screen_type, SCREEN_INPUT_BLV);
+        ASSERT_FALSE(pParty->_questBits[QBIT_CASTLE_HARMONDALE_GOBLINS_KILLED]);
         game.pressGuiButton("Transition_Yes");
         game.skipLoadingScreen();
         ASSERT_EQ(engine->_currentLoadedMapId, MAP_HARMONDALE);
+        ASSERT_EQ(pParty->_questBits[QBIT_CASTLE_HARMONDALE_GOBLINS_KILLED], !survivor);
         EXPECT_FALSE(pParty->_questBits[QBIT_CASTLE_HARMONDALE_REPAIR_ACTIVE]);
         EXPECT_FALSE(pParty->pCharacters[0]._achievedAwardsBits[AWARD_HARMONDALE_CASTLE_CLEARED]);
         auto tavernDoor = std::ranges::find_if(pOutdoor->faces, [](const BLVFace &face) { return face.eventId == 15; });

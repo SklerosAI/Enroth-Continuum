@@ -135,6 +135,12 @@ maps are allowed for now and listed, because real travel is stage 3 breadth.
 Order: the harness lane first. Then C0-C3 and C4-C7 as two lanes, which only
 share the harness table.
 
+State at the 2026-11-10 wrap-up: Codex's harness lane with C0 is active.
+The real Xenofex fight (`claude/mm7-xenofex-combat`) is reviewed and waiting
+for integration. Quest-item acquisition (`claude/mm7-light-items`) is paused
+at a WIP commit with three unbuilt draft tests. See
+`handoffs/2026-11-10-claude-lead-week-wrap.md`.
+
 ### Stage 1 defect queue
 
 Ordered by how badly a player is blocked. A lane takes the top item when free.

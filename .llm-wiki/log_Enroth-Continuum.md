@@ -2934,3 +2934,9 @@ Chronological record of wiki activity.
 - Updated the campaign status, handoff and index at `e471fd628` after the Stone City rescue and Castle rebuild interaction test reached integration.
 - The rebuild, Castle opening and raid focused tests built and passed 3/3 on integration source. The positive case rescues seven named dwarves; one missing blocks the king's rebuild reward.
 - Kept the fresh-process Save/Load checkpoint after rebuild explicitly open. The staged final-build visible smoke is still blocked by Mac lock.
+
+## [2026-11-10] verify | MM7 rebuilt-castle save checkpoint
+- by: T-Burton-ND via codex
+- Updated campaign and handoff status at `376dec830` after the exact-filter disposable checkpoint code reached integration and the integrated GameTest target compiled.
+- Before the owner's runtime window ended, the branch writer and fresh-process reader passed 1/1 each, the older disposable pair passed 1/1 each, malformed profile/filter cases rejected, and the slot bytes stayed unchanged after Load.
+- The integrated runtime rerun and extracted one-missing rescue case await renewed authorization. No installed app or normal profile was used for the checkpoint.

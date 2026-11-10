@@ -8,3 +8,4 @@
 - Conflict check: integration `master` had the raid case disabled. Claude's MM7 planning lane reserved this test file for lane A until handoff.
 - Planned checks: focused raid and campaign GameTests, a deliberate regression failure, and changed-file style validation.
 - Handoff target: Claude planning lead and Codex integration through a dated file in `agent_comms/handoffs/`.
+- Status: completed and integrated on `master` 2026-11-10. File ownership released for W4.

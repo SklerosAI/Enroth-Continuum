@@ -22,8 +22,10 @@ See the [November 9 progress table](Progress-2026-11-09.md) and [MM6 resume hand
 
 A [passive MM7 playtest recorder](MM7-Playtest-Recording.md) is integrated in the
 installed, signed Atlas after the owner authorized a headless reinstall. Its
-script, bundle and installed source hashes passed headless checks, while live
-video, external-drive behavior and installed-app launch remain unverified.
+script, bundle and installed source hashes passed headless checks. The tracked
+revision uses a bounded two-minute rolling video buffer and an intentional
+clip hotkey; live capture, external-drive behavior and installed-app launch
+remain unverified.
 This tooling does not advance campaign
 playability by itself.
 

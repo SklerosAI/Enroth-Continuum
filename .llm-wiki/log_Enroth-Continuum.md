@@ -2912,3 +2912,9 @@ Chronological record of wiki activity.
 - Recorded the owner's sequence at `19a0feab2`: MM7 completely working, MM6 working, full MM7 audit, then full MM6 audit. The previous MM6-first task ordering is marked superseded, while its completed work remains valid.
 - Updated the wiki index, campaign status, agent handoff, implementation plan and current cross-agent board. Claude Code may take the planning/coordination lead when it rejoins; two independent MM7 lanes now cover the raid route and current-candidate validation.
 - Working gates require visible runtime and durable saves; broad title audits remain separate later stages. Protected title baselines and private game data remain outside this coordination change.
+
+## [2026-11-10] update | MM7 raid and staged candidate acceptance
+- by: T-Burton-ND via codex
+- Updated campaign, save-gate and agent-handoff pages at `a36c4aaea` after the Harmondale raid test integrated and all six current MM7 campaign GameTests passed on integration source.
+- Recorded the staged Atlas visible New Game, purchase, spell, disposable named Save/reload and copied older-save Load checks, with the later fail-closed profile-path fix integrated and its Swift checks passing.
+- Kept the remaining W3 audio, ordinary NPC and monster checks, main-quest path, rebuilt visible candidate and installed cutover explicit. Private saves, screenshots and raw logs stayed outside Git.

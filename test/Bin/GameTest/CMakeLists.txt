@@ -20,6 +20,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7LightWalls.cpp
         GameTests_MM7LightAdvisors.cpp
         GameTests_MM7LightXenofex.cpp
+        GameTests_MM7LightSeam.cpp
         GameTests_MM7LightAssassination.cpp
         GameTests_MM7OverthrusterRoute.cpp
         GameTests_MM7PitCubeAcquisition.cpp

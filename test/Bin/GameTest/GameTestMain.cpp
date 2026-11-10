@@ -120,8 +120,10 @@ int platformMain(int argc, char **argv) {
         const bool mm7LightReader = GTEST_FLAG_GET(filter) == "MM7LightWalls.DISABLED_ReloadFreshCheckpoint";
         const bool mm7OverthrusterWriter = GTEST_FLAG_GET(filter) == "MM7OverthrusterRoute.DISABLED_WriteFreshCheckpoint";
         const bool mm7OverthrusterReader = GTEST_FLAG_GET(filter) == "MM7OverthrusterRoute.DISABLED_ReloadFreshCheckpoint";
-        const bool mm7Writer = mm7SaveWriter || mm7CastleWriter || mm7LightWriter || mm7OverthrusterWriter;
-        const bool mm7Reader = mm7SaveReader || mm7CastleReader || mm7LightReader || mm7OverthrusterReader;
+        const bool mm7LightSeamWriter = GTEST_FLAG_GET(filter) == "MM7LightSeam.DISABLED_WriteFreshCheckpoint";
+        const bool mm7LightSeamReader = GTEST_FLAG_GET(filter) == "MM7LightSeam.DISABLED_ReloadFreshCheckpoint";
+        const bool mm7Writer = mm7SaveWriter || mm7CastleWriter || mm7LightWriter || mm7OverthrusterWriter || mm7LightSeamWriter;
+        const bool mm7Reader = mm7SaveReader || mm7CastleReader || mm7LightReader || mm7OverthrusterReader || mm7LightSeamReader;
         if (opts.disposableMm7Profile || mm7Writer || mm7Reader) {
             if (!opts.disposableMm7Profile || !(mm7Writer || mm7Reader) ||
                 !GTEST_FLAG_GET(also_run_disabled_tests))

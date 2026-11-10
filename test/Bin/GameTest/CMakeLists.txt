@@ -17,6 +17,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7CastlePath.cpp
         GameTests_MM7CastleRebuild.cpp
         GameTests_MM7ScavengerPath.cpp
+        GameTests_MM7CampaignChainC0.cpp
         GameTests_MM7LightWalls.cpp
         GameTests_MM7LightAdvisors.cpp
         GameTests_MM7LightXenofex.cpp

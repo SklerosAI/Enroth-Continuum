@@ -20,8 +20,10 @@ tests, and fail-closed Atlas disposable-profile path are integrated as of
 The campaign GameTests pass 6/6; the two Castle tests and raid control pass
 3/3 on integration source. They cover first Butler contact, goblin exit and
 hand-in, and seven rescue interactions versus one missing before the king's
-rebuild outcome. A fresh-process Save/Load checkpoint after rebuild remains
-open. The visible staged candidate passed durable Save/Load with a purchased shield
+rebuild outcome. The fresh-process Save/Load checkpoint code is integrated;
+its writer and reader passed 1/1 each on the branch with unchanged slot bytes.
+The integrated runtime rerun and refactored one-missing case remain open after
+the owner's runtime window expired. The visible staged candidate passed durable Save/Load with a purchased shield
 and gold intact plus a copied older save. The visible run preceded the final
 Atlas profile-path fix; the current rebuilt staged app is signed but its
 visible smoke awaits an unlocked Mac. Do not install it before that check.

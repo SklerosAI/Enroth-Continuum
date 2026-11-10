@@ -10,7 +10,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 ## Navigation and conventions
 
 - [Home](Home_Enroth-Continuum.md) — Curated entry point
-- [Agent Handoff](Agent-Handoff.md) — MM7-first resume pointer, integrated raid/Castle rebuild and Atlas profile gates, visible gaps and historical MM6 handoff
+- [Agent Handoff](Agent-Handoff.md) — MM7-first resume pointer, Castle rebuild save checkpoint evidence, visible gaps and historical MM6 handoff
 - [Current Delivery Order](Current-Delivery-Order.md) — Owner's MM7 working → MM6 working → full MM7 audit → full MM6 audit sequence and coordination rules
 - [November 9 Progress](Progress-2026-11-09.md) — Dated integrated MM6/MM7 work and priority-ordered resume steps
 - [Agent communications](../agent_comms/README.md) — Cross-model claims, handoffs, reviews and model-card protocol

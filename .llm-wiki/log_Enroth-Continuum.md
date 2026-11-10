@@ -2983,3 +2983,9 @@ Chronological record of wiki activity.
 - The integrated GameTest target built and the combined advisor, assassination, Light route and dawn controls passed 7/7 headlessly. Prior quest state and quest items are fixtures; Xenofex, real acquisition, Pit combat, uninterrupted chapter continuity, Overthruster, its fresh-process checkpoint and the ending remain open.
 - The owner currently permits headless checks only. The Atlas recording control is staged and signed, with live video, external-drive and installed-app acceptance still open.
 
+## [2026-11-10] verify | MM7 Xenofex and headless Atlas install
+- by: T-Burton-ND via codex
+- Updated the campaign, recording, priority and handoff pages at `7ed7c5b62` after the Xenofex test integrated and the owner authorized reinstalling Atlas.
+- The integrated GameTest built and the focused Light controls passed 9/9. Xenofex request gating, map-leave alive/dead and UI hand-in work; travel and kill remain fixtures.
+- Installed the signed recording candidate headlessly, retained the prior app as a local rollback copy, verified installed source hashes and deep signature, and left profiles and saves untouched. Post-install launch, real recording, external-drive behavior and graphical Save/Load remain open under headless-only authorization.
+

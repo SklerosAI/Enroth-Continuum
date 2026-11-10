@@ -131,3 +131,47 @@ GAME_TEST(MM7Scrolls, CancelCharacterTargetScroll) {
         }
     }
 }
+
+GAME_TEST(MM7Scrolls, CancelActorTargetScrollFromInventory) {
+    // Cancelling the targeting after reading a Fire Bolt scroll on a portrait from the inventory used the scroll up.
+    for (bool cancel : {true, false}) {
+        SCOPED_TRACE(fmt::format("cancel={}", cancel));
+        test.prepareForNextTest();
+        auto scrollTape = tapes.totalItemCount(ITEM_SCROLL_FIRE_BOLT);
+        auto heldTape = tapes.custom([] { return pParty->pPickedItem.itemId; });
+        auto screenTape = tapes.screen();
+        auto targetingTape = tapes.custom([] { return pGUIWindow_CastTargetedSpell != nullptr; });
+        engine->config->debug.NoActors.setValue(true);
+        game.startNewGame();
+        test.startTaping();
+        prepareForBattleTest();
+        engine->config->debug.NoActors.setValue(false);
+
+        game.spawnMonster(pParty->pos + Vec3f(0, 300, 0), MONSTER_RAT_A, SPAWN_DUMMY);
+        auto hpTape = actorTapes.hp(0);
+        game.goToInventory(0);
+        pParty->setHoldingItem(Item(ITEM_SCROLL_FIRE_BOLT));
+        game.tick();
+        game.pressGuiButton("Game_Character1", BUTTON_RIGHT);
+        game.tick(2); // The scroll is read and the inventory closes, on the next frame the targeting cursor comes up.
+        if (cancel) {
+            game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        } else {
+            game.pointMouseAtActor(0);
+            game.pressAndReleaseButton(BUTTON_LEFT);
+        }
+        game.tick(2); // The bolt flies to the rat.
+
+        EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHARACTERS, SCREEN_GAME));
+        EXPECT_EQ(targetingTape, tape(false, true, false));
+        if (cancel) {
+            EXPECT_EQ(scrollTape, tape(0, 1, 0, 1));
+            EXPECT_EQ(heldTape, tape(ITEM_NULL, ITEM_SCROLL_FIRE_BOLT, ITEM_NULL, ITEM_SCROLL_FIRE_BOLT));
+            EXPECT_EQ(hpTape.delta(), 0);
+        } else {
+            EXPECT_EQ(scrollTape, tape(0, 1, 0));
+            EXPECT_EQ(heldTape, tape(ITEM_NULL, ITEM_SCROLL_FIRE_BOLT, ITEM_NULL));
+            EXPECT_LT(hpTape.delta(), 0);
+        }
+    }
+}

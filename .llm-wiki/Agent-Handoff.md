@@ -14,11 +14,15 @@ The owner's [current delivery order](Current-Delivery-Order.md) is MM7 working,
 then MM6 working, then the full MM7 audit, then the full MM6 audit. This
 supersedes the MM6-first sequence below. Claude Code is the planning and
 coordination lead through `agent_comms/PLAN.md`; Codex integrates reviewed
-lanes. The MM7 raid test and fail-closed Atlas disposable-profile path are
-integrated as of 2026-11-10. The integrated campaign GameTests pass 6/6, and
+lanes. The MM7 raid test, first Castle Harmondale goblin path test and
+fail-closed Atlas disposable-profile path are integrated as of 2026-11-10.
+The campaign GameTests pass 6/6; the Castle and raid focused controls pass 2/2
+on integration source. The Castle test covers the first Butler encounter,
+goblin kill versus survivor, input-driven exit and later hand-in. The
 the visible staged candidate passed durable Save/Load with a purchased shield
 and gold intact plus a copied older save. The visible run preceded the final
-Atlas profile-path fix; rebuild before further visible checks or installation.
+Atlas profile-path fix; the current rebuilt staged app is signed but its
+visible smoke awaits an unlocked Mac. Do not install it before that check.
 Ordinary NPC talk, one monster fight, owner audio confirmation, main-quest
 path coverage and installed-app cutover remain open. See the current
 [campaign status](Campaign-Status.md) and [MM7 save gate](MM7-Disposable-Save-Reload.md).

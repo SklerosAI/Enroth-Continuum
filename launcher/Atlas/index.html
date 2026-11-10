@@ -131,10 +131,10 @@
   window.Atlas={receive(state){
     for (const game of Object.keys(titles)) safeText(game+'-data',state.data[game]?(game==='mm8'?'Core files extracted':'Ready'):'Not configured');
     safeText('latest-save',state.saves[0]?.name||'None yet');
-    const play=document.getElementById('play-mm7');play.disabled=!!state.running;play.textContent=state.running?'MM7 is running':state.data.mm7?'Play MM7':'Choose MM7 data';
+    const play=document.getElementById('play-mm7');play.disabled=!!state.running||!!state.recordingFinalizing;play.textContent=state.running?'MM7 is running':state.recordingFinalizing?'Finishing recording':state.data.mm7?'Play MM7':'Choose MM7 data';
     safeText('record-toggle',state.recordingEnabled?'Turn off':'Turn on');
-    document.getElementById('record-toggle').disabled=!!state.running;
-    document.getElementById('record-folder').disabled=!!state.running;
+    document.getElementById('record-toggle').disabled=!!state.running||!!state.recordingFinalizing;
+    document.getElementById('record-folder').disabled=!!state.running||!!state.recordingFinalizing;
     safeText('record-path',state.recordingPath||'This Mac · Enroth Continuum recordings');
     safeText('record-status',state.recordingSession?(state.running?'Recording session: ':'Latest recording: ')+state.recordingSession:state.recordingEnabled?'Ready to record next MM7 launch.':'Recording is off.');
     const saves=document.getElementById('save-list');saves.replaceChildren();

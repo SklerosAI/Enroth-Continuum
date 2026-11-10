@@ -1,4 +1,5 @@
 import AppKit
+import Darwin
 import Foundation
 import ImageIO
 import UniformTypeIdentifiers
@@ -16,7 +17,11 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
     private var recorder: Process?
     private var recordingSession: URL?
     private var recordingMonitor: Timer?
-    private var recordingWarningShown = false
+    private var recordingFinalizing = false
+    private var recordingStartFailed = false
+    private var storageWarningShown = false
+    private var recorderExitWarningShown = false
+    private var reportedWarningLines = 0
     private var memoryWarningShown = false
     private let preferences = UserDefaults.standard
     private var portraitPreviewCache: [URL: (Date, String)] = [:]
@@ -196,7 +201,8 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             "data": Dictionary(uniqueKeysWithValues: gameTitles.map { ($0, dataReady($0)) }),
             "paths": Dictionary(uniqueKeysWithValues: gameTitles.map { ($0, dataPath(for: $0)?.path ?? "") }),
             "saves": saveNames(),
-            "running": game?.isRunning ?? false,
+            "running": game != nil,
+            "recordingFinalizing": recordingFinalizing,
             "recordingEnabled": recordingEnabled,
             "recordingPath": recordingBasePath.path,
             "recordingSession": recordingSession?.path ?? preferences.string(forKey: "recording.mm7.latestSession") ?? "",
@@ -256,7 +262,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
     }
 
     private func chooseRecordingFolder() {
-        guard game?.isRunning != true else { return }
+        guard game == nil, !recordingFinalizing else { return }
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
@@ -264,10 +270,18 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         panel.allowsMultipleSelection = false
         panel.prompt = "Use for recordings"
         panel.message = "Choose a local folder or an external drive folder for private MM7 recordings."
-        if panel.runModal() == .OK, let folder = panel.url {
+        if panel.runModal() == .OK, let folder = panel.url,
+           let volumeID = recordingVolumeID(at: folder) {
             preferences.set(folder.standardizedFileURL.path, forKey: "recording.mm7.path")
+            preferences.set(volumeID, forKey: "recording.mm7.volumeID")
             sendState(message: "MM7 recordings will go to the chosen folder.")
         }
+    }
+
+    private func recordingVolumeID(at folder: URL) -> String? {
+        var metadata = stat()
+        let result = folder.path.withCString { stat($0, &metadata) }
+        return result == 0 ? String(metadata.st_dev) : nil
     }
 
     private func freeStorageMiB(at folder: URL) -> Int? {
@@ -287,6 +301,12 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         guard FileManager.default.fileExists(atPath: folder.path, isDirectory: &isDirectory),
               isDirectory.boolValue, FileManager.default.isWritableFile(atPath: folder.path) else {
             return "The recording folder is unavailable or unwritable. Reconnect the external drive or choose another folder."
+        }
+        if preferences.string(forKey: "recording.mm7.path") != nil {
+            guard let selectedVolume = preferences.string(forKey: "recording.mm7.volumeID"),
+                  recordingVolumeID(at: folder) == selectedVolume else {
+                return "The recording drive changed or was remounted. Choose its folder again before recording."
+            }
         }
         let destination = folder.resolvingSymlinksInPath().standardizedFileURL.path + "/"
         for protected in [profilePath, dataPath] {
@@ -312,7 +332,14 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         alert.runModal()
     }
 
-    private func startRecorder(profilePath: URL, gameProcess: Process) throws {
+    private func recordingStatus(at session: URL) -> [String: Any]? {
+        let path = session.appendingPathComponent("status.json")
+        guard let data = try? Data(contentsOf: path),
+              let value = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        return value
+    }
+
+    private func startRecorder(profilePath: URL, gameProcess: Process, expectedVolumeID: String) throws {
         guard let script = recordingScript else { throw NSError(domain: "AtlasRecording", code: 1,
             userInfo: [NSLocalizedDescriptionKey: "The bundled gameplay recorder is missing."]) }
         let stamp = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: "-")
@@ -322,14 +349,32 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         process.arguments = [script.path, "start", "--profile", profilePath.path,
                              "--session", session.path, "--app", Bundle.main.bundleURL.path,
                              "--game-pid", String(gameProcess.processIdentifier), "--video",
-                             "--display", "1", "--min-free-mib", "2048"]
+                             "--display", "1", "--min-free-mib", "2048",
+                             "--expected-volume-id", expectedVolumeID]
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
         try process.run()
+        let deadline = Date().addingTimeInterval(3)
+        var ready = false
+        repeat {
+            if process.isRunning, recordingStatus(at: session)?["state"] as? String == "running" {
+                ready = true
+                break
+            }
+            if !process.isRunning { break }
+            Thread.sleep(forTimeInterval: 0.05)
+        } while Date() < deadline
+        guard ready else {
+            if process.isRunning { _ = Darwin.kill(process.processIdentifier, SIGTERM) }
+            throw NSError(domain: "AtlasRecording", code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "The recorder did not create a ready session. Check the destination and try again."])
+        }
         recorder = process
         recordingSession = session
         preferences.set(session.path, forKey: "recording.mm7.latestSession")
-        recordingWarningShown = false
+        storageWarningShown = false
+        recorderExitWarningShown = false
+        reportedWarningLines = 0
         memoryWarningShown = false
         recordingMonitor?.invalidate()
         recordingMonitor = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
@@ -337,38 +382,90 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         }
     }
 
-    private func stopRecorder() {
-        recordingMonitor?.invalidate()
-        recordingMonitor = nil
-        guard let session = recordingSession, let script = recordingScript else { return }
+    private func requestRecorderStop(session: URL) {
+        guard let script = recordingScript else { return }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
         process.arguments = [script.path, "stop", "--session", session.path]
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
         try? process.run()
-        recorder = nil
+    }
+
+    private func reportFinishedGame(_ finished: Process, session: URL?, recorderProcess: Process?,
+                                    warningText: String, attempt: Int = 0) {
+        if recorderProcess?.isRunning == true {
+            if attempt == 30 {
+                if let recorderProcess { _ = Darwin.kill(recorderProcess.processIdentifier, SIGTERM) }
+                sendState(message: "The recorder is taking longer than expected to finish. Atlas is stopping it; inspect the final video chunk.")
+            }
+            if attempt == 45, let recorderProcess {
+                _ = Darwin.kill(recorderProcess.processIdentifier, SIGKILL)
+            }
+            if attempt >= 50 {
+                recordingFinalizing = false
+                guard game == nil else { return }
+                sendState(message: "MM7 closed. The recorder did not finish cleanly. Inspect its private session folder before relying on the capture." + warningText)
+                return
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+                self?.reportFinishedGame(finished, session: session, recorderProcess: recorderProcess,
+                                         warningText: warningText, attempt: attempt + 1)
+            }
+            return
+        }
+        recordingFinalizing = false
+        guard game == nil else { return } // A newer MM7 launch owns the Atlas state.
+        let normalExit = finished.terminationReason == .exit && finished.terminationStatus == 0
+        var message = normalExit ? "Returned from MM7. Your saves remain on this Mac."
+                                 : "MM7 exited unexpectedly. Check your latest save before continuing."
+        if let session {
+            message += " Recording session: \(session.path)"
+            if let status = recordingStatus(at: session) {
+                let state = status["state"] as? String ?? "unknown"
+                let video = status["video"] as? String ?? "unknown"
+                if state != "stopped" && state != "game-exited" {
+                    message += " Recording ended with \(state); inspect status.json and warnings.txt."
+                }
+                if video == "failed" || video == "interrupted" {
+                    message += " The last video chunk needs review (\(video))."
+                }
+                if FileManager.default.fileExists(atPath: session.appendingPathComponent("warnings.txt").path) {
+                    message += " Check warnings.txt before relying on the capture."
+                }
+            } else {
+                message += " Recording completion was not confirmed; inspect the session folder."
+            }
+            if recorderProcess?.terminationStatus != 0 && recorderProcess?.isRunning == false {
+                message += " The recorder process exited with an error."
+            }
+        }
+        sendState(message: message + warningText)
     }
 
     private func checkRecordingHealth() {
         guard game?.isRunning == true, let session = recordingSession else { return }
         let free = freeStorageMiB(at: recordingBasePath)
-        if !recordingWarningShown {
+        if !storageWarningShown {
             if free == nil {
-                recordingWarningShown = true
+                storageWarningShown = true
                 showRecordingWarning("The recording drive is unavailable. MM7 can continue, but the recorder may have stopped.")
             } else if let free, free < 4_096 {
-                recordingWarningShown = true
+                storageWarningShown = true
                 showRecordingWarning("The recording drive has under 4 GB free. The recorder will stop at 2 GB to protect the drive; MM7 can continue.")
-            } else if recorder?.isRunning != true {
-                recordingWarningShown = true
-                showRecordingWarning("The recorder stopped before MM7 closed. Check the session folder before relying on this recording.")
             }
         }
+        if !recorderExitWarningShown, recorder?.isRunning != true {
+            recorderExitWarningShown = true
+            showRecordingWarning("The recorder stopped before MM7 closed. Check the session folder before relying on this recording.")
+        }
         let warningFile = session.appendingPathComponent("warnings.txt")
-        if !recordingWarningShown, FileManager.default.fileExists(atPath: warningFile.path) {
-            recordingWarningShown = true
-            showRecordingWarning("The recorder reported a problem. Check warnings.txt in the session folder; MM7 can continue.")
+        if let contents = try? String(contentsOf: warningFile, encoding: .utf8) {
+            let lines = contents.split(separator: "\n").count
+            if lines > reportedWarningLines {
+                reportedWarningLines = lines
+                showRecordingWarning("The recorder reported a new problem. Check warnings.txt in the session folder; MM7 can continue.")
+            }
         }
         if !memoryWarningShown {
             DispatchQueue.global(qos: .utility).async { [weak self] in
@@ -404,9 +501,13 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             sendState(message: "The disposable MM7 profile is invalid; MM7 was not launched.")
             return
         }
-        guard game?.isRunning != true else {
-            if let game { NSRunningApplication(processIdentifier: game.processIdentifier)?.activate() }
-            sendState(message: "MM7 is already running.")
+        guard game == nil else {
+            if let game, game.isRunning { NSRunningApplication(processIdentifier: game.processIdentifier)?.activate() }
+            sendState(message: "MM7 is already running or finishing its exit.")
+            return
+        }
+        guard !recordingFinalizing else {
+            sendState(message: "The previous recording is still finalizing. Play will be available when it finishes.")
             return
         }
         guard dataReady("mm7"), let dataPath = dataPath(for: "mm7") else {
@@ -421,6 +522,14 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         let shouldRecord = recordingEnabled
         if shouldRecord, let issue = recordingPreflight(profilePath: profilePath, dataPath: dataPath) {
             sendState(message: issue)
+            return
+        }
+        let expectedVolumeID = shouldRecord
+            ? (preferences.string(forKey: "recording.mm7.path") != nil
+                ? preferences.string(forKey: "recording.mm7.volumeID")
+                : recordingVolumeID(at: recordingBasePath)) : nil
+        if shouldRecord && expectedVolumeID == nil {
+            sendState(message: "Could not verify the recording drive. Choose the folder again.")
             return
         }
         do {
@@ -442,36 +551,45 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             let startedAt = Date()
             process.terminationHandler = { [weak self] finished in
                 DispatchQueue.main.async {
-                    guard let self else { return }
-                    self.stopRecorder()
+                    guard let self, self.game === finished else { return }
+                    let session = self.recordingSession
+                    let recorderProcess = self.recorder
+                    let recordingStartFailed = self.recordingStartFailed
+                    self.recordingMonitor?.invalidate()
+                    self.recordingMonitor = nil
                     self.game = nil
+                    self.recorder = nil
+                    self.recordingSession = nil
+                    self.recordingStartFailed = false
+                    self.recordingFinalizing = session != nil
+                    if let session { self.requestRecorderStop(session: session) }
                     self.window.makeKeyAndOrderFront(nil)
                     NSApp.activate(ignoringOtherApps: true)
                     let warnings = self.modWarnings(since: startedAt, profilePath: profilePath)
-                    let warningText = warnings.isEmpty ? "" : "\n" + warnings.joined(separator: "\n")
-                    let recordingText = self.recordingSession.map { " Recording session: \($0.path)" } ?? ""
-                    let recordingWarning = self.recordingSession.flatMap { session in
-                        FileManager.default.fileExists(atPath: session.appendingPathComponent("warnings.txt").path)
-                            ? " Check that session's warnings.txt before relying on the capture." : nil
-                    } ?? ""
-                    if finished.terminationReason == .exit && finished.terminationStatus == 0 {
-                        self.sendState(message: "Returned from MM7. Your saves remain on this Mac." + recordingText + recordingWarning + warningText)
-                    } else {
-                        self.sendState(message: "MM7 exited unexpectedly. Check your latest save before continuing." + recordingText + recordingWarning + warningText)
-                    }
+                    let warningText = (warnings.isEmpty ? "" : "\n" + warnings.joined(separator: "\n"))
+                        + (recordingStartFailed ? "\nGameplay recording did not start for this session." : "")
+                    if session != nil { self.sendState(message: "MM7 closed. Finalizing the recording…") }
+                    self.reportFinishedGame(finished, session: session, recorderProcess: recorderProcess,
+                                            warningText: warningText)
                 }
             }
             try process.run()
             game = process
+            recordingMonitor?.invalidate()
+            recordingMonitor = nil
+            recorder = nil
             recordingSession = nil
-            if shouldRecord {
+            recordingStartFailed = false
+            if shouldRecord, let expectedVolumeID {
                 do {
-                    try startRecorder(profilePath: profilePath, gameProcess: process)
+                    try startRecorder(profilePath: profilePath, gameProcess: process,
+                                      expectedVolumeID: expectedVolumeID)
                 } catch {
+                    recordingStartFailed = true
                     showRecordingWarning("MM7 opened, but recording could not start: \(error.localizedDescription)")
                 }
             }
-            sendState(message: shouldRecord && recorder?.isRunning == true ? "Opening MM7 with gameplay recording…" : "Opening MM7…")
+            sendState(message: shouldRecord && recorder?.isRunning == true ? "Opening MM7; recording is starting…" : "Opening MM7…")
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 NSRunningApplication(processIdentifier: process.processIdentifier)?.activate()
             }

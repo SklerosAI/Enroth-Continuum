@@ -9,7 +9,7 @@ Usage:
   mm7_playtest_capture.sh start --profile ABS_DIR --app ABS_ATLAS_APP --game-pid PID
       (--output ABS_EXISTING_BASE_DIR | --session ABS_NEW_DIR)
       [--video | --no-video] [--display N] [--video-chunk-seconds N]
-      [--poll-seconds N] [--min-free-mib N]
+      [--poll-seconds N] [--min-free-mib N] [--expected-volume-id N]
   mm7_playtest_capture.sh note --session ABS_SESSION_DIR --text "owner note"
   mm7_playtest_capture.sh stop --session ABS_SESSION_DIR
   mm7_playtest_capture.sh status --session ABS_SESSION_DIR
@@ -223,7 +223,9 @@ video_running() {
 }
 stop_video() {
     [[ -n "$video_pid" ]] || return 0
+    local was_running=0 exit_status=0
     if video_running; then
+        was_running=1
         kill -INT "$video_pid" 2>/dev/null || true  # Recorder-owned capture only, never the game.
         local tries=0
         while video_running && (( tries < 20 )); do
@@ -235,15 +237,30 @@ stop_video() {
             if volume_ok; then
                 warn "Screen recorder needed forced termination; its last video chunk may be incomplete."
             fi
+            tries=0
+            while video_running && (( tries < 5 )); do
+                sleep 1
+                tries=$((tries + 1))
+            done
+            if video_running; then
+                kill -KILL "$video_pid" 2>/dev/null || true
+                if volume_ok; then warn "Screen recorder did not stop after TERM; final video chunk is unreliable."; fi
+            fi
         fi
     fi
-    wait "$video_pid" 2>/dev/null || true
+    wait "$video_pid" 2>/dev/null || exit_status=$?
     video_pid=""
     if volume_ok && [[ ! -s "$video_file" ]]; then
         video_state="failed"
         warn "Screen recording produced no video; check macOS Screen Recording permission."
+    elif (( was_running )); then
+        video_state="interrupted"
+        if volume_ok; then event video "Final video chunk was interrupted at session end; inspect it before relying on it."; fi
+    elif (( exit_status != 0 )); then
+        video_state="failed"
+        if volume_ok; then warn "Final screen recording exited with an error; inspect the video file."; fi
     elif [[ "$video_state" != failed ]]; then
-        video_state="off"
+        video_state="completed"
     fi
 }
 
@@ -276,11 +293,11 @@ check_video() {
 mode="${1:-}"
 [[ -n "$mode" ]] || { usage; exit 2; }
 shift
-profile_arg=""; output_arg=""; session_arg=""; app_arg=""; game_pid=""; note_text=""
+profile_arg=""; output_arg=""; session_arg=""; app_arg=""; game_pid=""; note_text=""; expected_volume_id=""
 display=1; video_chunk_seconds=300; poll_seconds=5; min_free_mib=2048
 while (( $# > 0 )); do
     case "$1" in
-        --profile|--output|--session|--app|--game-pid|--display|--video-chunk-seconds|--poll-seconds|--min-free-mib|--text)
+        --profile|--output|--session|--app|--game-pid|--display|--video-chunk-seconds|--poll-seconds|--min-free-mib|--expected-volume-id|--text)
             (( $# >= 2 )) || fail "missing value for $1"
             case "$1" in
                 --profile) profile_arg="$2" ;; --output) output_arg="$2" ;;
@@ -288,6 +305,7 @@ while (( $# > 0 )); do
                 --game-pid) game_pid="$2" ;; --display) display="$2" ;;
                 --video-chunk-seconds) video_chunk_seconds="$2" ;; --poll-seconds) poll_seconds="$2" ;;
                 --min-free-mib) min_free_mib="$2" ;; --text) note_text="$2" ;;
+                --expected-volume-id) expected_volume_id="$2" ;;
             esac
             shift 2 ;;
         --video) video_enabled=1; shift ;;
@@ -319,6 +337,7 @@ fi
 for number in "$game_pid" "$display" "$video_chunk_seconds" "$poll_seconds" "$min_free_mib"; do
     is_uint "$number" || fail "PID and numeric options must be nonnegative integers"
 done
+[[ -z "$expected_volume_id" ]] || is_uint "$expected_volume_id" || fail "--expected-volume-id must be an integer"
 (( game_pid > 1 && display > 0 && video_chunk_seconds >= 10 && video_chunk_seconds <= 3600 &&
    poll_seconds >= 1 && poll_seconds <= 60 && min_free_mib >= 128 )) || fail "numeric option is out of range"
 [[ "$video_enabled" != 1 || -x /usr/sbin/screencapture ]] || fail "macOS screencapture is unavailable"
@@ -328,18 +347,24 @@ app=$(canonical_existing_dir "$app_arg")
     fail "--app must be an Atlas bundle with its MM7 helper"
 if [[ -n "$output_arg" ]]; then
     base=$(canonical_existing_dir "$output_arg")
+    [[ -z "$expected_volume_id" || "$(device "$base")" == "$expected_volume_id" ]] || fail "recording destination volume changed"
     check_private_destination "$base" "$base/.ec-mm7-playtest-check"
     [[ "$base" != "$profile" && "$base" != "$profile/"* ]] || fail "output base must be outside the MM7 profile"
     session=$(mktemp -d "$base/mm7-playtest-$(stamp)-XXXXXX") || fail "cannot create session directory"
 else
     [[ "$session_arg" == /* && ! -e "$session_arg" && ! -L "$session_arg" ]] || fail "--session must name a new absolute directory"
     base=$(canonical_existing_dir "$(dirname "$session_arg")")
+    [[ -z "$expected_volume_id" || "$(device "$base")" == "$expected_volume_id" ]] || fail "recording destination volume changed"
     session="$base/$(basename "$session_arg")"
     check_private_destination "$base" "$session"
     [[ "$session" != "$profile" && "$session" != "$profile/"* ]] || fail "session must be outside the MM7 profile"
     mkdir "$session" || fail "cannot create session directory"
 fi
 volume_id=$(device "$session")
+if [[ -n "$expected_volume_id" && "$volume_id" != "$expected_volume_id" ]]; then
+    rmdir "$session" 2>/dev/null || true
+    fail "recording destination volume changed during session creation"
+fi
 [[ -n "$volume_id" && "$volume_id" == "$(device "$base")" ]] || fail "session is not on the selected destination volume"
 for folder in logs saves state video; do mkdir "$session/$folder"; done
 printf 'EnrothContinuum-MM7-playtest-v1\n' > "$session/.ec-mm7-playtest-session"
@@ -372,12 +397,6 @@ requested=0
 trap 'requested=1' INT TERM
 stop_reason="stopped"
 while true; do
-    if ! check_destination; then
-        stop_reason="$state"
-        break
-    fi
-    check_video || { stop_reason="$state"; break; }
-    capture_once || { stop_reason="$state"; break; }
     if [[ "$requested" == 1 || -f "$session/.stop-requested" ]]; then
         stop_reason="stopped"
         break
@@ -387,6 +406,12 @@ while true; do
         stop_reason="game-exited"
         break
     fi
+    if ! check_destination; then
+        stop_reason="$state"
+        break
+    fi
+    check_video || { stop_reason="$state"; break; }
+    capture_once || { stop_reason="$state"; break; }
     sleep "$poll_seconds" || true
 done
 if volume_ok; then

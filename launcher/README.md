@@ -14,6 +14,8 @@ data path and user path. It does not package original Might & Magic data.
   low. Recording stops when MM7 exits, while normal gameplay and saves stay
   in the MM7 profile. The first screen recording may require macOS Screen
   Recording permission.
+  If an external drive is remounted or replaced, choose its folder again so
+  Atlas can verify the destination before the next recorded launch.
 - MM6 and MM8 cards detect locally extracted core data. Their engine adapters,
   play buttons, saves, and character transfer are still to be implemented.
 - The Vault lists MM7 saves and creates local backup copies.

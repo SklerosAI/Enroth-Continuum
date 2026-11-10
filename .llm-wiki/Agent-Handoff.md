@@ -107,6 +107,9 @@ The reviewed item-, actor- and character-target scroll cancellation fixes are
 integrated. Their focused scroll, spell and Light controls passed 16/16, and the MM7 disposable Save
 writer and fresh-process reader passed 1/1 each with unchanged slot bytes
 after the shared engine change. Other targeting exits remain an audit gap.
+The full integrated MM7 headless GameTest binary passed 533 tests, skipped
+two and left 11 disabled tests unrun. The unit suite passed 1,087 with 45
+skipped, and the full style check passed after the mechanical style repair.
 See [the scroll check](MM7-Scroll-Cancel.md).
 
 At MM7-first resumption, integration `master` was clean and pushed at

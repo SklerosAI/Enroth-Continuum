@@ -83,6 +83,14 @@ control 2/2. It uses real attack-key combat, viewport corpse picking/clicking
 and advisor hand-in, with party-only combat strength and positioning fixtures.
 It does not prove natural walking through the room or a continuous New Game to
 ending run. See the dated Pit cube handoff in `agent_comms/handoffs/`.
+The Overthruster fresh-process checkpoint is now integrated. Its writer uses
+the real Lincoln console/pedestal retrieval and Shoals exit before normal
+Save to a marked owner-only temporary profile. A fresh child normal-Loaded
+the slot and retained the held item, four suits, map and Light/retrieval bits.
+Writer and reader passed 1/1 each with unchanged slot digest. The focused
+retrieval, Xenofex/finale and wetsuit/Shoals controls passed 6/6. Earlier
+chapter state is fixtured, and the installed app remains unlaunched after the
+headless swap. The owner's headless-only instruction remains current.
 
 At MM7-first resumption, integration `master` was clean and pushed at
 `f4d1b8065`; this is a historical checkpoint, not the current head. The [November 9 progress table](Progress-2026-11-09.md)

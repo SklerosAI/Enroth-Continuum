@@ -63,6 +63,12 @@ advisor hand-in. The new test and existing no-cube control passed 2/2 on
 integrated source. Party combat strength and positioning are fixtures;
 natural walking through the room and uninterrupted campaign continuity
 remain open.
+The later Overthruster checkpoint is also integrated. Production Save after
+input-driven Lincoln retrieval and Shoals exit, followed by normal Load in a
+separate fresh headless process, passed 1/1 each. The loaded state kept the
+held Overthruster, Light/retrieval bits, four equipped wetsuits and unchanged
+slot bytes. Earlier chapter prerequisites are fixtures, so this does not yet
+prove uninterrupted campaign continuity or installed-app Save/Load.
 
 ## Historical snapshot — 2026-11-07
 

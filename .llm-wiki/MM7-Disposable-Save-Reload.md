@@ -53,7 +53,10 @@ compile passed. A rebuilt staged app still needs a visible check. One
 accidental direct launch during the earlier visible session modified the
 normal profile's settings file; prior bytes were unavailable, so it was
 preserved. The accidental new log was removed. This gate does not establish
-full campaign completion or installed-app cutover.
+full campaign completion or installed-app cutover. The owner later authorized
+a headless Atlas reinstall. The signed candidate is installed with the old
+app retained locally, but no post-install launch or graphical Save/Load check
+has run.
 
 ## Rebuilt-castle checkpoint — 2026-11-10
 
@@ -75,5 +78,19 @@ was unchanged. The refactored Light route and dawn closed-throne controls also
 passed 2/2. A transient NPC dialogue field was not used as a persistence
 assertion because the branch gate observed it reset after Load. This remains
 a bounded chapter checkpoint, not an end-to-end visible campaign.
+
+## Overthruster retrieval checkpoint — 2026-11-10
+
+On integrated source, a marked owner-only disposable-profile writer used the
+input-driven Lincoln console and pedestal, retrieved the Overthruster into the
+held-item slot, passed the four-wetsuit Shoals exit and wrote a normal numbered
+MM7 save. A separate fresh headless process selected that slot through the
+normal Load menu. Writer and reader passed 1/1 each. The reader retained
+Shoals location, Light and retrieval bits, four equipped wetsuits and the held
+Overthruster, while the slot digest remained unchanged. A focused integrated
+run of the refactored retrieval case, Xenofex/finale link and two wetsuit/
+Shoals controls passed 6/6. The writer fixtures earlier Light chapter state,
+so this proves a later chapter checkpoint rather than uninterrupted campaign
+continuity. It does not exercise post-install Atlas launch or visible play.
 
 See also: [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [MM7 Atomic Save File](MM7-Atomic-Save-File.md), [MM7 Playtest Recording](MM7-Playtest-Recording.md), [Campaign Status](Campaign-Status.md), [Agent Handoff](Agent-Handoff.md).

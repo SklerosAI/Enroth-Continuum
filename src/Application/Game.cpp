@@ -40,6 +40,7 @@
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Objects/NPC.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
+#include "Engine/Objects/ItemEnumFunctions.h"
 #include "Engine/Party.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Random/Random.h"
@@ -293,6 +294,9 @@ void Game::closeTargetedSpellWindow() {
         if (current_screen_type == SCREEN_CHARACTERS) {
             mouse->SetCursorImage("MICON2");
         } else {
+            CastSpellInfo *spellInfo = pGUIWindow_CastTargetedSpell->spellInfo();
+            if ((spellInfo->flags & ON_CAST_CastingInProgress) && spellInfo->scroll.itemId != ITEM_NULL)
+                pParty->setHoldingItem(std::exchange(spellInfo->scroll, Item()));
             pGUIWindow_CastTargetedSpell = nullptr;
             mouse->SetCursorImage("MICON1");
             engine->_statusBar->clearEvent();
@@ -522,11 +526,7 @@ void Game::processQueuedMessages() {
                         engine->_messageQueue->clear();
                         _menu->MenuLoop();
                     } else {
-                        pGUIWindow_CastTargetedSpell = nullptr;
-                        mouse->SetCursorImage("MICON1");
-                        engine->_statusBar->clearEvent();
-                        IsEnchantingInProgress = false;
-                        back_to_game();
+                        closeTargetedSpellWindow();
                     }
                     continue;
                 } else if (current_screen_type == SCREEN_MENU) {
@@ -551,11 +551,6 @@ void Game::processQueuedMessages() {
                         if (current_screen_type < SCREEN_64) {
                             switch (current_screen_type) {
                                 case SCREEN_CASTING:
-                                    if (IsEnchantingInProgress) {
-                                        Item &scroll = pGUIWindow_CastTargetedSpell->spellInfo()->scroll;
-                                        if (scroll.itemId != ITEM_NULL)
-                                            pParty->setHoldingItem(std::exchange(scroll, Item()));
-                                    }
                                     if (enchantingActiveCharacter != -1) {
                                         pParty->setActiveCharacterIndex(enchantingActiveCharacter);
                                         pParty->switchToNextActiveCharacter();
@@ -1320,11 +1315,12 @@ void Game::processQueuedMessages() {
                 }
                 continue;
 
-            case UIMSG_SpellScrollUse:
-                if (pTurnEngine->turn_stage != TE_MOVEMENT) {
-                    pushScrollSpell(static_cast<SpellId>(uMessageParam), uMessageParam2);
-                }
+            case UIMSG_SpellScrollUse: {
+                ItemId scrollId = static_cast<ItemId>(uMessageParam);
+                if (pTurnEngine->turn_stage != TE_MOVEMENT && pParty->pPickedItem.itemId == scrollId) // The scroll stays on the cursor until here.
+                    pushScrollSpell(spellForScroll(scrollId), uMessageParam2, pParty->takeHoldingItem());
                 continue;
+            }
 
             case UIMSG_SpellBookWindow:
                 if (pTurnEngine->turn_stage == TE_MOVEMENT) {

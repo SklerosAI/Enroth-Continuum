@@ -3310,7 +3310,7 @@ void pushNPCSpell(SpellId spell) {
 
 void pushScrollSpell(SpellId spell, int casterIndex, const Item &scroll) {
     pushSpellOrRangedAttack(spell, casterIndex, SCROLL_OR_NPC_SPELL_SKILL_VALUE, ON_CAST_CastViaScroll);
-    if (IsEnchantingInProgress)
+    if (pGUIWindow_CastTargetedSpell && (pGUIWindow_CastTargetedSpell->spellInfo()->flags & ON_CAST_CastingInProgress))
         pGUIWindow_CastTargetedSpell->spellInfo()->scroll = scroll;
 }
 

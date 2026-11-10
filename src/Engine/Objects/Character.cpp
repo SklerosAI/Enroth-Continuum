@@ -3717,10 +3717,8 @@ void Character::useItem(int targetCharacter, bool isPortraitClick) {
             current_screen_type = SCREEN_GAME;
             pushScrollSpell(scrollSpellId, targetCharacter, scroll);
         } else {
-            // TODO(Nik-RE-dev): the scroll is used up here even if the player then cancels the spell's targeting.
-            pParty->takeHoldingItem();
             // Process spell on next frame after game exits inventory window.
-            engine->_messageQueue->addMessageNextFrame(UIMSG_SpellScrollUse, std::to_underlying(scrollSpellId), targetCharacter);
+            engine->_messageQueue->addMessageNextFrame(UIMSG_SpellScrollUse, std::to_underlying(pParty->pPickedItem.itemId), targetCharacter);
             if (current_screen_type != SCREEN_GAME && pGUIWindow_CurrentMenu && (pGUIWindow_CurrentMenu->eWindowType != WINDOW_NULL)) {
                 engine->_messageQueue->addMessageCurrentFrame(UIMSG_Escape, 0, 0);
             }

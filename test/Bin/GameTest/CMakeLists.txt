@@ -22,6 +22,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7LightXenofex.cpp
         GameTests_MM7LightAssassination.cpp
         GameTests_MM7OverthrusterRoute.cpp
+        GameTests_MM7PitCubeAcquisition.cpp
         GameTests_MM6.cpp
         GameTests_MM6CharacterBitEvent.cpp
         GameTests_MM6EventVariables.cpp

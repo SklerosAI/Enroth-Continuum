@@ -3030,3 +3030,9 @@ Chronological record of wiki activity.
 - The integrated in-memory seam and two Xenofex controls passed 3/3. A marked disposable production Save writer and separate fresh-process normal Load reader passed 1/1 each with unchanged slot bytes; the reader selected NPC80's surviving Xenofex topic through UI.
 - NPC80's house and topic came from clicked Walls, altar and Tolberti hand-ins. Earlier quest outcomes, altar items and cube remain fixtures, so the continuous campaign chain is still open.
 
+## [2026-11-10] verify | MM7 scroll fixes and integration controls
+- by: T-Burton-ND via codex
+- Updated the scroll page, campaign status, handoff and index at `91911bb81`, then added the full-suite result at `97d821f2a` after the reviewed actor- and character-target scroll fix and mechanical style repair reached integration.
+- The full style check passed. The four scroll cases, 11 existing spell/scroll cases and Light route passed 16/16. A marked disposable production Save writer and separate fresh-process normal Load reader passed 1/1 each with unchanged slot bytes.
+- The full integrated MM7 headless GameTest binary passed 533 tests with two skipped and 11 disabled unrun. The unit suite passed 1,087 with 45 skipped. Other targeting exits and installed-app graphical acceptance remain open.
+

@@ -1,7 +1,10 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <filesystem>
 #include <numbers>
+#include <span>
+#include <string_view>
 #include <utility>
 
 #include "Testing/Game/GameTest.h"
@@ -10,15 +13,25 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MapEnums.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
+#include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Party.h"
+#include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/Resources/LOD.h"
+#include "Engine/SaveLoad.h"
 #include "Engine/Tables/NPCTable.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIHouses.h"
+#include "GUI/UI/UISaveLoad.h"
 #include "Utility/Exception.h"
 
 namespace {
+
+constexpr std::string_view checkpointSlot = "saves/save000.mm7";
+constexpr std::string_view checkpointFileName = "save000.mm7";
 
 std::pair<Vec3f, int> approachFace(const BLVFace &face) {
     Vec3f position = face.boundingBox.center() + 150 * face.facePlane.normal;
@@ -222,7 +235,7 @@ GAME_TEST(MM7OverthrusterRoute, ShoalsLincolnEntry) {
     test.stopTaping();
 }
 
-GAME_TEST(MM7OverthrusterRoute, LincolnRetrievalAndExit) {
+static void runLincolnRetrievalAndExit(EngineController &game, TestController &test, CommonTapeRecorder &tapes) {
     game.startNewGame();
     engine->config->debug.NoDamage.setValue(true);
     pParty->_questBits.set(QBIT_LIGHT_PATH);
@@ -272,4 +285,88 @@ GAME_TEST(MM7OverthrusterRoute, LincolnRetrievalAndExit) {
     EXPECT_EQ(oracleTape, tape(false, true));
     EXPECT_EQ(itemTape, tape(false, true));
     test.stopTaping();
+}
+
+GAME_TEST(MM7OverthrusterRoute, LincolnRetrievalAndExit) {
+    runLincolnRetrievalAndExit(game, test, tapes);
+}
+
+// These disabled tests require GameTestMain's exact-filter disposable MM7 profile gate.
+GAME_TEST(MM7OverthrusterRoute, DISABLED_WriteFreshCheckpoint) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    const auto profileRoot = mm7::startupNativeProfileRoot();
+    ASSERT_TRUE(profileRoot);
+    ASSERT_EQ(*profileRoot, std::filesystem::canonical(std::filesystem::path(ufs->displayPath(""))));
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    ASSERT_FALSE(ufs->exists(checkpointSlot));
+
+    runLincolnRetrievalAndExit(game, test, tapes);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    ASSERT_FALSE(::testing::Test::HasFailure());
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_SHOALS);
+    ASSERT_TRUE(pParty->_questBits[QBIT_LIGHT_PATH]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_OSCILLATION_OVERTHRUSTER_LIGHT_ACTIVE]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_OSCILLATION_OVERTHRUSTER_TAKEN]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_ORACLE_RECOVERS_OSCILLATION_OVERTHRUSTER]);
+    for (const Character &character : pParty->pCharacters)
+        ASSERT_TRUE(character.hasUnderwaterSuitEquipped());
+    ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_QUEST_OSCILLATION_OVERTHRUSTER);
+    ASSERT_FALSE(pParty->hasItem(ITEM_QUEST_OSCILLATION_OVERTHRUSTER));
+
+    SaveGameHeader header;
+    game.runGameRoutine([&] {
+        header = saveGame(false, false, checkpointSlot, "Overthruster retrieval checkpoint");
+    });
+    ASSERT_FALSE(header.locationName.empty());
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = ufs->read(checkpointSlot);
+    ASSERT_GT(saved.size(), 1024u);
+    ASSERT_TRUE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saved.data()), saved.size()),
+        GameTitle::MM7, *pGames_LOD));
+}
+
+GAME_TEST(MM7OverthrusterRoute, DISABLED_ReloadFreshCheckpoint) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    const auto profileRoot = mm7::startupNativeProfileRoot();
+    ASSERT_TRUE(profileRoot);
+    ASSERT_EQ(*profileRoot, std::filesystem::canonical(std::filesystem::path(ufs->displayPath(""))));
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = Blob::copy(ufs->read(checkpointSlot));
+    ASSERT_GT(saved.size(), 1024u);
+
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(3);
+    ASSERT_EQ(current_screen_type, SCREEN_LOADGAME);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto found = std::find_if(slots.begin(), slots.end(), [](const SavegameSlot &entry) {
+        return entry.fileName == checkpointFileName;
+    });
+    ASSERT_NE(found, slots.end());
+    const int index = static_cast<int>(found - slots.begin());
+    ASSERT_LT(index, 7);
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", index));
+    game.tick(2);
+    ASSERT_EQ(saveLoadMenu()->selectedSlot().fileName, checkpointFileName);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick(2);
+
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_SHOALS);
+    ASSERT_EQ(engine->_lastLoadedSaveFileName, checkpointFileName);
+    EXPECT_TRUE(pParty->_questBits[QBIT_LIGHT_PATH]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_DARK_PATH]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_OSCILLATION_OVERTHRUSTER_LIGHT_ACTIVE]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_OSCILLATION_OVERTHRUSTER_TAKEN]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_ORACLE_RECOVERS_OSCILLATION_OVERTHRUSTER]);
+    for (const Character &character : pParty->pCharacters)
+        EXPECT_TRUE(character.hasUnderwaterSuitEquipped());
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_QUEST_OSCILLATION_OVERTHRUSTER);
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_OSCILLATION_OVERTHRUSTER));
+    EXPECT_TRUE(ufs->read(checkpointSlot).str() == saved.str());
 }

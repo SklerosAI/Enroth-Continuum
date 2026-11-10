@@ -3001,3 +3001,8 @@ Chronological record of wiki activity.
 - The integrated GameTest built; Xenofex, Overthruster and ending focused controls passed 7/7. Actual Xenofex hand-in unlocked NPC80's second topic, L9 UI selection activated the final task, a no-item L15 attempt refused, and a held Overthruster fixture completed the game-over/certificate/autosave sequence.
 - The held item matches Lincoln's retrieval state but was injected in this test. A real post-retrieval fresh-process checkpoint and uninterrupted chapter continuity remain open. The test ran headlessly with an in-memory user filesystem.
 
+## [2026-11-10] plan | Trilogy artifact loot reroll mod
+- by: T-Burton-ND via codex
+- Recorded the owner's requested instant reroll for artifact-eligible high-level chest and monster loot across MM6, MM7 and MM8 in the cross-game roadmap and MM7 mod list at `af53b5bad`.
+- This is a future optional mod only. Behavior, interface, implementation and validation remain undecided.
+

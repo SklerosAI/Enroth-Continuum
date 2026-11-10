@@ -64,4 +64,4 @@ unchanged, and the one-missing-rescue and prior disposable writer/reader
 controls each passed 1/1. This proves this bounded interaction checkpoint,
 not a continuous human campaign or a visible check of the final staged app.
 
-See also: [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [MM7 Atomic Save File](MM7-Atomic-Save-File.md), [Campaign Status](Campaign-Status.md), [Agent Handoff](Agent-Handoff.md).
+See also: [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [MM7 Atomic Save File](MM7-Atomic-Save-File.md), [MM7 Playtest Recording](MM7-Playtest-Recording.md), [Campaign Status](Campaign-Status.md), [Agent Handoff](Agent-Handoff.md).

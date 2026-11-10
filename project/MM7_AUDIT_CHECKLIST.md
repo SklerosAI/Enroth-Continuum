@@ -91,16 +91,17 @@ assets, save contents, or copied guide text.
 
 ### Local endgame playtest recorder
 
-Before the owner starts the long audit playthrough, prepare a passive local
-Bash collector that records the source/app identity, start and stop times,
-engine log stream, timestamped owner notes, and save file names, sizes and
-checksums at named checkpoints. Snapshot changed saves into an owner-only,
-Git-ignored local directory; avoid changing the running game's profile.
-Optional screen captures require the owner's graphical authorization and stay
-local. The collector reports process exit and highlights errors, but a Bash
-script alone cannot observe all in-memory quest flags or prove that every
-event fired correctly. Pair its timeline with the campaign checklist and
-focused GameTests.
+A passive local [Bash collector](../tools/MM7_PLAYTEST_CAPTURE.md) and Atlas
+**Record gameplay** toggle are staged. They record source/app identity, start
+and stop times, incremental engine-log ranges, timestamped owner notes, stable
+changed-save snapshots and checksums in an owner-only destination, including
+an external drive chosen through Atlas. Screen video requires the owner's
+graphical authorization and macOS permission. The staged bundle passed
+headless assembly, signature, syntax and synthetic script checks; an actual
+owner-played recording and installed-app cutover remain open. The collector
+reports process exit and highlights errors, but Bash cannot observe all
+in-memory quest flags or prove that every event fired correctly. Pair its
+timeline with the campaign checklist and focused GameTests.
 
 For a short defect reproduction, MM7's built-in Ctrl+Shift+R recorder writes
 `traceNNNNN.json` and a paired `traceNNNNN.mm7` in the active profile when

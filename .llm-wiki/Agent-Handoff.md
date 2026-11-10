@@ -34,6 +34,11 @@ authorizes headless checks only. Do not install it before that check.
 Ordinary NPC talk, one monster fight, owner audio confirmation, main-quest
 path coverage and installed-app cutover remain open. See the current
 [campaign status](Campaign-Status.md) and [MM7 save gate](MM7-Disposable-Save-Reload.md).
+For the later endgame audit, the [passive playtest recorder](MM7-Playtest-Recording.md)
+is integrated into a separately staged, signed Atlas with a recording toggle
+and external-folder picker. Synthetic Bash checks and headless bundle checks
+passed; no actual video or Atlas recording lifecycle was exercised, and the
+installed app is unchanged. The owner currently authorizes headless checks only.
 
 At MM7-first resumption, integration `master` was clean and pushed at
 `f4d1b8065`; this is a historical checkpoint, not the current head. The [November 9 progress table](Progress-2026-11-09.md)

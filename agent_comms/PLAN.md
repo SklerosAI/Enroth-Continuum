@@ -95,9 +95,11 @@ the W1 save/reload check so stage 1 stays closed.
 Stage 3 works through `project/MM7_AUDIT_CHECKLIST.md` plus the stage 1
 defect queue's non-blocking items. Stage 4 works through
 `project/MM6_IMPLEMENTATION_CHECKLIST.md` and full campaign coverage.
-For the owner's endgame playtest, prepare a local passive Bash collector for
-build identity, timestamped notes, engine logs and save snapshots/checksums.
-Keep its output outside Git. The built-in Ctrl+Shift+R MM7 trace recorder is
+For the owner's endgame playtest, a local passive Bash collector and Atlas
+recording control are staged after synthetic script and headless bundle checks.
+The first actual video/launcher recording and external-drive check remain open
+under the owner's current headless-only authorization. Keep all output outside
+Git. The built-in Ctrl+Shift+R MM7 trace recorder is
 useful for short repros only: it reloads a save, changes to deterministic mode
 and redirects saves to an in-memory filesystem until the trace stops.
 

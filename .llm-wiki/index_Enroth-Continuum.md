@@ -36,6 +36,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Mac Dependency Recipe](MM7-Mac-Dependency-Recipe.md) — Five tracked media-library sources build to nine static arm64 archives
 - [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md) — One-command clean tracked-source MM7 and Atlas build under network denial, with focused headless controls
 - [MM7 Disposable Save and Reload](MM7-Disposable-Save-Reload.md) — Headless and visible isolated save/reload evidence, rebuilt-castle fresh-process checkpoint and staged-candidate limits
+- [MM7 Playtest Recording](MM7-Playtest-Recording.md) — Staged Atlas recording control, private local video/log/save collector, headless checks and live acceptance boundary
 - [MM7 Atomic Save File](MM7-Atomic-Save-File.md) — Native-slot helper, detached preflight and integrated staged live capture; production atomic SaveLoad wiring remains open
 - [MM6 Transition and Death Candidates](MM6-Transition-And-Death-Candidates.md) — Cancel-only MM6 indoor dialog and detached death model with explicit live integration gates
 - [MM7 Level-Seven Artifacts](MM7-Level-Seven-Artifacts.md) — MM7 artifact flags, cap and indoor pickup payload fixed with focused GameTests; graphical pickup remains open

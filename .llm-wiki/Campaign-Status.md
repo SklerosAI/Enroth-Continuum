@@ -20,6 +20,12 @@ The owner's [current delivery order](Current-Delivery-Order.md) puts MM7 working
 
 See the [November 9 progress table](Progress-2026-11-09.md) and [MM6 resume handoff](../project/MM6_RESUME_HANDOFF.md) for exact checks and next source paths. Raw captures and game data stay local.
 
+A [passive MM7 playtest recorder](MM7-Playtest-Recording.md) is integrated in a
+separate signed Atlas stage for the later owner-played audit. Its script and
+bundle passed headless checks, while live video, external-drive behavior and
+installed-app use remain unverified. This tooling does not advance campaign
+playability by itself.
+
 ## Historical snapshot — 2026-11-07
 
 The following table is retained as a dated record. Its claims that normal MM6 Save/Load remained closed were superseded by the November 9 first-map integration.

@@ -3710,14 +3710,14 @@ void Character::useItem(int targetCharacter, bool isPortraitClick) {
             return;
         }
 
-        // TODO(Nik-RE-dev): spell scroll is removed before actual casting and will be consumed even if casting is canceled.
         SpellId scrollSpellId = spellForScroll(pParty->pPickedItem.itemId);
         if (isSpellTargetsItem(scrollSpellId)) {
-            pParty->takeHoldingItem();
+            Item scroll = pParty->takeHoldingItem();
             pGUIWindow_CurrentMenu = nullptr;
             current_screen_type = SCREEN_GAME;
-            pushScrollSpell(scrollSpellId, targetCharacter);
+            pushScrollSpell(scrollSpellId, targetCharacter, scroll);
         } else {
+            // TODO(Nik-RE-dev): the scroll is used up here even if the player then cancels the spell's targeting.
             pParty->takeHoldingItem();
             // Process spell on next frame after game exits inventory window.
             engine->_messageQueue->addMessageNextFrame(UIMSG_SpellScrollUse, std::to_underlying(scrollSpellId), targetCharacter);

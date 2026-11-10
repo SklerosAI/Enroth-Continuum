@@ -3048,6 +3048,7 @@ static size_t pushCastSpellInfo(SpellId uSpellID,
             pCastSpellInfo[i].targetPid = targetPid;
             pCastSpellInfo[i].flags = uFlags;
             pCastSpellInfo[i].overrideSkillValue = skill_level;
+            pCastSpellInfo[i].scroll = Item();
             return i;
         }
     }
@@ -3307,8 +3308,10 @@ void pushNPCSpell(SpellId spell) {
     pushSpellOrRangedAttack(spell, 0, SCROLL_OR_NPC_SPELL_SKILL_VALUE, 0);
 }
 
-void pushScrollSpell(SpellId spell, int casterIndex) {
+void pushScrollSpell(SpellId spell, int casterIndex, const Item &scroll) {
     pushSpellOrRangedAttack(spell, casterIndex, SCROLL_OR_NPC_SPELL_SKILL_VALUE, ON_CAST_CastViaScroll);
+    if (IsEnchantingInProgress)
+        pGUIWindow_CastTargetedSpell->spellInfo()->scroll = scroll;
 }
 
 void spellTargetPicked(Pid targetPid, int targetCharacterIndex) {

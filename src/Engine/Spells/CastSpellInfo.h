@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "Engine/Objects/CombinedSkillValue.h"
+#include "Engine/Objects/Item.h"
 #include "Engine/Pid.h"
 
 #include "Utility/Flags.h"
@@ -74,6 +75,7 @@ struct CastSpellInfo {
     Pid targetPid; // Target pid, if any.
     int targetInventoryIndex = -1; // Target inventory item index (in Character::pInventoryItemList) in target
                                    // character's inventory, if any.
+    Item scroll; // Scroll an item-target spell was read from, given back if the player cancels the item pick.
 };
 
 /**
@@ -122,8 +124,11 @@ void pushNPCSpell(SpellId spell);
  *
  * @param spell                         Spell id.
  * @param casterIndex                   0-based index of the character casting the spell.
+ * @param scroll                        Scroll being read, for a spell that targets an item. It stays with the queued
+ *                                      spell until the player picks the item, and goes back on the cursor if the
+ *                                      player cancels instead.
  */
-void pushScrollSpell(SpellId spell, int casterIndex);
+void pushScrollSpell(SpellId spell, int casterIndex, const Item &scroll = Item());
 
 /**
  * Process successful picking target for spell.

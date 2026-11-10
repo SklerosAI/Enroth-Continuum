@@ -551,6 +551,11 @@ void Game::processQueuedMessages() {
                         if (current_screen_type < SCREEN_64) {
                             switch (current_screen_type) {
                                 case SCREEN_CASTING:
+                                    if (IsEnchantingInProgress) {
+                                        Item &scroll = pGUIWindow_CastTargetedSpell->spellInfo()->scroll;
+                                        if (scroll.itemId != ITEM_NULL)
+                                            pParty->setHoldingItem(std::exchange(scroll, Item()));
+                                    }
                                     if (enchantingActiveCharacter != -1) {
                                         pParty->setActiveCharacterIndex(enchantingActiveCharacter);
                                         pParty->switchToNextActiveCharacter();

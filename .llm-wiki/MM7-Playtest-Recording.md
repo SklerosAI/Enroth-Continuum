@@ -15,6 +15,14 @@ The Atlas has a persistent **Record gameplay** toggle and a folder picker for lo
 
 The Bash 3.2 script passed synthetic checks for paths with spaces, notes/stop, changing-save deferral, log append/rotation/truncation, tracked-destination refusal, low-space stop and watched-PID exit. The staged Atlas assembled, its signature and helper signature verified, and its packaged script matched the tracked source hash. Swift typechecking and page JavaScript syntax checks passed. No MM7 or screen-capture process was run for this feature under the owner's current headless-only authorization. The staged bundle is separate from the installed app.
 
+A later independent static review found and closed quick-relaunch, early-ready,
+warning-suppression, final-video-status and drive-remount races. Atlas now
+waits for the recorder's ready status, keeps Play closed while the previous
+recording finalizes, checks the selected volume ID across the Bash handoff and
+reports uncertain final video. A synthetic wrong-volume attempt was rejected;
+the matching-volume session started and stopped. The hardened stage was
+rebuilt and its signatures, notices, page and packaged script rechecked.
+
 The first live gate is to enable recording on a disposable profile, choose an owner-approved destination, grant macOS Screen Recording permission if requested, play briefly, quit, and inspect video, incremental logs, final status and unchanged original saves. External-drive removal and low-memory warnings need later owner-attended checks. Display video can include other windows; system/game audio is not captured. Raw video, saves, logs and notes stay outside Git and cloud services.
 
 The built-in Ctrl+Shift+R trace recorder remains a short defect-reproduction tool: it reloads a save, enters deterministic mode and redirects saves to memory while active, so it is unsuitable for the long durability playthrough.

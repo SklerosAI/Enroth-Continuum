@@ -33,10 +33,12 @@ with the arbiter and related issue controls, the integrated focused run passed
 interactions, exits and hands in the quest. The group-1 kill check is a
 failure branch: a qualifying kill skips the quest-pass bit, while the no-kill
 path sets it. A fresh-entry probe and local base/delta check found no group-1
-actor, spawn point, scripted summon or remap, so that negative branch may be
-unreachable in the shipped initial state. This does not block the proven
-successful route. Its original semantics and a fresh-process Save/Load
-checkpoint after this chapter remain open.
+actor, spawn point, scripted summon or remap. The negative branch is
+unreachable in the tested local data; no runtime fix is justified, and the
+successful route is unaffected. The later Light chapter checkpoint passed on
+integrated source: production Save writer and fresh-process normal Load reader
+1/1 each, persistent Light/Walls/guild bits intact and slot digest unchanged.
+Advisor tasks and later chapter boundaries remain open.
 
 ## Historical snapshot — 2026-11-07
 

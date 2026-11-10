@@ -64,4 +64,16 @@ unchanged, and the one-missing-rescue and prior disposable writer/reader
 controls each passed 1/1. This proves this bounded interaction checkpoint,
 not a continuous human campaign or a visible check of the final staged app.
 
+## Light Walls checkpoint — 2026-11-10
+
+On integrated source, a marked disposable-profile writer followed the
+input-driven Light choice, city, Walls pedestal and throne hand-in route and
+wrote a normal MM7 slot. A separate fresh headless child selected that slot
+through the normal Load menu. Writer and reader passed 1/1 each; persistent
+Light, Walls and guild bits, map and selected slot matched, and the slot digest
+was unchanged. The refactored Light route and dawn closed-throne controls also
+passed 2/2. A transient NPC dialogue field was not used as a persistence
+assertion because the branch gate observed it reset after Load. This remains
+a bounded chapter checkpoint, not an end-to-end visible campaign.
+
 See also: [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [MM7 Atomic Save File](MM7-Atomic-Save-File.md), [MM7 Playtest Recording](MM7-Playtest-Recording.md), [Campaign Status](Campaign-Status.md), [Agent Handoff](Agent-Handoff.md).

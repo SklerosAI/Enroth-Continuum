@@ -44,10 +44,12 @@ integrated; the new pair passed 2/2 and the focused integrated run including
 arbiter and issue controls passed 4/4. The Walls group-1 kill check is a
 failure branch: a true kill check skips the quest-pass write, while the no-kill
 route passes. A fresh-entry probe and local base/delta review found no group-1
-actor or spawn point and no scripted summon/remap. That negative branch may be
-unreachable in the shipped initial state; the successful quest path is not
-blocked by it. Original semantics and a fresh-process Light chapter checkpoint
-remain open. This corrects the earlier plausible-blocker reading.
+actor or spawn point and no scripted summon/remap. The negative branch is
+unreachable in the tested local data, so no runtime group change is justified;
+the successful quest path is unaffected. The Light chapter's production Save
+writer and fresh-process normal Load reader passed 1/1 each on integrated
+source with persistent Light/Walls/guild state and an unchanged slot digest.
+This supersedes the earlier plausible-blocker and open-checkpoint readings.
 
 At MM7-first resumption, integration `master` was clean and pushed at
 `f4d1b8065`; this is a historical checkpoint, not the current head. The [November 9 progress table](Progress-2026-11-09.md)

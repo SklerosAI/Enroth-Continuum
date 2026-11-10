@@ -78,8 +78,9 @@ first-map HUD books now open and close headlessly through their baked controls
 and the MM6 exit tab. The common book frame and Quest page use native art and
 original source-traced positions; Notes and Map art and visible acceptance
 remain open. The summoner-preflight checkpoint branch retains its ref. The arbiter, endings,
-messenger, Alice house and pickup checks now pass as five MM7 campaign
-GameTests. The raid case remains disabled.
+messenger, Alice house and pickup checks passed as five MM7 campaign
+GameTests at this earlier checkpoint. The raid case was disabled then; its
+later activation is recorded in the fast resume pointer above.
 The inherited MM6 pickup rule for IDs 506 and 455 is now title-gated so an
 MM7 pickup cannot set the raid completion bits.
 

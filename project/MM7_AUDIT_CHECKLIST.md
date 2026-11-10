@@ -89,6 +89,26 @@ assets, save contents, or copied guide text.
   currently playable title in succession, save/reload each, update MM7 alone,
   and repeat. No other app bundle, Play action, data root or save may change.
 
+### Local endgame playtest recorder
+
+Before the owner starts the long audit playthrough, prepare a passive local
+Bash collector that records the source/app identity, start and stop times,
+engine log stream, timestamped owner notes, and save file names, sizes and
+checksums at named checkpoints. Snapshot changed saves into an owner-only,
+Git-ignored local directory; avoid changing the running game's profile.
+Optional screen captures require the owner's graphical authorization and stay
+local. The collector reports process exit and highlights errors, but a Bash
+script alone cannot observe all in-memory quest flags or prove that every
+event fired correctly. Pair its timeline with the campaign checklist and
+focused GameTests.
+
+For a short defect reproduction, MM7's built-in Ctrl+Shift+R recorder writes
+`traceNNNNN.json` and a paired `traceNNNNN.mm7` in the active profile when
+stopped. Starting it saves/reloads the session, resizes the window to 640x480,
+enters deterministic mode, and redirects saves to memory until stopped. Do
+not leave it active during the long durability playthrough. Both trace and
+save contain private game state and remain outside the public repository.
+
 ## Evidence rule
 
 For each checklist item, retain the data manifest or source reference, engine

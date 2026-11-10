@@ -10,7 +10,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 ## Navigation and conventions
 
 - [Home](Home_Enroth-Continuum.md) — Curated entry point
-- [Agent Handoff](Agent-Handoff.md) — MM7-first resume pointer, Castle rebuild save checkpoint evidence, visible gaps and historical MM6 handoff
+- [Agent Handoff](Agent-Handoff.md) — MM7-first resume pointer, integrated Castle checkpoint and scavenger/ship evidence, visible gaps and historical MM6 handoff
 - [Current Delivery Order](Current-Delivery-Order.md) — Owner's MM7 working → MM6 working → full MM7 audit → full MM6 audit sequence and coordination rules
 - [November 9 Progress](Progress-2026-11-09.md) — Dated integrated MM6/MM7 work and priority-ordered resume steps
 - [Agent communications](../agent_comms/README.md) — Cross-model claims, handoffs, reviews and model-card protocol
@@ -28,14 +28,14 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 
 ## Campaigns and runtime
 
-- [Campaign Status](Campaign-Status.md) — Current MM6, MM7 and MM8 readiness, including MM7 Castle rebuild coverage, staged visible gate and remaining gaps
+- [Campaign Status](Campaign-Status.md) — Current MM6, MM7 and MM8 readiness, including integrated Castle and scavenger coverage, staged visible gate and remaining gaps
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [MM7 Private Portrait Mod](MM7-Private-Portrait-Mod.md) — Local mood PNG layout, shared MM7 portrait resolver, Atlas controls, and verified hidden HUD capture
 - [Runtime Isolation](Runtime-Isolation.md) — Title-locked MM7 helper and staged Atlas sibling assembler; MM6/MM8 launch gates remain closed
 - [MM7 Self-Contained Source](MM7-Self-Contained-Source.md) — Tracked Mac source, verified integration candidate and remaining graphical, save and identity gates
 - [MM7 Mac Dependency Recipe](MM7-Mac-Dependency-Recipe.md) — Five tracked media-library sources build to nine static arm64 archives
 - [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md) — One-command clean tracked-source MM7 and Atlas build under network denial, with focused headless controls
-- [MM7 Disposable Save and Reload](MM7-Disposable-Save-Reload.md) — Headless and visible isolated save/reload evidence, copied older-save Load and current staged-candidate limits
+- [MM7 Disposable Save and Reload](MM7-Disposable-Save-Reload.md) — Headless and visible isolated save/reload evidence, rebuilt-castle fresh-process checkpoint and staged-candidate limits
 - [MM7 Atomic Save File](MM7-Atomic-Save-File.md) — Native-slot helper, detached preflight and integrated staged live capture; production atomic SaveLoad wiring remains open
 - [MM6 Transition and Death Candidates](MM6-Transition-And-Death-Candidates.md) — Cancel-only MM6 indoor dialog and detached death model with explicit live integration gates
 - [MM7 Level-Seven Artifacts](MM7-Level-Seven-Artifacts.md) — MM7 artifact flags, cap and indoor pickup payload fixed with focused GameTests; graphical pickup remains open

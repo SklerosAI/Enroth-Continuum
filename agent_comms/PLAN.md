@@ -15,9 +15,9 @@ a visible check of the current candidate.
 | Row | Evidence that closes it | Owner | State |
 | --- | --- | --- | --- |
 | W1 | Current integrated source builds into a staged app. Title lock and signature hold. A headless fresh-process Save/quit/relaunch/Load passes on that build in an isolated profile. | Codex lane B (`codex/mm7-candidate-validation`) | Passed 2026-11-10 (staged build, Save and fresh-process Load 1/1 each) |
-| W2 | The disabled Harmondale raid test runs and passes, with the quest route fixed if needed. | Codex lane A (`codex/mm7-raid-route`) | Active |
-| W3 | One owner-attended visible session of the staged candidate on the main display (checklist below). | Lane B runs it, Claude drafts the checklist, owner attends | Blocked until staged Atlas Play can target a temporary profile. Lane B is adding that override. |
-| W4 | Every main-quest transition from New Game through the shared opening and the Light branch to its ending is exercised through input by a GameTest against the real data, plus fresh-process Save/Load across the chapter boundaries. | Claude, `claude/mm7-campaign-path` in `mm7-save-durability` once a code lane frees | Mapped, waiting for a lane |
+| W2 | The disabled Harmondale raid test runs and passes, with the quest route fixed if needed. | Codex lane A (`codex/mm7-raid-route`) | Passed on integrated source; campaign controls 6/6 |
+| W3 | One owner-attended visible session of the staged candidate on the main display (checklist below). | Lane B runs it, Claude drafts the checklist, owner attends | Partial staged session passed durable Save/Load; final signed build still needs visible smoke, audio, ordinary NPC and monster fight. Owner currently authorizes headless checks only. |
+| W4 | Every main-quest transition from New Game through the shared opening and the Light branch to its ending is exercised through input by a GameTest against the real data, plus fresh-process Save/Load across the chapter boundaries. | Claude coordinates; Codex takes independent code scopes | Castle opening/rebuild, fresh-process rebuild checkpoint and scavenger Judge/ship tests passed on integrated source. Light branch and remaining save boundaries open. |
 | W5 | Candidate replaces the installed MM7 under The Atlas. The old app and normal profile stay as a restorable backup. The installed copy relaunches and loads an existing save. | Lane B | Waiting on W3 |
 | W6 | Defects found in W1-W5 that block a player are fixed and their scenario rerun. Non-blocking finds go to the stage 3 audit queue. | Whichever lane is free | Ongoing |
 
@@ -95,6 +95,11 @@ the W1 save/reload check so stage 1 stays closed.
 Stage 3 works through `project/MM7_AUDIT_CHECKLIST.md` plus the stage 1
 defect queue's non-blocking items. Stage 4 works through
 `project/MM6_IMPLEMENTATION_CHECKLIST.md` and full campaign coverage.
+For the owner's endgame playtest, prepare a local passive Bash collector for
+build identity, timestamped notes, engine logs and save snapshots/checksums.
+Keep its output outside Git. The built-in Ctrl+Shift+R MM7 trace recorder is
+useful for short repros only: it reloads a save, changes to deterministic mode
+and redirects saves to an in-memory filesystem until the trace stops.
 
 ## Limits in force
 

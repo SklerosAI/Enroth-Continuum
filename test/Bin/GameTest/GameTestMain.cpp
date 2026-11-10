@@ -70,7 +70,8 @@ void validateDisposableMm7Profile(GameTestOptions *opts, bool writer) {
         for (const fs::directory_entry &entry : fs::directory_iterator(saves)) {
             const std::string name = entry.path().filename().string();
             if (!entry.is_regular_file() || entry.is_symlink() ||
-                (name != "save000.mm7" && name != "save000.mm7.bak" && name != "autosave.mm7"))
+                (name != "save000.mm7" && name != "save000.mm7.bak" &&
+                 name != "autosave.mm7" && name != "autosave.mm7.bak"))
                 throw Exception("MM7 save gate profile contains an unexpected save.");
         }
     }
@@ -113,11 +114,15 @@ int platformMain(int argc, char **argv) {
         }
         const bool mm7SaveWriter = GTEST_FLAG_GET(filter) == "MM7DisposableSave.DISABLED_WriteFreshProfile";
         const bool mm7SaveReader = GTEST_FLAG_GET(filter) == "MM7DisposableSave.DISABLED_ReloadFreshProcess";
-        if (opts.disposableMm7Profile || mm7SaveWriter || mm7SaveReader) {
-            if (!opts.disposableMm7Profile || !(mm7SaveWriter || mm7SaveReader) ||
+        const bool mm7CastleWriter = GTEST_FLAG_GET(filter) == "MM7CastleRebuild.DISABLED_WriteFreshCheckpoint";
+        const bool mm7CastleReader = GTEST_FLAG_GET(filter) == "MM7CastleRebuild.DISABLED_ReloadFreshCheckpoint";
+        const bool mm7Writer = mm7SaveWriter || mm7CastleWriter;
+        const bool mm7Reader = mm7SaveReader || mm7CastleReader;
+        if (opts.disposableMm7Profile || mm7Writer || mm7Reader) {
+            if (!opts.disposableMm7Profile || !(mm7Writer || mm7Reader) ||
                 !GTEST_FLAG_GET(also_run_disabled_tests))
                 throw Exception("MM7 disposable save gate requires its exact disabled test filter and temporary profile.");
-            validateDisposableMm7Profile(&opts, mm7SaveWriter);
+            validateDisposableMm7Profile(&opts, mm7Writer);
         }
         if (opts.listRequested)
             return RUN_ALL_TESTS();
@@ -134,7 +139,7 @@ int platformMain(int argc, char **argv) {
         int exitCode = 0;
         starter.runInstrumented([&] (EngineController *game) {
             NativeFileSystem tfs(opts.testPath);
-            TestController test(game, &tfs, opts.speed, opts.disposableMm7Profile, mm7SaveReader);
+            TestController test(game, &tfs, opts.speed, opts.disposableMm7Profile, mm7Reader);
             GameTest::init(game, &test);
             exitCode = RUN_ALL_TESTS();
         });

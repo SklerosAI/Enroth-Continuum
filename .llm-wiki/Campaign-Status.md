@@ -52,15 +52,16 @@ through fresh-process Load and two subsequent frames. The revised Light route
 and advisor controls passed 5/5, with writer and reader 1/1 each.
 The three advisor hand-in checks and assassination request/cube hand-in are
 also integrated. The focused combined Light run passed 7/7. These tests use
-fixture quest items and bits around input-driven dialogue and doors. Real
-item acquisition and hostile Pit combat/cube loot remain open. Xenofex request,
+fixture quest items and bits around input-driven dialogue and doors. Advisor
+item acquisition and uninterrupted chapter continuity remain open; a separate
+Pit test below covers combat and cube loot. Xenofex request,
 alive/dead map-leave and hand-in are integrated, with travel and actor death
 as fixtures. The Overthruster tests now cover throne request, wetsuit chest
 collection, Avlee and Lincoln suit gates, Shoals entry, unpowered pedestal,
 console activation, item retrieval and exit. Four new cases and the two
 wetsuit/Shoals controls plus two Xenofex cases passed 8/8 together on
-integration source. An uninterrupted chapter route, L15 with the retrieved
-item and its fresh-process checkpoint remain open.
+integration source. An uninterrupted chapter route and L15 with the actual
+retrieved item remain open; later focused checkpoints cover adjacent slices.
 The subsequent integrated final-link test passed with the existing Xenofex and
 ending controls 3/3, and with the Overthruster cases 7/7. It proves the real
 Xenofex hand-in unlocks the second NPC topic for L9, the request activates
@@ -74,6 +75,13 @@ advisor hand-in. The new test and existing no-cube control passed 2/2 on
 integrated source. Party combat strength and positioning are fixtures;
 natural walking through the room and uninterrupted campaign continuity
 remain open.
+The later integrated Pit-to-Xenofex seam uses input-driven Walls, altar and
+Tolberti hand-ins to produce NPC80's throne house and Xenofex topic without
+assigning those fields. A marked disposable production Save writer and
+separate normal-Load reader passed 1/1 each with unchanged slot bytes. The
+reader selected the surviving second-slot topic through the UI; the in-memory
+seam and Xenofex controls passed 3/3. Earlier quest outcomes, altar items and
+cube are fixtures, so continuous New Game-to-ending coverage remains open.
 The later Overthruster checkpoint is also integrated. Production Save after
 input-driven Lincoln retrieval and Shoals exit, followed by normal Load in a
 separate fresh headless process, passed 1/1 each. The loaded state kept the

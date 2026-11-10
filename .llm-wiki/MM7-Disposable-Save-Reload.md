@@ -83,6 +83,21 @@ The revised Light route and three advisor controls passed 5/5, and the
 disposable writer and reader passed 1/1 each with unchanged slot bytes. This
 remains a bounded chapter checkpoint, not an end-to-end visible campaign.
 
+## Light Pit-to-Xenofex checkpoint — 2026-11-10
+
+The integrated seam writer used the house UI for NPC79's Walls offer and
+hand-in, NPC80's altar offer and hand-in, and NPC83's assassination request
+and cube hand-in after the Pit door. These interactions naturally moved
+NPC80 to the Lambent throne and set his Xenofex topic. The writer saved to a
+marked owner-only temporary profile before requesting Xenofex. A separate
+fresh headless process selected the slot through the normal Load menu,
+verified NPC80's house and topic fields, then selected the actual second-slot
+Xenofex topic through the UI. The in-memory seam and two Xenofex controls
+passed 3/3; writer and reader passed 1/1 each, with the slot digest unchanged.
+Earlier Walls, Wine and Soul outcomes, two altar items and the cube were
+fixtures. Separate tests cover those local interactions and cube combat, but
+this checkpoint is not an uninterrupted New Game-to-ending run.
+
 ## Overthruster retrieval checkpoint — 2026-11-10
 
 On integrated source, a marked owner-only disposable-profile writer used the

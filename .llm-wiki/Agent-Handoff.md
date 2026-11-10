@@ -64,9 +64,9 @@ cover Robert's advisor gate, the request, Pit door transition and cube
 hand-in. Xenofex coverage gates the request on the assassination result,
 checks map-leave with its actor alive versus a fixture death, and completes
 the throne hand-in. Fixtures provide prior quest state, items, travel and the
-Xenofex kill. Real advisor-item and cube acquisition, Xenofex and Pit
-combat/cube loot, uninterrupted continuity and the later Overthruster
-checkpoint remain open.
+Xenofex kill. Advisor-item acquisition, Xenofex combat and uninterrupted
+continuity remain open; Pit cube combat and the Overthruster checkpoint are
+covered below.
 Read the dated handoffs under
 `agent_comms/handoffs/` before extending these tests.
 The later four Overthruster cases are integrated. Together with two wetsuit/
@@ -75,7 +75,7 @@ source. The test collects suits through chest input, checks the Avlee and
 Lincoln suit gates, enters Lincoln, powers its console and retrieves the
 Overthruster before exiting to Shoals with the item. L8 completion/topic169
 and the later chapter starting state are fixtures; L15 hand-in with the
-retrieved item, fresh-process checkpoint and full
+retrieved item and full
 continuity remain open. See the Overthruster handoff in `agent_comms/handoffs/`.
 The subsequent L8-to-L9-to-L15 final-link test is integrated and passed with
 the Xenofex and existing ending controls 3/3, and alongside the Overthruster
@@ -88,6 +88,13 @@ control 2/2. It uses real attack-key combat, viewport corpse picking/clicking
 and advisor hand-in, with party-only combat strength and positioning fixtures.
 It does not prove natural walking through the room or a continuous New Game to
 ending run. See the dated Pit cube handoff in `agent_comms/handoffs/`.
+The later Pit-to-Xenofex seam is integrated. Its writer used clicked Walls,
+altar and Tolberti hand-ins to produce NPC80's Lambent house and Xenofex
+topic, then saved to a marked temporary profile. A fresh child normal-Loaded
+the slot and selected the surviving second-slot topic through UI. Writer and
+reader passed 1/1 each with unchanged slot bytes, and the in-memory seam plus
+Xenofex controls passed 3/3. Earlier quest outcomes, altar items and cube
+are fixtures. See the dated seam handoff for the boundary.
 The Overthruster fresh-process checkpoint is now integrated. Its writer uses
 the real Lincoln console/pedestal retrieval and Shoals exit before normal
 Save to a marked owner-only temporary profile. A fresh child normal-Loaded

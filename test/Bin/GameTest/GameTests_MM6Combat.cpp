@@ -330,3 +330,29 @@ GAME_TEST(MM6CombatHeadless, DISABLED_Cd2PoisonPlateHitsOneCharacter) {
     EXPECT_EQ(conditionTape.frontBack(), tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
                                               {CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD}));
 }
+
+GAME_TEST(MM6CombatHeadless, DISABLED_Cd2IceBoltPlateHitsParty) {
+    // A cd2 plate that casts Ice Bolt at the party used to refuse its event spell and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = tapes.totalHp();
+    auto conditionTape = charTapes.conditions();
+    auto boltsTape = tapes.custom([] {
+        return std::ranges::count(pSpriteObjects, SPRITE_SPELL_WATER_RECHARGE_ITEM, &SpriteObject::spriteId);
+    });
+    auto spritesTape = tapes.sprites();
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "cd2.blv");
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(11900, 312, 540), 0); // Just before a plate.
+    test.startTaping();
+
+    game.pressKey(PlatformKey::KEY_UP);
+    game.tick(3); // The party walks onto the plate.
+    game.releaseKey(PlatformKey::KEY_UP);
+    game.tick(8); // Three bolts fly at the party from the far wall.
+
+    EXPECT_EQ(boltsTape.max(), 3);
+    EXPECT_CONTAINS(spritesTape.flatten(), impactSprite(SPRITE_SPELL_WATER_RECHARGE_ITEM));
+    EXPECT_LT(hpTape.delta(), 0);
+    EXPECT_EQ(conditionTape.frontBack(), tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
+                                              {CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD}));
+}

@@ -42,7 +42,7 @@ constexpr std::string_view slot = "saves/save000.mm7";
 }  // namespace
 
 GAME_TEST(MM7CampaignChain, DISABLED_Chapter0) {
-    // Fixtures: six held Scavenger items, party strength, and skipped Margaret tour. Travel uses teleports to Markham's door and ship.
+    // Fixtures: six held Scavenger items and party strength. Travel uses teleports to Markham's door and ship.
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
     const auto profileRoot = mm7::startupNativeProfileRoot();
     ASSERT_TRUE(profileRoot);
@@ -51,9 +51,7 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter0) {
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
     ASSERT_FALSE(ufs->exists(slot));
 
-    engine->config->debug.NoMargaret.setValue(true);
     game.startNewGame();
-    engine->config->debug.NoMargaret.setValue(false);
     for (Character &character : pParty->pCharacters) {
         character.inventory.equip(ITEM_SLOT_MAIN_HAND, Item(ITEM_CHAMPION_SWORD));
         character.setSkillValue(SKILL_SWORD, CombinedSkillValue(30, MASTERY_GRANDMASTER));
@@ -61,12 +59,21 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter0) {
         character._stats[ATTRIBUTE_ACCURACY] = 200;
         character.uLevel = 100;
     }
+    auto tourOffTape = tapes.questBit(QBIT_EMERALD_ISLAND_MARGARET_TOUR_OFF);
     auto wonTape = tapes.questBit(QBIT_EMERALD_ISLAND_SCAVENGER_HUNT_WON);
     auto shipTape = tapes.questBit(QBIT_EMERALD_ISLAND_SHIP_OFFERED);
     auto escapedTape = tapes.questBit(QBIT_ESCAPED_EMERALD_ISLE);
     auto mapTape = tapes.map();
     test.startTaping();
 
+    game.pressGuiButton("Game_Hireling1"); // Lady Margaret, the only hireling at the start.
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_NPC_DIALOGUE);
+    game.pressGuiButton("NpcDialogue_Option2"); // Tour Off, or her tour plates take the Space presses at doors.
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
     game.teleportTo(MAP_EMERALD_ISLAND, Vec3f(16154, 8560, 128), 180);
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();
@@ -109,6 +116,7 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter0) {
     game.skipLoadingScreen();
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_HARMONDALE);
     ASSERT_TRUE(pParty->_questBits[QBIT_ESCAPED_EMERALD_ISLE]);
+    EXPECT_EQ(tourOffTape, tape(false, true));
     EXPECT_EQ(wonTape, tape(false, true));
     EXPECT_EQ(shipTape, tape(false, true));
     EXPECT_EQ(escapedTape, tape(false, true));

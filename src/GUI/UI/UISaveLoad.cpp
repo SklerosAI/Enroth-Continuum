@@ -12,6 +12,7 @@
 #include "Engine/AssetsManager.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
@@ -66,8 +67,19 @@ static std::vector<SavegameSlot> loadMenuSlots() {
         try {
             deserialize(ufs->read(fmt::format("saves/{}", entry.name)), &save, tags::via<SaveGameLite_MM7>);
         } catch (const std::exception &e) {
-            MM_WARNING("Couldn't load savegame '{}': {}", entry.name, e.what()); // Don't list unreadable saves.
-            continue;
+            // A native MM7 slot can retain a valid atomic backup after its primary
+            // becomes unreadable. Keep the original slot name: loadGame resolves
+            // that name through the same primary-or-backup admission path.
+            if (engine->gameTitle() != GameTitle::MM7 || !mm7::startupNativeProfileRoot()) {
+                MM_WARNING("Couldn't load savegame '{}': {}", entry.name, e.what());
+                continue;
+            }
+            try {
+                deserialize(ufs->read(fmt::format("saves/{}.bak", entry.name)), &save, tags::via<SaveGameLite_MM7>);
+            } catch (const std::exception &backupError) {
+                MM_WARNING("Couldn't load savegame '{}' or its backup: {}; {}", entry.name, e.what(), backupError.what());
+                continue;
+            }
         }
         slot.header = save.header;
 

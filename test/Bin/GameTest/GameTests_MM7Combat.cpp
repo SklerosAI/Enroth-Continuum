@@ -1,3 +1,4 @@
+#include <set>
 #include <string_view>
 #include <utility>
 
@@ -11,7 +12,9 @@
 #include "Engine/Objects/Character.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Objects/MonsterEnums.h"
+#include "Engine/Objects/MonsterEnumFunctions.h"
 #include "Engine/Objects/Monsters.h"
+#include "Engine/Objects/NPC.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Spells/CastSpellInfo.h"
 #include "Engine/Spells/Spells.h"
@@ -275,6 +278,28 @@ GAME_TEST(MM7Combat, FlamingArcherProjectileToken) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
     EXPECT_EQ(ParseMissleAttackType("FireAr"), MONSTER_PROJECTILE_FLAMING_ARROW);
     EXPECT_EQ(ParseMissleAttackType("ARROWF"), MONSTER_PROJECTILE_FLAMING_ARROW);
+}
+
+GAME_TEST(MM7NpcGeneration, GeneratedHumanPortraitRanges) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    test.prepareForNextTest(10, RANDOM_ENGINE_MERSENNE_TWISTER);
+    game.startNewGame();
+
+    std::set<Sex> seen;
+    for (const Actor &actor : pActors) {
+        if (actor.npcId < 5000)
+            continue;
+        MonsterType type = monsterTypeForMonsterId(actor.monsterInfo.id);
+        ASSERT_EQ(raceForMonsterType(type), RACE_HUMAN) << actor.id;
+        Sex sex = sexForMonsterType(type);
+        auto [minPortrait, maxPortrait] = sex == SEX_MALE ? std::pair{2, 100} : std::pair{201, 250};
+        const NPCData *npc = getNPCData(actor.npcId);
+        ASSERT_NE(npc, nullptr);
+        EXPECT_GE(npc->portraitId, minPortrait) << actor.id;
+        EXPECT_LE(npc->portraitId, maxPortrait) << actor.id;
+        seen.insert(sex);
+    }
+    EXPECT_EQ(seen, std::set<Sex>({SEX_MALE, SEX_FEMALE}));
 }
 
 GAME_TEST(MM7Combat, DivineInterventionRecoveryFallsWithLightSkill) {

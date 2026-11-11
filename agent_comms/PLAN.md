@@ -10,16 +10,19 @@ separate. A stage advances only when every row of its gate has the stated
 evidence. Headless tests and the older installed baseline do not stand in for
 a visible check of the current candidate.
 
-## Stage 1 — MM7 working gate
+## Stage 1 — MM7 working gate (closed 2026-11-11)
+
+All six rows passed. The full headless MM7 suite passed 540/540 at
+`88619a690`. Stage 2 is now the active stage.
 
 | Row | Evidence that closes it | Owner | State |
 | --- | --- | --- | --- |
 | W1 | Current integrated source builds into a staged app. Title lock and signature hold. A headless fresh-process Save/quit/relaunch/Load passes on that build in an isolated profile. | Codex lane B (`codex/mm7-candidate-validation`) | Passed 2026-11-10 (staged build, Save and fresh-process Load 1/1 each) |
 | W2 | The disabled Harmondale raid test runs and passes, with the quest route fixed if needed. | Codex lane A (`codex/mm7-raid-route`) | Passed on integrated source; campaign controls 6/6 |
 | W3 | One owner-attended visible session of the current installed candidate on the main display (session S1 below). | Codex runs it when authorized, owner attends | **Passed 2026-11-10** in owner session S1 on the installed app: title music, NPC voice, combat sounds and damage heard by the owner, NPC talk and a fight done. The staged session had covered input, focus, pause, shop, spell and Save/Load. |
-| W4 | Every main-quest transition from New Game through the shared opening and the Light branch to its ending is exercised through input by a GameTest against the real data, plus fresh-process Save/Load across the chapter boundaries. | Claude coordinates; Codex takes independent code scopes | Castle opening/rebuild and Light Walls fresh-process checkpoints, scavenger Judge/ship, Light city/Walls, three advisor hand-ins, assassination request/cube hand-in and Xenofex map-leave/hand-in passed on integrated source; nine focused Light controls passed together. Real advisor-item and cube acquisition, Xenofex/Pit combat, retrieved-item ending and later save boundary remain open. Four Overthruster route cases plus two wetsuit/Shoals controls and two Xenofex cases passed 8/8 together on integrated source. The later final-link test proves natural L8-to-L9 topic unlock, no-item refusal and held-item fixture ending; it passed 7/7 with the Overthruster cases. The Walls group-1 negative branch is unreachable in tested local data and is not a success-path blocker. |
+| W4 | Every main-quest transition from New Game through the shared opening and the Light branch to its ending is exercised through input by a GameTest against the real data, plus fresh-process Save/Load across the chapter boundaries. | Claude coordinates; Codex takes independent code scopes | **Passed 2026-11-11** on `master` `88619a690`: chapters C0-C7 run through real saves from New Game to the Light ending, a fresh run passes all eight with pass markers, and no chapter writes quest state at its start. One party-strength fixture in C5 and named teleports between maps remain. The Dark branch is stage 3. |
 | W5 | Candidate replaces the installed MM7 under The Atlas. The old app stays as a restorable backup. The installed copy relaunches and loads a new durable save. | Codex root | **Passed 2026-11-10** in S1: the installed app saved a new slot, relaunched from The Atlas and loaded it with party, position and inventory intact. Existing saves unchanged. Only the ini, new logs and three cached tile images changed. |
-| W6 | Defects found in W1-W5 that block a player are fixed and their scenario rerun. Non-blocking finds go to the stage 3 audit queue. | Whichever lane is free | Ongoing |
+| W6 | Defects found in W1-W5 that block a player are fixed and their scenario rerun. Non-blocking finds go to the stage 3 audit queue. | Whichever lane is free | **Passed 2026-11-11**: no known player-blocking MM7 defect. Non-blocking finds are in the stage 3 queue. |
 
 W4 scope, decided 2026-11-10: the owner's gate says "an ending", so stage 1
 covers the shared opening and one branch (Light) to its ending. The Dark
@@ -185,7 +188,12 @@ Ordered by how badly a player is blocked. A lane takes the top item when free.
 3. Actor- and character-target scrolls (Fire Bolt and similar) still lose the scroll when targeting is cancelled. Fixed on `claude/mm7-actor-scroll-cancel` (`9ed8a074a`, `1fba84a61`), reviewed, waiting for integration. Other targeting exits still use the scroll up, which goes to the stage 3 queue.
 4. `master` failed full `check_style` with 75 errors in about 55 files, mostly MM6. Fixed on `claude/master-style-fix` at `349e55d62`, reviewed, waiting for integration.
 
-## Stage 2 — MM6 working (queued)
+## Stage 2 — MM6 working (active since 2026-11-11)
+
+On `master` at `88619a690`: M1 production New Game (gate 27/27), the map
+sweep, the award-animation crash, reputation, the generated NPC pool and
+the damage channels. Active lanes: the t7 trap re-fire loop and event spell
+casts.
 
 Drafted 2026-11-10 by a read-only planning pass, with its key source claims
 spot-checked by Claude. Source facts that shape it: production MM6 New Game

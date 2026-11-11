@@ -98,6 +98,30 @@ EvtProgram syntheticMessageThenPressAnyKeyEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticSpeakNpcEvent() {
+    std::string bytes;
+    std::string npc;
+    appendU32(&npc, 42);
+    appendRecord(&bytes, 0, EVENT_SpeakNPC, npc);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
+struct ScopedLocalEventMap {
+    EvtProgram events = std::move(engine->_localEventMap);
+
+    ~ScopedLocalEventMap() {
+        engine->_localEventMap = std::move(events);
+    }
+};
+
+struct ScopedDeferredNpcDialogue {
+    int npcId = bDialogueUI_InitializeActor_NPC_ID;
+
+    ~ScopedDeferredNpcDialogue() {
+        bDialogueUI_InitializeActor_NPC_ID = npcId;
+    }
+};
+
 struct ScopedQuestionEvent {
     EvtProgram events = std::move(engine->_localEventMap);
     std::vector<std::string> strings = std::move(engine->_levelStrings);
@@ -220,4 +244,17 @@ GAME_TEST(MM6MessageDialogue, BindsMapStringBeforePressAnyKeyContinuation) {
 
     EXPECT_EQ(pGUIWindow_BranchlessDialogue, nullptr);
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(13));
+}
+
+GAME_TEST(MM6SpeakNpc, DefersDialogueDuringMapLoad) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedDeferredNpcDialogue restoreNpc;
+    engine->_localEventMap = syntheticSpeakNpcEvent();
+    bDialogueUI_InitializeActor_NPC_ID = 0;
+
+    EvtInterpreter interpreter;
+    interpreter.prepare(EvtContext(EVT_SOURCE_MAP, 1, Pid(), /* duringMapLoad = */ true));
+    EXPECT_EQ(interpreter.execute(0), EVT_TRANSITION_NONE);
+    EXPECT_EQ(bDialogueUI_InitializeActor_NPC_ID, 42);
 }

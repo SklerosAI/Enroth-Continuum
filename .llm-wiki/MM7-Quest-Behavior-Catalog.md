@@ -190,3 +190,8 @@ player-visible reward assertions.
 Scripted award grants now trigger a character reaction only for recipients who
 receive the award for the first time. This preserves the one-time promotion and
 quest-feedback contract without replaying the reaction for a duplicate award.
+
+Indoor encounter points outside every map sector now produce no actor, matching
+vanilla MM7. This prevents unreachable void actors from falsifying clear-all
+or kill-gated quest fixtures; existing saved actors and valid sector spawns are
+unchanged.

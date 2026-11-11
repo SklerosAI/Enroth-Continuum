@@ -14,6 +14,7 @@
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Party.h"
+#include "Engine/mm7_data.h"
 
 #include "GUI/GUIWindow.h"
 
@@ -82,11 +83,28 @@ EvtProgram syntheticPressAnyKeyEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticMessageThenPressAnyKeyEvent() {
+    std::string bytes;
+    std::string message;
+    appendU32(&message, 0);
+    appendRecord(&bytes, 0, EVENT_ShowMessage, message);
+    appendRecord(&bytes, 1, EVENT_PressAnyKey, std::string(1, '\0'));
+
+    std::string continuation;
+    continuation.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&continuation, 13);
+    appendRecord(&bytes, 2, EVENT_Set, continuation);
+    appendRecord(&bytes, 3, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedQuestionEvent {
     EvtProgram events = std::move(engine->_localEventMap);
     std::vector<std::string> strings = std::move(engine->_levelStrings);
     std::array<IndexedBitset<1, 512>, 4> characterBits;
     int activeCharacter = pParty->hasActiveCharacter() ? pParty->activeCharacterIndex() : -1;
+    std::string branchlessText = std::move(branchless_dialogue_str);
+    std::string npcText = std::move(current_npc_text);
 
     ScopedQuestionEvent() {
         for (int i = 0; i < 4; ++i)
@@ -94,12 +112,16 @@ struct ScopedQuestionEvent {
         engine->_localEventMap = syntheticQuestionEvent();
         engine->_levelStrings = {"What is the password?", "oracle", "seer"};
         pParty->setActiveCharacterIndex(0);
+        branchless_dialogue_str.clear();
+        current_npc_text.clear();
     }
 
     ~ScopedQuestionEvent() {
         engine->_localEventMap = std::move(events);
         engine->_levelStrings = std::move(strings);
         pParty->setActiveCharacterIndex(activeCharacter);
+        branchless_dialogue_str = std::move(branchlessText);
+        current_npc_text = std::move(npcText);
         for (int i = 0; i < 4; ++i)
             pParty->pCharacters[i]._characterEventBits = characterBits[i];
     }
@@ -181,4 +203,21 @@ GAME_TEST(MM6PressAnyKey, ResumesContinuationAfterInput) {
 
     EXPECT_EQ(pGUIWindow_BranchlessDialogue, nullptr);
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(12));
+}
+
+GAME_TEST(MM6MessageDialogue, BindsMapStringBeforePressAnyKeyContinuation) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedQuestionEvent restore;
+    engine->_localEventMap = syntheticMessageThenPressAnyKeyEvent();
+    engine->_levelStrings = {"Continue through this synthetic prompt."};
+    pParty->pCharacters[0]._characterEventBits.reset(13);
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_EQ(branchless_dialogue_str, "Continue through this synthetic prompt.");
+    ASSERT_NE(pGUIWindow_BranchlessDialogue, nullptr);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick(2);
+
+    EXPECT_EQ(pGUIWindow_BranchlessDialogue, nullptr);
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(13));
 }

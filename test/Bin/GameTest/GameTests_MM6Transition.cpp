@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 
@@ -109,7 +108,7 @@ GAME_TEST(MM6Transition, DISABLED_FirstMapEntranceDialogAndGuard) {
         });
     };
     EXPECT_TRUE(hasButton("Transition_No"));
-    EXPECT_FALSE(hasButton("Transition_Yes"));
+    EXPECT_TRUE(hasButton("Transition_Yes"));
     ASSERT_NE(pBtn_ExitCancel, nullptr);
     ASSERT_FALSE(pBtn_ExitCancel->vTextures.empty());
     EXPECT_EQ(pBtn_ExitCancel->vTextures[0]->name(), "buttesc2");
@@ -133,19 +132,5 @@ GAME_TEST(MM6Transition, DISABLED_FirstMapEntranceDialogAndGuard) {
     EXPECT_EQ(pParty->GetPlayingTime(), originalTime);
     EXPECT_FALSE(engine->_pendingTransition.has_value());
 
-    // This checks the lower-level transition guard only. The live Accept
-    // handler calls onMapLeave() first, so its refusal is not state-atomic.
-    bool refused = false;
-    game.runGameRoutine([&] {
-        try {
-            startMapTransition(destination);
-        } catch (const std::runtime_error &) {
-            refused = true;
-        }
-    });
-    EXPECT_TRUE(refused);
-    EXPECT_EQ(engine->_currentLoadedMapId, firstMap);
-    EXPECT_FALSE(engine->_pendingTransition.has_value());
-    EXPECT_EQ(pParty->pos, originalPosition);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }

@@ -489,8 +489,10 @@ void reconstructMM6IndoorDelta(const MM6IndoorRuntimeDelta &delta, IndoorLocatio
     }
     reconstruct(delta.spriteObjects, &pSpriteObjects);
     vChests.resize(delta.chests.size());
-    for (size_t i = 0; i < delta.chests.size(); ++i)
+    for (size_t i = 0; i < delta.chests.size(); ++i) {
+        vChests[i].position.reset(); // Derived later from this map's own chest events, the vector still holds the previous map's.
         reconstruct(delta.chests[i], &vChests[i], tags::context<int>(i));
+    }
 
     reconstruct(delta.doors, &dst->doors);
     dst->doorsData = delta.doorsData;

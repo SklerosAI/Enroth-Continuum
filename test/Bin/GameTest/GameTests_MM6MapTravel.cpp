@@ -75,3 +75,35 @@ GAME_TEST(MM6MapTravel, WalkOffEdgeToNeighbour) {
     EXPECT_EQ(foodTape, tape(7, 2));
     EXPECT_EQ(weakTape, tape(0));
 }
+
+GAME_TEST(MM6MapTravel, DungeonDoorAndBack) {
+    // An MM6 dungeon door offered only Cancel, the party couldn't enter the dungeon or leave it.
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const MapId oute3 = pMapTable->GetMapInfo("oute3.odm");
+    const MapId d02 = pMapTable->GetMapInfo("d02.blv");
+    auto mapTape = tapes.map();
+    auto screenTape = tapes.screen();
+    auto positionTape = tapes.custom([] { return pParty->pos; });
+    auto foodTape = tapes.food();
+    game.teleportTo(oute3, Vec3f(-21456, -286, 193), 90); // In front of the d02 door, facing it.
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(screenTape.back(), SCREEN_INPUT_BLV);
+    confirmTransition(game);
+    ASSERT_EQ(mapTape.back(), d02);
+    EXPECT_EQ(positionTape.back(), Vec3f(16406, -19669, 864.5f)); // Where the door's script puts the party.
+
+    game.teleportTo(d02, Vec3f(16384, -19626, 864.5f), 270); // In front of the way out, facing it.
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(screenTape.back(), SCREEN_INPUT_BLV);
+    confirmTransition(game);
+
+    EXPECT_EQ(mapTape, tape(oute3, d02, oute3));
+    EXPECT_EQ(screenTape.back(), SCREEN_GAME);
+    EXPECT_EQ(positionTape.back(), Vec3f(-21468, -263, 193)); // Back in front of the door, where the way out's script puts it.
+    EXPECT_EQ(foodTape, tape(7));
+}

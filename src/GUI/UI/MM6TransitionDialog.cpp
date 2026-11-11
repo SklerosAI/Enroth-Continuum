@@ -95,12 +95,19 @@ void GUIWindow_IndoorEntryExit::initializeMM6(HouseId transitionHouse, unsigned 
         // Missing or invalid local house data keeps the transition closed.
         transition_ui_icon = nullptr;
     }
-    // The live Yes handler calls onMapLeave() before its MM6 save guard.
-    // Keep acceptance unavailable until the transition transaction has an
-    // MM6 preflight before those side effects.
     pBtn_ExitCancel = CreateButton("Transition_No", {556, 445}, {75, 33}, BUTTON_TYPE_NORMAL, 0,
                                    UIMSG_CancelIndoorEntryExit, 0, INPUT_ACTION_TRANSITION_NO,
                                    localization->str(LSTR_CANCEL), {ui_buttdesc2});
+    if (refused)
+        return;
+    const MapId mapId = mm6TransitionDestination(_mapName);
+    std::string hint = localization->str(LSTR_EXIT_DIALOGUE);
+    if (transitionHouse != HOUSE_INVALID && mapId != MAP_INVALID)
+        hint = localization->format(LSTR_ENTER_S, pMapTable->pInfos[mapId].name);
+    else if (transitionHouse == HOUSE_INVALID && engine->_currentLoadedMapId != MAP_INVALID)
+        hint = localization->format(LSTR_LEAVE_S, pMapTable->pInfos[engine->_currentLoadedMapId].name);
+    pBtn_YES = CreateButton("Transition_Yes", {476, 445}, {75, 33}, BUTTON_TYPE_NORMAL, 0, UIMSG_OnIndoorEntryExit, 0,
+                            INPUT_ACTION_TRANSITION_YES, hint, {ui_buttyes2});
 }
 
 void GUIWindow_IndoorEntryExit::updateMM6() {
@@ -108,6 +115,8 @@ void GUIWindow_IndoorEntryExit::updateMM6() {
     if (transition_ui_icon)
         render->DrawQuad2D(transition_ui_icon, {pNPCPortraits_x[0][0], pNPCPortraits_y[0][0]});
     render->DrawQuad2D(ui_buttdesc2, {556, 445});
+    if (!_mm6Unsupported)
+        render->DrawQuad2D(ui_buttyes2, {476, 445});
 
     const MapId mapId = mm6TransitionDestination(_mapName);
     Recti transitionWindow = pPrimaryWindow->frameRect;

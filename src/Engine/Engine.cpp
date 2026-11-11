@@ -88,6 +88,7 @@
 #include "Engine/MM6/MM6V6PreEventIndoorSpriteReplayForTest.h"
 #include "Engine/MM6/MM6V5PreEventSpriteReplayForTest.h"
 #include "Engine/MM6/MM6V5FirstMapLoadAttempt.h"
+#include "Engine/MM6/MM6MapTransition.h"
 #include "Engine/MM6/MM6TransitionAutosaveInterceptForTest.h"
 #include "Engine/MM6/MM6TransitionPostWorldCaptureForTest.h"
 #include "Engine/MM6/MM6VisitedReturnPreEventProbeForTest.h"
@@ -1801,10 +1802,11 @@ void startMapTransition(const MapDestination &destination) {
 
     // pGameLoadingUI_ProgressBar->Initialize(GUIProgressBar::TYPE_None);
 
-    if (engine->_currentLoadedMapId != destination.map() &&
-        !mm6::testing::interceptTransitionAutosaveForTest(
-            engine->gameTitle(), engine->_currentLoadedMapId, destination.map())) {
-        autoSave();
+    if (engine->_currentLoadedMapId != destination.map()) {
+        if (engine->gameTitle() == GameTitle::MM6)
+            mm6::leaveMap(destination.map());
+        if (!mm6::testing::interceptTransitionAutosaveForTest(engine->gameTitle(), engine->_currentLoadedMapId, destination.map()))
+            autoSave();
     }
 
     uGameState = GAME_STATE_CHANGE_LOCATION;

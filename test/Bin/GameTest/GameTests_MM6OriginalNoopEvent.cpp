@@ -739,6 +739,17 @@ EvtProgram syntheticLongTimerTriggerEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticForPartyMemberEvent() {
+    std::string bytes;
+    appendRecord(&bytes, 0, EVENT_ForPartyMember, std::string(1, static_cast<char>(CHOOSE_PARTY)));
+    std::string mutation;
+    mutation.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&mutation, 54);
+    appendRecord(&bytes, 1, EVENT_Set, mutation);
+    appendRecord(&bytes, 2, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -1502,4 +1513,17 @@ GAME_TEST(MM6LongTimerTrigger, StopsDirectEventExecution) {
 
     runEvent(EvtContext(EVT_SOURCE_MAP, 1));
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(53));
+}
+
+GAME_TEST(MM6ForPartyMember, TargetsEveryMM6PartyCharacter) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedParty restoreParty;
+    engine->_localEventMap = syntheticForPartyMemberEvent();
+    for (Character &character : pParty->pCharacters)
+        character._characterEventBits.reset(54);
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    for (const Character &character : pParty->pCharacters)
+        EXPECT_TRUE(character._characterEventBits.test(54));
 }

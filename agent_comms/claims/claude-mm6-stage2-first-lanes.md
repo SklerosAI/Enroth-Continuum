@@ -50,3 +50,7 @@ Update: S-DEATH integrated (`8963ff45b`, `dad5aa244`). New lane in its checkout:
 
 | S-HOVER MM6 decoration hover crash | `claude/mm6-decor-hover` in `mm7-monster-combat` | the MM6 decoration event-variable base and `GameUI_WritePointedObjectStatusString` MM6 path (`src/GUI/UI/UIGame.cpp` or wherever it lives), MM6 decoration setup in `src/Engine/MM6/` or `src/Engine/Graphics/Indoor.cpp` and `Outdoor.cpp` as needed, a new MM6 test. Shared core. |
 
+Update: S-SAVEANY integrated (`5e752feab`..`0614e727b`). New lane in its checkout:
+
+| S-TRAPS MM6 chest traps | `claude/mm6-chest-traps` in `mm7-save-durability` | the MM6 branch of chest opening and trap handling (`src/Engine/Objects/Chest.cpp` MM6 path, MM6 trap rules under `src/Engine/MM6/`), the disarm skill check, trap damage through the MM6 damage channels, new MM6 tests. Shared core. |
+

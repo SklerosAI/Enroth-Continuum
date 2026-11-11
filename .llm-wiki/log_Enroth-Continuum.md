@@ -3272,3 +3272,8 @@ Chronological record of wiki activity.
 - Added and repeat-verified `MM7SideQuests.SeasonsStoleIsAcquiredFromHallOfThePitChest`. With the real quest bit active, it identifies the loaded Hall of the Pit chest containing the Stole and takes it through the ordinary chest UI.
 - The Gary Zimm return and its reward remain a separate uncovered contract.
 
+## [2026-11-11] verify | MM7 Angel Statuette acquisition
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7SideQuests.AngelStatuetteIsAcquiredFromTheMazeChest`. It starts a new game, finds the Angel Statuette in the loaded Maze chest, and takes it through the ordinary chest UI.
+- Knight/Eagle acquisition, the three shrine placements, and Thom Lumbra's return/reward contract remain separate uncovered work.
+

@@ -3114,3 +3114,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Completed the focused D1 contract with three passing Dark Guild tests: the in-dungeon marker, Archibald assignment, and the second Archibald dialogue topic that clears the active task and grants Dark-guild membership. Archibald's later Clanker move is not part of this hand-in and is not asserted here.
 
+## [2026-11-11] verify | MM7 Dark altar hand-in
+- by: T-Burton-ND via codex
+- Added and passed `MM7DarkGuild.KastoreRequiresBothAltarPieces`. It reaches Kastore's actual Castle Gloaming dialogue, verifies that one physical altar piece is refused, and that both pieces complete the Dark task and are consumed. The two temple acquisition interactions are deliberately left for a continuous route test.
+

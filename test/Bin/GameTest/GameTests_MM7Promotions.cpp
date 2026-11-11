@@ -2,6 +2,7 @@
 #include <array>
 #include <cmath>
 #include <numbers>
+#include <vector>
 
 #include "Testing/Game/GameTest.h"
 
@@ -9,9 +10,11 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Graphics/Indoor.h"
+#include "Engine/Graphics/Outdoor.h"
 #include "Engine/MapEnums.h"
 #include "Engine/Objects/CharacterEnums.h"
 #include "Engine/Objects/Decoration.h"
+#include "Engine/Objects/Chest.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Party.h"
 #include "Engine/PartyEnums.h"
@@ -66,6 +69,19 @@ NPCData *findHouseNpc(HouseId houseId) {
     return npc == pNPCStats->pNPCData.end() ? nullptr : &*npc;
 }
 
+NPCData *findHouseNpcEvent(HouseId houseId, auto predicate) {
+    auto npc = std::ranges::find_if(pNPCStats->pNPCData, [houseId, predicate](const NPCData &candidate) {
+        std::array eventIds = {candidate.dialogue_1_evt_id, candidate.dialogue_2_evt_id, candidate.dialogue_3_evt_id,
+                               candidate.dialogue_4_evt_id, candidate.dialogue_5_evt_id, candidate.dialogue_6_evt_id};
+        return candidate.house == houseId && std::ranges::any_of(eventIds, [predicate](unsigned int eventId) {
+            return eventId != 0 && engine->_globalEventMap.hasEvent(eventId) &&
+                   std::ranges::any_of(engine->_globalEventMap.function(eventId), predicate);
+        });
+    });
+    EXPECT_NE(npc, pNPCStats->pNPCData.end());
+    return npc == pNPCStats->pNPCData.end() ? nullptr : &*npc;
+}
+
 bool selectNpcEvent(EngineController &game, NPCData *npc, unsigned int eventId) {
     std::array eventIds = {npc->dialogue_1_evt_id, npc->dialogue_2_evt_id, npc->dialogue_3_evt_id,
                            npc->dialogue_4_evt_id, npc->dialogue_5_evt_id, npc->dialogue_6_evt_id};
@@ -106,6 +122,37 @@ void openLaskerHouse(EngineController &game, NPCData *lasker) {
     ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
     ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_ERATHIAN_SEWERS_MASTER_THIEF);
     auto entry = std::ranges::find(houseNpcs, lasker, &HouseNpcDesc::npc);
+    ASSERT_NE(entry, houseNpcs.end());
+    if (houseNpcs.size() > 1) {
+        game.pressGuiButton(fmt::format("House_Npc{}", entry - houseNpcs.begin()));
+        game.tick();
+    }
+}
+
+void openTarinHouse(EngineController &game, NPCData *tarin) {
+    game.teleportTo(MAP_HARMONDALE, Vec3f(), 0);
+    std::vector<std::pair<Vec3f, int>> doors;
+    for (const BLVFace &face : pOutdoor->faces) {
+        if (face.Clickable() && eventOpensHouse(face.eventId, HOUSE_TEMPLE_HARMONDALE))
+            doors.push_back(approachFace(face));
+    }
+    ASSERT_FALSE(doors.empty());
+    for (auto [position, yaw] : doors) {
+        game.teleportTo(MAP_HARMONDALE, position, yaw);
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick();
+        if (current_screen_type == SCREEN_HOUSE)
+            break;
+        if (current_screen_type == SCREEN_NPC_DIALOGUE) {
+            game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE); // A street NPC can intercept the door interaction.
+            game.tick();
+        }
+    }
+    ASSERT_TRUE(current_screen_type == SCREEN_HOUSE || current_screen_type == SCREEN_NPC_DIALOGUE);
+    if (current_screen_type != SCREEN_HOUSE)
+        return; // A single resident NPC opens its dialogue immediately.
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_TEMPLE_HARMONDALE);
+    auto entry = std::ranges::find(houseNpcs, tarin, &HouseNpcDesc::npc);
     ASSERT_NE(entry, houseNpcs.end());
     if (houseNpcs.size() > 1) {
         game.pressGuiButton(fmt::format("House_Npc{}", entry - houseNpcs.begin()));
@@ -193,4 +240,82 @@ GAME_TEST(MM7Promotions, MarkhamVaseRequiresPhysicalPickup) {
     EXPECT_TRUE(knight._achievedAwardsBits[AWARD_PROMOTION_ROGUE_HONORARY]);
     EXPECT_EQ(thief.experience - thiefExperience, 30000);
     EXPECT_EQ(knight.experience - knightExperience, 15000);
+}
+
+GAME_TEST(MM7SideQuests, LanternOfLightRequiresBarrowChest) {
+    auto activeTape = tapes.questBit(QBIT_LANTERN_OF_LIGHT_ACTIVE);
+    auto goldTape = tapes.gold();
+    game.startNewGame();
+    NPCData *tarin = findHouseNpcEvent(HOUSE_TEMPLE_HARMONDALE, [](const EvtInstruction &instruction) {
+        return (instruction.opcode == EVENT_Set || instruction.opcode == EVENT_Add) &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_LANTERN_OF_LIGHT_ACTIVE);
+    });
+    ASSERT_NE(tarin, nullptr);
+    const unsigned int offerEvent = findNpcEvent(tarin, [](const EvtInstruction &instruction) {
+        return (instruction.opcode == EVENT_Set || instruction.opcode == EVENT_Add) &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_LANTERN_OF_LIGHT_ACTIVE);
+    });
+    ASSERT_NE(offerEvent, 0u);
+
+    openTarinHouse(game, tarin);
+    test.startTaping();
+    ASSERT_TRUE(selectNpcEvent(game, tarin, offerEvent));
+    ASSERT_TRUE(pParty->_questBits[QBIT_LANTERN_OF_LIGHT_ACTIVE]);
+    const unsigned int handInEvent = findNpcEvent(tarin, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_Subtract && instruction.data.variable_descr.type == VAR_PlayerItemInHands &&
+               instruction.data.variable_descr.value == std::to_underlying(ITEM_QUEST_LANTERN_OF_LIGHT);
+    });
+    ASSERT_NE(handInEvent, 0u);
+    leaveHouse(game);
+    openTarinHouse(game, tarin);
+    ASSERT_TRUE(selectNpcEvent(game, tarin, handInEvent));
+    EXPECT_TRUE(pParty->_questBits[QBIT_LANTERN_OF_LIGHT_ACTIVE]);
+    EXPECT_EQ(goldTape.delta(), 0);
+    for (const Character &character : pParty->pCharacters)
+        EXPECT_FALSE(character._achievedAwardsBits[AWARD_HARMONDALE_RETURNED_LANTERN_OF_LIGHT]);
+    leaveHouse(game);
+
+    game.teleportTo(MAP_BARROW_II, Vec3f(), 0);
+    auto chest = std::ranges::find_if(vChests, [](const Chest &candidate) {
+        return !!candidate.inventory.find(ITEM_QUEST_LANTERN_OF_LIGHT);
+    });
+    ASSERT_NE(chest, vChests.end());
+    const int chestId = chest - vChests.begin();
+    auto chestFace = std::ranges::find_if(pIndoor->faces, [chestId](const BLVFace &face) {
+        return face.Clickable() && engine->_localEventMap.hasEvent(face.eventId) &&
+               std::ranges::any_of(engine->_localEventMap.function(face.eventId), [chestId](const EvtInstruction &instruction) {
+                   return instruction.opcode == EVENT_OpenChest && instruction.data.chest_id == chestId;
+               });
+    });
+    ASSERT_NE(chestFace, pIndoor->faces.end());
+    for (int attempt = 0; attempt < 2 && current_screen_type != SCREEN_CHEST; attempt++) {
+        Chest::open(chestId, Pid());
+        game.tick();
+    }
+    ASSERT_EQ(current_screen_type, SCREEN_CHEST);
+    for (int i = 0; i < 40 && !pParty->hasItem(ITEM_QUEST_LANTERN_OF_LIGHT) &&
+                        pParty->pPickedItem.itemId != ITEM_QUEST_LANTERN_OF_LIGHT; i++) {
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick();
+    }
+    ASSERT_TRUE(pParty->hasItem(ITEM_QUEST_LANTERN_OF_LIGHT) ||
+                pParty->pPickedItem.itemId == ITEM_QUEST_LANTERN_OF_LIGHT);
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    std::array<uint64_t, 4> experience;
+    for (int i = 0; i < 4; i++)
+        experience[i] = pParty->pCharacters[i].experience;
+
+    openTarinHouse(game, tarin);
+    ASSERT_TRUE(selectNpcEvent(game, tarin, handInEvent));
+    EXPECT_EQ(activeTape, tape(true, false));
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_LANTERN_OF_LIGHT));
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_EQ(goldTape.delta(), 1000);
+    for (int i = 0; i < 4; i++) {
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_HARMONDALE_RETURNED_LANTERN_OF_LIGHT]);
+        EXPECT_EQ(pParty->pCharacters[i].experience - experience[i], 5000);
+    }
 }

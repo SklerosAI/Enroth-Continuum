@@ -399,6 +399,31 @@ EvtProgram syntheticHeldItemCompareEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticQuestBitClearEvent() {
+    std::string bytes;
+    std::string questBit;
+    questBit.push_back(static_cast<char>(VAR_QBits_QuestsDone));
+    appendU32(&questBit, 511);
+    appendRecord(&bytes, 0, EVENT_Subtract, questBit);
+
+    std::string compare = questBit;
+    compare.push_back(4);
+    appendRecord(&bytes, 1, EVENT_Compare, compare);
+
+    std::string cleared;
+    cleared.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&cleared, 36);
+    appendRecord(&bytes, 2, EVENT_Set, cleared);
+    appendRecord(&bytes, 3, EVENT_Exit);
+
+    std::string stillSet;
+    stillSet.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&stillSet, 37);
+    appendRecord(&bytes, 4, EVENT_Set, stillSet);
+    appendRecord(&bytes, 5, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -842,4 +867,19 @@ GAME_TEST(MM6HeldItemCompare, UsesTheMM6HeldItemAndBranch) {
     runEvent(EvtContext(EVT_SOURCE_MAP, 1));
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(34));
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(35));
+}
+
+GAME_TEST(MM6QuestBitClear, ClearsTheMM6QuestBitAndFallsThrough) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedParty restoreParty;
+    engine->_localEventMap = syntheticQuestBitClearEvent();
+    pParty->_questBits.set(static_cast<QuestBit>(511));
+    pParty->pCharacters[0]._characterEventBits.reset(36);
+    pParty->pCharacters[0]._characterEventBits.reset(37);
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_FALSE(pParty->_questBits.test(static_cast<QuestBit>(511)));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(36));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(37));
 }

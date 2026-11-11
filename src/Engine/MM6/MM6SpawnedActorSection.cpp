@@ -236,6 +236,10 @@ Actor_MM7 snapshotActorRuntimeImageForV5(const Actor &actor,
     return snapshotWithoutName(actor);
 }
 
+Actor_MM7 snapshotActorImageWithoutName(const Actor &actor) {
+    return snapshotWithoutName(actor);
+}
+
 std::vector<std::uint8_t> encodeSpawnedActorSection(
     std::span<const Actor> actors, size_t firstSlot, GameTitle title) {
     if (title != GameTitle::MM6 || firstSlot > MAX_ACTOR_SLOTS ||

@@ -26,4 +26,11 @@ std::vector<Actor> decodeSpawnedActorSection(
 Actor_MM7 snapshotActorRuntimeImageForV5(const Actor &actor,
                                          std::size_t slot, GameTitle title);
 
+/**
+ * @param actor                         Any actor.
+ * @return                              Its `Actor_MM7` image as the MM7 snapshot writes it, but with an empty name, so
+ *                                      no NPC or monster table is read.
+ */
+Actor_MM7 snapshotActorImageWithoutName(const Actor &actor);
+
 } // namespace mm6

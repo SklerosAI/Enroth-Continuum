@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "Engine/MM6/MM6Decorations.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 #include "Engine/Snapshots/MM6OutdoorSnapshot.h"
 #include "Engine/Tables/DecorationTable.h"
@@ -50,7 +51,7 @@ void requireFirstMapOutdoorDecorationReplay(
 
     std::size_t variable = 0;
     for (LevelDecoration &decoration : expected) {
-        if (!decoration.uEventID && decoration.IsInteractive() && variable < 124) {
+        if (!decoration.uEventID && isInteractiveDecoration(decoration.uDecorationDescID) && variable < 124) {
             decoration.eventVarId = static_cast<int16_t>(variable);
             if (!events.decorVars[variable])
                 decoration.uFlags |= LEVEL_DECORATION_INVISIBLE;

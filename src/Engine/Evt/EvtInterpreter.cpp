@@ -937,21 +937,20 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
         case EVENT_ChangeEvent:
         {
             // The operand is the absolute id of the global event to run on the next click, and the byte in decorVars
-            // stores it relative to the dispatch base of 380. The -124 is -380 folded through the mod-256 store, so
-            // the round trip only works for ids in [380, 635], and all shipped MM6 and MM7 records fit - every
-            // non-zero operand in both games' evt files is in [383, 443]. MM8 data doesn't fit. Its global.evt uses
-            // ids 268-289 and 531-570, and its engine maps them piecewise - states 0-21 are events 268-289, states
-            // 23-62 are events 531-570, everything else passes through unchanged. Read out of the PS2 SLPS_250.31
-            // binary at 0xa33e0 and 0xa3418, the PC MM8.exe is presumed to match.
-            // TODO(captainurist): make the state<->event mapping per-game before feeding MM8 data through here, and
-            //                     spell the MM7 store as -380 while at it.
+            // stores it relative to decorationEventBase() through a mod-256 store, so the round trip only works for
+            // ids in [base, base + 255]. All shipped records fit - every non-zero operand in MM7's evt files is in
+            // [383, 415], and in MM6's in [410, 443]. MM8 data doesn't fit. Its global.evt uses ids 268-289 and
+            // 531-570, and its engine maps them piecewise - states 0-21 are events 268-289, states 23-62 are events
+            // 531-570, everything else passes through unchanged. Read out of the PS2 SLPS_250.31 binary at 0xa33e0
+            // and 0xa3418, the PC MM8.exe is presumed to match.
+            // TODO(captainurist): make the state<->event mapping piecewise for MM8 before feeding MM8 data through here.
             if (_context.objectPid.type() != OBJECT_Decoration) {
                 MM_ERROR("Skipping step {} of evt event {}, ChangeEvent ran without a decoration", ir.step, _context.eventId);
                 break;
             }
             LevelDecoration &decoration = pLevelDecorations[_context.objectPid.id()];
             if (ir.data.event_id) {
-                engine->_persistentVariables.decorVars[decoration.eventVarId] = ir.data.event_id - 124;
+                engine->_persistentVariables.decorVars[decoration.eventVarId] = ir.data.event_id - decorationEventBase();
             } else {
                 engine->_persistentVariables.decorVars[decoration.eventVarId] = 0;
                 decoration.uFlags |= LEVEL_DECORATION_INVISIBLE;

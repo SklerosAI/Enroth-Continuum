@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Engine/Engine.h"
+#include "Engine/MM6/MM6Decorations.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Party.h"
 
@@ -31,6 +32,9 @@ int LevelDecoration::GetGlobalEvent() {
     // int v11; // eax@20
     // int v12; // eax@21
     // int v13; // eax@22
+
+    if (engine->gameTitle() == GameTitle::MM6)
+        return mm6::decorationGlobalEvent(uDecorationDescID, *grng);
 
     switch (uDecorationDescID) {
         case DECORATION_NULL:
@@ -348,6 +352,9 @@ bool LevelDecoration::IsObeliskChestActive() {
 
 //----- (0044C2F4) --------------------------------------------------------
 bool LevelDecoration::IsInteractive() {
+    if (engine->gameTitle() == GameTitle::MM6)
+        return mm6::isInteractiveDecoration(uDecorationDescID);
+
     switch (uDecorationDescID) {
     case DECORATION_TRASH_HEAP_4:    // trash pile
     case DECORATION_CAMPFIRE_5:    // campfire
@@ -372,6 +379,10 @@ bool LevelDecoration::IsInteractive() {
         return true;
 
     return false;
+}
+
+int decorationEventBase() {
+    return engine->gameTitle() == GameTitle::MM6 ? mm6::MM6_DECORATION_EVENT_BASE : 380;
 }
 
 void RespawnGlobalDecorations() {

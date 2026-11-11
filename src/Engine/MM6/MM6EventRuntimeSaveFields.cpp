@@ -8,6 +8,8 @@
 #include <utility>
 #include <vector>
 
+#include "Engine/MM6/MM6Decorations.h"
+
 namespace mm6 {
 namespace {
 
@@ -115,7 +117,7 @@ std::vector<EventRuntimeDecorationBinding> captureEventRuntimeDecorationBindings
     std::vector<EventRuntimeDecorationBinding> result;
     for (std::size_t index = 0; index < decorations.size(); ++index) {
         LevelDecoration &decoration = decorations[index];
-        if (decoration.uEventID || !decoration.IsInteractive())
+        if (decoration.uEventID || !isInteractiveDecoration(decoration.uDecorationDescID))
             continue;
         if (result.size() == MAX_BINDINGS)
             break; // The loader never assigns a variable to later decorations.

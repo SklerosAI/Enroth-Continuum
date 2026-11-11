@@ -2241,7 +2241,7 @@ void CastSpellInfoHelpers::castSpell() {
                             runEvent(EvtContext(EVT_SOURCE_MAP, pLevelDecorations[obj_id].uEventID, spell_targeted_at));
                             pLevelDecorations[obj_id].uFlags |= LEVEL_DECORATION_VISIBLE_ON_MAP;
                         } else if (pLevelDecorations[obj_id].IsInteractive()) {
-                            int eventId = engine->_persistentVariables.decorVars[pLevelDecorations[obj_id].eventVarId] + 380; // 380 is the MM7 dispatch base, see EVENT_ChangeEvent.
+                            int eventId = engine->_persistentVariables.decorVars[pLevelDecorations[obj_id].eventVarId] + decorationEventBase();
                             runEvent(EvtContext(EVT_SOURCE_GLOBAL, eventId, spell_targeted_at));
                         }
                     }

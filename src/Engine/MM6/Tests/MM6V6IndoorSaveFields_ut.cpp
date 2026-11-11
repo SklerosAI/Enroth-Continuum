@@ -214,13 +214,13 @@ UNIT_TEST(MM6V6IndoorSaveFields, DecorationRuntimeReplaysOnlyMutableSlots) {
     base->decorationNames[0][3] = '0';
     base->decorationNames[0][4] = '1';
     DecorationTable table;
-    table.decorations.resize(6);
-    table.decorations[4].internalName = "dec01";
+    table.decorations.resize(147);
+    table.decorations[146].internalName = "dec01";
     mm6::EventRuntimeMapEntry event;
     event.mapName = "d0.blv";
     std::vector<LevelDecoration> live(1);
     reconstruct(base->decorations[0], &live[0]);
-    live[0].uDecorationDescID = DECORATION_TRASH_HEAP_4;
+    live[0].uDecorationDescID = static_cast<DecorationId>(146);
     live[0].eventVarId = base->decorations[0].eventVarId;
     event.bindings = mm6::captureEventRuntimeDecorationBindings(
         live, GameTitle::MM6);

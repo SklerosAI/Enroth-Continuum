@@ -199,6 +199,11 @@ if(OE_BUILD_TESTS)
     target_check_style(test_engine_mm6_spell_items)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_spell_items)
 
+    add_library(test_engine_mm6_decorations OBJECT Tests/MM6Decorations_ut.cpp)
+    target_link_libraries(test_engine_mm6_decorations PUBLIC testing_unit)
+    target_check_style(test_engine_mm6_decorations)
+    target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_decorations)
+
     add_library(test_engine_mm6_monster_damage OBJECT Tests/MM6MonsterDamage_ut.cpp Tests/MM6CombatRules_ut.cpp
         Tests/MM6EventSpell_ut.cpp Tests/MM6MonsterAttack_ut.cpp)
     target_link_libraries(test_engine_mm6_monster_damage PUBLIC testing_unit)

@@ -103,6 +103,7 @@ target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6NewGame.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6MapTravel.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6PartyDeath.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6SaveAnywhere.cpp)
+target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Decorations.cpp)
 target_link_libraries(OpenEnroth_GameTest PUBLIC application testing_game library_cli library_platform_main library_stack_trace
         engine_mm6_save_runtime engine_mm6_spawn_actor_section)
 

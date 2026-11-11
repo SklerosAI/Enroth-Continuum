@@ -12,11 +12,11 @@ namespace {
 
 std::vector<LevelDecoration> decorations() {
     std::vector<LevelDecoration> result(3);
-    result[0].uDecorationDescID = DECORATION_TRASH_HEAP_4;
+    result[0].uDecorationDescID = static_cast<DecorationId>(146);
     result[0].eventVarId = 93; // Pre-PrepareDecorations state must be ignored.
-    result[1].uDecorationDescID = DECORATION_CAMPFIRE_5;
+    result[1].uDecorationDescID = static_cast<DecorationId>(167);
     result[1].uEventID = 15; // Explicit-event decoration has no var slot.
-    result[2].uDecorationDescID = DECORATION_CAULDRON_6;
+    result[2].uDecorationDescID = static_cast<DecorationId>(182);
     result[2].eventVarId = 92;
     return result;
 }
@@ -66,7 +66,7 @@ UNIT_TEST(MM6EventRuntimeSaveFields, RefusesMissingStaleAndForeignOwners) {
         source, "oute3.odm", 1, 6, live, GameTitle::MM6), std::exception);
     EXPECT_THROW((void) mm6::requireEventRuntimeMapEntry(
         source, "oute3.odm", 1, 5, live, GameTitle::MM7), std::exception);
-    live[2].uDecorationDescID = DECORATION_BARREL_34;
+    live[2].uDecorationDescID = static_cast<DecorationId>(163);
     EXPECT_THROW((void) mm6::requireEventRuntimeMapEntry(
         source, "oute3.odm", 1, 5, live, GameTitle::MM6), std::exception);
     source.maps[0].lastRespawnDay = 0;
@@ -99,8 +99,8 @@ UNIT_TEST(MM6EventRuntimeSaveFields, RejectsMalformedAndNoncanonicalPayload) {
 
 UNIT_TEST(MM6EventRuntimeSaveFields, RefusesSameTypeDecorationPositionSwap) {
     std::vector<LevelDecoration> live(2);
-    live[0].uDecorationDescID = DECORATION_TRASH_HEAP_4;
-    live[1].uDecorationDescID = DECORATION_TRASH_HEAP_4;
+    live[0].uDecorationDescID = static_cast<DecorationId>(146);
+    live[1].uDecorationDescID = static_cast<DecorationId>(146);
     live[0].vPosition.x = 100.25f;
     live[1].vPosition.x = 200.5f;
     const auto source = example(&live);

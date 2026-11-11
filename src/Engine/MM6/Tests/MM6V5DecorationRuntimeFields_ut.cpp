@@ -20,19 +20,19 @@ struct Fixture {
 
     Fixture() {
         base->decorations.resize(1);
-        base->decorations[0].uDecorationDescID = 4;
+        base->decorations[0].uDecorationDescID = 146;
         base->decorationNames.resize(1);
         base->decorationNames[0][0] = 'd';
         base->decorationNames[0][1] = 'e';
         base->decorationNames[0][2] = 'c';
         base->decorationNames[0][3] = '0';
         base->decorationNames[0][4] = '1';
-        table.decorations.resize(6);
-        table.decorations[4].internalName = "dec01";
+        table.decorations.resize(147);
+        table.decorations[146].internalName = "dec01";
         fields.mapName = "oute3.odm";
         fields.decorations.resize(1);
         reconstruct(base->decorations[0], &fields.decorations[0]);
-        fields.decorations[0].uDecorationDescID = DECORATION_TRASH_HEAP_4;
+        fields.decorations[0].uDecorationDescID = static_cast<DecorationId>(146);
         fields.decorations[0].eventVarId = 0;
         event.mapName = "oute3.odm";
         event.bindings = mm6::captureEventRuntimeDecorationBindings(
@@ -66,11 +66,11 @@ UNIT_TEST(MM6V5DecorationRuntimeFields, RefusesChangedSourceAnchorAndBadRuntimeS
         fixture.fields, "oute3.odm", *fixture.base, fixture.event,
         fixture.table, GameTitle::MM6), std::exception);
     fixture.fields.decorations[0].vPosition.x = 0;
-    fixture.fields.decorations[0].uDecorationDescID = static_cast<DecorationId>(99);
+    fixture.fields.decorations[0].uDecorationDescID = static_cast<DecorationId>(200);
     EXPECT_THROW((void) mm6::requireDecorationRuntimeBaseAgreement(
         fixture.fields, "oute3.odm", *fixture.base, fixture.event,
         fixture.table, GameTitle::MM6), std::exception);
-    fixture.fields.decorations[0].uDecorationDescID = DECORATION_TRASH_HEAP_4;
+    fixture.fields.decorations[0].uDecorationDescID = static_cast<DecorationId>(146);
     fixture.fields.decorations[0].eventVarId = -76;
     EXPECT_THROW((void) mm6::encodeDecorationRuntimeSection(
         fixture.fields, GameTitle::MM6), std::exception);
@@ -82,9 +82,9 @@ UNIT_TEST(MM6V5DecorationRuntimeFields, KeepsUnassignedOrdinalBeyondFirst124) {
     fixture.base->decorationNames.resize(125, fixture.base->decorationNames[0]);
     fixture.fields.decorations.resize(125);
     for (std::size_t index = 0; index < 125; ++index) {
-        fixture.base->decorations[index].uDecorationDescID = 4;
+        fixture.base->decorations[index].uDecorationDescID = 146;
         reconstruct(fixture.base->decorations[index], &fixture.fields.decorations[index]);
-        fixture.fields.decorations[index].uDecorationDescID = DECORATION_TRASH_HEAP_4;
+        fixture.fields.decorations[index].uDecorationDescID = static_cast<DecorationId>(146);
         if (index < 124)
             fixture.fields.decorations[index].eventVarId = index;
     }

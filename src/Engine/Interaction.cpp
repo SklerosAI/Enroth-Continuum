@@ -73,7 +73,7 @@ void DecorationInteraction(int id, Pid pid) {
         runEvent(EvtContext(EVT_SOURCE_MAP, pLevelDecorations[id].uEventID, pid));
         pLevelDecorations[id].uFlags |= LEVEL_DECORATION_VISIBLE_ON_MAP;
     } else if (pLevelDecorations[id].IsInteractive()) {
-        int eventId = engine->_persistentVariables.decorVars[pLevelDecorations[id].eventVarId] + 380; // 380 is the MM7 dispatch base, see EVENT_ChangeEvent.
+        int eventId = engine->_persistentVariables.decorVars[pLevelDecorations[id].eventVarId] + decorationEventBase();
         runEvent(EvtContext(EVT_SOURCE_GLOBAL, eventId, pid));
     }
 }

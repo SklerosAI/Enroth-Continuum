@@ -41,4 +41,10 @@ struct LevelDecoration {
 extern std::vector<LevelDecoration> pLevelDecorations;
 extern std::vector<int> decorationsWithSound;
 
+/**
+ * @return                              Global event that an interactive decoration runs and names on hover, minus its
+ *                                      `decorVars` byte.
+ */
+int decorationEventBase();
+
 void RespawnGlobalDecorations();

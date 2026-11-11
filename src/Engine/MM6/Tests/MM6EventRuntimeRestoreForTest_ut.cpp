@@ -10,8 +10,8 @@ namespace {
 
 std::vector<LevelDecoration> decorations() {
     std::vector<LevelDecoration> result(2);
-    result[0].uDecorationDescID = DECORATION_TRASH_HEAP_4;
-    result[1].uDecorationDescID = DECORATION_CAMPFIRE_5;
+    result[0].uDecorationDescID = static_cast<DecorationId>(146);
+    result[1].uDecorationDescID = static_cast<DecorationId>(167);
     return result;
 }
 
@@ -72,7 +72,7 @@ UNIT_TEST(MM6EventRuntimeRestoreForTest, RefusesMismatchBeforePublication) {
         EXPECT_EQ(destination.mapVars, before.mapVars);
         EXPECT_EQ(destination.decorVars, before.decorVars);
     }
-    live[0].uDecorationDescID = DECORATION_CAMPFIRE_5;
+    live[0].uDecorationDescID = static_cast<DecorationId>(167);
     {
         auto expectedDecorations = decorations();
         mm6::testing::ScopedEventRuntimeRestoreForTest scope(

@@ -24,11 +24,11 @@ struct Fixture {
         base->decorationNames[0][2] = 'c';
         base->decorationNames[0][3] = '0';
         base->decorationNames[0][4] = '1';
-        table.decorations.resize(5);
-        table.decorations[4].internalName = "dec01";
+        table.decorations.resize(147);
+        table.decorations[146].internalName = "dec01";
         live.resize(1);
         reconstruct(base->decorations[0], &live[0]);
-        live[0].uDecorationDescID = DECORATION_TRASH_HEAP_4;
+        live[0].uDecorationDescID = static_cast<DecorationId>(146);
         events.mapName = "oute3.odm";
         events.bindings = mm6::captureEventRuntimeDecorationBindings(live, GameTitle::MM6);
         live[0].eventVarId = 0;

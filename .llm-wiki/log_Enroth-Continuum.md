@@ -3122,3 +3122,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added and passed `MM7DarkGuild.ClankerDefensesAreDisabledByMapEvent`. The test finds the actual Clanker's Laboratory event that records destroyed magical and teleport defenses, executes it with no actors, and confirms that this objective is not satisfied by a kill-all proxy. Dark Shade's return dialogue remains open.
 
+## [2026-11-11] verify | MM7 Dark Pit advisers and Soul Jars
+- by: T-Burton-ND via codex
+- Replaced the altar test's artificial Castle Gloaming placement with the genuine Archibald hand-in and runtime-selected Pit adviser homes. Added a passing Maximus contract that follows Kastore's prerequisite, assigns the Dark Soul Jars task, refuses without the case, and consumes it on completion. The Thunderfist chest acquisition interaction remains a focused follow-up.
+

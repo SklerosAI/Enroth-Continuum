@@ -3150,3 +3150,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Traced the apparent exit-only completion to the event layer and documented it as a source-data divergence, not accepted intended coverage. Public player-facing behavior requires the Elder Vampire defeated, while the exit script can set the flag without a kill and the current referenced actor loads disabled. A compatibility decision is required before altering that legacy script or declaring the Light-chain prerequisite fixed.
 
+## [2026-11-11] verify | MM7 Wine Cellar requires a kill
+- by: T-Burton-ND via codex
+- Corrected the two narrow legacy event paths that treated the Wine Cellar's disabled Elder Vampire spawn as killed. The focused regression now leaves the task active after exit and the adviser refuses completion; the shared actor-kill semantics are unchanged. The actual combat-and-exit completion route remains to be added.
+

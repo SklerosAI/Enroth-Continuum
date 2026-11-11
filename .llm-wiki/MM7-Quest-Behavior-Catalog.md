@@ -91,7 +91,7 @@ and by the [DungeonCrawl quest table](https://dungeoncrawl-classics.com/might-an
 | Haldar’s remains | Recover remains from the Maze and return to Mazim Dusk for 50,000 XP and 35,000 gold. | Uncovered. | C |
 | Season’s Stole | Recover the stole from the Hall of the Pit and return it to Gary Zimm for 7,500 XP and 7,500 gold. | Uncovered. | C |
 | Troglodytes | Clear Stone City’s lower-tunnel troglodytes and report to Spark Burnkindle for 5,000 XP per character, 2,500 gold, -10 reputation, and the lower-city award. The Nighon passage is excluded. | `MM7SideQuests.TroglodytesRequireLowerCityClearance` proves assignment, refusal with one survivor, and the complete-clear state/reward contract. Direct combat remains separate. | C |
-| Griffins | On the Dark path, kill every Griffin in both Erathia and Bracada Desert, then report to Seth Drakkson for 10,000 XP and 5,000 gold. | Uncovered. | C |
+| Griffins | On the Dark path, kill every Griffin in both Erathia and Bracada Desert, then report to Seth Drakkson for 10,000 XP and 5,000 gold. | `Issues.Issue2868a` proves the per-map all-Griffin predicate (including the former Gold Golem mismatch); `Issue673d` covers assignment/report completion and reputation. Add XP, gold, award and refusal assertions. | C |
 | Malwick's favor/Niles debt | Taking Malwick's Wand of Fireballs on Emerald Island conditionally starts the later Niles chain. Within six weeks of choosing a path, the party receives the Guild message on entering Harmondale; it then has two weeks to visit Niles and two more weeks to return the path-appropriate allied-castle tapestry. | Partial focused coverage; expand into the explicit clock/trigger cases. | C |
 | War alternatives | Cover Loren real/decoy/decline, Riverstride real/decoy/decline, the resulting war score, trumpet recipient, and the neutral option independently. | Uncovered matrix. | C |
 | Niles/tapestry | Recover the allied-castle tapestry (Lambent on Light, Gloaming on Dark) and return it to Niles. Taking it makes that allied region hostile for one month. Missing either two-week deadline causes Goblins and Swordsmen to attack Harmondale; shops/services close until the invaders are cleared. | Uncovered. | C |
@@ -180,3 +180,9 @@ promotion action, added the previously omitted Griffin hunt and Obelisk puzzle,
 and recorded player-visible side-quest rewards. This establishes the behavior
 baseline for Dark-chain work and later regional side-quest implementation; it
 does not convert incomplete runtime tests into covered quests.
+
+An upstream event-decoder correction now treats MM7 script monster identifiers
+as zero-based for `IsActorKilled` and topic availability checks. Its focused
+original-script tests prove both regional Griffin predicates and the Stone City
+Troglodyte Queen boundary; the local reporting contracts continue to own the
+player-visible reward assertions.

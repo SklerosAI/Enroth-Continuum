@@ -46,3 +46,7 @@ Update: S-BORDER part (c) is done on `claude/mm6-map-return` (`45ce7e223`, `c1db
 
 | S-SAVEANY MM6 save and load on any map (M2 part 2) | `claude/mm6-save-any-map` stacked on `claude/mm6-map-return` in `mm7-save-durability` | the MM6 EC6 writer and reader (`src/Engine/MM6/` save sections, outdoor and indoor visited-map sections), MM6 branches of `saveGame` and load in `src/Engine/SaveLoad.cpp`, the Save and Load menu admission for MM6, new MM6 tests and gate children. Shared core. |
 
+Update: S-DEATH integrated (`8963ff45b`, `dad5aa244`). New lane in its checkout:
+
+| S-HOVER MM6 decoration hover crash | `claude/mm6-decor-hover` in `mm7-monster-combat` | the MM6 decoration event-variable base and `GameUI_WritePointedObjectStatusString` MM6 path (`src/GUI/UI/UIGame.cpp` or wherever it lives), MM6 decoration setup in `src/Engine/MM6/` or `src/Engine/Graphics/Indoor.cpp` and `Outdoor.cpp` as needed, a new MM6 test. Shared core. |
+

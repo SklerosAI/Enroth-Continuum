@@ -13,11 +13,14 @@ Usage:
       [--expected-volume-id N]
   mm7_playtest_capture.sh note --session ABS_SESSION_DIR --text "owner note"
   mm7_playtest_capture.sh clip --session ABS_SESSION_DIR
-  mm7_playtest_capture.sh stop --session ABS_SESSION_DIR
+  mm7_playtest_capture.sh stop --session ABS_SESSION_DIR [--game-exit normal|abnormal]
   mm7_playtest_capture.sh status --session ABS_SESSION_DIR
 
 The start command stays in the foreground, prints SESSION_DIR=..., and exits
 after the game PID exits or stop is requested. It never launches or signals MM7.
+Video keeps a rolling buffer of the last two minutes. A clip request, an
+abnormal game exit, or a game exit with no stop request keeps the buffer as a
+clip. Otherwise the buffer is deleted when recording ends.
 EOF
 }
 
@@ -58,8 +61,8 @@ validate_session() {
 
 write_status() {
     local tmp="$session/.status.$$"
-    printf '{"state":"%s","started_at":"%s","ended_at":%s,"video":"%s","warnings":%s}\n' \
-        "$state" "$started_at" "$ended_json" "$video_state" "$warning_count" > "$tmp"
+    printf '{"state":"%s","started_at":"%s","ended_at":%s,"video":"%s","clips":%s,"warnings":%s}\n' \
+        "$state" "$started_at" "$ended_json" "$video_state" "$clips_saved" "$warning_count" > "$tmp"
     mv "$tmp" "$session/status.json"
 }
 
@@ -109,7 +112,7 @@ snapshot() {
     [[ "$force" == yes || "$hash" != "$old" ]] || return 0
     if [[ "$stable" == yes ]]; then
         before=$(stat -f '%d:%i:%z:%m' "$source" 2>/dev/null) || return 0
-        sleep 1
+        idle 1 || return 1
         after=$(stat -f '%d:%i:%z:%m' "$source" 2>/dev/null) || return 0
         [[ "$before" == "$after" ]] || return 0
         [[ "$hash" == "$(sha "$source")" ]] || return 0
@@ -218,10 +221,14 @@ capture_once() {
 
 video_pid=""
 video_file=""
-video_slot=""
-next_video_slot="A"
+video_counter=0
 video_state="off"
 video_enabled=0
+video_restart=1
+pending_clip=""
+clip_counter=0
+clips_saved=0
+last_clip_saved=0
 video_running() {
     local status
     [[ -n "$video_pid" ]] || return 1
@@ -229,9 +236,69 @@ video_running() {
     status=${status//[[:space:]]/}
     [[ -n "$status" && "$status" != Z* ]]
 }
-discard_current_video() {
-    [[ -n "$video_file" && -e "$video_file" ]] || return 0
-    unlink "$video_file" 2>/dev/null || true
+
+# Completed chunks, oldest first. Zero-padded names sort in recording order.
+completed_chunks() {
+    local chunk
+    for chunk in "$session"/video/chunk-*.mov; do
+        [[ -f "$chunk" ]] && printf '%s\n' "$chunk"
+    done
+}
+
+prune_video_buffer() {
+    local keep="$1" chunks=() chunk extra
+    while IFS= read -r chunk; do chunks+=("$chunk"); done < <(completed_chunks)
+    extra=$(( ${#chunks[@]} - keep ))
+    while (( extra > 0 )); do
+        unlink "${chunks[$((extra - 1))]}" 2>/dev/null || true
+        extra=$((extra - 1))
+    done
+}
+
+# A hard link costs no space and survives the roll. exFAT and other volumes
+# without hard links get a copy instead.
+add_to_clip() {
+    local source="$1" clip="$2" target tmp
+    target="$clip/$(basename "$source")"
+    [[ ! -e "$target" ]] || return 0
+    ln "$source" "$target" 2>/dev/null && return 0
+    check_destination || return 1
+    tmp=$(mktemp "$clip/.incoming.XXXXXX") || return 1
+    if cp "$source" "$tmp" 2>/dev/null && mv "$tmp" "$target"; then
+        return 0
+    fi
+    unlink "$tmp" 2>/dev/null || true
+    warn "Could not copy a video chunk into $clip."
+}
+
+# The chunk being recorded joins the clip when it completes.
+open_clip() {
+    local reason="$1" chunk
+    clip_counter=$((clip_counter + 1))
+    pending_clip="$session/clips/clip-$(stamp)-$(printf '%03d' "$clip_counter")"
+    mkdir "$pending_clip" || { pending_clip=""; return 1; }
+    while IFS= read -r chunk; do
+        add_to_clip "$chunk" "$pending_clip" || return 1
+    done < <(completed_chunks)
+    event video-clip "Clip opened ($reason): $pending_clip"
+    [[ -n "$video_pid" ]] || close_clip
+}
+
+close_clip() {
+    local count
+    [[ -n "$pending_clip" ]] || return 0
+    count=$(find "$pending_clip" -maxdepth 1 -type f -name 'chunk-*.mov' | wc -l | tr -d ' ')
+    if (( count == 0 )); then
+        rmdir "$pending_clip" 2>/dev/null || true
+        last_clip_saved=0
+        event video-clip "No video was available for the clip."
+    else
+        clips_saved=$((clips_saved + 1))
+        last_clip_saved=1
+        event video-clip "Clip saved with $count chunk(s): $pending_clip"
+        write_status
+    fi
+    pending_clip=""
 }
 
 finish_video_chunk() {
@@ -239,95 +306,53 @@ finish_video_chunk() {
     [[ -n "$video_pid" ]] || return 0
     wait "$video_pid" 2>/dev/null || exit_status=$?
     video_pid=""
-    target="$session/video/rolling-$video_slot.mov"
+    target="$session/video/chunk-$(printf '%06d' "$video_counter").mov"
     if [[ "$exit_status" -ne 0 || ! -s "$video_file" ]]; then
-        discard_current_video
+        unlink "$video_file" 2>/dev/null || true
         video_enabled=0
         video_state="failed"
-        warn "Screen recording produced no rolling video; check macOS Screen Recording permission. Logs and saves continue."
+        warn "Screen recording produced no video; check macOS Screen Recording permission for Enroth Continuum. Logs and saves continue."
     else
+        # The buffer keeps video_keep completed chunks, which with the chunk
+        # being recorded hold at least the last two minutes.
+        prune_video_buffer $((video_keep - 1))
         mv "$video_file" "$target"
-        video_state="rolling"
         event video "Rolling video chunk completed."
+        if [[ -n "$pending_clip" ]]; then
+            add_to_clip "$target" "$pending_clip" || return 1
+        fi
     fi
     video_file=""
-    video_slot=""
+    close_clip
 }
 
-save_rolling_video_clip() {
-    local clip_dir slot source tmp copied=0
-    [[ -f "$session/.save-clip-requested" ]] || return 0
-    unlink "$session/.save-clip-requested" 2>/dev/null || true
-    check_destination || return 1
-    clip_dir="$session/clips/clip-$(stamp)-$(printf '%06d' "$sequence")"
-    mkdir "$clip_dir" || return 1
-    for slot in A B; do
-        source="$session/video/rolling-$slot.mov"
-        [[ -s "$source" ]] || continue
-        tmp=$(mktemp "$clip_dir/.incoming.XXXXXX") || return 1
-        if cp "$source" "$tmp" 2>/dev/null && mv "$tmp" "$clip_dir/rolling-$slot.mov"; then
-            copied=$((copied + 1))
-        else
-            unlink "$tmp" 2>/dev/null || true
-        fi
-    done
-    if (( copied == 0 )); then
-        rmdir "$clip_dir" 2>/dev/null || true
-        warn "Rolling-video save requested before a complete video chunk was available."
-        return 0
-    fi
-    event video-clip "Saved $copied rolling video chunk(s) to $clip_dir."
-}
-
+# Stops the chunk being recorded and deletes it. Clips never include it.
 stop_video() {
+    local tries=0
     [[ -n "$video_pid" ]] || return 0
-    local was_running=0
     if video_running; then
-        was_running=1
-        kill -INT "$video_pid" 2>/dev/null || true  # Recorder-owned capture only, never the game.
-        local tries=0
-        while video_running && (( tries < 20 )); do
+        kill -TERM "$video_pid" 2>/dev/null || true  # Recorder-owned capture only, never the game.
+        while video_running && (( tries < 5 )); do
             sleep 1
             tries=$((tries + 1))
         done
-        if video_running; then
-            kill -TERM "$video_pid" 2>/dev/null || true
-            if volume_ok; then
-                warn "Screen recorder needed forced termination; its last video chunk may be incomplete."
-            fi
-            tries=0
-            while video_running && (( tries < 5 )); do
-                sleep 1
-                tries=$((tries + 1))
-            done
-            if video_running; then
-                kill -KILL "$video_pid" 2>/dev/null || true
-                if volume_ok; then warn "Screen recorder did not stop after TERM; final video chunk is unreliable."; fi
-            fi
-        fi
-    fi
-    if (( was_running )); then
-        video_state="interrupted"
-        if volume_ok; then event video "Discarded incomplete rolling video chunk at session end."; fi
+        if video_running; then kill -KILL "$video_pid" 2>/dev/null || true; fi
     fi
     wait "$video_pid" 2>/dev/null || true
     video_pid=""
-    discard_current_video
+    [[ -z "$video_file" ]] || unlink "$video_file" 2>/dev/null || true
     video_file=""
-    video_slot=""
 }
 
 check_video() {
     [[ "$video_enabled" == 1 ]] || return 0
     if [[ -n "$video_pid" ]] && ! video_running; then
-        finish_video_chunk
+        finish_video_chunk || return 1
     fi
-    if [[ "$video_enabled" == 1 && -z "$video_pid" ]]; then
+    if [[ "$video_enabled" == 1 && "$video_restart" == 1 && -z "$video_pid" ]] && (( requested == 0 )); then
         check_destination || return 1
-        sequence=$((sequence + 1))
-        video_slot="$next_video_slot"
-        if [[ "$next_video_slot" == A ]]; then next_video_slot=B; else next_video_slot=A; fi
-        video_file="$session/video/.rolling-$video_slot-recording.mov"
+        video_counter=$((video_counter + 1))
+        video_file="$session/video/.chunk-$(printf '%06d' "$video_counter").recording.mov"
         local video_command=(/usr/sbin/screencapture -x -v "-V${video_chunk_seconds}" "-D${display}")
         "${video_command[@]}" "$video_file" \
             >> "$session/video-command.log" 2>&1 &
@@ -338,14 +363,53 @@ check_video() {
     fi
 }
 
+take_clip_request() {
+    [[ -f "$session/.save-clip-requested" ]] || return 0
+    unlink "$session/.save-clip-requested" 2>/dev/null || true
+    if [[ "$video_enabled" != 1 ]]; then
+        event video-clip "Clip requested while video is not recording."
+    elif [[ -n "$pending_clip" ]]; then
+        event video-clip "Clip request joined the clip in progress."
+    else
+        open_clip "owner request" || return 1
+    fi
+}
+
+service_video() {
+    take_clip_request || return 1
+    check_video
+}
+
+# Sleeps in one-second steps so a finished chunk is replaced at once.
+idle() {
+    local remaining="$1"
+    while (( remaining > 0 )); do
+        sleep 1 || true
+        (( requested == 0 )) || return 0
+        service_video || return 1
+        remaining=$((remaining - 1))
+    done
+}
+
+# An abnormal exit waits for the chunk being recorded to complete, so the
+# clip holds the moments around the exit.
+drain_video_into_clip() {
+    local waited=0 limit=$((video_chunk_seconds + 15)) signals="$requested"
+    while video_running && (( waited < limit && requested == signals )); do
+        sleep 1 || true
+        waited=$((waited + 1))
+    done
+    if [[ -n "$video_pid" ]] && ! video_running; then finish_video_chunk || return 1; fi
+}
+
 mode="${1:-}"
 [[ -n "$mode" ]] || { usage; exit 2; }
 shift
-profile_arg=""; output_arg=""; session_arg=""; app_arg=""; game_pid=""; note_text=""; expected_volume_id=""
+profile_arg=""; output_arg=""; session_arg=""; app_arg=""; game_pid=""; note_text=""; expected_volume_id=""; game_exit=""
 display=1; video_chunk_seconds=60; poll_seconds=5; save_checkpoint_seconds=600; min_free_mib=2048
 while (( $# > 0 )); do
     case "$1" in
-        --profile|--output|--session|--app|--game-pid|--display|--video-chunk-seconds|--poll-seconds|--save-checkpoint-seconds|--min-free-mib|--expected-volume-id|--text)
+        --profile|--output|--session|--app|--game-pid|--display|--video-chunk-seconds|--poll-seconds|--save-checkpoint-seconds|--min-free-mib|--expected-volume-id|--text|--game-exit)
             (( $# >= 2 )) || fail "missing value for $1"
             case "$1" in
                 --profile) profile_arg="$2" ;; --output) output_arg="$2" ;;
@@ -354,7 +418,7 @@ while (( $# > 0 )); do
                 --video-chunk-seconds) video_chunk_seconds="$2" ;; --poll-seconds) poll_seconds="$2" ;;
                 --save-checkpoint-seconds) save_checkpoint_seconds="$2" ;;
                 --min-free-mib) min_free_mib="$2" ;; --text) note_text="$2" ;;
-                --expected-volume-id) expected_volume_id="$2" ;;
+                --expected-volume-id) expected_volume_id="$2" ;; --game-exit) game_exit="$2" ;;
             esac
             shift 2 ;;
         --video) video_enabled=1; shift ;;
@@ -375,12 +439,16 @@ if [[ "$mode" == note || "$mode" == clip || "$mode" == stop || "$mode" == status
             note_text=${note_text:0:500}
             event owner-note "$note_text" ;;
         clip) : > "$session/.save-clip-requested" ;;
-        stop) : > "$session/.stop-requested" ;;
+        stop)
+            [[ -z "$game_exit" || "$game_exit" == normal || "$game_exit" == abnormal ]] ||
+                fail "--game-exit must be normal or abnormal"
+            printf '%s\n' "$game_exit" > "$session/.stop-requested.$$"
+            mv "$session/.stop-requested.$$" "$session/.stop-requested" ;;
         status) cat "$session/status.json" ;;
     esac
     exit 0
 fi
-[[ "$mode" == start ]] || fail "expected start, note, stop, or status"
+[[ "$mode" == start ]] || fail "expected start, note, clip, stop, or status"
 [[ -n "$profile_arg" && -n "$app_arg" && -n "$game_pid" ]] || fail "start requires --profile, --app, and --game-pid"
 [[ -n "$output_arg" && -z "$session_arg" || -z "$output_arg" && -n "$session_arg" ]] ||
     fail "start requires exactly one of --output or --session"
@@ -391,6 +459,7 @@ done
 (( game_pid > 1 && display > 0 && video_chunk_seconds >= 10 && video_chunk_seconds <= 3600 &&
    poll_seconds >= 1 && poll_seconds <= 60 && save_checkpoint_seconds >= 1 &&
    save_checkpoint_seconds <= 3600 && min_free_mib >= 128 )) || fail "numeric option is out of range"
+video_keep=$(( (120 + video_chunk_seconds - 1) / video_chunk_seconds ))
 [[ "$video_enabled" != 1 || -x /usr/sbin/screencapture ]] || fail "macOS screencapture is unavailable"
 profile=$(canonical_existing_dir "$profile_arg")
 app=$(canonical_existing_dir "$app_arg")
@@ -446,10 +515,10 @@ fi
 game_start=$(ps -p "$game_pid" -o lstart= 2>/dev/null || true)
 requested=0
 next_save_checkpoint_epoch=$(( $(date +%s) + save_checkpoint_seconds ))
-trap 'requested=1' INT TERM
+trap 'requested=$((requested + 1))' INT TERM
 stop_reason="stopped"
 while true; do
-    if [[ "$requested" == 1 || -f "$session/.stop-requested" ]]; then
+    if (( requested > 0 )) || [[ -f "$session/.stop-requested" ]]; then
         stop_reason="stopped"
         break
     fi
@@ -462,8 +531,7 @@ while true; do
         stop_reason="$state"
         break
     fi
-    check_video || { stop_reason="$state"; break; }
-    save_rolling_video_clip || { stop_reason="$state"; break; }
+    service_video || { stop_reason="$state"; break; }
     now_epoch=$(date +%s)
     force_save_checkpoint=no
     if (( now_epoch >= next_save_checkpoint_epoch )); then
@@ -473,14 +541,43 @@ while true; do
         done
     fi
     capture_once "$force_save_checkpoint" || { stop_reason="$state"; break; }
-    sleep "$poll_seconds" || true
+    idle "$poll_seconds" || { stop_reason="$state"; break; }
 done
+video_restart=0
 if volume_ok; then
+    # Atlas reports how MM7 exited through the stop request, which can land
+    # just after the recorder notices the exit itself.
+    waited=0
+    while [[ "$stop_reason" == game-exited && ! -f "$session/.stop-requested" ]] &&
+          (( waited < 10 && requested == 0 )); do
+        idle 1 || true
+        waited=$((waited + 1))
+    done
+    take_clip_request || true
+    game_exit=""
+    [[ ! -f "$session/.stop-requested" ]] || game_exit=$(head -n 1 "$session/.stop-requested")
+    keep_video=0
+    if [[ "$stop_reason" == stopped || "$stop_reason" == game-exited ]]; then
+        if [[ "$game_exit" == abnormal || ( -z "$game_exit" && "$stop_reason" == game-exited ) ]]; then
+            keep_video=1
+        fi
+        [[ -z "$pending_clip" ]] || keep_video=1
+    fi
     if [[ "$stop_reason" != low-space ]]; then capture_once || true; fi
+    if (( keep_video )) && [[ "$video_enabled" == 1 ]]; then
+        [[ -n "$pending_clip" ]] || open_clip "game exit ${game_exit:-unreported}" || true
+        drain_video_into_clip || true
+    fi
     stop_video
+    close_clip
+    while IFS= read -r chunk; do unlink "$chunk" 2>/dev/null || true; done < <(completed_chunks)
+    if [[ "$video_state" != off && "$video_state" != failed ]]; then
+        if (( keep_video && last_clip_saved )); then video_state="kept"; else video_state="discarded"; fi
+        event video "Rolling video buffer deleted ($video_state)."
+    fi
     state="$stop_reason"
     ended_json="\"$(utc)\""
-    event stop "$state"
+    event stop "$state${game_exit:+ ($game_exit exit)}"
     write_status
 else
     stop_video

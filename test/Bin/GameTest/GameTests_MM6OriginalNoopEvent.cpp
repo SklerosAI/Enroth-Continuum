@@ -550,6 +550,20 @@ EvtProgram syntheticCanShowHeldItemTopicEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticCanShowDayOfYearTopicEvent() {
+    std::string bytes;
+    std::string compare;
+    compare.push_back(static_cast<char>(VAR_DayOfYear));
+    appendU32(&compare, 84);
+    compare.push_back(3);
+    appendRecord(&bytes, 0, EVENT_OnCanShowDialogItemCmp, compare);
+    appendRecord(&bytes, 1, EVENT_SetCanShowDialogItem, std::string(1, '\0'));
+    appendRecord(&bytes, 2, EVENT_EndCanShowDialogItem, std::string(1, '\0'));
+    appendRecord(&bytes, 3, EVENT_SetCanShowDialogItem, std::string(1, '\1'));
+    appendRecord(&bytes, 4, EVENT_EndCanShowDialogItem, std::string(1, '\0'));
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -1108,6 +1122,23 @@ GAME_TEST(MM6HeldItemTopicAdmission, UsesTheMM6HeldItemTopicBranch) {
     EXPECT_TRUE(accepted.canShowTopic());
 
     pParty->pPickedItem.itemId = static_cast<ItemId>(579);
+    EvtInterpreter refused;
+    refused.prepare(EvtContext(EVT_SOURCE_GLOBAL, 1));
+    EXPECT_FALSE(refused.canShowTopic());
+}
+
+GAME_TEST(MM6DayOfYearTopicAdmission, UsesTheMM6CalendarTopicBranch) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedGlobalEventMap restoreEvents;
+    ScopedParty restoreParty;
+    engine->_globalEventMap = syntheticCanShowDayOfYearTopicEvent();
+
+    pParty->GetPlayingTime() = Time::fromDays(83);
+    EvtInterpreter accepted;
+    accepted.prepare(EvtContext(EVT_SOURCE_GLOBAL, 1));
+    EXPECT_TRUE(accepted.canShowTopic());
+
+    pParty->GetPlayingTime() = Time::fromDays(82);
     EvtInterpreter refused;
     refused.prepare(EvtContext(EVT_SOURCE_GLOBAL, 1));
     EXPECT_FALSE(refused.canShowTopic());

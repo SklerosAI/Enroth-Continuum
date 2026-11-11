@@ -187,6 +187,8 @@ void CastSpellInfoHelpers::castSpell() {
         }
 
         pSpellSprite.spriteId = SpellSpriteMapping[pCastSpell->uSpellID];
+        if (engine->gameTitle() == GameTitle::MM6 && pCastSpell->uSpellID == SPELL_BLASTER_PROJECTILE)
+            pSpellSprite.spriteId = static_cast<SpriteId>(590); // MM6 blasters fire the laser bolt, MM6 has no object 555.
 
         if (pSpellSprite.spriteId != SPRITE_NULL) {
             if (spell_targeted_at.type() == OBJECT_Actor) {

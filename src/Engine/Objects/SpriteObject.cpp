@@ -13,6 +13,7 @@
 #include "Engine/AttackList.h"
 #include "Engine/MM6/MM6ChestTrap.h"
 #include "Engine/MM6/MM6MonsterAttack.h"
+#include "Engine/MM6/MM6MonsterProjectile.h"
 #include "Engine/Spells/Spells.h"
 #include "Engine/Tables/MapTable.h"
 
@@ -750,6 +751,16 @@ bool processSpellImpact(unsigned int uLayingItemID, Pid pid) {
     if (engine->gameTitle() == GameTitle::MM6 && object->spell_caster_pid.type() == OBJECT_Actor &&
         mm6::monsterObjectImpact(object->spriteId) != mm6::MonsterObjectImpact::Unverified)
         return mm6::processMonsterObjectImpact(uLayingItemID, pid);
+
+    if (engine->gameTitle() == GameTitle::MM6 && object->spriteId == static_cast<SpriteId>(590)) { // The party's blaster shot.
+        applySpellSpriteDamage(uLayingItemID, pid);
+        object->spriteId = mm6::monsterObjectExplosion(object->spriteId);
+        object->uObjectDescID = pObjectTable->ObjectIDByItemID(object->spriteId);
+        if (object->uObjectDescID == 0)
+            SpriteObject::Remove(uLayingItemID);
+        object->spellSpriteStop();
+        return 0;
+    }
 
     // MM6 Ice Bolt flies as the sprite of MM7 Recharge Item.
     const bool mm6IceBolt = engine->gameTitle() == GameTitle::MM6 && object->spriteId == SPRITE_SPELL_WATER_RECHARGE_ITEM;

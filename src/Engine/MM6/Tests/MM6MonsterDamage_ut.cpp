@@ -51,9 +51,9 @@ UNIT_TEST(MM6MonsterDamage, RejectsUnknownActiveAndIgnoresZeroChancePlaceholder)
 }
 
 UNIT_TEST(MM6MonsterDamage, GatesUnverifiedEffectsByTitle) {
-    for (DamageType type : {DAMAGE_PHYSICAL, DAMAGE_FIRE})
+    for (DamageType type : {DAMAGE_PHYSICAL, DAMAGE_FIRE, DAMAGE_ENERGY})
         EXPECT_NO_THROW(mm6::requireVerifiedMonsterDamage(GameTitle::MM6, type));
-    for (DamageType type : {DAMAGE_AIR, DAMAGE_WATER, DAMAGE_EARTH, DAMAGE_MAGIC, DAMAGE_ENERGY}) {
+    for (DamageType type : {DAMAGE_AIR, DAMAGE_WATER, DAMAGE_EARTH, DAMAGE_MAGIC}) {
         EXPECT_THROW(mm6::requireVerifiedMonsterDamage(GameTitle::MM6, type), std::runtime_error);
         EXPECT_NO_THROW(mm6::requireVerifiedMonsterDamage(GameTitle::MM7, type));
     }
@@ -68,7 +68,7 @@ UNIT_TEST(MM6MonsterDamage, GatesCharacterChannelsSeparatelyFromMonsterChannels)
         EXPECT_THROW(mm6::requireVerifiedCharacterDamage(GameTitle::MM6, type), std::runtime_error);
         EXPECT_NO_THROW(mm6::requireVerifiedCharacterDamage(GameTitle::MM7, type));
     }
-    for (DamageType type : {DAMAGE_AIR, DAMAGE_WATER, DAMAGE_EARTH, DAMAGE_MAGIC, DAMAGE_ENERGY})
+    for (DamageType type : {DAMAGE_AIR, DAMAGE_WATER, DAMAGE_EARTH, DAMAGE_MAGIC})
         EXPECT_THROW(mm6::requireVerifiedMonsterDamage(GameTitle::MM6, type), std::runtime_error);
 }
 

@@ -3095,7 +3095,7 @@ int Actor::DamageMonsterFromParty(Pid a1, unsigned int uActorID_Monster, const V
                 v61 = 1;
                 if (character->getSkillValue(SKILL_BLASTER).mastery() >= MASTERY_MASTER)
                     skillLevel = character->getSkillValue(SKILL_BLASTER).level();
-                attackElement = DAMAGE_PHYSICAL;
+                attackElement = engine->gameTitle() == GameTitle::MM6 ? DAMAGE_ENERGY : DAMAGE_PHYSICAL;
                 uDamageAmount = character->CalculateMeleeDamageTo(true, true, MONSTER_INVALID);
                 if (!character->characterHitOrMiss(pMonster, v61, skillLevel)) {
                     character->playReaction(SPEECH_ATTACK_MISS);

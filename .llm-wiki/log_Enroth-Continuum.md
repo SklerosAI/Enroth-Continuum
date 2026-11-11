@@ -3126,3 +3126,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Replaced the altar test's artificial Castle Gloaming placement with the genuine Archibald hand-in and runtime-selected Pit adviser homes. Added a passing Maximus contract that follows Kastore's prerequisite, assigns the Dark Soul Jars task, refuses without the case, and consumes it on completion. The Thunderfist chest acquisition interaction remains a focused follow-up.
 
+## [2026-11-11] verify | MM7 Dark Shade Clanker hand-in
+- by: T-Burton-ND via codex
+- Added and passed Dark Shade's actual Pit dialogue contract: it assigns the Clanker task, refuses before the defense marker, and closes only after it. Together with the existing event test, this confirms the Dark route's intended map-state objective and recipient.
+

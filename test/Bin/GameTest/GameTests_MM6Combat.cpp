@@ -384,3 +384,18 @@ GAME_TEST(MM6CombatHeadless, DISABLED_D18VentFireballsHurtNobody) {
     EXPECT_EQ(hpTape.size(), 1);
     EXPECT_EQ(dummyHpTape.size(), 1);
 }
+
+GAME_TEST(MM6CombatHeadless, DISABLED_D18VentFireballsKeepExploding) {
+    // The trail particles of the d18 vents' fireballs used to run out after a few explosions and crash the run.
+    // Run alone in a fresh MM6 headless process.
+    auto explosionsTape = tapes.custom([] {
+        return std::ranges::count(pSpriteObjects, SPRITE_SPELL_FIRE_FIREBALL_IMPACT, &SpriteObject::spriteId);
+    });
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "d18.blv");
+    test.startTaping();
+
+    game.tick(34); // The timers keep launching fireballs from the vents, past the hundredth trail particle.
+
+    EXPECT_EQ(explosionsTape.adjacentDeltas().count([](auto delta) { return delta > 0; }), 7);
+}

@@ -1,5 +1,6 @@
 #include "Engine/Graphics/ParticleEngine.h"
 
+#include "Engine/Engine.h"
 #include "Engine/Graphics/Camera.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Random/Random.h"
@@ -22,6 +23,8 @@ void TrailParticleGenerator::AddParticle(int x, int y, int z, Color color) {
     particles[num_particles].color = color;
 
     num_particles++;
+    if (engine->gameTitle() == GameTitle::MM6 && num_particles == 100)
+        num_particles = 0; // MM6 reuses its trail particles as a ring of 100.
     assert(num_particles < 100);
 }
 

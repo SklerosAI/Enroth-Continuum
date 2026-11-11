@@ -38,8 +38,12 @@ continuously once permission is granted. Recording stays off and permission
 ungranted until an on-request replay build is reviewed and installed. A
 rolling 60-second replay exists only as uncommitted Codex launcher edits.
 Sound IDs 1103, 1503, 1523, 1543 and 1683 logged empty-name load failures
-and one `null` sprite lookup failed. Not heard as missing, queued for the
-stage 3 audit.
+and one `null` sprite lookup failed. A read-only check of the MM7 tables and
+archives found all harmless: the sound rows exist with blank names and no
+file exists for them (monster idle slots and one map-load decoration sound),
+and the `null` frame is the placeholder the seasons option uses to hide four
+flowers in winter. Stage 3 keeps two small items: an untraced `sound id 2
+not found`, and logging blank-name rows once instead of on every request.
 
 The staged W3 session already passed launch, opening movie, New Game, input,
 focus and pause, a shop purchase, a spell, and named Save then fresh-process

@@ -424,6 +424,31 @@ EvtProgram syntheticQuestBitClearEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticNpcHireEvent() {
+    std::string bytes;
+    std::string npc;
+    npc.push_back(static_cast<char>(214)); // MM6 NPC-in-party variable.
+    appendU32(&npc, 13);
+    appendRecord(&bytes, 0, EVENT_Set, npc);
+
+    std::string compare = npc;
+    compare.push_back(4);
+    appendRecord(&bytes, 1, EVENT_Compare, compare);
+
+    std::string failed;
+    failed.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&failed, 38);
+    appendRecord(&bytes, 2, EVENT_Set, failed);
+    appendRecord(&bytes, 3, EVENT_Exit);
+
+    std::string passed;
+    passed.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&passed, 39);
+    appendRecord(&bytes, 4, EVENT_Set, passed);
+    appendRecord(&bytes, 5, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -882,4 +907,20 @@ GAME_TEST(MM6QuestBitClear, ClearsTheMM6QuestBitAndFallsThrough) {
     EXPECT_FALSE(pParty->_questBits.test(static_cast<QuestBit>(511)));
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(36));
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(37));
+}
+
+GAME_TEST(MM6NpcHireEvent, UsesTheMM6NpcInPartyStateAndBranch) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedNpcStats restoreNpcs;
+    ScopedParty restoreParty;
+    engine->_localEventMap = syntheticNpcHireEvent();
+    pNPCStats->pNPCData[13].flags &= ~NPC_HIRED;
+    pParty->pCharacters[0]._characterEventBits.reset(38);
+    pParty->pCharacters[0]._characterEventBits.reset(39);
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_TRUE(pNPCStats->pNPCData[13].Hired());
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(38));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(39));
 }

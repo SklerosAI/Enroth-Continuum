@@ -32,6 +32,23 @@ static std::vector<int> breedingZoneCompletionEvents() {
     return result;
 }
 
+static std::vector<int> clankerDefenseEvents() {
+    std::vector<int> result;
+    for (const BLVFace &face : pIndoor->faces) {
+        if (!face.Clickable() || !engine->_localEventMap.hasEvent(face.eventId))
+            continue;
+        const auto &instructions = engine->_localEventMap.function(face.eventId);
+        bool disablesDefenses = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+            return (instruction.opcode == EVENT_Set || instruction.opcode == EVENT_Add) &&
+                   instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+                   instruction.data.variable_descr.value == std::to_underlying(QBIT_CLANKERS_LAB_DEFENSES_DESTROYED);
+        });
+        if (disablesDefenses && std::ranges::find(result, face.eventId) == result.end())
+            result.push_back(face.eventId);
+    }
+    return result;
+}
+
 GAME_TEST(MM7DarkGuild, BreedingZoneMarkerDoesNotGrantDarkGuild) {
     // The normal exit only returns the party to the Pit. The actual in-dungeon completion event must be found from
     // the loaded map program and clicked, so the test cannot silently substitute a generic exit for this objective.
@@ -192,4 +209,27 @@ GAME_TEST(MM7DarkGuild, KastoreRequiresBothAltarPieces) {
     EXPECT_EQ(finishedTape, tape(false, true));
     EXPECT_EQ(lightPieceTape, tape(false, true, false));
     EXPECT_EQ(darkPieceTape, tape(false, true, false));
+}
+
+GAME_TEST(MM7DarkGuild, ClankerDefensesAreDisabledByMapEvent) {
+    // Dark Shade's objective is the lab's magical and teleport defenses, not a kill-all sweep. Locate the live
+    // event that records those defenses as destroyed and exercise it without actors present.
+    auto activeTape = tapes.questBit(QBIT_CLANKERS_LAB_ACTIVE);
+    auto destroyedTape = tapes.questBit(QBIT_CLANKERS_LAB_DEFENSES_DESTROYED);
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+    pParty->_questBits.set(QBIT_DARK_PATH);
+    pParty->_questBits.set(QBIT_DARK_GUILD_JOINED);
+    pParty->_questBits.set(QBIT_CLANKERS_LAB_ACTIVE);
+    test.startTaping();
+
+    game.teleportTo(MAP_CLANKERS_LABORATORY, Vec3f(), 0);
+    const std::vector<int> defenseEvents = clankerDefenseEvents();
+    ASSERT_EQ(defenseEvents.size(), 1u);
+    ASSERT_TRUE(clickCampaignChainEventFace(game, MAP_CLANKERS_LABORATORY, defenseEvents.front(), 1, [] {
+        return pParty->_questBits[QBIT_CLANKERS_LAB_DEFENSES_DESTROYED];
+    }));
+
+    EXPECT_EQ(activeTape, tape(true));
+    EXPECT_EQ(destroyedTape, tape(false, true));
 }

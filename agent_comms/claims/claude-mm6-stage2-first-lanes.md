@@ -15,3 +15,8 @@ Update 2026-11-11: S-SWEEP finished (`fe66c3ca3`, handoff `handoffs/2026-11-11-c
 | S-AWARD MM6 award-animation crash | `claude/mm6-award-anim` in `mm7-save-durability` | `src/Engine/Tables/IconFrameTable.*`, `Character::PlayAwardSound_Anim` in `src/Engine/Objects/Character.cpp`, `SpellFxRenderer::SetPlayerBuffAnim`, MM6 icon mapping in `src/Engine/MM6/` if needed, a new MM6 game test. |
 
 Update 2026-11-11: S-NG, S-SWEEP and S-REP are finished and handed off (`handoffs/2026-11-11-claude-mm6-*.md`). Their build folders were removed to save disk. Only S-AWARD is active.
+
+Update 2026-11-11 later: S-AWARD finished (`dbb0b95e7`, handoff `handoffs/2026-11-11-claude-mm6-award-anim.md`). Its checkout now hosts S-NPCPOOL:
+
+| S-NPCPOOL MM6 generated NPC pool overflow | `claude/mm6-npc-pool` in `mm7-save-durability` | `src/Engine/MM6/MM6PostMapGeneratedNpcLinks.*` and the MM6 generated-NPC owners it needs, the matching MM6 save section only if the pool size is persisted, a new MM6 test. |
+

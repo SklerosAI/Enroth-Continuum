@@ -3097,3 +3097,8 @@ Chronological record of wiki activity.
 - The catalog identifies a definite Wine Cellar false positive: the current Light chain can complete without defeating the Elder Vampire, contrary to independently corroborated player-facing guides.
 - It also records the uncovered Dark chain, war/timer alternatives, Colony Zod route and side/promotion matrix as contracts to resolve before claiming behavior-complete coverage.
 
+## [2026-11-11] verify | MM7 quest behavior contract closure
+- by: T-Burton-ND via codex
+- Reconciled the remaining public-source questions and expanded the catalog into individual promotion and test-contract rows. The official Prima guide establishes a four-month war clock, with the trumpet battle available after two months; the Niles/Malwick chain now has its conditional trigger, two deadline windows, temporary ally-hostility and Harmondale-invasion outcomes recorded.
+- The catalog has no unresolved intended-behavior rows. This closes the research prerequisite only; Dark and side-quest runtime coverage remain unimplemented.
+

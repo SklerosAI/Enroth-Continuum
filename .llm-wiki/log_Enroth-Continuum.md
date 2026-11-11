@@ -3102,3 +3102,7 @@ Chronological record of wiki activity.
 - Reconciled the remaining public-source questions and expanded the catalog into individual promotion and test-contract rows. The official Prima guide establishes a four-month war clock, with the trumpet battle available after two months; the Niles/Malwick chain now has its conditional trigger, two deadline windows, temporary ally-hostility and Harmondale-invasion outcomes recorded.
 - The catalog has no unresolved intended-behavior rows. This closes the research prerequisite only; Dark and side-quest runtime coverage remain unimplemented.
 
+## [2026-11-11] verify | MM7 Dark Breeding Zone marker boundary
+- by: T-Burton-ND via codex
+- Added and passed `MM7DarkGuild.BreedingZoneMarkerDoesNotGrantDarkGuild`. It discovers the actual completion event from the loaded Breeding Zone program rather than treating its ordinary exit as a quest action, and proves the map marker alone does not award Dark-guild membership. The Archibald dialogue hand-in and durable Dark chain remain open.
+

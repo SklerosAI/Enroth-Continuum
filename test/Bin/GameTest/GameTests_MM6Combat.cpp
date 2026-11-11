@@ -179,6 +179,44 @@ GAME_TEST(MM6CombatHeadless, DISABLED_SkeletonFrightensParty) {
                                   {CONDITION_FEAR, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD})); // The new party fails the save.
 }
 
+GAME_TEST(MM6CombatHeadless, DISABLED_FireArcherFireballHitsWholeParty) {
+    // A monster's Fireball used to refuse and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = charTapes.hps();
+    auto conditionTape = charTapes.conditions();
+    auto spritesTape = tapes.sprites();
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    Actor *archer = game.spawnMonster(pParty->pos + Vec3f(0, 1500, 0), static_cast<MonsterId>(3), SPAWN_STATIONARY);
+    archer->monsterInfo.spell1UseChance = 100;
+    game.tick(21); // The archer casts, and the fireball explodes on the party.
+
+    auto sprites = spritesTape.flatten();
+    EXPECT_CONTAINS(sprites, static_cast<SpriteId>(1050));
+    EXPECT_CONTAINS(sprites, static_cast<SpriteId>(1051));
+    EXPECT_EQ(hpTape, tape({38, 22, 22, 20}, {34, 17, 17, 15})); // Each character takes 1d2 plus the archer's bonus of 3.
+    EXPECT_EQ(conditionTape.frontBack(), tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
+                                              {CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD}));
+}
+
+GAME_TEST(MM6CombatHeadless, DISABLED_HarpyMassCurseCursesParty) {
+    // A monster's Mass Curse used to refuse and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = tapes.totalHp();
+    auto conditionTape = charTapes.conditions();
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    Actor *harpy = game.spawnMonster(pParty->pos + Vec3f(0, 1500, 0), static_cast<MonsterId>(84), SPAWN_STATIONARY);
+    harpy->monsterInfo.spell1UseChance = 100;
+    game.tick(15); // The harpy casts.
+
+    EXPECT_EQ(hpTape, tape(102));
+    EXPECT_EQ(conditionTape, tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
+                                  {CONDITION_CURSED, CONDITION_CURSED, CONDITION_CURSED, CONDITION_CURSED})); // The new party fails every save.
+}
+
 GAME_TEST(MM6CombatHeadless, DISABLED_CureWeaknessFromSpellbook) {
     // A new Body caster knows Cure Weakness, casting it from the spellbook used to refuse and end the run.
     // Run alone in a fresh MM6 headless process.

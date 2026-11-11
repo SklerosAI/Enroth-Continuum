@@ -1,4 +1,5 @@
 #include <initializer_list>
+#include <set>
 #include <stdexcept>
 
 #include "Testing/Unit/UnitTest.h"
@@ -6,8 +7,9 @@
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 
 UNIT_TEST(MM6SpellEffectGuard, RejectsUnverifiedRegularIDsAtEveryEffectEntry) {
-    // Only Cure Weakness is open to player casts, only the four first-map monster spells to monster casts, and only
-    // the six event spells of the main quest to event casts.
+    // Only Cure Weakness is open to player casts, every monster spell but Paralyze and Toxic Cloud to monster casts,
+    // and only the six event spells of the main quest to event casts.
+    const std::set<int> monsterSpells = {2, 4, 6, 9, 11, 18, 24, 26, 28, 37, 58, 65, 70, 76, 80, 91, 95};
     for (int id = 1; id <= 99; ++id) {
         const SpellId spell = static_cast<SpellId>(id);
         for (mm6::SpellEffectSource source : {mm6::SpellEffectSource::PlayerQueue,
@@ -15,7 +17,7 @@ UNIT_TEST(MM6SpellEffectGuard, RejectsUnverifiedRegularIDsAtEveryEffectEntry) {
                                                mm6::SpellEffectSource::Monster,
                                                mm6::SpellEffectSource::Damage}) {
             const bool verified = (source == mm6::SpellEffectSource::PlayerQueue && id == 67) ||
-                                  (source == mm6::SpellEffectSource::Monster && (id == 2 || id == 4 || id == 18 || id == 24)) ||
+                                  (source == mm6::SpellEffectSource::Monster && monsterSpells.contains(id)) ||
                                   (source == mm6::SpellEffectSource::Event &&
                                    (id == 6 || id == 15 || id == 28 || id == 32 || id == 90 || id == 98));
             if (verified) {

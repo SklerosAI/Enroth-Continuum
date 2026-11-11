@@ -190,24 +190,43 @@ UNIT_TEST(MM6MonsterSpells, ResolvesMM6IdsAndRejectsUnknownNames) {
     EXPECT_THROW(mm6::monsterSpellId("unsupported"), std::runtime_error);
 }
 
-UNIT_TEST(MM6MonsterSpells, FirstMapSpellsUseOriginalMonsterDiceAndOwnElement) {
-    // Monster casts roll the original monster table, not the player spell formula.
-    for (int id : {2, 4, 18}) {
+UNIT_TEST(MM6MonsterSpells, SpellsUseOriginalMonsterDiceAndOwnElement) {
+    // Monster casts outside the first map's four spells used to refuse. They roll the original monster table, not the
+    // player spell formula.
+    for (int id : {2, 4, 6, 9, 11, 18, 26, 28, 37, 65, 70, 76}) {
         const mm6::MonsterSpellDice dice = mm6::monsterSpellDice(static_cast<SpellId>(id), 7);
         EXPECT_EQ(dice.rolls, 1) << id;
         EXPECT_EQ(dice.sides, 2) << id;
     }
-    const mm6::MonsterSpellDice coldBeam = mm6::monsterSpellDice(static_cast<SpellId>(24), 3);
-    EXPECT_EQ(coldBeam.rolls, 3);
-    EXPECT_EQ(coldBeam.sides, 2);
-    EXPECT_THROW(mm6::monsterSpellDice(static_cast<SpellId>(6), 1), std::runtime_error);
-    EXPECT_FALSE(mm6::isVerifiedMonsterSpell(static_cast<SpellId>(26)));
+    for (int id : {24, 58, 95}) {
+        const mm6::MonsterSpellDice dice = mm6::monsterSpellDice(static_cast<SpellId>(id), 3);
+        EXPECT_EQ(dice.rolls, 3) << id;
+        EXPECT_EQ(dice.sides, 2) << id;
+    }
+    EXPECT_TRUE(mm6::isVerifiedMonsterSpell(static_cast<SpellId>(91)));
+    EXPECT_FALSE(mm6::isVerifiedMonsterSpell(static_cast<SpellId>(86)));
+    EXPECT_FALSE(mm6::isVerifiedMonsterSpell(static_cast<SpellId>(90)));
 
+    EXPECT_EQ(mm6::monsterSpellDamageType(mm6::SpellDamageTag::Physical), DAMAGE_PHYSICAL);
     EXPECT_EQ(mm6::monsterSpellDamageType(mm6::SpellDamageTag::Fire), DAMAGE_FIRE);
     EXPECT_EQ(mm6::monsterSpellDamageType(mm6::SpellDamageTag::Electricity), DAMAGE_AIR);
     EXPECT_EQ(mm6::monsterSpellDamageType(mm6::SpellDamageTag::Cold), DAMAGE_WATER);
-    EXPECT_THROW(mm6::monsterSpellDamageType(mm6::SpellDamageTag::Poison), std::runtime_error);
-    EXPECT_THROW(mm6::monsterSpellDamageType(mm6::SpellDamageTag::Magic), std::runtime_error);
+    EXPECT_EQ(mm6::monsterSpellDamageType(mm6::SpellDamageTag::Poison), DAMAGE_EARTH);
+    EXPECT_EQ(mm6::monsterSpellDamageType(mm6::SpellDamageTag::Magic), DAMAGE_MAGIC);
+    EXPECT_THROW(mm6::monsterSpellDamageType(mm6::SpellDamageTag::None), std::runtime_error);
+}
+
+UNIT_TEST(MM6MonsterSpells, SpellsLaunchTheirOriginalObjects) {
+    // Monster casts outside the first map's four spells used to refuse. Expert Meteor Shower drops the most meteors.
+    EXPECT_EQ(mm6::monsterSpellObject(static_cast<SpellId>(6)), static_cast<SpriteId>(1050));
+    EXPECT_EQ(mm6::monsterSpellObject(static_cast<SpellId>(37)), static_cast<SpriteId>(4030));
+    EXPECT_EQ(mm6::monsterSpellObject(static_cast<SpellId>(95)), static_cast<SpriteId>(9060));
+    EXPECT_THROW(mm6::monsterSpellObject(static_cast<SpellId>(80)), std::runtime_error);
+    EXPECT_EQ(mm6::monsterMeteorCount(CombinedSkillValue(10, MASTERY_NOVICE)), 8);
+    EXPECT_EQ(mm6::monsterMeteorCount(CombinedSkillValue(10, MASTERY_EXPERT)), 16);
+    EXPECT_EQ(mm6::monsterMeteorCount(CombinedSkillValue(10, MASTERY_MASTER)), 12);
+    EXPECT_EQ(mm6::monsterSkillByte(CombinedSkillValue(14, MASTERY_NOVICE)), 14);
+    EXPECT_EQ(mm6::monsterSkillByte(CombinedSkillValue(10, MASTERY_MASTER)), 0x8A);
 }
 
 UNIT_TEST(MM6MonsterSpells, RetainsAllF3MatchedActiveMonsterCasts) {

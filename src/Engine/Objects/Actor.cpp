@@ -225,6 +225,10 @@ void Actor::SetRandomGoldIfTheresNoItem() {
 void Actor::AI_SpellAttack(unsigned int uActorID, AIDirection *pDir,
                            SpellId uSpellID, ActorAbility a4, CombinedSkillValue uSkillMastery) {
     mm6::requireVerifiedSpellEffect(engine->gameTitle(), uSpellID, mm6::SpellEffectSource::Monster);
+    if (engine->gameTitle() == GameTitle::MM6) {
+        mm6::castMonsterSpell(uActorID, *pDir, uSpellID, uSkillMastery);
+        return;
+    }
     if (engine->gameTitle() == GameTitle::MM7 && !isRegularSpell(uSpellID))
         return;
 
@@ -248,7 +252,7 @@ void Actor::AI_SpellAttack(unsigned int uActorID, AIDirection *pDir,
     }
 
     auto launchProjectile = [&] {
-        sprite.spriteId = SpellSpriteMapping[uSpellID]; // MM6 numbers its spell objects the same way, school * 1000 + 10 * index.
+        sprite.spriteId = SpellSpriteMapping[uSpellID];
         sprite.uObjectDescID = GetObjDescId(uSpellID);
         sprite.containing_item.Reset();
         sprite.uSpellID = uSpellID;
@@ -262,18 +266,13 @@ void Actor::AI_SpellAttack(unsigned int uActorID, AIDirection *pDir,
         sprite.spell_caster_pid = Pid(OBJECT_Actor, uActorID);
         sprite.spell_target_pid = Pid();
         sprite.field_60_distance_related_prolly_lod = distancemod;
-        sprite.spellCasterAbility = engine->gameTitle() == GameTitle::MM6 ? ABILITY_SPELL1 : a4;
+        sprite.spellCasterAbility = a4;
 
         spriteId = sprite.Create(pDir->uYawAngle, pDir->uPitchAngle, pObjectTable->pObjects[sprite.uObjectDescID].uSpeed, 0);
         if (spriteId != -1) {
             pAudioPlayer->playSpellSound(uSpellID, false, SOUND_MODE_PID, Pid(OBJECT_Sprite, spriteId));
         }
     };
-
-    if (engine->gameTitle() == GameTitle::MM6) {
-        launchProjectile(); // Every verified MM6 monster spell is a single projectile.
-        return;
-    }
 
     switch (uSpellID) {
         case SPELL_FIRE_FIRE_BOLT:

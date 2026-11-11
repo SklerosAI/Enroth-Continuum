@@ -309,9 +309,6 @@ GAME_TEST(MM7LightItems, WineCellarExitDoesNotReplaceVampireKill) {
     auto activeTape = tapes.questBit(QBIT_WINE_CELLAR_ACTIVE);
     auto finishedTape = tapes.questBit(QBIT_WINE_CELLAR_FINISHED);
     auto killedTape = tapes.questBit(QBIT_WINE_CELLAR_VAMPIRE_KILLED);
-    auto vampireTape = tapes.custom([] {
-        return engine->_currentLoadedMapId == MAP_WINE_CELLAR ? std::optional(pActors[0].aiState) : std::nullopt; // Outside of it the actor list is another map's.
-    });
     auto mapTape = tapes.map();
     test.startTaping();
 
@@ -325,6 +322,7 @@ GAME_TEST(MM7LightItems, WineCellarExitDoesNotReplaceVampireKill) {
 
     game.teleportTo(MAP_WINE_CELLAR, Vec3f(601, -512, 1), 0); // Cellar entrance from Tatalia.
     ASSERT_EQ(pActors[0].monsterInfo.id, MONSTER_VAMPIRE_C); // The vampire the leave event checks. The map data has it disabled.
+    ASSERT_EQ(pActors[0].aiState, Disabled);
     auto exit = std::ranges::find_if(pIndoor->faces, [](const BLVFace &face) {
         return face.eventId == 501 && face.Clickable();
     });
@@ -344,10 +342,29 @@ GAME_TEST(MM7LightItems, WineCellarExitDoesNotReplaceVampireKill) {
     game.tick();
     EXPECT_FALSE(pParty->_questBits[QBIT_WINE_CELLAR_FINISHED]);
     EXPECT_TRUE(pParty->_questBits[QBIT_WINE_CELLAR_ACTIVE]);
-    EXPECT_EQ(activeTape, tape(false, true));
-    EXPECT_EQ(finishedTape, tape(false));
-    EXPECT_EQ(killedTape, tape(false));
-    EXPECT_EQ(vampireTape, tape(std::optional<AIState>(), std::optional(Disabled), std::optional<AIState>()));
-    EXPECT_EQ(mapTape, tape(MAP_EMERALD_ISLAND, MAP_CELESTE, MAP_WINE_CELLAR, MAP_TATALIA, MAP_CELESTE));
+
+    // The genuine map-leave predicate recognizes a dead vampire. This isolates the quest event from combat setup
+    // while proving the exit still carries a real kill through to the adviser hand-in.
+    leaveHouse(game);
+    game.teleportTo(MAP_WINE_CELLAR, Vec3f(601, -512, 1), 0);
+    ASSERT_EQ(pActors[0].aiState, Disabled);
+    Actor::Die(0);
+    ASSERT_EQ(pActors[0].aiState, Dying);
+    game.teleportTo(MAP_WINE_CELLAR, exitPosition, exitYaw);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_INPUT_BLV);
+    game.pressGuiButton("Transition_Yes");
+    game.skipLoadingScreen();
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_TATALIA);
+    enterAdvisorHouse(game, 421, HOUSE_CELESTE_HOSTEL_2, 81);
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    EXPECT_TRUE(pParty->_questBits[QBIT_WINE_CELLAR_FINISHED]);
+    EXPECT_EQ(activeTape, tape(false, true, false));
+    EXPECT_EQ(finishedTape, tape(false, true));
+    EXPECT_EQ(killedTape, tape(false, true));
+    EXPECT_EQ(mapTape, tape(MAP_EMERALD_ISLAND, MAP_CELESTE, MAP_WINE_CELLAR, MAP_TATALIA, MAP_CELESTE,
+                            MAP_WINE_CELLAR, MAP_TATALIA, MAP_CELESTE));
     test.stopTaping();
 }

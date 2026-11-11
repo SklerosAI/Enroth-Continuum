@@ -1,20 +1,15 @@
-#include <charconv>
-#include <cctype>
 #include <cmath>
 #include <cstdlib>
 #include <exception>
 #include <iostream>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
-#include "Engine/Evt/EvtInstruction.h"
-#include "Engine/Evt/EvtProgram.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/MapEnumFunctions.h"
@@ -22,9 +17,7 @@
 #include "Engine/MM6/MM6ChestSeedAndOwnership.h"
 #include "Engine/Objects/Decoration.h"
 #include "Engine/Party.h"
-#include "Engine/PartyPlacement.h"
 #include "Engine/Resources/LOD.h"
-#include "Engine/Resources/ResourceManager.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/DecorationTable.h"
 #include "Engine/Tables/MapTable.h"
@@ -35,16 +28,9 @@
 
 #include "Library/Serialization/Serialization.h"
 
-#include "Utility/Math/TrigLut.h"
 #include "Utility/Memory/Blob.h"
 
-static MapId probeMap(std::string_view value) {
-    int id = 0;
-    const auto [end, error] = std::from_chars(value.data(), value.data() + value.size(), id);
-    if (error == std::errc() && end == value.data() + value.size())
-        return id >= std::to_underlying(MAP_FIRST) && id <= std::to_underlying(MAP_LAST) ? static_cast<MapId>(id) : MAP_INVALID;
-    return pMapTable->GetMapInfo(value);
-}
+#include "MM6MapEntranceForTest.h"
 
 static bool hasPartyStartDecoration() {
     const DecorationId partyStart = pDecorationTable->decorationId(toString(MAP_START_POINT_PARTY));
@@ -52,46 +38,6 @@ static bool hasPartyStartDecoration() {
         if (decoration.uDecorationDescID == partyStart)
             return true;
     return false;
-}
-
-struct ProbeEntrance {
-    PartyPlacement placement;
-    std::string source;
-};
-
-static std::string lowercase(std::string_view value) {
-    std::string result(value);
-    for (char &c : result)
-        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    return result;
-}
-
-static std::optional<ProbeEntrance> findShippedEntrance(std::string_view fileName) {
-    // The first MoveToMap with coordinates that names this map, from any map script.
-    const std::string target = lowercase(fileName);
-    for (MapId map : pMapTable->pInfos.indices()) {
-        const std::string &source = pMapTable->pInfos[map].fileName;
-        if (source.size() < 4)
-            continue;
-        const std::string evtName = source.substr(0, source.size() - 4) + ".evt";
-        const Blob data = Blob::copy(engine->resources()->eventsData(evtName));
-        if (data.size() == 0)
-            continue;
-        const EvtProgram program = EvtProgram::load(data, GameTitle::MM6);
-        for (int eventId = 0; eventId <= 0xFFFF; ++eventId) {
-            if (!program.hasEvent(eventId))
-                continue;
-            for (const EvtInstruction &ir : program.function(eventId)) {
-                const auto &move = ir.data.move_map_descr;
-                if (ir.opcode != EVENT_MoveToMap || lowercase(ir.str) != target || !(move.x || move.y || move.z))
-                    continue;
-                const int yaw = move.yaw != -1 ? (move.yaw & TrigTableLookup::uDoublePiMask) : -1;
-                return ProbeEntrance{PartyPlacement(Vec3f(move.x, move.y, move.z), yaw, move.pitch, move.zspeed),
-                                     evtName + " event " + std::to_string(eventId)};
-            }
-        }
-    }
-    return std::nullopt;
 }
 
 GAME_TEST(MM6WorldLoadProbe, DISABLED_LoadsNamedMap) {
@@ -103,11 +49,11 @@ GAME_TEST(MM6WorldLoadProbe, DISABLED_LoadsNamedMap) {
         GTEST_SKIP() << "Set ENROTH_MM6_WORLD_PROBE_MAP to an MM6 map ID or file name";
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     ASSERT_TRUE(window->nativeHandle() == nullptr || !window->isVisible());
-    const MapId map = probeMap(mapValue);
+    const MapId map = mm6MapByNameOrId(mapValue);
     ASSERT_NE(map, MAP_INVALID) << mapValue;
     const std::string fileName = pMapTable->pInfos[map].fileName;
     ASSERT_TRUE(isMapOutdoor(GameTitle::MM6, map) || isMapIndoor(GameTitle::MM6, map)) << mapValue;
-    const std::optional<ProbeEntrance> entrance = findShippedEntrance(fileName);
+    const std::optional<MM6ShippedEntrance> entrance = findShippedMM6Entrance(fileName);
     std::cout << "MM6 world probe " << std::to_underlying(map) << ' ' << fileName << " entering at "
               << (entrance ? entrance->source : "Party Start") << '\n';
 

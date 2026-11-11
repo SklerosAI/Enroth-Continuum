@@ -3108,3 +3108,8 @@ Chronological record of wiki activity.
 - The Atlas interface was simplified around the local Gridiron Dark palette. MM6 deliberately does not start the MM7 rolling recording or diagnostics collector.
 - The Swift build-profile controls, page controls and assembler syntax check passed. This is an owner playtest entry, not evidence that MM6 has completed a visible campaign.
 
+## [2026-11-11] verify | Installed Atlas MM6/MM7 playtest candidate
+- by: T-Burton-ND via codex
+- Built the current arm64 MM6 and MM7 targets, staged and signature-verified a two-helper Atlas, then visually checked the rebuilt Gridiron Dark interface and its enabled MM6 action.
+- Replaced the installed Atlas only after that verification, preserving the prior app in the local Application Support rollback folder. No MM6 session was started during installation.
+

@@ -3162,3 +3162,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Replaced C5's obsolete exit-only Wine Cellar shortcut with the Elder Vampire death state before the real cellar exit. A fresh owner-only disposable C0 through C5 run passed, with each chapter save and pass marker preserved across separate processes. This remains event/death-state coverage rather than direct player-combat coverage.
 
+## [2026-11-11] research | MM7 complete quest behavior audit
+- by: T-Burton-ND via codex
+- Rechecked the main, Light, Dark, side, promotion and puzzle contracts against public walkthroughs, promotion pages, quest-item listings and the official Prima guide excerpts. Reconciled those findings with the local `QuestBit` register instead of existing tests alone.
+- Corrected the Monk and Archer promotion contracts, added the Dark Griffin hunt and the fourteen-Obelisk puzzle, and recorded exact player-visible side rewards and promotion XP rules. Runtime coverage remains intentionally unchanged: the catalog is now the source baseline for the Dark chain and subsequent regional side-quest work.
+

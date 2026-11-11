@@ -162,6 +162,23 @@ GAME_TEST(MM6CombatHeadless, DISABLED_GoblinKingBreaksItem) {
     EXPECT_GT(brokenTape.back(), 0);
 }
 
+GAME_TEST(MM6CombatHeadless, DISABLED_SkeletonFrightensParty) {
+    // Every MM6 monster special attack but breaking an item used to refuse and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = tapes.totalHp();
+    auto conditionTape = charTapes.conditions();
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    Actor *skeleton = game.spawnMonster(pParty->pos + Vec3f(0, 150, 0), static_cast<MonsterId>(155), SPAWN_STATIONARY);
+    skeleton->monsterInfo.specialAttackLevel = 10; // Level 10 times 10 makes every hit try to frighten.
+    game.tick(23); // The skeleton walks up and strikes.
+
+    EXPECT_LT(hpTape.delta(), 0);
+    EXPECT_EQ(conditionTape, tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
+                                  {CONDITION_FEAR, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD})); // The new party fails the save.
+}
+
 GAME_TEST(MM6CombatHeadless, DISABLED_CureWeaknessFromSpellbook) {
     // A new Body caster knows Cure Weakness, casting it from the spellbook used to refuse and end the run.
     // Run alone in a fresh MM6 headless process.
@@ -241,10 +258,8 @@ GAME_TEST(MM6CombatHeadless, DISABLED_PoisonAndMagicMonstersHitParty) {
     enterFirstMapFromNewGame(game);
     test.startTaping();
 
-    for (int monster : {74, 115}) {
-        Actor *attacker = game.spawnMonster(pParty->pos + Vec3f(0, 150, 0), static_cast<MonsterId>(monster), SPAWN_STATIONARY);
-        attacker->monsterInfo.specialAttackType = SPECIAL_ATTACK_NONE; // Their special attacks are still refused.
-    }
+    for (int monster : {74, 115})
+        game.spawnMonster(pParty->pos + Vec3f(0, 150, 0), static_cast<MonsterId>(monster), SPAWN_STATIONARY);
     game.tick(25); // The monsters walk up and strike.
 
     auto attacks = attackTape.flatten();

@@ -1,6 +1,12 @@
+#include <memory>
+#include <stdexcept>
+#include <utility>
+
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6MonsterAttack.h"
+#include "Engine/Objects/Character.h"
+#include "Engine/Party.h"
 
 #include "Library/Random/SequentialRandomEngine.h"
 
@@ -26,4 +32,20 @@ UNIT_TEST(MM6MonsterAttack, SecondAttackAddsTheFirstAttackBonus) {
     rng.seed(0);
     EXPECT_EQ(mm6::monsterAttackDamage(archer(), ABILITY_SPECIAL, rng), 0);
     EXPECT_EQ(rng.state(), 0);
+}
+
+UNIT_TEST(MM6MonsterAttack, PoisonAndMagicSpecialAttacksSaveWithRawResistance) {
+    // Every MM6 special attack but breaking an item used to refuse. Poison saves with the raw Poison resistance, the
+    // deadly ones with the raw Magic resistance, not with a resistance bonus.
+    Character character;
+    character.sResBodyBase = 7;
+    character.sResMagicBase = 11;
+    auto party = std::make_unique<Party>();
+
+    for (MonsterSpecialAttack type : {SPECIAL_ATTACK_POISON_WEAK, SPECIAL_ATTACK_POISON_MEDIUM, SPECIAL_ATTACK_POISON_SEVERE})
+        EXPECT_EQ(mm6::specialAttackSave(character, type, *party, 20), 27) << std::to_underlying(type);
+    for (MonsterSpecialAttack type : {SPECIAL_ATTACK_PARALYZED, SPECIAL_ATTACK_DEAD, SPECIAL_ATTACK_PETRIFIED,
+                                      SPECIAL_ATTACK_ERADICATED, SPECIAL_ATTACK_AGING, SPECIAL_ATTACK_MANA_DRAIN})
+        EXPECT_EQ(mm6::specialAttackSave(character, type, *party, 20), 11) << std::to_underlying(type);
+    EXPECT_THROW(mm6::specialAttackSave(character, SPECIAL_ATTACK_BREAK_ANY, *party, 0), std::runtime_error);
 }

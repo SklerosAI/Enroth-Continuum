@@ -5,7 +5,6 @@
 #include <stdexcept>
 
 #include "Engine/MM6/MM6MonsterDamage.h"
-#include "Engine/MM6/MM6MonsterSpecialAttack.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Character.h"
@@ -70,16 +69,14 @@ inline void requireVerifiedMonsterSpellAbility(const Actor &monster, ActorAbilit
 }
 
 /**
- * Refuses an MM6 monster hit on a character that could reach an unverified spell, damage channel or special attack
- * anywhere in `DamageCharacterFromMonster`, before that function touches the party, the monster or the RNG.
+ * Refuses an MM6 monster hit on a character that could reach an unverified spell or damage channel anywhere in
+ * `DamageCharacterFromMonster`, before that function touches the party, the monster or the RNG.
  *
  * @param monster                       Attacking monster.
  * @param ability                       Which of its abilities hit.
- * @param canApplySpecialAttack         Whether this hit rolls for the monster's special attack.
  * @param party                         Party characters, one of them takes the hit.
  */
-inline void requireVerifiedMonsterHit(const Actor &monster, ActorAbility ability, bool canApplySpecialAttack,
-                                      std::span<const Character> party) {
+inline void requireVerifiedMonsterHit(const Actor &monster, ActorAbility ability, std::span<const Character> party) {
     requireVerifiedMonsterSpellAbility(monster, ability);
     const DamageType type = monster.abilityDamageType(ability);
     requireVerifiedCharacterDamage(GameTitle::MM6, type);
@@ -87,8 +84,6 @@ inline void requireVerifiedMonsterHit(const Actor &monster, ActorAbility ability
             return character.pCharacterBuffs[CHARACTER_BUFF_PAIN_REFLECTION].Active();
         }))
         requireVerifiedMonsterDamage(GameTitle::MM6, type); // Pain reflection sends the damage back to the monster.
-    if (canApplySpecialAttack)
-        requireVerifiedMonsterSpecialAttack(GameTitle::MM6, monster.monsterInfo.specialAttackType);
 }
 
 /**

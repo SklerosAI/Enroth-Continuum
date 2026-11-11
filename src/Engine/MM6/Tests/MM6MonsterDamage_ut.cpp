@@ -142,19 +142,16 @@ UNIT_TEST(MM6MonsterDamage, RetainsSixF3MatchedMonsterResistanceColumns) {
     EXPECT_EQ(immuneCounts, (std::array<int, 6>{18, 14, 13, 45, 5, 54}));
 }
 
-UNIT_TEST(MM6MonsterSpecialAttack, DecodesRetainedAliasesAndGatesUnverifiedEffects) {
+UNIT_TEST(MM6MonsterSpecialAttack, ReadsTheFirstNameTheCellContains) {
+    // The land dragons' Pois2 and Pois3 used to poison, the original finds none of its names in them.
     EXPECT_EQ(mm6::parseMonsterSpecialAttackName("Affraid"), SPECIAL_ATTACK_FEAR);
-    EXPECT_EQ(mm6::parseMonsterSpecialAttackName("Pois2"), SPECIAL_ATTACK_POISON_MEDIUM);
-    EXPECT_EQ(mm6::parseMonsterSpecialAttackName("Pois3"), SPECIAL_ATTACK_POISON_SEVERE);
+    EXPECT_EQ(mm6::parseMonsterSpecialAttackName("Pois2"), SPECIAL_ATTACK_NONE);
+    EXPECT_EQ(mm6::parseMonsterSpecialAttackName("Pois3"), SPECIAL_ATTACK_NONE);
+    EXPECT_EQ(mm6::parseMonsterSpecialAttackName("Poison2"), SPECIAL_ATTACK_POISON_MEDIUM);
     EXPECT_EQ(mm6::parseMonsterSpecialAttackName("BrkArmor "), SPECIAL_ATTACK_BREAK_ARMOR);
-    EXPECT_THROW(mm6::parseMonsterSpecialAttackName("unsupported"), std::runtime_error);
-    EXPECT_NO_THROW(mm6::requireVerifiedMonsterSpecialAttack(GameTitle::MM6, SPECIAL_ATTACK_NONE));
-    EXPECT_NO_THROW(mm6::requireVerifiedMonsterSpecialAttack(GameTitle::MM6, SPECIAL_ATTACK_BREAK_ANY));
-    EXPECT_THROW(mm6::requireVerifiedMonsterSpecialAttack(GameTitle::MM6, SPECIAL_ATTACK_FEAR),
-                 std::runtime_error);
-    EXPECT_THROW(mm6::requireVerifiedMonsterSpecialAttack(GameTitle::MM6, SPECIAL_ATTACK_BREAK_ARMOR),
-                 std::runtime_error);
-    EXPECT_NO_THROW(mm6::requireVerifiedMonsterSpecialAttack(GameTitle::MM7, SPECIAL_ATTACK_FEAR));
+    EXPECT_EQ(mm6::parseMonsterSpecialAttackName("Brkweapon"), SPECIAL_ATTACK_BREAK_WEAPON);
+    EXPECT_EQ(mm6::parseMonsterSpecialAttackName("Age"), SPECIAL_ATTACK_AGING);
+    EXPECT_EQ(mm6::parseMonsterSpecialAttackName("unsupported"), SPECIAL_ATTACK_NONE);
 }
 
 UNIT_TEST(MM6MonsterSpecialAttack, CoversAllF3MatchedActiveMonsterRows) {
@@ -178,10 +175,10 @@ UNIT_TEST(MM6MonsterSpecialAttack, CoversAllF3MatchedActiveMonsterRows) {
         mediumPoison += type == SPECIAL_ATTACK_POISON_MEDIUM;
         severePoison += type == SPECIAL_ATTACK_POISON_SEVERE;
     }
-    EXPECT_EQ(active, 93);
+    EXPECT_EQ(active, 90);
     EXPECT_EQ(fear, 8);
-    EXPECT_EQ(mediumPoison, 4);
-    EXPECT_EQ(severePoison, 4);
+    EXPECT_EQ(mediumPoison, 3);
+    EXPECT_EQ(severePoison, 2);
 }
 
 UNIT_TEST(MM6MonsterSpells, ResolvesMM6IdsAndRejectsUnknownNames) {

@@ -29,7 +29,6 @@
 #include "Engine/MM6/MM6MonsterAttack.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6MonsterPreferences.h"
-#include "Engine/MM6/MM6MonsterSpecialAttack.h"
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/MM6/MM6SpellItems.h"
 #include "Engine/MM6/MM6SpellLearning.h"
@@ -1528,10 +1527,11 @@ int Character::receiveDamage(signed int amount, DamageType dmg_type) {
 
 //----- (0048DCF6) --------------------------------------------------------
 int Character::ReceiveSpecialAttackEffect(MonsterSpecialAttack attType, Actor *pActor) {  // long function - consider breaking into two??
-    mm6::requireVerifiedMonsterSpecialAttack(engine->gameTitle(), attType);
     if (engine->callObserver) {
         engine->callObserver->notify(CALL_SPECIAL_ATTACK, attType);
     }
+    if (engine->gameTitle() == GameTitle::MM6)
+        return mm6::receiveSpecialAttack(*this, attType, *grng);
 
     int statcheck;
     int statcheckbonus;
@@ -1776,10 +1776,6 @@ int Character::ReceiveSpecialAttackEffect(MonsterSpecialAttack attType, Actor *p
             case SPECIAL_ATTACK_BREAK_ANY:
             case SPECIAL_ATTACK_BREAK_ARMOR:
             case SPECIAL_ATTACK_BREAK_WEAPON:
-                if (engine->gameTitle() == GameTitle::MM6) {
-                    mm6::breakItem(this, itemtobreak.get());
-                    return 1;
-                }
                 if (!(itemtobreak->flags & ITEM_HARDENED)) {
                     playReaction(SPEECH_ITEM_BROKEN);
                     itemtobreak->SetBroken();
@@ -4108,7 +4104,7 @@ void DamageCharacterFromMonster(Pid uObjID, ActorAbility dmgSource, signed int t
         Character *playerPtr = &pParty->pCharacters[targetchar];
         Actor *actorPtr = &pActors[uActorID];
         if (engine->gameTitle() == GameTitle::MM6)
-            mm6::requireVerifiedMonsterHit(*actorPtr, dmgSource, true, pParty->pCharacters);
+            mm6::requireVerifiedMonsterHit(*actorPtr, dmgSource, pParty->pCharacters);
         healthBeforeRecvdDamage = playerPtr->health;
         if (uObjID.type() != OBJECT_Actor || !actorPtr->ActorHitOrMiss(playerPtr))
             return;

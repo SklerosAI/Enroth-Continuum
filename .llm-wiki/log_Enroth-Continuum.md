@@ -3232,3 +3232,8 @@ Chronological record of wiki activity.
 - Selectively adapted OpenEnroth `#2968` / `8f18f9385`: MM7 Divine Intervention now clears the Zombie character's removable conditions without curing Zombie itself. The shared spell path retains its existing `resetAll` behavior for MM6 pending separate title-specific evidence.
 - `MM7Combat.DivineInterventionPreservesZombie` proves that the same cast clears Weak but retains Zombie. It and the existing recovery control passed three consecutive headless runs alongside the Lantern contract.
 
+## [2026-11-11] verify | MM7 Haldar's Remains side quest
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7SideQuests.HaldarsRemainsRequireMazeChest`. It dynamically finds Mazim Dusk and his Mount Nighon home event, proves assignment and a missing-remains refusal, maps the loaded Maze chest event to the remains-bearing chest, and collects it through the normal chest UI.
+- The physical hand-in consumes Haldar's Remains, clears the active quest, grants the Nighon award, 35,000 gold, and 50,000 XP to every character. It passed three consecutive headless runs with the Lantern, Vase, and Divine Intervention contracts.
+

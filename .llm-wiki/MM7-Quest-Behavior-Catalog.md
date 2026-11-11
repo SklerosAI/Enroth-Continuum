@@ -108,7 +108,7 @@ unless stated otherwise.
 
 | Tier | Quest and intended completion | Confidence |
 | --- | --- | --- |
-| First | Monk → Initiate: find and use the meditation pool in Zokarr's Tomb in the Dwarven Barrows. | C |
+| First | Monk → Initiate: accept from Bartholomew Hume, find and use the meditation pool in Zokarr's Tomb in the Dwarven Barrows. The pool remotely completes the quest and grants the promotion (no return visit). | C |
 | First | Ranger → Hunter: complete the Faerie King's task. | C |
 | First | Druid → Great Druid: activate the three druid monoliths. | C |
 | First | Archer → Warrior Mage: use the supplied Worn Belt to sabotage the Red Dwarf Mines lift, then return. | C |
@@ -117,7 +117,7 @@ unless stated otherwise.
 | First | Cleric → Priest: recover the pirate map; its other intended effect is opening the Evenmorn route. | C |
 | First | Thief → Rogue: return Markham's vase. | C |
 | First | Sorcerer → Wizard: recover and assemble all six golem components; separately cover the good/bad head choice. | C |
-| Light second | Monk → Master: help the priest of Baa. | C |
+| Light second | Initiate → Master: on the Light path, accept from Bartholomew Hume, kill the High Priest of Baa in Avlee's Temple of Baa, collect his cloak, then return to Hume. | C |
 | Light second | Ranger → Ranger Lord: return the Heart of Wood. | C |
 | Light second | Druid → Arch Druid: retrieve Zokarr IV's skull, return it to his tomb, then report back. | C |
 | Light second | Archer → Master Archer: return the Perfect Bow. | C |

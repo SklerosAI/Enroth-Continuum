@@ -260,9 +260,13 @@ GAME_TEST(MM6CombatHeadless, DISABLED_SciFiSparksTimerHitsParty) {
     // The sci-fi Sparks timer used to refuse its event spell and end the run.
     // Run alone in a fresh MM6 headless process.
     auto hpTape = charTapes.hps();
+    auto totalHpTape = tapes.totalHp();
     auto conditionTape = charTapes.conditions();
     auto sparksTape = tapes.custom([] {
         return std::ranges::count(pSpriteObjects, SPRITE_SPELL_AIR_SPARKS, &SpriteObject::spriteId);
+    });
+    auto popsTape = tapes.custom([] {
+        return std::ranges::count(pSpriteObjects, SPRITE_SPELL_AIR_SPARKS_POP, &SpriteObject::spriteId);
     });
     enterFirstMapFromNewGame(game);
     enterMapAtShippedEntrance(game, "sci-fi.blv");
@@ -274,7 +278,10 @@ GAME_TEST(MM6CombatHeadless, DISABLED_SciFiSparksTimerHitsParty) {
     game.tick(34); // The timer launches its sparks, and they fly into the party.
 
     EXPECT_EQ(sparksTape.max(), 7); // Master mastery spreads seven sparks.
-    EXPECT_EQ(hpTape, tape({200, 200, 200, 200}, {162, 200, 162, 162})); // Level 100 hits as 36 plus 2.
+    EXPECT_EQ(popsTape.max(), 3); // The middle three reach the party, the outer four fly past.
+    EXPECT_EQ(totalHpTape, tape(800, 800 - 3 * 38)); // Level 100 hits as 36 plus 2.
+    for (int hp : hpTape.back())
+        EXPECT_EQ((200 - hp) % 38, 0) << hp; // Each spark hits one random character in full.
     EXPECT_EQ(conditionTape.frontBack(), tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
                                               {CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD}));
 }

@@ -25,6 +25,7 @@
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/NPCTable.h"
+#include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/UIHouses.h"
@@ -60,8 +61,14 @@ void loadCampaignChainSlot(EngineController &game, int chapter) {
     const auto found = std::ranges::find_if(slots, [&fileName](const SavegameSlot &entry) { return entry.fileName == fileName; });
     ASSERT_NE(found, slots.end());
     const int index = static_cast<int>(found - slots.begin());
-    ASSERT_LT(index, 7); // The Load screen shows seven slots before it scrolls.
-    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", index));
+    const int scroll = std::max(0, index - 6); // The Load screen shows seven slots.
+    auto downArrow = std::ranges::find(pGUIWindow_CurrentMenu->vButtons, UIMSG_DownArrow, &GUIButton::msg);
+    ASSERT_NE(downArrow, pGUIWindow_CurrentMenu->vButtons.end());
+    for (int i = 0; i < scroll; i++) {
+        game.pressAndReleaseButton(BUTTON_LEFT, (*downArrow)->rect.center());
+        game.tick();
+    }
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", index - scroll));
     game.tick();
     ASSERT_EQ(saveLoadMenu()->selectedSlot().fileName, fileName);
     game.pressGuiButton("LoadMenu_Load");

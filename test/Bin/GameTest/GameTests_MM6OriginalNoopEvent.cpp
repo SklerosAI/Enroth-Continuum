@@ -377,6 +377,28 @@ EvtProgram syntheticDayOfYearCompareEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticHeldItemCompareEvent() {
+    std::string bytes;
+    std::string compare;
+    compare.push_back(static_cast<char>(VAR_PlayerItemInHands));
+    appendU32(&compare, 580); // Upper boundary of MM6 item-event IDs.
+    compare.push_back(3);
+    appendRecord(&bytes, 0, EVENT_Compare, compare);
+
+    std::string failed;
+    failed.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&failed, 34);
+    appendRecord(&bytes, 1, EVENT_Set, failed);
+    appendRecord(&bytes, 2, EVENT_Exit);
+
+    std::string passed;
+    passed.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&passed, 35);
+    appendRecord(&bytes, 3, EVENT_Set, passed);
+    appendRecord(&bytes, 4, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -799,4 +821,25 @@ GAME_TEST(MM6DayOfYearCompare, UsesTheMM6OneBasedCalendar) {
     runEvent(EvtContext(EVT_SOURCE_MAP, 1));
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(32));
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(33));
+}
+
+GAME_TEST(MM6HeldItemCompare, UsesTheMM6HeldItemAndBranch) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedParty restoreParty;
+    engine->_localEventMap = syntheticHeldItemCompareEvent();
+    pParty->pCharacters[0]._characterEventBits.reset(34);
+    pParty->pCharacters[0]._characterEventBits.reset(35);
+
+    pParty->pPickedItem.itemId = static_cast<ItemId>(580);
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(34));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(35));
+
+    pParty->pPickedItem.itemId = static_cast<ItemId>(579);
+    pParty->pCharacters[0]._characterEventBits.reset(34);
+    pParty->pCharacters[0]._characterEventBits.reset(35);
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(34));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(35));
 }

@@ -195,8 +195,9 @@ sweep, the award-animation crash, reputation, the generated NPC pool and
 the damage channels. The t7 trap loop was a broken MM6 indoor decoration parser,
 fixed and integrated at `c9d306191` (trap test, MM6 suite 96 passed, MM6
 first-map gate with MM7 controls, MM7 in-process 107 passed). Event spells and
-their d18 follow-ups are integrated. Active lanes: S-BORDER live travel and
-S-COMBAT monster missiles and spells.
+their d18 follow-ups are integrated. Monster missiles, spells and special attacks
+are integrated (`3b1be67dc`): a combat sweep went from 24 of 26 main-quest
+maps throwing to none. Active lane: MM6 map state on return.
 
 Drafted 2026-11-10 by a read-only planning pass, with its key source claims
 spot-checked by Claude. Source facts that shape it: production MM6 New Game

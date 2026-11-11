@@ -35,3 +35,5 @@ Update 2026-11-11: S-TRAPLOOP and S-EVTSPELL (with follow-ups) are integrated. C
 | S-COMBAT MM6 monster missiles and spells | `claude/mm6-monster-combat` in `mm7-monster-combat` | `src/Engine/MM6/MM6MonsterSpellEffect.h`, the MM6 projectile verification, the MM6 branch of `Actor::AI_RangedAttack` and monster special attacks, new MM6 tests. Shared core (`Actor.cpp`). |
 
 Update: S-BORDER parts (a) and (b) integrated (`adfc6dc45`, `86bff5ad3`). The same lane continues with part (c) on `claude/mm6-map-return` in `mm7-save-durability`: an in-memory per-map runtime store and a restore before map events, in MM6-owned code with thin hooks.
+
+Update: S-COMBAT integrated (`458688930`..`3b1be67dc`). Its checkout `mm7-monster-combat` is free again.

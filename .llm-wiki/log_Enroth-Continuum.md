@@ -3213,3 +3213,8 @@ Chronological record of wiki activity.
 - Selectively brought forward OpenEnroth `#2969`: a script grants a portrait/award reaction only when that character did not already have the award. This covers promotion-style award grants without replaying feedback on duplicate grants.
 - The focused `Issue2817` award regression, the Griffin reporting flow, and the full Stone City troglodyte contract passed three consecutive headless runs after resolving an upstream recorder-shape-only test expectation.
 
+## [2026-11-11] backport | valid indoor encounter sectors
+- by: T-Burton-ND via codex
+- Selectively ported OpenEnroth `#2994`: `SpawnEncounter` now drops an indoor spawn point only when it resolves to sector zero, before actor allocation. This is vanilla-MM7 behavior and prevents unreachable actors from blocking clear-all or kill-gated quest state; valid spawns, saved actors and pre-guard random work are retained.
+- Added `Issue2748`, which loads the Erathian Sewers, clears every reachable actor and proves the actor count reaches zero and yellow alert clears. It passed three repeat headless runs alongside the Griffin and Troglodyte predicate contracts.
+

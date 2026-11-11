@@ -3118,3 +3118,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added and passed `MM7DarkGuild.KastoreRequiresBothAltarPieces`. It reaches Kastore's actual Castle Gloaming dialogue, verifies that one physical altar piece is refused, and that both pieces complete the Dark task and are consumed. The two temple acquisition interactions are deliberately left for a continuous route test.
 
+## [2026-11-11] verify | MM7 Dark Clanker defenses
+- by: T-Burton-ND via codex
+- Added and passed `MM7DarkGuild.ClankerDefensesAreDisabledByMapEvent`. The test finds the actual Clanker's Laboratory event that records destroyed magical and teleport defenses, executes it with no actors, and confirms that this objective is not satisfied by a kill-all proxy. Dark Shade's return dialogue remains open.
+

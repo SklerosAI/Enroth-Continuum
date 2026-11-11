@@ -3167,3 +3167,7 @@ Chronological record of wiki activity.
 - Rechecked the main, Light, Dark, side, promotion and puzzle contracts against public walkthroughs, promotion pages, quest-item listings and the official Prima guide excerpts. Reconciled those findings with the local `QuestBit` register instead of existing tests alone.
 - Corrected the Monk and Archer promotion contracts, added the Dark Griffin hunt and the fourteen-Obelisk puzzle, and recorded exact player-visible side rewards and promotion XP rules. Runtime coverage remains intentionally unchanged: the catalog is now the source baseline for the Dark chain and subsequent regional side-quest work.
 
+## [2026-11-11] verify | MM7 Dark Thunderfist Soul Jars source
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7DarkGuild.ThunderfistChestProvidesDarkSoulJars`. It finds the loaded Thunderfist map event whose chest contains the Dark case, opens that production chest UI, and transfers the case without inventory injection or a renderer-dependent outdoor aim ray. `MM7DarkGuild.*` passed 11/11 in each of three consecutive headless runs.
+

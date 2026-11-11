@@ -148,6 +148,11 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter5) {
     ASSERT_TRUE(selectCampaignChainNpcEvent(game, 81, 151));
     leaveCampaignChainHouse(game);
     game.teleportTo(MAP_WINE_CELLAR, Vec3f(601, -512, 1), 0); // Cellar entrance from Tatalia.
+    ASSERT_FALSE(pActors.empty());
+    ASSERT_EQ(pActors[0].monsterInfo.id, MONSTER_VAMPIRE_C);
+    ASSERT_EQ(pActors[0].aiState, Disabled);
+    Actor::Die(0); // Event 2 only marks the quest complete on exit after this actor dies.
+    ASSERT_EQ(pActors[0].aiState, Dying);
     useCampaignChainTransition(game, MAP_WINE_CELLAR, 501);
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_TATALIA);
     openCampaignChainCelesteHouse(game, HOUSE_CELESTE_HOSTEL_2, 81);

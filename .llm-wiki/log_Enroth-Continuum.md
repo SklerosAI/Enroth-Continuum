@@ -3252,3 +3252,8 @@ Chronological record of wiki activity.
 - The native MM7 Load menu now retains a numbered slot when its primary cannot be decoded but its atomic backup can. The slot keeps its original filename, so normal Load resolves it through the existing structural primary-or-backup admission path.
 - The disposable writer leaves a corrupt primary next to a valid backup; a fresh process listed, selected and loaded the backup while preserving the corrupt primary. Automatic repair remains intentionally out of scope.
 
+## [2026-11-11] verify | MM7 Davrik's Signet Ring side quest
+- by: T-Burton-ND via codex
+- Added `MM7SideQuests.DavriksSignetRingRequiresBanditCavesChest`. It dynamically reaches Davrik through the Harmondale tavern, proves an empty-handed report is refused, finds the quest-gated Bandit Caves chest through the normal chest UI, and completes the physical return.
+- The contract verifies active/taken bits, ring consumption, the Harmondale award, 5,000 gold and 5,000 XP per character. It passed three consecutive headless runs.
+

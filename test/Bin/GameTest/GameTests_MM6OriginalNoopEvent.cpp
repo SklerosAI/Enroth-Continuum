@@ -115,6 +115,24 @@ EvtProgram syntheticStatusTextEvent(int stringId) {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticJumpEvent() {
+    std::string bytes;
+    appendRecord(&bytes, 0, EVENT_Jmp, std::string(1, '\3'));
+
+    std::string skipped;
+    skipped.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&skipped, 14);
+    appendRecord(&bytes, 1, EVENT_Set, skipped);
+    appendRecord(&bytes, 2, EVENT_Exit);
+
+    std::string target;
+    target.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&target, 15);
+    appendRecord(&bytes, 3, EVENT_Set, target);
+    appendRecord(&bytes, 4, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -296,4 +314,18 @@ GAME_TEST(MM6StatusText, UsesMapStringAndBoundsChecksItsId) {
     EXPECT_EQ(interpreter.execute(0), EVT_TRANSITION_NONE);
     EXPECT_TRUE(engine->_statusBar->get().empty());
     engine->_statusBar->clearAll();
+}
+
+GAME_TEST(MM6EventJump, SkipsFallthroughAndRunsItsTarget) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedQuestionEvent restore;
+    engine->_localEventMap = syntheticJumpEvent();
+    for (Character &character : pParty->pCharacters) {
+        character._characterEventBits.reset(14);
+        character._characterEventBits.reset(15);
+    }
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(14));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(15));
 }

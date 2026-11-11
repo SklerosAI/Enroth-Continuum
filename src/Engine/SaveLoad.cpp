@@ -56,14 +56,6 @@ namespace {
 std::function<void()> mm6NewGameSaveOverride;
 std::function<void(std::string_view)> mm6LoadGameOverride;
 
-void reportUnavailableMM6SaveAction() {
-    MM_WARNING("MM6 quick save refused, MM6 saves only from the Save menu");
-    if (engine->_statusBar)
-        engine->_statusBar->setEvent("Quick save is not available yet, use the Save menu");
-    if (pAudioPlayer)
-        pAudioPlayer->playUISound(SOUND_error);
-}
-
 void reportFailedMM7SaveAction() {
     if (engine->_statusBar)
         engine->_statusBar->setEvent(LSTR_ERROR);
@@ -426,8 +418,7 @@ void saveNewGame() {
 
 void quickSaveGame() {
     if (engine->gameTitle() == GameTitle::MM6) {
-        // A refused quicksave must not advance the rotating save index.
-        reportUnavailableMM6SaveAction();
+        mm6QuickSave();
         return;
     }
     assert(engine->_currentLoadedMapId != MAP_ARENA); // Not Arena.
@@ -451,14 +442,14 @@ void quickSaveGame() {
 }
 
 void quickLoadGame() {
+    std::string fileName = getCurrentQuickSave();
     if (engine->gameTitle() == GameTitle::MM6) {
-        // The normal MM6 load transaction is still guarded. Never inspect an
-        // inherited MM7 quicksave or claim a candidate is playable.
-        if (pAudioPlayer)
-            pAudioPlayer->playUISound(SOUND_error);
+        if (!mm6LoadOverGame(fileName))
+            return;
+        uGameState = GAME_STATE_LOADING_GAME;
+        pAudioPlayer->playUISound(SOUND_StartMainChoice02);
         return;
     }
-    std::string fileName = getCurrentQuickSave();
 
     if (!ufs->exists(fmt::format("saves/{}", fileName))) {
         MM_ERROR("QuickLoadGame:: No quick save could be found!");

@@ -74,6 +74,10 @@ SAVE_ANYWHERE = [
 AUTOSAVE = [
     ("MM6AutosaveHeadless.DISABLED_EdgeAndDoorWriteTheAutosave",
      "ENROTH_MM6_AUTOSAVE_ENABLE", "strict-autosave-write"),
+    ("MM6AutosaveHeadless.DISABLED_AutosaveLoadsAndQuickSaveComesBack",
+     "ENROTH_MM6_AUTOSAVE_ENABLE", "strict-autosave-reload"),
+    ("MM6AutosaveHeadless.DISABLED_QuickSaveLoadsInFreshProcess",
+     "ENROTH_MM6_AUTOSAVE_ENABLE", "strict-quicksave-reload"),
 ]
 MM7_CONTROLS = ["Prs.Pr2354", "Prs.Pr2956", "Issues.Issue840"]
 PASS_LINE = re.compile(r"\[\s*PASSED\s*\]\s+1 test\b")
@@ -248,7 +252,8 @@ def main():
     with tempfile.TemporaryDirectory(prefix="mm6-restart-autosave-") as seventh:
         profile = Path(seventh)
         os.chmod(profile, 0o700)
-        # A new party is autosaved, then autosaved again over a map edge and at a dungeon door.
+        # A new party is autosaved, then autosaved again over a map edge and at a dungeon door. A fresh process loads
+        # the autosave, quick saves and quick loads, and another fresh process loads the quick save.
         for name, flag, value in AUTOSAVE:
             if not run_child(name, flag, value, profile,
                              paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
@@ -258,8 +263,8 @@ def main():
             return 1
     print("PASS: seven-child MM6 chain, all full-retry fault children, the paperdoll child, normal Save/Load menus with a "
           "production load and resave, a production New Game saved, loaded and saved again, a dungeon save after travel "
-          "loaded with its outdoor maps and saved again, autosaves of a new party and over a map edge and a dungeon "
-          "door, and the MM7 controls")
+          "loaded with its outdoor maps and saved again, autosaves and a quick save loaded in fresh processes, and the "
+          "MM7 controls")
     return 0
 
 

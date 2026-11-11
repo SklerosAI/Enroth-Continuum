@@ -127,12 +127,9 @@ void Menu::EventLoop() {
                 saveLoadMenu()->slotClicked(param, param2);
                 continue;
             case UIMSG_LoadGame:
-                if (engine->gameTitle() == GameTitle::MM6) {
-                    mm6RefuseInGameLoad();
-                    continue;
-                }
                 if (saveLoadMenu()->hasSelectedSlot()) {
-                    if (loadGame(saveLoadMenu()->selectedSlot().fileName))
+                    if (engine->gameTitle() == GameTitle::MM6 ? mm6LoadOverGame(saveLoadMenu()->selectedSlot().fileName) :
+                                                                 loadGame(saveLoadMenu()->selectedSlot().fileName))
                         uGameState = GAME_STATE_LOADING_GAME;
                 }
                 continue;

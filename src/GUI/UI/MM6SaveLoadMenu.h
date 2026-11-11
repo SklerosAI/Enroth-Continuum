@@ -36,11 +36,20 @@ void mm6SaveFromMenu(std::string_view fileName, std::string_view title);
 bool mm6MayLoadFromMainMenu(std::string_view fileName);
 
 /**
- * Refuses loading an MM6 slot over a running game, an MM6 slot loads only into a fresh session.
+ * Starts loading an MM6 slot over the running game, from the in-game Load menu or quick load. A slot that can't be
+ * loaded keeps the game and plays the error sound. A load that fails part way sends the game to the main menu.
+ *
+ * @param fileName                      Slot to load.
+ * @return                              Whether the game loop should go on to load the slot's map.
  */
-void mm6RefuseInGameLoad();
+bool mm6LoadOverGame(std::string_view fileName);
 
 /**
  * Writes the MM6 autosave. A session that can't be saved is skipped.
  */
 void mm6AutoSave();
+
+/**
+ * Writes the next MM6 quick save and reports it on the status bar.
+ */
+void mm6QuickSave();

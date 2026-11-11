@@ -10,6 +10,7 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Localization.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
+#include "Engine/MM6/MM6V5FirstMapLoadAttempt.h"
 #include "Engine/MM6/MM6V5FirstMapNativeSlotPolicy.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Timer.h"
@@ -29,6 +30,23 @@ static void reportMM6MenuRefusal(std::string_view message) {
         engine->_statusBar->setEvent(message);
     if (pAudioPlayer)
         pAudioPlayer->playUISound(SOUND_error);
+}
+
+static void reportUnsavedOutcome(mm6::ManualSaveOutcome outcome) {
+    switch (outcome) {
+    case mm6::MANUAL_SAVE_COMMITTED:
+        break;
+    case mm6::MANUAL_SAVE_NOT_WRITTEN:
+        reportMM6MenuRefusal("Save failed, the slot was not changed");
+        break;
+    case mm6::MANUAL_SAVE_UNCONFIRMED:
+        reportMM6MenuRefusal("Save could not be confirmed, check the slot before saving again");
+        break;
+    case mm6::MANUAL_SAVE_REFUSED:
+        reportMM6MenuRefusal(mm6::isManualSaveArmed() ? "This game can't be saved here yet" :
+                                                                 "Might & Magic VI saving is not available yet");
+        break;
+    }
 }
 
 std::vector<SavegameSlot> mm6LoadMenuSlots() {
@@ -59,25 +77,16 @@ bool isMM6AutoOrQuickSaveSlot(std::string_view fileName) {
 }
 
 void mm6SaveFromMenu(std::string_view fileName, std::string_view title) {
-    switch (mm6::saveFirstMapManualSlot(fileName, title).outcome) {
-    case mm6::MANUAL_SAVE_COMMITTED:
-        GUI_UpdateWindows();
-        pGUIWindow_CurrentMenu = nullptr;
-        current_screen_type = SCREEN_GAME;
-        gameTimer->setPaused(false);
-        engine->_statusBar->setEvent(LSTR_GAME_SAVED);
-        break;
-    case mm6::MANUAL_SAVE_NOT_WRITTEN:
-        reportMM6MenuRefusal("Save failed, the slot was not changed");
-        break;
-    case mm6::MANUAL_SAVE_UNCONFIRMED:
-        reportMM6MenuRefusal("Save could not be confirmed, check the slot before saving again");
-        break;
-    case mm6::MANUAL_SAVE_REFUSED:
-        reportMM6MenuRefusal(mm6::isManualSaveArmed() ? "This game can't be saved here yet" :
-                                                                 "Might & Magic VI saving is not available yet");
-        break;
+    const mm6::ManualSaveOutcome outcome = mm6::saveFirstMapManualSlot(fileName, title).outcome;
+    if (outcome != mm6::MANUAL_SAVE_COMMITTED) {
+        reportUnsavedOutcome(outcome);
+        return;
     }
+    GUI_UpdateWindows();
+    pGUIWindow_CurrentMenu = nullptr;
+    current_screen_type = SCREEN_GAME;
+    gameTimer->setPaused(false);
+    engine->_statusBar->setEvent(LSTR_GAME_SAVED);
 }
 
 bool mm6MayLoadFromMainMenu(std::string_view fileName) {
@@ -89,8 +98,16 @@ bool mm6MayLoadFromMainMenu(std::string_view fileName) {
     return false;
 }
 
-void mm6RefuseInGameLoad() {
-    reportMM6MenuRefusal("Load this game from the main menu");
+bool mm6LoadOverGame(std::string_view fileName) {
+    try {
+        if (mm6::loadSlotOverSession(fileName))
+            return true;
+    } catch (const std::exception &) {
+        mm6::abandonMainMenuLoad();
+        return false;
+    }
+    reportMM6MenuRefusal("This game can't be loaded");
+    return false;
 }
 
 void mm6AutoSave() {
@@ -99,4 +116,19 @@ void mm6AutoSave() {
         return;
     }
     (void) mm6::saveSessionSlot(mm6::AUTOSAVE_SLOT, localization->str(LSTR_AUTOSAVE), mm6::V5FirstMapCaptureBoundary::SettledInput);
+}
+
+void mm6QuickSave() {
+    auto &quickSaveIndex = engine->config->gameplay.QuickSavesCount;
+    const int previousIndex = quickSaveIndex.value();
+    quickSaveIndex.cycleIncrement();
+    const mm6::ManualSaveOutcome outcome =
+        mm6::saveSessionSlot(getCurrentQuickSave(), localization->str(LSTR_QUICKSAVE), mm6::V5FirstMapCaptureBoundary::SettledInput).outcome;
+    if (outcome != mm6::MANUAL_SAVE_COMMITTED) {
+        quickSaveIndex.setValue(previousIndex);
+        reportUnsavedOutcome(outcome);
+        return;
+    }
+    engine->_statusBar->setEvent(LSTR_GAME_SAVED);
+    pAudioPlayer->playUISound(SOUND_StartMainChoice02);
 }

@@ -61,6 +61,17 @@ fi
 exec /bin/cp "$@"
 """
 
+DU_STUB = r"""#!/bin/bash
+# Reports DU_KIB for every path when that file exists, otherwise the real value.
+if [[ -f "$STUB_DIR/du-kib" ]]; then
+    for path in "$@"; do
+        [[ "$path" == -* ]] || printf '%s\t%s\n' "$(cat "$STUB_DIR/du-kib")" "$path"
+    done
+else
+    exec /usr/bin/du "$@"
+fi
+"""
+
 
 def write_executable(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -87,6 +98,7 @@ class CaptureCase(unittest.TestCase):
         write_executable(self.stub / "bin/df", DF_STUB)
         write_executable(self.stub / "bin/ln", LN_STUB)
         write_executable(self.stub / "bin/cp", CP_STUB)
+        write_executable(self.stub / "bin/du", DU_STUB)
         self.script = self.temp / "tools/mm7_playtest_capture.sh"
         self.script.parent.mkdir()
         self.script.write_text(SCRIPT.read_text().replace("/usr/sbin/screencapture", str(self.stub / "screencapture")))
@@ -177,6 +189,12 @@ class CaptureCase(unittest.TestCase):
     def assert_buffer_gone(self) -> None:
         self.assertEqual(self.video_files(), [])
         self.assertEqual(list((self.session / "video").glob(".*")), [])
+
+    def add_upstream_helper(self) -> None:
+        write_executable(self.app / "Contents/Helpers/OpenEnroth.app/Contents/MacOS/OpenEnroth", "#!/bin/sh\n")
+        info = self.app / "Contents/Resources/Helpers/OpenEnroth-BUILD-INFO.txt"
+        info.parent.mkdir(parents=True)
+        info.write_text("upstream: https://github.com/OpenEnroth/OpenEnroth.git\ncommit: 8010ac364d9e\nversion: nightly\n")
 
     def assert_no_capture_running(self) -> None:
         result = subprocess.run(["pgrep", "-f", str(self.stub / "screencapture")],
@@ -335,12 +353,6 @@ class RollingReplayTest(CaptureCase):
 
 
 class DiagnosticsTest(CaptureCase):
-    def add_upstream_helper(self) -> None:
-        write_executable(self.app / "Contents/Helpers/OpenEnroth.app/Contents/MacOS/OpenEnroth", "#!/bin/sh\n")
-        info = self.app / "Contents/Resources/Helpers/OpenEnroth-BUILD-INFO.txt"
-        info.parent.mkdir(parents=True)
-        info.write_text("upstream: https://github.com/OpenEnroth/OpenEnroth.git\ncommit: 8010ac364d9e\nversion: nightly\n")
-
     def write_crash_report(self, name: str, pid: int) -> Path:
         report = self.reports / name
         report.write_text('{"app_name":"MM7","name":"MM7"}\n{\n  "uptime" : 100,\n  "procName" : "MM7",\n'
@@ -469,6 +481,165 @@ class DiagnosticsTest(CaptureCase):
         self.finish()
         self.assertEqual(self.status()["state"], "low-space")
         self.assertTrue(self.game.poll() is None)
+
+
+class StorageCapTest(CaptureCase):
+    def snapshot_rows(self) -> list[list[str]]:
+        rows = (self.session / "snapshots.tsv").read_text().splitlines()
+        return [row.split("\t") for row in rows if row.split("\t")[1] == "saves"]
+
+    def save_copies(self) -> list[bytes]:
+        return sorted(path.read_bytes() for path in (self.session / "saves").iterdir())
+
+    def make_session(self, name: str, started: int, *, clip: bool = False, crash: bool = False,
+                     parent: Path | None = None) -> Path:
+        session = (parent or self.recordings) / name
+        (session / "saves").mkdir(parents=True)
+        (session / "saves/000001.mm7").write_bytes(b"old save")
+        marker = session / ".ec-mm7-playtest-session"
+        marker.write_text("EnrothContinuum-MM7-playtest-v1\n")
+        (session / "status.json").write_text('{"state":"stopped"}\n')
+        if clip:
+            (session / "clips/clip-1").mkdir(parents=True)
+            (session / "clips/clip-1/chunk-000001.mov").write_bytes(b"clip")
+        if crash:
+            (session / "crash-reports").mkdir()
+            (session / "crash-reports/MM7-2026-11-10-213455.ips").write_text("{}\n")
+        os.utime(marker, (started, started))
+        return session
+
+    def check_autosave_cap(self, *extra: str) -> None:
+        self.env["EC_MM7_MAX_SAVE_SNAPSHOTS"] = "2"
+        (self.profile / "saves/save000.mm7").write_bytes(b"slot")
+        autosave = self.profile / "saves/autosave.mm7"
+        autosave.write_bytes(b"autosave 0")
+        self.start(*extra, video=False)
+        for version in range(1, 6):
+            self.assertTrue(wait_for(lambda: len(self.snapshot_rows()) == version + 1, 10))
+            autosave.write_bytes(f"autosave {version}".encode())
+        self.assertTrue(wait_for(lambda: len(self.snapshot_rows()) == 7, 10))
+        self.cli("stop", "--game-exit", "normal")
+        self.finish()
+        self.assertEqual(self.status()["caps"], {"save_snapshots_per_file": 2, "sessions": 20})
+        self.assertEqual(self.save_copies(), [b"autosave 4", b"autosave 5", b"slot"])
+        rows = [row for row in self.snapshot_rows() if row[2] == str(autosave)]
+        self.assertEqual(len(rows), 6, "the index keeps every copy that was taken")
+        self.assertEqual([row[5:] for row in rows], [["pruned"]] * 4 + [[]] * 2)
+        self.assertEqual([Path(row[3]).exists() for row in rows], [False] * 4 + [True] * 2)
+        self.assertEqual(self.timeline().count("\tsave-pruned\t"), 4)
+
+    def test_autosave_copies_are_capped(self) -> None:
+        # Every map transition rewrote the autosave, and each change stacked another copy in the session.
+        self.check_autosave_cap()
+
+    def test_upstream_autosave_copies_are_capped(self) -> None:
+        # The save cap also holds for an upstream OpenEnroth session.
+        self.add_upstream_helper()
+        self.check_autosave_cap("--build", "openenroth")
+        self.assertEqual(self.identity()["build"], "openenroth")
+
+    def test_save_cap_option_and_range(self) -> None:
+        # The option overrides the environment, and a cap of zero is refused.
+        self.env["EC_MM7_MAX_SAVE_SNAPSHOTS"] = "7"
+        self.start("--max-save-snapshots", "0", video=False, check=False)
+        self.finish()
+        assert self.recorder
+        self.assertEqual(self.recorder.returncode, 2)
+        self.assertFalse(self.session.exists())
+        self.start("--max-save-snapshots", "4", "--max-sessions", "9", video=False)
+        self.cli("stop", "--game-exit", "normal")
+        self.finish()
+        self.assertEqual(self.status()["caps"], {"save_snapshots_per_file": 4, "sessions": 9})
+
+    def test_unchanged_checkpoint_copies_nothing(self) -> None:
+        # Scheduled checkpoints copied every save even when it had not changed.
+        save = self.profile / "saves/save000.mm7"
+        save.write_bytes(b"slot one")
+        self.start("--save-checkpoint-seconds", "2", video=False)
+        self.assertTrue(wait_for(lambda: self.timeline().count("save000.mm7 unchanged, not copied") >= 2, 15))
+        self.assertEqual(self.save_copies(), [b"slot one"])
+        save.write_bytes(b"slot two")
+        self.assertTrue(wait_for(lambda: len(self.snapshot_rows()) == 2, 10))
+        self.cli("stop", "--game-exit", "normal")
+        self.finish()
+        self.assertEqual(self.save_copies(), [b"slot one", b"slot two"])
+
+    def test_old_sessions_are_pruned_but_clips_kept(self) -> None:
+        # Recording sessions accumulated without limit.
+        outside = self.temp / "outside"
+        outside.mkdir()
+        precious = outside / "precious.mm7"
+        precious.write_bytes(b"not a recording")
+        foreign = self.make_session("foreign-session", 1_000, parent=outside)
+        oldest = self.make_session("mm7-playtest-1", 1_000)
+        (oldest / "saves/link-to-outside").symlink_to(outside)
+        (oldest / "saves/link-to-file.mm7").symlink_to(precious)
+        clip = self.make_session("mm7-playtest-2", 2_000, clip=True)
+        crash = self.make_session("mm7-playtest-3", 3_000, crash=True)
+        middle = self.make_session("mm7-playtest-4", 4_000)
+        newer = self.make_session("mm7-playtest-5", 5_000)
+        newest = self.make_session("mm7-playtest-6", 6_000)
+        unmarked = self.recordings / "owner-notes"
+        unmarked.mkdir()
+        (unmarked / "notes.txt").write_text("keep me\n")
+        os.utime(unmarked, (500, 500))
+        fake = self.recordings / "fake-marker"
+        fake.mkdir()
+        (fake / ".ec-mm7-playtest-session").symlink_to(foreign / ".ec-mm7-playtest-session")
+        (self.recordings / "linked-session").symlink_to(foreign)
+        self.start("--max-sessions", "3", video=False)
+        self.cli("stop", "--game-exit", "normal")
+        self.finish()
+        survivors = sorted(path.name for path in self.recordings.iterdir())
+        self.assertEqual(survivors, sorted([self.session.name, newest.name, newer.name, crash.name, clip.name,
+                                            unmarked.name, fake.name, "linked-session"]))
+        self.assertFalse(middle.exists() or oldest.exists())
+        self.assertEqual((clip / "clips/clip-1/chunk-000001.mov").read_bytes(), b"clip")
+        self.assertEqual((unmarked / "notes.txt").read_text(), "keep me\n")
+        self.assertEqual(precious.read_bytes(), b"not a recording")
+        self.assertEqual((foreign / "saves/000001.mm7").read_bytes(), b"old save")
+        self.assertTrue((self.recordings / "linked-session").is_symlink())
+        self.assertEqual(self.timeline().count("\tsession-pruned\t"), 2)
+        warnings = self.status()["storage_warnings"]
+        self.assertEqual(len(warnings), 1)
+        self.assertRegex(warnings[0], r"^Older sessions kept beyond the 3-session cap because they hold clips, "
+                                      r"crash reports or a running recorder: 2, \d+ MiB in all\.")
+
+    def test_live_session_is_not_pruned(self) -> None:
+        # A session whose recorder is still watching its game survives the cap.
+        live = self.make_session("mm7-playtest-live", 1_000)
+        (live / "status.json").write_text('{"state":"running"}\n')
+        (live / "identity.txt").write_text(f"game_pid={self.game.pid}\n")
+        dead = self.make_session("mm7-playtest-dead", 2_000)
+        (dead / "status.json").write_text('{"state":"running"}\n')
+        (dead / "identity.txt").write_text("game_pid=999999\n")
+        self.start("--max-sessions", "1", video=False)
+        self.cli("stop", "--game-exit", "normal")
+        self.finish()
+        self.assertTrue(live.exists())
+        self.assertFalse(dead.exists())
+
+    def test_large_recordings_warn_without_deleting(self) -> None:
+        # Recordings over 2 GiB are reported, and nothing under the session cap is removed.
+        older = self.make_session("mm7-playtest-1", 1_000)
+        (self.stub / "du-kib").write_text(str(1024 * 1024 + 1))
+        self.start(video=False)
+        self.cli("stop", "--game-exit", "normal")
+        self.finish()
+        self.assertTrue(older.exists())
+        self.assertEqual(self.status()["storage_warnings"],
+                         ["MM7 recordings use 2049 MiB, over 2 GiB. Review or move older clips."])
+        self.assertIn("\tstorage-warning\tMM7 recordings use 2049 MiB", self.timeline())
+        self.assertFalse((self.session / "warnings.txt").exists())
+
+    def test_small_recordings_do_not_warn(self) -> None:
+        # Recordings under 2 GiB raise no storage warning.
+        self.make_session("mm7-playtest-1", 1_000)
+        (self.stub / "du-kib").write_text(str(1024 * 1024))
+        self.start(video=False)
+        self.cli("stop", "--game-exit", "normal")
+        self.finish()
+        self.assertEqual(self.status()["storage_warnings"], [])
 
 
 if __name__ == "__main__":

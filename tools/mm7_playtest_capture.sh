@@ -11,7 +11,7 @@ Usage:
       [--build mm7 | --build openenroth] [--diagnostics | --no-diagnostics]
       [--video | --no-video] [--display N] [--video-chunk-seconds N]
       [--poll-seconds N] [--save-checkpoint-seconds N] [--min-free-mib N]
-      [--expected-volume-id N]
+      [--expected-volume-id N] [--max-save-snapshots N] [--max-sessions N]
   mm7_playtest_capture.sh note --session ABS_SESSION_DIR --text "owner note"
   mm7_playtest_capture.sh clip --session ABS_SESSION_DIR
   mm7_playtest_capture.sh stop --session ABS_SESSION_DIR [--game-exit normal|abnormal]
@@ -25,6 +25,10 @@ the upstream OpenEnroth.app. Diagnostics (logs, saves, crash reports and
 process samples) are on by default. Video keeps a rolling buffer of the last two minutes. A clip request, an
 abnormal game exit, or a game exit with no stop request keeps the buffer as a
 clip. Otherwise the buffer is deleted when recording ends.
+A session keeps the newest --max-save-snapshots copies of each save file
+(default 3, or EC_MM7_MAX_SAVE_SNAPSHOTS). Start removes all but the newest
+--max-sessions sessions in the destination (default 20, or EC_MM7_MAX_SESSIONS),
+except sessions holding clips or crash reports.
 EOF
 }
 
@@ -66,8 +70,10 @@ validate_session() {
 
 write_status() {
     local tmp="$session/.status.$$"
-    printf '{"state":"%s","started_at":"%s","ended_at":%s,"video":"%s","clips":%s,"warnings":%s}\n' \
+    printf '{"state":"%s","started_at":"%s","ended_at":%s,"video":"%s","clips":%s,"warnings":%s,' \
         "$state" "$started_at" "$ended_json" "$video_state" "$clips_saved" "$warning_count" > "$tmp"
+    printf '"caps":{"save_snapshots_per_file":%s,"sessions":%s},"storage_warnings":%s}\n' \
+        "$max_save_snapshots" "$max_sessions" "$storage_json" >> "$tmp"
     mv "$tmp" "$session/status.json"
 }
 
@@ -106,15 +112,38 @@ check_destination() {
     return 0
 }
 
+# Marks the snapshots.tsv lines of the listed copies as pruned, then deletes the copies.
+prune_save_copies() {
+    local list="$1" source="$2" pruned="$session/.pruned.$$" target count
+    count=$(wc -l < "$list" | tr -d ' ')
+    (( count > max_save_snapshots )) || return 0
+    head -n $((count - max_save_snapshots)) "$list" > "$pruned"
+    awk -F'\t' 'NR == FNR { prune[$0] = 1; next }
+                $2 == "saves" && ($4 in prune) && $6 != "pruned" { print $0 "\tpruned"; next }
+                { print }' "$pruned" "$session/snapshots.tsv" > "$session/.snapshots.$$"
+    mv "$session/.snapshots.$$" "$session/snapshots.tsv"
+    while IFS= read -r target; do
+        unlink "$target" 2>/dev/null || true
+        event save-pruned "Removed $(basename "$target"), an older copy of $(basename "$source"). The newest $max_save_snapshots are kept."
+    done < "$pruned"
+    tail -n "$max_save_snapshots" "$list" > "$list.tmp"
+    mv "$list.tmp" "$list"
+    unlink "$pruned"
+}
+
 # Saves must be unchanged across two reads and again after the copy.
 snapshot() {
-    local source="$1" category="$2" stable="$3" force="${4:-no}" key old hash before after copied tmp target ext now
+    local source="$1" category="$2" stable="$3" checkpoint="${4:-no}" key old hash before after copied tmp target ext now
     [[ -f "$source" && ! -L "$source" ]] || return 0
     key=$(printf '%s' "$source" | shasum -a 256 | awk '{print $1}')
     hash=$(sha "$source") || return 0
     old=""
     [[ ! -f "$session/state/$key" ]] || old=$(cat "$session/state/$key")
-    [[ "$force" == yes || "$hash" != "$old" ]] || return 0
+    if [[ "$hash" == "$old" ]]; then
+        [[ "$checkpoint" != yes ]] ||
+            event save-checkpoint "Scheduled save checkpoint: $(basename "$source") unchanged, not copied."
+        return 0
+    fi
     if [[ "$stable" == yes ]]; then
         before=$(stat -f '%d:%i:%z:%m' "$source" 2>/dev/null) || return 0
         idle 1 || return 1
@@ -148,11 +177,13 @@ snapshot() {
     mv "$tmp" "$target"
     printf '%s\t%s\t%s\t%s\t%s\n' "$(utc)" "$category" "$source" "$target" "$copied" >> "$session/snapshots.tsv"
     printf '%s\n' "$copied" > "$session/state/$key"
-    if [[ "$force" == yes ]]; then
-        event save-checkpoint "Scheduled save checkpoint copied."
+    if [[ "$checkpoint" == yes ]]; then
+        event save-checkpoint "Scheduled save checkpoint copied $(basename "$source")."
     else
         event snapshot "$category"
     fi
+    printf '%s\n' "$target" >> "$session/state/$key.copies"
+    prune_save_copies "$session/state/$key.copies" "$source" || true
 }
 
 # Logs are append-only byte ranges. A new inode, shorter file or changed prefix
@@ -266,6 +297,87 @@ collect_crash_reports() {
         waited=$((waited + 1))
     done
     (( found )) || event crash-report "No macOS crash report for PID $game_pid."
+}
+
+session_marked() {
+    local dir="$1" marker="$1/.ec-mm7-playtest-session"
+    [[ -d "$dir" && ! -L "$dir" && -f "$marker" && ! -L "$marker" ]] || return 1
+    [[ "$(device "$dir")" == "$volume_id" ]] || return 1
+    [[ "$(head -n 1 "$marker" 2>/dev/null)" == EnrothContinuum-MM7-playtest-v1 ]]
+}
+
+# Clips, crash reports and a recorder still watching its game are never pruned.
+session_held() {
+    local dir="$1" pid
+    [[ -z "$(find -x "$dir/clips" "$dir/crash-reports" -mindepth 1 -maxdepth 1 -print 2>/dev/null | head -n 1)" ]] || return 0
+    grep -q '"state":"running"' "$dir/status.json" 2>/dev/null || return 1
+    pid=$(sed -n 's/^game_pid=//p' "$dir/identity.txt" 2>/dev/null | head -n 1)
+    is_uint "${pid:-}" && ps -p "$pid" > /dev/null 2>&1
+}
+
+session_kib() {
+    local kib
+    kib=$(du -skx "$1" 2>/dev/null | awk '{print $1}')
+    is_uint "${kib:-}" && printf '%s' "$kib" || printf '0'
+}
+
+# The marker goes last, so an interrupted removal is retried by the next start.
+remove_session() {
+    local dir="$1"
+    find -x "$dir" -mindepth 1 ! -name .ec-mm7-playtest-session -delete 2>/dev/null || true
+    [[ "$(find -x "$dir" -mindepth 1 -maxdepth 1 ! -name .ec-mm7-playtest-session -print | head -n 1)" == "" ]] ||
+        return 1
+    unlink "$dir/.ec-mm7-playtest-session" && rmdir "$dir"
+}
+
+kib_to_mib() { printf '%s' $(( ($1 + 1023) / 1024 )); }
+
+# Keeps the newest max_sessions marked sessions next to this one, ordered by
+# the marker's modification time, which is set once when a session starts.
+prune_sessions() {
+    local dir mtime entries=() line kib kept=1 held=0 held_kib=0 total_kib warnings=()
+    while IFS= read -r -d '' dir; do
+        [[ "$dir" != "$session" && "$dir" != *$'\n'* && "$dir" != *$'\t'* ]] || continue
+        session_marked "$dir" || continue
+        mtime=$(stat -f '%m' "$dir/.ec-mm7-playtest-session") || continue
+        entries+=("$mtime"$'\t'"$dir")
+    done < <(find -x "$base" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null)
+    total_kib=$(session_kib "$session")
+    while IFS=$'\t' read -r _ dir; do
+        [[ -n "$dir" ]] || continue
+        kib=0
+        if (( kept < max_sessions )); then
+            kept=$((kept + 1))
+        elif session_held "$dir"; then
+            held=$((held + 1))
+            kib=$(session_kib "$dir")
+            held_kib=$((held_kib + kib))
+        elif remove_session "$dir"; then
+            event session-pruned "Removed older session $(basename "$dir"). The newest $max_sessions are kept."
+            continue
+        else
+            event warning "Could not fully remove older session $(basename "$dir")."
+        fi
+        (( kib )) || kib=$(session_kib "$dir")
+        total_kib=$((total_kib + kib))
+    done < <(if (( ${#entries[@]} )); then printf '%s\n' "${entries[@]}" | sort -t $'\t' -k1,1nr -k2,2r; fi)
+    if (( held )); then
+        warnings+=("Older sessions kept beyond the $max_sessions-session cap because they hold clips, crash reports or a running recorder: $held, $(kib_to_mib "$held_kib") MiB in all. Review or move them.")
+    fi
+    if (( total_kib > recordings_warn_kib )); then
+        warnings+=("MM7 recordings use $(kib_to_mib "$total_kib") MiB, over 2 GiB. Review or move older clips.")
+    fi
+    storage_json="[]"
+    if (( ${#warnings[@]} )); then
+        storage_json="["
+        for line in "${warnings[@]}"; do
+            event storage-warning "$line"
+            [[ "$storage_json" == "[" ]] || storage_json+=","
+            storage_json+="\"$line\""
+        done
+        storage_json+="]"
+    fi
+    write_status
 }
 
 video_pid=""
@@ -457,9 +569,11 @@ shift
 profile_arg=""; output_arg=""; session_arg=""; app_arg=""; game_pid=""; note_text=""; expected_volume_id=""; game_exit=""
 build=mm7; diagnostics_enabled=1; exit_detail=""
 display=1; video_chunk_seconds=60; poll_seconds=5; save_checkpoint_seconds=600; min_free_mib=2048
+max_save_snapshots="${EC_MM7_MAX_SAVE_SNAPSHOTS:-3}"; max_sessions="${EC_MM7_MAX_SESSIONS:-20}"
+recordings_warn_kib=$((2 * 1024 * 1024)); storage_json="[]"
 while (( $# > 0 )); do
     case "$1" in
-        --profile|--output|--session|--app|--game-pid|--display|--video-chunk-seconds|--poll-seconds|--save-checkpoint-seconds|--min-free-mib|--expected-volume-id|--text|--game-exit|--build|--exit-detail)
+        --profile|--output|--session|--app|--game-pid|--display|--video-chunk-seconds|--poll-seconds|--save-checkpoint-seconds|--min-free-mib|--expected-volume-id|--text|--game-exit|--build|--exit-detail|--max-save-snapshots|--max-sessions)
             (( $# >= 2 )) || fail "missing value for $1"
             case "$1" in
                 --profile) profile_arg="$2" ;; --output) output_arg="$2" ;;
@@ -470,6 +584,7 @@ while (( $# > 0 )); do
                 --min-free-mib) min_free_mib="$2" ;; --text) note_text="$2" ;;
                 --expected-volume-id) expected_volume_id="$2" ;; --game-exit) game_exit="$2" ;;
                 --build) build="$2" ;; --exit-detail) exit_detail="$2" ;;
+                --max-save-snapshots) max_save_snapshots="$2" ;; --max-sessions) max_sessions="$2" ;;
             esac
             shift 2 ;;
         --video) video_enabled=1; shift ;;
@@ -507,13 +622,16 @@ fi
 [[ -n "$profile_arg" && -n "$app_arg" && -n "$game_pid" ]] || fail "start requires --profile, --app, and --game-pid"
 [[ -n "$output_arg" && -z "$session_arg" || -z "$output_arg" && -n "$session_arg" ]] ||
     fail "start requires exactly one of --output or --session"
-for number in "$game_pid" "$display" "$video_chunk_seconds" "$poll_seconds" "$save_checkpoint_seconds" "$min_free_mib"; do
+for number in "$game_pid" "$display" "$video_chunk_seconds" "$poll_seconds" "$save_checkpoint_seconds" "$min_free_mib" \
+              "$max_save_snapshots" "$max_sessions"; do
     is_uint "$number" || fail "PID and numeric options must be nonnegative integers"
 done
 [[ -z "$expected_volume_id" ]] || is_uint "$expected_volume_id" || fail "--expected-volume-id must be an integer"
 (( game_pid > 1 && display > 0 && video_chunk_seconds >= 10 && video_chunk_seconds <= 3600 &&
    poll_seconds >= 1 && poll_seconds <= 60 && save_checkpoint_seconds >= 1 &&
-   save_checkpoint_seconds <= 3600 && min_free_mib >= 128 )) || fail "numeric option is out of range"
+   save_checkpoint_seconds <= 3600 && min_free_mib >= 128 &&
+   max_save_snapshots >= 1 && max_save_snapshots <= 1000 && max_sessions >= 1 && max_sessions <= 1000 )) ||
+    fail "numeric option is out of range"
 video_keep=$(( (120 + video_chunk_seconds - 1) / video_chunk_seconds ))
 case "$build" in
     mm7) helper_name=MM7; log_pattern='enroth-continuum-mm7*.log' ;;
@@ -579,6 +697,7 @@ fi
         "$game_pid" "$volume_id" "$video_enabled" "$diagnostics_enabled"
 } > "$session/identity.txt"
 event start "Passive MM7 recording started."
+prune_sessions || true
 if [[ "$video_enabled" == 1 ]]; then
     event notice "Video records the selected display; other visible desktop content may appear."
 fi

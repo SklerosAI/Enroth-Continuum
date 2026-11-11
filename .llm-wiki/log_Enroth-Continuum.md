@@ -3062,3 +3062,10 @@ Chronological record of wiki activity.
 - With W1-W6 passed, stage 1 (MM7 working) is complete. Stage 2 (MM6 working) is active. Its next blockers are event spell casts and a t7 trap event that re-fires every frame.
 - Updated `Current-Delivery-Order.md` and `Campaign-Status.md`.
 
+## [2026-11-11] verify | Every MM6 main-quest map runs headless
+- by: T-Burton-ND via claude
+- Integrated on `master` through `9db7e96ba`: the MM6 indoor decoration parser (records before names), event spell casts per the original executable, caster-less explosions that hurt nobody, and trail particles reused as a ring.
+- A sweep loading all 67 MM6 maps and firing every timer and event found all 26 main-quest maps running every phase with their actors, 66 maps in all, and no crash. Event spells 12, 35, 46, 83 and 91 on six non-quest maps are still refused.
+- On `master`: all twelve MM6 combat tests, the MM6 suite (96), the MM6 first-map gate with its MM7 controls, the MM7 in-process controls (107), the full headless MM7 suite (540/540) and `check_style`.
+- This is load-and-event coverage, not play. Live travel, monster missiles and spells, party death and a chained main-quest path remain for the MM6 working gate.
+

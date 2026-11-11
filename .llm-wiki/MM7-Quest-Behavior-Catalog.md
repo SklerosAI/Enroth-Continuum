@@ -131,7 +131,7 @@ uncovered unless stated otherwise.
 | `MM7CampaignChainC2`, `MM7CastleRebuild` | M2 elixir, seven-dwarf, rebuild sequence and one-missing refusal. | Keep its save boundary. |
 | `MM7CampaignChainC3`, `MM7Campaign` | Light Arbiter selection and post-choice house relation. | Add M3–M5 timer, war-score, trumpet/neutral, and Dark selection cases. |
 | `MM7CampaignChainC4`, `MM7LightWalls`, `MM7LightItems` | L1 key/pillar path and no-kill player rule. | Audit the unreachable local protected-group predicate. |
-| `MM7CampaignChainC5`, `MM7LightAdvisors`, `MM7PitCubeAcquisition` | L2, L4, L5 item/return progression. | Replace the L3 exit-bit oracle with an actual Elder Vampire defeat; assert Blaster training reward. |
+| `MM7CampaignChainC5`, `MM7LightItems`, `MM7LightAdvisors`, `MM7PitCubeAcquisition` | L2, L3 death-state plus exit/hand-in, L4, and L5 item/return progression. | Replace the C5 direct death-state fixture with real Elder Vampire combat; assert Blaster training reward. |
 | `MM7CampaignChainC6`, `MM7LightXenofex`, `MM7XenofexCombat` | L6 Xenofex combat and Light hand-in. | Add Roland/key/control access route. |
 | `MM7CampaignChainC7`, `MM7OverthrusterRoute` | L7 wetsuits, Lincoln, Overthruster, Light ending. | Retain all individual gate controls. |
 | Future `MM7DarkCampaignChainC1`–`C7` | D1–D7 through normal, durable save boundaries. | Include recipient, alignment, combat/event and ending assertions named above. |

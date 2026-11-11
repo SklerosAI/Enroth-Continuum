@@ -3106,3 +3106,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added and passed `MM7DarkGuild.BreedingZoneMarkerDoesNotGrantDarkGuild`. It discovers the actual completion event from the loaded Breeding Zone program rather than treating its ordinary exit as a quest action, and proves the map marker alone does not award Dark-guild membership. The Archibald dialogue hand-in and durable Dark chain remain open.
 
+## [2026-11-11] verify | MM7 Dark assignment and hidden Breeding Zone capture
+- by: T-Burton-ND via codex
+- Added and passed the real Castle Gloaming Archibald assignment dialogue test. The hidden OpenGL diagnostic can now render a Breeding Zone frame without showing or focusing a window; the owner-local capture helper retains 100 private PNGs by replacing the oldest at capacity. The first capture exposed black missing-geometry regions, which is audit evidence rather than a visual-acceptance result.
+

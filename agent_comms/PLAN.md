@@ -44,6 +44,8 @@ file exists for them (monster idle slots and one map-load decoration sound),
 and the `null` frame is the placeholder the seasons option uses to hide four
 flowers in winter. Stage 3 keeps two small items: an untraced `sound id 2
 not found`, and logging blank-name rows once instead of on every request.
+Also for stage 3: the Wine Cellar's named vampire loads `Disabled` with the
+undocumented attribute `0x10000`. Check whether the original activates it.
 
 The staged W3 session already passed launch, opening movie, New Game, input,
 focus and pause, a shop purchase, a spell, and named Save then fresh-process

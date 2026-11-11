@@ -81,7 +81,7 @@ and by the [DungeonCrawl quest table](https://dungeoncrawl-classics.com/might-an
 | --- | --- | --- | --- |
 | Missing Contestants | Return the Contestant Shield from Emerald Island’s Dragon Cave to Markham; award is 1,000 XP and 1,000 gold. | Uncovered. | C |
 | Lantern of Light | Tarin Withern assigns the Lantern recovery; return the physical Lantern from the Barrow II chest to receive 5,000 XP per character, 1,000 gold, and the Harmondale award. | `MM7SideQuests.LanternOfLightRequiresBarrowChest` dynamically finds Tarin, proves acceptance and no-item refusal, loots the event-mapped Barrow II chest through the chest UI, and verifies normal hand-in consumption and rewards. | C |
-| Davrik’s Signet Ring | Recover the Bandit Caves ring and return it to Davrik; award is 5,000 XP and 5,000 gold. | Uncovered. | C |
+| Davrik’s Signet Ring | Recover the Bandit Caves ring after accepting Davrik's task, then return it for 5,000 XP per character, 5,000 gold, and the Harmondale award. | `MM7SideQuests.DavriksSignetRingRequiresBanditCavesChest` dynamically finds Davrik and the tavern, proves the empty-handed refusal, loots the quest-gated Bandit Caves chest through its normal UI, and verifies the ring consumption, state transition and rewards. | C |
 | Darron’s brother | Find the White Cliff evidence/deck and return to Darron Temper; retain the Arcomage deck, receive 2,000 XP and 750 gold. | Uncovered. | C |
 | Three statuettes | Place Eagle/Knight/Angel statuettes at their three shrines, then return to Thom Lumbra for 50,000 XP and 50,000 gold. | Uncovered. | C |
 | Kerrid letter | Deliver Kerrid’s letter to the Faerie King, receive pipes, return them; the audience consumes party food and the award is 7,000 XP and 1,000 gold. | Uncovered. | C |

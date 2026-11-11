@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "Engine/Timer.h"
+#include "Engine/Engine.h"
 #include "Engine/Party.h"
 #include "Engine/AssetsManager.h"
 
@@ -1134,6 +1135,13 @@ void SpellFxRenderer::SetPlayerBuffAnim(SpellId uSpellID,
 
     pBuffAnim->uSpellAnimTimeElapsed = 0_ticks;
     pBuffAnim->bRender = uSpellID != SPELL_NONE;
+
+    // MM6's dift.bin has none of these icons. MM6 plays sprite overlays from doverlay.bin over the portrait instead,
+    // and those aren't drawn yet.
+    if (engine->gameTitle() == GameTitle::MM6) {
+        pBuffAnim->bRender = false;
+        return;
+    }
 
     switch (uSpellID) {
         case SPELL_DISEASE:

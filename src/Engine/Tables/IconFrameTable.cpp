@@ -16,12 +16,14 @@ int IconFrameTable::animationId(std::string_view animationName) const {
 }
 
 Duration IconFrameTable::animationLength(int animationId) const {
+    assert(animationId >= 0 && animationId < std::ssize(_frames));
     const IconFrameData &icon = _frames[animationId];
     assert(icon.flags & FRAME_FIRST);
     return icon.animationLength;
 }
 
 GraphicsImage *IconFrameTable::animationFrame(int animationId, Duration frameTime) {
+    assert(animationId >= 0 && animationId < std::ssize(_frames));
     IconFrameData &icon = _frames[animationId];
     assert(icon.flags & FRAME_FIRST);
 

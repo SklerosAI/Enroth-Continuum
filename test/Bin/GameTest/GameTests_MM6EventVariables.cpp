@@ -1,11 +1,20 @@
+#include <memory>
+#include <stdexcept>
 #include <string>
 
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
+#include "Engine/EngineGlobals.h"
 #include "Engine/Evt/EvtInterpreter.h"
 #include "Engine/Evt/EvtProgram.h"
+#include "Engine/Graphics/Outdoor.h"
+#include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Party.h"
+#include "Engine/Resources/LOD.h"
+#include "Engine/SaveLoad.h"
+#include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
 
 #include "Utility/Memory/Blob.h"
@@ -48,6 +57,41 @@ EvtProgram syntheticRewardEvent() {
                             GameTitle::MM6);
 }
 
+void startMM6NewGame(EngineController &game) {
+    // MM6 has no new-game save yet, so the override seeds the map deltas and chest state from the game archives.
+    std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
+    mm6::testing::setNewGameSaveOverride([] {
+        pMapDeltas.clear();
+        for (const std::string &name : pGames_LOD->ls())
+            if (name.ends_with(".dlv") || name.ends_with(".ddm"))
+                pMapDeltas.emplace(name, Blob::copy(pGames_LOD->read(name)));
+        mm6::resetChestTitleState(&mm6::chestTitleState());
+        if (!mm6::restoreChestTitleState(GameTitle::MM6, &mm6::chestTitleState(), 0x12345678u, {}))
+            throw std::runtime_error("MM6 chest title state did not restore");
+    });
+    game.runGameRoutine([&] { chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>(); });
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    game.runGameRoutine([] {
+        for (Character &character : pParty->pCharacters) {
+            for (int order = 4; order <= 12 && character.GetSkillIdxByOrder(3) == SKILL_INVALID; ++order) {
+                const Skill skill = character.GetSkillIdxByOrder(order);
+                if (skill != SKILL_INVALID && !character.pActiveSkills[skill])
+                    character.pActiveSkills[skill] = CombinedSkillValue::novice();
+            }
+        }
+        for (int pass = 0; pass < 100 && CharacterCreation_GetUnspentAttributePointCount() > 0; ++pass)
+            for (Character &character : pParty->pCharacters)
+                for (Attribute stat : allStatAttributes())
+                    character.IncreaseAttribute(stat);
+    });
+    game.pressGuiButton("PartyCreation_OK");
+    game.skipLoadingScreen();
+    game.tick(2);
+    game.runGameRoutine([&] { chestOptIn.reset(); });
+    mm6::testing::setNewGameSaveOverride({});
+}
+
 } // namespace
 
 GAME_TEST(MM6EventVariables, InterpreterUsesMM6ResistanceSkillPointHireAndConditionStorage) {
@@ -86,4 +130,28 @@ GAME_TEST(MM6EventVariables, InterpreterUsesMM6ResistanceSkillPointHireAndCondit
     EXPECT_FALSE(pParty->pCharacters[0].conditions.has(CONDITION_DEAD));
     EXPECT_TRUE(pParty->pCharacters[1].conditions.has(CONDITION_DEAD));
     EXPECT_FALSE(pParty->pCharacters[2].conditions.has(CONDITION_DEAD));
+}
+
+GAME_TEST(MM6EventVariables, FirstMapStatBonusAward) {
+    // Clicking a first-map face that sets a stat bonus used to crash on the award animation, which MM6 has no icon for.
+    auto mightTape = charTapes.stats(ATTRIBUTE_MIGHT);
+    auto soundsTape = tapes.sounds();
+    auto screenTape = tapes.screen();
+    startMM6NewGame(game);
+    ASSERT_EQ(engine->_currentLoadedMapId, pMapTable->GetMapInfo("oute3.odm"));
+    int faceId = -1;
+    for (int i = 0; i < pOutdoor->faces.size(); i++)
+        if (pOutdoor->faces[i].eventId == 150) // Sets the active character's might bonus to 10.
+            faceId = i;
+    ASSERT_NE(faceId, -1);
+    game.teleportTo(engine->_currentLoadedMapId, pOutdoor->faces[faceId].boundingBox.center() - Vec3f(300, 0, 0), 0);
+    test.startTaping();
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_2);
+    game.tick();
+    game.pointMouseAtFace(faceId);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+    EXPECT_EQ(mightTape.delta(), tape(0, 10, 0, 0));
+    EXPECT_CONTAINS(soundsTape.flatten(), SOUND_quest);
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME));
 }

@@ -786,6 +786,27 @@ EvtProgram syntheticActorKilledEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticSpringEvent() {
+    std::string bytes;
+    std::string season;
+    season.push_back(static_cast<char>(SEASON_SPRING));
+    season.push_back(3); // In-season continuation.
+    appendRecord(&bytes, 0, EVENT_CheckSeason, season);
+
+    std::string outOfSeason;
+    outOfSeason.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&outOfSeason, 57);
+    appendRecord(&bytes, 1, EVENT_Set, outOfSeason);
+    appendRecord(&bytes, 2, EVENT_Exit);
+
+    std::string inSeason;
+    inSeason.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&inSeason, 58);
+    appendRecord(&bytes, 3, EVENT_Set, inSeason);
+    appendRecord(&bytes, 4, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -1616,4 +1637,28 @@ GAME_TEST(MM6ActorKilled, SelectsTheCompletedBranchOnlyAfterEveryGroupActorDies)
     runEvent(EvtContext(EVT_SOURCE_MAP, 1));
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(55));
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(56));
+}
+
+GAME_TEST(MM6SeasonCheck, UsesTheInclusiveSpringBoundaryBeforeSummer) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedParty restoreParty;
+    engine->_localEventMap = syntheticSpringEvent();
+    for (Character &character : pParty->pCharacters) {
+        character._characterEventBits.reset(57);
+        character._characterEventBits.reset(58);
+    }
+
+    pParty->uCurrentMonth = 5;      // June, stored zero-based.
+    pParty->uCurrentDayOfMonth = 19; // The inclusive June 20 spring endpoint.
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(57));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(58));
+
+    for (Character &character : pParty->pCharacters)
+        character._characterEventBits.reset(58);
+    pParty->uCurrentDayOfMonth = 20; // June 21 begins summer.
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(57));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(58));
 }

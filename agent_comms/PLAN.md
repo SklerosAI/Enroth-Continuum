@@ -48,6 +48,9 @@ A visible replay of an upstream test trace with the installed upstream helper
 and the owner's MM7 data opened an OpenGL window and finished cleanly on
 2026-11-10. Its replay mode keeps config in memory, so window placement
 on the second monitor was not exercised.
+Also for stage 3: the Walls of Mist exit stayed closed once in about 16
+fresh chain runs after all three keys were looted. C4 now retries pedestal
+clicks until each key is consumed. Find the cause.
 Also for stage 3: the Wine Cellar's named vampire loads `Disabled` with the
 undocumented attribute `0x10000`. Check whether the original activates it.
 

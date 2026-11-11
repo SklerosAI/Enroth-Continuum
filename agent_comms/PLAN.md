@@ -192,8 +192,10 @@ Ordered by how badly a player is blocked. A lane takes the top item when free.
 
 On `master` at `88619a690`: M1 production New Game (gate 27/27), the map
 sweep, the award-animation crash, reputation, the generated NPC pool and
-the damage channels. Active lanes: the t7 trap re-fire loop and event spell
-casts.
+the damage channels. The t7 trap loop was a broken MM6 indoor decoration parser,
+fixed and integrated at `c9d306191` (trap test, MM6 suite 96 passed, MM6
+first-map gate with MM7 controls, MM7 in-process 107 passed). Active lane:
+event spell casts.
 
 Drafted 2026-11-10 by a read-only planning pass, with its key source claims
 spot-checked by Claude. Source facts that shape it: production MM6 New Game

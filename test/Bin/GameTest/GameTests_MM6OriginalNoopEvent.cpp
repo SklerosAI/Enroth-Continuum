@@ -285,6 +285,31 @@ EvtProgram syntheticMonthCompareEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticQuestBitEvent() {
+    std::string bytes;
+    std::string questBit;
+    questBit.push_back(static_cast<char>(VAR_QBits_QuestsDone));
+    appendU32(&questBit, 511); // Upper boundary of the MM6 quest-bit state.
+    appendRecord(&bytes, 0, EVENT_Set, questBit);
+
+    std::string compare = questBit;
+    compare.push_back(4);
+    appendRecord(&bytes, 1, EVENT_Compare, compare);
+
+    std::string failed;
+    failed.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&failed, 27);
+    appendRecord(&bytes, 2, EVENT_Set, failed);
+    appendRecord(&bytes, 3, EVENT_Exit);
+
+    std::string passed;
+    passed.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&passed, 28);
+    appendRecord(&bytes, 4, EVENT_Set, passed);
+    appendRecord(&bytes, 5, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -634,4 +659,21 @@ GAME_TEST(MM6MonthCompare, UsesTheMM6MonthVariableAndBranch) {
     runEvent(EvtContext(EVT_SOURCE_MAP, 1));
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(25));
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(26));
+}
+
+GAME_TEST(MM6QuestBitEvent, UsesTheMM6QuestBitStateAndBranch) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedParty restoreParty;
+    engine->_localEventMap = syntheticQuestBitEvent();
+    pParty->_questBits.reset(static_cast<QuestBit>(511));
+    pParty->_questBits.reset(static_cast<QuestBit>(510));
+    pParty->pCharacters[0]._characterEventBits.reset(27);
+    pParty->pCharacters[0]._characterEventBits.reset(28);
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_TRUE(pParty->_questBits.test(static_cast<QuestBit>(511)));
+    EXPECT_FALSE(pParty->_questBits.test(static_cast<QuestBit>(510)));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(27));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(28));
 }

@@ -42,3 +42,7 @@ New lane:
 
 | S-DEATH MM6 party death and respawn (M3) | `claude/mm6-party-death` in `mm7-monster-combat` | the detached MM6 party death model under `src/Engine/MM6/`, its MM6-gated hook where the party dies (`Party.cpp`, `Game.cpp` or `GameOver.cpp`, named in the handoff), new MM6 tests. Shared core. |
 
+Update: S-BORDER part (c) is done on `claude/mm6-map-return` (`45ce7e223`, `c1db9506b`, `e5b12576f`), waiting for integration after the combat validation. New lane:
+
+| S-SAVEANY MM6 save and load on any map (M2 part 2) | `claude/mm6-save-any-map` stacked on `claude/mm6-map-return` in `mm7-save-durability` | the MM6 EC6 writer and reader (`src/Engine/MM6/` save sections, outdoor and indoor visited-map sections), MM6 branches of `saveGame` and load in `src/Engine/SaveLoad.cpp`, the Save and Load menu admission for MM6, new MM6 tests and gate children. Shared core. |
+

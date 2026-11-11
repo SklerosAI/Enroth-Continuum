@@ -3134,3 +3134,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Public-source reconciliation corrected the Dark D5 row before implementation: Tolberti in the Pit assigns Robert the Wise in Celeste, accepts Robert's control cube, and grants Blaster training. The cube may be obtained by combat or theft; it is the Dark mirror of Robert's Light-side Tolberti quest.
 
+## [2026-11-11] verify | MM7 Dark Robert cube hand-in
+- by: T-Burton-ND via codex
+- Added and passed the Dark Tolberti dialogue contract after the three adviser completions. It assigns Robert's control cube, refuses an empty return, and consumes the supplied cube while closing the Dark quest. Robert's real Celeste combat/theft acquisition and the Blaster reward remain separately targeted.
+

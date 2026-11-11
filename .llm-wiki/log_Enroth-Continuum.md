@@ -3102,3 +3102,9 @@ Chronological record of wiki activity.
 - Reconciled the remaining public-source questions and expanded the catalog into individual promotion and test-contract rows. The official Prima guide establishes a four-month war clock, with the trumpet battle available after two months; the Niles/Malwick chain now has its conditional trigger, two deadline windows, temporary ally-hostility and Harmondale-invasion outcomes recorded.
 - The catalog has no unresolved intended-behavior rows. This closes the research prerequisite only; Dark and side-quest runtime coverage remain unimplemented.
 
+## [2026-11-11] update | Atlas MM6 isolated playtest entry
+- by: T-Burton-ND via codex
+- Added the gated `Play MM6` action at `ee7c49023`, alongside the existing MM7 route. It requires MM6 data, runs only the title-locked MM6 helper, uses `Profiles/MM6-Atlas`, and clears MM7-only settings.
+- The Atlas interface was simplified around the local Gridiron Dark palette. MM6 deliberately does not start the MM7 rolling recording or diagnostics collector.
+- The Swift build-profile controls, page controls and assembler syntax check passed. This is an owner playtest entry, not evidence that MM6 has completed a visible campaign.
+

@@ -60,3 +60,7 @@ New lane:
 
 | S-TRANSPORT MM6 boats and stables | `claude/mm6-transport` in `mm7-save-durability` | the MM6 transport house screen and routes (`src/GUI/UI/Houses/Transport.cpp` MM6 branch, `src/GUI/UI/Houses/MM6House.cpp`, MM6 route rules under `src/Engine/MM6/`), `leaveMap` on departure, new MM6 tests. Shared core. |
 
+Update: S-TRANSPORT and the fix-prices step integrated (`251afc203`..`3c0a70b98`). New lane:
+
+| S-QUICKSAVE MM6 autosave, quick save and in-game Load (M2/M3 remainder) | `claude/mm6-autosave-quickload` in `mm7-save-durability` | the MM6 slot policy for autosave and quick save names, the MM6 branches of `autoSave()`, quick save and quick load in `src/Engine/SaveLoad.cpp` and `src/Application/Game.cpp`, in-game Load admission in `MM6SaveLoadMenu.cpp`, new MM6 tests and gate children. Shared core. |
+

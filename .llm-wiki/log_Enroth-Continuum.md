@@ -3042,3 +3042,10 @@ Chronological record of wiki activity.
 - The Bash synthetic check preserved two rolling chunks into one unique private clip directory; source chunks remained intact. The Atlas hotkey source typechecked and compiled with Carbon.
 - The active private MM7 profile restored `1` through `4` for party selection and maps laptop alternatives `E`/`F` to fly up/down and `J`/`K` to look up/down. No MM7 or macOS screen recording was launched.
 
+## [2026-11-10] verify | MM7 owner visible session on the installed candidate
+- by: T-Burton-ND via claude
+- The owner ran session S1 from `agent_comms/PLAN.md` on the installed Atlas and MM7 candidate with the normal profile. Title music, NPC voice and combat sound were heard. An NPC conversation, a monster fight, a new save, relaunch from The Atlas and Load of that save passed.
+- A before and after comparison of the normal profile showed one new save slot, the ini, new logs and three cached tile images. Existing saves kept their times and sizes. Session logs show no crash or exception, only empty-name sound load warnings and one `null` sprite lookup, queued for the audit.
+- The recorder collected logs and save snapshots but no video, because macOS Screen Recording permission was not granted. The owner does not want continuous video capture, so recording stays off until an on-request replay build is installed.
+- Updated `Current-Delivery-Order.md` and `Campaign-Status.md`. The MM7 working gate now waits only on the continuous chapter chain.
+

@@ -667,7 +667,10 @@ Blob encodeMM6IndoorRuntimeDelta(const MM6IndoorRuntimeDelta &delta, const MM6In
     return encoded;
 }
 
-Blob encodeMM6IndoorChangedState(const IndoorLocation &location) {
+enum class IndoorActorAndSpriteRecords { Live, AsLoaded };
+
+static Blob encodeIndoorLiveState(const IndoorLocation &location, IndoorActorAndSpriteRecords records) {
+    const bool withActorsAndSprites = records == IndoorActorAndSpriteRecords::Live;
     if (location.mm6DeltaBytes.empty() || location.dlv.respawnCount < 0 || location.dlv.lastRespawnDay < 0 ||
         location.vertices.size() > std::numeric_limits<uint32_t>::max() ||
         location.faces.size() > std::numeric_limits<uint32_t>::max() ||
@@ -688,12 +691,12 @@ Blob encodeMM6IndoorChangedState(const IndoorLocation &location) {
     current.respawnCount = location.dlv.respawnCount;
     current.lastRespawnDay = location.dlv.lastRespawnDay;
     current.visibleOutlines = location._visible_outlines;
-    if (pActors.size() != current.actors.size() || pSpriteObjects.size() != current.spriteObjects.size() ||
+    if ((withActorsAndSprites && (pActors.size() != current.actors.size() || pSpriteObjects.size() != current.spriteObjects.size())) ||
         vChests.size() != current.chests.size() || location.doors.size() != current.doors.size() ||
         location.doorsData.size() != current.doorsData.size())
         throw Exception("MM6 indoor runtime record count changed; save encoding is not established");
 
-    for (size_t i = 0; i < current.actors.size(); ++i) {
+    for (size_t i = 0; withActorsAndSprites && i < current.actors.size(); ++i) {
         Actor_MM7 live{};
         snapshot(pActors[i], &live);
         current.actors[i].attributes = live.attributes;
@@ -701,7 +704,7 @@ Blob encodeMM6IndoorChangedState(const IndoorLocation &location) {
         copyBytes(&current.actors[i], &live, 134, 48);
         copyBytes(&current.actors[i], &live, 184, 28);
     }
-    for (size_t i = 0; i < current.spriteObjects.size(); ++i) {
+    for (size_t i = 0; withActorsAndSprites && i < current.spriteObjects.size(); ++i) {
         SpriteObject_MM7 live{};
         snapshot(pSpriteObjects[i], &live);
         copyBytes(&current.spriteObjects[i], &live, 0, 24);
@@ -744,4 +747,12 @@ Blob encodeMM6IndoorChangedState(const IndoorLocation &location) {
         offset += identifiers + skippedDeltas + offsets;
     }
     return encodeMM6IndoorRuntimeDelta(current, base);
+}
+
+Blob encodeMM6IndoorChangedState(const IndoorLocation &location) {
+    return encodeIndoorLiveState(location, IndoorActorAndSpriteRecords::Live);
+}
+
+Blob encodeMM6IndoorParkedState(const IndoorLocation &location) {
+    return encodeIndoorLiveState(location, IndoorActorAndSpriteRecords::AsLoaded);
 }

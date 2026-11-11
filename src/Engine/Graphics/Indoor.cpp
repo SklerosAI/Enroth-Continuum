@@ -13,6 +13,7 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6DoorMotionTraceForTest.h"
+#include "Engine/MM6/MM6MapTransition.h"
 #include "Engine/AssetsManager.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/BspRenderer.h"
@@ -289,7 +290,8 @@ void IndoorLocation::Load(std::string_view filename, int num_days_played, int re
         bool respawnInitial = true;
         bool respawnTimed = false;
         try {
-            delta = decodeMM6IndoorRuntimeDelta(decodeMM6ArchiveEntry(pMapDeltas.at(dlv_filename)), base);
+            std::optional<Blob> parked = mm6::parkedMapDelta(dlv_filename);
+            delta = decodeMM6IndoorRuntimeDelta(parked ? std::move(*parked) : decodeMM6ArchiveEntry(pMapDeltas.at(dlv_filename)), base);
             respawnInitial = delta.lastRespawnDay == 0;
             if (engineFlags & ENGINE_LOADING_SAVEGAME)
                 respawn_interval_days = 0x1BAF800;
@@ -330,6 +332,7 @@ void IndoorLocation::Load(std::string_view filename, int num_days_played, int re
         mm6DeltaBytes.resize(retained.size());
         std::memcpy(mm6DeltaBytes.data(), retained.data(), retained.size());
         *indoor_was_respawned = respawnInitial || respawnTimed;
+        mm6::restoreParkedMap(dlv_filename, *indoor_was_respawned);
         return;
     }
 

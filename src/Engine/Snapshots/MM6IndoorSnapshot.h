@@ -89,3 +89,12 @@ Blob encodeMM6IndoorRuntimeDelta(const MM6IndoorRuntimeDelta &delta, const MM6In
 // Captures the supported fields from the active indoor runtime. The current
 // sidecar supplies opaque bytes, including any event-variable edits.
 Blob encodeMM6IndoorChangedState(const IndoorLocation &location);
+
+/**
+ * Like `encodeMM6IndoorChangedState`, but leaves the actor and ground item records as they were loaded, so the live
+ * lists may have grown. Reset counters, visibility, chests and doors are the live ones.
+ *
+ * @param location                      The active indoor map.
+ * @return                              The decoded DLV.
+ */
+Blob encodeMM6IndoorParkedState(const IndoorLocation &location);

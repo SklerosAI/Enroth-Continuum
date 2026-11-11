@@ -34,6 +34,15 @@ struct OutdoorLocation;
 // MM6 sidecar as source for opaque bytes and event MapVar changes.
 Blob encodeMM6OutdoorChangedState(const OutdoorLocation &location);
 
+/**
+ * Like `encodeMM6OutdoorChangedState`, but leaves the actor and ground item records as they were loaded, so the live
+ * lists may have grown. Reset counters, visibility and chests are the live ones.
+ *
+ * @param location                      The active outdoor map, `*pOutdoor`.
+ * @return                              The decoded DDM.
+ */
+Blob encodeMM6OutdoorParkedState(const OutdoorLocation &location);
+
 // Shared bounded MM6 record projections for outdoor and indoor deltas.
 // These do not encode a changed record; callers must retain their wire bytes.
 Actor_MM7 projectMM6ActorRecord(std::span<const std::uint8_t> record);

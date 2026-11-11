@@ -1,7 +1,12 @@
 #pragma once
 
+#include <optional>
+#include <string_view>
+
 #include "Engine/MapEnums.h"
 #include "Engine/PartyPlacement.h"
+
+#include "Utility/Memory/Blob.h"
 
 namespace mm6 {
 
@@ -34,10 +39,33 @@ namespace mm6 {
 void settleBorderArrival(PartyPlacement *placement);
 
 /**
- * Bookkeeping every MM6 map change does before the target map loads.
+ * Bookkeeping every MM6 map change does before the target map loads. The map the party leaves is parked for the
+ * session: its delta with the live chests, doors, visibility and reset counters, and its actors, ground items and event
+ * variables.
  *
  * @param target                        Map the party is about to enter.
  */
 void leaveMap(MapId target);
+
+/**
+ * @param deltaName                     Delta file of the map being loaded, e.g. `oute3.ddm`.
+ * @return                              The decoded delta the map was parked with, to load in place of the one in
+ *                                      `pMapDeltas`, or empty for a map the session hasn't left.
+ */
+[[nodiscard]] std::optional<Blob> parkedMapDelta(std::string_view deltaName);
+
+/**
+ * Puts back the actors, ground items and event variables of a parked map once its parked delta has loaded, and
+ * forgets the parked map. A respawned map keeps what the respawn made.
+ *
+ * @param deltaName                     Delta file of the map that just loaded.
+ * @param respawned                     Whether the load respawned the map.
+ */
+void restoreParkedMap(std::string_view deltaName, bool respawned);
+
+/**
+ * Forgets every parked map, for a new or loaded game.
+ */
+void forgetParkedMaps();
 
 } // namespace mm6

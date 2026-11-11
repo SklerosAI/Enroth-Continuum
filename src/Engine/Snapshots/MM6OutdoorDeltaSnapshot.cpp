@@ -266,20 +266,23 @@ Blob encodeMM6OutdoorRuntimeDelta(const MM6OutdoorDeltaSnapshot &delta) {
     return Blob::copy(encoded.data(), encoded.size());
 }
 
-Blob encodeMM6OutdoorChangedState(const OutdoorLocation &location) {
+enum class OutdoorActorAndSpriteRecords { Live, AsLoaded };
+
+static Blob encodeOutdoorLiveState(const OutdoorLocation &location, OutdoorActorAndSpriteRecords records) {
+    const bool withActorsAndSprites = records == OutdoorActorAndSpriteRecords::Live;
     if (pOutdoor != &location || location.mm6DeltaBytes.empty() ||
         location.ddm.respawnCount < 0 || location.ddm.lastRespawnDay < 0)
         throw std::runtime_error("MM6 outdoor runtime lacks bounded delta state");
     MM6OutdoorDeltaSnapshot current = decodeMM6OutdoorDelta(
         Blob::copy(location.mm6DeltaBytes.data(), location.mm6DeltaBytes.size()));
-    if (pActors.size() != current.actors.size() || pSpriteObjects.size() != current.spriteObjects.size() ||
+    if ((withActorsAndSprites && (pActors.size() != current.actors.size() || pSpriteObjects.size() != current.spriteObjects.size())) ||
         vChests.size() != current.chests.size())
         throw std::runtime_error("MM6 outdoor runtime record count changed; save encoding is not established");
     current.respawnCount = location.ddm.respawnCount;
     current.lastRespawnDay = location.ddm.lastRespawnDay;
     current.fullyRevealedCells = location.uFullyRevealedCellOnMap;
     current.partiallyRevealedCells = location.uPartiallyRevealedCellOnMap;
-    for (size_t i = 0; i < current.actors.size(); ++i) {
+    for (size_t i = 0; withActorsAndSprites && i < current.actors.size(); ++i) {
         Actor_MM7 live{};
         snapshot(pActors[i], &live);
         current.actors[i].attributes = live.attributes;
@@ -287,7 +290,7 @@ Blob encodeMM6OutdoorChangedState(const OutdoorLocation &location) {
         copyBytes(&current.actors[i], &live, 134, 48);
         copyBytes(&current.actors[i], &live, 184, 28);
     }
-    for (size_t i = 0; i < current.spriteObjects.size(); ++i) {
+    for (size_t i = 0; withActorsAndSprites && i < current.spriteObjects.size(); ++i) {
         SpriteObject_MM7 live{};
         snapshot(pSpriteObjects[i], &live);
         copyBytes(&current.spriteObjects[i], &live, 0, 24);
@@ -304,4 +307,12 @@ Blob encodeMM6OutdoorChangedState(const OutdoorLocation &location) {
             std::memcpy(&current.chests[i].items[j], &live.items[j], 24);
     }
     return encodeMM6OutdoorRuntimeDelta(current);
+}
+
+Blob encodeMM6OutdoorChangedState(const OutdoorLocation &location) {
+    return encodeOutdoorLiveState(location, OutdoorActorAndSpriteRecords::Live);
+}
+
+Blob encodeMM6OutdoorParkedState(const OutdoorLocation &location) {
+    return encodeOutdoorLiveState(location, OutdoorActorAndSpriteRecords::AsLoaded);
 }

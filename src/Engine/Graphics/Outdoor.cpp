@@ -496,7 +496,8 @@ void OutdoorLocation::Load(std::string_view filename, int days_played, int respa
         bool respawnTimed = false;
         MM6OutdoorDeltaSnapshot delta;
         try {
-            Blob blob = decodeMM6ArchiveEntry(pMapDeltas.at(ddm_filename));
+            std::optional<Blob> parked = mm6::parkedMapDelta(ddm_filename);
+            Blob blob = parked ? std::move(*parked) : decodeMM6ArchiveEntry(pMapDeltas.at(ddm_filename));
             delta = decodeMM6OutdoorDelta(blob);
             respawnInitial = delta.lastRespawnDay == 0;
             if (engineFlags & ENGINE_LOADING_SAVEGAME)
@@ -565,6 +566,7 @@ void OutdoorLocation::Load(std::string_view filename, int days_played, int respa
         // 56-byte tail. Keep their exact decoded bytes for the later writer.
         mm6DeltaBytes = std::move(delta.wire.bytes);
         *outdoors_was_respawned = respawnInitial || respawnTimed;
+        mm6::restoreParkedMap(ddm_filename, *outdoors_was_respawned);
     } else {
         bool respawnInitial = false; // Perform initial location respawn?
         bool respawnTimed = false; // Perform timed location respawn?

@@ -1547,8 +1547,10 @@ void Game::gameLoop() {
 
     bLoading = sCurrentMenuID == MENU_LoadingProcInMainMenu;
     SetCurrentMenuID(MENU_NONE);
-    if (engine->gameTitle() == GameTitle::MM6)
+    if (engine->gameTitle() == GameTitle::MM6) {
         mm6::disarmFirstMapManualSave(); // Only an admitted load re-arms manual saves for the new session.
+        mm6::forgetParkedMaps();
+    }
     if (bLoading) {
         uGameState = GAME_STATE_PLAYING;
         assert(!engine->_pendingLoadFileName.empty());

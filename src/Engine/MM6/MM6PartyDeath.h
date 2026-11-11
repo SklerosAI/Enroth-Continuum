@@ -18,4 +18,10 @@ namespace mm6 {
  */
 void applyPartyDeath(Party *party, const std::function<int(const Character &)> &maxHealth);
 
+/**
+ * MM6 counterpart of the game loop's `GAME_STATE_PARTY_DIED` handler. Plays the losing movie, applies
+ * `applyPartyDeath`, moves the party to New Sorpigal if it died elsewhere and resumes play.
+ */
+void respawnDeadParty();
+
 } // namespace mm6

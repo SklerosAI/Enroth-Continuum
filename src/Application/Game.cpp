@@ -52,6 +52,7 @@
 #include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/MM6/MM6MapTransition.h"
 #include "Engine/MM6/MM6NewGameSession.h"
+#include "Engine/MM6/MM6PartyDeath.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
@@ -1697,6 +1698,10 @@ void Game::gameLoop() {
             }
             if (uGameState != GAME_STATE_PARTY_DIED) {
                 engine->Draw();  // when could this occur - can it be dropped?
+                continue;
+            }
+            if (engine->gameTitle() == GameTitle::MM6) {
+                mm6::respawnDeadParty();
                 continue;
             }
             if (uGameState == GAME_STATE_PARTY_DIED) {

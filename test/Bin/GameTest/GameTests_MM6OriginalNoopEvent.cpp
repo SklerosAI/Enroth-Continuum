@@ -684,6 +684,21 @@ EvtProgram syntheticNpcDismissEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticProfessionDismissEvent() {
+    std::string bytes;
+    std::string profession;
+    profession.push_back(static_cast<char>(223)); // MM6 hired-profession variable.
+    appendU32(&profession, 63);
+    appendRecord(&bytes, 0, EVENT_Subtract, profession);
+
+    std::string continued;
+    continued.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&continued, 51);
+    appendRecord(&bytes, 1, EVENT_Set, continued);
+    appendRecord(&bytes, 2, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -1382,4 +1397,22 @@ GAME_TEST(MM6NpcDismissEvent, ClearsTheMM6NpcInPartyStateAndFallsThrough) {
     EXPECT_FALSE(pNPCStats->pNPCData[13].Hired());
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(49));
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(50));
+}
+
+GAME_TEST(MM6ProfessionDismissEvent, DismissesOnlyTheMatchingMM6Profession) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedNpcStats restoreNpcs;
+    ScopedParty restoreParty;
+    engine->_localEventMap = syntheticProfessionDismissEvent();
+    pNPCStats->pNPCData[13].profession = static_cast<NpcProfession>(63);
+    pNPCStats->pNPCData[13].flags |= NPC_HIRED;
+    pNPCStats->pNPCData[14].profession = static_cast<NpcProfession>(64);
+    pNPCStats->pNPCData[14].flags |= NPC_HIRED;
+    pParty->pCharacters[0]._characterEventBits.reset(51);
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_FALSE(pNPCStats->pNPCData[13].Hired());
+    EXPECT_TRUE(pNPCStats->pNPCData[14].Hired());
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(51));
 }

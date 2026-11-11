@@ -592,6 +592,20 @@ EvtProgram syntheticCanShowQuestBitTopicEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticCanShowMonthTopicEvent() {
+    std::string bytes;
+    std::string compare;
+    compare.push_back(static_cast<char>(226)); // MM6 month-of-year variable.
+    appendU32(&compare, 6);
+    compare.push_back(3);
+    appendRecord(&bytes, 0, EVENT_OnCanShowDialogItemCmp, compare);
+    appendRecord(&bytes, 1, EVENT_SetCanShowDialogItem, std::string(1, '\0'));
+    appendRecord(&bytes, 2, EVENT_EndCanShowDialogItem, std::string(1, '\0'));
+    appendRecord(&bytes, 3, EVENT_SetCanShowDialogItem, std::string(1, '\1'));
+    appendRecord(&bytes, 4, EVENT_EndCanShowDialogItem, std::string(1, '\0'));
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -1203,6 +1217,23 @@ GAME_TEST(MM6QuestBitTopicAdmission, UsesTheMM6QuestBitTopicBranch) {
     EXPECT_TRUE(accepted.canShowTopic());
 
     pParty->_questBits.reset(static_cast<QuestBit>(511));
+    EvtInterpreter refused;
+    refused.prepare(EvtContext(EVT_SOURCE_GLOBAL, 1));
+    EXPECT_FALSE(refused.canShowTopic());
+}
+
+GAME_TEST(MM6MonthTopicAdmission, UsesTheMM6MonthTopicBranch) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedGlobalEventMap restoreEvents;
+    ScopedParty restoreParty;
+    engine->_globalEventMap = syntheticCanShowMonthTopicEvent();
+
+    pParty->uCurrentMonth = 6;
+    EvtInterpreter accepted;
+    accepted.prepare(EvtContext(EVT_SOURCE_GLOBAL, 1));
+    EXPECT_TRUE(accepted.canShowTopic());
+
+    pParty->uCurrentMonth = 5;
     EvtInterpreter refused;
     refused.prepare(EvtContext(EVT_SOURCE_GLOBAL, 1));
     EXPECT_FALSE(refused.canShowTopic());

@@ -1,5 +1,6 @@
 #include <array>
 #include <cstdint>
+#include <deque>
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -13,6 +14,7 @@
 #include "Engine/Evt/EvtInterpreter.h"
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Evt/Processor.h"
+#include "Engine/Objects/Actor.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/mm7_data.h"
@@ -739,6 +741,16 @@ EvtProgram syntheticLongTimerTriggerEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticNpcSetItemEvent() {
+    std::string bytes;
+    std::string item;
+    appendU32(&item, 42);
+    appendU32(&item, 1);
+    item.push_back(1);
+    appendRecord(&bytes, 0, EVENT_NPCSetItem, item);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 EvtProgram syntheticForPartyMemberEvent() {
     std::string bytes;
     appendRecord(&bytes, 0, EVENT_ForPartyMember, std::string(1, static_cast<char>(CHOOSE_PARTY)));
@@ -763,6 +775,18 @@ struct ScopedGlobalEventMap {
 
     ~ScopedGlobalEventMap() {
         engine->_globalEventMap = std::move(events);
+    }
+};
+
+struct ScopedActors {
+    std::deque<Actor> actors;
+
+    ScopedActors() {
+        actors.swap(pActors);
+    }
+
+    ~ScopedActors() {
+        pActors.swap(actors);
     }
 };
 
@@ -1513,6 +1537,19 @@ GAME_TEST(MM6LongTimerTrigger, StopsDirectEventExecution) {
 
     runEvent(EvtContext(EVT_SOURCE_MAP, 1));
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(53));
+}
+
+GAME_TEST(MM6NpcSetItem, UpdatesOnlyTheMatchingParsedNpcActor) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedActors restoreActors;
+    engine->_localEventMap = syntheticNpcSetItemEvent();
+    pActors.emplace_back();
+    pActors[0].npcId = 42;
+    pActors[0].carriedItemId = ITEM_NULL;
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_EQ(pActors[0].carriedItemId, static_cast<ItemId>(1));
 }
 
 GAME_TEST(MM6ForPartyMember, TargetsEveryMM6PartyCharacter) {

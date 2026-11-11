@@ -620,6 +620,20 @@ EvtProgram syntheticCanShowAutonoteTopicEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticCanShowFlyingTopicEvent() {
+    std::string bytes;
+    std::string compare;
+    compare.push_back(static_cast<char>(222)); // MM6 flying-state variable.
+    appendU32(&compare, 0); // MM6 ignores the numeric operand for this gate.
+    compare.push_back(3);
+    appendRecord(&bytes, 0, EVENT_OnCanShowDialogItemCmp, compare);
+    appendRecord(&bytes, 1, EVENT_SetCanShowDialogItem, std::string(1, '\0'));
+    appendRecord(&bytes, 2, EVENT_EndCanShowDialogItem, std::string(1, '\0'));
+    appendRecord(&bytes, 3, EVENT_SetCanShowDialogItem, std::string(1, '\1'));
+    appendRecord(&bytes, 4, EVENT_EndCanShowDialogItem, std::string(1, '\0'));
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -1265,6 +1279,24 @@ GAME_TEST(MM6AutonoteTopicAdmission, UsesTheMM6AutonoteTopicBranch) {
     EXPECT_TRUE(accepted.canShowTopic());
 
     pParty->_autonoteBits.reset(128);
+    EvtInterpreter refused;
+    refused.prepare(EvtContext(EVT_SOURCE_GLOBAL, 1));
+    EXPECT_FALSE(refused.canShowTopic());
+}
+
+GAME_TEST(MM6FlyingTopicAdmission, RequiresBothMM6FlyingStateAndBuff) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedGlobalEventMap restoreEvents;
+    ScopedParty restoreParty;
+    engine->_globalEventMap = syntheticCanShowFlyingTopicEvent();
+    pParty->bFlying = true;
+    pParty->pPartyBuffs[PARTY_BUFF_FLY].Apply(pParty->GetPlayingTime() + Duration::fromDays(1), MASTERY_NOVICE, 1, 0, 0);
+
+    EvtInterpreter accepted;
+    accepted.prepare(EvtContext(EVT_SOURCE_GLOBAL, 1));
+    EXPECT_TRUE(accepted.canShowTopic());
+
+    pParty->bFlying = false;
     EvtInterpreter refused;
     refused.prepare(EvtContext(EVT_SOURCE_GLOBAL, 1));
     EXPECT_FALSE(refused.canShowTopic());

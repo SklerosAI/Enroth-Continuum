@@ -3069,3 +3069,14 @@ Chronological record of wiki activity.
 - On `master`: all twelve MM6 combat tests, the MM6 suite (96), the MM6 first-map gate with its MM7 controls, the MM7 in-process controls (107), the full headless MM7 suite (540/540) and `check_style`.
 - This is load-and-event coverage, not play. Live travel, monster missiles and spells, party death and a chained main-quest path remain for the MM6 working gate.
 
+## [2026-11-11] verify | MM6 monster combat and live travel integrated
+- by: T-Burton-ND via claude
+- Integrated on `master` through `2e079b015`, all from the original MM6 executable:
+  - monster missiles, monster spells and special attacks, with a combat sweep in which each monster kind attacks the party
+  - outdoor edge travel with the original's days, food and Weak rules, the neighbour taken from the map name
+  - dungeon doors both ways
+  - maps kept as the party left them for a return in the same session, restored in the original's load order
+  - item pickup from MM6 chests
+- Checks on `master`: combat sweep 0 of 26 main-quest maps throwing (24 before), event sweep 67 loaded and 66 finished with no crash, 17 MM6 combat tests, MM6 suite 100, MM6 first-map gate with the MM7 controls, unit tests 1,112, full headless MM7 540/540, `check_style` clean.
+- Open for the MM6 working gate: saving and loading on any map, MM6 party death (today it sends the party to MM7 maps), the chained main-quest path and the owner's visible sessions.
+

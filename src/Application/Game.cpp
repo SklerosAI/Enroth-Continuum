@@ -50,6 +50,7 @@
 #include "Engine/TurnEngine/TurnEngine.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
+#include "Engine/MM6/MM6NewGameSession.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
@@ -1580,6 +1581,8 @@ void Game::gameLoop() {
         }
         if (bLoading && engine->_mm6FirstMapLoadAttempt && !mm6::releaseV5FirstMapLoadAttempt())
             return;
+        if (!bLoading && engine->gameTitle() == GameTitle::MM6)
+            mm6::armNewGameSessionAtFirstMap();
         if (bLoading && engine->gameTitle() == GameTitle::MM6 &&
             mm6::testing::runArmedPostWorldAdmissionForTest(GameTitle::MM6) ==
                 mm6::testing::PostWorldAdmissionResult::AbortToMainMenu) {

@@ -59,6 +59,12 @@ NORMAL_SAVE_LOAD = [
     ("MM6V5NormalLoadMenuHeadless.DISABLED_LoadedSlotSavesAgainThroughSaveMenu",
      "ENROTH_MM6_V5_NORMAL_RESAVE_ENABLE", "strict-v5-normal-resave"),
 ]
+NEW_GAME = [
+    ("MM6NewGameHeadless.DISABLED_NewPartySavesFromSaveMenu",
+     "ENROTH_MM6_NEW_GAME_ENABLE", "strict-new-game-save"),
+    ("MM6NewGameHeadless.DISABLED_NewPartySlotLoadsAndSavesAgain",
+     "ENROTH_MM6_NEW_GAME_ENABLE", "strict-new-game-reload"),
+]
 MM7_CONTROLS = ["Prs.Pr2354", "Prs.Pr2956", "Issues.Issue840"]
 PASS_LINE = re.compile(r"\[\s*PASSED\s*\]\s+1 test\b")
 
@@ -70,7 +76,7 @@ def run_child(name, flag, value, profile, data, rules=None, timeout=None):
     timeout = max(timeout or 0, CHILD_TIMEOUT)
     env = os.environ.copy()
     for key in list(env):
-        if key.startswith("ENROTH_MM6_V") or key == "ENROTH_MM6_RESTART_PROFILE":
+        if key.startswith("ENROTH_MM6_V") or key in ("ENROTH_MM6_RESTART_PROFILE", "ENROTH_MM6_NEW_GAME_ENABLE"):
             del env[key]
     if rules:
         env["ENROTH_MM6_RESTART_PROFILE"] = str(profile)
@@ -115,6 +121,8 @@ def main():
             print("paperdoll:", name)
         for name, _, _ in NORMAL_SAVE_LOAD:
             print("normal save/load:", name)
+        for name, _, _ in NEW_GAME:
+            print("new game:", name)
         for name in MM7_CONTROLS:
             print("MM7 control:", name)
         return 0
@@ -204,11 +212,20 @@ def main():
             if not run_child(name, flag, value, profile,
                              paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
                 return 1
+    with tempfile.TemporaryDirectory(prefix="mm6-restart-new-game-") as fifth:
+        profile = Path(fifth)
+        os.chmod(profile, 0o700)
+        # A party made on the creation screen saves from the Save menu, then a fresh process loads, walks and saves
+        # again. No seed, v4 or v5 child runs first.
+        for name, flag, value in NEW_GAME:
+            if not run_child(name, flag, value, profile,
+                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+                return 1
     for name in MM7_CONTROLS:
         if not run_child(name, None, None, ROOT, paths["MM7_DATA_PATH"]):
             return 1
     print("PASS: seven-child MM6 chain, all full-retry fault children, the paperdoll child, normal Save/Load menus with a "
-          "production load and resave, and the MM7 controls")
+          "production load and resave, a production New Game saved, loaded and saved again, and the MM7 controls")
     return 0
 
 

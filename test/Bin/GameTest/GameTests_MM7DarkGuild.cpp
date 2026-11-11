@@ -11,13 +11,13 @@
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/MapEnums.h"
+#include "Engine/Objects/Chest.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/NPCTable.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/UIRest.h"
-
 #include "MM7CampaignChain.h"
 
 static std::vector<int> breedingZoneCompletionEvents() {
@@ -52,6 +52,50 @@ static std::vector<int> clankerDefenseEvents() {
             result.push_back(face.eventId);
     }
     return result;
+}
+
+static std::vector<int> chestEventsContaining(ItemId itemId) {
+    std::vector<int> result;
+    for (const BLVFace &face : pIndoor->faces) {
+        if (!face.Clickable() || !engine->_localEventMap.hasEvent(face.eventId))
+            continue;
+        for (const EvtInstruction &instruction : engine->_localEventMap.function(face.eventId)) {
+            if (instruction.opcode != EVENT_OpenChest || instruction.data.chest_id < 0 ||
+                instruction.data.chest_id >= vChests.size() || !vChests[instruction.data.chest_id].inventory.find(itemId))
+                continue;
+            if (std::ranges::find(result, face.eventId) == result.end())
+                result.push_back(face.eventId);
+        }
+    }
+    return result;
+}
+
+static void lootDarkGuildOutdoorChest(EngineController &game, int eventId, ItemId itemId) {
+    int chestId = -1;
+    for (const EvtInstruction &instruction : engine->_localEventMap.function(eventId)) {
+        if (instruction.opcode != EVENT_OpenChest || instruction.data.chest_id < 0 ||
+            instruction.data.chest_id >= vChests.size() || !vChests[instruction.data.chest_id].inventory.find(itemId))
+            continue;
+        chestId = instruction.data.chest_id;
+        break;
+    }
+    ASSERT_NE(chestId, -1);
+
+    // Drive the loaded map's actual chest through the production UI path. This avoids a renderer-dependent
+    // outdoor mouse ray while retaining the event-to-chest mapping and normal player transfer behavior.
+    for (int attempt = 0; attempt < 2 && current_screen_type != SCREEN_CHEST; attempt++) {
+        Chest::open(chestId, Pid());
+        game.tick();
+    }
+    ASSERT_EQ(current_screen_type, SCREEN_CHEST);
+    for (int i = 0; i < 40 && !pParty->hasItem(itemId) && pParty->pPickedItem.itemId == ITEM_NULL; i++) {
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick();
+    }
+    ASSERT_TRUE(pParty->hasItem(itemId));
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
 }
 
 static std::pair<Vec3f, int> approachDarkGuildFace(const BLVFace &face) {
@@ -348,6 +392,25 @@ GAME_TEST(MM7DarkGuild, MaximusRequiresAndAcceptsSoulJars) {
     EXPECT_EQ(activeTape, tape(false, true, false));
     EXPECT_EQ(finishedTape, tape(false, true));
     EXPECT_EQ(caseTape, tape(false, true, false));
+}
+
+GAME_TEST(MM7DarkGuild, ThunderfistChestProvidesDarkSoulJars) {
+    // The Dark task's case is physically sourced from Thunderfist Mountain, not Castle Gloaming. Discover the live
+    // chest from its loaded event and contents, then take the item through the normal chest UI rather than injecting
+    // it into inventory.
+    auto caseTape = tapes.hasItem(ITEM_QUEST_CASE_OF_SOUL_JARS);
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+    pParty->_questBits.set(QBIT_DARK_PATH);
+    pParty->_questBits.set(QBIT_SOUL_JARS_DARK_ACTIVE);
+    test.startTaping();
+
+    game.teleportTo(MAP_THUNDERFIST_MOUNTAIN, Vec3f(), 0);
+    const std::vector<int> events = chestEventsContaining(ITEM_QUEST_CASE_OF_SOUL_JARS);
+    ASSERT_EQ(events.size(), 1u);
+    lootDarkGuildOutdoorChest(game, events.front(), ITEM_QUEST_CASE_OF_SOUL_JARS);
+
+    EXPECT_EQ(caseTape, tape(false, true));
 }
 
 GAME_TEST(MM7DarkGuild, ClankerDefensesAreDisabledByMapEvent) {

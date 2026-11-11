@@ -17,6 +17,7 @@
 #include "Engine/mm7_data.h"
 
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/UIStatusBar.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -106,6 +107,14 @@ EvtProgram syntheticSpeakNpcEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticStatusTextEvent(int stringId) {
+    std::string bytes;
+    std::string text;
+    appendU32(&text, stringId);
+    appendRecord(&bytes, 0, EVENT_StatusText, text);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -119,6 +128,14 @@ struct ScopedDeferredNpcDialogue {
 
     ~ScopedDeferredNpcDialogue() {
         bDialogueUI_InitializeActor_NPC_ID = npcId;
+    }
+};
+
+struct ScopedLevelStrings {
+    std::vector<std::string> strings = std::move(engine->_levelStrings);
+
+    ~ScopedLevelStrings() {
+        engine->_levelStrings = std::move(strings);
     }
 };
 
@@ -257,4 +274,26 @@ GAME_TEST(MM6SpeakNpc, DefersDialogueDuringMapLoad) {
     interpreter.prepare(EvtContext(EVT_SOURCE_MAP, 1, Pid(), /* duringMapLoad = */ true));
     EXPECT_EQ(interpreter.execute(0), EVT_TRANSITION_NONE);
     EXPECT_EQ(bDialogueUI_InitializeActor_NPC_ID, 42);
+}
+
+GAME_TEST(MM6StatusText, UsesMapStringAndBoundsChecksItsId) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_NE(engine->_statusBar, nullptr);
+    ScopedLocalEventMap restoreEvents;
+    ScopedLevelStrings restoreStrings;
+    engine->_levelStrings = {"Synthetic MM6 status text"};
+    engine->_statusBar->clearAll();
+
+    EvtInterpreter interpreter;
+    engine->_localEventMap = syntheticStatusTextEvent(0);
+    interpreter.prepare(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_EQ(interpreter.execute(0), EVT_TRANSITION_NONE);
+    EXPECT_EQ(engine->_statusBar->get(), "Synthetic MM6 status text");
+
+    engine->_statusBar->clearAll();
+    engine->_localEventMap = syntheticStatusTextEvent(1);
+    interpreter.prepare(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_EQ(interpreter.execute(0), EVT_TRANSITION_NONE);
+    EXPECT_TRUE(engine->_statusBar->get().empty());
+    engine->_statusBar->clearAll();
 }

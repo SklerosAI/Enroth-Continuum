@@ -474,6 +474,21 @@ EvtProgram syntheticAutonoteClearEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticHeldItemSubtractEvent() {
+    std::string bytes;
+    std::string item;
+    item.push_back(static_cast<char>(VAR_PlayerItemInHands));
+    appendU32(&item, 580);
+    appendRecord(&bytes, 0, EVENT_Subtract, item);
+
+    std::string continued;
+    continued.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&continued, 42);
+    appendRecord(&bytes, 1, EVENT_Set, continued);
+    appendRecord(&bytes, 2, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -963,4 +978,25 @@ GAME_TEST(MM6AutonoteClear, ClearsTheMM6AutonoteAndFallsThrough) {
     EXPECT_FALSE(pParty->_autonoteBits.test(128));
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(40));
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(41));
+}
+
+GAME_TEST(MM6HeldItemSubtract, ConsumesOnlyTheMatchingMM6HeldItem) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedParty restoreParty;
+    engine->_localEventMap = syntheticHeldItemSubtractEvent();
+    for (Character &character : pParty->pCharacters)
+        character.inventory.clear();
+    pParty->pCharacters[0]._characterEventBits.reset(42);
+
+    pParty->pPickedItem.itemId = static_cast<ItemId>(580);
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(42));
+
+    pParty->pPickedItem.itemId = static_cast<ItemId>(579);
+    pParty->pCharacters[0]._characterEventBits.reset(42);
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_EQ(pParty->pPickedItem.itemId, static_cast<ItemId>(579));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(42));
 }

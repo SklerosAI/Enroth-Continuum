@@ -3267,3 +3267,8 @@ Chronological record of wiki activity.
 - Extended the Darron contract to `MM7SideQuests.DarronsDeckIsPhysicallyAcquiredAndReturned`. After the real acquisition, it returns through Darron's visible Harmondale dialogue.
 - The return clears the active state, retains the deck, and grants 750 gold plus 2,000 XP to each character. It passed three consecutive headless runs.
 
+## [2026-11-11] verify | MM7 Season's Stole acquisition
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7SideQuests.SeasonsStoleIsAcquiredFromHallOfThePitChest`. With the real quest bit active, it identifies the loaded Hall of the Pit chest containing the Stole and takes it through the ordinary chest UI.
+- The Gary Zimm return and its reward remain a separate uncovered contract.
+

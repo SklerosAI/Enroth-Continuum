@@ -65,6 +65,12 @@ NEW_GAME = [
     ("MM6NewGameHeadless.DISABLED_NewPartySlotLoadsAndSavesAgain",
      "ENROTH_MM6_NEW_GAME_ENABLE", "strict-new-game-reload"),
 ]
+SAVE_ANYWHERE = [
+    ("MM6SaveAnywhereHeadless.DISABLED_DungeonSaveAfterTravel",
+     "ENROTH_MM6_SAVE_ANYWHERE_ENABLE", "strict-save-anywhere-write"),
+    ("MM6SaveAnywhereHeadless.DISABLED_DungeonSlotLoadsWithItsOutdoorMaps",
+     "ENROTH_MM6_SAVE_ANYWHERE_ENABLE", "strict-save-anywhere-reload"),
+]
 MM7_CONTROLS = ["Prs.Pr2354", "Prs.Pr2956", "Issues.Issue840"]
 PASS_LINE = re.compile(r"\[\s*PASSED\s*\]\s+1 test\b")
 
@@ -76,7 +82,8 @@ def run_child(name, flag, value, profile, data, rules=None, timeout=None):
     timeout = max(timeout or 0, CHILD_TIMEOUT)
     env = os.environ.copy()
     for key in list(env):
-        if key.startswith("ENROTH_MM6_V") or key in ("ENROTH_MM6_RESTART_PROFILE", "ENROTH_MM6_NEW_GAME_ENABLE"):
+        if key.startswith("ENROTH_MM6_V") or key in ("ENROTH_MM6_RESTART_PROFILE", "ENROTH_MM6_NEW_GAME_ENABLE",
+                                                     "ENROTH_MM6_SAVE_ANYWHERE_ENABLE"):
             del env[key]
     if rules:
         env["ENROTH_MM6_RESTART_PROFILE"] = str(profile)
@@ -123,6 +130,8 @@ def main():
             print("normal save/load:", name)
         for name, _, _ in NEW_GAME:
             print("new game:", name)
+        for name, _, _ in SAVE_ANYWHERE:
+            print("save anywhere:", name)
         for name in MM7_CONTROLS:
             print("MM7 control:", name)
         return 0
@@ -221,11 +230,21 @@ def main():
             if not run_child(name, flag, value, profile,
                              paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
                 return 1
+    with tempfile.TemporaryDirectory(prefix="mm6-restart-save-anywhere-") as sixth:
+        profile = Path(sixth)
+        os.chmod(profile, 0o700)
+        # A new party saves on the first map, travels to a neighbouring map and into a dungeon and saves there over the
+        # first save. A fresh process loads the dungeon save, walks back out over both outdoor maps and saves again.
+        for name, flag, value in SAVE_ANYWHERE:
+            if not run_child(name, flag, value, profile,
+                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+                return 1
     for name in MM7_CONTROLS:
         if not run_child(name, None, None, ROOT, paths["MM7_DATA_PATH"]):
             return 1
     print("PASS: seven-child MM6 chain, all full-retry fault children, the paperdoll child, normal Save/Load menus with a "
-          "production load and resave, a production New Game saved, loaded and saved again, and the MM7 controls")
+          "production load and resave, a production New Game saved, loaded and saved again, a dungeon save after travel "
+          "loaded with its outdoor maps and saved again, and the MM7 controls")
     return 0
 
 

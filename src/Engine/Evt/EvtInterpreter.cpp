@@ -712,6 +712,12 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                                              ir.data.variable_descr.value);
                 break;
             }
+            // Wine Cellar event 501 writes the quest's vampire flag unconditionally. The map-leave actor check
+            // below is the genuine completion predicate, so retain the exit but do not turn it into a free kill.
+            if (engine->_indoor->filename == "d16.blv" && _context.eventId == 501 &&
+                ir.data.variable_descr.type == VAR_QBits_QuestsDone &&
+                ir.data.variable_descr.value == std::to_underlying(QBIT_WINE_CELLAR_VAMPIRE_KILLED))
+                break;
             if (!validateVariableValue(ir))
                 break;
             for (Character &character : iterateCharacters(_who, ir.data.variable_descr.type, grng))
@@ -991,11 +997,19 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             pNPCStats->pNPCData[ir.data.npc_descr.npc_id].flags &= ~NPC_GREETED_SECOND;
             pNPCStats->pNPCData[ir.data.npc_descr.npc_id].greetingIndex = ir.data.npc_descr.greeting;
             break;
-        case EVENT_IsActorKilled:
-            if (Actor::isActorKilled(ir.data.actor_descr.policy, ir.data.actor_descr.param, ir.data.actor_descr.num)) {
+        case EVENT_IsActorKilled: {
+            bool actorKilled = Actor::isActorKilled(ir.data.actor_descr.policy, ir.data.actor_descr.param, ir.data.actor_descr.num);
+            // The Wine Cellar's map-leave script asks whether actor zero is dead. Its map data starts the Elder
+            // Vampire disabled; that is a spawn state, not the required quest kill.
+            if (engine->_indoor->filename == "d16.blv" && _context.eventId == 2 &&
+                ir.data.actor_descr.policy == KILL_CHECK_ACTORID && ir.data.actor_descr.param == 0 &&
+                pActors[0].aiState == Disabled)
+                actorKilled = false;
+            if (actorKilled) {
                 return {EVT_FLOW_JUMP, ir.target_step};
             }
             break;
+        }
         case EVENT_OnMapLeave:
             // Trigger, must be skipped but can be encountered in vanilla
             return {EVT_FLOW_STOP};

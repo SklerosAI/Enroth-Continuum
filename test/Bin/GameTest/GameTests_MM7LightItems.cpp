@@ -300,8 +300,9 @@ GAME_TEST(MM7LightItems, SoulJarsFromGloamingChest) {
     test.stopTaping();
 }
 
-GAME_TEST(MM7LightItems, WineCellarVampireQuest) {
-    // The Light advisor closes the Wine Cellar quest after the party walks out of the cellar through its exit.
+GAME_TEST(MM7LightItems, WineCellarExitDoesNotReplaceVampireKill) {
+    // Leaving the cellar does not count as defeating the Elder Vampire, including when the map's initial actor is
+    // disabled. The adviser must keep the quest active until the genuine map-leave kill predicate is satisfied.
     game.startNewGame();
     joinLightGuild();
     toughenParty();
@@ -341,10 +342,11 @@ GAME_TEST(MM7LightItems, WineCellarVampireQuest) {
     ASSERT_FALSE(::testing::Test::HasFatalFailure());
     game.pressGuiButton("HouseNpcDialogue_Option0");
     game.tick();
-    EXPECT_TRUE(pParty->_questBits[QBIT_WINE_CELLAR_FINISHED]);
-    EXPECT_EQ(activeTape, tape(false, true, false));
-    EXPECT_EQ(finishedTape, tape(false, true));
-    EXPECT_EQ(killedTape, tape(false, true));
+    EXPECT_FALSE(pParty->_questBits[QBIT_WINE_CELLAR_FINISHED]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_WINE_CELLAR_ACTIVE]);
+    EXPECT_EQ(activeTape, tape(false, true));
+    EXPECT_EQ(finishedTape, tape(false));
+    EXPECT_EQ(killedTape, tape(false));
     EXPECT_EQ(vampireTape, tape(std::optional<AIState>(), std::optional(Disabled), std::optional<AIState>()));
     EXPECT_EQ(mapTape, tape(MAP_EMERALD_ISLAND, MAP_CELESTE, MAP_WINE_CELLAR, MAP_TATALIA, MAP_CELESTE));
     test.stopTaping();

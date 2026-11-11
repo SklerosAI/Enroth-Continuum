@@ -525,7 +525,7 @@ GAME_TEST(MM6V6IndoorStage, DISABLED_PrivateSourceAndPreEventOwnersStageDetached
                     Blob::view(activeDelta.data(), activeDelta.size()), parsedBase);
                 for (std::size_t slot = 0; slot < nativeAtEntry.actors.size(); ++slot) {
                     const auto &nativeActor = nativeAtEntry.actors[slot];
-                    if (!mm6::clearNoneligibleSignedActorNpc(
+                    if (!mm6::clearsNativeActorNpc(
                             static_cast<MonsterId>(nativeActor.monsterInfo.id),
                             nativeActor.npcId))
                         continue;

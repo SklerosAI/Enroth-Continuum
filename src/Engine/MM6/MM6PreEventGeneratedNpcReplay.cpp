@@ -3,9 +3,8 @@
 #include <deque>
 #include <stdexcept>
 
-#include "Engine/Objects/MonsterEnumFunctions.h"
-
 #include "MM6GameplayRngSaveFields.h"
+#include "MM6NativeActorNpcPolicy.h"
 
 namespace mm6 {
 
@@ -34,18 +33,9 @@ PreEventGeneratedNpcReplay stagePreEventGeneratedNpcReplay(
             monster > MONSTER_LAST)
             throw std::runtime_error("MM6 pre-event actor identity is invalid");
 
-        // Native signed markers precede the map-load NPC policy; they do not
-        // consume the current GNPC row namespace.
-        const bool skipped = monsterTierForMonsterId(monster) == MONSTER_TIER_A ||
-            (actor.npcId != 0 && actor.npcId < 5000);
-        if (skipped) {
+        if (!getsStreetNpc(monster, actor.npcId)) {
             if (actor.npcId >= 5000)
-                throw std::runtime_error("MM6 pre-event skipped actor has generated link");
-            continue;
-        }
-        if (!isPeasant(monster)) {
-            if (actor.npcId >= 5000)
-                throw std::runtime_error("MM6 pre-event non-peasant has generated link");
+                throw std::runtime_error("MM6 pre-event ineligible actor has generated link");
             continue;
         }
 
@@ -53,7 +43,7 @@ PreEventGeneratedNpcReplay stagePreEventGeneratedNpcReplay(
             throw std::runtime_error("MM6 pre-event generated actor lacks saved row");
         const GeneratedNpcRow &row = savedGenerated.rows[expectedRow];
         if (row.actorSlot != slot || row.monster != monster ||
-            (actor.npcId != 0 && actor.npcId != 5000 + expectedRow))
+            (actor.npcId >= 5000 && actor.npcId != 5000 + expectedRow))
             throw std::runtime_error("MM6 pre-event generated actor anchor differs");
         ++expectedRow;
     }

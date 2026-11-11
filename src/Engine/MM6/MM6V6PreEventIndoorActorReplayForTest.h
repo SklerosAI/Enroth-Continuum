@@ -125,14 +125,14 @@ inline bool runArmedV6PreEventIndoorActorReplayForTest(
     static_assert(std::is_nothrow_swappable_v<std::array<NPCData, 100>>);
     if (scope->_publishGenerated) {
         // IART holds the post-map value, while GNPC's pre-event row plan must
-        // see the original signed source marker. Rebuild that join in a
-        // detached copy; the published actor remains cleared.
+        // see the original source marker. Rebuild that join in a
+        // detached copy. The published actor remains cleared.
         std::deque<Actor> nativeJoin = desired;
         constexpr std::size_t nativeWidth = 548;
         for (std::size_t slot = 0; slot < scope->_source.count; ++slot) {
             const auto native = projectMM6ActorRecord(
                 std::span(scope->_source.records).subspan(slot * nativeWidth, nativeWidth));
-            if (clearNoneligibleSignedActorNpc(
+            if (clearsNativeActorNpc(
                     static_cast<MonsterId>(native.monsterInfo.id), native.npcId) &&
                 desired[slot].npcId == 0)
                 nativeJoin[slot].npcId = native.npcId;
@@ -175,7 +175,7 @@ inline std::vector<std::size_t> nativeClearedIndoorActorSlotsForTest(GameTitle t
     for (std::size_t slot = 0; slot < scope->_source.count; ++slot) {
         const auto native = projectMM6ActorRecord(
             std::span(scope->_source.records).subspan(slot * nativeWidth, nativeWidth));
-        if (clearNoneligibleSignedActorNpc(
+        if (clearsNativeActorNpc(
                 static_cast<MonsterId>(native.monsterInfo.id), native.npcId)) {
             if (scope->_fields.actors[slot].npcId != 0)
                 throw std::runtime_error("MM6 IART retained a native-cleared NPC marker");

@@ -95,3 +95,27 @@ UNIT_TEST(MM6PostRebuildPidSlots, OutdoorRejectsSpriteReplacementAndCountChange)
     EXPECT_THROW(mm6::requirePostRebuildPidSlotAgreement(
         plan, "test.odm", actors, sprites, GameTitle::MM6), std::exception);
 }
+
+UNIT_TEST(MM6PostRebuildPidSlots, ActorLinksFollowTheMapLoadStreetNpcPolicy) {
+    // A saved map link matches the rebuilt actor as it is, or as the map load leaves it: replaced with a street NPC row
+    // for a street peasant, cleared for any other monster.
+    for (int monster : {123, 7}) {
+        auto plan = indoorPlan();
+        plan.savedDelta.actors[0].monsterInfo.id = plan.activeSidecar.actors[0].monsterInfo.id = monster;
+        plan.savedDelta.actors[0].npcId = plan.activeSidecar.actors[0].npcId = 1;
+        auto actors = rebuiltActors();
+        actors[0].monsterInfo.id = static_cast<MonsterId>(monster);
+        const auto sprites = rebuiltSprites();
+        const bool street = monster == 123;
+        for (int link : {1, 0, 5000, 2}) {
+            actors[0].npcId = link;
+            const bool expected = link == 1 || (street ? link == 5000 : link == 0);
+            if (expected) {
+                EXPECT_NO_THROW(mm6::requirePostRebuildPidSlotAgreement(plan, "test.blv", actors, sprites, GameTitle::MM6)) << monster << ' ' << link;
+            } else {
+                EXPECT_THROW(mm6::requirePostRebuildPidSlotAgreement(plan, "test.blv", actors, sprites, GameTitle::MM6), std::exception)
+                    << monster << ' ' << link;
+            }
+        }
+    }
+}

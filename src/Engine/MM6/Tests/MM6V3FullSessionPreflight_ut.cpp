@@ -175,9 +175,11 @@ UNIT_TEST(MM6V3FullSessionPreflight, RefusesMissingPreEventAndCursorOwners) {
     EXPECT_THROW((void) stage(fields, npcs, *items.table), std::exception);
 
     fields = exampleFields();
-    fields.raw.maps.deltas[52].bytes = outdoorDelta(true, MONSTER_PEASANT_DWARF_FEMALE_A_B);
+    constexpr MonsterId streetPeasant = static_cast<MonsterId>(122);
+    fields.raw.maps.deltas[52].bytes = outdoorDelta(true, streetPeasant);
     fields.raw.chest.rawActiveDelta = fields.raw.maps.deltas[52].bytes;
-    const std::array<Actor, 1> actors{actor(MONSTER_PEASANT_DWARF_FEMALE_A_B)};
+    std::array<Actor, 1> actors{actor(streetPeasant)};
+    actors[0].npcId = 5000; // A street NPC link that the empty GNPC section has no row for.
     fields.activeActorPayload = mm6::encodeActiveActorSection(actors, GameTitle::MM6);
     EXPECT_THROW((void) stage(fields, npcs, *items.table), std::exception);
 }

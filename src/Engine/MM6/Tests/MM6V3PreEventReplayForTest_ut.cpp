@@ -13,7 +13,7 @@
 
 namespace {
 
-constexpr MonsterId PEASANT = MONSTER_PEASANT_DWARF_FEMALE_A_B;
+constexpr MonsterId PEASANT = static_cast<MonsterId>(122); // An MM6 street peasant.
 
 Actor actor(int slot, int npcId) {
     Actor result(slot);

@@ -1177,18 +1177,23 @@ void Engine::_461103_load_level_sub() {
             std::vector<std::size_t>{};
         mm6::requirePostMapGeneratedNpcLinks(
             restoredActors, *pNPCStats, gameTitle(), clearedNativeSlots);
-    } else {
-        if (gameTitle() == GameTitle::MM6)
-            mm6::requirePreMapGeneratedNpcCapacity(pActors, *pNPCStats, gameTitle());
+    } else if (gameTitle() == GameTitle::MM6) {
+        mm6::requirePreMapGeneratedNpcCapacity(pActors, *pNPCStats, gameTitle());
         pNPCStats->uNewlNPCBufPos = 0;
-
         for (Actor &actor : pActors) {
-            if (gameTitle() == GameTitle::MM6 &&
-                mm6::clearNoneligibleSignedActorNpc(
-                    actor.monsterInfo.id, actor.npcId)) {
+            if (!mm6::getsStreetNpc(actor.monsterInfo.id, actor.npcId)) {
                 actor.npcId = 0;
                 continue;
             }
+            pNPCStats->InitializeAdditionalNPCs(&pNPCStats->pAdditionalNPC[pNPCStats->uNewlNPCBufPos],
+                                                actor.monsterInfo.id, HOUSE_INVALID, engine->_currentLoadedMapId);
+            actor.npcId = pNPCStats->uNewlNPCBufPos + 5000;
+            pNPCStats->uNewlNPCBufPos++;
+        }
+    } else {
+        pNPCStats->uNewlNPCBufPos = 0;
+
+        for (Actor &actor : pActors) {
             MonsterTier tier = monsterTierForMonsterId(actor.monsterInfo.id);
             if (tier == MONSTER_TIER_A)
                 continue; // Weakest peasants are just peasants.

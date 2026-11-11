@@ -27,18 +27,14 @@ void requireSourceShape(std::string_view mapName,
 
 void requireOccupiedNativeSlot(const Actor &runtime, const Actor_MM7 &native,
                                std::size_t slot) {
-    // The map loader assigns generated peasant links after restoring the
-    // native actor records. The v6 GNPC join validates each such link and its
-    // row; IACR still anchors the native identity that preceded generation.
-    const bool generatedFromNative = native.npcId == 0 &&
-        runtime.npcId >= 5000 && runtime.npcId < 5100 &&
-        isPeasant(runtime.monsterInfo.id) &&
-        monsterTierForMonsterId(runtime.monsterInfo.id) != MONSTER_TIER_A;
-    const bool clearedSignedNative = runtime.npcId == 0 &&
-        clearNoneligibleSignedActorNpc(
-            static_cast<MonsterId>(native.monsterInfo.id), native.npcId);
+    // The map loader assigns street NPC links after restoring the native actor records. The v6 GNPC join validates
+    // each such link and its row, IACR still anchors the native identity that preceded generation.
+    const MonsterId nativeMonster = static_cast<MonsterId>(native.monsterInfo.id);
+    const bool generatedFromNative = getsStreetNpc(nativeMonster, native.npcId) &&
+        runtime.npcId >= 5000 && runtime.npcId < 5100;
+    const bool clearedNative = runtime.npcId == 0 && clearsNativeActorNpc(nativeMonster, native.npcId);
     if (runtime.id != slot ||
-        (runtime.npcId != native.npcId && !generatedFromNative && !clearedSignedNative) ||
+        (runtime.npcId != native.npcId && !generatedFromNative && !clearedNative) ||
         std::to_underlying(runtime.monsterId) != native.monsterId ||
         std::to_underlying(runtime.monsterInfo.id) != native.monsterInfo.id ||
         runtime.initialPosition != native.initialPosition.toFloat())

@@ -20,12 +20,7 @@ size_t requirePreMapGeneratedNpcCapacity(const std::deque<Actor> &actors,
         const MonsterId monster = actor.monsterInfo.id;
         if (monster < MONSTER_FIRST || monster > MONSTER_LAST)
             throw std::runtime_error("MM6 generated NPC preflight has invalid monster");
-        if (actor.npcId != 0 && nativeStreetNpcEligible(monster))
-            throw std::runtime_error("MM6 native StreetNPC generation is not mapped");
-        if (monsterTierForMonsterId(monster) == MONSTER_TIER_A ||
-            (actor.npcId && actor.npcId < 5000))
-            continue;
-        if (isPeasant(monster) && ++needed > npcs.pAdditionalNPC.size())
+        if (getsStreetNpc(monster, actor.npcId) && ++needed > npcs.pAdditionalNPC.size())
             throw std::runtime_error("MM6 generated NPC pool would overflow");
     }
     return needed;
@@ -51,8 +46,6 @@ size_t requirePostMapGeneratedNpcLinks(std::span<const Actor> actors,
         if (actor.id != index || monster < MONSTER_FIRST || monster > MONSTER_LAST)
             throw std::runtime_error("MM6 post-map actor identity is invalid");
 
-        // Native signed markers must have been cleared or resolved by the
-        // MM6 map-load policy before this post-map owner check.
         if (actor.npcId < 0)
             throw std::runtime_error("MM6 post-map actor retained a native NPC marker");
         if (cleared < clearedNativeSlots.size() && clearedNativeSlots[cleared] == index) {
@@ -61,19 +54,13 @@ size_t requirePostMapGeneratedNpcLinks(std::span<const Actor> actors,
             ++cleared;
             continue;
         }
-        // These cases do not consume a generated row.
-        if (monsterTierForMonsterId(monster) == MONSTER_TIER_A ||
-            (actor.npcId != 0 && actor.npcId < 5000)) {
-            if (actor.npcId >= 5000)
-                throw std::runtime_error("MM6 weak actor has a generated NPC link");
-            continue;
-        }
-
-        if (!isPeasant(monster)) {
+        if (!nativeStreetNpcEligible(monster)) {
             if (actor.npcId != 0)
-                throw std::runtime_error("MM6 non-peasant retained a generated NPC link");
+                throw std::runtime_error("MM6 ineligible actor retained an NPC link");
             continue;
         }
+        if (actor.npcId == 0)
+            continue;
 
         if (generated >= npcs.pAdditionalNPC.size() ||
             actor.npcId != 5000 + generated)

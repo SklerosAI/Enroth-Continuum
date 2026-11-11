@@ -3,8 +3,18 @@
 #include <stdexcept>
 #include <utility>
 
+#include "MM6NativeActorNpcPolicy.h"
+
 namespace mm6 {
 namespace {
+
+bool sameNpcAnchor(int savedNpcId, MonsterId monster, int rebuiltNpcId) {
+    if (savedNpcId == rebuiltNpcId)
+        return true;
+    if (getsStreetNpc(monster, savedNpcId))
+        return rebuiltNpcId >= 5000; // The map load replaced the link with a street NPC row.
+    return rebuiltNpcId == 0 && clearsNativeActorNpc(monster, savedNpcId);
+}
 
 bool sameActorAnchor(const Actor_MM7 &left, const Actor_MM7 &right) {
     return left.npcId == right.npcId && left.monsterId == right.monsterId &&
@@ -13,7 +23,7 @@ bool sameActorAnchor(const Actor_MM7 &left, const Actor_MM7 &right) {
 }
 
 bool sameActorAnchor(const Actor_MM7 &saved, const Actor &rebuilt, size_t index) {
-    return rebuilt.id == index && saved.npcId == rebuilt.npcId &&
+    return rebuilt.id == index && sameNpcAnchor(saved.npcId, rebuilt.monsterInfo.id, rebuilt.npcId) &&
            saved.monsterId == std::to_underlying(rebuilt.monsterId) &&
            saved.monsterInfo.id == std::to_underlying(rebuilt.monsterInfo.id) &&
            saved.initialPosition.toFloat() == rebuilt.initialPosition;

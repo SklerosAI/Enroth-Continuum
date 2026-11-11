@@ -12,6 +12,7 @@
 
 #include "Engine/Objects/MonsterEnumFunctions.h"
 
+#include "MM6NativeActorNpcPolicy.h"
 #include "MM6NpcSaveFields.h"
 
 namespace mm6 {
@@ -78,14 +79,13 @@ class Reader {
 
 void validateRow(const GeneratedNpcRow &row) {
     if (row.monster < MONSTER_FIRST || row.monster > MONSTER_LAST ||
-        monsterTierForMonsterId(row.monster) == MONSTER_TIER_A ||
-        !isPeasant(row.monster) || row.npc.name.empty() ||
+        !nativeStreetNpcEligible(row.monster) || row.npc.name.empty() ||
         row.npc.portraitId == 0 || !row.npc.canJoin ||
         row.npc.field_24 != 1 || row.npc.house != HOUSE_INVALID ||
         row.npc.sex != sexForMonsterType(monsterTypeForMonsterId(row.monster)) ||
         row.npc.profession < NPC_PROFESSION_FIRST ||
         row.npc.profession >= NPC_PROFESSION_MM6_LAST)
-        throw std::runtime_error("MM6 GNPC row is not a generated peasant");
+        throw std::runtime_error("MM6 GNPC row is not a street NPC");
     (void) encodeNpcRecord(row.npc);
 }
 
@@ -118,8 +118,8 @@ GeneratedNpcSaveFields captureGeneratedNpcFields(
         if (actor.id != slot)
             throw std::runtime_error("invalid MM6 generated NPC actor source");
         // Pre-map native markers are not generated rows. The original MM6
-        // map-load loop clears a signed marker on an ineligible actor;
-        // the native source remains anchored separately from this capsule.
+        // map-load loop clears the marker of an ineligible actor.
+        // The native source remains anchored separately from this capsule.
         if (actor.npcId < 5000)
             continue;
         if (slot > std::numeric_limits<std::uint16_t>::max() ||

@@ -28,6 +28,10 @@ void generatedRow(NPCStats *npcs, size_t index, MonsterId monster) {
     row.profession = NPC_PROFESSION_SMITH;
 }
 
+constexpr MonsterId streetPeasantA = static_cast<MonsterId>(121);
+constexpr MonsterId streetPeasantB = static_cast<MonsterId>(134);
+constexpr MonsterId mm7Peasant = static_cast<MonsterId>(137); // In MM6 this ID isn't a peasant, MM7's ID ranges say it is.
+
 GameplayRandomState rngState() {
     MersenneTwisterRandomEngine rng;
     rng.seed(37);
@@ -40,20 +44,18 @@ GameplayRandomState rngState() {
 } // namespace
 
 UNIT_TEST(MM6PreEventGeneratedNpcReplay, StagesExactEligibleAnchorsWithoutMutation) {
-    constexpr MonsterId peasantB = MONSTER_PEASANT_DWARF_FEMALE_A_B;
-    constexpr MonsterId peasantC = MONSTER_PEASANT_DWARF_FEMALE_A_C;
     auto savedNpcs = std::make_unique<NPCStats>();
-    generatedRow(savedNpcs.get(), 0, peasantB);
-    generatedRow(savedNpcs.get(), 1, peasantC);
+    generatedRow(savedNpcs.get(), 0, streetPeasantA);
+    generatedRow(savedNpcs.get(), 1, streetPeasantB);
     savedNpcs->uNewlNPCBufPos = 2;
     std::deque<Actor> finalActors{
-        actor(0, MONSTER_PEASANT_DWARF_FEMALE_A_A, 0),
-        actor(1, peasantB, 5000), actor(2, MONSTER_ANGEL_B, 0),
-        actor(3, peasantB, 12), actor(4, peasantC, 5001)};
+        actor(0, streetPeasantB, 0),
+        actor(1, streetPeasantA, 5000), actor(2, MONSTER_ANGEL_B, 0),
+        actor(3, mm7Peasant, 0), actor(4, streetPeasantB, 5001)};
     const auto saved = mm6::captureGeneratedNpcFields(
         finalActors, *savedNpcs, "oute3.odm", GameTitle::MM6);
-    finalActors[1].npcId = 0;
-    finalActors[4].npcId = 0;
+    finalActors[1].npcId = 1;
+    finalActors[4].npcId = -1;
     auto freshNpcs = std::make_unique<NPCStats>();
     const auto rng = rngState();
     const auto plan = mm6::stagePreEventGeneratedNpcReplay(
@@ -62,41 +64,40 @@ UNIT_TEST(MM6PreEventGeneratedNpcReplay, StagesExactEligibleAnchorsWithoutMutati
     EXPECT_EQ(plan.generatedCount, 2u);
     EXPECT_EQ(plan.generated.rows[0].npc.name, "Generated");
     EXPECT_EQ(plan.gameplayRng, rng);
-    EXPECT_EQ(finalActors[1].npcId, 0);
+    EXPECT_EQ(finalActors[1].npcId, 1);
     EXPECT_EQ(freshNpcs->uNewlNPCBufPos, 0);
 }
 
-UNIT_TEST(MM6PreEventGeneratedNpcReplay, KeepsSignedFixedActorOutsideGeneratedRows) {
-    constexpr MonsterId peasantB = MONSTER_PEASANT_DWARF_FEMALE_A_B;
+UNIT_TEST(MM6PreEventGeneratedNpcReplay, KeepsClearedActorOutsideGeneratedRows) {
     auto savedNpcs = std::make_unique<NPCStats>();
-    generatedRow(savedNpcs.get(), 0, peasantB);
+    generatedRow(savedNpcs.get(), 0, streetPeasantB);
     savedNpcs->uNewlNPCBufPos = 1;
-    std::deque<Actor> finalActors{actor(0, MONSTER_ANGEL_B, -1),
-                                  actor(1, peasantB, 5000)};
+    std::deque<Actor> finalActors{actor(0, mm7Peasant, 0),
+                                  actor(1, streetPeasantB, 5000)};
     const auto saved = mm6::captureGeneratedNpcFields(
         finalActors, *savedNpcs, "oute3.odm", GameTitle::MM6);
-    finalActors[1].npcId = 0;
+    finalActors[0].npcId = -1;
+    finalActors[1].npcId = 2;
     auto freshNpcs = std::make_unique<NPCStats>();
     const auto plan = mm6::stagePreEventGeneratedNpcReplay(
         saved, rngState(), finalActors, *freshNpcs, "oute3.odm",
         RANDOM_ENGINE_MERSENNE_TWISTER, GameTitle::MM6);
     EXPECT_EQ(plan.generatedCount, 1u);
     EXPECT_EQ(finalActors[0].npcId, -1);
-    EXPECT_EQ(finalActors[1].npcId, 0);
+    EXPECT_EQ(finalActors[1].npcId, 2);
 }
 
 UNIT_TEST(MM6PreEventGeneratedNpcReplay, RefusesRespawnAndWrongLoadContext) {
-    constexpr MonsterId peasantB = MONSTER_PEASANT_DWARF_FEMALE_A_B;
     auto savedNpcs = std::make_unique<NPCStats>();
-    generatedRow(savedNpcs.get(), 0, peasantB);
+    generatedRow(savedNpcs.get(), 0, streetPeasantB);
     savedNpcs->uNewlNPCBufPos = 1;
-    std::deque<Actor> actors{actor(0, peasantB, 5000)};
+    std::deque<Actor> actors{actor(0, streetPeasantB, 5000)};
     const auto saved = mm6::captureGeneratedNpcFields(
         actors, *savedNpcs, "oute3.odm", GameTitle::MM6);
-    actors[0].npcId = 0;
+    actors[0].npcId = 1;
     auto freshNpcs = std::make_unique<NPCStats>();
     const auto rng = rngState();
-    actors.push_back(actor(1, peasantB, 0));
+    actors.push_back(actor(1, streetPeasantB, 1));
     EXPECT_THROW((void) mm6::stagePreEventGeneratedNpcReplay(
         saved, rng, actors, *freshNpcs, "oute3.odm",
         RANDOM_ENGINE_MERSENNE_TWISTER, GameTitle::MM6), std::exception);
@@ -111,5 +112,5 @@ UNIT_TEST(MM6PreEventGeneratedNpcReplay, RefusesRespawnAndWrongLoadContext) {
     EXPECT_THROW((void) mm6::stagePreEventGeneratedNpcReplay(
         saved, rng, actors, *freshNpcs, "oute3.odm",
         RANDOM_ENGINE_MERSENNE_TWISTER, GameTitle::MM6), std::exception);
-    EXPECT_EQ(actors[0].npcId, 0);
+    EXPECT_EQ(actors[0].npcId, 1);
 }

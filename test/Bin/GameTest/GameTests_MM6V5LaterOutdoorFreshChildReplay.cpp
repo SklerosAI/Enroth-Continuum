@@ -27,6 +27,7 @@
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6GeneratedNpcSaveFields.h"
 #include "Engine/MM6/MM6LoadedMapSource.h"
+#include "Engine/MM6/MM6NativeActorNpcPolicy.h"
 #include "Engine/MM6/MM6NpcStaticBaseline.h"
 #include "Engine/MM6/MM6PersistentEventPublication.h"
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
@@ -561,8 +562,8 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
                             if (saved.npcId != sidecar.npcId)
                                 refuse("native versus sidecar NPC ID");
                             if (saved.npcId != live.npcId) {
-                                // MM6 map setup assigns a generated peasant a 5000+
-                                // NPC row after reading the DDM's zero NPC link.
+                                // MM6 map setup assigns a street peasant a 5000+
+                                // NPC row after reading the DDM's nonzero NPC link.
                                 // GNPC and exact ARTR above bind that row and the
                                 // final actor to this same ordered PID slot.
                                 const auto row = std::find_if(
@@ -570,7 +571,8 @@ void runV5LaterOutdoorFreshChildReplay(EngineController &game, LaterReplayMode m
                                     [slot](const mm6::GeneratedNpcRow &candidate) {
                                         return candidate.actorSlot == slot;
                                     });
-                                if (saved.npcId != 0 || row == expectedGenerated.rows.end() ||
+                                if (!mm6::getsStreetNpc(live.monsterInfo.id, saved.npcId) ||
+                                    row == expectedGenerated.rows.end() ||
                                     live.npcId != 5000 +
                                         std::distance(expectedGenerated.rows.begin(), row) ||
                                     row->monster != live.monsterInfo.id)

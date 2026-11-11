@@ -28,11 +28,11 @@ MISSING = re.compile(r"fail(ed)? to (load|open|find)|not found|missing|could not
 IGNORED_LOG = re.compile(r"configuration file|Face has invalid event ID", re.I)
 
 
-def run_game_test(data, rules, env_extra, log_path, timeout):
+def run_game_test(data, rules, env_extra, log_path, timeout, test=TEST):
     env = {key: value for key, value in os.environ.items() if not key.startswith("ENROTH_MM6_")}
     env.update(env_extra)
     command = [str(GAME_TEST), "--game", "mm6", "--headless", "--data-path", str(data), "--rules-path", str(rules),
-               "--test-path", "test/Data", "--gtest_also_run_disabled_tests", "--gtest_filter=" + TEST, "--gtest_brief=1"]
+               "--test-path", "test/Data", "--gtest_also_run_disabled_tests", "--gtest_filter=" + test, "--gtest_brief=1"]
     start = time.monotonic()
     with open(log_path, "w") as log:
         try:

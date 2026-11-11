@@ -1,10 +1,14 @@
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
+#include <deque>
 #include <fstream>
+#include <map>
 #include <memory>
+#include <numbers>
 #include <optional>
 #include <set>
 #include <stdexcept>
@@ -31,6 +35,7 @@
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/Decoration.h"
+#include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/MapTable.h"
@@ -471,4 +476,207 @@ GAME_TEST(MM6MapSweep, DISABLED_EnterTickAndFireEvents) {
     record.currentEvent = 0;
     record.phase = "done";
     writeSweepRecord(resultPath, record);
+}
+
+struct CombatSweepMonster {
+    int id = 0;
+    int count = 0;
+    int missile1 = 0;
+    int missile2 = 0;
+    int spell = 0;
+    int special = 0;
+    bool placed = false;
+    bool attacked = false;
+    int frames = 0;
+    int hpLost = 0;
+    std::set<int> projectiles;
+};
+
+struct CombatSweepRecord {
+    std::string map;
+    int mapId = 0;
+    std::string entrance;
+    std::string phase = "first-map";
+    std::string loadError;
+    std::vector<CombatSweepMonster> monsters;
+    int currentMonster = 0;
+    std::set<int> attackingMonsters;
+};
+
+static void writeCombatSweepRecord(const std::filesystem::path &path, const CombatSweepRecord &record) {
+    // Rewritten after every monster, so a process that dies mid-run leaves the monster it died on.
+    const auto number = [](int value) { return std::to_string(value); };
+    std::string json = "{\n";
+    json += fmt::format("  \"map\": {}, \"mapId\": {}, \"entrance\": {},\n", jsonString(record.map), record.mapId, jsonString(record.entrance));
+    json += fmt::format("  \"phase\": {}, \"loadError\": {}, \"currentMonster\": {}, \"attackingMonsters\": {},\n", jsonString(record.phase),
+                        jsonString(record.loadError), record.currentMonster, jsonArray(record.attackingMonsters, number));
+    json += fmt::format("  \"monsters\": {}\n", jsonArray(record.monsters, [&](const CombatSweepMonster &monster) {
+        return fmt::format("{{\"id\": {}, \"count\": {}, \"missile1\": {}, \"missile2\": {}, \"spell\": {}, \"special\": {}, \"placed\": {}, "
+                           "\"attacked\": {}, \"frames\": {}, \"hpLost\": {}, \"projectiles\": {}}}", monster.id, monster.count,
+                           monster.missile1, monster.missile2, monster.spell, monster.special, monster.placed, monster.attacked,
+                           monster.frames, monster.hpLost, jsonArray(monster.projectiles, number));
+    }));
+    json += "}\n";
+
+    const std::filesystem::path temporary = path.string() + ".tmp";
+    {
+        std::ofstream file(temporary, std::ios::binary | std::ios::trunc);
+        file << json;
+    }
+    std::filesystem::rename(temporary, path);
+}
+
+static std::optional<Vec3f> combatSweepPartySpot(const Actor &actor) {
+    // A spot 400 to 1200 units from the monster, on a floor near its height, that it can see.
+    const Vec3f eye = actor.pos + Vec3f(0, 0, actor.height * 0.75f);
+    for (float distance : {800.0f, 1200.0f, 400.0f}) {
+        for (int step = 0; step < 16; ++step) {
+            const float angle = step * std::numbers::pi_v<float> / 8;
+            Vec3f spot = actor.pos + Vec3f(std::cos(angle) * distance, std::sin(angle) * distance, 0);
+            if (uCurrentlyLoadedLevelType == LEVEL_INDOOR) {
+                const int sector = pIndoor->GetSector(spot + Vec3f(0, 0, 40));
+                if (!sector)
+                    continue;
+                const float floor = BLV_GetFloorLevel(spot + Vec3f(0, 0, 40), sector);
+                if (floor <= -29000 || std::abs(floor - actor.pos.z) > 300)
+                    continue;
+                spot.z = floor + 1;
+            } else {
+                bool onWater = false;
+                int face = 0;
+                const float floor = ODM_GetFloorLevel(spot, &onWater, &face);
+                if (onWater || std::abs(floor - actor.pos.z) > 300)
+                    continue;
+                spot.z = floor + 1;
+            }
+            if (Check_LineOfSight(spot + Vec3f(0, 0, pParty->eyeLevel), eye))
+                return spot;
+        }
+    }
+    return std::nullopt;
+}
+
+GAME_TEST(MM6MapSweep, DISABLED_MonstersAttackParty) {
+    // Lets each kind of monster on one MM6 map attack the party, one process per map, for tools/run_mm6_combat_sweep.py.
+    // ENROTH_MM6_COMBAT_SWEEP_MAP names the map by ID or file name and ENROTH_MM6_COMBAT_SWEEP_RESULT is the file to
+    // write. Optional: ENROTH_MM6_COMBAT_SWEEP_FRAMES is the number of frames each kind gets, 150 by default, and
+    // ENROTH_MM6_COMBAT_SWEEP_SKIP_MONSTERS lists monster IDs to leave out. The party enters the first map through New
+    // Game, then the target map the way the event sweep does. For each monster ID on the map, only its own actors stay,
+    // they turn hostile, and the party stands at a spot one of them can see, with health no monster takes in time. A
+    // throw that escapes the game loop ends the process, and the record names the monster it happened with.
+    const char *mapValue = std::getenv("ENROTH_MM6_COMBAT_SWEEP_MAP");
+    const char *resultValue = std::getenv("ENROTH_MM6_COMBAT_SWEEP_RESULT");
+    if (!mapValue || !resultValue)
+        GTEST_SKIP() << "Set ENROTH_MM6_COMBAT_SWEEP_MAP and ENROTH_MM6_COMBAT_SWEEP_RESULT";
+    const char *framesValue = std::getenv("ENROTH_MM6_COMBAT_SWEEP_FRAMES");
+    const int frames = framesValue ? std::atoi(framesValue) : 150;
+    const std::vector<int> skipMonsters = parseEventList(std::getenv("ENROTH_MM6_COMBAT_SWEEP_SKIP_MONSTERS"));
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+
+    const MapId map = mm6MapByNameOrId(mapValue);
+    ASSERT_NE(map, MAP_INVALID) << mapValue;
+    const std::filesystem::path resultPath(resultValue);
+    CombatSweepRecord record;
+    record.map = pMapTable->pInfos[map].fileName;
+    record.mapId = std::to_underlying(map);
+    const std::optional<MM6ShippedEntrance> entrance = findShippedMM6Entrance(record.map);
+    record.entrance = entrance ? entrance->source : "Party Start";
+    writeCombatSweepRecord(resultPath, record);
+
+    enterFirstMapFromNewGame(game);
+    if (::testing::Test::HasFatalFailure())
+        return;
+
+    record.phase = "load";
+    writeCombatSweepRecord(resultPath, record);
+    bool finished = false;
+    game.runGameRoutine([&] {
+        try {
+            for (Chest &chest : vChests)
+                chest.position.reset(); // The first map's chest positions would make the target's chest load refuse.
+            engine->_pendingTransition = entrance ? MapDestination(map, entrance->placement) : MapDestination(map, MAP_START_POINT_PARTY);
+            mm6::ScopedChestMapLoadOptIn chestOptIn;
+            PrepareWorld(0);
+        } catch (...) {
+            record.loadError = currentExceptionText();
+        }
+        finished = true;
+    });
+    for (int tick = 0; tick < 256 && !finished; ++tick)
+        game.tick();
+    ASSERT_TRUE(finished);
+    if (!record.loadError.empty()) {
+        record.phase = "load failed";
+        writeCombatSweepRecord(resultPath, record);
+        return;
+    }
+    ASSERT_EQ(engine->_currentLoadedMapId, map);
+
+    const std::deque<Actor> actors = pActors;
+    const Party party = *pParty;
+    std::map<int, CombatSweepMonster> census;
+    for (const Actor &actor : actors) {
+        if (actor.aiState == Dead || actor.aiState == Removed || actor.monsterInfo.id == MONSTER_INVALID)
+            continue;
+        CombatSweepMonster &monster = census[std::to_underlying(actor.monsterInfo.id)];
+        monster.id = std::to_underlying(actor.monsterInfo.id);
+        monster.count++;
+        monster.missile1 = std::to_underlying(actor.monsterInfo.attack1MissileType);
+        monster.missile2 = actor.monsterInfo.attack2Chance ? std::to_underlying(actor.monsterInfo.attack2MissileType) : 0;
+        monster.spell = actor.monsterInfo.spell1UseChance ? std::to_underlying(actor.monsterInfo.spell1Id) : 0;
+        monster.special = actor.monsterInfo.specialAttackLevel ? std::to_underlying(actor.monsterInfo.specialAttackType) : 0;
+    }
+    for (const auto &[id, monster] : census)
+        record.monsters.push_back(monster);
+
+    record.phase = "combat";
+    for (CombatSweepMonster &monster : record.monsters) {
+        if (std::ranges::contains(skipMonsters, monster.id))
+            continue;
+        record.currentMonster = monster.id;
+        record.attackingMonsters.clear();
+        writeCombatSweepRecord(resultPath, record);
+        game.runGameRoutine([&] {
+            pActors = actors;
+            *pParty = party;
+            for (SpriteObject &sprite : pSpriteObjects)
+                sprite = SpriteObject();
+            std::optional<Vec3f> spot;
+            for (Actor &actor : pActors) {
+                if (std::to_underlying(actor.monsterInfo.id) != monster.id || actor.aiState == Dead || actor.aiState == Removed) {
+                    actor.aiState = Removed;
+                    continue;
+                }
+                actor.attributes |= ACTOR_AGGRESSOR;
+                actor.monsterInfo.hostilityType = HOSTILITY_LONG;
+                if (!spot)
+                    spot = combatSweepPartySpot(actor);
+            }
+            monster.placed = spot.has_value();
+            if (spot) {
+                pParty->pos = *spot;
+                pParty->uFallStartZ = spot->z;
+            }
+            for (Character &character : pParty->pCharacters)
+                character.health = 30000;
+        });
+        if (!monster.placed)
+            continue;
+        for (int frame = 0; frame < frames && engine->_currentLoadedMapId == map; ++frame) {
+            record.attackingMonsters = attackingMonsters();
+            monster.attacked |= !record.attackingMonsters.empty();
+            if (frame % 10 == 0)
+                writeCombatSweepRecord(resultPath, record);
+            game.tick();
+            monster.frames++;
+            for (const SpriteObject &sprite : pSpriteObjects)
+                if (sprite.spriteId != SPRITE_NULL && sprite.spell_caster_pid.type() == OBJECT_Actor)
+                    monster.projectiles.insert(std::to_underlying(sprite.spriteId));
+        }
+        monster.hpLost = 4 * 30000 - std::ranges::fold_left(pParty->pCharacters, 0, [](int sum, const Character &c) { return sum + c.health; });
+    }
+    record.currentMonster = 0;
+    record.attackingMonsters.clear();
+    record.phase = "done";
+    writeCombatSweepRecord(resultPath, record);
 }

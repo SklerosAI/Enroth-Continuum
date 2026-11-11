@@ -21,6 +21,7 @@
 #include "Engine/MM6/MM6SessionSave.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
+#include "Engine/Objects/CombinedSkillValue.h"
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Vis.h"
@@ -162,6 +163,18 @@ static void walkOverEdge(EngineController &game, MapId map, Vec3f pos, int yaw) 
     confirmTransition(game);
 }
 
+static void disarmAndOpenOutd3Chest4(EngineController &game) {
+    // The active character, good enough at disarming, opens a trapped chest on outd3 and closes it again.
+    pParty->activeCharacter().setSkillValue(SKILL_TRAP_DISARM, CombinedSkillValue(6, MASTERY_NOVICE)); // Beats outd3's lock even on the worst roll.
+    game.teleportTo(pMapTable->GetMapInfo("outd3.odm"), Vec3f(21632, -17200, 0), 90); // South of the crate, facing it.
+    game.pointMouseAtFace(2308); // The crate's near side.
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.moveMouse(600, 400); // Off the viewport.
+    game.tick();
+}
+
 static void enterD06(EngineController &game) {
     game.teleportTo(pMapTable->GetMapInfo("outd3.odm"), Vec3f(16512, -14550, 100), 90); // South of the d06 door, facing it.
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
@@ -203,6 +216,7 @@ GAME_TEST(MM6SaveAnywhereHeadless, DISABLED_DungeonSaveAfterTravel) {
     auto oute3DeadTape = tapes.custom([=] { return engine->_currentLoadedMapId == oute3 ? std::optional(deadActors()) : std::nullopt; });
     auto outd3DeadTape = tapes.custom([=] { return engine->_currentLoadedMapId == outd3 ? std::optional(deadActors()) : std::nullopt; });
     auto chestTape = tapes.custom([=] { return engine->_currentLoadedMapId == oute3 ? std::optional(chestContents(2)) : std::nullopt; });
+    auto trappedChestTape = tapes.custom([=] { return engine->_currentLoadedMapId == outd3 ? std::optional(chestContents(4)) : std::nullopt; });
 
     openSaveMenu(game);
     game.doubleClickGuiButton("SaveMenu_Slot0"); // The new save slot.
@@ -220,6 +234,7 @@ GAME_TEST(MM6SaveAnywhereHeadless, DISABLED_DungeonSaveAfterTravel) {
     lootOute3Chest2(game);
     walkOverEdge(game, oute3, Vec3f(-22450, -10000, 100), 180); // The west edge.
     killDummy(game, outd3, Vec3f(21632, -16880, 0), Vec3f(21800, -16880, 0)); // By a crate south of the arrival.
+    disarmAndOpenOutd3Chest4(game);
     enterD06(game);
     const std::string party = partySummary();
 
@@ -244,6 +259,9 @@ GAME_TEST(MM6SaveAnywhereHeadless, DISABLED_DungeonSaveAfterTravel) {
     ASSERT_EQ(outd3DeadTape[2]->size(), 1);
     ASSERT_EQ(chestTape.size(), 4);
     EXPECT_LT(chestTape[2]->size(), chestTape[1]->size()); // The item left the chest.
+    ASSERT_EQ(trappedChestTape.size(), 5); // The chest's random items are made while outd3 loads.
+    EXPECT_TRUE(trappedChestTape[2]->starts_with(fmt::format("{} ", std::to_underlying(CHEST_TRAPPED))));
+    EXPECT_TRUE(trappedChestTape[3]->starts_with(fmt::format("{} ", std::to_underlying(CHEST_ITEMS_PLACED)))); // Disarmed and opened.
     const auto saved = fileBytes(slot);
     EXPECT_EQ(fileBytes(profile / "saves/save000.ec6.bak"), firstMapSave);
     game.runGameRoutine([&] {
@@ -255,13 +273,13 @@ GAME_TEST(MM6SaveAnywhereHeadless, DISABLED_DungeonSaveAfterTravel) {
         mm6::testing::setNativeProfileRootForTest({});
     });
     std::ofstream(profile / "expected.txt") << party << "\n" << oute3DeadTape[1]->front() << "\n" << outd3DeadTape[2]->front() << "\n"
-                                            << *chestTape[2] << "\n";
+                                            << *chestTape[2] << "\n" << *trappedChestTape[3] << "\n";
 }
 
 GAME_TEST(MM6SaveAnywhereHeadless, DISABLED_DungeonSlotLoadsWithItsOutdoorMaps) {
     // A fresh MM6 process loads the dungeon slot with the party where it saved, and the outdoor maps the party came
-    // through still have their dead monsters and the looted chest when it walks back. Saving again keeps the dungeon save
-    // as the backup.
+    // through still have their dead monsters, the looted chest and the disarmed one when it walks back. Saving again
+    // keeps the dungeon save as the backup.
     if (!enabled("strict-save-anywhere-reload"))
         GTEST_SKIP() << "Run only after the save-anywhere write child of the first-map gate";
     const std::filesystem::path profile = ownerOnlyProfile();
@@ -275,9 +293,9 @@ GAME_TEST(MM6SaveAnywhereHeadless, DISABLED_DungeonSlotLoadsWithItsOutdoorMaps) 
     ASSERT_FALSE(saved.empty());
     ASSERT_TRUE(std::filesystem::exists(backup));
     std::istringstream expected(fileText(profile / "expected.txt"));
-    std::string savedParty, oute3Line, outd3Line, lootedChest;
+    std::string savedParty, oute3Line, outd3Line, lootedChest, disarmedChest;
     ASSERT_TRUE(std::getline(expected, savedParty) && std::getline(expected, oute3Line) && std::getline(expected, outd3Line) &&
-                std::getline(expected, lootedChest));
+                std::getline(expected, lootedChest) && std::getline(expected, disarmedChest));
     const int oute3Killed = std::stoi(oute3Line);
     const int outd3Killed = std::stoi(outd3Line);
     game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
@@ -297,6 +315,7 @@ GAME_TEST(MM6SaveAnywhereHeadless, DISABLED_DungeonSlotLoadsWithItsOutdoorMaps) 
         return engine->_currentLoadedMapId == outd3 && outd3Killed < std::ssize(pActors) ? std::optional(pActors[outd3Killed].aiState) : std::nullopt;
     });
     auto chestTape = tapes.custom([=] { return engine->_currentLoadedMapId == oute3 ? std::optional(chestContents(2)) : std::nullopt; });
+    auto trappedChestTape = tapes.custom([=] { return engine->_currentLoadedMapId == outd3 ? std::optional(chestContents(4)) : std::nullopt; });
 
     game.pressGuiButton("MainMenu_LoadGame");
     game.tick(4);
@@ -323,6 +342,7 @@ GAME_TEST(MM6SaveAnywhereHeadless, DISABLED_DungeonSlotLoadsWithItsOutdoorMaps) 
     EXPECT_EQ(outd3KilledTape, tape(std::optional<AIState>(), std::optional(Dead), std::optional<AIState>()));
     EXPECT_EQ(oute3KilledTape.back(), Dead);
     EXPECT_EQ(chestTape.back(), lootedChest);
+    EXPECT_EQ(trappedChestTape, tape(std::optional<std::string>(), std::optional(disarmedChest), std::optional<std::string>()));
 
     openSaveMenu(game);
     ASSERT_EQ(screenTape.back(), SCREEN_SAVEGAME);

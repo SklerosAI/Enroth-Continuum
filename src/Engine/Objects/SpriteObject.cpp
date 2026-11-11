@@ -11,6 +11,7 @@
 #include "Engine/Party.h"
 #include "Engine/TurnEngine/TurnEngine.h"
 #include "Engine/AttackList.h"
+#include "Engine/MM6/MM6ChestTrap.h"
 #include "Engine/MM6/MM6MonsterAttack.h"
 #include "Engine/Spells/Spells.h"
 #include "Engine/Tables/MapTable.h"
@@ -1193,6 +1194,8 @@ void UpdateObjects() {
                 }
                 // Lifetime expired
                 if (!(object->uFlags & OBJECT_DESC_INTERACTABLE)) {
+                    if (engine->gameTitle() == GameTitle::MM6)
+                        mm6::explodeChestTrap(pSpriteObjects[i]);
                     SpriteObject::Remove(i);
                     continue;
                 }

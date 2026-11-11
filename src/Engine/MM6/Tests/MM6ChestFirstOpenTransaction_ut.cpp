@@ -118,7 +118,7 @@ UNIT_TEST(MM6ChestFirstOpenTransaction, GoldRequiresExplicitNetCreditAndBounds) 
     EXPECT_EQ(input.partyGold, 100);
 }
 
-UNIT_TEST(MM6ChestFirstOpenTransaction, RejectsTrapForeignTitleAndBadActionWithoutMutation) {
+UNIT_TEST(MM6ChestFirstOpenTransaction, RejectsForeignTitleAndBadActionWithoutMutation) {
     TableScope table;
     const auto types = chestTypes();
     auto input = inputFor(200);
@@ -127,9 +127,6 @@ UNIT_TEST(MM6ChestFirstOpenTransaction, RejectsTrapForeignTitleAndBadActionWitho
     input.title = GameTitle::MM7;
     EXPECT_FALSE(mm6::stageChestFirstOpenInteraction(input));
     input.title = GameTitle::MM6;
-    mm6::writeChest16(input.record, 2, 1);
-    EXPECT_FALSE(mm6::stageChestFirstOpenInteraction(input));
-    input.record = original;
     input.action = mm6::ChestInteractionAction::TakeGridItem;
     input.gridPoint = Pointi(9, 0);
     EXPECT_FALSE(mm6::stageChestFirstOpenInteraction(input));

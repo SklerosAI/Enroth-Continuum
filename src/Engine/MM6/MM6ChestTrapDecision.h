@@ -11,7 +11,7 @@ namespace mm6 {
 struct ChestTrapDecision {
     bool disarmed = false;
     int variant = -1;  // 0..3 when triggered; no sprite/effect is emitted here.
-    int spriteId = 0;  // Original variant order: fire, cold, lightning, body.
+    int spriteId = 0;  // Original variant order: fire, electricity, cold, poison in MM6 terms.
     int drawsConsumed = 0;
     std::uint32_t nextLcgState = 0;
 };
@@ -19,8 +19,8 @@ struct ChestTrapDecision {
 // The retained MM6 chest-entry PE shows placement first, then active-party
 // and map checks, then this disarm comparison. The original score function is
 // separate; caller supplies its nonnegative result and the map difficulty.
-// This stage deliberately returns no changed chest, damage or UI state: the
-// trap effect call graph and its atomic commit are not yet established.
+// This stage returns no changed chest, damage or UI state, see
+// `stageChestOpenOwner` for the chest and `MM6ChestTrap.h` for the effects.
 inline std::optional<ChestTrapDecision> stageChestTrapDecision(
     GameTitle title, const ChestRecord &placedRecord, bool activeCharacter,
     int disarmScore, int mapDifficulty, std::uint32_t lcgState) {

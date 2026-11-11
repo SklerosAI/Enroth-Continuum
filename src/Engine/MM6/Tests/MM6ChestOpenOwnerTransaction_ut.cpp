@@ -4,6 +4,7 @@
 #include <memory>
 #include <span>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "Testing/Unit/UnitTest.h"
@@ -129,6 +130,59 @@ UNIT_TEST(MM6ChestOpenOwnerTransaction, TrapForeignTitleAndStaleRuntimeRollBackA
     EXPECT_EQ(bytes[chestOffset + 2], 1);
     EXPECT_EQ(title.lcgState, 8u);
     EXPECT_EQ(bytes.size(), original.size());
+}
+
+UNIT_TEST(MM6ChestOpenOwnerTransaction, TrapGoesOffOrIsDisarmedAfterPlacement) {
+    // A trapped chest places its items first. Then its trap either goes off or is disarmed, and either way it's gone
+    // from the chest and from the sidecar.
+    TableScope table;
+    constexpr size_t chestOffset = 8 + 2 * 88 * 11 + 3 * 4;
+    const auto types = chestTypes();
+    const auto icon = [](int) { return mm6::ChestIconSize{32, 32}; };
+    for (int score : {0, 100}) {
+        auto bytes = sidecar();
+        bytes[chestOffset + 2] = 1;
+        auto chests = initialChests(bytes);
+        mm6::ChestTitleState title;
+        ASSERT_TRUE(mm6::restoreChestTitleState(GameTitle::MM6, &title, 8, {}));
+        mm6::ChestLiveBinding binding{GameTitle::MM6, LEVEL_OUTDOOR, &chests, &bytes, &title};
+        const auto staged = mm6::stageChestOpenOwner(binding, 0, types, icon, mm6::ChestInteractionAction::OpenOnly, {},
+                                                     mm6::ChestTrapCheck{true, 2, score, true});
+        ASSERT_TRUE(staged);
+        EXPECT_TRUE(staged->placed);
+        ASSERT_TRUE(staged->trap);
+        EXPECT_EQ(staged->trap->disarmed, score > 0);
+        EXPECT_EQ(staged->trapFired, score == 0);
+        EXPECT_EQ(staged->nextLcgState, staged->trap->nextLcgState);
+        EXPECT_EQ(std::to_underlying(staged->chests[0].flags), std::to_underlying(CHEST_ITEMS_PLACED));
+        EXPECT_TRUE(mm6::chestMatchesOpenRecord(staged->chests[0], firstRecord(staged->deltaBytes)));
+        EXPECT_EQ(title.lcgState, 8u);
+    }
+}
+
+UNIT_TEST(MM6ChestOpenOwnerTransaction, TrapStaysArmedWithoutCharacterOrClickedObject) {
+    // With no active character the chest only places its items. A trap that would go off while the chest wasn't
+    // clicked through a decoration or a face stays armed, and the chest opens.
+    TableScope table;
+    constexpr size_t chestOffset = 8 + 2 * 88 * 11 + 3 * 4;
+    const auto types = chestTypes();
+    const auto icon = [](int) { return mm6::ChestIconSize{32, 32}; };
+    for (bool activeCharacter : {false, true}) {
+        auto bytes = sidecar();
+        bytes[chestOffset + 2] = 1;
+        auto chests = initialChests(bytes);
+        mm6::ChestTitleState title;
+        ASSERT_TRUE(mm6::restoreChestTitleState(GameTitle::MM6, &title, 8, {}));
+        mm6::ChestLiveBinding binding{GameTitle::MM6, LEVEL_OUTDOOR, &chests, &bytes, &title};
+        const auto staged = mm6::stageChestOpenOwner(binding, 0, types, icon, mm6::ChestInteractionAction::OpenOnly, {},
+                                                     mm6::ChestTrapCheck{activeCharacter, 2, 0, false});
+        ASSERT_TRUE(staged);
+        EXPECT_TRUE(staged->placed);
+        EXPECT_EQ(staged->trap.has_value(), activeCharacter);
+        EXPECT_FALSE(staged->trapFired);
+        EXPECT_EQ(std::to_underlying(staged->chests[0].flags), std::to_underlying(CHEST_TRAPPED | CHEST_ITEMS_PLACED));
+        EXPECT_TRUE(mm6::chestMatchesOpenRecord(staged->chests[0], firstRecord(staged->deltaBytes)));
+    }
 }
 
 UNIT_TEST(MM6ChestOpenOwnerTransaction, IndoorSidecarCommitsOneRecordAndPreservesOtherBytes) {

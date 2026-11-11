@@ -1,6 +1,7 @@
 #include "Engine/Objects/Chest.h"
 
 #include <array>
+#include <cmath>
 #include <limits>
 #include <memory>
 #include <numeric>
@@ -27,6 +28,7 @@
 #include "Engine/Tables/ItemTable.h"
 #include "Engine/Party.h"
 #include "Engine/MM6/MM6ChestOpenOwnerTransaction.h"
+#include "Engine/MM6/MM6ChestTrap.h"
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/ChestTable.h"
@@ -78,7 +80,36 @@ std::optional<mm6::ChestIconSize> mm6ChestIconSize(int id) {
     return mm6::ChestIconSize{icon.width(), icon.height()};
 }
 
-bool openMm6Chest(int chestId) {
+/**
+ * Sets off an MM6 chest trap. It hurts the party once its sprite runs out its lifetime, see `mm6::explodeChestTrap`.
+ *
+ * @param sprite                        Trap sprite.
+ * @param object                        Decoration or face that the chest was clicked through.
+ */
+void fireMm6ChestTrap(SpriteId sprite, Pid object) {
+    Vec3f objectPos;
+    if (object.type() == OBJECT_Decoration) {
+        const LevelDecoration &decoration = pLevelDecorations[object.id()];
+        objectPos = decoration.vPosition + Vec3f(0, 0, pDecorationTable->decoration(decoration.uDecorationDescID)->uDecorationHeight / 2);
+    } else {
+        const BBoxf &box = uCurrentlyLoadedLevelType == LEVEL_OUTDOOR ? pOutdoor->face(object).boundingBox : pIndoor->faces[object.id()].boundingBox;
+        objectPos = Vec3f(std::floor((box.x1 + box.x2) / 2), std::floor((box.y1 + box.y2) / 2), std::floor((box.z1 + box.z2) / 2));
+    }
+
+    const Vec3f toParty = pParty->pos + Vec3f(0, 0, pParty->eyeLevel) - objectPos;
+    const float length = toParty.length();
+    int yaw = 0;
+    int pitch = 0;
+    if (length > 1) {
+        yaw = TrigLUT.atan2(static_cast<int>(toParty.x), static_cast<int>(toParty.y));
+        pitch = TrigLUT.atan2(static_cast<int>(toParty.xy().length()), static_cast<int>(toParty.z));
+    }
+    const int depth = length < 256 ? static_cast<int>(length) / 4 : 256;
+    SpriteObject::dropItemAt(sprite, objectPos + Vec3f::fromPolar(depth, yaw, pitch), 0, 1, false, SPRITE_NO_Z_BUFFER);
+    pAudioPlayer->playUISound(SOUND_fireBall);
+}
+
+bool openMm6Chest(int chestId, Pid objectPid) {
     mm6::ChestLiveBinding binding;
     MM6IndoorSnapshot indoorBase;
     if (!bindMm6Chests(&binding, &indoorBase))
@@ -93,22 +124,36 @@ bool openMm6Chest(int chestId) {
     if (background.width() <= 0 || background.height() <= 0)
         return false;
 
-    auto staged = mm6::stageChestOpenOwner(binding, chestId, rawTypes, mm6ChestIconSize);
+    mm6::ChestTrapCheck trapCheck;
+    trapCheck.activeCharacter = pParty->hasActiveCharacter();
+    if (engine->_currentLoadedMapId != MAP_INVALID)
+        trapCheck.mapDifficulty = pMapTable->pInfos[engine->_currentLoadedMapId].disarmDifficulty;
+    if (trapCheck.activeCharacter)
+        trapCheck.disarmScore = mm6::chestDisarmScore(pParty->activeCharacter());
+    trapCheck.clickedObject = objectPid.type() == OBJECT_Decoration || objectPid.type() == OBJECT_Face;
+    auto staged = mm6::stageChestOpenOwner(binding, chestId, rawTypes, mm6ChestIconSize, mm6::ChestInteractionAction::OpenOnly, {}, trapCheck);
     if (!staged)
         return false;
 
     // Construct the GUI before changing chest, sidecar or RNG owners. Its
     // constructor can allocate; the remaining owner publication cannot throw.
     std::unique_ptr<GUIWindow_Chest> chestWindow;
-    if (pParty->hasActiveCharacter())
+    if (pParty->hasActiveCharacter() && !staged->trapFired)
         chestWindow = std::make_unique<GUIWindow_Chest>(chestId);
     binding.chests->swap(staged->chests);
     binding.deltaBytes->swap(staged->deltaBytes);
     binding.titleState->lcgState = staged->nextLcgState;
+    if (staged->trapFired) {
+        fireMm6ChestTrap(static_cast<SpriteId>(staged->trap->spriteId), objectPid);
+        pParty->setDelayedReaction(SPEECH_TRAP_EXPLODED, pParty->activeCharacterIndex());
+        return false;
+    }
     if (!chestWindow)
         return false;
     pGUIWindow_CurrentChest = std::move(chestWindow);
     pAudioPlayer->playUISound(SOUND_openchest0101);
+    if (staged->trap && staged->trap->disarmed)
+        pParty->activeCharacter().playReaction(SPEECH_TRAP_DISARMED);
     OpenedTelekinesis = false;
     return true;
 }
@@ -157,7 +202,7 @@ bool Chest::open(int uChestID, Pid objectPid) {
     if (uChestID < 0 || uChestID >= static_cast<int>(vChests.size()))
         return false;
     if (engine->gameTitle() == GameTitle::MM6)
-        return openMm6Chest(uChestID);
+        return openMm6Chest(uChestID, objectPid);
     Chest *chest = &vChests[uChestID];
 
     if (!chest->Initialized() || engine->config->gameplay.ChestTryPlaceItems.value() == 1)

@@ -45,12 +45,12 @@ struct ChestFirstOpenResult {
 // Detached first-open plus one grid pickup. All chest, RNG, held-item and gold
 // updates are staged in a returned value. The caller must atomically publish
 // it with its active-map sidecar and title state; this function does not touch
-// live owners. Traps and repeat-placement debug options remain unproved.
+// live owners. The trap check follows placement and is the caller's, see
+// `stageChestOpenOwner`. Repeat-placement debug options remain unproved.
 inline std::optional<ChestFirstOpenResult> stageChestFirstOpenInteraction(
     const ChestFirstOpenInput &input) {
     if (input.title != GameTitle::MM6 || input.chestIndex < 0 || input.chestIndex >= 20 ||
-        input.partyGold < 0 || !chestTypeLayout(input.title, readChest16(input.record, 0), input.dchest) ||
-        (readChest16(input.record, 2) & 1u))
+        input.partyGold < 0 || !chestTypeLayout(input.title, readChest16(input.record, 0), input.dchest))
         return std::nullopt;
 
     ChestFirstOpenResult result;

@@ -44,6 +44,10 @@ file exists for them (monster idle slots and one map-load decoration sound),
 and the `null` frame is the placeholder the seasons option uses to hide four
 flowers in winter. Stage 3 keeps two small items: an untraced `sound id 2
 not found`, and logging blank-name rows once instead of on every request.
+A visible replay of an upstream test trace with the installed upstream helper
+and the owner's MM7 data opened an OpenGL window and finished cleanly on
+2026-11-10. Its replay mode keeps config in memory, so window placement
+on the second monitor was not exercised.
 Also for stage 3: the Wine Cellar's named vampire loads `Disabled` with the
 undocumented attribute `0x10000`. Check whether the original activates it.
 

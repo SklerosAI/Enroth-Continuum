@@ -152,11 +152,14 @@ maps are allowed for now and listed, because real travel is stage 3 breadth.
 Order: the harness lane first. Then C0-C3 and C4-C7 as two lanes, which only
 share the harness table.
 
-State at the 2026-11-10 wrap-up: Codex's harness lane with C0 is active.
-The real Xenofex fight (`claude/mm7-xenofex-combat`) is reviewed and waiting
-for integration. Quest-item acquisition (`claude/mm7-light-items`) is paused
-at a WIP commit with three unbuilt draft tests. See
-`handoffs/2026-11-10-claude-lead-week-wrap.md`.
+State on 2026-11-10 late evening: the harness with its review fixes (pass
+markers, refusal of a chapter's own or later slot, Margaret's tour declined
+by input, unimplemented chapters refused before a profile is touched), the
+real Xenofex fight and the Light quest-item acquisition tests are on
+`master` at `56b5968ab`. The full headless MM7 suite passed 538 with two
+skipped, C0 passed through the runner, and the five legacy writer and
+reader pairs passed. Chapters C1-C3 are in a Claude lane. C4-C7 follow on
+top of them.
 
 ### Stage 1 defect queue
 

@@ -20,3 +20,7 @@ Update 2026-11-11 later: S-AWARD finished (`dbb0b95e7`, handoff `handoffs/2026-1
 
 | S-NPCPOOL MM6 generated NPC pool overflow | `claude/mm6-npc-pool` in `mm7-save-durability` | `src/Engine/MM6/MM6PostMapGeneratedNpcLinks.*` and the MM6 generated-NPC owners it needs, the matching MM6 save section only if the pool size is persisted, a new MM6 test. |
 
+Update 2026-11-11 later still: S-NPCPOOL finished (`c4663d0d6`, handoff `handoffs/2026-11-11-claude-mm6-npc-pool.md`). Its checkout now hosts S-DAMAGE:
+
+| S-DAMAGE MM6 damage channels | `claude/mm6-damage-channels` in `mm7-save-durability` | `src/Engine/MM6/MM6MonsterDamage.h` and the MM6 damage-channel verification it needs, the MM6 branch of event ReceiveDamage kinds in `src/Engine/Evt/` (MM6 files first), new MM6 tests. Event CastSpell follows in a later lane on top of this. |
+

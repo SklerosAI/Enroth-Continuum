@@ -47,24 +47,42 @@ std::vector<Chest> vChests;
 
 namespace {
 
-bool openMm6Chest(int chestId) {
-    mm6::ChestLiveBinding binding;
-    binding.title = GameTitle::MM6;
-    binding.levelType = uCurrentlyLoadedLevelType;
-    binding.chests = &vChests;
-    binding.titleState = &mm6::chestTitleState();
-    MM6IndoorSnapshot indoorBase;
-    if (binding.levelType == LEVEL_OUTDOOR && pOutdoor) {
-        binding.deltaBytes = &pOutdoor->mm6DeltaBytes;
-    } else if (binding.levelType == LEVEL_INDOOR && pIndoor &&
+bool bindMm6Chests(mm6::ChestLiveBinding *binding, MM6IndoorSnapshot *indoorBase) {
+    binding->title = GameTitle::MM6;
+    binding->levelType = uCurrentlyLoadedLevelType;
+    binding->chests = &vChests;
+    binding->titleState = &mm6::chestTitleState();
+    if (binding->levelType == LEVEL_OUTDOOR && pOutdoor) {
+        binding->deltaBytes = &pOutdoor->mm6DeltaBytes;
+    } else if (binding->levelType == LEVEL_INDOOR && pIndoor &&
                pIndoor->doorsData.size() <= std::numeric_limits<std::size_t>::max() / 2) {
-        binding.deltaBytes = &pIndoor->mm6DeltaBytes;
-        indoorBase.doorDataBytes = pIndoor->doorsData.size() * 2;
-        indoorBase.sections.push_back({MM6IndoorSectionKind::DoorSlots, Blob(), 200});
-        binding.indoorBase = &indoorBase;
+        binding->deltaBytes = &pIndoor->mm6DeltaBytes;
+        indoorBase->doorDataBytes = pIndoor->doorsData.size() * 2;
+        indoorBase->sections.push_back({MM6IndoorSectionKind::DoorSlots, Blob(), 200});
+        binding->indoorBase = indoorBase;
     } else {
         return false;
     }
+    return true;
+}
+
+std::optional<mm6::ChestIconSize> mm6ChestIconSize(int id) {
+    if (!pItemTable || id < 1 || id > 580)
+        return std::nullopt;
+    const auto &iconName = pItemTable->items[static_cast<ItemId>(id)].iconName;
+    if (iconName.empty())
+        return std::nullopt;
+    const auto icon = engine->resources()->icon(iconName);
+    if (icon.width() <= 0 || icon.height() <= 0)
+        return std::nullopt;
+    return mm6::ChestIconSize{icon.width(), icon.height()};
+}
+
+bool openMm6Chest(int chestId) {
+    mm6::ChestLiveBinding binding;
+    MM6IndoorSnapshot indoorBase;
+    if (!bindMm6Chests(&binding, &indoorBase))
+        return false;
 
     const Blob dchest = engine->resources()->eventsData("dchest.bin");
     const auto rawTypes = std::span(static_cast<const std::uint8_t *>(dchest.data()), dchest.size());
@@ -75,18 +93,7 @@ bool openMm6Chest(int chestId) {
     if (background.width() <= 0 || background.height() <= 0)
         return false;
 
-    const auto iconLookup = [](int id) -> std::optional<mm6::ChestIconSize> {
-        if (!pItemTable || id < 1 || id > 580)
-            return std::nullopt;
-        const auto &iconName = pItemTable->items[static_cast<ItemId>(id)].iconName;
-        if (iconName.empty())
-            return std::nullopt;
-        const auto icon = engine->resources()->icon(iconName);
-        if (icon.width() <= 0 || icon.height() <= 0)
-            return std::nullopt;
-        return mm6::ChestIconSize{icon.width(), icon.height()};
-    };
-    auto staged = mm6::stageChestOpenOwner(binding, chestId, rawTypes, iconLookup);
+    auto staged = mm6::stageChestOpenOwner(binding, chestId, rawTypes, mm6ChestIconSize);
     if (!staged)
         return false;
 
@@ -104,6 +111,33 @@ bool openMm6Chest(int chestId) {
     pAudioPlayer->playUISound(SOUND_openchest0101);
     OpenedTelekinesis = false;
     return true;
+}
+
+void takeMm6ChestItem(int chestId, Pointi mousePos) {
+    mm6::ChestLiveBinding binding;
+    MM6IndoorSnapshot indoorBase;
+    if (pParty->pPickedItem.itemId != ITEM_NULL || !bindMm6Chests(&binding, &indoorBase))
+        return;
+    const Blob dchest = engine->resources()->eventsData("dchest.bin");
+    const auto rawTypes = std::span(static_cast<const std::uint8_t *>(dchest.data()), dchest.size());
+    const auto layout = mm6::chestTypeLayout(GameTitle::MM6, vChests[chestId].chestTypeId, rawTypes);
+    if (!layout)
+        return;
+    const Pointi inGrid = mousePos - Pointi(layout->offsetX, layout->offsetY);
+    if (inGrid.x < 0 || inGrid.y < 0)
+        return;
+    const Pointi gridPoint = inGrid / 32;
+    auto staged = mm6::stageChestOpenOwner(binding, chestId, rawTypes, mm6ChestIconSize,
+                                           mm6::ChestInteractionAction::TakeGridItem, gridPoint);
+    if (!staged)
+        return; // An empty cell takes nothing, and neither does gold.
+
+    Pointi offset = inGrid - gridPoint * 32;
+    GraphicsImage *icon = assets->getIcon(staged->heldItem.GetIconName());
+    offset -= Pointi(itemOffset(icon->width()), itemOffset(icon->height()));
+    binding.chests->swap(staged->chests);
+    binding.deltaBytes->swap(staged->deltaBytes);
+    pParty->setHoldingItem(staged->heldItem, -offset);
 }
 
 } // namespace
@@ -304,8 +338,10 @@ void Chest::toggleFlag(int uChestID, ChestFlag uFlag, bool bValue) {
 }
 
 void Chest::OnChestLeftClick() {
-    if (engine->gameTitle() == GameTitle::MM6)
+    if (engine->gameTitle() == GameTitle::MM6) {
+        takeMm6ChestItem(pGUIWindow_CurrentChest->chestId(), mouse->position());
         return;
+    }
     int uChestID = pGUIWindow_CurrentChest->chestId();
     Chest *chest = &vChests[uChestID];
 

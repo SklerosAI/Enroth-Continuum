@@ -18,6 +18,7 @@ struct ChestOpenOwnerCandidate {
     std::vector<std::uint8_t> deltaBytes;
     std::uint32_t nextLcgState = 0;
     bool placed = false;
+    Item heldItem; // The item taken out of the chest, for `ChestInteractionAction::TakeGridItem`.
 };
 
 // The live chest can have a world position after load. Everything else must
@@ -36,11 +37,23 @@ inline bool chestMatchesOpenRecord(const Chest &chest, const ChestRecord &record
     return true;
 }
 
-// Stages one untrapped, open-only MM6 event target against the decoded active
-// sidecar. No GUI, trap, pickup or inherited MM7 generator is invoked.
+/**
+ * Stages opening one untrapped MM6 chest, or taking a non-gold item out of its grid, against the decoded active
+ * sidecar. No GUI, trap or inherited MM7 generator is invoked.
+ *
+ * @param binding                       Live chests, sidecar and chest title state.
+ * @param chestIndex                    Chest to open.
+ * @param dchest                        Contents of `dchest.bin`.
+ * @param iconLookup                    Item icon sizes, for the first placement.
+ * @param action                        Whether to only open the chest or also take an item.
+ * @param gridPoint                     Grid cell of the item to take.
+ * @return                              The chests, sidecar, chest RNG and taken item after the action, or empty if
+ *                                      anything refuses.
+ */
 inline std::optional<ChestOpenOwnerCandidate> stageChestOpenOwner(
     const ChestLiveBinding &binding, int chestIndex, std::span<const std::uint8_t> dchest,
-    const ChestIconLookup &iconLookup) {
+    const ChestIconLookup &iconLookup, ChestInteractionAction action = ChestInteractionAction::OpenOnly,
+    Pointi gridPoint = {}) {
     if (binding.title != GameTitle::MM6 || !binding.chests || binding.chests->size() != 20 ||
         !binding.deltaBytes || binding.deltaBytes->empty() || !binding.titleState ||
         !binding.titleState->ready || chestIndex < 0 || chestIndex >= 20 ||
@@ -75,8 +88,10 @@ inline std::optional<ChestOpenOwnerCandidate> stageChestOpenOwner(
         input.dchest = dchest;
         input.lcgState = binding.titleState->lcgState;
         input.iconLookup = iconLookup;
+        input.action = action;
+        input.gridPoint = gridPoint;
         const auto opened = stageChestFirstOpenInteraction(input);
-        if (!opened || opened->itemTaken)
+        if (!opened || opened->itemTaken != (action == ChestInteractionAction::TakeGridItem))
             return std::nullopt;
         auto projection = stageChestRuntimeProjection(GameTitle::MM6, opened->record, chestIndex);
         if (!projection)
@@ -88,6 +103,7 @@ inline std::optional<ChestOpenOwnerCandidate> stageChestOpenOwner(
         result.chests[chestIndex] = std::move(projection->chest);
         result.nextLcgState = opened->nextLcgState;
         result.placed = opened->placed;
+        result.heldItem = opened->heldItem;
         if (binding.levelType == LEVEL_INDOOR) {
             const auto &section = indoorWire.section(MM6IndoorSectionKind::Chests);
             std::string bytes(static_cast<const char *>(section.bytes.data()), section.bytes.size());

@@ -310,6 +310,31 @@ EvtProgram syntheticQuestBitEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticDayCounterEvent() {
+    std::string bytes;
+    std::string counter;
+    counter.push_back(static_cast<char>(216)); // First MM6 day-counter variable.
+    appendU32(&counter, 0);
+    appendRecord(&bytes, 0, EVENT_Set, counter);
+
+    std::string compare = counter;
+    compare.push_back(4);
+    appendRecord(&bytes, 1, EVENT_Compare, compare);
+
+    std::string failed;
+    failed.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&failed, 29);
+    appendRecord(&bytes, 2, EVENT_Set, failed);
+    appendRecord(&bytes, 3, EVENT_Exit);
+
+    std::string passed;
+    passed.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&passed, 30);
+    appendRecord(&bytes, 4, EVENT_Set, passed);
+    appendRecord(&bytes, 5, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -676,4 +701,20 @@ GAME_TEST(MM6QuestBitEvent, UsesTheMM6QuestBitStateAndBranch) {
     EXPECT_FALSE(pParty->_questBits.test(static_cast<QuestBit>(510)));
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(27));
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(28));
+}
+
+GAME_TEST(MM6DayCounterEvent, UsesTheMM6DayCounterStateAndBranch) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedParty restoreParty;
+    engine->_localEventMap = syntheticDayCounterEvent();
+    pParty->GetPlayingTime() = Time::fromDays(42);
+    pParty->PartyTimes.CounterEventValues[0] = Time();
+    pParty->pCharacters[0]._characterEventBits.reset(29);
+    pParty->pCharacters[0]._characterEventBits.reset(30);
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_EQ(pParty->PartyTimes.CounterEventValues[0], Time::fromDays(42));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(29));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(30));
 }

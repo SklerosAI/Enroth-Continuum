@@ -263,6 +263,28 @@ EvtProgram syntheticAutonoteEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticMonthCompareEvent() {
+    std::string bytes;
+    std::string compare;
+    compare.push_back(static_cast<char>(226)); // MM6 month-of-year variable.
+    appendU32(&compare, 6);
+    compare.push_back(3);
+    appendRecord(&bytes, 0, EVENT_Compare, compare);
+
+    std::string failed;
+    failed.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&failed, 25);
+    appendRecord(&bytes, 1, EVENT_Set, failed);
+    appendRecord(&bytes, 2, EVENT_Exit);
+
+    std::string passed;
+    passed.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&passed, 26);
+    appendRecord(&bytes, 3, EVENT_Set, passed);
+    appendRecord(&bytes, 4, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -591,4 +613,25 @@ GAME_TEST(MM6AutonoteEvent, UsesTheMM6AutonoteVariableAndBranch) {
     EXPECT_TRUE(pParty->_autonoteBits.test(128));
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(23));
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(24));
+}
+
+GAME_TEST(MM6MonthCompare, UsesTheMM6MonthVariableAndBranch) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedParty restoreParty;
+    engine->_localEventMap = syntheticMonthCompareEvent();
+    pParty->uCurrentMonth = 6;
+    pParty->pCharacters[0]._characterEventBits.reset(25);
+    pParty->pCharacters[0]._characterEventBits.reset(26);
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(25));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(26));
+
+    pParty->uCurrentMonth = 5;
+    pParty->pCharacters[0]._characterEventBits.reset(25);
+    pParty->pCharacters[0]._characterEventBits.reset(26);
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(25));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(26));
 }

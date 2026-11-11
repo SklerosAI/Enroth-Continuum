@@ -123,6 +123,11 @@ add_library(engine_mm6_outdoor_wire STATIC MM6OutdoorWire.cpp MM6OutdoorWire.h
     MM6NativeActorResistanceBytes.h)
 target_check_style(engine_mm6_outdoor_wire)
 
+add_library(engine_mm6_outdoor_sky STATIC MM6OutdoorSky.cpp MM6OutdoorSky.h)
+target_link_libraries(engine_mm6_outdoor_sky PUBLIC core_time library_random utility)
+target_check_style(engine_mm6_outdoor_sky)
+target_link_libraries(engine_graphics PUBLIC engine_mm6_outdoor_sky)
+
 add_library(engine_mm6_outdoor_actor_append STATIC
     MM6OutdoorActorAppendCodec.cpp MM6OutdoorActorAppendCodec.h)
 target_link_libraries(engine_mm6_outdoor_actor_append PUBLIC engine_mm6_outdoor_wire engine_objects)

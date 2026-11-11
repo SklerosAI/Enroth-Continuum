@@ -9,13 +9,12 @@
 #include <string>
 #include <utility>
 
-#include "Engine/Graphics/OutdoorSkyResources.h"
-
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6MapTransition.h"
 #include "Engine/MM6/MM6OutdoorBorderEligibility.h"
+#include "Engine/MM6/MM6OutdoorSky.h"
 #include "Engine/MM6/MM6V5FirstMapLoadAttempt.h"
 #include "Engine/MM6/MM6VisitedReturnPreEventProbeForTest.h"
 #include "Engine/AssetsManager.h"
@@ -626,10 +625,8 @@ void OutdoorLocation::Load(std::string_view filename, int days_played, int respa
     }
 
     // LABEL_150:
-    if (std::string_view baseSky = mm6OutdoorBaseSky(engine->gameTitle(), sky_texture_filename); !baseSky.empty()) {
-        // MM6's first outdoor map names its sky in the base map. The MM7
-        // fallback below otherwise replaces it with an unavailable bitmap.
-        weather.skyTextureName = baseSky;
+    if (engine->gameTitle() == GameTitle::MM6) {
+        weather.skyTextureName = mm6::outdoorSky(mm6DeltaBytes, pParty->uCurrentDayOfMonth, vrng);
     } else if (pWeather->bRenderSnow) {  // Ritor1: it's include for snow
         weather.skyTextureName = "sky19";
     } else if (lastVisitTime) {

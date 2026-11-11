@@ -26,6 +26,7 @@
 #include "Engine/Evt/EvtInstruction.h"
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Evt/Processor.h"
+#include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
@@ -39,6 +40,7 @@
 #include "Engine/Objects/Decoration.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
+#include "Engine/Resources/ResourceManager.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/MapTable.h"
 
@@ -210,6 +212,24 @@ static void enterFirstMapFromNewGame(EngineController &game) {
     mm6::testing::setNewGameSaveOverride({});
     ASSERT_EQ(engine->_currentLoadedMapId, pMapTable->GetMapInfo("oute3.odm"));
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
+}
+
+static void enterMapAtFirstShippedEntrance(EngineController &game, MapId map) {
+    // Loads the map at the first MoveToMap any map script sends there, or at its party start without one.
+    const std::optional<MM6ShippedEntrance> entrance = findShippedMM6Entrance(pMapTable->pInfos[map].fileName);
+    bool loaded = false;
+    game.runGameRoutine([&] {
+        for (Chest &chest : vChests)
+            chest.position.reset(); // The previous map's chest positions would make the target's chest load refuse.
+        engine->_pendingTransition = entrance ? MapDestination(map, entrance->placement) : MapDestination(map, MAP_START_POINT_PARTY);
+        mm6::ScopedChestMapLoadOptIn chestOptIn;
+        PrepareWorld(0);
+        loaded = true;
+    });
+    for (int tick = 0; tick < 256 && !loaded; ++tick)
+        game.tick();
+    ASSERT_TRUE(loaded);
+    ASSERT_EQ(engine->_currentLoadedMapId, map);
 }
 
 static std::vector<SweepTimer> loadedMapTimers() {
@@ -710,26 +730,36 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_MapCapture) {
     enterFirstMapFromNewGame(game);
     if (::testing::Test::HasFatalFailure())
         return;
-    if (map != engine->_currentLoadedMapId) {
-        const std::optional<MM6ShippedEntrance> entrance = findShippedMM6Entrance(fileName);
-        bool loaded = false;
-        game.runGameRoutine([&] {
-            for (Chest &chest : vChests)
-                chest.position.reset(); // The first map's chest positions would make the target's chest load refuse.
-            engine->_pendingTransition = entrance ? MapDestination(map, entrance->placement) : MapDestination(map, MAP_START_POINT_PARTY);
-            mm6::ScopedChestMapLoadOptIn chestOptIn;
-            PrepareWorld(0);
-            loaded = true;
-        });
-        for (int tick = 0; tick < 256 && !loaded; ++tick)
-            game.tick();
-        ASSERT_TRUE(loaded);
-    }
-    ASSERT_EQ(engine->_currentLoadedMapId, map);
+    if (map != engine->_currentLoadedMapId)
+        enterMapAtFirstShippedEntrance(game, map);
+    if (::testing::Test::HasFatalFailure())
+        return;
     ASSERT_FALSE(window->isVisible());
 
     const RgbaImage frame = drawOffscreenGameFrame(game);
     ASSERT_FALSE(window->isVisible());
     ASSERT_EQ(frame.size(), Sizei(640, 480));
     writeOffscreenCapture(capturePath, frame);
+}
+
+GAME_TEST(MM6OutdoorSky, FirstVisitSky) {
+    // MM6 outdoor maps drew the missing-texture sign across the whole sky.
+    enterFirstMapFromNewGame(game);
+    if (::testing::Test::HasFatalFailure())
+        return;
+    int outdoorMaps = 0;
+    for (MapId map : pMapTable->pInfos.indices()) {
+        if (!isMapOutdoor(GameTitle::MM6, map))
+            continue;
+        const std::string &fileName = pMapTable->pInfos[map].fileName;
+        if (map != engine->_currentLoadedMapId)
+            enterMapAtFirstShippedEntrance(game, map);
+        if (::testing::Test::HasFatalFailure())
+            return;
+        ASSERT_NE(pOutdoor->sky_texture, nullptr) << fileName;
+        EXPECT_EQ(pOutdoor->sky_texture->name(), "sky01") << fileName;
+        EXPECT_NE(engine->resources()->bitmapSize(pOutdoor->sky_texture->name()), Sizei()) << fileName; // A missing bitmap draws as the placeholder.
+        ++outdoorMaps;
+    }
+    EXPECT_EQ(outdoorMaps, 15);
 }

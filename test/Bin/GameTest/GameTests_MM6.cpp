@@ -21,7 +21,6 @@
 #include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
-#include "Engine/Graphics/OutdoorSkyResources.h"
 #include "Engine/MM6/MM6Archive.h"
 #include "Engine/MM7/MM7AtomicSaveFile.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
@@ -299,10 +298,6 @@ GAME_TEST(MM6Headless, FirstOutdoorResourcePreflight) {
     }
     EXPECT_GT(reloadSpriteActions, 0);
     EXPECT_GT(reloadFacetTextures, 0);
-    const auto terminator = std::find(base.skyTexture.begin(), base.skyTexture.end(), '\0');
-    const std::string_view sky(base.skyTexture.data(), terminator - base.skyTexture.begin());
-    EXPECT_EQ(mm6OutdoorBaseSky(GameTitle::MM6, sky), "plansky2");
-    EXPECT_EQ(engine->resources()->bitmapSize(sky), Sizei(256, 256));
 }
 
 GAME_TEST(MM6Headless, MapClassificationMatchesMapFiles) {
@@ -818,8 +813,6 @@ TEST(MM6HeadlessFirstOutdoorResources, TitleIsolation) {
     EXPECT_EQ(mm7Last.background, "loading5.pcx");
     EXPECT_EQ(mm7First.progress, "loadprog");
     EXPECT_EQ(mm7Last.progress, "loadprog");
-    EXPECT_EQ(mm6OutdoorBaseSky(GameTitle::MM6, "plansky2"), "plansky2");
-    EXPECT_TRUE(mm6OutdoorBaseSky(GameTitle::MM7, "plansky2").empty());
 }
 
 TEST(MM6HeadlessFirstOutdoorMapId, HirelingRuleIsolation) {

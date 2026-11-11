@@ -29,3 +29,8 @@ Update: S-DAMAGE finished (`ecf9d182f`, handoff `handoffs/2026-11-11-claude-mm6-
 | S-TRAPLOOP t7 trapped-door event repeat | `claude/mm6-trap-loop` in `mm7-save-durability` | whatever re-fires face events each frame (`Collisions.cpp` face trigger by monster, `SpriteObject.cpp` trigger by object, MM6 event dispatch), and a new MM6 test. Shared core, merged with the M7 controls. |
 | S-EVTSPELL MM6 event CastSpell | `claude/mm6-event-spells` in `mm7-monster-combat` | `src/Engine/MM6/MM6SpellEffectGuard.h`, MM6 spell effect dispatch for event sources (MM6-owned files first), the MM6 branch of `eventCastSpell` in `src/Engine/Spells/Spells.cpp`, new MM6 tests. |
 
+Update 2026-11-11: S-TRAPLOOP and S-EVTSPELL (with follow-ups) are integrated. Codex has been silent since 03:22 UTC, so Claude takes S-BORDER, which was offered to Codex. New lanes:
+
+| S-BORDER MM6 live travel within a session (M2 part 1) | `claude/mm6-border-travel` in `mm7-save-durability` | a new MM6 map transition module under `src/Engine/MM6/`, hooks in `src/Engine/Graphics/Outdoor.cpp` (`getTravelDestination`), `src/Application/Game.cpp` (`UIMSG_OnTravelByFoot`), `src/Engine/Engine.cpp` (`startMapTransition`), the MM6 house exit path in `src/GUI/UI/Houses/MM6House.cpp`, new MM6 tests. Shared core. |
+| S-COMBAT MM6 monster missiles and spells | `claude/mm6-monster-combat` in `mm7-monster-combat` | `src/Engine/MM6/MM6MonsterSpellEffect.h`, the MM6 projectile verification, the MM6 branch of `Actor::AI_RangedAttack` and monster special attacks, new MM6 tests. Shared core (`Actor.cpp`). |
+

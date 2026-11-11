@@ -194,8 +194,9 @@ On `master` at `88619a690`: M1 production New Game (gate 27/27), the map
 sweep, the award-animation crash, reputation, the generated NPC pool and
 the damage channels. The t7 trap loop was a broken MM6 indoor decoration parser,
 fixed and integrated at `c9d306191` (trap test, MM6 suite 96 passed, MM6
-first-map gate with MM7 controls, MM7 in-process 107 passed). Active lane:
-event spell casts.
+first-map gate with MM7 controls, MM7 in-process 107 passed). Event spells and
+their d18 follow-ups are integrated. Active lanes: S-BORDER live travel and
+S-COMBAT monster missiles and spells.
 
 Drafted 2026-11-10 by a read-only planning pass, with its key source claims
 spot-checked by Claude. Source facts that shape it: production MM6 New Game
@@ -317,6 +318,13 @@ exception is d18, whose event Fireball timer reaches an `evaluateAoeDamage`
 assert with the event caster. That fix and a sci-fi Sparks test re-check
 are with the event spell lane. Remaining event-spell refusals are on
 non-quest maps only (spells 12, 35, 46, 83, 91).
+
+Sweep on `master` after the d18 and particle follow-ups (`9db7e96ba`): all
+26 main-quest maps load and run every phase with actors, 66 of 67 maps in
+all, and nothing crashes. The only throws left are event spells 12, 35, 46,
+83 and 91 on six non-quest maps. The next MM6 gaps are live travel (M2),
+monster missiles and spells (under-sampled by the sweep), party death (M3)
+and the chained main-quest path (M4).
 
 Revised M4 build order: the award-animation crash, reputation executor
 (done on `claude/mm6-reputation-var`, display and other producers still

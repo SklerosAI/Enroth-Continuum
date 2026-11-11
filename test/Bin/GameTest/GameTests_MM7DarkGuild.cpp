@@ -11,6 +11,7 @@
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/MapEnums.h"
+#include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/NPCTable.h"
@@ -501,6 +502,47 @@ GAME_TEST(MM7DarkGuild, TolbertiRequiresAndAcceptsRobertsCube) {
     EXPECT_EQ(finishedTape, tape(false, true));
     EXPECT_EQ(cubeTape, tape(false, true, false));
     EXPECT_CONTAINS(prepareScriptedNPCDialogueTopics(&pNPCStats->pNPCData[87]), DIALOGUE_LEARN_BLASTER);
+}
+
+GAME_TEST(MM7DarkGuild, CelesteRobertCarriesControlCube) {
+    // The Dark target is Robert in the Celeste-side Small House; Tolberti's Light-side Pit encounter is a distinct
+    // actor despite sharing the map. Confirm the live Dark source rather than using that counterpart as a proxy.
+    game.startNewGame();
+    pParty->_questBits.set(QBIT_DARK_PATH);
+    pParty->_questBits.set(QBIT_DARK_GUILD_JOINED);
+    pParty->_questBits.set(QBIT_ALTAR_PIECES_DARK_FINISHED);
+    pParty->_questBits.set(QBIT_SOUL_JARS_DARK_FINISHED);
+    pParty->_questBits.set(QBIT_CLANKERS_LAB_FINISHED);
+    pParty->_questBits.set(QBIT_ROBERT_THE_WISE_ASSASSINATION_ACTIVE);
+
+    game.teleportTo(MAP_CELESTE, Vec3f(-158, 7624, 1), 0);
+    auto robertDoor = std::ranges::find_if(pIndoor->faces, [](const BLVFace &face) {
+        return face.eventId == 376 && face.Clickable();
+    });
+    ASSERT_NE(robertDoor, pIndoor->faces.end());
+    auto [position, yaw] = approachDarkGuildFace(*robertDoor);
+    game.teleportTo(MAP_CELESTE, position, yaw);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    if (current_screen_type != SCREEN_INPUT_BLV) {
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick();
+    }
+    ASSERT_EQ(current_screen_type, SCREEN_INPUT_BLV);
+    game.pressGuiButton("Transition_Yes");
+    game.skipLoadingScreen();
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_SMALL_HOUSE);
+
+    std::vector<int> carriers;
+    for (const Actor &actor : pActors) {
+        if (actor.monsterId != MONSTER_BLASTERGUY_B)
+            continue;
+        if (actor.carriedItemId == ITEM_QUEST_CONTROL_CUBE || actor.items[0].itemId == ITEM_QUEST_CONTROL_CUBE ||
+            actor.items[1].itemId == ITEM_QUEST_CONTROL_CUBE)
+            carriers.push_back(actor.id);
+    }
+    ASSERT_EQ(carriers.size(), 1u);
+    EXPECT_FALSE(pActors[carriers.front()].IsNotAlive());
 }
 
 GAME_TEST(MM7DarkGuild, KastoreRequiresXenofexKill) {

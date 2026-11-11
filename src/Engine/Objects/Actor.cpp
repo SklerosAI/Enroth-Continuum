@@ -4591,6 +4591,9 @@ double sub_43AE12(signed int a1) {
 
 //----- (0043B057) --------------------------------------------------------
 void ItemDamageFromActor(Pid uObjID, unsigned int uActorID, const Vec3f &pVelocity) {
+    if (engine->gameTitle() == GameTitle::MM6)
+        return; // The original monster damage routine ignores projectiles that an event launched.
+
      if (!pActors[uActorID].IsNotAlive()) {
         if (uObjID.type() == OBJECT_Sprite) {
             if (pSpriteObjects[uObjID.id()].uSpellID != SPELL_NONE) {

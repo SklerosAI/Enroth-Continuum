@@ -26,6 +26,26 @@ inline bool isVerifiedPlayerSpell(SpellId spell) {
 }
 
 /**
+ * @param spell                         MM6 spell ID from an event's CastSpell.
+ * @return                              Whether an event cast of this spell has a verified launch and damage. These are
+ *                                      Fireball, Sparks, Ice Bolt, Ice Blast and Toxic Cloud, plus Armageddon, which
+ *                                      the original event cast leaves undone.
+ */
+inline bool isVerifiedEventSpell(SpellId spell) {
+    switch (static_cast<int>(spell)) {
+        case 6:
+        case 15:
+        case 28:
+        case 32:
+        case 90:
+        case 98:
+            return true;
+        default:
+            return false;
+    }
+}
+
+/**
  * Refuses an MM6 spell whose target and effect are not verified for the given source, before anything changes.
  * Player bow and blaster projectiles are not spells and keep their queue behavior.
  *
@@ -42,6 +62,8 @@ inline void requireVerifiedSpellEffect(GameTitle title, SpellId spell, SpellEffe
     if (source == SpellEffectSource::PlayerQueue && isVerifiedPlayerSpell(spell))
         return;
     if (source == SpellEffectSource::Monster && isVerifiedMonsterSpell(spell))
+        return;
+    if (source == SpellEffectSource::Event && isVerifiedEventSpell(spell))
         return;
     throw std::runtime_error("MM6 spell target and effect dispatch are not implemented");
 }

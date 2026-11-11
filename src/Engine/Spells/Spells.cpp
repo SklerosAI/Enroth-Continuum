@@ -7,6 +7,7 @@
 
 #include "Engine/Party.h"
 #include "Engine/Engine.h"
+#include "Engine/MM6/MM6EventSpell.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Overlays.h"
@@ -589,6 +590,11 @@ void eventCastSpell(SpellId uSpellID, Mastery skillMastery, int skillLevel, Vec3
         int xy_distance = (int)std::sqrt((double)(xSquared + ySquared));
         yaw = TrigLUT.atan2(coord_delta.x, coord_delta.y);
         pitch = TrigLUT.atan2(xy_distance, coord_delta.z);
+    }
+
+    if (engine->gameTitle() == GameTitle::MM6) {
+        mm6::launchEventSpell(uSpellID, skillMastery, skillLevel, from, yaw, pitch, distance_to_target);
+        return;
     }
 
     SpriteObject spell_sprites;

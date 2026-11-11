@@ -6,7 +6,8 @@
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 
 UNIT_TEST(MM6SpellEffectGuard, RejectsUnverifiedRegularIDsAtEveryEffectEntry) {
-    // Only Cure Weakness is open to player casts, and only the four first-map monster spells to monster casts.
+    // Only Cure Weakness is open to player casts, only the four first-map monster spells to monster casts, and only
+    // the six event spells of the main quest to event casts.
     for (int id = 1; id <= 99; ++id) {
         const SpellId spell = static_cast<SpellId>(id);
         for (mm6::SpellEffectSource source : {mm6::SpellEffectSource::PlayerQueue,
@@ -14,7 +15,9 @@ UNIT_TEST(MM6SpellEffectGuard, RejectsUnverifiedRegularIDsAtEveryEffectEntry) {
                                                mm6::SpellEffectSource::Monster,
                                                mm6::SpellEffectSource::Damage}) {
             const bool verified = (source == mm6::SpellEffectSource::PlayerQueue && id == 67) ||
-                                  (source == mm6::SpellEffectSource::Monster && (id == 2 || id == 4 || id == 18 || id == 24));
+                                  (source == mm6::SpellEffectSource::Monster && (id == 2 || id == 4 || id == 18 || id == 24)) ||
+                                  (source == mm6::SpellEffectSource::Event &&
+                                   (id == 6 || id == 15 || id == 28 || id == 32 || id == 90 || id == 98));
             if (verified) {
                 EXPECT_NO_THROW(mm6::requireVerifiedSpellEffect(GameTitle::MM6, spell, source)) << id;
             } else {

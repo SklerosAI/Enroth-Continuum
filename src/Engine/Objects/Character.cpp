@@ -25,6 +25,7 @@
 #include "Engine/MM6/MM6Calendar.h"
 #include "Engine/MM6/MM6CombatRules.h"
 #include "Engine/MM6/MM6CreationRules.h"
+#include "Engine/MM6/MM6EventSpell.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6MonsterPreferences.h"
 #include "Engine/MM6/MM6MonsterSpecialAttack.h"
@@ -4206,6 +4207,11 @@ void DamageCharacterFromMonster(Pid uObjID, ActorAbility dmgSource, signed int t
             return;
 
         if (uActorType == OBJECT_Sprite) {
+            if (engine->gameTitle() == GameTitle::MM6) {
+                mm6::damageCharacterFromEventSpell(*spritefrom, targetchar);
+                return;
+            }
+
             Character *playerPtr;  // eax@81
 
             // select char target or pick random

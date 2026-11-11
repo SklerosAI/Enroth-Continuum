@@ -15,6 +15,8 @@
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Objects/Chest.h"
+#include "Engine/Objects/SpriteEnumFunctions.h"
+#include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/MapTable.h"
@@ -71,15 +73,15 @@ void enterFirstMapFromNewGame(EngineController &game) {
 }
 
 void enterMapAtShippedEntrance(EngineController &game, std::string_view fileName) {
-    // Loads the map at the first shipped MoveToMap that names it, the way the map sweep does.
+    // Loads the map at the first shipped MoveToMap that names it, or at its party start without one, the way the map
+    // sweep does.
     const MapId map = pMapTable->GetMapInfo(fileName);
     const std::optional<MM6ShippedEntrance> entrance = findShippedMM6Entrance(fileName);
-    ASSERT_TRUE(entrance);
     bool loaded = false;
     game.runGameRoutine([&] {
         for (Chest &chest : vChests)
             chest.position.reset(); // The first map's chest positions would make the target's chest load refuse.
-        engine->_pendingTransition = MapDestination(map, entrance->placement);
+        engine->_pendingTransition = entrance ? MapDestination(map, entrance->placement) : MapDestination(map, MAP_START_POINT_PARTY);
         mm6::ScopedChestMapLoadOptIn chestOptIn;
         PrepareWorld(0);
         loaded = true;
@@ -252,4 +254,79 @@ GAME_TEST(MM6CombatHeadless, DISABLED_TrapDoorFiresOnlyWhenClicked) {
 
     EXPECT_EQ(hpTape, tape({200, 200, 200, 200}, {200, 150, 200, 200})); // One hit of the trap.
     EXPECT_EQ(doorTape, tape(DOOR_OPEN)); // The new party fails the disarm check, so the trap goes off and the door doesn't move.
+}
+
+GAME_TEST(MM6CombatHeadless, DISABLED_SciFiSparksTimerHitsParty) {
+    // The sci-fi Sparks timer used to refuse its event spell and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = charTapes.hps();
+    auto conditionTape = charTapes.conditions();
+    auto sparksTape = tapes.custom([] {
+        return std::ranges::count(pSpriteObjects, SPRITE_SPELL_AIR_SPARKS, &SpriteObject::spriteId);
+    });
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "sci-fi.blv");
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(-5632, -4300, 394), 1536); // In the path of the timer's sparks.
+    for (Character &character : pParty->pCharacters)
+        character.health = 200; // A spark hits a new character harder than it can take.
+    test.startTaping();
+
+    game.tick(34); // The timer launches its sparks, and they fly into the party.
+
+    EXPECT_EQ(sparksTape.max(), 7); // Master mastery spreads seven sparks.
+    EXPECT_EQ(hpTape, tape({200, 200, 200, 200}, {162, 200, 162, 162})); // Level 100 hits as 36 plus 2.
+    EXPECT_EQ(conditionTape.frontBack(), tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
+                                              {CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD}));
+}
+
+GAME_TEST(MM6CombatHeadless, DISABLED_Cd1FireballTimerHitsWholeParty) {
+    // The cd1 Fireball timer used to refuse its event spell and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = charTapes.hps();
+    auto conditionTape = charTapes.conditions();
+    auto spritesTape = tapes.sprites();
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "cd1.blv");
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(2400, 9373, -928), 0); // In the path of the timer's fireball.
+    for (Character &character : pParty->pCharacters)
+        character.health = 200; // A level 10 fireball can kill a new character.
+    test.startTaping();
+
+    game.tick(202); // The ten-minute timer launches its fireball, and it explodes on the party.
+
+    auto sprites = spritesTape.flatten();
+    EXPECT_CONTAINS(sprites, SPRITE_SPELL_FIRE_FIREBALL);
+    EXPECT_CONTAINS(sprites, SPRITE_SPELL_FIRE_FIREBALL_IMPACT);
+    ASSERT_EQ(hpTape.size(), 2);
+    for (int i = 0; i < 4; i++) // The explosion hits every character.
+        EXPECT_LT(hpTape.back()[i], 200) << i;
+    EXPECT_EQ(conditionTape.frontBack(), tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
+                                              {CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD}));
+}
+
+GAME_TEST(MM6CombatHeadless, DISABLED_Cd2PoisonPlateHitsOneCharacter) {
+    // A cd2 plate that casts Toxic Cloud at the party used to refuse its event spell and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = charTapes.hps();
+    auto conditionTape = charTapes.conditions();
+    auto spritesTape = tapes.sprites();
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "cd2.blv");
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(12700, -288, -230), 0); // Just before the plates.
+    for (Character &character : pParty->pCharacters)
+        character.health = 200; // A level 10 cloud can kill a new character.
+    test.startTaping();
+
+    game.pressKey(PlatformKey::KEY_UP);
+    game.tick(2); // The party walks onto the plates.
+    game.releaseKey(PlatformKey::KEY_UP);
+    game.tick(13); // The cloud flies at the party from the wall.
+
+    auto sprites = spritesTape.flatten();
+    EXPECT_CONTAINS(sprites, SPRITE_SPELL_DARK_TOXIC_CLOUD);
+    EXPECT_CONTAINS(sprites, impactSprite(SPRITE_SPELL_DARK_TOXIC_CLOUD));
+    ASSERT_EQ(hpTape.size(), 2);
+    EXPECT_EQ(std::ranges::count(hpTape.back(), 200), 3); // The cloud hits one character.
+    EXPECT_EQ(conditionTape.frontBack(), tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
+                                              {CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD}));
 }

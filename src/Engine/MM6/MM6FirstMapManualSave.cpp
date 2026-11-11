@@ -11,6 +11,7 @@
 
 #include "Library/Logger/Logger.h"
 
+#include "MM6MapTransition.h"
 #include "MM6SessionSave.h"
 #include "MM6V4SaveFields.h"
 #include "MM6V5FirstMapLoadAttempt.h"
@@ -101,7 +102,8 @@ bool isManualSaveArmed() {
     return sessionTemplate != nullptr;
 }
 
-FirstMapManualSaveResult saveFirstMapManualSlot(std::string_view fileName, std::string_view displayName) {
+static FirstMapManualSaveResult saveSlot(std::string_view fileName, std::string_view displayName,
+                                         V5FirstMapCaptureBoundary boundary) {
     FirstMapManualSaveResult result;
     try {
         const auto &root = profileRoot();
@@ -112,17 +114,30 @@ FirstMapManualSaveResult saveFirstMapManualSlot(std::string_view fileName, std::
         result.fileName = fileName.empty() ? firstFreeSlot(*root) : std::string(fileName);
         if (armedSourceV4) {
             result.outcome = manualSaveOutcome(writeV5FirstMapNativeLiveSave({*root, *root}, result.fileName, *armedSourceV4, displayName,
-                                                                             GameTitle::MM6, numberedSlotValidator(), testFault).outcome);
+                                                                             boundary, GameTitle::MM6, numberedSlotValidator(), testFault).outcome);
         } else {
             const std::vector<std::uint8_t> candidate = captureSessionSave(*sessionTemplate, displayName, GameTitle::MM6);
             result.outcome = manualSaveOutcome(writeNumberedSlotCandidate({*root, *root}, result.fileName, candidate, GameTitle::MM6,
                                                                           numberedSlotValidator(), testFault));
         }
     } catch (const std::exception &e) {
-        MM_WARNING("MM6 manual save refused before writing: {}", e.what());
+        MM_WARNING("MM6 save to '{}' refused before writing: {}", fileName, e.what());
         result.outcome = MANUAL_SAVE_REFUSED;
     }
     return result;
+}
+
+FirstMapManualSaveResult saveFirstMapManualSlot(std::string_view fileName, std::string_view displayName) {
+    return saveSlot(fileName, displayName, V5FirstMapCaptureBoundary::PausedSaveMenu);
+}
+
+FirstMapManualSaveResult saveSessionSlot(std::string_view fileName, std::string_view displayName,
+                                         V5FirstMapCaptureBoundary boundary) {
+    if (fileName.empty()) {
+        MM_WARNING("MM6 save refused, it names no slot");
+        return {};
+    }
+    return saveSlot(fileName, displayName, boundary);
 }
 
 std::vector<SaveSlotInfo> listFirstMapManualSlots() {
@@ -145,28 +160,67 @@ std::vector<std::uint8_t> readFirstMapManualSlot(std::string_view fileName) {
 }
 
 bool mayLoadFirstMapManualSlot(std::string_view fileName) {
-    return profileRoot() && isNumberedV5FirstMapSlot(fileName);
+    return profileRoot() && isMM6SaveSlot(fileName);
+}
+
+namespace {
+struct StagedSlot {
+    std::unique_ptr<StagedSessionSave> session; // A v7 slot.
+    std::unique_ptr<V5FirstMapLoadAttempt> firstMap; // A first-map v5 slot.
+};
+} // namespace
+
+static StagedSlot stageSlot(std::string_view fileName) {
+    if (!engine || engine->gameTitle() != GameTitle::MM6 || engine->_mm6FirstMapLoadAttempt)
+        throw std::runtime_error("MM6 slot load needs an MM6 session without a load in flight");
+    const std::vector<std::uint8_t> bytes = readFirstMapManualSlot(fileName);
+    StagedSlot result;
+    if (isSessionSave(bytes)) {
+        result.session = stageSessionSave(bytes, GameTitle::MM6);
+    } else {
+        result.firstMap = V5FirstMapLoadAttempt::fromNativeSlot(bytes, fileName, GameTitle::MM6);
+    }
+    return result;
+}
+
+static void publishSlot(StagedSlot staged, std::string_view fileName) {
+    if (staged.session) {
+        auto savedTemplate = std::make_unique<RawSaveFields>(staged.session->represented.raw.saved);
+        publishSessionSave(staged.session.get(), GameTitle::MM6);
+        sessionTemplate = std::move(savedTemplate);
+    } else {
+        engine->_mm6FirstMapLoadAttempt = std::move(staged.firstMap);
+        engine->_mm6FirstMapLoadAttempt->publishOwners(GameTitle::MM6);
+    }
+    engine->_lastLoadedSaveFileName = fileName;
 }
 
 void loadFirstMapManualSlot(std::string_view fileName) {
-    if (!engine || engine->gameTitle() != GameTitle::MM6 || engine->_mm6FirstMapLoadAttempt)
-        throw std::runtime_error("MM6 slot load needs a fresh MM6 session");
     try {
-        const std::vector<std::uint8_t> bytes = readFirstMapManualSlot(fileName);
-        if (isSessionSave(bytes)) {
-            const std::unique_ptr<StagedSessionSave> staged = stageSessionSave(bytes, GameTitle::MM6);
-            auto savedTemplate = std::make_unique<RawSaveFields>(staged->represented.raw.saved);
-            publishSessionSave(staged.get(), GameTitle::MM6);
-            sessionTemplate = std::move(savedTemplate);
-        } else {
-            engine->_mm6FirstMapLoadAttempt = V5FirstMapLoadAttempt::fromNativeSlot(bytes, fileName, GameTitle::MM6);
-            engine->_mm6FirstMapLoadAttempt->publishOwners(GameTitle::MM6);
-        }
+        publishSlot(stageSlot(fileName), fileName);
     } catch (const std::exception &e) {
         MM_ERROR("MM6 slot '{}' was not loaded: {}", fileName, e.what());
         throw;
     }
-    engine->_lastLoadedSaveFileName = fileName;
+}
+
+bool loadSlotOverSession(std::string_view fileName) {
+    StagedSlot staged;
+    try {
+        staged = stageSlot(fileName);
+    } catch (const std::exception &e) {
+        MM_WARNING("MM6 slot '{}' was not loaded, the game goes on: {}", fileName, e.what());
+        return false;
+    }
+    forgetParkedMaps();
+    disarmFirstMapManualSave();
+    try {
+        publishSlot(std::move(staged), fileName);
+    } catch (const std::exception &e) {
+        MM_ERROR("MM6 slot '{}' was not loaded: {}", fileName, e.what());
+        throw;
+    }
+    return true;
 }
 
 void testing::setNativeProfileRootForTest(std::optional<std::filesystem::path> root) {

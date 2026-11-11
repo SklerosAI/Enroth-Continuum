@@ -55,7 +55,7 @@ constexpr std::string_view TEST_SLOT = "candidate-v5-after-action.ec6";
 std::function<void()> partyPublicationFault;
 
 bool admitsSlot(std::string_view slotName, GameTitle title) {
-    return title == GameTitle::MM6 && (slotName == TEST_SLOT || isNumberedV5FirstMapSlot(slotName));
+    return title == GameTitle::MM6 && (slotName == TEST_SLOT || isMM6SaveSlot(slotName));
 }
 
 } // namespace

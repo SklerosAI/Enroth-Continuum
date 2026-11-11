@@ -233,7 +233,7 @@ UNIT_TEST(MM6AtomicSaveFile, NativeFirstMapSlotRefusesRootAndCollision) {
     };
     EXPECT_FALSE(stage(binding).primary);
     EXPECT_THROW((void) stage({root, root / "other"}), std::exception);
-    EXPECT_THROW((void) stage(binding, "quicksave0.ec6"), std::exception);
+    EXPECT_THROW((void) stage(binding, "quicksave.ec6"), std::exception);
     EXPECT_THROW((void) stage(binding, "save001.mm7"), std::exception);
     EXPECT_THROW((void) stage(binding, "save001.ec6", GameTitle::MM7), std::exception);
     EXPECT_THROW((void) mm6::preflightV5FirstMapNativeWriteSlot(
@@ -347,8 +347,31 @@ UNIT_TEST(MM6AtomicSaveFile, NumberedSlotRotatesFirstMapAndAnyMapSaves) {
     EXPECT_EQ(read(slot), firstMap);
 }
 
-UNIT_TEST(MM6AtomicSaveFile, NativeFirstMapSlotListShowsOnlyLoadableNumberedSlots) {
-    // The MM6 load menu lists only numbered first-map slots it can load as they are.
+UNIT_TEST(MM6AtomicSaveFile, AutosaveAndQuickSaveKeepTheirBackups) {
+    // The autosave and a quick save are written atomically and keep the previous save as the backup, as numbered slots
+    // do.
+    TestProfile profile;
+    const auto root = std::filesystem::canonical(profile.root());
+    const mm6::V5FirstMapNativeRoot binding{root, root};
+    const auto firstMap = sampleFirstMapV5(134);
+    const auto dungeon = sampleV7(135);
+    const auto accept = [](std::span<const std::uint8_t>) {};
+    using Outcome = mm6::V5FirstMapSaveOutcome;
+    for (std::string_view name : {"autosave.ec6", "quicksave3.ec6"}) {
+        const auto slot = root / "saves" / name;
+        const auto backup = root / "saves" / (std::string(name) + ".bak");
+        EXPECT_EQ(mm6::writeNumberedSlotCandidate(binding, name, firstMap, GameTitle::MM6, accept), Outcome::Committed);
+        EXPECT_EQ(mm6::writeNumberedSlotCandidate(binding, name, dungeon, GameTitle::MM6, accept), Outcome::Committed);
+        EXPECT_EQ(read(slot), dungeon);
+        EXPECT_EQ(read(backup), firstMap);
+    }
+    write(root / "saves/autosave.ec6", sampleV4(136));
+    EXPECT_THROW((void) mm6::writeNumberedSlotCandidate(binding, "autosave.ec6", dungeon, GameTitle::MM6, accept), std::exception);
+    EXPECT_EQ(read(root / "saves/autosave.ec6"), sampleV4(136));
+}
+
+UNIT_TEST(MM6AtomicSaveFile, NativeFirstMapSlotListShowsOnlyLoadableProfileSlots) {
+    // The MM6 load menu lists the numbered slots, the autosave and the quick saves it can load as they are.
     TestProfile profile;
     const auto root = std::filesystem::canonical(profile.root());
     const mm6::V5FirstMapNativeRoot binding{root, root};
@@ -368,17 +391,23 @@ UNIT_TEST(MM6AtomicSaveFile, NativeFirstMapSlotListShowsOnlyLoadableNumberedSlot
     write(root / "saves/save004.ec6.bak", first);
     write(root / "saves/save005.ec6", rejectMarker);
     write(root / "saves/autosave.ec6", first);
+    write(root / "saves/quicksave2.ec6", first);
+    write(root / "saves/quicksave.ec6", first);
+    write(root / "saves/autosave.mm7", first);
     write(root / "saves/save006.ec6", first);
     write(root / "saves/save006.ec6.bak", {1, 2, 3});
 
     const auto slots = mm6::listV5FirstMapNativeSlots(binding, GameTitle::MM6, validate);
-    ASSERT_EQ(slots.size(), 1);
-    EXPECT_EQ(slots[0].fileName, "save000.ec6");
-    EXPECT_EQ(slots[0].header.mapFileName, "oute3.odm");
-    EXPECT_FALSE(slots[0].needsRecovery);
+    ASSERT_EQ(slots.size(), 3);
+    EXPECT_EQ(slots[0].fileName, "autosave.ec6");
+    EXPECT_EQ(slots[1].fileName, "quicksave2.ec6");
+    EXPECT_EQ(slots[2].fileName, "save000.ec6");
+    EXPECT_EQ(slots[2].header.mapFileName, "oute3.odm");
+    EXPECT_FALSE(slots[2].needsRecovery);
     EXPECT_EQ(mm6::readV5FirstMapNativeLoadSlot(binding, "save000.ec6", GameTitle::MM6, validate), first);
+    EXPECT_EQ(mm6::readV5FirstMapNativeLoadSlot(binding, "autosave.ec6", GameTitle::MM6, validate), first);
     for (std::string_view refused : {"save002.ec6", "save003.ec6", "save004.ec6", "save005.ec6", "save006.ec6",
-                                     "save007.ec6", "autosave.ec6", "save001.mm7"})
+                                     "save007.ec6", "quicksave.ec6", "autosave.mm7", "save001.mm7"})
         EXPECT_THROW((void) mm6::readV5FirstMapNativeLoadSlot(binding, refused, GameTitle::MM6, validate),
                      std::exception) << refused;
     EXPECT_THROW((void) mm6::listV5FirstMapNativeSlots(binding, GameTitle::MM7, validate), std::exception);

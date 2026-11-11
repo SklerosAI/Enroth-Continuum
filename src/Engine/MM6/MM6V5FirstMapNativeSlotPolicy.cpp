@@ -42,8 +42,8 @@ void requireNativeRoot(const V5FirstMapNativeRoot &root, GameTitle title,
 void requireNativeRootAndSlot(const V5FirstMapNativeRoot &root,
                               std::string_view slotName, GameTitle title,
                               const SaveCandidateValidator &validate) {
-    if (!isNumberedV5FirstMapSlot(slotName))
-        throw std::invalid_argument("MM6 native first-map write needs numbered title-private slot");
+    if (!isMM6SaveSlot(slotName))
+        throw std::invalid_argument("MM6 native first-map write needs a slot of the MM6 profile");
     requireNativeRoot(root, title, validate);
 }
 
@@ -108,6 +108,12 @@ bool isNumberedV5FirstMapSlot(std::string_view slotName) {
            std::ranges::all_of(slotName.substr(4, 3), [](char digit) { return digit >= '0' && digit <= '9'; });
 }
 
+bool isMM6SaveSlot(std::string_view slotName) {
+    const bool quickSave = slotName.size() == 14 && slotName.starts_with("quicksave") && slotName.ends_with(".ec6") &&
+                           slotName[9] >= '0' && slotName[9] <= '9';
+    return isNumberedV5FirstMapSlot(slotName) || slotName == AUTOSAVE_SLOT || quickSave;
+}
+
 V5FirstMapSlotState preflightV5FirstMapNativeWriteSlot(
     const V5FirstMapNativeRoot &root, std::string_view slotName,
     std::span<const std::uint8_t> candidate, GameTitle title,
@@ -151,13 +157,12 @@ V5FirstMapSaveOutcome writeNumberedSlotCandidate(
 
 V5FirstMapSaveAttempt writeV5FirstMapNativeLiveSave(
     const V5FirstMapNativeRoot &root, std::string_view slotName,
-    std::span<const std::uint8_t> sourceV4, std::string_view displayName,
+    std::span<const std::uint8_t> sourceV4, std::string_view displayName, V5FirstMapCaptureBoundary boundary,
     GameTitle title, const SaveCandidateValidator &validate, const detail::AtomicSaveFault &fault) {
     requireNativeRootAndSlot(root, slotName, title, validate);
     const auto source = std::unique_ptr<V4SaveFields>(new V4SaveFields(decodeV4Save(sourceV4, title)));
     source->v3.raw.metadata.header.displayName = displayName;
-    auto candidate = captureV5FirstMapLiveSession(
-        encodeV4Save(*source, title), V5FirstMapCaptureBoundary::PausedSaveMenu);
+    auto candidate = captureV5FirstMapLiveSession(encodeV4Save(*source, title), boundary);
     const V5FirstMapSaveOutcome outcome = writeNumberedSlotCandidate(
         root, slotName, candidate, title, validate, fault);
     return {std::move(candidate), outcome};
@@ -175,7 +180,7 @@ std::vector<SaveSlotInfo> listV5FirstMapNativeSlots(
         std::string name = entry.path().filename().string();
         if (name.ends_with(".bak"))
             name.resize(name.size() - 4);
-        if (isNumberedV5FirstMapSlot(name))
+        if (isMM6SaveSlot(name))
             names.insert(std::move(name));
     }
     std::vector<SaveSlotInfo> result;

@@ -11,6 +11,7 @@
 #include "Engine/GameTitle.h"
 
 #include "MM6AtomicSaveFile.h"
+#include "MM6V5LiveSaveCapture.h"
 
 namespace mm6 {
 
@@ -78,33 +79,55 @@ struct FirstMapManualSaveResult {
 FirstMapManualSaveResult saveFirstMapManualSlot(std::string_view fileName, std::string_view displayName);
 
 /**
- * @return                              Loadable numbered slots of the startup MM6 profile, sorted by file name. Empty
+ * Saves the armed session to one slot of the profile, as `saveFirstMapManualSlot` does.
+ *
+ * @param fileName                      Slot of the profile, see `isMM6SaveSlot`.
+ * @param displayName                   Title shown in the save list.
+ * @param boundary                      Where a save on the first map is captured, the idle paused Save menu or settled
+ *                                      input.
+ * @return                              Outcome and the slot it applies to. Never throws.
+ */
+FirstMapManualSaveResult saveSessionSlot(std::string_view fileName, std::string_view displayName,
+                                         V5FirstMapCaptureBoundary boundary);
+
+/**
+ * @return                              Loadable slots of the startup MM6 profile, sorted by file name. Empty
  *                                      when there is no profile root or the saves folder is refused.
  */
 std::vector<SaveSlotInfo> listFirstMapManualSlots();
 
 /**
- * @param fileName                      Listed `saveNNN.ec6` slot.
+ * @param fileName                      Listed slot.
  * @return                              Validated primary bytes of the slot. Throws when it can't be loaded as it is.
  */
 std::vector<std::uint8_t> readFirstMapManualSlot(std::string_view fileName);
 
 /**
  * @param fileName                      Slot selected in the main-menu Load menu.
- * @return                              Whether `loadFirstMapManualSlot` can take it: a numbered slot, with a native
- *                                      MM6 profile root to read it from.
+ * @return                              Whether `loadFirstMapManualSlot` can take it: a slot of the profile, see
+ *                                      `isMM6SaveSlot`, with a native MM6 profile root to read it from.
  */
 bool mayLoadFirstMapManualSlot(std::string_view fileName);
 
 /**
- * Starts the main-menu load of a numbered slot. Reads and stages the slot and publishes its owners, a first-map v5 slot
+ * Starts the main-menu load of a slot. Reads and stages the slot and publishes its owners, a first-map v5 slot
  * through a load attempt on the engine. World preparation, and the attempt's release, follow in the game loop. A v7
  * slot arms saving for the session right away. The slot file is only read.
  *
- * @param fileName                      Listed `saveNNN.ec6` slot. Throws when it can't be loaded, the caller then
- *                                      abandons the load.
+ * @param fileName                      Listed slot. Throws when it can't be loaded, the caller then abandons the load.
  */
 void loadFirstMapManualSlot(std::string_view fileName);
+
+/**
+ * Starts loading a slot over the running session. The slot is read and staged first. Then the session's parked maps
+ * and its save anchor are dropped, and the slot is published as `loadFirstMapManualSlot` publishes it.
+ *
+ * @param fileName                      Slot of the profile, see `isMM6SaveSlot`.
+ * @return                              Whether the slot was published. On `false` the slot couldn't be staged and the
+ *                                      session is unchanged. Throws when publication fails, the session is then
+ *                                      partial.
+ */
+bool loadSlotOverSession(std::string_view fileName);
 
 namespace testing {
 /**

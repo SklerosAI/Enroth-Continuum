@@ -21,6 +21,7 @@
 
 #include "MM6KnownSaveFields.h"
 #include "MM6RawSaveFields.h"
+#include "MM6V5FirstMapNativeSlotPolicy.h"
 
 namespace mm6 {
 namespace {
@@ -593,11 +594,8 @@ void detail::writeAtomicV5FirstMapNativeSaveFileForTest(
     const std::filesystem::path &profileRoot, std::string_view slotName,
     std::span<const std::uint8_t> container,
     const SaveCandidateValidator &validate, const AtomicSaveFault &fault) {
-    if (!validate || slotName.size() != 11 ||
-        !slotName.starts_with("save") || !slotName.ends_with(".ec6") ||
-        !std::all_of(slotName.begin() + 4, slotName.begin() + 7,
-                     [](char digit) { return digit >= '0' && digit <= '9'; }))
-        throw std::invalid_argument("MM6 native first-map writer needs numbered slot and validator");
+    if (!validate || !isMM6SaveSlot(slotName))
+        throw std::invalid_argument("MM6 native first-map writer needs a slot of the MM6 profile and a validator");
     validateNumberedCandidate(container, validate);
     rejectForeignSlotFiles(profileRoot, slotName, {5, 7});
     const auto directory = savesDirectory(profileRoot, slotName);

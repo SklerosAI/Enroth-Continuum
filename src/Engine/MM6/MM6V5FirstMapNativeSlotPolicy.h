@@ -9,6 +9,7 @@
 #include "Engine/GameTitle.h"
 #include "MM6AtomicSaveFile.h"
 #include "MM6V5FirstMapSaveWriter.h"
+#include "MM6V5LiveSaveCapture.h"
 
 namespace mm6 {
 
@@ -20,13 +21,22 @@ struct V5FirstMapNativeRoot {
     std::filesystem::path requestedRoot;
 };
 
+inline constexpr std::string_view AUTOSAVE_SLOT = "autosave.ec6";
+
 /**
  * @param slotName                      File name to check.
  * @return                              Whether it names a numbered manual slot, `saveNNN.ec6`.
  */
 bool isNumberedV5FirstMapSlot(std::string_view slotName);
 
-// Read-only admission for one numbered manual slot. All existing primary and
+/**
+ * @param slotName                      File name to check.
+ * @return                              Whether it names a slot of the MM6 profile: a numbered slot, the autosave or a
+ *                                      quick save, `quicksaveN.ec6`.
+ */
+bool isMM6SaveSlot(std::string_view slotName);
+
+// Read-only admission for one slot of the profile. All existing primary and
 // backup files must be exact, semantically valid v7 saves or first-map v5
 // candidates; damaged, foreign-version and backup-only slots refuse writes.
 V5FirstMapSlotState preflightV5FirstMapNativeWriteSlot(
@@ -44,12 +54,12 @@ V5FirstMapSaveOutcome writeV5FirstMapNativeCandidateForTest(
     const detail::AtomicSaveFault &fault = {});
 
 /**
- * Commits a candidate to one numbered slot, keeping the old primary as the backup. The candidate and every file of
- * the slot must be a v7 save, or a v5 save on the first map, and pass `validate`. Every check runs before the first
+ * Commits a candidate to one slot of the profile, keeping the old primary as the backup. The candidate and every file
+ * of the slot must be a v7 save, or a v5 save on the first map, and pass `validate`. Every check runs before the first
  * file change.
  *
  * @param root                          Startup-resolved MM6 profile root.
- * @param slotName                      Numbered slot, `saveNNN.ec6`.
+ * @param slotName                      Slot of the profile, see `isMM6SaveSlot`.
  * @param candidate                     Encoded save.
  * @param title                         Must be MM6.
  * @param validate                      Full semantic validator for one candidate.
@@ -64,13 +74,14 @@ V5FirstMapSaveOutcome writeNumberedSlotCandidate(
     const detail::AtomicSaveFault &fault = {});
 
 /**
- * Captures the live first-map session at the idle paused Save menu and commits it to one numbered slot. The
- * capture, title and slot checks all run before the first file change, and throw on refusal.
+ * Captures the live first-map session and commits it to one slot of the profile. The capture, title and slot checks
+ * all run before the first file change, and throw on refusal.
  *
  * @param root                          Startup-resolved MM6 profile root.
- * @param slotName                      Numbered slot, `saveNNN.ec6`.
+ * @param slotName                      Slot of the profile, see `isMM6SaveSlot`.
  * @param sourceV4                      First-map v4 anchor of the running session.
  * @param displayName                   Title shown in the save list.
+ * @param boundary                      Where the capture runs, the idle paused Save menu or settled input.
  * @param title                         Must be MM6.
  * @param validate                      Full semantic validator for the candidate and the files of the slot.
  * @param fault                         Fault injection for tests, empty otherwise.
@@ -79,11 +90,11 @@ V5FirstMapSaveOutcome writeNumberedSlotCandidate(
  */
 V5FirstMapSaveAttempt writeV5FirstMapNativeLiveSave(
     const V5FirstMapNativeRoot &root, std::string_view slotName,
-    std::span<const std::uint8_t> sourceV4, std::string_view displayName,
+    std::span<const std::uint8_t> sourceV4, std::string_view displayName, V5FirstMapCaptureBoundary boundary,
     GameTitle title, const SaveCandidateValidator &validate, const detail::AtomicSaveFault &fault = {});
 
 /**
- * Read-only list of the numbered slots under the startup MM6 root. Disk is never repaired.
+ * Read-only list of the slots under the startup MM6 root. Disk is never repaired.
  *
  * @param root                          Startup-resolved MM6 profile root.
  * @param title                         Must be MM6.
@@ -97,10 +108,10 @@ std::vector<SaveSlotInfo> listV5FirstMapNativeSlots(
     const SaveCandidateValidator &validate);
 
 /**
- * Read-only load selection for one numbered slot. A slot that needs backup recovery is refused.
+ * Read-only load selection for one slot. A slot that needs backup recovery is refused.
  *
  * @param root                          Startup-resolved MM6 profile root.
- * @param slotName                      Numbered slot, `saveNNN.ec6`.
+ * @param slotName                      Slot of the profile, see `isMM6SaveSlot`.
  * @param title                         Must be MM6.
  * @param validate                      Full semantic validator for the candidate.
  * @return                              Primary bytes that passed `validate`. Throws for a missing or invalid slot.

@@ -21,7 +21,7 @@ namespace mm6 {
 /**
  * Engine-owned first-map v5 load context. It owns the detached graph, replays EVRT, actors, generated NPCs,
  * decorations, sprites, the chest handoff and RNGS in native load order, and checks the prepared world before the
- * first input frame. It lives for one load, started by the main-menu Load of a numbered slot.
+ * first input frame. It lives for one load of a slot of the MM6 profile.
  */
 class V5FirstMapLoadAttempt {
  public:
@@ -40,7 +40,8 @@ class V5FirstMapLoadAttempt {
      * Stages a first-map v5 slot and checks it before anything is published.
      *
      * @param slotBytes                 Validated primary bytes of the slot.
-     * @param slotName                  A numbered `saveNNN.ec6` slot, or the disposable test candidate.
+     * @param slotName                  A slot of the MM6 profile, see `isMM6SaveSlot`, or the disposable test
+     *                                  candidate.
      * @param title                     Must be MM6.
      * @return                          Detached attempt. Throws `std::invalid_argument` for another slot name or
      *                                  title, and `std::runtime_error` when the slot can't be staged.

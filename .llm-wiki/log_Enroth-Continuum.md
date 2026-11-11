@@ -3247,3 +3247,8 @@ Chronological record of wiki activity.
 - MM7 now returns a cursor-held scroll when queued target casting is cancelled because the caster becomes unable to act. The shared cancellation path remains title-gated, so MM6 behavior is unchanged.
 - `MM7Scrolls.IncapacitationCancelsActorTargetScroll` and the complete five-case scroll contract passed three consecutive headless runs. Pass, theft, full-queue and turn-wait exits remain separate audit candidates.
 
+## [2026-11-11] fix | MM7 native backup-load menu recovery
+- by: T-Burton-ND via codex
+- The native MM7 Load menu now retains a numbered slot when its primary cannot be decoded but its atomic backup can. The slot keeps its original filename, so normal Load resolves it through the existing structural primary-or-backup admission path.
+- The disposable writer leaves a corrupt primary next to a valid backup; a fresh process listed, selected and loaded the backup while preserving the corrupt primary. Automatic repair remains intentionally out of scope.
+

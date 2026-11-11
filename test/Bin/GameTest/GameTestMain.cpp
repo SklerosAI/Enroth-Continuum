@@ -10,6 +10,7 @@
 #include "Application/Startup/GameStarter.h"
 
 #include "Engine/Components/Control/EngineController.h"
+#include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/Resources/EngineFileSystem.h"
 
 #include "Testing/Game/GameTest.h"
@@ -89,53 +90,97 @@ constexpr std::array<Mm7ProfileGate, 18> mm7ProfileGates = {{
     {"MM7CampaignChain.DISABLED_Chapter7", false, true, 7},
 }};
 
-void validateDisposableMm7Profile(GameTestOptions *opts, const Mm7ProfileGate &gate) {
+/**
+ * Where a title's save gate keeps its disposable profile, and what the profile may hold besides saves.
+ */
+struct DisposableProfileLayout {
+    std::string_view gate; // Gate name for errors.
+    std::string_view prefix; // Directory name prefix under the system temp root.
+    std::string_view marker; // Marker file in the profile root.
+    std::string_view markerText; // First line of the marker file.
+    std::string_view ini; // Config file the game writes into the profile root, empty when it writes none.
+    std::string_view extension; // Save file extension.
+};
+
+constexpr DisposableProfileLayout mm7ProfileLayout = {
+    "MM7 save gate", "mm7-save-gate-", ".ec-mm7-disposable-save-gate", "EnrothContinuum-MM7-save-gate-v1", "enroth-continuum-mm7.ini", "mm7"
+};
+
+constexpr DisposableProfileLayout mm6ChainProfileLayout = {
+    "MM6 campaign chain",
+    "mm6-restart-chain-", // The MM6 save code takes a GameTest profile root only under the mm6-restart- prefix.
+    ".ec-mm6-campaign-chain", "EnrothContinuum-MM6-campaign-chain-v1", "", "ec6"
+};
+
+constexpr std::array<std::string_view, 10> mm6ChainGates = {{
+    "MM6CampaignChain.DISABLED_Chapter0",
+    "MM6CampaignChain.DISABLED_Chapter1",
+    "MM6CampaignChain.DISABLED_Chapter2",
+    "MM6CampaignChain.DISABLED_Chapter3",
+    "MM6CampaignChain.DISABLED_Chapter4",
+    "MM6CampaignChain.DISABLED_Chapter5",
+    "MM6CampaignChain.DISABLED_Chapter6",
+    "MM6CampaignChain.DISABLED_Chapter7",
+    "MM6CampaignChain.DISABLED_Chapter8",
+    "MM6CampaignChain.DISABLED_Chapter9",
+}};
+
+/**
+ * Checks a disposable save gate profile before a gated test runs in it.
+ *
+ * @param supplied                      Profile directory passed on the command line.
+ * @param layout                        Title layout of the profile.
+ * @param writer                        Whether the test starts from a profile that holds nothing but the marker.
+ * @param chapter                       Campaign chain chapter, see `Mm7ProfileGate::chapter`.
+ * @return                              Canonical profile root. Throws when the profile is refused.
+ */
+std::filesystem::path validateDisposableProfile(const std::filesystem::path &supplied, const DisposableProfileLayout &layout,
+                                                bool writer, int chapter) {
     namespace fs = std::filesystem;
-    const fs::path supplied(opts->userPath.str());
     if (!supplied.is_absolute() || !fs::is_directory(supplied))
-        throw Exception("MM7 save gate requires an absolute disposable profile directory.");
+        throw Exception("{} requires an absolute disposable profile directory.", layout.gate);
     const fs::path root = fs::canonical(supplied);
     if (root.parent_path() != fs::canonical(fs::temp_directory_path()) ||
-        !root.filename().string().starts_with("mm7-save-gate-") ||
+        !root.filename().string().starts_with(layout.prefix) ||
         (fs::status(root).permissions() & (fs::perms::group_all | fs::perms::others_all)) != fs::perms::none)
-        throw Exception("MM7 save gate requires an owner-only system-temp profile.");
-    const fs::path markerPath = root / ".ec-mm7-disposable-save-gate";
+        throw Exception("{} requires an owner-only system-temp profile.", layout.gate);
+    const fs::path markerPath = root / layout.marker;
     if (!fs::is_regular_file(markerPath) || fs::is_symlink(markerPath))
-        throw Exception("MM7 save gate profile marker is missing or invalid.");
+        throw Exception("{} profile marker is missing or invalid.", layout.gate);
     std::ifstream marker(markerPath);
     std::string value;
-    if (!std::getline(marker, value) || value != "EnrothContinuum-MM7-save-gate-v1")
-        throw Exception("MM7 save gate profile marker is missing or invalid.");
+    if (!std::getline(marker, value) || value != layout.markerText)
+        throw Exception("{} profile marker is missing or invalid.", layout.gate);
     for (const fs::directory_entry &entry : fs::directory_iterator(root)) {
         const std::string name = entry.path().filename().string();
         if (entry.is_symlink() ||
-            (gate.writer && name != ".ec-mm7-disposable-save-gate") ||
-            (!gate.writer && name != ".ec-mm7-disposable-save-gate" &&
-             name != "enroth-continuum-mm7.ini" && name != "saves"))
-            throw Exception("MM7 save gate profile contains an unexpected entry.");
+            (writer && name != layout.marker) ||
+            (!writer && name != layout.marker && (layout.ini.empty() || name != layout.ini) && name != "saves"))
+            throw Exception("{} profile contains an unexpected entry.", layout.gate);
     }
-    if (!gate.writer) {
+    if (!writer) {
         const fs::path saves = root / "saves";
-        const std::string candidate = gate.chapter > 0 ? fmt::format("save{:03}.mm7", gate.chapter - 1) : "save000.mm7";
+        const std::string candidate = fmt::format("save{:03}.{}", std::max(chapter - 1, 0), layout.extension);
         if (!fs::is_directory(saves) || fs::is_symlink(saves) ||
             !fs::is_regular_file(saves / candidate) || fs::is_symlink(saves / candidate))
-            throw Exception("MM7 save gate profile has no regular candidate save.");
+            throw Exception("{} profile has no regular candidate save.", layout.gate);
+        const std::string autosave = fmt::format("autosave.{}", layout.extension);
         for (const fs::directory_entry &entry : fs::directory_iterator(saves)) {
             const std::string name = entry.path().filename().string();
-            bool allowed = name == "autosave.mm7" || name == "autosave.mm7.bak";
-            if (gate.chapter >= 0) {
-                for (int chapter = 0; chapter < gate.chapter; ++chapter) {
-                    const std::string slot = fmt::format("save{:03}.mm7", chapter);
+            bool allowed = name == autosave || name == autosave + ".bak";
+            if (chapter >= 0) {
+                for (int earlier = 0; earlier < chapter; ++earlier) {
+                    const std::string slot = fmt::format("save{:03}.{}", earlier, layout.extension);
                     allowed |= name == slot || name == slot + ".bak" || name == slot + ".passed";
                 }
             } else {
-                allowed |= name == "save000.mm7" || name == "save000.mm7.bak";
+                allowed |= name == candidate || name == candidate + ".bak";
             }
             if (!entry.is_regular_file() || entry.is_symlink() || !allowed)
-                throw Exception("MM7 save gate profile contains an unexpected save.");
+                throw Exception("{} profile contains an unexpected save.", layout.gate);
         }
     }
-    opts->userPath = Path(root.string());
+    return root;
 }
 } // anonymous namespace
 
@@ -176,7 +221,16 @@ int platformMain(int argc, char **argv) {
             if (!opts.disposableMm7Profile || !hasMm7ProfileGate ||
                 !GTEST_FLAG_GET(also_run_disabled_tests))
                 throw Exception("MM7 disposable save gate requires its exact disabled test filter and temporary profile.");
-            validateDisposableMm7Profile(&opts, *gate);
+            opts.userPath = Path(validateDisposableProfile(opts.userPath.str(), mm7ProfileLayout, gate->writer, gate->chapter).string());
+        }
+        const auto mm6ChainGate = std::ranges::find(mm6ChainGates, filter);
+        const bool hasMm6ChainGate = mm6ChainGate != mm6ChainGates.end();
+        std::filesystem::path mm6ChainRoot;
+        if (!opts.mm6ChainProfile.isEmpty() || hasMm6ChainGate) {
+            if (opts.mm6ChainProfile.isEmpty() || !hasMm6ChainGate || !GTEST_FLAG_GET(also_run_disabled_tests))
+                throw Exception("MM6 campaign chain requires its exact disabled test filter and temporary profile.");
+            const int chapter = static_cast<int>(mm6ChainGate - mm6ChainGates.begin());
+            mm6ChainRoot = validateDisposableProfile(opts.mm6ChainProfile.str(), mm6ChainProfileLayout, chapter == 0, chapter);
         }
         if (opts.listRequested)
             return RUN_ALL_TESTS();
@@ -196,6 +250,8 @@ int platformMain(int argc, char **argv) {
             TestController test(game, &tfs, opts.speed, opts.disposableMm7Profile,
                                 hasMm7ProfileGate && gate->preserveSave);
             GameTest::init(game, &test);
+            if (!mm6ChainRoot.empty())
+                game->runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(mm6ChainRoot); });
             exitCode = RUN_ALL_TESTS();
         });
         return exitCode;

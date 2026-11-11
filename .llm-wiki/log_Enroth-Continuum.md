@@ -3257,3 +3257,8 @@ Chronological record of wiki activity.
 - Added `MM7SideQuests.DavriksSignetRingRequiresBanditCavesChest`. It dynamically reaches Davrik through the Harmondale tavern, proves an empty-handed report is refused, finds the quest-gated Bandit Caves chest through the normal chest UI, and completes the physical return.
 - The contract verifies active/taken bits, ring consumption, the Harmondale award, 5,000 gold and 5,000 XP per character. It passed three consecutive headless runs.
 
+## [2026-11-11] verify | MM7 Darron deck acquisition
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7SideQuests.DarronsDeckIsPhysicallyAcquiredAfterAcceptance`. It reaches Darron's actual Harmondale dialogue, accepts the task, enters White Cliff Cave and collects the real Arcomage deck by clicking the world item.
+- The deck is already present before acceptance, so this records physical acquisition rather than an incorrect spawn gate. The Darron return and reward contract remain open.
+

@@ -155,7 +155,8 @@ void BaseRenderer::PrepareDecorationsRenderList_ODM() {
         if (!IsCylinderInFrustum(pLevelDecorations[i].vPosition, 512.0f)) continue;
 
         // LevelDecoration *decor = &pLevelDecorations[i];
-        if ((!(pLevelDecorations[i].uFlags & LEVEL_DECORATION_OBELISK_CHEST) ||
+        // MM6 sets the obelisk bit on its ships and has no obelisks.
+        if ((engine->gameTitle() == GameTitle::MM6 || !(pLevelDecorations[i].uFlags & LEVEL_DECORATION_OBELISK_CHEST) ||
             pLevelDecorations[i].IsObeliskChestActive()) &&
             !(pLevelDecorations[i].uFlags & LEVEL_DECORATION_INVISIBLE)) {
             const DecorationData *decor_desc = pDecorationTable->decoration(pLevelDecorations[i].uDecorationDescID);

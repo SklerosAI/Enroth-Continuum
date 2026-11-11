@@ -84,20 +84,20 @@ def passed_chapters(root):
 
 def remove_unverified(root, chapter):
     saves = root / "saves"
-    for later in range(chapter + 1, 8):
-        if any(path.exists() for path in chapter_files(saves, later)):
-            raise ValueError(f"C{later} has files although C{chapter} has no pass marker")
     if chapter == 0:
         if any(entry.name != MARKER for entry in root.iterdir()):
             shutil.rmtree(saves, ignore_errors=True)
             (root / "enroth-continuum-mm7.ini").unlink(missing_ok=True)
             print("C0: has no pass marker and needs a fresh profile, profile reset to its marker")
         return
-    removed = [path.name for path in chapter_files(saves, chapter) if path.exists()]
-    for path in chapter_files(saves, chapter):
-        path.unlink(missing_ok=True)
-    if removed:
-        print(f"C{chapter}: has no pass marker, removed unverified {', '.join(removed)}")
+    for later in range(chapter, 8):
+        removed = [path.name for path in chapter_files(saves, later) if path.exists()]
+        for path in chapter_files(saves, later):
+            path.unlink(missing_ok=True)
+        if removed and later == chapter:
+            print(f"C{later}: has no pass marker, removed unverified {', '.join(removed)}")
+        elif removed:
+            print(f"C{later}: built on unverified C{chapter}, removed {', '.join(removed)}")
 
 
 def chapter_test_name(chapter):

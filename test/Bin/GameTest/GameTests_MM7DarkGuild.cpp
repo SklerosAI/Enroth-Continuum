@@ -95,3 +95,40 @@ GAME_TEST(MM7DarkGuild, ArchibaldAssignsBreedingZone) {
     EXPECT_EQ(activeTape, tape(false, true));
     EXPECT_EQ(houseTape, tape(HOUSE_INVALID, HOUSE_CASTLE_GLOAMING_THRONE_ROOM_1));
 }
+
+GAME_TEST(MM7DarkGuild, ArchibaldCompletesBreedingZone) {
+    // The map marker is not enough by itself: report it back through the same Dark throne-room topic to unlock the
+    // guild and the three Dark advisers.
+    auto activeTape = tapes.questBit(QBIT_BREEDING_ZONE_ACTIVE);
+    auto finishedTape = tapes.questBit(QBIT_BREEDING_ZONE_FINISHED);
+    auto guildTape = tapes.questBit(QBIT_DARK_GUILD_JOINED);
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+    pParty->_questBits.set(QBIT_DARK_PATH);
+    pParty->_questBits.set(QBIT_ARCHIBALD_VISIT_ACTIVE);
+    pParty->_questBits.set(QBIT_BREEDING_ZONE_ACTIVE);
+    pParty->_questBits.set(QBIT_BREEDING_ZONE_FINISHED);
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_WaitTillDawn");
+    game.tick();
+    while (currentRestType == REST_WAIT)
+        game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    test.startTaping();
+
+    game.teleportTo(MAP_CASTLE_GLOAMING, Vec3f(-10300, -18432, -2861), 180);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_CASTLE_GLOAMING_THRONE_ROOM_1);
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+
+    EXPECT_EQ(activeTape, tape(true, false));
+    EXPECT_EQ(finishedTape, tape(true));
+    EXPECT_EQ(guildTape, tape(false, true));
+}

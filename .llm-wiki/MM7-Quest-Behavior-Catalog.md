@@ -58,7 +58,7 @@ and by the [DungeonCrawl quest table](https://dungeoncrawl-classics.com/might-an
 | ID | Intended behavior | Required future contract | Confidence |
 | --- | --- | --- | --- |
 | D1 | Meet Archibald in Castle Gloaming, complete the Breeding Zone proof, exit, and unlock Dark-side adviser progression/Dark Magic membership. Killing every inhabitant is not the stated completion rule. | `MM7DarkGuild` now covers the real map marker, Archibald assignment, and Archibald hand-in/guild unlock. The durable Dark chain is next. | C |
-| D2 | Kastore requires both altar pieces, using the Dark counterpart route and returning them to Kastore. | Reuse mechanics but assert recipient and Dark alignment behavior. | C |
+| D2 | Kastore requires both altar pieces, using the Dark counterpart route and returning them to Kastore. | `MM7DarkGuild.KastoreRequiresBothAltarPieces` covers Kastore's assignment, refusal with one piece, successful two-piece Dark hand-in, and consumption. Physical temple acquisition remains a separate continuous-chain concern. | C |
 | D3 | Maximus requires the Soul Jars from Thunderfist Mountain, not the Light-side Gloaming route. | Dedicated acquisition and hand-in test. | C |
 | D4 | Dark Shade requires Clanker's Laboratory's magical/teleport defenses disabled; it is not a kill-all dungeon objective. | Dedicated map-event and return test. | C |
 | D5 | After the three advisers, Tolberti sends the party to assassinate Robert in Celeste; loot the cube/Blaster and return it to Tolberti. | Dedicated mirrored-but-distinct quest test. | C |

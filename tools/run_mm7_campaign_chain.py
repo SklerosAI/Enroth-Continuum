@@ -17,6 +17,7 @@ MARKER = ".ec-mm7-disposable-save-gate"
 MARKER_TEXT = "EnrothContinuum-MM7-save-gate-v1\n"
 SLOT_RE = re.compile(r"save[0-9]{3}\.mm7(?:\.bak|\.passed)?$")
 CHAPTER_TIMEOUT_SECONDS = 3 * 60 * 60
+LIST_TIMEOUT_SECONDS = 5 * 60
 
 
 def slot_name(chapter):
@@ -99,6 +100,36 @@ def remove_unverified(root, chapter):
         print(f"C{chapter}: has no pass marker, removed unverified {', '.join(removed)}")
 
 
+def chapter_test_name(chapter):
+    return f"MM7CampaignChain.DISABLED_Chapter{chapter}"
+
+
+def require_chapter_tests(args):
+    command = [
+        str(args.game_test),
+        "--game", "mm7",
+        "--headless",
+        "--gtest_list_tests",
+        "--gtest_also_run_disabled_tests",
+        "--gtest_filter=MM7CampaignChain.*",
+    ]
+    result = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False,
+                            timeout=LIST_TIMEOUT_SECONDS)
+    if result.returncode:
+        print(result.stdout, file=sys.stderr)
+        raise RuntimeError(f"Listing chapter tests failed with exit {result.returncode}")
+    listed = set()
+    suite = ""
+    for line in result.stdout.splitlines():
+        if line and not line.startswith(" "):
+            suite = line.strip()
+        elif line.strip():
+            listed.add(suite + line.split("#")[0].strip())
+    for chapter in range(args.through + 1):
+        if chapter_test_name(chapter) not in listed:
+            raise RuntimeError(f"C{chapter} test not implemented")
+
+
 def run_chapter(args, root, chapter):
     saves = root / "saves"
     earlier = {i: digest(saves / slot_name(i)) for i in range(chapter)}
@@ -109,7 +140,7 @@ def run_chapter(args, root, chapter):
         "--data-path", str(args.data_path),
         "--test-path", str(args.test_path),
         "--mm7-disposable-profile", str(root),
-        f"--gtest_filter=MM7CampaignChain.DISABLED_Chapter{chapter}",
+        f"--gtest_filter={chapter_test_name(chapter)}",
         "--gtest_also_run_disabled_tests",
         "--gtest_brief=1",
         "--log-level=critical",
@@ -156,6 +187,7 @@ def main():
         parser.error("--data-path is required")
     if not args.game_test.is_file() or not args.test_path.is_dir() or not args.data_path.is_dir():
         raise ValueError("GameTest binary, test path, or MM7 data path is missing")
+    require_chapter_tests(args)
     if args.profile is None:
         root = Path(tempfile.mkdtemp(prefix="mm7-save-gate-"))
         os.chmod(root, 0o700)
@@ -178,6 +210,6 @@ def main():
 if __name__ == "__main__":
     try:
         sys.exit(main())
-    except (OSError, ValueError, RuntimeError) as error:
+    except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as error:
         print(f"MM7 campaign chain: {error}", file=sys.stderr)
         sys.exit(1)

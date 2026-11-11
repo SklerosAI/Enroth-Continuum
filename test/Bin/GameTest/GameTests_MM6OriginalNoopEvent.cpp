@@ -145,6 +145,30 @@ EvtProgram syntheticMapReloadTriggerEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticRandomGotoEvent() {
+    std::string bytes;
+    appendRecord(&bytes, 0, EVENT_RandomGoTo, std::string("\x03\x05\0\0\0\0", 6));
+
+    std::string fallthrough;
+    fallthrough.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&fallthrough, 17);
+    appendRecord(&bytes, 1, EVENT_Set, fallthrough);
+    appendRecord(&bytes, 2, EVENT_Exit);
+
+    std::string firstTarget;
+    firstTarget.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&firstTarget, 18);
+    appendRecord(&bytes, 3, EVENT_Set, firstTarget);
+    appendRecord(&bytes, 4, EVENT_Exit);
+
+    std::string secondTarget;
+    secondTarget.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&secondTarget, 19);
+    appendRecord(&bytes, 5, EVENT_Set, secondTarget);
+    appendRecord(&bytes, 6, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -350,4 +374,20 @@ GAME_TEST(MM6MapReloadTrigger, StopsDirectEventExecution) {
 
     runEvent(EvtContext(EVT_SOURCE_MAP, 1));
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(16));
+}
+
+GAME_TEST(MM6RandomGoto, RunsOneDeclaredTargetWithoutFallthrough) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedQuestionEvent restore;
+    engine->_localEventMap = syntheticRandomGotoEvent();
+    for (Character &character : pParty->pCharacters) {
+        character._characterEventBits.reset(17);
+        character._characterEventBits.reset(18);
+        character._characterEventBits.reset(19);
+    }
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(17));
+    EXPECT_NE(pParty->pCharacters[0]._characterEventBits.test(18),
+              pParty->pCharacters[0]._characterEventBits.test(19));
 }

@@ -791,6 +791,13 @@ void grantMM6StartingSkillItem(Character *character, Skill skill) {
     }
 }
 
+void grantMM6OpeningLetter(Character *character) {
+    Item letter(static_cast<ItemId>(505)); // The Letter, which Andover Potbello and Wilbur Humphrey ask for.
+    letter.SetIdentified();
+    if (!character->inventory.add(letter))
+        throw std::runtime_error("MM6 creation inventory cannot hold the opening letter");
+}
+
 } // namespace
 
 bool PartyCreationUI_LoopInternal() {
@@ -950,6 +957,8 @@ bool PartyCreationUI_LoopInternal() {
             for (InventoryEntry entry : pParty->pCharacters[i].inventory.entries())
                 entry->SetIdentified();
         }
+        if (engine->gameTitle() == GameTitle::MM6 && i == 0)
+            grantMM6OpeningLetter(&pParty->pCharacters[i]);
         mm6::refillCreationVitalsAtStage(engine->gameTitle(), mm6::CreationVitalStage::AfterStartingItems,
                                           &pParty->pCharacters[i]);
     }

@@ -5,6 +5,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTestMain.cpp
         GameTestOptions.cpp
         MM6HeadlessRules.cpp
+        MM7CampaignChain.cpp
         GameTests_0000.cpp
         GameTests_0500.cpp
         GameTests_1000.cpp
@@ -18,6 +19,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7CastleRebuild.cpp
         GameTests_MM7ScavengerPath.cpp
         GameTests_MM7CampaignChainC0.cpp
+        GameTests_MM7CampaignChainC1.cpp
         GameTests_MM7LightWalls.cpp
         GameTests_MM7LightAdvisors.cpp
         GameTests_MM7LightXenofex.cpp
@@ -42,7 +44,8 @@ set(GAME_TEST_MAIN_SOURCES
 set(GAME_TEST_MAIN_HEADERS
         GameTestCommon.h
         GameTestOptions.h
-        MM6HeadlessRules.h)
+        MM6HeadlessRules.h
+        MM7CampaignChain.h)
 
 add_executable(OpenEnroth_GameTest ${GAME_TEST_MAIN_SOURCES} ${GAME_TEST_MAIN_HEADERS})
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Chest.cpp)

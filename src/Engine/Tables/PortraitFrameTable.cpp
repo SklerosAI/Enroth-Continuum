@@ -24,6 +24,7 @@ int PortraitFrameTable::animationFrameIndex(int animationId, Duration frameTime)
     if (this->pFrames[animationId].flags & FRAME_HAS_MORE && this->pFrames[animationId].animationLength) {
         // Processing animated character expressions - e.g., PORTRAIT_YES & PORTRAIT_NO.
         Duration time = frameTime % this->pFrames[animationId].animationLength;
+        const PortraitId portrait = this->pFrames[animationId].portrait;
 
         while (true) {
             Duration frameTime = this->pFrames[animationId].frameLength;
@@ -31,7 +32,8 @@ int PortraitFrameTable::animationFrameIndex(int animationId, Duration frameTime)
                 break;
             time -= frameTime;
             ++animationId;
-            assert(this->pFrames[animationId].portrait == PORTRAIT_INVALID); // Shouldn't jump into another portrait.
+            // Shouldn't jump into another portrait. MM6's yes animation names its own portrait again on its fifth frame.
+            assert(this->pFrames[animationId].portrait == PORTRAIT_INVALID || this->pFrames[animationId].portrait == portrait);
         }
     }
     return pFrames[animationId].textureIndex;

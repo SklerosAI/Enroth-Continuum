@@ -16,9 +16,9 @@ a visible check of the current candidate.
 | --- | --- | --- | --- |
 | W1 | Current integrated source builds into a staged app. Title lock and signature hold. A headless fresh-process Save/quit/relaunch/Load passes on that build in an isolated profile. | Codex lane B (`codex/mm7-candidate-validation`) | Passed 2026-11-10 (staged build, Save and fresh-process Load 1/1 each) |
 | W2 | The disabled Harmondale raid test runs and passes, with the quest route fixed if needed. | Codex lane A (`codex/mm7-raid-route`) | Passed on integrated source; campaign controls 6/6 |
-| W3 | One owner-attended visible session of the current installed candidate on the main display (session S1 below). | Codex runs it when authorized, owner attends | Earlier staged session passed durable Save/Load; installed signed build still needs visible smoke, audio, ordinary NPC and monster fight. Owner currently authorizes headless checks only. |
+| W3 | One owner-attended visible session of the current installed candidate on the main display (session S1 below). | Codex runs it when authorized, owner attends | **Passed 2026-11-10** in owner session S1 on the installed app: title music, NPC voice, combat sounds and damage heard by the owner, NPC talk and a fight done. The staged session had covered input, focus, pause, shop, spell and Save/Load. |
 | W4 | Every main-quest transition from New Game through the shared opening and the Light branch to its ending is exercised through input by a GameTest against the real data, plus fresh-process Save/Load across the chapter boundaries. | Claude coordinates; Codex takes independent code scopes | Castle opening/rebuild and Light Walls fresh-process checkpoints, scavenger Judge/ship, Light city/Walls, three advisor hand-ins, assassination request/cube hand-in and Xenofex map-leave/hand-in passed on integrated source; nine focused Light controls passed together. Real advisor-item and cube acquisition, Xenofex/Pit combat, retrieved-item ending and later save boundary remain open. Four Overthruster route cases plus two wetsuit/Shoals controls and two Xenofex cases passed 8/8 together on integrated source. The later final-link test proves natural L8-to-L9 topic unlock, no-item refusal and held-item fixture ending; it passed 7/7 with the Overthruster cases. The Walls group-1 negative branch is unreachable in tested local data and is not a success-path blocker. |
-| W5 | Candidate replaces the installed MM7 under The Atlas. The old app stays as a restorable backup. The installed copy relaunches and loads a new durable save. | Codex root | Signed candidate installed headlessly after owner authorization; prior app backed up, profile and saves untouched. Relaunch/Load acceptance awaits graphical authorization. |
+| W5 | Candidate replaces the installed MM7 under The Atlas. The old app stays as a restorable backup. The installed copy relaunches and loads a new durable save. | Codex root | **Passed 2026-11-10** in S1: the installed app saved a new slot, relaunched from The Atlas and loaded it with party, position and inventory intact. Existing saves unchanged. Only the ini, new logs and three cached tile images changed. |
 | W6 | Defects found in W1-W5 that block a player are fixed and their scenario rerun. Non-blocking finds go to the stage 3 audit queue. | Whichever lane is free | Ongoing |
 
 W4 scope, decided 2026-11-10: the owner's gate says "an ending", so stage 1
@@ -29,6 +29,17 @@ whether the test chain plus W3 and visible spot checks at chapter boundaries
 is enough. Until the owner decides, plan for the test chain and spot checks.
 
 ### Owner session S1 — closes W3, W5 and the recorder's first run
+
+Ran 2026-11-10 21:15-21:22 local. W3 and W5 passed. Recorder: logs and save
+snapshots were collected in all three launch sessions, but no video, because
+macOS Screen Recording permission was not granted to the Atlas. The owner
+does not want continuous video capture, and the installed build records
+continuously once permission is granted. Recording stays off and permission
+ungranted until an on-request replay build is reviewed and installed. A
+rolling 60-second replay exists only as uncommitted Codex launcher edits.
+Sound IDs 1103, 1503, 1523, 1543 and 1683 logged empty-name load failures
+and one `null` sprite lookup failed. Not heard as missing, queued for the
+stage 3 audit.
 
 The staged W3 session already passed launch, opening movie, New Game, input,
 focus and pause, a shop purchase, a spell, and named Save then fresh-process

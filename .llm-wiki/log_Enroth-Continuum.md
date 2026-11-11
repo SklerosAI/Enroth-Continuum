@@ -3080,3 +3080,9 @@ Chronological record of wiki activity.
 - Checks on `master`: combat sweep 0 of 26 main-quest maps throwing (24 before), event sweep 67 loaded and 66 finished with no crash, 17 MM6 combat tests, MM6 suite 100, MM6 first-map gate with the MM7 controls, unit tests 1,112, full headless MM7 540/540, `check_style` clean.
 - Open for the MM6 working gate: saving and loading on any map, MM6 party death (today it sends the party to MM7 maps), the chained main-quest path and the owner's visible sessions.
 
+## [2026-11-11] verify | MM6 party death and save anywhere integrated
+- by: T-Burton-ND via claude
+- Integrated on `master` through `0614e727b`: MM6 party death and respawn at the New Sorpigal fountain by the original's rules (gold, days, buffs, monster hostility), and MM6 Save and Load on any map after travel, through a new EC6 v7 save that carries every visited map's live state.
+- Checks on `master`: the MM6 first-map gate passed all 29 children, including a dungeon save after travel loaded in a fresh process with its outdoor maps as left and saved again, plus the MM7 controls. 17 MM6 combat tests, MM6 suite 102, unit tests 1,113, full headless MM7 540/540, `check_style` clean, event sweep 67 loaded and 66 finished.
+- Open for the MM6 working gate: autosave and quick save, in-game Load, chest traps, transport routes, the chained main-quest path and the hive finale, and the owner's visible sessions.
+

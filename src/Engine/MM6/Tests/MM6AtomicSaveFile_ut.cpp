@@ -24,6 +24,7 @@
 #include "Engine/MM6/MM6KnownSaveFields.h"
 #include "Engine/MM6/MM6RawSaveFields.h"
 #include "Engine/MM6/MM6SaveContainer.h"
+#include "Engine/MM6/MM6SessionSave.h"
 #include "Engine/MM6/MM6ShopTitleState.h"
 #include "Engine/MM6/MM6V3SaveFields.h"
 #include "Engine/MM6/MM6V4SaveFields.h"
@@ -190,6 +191,18 @@ std::vector<std::uint8_t> sampleFirstMapV5(std::uint8_t marker) {
     return mm6::encodeV5Save(fields, GameTitle::MM6);
 }
 
+std::vector<std::uint8_t> sampleV7(std::uint8_t marker) {
+    mm6::SessionSaveFields fields;
+    fields.raw = mm6::decodeRawSave(sampleRaw(marker), GameTitle::MM6);
+    fields.raw.metadata.header.displayName = "V7 " + std::to_string(marker);
+    mm6::ParkedMapRuntime active;
+    active.mapName = "d0.blv";
+    active.variables.mapVars.fill(marker);
+    active.variables.decorVars.fill(0);
+    fields.maps.push_back(active);
+    return mm6::encodeSessionSave(fields, GameTitle::MM6);
+}
+
 std::vector<std::uint8_t> read(const std::filesystem::path &path) {
     std::ifstream file(path, std::ios::binary);
     return {std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
@@ -296,6 +309,42 @@ UNIT_TEST(MM6AtomicSaveFile, NativeFirstMapSlotClassifiesAtomicFaults) {
         }), Outcome::IndeterminateNeedsPreflight);
     EXPECT_EQ(read(slot), uncertain);
     EXPECT_EQ(read(backup), next);
+}
+
+UNIT_TEST(MM6AtomicSaveFile, NumberedSlotRotatesFirstMapAndAnyMapSaves) {
+    // A save on any map goes over a save on the first map in the same numbered slot and back, each keeping the other as
+    // the backup, while a slot of another EC6 version is still refused.
+    TestProfile profile;
+    const auto root = std::filesystem::canonical(profile.root());
+    const mm6::V5FirstMapNativeRoot binding{root, root};
+    const auto firstMap = sampleFirstMapV5(130);
+    const auto dungeon = sampleV7(131);
+    const auto accept = [](std::span<const std::uint8_t>) {};
+    const auto slot = root / "saves/save001.ec6";
+    const auto backup = root / "saves/save001.ec6.bak";
+    using Outcome = mm6::V5FirstMapSaveOutcome;
+    EXPECT_EQ(mm6::writeNumberedSlotCandidate(binding, "save001.ec6", firstMap, GameTitle::MM6, accept), Outcome::Committed);
+    EXPECT_EQ(mm6::writeNumberedSlotCandidate(binding, "save001.ec6", dungeon, GameTitle::MM6, accept), Outcome::Committed);
+    EXPECT_EQ(read(slot), dungeon);
+    EXPECT_EQ(read(backup), firstMap);
+    const auto slots = mm6::listV5FirstMapNativeSlots(binding, GameTitle::MM6, accept);
+    ASSERT_EQ(slots.size(), 1);
+    EXPECT_EQ(slots[0].header.mapFileName, "d0.blv");
+    EXPECT_EQ(slots[0].header.displayName, "V7 131");
+    EXPECT_EQ(mm6::readV5FirstMapNativeLoadSlot(binding, "save001.ec6", GameTitle::MM6, accept), dungeon);
+    EXPECT_EQ(mm6::writeNumberedSlotCandidate(binding, "save001.ec6", firstMap, GameTitle::MM6, accept), Outcome::Committed);
+    EXPECT_EQ(read(slot), firstMap);
+    EXPECT_EQ(read(backup), dungeon);
+
+    write(backup, sampleV4(132));
+    EXPECT_THROW((void) mm6::writeNumberedSlotCandidate(binding, "save001.ec6", dungeon, GameTitle::MM6, accept), std::exception);
+    EXPECT_EQ(read(slot), firstMap);
+    std::filesystem::remove(backup);
+    std::vector<std::uint8_t> future = dungeon;
+    future[8] = 8;
+    EXPECT_THROW((void) mm6::writeNumberedSlotCandidate(binding, "save001.ec6", future, GameTitle::MM6, accept), std::exception);
+    EXPECT_THROW((void) mm6::decodeSessionSave(sampleV5(133), GameTitle::MM6), std::exception);
+    EXPECT_EQ(read(slot), firstMap);
 }
 
 UNIT_TEST(MM6AtomicSaveFile, NativeFirstMapSlotListShowsOnlyLoadableNumberedSlots) {

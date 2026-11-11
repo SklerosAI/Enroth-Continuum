@@ -14,7 +14,7 @@ namespace {
 
 constexpr std::array<std::uint8_t, 8> MAGIC = {'E', 'C', '6', 'S', 'A', 'V', 'E', 0};
 constexpr std::uint16_t MIN_VERSION = 1;
-constexpr std::uint16_t MAX_VERSION = 6;
+constexpr std::uint16_t MAX_VERSION = 7;
 constexpr size_t HEADER_SIZE = 24;
 constexpr size_t SECTION_HEADER_SIZE = 16;
 constexpr size_t MAX_FILE_SIZE = 64 * 1024 * 1024;

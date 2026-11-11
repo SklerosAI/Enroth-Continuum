@@ -64,7 +64,7 @@ void mm6SaveFromMenu(std::string_view fileName, std::string_view title) {
         reportMM6MenuRefusal("Save could not be confirmed, check the slot before saving again");
         break;
     case mm6::MANUAL_SAVE_REFUSED:
-        reportMM6MenuRefusal(mm6::isFirstMapManualSaveArmed() ? "This game can't be saved here yet" :
+        reportMM6MenuRefusal(mm6::isManualSaveArmed() ? "This game can't be saved here yet" :
                                                                  "Might & Magic VI saving is not available yet");
         break;
     }

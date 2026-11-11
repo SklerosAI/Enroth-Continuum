@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstring>
 #include <fstream>
+#include <initializer_list>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -26,7 +27,7 @@ namespace {
 
 constexpr std::uintmax_t MAX_SAVE_BYTES = 64 * 1024 * 1024;
 
-enum class SlotSchema { KnownV1, RawV2, FullV3, FullV4, FullV5, FullV6Outdoor };
+enum class SlotSchema { KnownV1, RawV2, FullV3, FullV4, FullV5, FullV6Outdoor, NumberedV5OrV7 };
 
 class InvalidSaveFile : public std::runtime_error {
  public:
@@ -149,6 +150,28 @@ SaveHeaderFields decodeV6OutdoorSlotShell(std::span<const std::uint8_t> bytes) {
     return decodeV5SlotShell(encodeSaveContainer(container));
 }
 
+/**
+ * @param bytes                         Bytes of a v7 slot file.
+ * @return                              HEAD of the nineteen v2 raw owners. Throws unless they are followed by a
+ *                                      required PRKM, whose payload is left to the caller's validator.
+ */
+SaveHeaderFields decodeV7SlotShell(std::span<const std::uint8_t> bytes) {
+    SaveContainer container = decodeSaveContainer(bytes);
+    constexpr std::array<char, 4> parkedTag = {'P', 'R', 'K', 'M'};
+    if (container.version != 7 || container.sections.size() != 20 ||
+        container.sections.back().tag != parkedTag || !container.sections.back().required)
+        throw std::runtime_error("MM6 v7 slot lacks exact PRKM shell");
+    container.sections.pop_back();
+    container.version = 2;
+    return decodeRawSave(encodeSaveContainer(container), GameTitle::MM6).metadata.header;
+}
+
+SaveHeaderFields decodeNumberedSlotShell(std::span<const std::uint8_t> bytes) {
+    if (decodeSaveContainer(bytes).version == 7)
+        return decodeV7SlotShell(bytes);
+    return decodeV5SlotShell(bytes);
+}
+
 std::vector<std::uint8_t> readBoundedFile(const std::filesystem::path &path) {
     const std::uintmax_t fileSize = std::filesystem::file_size(path);
     if (fileSize > MAX_SAVE_BYTES)
@@ -193,6 +216,11 @@ std::vector<std::uint8_t> readValidatedFile(const std::filesystem::path &path,
                 *header = decodeV5SlotShell(bytes);
             else
                 (void) decodeV5SlotShell(bytes);
+        } else if (schema == SlotSchema::NumberedV5OrV7) {
+            if (header)
+                *header = decodeNumberedSlotShell(bytes);
+            else
+                (void) decodeNumberedSlotShell(bytes);
         } else {
             if (header)
                 *header = decodeV6OutdoorSlotShell(bytes);
@@ -210,7 +238,7 @@ std::vector<std::uint8_t> readValidatedFile(const std::filesystem::path &path,
 // or write; a bad checksum still leaves the versioned header recognizable.
 void rejectForeignSlotFiles(const std::filesystem::path &profileRoot,
                             std::string_view slotName,
-                            std::uint16_t expectedVersion) {
+                            std::initializer_list<std::uint16_t> expectedVersions) {
     const std::filesystem::path directory = savesDirectory(profileRoot, slotName);
     const std::filesystem::file_status status = std::filesystem::symlink_status(directory);
     if (status.type() == std::filesystem::file_type::not_found)
@@ -232,7 +260,7 @@ void rejectForeignSlotFiles(const std::filesystem::path &profileRoot,
         if (std::equal(magic.begin(), magic.end(), prefix.begin())) {
             const std::uint16_t version = std::uint16_t(prefix[8]) |
                                           (std::uint16_t(prefix[9]) << 8);
-            if (version != expectedVersion)
+            if (!std::ranges::contains(expectedVersions, version))
                 throw std::runtime_error("MM6 slot contains a foreign EC6 version");
         }
     }
@@ -288,6 +316,16 @@ void validateV5FirstMapCandidate(std::span<const std::uint8_t> bytes,
     if (decodeV5SlotShell(bytes).mapFileName != "oute3.odm")
         throw std::runtime_error("MM6 first-map v5 slot has another map");
     validate(bytes);
+}
+
+void validateNumberedCandidate(std::span<const std::uint8_t> bytes,
+                               const SaveCandidateValidator &validate) {
+    if (decodeSaveContainer(bytes).version == 7) {
+        (void) decodeV7SlotShell(bytes);
+        validate(bytes);
+    } else {
+        validateV5FirstMapCandidate(bytes, validate);
+    }
 }
 
 void requireDisposableV6OutdoorDestination(
@@ -410,6 +448,8 @@ static void writeAtomicSaveFileForSchema(const std::filesystem::path &profileRoo
         (void) decodeV4SlotShell(container);
     else if (schema == SlotSchema::FullV5)
         (void) decodeV5SlotShell(container);
+    else if (schema == SlotSchema::NumberedV5OrV7)
+        (void) decodeNumberedSlotShell(container);
     else
         (void) decodeV6OutdoorSlotShell(container);
     const std::filesystem::path directory = savesDirectory(profileRoot, slotName);
@@ -480,7 +520,7 @@ void detail::writeAtomicV3SaveFile(const std::filesystem::path &profileRoot,
         throw std::invalid_argument("MM6 v3 write needs a semantic validator");
     (void) decodeV3SlotShell(container);
     validate(container);
-    rejectForeignSlotFiles(profileRoot, slotName, 3);
+    rejectForeignSlotFiles(profileRoot, slotName, {3});
     writeAtomicSaveFileForSchema(profileRoot, slotName, container, SlotSchema::FullV3, fault);
 }
 
@@ -500,7 +540,7 @@ void detail::writeAtomicV4SaveFileForTest(
     requireDisposableV4Destination(profileRoot, slotName);
     (void) decodeV4SlotShell(container);
     validate(container);
-    rejectForeignSlotFiles(profileRoot, slotName, 4);
+    rejectForeignSlotFiles(profileRoot, slotName, {4});
     const std::filesystem::path directory = savesDirectory(profileRoot, slotName);
     for (const std::filesystem::path &path : {
              directory / std::string(slotName),
@@ -529,7 +569,7 @@ void detail::writeAtomicV5SaveFileForTest(
     requireDisposableV5Destination(profileRoot, slotName);
     (void) decodeV5SlotShell(container);
     validate(container);
-    rejectForeignSlotFiles(profileRoot, slotName, 5);
+    rejectForeignSlotFiles(profileRoot, slotName, {5});
     const std::filesystem::path directory = savesDirectory(profileRoot, slotName);
     for (const std::filesystem::path &path : {
              directory / std::string(slotName),
@@ -558,18 +598,18 @@ void detail::writeAtomicV5FirstMapNativeSaveFileForTest(
         !std::all_of(slotName.begin() + 4, slotName.begin() + 7,
                      [](char digit) { return digit >= '0' && digit <= '9'; }))
         throw std::invalid_argument("MM6 native first-map writer needs numbered slot and validator");
-    validateV5FirstMapCandidate(container, validate);
-    rejectForeignSlotFiles(profileRoot, slotName, 5);
+    validateNumberedCandidate(container, validate);
+    rejectForeignSlotFiles(profileRoot, slotName, {5, 7});
     const auto directory = savesDirectory(profileRoot, slotName);
     for (const std::filesystem::path &path : {
              directory / std::string(slotName),
              directory / (std::string(slotName) + ".bak")}) {
         if (regularFileExists(path))
-            validateV5FirstMapCandidate(readValidatedFile(path, SlotSchema::FullV5),
-                                        validate);
+            validateNumberedCandidate(readValidatedFile(path, SlotSchema::NumberedV5OrV7),
+                                      validate);
     }
     writeAtomicSaveFileForSchema(profileRoot, slotName, container,
-                                 SlotSchema::FullV5, fault);
+                                 SlotSchema::NumberedV5OrV7, fault);
 }
 
 V5FirstMapWriteResult assessV5FirstMapWriteResultForTest(
@@ -616,7 +656,7 @@ void detail::writeAtomicV6OutdoorSaveFileForTest(
     requireDisposableV6OutdoorDestination(profileRoot, slotName);
     (void) decodeV6OutdoorSlotShell(container);
     validate(container);
-    rejectForeignSlotFiles(profileRoot, slotName, 6);
+    rejectForeignSlotFiles(profileRoot, slotName, {6});
     const std::filesystem::path directory = savesDirectory(profileRoot, slotName);
     for (const std::filesystem::path &path : {
              directory / std::string(slotName),
@@ -780,7 +820,7 @@ std::optional<SaveFileCandidate> preflightRecoverableV3SaveFile(
     const SaveCandidateValidator &validate) {
     if (!validate)
         throw std::invalid_argument("MM6 v3 preflight needs a semantic validator");
-    rejectForeignSlotFiles(profileRoot, slotName, 3);
+    rejectForeignSlotFiles(profileRoot, slotName, {3});
     return preflightRecoverableSaveFileForSchema(profileRoot, slotName, validate,
                                                  SlotSchema::FullV3);
 }
@@ -790,7 +830,7 @@ std::optional<SaveFileCandidate> preflightRecoverableV5FirstMapSaveFileForTest(
     GameTitle title, const SaveCandidateValidator &validate) {
     requireV5FirstMapPolicyInput(title, slotName, validate);
     requireDisposableV5Destination(profileRoot, slotName);
-    rejectForeignSlotFiles(profileRoot, slotName, 5);
+    rejectForeignSlotFiles(profileRoot, slotName, {5});
     const auto directory = savesDirectory(profileRoot, slotName);
     for (const std::filesystem::path &path : {
              directory / std::string(slotName),
@@ -820,7 +860,7 @@ std::optional<SaveFileCandidate> preflightRecoverableV6OutdoorSaveFileForTest(
     if (!validate)
         throw std::invalid_argument("MM6 outdoor v6 preflight needs semantic validation");
     requireDisposableV6OutdoorDestination(profileRoot, slotName);
-    rejectForeignSlotFiles(profileRoot, slotName, 6);
+    rejectForeignSlotFiles(profileRoot, slotName, {6});
     return preflightRecoverableSaveFileForSchema(
         profileRoot, slotName, validate, SlotSchema::FullV6Outdoor);
 }

@@ -1,12 +1,16 @@
 #pragma once
 
 #include <optional>
+#include <string>
 #include <string_view>
+#include <vector>
 
 #include "Engine/MapEnums.h"
 #include "Engine/PartyPlacement.h"
 
 #include "Utility/Memory/Blob.h"
+
+#include "MM6ParkedMapSection.h"
 
 namespace mm6 {
 
@@ -67,5 +71,29 @@ void restoreParkedMap(std::string_view deltaName, bool respawned);
  * Forgets every parked map, for a new or loaded game.
  */
 void forgetParkedMaps();
+
+/**
+ * A map of the session as a save holds it, its native delta next to the lists the delta can't hold.
+ */
+struct SessionMap {
+    std::string deltaName; // Delta file of the map, e.g. `oute3.ddm`.
+    Blob delta; // Decoded delta.
+    ParkedMapRuntime runtime;
+};
+
+/**
+ * @return                              Every parked map, and the active map parked the way leaving it now would park
+ *                                      it, sorted by map name. Nothing changes. Throws when the active map can't be
+ *                                      parked.
+ */
+[[nodiscard]] std::vector<SessionMap> captureSessionMaps();
+
+/**
+ * Replaces the parked maps with the maps of a loaded save. The active map is among them, so the load that follows
+ * restores it the way a return in the same session would.
+ *
+ * @param maps                          Maps of the save, at most one per map.
+ */
+void restoreSessionMaps(std::vector<SessionMap> maps);
 
 } // namespace mm6

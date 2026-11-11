@@ -1,5 +1,6 @@
 #include "MM6MapTransition.h"
 
+#include <algorithm>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -31,32 +32,41 @@
 
 namespace mm6 {
 
-struct ParkedMap {
-    Blob delta;
-    std::vector<Actor> actors;
-    std::vector<SpriteObject> sprites;
-    PersistentVariables variables;
-};
-
 static bool borderArrivalPending = false;
-static std::unordered_map<std::string, ParkedMap, TransparentStringHash, TransparentStringEquals> parkedMaps;
+static std::unordered_map<std::string, SessionMap, TransparentStringHash, TransparentStringEquals> parkedMaps;
 
-static void parkActiveMap() {
+static std::string activeDeltaName() {
+    const std::string &mapName = pMapTable->pInfos[engine->_currentLoadedMapId].fileName;
+    return mapName.substr(0, mapName.size() - 3) + (uCurrentlyLoadedLevelType == LEVEL_INDOOR ? "dlv" : "ddm");
+}
+
+/**
+ * @return                              The active map parked the way leaving it now would park it. Throws when its
+ *                                      state can't be parked.
+ */
+static SessionMap captureActiveMap() {
     const std::string &mapName = pMapTable->pInfos[engine->_currentLoadedMapId].fileName;
     const bool indoor = uCurrentlyLoadedLevelType == LEVEL_INDOOR;
-    const std::string deltaName = mapName.substr(0, mapName.size() - 3) + (indoor ? "dlv" : "ddm");
-    ParkedMap parked;
+    SessionMap result;
+    result.deltaName = activeDeltaName();
+    result.delta = indoor ? encodeMM6IndoorParkedState(*pIndoor) : encodeMM6OutdoorParkedState(*pOutdoor);
+    result.runtime.mapName = mapName;
+    result.runtime.actors.assign(pActors.begin(), pActors.end());
+    result.runtime.sprites = pSpriteObjects;
+    result.runtime.variables = engine->_persistentVariables;
+    return result;
+}
+
+static void parkActiveMap() {
     try {
-        parked.delta = indoor ? encodeMM6IndoorParkedState(*pIndoor) : encodeMM6OutdoorParkedState(*pOutdoor);
+        SessionMap parked = captureActiveMap();
+        std::string deltaName = parked.deltaName;
+        parkedMaps.insert_or_assign(std::move(deltaName), std::move(parked));
     } catch (const std::exception &e) {
-        MM_WARNING("MM6 map '{}' will be back as it was saved, its state can't be parked: {}", mapName, e.what());
-        parkedMaps.erase(deltaName);
-        return;
+        MM_WARNING("MM6 map '{}' will be back as it was saved, its state can't be parked: {}",
+                   pMapTable->pInfos[engine->_currentLoadedMapId].fileName, e.what());
+        parkedMaps.erase(activeDeltaName());
     }
-    parked.actors.assign(pActors.begin(), pActors.end());
-    parked.sprites = pSpriteObjects;
-    parked.variables = engine->_persistentVariables;
-    parkedMaps.insert_or_assign(deltaName, std::move(parked));
 }
 
 MapDestination borderTravelDestination(int partyX, int partyY) {
@@ -105,7 +115,7 @@ void settleBorderArrival(PartyPlacement *placement) {
 
 void leaveMap(MapId target) {
     parkActiveMap();
-    disarmFirstMapManualSave(); // Its anchor covers only the first map of a session that never left it.
+    leaveFirstMapManualSave(); // Its anchor covers only the first map of a session that never left it.
     admitChestMapLoad(target);
 }
 
@@ -121,15 +131,36 @@ void restoreParkedMap(std::string_view deltaName, bool respawned) {
     if (pos == parkedMaps.end())
         return;
     if (!respawned) {
-        pActors.assign(pos->second.actors.begin(), pos->second.actors.end());
-        pSpriteObjects = std::move(pos->second.sprites);
-        engine->_persistentVariables = pos->second.variables;
+        ParkedMapRuntime &runtime = pos->second.runtime;
+        pActors.assign(runtime.actors.begin(), runtime.actors.end());
+        pSpriteObjects = std::move(runtime.sprites);
+        engine->_persistentVariables = runtime.variables;
     }
     parkedMaps.erase(pos);
 }
 
 void forgetParkedMaps() {
     parkedMaps.clear();
+}
+
+std::vector<SessionMap> captureSessionMaps() {
+    std::vector<SessionMap> result;
+    result.reserve(parkedMaps.size() + 1);
+    for (const auto &[deltaName, parked] : parkedMaps)
+        result.push_back({deltaName, Blob::copy(parked.delta), parked.runtime});
+    SessionMap active = captureActiveMap();
+    std::erase_if(result, [&](const SessionMap &map) { return map.deltaName == active.deltaName; });
+    result.push_back(std::move(active));
+    std::ranges::sort(result, {}, [](const SessionMap &map) { return map.runtime.mapName; });
+    return result;
+}
+
+void restoreSessionMaps(std::vector<SessionMap> maps) {
+    parkedMaps.clear();
+    for (SessionMap &map : maps) {
+        std::string deltaName = map.deltaName;
+        parkedMaps.insert_or_assign(std::move(deltaName), std::move(map));
+    }
 }
 
 } // namespace mm6

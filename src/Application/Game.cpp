@@ -1583,7 +1583,7 @@ void Game::gameLoop() {
             uGameState = GAME_STATE_GAME_QUITTING_TO_MAIN_MENU;
             return;
         } catch (...) {
-            if (bLoading && mm6::abandonV5FirstMapLoadAttempt())
+            if (bLoading && mm6::abandonMainMenuLoad())
                 return;
             throw;
         }

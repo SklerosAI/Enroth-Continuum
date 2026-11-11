@@ -57,9 +57,9 @@ std::function<void()> mm6NewGameSaveOverride;
 std::function<void(std::string_view)> mm6LoadGameOverride;
 
 void reportUnavailableMM6SaveAction() {
-    MM_WARNING("MM6 save action refused before production EC6 admission");
+    MM_WARNING("MM6 quick save refused, MM6 saves only from the Save menu");
     if (engine->_statusBar)
-        engine->_statusBar->setEvent("Might & Magic VI saving is not available yet");
+        engine->_statusBar->setEvent("Quick save is not available yet, use the Save menu");
     if (pAudioPlayer)
         pAudioPlayer->playUISound(SOUND_error);
 }
@@ -342,7 +342,7 @@ SaveGameHeader saveGame(bool isAutoSave, bool resetWorld, std::string_view path,
 
 void autoSave() {
     if (engine->gameTitle() == GameTitle::MM6) {
-        MM_INFO("MM6 autosave skipped, only a manual save on the first map is available");
+        MM_INFO("MM6 autosave skipped, MM6 saves only from the Save menu");
         return;
     }
     saveGame(true, false, fmt::format("saves/{}", autosaveFileName), localization->str(LSTR_AUTOSAVE));

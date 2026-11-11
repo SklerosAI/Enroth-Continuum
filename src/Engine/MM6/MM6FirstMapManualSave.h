@@ -25,14 +25,34 @@ void setStartupNativeProfileRoot(bool ramFsUserData, const std::filesystem::path
 
 /**
  * Arms manual saving for a first-map session that a load route has admitted to input. The anchor carries the
- * native slots, ACTR and EVRT bindings that every later capture keeps.
+ * native slots, ACTR and EVRT bindings that every later first-map capture keeps, and its raw owners stay the session's
+ * template for saves on later maps.
  *
  * @param sourceV4                      First-map v4 anchor of the admitted session.
  * @param title                         Must be MM6.
  */
 void armFirstMapManualSave(std::span<const std::uint8_t> sourceV4, GameTitle title);
+
+/**
+ * Drops the first-map anchor when the party leaves a map. Saving stays armed, later saves are v7 saves.
+ */
+void leaveFirstMapManualSave();
+
+/**
+ * Ends manual saving for the session, for a new or loaded game.
+ */
 void disarmFirstMapManualSave();
+
+/**
+ * @return                              Whether the session still has its first-map anchor, so that the next save is a
+ *                                      v5 save on the first map.
+ */
 bool isFirstMapManualSaveArmed();
+
+/**
+ * @return                              Whether the session can be saved at all: a staged new game, or a load.
+ */
+bool isManualSaveArmed();
 
 enum class ManualSaveOutcome {
     MANUAL_SAVE_COMMITTED,    // The new primary and backup are durably in place.
@@ -48,7 +68,8 @@ struct FirstMapManualSaveResult {
 };
 
 /**
- * Saves the armed first-map session from the idle paused Save menu.
+ * Saves the armed session from the idle paused Save menu: as a v5 save while the party is still on the first map of
+ * the session, and as a v7 save on any map once it has left it.
  *
  * @param fileName                      Selected `saveNNN.ec6` slot, or empty for the first free numbered slot.
  * @param displayName                   Title shown in the save list.
@@ -57,8 +78,8 @@ struct FirstMapManualSaveResult {
 FirstMapManualSaveResult saveFirstMapManualSlot(std::string_view fileName, std::string_view displayName);
 
 /**
- * @return                              Loadable numbered first-map slots of the startup MM6 profile, sorted by file
- *                                      name. Empty when there is no profile root or the saves folder is refused.
+ * @return                              Loadable numbered slots of the startup MM6 profile, sorted by file name. Empty
+ *                                      when there is no profile root or the saves folder is refused.
  */
 std::vector<SaveSlotInfo> listFirstMapManualSlots();
 
@@ -76,9 +97,9 @@ std::vector<std::uint8_t> readFirstMapManualSlot(std::string_view fileName);
 bool mayLoadFirstMapManualSlot(std::string_view fileName);
 
 /**
- * Starts the main-menu load of a numbered first-map slot. Reads and stages the slot, puts the load attempt on the
- * engine and publishes its owners. World preparation and the attempt's release follow in the game loop. The slot
- * file is only read.
+ * Starts the main-menu load of a numbered slot. Reads and stages the slot and publishes its owners, a first-map v5 slot
+ * through a load attempt on the engine. World preparation, and the attempt's release, follow in the game loop. A v7
+ * slot arms saving for the session right away. The slot file is only read.
  *
  * @param fileName                      Listed `saveNNN.ec6` slot. Throws when it can't be loaded, the caller then
  *                                      abandons the load.

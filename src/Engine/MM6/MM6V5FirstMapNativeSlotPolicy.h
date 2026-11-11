@@ -27,8 +27,8 @@ struct V5FirstMapNativeRoot {
 bool isNumberedV5FirstMapSlot(std::string_view slotName);
 
 // Read-only admission for one numbered manual slot. All existing primary and
-// backup files must be exact, semantically valid first-map v5 candidates;
-// damaged, foreign-version, other-map and backup-only slots refuse writes.
+// backup files must be exact, semantically valid v7 saves or first-map v5
+// candidates; damaged, foreign-version and backup-only slots refuse writes.
 V5FirstMapSlotState preflightV5FirstMapNativeWriteSlot(
     const V5FirstMapNativeRoot &root, std::string_view slotName,
     std::span<const std::uint8_t> candidate, GameTitle title,
@@ -44,6 +44,26 @@ V5FirstMapSaveOutcome writeV5FirstMapNativeCandidateForTest(
     const detail::AtomicSaveFault &fault = {});
 
 /**
+ * Commits a candidate to one numbered slot, keeping the old primary as the backup. The candidate and every file of
+ * the slot must be a v7 save, or a v5 save on the first map, and pass `validate`. Every check runs before the first
+ * file change.
+ *
+ * @param root                          Startup-resolved MM6 profile root.
+ * @param slotName                      Numbered slot, `saveNNN.ec6`.
+ * @param candidate                     Encoded save.
+ * @param title                         Must be MM6.
+ * @param validate                      Full semantic validator for one candidate.
+ * @param fault                         Fault injection for tests, empty otherwise.
+ * @return                              Atomic outcome. Anything but `Committed` leaves the slot for read-only
+ *                                      preflight before a retry. Throws when refused before writing.
+ */
+V5FirstMapSaveOutcome writeNumberedSlotCandidate(
+    const V5FirstMapNativeRoot &root, std::string_view slotName,
+    std::span<const std::uint8_t> candidate, GameTitle title,
+    const SaveCandidateValidator &validate,
+    const detail::AtomicSaveFault &fault = {});
+
+/**
  * Captures the live first-map session at the idle paused Save menu and commits it to one numbered slot. The
  * capture, title and slot checks all run before the first file change, and throw on refusal.
  *
@@ -52,6 +72,7 @@ V5FirstMapSaveOutcome writeV5FirstMapNativeCandidateForTest(
  * @param sourceV4                      First-map v4 anchor of the running session.
  * @param displayName                   Title shown in the save list.
  * @param title                         Must be MM6.
+ * @param validate                      Full semantic validator for the candidate and the files of the slot.
  * @param fault                         Fault injection for tests, empty otherwise.
  * @return                              Written candidate and the atomic outcome. Anything but `Committed` leaves
  *                                      the slot for read-only preflight before a retry.
@@ -59,16 +80,17 @@ V5FirstMapSaveOutcome writeV5FirstMapNativeCandidateForTest(
 V5FirstMapSaveAttempt writeV5FirstMapNativeLiveSave(
     const V5FirstMapNativeRoot &root, std::string_view slotName,
     std::span<const std::uint8_t> sourceV4, std::string_view displayName,
-    GameTitle title, const detail::AtomicSaveFault &fault = {});
+    GameTitle title, const SaveCandidateValidator &validate, const detail::AtomicSaveFault &fault = {});
 
 /**
- * Read-only list of the numbered first-map slots under the startup MM6 root. Disk is never repaired.
+ * Read-only list of the numbered slots under the startup MM6 root. Disk is never repaired.
  *
  * @param root                          Startup-resolved MM6 profile root.
  * @param title                         Must be MM6.
  * @param validate                      Full semantic validator for one candidate.
- * @return                              Slots whose primary passes the first-map checks and `validate`, sorted by
- *                                      file name. Backup-only, damaged, foreign and other-map slots are left out.
+ * @return                              Slots whose primary is a v7 save, or a v5 save on the first map, and passes
+ *                                      `validate`, sorted by file name. Backup-only, damaged and foreign slots are
+ *                                      left out.
  */
 std::vector<SaveSlotInfo> listV5FirstMapNativeSlots(
     const V5FirstMapNativeRoot &root, GameTitle title,

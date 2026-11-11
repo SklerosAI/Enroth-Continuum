@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "MM6SessionSave.h"
 #include "MM6V4SaveFields.h"
 #include "MM6V5FirstMapLoadPreflight.h"
 #include "MM6V5FullSessionPreflight.h"
@@ -46,12 +47,23 @@ void requireNativeRootAndSlot(const V5FirstMapNativeRoot &root,
     requireNativeRoot(root, title, validate);
 }
 
-void validateFirstMapV5(std::span<const std::uint8_t> bytes,
-                        const SaveCandidateValidator &validate) {
-    const auto saved = std::make_unique<V5SaveFields>(
-        decodeV5Save(bytes, GameTitle::MM6));
+/**
+ * @param bytes                         Bytes of a numbered slot file.
+ * @return                              Header of a v7 save on any map or of a v5 save on the first map. Throws for
+ *                                      anything else.
+ */
+SaveHeaderFields numberedSlotHeader(std::span<const std::uint8_t> bytes) {
+    if (decodeSaveContainer(bytes).version == SESSION_SAVE_VERSION)
+        return decodeSessionSave(bytes, GameTitle::MM6).raw.metadata.header;
+    const auto saved = std::make_unique<V5SaveFields>(decodeV5Save(bytes, GameTitle::MM6));
     if (saved->v4.v3.raw.metadata.header.mapFileName != "oute3.odm")
         throw std::runtime_error("MM6 native slot has another HEAD map");
+    return saved->v4.v3.raw.metadata.header;
+}
+
+void validateNumberedSlot(std::span<const std::uint8_t> bytes,
+                          const SaveCandidateValidator &validate) {
+    (void) numberedSlotHeader(bytes);
     validate(bytes);
 }
 
@@ -66,9 +78,9 @@ void validatePrior(const V5FirstMapSlotState &state,
     if (!state.primary && state.backup)
         throw std::runtime_error("MM6 native slot needs recovery before overwrite");
     if (state.primary)
-        validateFirstMapV5(*state.primary, validate);
+        validateNumberedSlot(*state.primary, validate);
     if (state.backup)
-        validateFirstMapV5(*state.backup, validate);
+        validateNumberedSlot(*state.backup, validate);
 }
 
 V5FirstMapSaveOutcome classify(const V5FirstMapSlotState &before,
@@ -101,13 +113,20 @@ V5FirstMapSlotState preflightV5FirstMapNativeWriteSlot(
     std::span<const std::uint8_t> candidate, GameTitle title,
     const SaveCandidateValidator &validate) {
     requireNativeRootAndSlot(root, slotName, title, validate);
-    validateFirstMapV5(candidate, validate);
+    validateNumberedSlot(candidate, validate);
     auto prior = snapshot(root.requestedRoot, slotName);
     validatePrior(prior, validate);
     return prior;
 }
 
 V5FirstMapSaveOutcome writeV5FirstMapNativeCandidateForTest(
+    const V5FirstMapNativeRoot &root, std::string_view slotName,
+    std::span<const std::uint8_t> candidate, GameTitle title,
+    const SaveCandidateValidator &validate, const detail::AtomicSaveFault &fault) {
+    return writeNumberedSlotCandidate(root, slotName, candidate, title, validate, fault);
+}
+
+V5FirstMapSaveOutcome writeNumberedSlotCandidate(
     const V5FirstMapNativeRoot &root, std::string_view slotName,
     std::span<const std::uint8_t> candidate, GameTitle title,
     const SaveCandidateValidator &validate, const detail::AtomicSaveFault &fault) {
@@ -133,16 +152,13 @@ V5FirstMapSaveOutcome writeV5FirstMapNativeCandidateForTest(
 V5FirstMapSaveAttempt writeV5FirstMapNativeLiveSave(
     const V5FirstMapNativeRoot &root, std::string_view slotName,
     std::span<const std::uint8_t> sourceV4, std::string_view displayName,
-    GameTitle title, const detail::AtomicSaveFault &fault) {
-    const SaveCandidateValidator validate = [title](std::span<const std::uint8_t> bytes) {
-        (void) stageV5FirstMapLoadPreflight(bytes, title);
-    };
+    GameTitle title, const SaveCandidateValidator &validate, const detail::AtomicSaveFault &fault) {
     requireNativeRootAndSlot(root, slotName, title, validate);
     const auto source = std::unique_ptr<V4SaveFields>(new V4SaveFields(decodeV4Save(sourceV4, title)));
     source->v3.raw.metadata.header.displayName = displayName;
     auto candidate = captureV5FirstMapLiveSession(
         encodeV4Save(*source, title), V5FirstMapCaptureBoundary::PausedSaveMenu);
-    const V5FirstMapSaveOutcome outcome = writeV5FirstMapNativeCandidateForTest(
+    const V5FirstMapSaveOutcome outcome = writeNumberedSlotCandidate(
         root, slotName, candidate, title, validate, fault);
     return {std::move(candidate), outcome};
 }
@@ -166,8 +182,7 @@ std::vector<SaveSlotInfo> listV5FirstMapNativeSlots(
     for (const std::string &name : names) {
         try {
             const auto bytes = readV5FirstMapNativeLoadSlot(root, name, title, validate);
-            const auto saved = std::unique_ptr<V5SaveFields>(new V5SaveFields(decodeV5Save(bytes, title)));
-            result.push_back({name, saved->v4.v3.raw.metadata.header, false});
+            result.push_back({name, numberedSlotHeader(bytes), false});
         } catch (const std::exception &) {
             // A slot that cannot be loaded as it is stays out of the menu.
         }

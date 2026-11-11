@@ -3208,3 +3208,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Rechecked both Bartholomew Hume promotions against the public promotion and Harmondale references. The first promotion completes remotely when the Zokarr Tomb meditation pool is used; the Light second promotion requires a return to Hume after the Temple of Baa High Priest kill and cloak recovery. The catalog now names those acceptance, completion and return boundaries rather than reducing the latter to a generic priest-help task.
 
+## [2026-11-11] backport | MM7 scripted award feedback
+- by: T-Burton-ND via codex
+- Selectively brought forward OpenEnroth `#2969`: a script grants a portrait/award reaction only when that character did not already have the award. This covers promotion-style award grants without replaying feedback on duplicate grants.
+- The focused `Issue2817` award regression, the Griffin reporting flow, and the full Stone City troglodyte contract passed three consecutive headless runs after resolving an upstream recorder-shape-only test expectation.
+

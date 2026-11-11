@@ -13,6 +13,7 @@
 #include "Engine/Objects/NPC.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
+#include "Engine/SaveLoad.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Timer.h"
 #include "Engine/mm7_data.h"
@@ -95,11 +96,12 @@ bool confirmBorderTravel(const MapDestination &offered) {
 
     pAudioPlayer->stopSounds();
     gameTimer->setPaused(true);
+    leaveMap(offered.map());
+    autoSave(); // The original saves before the trip's days pass, with the party still at the edge.
     *pParty = std::move(*confirmed.party);
     for (int character : confirmed.weakReactions)
         pParty->pCharacters[character].playReaction(SPEECH_WEAK);
 
-    leaveMap(offered.map());
     borderArrivalPending = true;
     uGameState = GAME_STATE_CHANGE_LOCATION;
     engine->_pendingTransition = MapDestination(offered.map(), PartyPlacement(pParty->pos, -1, pParty->_viewPitch, 0));

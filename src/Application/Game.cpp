@@ -1598,6 +1598,8 @@ void Game::gameLoop() {
             return;
         }
         gameTimer->setPaused(false);
+        if (!bLoading && engine->gameTitle() == GameTitle::MM6)
+            autoSave(); // MM6 autosaves a new party where it starts.
         engineFlags |= ENGINE_SKIP_NEXT_USER_INPUT;
         // uGame_if_0_else_ui_id__11_save__else_load__8_drawSpellInfoPopup__22_final_window__26_keymapOptions__2_options__28_videoOptions
         // = 0;

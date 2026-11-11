@@ -6,11 +6,19 @@
 #include "GUI/UI/UISaveLoad.h"
 
 /**
- * @return                              Loadable numbered first-map slots from the native MM6 profile, sorted by display
- *                                      name with file name as a tie-breaker. MM6 saves never live in the user
- *                                      filesystem that holds MM7 saves.
+ * @return                              Loadable slots from the native MM6 profile, sorted by display name with file
+ *                                      name as a tie-breaker. The autosave and quick saves show their titles in the
+ *                                      current language. MM6 saves never live in the user filesystem that holds MM7
+ *                                      saves.
  */
 std::vector<SavegameSlot> mm6LoadMenuSlots();
+
+/**
+ * @param fileName                      Slot file name.
+ * @return                              Whether it is the MM6 autosave or a quick save, which the Save menu doesn't
+ *                                      offer.
+ */
+bool isMM6AutoOrQuickSaveSlot(std::string_view fileName);
 
 /**
  * Saves the running MM6 session from the idle Save menu. The menu closes only when the slot is committed, any
@@ -31,3 +39,8 @@ bool mm6MayLoadFromMainMenu(std::string_view fileName);
  * Refuses loading an MM6 slot over a running game, an MM6 slot loads only into a fresh session.
  */
 void mm6RefuseInGameLoad();
+
+/**
+ * Writes the MM6 autosave. A session that can't be saved is skipped.
+ */
+void mm6AutoSave();

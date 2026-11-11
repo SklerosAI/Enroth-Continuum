@@ -342,7 +342,7 @@ SaveGameHeader saveGame(bool isAutoSave, bool resetWorld, std::string_view path,
 
 void autoSave() {
     if (engine->gameTitle() == GameTitle::MM6) {
-        MM_INFO("MM6 autosave skipped, MM6 saves only from the Save menu");
+        mm6AutoSave();
         return;
     }
     saveGame(true, false, fmt::format("saves/{}", autosaveFileName), localization->str(LSTR_AUTOSAVE));

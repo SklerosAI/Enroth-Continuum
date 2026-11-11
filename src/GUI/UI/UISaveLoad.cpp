@@ -112,7 +112,7 @@ static std::vector<SavegameSlot> saveMenuSlots() {
     std::vector<SavegameSlot> result = loadMenuSlots();
     std::erase_if(result, [](const SavegameSlot &slot) {
         return ascii::noCaseEquals(slot.fileName, autosaveFileName) ||
-               ascii::noCaseStartsWith(slot.fileName, quickSaveFileNamePrefix);
+               ascii::noCaseStartsWith(slot.fileName, quickSaveFileNamePrefix) || isMM6AutoOrQuickSaveSlot(slot.fileName);
     });
     result.insert(result.begin(), SavegameSlot()); // New save slot goes first.
     return result;

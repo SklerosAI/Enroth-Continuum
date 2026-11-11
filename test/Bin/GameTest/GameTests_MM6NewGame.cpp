@@ -186,10 +186,11 @@ GAME_TEST(MM6NewGameHeadless, DISABLED_NewPartySlotLoadsAndSavesAgain) {
     game.pressGuiButton("MainMenu_LoadGame");
     game.tick(4);
     ASSERT_EQ(screenTape.back(), SCREEN_LOADGAME);
-    ASSERT_EQ(saveLoadMenu()->slots().size(), 1);
-    EXPECT_EQ(saveLoadMenu()->slots()[0].fileName, "save000.ec6");
-    EXPECT_EQ(saveLoadMenu()->slots()[0].header.name, "ng");
-    game.pressGuiButton("LoadMenu_Slot0");
+    ASSERT_EQ(saveLoadMenu()->slots().size(), 2); // The autosave of the new party, then its slot.
+    EXPECT_EQ(saveLoadMenu()->slots()[0].fileName, "autosave.ec6");
+    EXPECT_EQ(saveLoadMenu()->slots()[1].fileName, "save000.ec6");
+    EXPECT_EQ(saveLoadMenu()->slots()[1].header.name, "ng");
+    game.pressGuiButton("LoadMenu_Slot1");
     game.tick(2);
     game.pressGuiButton("LoadMenu_Load");
     game.skipLoadingScreen();

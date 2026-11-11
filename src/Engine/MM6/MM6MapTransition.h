@@ -26,8 +26,9 @@ namespace mm6 {
 [[nodiscard]] MapDestination borderTravelDestination(int partyX, int partyY);
 
 /**
- * Applies the MM6 border confirmation to the live party and starts the change to the neighbouring map: the trip's
- * days pass with rest, food is eaten, a hungry party gets Weak, and the party arrives at the wrapped position.
+ * Applies the MM6 border confirmation to the live party and starts the change to the neighbouring map: the map is
+ * autosaved, the trip's days pass with rest, food is eaten, a hungry party gets Weak, and the party arrives at the
+ * wrapped position.
  *
  * @param offered                       Destination the travel dialogue offered.
  * @return                              Whether the party is leaving. On `false` nothing has changed.

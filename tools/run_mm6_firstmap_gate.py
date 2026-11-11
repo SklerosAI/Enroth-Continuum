@@ -71,6 +71,10 @@ SAVE_ANYWHERE = [
     ("MM6SaveAnywhereHeadless.DISABLED_DungeonSlotLoadsWithItsOutdoorMaps",
      "ENROTH_MM6_SAVE_ANYWHERE_ENABLE", "strict-save-anywhere-reload"),
 ]
+AUTOSAVE = [
+    ("MM6AutosaveHeadless.DISABLED_EdgeAndDoorWriteTheAutosave",
+     "ENROTH_MM6_AUTOSAVE_ENABLE", "strict-autosave-write"),
+]
 MM7_CONTROLS = ["Prs.Pr2354", "Prs.Pr2956", "Issues.Issue840"]
 PASS_LINE = re.compile(r"\[\s*PASSED\s*\]\s+1 test\b")
 
@@ -83,7 +87,7 @@ def run_child(name, flag, value, profile, data, rules=None, timeout=None):
     env = os.environ.copy()
     for key in list(env):
         if key.startswith("ENROTH_MM6_V") or key in ("ENROTH_MM6_RESTART_PROFILE", "ENROTH_MM6_NEW_GAME_ENABLE",
-                                                     "ENROTH_MM6_SAVE_ANYWHERE_ENABLE"):
+                                                     "ENROTH_MM6_SAVE_ANYWHERE_ENABLE", "ENROTH_MM6_AUTOSAVE_ENABLE"):
             del env[key]
     if rules:
         env["ENROTH_MM6_RESTART_PROFILE"] = str(profile)
@@ -132,6 +136,8 @@ def main():
             print("new game:", name)
         for name, _, _ in SAVE_ANYWHERE:
             print("save anywhere:", name)
+        for name, _, _ in AUTOSAVE:
+            print("autosave:", name)
         for name in MM7_CONTROLS:
             print("MM7 control:", name)
         return 0
@@ -239,12 +245,21 @@ def main():
             if not run_child(name, flag, value, profile,
                              paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
                 return 1
+    with tempfile.TemporaryDirectory(prefix="mm6-restart-autosave-") as seventh:
+        profile = Path(seventh)
+        os.chmod(profile, 0o700)
+        # A new party is autosaved, then autosaved again over a map edge and at a dungeon door.
+        for name, flag, value in AUTOSAVE:
+            if not run_child(name, flag, value, profile,
+                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+                return 1
     for name in MM7_CONTROLS:
         if not run_child(name, None, None, ROOT, paths["MM7_DATA_PATH"]):
             return 1
     print("PASS: seven-child MM6 chain, all full-retry fault children, the paperdoll child, normal Save/Load menus with a "
           "production load and resave, a production New Game saved, loaded and saved again, a dungeon save after travel "
-          "loaded with its outdoor maps and saved again, and the MM7 controls")
+          "loaded with its outdoor maps and saved again, autosaves of a new party and over a map edge and a dungeon "
+          "door, and the MM7 controls")
     return 0
 
 

@@ -10,6 +10,7 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Localization.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
+#include "Engine/MM6/MM6V5FirstMapNativeSlotPolicy.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Timer.h"
 
@@ -36,6 +37,11 @@ std::vector<SavegameSlot> mm6LoadMenuSlots() {
         SavegameSlot slot;
         slot.fileName = info.fileName;
         slot.header.name = info.header.displayName;
+        if (slot.fileName == mm6::AUTOSAVE_SLOT) {
+            slot.header.name = localization->str(LSTR_AUTOSAVE);
+        } else if (isMM6AutoOrQuickSaveSlot(slot.fileName)) {
+            slot.header.name = localization->str(LSTR_QUICKSAVE);
+        }
         slot.header.locationName = info.header.mapFileName;
         slot.header.playingTime = Time::fromTicks(info.header.playingTicks);
         result.push_back(std::move(slot));
@@ -46,6 +52,10 @@ std::vector<SavegameSlot> mm6LoadMenuSlots() {
         return l.fileName < r.fileName;
     });
     return result;
+}
+
+bool isMM6AutoOrQuickSaveSlot(std::string_view fileName) {
+    return mm6::isMM6SaveSlot(fileName) && !mm6::isNumberedV5FirstMapSlot(fileName);
 }
 
 void mm6SaveFromMenu(std::string_view fileName, std::string_view title) {
@@ -81,4 +91,12 @@ bool mm6MayLoadFromMainMenu(std::string_view fileName) {
 
 void mm6RefuseInGameLoad() {
     reportMM6MenuRefusal("Load this game from the main menu");
+}
+
+void mm6AutoSave() {
+    if (!mm6::isManualSaveArmed()) {
+        MM_INFO("MM6 autosave skipped, this game can't be saved");
+        return;
+    }
+    (void) mm6::saveSessionSlot(mm6::AUTOSAVE_SLOT, localization->str(LSTR_AUTOSAVE), mm6::V5FirstMapCaptureBoundary::SettledInput);
 }

@@ -489,6 +489,28 @@ EvtProgram syntheticHeldItemSubtractEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticCircusPrizeCompareEvent() {
+    std::string bytes;
+    std::string compare;
+    compare.push_back(static_cast<char>(224)); // MM6 circus-prize score variable.
+    appendU32(&compare, 1);
+    compare.push_back(3);
+    appendRecord(&bytes, 0, EVENT_Compare, compare);
+
+    std::string failed;
+    failed.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&failed, 43);
+    appendRecord(&bytes, 1, EVENT_Set, failed);
+    appendRecord(&bytes, 2, EVENT_Exit);
+
+    std::string passed;
+    passed.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&passed, 44);
+    appendRecord(&bytes, 3, EVENT_Set, passed);
+    appendRecord(&bytes, 4, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -999,4 +1021,22 @@ GAME_TEST(MM6HeldItemSubtract, ConsumesOnlyTheMatchingMM6HeldItem) {
     runEvent(EvtContext(EVT_SOURCE_MAP, 1));
     EXPECT_EQ(pParty->pPickedItem.itemId, static_cast<ItemId>(579));
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(42));
+}
+
+GAME_TEST(MM6CircusPrizeCompare, UsesTheMM6PartyInventoryScoreAndBranch) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedParty restoreParty;
+    engine->_localEventMap = syntheticCircusPrizeCompareEvent();
+    for (Character &character : pParty->pCharacters)
+        character.inventory.clear();
+    Item prize;
+    prize.itemId = static_cast<ItemId>(470);
+    ASSERT_TRUE(pParty->pCharacters[0].inventory.equip(ITEM_SLOT_RING1, prize));
+    pParty->pCharacters[0]._characterEventBits.reset(43);
+    pParty->pCharacters[0]._characterEventBits.reset(44);
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(43));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(44));
 }

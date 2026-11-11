@@ -37,3 +37,8 @@ Update 2026-11-11: S-TRAPLOOP and S-EVTSPELL (with follow-ups) are integrated. C
 Update: S-BORDER parts (a) and (b) integrated (`adfc6dc45`, `86bff5ad3`). The same lane continues with part (c) on `claude/mm6-map-return` in `mm7-save-durability`: an in-memory per-map runtime store and a restore before map events, in MM6-owned code with thin hooks.
 
 Update: S-COMBAT integrated (`458688930`..`3b1be67dc`). Its checkout `mm7-monster-combat` is free again.
+
+New lane:
+
+| S-DEATH MM6 party death and respawn (M3) | `claude/mm6-party-death` in `mm7-monster-combat` | the detached MM6 party death model under `src/Engine/MM6/`, its MM6-gated hook where the party dies (`Party.cpp`, `Game.cpp` or `GameOver.cpp`, named in the handoff), new MM6 tests. Shared core. |
+

@@ -3110,3 +3110,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added and passed the real Castle Gloaming Archibald assignment dialogue test. The hidden OpenGL diagnostic can now render a Breeding Zone frame without showing or focusing a window; the owner-local capture helper retains 100 private PNGs by replacing the oldest at capacity. The first capture exposed black missing-geometry regions, which is audit evidence rather than a visual-acceptance result.
 
+## [2026-11-11] verify | MM7 Dark guild hand-in
+- by: T-Burton-ND via codex
+- Completed the focused D1 contract with three passing Dark Guild tests: the in-dungeon marker, Archibald assignment, and the second Archibald dialogue topic that clears the active task and grants Dark-guild membership. Archibald's later Clanker move is not part of this hand-in and is not asserted here.
+

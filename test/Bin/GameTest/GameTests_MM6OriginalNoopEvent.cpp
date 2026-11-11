@@ -449,6 +449,31 @@ EvtProgram syntheticNpcHireEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticAutonoteClearEvent() {
+    std::string bytes;
+    std::string autonote;
+    autonote.push_back(static_cast<char>(VAR_AutoNotes));
+    appendU32(&autonote, 128);
+    appendRecord(&bytes, 0, EVENT_Subtract, autonote);
+
+    std::string compare = autonote;
+    compare.push_back(4);
+    appendRecord(&bytes, 1, EVENT_Compare, compare);
+
+    std::string cleared;
+    cleared.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&cleared, 40);
+    appendRecord(&bytes, 2, EVENT_Set, cleared);
+    appendRecord(&bytes, 3, EVENT_Exit);
+
+    std::string stillSet;
+    stillSet.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&stillSet, 41);
+    appendRecord(&bytes, 4, EVENT_Set, stillSet);
+    appendRecord(&bytes, 5, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -923,4 +948,19 @@ GAME_TEST(MM6NpcHireEvent, UsesTheMM6NpcInPartyStateAndBranch) {
     EXPECT_TRUE(pNPCStats->pNPCData[13].Hired());
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(38));
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(39));
+}
+
+GAME_TEST(MM6AutonoteClear, ClearsTheMM6AutonoteAndFallsThrough) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedParty restoreParty;
+    engine->_localEventMap = syntheticAutonoteClearEvent();
+    pParty->_autonoteBits.set(128);
+    pParty->pCharacters[0]._characterEventBits.reset(40);
+    pParty->pCharacters[0]._characterEventBits.reset(41);
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_FALSE(pParty->_autonoteBits.test(128));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(40));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(41));
 }

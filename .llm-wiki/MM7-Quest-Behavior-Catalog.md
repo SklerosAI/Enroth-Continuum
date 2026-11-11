@@ -186,3 +186,7 @@ as zero-based for `IsActorKilled` and topic availability checks. Its focused
 original-script tests prove both regional Griffin predicates and the Stone City
 Troglodyte Queen boundary; the local reporting contracts continue to own the
 player-visible reward assertions.
+
+Scripted award grants now trigger a character reaction only for recipients who
+receive the award for the first time. This preserves the one-time promotion and
+quest-feedback contract without replaying the reaction for a duplicate award.

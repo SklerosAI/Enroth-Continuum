@@ -728,6 +728,17 @@ EvtProgram syntheticMapLeaveTriggerEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticLongTimerTriggerEvent() {
+    std::string bytes;
+    appendRecord(&bytes, 0, EVENT_OnLongTimer, std::string(10, '\0'));
+    std::string mutation;
+    mutation.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&mutation, 53);
+    appendRecord(&bytes, 1, EVENT_Set, mutation);
+    appendRecord(&bytes, 2, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -1480,4 +1491,15 @@ GAME_TEST(MM6MapLeaveTrigger, StopsDirectEventExecution) {
 
     runEvent(EvtContext(EVT_SOURCE_MAP, 1));
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(52));
+}
+
+GAME_TEST(MM6LongTimerTrigger, StopsDirectEventExecution) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedParty restoreParty;
+    engine->_localEventMap = syntheticLongTimerTriggerEvent();
+    pParty->pCharacters[0]._characterEventBits.reset(53);
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(53));
 }

@@ -1,0 +1,11 @@
+# Claude — first MM6 stage 2 lanes
+
+Three lanes, each its own branch from `master`, started 2026-11-10 while the MM7 chain chapters finish. Owner: Claude Code lane subagents. Handoff target: Claude review, then integration with the MM7 controls (PLAN M7) after each shared-core merge. Plan: `PLAN.md` stage 2.
+
+| Lane | Branch / checkout | Files owned |
+| --- | --- | --- |
+| S-NG production New Game (M1) | `claude/mm6-new-game` in `mm7-monster-combat` (its `codex/mm6-notes-book` ref has no unique commits and is kept) | `saveNewGame()`'s MM6 branch in `src/Engine/SaveLoad.cpp` (shared core), `src/Engine/MM6/MM6FirstMapManualSave.*`, a new MM6 New Game session module under `src/Engine/MM6/`, `src/Engine/MM6/CMakeLists.txt`, new `GameTests_MM6NewGame.cpp`, `tools/run_mm6_firstmap_gate.py`. Not `Game.cpp`. |
+| S-SWEEP map, event and monster sweep (test only) | `claude/mm6-map-sweep` in `mm7-save-durability` (its `claude/mm7-light-items` ref is integrated and kept) | New disabled `test/Bin/GameTest/GameTests_MM6MapSweep.cpp` and a small helper header, CMake line. No `src/`. Results go to a Git-ignored private folder. |
+| S-REP MM6 reputation variable (var 215) | `claude/mm6-reputation-var` in `mm7-mod-access` (its `codex/mm7-meteor-shower` ref is merged and kept) | The MM6 variable descriptor and executor for 215 in `src/Engine/Evt/` (MM6 files first, `EvtInterpreter.cpp` dispatch only if needed, shared core), its unit and game tests. |
+
+Conflict check: no file overlaps between the three, or with the MM7 chain (test files) and recorder (launcher, tools) lanes. S-NG and S-REP both touch shared core, so they merge one at a time with M7 between.

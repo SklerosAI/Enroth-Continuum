@@ -26,12 +26,20 @@ enum GameBuild: String {
 
     var supportsRecording: Bool { self != .mm6 }
 
-    func helperExecutable(in app: URL) -> URL {
+    func bundledHelperExecutable(in app: URL) -> URL {
         app.appendingPathComponent("Contents/Helpers/\(helperName).app/Contents/MacOS/\(helperName)")
     }
 
-    func isAvailable(in app: URL) -> Bool {
-        FileManager.default.isExecutableFile(atPath: helperExecutable(in: app).path)
+    /** Resolves an embedded helper first; upstream can instead use a single separate system installation. */
+    func helperExecutable(in app: URL, externalUpstreamApp: URL? = nil) -> URL {
+        let bundled = bundledHelperExecutable(in: app)
+        guard self == .upstream, !FileManager.default.isExecutableFile(atPath: bundled.path) else { return bundled }
+        let upstreamApp = externalUpstreamApp ?? URL(fileURLWithPath: "/Applications/OpenEnroth.app", isDirectory: true)
+        return upstreamApp.appendingPathComponent("Contents/MacOS/OpenEnroth")
+    }
+
+    func isAvailable(in app: URL, externalUpstreamApp: URL? = nil) -> Bool {
+        FileManager.default.isExecutableFile(atPath: helperExecutable(in: app, externalUpstreamApp: externalUpstreamApp).path)
     }
 
     /**

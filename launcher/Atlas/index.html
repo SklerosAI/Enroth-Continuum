@@ -135,7 +135,7 @@
     const play=document.getElementById('play-mm7');play.disabled=busy;play.textContent=state.running?(state.runningBuild==='mm7'?'MM7 is running':'OpenEnroth is running'):state.recordingFinalizing?'Finishing recording':state.data.mm7?'Play MM7':'Choose MM7 data';
     const upstream=document.getElementById('play-openenroth');upstream.disabled=busy||!state.upstreamAvailable||!state.data.mm7;
     upstream.textContent=state.running&&state.runningBuild==='openenroth'?'OpenEnroth is running':'Play upstream OpenEnroth';
-    safeText('openenroth-note',state.upstreamAvailable?'The current upstream engine, for playtesting. It uses its own profile and your MM7 data.':'Unavailable: this Atlas build has no upstream OpenEnroth helper.');
+    safeText('openenroth-note',state.upstreamAvailable?'The current upstream engine, for playtesting. It uses its own profile and your MM7 data.':'Unavailable: install OpenEnroth.app in Applications.');
     safeText('record-video-toggle',state.recordVideo?'Turn off':'Turn on');
     safeText('record-diagnostics-toggle',state.recordDiagnostics?'Turn off':'Turn on');
     document.getElementById('record-video-toggle').disabled=busy;

@@ -8,8 +8,9 @@ data path and user path. It does not package original Might & Magic data.
 
 - MM7 launches, saves, exits, and reloads through The Atlas.
 - **Play upstream OpenEnroth**, next to Play MM7, launches the current upstream
-  OpenEnroth build on the same MM7 data, for playtesting upstream. It runs the
-  optional `Contents/Helpers/OpenEnroth.app` with exactly
+  OpenEnroth build on the same MM7 data, for playtesting upstream. It prefers an
+  optional bundled `Contents/Helpers/OpenEnroth.app`; otherwise it uses the separate
+  `/Applications/OpenEnroth.app` installation. Either route runs exactly
   `--data-path <MM7 data> --user-path <profile>`, which is upstream's own CLI.
   Upstream plays MM7 only and has no `--game` option. Its profile is
   `Profiles/MM7-OpenEnroth`, created before launch because upstream requires an

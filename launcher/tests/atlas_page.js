@@ -51,7 +51,7 @@ assert.strictEqual(upstream.hidden, false);
 window.Atlas.receive(state({}));
 assert.strictEqual(upstream.disabled, true);
 assert.strictEqual(upstream.hidden, false);
-assert.match(note.textContent, /no upstream OpenEnroth helper/);
+assert.match(note.textContent, /install OpenEnroth\.app in Applications/);
 assert.strictEqual(document.getElementById('play-mm7').disabled, false);
 assert.strictEqual(mm6.disabled, true);
 

@@ -55,27 +55,6 @@ inline int monsterAttackDamage(const MonsterInfo &monster, ActorAbility ability,
 }
 
 /**
- * @param character                     Character an arrow hits.
- * @return                              How many times the original halves the arrow's damage for this character. The
- *                                      Shield buff, any Shielding item, the artifact 408 in the armor slot and the
- *                                      artifact 423 in either hand halve it once each.
- */
-inline int arrowHalvings(const Character &character) {
-    auto wears = [&](ItemSlot slot, int item) {
-        InventoryConstEntry entry = character.inventory.entry(slot);
-        return entry && std::to_underlying(entry->itemId) == item && !entry->IsBroken();
-    };
-    auto shielding = [](InventoryConstEntry entry) {
-        return entry->specialEnchantment == ITEM_ENCHANTMENT_OF_SHIELDING && !entry->IsBroken();
-    };
-    int result = character.pCharacterBuffs[static_cast<CharacterBuff>(3)].Active(); // MM6 buffs keep their original slots, 3 is Shield.
-    result += std::ranges::any_of(character.inventory.equipment(), shielding);
-    result += wears(ITEM_SLOT_ARMOUR, 408);
-    result += wears(ITEM_SLOT_MAIN_HAND, 423) || wears(ITEM_SLOT_OFF_HAND, 423);
-    return result;
-}
-
-/**
  * @param character                     Character to check.
  * @param enchantment                   Special enchantment.
  * @return                              Whether an unbroken item the character wears has it.
@@ -95,6 +74,20 @@ inline bool wearsUnbrokenEnchantment(const Character &character, ItemEnchantment
 inline bool wearsUnbrokenItem(const Character &character, ItemSlot slot, int item) {
     InventoryConstEntry entry = character.inventory.entry(slot);
     return entry && std::to_underlying(entry->itemId) == item && !entry->IsBroken();
+}
+
+/**
+ * @param character                     Character an arrow hits.
+ * @return                              How many times the original halves the arrow's damage for this character. The
+ *                                      Shield buff, any Shielding item, the artifact 408 in the armor slot and the
+ *                                      artifact 423 in either hand halve it once each.
+ */
+inline int arrowHalvings(const Character &character) {
+    int result = character.pCharacterBuffs[static_cast<CharacterBuff>(3)].Active(); // MM6 buffs keep their original slots, 3 is Shield.
+    result += wearsUnbrokenEnchantment(character, ITEM_ENCHANTMENT_OF_SHIELDING);
+    result += wearsUnbrokenItem(character, ITEM_SLOT_ARMOUR, 408);
+    result += wearsUnbrokenItem(character, ITEM_SLOT_MAIN_HAND, 423) || wearsUnbrokenItem(character, ITEM_SLOT_OFF_HAND, 423);
+    return result;
 }
 
 /**

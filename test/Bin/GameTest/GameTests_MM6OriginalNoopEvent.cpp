@@ -238,6 +238,31 @@ EvtProgram syntheticCanShowGoldTopicEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticAutonoteEvent() {
+    std::string bytes;
+    std::string autonote;
+    autonote.push_back(static_cast<char>(VAR_AutoNotes));
+    appendU32(&autonote, 128); // Last retained MM6 autonote row.
+    appendRecord(&bytes, 0, EVENT_Set, autonote);
+
+    std::string compare = autonote;
+    compare.push_back(4);
+    appendRecord(&bytes, 1, EVENT_Compare, compare);
+
+    std::string failed;
+    failed.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&failed, 23);
+    appendRecord(&bytes, 2, EVENT_Set, failed);
+    appendRecord(&bytes, 3, EVENT_Exit);
+
+    std::string passed;
+    passed.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&passed, 24);
+    appendRecord(&bytes, 4, EVENT_Set, passed);
+    appendRecord(&bytes, 5, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -551,4 +576,19 @@ GAME_TEST(MM6TopicAdmission, UsesMM6GoldComparisonToSelectTheTopic) {
     EvtInterpreter denied;
     denied.prepare(EvtContext(EVT_SOURCE_GLOBAL, 1));
     EXPECT_FALSE(denied.canShowTopic());
+}
+
+GAME_TEST(MM6AutonoteEvent, UsesTheMM6AutonoteVariableAndBranch) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedParty restoreParty;
+    engine->_localEventMap = syntheticAutonoteEvent();
+    pParty->_autonoteBits.reset(128);
+    pParty->pCharacters[0]._characterEventBits.reset(23);
+    pParty->pCharacters[0]._characterEventBits.reset(24);
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_TRUE(pParty->_autonoteBits.test(128));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(23));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(24));
 }

@@ -8,17 +8,21 @@ usage() {
 Usage:
   mm7_playtest_capture.sh start --profile ABS_DIR --app ABS_ATLAS_APP --game-pid PID
       (--output ABS_EXISTING_BASE_DIR | --session ABS_NEW_DIR)
+      [--build mm7 | --build openenroth] [--diagnostics | --no-diagnostics]
       [--video | --no-video] [--display N] [--video-chunk-seconds N]
       [--poll-seconds N] [--save-checkpoint-seconds N] [--min-free-mib N]
       [--expected-volume-id N]
   mm7_playtest_capture.sh note --session ABS_SESSION_DIR --text "owner note"
   mm7_playtest_capture.sh clip --session ABS_SESSION_DIR
   mm7_playtest_capture.sh stop --session ABS_SESSION_DIR [--game-exit normal|abnormal]
+      [--exit-detail "exit status 0"]
   mm7_playtest_capture.sh status --session ABS_SESSION_DIR
 
 The start command stays in the foreground, prints SESSION_DIR=..., and exits
 after the game PID exits or stop is requested. It never launches or signals MM7.
-Video keeps a rolling buffer of the last two minutes. A clip request, an
+--build names the Atlas helper being played: the fork's MM7.app (default) or
+the upstream OpenEnroth.app. Diagnostics (logs, saves, crash reports and
+process samples) are on by default. Video keeps a rolling buffer of the last two minutes. A clip request, an
 abnormal game exit, or a game exit with no stop request keeps the buffer as a
 clip. Otherwise the buffer is deleted when recording ends.
 EOF
@@ -30,6 +34,7 @@ stamp() { date -u '+%Y%m%dT%H%M%SZ'; }
 is_uint() { [[ "$1" =~ ^[0-9]+$ ]]; }
 sha() { shasum -a 256 "$1" | awk '{print $1}'; }
 device() { stat -f '%d' "$1" 2>/dev/null; }
+plist_value() { plutil -extract "$2" raw -o - "$1" 2>/dev/null || printf 'unavailable'; }
 
 # A session inside any Git checkout is allowed only when Git itself ignores it.
 check_private_destination() {
@@ -210,13 +215,57 @@ capture_once() {
     if [[ -d "$profile/logs" ]]; then
         while IFS= read -r -d '' path; do
             capture_log "$path" || return 1
-        done < <(find "$profile/logs" -maxdepth 1 -type f -name 'enroth-continuum-mm7*.log' -print0 2>/dev/null)
+        done < <(find "$profile/logs" -maxdepth 1 -type f -name "$log_pattern" -print0 2>/dev/null)
     fi
     if [[ -d "$profile/saves" ]]; then
         while IFS= read -r -d '' path; do
             snapshot "$path" saves yes "$force_save_checkpoint" || return 1
         done < <(find "$profile/saves" -maxdepth 1 -type f \( -name '*.mm7' -o -name '*.mm7.bak' \) -print0 2>/dev/null)
     fi
+}
+
+# Both engines log their revision at startup, so the first log ranges hold it.
+record_engine_revision() {
+    local part revision="" checked=0
+    grep -q '^engine_revision=' "$session/identity.txt" && return 0
+    for part in "$session"/logs/*.log.part; do
+        [[ -f "$part" && -z "$revision" && checked -lt 3 ]] || break
+        revision=$(sed -n 's/.*OpenEnroth, revision \([0-9a-fA-F][0-9a-fA-F]*\) built on.*/\1/p' "$part" | head -n 1)
+        checked=$((checked + 1))
+    done
+    [[ -z "$revision" ]] || printf 'engine_revision=%s\n' "$revision" >> "$session/identity.txt"
+}
+
+sample_process() {
+    local sample
+    sample=$(ps -p "$game_pid" -o %cpu= -o rss= 2>/dev/null) || return 0
+    set -- $sample
+    (( $# == 2 )) || return 0
+    printf '%s\t%s\t%s\n' "$(utc)" "$1" "$2" >> "$session/samples.tsv"
+}
+
+# macOS names a report after the process, such as MM7-2026-11-10-213455.ips,
+# and writes it a few seconds after the crash.
+collect_crash_reports() {
+    local wait_seconds="$1" reports="$HOME/Library/Logs/DiagnosticReports" report found=0 waited=0
+    while true; do
+        if [[ -d "$reports" ]]; then
+            while IFS= read -r -d '' report; do
+                grep -Eq "\"pid\" *: *${game_pid}([^0-9]|\$)|\[${game_pid}\]" "$report" 2>/dev/null || continue
+                [[ ! -e "$session/crash-reports/$(basename "$report")" ]] || { found=1; continue; }
+                check_destination || return 1
+                mkdir -p "$session/crash-reports"
+                cp "$report" "$session/crash-reports/" 2>/dev/null || continue
+                event crash-report "Copied $report"
+                found=1
+            done < <(find "$reports" -maxdepth 1 -type f \( -name "${helper_name}-*.ips" -o -name "${helper_name}_*.crash" \) \
+                -newer "$session/.ec-mm7-playtest-session" -print0 2>/dev/null)
+        fi
+        (( found == 0 && waited < wait_seconds )) || break
+        sleep 1
+        waited=$((waited + 1))
+    done
+    (( found )) || event crash-report "No macOS crash report for PID $game_pid."
 }
 
 video_pid=""
@@ -406,10 +455,11 @@ mode="${1:-}"
 [[ -n "$mode" ]] || { usage; exit 2; }
 shift
 profile_arg=""; output_arg=""; session_arg=""; app_arg=""; game_pid=""; note_text=""; expected_volume_id=""; game_exit=""
+build=mm7; diagnostics_enabled=1; exit_detail=""
 display=1; video_chunk_seconds=60; poll_seconds=5; save_checkpoint_seconds=600; min_free_mib=2048
 while (( $# > 0 )); do
     case "$1" in
-        --profile|--output|--session|--app|--game-pid|--display|--video-chunk-seconds|--poll-seconds|--save-checkpoint-seconds|--min-free-mib|--expected-volume-id|--text|--game-exit)
+        --profile|--output|--session|--app|--game-pid|--display|--video-chunk-seconds|--poll-seconds|--save-checkpoint-seconds|--min-free-mib|--expected-volume-id|--text|--game-exit|--build|--exit-detail)
             (( $# >= 2 )) || fail "missing value for $1"
             case "$1" in
                 --profile) profile_arg="$2" ;; --output) output_arg="$2" ;;
@@ -419,10 +469,13 @@ while (( $# > 0 )); do
                 --save-checkpoint-seconds) save_checkpoint_seconds="$2" ;;
                 --min-free-mib) min_free_mib="$2" ;; --text) note_text="$2" ;;
                 --expected-volume-id) expected_volume_id="$2" ;; --game-exit) game_exit="$2" ;;
+                --build) build="$2" ;; --exit-detail) exit_detail="$2" ;;
             esac
             shift 2 ;;
         --video) video_enabled=1; shift ;;
         --no-video) video_enabled=0; shift ;;
+        --diagnostics) diagnostics_enabled=1; shift ;;
+        --no-diagnostics) diagnostics_enabled=0; shift ;;
         -h|--help) usage; exit 0 ;;
         *) fail "unknown argument: $1" ;;
     esac
@@ -442,7 +495,9 @@ if [[ "$mode" == note || "$mode" == clip || "$mode" == stop || "$mode" == status
         stop)
             [[ -z "$game_exit" || "$game_exit" == normal || "$game_exit" == abnormal ]] ||
                 fail "--game-exit must be normal or abnormal"
-            printf '%s\n' "$game_exit" > "$session/.stop-requested.$$"
+            exit_detail=${exit_detail//$'\n'/ }
+            exit_detail=${exit_detail//$'\t'/ }
+            printf '%s\n%s\n' "$game_exit" "${exit_detail:0:200}" > "$session/.stop-requested.$$"
             mv "$session/.stop-requested.$$" "$session/.stop-requested" ;;
         status) cat "$session/status.json" ;;
     esac
@@ -460,11 +515,18 @@ done
    poll_seconds >= 1 && poll_seconds <= 60 && save_checkpoint_seconds >= 1 &&
    save_checkpoint_seconds <= 3600 && min_free_mib >= 128 )) || fail "numeric option is out of range"
 video_keep=$(( (120 + video_chunk_seconds - 1) / video_chunk_seconds ))
+case "$build" in
+    mm7) helper_name=MM7; log_pattern='enroth-continuum-mm7*.log' ;;
+    openenroth) helper_name=OpenEnroth; log_pattern='openenroth*.log' ;;
+    *) fail "--build must be mm7 or openenroth" ;;
+esac
+(( video_enabled || diagnostics_enabled )) || fail "nothing to record: video and diagnostics are both off"
 [[ "$video_enabled" != 1 || -x /usr/sbin/screencapture ]] || fail "macOS screencapture is unavailable"
 profile=$(canonical_existing_dir "$profile_arg")
 app=$(canonical_existing_dir "$app_arg")
-[[ -x "$app/Contents/MacOS/EnrothContinuum" && -x "$app/Contents/Helpers/MM7.app/Contents/MacOS/MM7" ]] ||
-    fail "--app must be an Atlas bundle with its MM7 helper"
+helper="$app/Contents/Helpers/$helper_name.app"
+[[ -x "$app/Contents/MacOS/EnrothContinuum" && -x "$helper/Contents/MacOS/$helper_name" ]] ||
+    fail "--app must be an Atlas bundle with its $helper_name helper"
 if [[ -n "$output_arg" ]]; then
     base=$(canonical_existing_dir "$output_arg")
     [[ -z "$expected_volume_id" || "$(device "$base")" == "$expected_volume_id" ]] || fail "recording destination volume changed"
@@ -498,14 +560,23 @@ printf 'SESSION_DIR=%s\n' "$session"
 script_path="$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")"
 source_root=$(cd "$(dirname "$script_path")/.." && pwd -P)
 source_revision=$(git -C "$source_root" rev-parse HEAD 2>/dev/null || printf 'unavailable')
-atlas_id=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Contents/Info.plist" 2>/dev/null || printf 'unavailable')
-helper_id=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Contents/Helpers/MM7.app/Contents/Info.plist" 2>/dev/null || printf 'unavailable')
+atlas_id=$(plist_value "$app/Contents/Info.plist" CFBundleIdentifier)
+helper_id=$(plist_value "$helper/Contents/Info.plist" CFBundleIdentifier)
+helper_version=$(plist_value "$helper/Contents/Info.plist" CFBundleShortVersionString)
+helper_commit=unavailable
+build_info="$app/Contents/Resources/Helpers/$helper_name-BUILD-INFO.txt"
+if [[ -f "$build_info" ]]; then
+    helper_commit=$(sed -n 's/^commit: *//p' "$build_info" | head -n 1)
+fi
 {
     printf 'started_at=%s\nprofile=%s\noutput=%s\n' "$started_at" "$profile" "$session"
     printf 'source_revision=%s\nscript_sha256=%s\n' "$source_revision" "$(sha "$script_path")"
     printf 'atlas_path=%s\natlas_id=%s\natlas_sha256=%s\n' "$app" "$atlas_id" "$(sha "$app/Contents/MacOS/EnrothContinuum")"
-    printf 'helper_id=%s\nhelper_sha256=%s\n' "$helper_id" "$(sha "$app/Contents/Helpers/MM7.app/Contents/MacOS/MM7")"
-    printf 'game_pid=%s\nvolume_id=%s\nvideo_requested=%s\n' "$game_pid" "$volume_id" "$video_enabled"
+    printf 'build=%s\nhelper_path=%s\nhelper_id=%s\nhelper_version=%s\nhelper_commit=%s\nhelper_sha256=%s\n' \
+        "$build" "$helper" "$helper_id" "$helper_version" "${helper_commit:-unavailable}" "$(sha "$helper/Contents/MacOS/$helper_name")"
+    printf 'launch_command=%s\n' "$(ps -p "$game_pid" -o args= 2>/dev/null || printf 'unavailable')"
+    printf 'game_pid=%s\nvolume_id=%s\nvideo_requested=%s\ndiagnostics_requested=%s\n' \
+        "$game_pid" "$volume_id" "$video_enabled" "$diagnostics_enabled"
 } > "$session/identity.txt"
 event start "Passive MM7 recording started."
 if [[ "$video_enabled" == 1 ]]; then
@@ -515,6 +586,7 @@ fi
 game_start=$(ps -p "$game_pid" -o lstart= 2>/dev/null || true)
 requested=0
 next_save_checkpoint_epoch=$(( $(date +%s) + save_checkpoint_seconds ))
+next_sample_epoch=0
 trap 'requested=$((requested + 1))' INT TERM
 stop_reason="stopped"
 while true; do
@@ -540,7 +612,14 @@ while true; do
             next_save_checkpoint_epoch=$((next_save_checkpoint_epoch + save_checkpoint_seconds))
         done
     fi
-    capture_once "$force_save_checkpoint" || { stop_reason="$state"; break; }
+    if (( diagnostics_enabled )); then
+        capture_once "$force_save_checkpoint" || { stop_reason="$state"; break; }
+        record_engine_revision
+        if (( now_epoch >= next_sample_epoch )); then
+            sample_process
+            next_sample_epoch=$((now_epoch + 30))
+        fi
+    fi
     idle "$poll_seconds" || { stop_reason="$state"; break; }
 done
 video_restart=0
@@ -554,8 +633,11 @@ if volume_ok; then
         waited=$((waited + 1))
     done
     take_clip_request || true
-    game_exit=""
-    [[ ! -f "$session/.stop-requested" ]] || game_exit=$(head -n 1 "$session/.stop-requested")
+    game_exit=""; exit_detail=""
+    if [[ -f "$session/.stop-requested" ]]; then
+        game_exit=$(sed -n 1p "$session/.stop-requested")
+        exit_detail=$(sed -n 2p "$session/.stop-requested")
+    fi
     keep_video=0
     if [[ "$stop_reason" == stopped || "$stop_reason" == game-exited ]]; then
         if [[ "$game_exit" == abnormal || ( -z "$game_exit" && "$stop_reason" == game-exited ) ]]; then
@@ -563,13 +645,21 @@ if volume_ok; then
         fi
         [[ -z "$pending_clip" ]] || keep_video=1
     fi
-    if [[ "$stop_reason" != low-space ]]; then capture_once || true; fi
+    if (( diagnostics_enabled )) && [[ "$stop_reason" != low-space ]]; then
+        capture_once || true
+        record_engine_revision
+    fi
     if (( keep_video )) && [[ "$video_enabled" == 1 ]]; then
         [[ -n "$pending_clip" ]] || open_clip "game exit ${game_exit:-unreported}" || true
         drain_video_into_clip || true
     fi
     stop_video
     close_clip
+    if (( diagnostics_enabled )) && [[ "$stop_reason" != low-space && "$game_exit" != normal ]]; then
+        crash_wait=0
+        [[ "$game_exit" != abnormal ]] || crash_wait=15
+        collect_crash_reports "$crash_wait" || true
+    fi
     while IFS= read -r chunk; do unlink "$chunk" 2>/dev/null || true; done < <(completed_chunks)
     if [[ "$video_state" != off && "$video_state" != failed ]]; then
         if (( keep_video && last_clip_saved )); then video_state="kept"; else video_state="discarded"; fi
@@ -577,7 +667,7 @@ if volume_ok; then
     fi
     state="$stop_reason"
     ended_json="\"$(utc)\""
-    event stop "$state${game_exit:+ ($game_exit exit)}"
+    event stop "$state${game_exit:+ ($game_exit exit${exit_detail:+, $exit_detail})}"
     write_status
 else
     stop_video

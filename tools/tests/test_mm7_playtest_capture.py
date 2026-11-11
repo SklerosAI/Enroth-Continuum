@@ -100,7 +100,10 @@ class CaptureCase(unittest.TestCase):
         self.recordings = self.temp / "recordings"
         self.recordings.mkdir()
         self.session = self.recordings / "session"
-        self.env = dict(os.environ, STUB_DIR=str(self.stub), CHUNK_SLEEP="1",
+        self.home = self.temp / "home"
+        self.reports = self.home / "Library/Logs/DiagnosticReports"
+        self.reports.mkdir(parents=True)
+        self.env = dict(os.environ, STUB_DIR=str(self.stub), CHUNK_SLEEP="1", HOME=str(self.home),
                         PATH=f"{self.stub / 'bin'}:{os.environ['PATH']}")
         self.game = subprocess.Popen(["/bin/sleep", "600"])
         self.recorder: subprocess.Popen | None = None
@@ -117,7 +120,7 @@ class CaptureCase(unittest.TestCase):
         return subprocess.run(["/bin/bash", str(self.script), *args, "--session", str(self.session)],
                               env=self.env, text=True, capture_output=True, check=True)
 
-    def start(self, *extra: str, video: bool = True) -> None:
+    def start(self, *extra: str, video: bool = True, check: bool = True) -> None:
         args = ["/bin/bash", str(self.script), "start", "--profile", str(self.profile),
                 "--session", str(self.session), "--app", str(self.app),
                 "--game-pid", str(self.game.pid), "--display", "1", "--video-chunk-seconds", "60",
@@ -126,11 +129,19 @@ class CaptureCase(unittest.TestCase):
             args.append("--video")
         with (self.temp / "recorder.log").open("a") as log:
             self.recorder = subprocess.Popen(args, env=self.env, stdout=log, stderr=log)
-        self.assertTrue(wait_for(lambda: self.status().get("state") == "running", 5))
+        if check:
+            self.assertTrue(wait_for(lambda: self.status().get("state") == "running", 5))
 
     def finish(self, timeout: float = 30) -> None:
         assert self.recorder
         self.recorder.wait(timeout=timeout)
+
+    def identity(self) -> dict[str, str]:
+        lines = (self.session / "identity.txt").read_text().splitlines()
+        return dict(line.split("=", 1) for line in lines)
+
+    def timeline(self) -> str:
+        return (self.session / "timeline.tsv").read_text()
 
     def status(self) -> dict:
         try:
@@ -321,6 +332,143 @@ class RollingReplayTest(CaptureCase):
         self.assertEqual(self.calls(), [])
         self.assertEqual(self.status()["video"], "off")
         self.assertEqual(self.clips(), [])
+
+
+class DiagnosticsTest(CaptureCase):
+    def add_upstream_helper(self) -> None:
+        write_executable(self.app / "Contents/Helpers/OpenEnroth.app/Contents/MacOS/OpenEnroth", "#!/bin/sh\n")
+        info = self.app / "Contents/Resources/Helpers/OpenEnroth-BUILD-INFO.txt"
+        info.parent.mkdir(parents=True)
+        info.write_text("upstream: https://github.com/OpenEnroth/OpenEnroth.git\ncommit: 8010ac364d9e\nversion: nightly\n")
+
+    def write_crash_report(self, name: str, pid: int) -> Path:
+        report = self.reports / name
+        report.write_text('{"app_name":"MM7","name":"MM7"}\n{\n  "uptime" : 100,\n  "procName" : "MM7",\n'
+                          f'  "pid" : {pid},\n  "exception" : {{"type" : "EXC_BAD_ACCESS"}}\n}}\n')
+        return report
+
+    def test_diagnostics_without_video(self) -> None:
+        # Diagnostics alone copy logs and saves, sample the game and never touch the screen.
+        (self.profile / "saves/save000.mm7").write_bytes(b"save one")
+        (self.profile / "logs/enroth-continuum-mm7_1.log").write_text(
+            "OpenEnroth, revision 5e3d2cf built on 2026-11-10\n")
+        self.start(video=False)
+        self.assertTrue(wait_for(lambda: (self.session / "samples.tsv").exists(), 10))
+        self.cli("stop", "--game-exit", "normal", "--exit-detail", "exit status 0")
+        self.finish()
+        self.assertEqual(self.calls(), [])
+        identity = self.identity()
+        self.assertEqual(identity["build"], "mm7")
+        self.assertEqual(identity["diagnostics_requested"], "1")
+        self.assertEqual(identity["video_requested"], "0")
+        self.assertEqual(identity["engine_revision"], "5e3d2cf")
+        self.assertIn("sleep 600", identity["launch_command"])
+        self.assertTrue(identity["helper_path"].endswith("Contents/Helpers/MM7.app"))
+        self.assertEqual(len(list((self.session / "saves").glob("*.mm7"))), 1)
+        self.assertEqual(len(list((self.session / "logs").glob("*.log.part"))), 1)
+        sample = (self.session / "samples.tsv").read_text().splitlines()[0].split("\t")
+        self.assertEqual(len(sample), 3)
+        self.assertIn("stopped (normal exit, exit status 0)", self.timeline())
+        self.assertFalse((self.session / "crash-reports").exists())
+
+    def test_video_without_diagnostics(self) -> None:
+        # Video alone keeps the replay but copies no logs or saves.
+        (self.profile / "saves/save000.mm7").write_bytes(b"save one")
+        (self.profile / "logs/enroth-continuum-mm7_1.log").write_text("line one\n")
+        self.start("--no-diagnostics")
+        self.wait_for_completed(2)
+        self.game.kill()
+        self.game.wait()
+        self.cli("stop", "--game-exit", "abnormal", "--exit-detail", "uncaught signal 9")
+        self.finish()
+        self.assertEqual(self.status()["video"], "kept")
+        self.assertEqual(len(self.clips()), 1)
+        self.assertEqual(list((self.session / "saves").iterdir()), [])
+        self.assertEqual(list((self.session / "logs").iterdir()), [])
+        self.assertFalse((self.session / "samples.tsv").exists())
+        self.assertFalse((self.session / "crash-reports").exists())
+        self.assertEqual(self.identity()["diagnostics_requested"], "0")
+
+    def test_neither_toggle_is_refused(self) -> None:
+        # A recorder with nothing to record refuses to start.
+        self.start("--no-diagnostics", video=False, check=False)
+        self.finish()
+        assert self.recorder
+        self.assertEqual(self.recorder.returncode, 2)
+        self.assertFalse(self.session.exists())
+
+    def test_upstream_build_session(self) -> None:
+        # An upstream session reads upstream's own logs and records its commit.
+        self.add_upstream_helper()
+        (self.profile / "logs/openenroth_2026_11_10_21_00_00.log").write_text(
+            "OpenEnroth, revision 8010ac3 built on 2026-11-10\n")
+        (self.profile / "logs/enroth-continuum-mm7_1.log").write_text("fork log\n")
+        self.start("--build", "openenroth", video=False)
+        self.assertTrue(wait_for(lambda: list((self.session / "logs").glob("*.log.part")), 10))
+        self.cli("stop", "--game-exit", "normal")
+        self.finish()
+        identity = self.identity()
+        self.assertEqual(identity["build"], "openenroth")
+        self.assertTrue(identity["helper_path"].endswith("Contents/Helpers/OpenEnroth.app"))
+        self.assertEqual(identity["helper_commit"], "8010ac364d9e")
+        self.assertEqual(identity["engine_revision"], "8010ac3")
+        parts = [path.read_text() for path in (self.session / "logs").glob("*.log.part")]
+        self.assertEqual(parts, ["OpenEnroth, revision 8010ac3 built on 2026-11-10\n"])
+
+    def test_upstream_build_needs_its_helper(self) -> None:
+        # Without OpenEnroth.app in the bundle an upstream session is refused.
+        self.start("--build", "openenroth", video=False, check=False)
+        self.finish()
+        assert self.recorder
+        self.assertEqual(self.recorder.returncode, 2)
+        self.assertIn("OpenEnroth helper", (self.temp / "recorder.log").read_text())
+        self.assertFalse(self.session.exists())
+
+    def test_crash_report_is_copied(self) -> None:
+        # An abnormal exit copies the helper's own new crash report and nothing else.
+        old = self.write_crash_report("MM7-2026-01-01-000000.ips", self.game.pid)
+        os.utime(old, (1_000_000_000, 1_000_000_000))
+        self.start(video=False)
+        self.write_crash_report("MM7-2026-11-10-213455.ips", self.game.pid)
+        self.write_crash_report("MM7-2026-11-10-213456.ips", self.game.pid + 100000)
+        self.write_crash_report("Safari-2026-11-10-213457.ips", self.game.pid)
+        self.game.kill()
+        self.game.wait()
+        self.cli("stop", "--game-exit", "abnormal", "--exit-detail", "uncaught signal 11")
+        self.finish()
+        copied = sorted(path.name for path in (self.session / "crash-reports").iterdir())
+        self.assertEqual(copied, ["MM7-2026-11-10-213455.ips"])
+        self.assertEqual((self.session / "crash-reports" / copied[0]).read_bytes(),
+                         (self.reports / copied[0]).read_bytes())
+        self.assertIn("abnormal exit, uncaught signal 11", self.timeline())
+
+    def test_late_crash_report_is_waited_for(self) -> None:
+        # macOS writes the report seconds after the crash, so an abnormal exit waits for it.
+        self.start(video=False)
+        self.game.kill()
+        self.game.wait()
+        self.cli("stop", "--game-exit", "abnormal")
+        time.sleep(3)
+        self.write_crash_report("MM7-2026-11-10-213455.ips", self.game.pid)
+        self.finish()
+        self.assertEqual([path.name for path in (self.session / "crash-reports").iterdir()],
+                         ["MM7-2026-11-10-213455.ips"])
+
+    def test_normal_exit_skips_crash_reports(self) -> None:
+        # A normal exit never copies crash reports.
+        self.start(video=False)
+        self.write_crash_report("MM7-2026-11-10-213455.ips", self.game.pid)
+        self.cli("stop", "--game-exit", "normal")
+        self.finish()
+        self.assertFalse((self.session / "crash-reports").exists())
+
+    def test_diagnostics_low_space_stop(self) -> None:
+        # The storage floor also stops a diagnostics-only session.
+        self.start(video=False)
+        (self.stub / "df-avail-kb").write_text(str(100 * 1024))
+        self.finish()
+        self.assertEqual(self.status()["state"], "low-space")
+        self.assertTrue(self.game.poll() is None)
 
 
 if __name__ == "__main__":

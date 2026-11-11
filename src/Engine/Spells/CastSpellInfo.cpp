@@ -2665,7 +2665,13 @@ void CastSpellInfoHelpers::castSpell() {
                         continue;
                     }
                     for (Character &character : pParty->pCharacters) {
-                        character.conditions.resetAll();
+                        if (engine->gameTitle() == GameTitle::MM7) {
+                            for (Condition condition : allConditions())
+                                if (condition != CONDITION_ZOMBIE) // Vanilla MM7 doesn't cure zombies here.
+                                    character.conditions.reset(condition);
+                        } else {
+                            character.conditions.resetAll();
+                        }
                         character.health = character.GetMaxHealth();
                         character.mana = character.GetMaxMana();
                     }

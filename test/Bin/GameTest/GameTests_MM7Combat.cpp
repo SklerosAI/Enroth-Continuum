@@ -302,6 +302,27 @@ GAME_TEST(MM7Combat, DivineInterventionRecoveryFallsWithLightSkill) {
     EXPECT_GT(lowSkillRecovery, highSkillRecovery);
 }
 
+GAME_TEST(MM7Combat, DivineInterventionPreservesZombie) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+
+    Character &caster = pParty->pCharacters[0];
+    caster.classType = CLASS_PRIEST_OF_SUN;
+    caster.uLevel = 100;
+    caster.setSkillValue(SKILL_LIGHT, CombinedSkillValue(10, MASTERY_GRANDMASTER));
+    caster.bHaveSpell[SPELL_LIGHT_DIVINE_INTERVENTION] = true;
+    caster.mana = caster.GetMaxMana();
+    Character &zombie = pParty->pCharacters[1];
+    zombie.conditions.set(CONDITION_ZOMBIE, Time::fromTicks(1));
+    zombie.conditions.set(CONDITION_WEAK, Time::fromTicks(1));
+
+    game.castSpell(0, SPELL_LIGHT_DIVINE_INTERVENTION);
+    game.tick();
+
+    EXPECT_TRUE(zombie.conditions.has(CONDITION_ZOMBIE));
+    EXPECT_FALSE(zombie.conditions.has(CONDITION_WEAK));
+}
+
 GAME_TEST(MM7Combat, DeathExplosionUsesSpecialDamage) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
     game.startNewGame();

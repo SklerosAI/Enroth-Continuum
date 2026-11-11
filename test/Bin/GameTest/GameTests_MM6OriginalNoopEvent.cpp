@@ -14,6 +14,7 @@
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Party.h"
+#include "Engine/Tables/NPCTable.h"
 #include "Engine/mm7_data.h"
 
 #include "GUI/GUIWindow.h"
@@ -181,6 +182,16 @@ EvtProgram syntheticTimerTriggerEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticSetNpcTopicEvent() {
+    std::string bytes;
+    std::string topic;
+    appendU32(&topic, 1);   // NPC.
+    topic.push_back(2);     // Third MM6 script topic slot.
+    appendU32(&topic, 364); // Highest accepted MM6 global event ID.
+    appendRecord(&bytes, 0, EVENT_SetNPCTopic, topic);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -202,6 +213,14 @@ struct ScopedLevelStrings {
 
     ~ScopedLevelStrings() {
         engine->_levelStrings = std::move(strings);
+    }
+};
+
+struct ScopedNpcStats {
+    NPCStats stats = *pNPCStats;
+
+    ~ScopedNpcStats() {
+        *pNPCStats = std::move(stats);
     }
 };
 
@@ -412,4 +431,19 @@ GAME_TEST(MM6TimerTrigger, StopsDirectEventExecution) {
 
     runEvent(EvtContext(EVT_SOURCE_MAP, 1));
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(20));
+}
+
+GAME_TEST(MM6SetNpcTopic, UpdatesTheMM6TopicSlot) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedNpcStats restoreNpcs;
+    engine->_localEventMap = syntheticSetNpcTopicEvent();
+    pNPCStats->pNPCData[1].dialogue_1_evt_id = 101;
+    pNPCStats->pNPCData[1].dialogue_2_evt_id = 102;
+    pNPCStats->pNPCData[1].dialogue_3_evt_id = 0;
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_EQ(pNPCStats->pNPCData[1].dialogue_1_evt_id, 101);
+    EXPECT_EQ(pNPCStats->pNPCData[1].dialogue_2_evt_id, 102);
+    EXPECT_EQ(pNPCStats->pNPCData[1].dialogue_3_evt_id, 364);
 }

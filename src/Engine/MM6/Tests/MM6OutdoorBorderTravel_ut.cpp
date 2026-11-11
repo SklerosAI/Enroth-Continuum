@@ -29,11 +29,10 @@ UNIT_TEST(MM6OutdoorBorderTravel, ResolvesFourEdgesAndPreservesOffset) {
     EXPECT_EQ(west.candidate->arrivalY, 17);
     EXPECT_EQ(north.candidate->arrivalX, 17);
     EXPECT_EQ(west.candidate->travelDays, 5);
-    EXPECT_FALSE(west.mayOffer());
-    EXPECT_TRUE(west.refusal == mm6::BorderTravelRefusal::UnverifiedPartyEligibilityAndSpecialEdges);
+    EXPECT_TRUE(west.refusal == mm6::BorderTravelRefusal::None);
 }
 
-UNIT_TEST(MM6OutdoorBorderTravel, MovesBothAxesAtCornersButRefusesOffer) {
+UNIT_TEST(MM6OutdoorBorderTravel, MovesBothAxesAtCorners) {
     const mm6::BorderTravelHirelings hirelings;
     const auto northwest = mm6::assessOutdoorBorderTravel(GameTitle::MM6, "outc2.odm", -22529, 22529, hirelings);
     const auto northeast = mm6::assessOutdoorBorderTravel(GameTitle::MM6, "outc2.odm", 22529, 22529, hirelings);
@@ -52,8 +51,7 @@ UNIT_TEST(MM6OutdoorBorderTravel, MovesBothAxesAtCornersButRefusesOffer) {
     EXPECT_EQ(northwest.candidate->arrivalY, -22527);
     EXPECT_TRUE(northwest.candidate->crossedX);
     EXPECT_TRUE(northwest.candidate->crossedY);
-    EXPECT_FALSE(northwest.mayOffer());
-    EXPECT_TRUE(northwest.refusal == mm6::BorderTravelRefusal::UnverifiedCornerAndSpecialEdge);
+    EXPECT_TRUE(northwest.refusal == mm6::BorderTravelRefusal::None);
 }
 
 UNIT_TEST(MM6OutdoorBorderTravel, RefusesInvalidBordersAndCoordinates) {
@@ -97,7 +95,6 @@ UNIT_TEST(MM6OutdoorBorderTravel, AppliesBoundedHirelingReductionsWithoutMutatio
     EXPECT_EQ(x, 22529);
     EXPECT_EQ(y, -22529);
     EXPECT_TRUE(all.guide && all.tracker && all.pathfinder && all.explorer);
-    EXPECT_FALSE(assessment.mayOffer());
 }
 
 UNIT_TEST(MM6OutdoorBorderTravel, HirelingsAreGuideTrackerPathfinderAndExplorer) {

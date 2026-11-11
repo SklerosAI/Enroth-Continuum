@@ -47,7 +47,6 @@ enum class BorderConfirmationRefusal {
     WrongTitle,
     Flying,
     RouteChanged,
-    CornerUnverified,
 };
 
 /**
@@ -86,8 +85,6 @@ struct BorderConfirmation {
                                                                    hirelings);
     if (!route.candidate || route.candidate->destinationMap != offered.destinationMap)
         return {.refusal = BorderConfirmationRefusal::RouteChanged};
-    if (route.candidate->crossedX && route.candidate->crossedY)
-        return {.refusal = BorderConfirmationRefusal::CornerUnverified};
 
     BorderConfirmation result;
     result.destination = route.candidate;

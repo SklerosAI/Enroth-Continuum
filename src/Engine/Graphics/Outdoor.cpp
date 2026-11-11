@@ -14,6 +14,8 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
+#include "Engine/MM6/MM6MapTransition.h"
+#include "Engine/MM6/MM6OutdoorBorderEligibility.h"
 #include "Engine/MM6/MM6V5FirstMapLoadAttempt.h"
 #include "Engine/MM6/MM6VisitedReturnPreEventProbeForTest.h"
 #include "Engine/AssetsManager.h"
@@ -289,10 +291,8 @@ bool OutdoorLocation::Initialize(std::string_view filename, int days_played,
 }
 
 MapDestination OutdoorLocation::getTravelDestination(int partyX, int partyY) {
-    // The tables below contain MM7 map IDs and travel times. MM6 needs its
-    // own border routes before stepping off an outdoor map can be enabled.
     if (engine->gameTitle() == GameTitle::MM6)
-        return {};
+        return mm6::borderTravelDestination(partyX, partyY);
 
     int direction;
     MapId currentMap = engine->_currentLoadedMapId;
@@ -966,8 +966,11 @@ void ODM_UpdateUserInputAndOther() {
     if (pParty->pos.x < -maxPartyAxisDistance || pParty->pos.x > maxPartyAxisDistance ||
         pParty->pos.y < -maxPartyAxisDistance || pParty->pos.y > maxPartyAxisDistance) {
         MapDestination destination = pOutdoor->getTravelDestination(pParty->pos.x, pParty->pos.y);
-        if (!engine->IsUnderwater() && (pParty->isAirborne() || (pParty->uFlags & (PARTY_FLAG_STANDING_ON_WATER | PARTY_FLAG_WATER_DAMAGE)) ||
-                             pParty->uFlags & PARTY_FLAG_BURNING || pParty->bFlying) || destination.map() == MAP_INVALID) {
+        const bool partyStateBlocks = engine->gameTitle() == GameTitle::MM6
+            ? !mm6::borderOfferPartyFlagsPermit(GameTitle::MM6, pParty->uFlags)
+            : !engine->IsUnderwater() && (pParty->isAirborne() || (pParty->uFlags & (PARTY_FLAG_STANDING_ON_WATER | PARTY_FLAG_WATER_DAMAGE)) ||
+                                          pParty->uFlags & PARTY_FLAG_BURNING || pParty->bFlying);
+        if (partyStateBlocks || destination.map() == MAP_INVALID) {
             pParty->pos.x = std::clamp(pParty->pos.x, -maxPartyAxisDistance, maxPartyAxisDistance);
             pParty->pos.y = std::clamp(pParty->pos.y, -maxPartyAxisDistance, maxPartyAxisDistance);
         } else {
@@ -1917,8 +1920,11 @@ void loadAndPrepareODM(MapId mapid, bool bLoading) {
         mm6::testing::runArmedVisitedReturnPreEventProbeForTest(
             GameTitle::MM6, mapid);
     if (!bLoading) {
-        if (std::optional<PartyPlacement> placement = engine->_pendingTransition->resolvePlacement())
+        if (std::optional<PartyPlacement> placement = engine->_pendingTransition->resolvePlacement()) {
+            if (engine->gameTitle() == GameTitle::MM6)
+                mm6::settleBorderArrival(&*placement);
             placeParty(*placement);
+        }
     }
 
     viewparams->_443365();

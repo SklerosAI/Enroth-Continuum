@@ -16,8 +16,9 @@ namespace mm6 {
 
 inline constexpr float MM6_OUTDOOR_BORDER_EDGE = 22528.0f;
 
-// This is a detached geometric candidate, not permission to display travel or
-// change maps. The caller must also prove the active map's archive identity.
+/**
+ * Neighbouring outdoor map that walking off the edge of an MM6 outdoor map leads to, and where the party arrives.
+ */
 struct BorderTravelCandidate {
     std::string destinationMap;
     float arrivalX = 0;
@@ -46,22 +47,18 @@ struct BorderTravelHirelings {
 }
 
 enum class BorderTravelRefusal {
+    None,
     WrongTitle,
     InvalidSourceMap,
     InvalidCoordinates,
     NoBorderCrossing,
     OutsideGrid,
     ArrivalOutsideBounds,
-    UnverifiedPartyEligibilityAndSpecialEdges,
-    UnverifiedCornerAndSpecialEdge,
 };
 
 struct BorderTravelAssessment {
     std::optional<BorderTravelCandidate> candidate;
     BorderTravelRefusal refusal = BorderTravelRefusal::InvalidSourceMap;
-
-    // A geometric candidate is never a live travel offer at this stage.
-    [[nodiscard]] bool mayOffer() const { return false; }
 };
 
 // Original MM6 has a five-day base and these four reductions, with a one-day
@@ -75,6 +72,18 @@ struct BorderTravelAssessment {
     return std::max(1, days);
 }
 
+/**
+ * Finds the outdoor map that walking off an edge leads to. The neighbour's `outXY.odm` name has the column letter or
+ * the row digit moved, both at a corner, and each crossed axis wraps by one map width. No map has an exceptional edge.
+ *
+ * @param title                         Game title, only MM6 has this route.
+ * @param sourceMap                     Outdoor map the party is on.
+ * @param partyX                        Party X.
+ * @param partyY                        Party Y.
+ * @param hirelings                     Hireling professions that shorten the trip.
+ * @return                              The neighbouring map and arrival, or a refusal. Party state that blocks the
+ *                                      offer is the caller's to check, see `borderOfferPartyFlagsPermit`.
+ */
 [[nodiscard]] inline BorderTravelAssessment assessOutdoorBorderTravel(
     GameTitle title, std::string_view sourceMap, float partyX, float partyY,
     const BorderTravelHirelings &hirelings) {
@@ -112,13 +121,7 @@ struct BorderTravelAssessment {
     candidate.travelDays = borderTravelDays(hirelings);
     candidate.crossedX = columnChange != 0;
     candidate.crossedY = rowChange != 0;
-    const BorderTravelRefusal refusal = candidate.crossedX && candidate.crossedY
-        ? BorderTravelRefusal::UnverifiedCornerAndSpecialEdge
-        : BorderTravelRefusal::UnverifiedPartyEligibilityAndSpecialEdges;
-
-    // The original party-state predicate and exceptional border permissions
-    // are not typed yet. Corner arrival also lacks a native acceptance sample.
-    return {.candidate = std::move(candidate), .refusal = refusal};
+    return {.candidate = std::move(candidate), .refusal = BorderTravelRefusal::None};
 }
 
 } // namespace mm6

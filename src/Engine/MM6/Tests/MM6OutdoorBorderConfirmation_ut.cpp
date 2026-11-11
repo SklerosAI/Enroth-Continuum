@@ -135,9 +135,18 @@ UNIT_TEST(MM6OutdoorBorderConfirmation, RefusesWithoutCopyingTheParty) {
     EXPECT_EQ(refusal(GameTitle::MM6, "outc2.odm", elsewhere), mm6::BorderConfirmationRefusal::RouteChanged);
     live->pos.x = 22528;
     EXPECT_EQ(refusal(GameTitle::MM6, "outc2.odm", offered), mm6::BorderConfirmationRefusal::RouteChanged);
-    live->pos = Vec3f(22529, 22529, 300);
-    const auto corner = *mm6::assessOutdoorBorderTravel(GameTitle::MM6, "outc2.odm", 22529, 22529, {}).candidate;
-    EXPECT_EQ(refusal(GameTitle::MM6, "outc2.odm", corner), mm6::BorderConfirmationRefusal::CornerUnverified);
     EXPECT_EQ(rests, 0);
     EXPECT_EQ(live->uNumFoodRations, 10);
+}
+
+UNIT_TEST(MM6OutdoorBorderConfirmation, CornerWrapsBothAxes) {
+    // Crossing at a corner leads to the diagonal neighbour, with both axes wrapped.
+    const auto live = partyAtEastEdge(10);
+    live->pos = Vec3f(22529, 22530, 300);
+    const auto confirmed = mm6::stageBorderConfirmation(GameTitle::MM6, "outc2.odm", offeredFrom(*live), *live, {},
+                                                        [](Party &) {});
+    ASSERT_EQ(confirmed.refusal, mm6::BorderConfirmationRefusal::None);
+    EXPECT_EQ(confirmed.destination->destinationMap, "outd1.odm");
+    EXPECT_EQ(confirmed.party->pos.x, -22527);
+    EXPECT_EQ(confirmed.party->pos.y, -22526);
 }

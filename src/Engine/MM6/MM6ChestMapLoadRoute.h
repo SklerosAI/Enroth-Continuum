@@ -10,8 +10,8 @@ namespace mm6 {
 
 // A scoped, thread-local integration gate for headless map-load acceptance.
 // Production MM6 map loads keep the blocking guard, except the first map of a
-// new game, see admitNewGameChestMapLoad. MM7 never enters this route, even if
-// a scope exists on its thread.
+// new game and the target of an in-session map change, see admitChestMapLoad.
+// MM7 never enters this route, even if a scope exists on its thread.
 namespace detail {
 
 inline bool &chestMapLoadOptInFlag() {
@@ -24,7 +24,7 @@ inline bool &preserveMarkerFreeChestFlag() {
     return enabled;
 }
 
-inline MapId &newGameChestMap() {
+inline MapId &admittedChestMap() {
     static MapId map = MAP_INVALID;
     return map;
 }
@@ -36,14 +36,14 @@ inline bool chestMapLoadOptedIn() {
 }
 
 /**
- * Lets the next active chest load hand off the chest title state of a new game that `startNewGameSession` staged,
- * without a scoped opt-in. Only a load of `mapId` uses the admission, and the next active chest load of any map
- * consumes it.
+ * Lets the next active chest load hand off the live chest title state without a scoped opt-in. That state is the one
+ * `startNewGameSession` staged, carried along every map change of the session since. Only a load of `mapId` uses the
+ * admission, and the next active chest load of any map consumes it.
  *
- * @param mapId                         First map of the new game.
+ * @param mapId                         Map about to load, the first map of a new game or the target of a map change.
  */
-inline void admitNewGameChestMapLoad(MapId mapId) {
-    detail::newGameChestMap() = mapId;
+inline void admitChestMapLoad(MapId mapId) {
+    detail::admittedChestMap() = mapId;
 }
 
 class ScopedChestMapLoadOptIn {
@@ -80,8 +80,8 @@ inline bool tryChestMapLoadBinding(GameTitle title, MapTreasureLevel mapLevel,
 
 inline bool tryActiveChestMapLoad(GameTitle title, MapId mapId, const MapTable *maps,
                                  const ItemTable *table, const Party *party) {
-    const bool newGameMap = std::exchange(detail::newGameChestMap(), MAP_INVALID) == mapId;
-    if (title != GameTitle::MM6 || !(chestMapLoadOptedIn() || newGameMap) || !maps || !table || !party ||
+    const bool admittedMap = std::exchange(detail::admittedChestMap(), MAP_INVALID) == mapId;
+    if (title != GameTitle::MM6 || !(chestMapLoadOptedIn() || admittedMap) || !maps || !table || !party ||
         mapId < MAP_FIRST || mapId > MAP_LAST || !chestTitleState().ready)
         return false;
     const auto owned = scanPartyOwnedChestArtifacts(title, *party);

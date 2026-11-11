@@ -107,6 +107,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6OutdoorBorderTravel.h
     MM6OutdoorBorderEligibility.h
     MM6OutdoorBorderConfirmation.h
+    MM6MapTransition.cpp MM6MapTransition.h
     MM6ScopedNewGameSave.cpp MM6ScopedNewGameSave.h
     MM6PartyDeath.cpp MM6PartyDeath.h
     MM6PartyRest.cpp MM6PartyRest.h

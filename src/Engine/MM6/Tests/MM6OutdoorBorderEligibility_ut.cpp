@@ -1,7 +1,6 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6OutdoorBorderEligibility.h"
-#include "Engine/MM6/MM6OutdoorBorderTravel.h"
 
 UNIT_TEST(MM6OutdoorBorderEligibility, RefusesEachOriginalOfferFlag) {
     EXPECT_TRUE(mm6::borderOfferPartyFlagsPermit(GameTitle::MM6, {}));
@@ -40,8 +39,4 @@ UNIT_TEST(MM6OutdoorBorderEligibility, ForeignTitleAndInputsRemainUnchanged) {
     EXPECT_FALSE(mm6::borderConfirmFlyingStatePermits(GameTitle::MM7, flying));
     EXPECT_TRUE(flags == (PARTY_FLAG_BURNING | PARTY_FLAG_AIRBORNE));
     EXPECT_EQ(flying, 1);
-
-    const auto candidate = mm6::assessOutdoorBorderTravel(GameTitle::MM6, "outc2.odm", 22529, 0, {});
-    ASSERT_TRUE(candidate.candidate.has_value());
-    EXPECT_FALSE(candidate.mayOffer());
 }

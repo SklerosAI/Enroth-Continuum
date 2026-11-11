@@ -50,6 +50,7 @@
 #include "Engine/TurnEngine/TurnEngine.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
+#include "Engine/MM6/MM6MapTransition.h"
 #include "Engine/MM6/MM6NewGameSession.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
@@ -772,7 +773,11 @@ void Game::processQueuedMessages() {
                 pAudioPlayer->playUISound(SOUND_StartMainChoice02);
                 // encounter_index = (NPCData *)getTravelTime();
                 MapDestination travelDestination = pOutdoor->getTravelDestination(pParty->pos.x, pParty->pos.y);
-                if (!engine->IsUnderwater() && pParty->bFlying || travelDestination.map() == MAP_INVALID) {
+                if (engine->gameTitle() == GameTitle::MM6 && travelDestination.map() != MAP_INVALID &&
+                    mm6::confirmBorderTravel(travelDestination)) {
+                    DialogueEnding();
+                } else if (engine->gameTitle() == GameTitle::MM6 || !engine->IsUnderwater() && pParty->bFlying ||
+                           travelDestination.map() == MAP_INVALID) {
                     PlayButtonClickSound();
                     pParty->pos.x = std::clamp(pParty->pos.x, -maxPartyAxisDistance, maxPartyAxisDistance);
                     pParty->pos.y = std::clamp(pParty->pos.y, -maxPartyAxisDistance, maxPartyAxisDistance);;

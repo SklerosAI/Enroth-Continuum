@@ -137,7 +137,7 @@ bool startNewGameSession() {
             pMapDeltas = std::move(mapDeltas);
             chestTitleState() = chest;
         }
-        admitNewGameChestMapLoad(pMapTable->GetMapInfo(NEW_GAME_FIRST_MAP));
+        admitChestMapLoad(pMapTable->GetMapInfo(NEW_GAME_FIRST_MAP));
     } catch (const std::exception &e) {
         MM_ERROR("MM6 new game could not prepare the first map: {}", e.what());
     }

@@ -3091,3 +3091,9 @@ Chronological record of wiki activity.
 - Integrated on `master` through `2379d130a`: MM6's own interactive decoration rows and event base 400, which ends the hover crash on scenery and makes barrels work; MM6 chest traps with the original disarm roll and delayed trap blast; and four combat tests re-pinned to deterministic outcomes after the corrected first-map RNG use. One of those had a hostile training dummy casting at the party, now spawned friendly.
 - Checks on `master`: 17 MM6 combat tests, MM6 suite 107, unit tests 1,117, MM6 first-map gate 29 with the MM7 controls, full headless MM7 540/540, `check_style` clean, event sweep 67 loaded and 66 finished, combat sweep 0 of 26 main-quest maps throwing.
 
+## [2026-11-11] ingest | MM7 quest intended-behavior catalog
+- by: T-Burton-ND via codex
+- Added a public-source-reconciled main, Light, Dark, side-quest and promotion catalog with test coverage, confidence states and implementation gates.
+- The catalog identifies a definite Wine Cellar false positive: the current Light chain can complete without defeating the Elder Vampire, contrary to independently corroborated player-facing guides.
+- It also records the uncovered Dark chain, war/timer alternatives, Colony Zod route and side/promotion matrix as contracts to resolve before claiming behavior-complete coverage.
+

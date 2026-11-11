@@ -5,6 +5,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/Localization.h"
+#include "Engine/Objects/NPCEnums.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
@@ -236,4 +237,47 @@ GAME_TEST(MM6Transport, LastStableFinishesPriceFixing) {
 
     EXPECT_EQ(bitsTape, tape(std::vector<int>{116, 148, 149, 150, 151, 152, 153, 154, 155},
                              std::vector<int>{116, 117, 147, 148, 149, 150, 151, 152, 153, 154, 155}));
+}
+
+GAME_TEST(MM6Transport, CoachWithoutGold) {
+    // A stable refuses a party that can't pay for the coach, which stays where it is.
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    pParty->SetGold(10); // The coach costs 25.
+    auto mapTape = tapes.map();
+    auto screenTape = tapes.screen();
+    auto goldTape = tapes.gold();
+    auto statusTape = tapes.statusBar();
+    auto soundsTape = tapes.sounds();
+    auto timeTape = tapes.custom([] { return pParty->GetPlayingTime().ticks(); });
+    test.startTaping();
+
+    enterNewSorpigalStable(game);
+    game.pressGuiButton("HouseDialogue_Option0");
+    game.tick();
+
+    EXPECT_EQ(mapTape, tape(pMapTable->GetMapInfo("oute3.odm")));
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
+    EXPECT_EQ(goldTape, tape(10));
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD));
+    EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(31103)); // The stablemaster's not enough gold line.
+    EXPECT_LT(timeTape.back() - timeTape.front(), Duration::fromHours(1).ticks());
+}
+
+GAME_TEST(MM6Transport, HiredHorsemanShortensCoach) {
+    // A hired horseman takes two days off a coach trip, down to the one day a trip always takes.
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    pParty->pHirelings[0].profession = NPC_PROFESSION_HORSEMAN;
+    auto mapTape = tapes.map();
+    auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+    auto timeTape = tapes.custom([] { return pParty->GetPlayingTime().ticks(); });
+    test.startTaping();
+
+    takeCoachFromNewSorpigal(game);
+
+    EXPECT_EQ(mapTape, tape(pMapTable->GetMapInfo("oute3.odm"), pMapTable->GetMapInfo("outd3.odm")));
+    EXPECT_CONTAINS(optionsTape, std::vector<std::string>{routeLabel(1, "outd3.odm")});
+    EXPECT_CONTAINS(timeTape.adjacentDeltas(), Duration::fromDays(1).ticks());
+    EXPECT_MISSES(timeTape.adjacentDeltas(), Duration::fromDays(2).ticks());
 }

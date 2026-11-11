@@ -3086,3 +3086,8 @@ Chronological record of wiki activity.
 - Checks on `master`: the MM6 first-map gate passed all 29 children, including a dungeon save after travel loaded in a fresh process with its outdoor maps as left and saved again, plus the MM7 controls. 17 MM6 combat tests, MM6 suite 102, unit tests 1,113, full headless MM7 540/540, `check_style` clean, event sweep 67 loaded and 66 finished.
 - Open for the MM6 working gate: autosave and quick save, in-game Load, chest traps, transport routes, the chained main-quest path and the hive finale, and the owner's visible sessions.
 
+## [2026-11-11] verify | MM6 decorations, chest traps and combat test re-pin
+- by: T-Burton-ND via claude
+- Integrated on `master` through `2379d130a`: MM6's own interactive decoration rows and event base 400, which ends the hover crash on scenery and makes barrels work; MM6 chest traps with the original disarm roll and delayed trap blast; and four combat tests re-pinned to deterministic outcomes after the corrected first-map RNG use. One of those had a hostile training dummy casting at the party, now spawned friendly.
+- Checks on `master`: 17 MM6 combat tests, MM6 suite 107, unit tests 1,117, MM6 first-map gate 29 with the MM7 controls, full headless MM7 540/540, `check_style` clean, event sweep 67 loaded and 66 finished, combat sweep 0 of 26 main-quest maps throwing.
+

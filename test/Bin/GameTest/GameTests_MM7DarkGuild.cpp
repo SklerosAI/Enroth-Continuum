@@ -9,6 +9,9 @@
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/MapEnums.h"
 #include "Engine/Party.h"
+#include "GUI/GUIWindow.h"
+#include "GUI/UI/UIHouses.h"
+#include "GUI/UI/UIRest.h"
 
 #include "MM7CampaignChain.h"
 
@@ -59,4 +62,36 @@ GAME_TEST(MM7DarkGuild, BreedingZoneMarkerDoesNotGrantDarkGuild) {
         EXPECT_EQ(finishedTape, tape(false, true));
         EXPECT_EQ(guildTape, tape(false));
     }
+}
+
+GAME_TEST(MM7DarkGuild, ArchibaldAssignsBreedingZone) {
+    // This is the post-Arbiter Dark route: reach Archibald through Castle Gloaming's actual night-only throne-room
+    // door and accept his first dialogue topic. It deliberately does not fixture the Breeding Zone activation.
+    auto activeTape = tapes.questBit(QBIT_BREEDING_ZONE_ACTIVE);
+    auto houseTape = tapes.house();
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+    pParty->_questBits.set(QBIT_DARK_PATH);
+    pParty->_questBits.set(QBIT_ARCHIBALD_VISIT_ACTIVE);
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_WaitTillDawn");
+    game.tick();
+    while (currentRestType == REST_WAIT)
+        game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    test.startTaping();
+
+    game.teleportTo(MAP_CASTLE_GLOAMING, Vec3f(-10300, -18432, -2861), 180);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_CASTLE_GLOAMING_THRONE_ROOM_1);
+    ASSERT_EQ(houseNpcs.size(), 1u);
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+
+    EXPECT_EQ(activeTape, tape(false, true));
+    EXPECT_EQ(houseTape, tape(HOUSE_INVALID, HOUSE_CASTLE_GLOAMING_THRONE_ROOM_1));
 }

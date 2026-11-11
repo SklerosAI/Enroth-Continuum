@@ -1,17 +1,11 @@
-#include <array>
-#include <cstdint>
-#include <limits>
 #include <memory>
-#include <variant>
 
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6PartyDeath.h"
 #include "Engine/Party.h"
 
-namespace {
-
-std::unique_ptr<Party> makeParty() {
+static std::unique_ptr<Party> makeDeadParty(Mastery guardianAngel) {
     auto party = std::make_unique<Party>();
     party->playing_time = Time::fromDays(10);
     party->uNumDeaths = 2;
@@ -20,114 +14,64 @@ std::unique_ptr<Party> makeParty() {
     party->velocity = Vec3f(6, 7, 8);
     party->_viewYaw = 100;
     party->_viewPitch = 20;
-    party->pPartyBuffs[PARTY_BUFF_RESIST_AIR].power = 3;
+    party->uFlags = PARTY_FLAG_WATER_DAMAGE | PARTY_FLAG_BURNING;
+    party->pHirelings[0].name = "hireling";
+    party->setActiveCharacterIndex(-1);
+    party->pPartyBuffs[static_cast<PartyBuff>(0)].expireTime = Time::fromDays(11);
+    if (guardianAngel != MASTERY_NONE) {
+        party->pPartyBuffs[static_cast<PartyBuff>(8)].expireTime = Time::fromDays(11);
+        party->pPartyBuffs[static_cast<PartyBuff>(8)].skillMastery = guardianAngel;
+    }
     for (Character &character : party->pCharacters) {
-        character.health = 5;
+        character.health = -5;
         character.mana = 9;
         character.conditions.set(CONDITION_DEAD, Time::fromTicks(1));
-        character.pCharacterBuffs[CHARACTER_BUFF_BLESS].power = 2;
+        character.pCharacterBuffs[static_cast<CharacterBuff>(0)].expireTime = Time::fromDays(11);
     }
     return party;
 }
 
-const mm6::PartyDeathPlan &plan(const mm6::PartyDeathResult &result) {
-    return std::get<mm6::PartyDeathPlan>(result);
+static int maxHealthByIndex(const Party &party, const Character &character) {
+    return 21 + 20 * static_cast<int>(&character - party.pCharacters.data());
 }
 
-} // namespace
+UNIT_TEST(MM6PartyDeath, PartyWakesInNewSorpigalWithNothing) {
+    // How the original MM6 handles a dead party without a Guardian Angel.
+    auto party = makeDeadParty(MASTERY_NONE);
+    mm6::applyPartyDeath(party.get(), [&](const Character &character) { return maxHealthByIndex(*party, character); });
 
-UNIT_TEST(MM6PartyDeath, OrdinaryDeathStagesSourceBackedRespawn) {
-    auto source = makeParty();
-    const auto result = mm6::planPartyDeath(*source, GameTitle::MM6,
-                                           mm6::GuardianAngelState::Absent, {});
-    ASSERT_TRUE(std::holds_alternative<mm6::PartyDeathPlan>(result));
-    const auto &staged = *plan(result).party;
-    EXPECT_EQ(plan(result).mapFile, "oute3.odm");
-    EXPECT_EQ(staged.pos, Vec3f(-9728, -11319, 160));
-    EXPECT_EQ(staged.velocity, Vec3f());
-    EXPECT_EQ(staged._viewYaw, 512);
-    EXPECT_EQ(staged._viewPitch, 0);
-    EXPECT_EQ(staged.uNumDeaths, 3);
-    EXPECT_EQ(staged.playing_time, Time::fromDays(17));
-    EXPECT_EQ(staged.uNumGold, 0);
-    EXPECT_EQ(staged.pPartyBuffs[PARTY_BUFF_RESIST_AIR].power, 0);
-    for (const Character &character : staged.pCharacters) {
+    EXPECT_EQ(party->pos, Vec3f(-9728, -11319, 160));
+    EXPECT_EQ(party->uFallStartZ, 160);
+    EXPECT_EQ(party->velocity, Vec3f());
+    EXPECT_EQ(party->_viewYaw, 512);
+    EXPECT_EQ(party->_viewPitch, 0);
+    EXPECT_EQ(party->uNumDeaths, 3);
+    EXPECT_EQ(party->playing_time, Time::fromDays(17));
+    EXPECT_EQ(party->uNumGold, 0);
+    EXPECT_EQ(party->uFlags, PARTY_FLAG_BURNING); // The original clears only water damage.
+    EXPECT_TRUE(party->pHirelings[0].name.empty());
+    EXPECT_FALSE(party->pPartyBuffs[static_cast<PartyBuff>(0)].Active());
+    EXPECT_EQ(party->activeCharacterIndex(), 0);
+    for (const Character &character : party->pCharacters) {
         EXPECT_EQ(character.health, 1);
-        EXPECT_EQ(character.mana, 9); // The original death block does not write mana.
+        EXPECT_EQ(character.mana, 9);
         EXPECT_FALSE(character.conditions.has(CONDITION_DEAD));
-        EXPECT_EQ(character.pCharacterBuffs[CHARACTER_BUFF_BLESS].power, 0);
+        EXPECT_FALSE(character.pCharacterBuffs[static_cast<CharacterBuff>(0)].Active());
     }
-    EXPECT_EQ(source->uNumDeaths, 2);
-    EXPECT_EQ(source->uNumGold, 101);
-    EXPECT_EQ(source->pCharacters[0].health, 5);
-    EXPECT_TRUE(source->pCharacters[0].conditions.has(CONDITION_DEAD));
 }
 
-UNIT_TEST(MM6PartyDeath, GuardianAngelExpertAndMasterUseExplicitHealth) {
-    auto source = makeParty();
-    constexpr std::array<int, 4> maximumHealth{21, 40, 79, 100};
-    auto expert = mm6::planPartyDeath(*source, GameTitle::MM6,
-                                      mm6::GuardianAngelState::Expert, maximumHealth);
-    ASSERT_TRUE(std::holds_alternative<mm6::PartyDeathPlan>(expert));
-    EXPECT_EQ(plan(expert).party->uNumGold, 50);
-    EXPECT_EQ(plan(expert).party->pCharacters[0].health, 10);
-    EXPECT_EQ(plan(expert).party->pCharacters[3].health, 50);
+UNIT_TEST(MM6PartyDeath, GuardianAngelKeepsHalfTheGoldAndRaisesByMastery) {
+    // Any Guardian Angel halves the gold loss, only Expert and Master raise the party above 1 HP.
+    for (Mastery mastery : {MASTERY_NOVICE, MASTERY_EXPERT, MASTERY_MASTER}) {
+        auto party = makeDeadParty(mastery);
+        mm6::applyPartyDeath(party.get(), [&](const Character &character) { return maxHealthByIndex(*party, character); });
 
-    auto master = mm6::planPartyDeath(*source, GameTitle::MM6,
-                                      mm6::GuardianAngelState::Master, maximumHealth);
-    ASSERT_TRUE(std::holds_alternative<mm6::PartyDeathPlan>(master));
-    EXPECT_EQ(plan(master).party->uNumGold, 50);
-    EXPECT_EQ(plan(master).party->pCharacters[0].health, 21);
-    EXPECT_EQ(plan(master).party->pCharacters[3].health, 100);
-    EXPECT_EQ(source->uNumGold, 101);
-}
-
-UNIT_TEST(MM6PartyDeath, RefusesUnknownAndUnmappedStateBeforeMutation) {
-    auto source = makeParty();
-    constexpr std::array<int, 4> maximumHealth{21, 40, 79, 100};
-    EXPECT_EQ(std::get<mm6::PartyDeathRefusal>(mm6::planPartyDeath(
-        *source, GameTitle::MM6, mm6::GuardianAngelState::Unknown, maximumHealth)),
-        mm6::PartyDeathRefusal::UnknownGuardianAngel);
-    EXPECT_EQ(std::get<mm6::PartyDeathRefusal>(mm6::planPartyDeath(
-        *source, GameTitle::MM7, mm6::GuardianAngelState::Absent, {})),
-        mm6::PartyDeathRefusal::ForeignTitle);
-
-    source->pPartyBuffs[static_cast<PartyBuff>(16)].power = 1;
-    EXPECT_EQ(std::get<mm6::PartyDeathRefusal>(mm6::planPartyDeath(
-        *source, GameTitle::MM6, mm6::GuardianAngelState::Absent, {})),
-        mm6::PartyDeathRefusal::UnmappedBuff);
-    source->pPartyBuffs[static_cast<PartyBuff>(16)] = SpellBuff();
-    source->pCharacters[0].pCharacterBuffs[static_cast<CharacterBuff>(16)].power = 1;
-    EXPECT_EQ(std::get<mm6::PartyDeathRefusal>(mm6::planPartyDeath(
-        *source, GameTitle::MM6, mm6::GuardianAngelState::Absent, {})),
-        mm6::PartyDeathRefusal::UnmappedBuff);
-    source->pCharacters[0].pCharacterBuffs[static_cast<CharacterBuff>(16)] = SpellBuff();
-    source->pCharacters[0].conditions.set(CONDITION_ZOMBIE, Time::fromTicks(1));
-    EXPECT_EQ(std::get<mm6::PartyDeathRefusal>(mm6::planPartyDeath(
-        *source, GameTitle::MM6, mm6::GuardianAngelState::Absent, {})),
-        mm6::PartyDeathRefusal::UnmappedCondition);
-    EXPECT_EQ(source->uNumDeaths, 2);
-    EXPECT_EQ(source->pCharacters[0].health, 5);
-}
-
-UNIT_TEST(MM6PartyDeath, RefusesOverflowAndInvalidHealth) {
-    auto source = makeParty();
-    source->uNumGold = -1;
-    EXPECT_EQ(std::get<mm6::PartyDeathRefusal>(mm6::planPartyDeath(
-        *source, GameTitle::MM6, mm6::GuardianAngelState::Absent, {})),
-        mm6::PartyDeathRefusal::InvalidGold);
-    source->uNumGold = 101;
-    source->uNumDeaths = std::numeric_limits<int>::max();
-    EXPECT_EQ(std::get<mm6::PartyDeathRefusal>(mm6::planPartyDeath(
-        *source, GameTitle::MM6, mm6::GuardianAngelState::Absent, {})),
-        mm6::PartyDeathRefusal::DeathCountOverflow);
-    source->uNumDeaths = 2;
-    source->playing_time = Time::fromTicks(std::numeric_limits<std::int64_t>::max());
-    EXPECT_EQ(std::get<mm6::PartyDeathRefusal>(mm6::planPartyDeath(
-        *source, GameTitle::MM6, mm6::GuardianAngelState::Absent, {})),
-        mm6::PartyDeathRefusal::PlayingTimeOverflow);
-    source->playing_time = Time::fromDays(10);
-    EXPECT_EQ(std::get<mm6::PartyDeathRefusal>(mm6::planPartyDeath(
-        *source, GameTitle::MM6, mm6::GuardianAngelState::Expert, {21, 0, 79, 100})),
-        mm6::PartyDeathRefusal::InvalidMaximumHealth);
+        EXPECT_EQ(party->uNumGold, 50);
+        EXPECT_FALSE(party->pPartyBuffs[static_cast<PartyBuff>(8)].Active());
+        for (int i = 0; i < 4; i++) {
+            const int maxHealth = 21 + 20 * i;
+            const int expected = mastery == MASTERY_MASTER ? maxHealth : mastery == MASTERY_EXPERT ? maxHealth / 2 : 1;
+            EXPECT_EQ(party->pCharacters[i].health, expected);
+        }
+    }
 }

@@ -1,42 +1,21 @@
 #pragma once
 
-#include <array>
-#include <memory>
-#include <string_view>
-#include <variant>
+#include <functional>
 
-#include "Engine/GameTitle.h"
-
+class Character;
 struct Party;
 
 namespace mm6 {
 
-// Guardian Angel is not yet mapped to a runtime MM6 buff slot. The caller
-// must supply its independently verified state, including absence.
-enum class GuardianAngelState { Absent, Expert, Master, Unknown };
-
-enum class PartyDeathRefusal {
-    ForeignTitle,
-    UnknownGuardianAngel,
-    UnmappedBuff,
-    UnmappedCondition,
-    InvalidGold,
-    InvalidMaximumHealth,
-    DeathCountOverflow,
-    PlayingTimeOverflow
-};
-
-struct PartyDeathPlan {
-    std::unique_ptr<Party> party;
-    std::string_view mapFile = "oute3.odm";
-};
-
-using PartyDeathResult = std::variant<PartyDeathPlan, PartyDeathRefusal>;
-
-// Detached result only. The caller owns movie, NPC/actor cleanup, map
-// transition and any award once its MM6 mapping is proved.
-PartyDeathResult planPartyDeath(const Party &source, GameTitle title,
-                               GuardianAngelState guardianAngel,
-                               const std::array<int, 4> &maximumHealth);
+/**
+ * Applies the MM6 death penalties and the respawn placement to a party: hirelings leave, the death count goes up, a
+ * week passes, gold and every buff and condition are lost, and the party stands at the New Sorpigal respawn point
+ * with 1 HP each. An active Guardian Angel halves the gold instead, and at Expert or Master raises the party with half
+ * or full health. Gold is written silently.
+ *
+ * @param[in,out] party                 Party none of whose members can act.
+ * @param maxHealth                     Maximum health of a character, called once its buffs and conditions are gone.
+ */
+void applyPartyDeath(Party *party, const std::function<int(const Character &)> &maxHealth);
 
 } // namespace mm6

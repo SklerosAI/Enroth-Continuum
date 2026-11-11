@@ -1,7 +1,9 @@
 #include "MM6CampaignChain.h"
 
 #include <algorithm>
+#include <cmath>
 #include <functional>
+#include <numbers>
 #include <string>
 #include <vector>
 
@@ -9,11 +11,17 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
+#include "Engine/Localization.h"
 #include "Engine/Tables/MapTable.h"
+#include "Engine/Tables/NPCTable.h"
 #include "GUI/GUIButton.h"
+#include "GUI/GUIDialogues.h"
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/Houses/MM6House.h"
+#include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UISaveLoad.h"
 #include "Library/Platform/Interface/PlatformEnumFunctions.h"
 
@@ -116,4 +124,64 @@ void saveMM6CampaignChainSlot(EngineController &game, int chapter) {
         EXPECT_EQ(slot->header.mapFileName, mapFileName);
         EXPECT_NO_THROW((void) mm6::readFirstMapManualSlot(fileName));
     });
+}
+
+void useMM6CampaignChainEventFace(EngineController &game, MapId map, int eventId) {
+    if (engine->_currentLoadedMapId != map)
+        game.teleportTo(map, Vec3f(0, 0, 0), 0);
+    ASSERT_EQ(engine->_currentLoadedMapId, map);
+    auto face = std::ranges::find_if(pOutdoor->faces, [eventId](const BLVFace &face) { return face.eventId == eventId; });
+    ASSERT_NE(face, pOutdoor->faces.end());
+    Vec3f position = face->boundingBox.center() + 150 * face->facePlane.normal;
+    position.z = face->boundingBox.z1;
+    const int yaw = std::lround(std::atan2(-face->facePlane.normal.y, -face->facePlane.normal.x) * 180 / std::numbers::pi);
+    game.teleportTo(map, position, yaw);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+}
+
+void enterMM6CampaignChainCastle(EngineController &game, MapId map, int eventId) {
+    useMM6CampaignChainEventFace(game, map, eventId);
+    ASSERT_EQ(current_screen_type, SCREEN_INPUT_BLV);
+    game.pressGuiButton("Transition_Yes");
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+}
+
+void talkToMM6CampaignChainNpc(EngineController &game, int npcId) {
+    ASSERT_NE(mm6HouseWindow(), nullptr);
+    if (mm6HouseWindow()->selectedNpc() == &pNPCStats->pNPCData[npcId])
+        return; // A house with one person opens straight into the conversation.
+    const std::string label = localization->format(LSTR_CONVERSE_WITH_S, pNPCStats->pNPCData[npcId].name);
+    auto button = std::ranges::find(window_SpeakInHouse->vButtons, label, &GUIButton::label);
+    ASSERT_NE(button, window_SpeakInHouse->vButtons.end());
+    game.pressGuiButton((*button)->id);
+    game.tick();
+    ASSERT_EQ(mm6HouseWindow()->selectedNpc(), &pNPCStats->pNPCData[npcId]);
+}
+
+bool selectMM6CampaignChainTopic(EngineController &game, int eventId) {
+    const NPCData *npc = mm6HouseWindow() ? mm6HouseWindow()->selectedNpc() : nullptr;
+    if (!npc)
+        return false;
+    const unsigned events[] = {npc->dialogue_1_evt_id, npc->dialogue_2_evt_id, npc->dialogue_3_evt_id,
+                               npc->dialogue_4_evt_id, npc->dialogue_5_evt_id, npc->dialogue_6_evt_id};
+    for (GUIButton *button : window_SpeakInHouse->vButtons) {
+        const int slot = static_cast<int>(button->msg_param) - std::to_underlying(DIALOGUE_SCRIPTED_LINE_1);
+        if (button->id.starts_with("HouseNpcDialogue_Option") && slot >= 0 && slot < std::ssize(events) &&
+            events[slot] == static_cast<unsigned>(eventId)) {
+            game.pressGuiButton(button->id);
+            game.tick();
+            return true;
+        }
+    }
+    return false;
+}
+
+void leaveMM6CampaignChainHouse(EngineController &game) {
+    for (int i = 0; i < 5 && current_screen_type != SCREEN_GAME; i++) {
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+    }
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
 }

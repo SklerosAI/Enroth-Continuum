@@ -13,6 +13,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Evt/EvtProgram.h"
 #include "Engine/Localization.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
@@ -22,6 +23,8 @@
 #include "Engine/Party.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Tables/MapTable.h"
+#include "Engine/Tables/NPCTable.h"
+#include "Engine/mm7_data.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UISaveLoad.h"
 
@@ -100,6 +103,34 @@ GAME_TEST(MM6NewGameHeadless, NewPartyEntersFirstMap) {
     EXPECT_EQ(screenTape.back(), SCREEN_GAME);
     EXPECT_EQ(mapTape.back(), pMapTable->GetMapInfo("oute3.odm"));
     EXPECT_FALSE(ufs->exists("saves"));
+}
+
+GAME_TEST(MM6NewGameHeadless, PotbelloPaysForTheLetter) {
+    // A new MM6 party carried no letter, so Andover Potbello in the New Sorpigal tavern never paid for it.
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    createPartyThroughInput(game);
+    game.pressGuiButton("PartyCreation_OK");
+    game.skipLoadingScreen();
+    game.tick();
+    auto goldTape = tapes.gold();
+    auto letterTape = tapes.hasItem(static_cast<ItemId>(505));
+    auto paidTape = tapes.questBit(static_cast<QuestBit>(82));
+    auto textTape = tapes.custom([] { return current_npc_text; });
+    test.startTaping();
+
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(-8784, -8690, 300), 0); // A Lonely Knight, facing its door.
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    game.pressGuiButton("House_Npc1"); // Andover Potbello.
+    game.tick();
+    game.pressGuiButton("HouseNpcDialogue_Option0"); // The Letter.
+    game.tick();
+
+    EXPECT_EQ(goldTape, tape(200, 1200));
+    EXPECT_EQ(letterTape, tape(true)); // He reads it and gives it back.
+    EXPECT_EQ(paidTape, tape(false, true));
+    EXPECT_EQ(textTape.back(), pNPCTopics[engine->_globalEventMap.instruction(1, 4).data.text_id - 1].pText);
 }
 
 GAME_TEST(MM6NewGameHeadless, DISABLED_NewPartySavesFromSaveMenu) {

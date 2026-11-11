@@ -39,6 +39,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7Scrolls.cpp
         GameTests_MM6.cpp
         GameTests_MM6CampaignChainC0.cpp
+        GameTests_MM6CampaignChainC1.cpp
         GameTests_MM6CharacterBitEvent.cpp
         GameTests_MM6EventVariables.cpp
         GameTests_MM6Creation.cpp

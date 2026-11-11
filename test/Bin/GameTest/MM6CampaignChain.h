@@ -2,6 +2,8 @@
 
 #include <filesystem>
 
+#include "Engine/MapEnums.h"
+
 class EngineController;
 
 /**
@@ -37,3 +39,46 @@ void loadMM6CampaignChainSlot(EngineController &game, int chapter);
  * @param chapter                       Chapter whose slot to write. Slots of all earlier chapters must exist.
  */
 void saveMM6CampaignChainSlot(EngineController &game, int chapter);
+
+/**
+ * Teleports in front of an outdoor face of a map event and presses Space. Loads the map first when the party is
+ * elsewhere.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param map                           Outdoor map of the event.
+ * @param eventId                       Local event of the face.
+ */
+void useMM6CampaignChainEventFace(EngineController &game, MapId map, int eventId);
+
+/**
+ * Enters a castle whose door asks before it lets the party in, and answers yes.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param map                           Outdoor map of the castle.
+ * @param eventId                       Local event of the castle door.
+ */
+void enterMM6CampaignChainCastle(EngineController &game, MapId map, int eventId);
+
+/**
+ * Picks a person in the open house screen by name.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param npcId                         NPC to talk to.
+ */
+void talkToMM6CampaignChainNpc(EngineController &game, int npcId);
+
+/**
+ * Clicks the topic of the NPC the party talks to whose script is the given global event.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param eventId                       Global event behind the topic.
+ * @return                              Whether the NPC offered the topic.
+ */
+bool selectMM6CampaignChainTopic(EngineController &game, int eventId);
+
+/**
+ * Presses Escape until the party is back in the game view.
+ *
+ * @param game                          Engine controller of the running test.
+ */
+void leaveMM6CampaignChainHouse(EngineController &game);

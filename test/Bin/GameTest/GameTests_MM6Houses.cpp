@@ -291,7 +291,7 @@ GAME_TEST(MM6Houses, GeneralStoreSell) {
     game.pressAndReleaseButton(BUTTON_LEFT, mapFromInventoryGrid(sold.geometry().topLeft(), Pointi(14, 17)) + Pointi(16, 16));
     game.tick();
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
-    EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66}, std::vector<int>{1, 15, 23, 66}));
+    EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66, 505}, std::vector<int>{1, 15, 23, 66, 505}));
     EXPECT_EQ(otherBackpackTape.size(), 1);
     EXPECT_EQ(goldTape, tape(200, 312));
 }
@@ -327,8 +327,8 @@ GAME_TEST(MM6Houses, WeaponShopBuyAndSellBack) {
     std::vector<int> afterSale = generated;
     afterSale[0] = 0;
     EXPECT_EQ(stockTape, tape(std::vector<int>(24, 0), generated, afterSale));
-    EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66}, std::vector<int>{124, 1, 15, 23, 66, 50},
-                                 std::vector<int>{124, 1, 15, 23, 66}));
+    EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66, 505}, std::vector<int>{124, 1, 15, 23, 66, 505, 50},
+                                 std::vector<int>{124, 1, 15, 23, 66, 505}));
     EXPECT_EQ(otherBackpackTape.size(), 1);
     EXPECT_EQ(goldTape, tape(200, 125, 139));
     EXPECT_EQ(clockTape, tape(false, true));
@@ -352,7 +352,7 @@ GAME_TEST(MM6Houses, GuildBuySpellbook) {
     std::vector<int> afterSale = generated;
     afterSale[0] = 0;
     EXPECT_EQ(stockTape, tape(std::vector<int>(12, 0), generated, afterSale));
-    EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66}, std::vector<int>{124, 1, 15, 23, 66, 322}));
+    EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66, 505}, std::vector<int>{124, 1, 15, 23, 66, 505, 322}));
     EXPECT_EQ(goldTape, tape(200, 50));
 }
 

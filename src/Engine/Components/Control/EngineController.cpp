@@ -23,6 +23,7 @@
 #include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/MM6/MM6MapTransition.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Decoration.h"
 #include "Engine/Objects/SpriteObject.h"
@@ -357,6 +358,8 @@ void EngineController::teleportTo(MapId map, Vec3f position, int viewYaw, int vi
         engineFlags |= ENGINE_SKIP_NEXT_WORLD_UPDATE;
         uGameState = GAME_STATE_CHANGE_LOCATION;
         onMapLeave();
+        if (engine->gameTitle() == GameTitle::MM6)
+            mm6::leaveMap(map); // Parks the map the party leaves and admits the target's chests, as an MM6 map change does.
         tick();
         skipLoadingScreen();
     } else {

@@ -32,7 +32,7 @@ Claude Code is the planning and coordination lead. The stage 1 gate rows
 | MM7 W4 path review | Claude Code lead | Audit chapter seams, test assertions and disposable-profile harness | Review committed at `a9af27ae6`; F1 is a possible player blocker, F2-F4 need stronger tests | Codex owns F1; queue F2-F4 after a code lane frees |
 | MM7 Walls protected group (W4 L1–L4) | Codex subagent | Fresh-entry group-population and source semantics | Investigation complete; group-1 check is an unreachable negative branch in tested local data, with no source-backed runtime fix | Retain handoff; revisit only if another owned edition or original-game observation contradicts it |
 | MM7 endgame audit recorder | Codex root + subagent | Atlas recording toggle, chosen local/external folder, passive video/log/save collector | Integrated on `master`; signed candidate installed headlessly after owner authorization; installed hashes and signature verified | First real recording, screen permission, external-drive removal and Atlas lifecycle require later graphical authorization |
-| MM6 implementation | Unassigned | Existing first-map progress and Notes worktree retained | Queued after MM7 working gate | Resume from `project/MM6_RESUME_HANDOFF.md` after MM7 acceptance |
+| MM6, all of stage 2 | Claude Code (owner's assignment, 2026-11-11) | Lanes F, H, X and SKY, MM6 integration into `master` with the M7 controls | Active | `claims/claude-mm6-all.md` |
 
 ## State at the 2026-11-11 break
 

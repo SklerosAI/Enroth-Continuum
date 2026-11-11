@@ -21,3 +21,5 @@ Update 2026-11-11 afternoon: H is integrated (`133fabf5a`, full MM7 suite 540/54
 | VISIT, MM6 map visit record | `claude/mm6-visit-record` in `mm7-death-regression` | the MM6 visit block read and write (new files under `src/Engine/MM6/`, the MM6 EC6 sections carrying map deltas, thin hooks in `Outdoor.cpp`, `Indoor.cpp`, `SaveLoad.cpp` and the MM6 map transition module), new MM6 tests. Shared core. |
 
 Queued: bright white ground near the `oute3` start and in patches on `outd3` (seen before and after the sky fix).
+
+Update 2026-11-11 end of day: all lanes finished and are on master (F, H, X, SKY, C1, BOW, VISIT). No MM6 lane is active. Week wrap and the queue for next week: `handoffs/2026-11-11-claude-mm6-week-wrap.md`. The claim on MM6 as a whole stays with Claude.

@@ -3119,3 +3119,9 @@ Chronological record of wiki activity.
 - C0 created `save000.ec6` from production New Game; C1 normal-Loaded it, completed the early council and stable-price routes plus the shield chest pickup, and created `save001.ec6`. Both retained digest pass markers in the disposable profile.
 - This is stronger headless progression evidence, but it does not replace visible owner playtesting or prove the remaining MM6 quest chain.
 
+## [2026-11-11] verify | MM6 bow and map-visit repairs
+- by: T-Burton-ND via codex
+- Integrated the title-gated bow projectile correction: MM6 bows now select the native arrow object rather than an absent MM7 object row. The focused monster-hit test passed on the integration binary.
+- Integrated MM6 visit-state capture and restore across map changes and saves. The three headless checks covering later-day sky variation, same-day sky retention and a delayed fountain refill passed 3/3.
+- The installed candidate will be rebuilt from this revision after the remaining integration checks; visual projectile fidelity and exceptional arrow behaviors remain explicitly open.
+

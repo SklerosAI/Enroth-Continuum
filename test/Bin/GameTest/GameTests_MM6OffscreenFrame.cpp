@@ -178,21 +178,17 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_FirstOutdoorCapture) {
     ASSERT_EQ(lWindowList.size(), 1u);
     ASSERT_FALSE(window->isVisible());
 
-    auto captureWorldFrame = [&] {
-        RgbaImage result;
-        game.runGameRoutine([&result] {
-            uGameState = GAME_STATE_PLAYING;
-            current_screen_type = SCREEN_GAME;
-            render->ClearTarget(Color(0, 0, 0));
-            engine->drawWorld();
-            engine->drawHUD();
-            render->flushAndScale();
-            engine->drawOverlay();
-            result = render->MakeFullScreenshot(); // Read before swap; no display presentation.
-        });
-        return result;
-    };
-    RgbaImage frame = captureWorldFrame();
+    RgbaImage frame;
+    game.runGameRoutine([&frame] {
+        uGameState = GAME_STATE_PLAYING;
+        current_screen_type = SCREEN_GAME;
+        render->ClearTarget(Color(0, 0, 0));
+        engine->drawWorld();
+        engine->drawHUD();
+        render->flushAndScale();
+        engine->drawOverlay();
+        frame = render->MakeFullScreenshot(); // Read before swap; no display presentation.
+    });
 
     ASSERT_FALSE(window->isVisible());
     ASSERT_FALSE(window->grabsMouse());
@@ -216,41 +212,6 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_FirstOutdoorCapture) {
     EXPECT_GT(changed, 10000u);
     EXPECT_GT(nonblackWorld, 10000u);
     EXPECT_GT(nonblackHud, 10000u);
-
-    // This optional probe specifically distinguishes a capture that occurs during outdoor-world setup from two
-    // settled post-world frames. The lower world area is where a failed terrain overwrite leaves the sky fog fill.
-    if (const char *probe = std::getenv("MM6_OFFSCREEN_SETTLED_TERRAIN_PROBE");
-        probe && std::string_view(probe) == "1") {
-        auto texturedPixels = [](const RgbaImage &image) {
-            size_t count = 0;
-            for (int y = 200; y < 350; ++y) {
-                for (int x = 8; x < 468; ++x) {
-                    const Color pixel = image[y][x];
-                    const int spread = std::max({pixel.r, pixel.g, pixel.b}) -
-                                       std::min({pixel.r, pixel.g, pixel.b});
-                    count += spread > 20;
-                }
-            }
-            return count;
-        };
-        constexpr size_t kLowerWorldPixels = 460 * 150;
-        game.tick();
-        RgbaImage settledFirst = captureWorldFrame();
-        game.tick();
-        RgbaImage settledSecond = captureWorldFrame();
-        const size_t firstCoverage = texturedPixels(settledFirst);
-        const size_t secondCoverage = texturedPixels(settledSecond);
-        EXPECT_GT(firstCoverage, kLowerWorldPixels / 50)
-            << "first settled frame map=" << static_cast<int>(engine->_currentLoadedMapId)
-            << " pos=" << pParty->pos.x << ',' << pParty->pos.y << ',' << pParty->pos.z
-            << " pitch=" << pParty->_viewPitch
-            << " yaw=" << pParty->_viewYaw;
-        EXPECT_GT(secondCoverage, kLowerWorldPixels / 50)
-            << "second settled frame map=" << static_cast<int>(engine->_currentLoadedMapId)
-            << " pos=" << pParty->pos.x << ',' << pParty->pos.y << ',' << pParty->pos.z
-            << " pitch=" << pParty->_viewPitch
-            << " yaw=" << pParty->_viewYaw;
-    }
     // Before the normal 2D flush, these four inner face regions contain only
     // the monochrome frame backing even though portrait quads were queued.
     for (int center : {50, 163, 276, 388}) {

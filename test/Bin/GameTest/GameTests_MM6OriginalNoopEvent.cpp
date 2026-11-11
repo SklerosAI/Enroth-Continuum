@@ -335,6 +335,26 @@ EvtProgram syntheticDayCounterEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticGoldPaymentEvent() {
+    std::string bytes;
+    std::string reward;
+    reward.push_back(static_cast<char>(VAR_FixedGold));
+    appendU32(&reward, 300);
+    appendRecord(&bytes, 0, EVENT_Add, reward);
+
+    std::string payment;
+    payment.push_back(static_cast<char>(VAR_FixedGold));
+    appendU32(&payment, 800);
+    appendRecord(&bytes, 1, EVENT_Subtract, payment);
+
+    std::string completed;
+    completed.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&completed, 31);
+    appendRecord(&bytes, 2, EVENT_Set, completed);
+    appendRecord(&bytes, 3, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -717,4 +737,23 @@ GAME_TEST(MM6DayCounterEvent, UsesTheMM6DayCounterStateAndBranch) {
     EXPECT_EQ(pParty->PartyTimes.CounterEventValues[0], Time::fromDays(42));
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(29));
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(30));
+}
+
+GAME_TEST(MM6GoldPaymentEvent, StopsOnInsufficientMM6Gold) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedParty restoreParty;
+    engine->_localEventMap = syntheticGoldPaymentEvent();
+    pParty->pCharacters[0]._characterEventBits.reset(31);
+
+    pParty->SetGold(500, true);
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_EQ(pParty->GetGold(), 0);
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(31));
+
+    pParty->SetGold(499, true);
+    pParty->pCharacters[0]._characterEventBits.reset(31);
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_EQ(pParty->GetGold(), 799);
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(31));
 }

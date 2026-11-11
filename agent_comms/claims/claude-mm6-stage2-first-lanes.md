@@ -9,3 +9,8 @@ Three lanes, each its own branch from `master`, started 2026-11-10 while the MM7
 | S-REP MM6 reputation variable (var 215) | `claude/mm6-reputation-var` in `mm7-mod-access` (its `codex/mm7-meteor-shower` ref is merged and kept) | The MM6 variable descriptor and executor for 215 in `src/Engine/Evt/` (MM6 files first, `EvtInterpreter.cpp` dispatch only if needed, shared core), its unit and game tests. |
 
 Conflict check: no file overlaps between the three, or with the MM7 chain (test files) and recorder (launcher, tools) lanes. S-NG and S-REP both touch shared core, so they merge one at a time with M7 between.
+
+Update 2026-11-11: S-SWEEP finished (`fe66c3ca3`, handoff `handoffs/2026-11-11-claude-mm6-map-sweep.md`). Its checkout now hosts S-AWARD:
+
+| S-AWARD MM6 award-animation crash | `claude/mm6-award-anim` in `mm7-save-durability` | `src/Engine/Tables/IconFrameTable.*`, `Character::PlayAwardSound_Anim` in `src/Engine/Objects/Character.cpp`, `SpellFxRenderer::SetPlayerBuffAnim`, MM6 icon mapping in `src/Engine/MM6/` if needed, a new MM6 game test. |
+

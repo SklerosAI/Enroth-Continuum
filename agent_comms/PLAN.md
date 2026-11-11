@@ -290,7 +290,10 @@ throws ranked by main-quest maps blocked:
    Fixed on `claude/mm6-npc-pool`: MM6 now uses the original's peasant-only
    street NPC rule instead of MM7's ID ranges.
 3. Event CastSpell on 3 main-quest maps by timer (15 maps with faces).
-4. Unverified damage channel on 3 main-quest maps.
+4. Unverified damage channel on 3 main-quest maps. Fixed on
+   `claude/mm6-damage-channels`: MM6's seven damage kinds and the original
+   resistance roll. It exposed a t7 trapped-door event that re-fires
+   thousands of times per frame and kills the party.
 5. An `Indoor.cpp` render assert when loading 3 non-quest maps at sector 0.
 714 face or decoration references point at missing event IDs and only warn.
 Missing assets are limited to a few sounds. Monster missiles and spells are

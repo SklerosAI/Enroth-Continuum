@@ -24,3 +24,8 @@ Update 2026-11-11 later still: S-NPCPOOL finished (`c4663d0d6`, handoff `handoff
 
 | S-DAMAGE MM6 damage channels | `claude/mm6-damage-channels` in `mm7-save-durability` | `src/Engine/MM6/MM6MonsterDamage.h` and the MM6 damage-channel verification it needs, the MM6 branch of event ReceiveDamage kinds in `src/Engine/Evt/` (MM6 files first), new MM6 tests. Event CastSpell follows in a later lane on top of this. |
 
+Update: S-DAMAGE finished (`ecf9d182f`, handoff `handoffs/2026-11-11-claude-mm6-damage-channels.md`). New lanes:
+
+| S-TRAPLOOP t7 trapped-door event repeat | `claude/mm6-trap-loop` in `mm7-save-durability` | whatever re-fires face events each frame (`Collisions.cpp` face trigger by monster, `SpriteObject.cpp` trigger by object, MM6 event dispatch), and a new MM6 test. Shared core, merged with the M7 controls. |
+| S-EVTSPELL MM6 event CastSpell | `claude/mm6-event-spells` in `mm7-monster-combat` | `src/Engine/MM6/MM6SpellEffectGuard.h`, MM6 spell effect dispatch for event sources (MM6-owned files first), the MM6 branch of `eventCastSpell` in `src/Engine/Spells/Spells.cpp`, new MM6 tests. |
+

@@ -3146,3 +3146,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added and passed the final Kastore assignment through the genuine Dark adviser, cube and Xenofex state transitions. The test selects Kastore's final event by identity and records the Dark-only Overthruster active bit; the existing campaign ending test remains the Kastore hand-in control.
 
+## [2026-11-11] analyze | MM7 Wine Cellar behavior divergence
+- by: T-Burton-ND via codex
+- Traced the apparent exit-only completion to the event layer and documented it as a source-data divergence, not accepted intended coverage. Public player-facing behavior requires the Elder Vampire defeated, while the exit script can set the flag without a kill and the current referenced actor loads disabled. A compatibility decision is required before altering that legacy script or declaring the Light-chain prerequisite fixed.
+

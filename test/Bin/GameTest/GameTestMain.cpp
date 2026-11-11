@@ -40,6 +40,17 @@ bool isMm6OnlyFilter(std::string_view filter) {
 }
 
 /**
+ * @param title                         Title the tests run for.
+ * @param filter                        The `--gtest_filter` value.
+ * @return                              Whether `filter` names exactly one of `title`'s offscreen capture tests.
+ */
+bool isOffscreenCaptureFilter(GameTitle title, std::string_view filter) {
+    if (title == GameTitle::MM6)
+        return filter == "MM6OffscreenFrame.DISABLED_FirstOutdoorCapture" || filter == "MM6OffscreenFrame.DISABLED_MapCapture";
+    return filter == "MM7OffscreenFrame.DISABLED_FirstOutdoorCapture" || filter == "MM7OffscreenFrame.DISABLED_MapCapture";
+}
+
+/**
  * Admission rule for one disabled MM7 test that runs against a marked disposable profile.
  *
  * @param filter                        Exact `--gtest_filter` that selects the test.
@@ -154,13 +165,8 @@ int platformMain(int argc, char **argv) {
         } else if (opts.gameTitle == GameTitle::MM6 && !isMm6OnlyFilter(GTEST_FLAG_GET(filter))) {
             throw Exception("MM6 game tests require an MM6-only --gtest_filter.");
         }
-        if (opts.offscreenCapture &&
-            (GTEST_FLAG_GET(filter) != (opts.gameTitle == GameTitle::MM6 ?
-                 "MM6OffscreenFrame.DISABLED_FirstOutdoorCapture" :
-                 "MM7OffscreenFrame.DISABLED_FirstOutdoorCapture") ||
-             !GTEST_FLAG_GET(also_run_disabled_tests))) {
-            throw Exception("--offscreen-gl requires the title's isolated disabled first-frame test filter.");
-        }
+        if (opts.offscreenCapture && (!isOffscreenCaptureFilter(opts.gameTitle, GTEST_FLAG_GET(filter)) || !GTEST_FLAG_GET(also_run_disabled_tests)))
+            throw Exception("--offscreen-gl requires one of the title's isolated disabled capture test filters.");
         const std::string filter = GTEST_FLAG_GET(filter);
         auto gate = std::ranges::find_if(mm7ProfileGates, [&filter](const Mm7ProfileGate &entry) {
             return filter == entry.filter;

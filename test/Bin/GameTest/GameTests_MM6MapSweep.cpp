@@ -28,6 +28,8 @@
 #include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
+#include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
@@ -46,6 +48,7 @@
 #include "Utility/String/Format.h"
 
 #include "MM6MapEntranceForTest.h"
+#include "OffscreenCaptureForTest.h"
 
 struct SweepTimer {
     int eventId = 0;
@@ -679,4 +682,54 @@ GAME_TEST(MM6MapSweep, DISABLED_MonstersAttackParty) {
     record.attackingMonsters.clear();
     record.phase = "done";
     writeCombatSweepRecord(resultPath, record);
+}
+
+GAME_TEST(MM6OffscreenFrame, DISABLED_MapCapture) {
+    // Progress capture of any MM6 map from its first shipped entrance, for enroth-capture. MM6_OFFSCREEN_CAPTURE_MAP is
+    // a map file name or an index into the map table that wraps around, MM6_OFFSCREEN_CAPTURE_PATH the PNG to write.
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_NE(window->nativeHandle(), nullptr);
+    ASSERT_FALSE(window->isVisible());
+    ASSERT_EQ(dynamic_cast<NullRenderer *>(render), nullptr);
+
+    const char *capturePath = std::getenv("MM6_OFFSCREEN_CAPTURE_PATH");
+    const char *mapValue = std::getenv("MM6_OFFSCREEN_CAPTURE_MAP");
+    ASSERT_NE(capturePath, nullptr);
+    ASSERT_NE(mapValue, nullptr);
+    ASSERT_TRUE(isOffscreenCapturePath(capturePath));
+
+    std::vector<MapId> maps;
+    for (MapId id : pMapTable->pInfos.indices())
+        if (isMapOutdoor(GameTitle::MM6, id) || isMapIndoor(GameTitle::MM6, id))
+            maps.push_back(id);
+    const MapId map = offscreenCaptureMap(mapValue, maps);
+    ASSERT_NE(map, MAP_INVALID) << mapValue;
+    const std::string fileName = pMapTable->pInfos[map].fileName;
+    fmt::print("offscreen capture map: {}\n", fileName);
+
+    enterFirstMapFromNewGame(game);
+    if (::testing::Test::HasFatalFailure())
+        return;
+    if (map != engine->_currentLoadedMapId) {
+        const std::optional<MM6ShippedEntrance> entrance = findShippedMM6Entrance(fileName);
+        bool loaded = false;
+        game.runGameRoutine([&] {
+            for (Chest &chest : vChests)
+                chest.position.reset(); // The first map's chest positions would make the target's chest load refuse.
+            engine->_pendingTransition = entrance ? MapDestination(map, entrance->placement) : MapDestination(map, MAP_START_POINT_PARTY);
+            mm6::ScopedChestMapLoadOptIn chestOptIn;
+            PrepareWorld(0);
+            loaded = true;
+        });
+        for (int tick = 0; tick < 256 && !loaded; ++tick)
+            game.tick();
+        ASSERT_TRUE(loaded);
+    }
+    ASSERT_EQ(engine->_currentLoadedMapId, map);
+    ASSERT_FALSE(window->isVisible());
+
+    const RgbaImage frame = drawOffscreenGameFrame(game);
+    ASSERT_FALSE(window->isVisible());
+    ASSERT_EQ(frame.size(), Sizei(640, 480));
+    writeOffscreenCapture(capturePath, frame);
 }

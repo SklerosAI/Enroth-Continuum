@@ -3154,3 +3154,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Corrected the two narrow legacy event paths that treated the Wine Cellar's disabled Elder Vampire spawn as killed. The focused regression now leaves the task active after exit and the adviser refuses completion; the shared actor-kill semantics are unchanged. The actual combat-and-exit completion route remains to be added.
 
+## [2026-11-11] verify | MM7 Wine Cellar kill-and-exit hand-in
+- by: T-Burton-ND via codex
+- Extended the focused Wine Cellar regression with the positive path: after the disabled-spawn exit is refused, the actual vampire is marked dead, the real map-leave predicate sets the quest marker, and Crag Hack completes the task. This closes the intended completion contract without changing general actor-kill semantics.
+

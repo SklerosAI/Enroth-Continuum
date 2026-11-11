@@ -14,6 +14,7 @@
 #include "Engine/Evt/EvtInterpreter.h"
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Evt/Processor.h"
+#include "Engine/Graphics/LocationFunctions.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/NPCTable.h"
@@ -759,6 +760,29 @@ EvtProgram syntheticForPartyMemberEvent() {
     appendU32(&mutation, 54);
     appendRecord(&bytes, 1, EVENT_Set, mutation);
     appendRecord(&bytes, 2, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
+EvtProgram syntheticActorKilledEvent() {
+    std::string bytes;
+    std::string killed;
+    killed.push_back(static_cast<char>(KILL_CHECK_GROUPID));
+    appendU32(&killed, 17);
+    killed.push_back(0); // Every actor in the group must be dead.
+    killed.push_back(3); // Completed branch.
+    appendRecord(&bytes, 0, EVENT_IsActorKilled, killed);
+
+    std::string incomplete;
+    incomplete.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&incomplete, 55);
+    appendRecord(&bytes, 1, EVENT_Set, incomplete);
+    appendRecord(&bytes, 2, EVENT_Exit);
+
+    std::string complete;
+    complete.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&complete, 56);
+    appendRecord(&bytes, 3, EVENT_Set, complete);
+    appendRecord(&bytes, 4, EVENT_Exit);
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
@@ -1563,4 +1587,33 @@ GAME_TEST(MM6ForPartyMember, TargetsEveryMM6PartyCharacter) {
     runEvent(EvtContext(EVT_SOURCE_MAP, 1));
     for (const Character &character : pParty->pCharacters)
         EXPECT_TRUE(character._characterEventBits.test(54));
+}
+
+GAME_TEST(MM6ActorKilled, SelectsTheCompletedBranchOnlyAfterEveryGroupActorDies) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedActors restoreActors;
+    ScopedParty restoreParty;
+    engine->_localEventMap = syntheticActorKilledEvent();
+    for (Character &character : pParty->pCharacters) {
+        character._characterEventBits.reset(55);
+        character._characterEventBits.reset(56);
+    }
+
+    pActors.emplace_back();
+    Actor &actor = pActors.back();
+    actor.group = 17;
+    if (GetAlertStatus())
+        actor.attributes |= ACTOR_UNKNOW7;
+    actor.aiState = Standing;
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(55));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(56));
+
+    for (Character &character : pParty->pCharacters)
+        character._characterEventBits.reset(55);
+    actor.aiState = Dead;
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(55));
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(56));
 }

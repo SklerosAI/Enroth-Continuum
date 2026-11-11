@@ -5,44 +5,37 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>The Atlas · Enroth Continuum</title>
   <style>
-    :root { color-scheme: dark; --ink:#eee7d7; --muted:#aaa99f; --gold:#e9bb70; --edge:#536566; --deep:#081a22; --panel:#122b30; --green:#9ed4b0 }
-    * { box-sizing:border-box } body { margin:0; background:#07171e; color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif }
-    button { font:inherit; cursor:pointer } button:focus-visible { outline:2px solid var(--gold); outline-offset:3px }
-    .shell { display:grid; grid-template-columns:238px minmax(0,1fr); min-height:100vh }
-    aside { background:linear-gradient(160deg,#102832,#081920 70%); border-right:1px solid #38565c; padding:30px 18px; display:flex; flex-direction:column; gap:30px }
-    .brand { display:flex; gap:12px; align-items:center; padding:0 12px } .sigil { width:39px;height:39px;border:1px solid #c9a36d; border-radius:50%;display:grid;place-items:center;color:var(--gold);font:26px Georgia,serif; box-shadow:0 0 0 5px #d7b77912 }
-    .brand strong { display:block; font:17px Georgia,serif;letter-spacing:.04em } .brand small { display:block;color:#9ab2b2;font-size:10px;letter-spacing:.22em;text-transform:uppercase;margin-top:3px }
-    nav { display:grid;gap:5px } nav button { color:#bac6c2;background:transparent;border:1px solid transparent;border-radius:8px;text-align:left;padding:12px 13px;display:flex;align-items:center;gap:11px }
-    nav button.active { background:#d7b77916;border-color:#c8a46a70;color:#f5d7a3 } nav button:hover { background:#ffffff0d }
-    .nav-icon { color:#d6b273;width:22px;text-align:center;font:20px Georgia,serif }
-    .side-bottom { margin-top:auto;padding:18px 12px;border-top:1px solid #71878a44;color:#99aaab;font-size:11px;line-height:1.6 }
-    .side-bottom a { color:#e4bf81 }
-    main { min-width:0; max-height:100vh; overflow:auto; background:radial-gradient(circle at 70% 0%,#25484a 0%,#102a30 42%,#0a2029 100%); padding:34px 42px 56px }
-    .topline { display:flex;align-items:center;justify-content:space-between;color:#bbcbc6;font-size:11px;letter-spacing:.2em;text-transform:uppercase }
-    .statusdot { display:inline-block;width:7px;height:7px;border-radius:50%;background:#80cc9d;margin-right:8px;box-shadow:0 0 0 4px #80cc9d1e }
-    .hero { margin:30px 0 32px; min-height:207px; border:1px solid #9ab0a04d; border-radius:14px; padding:27px 34px; background:linear-gradient(90deg,#10272cf0 7%,#143039ad 55%,#10343e66),radial-gradient(circle at 82% 38%,#aa936055,transparent 23%), repeating-radial-gradient(ellipse at 75% 50%,#b9a97c20 0 1px,transparent 2px 31px); position:relative;overflow:hidden }
-    .hero:after { content:"✦     ·     ✧       ·      ✦";position:absolute;right:48px;top:44px;font:25px Georgia,serif;color:#d4ba8a55;transform:rotate(-19deg);letter-spacing:23px;white-space:nowrap }
-    .eyebrow { color:var(--gold);font-size:11px;letter-spacing:.24em;text-transform:uppercase;font-weight:650 }
-    h1 { font:normal clamp(38px,5vw,62px)/1.05 Georgia,serif;letter-spacing:-.04em;margin:12px 0 10px } h2 { font:normal 32px Georgia,serif;margin:9px 0 8px } h3 { font:normal 22px Georgia,serif;margin:7px 0 }
-    p { color:#bbcbc7;margin:0 } .hero p { max-width:440px;font-size:15px }
+    :root { color-scheme:dark; --ink:#E6E9ED; --muted:#A8DFFF; --blue:#1EA7FF; --line:#3A4450; --deep:#10131B; --panel:#2B2F33; --good:#5FF2D2; --violet:#6A37C8; --brass:#D4B56E }
+    * { box-sizing:border-box } body { margin:0; min-width:760px; background:var(--deep); color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif }
+    button { font:inherit; cursor:pointer } button:focus-visible { outline:2px solid var(--blue); outline-offset:3px }
+    .shell { display:grid;grid-template-columns:210px minmax(0,1fr);min-height:100vh }
+    aside { background:#10131B;border-right:1px solid var(--line);padding:25px 15px;display:flex;flex-direction:column;gap:26px }
+    .brand { display:flex;gap:10px;align-items:center;padding:0 10px }.sigil { width:34px;height:34px;border:1px solid var(--violet);border-radius:8px;display:grid;place-items:center;color:var(--blue);font:20px sans-serif }
+    .brand strong { display:block;font-size:15px;letter-spacing:.01em }.brand small { display:block;color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-top:2px }
+    nav { display:grid;gap:4px } nav button { color:#A8DFFF;background:transparent;border:1px solid transparent;border-radius:6px;text-align:left;padding:10px 11px;display:flex;align-items:center;gap:9px }
+    nav button.active { background:#3A4450;border-color:#5A606B;color:var(--ink) } nav button:hover { background:#2B2F33 }
+    .nav-icon { color:var(--blue);width:18px;text-align:center;font-size:15px }
+    .side-bottom { margin-top:auto;padding:15px 10px;border-top:1px solid var(--line);color:#8893A1;font-size:11px;line-height:1.55 }.side-bottom a { color:var(--blue) }
+    main { min-width:0;max-height:100vh;overflow:auto;background:var(--deep);padding:30px 36px 48px }
+    .topline { display:flex;align-items:center;justify-content:space-between;color:#A8DFFF;font-size:11px;letter-spacing:.12em;text-transform:uppercase }.statusdot { display:inline-block;width:7px;height:7px;border-radius:50%;background:#00C853;margin-right:7px }
+    .hero { margin:24px 0 26px;min-height:150px;border:1px solid #5A606B;border-radius:8px;padding:25px 28px;background:var(--panel);position:relative;overflow:hidden }.hero:after { content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 45%,#6A37C822);pointer-events:none }
+    .eyebrow { color:var(--blue);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:650 }
+    h1 { font:650 clamp(35px,4vw,52px)/1.05 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:-.045em;margin:8px 0 9px } h2 { font:650 27px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:9px 0 8px } h3 { font:650 20px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:7px 0 }
+    p { color:#A8DFFF;margin:0 }.hero p { max-width:520px;font-size:15px }
     .sectionline { display:flex;align-items:end;justify-content:space-between;margin:0 0 14px } .sectionline h2 { margin:0;font-size:25px } .sectionline span { font-size:12px;color:var(--muted) }
     .cards { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px }
-    .card { display:flex;flex-direction:column;min-height:300px;padding:20px;border:1px solid #66807e88;border-radius:12px;background:linear-gradient(145deg,#1e3b3e,#10262d);box-shadow:0 15px 25px #06101642;transition:transform .18s,border-color .18s }
-    .card:hover { transform:translateY(-3px);border-color:#c2a579 }
-    .card.primary { border-color:#d6ad6caa;background:linear-gradient(145deg,#34504a,#172d30 75%) }
-    .roman { align-self:flex-start;display:inline-grid;place-items:center;width:42px;height:42px;border:1px solid #d8b37d7c;border-radius:50%;font:20px Georgia,serif;color:#f0cb92;margin-bottom:30px }
-    .card small { color:#c9a97a;letter-spacing:.16em;text-transform:uppercase;font-size:10px }.card h3 { line-height:1.15;min-height:54px }
-    .card .meta { margin-top:9px;color:#b8c6c1;font-size:12px;line-height:1.6 }.card .meta strong { color:#e3e5d6;font-weight:550 }
-    .card button { margin-top:auto;min-height:42px;border-radius:7px;border:1px solid #bca3729e;color:#f5dec0;background:#a7824633 }
-    .card button.play { color:#15242a;background:#ebc489;border-color:#f2d29c;font-weight:700 }.card button:hover { filter:brightness(1.15) }.card button:disabled { opacity:.55;cursor:default;filter:none }
+    .card { display:flex;flex-direction:column;min-height:245px;padding:19px;border:1px solid #5A606B;border-radius:8px;background:var(--panel);box-shadow:none;transition:border-color .18s,background .18s }.card:hover { border-color:var(--blue);background:#343a40 }.card.primary { border-color:var(--blue);background:#30353b }
+    .roman { align-self:flex-start;display:inline-grid;place-items:center;width:34px;height:30px;border:1px solid #6A37C8;border-radius:5px;font:600 16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--muted);margin-bottom:18px }
+    .card small { color:#A8DFFF;letter-spacing:.09em;text-transform:uppercase;font-size:10px }.card h3 { line-height:1.15;min-height:48px }.card .meta { margin-top:9px;color:#A8DFFF;font-size:12px;line-height:1.6 }.card .meta strong { color:var(--ink);font-weight:600 }
+    .card button { margin-top:auto;min-height:40px;border-radius:6px;border:1px solid #5A606B;color:var(--ink);background:#3A4450 }.card button.play { color:#10131B;background:var(--blue);border-color:var(--blue);font-weight:650 }.card button:hover { filter:brightness(1.12) }.card button:disabled { opacity:.5;cursor:default;filter:none }
     .card .actions { margin-top:auto;display:grid;gap:8px }.card .actions button { margin-top:0;width:100% }.card .actions .minor { font-size:11px }
-    .footnote { margin:22px 0;color:#a9b9b4;font-size:12px }
+    .footnote { margin:22px 0;color:#8893A1;font-size:12px }
     .view { display:none }.view.active { display:block }
     .pagehero { margin:35px 0 24px }.pagehero p { max-width:640px }
-    .panel { border:1px solid #718f8a85;background:#142d3299;border-radius:12px;padding:22px;margin:14px 0 }
-    .panel h3 { margin-bottom:8px }.row { display:flex;justify-content:space-between;align-items:center;gap:18px;padding:15px 0;border-top:1px solid #b6c6b42d }.row:first-of-type { border-top:0 }
-    .row p,.minor { font-size:12px;color:#b3c3bd }.pill { display:inline-block;padding:4px 9px;border-radius:50px;background:#b68f5830;color:#e8c28a;font-size:11px;white-space:nowrap }.pill.good { background:#88c9a72c;color:#a9dfbd }
-    .secondary { padding:9px 13px;border-radius:7px;background:#24444a;color:#e9ddc9;border:1px solid #86a09a;white-space:nowrap }.secondary:hover { background:#34565b }
+    .panel { border:1px solid #5A606B;background:var(--panel);border-radius:8px;padding:22px;margin:14px 0 }
+    .panel h3 { margin-bottom:8px }.row { display:flex;justify-content:space-between;align-items:center;gap:18px;padding:15px 0;border-top:1px solid var(--line) }.row:first-of-type { border-top:0 }
+    .row p,.minor { font-size:12px;color:#A8DFFF }.pill { display:inline-block;padding:4px 9px;border-radius:50px;background:#6A37C840;color:var(--ink);font-size:11px;white-space:nowrap }.pill.good { background:#00C85333;color:#5FF2D2 }
+    .secondary { padding:9px 13px;border-radius:6px;background:#3A4450;color:var(--ink);border:1px solid #5A606B;white-space:nowrap }.secondary:hover { background:#4a5664 }
     .rule-grid { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:18px }.rule { background:#1f3c40;border-radius:8px;padding:17px;border:1px solid #67837b6b }.rule b { display:block;color:#efc78d;font:27px Georgia,serif }.rule span { font-size:11px;color:#c7d0c7 }
     .slot-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px }.slot { min-height:90px;border:1px dashed #7c9187;border-radius:9px;display:grid;place-content:center;text-align:center;color:#bcc9c2;font-size:12px }.slot b { font:22px Georgia,serif;color:#d3b47f }
     .slot img { width:48px;height:48px;object-fit:cover;margin:4px auto;border-radius:4px }
@@ -54,7 +47,7 @@
     .mood-tile img { width:48px;height:48px;object-fit:cover;border-radius:4px }.mood-tile button { padding:4px 6px;background:#24444a;color:#e9ddc9;border:1px solid #86a09a;border-radius:5px;font-size:11px }
     .mood-tile .clear { background:transparent;border:0;color:#e4be89;text-decoration:underline }
     .armor-fields { display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin-top:15px }.armor-fields label { display:grid;gap:6px;color:#c5d3c9;font-size:12px }.armor-fields input,.armor-fields select { color:#f4e7d1;background:#0e242a;border:1px solid #7f9b90;border-radius:6px;padding:9px 10px;font:14px -apple-system,BlinkMacSystemFont,sans-serif;min-height:39px }.armor-fields input { width:88px }.armor-fields select { width:255px }
-    .notice { min-height:25px;color:#d9bd8d;font-size:12px;letter-spacing:.01em;margin-top:13px;white-space:pre-line }
+    .notice { min-height:25px;color:var(--brass);font-size:12px;letter-spacing:.01em;margin-top:13px;white-space:pre-line }
     .record-path { max-width:520px;overflow-wrap:anywhere }
     .save-list { list-style:none;margin:10px 0 0;padding:0 }.save-list li { display:flex;justify-content:space-between;border-top:1px solid #a9bbb332;padding:11px 0;font-size:13px }.save-list time { color:#aab8b1 }
     @media(max-width:1040px){.shell{grid-template-columns:200px minmax(0,1fr)}main{padding:26px}.cards{gap:9px}.card{padding:15px}}
@@ -64,23 +57,23 @@
 <body>
 <div class="shell">
   <aside>
-    <div class="brand"><div class="sigil">✧</div><div><strong>Enroth Continuum</strong><small>A personal atlas</small></div></div>
+    <div class="brand"><div class="sigil">EC</div><div><strong>Enroth Continuum</strong><small>Local game launcher</small></div></div>
     <nav aria-label="Atlas sections">
       <button data-view="campaigns" class="active"><span class="nav-icon">◇</span>Campaigns</button>
-      <button data-view="atelier"><span class="nav-icon">✦</span>The Atelier</button>
-      <button data-view="echoes"><span class="nav-icon">♜</span>Hall of Echoes</button>
-      <button data-view="vault"><span class="nav-icon">▤</span>The Vault</button>
+      <button data-view="atelier"><span class="nav-icon">◆</span>Mods</button>
+      <button data-view="echoes"><span class="nav-icon">↗</span>Transfers</button>
+      <button data-view="vault"><span class="nav-icon">▤</span>Saves</button>
       <button data-view="settings"><span class="nav-icon">⚙</span>Settings</button>
     </nav>
     <div class="side-bottom">Powered by <strong>OpenEnroth</strong>, the open source engine by its original contributors. Original Might &amp; Magic art and data stay on this Mac.<br><br><a href="#" id="credit-link">Credits &amp; local data</a></div>
   </aside>
   <main>
-    <div class="topline"><span>THE ATLAS / <span id="breadcrumb">CAMPAIGNS</span></span><span><i class="statusdot"></i> LOCAL LIBRARY</span></div>
+    <div class="topline"><span id="breadcrumb">CAMPAIGNS</span><span><i class="statusdot"></i> LOCAL DATA</span></div>
     <div id="campaigns" class="view active">
-      <div class="hero"><span class="eyebrow">Three worlds · One long journey</span><h1>Choose your<br>next adventure.</h1><p>Open your campaign, shape a future party, and keep every chapter close to home.</p></div>
-      <div class="sectionline"><h2>The campaigns</h2><span>Your owned game data stays private</span></div>
+      <div class="hero"><span class="eyebrow">Enroth Continuum</span><h1>Choose a campaign.</h1><p>Launch a local game with its own data and save profile.</p></div>
+      <div class="sectionline"><h2>Campaigns</h2><span>Game data stays on this Mac</span></div>
       <div class="cards">
-        <article class="card"><span class="roman">VI</span><small>New Sorpigal awaits</small><h3>Mandate of Heaven</h3><div class="meta">Data <strong id="mm6-data">Checking…</strong><br>Engine <strong>In progress</strong></div><button data-detail="mm6">Explore campaign</button></article>
+        <article class="card"><span class="roman">VI</span><small>New Sorpigal awaits</small><h3>Mandate of Heaven</h3><div class="meta">Data <strong id="mm6-data">Checking…</strong><br>Engine <strong id="mm6-engine">Checking…</strong></div><div class="actions"><button class="play" id="play-mm6" disabled>Play MM6</button><p class="minor" id="mm6-note">Checking for the MM6 helper…</p></div></article>
         <article class="card primary"><span class="roman">VII</span><small>The first open gate</small><h3>For Blood and Honor</h3><div class="meta">Data <strong id="mm7-data">Checking…</strong><br>Latest save <strong id="latest-save">Checking…</strong></div><div class="actions"><button class="play" id="play-mm7">Play MM7</button><button id="play-openenroth" disabled>Play upstream OpenEnroth</button><p class="minor" id="openenroth-note">Checking for the upstream OpenEnroth helper…</p></div></article>
         <article class="card"><span class="roman">VIII</span><small>Jadame calls</small><h3>Day of the Destroyer</h3><div class="meta">Data <strong id="mm8-data">Checking…</strong><br>Engine <strong>In progress</strong></div><button data-detail="mm8">Explore campaign</button></article>
       </div>
@@ -135,6 +128,10 @@
     for (const game of Object.keys(titles)) safeText(game+'-data',state.data[game]?(game==='mm8'?'Core files extracted':'Ready'):'Not configured');
     safeText('latest-save',state.saves[0]?.name||'None yet');
     const busy=!!state.running||!!state.recordingFinalizing;
+    const mm6=document.getElementById('play-mm6');mm6.disabled=busy||!state.mm6Available||!state.data.mm6;
+    mm6.textContent=state.running&&state.runningBuild==='mm6'?'MM6 is running':state.data.mm6?'Play MM6':'Choose MM6 data';
+    safeText('mm6-engine',state.mm6Available?'Playtest helper':'In progress');
+    safeText('mm6-note',state.mm6Available?'Uses its own MM6 profile and your local MM6 data. Recording controls apply to MM7 only.':'Unavailable: this Atlas build has no MM6 helper.');
     const play=document.getElementById('play-mm7');play.disabled=busy;play.textContent=state.running?(state.runningBuild==='mm7'?'MM7 is running':'OpenEnroth is running'):state.recordingFinalizing?'Finishing recording':state.data.mm7?'Play MM7':'Choose MM7 data';
     const upstream=document.getElementById('play-openenroth');upstream.disabled=busy||!state.upstreamAvailable||!state.data.mm7;
     upstream.textContent=state.running&&state.runningBuild==='openenroth'?'OpenEnroth is running':'Play upstream OpenEnroth';
@@ -204,6 +201,7 @@
   document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));
   document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>send(b.dataset.action)));
   document.querySelectorAll('[data-detail]').forEach(b=>b.addEventListener('click',()=>{show('settings');safeText('notice',titles[b.dataset.detail]+' engine support is in progress. You can already choose its private game data folder.')}));
+  document.getElementById('play-mm6').addEventListener('click',()=>send('play-mm6'));
   document.getElementById('play-mm7').addEventListener('click',()=>send('play-mm7'));
   document.getElementById('play-openenroth').addEventListener('click',()=>send('play-openenroth'));
   for(const kind of ['video','diagnostics'])document.getElementById('record-'+kind+'-toggle').addEventListener('click',e=>send('record-'+kind+'-'+(e.currentTarget.textContent==='Turn on'?'on':'off')));

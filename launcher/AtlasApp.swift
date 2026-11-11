@@ -172,6 +172,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
                                didReceive message: WKScriptMessage) {
         guard let action = message.body as? String else { return }
         if action == "refresh" { sendState() }
+        else if action == "play-mm6" { play(.mm6) }
         else if action == "play-mm7" { play(.fork) }
         else if action == "play-openenroth" { play(.upstream) }
         else if action == "record-video-on" || action == "record-video-off" {
@@ -249,6 +250,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             "saves": saveNames(),
             "running": game != nil,
             "runningBuild": gameBuild?.rawValue ?? "",
+            "mm6Available": GameBuild.mm6.isAvailable(in: Bundle.main.bundleURL),
             "upstreamAvailable": GameBuild.upstream.isAvailable(in: Bundle.main.bundleURL),
             "recordingFinalizing": recordingFinalizing,
             "recordingEnabled": recordingEnabled,
@@ -594,7 +596,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         let name = build.displayName
         guard let profilePath = build.profilePath(environment: ProcessInfo.processInfo.environment,
                                                   supportPath: supportPath) else {
-            sendState(message: "The disposable MM7 profile is invalid; MM7 was not launched.")
+            sendState(message: "The \(name) profile is invalid; \(name) was not launched.")
             return
         }
         guard game == nil else {
@@ -606,8 +608,8 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             sendState(message: "The previous recording is still finalizing. Play will be available when it finishes.")
             return
         }
-        guard dataReady("mm7"), let dataPath = dataPath(for: "mm7") else {
-            sendState(message: "Choose a folder containing your MM7 ANIMS, DATA, MUSIC and SOUNDS directories.")
+        guard dataReady(build.dataTitle), let dataPath = dataPath(for: build.dataTitle) else {
+            sendState(message: "Choose a folder containing your \(build.dataTitle.uppercased()) ANIMS, DATA, MUSIC and SOUNDS directories.")
             return
         }
         let engine = build.helperExecutable(in: Bundle.main.bundleURL)
@@ -615,7 +617,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             sendState(message: "The bundled \(name) engine is missing.")
             return
         }
-        let shouldRecord = recordingEnabled
+        let shouldRecord = build.supportsRecording && recordingEnabled
         if shouldRecord, let issue = recordingPreflight(profilePath: profilePath, dataPath: dataPath) {
             sendState(message: issue)
             return
@@ -693,7 +695,8 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
                 }
             }
             sendState(message: shouldRecord && recorder?.isRunning == true
-                      ? "Opening \(name); recording is starting…" : "Opening \(name)…")
+                      ? "Opening \(name); recording is starting…"
+                      : build.supportsRecording ? "Opening \(name)…" : "Opening \(name) in its separate MM6 profile…")
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 NSRunningApplication(processIdentifier: process.processIdentifier)?.activate()
             }

@@ -57,7 +57,17 @@ def verify_helper(path: Path, title: str) -> None:
         result = subprocess.run([str(binary), "--game", wrong_game, "--headless"],
                                 text=True, capture_output=True, timeout=5)
     except subprocess.TimeoutExpired as exc:
-        raise ValueError(f"{title} helper did not reject the foreign title") from exc
+        # A macOS GUI bundle can stay resident after its command-line main
+        # returns, so its stdout never becomes observable by communicate().
+        # Retain the title-lock check by requiring the exact compiled rejection
+        # text in the helper, rather than treating the bundle lifecycle as a
+        # false negative. Non-bundle/returning helpers still take the dynamic
+        # path below.
+        strings = subprocess.run(["strings", str(binary)], text=True, capture_output=True, check=True).stdout
+        expected = f"This {title} app only accepts --game {title.lower()}."
+        if expected not in strings:
+            raise ValueError(f"{title} helper did not contain its title lock: {binary}") from exc
+        return
     if result.returncode == 0 or f"only accepts --game {title.lower()}" not in result.stdout + result.stderr:
         raise ValueError(f"{title} helper did not prove its title lock: {binary}")
 

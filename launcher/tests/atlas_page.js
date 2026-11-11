@@ -32,7 +32,7 @@ vm.runInNewContext(script, {document, window});
 const titles = {mm6: false, mm7: true, mm8: false};
 function state(overrides) {
   return {
-    data: titles, paths: {}, saves: [], running: false, runningBuild: '', upstreamAvailable: false,
+    data: titles, paths: {}, saves: [], running: false, runningBuild: '', mm6Available: false, upstreamAvailable: false,
     recordingFinalizing: false, recordingEnabled: false, recordVideo: false, recordDiagnostics: false,
     recordingPath: '', recordingSession: '', modsEnabled: false, vendorRefreshOnEntry: false,
     portraits: [false, false, false, false], portraitMoods: [{}, {}, {}, {}],
@@ -41,6 +41,7 @@ function state(overrides) {
 }
 const upstream = document.getElementById('play-openenroth');
 const note = document.getElementById('openenroth-note');
+const mm6 = document.getElementById('play-mm6');
 
 // The upstream button is disabled with an explanation, not hidden, before any state arrives.
 assert.strictEqual(upstream.disabled, true);
@@ -52,6 +53,13 @@ assert.strictEqual(upstream.disabled, true);
 assert.strictEqual(upstream.hidden, false);
 assert.match(note.textContent, /no upstream OpenEnroth helper/);
 assert.strictEqual(document.getElementById('play-mm7').disabled, false);
+assert.strictEqual(mm6.disabled, true);
+
+// MM6 is enabled only when both its title-locked helper and data are available.
+window.Atlas.receive(state({data: {...titles, mm6: true}, mm6Available: true}));
+assert.strictEqual(mm6.disabled, false);
+mm6.click();
+assert.strictEqual(sent.at(-1), 'play-mm6');
 
 // With the helper present the button is enabled and sends its own action.
 window.Atlas.receive(state({upstreamAvailable: true}));
@@ -66,6 +74,7 @@ window.Atlas.receive(state({upstreamAvailable: true, running: true, runningBuild
 assert.strictEqual(upstream.disabled, true);
 assert.strictEqual(upstream.textContent, 'OpenEnroth is running');
 assert.strictEqual(document.getElementById('play-mm7').disabled, true);
+assert.strictEqual(mm6.disabled, true);
 assert.strictEqual(document.getElementById('record-video-toggle').disabled, true);
 assert.strictEqual(document.getElementById('record-diagnostics-toggle').disabled, true);
 

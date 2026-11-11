@@ -9,7 +9,9 @@
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Character.h"
+#include "Engine/Objects/NPC.h"
 #include "Engine/Objects/SpriteObject.h"
+#include "Engine/Party.h"
 
 #include "Library/Random/RandomEngine.h"
 
@@ -102,9 +104,62 @@ inline void requireVerifiedMonsterOnMonsterHit(const Actor &attacker, ActorAbili
 }
 
 /**
+ * MM6 resistance of a character to a damage channel, summed as the original character damage routine sums it. Fire,
+ * Electricity, Cold and Poison add items, a party protection buff and a hired Enchanter. Magic adds only its party
+ * buff, and Energy has no resistance at all.
+ *
+ * @param character                     Character taking the hit.
+ * @param type                          Damage channel other than physical.
+ * @param party                         Party whose protection buffs add to the resistance.
+ * @param enchanterBonus                Resistance that a hired Enchanter gives.
+ * @return                              Resistance for the damage roll.
+ */
+inline int characterResistance(const Character &character, DamageType type, const Party &party, int enchanterBonus) {
+    auto element = [&](int base, int bonus, Attribute attribute, PartyBuff buff) {
+        return base + bonus + character.GetItemsBonus(attribute) + party.pPartyBuffs[buff].power + enchanterBonus;
+    };
+    switch (type) {
+        case DAMAGE_FIRE:
+            return element(character.sResFireBase, character.sResFireBonus, ATTRIBUTE_RESIST_FIRE, PARTY_BUFF_RESIST_FIRE);
+        case DAMAGE_AIR:
+            return element(character.sResAirBase, character.sResAirBonus, ATTRIBUTE_RESIST_AIR, PARTY_BUFF_RESIST_AIR);
+        case DAMAGE_WATER:
+            return element(character.sResWaterBase, character.sResWaterBonus, ATTRIBUTE_RESIST_WATER, PARTY_BUFF_RESIST_WATER);
+        case DAMAGE_EARTH: // The shared runtime keeps MM6 Poison resistance in its Body fields.
+            return element(character.sResBodyBase, character.sResBodyBonus, ATTRIBUTE_RESIST_BODY, PARTY_BUFF_RESIST_BODY);
+        case DAMAGE_MAGIC:
+            return character.sResMagicBase + character.sResMagicBonus + party.pPartyBuffs[PARTY_BUFF_PROTECTION_FROM_MAGIC].power;
+        case DAMAGE_ENERGY:
+            return 0;
+        default:
+            throw std::runtime_error("MM6 has no character resistance for this damage channel");
+    }
+}
+
+/**
+ * MM6 resistance roll for damage that reaches a character. The hit is halved up to four times while a roll below
+ * luck bonus plus resistance plus 30 reaches 30. Unlike MM7, the roll runs even when luck and resistance add up to
+ * nothing.
+ *
+ * @param damage                        Incoming damage.
+ * @param luckBonus                     Character's luck bonus.
+ * @param resistance                    Character's resistance to the damage channel.
+ * @param rng                           Game RNG.
+ * @return                              Damage after resistance.
+ */
+inline int resistedDamage(int damage, int luckBonus, int resistance, RandomEngine &rng) {
+    const int divider = luckBonus + resistance + 30;
+    for (int i = 0; i < 4 && divider > 0; i++) {
+        if (rng.random(divider) < 30)
+            break;
+        damage /= 2;
+    }
+    return damage;
+}
+
+/**
  * MM6 rule for damage that reaches a character, from the original character damage routine. Physical damage passes
- * unchanged. An elemental hit is halved up to four times while a roll against luck bonus plus resistance plus 30
- * reaches 30. Unlike MM7, the roll runs even when luck and resistance add up to nothing.
+ * unchanged, every other channel goes through `resistedDamage`.
  *
  * @param character                     Character taking the hit.
  * @param type                          Damage channel.
@@ -117,14 +172,9 @@ inline int characterIncomingDamage(const Character &character, DamageType type, 
     if (type == DAMAGE_PHYSICAL)
         return damage;
 
-    const int divider = character.GetParameterBonus(character.GetActualLuck()) +
-                        character.GetActualResistance(characterResistanceForDamage(type)) + 30;
-    for (int i = 0; i < 4 && divider > 0; i++) {
-        if (rng.random(divider) < 30)
-            break;
-        damage /= 2;
-    }
-    return damage;
+    const int enchanterBonus = CheckHiredNPCSpeciality(NPC_PROFESSION_ENCHANTER) ? 20 : 0;
+    return resistedDamage(damage, character.GetParameterBonus(character.GetActualLuck()),
+                          characterResistance(character, type, *pParty, enchanterBonus), rng);
 }
 
 /**

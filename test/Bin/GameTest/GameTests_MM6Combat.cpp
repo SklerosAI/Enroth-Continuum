@@ -1,7 +1,10 @@
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <stdexcept>
+#include <string_view>
 #include <utility>
+#include <vector>
 
 #include "Testing/Game/GameTest.h"
 
@@ -11,6 +14,7 @@
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
+#include "Engine/Objects/Chest.h"
 #include "Engine/Party.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/MapTable.h"
@@ -18,6 +22,8 @@
 #include "GUI/GUIWindow.h"
 
 #include "Utility/String/Format.h"
+
+#include "MM6MapEntranceForTest.h"
 
 namespace {
 
@@ -62,6 +68,25 @@ void enterFirstMapFromNewGame(EngineController &game) {
     mm6::testing::setNewGameSaveOverride({});
     ASSERT_EQ(engine->_currentLoadedMapId, pMapTable->GetMapInfo("oute3.odm"));
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
+}
+
+void enterMapAtShippedEntrance(EngineController &game, std::string_view fileName) {
+    // Loads the map at the first shipped MoveToMap that names it, the way the map sweep does.
+    const MapId map = pMapTable->GetMapInfo(fileName);
+    const std::optional<MM6ShippedEntrance> entrance = findShippedMM6Entrance(fileName);
+    ASSERT_TRUE(entrance);
+    bool loaded = false;
+    game.runGameRoutine([&] {
+        for (Chest &chest : vChests)
+            chest.position.reset(); // The first map's chest positions would make the target's chest load refuse.
+        engine->_pendingTransition = MapDestination(map, entrance->placement);
+        mm6::ScopedChestMapLoadOptIn chestOptIn;
+        PrepareWorld(0);
+        loaded = true;
+    });
+    while (!loaded)
+        game.tick(); // The loading screen draws frames.
+    ASSERT_EQ(engine->_currentLoadedMapId, map);
 }
 
 } // namespace
@@ -150,4 +175,58 @@ GAME_TEST(MM6CombatHeadless, DISABLED_CureWeaknessFromSpellbook) {
     EXPECT_EQ(conditionTape.back()[targetIndex], CONDITION_GOOD);
     EXPECT_FALSE(recoveringTape.front()[casterIndex]);
     EXPECT_TRUE(recoveringTape.back()[casterIndex]);
+}
+
+GAME_TEST(MM6CombatHeadless, DISABLED_ElectricTrapIsResistedByElectricity) {
+    // An MM6 trap that dealt damage other than physical or fire used to refuse and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = charTapes.hps();
+    auto conditionTape = charTapes.conditions();
+    auto trapTape = tapes.questBit(static_cast<QuestBit>(316));
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "t6.blv");
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(3712, 1100, 1792), 270); // In front of a box that shocks the party.
+
+    for (Character &character : pParty->pCharacters)
+        character.health = 200; // A new party dies to the trap.
+    pParty->pCharacters[0].sResAirBase = 10000; // The shared runtime keeps MM6 Electricity, Cold and Poison in Air, Water and Body.
+    pParty->pCharacters[1].sResWaterBase = 10000;
+    pParty->pCharacters[2].sResBodyBase = 10000;
+    pParty->pCharacters[3].sResMagicBase = 10000;
+    test.startTaping();
+
+    game.pointMouseAtFace(2239); // The box's near side.
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+
+    EXPECT_EQ(trapTape, tape(false, true));
+    EXPECT_EQ(hpTape, tape({200, 200, 200, 200}, {196, 125, 125, 125})); // Only Electricity resistance halves the 75.
+    EXPECT_EQ(conditionTape.frontBack(), tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
+                                              {CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD}));
+}
+
+GAME_TEST(MM6CombatHeadless, DISABLED_PoisonAndMagicMonstersHitParty) {
+    // A monster hit with a Poison or Magic attack used to refuse and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = tapes.totalHp();
+    auto attackTape = tapes.custom([] {
+        std::vector<DamageType> types;
+        for (const Actor &actor : pActors)
+            if (actor.aiState == AttackingMelee)
+                types.push_back(actor.monsterInfo.attack1Type);
+        return types;
+    });
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    for (int monster : {74, 115}) {
+        Actor *attacker = game.spawnMonster(pParty->pos + Vec3f(0, 150, 0), static_cast<MonsterId>(monster), SPAWN_STATIONARY);
+        attacker->monsterInfo.specialAttackType = SPECIAL_ATTACK_NONE; // Their special attacks are still refused.
+    }
+    game.tick(25); // The monsters walk up and strike.
+
+    auto attacks = attackTape.flatten();
+    EXPECT_CONTAINS(attacks, DAMAGE_MAGIC);
+    EXPECT_CONTAINS(attacks, DAMAGE_EARTH); // MM6 Poison.
+    EXPECT_LT(hpTape.delta(), 0);
 }

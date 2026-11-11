@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -26,8 +27,7 @@ inline MonsterDamageLabel parseMonsterDamageLabel(std::string_view label) {
     throw std::runtime_error("Unknown active MM6 monster damage label: " + std::string(label));
 }
 
-// Explicit adapter for storage in MonsterInfo. The inherited Air/Water/Earth
-// slots are provisional aliases; the effect gate below does not enable them.
+// The shared runtime keeps MM6 Electricity, Cold and Poison in its Air, Water and Earth channels.
 inline DamageType damageTypeForMonsterLabel(MonsterDamageLabel label) {
     switch (label) {
         case MonsterDamageLabel::Physical: return DAMAGE_PHYSICAL;
@@ -77,30 +77,42 @@ inline void requireVerifiedMonsterDamage(GameTitle title, DamageType type) {
 }
 
 /**
- * @param type                          Damage channel, the shared runtime stores MM6 Electricity as Air and Cold as
- *                                      Water.
- * @return                              MM6 character resistance that the original damage check reads for it.
+ * @param kind                          Damage kind byte of an MM6 event, the same numbering the original gives the
+ *                                      monsters.txt labels: Physical, Magic, Fire, Electricity, Cold, Poison, Energy.
+ * @return                              Shared damage channel for it.
  */
-inline Attribute characterResistanceForDamage(DamageType type) {
-    switch (type) {
-        case DAMAGE_FIRE: return ATTRIBUTE_RESIST_FIRE;
-        case DAMAGE_AIR: return ATTRIBUTE_RESIST_AIR;
-        case DAMAGE_WATER: return ATTRIBUTE_RESIST_WATER;
-        default: break;
-    }
-    throw std::runtime_error("MM6 character resistance for this damage channel is not verified");
+inline DamageType damageTypeForEventKind(int kind) {
+    constexpr std::array<MonsterDamageLabel, 7> labels = {
+        MonsterDamageLabel::Physical, MonsterDamageLabel::Magic, MonsterDamageLabel::Fire,
+        MonsterDamageLabel::Electricity, MonsterDamageLabel::Cold, MonsterDamageLabel::Poison,
+        MonsterDamageLabel::Energy,
+    };
+    if (kind < 0 || kind >= static_cast<int>(labels.size()))
+        return DAMAGE_PHYSICAL; // The original character damage routine resists nothing past Energy.
+    return damageTypeForMonsterLabel(labels[kind]);
 }
 
 /**
- * Refuses MM6 damage to a character in a channel whose character resistance rule is not verified.
+ * Refuses MM6 damage to a character in a channel that MM6 never produces.
  *
  * @param title                         Running game title, everything passes outside MM6.
  * @param type                          Damage channel.
  */
 inline void requireVerifiedCharacterDamage(GameTitle title, DamageType type) {
-    if (title != GameTitle::MM6) return;
-    if (type == DAMAGE_PHYSICAL) return; // MM6 applies no resistance or luck roll to physical damage.
-    characterResistanceForDamage(type);
+    if (title != GameTitle::MM6)
+        return;
+    switch (type) {
+        case DAMAGE_PHYSICAL:
+        case DAMAGE_MAGIC:
+        case DAMAGE_FIRE:
+        case DAMAGE_AIR:
+        case DAMAGE_WATER:
+        case DAMAGE_EARTH:
+        case DAMAGE_ENERGY:
+            return;
+        default:
+            throw std::runtime_error("MM6 has no such character damage channel");
+    }
 }
 
 }  // namespace mm6

@@ -61,21 +61,30 @@ UNIT_TEST(MM6MonsterDamage, GatesUnverifiedEffectsByTitle) {
 }
 
 UNIT_TEST(MM6MonsterDamage, GatesCharacterChannelsSeparatelyFromMonsterChannels) {
-    // Characters take Electricity and Cold through their own resistances, monsters don't have a verified rule yet.
-    for (DamageType type : {DAMAGE_PHYSICAL, DAMAGE_FIRE, DAMAGE_AIR, DAMAGE_WATER})
+    // Characters take all seven MM6 channels, monsters don't have a verified rule for most of them yet.
+    for (DamageType type : {DAMAGE_PHYSICAL, DAMAGE_MAGIC, DAMAGE_FIRE, DAMAGE_AIR, DAMAGE_WATER, DAMAGE_EARTH, DAMAGE_ENERGY})
         EXPECT_NO_THROW(mm6::requireVerifiedCharacterDamage(GameTitle::MM6, type));
-    for (DamageType type : {DAMAGE_EARTH, DAMAGE_MAGIC, DAMAGE_ENERGY, DAMAGE_BODY, DAMAGE_MIND}) {
+    for (DamageType type : {DAMAGE_SPIRIT, DAMAGE_MIND, DAMAGE_BODY, DAMAGE_LIGHT, DAMAGE_DARK}) {
         EXPECT_THROW(mm6::requireVerifiedCharacterDamage(GameTitle::MM6, type), std::runtime_error);
         EXPECT_NO_THROW(mm6::requireVerifiedCharacterDamage(GameTitle::MM7, type));
     }
-    for (DamageType type : {DAMAGE_AIR, DAMAGE_WATER})
+    for (DamageType type : {DAMAGE_AIR, DAMAGE_WATER, DAMAGE_EARTH, DAMAGE_MAGIC, DAMAGE_ENERGY})
         EXPECT_THROW(mm6::requireVerifiedMonsterDamage(GameTitle::MM6, type), std::runtime_error);
+}
 
-    EXPECT_EQ(mm6::characterResistanceForDamage(DAMAGE_FIRE), ATTRIBUTE_RESIST_FIRE);
-    EXPECT_EQ(mm6::characterResistanceForDamage(DAMAGE_AIR), ATTRIBUTE_RESIST_AIR);
-    EXPECT_EQ(mm6::characterResistanceForDamage(DAMAGE_WATER), ATTRIBUTE_RESIST_WATER);
-    EXPECT_THROW(mm6::characterResistanceForDamage(DAMAGE_PHYSICAL), std::runtime_error);
-    EXPECT_THROW(mm6::characterResistanceForDamage(DAMAGE_EARTH), std::runtime_error);
+UNIT_TEST(MM6MonsterDamage, EventKindsFollowTheMonsterLabelNumbering) {
+    // MM6 event damage kinds used to be read in MM7's numbering, so physical traps rolled fire resistance and cold ones none.
+    EXPECT_EQ(mm6::damageTypeForEventKind(0), mm6::damageTypeForMonsterAttack("Phys", true));
+    EXPECT_EQ(mm6::damageTypeForEventKind(1), mm6::damageTypeForMonsterAttack("Magic", true));
+    EXPECT_EQ(mm6::damageTypeForEventKind(2), mm6::damageTypeForMonsterAttack("Fire", true));
+    EXPECT_EQ(mm6::damageTypeForEventKind(3), mm6::damageTypeForMonsterAttack("Elec", true));
+    EXPECT_EQ(mm6::damageTypeForEventKind(4), mm6::damageTypeForMonsterAttack("Cold", true));
+    EXPECT_EQ(mm6::damageTypeForEventKind(5), mm6::damageTypeForMonsterAttack("Pois", true));
+    EXPECT_EQ(mm6::damageTypeForEventKind(6), mm6::damageTypeForMonsterAttack("Ener", true));
+    EXPECT_EQ(mm6::damageTypeForEventKind(0), DAMAGE_PHYSICAL);
+    EXPECT_EQ(mm6::damageTypeForEventKind(4), DAMAGE_WATER);
+    EXPECT_EQ(mm6::damageTypeForEventKind(7), DAMAGE_PHYSICAL);
+    EXPECT_EQ(mm6::damageTypeForEventKind(255), DAMAGE_PHYSICAL);
 }
 
 UNIT_TEST(MM6MonsterDamage, ReadsSixExplicitMonsterResistanceColumns) {

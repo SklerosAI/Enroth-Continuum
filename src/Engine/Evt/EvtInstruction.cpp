@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "Engine/Evt/EvtEnums.h"
+#include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/Tables/HouseTable.h"
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/Engine.h"
@@ -973,7 +974,11 @@ EvtInstruction EvtInstruction::parse(InputStream &stream, size_t size, GameTitle
         case EVENT_ReceiveDamage:
             requireSize(11);
             ir.who = static_cast<EvtTargetCharacter>(fromStream<uint8_t>(stream));
-            ir.data.damage_descr.damage_type = static_cast<DamageType>(fromStream<uint8_t>(stream));
+            if (gameTitle == GameTitle::MM6) {
+                ir.data.damage_descr.damage_type = mm6::damageTypeForEventKind(fromStream<uint8_t>(stream));
+            } else {
+                ir.data.damage_descr.damage_type = static_cast<DamageType>(fromStream<uint8_t>(stream));
+            }
             ir.data.damage_descr.damage = fromStream<uint32_t>(stream);
             break;
         case EVENT_SetSnow:  // TODO(yoctozepto): not present in used MM7 data; likely present in MM6

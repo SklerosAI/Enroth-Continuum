@@ -4,6 +4,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTestCommon.cpp
         GameTestMain.cpp
         GameTestOptions.cpp
+        MM6CampaignChain.cpp
         MM6HeadlessRules.cpp
         MM7CampaignChain.cpp
         GameTests_0000.cpp
@@ -37,6 +38,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7LightItems.cpp
         GameTests_MM7Scrolls.cpp
         GameTests_MM6.cpp
+        GameTests_MM6CampaignChainC0.cpp
         GameTests_MM6CharacterBitEvent.cpp
         GameTests_MM6EventVariables.cpp
         GameTests_MM6Creation.cpp
@@ -50,6 +52,7 @@ set(GAME_TEST_MAIN_SOURCES
 set(GAME_TEST_MAIN_HEADERS
         GameTestCommon.h
         GameTestOptions.h
+        MM6CampaignChain.h
         MM6HeadlessRules.h
         MM7CampaignChain.h)
 

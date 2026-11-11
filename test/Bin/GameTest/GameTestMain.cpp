@@ -10,7 +10,6 @@
 #include "Application/Startup/GameStarter.h"
 
 #include "Engine/Components/Control/EngineController.h"
-#include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/Resources/EngineFileSystem.h"
 
 #include "Testing/Game/GameTest.h"
@@ -26,6 +25,7 @@
 #include "Utility/Exception.h"
 
 #include "GameTestOptions.h"
+#include "MM6CampaignChain.h"
 #include "MM6HeadlessRules.h"
 
 namespace {
@@ -251,7 +251,7 @@ int platformMain(int argc, char **argv) {
                                 hasMm7ProfileGate && gate->preserveSave);
             GameTest::init(game, &test);
             if (!mm6ChainRoot.empty())
-                game->runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(mm6ChainRoot); });
+                game->runGameRoutine([&] { setMM6CampaignChainProfile(mm6ChainRoot); });
             exitCode = RUN_ALL_TESTS();
         });
         return exitCode;

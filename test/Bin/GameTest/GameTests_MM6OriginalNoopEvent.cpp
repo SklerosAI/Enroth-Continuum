@@ -133,6 +133,18 @@ EvtProgram syntheticJumpEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticMapReloadTriggerEvent() {
+    std::string bytes;
+    appendRecord(&bytes, 0, EVENT_OnMapReload, std::string(1, '\0'));
+
+    std::string mutation;
+    mutation.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&mutation, 16);
+    appendRecord(&bytes, 1, EVENT_Set, mutation);
+    appendRecord(&bytes, 2, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -328,4 +340,14 @@ GAME_TEST(MM6EventJump, SkipsFallthroughAndRunsItsTarget) {
     runEvent(EvtContext(EVT_SOURCE_MAP, 1));
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(14));
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(15));
+}
+
+GAME_TEST(MM6MapReloadTrigger, StopsDirectEventExecution) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedQuestionEvent restore;
+    engine->_localEventMap = syntheticMapReloadTriggerEvent();
+    pParty->pCharacters[0]._characterEventBits.reset(16);
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(16));
 }

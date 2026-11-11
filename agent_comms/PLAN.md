@@ -342,6 +342,31 @@ exits and boat routes on top of M2, flight and water walking, the MM6 finale,
 then the executable-only quest rules. S-SWEEP should also fire each map's
 timer and trap events once.
 
+### M4 plan, MM6 continuous chain (2026-11-11, read-only pass)
+
+Sixteen main-quest transitions (T0-T16) from New Game to the hive. Today:
+New Game, the opening, councils A, C and F, the traitor step and the t6
+crystal work or probably work. Gaps by transition: d18 and the plateau
+house need water walking or flight (teleport fixtures for now), the sewer
+and the Oracle and Control Center entries need MM6 house exits with
+quest-bit restrictions, the sewer council needs MM6 SpeakNPC dialogue, the
+Varn and castle crystal steps need Question records driven by input, the
+NPC 12 release needs the room chain between houses 168, 553 and 554, and
+the hive needs the finale. Blaster acquisition and use are unknown.
+
+Chapters C0-C9, a save at each end, fixtures named per chapter: C0 New
+Game and opening, C1 councils A and C, C2 council B, C3 councils D and E,
+C4 council F and the traitor, C5 Oracle admission and the t6 crystal, C6
+castle crystals and the Oracle hand-in, C7 Varn and the Control Center, C8
+the NPC 12 release, C9 the hive finale.
+
+Lanes, in order: H chain harness (extend `tools/run_mm7_campaign_chain.py`
+with a title switch, MM6 gate rows in `GameTestMain.cpp`, a new
+`MM6CampaignChain` helper, C0). X house exits and the room chain. D SpeakNPC
+dialogue. F the finale (active). Q Question by input. S flight and water
+walking later. Chapter lanes C0-C4 and C5-C9 follow H. Estimated 4-6 weeks
+of chapter writing.
+
 ## Stages 3 and 4 — audits (queued)
 
 Stage 3 works through `project/MM7_AUDIT_CHECKLIST.md` plus the stage 1
@@ -357,11 +382,12 @@ and redirects saves to an in-memory filesystem until the trace stops.
 
 ## Limits in force
 
-- Two code-changing lanes at most while both Codex lanes are active. Claude
-  takes a code lane only when one frees.
+- Lanes are limited by the ten-worktree cap and disk, not by a lane count
+  (owner, 2026-11-10). Codex has been silent since 2026-11-11 03:22 UTC, so
+  Claude integrates.
 - Ten registered worktrees at most. Reuse a merged worktree before creating one.
-- Keep at least 10 GB free on disk. The shared ccache is capped at 3 GB
-  (2026-11-10). Each new worktree build adds about 1.5-2 GB, so check
+- Keep at least 10 GB free on disk. The shared ccache is capped at 2 GB
+  (lowered from 3 GB on 2026-11-11). Each new worktree build adds about 1.5-2 GB, so check
   `df -h /` before starting one. Codex freed 2.3 GiB of merged build
   output on 2026-11-10, leaving 14 GiB free.
 - Integrate reviewed commits into `master` one at a time. Codex root

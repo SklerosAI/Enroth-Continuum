@@ -68,3 +68,8 @@ Update: S-QUICKSAVE integrated (`2a9f31413`..`657878857`). New lane, plus a read
 
 | S-FINALE MM6 hive finale, winning and losing endings | `claude/mm6-finale` in `mm7-save-durability` | the MM6 game-over path replacing the MM7 one for houses 600/601 and the reactor destruction (`src/Application/GameOver.cpp`, `src/GUI/UI/UIGameOver.cpp` MM6 branches, MM6 finale code under `src/Engine/MM6/`), the hive losing-ending branch of party death, new MM6 tests. Shared core. |
 
+New lanes for M4:
+
+| H MM6 chain harness and C0 | `claude/mm6-chain-harness` in `mm7-monster-combat` | `test/Bin/GameTest/GameTestMain.cpp` (MM6 gate rows), `GameTestOptions.{h,cpp}`, new `MM6CampaignChain.{h,cpp}` and `GameTests_MM6CampaignChainC0.cpp`, `tools/run_mm7_campaign_chain.py` (title switch). Shared harness. |
+| X MM6 house exits and the NPC 12 room chain | `claude/mm6-house-exits` in `mm7-load-admission` | `src/GUI/UI/Houses/MM6House.{h,cpp}`, `src/GUI/UI/MM6HouseServiceData.{h,cpp}`, new `src/Engine/MM6/MM6HouseExit.h`, new MM6 tests. |
+

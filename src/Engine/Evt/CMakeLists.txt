@@ -22,6 +22,7 @@ set(ENGINE_EVENTS_SOURCES
         MM6HirelingEvent.cpp
         MM6DayCounterEvent.cpp
         MM6CircusPrizeEvent.cpp
+        MM6ReputationEvent.cpp
         MM6EventVariableDispatch.cpp
         MM6GiveItemEvent.cpp
         EvtInterpreter.cpp
@@ -54,6 +55,7 @@ set(ENGINE_EVENTS_HEADERS
         MM6HirelingEvent.h
         MM6DayCounterEvent.h
         MM6CircusPrizeEvent.h
+        MM6ReputationEvent.h
         MM6EventVariableDispatch.h
         MM6GiveItemEvent.h
         Processor.h
@@ -79,7 +81,8 @@ if(OE_BUILD_TESTS)
         Tests/MM6ResistanceEvent_ut.cpp
         Tests/MM6HirelingEvent_ut.cpp
         Tests/MM6DayCounterEvent_ut.cpp
-        Tests/MM6CircusPrizeEvent_ut.cpp)
+        Tests/MM6CircusPrizeEvent_ut.cpp
+        Tests/MM6ReputationEvent_ut.cpp)
     target_link_libraries(test_engine_events PUBLIC testing_unit engine_events)
     target_check_style(test_engine_events)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_events)

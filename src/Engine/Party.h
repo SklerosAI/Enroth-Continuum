@@ -350,6 +350,7 @@ struct Party {
     std::array<Duration, 4> pTurnBasedCharacterRecoveryTimes;
     IndexedArray<int, HOUSE_FIRST_SHOP, HOUSE_LAST_SHOP> InTheShopFlags;
     int uFine = 0;
+    int mm6Reputation = 0; // MM6 keeps one party-wide reputation and positive is good. MM7 keeps it per location.
     float TorchLightLastIntensity = 0.0f;
 
     Duration _roundingDt;  // keeps track of rounding remainder for recovery

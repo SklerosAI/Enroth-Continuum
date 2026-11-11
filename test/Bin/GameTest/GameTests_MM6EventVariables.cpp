@@ -1,6 +1,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include "Testing/Game/GameTest.h"
 
@@ -154,4 +155,32 @@ GAME_TEST(MM6EventVariables, FirstMapStatBonusAward) {
     EXPECT_EQ(mightTape.delta(), tape(0, 10, 0, 0));
     EXPECT_CONTAINS(soundsTape.flatten(), SOUND_quest);
     EXPECT_EQ(screenTape, tape(SCREEN_GAME));
+}
+
+GAME_TEST(MM6EventVariables, ShippedReputationWritesLandOncePerTargetedCharacter) {
+    // MM6 reputation scripts used to throw. A write lands once per targeted character, so four times for the party.
+    struct Write {
+        int eventId;
+        int whoStep;
+        EvtTargetCharacter who;
+        int writeStep;
+        int reputation;
+    };
+    // Frank's reward in the New Sorpigal Town Hall adds 50 for the active character. Global event 30 subtracts 1000
+    // from the whole party, of which only the low byte 232 counts. Global event 380 adds 200 for the whole party.
+    for (Write write : {Write{326, 7, CHOOSE_ACTIVE, 9, 50}, Write{30, 8, CHOOSE_PARTY, 9, -928}, Write{380, 0, CHOOSE_PARTY, 6, 800}}) {
+        ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+        ScopedPartyAndNpcs restore;
+        const EvtInstruction &who = engine->_globalEventMap.instruction(write.eventId, write.whoStep);
+        const EvtInstruction &reputation = engine->_globalEventMap.instruction(write.eventId, write.writeStep);
+        ASSERT_EQ(who.opcode, EVENT_ForPartyMember);
+        ASSERT_EQ(who.who, write.who);
+        ASSERT_EQ(std::to_underlying(reputation.data.variable_descr.type), 215);
+        pParty->mm6Reputation = 0;
+
+        EvtInterpreter interpreter;
+        EXPECT_EQ(interpreter.executeInstruction(who).type, EVT_FLOW_NEXT);
+        EXPECT_EQ(interpreter.executeInstruction(reputation).type, EVT_FLOW_NEXT);
+        EXPECT_EQ(pParty->mm6Reputation, write.reputation) << write.eventId;
+    }
 }

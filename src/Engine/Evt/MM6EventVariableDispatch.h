@@ -33,8 +33,10 @@ void writePartyEventVariable(EvtOpcode opcode, int rawId, int value);
  * @param rawId                         MM6 EVT variable ID.
  * @return                              Whether it's an MM6 per-character variable run by
  *                                      `compareCharacterEventVariable` and `writeCharacterEventVariable` for this
- *                                      opcode: resistances (46-55), conditions (87-104), skill points (225), and
- *                                      awards (12) on Set and Add.
+ *                                      opcode: resistances (46-55), conditions (87-104), skill points (225), awards
+ *                                      (12) on Set and Add, and reputation (215). Reputation is shared by the party,
+ *                                      but MM6 still runs it once per targeted character, so a write for the whole
+ *                                      party lands four times.
  */
 bool isCharacterEventVariable(EvtOpcode opcode, int rawId);
 

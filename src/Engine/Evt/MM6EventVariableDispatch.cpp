@@ -7,6 +7,7 @@
 #include "Engine/Evt/MM6DayCounterEvent.h"
 #include "Engine/Evt/MM6EventVariables.h"
 #include "Engine/Evt/MM6HirelingEvent.h"
+#include "Engine/Evt/MM6ReputationEvent.h"
 #include "Engine/Evt/MM6ResistanceEvent.h"
 #include "Engine/Objects/NPC.h"
 #include "Engine/Party.h"
@@ -64,7 +65,7 @@ void writePartyEventVariable(EvtOpcode opcode, int rawId, int value) {
 }
 
 bool isCharacterEventVariable(EvtOpcode opcode, int rawId) {
-    if (isResistanceVariable(rawId) || isConditionVariable(rawId) || rawId == 225)
+    if (isResistanceVariable(rawId) || isConditionVariable(rawId) || rawId == 215 || rawId == 225)
         return true;
     return rawId == 12 && (opcode == EVENT_Set || opcode == EVENT_Add);
 }
@@ -74,6 +75,8 @@ bool compareCharacterEventVariable(const Character &character, int rawId, int va
         return compareEventResistance(character, rawId, value);
     if (isConditionVariable(rawId))
         return compareCondition(character.conditions, rawId);
+    if (rawId == 215)
+        return compareReputation(effectiveReputation(pParty->mm6Reputation, &CheckHiredNPCSpeciality), value);
     return character.uSkillPoints >= value;
 }
 
@@ -84,6 +87,8 @@ void writeCharacterEventVariable(Character &character, EvtOpcode opcode, int raw
             throw std::runtime_error("MM6 award event operand is outside the award table");
         character._achievedAwardsBits.set(static_cast<AwardId>(value));
         playWriteFeedback(character, SPEECH_AWARD_GOT);
+    } else if (rawId == 215) {
+        pParty->mm6Reputation = reputationAfterEventWrite(opcode, pParty->mm6Reputation, value);
     } else if (isResistanceVariable(rawId)) {
         if (opcode == EVENT_Set)
             setEventResistance(character, rawId, value);

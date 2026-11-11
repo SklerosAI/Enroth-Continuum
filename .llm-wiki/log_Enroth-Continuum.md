@@ -3227,3 +3227,8 @@ Chronological record of wiki activity.
 - Added and repeat-verified `MM7SideQuests.LanternOfLightRequiresBarrowChest`. It dynamically finds Tarin Withern and the Harmondale temple event, proves assignment and a missing-Lantern refusal, maps the loaded Barrow II chest event to the Lantern-bearing chest, and collects it through the normal chest UI.
 - The physical hand-in consumes the Lantern, clears the active quest, grants the Harmondale award, 1,000 gold, and 5,000 XP to every character. The Lantern, Markham Vase, and Stone City Troglodyte contracts passed three consecutive headless runs together.
 
+## [2026-11-11] backport | MM7 Divine Intervention preserves Zombie
+- by: T-Burton-ND via codex
+- Selectively adapted OpenEnroth `#2968` / `8f18f9385`: MM7 Divine Intervention now clears the Zombie character's removable conditions without curing Zombie itself. The shared spell path retains its existing `resetAll` behavior for MM6 pending separate title-specific evidence.
+- `MM7Combat.DivineInterventionPreservesZombie` proves that the same cast clears Weak but retains Zombie. It and the existing recovery control passed three consecutive headless runs alongside the Lantern contract.
+

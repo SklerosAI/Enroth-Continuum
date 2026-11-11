@@ -3049,3 +3049,9 @@ Chronological record of wiki activity.
 - The recorder collected logs and save snapshots but no video, because macOS Screen Recording permission was not granted. The owner does not want continuous video capture, so recording stays off until an on-request replay build is installed.
 - Updated `Current-Delivery-Order.md` and `Campaign-Status.md`. The MM7 working gate now waits only on the continuous chapter chain.
 
+## [2026-11-10] verify | MM7 chain harness, Xenofex fight and quest items integrated
+- by: T-Burton-ND via claude
+- Integrated on `master` at `56b5968ab`: the continuous campaign chain harness and C0 with review fixes (pass markers, own and later slots refused, the tour declined by input, unimplemented chapters refused before touching a profile), a real Xenofex fight replacing the direct-death fixture, and Light quest-item acquisition from real chests for the pillar keys, both altar pieces and the soul jar case, plus the Wine Cellar exit path.
+- C0 passed through the runner with its pass marker, and the C1 refusal held. The five disposable writer and reader pairs passed 1/1 each with unchanged slots. Focused Light and Xenofex controls passed 4/4 and 16/16. Full `check_style` passed. Unit tests passed 1,087 with 45 skipped. The full headless MM7 suite passed 538 with two skipped.
+- The working gate's remaining item is chapters C1-C7 of the chain to the Light ending.
+

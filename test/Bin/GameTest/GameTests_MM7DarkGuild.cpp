@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <numbers>
 #include <utility>
@@ -14,6 +15,7 @@
 #include "Engine/Tables/NPCTable.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIHouses.h"
+#include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/UIRest.h"
 
 #include "MM7CampaignChain.h"
@@ -124,6 +126,39 @@ static void openPitAdviser(EngineController &game, int npcId) {
         game.pressGuiButton(fmt::format("House_Npc{}", npc - houseNpcs.begin()));
         game.tick();
     }
+}
+
+static void openGloamingKastore(EngineController &game) {
+    game.teleportTo(MAP_CASTLE_GLOAMING, Vec3f(-10300, -18432, -2861), 180);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_CASTLE_GLOAMING_THRONE_ROOM_2);
+    auto kastore = std::ranges::find_if(houseNpcs, [](const HouseNpcDesc &entry) {
+        return entry.npc == &pNPCStats->pNPCData[84];
+    });
+    ASSERT_NE(kastore, houseNpcs.end());
+    if (houseNpcs.size() > 1) {
+        game.pressGuiButton(fmt::format("House_Npc{}", kastore - houseNpcs.begin()));
+        game.tick();
+    }
+}
+
+static bool selectKastoreEvent(EngineController &game, unsigned int eventId) {
+    NPCData &kastore = pNPCStats->pNPCData[84];
+    std::array eventIds = {kastore.dialogue_1_evt_id, kastore.dialogue_2_evt_id, kastore.dialogue_3_evt_id,
+                           kastore.dialogue_4_evt_id, kastore.dialogue_5_evt_id, kastore.dialogue_6_evt_id};
+    auto event = std::ranges::find(eventIds, eventId);
+    if (event == eventIds.end())
+        return false;
+    DialogueId line = static_cast<DialogueId>(std::to_underlying(DIALOGUE_SCRIPTED_LINE_1) + (event - eventIds.begin()));
+    auto topics = prepareScriptedNPCDialogueTopics(&kastore);
+    auto option = std::ranges::find(topics, line);
+    if (option == topics.end())
+        return false;
+    game.pressGuiButton(fmt::format("HouseNpcDialogue_Option{}", option - topics.begin()));
+    game.tick();
+    return true;
 }
 
 GAME_TEST(MM7DarkGuild, BreedingZoneMarkerDoesNotGrantDarkGuild) {
@@ -402,4 +437,44 @@ GAME_TEST(MM7DarkGuild, TolbertiRequiresAndAcceptsRobertsCube) {
     EXPECT_EQ(activeTape, tape(false, true, false));
     EXPECT_EQ(finishedTape, tape(false, true));
     EXPECT_EQ(cubeTape, tape(false, true, false));
+}
+
+GAME_TEST(MM7DarkGuild, KastoreRequiresXenofexKill) {
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+    unlockDarkAdvisers(game);
+    pParty->_questBits.set(QBIT_ALTAR_PIECES_DARK_FINISHED);
+    pParty->_questBits.set(QBIT_SOUL_JARS_DARK_FINISHED);
+    pParty->_questBits.set(QBIT_CLANKERS_LAB_FINISHED);
+    openPitAdviser(game, 87);
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    leaveDarkGuildHouse(game);
+    openPitAdviser(game, 87);
+    pParty->pCharacters[0].inventory.add(Item(ITEM_QUEST_CONTROL_CUBE));
+    game.tick();
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    ASSERT_TRUE(pParty->_questBits[QBIT_ROBERT_THE_WISE_ASSASSINATED]);
+    leaveDarkGuildHouse(game);
+
+    auto activeTape = tapes.questBit(QBIT_XENOFEX_DARK_ACTIVE);
+    auto killedTape = tapes.questBit(QBIT_XENOFEX_KILLED);
+    auto finishedTape = tapes.questBit(QBIT_XENOFEX_QUEST_FINISHED);
+    test.startTaping();
+    openGloamingKastore(game);
+    ASSERT_TRUE(selectKastoreEvent(game, 159));
+    ASSERT_TRUE(pParty->_questBits[QBIT_XENOFEX_DARK_ACTIVE]);
+    leaveDarkGuildHouse(game);
+    openGloamingKastore(game);
+    ASSERT_TRUE(selectKastoreEvent(game, 160));
+    EXPECT_FALSE(pParty->_questBits[QBIT_XENOFEX_QUEST_FINISHED]);
+    leaveDarkGuildHouse(game);
+
+    pParty->_questBits.set(QBIT_XENOFEX_KILLED);
+    openGloamingKastore(game);
+    ASSERT_TRUE(selectKastoreEvent(game, 160));
+    EXPECT_EQ(activeTape, tape(false, true, false));
+    EXPECT_EQ(killedTape, tape(false, true));
+    EXPECT_EQ(finishedTape, tape(false, true));
 }

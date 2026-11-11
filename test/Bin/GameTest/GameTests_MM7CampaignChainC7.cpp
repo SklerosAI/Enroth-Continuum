@@ -235,6 +235,7 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter7) {
     game.tick();
     game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
     game.tick(2); // The window closes, then the party is sent to Harmondale.
+    ufs->remove("MM7_Win.Pcx"); // The chain runner accepts nothing in the profile root but the marker, the saves and the ini.
 
     EXPECT_EQ(wetsuitTape, tape(false, true, false));
     EXPECT_EQ(suitedTape, tape(std::array{false, false, false, false}, std::array{true, false, false, false},
@@ -254,5 +255,4 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter7) {
     ASSERT_FALSE(::testing::Test::HasFailure());
 
     saveCampaignChainSlot(game, 7);
-    ufs->remove("MM7_Win.Pcx"); // The chain profile holds nothing but saves and the ini.
 }

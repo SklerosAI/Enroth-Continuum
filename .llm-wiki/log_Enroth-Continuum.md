@@ -3130,3 +3130,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added and passed Dark Shade's actual Pit dialogue contract: it assigns the Clanker task, refuses before the defense marker, and closes only after it. Together with the existing event test, this confirms the Dark route's intended map-state objective and recipient.
 
+## [2026-11-11] correct | MM7 Dark control-cube contract
+- by: T-Burton-ND via codex
+- Public-source reconciliation corrected the Dark D5 row before implementation: Tolberti in the Pit assigns Robert the Wise in Celeste, accepts Robert's control cube, and grants Blaster training. The cube may be obtained by combat or theft; it is the Dark mirror of Robert's Light-side Tolberti quest.
+

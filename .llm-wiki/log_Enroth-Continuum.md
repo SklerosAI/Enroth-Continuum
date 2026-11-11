@@ -3218,3 +3218,7 @@ Chronological record of wiki activity.
 - Selectively ported OpenEnroth `#2994`: `SpawnEncounter` now drops an indoor spawn point only when it resolves to sector zero, before actor allocation. This is vanilla-MM7 behavior and prevents unreachable actors from blocking clear-all or kill-gated quest state; valid spawns, saved actors and pre-guard random work are retained.
 - Added `Issue2748`, which loads the Erathian Sewers, clears every reachable actor and proves the actor count reaches zero and yellow alert clears. It passed three repeat headless runs alongside the Griffin and Troglodyte predicate contracts.
 
+## [2026-11-11] verify | MM7 Markham Vase promotion
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7Promotions.MarkhamVaseRequiresPhysicalPickup`. It dynamically finds William Lasker and the Erathian Sewer house entrance, proves acceptance and the missing-vase refusal, then finds and clicks the real Markham Manor fireplace decoration through its held-item event. The normal return consumes the held vase and proves Thief-to-Rogue promotion, Knight honorary award, 30,000/15,000 XP split and 5,000 gold.
+

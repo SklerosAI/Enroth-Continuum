@@ -12,3 +12,12 @@
 | SKY, outdoor sky placeholder | `claude/mm6-sky` in `mm7-death-regression` | MM6 sky texture selection (`src/Engine/Graphics/OutdoorSkyResources.*`, the MM6 path in `src/Engine/Graphics/Outdoor.cpp`, MM6 code under `src/Engine/MM6/`), a new MM6 test. Shared core. |
 
 Conflict check: no file overlaps between the four lanes. None of them touches Codex's MM7 Dark-chain test files.
+
+Update 2026-11-11 afternoon: H is integrated (`133fabf5a`, full MM7 suite 540/540) and SKY is integrated (`98cb96ab3`, MM6 suite 116, full MM7 suite 540/540). Their worktrees host two new lanes:
+
+| Lane | Branch / worktree | Files owned |
+| --- | --- | --- |
+| C1-C4, MM6 chain chapters | `claude/mm6-chain-c1-c4` in `mm7-monster-combat` | new `GameTests_MM6CampaignChainC1.cpp` to `C4`, additions to `MM6CampaignChain.{h,cpp}`, CMake lines, small MM6-owned engine fixes in separate commits. |
+| VISIT, MM6 map visit record | `claude/mm6-visit-record` in `mm7-death-regression` | the MM6 visit block read and write (new files under `src/Engine/MM6/`, the MM6 EC6 sections carrying map deltas, thin hooks in `Outdoor.cpp`, `Indoor.cpp`, `SaveLoad.cpp` and the MM6 map transition module), new MM6 tests. Shared core. |
+
+Queued: bright white ground near the `oute3` start and in patches on `outd3` (seen before and after the sky fix).

@@ -14,3 +14,4 @@ Update 2026-11-11: S-SWEEP finished (`fe66c3ca3`, handoff `handoffs/2026-11-11-c
 
 | S-AWARD MM6 award-animation crash | `claude/mm6-award-anim` in `mm7-save-durability` | `src/Engine/Tables/IconFrameTable.*`, `Character::PlayAwardSound_Anim` in `src/Engine/Objects/Character.cpp`, `SpellFxRenderer::SetPlayerBuffAnim`, MM6 icon mapping in `src/Engine/MM6/` if needed, a new MM6 game test. |
 
+Update 2026-11-11: S-NG, S-SWEEP and S-REP are finished and handed off (`handoffs/2026-11-11-claude-mm6-*.md`). Their build folders were removed to save disk. Only S-AWARD is active.

@@ -3138,3 +3138,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added and passed the Dark Tolberti dialogue contract after the three adviser completions. It assigns Robert's control cube, refuses an empty return, and consumes the supplied cube while closing the Dark quest. Robert's real Celeste combat/theft acquisition and the Blaster reward remain separately targeted.
 
+## [2026-11-11] verify | MM7 Dark Xenofex hand-in
+- by: T-Burton-ND via codex
+- Added and passed Kastore's post-cube Dark Xenofex dialogue contract. It uses the real Tolberti hand-in relocation to Castle Gloaming, selects the actual later Kastore topic by event identity, rejects a return before Xenofex's shared death marker, then closes the Dark task after it.
+

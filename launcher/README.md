@@ -9,14 +9,20 @@ data path and user path. It does not package original Might & Magic data.
 - MM7 launches, saves, exits, and reloads through The Atlas.
 - Optional **Record gameplay** starts a local passive MM7 session recorder with
   Play. Choose an existing folder on this Mac or an external drive before
-  launching. The recorder keeps only a rolling two-minute display replay,
-  writes game logs and stable save snapshots there, and makes a fresh save
-  checkpoint every 10 minutes. Press **Command-Shift-R** while tracking is
-  active to copy the latest completed rolling chunks into a uniquely named
-  clip folder; only those intentionally saved clips accumulate. Atlas warns
-  when recording storage or system memory runs low. Recording stops when MM7
-  exits, while normal gameplay and saves stay in the MM7 profile. The first
-  screen recording may require macOS Screen Recording permission.
+  launching. The recorder keeps a rolling display replay of the last two
+  minutes, writes game logs and stable save snapshots there, and makes a fresh
+  save checkpoint every 10 minutes. Press **Command-Shift-R** while MM7 runs
+  to keep the replay in a new clip folder. If MM7 crashes, quits on a signal
+  or exits with an error, Atlas tells the recorder and the replay is kept as a
+  clip automatically. After a normal exit the replay is deleted. Only clips
+  accumulate. Atlas warns when recording storage or system memory runs low,
+  and the recorder stops below 2 GB free. Recording stops when MM7 exits,
+  while normal gameplay and saves stay in the MM7 profile. Video needs macOS
+  Screen Recording permission for Enroth Continuum. Atlas is ad-hoc signed,
+  so macOS may ask again after each new install.
+  The hotkey uses the Carbon hot key API, which needs neither Accessibility
+  nor Input Monitoring permission. Atlas registers it only while a recorded
+  MM7 session runs, and other apps do not receive Command-Shift-R meanwhile.
   If an external drive is remounted or replaced, choose its folder again so
   Atlas can verify the destination before the next recorded launch.
 - MM6 and MM8 cards detect locally extracted core data. Their engine adapters,

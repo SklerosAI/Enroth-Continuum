@@ -431,13 +431,15 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         process.standardError = FileHandle.nullDevice
         guard (try? process.run()) != nil else { return }
         NSSound.beep()
+        sendState(message: "Saving the last two minutes of video. The clip is complete within a minute.")
     }
 
-    private func requestRecorderStop(session: URL) {
+    private func requestRecorderStop(session: URL, normalExit: Bool) {
         guard let script = recordingScript else { return }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
-        process.arguments = [script.path, "stop", "--session", session.path]
+        process.arguments = [script.path, "stop", "--session", session.path,
+                             "--game-exit", normalExit ? "normal" : "abnormal"]
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
         try? process.run()
@@ -446,14 +448,14 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
     private func reportFinishedGame(_ finished: Process, session: URL?, recorderProcess: Process?,
                                     warningText: String, attempt: Int = 0) {
         if recorderProcess?.isRunning == true {
-            if attempt == 30 {
+            if attempt == 90 { // The recorder can wait up to 75 s for the last video chunk of a crash clip.
                 if let recorderProcess { _ = Darwin.kill(recorderProcess.processIdentifier, SIGTERM) }
-                sendState(message: "The recorder is taking longer than expected to finish. Atlas is stopping it; inspect the final video chunk.")
+                sendState(message: "The recorder is taking longer than expected to finish, so Atlas is stopping it.")
             }
-            if attempt == 45, let recorderProcess {
+            if attempt == 100, let recorderProcess {
                 _ = Darwin.kill(recorderProcess.processIdentifier, SIGKILL)
             }
-            if attempt >= 50 {
+            if attempt >= 105 {
                 recordingFinalizing = false
                 guard game == nil else { return }
                 sendState(message: "MM7 closed. The recorder did not finish cleanly. Inspect its private session folder before relying on the capture." + warningText)
@@ -478,8 +480,11 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
                 if state != "stopped" && state != "game-exited" {
                     message += " Recording ended with \(state); inspect status.json and warnings.txt."
                 }
-                if video == "failed" || video == "interrupted" {
-                    message += " The last video chunk needs review (\(video))."
+                if video == "failed" {
+                    message += " Screen video failed. Check Screen Recording permission for Enroth Continuum in System Settings."
+                }
+                if let clips = status["clips"] as? Int, clips > 0 {
+                    message += " Saved \(clips) video clip\(clips == 1 ? "" : "s") in its clips folder."
                 }
                 if FileManager.default.fileExists(atPath: session.appendingPathComponent("warnings.txt").path) {
                     message += " Check warnings.txt before relying on the capture."
@@ -614,13 +619,17 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
                     self.recordingSession = nil
                     self.recordingStartFailed = false
                     self.recordingFinalizing = session != nil
-                    if let session { self.requestRecorderStop(session: session) }
+                    let normalExit = finished.terminationReason == .exit && finished.terminationStatus == 0
+                    if let session { self.requestRecorderStop(session: session, normalExit: normalExit) }
                     self.window.makeKeyAndOrderFront(nil)
                     NSApp.activate(ignoringOtherApps: true)
                     let warnings = self.modWarnings(since: startedAt, profilePath: profilePath)
                     let warningText = (warnings.isEmpty ? "" : "\n" + warnings.joined(separator: "\n"))
                         + (recordingStartFailed ? "\nGameplay recording did not start for this session." : "")
-                    if session != nil { self.sendState(message: "MM7 closed. Finalizing the recording…") }
+                    if session != nil {
+                        self.sendState(message: normalExit ? "MM7 closed. Finalizing the recording…"
+                                                           : "MM7 exited unexpectedly. Saving the last two minutes of video…")
+                    }
                     self.reportFinishedGame(finished, session: session, recorderProcess: recorderProcess,
                                             warningText: warningText)
                 }

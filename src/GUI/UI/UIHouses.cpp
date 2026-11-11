@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 #include <utility>
@@ -17,6 +18,7 @@
 #include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
+#include "Engine/MM6/MM6Finale.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Party.h"
 #include "Engine/PriceCalculator.h"
@@ -292,8 +294,13 @@ static constexpr IndexedArray<const char *, HOUSE_TYPE_WEAPON_SHOP, HOUSE_TYPE_M
 }};
 
 bool enterHouse(HouseId uHouseID) {
-    if (engine->gameTitle() == GameTitle::MM6)
+    if (engine->gameTitle() == GameTitle::MM6) {
+        if (std::optional<mm6::FinaleEnding> ending = mm6::finaleEndingForHouse(uHouseID)) {
+            mm6::queueFinaleEnding(*ending);
+            return false;
+        }
         return mm6EnterHouse(uHouseID);
+    }
 
     engine->_statusBar->clearAll();
     engine->_messageQueue->clear();

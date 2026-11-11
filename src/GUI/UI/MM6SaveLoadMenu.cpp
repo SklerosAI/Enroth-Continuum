@@ -9,6 +9,7 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Localization.h"
+#include "Engine/MM6/MM6Finale.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/MM6/MM6V5FirstMapLoadAttempt.h"
 #include "Engine/MM6/MM6V5FirstMapNativeSlotPolicy.h"
@@ -111,6 +112,8 @@ bool mm6LoadOverGame(std::string_view fileName) {
 }
 
 void mm6AutoSave() {
+    if (mm6::isHiveFinaleUnderway())
+        return;
     if (!mm6::isManualSaveArmed()) {
         MM_INFO("MM6 autosave skipped, this game can't be saved");
         return;

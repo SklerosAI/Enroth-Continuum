@@ -52,6 +52,7 @@
 #include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/MM6/MM6MapTransition.h"
 #include "Engine/MM6/MM6NewGameSession.h"
+#include "Engine/MM6/MM6Finale.h"
 #include "Engine/MM6/MM6PartyDeath.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
@@ -928,11 +929,19 @@ void Game::processQueuedMessages() {
                 continue;
 
             case UIMSG_ShowGameOverWindow: {
+                if (engine->gameTitle() == GameTitle::MM6) {
+                    mm6::playFinaleEnding(static_cast<mm6::FinaleEnding>(uMessageParam));
+                    continue;
+                }
                 pGameOverWindow = std::make_unique<GUIWindow_GameOver>();
                 uGameState = GAME_STATE_FINAL_WINDOW;
                 continue;
             }
             case UIMSG_OnGameOverWindowClose:
+                if (engine->gameTitle() == GameTitle::MM6) {
+                    mm6::closeFinaleEnding();
+                    continue;
+                }
                 pAudioPlayer->stopSounds();
                 autoSave();
 
@@ -1674,6 +1683,8 @@ void Game::gameLoop() {
             }
 
             if (uGameState == GAME_STATE_CHANGE_LOCATION) {
+                if (engine->gameTitle() == GameTitle::MM6 && mm6::loseOnLeavingHive())
+                    continue;
                 pAudioPlayer->stopSounds();
                 try {
                     PrepareWorld(0);

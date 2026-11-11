@@ -11,6 +11,7 @@
 #include "Engine/MM6/MM6CombatRules.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6EncounterMonster.h"
+#include "Engine/MM6/MM6Finale.h"
 #include "Engine/MM6/MM6MonsterAttack.h"
 #include "Engine/MM6/MM6MonsterProjectile.h"
 #include "Engine/MM6/MM6MonsterSpellEffect.h"
@@ -1854,6 +1855,9 @@ void Actor::Die(unsigned int uActorID) {
     if (actor->monsterInfo.specialAbilityType == MONSTER_SPECIAL_ABILITY_EXPLODE) {
         Actor::Explode(uActorID);
     }
+
+    if (engine->gameTitle() == GameTitle::MM6)
+        mm6::onFinaleMonsterDeath(*actor);
 }
 
 void Actor::playSound(unsigned int uActorID, ActorSound uSoundID) {

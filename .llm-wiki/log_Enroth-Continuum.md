@@ -3142,3 +3142,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added and passed Kastore's post-cube Dark Xenofex dialogue contract. It uses the real Tolberti hand-in relocation to Castle Gloaming, selects the actual later Kastore topic by event identity, rejects a return before Xenofex's shared death marker, then closes the Dark task after it.
 
+## [2026-11-11] verify | MM7 Dark Overthruster assignment
+- by: T-Burton-ND via codex
+- Added and passed the final Kastore assignment through the genuine Dark adviser, cube and Xenofex state transitions. The test selects Kastore's final event by identity and records the Dark-only Overthruster active bit; the existing campaign ending test remains the Kastore hand-in control.
+

@@ -3171,3 +3171,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added and repeat-verified `MM7DarkGuild.ThunderfistChestProvidesDarkSoulJars`. It finds the loaded Thunderfist map event whose chest contains the Dark case, opens that production chest UI, and transfers the case without inventory injection or a renderer-dependent outdoor aim ray. `MM7DarkGuild.*` passed 11/11 in each of three consecutive headless runs.
 
+## [2026-11-11] verify | MM7 Dark cube reward
+- by: T-Burton-ND via codex
+- Extended and repeat-verified the Dark Tolberti control-cube hand-in contract. In addition to assignment, refusal, consumption and completion, its post-hand-in dialogue now proves the documented Blaster-training option is live. The dedicated case passed three consecutive headless runs; Robert's separate Celeste combat/theft source remains open.
+

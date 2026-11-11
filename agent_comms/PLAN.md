@@ -275,7 +275,23 @@ for M2: the sewer only loads with actors off, because generated NPCs
 overflow the pool. And a transition from the first map into a map with
 chests refuses, because the previous map's chest positions are still loaded.
 
-Revised M4 build order: reputation executor, event CastSpell and damage
+Map sweep (S-SWEEP, `claude/mm6-map-sweep`, 2026-11-10, all 67 maps, one
+process each, results Git-ignored). 58 maps load and 32 finish every phase
+with actors. Of the 26 main-quest maps 22 load and 10 finish clean. First
+throws ranked by main-quest maps blocked:
+1. A hard crash on 9 main-quest maps (17 in all, including the first map):
+   an award event plays the party buff animation, its icon name is missing
+   from the MM6 icon table, and `IconFrameTable::animationLength` reads
+   index -1. Next lane.
+2. Generated NPC pool overflow at load on 4 main-quest maps (6 in all).
+3. Event CastSpell on 3 main-quest maps by timer (15 maps with faces).
+4. Unverified damage channel on 3 main-quest maps.
+5. An `Indoor.cpp` render assert when loading 3 non-quest maps at sector 0.
+714 face or decoration references point at missing event IDs and only warn.
+Missing assets are limited to a few sounds. Monster missiles and spells are
+under-sampled because most maps tick only a few frames.
+
+Revised M4 build order: the award-animation crash, reputation executor, event CastSpell and damage
 kinds starting with the three timers, monster missiles and spells, house
 exits and boat routes on top of M2, flight and water walking, the MM6 finale,
 then the executable-only quest rules. S-SWEEP should also fire each map's

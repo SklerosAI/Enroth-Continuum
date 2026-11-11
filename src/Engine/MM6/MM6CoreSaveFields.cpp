@@ -15,7 +15,7 @@ namespace {
 
 constexpr std::array<char, 4> PART_TAG = {'P', 'A', 'R', 'T'};
 constexpr std::array<char, 4> CHAR_TAG = {'C', 'H', 'A', 'R'};
-constexpr std::uint8_t PARTY_VERSION = 3;
+constexpr std::uint8_t PARTY_VERSION = 4;
 constexpr std::uint8_t CHARACTER_VERSION = 4;
 constexpr size_t MAX_NAME_BYTES = 63;
 constexpr size_t MAX_CHARACTER_PAYLOAD = 4 * (1 + MAX_NAME_BYTES + 4 + 2 + 8 + 12 + 28 + 62 + 13 + 39 + 2 + 8) + 2;
@@ -143,11 +143,12 @@ std::vector<std::uint8_t> encodeParty(const CorePartyFields &party) {
     put32(&bytes, std::bit_cast<std::uint32_t>(party.deaths));
     put32(&bytes, std::bit_cast<std::uint32_t>(party.prisonTerms));
     put32(&bytes, std::bit_cast<std::uint32_t>(party.bountiesCollected));
+    put32(&bytes, std::bit_cast<std::uint32_t>(party.reputation));
     return bytes;
 }
 
 CorePartyFields decodeParty(std::span<const std::uint8_t> bytes) {
-    if (bytes.size() != 90)
+    if (bytes.size() != 94)
         throw std::runtime_error("invalid MM6 PART field length");
     Reader reader(bytes);
     if (reader.u8() != PARTY_VERSION)
@@ -173,6 +174,7 @@ CorePartyFields decodeParty(std::span<const std::uint8_t> bytes) {
     party.deaths = std::bit_cast<std::int32_t>(reader.u32());
     party.prisonTerms = std::bit_cast<std::int32_t>(reader.u32());
     party.bountiesCollected = std::bit_cast<std::int32_t>(reader.u32());
+    party.reputation = std::bit_cast<std::int32_t>(reader.u32());
     reader.finish();
     return party;
 }

@@ -128,6 +128,7 @@ CoreSaveFields captureCoreFields(const Party &party, GameTitle title) {
     fields.party.deaths = party.uNumDeaths;
     fields.party.prisonTerms = party.uNumPrisonTerms;
     fields.party.bountiesCollected = party.uNumBountiesCollected;
+    fields.party.reputation = party.mm6Reputation;
 
     for (size_t i = 0; i < fields.characters.size(); ++i) {
         const Character &source = party.pCharacters[i];
@@ -192,6 +193,7 @@ Party stageCoreParty(const Party &live, const CoreSaveFields &fields, GameTitle 
     staged.uNumDeaths = fields.party.deaths;
     staged.uNumPrisonTerms = fields.party.prisonTerms;
     staged.uNumBountiesCollected = fields.party.bountiesCollected;
+    staged.mm6Reputation = fields.party.reputation;
     staged.floor_face_id = -1;
     staged.currentWalkingSound = SOUND_Invalid;
 

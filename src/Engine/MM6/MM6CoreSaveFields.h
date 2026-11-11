@@ -83,6 +83,7 @@ struct CorePartyFields {
     std::int32_t deaths = 0;
     std::int32_t prisonTerms = 0;
     std::int32_t bountiesCollected = 0;
+    std::int32_t reputation = 0;
 
     bool operator==(const CorePartyFields &) const = default;
 };

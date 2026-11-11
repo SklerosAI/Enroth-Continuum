@@ -3259,6 +3259,6 @@ Chronological record of wiki activity.
 
 ## [2026-11-11] verify | MM7 Darron deck acquisition
 - by: T-Burton-ND via codex
-- Added and repeat-verified `MM7SideQuests.DarronsDeckIsPhysicallyAcquiredAfterAcceptance`. It reaches Darron's actual Harmondale dialogue, accepts the task, enters White Cliff Cave and collects the real Arcomage deck by clicking the world item.
-- The deck is already present before acceptance, so this records physical acquisition rather than an incorrect spawn gate. The Darron return and reward contract remain open.
+- Added and repeat-verified `MM7SideQuests.DarronsDeckIsPhysicallyAcquiredAndReturned`. It reaches Darron's actual Harmondale dialogue, accepts the task, enters White Cliff Cave and collects the real Arcomage deck by clicking the world item.
+- The deck is already present before acceptance, so this proves physical acquisition rather than an incorrect spawn gate. The normal return clears the active state, retains the deck, and grants 750 gold plus 2,000 XP to each character.
 

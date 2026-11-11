@@ -3237,3 +3237,8 @@ Chronological record of wiki activity.
 - Added and repeat-verified `MM7SideQuests.HaldarsRemainsRequireMazeChest`. It dynamically finds Mazim Dusk and his Mount Nighon home event, proves assignment and a missing-remains refusal, maps the loaded Maze chest event to the remains-bearing chest, and collects it through the normal chest UI.
 - The physical hand-in consumes Haldar's Remains, clears the active quest, grants the Nighon award, 35,000 gold, and 50,000 XP to every character. It passed three consecutive headless runs with the Lantern, Vase, and Divine Intervention contracts.
 
+## [2026-11-11] fix | MM7 native backup load admission
+- by: T-Burton-ND via codex
+- Native MM7 loading now uses the same structural validator and bounded path checks as its atomic writer. A valid `.bak` is admitted read-only when the primary is corrupt; invalid candidates fail before load-side live-state mutation, and RAM/test filesystems retain their existing path.
+- Existing save-capture and corrupt-body admission controls passed three consecutive headless runs. Manual load-menu backup visibility and an explicit repair decision remain separate user-facing work.
+

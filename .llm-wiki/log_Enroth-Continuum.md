@@ -3187,3 +3187,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Extended the repeat-verified Celeste Robert source test. The one live Robert actor reached through the Dark route now proves both documented carried quest rewards before any inventory injection: the control cube and a Blaster. Combat or theft and corpse/pocket transfer are still deliberately separate interaction coverage.
 
+## [2026-11-11] research | MM7 Dark Roland and Xenofex route
+- by: T-Burton-ND via codex
+- Rechecked D6 against the Dark walkthrough and replaced its vague Colony Zod wording. The intended route is to rescue Roland in the Hive/Colony Zod sequence and activate the two controls that open Xenofex's way, then kill Xenofex and return to Kastore. Existing Dark coverage begins only at the death marker and hand-in; the recorded route is the next focused contract.
+

@@ -291,7 +291,9 @@ throws ranked by main-quest maps blocked:
 Missing assets are limited to a few sounds. Monster missiles and spells are
 under-sampled because most maps tick only a few frames.
 
-Revised M4 build order: the award-animation crash, reputation executor, event CastSpell and damage
+Revised M4 build order: the award-animation crash, reputation executor
+(done on `claude/mm6-reputation-var`, display and other producers still
+open), event CastSpell and damage
 kinds starting with the three timers, monster missiles and spells, house
 exits and boat routes on top of M2, flight and water walking, the MM6 finale,
 then the executable-only quest rules. S-SWEEP should also fire each map's

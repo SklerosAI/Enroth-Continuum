@@ -25,16 +25,20 @@ data path and user path. It does not package original Might & Magic data.
   Choose an existing folder on this Mac or an external drive before launching.
   **Record video** keeps a rolling display replay of the last two minutes.
   **Record diagnostics** keeps game log ranges, stable save snapshots with a
-  fresh checkpoint every 10 minutes, the timeline, the build identity and
+  checkpoint of changed saves every 10 minutes, the timeline, the build identity and
   launch command, the exit status, macOS crash reports for the helper and light
   CPU and memory samples. Diagnostics need no Screen Recording permission.
   Atlas versions with a single recording switch carry its setting into both
   toggles. With video on, press **Command-Shift-R** while the game runs
   to keep the replay in a new clip folder. If the game crashes, quits on a
   signal or exits with an error, Atlas tells the recorder and the replay is
-  kept as a clip automatically. After a normal exit the replay is deleted. Only
-  clips accumulate. Atlas warns when recording storage or system memory runs
-  low, and the recorder stops below 2 GB free. Recording stops when the game
+  kept as a clip automatically. After a normal exit the replay is deleted.
+  Diagnostics keep at most the newest 3 copies of each save per session and
+  copy a save at a checkpoint only when it changed. Each recording start keeps
+  the newest 20 sessions in the recording folder. Sessions with clips or crash
+  reports are never deleted. Atlas reports them, and recordings over 2 GiB in
+  all, when the game closes. Atlas warns when recording storage or system
+  memory runs low, and the recorder stops below 2 GB free. Recording stops when the game
   exits, while normal gameplay and saves stay in its profile. Video needs macOS
   Screen Recording permission for Enroth Continuum. Atlas is ad-hoc signed,
   so macOS may ask again after each new install.

@@ -115,7 +115,7 @@ unless stated otherwise.
 | First | Knight → Cavalier: clear the Haunted Mansion task. | C |
 | First | Paladin → Crusader: defeat Wromthrax. | C |
 | First | Cleric → Priest: recover the pirate map; its other intended effect is opening the Evenmorn route. | C |
-| First | Thief → Rogue: return Markham's vase. | C |
+| First | Thief → Rogue: accept William Lasker’s request in the Erathian Sewers, take Markham’s Vase from the Markham Manor fireplace, and return it. `MM7Promotions.MarkhamVaseRequiresPhysicalPickup` proves offer, no-vase refusal, real map pickup, hand-in consumption, promotion/honorary split, XP and gold. | C |
 | First | Sorcerer → Wizard: recover and assemble all six golem components; separately cover the good/bad head choice. | C |
 | Light second | Initiate → Master: on the Light path, accept from Bartholomew Hume, kill the High Priest of Baa in Avlee's Temple of Baa, collect his cloak, then return to Hume. | C |
 | Light second | Ranger → Ranger Lord: return the Heart of Wood. | C |

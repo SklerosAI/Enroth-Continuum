@@ -203,8 +203,8 @@ fixed and integrated at `c9d306191` (trap test, MM6 suite 96 passed, MM6
 first-map gate with MM7 controls, MM7 in-process 107 passed). Event spells and
 their d18 follow-ups are integrated. Monster missiles, spells and special attacks
 are integrated (`3b1be67dc`): a combat sweep went from 24 of 26 main-quest
-maps throwing to none. Map state across a return is integrated (`2e079b015`). Active lanes:
-S-DEATH party death and S-SAVEANY save and load on any map.
+maps throwing to none. Map state across a return is integrated (`2e079b015`). Party death is integrated (`dad5aa244`). Active lanes: S-SAVEANY save
+and load on any map, and S-HOVER the decoration hover crash.
 
 Drafted 2026-11-10 by a read-only planning pass, with its key source claims
 spot-checked by Claude. Source facts that shape it: production MM6 New Game
@@ -219,7 +219,7 @@ already in `master`, so its scope restarts from `master`.
 | --- | --- | --- |
 | M1 | Done on `claude/mm6-new-game`, waiting for integration (gate 27/27). Production New Game with no test override or test anchor: party creation by input, first map, Save, fresh-process Load, move, Save with backup rotation. Children of `tools/run_mm6_firstmap_gate.py`. Headless. | 1-2 weeks |
 | M2 | In progress: edge travel, dungeon doors and map state across a return are integrated (`2e079b015`). Saving on any map is the active S-SAVEANY lane. Live travel: border walk out and back, indoor entry and exit, transport. Save on a later outdoor map and an indoor map, fresh-process Load restores chests, dead monsters and doors on the active and the parked map. `autoSave` never throws for MM6. Headless. | 3-6 weeks |
-| M3 | Party death and respawn by MM6 rules, in-game Load, quick and autosave work or refuse cleanly. Headless. | 1 week |
+| M3 | In progress: party death and respawn by the original's rules are integrated (`dad5aa244`, validated). In-game Load and quick save remain. Party death and respawn by MM6 rules, in-game Load, quick and autosave work or refuse cleanly. Headless. | 1 week |
 | M4 | Main-quest path GameTests from New Game to the MM6 finale, input-driven, with fresh-process checkpoints at chapter boundaries. The finale never enters an MM7 map. Combat-outcome fixtures allowed as in W4. Headless. | 6-12+ weeks, narrowed by the probes |
 | M5 | Owner sessions: (a) F5a Load profile with HUD, books, paperdoll and Save/quit/relaunch/Load, (b) the S1-style session on MM6 including travel and a dungeon, (c) spot checks at M4 checkpoints and the ending. Visible. | Owner hours |
 | M6 | Atlas install of a sibling MM6 helper with its own profile. Installed MM6 relaunches and loads. MM7's helper, profile and saves unchanged and MM7 still loads. | 3-5 days |

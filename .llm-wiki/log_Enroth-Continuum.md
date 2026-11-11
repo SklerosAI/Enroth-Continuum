@@ -3175,3 +3175,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Extended and repeat-verified the Dark Tolberti control-cube hand-in contract. In addition to assignment, refusal, consumption and completion, its post-hand-in dialogue now proves the documented Blaster-training option is live. The dedicated case passed three consecutive headless runs; Robert's separate Celeste combat/theft source remains open.
 
+## [2026-11-11] verify | MM7 Dark Robert cube source
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7DarkGuild.CelesteRobertCarriesControlCube`. With the actual Dark prerequisites and cube assignment, it uses the real Celeste door transition and finds exactly one live Robert the Wise actor carrying the control cube in the Small House. This distinguishes the Dark source from the already-tested Light-side Tolberti actor; Dark combat/theft retrieval remains open.
+

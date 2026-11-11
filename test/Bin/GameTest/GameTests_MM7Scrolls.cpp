@@ -95,6 +95,32 @@ GAME_TEST(MM7Scrolls, CancelActorTargetScroll) {
     }
 }
 
+GAME_TEST(MM7Scrolls, IncapacitationCancelsActorTargetScroll) {
+    auto scrollTape = tapes.totalItemCount(ITEM_SCROLL_FIRE_BOLT);
+    auto heldTape = tapes.custom([] { return pParty->pPickedItem.itemId; });
+    auto targetingTape = tapes.custom([] { return pGUIWindow_CastTargetedSpell != nullptr; });
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+    test.startTaping();
+    prepareForBattleTest();
+    engine->config->debug.NoActors.setValue(false);
+
+    game.spawnMonster(pParty->pos + Vec3f(0, 300, 0), MONSTER_RAT_A, SPAWN_DUMMY);
+    auto hpTape = actorTapes.hp(0);
+    pParty->setHoldingItem(Item(ITEM_SCROLL_FIRE_BOLT));
+    game.tick();
+    game.pressGuiButton("Game_Character1", BUTTON_RIGHT);
+    game.tick(2);
+    ASSERT_NE(pGUIWindow_CastTargetedSpell, nullptr);
+    pParty->pCharacters[0].SetCondition(CONDITION_UNCONSCIOUS, false);
+    game.tick(2);
+
+    EXPECT_EQ(targetingTape, tape(false, true, false));
+    EXPECT_EQ(scrollTape, tape(0, 1, 0, 1));
+    EXPECT_EQ(heldTape, tape(ITEM_NULL, ITEM_SCROLL_FIRE_BOLT, ITEM_NULL, ITEM_SCROLL_FIRE_BOLT));
+    EXPECT_EQ(hpTape.delta(), 0);
+}
+
 GAME_TEST(MM7Scrolls, CancelCharacterTargetScroll) {
     // Cancelling the targeting after reading a Cure Weakness scroll used the scroll up.
     for (bool cancel : {true, false}) {

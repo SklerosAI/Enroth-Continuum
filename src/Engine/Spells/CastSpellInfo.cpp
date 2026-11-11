@@ -3070,6 +3070,8 @@ void CastSpellInfoHelpers::cancelSpellCastInProgress() {
             // Only one targeted spell can exist in queue.
             assert(!targeted_spell_canceled);
 
+            if (engine->gameTitle() == GameTitle::MM7 && spellInfo.scroll.itemId != ITEM_NULL)
+                pParty->setHoldingItem(std::exchange(spellInfo.scroll, Item()));
             spellInfo.uSpellID = SPELL_NONE;
 
             if (pGUIWindow_CastTargetedSpell) {

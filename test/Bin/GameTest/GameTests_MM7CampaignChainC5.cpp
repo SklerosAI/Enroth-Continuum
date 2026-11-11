@@ -138,6 +138,7 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter5) {
     ASSERT_TRUE(clickCampaignChainEventFace(game, MAP_TEMPLE_OF_THE_DARK, 13, 1, [] { return templeDoorState(17) != DOOR_CLOSED; })); // The altar's lid covers the chest.
     for (int i = 0; i < 100 && templeDoorState(17) != DOOR_OPEN; i++)
         game.tick();
+    ASSERT_EQ(templeDoorState(17), DOOR_OPEN);
     lootCampaignChainChest(game, MAP_TEMPLE_OF_THE_DARK, 195, ITEM_QUEST_ALTAR_PIECE_DARK);
     openCampaignChainCelesteHouse(game, HOUSE_CELESTE_HOSTEL_1, 80);
     ASSERT_TRUE(selectCampaignChainNpcEvent(game, 80, 148));

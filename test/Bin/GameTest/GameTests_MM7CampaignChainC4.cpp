@@ -12,6 +12,7 @@
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Tables/NPCTable.h"
 #include "GUI/GUIWindow.h"
+#include "Utility/Exception.h"
 
 #include "MM7CampaignChain.h"
 
@@ -76,6 +77,7 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter4) {
     ASSERT_TRUE(clickCampaignChainEventFace(game, MAP_WALLS_OF_MIST, 10, 1, [] { return wallsDoorState(4) != DOOR_CLOSED; })); // The button slides the floor away from the first chest.
     for (int i = 0; i < 100 && wallsDoorState(4) != DOOR_OPEN; i++)
         game.tick();
+    ASSERT_EQ(wallsDoorState(4), DOOR_OPEN);
     constexpr std::array keys = {ITEM_WEST_PILLAR_KEY, ITEM_CENTRAL_PILLAR_KEY, ITEM_EAST_PILLAR_KEY};
     constexpr std::array chestEvents = {177, 178, 179};
     for (int i = 0; i < 3; i++)
@@ -83,13 +85,22 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter4) {
     constexpr std::array pedestalFaces = {164, 4019, 4075};
     constexpr std::array pedestalPositions = {Vec3f(-1122, 3392, 1), Vec3f(-482, 3264, 1), Vec3f(158, 3392, 1)};
     for (int i = 0; i < 3; i++) {
-        game.teleportTo(MAP_WALLS_OF_MIST, pedestalPositions[i], 180, -22); // Looking down at the pedestal.
-        game.pointMouseAtFace(pedestalFaces[i]);
-        game.pressAndReleaseButton(BUTTON_LEFT);
-        game.tick();
+        for (int attempt = 0; attempt < 10 && pParty->hasItem(keys[i]); attempt++) {
+            game.teleportTo(MAP_WALLS_OF_MIST, pedestalPositions[i], 180, -22); // Looking down at the pedestal.
+            try {
+                game.pointMouseAtFace(pedestalFaces[i]);
+            } catch (const Exception &) {
+                game.tick();
+                continue;
+            }
+            game.pressAndReleaseButton(BUTTON_LEFT);
+            game.tick();
+        }
+        ASSERT_FALSE(pParty->hasItem(keys[i]));
     }
     for (int i = 0; i < 100 && wallsDoorState(1) != DOOR_OPEN; i++) // The exit doors slide open.
         game.tick();
+    ASSERT_EQ(wallsDoorState(1), DOOR_OPEN);
     useCampaignChainTransition(game, MAP_WALLS_OF_MIST, 502);
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_CELESTE);
 

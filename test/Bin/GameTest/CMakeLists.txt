@@ -35,6 +35,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7PitCubeAcquisition.cpp
         GameTests_MM7XenofexCombat.cpp
         GameTests_MM7LightItems.cpp
+        GameTests_MM7DavrikRing.cpp
         GameTests_MM7Promotions.cpp
         GameTests_MM7DarkGuild.cpp
         GameTests_MM7Scrolls.cpp

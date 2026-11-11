@@ -3191,3 +3191,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Rechecked D6 against the Dark walkthrough and replaced its vague Colony Zod wording. The intended route is to rescue Roland in the Hive/Colony Zod sequence and activate the two controls that open Xenofex's way, then kill Xenofex and return to Kastore. Existing Dark coverage begins only at the death marker and hand-in; the recorded route is the next focused contract.
 
+## [2026-11-11] research | MM7 Dark Lincoln finale route
+- by: T-Burton-ND via codex
+- Rechecked the shared finale before extending Dark coverage. The four wetsuits may only be worn with Blasters while crossing to Lincoln; normal equipment must be restored inside. Lincoln power must be restored before the Overthruster can be retrieved and returned to Kastore. The catalog now records those gates rather than collapsing D7 into a generic final item hand-in.
+

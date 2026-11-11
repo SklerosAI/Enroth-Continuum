@@ -134,6 +134,15 @@ GAME_TEST(MM6QuestionInput, ResumesCorrectAndIncorrectContinuations) {
         character._characterEventBits.reset(11);
     }
 
+    // Closing a Question must abandon the paused event, rather than choosing either branch.
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    ASSERT_NE(pGUIWindow_BranchlessDialogue, nullptr);
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    EXPECT_EQ(pGUIWindow_BranchlessDialogue, nullptr);
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(10));
+    EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(11));
+
     const std::array wrong = {PlatformKey::KEY_N, PlatformKey::KEY_O};
     enterQuestionResponse(game, wrong);
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(10));

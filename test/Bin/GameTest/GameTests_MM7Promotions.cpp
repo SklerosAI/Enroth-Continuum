@@ -160,6 +160,35 @@ void openTarinHouse(EngineController &game, NPCData *tarin) {
     }
 }
 
+void openMazimHouse(EngineController &game, NPCData *mazim) {
+    game.teleportTo(MAP_MOUNT_NIGHON, Vec3f(), 0);
+    std::vector<std::pair<Vec3f, int>> doors;
+    for (const BLVFace &face : pOutdoor->faces) {
+        if (face.Clickable() && eventOpensHouse(face.eventId, HOUSE_MOUNT_NIGHON_DUSKS_HOME))
+            doors.push_back(approachFace(face));
+    }
+    ASSERT_FALSE(doors.empty());
+    for (auto [position, yaw] : doors) {
+        game.teleportTo(MAP_MOUNT_NIGHON, position, yaw);
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick();
+        if (current_screen_type == SCREEN_HOUSE)
+            break;
+        if (current_screen_type == SCREEN_NPC_DIALOGUE) {
+            game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+            game.tick();
+        }
+    }
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_MOUNT_NIGHON_DUSKS_HOME);
+    auto entry = std::ranges::find(houseNpcs, mazim, &HouseNpcDesc::npc);
+    ASSERT_NE(entry, houseNpcs.end());
+    if (houseNpcs.size() > 1) {
+        game.pressGuiButton(fmt::format("House_Npc{}", entry - houseNpcs.begin()));
+        game.tick();
+    }
+}
+
 } // namespace
 
 GAME_TEST(MM7Promotions, MarkhamVaseRequiresPhysicalPickup) {
@@ -317,5 +346,83 @@ GAME_TEST(MM7SideQuests, LanternOfLightRequiresBarrowChest) {
     for (int i = 0; i < 4; i++) {
         EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_HARMONDALE_RETURNED_LANTERN_OF_LIGHT]);
         EXPECT_EQ(pParty->pCharacters[i].experience - experience[i], 5000);
+    }
+}
+
+GAME_TEST(MM7SideQuests, HaldarsRemainsRequireMazeChest) {
+    auto activeTape = tapes.questBit(QBIT_HALDARS_REMAINS_ACTIVE);
+    auto goldTape = tapes.gold();
+    game.startNewGame();
+    NPCData *mazim = findHouseNpcEvent(HOUSE_MOUNT_NIGHON_DUSKS_HOME, [](const EvtInstruction &instruction) {
+        return (instruction.opcode == EVENT_Set || instruction.opcode == EVENT_Add) &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_HALDARS_REMAINS_ACTIVE);
+    });
+    ASSERT_NE(mazim, nullptr);
+    const unsigned int offerEvent = findNpcEvent(mazim, [](const EvtInstruction &instruction) {
+        return (instruction.opcode == EVENT_Set || instruction.opcode == EVENT_Add) &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_HALDARS_REMAINS_ACTIVE);
+    });
+    ASSERT_NE(offerEvent, 0u);
+
+    openMazimHouse(game, mazim);
+    test.startTaping();
+    ASSERT_TRUE(selectNpcEvent(game, mazim, offerEvent));
+    ASSERT_TRUE(pParty->_questBits[QBIT_HALDARS_REMAINS_ACTIVE]);
+    const unsigned int handInEvent = findNpcEvent(mazim, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_Subtract && instruction.data.variable_descr.type == VAR_PlayerItemInHands &&
+               instruction.data.variable_descr.value == std::to_underlying(ITEM_QUEST_HALDARS_REMAINS);
+    });
+    ASSERT_NE(handInEvent, 0u);
+    leaveHouse(game);
+    openMazimHouse(game, mazim);
+    ASSERT_TRUE(selectNpcEvent(game, mazim, handInEvent));
+    EXPECT_TRUE(pParty->_questBits[QBIT_HALDARS_REMAINS_ACTIVE]);
+    EXPECT_EQ(goldTape.delta(), 0);
+    for (const Character &character : pParty->pCharacters)
+        EXPECT_FALSE(character._achievedAwardsBits[AWARD_NIGHON_RETRIEVED_HALDARS_REMAINS]);
+    leaveHouse(game);
+
+    game.teleportTo(MAP_MAZE, Vec3f(), 0);
+    auto chest = std::ranges::find_if(vChests, [](const Chest &candidate) {
+        return !!candidate.inventory.find(ITEM_QUEST_HALDARS_REMAINS);
+    });
+    ASSERT_NE(chest, vChests.end());
+    const int chestId = chest - vChests.begin();
+    auto chestFace = std::ranges::find_if(pIndoor->faces, [chestId](const BLVFace &face) {
+        return face.Clickable() && engine->_localEventMap.hasEvent(face.eventId) &&
+               std::ranges::any_of(engine->_localEventMap.function(face.eventId), [chestId](const EvtInstruction &instruction) {
+                   return instruction.opcode == EVENT_OpenChest && instruction.data.chest_id == chestId;
+               });
+    });
+    ASSERT_NE(chestFace, pIndoor->faces.end());
+    for (int attempt = 0; attempt < 2 && current_screen_type != SCREEN_CHEST; attempt++) {
+        Chest::open(chestId, Pid());
+        game.tick();
+    }
+    ASSERT_EQ(current_screen_type, SCREEN_CHEST);
+    for (int i = 0; i < 40 && !pParty->hasItem(ITEM_QUEST_HALDARS_REMAINS) &&
+                        pParty->pPickedItem.itemId != ITEM_QUEST_HALDARS_REMAINS; i++) {
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick();
+    }
+    ASSERT_TRUE(pParty->hasItem(ITEM_QUEST_HALDARS_REMAINS) ||
+                pParty->pPickedItem.itemId == ITEM_QUEST_HALDARS_REMAINS);
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    std::array<uint64_t, 4> experience;
+    for (int i = 0; i < 4; i++)
+        experience[i] = pParty->pCharacters[i].experience;
+
+    openMazimHouse(game, mazim);
+    ASSERT_TRUE(selectNpcEvent(game, mazim, handInEvent));
+    EXPECT_EQ(activeTape, tape(true, false));
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_HALDARS_REMAINS));
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_EQ(goldTape.delta(), 35000);
+    for (int i = 0; i < 4; i++) {
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_NIGHON_RETRIEVED_HALDARS_REMAINS]);
+        EXPECT_EQ(pParty->pCharacters[i].experience - experience[i], 50000);
     }
 }

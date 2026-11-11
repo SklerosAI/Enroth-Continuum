@@ -39,6 +39,17 @@ bool isMm6OnlyFilter(std::string_view filter) {
     return true;
 }
 
+/**
+ * Admission rule for one disabled MM7 test that runs against a marked disposable profile.
+ *
+ * @param filter                        Exact `--gtest_filter` that selects the test.
+ * @param writer                        Whether the test starts from a profile that holds nothing but the gate marker.
+ * @param preserveSave                  Whether the test controller keeps the profile's saves when it resets the
+ *                                      profile before the test.
+ * @param chapter                       Campaign chain chapter. A chapter after C0 requires the previous chapter's
+ *                                      slot and refuses its own and later slots. -1 is a legacy writer or reader
+ *                                      pair that only knows `save000.mm7`.
+ */
 struct Mm7ProfileGate {
     std::string_view filter;
     bool writer;
@@ -102,9 +113,9 @@ void validateDisposableMm7Profile(GameTestOptions *opts, const Mm7ProfileGate &g
             const std::string name = entry.path().filename().string();
             bool allowed = name == "autosave.mm7" || name == "autosave.mm7.bak";
             if (gate.chapter >= 0) {
-                for (int chapter = 0; chapter <= gate.chapter; ++chapter) {
+                for (int chapter = 0; chapter < gate.chapter; ++chapter) {
                     const std::string slot = fmt::format("save{:03}.mm7", chapter);
-                    allowed |= name == slot || name == slot + ".bak";
+                    allowed |= name == slot || name == slot + ".bak" || name == slot + ".passed";
                 }
             } else {
                 allowed |= name == "save000.mm7" || name == "save000.mm7.bak";

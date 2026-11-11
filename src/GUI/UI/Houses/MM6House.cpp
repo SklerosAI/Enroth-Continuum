@@ -26,6 +26,7 @@
 #include "GUI/UI/Houses/MM6Tavern.h"
 #include "GUI/UI/Houses/MM6Temple.h"
 #include "GUI/UI/Houses/MM6Training.h"
+#include "GUI/UI/Houses/MM6Transport.h"
 
 #include "Library/Logger/Logger.h"
 
@@ -95,7 +96,7 @@ void GUIWindow_MM6House::Update() {
             if (resident.npc) {
                 labels.push_back(npcDialogueOptionString(static_cast<DialogueId>(button->msg_param), resident.npc));
             } else {
-                labels.push_back(serviceLabel(_services[button->msg_param]));
+                labels.push_back(serviceLabel(button->msg_param));
             }
         }
         drawOptionLabels(labels);
@@ -204,7 +205,8 @@ void GUIWindow_MM6House::healActiveCharacter() {
     character.playReaction(SPEECH_TEMPLE_HEAL);
 }
 
-std::string GUIWindow_MM6House::serviceLabel(mm6::HouseServiceOption option) const {
+std::string GUIWindow_MM6House::serviceLabel(int index) const {
+    const mm6::HouseServiceOption option = _services[index];
     if (option == mm6::HouseServiceOption::Train)
         return pParty->hasActiveCharacter() ? mm6::trainingLabel(std::to_underlying(houseId()), pParty->activeCharacter(), _house.value.value_or(0)) : std::string();
     if (option == mm6::HouseServiceOption::RentRoom || option == mm6::HouseServiceOption::FillPacks) {
@@ -294,6 +296,8 @@ void mm6CreateHouseUI(HouseId houseId) {
     const mm6::HouseServiceFamily family = mm6::houseServiceData().at(std::to_underlying(houseId)).family;
     if (family == mm6::HouseServiceFamily::Shop || family == mm6::HouseServiceFamily::MagicGuild) {
         window_SpeakInHouse = std::make_unique<GUIWindow_MM6Shop>(houseId, presentation);
+    } else if (family == mm6::HouseServiceFamily::Transport) {
+        window_SpeakInHouse = std::make_unique<GUIWindow_MM6Transport>(houseId, presentation);
     } else {
         window_SpeakInHouse = std::make_unique<GUIWindow_MM6House>(houseId, presentation);
     }

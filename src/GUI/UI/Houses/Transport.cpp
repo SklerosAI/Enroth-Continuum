@@ -1,5 +1,4 @@
 #include "Transport.h"
-#include "MM6TransportRules.h"
 
 #include <string>
 #include <array>
@@ -111,31 +110,6 @@ void GUIWindow_Transport::mainDialogue() {
         return;
     }
 
-    if (engine->gameTitle() == GameTitle::MM6) {
-        std::vector<std::string> optionsText;
-        bool hasActiveRoute = false;
-        const int house = std::to_underlying(houseId());
-        const int weekday = pParty->uCurrentDayOfMonth % 7;
-        for (size_t slot = 0; slot < 3; ++slot) {
-            const mm6::TransportRoute *route = mm6::transportRules().scheduledRoute(house, slot, weekday, false);
-            if (route) {
-                MapId destination = pMapTable->GetMM6TransportMapInfo(*pGames_LOD, route->mapIndex);
-                optionsText.push_back(localization->format(LSTR_D_DAYS_TO_S, route->duration, pMapTable->pInfos[destination].name));
-                hasActiveRoute = true;
-            } else {
-                optionsText.emplace_back();
-            }
-        }
-        if (hasActiveRoute) {
-            drawOptions(optionsText, colorTable.PaleCanary, 146, true);
-        } else {
-            int textHeight = assets->pFontArrus->CalcTextHeight(localization->str(LSTR_SORRY_COME_BACK_ANOTHER_DAY), travel_window.w, 0);
-            int vertMargin = (SIDE_TEXT_BOX_BODY_TEXT_HEIGHT - textHeight) / 2 + SIDE_TEXT_BOX_BODY_TEXT_OFFSET;
-            DrawTitleText(assets->pFontArrus.get(), 0, vertMargin, colorTable.White, localization->str(LSTR_SORRY_COME_BACK_ANOTHER_DAY), 3, travel_window);
-        }
-        return;
-    }
-
     std::vector<std::string> optionsText;
     int price = PriceCalculator::transportCostForPlayer(&pParty->activeCharacter(), houseTable[houseId()]);
     std::string travelCost = localization->format(LSTR_TRAVEL_COST_D_GOLD, price);
@@ -173,12 +147,6 @@ void GUIWindow_Transport::mainDialogue() {
 }
 
 void GUIWindow_Transport::transportDialogue() {
-    if (engine->gameTitle() == GameTitle::MM6) {
-        engine->_statusBar->setEvent("Travel is unavailable right now.");
-        pAudioPlayer->playUISound(SOUND_error);
-        houseDialogueGoBackToTop();
-        return;
-    }
     if (_departureTime) {
         if (platform->tickCount() >= *_departureTime) {
             depart();
@@ -226,8 +194,6 @@ void GUIWindow_Transport::transportDialogue() {
 }
 
 void GUIWindow_Transport::depart() {
-    if (engine->gameTitle() == GameTitle::MM6)
-        return;
     const TransportInfo &route = transportSchedule[_routeId];
     _departureTime.reset();
     restAndHeal(Duration::fromDays(getTravelTimeTransportDays(_routeId)));
@@ -276,8 +242,6 @@ void GUIWindow_Transport::houseDialogueOptionSelected(DialogueId option) {
 std::vector<DialogueId> GUIWindow_Transport::listDialogueOptions() {
     switch (_currentDialogue) {
       case DIALOGUE_MAIN:
-        if (engine->gameTitle() == GameTitle::MM6)
-            return {DIALOGUE_TRANSPORT_SCHEDULE_1, DIALOGUE_TRANSPORT_SCHEDULE_2, DIALOGUE_TRANSPORT_SCHEDULE_3};
         return {DIALOGUE_TRANSPORT_SCHEDULE_1, DIALOGUE_TRANSPORT_SCHEDULE_2, DIALOGUE_TRANSPORT_SCHEDULE_3, DIALOGUE_TRANSPORT_SCHEDULE_4};
       default:
         return {};
@@ -305,14 +269,6 @@ int GUIWindow_Transport::getTravelTimeTransportDays(int schedule_id) {
 }
 
 bool isTravelAvailable(HouseId houseId) {
-    if (engine->gameTitle() == GameTitle::MM6) {
-        const int house = std::to_underlying(houseId);
-        const int weekday = pParty->uCurrentDayOfMonth % 7;
-        for (size_t slot = 0; slot < 3; ++slot)
-            if (mm6::transportRules().scheduledRoute(house, slot, weekday, false))
-                return true;
-        return false;
-    }
     for (int schedule : transportRoutes[houseId]) {
         if (transportSchedule[schedule].pSchedule[pParty->uCurrentDayOfMonth % 7]) {
             if (transportSchedule[schedule].uQuestBit == QBIT_INVALID || pParty->_questBits[transportSchedule[schedule].uQuestBit]) {

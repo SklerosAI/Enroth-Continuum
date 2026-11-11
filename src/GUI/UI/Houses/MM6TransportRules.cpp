@@ -1,6 +1,8 @@
 #include "MM6TransportRules.h"
 
 #include <algorithm>
+#include <cassert>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_set>
@@ -42,17 +44,29 @@ const TransportHouse *TransportRules::findHouse(int id) const {
     return it == houses.end() ? nullptr : &*it;
 }
 
-const TransportRoute *TransportRules::scheduledRoute(int houseId, size_t slot, int weekday, bool hasQuestBit) const {
+std::array<const TransportRoute *, 3> TransportRules::offeredRoutes(int houseId, int weekday, const std::function<bool(int)> &hasQuestBit) const {
+    std::array<const TransportRoute *, 3> result{};
     const TransportHouse *house = findHouse(houseId);
-    if (!house || slot >= house->slots.size() || weekday < 0 || weekday >= 7)
-        return nullptr;
-    const TransportSlot &choice = house->slots[slot];
-    if (choice.kind != TransportSlotKind::Scheduled || choice.route >= routes.size())
-        return nullptr;
-    const TransportRoute &route = routes[choice.route];
-    if (!route.days[weekday] || (route.questBit != 0 && !hasQuestBit))
-        return nullptr;
-    return &route;
+    if (!house)
+        return result;
+    assert(weekday >= 0 && weekday < 7);
+    std::optional<size_t> lastShown;
+    for (size_t slot = 0; slot < result.size(); ++slot) {
+        const size_t index = house->slots[slot].route;
+        const TransportRoute &route = routes[index];
+        if (index == lastShown || !route.days[weekday] || (route.questBit && !hasQuestBit(route.questBit)))
+            continue;
+        result[slot] = &route;
+        lastShown = index;
+    }
+    return result;
+}
+
+int transportPrice(int houseId, float value, int merchant) {
+    if (houseId == 59)
+        return 0;
+    const int full = static_cast<int>((isTransportStable(houseId) ? 25 : 50) * static_cast<double>(value));
+    return std::max((100 - merchant) * full / 100, full / 3);
 }
 
 TransportRules decodeTransportRules(const Blob &source) {

@@ -12,6 +12,7 @@ set(GUI_UI_HOUSES_SOURCES
         MM6Tavern.cpp
         MM6Temple.cpp
         MM6Training.cpp
+        MM6Transport.cpp
         MM6TransportRules.cpp
         Bank.cpp
         Jail.cpp
@@ -32,6 +33,7 @@ set(GUI_UI_HOUSES_HEADERS
         MM6Tavern.h
         MM6Temple.h
         MM6Training.h
+        MM6Transport.h
         MM6TransportRules.h
         VendorRefreshMod.h
         Bank.h

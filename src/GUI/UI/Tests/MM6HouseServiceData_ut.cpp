@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "GUI/UI/MM6HouseServiceData.h"
+#include "GUI/UI/Houses/MM6TransportRules.h"
 #include "GUI/UI/UIHouses.h"
 
 #include "Engine/Snapshots/TableSerialization.h"
@@ -150,7 +151,7 @@ TEST(MM6HouseServiceData, RejectsMalformedHouseTableBeforeSelection) {
     }
 }
 
-TEST(MM6HouseServiceData, PlansOnlyVerifiedTransportMenuSlots) {
+TEST(MM6HouseServiceData, EveryTransportHouseHasRoutesAndARoom) {
     const char *roomManifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
     const char *transportManifest = std::getenv("ENROTH_MM6_TRANSPORT_MANIFEST");
     const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
@@ -174,48 +175,12 @@ TEST(MM6HouseServiceData, PlansOnlyVerifiedTransportMenuSlots) {
             continue;
         }
         ++transportRows;
-        ASSERT_NE(rules.findHouse(houseId), nullptr);
-        ASSERT_EQ(house.room.kind, mm6::HouseRoomKind::Room);
-        ASSERT_TRUE(house.room.room.has_value());
-        for (int weekday = 0; weekday < 7; ++weekday) {
-            const mm6::TransportMenuData menu = mm6::selectTransportMenu(houses, rules, houseId, weekday);
-            bool any = false;
-            for (size_t slot = 0; slot < menu.routes.size(); ++slot) {
-                const mm6::TransportRoute *expected = rules.scheduledRoute(houseId, slot, weekday, false);
-                EXPECT_EQ(menu.routes[slot].has_value(), expected != nullptr);
-                if (menu.routes[slot]) {
-                    ASSERT_NE(expected, nullptr);
-                    EXPECT_EQ(menu.routes[slot]->mapIndex, expected->mapIndex);
-                    EXPECT_EQ(menu.routes[slot]->duration, expected->duration);
-                    EXPECT_EQ(menu.routes[slot]->questBit, 0);
-                    any = true;
-                }
-            }
-            EXPECT_EQ(menu.hasAvailableRoute(), any);
-        }
+        EXPECT_NE(rules.findHouse(houseId), nullptr);
+        EXPECT_EQ(house.room.kind, mm6::HouseRoomKind::Room);
+        EXPECT_TRUE(house.room.room.has_value());
     }
     EXPECT_EQ(transportRows, 21);
     EXPECT_EQ(nonTransport, 536);
-    EXPECT_THROW(mm6::selectTransportMenu(houses, rules, 0, 0), std::exception);
-    EXPECT_THROW(mm6::selectTransportMenu(houses, rules, 558, 0), std::exception);
-    EXPECT_THROW(mm6::selectTransportMenu(houses, rules, rules.houses[0].id, -1), std::exception);
-    EXPECT_THROW(mm6::selectTransportMenu(houses, rules, rules.houses[0].id, 7), std::exception);
-    for (int houseId = 1; houseId <= 557; ++houseId) {
-        if (houses.at(houseId).family != mm6::HouseServiceFamily::Transport) {
-            EXPECT_THROW(mm6::selectTransportMenu(houses, rules, houseId, 0), std::exception);
-            break;
-        }
-    }
-
-    const int transportId = rules.houses[0].id;
-    mm6::TransportRules missingRouteHouse = rules;
-    missingRouteHouse.houses.erase(missingRouteHouse.houses.begin());
-    EXPECT_THROW(mm6::selectTransportMenu(houses, missingRouteHouse, transportId, 0), std::exception);
-
-    const std::string source = readFile(root / "icons" / "2devents.txt");
-    const std::string blankRoom = changeHouseRowField(source, transportId, 4, "");
-    const mm6::HouseServiceData missingRoom = mm6::decodeHouseServiceData(Blob::fromString(blankRoom), rooms);
-    EXPECT_THROW(mm6::selectTransportMenu(missingRoom, rules, transportId, 0), std::exception);
 }
 
 TEST(MM6HouseServiceData, PreflightsEveryActiveHouseInstruction) {
@@ -507,7 +472,7 @@ TEST(MM6HouseServiceData, ServiceOptionsFollowHouseFamilyAndType) {
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_MAGIC_SHOP), Options({BuyItems, SellItems, IdentifyItems, RepairItems, BuySpecialItems}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_GENERAL_STORE), Options({BuyItems, SellItems}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_ELEMENTAL_GUILD), Options({BuySpells, LearnSkills}));
-    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_STABLE), Options());
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_STABLE), Options({Travel, Travel, Travel}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_TEMPLE), Options({TempleHeal, TempleDonate}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_TRAINING_GROUND), Options({Train}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_BANK), Options({Deposit, Withdraw}));

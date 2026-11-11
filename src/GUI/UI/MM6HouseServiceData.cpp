@@ -149,7 +149,7 @@ std::vector<HouseServiceOption> houseServiceOptions(HouseType type) {
         case HouseServiceFamily::MagicGuild:
             return {BuySpells, LearnSkills};
         case HouseServiceFamily::Transport:
-            return {};
+            return {Travel, Travel, Travel};
         case HouseServiceFamily::Other:
             break;
     }
@@ -185,30 +185,9 @@ LstrId houseServiceOptionLabel(HouseServiceOption option) {
         case HouseServiceOption::FillPacks: return static_cast<LstrId>(86);      // "Fill Packs to %d days for %d gold"
         case HouseServiceOption::HaveADrink: return static_cast<LstrId>(398);    // "Have a Drink"
         case HouseServiceOption::TipBarkeep: return static_cast<LstrId>(399);    // "Tip Barkeep"
+        case HouseServiceOption::Travel: return static_cast<LstrId>(404);        // "%d days to %s"
     }
     throw std::runtime_error("Unknown MM6 house service option");
-}
-
-bool TransportMenuData::hasAvailableRoute() const {
-    for (const std::optional<TransportRoute> &route : routes)
-        if (route)
-            return true;
-    return false;
-}
-
-TransportMenuData selectTransportMenu(const HouseServiceData &houses, const TransportRules &rules,
-                                      int houseId, int weekday) {
-    const HouseServiceRow &house = houses.at(houseId);
-    if (house.family != HouseServiceFamily::Transport || house.room.kind != HouseRoomKind::Room ||
-        !rules.findHouse(houseId) || weekday < 0 || weekday >= 7)
-        throw std::runtime_error("MM6 transport menu needs a validated house, room and weekday");
-
-    TransportMenuData result;
-    for (size_t slot = 0; slot < result.routes.size(); ++slot) {
-        if (const TransportRoute *route = rules.scheduledRoute(houseId, slot, weekday, false))
-            result.routes[slot] = *route;
-    }
-    return result;
 }
 
 } // namespace mm6

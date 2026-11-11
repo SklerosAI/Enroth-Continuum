@@ -54,6 +54,12 @@ class GUIWindow_MM6House : public GUIWindow_House {
     void showServiceButtons();
     void drawOptionLabels(const std::vector<std::string> &labels);
 
+    /**
+     * @param index                     Index into the proprietor's service list.
+     * @return                          Line the service shows on the menu, empty to hide it.
+     */
+    virtual std::string serviceLabel(int index) const;
+
     const mm6::HouseServiceRow &_house;
     std::vector<mm6::HouseServiceOption> _services;
 
@@ -67,7 +73,6 @@ class GUIWindow_MM6House : public GUIWindow_House {
 
     void showResidentButtons();
     void healActiveCharacter();
-    std::string serviceLabel(mm6::HouseServiceOption option) const;
 
     GraphicsImage *_panel = nullptr;
     GraphicsImage *_exit = nullptr;

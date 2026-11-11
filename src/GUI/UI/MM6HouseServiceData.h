@@ -11,7 +11,6 @@
 #include "Engine/LocalizationEnums.h"
 
 #include "GUI/UI/MM6RoomDescriptors.h"
-#include "GUI/UI/Houses/MM6TransportRules.h"
 
 class Blob;
 
@@ -98,13 +97,14 @@ enum class HouseServiceOption {
     RentRoom,
     FillPacks,
     HaveADrink,
-    TipBarkeep
+    TipBarkeep,
+    Travel
 };
 
 /**
  * @param type                          Parsed MM6 house type.
- * @return                              Services the proprietor of a house of this type lists, in menu order. Transport
- *                                      houses list none here, their routes come from `selectTransportMenu`.
+ * @return                              Services the proprietor of a house of this type lists, in menu order. A
+ *                                      transport house lists `Travel` once for each of its three route slots.
  */
 std::vector<HouseServiceOption> houseServiceOptions(HouseType type);
 
@@ -114,16 +114,5 @@ std::vector<HouseServiceOption> houseServiceOptions(HouseType type);
  *                                      strings in MM7's global.txt.
  */
 LstrId houseServiceOptionLabel(HouseServiceOption option);
-
-struct TransportMenuData {
-    std::array<std::optional<TransportRoute>, 3> routes;
-
-    bool hasAvailableRoute() const;
-};
-
-// Plans the three visible route slots only for a validated MM6 transport house.
-// Unresolved weekday, special, and quest-gated routes stay absent.
-TransportMenuData selectTransportMenu(const HouseServiceData &houses, const TransportRules &rules,
-                                      int houseId, int weekday);
 
 } // namespace mm6

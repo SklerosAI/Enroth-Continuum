@@ -287,6 +287,8 @@ throws ranked by main-quest maps blocked:
    portrait overlays, and HUD buff icons MM6 lacks (torch, wizard eye, fly,
    water walk) that would hit the new assert.
 2. Generated NPC pool overflow at load on 4 main-quest maps (6 in all).
+   Fixed on `claude/mm6-npc-pool`: MM6 now uses the original's peasant-only
+   street NPC rule instead of MM7's ID ranges.
 3. Event CastSpell on 3 main-quest maps by timer (15 maps with faces).
 4. Unverified damage channel on 3 main-quest maps.
 5. An `Indoor.cpp` render assert when loading 3 non-quest maps at sector 0.

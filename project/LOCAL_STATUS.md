@@ -83,7 +83,18 @@ source archive rather than a remote clone. Visible play, save/quit/reload,
 installed-app cutover and binary distribution review remain open. The existing
 MM7 installation and distinct legacy save roots remain untouched.
 
-## MM6: implementation checkpoint, not yet playable
+## Installed Atlas MM6 playtest candidate — 2026-11-11
+
+The signed `/Applications/Enroth Continuum.app` now contains separate,
+title-locked `MM6.app` and `MM7.app` helpers and exposes gated actions for both.
+MM6 requires its own data folder and writes only to `Profiles/MM6-Atlas`; it
+does not inherit MM7 mods or the MM7 recording collector. The prior installed
+Atlas was preserved as a local rollback copy before replacement. The staged
+Atlas visual check used the Gridiron Dark interface. No MM6 owner session was
+started as part of this installation, so this is a playtest candidate rather
+than a visible-campaign acceptance claim.
+
+## Historical MM6 implementation checkpoint, before the playtest candidate
 
 The [indoor v6 input-cycle packet](MM6_F4_EC6_V6_INDOOR_INPUT_CYCLE.md)
 records five fresh headless children passing 1/1 each: seed, first-map

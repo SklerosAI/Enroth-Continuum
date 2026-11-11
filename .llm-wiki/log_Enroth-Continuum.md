@@ -3222,3 +3222,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added and repeat-verified `MM7Promotions.MarkhamVaseRequiresPhysicalPickup`. It dynamically finds William Lasker and the Erathian Sewer house entrance, proves acceptance and the missing-vase refusal, then finds and clicks the real Markham Manor fireplace decoration through its held-item event. The normal return consumes the held vase and proves Thief-to-Rogue promotion, Knight honorary award, 30,000/15,000 XP split and 5,000 gold.
 
+## [2026-11-11] verify | MM7 Lantern of Light side quest
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7SideQuests.LanternOfLightRequiresBarrowChest`. It dynamically finds Tarin Withern and the Harmondale temple event, proves assignment and a missing-Lantern refusal, maps the loaded Barrow II chest event to the Lantern-bearing chest, and collects it through the normal chest UI.
+- The physical hand-in consumes the Lantern, clears the active quest, grants the Harmondale award, 1,000 gold, and 5,000 XP to every character. The Lantern, Markham Vase, and Stone City Troglodyte contracts passed three consecutive headless runs together.
+

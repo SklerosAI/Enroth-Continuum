@@ -47,7 +47,7 @@ and by the [DungeonCrawl quest table](https://dungeoncrawl-classics.com/might-an
 | --- | --- | --- | --- |
 | L1 | Gavin Magnus sends the party through Walls of Mist; avoid killing its protected inhabitants, solve the key/pillar route, exit, and report back to join the Light guild. | C4 and focused Walls tests. Local group-ID predicate is unreachable, so retain the no-kill player contract and audit the predicate separately. | C / O for local predicate |
 | L2 | Resurecta requires both altar pieces from the Light and Dark temples; return both after their dungeon interactions. | C5 plus item/adviser tests. | C |
-| L3 | Crag Hack's Wine Cellar task requires the Elder Vampire to be defeated before return. | **Conflict:** public player-facing sources require the kill, while the original event data sets the vampire flag on the Wine Cellar exit without a kill check. In the current runtime the referenced vampire also loads disabled, so C5's exit-only completion is neither a valid intended-behavior oracle nor proof of a kill. Decide and document the compatibility policy before changing the event or test. | C (intended); source-data divergence |
+| L3 | Crag Hack's Wine Cellar task requires the Elder Vampire to be defeated before return. | `MM7LightItems.WineCellarExitDoesNotReplaceVampireKill` rejects the disabled spawn/exit false positive and leaves the adviser task active. The actual kill path remains a focused combat-and-exit contract. | C |
 | L4 | Caneghem requires the Case of Soul Jars from Castle Gloaming. | C5 and item/adviser tests. | C |
 | L5 | Once the three advisers are complete, Robert requests Tolberti's control cube; kill Tolberti, loot the cube, return it, and gain Blaster training. | C5 and Cube combat/hand-in tests; add reward assertion. | C |
 | L6 | Resurecta sends the party after Xenofex in Colony Zod; the normal route includes Roland/key/control access, Xenofex's death, then Resurecta hand-in. | C6 proves combat and hand-in, but teleports past Roland/access route. | C; route gap |
@@ -139,7 +139,7 @@ uncovered unless stated otherwise.
 
 ## Implementation gates
 
-1. Resolve the Wine Cellar intended-behavior versus original-event divergence before using its completion state as a Light-chain oracle.
+1. Add the Wine Cellar's actual Elder Vampire combat-and-exit contract before using its completion state as a Light-chain oracle.
 2. Treat all C rows as the public-source behavior contract. Where a later
    implementation exposes a source/event mismatch, record the mismatch and
    resolve it before changing a test oracle; do not turn a guide route into an

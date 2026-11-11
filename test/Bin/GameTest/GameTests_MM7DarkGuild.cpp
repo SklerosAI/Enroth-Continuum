@@ -500,6 +500,7 @@ GAME_TEST(MM7DarkGuild, TolbertiRequiresAndAcceptsRobertsCube) {
     EXPECT_EQ(activeTape, tape(false, true, false));
     EXPECT_EQ(finishedTape, tape(false, true));
     EXPECT_EQ(cubeTape, tape(false, true, false));
+    EXPECT_CONTAINS(prepareScriptedNPCDialogueTopics(&pNPCStats->pNPCData[87]), DIALOGUE_LEARN_BLASTER);
 }
 
 GAME_TEST(MM7DarkGuild, KastoreRequiresXenofexKill) {

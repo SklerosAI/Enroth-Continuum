@@ -149,6 +149,8 @@ std::vector<HouseServiceOption> houseServiceOptions(HouseType type) {
         case HouseServiceFamily::MagicGuild:
             return {BuySpells, LearnSkills};
         case HouseServiceFamily::Transport:
+            if (type == HOUSE_TYPE_STABLE)
+                return {Travel, Travel, Travel, FixPrices};
             return {Travel, Travel, Travel};
         case HouseServiceFamily::Other:
             break;
@@ -186,8 +188,9 @@ LstrId houseServiceOptionLabel(HouseServiceOption option) {
         case HouseServiceOption::HaveADrink: return static_cast<LstrId>(398);    // "Have a Drink"
         case HouseServiceOption::TipBarkeep: return static_cast<LstrId>(399);    // "Tip Barkeep"
         case HouseServiceOption::Travel: return static_cast<LstrId>(404);        // "%d days to %s"
+        case HouseServiceOption::FixPrices: break;
     }
-    throw std::runtime_error("Unknown MM6 house service option");
+    throw std::runtime_error("MM6 house service option has no global.txt label");
 }
 
 } // namespace mm6

@@ -472,7 +472,8 @@ TEST(MM6HouseServiceData, ServiceOptionsFollowHouseFamilyAndType) {
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_MAGIC_SHOP), Options({BuyItems, SellItems, IdentifyItems, RepairItems, BuySpecialItems}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_GENERAL_STORE), Options({BuyItems, SellItems}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_ELEMENTAL_GUILD), Options({BuySpells, LearnSkills}));
-    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_STABLE), Options({Travel, Travel, Travel}));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_STABLE), Options({Travel, Travel, Travel, FixPrices}));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_BOAT), Options({Travel, Travel, Travel}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_TEMPLE), Options({TempleHeal, TempleDonate}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_TRAINING_GROUND), Options({Train}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_BANK), Options({Deposit, Withdraw}));
@@ -480,6 +481,7 @@ TEST(MM6HouseServiceData, ServiceOptionsFollowHouseFamilyAndType) {
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_HOUSE), Options());
     EXPECT_EQ(mm6::houseServiceOptionLabel(TempleHeal), LSTR_HEAL);
     EXPECT_EQ(mm6::houseServiceOptionLabel(Deposit), LSTR_DEPOSIT);
+    EXPECT_THROW(mm6::houseServiceOptionLabel(FixPrices), std::exception);
 }
 
 TEST(MM6HouseServiceData, StagesOnlyF3MatchedMM6GreetingCandidatesWithoutPlayback) {

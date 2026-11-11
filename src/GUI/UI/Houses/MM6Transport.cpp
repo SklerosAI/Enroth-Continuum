@@ -1,6 +1,7 @@
 #include "MM6Transport.h"
 
 #include <algorithm>
+#include <ranges>
 #include <string>
 #include <utility>
 
@@ -14,6 +15,8 @@
 #include "Engine/PartyPlacement.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/Tables/MapTable.h"
+#include "Engine/Tables/NPCTable.h"
+#include "Engine/mm7_data.h"
 
 #include "GUI/GUIFont.h"
 #include "GUI/GUIMessageQueue.h"
@@ -21,6 +24,9 @@
 #include "GUI/UI/Houses/MM6ShopPrices.h"
 
 #include "Library/Platform/Interface/Platform.h"
+
+static constexpr QuestBit QBIT_MM6_PRICE_FIXING_TOPIC = static_cast<QuestBit>(116); // Loretta Fleise's topic sets it.
+static constexpr QuestBit QBIT_MM6_ALL_STABLE_PRICES_FIXED = static_cast<QuestBit>(117); // Her reward topic reads it.
 
 GUIWindow_MM6Transport::GUIWindow_MM6Transport(HouseId houseId, const mm6::HousePresentationState &presentation)
     : GUIWindow_MM6House(houseId, presentation) {}
@@ -36,7 +42,7 @@ void GUIWindow_MM6Transport::Update() {
     const Recti sidePanel(SIDE_TEXT_BOX_POS_X, 0, SIDE_TEXT_BOX_WIDTH, render->GetRenderDimensions().h);
     const std::array<const mm6::TransportRoute *, 3> routes = offeredRoutes();
     const bool anyRoute = std::ranges::any_of(routes, [](const mm6::TransportRoute *route) { return route != nullptr; });
-    if (anyRoute) {
+    if (anyRoute || offersToFixPrices()) {
         DrawTitleText(assets->pFontArrus.get(), 0, 136, colorTable.White, localization->format(LSTR_TRAVEL_COST_D_GOLD, price()), 3, sidePanel);
     } else {
         const std::string sorry = localization->str(LSTR_SORRY_COME_BACK_ANOTHER_DAY);
@@ -49,6 +55,11 @@ void GUIWindow_MM6Transport::Update() {
 void GUIWindow_MM6Transport::selectService(int index) {
     if (_route || !isProprietorSelected() || !pParty->hasActiveCharacter() || index < 0 || index >= std::ssize(_services))
         return;
+    if (_services[index] == mm6::HouseServiceOption::FixPrices) {
+        if (offersToFixPrices())
+            fixPrices();
+        return;
+    }
     const mm6::TransportRoute *route = offeredRoutes()[index];
     if (!route)
         return;
@@ -80,6 +91,8 @@ bool GUIWindow_MM6Transport::goBack() {
 std::string GUIWindow_MM6Transport::serviceLabel(int index) const {
     if (_route || !pParty->hasActiveCharacter())
         return {};
+    if (_services[index] == mm6::HouseServiceOption::FixPrices)
+        return offersToFixPrices() ? pNPCTopics[99].pTopic : std::string();
     const mm6::TransportRoute *route = offeredRoutes()[index];
     if (!route)
         return {};
@@ -112,6 +125,25 @@ int GUIWindow_MM6Transport::travelDays(const mm6::TransportRoute &route) const {
     if (CheckHiredNPCSpeciality(NPC_PROFESSION_EXPLORER))
         days -= 1;
     return std::max(days, 1);
+}
+
+bool GUIWindow_MM6Transport::offersToFixPrices() const {
+    return std::ranges::contains(_services, mm6::HouseServiceOption::FixPrices) && pParty->_questBits[QBIT_MM6_PRICE_FIXING_TOPIC] &&
+           !pParty->_questBits[stablePricesFixedBit()];
+}
+
+void GUIWindow_MM6Transport::fixPrices() {
+    pParty->_questBits.set(stablePricesFixedBit());
+    current_npc_text = pNPCTopics[135].pText; // Text 136 of npctext.txt.
+    const bool allFixed = std::ranges::all_of(std::views::iota(48, 57), [](int stable) {
+        return pParty->_questBits[static_cast<QuestBit>(stable + 99)];
+    });
+    if (allFixed)
+        pParty->_questBits.set(QBIT_MM6_ALL_STABLE_PRICES_FIXED);
+}
+
+QuestBit GUIWindow_MM6Transport::stablePricesFixedBit() const {
+    return static_cast<QuestBit>(std::to_underlying(houseId()) + 99);
 }
 
 void GUIWindow_MM6Transport::depart() {

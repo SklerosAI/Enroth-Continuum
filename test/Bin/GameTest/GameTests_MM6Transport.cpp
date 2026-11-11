@@ -7,6 +7,8 @@
 #include "Engine/Localization.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/MapTable.h"
+#include "Engine/Tables/NPCTable.h"
+#include "Engine/mm7_data.h"
 
 #include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
@@ -54,11 +56,24 @@ static std::string routeLabel(int days, const char *map) {
     return localization->format(LSTR_D_DAYS_TO_S, days, pMapTable->pInfos[pMapTable->GetMapInfo(map)].name);
 }
 
-static void takeCoachFromNewSorpigal(EngineController &game) {
-    // Space at the door of the New Sorpigal stable, then its only route to outd3.
+static std::vector<int> priceFixingBits() {
+    // Loretta Fleise's price fixing bits that are set: taken on, all done, and one per stable.
+    std::vector<int> result;
+    for (int bit : {116, 117, 147, 148, 149, 150, 151, 152, 153, 154, 155})
+        if (pParty->_questBits[static_cast<QuestBit>(bit)])
+            result.push_back(bit);
+    return result;
+}
+
+static void enterNewSorpigalStable(EngineController &game) {
     game.teleportTo(engine->_currentLoadedMapId, Vec3f(-10346, -9472, 161), 180);
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();
+}
+
+static void takeCoachFromNewSorpigal(EngineController &game) {
+    // Space at the door of the New Sorpigal stable, then its only route to outd3.
+    enterNewSorpigalStable(game);
     game.pressGuiButton("HouseDialogue_Option0");
     game.tick(17); // The coach leaves a second and a half after the party pays, then the house closes.
     game.skipLoadingScreen();
@@ -177,4 +192,48 @@ GAME_TEST(MM6Transport, QuestRouteToHermitsIsle) {
     EXPECT_EQ(positionTape.back(), Vec3f(-18486, -20342, 1));
     EXPECT_EQ(goldTape, tape(175)); // This ship's captain doesn't charge.
     EXPECT_CONTAINS(timeTape.adjacentDeltas(), Duration::fromDays(21).ticks());
+}
+
+GAME_TEST(MM6Transport, StableAgreesToFixPrices) {
+    // MM6 stables never offered Loretta Fleise's price fixing, so her quest couldn't be finished.
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+    auto bitsTape = tapes.custom([] { return priceFixingBits(); });
+    auto textTape = tapes.custom([] { return current_npc_text; });
+    auto goldTape = tapes.gold();
+    test.startTaping();
+
+    enterNewSorpigalStable(game);
+    game.pressGuiButton("House_Exit");
+    game.tick();
+    pParty->_questBits.set(static_cast<QuestBit>(116)); // Loretta Fleise's price fixing topic in outd1 sets it.
+    enterNewSorpigalStable(game);
+    game.pressGuiButton("HouseDialogue_Option3");
+    game.tick();
+
+    const std::vector<std::string> route = {routeLabel(2, "outd3.odm")};
+    const std::vector<std::string> routeAndPriceFixing = {routeLabel(2, "outd3.odm"), pNPCTopics[99].pTopic};
+    EXPECT_EQ(optionsTape, tape(std::vector<std::string>{}, route, std::vector<std::string>{}, routeAndPriceFixing, route));
+    EXPECT_EQ(bitsTape, tape(std::vector<int>{}, std::vector<int>{116}, std::vector<int>{116, 147}));
+    EXPECT_EQ(textTape, tape(std::string(), pNPCTopics[135].pText));
+    EXPECT_EQ(goldTape, tape(200));
+}
+
+GAME_TEST(MM6Transport, LastStableFinishesPriceFixing) {
+    // Nothing set the bit Loretta Fleise's reward reads once all nine stables had agreed to fix their prices.
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    pParty->_questBits.set(static_cast<QuestBit>(116)); // Loretta Fleise's price fixing topic in outd1 sets it.
+    for (int bit = 148; bit <= 155; bit++)
+        pParty->_questBits.set(static_cast<QuestBit>(bit)); // The other eight stables have agreed.
+    auto bitsTape = tapes.custom([] { return priceFixingBits(); });
+    test.startTaping();
+
+    enterNewSorpigalStable(game);
+    game.pressGuiButton("HouseDialogue_Option3");
+    game.tick();
+
+    EXPECT_EQ(bitsTape, tape(std::vector<int>{116, 148, 149, 150, 151, 152, 153, 154, 155},
+                             std::vector<int>{116, 117, 147, 148, 149, 150, 151, 152, 153, 154, 155}));
 }

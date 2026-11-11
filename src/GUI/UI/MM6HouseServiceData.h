@@ -98,20 +98,22 @@ enum class HouseServiceOption {
     FillPacks,
     HaveADrink,
     TipBarkeep,
-    Travel
+    Travel,
+    FixPrices
 };
 
 /**
  * @param type                          Parsed MM6 house type.
  * @return                              Services the proprietor of a house of this type lists, in menu order. A
- *                                      transport house lists `Travel` once for each of its three route slots.
+ *                                      transport house lists `Travel` once for each of its three route slots, and a
+ *                                      stable adds `FixPrices`.
  */
 std::vector<HouseServiceOption> houseServiceOptions(HouseType type);
 
 /**
  * @param option                        House service.
  * @return                              Id of the service's label in MM6's global.txt. Many of these ids hold other
- *                                      strings in MM7's global.txt.
+ *                                      strings in MM7's global.txt. Throws for `FixPrices`, an NPC topic.
  */
 LstrId houseServiceOptionLabel(HouseServiceOption option);
 

@@ -543,7 +543,9 @@ GAME_TEST(MM7DarkGuild, CelesteRobertCarriesControlCube) {
             carriers.push_back(actor.id);
     }
     ASSERT_EQ(carriers.size(), 1u);
-    EXPECT_FALSE(pActors[carriers.front()].IsNotAlive());
+    Actor &robert = pActors[carriers.front()];
+    EXPECT_FALSE(robert.IsNotAlive());
+    EXPECT_TRUE(robert.items[0].itemId == ITEM_BLASTER || robert.items[1].itemId == ITEM_BLASTER);
 }
 
 GAME_TEST(MM7DarkGuild, KastoreRequiresXenofexKill) {

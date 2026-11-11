@@ -18,7 +18,7 @@ All of these passed the full MM6 suite and the full headless MM7 suite (540/540)
 | BOW | MM6 bows fire object 500, the MM6 arrow. They never fired before | `0705a8173` (merged by Codex) |
 | VISIT | MM6 map visit record read and written as MM6 does, with MM6's map timer rule | `e27757e2f` (merged by Codex), handoff `6a62d1903`. Lane checks: MM6 suite 119, MM7 controls 107, first-map gate 33/33 |
 
-Codex also merged about 50 MM6 event and dialogue coverage tests between 12:25 and 14:51 and installed an Atlas with an MM6 button (`Profiles/MM6-Atlas`).
+Codex installed an Atlas with an MM6 button (`Profiles/MM6-Atlas`). A separate MM6 event-fixture branch was reviewed but reverted because its synthetic records are incompatible with the current event parser; it is not part of the playtest baseline.
 
 ## Final check on master
 
@@ -42,7 +42,7 @@ On `e27757e2f`, the last code commit of the day, built from scratch in its own w
 
 - `~/enroth-tools/bin/enroth-build` is at SLOTS=1 since the midday swap pressure (load ~400). Raise it back to 2 only when swap stays below about 4 GB.
 - `~/enroth-tools/bin/enroth-capture-loop` tours every MM6 and MM7 map every 3 minutes for up to 12 hours, only from a build that contains master's latest code. Stop it with `touch /private/tmp/enroth-capture-loop.stop`.
-- `build-release/` in the main checkout holds a Release MM6 for `~/enroth-tools/bin/play-mm6` and the Desktop shortcut, on `Profiles/MM6`.
+- `build-release/` in the main checkout holds a Release MM6 for the local `play-mm6` utility, on `Profiles/MM6`; the former Desktop developer shortcut was removed.
 - Worktrees: 10 of 10. Free for reuse: `mm7-monster-combat`, `mm7-save-durability`, `mm7-load-admission`, `mm7-death-regression`, `mm7-mod-access`, `mm7-rolling-replay` and the detached `mm7-save-atomic`.
 
 Privacy: no game data, saves, captures, logs or disassembly in Git.

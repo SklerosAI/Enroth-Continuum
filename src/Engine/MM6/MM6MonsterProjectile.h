@@ -56,6 +56,20 @@ inline MonsterProjectile monsterProjectileType(std::string_view label, MonsterAt
 }
 
 /**
+ * @param value                         Missile byte of a monster attack in an original MM6 actor record.
+ * @return                              Missile it stands for, numbered the way the `monsters.txt` loader numbers them.
+ */
+inline MonsterProjectile monsterProjectileForNativeByte(int value) {
+    constexpr std::array<MonsterProjectile, 10> types = {
+        MONSTER_PROJECTILE_NONE, MONSTER_PROJECTILE_MM6_ARROW, MONSTER_PROJECTILE_MM6_FLAMING_ARROW,
+        MONSTER_PROJECTILE_MM6_FIRE, MONSTER_PROJECTILE_MM6_ELECTRICITY, MONSTER_PROJECTILE_MM6_COLD,
+        MONSTER_PROJECTILE_MM6_POISON, MONSTER_PROJECTILE_MM6_ENERGY, MONSTER_PROJECTILE_MM6_MAGIC,
+        MONSTER_PROJECTILE_MM6_ROCK,
+    };
+    return value >= 0 && value < static_cast<int>(types.size()) ? types[value] : MONSTER_PROJECTILE_NONE;
+}
+
+/**
  * @param type                          MM6 missile of a monster attack.
  * @param monster                       Shooting monster.
  * @return                              Object the original launches for it. The robots shoot Energy as their own laser.

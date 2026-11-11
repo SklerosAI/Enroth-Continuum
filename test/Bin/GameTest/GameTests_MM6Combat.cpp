@@ -217,6 +217,29 @@ GAME_TEST(MM6CombatHeadless, DISABLED_HarpyMassCurseCursesParty) {
                                   {CONDITION_CURSED, CONDITION_CURSED, CONDITION_CURSED, CONDITION_CURSED})); // The new party fails every save.
 }
 
+GAME_TEST(MM6CombatHeadless, DISABLED_HiveReactorShootsParty) {
+    // The hive reactor kept its raw attack bytes from the map, and its missile refused to launch and ended the run.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = tapes.totalHp();
+    auto spritesTape = tapes.sprites();
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "hive.blv");
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(5216, 22464, -2255), 180); // In sight of the reactor.
+    for (Character &character : pParty->pCharacters)
+        character.health = 200; // A reactor bolt kills a new character.
+    test.startTaping();
+
+    Actor &reactor = pActors[0];
+    ASSERT_EQ(reactor.monsterInfo.id, static_cast<MonsterId>(173));
+    reactor.attributes |= ACTOR_AGGRESSOR; // The map places the reactor peaceful.
+    game.tick(26); // The reactor fires its Energy bolt, and it explodes on the party.
+
+    auto sprites = spritesTape.flatten();
+    EXPECT_CONTAINS(sprites, static_cast<SpriteId>(560));
+    EXPECT_CONTAINS(sprites, static_cast<SpriteId>(561));
+    EXPECT_EQ(hpTape, tape(800, 728)); // One character takes the bolt, Energy has no resistance.
+}
+
 GAME_TEST(MM6CombatHeadless, DISABLED_CureWeaknessFromSpellbook) {
     // A new Body caster knows Cure Weakness, casting it from the spellbook used to refuse and end the run.
     // Run alone in a fresh MM6 headless process.

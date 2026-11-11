@@ -53,4 +53,14 @@ inline MonsterSpecialAttack parseMonsterSpecialAttackName(std::string_view name)
     return SPECIAL_ATTACK_NONE;
 }
 
+/**
+ * @param value                         Special attack byte in an original MM6 actor record.
+ * @return                              Special attack it stands for. The loader numbers them 1 to 23, Afraid last.
+ */
+inline MonsterSpecialAttack specialAttackForNativeByte(int value) {
+    if (value < 1 || value > 23)
+        return SPECIAL_ATTACK_NONE;
+    return kSpecialAttackNames[value == 23 ? 3 : value < 4 ? value - 1 : value].second;
+}
+
 }  // namespace mm6

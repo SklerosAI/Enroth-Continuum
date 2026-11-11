@@ -15,6 +15,9 @@
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/MM6/MM6ChestRuntimeProjection.h"
+#include "Engine/MM6/MM6MonsterDamage.h"
+#include "Engine/MM6/MM6MonsterProjectile.h"
+#include "Engine/MM6/MM6MonsterSpecialAttack.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -56,7 +59,8 @@ Actor_MM7 actorForRuntime(std::span<const std::uint8_t> bytes) {
     result.hp = read16(bytes, 40);
 
     // MM6's embedded monster descriptor is 72 bytes; MM7's is 88 bytes and
-    // has different spell/resistance slots. Project only matching fields.
+    // has different spell/resistance slots. Project only matching fields,
+    // with attack kinds, missiles and special attacks in runtime terms.
     auto &monster = result.monsterInfo;
     monster.id = bytes[52];
     monster.level = bytes[53];
@@ -69,21 +73,22 @@ Actor_MM7 actorForRuntime(std::span<const std::uint8_t> bytes) {
     monster.movementType = bytes[60];
     monster.aiType = bytes[61];
     monster.hostilityType = bytes[62];
-    monster.specialAttackType = bytes[64];
+    monster.specialAttackType = std::to_underlying(mm6::specialAttackForNativeByte(bytes[64]));
     monster.specialAttackLevel = bytes[65];
-    monster.attack1Type = bytes[66];
+    monster.attack1Type = std::to_underlying(mm6::damageTypeForEventKind(bytes[66]));
     monster.attack1DamageDiceRolls = bytes[67];
     monster.attack1DamageDiceSides = bytes[68];
     monster.attack1DamageBonus = bytes[69];
-    monster.attack1MissileType = bytes[70];
+    monster.attack1MissileType = std::to_underlying(mm6::monsterProjectileForNativeByte(bytes[70]));
     monster.attack2Chance = bytes[71];
-    monster.attack2Type = bytes[72];
+    monster.attack2Type = std::to_underlying(mm6::damageTypeForEventKind(bytes[72]));
     monster.attack2DamageDiceRolls = bytes[73];
     monster.attack2DamageDiceSides = bytes[74];
     monster.attack2DamageBonus = bytes[75];
-    monster.attack2MissileType = bytes[76];
+    monster.attack2MissileType = std::to_underlying(mm6::monsterProjectileForNativeByte(bytes[76]));
     monster.spell1UseChance = bytes[77];
     monster.spell1Id = bytes[78];
+    monster.spell1SkillMastery = bytes[79]; // The level, plus 0x40 for Expert and 0x80 for Master, as the runtime joins them.
     monster.resFire = bytes[80];
     monster.resAir = bytes[81];
     monster.resWater = bytes[82];

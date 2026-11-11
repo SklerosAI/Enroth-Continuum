@@ -263,6 +263,23 @@ UNIT_TEST(MM6MonsterProjectile, EachAttackColumnReadsItsOwnNames) {
     EXPECT_EQ(mm6::monsterProjectileType("0", mm6::MonsterAttackColumn::Attack1), MONSTER_PROJECTILE_NONE);
 }
 
+UNIT_TEST(MM6MonsterProjectile, NativeBytesFollowTheLoaderNumbering) {
+    // Placed MM6 actors used to keep their raw missile and special attack bytes.
+    EXPECT_EQ(mm6::monsterProjectileForNativeByte(0), MONSTER_PROJECTILE_NONE);
+    EXPECT_EQ(mm6::monsterProjectileForNativeByte(1), MONSTER_PROJECTILE_MM6_ARROW);
+    EXPECT_EQ(mm6::monsterProjectileForNativeByte(2), MONSTER_PROJECTILE_MM6_FLAMING_ARROW);
+    EXPECT_EQ(mm6::monsterProjectileForNativeByte(9), MONSTER_PROJECTILE_MM6_ROCK);
+    EXPECT_EQ(mm6::monsterProjectileForNativeByte(10), MONSTER_PROJECTILE_NONE);
+    EXPECT_EQ(mm6::specialAttackForNativeByte(0), SPECIAL_ATTACK_NONE);
+    EXPECT_EQ(mm6::specialAttackForNativeByte(1), SPECIAL_ATTACK_CURSE);
+    EXPECT_EQ(mm6::specialAttackForNativeByte(3), SPECIAL_ATTACK_SLEEP);
+    EXPECT_EQ(mm6::specialAttackForNativeByte(4), SPECIAL_ATTACK_DRUNK);
+    EXPECT_EQ(mm6::specialAttackForNativeByte(17), SPECIAL_ATTACK_BREAK_ANY);
+    EXPECT_EQ(mm6::specialAttackForNativeByte(22), SPECIAL_ATTACK_MANA_DRAIN);
+    EXPECT_EQ(mm6::specialAttackForNativeByte(23), SPECIAL_ATTACK_FEAR);
+    EXPECT_EQ(mm6::specialAttackForNativeByte(24), SPECIAL_ATTACK_NONE);
+}
+
 UNIT_TEST(MM6MonsterProjectile, MissilesLaunchTheirOriginalObjects) {
     // MM6 monster missiles used to refuse to launch. Robots shoot Energy as their own laser, the rest as the Energy missile.
     EXPECT_EQ(mm6::monsterProjectileObjectId(MONSTER_PROJECTILE_MM6_ARROW, static_cast<MonsterId>(1)), static_cast<SpriteId>(500));

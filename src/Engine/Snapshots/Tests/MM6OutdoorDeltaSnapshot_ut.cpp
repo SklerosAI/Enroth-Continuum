@@ -1,3 +1,5 @@
+#include <array>
+#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -8,6 +10,8 @@
 
 #include "Testing/Unit/UnitTest.h"
 
+#include "Engine/Objects/CombinedSkillValue.h"
+#include "Engine/Objects/MonsterEnums.h"
 #include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
 
 #include "Utility/Memory/Blob.h"
@@ -184,4 +188,22 @@ UNIT_TEST(MM6OutdoorDeltaSnapshot, RetainedFifteenDeltas) {
     EXPECT_GT(actors, 0);
     EXPECT_GT(items, 0);
     EXPECT_EQ(chests, 300);
+}
+
+UNIT_TEST(MM6OutdoorDeltaSnapshot, ProjectsActorAttacksInRuntimeTerms) {
+    // A placed MM6 actor used to keep its raw attack bytes, so the reactor's Energy missile refused to launch.
+    std::array<std::uint8_t, 548> record{};
+    record[64] = 23; // Afraid.
+    record[66] = 6; // Energy.
+    record[70] = 7; // Energy missile.
+    record[72] = 2; // Fire.
+    record[76] = 9; // Rock.
+    record[79] = 0x80 | 14; // Master, level 14.
+    const Actor_MM7 actor = projectMM6ActorRecord(record);
+    EXPECT_EQ(actor.monsterInfo.specialAttackType, std::to_underlying(SPECIAL_ATTACK_FEAR));
+    EXPECT_EQ(actor.monsterInfo.attack1Type, std::to_underlying(DAMAGE_ENERGY));
+    EXPECT_EQ(actor.monsterInfo.attack1MissileType, std::to_underlying(MONSTER_PROJECTILE_MM6_ENERGY));
+    EXPECT_EQ(actor.monsterInfo.attack2Type, std::to_underlying(DAMAGE_FIRE));
+    EXPECT_EQ(actor.monsterInfo.attack2MissileType, std::to_underlying(MONSTER_PROJECTILE_MM6_ROCK));
+    EXPECT_EQ(CombinedSkillValue::fromJoined(actor.monsterInfo.spell1SkillMastery), CombinedSkillValue(14, MASTERY_MASTER));
 }

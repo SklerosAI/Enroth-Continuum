@@ -34,15 +34,7 @@ Claude Code is the planning and coordination lead. The stage 1 gate rows
 | MM7 endgame audit recorder | Codex root + subagent | Atlas recording toggle, chosen local/external folder, passive video/log/save collector | Integrated on `master`; signed candidate installed headlessly after owner authorization; installed hashes and signature verified | First real recording, screen permission, external-drive removal and Atlas lifecycle require later graphical authorization |
 | MM6 implementation | Unassigned | Existing first-map progress and Notes worktree retained | Queued after MM7 working gate | Resume from `project/MM6_RESUME_HANDOFF.md` after MM7 acceptance |
 
-## Active lanes at Codex's return (2026-11-10 22:10 local)
+## State at the 2026-11-11 break
 
-| Checkout | Branch | Owner | Scope |
-| --- | --- | --- | --- |
-| `mm7-load-admission` | `claude/mm7-chain-c1-c3` | Claude | Chain C1-C3, follow-ups |
-| `mm7-death-regression` | `claude/mm7-chain-c4-c7` | Claude | Chain C4-C7 to the Light ending |
-| `mm7-rolling-replay` | `claude/mm7-recorder-caps` | Claude | Recorder storage caps, reinstall |
-| `mm7-monster-combat` | `claude/mm6-new-game` | Claude | MM6 production New Game (M1) |
-| `mm7-save-durability` | `claude/mm6-map-sweep` | Claude | MM6 map sweep probe |
-| `mm7-mod-access` | `claude/mm6-reputation-var` | Claude | MM6 reputation variable |
-| `openenroth-upstream` | `upstream-playtest` | Claude | Upstream build checkout |
-| `mm7-combat-fixes`, `mm7-save-atomic` | free | Codex | See the welcome-back message |
+Stage 1 (MM7 working) is closed. Stage 2 (MM6 working) is active, with M1-M3 done headless on `master`. Paused lanes holding WIP: `claude/mm6-finale` (`mm7-save-durability`), `claude/mm6-chain-harness` (`mm7-monster-combat`), `claude/mm6-house-exits` (`mm7-load-admission`). Details in `handoffs/2026-11-11-claude-lead-break.md`. Codex has been silent since 03:22 UTC, so Claude integrates.
+

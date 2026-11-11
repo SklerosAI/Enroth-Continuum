@@ -3158,3 +3158,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Extended the focused Wine Cellar regression with the positive path: after the disabled-spawn exit is refused, the actual vampire is marked dead, the real map-leave predicate sets the quest marker, and Crag Hack completes the task. This closes the intended completion contract without changing general actor-kill semantics.
 
+## [2026-11-11] verify | MM7 Wine Cellar C5 save-chain alignment
+- by: T-Burton-ND via codex
+- Replaced C5's obsolete exit-only Wine Cellar shortcut with the Elder Vampire death state before the real cellar exit. A fresh owner-only disposable C0 through C5 run passed, with each chapter save and pass marker preserved across separate processes. This remains event/death-state coverage rather than direct player-combat coverage.
+

@@ -9,6 +9,7 @@
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/LocationFunctions.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/MM6/MM6MapVisit.h"
 #include "Engine/Tables/DecorationTable.h"
 #include "Engine/Objects/Decoration.h"
 #include "Engine/Objects/SpriteObject.h"
@@ -105,7 +106,10 @@ static void registerTimerTriggers(EvtOpcode triggerType, std::vector<MapTimer> *
                 timer.timeInsideDay += Duration::fromSeconds(ir.data.timer_descr.daily_start_second);
             }
 
-            if (timer.interval == Duration::fromDays(1)) {
+            if (engine->gameTitle() == GameTitle::MM6) {
+                timer.alarmTime = mm6::mapTimerFirstAlarm(triggerType, timer.interval, timer.timeInsideDay, levelLastVisit,
+                                                          pParty->GetPlayingTime());
+            } else if (timer.interval == Duration::fromDays(1)) {
                 if (levelLastVisit) {
                     // Calculate alarm time inside last visit day
                     timer.alarmTime = Time::fromDays(levelLastVisit.toDays()) + timer.timeInsideDay;

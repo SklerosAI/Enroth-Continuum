@@ -13,6 +13,7 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6MapTransition.h"
+#include "Engine/MM6/MM6MapVisit.h"
 #include "Engine/MM6/MM6OutdoorBorderEligibility.h"
 #include "Engine/MM6/MM6OutdoorSky.h"
 #include "Engine/MM6/MM6V5FirstMapLoadAttempt.h"
@@ -527,7 +528,7 @@ void OutdoorLocation::Load(std::string_view filename, int days_played, int respa
 
         ddm.respawnCount = delta.respawnCount;
         ddm.lastRespawnDay = delta.lastRespawnDay;
-        lastVisitTime = Time::fromTicks(0);
+        lastVisitTime = mm6::mapLastVisit(delta.wire.bytes);
         weather = MapWeather{};
         reconstruct(delta.fullyRevealedCells, &uFullyRevealedCellOnMap);
         reconstruct(delta.partiallyRevealedCells, &uPartiallyRevealedCellOnMap);

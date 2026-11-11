@@ -33,6 +33,7 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/MM6/MM6MapVisit.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
@@ -241,20 +242,14 @@ static std::vector<SweepTimer> loadedMapTimers() {
         for (const EventTrigger &trigger : engine->_localEventMap.enumerateTriggers(type)) {
             const auto &timer = engine->_localEventMap.instruction(trigger.eventId, trigger.eventStep).data.timer_descr;
             const Duration altInterval = Duration::fromSeconds(timer.alt_halfmin_interval * 30);
-            Time alarm = now;
-            if (altInterval) {
-                alarm = now + altInterval;
-            } else if (lastVisit) {
+            Time alarm = now + altInterval;
+            if (!altInterval) {
                 const bool daily = !timer.is_yearly && !timer.is_monthly && !timer.is_weekly;
-                if (daily) {
-                    const Duration timeInsideDay = Duration::fromHours(timer.daily_start_hour) +
-                                                   Duration::fromMinutes(timer.daily_start_minute) + Duration::fromSeconds(timer.daily_start_second);
-                    alarm = Time::fromDays(lastVisit.toDays()) + timeInsideDay;
-                    if (alarm < lastVisit)
-                        alarm += Duration::fromDays(1);
-                } else {
-                    alarm = lastVisit + (timer.is_yearly ? Duration::fromYears(1) : timer.is_monthly ? Duration::fromDays(28) : Duration::fromDays(7));
-                }
+                const Duration timeInsideDay = daily ? Duration::fromHours(timer.daily_start_hour) + Duration::fromMinutes(timer.daily_start_minute) +
+                                                       Duration::fromSeconds(timer.daily_start_second) : Duration();
+                const Duration interval = timer.is_yearly ? Duration::fromYears(1) : timer.is_monthly ? Duration::fromDays(28) :
+                                          timer.is_weekly ? Duration::fromDays(7) : Duration::fromDays(1);
+                alarm = mm6::mapTimerFirstAlarm(type, interval, timeInsideDay, lastVisit, now);
             }
             const Duration firstAlarm = std::max(Duration(), alarm - now);
             result.push_back({trigger.eventId, firstAlarm, altInterval, firstAlarm});

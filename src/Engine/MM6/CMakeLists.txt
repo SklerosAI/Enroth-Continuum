@@ -125,8 +125,14 @@ add_library(engine_mm6_outdoor_wire STATIC MM6OutdoorWire.cpp MM6OutdoorWire.h
     MM6NativeActorResistanceBytes.h)
 target_check_style(engine_mm6_outdoor_wire)
 
+add_library(engine_mm6_map_visit STATIC MM6MapVisit.cpp MM6MapVisit.h)
+target_link_libraries(engine_mm6_map_visit PUBLIC core_time utility)
+target_check_style(engine_mm6_map_visit)
+target_link_libraries(engine_mm6_save_runtime PUBLIC engine_mm6_map_visit)
+target_link_libraries(engine_events PUBLIC engine_mm6_map_visit)
+
 add_library(engine_mm6_outdoor_sky STATIC MM6OutdoorSky.cpp MM6OutdoorSky.h)
-target_link_libraries(engine_mm6_outdoor_sky PUBLIC core_time library_random utility)
+target_link_libraries(engine_mm6_outdoor_sky PUBLIC core_time library_random utility engine_mm6_map_visit)
 target_check_style(engine_mm6_outdoor_sky)
 target_link_libraries(engine_graphics PUBLIC engine_mm6_outdoor_sky)
 

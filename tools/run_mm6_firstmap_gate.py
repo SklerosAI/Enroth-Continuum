@@ -79,6 +79,12 @@ AUTOSAVE = [
     ("MM6AutosaveHeadless.DISABLED_QuickSaveLoadsInFreshProcess",
      "ENROTH_MM6_AUTOSAVE_ENABLE", "strict-quicksave-reload"),
 ]
+VISIT = [
+    ("MM6MapVisitHeadless.DISABLED_SaveInDungeonAfterSkyRoll",
+     "ENROTH_MM6_VISIT_ENABLE", "strict-visit-write"),
+    ("MM6MapVisitHeadless.DISABLED_LoadedSaveKeepsTheVisit",
+     "ENROTH_MM6_VISIT_ENABLE", "strict-visit-reload"),
+]
 MM7_CONTROLS = ["Prs.Pr2354", "Prs.Pr2956", "Issues.Issue840"]
 PASS_LINE = re.compile(r"\[\s*PASSED\s*\]\s+1 test\b")
 
@@ -91,7 +97,8 @@ def run_child(name, flag, value, profile, data, rules=None, timeout=None):
     env = os.environ.copy()
     for key in list(env):
         if key.startswith("ENROTH_MM6_V") or key in ("ENROTH_MM6_RESTART_PROFILE", "ENROTH_MM6_NEW_GAME_ENABLE",
-                                                     "ENROTH_MM6_SAVE_ANYWHERE_ENABLE", "ENROTH_MM6_AUTOSAVE_ENABLE"):
+                                                     "ENROTH_MM6_SAVE_ANYWHERE_ENABLE", "ENROTH_MM6_AUTOSAVE_ENABLE",
+                                                     "ENROTH_MM6_VISIT_ENABLE"):
             del env[key]
     if rules:
         env["ENROTH_MM6_RESTART_PROFILE"] = str(profile)
@@ -142,6 +149,8 @@ def main():
             print("save anywhere:", name)
         for name, _, _ in AUTOSAVE:
             print("autosave:", name)
+        for name, _, _ in VISIT:
+            print("visit:", name)
         for name in MM7_CONTROLS:
             print("MM7 control:", name)
         return 0
@@ -258,13 +267,22 @@ def main():
             if not run_child(name, flag, value, profile,
                              paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
                 return 1
+    with tempfile.TemporaryDirectory(prefix="mm6-restart-visit-") as eighth:
+        profile = Path(eighth)
+        os.chmod(profile, 0o700)
+        # A new party walks to the next map and back, which rolls the first map's sky, and saves in a dungeon. A fresh
+        # process loads the save and walks out to the first map on the same day, under the sky it left.
+        for name, flag, value in VISIT:
+            if not run_child(name, flag, value, profile,
+                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+                return 1
     for name in MM7_CONTROLS:
         if not run_child(name, None, None, ROOT, paths["MM7_DATA_PATH"]):
             return 1
     print("PASS: seven-child MM6 chain, all full-retry fault children, the paperdoll child, normal Save/Load menus with a "
           "production load and resave, a production New Game saved, loaded and saved again, a dungeon save after travel "
-          "loaded with its outdoor maps and saved again, autosaves and a quick save loaded in fresh processes, and the "
-          "MM7 controls")
+          "loaded with its outdoor maps and saved again, autosaves and a quick save loaded in fresh processes, a map visit "
+          "kept across a fresh-process load, and the MM7 controls")
     return 0
 
 

@@ -337,3 +337,34 @@ GAME_TEST(MM7DarkGuild, ClankerDefensesAreDisabledByMapEvent) {
     EXPECT_EQ(activeTape, tape(true));
     EXPECT_EQ(destroyedTape, tape(false, true));
 }
+
+GAME_TEST(MM7DarkGuild, DarkShadeRequiresDisabledClankerDefenses) {
+    // The dialogue contract is deliberately paired with the map-event contract above: Dark Shade must not accept a
+    // generic dungeon visit or a kill-all substitute; only the defense marker completes this adviser task.
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+    unlockDarkAdvisers(game);
+    auto activeTape = tapes.questBit(QBIT_CLANKERS_LAB_ACTIVE);
+    auto defensesTape = tapes.questBit(QBIT_CLANKERS_LAB_DEFENSES_DESTROYED);
+    auto finishedTape = tapes.questBit(QBIT_CLANKERS_LAB_FINISHED);
+    test.startTaping();
+
+    openPitAdviser(game, 86);
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    ASSERT_TRUE(pParty->_questBits[QBIT_CLANKERS_LAB_ACTIVE]);
+    leaveDarkGuildHouse(game);
+    openPitAdviser(game, 86);
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    EXPECT_FALSE(pParty->_questBits[QBIT_CLANKERS_LAB_FINISHED]);
+    leaveDarkGuildHouse(game);
+
+    pParty->_questBits.set(QBIT_CLANKERS_LAB_DEFENSES_DESTROYED);
+    openPitAdviser(game, 86);
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    EXPECT_EQ(activeTape, tape(false, true, false));
+    EXPECT_EQ(defensesTape, tape(false, true));
+    EXPECT_EQ(finishedTape, tape(false, true));
+}

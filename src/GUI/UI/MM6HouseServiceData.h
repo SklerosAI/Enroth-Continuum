@@ -9,6 +9,7 @@
 #include "Engine/Data/SoundEnums.h"
 #include "Engine/GameTitle.h"
 #include "Engine/LocalizationEnums.h"
+#include "Engine/MM6/MM6HouseExit.h"
 
 #include "GUI/UI/MM6RoomDescriptors.h"
 
@@ -26,6 +27,7 @@ struct HouseServiceRow {
     std::string auxiliaryText;    // Raw MM6 column C; can be a route or arena note.
     std::optional<int> openHour;
     std::optional<int> closeHour;
+    HouseExit exit;
 };
 
 class HouseServiceData {

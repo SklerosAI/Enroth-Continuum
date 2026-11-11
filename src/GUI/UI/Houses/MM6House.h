@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -12,8 +14,9 @@ class GUIButton;
 struct NPCData;
 
 /**
- * MM6 house screen. Lists the people in the house, and when one of them is selected, the proprietor's services or
- * the NPC's topics.
+ * MM6 house screen. Lists the people in the house and the house's exit to another map. When one of the people is
+ * selected it shows the proprietor's services or the NPC's topics, and when the exit is selected it asks whether to
+ * take it.
  */
 class GUIWindow_MM6House : public GUIWindow_House {
  public:
@@ -48,6 +51,22 @@ class GUIWindow_MM6House : public GUIWindow_House {
      */
     virtual bool goBack();
 
+    /**
+     * Takes the selected exit: autosaves, leaves the house and starts the trip to the exit's map.
+     */
+    void confirmExit();
+
+    /**
+     * Lets a looping room movie finish its current pass instead of starting another.
+     */
+    void stopRoomMovieLoop();
+
+    /**
+     * @return                          House the party moves on to now that the room movie has played out, empty while
+     *                                  it plays or for a room that stays.
+     */
+    std::optional<HouseId> roomAfterMovie() const;
+
  protected:
     bool isProprietorSelected() const;
     void clearOptionButtons();
@@ -65,13 +84,17 @@ class GUIWindow_MM6House : public GUIWindow_House {
 
  private:
     struct Resident {
-        NPCData *npc = nullptr; // `nullptr` for the proprietor.
+        NPCData *npc = nullptr; // `nullptr` for the proprietor and the exit.
         GraphicsImage *icon = nullptr;
         std::string name;
         std::string title;
+        bool exit = false;
     };
 
+    bool isExitSelected() const;
     void showResidentButtons();
+    void showExitButtons();
+    void drawExit();
     void healActiveCharacter();
 
     GraphicsImage *_panel = nullptr;
@@ -80,6 +103,9 @@ class GUIWindow_MM6House : public GUIWindow_House {
     std::vector<GUIButton *> _optionButtons;
     int _selected = -1;
     bool _trainingTimePassed = false;
+    std::string _roomMovie;
+    int64_t _roomMovieStart = 0; // Platform tick count at which the room movie started.
+    std::optional<int64_t> _roomMovieEnd; // Platform tick count at which the room movie stops, empty while it loops.
 };
 
 /**
@@ -110,6 +136,17 @@ void mm6SelectHouseTopic(DialogueId topic);
  * @return                              The MM6 house window, or `nullptr` if the party isn't in an MM6 house.
  */
 GUIWindow_MM6House *mm6HouseWindow();
+
+/**
+ * Called once a frame. Once the room movie of the house the party is in has played out, the party moves on to the
+ * house that follows it.
+ */
+void mm6UpdateHouseRoom();
+
+/**
+ * Called after a script moved an NPC. In the room where Archibald waits it lets the room movie play out.
+ */
+void mm6OnNpcMoved();
 
 /**
  * Plays one of the room's proprietor sounds. Rooms without a sound group stay silent.

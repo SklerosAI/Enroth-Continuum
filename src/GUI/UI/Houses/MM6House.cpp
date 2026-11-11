@@ -1,20 +1,30 @@
 #include "MM6House.h"
 
+#include <algorithm>
 #include <exception>
 #include <memory>
 #include <string>
+#include <string_view>
+#include <tuple>
 #include <utility>
 #include <vector>
 
 #include "Engine/AssetsManager.h"
 #include "Engine/Engine.h"
+#include "Engine/EngineGlobals.h"
+#include "Engine/Evt/MM6ItemEventCompare.h"
 #include "Engine/Localization.h"
 #include "Engine/mm7_data.h"
+#include "Engine/Graphics/Camera.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
+#include "Engine/MM6/MM6HouseExit.h"
+#include "Engine/MM6/MM6RoomMovie.h"
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/HouseTable.h"
+#include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
+#include "Engine/Tables/TransitionTable.h"
 
 #include "GUI/GUIButton.h"
 #include "GUI/GUIFont.h"
@@ -29,6 +39,7 @@
 #include "GUI/UI/Houses/MM6Transport.h"
 
 #include "Library/Logger/Logger.h"
+#include "Library/Platform/Interface/Platform.h"
 
 #include "Media/Audio/AudioPlayer.h"
 #include "Media/MediaPlayer.h"
@@ -52,6 +63,27 @@ static bool hasResidentNpc(HouseId houseId) {
     return false;
 }
 
+static bool carriesTanirsBell() {
+    return std::ranges::any_of(pParty->pCharacters, [](const Character &character) {
+        return mm6::hasEventItem(character, pParty->pPickedItem, 17, 461);
+    });
+}
+
+/**
+ * @param houseId                       House the party enters.
+ * @param videoName                     Room's own movie.
+ * @return                              Movie the room plays, and whether it loops.
+ */
+static std::pair<std::string, bool> roomMovie(HouseId houseId, const std::string &videoName) {
+    if (std::optional<std::string_view> once = mm6::oneShotRoomMovie(std::to_underlying(houseId), carriesTanirsBell()))
+        return {std::string(*once), false};
+    return {videoName, true};
+}
+
+static std::string exitLabel(MapId map) {
+    return localization->format(LSTR_ENTER_S, pMapTable->pInfos[map].name);
+}
+
 GUIWindow_MM6House::GUIWindow_MM6House(HouseId houseId, const mm6::HousePresentationState &presentation)
     : GUIWindow_House(houseId), _house(mm6::houseServiceData().at(std::to_underlying(houseId))) {
     _panel = assets->getIcon("backevt");
@@ -64,7 +96,15 @@ GUIWindow_MM6House::GUIWindow_MM6House(HouseId houseId, const mm6::HousePresenta
         if (isResidentNpc(npc, houseId))
             _residents.push_back({&npc, assets->getIcon(fmt::format("npc{:03}", npc.portraitId)), npc.name, ""});
     }
+    if (mm6::isHouseExitOffered(_house.exit, pParty->_questBits) && _residents.size() < 6) // The original lays out at most six portraits.
+        _residents.push_back({nullptr, assets->getIcon(mm6::houseExitIcon(_house.exit.picture)), "", "", true});
     _services = mm6::houseServiceOptions(_house.type);
+
+    bool loops = false;
+    std::tie(_roomMovie, loops) = roomMovie(houseId, presentation.videoName);
+    _roomMovieStart = platform->tickCount();
+    if (!loops)
+        _roomMovieEnd = _roomMovieStart + mm6::roomMovieLength(pMediaPlayer->houseMoviePayload(_roomMovie));
 
     CreateCharacterButtons();
     if (_residents.size() == 1) {
@@ -78,6 +118,10 @@ void GUIWindow_MM6House::Update() {
     const Recti sidePanel(SIDE_TEXT_BOX_POS_X, 0, SIDE_TEXT_BOX_WIDTH, render->GetRenderDimensions().h);
     render->DrawQuad2D(_panel, {477, 0});
     render->DrawQuad2D(_exit, {471, 445});
+    if (isExitSelected()) {
+        drawExit();
+        return;
+    }
     DrawTitleText(assets->pFontCreate.get(), 0, 4, colorTable.White, houseTable[houseId()].name, 3, sidePanel);
 
     if (_selected == -1) {
@@ -114,12 +158,16 @@ void GUIWindow_MM6House::selectResident(int index) {
         refreshTopics();
     } else {
         clearOptionButtons();
-        showServiceButtons();
+        if (_residents[index].exit) {
+            showExitButtons();
+        } else {
+            showServiceButtons();
+        }
     }
 }
 
 void GUIWindow_MM6House::selectService(int index) {
-    if (_selected == -1 || _residents[_selected].npc || index < 0 || index >= static_cast<int>(_services.size()))
+    if (!isProprietorSelected() || index < 0 || index >= static_cast<int>(_services.size()))
         return;
     if (_services[index] == mm6::HouseServiceOption::TempleHeal) {
         healActiveCharacter();
@@ -161,8 +209,32 @@ bool GUIWindow_MM6House::goBack() {
     return true;
 }
 
+void GUIWindow_MM6House::confirmExit() {
+    if (!isExitSelected() || uGameState == GAME_STATE_CHANGE_LOCATION)
+        return;
+    startMapTransition(mm6::houseExitDestination(_house.exit));
+    pAudioPlayer->playUISound(SOUND_StartMainChoice02); // After the transition, which stops every sound.
+    engine->_messageQueue->addMessageCurrentFrame(UIMSG_Escape, 0, 0);
+}
+
+void GUIWindow_MM6House::stopRoomMovieLoop() {
+    if (_roomMovieEnd)
+        return;
+    const int64_t length = mm6::roomMovieLength(pMediaPlayer->houseMoviePayload(_roomMovie));
+    const int64_t played = platform->tickCount() - _roomMovieStart;
+    _roomMovieEnd = _roomMovieStart + (length ? (played / length + 1) * length : 0);
+}
+
+std::optional<HouseId> GUIWindow_MM6House::roomAfterMovie() const {
+    if (!_roomMovieEnd || platform->tickCount() < *_roomMovieEnd)
+        return std::nullopt;
+    if (std::optional<int> next = mm6::roomAfterMovie(std::to_underlying(houseId())))
+        return static_cast<HouseId>(*next);
+    return std::nullopt;
+}
+
 bool GUIWindow_MM6House::isProprietorSelected() const {
-    return _selected != -1 && !_residents[_selected].npc;
+    return _selected != -1 && !_residents[_selected].npc && !_residents[_selected].exit;
 }
 
 void GUIWindow_MM6House::clearOptionButtons() {
@@ -171,13 +243,45 @@ void GUIWindow_MM6House::clearOptionButtons() {
     _optionButtons.clear();
 }
 
+bool GUIWindow_MM6House::isExitSelected() const {
+    return _selected != -1 && _residents[_selected].exit;
+}
+
 void GUIWindow_MM6House::showResidentButtons() {
     for (size_t i = 0; i < _residents.size(); ++i) {
         const Pointi position(pNPCPortraits_x[_residents.size() - 1][i], pNPCPortraits_y[_residents.size() - 1][i]);
+        const std::string label = _residents[i].exit ? exitLabel(static_cast<MapId>(_house.exit.map))
+                                                     : localization->format(LSTR_CONVERSE_WITH_S, _residents[i].name);
         _optionButtons.push_back(CreateButton(fmt::format("House_Npc{}", i), position, {63, 73}, BUTTON_TYPE_NORMAL, 0,
-                                              UIMSG_ClickHouseNPCPortrait, i, INPUT_ACTION_INVALID,
-                                              localization->format(LSTR_CONVERSE_WITH_S, _residents[i].name)));
+                                              UIMSG_ClickHouseNPCPortrait, i, INPUT_ACTION_INVALID, label));
     }
+}
+
+void GUIWindow_MM6House::showExitButtons() {
+    const std::string label = exitLabel(static_cast<MapId>(_house.exit.map));
+    _optionButtons.push_back(CreateButton("HouseExit_Cancel", {566, 313}, {75, 33}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0,
+                                          INPUT_ACTION_TRANSITION_NO, localization->str(LSTR_CANCEL), {assets->getIcon("buttesc2")}));
+    _optionButtons.push_back(CreateButton("HouseExit_Yes", {486, 313}, {75, 33}, BUTTON_TYPE_NORMAL, 0, UIMSG_HouseTransitionConfirmation, 1,
+                                          INPUT_ACTION_TRANSITION_YES, label, {assets->getIcon("buttyes2")}));
+    _optionButtons.push_back(CreateButton("HouseExit_Portrait", {pNPCPortraits_x[0][0], pNPCPortraits_y[0][0]}, {63, 73}, BUTTON_TYPE_NORMAL, 0,
+                                          UIMSG_HouseTransitionConfirmation, 1, INPUT_ACTION_INTERACT, label));
+    _optionButtons.push_back(CreateButton("HouseExit_Room", {8, 8}, {460, 344}, BUTTON_TYPE_NORMAL, 0, UIMSG_HouseTransitionConfirmation, 1,
+                                          INPUT_ACTION_TRANSITION_YES, label));
+}
+
+void GUIWindow_MM6House::drawExit() {
+    const MapId map = static_cast<MapId>(_house.exit.map);
+    const std::string &mapName = pMapTable->pInfos[map].name;
+    render->DrawQuad2D(_residents[_selected].icon, {pNPCPortraits_x[0][0], pNPCPortraits_y[0][0]});
+    render->DrawQuad2D(_optionButtons[0]->vTextures[0], {566, 313});
+    render->DrawQuad2D(_optionButtons[1]->vTextures[0], {486, 313});
+    DrawTitleText(assets->pFontCreate.get(), 0, 2, colorTable.White, mapName, 3, Recti(493, 0, 126, render->GetRenderDimensions().h));
+
+    const Recti sidePanel(SIDE_TEXT_BOX_POS_X, 0, SIDE_TEXT_BOX_WIDTH, render->GetRenderDimensions().h);
+    const std::string &transition = pTransitionStrings[std::to_underlying(map)]; // The original looks trans.txt up by map, not by house.
+    const std::string text = transition.empty() ? exitLabel(map) : transition;
+    const int y = (212 - assets->pFontCreate->CalcTextHeight(text, sidePanel.w, 0)) / 2 + 101;
+    DrawTitleText(assets->pFontCreate.get(), 0, y, colorTable.White, text, 3, sidePanel);
 }
 
 void GUIWindow_MM6House::showServiceButtons() {
@@ -268,8 +372,9 @@ bool mm6EnterHouse(HouseId houseId) {
         return false;
     }
     const mm6::HousePresentationState presentation = mm6::planHousePresentation(GameTitle::MM6, *houses, id);
+    const auto [movie, loops] = roomMovie(houseId, presentation.videoName);
     const bool iconMissing = entry.proprietorIconName && engine->resources()->iconSize(*entry.proprietorIconName).isEmpty();
-    if (iconMissing || !pMediaPlayer->hasHouseMoviePayload(presentation.videoName)) {
+    if (iconMissing || !pMediaPlayer->hasHouseMoviePayload(movie)) {
         MM_WARNING("MM6 house {} refused: its room media is unavailable", id);
         engine->_statusBar->setEvent("This place is unavailable.");
         return false;
@@ -283,7 +388,8 @@ bool mm6EnterHouse(HouseId houseId) {
     houseNpcs.clear();
     currentHouseNpc = -1;
     uCurrentHouse_Animation = 0; // The MM7 jail sentinel in event dispatch must not remap this house.
-    if (!pMediaPlayer->tryOpenHouseMovie(presentation.videoName, true) && !presentation.proprietorIconName && !hasResidentNpc(houseId)) {
+    const bool showsExit = mm6::isHouseExitOffered(houses->at(id).exit, pParty->_questBits);
+    if (!pMediaPlayer->tryOpenHouseMovie(movie, loops) && !presentation.proprietorIconName && !hasResidentNpc(houseId) && !showsExit) {
         engine->_statusBar->setEvent("This place is unavailable.");
         return false;
     }
@@ -316,6 +422,32 @@ GUIWindow_MM6House *mm6HouseWindow() {
     if (engine->gameTitle() != GameTitle::MM6)
         return nullptr;
     return dynamic_cast<GUIWindow_MM6House *>(window_SpeakInHouse.get());
+}
+
+void mm6UpdateHouseRoom() {
+    GUIWindow_MM6House *house = mm6HouseWindow();
+    if (!house || uGameState == GAME_STATE_CHANGE_LOCATION)
+        return;
+    const std::optional<HouseId> next = house->roomAfterMovie();
+    if (!next)
+        return;
+
+    const int yaw = pParty->_viewYaw; // Closing a house turns the party around with flip_on_exit, and it stays inside.
+    pMediaPlayer->Unload();
+    if (!mm6EnterHouse(*next)) {
+        window_SpeakInHouse = nullptr;
+        current_screen_type = SCREEN_GAME;
+        return;
+    }
+    mm6CreateHouseUI(*next);
+    pParty->_viewYaw = yaw;
+    pCamera3D->_viewYaw = yaw;
+}
+
+void mm6OnNpcMoved() {
+    GUIWindow_MM6House *house = mm6HouseWindow();
+    if (house && mm6::npcMoveStopsRoomLoop(std::to_underlying(house->houseId())))
+        house->stopRoomMovieLoop();
 }
 
 void mm6PlayHouseSound(HouseId houseId, HouseSoundType type) {

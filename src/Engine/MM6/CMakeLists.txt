@@ -113,6 +113,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6ScopedNewGameSave.cpp MM6ScopedNewGameSave.h
     MM6PartyDeath.cpp MM6PartyDeath.h
     MM6PartyRest.cpp MM6PartyRest.h
+    MM6HouseExit.h MM6RoomMovie.h
     MM6LoadedMapSource.cpp MM6LoadedMapSource.h
     MM6PrivateMapSource.cpp MM6PrivateMapSource.h)
 target_link_libraries(engine_mm6_save_runtime PUBLIC engine_mm6_save_container engine_mm6_atomic_save
@@ -302,7 +303,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6HirelingRecoveryV2Stage_ut.cpp
         Tests/MM6FirstMapCombatTransientTransaction_ut.cpp
         Tests/MM6FirstMapPersistentEventTransaction_ut.cpp)
-    target_sources(test_engine_mm6_save_runtime PRIVATE Tests/MM6PartyDeath_ut.cpp Tests/MM6Archive_ut.cpp)
+    target_sources(test_engine_mm6_save_runtime PRIVATE Tests/MM6PartyDeath_ut.cpp Tests/MM6Archive_ut.cpp Tests/MM6HouseExit_ut.cpp)
     target_link_libraries(test_engine_mm6_save_runtime PUBLIC testing_unit engine_mm6_save_runtime)
     target_check_style(test_engine_mm6_save_runtime)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_save_runtime)

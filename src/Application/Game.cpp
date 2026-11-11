@@ -871,6 +871,11 @@ void Game::processQueuedMessages() {
                 continue;
 
             case UIMSG_HouseTransitionConfirmation: {
+                if (engine->gameTitle() == GameTitle::MM6) {
+                    if (GUIWindow_MM6House *house = mm6HouseWindow())
+                        house->confirmExit();
+                    continue;
+                }
                 assert(false);
                 playButtonSoundOnEscape = false;
                 pAudioPlayer->playUISound(SOUND_StartMainChoice02);
@@ -1626,6 +1631,8 @@ void Game::gameLoop() {
             }
 
             pMediaPlayer->HouseMovieLoop();
+            if (engine->gameTitle() == GameTitle::MM6)
+                mm6UpdateHouseRoom();
 
             gameTimer->tick();
             animTimer->tick();

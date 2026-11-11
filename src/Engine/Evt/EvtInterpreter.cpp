@@ -58,6 +58,7 @@
 
 #include "GUI/GUIProgressBar.h"
 #include "GUI/GUIMessageQueue.h"
+#include "GUI/UI/Houses/MM6House.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UIDialogue.h"
 #include "GUI/UI/UIBranchlessDialogue.h"
@@ -899,6 +900,7 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             if (engine->gameTitle() == GameTitle::MM6) {
                 mm6::moveNpc(*pNPCStats, GameTitle::MM6, ir.data.npc_move_descr.npc_id,
                              ir.data.npc_move_descr.location_id);
+                mm6OnNpcMoved();
                 break;
             }
             pNPCStats->pNPCData[ir.data.npc_move_descr.npc_id].house = ir.data.npc_move_descr.location_id;

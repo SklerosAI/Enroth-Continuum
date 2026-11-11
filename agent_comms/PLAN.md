@@ -309,6 +309,15 @@ throws ranked by main-quest maps blocked:
 Missing assets are limited to a few sounds. Monster missiles and spells are
 under-sampled because most maps tick only a few frames.
 
+Fresh sweep on `master` 2026-11-11 after the first stage 2 fixes (award
+animation, reputation, NPC pool, damage channels, indoor decoration parser,
+event spells): all 67 maps load and 65 finish every phase with actors (was
+58 loading and 32 finishing). Of the 26 main-quest maps, 25 finish. The
+exception is d18, whose event Fireball timer reaches an `evaluateAoeDamage`
+assert with the event caster. That fix and a sci-fi Sparks test re-check
+are with the event spell lane. Remaining event-spell refusals are on
+non-quest maps only (spells 12, 35, 46, 83, 91).
+
 Revised M4 build order: the award-animation crash, reputation executor
 (done on `claude/mm6-reputation-var`, display and other producers still
 open), event CastSpell and damage

@@ -736,7 +736,8 @@ GUIWindow_PartyCreation::GUIWindow_PartyCreation() :
         uX = -5;
         if (uControlParam <= 3)
             uX = 0;
-        CreateButton({100 * (uControlParam / 3) + uX + 17, v0 * (uControlParam % 3) + 417}, {100, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectActiveSkill, uControlParam);
+        CreateButton(fmt::format("PartyCreation_Skill{}", uControlParam), {100 * (uControlParam / 3) + uX + 17, v0 * (uControlParam % 3) + 417}, {100, v0},
+                     BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectActiveSkill, uControlParam);
         ++uControlParam;
     } while (uControlParam < 9);
 

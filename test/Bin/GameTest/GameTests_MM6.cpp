@@ -112,18 +112,6 @@ GAME_TEST(MM6Headless, StartupAndChestGuard) {
     game.tick(1);
 }
 
-GAME_TEST(MM6Headless, NewGameSaveGuard) {
-    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
-    ASSERT_NE(dynamic_cast<MemoryFileSystem *>(ufs), nullptr);
-    ASSERT_FALSE(ufs->exists("saves"));
-
-    // Game::loop calls saveNewGame after party creation and before its first
-    // gameLoop/map transition. The EC6 transaction is still guarded, so the
-    // headless runner must stop here rather than attempt a partial map load.
-    EXPECT_THROW(saveNewGame(), std::runtime_error);
-    EXPECT_FALSE(ufs->exists("saves"));
-}
-
 GAME_TEST(MM6Headless, OriginalCharacterItemCapacity) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     EXPECT_EQ(CharacterInventory().capacity(), 126); // Protected MM7 default.
@@ -643,9 +631,8 @@ GAME_TEST(MM6Headless, DISABLED_ScopedFirstOutdoorWorld) {
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }
 
-// This is a bounded post-load subsystem step, not Game::gameLoop: the normal
-// New Game path still stops at the guarded saveNewGame() call. Run alone in a
-// fresh process because DoPrepareWorld has no complete global rollback.
+// This is a bounded post-load subsystem step, not Game::gameLoop. Run alone in
+// a fresh process because DoPrepareWorld has no complete global rollback.
 GAME_TEST(MM6Headless, DISABLED_FirstOutdoorSubsystemStep) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     ASSERT_EQ(window->nativeHandle(), nullptr);

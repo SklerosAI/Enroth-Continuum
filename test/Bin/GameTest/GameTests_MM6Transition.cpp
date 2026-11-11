@@ -29,8 +29,7 @@
 
 extern GraphicsImage *transition_ui_icon;
 
-// The production MM6 New Game loop still stops at saveNewGame(). This test
-// enters the first map through the existing scoped headless route, then runs
+// This test enters the first map through the existing scoped headless route, then runs
 // an actual first-map event. It does not claim keyboard walking or Space input.
 // DoPrepareWorld mutates global owners, so run this alone in a fresh process.
 GAME_TEST(MM6Transition, DISABLED_FirstMapEntranceDialogAndGuard) {

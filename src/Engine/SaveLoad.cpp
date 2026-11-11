@@ -19,6 +19,7 @@
 #include "Engine/Resources/LOD.h"
 #include "Engine/Localization.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
+#include "Engine/MM6/MM6NewGameSession.h"
 #include "Engine/MM7/MM7AtomicSaveFile.h"
 #include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/Party.h"
@@ -372,8 +373,11 @@ void doSavegame(std::string fileName, std::string_view title) {
 }
 
 void saveNewGame() {
-    if (engine->gameTitle() == GameTitle::MM6 && !mm6NewGameSaveOverride)
-        throw std::runtime_error("MM6 new-game save is unavailable until the EC6 transaction is complete");
+    if (engine->gameTitle() == GameTitle::MM6 && !mm6NewGameSaveOverride) {
+        engine->_lastLoadedSaveFileName.clear();
+        mm6::startNewGameSession();
+        return;
+    }
 
     if (engine->gameTitle() == GameTitle::MM6) {
         const MapId priorMap = engine->_currentLoadedMapId;

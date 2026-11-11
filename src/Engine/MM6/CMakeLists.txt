@@ -69,6 +69,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6V5FirstMapSaveWriter.cpp MM6V5FirstMapSaveWriter.h
     MM6V5FirstMapNativeSlotPolicy.cpp MM6V5FirstMapNativeSlotPolicy.h
     MM6FirstMapManualSave.cpp MM6FirstMapManualSave.h
+    MM6NewGameSession.cpp MM6NewGameSession.h
     MM6V5FirstMapLoadPreflight.cpp MM6V5FirstMapLoadPreflight.h
     MM6V5FirstMapLoadAttempt.cpp MM6V5FirstMapLoadAttempt.h
     MM6V6IndoorSaveFields.cpp MM6V6IndoorSaveFields.h MM6IndoorFaceLiveOwner.h

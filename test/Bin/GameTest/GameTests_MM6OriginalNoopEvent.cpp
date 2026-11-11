@@ -70,6 +70,18 @@ EvtProgram syntheticQuestionEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticPressAnyKeyEvent() {
+    std::string bytes;
+    appendRecord(&bytes, 0, EVENT_PressAnyKey, std::string(1, '\0'));
+
+    std::string continuation;
+    continuation.push_back(static_cast<char>(213)); // MM6 character event bit.
+    appendU32(&continuation, 12);
+    appendRecord(&bytes, 1, EVENT_Set, continuation);
+    appendRecord(&bytes, 2, EVENT_Exit);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedQuestionEvent {
     EvtProgram events = std::move(engine->_localEventMap);
     std::vector<std::string> strings = std::move(engine->_levelStrings);
@@ -154,4 +166,19 @@ GAME_TEST(MM6QuestionInput, ResumesCorrectAndIncorrectContinuations) {
     enterQuestionResponse(game, correct);
     EXPECT_FALSE(pParty->pCharacters[0]._characterEventBits.test(10));
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(11));
+}
+
+GAME_TEST(MM6PressAnyKey, ResumesContinuationAfterInput) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedQuestionEvent restore;
+    engine->_localEventMap = syntheticPressAnyKeyEvent();
+    pParty->pCharacters[0]._characterEventBits.reset(12);
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    ASSERT_NE(pGUIWindow_BranchlessDialogue, nullptr);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick(2);
+
+    EXPECT_EQ(pGUIWindow_BranchlessDialogue, nullptr);
+    EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(12));
 }

@@ -210,7 +210,7 @@ already in `master`, so its scope restarts from `master`.
 | Row | Evidence that closes it | Size |
 | --- | --- | --- |
 | M1 | Done on `claude/mm6-new-game`, waiting for integration (gate 27/27). Production New Game with no test override or test anchor: party creation by input, first map, Save, fresh-process Load, move, Save with backup rotation. Children of `tools/run_mm6_firstmap_gate.py`. Headless. | 1-2 weeks |
-| M2 | Live travel: border walk out and back, indoor entry and exit, transport. Save on a later outdoor map and an indoor map, fresh-process Load restores chests, dead monsters and doors on the active and the parked map. `autoSave` never throws for MM6. Headless. | 3-6 weeks |
+| M2 | In progress: edge travel and dungeon doors work and are integrated (`86bff5ad3`). Returning to a map still reloads it fresh, which the map-return lane fixes. Live travel: border walk out and back, indoor entry and exit, transport. Save on a later outdoor map and an indoor map, fresh-process Load restores chests, dead monsters and doors on the active and the parked map. `autoSave` never throws for MM6. Headless. | 3-6 weeks |
 | M3 | Party death and respawn by MM6 rules, in-game Load, quick and autosave work or refuse cleanly. Headless. | 1 week |
 | M4 | Main-quest path GameTests from New Game to the MM6 finale, input-driven, with fresh-process checkpoints at chapter boundaries. The finale never enters an MM7 map. Combat-outcome fixtures allowed as in W4. Headless. | 6-12+ weeks, narrowed by the probes |
 | M5 | Owner sessions: (a) F5a Load profile with HUD, books, paperdoll and Save/quit/relaunch/Load, (b) the S1-style session on MM6 including travel and a dungeon, (c) spot checks at M4 checkpoints and the ending. Visible. | Owner hours |

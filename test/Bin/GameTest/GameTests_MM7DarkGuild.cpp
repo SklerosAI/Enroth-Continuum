@@ -132,3 +132,64 @@ GAME_TEST(MM7DarkGuild, ArchibaldCompletesBreedingZone) {
     EXPECT_EQ(finishedTape, tape(true));
     EXPECT_EQ(guildTape, tape(false, true));
 }
+
+GAME_TEST(MM7DarkGuild, KastoreRequiresBothAltarPieces) {
+    // Kastore's Dark-side altar task has the same two physical pieces as the Light quest, but a distinct recipient
+    // and completion bit. This starts after Archibald has vacated the throne room.
+    auto activeTape = tapes.questBit(QBIT_ALTAR_PIECES_DARK_ACTIVE);
+    auto finishedTape = tapes.questBit(QBIT_ALTAR_PIECES_DARK_FINISHED);
+    auto lightPieceTape = tapes.hasItem(ITEM_QUEST_ALTAR_PIECE_LIGHT);
+    auto darkPieceTape = tapes.hasItem(ITEM_QUEST_ALTAR_PIECE_DARK);
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+    pParty->_questBits.set(QBIT_DARK_PATH);
+    pParty->_questBits.set(QBIT_DARK_GUILD_JOINED);
+    pParty->_questBits.set(QBIT_ARCHIBALD_MOVED_TO_CLANKERS_LAB);
+    pNPCStats->pNPCData[84].house = HOUSE_CASTLE_GLOAMING_THRONE_ROOM_2;
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_WaitTillDawn");
+    game.tick();
+    while (currentRestType == REST_WAIT)
+        game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    test.startTaping();
+
+    game.teleportTo(MAP_CASTLE_GLOAMING, Vec3f(-10300, -18432, -2861), 180);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_CASTLE_GLOAMING_THRONE_ROOM_2);
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    ASSERT_TRUE(pParty->_questBits[QBIT_ALTAR_PIECES_DARK_ACTIVE]);
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+
+    pParty->pCharacters[0].inventory.add(Item(ITEM_QUEST_ALTAR_PIECE_LIGHT));
+    game.tick();
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    EXPECT_FALSE(pParty->_questBits[QBIT_ALTAR_PIECES_DARK_FINISHED]);
+    EXPECT_TRUE(pParty->hasItem(ITEM_QUEST_ALTAR_PIECE_LIGHT));
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+
+    pParty->pCharacters[0].inventory.add(Item(ITEM_QUEST_ALTAR_PIECE_DARK));
+    game.tick();
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    EXPECT_TRUE(pParty->_questBits[QBIT_ALTAR_PIECES_DARK_FINISHED]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_ALTAR_PIECES_DARK_ACTIVE]);
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_ALTAR_PIECE_LIGHT));
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_ALTAR_PIECE_DARK));
+    EXPECT_EQ(activeTape, tape(false, true, false));
+    EXPECT_EQ(finishedTape, tape(false, true));
+    EXPECT_EQ(lightPieceTape, tape(false, true, false));
+    EXPECT_EQ(darkPieceTape, tape(false, true, false));
+}

@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <cmath>
+#include <numbers>
 #include <utility>
 #include <vector>
 
@@ -9,6 +11,7 @@
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/MapEnums.h"
 #include "Engine/Party.h"
+#include "Engine/Tables/NPCTable.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UIRest.h"
@@ -47,6 +50,80 @@ static std::vector<int> clankerDefenseEvents() {
             result.push_back(face.eventId);
     }
     return result;
+}
+
+static std::pair<Vec3f, int> approachDarkGuildFace(const BLVFace &face) {
+    Vec3f position = face.boundingBox.center() + 150 * face.facePlane.normal;
+    position.z = face.boundingBox.z1;
+    int yaw = std::lround(std::atan2(-face.facePlane.normal.y, -face.facePlane.normal.x) * 180 / std::numbers::pi);
+    return {position, yaw};
+}
+
+static bool opensDarkGuildHouse(int eventId, HouseId houseId) {
+    if (!engine->_localEventMap.hasEvent(eventId))
+        return false;
+    return std::ranges::any_of(engine->_localEventMap.function(eventId), [houseId](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_SpeakInHouse && instruction.data.house_id == houseId;
+    });
+}
+
+static void leaveDarkGuildHouse(EngineController &game) {
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    if (current_screen_type == SCREEN_HOUSE) {
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+    }
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+}
+
+static void unlockDarkAdvisers(EngineController &game) {
+    pParty->_questBits.set(QBIT_DARK_PATH);
+    pParty->_questBits.set(QBIT_ARCHIBALD_VISIT_ACTIVE);
+    pParty->_questBits.set(QBIT_BREEDING_ZONE_ACTIVE);
+    pParty->_questBits.set(QBIT_BREEDING_ZONE_FINISHED);
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_WaitTillDawn");
+    game.tick();
+    while (currentRestType == REST_WAIT)
+        game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    game.teleportTo(MAP_CASTLE_GLOAMING, Vec3f(-10300, -18432, -2861), 180);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    ASSERT_TRUE(pParty->_questBits[QBIT_DARK_GUILD_JOINED]);
+    leaveDarkGuildHouse(game);
+}
+
+static void openPitAdviser(EngineController &game, int npcId) {
+    const HouseId houseId = pNPCStats->pNPCData[npcId].house;
+    ASSERT_NE(houseId, HOUSE_INVALID);
+    game.teleportTo(MAP_PIT, Vec3f(), 0);
+    auto door = std::ranges::find_if(pIndoor->faces, [houseId](const BLVFace &face) {
+        return face.Clickable() && opensDarkGuildHouse(face.eventId, houseId);
+    });
+    ASSERT_NE(door, pIndoor->faces.end());
+    auto [position, yaw] = approachDarkGuildFace(*door);
+    game.teleportTo(MAP_PIT, position, yaw);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), houseId);
+    auto npc = std::ranges::find_if(houseNpcs, [npcId](const HouseNpcDesc &entry) {
+        return entry.npc == &pNPCStats->pNPCData[npcId];
+    });
+    ASSERT_NE(npc, houseNpcs.end());
+    if (houseNpcs.size() > 1) {
+        game.pressGuiButton(fmt::format("House_Npc{}", npc - houseNpcs.begin()));
+        game.tick();
+    }
 }
 
 GAME_TEST(MM7DarkGuild, BreedingZoneMarkerDoesNotGrantDarkGuild) {
@@ -152,39 +229,22 @@ GAME_TEST(MM7DarkGuild, ArchibaldCompletesBreedingZone) {
 
 GAME_TEST(MM7DarkGuild, KastoreRequiresBothAltarPieces) {
     // Kastore's Dark-side altar task has the same two physical pieces as the Light quest, but a distinct recipient
-    // and completion bit. This starts after Archibald has vacated the throne room.
+    // and completion bit. Reach him through the genuine Archibald hand-in and his runtime-selected Pit house.
     auto activeTape = tapes.questBit(QBIT_ALTAR_PIECES_DARK_ACTIVE);
     auto finishedTape = tapes.questBit(QBIT_ALTAR_PIECES_DARK_FINISHED);
     auto lightPieceTape = tapes.hasItem(ITEM_QUEST_ALTAR_PIECE_LIGHT);
     auto darkPieceTape = tapes.hasItem(ITEM_QUEST_ALTAR_PIECE_DARK);
     engine->config->debug.NoActors.setValue(true);
     game.startNewGame();
-    pParty->_questBits.set(QBIT_DARK_PATH);
-    pParty->_questBits.set(QBIT_DARK_GUILD_JOINED);
-    pParty->_questBits.set(QBIT_ARCHIBALD_MOVED_TO_CLANKERS_LAB);
-    pNPCStats->pNPCData[84].house = HOUSE_CASTLE_GLOAMING_THRONE_ROOM_2;
-    game.pressAndReleaseKey(PlatformKey::KEY_R);
-    game.tick();
-    game.pressGuiButton("Rest_WaitTillDawn");
-    game.tick();
-    while (currentRestType == REST_WAIT)
-        game.tick();
-    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
-    game.tick();
+    unlockDarkAdvisers(game);
     test.startTaping();
 
-    game.teleportTo(MAP_CASTLE_GLOAMING, Vec3f(-10300, -18432, -2861), 180);
-    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
-    game.tick();
-    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
-    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_CASTLE_GLOAMING_THRONE_ROOM_2);
+    openPitAdviser(game, 84);
     game.pressGuiButton("HouseNpcDialogue_Option0");
     game.tick();
     ASSERT_TRUE(pParty->_questBits[QBIT_ALTAR_PIECES_DARK_ACTIVE]);
-    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
-    game.tick();
-    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
-    game.tick();
+    leaveDarkGuildHouse(game);
+    openPitAdviser(game, 84);
 
     pParty->pCharacters[0].inventory.add(Item(ITEM_QUEST_ALTAR_PIECE_LIGHT));
     game.tick();
@@ -192,10 +252,8 @@ GAME_TEST(MM7DarkGuild, KastoreRequiresBothAltarPieces) {
     game.tick();
     EXPECT_FALSE(pParty->_questBits[QBIT_ALTAR_PIECES_DARK_FINISHED]);
     EXPECT_TRUE(pParty->hasItem(ITEM_QUEST_ALTAR_PIECE_LIGHT));
-    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
-    game.tick();
-    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
-    game.tick();
+    leaveDarkGuildHouse(game);
+    openPitAdviser(game, 84);
 
     pParty->pCharacters[0].inventory.add(Item(ITEM_QUEST_ALTAR_PIECE_DARK));
     game.tick();
@@ -209,6 +267,52 @@ GAME_TEST(MM7DarkGuild, KastoreRequiresBothAltarPieces) {
     EXPECT_EQ(finishedTape, tape(false, true));
     EXPECT_EQ(lightPieceTape, tape(false, true, false));
     EXPECT_EQ(darkPieceTape, tape(false, true, false));
+}
+
+GAME_TEST(MM7DarkGuild, MaximusRequiresAndAcceptsSoulJars) {
+    // Complete Kastore's prerequisite through his real Pit placement, then verify Maximus both assigns the distinct
+    // Dark task and consumes the case. The Thunderfist acquisition event is covered separately because it is an
+    // interaction-heavy dungeon source rather than a dialogue condition.
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+    unlockDarkAdvisers(game);
+    openPitAdviser(game, 84);
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    ASSERT_TRUE(pParty->_questBits[QBIT_ALTAR_PIECES_DARK_ACTIVE]);
+    leaveDarkGuildHouse(game);
+    openPitAdviser(game, 84);
+    pParty->pCharacters[0].inventory.add(Item(ITEM_QUEST_ALTAR_PIECE_LIGHT));
+    pParty->pCharacters[0].inventory.add(Item(ITEM_QUEST_ALTAR_PIECE_DARK));
+    game.tick();
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    ASSERT_TRUE(pParty->_questBits[QBIT_ALTAR_PIECES_DARK_FINISHED]);
+    leaveDarkGuildHouse(game);
+
+    auto activeTape = tapes.questBit(QBIT_SOUL_JARS_DARK_ACTIVE);
+    auto finishedTape = tapes.questBit(QBIT_SOUL_JARS_DARK_FINISHED);
+    auto caseTape = tapes.hasItem(ITEM_QUEST_CASE_OF_SOUL_JARS);
+    test.startTaping();
+    openPitAdviser(game, 85);
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    ASSERT_TRUE(pParty->_questBits[QBIT_SOUL_JARS_DARK_ACTIVE]);
+    leaveDarkGuildHouse(game);
+    openPitAdviser(game, 85);
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    EXPECT_FALSE(pParty->_questBits[QBIT_SOUL_JARS_DARK_FINISHED]);
+    leaveDarkGuildHouse(game);
+    openPitAdviser(game, 85);
+
+    pParty->pCharacters[0].inventory.add(Item(ITEM_QUEST_CASE_OF_SOUL_JARS));
+    game.tick();
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    EXPECT_EQ(activeTape, tape(false, true, false));
+    EXPECT_EQ(finishedTape, tape(false, true));
+    EXPECT_EQ(caseTape, tape(false, true, false));
 }
 
 GAME_TEST(MM7DarkGuild, ClankerDefensesAreDisabledByMapEvent) {

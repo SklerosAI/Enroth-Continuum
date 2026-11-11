@@ -55,3 +55,8 @@ Update: S-SAVEANY integrated (`5e752feab`..`0614e727b`). New lane in its checkou
 | S-TRAPS MM6 chest traps | `claude/mm6-chest-traps` in `mm7-save-durability` | the MM6 branch of chest opening and trap handling (`src/Engine/Objects/Chest.cpp` MM6 path, MM6 trap rules under `src/Engine/MM6/`), the disarm skill check, trap damage through the MM6 damage channels, new MM6 tests. Shared core. |
 
 Update: S-HOVER and S-TRAPS integrated (`810cae956`, `404eacbd8`). A small follow-up lane re-pins four RNG-dependent combat tests on `claude/mm6-combat-tests-rng` in `mm7-monster-combat`. `mm7-save-durability` is free.
+
+New lane:
+
+| S-TRANSPORT MM6 boats and stables | `claude/mm6-transport` in `mm7-save-durability` | the MM6 transport house screen and routes (`src/GUI/UI/Houses/Transport.cpp` MM6 branch, `src/GUI/UI/Houses/MM6House.cpp`, MM6 route rules under `src/Engine/MM6/`), `leaveMap` on departure, new MM6 tests. Shared core. |
+

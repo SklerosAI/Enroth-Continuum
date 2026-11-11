@@ -9,8 +9,10 @@ Usage:
   mm7_playtest_capture.sh start --profile ABS_DIR --app ABS_ATLAS_APP --game-pid PID
       (--output ABS_EXISTING_BASE_DIR | --session ABS_NEW_DIR)
       [--video | --no-video] [--display N] [--video-chunk-seconds N]
-      [--poll-seconds N] [--min-free-mib N] [--expected-volume-id N]
+      [--poll-seconds N] [--save-checkpoint-seconds N] [--min-free-mib N]
+      [--expected-volume-id N]
   mm7_playtest_capture.sh note --session ABS_SESSION_DIR --text "owner note"
+  mm7_playtest_capture.sh clip --session ABS_SESSION_DIR
   mm7_playtest_capture.sh stop --session ABS_SESSION_DIR
   mm7_playtest_capture.sh status --session ABS_SESSION_DIR
 
@@ -98,13 +100,13 @@ check_destination() {
 
 # Saves must be unchanged across two reads and again after the copy.
 snapshot() {
-    local source="$1" category="$2" stable="$3" key old hash before after copied tmp target ext now
+    local source="$1" category="$2" stable="$3" force="${4:-no}" key old hash before after copied tmp target ext now
     [[ -f "$source" && ! -L "$source" ]] || return 0
     key=$(printf '%s' "$source" | shasum -a 256 | awk '{print $1}')
     hash=$(sha "$source") || return 0
     old=""
     [[ ! -f "$session/state/$key" ]] || old=$(cat "$session/state/$key")
-    [[ "$hash" != "$old" ]] || return 0
+    [[ "$force" == yes || "$hash" != "$old" ]] || return 0
     if [[ "$stable" == yes ]]; then
         before=$(stat -f '%d:%i:%z:%m' "$source" 2>/dev/null) || return 0
         sleep 1
@@ -138,7 +140,11 @@ snapshot() {
     mv "$tmp" "$target"
     printf '%s\t%s\t%s\t%s\t%s\n' "$(utc)" "$category" "$source" "$target" "$copied" >> "$session/snapshots.tsv"
     printf '%s\n' "$copied" > "$session/state/$key"
-    event snapshot "$category"
+    if [[ "$force" == yes ]]; then
+        event save-checkpoint "Scheduled save checkpoint copied."
+    else
+        event snapshot "$category"
+    fi
 }
 
 # Logs are append-only byte ranges. A new inode, shorter file or changed prefix
@@ -197,7 +203,7 @@ capture_log() {
 }
 
 capture_once() {
-    local path
+    local force_save_checkpoint="${1:-no}" path
     if [[ -d "$profile/logs" ]]; then
         while IFS= read -r -d '' path; do
             capture_log "$path" || return 1
@@ -205,13 +211,15 @@ capture_once() {
     fi
     if [[ -d "$profile/saves" ]]; then
         while IFS= read -r -d '' path; do
-            snapshot "$path" saves yes || return 1
+            snapshot "$path" saves yes "$force_save_checkpoint" || return 1
         done < <(find "$profile/saves" -maxdepth 1 -type f \( -name '*.mm7' -o -name '*.mm7.bak' \) -print0 2>/dev/null)
     fi
 }
 
 video_pid=""
 video_file=""
+video_slot=""
+next_video_slot="A"
 video_state="off"
 video_enabled=0
 video_running() {
@@ -221,9 +229,59 @@ video_running() {
     status=${status//[[:space:]]/}
     [[ -n "$status" && "$status" != Z* ]]
 }
+discard_current_video() {
+    [[ -n "$video_file" && -e "$video_file" ]] || return 0
+    unlink "$video_file" 2>/dev/null || true
+}
+
+finish_video_chunk() {
+    local exit_status=0 target
+    [[ -n "$video_pid" ]] || return 0
+    wait "$video_pid" 2>/dev/null || exit_status=$?
+    video_pid=""
+    target="$session/video/rolling-$video_slot.mov"
+    if [[ "$exit_status" -ne 0 || ! -s "$video_file" ]]; then
+        discard_current_video
+        video_enabled=0
+        video_state="failed"
+        warn "Screen recording produced no rolling video; check macOS Screen Recording permission. Logs and saves continue."
+    else
+        mv "$video_file" "$target"
+        video_state="rolling"
+        event video "Rolling video chunk completed."
+    fi
+    video_file=""
+    video_slot=""
+}
+
+save_rolling_video_clip() {
+    local clip_dir slot source tmp copied=0
+    [[ -f "$session/.save-clip-requested" ]] || return 0
+    unlink "$session/.save-clip-requested" 2>/dev/null || true
+    check_destination || return 1
+    clip_dir="$session/clips/clip-$(stamp)-$(printf '%06d' "$sequence")"
+    mkdir "$clip_dir" || return 1
+    for slot in A B; do
+        source="$session/video/rolling-$slot.mov"
+        [[ -s "$source" ]] || continue
+        tmp=$(mktemp "$clip_dir/.incoming.XXXXXX") || return 1
+        if cp "$source" "$tmp" 2>/dev/null && mv "$tmp" "$clip_dir/rolling-$slot.mov"; then
+            copied=$((copied + 1))
+        else
+            unlink "$tmp" 2>/dev/null || true
+        fi
+    done
+    if (( copied == 0 )); then
+        rmdir "$clip_dir" 2>/dev/null || true
+        warn "Rolling-video save requested before a complete video chunk was available."
+        return 0
+    fi
+    event video-clip "Saved $copied rolling video chunk(s) to $clip_dir."
+}
+
 stop_video() {
     [[ -n "$video_pid" ]] || return 0
-    local was_running=0 exit_status=0
+    local was_running=0
     if video_running; then
         was_running=1
         kill -INT "$video_pid" 2>/dev/null || true  # Recorder-owned capture only, never the game.
@@ -248,44 +306,34 @@ stop_video() {
             fi
         fi
     fi
-    wait "$video_pid" 2>/dev/null || exit_status=$?
-    video_pid=""
-    if volume_ok && [[ ! -s "$video_file" ]]; then
-        video_state="failed"
-        warn "Screen recording produced no video; check macOS Screen Recording permission."
-    elif (( was_running )); then
+    if (( was_running )); then
         video_state="interrupted"
-        if volume_ok; then event video "Final video chunk was interrupted at session end; inspect it before relying on it."; fi
-    elif (( exit_status != 0 )); then
-        video_state="failed"
-        if volume_ok; then warn "Final screen recording exited with an error; inspect the video file."; fi
-    elif [[ "$video_state" != failed ]]; then
-        video_state="completed"
+        if volume_ok; then event video "Discarded incomplete rolling video chunk at session end."; fi
     fi
+    wait "$video_pid" 2>/dev/null || true
+    video_pid=""
+    discard_current_video
+    video_file=""
+    video_slot=""
 }
 
 check_video() {
     [[ "$video_enabled" == 1 ]] || return 0
     if [[ -n "$video_pid" ]] && ! video_running; then
-        if ! wait "$video_pid" 2>/dev/null || [[ ! -s "$video_file" ]]; then
-            video_enabled=0
-            video_state="failed"
-            warn "Screen recording failed; check macOS Screen Recording permission. Logs and saves continue."
-        else
-            event video "Video chunk completed."
-        fi
-        video_pid=""
+        finish_video_chunk
     fi
     if [[ "$video_enabled" == 1 && -z "$video_pid" ]]; then
         check_destination || return 1
         sequence=$((sequence + 1))
-        video_file="$session/video/$(stamp)-$(printf '%06d' "$sequence").mov"
+        video_slot="$next_video_slot"
+        if [[ "$next_video_slot" == A ]]; then next_video_slot=B; else next_video_slot=A; fi
+        video_file="$session/video/.rolling-$video_slot-recording.mov"
         local video_command=(/usr/sbin/screencapture -x -v "-V${video_chunk_seconds}" "-D${display}")
         "${video_command[@]}" "$video_file" \
             >> "$session/video-command.log" 2>&1 &
         video_pid=$!
-        video_state="recording"
-        event video "Video chunk started."
+        video_state="rolling"
+        event video "Rolling video chunk started."
         write_status
     fi
 }
@@ -294,16 +342,17 @@ mode="${1:-}"
 [[ -n "$mode" ]] || { usage; exit 2; }
 shift
 profile_arg=""; output_arg=""; session_arg=""; app_arg=""; game_pid=""; note_text=""; expected_volume_id=""
-display=1; video_chunk_seconds=300; poll_seconds=5; min_free_mib=2048
+display=1; video_chunk_seconds=60; poll_seconds=5; save_checkpoint_seconds=600; min_free_mib=2048
 while (( $# > 0 )); do
     case "$1" in
-        --profile|--output|--session|--app|--game-pid|--display|--video-chunk-seconds|--poll-seconds|--min-free-mib|--expected-volume-id|--text)
+        --profile|--output|--session|--app|--game-pid|--display|--video-chunk-seconds|--poll-seconds|--save-checkpoint-seconds|--min-free-mib|--expected-volume-id|--text)
             (( $# >= 2 )) || fail "missing value for $1"
             case "$1" in
                 --profile) profile_arg="$2" ;; --output) output_arg="$2" ;;
                 --session) session_arg="$2" ;; --app) app_arg="$2" ;;
                 --game-pid) game_pid="$2" ;; --display) display="$2" ;;
                 --video-chunk-seconds) video_chunk_seconds="$2" ;; --poll-seconds) poll_seconds="$2" ;;
+                --save-checkpoint-seconds) save_checkpoint_seconds="$2" ;;
                 --min-free-mib) min_free_mib="$2" ;; --text) note_text="$2" ;;
                 --expected-volume-id) expected_volume_id="$2" ;;
             esac
@@ -315,7 +364,7 @@ while (( $# > 0 )); do
     esac
 done
 
-if [[ "$mode" == note || "$mode" == stop || "$mode" == status ]]; then
+if [[ "$mode" == note || "$mode" == clip || "$mode" == stop || "$mode" == status ]]; then
     [[ -n "$session_arg" ]] || fail "$mode requires --session"
     validate_session
     case "$mode" in
@@ -325,6 +374,7 @@ if [[ "$mode" == note || "$mode" == stop || "$mode" == status ]]; then
             note_text=${note_text//$'\t'/ }
             note_text=${note_text:0:500}
             event owner-note "$note_text" ;;
+        clip) : > "$session/.save-clip-requested" ;;
         stop) : > "$session/.stop-requested" ;;
         status) cat "$session/status.json" ;;
     esac
@@ -334,12 +384,13 @@ fi
 [[ -n "$profile_arg" && -n "$app_arg" && -n "$game_pid" ]] || fail "start requires --profile, --app, and --game-pid"
 [[ -n "$output_arg" && -z "$session_arg" || -z "$output_arg" && -n "$session_arg" ]] ||
     fail "start requires exactly one of --output or --session"
-for number in "$game_pid" "$display" "$video_chunk_seconds" "$poll_seconds" "$min_free_mib"; do
+for number in "$game_pid" "$display" "$video_chunk_seconds" "$poll_seconds" "$save_checkpoint_seconds" "$min_free_mib"; do
     is_uint "$number" || fail "PID and numeric options must be nonnegative integers"
 done
 [[ -z "$expected_volume_id" ]] || is_uint "$expected_volume_id" || fail "--expected-volume-id must be an integer"
 (( game_pid > 1 && display > 0 && video_chunk_seconds >= 10 && video_chunk_seconds <= 3600 &&
-   poll_seconds >= 1 && poll_seconds <= 60 && min_free_mib >= 128 )) || fail "numeric option is out of range"
+   poll_seconds >= 1 && poll_seconds <= 60 && save_checkpoint_seconds >= 1 &&
+   save_checkpoint_seconds <= 3600 && min_free_mib >= 128 )) || fail "numeric option is out of range"
 [[ "$video_enabled" != 1 || -x /usr/sbin/screencapture ]] || fail "macOS screencapture is unavailable"
 profile=$(canonical_existing_dir "$profile_arg")
 app=$(canonical_existing_dir "$app_arg")
@@ -366,7 +417,7 @@ if [[ -n "$expected_volume_id" && "$volume_id" != "$expected_volume_id" ]]; then
     fail "recording destination volume changed during session creation"
 fi
 [[ -n "$volume_id" && "$volume_id" == "$(device "$base")" ]] || fail "session is not on the selected destination volume"
-for folder in logs saves state video; do mkdir "$session/$folder"; done
+for folder in logs saves state video clips; do mkdir "$session/$folder"; done
 printf 'EnrothContinuum-MM7-playtest-v1\n' > "$session/.ec-mm7-playtest-session"
 printf '%s\n' "$volume_id" > "$session/.volume-id"
 : > "$session/timeline.tsv"; : > "$session/snapshots.tsv"
@@ -394,6 +445,7 @@ fi
 
 game_start=$(ps -p "$game_pid" -o lstart= 2>/dev/null || true)
 requested=0
+next_save_checkpoint_epoch=$(( $(date +%s) + save_checkpoint_seconds ))
 trap 'requested=1' INT TERM
 stop_reason="stopped"
 while true; do
@@ -411,7 +463,16 @@ while true; do
         break
     fi
     check_video || { stop_reason="$state"; break; }
-    capture_once || { stop_reason="$state"; break; }
+    save_rolling_video_clip || { stop_reason="$state"; break; }
+    now_epoch=$(date +%s)
+    force_save_checkpoint=no
+    if (( now_epoch >= next_save_checkpoint_epoch )); then
+        force_save_checkpoint=yes
+        while (( next_save_checkpoint_epoch <= now_epoch )); do
+            next_save_checkpoint_epoch=$((next_save_checkpoint_epoch + save_checkpoint_seconds))
+        done
+    fi
+    capture_once "$force_save_checkpoint" || { stop_reason="$state"; break; }
     sleep "$poll_seconds" || true
 done
 if volume_ok; then

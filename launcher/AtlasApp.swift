@@ -1,4 +1,5 @@
 import AppKit
+import Carbon
 import Darwin
 import Foundation
 import ImageIO
@@ -9,6 +10,20 @@ private let gameTitles = ["mm6", "mm7", "mm8"]
 private let portraitMoods = ["normal", "talk", "smile", "sad", "hurt", "pain", "afraid", "cast",
                              "sleep", "unconscious", "weak", "cursed", "drunk", "insane", "sick",
                              "paralyzed", "stone", "zombie", "dead", "eradicated"]
+private let rollingVideoHotKeyID: UInt32 = 1
+private weak var rollingVideoHotKeyOwner: AtlasApp?
+
+private func rollingVideoHotKeyHandler(_ nextHandler: EventHandlerCallRef?, _ event: EventRef?,
+                                       _ userData: UnsafeMutableRawPointer?) -> OSStatus {
+    var hotKey = EventHotKeyID()
+    let status = GetEventParameter(event, EventParamName(kEventParamDirectObject),
+                                   EventParamType(kEventParamDirectObject), nil,
+                                   MemoryLayout<EventHotKeyID>.size, nil, &hotKey)
+    if status == noErr && hotKey.id == rollingVideoHotKeyID {
+        DispatchQueue.main.async { rollingVideoHotKeyOwner?.saveRollingVideoClip() }
+    }
+    return noErr
+}
 
 final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavigationDelegate {
     private var window: NSWindow!
@@ -21,6 +36,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
     private var recordingStartFailed = false
     private var storageWarningShown = false
     private var recorderExitWarningShown = false
+    private var rollingVideoHotKey: EventHotKeyRef?
     private var reportedWarningLines = 0
     private var memoryWarningShown = false
     private let preferences = UserDefaults.standard
@@ -94,6 +110,8 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+        InstallEventHandler(GetApplicationEventTarget(), rollingVideoHotKeyHandler, 1, &eventType, nil, nil)
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .nonPersistent()
         configuration.userContentController.add(self, name: "atlas")
@@ -349,7 +367,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         process.arguments = [script.path, "start", "--profile", profilePath.path,
                              "--session", session.path, "--app", Bundle.main.bundleURL.path,
                              "--game-pid", String(gameProcess.processIdentifier), "--video",
-                             "--display", "1", "--min-free-mib", "2048",
+                             "--display", "1", "--video-chunk-seconds", "60", "--save-checkpoint-seconds", "600", "--min-free-mib", "2048",
                              "--expected-volume-id", expectedVolumeID]
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
@@ -371,6 +389,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         }
         recorder = process
         recordingSession = session
+        registerRollingVideoHotKey()
         preferences.set(session.path, forKey: "recording.mm7.latestSession")
         storageWarningShown = false
         recorderExitWarningShown = false
@@ -380,6 +399,38 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         recordingMonitor = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
             self?.checkRecordingHealth()
         }
+    }
+
+    private func registerRollingVideoHotKey() {
+        guard rollingVideoHotKey == nil else { return }
+        let hotKeyID = EventHotKeyID(signature: OSType(0x4543_5243), id: rollingVideoHotKeyID)
+        var hotKey: EventHotKeyRef?
+        let status = RegisterEventHotKey(UInt32(kVK_ANSI_R), UInt32(cmdKey | shiftKey), hotKeyID,
+                                         GetApplicationEventTarget(), 0, &hotKey)
+        guard status == noErr else {
+            showRecordingWarning("Could not register the rolling-video hotkey. Logs and save checkpoints continue.")
+            return
+        }
+        rollingVideoHotKeyOwner = self
+        rollingVideoHotKey = hotKey
+    }
+
+    private func unregisterRollingVideoHotKey() {
+        if let rollingVideoHotKey { UnregisterEventHotKey(rollingVideoHotKey) }
+        rollingVideoHotKey = nil
+        if rollingVideoHotKeyOwner === self { rollingVideoHotKeyOwner = nil }
+    }
+
+    fileprivate func saveRollingVideoClip() {
+        guard game?.isRunning == true, recorder?.isRunning == true, let session = recordingSession,
+              let script = recordingScript else { return }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/bash")
+        process.arguments = [script.path, "clip", "--session", session.path]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        guard (try? process.run()) != nil else { return }
+        NSSound.beep()
     }
 
     private func requestRecorderStop(session: URL) {
@@ -557,6 +608,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
                     let recordingStartFailed = self.recordingStartFailed
                     self.recordingMonitor?.invalidate()
                     self.recordingMonitor = nil
+                    self.unregisterRollingVideoHotKey()
                     self.game = nil
                     self.recorder = nil
                     self.recordingSession = nil

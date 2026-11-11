@@ -142,7 +142,7 @@ def assemble(output: Path, helpers: dict[str, Path], mm7_deps_build_root: Path |
         cache = Path.home() / "Library/Caches/EnrothContinuum/SwiftModules"
         cache.mkdir(parents=True, exist_ok=True)
         run(swiftc, "-O", "-sdk", sdk, "-module-cache-path", cache,
-            "-framework", "AppKit", "-framework", "WebKit",
+            "-framework", "AppKit", "-framework", "WebKit", "-framework", "Carbon",
             ROOT / "launcher/AtlasApp.swift", ROOT / "launcher/MM7ProfilePath.swift",
             "-o", contents / "MacOS/EnrothContinuum")
         shutil.copy2(ROOT / "launcher/Info.plist", contents / "Info.plist")

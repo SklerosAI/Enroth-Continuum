@@ -11,7 +11,7 @@
 #include "Engine/Party.h"
 #include "Engine/TurnEngine/TurnEngine.h"
 #include "Engine/AttackList.h"
-#include "Engine/MM6/MM6MonsterSpellEffect.h"
+#include "Engine/MM6/MM6MonsterAttack.h"
 #include "Engine/Spells/Spells.h"
 #include "Engine/Tables/MapTable.h"
 
@@ -746,12 +746,13 @@ bool processSpellImpact(unsigned int uLayingItemID, Pid pid) {
         }
     }
 
-    // Verified MM6 monster spells all land like a single-target bolt, and MM6 Fire Bolt has the id of MM7 Fire Aura.
-    const bool mm6MonsterBolt = engine->gameTitle() == GameTitle::MM6 && object->spell_caster_pid.type() == OBJECT_Actor &&
-                                mm6::isVerifiedMonsterSpell(object->uSpellID) && object->spriteId == SpellSpriteMapping[object->uSpellID];
+    if (engine->gameTitle() == GameTitle::MM6 && object->spell_caster_pid.type() == OBJECT_Actor &&
+        mm6::monsterObjectImpact(object->spriteId) != mm6::MonsterObjectImpact::Unverified)
+        return mm6::processMonsterObjectImpact(uLayingItemID, pid);
+
     // MM6 Ice Bolt flies as the sprite of MM7 Recharge Item.
     const bool mm6IceBolt = engine->gameTitle() == GameTitle::MM6 && object->spriteId == SPRITE_SPELL_WATER_RECHARGE_ITEM;
-    switch (mm6MonsterBolt || mm6IceBolt ? SPRITE_SPELL_FIRE_FIRE_BOLT : object->spriteId) {
+    switch (mm6IceBolt ? SPRITE_SPELL_FIRE_FIRE_BOLT : object->spriteId) {
         case SPRITE_SPELL_FIRE_FIRE_SPIKE:
         case SPRITE_SPELL_AIR_SPARKS:
         case SPRITE_SPELL_DARK_TOXIC_CLOUD: {

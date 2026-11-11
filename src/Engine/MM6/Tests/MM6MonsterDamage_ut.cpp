@@ -233,16 +233,42 @@ UNIT_TEST(MM6MonsterSpells, RetainsAllF3MatchedActiveMonsterCasts) {
     EXPECT_EQ(active, 55);
 }
 
-UNIT_TEST(MM6MonsterProjectile, TypesEveryActiveLabelAndGatesLaunch) {
-    EXPECT_EQ(mm6::monsterProjectileType("Arrow", true), MONSTER_PROJECTILE_MM6_ARROW);
-    EXPECT_EQ(mm6::monsterProjectileType("FireAr", true), MONSTER_PROJECTILE_MM6_FLAMING_ARROW);
-    EXPECT_EQ(mm6::monsterProjectileType("Magic", true), MONSTER_PROJECTILE_MM6_MAGIC);
-    EXPECT_EQ(mm6::monsterProjectileType("0", false), MONSTER_PROJECTILE_NONE);
-    EXPECT_THROW(mm6::monsterProjectileType("unsupported", true), std::runtime_error);
-    EXPECT_NO_THROW(mm6::requireVerifiedMonsterProjectile(GameTitle::MM6, MONSTER_PROJECTILE_NONE));
-    EXPECT_THROW(mm6::requireVerifiedMonsterProjectile(GameTitle::MM6, MONSTER_PROJECTILE_MM6_ARROW),
-                 std::runtime_error);
-    EXPECT_NO_THROW(mm6::requireVerifiedMonsterProjectile(GameTitle::MM7, MONSTER_PROJECTILE_ARROW));
+UNIT_TEST(MM6MonsterProjectile, EachAttackColumnReadsItsOwnNames) {
+    // Second-attack Pois and Dagger cells used to get missiles that the original never launches.
+    EXPECT_EQ(mm6::monsterProjectileType("Arrow", mm6::MonsterAttackColumn::Attack1), MONSTER_PROJECTILE_MM6_ARROW);
+    EXPECT_EQ(mm6::monsterProjectileType("ArrowF", mm6::MonsterAttackColumn::Attack1), MONSTER_PROJECTILE_MM6_FLAMING_ARROW);
+    EXPECT_EQ(mm6::monsterProjectileType("FireAr", mm6::MonsterAttackColumn::Attack1), MONSTER_PROJECTILE_NONE);
+    EXPECT_EQ(mm6::monsterProjectileType("Pois", mm6::MonsterAttackColumn::Attack1), MONSTER_PROJECTILE_MM6_POISON);
+    EXPECT_EQ(mm6::monsterProjectileType("FireAr", mm6::MonsterAttackColumn::Attack2), MONSTER_PROJECTILE_MM6_FLAMING_ARROW);
+    EXPECT_EQ(mm6::monsterProjectileType("Pois", mm6::MonsterAttackColumn::Attack2), MONSTER_PROJECTILE_NONE);
+    EXPECT_EQ(mm6::monsterProjectileType("Poison", mm6::MonsterAttackColumn::Attack2), MONSTER_PROJECTILE_MM6_POISON);
+    EXPECT_EQ(mm6::monsterProjectileType("Dagger", mm6::MonsterAttackColumn::Attack2), MONSTER_PROJECTILE_NONE);
+    EXPECT_EQ(mm6::monsterProjectileType("magic", mm6::MonsterAttackColumn::Attack2), MONSTER_PROJECTILE_MM6_MAGIC);
+    EXPECT_EQ(mm6::monsterProjectileType("0", mm6::MonsterAttackColumn::Attack1), MONSTER_PROJECTILE_NONE);
+}
+
+UNIT_TEST(MM6MonsterProjectile, MissilesLaunchTheirOriginalObjects) {
+    // MM6 monster missiles used to refuse to launch. Robots shoot Energy as their own laser, the rest as the Energy missile.
+    EXPECT_EQ(mm6::monsterProjectileObjectId(MONSTER_PROJECTILE_MM6_ARROW, static_cast<MonsterId>(1)), static_cast<SpriteId>(500));
+    EXPECT_EQ(mm6::monsterProjectileObjectId(MONSTER_PROJECTILE_MM6_ROCK, static_cast<MonsterId>(52)), static_cast<SpriteId>(580));
+    EXPECT_EQ(mm6::monsterProjectileObjectId(MONSTER_PROJECTILE_MM6_ENERGY, static_cast<MonsterId>(147)), static_cast<SpriteId>(560));
+    for (int robot : {148, 149, 150})
+        EXPECT_EQ(mm6::monsterProjectileObjectId(MONSTER_PROJECTILE_MM6_ENERGY, static_cast<MonsterId>(robot)), static_cast<SpriteId>(590));
+    EXPECT_EQ(mm6::monsterProjectileObjectId(MONSTER_PROJECTILE_MM6_ENERGY, static_cast<MonsterId>(173)), static_cast<SpriteId>(560));
+    EXPECT_THROW(mm6::monsterProjectileObjectId(MONSTER_PROJECTILE_NONE, static_cast<MonsterId>(1)), std::runtime_error);
+}
+
+UNIT_TEST(MM6MonsterProjectile, ObjectsLandAsTheOriginalCollisionDecides) {
+    // Flame Arrow used to explode like a bolt where the original lets it vanish like an arrow.
+    for (int object : {500, 510, 1010})
+        EXPECT_EQ(mm6::monsterObjectImpact(static_cast<SpriteId>(object)), mm6::MonsterObjectImpact::Arrow) << object;
+    for (int object : {520, 530, 540, 550, 560, 570, 580, 590, 1030, 2060, 3010})
+        EXPECT_EQ(mm6::monsterObjectImpact(static_cast<SpriteId>(object)), mm6::MonsterObjectImpact::Missile) << object;
+    EXPECT_EQ(mm6::monsterObjectImpact(static_cast<SpriteId>(1050)), mm6::MonsterObjectImpact::Explosion);
+    EXPECT_EQ(mm6::monsterObjectImpact(static_cast<SpriteId>(1080)), mm6::MonsterObjectImpact::Meteor);
+    EXPECT_EQ(mm6::monsterObjectImpact(static_cast<SpriteId>(8080)), mm6::MonsterObjectImpact::Unverified);
+    EXPECT_EQ(mm6::monsterObjectExplosion(static_cast<SpriteId>(520)), static_cast<SpriteId>(521));
+    EXPECT_EQ(mm6::monsterObjectExplosion(static_cast<SpriteId>(590)), static_cast<SpriteId>(561));
 }
 
 UNIT_TEST(MM6MonsterProjectile, RetainsAllF3MatchedRangedAttackCells) {
@@ -256,7 +282,7 @@ UNIT_TEST(MM6MonsterProjectile, RetainsAllF3MatchedRangedAttackCells) {
     MonsterStats stats;
     stats.Initialize(Blob::fromString(std::move(data)), GameTitle::MM6);
 
-    std::array<int, 10> counts{};
+    std::array<int, 9> counts{};
     for (int rawId = 1; rawId <= 173; ++rawId) {
         const MonsterInfo &info = stats.infos[static_cast<MonsterId>(rawId)];
         for (MonsterProjectile type : {info.attack1MissileType, info.attack2MissileType}) {
@@ -268,7 +294,7 @@ UNIT_TEST(MM6MonsterProjectile, RetainsAllF3MatchedRangedAttackCells) {
             ++counts[index];
         }
     }
-    EXPECT_EQ(counts, (std::array<int, 10>{6, 18, 17, 10, 12, 6, 4, 3, 3, 3}));
+    EXPECT_EQ(counts, (std::array<int, 9>{6, 18, 17, 10, 12, 3, 4, 3, 3}));
 }
 
 UNIT_TEST(MM6MonsterProjectile, NineLabelsResolveToRetainedMM6ObjectAndSpriteRows) {
@@ -301,7 +327,7 @@ UNIT_TEST(MM6MonsterProjectile, NineLabelsResolveToRetainedMM6ObjectAndSpriteRow
                                   "msl06", "msl07", "msl08", "msl09"};
     for (size_t index = 0; index < labels.size(); ++index) {
         MonsterProjectile label = labels[index];
-        const SpriteId objectId = mm6::monsterProjectileObjectId(label);
+        const SpriteId objectId = mm6::monsterProjectileObjectId(label, static_cast<MonsterId>(1));
         const unsigned row = objects.ObjectIDByItemID(objectId);
         ASSERT_GT(row, 0);
         ASSERT_LT(row, objects.pObjects.size());
@@ -322,7 +348,7 @@ UNIT_TEST(MM6MonsterProjectile, NineLabelsResolveToRetainedMM6ObjectAndSpriteRow
         "mslx03", "mslx04", "mslx05", "mslx06", "mslx07", "mslx08", "mslx09",
     };
     for (size_t index = 0; index < impactLabels.size(); ++index) {
-        const SpriteId objectId = mm6::monsterProjectileImpactObjectId(impactLabels[index]);
+        const SpriteId objectId = mm6::monsterObjectExplosion(mm6::monsterProjectileObjectId(impactLabels[index], static_cast<MonsterId>(1)));
         const unsigned row = objects.ObjectIDByItemID(objectId);
         ASSERT_GT(row, 0);
         ASSERT_LT(row, objects.pObjects.size());
@@ -333,9 +359,4 @@ UNIT_TEST(MM6MonsterProjectile, NineLabelsResolveToRetainedMM6ObjectAndSpriteRow
         EXPECT_EQ(frames.pSpriteSFrames[frameId].spriteName, impactNames[index]);
         EXPECT_FALSE(frames.pSpriteSFrames[frameId].textureName.empty());
     }
-    EXPECT_THROW(mm6::monsterProjectileImpactObjectId(MONSTER_PROJECTILE_MM6_ARROW), std::runtime_error);
-    EXPECT_THROW(mm6::monsterProjectileImpactObjectId(MONSTER_PROJECTILE_MM6_FLAMING_ARROW), std::runtime_error);
-    EXPECT_THROW(mm6::monsterProjectileImpactObjectId(MONSTER_PROJECTILE_MM6_DAGGER), std::runtime_error);
-    EXPECT_THROW(mm6::monsterProjectileObjectId(MONSTER_PROJECTILE_MM6_DAGGER), std::runtime_error);
-    EXPECT_THROW(mm6::monsterProjectileObjectId(MONSTER_PROJECTILE_NONE), std::runtime_error);
 }

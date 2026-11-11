@@ -559,7 +559,7 @@ void MonsterStats::Initialize(const Blob &monsters, GameTitle gameTitle) {
                                : ParseAttackType(tokens[17]);
         ParseDamage(tokens[18], &info.attack1DamageDiceRolls, &info.attack1DamageDiceSides, &info.attack1DamageBonus);
         info.attack1MissileType = gameTitle == GameTitle::MM6
-                                      ? mm6::monsterProjectileType(tokens[19], true)
+                                      ? mm6::monsterProjectileType(tokens[19], mm6::MonsterAttackColumn::Attack1)
                                       : ParseMissleAttackType(tokens[19]);
         info.attack2Chance = fromString<int>(tokens[20]);
         // MM6 uses "0" in the secondary type cell only when its chance is zero.
@@ -570,7 +570,7 @@ void MonsterStats::Initialize(const Blob &monsters, GameTitle gameTitle) {
         }
         ParseDamage(tokens[22], &info.attack2DamageDiceRolls, &info.attack2DamageDiceSides, &info.attack2DamageBonus);
         info.attack2MissileType = gameTitle == GameTitle::MM6
-                                      ? mm6::monsterProjectileType(tokens[23], info.attack2Chance != 0)
+                                      ? mm6::monsterProjectileType(tokens[23], mm6::MonsterAttackColumn::Attack2)
                                       : ParseMissleAttackType(tokens[23]);
         info.spell1UseChance = fromString<int>(tokens[24]);
         parseSpellEntry(tokens[25], info.spell1Id, info.spell1SkillMastery);

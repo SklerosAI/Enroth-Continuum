@@ -11,6 +11,7 @@
 #include "Engine/MM6/MM6CombatRules.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6EncounterMonster.h"
+#include "Engine/MM6/MM6MonsterAttack.h"
 #include "Engine/MM6/MM6MonsterProjectile.h"
 #include "Engine/MM6/MM6MonsterSpellEffect.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
@@ -751,7 +752,6 @@ void Actor::AggroSurroundingPeasants(unsigned int uActorID, int a2) {
 //----- (00404874) --------------------------------------------------------
 void Actor::AI_RangedAttack(unsigned int uActorID, AIDirection *pDir,
                             MonsterProjectile type, ActorAbility a4) {
-    mm6::requireVerifiedMonsterProjectile(engine->gameTitle(), type);
     if (type == MONSTER_PROJECTILE_NONE)
         return;
 
@@ -759,7 +759,8 @@ void Actor::AI_RangedAttack(unsigned int uActorID, AIDirection *pDir,
     int v13;      // edx@28
 
     SpriteObject a1;  // [sp+Ch] [bp-74h]@1
-    a1.spriteId = spriteForMonsterProjectile(type);
+    a1.spriteId = engine->gameTitle() == GameTitle::MM6 ? mm6::monsterProjectileObjectId(type, pActors[uActorID].monsterInfo.id)
+                                                         : spriteForMonsterProjectile(type);
 
     a1.uObjectDescID = pObjectTable->ObjectIDByItemID(a1.spriteId);
     if (a1.uObjectDescID == 0) {
@@ -1193,6 +1194,9 @@ int Actor::_43B3E0_CalcDamage(ActorAbility dmgSource) {
     if (dmgSource == ABILITY_ATTACK2)
         mm6::requireVerifiedCharacterDamage(engine->gameTitle(), monsterInfo.attack2Type);
 
+    if (engine->gameTitle() == GameTitle::MM6)
+        return mm6::monsterAttackDamage(monsterInfo, dmgSource, *grng);
+
     int damageDiceRolls;
     int damageDiceSides;
     int damageBonus;
@@ -1225,8 +1229,6 @@ int Actor::_43B3E0_CalcDamage(ActorAbility dmgSource) {
             skill = dmgSource == ABILITY_SPELL1 ? this->monsterInfo.spell1SkillMastery : this->monsterInfo.spell2SkillMastery;
             skillLevel = skill.level();
             skillMastery = skill.mastery();
-            if (dmgSource == ABILITY_SPELL1 && engine->gameTitle() == GameTitle::MM6)
-                return mm6::monsterSpellDamage(this->monsterInfo, spellID, skill, *grng);
             if (engine->gameTitle() == GameTitle::MM7 && !isRegularSpell(spellID))
                 return 0;
             return CalcSpellDamage(spellID, skillLevel, skillMastery, 0);

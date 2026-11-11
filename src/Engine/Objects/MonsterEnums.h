@@ -547,8 +547,7 @@ enum class MonsterProjectile {
     MONSTER_PROJECTILE_LIGHT_BOLT = 10,
     MONSTER_PROJECTILE_DARK_BOLT = 11,
     MONSTER_PROJECTILE_ENERGY_BOLT = 13,
-    // Source-typed MM6 labels. Sprite and impact behavior are title-specific
-    // and remain gated before the inherited renderer.
+    // MM6 missiles, see mm6::monsterProjectileObjectId.
     MONSTER_PROJECTILE_MM6_ARROW = 100,
     MONSTER_PROJECTILE_MM6_FIRE = 101,
     MONSTER_PROJECTILE_MM6_ELECTRICITY = 102,
@@ -558,6 +557,5 @@ enum class MonsterProjectile {
     MONSTER_PROJECTILE_MM6_MAGIC = 106,
     MONSTER_PROJECTILE_MM6_FLAMING_ARROW = 107,
     MONSTER_PROJECTILE_MM6_ROCK = 108,
-    MONSTER_PROJECTILE_MM6_DAGGER = 109,
 };
 using enum MonsterProjectile;

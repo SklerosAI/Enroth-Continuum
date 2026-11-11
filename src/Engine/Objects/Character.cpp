@@ -26,6 +26,7 @@
 #include "Engine/MM6/MM6CombatRules.h"
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6EventSpell.h"
+#include "Engine/MM6/MM6MonsterAttack.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6MonsterPreferences.h"
 #include "Engine/MM6/MM6MonsterSpecialAttack.h"
@@ -4246,9 +4247,11 @@ void DamageCharacterFromMonster(Pid uObjID, ActorAbility dmgSource, signed int t
             }
             return;
         } else if (uActorType == OBJECT_Actor) {  // missile fired by actor
+            if (engine->gameTitle() == GameTitle::MM6) {
+                mm6::damageCharacterFromMonsterObject(*spritefrom, targetchar);
+                return;
+            }
             Actor *actorPtr = &pActors[uActorID];
-            if (engine->gameTitle() == GameTitle::MM6)
-                mm6::requireVerifiedMonsterHit(*actorPtr, dmgSource, dmgSource == ABILITY_ATTACK1, pParty->pCharacters);
             if (targetchar == -1) targetchar = stru_50C198.which_player_to_attack(actorPtr);
             Character *playerPtr = &pParty->pCharacters[targetchar];
             int dmgToReceive = actorPtr->_43B3E0_CalcDamage(dmgSource);

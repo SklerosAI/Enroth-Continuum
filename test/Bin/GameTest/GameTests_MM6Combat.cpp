@@ -118,6 +118,26 @@ GAME_TEST(MM6CombatHeadless, DISABLED_FirstMapMonsterSpellsHitParty) {
                                               {CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD}));
 }
 
+GAME_TEST(MM6CombatHeadless, DISABLED_ArcherShootsParty) {
+    // Every MM6 monster missile used to refuse to launch and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = tapes.totalHp();
+    auto conditionTape = charTapes.conditions();
+    auto spritesTape = tapes.sprites();
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    game.spawnMonster(pParty->pos + Vec3f(0, 1500, 0), static_cast<MonsterId>(1), SPAWN_STATIONARY);
+    game.tick(96); // The archer shoots three arrows, the first two miss.
+
+    auto sprites = spritesTape.flatten();
+    EXPECT_CONTAINS(sprites, static_cast<SpriteId>(500));
+    EXPECT_FALSE(std::ranges::contains(sprites, static_cast<SpriteId>(501))); // Arrows vanish where they land.
+    EXPECT_LT(hpTape.delta(), 0);
+    EXPECT_EQ(conditionTape.frontBack(), tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
+                                              {CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD}));
+}
+
 GAME_TEST(MM6CombatHeadless, DISABLED_GoblinKingBreaksItem) {
     // The Goblin King's item-breaking hit used to refuse and end the run.
     // Run alone in a fresh MM6 headless process.

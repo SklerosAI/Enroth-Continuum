@@ -14,6 +14,7 @@
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6DoorMotionTraceForTest.h"
 #include "Engine/MM6/MM6MapTransition.h"
+#include "Engine/MM6/MM6MapVisit.h"
 #include "Engine/AssetsManager.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/BspRenderer.h"
@@ -331,6 +332,7 @@ void IndoorLocation::Load(std::string_view filename, int num_days_played, int re
         Blob retained = serializeMM6Indoor(delta.wire);
         mm6DeltaBytes.resize(retained.size());
         std::memcpy(mm6DeltaBytes.data(), retained.data(), retained.size());
+        lastVisitTime = mm6::mapLastVisit(mm6DeltaBytes);
         *indoor_was_respawned = respawnInitial || respawnTimed;
         mm6::restoreParkedMap(dlv_filename, *indoor_was_respawned);
         return;

@@ -3179,3 +3179,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added and repeat-verified `MM7DarkGuild.CelesteRobertCarriesControlCube`. With the actual Dark prerequisites and cube assignment, it uses the real Celeste door transition and finds exactly one live Robert the Wise actor carrying the control cube in the Small House. This distinguishes the Dark source from the already-tested Light-side Tolberti actor; Dark combat/theft retrieval remains open.
 
+## [2026-11-11] verify | MM7 Dark cube Blaster reward
+- by: T-Burton-ND via codex
+- Public walkthrough and skill-teacher sources clarify that the control-cube target drops both the cube and a Blaster, and completing either assassination grants normal Blaster skill access. The rebuilt Dark hand-in test now proves the direct effect: each of the four party members receives novice Blaster skill. This replaces the disproven claim that Tolberti exposes a dedicated learning-dialogue button.
+

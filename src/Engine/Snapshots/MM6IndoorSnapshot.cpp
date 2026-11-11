@@ -305,9 +305,10 @@ IndoorLocation_MM7 projectMM6IndoorBase(const MM6IndoorSnapshot &base) {
     result.decorations.resize(sprites.count);
     result.decorationNames.resize(sprites.count);
     const auto *spriteBytes = static_cast<const uint8_t *>(sprites.bytes.data()) + 4;
+    const auto *spriteNames = spriteBytes + sprites.count * sizeof(MM6Decoration); // All records come first, then all names.
     for (size_t i = 0; i < sprites.count; ++i) {
         MM6Decoration source;
-        std::memcpy(&source, spriteBytes + i * 60, sizeof(source));
+        std::memcpy(&source, spriteBytes + i * sizeof(MM6Decoration), sizeof(source));
         LevelDecoration_MM7 &target = result.decorations[i];
         target.uDecorationDescID = source.id;
         target.uFlags = source.flags;
@@ -317,7 +318,7 @@ IndoorLocation_MM7 projectMM6IndoorBase(const MM6IndoorSnapshot &base) {
         target.uTriggerRange = source.triggerRadius;
         target.eventVarId = source.eventVariable;
         target.field_1A = source.direction;
-        std::memcpy(result.decorationNames[i].data(), spriteBytes + i * 60 + 28, 32);
+        std::memcpy(result.decorationNames[i].data(), spriteNames + i * 32, 32);
     }
 
     const std::vector<BLVLight_MM6> lights = records<BLVLight_MM6>(base.section(MM6IndoorSectionKind::Lights), 12);

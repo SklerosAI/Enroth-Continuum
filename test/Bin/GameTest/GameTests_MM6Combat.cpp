@@ -230,3 +230,26 @@ GAME_TEST(MM6CombatHeadless, DISABLED_PoisonAndMagicMonstersHitParty) {
     EXPECT_CONTAINS(attacks, DAMAGE_EARTH); // MM6 Poison.
     EXPECT_LT(hpTape.delta(), 0);
 }
+
+GAME_TEST(MM6CombatHeadless, DISABLED_TrapDoorFiresOnlyWhenClicked) {
+    // The t7 trapped door used to fire thousands of times a frame without being clicked and kill the party.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = charTapes.hps();
+    auto doorTape = tapes.doorState(1);
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "t7.blv");
+    for (Character &character : pParty->pCharacters)
+        character.health = 200; // A new party dies to the trap.
+    test.startTaping();
+
+    game.tick();
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(-511, -774, 0), 270); // In front of the trapped door.
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_2); // The trap hits the current character.
+    game.tick();
+    game.pointMouseAtFace(814); // The door's near side.
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+
+    EXPECT_EQ(hpTape, tape({200, 200, 200, 200}, {200, 150, 200, 200})); // One hit of the trap.
+    EXPECT_EQ(doorTape, tape(DOOR_OPEN)); // The new party fails the disarm check, so the trap goes off and the door doesn't move.
+}

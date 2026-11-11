@@ -296,7 +296,9 @@ and redirects saves to an in-memory filesystem until the trace stops.
 - Two code-changing lanes at most while both Codex lanes are active. Claude
   takes a code lane only when one frees.
 - Ten registered worktrees at most. Reuse a merged worktree before creating one.
-- Keep at least 10 GB free on disk. Codex freed 2.3 GiB of merged build
+- Keep at least 10 GB free on disk. The shared ccache is capped at 3 GB
+  (2026-11-10). Each new worktree build adds about 1.5-2 GB, so check
+  `df -h /` before starting one. Codex freed 2.3 GiB of merged build
   output on 2026-11-10, leaving 14 GiB free.
 - Integrate reviewed commits into `master` one at a time. Codex root
   integrates, Claude reviews lane output before it goes in.

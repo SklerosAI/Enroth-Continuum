@@ -478,3 +478,37 @@ GAME_TEST(MM7DarkGuild, KastoreRequiresXenofexKill) {
     EXPECT_EQ(killedTape, tape(false, true));
     EXPECT_EQ(finishedTape, tape(false, true));
 }
+
+GAME_TEST(MM7DarkGuild, KastoreAssignsDarkOverthrusterAfterXenofex) {
+    // The final Dark task is not available from a bare path flag: execute the cube and Xenofex hand-in state
+    // transitions, then select Kastore's actual final-topic event in Gloaming.
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+    unlockDarkAdvisers(game);
+    pParty->_questBits.set(QBIT_ALTAR_PIECES_DARK_FINISHED);
+    pParty->_questBits.set(QBIT_SOUL_JARS_DARK_FINISHED);
+    pParty->_questBits.set(QBIT_CLANKERS_LAB_FINISHED);
+    openPitAdviser(game, 87);
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    leaveDarkGuildHouse(game);
+    openPitAdviser(game, 87);
+    pParty->pCharacters[0].inventory.add(Item(ITEM_QUEST_CONTROL_CUBE));
+    game.tick();
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    leaveDarkGuildHouse(game);
+    openGloamingKastore(game);
+    ASSERT_TRUE(selectKastoreEvent(game, 159));
+    leaveDarkGuildHouse(game);
+    pParty->_questBits.set(QBIT_XENOFEX_KILLED);
+    openGloamingKastore(game);
+    ASSERT_TRUE(selectKastoreEvent(game, 160));
+    leaveDarkGuildHouse(game);
+
+    auto activeTape = tapes.questBit(QBIT_OSCILLATION_OVERTHRUSTER_DARK_ACTIVE);
+    test.startTaping();
+    openGloamingKastore(game);
+    ASSERT_TRUE(selectKastoreEvent(game, 171));
+    EXPECT_EQ(activeTape, tape(false, true));
+}

@@ -3195,3 +3195,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Rechecked the shared finale before extending Dark coverage. The four wetsuits may only be worn with Blasters while crossing to Lincoln; normal equipment must be restored inside. Lincoln power must be restored before the Overthruster can be retrieved and returned to Kastore. The catalog now records those gates rather than collapsing D7 into a generic final item hand-in.
 
+## [2026-11-11] verify | MM7 Stone City troglodyte side quest
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7SideQuests.TroglodytesRequireLowerCityClearance`, the first side-quest expansion selected from the independent lane. It proves Spark Burnkindle assigns the task, refuses a report with one qualifying lower-city troglodyte alive, and after a full clear grants 5,000 XP to each party member, 2,500 gold, -10 reputation and the lower-city award. The Nighon passage is out of this source fixture; direct combat remains separate.
+

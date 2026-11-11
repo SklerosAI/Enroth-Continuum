@@ -699,6 +699,15 @@ EvtProgram syntheticProfessionDismissEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticNpcGroupNewsEvent() {
+    std::string bytes;
+    std::string group;
+    appendU32(&group, 1);
+    appendU32(&group, 42);
+    appendRecord(&bytes, 0, EVENT_SetNPCGroupNews, group);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -1415,4 +1424,15 @@ GAME_TEST(MM6ProfessionDismissEvent, DismissesOnlyTheMatchingMM6Profession) {
     EXPECT_FALSE(pNPCStats->pNPCData[13].Hired());
     EXPECT_TRUE(pNPCStats->pNPCData[14].Hired());
     EXPECT_TRUE(pParty->pCharacters[0]._characterEventBits.test(51));
+}
+
+GAME_TEST(MM6NpcGroupNews, UpdatesTheParsedNpcGroupState) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedNpcStats restoreNpcs;
+    engine->_localEventMap = syntheticNpcGroupNewsEvent();
+    pNPCStats->pGroups[1] = 0;
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_EQ(pNPCStats->pGroups[1], 42);
 }

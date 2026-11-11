@@ -32,7 +32,7 @@ int PortraitFrameTable::animationFrameIndex(int animationId, Duration frameTime)
                 break;
             time -= frameTime;
             ++animationId;
-            // Shouldn't jump into another portrait. MM6's yes animation names its own portrait again on its fifth frame.
+            // Shouldn't jump into another portrait. MM6's yes animation names its portrait again on its fifth frame.
             assert(this->pFrames[animationId].portrait == PORTRAIT_INVALID || this->pFrames[animationId].portrait == portrait);
         }
     }

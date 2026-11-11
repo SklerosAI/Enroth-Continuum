@@ -150,7 +150,7 @@ GAME_TEST(MM6Transport, BoatToMistAndBack) {
 }
 
 GAME_TEST(MM6Transport, QuestRouteToHermitsIsle) {
-    // The outd3 ship never listed its voyage to the Hermit's Isle, which opens once the traitor step sets quest bit 168.
+    // The outd3 ship never listed its voyage to the Hermit's Isle, which quest bit 168 opens after the traitor step.
     startNewGameThroughInput(game);
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     const MapId outd3 = pMapTable->GetMapInfo("outd3.odm");

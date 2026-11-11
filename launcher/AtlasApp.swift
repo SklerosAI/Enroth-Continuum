@@ -524,6 +524,9 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
                 if FileManager.default.fileExists(atPath: session.appendingPathComponent("warnings.txt").path) {
                     message += " Check warnings.txt before relying on the capture."
                 }
+                if let storage = status["storage_warnings"] as? [String], !storage.isEmpty {
+                    message += " " + storage.joined(separator: " ")
+                }
             } else {
                 message += " Recording completion was not confirmed; inspect the session folder."
             }

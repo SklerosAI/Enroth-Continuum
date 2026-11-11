@@ -3113,3 +3113,9 @@ Chronological record of wiki activity.
 - Built the current arm64 MM6 and MM7 targets, staged and signature-verified a two-helper Atlas, then visually checked the rebuilt Gridiron Dark interface and its enabled MM6 action.
 - Replaced the installed Atlas only after that verification, preserving the prior app in the local Application Support rollback folder. No MM6 session was started during installation.
 
+## [2026-11-11] verify | MM6 campaign chain C0-C1
+- by: T-Burton-ND via codex
+- Integrated the C1 campaign chapter after its two independent fresh-profile runs passed. The integration checkout then ran C0 and C1 in separate headless processes.
+- C0 created `save000.ec6` from production New Game; C1 normal-Loaded it, completed the early council and stable-price routes plus the shield chest pickup, and created `save001.ec6`. Both retained digest pass markers in the disposable profile.
+- This is stronger headless progression evidence, but it does not replace visible owner playtesting or prove the remaining MM6 quest chain.
+

@@ -3055,3 +3055,10 @@ Chronological record of wiki activity.
 - C0 passed through the runner with its pass marker, and the C1 refusal held. The five disposable writer and reader pairs passed 1/1 each with unchanged slots. Focused Light and Xenofex controls passed 4/4 and 16/16. Full `check_style` passed. Unit tests passed 1,087 with 45 skipped. The full headless MM7 suite passed 538 with two skipped.
 - The working gate's remaining item is chapters C1-C7 of the chain to the Light ending.
 
+## [2026-11-11] verify | MM7 working gate closed, first MM6 working fixes integrated
+- by: T-Burton-ND via claude
+- Integrated on `master` at `88619a690`: MM7 chain chapters C4-C7, so eight chained chapter tests now run from New Game to the Light ending through real saves with pass markers. Also the recorder storage caps, and the MM6 map sweep, award-animation crash fix, production New Game, reputation variable, generated NPC pool and damage channels.
+- Checks at that commit: the full chain passed from a fresh profile. The full headless MM7 suite passed 540/540. The MM6 first-map gate passed 27/27 with its MM7 controls. Unit tests passed 1,100 with 45 skipped. `check_style` was clean.
+- With W1-W6 passed, stage 1 (MM7 working) is complete. Stage 2 (MM6 working) is active. Its next blockers are event spell casts and a t7 trap event that re-fires every frame.
+- Updated `Current-Delivery-Order.md` and `Campaign-Status.md`.
+

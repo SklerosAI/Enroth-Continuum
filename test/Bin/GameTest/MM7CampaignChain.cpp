@@ -43,7 +43,10 @@ void loadCampaignChainSlot(EngineController &game, int chapter) {
     const std::string fileName = fmt::format("save{:03}.mm7", chapter);
     ASSERT_TRUE(ufs->exists("saves/" + fileName));
     game.pressGuiButton("MainMenu_LoadGame");
-    game.tick(2);
+    auto loadWindowOpen = [] { return pGUIWindow_CurrentMenu && pGUIWindow_CurrentMenu->eWindowType == WINDOW_LOAD; };
+    for (int i = 0; i < 10 && !loadWindowOpen(); i++)
+        game.tick();
+    ASSERT_TRUE(loadWindowOpen());
     ASSERT_EQ(current_screen_type, SCREEN_LOADGAME);
     const auto &slots = saveLoadMenu()->slots();
     const auto found = std::ranges::find_if(slots, [&fileName](const SavegameSlot &entry) { return entry.fileName == fileName; });

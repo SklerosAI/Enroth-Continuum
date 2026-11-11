@@ -368,3 +368,38 @@ GAME_TEST(MM7DarkGuild, DarkShadeRequiresDisabledClankerDefenses) {
     EXPECT_EQ(defensesTape, tape(false, true));
     EXPECT_EQ(finishedTape, tape(false, true));
 }
+
+GAME_TEST(MM7DarkGuild, TolbertiRequiresAndAcceptsRobertsCube) {
+    // This is the Dark mirror of Robert's Light-side request: the Pit's Tolberti sends the party after Robert in
+    // Celeste and accepts Robert's cube, not Tolberti's own cube or a Light-recipient hand-in.
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+    unlockDarkAdvisers(game);
+    pParty->_questBits.set(QBIT_ALTAR_PIECES_DARK_FINISHED);
+    pParty->_questBits.set(QBIT_SOUL_JARS_DARK_FINISHED);
+    pParty->_questBits.set(QBIT_CLANKERS_LAB_FINISHED);
+    auto activeTape = tapes.questBit(QBIT_ROBERT_THE_WISE_ASSASSINATION_ACTIVE);
+    auto finishedTape = tapes.questBit(QBIT_ROBERT_THE_WISE_ASSASSINATED);
+    auto cubeTape = tapes.hasItem(ITEM_QUEST_CONTROL_CUBE);
+    test.startTaping();
+
+    openPitAdviser(game, 87);
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    ASSERT_TRUE(pParty->_questBits[QBIT_ROBERT_THE_WISE_ASSASSINATION_ACTIVE]);
+    leaveDarkGuildHouse(game);
+    openPitAdviser(game, 87);
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    EXPECT_FALSE(pParty->_questBits[QBIT_ROBERT_THE_WISE_ASSASSINATED]);
+    leaveDarkGuildHouse(game);
+    openPitAdviser(game, 87);
+
+    pParty->pCharacters[0].inventory.add(Item(ITEM_QUEST_CONTROL_CUBE));
+    game.tick();
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    EXPECT_EQ(activeTape, tape(false, true, false));
+    EXPECT_EQ(finishedTape, tape(false, true));
+    EXPECT_EQ(cubeTape, tape(false, true, false));
+}

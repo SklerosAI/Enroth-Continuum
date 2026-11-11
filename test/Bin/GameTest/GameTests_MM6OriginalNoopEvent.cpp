@@ -708,6 +708,15 @@ EvtProgram syntheticNpcGroupNewsEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticNpcGreetingEvent() {
+    std::string bytes;
+    std::string greeting;
+    appendU32(&greeting, 13);
+    appendU32(&greeting, 42);
+    appendRecord(&bytes, 0, EVENT_SetNPCGreeting, greeting);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -1435,4 +1444,18 @@ GAME_TEST(MM6NpcGroupNews, UpdatesTheParsedNpcGroupState) {
 
     runEvent(EvtContext(EVT_SOURCE_MAP, 1));
     EXPECT_EQ(pNPCStats->pGroups[1], 42);
+}
+
+GAME_TEST(MM6NpcGreeting, UpdatesTheParsedNpcGreetingState) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedNpcStats restoreNpcs;
+    engine->_localEventMap = syntheticNpcGreetingEvent();
+    pNPCStats->pNPCData[13].flags |= NPC_GREETED_FIRST | NPC_GREETED_SECOND;
+    pNPCStats->pNPCData[13].greetingIndex = 0;
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_FALSE(static_cast<bool>(pNPCStats->pNPCData[13].flags & NPC_GREETED_FIRST));
+    EXPECT_FALSE(static_cast<bool>(pNPCStats->pNPCData[13].flags & NPC_GREETED_SECOND));
+    EXPECT_EQ(pNPCStats->pNPCData[13].greetingIndex, 42);
 }

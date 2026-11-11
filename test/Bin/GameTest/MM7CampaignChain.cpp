@@ -166,7 +166,7 @@ static void pickHouseNpc(EngineController &game, HouseId houseId, int npcId) {
     }
 }
 
-void openCampaignChainCelesteHouse(EngineController &game, HouseId houseId, int npcId) {
+void enterCampaignChainCelesteHouse(EngineController &game, HouseId houseId) {
     game.teleportTo(MAP_CELESTE, Vec3f(-158, 7624, 1), 0);
     auto door = std::ranges::find_if(pIndoor->faces, [houseId](const BLVFace &face) {
         return face.Clickable() && opensHouse(face.eventId, houseId);
@@ -176,6 +176,12 @@ void openCampaignChainCelesteHouse(EngineController &game, HouseId houseId, int 
     game.teleportTo(MAP_CELESTE, position, yaw);
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), houseId);
+}
+
+void openCampaignChainCelesteHouse(EngineController &game, HouseId houseId, int npcId) {
+    enterCampaignChainCelesteHouse(game, houseId);
     pickHouseNpc(game, houseId, npcId);
 }
 

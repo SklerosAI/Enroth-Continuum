@@ -70,6 +70,14 @@ void lootCampaignChainChest(EngineController &game, MapId map, int eventId, Item
 void useCampaignChainTransition(EngineController &game, MapId map, int eventId);
 
 /**
+ * Teleports to the Celeste town portal arrival point, walks up to a house door and enters.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param houseId                       House behind the door.
+ */
+void enterCampaignChainCelesteHouse(EngineController &game, HouseId houseId);
+
+/**
  * Teleports to the Celeste town portal arrival point, walks up to a house door, enters and picks an NPC.
  *
  * @param game                          Engine controller of the running test.

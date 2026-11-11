@@ -1,7 +1,10 @@
 #include "MM6NewGameSession.h"
 
 #include <algorithm>
+#include <cstdint>
+#include <limits>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -18,6 +21,7 @@
 #include "Engine/Objects/Decoration.h"
 #include "Engine/Objects/Monsters.h"
 #include "Engine/Party.h"
+#include "Engine/Random/Random.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/DecorationTable.h"
@@ -117,7 +121,8 @@ bool startNewGameSession() {
             throw std::runtime_error("MM6 new game needs a loaded MM6 runtime");
         const LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
         ChestTitleState chest;
-        if (!initializePortNewGameChestTitleState(GameTitle::MM6, &chest))
+        const auto gameRandomSeed = [] { return std::optional(static_cast<std::uint32_t>(grng->random(std::numeric_limits<int>::max()))); };
+        if (!initializePortNewGameChestTitleState(GameTitle::MM6, &chest, gameRandomSeed))
             throw std::runtime_error("MM6 new game has no chest seed");
         std::unique_ptr<StagedRawSessionFields> staged;
         try {

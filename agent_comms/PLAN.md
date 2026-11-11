@@ -282,7 +282,10 @@ throws ranked by main-quest maps blocked:
 1. A hard crash on 9 main-quest maps (17 in all, including the first map):
    an award event plays the party buff animation, its icon name is missing
    from the MM6 icon table, and `IconFrameTable::animationLength` reads
-   index -1. Next lane.
+   index -1. Fixed on `claude/mm6-award-anim`: MM6 skips that animation, as
+   the original shows a portrait sparkle overlay instead. Follow-ups: MM6
+   portrait overlays, and HUD buff icons MM6 lacks (torch, wizard eye, fly,
+   water walk) that would hit the new assert.
 2. Generated NPC pool overflow at load on 4 main-quest maps (6 in all).
 3. Event CastSpell on 3 main-quest maps by timer (15 maps with faces).
 4. Unverified damage channel on 3 main-quest maps.

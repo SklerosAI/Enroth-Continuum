@@ -363,3 +363,24 @@ GAME_TEST(MM6CombatHeadless, DISABLED_Cd2IceBoltPlateHitsParty) {
     EXPECT_EQ(conditionTape.frontBack(), tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
                                               {CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD}));
 }
+
+GAME_TEST(MM6CombatHeadless, DISABLED_D18VentFireballsHurtNobody) {
+    // The d18 timers summon fireballs without a caster, and their explosions used to crash the run.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = tapes.totalHp();
+    auto spritesTape = tapes.sprites();
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "d18.blv");
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(512, -1152, -2044), 1536); // On a vent that a timer fires.
+    Actor *dummy = game.spawnMonster(Vec3f(512, -1400, -2044), static_cast<MonsterId>(78), SPAWN_DUMMY);
+    auto dummyHpTape = actorTapes.hp(dummy->id);
+    test.startTaping();
+
+    game.tick(24); // The timers launch fireballs from the vents, and one explodes next to the monster.
+
+    auto sprites = spritesTape.flatten();
+    EXPECT_CONTAINS(sprites, SPRITE_SPELL_FIRE_FIREBALL);
+    EXPECT_CONTAINS(sprites, SPRITE_SPELL_FIRE_FIREBALL_IMPACT);
+    EXPECT_EQ(hpTape.size(), 1);
+    EXPECT_EQ(dummyHpTape.size(), 1);
+}

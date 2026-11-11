@@ -4471,6 +4471,9 @@ void evaluateAoeDamage() {
             // If let through, they can trigger the assert near the end of the loop.
             if (pSpriteObj->spriteId == SPRITE_SPELL_EARTH_ROCK_BLAST_IMPACT && attackerType == OBJECT_None)
                 continue;
+            // An object that an MM6 event summoned has no caster, and the original hit routines ignore its explosion.
+            if (engine->gameTitle() == GameTitle::MM6 && attackerType == OBJECT_None)
+                continue;
         }
 
         if (attack.isMelee) {

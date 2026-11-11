@@ -192,6 +192,15 @@ EvtProgram syntheticSetNpcTopicEvent() {
     return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
 }
 
+EvtProgram syntheticMoveNpcEvent() {
+    std::string bytes;
+    std::string move;
+    appendU32(&move, 1);   // NPC.
+    appendU32(&move, 486); // Valid retained MM6 house ID.
+    appendRecord(&bytes, 0, EVENT_MoveNPC, move);
+    return EvtProgram::load(Blob::fromString(bytes), GameTitle::MM6);
+}
+
 struct ScopedLocalEventMap {
     EvtProgram events = std::move(engine->_localEventMap);
 
@@ -446,4 +455,15 @@ GAME_TEST(MM6SetNpcTopic, UpdatesTheMM6TopicSlot) {
     EXPECT_EQ(pNPCStats->pNPCData[1].dialogue_1_evt_id, 101);
     EXPECT_EQ(pNPCStats->pNPCData[1].dialogue_2_evt_id, 102);
     EXPECT_EQ(pNPCStats->pNPCData[1].dialogue_3_evt_id, 364);
+}
+
+GAME_TEST(MM6MoveNpc, UpdatesTheMM6NpcLocation) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ScopedLocalEventMap restoreEvents;
+    ScopedNpcStats restoreNpcs;
+    engine->_localEventMap = syntheticMoveNpcEvent();
+    pNPCStats->pNPCData[1].house = HOUSE_INVALID;
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 1));
+    EXPECT_EQ(pNPCStats->pNPCData[1].house, static_cast<HouseId>(486));
 }

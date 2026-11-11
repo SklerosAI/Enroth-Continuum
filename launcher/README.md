@@ -7,22 +7,40 @@ data path and user path. It does not package original Might & Magic data.
 ## Current behavior
 
 - MM7 launches, saves, exits, and reloads through The Atlas.
-- Optional **Record gameplay** starts a local passive MM7 session recorder with
-  Play. Choose an existing folder on this Mac or an external drive before
-  launching. The recorder keeps a rolling display replay of the last two
-  minutes, writes game logs and stable save snapshots there, and makes a fresh
-  save checkpoint every 10 minutes. Press **Command-Shift-R** while MM7 runs
-  to keep the replay in a new clip folder. If MM7 crashes, quits on a signal
-  or exits with an error, Atlas tells the recorder and the replay is kept as a
-  clip automatically. After a normal exit the replay is deleted. Only clips
-  accumulate. Atlas warns when recording storage or system memory runs low,
-  and the recorder stops below 2 GB free. Recording stops when MM7 exits,
-  while normal gameplay and saves stay in the MM7 profile. Video needs macOS
+- **Play upstream OpenEnroth**, next to Play MM7, launches the current upstream
+  OpenEnroth build on the same MM7 data, for playtesting upstream. It runs the
+  optional `Contents/Helpers/OpenEnroth.app` with exactly
+  `--data-path <MM7 data> --user-path <profile>`, which is upstream's own CLI.
+  Upstream plays MM7 only and has no `--game` option. Its profile is
+  `Profiles/MM7-OpenEnroth`, created before launch because upstream requires an
+  existing folder, and never the fork's `MM7-Atlas`. Atlas removes
+  `OPENENROTH_MM7_PATH` from its environment and passes no fork mod or vendor
+  settings, so upstream never falls back to `~/.openenroth` or another data
+  folder. Upstream writes its config, saves and `logs/openenroth_*.log` into
+  that profile and only reads the data folder, as its `GameStarter` source
+  shows. On its first start with an empty profile it copies any `saves` folder
+  from the data folder into the profile. Without the helper the button stays
+  visible but disabled, with a short explanation.
+- Two independent recording toggles apply to either Play button, and persist.
+  Choose an existing folder on this Mac or an external drive before launching.
+  **Record video** keeps a rolling display replay of the last two minutes.
+  **Record diagnostics** keeps game log ranges, stable save snapshots with a
+  fresh checkpoint every 10 minutes, the timeline, the build identity and
+  launch command, the exit status, macOS crash reports for the helper and light
+  CPU and memory samples. Diagnostics need no Screen Recording permission.
+  Atlas versions with a single recording switch carry its setting into both
+  toggles. With video on, press **Command-Shift-R** while the game runs
+  to keep the replay in a new clip folder. If the game crashes, quits on a
+  signal or exits with an error, Atlas tells the recorder and the replay is
+  kept as a clip automatically. After a normal exit the replay is deleted. Only
+  clips accumulate. Atlas warns when recording storage or system memory runs
+  low, and the recorder stops below 2 GB free. Recording stops when the game
+  exits, while normal gameplay and saves stay in its profile. Video needs macOS
   Screen Recording permission for Enroth Continuum. Atlas is ad-hoc signed,
   so macOS may ask again after each new install.
   The hotkey uses the Carbon hot key API, which needs neither Accessibility
-  nor Input Monitoring permission. Atlas registers it only while a recorded
-  MM7 session runs, and other apps do not receive Command-Shift-R meanwhile.
+  nor Input Monitoring permission. Atlas registers it only while a session
+  with video runs, and other apps do not receive Command-Shift-R meanwhile.
   If an external drive is remounted or replaced, choose its folder again so
   Atlas can verify the destination before the next recorded launch.
 - MM6 and MM8 cards detect locally extracted core data. Their engine adapters,
@@ -88,6 +106,10 @@ A Debug helper is about three times larger and noticeably slower.
 
 ## Local build
 
+Launcher checks need no app build. Compile and run
+`xcrun swiftc launcher/MM7ProfilePath.swift launcher/GameBuild.swift launcher/tests/main.swift -o <tmp>/atlas-tests`,
+then run `node launcher/tests/atlas_page.js` for the page controls.
+
 Build the fork's `MM7` target with CMake, then run
 `launcher/build.sh --mm7-app build/src/Bin/OpenEnroth/MM7.app`. The assembler
 checks the bundle ID, arm64 executable and title lock before staging the
@@ -110,6 +132,13 @@ archives and copied source notices, then includes those notices in
 older cached-library helper cannot be identified as a source-built helper from
 its bundle metadata alone. Keep the recipe output available until the staged
 Atlas is assembled.
+
+Pass `--openenroth-app path/to/OpenEnroth.app` to add the upstream helper. The
+assembler checks its bundle ID `OpenEnroth`, executable and arm64 slice. It
+cannot probe a title lock, since upstream has none. A `BUILD-INFO.txt` beside
+the given app is copied to
+`Contents/Resources/Helpers/OpenEnroth-BUILD-INFO.txt`, where the recorder reads
+the upstream commit. `--reuse-from` keeps both the helper and that file.
 
 For a future title update, pass `--reuse-from` with an existing Atlas and
 `--mm6-app` or `--mm8-app` only after that title passes its play and save gate.

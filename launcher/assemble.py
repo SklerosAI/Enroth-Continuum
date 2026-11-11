@@ -22,7 +22,10 @@ IDENTITIES = {
     "MM6": ("org.sklerosai.enrothcontinuum.mm6", "MM6", "mm7"),
     "MM7": ("org.sklerosai.enrothcontinuum.mm7", "MM7", "mm6"),
     "MM8": ("org.sklerosai.enrothcontinuum.mm8", "MM8", "mm7"),
+    # Upstream OpenEnroth plays MM7 only and has no --game option to probe.
+    "OpenEnroth": ("OpenEnroth", "OpenEnroth", None),
 }
+HELPER_OPTIONS = {"MM6": "mm6_app", "MM7": "mm7_app", "MM8": "mm8_app", "OpenEnroth": "openenroth_app"}
 
 
 def run(*args: str | Path) -> subprocess.CompletedProcess[str]:
@@ -45,6 +48,8 @@ def verify_helper(path: Path, title: str) -> None:
         raise ValueError(f"{title} helper executable is missing: {binary}")
     if "arm64" not in run("lipo", "-archs", binary).stdout.split():
         raise ValueError(f"{title} helper is not arm64: {binary}")
+    if wrong_game is None:
+        return
 
     # Bundle metadata alone is insufficient: prove the executable rejects
     # the other playable title before it can initialize data or a GUI.
@@ -119,7 +124,8 @@ def verify_mm7_dependency_notices(build_root: Path) -> Path:
     return notices_root
 
 
-def assemble(output: Path, helpers: dict[str, Path], mm7_deps_build_root: Path | None = None) -> None:
+def assemble(output: Path, helpers: dict[str, Path], mm7_deps_build_root: Path | None = None,
+             build_infos: dict[str, Path] | None = None) -> None:
     sdk = Path(run("/usr/bin/xcrun", "--sdk", "macosx", "--show-sdk-path").stdout.strip())
     swiftc = Path(run("/usr/bin/xcrun", "--find", "swiftc").stdout.strip())
     if not sdk.is_dir() or not swiftc.is_file():
@@ -136,7 +142,7 @@ def assemble(output: Path, helpers: dict[str, Path], mm7_deps_build_root: Path |
         temporary_root = Path(temporary)
         app = temporary_root / output.name
         contents = app / "Contents"
-        for folder in ("MacOS", "Resources/Atlas", "Resources/Notices", "Helpers"):
+        for folder in ("MacOS", "Resources/Atlas", "Resources/Notices", "Resources/Helpers", "Helpers"):
             (contents / folder).mkdir(parents=True)
 
         cache = Path.home() / "Library/Caches/EnrothContinuum/SwiftModules"
@@ -144,6 +150,7 @@ def assemble(output: Path, helpers: dict[str, Path], mm7_deps_build_root: Path |
         run(swiftc, "-O", "-sdk", sdk, "-module-cache-path", cache,
             "-framework", "AppKit", "-framework", "WebKit", "-framework", "Carbon",
             ROOT / "launcher/AtlasApp.swift", ROOT / "launcher/MM7ProfilePath.swift",
+            ROOT / "launcher/GameBuild.swift",
             "-o", contents / "MacOS/EnrothContinuum")
         shutil.copy2(ROOT / "launcher/Info.plist", contents / "Info.plist")
         shutil.copy2(ROOT / "launcher/Atlas/index.html", contents / "Resources/Atlas/index.html")
@@ -154,6 +161,8 @@ def assemble(output: Path, helpers: dict[str, Path], mm7_deps_build_root: Path |
             shutil.copytree(notice_source, contents / "Resources/Notices/MM7-Media")
         shutil.copy2(ATLAS_ICON, contents / "Resources/AtlasIcon.icns")
 
+        for title, source in (build_infos or {}).items():
+            shutil.copy2(source, contents / "Resources/Helpers" / f"{title}-BUILD-INFO.txt")
         for title, source in helpers.items():
             destination = contents / "Helpers" / f"{title}.app"
             run("ditto", source, destination)
@@ -180,6 +189,8 @@ def main() -> None:
     parser.add_argument("--mm7-app", type=Path, help="Verified, title-locked MM7.app")
     parser.add_argument("--mm6-app", type=Path, help="Verified MM6.app, only after its play gate")
     parser.add_argument("--mm8-app", type=Path, help="Verified MM8.app, only after its play gate")
+    parser.add_argument("--openenroth-app", type=Path,
+                        help="Optional upstream OpenEnroth.app for playtesting; its sibling BUILD-INFO.txt is kept")
     parser.add_argument("--mm7-deps-build-root", type=Path,
                         help="Local MM7 media-library recipe output; verify and bundle its source notices")
     parser.add_argument("--reuse-from", type=Path, help="Existing Atlas with sibling helpers to retain")
@@ -190,19 +201,25 @@ def main() -> None:
         raise ValueError(f"Atlas to reuse does not exist: {options.reuse_from}")
 
     helpers = {}
-    for title in ("MM6", "MM7", "MM8"):
-        explicit = getattr(options, f"{title.lower()}_app")
+    build_infos = {}
+    for title, option in HELPER_OPTIONS.items():
+        explicit = getattr(options, option)
         inherited = (options.reuse_from / "Contents/Helpers" / f"{title}.app"
                      if options.reuse_from else None)
         source = explicit if explicit is not None else inherited
         if source is not None and source.is_dir():
             helpers[title] = source.resolve()
+            build_info = (source.parent / "BUILD-INFO.txt" if explicit is not None else
+                          options.reuse_from / "Contents/Resources/Helpers" / f"{title}-BUILD-INFO.txt")
+            if build_info.is_file():
+                build_infos[title] = build_info.resolve()
         elif explicit is not None:
             raise ValueError(f"Explicit {title} helper does not exist: {explicit}")
     if "MM7" not in helpers:
         raise ValueError("A title-locked MM7.app is required; pass --mm7-app or --reuse-from")
     assemble(options.output.resolve(), helpers,
-             options.mm7_deps_build_root.expanduser().resolve() if options.mm7_deps_build_root else None)
+             options.mm7_deps_build_root.expanduser().resolve() if options.mm7_deps_build_root else None,
+             build_infos)
 
 
 if __name__ == "__main__":

@@ -35,6 +35,7 @@
     .card .meta { margin-top:9px;color:#b8c6c1;font-size:12px;line-height:1.6 }.card .meta strong { color:#e3e5d6;font-weight:550 }
     .card button { margin-top:auto;min-height:42px;border-radius:7px;border:1px solid #bca3729e;color:#f5dec0;background:#a7824633 }
     .card button.play { color:#15242a;background:#ebc489;border-color:#f2d29c;font-weight:700 }.card button:hover { filter:brightness(1.15) }.card button:disabled { opacity:.55;cursor:default;filter:none }
+    .card .actions { margin-top:auto;display:grid;gap:8px }.card .actions button { margin-top:0;width:100% }.card .actions .minor { font-size:11px }
     .footnote { margin:22px 0;color:#a9b9b4;font-size:12px }
     .view { display:none }.view.active { display:block }
     .pagehero { margin:35px 0 24px }.pagehero p { max-width:640px }
@@ -80,12 +81,13 @@
       <div class="sectionline"><h2>The campaigns</h2><span>Your owned game data stays private</span></div>
       <div class="cards">
         <article class="card"><span class="roman">VI</span><small>New Sorpigal awaits</small><h3>Mandate of Heaven</h3><div class="meta">Data <strong id="mm6-data">Checking…</strong><br>Engine <strong>In progress</strong></div><button data-detail="mm6">Explore campaign</button></article>
-        <article class="card primary"><span class="roman">VII</span><small>The first open gate</small><h3>For Blood and Honor</h3><div class="meta">Data <strong id="mm7-data">Checking…</strong><br>Latest save <strong id="latest-save">Checking…</strong></div><button class="play" id="play-mm7">Play MM7</button></article>
+        <article class="card primary"><span class="roman">VII</span><small>The first open gate</small><h3>For Blood and Honor</h3><div class="meta">Data <strong id="mm7-data">Checking…</strong><br>Latest save <strong id="latest-save">Checking…</strong></div><div class="actions"><button class="play" id="play-mm7">Play MM7</button><button id="play-openenroth" disabled>Play upstream OpenEnroth</button><p class="minor" id="openenroth-note">Checking for the upstream OpenEnroth helper…</p></div></article>
         <article class="card"><span class="roman">VIII</span><small>Jadame calls</small><h3>Day of the Destroyer</h3><div class="meta">Data <strong id="mm8-data">Checking…</strong><br>Engine <strong>In progress</strong></div><button data-detail="mm8">Explore campaign</button></article>
       </div>
-      <div class="panel"><h3>Gameplay recording</h3><p>Capture your MM7 play session locally for later bug review. Recording starts with Play and ends when MM7 closes. It keeps only a rolling two-minute display replay; game audio is not captured.</p>
-        <div class="row"><div><strong>Record gameplay</strong><p>Game logs and a fresh save checkpoint every 10 minutes stay in your chosen folder. The rolling display replay never grows past two minutes unless you save a clip.</p></div><button class="secondary" id="record-toggle">Turn on</button></div>
-        <div class="row"><div><strong>Save the last two minutes</strong><p>Press <kbd>⌘⇧R</kbd> while MM7 is running to keep the replay in a new clip folder. If MM7 crashes, the replay is kept automatically.</p></div><span class="pill">Rolling replay</span></div>
+      <div class="panel"><h3>Gameplay recording</h3><p>Capture your MM7 play session locally for later bug review, with either engine. Recording starts with Play and ends when the game closes. Game audio is not captured.</p>
+        <div class="row"><div><strong>Record video</strong><p>Keeps a rolling replay of the last two minutes of the display. It never grows past that unless you save a clip. Needs macOS Screen Recording permission.</p></div><button class="secondary" id="record-video-toggle">Turn on</button></div>
+        <div class="row"><div><strong>Record diagnostics</strong><p>Game logs, save checkpoints every 10 minutes, build identity, exit status, macOS crash reports and light CPU and memory samples. No screen access is needed.</p></div><button class="secondary" id="record-diagnostics-toggle">Turn on</button></div>
+        <div class="row"><div><strong>Save the last two minutes</strong><p>With video on, press <kbd>⌘⇧R</kbd> while the game is running to keep the replay in a new clip folder. If the game crashes, the replay is kept automatically.</p></div><span class="pill">Rolling replay</span></div>
         <div class="row"><div><strong>Save recordings to</strong><p class="record-path" id="record-path">This Mac</p><p>Each session is kept in its own new folder.</p></div><div><button class="secondary" id="record-folder">Choose folder…</button> <button class="secondary" id="open-record-folder">Open folder</button></div></div>
         <p class="minor" id="record-status">Recording is off.</p>
       </div>
@@ -132,12 +134,18 @@
   window.Atlas={receive(state){
     for (const game of Object.keys(titles)) safeText(game+'-data',state.data[game]?(game==='mm8'?'Core files extracted':'Ready'):'Not configured');
     safeText('latest-save',state.saves[0]?.name||'None yet');
-    const play=document.getElementById('play-mm7');play.disabled=!!state.running||!!state.recordingFinalizing;play.textContent=state.running?'MM7 is running':state.recordingFinalizing?'Finishing recording':state.data.mm7?'Play MM7':'Choose MM7 data';
-    safeText('record-toggle',state.recordingEnabled?'Turn off':'Turn on');
-    document.getElementById('record-toggle').disabled=!!state.running||!!state.recordingFinalizing;
+    const busy=!!state.running||!!state.recordingFinalizing;
+    const play=document.getElementById('play-mm7');play.disabled=busy;play.textContent=state.running?(state.runningBuild==='mm7'?'MM7 is running':'OpenEnroth is running'):state.recordingFinalizing?'Finishing recording':state.data.mm7?'Play MM7':'Choose MM7 data';
+    const upstream=document.getElementById('play-openenroth');upstream.disabled=busy||!state.upstreamAvailable||!state.data.mm7;
+    upstream.textContent=state.running&&state.runningBuild==='openenroth'?'OpenEnroth is running':'Play upstream OpenEnroth';
+    safeText('openenroth-note',state.upstreamAvailable?'The current upstream engine, for playtesting. It uses its own profile and your MM7 data.':'Unavailable: this Atlas build has no upstream OpenEnroth helper.');
+    safeText('record-video-toggle',state.recordVideo?'Turn off':'Turn on');
+    safeText('record-diagnostics-toggle',state.recordDiagnostics?'Turn off':'Turn on');
+    document.getElementById('record-video-toggle').disabled=busy;
+    document.getElementById('record-diagnostics-toggle').disabled=busy;
     document.getElementById('record-folder').disabled=!!state.running||!!state.recordingFinalizing;
     safeText('record-path',state.recordingPath||'This Mac · Enroth Continuum recordings');
-    safeText('record-status',state.recordingSession?(state.running?'Recording session: ':'Latest recording: ')+state.recordingSession:state.recordingEnabled?'Ready to record next MM7 launch.':'Recording is off.');
+    safeText('record-status',state.recordingSession?(state.running?'Recording session: ':'Latest recording: ')+state.recordingSession:state.recordingEnabled?'Ready to record the next launch.':'Recording is off.');
     const saves=document.getElementById('save-list');saves.replaceChildren();
     if (!state.saves.length){const li=document.createElement('li');li.textContent='No MM7 saves found yet.';saves.append(li)}
     for(const save of state.saves){const li=document.createElement('li'),name=document.createElement('span'),date=document.createElement('time');name.textContent=save.name;date.textContent=save.date;li.append(name,date);saves.append(li)}
@@ -197,7 +205,8 @@
   document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>send(b.dataset.action)));
   document.querySelectorAll('[data-detail]').forEach(b=>b.addEventListener('click',()=>{show('settings');safeText('notice',titles[b.dataset.detail]+' engine support is in progress. You can already choose its private game data folder.')}));
   document.getElementById('play-mm7').addEventListener('click',()=>send('play-mm7'));
-  document.getElementById('record-toggle').addEventListener('click',()=>send('record-'+(document.getElementById('record-toggle').textContent==='Turn on'?'on':'off')));
+  document.getElementById('play-openenroth').addEventListener('click',()=>send('play-openenroth'));
+  for(const kind of ['video','diagnostics'])document.getElementById('record-'+kind+'-toggle').addEventListener('click',e=>send('record-'+kind+'-'+(e.currentTarget.textContent==='Turn on'?'on':'off')));
   document.getElementById('record-folder').addEventListener('click',()=>send('choose-record-folder'));
   document.getElementById('open-record-folder').addEventListener('click',()=>send('open-record-folder'));
   document.getElementById('mod-toggle').addEventListener('click',()=>send(document.getElementById('mod-toggle').textContent==='Play Vanilla'?'mods-off':'mods-on'));

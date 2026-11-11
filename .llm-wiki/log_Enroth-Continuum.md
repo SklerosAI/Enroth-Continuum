@@ -3204,3 +3204,7 @@ Chronological record of wiki activity.
 - Selectively brought forward OpenEnroth `#2972` / `#2868`: MM7 event scripts identify monsters from zero, so decoder handling now translates monster-ID kill checks before engine comparison. This restores correct Griffin and Troglodyte quest predicates without changing source map data.
 - Rebuilt the arm64 headless runner and passed `Issue2868a`, `Issue2868b`, `Issue673d`, and `MM7SideQuests.TroglodytesRequireLowerCityClearance` three times. The retained upstream tests prove the regional all-Griffin and Troglodyte-Queen boundaries; local tests retain the full reward contract.
 
+## [2026-11-11] research | MM7 Hume Monk promotion contracts
+- by: T-Burton-ND via codex
+- Rechecked both Bartholomew Hume promotions against the public promotion and Harmondale references. The first promotion completes remotely when the Zokarr Tomb meditation pool is used; the Light second promotion requires a return to Hume after the Temple of Baa High Priest kill and cloak recovery. The catalog now names those acceptance, completion and return boundaries rather than reducing the latter to a generic priest-help task.
+

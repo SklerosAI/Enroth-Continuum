@@ -3242,3 +3242,8 @@ Chronological record of wiki activity.
 - Native MM7 loading now uses the same structural validator and bounded path checks as its atomic writer. A valid `.bak` is admitted read-only when the primary is corrupt; invalid candidates fail before load-side live-state mutation, and RAM/test filesystems retain their existing path.
 - Existing save-capture and corrupt-body admission controls passed three consecutive headless runs. Manual load-menu backup visibility and an explicit repair decision remain separate user-facing work.
 
+## [2026-11-11] fix | MM7 queued scroll cancellation
+- by: T-Burton-ND via codex
+- MM7 now returns a cursor-held scroll when queued target casting is cancelled because the caster becomes unable to act. The shared cancellation path remains title-gated, so MM6 behavior is unchanged.
+- `MM7Scrolls.IncapacitationCancelsActorTargetScroll` and the complete five-case scroll contract passed three consecutive headless runs. Pass, theft, full-queue and turn-wait exits remain separate audit candidates.
+

@@ -3183,3 +3183,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Public walkthrough and skill-teacher sources clarify that the control-cube target drops both the cube and a Blaster, and completing either assassination grants normal Blaster skill access. The rebuilt Dark hand-in test now proves the direct effect: each of the four party members receives novice Blaster skill. This replaces the disproven claim that Tolberti exposes a dedicated learning-dialogue button.
 
+## [2026-11-11] verify | MM7 Dark Robert Blaster source
+- by: T-Burton-ND via codex
+- Extended the repeat-verified Celeste Robert source test. The one live Robert actor reached through the Dark route now proves both documented carried quest rewards before any inventory injection: the control cube and a Blaster. Combat or theft and corpse/pocket transfer are still deliberately separate interaction coverage.
+

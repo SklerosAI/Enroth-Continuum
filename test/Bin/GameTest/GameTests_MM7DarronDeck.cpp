@@ -134,11 +134,20 @@ bool pickUpDeck(EngineController &game, int spriteId) {
     return false;
 }
 
+int totalExperience() {
+    int result = 0;
+    for (const Character &character : pParty->pCharacters)
+        result += character.experience;
+    return result;
+}
+
 } // namespace
 
-GAME_TEST(MM7SideQuests, DarronsDeckIsPhysicallyAcquiredAfterAcceptance) {
+GAME_TEST(MM7SideQuests, DarronsDeckIsPhysicallyAcquiredAndReturned) {
     game.startNewGame();
     engine->config->debug.NoDamage.setValue(true);
+    const int gold = pParty->uNumGold;
+    const int experience = totalExperience();
     game.teleportTo(MAP_WHITE_CLIFF_CAVE, Vec3f(), 0);
     ASSERT_GE(deckSprite(), 0);
 
@@ -157,4 +166,12 @@ GAME_TEST(MM7SideQuests, DarronsDeckIsPhysicallyAcquiredAfterAcceptance) {
     ASSERT_TRUE(pickUpDeck(game, sprite));
     EXPECT_TRUE(pParty->hasItem(ITEM_QUEST_ARCOMAGE_DECK) || pParty->pPickedItem.itemId == ITEM_QUEST_ARCOMAGE_DECK);
     EXPECT_EQ(deckSprite(), -1);
+
+    openDarronHouse(game, darron);
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    EXPECT_FALSE(pParty->_questBits[QBIT_DARRONS_BROTHER_ACTIVE]);
+    EXPECT_TRUE(pParty->hasItem(ITEM_QUEST_ARCOMAGE_DECK) || pParty->pPickedItem.itemId == ITEM_QUEST_ARCOMAGE_DECK);
+    EXPECT_EQ(pParty->uNumGold, gold + 750);
+    EXPECT_EQ(totalExperience(), experience + 4 * 2000);
 }

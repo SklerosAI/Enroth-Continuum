@@ -3199,3 +3199,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added and repeat-verified `MM7SideQuests.TroglodytesRequireLowerCityClearance`, the first side-quest expansion selected from the independent lane. It proves Spark Burnkindle assigns the task, refuses a report with one qualifying lower-city troglodyte alive, and after a full clear grants 5,000 XP to each party member, 2,500 gold, -10 reputation and the lower-city award. The Nighon passage is out of this source fixture; direct combat remains separate.
 
+## [2026-11-11] backport | MM7 zero-based event monster identifiers
+- by: T-Burton-ND via codex
+- Selectively brought forward OpenEnroth `#2972` / `#2868`: MM7 event scripts identify monsters from zero, so decoder handling now translates monster-ID kill checks before engine comparison. This restores correct Griffin and Troglodyte quest predicates without changing source map data.
+- Rebuilt the arm64 headless runner and passed `Issue2868a`, `Issue2868b`, `Issue673d`, and `MM7SideQuests.TroglodytesRequireLowerCityClearance` three times. The retained upstream tests prove the regional all-Griffin and Troglodyte-Queen boundaries; local tests retain the full reward contract.
+

@@ -8,6 +8,18 @@ tags: [handoff, agents, mm6]
 
 This page is the starting brief for future Codex agents working in parallel on Enroth Continuum; recheck its dated status against the authoritative files before acting.
 
+## Title ownership — 2026-11-12
+
+The owner made the title boundary explicit: Codex is the sole arbiter and
+delivery owner for MM7, including the working gate, audit, defects, acceptance
+evidence and MM7 lane decisions. Claude Code equivalently owns all MM6 work.
+Neither may redirect, accept or change the other's title without a new owner
+instruction. Each title has up to five linked worktrees; `master` is neutral
+integration and does not use either allocation. Before creating one, run
+`python3 tools/check_worktree_budget.py --agent codex` or `--agent claude` and
+use the corresponding `codex/` or `claude/` branch prefix. Older global-lead
+language below is historical and superseded by this boundary.
+
 ## Fast resume pointer — 2026-11-10
 
 The owner's [current delivery order](Current-Delivery-Order.md) is MM7 working,

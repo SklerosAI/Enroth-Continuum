@@ -3,8 +3,14 @@
 The owner's [delivery order](../.llm-wiki/Current-Delivery-Order.md) is MM7
 working, MM6 working, full MM7 audit, full MM6 audit. This board records
 current lanes; older messages and handoffs remain historical evidence.
-Claude Code is the planning and coordination lead. The stage 1 gate rows
-(W1-W6), defect queue and limits are in [PLAN.md](PLAN.md).
+
+**Effective 2026-11-12:** Codex is the sole arbiter and delivery owner for
+MM7; Claude Code is the sole delivery owner for MM6. Each owner has up to five
+linked worktrees, while the `master` checkout is neutral integration and does
+not consume either allocation. Run the owner-specific budget check before
+creating a checkout. Earlier lead/coordination labels below are historical and
+do not override this split. The stage gates, defect queue and limits remain in
+[PLAN.md](PLAN.md).
 
 | Lane | Owner | Scope | State | Next coordination point |
 | --- | --- | --- | --- | --- |

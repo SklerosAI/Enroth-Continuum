@@ -1,6 +1,6 @@
 # Claude — all MM6 work
 
-- Owner: Claude Code, assigned by the owner on 2026-11-11: "you're taking all of the MM6 work". Codex keeps the coordination lead and MM7.
+- Owner: Claude Code, assigned by the owner on 2026-11-11 to take all MM6 work and confirmed on 2026-11-12 as the sole MM6 delivery owner. Codex is the sole MM7 arbiter; neither title owner directs the other title.
 - Claude plans the MM6 lanes, reviews them and integrates them into `master` one at a time, with the M7 controls from `PLAN.md` after every merge that touches a shared-core file.
 - Started: 2026-11-11.
 

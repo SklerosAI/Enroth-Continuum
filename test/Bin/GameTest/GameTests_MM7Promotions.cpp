@@ -2,6 +2,7 @@
 #include <array>
 #include <cmath>
 #include <numbers>
+#include <utility>
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
@@ -182,6 +183,91 @@ void openMazimHouse(EngineController &game, NPCData *mazim) {
     ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
     ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_MOUNT_NIGHON_DUSKS_HOME);
     auto entry = std::ranges::find(houseNpcs, mazim, &HouseNpcDesc::npc);
+    ASSERT_NE(entry, houseNpcs.end());
+    if (houseNpcs.size() > 1) {
+        game.pressGuiButton(fmt::format("House_Npc{}", entry - houseNpcs.begin()));
+        game.tick();
+    }
+}
+
+void openThrushHouse(EngineController &game, NPCData *thrush) {
+    game.teleportTo(MAP_ERATHIA, Vec3f(), 0);
+    std::vector<std::pair<Vec3f, int>> doors;
+    for (const BLVFace &face : pOutdoor->faces) {
+        if (face.Clickable() && eventOpensHouse(face.eventId, HOUSE_ERATHIA_THRUSH_RESIDENCE))
+            doors.push_back(approachFace(face));
+    }
+    ASSERT_FALSE(doors.empty());
+    for (auto [position, yaw] : doors) {
+        game.teleportTo(MAP_ERATHIA, position, yaw);
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick();
+        if (current_screen_type == SCREEN_HOUSE)
+            break;
+        if (current_screen_type == SCREEN_NPC_DIALOGUE) {
+            game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+            game.tick();
+        }
+    }
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_ERATHIA_THRUSH_RESIDENCE);
+    auto entry = std::ranges::find(houseNpcs, thrush, &HouseNpcDesc::npc);
+    ASSERT_NE(entry, houseNpcs.end());
+    if (houseNpcs.size() > 1) {
+        game.pressGuiButton(fmt::format("House_Npc{}", entry - houseNpcs.begin()));
+        game.tick();
+    }
+}
+
+void leaveEmeraldIsland(EngineController &game) {
+    engine->config->debug.NoMargaret.setValue(true);
+    game.startNewGame();
+    game.teleportTo(MAP_EMERALD_ISLAND, Vec3f(16154, 8560, 128), 180);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_EMERALD_ISLAND_MARKHAMS_HEADQUARTERS);
+    game.pressGuiButton("House_Npc1"); // Thomas the Judge.
+    game.tick();
+    for (ItemId item : std::array{ITEM_POTION_CURE_WOUNDS, ITEM_QUEST_SEASHELL, ITEM_LONGBOW,
+                                  ITEM_QUEST_FLOOR_TILE_W_MOON_INSIGNIA, ITEM_QUEST_LUTE,
+                                  ITEM_QUEST_WEALTHY_HAT}) {
+        pParty->setHoldingItem(Item(item));
+        game.pressGuiButton("HouseNpcDialogue_Option1");
+        game.tick();
+    }
+    game.pressGuiButton("HouseNpcDialogue_Option1"); // Complete the contest after the last hand-in.
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    game.pressGuiButton("House_Npc0"); // Lord Markham.
+    game.tick();
+    game.pressGuiButton("HouseNpcDialogue_Option0"); // Congratulations.
+    game.tick();
+    game.pressGuiButton("HouseNpcDialogue_Option0"); // Your ship.
+    game.tick();
+    leaveHouse(game);
+    game.teleportTo(MAP_EMERALD_ISLAND, Vec3f(11008, 34, 193), 90);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    game.pressGuiButton("HouseNpcDialogue_Option0"); // Cast off.
+    game.skipLoadingScreen();
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_HARMONDALE);
+}
+
+void openMarkhamManor(EngineController &game, NPCData *markham) {
+    game.teleportTo(MAP_LORD_MARKHAMS_MANOR, Vec3f(), 0);
+    auto door = std::ranges::find_if(pIndoor->faces, [](const BLVFace &face) {
+        return face.Clickable() && eventOpensHouse(face.eventId, HOUSE_LORD_MARKHAMS_MANOR_LORD_MARKHAMS_CHAMBER);
+    });
+    ASSERT_NE(door, pIndoor->faces.end());
+    auto [position, yaw] = approachFace(*door);
+    game.teleportTo(MAP_LORD_MARKHAMS_MANOR, position, yaw);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_LORD_MARKHAMS_MANOR_LORD_MARKHAMS_CHAMBER);
+    auto entry = std::ranges::find(houseNpcs, markham, &HouseNpcDesc::npc);
     ASSERT_NE(entry, houseNpcs.end());
     if (houseNpcs.size() > 1) {
         game.pressGuiButton(fmt::format("House_Npc{}", entry - houseNpcs.begin()));
@@ -424,5 +510,90 @@ GAME_TEST(MM7SideQuests, HaldarsRemainsRequireMazeChest) {
     for (int i = 0; i < 4; i++) {
         EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_NIGHON_RETRIEVED_HALDARS_REMAINS]);
         EXPECT_EQ(pParty->pCharacters[i].experience - experience[i], 50000);
+    }
+}
+
+GAME_TEST(MM7SideQuests, ParsonsQuillRequiresMarkhamExchange) {
+    auto letterTape = tapes.questBit(QBIT_THRUSH_LETTER_ACTIVE);
+    auto quillTape = tapes.questBit(QBIT_PARSONS_QUILL_ACTIVE);
+    auto goldTape = tapes.gold();
+    leaveEmeraldIsland(game);
+    const int initialReputation = pParty->GetPartyReputation();
+    NPCData *thrush = findHouseNpcEvent(HOUSE_ERATHIA_THRUSH_RESIDENCE, [](const EvtInstruction &instruction) {
+        return (instruction.opcode == EVENT_Set || instruction.opcode == EVENT_Add) &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_THRUSH_LETTER_ACTIVE);
+    });
+    ASSERT_NE(thrush, nullptr);
+    const unsigned int offerEvent = findNpcEvent(thrush, [](const EvtInstruction &instruction) {
+        return (instruction.opcode == EVENT_Set || instruction.opcode == EVENT_Add) &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_THRUSH_LETTER_ACTIVE);
+    });
+    ASSERT_NE(offerEvent, 0u);
+
+    openThrushHouse(game, thrush);
+    test.startTaping();
+    ASSERT_TRUE(selectNpcEvent(game, thrush, offerEvent));
+    EXPECT_TRUE(pParty->_questBits[QBIT_THRUSH_LETTER_ACTIVE]);
+    EXPECT_TRUE(pParty->hasItem(ITEM_QUEST_LETTER_FROM_NORBERT_THRUSH) ||
+                pParty->pPickedItem.itemId == ITEM_QUEST_LETTER_FROM_NORBERT_THRUSH);
+    const unsigned int handInEvent = findNpcEvent(thrush, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_Subtract && instruction.data.variable_descr.type == VAR_PlayerItemInHands &&
+               instruction.data.variable_descr.value == std::to_underlying(ITEM_QUEST_PARSONS_QUILL);
+    });
+    ASSERT_NE(handInEvent, 0u);
+    leaveHouse(game);
+
+    openThrushHouse(game, thrush);
+    ASSERT_TRUE(selectNpcEvent(game, thrush, handInEvent)); // The visible return topic refuses the missing quill.
+    EXPECT_TRUE(pParty->_questBits[QBIT_THRUSH_LETTER_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_PARSONS_QUILL_ACTIVE]);
+    EXPECT_TRUE(pParty->hasItem(ITEM_QUEST_LETTER_FROM_NORBERT_THRUSH) ||
+                pParty->pPickedItem.itemId == ITEM_QUEST_LETTER_FROM_NORBERT_THRUSH);
+    EXPECT_EQ(goldTape.delta(), 0);
+    for (const Character &character : pParty->pCharacters)
+        EXPECT_FALSE(character._achievedAwardsBits[AWARD_ERATHIA_RETURNED_PARSONS_QUILL]);
+    leaveHouse(game);
+
+    auto markhamIt = std::ranges::find_if(pNPCStats->pNPCData, [](const NPCData &candidate) {
+        std::array eventIds = {candidate.dialogue_1_evt_id, candidate.dialogue_2_evt_id, candidate.dialogue_3_evt_id,
+                               candidate.dialogue_4_evt_id, candidate.dialogue_5_evt_id, candidate.dialogue_6_evt_id};
+        return std::ranges::any_of(eventIds, [](unsigned int eventId) {
+            return eventId != 0 && engine->_globalEventMap.hasEvent(eventId) &&
+                   std::ranges::any_of(engine->_globalEventMap.function(eventId), [](const EvtInstruction &instruction) {
+                       return instruction.opcode == EVENT_Subtract &&
+                              instruction.data.variable_descr.type == VAR_PlayerItemInHands &&
+                              instruction.data.variable_descr.value ==
+                                  std::to_underlying(ITEM_QUEST_LETTER_FROM_NORBERT_THRUSH);
+                   });
+        });
+    });
+    ASSERT_NE(markhamIt, pNPCStats->pNPCData.end());
+    NPCData *markham = &*markhamIt;
+    const unsigned int exchangeEvent = findNpcEvent(markham, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_Subtract && instruction.data.variable_descr.type == VAR_PlayerItemInHands &&
+               instruction.data.variable_descr.value == std::to_underlying(ITEM_QUEST_LETTER_FROM_NORBERT_THRUSH);
+    });
+    ASSERT_NE(exchangeEvent, 0u);
+    openMarkhamManor(game, markham);
+    ASSERT_TRUE(selectNpcEvent(game, markham, exchangeEvent));
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_QUEST_PARSONS_QUILL);
+    EXPECT_TRUE(pParty->_questBits[QBIT_PARSONS_QUILL_ACTIVE]);
+    leaveHouse(game);
+
+    std::array<uint64_t, 4> experience;
+    for (int i = 0; i < 4; i++)
+        experience[i] = pParty->pCharacters[i].experience;
+    openThrushHouse(game, thrush);
+    ASSERT_TRUE(selectNpcEvent(game, thrush, handInEvent));
+    EXPECT_EQ(letterTape, tape(true, false));
+    EXPECT_EQ(quillTape, tape(false, true, false));
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_EQ(goldTape.delta(), 2000);
+    EXPECT_EQ(pParty->GetPartyReputation() - initialReputation, -5);
+    for (int i = 0; i < 4; i++) {
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_ERATHIA_RETURNED_PARSONS_QUILL]);
+        EXPECT_EQ(pParty->pCharacters[i].experience - experience[i], 5000);
     }
 }

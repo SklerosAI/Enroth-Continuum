@@ -2,6 +2,8 @@
 #include <array>
 #include <cmath>
 #include <numbers>
+#include <utility>
+#include <vector>
 
 #include "Testing/Game/GameTest.h"
 

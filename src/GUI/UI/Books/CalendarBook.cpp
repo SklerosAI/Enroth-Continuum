@@ -1,5 +1,6 @@
 #include "GUI/UI/Books/CalendarBook.h"
 
+#include <array>
 #include <memory>
 #include <string>
 
@@ -15,6 +16,7 @@
 
 #include "GUI/GUIButton.h"
 #include "GUI/UI/Books/CalendarBackgroundResources.h"
+#include "GUI/UI/Books/MM6BookLayout.h"
 
 GraphicsImage *ui_book_calendar_background = nullptr;
 
@@ -23,6 +25,8 @@ GraphicsImage *ui_book_calendar_moon_4 = nullptr;
 GraphicsImage *ui_book_calendar_moon_2 = nullptr;
 GraphicsImage *ui_book_calendar_moon_2_2 = nullptr;
 GraphicsImage *ui_book_calendar_moon_full = nullptr;
+
+static constexpr LstrId LSTR_MM6_TIME_IN_ENROTH = static_cast<LstrId>(525);
 
 // 4E1B18
 static std::array<int, 28> pDayMoonPhase = {
@@ -70,10 +74,17 @@ static std::string getDayPart(int hour) {
 void GUIWindow_CalendarBook::Update() {
     drawExitButton();
 
-    render->DrawQuad2D(ui_book_calendar_background, pViewport.topLeft());
     CivilTime time = pParty->GetPlayingTime().toCivilTime();
-
-    DrawTitleText(assets->pFontBookTitle.get(), 0, 22, ui_book_calendar_title_color, localization->str(LSTR_TIME_IN_ERATHIA), 3, pViewport);
+    if (engine->gameTitle() == GameTitle::MM6) {
+        const std::array<GraphicsImage *, 5> moons = {ui_book_calendar_moon_new, ui_book_calendar_moon_4, ui_book_calendar_moon_2,
+                                                      ui_book_calendar_moon_2_2, ui_book_calendar_moon_full};
+        render->DrawQuad2D(ui_book_calendar_background, mm6::books::kPagePosition);
+        render->DrawQuad2D(moons[pDayMoonPhase[time.day - 1]], mm6::books::kMoonPosition);
+        DrawTitleText(assets->pFontBookTitle.get(), 0, 22, ui_book_calendar_title_color, localization->str(LSTR_MM6_TIME_IN_ENROTH), 3, mm6::books::kTitleFrame);
+    } else {
+        render->DrawQuad2D(ui_book_calendar_background, pViewport.topLeft());
+        DrawTitleText(assets->pFontBookTitle.get(), 0, 22, ui_book_calendar_title_color, localization->str(LSTR_TIME_IN_ERATHIA), 3, pViewport);
+    }
 
     std::string str = fmt::format("{}\t100:\t110{}:{:02} {} - {}", localization->str(LSTR_TIME), time.hourAmPm,
                                   time.minute, localization->amPm(time.isPm), getDayPart(time.hour));

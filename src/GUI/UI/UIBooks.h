@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include "GUI/GUIWindow.h"
 
@@ -37,6 +38,30 @@ class GUIWindow_Book : public GUIWindow {
 
  protected:
     void drawExitButton();
+
+    /**
+     * Creates an MM6 side tab in the tab column.
+     *
+     * @param y                         Top of the tab.
+     * @param action                    Book button the tab presses.
+     * @param inputAction               Key binding that also presses it.
+     * @param label                     Hover text.
+     * @param onArt                     The tab's `on` art.
+     * @return                          The created button.
+     */
+    GUIButton *createMM6Tab(int y, BookButtonAction action, InputAction inputAction, std::string_view label, GraphicsImage *onArt);
+
+    /**
+     * Draws an MM6 side tab, the `on` art in the tab column or the `off` art three pixels to its right.
+     *
+     * @param y                         Top of the tab.
+     * @param onArt                     The tab's `on` art.
+     * @param offArt                    The tab's `off` art.
+     * @param drawOn                    Whether to draw the `on` art.
+     */
+    void drawMM6Tab(int y, GraphicsImage *onArt, GraphicsImage *offArt, bool drawOn);
+
+    bool isButtonPressed(BookButtonAction action) const;
 
     std::unique_ptr<GUIWindow> pChildBooksOverlay;
 

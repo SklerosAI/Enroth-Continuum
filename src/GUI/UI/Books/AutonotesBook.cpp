@@ -1,6 +1,9 @@
+#include <array>
 #include <memory>
+#include <optional>
 
 #include "Engine/AssetsManager.h"
+#include "Engine/Engine.h"
 #include "Engine/Localization.h"
 #include "Engine/Party.h"
 
@@ -12,6 +15,7 @@
 #include "GUI/GUIButton.h"
 #include "GUI/UI/UIGame.h"
 #include "GUI/UI/Books/AutonotesBook.h"
+#include "GUI/UI/Books/MM6BookLayout.h"
 
 #include "Media/Audio/AudioPlayer.h"
 
@@ -19,14 +23,46 @@ GraphicsImage *ui_book_autonotes_background = nullptr;
 
 AutonoteType autonoteBookDisplayType;
 
+struct MM6AutonoteTab {
+    int y;
+    BookButtonAction action;
+    AutonoteType type;
+    GraphicsImage *onArt;
+    GraphicsImage *offArt;
+};
+
+/**
+ * MM6.exe sorts autonotes into tabs with its own table, which mostly follows the autonote.txt types.
+ *
+ * @param note                          Autonote id.
+ * @return                              The MM6 autonotes tab that lists the note, or nothing if MM6 lists it in no tab.
+ */
+static std::optional<AutonoteType> mm6AutonoteCategory(int note) {
+    auto in = [note](int first, int last) { return note >= first && note <= last; };
+    if (in(1, 3) || note == 9 || in(11, 14) || in(17, 53) || in(94, 96))
+        return AUTONOTE_STAT_HINT;
+    if (in(54, 78))
+        return AUTONOTE_POTION_RECIPE;
+    if (in(79, 93))
+        return AUTONOTE_OBELISK;
+    if (in(108, 116))
+        return AUTONOTE_SEER;
+    if (in(97, 107) || in(117, 128))
+        return AUTONOTE_MISC;
+    return std::nullopt;
+}
+
 void GUIWindow_AutonotesBook::recalculateCurrentNotesTypePages() {
     _startingNotesIdx = 0;
     _currentPage = 0;
     _currentPageNotes = 0;
     _activeNotesIdx.clear();
-    for (int i : pParty->_autonoteBits.indices())
-        if (pParty->_autonoteBits[i] && autonoteBookDisplayType == pAutonoteTxt[i].eType && !pAutonoteTxt[i].pText.empty())
+    const bool isMM6 = engine->gameTitle() == GameTitle::MM6;
+    for (int i : pParty->_autonoteBits.indices()) {
+        const std::optional<AutonoteType> type = isMM6 ? mm6AutonoteCategory(i) : pAutonoteTxt[i].eType;
+        if (pParty->_autonoteBits[i] && autonoteBookDisplayType == type && !pAutonoteTxt[i].pText.empty())
             _activeNotesIdx.push_back(i);
+    }
 }
 
 GUIWindow_AutonotesBook::GUIWindow_AutonotesBook() : GUIWindow_Book() {
@@ -35,42 +71,70 @@ GUIWindow_AutonotesBook::GUIWindow_AutonotesBook() : GUIWindow_Book() {
     pChildBooksOverlay = std::make_unique<GUIWindow_BooksButtonOverlay>(Pointi{527, 353}, Sizei{0, 0}, pBtn_Autonotes);
     bFlashAutonotesBook = false;
 
-    ui_book_autonotes_background = assets->getIcon("sbautnot");
-    ui_book_quest_div_bar = assets->getIcon("divbar");
+    if (engine->gameTitle() == GameTitle::MM6) {
+        ui_book_autonotes_background = assets->getIcon("note_bg");
+        ui_book_quest_div_bar = assets->getIcon("divbar");
 
-    ui_book_button1_on = assets->getIcon("tab-an-6b");
-    ui_book_button2_on = assets->getIcon("tab-an-7b");
-    ui_book_button3_on = assets->getIcon("tab-an-1b");
-    ui_book_button4_on = assets->getIcon("tab-an-2b");
-    ui_book_button5_on = assets->getIcon("tab-an-3b");
-    ui_book_button6_on = assets->getIcon("tab-an-5b");
-    ui_book_button7_on = assets->getIcon("tab-an-4b");
-    ui_book_button8_on = assets->getIcon("tab-an-8b");
-    ui_book_button1_off = assets->getIcon("tab-an-6a");
-    ui_book_button2_off = assets->getIcon("tab-an-7a");
-    ui_book_button3_off = assets->getIcon("tab-an-1a");
-    ui_book_button4_off = assets->getIcon("tab-an-2a");
-    ui_book_button5_off = assets->getIcon("tab-an-3a");
-    ui_book_button6_off = assets->getIcon("tab-an-5a");
-    ui_book_button7_off = assets->getIcon("tab-an-4a");
-    ui_book_button8_off = assets->getIcon("tab-an-8a");
+        ui_book_button1_on = assets->getIcon("tab--on");
+        ui_book_button2_on = assets->getIcon("tab+on");
+        ui_book_button3_on = assets->getIcon("anot1on");
+        ui_book_button4_on = assets->getIcon("anot2on");
+        ui_book_button5_on = assets->getIcon("anot3on");
+        ui_book_button6_on = assets->getIcon("anot5on");
+        ui_book_button7_on = assets->getIcon("anot4on");
+        ui_book_button1_off = assets->getIcon("tab--off");
+        ui_book_button2_off = assets->getIcon("tab+off");
+        ui_book_button3_off = assets->getIcon("anot1off");
+        ui_book_button4_off = assets->getIcon("anot2off");
+        ui_book_button5_off = assets->getIcon("anot3off");
+        ui_book_button6_off = assets->getIcon("anot5off");
+        ui_book_button7_off = assets->getIcon("anot4off");
 
-    pBtn_Book_1 = CreateButton(pViewport.topLeft() + Pointi(398, 1), {50, 34}, BUTTON_TYPE_NORMAL, 0,
-        UIMSG_ClickBooksBtn, std::to_underlying(BOOK_PREV_PAGE), INPUT_ACTION_DIALOG_LEFT, localization->str(LSTR_SCROLL_DOWN), {ui_book_button1_on});
-    pBtn_Book_2 = CreateButton(pViewport.topLeft() + Pointi(398, 38), {50, 34}, BUTTON_TYPE_NORMAL, 0,
-        UIMSG_ClickBooksBtn, std::to_underlying(BOOK_NEXT_PAGE), INPUT_ACTION_DIALOG_RIGHT, localization->str(LSTR_SCROLL_UP), {ui_book_button2_on});
-    pBtn_Book_3 = CreateButton(pViewport.topLeft() + Pointi(398, 113), {50, 34}, BUTTON_TYPE_NORMAL, 0,
-        UIMSG_ClickBooksBtn, std::to_underlying(BOOK_NOTES_POTION), INPUT_ACTION_INVALID, localization->str(LSTR_POTION_NOTES), {ui_book_button3_on});
-    pBtn_Book_4 = CreateButton(pViewport.topLeft() + Pointi(399, 150), {50, 34}, BUTTON_TYPE_NORMAL, 0,
-        UIMSG_ClickBooksBtn, std::to_underlying(BOOK_NOTES_FOUNTAIN), INPUT_ACTION_INVALID, localization->str(LSTR_FOUNTAIN_NOTES), {ui_book_button4_on});
-    pBtn_Book_5 = CreateButton(pViewport.topLeft() + Pointi(397, 188), {50, 34}, BUTTON_TYPE_NORMAL, 0,
-        UIMSG_ClickBooksBtn, std::to_underlying(BOOK_NOTES_OBELISK), INPUT_ACTION_INVALID, localization->str(LSTR_OBELISK_NOTES), {ui_book_button5_on});
-    pBtn_Book_6 = CreateButton(pViewport.topLeft() + Pointi(397, 226), {50, 34}, BUTTON_TYPE_NORMAL, 0,
-        UIMSG_ClickBooksBtn, std::to_underlying(BOOK_NOTES_SEER), INPUT_ACTION_INVALID, localization->str(LSTR_SEER_NOTES), {ui_book_button6_on});
-    pBtn_Autonotes_Misc = CreateButton(pViewport.topLeft() + Pointi(397, 264), {50, 34}, BUTTON_TYPE_NORMAL, 0,
-        UIMSG_ClickBooksBtn, std::to_underlying(BOOK_NOTES_MISC), INPUT_ACTION_INVALID, localization->str(LSTR_MISCELLANEOUS_NOTES), {ui_book_button7_on});
-    pBtn_Autonotes_Instructors = CreateButton(pViewport.topLeft() + Pointi(397, 302), {50, 34}, BUTTON_TYPE_NORMAL, 0,
-        UIMSG_ClickBooksBtn, std::to_underlying(BOOK_NOTES_INSTRUCTORS), INPUT_ACTION_INVALID, localization->str(LSTR_INSTRUCTORS), {ui_book_button8_on});
+        pBtn_Book_1 = createMM6Tab(mm6::books::kPrevPageTabY, BOOK_PREV_PAGE, INPUT_ACTION_DIALOG_LEFT, localization->str(LSTR_SCROLL_UP), ui_book_button1_on);
+        pBtn_Book_2 = createMM6Tab(mm6::books::kNextPageTabY, BOOK_NEXT_PAGE, INPUT_ACTION_DIALOG_RIGHT, localization->str(LSTR_SCROLL_DOWN), ui_book_button2_on);
+        pBtn_Book_3 = createMM6Tab(mm6::books::kPotionTabY, BOOK_NOTES_POTION, INPUT_ACTION_INVALID, localization->str(LSTR_POTION_NOTES), ui_book_button3_on);
+        pBtn_Book_4 = createMM6Tab(mm6::books::kFountainTabY, BOOK_NOTES_FOUNTAIN, INPUT_ACTION_INVALID, localization->str(LSTR_FOUNTAIN_NOTES), ui_book_button4_on);
+        pBtn_Book_5 = createMM6Tab(mm6::books::kObeliskTabY, BOOK_NOTES_OBELISK, INPUT_ACTION_INVALID, localization->str(LSTR_OBELISK_NOTES), ui_book_button5_on);
+        pBtn_Book_6 = createMM6Tab(mm6::books::kSeerTabY, BOOK_NOTES_SEER, INPUT_ACTION_INVALID, localization->str(LSTR_SEER_NOTES), ui_book_button6_on);
+        pBtn_Autonotes_Misc = createMM6Tab(mm6::books::kMiscTabY, BOOK_NOTES_MISC, INPUT_ACTION_INVALID, localization->str(LSTR_MISCELLANEOUS_NOTES), ui_book_button7_on);
+    } else {
+        ui_book_autonotes_background = assets->getIcon("sbautnot");
+        ui_book_quest_div_bar = assets->getIcon("divbar");
+
+        ui_book_button1_on = assets->getIcon("tab-an-6b");
+        ui_book_button2_on = assets->getIcon("tab-an-7b");
+        ui_book_button3_on = assets->getIcon("tab-an-1b");
+        ui_book_button4_on = assets->getIcon("tab-an-2b");
+        ui_book_button5_on = assets->getIcon("tab-an-3b");
+        ui_book_button6_on = assets->getIcon("tab-an-5b");
+        ui_book_button7_on = assets->getIcon("tab-an-4b");
+        ui_book_button8_on = assets->getIcon("tab-an-8b");
+        ui_book_button1_off = assets->getIcon("tab-an-6a");
+        ui_book_button2_off = assets->getIcon("tab-an-7a");
+        ui_book_button3_off = assets->getIcon("tab-an-1a");
+        ui_book_button4_off = assets->getIcon("tab-an-2a");
+        ui_book_button5_off = assets->getIcon("tab-an-3a");
+        ui_book_button6_off = assets->getIcon("tab-an-5a");
+        ui_book_button7_off = assets->getIcon("tab-an-4a");
+        ui_book_button8_off = assets->getIcon("tab-an-8a");
+
+        pBtn_Book_1 = CreateButton(pViewport.topLeft() + Pointi(398, 1), {50, 34}, BUTTON_TYPE_NORMAL, 0,
+            UIMSG_ClickBooksBtn, std::to_underlying(BOOK_PREV_PAGE), INPUT_ACTION_DIALOG_LEFT, localization->str(LSTR_SCROLL_DOWN), {ui_book_button1_on});
+        pBtn_Book_2 = CreateButton(pViewport.topLeft() + Pointi(398, 38), {50, 34}, BUTTON_TYPE_NORMAL, 0,
+            UIMSG_ClickBooksBtn, std::to_underlying(BOOK_NEXT_PAGE), INPUT_ACTION_DIALOG_RIGHT, localization->str(LSTR_SCROLL_UP), {ui_book_button2_on});
+        pBtn_Book_3 = CreateButton(pViewport.topLeft() + Pointi(398, 113), {50, 34}, BUTTON_TYPE_NORMAL, 0,
+            UIMSG_ClickBooksBtn, std::to_underlying(BOOK_NOTES_POTION), INPUT_ACTION_INVALID, localization->str(LSTR_POTION_NOTES), {ui_book_button3_on});
+        pBtn_Book_4 = CreateButton(pViewport.topLeft() + Pointi(399, 150), {50, 34}, BUTTON_TYPE_NORMAL, 0,
+            UIMSG_ClickBooksBtn, std::to_underlying(BOOK_NOTES_FOUNTAIN), INPUT_ACTION_INVALID, localization->str(LSTR_FOUNTAIN_NOTES), {ui_book_button4_on});
+        pBtn_Book_5 = CreateButton(pViewport.topLeft() + Pointi(397, 188), {50, 34}, BUTTON_TYPE_NORMAL, 0,
+            UIMSG_ClickBooksBtn, std::to_underlying(BOOK_NOTES_OBELISK), INPUT_ACTION_INVALID, localization->str(LSTR_OBELISK_NOTES), {ui_book_button5_on});
+        pBtn_Book_6 = CreateButton(pViewport.topLeft() + Pointi(397, 226), {50, 34}, BUTTON_TYPE_NORMAL, 0,
+            UIMSG_ClickBooksBtn, std::to_underlying(BOOK_NOTES_SEER), INPUT_ACTION_INVALID, localization->str(LSTR_SEER_NOTES), {ui_book_button6_on});
+        pBtn_Autonotes_Misc = CreateButton(pViewport.topLeft() + Pointi(397, 264), {50, 34}, BUTTON_TYPE_NORMAL, 0,
+            UIMSG_ClickBooksBtn, std::to_underlying(BOOK_NOTES_MISC), INPUT_ACTION_INVALID, localization->str(LSTR_MISCELLANEOUS_NOTES), {ui_book_button7_on});
+        pBtn_Autonotes_Instructors = CreateButton(pViewport.topLeft() + Pointi(397, 302), {50, 34}, BUTTON_TYPE_NORMAL, 0,
+            UIMSG_ClickBooksBtn, std::to_underlying(BOOK_NOTES_INSTRUCTORS), INPUT_ACTION_INVALID, localization->str(LSTR_INSTRUCTORS), {ui_book_button8_on});
+    }
 
     recalculateCurrentNotesTypePages();
 }
@@ -81,123 +145,147 @@ void GUIWindow_AutonotesBook::Update() {
     int pTextHeight;
     bool noteTypeChanged = false;
 
-    render->DrawQuad2D(ui_book_autonotes_background, pViewport.topLeft());
-    if ((_bookButtonClicked && _bookButtonAction == BOOK_PREV_PAGE) || !_startingNotesIdx) {
-        render->DrawQuad2D(ui_book_button1_off, pViewport.topLeft() + Pointi(407, 2));
-    } else {
-        render->DrawQuad2D(ui_book_button1_on, pViewport.topLeft() + Pointi(398, 1));
-    }
+    const bool isMM6 = engine->gameTitle() == GameTitle::MM6;
+    if (isMM6) {
+        render->DrawQuad2D(ui_book_autonotes_background, mm6::books::kPagePosition);
+        drawMM6Tab(mm6::books::kPrevPageTabY, ui_book_button1_on, ui_book_button1_off, isButtonPressed(BOOK_PREV_PAGE) || !_startingNotesIdx);
+        drawMM6Tab(mm6::books::kNextPageTabY, ui_book_button2_on, ui_book_button2_off,
+                   isButtonPressed(BOOK_NEXT_PAGE) || (_startingNotesIdx + _currentPageNotes) >= _activeNotesIdx.size());
 
-    if ((_bookButtonClicked && _bookButtonAction == BOOK_NEXT_PAGE) || (_startingNotesIdx + _currentPageNotes) >= _activeNotesIdx.size()) {
-        render->DrawQuad2D(ui_book_button2_off, pViewport.topLeft() + Pointi(407, 38));
+        const std::array<MM6AutonoteTab, 5> tabs = {{
+            {mm6::books::kPotionTabY, BOOK_NOTES_POTION, AUTONOTE_POTION_RECIPE, ui_book_button3_on, ui_book_button3_off},
+            {mm6::books::kFountainTabY, BOOK_NOTES_FOUNTAIN, AUTONOTE_STAT_HINT, ui_book_button4_on, ui_book_button4_off},
+            {mm6::books::kObeliskTabY, BOOK_NOTES_OBELISK, AUTONOTE_OBELISK, ui_book_button5_on, ui_book_button5_off},
+            {mm6::books::kSeerTabY, BOOK_NOTES_SEER, AUTONOTE_SEER, ui_book_button6_on, ui_book_button6_off},
+            {mm6::books::kMiscTabY, BOOK_NOTES_MISC, AUTONOTE_MISC, ui_book_button7_on, ui_book_button7_off}
+        }};
+        for (const MM6AutonoteTab &tab : tabs) {
+            if (isButtonPressed(tab.action) && autonoteBookDisplayType != tab.type) {
+                pAudioPlayer->playUISound(SOUND_StartMainChoice02);
+                autonoteBookDisplayType = tab.type;
+                noteTypeChanged = true;
+            }
+            drawMM6Tab(tab.y, tab.onArt, tab.offArt, autonoteBookDisplayType == tab.type);
+        }
     } else {
-        render->DrawQuad2D(ui_book_button2_on, pViewport.topLeft() + Pointi(398, 38));
-    }
+        render->DrawQuad2D(ui_book_autonotes_background, pViewport.topLeft());
+        if ((_bookButtonClicked && _bookButtonAction == BOOK_PREV_PAGE) || !_startingNotesIdx) {
+            render->DrawQuad2D(ui_book_button1_off, pViewport.topLeft() + Pointi(407, 2));
+        } else {
+            render->DrawQuad2D(ui_book_button1_on, pViewport.topLeft() + Pointi(398, 1));
+        }
 
-    if (_bookButtonClicked && _bookButtonAction == BOOK_NOTES_POTION) {
-        if (autonoteBookDisplayType == AUTONOTE_POTION_RECIPE) {
-            render->DrawQuad2D(ui_book_button3_on, pViewport.topLeft() + Pointi(398, 113));
+        if ((_bookButtonClicked && _bookButtonAction == BOOK_NEXT_PAGE) || (_startingNotesIdx + _currentPageNotes) >= _activeNotesIdx.size()) {
+            render->DrawQuad2D(ui_book_button2_off, pViewport.topLeft() + Pointi(407, 38));
         } else {
-            pAudioPlayer->playUISound(SOUND_StartMainChoice02);
-            autonoteBookDisplayType = AUTONOTE_POTION_RECIPE;
-            noteTypeChanged = true;
-            render->DrawQuad2D(ui_book_button3_on, pViewport.topLeft() + Pointi(398, 113));
+            render->DrawQuad2D(ui_book_button2_on, pViewport.topLeft() + Pointi(398, 38));
         }
-    } else {
-        if (autonoteBookDisplayType == AUTONOTE_POTION_RECIPE) {
-            render->DrawQuad2D(ui_book_button3_on, pViewport.topLeft() + Pointi(398, 113));
-        } else {
-            render->DrawQuad2D(ui_book_button3_off, pViewport.topLeft() + Pointi(408, 113));
-        }
-    }
 
-    if (_bookButtonClicked && _bookButtonAction == BOOK_NOTES_FOUNTAIN) {
-        if (autonoteBookDisplayType == AUTONOTE_STAT_HINT) {
-            render->DrawQuad2D(ui_book_button4_on, pViewport.topLeft() + Pointi(399, 150));
+        if (_bookButtonClicked && _bookButtonAction == BOOK_NOTES_POTION) {
+            if (autonoteBookDisplayType == AUTONOTE_POTION_RECIPE) {
+                render->DrawQuad2D(ui_book_button3_on, pViewport.topLeft() + Pointi(398, 113));
+            } else {
+                pAudioPlayer->playUISound(SOUND_StartMainChoice02);
+                autonoteBookDisplayType = AUTONOTE_POTION_RECIPE;
+                noteTypeChanged = true;
+                render->DrawQuad2D(ui_book_button3_on, pViewport.topLeft() + Pointi(398, 113));
+            }
         } else {
-            pAudioPlayer->playUISound(SOUND_StartMainChoice02);
-            autonoteBookDisplayType = AUTONOTE_STAT_HINT;
-            noteTypeChanged = true;
-            render->DrawQuad2D(ui_book_button4_on, pViewport.topLeft() + Pointi(399, 150));
+            if (autonoteBookDisplayType == AUTONOTE_POTION_RECIPE) {
+                render->DrawQuad2D(ui_book_button3_on, pViewport.topLeft() + Pointi(398, 113));
+            } else {
+                render->DrawQuad2D(ui_book_button3_off, pViewport.topLeft() + Pointi(408, 113));
+            }
         }
-    } else {
-        if (autonoteBookDisplayType == AUTONOTE_STAT_HINT) {
-            render->DrawQuad2D(ui_book_button4_on, pViewport.topLeft() + Pointi(399, 150));
-        } else {
-            render->DrawQuad2D(ui_book_button4_off, pViewport.topLeft() + Pointi(408, 150));
-        }
-    }
 
-    if (_bookButtonClicked && _bookButtonAction == BOOK_NOTES_OBELISK) {
-        if (autonoteBookDisplayType == AUTONOTE_OBELISK) {
-            render->DrawQuad2D(ui_book_button5_on, pViewport.topLeft() + Pointi(397, 188));
+        if (_bookButtonClicked && _bookButtonAction == BOOK_NOTES_FOUNTAIN) {
+            if (autonoteBookDisplayType == AUTONOTE_STAT_HINT) {
+                render->DrawQuad2D(ui_book_button4_on, pViewport.topLeft() + Pointi(399, 150));
+            } else {
+                pAudioPlayer->playUISound(SOUND_StartMainChoice02);
+                autonoteBookDisplayType = AUTONOTE_STAT_HINT;
+                noteTypeChanged = true;
+                render->DrawQuad2D(ui_book_button4_on, pViewport.topLeft() + Pointi(399, 150));
+            }
         } else {
-            pAudioPlayer->playUISound(SOUND_StartMainChoice02);
-            autonoteBookDisplayType = AUTONOTE_OBELISK;
-            noteTypeChanged = true;
-            render->DrawQuad2D(ui_book_button5_on, pViewport.topLeft() + Pointi(397, 188));
+            if (autonoteBookDisplayType == AUTONOTE_STAT_HINT) {
+                render->DrawQuad2D(ui_book_button4_on, pViewport.topLeft() + Pointi(399, 150));
+            } else {
+                render->DrawQuad2D(ui_book_button4_off, pViewport.topLeft() + Pointi(408, 150));
+            }
         }
-    } else {
-        if (autonoteBookDisplayType == AUTONOTE_OBELISK) {
-            render->DrawQuad2D(ui_book_button5_on, pViewport.topLeft() + Pointi(397, 188));
-        } else {
-            render->DrawQuad2D(ui_book_button5_off, pViewport.topLeft() + Pointi(408, 188));
-        }
-    }
 
-    if (_bookButtonClicked && _bookButtonAction == BOOK_NOTES_SEER) {
-        if (autonoteBookDisplayType == AUTONOTE_SEER) {
-            render->DrawQuad2D(ui_book_button6_on, pViewport.topLeft() + Pointi(397, 226));
+        if (_bookButtonClicked && _bookButtonAction == BOOK_NOTES_OBELISK) {
+            if (autonoteBookDisplayType == AUTONOTE_OBELISK) {
+                render->DrawQuad2D(ui_book_button5_on, pViewport.topLeft() + Pointi(397, 188));
+            } else {
+                pAudioPlayer->playUISound(SOUND_StartMainChoice02);
+                autonoteBookDisplayType = AUTONOTE_OBELISK;
+                noteTypeChanged = true;
+                render->DrawQuad2D(ui_book_button5_on, pViewport.topLeft() + Pointi(397, 188));
+            }
         } else {
-            pAudioPlayer->playUISound(SOUND_StartMainChoice02);
-            autonoteBookDisplayType = AUTONOTE_SEER;
-            noteTypeChanged = true;
-            render->DrawQuad2D(ui_book_button6_on, pViewport.topLeft() + Pointi(397, 226));
+            if (autonoteBookDisplayType == AUTONOTE_OBELISK) {
+                render->DrawQuad2D(ui_book_button5_on, pViewport.topLeft() + Pointi(397, 188));
+            } else {
+                render->DrawQuad2D(ui_book_button5_off, pViewport.topLeft() + Pointi(408, 188));
+            }
         }
-    } else {
-        if (autonoteBookDisplayType == AUTONOTE_SEER) {
-            render->DrawQuad2D(ui_book_button6_on, pViewport.topLeft() + Pointi(397, 226));
-        } else {
-            render->DrawQuad2D(ui_book_button6_off, pViewport.topLeft() + Pointi(408, 226));
-        }
-    }
 
-    if (_bookButtonClicked && _bookButtonAction == BOOK_NOTES_MISC) {
-        if (autonoteBookDisplayType == AUTONOTE_MISC) {
-            render->DrawQuad2D(ui_book_button7_on, pViewport.topLeft() + Pointi(397, 264));
+        if (_bookButtonClicked && _bookButtonAction == BOOK_NOTES_SEER) {
+            if (autonoteBookDisplayType == AUTONOTE_SEER) {
+                render->DrawQuad2D(ui_book_button6_on, pViewport.topLeft() + Pointi(397, 226));
+            } else {
+                pAudioPlayer->playUISound(SOUND_StartMainChoice02);
+                autonoteBookDisplayType = AUTONOTE_SEER;
+                noteTypeChanged = true;
+                render->DrawQuad2D(ui_book_button6_on, pViewport.topLeft() + Pointi(397, 226));
+            }
         } else {
-            pAudioPlayer->playUISound(SOUND_StartMainChoice02);
-            autonoteBookDisplayType = AUTONOTE_MISC;
-            noteTypeChanged = true;
-            render->DrawQuad2D(ui_book_button7_on, pViewport.topLeft() + Pointi(397, 264));
+            if (autonoteBookDisplayType == AUTONOTE_SEER) {
+                render->DrawQuad2D(ui_book_button6_on, pViewport.topLeft() + Pointi(397, 226));
+            } else {
+                render->DrawQuad2D(ui_book_button6_off, pViewport.topLeft() + Pointi(408, 226));
+            }
         }
-    } else {
-        if (autonoteBookDisplayType == AUTONOTE_MISC) {
-            render->DrawQuad2D(ui_book_button7_on, pViewport.topLeft() + Pointi(397, 264));
-        } else {
-            render->DrawQuad2D(ui_book_button7_off, pViewport.topLeft() + Pointi(408, 263));
-        }
-    }
 
-    if (_bookButtonClicked && _bookButtonAction == BOOK_NOTES_INSTRUCTORS) {
-        if (autonoteBookDisplayType == AUTONOTE_TEACHER) {
-            render->DrawQuad2D(ui_book_button8_on, pViewport.topLeft() + Pointi(397, 302));
+        if (_bookButtonClicked && _bookButtonAction == BOOK_NOTES_MISC) {
+            if (autonoteBookDisplayType == AUTONOTE_MISC) {
+                render->DrawQuad2D(ui_book_button7_on, pViewport.topLeft() + Pointi(397, 264));
+            } else {
+                pAudioPlayer->playUISound(SOUND_StartMainChoice02);
+                autonoteBookDisplayType = AUTONOTE_MISC;
+                noteTypeChanged = true;
+                render->DrawQuad2D(ui_book_button7_on, pViewport.topLeft() + Pointi(397, 264));
+            }
         } else {
-            pAudioPlayer->playUISound(SOUND_StartMainChoice02);
-            autonoteBookDisplayType = AUTONOTE_TEACHER;
-            noteTypeChanged = true;
-            render->DrawQuad2D(ui_book_button8_on, pViewport.topLeft() + Pointi(397, 302));
+            if (autonoteBookDisplayType == AUTONOTE_MISC) {
+                render->DrawQuad2D(ui_book_button7_on, pViewport.topLeft() + Pointi(397, 264));
+            } else {
+                render->DrawQuad2D(ui_book_button7_off, pViewport.topLeft() + Pointi(408, 263));
+            }
         }
-    } else {
-        if (autonoteBookDisplayType == AUTONOTE_TEACHER) {
-            render->DrawQuad2D(ui_book_button8_on, pViewport.topLeft() + Pointi(397, 302));
+
+        if (_bookButtonClicked && _bookButtonAction == BOOK_NOTES_INSTRUCTORS) {
+            if (autonoteBookDisplayType == AUTONOTE_TEACHER) {
+                render->DrawQuad2D(ui_book_button8_on, pViewport.topLeft() + Pointi(397, 302));
+            } else {
+                pAudioPlayer->playUISound(SOUND_StartMainChoice02);
+                autonoteBookDisplayType = AUTONOTE_TEACHER;
+                noteTypeChanged = true;
+                render->DrawQuad2D(ui_book_button8_on, pViewport.topLeft() + Pointi(397, 302));
+            }
         } else {
-            render->DrawQuad2D(ui_book_button8_off, pViewport.topLeft() + Pointi(408, 302));
+            if (autonoteBookDisplayType == AUTONOTE_TEACHER) {
+                render->DrawQuad2D(ui_book_button8_on, pViewport.topLeft() + Pointi(397, 302));
+            } else {
+                render->DrawQuad2D(ui_book_button8_off, pViewport.topLeft() + Pointi(408, 302));
+            }
         }
     }
 
     // for title
-    DrawTitleText(assets->pFontBookTitle.get(), 0, 22, ui_book_autonotes_title_color, localization->str(LSTR_AUTO_NOTES), 3, pViewport);
+    DrawTitleText(assets->pFontBookTitle.get(), 0, 22, ui_book_autonotes_title_color, localization->str(LSTR_AUTO_NOTES), 3, isMM6 ? mm6::books::kTitleFrame : pViewport);
 
     // for other text
     Recti autonotes_frameRect(48, 70, 360, 264);

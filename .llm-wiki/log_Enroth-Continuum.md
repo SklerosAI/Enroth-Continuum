@@ -3386,3 +3386,13 @@ Chronological record of wiki activity.
 - Covered Visconti's real offer and empty-handed refusal, the Angel painting wall in the Haunted Mansion, both Ironfist painting walls in Castle Gryphonheart, the three taken bits, final item consumption, 50,000 gold and 50,000 XP per character.
 - The production-Save writer and separate normal-Load reader passed in a marked disposable profile with byte-identical slot contents after reading. Missing-profile and no-save admissions were rejected, and the disposable profiles were moved to Trash.
 - The regional side/promotion selection passed 12/12 headlessly and the full `check_style` gate passed 157/157. This remains an independent quest boundary rather than continuous regional progression.
+
+## [2026-11-12] fix | MM6 quest, autonotes, map and calendar books
+- by: T-Burton-ND via claude
+- The MM6 autonotes and map books loaded MM7 art MM6 doesn't have and showed missing-image markers, the map book swapped East and West, the quest book swapped its page tabs, and the calendar was titled "Running" with no moon. All four now follow a static trace of `MM6.exe`: the shared frame with MM6's side borders and side tabs, `note_bg` with MM6's five autonote categories (sorted by the executable's own table, which moves a few notes between tabs), the zoom and direction tabs over the map with `mapbordr` on top, `time_bg` with the moon phase and the "Time in Enroth" title.
+- Merged on `master` at `ca0eff583`. Unit tests 1122, MM6 suite 152 passed and 2 skipped, MM7 controls with the book issue tests 136, `check_style` clean. Six input-driven tests fail with the fixes reverted. Book title colour stays white, because the trace doesn't settle what colour 0 means.
+
+## [2026-11-12] fix | MM6 ground no longer turns to snow in winter
+- by: T-Burton-ND via claude
+- The bright white ground at the start of a new MM6 game was snow. A new game starts on 1 January, and the port's `seasons_change` option turned grass into snow in winter and into dirt in spring and autumn. A static trace of `MM6.exe` shows MM6 never changes ground or trees by month: tilesets come straight from the ODM header and nothing rewrites the tile map after load. Snow is authored only on outb1 and outc1. MM6 terrain now keeps its authored tiles in every month, MM7 is unchanged.
+- Merged on `master` at `c48514b94`. Unit tests 1122, MM6 suite 147 passed and 2 skipped, MM7 controls 133, `check_style` clean. A hidden capture of the start shows green grass and the dirt road. The `seasons_change` config text still says the feature came from MM6, which the trace contradicts.

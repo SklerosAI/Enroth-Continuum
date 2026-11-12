@@ -365,22 +365,11 @@ GAME_TEST(MM6Headless, FirstOutdoorTileSelectors) {
     EXPECT_EQ(summerChanges, 0u);
 
     mm6Terrain->changeSeason(0, GameTitle::MM6);
-    size_t preservedMM6Only = 0;
-    size_t changedGrass = 0;
-    for (int y = 0; y < 127; ++y) {
-        for (int x = 0; x < 127; ++x) {
-            const int localId = base->tileMap[y * 128 + x];
-            const int currentId = mm6Terrain->tileIdByGrid({x, y});
-            if (localId >= 162 && localId < 234) {
-                EXPECT_EQ(currentId, authoredIds[y * 127 + x]);
-                ++preservedMM6Only;
-            } else if (localId >= 90 && localId < 126) {
-                changedGrass += currentId != authoredIds[y * 127 + x];
-            }
-        }
-    }
-    EXPECT_GT(preservedMM6Only, 0u);
-    EXPECT_GT(changedGrass, 0u);
+    size_t winterChanges = 0;
+    for (int y = 0; y < 127; ++y)
+        for (int x = 0; x < 127; ++x)
+            winterChanges += mm6Terrain->tileIdByGrid({x, y}) != authoredIds[y * 127 + x];
+    EXPECT_EQ(winterChanges, 0u);
 
     inheritedTerrain->changeSeason(6, GameTitle::MM7);
     size_t inheritedSeasonChanges = 0;

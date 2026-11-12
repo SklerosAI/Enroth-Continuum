@@ -4364,8 +4364,11 @@ void SpawnEncounter(MapData *mapData, SpawnPoint *spawn, int monsterCatMod, int 
     }
 
     int pSector = 0;
-    if (uCurrentlyLoadedLevelType == LEVEL_INDOOR)
+    if (uCurrentlyLoadedLevelType == LEVEL_INDOOR) {
         pSector = pIndoor->GetSector(spawn->position);
+        if (pSector == 0)
+            return; // Vanilla MM7 drops indoor spawn points outside every sector.
+    }
 
     // spawning loop
     std::string fullInternalName = baseInternalName;

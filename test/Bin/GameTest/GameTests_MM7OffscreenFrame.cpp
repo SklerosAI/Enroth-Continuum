@@ -33,6 +33,12 @@ GAME_TEST(MM7OffscreenFrame, DISABLED_FirstOutdoorCapture) {
     game.startNewGame();
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_EMERALD_ISLAND);
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    const char *scene = std::getenv("MM7_OFFSCREEN_CAPTURE_SCENE");
+    if (scene && std::string_view(scene) == "breeding-zone") {
+        game.teleportTo(MAP_BREEDING_ZONE, Vec3f(), 0);
+        ASSERT_EQ(engine->_currentLoadedMapId, MAP_BREEDING_ZONE);
+        ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    }
     ASSERT_FALSE(window->isVisible());
     ASSERT_FALSE(window->grabsMouse());
 

@@ -35,6 +35,15 @@ The previous paragraph records the 2026-11-07 state. The later native-slot
 helper and load preflight were integrated on 2026-11-09; see the
 [current campaign status](Campaign-Status.md) for the newer acceptance boundary.
 
+## Atomic-backup recovery — 2026-11-11
+
+The disposable writer now deliberately leaves a structurally corrupt primary
+beside its valid atomic `.bak`. A fresh headless process lists the original
+slot through the normal Load menu, loads the backup, retains the backup's
+party state, and leaves the corrupt primary unchanged. This proves the UI and
+loader use the same read-only recovery contract; it does not automatically
+repair or replace the owner's primary save.
+
 ## Current staged-candidate gate — 2026-11-10
 
 The integrated-source headless writer and fresh-process reader each passed

@@ -28,7 +28,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 
 ## Campaigns and runtime
 
-- [Campaign Status](Campaign-Status.md) — Current MM6, MM7 and MM8 readiness, including the MM6 C0-C1 chain and map-visit fixes, Castle, scavenger, Light Pit cube acquisition and Overthruster retrieval
+- [Campaign Status](Campaign-Status.md) — Current MM6, MM7 and MM8 readiness, including the MM6 C0-C1 chain, integrated MM7 campaign gates and the active MM7 quest-audit branch
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [MM7 Private Portrait Mod](MM7-Private-Portrait-Mod.md) — Local mood PNG layout, shared MM7 portrait resolver, Atlas controls, and verified hidden HUD capture
 - [Runtime Isolation](Runtime-Isolation.md) — Title-locked MM6/MM7 helpers, staged Atlas sibling assembler and isolated MM6 playtest entry; MM8 remains gated
@@ -38,11 +38,11 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Disposable Save and Reload](MM7-Disposable-Save-Reload.md) — Headless and visible isolated save/reload evidence, Castle, Light Walls, Pit-to-Xenofex and Overthruster fresh-process checkpoints, and installed-candidate limits
 - [MM7 Scroll Cancellation](MM7-Scroll-Cancel.md) — Item-, actor- and character-target scroll return on cancelled targeting, focused integrated controls and remaining exit paths
 - [MM7 Playtest Recording](MM7-Playtest-Recording.md) — Staged Atlas rolling-video, log/save collector, intentional clip hotkey, drive/relaunch guards, and live acceptance boundary
-- [MM7 Quest Behavior Catalog](MM7-Quest-Behavior-Catalog.md) — Public-source reconciliation of every main, Light, Dark, side and promotion quest with current test coverage and implementation gates
+- [MM7 Quest Behavior Catalog](MM7-Quest-Behavior-Catalog.md) — Public-source reconciliation of every main, Light, Dark, side and promotion quest; includes verified regional contracts through Parsons' Quill and partial Kerrid coverage
 - [MM7 Atomic Save File](MM7-Atomic-Save-File.md) — Native-slot helper, detached preflight and integrated staged live capture; production atomic SaveLoad wiring remains open
 - [MM6 Transition and Death Candidates](MM6-Transition-And-Death-Candidates.md) — Cancel-only MM6 indoor dialog and detached death model with explicit live integration gates
 - [MM7 Level-Seven Artifacts](MM7-Level-Seven-Artifacts.md) — MM7 artifact flags, cap and indoor pickup payload fixed with focused GameTests; graphical pickup remains open
-- [MM7 Combat Audit Fixes](MM7-Combat-Audit-Fixes.md) — Integrated combat, monster spell, Energy parser, event Day of the Gods, death-explosion, Spirit Lash, wand-recovery, Fate and Squire/Sage fixes; 504 MM7 headless tests passed with two skipped
+- [MM7 Combat Audit Fixes](MM7-Combat-Audit-Fixes.md) — Integrated combat, monster spell, Energy parser, Divine Intervention Zombie, event Day of the Gods, death-explosion, Spirit Lash, wand-recovery, Fate and Squire/Sage fixes
 - [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md) — Hidden OpenGL first-map world and HUD frame with no visible window or focus change; visible save/reload remains open
 - [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md) — Private MM7 paths, save migration and installed Release helper with system OpenGL linkage
 

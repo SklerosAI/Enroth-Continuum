@@ -1,3 +1,4 @@
+#include <set>
 #include <string_view>
 #include <utility>
 
@@ -11,7 +12,9 @@
 #include "Engine/Objects/Character.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Objects/MonsterEnums.h"
+#include "Engine/Objects/MonsterEnumFunctions.h"
 #include "Engine/Objects/Monsters.h"
+#include "Engine/Objects/NPC.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Spells/CastSpellInfo.h"
 #include "Engine/Spells/Spells.h"
@@ -277,6 +280,28 @@ GAME_TEST(MM7Combat, FlamingArcherProjectileToken) {
     EXPECT_EQ(ParseMissleAttackType("ARROWF"), MONSTER_PROJECTILE_FLAMING_ARROW);
 }
 
+GAME_TEST(MM7NpcGeneration, GeneratedHumanPortraitRanges) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    test.prepareForNextTest(10, RANDOM_ENGINE_MERSENNE_TWISTER);
+    game.startNewGame();
+
+    std::set<Sex> seen;
+    for (const Actor &actor : pActors) {
+        if (actor.npcId < 5000)
+            continue;
+        MonsterType type = monsterTypeForMonsterId(actor.monsterInfo.id);
+        ASSERT_EQ(raceForMonsterType(type), RACE_HUMAN) << actor.id;
+        Sex sex = sexForMonsterType(type);
+        auto [minPortrait, maxPortrait] = sex == SEX_MALE ? std::pair{2, 100} : std::pair{201, 250};
+        const NPCData *npc = getNPCData(actor.npcId);
+        ASSERT_NE(npc, nullptr);
+        EXPECT_GE(npc->portraitId, minPortrait) << actor.id;
+        EXPECT_LE(npc->portraitId, maxPortrait) << actor.id;
+        seen.insert(sex);
+    }
+    EXPECT_EQ(seen, std::set<Sex>({SEX_MALE, SEX_FEMALE}));
+}
+
 GAME_TEST(MM7Combat, DivineInterventionRecoveryFallsWithLightSkill) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
 
@@ -300,6 +325,27 @@ GAME_TEST(MM7Combat, DivineInterventionRecoveryFallsWithLightSkill) {
     Duration lowSkillRecovery = recoveryAtLevel(1);
     Duration highSkillRecovery = recoveryAtLevel(10);
     EXPECT_GT(lowSkillRecovery, highSkillRecovery);
+}
+
+GAME_TEST(MM7Combat, DivineInterventionPreservesZombie) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    game.startNewGame();
+
+    Character &caster = pParty->pCharacters[0];
+    caster.classType = CLASS_PRIEST_OF_SUN;
+    caster.uLevel = 100;
+    caster.setSkillValue(SKILL_LIGHT, CombinedSkillValue(10, MASTERY_GRANDMASTER));
+    caster.bHaveSpell[SPELL_LIGHT_DIVINE_INTERVENTION] = true;
+    caster.mana = caster.GetMaxMana();
+    Character &zombie = pParty->pCharacters[1];
+    zombie.conditions.set(CONDITION_ZOMBIE, Time::fromTicks(1));
+    zombie.conditions.set(CONDITION_WEAK, Time::fromTicks(1));
+
+    game.castSpell(0, SPELL_LIGHT_DIVINE_INTERVENTION);
+    game.tick();
+
+    EXPECT_TRUE(zombie.conditions.has(CONDITION_ZOMBIE));
+    EXPECT_FALSE(zombie.conditions.has(CONDITION_WEAK));
 }
 
 GAME_TEST(MM7Combat, DeathExplosionUsesSpecialDamage) {

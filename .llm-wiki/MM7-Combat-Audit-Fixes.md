@@ -15,7 +15,7 @@ Five ranked MM7 gameplay defects have focused headless regressions and fixes int
 | Lich Mind and Body immunity | Incoming Mind and Body damage is zero for an MM7 lich. Fire damage and non-lich Mind damage remain nonzero. |
 | Divine Restoration | The potion clears the target's removable conditions while retaining the drinker's conditions. |
 | Flaming archer projectile | The MM7 `FireAr` token resolves to a flaming arrow while the older `ARROWF` spelling still resolves. |
-| Divine Intervention | Higher Light skill shortens the spell's base recovery rather than replacing it with a longer delay. |
+| Divine Intervention | Higher Light skill shortens the spell's base recovery rather than replacing it with a longer delay; it clears a Zombie's removable conditions but preserves Zombie itself, matching vanilla MM7. |
 | Monster second-spell ability | Projectile, Meteor Shower, Sparks and Sharpmetal sprites carry the selected spell ability. The MM6 single-projectile path keeps its existing first-slot stamp. |
 | Monster Energy attacks | MM7 `Ener` in either attack field parses as Energy (12), while `Earth` remains Earth (3). The separate MM6 parser is unchanged. |
 | Event Day of the Gods | MM7 event Master and Grandmaster power now follows the ordinary cast: `4 * level + 10` and `5 * level + 10`; the existing `4 * level` and `5 * level` hour durations remain. MM6 refuses this event source before the shared case. |
@@ -45,7 +45,7 @@ of 934. The `Issue1972` independent damage floor now requires at least 650 damag
 checks remain. The parser test checks the token rather than observing an archer fire in live combat.
 No graphical acceptance or installed helper update follows from these tests.
 
-Title checks retain MM6's existing Break Weapon and Divine Intervention behavior. The MM6 direct-use guard blocks the
+Title checks retain MM6's existing Break Weapon and Divine Intervention behavior. The Zombie exception is explicitly MM7-gated pending separate MM6 rule evidence. The MM6 direct-use guard blocks the
 Divine Restoration potion before the shared case. If MM6 Break Weapon is admitted for an unarmed target, its old
 empty-list path can still assert. Claude owns that MM6 rule. MM7 liches intentionally resist Mind and Body, not Spirit.
 The enemy Meteor Shower party-centred target matches the AI's sole target; neither is an actionable defect. Other ranked combat defects in the

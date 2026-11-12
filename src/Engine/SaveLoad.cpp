@@ -102,22 +102,38 @@ bool loadGame(std::string_view fileName) {
         return true;
     }
 
-    std::string path = fmt::format("saves/{}", fileName);
-    if (!ufs->exists(path)) {
-        pAudioPlayer->playUISound(SOUND_error);
-        MM_WARNING("loadGame: '{}' doesn't exist", fileName);
-        return false;
-    }
-
-    // Deserialize and inspect a detached copy before altering any live state. The
-    // load menu intentionally accepts a damaged thumbnail, so this is the first
-    // point at which a valid-header save with an unsafe body can be refused.
-    const Blob saveBytes = Blob::copy(ufs->read(path));
-    if (!pGames_LOD || !pGames_LOD->isOpen() ||
-        !mm7::preflightNativeSaveStructure(
-            std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saveBytes.data()), saveBytes.size()),
-            GameTitle::MM7, *pGames_LOD)) {
-        MM_WARNING("loadGame: '{}' failed MM7 structural save admission", fileName);
+    Blob saveBytes;
+    try {
+        const auto validate = [](std::span<const std::uint8_t> candidate) {
+            return pGames_LOD && pGames_LOD->isOpen() &&
+                   mm7::preflightNativeSaveStructure(candidate, GameTitle::MM7, *pGames_LOD);
+        };
+        if (const auto profileRoot = mm7::startupNativeProfileRoot()) {
+            // Select a valid backup read-only when a native primary is corrupt;
+            // recovery is deliberately a separate, explicit user decision.
+            const auto candidate = mm7::preflightSaveSlot(*profileRoot, fileName, validate);
+            if (!candidate) {
+                MM_WARNING("loadGame: '{}' doesn't exist", fileName);
+                reportFailedMM7SaveAction();
+                return false;
+            }
+            saveBytes = Blob::copy(candidate->bytes.data(), candidate->bytes.size());
+        } else {
+            const std::string path = fmt::format("saves/{}", fileName);
+            if (!ufs->exists(path)) {
+                MM_WARNING("loadGame: '{}' doesn't exist", fileName);
+                reportFailedMM7SaveAction();
+                return false;
+            }
+            saveBytes = Blob::copy(ufs->read(path));
+            if (!validate(std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saveBytes.data()), saveBytes.size()))) {
+                MM_WARNING("loadGame: '{}' failed MM7 structural save admission", fileName);
+                reportFailedMM7SaveAction();
+                return false;
+            }
+        }
+    } catch (const std::exception &e) {
+        MM_WARNING("loadGame: '{}' failed MM7 structural save admission: {}", fileName, e.what());
         reportFailedMM7SaveAction();
         return false;
     }

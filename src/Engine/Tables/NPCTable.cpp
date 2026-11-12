@@ -314,6 +314,8 @@ void NPCStats::InitializeAdditionalNPCs(NPCData *pNPCDataBuff, MonsterId npc_uid
                     uPortretMin = 201;
                     uPortretMax = 250;
                 }
+                if (engine->gameTitle() == GameTitle::MM7)
+                    break;
             case RACE_ELF:
                 if (uNPCSex == SEX_MALE) {
                     uPortretMin = 400;

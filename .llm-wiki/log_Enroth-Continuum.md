@@ -3102,6 +3102,181 @@ Chronological record of wiki activity.
 - Reconciled the remaining public-source questions and expanded the catalog into individual promotion and test-contract rows. The official Prima guide establishes a four-month war clock, with the trumpet battle available after two months; the Niles/Malwick chain now has its conditional trigger, two deadline windows, temporary ally-hostility and Harmondale-invasion outcomes recorded.
 - The catalog has no unresolved intended-behavior rows. This closes the research prerequisite only; Dark and side-quest runtime coverage remain unimplemented.
 
+## [2026-11-11] verify | MM7 Dark Breeding Zone marker boundary
+- by: T-Burton-ND via codex
+- Added and passed `MM7DarkGuild.BreedingZoneMarkerDoesNotGrantDarkGuild`. It discovers the actual completion event from the loaded Breeding Zone program rather than treating its ordinary exit as a quest action, and proves the map marker alone does not award Dark-guild membership. The Archibald dialogue hand-in and durable Dark chain remain open.
+
+## [2026-11-11] verify | MM7 Dark assignment and hidden Breeding Zone capture
+- by: T-Burton-ND via codex
+- Added and passed the real Castle Gloaming Archibald assignment dialogue test. The hidden OpenGL diagnostic can now render a Breeding Zone frame without showing or focusing a window; the owner-local capture helper retains 100 private PNGs by replacing the oldest at capacity. The first capture exposed black missing-geometry regions, which is audit evidence rather than a visual-acceptance result.
+
+## [2026-11-11] verify | MM7 Dark guild hand-in
+- by: T-Burton-ND via codex
+- Completed the focused D1 contract with three passing Dark Guild tests: the in-dungeon marker, Archibald assignment, and the second Archibald dialogue topic that clears the active task and grants Dark-guild membership. Archibald's later Clanker move is not part of this hand-in and is not asserted here.
+
+## [2026-11-11] verify | MM7 Dark altar hand-in
+- by: T-Burton-ND via codex
+- Added and passed `MM7DarkGuild.KastoreRequiresBothAltarPieces`. It reaches Kastore's actual Castle Gloaming dialogue, verifies that one physical altar piece is refused, and that both pieces complete the Dark task and are consumed. The two temple acquisition interactions are deliberately left for a continuous route test.
+
+## [2026-11-11] verify | MM7 Dark Clanker defenses
+- by: T-Burton-ND via codex
+- Added and passed `MM7DarkGuild.ClankerDefensesAreDisabledByMapEvent`. The test finds the actual Clanker's Laboratory event that records destroyed magical and teleport defenses, executes it with no actors, and confirms that this objective is not satisfied by a kill-all proxy. Dark Shade's return dialogue remains open.
+
+## [2026-11-11] verify | MM7 Dark Pit advisers and Soul Jars
+- by: T-Burton-ND via codex
+- Replaced the altar test's artificial Castle Gloaming placement with the genuine Archibald hand-in and runtime-selected Pit adviser homes. Added a passing Maximus contract that follows Kastore's prerequisite, assigns the Dark Soul Jars task, refuses without the case, and consumes it on completion. The Thunderfist chest acquisition interaction remains a focused follow-up.
+
+## [2026-11-11] verify | MM7 Dark Shade Clanker hand-in
+- by: T-Burton-ND via codex
+- Added and passed Dark Shade's actual Pit dialogue contract: it assigns the Clanker task, refuses before the defense marker, and closes only after it. Together with the existing event test, this confirms the Dark route's intended map-state objective and recipient.
+
+## [2026-11-11] correct | MM7 Dark control-cube contract
+- by: T-Burton-ND via codex
+- Public-source reconciliation corrected the Dark D5 row before implementation: Tolberti in the Pit assigns Robert the Wise in Celeste, accepts Robert's control cube, and grants Blaster training. The cube may be obtained by combat or theft; it is the Dark mirror of Robert's Light-side Tolberti quest.
+
+## [2026-11-11] verify | MM7 Dark Robert cube hand-in
+- by: T-Burton-ND via codex
+- Added and passed the Dark Tolberti dialogue contract after the three adviser completions. It assigns Robert's control cube, refuses an empty return, and consumes the supplied cube while closing the Dark quest. Robert's real Celeste combat/theft acquisition and the Blaster reward remain separately targeted.
+
+## [2026-11-11] verify | MM7 Dark Xenofex hand-in
+- by: T-Burton-ND via codex
+- Added and passed Kastore's post-cube Dark Xenofex dialogue contract. It uses the real Tolberti hand-in relocation to Castle Gloaming, selects the actual later Kastore topic by event identity, rejects a return before Xenofex's shared death marker, then closes the Dark task after it.
+
+## [2026-11-11] verify | MM7 Dark Overthruster assignment
+- by: T-Burton-ND via codex
+- Added and passed the final Kastore assignment through the genuine Dark adviser, cube and Xenofex state transitions. The test selects Kastore's final event by identity and records the Dark-only Overthruster active bit; the existing campaign ending test remains the Kastore hand-in control.
+
+## [2026-11-11] analyze | MM7 Wine Cellar behavior divergence
+- by: T-Burton-ND via codex
+- Traced the apparent exit-only completion to the event layer and documented it as a source-data divergence, not accepted intended coverage. Public player-facing behavior requires the Elder Vampire defeated, while the exit script can set the flag without a kill and the current referenced actor loads disabled. A compatibility decision is required before altering that legacy script or declaring the Light-chain prerequisite fixed.
+
+## [2026-11-11] verify | MM7 Wine Cellar requires a kill
+- by: T-Burton-ND via codex
+- Corrected the two narrow legacy event paths that treated the Wine Cellar's disabled Elder Vampire spawn as killed. The focused regression now leaves the task active after exit and the adviser refuses completion; the shared actor-kill semantics are unchanged. The actual combat-and-exit completion route remains to be added.
+
+## [2026-11-11] verify | MM7 Wine Cellar kill-and-exit hand-in
+- by: T-Burton-ND via codex
+- Extended the focused Wine Cellar regression with the positive path: after the disabled-spawn exit is refused, the actual vampire is marked dead, the real map-leave predicate sets the quest marker, and Crag Hack completes the task. This closes the intended completion contract without changing general actor-kill semantics.
+
+## [2026-11-11] verify | MM7 Wine Cellar C5 save-chain alignment
+- by: T-Burton-ND via codex
+- Replaced C5's obsolete exit-only Wine Cellar shortcut with the Elder Vampire death state before the real cellar exit. A fresh owner-only disposable C0 through C5 run passed, with each chapter save and pass marker preserved across separate processes. This remains event/death-state coverage rather than direct player-combat coverage.
+
+## [2026-11-11] research | MM7 complete quest behavior audit
+- by: T-Burton-ND via codex
+- Rechecked the main, Light, Dark, side, promotion and puzzle contracts against public walkthroughs, promotion pages, quest-item listings and the official Prima guide excerpts. Reconciled those findings with the local `QuestBit` register instead of existing tests alone.
+- Corrected the Monk and Archer promotion contracts, added the Dark Griffin hunt and the fourteen-Obelisk puzzle, and recorded exact player-visible side rewards and promotion XP rules. Runtime coverage remains intentionally unchanged: the catalog is now the source baseline for the Dark chain and subsequent regional side-quest work.
+
+## [2026-11-11] verify | MM7 Dark Thunderfist Soul Jars source
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7DarkGuild.ThunderfistChestProvidesDarkSoulJars`. It finds the loaded Thunderfist map event whose chest contains the Dark case, opens that production chest UI, and transfers the case without inventory injection or a renderer-dependent outdoor aim ray. `MM7DarkGuild.*` passed 11/11 in each of three consecutive headless runs.
+
+## [2026-11-11] correct | MM7 Dark cube reward presentation
+- by: T-Burton-ND via codex
+- A rebuilt focused check disproved the earlier assumption that Tolberti himself presents the Blaster-learning dialogue after the control-cube hand-in. Public guides still describe Blaster training as a reward, but the trainer/presentation must be located separately. The completed assignment, refusal, cube consumption and state transition remain verified.
+
+## [2026-11-11] verify | MM7 Dark Robert cube source
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7DarkGuild.CelesteRobertCarriesControlCube`. With the actual Dark prerequisites and cube assignment, it uses the real Celeste door transition and finds exactly one live Robert the Wise actor carrying the control cube in the Small House. This distinguishes the Dark source from the already-tested Light-side Tolberti actor; Dark combat/theft retrieval remains open.
+
+## [2026-11-11] verify | MM7 Dark cube Blaster reward
+- by: T-Burton-ND via codex
+- Public walkthrough and skill-teacher sources clarify that the control-cube target drops both the cube and a Blaster, and completing either assassination grants normal Blaster skill access. The rebuilt Dark hand-in test now proves the direct effect: each of the four party members receives novice Blaster skill. This replaces the disproven claim that Tolberti exposes a dedicated learning-dialogue button.
+
+## [2026-11-11] verify | MM7 Dark Robert Blaster source
+- by: T-Burton-ND via codex
+- Extended the repeat-verified Celeste Robert source test. The one live Robert actor reached through the Dark route now proves both documented carried quest rewards before any inventory injection: the control cube and a Blaster. Combat or theft and corpse/pocket transfer are still deliberately separate interaction coverage.
+
+## [2026-11-11] research | MM7 Dark Roland and Xenofex route
+- by: T-Burton-ND via codex
+- Rechecked D6 against the Dark walkthrough and replaced its vague Colony Zod wording. The intended route is to rescue Roland in the Hive/Colony Zod sequence and activate the two controls that open Xenofex's way, then kill Xenofex and return to Kastore. Existing Dark coverage begins only at the death marker and hand-in; the recorded route is the next focused contract.
+
+## [2026-11-11] research | MM7 Dark Lincoln finale route
+- by: T-Burton-ND via codex
+- Rechecked the shared finale before extending Dark coverage. The four wetsuits may only be worn with Blasters while crossing to Lincoln; normal equipment must be restored inside. Lincoln power must be restored before the Overthruster can be retrieved and returned to Kastore. The catalog now records those gates rather than collapsing D7 into a generic final item hand-in.
+
+## [2026-11-11] verify | MM7 Stone City troglodyte side quest
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7SideQuests.TroglodytesRequireLowerCityClearance`, the first side-quest expansion selected from the independent lane. It proves Spark Burnkindle assigns the task, refuses a report with one qualifying lower-city troglodyte alive, and after a full clear grants 5,000 XP to each party member, 2,500 gold, -10 reputation and the lower-city award. The Nighon passage is out of this source fixture; direct combat remains separate.
+
+## [2026-11-11] backport | MM7 zero-based event monster identifiers
+- by: T-Burton-ND via codex
+- Selectively brought forward OpenEnroth `#2972` / `#2868`: MM7 event scripts identify monsters from zero, so decoder handling now translates monster-ID kill checks before engine comparison. This restores correct Griffin and Troglodyte quest predicates without changing source map data.
+- Rebuilt the arm64 headless runner and passed `Issue2868a`, `Issue2868b`, `Issue673d`, and `MM7SideQuests.TroglodytesRequireLowerCityClearance` three times. The retained upstream tests prove the regional all-Griffin and Troglodyte-Queen boundaries; local tests retain the full reward contract.
+
+## [2026-11-11] research | MM7 Hume Monk promotion contracts
+- by: T-Burton-ND via codex
+- Rechecked both Bartholomew Hume promotions against the public promotion and Harmondale references. The first promotion completes remotely when the Zokarr Tomb meditation pool is used; the Light second promotion requires a return to Hume after the Temple of Baa High Priest kill and cloak recovery. The catalog now names those acceptance, completion and return boundaries rather than reducing the latter to a generic priest-help task.
+
+## [2026-11-11] backport | MM7 scripted award feedback
+- by: T-Burton-ND via codex
+- Selectively brought forward OpenEnroth `#2969`: a script grants a portrait/award reaction only when that character did not already have the award. This covers promotion-style award grants without replaying feedback on duplicate grants.
+- The focused `Issue2817` award regression, the Griffin reporting flow, and the full Stone City troglodyte contract passed three consecutive headless runs after resolving an upstream recorder-shape-only test expectation.
+
+## [2026-11-11] backport | valid indoor encounter sectors
+- by: T-Burton-ND via codex
+- Selectively ported OpenEnroth `#2994`: `SpawnEncounter` now drops an indoor spawn point only when it resolves to sector zero, before actor allocation. This is vanilla-MM7 behavior and prevents unreachable actors from blocking clear-all or kill-gated quest state; valid spawns, saved actors and pre-guard random work are retained.
+- Added `Issue2748`, which loads the Erathian Sewers, clears every reachable actor and proves the actor count reaches zero and yellow alert clears. It passed three repeat headless runs alongside the Griffin and Troglodyte predicate contracts.
+
+## [2026-11-11] verify | MM7 Markham Vase promotion
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7Promotions.MarkhamVaseRequiresPhysicalPickup`. It dynamically finds William Lasker and the Erathian Sewer house entrance, proves acceptance and the missing-vase refusal, then finds and clicks the real Markham Manor fireplace decoration through its held-item event. The normal return consumes the held vase and proves Thief-to-Rogue promotion, Knight honorary award, 30,000/15,000 XP split and 5,000 gold.
+
+## [2026-11-11] verify | MM7 Lantern of Light side quest
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7SideQuests.LanternOfLightRequiresBarrowChest`. It dynamically finds Tarin Withern and the Harmondale temple event, proves assignment and a missing-Lantern refusal, maps the loaded Barrow II chest event to the Lantern-bearing chest, and collects it through the normal chest UI.
+- The physical hand-in consumes the Lantern, clears the active quest, grants the Harmondale award, 1,000 gold, and 5,000 XP to every character. The Lantern, Markham Vase, and Stone City Troglodyte contracts passed three consecutive headless runs together.
+
+## [2026-11-11] backport | MM7 Divine Intervention preserves Zombie
+- by: T-Burton-ND via codex
+- Selectively adapted OpenEnroth `#2968` / `8f18f9385`: MM7 Divine Intervention now clears the Zombie character's removable conditions without curing Zombie itself. The shared spell path retains its existing `resetAll` behavior for MM6 pending separate title-specific evidence.
+- `MM7Combat.DivineInterventionPreservesZombie` proves that the same cast clears Weak but retains Zombie. It and the existing recovery control passed three consecutive headless runs alongside the Lantern contract.
+
+## [2026-11-11] verify | MM7 Haldar's Remains side quest
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7SideQuests.HaldarsRemainsRequireMazeChest`. It dynamically finds Mazim Dusk and his Mount Nighon home event, proves assignment and a missing-remains refusal, maps the loaded Maze chest event to the remains-bearing chest, and collects it through the normal chest UI.
+- The physical hand-in consumes Haldar's Remains, clears the active quest, grants the Nighon award, 35,000 gold, and 50,000 XP to every character. It passed three consecutive headless runs with the Lantern, Vase, and Divine Intervention contracts.
+
+## [2026-11-11] fix | MM7 native backup load admission
+- by: T-Burton-ND via codex
+- Native MM7 loading now uses the same structural validator and bounded path checks as its atomic writer. A valid `.bak` is admitted read-only when the primary is corrupt; invalid candidates fail before load-side live-state mutation, and RAM/test filesystems retain their existing path.
+- Existing save-capture and corrupt-body admission controls passed three consecutive headless runs. Manual load-menu backup visibility and an explicit repair decision remain separate user-facing work.
+
+## [2026-11-11] fix | MM7 queued scroll cancellation
+- by: T-Burton-ND via codex
+- MM7 now returns a cursor-held scroll when queued target casting is cancelled because the caster becomes unable to act. The shared cancellation path remains title-gated, so MM6 behavior is unchanged.
+- `MM7Scrolls.IncapacitationCancelsActorTargetScroll` and the complete five-case scroll contract passed three consecutive headless runs. Pass, theft, full-queue and turn-wait exits remain separate audit candidates.
+
+## [2026-11-11] fix | MM7 native backup-load menu recovery
+- by: T-Burton-ND via codex
+- The native MM7 Load menu now retains a numbered slot when its primary cannot be decoded but its atomic backup can. The slot keeps its original filename, so normal Load resolves it through the existing structural primary-or-backup admission path.
+- The disposable writer leaves a corrupt primary next to a valid backup; a fresh process listed, selected and loaded the backup while preserving the corrupt primary. Automatic repair remains intentionally out of scope.
+
+## [2026-11-11] verify | MM7 Davrik's Signet Ring side quest
+- by: T-Burton-ND via codex
+- Added `MM7SideQuests.DavriksSignetRingRequiresBanditCavesChest`. It dynamically reaches Davrik through the Harmondale tavern, proves an empty-handed report is refused, finds the quest-gated Bandit Caves chest through the normal chest UI, and completes the physical return.
+- The contract verifies active/taken bits, ring consumption, the Harmondale award, 5,000 gold and 5,000 XP per character. It passed three consecutive headless runs.
+
+## [2026-11-11] verify | MM7 Darron deck acquisition
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7SideQuests.DarronsDeckIsPhysicallyAcquiredAfterAcceptance`. It reaches Darron's actual Harmondale dialogue, accepts the task, enters White Cliff Cave and collects the real Arcomage deck by clicking the world item.
+- The deck is already present before acceptance, so this records physical acquisition rather than an incorrect spawn gate. The Darron return and reward contract remain open.
+
+## [2026-11-11] verify | MM7 Darron deck return
+- by: T-Burton-ND via codex
+- Extended the Darron contract to `MM7SideQuests.DarronsDeckIsPhysicallyAcquiredAndReturned`. After the real acquisition, it returns through Darron's visible Harmondale dialogue.
+- The return clears the active state, retains the deck, and grants 750 gold plus 2,000 XP to each character. It passed three consecutive headless runs.
+
+## [2026-11-11] verify | MM7 Season's Stole acquisition
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7SideQuests.SeasonsStoleIsAcquiredFromHallOfThePitChest`. With the real quest bit active, it identifies the loaded Hall of the Pit chest containing the Stole and takes it through the ordinary chest UI.
+- The Gary Zimm return and its reward remain a separate uncovered contract.
+
+## [2026-11-11] verify | MM7 Angel Statuette acquisition
+- by: T-Burton-ND via codex
+- Added and repeat-verified `MM7SideQuests.AngelStatuetteIsAcquiredFromTheMazeChest`. It starts a new game, finds the Angel Statuette in the loaded Maze chest, and takes it through the ordinary chest UI.
+- Knight/Eagle acquisition, the three shrine placements, and Thom Lumbra's return/reward contract remain separate uncovered work.
+
 ## [2026-11-11] update | Atlas MM6 isolated playtest entry
 - by: T-Burton-ND via codex
 - Added the gated `Play MM6` action at `ee7c49023`, alongside the existing MM7 route. It requires MM6 data, runs only the title-locked MM6 helper, uses `Profiles/MM6-Atlas`, and clears MM7-only settings.
@@ -3140,3 +3315,10 @@ Chronological record of wiki activity.
 - Recorded the owner's strict title boundary: Codex is the sole MM7 arbiter and delivery owner, while Claude Code owns all MM6 work; prior overall-lead wording is historical.
 - Allocated up to five linked worktrees to each title, left `master` neutral for integration, and made the budget check count `codex/` and `claude/` branches separately.
 - Verified the capacity tool compiles and reports the current allocation as Codex 1/5 and Claude 0/5. The two-active-code-lane safety limit and cross-title regression controls remain in force.
+
+## [2026-11-12] verify | MM7 Kerrid and Parsons side quests
+- by: T-Burton-ND via codex
+- `MM7SideQuests.KerridLetterIsReceivedThroughRealHouseDialogue` reaches Kerrid's real Pierpont residence and offer, then verifies the active state and physical letter. The Faerie audience and return remain open.
+- `MM7SideQuests.ParsonsQuillRequiresMarkhamExchange` completes the Emerald contest and departure, accepts Thrush's physical letter, proves the missing-quill refusal, performs the relocated Markham Manor exchange, and completes the return with item, quest, award, reputation, 2,000-gold and 5,000-XP-per-character assertions.
+- The final regional side/promotion selection passed 10/10 headlessly. Full `check_style` and changed-file `cpplint` also passed.
+

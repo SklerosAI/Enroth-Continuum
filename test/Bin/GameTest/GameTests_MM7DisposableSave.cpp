@@ -309,6 +309,13 @@ GAME_TEST(MM7DisposableSave, DISABLED_WriteFreshProfile) {
     auto backupState = std::make_unique<SaveGame_MM7>();
     deserialize(backup, backupState.get());
     EXPECT_EQ(backupState->party.numGold, savedGold);
+
+    // Leave the next process with the exact recovery case: the atomic backup
+    // is valid, while the primary cannot pass structural admission.
+    ufs->write(slot, Blob::fromString("corrupt primary after atomic backup"));
+    EXPECT_FALSE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(ufs->read(slot).data()), ufs->read(slot).size()),
+        GameTitle::MM7, *pGames_LOD));
 }
 
 GAME_TEST(MM7DisposableSave, DISABLED_ReloadFreshProcess) {
@@ -319,8 +326,9 @@ GAME_TEST(MM7DisposableSave, DISABLED_ReloadFreshProcess) {
     ASSERT_EQ(window->nativeHandle(), nullptr);
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
     ASSERT_TRUE(ufs->exists(slot));
-    const size_t savedSize = ufs->read(slot).size();
-    ASSERT_GT(savedSize, 1024u);
+    const Blob corruptPrimary = ufs->read(slot);
+    ASSERT_LT(corruptPrimary.size(), 1024u);
+    ASSERT_TRUE(ufs->exists("saves/save000.mm7.bak"));
 
     game.pressGuiButton("MainMenu_LoadGame");
     game.tick(3);
@@ -342,6 +350,6 @@ GAME_TEST(MM7DisposableSave, DISABLED_ReloadFreshProcess) {
     EXPECT_EQ(current_screen_type, SCREEN_GAME);
     EXPECT_EQ(engine->_currentLoadedMapId, MAP_EMERALD_ISLAND);
     EXPECT_EQ(engine->_lastLoadedSaveFileName, fileName);
-    EXPECT_EQ(pParty->uNumGold, savedGold + 1);
-    EXPECT_EQ(ufs->read(slot).size(), savedSize);
+    EXPECT_EQ(pParty->uNumGold, savedGold);
+    EXPECT_TRUE(ufs->read(slot).str() == corruptPrimary.str());
 }

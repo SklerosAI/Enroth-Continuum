@@ -552,6 +552,59 @@ GAME_TEST(Issues, Issue673c) {
     EXPECT_EQ(reputationTape.delta(), -10);
 }
 
+GAME_TEST(MM7SideQuests, TroglodytesRequireLowerCityClearance) {
+    // Spark must reject a report while even one qualifying lower-city troglodyte survives. A full clear grants the
+    // documented party XP, gold, award and reputation change; the Nighon passage is not part of this map fixture.
+    for (bool leaveOneAlive : {true, false}) {
+        SCOPED_TRACE(fmt::format("leaveOneAlive={}", leaveOneAlive));
+        test.prepareForNextTest();
+        game.startNewGame();
+        game.teleportTo(MAP_STONE_CITY, Vec3f(3904, -3334, -5), 270); // Spark's house and lower-city actor fixture.
+        bool spared = false;
+        for (Actor &actor : pActors) {
+            if (monsterTypeForMonsterId(actor.monsterInfo.id) != MONSTER_TYPE_TROGLODYTE)
+                continue;
+            if (leaveOneAlive && !spared) {
+                spared = true;
+                continue;
+            }
+            Actor::Die(actor.id);
+        }
+        ASSERT_EQ(spared, leaveOneAlive);
+        auto activeTape = tapes.questBit(QBIT_STONE_CITY_TROGLODYTES_ACTIVE);
+        auto goldTape = tapes.gold();
+        auto experienceTape = tapes.totalExperience();
+        auto reputationTape = tapes.reputation();
+        auto awardTape = tapes.custom([] {
+            return static_cast<bool>(pParty->pCharacters[0]._achievedAwardsBits[AWARD_BARROW_DOWNS_KILLED_TROGLODYTES_IN_LOWER_CITY]);
+        });
+        test.startTaping();
+
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick(2);
+        game.pressGuiButton("House_Npc0"); // Spark Burnkindle.
+        game.tick(2);
+        game.pressGuiButton("HouseNpcDialogue_Option0"); // Take the quest.
+        game.tick(2);
+        game.pressGuiButton("HouseNpcDialogue_Option0"); // Attempt report.
+        game.tick(2);
+
+        if (leaveOneAlive) {
+            EXPECT_EQ(activeTape, tape(false, true));
+            EXPECT_EQ(goldTape.delta(), 0);
+            EXPECT_EQ(experienceTape.delta(), 0);
+            EXPECT_EQ(reputationTape.delta(), 0);
+            EXPECT_EQ(awardTape, tape(false));
+        } else {
+            EXPECT_EQ(activeTape, tape(false, true, false));
+            EXPECT_EQ(goldTape.delta(), 2500);
+            EXPECT_EQ(experienceTape.delta(), 4 * 5000);
+            EXPECT_EQ(reputationTape.delta(), -10);
+            EXPECT_EQ(awardTape, tape(false, true));
+        }
+    }
+}
+
 GAME_TEST(Issues, Issue673d) {
     // Reporting the griffins killed to Seth Drakkson changed the reputation once per character.
     auto reputationTape = tapes.reputation();
@@ -560,13 +613,9 @@ GAME_TEST(Issues, Issue673d) {
     pParty->_questBits.set(QBIT_DARK_PATH); // Seth offers the quest only on the dark path.
     for (MapId map : {MAP_ERATHIA, MAP_BRACADA_DESERT}) {
         game.teleportTo(map, Vec3f(0, 0, 0), 0);
-        for (Actor &actor : pActors) {
+        for (Actor &actor : pActors)
             if (monsterTypeForMonsterId(actor.monsterInfo.id) == MONSTER_TYPE_GRIFFIN)
                 Actor::Die(actor.id);
-            // TODO(captainurist): #2868 makes the griffin check want Bracada's Gold Golems dead, drop this once it's fixed.
-            if (actor.monsterInfo.id == MONSTER_GOLEM_C)
-                Actor::Die(actor.id);
-        }
     }
     game.teleportTo(MAP_DEYJA, Vec3f(-19150, 14456, 0), 180); // In front of Slicer's house.
     test.startTaping();

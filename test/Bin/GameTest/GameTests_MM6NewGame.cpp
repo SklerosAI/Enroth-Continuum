@@ -13,7 +13,9 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Data/TileData.h"
 #include "Engine/Evt/EvtProgram.h"
+#include "Engine/Graphics/Outdoor.h"
 #include "Engine/Localization.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
@@ -108,6 +110,31 @@ GAME_TEST(MM6NewGameHeadless, NewPartyEntersFirstMap) {
     EXPECT_EQ(screenTape.back(), SCREEN_GAME);
     EXPECT_EQ(mapTape.back(), pMapTable->GetMapInfo("oute3.odm"));
     EXPECT_FALSE(ufs->exists("saves"));
+}
+
+GAME_TEST(MM6NewGameHeadless, StartingGroundIsGrassInJanuary) {
+    // New Sorpigal's grass was drawn as snow at the start of a new game, which begins in January.
+    auto monthTape = tapes.custom([] { return pParty->uCurrentMonth; });
+    auto snowTape = tapes.custom([] {
+        if (uCurrentlyLoadedLevelType != LEVEL_OUTDOOR)
+            return -1;
+        int snow = 0;
+        Pointi start = worldToGrid(pParty->pos);
+        for (int y = start.y - 8; y <= start.y + 8; ++y)
+            for (int x = start.x - 8; x <= start.x + 8; ++x)
+                snow += pOutdoor->pTerrain.containsGrid({x, y}) && pOutdoor->pTerrain.tileDataByGrid({x, y}).textureName.starts_with("sno");
+        return snow;
+    });
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    createPartyThroughInput(game);
+    game.pressGuiButton("PartyCreation_OK");
+    game.skipLoadingScreen();
+    test.startTaping();
+    game.tick();
+
+    EXPECT_EQ(monthTape, tape(0));
+    EXPECT_EQ(snowTape, tape(0));
 }
 
 GAME_TEST(MM6NewGameHeadless, PotbelloPaysForTheLetter) {

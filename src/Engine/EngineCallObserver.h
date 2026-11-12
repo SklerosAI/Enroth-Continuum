@@ -1,10 +1,14 @@
 #pragma once
 
+#include <string>
 #include <typeinfo>
+
+#include "Library/Geometry/Point.h"
 
 enum class EngineCall {
     CALL_PLAY_SOUND,
     CALL_DRAW_2D_TEXTURE,
+    CALL_DRAW_2D_QUAD,
     CALL_DRAW_MESSAGE_BOX,
     CALL_GUIWINDOW_DRAWTEXT,
     CALL_SPECIAL_ATTACK,
@@ -15,6 +19,16 @@ enum class EngineCall {
     CALL_LAST = CALL_PAUSE_MUSIC
 };
 using enum EngineCall;
+
+/**
+ * Payload of `CALL_DRAW_2D_QUAD`, a texture drawn by `Renderer::DrawQuad2D` and the top left corner it was drawn at.
+ */
+struct DrawnQuad {
+    std::string texture;
+    Pointi position;
+
+    friend bool operator==(const DrawnQuad &l, const DrawnQuad &r) = default;
+};
 
 /**
  * An interface that's used to implement poor man's gmock for recording calls into different engine functions.

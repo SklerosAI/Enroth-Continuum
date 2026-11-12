@@ -22,6 +22,10 @@
 
 #include "Utility/String/Ascii.h"
 
+void PrintTo(const DrawnQuad &quad, std::ostream *stream) {
+    *stream << quad.texture << "@(" << quad.position.x << ", " << quad.position.y << ")";
+}
+
 static DoorState doorStateById(int doorId) {
     auto door = std::ranges::find(pIndoor->doors, doorId, &BLVDoor::doorId);
     assert(door != pIndoor->doors.end());
@@ -215,6 +219,10 @@ TestMultiTape<SoundId> CommonTapeRecorder::sounds() {
 
 TestMultiTape<std::string> CommonTapeRecorder::hudTextures() {
     return _controller->recordFunctionTape<std::string>(CALL_DRAW_2D_TEXTURE);
+}
+
+TestMultiTape<DrawnQuad> CommonTapeRecorder::hudQuads() {
+    return _controller->recordFunctionTape<DrawnQuad>(CALL_DRAW_2D_QUAD);
 }
 
 TestMultiTape<std::string> CommonTapeRecorder::messageBoxes() {

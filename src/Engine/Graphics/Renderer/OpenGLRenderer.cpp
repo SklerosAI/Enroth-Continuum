@@ -1995,8 +1995,10 @@ void OpenGLRenderer::BeginScene2D() {
 void OpenGLRenderer::DrawQuad2D(GraphicsImage *texture, const Recti &srcRect, const Recti &dstRect, Color color) {
     assert(texture);
 
-    if (engine->callObserver)
+    if (engine->callObserver) {
         engine->callObserver->notify(CALL_DRAW_2D_TEXTURE, texture->name());
+        engine->callObserver->notify(CALL_DRAW_2D_QUAD, DrawnQuad{texture->name(), dstRect.topLeft()});
+    }
 
     // Early out if destination is completely outside render area.
     if (dstRect.x >= outputRender.w || dstRect.y >= outputRender.h)

@@ -1579,8 +1579,13 @@ void GameUI_DrawMinimap(const Recti &rect, int zoom) {
     if (rotate < 128 || rotate > 1920) arrow_idx = 7;
     render->DrawQuad2D(game_ui_minimap_dirs[arrow_idx], {center.x - 3, center.y - 3});
 
-    render->SetUIClipRect(Recti(541, 0, 26, 480));
-    render->DrawQuad2D(game_ui_minimap_compass, {static_cast<int>(floorf((pParty->_viewYaw * 0.1171875) + 0.5f) + 285), 136});
+    if (engine->gameTitle() == GameTitle::MM6) {
+        render->SetUIClipRect(mm6HudCompassClipRect);
+        render->DrawQuad2D(game_ui_minimap_compass, mm6HudCompassPosition(pParty->_viewYaw & TrigLUT.uDoublePiMask));
+    } else {
+        render->SetUIClipRect(Recti(541, 0, 26, 480));
+        render->DrawQuad2D(game_ui_minimap_compass, {static_cast<int>(floorf((pParty->_viewYaw * 0.1171875) + 0.5f) + 285), 136});
+    }
     render->ResetUIClipRect();
     if (engine->gameTitle() == GameTitle::MM6) {
         // MM6 draws its hour-selected panel over the completed automap.

@@ -2,10 +2,12 @@
 
 #include <cstdint>
 #include <initializer_list>
+#include <ostream>
 #include <utility>
 #include <string>
 #include <type_traits>
 
+#include "Engine/EngineCallObserver.h"
 #include "Engine/Data/HouseEnums.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Objects/SpriteEnums.h"
@@ -22,6 +24,8 @@
 #include "Library/Config/ConfigEntry.h"
 
 #include "TestController.h"
+
+void PrintTo(const DrawnQuad &quad, std::ostream *stream);
 
 class CommonTapeRecorder {
  public:
@@ -108,6 +112,8 @@ class CommonTapeRecorder {
     TestMultiTape<int> musicPauses();
 
     TestMultiTape<std::string> hudTextures();
+
+    TestMultiTape<DrawnQuad> hudQuads(); // Like hudTextures, but with the position each texture was drawn at.
 
     /**
      * Return a tape object of strings listing all the hints whenever a pop up message box was called.

@@ -108,3 +108,21 @@ GAME_TEST(MM6Hud, FoodAndGoldNumbers) {
     EXPECT_CONTAINS(text, "\r0877");
     EXPECT_CONTAINS(text, "\r0231234567");
 }
+
+GAME_TEST(MM6Hud, CompassUnderTopPanelSlot) {
+    // The compass was drawn at y 136 under the opaque top panel art, so it never showed.
+    auto quadsTape = tapes.hudQuads();
+    auto yawTape = tapes.custom([] { return pParty->_viewYaw; });
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    game.tick();
+    game.pressKey(PlatformKey::KEY_LEFT);
+    game.tick();
+    game.releaseKey(PlatformKey::KEY_LEFT);
+
+    auto compassAndPanel = quadsTape.flatten().filter([](const DrawnQuad &quad) { return quad.texture == "compass" || quad.texture == "tap2"; });
+    EXPECT_EQ(yawTape, tape(512, 616));
+    EXPECT_EQ(compassAndPanel, tape(DrawnQuad{"compass", {348, 10}}, DrawnQuad{"tap2", {468, 0}},
+                                    DrawnQuad{"compass", {361, 10}}, DrawnQuad{"tap2", {468, 0}}));
+}

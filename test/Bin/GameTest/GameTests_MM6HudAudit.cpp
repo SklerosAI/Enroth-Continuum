@@ -233,3 +233,20 @@ GAME_TEST(MM6Hud, TorchLightAndWizardEye) {
     auto topPanel = quadsTape.flatten().filter([](const DrawnQuad &quad) { return quad.position.x >= 468 && quad.position.y < 141; });
     EXPECT_EQ(topPanel, tape(DrawnQuad{"", {480, 25}}, DrawnQuad{"mapdir2", {553, 79}}, DrawnQuad{"tap2", {468, 0}}, DrawnQuad{"wizeye", {547, 20}})); // No torch light.
 }
+
+GAME_TEST(MM6Hud, HitPointBarSegments) {
+    // Hit point bars were one green bar filled linearly, MM6 switches to the half and quarter images as hit points drop.
+    auto quadsTape = tapes.hudQuads();
+    enterFirstMapFromNewGame(game);
+    game.runGameRoutine([] {
+        pParty->pCharacters[0].health = pParty->pCharacters[0].GetMaxHealth() * 2 / 5;
+        pParty->pCharacters[1].health = pParty->pCharacters[1].GetMaxHealth() / 5;
+    });
+    test.startTaping();
+
+    game.tick();
+
+    auto bars = quadsTape.flatten().filter([](const DrawnQuad &quad) { return quad.texture.starts_with("hits"); });
+    EXPECT_EQ(bars, tape(DrawnQuad{"hitshalf", {93, 421}}, DrawnQuad{"hitsqtr", {206, 442}},
+                         DrawnQuad{"hitsfull", {319, 383}}, DrawnQuad{"hitsfull", {431, 383}}));
+}

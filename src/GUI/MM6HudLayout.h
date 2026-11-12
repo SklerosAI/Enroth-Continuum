@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <string_view>
 
@@ -63,3 +64,25 @@ inline constexpr std::array<MM6HudBuffSprite, 7> mm6HudBuffSprites = {{
     {PARTY_BUFF_FEATHER_FALL, "i1_fall", {500, 254}},
     {PARTY_BUFF_WIZARD_EYE, "wizeye", {556, 30}}
 }};
+
+/**
+ * Part of an MM6 hit point bar that MM6.exe draws. The top half of the bar is HITSFULL, the next quarter HITSHALF and
+ * the last quarter HITSQTR, so the bar isn't linear in hit points.
+ */
+struct MM6HudHealthBar {
+    std::string_view image;
+    int top; // Of the whole image.
+    int skip; // Rows left out at the top of the image.
+};
+
+/**
+ * @param ratio                         Hit points over maximum hit points, above zero.
+ * @return                              What to draw of the bar.
+ */
+inline MM6HudHealthBar mm6HudHealthBar(double ratio) {
+    if (ratio > 0.5)
+        return {"hitsfull", 383, 38 - static_cast<int>((std::min(ratio, 1.0) - 0.5) * 2 * 38)};
+    if (ratio > 0.25)
+        return {"hitshalf", 421, 21 - static_cast<int>((ratio - 0.25) * 4 * 21)};
+    return {"hitsqtr", 442, 19 - static_cast<int>(ratio * 4 * 19)};
+}

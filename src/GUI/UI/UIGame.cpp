@@ -774,16 +774,20 @@ void GameUI_DrawLifeManaBars() {
     const auto mm6Health = mm6HudHealthBarRects();
     const auto mm6Mana = mm6HudManaBarRects();
     for (int i = 0; i < pParty->pCharacters.size(); ++i) {
-        if (pParty->pCharacters[i].health > 0) {
+        if (pParty->pCharacters[i].health > 0 && mm6Bars) {
+            const MM6HudHealthBar bar = mm6HudHealthBar((double)pParty->pCharacters[i].health / pParty->pCharacters[i].GetMaxHealth());
+            GraphicsImage *image = assets->getIcon(bar.image);
+            const int x = mm6Health[i].x;
+            render->SetUIClipRect(Recti(x, bar.top + bar.skip, image->width(), image->height() - bar.skip));
+            render->DrawQuad2D(image, {x, bar.top});
+            render->ResetUIClipRect();
+        } else if (pParty->pCharacters[i].health > 0) {
             int v17 = 0;
             if (i == 2 || i == 3) v17 = 2;
             double hpFillRatio = (double)pParty->pCharacters[i].health / (double)pParty->pCharacters[i].GetMaxHealth();
 
             auto pTextureHealth = game_ui_bar_green;
-            if (mm6Bars) {
-                // The original MM6 archive supplies one green hit fill.
-                hpFillRatio = std::min(hpFillRatio, 1.0);
-            } else if (hpFillRatio > 0.5) {
+            if (hpFillRatio > 0.5) {
                 if (hpFillRatio > 1.0) {
                     hpFillRatio = 1.0;
                 }
@@ -793,7 +797,7 @@ void GameUI_DrawLifeManaBars() {
                 pTextureHealth = game_ui_bar_red;
             }
             if (hpFillRatio > 0.0) {
-                Pointi barPosition = mm6Bars ? mm6Health[i].topLeft() : Pointi(v17 + pHealthBarPos[i], pHealthManaBarYPos);
+                Pointi barPosition = Pointi(v17 + pHealthBarPos[i], pHealthManaBarYPos);
                 int height = pTextureHealth->height() * hpFillRatio;
                 render->SetUIClipRect(Recti(
                     barPosition.x,

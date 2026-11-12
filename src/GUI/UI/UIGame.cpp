@@ -47,6 +47,7 @@
 #include "GUI/HudPortraitSelectionResources.h"
 #include "GUI/HudVitalBarResources.h"
 #include "GUI/MM6HudBookControls.h"
+#include "GUI/MM6HudLayout.h"
 #include "GUI/MM6TopPanelResources.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/GUIMessageQueue.h"
@@ -750,16 +751,21 @@ static std::string toCompactString(int value) {
 
 //----- (0041AEBB) --------------------------------------------------------
 void GameUI_DrawFoodAndGold() {
-    int text_y;  // esi@2
+    if (uGameState == GAME_STATE_FINAL_WINDOW)
+        return;
 
-    if (uGameState != GAME_STATE_FINAL_WINDOW) {
-        text_y = _44100D_should_alter_right_panel() != 0 ? 381 : 322;
-
+    if (engine->gameTitle() == GameTitle::MM6) {
+        GUIWindow::DrawText(assets->pFontSmallnum.get(), {0, mm6HudFoodGoldY}, colorTable.Yellow,
+                            fmt::format("\r{:03}{}", mm6HudFoodRightMargin, pParty->GetFood()), pPrimaryWindow->frameRect, 0, colorTable.Black);
+        GUIWindow::DrawText(assets->pFontSmallnum.get(), {0, mm6HudFoodGoldY}, colorTable.Yellow,
+                            fmt::format("\r{:03}{}", mm6HudGoldRightMargin, pParty->GetGold()), pPrimaryWindow->frameRect, 0, colorTable.Black);
+    } else {
+        int text_y = _44100D_should_alter_right_panel() != 0 ? 381 : 322;
         GUIWindow::DrawText(assets->pFontSmallnum.get(), {0, text_y}, uGameUIFontMain, fmt::format("\r087{}", toCompactString(pParty->GetFood())), pPrimaryWindow->frameRect, 0, uGameUIFontShadow);
         GUIWindow::DrawText(assets->pFontSmallnum.get(), {0, text_y}, uGameUIFontMain, fmt::format("\r028{}", toCompactString(pParty->GetGold())), pPrimaryWindow->frameRect, 0, uGameUIFontShadow);
-        // force to render all queued text now so it wont be delayed and drawn over things it isn't supposed to, like item in hand or nuklear
-        render->EndTextNew();
     }
+    // force to render all queued text now so it wont be delayed and drawn over things it isn't supposed to, like item in hand or nuklear
+    render->EndTextNew();
 }
 
 //----- (0041B0C9) --------------------------------------------------------

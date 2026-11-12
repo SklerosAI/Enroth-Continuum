@@ -16,6 +16,7 @@
 #include "GUI/HudPortraitAlertResources.h"
 #include "GUI/MM6HudActionControls.h"
 #include "GUI/MM6HudBookControls.h"
+#include "GUI/MM6HudLayout.h"
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
@@ -1093,6 +1094,17 @@ static void LoadPartyBuffIcons() {
     uIconIdx_WaterWalk = pIconsFrameTable->animationId("spell27");
 }
 
+/**
+ * Creates a hover-only button on the main HUD window. MM6.exe hit boxes cover exactly their width and height, while
+ * `CreateButton` adds one to both.
+ *
+ * @param rect                          Hit box in MM6.exe terms.
+ * @param hover                         Status message shown while the mouse is over the box.
+ */
+static GUIButton *createExactHudButton(const Recti &rect, UIMessageType hover) {
+    return pPrimaryWindow->CreateButton(rect.topLeft(), {rect.w - 1, rect.h - 1}, BUTTON_TYPE_NORMAL, hover, UIMSG_0, 0);
+}
+
 void UI_Create() {
     game_ui_minimap_dirs[0] = assets->getIcon("MAPDIR1");
     game_ui_minimap_dirs[1] = assets->getIcon("MAPDIR2");
@@ -1190,8 +1202,13 @@ void UI_Create() {
     pPrimaryWindow->CreateButton({484, 15}, {138, 116}, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_DateTime, UIMSG_0, 0);
     pPrimaryWindow->CreateButton("Game_Hireling1", {491, 149}, {64, 74}, BUTTON_TYPE_NORMAL, 0, UIMSG_StartHireling1Dialogue, 0, INPUT_ACTION_SELECT_NPC_1);
     pPrimaryWindow->CreateButton("Game_Hireling2", {561, 149}, {64, 74}, BUTTON_TYPE_NORMAL, 0, UIMSG_StartHireling2Dialogue, 0, INPUT_ACTION_SELECT_NPC_2);
-    pPrimaryWindow->CreateButton({476, 322}, {77, 17}, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_Food, UIMSG_0, 0);
-    pPrimaryWindow->CreateButton({555, 322}, {77, 17}, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_Funds, UIMSG_0, 0);
+    if (engine->gameTitle() == GameTitle::MM6) {
+        createExactHudButton(mm6HudFoodHoverRect, UIMSG_ShowStatus_Food);
+        createExactHudButton(mm6HudGoldHoverRect, UIMSG_ShowStatus_Funds);
+    } else {
+        pPrimaryWindow->CreateButton({476, 322}, {77, 17}, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_Food, UIMSG_0, 0);
+        pPrimaryWindow->CreateButton({555, 322}, {77, 17}, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_Funds, UIMSG_0, 0);
+    }
 
     if (useMm6HudActionControls(engine->gameTitle())) {
         const auto controls = mm6HudActionControls();

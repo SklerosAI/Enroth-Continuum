@@ -18,7 +18,8 @@ set(GUI_HEADERS
         GUIWindow.h
         HudFrameResources.h
         HudNavigationResources.h
-        MM6HudBookControls.h)
+        MM6HudBookControls.h
+        MM6HudLayout.h)
 
 add_library(gui STATIC ${GUI_SOURCES} ${GUI_HEADERS})
 target_check_style(gui)

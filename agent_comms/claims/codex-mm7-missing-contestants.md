@@ -8,3 +8,4 @@
 - Conflict check: Claude owns MM6; this lane is MM7-only and does not change shared runtime code.
 - Planned checks: focused ordinary route, separate-process writer/reader in a fresh marked profile, relevant regional controls, `check_style`, and reconciliation with neutral `master` before integration.
 - Privacy: private game data and disposable saves remain local and untracked.
+- Completed: 2026-11-12. Integrated on neutral `master` at `7058a30b5`; handoff: `agent_comms/handoffs/2026-11-12-codex-mm7-missing-contestants.md`.

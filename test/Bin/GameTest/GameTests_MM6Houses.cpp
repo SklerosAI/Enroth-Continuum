@@ -427,7 +427,7 @@ GAME_TEST(MM6Houses, TavernMenu) {
 }
 
 GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
-    // Hidden capture of New Sorpigal house screens: each house's first view, then its first option.
+    // Hidden capture of New Sorpigal house screens: each house's first view, then the screens behind its options.
     ASSERT_FALSE(window->isVisible());
     ASSERT_EQ(dynamic_cast<NullRenderer *>(render), nullptr);
     const char *capturePrefix = std::getenv("MM6_OFFSCREEN_CAPTURE_PATH");
@@ -451,23 +451,25 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
 
     engine->config->debug.NoVideo.setValue(false);
     startMM6NewGame(game);
-    for (auto [door, yaw, name] : std::array<std::tuple<Vec3f, int, std::string_view>, 5>{{
-             {kWeaponShopDoor, 0, "weapons"}, {kGeneralStoreDoor, 1536, "general"}, {kTempleDoor, 0, "temple"},
-             {kTrainingDoor, 0, "training"}, {kTownHallDoor, 0, "townhall"}}}) {
+    for (auto [door, yaw, name, screens] : std::array<std::tuple<Vec3f, int, std::string_view, int>, 6>{{
+             {kWeaponShopDoor, 0, "weapons", 5}, {kGeneralStoreDoor, 1536, "general", 2}, {kTempleDoor, 90, "temple", 0},
+             {kTrainingDoor, 180, "training", 0}, {kGuildDoor, 1536, "guild", 1}, {kTavernDoor, 0, "tavern", 0}}}) {
         enterThroughDoor(game, door, yaw);
         game.tick();
         capture(fmt::format("{}-0", name));
         if (current_screen_type != SCREEN_HOUSE)
             continue;
-        if (name == "weapons" || name == "general") {
-            game.pressGuiButton("HouseDialogue_Option0"); // Buy Items.
+        if (name == "tavern") {
+            game.pressGuiButton("House_Npc0");
             game.tick();
-            capture(fmt::format("{}-1", name));
+            capture(fmt::format("{}-p", name));
+        }
+        for (int option = 0; option < screens; ++option) {
+            game.pressGuiButton(fmt::format("HouseDialogue_Option{}", option));
+            game.tick();
+            capture(fmt::format("{}-{}", name, option + 1));
             game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
             game.tick();
-            game.pressGuiButton("HouseDialogue_Option1"); // Sell Items.
-            game.tick();
-            capture(fmt::format("{}-2", name));
         }
         for (int i = 0; i < 3 && current_screen_type != SCREEN_GAME; ++i) {
             game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);

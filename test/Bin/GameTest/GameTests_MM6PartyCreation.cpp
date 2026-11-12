@@ -7,7 +7,7 @@
 
 static constexpr Pointi firstFaceNextArrow = {134, 39};
 static constexpr Pointi paladinClassName = {174, 425};
-static constexpr Pointi bowAvailableSkill = {348, 425};
+static constexpr Pointi leatherAvailableSkill = {348, 441};
 static constexpr Pointi minusCap = {491, 410};
 static constexpr Pointi plusCap = {591, 410};
 static constexpr Pointi okThumb = {542, 452};
@@ -31,25 +31,25 @@ GAME_TEST(MM6PartyCreationHeadless, ClicksReachVisibleControls) {
     auto screenTape = tapes.screen();
     auto faceTape = charTapes.face(0);
     auto classTape = charTapes.clazz(0);
-    auto bowTape = charTapes.hasSkill(0, SKILL_BOW);
+    auto leatherTape = charTapes.hasSkill(0, SKILL_LEATHER);
     auto mightTape = charTapes.stat(0, ATTRIBUTE_MIGHT);
     auto bonusTape = tapes.custom([] { return CharacterCreation_GetUnspentAttributePointCount(); });
     game.tick(); // Tapes the party as it was created.
 
     game.pressAndReleaseButton(BUTTON_LEFT, firstFaceNextArrow);
     game.tick();
-    game.pressAndReleaseButton(BUTTON_LEFT, bowAvailableSkill);
+    game.pressAndReleaseButton(BUTTON_LEFT, paladinClassName);
+    game.tick();
+    game.pressAndReleaseButton(BUTTON_LEFT, leatherAvailableSkill);
     game.tick();
     game.pressAndReleaseButton(BUTTON_LEFT, plusCap);
     game.tick();
     game.pressAndReleaseButton(BUTTON_LEFT, minusCap);
     game.tick();
-    game.pressAndReleaseButton(BUTTON_LEFT, paladinClassName);
-    game.tick();
 
     EXPECT_EQ(faceTape, tape(0, 1));
     EXPECT_EQ(classTape, tape(mm6Knight, mm6Paladin));
-    EXPECT_EQ(bowTape, tape(false, true, false)); // Changing class clears the optional skills.
+    EXPECT_EQ(leatherTape, tape(true, false, true)); // A Knight starts with Leather, a Paladin learns it here.
     EXPECT_EQ(mightTape, tape(14, 15, 14));
     EXPECT_EQ(bonusTape, tape(50, 49, 50));
     EXPECT_EQ(screenTape, tape(SCREEN_PARTY_CREATION));

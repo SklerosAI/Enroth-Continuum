@@ -3357,3 +3357,9 @@ Chronological record of wiki activity.
 - MM6 objects 500 to 599 went through MM7's `RenderAsSprite` id switch, so MM6 arrows and monster bolts showed MM7 trail particles instead of their sprites. `MM6.exe` draws every object's sprite without an id test, and MM6 now does too. MM6 arrow frames with no image for an octant leave it empty.
 - A Percival arrow, or one with the Carnage enchantment, now becomes object 1051 with a radius 512 area attack, as the original does. Before, it hit like a plain arrow.
 - Merged on `master` at `aa8728361`. Unit tests 1122, MM6 suite 139 passed and 2 skipped, MM7 controls 132, `check_style` clean. The lane's commit message overstates one point: MM6 object 550 was already drawn before the fix. The Carnage branch has no test.
+
+## [2026-11-12] verify | MM7 Missing Contestants route and checkpoint
+- by: T-Burton-ND via codex
+- Added the complete Markham contract: real offer, no-shield refusal, physical Contestant Shield pickup from Emerald Island's Dragon's Lair, return, item and quest transitions, 1,000 gold, 1,000 XP per character, and the award for all four characters.
+- The production-Save writer and separate normal-Load reader passed in a fresh marked profile. The slot stayed byte-identical, while missing-profile and no-save admission cases were rejected; disposable profiles were removed after verification.
+- The focused regional side/promotion selection passed 11/11 headlessly and the complete `check_style` gate passed 157/157. This remains an independent regional boundary, not a continuous campaign.

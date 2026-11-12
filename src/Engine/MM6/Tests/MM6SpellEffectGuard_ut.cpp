@@ -8,9 +8,9 @@
 
 UNIT_TEST(MM6SpellEffectGuard, RejectsUnverifiedRegularIDsAtEveryEffectEntry) {
     // Only Cure Weakness is open to player casts, every monster spell but Paralyze and Toxic Cloud to monster casts,
-    // and the event projectiles and Armageddon to event casts.
+    // and every spell that a shipped event casts to event casts.
     const std::set<int> monsterSpells = {2, 4, 6, 9, 11, 18, 24, 26, 28, 37, 58, 65, 70, 76, 80, 91, 95};
-    const std::set<int> eventSpells = {2, 6, 13, 15, 24, 28, 32, 35, 41, 90, 98};
+    const std::set<int> eventSpells = {2, 6, 12, 13, 15, 24, 28, 32, 35, 41, 46, 83, 90, 91, 98};
     for (int id = 1; id <= 99; ++id) {
         const SpellId spell = static_cast<SpellId>(id);
         for (mm6::SpellEffectSource source : {mm6::SpellEffectSource::PlayerQueue,

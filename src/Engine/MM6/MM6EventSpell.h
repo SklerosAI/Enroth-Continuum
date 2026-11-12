@@ -1,11 +1,14 @@
 #pragma once
 
 #include <cassert>
+#include <cstdlib>
 #include <optional>
 #include <stdexcept>
 #include <utility>
 
 #include "Engine/Graphics/Indoor.h"
+#include "Engine/MM6/MM6ChestTrap.h"
+#include "Engine/MM6/MM6MonsterAttack.h"
 #include "Engine/MM6/MM6SpellDamageTag.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Objects/Character.h"
@@ -115,11 +118,12 @@ inline void launchEventProjectile(SpellId spell, Mastery mastery, int skillLevel
 }
 
 /**
- * Casts an MM6 event spell the way the original event cast does. Projectiles fly at the target, and Armageddon does
- * nothing.
+ * Casts an MM6 event spell the way the original event cast does. Projectiles fly at the target, Bless and Day of the
+ * Gods buff every character, Mass Curse tries to curse every character when the party is near the launch point, and
+ * Wizard Eye and Armageddon do nothing.
  *
  * @param spell                         Verified event spell, see `isVerifiedEventSpell`.
- * @param mastery                       Mastery from the event.
+ * @param mastery                       Mastery from the event, Normal to Master.
  * @param skillLevel                    Skill level from the event.
  * @param from                          Launch point.
  * @param yaw                           Launch yaw toward the target.
@@ -128,8 +132,42 @@ inline void launchEventProjectile(SpellId spell, Mastery mastery, int skillLevel
  */
 inline void castEventSpell(SpellId spell, Mastery mastery, int skillLevel, Vec3f from, int yaw, int pitch, float distance) {
     assert(isVerifiedEventSpell(spell));
-    if (isEventProjectileSpell(spell))
+    assert(mastery >= MASTERY_NOVICE && mastery <= MASTERY_MASTER);
+    if (isEventProjectileSpell(spell)) {
         launchEventProjectile(spell, mastery, skillLevel, from, yaw, pitch, distance);
+        return;
+    }
+
+    const Time now = pParty->GetPlayingTime();
+    switch (static_cast<int>(spell)) {
+        case 46: {
+            const Duration duration = Duration::fromSeconds(240 + (mastery == MASTERY_NOVICE ? 300 : 900) * skillLevel);
+            for (Character &character : pParty->pCharacters)
+                character.pCharacterBuffs[CHARACTER_BUFF_BLESS].Apply(now + duration, mastery, 0, 0, -1); // The original applies no power.
+            break;
+        }
+        case 83: {
+            const int power = (std::to_underlying(mastery) + 1) * skillLevel;
+            for (Character &character : pParty->pCharacters)
+                for (CharacterBuff buff : {CHARACTER_BUFF_STRENGTH, CHARACTER_BUFF_INTELLIGENCE, CHARACTER_BUFF_PERSONALITY, CHARACTER_BUFF_ENDURANCE,
+                                           CHARACTER_BUFF_ACCURACY, CHARACTER_BUFF_SPEED, CHARACTER_BUFF_LUCK})
+                    character.pCharacterBuffs[buff].Apply(now + Duration::fromHours(skillLevel), mastery, power, 0, -1);
+            break;
+        }
+        case 91: {
+            const int dx = std::abs(static_cast<int>(pParty->pos.x) - static_cast<int>(from.x));
+            const int dy = std::abs(static_cast<int>(pParty->pos.y) - static_cast<int>(from.y));
+            const int dz = std::abs(static_cast<int>(pParty->pos.z) - static_cast<int>(from.z));
+            if (approximateLength(dx, dy, dz) > 4096)
+                return;
+            for (Character &character : pParty->pCharacters)
+                receiveSpecialAttack(character, SPECIAL_ATTACK_CURSE, *grng);
+            break;
+        }
+        default:
+            return; // Wizard Eye and Armageddon.
+    }
+    pAudioPlayer->playSpellSound(spell, false, SOUND_MODE_EXCLUSIVE);
 }
 
 /**

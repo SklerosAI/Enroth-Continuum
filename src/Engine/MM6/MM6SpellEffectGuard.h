@@ -52,10 +52,12 @@ inline bool isEventProjectileSpell(SpellId spell) {
 /**
  * @param spell                         MM6 spell ID from an event's CastSpell.
  * @return                              Whether an event cast of this spell has a verified effect. These are the
- *                                      projectiles, plus Armageddon, which the original event cast leaves undone.
+ *                                      projectiles, Bless, Day of the Gods and Mass Curse, plus Wizard Eye and
+ *                                      Armageddon, which the original event cast leaves undone.
  */
 inline bool isVerifiedEventSpell(SpellId spell) {
-    return isEventProjectileSpell(spell) || static_cast<int>(spell) == 98;
+    const int id = static_cast<int>(spell);
+    return isEventProjectileSpell(spell) || id == 12 || id == 46 || id == 83 || id == 91 || id == 98;
 }
 
 /**

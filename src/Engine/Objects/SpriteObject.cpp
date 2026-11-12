@@ -14,6 +14,7 @@
 #include "Engine/MM6/MM6ChestTrap.h"
 #include "Engine/MM6/MM6MonsterAttack.h"
 #include "Engine/MM6/MM6MonsterProjectile.h"
+#include "Engine/MM6/MM6PlayerSpell.h"
 #include "Engine/Spells/Spells.h"
 #include "Engine/Tables/MapTable.h"
 
@@ -772,6 +773,23 @@ bool processSpellImpact(unsigned int uLayingItemID, Pid pid) {
         object->spellSpriteStop();
         pushAoeAttack(Pid(OBJECT_Sprite, uLayingItemID), 512, object->vPosition, ABILITY_ATTACK1);
         pAudioPlayer->playSound(SOUND_fireBall, SOUND_MODE_PID, Pid(OBJECT_Sprite, uLayingItemID));
+        return 0;
+    }
+
+    if (engine->gameTitle() == GameTitle::MM6 && object->spell_caster_pid.type() == OBJECT_Character &&
+        mm6::isPlayerAttackSpell(object->uSpellID) && object->uSpellID != mm6::SPELL_SPARKS) {
+        if (mm6::isArrowObject(object->spriteId)) {
+            object->spellSpriteStop();
+            applySpellSpriteDamage(uLayingItemID, pid);
+            SpriteObject::Remove(uLayingItemID);
+        } else {
+            applySpellSpriteDamage(uLayingItemID, pid);
+            updateSpriteOnImpact(object);
+            if (object->uObjectDescID == 0)
+                SpriteObject::Remove(uLayingItemID);
+            object->spellSpriteStop();
+        }
+        pAudioPlayer->playSpellSound(object->uSpellID, true, SOUND_MODE_PID, Pid(OBJECT_Sprite, uLayingItemID));
         return 0;
     }
 

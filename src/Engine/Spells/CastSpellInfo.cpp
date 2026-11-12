@@ -36,6 +36,7 @@
 #include "Engine/Spells/MM6PowerCureRules.h"
 #include "Engine/Spells/MM6TimedCureRules.h"
 #include "Engine/Spells/MM6CombatBuffRules.h"
+#include "Engine/MM6/MM6PlayerSpell.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
 
@@ -124,6 +125,82 @@ static void setSpellRecovery(CastSpellInfo *pCastSpell,
     // It's here to set character portrain emotion on spell cast.
     // There's no actual spell speech.
     pPlayer->playReaction(SPEECH_CAST_SPELL);
+}
+
+/**
+ * Runs the effect of an MM6 player spell that MM6 casts differently from the shared case with its ID, see
+ * `mm6::hasOwnPlayerCast`.
+ * A cast that fails shows its reason and sets the full spell recovery, as MM6 does.
+ *
+ * @param pCastSpell                    Queued cast.
+ * @param spellLevel                    Caster's spell level.
+ * @param mastery                       Caster's mastery.
+ * @param[in,out] recoveryTime          Spell recovery, Healing Touch shortens it.
+ * @param sprite                        Spell sprite with the spell's object set, for the attack spells.
+ * @param target                        Monster the spell aims at, or none.
+ * @param direction                     Direction toward the target, or the party's view when there is none.
+ * @return                              Whether the spell took effect, the caller then spends the mana, sets the
+ *                                      recovery and plays the spell sound.
+ */
+static bool castMM6PlayerSpell(CastSpellInfo *pCastSpell, int spellLevel, Mastery mastery, Duration &recoveryTime,
+                               SpriteObject &sprite, Pid target, const AIDirection &direction) {
+    auto fail = [&](LstrId reason) {
+        spellFailed(pCastSpell, reason);
+        setSpellRecovery(pCastSpell, recoveryTime);
+        return false;
+    };
+
+    const SpellId spell = pCastSpell->uSpellID;
+    if (spell == mm6::SPELL_FEATHER_FALL) {
+        pParty->pPartyBuffs[PARTY_BUFF_FEATHER_FALL].Apply(pParty->GetPlayingTime() + mm6::travelBuffDuration(mastery, spellLevel),
+                                                            mastery, mm6::masteryRank(mastery) * spellLevel, 0, -1);
+    } else if (spell == mm6::SPELL_JUMP) {
+        if (pParty->isAirborne())
+            return fail(LSTR_CANT_CAST_JUMP_WHILE_AIRBORNE);
+        pParty->uFlags |= PARTY_FLAG_JUMPING;
+        pParty->velocity.z = 1000;
+        pParty->pos.z += 5;
+    } else if (spell == mm6::SPELL_FLY) {
+        if (uCurrentlyLoadedLevelType == LEVEL_INDOOR)
+            return fail(LSTR_CAN_NOT_CAST_FLY_INDOORS);
+        pParty->pPartyBuffs[PARTY_BUFF_FLY].Apply(pParty->GetPlayingTime() + mm6::travelBuffDuration(mastery, spellLevel),
+                                                   mastery, 1, 0, pCastSpell->casterCharacterIndex);
+        pParty->pPartyBuffs[PARTY_BUFF_FLY].isGM = false;
+    } else if (spell == mm6::SPELL_PROTECTION_FROM_MAGIC) {
+        pParty->pPartyBuffs[PARTY_BUFF_PROTECTION_FROM_MAGIC].Apply(pParty->GetPlayingTime() + Duration::fromHours(spellLevel), mastery,
+                                                                     mm6::masteryRank(mastery) * spellLevel, 0, -1);
+    } else if (spell == mm6::SPELL_BLESS || spell == mm6::SPELL_HEROISM) {
+        const CharacterBuff buff = spell == mm6::SPELL_BLESS ? CHARACTER_BUFF_BLESS : CHARACTER_BUFF_HEROISM;
+        const Duration duration = mm6::blessAndHeroismDuration(mastery, spellLevel);
+        for (int i = 0; i < pParty->pCharacters.size(); i++)
+            if (mastery != MASTERY_NOVICE || i == pCastSpell->targetCharacterIndex)
+                pParty->pCharacters[i].pCharacterBuffs[buff].Apply(pParty->GetPlayingTime() + duration, mastery, spellLevel + 5, 0, -1);
+    } else if (spell == mm6::SPELL_HEALING_TOUCH) {
+        pParty->pCharacters[pCastSpell->targetCharacterIndex].Heal(mm6::healingTouchAmount(mastery, *grng));
+        recoveryTime -= Duration::fromTicks(spellLevel);
+    } else if (spell == mm6::SPELL_CURE_WOUNDS) {
+        pParty->pCharacters[pCastSpell->targetCharacterIndex].Heal(2 * spellLevel + 5);
+    } else if (mm6::isPlayerAttackSpell(spell)) {
+        initSpellSprite(&sprite, spellLevel, mastery, pCastSpell);
+        sprite.vPosition = pParty->pos + Vec3f(0, 0, pParty->height / 3);
+        sprite.uSectorID = pIndoor->GetSector(sprite.vPosition);
+        sprite.spell_target_pid = target;
+        sprite.field_60_distance_related_prolly_lod = direction.uDistance;
+        if (pParty->bTurnBasedModeOn)
+            sprite.uAttributes |= SPRITE_HALT_TURN_BASED;
+        const int speed = pObjectTable->pObjects[sprite.uObjectDescID].uSpeed;
+        const int count = spell == mm6::SPELL_SPARKS ? 2 * mm6::masteryRank(mastery) + 1 : 1;
+        const int arc = 60 * TrigLUT.uIntegerDoublePi / 360;
+        for (int i = 0; i < count; i++) {
+            const int yaw = count == 1 ? direction.uYawAngle : direction.uYawAngle - arc / 2 + i * (arc / (count - 1));
+            sprite.uFacing = yaw;
+            if (sprite.Create(yaw, direction.uPitchAngle, speed, pCastSpell->casterCharacterIndex + 1) != -1 && pParty->bTurnBasedModeOn)
+                ++pTurnEngine->pending_actions;
+        }
+    } else {
+        throw std::runtime_error("MM6 spell has no own player cast");
+    }
+    return true;
 }
 
 // TODO(pskelton): caster index not supplied to buffs ".Apply"
@@ -352,6 +429,12 @@ void CastSpellInfoHelpers::castSpell() {
                 engine->_messageQueue->addMessageCurrentFrame(UIMSG_OnCastLloydsBeacon, Pid(OBJECT_Character, pCastSpell->casterCharacterIndex).packed(), param2);
                 pCastSpell->flags |= ON_CAST_NoRecoverySpell;
             }
+        } else if (engine->gameTitle() == GameTitle::MM6 && mm6::hasOwnPlayerCast(pCastSpell->uSpellID)) {
+            if (!castMM6PlayerSpell(pCastSpell, spell_level, spell_mastery, recoveryTime, pSpellSprite, spell_targeted_at, target_direction))
+                continue;
+            pPlayer->SpendMana(uRequiredMana);
+            setSpellRecovery(pCastSpell, recoveryTime);
+            pAudioPlayer->playSpellSound(pCastSpell->uSpellID, false, SOUND_MODE_EXCLUSIVE);
         } else if (engine->gameTitle() == GameTitle::MM6 && mm6::isTimedCureSpell(pCastSpell->uSpellID)) {
             if (pCastSpell->targetPid || pCastSpell->targetCharacterIndex < 0 ||
                 pCastSpell->targetCharacterIndex >= 4)
@@ -2300,8 +2383,9 @@ void CastSpellInfoHelpers::castSpell() {
                         if (pCastSpell->targetPid || pCastSpell->targetCharacterIndex < 0 ||
                             pCastSpell->targetCharacterIndex >= 4)
                             throw std::runtime_error("MM6 First Aid requires one party member target");
-                        pParty->pCharacters[pCastSpell->targetCharacterIndex].Heal(
-                            mm6::firstAidHealAmount(pCastSpell->uSpellID, spell_mastery));
+                        Character &target = pParty->pCharacters[pCastSpell->targetCharacterIndex];
+                        target.Heal(mm6::firstAidHealAmount(pCastSpell->uSpellID, spell_mastery));
+                        target.Recover(Duration::fromTicks(spell_level));
                         break;
                     }
 
@@ -3232,6 +3316,15 @@ void pushSpellOrRangedAttack(SpellId spell,
                 break;
         }
 
+        if (engine->gameTitle() == GameTitle::MM6 && spell == mm6::SPELL_HEALING_TOUCH) {
+            flags &= ~ON_CAST_TargetedActorOrCharacter;
+            flags |= ON_CAST_TargetedCharacter;
+        }
+        if (engine->gameTitle() == GameTitle::MM6 && mm6::isPlayerAttackSpell(spell)) {
+            flags &= ~(ON_CAST_TargetedActor | ON_CAST_TargetedEnchantment);
+            if (pParty->bTurnBasedModeOn && !target && spell != mm6::SPELL_SPARKS)
+                flags |= ON_CAST_TargetedActor;
+        }
         if (engine->gameTitle() == GameTitle::MM6 && mm6::isTimedCureSpell(spell)) {
             flags &= ~(ON_CAST_TargetedActor | ON_CAST_TargetedActorOrCharacter);
             flags |= ON_CAST_TargetedCharacter;

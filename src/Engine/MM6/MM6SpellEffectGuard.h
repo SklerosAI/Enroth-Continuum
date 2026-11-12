@@ -4,6 +4,7 @@
 
 #include "Engine/GameTitle.h"
 #include "Engine/MM6/MM6MonsterSpellEffect.h"
+#include "Engine/MM6/MM6PlayerSpell.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
 #include "Engine/Spells/SpellEnums.h"
 
@@ -19,10 +20,36 @@ enum class SpellEffectSource {
 /**
  * @param spell                         MM6 spell ID.
  * @return                              Whether a player cast of this spell from the spellbook has a verified target,
- *                                      cost, recovery and effect. This is Cure Weakness.
+ *                                      cost, recovery and effect. These are the attack spells of `isPlayerAttackSpell`,
+ *                                      the travel spells Feather Fall, Jump, Fly and Water Walk, and the support spells
+ *                                      Torch Light, Wizard Eye, the five protections, Bless, Healing Touch, Heroism,
+ *                                      Cure Weakness, First Aid and Cure Wounds.
  */
 inline bool isVerifiedPlayerSpell(SpellId spell) {
-    return static_cast<int>(spell) == 67;
+    if (isPlayerAttackSpell(spell))
+        return true;
+    switch (static_cast<int>(spell)) {
+        case 1:
+        case 3:
+        case 12:
+        case 14:
+        case 16:
+        case 19:
+        case 21:
+        case 25:
+        case 27:
+        case 36:
+        case 46:
+        case 47:
+        case 51:
+        case 67:
+        case 68:
+        case 69:
+        case 71:
+            return true;
+        default:
+            return false;
+    }
 }
 
 /**
@@ -79,6 +106,8 @@ inline void requireVerifiedSpellEffect(GameTitle title, SpellId spell, SpellEffe
     if (source == SpellEffectSource::Monster && isVerifiedMonsterSpell(spell))
         return;
     if (source == SpellEffectSource::Event && isVerifiedEventSpell(spell))
+        return;
+    if (source == SpellEffectSource::Damage && isPlayerAttackSpell(spell))
         return;
     throw std::runtime_error("MM6 spell target and effect dispatch are not implemented");
 }

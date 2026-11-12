@@ -12,9 +12,11 @@
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6EncounterMonster.h"
 #include "Engine/MM6/MM6Finale.h"
+#include "Engine/MM6/MM6EventSpell.h"
 #include "Engine/MM6/MM6MonsterAttack.h"
 #include "Engine/MM6/MM6MonsterProjectile.h"
 #include "Engine/MM6/MM6MonsterSpellEffect.h"
+#include "Engine/MM6/MM6PlayerSpell.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Data/AwardEnums.h"
 #include "Engine/Data/HouseEnumFunctions.h"
@@ -3192,8 +3194,16 @@ int Actor::DamageMonsterFromParty(Pid a1, unsigned int uActorID_Monster, const V
                 break;
 
             default:
-                attackElement = pSpellStats->pInfos[projectileSprite->uSpellID].damageType;
                 IsAdditionalDamagePossible = false;
+                if (engine->gameTitle() == GameTitle::MM6 && mm6::isPlayerAttackSpell(projectileSprite->uSpellID)) {
+                    const SpellId spell = projectileSprite->uSpellID;
+                    if (mm6::playerSpellRollsToHit(spell) && !character->characterHitOrMiss(pMonster, v61, 5 * projectileSprite->spell_level))
+                        return 0; // MM6 says nothing on a miss.
+                    attackElement = mm6::spellDamageType(*pSpellStats->pInfos[spell].mm6DamageTag);
+                    uDamageAmount = mm6::playerSpellDamage(spell, projectileSprite->spell_level, *grng);
+                    break;
+                }
+                attackElement = pSpellStats->pInfos[projectileSprite->uSpellID].damageType;
                 uDamageAmount = CalcSpellDamage(
                     projectileSprite->uSpellID,
                     projectileSprite->spell_level,

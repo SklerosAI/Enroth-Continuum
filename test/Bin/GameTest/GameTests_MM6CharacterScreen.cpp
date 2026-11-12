@@ -317,9 +317,9 @@ GAME_TEST(MM6CharacterScreenHeadless, RestButtonsAnswerAtTheirPictures) {
     game.pressAndReleaseKey(PlatformKey::KEY_R);
     game.tick();
     game.pressAndReleaseButton(BUTTON_LEFT, {140, 331}); // Bottom of the Wait 5 Minutes picture.
-    game.tick(2); // The click queues the wait, the next frame rests.
+    game.tick();
     game.pressAndReleaseButton(BUTTON_LEFT, {360, 342}); // Bottom of the Exit Rest picture.
-    game.tick(2);
+    game.tick(2); // The press draws its pressed picture, then closes the screen on the next frame.
 
     EXPECT_EQ(screenTape, tape(SCREEN_REST, SCREEN_GAME));
     EXPECT_EQ(timeTape.frontBack(), tape(timeTape.front(), timeTape.front() + Duration::fromMinutes(5)));

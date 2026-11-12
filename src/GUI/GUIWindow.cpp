@@ -1222,10 +1222,11 @@ void UI_Create() {
                                                     localization->str(LSTR_ZOOM_OUT), { game_ui_btn_zoomout });
     }
 
-    if (engine->gameTitle() == GameTitle::MM6)
+    if (engine->gameTitle() == GameTitle::MM6) {
         createExactHudButton(mm6HudDateTimeHoverRect, UIMSG_ShowStatus_DateTime);
-    else
+    } else {
         pPrimaryWindow->CreateButton({484, 15}, {138, 116}, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_DateTime, UIMSG_0, 0);
+    }
     const Sizei hirelingSize = engine->gameTitle() == GameTitle::MM6 ? Sizei(63, 73) : Sizei(64, 74); // MM6.exe's boxes are exactly 64x74.
     pPrimaryWindow->CreateButton("Game_Hireling1", {491, 149}, hirelingSize, BUTTON_TYPE_NORMAL, 0, UIMSG_StartHireling1Dialogue, 0, INPUT_ACTION_SELECT_NPC_1);
     pPrimaryWindow->CreateButton("Game_Hireling2", {561, 149}, hirelingSize, BUTTON_TYPE_NORMAL, 0, UIMSG_StartHireling2Dialogue, 0, INPUT_ACTION_SELECT_NPC_2);

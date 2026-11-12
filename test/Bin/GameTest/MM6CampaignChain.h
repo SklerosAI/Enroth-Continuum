@@ -94,6 +94,14 @@ void lootMM6CampaignChainCorpse(EngineController &game, int actorId);
 void pickUpMM6CampaignChainFloorItem(EngineController &game, ItemId itemId);
 
 /**
+ * Clicks a decoration on the current indoor map, standing next to it.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param decorationId                  Decoration to click.
+ */
+void useMM6CampaignChainDecoration(EngineController &game, int decorationId);
+
+/**
  * Enters a castle whose door asks before it lets the party in, and answers yes.
  *
  * @param game                          Engine controller of the running test.

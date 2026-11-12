@@ -22,6 +22,7 @@
 #include "Engine/Localization.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
+#include "Engine/Objects/Decoration.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Tables/ChestTable.h"
 #include "Engine/Tables/MapTable.h"
@@ -241,6 +242,14 @@ void pickUpMM6CampaignChainFloorItem(EngineController &game, ItemId itemId) {
     const int spriteId = sprite - pSpriteObjects.begin();
     standNextTo(game, pSpriteObjects[spriteId].vPosition, -20);
     game.pointMouseAtSprite(spriteId);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+}
+
+void useMM6CampaignChainDecoration(EngineController &game, int decorationId) {
+    standNextTo(game, pLevelDecorations[decorationId].vPosition, -20);
+    game.tick(); // The party lands, and the decoration gets drawn.
+    game.pointMouseAtDecoration(decorationId);
     game.pressAndReleaseButton(BUTTON_LEFT);
     game.tick();
 }

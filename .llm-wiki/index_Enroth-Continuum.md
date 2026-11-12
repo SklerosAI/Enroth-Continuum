@@ -38,7 +38,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Disposable Save and Reload](MM7-Disposable-Save-Reload.md) — Isolated Save/Load evidence, campaign checkpoints, eight regional quest boundaries and installed-candidate limits
 - [MM7 Scroll Cancellation](MM7-Scroll-Cancel.md) — Item-, actor- and character-target scroll return on cancelled targeting, focused integrated controls and remaining exit paths
 - [MM7 Playtest Recording](MM7-Playtest-Recording.md) — Staged Atlas rolling-video, log/save collector, intentional clip hotkey, drive/relaunch guards, and live acceptance boundary
-- [MM7 Quest Behavior Catalog](MM7-Quest-Behavior-Catalog.md) — Public/source-event reconciliation of every main, Light, Dark, side and promotion quest; includes the durable balanced-war, neutral-trumpet and Dark-Arbiter route plus the verified regional quest contracts
+- [MM7 Quest Behavior Catalog](MM7-Quest-Behavior-Catalog.md) — Public/source-event reconciliation of every main, Light, Dark, side and promotion quest; includes the durable balanced-war route, verified Malwick/Niles clock and invasion boundaries, and the regional quest contracts
 - [MM7 Remaining Quests and Areas](../project/MM7_REMAINING_QUESTS_AND_AREAS.md) — Priority-ordered quest, region, durability and deferred graphical backlog for the Codex MM7 lane
 - [MM7 Atomic Save File](MM7-Atomic-Save-File.md) — Native-slot helper, detached preflight and integrated staged live capture; production atomic SaveLoad wiring remains open
 - [MM6 Transition and Death Candidates](MM6-Transition-And-Death-Candidates.md) — Cancel-only MM6 indoor dialog and detached death model with explicit live integration gates

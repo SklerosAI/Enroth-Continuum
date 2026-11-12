@@ -8,10 +8,18 @@
   six-week Harmondale trigger, the two Niles deadlines, Light and Dark tapestry
   sources, the one-month allied-region hostility window, missed-deadline
   invasion, closed services and reopening after the attackers are cleared.
-- First packet: map the authored global/local events, counters, NPC placements,
-  items, invasion groups and service gates before implementing a behavior
-  slice. Prefer one clock boundary with a meaningful refusal over a broad
-  fixture-only matrix.
+- Verified first packet: Malwick is placed street NPC 6; NPC 98 is the later
+  message proxy and Niles is NPC 99. The path choice starts zero-based counter
+  index 4. The authored thresholds are 1,008 hours to the message, 336 hours
+  to visit Niles and 672 hours to return the tapestry. The delivered message
+  is item 704. Three headless tests cover Malwick refusal/repeat/acceptance,
+  the exact six-week trigger, Niles's real Tatalia entrance and missing-item
+  refusal, both missed deadlines, bank loss, live invaders and service closure;
+  the existing raid test covers service reopening after both groups are dead.
+- Next packet: physical Light/Dark tapestry acquisition, successful Niles
+  hand-in, the one-month allied-region hostility window and then an exact
+  disposable checkpoint. Do not claim a continuous Malwick-to-path chain from
+  the focused fixture; Campaign Chain C3 separately covers the real path choice.
 - Expected files: focused MM7 GameTests and registration, exact disposable
   profile gates only after behavior is stable, quest catalog/backlog updates,
   index if materially changed, separate wiki log commit and final handoff.

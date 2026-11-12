@@ -22,3 +22,18 @@ inline constexpr Recti mm6HudCompassClipRect = {536, 0, 42, 480};
 inline constexpr Pointi mm6HudCompassPosition(int yaw) {
     return {528 - (2048 - yaw) * 15 / 128, 10};
 }
+
+inline constexpr Recti mm6HudMinimapRect = {480, 25, 152, 115};
+inline constexpr Pointi mm6HudMapBackPosition = {482, 25}; // Indoors only.
+
+/**
+ * @param yaw                           Party yaw, in 0..2047.
+ * @return                              Index of the MAPDIR arrow that the minimap draws for `yaw`.
+ */
+inline constexpr int mm6HudMinimapArrowIndex(int yaw) {
+    return ((yaw - 128) & 2047) >> 8;
+}
+
+inline constexpr Pointi mm6HudZoomOutCenter = {502, 42}; // The minus mark on TAP.
+inline constexpr Pointi mm6HudZoomInCenter = {595, 42}; // The plus mark on TAP.
+inline constexpr int mm6HudZoomRadius = 17;

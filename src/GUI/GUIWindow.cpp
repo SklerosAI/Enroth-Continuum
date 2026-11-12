@@ -469,11 +469,8 @@ void OnButtonClick::Update() {
     if (_playSound) {
         pAudioPlayer->playUISound(SOUND_StartMainChoice02);
     }
-    const bool bakedMm6Action = useMm6HudActionControls(engine->gameTitle()) &&
-        (_button == pBtn_CastSpell || _button == pBtn_Rest ||
-         _button == pBtn_QuickReference || _button == pBtn_GameSettings) &&
-        _button->vTextures.empty();
-    if (!bakedMm6Action)
+    const bool mm6WithoutArt = engine->gameTitle() == GameTitle::MM6 && _button->vTextures.empty();
+    if (!mm6WithoutArt)
         render->DrawQuad2D(_button->vTextures[0], frameRect.topLeft());
     if (!sHint.empty()) {
         _button->DrawLabel(sHint, assets->pFontCreate.get(), colorTable.White);
@@ -1105,6 +1102,22 @@ static GUIButton *createExactHudButton(const Recti &rect, UIMessageType hover) {
     return pPrimaryWindow->CreateButton(rect.topLeft(), {rect.w - 1, rect.h - 1}, BUTTON_TYPE_NORMAL, hover, UIMSG_0, 0);
 }
 
+/**
+ * Creates a round button on the main HUD window, hit when the distance to `center` is less than `radius`, as MM6.exe's
+ * round buttons are. The button has no art of its own.
+ *
+ * @param center                        Center of the circle.
+ * @param radius                        Radius of the circle.
+ * @param msg                           Message sent on click.
+ * @param action                        Input action that also presses the button.
+ * @param label                         Status bar text while the mouse is over the button.
+ */
+static GUIButton *createCircleHudButton(Pointi center, int radius, UIMessageType msg, InputAction action, std::string_view label) {
+    // A character button hit-tests the oval inscribed in its rect. CreateButton makes the rect 2 * radius wide.
+    return pPrimaryWindow->CreateButton(center - Pointi(radius, radius), {2 * radius - 1, 2 * radius - 1}, BUTTON_TYPE_CHARACTER, 0,
+                                        msg, 0, action, label);
+}
+
 void UI_Create() {
     game_ui_minimap_dirs[0] = assets->getIcon("MAPDIR1");
     game_ui_minimap_dirs[1] = assets->getIcon("MAPDIR2");
@@ -1190,14 +1203,21 @@ void UI_Create() {
     bFlashQuestBook = false;
     bFlashHistoryBook = false;
 
-    pBtn_ZoomIn = pPrimaryWindow->CreateButton({519, 136}, game_ui_btn_zoomin->size(), BUTTON_TYPE_NORMAL, 0,
-                                               UIMSG_ClickZoomInBtn, 0, INPUT_ACTION_ZOOM_IN,
-                                               localization->str(LSTR_ZOOM_IN), { game_ui_btn_zoomin }
-    );
+    if (engine->gameTitle() == GameTitle::MM6) {
+        pBtn_ZoomIn = createCircleHudButton(mm6HudZoomInCenter, mm6HudZoomRadius, UIMSG_ClickZoomInBtn, INPUT_ACTION_ZOOM_IN,
+                                            localization->str(LSTR_ZOOM_IN));
+        pBtn_ZoomOut = createCircleHudButton(mm6HudZoomOutCenter, mm6HudZoomRadius, UIMSG_ClickZoomOutBtn, INPUT_ACTION_ZOOM_OUT,
+                                             localization->str(LSTR_ZOOM_OUT));
+    } else {
+        pBtn_ZoomIn = pPrimaryWindow->CreateButton({519, 136}, game_ui_btn_zoomin->size(), BUTTON_TYPE_NORMAL, 0,
+                                                   UIMSG_ClickZoomInBtn, 0, INPUT_ACTION_ZOOM_IN,
+                                                   localization->str(LSTR_ZOOM_IN), { game_ui_btn_zoomin }
+        );
 
-    pBtn_ZoomOut = pPrimaryWindow->CreateButton({574, 136}, game_ui_btn_zoomout->size(), BUTTON_TYPE_NORMAL, 0,
-                                                UIMSG_ClickZoomOutBtn, 0, INPUT_ACTION_ZOOM_OUT,
-                                                localization->str(LSTR_ZOOM_OUT), { game_ui_btn_zoomout });
+        pBtn_ZoomOut = pPrimaryWindow->CreateButton({574, 136}, game_ui_btn_zoomout->size(), BUTTON_TYPE_NORMAL, 0,
+                                                    UIMSG_ClickZoomOutBtn, 0, INPUT_ACTION_ZOOM_OUT,
+                                                    localization->str(LSTR_ZOOM_OUT), { game_ui_btn_zoomout });
+    }
 
     pPrimaryWindow->CreateButton({484, 15}, {138, 116}, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_DateTime, UIMSG_0, 0);
     pPrimaryWindow->CreateButton("Game_Hireling1", {491, 149}, {64, 74}, BUTTON_TYPE_NORMAL, 0, UIMSG_StartHireling1Dialogue, 0, INPUT_ACTION_SELECT_NPC_1);

@@ -1357,6 +1357,9 @@ void GameUI_DrawMinimap(const Recti &rect, int zoom) {
     //double starty;            // [sp+60h] [bp+Ch]@30
     Color pColor;
 
+    if (engine->gameTitle() == GameTitle::MM6 && uCurrentlyLoadedLevelType == LEVEL_INDOOR)
+        render->DrawQuad2D(assets->getIcon("mapback"), mm6HudMapBackPosition);
+
     Pointi center = rect.center();
     render->SetUIClipRect(rect);
 
@@ -1391,7 +1394,7 @@ void GameUI_DrawMinimap(const Recti &rect, int zoom) {
             int starty16 = partyy16 - (rect.h << 16) / (2 * zoom) * imageWidth;
 
             // TODO(pskelton): could stretch texture rather than rescale
-            assert(rect.w == 137 && rect.h == 117);
+            assert(rect.size() == (engine->gameTitle() == GameTitle::MM6 ? mm6HudMinimapRect.size() : Sizei(137, 117)));
 
             RgbaImage minimapImage = RgbaImage::solid(Color(), rect.size());
             int step16 = (1 << 16) * imageWidth / zoom;
@@ -1411,7 +1414,8 @@ void GameUI_DrawMinimap(const Recti &rect, int zoom) {
         }
         render->BeginLines2D();
     } else if (uCurrentlyLoadedLevelType == LEVEL_INDOOR) {
-        render->FillRect(rect, colorTable.NavyBlue);
+        if (engine->gameTitle() != GameTitle::MM6)
+            render->FillRect(rect, colorTable.NavyBlue);
         uNumBlueFacesInBLVMinimap = 0;
         render->BeginLines2D();
         for (unsigned i = 0; i < (unsigned)pIndoor->mapOutlines.size(); ++i) {
@@ -1569,14 +1573,18 @@ void GameUI_DrawMinimap(const Recti &rect, int zoom) {
     // draw arrow on the minimap(include. Ritor1)
     unsigned arrow_idx;
     int rotate = pParty->_viewYaw & TrigLUT.uDoublePiMask;
-    if (rotate <= 1920) arrow_idx = 6;
-    if (rotate < 1664) arrow_idx = 5;
-    if (rotate <= 1408) arrow_idx = 4;
-    if (rotate < 1152) arrow_idx = 3;
-    if (rotate <= 896) arrow_idx = 2;
-    if (rotate < 640) arrow_idx = 1;
-    if (rotate <= 384) arrow_idx = 0;
-    if (rotate < 128 || rotate > 1920) arrow_idx = 7;
+    if (engine->gameTitle() == GameTitle::MM6) {
+        arrow_idx = mm6HudMinimapArrowIndex(rotate);
+    } else {
+        if (rotate <= 1920) arrow_idx = 6;
+        if (rotate < 1664) arrow_idx = 5;
+        if (rotate <= 1408) arrow_idx = 4;
+        if (rotate < 1152) arrow_idx = 3;
+        if (rotate <= 896) arrow_idx = 2;
+        if (rotate < 640) arrow_idx = 1;
+        if (rotate <= 384) arrow_idx = 0;
+        if (rotate < 128 || rotate > 1920) arrow_idx = 7;
+    }
     render->DrawQuad2D(game_ui_minimap_dirs[arrow_idx], {center.x - 3, center.y - 3});
 
     if (engine->gameTitle() == GameTitle::MM6) {

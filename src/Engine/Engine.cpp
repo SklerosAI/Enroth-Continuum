@@ -99,6 +99,7 @@
 
 #include "GUI/GUIProgressBar.h"
 #include "GUI/GUIWindow.h"
+#include "GUI/MM6HudLayout.h"
 #include "GUI/UI/UIStatusBar.h"
 #include "GUI/UI/UIPopup.h"
 #include "GUI/UI/UIMessageScroll.h"
@@ -229,7 +230,7 @@ void Engine::DrawGUI() {
     _statusBar->draw();
 
     if (!pMovie_Track && uGameState != GAME_STATE_CHANGE_LOCATION) {  // ! pVideoPlayer->pSmackerMovie)
-        GameUI_DrawMinimap(Recti(488, 16, 137, 117), viewparams->uMinimapZoom);
+        GameUI_DrawMinimap(gameTitle() == GameTitle::MM6 ? mm6HudMinimapRect : Recti(488, 16, 137, 117), viewparams->uMinimapZoom);
     }
 
     GameUI_DrawPartySpells();

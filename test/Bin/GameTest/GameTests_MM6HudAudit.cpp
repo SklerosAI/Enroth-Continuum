@@ -1,10 +1,14 @@
 #include <memory>
+#include <optional>
 #include <stdexcept>
+#include <string_view>
 
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Graphics/Viewport.h"
+#include "Engine/Objects/Chest.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
@@ -15,6 +19,8 @@
 
 #include "GUI/GUIWindow.h"
 #include "GUI/HudNpcArrowResources.h"
+
+#include "MM6MapEntranceForTest.h"
 
 static void completeEditableMM6Party() {
     for (Character &character : pParty->pCharacters) {
@@ -57,6 +63,25 @@ static void enterFirstMapFromNewGame(EngineController &game) {
     mm6::testing::setNewGameSaveOverride({});
     ASSERT_EQ(engine->_currentLoadedMapId, pMapTable->GetMapInfo("oute3.odm"));
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
+}
+
+static void enterMapAtShippedEntrance(EngineController &game, std::string_view fileName) {
+    // Loads the map at the first shipped MoveToMap that names it, or at its party start without one, the way the map
+    // sweep does.
+    const MapId map = pMapTable->GetMapInfo(fileName);
+    const std::optional<MM6ShippedEntrance> entrance = findShippedMM6Entrance(fileName);
+    bool loaded = false;
+    game.runGameRoutine([&] {
+        for (Chest &chest : vChests)
+            chest.position.reset(); // The first map's chest positions would make the target's chest load refuse.
+        engine->_pendingTransition = entrance ? MapDestination(map, entrance->placement) : MapDestination(map, MAP_START_POINT_PARTY);
+        mm6::ScopedChestMapLoadOptIn chestOptIn;
+        PrepareWorld(0);
+        loaded = true;
+    });
+    while (!loaded)
+        game.tick(); // The loading screen draws frames.
+    ASSERT_EQ(engine->_currentLoadedMapId, map);
 }
 
 GAME_TEST(MM6HudAudit, NativeNpcArrows) {
@@ -125,4 +150,43 @@ GAME_TEST(MM6Hud, CompassUnderTopPanelSlot) {
     EXPECT_EQ(yawTape, tape(512, 616));
     EXPECT_EQ(compassAndPanel, tape(DrawnQuad{"compass", {348, 10}}, DrawnQuad{"tap2", {468, 0}},
                                     DrawnQuad{"compass", {361, 10}}, DrawnQuad{"tap2", {468, 0}}));
+}
+
+GAME_TEST(MM6Hud, MinimapFillsTopPanelHole) {
+    // The minimap was drawn in MM7's 137x117 rect, which left the edges of the hole in the top panel unpainted.
+    auto quadsTape = tapes.hudQuads();
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    game.tick();
+
+    auto topPanel = quadsTape.flatten().filter([](const DrawnQuad &quad) { return quad.position.x >= 468 && quad.position.y < 141; });
+    EXPECT_EQ(topPanel, tape(DrawnQuad{"", {480, 25}}, DrawnQuad{"mapdir2", {553, 79}}, DrawnQuad{"tap2", {468, 0}})); // The minimap has no name.
+}
+
+GAME_TEST(MM6Hud, IndoorMinimapBackground) {
+    // Indoors, the minimap was a navy blue fill instead of MM6's MAPBACK art.
+    auto quadsTape = tapes.hudQuads();
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "d02.blv");
+    test.startTaping();
+
+    game.tick();
+
+    auto topPanel = quadsTape.flatten().filter([](const DrawnQuad &quad) { return quad.position.x >= 468 && quad.position.y < 141; });
+    EXPECT_EQ(topPanel, tape(DrawnQuad{"mapback", {482, 25}}, DrawnQuad{"mapdir2", {553, 79}}, DrawnQuad{"tap2", {468, 0}}));
+}
+
+GAME_TEST(MM6Hud, ZoomCircles) {
+    // Clicking the minus and plus marks on the top panel didn't zoom the minimap, the zoom buttons sat below it.
+    auto zoomTape = tapes.custom([] { return viewparams->uMinimapZoom; });
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    game.pressAndReleaseButton(BUTTON_LEFT, 595, 42); // Plus.
+    game.tick();
+    game.pressAndReleaseButton(BUTTON_LEFT, 502, 42); // Minus.
+    game.tick();
+
+    EXPECT_EQ(zoomTape, tape(1024, 512));
 }

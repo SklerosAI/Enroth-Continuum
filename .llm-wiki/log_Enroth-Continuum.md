@@ -3420,3 +3420,13 @@ Chronological record of wiki activity.
 - Added all fourteen authored regional Obelisk discovery bindings, the one-missing and 1 AM refusal states, and the midnight Evenmorn treasure activation. The route opens and empties the real chest, verifies every discovery and treasure bit, and retains the scripted 100,000 gold, chest gold and physical chest items.
 - The production-Save writer and separate normal-Load reader passed with byte-identical slot contents. Missing-profile and no-save admissions were rejected, and the disposable profiles were moved to Trash.
 - The focused route passed 1/1, both fresh-process checkpoint tests passed 1/1, the regional side/promotion selection passed 14/14, and `check_style` passed 157/157 headlessly. This is an independent route boundary, not continuous regional progression.
+
+## [2026-11-12] fix | MM6 house and shop screens
+- by: T-Burton-ND via claude
+- House and shop screens now follow a static trace of `MM6.exe`: the room movie copied unscaled at (8,8) inside the stone frame, the room's own right panel, MM6's portrait table, house name, resident name and options centred and spaced as MM6 does, and the BUTTESC1 exit at (526,313) instead of over the action buttons. Each shop type gets its own buy shelves, so general store items stand on their shelf. Sell, identify and repair draw on leather with the MM6 footer instructions.
+- Merged on `master` at `5684f64d0`. Unit tests 1122, MM6 suite 156 passed and 2 skipped, MM7 controls 137, `check_style` clean. Three input-driven tests fail with the fix reverted. Guild, bank, stable and boat option layouts weren't traced yet, and shop items are still picked by rectangle rather than visible pixels.
+
+## [2026-11-12] fix | MM6 main HUD
+- by: T-Burton-ND via claude
+- The owner reported the food and gold numbers misaligned. They were drawn at MM7's positions, on the book spines. A static trace of `MM6.exe` put them at y 356 in the slots between the apple and the coins, yellow with a black shadow and never shortened. The same trace fixed the compass (it sat under opaque panel art and never showed), the minimap rect and indoor background, the party arrow, round zoom buttons, the status bar line, MM6's six buff sprites instead of MM7 icons, the three-segment HP bars, hireling portraits and arrows, and the hit boxes of books, actions, portraits and hints. MM6 also crashed with torch light or wizard eye active, asking for MM7 animations, and doesn't now.
+- Merged on `master` at `ea1d49d3d`. Unit tests 1122, MM6 suite 168 passed and 2 skipped, MM7 controls 137, `check_style` clean. Twelve input-driven `MM6Hud.*` tests fail with their fix reverted. A new `hudQuads` tape reports 2D draws with their positions, only when a test observer is attached.

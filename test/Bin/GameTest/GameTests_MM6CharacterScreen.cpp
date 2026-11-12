@@ -24,6 +24,9 @@
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/MM6PaperdollArt.h"
 #include "GUI/UI/UICharacter.h"
+#include "GUI/UI/UIQuickReference.h"
+
+#include "Library/Color/ColorTable.h"
 
 #include "Library/Image/Png.h"
 
@@ -301,6 +304,45 @@ GAME_TEST(MM6CharacterScreenHeadless, DetailToggleClosesFromItsPicture) {
 
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHARACTERS));
     EXPECT_EQ(detailTape, tape(false, true, false));
+}
+
+GAME_TEST(MM6CharacterScreenHeadless, RestButtonsAnswerAtTheirPictures) {
+    // The rest screen used MM7's button positions, so the bottom rows of the Wait 5 Minutes and Exit Rest pictures
+    // did nothing.
+    auto screenTape = tapes.screen();
+    auto timeTape = tapes.time();
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressAndReleaseButton(BUTTON_LEFT, {140, 331}); // Bottom of the Wait 5 Minutes picture.
+    game.tick(2); // The click queues the wait, the next frame rests.
+    game.pressAndReleaseButton(BUTTON_LEFT, {360, 342}); // Bottom of the Exit Rest picture.
+    game.tick(2);
+
+    EXPECT_EQ(screenTape, tape(SCREEN_REST, SCREEN_GAME));
+    EXPECT_EQ(timeTape.frontBack(), tape(timeTape.front(), timeTape.front() + Duration::fromMinutes(5)));
+}
+
+GAME_TEST(MM6CharacterScreenHeadless, QuickReferenceShowsMM6Reputation) {
+    // Quick reference looked MM6 reputation up with MM7's string ids and showed "Tip Barkeep".
+    auto lineTape = tapes.custom([] {
+        return current_screen_type == SCREEN_QUICK_REFERENCE ? GUIWindow_QuickReference::reputationLine() : std::string();
+    });
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    for (int reputation : {0, -300}) {
+        game.runGameRoutine([reputation] { pParty->mm6Reputation = reputation; });
+        game.pressAndReleaseKey(PlatformKey::KEY_Z);
+        game.tick();
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+    }
+
+    EXPECT_EQ(lineTape, tape(fmt::format("Reputation: {::}Average\f00000", colorTable.White.tag()), std::string(),
+                             fmt::format("Reputation: {::}Vile\f00000", colorTable.Red.tag()), std::string()));
 }
 
 GAME_TEST(MM6CharacterScreenHeadless, EquippedArmorHasPaperdollHitArea) {

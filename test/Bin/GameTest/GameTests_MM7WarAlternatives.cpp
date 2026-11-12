@@ -14,6 +14,7 @@
 #include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/MapEnums.h"
+#include "Engine/Objects/Chest.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
 #include "Engine/PartyEnums.h"
@@ -37,6 +38,12 @@ enum class WarJobOutcome {
     REAL,
     DECOY,
     EXPIRED,
+};
+
+enum class TrumpetRecipient {
+    CATHERINE,
+    PARSON,
+    ARBITER,
 };
 
 std::pair<Vec3f, int> approachFace(const BLVFace &face) {
@@ -228,9 +235,68 @@ int totalExperience() {
 
 void prepareWarJobs() {
     pParty->_questBits.set(QBIT_HARMONDALE_REBUILT);
+    pParty->SetGold(1000);
     pParty->uNumGoldInBank = 1000;
     for (int i = 0; i < 4; ++i)
         pParty->pCharacters[i].experience = 1000 + i * 100;
+}
+
+void acquireGryphonheartTrumpet(EngineController &game) {
+    loadMapAtPartyStart(game, MAP_HARMONDALE);
+    ASSERT_TRUE(pParty->_questBits[QBIT_CASTLE_HARMONDALE_TIMER_STARTED]);
+
+    // Exercise the authored timer start and map-reload event while keeping the test headless and fast.
+    pParty->GetPlayingTime() += Duration::fromDays(57);
+    loadMapAtPartyStart(game, MAP_TULAREAN_FOREST);
+    ASSERT_TRUE(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_MESSENGER_MET]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_ACTIVE]);
+    if (current_screen_type == SCREEN_NPC_DIALOGUE) {
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+    }
+    if (pParty->pPickedItem.itemId != ITEM_NULL)
+        pParty->placeHeldItemInInventoryOrDrop();
+
+    constexpr int trumpetChestId = 0;
+    ASSERT_TRUE(engine->_localEventMap.hasEvent(170));
+    ASSERT_TRUE(std::ranges::any_of(engine->_localEventMap.function(170), [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_OpenChest && instruction.data.chest_id == trumpetChestId;
+    }));
+    ASSERT_LT(trumpetChestId, vChests.size());
+    ASSERT_TRUE(vChests[trumpetChestId].inventory.find(ITEM_QUEST_GRYPHONHEARTS_TRUMPET));
+    for (int attempt = 0; attempt < 2 && current_screen_type != SCREEN_CHEST; ++attempt) {
+        Chest::open(trumpetChestId, Pid());
+        game.tick();
+    }
+    ASSERT_EQ(current_screen_type, SCREEN_CHEST);
+    for (int attempt = 0; attempt < 20 && !pParty->hasItem(ITEM_QUEST_GRYPHONHEARTS_TRUMPET); ++attempt) {
+        if (pParty->pPickedItem.itemId != ITEM_NULL)
+            pParty->placeHeldItemInInventoryOrDrop();
+        Chest::GrabItem(true);
+        game.tick();
+    }
+    if (pParty->pPickedItem.itemId != ITEM_NULL)
+        pParty->placeHeldItemInInventoryOrDrop();
+    ASSERT_TRUE(pParty->hasItem(ITEM_QUEST_GRYPHONHEARTS_TRUMPET));
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+}
+
+void openJudgeGrey(EngineController &game) {
+    game.teleportTo(MAP_HARMONDALE, Vec3f(20992, -6450, 672), 90);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_BARROW_DOWNS_HARMONDALE_ARBITER);
+    auto judge = std::ranges::find_if(houseNpcs, [](const HouseNpcDesc &entry) {
+        return entry.npc == &pNPCStats->pNPCData[74];
+    });
+    ASSERT_NE(judge, houseNpcs.end());
+    if (houseNpcs.size() > 1) {
+        game.pressGuiButton(fmt::format("House_Npc{}", judge - houseNpcs.begin()));
+        game.tick();
+    }
 }
 
 } // namespace
@@ -365,5 +431,49 @@ GAME_TEST(MM7WarAlternatives, RiverstrideRealDecoyAndExpiredOutcomes) {
             EXPECT_EQ(character._achievedAwardsBits[AWARD_ERATHIA_DELIVERED_FAKE_PLANS_TO_ELVES],
                       outcome == WarJobOutcome::DECOY);
         }
+    }
+}
+
+GAME_TEST(MM7WarAlternatives, TrumpetSupportsErathiaAvleeAndArbiterRecipients) {
+    for (TrumpetRecipient recipient : {TrumpetRecipient::CATHERINE, TrumpetRecipient::PARSON,
+                                       TrumpetRecipient::ARBITER}) {
+        SCOPED_TRACE(fmt::format("recipient={}", std::to_underlying(recipient)));
+        test.prepareForNextTest();
+        game.startNewGame();
+        prepareWarJobs();
+        const int initialExperience = totalExperience();
+        acquireGryphonheartTrumpet(game);
+
+        int npcId;
+        QuestBit outcomeBit;
+        if (recipient == TrumpetRecipient::CATHERINE) {
+            openCatherine(game);
+            npcId = catherineId;
+            outcomeBit = QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ERATHIA;
+        } else if (recipient == TrumpetRecipient::PARSON) {
+            openParson(game);
+            npcId = parsonId;
+            outcomeBit = QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_AVLEE;
+        } else {
+            openJudgeGrey(game);
+            npcId = 74;
+            outcomeBit = QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ARBITER;
+        }
+        const unsigned int handIn = findNpcEvent(npcId, [outcomeBit](const EvtInstruction &instruction) {
+            return eventChangesQuestBit(instruction, outcomeBit) && instruction.opcode != EVENT_Subtract;
+        });
+        ASSERT_TRUE(selectNpcEvent(game, npcId, handIn));
+
+        EXPECT_FALSE(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_ACTIVE]);
+        EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_GRYPHONHEARTS_TRUMPET));
+        EXPECT_EQ(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ERATHIA],
+                  recipient == TrumpetRecipient::CATHERINE);
+        EXPECT_EQ(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_AVLEE],
+                  recipient == TrumpetRecipient::PARSON);
+        EXPECT_EQ(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ARBITER],
+                  recipient == TrumpetRecipient::ARBITER);
+        EXPECT_EQ(pParty->uNumGoldInBank, recipient == TrumpetRecipient::ARBITER ? 1000 : 6000);
+        EXPECT_EQ(pParty->GetGold(), 1000);
+        EXPECT_EQ(totalExperience(), initialExperience + (recipient == TrumpetRecipient::ARBITER ? 50000 : 40000));
     }
 }

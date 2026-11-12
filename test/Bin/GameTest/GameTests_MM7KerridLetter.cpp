@@ -1,6 +1,9 @@
 #include <array>
 #include <cmath>
+#include <filesystem>
 #include <numbers>
+#include <span>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -14,17 +17,28 @@
 #include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MapEnums.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
+#include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Party.h"
 #include "Engine/PartyEnums.h"
+#include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/Resources/LOD.h"
+#include "Engine/SaveLoad.h"
 #include "Engine/Tables/NPCTable.h"
 
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/UIHouses.h"
+#include "GUI/UI/UISaveLoad.h"
 
 namespace {
+
+constexpr std::string_view checkpointSlot = "saves/save000.mm7";
+constexpr std::string_view checkpointFileName = "save000.mm7";
+constexpr std::array<uint64_t, 4> checkpointExperienceBaseline = {2000, 2100, 2200, 2300};
 
 std::pair<Vec3f, int> approachFace(const BLVFace &face) {
     Vec3f position = face.boundingBox.center() + 150 * face.facePlane.normal;
@@ -138,13 +152,25 @@ void leaveDialogue(EngineController &game) {
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
 }
 
-} // namespace
+void assertDisposableHeadlessProfile() {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    const auto profileRoot = mm7::startupNativeProfileRoot();
+    ASSERT_TRUE(profileRoot);
+    ASSERT_EQ(*profileRoot, std::filesystem::canonical(std::filesystem::path(ufs->displayPath(""))));
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+}
 
-GAME_TEST(MM7SideQuests, KerridLetterRequiresFaerieKingExchange) {
+void runKerridLetterRoute(EngineController &game, TestController &test, CommonTapeRecorder &tapes,
+                          bool useCheckpointExperienceBaseline = false) {
     auto letterActiveTape = tapes.questBit(QBIT_FAERIE_KING_LETTER_ACTIVE);
     auto pipesActiveTape = tapes.questBit(QBIT_FAERIE_PIPES_ACTIVE);
     auto goldTape = tapes.gold();
     game.startNewGame();
+    if (useCheckpointExperienceBaseline) {
+        for (int i = 0; i < 4; i++)
+            pParty->pCharacters[i].experience = checkpointExperienceBaseline[i];
+    }
     NPCData *kerrid = findKerrid();
     ASSERT_NE(kerrid, nullptr);
     unsigned int offerEvent = findNpcEvent(kerrid, offersKerridLetter);
@@ -227,4 +253,69 @@ GAME_TEST(MM7SideQuests, KerridLetterRequiresFaerieKingExchange) {
         EXPECT_EQ(pParty->pCharacters[i].experience - experienceBeforeKerrid[i], 5000);
         EXPECT_EQ(pParty->pCharacters[i].experience - experienceBeforeKing[i], 7000);
     }
+}
+
+} // namespace
+
+GAME_TEST(MM7SideQuests, KerridLetterRequiresFaerieKingExchange) {
+    runKerridLetterRoute(game, test, tapes);
+}
+
+GAME_TEST(MM7SideQuestCheckpoint, DISABLED_WriteKerridLetter) {
+    assertDisposableHeadlessProfile();
+    ASSERT_FALSE(ufs->exists(checkpointSlot));
+    runKerridLetterRoute(game, test, tapes, true);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    ASSERT_FALSE(::testing::Test::HasFailure());
+    leaveDialogue(game);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_TULAREAN_FOREST);
+    game.runGameRoutine([] {
+        saveGame(false, false, checkpointSlot, "Kerrid letter regional checkpoint");
+    });
+
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = ufs->read(checkpointSlot);
+    ASSERT_GT(saved.size(), 1024u);
+    ASSERT_TRUE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saved.data()), saved.size()),
+        GameTitle::MM7, *pGames_LOD));
+}
+
+GAME_TEST(MM7SideQuestCheckpoint, DISABLED_ReloadKerridLetter) {
+    assertDisposableHeadlessProfile();
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = Blob::copy(ufs->read(checkpointSlot));
+    ASSERT_GT(saved.size(), 1024u);
+
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(3);
+    ASSERT_EQ(current_screen_type, SCREEN_LOADGAME);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto found = std::ranges::find(slots, checkpointFileName, &SavegameSlot::fileName);
+    ASSERT_NE(found, slots.end());
+    const int index = static_cast<int>(found - slots.begin());
+    ASSERT_LT(index, 7);
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", index));
+    game.tick(2);
+    ASSERT_EQ(saveLoadMenu()->selectedSlot().fileName, checkpointFileName);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick(2);
+
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_TULAREAN_FOREST);
+    ASSERT_EQ(engine->_lastLoadedSaveFileName, checkpointFileName);
+    EXPECT_FALSE(pParty->_questBits[QBIT_FAERIE_KING_LETTER_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_FAERIE_PIPES_ACTIVE]);
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_LETTER_FROM_JOHANN_KERRID));
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_FAERIE_PIPES));
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_EQ(pParty->uNumGold, engine->config->gameplay.NewGameGold.value() + 1000);
+    EXPECT_EQ(pParty->GetFood(), 0);
+    const int activeCharacter = pParty->activeCharacterIndex();
+    for (int i = 0; i < 4; i++) {
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits[AWARD_RETRIEVED_FAERIE_PIPES], i == activeCharacter);
+        EXPECT_EQ(pParty->pCharacters[i].experience, checkpointExperienceBaseline[i] + 7000);
+    }
+    EXPECT_TRUE(ufs->read(checkpointSlot).str() == saved.str());
 }

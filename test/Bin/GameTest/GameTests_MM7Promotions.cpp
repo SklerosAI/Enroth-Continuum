@@ -1,7 +1,10 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <filesystem>
 #include <numbers>
+#include <span>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -12,7 +15,10 @@
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MapEnums.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
+#include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/Objects/CharacterEnums.h"
 #include "Engine/Objects/Decoration.h"
 #include "Engine/Objects/Chest.h"
@@ -21,15 +27,24 @@
 #include "Engine/PartyEnums.h"
 #include "Engine/Data/AwardEnums.h"
 #include "Engine/Data/HouseEnums.h"
+#include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/Resources/LOD.h"
+#include "Engine/SaveLoad.h"
 #include "Engine/Tables/NPCTable.h"
 
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/UIHouses.h"
+#include "GUI/UI/UISaveLoad.h"
 
 #include "Utility/Exception.h"
 
 namespace {
+
+constexpr std::string_view checkpointSlot = "saves/save000.mm7";
+constexpr std::string_view checkpointFileName = "save000.mm7";
+constexpr std::array<uint64_t, 4> checkpointExperienceBaseline = {3000, 3100, 3200, 3300};
+constexpr int checkpointGoldBaseline = 4000;
 
 std::pair<Vec3f, int> approachFace(const BLVFace &face) {
     Vec3f position = face.boundingBox.center() + 150 * face.facePlane.normal;
@@ -275,6 +290,15 @@ void openMarkhamManor(EngineController &game, NPCData *markham) {
     }
 }
 
+void assertDisposableHeadlessProfile() {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    const auto profileRoot = mm7::startupNativeProfileRoot();
+    ASSERT_TRUE(profileRoot);
+    ASSERT_EQ(*profileRoot, std::filesystem::canonical(std::filesystem::path(ufs->displayPath(""))));
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+}
+
 } // namespace
 
 GAME_TEST(MM7Promotions, MarkhamVaseRequiresPhysicalPickup) {
@@ -513,12 +537,19 @@ GAME_TEST(MM7SideQuests, HaldarsRemainsRequireMazeChest) {
     }
 }
 
-GAME_TEST(MM7SideQuests, ParsonsQuillRequiresMarkhamExchange) {
+namespace {
+
+void runParsonsQuillRoute(EngineController &game, TestController &test, CommonTapeRecorder &tapes,
+                          bool useCheckpointBaseline = false) {
     auto letterTape = tapes.questBit(QBIT_THRUSH_LETTER_ACTIVE);
     auto quillTape = tapes.questBit(QBIT_PARSONS_QUILL_ACTIVE);
     auto goldTape = tapes.gold();
     leaveEmeraldIsland(game);
-    const int initialReputation = pParty->GetPartyReputation();
+    if (useCheckpointBaseline) {
+        pParty->SetGold(checkpointGoldBaseline);
+        for (int i = 0; i < 4; i++)
+            pParty->pCharacters[i].experience = checkpointExperienceBaseline[i];
+    }
     NPCData *thrush = findHouseNpcEvent(HOUSE_ERATHIA_THRUSH_RESIDENCE, [](const EvtInstruction &instruction) {
         return (instruction.opcode == EVENT_Set || instruction.opcode == EVENT_Add) &&
                instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
@@ -533,6 +564,7 @@ GAME_TEST(MM7SideQuests, ParsonsQuillRequiresMarkhamExchange) {
     ASSERT_NE(offerEvent, 0u);
 
     openThrushHouse(game, thrush);
+    const int initialReputation = pParty->GetPartyReputation();
     test.startTaping();
     ASSERT_TRUE(selectNpcEvent(game, thrush, offerEvent));
     EXPECT_TRUE(pParty->_questBits[QBIT_THRUSH_LETTER_ACTIVE]);
@@ -596,4 +628,68 @@ GAME_TEST(MM7SideQuests, ParsonsQuillRequiresMarkhamExchange) {
         EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_ERATHIA_RETURNED_PARSONS_QUILL]);
         EXPECT_EQ(pParty->pCharacters[i].experience - experience[i], 5000);
     }
+}
+
+} // namespace
+
+GAME_TEST(MM7SideQuests, ParsonsQuillRequiresMarkhamExchange) {
+    runParsonsQuillRoute(game, test, tapes);
+}
+
+GAME_TEST(MM7SideQuestCheckpoint, DISABLED_WriteParsonsQuill) {
+    assertDisposableHeadlessProfile();
+    ASSERT_FALSE(ufs->exists(checkpointSlot));
+    runParsonsQuillRoute(game, test, tapes, true);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    ASSERT_FALSE(::testing::Test::HasFailure());
+    leaveHouse(game);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_ERATHIA);
+    game.runGameRoutine([] {
+        saveGame(false, false, checkpointSlot, "Parsons' Quill regional checkpoint");
+    });
+
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = ufs->read(checkpointSlot);
+    ASSERT_GT(saved.size(), 1024u);
+    ASSERT_TRUE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saved.data()), saved.size()),
+        GameTitle::MM7, *pGames_LOD));
+}
+
+GAME_TEST(MM7SideQuestCheckpoint, DISABLED_ReloadParsonsQuill) {
+    assertDisposableHeadlessProfile();
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = Blob::copy(ufs->read(checkpointSlot));
+    ASSERT_GT(saved.size(), 1024u);
+
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(3);
+    ASSERT_EQ(current_screen_type, SCREEN_LOADGAME);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto found = std::ranges::find(slots, checkpointFileName, &SavegameSlot::fileName);
+    ASSERT_NE(found, slots.end());
+    const int index = static_cast<int>(found - slots.begin());
+    ASSERT_LT(index, 7);
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", index));
+    game.tick(2);
+    ASSERT_EQ(saveLoadMenu()->selectedSlot().fileName, checkpointFileName);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick(2);
+
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_ERATHIA);
+    ASSERT_EQ(engine->_lastLoadedSaveFileName, checkpointFileName);
+    EXPECT_FALSE(pParty->_questBits[QBIT_THRUSH_LETTER_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_PARSONS_QUILL_ACTIVE]);
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_LETTER_FROM_NORBERT_THRUSH));
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_PARSONS_QUILL));
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_EQ(pParty->uNumGold, checkpointGoldBaseline + 2000);
+    EXPECT_EQ(pParty->GetPartyReputation(), -5);
+    for (int i = 0; i < 4; i++) {
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_ERATHIA_RETURNED_PARSONS_QUILL]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, checkpointExperienceBaseline[i] + 5000);
+    }
+    EXPECT_TRUE(ufs->read(checkpointSlot).str() == saved.str());
 }

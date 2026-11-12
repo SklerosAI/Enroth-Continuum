@@ -1,7 +1,10 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <filesystem>
 #include <numbers>
+#include <span>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -13,18 +16,29 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MapEnums.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
+#include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Party.h"
 #include "Engine/PartyEnums.h"
+#include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/Resources/LOD.h"
+#include "Engine/SaveLoad.h"
 #include "Engine/Tables/NPCTable.h"
 
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/UIHouses.h"
+#include "GUI/UI/UISaveLoad.h"
 
 namespace {
+
+constexpr std::string_view checkpointSlot = "saves/save000.mm7";
+constexpr std::string_view checkpointFileName = "save000.mm7";
+constexpr std::array<uint64_t, 4> checkpointExperienceBaseline = {1000, 1100, 1200, 1300};
 
 std::pair<Vec3f, int> approachFace(const BLVFace &face) {
     Vec3f position = face.boundingBox.center() + 150 * face.facePlane.normal;
@@ -122,13 +136,25 @@ void leaveUi(EngineController &game) {
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
 }
 
-} // namespace
+void assertDisposableHeadlessProfile() {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    const auto profileRoot = mm7::startupNativeProfileRoot();
+    ASSERT_TRUE(profileRoot);
+    ASSERT_EQ(*profileRoot, std::filesystem::canonical(std::filesystem::path(ufs->displayPath(""))));
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+}
 
-GAME_TEST(MM7SideQuests, SeasonsStoleRequiresHallOfThePitChest) {
+void runSeasonsStoleRoute(EngineController &game, TestController &test, CommonTapeRecorder &tapes,
+                          bool useCheckpointExperienceBaseline = false) {
     auto activeTape = tapes.questBit(QBIT_SEASONS_STOLE_ACTIVE);
     auto goldTape = tapes.gold();
     engine->config->debug.NoDamage.setValue(true);
     game.startNewGame();
+    if (useCheckpointExperienceBaseline) {
+        for (int i = 0; i < 4; i++)
+            pParty->pCharacters[i].experience = checkpointExperienceBaseline[i];
+    }
     pParty->_questBits.set(QBIT_LIGHT_PATH); // Gary offers this regional task only to a Light-path party.
     NPCData *gary = findGaryZimm();
     ASSERT_NE(gary, nullptr);
@@ -194,4 +220,68 @@ GAME_TEST(MM7SideQuests, SeasonsStoleRequiresHallOfThePitChest) {
                   i == activeCharacter);
         EXPECT_EQ(pParty->pCharacters[i].experience - experience[i], 7500);
     }
+}
+
+} // namespace
+
+GAME_TEST(MM7SideQuests, SeasonsStoleRequiresHallOfThePitChest) {
+    runSeasonsStoleRoute(game, test, tapes);
+}
+
+GAME_TEST(MM7SideQuestCheckpoint, DISABLED_WriteSeasonsStole) {
+    assertDisposableHeadlessProfile();
+    ASSERT_FALSE(ufs->exists(checkpointSlot));
+    runSeasonsStoleRoute(game, test, tapes, true);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    ASSERT_FALSE(::testing::Test::HasFailure());
+    leaveUi(game);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_BRACADA_DESERT);
+    game.runGameRoutine([] {
+        saveGame(false, false, checkpointSlot, "Season's Stole regional checkpoint");
+    });
+
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = ufs->read(checkpointSlot);
+    ASSERT_GT(saved.size(), 1024u);
+    ASSERT_TRUE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saved.data()), saved.size()),
+        GameTitle::MM7, *pGames_LOD));
+}
+
+GAME_TEST(MM7SideQuestCheckpoint, DISABLED_ReloadSeasonsStole) {
+    assertDisposableHeadlessProfile();
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = Blob::copy(ufs->read(checkpointSlot));
+    ASSERT_GT(saved.size(), 1024u);
+
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(3);
+    ASSERT_EQ(current_screen_type, SCREEN_LOADGAME);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto found = std::ranges::find(slots, checkpointFileName, &SavegameSlot::fileName);
+    ASSERT_NE(found, slots.end());
+    const int index = static_cast<int>(found - slots.begin());
+    ASSERT_LT(index, 7);
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", index));
+    game.tick(2);
+    ASSERT_EQ(saveLoadMenu()->selectedSlot().fileName, checkpointFileName);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick(2);
+
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_BRACADA_DESERT);
+    ASSERT_EQ(engine->_lastLoadedSaveFileName, checkpointFileName);
+    EXPECT_TRUE(pParty->_questBits[QBIT_LIGHT_PATH]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_SEASONS_STOLE_ACTIVE]);
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_SEASONS_STOLE));
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_EQ(pParty->uNumGold, engine->config->gameplay.NewGameGold.value() + 7500);
+    const int activeCharacter = pParty->activeCharacterIndex();
+    for (int i = 0; i < 4; i++) {
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits[AWARD_BRACADA_RETRIEVED_SEASONS_STOLE],
+                  i == activeCharacter);
+        EXPECT_EQ(pParty->pCharacters[i].experience, checkpointExperienceBaseline[i] + 7500);
+    }
+    EXPECT_TRUE(ufs->read(checkpointSlot).str() == saved.str());
 }

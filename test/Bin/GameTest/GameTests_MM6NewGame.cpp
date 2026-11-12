@@ -28,6 +28,7 @@
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
+#include "Engine/Tables/QuestTable.h"
 #include "Engine/mm7_data.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIChest.h"
@@ -147,6 +148,7 @@ GAME_TEST(MM6NewGameHeadless, PotbelloPaysForTheLetter) {
     game.tick();
     auto goldTape = tapes.gold();
     auto letterTape = tapes.hasItem(static_cast<ItemId>(505));
+    auto noteTape = tapes.questBit(static_cast<QuestBit>(81));
     auto paidTape = tapes.questBit(static_cast<QuestBit>(82));
     auto textTape = tapes.custom([] { return current_npc_text; });
     test.startTaping();
@@ -161,8 +163,30 @@ GAME_TEST(MM6NewGameHeadless, PotbelloPaysForTheLetter) {
 
     EXPECT_EQ(goldTape, tape(200, 1200));
     EXPECT_EQ(letterTape, tape(true)); // He reads it and gives it back.
+    EXPECT_EQ(noteTape, tape(true, false));
     EXPECT_EQ(paidTape, tape(false, true));
     EXPECT_EQ(textTape.back(), pNPCTopics[engine->_globalEventMap.instruction(1, 4).data.text_id - 1].pText);
+}
+
+GAME_TEST(MM6NewGameHeadless, QuestBookShowsTheLetter) {
+    // A new MM6 party started without quest bits 81 and 181, so the quest book didn't show the note about the letter
+    // for Andover Potbello.
+    auto noteTape = tapes.questBit(static_cast<QuestBit>(81));
+    auto hiddenTape = tapes.questBit(static_cast<QuestBit>(181));
+    auto textTape = tapes.allGUIWindowsText();
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    test.startTaping();
+    createPartyThroughInput(game);
+    game.pressGuiButton("PartyCreation_OK");
+    game.skipLoadingScreen();
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_Q);
+    game.tick();
+
+    EXPECT_EQ(noteTape, tape(true));
+    EXPECT_EQ(hiddenTape, tape(true));
+    EXPECT_TRUE(textTape.back().contains(pQuestTable[static_cast<QuestBit>(81)]));
 }
 
 GAME_TEST(MM6NewGameHeadless, ForgeChestHoldsTheHourglass) {

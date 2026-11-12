@@ -9,6 +9,7 @@
 #include <memory>
 #include <utility>
 #include <map>
+#include <span>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -67,6 +68,9 @@ static constexpr GLint PALETTE_TEXTURE_UNIT = 1;
 static constexpr int PALETTE_COUNT = 1000; // pal000 to pal999 in bitmaps.lod.
 
 static constexpr int DEFAULT_AMBIENT_LIGHT_LEVEL = 0;
+
+static constexpr int BSP_ATTRIB_DIM_LEVEL = 0x20000; // glbspshader.frag reads the face's own dim level from the bits above.
+static constexpr int BSP_ATTRIB_DIM_LEVEL_SHIFT = 18;
 
 // globals
 //TODO(pskelton): Combine and contain
@@ -3014,6 +3018,9 @@ void OpenGLRenderer::DrawIndoorFaces() {
                 if (face->attributes & FACE_OUTLINED || (face->attributes & FACE_IsSecret) && engine->is_saturate_faces)
                     attribflags |= 0x00010000;
 
+                if (engine->gameTitle() == GameTitle::MM6)
+                    attribflags |= BSP_ATTRIB_DIM_LEVEL | mm6IndoorFaceDimLevel(*face) << BSP_ATTRIB_DIM_LEVEL_SHIFT;
+
                 if (face->IsAnimated()) {
                     texlayer = -1;
                     texunit = -1;
@@ -3198,6 +3205,22 @@ void OpenGLRenderer::DrawIndoorFaces() {
             uniforms.pointLights[num_lights].specular = Colorf(0.0f, 0.0f, 0.0f);
             uniforms.pointLights[num_lights].radius = test.uRadius;
             num_lights++;
+        }
+
+        if (engine->gameTitle() == GameTitle::MM6) {
+            std::span<const int> visibleSectors(pBspRenderer->pVisibleSectorIDs_toDrawDecorsActorsEtcFrom.data(), pBspRenderer->uNumVisibleNotEmptySectors);
+            for (const BLVLight *light : litSectorLights(visibleSectors)) {
+                if (num_lights >= 40) break;
+                if (!IsSphereInFrustum(light->vPosition, light->uRadius)) continue;
+
+                uniforms.pointLights[num_lights].type = 1.0f;
+                uniforms.pointLights[num_lights].position = light->vPosition;
+                uniforms.pointLights[num_lights].ambient = Colorf(1.0f, 1.0f, 1.0f);
+                uniforms.pointLights[num_lights].diffuse = Colorf(1.0f, 1.0f, 1.0f);
+                uniforms.pointLights[num_lights].specular = Colorf(0.0f, 0.0f, 0.0f);
+                uniforms.pointLights[num_lights].radius = light->uRadius;
+                num_lights++;
+            }
         }
 
         // whatevers left for mobile lights

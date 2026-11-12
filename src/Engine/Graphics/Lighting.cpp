@@ -1,5 +1,9 @@
 #include "Lighting.h"
 
+#include <algorithm>
+#include <span>
+#include <vector>
+
 #include "Engine/Engine.h"
 
 #include "Engine/Graphics/LightsStack.h"
@@ -199,4 +203,20 @@ int _43F55F_get_billboard_light_level(const RenderBillboard *a1, int uBaseLightL
     }
 
     return GetLightLevelAtPoint(v3, a1->uIndoorSectorID, a1->worldPos.x, a1->worldPos.y, a1->worldPos.z);
+}
+
+int mm6IndoorFaceDimLevel(const BLVFace &face) {
+    return pIndoor->sectors[face.sectorId].minAmbientLightLevel;
+}
+
+std::vector<const BLVLight *> litSectorLights(std::span<const int> sectorIds) {
+    std::vector<const BLVLight *> result;
+    for (int sectorId : sectorIds) {
+        for (uint16_t lightId : pIndoor->sectors[sectorId].lightIds) {
+            const BLVLight *light = &pIndoor->lights[lightId];
+            if (!(light->uAtributes & 8) && !std::ranges::contains(result, light))
+                result.push_back(light);
+        }
+    }
+    return result;
 }

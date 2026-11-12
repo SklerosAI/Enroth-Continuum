@@ -3,6 +3,7 @@
 #include <array>
 #include <string>
 
+#include "Engine/Data/HouseEnums.h"
 #include "Engine/Graphics/FrameLimiter.h"
 
 #include "Library/Geometry/Point.h"
@@ -193,6 +194,8 @@ struct ArcomageGame {
 
 extern ArcomageGame *pArcomageGame;
 extern ArcomageCard pCards[87];
+
+void recordArcomageGameResult(HouseId houseId, bool playerWon);
 
 struct spark_point_struct {
     int spark_remaining_life = 0;

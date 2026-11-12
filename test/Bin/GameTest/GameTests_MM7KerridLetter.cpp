@@ -6,10 +6,13 @@
 
 #include "Testing/Game/GameTest.h"
 
+#include "Engine/Data/AwardEnums.h"
 #include "Engine/Data/HouseEnums.h"
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/EvtProgram.h"
+#include "Engine/Evt/Processor.h"
+#include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/MapEnums.h"
 #include "Engine/Objects/ItemEnums.h"
@@ -58,12 +61,12 @@ NPCData *findKerrid() {
     return npc == pNPCStats->pNPCData.end() ? nullptr : &*npc;
 }
 
-unsigned int letterOfferEvent(const NPCData *kerrid) {
-    std::array events = {kerrid->dialogue_1_evt_id, kerrid->dialogue_2_evt_id, kerrid->dialogue_3_evt_id,
-                         kerrid->dialogue_4_evt_id, kerrid->dialogue_5_evt_id, kerrid->dialogue_6_evt_id};
-    auto event = std::ranges::find_if(events, [](unsigned int eventId) {
+unsigned int findNpcEvent(const NPCData *npc, auto predicate) {
+    std::array events = {npc->dialogue_1_evt_id, npc->dialogue_2_evt_id, npc->dialogue_3_evt_id,
+                         npc->dialogue_4_evt_id, npc->dialogue_5_evt_id, npc->dialogue_6_evt_id};
+    auto event = std::ranges::find_if(events, [predicate](unsigned int eventId) {
         return eventId != 0 && engine->_globalEventMap.hasEvent(eventId) &&
-               std::ranges::any_of(engine->_globalEventMap.function(eventId), offersKerridLetter);
+               std::ranges::any_of(engine->_globalEventMap.function(eventId), predicate);
     });
     EXPECT_NE(event, events.end());
     return event == events.end() ? 0 : *event;
@@ -93,33 +96,135 @@ void openKerridHouse(EngineController &game, NPCData *kerrid) {
     }
 }
 
-bool selectOffer(EngineController &game, NPCData *kerrid, unsigned int eventId) {
-    std::array events = {kerrid->dialogue_1_evt_id, kerrid->dialogue_2_evt_id, kerrid->dialogue_3_evt_id,
-                         kerrid->dialogue_4_evt_id, kerrid->dialogue_5_evt_id, kerrid->dialogue_6_evt_id};
+bool selectNpcEvent(EngineController &game, NPCData *npc, unsigned int eventId) {
+    std::array events = {npc->dialogue_1_evt_id, npc->dialogue_2_evt_id, npc->dialogue_3_evt_id,
+                         npc->dialogue_4_evt_id, npc->dialogue_5_evt_id, npc->dialogue_6_evt_id};
     auto event = std::ranges::find(events, eventId);
     if (event == events.end())
         return false;
     DialogueId line = static_cast<DialogueId>(std::to_underlying(DIALOGUE_SCRIPTED_LINE_1) + (event - events.begin()));
-    auto topics = prepareScriptedNPCDialogueTopics(kerrid);
+    auto topics = prepareScriptedNPCDialogueTopics(npc);
     auto option = std::ranges::find(topics, line);
     if (option == topics.end())
         return false;
-    game.pressGuiButton(fmt::format("HouseNpcDialogue_Option{}", option - topics.begin()));
+    const char *prefix = current_screen_type == SCREEN_NPC_DIALOGUE ? "NpcDialogue_Option" : "HouseNpcDialogue_Option";
+    game.pressGuiButton(fmt::format("{}{}", prefix, option - topics.begin()));
     game.tick();
     return true;
 }
 
+NPCData *findFaerieKing() {
+    auto npc = std::ranges::find_if(pNPCStats->pNPCData, [](const NPCData &candidate) {
+        std::array events = {candidate.dialogue_1_evt_id, candidate.dialogue_2_evt_id, candidate.dialogue_3_evt_id,
+                             candidate.dialogue_4_evt_id, candidate.dialogue_5_evt_id, candidate.dialogue_6_evt_id};
+        return std::ranges::any_of(events, [](unsigned int eventId) {
+            return eventId != 0 && engine->_globalEventMap.hasEvent(eventId) &&
+                   std::ranges::any_of(engine->_globalEventMap.function(eventId), [](const EvtInstruction &instruction) {
+                       return instruction.opcode == EVENT_Add &&
+                              instruction.data.variable_descr.type == VAR_PlayerItemInHands &&
+                              instruction.data.variable_descr.value == std::to_underlying(ITEM_QUEST_FAERIE_PIPES);
+                   });
+        });
+    });
+    EXPECT_NE(npc, pNPCStats->pNPCData.end());
+    return npc == pNPCStats->pNPCData.end() ? nullptr : &*npc;
+}
+
+void leaveDialogue(EngineController &game) {
+    for (int i = 0; i < 4 && current_screen_type != SCREEN_GAME; i++) {
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+    }
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+}
+
 } // namespace
 
-GAME_TEST(MM7SideQuests, KerridLetterIsReceivedThroughRealHouseDialogue) {
+GAME_TEST(MM7SideQuests, KerridLetterRequiresFaerieKingExchange) {
+    auto letterActiveTape = tapes.questBit(QBIT_FAERIE_KING_LETTER_ACTIVE);
+    auto pipesActiveTape = tapes.questBit(QBIT_FAERIE_PIPES_ACTIVE);
+    auto goldTape = tapes.gold();
     game.startNewGame();
     NPCData *kerrid = findKerrid();
     ASSERT_NE(kerrid, nullptr);
-    unsigned int event = letterOfferEvent(kerrid);
-    ASSERT_NE(event, 0u);
+    unsigned int offerEvent = findNpcEvent(kerrid, offersKerridLetter);
+    ASSERT_NE(offerEvent, 0u);
+
+    test.startTaping();
     openKerridHouse(game, kerrid);
-    ASSERT_TRUE(selectOffer(game, kerrid, event));
+    ASSERT_TRUE(selectNpcEvent(game, kerrid, offerEvent));
     EXPECT_TRUE(pParty->_questBits[QBIT_FAERIE_KING_LETTER_ACTIVE]);
     EXPECT_TRUE(pParty->hasItem(ITEM_QUEST_LETTER_FROM_JOHANN_KERRID) ||
                 pParty->pPickedItem.itemId == ITEM_QUEST_LETTER_FROM_JOHANN_KERRID);
+    unsigned int handInEvent = findNpcEvent(kerrid, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_Subtract &&
+               instruction.data.variable_descr.type == VAR_PlayerItemInHands &&
+               instruction.data.variable_descr.value == std::to_underlying(ITEM_QUEST_FAERIE_PIPES);
+    });
+    ASSERT_NE(handInEvent, 0u);
+    if (pParty->pPickedItem.itemId == ITEM_QUEST_LETTER_FROM_JOHANN_KERRID)
+        ASSERT_TRUE(pParty->pCharacters[0].inventory.add(pParty->takeHoldingItem()));
+    leaveDialogue(game);
+
+    openKerridHouse(game, kerrid);
+    ASSERT_TRUE(selectNpcEvent(game, kerrid, handInEvent)); // The visible return topic refuses the missing pipes.
+    EXPECT_TRUE(pParty->_questBits[QBIT_FAERIE_KING_LETTER_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_FAERIE_PIPES_ACTIVE]);
+    EXPECT_TRUE(pParty->hasItem(ITEM_QUEST_LETTER_FROM_JOHANN_KERRID));
+    EXPECT_EQ(goldTape.delta(), 0);
+    leaveDialogue(game);
+
+    NPCData *faerieKing = findFaerieKing();
+    ASSERT_NE(faerieKing, nullptr);
+    unsigned int exchangeEvent = findNpcEvent(faerieKing, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_Add && instruction.data.variable_descr.type == VAR_PlayerItemInHands &&
+               instruction.data.variable_descr.value == std::to_underlying(ITEM_QUEST_FAERIE_PIPES);
+    });
+    ASSERT_NE(exchangeEvent, 0u);
+    const int faerieKingId = faerieKing - pNPCStats->pNPCData.data();
+    game.teleportTo(MAP_HALL_UNDER_THE_HILL, Vec3f(), 0);
+    auto audience = std::ranges::find_if(pIndoor->faces, [faerieKingId](const BLVFace &face) {
+        return face.eventId != 0 && engine->_localEventMap.hasEvent(face.eventId) &&
+               std::ranges::any_of(engine->_localEventMap.function(face.eventId),
+                                   [faerieKingId](const EvtInstruction &instruction) {
+                                       return instruction.opcode == EVENT_SpeakNPC &&
+                                              instruction.data.npc_descr.npc_id == faerieKingId;
+                                   });
+    });
+    ASSERT_NE(audience, pIndoor->faces.end());
+    ASSERT_TRUE(audience->Pressure_Plate());
+    pParty->SetFood(12);
+    std::array<uint64_t, 4> experienceBeforeKing;
+    for (int i = 0; i < 4; i++)
+        experienceBeforeKing[i] = pParty->pCharacters[i].experience;
+    const int audienceEvent = audience->eventId;
+    game.runGameRoutine([audienceEvent] { runEvent(EvtContext(EVT_SOURCE_MAP, audienceEvent)); });
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_NPC_DIALOGUE);
+    ASSERT_TRUE(selectNpcEvent(game, faerieKing, exchangeEvent));
+    EXPECT_FALSE(pParty->_questBits[QBIT_FAERIE_KING_LETTER_ACTIVE]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_FAERIE_PIPES_ACTIVE]);
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_LETTER_FROM_JOHANN_KERRID));
+    EXPECT_TRUE(pParty->hasItem(ITEM_QUEST_FAERIE_PIPES) || pParty->pPickedItem.itemId == ITEM_QUEST_FAERIE_PIPES);
+    EXPECT_EQ(pParty->GetFood(), 0);
+    for (int i = 0; i < 4; i++)
+        EXPECT_EQ(pParty->pCharacters[i].experience - experienceBeforeKing[i], 2000);
+    leaveDialogue(game);
+
+    std::array<uint64_t, 4> experienceBeforeKerrid;
+    for (int i = 0; i < 4; i++)
+        experienceBeforeKerrid[i] = pParty->pCharacters[i].experience;
+    const int activeCharacter = pParty->activeCharacterIndex();
+    openKerridHouse(game, kerrid);
+    ASSERT_TRUE(selectNpcEvent(game, kerrid, handInEvent));
+    EXPECT_EQ(letterActiveTape, tape(false, true, false));
+    EXPECT_EQ(pipesActiveTape, tape(false, true, false));
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_FAERIE_PIPES));
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_EQ(goldTape.delta(), 1000);
+    for (int i = 0; i < 4; i++) {
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits[AWARD_RETRIEVED_FAERIE_PIPES], i == activeCharacter);
+        EXPECT_EQ(pParty->pCharacters[i].experience - experienceBeforeKerrid[i], 5000);
+        EXPECT_EQ(pParty->pCharacters[i].experience - experienceBeforeKing[i], 7000);
+    }
 }

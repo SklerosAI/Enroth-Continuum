@@ -3369,3 +3369,8 @@ Chronological record of wiki activity.
 - Added the complete Markham contract: real offer, no-shield refusal, physical Contestant Shield pickup from Emerald Island's Dragon's Lair, return, item and quest transitions, 1,000 gold, 1,000 XP per character, and the award for all four characters.
 - The production-Save writer and separate normal-Load reader passed in a fresh marked profile. The slot stayed byte-identical, while missing-profile and no-save admission cases were rejected; disposable profiles were removed after verification.
 - The focused regional side/promotion selection passed 11/11 headlessly and the complete `check_style` gate passed 157/157. This remains an independent regional boundary, not a continuous campaign.
+
+## [2026-11-12] fix | MM6 spellbook drawn and clicked as MM6 does
+- by: T-Burton-ND via claude
+- The MM6 spellbook loaded MM7 page art MM6 doesn't have, so every page was blank with missing-image markers. It now follows a static trace of `MM6.exe`: `book` and `pagemask`, the school header picture, one picture per spell at MM6's position tables with its name underneath, school tabs only for schools the character has, and TABSPELL and TABEXIT at the bottom. The first click selects a spell and the second casts it. TABSPELL sets the quick spell, and the header picture clears it. The MM6 code lives in `src/GUI/UI/MM6Spellbook.{h,cpp}` with thin hooks.
+- Merged on `master` at `224aa4504`. Unit tests 1122, MM6 suite 145 passed and 2 skipped, MM7 controls 132, `check_style` clean. Four input-driven tests fail with the fix reverted. Spell buttons are rebuilt per page, where MM6 keeps the first page's buttons, and one call on TABSPELL (0x488BF0) is unidentified.

@@ -2,6 +2,42 @@
 
 This is a personal-machine validation note. It contains no game assets.
 
+## MM6 party creation layout and input — 2026-11-11
+
+MM6 party creation now uses the original executable's layout. Its background
+sits under the top strip, the MM7 race line is gone, and the face arrows,
+class and skill lists, plus and minus caps and OK thumb have hit boxes on
+their visible art. MM6 has no Clear button and no voice arrows. MM7 is
+unchanged.
+
+Visible checks on the lane build used real macOS mouse and keyboard events in
+a scratch copy of the Atlas profile. Each launch had one process and one game
+window. Escape skipped the intro, a click on NEW opened creation, and clicks
+on a face arrow, class names, an available skill, a stat row and both caps
+each changed the value under the pointer. Digit and arrow keys moved focus and
+the keypad plus raised the focused stat. Fullscreen rendered letterboxed at
+4:3 and its clicks landed on their visible targets. Windowed mode came back at
+its original size and position, and closing the game left no process or
+window.
+
+Fullscreen correction: the earlier note that the fixed window keeps the
+game's fullscreen toggle does not hold on macOS. The system takes F11 for Show
+Desktop, so the key never reaches the game, and a non-resizable window has no
+fullscreen button. Atlas now makes the MM6 window resizable once, and
+Ctrl-Cmd-F or the green button enter and leave fullscreen with working input.
+
+The duplicate MM6 surface was not reproduced. Three measured direct launches
+showed one process and one native game window, and the owner saw one window
+on a repeat run. The duplicate sessions coincided with a running
+computer-use agent.
+
+The MM6 suite passed 134/134, the MM7 control suite 540/540 and the unit
+tests 1122/1122. The signed Atlas was rebuilt with the new MM6 helper and the
+unchanged MM7 helper and installed in place. Pressing Play MM6 in the
+installed Atlas has not been checked visibly yet. That check covers one
+process and window per press, the window migration and the return to Atlas on
+exit. This is not campaign or Save/Load acceptance.
+
 ## Atlas MM6 interaction repair — 2026-11-11
 
 The installed Atlas now seeds only missing local MM6 rules and configuration

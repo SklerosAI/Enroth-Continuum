@@ -285,6 +285,10 @@ Sizei ResourceManager::spriteSize(std::string_view filename) {
     return lod::decodeSpriteSize(_spritesLodReader.read(name));
 }
 
+bool ResourceManager::hasSprite(std::string_view filename) {
+    return _spritesLodReader.exists(ascii::toLower(filename));
+}
+
 void ResourceManager::desaturate(std::span<Color> colors) const {
     if (fuzzyEquals(_saturation, 1.0f) && fuzzyEquals(_lightness, 1.0f))
         return;

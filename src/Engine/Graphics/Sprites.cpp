@@ -8,6 +8,7 @@
 #include "Engine/AssetsManager.h"
 #include "Engine/Data/DecorationData.h"
 #include "Engine/Engine.h"
+#include "Engine/Resources/ResourceManager.h"
 #include "Engine/Seasons.h"
 
 #include "Library/Logger/Logger.h"
@@ -139,8 +140,10 @@ void SpriteFrameTable::InitializeSprite(signed int uSpriteID) {
                                 }
                             }
 
-                            GraphicsImage *sprite = assets->getSprite(spriteName);
-                            assert(sprite);
+                            // MM6 has no image for some octants, most of its arrow frames only have front and back views.
+                            const bool blankOctant = engine->gameTitle() == GameTitle::MM6 && !engine->resources()->hasSprite(spriteName);
+                            GraphicsImage *sprite = blankOctant ? nullptr : assets->getSprite(spriteName);
+                            assert(sprite || blankOctant);
                             pSpriteSFrames[iter_uSpriteID].sprites[i] = sprite;
                         }
                     }

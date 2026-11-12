@@ -93,6 +93,8 @@ class CommonTapeRecorder {
 
     TestMultiTape<SpriteId> sprites();
 
+    TestMultiTape<SpriteId> drawnSprites(); // Sprite objects that made it into the frame's billboard list.
+
     TestTape<int> activeCharacterIndex(); // Remember that -1 means none!
 
     TestTape<bool> questBit(QuestBit bit);

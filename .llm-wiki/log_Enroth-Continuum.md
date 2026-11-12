@@ -3345,3 +3345,9 @@ Chronological record of wiki activity.
 - Extended the Light-path Season's Stole contract through Gary Zimm's real Bracada offer, a missing-item refusal, the physical Hall of the Pit chest acquisition, and the final return. The result consumes the Stole, clears the active bit, grants 7,500 XP per character and 7,500 gold, and writes the journal award only to the active character.
 - Integrated the verified test on `master` at merge `29d95abf3`. The focused route and the full 10-test regional side-quest/promotion selection passed headlessly; the complete 157-target `check_style` gate also passed.
 - A durable regional Save/Load boundary remains the next extension for the completed Kerrid, Parsons and Season's Stole contracts.
+
+## [2026-11-12] verify | MM7 regional side-quest Save/Load checkpoints
+- by: T-Burton-ND via codex
+- Added exact disposable-profile writer/reader pairs for Season's Stole, Kerrid's letter and Parsons' Quill. Each writer completes its real covered route and normal Save; each fresh-process reader uses the normal Load menu and verifies durable map, quest, item, reward and award state. Kerrid's food cost and Parsons' final -5 Erathia reputation are included.
+- All six writers/readers passed, and every slot remained byte-identical after its reader. The admission gate rejected a writer without the marked temporary profile and a reader profile without a save. All disposable profiles were removed.
+- Integrated the packet on `master` at merge `8e4d5fffb`. The regional side/promotion selection passed 10/10 headlessly and the complete 157-target `check_style` gate passed. These are three independent route boundaries, not a continuous campaign.

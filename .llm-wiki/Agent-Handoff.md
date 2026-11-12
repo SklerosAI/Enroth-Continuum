@@ -24,7 +24,7 @@ language below is historical and superseded by this boundary.
 
 Codex integrated fresh-process Save/Load boundaries for the complete Season's
 Stole, Kerrid letter, Parsons' Quill, Missing Contestants, Three Paintings,
-Three Statuettes and Arcomage Champion routes. Each
+Three Statuettes, Arcomage Champion and the Obelisk puzzle routes. Each
 writer runs its real covered route and normal Save; a separate reader uses the
 normal Load menu and asserts durable quest, item, map, reward and award state.
 Missing Contestants includes Markham's offer and no-shield refusal, physical
@@ -35,12 +35,16 @@ grant 50,000 gold and 50,000 XP per character. Arcomage Champion covers all
 thirteen authored tavern result records, Gina's refusal and hand-in, and the
 Erathia reward chest; the live-card-loop control is separate, so this is not a
 claim of thirteen full card matches. Kerrid's food cost and Parsons' -5
-Erathia reputation also persist. All fourteen exact writer/reader tests passed
-and every slot stayed byte-identical after reading. The regional side/promotion
-selection passed 13/13 and `check_style` passed 157/157. The admission gate
-refused a missing temporary profile and a reader profile with no save. Disposable profiles were
-moved to Trash. Continue the broader uncovered side-quest catalog from this
-boundary; do not call the seven independent routes a continuous campaign.
+Erathia reputation also persist. The Obelisk route executes all fourteen
+authored regional discovery bindings, proves the treasure remains hidden with
+one discovery missing and at 1 AM, then opens and empties the real Evenmorn
+chest at midnight after the 100,000-gold script reward. All sixteen exact
+writer/reader tests passed, and every slot stayed byte-identical after reading.
+The regional side/promotion
+selection passed 14/14 and `check_style` passed 157/157. The admission gate
+refused a missing temporary profile and a reader profile with no save.
+Disposable profiles were moved to Trash. Continue the broader uncovered side-quest catalog from this
+boundary; do not call the eight independent routes a continuous campaign.
 
 ## Fast resume pointer — 2026-11-10
 

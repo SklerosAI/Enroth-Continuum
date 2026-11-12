@@ -3414,3 +3414,9 @@ Chronological record of wiki activity.
 - Extracted the persistent result transaction used by the live Arcomage game, then covered Gina Barnes's real offer and incomplete refusal, one result for each of the thirteen authored tavern IDs, first-win-only stake payouts, final rewards and the authored Erathia reward chest with Forge Gauntlets.
 - The production-Save writer and separate normal-Load reader passed with every tavern flag, quest bits, rewards, awards and chest item intact and byte-identical slot contents. Missing-profile and no-save admissions were rejected, and both disposable profiles were moved to Trash.
 - The regional side/promotion selection passed 13/13 and `check_style` passed 157/157 headlessly. The live-loop trace separately plays cards; this deterministic quest fixture does not claim thirteen complete card matches.
+
+## [2026-11-12] verify | MM7 Obelisk puzzle route and checkpoint
+- by: T-Burton-ND via codex
+- Added all fourteen authored regional Obelisk discovery bindings, the one-missing and 1 AM refusal states, and the midnight Evenmorn treasure activation. The route opens and empties the real chest, verifies every discovery and treasure bit, and retains the scripted 100,000 gold, chest gold and physical chest items.
+- The production-Save writer and separate normal-Load reader passed with byte-identical slot contents. Missing-profile and no-save admissions were rejected, and the disposable profiles were moved to Trash.
+- The focused route passed 1/1, both fresh-process checkpoint tests passed 1/1, the regional side/promotion selection passed 14/14, and `check_style` passed 157/157 headlessly. This is an independent route boundary, not continuous regional progression.

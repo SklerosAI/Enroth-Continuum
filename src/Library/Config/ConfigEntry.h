@@ -30,6 +30,10 @@ class ConfigEntry : public AnyConfigEntry {
         return std::any_cast<const T &>(AnyConfigEntry::defaultValue());
     }
 
+    void setDefaultValue(T value) {
+        AnyConfigEntry::setDefaultValue(std::move(value));
+    }
+
     const T &value() const {
         return std::any_cast<const T &>(AnyConfigEntry::value());
     }

@@ -272,7 +272,7 @@ GAME_TEST(MM6CharacterScreenHeadless, TabsOpenByKeyAndButton) {
 
     game.pressAndReleaseKey(PlatformKey::KEY_I);
     game.tick(2); // The key queues the character screen for the next frame.
-    for (PlatformKey key : {PlatformKey::KEY_C, PlatformKey::KEY_S, PlatformKey::KEY_A, PlatformKey::KEY_I}) {
+    for (PlatformKey key : {PlatformKey::KEY_S, PlatformKey::KEY_K, PlatformKey::KEY_A, PlatformKey::KEY_I}) {
         game.pressAndReleaseKey(key);
         game.tick();
     }
@@ -528,6 +528,24 @@ GAME_TEST(MM6CharacterScreenHeadless, TabKeyRightAfterInventoryKey) {
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_SPELL_BOOK));
 }
 
+GAME_TEST(MM6CharacterScreenHeadless, TabKeysAreMM6s) {
+    // The character screen used MM7's tab keys, so S opened the skills tab instead of the stats tab and K did nothing.
+    auto screenTape = tapes.screen();
+    auto tabTape = tapes.custom([] { return current_character_screen_window; });
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_I);
+    game.tick(2); // The key queues the character screen for the next frame.
+    game.pressAndReleaseKey(PlatformKey::KEY_K);
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_S);
+    game.tick();
+
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHARACTERS));
+    EXPECT_EQ(tabTape, tape(WINDOW_CHARACTER_STATS, WINDOW_CHARACTER_INVENTORY, WINDOW_CHARACTER_SKILLS, WINDOW_CHARACTER_STATS));
+}
+
 GAME_TEST(MM6OffscreenFrame, DISABLED_CharacterScreenCapture) {
     // Hidden capture of the four MM6 character screen tabs, with an optional dump of their hit boxes.
     ASSERT_FALSE(window->isVisible());
@@ -541,7 +559,7 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_CharacterScreenCapture) {
     game.pressAndReleaseKey(PlatformKey::KEY_I);
     game.tick(2); // The key queues the character screen for the next frame.
     for (auto [key, name] : std::array<std::pair<PlatformKey, std::string_view>, 4>{
-             {{PlatformKey::KEY_C, "stats"}, {PlatformKey::KEY_S, "skills"}, {PlatformKey::KEY_A, "awards"}, {PlatformKey::KEY_I, "inventory"}}}) {
+             {{PlatformKey::KEY_S, "stats"}, {PlatformKey::KEY_K, "skills"}, {PlatformKey::KEY_A, "awards"}, {PlatformKey::KEY_I, "inventory"}}}) {
         game.pressAndReleaseKey(key);
         game.tick();
         RgbaImage frame;

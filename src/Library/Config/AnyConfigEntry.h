@@ -24,6 +24,8 @@ class AnyConfigEntry {
         return _defaultValue;
     }
 
+    void setDefaultValue(std::any value);
+
     const std::any &value() const {
         return _value;
     }

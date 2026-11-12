@@ -24,6 +24,12 @@ AnyConfigEntry::AnyConfigEntry(ConfigSection *section, std::string_view name, st
     section->registerEntry(this);
 }
 
+void AnyConfigEntry::setDefaultValue(std::any value) {
+    assert(value.type() == type());
+
+    _defaultValue = std::move(value);
+}
+
 void AnyConfigEntry::setValue(std::any value) {
     assert(value.type() == type());
 

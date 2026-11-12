@@ -2,6 +2,19 @@
 
 This is a personal-machine validation note. It contains no game assets.
 
+## Atlas MM6 interaction repair — 2026-11-11
+
+The installed Atlas now seeds only missing local MM6 rules and configuration
+into its separate `Profiles/MM6-Atlas` profile before launch. Its one-time
+profile migration chooses windowed mode rather than inheriting the integration
+profile's borderless developer setting. A visible owner-local run opened the
+MM6 helper in front, reached party creation, accepted a character-selection
+input, and showed the class icons with their native transparent backgrounds.
+The app and helper passed strict signature verification after installation. A
+remaining MM6 party-creation asset-layout issue is still under investigation;
+this does not accept MM6 campaign play, normal Save/Load, or broader MM6 UI
+coverage.
+
 ## Atlas headless reinstall — 2026-11-10
 
 After the owner authorized reinstalling Atlas, the signed MM7 recording

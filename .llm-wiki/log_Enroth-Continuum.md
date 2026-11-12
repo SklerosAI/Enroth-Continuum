@@ -3370,6 +3370,12 @@ Chronological record of wiki activity.
 - The production-Save writer and separate normal-Load reader passed in a fresh marked profile. The slot stayed byte-identical, while missing-profile and no-save admission cases were rejected; disposable profiles were removed after verification.
 - The focused regional side/promotion selection passed 11/11 headlessly and the complete `check_style` gate passed 157/157. This remains an independent regional boundary, not a continuous campaign.
 
+## [2026-11-12] fix | MM7 progress-capture map placement
+- by: T-Burton-ND via codex
+- Inspection of the private Tatalia, Avlee and Shoals progress frames traced the malformed Tatalia/Avlee views to the diagnostic requesting a missing `Party Start` and retaining Emerald Island coordinates, not to a proved renderer defect.
+- The capture now selects the first available party/cardinal start after map load and fails when no target-map start exists. A normal Null-renderer check passed 1/1 across all three maps and proved the Tatalia/Avlee fallbacks.
+- No replacement graphical capture ran under the owner's headless-only instruction. Shoals underwater fog and the corrected world frames still require a later hidden recapture before visual acceptance.
+
 ## [2026-11-12] fix | MM6 spellbook drawn and clicked as MM6 does
 - by: T-Burton-ND via claude
 - The MM6 spellbook loaded MM7 page art MM6 doesn't have, so every page was blank with missing-image markers. It now follows a static trace of `MM6.exe`: `book` and `pagemask`, the school header picture, one picture per spell at MM6's position tables with its name underneath, school tabs only for schools the character has, and TABSPELL and TABEXIT at the bottom. The first click selects a spell and the second casts it. TABSPELL sets the quick spell, and the header picture clears it. The MM6 code lives in `src/GUI/UI/MM6Spellbook.{h,cpp}` with thin hooks.

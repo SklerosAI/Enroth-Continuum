@@ -23,18 +23,19 @@ language below is historical and superseded by this boundary.
 ## Current MM7 regional checkpoint — 2026-11-12
 
 Codex integrated fresh-process Save/Load boundaries for the complete Season's
-Stole, Kerrid letter, Parsons' Quill and Missing Contestants routes. Each
+Stole, Kerrid letter, Parsons' Quill, Missing Contestants and Three Paintings routes. Each
 writer runs its real covered route and normal Save; a separate reader uses the
 normal Load menu and asserts durable quest, item, map, reward and award state.
 Missing Contestants includes Markham's offer and no-shield refusal, physical
 Dragon's Lair floor pickup, 1,000 gold, 1,000 XP per character and the
-all-character award. Kerrid's food cost and Parsons' -5 Erathia reputation
-also persist. All eight exact writer/reader tests passed and every slot stayed
-byte-identical after reading. The regional side/promotion selection passed
-11/11 and `check_style` passed 157/157. The admission gate refused a missing
+all-character award. Three Paintings includes the three authored wall pickups,
+item consumption, 50,000 gold and 50,000 XP per character. Kerrid's food cost
+and Parsons' -5 Erathia reputation also persist. All ten exact writer/reader
+tests passed and every slot stayed byte-identical after reading. The regional
+side/promotion selection passed 12/12 and `check_style` passed 157/157. The admission gate refused a missing
 temporary profile and a reader profile with no save. Disposable profiles were
 removed. Continue the broader uncovered side-quest catalog from this boundary;
-do not call the four independent routes a continuous campaign.
+do not call the five independent routes a continuous campaign.
 
 ## Fast resume pointer — 2026-11-10
 

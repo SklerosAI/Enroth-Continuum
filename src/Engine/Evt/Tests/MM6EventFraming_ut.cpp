@@ -127,8 +127,9 @@ UNIT_TEST(MM6EventFraming, ZeroMasterySkillCheckMatchesTrainedSkill) {
 }
 
 UNIT_TEST(MM6EventFraming, QuestionMatchesEitherAnswer) {
-    EXPECT_TRUE(mm6QuestionMatches("  Jbard ", "jbard", "other"));
+    EXPECT_TRUE(mm6QuestionMatches("Jbard", "JBARD", "other"));
     EXPECT_TRUE(mm6QuestionMatches("OTHER", "jbard", "other"));
     EXPECT_FALSE(mm6QuestionMatches("wrong", "jbard", "other"));
-    EXPECT_FALSE(mm6QuestionMatches("", "", "other"));
+    EXPECT_FALSE(mm6QuestionMatches(" jbard", "jbard", "other")); // MM6 compares the typed text as it is.
+    EXPECT_FALSE(mm6QuestionMatches("", "jbard", "other"));
 }

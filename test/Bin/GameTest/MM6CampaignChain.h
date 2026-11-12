@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <string_view>
 
 #include "Engine/MapEnums.h"
 #include "Engine/Objects/ItemEnums.h"
@@ -59,6 +60,22 @@ void useMM6CampaignChainEventFace(EngineController &game, MapId map, int eventId
  *                                      front of it is used.
  */
 void useMM6CampaignChainIndoorEventFace(EngineController &game, int eventId);
+
+/**
+ * Teleports next to a pressure plate of an event on the current indoor map and walks onto it.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param eventId                       Local event of the plate. Its first floor face that is a pressure plate is used.
+ */
+void walkOntoMM6CampaignChainIndoorEventPlate(EngineController &game, int eventId);
+
+/**
+ * Types an answer into the open Question prompt of an event and presses Enter.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param answer                        Lowercase letters, digits and spaces. MM6 compares answers ignoring case.
+ */
+void answerMM6CampaignChainQuestion(EngineController &game, std::string_view answer);
 
 /**
  * Picks an item up from the open chest and puts it into the first character's backpack.

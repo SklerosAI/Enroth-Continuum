@@ -31,6 +31,7 @@
 #include "GUI/GUIDialogues.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/Houses/MM6House.h"
+#include "GUI/UI/UIBranchlessDialogue.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UISaveLoad.h"
 #include "Library/Platform/Interface/PlatformEnumFunctions.h"
@@ -186,6 +187,49 @@ void useMM6CampaignChainIndoorEventFace(EngineController &game, int eventId) {
     game.teleportTo(engine->_currentLoadedMapId, position, yaw);
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();
+}
+
+void walkOntoMM6CampaignChainIndoorEventPlate(EngineController &game, int eventId) {
+    ASSERT_EQ(uCurrentlyLoadedLevelType, LEVEL_INDOOR);
+    auto plate = std::ranges::find_if(pIndoor->faces, [&](const BLVFace &face) {
+        return face.eventId == eventId && face.Pressure_Plate() && face.facePlane.normal.z > 0.9f;
+    });
+    ASSERT_NE(plate, pIndoor->faces.end());
+    const int plateId = plate - pIndoor->faces.begin();
+    const Vec3f center = plate->boundingBox.center();
+    const float reach = std::max(plate->boundingBox.x2 - plate->boundingBox.x1, plate->boundingBox.y2 - plate->boundingBox.y1) / 2 + 100;
+    for (Vec3f direction : {Vec3f(0, -1, 0), Vec3f(-1, 0, 0), Vec3f(0, 1, 0), Vec3f(1, 0, 0)}) {
+        Vec3f start = center + reach * direction;
+        int sectorId = 0;
+        start.z = GetIndoorFloorZ(start + Vec3f(0, 0, 40), &sectorId);
+        if (start.z <= -29000)
+            continue; // No floor there.
+        game.teleportTo(engine->_currentLoadedMapId, start, std::lround(std::atan2(-direction.y, -direction.x) * 180 / std::numbers::pi));
+        game.pressKey(PlatformKey::KEY_UP);
+        for (int i = 0; i < 30 && pParty->floor_face_id != plateId; i++)
+            game.tick();
+        game.releaseKey(PlatformKey::KEY_UP);
+        ASSERT_EQ(pParty->floor_face_id, plateId);
+        return;
+    }
+    FAIL() << "No floor next to the plate of event " << eventId;
+}
+
+void answerMM6CampaignChainQuestion(EngineController &game, std::string_view answer) {
+    ASSERT_NE(pGUIWindow_BranchlessDialogue, nullptr);
+    ASSERT_EQ(pGUIWindow_BranchlessDialogue->opcode(), EVENT_InputString);
+    for (char c : answer) {
+        if (c == ' ') {
+            game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        } else if (c >= 'a' && c <= 'z') {
+            game.pressAndReleaseKey(static_cast<PlatformKey>(std::to_underlying(PlatformKey::KEY_A) + c - 'a'));
+        } else {
+            ASSERT_TRUE(c >= '0' && c <= '9') << c;
+            game.pressAndReleaseKey(static_cast<PlatformKey>(std::to_underlying(PlatformKey::KEY_DIGIT_0) + c - '0'));
+        }
+    }
+    game.pressAndReleaseKey(PlatformKey::KEY_RETURN);
+    game.tick(2); // The prompt takes the answer when it draws, and closes on the next frame.
 }
 
 void takeMM6CampaignChainChestItem(EngineController &game, int chestId, ItemId itemId) {

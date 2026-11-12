@@ -26,6 +26,6 @@ Character screen tabs, the MM6 icon cyan key, quick reference and rest, missiles
 ## Update, late afternoon
 
 - Merged after review and the full gate: C4 (`b834a70e3`, chain C0 to C4 passed) and the indoor lighting fix (`77e1f3432`, MM7 dungeons d17 and d29 pixel-identical offscreen, d02 before and after in the progress captures).
-- Small leftovers (`claude/mm6-leftovers`, rebased on C4): MM6 tab hotkeys, skill row keyboard focus, starting quest bits 81 and 181, plus a test update for `MM6Houses.HouseNpcTopic`. Its first gate passed except that test, now fixed, and the starting bits test was seen to fail without the fix. A rerun of the MM6 suite and chain C0 to C4 on top of C4 was still running at the pause. Merge it once that passes.
+- Small leftovers merged at `f01ee17ba` after the rerun passed (MM6 suite 178 passed and 2 skipped, chain C0 to C4): MM6 tab hotkeys S and K, skill row keyboard focus, starting quest bits 81 and 181.
 - Player spells batch 1 (`../enroth-worktrees/mm6-spells`) still has only uncommitted work. Review before anything else.
 

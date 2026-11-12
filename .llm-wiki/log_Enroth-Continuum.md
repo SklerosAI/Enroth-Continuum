@@ -3396,3 +3396,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via claude
 - The bright white ground at the start of a new MM6 game was snow. A new game starts on 1 January, and the port's `seasons_change` option turned grass into snow in winter and into dirt in spring and autumn. A static trace of `MM6.exe` shows MM6 never changes ground or trees by month: tilesets come straight from the ODM header and nothing rewrites the tile map after load. Snow is authored only on outb1 and outc1. MM6 terrain now keeps its authored tiles in every month, MM7 is unchanged.
 - Merged on `master` at `c48514b94`. Unit tests 1122, MM6 suite 147 passed and 2 skipped, MM7 controls 133, `check_style` clean. A hidden capture of the start shows green grass and the dirt road. The `seasons_change` config text still says the feature came from MM6, which the trace contradicts.
+
+## [2026-11-12] verify | MM7 Three Statuettes route and checkpoint
+- by: T-Burton-ND via codex
+- Extended the Angel-only probe into Thom Lumbra's complete route: real offer and refusal, Knight/Eagle/Angel acquisition from the two Grand Temples and Maze chest UIs, and placement through the Avlee, Tatalia and Bracada authored shrine faces.
+- The return clears the quest, grants 50,000 gold, 50,000 XP per character and the award to all four characters. The production-Save writer and separate normal-Load reader passed with byte-identical slot contents; missing-profile and no-save admissions were rejected.
+- The regional side/promotion selection passed 12/12 headlessly, changed-file lint passed and the full `check_style` gate passed 157/157. Disposable profiles were moved to Trash.

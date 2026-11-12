@@ -35,6 +35,13 @@ skips. The upstream `issue_1666` trace update paired with the earlier
 valid-indoor-spawn fix is included; the post-MM6-reconciliation regional
 side/promotion selection remains green at 10/10.
 
+The same regional gate now also carries the complete Light-path Season's Stole
+contract: Gary Zimm's real offer and missing-item refusal, Hall of the Pit chest
+acquisition, physical return, quest/item transitions, 7,500 XP per character
+and 7,500 gold. As with Kerrid, the source script writes its journal award only
+to the active character. The focused test and the 10-test regional selection
+both pass headlessly after integration.
+
 See the [November 9 progress table](Progress-2026-11-09.md) and [MM6 resume handoff](../project/MM6_RESUME_HANDOFF.md) for exact checks and next source paths. Raw captures and game data stay local.
 
 A [passive MM7 playtest recorder](MM7-Playtest-Recording.md) is integrated in the

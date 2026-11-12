@@ -3351,3 +3351,9 @@ Chronological record of wiki activity.
 - Added exact disposable-profile writer/reader pairs for Season's Stole, Kerrid's letter and Parsons' Quill. Each writer completes its real covered route and normal Save; each fresh-process reader uses the normal Load menu and verifies durable map, quest, item, reward and award state. Kerrid's food cost and Parsons' final -5 Erathia reputation are included.
 - All six writers/readers passed, and every slot remained byte-identical after its reader. The admission gate rejected a writer without the marked temporary profile and a reader profile without a save. All disposable profiles were removed.
 - Integrated the packet on `master` at merge `8e4d5fffb`. The regional side/promotion selection passed 10/10 headlessly and the complete 157-target `check_style` gate passed. These are three independent route boundaries, not a continuous campaign.
+
+## [2026-11-12] fix | MM6 missiles drawn as sprites, Percival arrows explode
+- by: T-Burton-ND via claude
+- MM6 objects 500 to 599 went through MM7's `RenderAsSprite` id switch, so MM6 arrows and monster bolts showed MM7 trail particles instead of their sprites. `MM6.exe` draws every object's sprite without an id test, and MM6 now does too. MM6 arrow frames with no image for an octant leave it empty.
+- A Percival arrow, or one with the Carnage enchantment, now becomes object 1051 with a radius 512 area attack, as the original does. Before, it hit like a plain arrow.
+- Merged on `master` at `aa8728361`. Unit tests 1122, MM6 suite 139 passed and 2 skipped, MM7 controls 132, `check_style` clean. The lane's commit message overstates one point: MM6 object 550 was already drawn before the fix. The Carnage branch has no test.

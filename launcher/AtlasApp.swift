@@ -12,6 +12,8 @@ private let portraitMoods = ["normal", "talk", "smile", "sad", "hurt", "pain", "
                              "paralyzed", "stone", "zombie", "dead", "eradicated"]
 private let rollingVideoHotKeyID: UInt32 = 1
 private weak var rollingVideoHotKeyOwner: AtlasApp?
+private let mm6RuleNames = ["creation.json", "spells.json", "first-aid.json", "power-cure.json", "timed-cures.json",
+                            "combat-buffs.json", "house-rooms.json", "transport.json", "shop-stock.json"]
 
 private func rollingVideoHotKeyHandler(_ nextHandler: EventHandlerCallRef?, _ event: EventRef?,
                                        _ userData: UnsafeMutableRawPointer?) -> OSStatus {
@@ -54,6 +56,39 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
 
     private var modRoot: URL {
         supportPath.appendingPathComponent("Mods/MM7", isDirectory: true)
+    }
+
+    /**
+     * Atlas profiles are isolated from the MM6 integration profile, but the current MM6 runtime needs its local rule
+     * JSON. Seed only missing files so a player-owned Atlas profile is never overwritten.
+     */
+    private func seedMM6Profile(_ profilePath: URL) throws {
+        let fileManager = FileManager.default
+        let source = supportPath.appendingPathComponent("Profiles/MM6", isDirectory: true)
+        let sourceRules = source.appendingPathComponent("rules", isDirectory: true)
+        let targetRules = profilePath.appendingPathComponent("rules", isDirectory: true)
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: sourceRules.path, isDirectory: &isDirectory), isDirectory.boolValue else {
+            throw NSError(domain: "AtlasMM6Profile", code: 1, userInfo: [NSLocalizedDescriptionKey:
+                "The local MM6 rule set is missing. Restore Profiles/MM6/rules before launching MM6."])
+        }
+        try fileManager.createDirectory(at: targetRules, withIntermediateDirectories: true)
+        for name in mm6RuleNames {
+            let input = sourceRules.appendingPathComponent(name)
+            let output = targetRules.appendingPathComponent(name)
+            guard fileManager.fileExists(atPath: input.path) else {
+                throw NSError(domain: "AtlasMM6Profile", code: 2, userInfo: [NSLocalizedDescriptionKey:
+                    "The local MM6 rule set is incomplete (missing \(name))."])
+            }
+            if !fileManager.fileExists(atPath: output.path) {
+                try fileManager.copyItem(at: input, to: output)
+            }
+        }
+        let sourceConfig = source.appendingPathComponent("openenroth.ini")
+        let targetConfig = profilePath.appendingPathComponent("openenroth.ini")
+        if fileManager.fileExists(atPath: sourceConfig.path), !fileManager.fileExists(atPath: targetConfig.path) {
+            try fileManager.copyItem(at: sourceConfig, to: targetConfig)
+        }
     }
 
     private var recordingBasePath: URL {
@@ -632,6 +667,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         }
         do {
             try FileManager.default.createDirectory(at: profilePath, withIntermediateDirectories: true)
+            if build == .mm6 { try seedMM6Profile(profilePath) }
             let process = Process()
             process.executableURL = engine
             process.arguments = build.arguments(dataPath: dataPath, profilePath: profilePath)

@@ -24,12 +24,16 @@ The `codex/mm7-dark-chain` audit line is integrated on `master`. It carries
 complete headless coverage for Norbert Thrush's Parsons' Quill route: Emerald
 Island contest completion and departure, the real letter offer, a
 missing-quill refusal, the Markham Manor exchange, and the final hand-in with
-item, quest, award, reputation, gold and XP assertions. It also covers
-Kerrid's real offer and physical-letter acquisition; the Faerie King audience,
-food consumption, pipes and return remain open. After reconciliation with the
-current shared core, the complete MM7 headless suite passed 567 tests with two
-expected vendor-mod skips. The upstream `issue_1666` trace update paired with
-the earlier valid-indoor-spawn fix is included.
+item, quest, award, reputation, gold and XP assertions. Kerrid's route is also
+complete through his real offer, the missing-pipes refusal, the Hall Under the
+Hill pressure-plate audience event, all-food consumption, letter-to-pipes
+exchange, return and rewards. The observed script grants 2,000 XP per character
+at the audience and 5,000 more at Kerrid, while writing the journal award only
+to the active character. After reconciliation with the current shared core,
+the complete MM7 headless suite passed 567 tests with two expected vendor-mod
+skips. The upstream `issue_1666` trace update paired with the earlier
+valid-indoor-spawn fix is included; the post-MM6-reconciliation regional
+side/promotion selection remains green at 10/10.
 
 See the [November 9 progress table](Progress-2026-11-09.md) and [MM6 resume handoff](../project/MM6_RESUME_HANDOFF.md) for exact checks and next source paths. Raw captures and game data stay local.
 

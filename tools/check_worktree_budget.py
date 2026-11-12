@@ -59,7 +59,7 @@ def main() -> int:
     unassigned = []
     for record in paths:
         path = pathlib.Path(record["worktree"])
-        if path == ROOT:
+        if record.get("branch") == "refs/heads/master":
             continue
         assigned_owner = owner(record.get("branch", ""))
         if assigned_owner:

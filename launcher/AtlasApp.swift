@@ -769,6 +769,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             sendState(message: shouldRecord && recorder?.isRunning == true
                       ? "Opening \(name); recording is starting…"
                       : build.supportsRecording ? "Opening \(name)…" : "Opening \(name) in its separate MM6 profile…")
+            window.orderOut(nil)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 NSRunningApplication(processIdentifier: process.processIdentifier)?.activate()
             }

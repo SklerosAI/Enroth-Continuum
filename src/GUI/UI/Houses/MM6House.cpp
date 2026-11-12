@@ -1,6 +1,7 @@
 #include "MM6House.h"
 
 #include <algorithm>
+#include <array>
 #include <exception>
 #include <memory>
 #include <string>
@@ -29,6 +30,8 @@
 #include "GUI/GUIButton.h"
 #include "GUI/GUIFont.h"
 #include "GUI/GUIMessageQueue.h"
+#include "GUI/MM6TopPanelResources.h"
+#include "GUI/UI/MM6CharacterScreen.h"
 #include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/UIStatusBar.h"
 #include "GUI/UI/Houses/MM6Shop.h"
@@ -43,6 +46,39 @@
 
 #include "Media/Audio/AudioPlayer.h"
 #include "Media/MediaPlayer.h"
+
+static constexpr LstrId LSTR_MM6_CANCEL = static_cast<LstrId>(34);
+static constexpr LstrId LSTR_MM6_END_CONVERSATION = static_cast<LstrId>(74);
+static constexpr LstrId LSTR_MM6_EXIT_BUILDING = static_cast<LstrId>(80);
+
+/** Portrait positions on the right panel, by the number of people in the house. */
+static constexpr std::array<std::array<Pointi, 6>, 6> kPortraitPositions = {{
+    {{{525, 34}}},
+    {{{525, 34}, {525, 129}}},
+    {{{525, 34}, {525, 129}, {525, 224}}},
+    {{{525, 34}, {486, 129}, {564, 129}, {525, 224}}},
+    {{{525, 34}, {486, 129}, {564, 129}, {486, 224}, {564, 224}}},
+    {{{486, 34}, {564, 34}, {486, 129}, {564, 129}, {486, 224}, {564, 224}}},
+}};
+static constexpr Pointi kSelectedPortrait = {525, 34};
+static constexpr Pointi kExitPicture = {526, 313};
+static constexpr int kPanelTextRight = 630; // Names and portrait labels are centred between their margin and here.
+static constexpr int kOptionTextX = 483;
+static constexpr int kOptionTextWidth = 148;
+
+static Pointi portraitPosition(size_t count, size_t index) {
+    return kPortraitPositions[count - 1][index];
+}
+
+/**
+ * @param font                          Font the text is drawn in.
+ * @param text                          Text to measure.
+ * @param width                         Width the text wraps to.
+ * @return                              Height of the text as MM6 counts it, the font height minus 3 for every line.
+ */
+static int mm6TextHeight(GUIFont *font, std::string_view text, int width) {
+    return text.empty() ? 0 : font->CalcTextHeight(text, width, 0) + 3;
+}
 
 static bool isResidentNpc(const NPCData &npc, HouseId houseId) {
     return npc.house == houseId && !(npc.flags & NPC_HIRED);
@@ -86,8 +122,7 @@ static std::string exitLabel(MapId map) {
 
 GUIWindow_MM6House::GUIWindow_MM6House(HouseId houseId, const mm6::HousePresentationState &presentation)
     : GUIWindow_House(houseId), _house(mm6::houseServiceData().at(std::to_underlying(houseId))) {
-    _panel = assets->getIcon("backevt");
-    _exit = assets->getIcon("buttexi1");
+    _panel = _house.room.room ? assets->getIcon(fmt::format("evpan{:03}", _house.room.room->background)) : assets->getIcon("backevt");
     if (presentation.proprietorIconName)
         _residents.push_back({nullptr, assets->getIcon(*presentation.proprietorIconName),
                               houseTable[houseId].pProprieterName, houseTable[houseId].pProprieterTitle});
@@ -115,25 +150,26 @@ GUIWindow_MM6House::GUIWindow_MM6House(HouseId houseId, const mm6::HousePresenta
 }
 
 void GUIWindow_MM6House::Update() {
-    const Recti sidePanel(SIDE_TEXT_BOX_POS_X, 0, SIDE_TEXT_BOX_WIDTH, render->GetRenderDimensions().h);
-    render->DrawQuad2D(_panel, {477, 0});
-    render->DrawQuad2D(_exit, {471, 445});
+    const int screenHeight = render->GetRenderDimensions().h;
+    render->DrawQuad2D(assets->getIcon(mm6TopPanelIconForHour(GameTitle::MM6, pParty->uCurrentHour)), {468, 0}); // Only its edges show around the panel.
+    render->DrawQuad2D(_panel, {481, 0});
     if (isExitSelected()) {
+        pBtn_ExitCancel->label = localization->str(LSTR_MM6_CANCEL);
         drawExit();
+        drawMM6CharacterScreenBorders();
         return;
     }
-    DrawTitleText(assets->pFontCreate.get(), 0, 4, colorTable.White, houseTable[houseId()].name, 3, sidePanel);
+    pBtn_ExitCancel->label = localization->str(_selected == -1 ? LSTR_MM6_EXIT_BUILDING : LSTR_MM6_END_CONVERSATION);
+    DrawTitleText(assets->pFontCreate.get(), 490, 2, colorTable.White, houseTable[houseId()].name, 3, Recti(0, 0, 622, screenHeight));
 
     if (_selected == -1) {
-        for (size_t i = 0; i < _residents.size(); ++i) {
-            const Pointi position(pNPCPortraits_x[_residents.size() - 1][i], pNPCPortraits_y[_residents.size() - 1][i]);
-            render->DrawQuad2D(_residents[i].icon, position);
-        }
+        drawResidents();
     } else {
         const Resident &resident = _residents[_selected];
-        render->DrawQuad2D(resident.icon, {pNPCPortraits_x[0][0], pNPCPortraits_y[0][0]});
-        DrawTitleText(assets->pFontCreate.get(), 0, SIDE_TEXT_BOX_POS_Y, colorTable.EasternBlue,
-                      resident.npc ? NameAndTitle(resident.npc) : NameAndTitle(resident.name, resident.title), 3, sidePanel);
+        render->DrawQuad2D(resident.icon, kSelectedPortrait);
+        DrawTitleText(assets->pFontCreate.get(), kOptionTextX, 108, colorTable.EasternBlue,
+                      resident.npc ? NameAndTitle(resident.npc) : NameAndTitle(resident.name, resident.title), 3,
+                      Recti(0, 0, kPanelTextRight, screenHeight));
 
         std::vector<std::string> labels;
         for (GUIButton *button : _optionButtons) {
@@ -147,6 +183,8 @@ void GUIWindow_MM6House::Update() {
     }
 
     DrawDialoguePanel(current_npc_text);
+    render->DrawQuad2D(assets->getIcon("buttesc1"), kExitPicture);
+    drawMM6CharacterScreenBorders();
 }
 
 void GUIWindow_MM6House::selectResident(int index) {
@@ -189,7 +227,7 @@ void GUIWindow_MM6House::refreshTopics() {
     for (DialogueId topic : prepareScriptedNPCDialogueTopics(npc)) {
         if (topic < DIALOGUE_SCRIPTED_LINE_1 || topic > DIALOGUE_SCRIPTED_LINE_6)
             continue;
-        _optionButtons.push_back(CreateButton(fmt::format("HouseNpcDialogue_Option{}", row), {480, 160 + 30 * row}, {140, 30},
+        _optionButtons.push_back(CreateButton(fmt::format("HouseNpcDialogue_Option{}", row), {480, 160 + 30 * row}, {139, 29},
                                               BUTTON_TYPE_NORMAL, 0, UIMSG_SelectHouseNPCDialogueOption, std::to_underlying(topic)));
         ++row;
     }
@@ -249,32 +287,46 @@ bool GUIWindow_MM6House::isExitSelected() const {
 
 void GUIWindow_MM6House::showResidentButtons() {
     for (size_t i = 0; i < _residents.size(); ++i) {
-        const Pointi position(pNPCPortraits_x[_residents.size() - 1][i], pNPCPortraits_y[_residents.size() - 1][i]);
         const std::string label = _residents[i].exit ? exitLabel(static_cast<MapId>(_house.exit.map))
                                                      : localization->format(LSTR_CONVERSE_WITH_S, _residents[i].name);
-        _optionButtons.push_back(CreateButton(fmt::format("House_Npc{}", i), position, {63, 73}, BUTTON_TYPE_NORMAL, 0,
-                                              UIMSG_ClickHouseNPCPortrait, i, INPUT_ACTION_INVALID, label));
+        _optionButtons.push_back(CreateButton(fmt::format("House_Npc{}", i), portraitPosition(_residents.size(), i), {62, 72},
+                                              BUTTON_TYPE_NORMAL, 0, UIMSG_ClickHouseNPCPortrait, i, INPUT_ACTION_INVALID, label));
     }
 }
 
 void GUIWindow_MM6House::showExitButtons() {
     const std::string label = exitLabel(static_cast<MapId>(_house.exit.map));
-    _optionButtons.push_back(CreateButton("HouseExit_Cancel", {566, 313}, {75, 33}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0,
-                                          INPUT_ACTION_TRANSITION_NO, localization->str(LSTR_CANCEL), {assets->getIcon("buttesc2")}));
-    _optionButtons.push_back(CreateButton("HouseExit_Yes", {486, 313}, {75, 33}, BUTTON_TYPE_NORMAL, 0, UIMSG_HouseTransitionConfirmation, 1,
+    _optionButtons.push_back(CreateButton("HouseExit_Cancel", {566, 313}, {74, 32}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0,
+                                          INPUT_ACTION_TRANSITION_NO, localization->str(LSTR_MM6_CANCEL), {assets->getIcon("buttesc2")}));
+    _optionButtons.push_back(CreateButton("HouseExit_Yes", {486, 313}, {74, 32}, BUTTON_TYPE_NORMAL, 0, UIMSG_HouseTransitionConfirmation, 1,
                                           INPUT_ACTION_TRANSITION_YES, label, {assets->getIcon("buttyes2")}));
-    _optionButtons.push_back(CreateButton("HouseExit_Portrait", {pNPCPortraits_x[0][0], pNPCPortraits_y[0][0]}, {63, 73}, BUTTON_TYPE_NORMAL, 0,
+    _optionButtons.push_back(CreateButton("HouseExit_Portrait", kSelectedPortrait, {62, 72}, BUTTON_TYPE_NORMAL, 0,
                                           UIMSG_HouseTransitionConfirmation, 1, INPUT_ACTION_INTERACT, label));
-    _optionButtons.push_back(CreateButton("HouseExit_Room", {8, 8}, {460, 344}, BUTTON_TYPE_NORMAL, 0, UIMSG_HouseTransitionConfirmation, 1,
+    _optionButtons.push_back(CreateButton("HouseExit_Room", {8, 8}, {459, 343}, BUTTON_TYPE_NORMAL, 0, UIMSG_HouseTransitionConfirmation, 1,
                                           INPUT_ACTION_TRANSITION_YES, label));
+}
+
+void GUIWindow_MM6House::drawResidents() {
+    const int screenHeight = render->GetRenderDimensions().h;
+    for (size_t i = 0; i < _residents.size(); ++i) {
+        const Resident &resident = _residents[i];
+        render->DrawQuad2D(resident.icon, portraitPosition(_residents.size(), i));
+        if (_residents.size() >= 4)
+            continue;
+        std::string label = resident.npc ? resident.npc->name : resident.title;
+        if (resident.exit)
+            label = pMapTable->pInfos[static_cast<MapId>(_house.exit.map)].name;
+        DrawTitleText(assets->pFontCreate.get(), kOptionTextX, 108 + 94 * static_cast<int>(i), colorTable.EasternBlue, label, 3,
+                      Recti(0, 0, kPanelTextRight, screenHeight));
+    }
 }
 
 void GUIWindow_MM6House::drawExit() {
     const MapId map = static_cast<MapId>(_house.exit.map);
     const std::string &mapName = pMapTable->pInfos[map].name;
-    render->DrawQuad2D(_residents[_selected].icon, {pNPCPortraits_x[0][0], pNPCPortraits_y[0][0]});
-    render->DrawQuad2D(_optionButtons[0]->vTextures[0], {566, 313});
-    render->DrawQuad2D(_optionButtons[1]->vTextures[0], {486, 313});
+    render->DrawQuad2D(_residents[_selected].icon, kSelectedPortrait);
+    render->DrawQuad2D(assets->getIcon("buttesc1"), {566, 313});
+    render->DrawQuad2D(assets->getIcon("buttyes1"), {486, 313});
     DrawTitleText(assets->pFontCreate.get(), 0, 2, colorTable.White, mapName, 3, Recti(493, 0, 126, render->GetRenderDimensions().h));
 
     const Recti sidePanel(SIDE_TEXT_BOX_POS_X, 0, SIDE_TEXT_BOX_WIDTH, render->GetRenderDimensions().h);
@@ -286,7 +338,7 @@ void GUIWindow_MM6House::drawExit() {
 
 void GUIWindow_MM6House::showServiceButtons() {
     for (size_t i = 0; i < _services.size(); ++i)
-        _optionButtons.push_back(CreateButton(fmt::format("HouseDialogue_Option{}", i), {480, 160 + 30 * static_cast<int>(i)}, {140, 30},
+        _optionButtons.push_back(CreateButton(fmt::format("HouseDialogue_Option{}", i), {480, 146 + 30 * static_cast<int>(i)}, {139, 29},
                                               BUTTON_TYPE_NORMAL, 0, UIMSG_SelectProprietorDialogueOption, i));
 }
 
@@ -331,16 +383,47 @@ std::string GUIWindow_MM6House::serviceLabel(int index) const {
 }
 
 void GUIWindow_MM6House::drawOptionLabels(const std::vector<std::string> &labels) {
-    const Recti sidePanel(SIDE_TEXT_BOX_POS_X, 0, SIDE_TEXT_BOX_WIDTH, render->GetRenderDimensions().h);
+    GUIFont *font = assets->pFontArrus.get();
+    const Recti textRect(kOptionTextX, 0, kOptionTextWidth, render->GetRenderDimensions().h);
+    std::vector<int> heights;
+    int total = 0;
+    int shown = 0;
+    for (const std::string &label : labels) {
+        heights.push_back(mm6TextHeight(font, label, kOptionTextWidth));
+        total += heights.back();
+        shown += !label.empty();
+    }
+
+    const bool proprietor = isProprietorSelected();
+    int spacing = 0;
+    int y = 0;
+    if (proprietor && _house.type == HOUSE_TYPE_TAVERN) {
+        y = 146; // The tavern stacks its lines with a blank line between them.
+    } else if (proprietor && _house.type == HOUSE_TYPE_TRAINING_GROUND && shown == 1) {
+        y = (212 - total) / 2 + 101;
+    } else if (shown > 0) {
+        spacing = std::min((174 - total) / shown, 32);
+        const int base = proprietor && _house.type == HOUSE_TYPE_GENERAL_STORE ? 130 : 138;
+        y = (174 - shown * spacing - total) / 2 - spacing / 2 + base;
+    }
+
     for (size_t i = 0; i < labels.size(); ++i) {
         GUIButton *button = _optionButtons[i];
         if (labels[i].empty()) {
             button->rect.h = 0;
             continue;
         }
-        button->rect.h = 30;
         button->label = labels[i];
-        DrawTitleText(assets->pFontArrus.get(), 0, button->rect.y, colorTable.White, labels[i], 3, sidePanel);
+        if (proprietor && _house.type == HOUSE_TYPE_TAVERN) {
+            button->rect.y = y;
+            y += heights[i] + font->GetHeight() - 3;
+        } else {
+            y += spacing;
+            button->rect.y = y;
+            y += heights[i] - 1;
+        }
+        button->rect.h = heights[i];
+        DrawTitleText(font, 0, button->rect.y, colorTable.White, labels[i], 3, textRect);
     }
 }
 

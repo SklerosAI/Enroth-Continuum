@@ -71,6 +71,12 @@ class GUIWindow_MM6House : public GUIWindow_House {
     bool isProprietorSelected() const;
     void clearOptionButtons();
     void showServiceButtons();
+
+    /**
+     * Places the option buttons the way MM6 spaces them on the right panel, and draws their lines.
+     *
+     * @param labels                    Line of each option button, empty to hide the button.
+     */
     void drawOptionLabels(const std::vector<std::string> &labels);
 
     /**
@@ -94,11 +100,11 @@ class GUIWindow_MM6House : public GUIWindow_House {
     bool isExitSelected() const;
     void showResidentButtons();
     void showExitButtons();
+    void drawResidents();
     void drawExit();
     void healActiveCharacter();
 
     GraphicsImage *_panel = nullptr;
-    GraphicsImage *_exit = nullptr;
     std::vector<Resident> _residents;
     std::vector<GUIButton *> _optionButtons;
     int _selected = -1;

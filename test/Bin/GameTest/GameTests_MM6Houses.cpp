@@ -426,6 +426,54 @@ GAME_TEST(MM6Houses, TavernMenu) {
     EXPECT_EQ(optionsTape, tape(std::vector<std::string>{}, menu));
 }
 
+GAME_TEST(MM6Houses, ExitPicture) {
+    // The exit picture under the right panel didn't leave the house, the exit button sat over the HUD buttons instead.
+    auto screenTape = tapes.screen();
+    auto houseTape = tapes.house();
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kTempleDoor, 90);
+    game.pressAndReleaseButton(BUTTON_LEFT, {556, 329});
+    game.tick();
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE, SCREEN_GAME));
+    EXPECT_EQ(houseTape, tape(HOUSE_INVALID, static_cast<HouseId>(69), HOUSE_INVALID));
+}
+
+GAME_TEST(MM6Houses, TempleHealAtItsLine) {
+    // Clicking Heal where MM6 draws it hit Donate, the options sat on a fixed 30-pixel grid.
+    auto poisonedTape = tapes.custom([] { return pParty->pCharacters[0].conditions.has(CONDITION_POISON_WEAK); });
+    auto goldTape = tapes.gold();
+    auto statusTape = tapes.statusBar();
+    startMM6NewGame(game);
+    pParty->pCharacters[0].SetCondition(CONDITION_POISON_WEAK, 0);
+    test.startTaping();
+    enterThroughDoor(game, kTempleDoor, 90);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+    game.tick();
+    game.pressAndReleaseButton(BUTTON_LEFT, {556, 200});
+    game.tick();
+    EXPECT_EQ(poisonedTape, tape(true, false));
+    EXPECT_EQ(goldTape, tape(200, 190));
+    EXPECT_MISSES(statusTape, "This service is not available yet.");
+}
+
+GAME_TEST(MM6Houses, GeneralStoreShelf) {
+    // General store items floated half way up the wall, so a click on the shelf they stand on in MM6 bought nothing.
+    auto goldTape = tapes.gold();
+    auto backpackTape = tapes.custom([] { return backpackItems(0); });
+    auto otherBackpackTape = tapes.custom([] { return backpackItems(1); });
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kGeneralStoreDoor, 1536);
+    game.pressGuiButton("HouseDialogue_Option0"); // Buy Items.
+    game.tick();
+    game.pressAndReleaseButton(BUTTON_LEFT, {40, 303}); // Just above the shelf, in the middle of the first item.
+    game.tick();
+    EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66, 505}, std::vector<int>{124, 1, 15, 23, 66, 505, 115}));
+    EXPECT_EQ(otherBackpackTape.size(), 1);
+    EXPECT_EQ(goldTape, tape(200, 100));
+}
+
 GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
     // Hidden capture of New Sorpigal house screens: each house's first view, then the screens behind its options.
     ASSERT_FALSE(window->isVisible());

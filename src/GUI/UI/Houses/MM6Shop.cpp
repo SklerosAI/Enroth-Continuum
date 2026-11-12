@@ -16,6 +16,7 @@
 #include "Engine/MM6/MM6ShopTitleState.h"
 #include "Engine/Objects/Item.h"
 #include "Engine/Party.h"
+#include "Engine/Random/Random.h"
 #include "Engine/Tables/HouseTable.h"
 #include "Engine/Tables/ItemTable.h"
 
@@ -23,6 +24,7 @@
 #include "GUI/GUIFont.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/ItemGrid.h"
+#include "GUI/UI/MM6CharacterScreen.h"
 #include "GUI/UI/UIStatusBar.h"
 
 #include "Io/Mouse.h"
@@ -35,6 +37,11 @@
 static constexpr LstrId LSTR_MM6_PACK_IS_FULL = static_cast<LstrId>(563);
 static constexpr LstrId LSTR_MM6_DONE = static_cast<LstrId>(569);
 static constexpr LstrId LSTR_MM6_GOOD_AS_NEW = static_cast<LstrId>(570);
+static constexpr LstrId LSTR_MM6_SELECT_ITEM_TO_BUY = static_cast<LstrId>(195);
+static constexpr LstrId LSTR_MM6_SELECT_SPECIAL_ITEM_TO_BUY = static_cast<LstrId>(196);
+static constexpr LstrId LSTR_MM6_SELECT_ITEM_TO_IDENTIFY = static_cast<LstrId>(197);
+static constexpr LstrId LSTR_MM6_SELECT_ITEM_TO_REPAIR = static_cast<LstrId>(198);
+static constexpr LstrId LSTR_MM6_SELECT_ITEM_TO_SELL = static_cast<LstrId>(199);
 
 static bool isBuyScreen(std::optional<mm6::HouseServiceOption> screen) {
     using enum mm6::HouseServiceOption;
@@ -53,6 +60,30 @@ static const char *shelfIconName(HouseType type) {
         case HOUSE_TYPE_ARMOR_SHOP: return "armory";
         case HOUSE_TYPE_GENERAL_STORE: return "genshelf";
         default: return "magshelf";
+    }
+}
+
+/**
+ * @param type                          Shop type.
+ * @return                              Number of stock slots the shop puts on display.
+ */
+static int displayedSlotCount(HouseType type) {
+    switch (type) {
+        case HOUSE_TYPE_WEAPON_SHOP: return 6;
+        case HOUSE_TYPE_ARMOR_SHOP: return 8;
+        case HOUSE_TYPE_GENERAL_STORE: return 6;
+        default: return 12;
+    }
+}
+
+static LstrId footerLine(mm6::HouseServiceOption screen) {
+    using enum mm6::HouseServiceOption;
+    switch (screen) {
+        case BuySpecialItems: return LSTR_MM6_SELECT_SPECIAL_ITEM_TO_BUY;
+        case SellItems: return LSTR_MM6_SELECT_ITEM_TO_SELL;
+        case IdentifyItems: return LSTR_MM6_SELECT_ITEM_TO_IDENTIFY;
+        case RepairItems: return LSTR_MM6_SELECT_ITEM_TO_REPAIR;
+        default: return LSTR_MM6_SELECT_ITEM_TO_BUY;
     }
 }
 
@@ -77,12 +108,18 @@ void GUIWindow_MM6Shop::Update() {
             const Recti rect = stockItemRect(slot);
             if (rect.w == 0)
                 continue;
-            const mm6::ItemRecord28 &record = mm6::shopTitleState().stock.records[stockRecordIndex(slot)];
-            render->DrawQuad2D(assets->getIcon(pItemTable->items[static_cast<ItemId>(record.itemNumberRaw())].iconName), rect.topLeft());
+            render->DrawQuad2D(stockIcon(slot), rect.topLeft());
         }
-    } else if (pParty->hasActiveCharacter()) {
-        CharacterUI_InventoryTab_Draw(&pParty->activeCharacter(), false);
+    } else {
+        render->DrawQuad2D(assets->getIcon("leather"), {8, 8});
+        if (pParty->hasActiveCharacter())
+            CharacterUI_InventoryTab_Draw(&pParty->activeCharacter(), false);
     }
+    drawMM6CharacterScreenBorders();
+
+    const std::string footer = localization->str(footerLine(*_screen));
+    render->DrawQuad2D(assets->getIcon("footer"), {0, 352});
+    DrawText(assets->pFontLucida.get(), {assets->pFontLucida->AlignText_Center(450, footer) + 11, 355}, colorTable.White, footer, frameRect);
 }
 
 void GUIWindow_MM6Shop::selectService(int index) {
@@ -137,23 +174,31 @@ Recti GUIWindow_MM6Shop::stockItemRect(int slot) const {
     if (!shops.stock.records[stockRecordIndex(slot)].itemNumberRaw())
         return {};
 
-    const auto iconSize = [&](int index) {
-        const mm6::ItemRecord28 &record = shops.stock.records[stockRecordIndex(index)];
-        GraphicsImage *icon = assets->getIcon(pItemTable->items[static_cast<ItemId>(record.itemNumberRaw())].iconName);
-        return Sizei(icon->width(), icon->height());
-    };
-    const Sizei size = iconSize(slot);
+    const Sizei size = stockIcon(slot)->size();
     const int column = slot % 6;
     if (_screen == mm6::HouseServiceOption::BuySpells)
         return Recti(32 + 70 * column, slot < 6 ? 90 : 250, size.w, size.h); // Two rows of six books.
+    if (slot >= displayedSlotCount(_house.type))
+        return {};
 
-    // Two shelves of six, items centered 75 pixels apart and standing on the shelf line.
+    if (_house.type == HOUSE_TYPE_WEAPON_SHOP)
+        return Recti(60 + 70 * slot - size.w / 2, 30 + _weaponDrops[slot], size.w, size.h); // Weapons hang from the top of the table.
+    if (_house.type == HOUSE_TYPE_ARMOR_SHOP) {
+        if (slot < 4)
+            return Recti(86 + 105 * slot - size.w / 2, 98 - size.h, size.w, size.h);
+        return Recti(90 + 105 * (slot - 4) - size.w / 2, 126, size.w, size.h);
+    }
+
+    // Items stand on a shelf, centered 75 pixels apart. The general store has one shelf, the magic shop two.
     int x = 40 + 75 * column - size.w / 2;
     if (column == 0)
         x = std::max(x, 18);
     if (column == 5)
-        x = std::min(x, 457 - iconSize(slot < 6 ? 5 : 11).w);
-    int y = (slot < 6 ? 152 : 306) - size.h;
+        x = std::min(x, 457 - size.w);
+    int shelf = slot < 6 ? 152 : 306;
+    if (_house.type == HOUSE_TYPE_GENERAL_STORE)
+        shelf = 308;
+    int y = shelf - size.h;
     if (slot < 6 && y < 1)
         y = 0;
     return Recti(x, y, size.w, size.h);
@@ -166,8 +211,13 @@ void GUIWindow_MM6Shop::openScreen(mm6::HouseServiceOption option) {
         engine->_statusBar->setEvent("This service is not available yet.");
         return;
     }
+    if (_house.type == HOUSE_TYPE_WEAPON_SHOP && option != mm6::HouseServiceOption::BuySpells) {
+        for (int slot = 0; slot < 6; ++slot)
+            if (mm6::shopTitleState().stock.records[stockRecordIndex(slot)].itemNumberRaw())
+                _weaponDrops[slot] = vrng->random(300 - stockIcon(slot)->height());
+    }
     clearOptionButtons();
-    _screenButton = CreateButton("MM6Shop_Screen", {8, 8}, {454, 312}, BUTTON_TYPE_NORMAL, 0, UIMSG_HouseScreenClick, 0);
+    _screenButton = CreateButton("MM6Shop_Screen", {8, 8}, {449, 319}, BUTTON_TYPE_NORMAL, 0, UIMSG_HouseScreenClick, 0);
 }
 
 void GUIWindow_MM6Shop::closeScreen() {
@@ -287,6 +337,11 @@ void GUIWindow_MM6Shop::repair() {
     pParty->TakeGold(price);
     entry->flags = ITEM_IDENTIFIED; // MM6 overwrites the whole condition word.
     engine->_statusBar->setEvent(LSTR_MM6_GOOD_AS_NEW);
+}
+
+GraphicsImage *GUIWindow_MM6Shop::stockIcon(int slot) const {
+    const mm6::ItemRecord28 &record = mm6::shopTitleState().stock.records[stockRecordIndex(slot)];
+    return assets->getIcon(pItemTable->items[static_cast<ItemId>(record.itemNumberRaw())].iconName);
 }
 
 size_t GUIWindow_MM6Shop::stockRecordIndex(int slot) const {

@@ -868,6 +868,8 @@ void MPlayer::HouseMovieLoop() {
         rect.y = render->config->graphics.HouseMovieY1.value();
         rect.w = wsize.w - render->config->graphics.HouseMovieX2.value();
         rect.h = wsize.h - render->config->graphics.HouseMovieY2.value();
+        if (engine->gameTitle() == GameTitle::MM6)
+            rect = Recti(8, 8, pMovie_Track->GetWidth(), pMovie_Track->GetHeight()); // MM6 copies its 460x344 room movies unscaled.
 
         // create texture from buffer
         // TODO(captainurist): no need to copy here.

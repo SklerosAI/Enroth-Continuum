@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <optional>
 
@@ -7,6 +8,7 @@
 
 #include "MM6House.h"
 
+class GraphicsImage;
 class GUIButton;
 
 /**
@@ -45,9 +47,11 @@ class GUIWindow_MM6Shop : public GUIWindow_MM6House {
     void sell();
     void identify();
     void repair();
+    GraphicsImage *stockIcon(int slot) const;
     size_t stockRecordIndex(int slot) const;
     float multiplier() const;
 
     std::optional<mm6::HouseServiceOption> _screen;
     GUIButton *_screenButton = nullptr;
+    std::array<int, 6> _weaponDrops = {}; // How far below the top of the table each weapon hangs, rolled when the buy screen opens.
 };

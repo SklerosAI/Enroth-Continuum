@@ -1086,8 +1086,8 @@ GUIWindow_House::GUIWindow_House(HouseId houseId) : GUIWindow(WINDOW_HOUSE_INTER
 
     current_screen_type = SCREEN_HOUSE;
     if (engine->gameTitle() == GameTitle::MM6) {
-        pBtn_ExitCancel = CreateButton("House_Exit", {471, 445}, {169, 35}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0,
-                                       INPUT_ACTION_INVALID, "Exit", {assets->getIcon("buttexi1")});
+        pBtn_ExitCancel = CreateButton("House_Exit", {526, 313}, {74, 32}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0,
+                                       INPUT_ACTION_INVALID, "", {assets->getIcon("buttesc2")});
         return;
     }
     pBtn_ExitCancel = CreateButton({471, 445}, {169, 35}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0, INPUT_ACTION_INVALID,

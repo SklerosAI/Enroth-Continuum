@@ -86,3 +86,7 @@ inline MM6HudHealthBar mm6HudHealthBar(double ratio) {
         return {"hitshalf", 421, 21 - static_cast<int>((ratio - 0.25) * 4 * 21)};
     return {"hitsqtr", 442, 19 - static_cast<int>(ratio * 4 * 19)};
 }
+
+inline constexpr std::array<Pointi, 2> mm6HudHirelingPositions = {{{491, 149}, {561, 149}}};
+inline constexpr Pointi mm6HudNpcLeftArrowPosition = {474, 174};
+inline constexpr Pointi mm6HudNpcRightArrowPosition = {626, 174};

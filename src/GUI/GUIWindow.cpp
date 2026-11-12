@@ -1220,8 +1220,9 @@ void UI_Create() {
     }
 
     pPrimaryWindow->CreateButton({484, 15}, {138, 116}, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_DateTime, UIMSG_0, 0);
-    pPrimaryWindow->CreateButton("Game_Hireling1", {491, 149}, {64, 74}, BUTTON_TYPE_NORMAL, 0, UIMSG_StartHireling1Dialogue, 0, INPUT_ACTION_SELECT_NPC_1);
-    pPrimaryWindow->CreateButton("Game_Hireling2", {561, 149}, {64, 74}, BUTTON_TYPE_NORMAL, 0, UIMSG_StartHireling2Dialogue, 0, INPUT_ACTION_SELECT_NPC_2);
+    const Sizei hirelingSize = engine->gameTitle() == GameTitle::MM6 ? Sizei(63, 73) : Sizei(64, 74); // MM6.exe's boxes are exactly 64x74.
+    pPrimaryWindow->CreateButton("Game_Hireling1", {491, 149}, hirelingSize, BUTTON_TYPE_NORMAL, 0, UIMSG_StartHireling1Dialogue, 0, INPUT_ACTION_SELECT_NPC_1);
+    pPrimaryWindow->CreateButton("Game_Hireling2", {561, 149}, hirelingSize, BUTTON_TYPE_NORMAL, 0, UIMSG_StartHireling2Dialogue, 0, INPUT_ACTION_SELECT_NPC_2);
     if (engine->gameTitle() == GameTitle::MM6) {
         createExactHudButton(mm6HudFoodHoverRect, UIMSG_ShowStatus_Food);
         createExactHudButton(mm6HudGoldHoverRect, UIMSG_ShowStatus_Funds);
@@ -1257,10 +1258,19 @@ void UI_Create() {
                                                          UIMSG_GameMenuButton, 0, INPUT_ACTION_INVALID,
                                                          localization->str(LSTR_GAME_OPTIONS), { game_ui_btn_settings });
     }
-    pBtn_NPCLeft = pPrimaryWindow->CreateButton({469, 178}, ui_btn_npc_left->size(), BUTTON_TYPE_NORMAL, 0,
-                                                UIMSG_ScrollNPCPanel, 0, INPUT_ACTION_INVALID, "", {ui_btn_npc_left });
-    pBtn_NPCRight = pPrimaryWindow->CreateButton({626, 178}, ui_btn_npc_right->size(), BUTTON_TYPE_NORMAL, 0,
-                                                 UIMSG_ScrollNPCPanel, 1, INPUT_ACTION_INVALID, "", {ui_btn_npc_right });
+    if (engine->gameTitle() == GameTitle::MM6) {
+        GraphicsImage *leftDown = assets->getIcon("npc_ldn");
+        GraphicsImage *rightDown = assets->getIcon("npc_rdn");
+        pBtn_NPCLeft = pPrimaryWindow->CreateButton(mm6HudNpcLeftArrowPosition, {leftDown->width() - 1, leftDown->height() - 1}, BUTTON_TYPE_NORMAL, 0,
+                                                    UIMSG_ScrollNPCPanel, 0, INPUT_ACTION_INVALID, "", {leftDown});
+        pBtn_NPCRight = pPrimaryWindow->CreateButton(mm6HudNpcRightArrowPosition, {rightDown->width() - 1, rightDown->height() - 1}, BUTTON_TYPE_NORMAL, 0,
+                                                     UIMSG_ScrollNPCPanel, 1, INPUT_ACTION_INVALID, "", {rightDown});
+    } else {
+        pBtn_NPCLeft = pPrimaryWindow->CreateButton({469, 178}, ui_btn_npc_left->size(), BUTTON_TYPE_NORMAL, 0,
+                                                    UIMSG_ScrollNPCPanel, 0, INPUT_ACTION_INVALID, "", {ui_btn_npc_left });
+        pBtn_NPCRight = pPrimaryWindow->CreateButton({626, 178}, ui_btn_npc_right->size(), BUTTON_TYPE_NORMAL, 0,
+                                                     UIMSG_ScrollNPCPanel, 1, INPUT_ACTION_INVALID, "", {ui_btn_npc_right });
+    }
 
     LoadPartyBuffIcons();
 }

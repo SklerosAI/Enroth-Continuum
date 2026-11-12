@@ -10,6 +10,7 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Viewport.h"
 #include "Engine/Objects/Chest.h"
+#include "Engine/Objects/NPC.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
@@ -249,4 +250,31 @@ GAME_TEST(MM6Hud, HitPointBarSegments) {
     auto bars = quadsTape.flatten().filter([](const DrawnQuad &quad) { return quad.texture.starts_with("hits"); });
     EXPECT_EQ(bars, tape(DrawnQuad{"hitshalf", {93, 421}}, DrawnQuad{"hitsqtr", {206, 442}},
                          DrawnQuad{"hitsfull", {319, 383}}, DrawnQuad{"hitsfull", {431, 383}}));
+}
+
+GAME_TEST(MM6Hud, HirelingPortraitsAndArrows) {
+    // Hireling portraits sat two pixels off their frames, and the NPC arrows only showed while pressed.
+    auto quadsTape = tapes.hudQuads();
+    auto scrollTape = tapes.custom([] { return pParty->hirelingScrollPosition; });
+    enterFirstMapFromNewGame(game);
+    game.runGameRoutine([] {
+        pParty->pHirelings[0] = pNPCStats->pNPCData[1];
+        pParty->pHirelings[1] = pNPCStats->pNPCData[2];
+        pNPCStats->pNPCData[3].flags |= NPC_HIRED; // A follower, so there are three to scroll through.
+        pParty->CountHirelings();
+    });
+    test.startTaping();
+
+    game.tick();
+    game.pressAndReleaseButton(BUTTON_LEFT, 632, 186); // The right arrow.
+    game.tick();
+
+    auto panel = quadsTape.flatten().filter([](const DrawnQuad &quad) {
+        return quad.position.x >= 468 && quad.position.y >= 149 && quad.position.y < 230 && !quad.texture.starts_with("micon"); // Not the cursor.
+    });
+    EXPECT_EQ(scrollTape, tape(0, 1));
+    EXPECT_EQ(panel, tape(DrawnQuad{"npc081", {491, 149}}, DrawnQuad{"npc126", {561, 149}}, DrawnQuad{"npc_rup", {626, 174}},
+                          DrawnQuad{"npc126", {491, 149}}, DrawnQuad{"npc187", {561, 149}}, DrawnQuad{"npc_lup", {474, 174}}, // The click redraws them.
+                          DrawnQuad{"npc126", {491, 149}}, DrawnQuad{"npc187", {561, 149}}, DrawnQuad{"npc_lup", {474, 174}},
+                          DrawnQuad{"npc_rdn", {626, 174}}));
 }

@@ -64,6 +64,7 @@
 #include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/GUIMessageQueue.h"
+#include "GUI/MM6HudLayout.h"
 #include "GUI/UI/Books/AutonotesBook.h"
 #include "GUI/UI/Books/CalendarBook.h"
 #include "GUI/UI/Books/JournalBook.h"
@@ -700,7 +701,8 @@ void Game::processQueuedMessages() {
 
             case UIMSG_ScrollNPCPanel:  // Right and Left button for NPCPanel
                 if (uMessageParam) {
-                    new OnButtonClick({626, 179 + 2 * (pParty->alignment == PartyAlignment::PartyAlignment_Evil) }, {0, 0}, pBtn_NPCRight);
+                    new OnButtonClick(engine->gameTitle() == GameTitle::MM6 ? mm6HudNpcRightArrowPosition :
+                                      Pointi(626, 179 + 2 * (pParty->alignment == PartyAlignment::PartyAlignment_Evil)), {0, 0}, pBtn_NPCRight);
                     int maxScrollPosition = (!pParty->pHirelings[0].name.empty()) +
                                             (!pParty->pHirelings[1].name.empty()) +
                                             (uint8_t)pParty->cNonHireFollowers - 2;
@@ -708,7 +710,7 @@ void Game::processQueuedMessages() {
                         ++pParty->hirelingScrollPosition;
                     }
                 } else {
-                    new OnButtonClick({469, 179}, {0, 0}, pBtn_NPCLeft);
+                    new OnButtonClick(engine->gameTitle() == GameTitle::MM6 ? mm6HudNpcLeftArrowPosition : Pointi(469, 179), {0, 0}, pBtn_NPCLeft);
                     if (pParty->hirelingScrollPosition > 0) {
                         --pParty->hirelingScrollPosition;
                     }

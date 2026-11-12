@@ -1654,8 +1654,9 @@ void GameUI_DrawHiredNPCs() {
 
         for (int i = pParty->hirelingScrollPosition, count = 0; i < buf.Size() && count < 2; i++, count++) {
             std::string pContainer = fmt::format("NPC{:03}", buf.Get(i)->portraitId);
-            int npcX = pHiredNPCsIconsOffsetsX[count];
-            int npcY = pHiredNPCsIconsOffsetsY[count];
+            const bool mm6 = engine->gameTitle() == GameTitle::MM6;
+            int npcX = mm6 ? mm6HudHirelingPositions[count].x : pHiredNPCsIconsOffsetsX[count];
+            int npcY = mm6 ? mm6HudHirelingPositions[count].y : pHiredNPCsIconsOffsetsY[count];
             render->DrawQuad2D(assets->getIcon(pContainer), {npcX, npcY});
 
             // Dark sacrifice animation.
@@ -1664,6 +1665,13 @@ void GameUI_DrawHiredNPCs() {
                     pIconsFrameTable->animationFrame(pIconsFrameTable->animationId("spell96"), buf.GetSacrificeStatus(i)->elapsedTime),
                     {npcX, npcY});
             }
+        }
+
+        if (engine->gameTitle() == GameTitle::MM6) {
+            if (pParty->hirelingScrollPosition > 0)
+                render->DrawQuad2D(ui_btn_npc_left, mm6HudNpcLeftArrowPosition);
+            if (pParty->hirelingScrollPosition < static_cast<int>(buf.Size()) - 2)
+                render->DrawQuad2D(ui_btn_npc_right, mm6HudNpcRightArrowPosition);
         }
     }
 }

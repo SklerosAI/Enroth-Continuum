@@ -3333,3 +3333,9 @@ Chronological record of wiki activity.
 - The MM6 character screen tabs now follow a static trace of `MM6.exe`: MM6 underlay, frame positions, the MM6 stats tab with five resistances, skill heading spacing, award arrows and spacing, and the detail-mode toggle. MM6 icons with a cyan background and no transparency flag are now keyed out, which removes the cyan box over the paperdoll hand.
 - Merged on `master` at `2820d16e1`. Unit tests 1122, MM6 suite 136 passed and 2 skipped, MM7 controls 132, `check_style` clean. The layout was checked in hidden offscreen captures, not visibly.
 - A sweep of the key-opened screens found MM7 art names in the MM6 spellbook, autonotes and map books, and a wrong reputation label on quick reference. Those are the next MM6 lane.
+
+## [2026-11-12] verify | MM7 Kerrid Faerie King route
+- by: T-Burton-ND via codex
+- Extended the Kerrid contract through his real offer, a missing-pipes refusal, the Hall Under the Hill pressure-plate audience event, full food consumption, physical letter-to-pipes exchange, and Kerrid's final hand-in. The script grants 2,000 XP per character at the audience and 5,000 at the return, 1,000 gold, and the journal award only to the active character.
+- Integrated the verified test on `master` at merge `473b7554c`. After reconciliation with the concurrent MM6 integration line, the regional MM7 side-quest and promotion gate passed 10/10 headlessly and the complete 157-target `check_style` gate passed.
+- The next durable extension for Kerrid and Parsons is a regional Save/Load checkpoint boundary; broader uncovered side-quest rows remain queued by the catalog.

@@ -3134,3 +3134,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via claude
 - MM6 party creation uses the original executable's layout, and its hit boxes sit on the visible art. Real mouse and keyboard events changed the value under the pointer in windowed and fullscreen mode. MM6 suite 134/134, MM7 control 540/540.
 - Supersedes the earlier note that the fixed window keeps the fullscreen toggle. macOS takes F11, so Atlas now makes the MM6 window resizable and native fullscreen works. Play MM6 from the installed Atlas still needs a visible check.
+
+## [2026-11-12] update | Title ownership and worktree allocation
+- by: T-Burton-ND via codex
+- Recorded the owner's strict title boundary: Codex is the sole MM7 arbiter and delivery owner, while Claude Code owns all MM6 work; prior overall-lead wording is historical.
+- Allocated up to five linked worktrees to each title, left `master` neutral for integration, and made the budget check count `codex/` and `claude/` branches separately.
+- Verified the capacity tool compiles and reports the current allocation as Codex 1/5 and Claude 0/5. The two-active-code-lane safety limit and cross-title regression controls remain in force.

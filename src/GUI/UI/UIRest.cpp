@@ -12,6 +12,7 @@
 #include "Engine/Timer.h"
 
 #include "GUI/GUIButton.h"
+#include "GUI/UI/MM6CharacterScreen.h"
 #include "GUI/UI/UIRest.h"
 
 GraphicsImage *rest_ui_btn_4 = nullptr;
@@ -85,6 +86,14 @@ GUIWindow_Rest::GUIWindow_Rest()
 
     OutdoorLocation::LoadActualSkyFrame();
 
+    if (engine->gameTitle() == GameTitle::MM6) { // CreateButton adds a pixel, these are MM6's exact sizes minus one.
+        pButton_RestUI_Exit = CreateButton({283, 308}, {153, 36}, BUTTON_TYPE_NORMAL, 0, UIMSG_ExitRest, 0, INPUT_ACTION_INVALID, "", {rest_ui_btn_exit});
+        pButton_RestUI_Main = CreateButton("Rest_RestAndHeal", {27, 161}, {224, 36}, BUTTON_TYPE_NORMAL, 0, UIMSG_Rest8Hour, 0, INPUT_ACTION_REST_HEAL, "", {rest_ui_btn_4});
+        pButton_RestUI_WaitUntilDawn = CreateButton("Rest_WaitTillDawn", {64, 243}, {153, 26}, BUTTON_TYPE_NORMAL, 0, UIMSG_WaitTillDawn, 0, INPUT_ACTION_REST_WAIT_TILL_DAWN, "", {rest_ui_btn_1});
+        pButton_RestUI_Wait1Hour = CreateButton("Rest_Wait1Hour", {64, 275}, {153, 26}, BUTTON_TYPE_NORMAL, 0, UIMSG_Wait1Hour, 0, INPUT_ACTION_REST_WAIT_1_HOUR, "", {rest_ui_btn_2});
+        pButton_RestUI_Wait5Minutes = CreateButton({64, 307}, {153, 26}, BUTTON_TYPE_NORMAL, 0, UIMSG_Wait5Minutes, 0, INPUT_ACTION_REST_WAIT_5_MINUTES, "", {rest_ui_btn_3});
+        return;
+    }
     pButton_RestUI_Exit = CreateButton({280, 297}, {154, 37}, BUTTON_TYPE_NORMAL, 0, UIMSG_ExitRest, 0, INPUT_ACTION_INVALID, "", {rest_ui_btn_exit});
     pButton_RestUI_Main = CreateButton("Rest_RestAndHeal", {24, 154}, {225, 37}, BUTTON_TYPE_NORMAL, 0, UIMSG_Rest8Hour, 0, INPUT_ACTION_REST_HEAL, "", {rest_ui_btn_4});
     pButton_RestUI_WaitUntilDawn = CreateButton("Rest_WaitTillDawn", {61, 232}, {154, 33}, BUTTON_TYPE_NORMAL, 0, UIMSG_WaitTillDawn, 0, INPUT_ACTION_REST_WAIT_TILL_DAWN, "", {rest_ui_btn_1});
@@ -103,7 +112,10 @@ void GUIWindow_Rest::Update() {
     }
 
     if (liveCharacters) {
+        const bool isMM6 = engine->gameTitle() == GameTitle::MM6;
         render->DrawQuad2D(rest_ui_restmain, {8, 8});
+        if (isMM6)
+            drawMM6CharacterScreenBorders();
         render->DrawQuad2D(rest_ui_sky_frame_current, {16, 26});
 
         hourglassLoopTimer += gameTimer->dt();
@@ -116,21 +128,21 @@ void GUIWindow_Rest::Update() {
             hourglass_icon_idx = 1;
         }
 
-        render->DrawQuad2D(assets->getIcon(fmt::format("hglas{:03}", hourglass_icon_idx)), {267, 159});
+        render->DrawQuad2D(assets->getIcon(fmt::format("hglas{:03}", hourglass_icon_idx)), isMM6 ? Pointi(271, 164) : Pointi(267, 159));
 
-        tmp_button.rect = Recti(24, 154, 171, 37);
+        tmp_button.rect = isMM6 ? Recti(27, 161, 171, 37) : Recti(24, 154, 171, 37);
         tmp_button.pParent = pButton_RestUI_WaitUntilDawn->pParent;
         tmp_button.DrawLabel(localization->str(LSTR_REST_HEAL_8_HOURS), assets->pFontCreate.get(), colorTable.Diesel, colorTable.StarkWhite);
         tmp_button.pParent = 0;
 
-        auto str1 = fmt::format("\r408{}", foodRequiredToRest);
-        GUIWindow::DrawText(assets->pFontCreate.get(), {0, 164}, colorTable.Diesel, str1, pGUIWindow_CurrentMenu->frameRect, 0, colorTable.StarkWhite);
+        auto str1 = fmt::format("\r{}{}", isMM6 ? 392 : 408, foodRequiredToRest);
+        GUIWindow::DrawText(assets->pFontCreate.get(), {0, isMM6 ? 170 : 164}, colorTable.Diesel, str1, pGUIWindow_CurrentMenu->frameRect, 0, colorTable.StarkWhite);
 
         pButton_RestUI_WaitUntilDawn->DrawLabel(localization->str(LSTR_WAIT_UNTIL_DAWN), assets->pFontCreate.get(), colorTable.Diesel, colorTable.StarkWhite);
         pButton_RestUI_Wait1Hour->DrawLabel(localization->str(LSTR_WAIT_1_HOUR), assets->pFontCreate.get(), colorTable.Diesel, colorTable.StarkWhite);
         pButton_RestUI_Wait5Minutes->DrawLabel(localization->str(LSTR_WAIT_5_MINUTES), assets->pFontCreate.get(), colorTable.Diesel, colorTable.StarkWhite);
         pButton_RestUI_Exit->DrawLabel(localization->str(LSTR_EXIT_REST), assets->pFontCreate.get(), colorTable.Diesel, colorTable.StarkWhite);
-        tmp_button.rect = Recti(45, 199, 185, 30);
+        tmp_button.rect = isMM6 ? Recti(48, 210, 185, 22) : Recti(45, 199, 185, 30);
 
         tmp_button.pParent = pButton_RestUI_WaitUntilDawn->pParent;
         tmp_button.DrawLabel(localization->str(LSTR_WAIT_WITHOUT_HEALING), assets->pFontCreate.get(), colorTable.Diesel, colorTable.StarkWhite);

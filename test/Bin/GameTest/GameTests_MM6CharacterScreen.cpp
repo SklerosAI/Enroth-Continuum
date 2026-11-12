@@ -24,6 +24,9 @@
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/MM6PaperdollArt.h"
 #include "GUI/UI/UICharacter.h"
+#include "GUI/UI/UIQuickReference.h"
+
+#include "Library/Color/ColorTable.h"
 
 #include "Library/Image/Png.h"
 
@@ -303,6 +306,45 @@ GAME_TEST(MM6CharacterScreenHeadless, DetailToggleClosesFromItsPicture) {
     EXPECT_EQ(detailTape, tape(false, true, false));
 }
 
+GAME_TEST(MM6CharacterScreenHeadless, RestButtonsAnswerAtTheirPictures) {
+    // The rest screen used MM7's button positions, so the bottom rows of the Wait 5 Minutes and Exit Rest pictures
+    // did nothing.
+    auto screenTape = tapes.screen();
+    auto timeTape = tapes.time();
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressAndReleaseButton(BUTTON_LEFT, {140, 331}); // Bottom of the Wait 5 Minutes picture.
+    game.tick();
+    game.pressAndReleaseButton(BUTTON_LEFT, {360, 342}); // Bottom of the Exit Rest picture.
+    game.tick(2); // The press draws its pressed picture, then closes the screen on the next frame.
+
+    EXPECT_EQ(screenTape, tape(SCREEN_REST, SCREEN_GAME));
+    EXPECT_EQ(timeTape.frontBack(), tape(timeTape.front(), timeTape.front() + Duration::fromMinutes(5)));
+}
+
+GAME_TEST(MM6CharacterScreenHeadless, QuickReferenceShowsMM6Reputation) {
+    // Quick reference looked MM6 reputation up with MM7's string ids and showed "Tip Barkeep".
+    auto lineTape = tapes.custom([] {
+        return current_screen_type == SCREEN_QUICK_REFERENCE ? GUIWindow_QuickReference::reputationLine() : std::string();
+    });
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    for (int reputation : {0, -300}) {
+        game.runGameRoutine([reputation] { pParty->mm6Reputation = reputation; });
+        game.pressAndReleaseKey(PlatformKey::KEY_Z);
+        game.tick();
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+    }
+
+    EXPECT_EQ(lineTape, tape(fmt::format("Reputation: {::}Average\f00000", colorTable.White.tag()), std::string(),
+                             fmt::format("Reputation: {::}Vile\f00000", colorTable.Red.tag()), std::string()));
+}
+
 GAME_TEST(MM6CharacterScreenHeadless, EquippedArmorHasPaperdollHitArea) {
     enterFirstMapFromNewGame(game);
     ItemId armorId = ITEM_NULL;
@@ -523,5 +565,38 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_CharacterScreenCapture) {
             buttons.write(lines);
             buttons.close();
         }
+    }
+}
+
+GAME_TEST(MM6OffscreenFrame, DISABLED_ScreensCapture) {
+    // Hidden capture of the in-game screens that open by key: spellbook, rest, the books, quick reference and options.
+    ASSERT_FALSE(window->isVisible());
+    ASSERT_EQ(dynamic_cast<NullRenderer *>(render), nullptr);
+    const char *capturePrefix = std::getenv("MM6_OFFSCREEN_CAPTURE_PATH");
+    ASSERT_NE(capturePrefix, nullptr);
+    ASSERT_TRUE(std::string_view(capturePrefix).starts_with("/private/tmp/"));
+
+    enterFirstMapFromNewGame(game);
+    for (auto [key, name] : std::array<std::pair<PlatformKey, std::string_view>, 8>{{
+             {PlatformKey::KEY_C, "spellbook"}, {PlatformKey::KEY_R, "rest"}, {PlatformKey::KEY_Q, "quests"},
+             {PlatformKey::KEY_N, "autonotes"}, {PlatformKey::KEY_M, "map"}, {PlatformKey::KEY_T, "calendar"},
+             {PlatformKey::KEY_Z, "reference"}, {PlatformKey::KEY_ESCAPE, "options"}}}) {
+        game.pressAndReleaseKey(key);
+        game.tick(3); // Books open over a couple of frames.
+        RgbaImage frame;
+        game.runGameRoutine([&frame] {
+            render->ClearTarget(Color(0, 0, 0));
+            engine->drawWorld();
+            engine->drawHUD();
+            render->flushAndScale();
+            engine->drawOverlay();
+            frame = render->MakeFullScreenshot();
+        });
+        FileOutputStream output{Path(fmt::format("{}-{}.png", capturePrefix, name))};
+        output.write(png::encode(frame));
+        output.close();
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick(3);
+        ASSERT_EQ(current_screen_type, SCREEN_GAME) << name;
     }
 }

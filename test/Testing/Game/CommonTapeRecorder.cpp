@@ -14,6 +14,7 @@
 #include "Engine/Party.h"
 #include "Engine/Engine.h"
 #include "Engine/Graphics/Indoor.h"
+#include "Engine/Graphics/Renderer/Renderer.h"
 
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UIDialogue.h"
@@ -173,6 +174,16 @@ TestMultiTape<SpriteId> CommonTapeRecorder::sprites() {
         for (const SpriteObject &sprite : pSpriteObjects)
             if (sprite.uObjectDescID != 0)
                 result.push_back(sprite.spriteId);
+        return result;
+    });
+}
+
+TestMultiTape<SpriteId> CommonTapeRecorder::drawnSprites() {
+    return custom([] {
+        AccessibleVector<SpriteId> result;
+        for (int i = 0; i < uNumBillboardsToDraw; i++)
+            if (pBillboardRenderList[i].object_pid.type() == OBJECT_Sprite)
+                result.push_back(pSpriteObjects[pBillboardRenderList[i].object_pid.id()].spriteId);
         return result;
     });
 }

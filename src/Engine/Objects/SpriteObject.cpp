@@ -762,6 +762,19 @@ bool processSpellImpact(unsigned int uLayingItemID, Pid pid) {
         return 0;
     }
 
+    if (engine->gameTitle() == GameTitle::MM6 && object->spriteId == static_cast<SpriteId>(500) && // Arrow.
+        (object->containing_item.itemId == static_cast<ItemId>(405) || // Percival.
+         object->containing_item.specialEnchantment == ITEM_ENCHANTMENT_OF_CARNAGE)) {
+        object->spriteId = SPRITE_SPELL_FIRE_FIREBALL_IMPACT;
+        object->uObjectDescID = pObjectTable->ObjectIDByItemID(object->spriteId);
+        if (object->uObjectDescID == 0)
+            SpriteObject::Remove(uLayingItemID);
+        object->spellSpriteStop();
+        pushAoeAttack(Pid(OBJECT_Sprite, uLayingItemID), 512, object->vPosition, ABILITY_ATTACK1);
+        pAudioPlayer->playSound(SOUND_fireBall, SOUND_MODE_PID, Pid(OBJECT_Sprite, uLayingItemID));
+        return 0;
+    }
+
     // MM6 Ice Bolt flies as the sprite of MM7 Recharge Item.
     const bool mm6IceBolt = engine->gameTitle() == GameTitle::MM6 && object->spriteId == SPRITE_SPELL_WATER_RECHARGE_ITEM;
     switch (mm6IceBolt ? SPRITE_SPELL_FIRE_FIRE_BOLT : object->spriteId) {

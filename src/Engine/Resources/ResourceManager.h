@@ -127,6 +127,12 @@ class ResourceManager {
      */
     Sizei spriteSize(std::string_view filename);
 
+    /**
+     * @param filename                  Name of a sprite in `sprites.lod`, case-insensitive.
+     * @return                          Whether `sprites.lod` has the sprite.
+     */
+    bool hasSprite(std::string_view filename);
+
  private:
     void desaturate(std::span<Color> colors) const;
 

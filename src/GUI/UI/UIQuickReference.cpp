@@ -1,4 +1,6 @@
+#include <array>
 #include <string>
+#include <utility>
 
 #include "Engine/AssetsManager.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
@@ -8,9 +10,12 @@
 #include "Engine/Party.h"
 #include "Engine/Timer.h"
 #include "Engine/Engine.h"
+#include "Engine/Evt/MM6ReputationEvent.h"
+#include "Engine/Objects/NPC.h"
 
 #include "GUI/GUIButton.h"
 #include "GUI/GUIFont.h"
+#include "GUI/UI/MM6CharacterScreen.h"
 #include "GUI/UI/UIQuickReference.h"
 
 #include "Media/Audio/AudioPlayer.h"
@@ -27,8 +32,46 @@ GUIWindow_QuickReference::GUIWindow_QuickReference() : GUIWindow(WINDOW_QUICK_RE
     if (!ui_game_quickref_background)
         ui_game_quickref_background = assets->getIcon("quikref");
 
-    pBtn_ExitCancel = CreateButton({0x187u, 0x13Cu}, {0x4Bu, 0x21u}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0,
-                                   INPUT_ACTION_INVALID, localization->str(LSTR_EXIT_DIALOGUE), {ui_buttdesc2});
+    if (engine->gameTitle() == GameTitle::MM6) {
+        pBtn_ExitCancel = CreateButton({391, 316}, {74, 32}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0, // CreateButton adds a pixel, MM6's is 75x33.
+                                       INPUT_ACTION_INVALID, localization->str(LSTR_EXIT_DIALOGUE), mm6CharacterScreenExitTextures());
+    } else {
+        pBtn_ExitCancel = CreateButton({0x187u, 0x13Cu}, {0x4Bu, 0x21u}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0,
+                                       INPUT_ACTION_INVALID, localization->str(LSTR_EXIT_DIALOGUE), {ui_buttdesc2});
+    }
+}
+
+/**
+ * @param reputation                    MM6 party reputation with hirelings counted, positive is good.
+ * @return                              Label MM6 shows for it.
+ */
+static LstrId mm6ReputationLabel(int reputation) {
+    static constexpr std::array<std::pair<int, LstrId>, 10> labels = {{
+        {1000, LSTR_SAINTLY}, {800, LSTR_ANGELIC}, {600, LSTR_GLORIOUS}, {400, LSTR_HONORABLE}, {200, LSTR_RESPECTABLE},
+        {0, LSTR_AVERAGE}, {-299, LSTR_BAD}, {-599, LSTR_VILE}, {-799, LSTR_DESPICABLE}, {-999, LSTR_MONSTROUS}}};
+    for (auto [threshold, label] : labels)
+        if (reputation >= threshold)
+            return label;
+    return LSTR_NOTORIOUS;
+}
+
+std::string GUIWindow_QuickReference::reputationLine() {
+    Color color;
+    std::string label;
+    if (engine->gameTitle() == GameTitle::MM6) {
+        int reputation = mm6::effectiveReputation(pParty->mm6Reputation, &CheckHiredNPCSpeciality);
+        color = reputation < 0 ? colorTable.Red : reputation < 200 ? colorTable.White : Color(0, 255, 0);
+        label = localization->str(mm6ReputationLabel(reputation));
+    } else {
+        int reputation = pParty->GetPartyReputation();
+        if (reputation >= 0) {
+            color = (reputation <= 5) ? ui_character_default_text_color : ui_character_bonus_text_color_neg;
+        } else {
+            color = ui_character_bonus_text_color;
+        }
+        label = GetReputationString(reputation);
+    }
+    return fmt::format("{}: {::}{}\f00000", localization->str(LSTR_REPUTATION), color.tag(), label);
 }
 
 void GUIWindow_QuickReference::Update() {
@@ -44,7 +87,14 @@ void GUIWindow_QuickReference::Update() {
     Color pTextColor;
     int pFontHeight = assets->pFontArrus->GetHeight() + 1;
 
-    render->DrawQuad2D(ui_game_quickref_background, {8, 8});
+    if (engine->gameTitle() == GameTitle::MM6) {
+        render->DrawQuad2D(assets->getIcon("leather"), {8, 8});
+        drawMM6CharacterScreenBorders();
+        render->DrawQuad2D(ui_game_quickref_background, {0, 0}); // MM6's quikref is only the box outlines.
+        render->DrawQuad2D(mm6CharacterScreenExitTextures()[0], pBtn_ExitCancel->rect.topLeft());
+    } else {
+        render->DrawQuad2D(ui_game_quickref_background, {8, 8});
+    }
 
     pGUIWindow_CurrentMenu->DrawTextInRect(assets->pFontArrus.get(), {22, 18}, colorTable.White, localization->str(LSTR_NAME), 60, 0);
     pGUIWindow_CurrentMenu->DrawTextInRect(assets->pFontArrus.get(), {22, 47}, colorTable.White, localization->str(LSTR_LEVEL), 60, 0);
@@ -73,7 +123,7 @@ void GUIWindow_QuickReference::Update() {
     pY += pFontHeight;
     pGUIWindow_CurrentMenu->DrawTextInRect(assets->pFontArrus.get(), {22, pY}, colorTable.White, localization->str(LSTR_QSPELL), 60, 0);
 
-    int pX = 89;
+    int pX = engine->gameTitle() == GameTitle::MM6 ? 91 : 89;
     for (Character &player : pParty->pCharacters) {
         pGUIWindow_CurrentMenu->DrawTextInRect(assets->pFontArrus.get(), {pX, 18}, ui_character_header_text_color, player.name, 84, 0);
 
@@ -131,14 +181,7 @@ void GUIWindow_QuickReference::Update() {
         pX += 94;
     }
 
-    if (pParty->GetPartyReputation() >= 0) {
-        pTextColor = (pParty->GetPartyReputation() <= 5) ? ui_character_default_text_color : ui_character_bonus_text_color_neg;
-    } else {
-        pTextColor = ui_character_bonus_text_color;
-    }
-
-    std::string rep = fmt::format("{}: {::}{}\f00000", localization->str(LSTR_REPUTATION), pTextColor.tag(), GetReputationString(pParty->GetPartyReputation()));
-    GUIWindow::DrawText(assets->pFontArrus.get(), {22, 323}, colorTable.White, rep, pGUIWindow_CurrentMenu->frameRect);
+    GUIWindow::DrawText(assets->pFontArrus.get(), {22, 323}, colorTable.White, reputationLine(), pGUIWindow_CurrentMenu->frameRect);
     std::string fame = fmt::format("\r261{}: {}", localization->str(LSTR_FAME), pParty->fame());
     GUIWindow::DrawText(assets->pFontArrus.get(), {0, 323}, colorTable.White, fame, pGUIWindow_CurrentMenu->frameRect);
 }

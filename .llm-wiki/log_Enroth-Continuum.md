@@ -3420,3 +3420,9 @@ Chronological record of wiki activity.
 - Added all fourteen authored regional Obelisk discovery bindings, the one-missing and 1 AM refusal states, and the midnight Evenmorn treasure activation. The route opens and empties the real chest, verifies every discovery and treasure bit, and retains the scripted 100,000 gold, chest gold and physical chest items.
 - The production-Save writer and separate normal-Load reader passed with byte-identical slot contents. Missing-profile and no-save admissions were rejected, and the disposable profiles were moved to Trash.
 - The focused route passed 1/1, both fresh-process checkpoint tests passed 1/1, the regional side/promotion selection passed 14/14, and `check_style` passed 157/157 headlessly. This is an independent route boundary, not continuous regional progression.
+
+## [2026-11-12] fix | MM7 war alternatives and neutral Dark Arbiter
+- by: T-Burton-ND via codex
+- Added authored real, decoy and 28-day timeout routes for Loren Steel and the Riverstride plans, including physical Loren and plan acquisition. MM7's two timeout cleanup blocks lacked terminal exits and incorrectly fell through into real-task rewards; title-specific terminal steps now stop both fallthroughs.
+- Covered the 56–84-day Tularean trumpet window, physical chest, Catherine, Parson and Judge Grey hand-ins, then continued a balanced real/real neutral result through the 112-day messenger, Sleen recruitment and Dark Arbiter installation. The unplaced envoy handlers, reveal/treason branches and remaining result-bit combinations stay open.
+- A production-Save writer and fresh-process normal-Load reader preserved the neutral/Dark state with byte-identical slot contents. The four behavior tests, two checkpoint processes, combined 18-test war/side/promotion selection and full 157-target style gate passed headlessly; disposable profiles were moved to Trash.

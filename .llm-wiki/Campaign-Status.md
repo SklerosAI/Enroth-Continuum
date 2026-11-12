@@ -43,7 +43,7 @@ to the active character. The focused test and the 10-test regional selection
 both pass headlessly after integration.
 
 The completed Season's Stole, Kerrid, Parsons, Missing Contestants, Three
-Paintings, Three Statuettes and Arcomage Champion routes now also have
+Paintings, Three Statuettes, Arcomage Champion and Obelisk puzzle routes now also have
 independent production-Save/fresh-process-normal-Load checkpoints. Missing
 Contestants follows Markham's real offer, proves the
 no-shield refusal, clicks the physical Dragon's Lair floor item, and verifies
@@ -52,13 +52,16 @@ contract. Arcomage Champion reaches Gina's real offer and refusal, records all
 thirteen authored tavern results through the same persistence transaction used
 by the live game, completes her hand-in and takes the Forge Gauntlets from the
 authored reward chest. `Issues.Issue388` separately covers live card play; the
-quest fixture does not claim thirteen complete matches. All fourteen exact
-writer/reader tests passed headlessly, with final
+quest fixture does not claim thirteen complete matches. The Obelisk route
+executes all fourteen authored discovery bindings,
+proves the one-missing and 1 AM refusal states, then opens and empties the real
+Evenmorn chest at midnight after its scripted 100,000-gold reward. All sixteen
+exact writer/reader tests passed headlessly, with final
 quest, item, reward, award, map and route-specific food/reputation state intact
 and every slot byte-identical after its reader. Admission rejects a missing
 disposable profile and a reader profile without a save. The regional selection
-passes 13/13 and the repository style gate 157/157. These checkpoints do not
-join the seven quests into one continuous campaign.
+passes 14/14 and the repository style gate 157/157. These checkpoints do not
+join the eight quests into one continuous campaign.
 
 See the [November 9 progress table](Progress-2026-11-09.md) and [MM6 resume handoff](../project/MM6_RESUME_HANDOFF.md) for exact checks and next source paths. Raw captures and game data stay local.
 

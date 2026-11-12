@@ -123,9 +123,9 @@ continuity. It does not exercise post-install Atlas launch or visible play.
 
 ## Regional side-quest checkpoints — 2026-11-12
 
-Seven exact-filter writer/reader pairs now give the completed Season's Stole,
+Eight exact-filter writer/reader pairs now give the completed Season's Stole,
 Kerrid letter, Parsons' Quill, Missing Contestants, Three Paintings, Three
-Statuettes and Arcomage Champion routes durable
+Statuettes, Arcomage Champion and Obelisk puzzle routes durable
 boundaries. Each writer runs the real covered route, exits dialogue, writes
 `save000.mm7` through normal MM7 Save, and passes native structural preflight.
 A separate fresh headless process selects that slot through the normal Load
@@ -140,13 +140,17 @@ champion/finished bits, first-win stake payouts, Gina's rewards and the Forge
 Gauntlets taken from the authored Erathia chest; the deterministic result
 fixture is not thirteen full card matches. Kerrid
 also preserves the all-food audience cost; Parsons preserves Erathia's final
-reputation of -5.
+reputation of -5. The Obelisk writer executes all fourteen authored regional
+discovery bindings, proves the one-missing and wrong-hour refusal states, and
+opens and empties the authored Evenmorn chest at midnight after the scripted
+100,000-gold reward. Its reader preserves every discovery bit, the treasure
+bit, gold and looted chest state.
 The slot digest stayed unchanged across every reader.
 
 The writer is refused without the exact marked owner-only temporary profile,
 and a reader is refused when the marked profile has no candidate save. The
 disposable profiles were moved to Trash after verification. The focused
-regional side/promotion selection passed 13/13 and `check_style` passed
+regional side/promotion selection passed 14/14 and `check_style` passed
 157/157. These are independent completed-route checkpoints, not a continuous
 regional campaign or a visible installed-app run.
 

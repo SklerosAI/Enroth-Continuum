@@ -56,6 +56,7 @@
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UIStatusBar.h"
 #include "GUI/UI/UISpellbook.h"
+#include "GUI/UI/MM6Spellbook.h"
 
 #include "Io/InputEnumFunctions.h"
 #include "Io/Mouse.h"
@@ -1703,6 +1704,10 @@ std::string GetReputationString(int reputation) {
 void GameUI_handleHintMessage(UIMessageType type, int param) {
     switch (type) {
         case UIMSG_HintSelectRemoveQuickSpellBtn: {
+            if (engine->gameTitle() == GameTitle::MM6) {
+                hintMM6QuickSpellButton(static_cast<MM6QuickSpellAction>(param));
+                break;
+            }
             if (spellbookSelectedSpell != SPELL_NONE && spellbookSelectedSpell != pParty->activeCharacter().uQuickSpell) {
                 engine->_statusBar->setPermanent(LSTR_SET_S_AS_THE_READY_SPELL, pSpellStats->pInfos[spellbookSelectedSpell].name);
             } else {
@@ -1718,6 +1723,8 @@ void GameUI_handleHintMessage(UIMessageType type, int param) {
             if (!pParty->hasActiveCharacter())
                 break;
             SpellId selectedSpell = static_cast<SpellId>(param);
+            if (engine->gameTitle() == GameTitle::MM6 && !pParty->activeCharacter().bHaveSpell[selectedSpell] && !engine->config->debug.AllMagic.value())
+                break; // MM6 has a button on every spell cell, known or not.
             if (isHoldingMouseRightButton()) {
                 dword_507B00_spell_info_to_draw_in_popup = selectedSpell;
             }

@@ -16,6 +16,8 @@
 #include "Engine/Timer.h"
 
 #include "GUI/GUIButton.h"
+#include "GUI/GUIFont.h"
+#include "GUI/UI/MM6Spellbook.h"
 
 #include "Io/Mouse.h"
 
@@ -107,6 +109,11 @@ void GUIWindow_Spellbook::openSpellbook() {
 
     loadSpellbook();
 
+    if (engine->gameTitle() == GameTitle::MM6) {
+        createMM6SpellbookButtons(this);
+        return;
+    }
+
     MagicSchool chapter = player.lastOpenedSpellbookPage;
     for (SpellId spell : spellsForMagicSchool(chapter)) {
         if (!player.bHaveSpell[spell] && !engine->config->debug.AllMagic.value())
@@ -153,6 +160,11 @@ void GUIWindow_Spellbook::openSpellbook() {
 void GUIWindow_Spellbook::Update() {
     const Character &player = pParty->activeCharacter();
     int pX_coord, pY_coord;
+
+    if (engine->gameTitle() == GameTitle::MM6) {
+        drawMM6Spellbook(SBPageSSpellsTextureList);
+        return;
+    }
 
     drawCurrentSchoolBackground();
 
@@ -209,6 +221,12 @@ GUIWindow_Spellbook::~GUIWindow_Spellbook() {
 
 void GUIWindow_Spellbook::loadSpellbook() {
     MagicSchool page = pParty->activeCharacter().lastOpenedSpellbookPage;
+    if (engine->gameTitle() == GameTitle::MM6) {
+        spellbookSelectedSpell = SPELL_NONE;
+        SBPageSSpellsTextureList = loadMM6SpellbookPage(page);
+        return;
+    }
+
     if (pParty->activeCharacter().uQuickSpell != SPELL_NONE && magicSchoolForSpell(pParty->activeCharacter().uQuickSpell) == page) {
         spellbookSelectedSpell = pParty->activeCharacter().uQuickSpell;
     } else {
@@ -242,6 +260,12 @@ void GUIWindow_Spellbook::drawCurrentSchoolBackground() {
 
 void GUIWindow_Spellbook::initializeTextures() {
     pAudioPlayer->playUISound(SOUND_openbook);
+
+    if (engine->gameTitle() == GameTitle::MM6) {
+        if (!assets->pFontBookLloyds)
+            assets->pFontBookLloyds = GUIFont::LoadFont("spell.fnt");
+        return;
+    }
 
     ui_spellbook_btn_close = assets->getIcon("ib-m5-u");
     ui_spellbook_btn_close_click = assets->getIcon("ib-m5-d");

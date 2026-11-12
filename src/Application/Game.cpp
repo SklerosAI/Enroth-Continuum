@@ -73,6 +73,7 @@
 #include "GUI/UI/Books/TownPortalBook.h"
 #include "GUI/UI/Houses/MM6House.h"
 #include "GUI/UI/UISpellbook.h"
+#include "GUI/UI/MM6Spellbook.h"
 #include "GUI/UI/UIBooks.h"
 #include "GUI/UI/UICharacter.h"
 #include "GUI/UI/UIDialogue.h"
@@ -1249,6 +1250,10 @@ void Game::processQueuedMessages() {
                 continue;
 
             case UIMSG_ClickInstallRemoveQuickSpellBtn: {
+                if (engine->gameTitle() == GameTitle::MM6) {
+                    clickMM6QuickSpellButton(static_cast<MM6QuickSpellAction>(uMessageParam));
+                    continue;
+                }
                 new OnButtonClick(pBtn_InstallRemoveSpell->rect.topLeft(), {0, 0}, pBtn_InstallRemoveSpell);
                 if (!pParty->hasActiveCharacter())
                     continue;

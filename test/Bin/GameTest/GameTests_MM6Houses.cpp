@@ -1,12 +1,17 @@
+#include <array>
+#include <cstdlib>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
+#include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6ShopStockIdentity.h"
@@ -28,7 +33,13 @@
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/Houses/MM6Shop.h"
 
+#include "Library/Image/Png.h"
+
+#include "Media/MediaPlayer.h"
+
 #include "Utility/Memory/Blob.h"
+#include "Utility/Streams/FileOutputStream.h"
+#include "Utility/System/Path.h"
 
 static void startMM6NewGame(EngineController &game) {
     // MM6 has no new-game save yet, so the override seeds the map deltas and chest state from the game archives.
@@ -413,4 +424,54 @@ GAME_TEST(MM6Houses, TavernMenu) {
     const std::vector<std::string> menu = {localization->format(LSTR_RENT_ROOM_FOR_D_GOLD, 3), localization->format(LSTR_FILL_PACKS_TO_D_DAYS_FOR_D_GOLD, 6, 2),
                                            localization->str(LSTR_HAVE_A_DRINK), localization->str(static_cast<LstrId>(399))};
     EXPECT_EQ(optionsTape, tape(std::vector<std::string>{}, menu));
+}
+
+GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
+    // Hidden capture of New Sorpigal house screens: each house's first view, then its first option.
+    ASSERT_FALSE(window->isVisible());
+    ASSERT_EQ(dynamic_cast<NullRenderer *>(render), nullptr);
+    const char *capturePrefix = std::getenv("MM6_OFFSCREEN_CAPTURE_PATH");
+    ASSERT_NE(capturePrefix, nullptr);
+    ASSERT_TRUE(std::string_view(capturePrefix).starts_with("/private/tmp/"));
+    auto capture = [&](std::string_view name) {
+        RgbaImage frame;
+        game.runGameRoutine([&frame] {
+            render->ClearTarget(Color(0, 0, 0));
+            engine->drawWorld();
+            pMediaPlayer->HouseMovieLoop();
+            engine->drawHUD();
+            render->flushAndScale();
+            engine->drawOverlay();
+            frame = render->MakeFullScreenshot();
+        });
+        FileOutputStream output{Path(fmt::format("{}-{}.png", capturePrefix, name))};
+        output.write(png::encode(frame));
+        output.close();
+    };
+
+    engine->config->debug.NoVideo.setValue(false);
+    startMM6NewGame(game);
+    for (auto [door, yaw, name] : std::array<std::tuple<Vec3f, int, std::string_view>, 5>{{
+             {kWeaponShopDoor, 0, "weapons"}, {kGeneralStoreDoor, 1536, "general"}, {kTempleDoor, 0, "temple"},
+             {kTrainingDoor, 0, "training"}, {kTownHallDoor, 0, "townhall"}}}) {
+        enterThroughDoor(game, door, yaw);
+        game.tick();
+        capture(fmt::format("{}-0", name));
+        if (current_screen_type != SCREEN_HOUSE)
+            continue;
+        if (name == "weapons" || name == "general") {
+            game.pressGuiButton("HouseDialogue_Option0"); // Buy Items.
+            game.tick();
+            capture(fmt::format("{}-1", name));
+            game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+            game.tick();
+            game.pressGuiButton("HouseDialogue_Option1"); // Sell Items.
+            game.tick();
+            capture(fmt::format("{}-2", name));
+        }
+        for (int i = 0; i < 3 && current_screen_type != SCREEN_GAME; ++i) {
+            game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+            game.tick(2);
+        }
+    }
 }

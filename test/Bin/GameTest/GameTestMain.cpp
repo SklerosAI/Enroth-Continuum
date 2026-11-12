@@ -53,7 +53,8 @@ bool isOffscreenCaptureFilter(GameTitle title, std::string_view filter) {
                filter == "MM6OffscreenFrame.DISABLED_MissileCapture" ||
                filter == "MM6OffscreenFrame.DISABLED_ScreensCapture" ||
                filter == "MM6OffscreenFrame.DISABLED_SpellbookCapture" ||
-               filter == "MM6OffscreenFrame.DISABLED_SpellbookSchoolsCapture";
+               filter == "MM6OffscreenFrame.DISABLED_SpellbookSchoolsCapture" ||
+               filter == "MM6OffscreenFrame.DISABLED_HousesCapture";
     return filter == "MM7OffscreenFrame.DISABLED_FirstOutdoorCapture" || filter == "MM7OffscreenFrame.DISABLED_MapCapture";
 }
 

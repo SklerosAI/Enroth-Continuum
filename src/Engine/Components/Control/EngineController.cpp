@@ -560,12 +560,14 @@ void EngineController::pointMouseAt(Pid target) {
     std::vector<Pointi> points = {screenPos};
     for (int distance = 5; distance <= 50; distance += 5)
         points.insert(points.end(), {screenPos - Pointi(0, distance), screenPos + Pointi(0, distance), screenPos - Pointi(distance, 0), screenPos + Pointi(distance, 0)});
-    auto point = std::ranges::find_if(points, [&](Pointi point) { return (*viewport)->Contains(point) && pickAt(point) == target; });
-    if (point == points.end())
-        throw Exception("Failed to point mouse at {}", targetName);
+    for (Pointi point : points) {
+        if (!(*viewport)->Contains(point) || pickAt(point) != target)
+            continue;
 
-    moveMouse(*point);
-    tick(1); // The mouse move is a queued event, the pick sees the new position only once it's processed.
-    if (pickAt(mouse->position()) != target)
-        throw Exception("Failed to point mouse at {}", targetName);
+        moveMouse(point);
+        tick(1); // The mouse move is a queued event, the pick sees the new position only once it's processed.
+        if (pickAt(mouse->position()) == target)
+            return; // An animated decoration can cover the point by the next frame.
+    }
+    throw Exception("Failed to point mouse at {}", targetName);
 }

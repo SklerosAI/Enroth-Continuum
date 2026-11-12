@@ -56,4 +56,15 @@ bool compareCharacterEventVariable(const Character &character, int rawId, int va
  */
 void writeCharacterEventVariable(Character &character, EvtOpcode opcode, int rawId, int value);
 
+/**
+ * @offset 0x440FA1
+ *
+ * Runs an MM6 skill Set for one character, with the award chime that follows it.
+ *
+ * @param character                     Selected character.
+ * @param rawId                         MM6 skill variable ID, 56 to 86.
+ * @param value                         Operand, see `setEventSkill`.
+ */
+void writeEventSkill(Character &character, int rawId, int value);
+
 } // namespace mm6

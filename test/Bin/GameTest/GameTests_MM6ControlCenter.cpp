@@ -25,6 +25,7 @@
 static constexpr QuestBit cubeQuest = static_cast<QuestBit>(166);
 static constexpr QuestBit controlCenterAccess = static_cast<QuestBit>(169);
 static constexpr QuestBit archibaldQuest = static_cast<QuestBit>(235);
+static constexpr QuestBit blasterTerminalUsed = static_cast<QuestBit>(276);
 static constexpr ItemId blaster = static_cast<ItemId>(64);
 static constexpr ItemId controlCube = static_cast<ItemId>(456);
 
@@ -69,6 +70,10 @@ static void talkToOracle(EngineController &game) {
     game.teleportTo(engine->_currentLoadedMapId, Vec3f(-1408, 2186, -496), 90);
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();
+}
+
+static bool isBlasterLesson(const std::string &text) {
+    return text.starts_with("Blaster weapons provide an effective, accurate");
 }
 
 static std::vector<std::string> portraitLabels() {
@@ -159,4 +164,28 @@ GAME_TEST(MM6ControlCenter, BlasterInStorageContainer) {
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHEST, SCREEN_GAME));
     EXPECT_EQ(chestTape, tape(true, false));
     EXPECT_EQ(blasterTape, tape({false, false, false, false}, {true, false, false, false}));
+}
+
+GAME_TEST(MM6ControlCenter, TerminalTeachesBlaster) {
+    // The Control Center's terminal taught the Blaster skill without the award chime. It teaches the whole party once,
+    // with a chime for each character, and a second visit only shows its text.
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    teleportToMap(game, "sci-fi.blv", Vec3f(-9280, 4160, 196), 0);
+    auto skillTape = charTapes.skillLevels(SKILL_BLASTER);
+    auto terminalTape = tapes.questBit(blasterTerminalUsed);
+    auto textTape = tapes.allGUIWindowsText();
+    auto soundsTape = tapes.sounds();
+    test.startTaping();
+
+    for (int visit = 0; visit < 2; visit++) {
+        useMM6CampaignChainIndoorEventFace(game, 61);
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE); // Any key closes the terminal's text.
+        game.tick();
+    }
+
+    EXPECT_EQ(skillTape, tape({0, 0, 0, 0}, {1, 1, 1, 1}));
+    EXPECT_EQ(terminalTape, tape(false, true));
+    EXPECT_EQ(std::ranges::count(soundsTape.flatten(), SOUND_quest), 4);
+    EXPECT_EQ(std::ranges::count_if(textTape, [](const auto &frame) { return std::ranges::any_of(frame, isBlasterLesson); }), 2);
 }

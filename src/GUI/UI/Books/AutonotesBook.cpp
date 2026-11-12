@@ -1,5 +1,6 @@
 #include <array>
 #include <memory>
+#include <optional>
 
 #include "Engine/AssetsManager.h"
 #include "Engine/Engine.h"
@@ -30,14 +31,38 @@ struct MM6AutonoteTab {
     GraphicsImage *offArt;
 };
 
+/**
+ * MM6.exe sorts autonotes into tabs with its own table, which mostly follows the autonote.txt types.
+ *
+ * @param note                          Autonote id.
+ * @return                              The MM6 autonotes tab that lists the note, or nothing if MM6 lists it in no tab.
+ */
+static std::optional<AutonoteType> mm6AutonoteCategory(int note) {
+    auto in = [note](int first, int last) { return note >= first && note <= last; };
+    if (in(1, 3) || note == 9 || in(11, 14) || in(17, 53) || in(94, 96))
+        return AUTONOTE_STAT_HINT;
+    if (in(54, 78))
+        return AUTONOTE_POTION_RECIPE;
+    if (in(79, 93))
+        return AUTONOTE_OBELISK;
+    if (in(108, 116))
+        return AUTONOTE_SEER;
+    if (in(97, 107) || in(117, 128))
+        return AUTONOTE_MISC;
+    return std::nullopt;
+}
+
 void GUIWindow_AutonotesBook::recalculateCurrentNotesTypePages() {
     _startingNotesIdx = 0;
     _currentPage = 0;
     _currentPageNotes = 0;
     _activeNotesIdx.clear();
-    for (int i : pParty->_autonoteBits.indices())
-        if (pParty->_autonoteBits[i] && autonoteBookDisplayType == pAutonoteTxt[i].eType && !pAutonoteTxt[i].pText.empty())
+    const bool isMM6 = engine->gameTitle() == GameTitle::MM6;
+    for (int i : pParty->_autonoteBits.indices()) {
+        const std::optional<AutonoteType> type = isMM6 ? mm6AutonoteCategory(i) : pAutonoteTxt[i].eType;
+        if (pParty->_autonoteBits[i] && autonoteBookDisplayType == type && !pAutonoteTxt[i].pText.empty())
             _activeNotesIdx.push_back(i);
+    }
 }
 
 GUIWindow_AutonotesBook::GUIWindow_AutonotesBook() : GUIWindow_Book() {

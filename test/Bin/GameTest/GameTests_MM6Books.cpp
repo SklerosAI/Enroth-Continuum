@@ -148,6 +148,33 @@ GAME_TEST(MM6BooksHeadless, AutonotesTabsPickTheirCategory) {
     EXPECT_CONTAINS(texturesTape.back(), "anot2on");
 }
 
+GAME_TEST(MM6BooksHeadless, AutonotesListNotesWhereMM6Does) {
+    // Award notes and four fountain notes were listed under Miscellaneous Notes.
+    constexpr int awardNote = 4;
+    constexpr int fountainNote = 51;
+    constexpr int miscNote = 97;
+    auto textTape = tapes.allGUIWindowsText();
+    enterFirstMapFromNewGame(game);
+    ASSERT_EQ(pAutonoteTxt[fountainNote].eType, AUTONOTE_MISC);
+    game.runGameRoutine([&] {
+        for (int note : {awardNote, fountainNote, miscNote})
+            pParty->_autonoteBits.set(note);
+        autonoteBookDisplayType = AUTONOTE_POTION_RECIPE;
+    });
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_N);
+    game.tick();
+    game.pressAndReleaseButton(BUTTON_LEFT, {440, 275}); // Miscellaneous Notes.
+    game.tick();
+    game.pressAndReleaseButton(BUTTON_LEFT, {440, 170}); // Fountain Notes.
+    game.tick();
+
+    EXPECT_EQ(framesShowing(textTape, pAutonoteTxt[miscNote].pText), std::vector<bool>({false, true, false}));
+    EXPECT_EQ(framesShowing(textTape, pAutonoteTxt[fountainNote].pText), std::vector<bool>({false, true}));
+    EXPECT_EQ(framesShowing(textTape, pAutonoteTxt[awardNote].pText), std::vector<bool>({false}));
+}
+
 GAME_TEST(MM6BooksHeadless, MapWestAndEastTabsScroll) {
     // The MM6 map book had its West and East tabs swapped.
     auto xTape = tapes.custom([] { return viewparams->sViewCenterX; });

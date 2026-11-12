@@ -8,3 +8,5 @@
 - Conflict check: Claude owns MM6 and may extend the MM6 chain harness, but this lane changes only MM7 gate rows and the named MM7 tests. Reconcile `master` before integration.
 - Planned checks: focused in-memory tests, writer/reader pairs in fresh headless processes, regional MM7 suite, `check_style`, and post-reconciliation reruns.
 - Handoff target: neutral `master` after reviewed headless evidence.
+- Completed: integrated on neutral `master` at merge `8e4d5fffb`; wiki commit `57cb4ad78`, separate log commit `2d3f76c2b`.
+- Released files: the three named MM7 test files and `GameTestMain.cpp` are no longer reserved by this completed lane.

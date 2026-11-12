@@ -525,3 +525,36 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_CharacterScreenCapture) {
         }
     }
 }
+
+GAME_TEST(MM6OffscreenFrame, DISABLED_ScreensCapture) {
+    // Hidden capture of the in-game screens that open by key: spellbook, rest, the books, quick reference and options.
+    ASSERT_FALSE(window->isVisible());
+    ASSERT_EQ(dynamic_cast<NullRenderer *>(render), nullptr);
+    const char *capturePrefix = std::getenv("MM6_OFFSCREEN_CAPTURE_PATH");
+    ASSERT_NE(capturePrefix, nullptr);
+    ASSERT_TRUE(std::string_view(capturePrefix).starts_with("/private/tmp/"));
+
+    enterFirstMapFromNewGame(game);
+    for (auto [key, name] : std::array<std::pair<PlatformKey, std::string_view>, 8>{{
+             {PlatformKey::KEY_C, "spellbook"}, {PlatformKey::KEY_R, "rest"}, {PlatformKey::KEY_Q, "quests"},
+             {PlatformKey::KEY_N, "autonotes"}, {PlatformKey::KEY_M, "map"}, {PlatformKey::KEY_T, "calendar"},
+             {PlatformKey::KEY_Z, "reference"}, {PlatformKey::KEY_ESCAPE, "options"}}}) {
+        game.pressAndReleaseKey(key);
+        game.tick(3); // Books open over a couple of frames.
+        RgbaImage frame;
+        game.runGameRoutine([&frame] {
+            render->ClearTarget(Color(0, 0, 0));
+            engine->drawWorld();
+            engine->drawHUD();
+            render->flushAndScale();
+            engine->drawOverlay();
+            frame = render->MakeFullScreenshot();
+        });
+        FileOutputStream output{Path(fmt::format("{}-{}.png", capturePrefix, name))};
+        output.write(png::encode(frame));
+        output.close();
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick(3);
+        ASSERT_EQ(current_screen_type, SCREEN_GAME) << name;
+    }
+}

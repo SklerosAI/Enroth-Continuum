@@ -34,11 +34,13 @@ struct DrawnQuad {
 };
 
 /**
- * Payload of `CALL_GUIWINDOW_DRAWN_TEXT`, a string drawn by `GUIWindow::DrawText` and the color it was drawn in.
+ * Payload of `CALL_GUIWINDOW_DRAWN_TEXT`, a string drawn by `GUIWindow::DrawText`, the color it was drawn in and the
+ * position it was drawn at.
  */
 struct DrawnText {
     std::string text;
     Color color;
+    Pointi position;
 
     friend bool operator==(const DrawnText &l, const DrawnText &r) = default;
 };

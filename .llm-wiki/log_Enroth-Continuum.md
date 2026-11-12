@@ -3363,3 +3363,9 @@ Chronological record of wiki activity.
 - A new MM6 party started with MM7's six Emerald Island quest bits (1 to 6) set. In MM6 each is the run-once flag of one dungeon event (d06, d09, d10, d11, d18 and t3), found by scanning global.evt and all 67 MM6 map scripts. With bit 5 set, the Gharik's Forge chest opened a chest with no Hourglass, so Newton's council vote could never be won. MM6 now starts with no quest bits. MM7 is unchanged.
 - Chapter C2 (council B) drives the oute2 ship, Newton's topics, d07's key chest and d18's key lever and Hourglass chest by input from C1's save, and passes in the chain runner. Teleports to doors, chests and exit faces remain fixtures, and d18's damage timer was never seen firing.
 - Merged on `master` at `900cde1cd`. Unit tests 1122, MM6 suite 142 passed and 2 skipped, MM7 controls 132, `check_style` clean. Next for C3: the sewer SpeakNPC street dialogue and the Hermit's hut.
+
+## [2026-11-12] verify | MM7 Missing Contestants route and checkpoint
+- by: T-Burton-ND via codex
+- Added the complete Markham contract: real offer, no-shield refusal, physical Contestant Shield pickup from Emerald Island's Dragon's Lair, return, item and quest transitions, 1,000 gold, 1,000 XP per character, and the award for all four characters.
+- The production-Save writer and separate normal-Load reader passed in a fresh marked profile. The slot stayed byte-identical, while missing-profile and no-save admission cases were rejected; disposable profiles were removed after verification.
+- The focused regional side/promotion selection passed 11/11 headlessly and the complete `check_style` gate passed 157/157. This remains an independent regional boundary, not a continuous campaign.

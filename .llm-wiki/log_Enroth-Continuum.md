@@ -3130,3 +3130,7 @@ Chronological record of wiki activity.
 - Atlas now seeds missing local MM6 rules and configuration into its separate profile before launch, preventing the new-profile rules failure. Its profile migration opens a fixed native-size window by default while retaining the game's fullscreen toggle.
 - Visible owner-local checks reached party creation in the foreground and confirmed character-selection input. MM6 class-icon transparency keys were corrected, but the remaining party-creation asset-layout issue is still open; this is not campaign or normal Save/Load acceptance.
 
+## [2026-11-11] fix | MM6 party creation layout and fullscreen
+- by: T-Burton-ND via claude
+- MM6 party creation uses the original executable's layout, and its hit boxes sit on the visible art. Real mouse and keyboard events changed the value under the pointer in windowed and fullscreen mode. MM6 suite 134/134, MM7 control 540/540.
+- Supersedes the earlier note that the fixed window keeps the fullscreen toggle. macOS takes F11, so Atlas now makes the MM6 window resizable and native fullscreen works. Play MM6 from the installed Atlas still needs a visible check.

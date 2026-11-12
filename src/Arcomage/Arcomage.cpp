@@ -129,6 +129,33 @@ int quarry_bonus = 1;  // acts as effective min level
 int magic_bonus = 1;
 int zoo_bonus = 1;
 
+void recordArcomageGameResult(HouseId houseId, bool playerWon) {
+    if (playerWon) {
+        if (isArcomageTavern(houseId) && !pParty->pArcomageWins[houseId]) {
+            pParty->pArcomageWins[houseId] = true;
+            pParty->partyFindsGold(houseTable[houseId].fPriceMultiplier * 100, GOLD_RECEIVE_SHARE);
+        }
+
+        if (std::ranges::all_of(allArcomageTaverns(), [](HouseId tavern) {
+                return pParty->pArcomageWins[tavern];
+            })) {
+            pParty->_questBits.set(QBIT_ARCOMAGE_CHAMPION);
+        }
+
+        for (Character &character : pParty->pCharacters) {
+            if (!character._achievedAwardsBits[AWARD_FINE])
+                character._achievedAwardsBits.set(AWARD_ARCOMAGE_WINS);
+        }
+        pParty->uNumArcomageWins = std::min(pParty->uNumArcomageWins + 1, 1000000);
+    } else {
+        for (Character &character : pParty->pCharacters) {
+            if (!character._achievedAwardsBits[AWARD_FINE])
+                character._achievedAwardsBits.set(AWARD_ARCOMAGE_LOSES);
+        }
+        pParty->uNumArcomageLoses = std::min(pParty->uNumArcomageLoses + 1, 1000000);
+    }
+}
+
 int max_tower_height = 50;
 int max_resources_amount = 100;
 
@@ -2680,7 +2707,6 @@ void GameResultsApply() {
     int victory_type;         // edi@1
     int pl_resource;          // edx@25
     int en_resource;          // eax@28
-    int tavern_num;  // eax@54
 
     winner = -1;
     victory_type = -1;
@@ -2810,43 +2836,7 @@ void GameResultsApply() {
 
     pArcomageGame->_victoryType = victory_type;
     pArcomageGame->_gameWinner = winner;
-    if (winner == 1) {
-        HouseId houseId = window_SpeakInHouse->houseId();
-        if (isArcomageTavern(houseId)) {
-            if (!pParty->pArcomageWins[houseId]) {
-                pParty->pArcomageWins[houseId] = 1;
-                pParty->partyFindsGold(houseTable[houseId].fPriceMultiplier * 100, GOLD_RECEIVE_SHARE);
-            }
-        }
-
-        // arcomage quest test
-        tavern_num = 0;
-        for (HouseId i : allArcomageTaverns()) {
-            if (!pParty->pArcomageWins[i]) break;
-            tavern_num++;
-        }
-        if (tavern_num == allArcomageTaverns().size()) {
-            pParty->_questBits.set(QBIT_ARCOMAGE_CHAMPION);
-        }
-
-        for (int i = 0; i < 4; ++i) {
-            if (!pParty->pCharacters[i]._achievedAwardsBits[AWARD_FINE]) {
-                pParty->pCharacters[i]._achievedAwardsBits.set(AWARD_ARCOMAGE_WINS);
-            }
-        }
-        ++pParty->uNumArcomageWins;
-        if (pParty->uNumArcomageWins > 1000000)
-            pParty->uNumArcomageWins = 1000000;
-    } else {  // loss or draw
-        for (int i = 0; i < 4; ++i) {
-            if (!pParty->pCharacters[i]._achievedAwardsBits[AWARD_FINE]) {
-                pParty->pCharacters[i]._achievedAwardsBits.set(AWARD_ARCOMAGE_LOSES);
-            }
-        }
-        ++pParty->uNumArcomageLoses;
-        if (pParty->uNumArcomageLoses > 1000000)
-            pParty->uNumArcomageLoses = 1000000;
-    }
+    recordArcomageGameResult(window_SpeakInHouse->houseId(), winner == 1);
 }
 
 void ArcomageGame::PrepareArcomage() {

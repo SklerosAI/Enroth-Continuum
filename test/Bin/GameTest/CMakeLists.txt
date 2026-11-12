@@ -39,6 +39,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7MissingContestants.cpp
         GameTests_MM7DavrikRing.cpp
         GameTests_MM7DarronDeck.cpp
+        GameTests_MM7ArcomageChampion.cpp
         GameTests_MM7SeasonsStole.cpp
         GameTests_MM7ThreePaintings.cpp
         GameTests_MM7ThreeStatuettes.cpp

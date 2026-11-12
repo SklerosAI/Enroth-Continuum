@@ -123,9 +123,9 @@ continuity. It does not exercise post-install Atlas launch or visible play.
 
 ## Regional side-quest checkpoints — 2026-11-12
 
-Six exact-filter writer/reader pairs now give the completed Season's Stole,
-Kerrid letter, Parsons' Quill, Missing Contestants, Three Paintings and Three
-Statuettes routes durable
+Seven exact-filter writer/reader pairs now give the completed Season's Stole,
+Kerrid letter, Parsons' Quill, Missing Contestants, Three Paintings, Three
+Statuettes and Arcomage Champion routes durable
 boundaries. Each writer runs the real covered route, exits dialogue, writes
 `save000.mm7` through normal MM7 Save, and passes native structural preflight.
 A separate fresh headless process selects that slot through the normal Load
@@ -134,14 +134,19 @@ XP and award ownership. Missing Contestants includes the real Markham offer,
 no-shield refusal and Dragon's Lair floor pickup. Three Paintings includes
 Visconti's offer and refusal plus the Angel, Archibald and Roland authored wall
 interactions. Three Statuettes preserves all three placement bits and the
-all-character award after its three dungeon chests and outdoor shrines. Kerrid
-also preserves the all-food audience cost; Parsons preserves Erathia's final reputation of -5.
+all-character award after its three dungeon chests and outdoor shrines.
+Arcomage Champion preserves all thirteen authored tavern win flags, the
+champion/finished bits, first-win stake payouts, Gina's rewards and the Forge
+Gauntlets taken from the authored Erathia chest; the deterministic result
+fixture is not thirteen full card matches. Kerrid
+also preserves the all-food audience cost; Parsons preserves Erathia's final
+reputation of -5.
 The slot digest stayed unchanged across every reader.
 
 The writer is refused without the exact marked owner-only temporary profile,
 and a reader is refused when the marked profile has no candidate save. The
-disposable profiles were removed after verification. The focused regional
-side/promotion selection passed 12/12 and `check_style` passed
+disposable profiles were moved to Trash after verification. The focused
+regional side/promotion selection passed 13/13 and `check_style` passed
 157/157. These are independent completed-route checkpoints, not a continuous
 regional campaign or a visible installed-app run.
 

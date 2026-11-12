@@ -3408,3 +3408,9 @@ Chronological record of wiki activity.
 - Chapter C3 runs from C2's save on oute2 to a save on outc1: Stromgard's winter quest, Anthony Stone's Prince of Thieves quest, the Hermit breaking the weather spell, Takao's house into the Free Haven sewer, the Prince's bed event hiring him, the ladder back, then both councils' rewards. All by input, with teleports to the castles, the Hermit's hut, Takao's door and inside the sewer as fixtures.
 - None of the expected blockers needed engine work. A trace of `MM6.exe` shows SpeakNPC opens the conversation and carries on with the script, as the port does. The original skips SpeakNPC for an NPC whose house is 0, which the port doesn't, and that could matter in d09 and d07 later.
 - Merged on `master` at `0e1480602`, test only. The lane's own run passed the chain C0 to C3, MM6 suite 142 passed and 2 skipped, MM7 controls 132. The street NPC dialogue still uses MM7's layout and three MM7 images MM6 lacks. Next for C4: where Devil Outpost keeps the Devil Plans, and the t7 chest with Zenofex's letter.
+
+## [2026-11-12] verify | MM7 Arcomage Champion route and checkpoint
+- by: T-Burton-ND via codex
+- Extracted the persistent result transaction used by the live Arcomage game, then covered Gina Barnes's real offer and incomplete refusal, one result for each of the thirteen authored tavern IDs, first-win-only stake payouts, final rewards and the authored Erathia reward chest with Forge Gauntlets.
+- The production-Save writer and separate normal-Load reader passed with every tavern flag, quest bits, rewards, awards and chest item intact and byte-identical slot contents. Missing-profile and no-save admissions were rejected, and both disposable profiles were moved to Trash.
+- The regional side/promotion selection passed 13/13 and `check_style` passed 157/157 headlessly. The live-loop trace separately plays cards; this deterministic quest fixture does not claim thirteen complete card matches.

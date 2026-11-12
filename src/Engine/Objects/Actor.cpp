@@ -2236,6 +2236,25 @@ MonsterHostility Actor::GetActorsRelation(Actor *otherActPtr) {
     }
 }
 
+/**
+ * Puts the item a monster carries on the floor where the monster stands. MM6 monsters whose dead sprite is empty leave
+ * no corpse to loot, and MM6.exe 0x44C204 drops their item instead.
+ *
+ * @param actor                         Monster that has just vanished.
+ */
+static void dropCarriedItem(Actor &actor) {
+    if (actor.carriedItemId == ITEM_NULL)
+        return;
+    SpriteObject sprite;
+    sprite.containing_item.itemId = actor.carriedItemId;
+    sprite.spriteId = pItemTable->items[actor.carriedItemId].spriteId;
+    sprite.uObjectDescID = pObjectTable->ObjectIDByItemID(sprite.spriteId);
+    sprite.vPosition = actor.pos;
+    sprite.uSectorID = actor.sectorId;
+    sprite.Create(0, 0, 0, 0);
+    actor.carriedItemId = ITEM_NULL;
+}
+
 //----- (0045976D) --------------------------------------------------------
 void Actor::UpdateAnimation() {
     ResetAnimation();
@@ -2288,10 +2307,13 @@ void Actor::UpdateAnimation() {
 
         case Dead:
             pSpriteFrameTable->InitializeSprite(spriteIds[ANIM_Dead]);
-            if (pSpriteFrameTable->pSpriteSFrames[spriteIds[ANIM_Dead]].sprites[0] == nullptr)
+            if (pSpriteFrameTable->pSpriteSFrames[spriteIds[ANIM_Dead]].sprites[0] == nullptr) {
                 aiState = Removed;
-            else
+                if (engine->gameTitle() == GameTitle::MM6)
+                    dropCarriedItem(*this);
+            } else {
                 currentActionAnimation = ANIM_Dead;
+            }
             break;
 
         case Removed:

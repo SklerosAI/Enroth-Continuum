@@ -5,12 +5,15 @@
 
 #include "Testing/Game/GameTest.h"
 
+#include "Application/GameConfig.h"
+
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
+#include "Engine/Tables/MapTable.h"
 
 #include "Library/Image/Png.h"
 
@@ -143,6 +146,40 @@ GAME_TEST(MM6Missile, MonsterMissilesAreDrawn) {
     EXPECT_CONTAINS(spritesTape.flatten(), static_cast<SpriteId>(520));
     EXPECT_CONTAINS(drawnTape.flatten(), static_cast<SpriteId>(500));
     EXPECT_CONTAINS(drawnTape.flatten(), static_cast<SpriteId>(520));
+}
+
+GAME_TEST(MM6Loot, DevilWarriorDropsPlans) {
+    // The Devil Warrior took the Devil Plans with it, MM6 devils leave no corpse to loot.
+    startNewGameThroughInput(game);
+    const ItemId plans = static_cast<ItemId>(506);
+    const int warrior = 0;
+    game.teleportTo(pMapTable->GetMapInfo("zdwj02.blv"), Vec3f(-128, -300, 1), 90);
+    ASSERT_EQ(pActors[warrior].carriedItemId, plans);
+    pActors[warrior].hp = 1;
+    engine->config->debug.NoDamage.setValue(true); // The other devils of the outpost attack the party.
+    auto stateTape = actorTapes.aiState(warrior);
+    auto floorTape = tapes.mapItemCount(plans);
+    auto plansTape = tapes.hasItem(plans);
+    test.startTaping();
+
+    for (int frame = 0; frame < 300 && !pActors[warrior].IsNotAlive(); frame++) { // Blows can miss.
+        game.pointMouseAtActor(warrior);
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+    }
+    for (int frame = 0; frame < 100 && pActors[warrior].aiState != Removed; frame++) // The warrior falls and vanishes.
+        game.tick();
+    auto sprite = std::ranges::find(pSpriteObjects, plans, [](const SpriteObject &sprite) { return sprite.containing_item.itemId; });
+    ASSERT_NE(sprite, pSpriteObjects.end());
+    game.teleportTo(engine->_currentLoadedMapId, sprite->vPosition - Vec3f(0, 150, 0), 90, -20); // Looking down at the plans.
+    game.pointMouseAtSprite(sprite - pSpriteObjects.begin());
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+
+    EXPECT_CONTAINS(stateTape, Dying);
+    EXPECT_EQ(stateTape.back(), Removed);
+    EXPECT_EQ(floorTape, tape(0, 1, 0));
+    EXPECT_EQ(plansTape, tape(false, true));
 }
 
 GAME_TEST(MM6OffscreenFrame, DISABLED_MissileCapture) {

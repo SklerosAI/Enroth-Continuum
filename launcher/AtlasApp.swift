@@ -93,38 +93,42 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
     }
 
     /**
-     * The private integration profile can legitimately be borderless for development, but that mode is a poor
-     * default for the independent Atlas profile on Retina displays: it makes the fixed 640x480 creation UI look
-     * like a full-display overlay and can leave its pointer mapping ambiguous. Keep that native 4:3 frame fixed.
-     * Apply this migration once only;
-     * afterwards the Atlas player owns the setting.
+     * Starts the Atlas MM6 profile in a 640x480 window and keeps that window resizable. macOS greys out the
+     * fullscreen button of a fixed-size window and reserves F11 for Show Desktop, so a resizable window is the
+     * player's way into fullscreen. Each step applies once, afterwards the Atlas player owns the setting.
+     *
+     * @param configPath                The Atlas MM6 profile's `openenroth.ini`.
      */
     private func setMM6AtlasWindowDefaults(_ configPath: URL) throws {
         let versionKey = "mm6.profile.windowDefaults.version"
-        guard preferences.integer(forKey: versionKey) < 2,
+        let version = 3
+        let previous = preferences.integer(forKey: versionKey)
+        guard previous < version,
               FileManager.default.fileExists(atPath: configPath.path) else { return }
+        var defaults = [("resizable", "true")]
+        if previous < 2 { defaults.append(("mode", "windowed")) }
         let contents = try String(contentsOf: configPath, encoding: .utf8)
         var inWindowSection = false
-        var replacedMode = false
+        var replaced = false
         let updated = contents.split(separator: "\n", omittingEmptySubsequences: false).map { line -> String in
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             if trimmed.hasPrefix("[") && trimmed.hasSuffix("]") {
                 inWindowSection = trimmed == "[window]"
             }
             if inWindowSection {
-                for (key, value) in [("mode", "windowed"), ("resizable", "false")] {
+                for (key, value) in defaults {
                     if trimmed.hasPrefix(key) && trimmed.dropFirst(key.count).trimmingCharacters(in: .whitespaces).hasPrefix("=") {
-                        replacedMode = true
+                        replaced = true
                         return "\(key) = \(value)"
                     }
                 }
             }
             return String(line)
         }.joined(separator: "\n")
-        if replacedMode {
+        if replaced {
             try updated.write(to: configPath, atomically: true, encoding: .utf8)
         }
-        preferences.set(1, forKey: versionKey)
+        preferences.set(version, forKey: versionKey)
     }
 
     private var recordingBasePath: URL {

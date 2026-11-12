@@ -358,6 +358,7 @@ void GUIWindow::DrawDialoguePanel(std::string_view text) {
 void GUIWindow::DrawText(GUIFont *font, Pointi position, Color color, std::string_view text, Recti frameRect, int maxY, Color shadowColor) {
     if (engine->callObserver) {
         engine->callObserver->notify(CALL_GUIWINDOW_DRAWTEXT, std::string(text));
+        engine->callObserver->notify(CALL_GUIWINDOW_DRAWN_TEXT, DrawnText{std::string(text), color});
     }
     font->DrawText(frameRect, position, color, text, maxY, shadowColor);
 }

@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "Testing/Game/GameTest.h"
 
@@ -11,6 +12,7 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
+#include "Engine/Localization.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
@@ -544,6 +546,42 @@ GAME_TEST(MM6CharacterScreenHeadless, TabKeysAreMM6s) {
 
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHARACTERS));
     EXPECT_EQ(tabTape, tape(WINDOW_CHARACTER_STATS, WINDOW_CHARACTER_INVENTORY, WINDOW_CHARACTER_SKILLS, WINDOW_CHARACTER_STATS));
+}
+
+GAME_TEST(MM6CharacterScreenHeadless, SkillRowFocusStaysOnLastHoveredRow) {
+    // The skills tab highlighted only the row under the mouse. MM6 highlights the focused row, the first one when the
+    // tab opens and then the last one the mouse was over.
+    auto textTape = tapes.drawnTexts();
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_I);
+    game.tick(2); // The key queues the character screen for the next frame.
+    game.pressAndReleaseKey(PlatformKey::KEY_K);
+    game.tick();
+    std::vector<GUIButton *> rows;
+    for (GUIButton *button : pGUIWindow_CurrentMenu->vButtons)
+        if (button->msg == UIMSG_SkillUp)
+            rows.push_back(button);
+    ASSERT_GE(rows.size(), 2u);
+    game.moveMouse(rows[1]->rect.center());
+    game.tick();
+    game.moveMouse({600, 200}); // The paperdoll.
+    game.tick();
+
+    std::vector<std::string> names;
+    for (GUIButton *row : rows)
+        names.push_back(localization->skillName(static_cast<Skill>(row->msg_param)));
+    auto highlighted = textTape.map([&](const AccessibleVector<DrawnText> &frame) {
+        std::string result;
+        for (const DrawnText &text : frame)
+            if (text.color == ui_character_bonus_text_color || text.color == ui_character_skill_default_color)
+                for (const std::string &name : names)
+                    if (text.text.starts_with(name))
+                        result += name;
+        return result;
+    }).unique();
+    EXPECT_EQ(highlighted, tape(std::string(), names[0], names[1]));
 }
 
 GAME_TEST(MM6OffscreenFrame, DISABLED_CharacterScreenCapture) {

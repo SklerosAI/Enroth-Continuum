@@ -5,6 +5,7 @@
 
 #include "Engine/HitMap.h"
 #include "Engine/Data/AwardEnums.h"
+#include "Engine/Objects/CharacterEnums.h"
 
 #include "GUI/GUIWindow.h"
 
@@ -48,6 +49,7 @@ class GUIWindow_CharacterRecord : public GUIWindow {
 
  private:
     bool _awardsScrollBarCreated = false;
+    Skill _focusedSkill = SKILL_INVALID; // MM6 highlights this skill row, the last one the mouse was over.
     int _awardsCharacterId = -1;
     int _startAwardElem = 0;
     int _scrollableAwardSteps = 0;

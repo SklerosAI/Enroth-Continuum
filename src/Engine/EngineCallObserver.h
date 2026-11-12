@@ -3,6 +3,7 @@
 #include <string>
 #include <typeinfo>
 
+#include "Library/Color/Color.h"
 #include "Library/Geometry/Point.h"
 
 enum class EngineCall {
@@ -11,6 +12,7 @@ enum class EngineCall {
     CALL_DRAW_2D_QUAD,
     CALL_DRAW_MESSAGE_BOX,
     CALL_GUIWINDOW_DRAWTEXT,
+    CALL_GUIWINDOW_DRAWN_TEXT,
     CALL_SPECIAL_ATTACK,
     CALL_PROCESS_UIMSG,
     CALL_PAUSE_MUSIC,
@@ -29,6 +31,16 @@ struct DrawnQuad {
     Pointi position;
 
     friend bool operator==(const DrawnQuad &l, const DrawnQuad &r) = default;
+};
+
+/**
+ * Payload of `CALL_GUIWINDOW_DRAWN_TEXT`, a string drawn by `GUIWindow::DrawText` and the color it was drawn in.
+ */
+struct DrawnText {
+    std::string text;
+    Color color;
+
+    friend bool operator==(const DrawnText &l, const DrawnText &r) = default;
 };
 
 /**

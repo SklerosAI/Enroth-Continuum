@@ -26,6 +26,7 @@
 #include "TestController.h"
 
 void PrintTo(const DrawnQuad &quad, std::ostream *stream);
+void PrintTo(const DrawnText &text, std::ostream *stream);
 
 class CommonTapeRecorder {
  public:
@@ -129,6 +130,8 @@ class CommonTapeRecorder {
      * @return                          Tape object.
      */
     TestMultiTape<std::string> allGUIWindowsText();
+
+    TestMultiTape<DrawnText> drawnTexts(); // Like allGUIWindowsText, but with the color each string was drawn in.
 
     /**
      * Return a tape object of SpecialAttackTypes listing all the special attack attempts on the party.

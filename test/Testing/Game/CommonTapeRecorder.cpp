@@ -26,6 +26,10 @@ void PrintTo(const DrawnQuad &quad, std::ostream *stream) {
     *stream << quad.texture << "@(" << quad.position.x << ", " << quad.position.y << ")";
 }
 
+void PrintTo(const DrawnText &text, std::ostream *stream) {
+    *stream << "\"" << text.text << "\" in (" << int(text.color.r) << ", " << int(text.color.g) << ", " << int(text.color.b) << ")";
+}
+
 static DoorState doorStateById(int doorId) {
     auto door = std::ranges::find(pIndoor->doors, doorId, &BLVDoor::doorId);
     assert(door != pIndoor->doors.end());
@@ -231,6 +235,10 @@ TestMultiTape<std::string> CommonTapeRecorder::messageBoxes() {
 
 TestMultiTape<std::string> CommonTapeRecorder::allGUIWindowsText() {
     return _controller->recordFunctionTape<std::string>(CALL_GUIWINDOW_DRAWTEXT);
+}
+
+TestMultiTape<DrawnText> CommonTapeRecorder::drawnTexts() {
+    return _controller->recordFunctionTape<DrawnText>(CALL_GUIWINDOW_DRAWN_TEXT);
 }
 
 TestMultiTape<MonsterSpecialAttack> CommonTapeRecorder::specialAttacks() {

@@ -8,8 +8,9 @@
 
 UNIT_TEST(MM6SpellEffectGuard, RejectsUnverifiedRegularIDsAtEveryEffectEntry) {
     // Only Cure Weakness is open to player casts, every monster spell but Paralyze and Toxic Cloud to monster casts,
-    // and only the six event spells of the main quest to event casts.
+    // and the event projectiles and Armageddon to event casts.
     const std::set<int> monsterSpells = {2, 4, 6, 9, 11, 18, 24, 26, 28, 37, 58, 65, 70, 76, 80, 91, 95};
+    const std::set<int> eventSpells = {2, 6, 13, 15, 24, 28, 32, 35, 41, 90, 98};
     for (int id = 1; id <= 99; ++id) {
         const SpellId spell = static_cast<SpellId>(id);
         for (mm6::SpellEffectSource source : {mm6::SpellEffectSource::PlayerQueue,
@@ -18,8 +19,7 @@ UNIT_TEST(MM6SpellEffectGuard, RejectsUnverifiedRegularIDsAtEveryEffectEntry) {
                                                mm6::SpellEffectSource::Damage}) {
             const bool verified = (source == mm6::SpellEffectSource::PlayerQueue && id == 67) ||
                                   (source == mm6::SpellEffectSource::Monster && monsterSpells.contains(id)) ||
-                                  (source == mm6::SpellEffectSource::Event &&
-                                   (id == 6 || id == 15 || id == 28 || id == 32 || id == 90 || id == 98));
+                                  (source == mm6::SpellEffectSource::Event && eventSpells.contains(id));
             if (verified) {
                 EXPECT_NO_THROW(mm6::requireVerifiedSpellEffect(GameTitle::MM6, spell, source)) << id;
             } else {

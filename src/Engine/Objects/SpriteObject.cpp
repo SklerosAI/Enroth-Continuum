@@ -775,9 +775,10 @@ bool processSpellImpact(unsigned int uLayingItemID, Pid pid) {
         return 0;
     }
 
-    // MM6 Ice Bolt flies as the sprite of MM7 Recharge Item.
-    const bool mm6IceBolt = engine->gameTitle() == GameTitle::MM6 && object->spriteId == SPRITE_SPELL_WATER_RECHARGE_ITEM;
-    switch (mm6IceBolt ? SPRITE_SPELL_FIRE_FIRE_BOLT : object->spriteId) {
+    // MM6 Ice Bolt and Static Charge fly as the sprites of MM7 Recharge Item and Feather Fall, and hit like bolts.
+    const bool mm6Bolt = engine->gameTitle() == GameTitle::MM6 &&
+                         (object->spriteId == SPRITE_SPELL_WATER_RECHARGE_ITEM || object->spriteId == SPRITE_SPELL_AIR_FEATHER_FALL);
+    switch (mm6Bolt ? SPRITE_SPELL_FIRE_FIRE_BOLT : object->spriteId) {
         case SPRITE_SPELL_FIRE_FIRE_SPIKE:
         case SPRITE_SPELL_AIR_SPARKS:
         case SPRITE_SPELL_DARK_TOXIC_CLOUD: {

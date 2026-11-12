@@ -27,7 +27,7 @@ namespace mm6 {
  * Damage of one hit by an MM6 event spell on a character, from the original's event spell damage table. Only the low
  * six bits of the event's skill level count there, so a level of 100 hits as 36.
  *
- * @param spell                         Event spell other than Armageddon, see `isVerifiedEventSpell`.
+ * @param spell                         Event spell that flies at the party, see `isEventProjectileSpell`.
  * @param skillLevel                    Skill level from the event.
  * @param rng                           Game RNG.
  * @return                              Damage before the character's resistance.
@@ -36,9 +36,12 @@ inline int eventSpellDamage(SpellId spell, int skillLevel, RandomEngine &rng) {
     const int level = skillLevel & 0x3F;
     switch (static_cast<int>(spell)) {
         case 6: return rng.randomDice(level, 6);
+        case 13: return 2 + rng.random(5);
         case 15: return level + 2;
+        case 24: return rng.randomDice(2, 3);
         case 28: return rng.randomDice(level, 7);
         case 32: return 12 + rng.randomDice(level, 2);
+        case 41: return rng.randomDice(level, 8);
         case 90: return 25 + rng.randomDice(level, 10);
         default: break;
     }
@@ -64,10 +67,10 @@ inline DamageType spellDamageType(SpellDamageTag tag) {
 }
 
 /**
- * Launches an MM6 event spell the way the original event cast does. Sparks spreads three, five or seven sparks over 60
- * degrees by mastery, the other projectiles fly alone, and Armageddon does nothing.
+ * Launches an MM6 event spell that flies at the party. Flame Arrow and Magic Arrow fly as Cold Beam, Sparks spreads
+ * three, five or seven sparks over 60 degrees by mastery, and the other projectiles fly alone.
  *
- * @param spell                         Verified event spell, see `isVerifiedEventSpell`.
+ * @param spell                         Event projectile spell, see `isEventProjectileSpell`.
  * @param mastery                       Mastery from the event.
  * @param skillLevel                    Skill level from the event.
  * @param from                          Launch point.
@@ -75,10 +78,10 @@ inline DamageType spellDamageType(SpellDamageTag tag) {
  * @param pitch                         Launch pitch toward the target.
  * @param distance                      Distance to the target.
  */
-inline void launchEventSpell(SpellId spell, Mastery mastery, int skillLevel, Vec3f from, int yaw, int pitch, float distance) {
-    assert(isVerifiedEventSpell(spell));
-    if (static_cast<int>(spell) == 98)
-        return;
+inline void launchEventProjectile(SpellId spell, Mastery mastery, int skillLevel, Vec3f from, int yaw, int pitch, float distance) {
+    assert(isEventProjectileSpell(spell));
+    if (static_cast<int>(spell) == 2 || static_cast<int>(spell) == 35)
+        spell = static_cast<SpellId>(24);
 
     SpriteObject sprite;
     sprite.spriteId = SpellSpriteMapping[spell]; // Sprite IDs follow the spell's school and slot, as the spell IDs do.
@@ -109,6 +112,24 @@ inline void launchEventSpell(SpellId spell, Mastery mastery, int skillLevel, Vec
         spriteId = sprite.Create(yaw, pitch, speed, 0);
     }
     pAudioPlayer->playSpellSound(spell, false, SOUND_MODE_PID, Pid(OBJECT_Sprite, spriteId));
+}
+
+/**
+ * Casts an MM6 event spell the way the original event cast does. Projectiles fly at the target, and Armageddon does
+ * nothing.
+ *
+ * @param spell                         Verified event spell, see `isVerifiedEventSpell`.
+ * @param mastery                       Mastery from the event.
+ * @param skillLevel                    Skill level from the event.
+ * @param from                          Launch point.
+ * @param yaw                           Launch yaw toward the target.
+ * @param pitch                         Launch pitch toward the target.
+ * @param distance                      Distance to the target.
+ */
+inline void castEventSpell(SpellId spell, Mastery mastery, int skillLevel, Vec3f from, int yaw, int pitch, float distance) {
+    assert(isVerifiedEventSpell(spell));
+    if (isEventProjectileSpell(spell))
+        launchEventProjectile(spell, mastery, skillLevel, from, yaw, pitch, distance);
 }
 
 /**

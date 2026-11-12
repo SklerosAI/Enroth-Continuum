@@ -27,22 +27,35 @@ inline bool isVerifiedPlayerSpell(SpellId spell) {
 
 /**
  * @param spell                         MM6 spell ID from an event's CastSpell.
- * @return                              Whether an event cast of this spell has a verified launch and damage. These are
- *                                      Fireball, Sparks, Ice Bolt, Ice Blast and Toxic Cloud, plus Armageddon, which
- *                                      the original event cast leaves undone.
+ * @return                              Whether an event cast of this spell launches a projectile with a verified
+ *                                      launch, impact and damage. These are Flame Arrow, Fireball, Static Charge,
+ *                                      Sparks, Cold Beam, Ice Bolt, Ice Blast, Magic Arrow, Rock Blast and Toxic Cloud.
  */
-inline bool isVerifiedEventSpell(SpellId spell) {
+inline bool isEventProjectileSpell(SpellId spell) {
     switch (static_cast<int>(spell)) {
+        case 2:
         case 6:
+        case 13:
         case 15:
+        case 24:
         case 28:
         case 32:
+        case 35:
+        case 41:
         case 90:
-        case 98:
             return true;
         default:
             return false;
     }
+}
+
+/**
+ * @param spell                         MM6 spell ID from an event's CastSpell.
+ * @return                              Whether an event cast of this spell has a verified effect. These are the
+ *                                      projectiles, plus Armageddon, which the original event cast leaves undone.
+ */
+inline bool isVerifiedEventSpell(SpellId spell) {
+    return isEventProjectileSpell(spell) || static_cast<int>(spell) == 98;
 }
 
 /**

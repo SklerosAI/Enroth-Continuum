@@ -138,5 +138,6 @@ class ResourceManager {
     ResourceMaskTable _masks;
     float _saturation = 1.0f;
     float _lightness = 1.0f;
+    GameTitle _gameTitle = GameTitle::MM7;
     std::unique_ptr<TileGenerator> _tileGenerator;
 };

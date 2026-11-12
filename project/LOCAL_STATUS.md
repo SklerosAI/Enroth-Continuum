@@ -2,6 +2,24 @@
 
 This is a personal-machine validation note. It contains no game assets.
 
+## MM6 character screen layout — 2026-11-12
+
+The MM6 character screen now uses the original executable's layout on all
+four tabs. Every tab gets MM6's leather, side borders and button strip
+underneath. The tab frames sit where MM6 draws them, so text stays inside
+the boxes and the inventory grid art lines up with the item cells. The
+stats tab shows MM6's five resistances. The award arrows are drawn, and the
+detail-mode toggle is clickable on its picture. A cyan box over the
+paperdoll hand is gone: 37 MM6 icons fill their background with cyan
+without the transparency flag, and that cyan is now keyed out.
+
+Checked headless and in hidden offscreen captures, never visibly. Unit
+tests 1122, MM6 suite 136 passed and 2 skipped, MM7 controls 132, style
+clean, on master at `2820d16e1`. Still open: MM6's tab hotkeys (S, K, I, A)
+differ from the shared defaults, skill rows highlight on hover rather than
+keyboard focus, and the portrait hit areas are MM7 ovals rather than MM6
+circles.
+
 ## MM6 party creation layout and input — 2026-11-11
 
 MM6 party creation now uses the original executable's layout. Its background

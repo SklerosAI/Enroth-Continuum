@@ -97,6 +97,14 @@ static Color processTransparentPixel(const GrayscaleImage &image, const Palette 
     return Color(static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b), 0);
 }
 
+/**
+ * @param color                         Palette entry zero of an MM6 icon.
+ * @return                              Whether it's the cyan MM6 fills an icon's background with.
+ */
+static bool isMM6IconBackground(Color color) {
+    return color.r == 0 && color.g >= 246 && color.b >= 246; // MM6 icons use (0,255,255), (0,252,252) and (0,255,246).
+}
+
 static Palette grayscalePalette() {
     Palette result;
     for (int i = 0; i < 256; i++)
@@ -110,6 +118,7 @@ ResourceManager::~ResourceManager() = default;
 void ResourceManager::open(float saturation, float lightness, GameTitle gameTitle) {
     _saturation = saturation;
     _lightness = lightness;
+    _gameTitle = gameTitle;
     // MM6 stores its tables and event programs alongside images in icons.lod.
     _eventsLodReader.open(dfs->read(gameTitle == GameTitle::MM6 ? "data/icons.lod" : "data/events.lod"));
     _iconsLodReader.open(dfs->read("data/icons.lod"));
@@ -151,6 +160,8 @@ RgbaImage ResourceManager::icon(std::string_view filename) {
     }
 
     LodImage image = lod::decodeImage(_iconsLodReader.read(name));
+    if (_gameTitle == GameTitle::MM6 && mask.mode == MASK_DEFAULT && isMM6IconBackground(image.palette.colors[0]))
+        mask.mode = MASK_ZERO; // Hands, buttons, tabs and class icons have no transparency flag but a cyan background.
     return makeRgbaImage(image.image, maskedPalette(image, mask));
 }
 

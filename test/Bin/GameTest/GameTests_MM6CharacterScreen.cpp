@@ -1,4 +1,5 @@
 #include <array>
+#include <cstdlib>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -8,6 +9,8 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
+#include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
@@ -22,7 +25,11 @@
 #include "GUI/UI/MM6PaperdollArt.h"
 #include "GUI/UI/UICharacter.h"
 
+#include "Library/Image/Png.h"
+
 #include "Utility/String/Ascii.h"
+#include "Utility/Streams/FileOutputStream.h"
+#include "Utility/System/Path.h"
 
 static void completeEditableMM6Party() {
     for (Character &character : pParty->pCharacters) {
@@ -81,6 +88,16 @@ GAME_TEST(MM6CharacterScreenHeadless, ButtonArtExistsInMM6Archive) {
         Sizei size = engine->resources()->iconSize(name);
         EXPECT_GT(size.w, 0);
         EXPECT_GT(size.h, 0);
+    }
+}
+
+GAME_TEST(MM6CharacterScreenHeadless, IconBackgroundsAreTransparent) {
+    // The paperdoll hands, the magnifier and the party creation art were drawn on a cyan box.
+    for (std::string_view name : {"lefthand", "rthand", "magnif-a", "buttyes2", "ic_knig"}) {
+        SCOPED_TRACE(name);
+        RgbaImage image = engine->resources()->icon(name);
+        EXPECT_EQ(image[0][0].a, 0);
+        EXPECT_EQ(image[image.height() / 2][image.width() / 2].a, 255);
     }
 }
 
@@ -267,6 +284,25 @@ GAME_TEST(MM6CharacterScreenHeadless, TabsOpenByKeyAndButton) {
                             WINDOW_CHARACTER_STATS, WINDOW_CHARACTER_SKILLS, WINDOW_CHARACTER_AWARDS, WINDOW_CHARACTER_INVENTORY));
 }
 
+GAME_TEST(MM6CharacterScreenHeadless, DetailToggleClosesFromItsPicture) {
+    // In detail mode the toggle's hit box sat on the portrait bar, so clicking its picture next to the hand didn't
+    // leave detail mode.
+    auto screenTape = tapes.screen();
+    auto detailTape = tapes.custom([] { return ringscreenactive(); });
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_I);
+    game.tick(2); // The key queues the character screen for the next frame.
+    game.pressAndReleaseButton(BUTTON_LEFT, {615, 315}); // The magnifier.
+    game.tick();
+    game.pressAndReleaseButton(BUTTON_LEFT, {558, 315}); // The toggle picture in detail mode.
+    game.tick();
+
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHARACTERS));
+    EXPECT_EQ(detailTape, tape(false, true, false));
+}
+
 GAME_TEST(MM6CharacterScreenHeadless, EquippedArmorHasPaperdollHitArea) {
     enterFirstMapFromNewGame(game);
     ItemId armorId = ITEM_NULL;
@@ -448,4 +484,44 @@ GAME_TEST(MM6CharacterScreenHeadless, TabKeyRightAfterInventoryKey) {
     game.tick();
 
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_SPELL_BOOK));
+}
+
+GAME_TEST(MM6OffscreenFrame, DISABLED_CharacterScreenCapture) {
+    // Hidden capture of the four MM6 character screen tabs, with an optional dump of their hit boxes.
+    ASSERT_FALSE(window->isVisible());
+    ASSERT_EQ(dynamic_cast<NullRenderer *>(render), nullptr);
+    const char *capturePrefix = std::getenv("MM6_OFFSCREEN_CAPTURE_PATH");
+    ASSERT_NE(capturePrefix, nullptr);
+    ASSERT_TRUE(std::string_view(capturePrefix).starts_with("/private/tmp/"));
+    const char *buttonsPrefix = std::getenv("MM6_OFFSCREEN_BUTTONS_PATH");
+
+    enterFirstMapFromNewGame(game);
+    game.pressAndReleaseKey(PlatformKey::KEY_I);
+    game.tick(2); // The key queues the character screen for the next frame.
+    for (auto [key, name] : std::array<std::pair<PlatformKey, std::string_view>, 4>{
+             {{PlatformKey::KEY_C, "stats"}, {PlatformKey::KEY_S, "skills"}, {PlatformKey::KEY_A, "awards"}, {PlatformKey::KEY_I, "inventory"}}}) {
+        game.pressAndReleaseKey(key);
+        game.tick();
+        RgbaImage frame;
+        game.runGameRoutine([&frame] {
+            render->ClearTarget(Color(0, 0, 0));
+            engine->drawWorld();
+            engine->drawHUD();
+            render->flushAndScale();
+            engine->drawOverlay();
+            frame = render->MakeFullScreenshot();
+        });
+        FileOutputStream output{Path(fmt::format("{}-{}.png", capturePrefix, name))};
+        output.write(png::encode(frame));
+        output.close();
+        if (buttonsPrefix) {
+            std::string lines;
+            for (const GUIButton *button : pGUIWindow_CurrentMenu->vButtons)
+                lines += fmt::format("{} {} {} {} {} {} {}\n", button->rect.x, button->rect.y, button->rect.w, button->rect.h,
+                                     std::to_underlying(button->msg), button->msg_param, button->id);
+            FileOutputStream buttons{Path(fmt::format("{}-{}.txt", buttonsPrefix, name))};
+            buttons.write(lines);
+            buttons.close();
+        }
+    }
 }

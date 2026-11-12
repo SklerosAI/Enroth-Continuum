@@ -23,3 +23,11 @@ Update 2026-11-11 afternoon: H is integrated (`133fabf5a`, full MM7 suite 540/54
 Queued: bright white ground near the `oute3` start and in patches on `outd3` (seen before and after the sky fix).
 
 Update 2026-11-11 end of day: all lanes finished and are on master (F, H, X, SKY, C1, BOW, VISIT). No MM6 lane is active. Week wrap and the queue for next week: `handoffs/2026-11-11-claude-mm6-week-wrap.md`. The claim on MM6 as a whole stays with Claude.
+
+Update 2026-11-12: under the owner's 5 + 5 worktree split, Claude runs these MM6 lanes:
+
+| Lane | Branch / worktree | Files owned |
+| --- | --- | --- |
+| UI, MM6 screen audit | `claude/mm6-character-screen` in `../enroth-worktrees/mm6-charscreen` | `src/GUI/UI/MM6CharacterScreen.*`, MM6 branches of `UICharacter.cpp`, `UISpellbook.cpp`, `UIBooks.cpp`, `Books/*.cpp`, `UIQuickReference.cpp`, the MM6 icon mask in `ResourceManager.cpp`, new MM6 tests. Character screen merged at `2820d16e1`, books and spellbook next. |
+| C2, chain chapter C2 | `claude/mm6-chain-c2` in `../enroth-worktrees/mm6-chain-c2` | new `GameTests_MM6CampaignChainC2.cpp`, additions to `MM6CampaignChain.{h,cpp}`, small MM6-owned fixes. |
+| MSL, MM6 missiles | `claude/mm6-missiles` in `../enroth-worktrees/mm6-missiles` | MM6 missile sprite and Percival arrow handling, new MM6 tests. |

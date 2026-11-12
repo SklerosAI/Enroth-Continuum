@@ -3816,7 +3816,8 @@ bool Actor::ActorHitOrMiss(Character *pPlayer) {
 //----- (0042756B) --------------------------------------------------------
 int Actor::CalcMagicalDamageToActor(DamageType dmgType,
                                     signed int incomingDmg) {
-    mm6::requireVerifiedMonsterDamage(engine->gameTitle(), dmgType);
+    if (engine->gameTitle() == GameTitle::MM6)
+        return mm6::monsterIncomingDamage(monsterInfo, dmgType, incomingDmg, *grng);
     int v4;             // edx@1
     int v5;             // ecx@1
     signed int v6;      // eax@4

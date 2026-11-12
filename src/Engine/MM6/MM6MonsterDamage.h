@@ -78,6 +78,26 @@ inline void requireVerifiedMonsterDamage(GameTitle title, DamageType type) {
 }
 
 /**
+ * @param monster                       MM6 monster.
+ * @param type                          Damage channel, one of the seven MM6 damage kinds. Others throw.
+ * @return                              Resistance MM6.exe rolls against for this channel. Energy has no resistance
+ *                                      column and rolls against 0.
+ */
+inline int monsterResistanceToDamage(const MonsterInfo &monster, DamageType type) {
+    switch (type) {
+        case DAMAGE_PHYSICAL: return monsterResistanceForAttack(monster, MonsterDamageLabel::Physical);
+        case DAMAGE_FIRE: return monsterResistanceForAttack(monster, MonsterDamageLabel::Fire);
+        case DAMAGE_AIR: return monsterResistanceForAttack(monster, MonsterDamageLabel::Electricity);
+        case DAMAGE_WATER: return monsterResistanceForAttack(monster, MonsterDamageLabel::Cold);
+        case DAMAGE_EARTH: return monsterResistanceForAttack(monster, MonsterDamageLabel::Poison);
+        case DAMAGE_MAGIC: return monsterResistanceForAttack(monster, MonsterDamageLabel::Magic);
+        case DAMAGE_ENERGY: return 0;
+        default: break;
+    }
+    throw std::runtime_error("MM6 damage channel is not verified");
+}
+
+/**
  * @param kind                          Damage kind byte of an MM6 event, the same numbering the original gives the
  *                                      monsters.txt labels: Physical, Magic, Fire, Electricity, Cold, Poison, Energy.
  * @return                              Shared damage channel for it.

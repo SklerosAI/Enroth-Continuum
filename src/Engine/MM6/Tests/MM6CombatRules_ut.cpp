@@ -5,6 +5,7 @@
 
 #include "Engine/MM6/MM6CombatRules.h"
 #include "Engine/Objects/Character.h"
+#include "Engine/Objects/Monsters.h"
 #include "Engine/Party.h"
 
 #include "Library/Random/SequentialRandomEngine.h"
@@ -95,4 +96,34 @@ UNIT_TEST(MM6CombatRules, ResistanceRollRunsWithoutLuckOrResistance) {
 
     EXPECT_EQ(mm6::resistedDamage(100, 0, -30, rng), 100);
     EXPECT_EQ(rng.state(), 1);
+}
+
+UNIT_TEST(MM6CombatRules, MonsterResistanceReadsItsOwnColumn) {
+    // Each damage kind rolls against its own MM6 monster resistance column, 200 or more is immunity without a roll,
+    // and Energy rolls against nothing.
+    MonsterInfo monster;
+    monster.mm6Resistances = mm6::MonsterResistances{.fire = 200, .electricity = 30, .cold = 0, .poison = 0, .physical = 0, .magic = 30};
+    SequentialRandomEngine rng;
+
+    rng.seed(0);
+    EXPECT_EQ(mm6::monsterIncomingDamage(monster, DAMAGE_FIRE, 100, rng), 0);
+    EXPECT_EQ(rng.state(), 0);
+
+    rng.seed(29);
+    EXPECT_EQ(mm6::monsterIncomingDamage(monster, DAMAGE_MAGIC, 100, rng), 6);
+    EXPECT_EQ(rng.state(), 33);
+
+    rng.seed(29);
+    EXPECT_EQ(mm6::monsterIncomingDamage(monster, DAMAGE_AIR, 100, rng), 6);
+    EXPECT_EQ(rng.state(), 33);
+
+    rng.seed(29);
+    EXPECT_EQ(mm6::monsterIncomingDamage(monster, DAMAGE_WATER, 100, rng), 100);
+    EXPECT_EQ(rng.state(), 30);
+
+    rng.seed(29);
+    EXPECT_EQ(mm6::monsterIncomingDamage(monster, DAMAGE_ENERGY, 100, rng), 100);
+    EXPECT_EQ(rng.state(), 30);
+
+    EXPECT_THROW(mm6::monsterIncomingDamage(monster, DAMAGE_MIND, 100, rng), std::runtime_error);
 }

@@ -344,6 +344,8 @@ Actor *EngineController::spawnMonster(Vec3f position, MonsterId id, SpawnFlags f
         actor->monsterInfo.resLight = 0;
         actor->monsterInfo.resDark = 0;
         actor->monsterInfo.resPhysical = 0;
+        if (actor->monsterInfo.mm6Resistances)
+            actor->monsterInfo.mm6Resistances = mm6::MonsterResistances();
     }
     if (flags & SPAWN_LEVEL_1)
         actor->monsterInfo.level = 1;

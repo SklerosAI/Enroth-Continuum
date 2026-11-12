@@ -173,6 +173,23 @@ inline int characterIncomingDamage(const Character &character, DamageType type, 
 }
 
 /**
+ * MM6 rule for damage that reaches a monster, from the original monster damage routine. A resistance of 200 or more
+ * is immunity, a lower one goes through `resistedDamage` with no luck bonus.
+ *
+ * @param monster                       Monster taking the hit.
+ * @param type                          Damage channel, see `monsterResistanceToDamage`.
+ * @param damage                        Incoming damage.
+ * @param rng                           Game RNG.
+ * @return                              Damage after resistance.
+ */
+inline int monsterIncomingDamage(const MonsterInfo &monster, DamageType type, int damage, RandomEngine &rng) {
+    const int resistance = monsterResistanceToDamage(monster, type);
+    if (resistance >= 200)
+        return 0;
+    return resistedDamage(damage, 0, resistance, rng);
+}
+
+/**
  * Breaks an item for a successful MM6 break-item special attack. MM6 has no hardened items. The original portrait
  * animation for this effect is not mapped, the shared one has no MM6 icon frames.
  *

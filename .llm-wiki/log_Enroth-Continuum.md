@@ -3402,3 +3402,9 @@ Chronological record of wiki activity.
 - Extended the Angel-only probe into Thom Lumbra's complete route: real offer and refusal, Knight/Eagle/Angel acquisition from the two Grand Temples and Maze chest UIs, and placement through the Avlee, Tatalia and Bracada authored shrine faces.
 - The return clears the quest, grants 50,000 gold, 50,000 XP per character and the award to all four characters. The production-Save writer and separate normal-Load reader passed with byte-identical slot contents; missing-profile and no-save admissions were rejected.
 - The regional side/promotion selection passed 12/12 headlessly, changed-file lint passed and the full `check_style` gate passed 157/157. Disposable profiles were moved to Trash.
+
+## [2026-11-12] verify | MM6 chain chapter C3, councils D and E
+- by: T-Burton-ND via claude
+- Chapter C3 runs from C2's save on oute2 to a save on outc1: Stromgard's winter quest, Anthony Stone's Prince of Thieves quest, the Hermit breaking the weather spell, Takao's house into the Free Haven sewer, the Prince's bed event hiring him, the ladder back, then both councils' rewards. All by input, with teleports to the castles, the Hermit's hut, Takao's door and inside the sewer as fixtures.
+- None of the expected blockers needed engine work. A trace of `MM6.exe` shows SpeakNPC opens the conversation and carries on with the script, as the port does. The original skips SpeakNPC for an NPC whose house is 0, which the port doesn't, and that could matter in d09 and d07 later.
+- Merged on `master` at `0e1480602`, test only. The lane's own run passed the chain C0 to C3, MM6 suite 142 passed and 2 skipped, MM7 controls 132. The street NPC dialogue still uses MM7's layout and three MM7 images MM6 lacks. Next for C4: where Devil Outpost keeps the Devil Plans, and the t7 chest with Zenofex's letter.

@@ -1,11 +1,15 @@
 # Codex claim: MM7 war alternatives
 
+Status: integrated on neutral `master` at merge `5236361fa`; retained as the
+completed scope record. The remaining failure branches and result-bit
+combinations are listed in `project/MM7_REMAINING_QUESTS_AND_AREAS.md`.
+
 - Owner: Codex, MM7 delivery lane.
 - Branch/worktree: use `codex/mm7-dark-chain` in the existing
   `mm7-combat-fixes` checkout unless a disjoint MM7 worktree is explicitly
   created within Codex's five-worktree budget.
 - Scope: source-audit and headlessly cover the Loren and Riverstride real-item,
-  decoy-item and decline outcomes, resulting war-score state, trumpet recipient
+  decoy-item and ignored/timeout outcomes, resulting bit-derived state, trumpet recipient
   and neutral outcome. Add a separate production-Save/fresh-process-Load
   checkpoint only after the authored route and durable assertions are stable.
 - Expected files: a new focused MM7 GameTest and registration, exact disposable

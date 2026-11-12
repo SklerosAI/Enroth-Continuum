@@ -123,8 +123,9 @@ continuity. It does not exercise post-install Atlas launch or visible play.
 
 ## Regional side-quest checkpoints — 2026-11-12
 
-Five exact-filter writer/reader pairs now give the completed Season's Stole,
-Kerrid letter, Parsons' Quill, Missing Contestants and Three Paintings routes durable
+Six exact-filter writer/reader pairs now give the completed Season's Stole,
+Kerrid letter, Parsons' Quill, Missing Contestants, Three Paintings and Three
+Statuettes routes durable
 boundaries. Each writer runs the real covered route, exits dialogue, writes
 `save000.mm7` through normal MM7 Save, and passes native structural preflight.
 A separate fresh headless process selects that slot through the normal Load
@@ -132,7 +133,9 @@ menu and verifies the final map, quest bits, physical-item consumption, gold,
 XP and award ownership. Missing Contestants includes the real Markham offer,
 no-shield refusal and Dragon's Lair floor pickup. Three Paintings includes
 Visconti's offer and refusal plus the Angel, Archibald and Roland authored wall
-interactions. Kerrid also preserves the all-food audience cost; Parsons preserves Erathia's final reputation of -5.
+interactions. Three Statuettes preserves all three placement bits and the
+all-character award after its three dungeon chests and outdoor shrines. Kerrid
+also preserves the all-food audience cost; Parsons preserves Erathia's final reputation of -5.
 The slot digest stayed unchanged across every reader.
 
 The writer is refused without the exact marked owner-only temporary profile,

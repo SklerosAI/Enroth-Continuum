@@ -21,7 +21,8 @@ enum class EngineCall {
 using enum EngineCall;
 
 /**
- * Payload of `CALL_DRAW_2D_QUAD`, a texture drawn by `Renderer::DrawQuad2D` and the top left corner it was drawn at.
+ * Payload of `CALL_DRAW_2D_QUAD`, a texture drawn by `Renderer::DrawQuad2D` or `Renderer::DrawImage` and the top left
+ * corner it was drawn at.
  */
 struct DrawnQuad {
     std::string texture;

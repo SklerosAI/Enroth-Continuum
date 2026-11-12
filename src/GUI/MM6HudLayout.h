@@ -1,5 +1,10 @@
 #pragma once
 
+#include <array>
+#include <string_view>
+
+#include "Engine/PartyEnums.h"
+
 #include "Library/Geometry/Rect.h"
 
 inline constexpr int mm6HudFoodGoldY = 356;
@@ -39,3 +44,22 @@ inline constexpr Pointi mm6HudZoomInCenter = {595, 42}; // The plus mark on TAP.
 inline constexpr int mm6HudZoomRadius = 17;
 
 inline constexpr int mm6HudStatusTextY = 355;
+
+/**
+ * Party buff that MM6.exe shows as an animated sprite on the right panel.
+ */
+struct MM6HudBuffSprite {
+    PartyBuff buff;
+    std::string_view sprite;
+    Pointi anchor; // Bottom centre of the sprite.
+};
+
+inline constexpr std::array<MM6HudBuffSprite, 7> mm6HudBuffSprites = {{
+    {PARTY_BUFF_RESIST_FIRE, "i2_fire", {521, 254}},
+    {PARTY_BUFF_RESIST_WATER, "i4_cold", {567, 254}},
+    {PARTY_BUFF_RESIST_AIR, "i3_ltng", {543, 254}}, // Electricity.
+    {PARTY_BUFF_PROTECTION_FROM_MAGIC, "i6_magic", {610, 254}},
+    {PARTY_BUFF_RESIST_BODY, "i5_poisn", {588, 254}}, // Poison.
+    {PARTY_BUFF_FEATHER_FALL, "i1_fall", {500, 254}},
+    {PARTY_BUFF_WIZARD_EYE, "wizeye", {556, 30}}
+}};

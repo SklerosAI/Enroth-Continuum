@@ -1192,12 +1192,22 @@ void GameUI_DrawCharacterSelectionFrame() {
 
 //----- (0044162D) --------------------------------------------------------
 void GameUI_DrawPartySpells() {
-    for (int i = 0; i < spellBuffsAtRightPanel.size(); ++i) {
-        if (pParty->pPartyBuffs[spellBuffsAtRightPanel[i]].Active()) {
-            GraphicsImage *icon = party_buff_icons[i];
-            AtlasLayout layout({16, 8}, {icon->width() / 16, icon->height() / 8});
-            int frame = (animTimer->time().realtimeMilliseconds() / 20 + 20 * pPartySpellbuffsUI_smthns[i]) % 126;
-            render->DrawQuad2D(icon, layout[frame], pPartySpellbuffsUI_XYs[i]);
+    if (engine->gameTitle() == GameTitle::MM6) {
+        for (const MM6HudBuffSprite &buff : mm6HudBuffSprites) {
+            if (!pParty->pPartyBuffs[buff.buff].Active())
+                continue;
+            SpriteFrame *frame = pSpriteFrameTable->GetFrame(pSpriteFrameTable->FastFindSprite(buff.sprite), animTimer->time());
+            GraphicsImage *sprite = frame->sprites[0];
+            render->DrawImage(sprite, Recti({buff.anchor.x - sprite->width() / 2, buff.anchor.y - sprite->height()}, sprite->size()), frame->paletteId);
+        }
+    } else {
+        for (int i = 0; i < spellBuffsAtRightPanel.size(); ++i) {
+            if (pParty->pPartyBuffs[spellBuffsAtRightPanel[i]].Active()) {
+                GraphicsImage *icon = party_buff_icons[i];
+                AtlasLayout layout({16, 8}, {icon->width() / 16, icon->height() / 8});
+                int frame = (animTimer->time().realtimeMilliseconds() / 20 + 20 * pPartySpellbuffsUI_smthns[i]) % 126;
+                render->DrawQuad2D(icon, layout[frame], pPartySpellbuffsUI_XYs[i]);
+            }
         }
     }
 
@@ -1606,6 +1616,9 @@ void GameUI_DrawMinimap(const Recti &rect, int zoom) {
 
 //----- (00441498) --------------------------------------------------------
 void GameUI_DrawTorchlightAndWizardEye() {
+    if (engine->gameTitle() == GameTitle::MM6)
+        return; // MM6 has no torch light sprite, and draws its wizard eye with the party buffs.
+
     if (current_screen_type == SCREEN_GAME ||
         current_screen_type == SCREEN_MENU ||
         current_screen_type == SCREEN_OPTIONS ||

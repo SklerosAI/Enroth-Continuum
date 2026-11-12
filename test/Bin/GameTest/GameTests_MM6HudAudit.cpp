@@ -1,3 +1,4 @@
+#include <cctype>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -82,6 +83,14 @@ static void enterMapAtShippedEntrance(EngineController &game, std::string_view f
     while (!loaded)
         game.tick(); // The loading screen draws frames.
     ASSERT_EQ(engine->_currentLoadedMapId, map);
+}
+
+static DrawnQuad withoutAnimationFrame(DrawnQuad quad) {
+    // Buff sprite frames are numbered, i2_fire1 and on. Which frame is up depends on how long the loading screen ran.
+    if (quad.texture.size() > 3 && quad.texture[2] == '_')
+        while (std::isdigit(static_cast<unsigned char>(quad.texture.back())))
+            quad.texture.pop_back();
+    return quad;
 }
 
 GAME_TEST(MM6HudAudit, NativeNpcArrows) {
@@ -189,4 +198,38 @@ GAME_TEST(MM6Hud, ZoomCircles) {
     game.tick();
 
     EXPECT_EQ(zoomTape, tape(1024, 512));
+}
+
+GAME_TEST(MM6Hud, PartyBuffSprites) {
+    // Party buffs were drawn as MM7's isn icons, which MM6 doesn't have, instead of MM6's sprites on the shelf.
+    auto quadsTape = tapes.hudQuads();
+    enterFirstMapFromNewGame(game);
+    game.runGameRoutine([] {
+        for (PartyBuff buff : {PARTY_BUFF_RESIST_FIRE, PARTY_BUFF_RESIST_WATER, PARTY_BUFF_RESIST_AIR, PARTY_BUFF_PROTECTION_FROM_MAGIC,
+                               PARTY_BUFF_RESIST_BODY, PARTY_BUFF_FEATHER_FALL})
+            pParty->pPartyBuffs[buff].Apply(pParty->GetPlayingTime() + Duration::fromHours(1), MASTERY_EXPERT, 1, 0, 0);
+    });
+    test.startTaping();
+
+    game.tick();
+
+    auto shelf = quadsTape.flatten().filter([](const DrawnQuad &quad) { return quad.position.x >= 468 && quad.position.y > 141 && quad.position.y < 260; });
+    EXPECT_EQ(shelf.map(withoutAnimationFrame), tape(DrawnQuad{"i2_fire", {513, 231}}, DrawnQuad{"i4_cold", {555, 231}}, DrawnQuad{"i3_ltng", {530, 231}},
+                                                     DrawnQuad{"i6_magc", {597, 231}}, DrawnQuad{"i5_pois", {579, 231}}, DrawnQuad{"i1_ffal", {490, 231}}));
+}
+
+GAME_TEST(MM6Hud, TorchLightAndWizardEye) {
+    // An active torch light or wizard eye crashed MM6 on MM7's torchA and wizeyeA icon animations.
+    auto quadsTape = tapes.hudQuads();
+    enterFirstMapFromNewGame(game);
+    game.runGameRoutine([] {
+        for (PartyBuff buff : {PARTY_BUFF_TORCHLIGHT, PARTY_BUFF_WIZARD_EYE})
+            pParty->pPartyBuffs[buff].Apply(pParty->GetPlayingTime() + Duration::fromHours(1), MASTERY_EXPERT, 1, 0, 0);
+    });
+    test.startTaping();
+
+    game.tick();
+
+    auto topPanel = quadsTape.flatten().filter([](const DrawnQuad &quad) { return quad.position.x >= 468 && quad.position.y < 141; });
+    EXPECT_EQ(topPanel, tape(DrawnQuad{"", {480, 25}}, DrawnQuad{"mapdir2", {553, 79}}, DrawnQuad{"tap2", {468, 0}}, DrawnQuad{"wizeye", {547, 20}})); // No torch light.
 }

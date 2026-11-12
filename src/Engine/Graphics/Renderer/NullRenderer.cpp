@@ -65,7 +65,10 @@ void NullRenderer::DrawQuad2D(GraphicsImage *texture, const Recti &srcRect, cons
     }
 }
 
-void NullRenderer::DrawImage(GraphicsImage *, const Recti &rect, int paletteid, Color colourmask) {}
+void NullRenderer::DrawImage(GraphicsImage *img, const Recti &rect, int paletteid, Color colourmask) {
+    if (img && engine->callObserver)
+        engine->callObserver->notify(CALL_DRAW_2D_QUAD, DrawnQuad{img->name(), rect.topLeft()});
+}
 
 void NullRenderer::BlendTextures(int a2, int a3, GraphicsImage *a4, GraphicsImage *a5, int t,
                                  int start_opacity, int end_opacity) {}

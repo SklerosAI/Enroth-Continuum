@@ -113,7 +113,7 @@ class CommonTapeRecorder {
 
     TestMultiTape<std::string> hudTextures();
 
-    TestMultiTape<DrawnQuad> hudQuads(); // Like hudTextures, but with the position each texture was drawn at.
+    TestMultiTape<DrawnQuad> hudQuads(); // Like hudTextures, but with positions, and paletted images drawn by DrawImage too.
 
     /**
      * Return a tape object of strings listing all the hints whenever a pop up message box was called.

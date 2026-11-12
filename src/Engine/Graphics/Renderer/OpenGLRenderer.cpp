@@ -490,6 +490,9 @@ void OpenGLRenderer::DrawImage(GraphicsImage *img, const Recti &rect, int palett
         return;
     }
 
+    if (engine->callObserver)
+        engine->callObserver->notify(CALL_DRAW_2D_QUAD, DrawnQuad{img->name(), rect.topLeft()});
+
     Colorf cf = uColor32.toColorf();
 
     int width = img->width();

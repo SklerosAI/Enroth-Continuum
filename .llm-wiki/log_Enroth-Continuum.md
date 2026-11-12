@@ -3328,3 +3328,8 @@ Chronological record of wiki activity.
 - The first full run exposed that the valid-indoor-spawn backport lacked its paired upstream `issue_1666` RNG trace update. Applying that exact trace change made the test pass 3/3 without another runtime change.
 - The final headless MM7 suite ran 569 tests: 567 passed and two vendor-mod cases skipped as expected. The 10 regional side/promotion tests and full `check_style` also passed.
 
+## [2026-11-12] fix | MM6 character screen layout
+- by: T-Burton-ND via claude
+- The MM6 character screen tabs now follow a static trace of `MM6.exe`: MM6 underlay, frame positions, the MM6 stats tab with five resistances, skill heading spacing, award arrows and spacing, and the detail-mode toggle. MM6 icons with a cyan background and no transparency flag are now keyed out, which removes the cyan box over the paperdoll hand.
+- Merged on `master` at `2820d16e1`. Unit tests 1122, MM6 suite 136 passed and 2 skipped, MM7 controls 132, `check_style` clean. The layout was checked in hidden offscreen captures, not visibly.
+- A sweep of the key-opened screens found MM7 art names in the MM6 spellbook, autonotes and map books, and a wrong reputation label on quick reference. Those are the next MM6 lane.

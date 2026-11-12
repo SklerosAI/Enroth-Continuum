@@ -3447,3 +3447,13 @@ Chronological record of wiki activity.
 - Covered Malwick's placed Emerald Island street conversation through refusal, repeat offer and Wand acceptance, then proved the exact 1,007/1,008-hour Harmondale message boundary and Niles's real Tatalia entrance with a missing-tapestry refusal.
 - Corrected the prior model from two equal deadlines to a 336-hour Niles-visit deadline and a 672-hour tapestry-return deadline. Missing either deadline now has explicit test evidence for the failure transition, active-bit cleanup, bank loss, live group-9 invaders and a closed Harmondale service; the existing raid test proves service reopening after both attacker groups are cleared.
 - All three focused tests and the combined six-test Malwick/raid control passed headlessly, and the full 157-target style gate passed. Physical Light/Dark tapestry acquisition, successful return, one-month allied-region hostility and fresh-process durability remain open.
+
+## [2026-11-12] verify | MM6 chain chapter C4, council F and the traitor
+- by: T-Burton-ND via claude
+- Chapter C4 continues from C3's save through Temper's council and the traitor step. Three MM6 item fixes came with it: a monster with no corpse sprite drops its carried item on the floor (MM6.exe 0x44C204), and items from MM6 events and from monsters carry the raw record MM6 writes.
+- Merged on `master` at `b834a70e3`. Unit tests 1122, MM6 suite 175 passed and 2 skipped, MM7 controls 144, `check_style` clean, chain C0 to C4 passed in a fresh profile. The lane was stopped before its own report, so the list of C4 fixtures is in the chapter file only.
+
+## [2026-11-12] fix | MM6 dungeons lit by sector and wall lights
+- by: T-Burton-ND via claude
+- MM6 dungeons drew nearly black. The GL renderer lit every indoor face from the darkest sector level of the whole map, which is full dark on d02, and the MM6 BLV light record was read in the wrong field order, so every light loaded with radius 0 and most read as off. MM6 now lights each face from its own sector level and the switched-on lights of the visible sectors, as `MM6.exe` does (0x4940D7, 0x493990).
+- Merged on `master` at `77e1f3432`. Unit tests 1122, MM6 suite 172 passed and 2 skipped, MM7 controls 144, `check_style` clean. MM7 dungeons d17 and d29 render pixel-identical before and after, checked offscreen because the MM7 controls run without a renderer. A before and after frame of d02 is in the owner's progress captures.

@@ -150,8 +150,8 @@ void Party::zero(bool resetMouseCursor) {
         for (int j = 0; j < 12; ++j)
             spellBooksInGuilds[i][j].Reset();
 
-    pHireling1Name[0] = 0;
-    pHireling2Name[0] = 0;
+    pHireling1Name.clear();
+    pHireling2Name.clear();
     armageddon_timer = 0_ticks;
     armageddonDamage = 0;
     pTurnBasedCharacterRecoveryTimes.fill(0_ticks);
@@ -417,8 +417,8 @@ static void setProvisionalMM6Portraits(std::array<Character, 4> &characters) {
 }
 
 void Party::createDefaultParty() {
-    pHireling1Name[0] = 0;
-    pHireling2Name[0] = 0;
+    pHireling1Name.clear();
+    pHireling2Name.clear();
     this->hirelingScrollPosition = 0;
     pHirelings.fill(NPCData());
     pHirelingsSacrifice.fill(NPCSacrificeStatus());

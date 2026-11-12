@@ -13,6 +13,17 @@ The [public capture packet](../project/MM7_OFFSCREEN_FRAME_CAPTURE.md) is the so
 
 The local-only Mac GameTest build passed **1/1** with private MM7 data. The private 640×480 frame was inspected locally: world, minimap, HUD and four portraits rendered. A host monitor took **98** samples at 10 ms intervals, finding **zero on-screen test windows** and **zero frontmost-app changes**. A wrong-filter invocation rejected before SDL startup. No capture, proprietary asset or private log is tracked.
 
+The later progress-capture sweep exposed a diagnostic placement defect rather
+than an established renderer defect. It asked every target map for `Party
+Start`; Tatalia and Avlee have no such decoration, so the destination contract
+kept the previous Emerald Island coordinates and the private frames viewed
+terrain from an invalid position. The capture now selects the first available
+party/north/south/east/west start after load and fails if none exists. A normal
+Null-renderer check passed 1/1 across Tatalia, Avlee and Shoals and proved the
+two missing-`Party Start` fallbacks. No new graphics process ran under the
+owner's 2026-11-12 headless-only rule; later hidden recaptures must distinguish
+valid map appearance and Shoals underwater fog from genuine rendering issues.
+
 The MM7 health and mana bars flank the portrait art consistently. Their inherited render coordinates repeat at 115-pixel intervals. A slight visual offset remains a user observation, but the capture and source do not establish a better target position, so HUD geometry was left unchanged. A separate 1–2 pixel hover-hitbox discrepancy does not account for visible placement.
 
 This diagnostic does not prove visible candidate-app launch, normal audio or input, save/quit/reload, installed-app cutover or a complete campaign. It rebuilt GameTest after copying test and startup files into the earlier temporary source extraction; that extraction was marked modified and is no longer pristine build evidence. The separately staged Atlas app was untouched. Continue using the protected installed MM7 app until candidate visible play and save/reload pass.

@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <memory>
+#include <utility>
 
 #include "Engine/Localization.h"
 #include "Engine/Engine.h"
@@ -12,6 +13,7 @@
 #include "GUI/GUIButton.h"
 #include "GUI/MM6HudBookControls.h"
 #include "GUI/UI/UIBooks.h"
+#include "GUI/UI/Books/MM6BookLayout.h"
 
 #include "Media/Audio/AudioPlayer.h"
 
@@ -36,9 +38,28 @@ void GUIWindow_Book::drawExitButton() {
         // The original MM6 book frame and exit tab are drawn at these screen positions.
         render->DrawQuad2D(assets->getIcon("book"), {8, 8});
         render->DrawQuad2D(assets->getIcon("tabexit"), {360, 332});
+        render->DrawQuad2D(assets->getIcon("border5"), mm6::books::kBorder5Position);
+        render->DrawQuad2D(assets->getIcon("border6"), mm6::books::kBorder6Position);
     } else {
         render->DrawQuad2D(ui_exit_cancel_button_background, {471, 445});
     }
+}
+
+GUIButton *GUIWindow_Book::createMM6Tab(int y, BookButtonAction action, InputAction inputAction, std::string_view label, GraphicsImage *onArt) {
+    return CreateButton({mm6::books::kTabX, y}, mm6::books::kTabSize, BUTTON_TYPE_NORMAL, 0, UIMSG_ClickBooksBtn, std::to_underlying(action),
+                        inputAction, label, {onArt});
+}
+
+void GUIWindow_Book::drawMM6Tab(int y, GraphicsImage *onArt, GraphicsImage *offArt, bool drawOn) {
+    if (drawOn) {
+        render->DrawQuad2D(onArt, {mm6::books::kTabX, y});
+    } else {
+        render->DrawQuad2D(offArt, {mm6::books::kTabOffX, y});
+    }
+}
+
+bool GUIWindow_Book::isButtonPressed(BookButtonAction action) const {
+    return _bookButtonClicked && _bookButtonAction == action;
 }
 
 void GUIWindow_Book::initializeFonts() {

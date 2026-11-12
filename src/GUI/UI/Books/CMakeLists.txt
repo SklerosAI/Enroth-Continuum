@@ -15,6 +15,7 @@ set(GUI_UI_BOOKS_HEADERS
         JournalBook.h
         LloydsBook.h
         MapBook.h
+        MM6BookLayout.h
         QuestBook.h
         TownPortalBook.h)
 

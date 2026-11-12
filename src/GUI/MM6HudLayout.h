@@ -37,3 +37,5 @@ inline constexpr int mm6HudMinimapArrowIndex(int yaw) {
 inline constexpr Pointi mm6HudZoomOutCenter = {502, 42}; // The minus mark on TAP.
 inline constexpr Pointi mm6HudZoomInCenter = {595, 42}; // The plus mark on TAP.
 inline constexpr int mm6HudZoomRadius = 17;
+
+inline constexpr int mm6HudStatusTextY = 355;

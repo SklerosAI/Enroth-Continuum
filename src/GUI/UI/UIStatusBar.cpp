@@ -3,6 +3,7 @@
 #include <string>
 
 #include "Engine/AssetsManager.h"
+#include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Localization.h"
 #include "Engine/mm7_data.h"
@@ -10,6 +11,7 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 
 #include "GUI/GUIFont.h"
+#include "GUI/MM6HudLayout.h"
 
 #include "GUI/UI/UIGame.h"
 
@@ -25,14 +27,22 @@ void StatusBar::draw() {
     render->DrawQuad2D(game_ui_statusbar, {0, 352});
 
     const std::string &status = get();
-    if (status.length() > 0) {
-        GUIWindow::DrawText(assets->pFontLucida.get(), { assets->pFontLucida->AlignText_Center(450, status) + 11, 357}, uGameUIFontMain, status, pPrimaryWindow->frameRect, 0, uGameUIFontShadow);
+    if (status.empty())
+        return;
+
+    const int x = assets->pFontLucida->AlignText_Center(450, status) + 11;
+    if (engine->gameTitle() == GameTitle::MM6) {
+        Color color = _eventStatusExpireTime ? colorTable.PaleCanary : colorTable.White;
+        GUIWindow::DrawText(assets->pFontLucida.get(), {x, mm6HudStatusTextY}, color, status, pPrimaryWindow->frameRect, 0, colorTable.Black);
+    } else {
+        GUIWindow::DrawText(assets->pFontLucida.get(), {x, 357}, uGameUIFontMain, status, pPrimaryWindow->frameRect, 0, uGameUIFontShadow);
     }
 }
 
 void StatusBar::drawForced(std::string_view str, Color color) {
     render->DrawQuad2D(game_ui_statusbar, {0, 352});
-    GUIWindow::DrawText(assets->pFontLucida.get(), { assets->pFontLucida->AlignText_Center(450, str) + 11, 357}, color, str, pPrimaryWindow->frameRect);
+    const int y = engine->gameTitle() == GameTitle::MM6 ? mm6HudStatusTextY : 357;
+    GUIWindow::DrawText(assets->pFontLucida.get(), { assets->pFontLucida->AlignText_Center(450, str) + 11, y}, color, str, pPrimaryWindow->frameRect);
 }
 
 void StatusBar::update() {

@@ -4,6 +4,7 @@
 #include <set>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "Testing/Game/GameTest.h"
 
@@ -123,6 +124,48 @@ GAME_TEST(MM6SpritePalette, TreeFrameUsesRecordedPalette) {
     };
     EXPECT_GT(dominantPixels("tree01", false), 1000u);
     EXPECT_GT(dominantPixels("tree03", true), 1000u);
+}
+
+GAME_TEST(MM6OffscreenFrame, DISABLED_PartyCreationCapture) {
+    // Hidden capture of the MM6 party creation screen, with an optional dump of its hit boxes.
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_FALSE(window->isVisible());
+    ASSERT_EQ(dynamic_cast<NullRenderer *>(render), nullptr);
+
+    const char *capturePath = std::getenv("MM6_OFFSCREEN_CAPTURE_PATH");
+    ASSERT_NE(capturePath, nullptr);
+    const std::string_view destination(capturePath);
+    ASSERT_TRUE(destination.starts_with("/tmp/") || destination.starts_with("/private/tmp/"));
+    ASSERT_TRUE(Path(capturePath).isNormalized());
+    ASSERT_EQ(Path(capturePath).extension(), ".png");
+
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2); // The main menu closes on the first frame, party creation opens on the second.
+    ASSERT_NE(pGUIWindow_CurrentMenu, nullptr);
+    ASSERT_EQ(pGUIWindow_CurrentMenu->eWindowType, WINDOW_PARTY_CREATION);
+
+    RgbaImage frame;
+    game.runGameRoutine([&frame] {
+        render->ClearTarget(Color(0, 0, 0));
+        pGUIWindow_CurrentMenu->Update();
+        render->flushAndScale();
+        frame = render->MakeFullScreenshot();
+    });
+    ASSERT_EQ(frame.size(), Sizei(640, 480));
+
+    FileOutputStream output{Path(capturePath)};
+    output.write(png::encode(frame));
+    output.close();
+
+    if (const char *buttonsPath = std::getenv("MM6_OFFSCREEN_BUTTONS_PATH")) {
+        std::string lines;
+        for (const GUIButton *button : pGUIWindow_CurrentMenu->vButtons)
+            lines += fmt::format("{} {} {} {} {} {} {}\n", button->rect.x, button->rect.y, button->rect.w, button->rect.h,
+                                 std::to_underlying(button->msg), button->msg_param, button->id);
+        FileOutputStream buttons{Path(buttonsPath)};
+        buttons.write(lines);
+        buttons.close();
+    }
 }
 
 // Explicit, fresh-process, macOS-only capture. --offscreen-gl installs the

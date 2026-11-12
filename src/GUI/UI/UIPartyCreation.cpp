@@ -28,6 +28,7 @@
 #include "GUI/GUIButton.h"
 #include "GUI/GUIFont.h"
 #include "GUI/GUIMessageQueue.h"
+#include "GUI/UI/MM6PartyCreationLayout.h"
 #include "GUI/UI/UIPartyCreation.h"
 
 #include "Io/Mouse.h"
@@ -161,8 +162,9 @@ void CreateParty_EventLoop() {
                 7 +
                 pGUIWindow_CurrentMenu->pStartingPosActiveItem + 7 * param;
             uPlayerCreationUI_SelectedCharacter = param;
-            new OnButtonClick(pCreationUI_BtnPressLeft[param]->rect.topLeft(), {0, 0},
-                pCreationUI_BtnPressLeft[param], std::string(), false);
+            if (!pCreationUI_BtnPressLeft[param]->vTextures.empty())
+                new OnButtonClick(pCreationUI_BtnPressLeft[param]->rect.topLeft(), {0, 0},
+                    pCreationUI_BtnPressLeft[param], std::string(), false);
             pAudioPlayer->playUISound(SOUND_SelectingANewCharacter);
             pAudioPlayer->stopVoiceSounds();
             pParty->pCharacters[param].playReaction(SPEECH_PICK_ME);
@@ -183,20 +185,23 @@ void CreateParty_EventLoop() {
                 7 +
                 pGUIWindow_CurrentMenu->pStartingPosActiveItem + 7 * param;
             uPlayerCreationUI_SelectedCharacter = param;
-            new OnButtonClick(pCreationUI_BtnPressRight[param]->rect.topLeft(), {0, 0},
-                pCreationUI_BtnPressRight[param], std::string(), false);
+            if (!pCreationUI_BtnPressRight[param]->vTextures.empty())
+                new OnButtonClick(pCreationUI_BtnPressRight[param]->rect.topLeft(), {0, 0},
+                    pCreationUI_BtnPressRight[param], std::string(), false);
             pAudioPlayer->playUISound(SOUND_SelectingANewCharacter);
             pAudioPlayer->stopVoiceSounds();
             pParty->pCharacters[param].playReaction(SPEECH_PICK_ME);
             break;
         case UIMSG_PlayerCreationClickPlus:
-            new OnButtonClick({613, 393}, {0, 0}, pPlayerCreationUI_BtnPlus, std::string(), false);
+            new OnButtonClick(engine->gameTitle() == GameTitle::MM6 ? mm6::party_creation::kPlusPressed : Pointi(613, 393),
+                              {0, 0}, pPlayerCreationUI_BtnPlus, std::string(), false);
             pPlayer[uPlayerCreationUI_SelectedCharacter].IncreaseAttribute(
                 static_cast<Attribute>((pGUIWindow_CurrentMenu->pCurrentPosActiveItem - pGUIWindow_CurrentMenu->pStartingPosActiveItem) % 7));
             pAudioPlayer->playUISound(SOUND_ClickMinus);
             break;
         case UIMSG_PlayerCreationClickMinus:
-            new OnButtonClick({523, 393}, {0, 0}, pPlayerCreationUI_BtnMinus, std::string(), false);
+            new OnButtonClick(engine->gameTitle() == GameTitle::MM6 ? mm6::party_creation::kMinusPressed : Pointi(523, 393),
+                              {0, 0}, pPlayerCreationUI_BtnMinus, std::string(), false);
             pPlayer[uPlayerCreationUI_SelectedCharacter].DecreaseAttribute(
                 static_cast<Attribute>((pGUIWindow_CurrentMenu->pCurrentPosActiveItem - pGUIWindow_CurrentMenu->pStartingPosActiveItem) % 7));
             pAudioPlayer->playUISound(SOUND_ClickPlus);
@@ -214,7 +219,8 @@ void CreateParty_EventLoop() {
             pAudioPlayer->playUISound(SOUND_SelectingANewCharacter);
             break;
         case UIMSG_PlayerCreationClickOK:
-            new OnButtonClick({580, 431}, {0, 0}, pPlayerCreationUI_BtnOK);
+            new OnButtonClick(engine->gameTitle() == GameTitle::MM6 ? mm6::party_creation::kOkPressed : Pointi(580, 431),
+                              {0, 0}, pPlayerCreationUI_BtnOK);
             if (CharacterCreation_GetUnspentAttributePointCount() || !PlayerCreation_Choose4Skills()) {
                 errorMessageExpireTime = animTimer->time() + Duration::fromRealtimeSeconds(4); // show message for 4 seconds
             } else {
@@ -312,9 +318,11 @@ void GUIWindow_PartyCreation::Update() {
     int pIntervalX;
     int pCorrective;
 
+    const bool isMM6 = engine->gameTitle() == GameTitle::MM6;
+
     // move sky
     render->BeginScene2D();
-    render->DrawQuad2D(main_menu_background, {0, 0});
+    render->DrawQuad2D(main_menu_background, {0, isMM6 ? mm6::party_creation::kBackgroundY : 0});
     int sky_slider_anim_timer = static_cast<int>(std::fmod(animTimer->time().realtimeMillisecondsFloat() * 640.0 / 20, 640.0));
     render->DrawQuad2D(ui_partycreation_sky_scroller, {sky_slider_anim_timer, 2});
     render->DrawQuad2D(ui_partycreation_sky_scroller, {sky_slider_anim_timer - 640, 2});
@@ -359,8 +367,16 @@ void GUIWindow_PartyCreation::Update() {
     uPosActiveItem = pGUIWindow_CurrentMenu->GetControl(pGUIWindow_CurrentMenu->pCurrentPosActiveItem);
     // cycle arrows backwards
     int arrowAnimTextureNum = ui_partycreation_arrow_l.size() - 1 - (animTimer->time().realtimeMilliseconds() % ARROW_SPIN_PERIOD_MS) / (ARROW_SPIN_PERIOD_MS / ui_partycreation_arrow_l.size());
-    render->DrawQuad2D(ui_partycreation_arrow_l[arrowAnimTextureNum], {uPosActiveItem->rect.x + uPosActiveItem->rect.w - 4, uPosActiveItem->rect.y});
-    render->DrawQuad2D(ui_partycreation_arrow_r[arrowAnimTextureNum], {uPosActiveItem->rect.x - 12, uPosActiveItem->rect.y});
+    if (isMM6) {
+        render->DrawQuad2D(ui_partycreation_arrow_l[arrowAnimTextureNum],
+                           {uPosActiveItem->rect.x - mm6::party_creation::kFocusArrowLeftGap, uPosActiveItem->rect.y});
+        render->DrawQuad2D(ui_partycreation_arrow_r[arrowAnimTextureNum],
+                           {uPosActiveItem->rect.x + uPosActiveItem->rect.w - mm6::party_creation::kFocusArrowRightGap,
+                            uPosActiveItem->rect.y});
+    } else {
+        render->DrawQuad2D(ui_partycreation_arrow_l[arrowAnimTextureNum], {uPosActiveItem->rect.x + uPosActiveItem->rect.w - 4, uPosActiveItem->rect.y});
+        render->DrawQuad2D(ui_partycreation_arrow_r[arrowAnimTextureNum], {uPosActiveItem->rect.x - 12, uPosActiveItem->rect.y});
+    }
 
     pText = localization->str(LSTR_SKILLS);
     for (int i = pText.size() - 1; i >= 0; i--)
@@ -372,7 +388,8 @@ void GUIWindow_PartyCreation::Update() {
     pX_Numbers = 640 - 147;  // 493;
 
     for (int i = 0; i < 4; ++i) {
-        DrawText(assets->pFontCreate.get(), {pIntervalX + 73, 100}, colorTable.White,
+        const Pointi classNamePos = isMM6 ? mm6::party_creation::kClassName + Pointi(159 * i, 0) : Pointi(pIntervalX + 73, 100);
+        DrawText(assets->pFontCreate.get(), classNamePos, colorTable.White,
             localization->expand(localization->className(pParty->pCharacters[i].classType)), pGUIWindow_CurrentMenu->frameRect);
         render->DrawQuad2D(ui_partycreation_class_icons[std::to_underlying(pParty->pCharacters[i].classType) /
             (engine->gameTitle() == GameTitle::MM6 ? mm6::kClassTiers : 4)], {pIntervalX + 77, 50});
@@ -402,13 +419,16 @@ void GUIWindow_PartyCreation::Update() {
             pGUIWindow_CurrentMenu->DrawTextInRect(assets->pFontCreate.get(), {pIntervalX, 124}, colorTable.White, pParty->pCharacters[i].name, 130, 0);
         }
 
-        std::string pRaceName = pParty->pCharacters[i].GetRaceName();
-        pGUIWindow_CurrentMenu->DrawTextInRect(assets->pFontCreate.get(), {pIntervalX + 72, pIntervalY + 12}, colorTable.White, pRaceName, 130, 0);
+        if (!isMM6) { // MM6 has no races.
+            std::string pRaceName = pParty->pCharacters[i].GetRaceName();
+            pGUIWindow_CurrentMenu->DrawTextInRect(assets->pFontCreate.get(), {pIntervalX + 72, pIntervalY + 12}, colorTable.White, pRaceName, 130, 0);
+        }
 
         pTextCenter = assets->pFontCreate->AlignText_Center(150, pText);
-        DrawText(assets->pFontCreate.get(), {pTextCenter + uX - 24, 291}, colorTable.Tacha, pText, pGUIWindow_CurrentMenu->frameRect);  // Skills
+        DrawText(assets->pFontCreate.get(), {pTextCenter + uX - 24, isMM6 ? mm6::party_creation::kSkillsHeadingY : 291},
+                 colorTable.Tacha, pText, pGUIWindow_CurrentMenu->frameRect);  // Skills
 
-        int posY = 169;
+        int posY = isMM6 ? mm6::party_creation::kStatY : 169;
 
         auto str1 = fmt::format("{}\r{:03}{}", localization->str(LSTR_MIGHT), pX_Numbers, pParty->pCharacters[i].GetActualMight());
         pStatColor = pParty->pCharacters[i].GetStatColor(ATTRIBUTE_MIGHT);
@@ -435,7 +455,7 @@ void GUIWindow_PartyCreation::Update() {
         pStatColor = pParty->pCharacters[i].GetStatColor(ATTRIBUTE_LUCK);
         DrawText(assets->pFontCreate.get(), {uX, 6 * pIntervalY + posY}, pStatColor, str7, pGUIWindow_CurrentMenu->frameRect);
 
-        posY = 311;
+        posY = isMM6 ? mm6::party_creation::kSkillY : 311;
 
         pSkillsType = pParty->pCharacters[i].GetSkillIdxByOrder(0);
         pTextCenter = assets->pFontCreate->AlignText_Center(150, localization->skillName(pSkillsType));
@@ -474,17 +494,19 @@ void GUIWindow_PartyCreation::Update() {
 
     uClassType = pParty->pCharacters[uPlayerCreationUI_SelectedCharacter].classType;
     pTextCenter = assets->pFontCreate->AlignText_Center(193, pText);
-    DrawText(assets->pFontCreate.get(), {pTextCenter + 324, 395}, colorTable.Tacha, pText, pGUIWindow_CurrentMenu->frameRect);  // Classes
+    const Pointi classHeading = isMM6 ? mm6::party_creation::kClassHeading : Pointi(324, 395);
+    DrawText(assets->pFontCreate.get(), classHeading + Pointi(pTextCenter, 0), colorTable.Tacha, pText, pGUIWindow_CurrentMenu->frameRect);  // Classes
 
-    if (engine->gameTitle() == GameTitle::MM6) {
+    if (isMM6) {
+        namespace layout = mm6::party_creation;
         constexpr std::array<int, 6> baseClasses = {0, 3, 6, 9, 12, 15};
         for (std::size_t i = 0; i < baseClasses.size(); ++i) {
             const Class classId = static_cast<Class>(baseClasses[i]);
             const std::string &name = localization->className(classId);
-            const int x = i < 3 ? 323 : 388;
-            const int y = 417 + (i % 3) * pIntervalY;
+            const int x = layout::kClassColumnX[i / 3];
+            const int y = layout::kListY + (i % 3) * pIntervalY;
             pColorText = uClassType == classId ? colorTable.Aqua : colorTable.White;
-            pTextCenter = assets->pFontCreate->AlignText_Center(65, name);
+            pTextCenter = assets->pFontCreate->AlignText_Center(layout::kClassColumnWidth, name);
             DrawText(assets->pFontCreate.get(), {pTextCenter + x, y}, pColorText, name, pGUIWindow_CurrentMenu->frameRect);
         }
     } else {
@@ -552,8 +574,21 @@ void GUIWindow_PartyCreation::Update() {
 
     pTextCenter = assets->pFontCreate->AlignText_Center(
         236, localization->str(LSTR_AVAILABLE_SKILLS));
-    DrawText(assets->pFontCreate.get(), {pTextCenter + 37, 395}, colorTable.Tacha, localization->str(LSTR_AVAILABLE_SKILLS), pGUIWindow_CurrentMenu->frameRect);
-    for (int i = 0; i < 9; ++i) {
+    const Pointi availableSkillsHeading = isMM6 ? mm6::party_creation::kAvailableSkillsHeading : Pointi(37, 395);
+    DrawText(assets->pFontCreate.get(), availableSkillsHeading + Pointi(pTextCenter, 0), colorTable.Tacha,
+             localization->str(LSTR_AVAILABLE_SKILLS), pGUIWindow_CurrentMenu->frameRect);
+    for (int i = 0; isMM6 && i < 9; ++i) {
+        namespace layout = mm6::party_creation;
+        pSkillId = pParty->pCharacters[uPlayerCreationUI_SelectedCharacter].GetSkillIdxByOrder(i + 4);
+        pText = localization->skillName(pSkillId);
+        pText = pText.substr(0, pText.find(' ')); // MM6 shows only the first word.
+        pColorText = pParty->pCharacters[uPlayerCreationUI_SelectedCharacter].pActiveSkills[pSkillId] ? colorTable.Aqua : colorTable.White;
+        pTextCenter = assets->pFontCreate->AlignText_Center(layout::kAvailableSkillsColumnWidth, pText);
+        DrawText(assets->pFontCreate.get(),
+                 {layout::kAvailableSkillsX + layout::kAvailableSkillsColumnWidth * (i / 3) + pTextCenter, layout::kListY + pIntervalY * (i % 3)},
+                 pColorText, pText, pGUIWindow_CurrentMenu->frameRect);
+    }
+    for (int i = 0; !isMM6 && i < 9; ++i) {
         pSkillId = pParty->pCharacters[uPlayerCreationUI_SelectedCharacter].GetSkillIdxByOrder(i + 4);
         pText = localization->skillName(pSkillId);
         // trim skills that are too long
@@ -577,7 +612,8 @@ void GUIWindow_PartyCreation::Update() {
 
     pTextCenter = assets->pFontCreate->AlignText_Center(
                 0x5C, localization->str(LSTR_BONUS_1));
-        DrawText(assets->pFontCreate.get(), {pTextCenter + 533, 394}, colorTable.Tacha, localization->str(LSTR_BONUS_1), pGUIWindow_CurrentMenu->frameRect);
+        DrawText(assets->pFontCreate.get(), (isMM6 ? mm6::party_creation::kBonusHeading : Pointi(533, 394)) + Pointi(pTextCenter, 0),
+                 colorTable.Tacha, localization->str(LSTR_BONUS_1), pGUIWindow_CurrentMenu->frameRect);
 
     // force draw so overlays dont get muddled
     render->DrawTwodVerts();
@@ -587,7 +623,8 @@ void GUIWindow_PartyCreation::Update() {
 
     auto unspent_attribute_bonus_label = fmt::format("{}", pBonusNum);
     pTextCenter = assets->pFontCreate->AlignText_Center(84, unspent_attribute_bonus_label);
-    DrawText(assets->pFontCreate.get(), {pTextCenter + 530, 410}, colorTable.White, unspent_attribute_bonus_label, pGUIWindow_CurrentMenu->frameRect);
+    DrawText(assets->pFontCreate.get(), (isMM6 ? mm6::party_creation::kBonusValue : Pointi(530, 410)) + Pointi(pTextCenter, 0),
+             colorTable.White, unspent_attribute_bonus_label, pGUIWindow_CurrentMenu->frameRect);
 
     if (errorMessageExpireTime > animTimer->time()) {
         auto& sHint = pBonusNum < 0 ? localization->str(LSTR_YOU_CANT_SPEND_MORE_THAN_50_POINTS) : localization->str(LSTR_CREATE_PARTY_CANNOT_BE_COMPLETED_UNLESS);
@@ -642,8 +679,8 @@ GUIWindow_PartyCreation::GUIWindow_PartyCreation() :
         ui_partycreation_portraits[uX] = assets->getIcon(fmt::format("{}01", stem));
     }
 
-    ui_partycreation_minus = assets->getIcon("buttminu");
-    ui_partycreation_plus = assets->getIcon("buttplus");
+    ui_partycreation_minus = assets->getIcon(isMM6 ? "makeminu" : "buttminu");
+    ui_partycreation_plus = assets->getIcon(isMM6 ? "makeplus" : "buttplus");
     ui_partycreation_right = assets->getIcon("presrigh");
     ui_partycreation_left = assets->getIcon("presleft");
 
@@ -661,25 +698,35 @@ GUIWindow_PartyCreation::GUIWindow_PartyCreation() :
         uX += 158;
     }
 
-    pCreationUI_BtnPressLeft[0] = CreateButton({10, 32}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FacePrev, 0, INPUT_ACTION_INVALID, "", {ui_partycreation_left});
-    pCreationUI_BtnPressLeft[1] = CreateButton({169, 32}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FacePrev, 1, INPUT_ACTION_INVALID, "", {ui_partycreation_left});
-    pCreationUI_BtnPressLeft[2] = CreateButton({327, 32}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FacePrev, 2, INPUT_ACTION_INVALID, "", {ui_partycreation_left});
-    pCreationUI_BtnPressLeft[3] = CreateButton({486, 32}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FacePrev, 3, INPUT_ACTION_INVALID, "", {ui_partycreation_left});
+    if (isMM6) {
+        namespace layout = mm6::party_creation;
+        for (int i = 0; i < 4; ++i)
+            pCreationUI_BtnPressLeft[i] = CreateButton({layout::kFacePrevX[i], layout::kFaceButtonY}, layout::kFaceButtonSize,
+                                                       BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FacePrev, i);
+        for (int i = 0; i < 4; ++i)
+            pCreationUI_BtnPressRight[i] = CreateButton({layout::kFaceNextX[i], layout::kFaceButtonY}, layout::kFaceButtonSize,
+                                                        BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FaceNext, i);
+    } else {
+        pCreationUI_BtnPressLeft[0] = CreateButton({10, 32}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FacePrev, 0, INPUT_ACTION_INVALID, "", {ui_partycreation_left});
+        pCreationUI_BtnPressLeft[1] = CreateButton({169, 32}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FacePrev, 1, INPUT_ACTION_INVALID, "", {ui_partycreation_left});
+        pCreationUI_BtnPressLeft[2] = CreateButton({327, 32}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FacePrev, 2, INPUT_ACTION_INVALID, "", {ui_partycreation_left});
+        pCreationUI_BtnPressLeft[3] = CreateButton({486, 32}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FacePrev, 3, INPUT_ACTION_INVALID, "", {ui_partycreation_left});
 
-    pCreationUI_BtnPressRight[0] = CreateButton({74, 32}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FaceNext, 0, INPUT_ACTION_INVALID, "", {ui_partycreation_right});
-    pCreationUI_BtnPressRight[1] = CreateButton({233, 32}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FaceNext, 1, INPUT_ACTION_INVALID, "", {ui_partycreation_right});
-    pCreationUI_BtnPressRight[2] = CreateButton({391, 32}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FaceNext, 2, INPUT_ACTION_INVALID, "", {ui_partycreation_right});
-    pCreationUI_BtnPressRight[3] = CreateButton({549, 32}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FaceNext, 3, INPUT_ACTION_INVALID, "", {ui_partycreation_right});
+        pCreationUI_BtnPressRight[0] = CreateButton({74, 32}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FaceNext, 0, INPUT_ACTION_INVALID, "", {ui_partycreation_right});
+        pCreationUI_BtnPressRight[1] = CreateButton({233, 32}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FaceNext, 1, INPUT_ACTION_INVALID, "", {ui_partycreation_right});
+        pCreationUI_BtnPressRight[2] = CreateButton({391, 32}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FaceNext, 2, INPUT_ACTION_INVALID, "", {ui_partycreation_right});
+        pCreationUI_BtnPressRight[3] = CreateButton({549, 32}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_FaceNext, 3, INPUT_ACTION_INVALID, "", {ui_partycreation_right});
 
-    pCreationUI_BtnPressLeft2[0] = CreateButton({10, 103}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_VoicePrev, 0, INPUT_ACTION_INVALID, "", {ui_partycreation_left});
-    pCreationUI_BtnPressLeft2[1] = CreateButton({169, 103}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_VoicePrev, 1, INPUT_ACTION_INVALID, "", {ui_partycreation_left});
-    pCreationUI_BtnPressLeft2[2] = CreateButton({327, 103}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_VoicePrev, 2, INPUT_ACTION_INVALID, "", {ui_partycreation_left});
-    pCreationUI_BtnPressLeft2[3] = CreateButton({486, 103}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_VoicePrev, 3, INPUT_ACTION_INVALID, "", {ui_partycreation_left});
+        pCreationUI_BtnPressLeft2[0] = CreateButton({10, 103}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_VoicePrev, 0, INPUT_ACTION_INVALID, "", {ui_partycreation_left});
+        pCreationUI_BtnPressLeft2[1] = CreateButton({169, 103}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_VoicePrev, 1, INPUT_ACTION_INVALID, "", {ui_partycreation_left});
+        pCreationUI_BtnPressLeft2[2] = CreateButton({327, 103}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_VoicePrev, 2, INPUT_ACTION_INVALID, "", {ui_partycreation_left});
+        pCreationUI_BtnPressLeft2[3] = CreateButton({486, 103}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_VoicePrev, 3, INPUT_ACTION_INVALID, "", {ui_partycreation_left});
 
-    pCreationUI_BtnPressRight2[0] = CreateButton({74, 103}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_VoiceNext, 0, INPUT_ACTION_INVALID, "", {ui_partycreation_right});
-    pCreationUI_BtnPressRight2[1] = CreateButton({233, 103}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_VoiceNext, 1, INPUT_ACTION_INVALID, "", {ui_partycreation_right});
-    pCreationUI_BtnPressRight2[2] = CreateButton({391, 103}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_VoiceNext, 2, INPUT_ACTION_INVALID, "", {ui_partycreation_right});
-    pCreationUI_BtnPressRight2[3] = CreateButton({549, 103}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_VoiceNext, 3, INPUT_ACTION_INVALID, "", {ui_partycreation_right});
+        pCreationUI_BtnPressRight2[0] = CreateButton({74, 103}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_VoiceNext, 0, INPUT_ACTION_INVALID, "", {ui_partycreation_right});
+        pCreationUI_BtnPressRight2[1] = CreateButton({233, 103}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_VoiceNext, 1, INPUT_ACTION_INVALID, "", {ui_partycreation_right});
+        pCreationUI_BtnPressRight2[2] = CreateButton({391, 103}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_VoiceNext, 2, INPUT_ACTION_INVALID, "", {ui_partycreation_right});
+        pCreationUI_BtnPressRight2[3] = CreateButton({549, 103}, {11, 13}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_VoiceNext, 3, INPUT_ACTION_INVALID, "", {ui_partycreation_right});
+    }
 
     uX = 8;
     for (int characterIndex = 0 ; characterIndex < 4; characterIndex++) {
@@ -695,28 +742,31 @@ GUIWindow_PartyCreation::GUIWindow_PartyCreation() :
     CreateButton({321, 21}, {153, 365}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_SelectAttribute, 2, INPUT_ACTION_SELECT_CHAR_3);
     CreateButton({479, 21}, {153, 365}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreation_SelectAttribute, 3, INPUT_ACTION_SELECT_CHAR_4);
 
+    const int firstStatButton = static_cast<int>(vButtons.size());
+    const int statY = isMM6 ? mm6::party_creation::kStatButtonY : 169;
     uX = 23;
     int uControlParam = 2;
     do {
-        CreateButton({uX, 169}, {120, 20}, BUTTON_TYPE_NORMAL, 0, UIMSG_0, uControlParam - 2);
-        CreateButton({uX, v0 + 169}, {120, 20}, BUTTON_TYPE_NORMAL, 0, UIMSG_0, uControlParam - 1);
-        CreateButton({uX, 2 * v0 + 169}, {120, 20}, BUTTON_TYPE_NORMAL, 0, UIMSG_0, uControlParam);
-        CreateButton({uX, 3 * v0 + 169}, {120, 20}, BUTTON_TYPE_NORMAL, 0, UIMSG_0, uControlParam + 1);
-        CreateButton({uX, 4 * v0 + 169}, {120, 20}, BUTTON_TYPE_NORMAL, 0, UIMSG_0, uControlParam + 2);
-        CreateButton({uX, 5 * v0 + 169}, {120, 20}, BUTTON_TYPE_NORMAL, 0, UIMSG_0, uControlParam + 3);
-        CreateButton({uX, 6 * v0 + 169}, {120, 20}, BUTTON_TYPE_NORMAL, 0, UIMSG_0, uControlParam + 4);
+        CreateButton({uX, statY}, {120, 20}, BUTTON_TYPE_NORMAL, 0, UIMSG_0, uControlParam - 2);
+        CreateButton({uX, v0 + statY}, {120, 20}, BUTTON_TYPE_NORMAL, 0, UIMSG_0, uControlParam - 1);
+        CreateButton({uX, 2 * v0 + statY}, {120, 20}, BUTTON_TYPE_NORMAL, 0, UIMSG_0, uControlParam);
+        CreateButton({uX, 3 * v0 + statY}, {120, 20}, BUTTON_TYPE_NORMAL, 0, UIMSG_0, uControlParam + 1);
+        CreateButton({uX, 4 * v0 + statY}, {120, 20}, BUTTON_TYPE_NORMAL, 0, UIMSG_0, uControlParam + 2);
+        CreateButton({uX, 5 * v0 + statY}, {120, 20}, BUTTON_TYPE_NORMAL, 0, UIMSG_0, uControlParam + 3);
+        CreateButton({uX, 6 * v0 + statY}, {120, 20}, BUTTON_TYPE_NORMAL, 0, UIMSG_0, uControlParam + 4);
 
         uControlParam += 7;
         uX += 158;
     } while ((signed int)uControlParam < 30);
 
-    setKeyboardControlGroup(28, true, 7, 40);
+    setKeyboardControlGroup(28, !isMM6, 7, firstStatButton);
 
     if (isMM6) {
+        namespace layout = mm6::party_creation;
         constexpr std::array<int, 6> baseClasses = {0, 3, 6, 9, 12, 15};
         for (std::size_t i = 0; i < baseClasses.size(); ++i) {
             const int row = static_cast<int>(i % 3);
-            CreateButton({i < 3 ? 323 : 388, 417 + row * v0}, {65, v0},
+            CreateButton({layout::kClassColumnX[i / 3], layout::kListY + row * v0}, {layout::kClassColumnWidth, v0},
                          BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, baseClasses[i]);
         }
     } else {
@@ -731,27 +781,47 @@ GUIWindow_PartyCreation::GUIWindow_PartyCreation() :
         CreateButton({453, 2 * v0 + 417}, {65, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectClass, 4);
     }
 
-    uControlParam = 0;
-    do {
-        uX = -5;
-        if (uControlParam <= 3)
-            uX = 0;
-        CreateButton(fmt::format("PartyCreation_Skill{}", uControlParam), {100 * (uControlParam / 3) + uX + 17, v0 * (uControlParam % 3) + 417}, {100, v0},
-                     BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectActiveSkill, uControlParam);
-        ++uControlParam;
-    } while (uControlParam < 9);
+    if (isMM6) {
+        namespace layout = mm6::party_creation;
+        for (int i = 0; i < 9; ++i)
+            CreateButton(fmt::format("PartyCreation_Skill{}", i),
+                         {layout::kAvailableSkillsX + layout::kAvailableSkillsColumnWidth * (i / 3), layout::kListY + v0 * (i % 3)},
+                         {layout::kAvailableSkillsColumnWidth, v0}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectActiveSkill, i);
 
-    ui_partycreation_buttmake = assets->getIcon("BUTTMAKE");
-    ui_partycreation_buttmake2 = assets->getIcon("BUTTMAKE2");
+        ui_partycreation_buttmake = assets->getIcon("buttyes2");
+        pPlayerCreationUI_BtnOK = CreateButton("PartyCreation_OK", layout::kOkButton.topLeft(), layout::kOkButton.size(),
+                                               BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationClickOK, 0,
+                                               INPUT_ACTION_PARTY_CREATION_DONE, "", {ui_partycreation_buttmake});
+        pPlayerCreationUI_BtnReset = nullptr; // MM6 has no Clear button.
+        pPlayerCreationUI_BtnMinus = CreateButton(layout::kMinusButton.topLeft(), layout::kMinusButton.size(), BUTTON_TYPE_NORMAL, 0,
+                                                  UIMSG_PlayerCreationClickMinus, 0, INPUT_ACTION_PARTY_CREATION_DEC, "",
+                                                  {ui_partycreation_minus});
+        pPlayerCreationUI_BtnPlus = CreateButton(layout::kPlusButton.topLeft(), layout::kPlusButton.size(), BUTTON_TYPE_NORMAL, 0,
+                                                 UIMSG_PlayerCreationClickPlus, 1, INPUT_ACTION_PARTY_CREATION_INC, "",
+                                                 {ui_partycreation_plus});
+    } else {
+        uControlParam = 0;
+        do {
+            uX = -5;
+            if (uControlParam <= 3)
+                uX = 0;
+            CreateButton(fmt::format("PartyCreation_Skill{}", uControlParam), {100 * (uControlParam / 3) + uX + 17, v0 * (uControlParam % 3) + 417}, {100, v0},
+                         BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationSelectActiveSkill, uControlParam);
+            ++uControlParam;
+        } while (uControlParam < 9);
 
-    pPlayerCreationUI_BtnOK = CreateButton("PartyCreation_OK", {580, 431}, {51, 39}, BUTTON_TYPE_NORMAL, 0,
-                                           UIMSG_PlayerCreationClickOK, 0, INPUT_ACTION_PARTY_CREATION_DONE, "",
-                                           {ui_partycreation_buttmake});
-    pPlayerCreationUI_BtnReset = CreateButton("PartyCreation_Clear", {527, 431}, {51, 39}, BUTTON_TYPE_NORMAL, 0,
-                                              UIMSG_PlayerCreationClickReset, 0, INPUT_ACTION_PARTY_CREATION_CLEAR, "",
-                                              {ui_partycreation_buttmake2});
-    pPlayerCreationUI_BtnMinus = CreateButton({523, 393}, {20, 35}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationClickMinus, 0, INPUT_ACTION_PARTY_CREATION_DEC, "", {ui_partycreation_minus});
-    pPlayerCreationUI_BtnPlus = CreateButton({613, 393}, {20, 35}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationClickPlus, 1, INPUT_ACTION_PARTY_CREATION_INC, "", {ui_partycreation_plus});
+        ui_partycreation_buttmake = assets->getIcon("BUTTMAKE");
+        ui_partycreation_buttmake2 = assets->getIcon("BUTTMAKE2");
+
+        pPlayerCreationUI_BtnOK = CreateButton("PartyCreation_OK", {580, 431}, {51, 39}, BUTTON_TYPE_NORMAL, 0,
+                                               UIMSG_PlayerCreationClickOK, 0, INPUT_ACTION_PARTY_CREATION_DONE, "",
+                                               {ui_partycreation_buttmake});
+        pPlayerCreationUI_BtnReset = CreateButton("PartyCreation_Clear", {527, 431}, {51, 39}, BUTTON_TYPE_NORMAL, 0,
+                                                  UIMSG_PlayerCreationClickReset, 0, INPUT_ACTION_PARTY_CREATION_CLEAR, "",
+                                                  {ui_partycreation_buttmake2});
+        pPlayerCreationUI_BtnMinus = CreateButton({523, 393}, {20, 35}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationClickMinus, 0, INPUT_ACTION_PARTY_CREATION_DEC, "", {ui_partycreation_minus});
+        pPlayerCreationUI_BtnPlus = CreateButton({613, 393}, {20, 35}, BUTTON_TYPE_NORMAL, 0, UIMSG_PlayerCreationClickPlus, 1, INPUT_ACTION_PARTY_CREATION_INC, "", {ui_partycreation_plus});
+    }
 
     ui_partycreation_font = GUIFont::LoadFont("cchar.fnt");
 }

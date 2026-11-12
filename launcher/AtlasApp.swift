@@ -89,6 +89,37 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         if fileManager.fileExists(atPath: sourceConfig.path), !fileManager.fileExists(atPath: targetConfig.path) {
             try fileManager.copyItem(at: sourceConfig, to: targetConfig)
         }
+        try setMM6AtlasWindowDefaults(targetConfig)
+    }
+
+    /**
+     * The private integration profile can legitimately be borderless for development, but that mode is a poor
+     * default for the independent Atlas profile on Retina displays: it makes the fixed 640x480 creation UI look
+     * like a full-display overlay and can leave its pointer mapping ambiguous. Apply this migration once only;
+     * afterwards the Atlas player owns the setting.
+     */
+    private func setMM6AtlasWindowDefaults(_ configPath: URL) throws {
+        let versionKey = "mm6.profile.windowDefaults.version"
+        guard preferences.integer(forKey: versionKey) < 1,
+              FileManager.default.fileExists(atPath: configPath.path) else { return }
+        let contents = try String(contentsOf: configPath, encoding: .utf8)
+        var inWindowSection = false
+        var replacedMode = false
+        let updated = contents.split(separator: "\n", omittingEmptySubsequences: false).map { line -> String in
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.hasPrefix("[") && trimmed.hasSuffix("]") {
+                inWindowSection = trimmed == "[window]"
+            }
+            if inWindowSection && trimmed.hasPrefix("mode") && trimmed.dropFirst(4).trimmingCharacters(in: .whitespaces).hasPrefix("=") {
+                replacedMode = true
+                return "mode = windowed"
+            }
+            return String(line)
+        }.joined(separator: "\n")
+        if replacedMode {
+            try updated.write(to: configPath, atomically: true, encoding: .utf8)
+        }
+        preferences.set(1, forKey: versionKey)
     }
 
     private var recordingBasePath: URL {

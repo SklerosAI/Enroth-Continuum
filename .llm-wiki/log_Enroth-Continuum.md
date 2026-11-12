@@ -3381,6 +3381,12 @@ Chronological record of wiki activity.
 - The MM6 spellbook loaded MM7 page art MM6 doesn't have, so every page was blank with missing-image markers. It now follows a static trace of `MM6.exe`: `book` and `pagemask`, the school header picture, one picture per spell at MM6's position tables with its name underneath, school tabs only for schools the character has, and TABSPELL and TABEXIT at the bottom. The first click selects a spell and the second casts it. TABSPELL sets the quick spell, and the header picture clears it. The MM6 code lives in `src/GUI/UI/MM6Spellbook.{h,cpp}` with thin hooks.
 - Merged on `master` at `224aa4504`. Unit tests 1122, MM6 suite 145 passed and 2 skipped, MM7 controls 132, `check_style` clean. Four input-driven tests fail with the fix reverted. Spell buttons are rebuilt per page, where MM6 keeps the first page's buttons, and one call on TABSPELL (0x488BF0) is unidentified.
 
+## [2026-11-12] verify | MM7 Three Paintings route and checkpoint
+- by: T-Burton-ND via codex
+- Covered Visconti's real offer and empty-handed refusal, the Angel painting wall in the Haunted Mansion, both Ironfist painting walls in Castle Gryphonheart, the three taken bits, final item consumption, 50,000 gold and 50,000 XP per character.
+- The production-Save writer and separate normal-Load reader passed in a marked disposable profile with byte-identical slot contents after reading. Missing-profile and no-save admissions were rejected, and the disposable profiles were moved to Trash.
+- The regional side/promotion selection passed 12/12 headlessly and the full `check_style` gate passed 157/157. This remains an independent quest boundary rather than continuous regional progression.
+
 ## [2026-11-12] fix | MM6 quest, autonotes, map and calendar books
 - by: T-Burton-ND via claude
 - The MM6 autonotes and map books loaded MM7 art MM6 doesn't have and showed missing-image markers, the map book swapped East and West, the quest book swapped its page tabs, and the calendar was titled "Running" with no moon. All four now follow a static trace of `MM6.exe`: the shared frame with MM6's side borders and side tabs, `note_bg` with MM6's five autonote categories (sorted by the executable's own table, which moves a few notes between tabs), the zoom and direction tabs over the map with `mapbordr` on top, `time_bg` with the moon phase and the "Time in Enroth" title.

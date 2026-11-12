@@ -3277,3 +3277,9 @@ Chronological record of wiki activity.
 - Added and repeat-verified `MM7SideQuests.AngelStatuetteIsAcquiredFromTheMazeChest`. It starts a new game, finds the Angel Statuette in the loaded Maze chest, and takes it through the ordinary chest UI.
 - Knight/Eagle acquisition, the three shrine placements, and Thom Lumbra's return/reward contract remain separate uncovered work.
 
+## [2026-11-12] verify | MM7 Kerrid and Parsons side quests
+- by: T-Burton-ND via codex
+- `MM7SideQuests.KerridLetterIsReceivedThroughRealHouseDialogue` reaches Kerrid's real Pierpont residence and offer, then verifies the active state and physical letter. The Faerie audience and return remain open.
+- `MM7SideQuests.ParsonsQuillRequiresMarkhamExchange` completes the Emerald contest and departure, accepts Thrush's physical letter, proves the missing-quill refusal, performs the relocated Markham Manor exchange, and completes the return with item, quest, award, reputation, 2,000-gold and 5,000-XP-per-character assertions.
+- The final regional side/promotion selection passed 10/10 headlessly. Full `check_style` and changed-file `cpplint` also passed.
+

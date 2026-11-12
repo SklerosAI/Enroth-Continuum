@@ -18,6 +18,17 @@ The owner's [current delivery order](Current-Delivery-Order.md) puts MM7 working
 | MM6 | A seeded first-map session can Save to and Load from numbered native slots; the full headless gate passed 25 children, including three MM7 controls. Character paperdoll, portrait animation and Quest book slices passed focused and hidden checks. On 2026-11-11 production New Game reached the first map, saved from the menu and reloaded in a fresh process (gate 27/27). A sweep of all 67 maps found the blockers, and fixes for the award-animation crash, the reputation variable, the generated NPC pool and the damage channels are integrated. | Complete Notes and Map art, then the staged visible F5a Load/input/save check. Production New Game, live travel and campaign completion remain guarded. |
 | MM8 | Private data is staged for local detection; the runtime is reserved. | Build and verify an isolated MM8 engine, save route and graphical session before any Play action. |
 
+## MM7 audit continuation — 2026-11-12
+
+The unintegrated `codex/mm7-dark-chain` audit branch now carries complete
+headless coverage for Norbert Thrush's Parsons' Quill route: Emerald Island
+contest completion and departure, the real letter offer, a missing-quill
+refusal, the Markham Manor exchange, and the final hand-in with item, quest,
+award, reputation, gold and XP assertions. The same branch covers Kerrid's
+real offer and physical-letter acquisition; the Faerie King audience, food
+consumption, pipes and return remain open. These results are branch evidence,
+not yet `master` integration evidence.
+
 See the [November 9 progress table](Progress-2026-11-09.md) and [MM6 resume handoff](../project/MM6_RESUME_HANDOFF.md) for exact checks and next source paths. Raw captures and game data stay local.
 
 A [passive MM7 playtest recorder](MM7-Playtest-Recording.md) is integrated in the

@@ -14,7 +14,7 @@ struct ItemRemovalStep {
     bool held = false;
 };
 
-// MM6's fixed-item Add creates an identified, otherwise empty item.
+// MM6's fixed-item Add creates an identified, otherwise empty item, with the raw record the original writes.
 // The generated-artifact band stays guarded until its state is durable.
 Item makeEventItem(int rawId, int value);
 

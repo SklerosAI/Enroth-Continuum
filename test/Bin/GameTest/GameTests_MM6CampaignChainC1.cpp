@@ -8,9 +8,7 @@
 #include "Engine/Data/AwardEnums.h"
 #include "Engine/Engine.h"
 #include "Engine/Party.h"
-#include "Engine/Objects/Chest.h"
 #include "Engine/Objects/CombinedSkillValue.h"
-#include "Engine/Tables/ChestTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
 
@@ -119,15 +117,7 @@ GAME_TEST(MM6CampaignChain, DISABLED_Chapter1) {
     fixStablePrices(game, outb2, 10);
 
     useMM6CampaignChainEventFace(game, outb2, 68); // Kilburn's chest.
-    ASSERT_EQ(current_screen_type, SCREEN_CHEST);
-    InventoryEntry shield = vChests[1].inventory.find(static_cast<ItemId>(499));
-    ASSERT_TRUE(shield);
-    game.pressAndReleaseButton(BUTTON_LEFT, chestTable[vChests[1].chestTypeId].inventoryOffset + shield.geometry().topLeft() * 32 + Pointi(16, 16));
-    game.tick();
-    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
-    game.tick();
-    game.pressGuiButton("Game_Character1"); // The held shield goes into the first character's backpack.
-    game.tick();
+    takeMM6CampaignChainChestItem(game, 1, static_cast<ItemId>(499));
 
     fixStablePrices(game, outc2, 14);
     fixStablePrices(game, outc2, 16);

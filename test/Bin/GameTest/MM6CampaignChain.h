@@ -3,6 +3,7 @@
 #include <filesystem>
 
 #include "Engine/MapEnums.h"
+#include "Engine/Objects/ItemEnums.h"
 
 class EngineController;
 
@@ -49,6 +50,24 @@ void saveMM6CampaignChainSlot(EngineController &game, int chapter);
  * @param eventId                       Local event of the face.
  */
 void useMM6CampaignChainEventFace(EngineController &game, MapId map, int eventId);
+
+/**
+ * Teleports in front of a wall face of an event on the current indoor map and presses Space.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param eventId                       Local event of the face. Its first face with a horizontal normal and a floor in
+ *                                      front of it is used.
+ */
+void useMM6CampaignChainIndoorEventFace(EngineController &game, int eventId);
+
+/**
+ * Picks an item up from the open chest and puts it into the first character's backpack.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param chestId                       Open chest.
+ * @param itemId                        Item to take, must be in the chest.
+ */
+void takeMM6CampaignChainChestItem(EngineController &game, int chestId, ItemId itemId);
 
 /**
  * Enters a castle whose door asks before it lets the party in, and answers yes.

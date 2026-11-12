@@ -11,10 +11,13 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/Localization.h"
+#include "Engine/Objects/Chest.h"
+#include "Engine/Tables/ChestTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
 #include "GUI/GUIButton.h"
@@ -137,6 +140,36 @@ void useMM6CampaignChainEventFace(EngineController &game, MapId map, int eventId
     const int yaw = std::lround(std::atan2(-face->facePlane.normal.y, -face->facePlane.normal.x) * 180 / std::numbers::pi);
     game.teleportTo(map, position, yaw);
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+}
+
+void useMM6CampaignChainIndoorEventFace(EngineController &game, int eventId) {
+    ASSERT_EQ(uCurrentlyLoadedLevelType, LEVEL_INDOOR);
+    Vec3f position;
+    auto face = std::ranges::find_if(pIndoor->faces, [&](const BLVFace &face) {
+        if (face.eventId != eventId || std::abs(face.facePlane.normal.z) > 0.1f)
+            return false;
+        position = face.boundingBox.center() + 150 * face.facePlane.normal;
+        int sectorId = 0;
+        position.z = GetIndoorFloorZ(position, &sectorId);
+        return sectorId == face.sectorId;
+    });
+    ASSERT_NE(face, pIndoor->faces.end());
+    const int yaw = std::lround(std::atan2(-face->facePlane.normal.y, -face->facePlane.normal.x) * 180 / std::numbers::pi);
+    game.teleportTo(engine->_currentLoadedMapId, position, yaw);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+}
+
+void takeMM6CampaignChainChestItem(EngineController &game, int chestId, ItemId itemId) {
+    ASSERT_EQ(current_screen_type, SCREEN_CHEST);
+    InventoryEntry item = vChests[chestId].inventory.find(itemId);
+    ASSERT_TRUE(item);
+    game.pressAndReleaseButton(BUTTON_LEFT, chestTable[vChests[chestId].chestTypeId].inventoryOffset + item.geometry().topLeft() * 32 + Pointi(16, 16));
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    game.pressGuiButton("Game_Character1"); // The held item goes into the first character's backpack.
     game.tick();
 }
 

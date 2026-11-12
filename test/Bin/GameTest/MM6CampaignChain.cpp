@@ -5,18 +5,24 @@
 #include <functional>
 #include <numbers>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
+
+#include "Application/GameConfig.h"
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
+#include "Engine/Graphics/Vis.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/Localization.h"
+#include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
+#include "Engine/Objects/SpriteObject.h"
 #include "Engine/Tables/ChestTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
@@ -27,6 +33,8 @@
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UISaveLoad.h"
 #include "Library/Platform/Interface/PlatformEnumFunctions.h"
+
+#include "Utility/Exception.h"
 
 static std::filesystem::path profileRoot;
 
@@ -46,6 +54,24 @@ static void clickArrow(EngineController &game, UIMessageType arrow, int times) {
         game.pressAndReleaseButton(BUTTON_LEFT, (*button)->rect.center());
         game.tick();
     }
+}
+
+static std::vector<std::pair<Vec3f, int>> placesNextTo(Vec3f target) {
+    // Positions 150 units to each side of the target with a floor under them, and the yaws that face the target.
+    std::vector<std::pair<Vec3f, int>> result;
+    for (Vec3f offset : {Vec3f(0, -150, 0), Vec3f(-150, 0, 0), Vec3f(0, 150, 0), Vec3f(150, 0, 0)}) {
+        int sectorId = 0;
+        if (GetIndoorFloorZ(target + offset + Vec3f(0, 0, 40), &sectorId) != -30000)
+            result.emplace_back(target + offset, std::lround(std::atan2(-offset.y, -offset.x) * 180 / std::numbers::pi));
+    }
+    return result;
+}
+
+static void standNextTo(EngineController &game, Vec3f target, int pitch) {
+    ASSERT_EQ(uCurrentlyLoadedLevelType, LEVEL_INDOOR);
+    const auto places = placesNextTo(target);
+    ASSERT_FALSE(places.empty());
+    game.teleportTo(engine->_currentLoadedMapId, places.front().first, places.front().second, pitch);
 }
 
 void setMM6CampaignChainProfile(const std::filesystem::path &root) {
@@ -170,6 +196,52 @@ void takeMM6CampaignChainChestItem(EngineController &game, int chestId, ItemId i
     game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
     game.tick();
     game.pressGuiButton("Game_Character1"); // The held item goes into the first character's backpack.
+    game.tick();
+}
+
+void killMM6CampaignChainActor(EngineController &game, int actorId) {
+    for (int attack = 0; attack < 500 && !pActors[actorId].IsNotAlive(); attack++) {
+        if (attack % 10 == 0)
+            standNextTo(game, pActors[actorId].pos, 0); // The monster moves while it fights.
+        try {
+            game.pointMouseAtActor(actorId);
+        } catch (const Exception &) {
+            // The monster can be out of view for a frame, A still attacks then.
+        }
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+    }
+    ASSERT_TRUE(pActors[actorId].IsNotAlive());
+}
+
+void lootMM6CampaignChainCorpse(EngineController &game, int actorId) {
+    ASSERT_EQ(uCurrentlyLoadedLevelType, LEVEL_INDOOR);
+    for (int frame = 0; frame < 100 && pActors[actorId].aiState != Dead; frame++)
+        game.tick(); // The monster falls.
+    ASSERT_EQ(pActors[actorId].aiState, Dead);
+    for (auto [position, yaw] : placesNextTo(pActors[actorId].pos)) {
+        game.teleportTo(engine->_currentLoadedMapId, position, yaw, -20);
+        game.tick();
+        const Pid target = engine->PickKeyboard(engine->config->gameplay.KeyboardInteractionDepth.value(), &vis_decoration_noevent_filter,
+                                                &vis_door_filter).pid;
+        if (target != Pid::actor(actorId))
+            continue; // A living monster can stand between the party and the corpse.
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick();
+        return;
+    }
+    FAIL() << "No side of the corpse where Space reaches it";
+}
+
+void pickUpMM6CampaignChainFloorItem(EngineController &game, ItemId itemId) {
+    auto sprite = std::ranges::find_if(pSpriteObjects, [itemId](const SpriteObject &sprite) {
+        return sprite.uObjectDescID && sprite.containing_item.itemId == itemId;
+    });
+    ASSERT_NE(sprite, pSpriteObjects.end());
+    const int spriteId = sprite - pSpriteObjects.begin();
+    standNextTo(game, pSpriteObjects[spriteId].vPosition, -20);
+    game.pointMouseAtSprite(spriteId);
+    game.pressAndReleaseButton(BUTTON_LEFT);
     game.tick();
 }
 

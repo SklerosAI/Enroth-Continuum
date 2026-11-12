@@ -2237,6 +2237,19 @@ MonsterHostility Actor::GetActorsRelation(Actor *otherActPtr) {
 }
 
 /**
+ * @param itemId                        Item an MM6 monster carries.
+ * @return                              The item as MM6.exe builds it when the monster gives it up, with nothing but
+ *                                      its number in its raw record.
+ */
+static Item mm6CarriedItem(ItemId itemId) {
+    Item result;
+    result.itemId = itemId;
+    result.mm6RawRecord.emplace();
+    result.mm6RawRecord->setWord(0, std::to_underlying(itemId));
+    return result;
+}
+
+/**
  * Puts the item a monster carries on the floor where the monster stands. MM6 monsters whose dead sprite is empty leave
  * no corpse to loot, and MM6.exe 0x44C204 drops their item instead.
  *
@@ -2246,7 +2259,7 @@ static void dropCarriedItem(Actor &actor) {
     if (actor.carriedItemId == ITEM_NULL)
         return;
     SpriteObject sprite;
-    sprite.containing_item.itemId = actor.carriedItemId;
+    sprite.containing_item = mm6CarriedItem(actor.carriedItemId);
     sprite.spriteId = pItemTable->items[actor.carriedItemId].spriteId;
     sprite.uObjectDescID = pObjectTable->ObjectIDByItemID(sprite.spriteId);
     sprite.vPosition = actor.pos;
@@ -3601,7 +3614,10 @@ void Actor::LootActor() {
     }
     if (this->carriedItemId != ITEM_NULL) {
         Dst.Reset();
-        Dst.itemId = this->carriedItemId;
+        if (engine->gameTitle() == GameTitle::MM6)
+            Dst = mm6CarriedItem(this->carriedItemId); // MM6.exe 0x4217BD.
+        else
+            Dst.itemId = this->carriedItemId;
         Dst.postGenerate(ITEM_SOURCE_MONSTER);
 
         StatusBarItemFound(foundGold, pItemTable->items[Dst.itemId].unidentifiedName);

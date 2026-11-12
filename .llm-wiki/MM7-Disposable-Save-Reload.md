@@ -121,4 +121,22 @@ Shoals controls passed 6/6. The writer fixtures earlier Light chapter state,
 so this proves a later chapter checkpoint rather than uninterrupted campaign
 continuity. It does not exercise post-install Atlas launch or visible play.
 
+## Regional side-quest checkpoints — 2026-11-12
+
+Three exact-filter writer/reader pairs now give the completed Season's Stole,
+Kerrid letter and Parsons' Quill routes durable boundaries. Each writer runs
+the real covered route, exits dialogue, writes `save000.mm7` through normal
+MM7 Save, and passes native structural preflight. A separate fresh headless
+process selects that slot through the normal Load menu and verifies the final
+map, quest bits, physical-item consumption, gold, XP and award ownership.
+Kerrid also preserves the all-food audience cost; Parsons preserves Erathia's
+final reputation of -5. The slot digest stayed unchanged across every reader.
+
+The writer is refused without the exact marked owner-only temporary profile,
+and a reader is refused when the marked profile has no candidate save. The
+three disposable profiles were removed after verification. The focused
+regional side/promotion selection passed 10/10 and `check_style` passed
+157/157. These are independent completed-route checkpoints, not a continuous
+regional campaign or a visible installed-app run.
+
 See also: [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [MM7 Atomic Save File](MM7-Atomic-Save-File.md), [MM7 Playtest Recording](MM7-Playtest-Recording.md), [Campaign Status](Campaign-Status.md), [Agent Handoff](Agent-Handoff.md).

@@ -42,6 +42,15 @@ and 7,500 gold. As with Kerrid, the source script writes its journal award only
 to the active character. The focused test and the 10-test regional selection
 both pass headlessly after integration.
 
+The completed Season's Stole, Kerrid and Parsons routes now also have
+independent production-Save/fresh-process-normal-Load checkpoints. All six
+exact writer/reader tests passed headlessly, with final quest, item, reward,
+award, map and route-specific food/reputation state intact and every slot
+byte-identical after its reader. Admission rejects a missing disposable
+profile and a reader profile without a save. The regional selection remains
+10/10 and the repository style gate 157/157. These checkpoints do not join the
+three quests into one continuous campaign.
+
 See the [November 9 progress table](Progress-2026-11-09.md) and [MM6 resume handoff](../project/MM6_RESUME_HANDOFF.md) for exact checks and next source paths. Raw captures and game data stay local.
 
 A [passive MM7 playtest recorder](MM7-Playtest-Recording.md) is integrated in the

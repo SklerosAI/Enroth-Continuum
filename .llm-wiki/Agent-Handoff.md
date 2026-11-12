@@ -20,6 +20,20 @@ integration and does not use either allocation. Before creating one, run
 use the corresponding `codex/` or `claude/` branch prefix. Older global-lead
 language below is historical and superseded by this boundary.
 
+## Current MM7 regional checkpoint — 2026-11-12
+
+Codex integrated fresh-process Save/Load boundaries for the complete Season's
+Stole, Kerrid letter and Parsons' Quill routes. Each writer runs its real
+covered route and normal Save; a separate reader uses the normal Load menu and
+asserts durable quest, item, map, reward and award state. Kerrid's food cost
+and Parsons' -5 Erathia reputation also persist. All six exact writer/reader
+tests passed and every slot stayed byte-identical after reading. The regional
+side/promotion selection passed 10/10 and `check_style` passed 157/157. The
+admission gate refused a missing temporary profile and a reader profile with no
+save. Disposable profiles were removed. Continue the broader uncovered
+side-quest catalog from this boundary; do not call the three independent
+routes a continuous campaign.
+
 ## Fast resume pointer — 2026-11-10
 
 The owner's [current delivery order](Current-Delivery-Order.md) is MM7 working,

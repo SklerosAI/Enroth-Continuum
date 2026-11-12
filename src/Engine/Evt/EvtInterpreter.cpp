@@ -1081,6 +1081,14 @@ int EvtInterpreter::executeStep(int step) {
         return -1;
 
     EvtFlow flow = executeInstruction(*ir);
+    // MM7's two timed war assignments omit an Exit after their deadline cleanup blocks.
+    // Continuing would fall through into the real-item success rewards even though the
+    // deadline branch already removed the quest state and any carried quest item.
+    if (flow.type == EVT_FLOW_NEXT && engine->gameTitle() == GameTitle::MM7 &&
+        _context.source == EVT_SOURCE_GLOBAL &&
+        ((_context.eventId == 125 && step == 11) || (_context.eventId == 132 && step == 12))) {
+        return -1;
+    }
     switch (flow.type) {
     default: assert(false); [[fallthrough]];
     case EVT_FLOW_STOP:

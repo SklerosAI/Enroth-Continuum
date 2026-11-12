@@ -14,7 +14,7 @@ deferred while the owner's headless-only instruction is active.
 
 | Priority | Quest group | Areas | Work remaining |
 | --- | --- | --- | --- |
-| 1 | War alternatives and Arbiter | Erathia, Tularean Forest, Avlee, Harmondale | Cover Loren Steel and Riverstride real-item, decoy-item and decline outcomes; the response and war clocks; resulting war score; each Gryphonheart's Trumpet recipient; the balanced/neutral Judge outcome; Judge Grey's death timing; and the Dark Arbiter selection. Only the Light continuation is currently chained. |
+| 1 | War alternatives and Arbiter | Erathia, Tularean Forest, Avlee, Harmondale | Real-item, decoy-item and ignored/timeout outcomes now pass for both 28-day assignments, including physical Loren and plans acquisition; the two broken timeout fallthroughs are fixed. The authored 56–84-day trumpet window, physical chest, Catherine/Parson/Judge Grey hand-ins, balanced real/real neutral result, 112-day messenger, Dark judge installation and a durable checkpoint pass. Remaining: expose/treason failure branches, determine whether the unplaced envoy hand-ins are reachable, cover balanced decoy/decoy and the other bit-derived result combinations, and add the war packet to a continuous campaign chain. |
 | 2 | Malwick, Niles and the tapestries | Emerald Island, Harmondale, Castle Lambent, Castle Gloaming | Cover accepting or refusing Malwick's wand, the six-week trigger, both two-week deadlines, Niles's visit, both alignment-specific tapestries, one-month allied-region hostility, missed-deadline invasion, closed services and service reopening after the attackers are cleared. |
 | 3 | Continuous Dark campaign D1-D7 | Castle Gloaming, the Pit, Celeste, Thunderfist Mountain, Clanker's Laboratory, Breeding Zone, Colony Zod, Shoals and Lincoln | Focused Dark contracts exist, but the durable chain does not. Link physical altar-piece acquisition, Robert's cube by combat or theft, Roland/control access and combat, physical Lincoln retrieval and the continuous Dark ending. |
 | 4 | Light route seams | Wine Cellar, Castle Gloaming, the Pit, Land of the Giants, Colony Zod, Shoals and Lincoln | Cover real Elder Vampire combat, the L5 Blaster reward, Roland/key/control access before Xenofex, and the retrieved Overthruster through the final hand-in. Audit the Walls protected-group predicate without weakening the no-kill player contract. |
@@ -38,7 +38,7 @@ deferred while the owner's headless-only instruction is active.
 
 ## Already durable; do not reopen without new evidence
 
-These eight independent regional routes have exact production-Save and
+These nine independent routes have exact production-Save and
 fresh-process normal-Load pairs with unchanged slot bytes:
 
 - Season's Stole
@@ -49,10 +49,12 @@ fresh-process normal-Load pairs with unchanged slot bytes:
 - Three Statuettes
 - Arcomage Champion
 - Obelisk puzzle
+- Balanced war, neutral trumpet and Dark Arbiter
 
 They are independent route boundaries, not a continuous regional campaign.
-The current regional side/promotion selection is 14/14; there are sixteen
-exact writer/reader checkpoint tests across the eight routes.
+The current regional side/promotion selection is 14/14; there are eighteen
+exact writer/reader checkpoint tests across the nine routes. The war checkpoint
+is a main-path boundary, not a regional side quest.
 
 ## Gate for each new quest slice
 

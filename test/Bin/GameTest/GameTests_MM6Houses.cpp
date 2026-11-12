@@ -224,7 +224,7 @@ GAME_TEST(MM6Houses, HouseNpcTopic) {
     game.pressGuiButton("HouseNpcDialogue_Option0");
     game.tick();
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
-    EXPECT_EQ(questBitsTape, tape(std::vector<int>{1, 2, 3, 4, 5, 6}, std::vector<int>{1, 2, 3, 4, 5, 6, 138}));
+    EXPECT_EQ(questBitsTape, tape(std::vector<int>(), std::vector<int>{138}));
     EXPECT_EQ(topicsTape, tape(std::vector<unsigned>{324, 326, 0}, std::vector<unsigned>{325, 326, 0}));
     const EvtInstruction &message = engine->_globalEventMap.function(324).front();
     ASSERT_EQ(message.opcode, EVENT_ShowMessage);

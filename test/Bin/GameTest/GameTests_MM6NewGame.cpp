@@ -20,13 +20,18 @@
 #include "Engine/MM6/MM6V5FirstMapLoadPreflight.h"
 #include "Engine/MM6/MM6V5FullSessionPreflight.h"
 #include "Engine/MM6/MM6V5SaveFields.h"
+#include "Engine/Objects/Chest.h"
+#include "Engine/Objects/CombinedSkillValue.h"
 #include "Engine/Party.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/mm7_data.h"
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/UIChest.h"
 #include "GUI/UI/UISaveLoad.h"
+
+#include "MM6CampaignChain.h"
 
 static std::filesystem::path ownerOnlyProfile() {
     const char *value = std::getenv("ENROTH_MM6_RESTART_PROFILE");
@@ -131,6 +136,36 @@ GAME_TEST(MM6NewGameHeadless, PotbelloPaysForTheLetter) {
     EXPECT_EQ(letterTape, tape(true)); // He reads it and gives it back.
     EXPECT_EQ(paidTape, tape(false, true));
     EXPECT_EQ(textTape.back(), pNPCTopics[engine->_globalEventMap.instruction(1, 4).data.text_id - 1].pText);
+}
+
+GAME_TEST(MM6NewGameHeadless, ForgeChestHoldsTheHourglass) {
+    // A new MM6 party started with MM7's Emerald Island quest bits, which MM6 dungeons read as their run-once flags, so
+    // the Gharik's Forge chest opened its second copy without the Hourglass of Time.
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    createPartyThroughInput(game);
+    game.pressGuiButton("PartyCreation_OK");
+    game.skipLoadingScreen();
+    game.tick();
+    for (Character &character : pParty->pCharacters)
+        character.setSkillValue(SKILL_TRAP_DISARM, CombinedSkillValue(30, MASTERY_MASTER)); // The chest's trap kills a new party.
+    useMM6CampaignChainEventFace(game, engine->_currentLoadedMapId, 103); // Gharik's Forge, on its island.
+    game.pressGuiButton("Transition_Yes");
+    game.tick();
+    game.skipLoadingScreen();
+    game.tick();
+    auto hourglassTape = tapes.custom([] {
+        return pGUIWindow_CurrentChest && static_cast<bool>(vChests[pGUIWindow_CurrentChest->chestId()].inventory.find(static_cast<ItemId>(433)));
+    });
+    auto takenTape = tapes.questBit(static_cast<QuestBit>(5));
+    auto foundTape = tapes.questBit(static_cast<QuestBit>(183));
+    test.startTaping();
+
+    useMM6CampaignChainIndoorEventFace(game, 48); // The Hourglass chest.
+
+    EXPECT_EQ(hourglassTape, tape(false, true));
+    EXPECT_EQ(takenTape, tape(false, true));
+    EXPECT_EQ(foundTape, tape(false, true));
 }
 
 GAME_TEST(MM6NewGameHeadless, DISABLED_NewPartySavesFromSaveMenu) {

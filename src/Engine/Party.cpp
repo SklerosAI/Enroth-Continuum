@@ -597,12 +597,14 @@ void Party::Reset() {
     _autonoteBits.reset();
 
     _questBits.reset();
-    _questBits.set(QBIT_EMERALD_ISLAND_RED_POTION_ACTIVE);
-    _questBits.set(QBIT_EMERALD_ISLAND_SEASHELL_ACTIVE);
-    _questBits.set(QBIT_EMERALD_ISLAND_LONGBOW_ACTIVE);
-    _questBits.set(QBIT_EMERALD_ISLAND_FLOOR_TILE_ACTIVE);
-    _questBits.set(QBIT_EMERALD_ISLAND_LUTE_ACTIVE);
-    _questBits.set(QBIT_EMERALD_ISLAND_HAT_ACTIVE);
+    if (engine->gameTitle() != GameTitle::MM6) { // MM6 dungeon scripts use bits 1-6 as their own run-once flags.
+        _questBits.set(QBIT_EMERALD_ISLAND_RED_POTION_ACTIVE);
+        _questBits.set(QBIT_EMERALD_ISLAND_SEASHELL_ACTIVE);
+        _questBits.set(QBIT_EMERALD_ISLAND_LONGBOW_ACTIVE);
+        _questBits.set(QBIT_EMERALD_ISLAND_FLOOR_TILE_ACTIVE);
+        _questBits.set(QBIT_EMERALD_ISLAND_LUTE_ACTIVE);
+        _questBits.set(QBIT_EMERALD_ISLAND_HAT_ACTIVE);
+    }
 
     isArtifactGenerated.fill(false);
 

@@ -3358,6 +3358,12 @@ Chronological record of wiki activity.
 - A Percival arrow, or one with the Carnage enchantment, now becomes object 1051 with a radius 512 area attack, as the original does. Before, it hit like a plain arrow.
 - Merged on `master` at `aa8728361`. Unit tests 1122, MM6 suite 139 passed and 2 skipped, MM7 controls 132, `check_style` clean. The lane's commit message overstates one point: MM6 object 550 was already drawn before the fix. The Carnage branch has no test.
 
+## [2026-11-12] verify | MM6 chain chapter C2 and the starting quest bits
+- by: T-Burton-ND via claude
+- A new MM6 party started with MM7's six Emerald Island quest bits (1 to 6) set. In MM6 each is the run-once flag of one dungeon event (d06, d09, d10, d11, d18 and t3), found by scanning global.evt and all 67 MM6 map scripts. With bit 5 set, the Gharik's Forge chest opened a chest with no Hourglass, so Newton's council vote could never be won. MM6 now starts with no quest bits. MM7 is unchanged.
+- Chapter C2 (council B) drives the oute2 ship, Newton's topics, d07's key chest and d18's key lever and Hourglass chest by input from C1's save, and passes in the chain runner. Teleports to doors, chests and exit faces remain fixtures, and d18's damage timer was never seen firing.
+- Merged on `master` at `900cde1cd`. Unit tests 1122, MM6 suite 142 passed and 2 skipped, MM7 controls 132, `check_style` clean. Next for C3: the sewer SpeakNPC street dialogue and the Hermit's hut.
+
 ## [2026-11-12] verify | MM7 Missing Contestants route and checkpoint
 - by: T-Burton-ND via codex
 - Added the complete Markham contract: real offer, no-shield refusal, physical Contestant Shield pickup from Emerald Island's Dragon's Lair, return, item and quest transitions, 1,000 gold, 1,000 XP per character, and the award for all four characters.

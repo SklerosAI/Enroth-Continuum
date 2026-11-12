@@ -1,8 +1,11 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <filesystem>
 #include <numbers>
 #include <ranges>
+#include <span>
+#include <string_view>
 #include <utility>
 
 #include "Testing/Game/GameTest.h"
@@ -13,17 +16,24 @@
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Indoor.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
+#include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/MapEnums.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
 #include "Engine/PartyEnums.h"
 #include "Engine/PartyPlacement.h"
+#include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/Resources/LOD.h"
+#include "Engine/SaveLoad.h"
 #include "Engine/Tables/NPCTable.h"
 
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/UIHouses.h"
+#include "GUI/UI/UISaveLoad.h"
 
 #include "Utility/Exception.h"
 
@@ -33,6 +43,9 @@ constexpr int catherineId = 69;
 constexpr int parsonId = 70;
 constexpr int lorenId = 71;
 constexpr int falseLorenId = 72;
+constexpr std::string_view checkpointSlot = "saves/save000.mm7";
+constexpr std::string_view checkpointFileName = "save000.mm7";
+constexpr std::array<uint64_t, 4> checkpointExperience = {13500, 13600, 13700, 13800};
 
 enum class WarJobOutcome {
     REAL,
@@ -241,6 +254,15 @@ void prepareWarJobs() {
         pParty->pCharacters[i].experience = 1000 + i * 100;
 }
 
+void assertDisposableHeadlessProfile() {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    const auto profileRoot = mm7::startupNativeProfileRoot();
+    ASSERT_TRUE(profileRoot);
+    ASSERT_EQ(*profileRoot, std::filesystem::canonical(std::filesystem::path(ufs->displayPath(""))));
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+}
+
 void acquireGryphonheartTrumpet(EngineController &game) {
     loadMapAtPartyStart(game, MAP_HARMONDALE);
     ASSERT_TRUE(pParty->_questBits[QBIT_CASTLE_HARMONDALE_TIMER_STARTED]);
@@ -297,6 +319,59 @@ void openJudgeGrey(EngineController &game) {
         game.pressGuiButton(fmt::format("House_Npc{}", judge - houseNpcs.begin()));
         game.tick();
     }
+}
+
+void installDarkArbiterAfterBalancedWar(EngineController &game) {
+    pParty->_questBits.set(QBIT_RIVERSTRIDE_PLANS_GIVEN);
+    pParty->_questBits.set(QBIT_LOREN_STEEL_RESCUED);
+    acquireGryphonheartTrumpet(game);
+    openJudgeGrey(game);
+    const unsigned int handIn = findNpcEvent(74, [](const EvtInstruction &instruction) {
+        return eventChangesQuestBit(instruction, QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ARBITER) &&
+               instruction.opcode != EVENT_Subtract;
+    });
+    ASSERT_TRUE(selectNpcEvent(game, 74, handIn));
+    ASSERT_TRUE(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ARBITER]);
+    leaveHouse(game);
+
+    // Counter 3 started when Harmondale loaded before the trumpet battle. Advance to the authored 112-day messenger.
+    pParty->GetPlayingTime() += Duration::fromDays(56);
+    loadMapAtPartyStart(game, MAP_HARMONDALE);
+    ASSERT_TRUE(pParty->_questBits[QBIT_ARBITER_MESSENGER_MET]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_ARBITER_CHOICE_ACTIVE]);
+    if (current_screen_type == SCREEN_NPC_DIALOGUE) {
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+    }
+
+    game.teleportTo(MAP_DEYJA, Vec3f(4544, -12350, 2592), 90);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_TAVERN_DEYJA);
+    auto judge = std::ranges::find_if(houseNpcs, [](const HouseNpcDesc &entry) {
+        return entry.npc == &pNPCStats->pNPCData[78];
+    });
+    ASSERT_NE(judge, houseNpcs.end());
+    if (houseNpcs.size() > 1) {
+        game.pressGuiButton(fmt::format("House_Npc{}", judge - houseNpcs.begin()));
+        game.tick();
+    }
+    ASSERT_TRUE(selectNpcEvent(game, 78, pNPCStats->pNPCData[78].dialogue_1_evt_id));
+    ASSERT_TRUE(pNPCStats->pNPCData[78].Hired());
+    leaveHouse(game);
+
+    game.teleportTo(MAP_HARMONDALE, Vec3f(20992, -6450, 672), 90);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_HARMONDALE_ARBITER_2);
+    ASSERT_TRUE(pParty->_questBits[QBIT_DARK_PATH]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_ARCHIBALD_VISIT_ACTIVE]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_ARBITER_CHOICE_ACTIVE]);
+    ASSERT_FALSE(pNPCStats->pNPCData[78].Hired());
+    ASSERT_EQ(pNPCStats->pNPCData[78].house, HOUSE_HARMONDALE_ARBITER_2);
+    leaveHouse(game);
 }
 
 } // namespace
@@ -476,4 +551,82 @@ GAME_TEST(MM7WarAlternatives, TrumpetSupportsErathiaAvleeAndArbiterRecipients) {
         EXPECT_EQ(pParty->GetGold(), 1000);
         EXPECT_EQ(totalExperience(), initialExperience + (recipient == TrumpetRecipient::ARBITER ? 50000 : 40000));
     }
+}
+
+GAME_TEST(MM7WarAlternatives, BalancedWarAndNeutralTrumpetCanInstallDarkArbiter) {
+    game.startNewGame();
+    prepareWarJobs();
+    installDarkArbiterAfterBalancedWar(game);
+
+    EXPECT_TRUE(pParty->_questBits[QBIT_RIVERSTRIDE_PLANS_GIVEN]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_LOREN_STEEL_RESCUED]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ARBITER]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ERATHIA]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_AVLEE]);
+    EXPECT_EQ(pParty->alignment, PartyAlignment::PartyAlignment_Evil);
+}
+
+GAME_TEST(MM7WarCheckpoint, DISABLED_WriteNeutralDarkArbiter) {
+    assertDisposableHeadlessProfile();
+    ASSERT_FALSE(ufs->exists(checkpointSlot));
+    game.startNewGame();
+    prepareWarJobs();
+    installDarkArbiterAfterBalancedWar(game);
+    ASSERT_FALSE(::testing::Test::HasFailure());
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_HARMONDALE);
+    game.runGameRoutine([] {
+        saveGame(false, false, checkpointSlot, "Neutral war, Dark Arbiter checkpoint");
+    });
+
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = ufs->read(checkpointSlot);
+    ASSERT_GT(saved.size(), 1024u);
+    ASSERT_TRUE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saved.data()), saved.size()),
+        GameTitle::MM7, *pGames_LOD));
+}
+
+GAME_TEST(MM7WarCheckpoint, DISABLED_ReloadNeutralDarkArbiter) {
+    assertDisposableHeadlessProfile();
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = Blob::copy(ufs->read(checkpointSlot));
+    ASSERT_GT(saved.size(), 1024u);
+
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(3);
+    ASSERT_EQ(current_screen_type, SCREEN_LOADGAME);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto found = std::ranges::find(slots, checkpointFileName, &SavegameSlot::fileName);
+    ASSERT_NE(found, slots.end());
+    const int index = static_cast<int>(found - slots.begin());
+    ASSERT_LT(index, 7);
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", index));
+    game.tick(2);
+    ASSERT_EQ(saveLoadMenu()->selectedSlot().fileName, checkpointFileName);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick(2);
+
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_HARMONDALE);
+    ASSERT_EQ(engine->_lastLoadedSaveFileName, checkpointFileName);
+    EXPECT_TRUE(pParty->_questBits[QBIT_RIVERSTRIDE_PLANS_GIVEN]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_LOREN_STEEL_RESCUED]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ARBITER]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_ARBITER_MESSENGER_MET]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_DARK_PATH]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_ARCHIBALD_VISIT_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_ARBITER_CHOICE_ACTIVE]);
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_GRYPHONHEARTS_TRUMPET));
+    EXPECT_EQ(pParty->alignment, PartyAlignment::PartyAlignment_Evil);
+    EXPECT_EQ(pParty->GetGold(), 1000);
+    EXPECT_EQ(pParty->uNumGoldInBank, 1000);
+    for (int i = 0; i < 4; ++i)
+        EXPECT_EQ(pParty->pCharacters[i].experience, checkpointExperience[i]);
+    EXPECT_TRUE(pParty->PartyTimes.CounterEventValues[2].isValid());
+    EXPECT_GE(pParty->GetPlayingTime(), pParty->PartyTimes.CounterEventValues[2] + Duration::fromDays(112));
+    EXPECT_FALSE(pNPCStats->pNPCData[78].Hired());
+    EXPECT_EQ(pNPCStats->pNPCData[78].house, HOUSE_HARMONDALE_ARBITER_2);
+    EXPECT_TRUE(ufs->read(checkpointSlot).str() == saved.str());
 }

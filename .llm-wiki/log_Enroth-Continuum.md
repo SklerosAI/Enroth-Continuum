@@ -3322,3 +3322,9 @@ Chronological record of wiki activity.
 - `MM7SideQuests.ParsonsQuillRequiresMarkhamExchange` completes the Emerald contest and departure, accepts Thrush's physical letter, proves the missing-quill refusal, performs the relocated Markham Manor exchange, and completes the return with item, quest, award, reputation, 2,000-gold and 5,000-XP-per-character assertions.
 - The final regional side/promotion selection passed 10/10 headlessly. Full `check_style` and changed-file `cpplint` also passed.
 
+## [2026-11-12] verify | MM7 audit line integrated
+- by: T-Burton-ND via codex
+- Reconciled the full MM7 audit line with the current shared core and integrated it on `master` at merge `0fbb8126f`. This includes the Dark quest contracts, regional side quests, save and scroll fixes, and their source-linked catalog updates.
+- The first full run exposed that the valid-indoor-spawn backport lacked its paired upstream `issue_1666` RNG trace update. Applying that exact trace change made the test pass 3/3 without another runtime change.
+- The final headless MM7 suite ran 569 tests: 567 passed and two vendor-mod cases skipped as expected. The 10 regional side/promotion tests and full `check_style` also passed.
+

@@ -81,6 +81,9 @@ HouseServiceData decodeHouseServiceData(const Blob &source, const RoomDescriptor
         row.closeHour = optionalNumber(fields[19], 0, 24);
         if (row.openHour.has_value() != row.closeHour.has_value())
             throw std::runtime_error("MM6 house service hours must form a pair");
+        row.exit = {houseExitField(fields[20]), houseExitField(fields[21]), houseExitField(fields[22])};
+        if (row.exit.picture < 0 || row.exit.picture > 8 || (row.exit.picture && row.exit.restriction < -6))
+            throw std::runtime_error("MM6 house exit is outside retained bounds");
         ++expectedId;
     }
     if (expectedId != 558)

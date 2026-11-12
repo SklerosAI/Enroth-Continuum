@@ -3,15 +3,21 @@
 The owner's [delivery order](../.llm-wiki/Current-Delivery-Order.md) is MM7
 working, MM6 working, full MM7 audit, full MM6 audit. This board records
 current lanes; older messages and handoffs remain historical evidence.
-Claude Code is the planning and coordination lead. The stage 1 gate rows
-(W1-W6), defect queue and limits are in [PLAN.md](PLAN.md).
+
+**Effective 2026-11-12:** Codex is the sole arbiter and delivery owner for
+MM7; Claude Code is the sole delivery owner for MM6. Each owner has up to five
+linked worktrees, while the `master` checkout is neutral integration and does
+not consume either allocation. Run the owner-specific budget check before
+creating a checkout. Earlier lead/coordination labels below are historical and
+do not override this split. The stage gates, defect queue and limits remain in
+[PLAN.md](PLAN.md).
 
 | Lane | Owner | Scope | State | Next coordination point |
 | --- | --- | --- | --- | --- |
 | MM7 raid route (W2) | Codex subagent | Harmondale raid GameTest and shop reopening | Integrated on `master`; campaign GameTests 6/6 | `GameTests_MM7Campaign.cpp` released for W4 |
 | MM7 candidate validation (W1, W3) | Codex subagent | Current staged build and isolated visible Save/Load | W1 passed; W3 partial; final staged Atlas rebuilt and signed | Owner authorized headless checks only; visible smoke, audible sound, ordinary NPC and monster fight remain open |
 | MM7 integration and priority record | Codex root | Review lanes, integrate one at a time, maintain the four-stage delivery order | Active | Share reviewed outcomes through `agent_comms/` and update this board |
-| Planning and coordination lead | Claude Code | Sequence the working gates, review and integrate lane output while Codex is paused | Active | `PLAN.md` |
+| Planning and coordination lead | Codex root (from Claude, 2026-11-11, owner's request) | Sequence the working gates, assign lanes, integrate | Handover sent | Codex replies with Claude's lane assignments |
 | MM7 campaign path (W4) | Claude Code | Continuous chain C1-C7 on the integrated harness | C0, harness, Xenofex fight and quest items integrated at `56b5968ab`. C1-C3 lane active | C4-C7 after C1-C3 lands |
 | MM7 castle opening (W4 O5–O7) | Codex subagent | First Butler visit, goblin completion, exit and hand-in | Integrated on `master`; Castle and raid controls 2/2 | Start the next independent W4 scope; Castle test file released |
 | MM7 castle rebuild (W4 O8–O10) | Codex subagent | Butler repair, seven rescues, king hand-in and missing-rescue control | Interaction test integrated; three related controls 3/3 before checkpoint refactor | Rerun one-missing case on integrated checkpoint code when runtime authorization resumes |
@@ -32,7 +38,7 @@ Claude Code is the planning and coordination lead. The stage 1 gate rows
 | MM7 W4 path review | Claude Code lead | Audit chapter seams, test assertions and disposable-profile harness | Review committed at `a9af27ae6`; F1 is a possible player blocker, F2-F4 need stronger tests | Codex owns F1; queue F2-F4 after a code lane frees |
 | MM7 Walls protected group (W4 L1–L4) | Codex subagent | Fresh-entry group-population and source semantics | Investigation complete; group-1 check is an unreachable negative branch in tested local data, with no source-backed runtime fix | Retain handoff; revisit only if another owned edition or original-game observation contradicts it |
 | MM7 endgame audit recorder | Codex root + subagent | Atlas recording toggle, chosen local/external folder, passive video/log/save collector | Integrated on `master`; signed candidate installed headlessly after owner authorization; installed hashes and signature verified | First real recording, screen permission, external-drive removal and Atlas lifecycle require later graphical authorization |
-| MM6 implementation | Unassigned | Existing first-map progress and Notes worktree retained | Queued after MM7 working gate | Resume from `project/MM6_RESUME_HANDOFF.md` after MM7 acceptance |
+| MM6, all of stage 2 | Claude Code (owner's assignment, 2026-11-11) | Lanes F, H, X and SKY, MM6 integration into `master` with the M7 controls | Active | `claims/claude-mm6-all.md` |
 
 ## State at the 2026-11-11 break
 

@@ -1,6 +1,7 @@
 #include "MM6MapTransition.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -28,6 +29,7 @@
 
 #include "MM6ChestMapLoadRoute.h"
 #include "MM6FirstMapManualSave.h"
+#include "MM6MapVisit.h"
 #include "MM6OutdoorBorderConfirmation.h"
 #include "MM6PartyRest.h"
 
@@ -50,7 +52,11 @@ static SessionMap captureActiveMap() {
     const bool indoor = uCurrentlyLoadedLevelType == LEVEL_INDOOR;
     SessionMap result;
     result.deltaName = activeDeltaName();
-    result.delta = indoor ? encodeMM6IndoorParkedState(*pIndoor) : encodeMM6OutdoorParkedState(*pOutdoor);
+    const Blob delta = indoor ? encodeMM6IndoorParkedState(*pIndoor) : encodeMM6OutdoorParkedState(*pOutdoor);
+    const auto *deltaBytes = static_cast<const std::uint8_t *>(delta.data());
+    std::vector<std::uint8_t> stamped(deltaBytes, deltaBytes + delta.size());
+    recordMapVisit(stamped, pParty->GetPlayingTime(), indoor ? "" : pOutdoor->weather.skyTextureName);
+    result.delta = Blob::copy(stamped.data(), stamped.size());
     result.runtime.mapName = mapName;
     result.runtime.actors.assign(pActors.begin(), pActors.end());
     result.runtime.sprites = pSpriteObjects;

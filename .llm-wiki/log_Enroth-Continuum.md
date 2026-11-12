@@ -3277,6 +3277,45 @@ Chronological record of wiki activity.
 - Added and repeat-verified `MM7SideQuests.AngelStatuetteIsAcquiredFromTheMazeChest`. It starts a new game, finds the Angel Statuette in the loaded Maze chest, and takes it through the ordinary chest UI.
 - Knight/Eagle acquisition, the three shrine placements, and Thom Lumbra's return/reward contract remain separate uncovered work.
 
+## [2026-11-11] update | Atlas MM6 isolated playtest entry
+- by: T-Burton-ND via codex
+- Added the gated `Play MM6` action at `ee7c49023`, alongside the existing MM7 route. It requires MM6 data, runs only the title-locked MM6 helper, uses `Profiles/MM6-Atlas`, and clears MM7-only settings.
+- The Atlas interface was simplified around the local Gridiron Dark palette. MM6 deliberately does not start the MM7 rolling recording or diagnostics collector.
+- The Swift build-profile controls, page controls and assembler syntax check passed. This is an owner playtest entry, not evidence that MM6 has completed a visible campaign.
+
+## [2026-11-11] verify | Installed Atlas MM6/MM7 playtest candidate
+- by: T-Burton-ND via codex
+- Built the current arm64 MM6 and MM7 targets, staged and signature-verified a two-helper Atlas, then visually checked the rebuilt Gridiron Dark interface and its enabled MM6 action.
+- Replaced the installed Atlas only after that verification, preserving the prior app in the local Application Support rollback folder. No MM6 session was started during installation.
+
+## [2026-11-11] verify | MM6 campaign chain C0-C1
+- by: T-Burton-ND via codex
+- Integrated the C1 campaign chapter after its two independent fresh-profile runs passed. The integration checkout then ran C0 and C1 in separate headless processes.
+- C0 created `save000.ec6` from production New Game; C1 normal-Loaded it, completed the early council and stable-price routes plus the shield chest pickup, and created `save001.ec6`. Both retained digest pass markers in the disposable profile.
+- This is stronger headless progression evidence, but it does not replace visible owner playtesting or prove the remaining MM6 quest chain.
+
+## [2026-11-11] verify | MM6 bow and map-visit repairs
+- by: T-Burton-ND via codex
+- Integrated the title-gated bow projectile correction: MM6 bows now select the native arrow object rather than an absent MM7 object row. The focused monster-hit test passed on the integration binary.
+- Integrated MM6 visit-state capture and restore across map changes and saves. The three headless checks covering later-day sky variation, same-day sky retention and a delayed fountain refill passed 3/3.
+- The installed candidate will be rebuilt from this revision after the remaining integration checks; visual projectile fidelity and exceptional arrow behaviors remain explicitly open.
+
+## [2026-11-11] fix | Atlas MM6 launch and party-creation presentation
+- by: T-Burton-ND via codex
+- Atlas now seeds missing local MM6 rules and configuration into its separate profile before launch, preventing the new-profile rules failure. Its profile migration opens a fixed native-size window by default while retaining the game's fullscreen toggle.
+- Visible owner-local checks reached party creation in the foreground and confirmed character-selection input. MM6 class-icon transparency keys were corrected, but the remaining party-creation asset-layout issue is still open; this is not campaign or normal Save/Load acceptance.
+
+## [2026-11-11] fix | MM6 party creation layout and fullscreen
+- by: T-Burton-ND via claude
+- MM6 party creation uses the original executable's layout, and its hit boxes sit on the visible art. Real mouse and keyboard events changed the value under the pointer in windowed and fullscreen mode. MM6 suite 134/134, MM7 control 540/540.
+- Supersedes the earlier note that the fixed window keeps the fullscreen toggle. macOS takes F11, so Atlas now makes the MM6 window resizable and native fullscreen works. Play MM6 from the installed Atlas still needs a visible check.
+
+## [2026-11-12] update | Title ownership and worktree allocation
+- by: T-Burton-ND via codex
+- Recorded the owner's strict title boundary: Codex is the sole MM7 arbiter and delivery owner, while Claude Code owns all MM6 work; prior overall-lead wording is historical.
+- Allocated up to five linked worktrees to each title, left `master` neutral for integration, and made the budget check count `codex/` and `claude/` branches separately.
+- Verified the capacity tool compiles and reports the current allocation as Codex 1/5 and Claude 0/5. The two-active-code-lane safety limit and cross-title regression controls remain in force.
+
 ## [2026-11-12] verify | MM7 Kerrid and Parsons side quests
 - by: T-Burton-ND via codex
 - `MM7SideQuests.KerridLetterIsReceivedThroughRealHouseDialogue` reaches Kerrid's real Pierpont residence and offer, then verifies the active state and physical letter. The Faerie audience and return remain open.

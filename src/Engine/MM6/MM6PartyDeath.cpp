@@ -1,6 +1,5 @@
 #include "Engine/MM6/MM6PartyDeath.h"
 
-#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -9,6 +8,7 @@
 #include "Engine/Evt/EvtEnums.h"
 #include "Engine/Evt/MM6EventVariableDispatch.h"
 #include "Engine/Graphics/Overlays.h"
+#include "Engine/MM6/MM6Finale.h"
 #include "Engine/MM6/MM6MapTransition.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Character.h"
@@ -29,16 +29,6 @@
 namespace mm6 {
 
 static constexpr int deathsAward = 82;
-
-/**
- * @return                              Whether the party died in the hive with quest bit 180 set, which only the engine
- *                                      sets, and 237 clear, which the hive's script sets. The original plays its losing
- *                                      ending then.
- */
-static bool endsTheGameInHive() {
-    return pMapTable->pInfos[engine->_currentLoadedMapId].fileName == "hive.blv" &&
-           pParty->_questBits.test(static_cast<QuestBit>(180)) && !pParty->_questBits.test(static_cast<QuestBit>(237));
-}
 
 /**
  * MM6 counterpart of `Actor::InitializeActors`. Every monster takes its hostility back from the monster table, where
@@ -87,8 +77,10 @@ void applyPartyDeath(Party *party, const std::function<int(const Character &)> &
 
 void respawnDeadParty() {
     pAudioPlayer->stopSounds();
-    if (endsTheGameInHive())
-        throw std::runtime_error("MM6 losing ending for a party that dies in the hive is not implemented");
+    if (isHiveFinaleUnderway()) {
+        playFinaleEnding(FINALE_ENDING_LOSE);
+        return;
+    }
 
     for (int i = 0; i < pNPCStats->uNumNewNPCs; ++i)
         if (pNPCStats->pNPCData[i].canJoin)

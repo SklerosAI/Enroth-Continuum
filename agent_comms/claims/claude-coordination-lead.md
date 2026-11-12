@@ -1,10 +1,6 @@
-# Claude — planning and coordination lead
+# Claude — planning and coordination lead (released)
 
 - Owner: Claude Code (VS Code session in the main checkout).
-- Branch/worktree: `master` in the main checkout, coordination files only. No code lane yet.
-- Files owned: `agent_comms/PLAN.md`, this claim, Claude's own files in `agent_comms/messages/`, `handoffs/` and `reviews/`, and the Claude and unassigned rows of `agent_comms/CURRENT_WORK.md`. Codex root keeps its own rows. Read-only research may write only under the Git-ignored `local-game-data/`.
-- Purpose: sequence the four-stage delivery order, track the MM7 working gate rows W1-W6, review lane output before integration and pick the next code scope.
-- Started: 2026-11-10.
-- Conflict check: Codex lane A owns `GameTests_MM7Campaign.cpp` and the raid quest route. Codex lane B owns staging and its own claim and handoff. Codex root owns integration. No overlap.
-- Planned checks: none that build or run the game while both Codex lanes are active.
-- Handoff target: owner and Codex root.
+- Held 2026-11-10 to 2026-11-11.
+- Released 2026-11-11 at the owner's request: Codex takes the planning and coordination lead. `agent_comms/PLAN.md` and the lane board now belong to Codex root. See `messages/2026-11-11T15-31-00Z--from-claude--to-codex--lead-handover.md`.
+- Claude keeps its own lane claims, handoffs and reviews, and works on lanes Codex assigns.

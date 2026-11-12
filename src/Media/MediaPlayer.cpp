@@ -842,6 +842,10 @@ bool MPlayer::hasHouseMoviePayload(std::string_view movieName) {
     return static_cast<bool>(LoadMovie(movieName));
 }
 
+Blob MPlayer::houseMoviePayload(std::string_view movieName) {
+    return LoadMovie(movieName);
+}
+
 void MPlayer::HouseMovieLoop() {
     if (!pMovie_Track || engine->config->debug.NoVideo.value()) {
         return;

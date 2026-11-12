@@ -12,6 +12,8 @@ private let portraitMoods = ["normal", "talk", "smile", "sad", "hurt", "pain", "
                              "paralyzed", "stone", "zombie", "dead", "eradicated"]
 private let rollingVideoHotKeyID: UInt32 = 1
 private weak var rollingVideoHotKeyOwner: AtlasApp?
+private let mm6RuleNames = ["creation.json", "spells.json", "first-aid.json", "power-cure.json", "timed-cures.json",
+                            "combat-buffs.json", "house-rooms.json", "transport.json", "shop-stock.json"]
 
 private func rollingVideoHotKeyHandler(_ nextHandler: EventHandlerCallRef?, _ event: EventRef?,
                                        _ userData: UnsafeMutableRawPointer?) -> OSStatus {
@@ -54,6 +56,79 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
 
     private var modRoot: URL {
         supportPath.appendingPathComponent("Mods/MM7", isDirectory: true)
+    }
+
+    /**
+     * Atlas profiles are isolated from the MM6 integration profile, but the current MM6 runtime needs its local rule
+     * JSON. Seed only missing files so a player-owned Atlas profile is never overwritten.
+     */
+    private func seedMM6Profile(_ profilePath: URL) throws {
+        let fileManager = FileManager.default
+        let source = supportPath.appendingPathComponent("Profiles/MM6", isDirectory: true)
+        let sourceRules = source.appendingPathComponent("rules", isDirectory: true)
+        let targetRules = profilePath.appendingPathComponent("rules", isDirectory: true)
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: sourceRules.path, isDirectory: &isDirectory), isDirectory.boolValue else {
+            throw NSError(domain: "AtlasMM6Profile", code: 1, userInfo: [NSLocalizedDescriptionKey:
+                "The local MM6 rule set is missing. Restore Profiles/MM6/rules before launching MM6."])
+        }
+        try fileManager.createDirectory(at: targetRules, withIntermediateDirectories: true)
+        for name in mm6RuleNames {
+            let input = sourceRules.appendingPathComponent(name)
+            let output = targetRules.appendingPathComponent(name)
+            guard fileManager.fileExists(atPath: input.path) else {
+                throw NSError(domain: "AtlasMM6Profile", code: 2, userInfo: [NSLocalizedDescriptionKey:
+                    "The local MM6 rule set is incomplete (missing \(name))."])
+            }
+            if !fileManager.fileExists(atPath: output.path) {
+                try fileManager.copyItem(at: input, to: output)
+            }
+        }
+        let sourceConfig = source.appendingPathComponent("openenroth.ini")
+        let targetConfig = profilePath.appendingPathComponent("openenroth.ini")
+        if fileManager.fileExists(atPath: sourceConfig.path), !fileManager.fileExists(atPath: targetConfig.path) {
+            try fileManager.copyItem(at: sourceConfig, to: targetConfig)
+        }
+        try setMM6AtlasWindowDefaults(targetConfig)
+    }
+
+    /**
+     * Starts the Atlas MM6 profile in a 640x480 window and keeps that window resizable. macOS greys out the
+     * fullscreen button of a fixed-size window and reserves F11 for Show Desktop, so a resizable window is the
+     * player's way into fullscreen. Each step applies once, afterwards the Atlas player owns the setting.
+     *
+     * @param configPath                The Atlas MM6 profile's `openenroth.ini`.
+     */
+    private func setMM6AtlasWindowDefaults(_ configPath: URL) throws {
+        let versionKey = "mm6.profile.windowDefaults.version"
+        let version = 3
+        let previous = preferences.integer(forKey: versionKey)
+        guard previous < version,
+              FileManager.default.fileExists(atPath: configPath.path) else { return }
+        var defaults = [("resizable", "true")]
+        if previous < 2 { defaults.append(("mode", "windowed")) }
+        let contents = try String(contentsOf: configPath, encoding: .utf8)
+        var inWindowSection = false
+        var replaced = false
+        let updated = contents.split(separator: "\n", omittingEmptySubsequences: false).map { line -> String in
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.hasPrefix("[") && trimmed.hasSuffix("]") {
+                inWindowSection = trimmed == "[window]"
+            }
+            if inWindowSection {
+                for (key, value) in defaults {
+                    if trimmed.hasPrefix(key) && trimmed.dropFirst(key.count).trimmingCharacters(in: .whitespaces).hasPrefix("=") {
+                        replaced = true
+                        return "\(key) = \(value)"
+                    }
+                }
+            }
+            return String(line)
+        }.joined(separator: "\n")
+        if replaced {
+            try updated.write(to: configPath, atomically: true, encoding: .utf8)
+        }
+        preferences.set(version, forKey: versionKey)
     }
 
     private var recordingBasePath: URL {
@@ -172,6 +247,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
                                didReceive message: WKScriptMessage) {
         guard let action = message.body as? String else { return }
         if action == "refresh" { sendState() }
+        else if action == "play-mm6" { play(.mm6) }
         else if action == "play-mm7" { play(.fork) }
         else if action == "play-openenroth" { play(.upstream) }
         else if action == "record-video-on" || action == "record-video-off" {
@@ -249,6 +325,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             "saves": saveNames(),
             "running": game != nil,
             "runningBuild": gameBuild?.rawValue ?? "",
+            "mm6Available": GameBuild.mm6.isAvailable(in: Bundle.main.bundleURL),
             "upstreamAvailable": GameBuild.upstream.isAvailable(in: Bundle.main.bundleURL),
             "recordingFinalizing": recordingFinalizing,
             "recordingEnabled": recordingEnabled,
@@ -594,7 +671,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         let name = build.displayName
         guard let profilePath = build.profilePath(environment: ProcessInfo.processInfo.environment,
                                                   supportPath: supportPath) else {
-            sendState(message: "The disposable MM7 profile is invalid; MM7 was not launched.")
+            sendState(message: "The \(name) profile is invalid; \(name) was not launched.")
             return
         }
         guard game == nil else {
@@ -606,8 +683,8 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             sendState(message: "The previous recording is still finalizing. Play will be available when it finishes.")
             return
         }
-        guard dataReady("mm7"), let dataPath = dataPath(for: "mm7") else {
-            sendState(message: "Choose a folder containing your MM7 ANIMS, DATA, MUSIC and SOUNDS directories.")
+        guard dataReady(build.dataTitle), let dataPath = dataPath(for: build.dataTitle) else {
+            sendState(message: "Choose a folder containing your \(build.dataTitle.uppercased()) ANIMS, DATA, MUSIC and SOUNDS directories.")
             return
         }
         let engine = build.helperExecutable(in: Bundle.main.bundleURL)
@@ -615,7 +692,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             sendState(message: "The bundled \(name) engine is missing.")
             return
         }
-        let shouldRecord = recordingEnabled
+        let shouldRecord = build.supportsRecording && recordingEnabled
         if shouldRecord, let issue = recordingPreflight(profilePath: profilePath, dataPath: dataPath) {
             sendState(message: issue)
             return
@@ -630,6 +707,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         }
         do {
             try FileManager.default.createDirectory(at: profilePath, withIntermediateDirectories: true)
+            if build == .mm6 { try seedMM6Profile(profilePath) }
             let process = Process()
             process.executableURL = engine
             process.arguments = build.arguments(dataPath: dataPath, profilePath: profilePath)
@@ -693,7 +771,9 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
                 }
             }
             sendState(message: shouldRecord && recorder?.isRunning == true
-                      ? "Opening \(name); recording is starting…" : "Opening \(name)…")
+                      ? "Opening \(name); recording is starting…"
+                      : build.supportsRecording ? "Opening \(name)…" : "Opening \(name) in its separate MM6 profile…")
+            window.orderOut(nil)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 NSRunningApplication(processIdentifier: process.processIdentifier)?.activate()
             }

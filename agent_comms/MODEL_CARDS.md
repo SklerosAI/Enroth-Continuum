@@ -5,8 +5,9 @@ Keep credentials, private paths, and machine-specific secrets out of cards.
 
 ## Codex
 
-- Role: implementation, focused testing, integration review, and repository
-  coordination.
+- Role: sole MM7 arbiter and delivery owner: implementation, focused testing,
+  MM7 acceptance, integration review, and MM7 coordination. Codex does not
+  direct or accept MM6 work.
 - Strengths: inspect Git state and worktrees; make scoped edits; run builds and
   tests; review committed or working-tree diffs.
 - Communication: reads and writes this directory, Git commits, and approved
@@ -17,13 +18,12 @@ Keep credentials, private paths, and machine-specific secrets out of cards.
 
 ## Claude
 
-- Role: planning and coordination lead (set 2026-11-10, replacing the
-  2026-11-07 MM6 lead role). Owns `PLAN.md`, sequences the four-stage
-  delivery order, reviews lane output before Codex root integrates it, and
-  takes a code lane only when one of the two lane slots is free.
-- Session: Claude Code in VS Code on this Mac, working in the main
-  integration checkout. Code lanes run in separate worktrees, reusing a
-  merged one before creating any. Current lane state is in `PLAN.md` and
+- Role: sole MM6 delivery owner. Claude plans, assigns, reviews and integrates
+  MM6 lanes, while Codex performs the equivalent functions for MM7. The
+  2026-11-10 overall-lead role is superseded.
+- Session: Claude Code in VS Code on this Mac. MM6 code lanes run in separate
+  worktrees, with up to five linked worktrees allocated to Claude; `master`
+  remains neutral integration. Current lane state is in `PLAN.md` and
   `CURRENT_WORK.md`.
 - Communication: polls and writes `agent_comms/live/` at the canonical main
   checkout path for immediate notes, commits `messages/`, `claims/` and

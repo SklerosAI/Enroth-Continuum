@@ -1,8 +1,16 @@
-# Lead plan — MM7 first
+# Delivery plan — title-owned execution
 
-Owner: Claude Code, planning and coordination lead since 2026-11-10.
-This is a living plan. `CURRENT_WORK.md` holds the lane board. The delivery
-order itself is in `.llm-wiki/Current-Delivery-Order.md`.
+Codex is the sole arbiter and delivery owner for MM7 as of 2026-11-12; Claude
+Code owns MM6. This is a living plan. `CURRENT_WORK.md` holds the lane board.
+The delivery order itself is in `.llm-wiki/Current-Delivery-Order.md`.
+
+Title authority is strict: Codex assigns, accepts and integrates MM7 work;
+Claude assigns, accepts and integrates MM6 work. Each may use up to five linked
+worktrees. `master` is neutral integration and consumes neither allocation.
+Use `tools/check_worktree_budget.py --agent <codex|claude>` before adding a
+checkout, and use the matching `codex/` or `claude/` branch prefix. The older
+references to Claude as overall lead describe the prior handoff and are
+superseded by this owner decision.
 
 Stages run in order: (1) MM7 working, (2) MM6 working with MM7 preserved,
 (3) full MM7 audit, (4) full MM6 audit. A working gate and an audit are

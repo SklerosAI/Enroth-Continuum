@@ -73,6 +73,7 @@ inline uint8_t monsterResistanceForAttack(const MonsterInfo &monster, MonsterDam
 inline void requireVerifiedMonsterDamage(GameTitle title, DamageType type) {
     if (title != GameTitle::MM6) return;
     if (type == DAMAGE_PHYSICAL || type == DAMAGE_FIRE) return;
+    if (type == DAMAGE_ENERGY) return; // MM6 blasters, no monster resists them.
     throw std::runtime_error("MM6 damage channel is not verified");
 }
 

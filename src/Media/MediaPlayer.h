@@ -35,6 +35,7 @@ class MPlayer {
     bool tryOpenHouseMovie(std::string_view movieName, bool loop);
     // Resolves the active title's movie bytes without starting playback.
     bool hasHouseMoviePayload(std::string_view movieName);
+    Blob houseMoviePayload(std::string_view movieName);
     void HouseMovieLoop();
 
     bool IsMoviePlaying() const;

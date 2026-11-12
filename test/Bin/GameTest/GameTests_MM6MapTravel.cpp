@@ -243,3 +243,18 @@ GAME_TEST(MM6MapTravel, NeighbourAndBackKeepsTheMap) {
     EXPECT_EQ(chestTape[4], chestTape[2]);
     EXPECT_EQ(heldTape.size(), 2);
 }
+
+GAME_TEST(MM6MapTravel, TeleportToUnvisitedMap) {
+    // An MM6 game test that teleported to a map the party hadn't been to stopped at the chest generation guard.
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const MapId outb2 = pMapTable->GetMapInfo("outb2.odm");
+    auto mapTape = tapes.map();
+    auto shieldChestTape = tapes.custom([=] { return engine->_currentLoadedMapId == outb2 && vChests[1].inventory.find(static_cast<ItemId>(499)); });
+    test.startTaping();
+
+    game.teleportTo(outb2, Vec3f(-4320, 554, 161), 90);
+
+    EXPECT_EQ(mapTape, tape(pMapTable->GetMapInfo("oute3.odm"), outb2));
+    EXPECT_EQ(shieldChestTape, tape(false, true)); // Kilburn's shield is in its chest.
+}

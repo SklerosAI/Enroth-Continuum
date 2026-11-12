@@ -8,8 +8,9 @@ data path and user path. It does not package original Might & Magic data.
 
 - MM7 launches, saves, exits, and reloads through The Atlas.
 - **Play upstream OpenEnroth**, next to Play MM7, launches the current upstream
-  OpenEnroth build on the same MM7 data, for playtesting upstream. It runs the
-  optional `Contents/Helpers/OpenEnroth.app` with exactly
+  OpenEnroth build on the same MM7 data, for playtesting upstream. It prefers an
+  optional bundled `Contents/Helpers/OpenEnroth.app`; otherwise it uses the separate
+  `/Applications/OpenEnroth.app` installation. Either route runs exactly
   `--data-path <MM7 data> --user-path <profile>`, which is upstream's own CLI.
   Upstream plays MM7 only and has no `--game` option. Its profile is
   `Profiles/MM7-OpenEnroth`, created before launch because upstream requires an
@@ -47,8 +48,12 @@ data path and user path. It does not package original Might & Magic data.
   with video runs, and other apps do not receive Command-Shift-R meanwhile.
   If an external drive is remounted or replaced, choose its folder again so
   Atlas can verify the destination before the next recorded launch.
-- MM6 and MM8 cards detect locally extracted core data. Their engine adapters,
-  play buttons, saves, and character transfer are still to be implemented.
+- **Play MM6** launches the bundled, title-locked MM6 helper only when its own
+  MM6 data folder is ready. It uses `Profiles/MM6-Atlas`, never an MM7 profile,
+  and does not enable MM7 recording or private-mod settings. It is a playtest
+  candidate: use it to exercise MM6 and report problems; it is not a claim that
+  every campaign path has received a visible owner playthrough. MM8 remains a
+  data-detection card until it has its own runnable helper.
 - The Vault lists MM7 saves and creates local backup copies.
 - The Atelier provides private portrait moods for four party positions,
   one MM7 armor template AC override, an optional fresh-vendor-stock-on-entry
@@ -144,8 +149,9 @@ the given app is copied to
 `Contents/Resources/Helpers/OpenEnroth-BUILD-INFO.txt`, where the recorder reads
 the upstream commit. `--reuse-from` keeps both the helper and that file.
 
-For a future title update, pass `--reuse-from` with an existing Atlas and
-`--mm6-app` or `--mm8-app` only after that title passes its play and save gate.
+For a title update, pass `--reuse-from` with an existing Atlas and `--mm6-app`
+or `--mm8-app` only after its helper has passed the relevant headless gate and
+the intended Atlas action is explicitly ready for playtesting.
 The assembler carries forward any existing sibling helper not replaced by an
 explicit input. It always writes a staged bundle, never directly to
 `/Applications`; install only after verifying the playable title's launch and

@@ -45,8 +45,8 @@ void settleBorderArrival(PartyPlacement *placement);
 
 /**
  * Bookkeeping every MM6 map change does before the target map loads. The map the party leaves is parked for the
- * session: its delta with the live chests, doors, visibility and reset counters, and its actors, ground items and event
- * variables.
+ * session: its delta with the live chests, doors, visibility and reset counters and this visit's time and sky, and its
+ * actors, ground items and event variables.
  *
  * @param target                        Map the party is about to enter.
  */

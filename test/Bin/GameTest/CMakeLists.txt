@@ -4,6 +4,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTestCommon.cpp
         GameTestMain.cpp
         GameTestOptions.cpp
+        MM6CampaignChain.cpp
         MM6HeadlessRules.cpp
         MM7CampaignChain.cpp
         GameTests_0000.cpp
@@ -44,12 +45,15 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7DarkGuild.cpp
         GameTests_MM7Scrolls.cpp
         GameTests_MM6.cpp
+        GameTests_MM6CampaignChainC0.cpp
+        GameTests_MM6CampaignChainC1.cpp
         GameTests_MM6CharacterBitEvent.cpp
         GameTests_MM6EventVariables.cpp
         GameTests_MM6Creation.cpp
         GameTests_MM6FlyingEvent.cpp
         GameTests_MM6IndoorFacetEvent.cpp
         GameTests_MM6MonthEvent.cpp
+        GameTests_MM6PartyCreation.cpp
         GameTests_MM6SkillEvent.cpp
         GameTests_MM6OriginalNoopEvent.cpp
         GameTests_MM6Save.cpp
@@ -57,6 +61,7 @@ set(GAME_TEST_MAIN_SOURCES
 set(GAME_TEST_MAIN_HEADERS
         GameTestCommon.h
         GameTestOptions.h
+        MM6CampaignChain.h
         MM6HeadlessRules.h
         MM7CampaignChain.h)
 
@@ -108,11 +113,15 @@ target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Calendar.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6CharacterScreen.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6NewGame.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6MapTravel.cpp)
+target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6MapVisit.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6PartyDeath.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6SaveAnywhere.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Decorations.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Transport.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Autosave.cpp)
+target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6HouseExit.cpp)
+target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Finale.cpp)
+target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Bow.cpp)
 target_link_libraries(OpenEnroth_GameTest PUBLIC application testing_game library_cli library_platform_main library_stack_trace
         engine_mm6_save_runtime engine_mm6_spawn_actor_section)
 

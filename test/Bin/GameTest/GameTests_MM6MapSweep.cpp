@@ -26,10 +26,14 @@
 #include "Engine/Evt/EvtInstruction.h"
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Evt/Processor.h"
+#include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
+#include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/MM6/MM6MapVisit.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
@@ -37,6 +41,7 @@
 #include "Engine/Objects/Decoration.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
+#include "Engine/Resources/ResourceManager.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/MapTable.h"
 
@@ -46,6 +51,7 @@
 #include "Utility/String/Format.h"
 
 #include "MM6MapEntranceForTest.h"
+#include "OffscreenCaptureForTest.h"
 
 struct SweepTimer {
     int eventId = 0;
@@ -209,6 +215,24 @@ static void enterFirstMapFromNewGame(EngineController &game) {
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
 }
 
+static void enterMapAtFirstShippedEntrance(EngineController &game, MapId map) {
+    // Loads the map at the first MoveToMap any map script sends there, or at its party start without one.
+    const std::optional<MM6ShippedEntrance> entrance = findShippedMM6Entrance(pMapTable->pInfos[map].fileName);
+    bool loaded = false;
+    game.runGameRoutine([&] {
+        for (Chest &chest : vChests)
+            chest.position.reset(); // The previous map's chest positions would make the target's chest load refuse.
+        engine->_pendingTransition = entrance ? MapDestination(map, entrance->placement) : MapDestination(map, MAP_START_POINT_PARTY);
+        mm6::ScopedChestMapLoadOptIn chestOptIn;
+        PrepareWorld(0);
+        loaded = true;
+    });
+    for (int tick = 0; tick < 256 && !loaded; ++tick)
+        game.tick();
+    ASSERT_TRUE(loaded);
+    ASSERT_EQ(engine->_currentLoadedMapId, map);
+}
+
 static std::vector<SweepTimer> loadedMapTimers() {
     // First alarm of every OnTimer and OnLongTimer, computed the way the event processor registers them on map load.
     const Time lastVisit = uCurrentlyLoadedLevelType == LEVEL_INDOOR ? pIndoor->lastVisitTime : pOutdoor->lastVisitTime;
@@ -218,20 +242,14 @@ static std::vector<SweepTimer> loadedMapTimers() {
         for (const EventTrigger &trigger : engine->_localEventMap.enumerateTriggers(type)) {
             const auto &timer = engine->_localEventMap.instruction(trigger.eventId, trigger.eventStep).data.timer_descr;
             const Duration altInterval = Duration::fromSeconds(timer.alt_halfmin_interval * 30);
-            Time alarm = now;
-            if (altInterval) {
-                alarm = now + altInterval;
-            } else if (lastVisit) {
+            Time alarm = now + altInterval;
+            if (!altInterval) {
                 const bool daily = !timer.is_yearly && !timer.is_monthly && !timer.is_weekly;
-                if (daily) {
-                    const Duration timeInsideDay = Duration::fromHours(timer.daily_start_hour) +
-                                                   Duration::fromMinutes(timer.daily_start_minute) + Duration::fromSeconds(timer.daily_start_second);
-                    alarm = Time::fromDays(lastVisit.toDays()) + timeInsideDay;
-                    if (alarm < lastVisit)
-                        alarm += Duration::fromDays(1);
-                } else {
-                    alarm = lastVisit + (timer.is_yearly ? Duration::fromYears(1) : timer.is_monthly ? Duration::fromDays(28) : Duration::fromDays(7));
-                }
+                const Duration timeInsideDay = daily ? Duration::fromHours(timer.daily_start_hour) + Duration::fromMinutes(timer.daily_start_minute) +
+                                                       Duration::fromSeconds(timer.daily_start_second) : Duration();
+                const Duration interval = timer.is_yearly ? Duration::fromYears(1) : timer.is_monthly ? Duration::fromDays(28) :
+                                          timer.is_weekly ? Duration::fromDays(7) : Duration::fromDays(1);
+                alarm = mm6::mapTimerFirstAlarm(type, interval, timeInsideDay, lastVisit, now);
             }
             const Duration firstAlarm = std::max(Duration(), alarm - now);
             result.push_back({trigger.eventId, firstAlarm, altInterval, firstAlarm});
@@ -679,4 +697,64 @@ GAME_TEST(MM6MapSweep, DISABLED_MonstersAttackParty) {
     record.attackingMonsters.clear();
     record.phase = "done";
     writeCombatSweepRecord(resultPath, record);
+}
+
+GAME_TEST(MM6OffscreenFrame, DISABLED_MapCapture) {
+    // Progress capture of any MM6 map from its first shipped entrance, for enroth-capture. MM6_OFFSCREEN_CAPTURE_MAP is
+    // a map file name or an index into the map table that wraps around, MM6_OFFSCREEN_CAPTURE_PATH the PNG to write.
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_NE(window->nativeHandle(), nullptr);
+    ASSERT_FALSE(window->isVisible());
+    ASSERT_EQ(dynamic_cast<NullRenderer *>(render), nullptr);
+
+    const char *capturePath = std::getenv("MM6_OFFSCREEN_CAPTURE_PATH");
+    const char *mapValue = std::getenv("MM6_OFFSCREEN_CAPTURE_MAP");
+    ASSERT_NE(capturePath, nullptr);
+    ASSERT_NE(mapValue, nullptr);
+    ASSERT_TRUE(isOffscreenCapturePath(capturePath));
+
+    std::vector<MapId> maps;
+    for (MapId id : pMapTable->pInfos.indices())
+        if (isMapOutdoor(GameTitle::MM6, id) || isMapIndoor(GameTitle::MM6, id))
+            maps.push_back(id);
+    const MapId map = offscreenCaptureMap(mapValue, maps);
+    ASSERT_NE(map, MAP_INVALID) << mapValue;
+    const std::string fileName = pMapTable->pInfos[map].fileName;
+    fmt::print("offscreen capture map: {}\n", fileName);
+
+    enterFirstMapFromNewGame(game);
+    if (::testing::Test::HasFatalFailure())
+        return;
+    if (map != engine->_currentLoadedMapId)
+        enterMapAtFirstShippedEntrance(game, map);
+    if (::testing::Test::HasFatalFailure())
+        return;
+    ASSERT_FALSE(window->isVisible());
+
+    const RgbaImage frame = drawOffscreenGameFrame(game);
+    ASSERT_FALSE(window->isVisible());
+    ASSERT_EQ(frame.size(), Sizei(640, 480));
+    writeOffscreenCapture(capturePath, frame);
+}
+
+GAME_TEST(MM6OutdoorSky, FirstVisitSky) {
+    // MM6 outdoor maps drew the missing-texture sign across the whole sky.
+    enterFirstMapFromNewGame(game);
+    if (::testing::Test::HasFatalFailure())
+        return;
+    int outdoorMaps = 0;
+    for (MapId map : pMapTable->pInfos.indices()) {
+        if (!isMapOutdoor(GameTitle::MM6, map))
+            continue;
+        const std::string &fileName = pMapTable->pInfos[map].fileName;
+        if (map != engine->_currentLoadedMapId)
+            enterMapAtFirstShippedEntrance(game, map);
+        if (::testing::Test::HasFatalFailure())
+            return;
+        ASSERT_NE(pOutdoor->sky_texture, nullptr) << fileName;
+        EXPECT_EQ(pOutdoor->sky_texture->name(), "sky01") << fileName;
+        EXPECT_NE(engine->resources()->bitmapSize(pOutdoor->sky_texture->name()), Sizei()) << fileName; // A missing bitmap draws as the placeholder.
+        ++outdoorMaps;
+    }
+    EXPECT_EQ(outdoorMaps, 15);
 }

@@ -33,6 +33,10 @@ GameTestOptions GameTestOptions::parse(int argc, char **argv) {
         "--mm7-disposable-profile", result.userPath,
         "Owner-only temporary MM7 profile for the isolated save/reload gate.")
         ->check(CLI::ExistingDirectory)->option_text("PATH")->group(otherOptions);
+    app->add_option(
+        "--mm6-chain-profile", result.mm6ChainProfile,
+        "Owner-only temporary MM6 profile for one campaign chain chapter.")
+        ->check(CLI::ExistingDirectory)->option_text("PATH")->group(otherOptions);
     app->add_flag(
         "--headless", result.headless,
         "Run in headless mode.")->group(otherOptions);
@@ -65,6 +69,9 @@ GameTestOptions GameTestOptions::parse(int argc, char **argv) {
         result.disposableMm7Profile = true;
         result.ramFsUserData = false;
     }
+
+    if (!result.mm6ChainProfile.isEmpty() && (game != "mm6" || !result.headless || result.dataPath.isEmpty()))
+        throw Exception("--mm6-chain-profile requires MM6, --headless and explicit --data-path.");
 
     if (game == "mm6") {
         result.gameTitle = GameTitle::MM6;

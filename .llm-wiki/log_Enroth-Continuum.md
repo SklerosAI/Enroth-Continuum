@@ -3339,3 +3339,9 @@ Chronological record of wiki activity.
 - Extended the Kerrid contract through his real offer, a missing-pipes refusal, the Hall Under the Hill pressure-plate audience event, full food consumption, physical letter-to-pipes exchange, and Kerrid's final hand-in. The script grants 2,000 XP per character at the audience and 5,000 at the return, 1,000 gold, and the journal award only to the active character.
 - Integrated the verified test on `master` at merge `473b7554c`. After reconciliation with the concurrent MM6 integration line, the regional MM7 side-quest and promotion gate passed 10/10 headlessly and the complete 157-target `check_style` gate passed.
 - The next durable extension for Kerrid and Parsons is a regional Save/Load checkpoint boundary; broader uncovered side-quest rows remain queued by the catalog.
+
+## [2026-11-12] verify | MM7 Season's Stole route
+- by: T-Burton-ND via codex
+- Extended the Light-path Season's Stole contract through Gary Zimm's real Bracada offer, a missing-item refusal, the physical Hall of the Pit chest acquisition, and the final return. The result consumes the Stole, clears the active bit, grants 7,500 XP per character and 7,500 gold, and writes the journal award only to the active character.
+- Integrated the verified test on `master` at merge `29d95abf3`. The focused route and the full 10-test regional side-quest/promotion selection passed headlessly; the complete 157-target `check_style` gate also passed.
+- A durable regional Save/Load boundary remains the next extension for the completed Kerrid, Parsons and Season's Stole contracts.

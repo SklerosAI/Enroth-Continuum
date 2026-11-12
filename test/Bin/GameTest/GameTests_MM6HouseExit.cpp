@@ -136,6 +136,47 @@ GAME_TEST(MM6HouseExit, HighCouncilExitNeedsItsQuestBit) {
     EXPECT_EQ(positionTape.back(), Vec3f(7168, -6176, 0.5f)); // The Oracle's party start.
 }
 
+GAME_TEST(MM6HouseExit, OracleExitNeedsItsQuestBit) {
+    // The Oracle offers her way down to the Control Center only once the quest bit of her Kreegan topic is set, and the
+    // way leads to the Control Center's party start.
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const MapId oracle = pMapTable->GetMapInfo("oracle.blv");
+    const MapId sciFi = pMapTable->GetMapInfo("sci-fi.blv");
+    teleportToMap(game, "oracle.blv", Vec3f(-1408, 2186, -496), 90);
+    game.tick(); // A plate goes off only for a party that stood on another floor first.
+    game.teleportTo(oracle, Vec3f(-1408, 1216, -512), 90); // Onto the floor plate in front of the Oracle.
+    game.tick(4); // The plate starts raising the Oracle's screen out of the floor, and she can be talked to.
+    auto mapTape = tapes.map();
+    auto houseTape = tapes.house();
+    auto portraitTape = tapes.custom([] { return portraitLabels(); });
+    auto bitTape = tapes.questBit(static_cast<QuestBit>(169));
+    auto positionTape = tapes.custom([] { return pParty->pos; });
+    test.startTaping();
+
+    const std::vector<std::string> portraits = {localization->format(LSTR_CONVERSE_WITH_S, "Oracle"),
+                                                localization->format(LSTR_ENTER_S, pMapTable->pInfos[sciFi].name)};
+    for (bool admitted : {false, true}) {
+        if (admitted)
+            pParty->_questBits.set(static_cast<QuestBit>(169)); // The Oracle's leave to use the Control Center.
+        enterThroughDoor(game, Vec3f(-1408, 2186, -496), 90);
+        ASSERT_EQ(houseTape.back(), static_cast<HouseId>(170));
+        EXPECT_EQ(portraitTape.back(), admitted ? portraits : std::vector<std::string>()); // Alone, the Oracle opens straight into her topics.
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+    }
+    enterThroughDoor(game, Vec3f(-1408, 2186, -496), 90);
+    game.pressGuiButton("House_Npc1");
+    game.tick();
+    takeExit(game);
+
+    EXPECT_EQ(mapTape, tape(oracle, sciFi));
+    EXPECT_EQ(houseTape, tape(HOUSE_INVALID, static_cast<HouseId>(170), HOUSE_INVALID, static_cast<HouseId>(170), HOUSE_INVALID,
+                              static_cast<HouseId>(170), HOUSE_INVALID));
+    EXPECT_EQ(bitTape, tape(false, true));
+    EXPECT_EQ(positionTape.back(), Vec3f(-9280, 4160, 196.5f)); // The Control Center's party start, settled on the floor.
+}
+
 GAME_TEST(MM6HouseExit, SewerHouseArrival) {
     // MM6 houses with a trapdoor into the Free Haven sewer offered no way down. Takao's house takes the party to its
     // own spot in the sewer and autosaves on the way.

@@ -90,3 +90,8 @@ inline MM6HudHealthBar mm6HudHealthBar(double ratio) {
 inline constexpr std::array<Pointi, 2> mm6HudHirelingPositions = {{{491, 149}, {561, 149}}};
 inline constexpr Pointi mm6HudNpcLeftArrowPosition = {474, 174};
 inline constexpr Pointi mm6HudNpcRightArrowPosition = {626, 174};
+
+inline constexpr Recti mm6HudDateTimeHoverRect = {481, 0, 153, 67};
+inline constexpr std::array<Pointi, 4> mm6HudPortraitCenters = {{{52, 422}, {165, 422}, {280, 422}, {390, 422}}};
+inline constexpr int mm6HudPortraitRadius = 35;
+inline constexpr std::array<Recti, 4> mm6HudVitalsHoverRects = {{{90, 378, 21, 89}, {203, 378, 21, 89}, {316, 378, 21, 89}, {428, 378, 21, 89}}};

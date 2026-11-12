@@ -404,21 +404,23 @@ GUIButton *GUIWindow::CreateButton(std::string id, Pointi position, Sizei dimens
 }
 
 void GUIWindow::CreateCharacterButtons() {
-    CreateButton("Game_Character1", { 29, 383 }, { 63, 81 }, BUTTON_TYPE_CHARACTER, 94, UIMSG_SelectCharacter, 0, INPUT_ACTION_SELECT_CHAR_1);  // buttons for portraits
-    CreateButton("Game_Character2", { 145, 383 }, { 63, 81 }, BUTTON_TYPE_CHARACTER, 94, UIMSG_SelectCharacter, 1, INPUT_ACTION_SELECT_CHAR_2);
-    CreateButton("Game_Character3", { 260, 383 }, { 63, 81 }, BUTTON_TYPE_CHARACTER, 94, UIMSG_SelectCharacter, 2, INPUT_ACTION_SELECT_CHAR_3);
-    CreateButton("Game_Character4", { 375, 383 }, { 63, 81 }, BUTTON_TYPE_CHARACTER, 94, UIMSG_SelectCharacter, 3, INPUT_ACTION_SELECT_CHAR_4);
-
     if (engine->gameTitle() == GameTitle::MM6) {
-        const auto health = mm6HudHealthBarRects();
-        const auto mana = mm6HudManaBarRects();
-        for (size_t i = 0; i < health.size(); ++i) {
-            CreateButton(health[i].topLeft(), {health[i].w - 1, health[i].h - 1}, BUTTON_TYPE_NORMAL,
-                         UIMSG_ShowStatus_ManaHP, UIMSG_0, i + 1);
-            CreateButton(mana[i].topLeft(), {mana[i].w - 1, mana[i].h - 1}, BUTTON_TYPE_NORMAL,
-                         UIMSG_ShowStatus_ManaHP, UIMSG_0, i + 1);
+        constexpr std::array<InputAction, 4> actions = {INPUT_ACTION_SELECT_CHAR_1, INPUT_ACTION_SELECT_CHAR_2, INPUT_ACTION_SELECT_CHAR_3,
+                                                        INPUT_ACTION_SELECT_CHAR_4};
+        constexpr int r = mm6HudPortraitRadius;
+        for (int i = 0; i < 4; ++i) // A character button hit-tests the oval inscribed in its 2r x 2r rect, MM6's circle.
+            CreateButton(fmt::format("Game_Character{}", i + 1), mm6HudPortraitCenters[i] - Pointi(r, r), {2 * r - 1, 2 * r - 1}, BUTTON_TYPE_CHARACTER,
+                         94, UIMSG_SelectCharacter, i, actions[i]);
+        for (int i = 0; i < 4; ++i) {
+            const Recti &rect = mm6HudVitalsHoverRects[i];
+            CreateButton(rect.topLeft(), {rect.w - 1, rect.h - 1}, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, i + 1);
         }
     } else {
+        CreateButton("Game_Character1", { 29, 383 }, { 63, 81 }, BUTTON_TYPE_CHARACTER, 94, UIMSG_SelectCharacter, 0, INPUT_ACTION_SELECT_CHAR_1);  // buttons for portraits
+        CreateButton("Game_Character2", { 145, 383 }, { 63, 81 }, BUTTON_TYPE_CHARACTER, 94, UIMSG_SelectCharacter, 1, INPUT_ACTION_SELECT_CHAR_2);
+        CreateButton("Game_Character3", { 260, 383 }, { 63, 81 }, BUTTON_TYPE_CHARACTER, 94, UIMSG_SelectCharacter, 2, INPUT_ACTION_SELECT_CHAR_3);
+        CreateButton("Game_Character4", { 375, 383 }, { 63, 81 }, BUTTON_TYPE_CHARACTER, 94, UIMSG_SelectCharacter, 3, INPUT_ACTION_SELECT_CHAR_4);
+
         CreateButton({ pHealthBarPos[0], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 1);  // buttons for HP
         CreateButton({ pHealthBarPos[1], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 2);
         CreateButton({ pHealthBarPos[2], pHealthManaBarYPos }, { 5, 49 }, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_ManaHP, UIMSG_0, 3);
@@ -1148,7 +1150,8 @@ void UI_Create() {
     ui_buttyes2 = assets->getIcon("BUTTYES2");
 
     pPrimaryWindow = std::make_unique<GUIWindow>(WINDOW_GAME_UI, Pointi{0, 0}, render->GetRenderDimensions());
-    pPrimaryWindow->CreateButton("Game_Viewport", {7, 8}, {460, 343}, BUTTON_TYPE_NORMAL, 0, UIMSG_MouseLeftClickInGame, 0);
+    const Recti viewport = engine->gameTitle() == GameTitle::MM6 ? Recti(7, 8, 460, 343) : Recti(7, 8, 461, 344);
+    pPrimaryWindow->CreateButton("Game_Viewport", viewport.topLeft(), {viewport.w - 1, viewport.h - 1}, BUTTON_TYPE_NORMAL, 0, UIMSG_MouseLeftClickInGame, 0);
 
     pPrimaryWindow->CreateCharacterButtons();
 
@@ -1219,7 +1222,10 @@ void UI_Create() {
                                                     localization->str(LSTR_ZOOM_OUT), { game_ui_btn_zoomout });
     }
 
-    pPrimaryWindow->CreateButton({484, 15}, {138, 116}, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_DateTime, UIMSG_0, 0);
+    if (engine->gameTitle() == GameTitle::MM6)
+        createExactHudButton(mm6HudDateTimeHoverRect, UIMSG_ShowStatus_DateTime);
+    else
+        pPrimaryWindow->CreateButton({484, 15}, {138, 116}, BUTTON_TYPE_NORMAL, UIMSG_ShowStatus_DateTime, UIMSG_0, 0);
     const Sizei hirelingSize = engine->gameTitle() == GameTitle::MM6 ? Sizei(63, 73) : Sizei(64, 74); // MM6.exe's boxes are exactly 64x74.
     pPrimaryWindow->CreateButton("Game_Hireling1", {491, 149}, hirelingSize, BUTTON_TYPE_NORMAL, 0, UIMSG_StartHireling1Dialogue, 0, INPUT_ACTION_SELECT_NPC_1);
     pPrimaryWindow->CreateButton("Game_Hireling2", {561, 149}, hirelingSize, BUTTON_TYPE_NORMAL, 0, UIMSG_StartHireling2Dialogue, 0, INPUT_ACTION_SELECT_NPC_2);

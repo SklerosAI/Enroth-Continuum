@@ -61,6 +61,7 @@
 #include "GUI/LoadingScreenResources.h"
 #include "GUI/MM6HudActionControls.h"
 #include "GUI/MM6HudBookControls.h"
+#include "GUI/MM6HudLayout.h"
 #include "GUI/UI/Books/CalendarBackgroundResources.h"
 #include "GUI/UI/MainMenuResources.h"
 #include "GUI/UI/UIGame.h"
@@ -877,15 +878,7 @@ GAME_TEST(MM6Headless, PortraitVitalBarsAndHitBoxes) {
     for (GUIButton *button : buttons.vButtons)
         if (button->uData == UIMSG_ShowStatus_ManaHP)
             actual.push_back(button->rect);
-    const auto health = mm6HudHealthBarRects();
-    const auto mana = mm6HudManaBarRects();
-    ASSERT_EQ(actual.size(), 8);
-    for (size_t i = 0; i < health.size(); ++i) {
-        EXPECT_EQ(actual[2 * i], health[i]);
-        EXPECT_EQ(actual[2 * i + 1], mana[i]);
-        EXPECT_EQ(health[i].y + health[i].h, 461);
-        EXPECT_EQ(mana[i].y + mana[i].h, 461);
-    }
+    EXPECT_EQ(actual, std::vector<Recti>(mm6HudVitalsHoverRects.begin(), mm6HudVitalsHoverRects.end())); // One box over both bars.
 }
 
 TEST(MM6HeadlessVitalBars, TitleIsolation) {

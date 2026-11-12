@@ -24,9 +24,9 @@ inline constexpr std::array<MM6HudBookControl, 4> mm6HudBookControls() {
     // The manual's fourth "Events" book manages time. Route its input to the
     // existing Calendar action; MM6 page content and art need separate work.
     return {{
-        {{492, 260, 34, 81}, UIMSG_OpenQuestBook, INPUT_ACTION_OPEN_QUESTS},
-        {{526, 260, 34, 81}, UIMSG_OpenAutonotes, INPUT_ACTION_OPEN_AUTONOTES},
-        {{560, 260, 34, 81}, UIMSG_OpenMapBook, INPUT_ACTION_OPEN_MAP},
-        {{594, 260, 34, 81}, UIMSG_OpenCalendar, INPUT_ACTION_OPEN_CALENDAR}
+        {{495, 263, 30, 87}, UIMSG_OpenQuestBook, INPUT_ACTION_OPEN_QUESTS},
+        {{527, 263, 30, 87}, UIMSG_OpenAutonotes, INPUT_ACTION_OPEN_AUTONOTES},
+        {{558, 263, 30, 87}, UIMSG_OpenMapBook, INPUT_ACTION_OPEN_MAP},
+        {{588, 263, 30, 87}, UIMSG_OpenCalendar, INPUT_ACTION_OPEN_CALENDAR}
     }};
 }

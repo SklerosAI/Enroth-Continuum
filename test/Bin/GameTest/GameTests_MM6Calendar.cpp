@@ -71,7 +71,7 @@ GAME_TEST(MM6CalendarHeadless, DISABLED_NewGameCalendarShowsYear) {
     enterFirstMapFromNewGame(game);
     test.startTaping();
 
-    game.moveMouse(517, 111); // The minimap.
+    game.moveMouse(517, 12); // Beside the compass.
     game.tick();
     game.pressAndReleaseKey(PlatformKey::KEY_T);
     game.tick();

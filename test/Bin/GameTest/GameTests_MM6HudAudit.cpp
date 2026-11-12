@@ -278,3 +278,39 @@ GAME_TEST(MM6Hud, HirelingPortraitsAndArrows) {
                           DrawnQuad{"npc126", {491, 149}}, DrawnQuad{"npc187", {561, 149}}, DrawnQuad{"npc_lup", {474, 174}},
                           DrawnQuad{"npc_rdn", {626, 174}}));
 }
+
+GAME_TEST(MM6Hud, HoverHitBoxes) {
+    // The date, hit point and portrait hints used MM7's boxes, so the top of the panel, the gap between a character's
+    // bars and the left edge of a portrait showed nothing.
+    auto statusTape = tapes.statusBar();
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    game.moveMouse(600, 5); // Top of the panel, right of the compass.
+    game.tick();
+    game.moveMouse(99, 420); // Between the first character's bars.
+    game.tick();
+    game.moveMouse(20, 422); // Left edge of the first portrait.
+    game.tick();
+
+    EXPECT_EQ(statusTape, tape("9:00am Monday 1 January 1165", "38 / 38 Hit Points    0 / 0 Spell Points", "Zoltan the Knight: Good"));
+}
+
+GAME_TEST(MM6Hud, BookAndActionHitBoxes) {
+    // The book and action boxes were a few pixels off, so the right edge of the maps book opened the calendar and the
+    // right edge of the quick reference oval did nothing.
+    auto screenTape = tapes.screen();
+    auto windowTape = tapes.custom([] { return pGUIWindow_CurrentMenu ? pGUIWindow_CurrentMenu->eWindowType : WINDOW_NULL; });
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    game.pressAndReleaseButton(BUTTON_LEFT, 590, 300); // Right edge of the calendar book.
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    game.pressAndReleaseButton(BUTTON_LEFT, 589, 430); // Right edge of the quick reference oval.
+    game.tick();
+
+    EXPECT_EQ(screenTape, tape(SCREEN_BOOKS, SCREEN_GAME, SCREEN_QUICK_REFERENCE));
+    EXPECT_EQ(windowTape, tape(WINDOW_CALENDAR_BOOK, WINDOW_NULL, WINDOW_QUICK_REFERENCE));
+}

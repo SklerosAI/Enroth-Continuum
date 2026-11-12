@@ -3125,3 +3125,8 @@ Chronological record of wiki activity.
 - Integrated MM6 visit-state capture and restore across map changes and saves. The three headless checks covering later-day sky variation, same-day sky retention and a delayed fountain refill passed 3/3.
 - The installed candidate will be rebuilt from this revision after the remaining integration checks; visual projectile fidelity and exceptional arrow behaviors remain explicitly open.
 
+## [2026-11-11] fix | Atlas MM6 launch and party-creation presentation
+- by: T-Burton-ND via codex
+- Atlas now seeds missing local MM6 rules and configuration into its separate profile before launch, preventing the new-profile rules failure. Its profile migration opens a fixed native-size window by default while retaining the game's fullscreen toggle.
+- Visible owner-local checks reached party creation in the foreground and confirmed character-selection input. MM6 class-icon transparency keys were corrected, but the remaining party-creation asset-layout issue is still open; this is not campaign or normal Save/Load acceptance.
+

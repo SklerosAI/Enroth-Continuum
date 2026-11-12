@@ -1,4 +1,6 @@
+#include <array>
 #include <cstdlib>
+#include <optional>
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
@@ -8,6 +10,7 @@
 #include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
+#include "Engine/Party.h"
 #include "Engine/PartyPlacement.h"
 #include "Engine/Tables/MapTable.h"
 
@@ -16,6 +19,47 @@
 #include "Utility/String/Format.h"
 
 #include "OffscreenCaptureForTest.h"
+
+namespace {
+
+struct CaptureStart {
+    MapStartPoint point;
+    PartyPlacement placement;
+};
+
+std::optional<CaptureStart> firstAvailableCaptureStart(MapId map) {
+    for (MapStartPoint point : std::array{MAP_START_POINT_PARTY, MAP_START_POINT_NORTH, MAP_START_POINT_SOUTH,
+                                         MAP_START_POINT_EAST, MAP_START_POINT_WEST}) {
+        if (std::optional<PartyPlacement> placement = MapDestination(map, point).resolvePlacement())
+            return CaptureStart{point, *placement};
+    }
+    return std::nullopt;
+}
+
+void loadCaptureMap(EngineController &game, MapId map) {
+    if (map == engine->_currentLoadedMapId)
+        return;
+    game.runGameRoutine([map] {
+        engine->_pendingTransition = MapDestination(map, MAP_START_POINT_PARTY);
+        engineFlags |= ENGINE_SKIP_NEXT_WORLD_UPDATE;
+        uGameState = GAME_STATE_CHANGE_LOCATION;
+        onMapLeave();
+    });
+    game.tick();
+    game.skipLoadingScreen();
+    ASSERT_EQ(engine->_currentLoadedMapId, map);
+}
+
+CaptureStart placeAtCaptureStart(MapId map) {
+    const std::optional<CaptureStart> start = firstAvailableCaptureStart(map);
+    EXPECT_TRUE(start);
+    if (!start)
+        return {};
+    placeParty(start->placement);
+    return *start;
+}
+
+} // namespace
 
 // A fresh-process, explicit macOS diagnostic. --offscreen-gl installs the
 // hidden SDL OpenGL input/focus guard before GameStarter configures its window.
@@ -71,8 +115,9 @@ GAME_TEST(MM7OffscreenFrame, DISABLED_FirstOutdoorCapture) {
 }
 
 GAME_TEST(MM7OffscreenFrame, DISABLED_MapCapture) {
-    // Progress capture of any MM7 map from its party start point, for enroth-capture. MM7_OFFSCREEN_CAPTURE_MAP is a
-    // map file name or an index into the map table that wraps around, MM7_OFFSCREEN_CAPTURE_PATH the PNG to write.
+    // Progress capture of any MM7 map from its first available start point, for enroth-capture.
+    // MM7_OFFSCREEN_CAPTURE_MAP is a map file name or an index into the map table that wraps around,
+    // MM7_OFFSCREEN_CAPTURE_PATH the PNG to write.
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
     ASSERT_NE(window->nativeHandle(), nullptr);
     ASSERT_FALSE(window->isVisible());
@@ -93,21 +138,27 @@ GAME_TEST(MM7OffscreenFrame, DISABLED_MapCapture) {
     fmt::print("offscreen capture map: {}\n", pMapTable->pInfos[map].fileName);
 
     game.startNewGame();
-    if (map != engine->_currentLoadedMapId) {
-        game.runGameRoutine([map] {
-            engine->_pendingTransition = MapDestination(map, MAP_START_POINT_PARTY);
-            engineFlags |= ENGINE_SKIP_NEXT_WORLD_UPDATE;
-            uGameState = GAME_STATE_CHANGE_LOCATION;
-            onMapLeave();
-        });
-        game.tick();
-        game.skipLoadingScreen();
-    }
-    ASSERT_EQ(engine->_currentLoadedMapId, map);
+    loadCaptureMap(game, map);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    placeAtCaptureStart(map);
+    ASSERT_FALSE(::testing::Test::HasFailure());
     ASSERT_FALSE(window->isVisible());
 
     const RgbaImage frame = drawOffscreenGameFrame(game);
     ASSERT_FALSE(window->isVisible());
     ASSERT_EQ(frame.size(), Sizei(640, 480));
     writeOffscreenCapture(capturePath, frame);
+}
+
+GAME_TEST(MM7OffscreenFrame, MapCaptureUsesTargetMapStart) {
+    game.startNewGame();
+    for (MapId map : {MAP_TATALIA, MAP_AVLEE, MAP_SHOALS}) {
+        loadCaptureMap(game, map);
+        ASSERT_FALSE(::testing::Test::HasFatalFailure());
+        const CaptureStart start = placeAtCaptureStart(map);
+        ASSERT_FALSE(::testing::Test::HasFailure());
+        EXPECT_EQ(pParty->pos, start.placement.pos);
+        if (map == MAP_TATALIA || map == MAP_AVLEE)
+            EXPECT_NE(start.point, MAP_START_POINT_PARTY);
+    }
 }

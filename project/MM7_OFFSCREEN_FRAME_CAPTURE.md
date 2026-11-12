@@ -13,6 +13,19 @@ capacity.
 
 The opt-in test passed **1/1** using the tracked-source local-only Mac dependency build and private MM7 data. The captured 640×480 frame has a recognizable Emerald Island scene, minimap, HUD and four colored portraits. A host monitor sampled the process **98** times at 10 ms intervals: **zero on-screen test windows** and **zero frontmost-app changes**. The negative wrong-filter invocation exited before platform startup. The diagnostic does not prove visible app launch, menu interaction, sound, saving or reload.
 
+The later all-map progress diagnostic originally requested `Party Start` for
+every target. Tatalia and Avlee do not provide that decoration, so the normal
+destination contract left the party at its prior Emerald Island coordinates;
+their private frames consequently viewed the target terrain from an invalid
+position. The diagnostic now scans `Party`, north, south, east and west start
+decorations in that order after map load, fails if none exists, and places the
+party at the first real target-map start before drawing. A normal Null-renderer
+test passed 1/1 across Tatalia, Avlee and Shoals, including explicit proof that
+Tatalia and Avlee use a fallback rather than `Party Start`. No replacement
+OpenGL frames were produced under the owner's 2026-11-12 headless-only rule,
+so the apparent world rendering and Shoals fog still require a later hidden
+recapture before any renderer defect is claimed.
+
 The health and mana bars flank each portrait consistently in the private frame. MM7's inherited render coordinates place each type at exact 115-pixel intervals; the visible bars sit roughly 4–5 pixels outside the portrait art on each side. The owner's earlier slight-offset observation remains unresolved because no source-backed target position is established. Later-character hover hitboxes differ from the drawn bar positions by 1–2 pixels, but this does not explain the visible placement. No HUD geometry was changed in this gate.
 
 The focused test binary was rebuilt in the retained local-only build tree after copying the five changed test/guard files plus the current `LogStarter` pair into its temporary source extraction. That extraction is modified by the diagnostic and must not be cited as a pristine source-only extraction until restored. The staged Atlas app was not changed. No proprietary assets, screenshots, detailed inventories, saves or logs are tracked here.

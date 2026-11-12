@@ -3402,3 +3402,9 @@ Chronological record of wiki activity.
 - Extended the Angel-only probe into Thom Lumbra's complete route: real offer and refusal, Knight/Eagle/Angel acquisition from the two Grand Temples and Maze chest UIs, and placement through the Avlee, Tatalia and Bracada authored shrine faces.
 - The return clears the quest, grants 50,000 gold, 50,000 XP per character and the award to all four characters. The production-Save writer and separate normal-Load reader passed with byte-identical slot contents; missing-profile and no-save admissions were rejected.
 - The regional side/promotion selection passed 12/12 headlessly, changed-file lint passed and the full `check_style` gate passed 157/157. Disposable profiles were moved to Trash.
+
+## [2026-11-12] verify | MM7 Arcomage Champion route and checkpoint
+- by: T-Burton-ND via codex
+- Extracted the persistent result transaction used by the live Arcomage game, then covered Gina Barnes's real offer and incomplete refusal, one result for each of the thirteen authored tavern IDs, first-win-only stake payouts, final rewards and the authored Erathia reward chest with Forge Gauntlets.
+- The production-Save writer and separate normal-Load reader passed with every tavern flag, quest bits, rewards, awards and chest item intact and byte-identical slot contents. Missing-profile and no-save admissions were rejected, and both disposable profiles were moved to Trash.
+- The regional side/promotion selection passed 13/13 and `check_style` passed 157/157 headlessly. The live-loop trace separately plays cards; this deterministic quest fixture does not claim thirteen complete card matches.

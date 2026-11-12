@@ -39,3 +39,15 @@ Update 2026-11-12 afternoon: merged today are the character screen, quick refere
 | HUD, MM6 main HUD layout | `claude/mm6-hud` in `../enroth-worktrees/mm6-hud` | MM6 branches of `src/GUI/UI/UIGame.cpp`, the HUD buttons in `src/GUI/GUIWindow.cpp`, `src/GUI/UI/UIStatusBar.cpp`, the minimap rect in `src/Engine/Engine.cpp`, `src/GUI/MM6Hud*.h`, new MM6 tests. |
 | HOUSES, MM6 house and shop screens | `claude/mm6-houses` in `../enroth-worktrees/mm6-houses` | `src/GUI/UI/Houses/MM6House.*`, `MM6Shop.*`, `src/GUI/UI/MM6HouseServiceData.*`, MM6 branches of shared house code and the house movie rect, new MM6 tests. |
 | C3, chain chapter C3 | `claude/mm6-chain-c3` in `../enroth-worktrees/mm6-chain-c3` | new `GameTests_MM6CampaignChainC3.cpp`, `MM6CampaignChain.{h,cpp}`, the MM6 street NPC dialogue path, small MM6-owned fixes. |
+
+Update 2026-11-12 evening: C4, the indoor lighting fix and the small leftovers are merged. The owner released shared MM6/MM7 code to Claude for today (Codex is idle), so a lane may change a shared-core file when the fix needs it and runs the MM7 controls afterwards. Five lanes are active, all five Claude worktrees in use:
+
+| Lane | Branch / worktree | Files owned |
+| --- | --- | --- |
+| SPELLS, MM6 player spells batch 1 | `claude/mm6-spells` in `../enroth-worktrees/mm6-spells` | `src/Engine/MM6/MM6PlayerSpell.h`, `MM6SpellEffectGuard.h`, `MM6MonsterDamage.h`, MM6 branches of `CastSpellInfo.cpp`, `SpriteObject.cpp`, `Actor.cpp`, `UIGame.cpp`, new `GameTests_MM6PlayerSpells.cpp`. Shared core. |
+| C5, chain chapter C5 | `claude/mm6-chain-c5` in `../enroth-worktrees/mm6-chain-c4` | new `GameTests_MM6CampaignChainC5.cpp`, additions to `MM6CampaignChain.{h,cpp}`, small MM6-owned fixes. |
+| Q, MM6 Question prompts by input | `claude/mm6-questions` in `../enroth-worktrees/mm6-leftovers` | the MM6 Question dialogue code and its drawing, new MM6 tests, then the shared `Party.cpp` hireling name reset. Shared core. |
+| EVSPELL, event spells 12, 35, 46, 83, 91 | `claude/mm6-event-spells` in `../enroth-worktrees/mm6-indoor-light` | the event branch of `MM6SpellEffectGuard.h` and the MM6 event spell effects, new MM6 tests on d01, d04, d08, d13, zddb08, znwc. |
+| CC, Control Center access and blasters | `claude/mm6-control-center` in `../enroth-worktrees/mm6-control-center` | Oracle house 170 exit, sci-fi.blv blaster acquisition, the C7 and C8 route, new MM6 tests, small MM6-owned fixes. |
+
+Conflict watch: SPELLS and EVSPELL both touch `MM6SpellEffectGuard.h` (player list and event list are separate functions). The lead merges SPELLS first and rebases EVSPELL.

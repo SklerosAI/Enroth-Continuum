@@ -55,6 +55,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM6CampaignChainC1.cpp
         GameTests_MM6CampaignChainC2.cpp
         GameTests_MM6CampaignChainC3.cpp
+        GameTests_MM6CampaignChainC4.cpp
         GameTests_MM6CharacterBitEvent.cpp
         GameTests_MM6EventVariables.cpp
         GameTests_MM6Creation.cpp

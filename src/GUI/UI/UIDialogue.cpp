@@ -20,6 +20,7 @@
 #include "GUI/GUIFont.h"
 #include "GUI/GUIButton.h"
 #include "GUI/GUIMessageQueue.h"
+#include "GUI/UI/MM6NpcDialogue.h"
 #include "GUI/UI/UIGame.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/NPCTopics.h"
@@ -108,9 +109,13 @@ void initializeNPCDialogue(int npcId, int bPlayerSaysHello, Actor *actor) {
 GUIWindow_Dialogue::GUIWindow_Dialogue(DialogWindowType type) : GUIWindow(WINDOW_DIALOGUE, {0, 0}, render->GetRenderDimensions()) {
     prev_screen_type = current_screen_type;
     current_screen_type = SCREEN_NPC_DIALOGUE;
-    _dialogueBackground = dialogueBackground(pParty->alignment);
-    pBtn_ExitCancel = CreateButton("NpcDialogue_Exit", {0x1D7u, 0x1BDu}, {0xA9u, 0x23u}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0, INPUT_ACTION_INVALID,
-                                   localization->str(LSTR_EXIT_DIALOGUE), {ui_exit_cancel_button_background});
+    if (engine->gameTitle() == GameTitle::MM6) {
+        pBtn_ExitCancel = mm6::createNpcDialogueExitButton(this);
+    } else {
+        _dialogueBackground = dialogueBackground(pParty->alignment);
+        pBtn_ExitCancel = CreateButton("NpcDialogue_Exit", {0x1D7u, 0x1BDu}, {0xA9u, 0x23u}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0, INPUT_ACTION_INVALID,
+                                       localization->str(LSTR_EXIT_DIALOGUE), {ui_exit_cancel_button_background});
+    }
 
     int text_line_height = assets->pFontArrus->GetHeight() - 3;
     NPCData *speakingNPC = getNPCData(speakingNpcId);
@@ -143,8 +148,12 @@ GUIWindow_Dialogue::GUIWindow_Dialogue(DialogWindowType type) : GUIWindow(WINDOW
         optionList.push_back(DIALOGUE_HIRE_FIRE);
     }
     for (int i = 0; i < optionList.size(); i++) {
-        CreateButton(fmt::format("NpcDialogue_Option{}", i), {480, 130 + i * text_line_height}, {140, text_line_height}, BUTTON_TYPE_NORMAL, 0,
-                     UIMSG_SelectNPCDialogueOption, std::to_underlying(optionList[i]), INPUT_ACTION_INVALID, "");
+        if (engine->gameTitle() == GameTitle::MM6) {
+            mm6::createNpcDialogueOptionButton(this, i, optionList[i], 130 + i * text_line_height, text_line_height);
+        } else {
+            CreateButton(fmt::format("NpcDialogue_Option{}", i), {480, 130 + i * text_line_height}, {140, text_line_height}, BUTTON_TYPE_NORMAL, 0,
+                         UIMSG_SelectNPCDialogueOption, std::to_underlying(optionList[i]), INPUT_ACTION_INVALID, "");
+        }
     }
     setKeyboardControlGroup(optionList.size(), false, 0, 1);
 
@@ -167,15 +176,19 @@ void GUIWindow_Dialogue::Update() {
     // Window title
     NPCData *pNPC = getNPCData(speakingNpcId);
     NpcType npcType = getNPCType(speakingNpcId);
-    render->DrawQuad2D(_dialogueBackground, {477, 0});
-    if (game_ui_right_panel_frame)
-        render->DrawQuad2D(game_ui_right_panel_frame, {468, 0});
-    render->DrawQuad2D(game_ui_evtnpc, {pNPCPortraits_x[0][0] - 4, pNPCPortraits_y[0][0] - 4});
-    render->DrawQuad2D(houseNpcs[0].icon, {pNPCPortraits_x[0][0], pNPCPortraits_y[0][0]});
+    if (engine->gameTitle() == GameTitle::MM6) {
+        mm6::drawNpcDialoguePanel(houseNpcs[0].icon, NameAndTitle(pNPC));
+    } else {
+        render->DrawQuad2D(_dialogueBackground, {477, 0});
+        if (game_ui_right_panel_frame)
+            render->DrawQuad2D(game_ui_right_panel_frame, {468, 0});
+        render->DrawQuad2D(game_ui_evtnpc, {pNPCPortraits_x[0][0] - 4, pNPCPortraits_y[0][0] - 4});
+        render->DrawQuad2D(houseNpcs[0].icon, {pNPCPortraits_x[0][0], pNPCPortraits_y[0][0]});
 
-    Recti titleWindow = pDialogueWindow->frameRect;
-    titleWindow.w -= 10;
-    DrawTitleText(assets->pFontArrus.get(), SIDE_TEXT_BOX_POS_X, SIDE_TEXT_BOX_POS_Y, ui_game_dialogue_npc_name_color, NameAndTitle(pNPC), 3, titleWindow);
+        Recti titleWindow = pDialogueWindow->frameRect;
+        titleWindow.w -= 10;
+        DrawTitleText(assets->pFontArrus.get(), SIDE_TEXT_BOX_POS_X, SIDE_TEXT_BOX_POS_Y, ui_game_dialogue_npc_name_color, NameAndTitle(pNPC), 3, titleWindow);
+    }
 
     std::string dialogue_string;
     switch (_displayedDialogue) {
@@ -267,6 +280,11 @@ void GUIWindow_Dialogue::Update() {
         }
     }
 
+    if (engine->gameTitle() == GameTitle::MM6) {
+        mm6::drawNpcDialogueOptions(pDialogueWindow.get());
+        return;
+    }
+
     // Button layout
     Recti window = pDialogueWindow->frameRect;
     window.x = SIDE_TEXT_BOX_POS_X;
@@ -324,12 +342,20 @@ void selectNPCDialogueOption(DialogueId option) {
             std::vector<DialogueId> topics = listNPCDialogueOptions(newTopic);
             ((GUIWindow_Dialogue*)pDialogueWindow.get())->setDisplayedDialogueType(newTopic);
             pDialogueWindow->DeleteButtons();
-            pBtn_ExitCancel = pDialogueWindow->CreateButton("NpcDialogue_Exit", {471, 445}, {0xA9u, 0x23u}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0, INPUT_ACTION_INVALID,
-                                                            localization->str(LSTR_EXIT_DIALOGUE), {ui_exit_cancel_button_background});
+            if (engine->gameTitle() == GameTitle::MM6) {
+                pBtn_ExitCancel = mm6::createNpcDialogueExitButton(pDialogueWindow.get());
+            } else {
+                pBtn_ExitCancel = pDialogueWindow->CreateButton("NpcDialogue_Exit", {471, 445}, {0xA9u, 0x23u}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0,
+                                                                INPUT_ACTION_INVALID, localization->str(LSTR_EXIT_DIALOGUE), {ui_exit_cancel_button_background});
+            }
 
             for (int i = 0; i < topics.size(); i++) {
-                pDialogueWindow->CreateButton(fmt::format("NpcDialogue_Option{}", i), {480, 160 + i * 30}, {140, 30}, BUTTON_TYPE_NORMAL, 0,
-                                              UIMSG_SelectNPCDialogueOption, std::to_underlying(topics[i]), INPUT_ACTION_INVALID, "");
+                if (engine->gameTitle() == GameTitle::MM6) {
+                    mm6::createNpcDialogueOptionButton(pDialogueWindow.get(), i, topics[i], 160 + i * 30, 30);
+                } else {
+                    pDialogueWindow->CreateButton(fmt::format("NpcDialogue_Option{}", i), {480, 160 + i * 30}, {140, 30}, BUTTON_TYPE_NORMAL, 0,
+                                                  UIMSG_SelectNPCDialogueOption, std::to_underlying(topics[i]), INPUT_ACTION_INVALID, "");
+                }
             }
             pDialogueWindow->setKeyboardControlGroup(topics.size(), false, 0, 1);
 

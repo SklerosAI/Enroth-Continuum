@@ -8,6 +8,7 @@ set(GUI_UI_SOURCES
         UICharacter.cpp
         MM6CharacterScreen.cpp
         MM6Spellbook.cpp
+        MM6NpcDialogue.cpp
         UIChest.cpp
         UICredits.cpp
         UIDialogue.cpp
@@ -39,6 +40,7 @@ set(GUI_UI_HEADERS
         UICharacter.h
         MM6CharacterScreen.h
         MM6Spellbook.h
+        MM6NpcDialogue.h
         MM6PaperdollArt.h
         UIChest.h
         UICredits.h

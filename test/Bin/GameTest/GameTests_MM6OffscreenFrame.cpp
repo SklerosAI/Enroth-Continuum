@@ -532,7 +532,8 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_FirstOutdoorCapture) {
         game.runGameRoutine([&] {
             render->ClearTarget(Color(0, 0, 0));
             render->BeginScene2D();
-            drawMM6CharacterScreenButtons(WINDOW_CHARACTER_INVENTORY);
+            drawMM6CharacterScreenUnderlay();
+            drawMM6CharacterScreenActiveTab(WINDOW_CHARACTER_INVENTORY);
             render->flushAndScale();
             buttonsOnly = render->MakeFullScreenshot();
         });

@@ -616,11 +616,14 @@ void GUIWindow_CharacterRecord::createAwardsScrollBar() {
                 pButton->rect = {};
             }
         }
-        pBtn_Up = pGUIWindow_CurrentMenu->CreateButton({438, 46}, ui_ar_up_up->size(), BUTTON_TYPE_NORMAL, 0,
-                                                       UIMSG_ClickAwardsUpBtn, 0, INPUT_ACTION_INVALID, "", {{ui_ar_up_up, ui_ar_up_dn}});
-        pBtn_Down = pGUIWindow_CurrentMenu->CreateButton({438, 292}, ui_ar_dn_up->size(), BUTTON_TYPE_NORMAL, 0,
-                                                         UIMSG_ClickAwardsDownBtn, 0, INPUT_ACTION_INVALID, "", {{ui_ar_dn_up, ui_ar_dn_dn}});
-        pBtn_Scroll = pGUIWindow_CurrentMenu->CreateButton({440, 62}, {16, 232}, BUTTON_TYPE_NORMAL, 0, UIMSG_ClickAwardScrollBar, 0, INPUT_ACTION_INVALID, "");
+        const bool isMM6 = engine->gameTitle() == GameTitle::MM6;
+        // CreateButton adds a pixel to the size, MM6's hit boxes are exactly 16x16 and 16x232.
+        pBtn_Up = pGUIWindow_CurrentMenu->CreateButton(isMM6 ? Pointi(440, 45) : Pointi(438, 46), isMM6 ? Sizei(15, 15) : ui_ar_up_up->size(),
+                                                       BUTTON_TYPE_NORMAL, 0, UIMSG_ClickAwardsUpBtn, 0, INPUT_ACTION_INVALID, "", {{ui_ar_up_up, ui_ar_up_dn}});
+        pBtn_Down = pGUIWindow_CurrentMenu->CreateButton(isMM6 ? Pointi(440, 294) : Pointi(438, 292), isMM6 ? Sizei(15, 15) : ui_ar_dn_up->size(),
+                                                         BUTTON_TYPE_NORMAL, 0, UIMSG_ClickAwardsDownBtn, 0, INPUT_ACTION_INVALID, "", {{ui_ar_dn_up, ui_ar_dn_dn}});
+        pBtn_Scroll = pGUIWindow_CurrentMenu->CreateButton({440, 62}, isMM6 ? Sizei(15, 231) : Sizei(16, 232), BUTTON_TYPE_NORMAL, 0,
+                                                           UIMSG_ClickAwardScrollBar, 0, INPUT_ACTION_INVALID, "");
     }
 }
 
@@ -628,14 +631,21 @@ void GUIWindow_CharacterRecord::Update() {
     if (!pParty->hasActiveCharacter())
         return;
     auto player = &pParty->activeCharacter();
+    const bool isMM6 = engine->gameTitle() == GameTitle::MM6;
+
+    if (isMM6)
+        drawMM6CharacterScreenUnderlay();
 
     switch (current_character_screen_window) {
         case WINDOW_CHARACTER_STATS: {
             CharacterUI_ReleaseButtons();
             releaseAwardsScrollBar();
-            CharacterUI_StatsTab_Draw(player);
-            if (engine->gameTitle() != GameTitle::MM6)
+            if (isMM6) {
+                drawMM6StatsTab(this, player);
+            } else {
+                CharacterUI_StatsTab_Draw(player);
                 render->DrawQuad2D(assets->getIcon("ib-cd1-d"), pCharacterScreen_StatsBtn->rect.topLeft());
+            }
             break;
         }
         case WINDOW_CHARACTER_SKILLS: {
@@ -645,7 +655,7 @@ void GUIWindow_CharacterRecord::Update() {
             }
             releaseAwardsScrollBar();
             CharacterUI_SkillsTab_Draw(player);
-            if (engine->gameTitle() != GameTitle::MM6)
+            if (!isMM6)
                 render->DrawQuad2D(assets->getIcon("ib-cd2-d"), pCharacterScreen_SkillsBtn->rect.topLeft());
             break;
         }
@@ -653,7 +663,7 @@ void GUIWindow_CharacterRecord::Update() {
             CharacterUI_ReleaseButtons();
             createAwardsScrollBar();
             CharacterUI_AwardsTab_Draw(player);
-            if (engine->gameTitle() != GameTitle::MM6)
+            if (!isMM6)
                 render->DrawQuad2D(assets->getIcon("ib-cd4-d"), pCharacterScreen_AwardsBtn->rect.topLeft());
             break;
         }
@@ -661,7 +671,7 @@ void GUIWindow_CharacterRecord::Update() {
             CharacterUI_ReleaseButtons();
             releaseAwardsScrollBar();
             CharacterUI_InventoryTab_Draw(player, false);
-            if (engine->gameTitle() != GameTitle::MM6)
+            if (!isMM6)
                 render->DrawQuad2D(assets->getIcon("ib-cd3-d"), pCharacterScreen_InventoryBtn->rect.topLeft());
             break;
         }
@@ -670,13 +680,16 @@ void GUIWindow_CharacterRecord::Update() {
             break;
     }
 
-    if (engine->gameTitle() == GameTitle::MM6)
-        drawMM6CharacterScreenButtons(current_character_screen_window);
+    if (isMM6)
+        drawMM6CharacterScreenActiveTab(current_character_screen_window);
 
     if (bRingsShownInCharScreen)
         CharacterUI_DrawPaperdollWithRingOverlay(player);
     else
         CharacterUI_DrawPaperdoll(player);
+
+    if (isMM6)
+        drawMM6CharacterScreenBorders();
 }
 
 void GUIWindow_CharacterRecord::ShowStatsTab() {
@@ -720,7 +733,12 @@ void GUIWindow_CharacterRecord::ToggleRingsOverlay() {
     bRingsShownInCharScreen ^= 1;
     pCharacterScreen_DetalizBtn->Release();
     pCharacterScreen_DollBtn->Release();
-    if (bRingsShownInCharScreen) {
+    if (bRingsShownInCharScreen && engine->gameTitle() == GameTitle::MM6) {
+        h = 31; // CreateButton adds a pixel, MM6's hit box is 64x32.
+        w = 63;
+        y = MM6_DETAIL_TOGGLE_POSITION.y;
+        x = MM6_DETAIL_TOGGLE_POSITION.x;
+    } else if (bRingsShownInCharScreen) {
         h = ui_exit_cancel_button_background->height();
         w = ui_exit_cancel_button_background->width();
         y = 445;
@@ -826,7 +844,9 @@ static int drawSkillTable(Character *player, int x, int y, const std::initialize
 
 //----- (00419719) --------------------------------------------------------
 void GUIWindow_CharacterRecord::CharacterUI_SkillsTab_Draw(Character *player) {
-    render->DrawQuad2D(ui_character_skills_background, {8, 8});
+    const bool isMM6 = engine->gameTitle() == GameTitle::MM6;
+    render->DrawQuad2D(ui_character_skills_background, isMM6 ? MM6_CHARACTER_TAB_BACKGROUND_POSITION : Pointi(8, 8));
+    const int groupGap = 2 * assets->pFontLucida->GetHeight() - (isMM6 ? 6 : 10);
 
     auto str = fmt::format(
         "{} {::}{}\f00000\r177{}: {::}{}\f00000",  // ^Pv[]
@@ -841,13 +861,13 @@ void GUIWindow_CharacterRecord::CharacterUI_SkillsTab_Draw(Character *player) {
     int y = 2 * assets->pFontLucida->GetHeight() + 13;
     y = drawSkillTable(player, 24, y, allWeaponSkills(), 400, localization->str(LSTR_WEAPONS));
 
-    y += 2 * assets->pFontLucida->GetHeight() - 10;
+    y += groupGap;
     drawSkillTable(player, 24, y, allMagicSkills(), 400, localization->str(LSTR_MAGIC));
 
     y = 2 * assets->pFontLucida->GetHeight() + 13;
     y = drawSkillTable(player, 248, y, allArmorSkills(), 177, localization->str(LSTR_ARMOR));
 
-    y += 2 * assets->pFontLucida->GetHeight() - 10;
+    y += groupGap;
     y = drawSkillTable(player, 248, y, allMiscSkills(), 177, localization->str(LSTR_MISC));
 }
 
@@ -930,7 +950,8 @@ void GUIWindow_CharacterRecord::CharacterUI_AwardsTab_Draw(Character *player) {
     Recti window(12, 48, 424, 290);
     int stopPos = 0;
 
-    render->DrawQuad2D(ui_character_awards_background, {8, 8});
+    const bool isMM6 = engine->gameTitle() == GameTitle::MM6;
+    render->DrawQuad2D(ui_character_awards_background, isMM6 ? MM6_CHARACTER_TAB_BACKGROUND_POSITION : Pointi(8, 8));
 
     std::string str = fmt::format("{} {::}{}\f00000", localization->str(LSTR_AWARDS_FOR),
                                   ui_character_header_text_color.tag(), NameAndTitle(player->name, player->classType));
@@ -947,7 +968,7 @@ void GUIWindow_CharacterRecord::CharacterUI_AwardsTab_Draw(Character *player) {
         std::string str = getAchievedAwardsString(i);
 
         GUIWindow::DrawText(assets->pFontArrus.get(), {0, 0}, ui_character_award_color[pAwards[_achievedAwardsList[i]].uPriority % 6], str, window);
-        window.y = assets->pFontArrus->CalcTextHeight(str, window.w, 0) + window.y + 8;
+        window.y += assets->pFontArrus->CalcTextHeight(str, window.w, 0) + (isMM6 ? MM6_AWARD_SPACING : 8);
         currentlyDisplayedElems++;
         if (window.y > window.h) {
             break;
@@ -963,7 +984,12 @@ void GUIWindow_CharacterRecord::CharacterUI_AwardsTab_Draw(Character *player) {
             stopPos = 211;
         }
     }
-    render->DrawQuad2D(scrollstop, {439, 65 + stopPos});
+    if (isMM6) { // MM6's award frame has no arrows in it and no scroll position marker.
+        render->DrawQuad2D(ui_ar_up_up, pBtn_Up->rect.topLeft());
+        render->DrawQuad2D(ui_ar_dn_up, pBtn_Down->rect.topLeft());
+    } else {
+        render->DrawQuad2D(scrollstop, {439, 65 + stopPos});
+    }
 }
 
 //----- (0041A2C1) --------------------------------------------------------
@@ -1303,7 +1329,8 @@ void CharacterUI_DrawPaperdoll(Character *player) {
 
 //----- (0041A2D1) --------------------------------------------------------
 void CharacterUI_InventoryTab_Draw(Character *player, bool Cover_Strip) {
-    render->DrawQuad2D(ui_character_inventory_background, {8, 8});
+    render->DrawQuad2D(ui_character_inventory_background,
+                       engine->gameTitle() == GameTitle::MM6 ? MM6_INVENTORY_BACKGROUND_POSITION : Pointi(8, 8));
 
     if (Cover_Strip) {
         ui_character_inventory_background_strip = assets->getIcon("fr_strip");
@@ -1387,10 +1414,15 @@ static void CharacterUI_DrawItem(int x, int y, Item *item, int id, GraphicsImage
 void CharacterUI_DrawPaperdollWithRingOverlay(Character *player) {
     CharacterUI_DrawPaperdoll(player);
 
-    render->DrawQuad2D(ui_character_inventory_paperdoll_rings_background, {473, 0});
-    if (game_ui_right_panel_frame)
-        render->DrawQuad2D(game_ui_right_panel_frame, {468, 0});
-    render->DrawQuad2D(ui_exit_cancel_button_background, pCharacterScreen_DetalizBtn->rect.topLeft());
+    if (engine->gameTitle() == GameTitle::MM6) {
+        render->DrawQuad2D(assets->getIcon("backhand"), MM6_DETAIL_BACKGROUND_POSITION);
+        render->DrawQuad2D(assets->getIcon("guy_up"), pCharacterScreen_DetalizBtn->rect.topLeft());
+    } else {
+        render->DrawQuad2D(ui_character_inventory_paperdoll_rings_background, {473, 0});
+        if (game_ui_right_panel_frame)
+            render->DrawQuad2D(game_ui_right_panel_frame, {468, 0});
+        render->DrawQuad2D(ui_exit_cancel_button_background, pCharacterScreen_DetalizBtn->rect.topLeft());
+    }
 
     for (unsigned i = 0; i < 6; ++i) {
         InventoryEntry entry = player->inventory.entry(ringSlot(i));

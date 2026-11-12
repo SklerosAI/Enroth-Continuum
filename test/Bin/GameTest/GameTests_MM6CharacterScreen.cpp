@@ -284,6 +284,25 @@ GAME_TEST(MM6CharacterScreenHeadless, TabsOpenByKeyAndButton) {
                             WINDOW_CHARACTER_STATS, WINDOW_CHARACTER_SKILLS, WINDOW_CHARACTER_AWARDS, WINDOW_CHARACTER_INVENTORY));
 }
 
+GAME_TEST(MM6CharacterScreenHeadless, DetailToggleClosesFromItsPicture) {
+    // In detail mode the toggle's hit box sat on the portrait bar, so clicking its picture next to the hand didn't
+    // leave detail mode.
+    auto screenTape = tapes.screen();
+    auto detailTape = tapes.custom([] { return ringscreenactive(); });
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_I);
+    game.tick(2); // The key queues the character screen for the next frame.
+    game.pressAndReleaseButton(BUTTON_LEFT, {615, 315}); // The magnifier.
+    game.tick();
+    game.pressAndReleaseButton(BUTTON_LEFT, {558, 315}); // The toggle picture in detail mode.
+    game.tick();
+
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHARACTERS));
+    EXPECT_EQ(detailTape, tape(false, true, false));
+}
+
 GAME_TEST(MM6CharacterScreenHeadless, EquippedArmorHasPaperdollHitArea) {
     enterFirstMapFromNewGame(game);
     ItemId armorId = ITEM_NULL;

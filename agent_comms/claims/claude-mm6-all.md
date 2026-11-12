@@ -31,3 +31,11 @@ Update 2026-11-12: under the owner's 5 + 5 worktree split, Claude runs these MM6
 | UI, MM6 screen audit | `claude/mm6-character-screen` in `../enroth-worktrees/mm6-charscreen` | `src/GUI/UI/MM6CharacterScreen.*`, MM6 branches of `UICharacter.cpp`, `UISpellbook.cpp`, `UIBooks.cpp`, `Books/*.cpp`, `UIQuickReference.cpp`, the MM6 icon mask in `ResourceManager.cpp`, new MM6 tests. Character screen merged at `2820d16e1`, books and spellbook next. |
 | C2, chain chapter C2 | `claude/mm6-chain-c2` in `../enroth-worktrees/mm6-chain-c2` | new `GameTests_MM6CampaignChainC2.cpp`, additions to `MM6CampaignChain.{h,cpp}`, small MM6-owned fixes. |
 | MSL, MM6 missiles | `claude/mm6-missiles` in `../enroth-worktrees/mm6-missiles` | MM6 missile sprite and Percival arrow handling, new MM6 tests. |
+
+Update 2026-11-12 afternoon: merged today are the character screen, quick reference and rest, missiles, chain C2, spellbook, books and the winter ground fix. Active Claude MM6 lanes now:
+
+| Lane | Branch / worktree | Files owned |
+| --- | --- | --- |
+| HUD, MM6 main HUD layout | `claude/mm6-hud` in `../enroth-worktrees/mm6-hud` | MM6 branches of `src/GUI/UI/UIGame.cpp`, the HUD buttons in `src/GUI/GUIWindow.cpp`, `src/GUI/UI/UIStatusBar.cpp`, the minimap rect in `src/Engine/Engine.cpp`, `src/GUI/MM6Hud*.h`, new MM6 tests. |
+| HOUSES, MM6 house and shop screens | `claude/mm6-houses` in `../enroth-worktrees/mm6-houses` | `src/GUI/UI/Houses/MM6House.*`, `MM6Shop.*`, `src/GUI/UI/MM6HouseServiceData.*`, MM6 branches of shared house code and the house movie rect, new MM6 tests. |
+| C3, chain chapter C3 | `claude/mm6-chain-c3` in `../enroth-worktrees/mm6-chain-c3` | new `GameTests_MM6CampaignChainC3.cpp`, `MM6CampaignChain.{h,cpp}`, the MM6 street NPC dialogue path, small MM6-owned fixes. |

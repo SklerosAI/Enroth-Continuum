@@ -17,8 +17,9 @@
 | `a1f307c43` | UI leftovers: guild, bank, stable menus, chest exit, zoom art, professions, start capture | master gate: unit 1123, MM6 208, MM7 147 |
 | `381d7ddf4` | Visit stamps on first-map saves and the death map, timer rule pinned | lane: MM6 190, first-map gate green |
 | `5001f152c` | Bank deposit and withdraw, services audit | lane: MM6 211 |
+| `66e71b82c` | First combat: potions, turn-based mode, volcanic rest cost, no-food sound | lane: MM6 212, MM7 controls 147 |
 
-The first-map gate passed every fresh-process child and the MM7 controls on `f88268730`. The Release MM6 app in `build-release/` was rebuilt at 20:02 and must be rebuilt again on the final master before the playtest, then launched once to the main menu.
+The first-map gate passed every fresh-process child and the MM7 controls on `f88268730` and again on `6361f74a5` (39 children, with the buff and first-map visit pairs). Master gate on `6361f74a5`: unit 1123, MM6 210, MM7 147. The Release MM6 app in `build-release/` was rebuilt at 20:02 and must be rebuilt again on the final master before the playtest, then launched once to the main menu.
 
 ## Parked
 
@@ -30,7 +31,7 @@ The first-map gate passed every fresh-process child and the MM7 controls on `f88
 | --- | --- | --- |
 | Services 2 | `claude/mm6-services-2` in `../enroth-worktrees/mm6-leftovers` | guild joins (topics 381 to 397), tavern room, food, drink, tip, temple donate, expert teachers |
 | Dungeons | `claude/mm6-dungeons` in `../enroth-worktrees/mm6-chain-c4` | d02, d01, d18 end to end, the town's side quests, dungeon rest |
-| First combat | `claude/mm6-first-combat` in `../enroth-worktrees/mm6-spells` | melee, turn-based mode, potions, resting, conditions, regeneration |
+| Rest rules | `claude/mm6-rest-rules` in `../enroth-worktrees/mm6-spells` | new-party days without rest, Wait until Dawn and the rest encounter, wake-all and recovery across rest, the death rule, the 3 am daily rules, turn-based start order |
 | Guild menus | `claude/mm6-guild-menus` in `../enroth-worktrees/mm6-control-center` | Mercenary and Thieves guild menus (patch from services 1), Self guild door, four layout checks, menu focus colours |
 | Menus and hirelings | `claude/mm6-menus-hirelings` in `../enroth-worktrees/mm6-indoor-light` | main menu, escape menu and options, hirelings, news and rumours |
 

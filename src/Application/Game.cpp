@@ -1504,14 +1504,14 @@ void Game::processQueuedMessages() {
                 continue;
             case UIMSG_ClickZoomInBtn:
                 if (!(current_screen_type == SCREEN_GAME)) continue;
-                new OnButtonClick({519, 136}, {0, 0}, pBtn_ZoomIn);
+                new OnButtonClick(engine->gameTitle() == GameTitle::MM6 ? mm6HudZoomInPressed : Pointi(519, 136), {0, 0}, pBtn_ZoomIn);
 
                 setMinimapZoom(viewparams->uMinimapZoom * 2);
 
                 break;
             case UIMSG_ClickZoomOutBtn:
                 if (!(current_screen_type == SCREEN_GAME)) continue;
-                new OnButtonClick({574, 136}, {0, 0}, pBtn_ZoomOut);
+                new OnButtonClick(engine->gameTitle() == GameTitle::MM6 ? mm6HudZoomOutPressed : Pointi(574, 136), {0, 0}, pBtn_ZoomOut);
 
                 setMinimapZoom(viewparams->uMinimapZoom / 2);
 

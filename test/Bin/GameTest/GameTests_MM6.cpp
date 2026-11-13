@@ -1026,8 +1026,8 @@ TEST(MM6HeadlessHudResources, TitleIsolation) {
     const HudNavigationResources mm6 = hudNavigationResources(GameTitle::MM6,
         "IB-COMP-A", "ib-autout-a", "ib-autin-a");
     EXPECT_EQ(mm6.compass, "compass");
-    EXPECT_EQ(mm6.zoomIn, "zoom+on");
-    EXPECT_EQ(mm6.zoomOut, "zoom-on");
+    EXPECT_EQ(mm6.zoomIn, "buttplus");
+    EXPECT_EQ(mm6.zoomOut, "buttminu");
 
     const HudNavigationResources mm7Neutral = hudNavigationResources(GameTitle::MM7,
         "IB-COMP-A", "ib-autout-a", "ib-autin-a");

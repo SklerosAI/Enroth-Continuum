@@ -1212,8 +1212,10 @@ void UI_Create() {
     if (engine->gameTitle() == GameTitle::MM6) {
         pBtn_ZoomIn = createCircleHudButton(mm6HudZoomInCenter, mm6HudZoomRadius, UIMSG_ClickZoomInBtn, INPUT_ACTION_ZOOM_IN,
                                             localization->str(LSTR_ZOOM_IN));
+        pBtn_ZoomIn->vTextures = {game_ui_btn_zoomin};
         pBtn_ZoomOut = createCircleHudButton(mm6HudZoomOutCenter, mm6HudZoomRadius, UIMSG_ClickZoomOutBtn, INPUT_ACTION_ZOOM_OUT,
                                              localization->str(LSTR_ZOOM_OUT));
+        pBtn_ZoomOut->vTextures = {game_ui_btn_zoomout};
     } else {
         pBtn_ZoomIn = pPrimaryWindow->CreateButton({519, 136}, game_ui_btn_zoomin->size(), BUTTON_TYPE_NORMAL, 0,
                                                    UIMSG_ClickZoomInBtn, 0, INPUT_ACTION_ZOOM_IN,

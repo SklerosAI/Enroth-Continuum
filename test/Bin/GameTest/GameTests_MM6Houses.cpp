@@ -177,9 +177,11 @@ static const Vec3f kBankDoor(-10800, -7416, 300); // In front of the bank, facin
 static constexpr int kBankDoorFace = 1928;
 static const Vec3f kBufordHouseDoor(-7014, -5798, 300); // In front of Buford T. Allman's house, facing north.
 static const Vec3f kStableDoor(-10346, -9472, 161); // In front of the stable, facing west.
+static const Vec3f kSelfGuildDoor(-13952, -684, 576); // Initiate Guild of the Self, on the ground south of its door.
 static const Vec3f kBladesEndDoor(-6504, -6090, 300); // Blades' End, a mercenary guild.
 static const Vec3f kBuccaneersLairDoor(-12632, -5946, 300); // Buccaneers' Lair, a thieves' guild.
 static constexpr AwardId kElementalGuildMember = static_cast<AwardId>(64);
+static constexpr AwardId kSelfGuildMember = static_cast<AwardId>(65);
 static constexpr AwardId kBuccaneersLairMember = static_cast<AwardId>(66);
 static constexpr AwardId kBladesEndMember = static_cast<AwardId>(69);
 
@@ -747,6 +749,21 @@ GAME_TEST(MM6Houses, ThievesGuildMenu) {
     EXPECT_EQ(soundsTape.flatten(), tape(SOUND_gold01, static_cast<SoundId>(32602), static_cast<SoundId>(32604))); // The room's learn and no gold sounds.
 }
 
+GAME_TEST(MM6Houses, SelfGuildDoor) {
+    // Space at the Initiate Guild of the Self's door, from the ground south of it, opens the guild. It lists a member
+    // Buy Spells and the Self skills the member's class can learn and doesn't know yet.
+    auto houseTape = tapes.house();
+    auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+    startMM6NewGame(game);
+    pParty->pCharacters[1]._achievedAwardsBits.set(kSelfGuildMember);
+    test.startTaping();
+    enterThroughDoor(game, kSelfGuildDoor, 90);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_2);
+    game.tick();
+    EXPECT_EQ(houseTape, tape(HOUSE_INVALID, static_cast<HouseId>(139)));
+    EXPECT_EQ(optionsTape, tape(std::vector<std::string>{}, std::vector<std::string>{"Buy Spells", "Spirit Magic", "Mind Magic"})); // The cleric knows Body Magic already.
+}
+
 GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
     // Hidden capture of New Sorpigal house screens: each house's first view, then the screens behind its options.
     ASSERT_FALSE(window->isVisible());
@@ -796,12 +813,12 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
 
     engine->config->debug.NoVideo.setValue(false);
     startMM6NewGame(game);
-    for (auto [door, yaw, name, screens] : std::array<std::tuple<Vec3f, int, std::string_view, int>, 12>{{
+    for (auto [door, yaw, name, screens] : std::array<std::tuple<Vec3f, int, std::string_view, int>, 13>{{
              {kWeaponShopDoor, 0, "weapons", 5}, {kGeneralStoreDoor, 1536, "general", 2}, {kTempleDoor, 90, "temple", 0},
              {kTrainingDoor, 180, "training", 0}, {kGuildDoor, 1536, "guild", 0}, {kTavernDoor, 0, "tavern", 0},
              {kStableDoor, 180, "stable", 0}, {Vec3f(-8678, -6352, 300), 0, "armor", 5}, {Vec3f(-6376, -7606, 300), 90, "magic", 5},
              {kBladesEndDoor, 270, "merc", 0}, {Vec3f(-12528, -5814, 300), 90, "npchouse465", 0},
-             {kBufordHouseDoor, 90, "npchouse470", 0}}}) {
+             {kBufordHouseDoor, 90, "npchouse470", 0}, {kSelfGuildDoor, 90, "self", 0}}}) {
         enterThroughDoor(game, door, yaw);
         captureHouse(name, screens);
     }

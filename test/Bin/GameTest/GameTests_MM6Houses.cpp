@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <cstdlib>
 #include <memory>
@@ -631,7 +632,8 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
         capture(fmt::format("{}-0", name));
         if (current_screen_type != SCREEN_HOUSE)
             return;
-        if (name == "tavern") {
+        const bool listsResidents = std::ranges::any_of(window_SpeakInHouse->vButtons, [](GUIButton *button) { return button->id == "House_Npc0"; });
+        if (listsResidents && name != "npchouse465" && name != "npchouse470") {
             game.pressGuiButton("House_Npc0");
             game.tick();
             capture(fmt::format("{}-p", name));
@@ -651,10 +653,12 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
 
     engine->config->debug.NoVideo.setValue(false);
     startMM6NewGame(game);
-    for (auto [door, yaw, name, screens] : std::array<std::tuple<Vec3f, int, std::string_view, int>, 7>{{
+    for (auto [door, yaw, name, screens] : std::array<std::tuple<Vec3f, int, std::string_view, int>, 12>{{
              {kWeaponShopDoor, 0, "weapons", 5}, {kGeneralStoreDoor, 1536, "general", 2}, {kTempleDoor, 90, "temple", 0},
              {kTrainingDoor, 180, "training", 0}, {kGuildDoor, 1536, "guild", 0}, {kTavernDoor, 0, "tavern", 0},
-             {kStableDoor, 180, "stable", 0}}}) {
+             {kStableDoor, 180, "stable", 0}, {Vec3f(-8678, -6352, 300), 0, "armor", 5}, {Vec3f(-6376, -7606, 300), 90, "magic", 5},
+             {Vec3f(-6504, -6090, 300), 270, "merc", 0}, {Vec3f(-12528, -5814, 300), 90, "npchouse465", 0},
+             {Vec3f(-7014, -5798, 300), 90, "npchouse470", 0}}}) {
         enterThroughDoor(game, door, yaw);
         captureHouse(name, screens);
     }
@@ -673,4 +677,13 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
     enterThroughDoor(game, kGuildDoor, 1536);
     game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_3);
     captureHouse("guild-member", 1);
+
+    waitUntilHour(game, 10); // The Town Hall opens at 10 am.
+    enterThroughDoor(game, kTownHallDoor, 180);
+    captureHouse("townhall", 0);
+
+    waitUntilHour(game, 18); // The thieves' guild opens at 6 pm.
+    enterThroughDoor(game, Vec3f(-12632, -5946, 300), 270);
+    captureHouse("thieves", 0);
 }
+

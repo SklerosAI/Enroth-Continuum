@@ -146,8 +146,44 @@ GAME_TEST(MM6GameMenu, Controls) {
     EXPECT_MISSES(art, (DrawnQuad{"con_16x", {22, 270}}));
 }
 
+GAME_TEST(MM6GameMenu, SaveAndLoadScreens) {
+    // The Save and Load screens drew MM7's button art, which MM6 doesn't have, over MM6's art, and their buttons sat
+    // where MM7 puts them.
+    startNewGameThroughInput(game);
+    auto screenTape = tapes.screen();
+    auto quadsTape = tapes.hudQuads();
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2); // The game stops on the first frame, the menu opens on the second.
+    game.pressAndReleaseButton(BUTTON_LEFT, 128, 286); // Save Game.
+    game.tick(2); // The menu takes the click on the second frame.
+    game.pressAndReleaseButton(BUTTON_LEFT, 224, 330); // The down arrow.
+    game.tick(2);
+    game.pressAndReleaseButton(BUTTON_LEFT, 406, 320); // The cross.
+    game.tick(2); // The cross shows pressed on the first frame and closes the screen on the second.
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressAndReleaseButton(BUTTON_LEFT, 350, 233); // Load Game.
+    game.tick(2);
+    game.pressAndReleaseButton(BUTTON_LEFT, 224, 201); // The up arrow.
+    game.tick(2);
+    game.pressAndReleaseButton(BUTTON_LEFT, 306, 320); // The check mark, with no save to load.
+    game.tick(2);
+
+    auto art = quadsTape.flatten().filter([](const DrawnQuad &quad) {
+        return quad.texture == "loadsave" || quad.texture.ends_with("_up") || quad.texture.starts_with("ls_") || quad.texture.starts_with("x_") ||
+               quad.texture.starts_with("sarr") || quad.texture == "check_p" || quad.texture == "con_x";
+    });
+    EXPECT_EQ(screenTape, tape(SCREEN_MENU, SCREEN_SAVEGAME, SCREEN_GAME, SCREEN_MENU, SCREEN_LOADGAME));
+    const DrawnQuad panel{"loadsave", {8, 8}}, saveHeader{"save_up", {18, 141}}, loadHeader{"load_up", {18, 141}};
+    EXPECT_EQ(art, tape(panel, saveHeader, panel, saveHeader, panel, saveHeader, DrawnQuad{"sarr2_pr", {216, 323}}, panel, saveHeader, panel,
+                        saveHeader, DrawnQuad{"x_d", {376, 306}}, panel, loadHeader, panel, loadHeader, panel, loadHeader,
+                        DrawnQuad{"sarr1_pr", {216, 194}}, panel, loadHeader, panel, loadHeader, DrawnQuad{"check_p", {276, 306}}));
+}
+
 GAME_TEST(MM6OffscreenFrame, DISABLED_MenusCapture) {
-    // Hidden captures of the title screen with New Game hovered, the escape menu and its Controls screen. Each one goes
+    // Hidden captures of the title screen with New Game hovered, the escape menu, Controls, Save and Load. Each one goes
     // next to MM6_OFFSCREEN_CAPTURE_PATH with a suffix.
     ASSERT_FALSE(window->isVisible());
     ASSERT_EQ(dynamic_cast<NullRenderer *>(render), nullptr);
@@ -184,4 +220,18 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_MenusCapture) {
     game.pressAndReleaseButton(BUTTON_LEFT, 350, 180); // Controls.
     game.tick(2);
     capture("controls", true);
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressAndReleaseButton(BUTTON_LEFT, 128, 286); // Save Game.
+    game.tick(2);
+    capture("save", true);
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressAndReleaseButton(BUTTON_LEFT, 350, 233); // Load Game.
+    game.tick(2);
+    capture("load", true);
 }

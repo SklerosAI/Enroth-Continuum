@@ -30,3 +30,11 @@ inline constexpr int mm6ControlsLeftArrowX = 262;
 inline constexpr int mm6ControlsRightArrowX = 438;
 inline constexpr int mm6ControlsSliderX = 278; // Level n is marked at x 278 + 16 n, a click picks the notch under it.
 inline constexpr int mm6ControlsSliderNotch = 16;
+
+// Save and Load share one window, `loadsave` at (8, 8) with the buttons drawn into it. Positions are relative to the
+// window, which sits at (82, 60) over lsave640.pcx when loading from the title screen.
+inline constexpr Pointi mm6SaveLoadHeaderPosition = {18, 141};
+inline constexpr Recti mm6SaveLoadActionRect = {276, 306, 61, 28};
+inline constexpr Recti mm6SaveLoadCancelRect = {376, 306, 61, 28};
+inline constexpr Recti mm6SaveLoadUpRect = {216, 194, 16, 16};
+inline constexpr Recti mm6SaveLoadDownRect = {216, 323, 16, 16};

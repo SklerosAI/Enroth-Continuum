@@ -140,20 +140,20 @@ void Menu::EventLoop() {
 
             case UIMSG_ArrowUp:
                 saveLoadMenu()->scrollUp();
-                new OnButtonClick({215, 199}, {17, 17}, pBtnArrowUp);
+                new OnButtonClick(saveLoadPressedPosition(pBtnArrowUp, {215, 199}), {17, 17}, pBtnArrowUp);
                 continue;
 
             case UIMSG_DownArrow:
                 saveLoadMenu()->scrollDown();
-                new OnButtonClick({215, 323}, {17, 17}, pBtnDownArrow);
+                new OnButtonClick(saveLoadPressedPosition(pBtnDownArrow, {215, 323}), {17, 17}, pBtnDownArrow);
                 continue;
 
             case UIMSG_Cancel:
-                new OnCancel({350, 302}, {106, 42}, pBtnCancel);
+                new OnCancel(saveLoadPressedPosition(pBtnCancel, {350, 302}), {106, 42}, pBtnCancel);
                 continue;
 
             case UIMSG_SaveLoadBtn:
-                new OnSaveLoad({241, 302}, {106, 42}, pBtnLoadSlot);
+                new OnSaveLoad(saveLoadPressedPosition(pBtnLoadSlot, {241, 302}), {106, 42}, pBtnLoadSlot);
                 continue;
             case UIMSG_SelectLoadSlot:
                 saveLoadMenu()->slotClicked(param, param2);

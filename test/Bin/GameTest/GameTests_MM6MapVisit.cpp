@@ -227,6 +227,7 @@ GAME_TEST(MM6MapVisit, TimerWithoutIntervalWaitsFromTheNextMidnight) {
     game.tick();
     confirmTransition(game);
     ASSERT_EQ(engine->_currentLoadedMapId, t4);
+    engine->config->debug.NoDamage.setValue(true); // The temple's monsters hunt the party through the four-day wait.
     const Time dawn = Time::fromDays(4) + Duration::fromHours(16);
     using TempleState = std::tuple<std::string, bool, bool>; // The window's sky, and whether each of the two lights is on.
     const TempleState night("sky_nit1", false, false);

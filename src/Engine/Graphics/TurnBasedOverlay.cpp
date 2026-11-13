@@ -1,7 +1,10 @@
 #include "TurnBasedOverlay.h"
 
-#include "Engine/Tables/IconFrameTable.h"
+#include "Engine/Engine.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
+#include "Engine/Graphics/Sprites.h"
+#include "Engine/Tables/IconFrameTable.h"
+#include "Engine/Timer.h"
 #include "Engine/TurnEngine/TurnEngine.h"
 
 // Opening hand animation in vanilla was 320 ticks long (that's 2.5 seconds), but it was cut short and only the first
@@ -71,7 +74,18 @@ void TurnBasedOverlay::update(Duration dt, TurnEngineStep newStep) {
 }
 
 void TurnBasedOverlay::draw() {
-    if (_state == TURN_BASED_OVERLAY_NONE || _initialIconId < 0)
+    if (_state == TURN_BASED_OVERLAY_NONE)
+        return;
+
+    if (engine->gameTitle() == GameTitle::MM6) { // An open hand on the party's turn, an hourglass on the monsters'.
+        const char *name = pTurnEngine->flags & TE_PLAYER_TURN ? "newhand1" : "newglas1";
+        SpriteFrame *frame = pSpriteFrameTable->GetFrame(pSpriteFrameTable->FastFindSprite(name), animTimer->time());
+        GraphicsImage *sprite = frame->sprites[0];
+        render->DrawImage(sprite, Recti({444 - sprite->width() / 2, 326 - sprite->height() / 2}, sprite->size()), frame->paletteId);
+        return;
+    }
+
+    if (_initialIconId < 0)
         return;
 
     render->DrawQuad2D(currentIcon(), {394, 288});

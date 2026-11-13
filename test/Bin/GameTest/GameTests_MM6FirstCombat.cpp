@@ -1,8 +1,25 @@
+#include <algorithm>
+#include <limits>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
 
+#include "Engine/Data/TileData.h"
+#include "Engine/Engine.h"
+#include "Engine/EngineCallObserver.h"
+#include "Engine/EngineGlobals.h"
+#include "Engine/Graphics/Outdoor.h"
+#include "Engine/Objects/Actor.h"
+#include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
+#include "Engine/TurnEngine/TurnEngine.h"
+
+#include "GUI/GUIWindow.h"
+#include "GUI/UI/UIStatusBar.h"
+
+#include "Utility/Math/TrigLut.h"
 
 static void startNewGameThroughInput(EngineController &game) {
     // Each character takes its first three optional skills and up to three points in every attribute, then the party
@@ -112,4 +129,57 @@ GAME_TEST(MM6Potion, EmptyBottleStaysInHand) {
     EXPECT_CONTAINS(statusTape, "Potion Bottle can not be used that way");
     EXPECT_CONTAINS(soundsTape.flatten(), SOUND_error);
     EXPECT_MISSES(soundsTape.flatten(), SOUND_drink);
+}
+
+GAME_TEST(MM6TurnBased, PartyAndMonstersTakeTurns) {
+    // MM6 drew no turn-based indicator, and the party had MM7's movement phase between the rounds.
+    startNewGameThroughInput(game);
+    const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+    const int goblin = game.spawnMonster(pParty->pos + ahead * 150, static_cast<MonsterId>(76), SPAWN_DUMMY)->id;
+    auto turnBasedTape = tapes.turnBasedMode();
+    auto indicatorTape = tapes.hudQuads();
+    auto positionTape = tapes.custom([] { return pParty->pos; });
+    auto timeTape = tapes.custom([] { return pParty->GetPlayingTime().ticks(); });
+    auto goblinHpTape = actorTapes.hp(goblin);
+    auto soundsTape = tapes.sounds();
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_RETURN);
+    game.tick();
+    while (!(pTurnEngine->turn_stage == TE_ATTACK && pTurnEngine->flags & TE_PLAYER_TURN))
+        game.tick(); // The monsters finish their opening move.
+    game.pressKey(PlatformKey::KEY_UP);
+    game.tick();
+    game.releaseKey(PlatformKey::KEY_UP);
+    game.pointMouseAtActor(goblin);
+    for (int i = 0; i < 4; i++) { // Two attacks, then the other two characters pass.
+        game.pressAndReleaseKey(i < 2 ? PlatformKey::KEY_A : PlatformKey::KEY_B);
+        game.tick();
+    }
+    while (pTurnEngine->turn_stage != TE_WAIT) { // The monsters strike, and the party passes until the round ends.
+        game.pressAndReleaseKey(PlatformKey::KEY_B);
+        game.tick();
+    }
+    while (!(pTurnEngine->turn_stage == TE_ATTACK && pTurnEngine->flags & TE_PLAYER_TURN))
+        game.tick(); // The monsters move.
+    game.pressAndReleaseKey(PlatformKey::KEY_RETURN);
+    game.tick();
+
+    auto indicator = indicatorTape.flatten().filter([](const DrawnQuad &quad) { return quad.texture.starts_with("new"); });
+    auto hand = indicator.filter([](const DrawnQuad &quad) { return quad.texture.starts_with("newhand"); });
+    auto hourglass = indicator.filter([](const DrawnQuad &quad) { return quad.texture.starts_with("newglas"); });
+    EXPECT_EQ(turnBasedTape, tape(true, false));
+    EXPECT_FALSE(hand.empty());
+    EXPECT_FALSE(hourglass.empty());
+    EXPECT_EQ(hand.size() + hourglass.size(), indicator.size());
+    for (const DrawnQuad &quad : hand)
+        EXPECT_EQ(quad.position, Pointi(432, 305)); // Centered on (444, 326).
+    for (const DrawnQuad &quad : hourglass)
+        EXPECT_EQ(quad.position, Pointi(433, 306));
+    EXPECT_EQ(positionTape.size(), 1); // The party can't walk in turn-based mode.
+    EXPECT_CONTAINS(timeTape.adjacentDeltas(), 426); // A round is 100 game seconds.
+    EXPECT_MISSES(timeTape.adjacentDeltas(), 213); // MM7's movement phase.
+    EXPECT_LT(goblinHpTape.min(), 13);
+    EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(207)); // Entering turn-based mode.
+    EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(206)); // Leaving it.
 }

@@ -299,3 +299,28 @@ GAME_TEST(MM6ChestTrap, SprungTrapStaysGoneAfterReturn) {
     EXPECT_EQ(chestTape[2], std::nullopt);
     EXPECT_EQ(chestTape[3], chestTape[1]);
 }
+
+GAME_TEST(MM6ChestScreen, ExitButton) {
+    // An open chest drew MM7's exit button art, which MM6 doesn't have, below the 3D view. MM6 draws its exit button in
+    // the 3D view's corner over the chest, with the view's side borders, and the button closes the chest.
+    startNewGameThroughInput(game);
+    auto quadsTape = tapes.hudQuads();
+    auto screenTape = tapes.screen();
+    test.startTaping();
+
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(-15950, -1680, 0), 180, -20); // East of the box that holds chest 1, looking down at it.
+    game.pointMouseAtFace(866);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+    const auto chestFrame = quadsTape.back();
+    game.pressAndReleaseButton(BUTTON_LEFT, 429, 334); // The middle of the exit button.
+    game.tick();
+
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHEST, SCREEN_GAME));
+    auto frameArt = chestFrame.filter([](const DrawnQuad &quad) {
+        return quad.texture.starts_with("chest") || quad.texture.starts_with("border5") || quad.texture.starts_with("border6") ||
+               quad.texture.starts_with("buttesc") || quad.texture.starts_with("ib-");
+    });
+    EXPECT_EQ(frameArt, tape(DrawnQuad{"chest01", {8, 8}}, DrawnQuad{"border5", {7, 8}}, DrawnQuad{"border6", {461, 8}}, DrawnQuad{"buttesc1", {392, 318}}));
+}
+

@@ -7,26 +7,42 @@
 #include "Engine/Timer.h"
 #include "Engine/Party.h"
 #include "Engine/AssetsManager.h"
+#include "Engine/Engine.h"
 #include "Engine/Tables/ChestTable.h"
 
 #include "GUI/GUIButton.h"
 #include "GUI/UI/ItemGrid.h"
+#include "GUI/UI/MM6CharacterScreen.h"
 
 GUIWindow_Chest::GUIWindow_Chest(int chestId) : GUIWindow(WINDOW_CHEST, {0, 0}, render->GetRenderDimensions()), _chestId(chestId) {
     CreateCharacterButtons();
 
-    pBtn_ExitCancel = CreateButton({471, 445}, {169, 35}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0, INPUT_ACTION_INVALID,
-                                   localization->str(LSTR_EXIT_DIALOGUE), {ui_exit_cancel_button_background});
+    if (engine->gameTitle() == GameTitle::MM6) {
+        pBtn_ExitCancel = CreateButton("Chest_Exit", {392, 318}, {74, 32}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0, INPUT_ACTION_INVALID,
+                                       localization->str(LSTR_EXIT_DIALOGUE), {assets->getIcon("buttesc2")});
+    } else {
+        pBtn_ExitCancel = CreateButton({471, 445}, {169, 35}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0, INPUT_ACTION_INVALID,
+                                       localization->str(LSTR_EXIT_DIALOGUE), {ui_exit_cancel_button_background});
+    }
     CreateButton({7, 8}, {460, 343}, BUTTON_TYPE_NORMAL, 0, UIMSG_CHEST_ClickItem, 0);
     current_screen_type = SCREEN_CHEST;
     gameTimer->setPaused(true);
+}
+
+void GUIWindow_Chest::drawExitButton() {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        drawMM6CharacterScreenBorders();
+        render->DrawQuad2D(assets->getIcon("buttesc1"), pBtn_ExitCancel->rect.topLeft());
+        return;
+    }
+    render->DrawQuad2D(ui_exit_cancel_button_background, pBtn_ExitCancel->rect.topLeft());
 }
 
 void GUIWindow_Chest::Update() {
     if (current_screen_type == SCREEN_CHEST_INVENTORY && pParty->hasActiveCharacter()) {
         draw_leather();
         CharacterUI_InventoryTab_Draw(&pParty->activeCharacter(), true);
-        render->DrawQuad2D(ui_exit_cancel_button_background, pBtn_ExitCancel->rect.topLeft());
+        drawExitButton();
     } else if (current_screen_type == SCREEN_CHEST) {
         int uChestID = _chestId;
         int chestDescId = vChests[uChestID].chestTypeId;
@@ -57,6 +73,6 @@ void GUIWindow_Chest::Update() {
             render->DrawQuad2D(item_texture, {itemPixelPosX, itemPixelPosY});
         }
 
-        render->DrawQuad2D(ui_exit_cancel_button_background, pBtn_ExitCancel->rect.topLeft());
+        drawExitButton();
     }
 }

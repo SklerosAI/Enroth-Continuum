@@ -14,5 +14,10 @@ class GUIWindow_Chest : public GUIWindow {
     }
 
  private:
+    /**
+     * Draws the exit button over the chest or the inventory. MM6 draws the 3D view's side borders under it.
+     */
+    void drawExitButton();
+
     int _chestId = 0;
 };

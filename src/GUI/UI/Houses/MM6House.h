@@ -57,6 +57,23 @@ class GUIWindow_MM6House : public GUIWindow_House {
     void joinGuild();
 
     /**
+     * Shows an expert teacher's offer with its one learn line in place of the NPC's topics.
+     *
+     * @offset 0x499610 (MM6)
+     *
+     * @param topic                     NPC topic of the teacher, an even one from 200 to 258.
+     */
+    void offerExpertTraining(int topic);
+
+    /**
+     * Makes the active character an expert in the skill on offer when the teacher's checks pass and the party has the
+     * gold.
+     *
+     * @offset 0x4969C4 (MM6)
+     */
+    void learnFromTeacher();
+
+    /**
      * @return                          NPC the party is talking to, or `nullptr` if it isn't talking to an NPC.
      */
     NPCData *selectedNpc() const;
@@ -148,6 +165,14 @@ class GUIWindow_MM6House : public GUIWindow_House {
      */
     std::string membershipLabel() const;
 
+    /**
+     * @offset 0x496C90 (MM6)
+     *
+     * @param[out] approved             Whether the active character may learn from the teacher on offer.
+     * @return                          Line of the learn button, or why the character can't learn.
+     */
+    std::string teacherLabel(bool *approved) const;
+
     void showResidentButtons();
     void showExitButtons();
     void drawResidents();
@@ -181,6 +206,7 @@ class GUIWindow_MM6House : public GUIWindow_House {
     int _focusedOption = 0; // Index into `_optionButtons` of the line the mouse last pointed at, the first one at the start.
     int _selected = -1;
     std::optional<int> _membershipOffer; // Guild the selected NPC offers to join, see `offerGuildMembership`.
+    std::optional<int> _teacherOffer; // Topic of the teacher whose offer is shown.
     bool _trainingTimePassed = false;
     std::optional<mm6::HouseServiceOption> _bankTransfer; // Deposit or withdraw while the player types the amount.
     std::string _roomMovie;

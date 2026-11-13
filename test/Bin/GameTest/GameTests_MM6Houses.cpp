@@ -181,6 +181,7 @@ static const Vec3f kSelfGuildDoor(-13952, -684, 576); // Initiate Guild of the S
 static const Vec3f kHaroldHessDoor(-5976, -8068, 160); // Harold Hess's house, facing south.
 static const Vec3f kBladesEndDoor(-6504, -6090, 300); // Blades' End, a mercenary guild.
 static const Vec3f kBuccaneersLairDoor(-12632, -5946, 300); // Buccaneers' Lair, a thieves' guild.
+static const Vec3f kIsaoHouseDoor(-12528, -5814, 300); // In front of Isao Magistrus' house, facing north.
 static constexpr AwardId kElementalGuildMember = static_cast<AwardId>(64);
 static constexpr AwardId kSelfGuildMember = static_cast<AwardId>(65);
 static constexpr AwardId kBuccaneersLairMember = static_cast<AwardId>(66);
@@ -1056,4 +1057,37 @@ GAME_TEST(MM6Houses, TavernFillPacks) {
     EXPECT_MISSES(statusTape, "This service is not available yet.");
     EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_NO)); // The packs full reaction.
     EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(32003)); // The tavern keeper selling food.
+}
+
+GAME_TEST(MM6Houses, ExpertTeacher) {
+    // Isao Magistrus' Fire Magic Expertise topic did nothing, so no character could become an expert. His offer turns
+    // away a character who doesn't know the skill, and makes one with rank 4 an expert for 1000 gold.
+    auto goldTape = tapes.gold();
+    auto fireTape = tapes.custom([] {
+        const CombinedSkillValue fire = pParty->pCharacters[2].pActiveSkills[SKILL_FIRE];
+        return std::pair(fire.level(), fire.mastery());
+    });
+    auto textTape = tapes.custom([] { return current_npc_text; });
+    auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+    auto portraitTape = charTapes.portrait(2);
+    auto houseTape = tapes.house();
+    startMM6NewGame(game);
+    pParty->SetGold(2000);
+    pParty->pCharacters[2].pActiveSkills[SKILL_FIRE] = CombinedSkillValue(4, MASTERY_NOVICE); // Serena, a sorcerer.
+    test.startTaping();
+    enterThroughDoor(game, kIsaoHouseDoor, 90);
+    clickHouseOption(game, "Fire Magic Expertise");
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_3);
+    game.tick();
+    clickHouseOption(game, "Become Expert in Fire Magic for 1000 gold");
+
+    EXPECT_EQ(houseTape, tape(HOUSE_INVALID, static_cast<HouseId>(465)));
+    EXPECT_EQ(goldTape, tape(2000, 1000));
+    EXPECT_EQ(fireTape, tape(std::pair(4, MASTERY_NOVICE), std::pair(4, MASTERY_EXPERT)));
+    EXPECT_EQ(textTape, tape(std::string(), std::string(pNPCTopics[223].pText), std::string())); // The offer, text 224 of npctext.txt.
+    EXPECT_EQ(optionsTape, tape(std::vector<std::string>{}, std::vector<std::string>{"Fire Magic Expertise", "Jezebel"},
+                                std::vector<std::string>{pNPCTopics[261].pText}, // "You must know the skill before you can become an expert in it!"
+                                std::vector<std::string>{"Become Expert in Fire Magic for 1000 gold"},
+                                std::vector<std::string>{"Fire Magic Expertise", "Jezebel"}));
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE));
 }

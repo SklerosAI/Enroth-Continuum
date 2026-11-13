@@ -87,6 +87,39 @@ static AwardId membershipAward(int guild) {
     return static_cast<AwardId>(64 + guild);
 }
 
+static constexpr int kFirstTeacherTopic = 200;
+static constexpr int kLastTeacherTopic = 259;
+
+/**
+ * @param topic                         Teacher topic, 200 to 259. Two topics per skill, expert then master.
+ * @return                              Skill the teacher teaches.
+ */
+static Skill teacherSkill(int topic) {
+    int index = (topic - kFirstTeacherTopic) / 2;
+    if (index > 27)
+        ++index; // No one teaches Thievery, MM6 skill 28.
+    return index == 30 ? SKILL_LEARNING : static_cast<Skill>(index); // MM6 numbers Learning 30.
+}
+
+/**
+ * @offset 0x497102 (MM6)
+ *
+ * @param skill                         Skill taught.
+ * @return                              Gold an expert teacher asks.
+ */
+static int expertTeacherPrice(Skill skill) {
+    switch (skill) {
+      case SKILL_LEATHER: case SKILL_CHAIN: case SKILL_PLATE: case SKILL_FIRE: case SKILL_AIR:
+      case SKILL_WATER: case SKILL_EARTH: case SKILL_SPIRIT: case SKILL_MIND: case SKILL_BODY:
+        return 1000;
+      case SKILL_ITEM_ID: case SKILL_REPAIR: case SKILL_BODYBUILDING: case SKILL_MEDITATION:
+      case SKILL_PERCEPTION: case SKILL_DIPLOMACY: case SKILL_TRAP_DISARM:
+        return 500;
+      default:
+        return 2000;
+    }
+}
+
 static Pointi portraitPosition(size_t count, size_t index) {
     return kPortraitPositions[count - 1][index];
 }
@@ -202,6 +235,9 @@ void GUIWindow_MM6House::Update() {
         for (GUIButton *button : _optionButtons) {
             if (resident.npc && _membershipOffer) {
                 labels.push_back(membershipLabel());
+            } else if (resident.npc && _teacherOffer) {
+                bool approved = false;
+                labels.push_back(teacherLabel(&approved));
             } else if (resident.npc) {
                 labels.push_back(npcDialogueOptionString(static_cast<DialogueId>(button->msg_param), resident.npc));
             } else {
@@ -224,6 +260,7 @@ void GUIWindow_MM6House::selectResident(int index) {
         return;
     current_npc_text.clear();
     _membershipOffer.reset();
+    _teacherOffer.reset();
     _selected = index;
     if (_residents[index].npc) {
         refreshTopics();
@@ -277,6 +314,11 @@ void GUIWindow_MM6House::refreshTopics() {
                                               std::to_underlying(DIALOGUE_MAGIC_GUILD_JOIN)));
         return;
     }
+    if (_teacherOffer) {
+        _optionButtons.push_back(CreateButton("HouseNpcDialogue_Option0", {480, 160}, {139, 29}, BUTTON_TYPE_NORMAL, 0, UIMSG_SelectHouseNPCDialogueOption,
+                                              std::to_underlying(DIALOGUE_MASTERY_TEACHER_LEARN)));
+        return;
+    }
     int row = 0;
     for (DialogueId topic : prepareScriptedNPCDialogueTopics(npc)) {
         if (topic < DIALOGUE_SCRIPTED_LINE_1 || topic > DIALOGUE_SCRIPTED_LINE_6)
@@ -310,14 +352,37 @@ void GUIWindow_MM6House::joinGuild() {
     refreshTopics();
 }
 
+void GUIWindow_MM6House::offerExpertTraining(int topic) {
+    assert(topic >= kFirstTeacherTopic && topic <= kLastTeacherTopic && topic % 2 == 0);
+    _teacherOffer = topic;
+    current_npc_text = pNPCTopics[topic - 1].pText; // The text with the topic's number.
+    refreshTopics();
+}
+
+void GUIWindow_MM6House::learnFromTeacher() {
+    bool approved = false;
+    teacherLabel(&approved);
+    if (!approved)
+        return;
+    const Skill skill = teacherSkill(*_teacherOffer);
+    Character &character = pParty->activeCharacter();
+    pParty->TakeGold(expertTeacherPrice(skill));
+    character.pActiveSkills[skill] = CombinedSkillValue(character.pActiveSkills[skill].level(), MASTERY_EXPERT);
+    character.playReaction(SPEECH_SKILL_MASTERY_INC);
+    _teacherOffer.reset();
+    current_npc_text.clear();
+    refreshTopics();
+}
+
 NPCData *GUIWindow_MM6House::selectedNpc() const {
     return _selected == -1 ? nullptr : _residents[_selected].npc;
 }
 
 bool GUIWindow_MM6House::goBack() {
     current_npc_text.clear();
-    if (_membershipOffer) {
+    if (_membershipOffer || _teacherOffer) {
         _membershipOffer.reset();
+        _teacherOffer.reset();
         refreshTopics();
         return true;
     }
@@ -371,6 +436,28 @@ Color GUIWindow_MM6House::optionFocusColor() const {
     if (!isProprietorSelected() || _house.family == mm6::HouseServiceFamily::Shop || _house.type == HOUSE_TYPE_TRAINING_GROUND)
         return colorTable.Sunflower;
     return colorTable.PaleCanary;
+}
+
+std::string GUIWindow_MM6House::teacherLabel(bool *approved) const {
+    *approved = false;
+    if (!pParty->hasActiveCharacter())
+        return {};
+    const Character &character = pParty->activeCharacter();
+    const Skill skill = teacherSkill(*_teacherOffer);
+    const CombinedSkillValue value = character.pActiveSkills[skill];
+    if (!character.CanAct())
+        return pNPCTopics[263].pText; // "Not in your condition!"
+    if (!value.level())
+        return pNPCTopics[261].pText; // "You must know the skill before you can become an expert in it!"
+    if (value.mastery() >= MASTERY_EXPERT)
+        return pNPCTopics[264].pText; // "You are already an expert in this skill."
+    if (value.level() < 4)
+        return pNPCTopics[260].pText; // "You don't meet the requirements, and cannot be taught until you do."
+    const int price = expertTeacherPrice(skill);
+    if (price > pParty->GetGold())
+        return pNPCTopics[259].pText; // "You don't have enough gold!"
+    *approved = true;
+    return localization->format(LSTR_BECOME_S_IN_S_FOR_LU_GOLD, localization->str(LSTR_EXPERT), localization->skillName(skill), price);
 }
 
 std::string GUIWindow_MM6House::membershipLabel() const {
@@ -699,6 +786,10 @@ void mm6SelectHouseTopic(DialogueId topic) {
         house->joinGuild();
         return;
     }
+    if (npc && topic == DIALOGUE_MASTERY_TEACHER_LEARN) {
+        house->learnFromTeacher();
+        return;
+    }
     if (!npc || topic < DIALOGUE_SCRIPTED_LINE_1 || topic > DIALOGUE_SCRIPTED_LINE_6)
         return;
     const std::array<unsigned, 6> events = {npc->dialogue_1_evt_id, npc->dialogue_2_evt_id, npc->dialogue_3_evt_id,
@@ -706,6 +797,10 @@ void mm6SelectHouseTopic(DialogueId topic) {
     const int event = events[std::to_underlying(topic) - std::to_underlying(DIALOGUE_SCRIPTED_LINE_1)];
     if (event >= kFirstMembershipTopic && event < kFirstMembershipTopic + static_cast<int>(kMembershipPrices.size())) { // MM6.exe answers these topics itself.
         house->offerGuildMembership(event - kFirstMembershipTopic);
+        return;
+    }
+    if (event >= kFirstTeacherTopic && event <= kLastTeacherTopic && event % 2 == 0) {
+        house->offerExpertTraining(event);
         return;
     }
     handleScriptedNPCTopicSelection(topic, npc);

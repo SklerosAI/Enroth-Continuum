@@ -89,6 +89,11 @@ void respawnDeadParty() {
     if (pMovie_Track)
         pMediaPlayer->Unload();
 
+    const MapId respawnMap = pMapTable->GetMapInfo("oute3.odm");
+    const bool respawnElsewhere = engine->_currentLoadedMapId != respawnMap;
+    if (respawnElsewhere)
+        leaveMap(respawnMap); // The original saves the map the party died on before the week passes.
+
     for (Character &character : pParty->pCharacters)
         writeCharacterEventVariable(character, EVENT_Set, std::to_underlying(VAR_Award), deathsAward);
     applyPartyDeath(pParty, [](const Character &character) { return character.GetMaxHealth(); });
@@ -99,9 +104,7 @@ void respawnDeadParty() {
         pParty->bTurnBasedModeOn = false;
     }
 
-    const MapId respawnMap = pMapTable->GetMapInfo("oute3.odm");
-    if (engine->_currentLoadedMapId != respawnMap) {
-        leaveMap(respawnMap);
+    if (respawnElsewhere) {
         engine->_pendingTransition = MapDestination(respawnMap, PartyPlacement(pParty->pos, pParty->_viewYaw, pParty->_viewPitch, 0));
         PrepareWorld(1);
     }

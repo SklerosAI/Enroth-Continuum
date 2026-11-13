@@ -3,8 +3,11 @@
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
+#include "Engine/Graphics/Indoor.h"
+#include "Engine/Graphics/Outdoor.h"
 #include "Engine/Localization.h"
 #include "Engine/Objects/Actor.h"
+#include "Engine/Objects/Chest.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/MapTable.h"
 
@@ -56,6 +59,17 @@ static std::vector<int> spawnKillers(EngineController &game) {
         result.push_back(killer->id);
     }
     return result;
+}
+
+static int killDummyAhead(EngineController &game) {
+    // The party hits a dummy in front of it until it's dead.
+    const Actor *monster = game.spawnMonster(pParty->pos + Vec3f(0, 300, 0), static_cast<MonsterId>(7), SPAWN_DUMMY);
+    game.pointMouseAtActor(monster->id);
+    for (int attack = 0; attack < 1000 && monster->aiState != Dead; attack++) {
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+    }
+    return monster->id;
 }
 
 static void walkForward(EngineController &game) {
@@ -124,4 +138,49 @@ GAME_TEST(MM6PartyDeath, DiesOnFirstMapWakesWithoutReload) {
     EXPECT_NE(positionTape.back(), Vec2f(-9728, -11319));
     EXPECT_EQ(hpTape.back(), tape(1, 1, 1, 1));
     EXPECT_EQ(hostilityTape, tape(HOSTILITY_LONG)); // MM7 makes every monster friendly, MM6 reads the monster table.
+}
+
+GAME_TEST(MM6PartyDeath, DungeonStaysAsThePartyDiedInIt) {
+    // The dungeon an MM6 party died in was recorded as last visited when the party woke a week later. It is last
+    // visited at the death, and keeps the monsters the party killed and the chests it opened.
+    startNewGameThroughInput(game);
+    const MapId oute3 = pMapTable->GetMapInfo("oute3.odm");
+    const MapId d02 = pMapTable->GetMapInfo("d02.blv");
+    enterDungeonDoor(game);
+    const Vec3f arrival = pParty->pos;
+    auto mapTape = tapes.map();
+    auto timeTape = tapes.time();
+    auto screenTape = tapes.screen();
+    auto deathsTape = tapes.deaths();
+    auto visitTape = tapes.custom([] { return uCurrentlyLoadedLevelType == LEVEL_INDOOR ? pIndoor->lastVisitTime : pOutdoor->lastVisitTime; });
+    int dummy = -1;
+    auto dummyTape = tapes.custom([&] { return engine->_currentLoadedMapId == d02 && dummy != -1 && pActors[dummy].aiState == Dead; });
+    auto chestTape = tapes.custom([&] { return engine->_currentLoadedMapId == d02 ? static_cast<int>(std::to_underlying(vChests[5].flags)) : -1; });
+    test.startTaping();
+
+    game.teleportTo(d02, Vec3f(-7712, -1000, -1687), 90, -30); // In front of chest 5, looking down at it.
+    game.pointMouseAtFace(3526);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick(7); // The trap's flash burns out and hits the party.
+    game.pointMouseAtFace(3526);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+    ASSERT_EQ(screenTape.back(), SCREEN_CHEST);
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    game.teleportTo(d02, arrival, 90);
+    dummy = killDummyAhead(game);
+    spawnKillers(game);
+    game.skipLoadingScreen(); // The killers walk up and strike everyone down, the losing movie plays and New Sorpigal loads.
+    enterDungeonDoor(game);
+
+    EXPECT_EQ(mapTape, tape(d02, oute3, d02));
+    EXPECT_EQ(deathsTape, tape(0, 1));
+    EXPECT_EQ(dummyTape, tape(false, true, false, true));
+    const int trapped = std::to_underlying(CHEST_TRAPPED);
+    const int placed = std::to_underlying(CHEST_ITEMS_PLACED);
+    EXPECT_EQ(chestTape, tape(trapped, placed, -1, placed)); // The trap went off and the items were placed.
+    ASSERT_EQ(visitTape.size(), 3);
+    EXPECT_EQ(visitTape[0], Time());
+    EXPECT_CONTAINS(timeTape, visitTape[2] + Duration::fromDays(7)); // The party woke a week after it died.
 }

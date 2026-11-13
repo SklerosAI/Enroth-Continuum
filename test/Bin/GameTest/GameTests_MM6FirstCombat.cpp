@@ -84,6 +84,45 @@ static Vec3f nearestVolcanicGround() {
     return result;
 }
 
+GAME_TEST(MM6Melee, KillGoblinAndLootIt) {
+    // A goblin dies to blows from the A key and from clicking it, gives experience and leaves gold on its body.
+    startNewGameThroughInput(game);
+    const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+    const int goblin = game.spawnMonster(pParty->pos + ahead * 150, static_cast<MonsterId>(76), SPAWN_STATIONARY)->id; // Stationary, a wounded goblin runs.
+    auto hpTape = actorTapes.hp(goblin);
+    auto stateTape = actorTapes.aiState(goblin);
+    auto experienceTape = tapes.totalExperience();
+    auto statusTape = tapes.statusBar();
+    auto goldTape = tapes.gold();
+    test.startTaping();
+
+    for (int i = 0; i < 200 && !pActors[goblin].IsNotAlive(); i++) { // Blows can miss.
+        game.pointMouseAtActor(goblin);
+        if (i % 2) {
+            game.pressAndReleaseKey(PlatformKey::KEY_A);
+        } else {
+            game.pressAndReleaseButton(BUTTON_LEFT);
+        }
+        game.tick();
+    }
+    while (pActors[goblin].aiState != Dead)
+        game.tick(); // The goblin falls.
+    game.pointMouseAtActor(goblin);
+    game.pressAndReleaseButton(BUTTON_LEFT); // Search the body.
+    game.tick();
+
+    EXPECT_EQ(hpTape.front(), 13);
+    EXPECT_LE(hpTape.back(), 0);
+    EXPECT_CONTAINS(stateTape, Dying);
+    EXPECT_CONTAINS(stateTape, Dead);
+    EXPECT_EQ(stateTape.back(), Removed); // The searched body is gone.
+    EXPECT_TRUE(std::ranges::any_of(statusTape, [](const std::string &status) { return status.contains("hits Goblin for"); }));
+    EXPECT_TRUE(std::ranges::any_of(statusTape, [](const std::string &status) { return status.contains("killing Goblin"); }));
+    EXPECT_EQ(experienceTape.delta(), 56); // The goblin's experience, split between the four.
+    EXPECT_CONTAINS(statusTape, "You found 8 gold!");
+    EXPECT_EQ(goldTape.delta(), 8);
+}
+
 GAME_TEST(MM6Potion, DrinkCureWoundsAndMagicPotion) {
     // MM6 potions could not be drunk, every herb and potion was "can not be used that way".
     startNewGameThroughInput(game);
@@ -203,6 +242,34 @@ GAME_TEST(MM6TurnBased, PartyAndMonstersTakeTurns) {
     EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(206)); // Leaving it.
 }
 
+GAME_TEST(MM6Rest, RestAndHealOnGrass) {
+    // Rest and heal by the New Sorpigal fountain, on grass, costs one food and brings everyone back to full.
+    startNewGameThroughInput(game);
+    for (Character &character : pParty->pCharacters) {
+        character.health = 1;
+        character.mana = 0;
+    }
+    auto hpTape = charTapes.hps();
+    auto mpTape = charTapes.mps();
+    auto foodTape = tapes.food();
+    auto screenTape = tapes.screen();
+    auto timeTape = tapes.time();
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_RestAndHeal");
+    game.tick();
+    while (current_screen_type == SCREEN_REST)
+        game.tick(); // The party sleeps eight hours.
+
+    EXPECT_EQ(hpTape.frontBack(), tape({1, 1, 1, 1}, {42, 22, 20, 20}));
+    EXPECT_EQ(mpTape.frontBack(), tape({0, 0, 0, 0}, {0, 19, 19, 13}));
+    EXPECT_EQ(foodTape, tape(7, 6));
+    EXPECT_EQ(screenTape, tape(SCREEN_REST, SCREEN_GAME));
+    EXPECT_GE(timeTape.back() - timeTape.front(), Duration::fromHours(8));
+}
+
 GAME_TEST(MM6Rest, VolcanicGroundCostsFourFood) {
     // Resting on New Sorpigal's volcanic ground cost two food, MM6 asks four there.
     startNewGameThroughInput(game);
@@ -239,3 +306,53 @@ GAME_TEST(MM6Rest, NotEnoughFood) {
     EXPECT_CONTAINS(soundsTape.flatten(), SOUND_error);
     EXPECT_EQ(screenTape, tape(SCREEN_REST));
 }
+
+GAME_TEST(MM6Rest, HostileMonsterNearby) {
+    // A hostile monster in sight keeps the party from resting.
+    startNewGameThroughInput(game);
+    const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+    game.spawnMonster(pParty->pos + ahead * 3000, static_cast<MonsterId>(76), SPAWN_STATIONARY);
+    auto screenTape = tapes.screen();
+    auto statusTape = tapes.statusBar();
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME));
+    EXPECT_CONTAINS(statusTape, "There are hostile enemies near!");
+}
+
+GAME_TEST(MM6Conditions, SpiderPoisonsAndRatDiseases) {
+    // A spider's bite poisons and a rat's bite diseases, and the condition lowers the victim's might.
+    startNewGameThroughInput(game);
+    for (Character &character : pParty->pCharacters)
+        character.health = 200; // The bites would knock a new character out before the conditions show.
+    const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+    const Vec3f side(-ahead.y, ahead.x, 0);
+    for (auto [monster, offset] : {std::pair(160, 100.0f), std::pair(146, -100.0f)}) { // Spider, Large Rat.
+        Actor *biter = game.spawnMonster(pParty->pos + ahead * 200 + side * offset, static_cast<MonsterId>(monster), SPAWN_STATIONARY);
+        biter->monsterInfo.specialAttackLevel = 10; // Level 10 times 10 makes every bite try.
+    }
+    auto conditionTape = charTapes.conditions();
+    auto mightTape = charTapes.custom([](const Character &character) { return character.GetActualMight(); });
+    auto poisonedTape = tapes.custom([] { return std::ranges::any_of(pParty->pCharacters, [](const Character &character) { return character.conditions.has(CONDITION_POISON_WEAK); }); });
+    auto diseasedTape = tapes.custom([] { return std::ranges::any_of(pParty->pCharacters, [](const Character &character) { return character.conditions.has(CONDITION_DISEASE_WEAK); }); });
+    test.startTaping();
+
+    game.tick();
+    for (int frame = 0; frame < 300 && !(poisonedTape.back() && diseasedTape.back()); frame++)
+        game.tick(); // The monsters walk up and bite, a bite can miss and a character can resist.
+
+    EXPECT_EQ(poisonedTape.frontBack(), tape(false, true));
+    EXPECT_EQ(diseasedTape.frontBack(), tape(false, true));
+    for (int i = 0; i < 4; i++) {
+        const Condition condition = conditionTape.back()[i];
+        if (condition == CONDITION_POISON_WEAK || condition == CONDITION_DISEASE_WEAK)
+            EXPECT_LT(mightTape.back()[i], mightTape.front()[i]) << i;
+        else
+            EXPECT_EQ(mightTape.back()[i], mightTape.front()[i]) << i;
+    }
+}
+
+

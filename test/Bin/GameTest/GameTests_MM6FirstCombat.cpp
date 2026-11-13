@@ -443,6 +443,44 @@ GAME_TEST(MM6Conditions, SpiderPoisonsAndRatDiseases) {
     }
 }
 
+GAME_TEST(MM6Conditions, KnockedToMinusMaxHpDies) {
+    // A character bitten down to minus his max HP stayed unconscious as long as his endurance kept him above the death line
+    // of MM7, MM6 kills him on the next frame.
+    for (int margin : {0, 1}) {
+        game.goToMainMenu();
+        startNewGameThroughInput(game);
+        std::vector<int> maxHps;
+        for (Character &character : pParty->pCharacters) {
+            character._stats[ATTRIBUTE_ENDURANCE] = 100; // More endurance than max HP, so the blow itself only knocks out.
+            maxHps.push_back(character.GetMaxHealth());
+            character.health = 100 - maxHps.back() + margin;
+        }
+        const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+        Actor *rat = game.spawnMonster(pParty->pos + ahead * 200, static_cast<MonsterId>(146), SPAWN_STATIONARY);
+        rat->monsterInfo.attack1DamageDiceRolls = 1;
+        rat->monsterInfo.attack1DamageDiceSides = 1;
+        rat->monsterInfo.attack1DamageBonus = 99; // Every bite deals 100.
+        rat->monsterInfo.specialAttackType = SPECIAL_ATTACK_NONE;
+        auto hpTape = charTapes.hps();
+        auto conditionTape = charTapes.conditions();
+        test.startTaping();
+
+        auto hit = [&] { return std::ranges::any_of(pParty->pCharacters, [](const Character &character) { return character.health <= 0; }); };
+        for (int frame = 0; frame < 300 && !hit(); frame++)
+            game.tick(); // The rat walks up and bites, a bite can miss.
+        ASSERT_TRUE(hit());
+        game.tick();
+        test.stopTaping();
+
+        for (int i = 0; i < 4; i++) {
+            if (hpTape.back()[i] > 0)
+                continue;
+            EXPECT_EQ(hpTape.back()[i], -maxHps[i] + margin) << i;
+            EXPECT_EQ(conditionTape.back()[i], margin == 0 ? CONDITION_DEAD : CONDITION_UNCONSCIOUS) << i;
+        }
+    }
+}
+
 GAME_TEST(MM6OffscreenFrame, DISABLED_TurnBasedCapture) {
     // Hidden capture of the party's turn in turn-based mode, for checking how the MM6 turn indicator looks.
     ASSERT_FALSE(window->isVisible());

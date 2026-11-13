@@ -1443,8 +1443,14 @@ void _494035_timed_effects__water_walking_damage__etc(Duration dt) {
         if (character.timeToRecovery && recoveryTimeDt > 0_ticks)
             character.Recover(recoveryTimeDt);
 
-        if (character.GetBaseEndurance() + character.health >= 1 ||
-            character.pCharacterBuffs[CHARACTER_BUFF_PRESERVATION].Active()) {
+        if (engine->gameTitle() == GameTitle::MM6) {
+            if (character.health <= -std::max(1, character.GetMaxHealth()) && !character.conditions.has(CONDITION_DEAD)) {
+                character.conditions.set(CONDITION_DEAD, pParty->GetPlayingTime());
+            } else if (character.health <= 0 && !character.conditions.has(CONDITION_UNCONSCIOUS)) {
+                character.conditions.set(CONDITION_UNCONSCIOUS, pParty->GetPlayingTime());
+            }
+        } else if (character.GetBaseEndurance() + character.health >= 1 ||
+                   character.pCharacterBuffs[CHARACTER_BUFF_PRESERVATION].Active()) {
             if (character.health < 1)
                 character.SetCondition(CONDITION_UNCONSCIOUS, 0);
         } else {

@@ -5,6 +5,7 @@ set(GUI_UI_HOUSES_SOURCES
         Temple.cpp
         Training.cpp
         Transport.cpp
+        MM6Guild.cpp
         MM6House.cpp
         MM6Shop.cpp
         MM6ShopPrices.cpp
@@ -26,6 +27,7 @@ set(GUI_UI_HOUSES_HEADERS
         Temple.h
         Training.h
         Transport.h
+        MM6Guild.h
         MM6House.h
         MM6Shop.h
         MM6ShopPrices.h

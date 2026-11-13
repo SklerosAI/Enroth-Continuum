@@ -329,6 +329,8 @@ void GUIWindow::DrawTitleText(GUIFont *pFont, int horizontalMargin, int vertical
     Color lastcolor = color;
     while (std::getline(stream, line)) {
         int x_offset = pFont->AlignText_Center(width, line);
+        if (engine->callObserver)
+            engine->callObserver->notify(CALL_GUIWINDOW_DRAWN_TITLE_LINE, DrawnLine{line, {x + x_offset, y}, lastcolor});
         lastcolor = pFont->DrawTextLine(line, lastcolor, color, {x + x_offset, y});
         y += pFont->GetHeight() - lineSpacing;
     }

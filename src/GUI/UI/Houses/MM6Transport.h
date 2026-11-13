@@ -24,8 +24,14 @@ class GUIWindow_MM6Transport : public GUIWindow_MM6House {
 
  protected:
     virtual std::string serviceLabel(int index) const override;
+    virtual int stackedMenuTop() const override;
 
  private:
+    /**
+     * @return                          Line above the routes with what a trip costs the active character.
+     */
+    std::string priceLine() const;
+
     /**
      * @return                          Route of each menu slot today, `nullptr` for a hidden slot.
      */

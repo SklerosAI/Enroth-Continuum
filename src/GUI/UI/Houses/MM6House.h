@@ -3,11 +3,14 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "GUI/UI/UIHouseEnums.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/MM6HouseServiceData.h"
+
+#include "Library/Color/Color.h"
 
 class GraphicsImage;
 class GUIButton;
@@ -84,6 +87,27 @@ class GUIWindow_MM6House : public GUIWindow_House {
      * @return                          Line the service shows on the menu, empty to hide it.
      */
     virtual std::string serviceLabel(int index) const;
+
+    /**
+     * @return                          Top of the first line of a menu that stacks its lines with a blank line between
+     *                                  them, the way a tavern or a stable lists its services.
+     */
+    virtual int stackedMenuTop() const;
+
+    /**
+     * @param text                      Text drawn in the right panel.
+     * @return                          Height of the text as MM6 counts it, the font height minus 3 for every line.
+     */
+    static int panelTextHeight(std::string_view text);
+
+    /**
+     * Draws text in the right panel's text column, centred in it.
+     *
+     * @param text                      Text to draw, in the Arrus font.
+     * @param y                         Top of the first line.
+     * @param color                     Text color.
+     */
+    static void drawPanelText(std::string_view text, int y, Color color);
 
     const mm6::HouseServiceRow &_house;
     std::vector<mm6::HouseServiceOption> _services;

@@ -13,6 +13,7 @@ enum class EngineCall {
     CALL_DRAW_MESSAGE_BOX,
     CALL_GUIWINDOW_DRAWTEXT,
     CALL_GUIWINDOW_DRAWN_TEXT,
+    CALL_GUIWINDOW_DRAWN_TITLE_LINE,
     CALL_SPECIAL_ATTACK,
     CALL_PROCESS_UIMSG,
     CALL_PAUSE_MUSIC,
@@ -43,6 +44,18 @@ struct DrawnText {
     Pointi position;
 
     friend bool operator==(const DrawnText &l, const DrawnText &r) = default;
+};
+
+/**
+ * Payload of `CALL_GUIWINDOW_DRAWN_TITLE_LINE`, a line drawn by `GUIWindow::DrawTitleText`, where it starts after
+ * centering and the color it was drawn in.
+ */
+struct DrawnLine {
+    std::string text;
+    Pointi position;
+    Color color;
+
+    friend bool operator==(const DrawnLine &l, const DrawnLine &r) = default;
 };
 
 /**

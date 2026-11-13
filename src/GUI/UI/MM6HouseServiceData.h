@@ -10,6 +10,7 @@
 #include "Engine/GameTitle.h"
 #include "Engine/LocalizationEnums.h"
 #include "Engine/MM6/MM6HouseExit.h"
+#include "Engine/Objects/CharacterEnums.h"
 
 #include "GUI/UI/MM6RoomDescriptors.h"
 
@@ -93,7 +94,7 @@ enum class HouseServiceOption {
     RepairItems,
     BuySpecialItems,
     BuySpells,
-    LearnSkills,
+    LearnSkill,
     Deposit,
     Withdraw,
     RentRoom,
@@ -108,14 +109,22 @@ enum class HouseServiceOption {
  * @param type                          Parsed MM6 house type.
  * @return                              Services the proprietor of a house of this type lists, in menu order. A
  *                                      transport house lists `Travel` once for each of its three route slots, and a
- *                                      stable adds `FixPrices`.
+ *                                      stable adds `FixPrices`. A spell guild lists `LearnSkill` once for each skill
+ *                                      of `guildSkills`, after `BuySpells`.
  */
 std::vector<HouseServiceOption> houseServiceOptions(HouseType type);
 
 /**
+ * @param type                          Parsed MM6 house type.
+ * @return                              Skills a spell guild of this type teaches, in menu order.
+ */
+std::vector<Skill> guildSkills(HouseType type);
+
+/**
  * @param option                        House service.
  * @return                              Id of the service's label in MM6's global.txt. Many of these ids hold other
- *                                      strings in MM7's global.txt. Throws for `FixPrices`, an NPC topic.
+ *                                      strings in MM7's global.txt. Throws for `FixPrices`, an NPC topic, and for
+ *                                      `LearnSkill`, which shows the skill's name.
  */
 LstrId houseServiceOptionLabel(HouseServiceOption option);
 

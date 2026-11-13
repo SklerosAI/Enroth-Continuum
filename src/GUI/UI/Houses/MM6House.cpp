@@ -34,6 +34,7 @@
 #include "GUI/UI/MM6CharacterScreen.h"
 #include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/UIStatusBar.h"
+#include "GUI/UI/Houses/MM6Guild.h"
 #include "GUI/UI/Houses/MM6Shop.h"
 #include "GUI/UI/Houses/MM6ShopPrices.h"
 #include "GUI/UI/Houses/MM6Tavern.h"
@@ -180,6 +181,8 @@ void GUIWindow_MM6House::Update() {
             }
         }
         drawOptionLabels(labels);
+        if (isProprietorSelected() && _house.type == HOUSE_TYPE_BANK)
+            drawPanelText(fmt::format("{}: {}", localization->str(LSTR_BALANCE), pParty->GetBankGold()), 220, colorTable.PaleCanary);
     }
 
     DrawDialoguePanel(current_npc_text);
@@ -382,29 +385,46 @@ std::string GUIWindow_MM6House::serviceLabel(int index) const {
     return fmt::format("{} {} {}", localization->str(mm6::houseServiceOptionLabel(option)), price, localization->str(LSTR_GOLD));
 }
 
+int GUIWindow_MM6House::stackedMenuTop() const {
+    return 146;
+}
+
+int GUIWindow_MM6House::panelTextHeight(std::string_view text) {
+    return mm6TextHeight(assets->pFontArrus.get(), text, kOptionTextWidth);
+}
+
+void GUIWindow_MM6House::drawPanelText(std::string_view text, int y, Color color) {
+    DrawTitleText(assets->pFontArrus.get(), 0, y, color, text, 3, Recti(kOptionTextX, 0, kOptionTextWidth, render->GetRenderDimensions().h));
+}
+
 void GUIWindow_MM6House::drawOptionLabels(const std::vector<std::string> &labels) {
     GUIFont *font = assets->pFontArrus.get();
-    const Recti textRect(kOptionTextX, 0, kOptionTextWidth, render->GetRenderDimensions().h);
     std::vector<int> heights;
     int total = 0;
     int shown = 0;
     for (const std::string &label : labels) {
-        heights.push_back(mm6TextHeight(font, label, kOptionTextWidth));
+        heights.push_back(panelTextHeight(label));
         total += heights.back();
         shown += !label.empty();
     }
 
     const bool proprietor = isProprietorSelected();
+    const bool stacked = proprietor && (_house.type == HOUSE_TYPE_TAVERN || _house.family == mm6::HouseServiceFamily::Transport);
+    const bool fixed = proprietor && _house.type == HOUSE_TYPE_BANK; // The bank leaves its lines where it created their buttons.
     int spacing = 0;
     int y = 0;
-    if (proprietor && _house.type == HOUSE_TYPE_TAVERN) {
-        y = 146; // The tavern stacks its lines with a blank line between them.
+    if (stacked) {
+        y = stackedMenuTop();
     } else if (proprietor && _house.type == HOUSE_TYPE_TRAINING_GROUND && shown == 1) {
         y = (212 - total) / 2 + 101;
     } else if (shown > 0) {
-        spacing = std::min((174 - total) / shown, 32);
-        const int base = proprietor && _house.type == HOUSE_TYPE_GENERAL_STORE ? 130 : 138;
-        y = (174 - shown * spacing - total) / 2 - spacing / 2 + base;
+        const bool guild = proprietor && _house.family == mm6::HouseServiceFamily::MagicGuild; // Leaves room for the skill cost line.
+        const int area = guild ? 149 : 174;
+        int base = guild ? 162 : 138;
+        if (proprietor && _house.type == HOUSE_TYPE_GENERAL_STORE)
+            base = 130;
+        spacing = std::min((area - total) / shown, 32);
+        y = (area - shown * spacing - total) / 2 - spacing / 2 + base;
     }
 
     for (size_t i = 0; i < labels.size(); ++i) {
@@ -414,7 +434,11 @@ void GUIWindow_MM6House::drawOptionLabels(const std::vector<std::string> &labels
             continue;
         }
         button->label = labels[i];
-        if (proprietor && _house.type == HOUSE_TYPE_TAVERN) {
+        if (fixed) {
+            drawPanelText(labels[i], button->rect.y, colorTable.White);
+            continue;
+        }
+        if (stacked) {
             button->rect.y = y;
             y += heights[i] + font->GetHeight() - 3;
         } else {
@@ -423,7 +447,7 @@ void GUIWindow_MM6House::drawOptionLabels(const std::vector<std::string> &labels
             y += heights[i] - 1;
         }
         button->rect.h = heights[i];
-        DrawTitleText(font, 0, button->rect.y, colorTable.White, labels[i], 3, textRect);
+        drawPanelText(labels[i], button->rect.y, colorTable.White);
     }
 }
 
@@ -483,8 +507,10 @@ void mm6CreateHouseUI(HouseId houseId) {
     const mm6::HousePresentationState presentation =
         mm6::planHousePresentation(GameTitle::MM6, mm6::houseServiceData(), std::to_underlying(houseId));
     const mm6::HouseServiceFamily family = mm6::houseServiceData().at(std::to_underlying(houseId)).family;
-    if (family == mm6::HouseServiceFamily::Shop || family == mm6::HouseServiceFamily::MagicGuild) {
+    if (family == mm6::HouseServiceFamily::Shop) {
         window_SpeakInHouse = std::make_unique<GUIWindow_MM6Shop>(houseId, presentation);
+    } else if (family == mm6::HouseServiceFamily::MagicGuild) {
+        window_SpeakInHouse = std::make_unique<GUIWindow_MM6Guild>(houseId, presentation);
     } else if (family == mm6::HouseServiceFamily::Transport) {
         window_SpeakInHouse = std::make_unique<GUIWindow_MM6Transport>(houseId, presentation);
     } else {

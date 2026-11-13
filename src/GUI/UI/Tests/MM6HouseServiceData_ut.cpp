@@ -471,7 +471,9 @@ TEST(MM6HouseServiceData, ServiceOptionsFollowHouseFamilyAndType) {
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_WEAPON_SHOP), Options({BuyItems, SellItems, IdentifyItems, RepairItems, BuySpecialItems}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_MAGIC_SHOP), Options({BuyItems, SellItems, IdentifyItems, RepairItems, BuySpecialItems}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_GENERAL_STORE), Options({BuyItems, SellItems}));
-    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_ELEMENTAL_GUILD), Options({BuySpells, LearnSkills}));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_ELEMENTAL_GUILD), Options({BuySpells, LearnSkill, LearnSkill, LearnSkill, LearnSkill}));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_LIGHT_GUILD), Options({BuySpells, LearnSkill}));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_MIRRORED_PATH_GUILD), Options());
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_STABLE), Options({Travel, Travel, Travel, FixPrices}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_BOAT), Options({Travel, Travel, Travel}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_TEMPLE), Options({TempleHeal, TempleDonate}));
@@ -482,6 +484,7 @@ TEST(MM6HouseServiceData, ServiceOptionsFollowHouseFamilyAndType) {
     EXPECT_EQ(mm6::houseServiceOptionLabel(TempleHeal), LSTR_HEAL);
     EXPECT_EQ(mm6::houseServiceOptionLabel(Deposit), LSTR_DEPOSIT);
     EXPECT_THROW(mm6::houseServiceOptionLabel(FixPrices), std::exception);
+    EXPECT_THROW(mm6::houseServiceOptionLabel(LearnSkill), std::exception);
 }
 
 TEST(MM6HouseServiceData, StagesOnlyF3MatchedMM6GreetingCandidatesWithoutPlayback) {

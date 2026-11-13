@@ -398,7 +398,7 @@ GAME_TEST(MM6Rest, FinishedWaitWakesSleeper) {
         character.health = 200; // The beholder's bolts would knock a new character out.
     const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
     Actor *beholder = game.spawnMonster(pParty->pos + ahead * 400, static_cast<MonsterId>(10), SPAWN_STATIONARY);
-    beholder->monsterInfo.specialAttackLevel = 10; // Level 10 times 10 makes every bolt try.
+    beholder->monsterInfo.specialAttackLevel = 10; // Level 10 times the beholder's 30 makes every bolt try.
     auto sleepTape = charTapes.custom([](const Character &character) { return character.conditions.has(CONDITION_SLEEP); });
     auto restTape = tapes.custom([] { return currentRestType; });
     auto screenTape = tapes.screen();
@@ -579,8 +579,8 @@ GAME_TEST(MM6Conditions, SpiderPoisonsAndRatDiseases) {
 }
 
 GAME_TEST(MM6Conditions, KnockedToMinusMaxHpDies) {
-    // A character bitten down to minus his max HP stayed unconscious as long as his endurance kept him above the death line
-    // of MM7, MM6 kills him on the next frame.
+    // A character bitten down to minus his max HP stayed unconscious as long as his endurance kept him above MM7's
+    // death line, MM6 kills him on the next frame.
     for (int margin : {0, 1}) {
         game.goToMainMenu();
         startNewGameThroughInput(game);

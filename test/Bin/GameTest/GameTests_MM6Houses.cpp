@@ -185,7 +185,7 @@ static const Vec3f kHaroldHessDoor(-5976, -8068, 160); // Harold Hess's house, f
 static const Vec3f kBladesEndDoor(-6504, -6090, 300); // Blades' End, a mercenary guild.
 static const Vec3f kBuccaneersLairDoor(-12632, -5946, 300); // Buccaneers' Lair, a thieves' guild.
 static const Vec3f kIsaoHouseDoor(-12528, -5814, 300); // In front of Isao Magistrus' house, facing north.
-static const Vec3f kJezebelHouseDoor(4688, -17668, 192); // In front of Jezebel's house in Castle Ironfist, facing south.
+static const Vec3f kJezebelHouseDoor(4688, -17668, 192); // In front of Jezebel's house on the Misty Islands, facing south.
 static constexpr AwardId kElementalGuildMember = static_cast<AwardId>(64);
 static constexpr AwardId kSelfGuildMember = static_cast<AwardId>(65);
 static constexpr AwardId kBuccaneersLairMember = static_cast<AwardId>(66);
@@ -1093,7 +1093,7 @@ GAME_TEST(MM6Houses, ExpertTeacher) {
 }
 
 GAME_TEST(MM6Houses, MasterTeacher) {
-    // Jezebel's Master of Fire topic in Castle Ironfist did nothing, so no character could become a master. Her offer
+    // Jezebel's Master of Fire topic on the Misty Islands did nothing, so no character could become a master. Her offer
     // turns away a character who doesn't know Fire Magic and an expert of rank 11, and makes an expert of rank 12 a
     // master for 4000 gold.
     auto goldTape = tapes.gold();

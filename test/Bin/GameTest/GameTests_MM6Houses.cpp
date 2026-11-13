@@ -870,6 +870,11 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
     game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_3);
     captureHouse("guild-member", 1);
 
+    pParty->pCharacters[0]._achievedAwardsBits.set(kBladesEndMember);
+    enterThroughDoor(game, kBladesEndDoor, 270);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+    captureHouse("merc-member", 0);
+
     waitUntilHour(game, 10); // The Town Hall opens at 10 am.
     enterThroughDoor(game, kTownHallDoor, 180);
     captureHouse("townhall", 0);
@@ -877,6 +882,10 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
     waitUntilHour(game, 18); // The thieves' guild opens at 6 pm.
     enterThroughDoor(game, kBuccaneersLairDoor, 270);
     captureHouse("thieves", 0);
+    pParty->pCharacters[0]._achievedAwardsBits.set(kBuccaneersLairMember);
+    enterThroughDoor(game, kBuccaneersLairDoor, 270);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+    captureHouse("thieves-member", 0);
 }
 
 

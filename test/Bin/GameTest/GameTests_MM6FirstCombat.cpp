@@ -65,6 +65,25 @@ static void drinkFromBackpack(EngineController &game, PlatformKey characterKey, 
     game.tick();
 }
 
+static Vec3f nearestVolcanicGround() {
+    // Center of the volcanic tile nearest the party.
+    Vec3f result;
+    float bestDistance = std::numeric_limits<float>::max();
+    for (int y = 0; y < 128; y++) {
+        for (int x = 0; x < 128; x++) {
+            if (pOutdoor->pTerrain.tileDataByGrid(Pointi(x, y)).sourceTileset != 3)
+                continue;
+            const Vec3f center((x - 64) * 512 + 256, (63 - y) * 512 + 256, 0);
+            if ((center - pParty->pos).xy().length() < bestDistance) {
+                bestDistance = (center - pParty->pos).xy().length();
+                result = center;
+            }
+        }
+    }
+    result.z = pOutdoor->pTerrain.heightByPos(result);
+    return result;
+}
+
 GAME_TEST(MM6Potion, DrinkCureWoundsAndMagicPotion) {
     // MM6 potions could not be drunk, every herb and potion was "can not be used that way".
     startNewGameThroughInput(game);
@@ -182,4 +201,19 @@ GAME_TEST(MM6TurnBased, PartyAndMonstersTakeTurns) {
     EXPECT_LT(goblinHpTape.min(), 13);
     EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(207)); // Entering turn-based mode.
     EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(206)); // Leaving it.
+}
+
+GAME_TEST(MM6Rest, VolcanicGroundCostsFourFood) {
+    // Resting on New Sorpigal's volcanic ground cost two food, MM6 asks four there.
+    startNewGameThroughInput(game);
+    game.teleportTo(engine->_currentLoadedMapId, nearestVolcanicGround(), 0);
+    auto foodTape = tapes.food();
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_RestAndHeal");
+    game.tick();
+
+    EXPECT_EQ(foodTape, tape(7, 3));
 }

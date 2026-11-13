@@ -59,6 +59,14 @@ SoundId walkSoundForTile(GameTitle gameTitle, const TileData &tile, bool isRunni
 
 int foodRequiredForTileset(Tileset tileset);
 
+/**
+ * @param gameTitle                     Game whose rules apply.
+ * @param tile                          Tile the party rests on.
+ * @return                              Food that eight hours of rest and heal cost on this tile.
+ * @offset 0x47C160 in MM6
+ */
+int foodRequiredForTile(GameTitle gameTitle, const TileData &tile);
+
 
 //
 // Direction

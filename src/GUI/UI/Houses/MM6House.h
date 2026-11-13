@@ -214,6 +214,14 @@ class GUIWindow_MM6House : public GUIWindow_House {
     void haveDrink();
 
     /**
+     * Takes 1 gold for the barkeep, who tells a piece of the region's news. The party has to have had a drink at the
+     * tavern first, and each tavern keeps telling the news it picked the first time.
+     *
+     * @offset 0x49F716 (MM6)
+     */
+    void tipBarkeep();
+
+    /**
      * Shows the bank's how much prompt while the player types an amount, and moves the gold once the amount is
      * confirmed. An amount above what the party has, or holds in the bank, moves all of it.
      */

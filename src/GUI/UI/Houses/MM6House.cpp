@@ -25,6 +25,7 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/MM6/MM6HouseExit.h"
 #include "Engine/MM6/MM6RoomMovie.h"
+#include "Engine/Resources/LOD.h"
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/Party.h"
 #include "Engine/Random/Random.h"
@@ -52,11 +53,14 @@
 #include "Io/KeyboardInputHandler.h"
 #include "Io/Mouse.h"
 
+#include "Library/Lod/LodReader.h"
 #include "Library/Logger/Logger.h"
 #include "Library/Platform/Interface/Platform.h"
 
 #include "Media/Audio/AudioPlayer.h"
 #include "Media/MediaPlayer.h"
+
+#include "Utility/String/Ascii.h"
 
 static constexpr LstrId LSTR_MM6_CANCEL = static_cast<LstrId>(34);
 static constexpr LstrId LSTR_MM6_END_CONVERSATION = static_cast<LstrId>(74);
@@ -170,6 +174,18 @@ static std::pair<std::string, bool> roomMovie(HouseId houseId, const std::string
     if (std::optional<std::string_view> once = mm6::oneShotRoomMovie(std::to_underlying(houseId), carriesTanirsBell()))
         return {std::string(*once), false};
     return {videoName, true};
+}
+
+/**
+ * @return                              Region of the map the party is on, see `mm6::tavernTipNews`.
+ */
+static int newsRegion() {
+    const std::string &map = pMapTable->pInfos[engine->_currentLoadedMapId].fileName;
+    const size_t baseMaps = pGames_LOD->directoryEntryCount() / 2;
+    for (size_t i = 1; i <= baseMaps; ++i)
+        if (ascii::toLower(pGames_LOD->entryNameAtDirectoryIndex(i)) == map)
+            return static_cast<int>(i);
+    return 1;
 }
 
 static std::string exitLabel(MapId map) {
@@ -301,6 +317,10 @@ void GUIWindow_MM6House::selectService(int index) {
     }
     if (_services[index] == mm6::HouseServiceOption::HaveADrink) {
         haveDrink();
+        return;
+    }
+    if (_services[index] == mm6::HouseServiceOption::TipBarkeep) {
+        tipBarkeep();
         return;
     }
     if (_services[index] == mm6::HouseServiceOption::Deposit || _services[index] == mm6::HouseServiceOption::Withdraw) {
@@ -663,6 +683,8 @@ void GUIWindow_MM6House::haveDrink() {
     pParty->TakeGold(1);
     engine->_statusBar->setEvent(LSTR_HIC);
     mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_BUY_FOOD);
+    pParty->mm6TavernDrinks[std::to_underlying(houseId()) - mm6::kFirstTavern] = true;
+    current_npc_text.clear(); // A drink hides the tip.
     if (grng->random(2) == 1) {
         character.playReaction(SPEECH_TAVERN_GOT_DRUNK);
         if (grng->random(3) == 1)
@@ -674,6 +696,29 @@ void GUIWindow_MM6House::haveDrink() {
         character._statBonuses[stat] += grng->random(6) + 5;
     }
     character.playReaction(SPEECH_TAVERN_DRINK);
+}
+
+void GUIWindow_MM6House::tipBarkeep() {
+    const int tavern = std::to_underlying(houseId()) - mm6::kFirstTavern;
+    if (!pParty->mm6TavernDrinks[tavern]) {
+        engine->_statusBar->setEvent(LSTR_HAVE_A_DRINK_FIRST);
+        return;
+    }
+    if (pParty->GetGold() < 1) {
+        engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_NOT_ENOUGH_GOLD);
+        return;
+    }
+    pParty->TakeGold(1);
+    int &tip = pParty->mm6TavernTips[tavern];
+    if (!tip) {
+        const std::vector<int> regions = mm6::tavernNewsRegions(engine->resources()->eventsData("npcnews.txt").str());
+        const auto [first, count] = mm6::tavernTipNews(regions, newsRegion());
+        tip = first + grng->random(count);
+        if (pParty->hasActiveCharacter())
+            pParty->activeCharacter().playReaction(SPEECH_TAVERN_TIP);
+    }
+    current_npc_text = tip ? pNPCStats->pCatchPhrases[tip + 1] : std::string(); // MM6 shows nothing for the first entry, which is New Sorpigal's.
 }
 
 std::string GUIWindow_MM6House::serviceLabel(int index) const {

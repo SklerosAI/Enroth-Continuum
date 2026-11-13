@@ -109,6 +109,7 @@ UNIT_TEST(LodReader, OriginalDirectoryOrder) {
     EXPECT_EQ(reader.ls(), (std::vector<std::string>{"alpha.blv", "zeta.odm"}));
     EXPECT_EQ(reader.entryNameAtDirectoryIndex(1), "Zeta.odm");
     EXPECT_EQ(reader.entryNameAtDirectoryIndex(2), "Alpha.blv");
+    EXPECT_EQ(reader.directoryEntryCount(), 2);
     EXPECT_EQ(reader.read("zeta.odm").str(), "A");
     EXPECT_THROW((void) reader.entryNameAtDirectoryIndex(0), std::exception);
     EXPECT_THROW((void) reader.entryNameAtDirectoryIndex(3), std::exception);

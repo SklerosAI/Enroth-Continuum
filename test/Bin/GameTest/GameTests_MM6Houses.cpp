@@ -232,24 +232,6 @@ GAME_TEST(MM6Houses, EnterAndExit) {
     EXPECT_EQ(mapTape, tape(pMapTable->GetMapInfo("oute3.odm")));
 }
 
-GAME_TEST(MM6Houses, UnimplementedServiceRefuses) {
-    // A service the MM6 house screen doesn't implement is listed, and choosing it refuses without touching the party.
-    auto screenTape = tapes.screen();
-    auto statusTape = tapes.statusBar();
-    auto goldTape = tapes.gold();
-    auto itemsTape = tapes.totalItemCount();
-    startMM6NewGame(game);
-    test.startTaping();
-    enterThroughDoor(game, kTavernDoor, 0);
-    game.pressGuiButton("House_Npc0"); // The proprietor.
-    game.tick();
-    clickHouseOption(game, localization->str(mm6::houseServiceOptionLabel(mm6::HouseServiceOption::TipBarkeep)));
-    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
-    EXPECT_CONTAINS(statusTape, "This service is not available yet.");
-    EXPECT_EQ(goldTape.size(), 1);
-    EXPECT_EQ(itemsTape.size(), 1);
-}
-
 GAME_TEST(MM6Houses, TempleHeal) {
     // New Sorpigal Temple heals a poisoned character for gold, and doesn't offer to heal an eradicated one.
     auto poisonedTape = tapes.custom([] { return pParty->pCharacters[0].conditions.has(CONDITION_POISON_WEAK); });
@@ -1156,4 +1138,37 @@ GAME_TEST(MM6Houses, TavernDrink) {
     EXPECT_EQ(drunkTape, tape(false, true));
     EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_DRUNK));
     EXPECT_EQ(bonusesTape.size(), 1); // These drinks rolled no stat bonus.
+}
+
+GAME_TEST(MM6Houses, TavernTip) {
+    // A Lonely Knight's Tip the Bartender said "not available yet". The barkeep wants the party to have a drink first.
+    // After one, a tip of 1 gold gets a piece of New Sorpigal's news, and the next tip gets the same news again. The
+    // drinker gets drunk, so a sober character tips.
+    auto goldTape = tapes.gold();
+    auto statusTape = tapes.statusBar();
+    auto textTape = tapes.custom([] { return current_npc_text; });
+    auto drawnTape = tapes.allGUIWindowsText();
+    auto portraitTape = charTapes.portrait(1);
+    auto tipsTape = tapes.custom([] { return pParty->mm6TavernTips[0]; });
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kTavernDoor, 0);
+    game.pressGuiButton("House_Npc0"); // The proprietor.
+    game.tick();
+    const std::string tip = localization->str(mm6::houseServiceOptionLabel(mm6::HouseServiceOption::TipBarkeep));
+    clickHouseOption(game, tip);
+    clickHouseOption(game, localization->str(LSTR_HAVE_A_DRINK));
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_2);
+    game.tick();
+    clickHouseOption(game, tip);
+    clickHouseOption(game, tip);
+
+    const std::string news = pNPCStats->pCatchPhrases[30]; // The last of New Sorpigal's news.
+    EXPECT_EQ(goldTape, tape(200, 199, 198, 197));
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_HAVE_A_DRINK_FIRST));
+    EXPECT_MISSES(statusTape, "This service is not available yet.");
+    EXPECT_EQ(textTape, tape(std::string(), news));
+    EXPECT_EQ(tipsTape, tape(0, 29));
+    EXPECT_CONTAINS(portraitTape, PORTRAIT_45); // The tip reaction.
+    EXPECT_CONTAINS(drawnTape.flatten(), "Berserker's Fury in Castle Ironfist can teach you\nbow, shield, chain, plate, and repair item.");
 }

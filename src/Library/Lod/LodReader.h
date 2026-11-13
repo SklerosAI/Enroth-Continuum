@@ -85,6 +85,11 @@ class LodReader final {
     [[nodiscard]] std::string_view entryNameAtDirectoryIndex(size_t oneBasedIndex) const;
 
     /**
+     * @return                          Number of entries in the LOD directory, duplicates included.
+     */
+    [[nodiscard]] size_t directoryEntryCount() const;
+
+    /**
      * @return                          LOD info, containing LOD version, description of this LOD file as specified in
      *                                  the LOD header, and a name of the single folder inside this LOD file.
      */

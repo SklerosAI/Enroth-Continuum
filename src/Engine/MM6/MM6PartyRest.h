@@ -13,4 +13,13 @@ namespace mm6 {
  */
 void restAndHealDetachedParty(Party &party);
 
+/**
+ * MM6's check behind "There are hostile enemies near!" when the party tries to rest.
+ *
+ * @offset 0x42A680
+ * @return                              Whether a monster that isn't friendly, dying, dead or removed stands closer to
+ *                                      the party than 2560 units indoors or 5120 outdoors, by MM6's octagonal distance.
+ */
+bool hostileMonstersNearParty();
+
 } // namespace mm6

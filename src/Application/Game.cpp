@@ -54,6 +54,7 @@
 #include "Engine/MM6/MM6NewGameSession.h"
 #include "Engine/MM6/MM6Finale.h"
 #include "Engine/MM6/MM6PartyDeath.h"
+#include "Engine/MM6/MM6PartyRest.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
@@ -1138,7 +1139,7 @@ void Game::processQueuedMessages() {
                 if (current_screen_type != SCREEN_GAME) continue;
                 closeTargetedSpellWindow();
 
-                if (CheckActors_proximity()) {
+                if (engine->gameTitle() == GameTitle::MM6 ? mm6::hostileMonstersNearParty() : CheckActors_proximity()) {
                     if (pParty->bTurnBasedModeOn) {
                         engine->_statusBar->setEvent(LSTR_YOU_CANT_REST_IN_TURN_BASED_MODE);
                         continue;

@@ -45,6 +45,9 @@ extern OpenALSoundProvider *provider;
 AudioPlayer::~AudioPlayer() = default;
 
 void AudioPlayer::MusicPlayTrack(MusicId eTrack) {
+    if (engine->callObserver)
+        engine->callObserver->notify(CALL_PLAY_MUSIC, eTrack);
+
     if (currentMusicTrack == eTrack) {
         return;
     }

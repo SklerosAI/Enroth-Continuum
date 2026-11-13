@@ -17,9 +17,10 @@ enum class EngineCall {
     CALL_SPECIAL_ATTACK,
     CALL_PROCESS_UIMSG,
     CALL_PAUSE_MUSIC,
+    CALL_PLAY_MUSIC,
 
     CALL_FIRST = CALL_PLAY_SOUND,
-    CALL_LAST = CALL_PAUSE_MUSIC
+    CALL_LAST = CALL_PLAY_MUSIC
 };
 using enum EngineCall;
 

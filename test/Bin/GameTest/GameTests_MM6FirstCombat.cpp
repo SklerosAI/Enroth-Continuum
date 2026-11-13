@@ -1,6 +1,8 @@
 #include <algorithm>
+#include <cstdlib>
 #include <limits>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -11,6 +13,7 @@
 #include "Engine/EngineCallObserver.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
@@ -19,7 +22,11 @@
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIStatusBar.h"
 
+#include "Library/Image/Png.h"
+
 #include "Utility/Math/TrigLut.h"
+#include "Utility/Streams/FileOutputStream.h"
+#include "Utility/System/Path.h"
 
 static void startNewGameThroughInput(EngineController &game) {
     // Each character takes its first three optional skills and up to three points in every attribute, then the party
@@ -323,6 +330,26 @@ GAME_TEST(MM6Rest, HostileMonsterNearby) {
     EXPECT_CONTAINS(statusTape, "There are hostile enemies near!");
 }
 
+GAME_TEST(MM6Rest, WaitAnHourNeitherEatsNorHeals) {
+    // Waiting an hour passes the time without food and without healing.
+    startNewGameThroughInput(game);
+    pParty->pCharacters[0].health = 1;
+    auto hpTape = charTapes.hp(0);
+    auto foodTape = tapes.food();
+    auto timeTape = tapes.time();
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_Wait1Hour");
+    game.tick();
+    while (timeTape.back() < timeTape.front() + Duration::fromHours(1))
+        game.tick(); // The hour passes.
+
+    EXPECT_EQ(hpTape, tape(1));
+    EXPECT_EQ(foodTape, tape(7));
+}
+
 GAME_TEST(MM6Conditions, SpiderPoisonsAndRatDiseases) {
     // A spider's bite poisons and a rat's bite diseases, and the condition lowers the victim's might.
     startNewGameThroughInput(game);
@@ -355,4 +382,33 @@ GAME_TEST(MM6Conditions, SpiderPoisonsAndRatDiseases) {
     }
 }
 
+GAME_TEST(MM6OffscreenFrame, DISABLED_TurnBasedCapture) {
+    // Hidden capture of the party's turn in turn-based mode, for checking how the MM6 turn indicator looks.
+    ASSERT_FALSE(window->isVisible());
+    ASSERT_EQ(dynamic_cast<NullRenderer *>(render), nullptr);
+    const char *capturePath = std::getenv("MM6_OFFSCREEN_CAPTURE_PATH");
+    ASSERT_NE(capturePath, nullptr);
+    ASSERT_TRUE(std::string_view(capturePath).starts_with("/tmp/") || std::string_view(capturePath).starts_with("/private/tmp/"));
+    ASSERT_EQ(Path(capturePath).extension(), ".png");
 
+    startNewGameThroughInput(game);
+    const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+    game.spawnMonster(pParty->pos + ahead * 400, static_cast<MonsterId>(76), SPAWN_DUMMY);
+    game.pressAndReleaseKey(PlatformKey::KEY_RETURN);
+    game.tick();
+    while (!(pTurnEngine->turn_stage == TE_ATTACK && pTurnEngine->flags & TE_PLAYER_TURN))
+        game.tick(); // The monsters finish their opening move.
+
+    RgbaImage frame;
+    game.runGameRoutine([&frame] {
+        render->ClearTarget(Color(0, 0, 0));
+        engine->drawWorld();
+        engine->drawHUD();
+        render->flushAndScale();
+        engine->drawOverlay();
+        frame = render->MakeFullScreenshot();
+    });
+    FileOutputStream output{Path(capturePath)};
+    output.write(png::encode(frame));
+    output.close();
+}

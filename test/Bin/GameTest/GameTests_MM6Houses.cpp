@@ -2,6 +2,7 @@
 #include <array>
 #include <cstdlib>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -115,6 +116,28 @@ static std::vector<std::string> houseOptionLabels() {
             if (button->id.contains("Dialogue_Option") && button->rect.h > 0)
                 result.push_back(button->label);
     return result;
+}
+
+static void clickHouseOption(EngineController &game, std::string_view label) {
+    // Left click in the middle of the shown option with this line.
+    ASSERT_NE(window_SpeakInHouse, nullptr);
+    std::optional<Pointi> center;
+    for (GUIButton *button : window_SpeakInHouse->vButtons)
+        if (button->id.contains("Dialogue_Option") && button->rect.h > 0 && button->label == label)
+            center = button->rect.center();
+    ASSERT_TRUE(center) << "No house option " << label;
+    game.pressAndReleaseButton(BUTTON_LEFT, *center);
+    game.tick();
+}
+
+static void typeAmount(EngineController &game, std::string_view digits) {
+    // Types a number into the text input and confirms it with Enter.
+    for (char digit : digits) {
+        game.pressAndReleaseKey(static_cast<PlatformKey>(std::to_underlying(PlatformKey::KEY_DIGIT_0) + (digit - '0')));
+        game.tick();
+    }
+    game.pressAndReleaseKey(PlatformKey::KEY_RETURN);
+    game.tick();
 }
 
 static std::vector<int> shopStock(int house) {
@@ -762,4 +785,28 @@ GAME_TEST(MM6Houses, WeaponShopRepair) {
     EXPECT_EQ(goldTape, tape(200, 189));
     EXPECT_EQ(brokenTape, tape(true, false));
     EXPECT_CONTAINS(statusTape, localization->str(static_cast<LstrId>(570))); // "Good as New!"
+}
+
+GAME_TEST(MM6Houses, BankDepositAndWithdraw) {
+    // The New Sorpigal bank answered Deposit and Withdraw with a not available line instead of moving gold.
+    auto goldTape = tapes.gold();
+    auto bankTape = tapes.custom([] { return pParty->GetBankGold(); });
+    auto soundsTape = tapes.sounds();
+    auto screenTape = tapes.screen();
+    auto statusTape = tapes.statusBar();
+    startMM6NewGame(game);
+    test.startTaping();
+    game.teleportTo(engine->_currentLoadedMapId, kBankDoor, 180);
+    game.pointMouseAtFace(kBankDoorFace);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+    clickHouseOption(game, localization->str(LSTR_DEPOSIT));
+    typeAmount(game, "150");
+    clickHouseOption(game, localization->str(LSTR_WITHDRAW));
+    typeAmount(game, "999"); // More than the bank holds.
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
+    EXPECT_EQ(goldTape, tape(200, 50, 200));
+    EXPECT_EQ(bankTape, tape(0, 150, 0));
+    EXPECT_MISSES(statusTape, "This service is not available yet.");
+    EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(31502)); // The banker when the party asks for more than the bank holds.
 }

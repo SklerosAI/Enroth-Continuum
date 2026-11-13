@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdlib>
 #include <exception>
 #include <memory>
 #include <string>
@@ -42,6 +43,8 @@
 #include "GUI/UI/Houses/MM6Training.h"
 #include "GUI/UI/Houses/MM6Transport.h"
 
+#include "Io/KeyboardInputHandler.h"
+
 #include "Library/Logger/Logger.h"
 #include "Library/Platform/Interface/Platform.h"
 
@@ -51,6 +54,7 @@
 static constexpr LstrId LSTR_MM6_CANCEL = static_cast<LstrId>(34);
 static constexpr LstrId LSTR_MM6_END_CONVERSATION = static_cast<LstrId>(74);
 static constexpr LstrId LSTR_MM6_EXIT_BUILDING = static_cast<LstrId>(80);
+static constexpr LstrId LSTR_MM6_HOW_MUCH = static_cast<LstrId>(112);
 
 /** Portrait positions on the right panel, by the number of people in the house. */
 static constexpr std::array<std::array<Pointi, 6>, 6> kPortraitPositions = {{
@@ -172,6 +176,7 @@ void GUIWindow_MM6House::Update() {
                       resident.npc ? NameAndTitle(resident.npc) : NameAndTitle(resident.name, resident.title), 3,
                       Recti(0, 0, kPanelTextRight, screenHeight));
 
+        updateBankTransfer();
         std::vector<std::string> labels;
         for (GUIButton *button : _optionButtons) {
             if (resident.npc) {
@@ -180,7 +185,8 @@ void GUIWindow_MM6House::Update() {
                 labels.push_back(serviceLabel(button->msg_param));
             }
         }
-        drawOptionLabels(labels);
+        if (!_bankTransfer)
+            drawOptionLabels(labels); // MM6 keeps the bank's buttons but draws the how much prompt instead of their lines.
         if (isProprietorSelected() && _house.type == HOUSE_TYPE_BANK)
             drawPanelText(fmt::format("{}: {}", localization->str(LSTR_BALANCE), pParty->GetBankGold()), 220, colorTable.PaleCanary);
     }
@@ -216,6 +222,13 @@ void GUIWindow_MM6House::selectService(int index) {
     }
     if (_services[index] == mm6::HouseServiceOption::Train) {
         mm6::trainActiveCharacter(std::to_underlying(houseId()), _house.value.value_or(0), &_trainingTimePassed);
+        return;
+    }
+    if (_services[index] == mm6::HouseServiceOption::Deposit || _services[index] == mm6::HouseServiceOption::Withdraw) {
+        if (!_bankTransfer) {
+            _bankTransfer = _services[index];
+            keyboardInputHandler->StartTextInput(TEXT_INPUT_NUMBER, 10, this);
+        }
         return;
     }
     engine->_statusBar->setEvent("This service is not available yet.");
@@ -343,6 +356,39 @@ void GUIWindow_MM6House::showServiceButtons() {
     for (size_t i = 0; i < _services.size(); ++i)
         _optionButtons.push_back(CreateButton(fmt::format("HouseDialogue_Option{}", i), {480, 146 + 30 * static_cast<int>(i)}, {139, 29},
                                               BUTTON_TYPE_NORMAL, 0, UIMSG_SelectProprietorDialogueOption, i));
+}
+
+void GUIWindow_MM6House::updateBankTransfer() {
+    if (!_bankTransfer)
+        return;
+    const bool deposit = *_bankTransfer == mm6::HouseServiceOption::Deposit;
+    if (keyboard_input_status == WINDOW_INPUT_IN_PROGRESS) {
+        const std::string &typed = keyboardInputHandler->GetTextInput();
+        drawPanelText(fmt::format("{}\n{}", localization->str(mm6::houseServiceOptionLabel(*_bankTransfer)), localization->str(LSTR_MM6_HOW_MUCH)), 146, colorTable.PaleCanary);
+        drawPanelText(typed, 186, colorTable.White);
+        DrawFlashingInputCursor(assets->pFontArrus->GetLineWidth(typed) / 2 + 80, 185, assets->pFontArrus.get(),
+                                Recti(kOptionTextX, 0, kOptionTextWidth, render->GetRenderDimensions().h));
+        return;
+    }
+    if (keyboard_input_status == WINDOW_INPUT_CONFIRMED) {
+        int amount = std::strtol(keyboardInputHandler->GetTextInput().c_str(), nullptr, 10);
+        const int available = deposit ? pParty->GetGold() : pParty->GetBankGold();
+        if (amount > available) {
+            mm6PlayHouseSound(houseId(), HOUSE_SOUND_GENERAL_NOT_ENOUGH_GOLD);
+            amount = available;
+        }
+        if (amount > 0 && deposit) {
+            pParty->TakeGold(amount);
+            pParty->AddBankGold(amount);
+            if (pParty->hasActiveCharacter())
+                pParty->activeCharacter().playReaction(SPEECH_BANK_DEPOSIT);
+        } else if (amount > 0) {
+            pParty->TakeBankGold(amount);
+            pParty->AddGold(amount);
+        }
+    }
+    keyboard_input_status = WINDOW_INPUT_NONE;
+    _bankTransfer.reset();
 }
 
 void GUIWindow_MM6House::healActiveCharacter() {

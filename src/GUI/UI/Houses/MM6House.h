@@ -128,11 +128,18 @@ class GUIWindow_MM6House : public GUIWindow_House {
     void drawExit();
     void healActiveCharacter();
 
+    /**
+     * Shows the bank's how much prompt while the player types an amount, and moves the gold once the amount is
+     * confirmed. An amount above what the party has, or holds in the bank, moves all of it.
+     */
+    void updateBankTransfer();
+
     GraphicsImage *_panel = nullptr;
     std::vector<Resident> _residents;
     std::vector<GUIButton *> _optionButtons;
     int _selected = -1;
     bool _trainingTimePassed = false;
+    std::optional<mm6::HouseServiceOption> _bankTransfer; // Deposit or withdraw while the player types the amount.
     std::string _roomMovie;
     int64_t _roomMovieStart = 0; // Platform tick count at which the room movie started.
     std::optional<int64_t> _roomMovieEnd; // Platform tick count at which the room movie stops, empty while it loops.

@@ -427,8 +427,10 @@ GAME_TEST(MM6Dungeons, AbandonedTemple) {
     const int queen = std::ranges::find(pActors, static_cast<ItemId>(481), &Actor::carriedItemId)->id;
     killActor(game, queen);
     lootMM6CampaignChainCorpse(game, queen);
-    game.pressGuiButton("Game_Character1"); // The heart goes into the first backpack.
-    game.tick();
+    for (int character = 1; character <= 4 && pParty->pPickedItem.itemId != ITEM_NULL; character++) {
+        game.pressGuiButton(fmt::format("Game_Character{}", character)); // The heart can come in hand.
+        game.tick();
+    }
 
     useIndoorEventFace(game, 31); // The teleporter by the queen leads back to the entrance.
     useIndoorEventFace(game, 50); // The way out.

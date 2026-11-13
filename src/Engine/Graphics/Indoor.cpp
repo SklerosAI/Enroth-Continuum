@@ -13,6 +13,7 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6DoorMotionTraceForTest.h"
+#include "Engine/MM6/MM6EncounterMonster.h"
 #include "Engine/MM6/MM6MapTransition.h"
 #include "Engine/MM6/MM6MapVisit.h"
 #include "Engine/AssetsManager.h"
@@ -1703,6 +1704,8 @@ int SpawnEncounterMonsters(MapData *mapData, int enc_index) {
 
     //// why check this ??
     // if (!uNumActors) return 0;
+    if (engine->gameTitle() == GameTitle::MM6 && !mm6::restEncounterCanSpawn(pActors))
+        return 0;
 
     if (uCurrentlyLoadedLevelType == LEVEL_OUTDOOR) {
         int dist_y;

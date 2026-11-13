@@ -17,6 +17,7 @@
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
+#include "Engine/Tables/MapTable.h"
 #include "Engine/TurnEngine/TurnEngine.h"
 
 #include "GUI/GUIWindow.h"
@@ -484,6 +485,65 @@ GAME_TEST(MM6Rest, DeathWithoutRestSkipsInsanity) {
     EXPECT_EQ(deadInsaneTape[death][dead].second, deadInsaneTape[death - 1][dead].second);
     EXPECT_EQ(hpTape.back()[dead], 0);
     EXPECT_EQ(mpTape.back()[dead], 0);
+}
+
+GAME_TEST(MM6Rest, EncounterWakesOneSleeper) {
+    // A rest encounter brings monsters, wakes one character, takes an hour and no food.
+    startNewGameThroughInput(game);
+    pMapTable->pInfos[engine->_currentLoadedMapId].encounterChance = 100;
+    auto actorCountTape = tapes.custom([] { return static_cast<int>(pActors.size()); });
+    auto sleepTape = charTapes.custom([](const Character &character) { return character.conditions.has(CONDITION_SLEEP); });
+    auto foodTape = tapes.food();
+    auto timeTape = tapes.time();
+    auto statusTape = tapes.statusBar();
+    auto soundsTape = tapes.sounds();
+    auto screenTape = tapes.screen();
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_RestAndHeal");
+    game.tick();
+    game.tick(); // The rest screen closes.
+
+    const std::vector<bool> asleep = sleepTape.back();
+    EXPECT_EQ(std::ranges::count(asleep, true), 3);
+    EXPECT_EQ(screenTape, tape(SCREEN_REST, SCREEN_GAME));
+    EXPECT_EQ(foodTape, tape(7));
+    EXPECT_CONTAINS(statusTape, "Encounter!");
+    EXPECT_CONTAINS(soundsTape.flatten(), SOUND_encounter);
+    EXPECT_GE(timeTape.back() - timeTape.front(), Duration::fromMinutes(60));
+    EXPECT_LT(timeTape.back() - timeTape.front(), Duration::fromMinutes(66));
+    EXPECT_GE(actorCountTape.delta(), 3); // New Sorpigal's goblins and apprentice mages come three to five.
+    EXPECT_LE(actorCountTape.delta(), 5);
+}
+
+GAME_TEST(MM6Rest, NoEncounterOnClearedMap) {
+    // A rest on a map with only peasants left could still bring an encounter, MM6 needs a living monster on the map.
+    startNewGameThroughInput(game);
+    pMapTable->pInfos[engine->_currentLoadedMapId].encounterChance = 100;
+    for (Actor &actor : pActors) {
+        const int family = (std::to_underlying(actor.monsterInfo.id) - 1) / 3;
+        if (family != 40 && family != 41 && family != 44)
+            actor.aiState = Dead; // The party cleared the map, the Peasant F1, F2 and M1 families are left.
+    }
+    auto actorCountTape = tapes.custom([] { return static_cast<int>(pActors.size()); });
+    auto foodTape = tapes.food();
+    auto statusTape = tapes.statusBar();
+    auto screenTape = tapes.screen();
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_RestAndHeal");
+    game.tick();
+    while (current_screen_type == SCREEN_REST)
+        game.tick(); // The party sleeps eight hours.
+
+    EXPECT_EQ(actorCountTape.size(), 1);
+    EXPECT_EQ(foodTape, tape(7, 6));
+    EXPECT_MISSES(statusTape, "Encounter!");
+    EXPECT_EQ(screenTape, tape(SCREEN_REST, SCREEN_GAME));
 }
 
 GAME_TEST(MM6Conditions, SpiderPoisonsAndRatDiseases) {

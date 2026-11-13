@@ -2172,6 +2172,8 @@ void Actor::_SelectTarget(unsigned int uActorID, Pid *OutTargetPID,
             !thisActor->buffs[ACTOR_BUFF_CHARM].Active() &&
             !thisActor->buffs[ACTOR_BUFF_SUMMONED].Active())
             v14 = HOSTILITY_LONG;
+        else if (engine->gameTitle() == GameTitle::MM6)
+            v14 = pMonsterStats->infos[thisActor->monsterInfo.id].hostilityType; // MM6 has no faction table, monsters.txt says whether a monster hunts the party.
         else
             v14 = thisActor->GetActorsRelation(0);
         if (v14 != HOSTILITY_FRIENDLY) {

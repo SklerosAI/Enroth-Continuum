@@ -9,11 +9,13 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <tuple>
 
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
@@ -212,6 +214,36 @@ GAME_TEST(MM6MapVisit, FountainRefillsADayAfterTheLastVisit) {
         EXPECT_EQ(statusTape.back(), laterDay ? healed : empty) << laterDay;
     }
     EXPECT_GE(timeTape.back() - timeTape.front(), Duration::fromDays(10));
+}
+
+GAME_TEST(MM6MapVisit, TimerWithoutIntervalWaitsFromTheNextMidnight) {
+    // An MM6 OnTimer without an interval went off as soon as the party entered its map, so the Temple of the Sun ran
+    // its night, dawn and sunset timers at once. Its dawn timer goes off first 88 hours after the midnight that follows
+    // the arrival.
+    startNewGameThroughInput(game);
+    const MapId t4 = pMapTable->GetMapInfo("t4.blv");
+    game.teleportTo(pMapTable->GetMapInfo("outd2.odm"), Vec3f(-7608, 4032, 96), 180); // In front of the temple door, facing it.
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    confirmTransition(game);
+    ASSERT_EQ(engine->_currentLoadedMapId, t4);
+    const Time dawn = Time::fromDays(4) + Duration::fromHours(16);
+    using TempleState = std::tuple<std::string, bool, bool>; // The window's sky, and whether each of the two lights is on.
+    const TempleState night("sky_nit1", false, false);
+    const TempleState lit("orair256", true, true);
+    auto timeTape = tapes.time();
+    auto templeTape = tapes.custom([] {
+        GraphicsImage *sky = pIndoor->faces[79].GetTexture();
+        return TempleState(sky ? sky->name() : std::string(), !(pIndoor->lights[0].uAtributes & 8), !(pIndoor->lights[1].uAtributes & 8));
+    });
+    test.startTaping();
+
+    game.tick(123598); // Up to the last frame before 16:00 on the fourth day.
+    EXPECT_LT(timeTape.back(), dawn);
+    EXPECT_EQ(templeTape, tape(night));
+    game.tick(2); // The event processor's next timer check runs the dawn timer.
+    EXPECT_GE(timeTape.back(), dawn);
+    EXPECT_EQ(templeTape, tape(night, lit));
 }
 
 GAME_TEST(MM6MapVisitHeadless, DISABLED_SaveInDungeonAfterSkyRoll) {

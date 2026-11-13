@@ -2,15 +2,15 @@
 
 - Owner: Claude Code, lane `mm6-spells`, worktree `../enroth-worktrees/mm6-spells`, branch `claude/mm6-spells`.
 - Recipient: the lead, for review and merge.
-- Branch rebased onto master `7024a995c`. The earlier uncommitted diff was reviewed against MM6.exe and committed in two
-  commits.
+- Branch rebased onto master `6156c7801` (event spells batch 2, chain C5, Control Center, Question prompts). The
+  earlier uncommitted diff was reviewed against MM6.exe and committed in two commits.
 
 ## Commits
 
 | Commit | What |
 | --- | --- |
-| `a84a3cffa` fix(mm6): roll monster resistance from MM6's own columns | `mm6::monsterIncomingDamage` (MM6.exe 0x421dc0) for every MM6 damage kind, `SPAWN_DUMMY` clears the MM6 resistances too. `requireVerifiedMonsterDamage` keeps its old set. |
-| `3be132960` fix(mm6): cast the verified first batch of MM6 spells | The spells below, the MM6 Fly drop, Protection from Magic not blocking conditions, First Aid recovery, the MM6 skips of the MM7 Fly / Water Walk icons and isg buff icons, 12 game tests. |
+| `b5bb29483` fix(mm6): roll monster resistance from MM6's own columns | `mm6::monsterIncomingDamage` (MM6.exe 0x421dc0) for every MM6 damage kind, `SPAWN_DUMMY` clears the MM6 resistances too. `requireVerifiedMonsterDamage` keeps its old set. |
+| `89b4e3d12` fix(mm6): cast the verified first batch of MM6 spells | The spells below, the MM6 Fly drop, Protection from Magic not blocking conditions, First Aid recovery, the MM6 skips of the MM7 Fly / Water Walk icons and isg buff icons, 12 game tests. |
 | this file | Handoff. |
 
 ## Castable now, and where they are verified
@@ -49,10 +49,12 @@ Details and the independent re-check: `local-game-data/private-wiki/mm6/PLAYER_S
 
 ## Tests
 
-- On `3be132960`: unit tests 1123 passed. Full MM6 suite 191 passed, 2 skipped (the two `MM6ZSaveHeadless` research
-  tests). MM7 controls 147 passed, 2 skipped (`VendorRefreshIntegration` magic guild and weapon shop). `check_style`
-  clean. `check_tidy` not run locally (no clang-tidy 22).
-- On `a84a3cffa` alone: unit tests 1123 passed, MM6 suite 179 passed, 2 skipped.
+- On the rebased tree (`cc76736e5` plus this note, master `6156c7801`): unit tests 1123 passed. Full MM6 suite 200
+  passed, 2 skipped (the two `MM6ZSaveHeadless` research tests), all 12 `MM6PlayerSpells` among them. MM7 controls 147
+  passed, 2 skipped (`VendorRefreshIntegration` magic guild and weapon shop). `check_style` clean. `check_tidy` not run
+  locally (no clang-tidy 22).
+- Before the last rebase: the same counts with MM6 191 passed, 2 skipped.
+- The resistance commit alone, before the rebases: unit tests 1123 passed, MM6 suite 179 passed, 2 skipped.
 - Capture `local-game-data/progress-captures/20261112-190431-mm6-spells.png` is the default first-map render, with no
   spell active. The frame looks right except for the food and gold slots next to the apple and coins, which show no
   digits. That belongs to the HUD lane, not to this branch.
@@ -62,6 +64,23 @@ Details and the independent re-check: `local-game-data/private-wiki/mm6/PLAYER_S
 - Fixtures: a new game through the creation screen into oute3, the Sorcerer taught the spell, a `SPAWN_DUMMY` monster
   with 100+ hit points and armor class 20 or less for the attack spells, the first water ahead of the start for Water
   Walk.
+
+## Buff slot convention
+
+Player Bless and Heroism write the shared `CHARACTER_BUFF_BLESS` (1) and `CHARACTER_BUFF_HEROISM` (8). The party
+spells write the shared `PartyBuff` slots (`PARTY_BUFF_RESIST_FIRE` 6, `PARTY_BUFF_FLY` 7, `PARTY_BUFF_WATER_WALK` 18 and
+so on). That is the event lane's convention, and the HUD shelf and the stat getters read those slots. The raw-slot
+code disagrees with it:
+
+- MM6 Dispel Magic (`MM6MonsterAttack.h`, case 80) resets party slots 0 to 12 and character slots 0 to 11 as raw MM6
+  indexes. It misses Protection from Magic (13), Torch Light (16), Water resistance (17), Water Walk (18) and Wizard
+  Eye (19), and resets OE slots that MM6 never uses.
+- The MM6 Shield check reads character slot 3, which is OE `CHARACTER_BUFF_RESIST_EARTH`.
+- `MM6BuffSaveRuntime.cpp` saves and restores buffs by raw index, so an MM6 save puts OE Bless (1) in MM6's Heroism
+  slot and OE Fire resistance (6) in MM6's Water Walk slot.
+
+This needs one decision across the lanes, a mapping table between MM6 slots and OE slots in those three places. It
+isn't changed here.
 
 ## Open items
 

@@ -908,8 +908,6 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
     captureHouse("townhall", 0);
 
     waitUntilHour(game, 18); // The thieves' guild opens at 6 pm.
-    enterThroughDoor(game, kBuccaneersLairDoor, 270);
-    captureHouse("thieves", 0);
     pParty->pCharacters[0]._achievedAwardsBits.set(kBuccaneersLairMember);
     enterThroughDoor(game, kBuccaneersLairDoor, 270);
     game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);

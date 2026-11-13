@@ -21,6 +21,7 @@
 #include "Engine/Party.h"
 #include "Engine/Tables/MapTable.h"
 #include "GUI/UI/UISaveLoad.h"
+#include "Io/Mouse.h"
 
 static constexpr std::array<std::string_view, 16> mm6Skies = {
     "sky01", "sky02", "sky03", "sky05", "sky06", "sky07", "sky08", "sky09", "sky10", "sky12", "sky13", "sky14", "sky15", "sky16", "sky18", "sky19"};
@@ -119,7 +120,9 @@ static Time loadedMapLastVisit() {
 
 static void faceFountain(EngineController &game) {
     game.teleportTo(pMapTable->GetMapInfo("oute3.odm"), Vec3f(-10028, -7168, 0), 0); // West of the Sorpigal fountain, facing it.
-    game.pointMouseAtFace(863); // Its water.
+    game.pointMouseAtFace(863); // Its water, at the feet of the statue in the middle.
+    game.moveMouse(mouse->position() + Pointi(0, 20)); // Onto the near water, the statue's sprite covers its feet on some frames.
+    game.tick();
 }
 
 static void drinkFromFountain(EngineController &game) {
@@ -179,7 +182,8 @@ GAME_TEST(MM6MapVisit, SameDayReturnKeepsTheSky) {
 
 GAME_TEST(MM6MapVisit, FountainRefillsADayAfterTheLastVisit) {
     // A drained MM6 fountain was full again whenever the party came back, its daily refill went off on every return as
-    // if the map had never been visited. It refills on a return a day or more after the party left, not the same day.
+    // if the map had never been visited. It refills on a return a day or more after the party left, not the same day,
+    // and heals 30 times before it runs dry.
     startNewGameThroughInput(game);
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     const std::string healed = engine->_levelStrings[14]; // Hit points restored.
@@ -190,10 +194,10 @@ GAME_TEST(MM6MapVisit, FountainRefillsADayAfterTheLastVisit) {
 
     game.tick(10); // The event processor checks the map's timers 30 game seconds after the map loads, the fountain fills.
     faceFountain(game);
-    drinkFromFountain(game);
-    ASSERT_EQ(statusTape.back(), healed);
-    for (int drink = 0; drink < 100 && statusTape.back() != empty; drink++)
+    for (int drink = 0; drink < 30; drink++)
         drinkFromFountain(game);
+    ASSERT_EQ(statusTape.back(), healed);
+    drinkFromFountain(game);
     ASSERT_EQ(statusTape.back(), empty);
 
     for (bool laterDay : {false, true}) {

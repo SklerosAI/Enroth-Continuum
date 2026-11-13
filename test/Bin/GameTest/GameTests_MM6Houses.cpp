@@ -577,7 +577,7 @@ GAME_TEST(MM6Houses, GuildMenu) {
     const Color yellow = colorTable.PaleCanary;
     EXPECT_EQ(refusal, std::vector<DrawnLine>({panelLine("You must be a", 175, yellow), panelLine("member of this", 191, yellow),
                                                panelLine("guild to study", 207, yellow), panelLine("here", 223, yellow)}));
-    EXPECT_EQ(menu, std::vector<DrawnLine>({panelLine("Buy Spells", 173, white), panelLine("Air Magic", 209, white), panelLine("Water Magic", 245, white),
+    EXPECT_EQ(menu, std::vector<DrawnLine>({panelLine("Buy Spells", 173, yellow), panelLine("Air Magic", 209, white), panelLine("Water Magic", 245, white),
                                             panelLine("Earth Magic", 281, white), panelLine("Skill Cost: 750", 146, white)}));
     EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>({panelLine("Buy Spells", 180, white), panelLine("Water Magic", 227, white),
                                                                     panelLine("Earth Magic", 274, white), panelLine("Skill Cost: 750", 146, white)}));
@@ -605,7 +605,7 @@ GAME_TEST(MM6Houses, BankMenu) {
     game.pressAndReleaseButton(BUTTON_LEFT);
     game.tick();
 
-    EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>({panelLine("Deposit", 146, colorTable.White), panelLine("Withdraw", 176, colorTable.White),
+    EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>({panelLine("Deposit", 146, colorTable.PaleCanary), panelLine("Withdraw", 176, colorTable.White),
                                                                     panelLine("Balance: 0", 220, colorTable.PaleCanary)}));
     using Options = std::vector<std::pair<std::string, Recti>>;
     EXPECT_EQ(optionsTape, tape(Options(), Options({{"Deposit", Recti(480, 146, 140, 30)}, {"Withdraw", Recti(480, 176, 140, 30)}})));
@@ -626,7 +626,8 @@ GAME_TEST(MM6Houses, StableMenu) {
     game.tick();
 
     const Color white = colorTable.White;
-    EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>({panelLine("2 days to Castle", 194, white), panelLine("Ironfist", 210, white),
+    const Color yellow = colorTable.PaleCanary;
+    EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>({panelLine("2 days to Castle", 194, yellow), panelLine("Ironfist", 210, yellow),
                                                                     panelLine("Travel Cost 25", 146, white), panelLine("gold", 162, white)}));
     using Options = std::vector<std::pair<std::string, Recti>>;
     EXPECT_EQ(optionsTape, tape(Options(), Options({{"2 days to Castle Ironfist", Recti(480, 194, 140, 32)}})));
@@ -732,9 +733,10 @@ GAME_TEST(MM6Houses, ThievesGuildMenu) {
     clickHouseOption(game, localization->skillName(SKILL_ITEM_ID));
 
     const Color white = colorTable.White;
+    const Color yellow = colorTable.PaleCanary;
     EXPECT_EQ(menu, std::vector<DrawnLine>({panelLine("Merchant", 173, white), panelLine("Identify Item", 209, white), panelLine("Perception", 245, white),
                                             panelLine("Disarm Trap", 281, white), panelLine("Skill Cost: 150", 146, white)}));
-    EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>({panelLine("Identify Item", 180, white), panelLine("Perception", 227, white),
+    EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>({panelLine("Identify Item", 180, yellow), panelLine("Perception", 227, white),
                                                                     panelLine("Disarm Trap", 274, white), panelLine("Skill Cost: 135", 146, white)}));
     using Options = std::vector<std::pair<std::string, Recti>>;
     EXPECT_EQ(optionsTape, tape(Options(),
@@ -762,6 +764,36 @@ GAME_TEST(MM6Houses, SelfGuildDoor) {
     game.tick();
     EXPECT_EQ(houseTape, tape(HOUSE_INVALID, static_cast<HouseId>(139)));
     EXPECT_EQ(optionsTape, tape(std::vector<std::string>{}, std::vector<std::string>{"Buy Spells", "Spirit Magic", "Mind Magic"})); // The cleric knows Body Magic already.
+}
+
+GAME_TEST(MM6Houses, OptionFocusColor) {
+    // House menus drew every line white. MM6 draws the line the mouse last pointed at, the first one until then, in a
+    // focus colour: gold at a shop, pale yellow at a temple.
+    auto linesTape = tapes.titleLines();
+    startMM6NewGame(game);
+    pParty->pCharacters[0].SetCondition(CONDITION_POISON_WEAK, 0); // So that the temple offers to heal.
+    test.startTaping();
+    enterThroughDoor(game, kWeaponShopDoor, 0);
+    const std::vector<DrawnLine> shop = panelLines(linesTape.back());
+    game.hoverGuiButton("HouseDialogue_Option2");
+    game.tick();
+    const std::vector<DrawnLine> shopHovered = panelLines(linesTape.back());
+    game.moveMouse(240, 180); // Over the room, away from the menu.
+    game.tick();
+    const std::vector<DrawnLine> shopAway = panelLines(linesTape.back());
+    game.pressGuiButton("House_Exit");
+    game.tick();
+    enterThroughDoor(game, kTempleDoor, 90);
+    const std::vector<DrawnLine> temple = panelLines(linesTape.back());
+
+    const Color white = colorTable.White;
+    const Color gold = colorTable.Sunflower;
+    EXPECT_EQ(shop, std::vector<DrawnLine>({panelLine("Buy Items", 149, gold), panelLine("Sell Items", 182, white), panelLine("Identify Items", 215, white),
+                                            panelLine("Repair Items", 248, white), panelLine("Special Items", 281, white)}));
+    EXPECT_EQ(shopHovered, std::vector<DrawnLine>({panelLine("Buy Items", 149, white), panelLine("Sell Items", 182, white), panelLine("Identify Items", 215, gold),
+                                                   panelLine("Repair Items", 248, white), panelLine("Special Items", 281, white)}));
+    EXPECT_EQ(shopAway, shopHovered);
+    EXPECT_EQ(temple, std::vector<DrawnLine>({panelLine("Heal 10 Gold", 193, colorTable.PaleCanary), panelLine("Donate", 240, white)}));
 }
 
 GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {

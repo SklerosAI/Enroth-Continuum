@@ -13,6 +13,7 @@
 
 #include "Engine/AssetsManager.h"
 #include "Engine/Engine.h"
+#include "Engine/EngineIocContainer.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/MM6ItemEventCompare.h"
 #include "Engine/Localization.h"
@@ -45,6 +46,7 @@
 #include "GUI/UI/Houses/MM6Transport.h"
 
 #include "Io/KeyboardInputHandler.h"
+#include "Io/Mouse.h"
 
 #include "Library/Logger/Logger.h"
 #include "Library/Platform/Interface/Platform.h"
@@ -178,6 +180,11 @@ void GUIWindow_MM6House::Update() {
                       Recti(0, 0, kPanelTextRight, screenHeight));
 
         updateBankTransfer();
+        const Pointi mouse = EngineIocContainer::ResolveMouse()->position();
+        for (size_t i = 0; i < _optionButtons.size(); ++i)
+            if (_optionButtons[i]->rect.h > 0 && _optionButtons[i]->Contains(mouse))
+                _focusedOption = static_cast<int>(i);
+
         std::vector<std::string> labels;
         for (GUIButton *button : _optionButtons) {
             if (resident.npc) {
@@ -240,6 +247,7 @@ void GUIWindow_MM6House::refreshTopics() {
     if (!npc)
         return;
     clearOptionButtons();
+    _focusedOption = 0;
     int row = 0;
     for (DialogueId topic : prepareScriptedNPCDialogueTopics(npc)) {
         if (topic < DIALOGUE_SCRIPTED_LINE_1 || topic > DIALOGUE_SCRIPTED_LINE_6)
@@ -302,6 +310,12 @@ bool GUIWindow_MM6House::isExitSelected() const {
     return _selected != -1 && _residents[_selected].exit;
 }
 
+Color GUIWindow_MM6House::optionFocusColor() const {
+    if (!isProprietorSelected() || _house.family == mm6::HouseServiceFamily::Shop || _house.type == HOUSE_TYPE_TRAINING_GROUND)
+        return colorTable.Sunflower;
+    return colorTable.PaleCanary;
+}
+
 void GUIWindow_MM6House::showResidentButtons() {
     for (size_t i = 0; i < _residents.size(); ++i) {
         const std::string label = _residents[i].exit ? exitLabel(static_cast<MapId>(_house.exit.map))
@@ -354,6 +368,7 @@ void GUIWindow_MM6House::drawExit() {
 }
 
 void GUIWindow_MM6House::showServiceButtons() {
+    _focusedOption = 0;
     for (size_t i = 0; i < _services.size(); ++i)
         _optionButtons.push_back(CreateButton(fmt::format("HouseDialogue_Option{}", i), {480, 146 + 30 * static_cast<int>(i)}, {139, 29},
                                               BUTTON_TYPE_NORMAL, 0, UIMSG_SelectProprietorDialogueOption, i));
@@ -483,8 +498,9 @@ void GUIWindow_MM6House::drawOptionLabels(const std::vector<std::string> &labels
             continue;
         }
         button->label = labels[i];
+        const Color color = static_cast<int>(i) == _focusedOption ? optionFocusColor() : colorTable.White;
         if (fixed) {
-            drawPanelText(labels[i], button->rect.y, colorTable.White);
+            drawPanelText(labels[i], button->rect.y, color);
             continue;
         }
         if (stacked) {
@@ -496,7 +512,7 @@ void GUIWindow_MM6House::drawOptionLabels(const std::vector<std::string> &labels
             y += heights[i] - 1;
         }
         button->rect.h = heights[i];
-        drawPanelText(labels[i], button->rect.y, colorTable.White);
+        drawPanelText(labels[i], button->rect.y, color);
     }
 }
 

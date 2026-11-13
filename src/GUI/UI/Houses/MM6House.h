@@ -122,6 +122,12 @@ class GUIWindow_MM6House : public GUIWindow_House {
     };
 
     bool isExitSelected() const;
+
+    /**
+     * @return                          Color of the option line the mouse last pointed at.
+     */
+    Color optionFocusColor() const;
+
     void showResidentButtons();
     void showExitButtons();
     void drawResidents();
@@ -137,6 +143,7 @@ class GUIWindow_MM6House : public GUIWindow_House {
     GraphicsImage *_panel = nullptr;
     std::vector<Resident> _residents;
     std::vector<GUIButton *> _optionButtons;
+    int _focusedOption = 0; // Index into `_optionButtons` of the line the mouse last pointed at, the first one at the start.
     int _selected = -1;
     bool _trainingTimePassed = false;
     std::optional<mm6::HouseServiceOption> _bankTransfer; // Deposit or withdraw while the player types the amount.

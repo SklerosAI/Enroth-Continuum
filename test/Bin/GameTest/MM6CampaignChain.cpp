@@ -266,16 +266,24 @@ void lootMM6CampaignChainCorpse(EngineController &game, int actorId) {
     for (int frame = 0; frame < 100 && pActors[actorId].aiState != Dead; frame++)
         game.tick(); // The monster falls.
     ASSERT_EQ(pActors[actorId].aiState, Dead);
-    for (auto [position, yaw] : placesNextTo(pActors[actorId].pos)) {
-        game.teleportTo(engine->_currentLoadedMapId, position, yaw, -20);
-        game.tick();
-        const Pid target = engine->PickKeyboard(engine->config->gameplay.KeyboardInteractionDepth.value(), &vis_decoration_noevent_filter,
-                                                &vis_door_filter).pid;
-        if (target != Pid::actor(actorId))
-            continue; // A living monster can stand between the party and the corpse.
-        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
-        game.tick();
-        return;
+    for (int round = 0; round < 5; round++) {
+        int blocker = -1;
+        for (auto [position, yaw] : placesNextTo(pActors[actorId].pos)) {
+            game.teleportTo(engine->_currentLoadedMapId, position, yaw, -20);
+            game.tick();
+            const Pid target = engine->PickKeyboard(engine->config->gameplay.KeyboardInteractionDepth.value(), &vis_decoration_noevent_filter,
+                                                    &vis_door_filter).pid;
+            if (target == Pid::actor(actorId)) {
+                game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+                game.tick();
+                return;
+            }
+            if (target.type() == OBJECT_Actor && !pActors[target.id()].IsNotAlive())
+                blocker = target.id(); // A living monster stands between the party and the corpse.
+        }
+        if (blocker < 0)
+            break;
+        killMM6CampaignChainActor(game, blocker);
     }
     FAIL() << "No side of the corpse where Space reaches it";
 }

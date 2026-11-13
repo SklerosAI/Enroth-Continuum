@@ -95,7 +95,8 @@ void takeMM6CampaignChainChestItem(EngineController &game, int chestId, ItemId i
 void killMM6CampaignChainActor(EngineController &game, int actorId);
 
 /**
- * Loots a corpse on the current indoor map by pressing Space next to it, once it has settled.
+ * Loots a corpse on the current indoor map by pressing Space next to it, once it has settled. Kills a living monster
+ * that stands in the way.
  *
  * @param game                          Engine controller of the running test.
  * @param actorId                       Dead monster.

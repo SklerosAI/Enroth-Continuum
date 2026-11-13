@@ -17,7 +17,8 @@
 | `a1f307c43` | UI leftovers: guild, bank, stable menus, chest exit, zoom art, professions, start capture | master gate: unit 1123, MM6 208, MM7 147 |
 | `381d7ddf4` | Visit stamps on first-map saves and the death map, timer rule pinned | lane: MM6 190, first-map gate green |
 | `5001f152c` | Bank deposit and withdraw, services audit | lane: MM6 211 |
-| `66e71b82c` | First combat: potions, turn-based mode, volcanic rest cost, no-food sound | lane: MM6 212, MM7 controls 147 |
+| `66e71b82c` | First combat: potions, turn-based mode, volcanic rest cost, no-food sound | lane: MM6 212, MM7 controls 147. Master gate: unit 1123, MM6 224, MM7 147 |
+| `2c6f6dbdd` | Guild membership topics, Mercenary and Thieves guilds, menu focus colour, Self guild door | lane: MM6 213, MM7 controls 147, worktree houses run 42 |
 
 The first-map gate passed every fresh-process child and the MM7 controls on `f88268730` and again on `6361f74a5` (39 children, with the buff and first-map visit pairs). Master gate on `6361f74a5`: unit 1123, MM6 210, MM7 147. The Release MM6 app in `build-release/` was rebuilt at 20:02 and must be rebuilt again on the final master before the playtest, then launched once to the main menu.
 
@@ -32,15 +33,14 @@ The first-map gate passed every fresh-process child and the MM7 controls on `f88
 | Services 2 | `claude/mm6-services-2` in `../enroth-worktrees/mm6-leftovers` | guild joins (topics 381 to 397), tavern room, food, drink, tip, temple donate, expert teachers |
 | Dungeons | `claude/mm6-dungeons` in `../enroth-worktrees/mm6-chain-c4` | d02, d01, d18 end to end, the town's side quests, dungeon rest |
 | Rest rules | `claude/mm6-rest-rules` in `../enroth-worktrees/mm6-spells` | new-party days without rest, Wait until Dawn and the rest encounter, wake-all and recovery across rest, the death rule, the 3 am daily rules, turn-based start order |
-| Guild menus | `claude/mm6-guild-menus` in `../enroth-worktrees/mm6-control-center` | Mercenary and Thieves guild menus (patch from services 1), Self guild door, four layout checks, menu focus colours |
+| First hour | `claude/mm6-first-hour` in `../enroth-worktrees/mm6-control-center` | one scenario test of the owner's playtest path, captures of every screen on the way |
 | Menus and hirelings | `claude/mm6-menus-hirelings` in `../enroth-worktrees/mm6-indoor-light` | main menu, escape menu and options, hirelings, news and rumours |
 
 Each lane commits on its branch, never pushes, and writes `agent_comms/handoffs/2026-11-12-claude-mm6-<lane>.md`. To integrate one: review the diff, `git rebase master` in its worktree, syntax-check the shared files from `build/compile_commands.json`, `git merge --ff-only`, then run the gate script pattern (unit, `check_style`, MM6 suite, MM7 controls) on the main checkout.
 
 ## Known open items for the playtest
 
-- Still "not available yet" until services 2 lands: guild joins, tavern rent room, food, drink and tip, temple donate, expert teachers, Bounty Hunt.
-- Empty menus at the Mercenary and Thieves guilds until the guild lane lands.
+- Still "not available yet" until services 2 lands: tavern rent room, food, drink and tip, temple donate, expert teachers, Bounty Hunt.
 - Unverified against MM6: text wrapping at the 148 px column, the tall staff in the magic shop's special stock, the grey band under the sell grid, the portrait selection ring.
 - Town Portal, Stun, Shield and the rest of the spellbook are refused. Scroll casts are refused.
 - Guardian Angel has no shared buff slot. Actor buff 2 is read as Curse where the shared slot is Summoned.

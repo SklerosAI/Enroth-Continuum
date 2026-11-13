@@ -705,3 +705,61 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
     captureHouse("thieves", 0);
 }
 
+
+GAME_TEST(MM6Houses, WeaponShopIdentify) {
+    // The New Sorpigal weapon shop identifies a weapon from the active character's backpack for gold.
+    auto goldTape = tapes.gold();
+    auto identifiedTape = tapes.custom([] {
+        for (InventoryConstEntry entry : pParty->pCharacters[0].inventory.entries())
+            if (entry->itemId == static_cast<ItemId>(1))
+                return entry->IsIdentified();
+        return false;
+    });
+    auto statusTape = tapes.statusBar();
+    startMM6NewGame(game);
+    for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+        if (entry->itemId == static_cast<ItemId>(1))
+            entry->flags &= ~ITEM_IDENTIFIED;
+    test.startTaping();
+    enterThroughDoor(game, kWeaponShopDoor, 0);
+    clickHouseOption(game, localization->str(static_cast<LstrId>(541))); // Identify Items.
+    InventoryEntry sword;
+    for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+        if (entry->itemId == static_cast<ItemId>(1))
+            sword = entry;
+    ASSERT_TRUE(sword);
+    game.pressAndReleaseButton(BUTTON_LEFT, mapFromInventoryGrid(sword.geometry().topLeft(), Pointi(14, 17)) + Pointi(16, 16));
+    game.tick();
+    EXPECT_EQ(goldTape, tape(200, 125));
+    EXPECT_EQ(identifiedTape, tape(false, true));
+    EXPECT_CONTAINS(statusTape, localization->str(static_cast<LstrId>(569))); // "Done!"
+}
+
+GAME_TEST(MM6Houses, WeaponShopRepair) {
+    // The New Sorpigal weapon shop repairs a broken weapon from the active character's backpack for gold.
+    auto goldTape = tapes.gold();
+    auto brokenTape = tapes.custom([] {
+        for (InventoryConstEntry entry : pParty->pCharacters[0].inventory.entries())
+            if (entry->itemId == static_cast<ItemId>(1))
+                return entry->IsBroken();
+        return false;
+    });
+    auto statusTape = tapes.statusBar();
+    startMM6NewGame(game);
+    for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+        if (entry->itemId == static_cast<ItemId>(1))
+            entry->flags |= ITEM_BROKEN;
+    test.startTaping();
+    enterThroughDoor(game, kWeaponShopDoor, 0);
+    clickHouseOption(game, localization->str(static_cast<LstrId>(542))); // Repair Items.
+    InventoryEntry sword;
+    for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+        if (entry->itemId == static_cast<ItemId>(1))
+            sword = entry;
+    ASSERT_TRUE(sword);
+    game.pressAndReleaseButton(BUTTON_LEFT, mapFromInventoryGrid(sword.geometry().topLeft(), Pointi(14, 17)) + Pointi(16, 16));
+    game.tick();
+    EXPECT_EQ(goldTape, tape(200, 189));
+    EXPECT_EQ(brokenTape, tape(true, false));
+    EXPECT_CONTAINS(statusTape, localization->str(static_cast<LstrId>(570))); // "Good as New!"
+}

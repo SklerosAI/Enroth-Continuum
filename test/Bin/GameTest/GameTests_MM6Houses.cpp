@@ -239,9 +239,10 @@ GAME_TEST(MM6Houses, UnimplementedServiceRefuses) {
     auto itemsTape = tapes.totalItemCount();
     startMM6NewGame(game);
     test.startTaping();
-    enterThroughDoor(game, kTempleDoor, 90);
-    game.pressGuiButton("HouseDialogue_Option1"); // Donate.
+    enterThroughDoor(game, kTavernDoor, 0);
+    game.pressGuiButton("House_Npc0"); // The proprietor.
     game.tick();
+    clickHouseOption(game, localization->str(LSTR_HAVE_A_DRINK));
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
     EXPECT_CONTAINS(statusTape, "This service is not available yet.");
     EXPECT_EQ(goldTape.size(), 1);
@@ -1090,4 +1091,24 @@ GAME_TEST(MM6Houses, ExpertTeacher) {
                                 std::vector<std::string>{"Become Expert in Fire Magic for 1000 gold"},
                                 std::vector<std::string>{"Fire Magic Expertise", "Jezebel"}));
     EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE));
+}
+
+GAME_TEST(MM6Houses, TempleDonate) {
+    // New Sorpigal Temple's Donate said "not available yet". A donation takes the temple's 10 gold, thanks the party
+    // and raises its reputation by 200, but not past 200.
+    auto goldTape = tapes.gold();
+    auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+    auto statusTape = tapes.statusBar();
+    auto portraitTape = charTapes.portrait(0);
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kTempleDoor, 90);
+    clickHouseOption(game, localization->str(LSTR_DONATE));
+    clickHouseOption(game, localization->str(LSTR_DONATE));
+
+    EXPECT_EQ(goldTape, tape(200, 190, 180));
+    EXPECT_EQ(reputationTape, tape(0, 200));
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_THANK_YOU));
+    EXPECT_MISSES(statusTape, "This service is not available yet.");
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_PURSE_LIPS_3)); // The donation reaction.
 }

@@ -180,6 +180,14 @@ class GUIWindow_MM6House : public GUIWindow_House {
     void healActiveCharacter();
 
     /**
+     * Takes the temple's `Val` in gold and raises the party's reputation by 200, to no more than 200. Temple Baa takes
+     * the 200 back while the reputation is above -800.
+     *
+     * @offset 0x49DD99 (MM6)
+     */
+    void donate();
+
+    /**
      * Takes the room price, then leaves the house and puts the party to bed until 6 am.
      *
      * @offset 0x49F319 (MM6)

@@ -285,6 +285,10 @@ void GUIWindow_MM6House::selectService(int index) {
         mm6::trainActiveCharacter(std::to_underlying(houseId()), _house.value.value_or(0), &_trainingTimePassed);
         return;
     }
+    if (_services[index] == mm6::HouseServiceOption::TempleDonate) {
+        donate();
+        return;
+    }
     if (_services[index] == mm6::HouseServiceOption::RentRoom) {
         rentRoom();
         return;
@@ -581,6 +585,27 @@ void GUIWindow_MM6House::healActiveCharacter() {
     mm6::templeHeal(house, &character);
     pAudioPlayer->playExclusiveSound(SOUND_heal);
     character.playReaction(SPEECH_TEMPLE_HEAL);
+}
+
+void GUIWindow_MM6House::donate() {
+    if (!pParty->hasActiveCharacter())
+        return;
+    const int price = _house.value.value_or(0);
+    if (pParty->GetGold() < price) {
+        engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_GENERAL_NOT_ENOUGH_GOLD);
+        return;
+    }
+    pParty->TakeGold(price);
+    if (pParty->mm6Reputation < 200)
+        pParty->mm6Reputation = std::min(pParty->mm6Reputation + 200, 200);
+    // TODO(_): with an effective reputation above 200, the donation whose count this visit matches the day of the
+    // month mod 7 casts spells at master rank day mod 7 + 1: Guardian Angel above 200, Wizard Eye above 400, Day of the
+    // Gods above 600, Hour of Power above 800, Day of Protection above 1000. MM6 temple casts aren't verified yet.
+    if (houseId() == static_cast<HouseId>(78) && pParty->mm6Reputation > -800)
+        pParty->mm6Reputation -= 200; // Temple Baa.
+    pParty->activeCharacter().playReaction(SPEECH_TEMPLE_DONATE);
+    engine->_statusBar->setEvent(LSTR_THANK_YOU);
 }
 
 void GUIWindow_MM6House::rentRoom() {

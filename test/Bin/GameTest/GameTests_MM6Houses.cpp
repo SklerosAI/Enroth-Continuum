@@ -23,7 +23,9 @@
 #include "Engine/MM6/MM6ShopTitleState.h"
 #include "Engine/Localization.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
+#include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
+#include "Engine/Objects/Monsters.h"
 #include "Engine/Party.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
@@ -1130,6 +1132,73 @@ GAME_TEST(MM6Houses, MasterTeacher) {
                                 Lines{pNPCTopics[260].pText}, // "You don't meet the requirements, and cannot be taught until you do."
                                 Lines{"Become Master in Fire Magic for 4000 gold"}, Lines{"Master of Fire ", "Fire Guild Membership"}));
     EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_WIDE_SMILE)); // The mastery reaction.
+}
+
+static void talkTo(EngineController &game, std::string_view name) {
+    // Clicks the portrait of the person in the house with this name.
+    ASSERT_NE(window_SpeakInHouse, nullptr);
+    std::optional<Pointi> center;
+    for (GUIButton *button : window_SpeakInHouse->vButtons)
+        if (button->id.starts_with("House_Npc") && button->label.contains(name))
+            center = button->rect.center();
+    ASSERT_TRUE(center) << "No one called " << name;
+    game.pressAndReleaseButton(BUTTON_LEFT, *center);
+    game.tick();
+}
+
+GAME_TEST(MM6Houses, BountyHunt) {
+    // Janice's Bounty Hunt topic in the New Sorpigal Town Hall did nothing. She names this month's monster, and once
+    // the party has killed one she pays 100 gold per level of the monster, every character gets the bounties
+    // collected award with its chime, and the reputation grows by the level. Asked again that month, she says the
+    // bounty is claimed.
+    auto goldTape = tapes.gold();
+    auto textTape = tapes.custom([] { return current_npc_text; });
+    auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+    auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+    auto bountyTape = tapes.custom([] { return std::pair(pParty->monster_id_for_hunting[HOUSE_FIRST_TOWN_HALL], pParty->monster_for_hunting_killed[HOUSE_FIRST_TOWN_HALL]); });
+    auto awardsTape = charTapes.custom([](const Character &character) { return character._achievedAwardsBits[static_cast<AwardId>(81)]; });
+    auto soundsTape = tapes.sounds();
+    startMM6NewGame(game);
+    waitUntilHour(game, 10); // The Town Hall opens at 10 am.
+    test.startTaping();
+    enterThroughDoor(game, kTownHallDoor, 180);
+    talkTo(game, "Janice");
+    clickHouseOption(game, "Bounty Hunt");
+    for (int i = 0; i < 3 && current_screen_type != SCREEN_GAME; ++i) {
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+    }
+    game.teleportTo(engine->_currentLoadedMapId, kTownHallDoor, 0); // Back to the street, facing east.
+    ASSERT_NE(pParty->monster_id_for_hunting[HOUSE_FIRST_TOWN_HALL], MONSTER_INVALID);
+    Actor *target = game.spawnMonster(kTownHallDoor + Vec3f(200, 0, 0), pParty->monster_id_for_hunting[HOUSE_FIRST_TOWN_HALL], SPAWN_DUMMY);
+    target->hp = 1; // One hit kills it.
+    game.pointMouseAtActor(target->id);
+    for (int attack = 0; attack < 1000 && target->aiState != Dead; ++attack) {
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+    }
+    for (int frame = 0; frame < 100 && !pParty->hasActiveCharacter(); frame++)
+        game.tick(); // A door opens only for a character who has recovered from the fight.
+    enterThroughDoor(game, kTownHallDoor, 180);
+    talkTo(game, "Janice");
+    clickHouseOption(game, "Bounty Hunt");
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    clickHouseOption(game, "Bounty Hunt");
+
+    const MonsterId ooze = static_cast<MonsterId>(116);
+    const std::string name = fmt::format("{::}Acidic Ooze{::}", colorTable.PaleCanary.tag(), colorTable.White.tag());
+    EXPECT_EQ(bountyTape, tape(std::pair(MONSTER_INVALID, false), std::pair(ooze, false), std::pair(ooze, true), std::pair(MONSTER_INVALID, false)));
+    EXPECT_EQ(textTape, tape(std::string(), "This month's bounty is on a " + name + ".  Kill it and return before the end of the month to collect the 1800 gold reward.",
+                             std::string(), "Congratulations on defeating the " + name + "!  Here is the 1800 gold reward.  Come back next month for a new bounty.",
+                             std::string(), "Someone has already claimed the bounty this month.  Come back next month for a new bounty."));
+    using Lines = std::vector<std::string>;
+    const Lines topics = {"Goblinwatch", "Bounty Hunt"};
+    EXPECT_EQ(optionsTape, tape(Lines(), topics, Lines(), topics, Lines(), topics, Lines(), topics, Lines())); // The bounty takes the place of her topics, escape brings them back.
+    EXPECT_EQ(goldTape, tape(200, 2000)); // A level 18 monster.
+    EXPECT_EQ(reputationTape, tape(0, 18));
+    EXPECT_EQ(awardsTape, tape({false, false, false, false}, {true, true, true, true}));
+    EXPECT_EQ(std::ranges::count(soundsTape.flatten(), SOUND_quest), 4); // Each character's award chime.
 }
 
 GAME_TEST(MM6Houses, TempleDonate) {

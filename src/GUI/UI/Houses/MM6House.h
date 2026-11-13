@@ -78,6 +78,15 @@ class GUIWindow_MM6House : public GUIWindow_House {
     void learnFromTeacher();
 
     /**
+     * Shows the town hall's bounty for this month in place of the NPC's topics, rolling a new monster when the month
+     * has turned. When the party has killed the monster since, pays 100 gold per monster level, gives every character
+     * the bounties collected award and adds the level to the reputation.
+     *
+     * @offset 0x4A30B0 (MM6)
+     */
+    void huntBounty();
+
+    /**
      * @return                          NPC the party is talking to, or `nullptr` if it isn't talking to an NPC.
      */
     NPCData *selectedNpc() const;
@@ -235,6 +244,7 @@ class GUIWindow_MM6House : public GUIWindow_House {
     int _selected = -1;
     std::optional<int> _membershipOffer; // Guild the selected NPC offers to join, see `offerGuildMembership`.
     std::optional<int> _teacherOffer; // Topic of the teacher whose offer is shown.
+    bool _bountyShown = false; // The NPC tells the town hall's bounty, see `huntBounty`.
     bool _trainingTimePassed = false;
     std::optional<mm6::HouseServiceOption> _bankTransfer; // Deposit or withdraw while the player types the amount.
     std::string _roomMovie;

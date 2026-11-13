@@ -28,6 +28,7 @@
 #include "Engine/MM6/MM6RoomMovie.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/Resources/ResourceManager.h"
+#include "Engine/Objects/Monsters.h"
 #include "Engine/Objects/NPC.h"
 #include "Engine/Party.h"
 #include "Engine/Random/Random.h"
@@ -204,6 +205,36 @@ static std::optional<int> teacherPrice(const Character &character, int topic) {
     return expertTeacherPrice(skill);
 }
 
+static constexpr int kFirstTownHall = 89; // New Sorpigal's, then the Misty Islands' and Silver Cove's.
+static constexpr int kBountyHuntTopic = 399;
+static constexpr int kBountiesAward = 81; // awards.txt "Collected %u bounties".
+
+/**
+ * @param townHall                      MM6 town hall.
+ * @return                              Slot of the party's bounty arrays the town hall keeps its bounty in. The three
+ *                                      MM6 town halls take the first three, which `Actor::Die` marks killed.
+ */
+static HouseId bountySlot(HouseId townHall) {
+    const int index = std::to_underlying(townHall) - kFirstTownHall;
+    assert(index >= 0 && index < 3);
+    return static_cast<HouseId>(std::to_underlying(HOUSE_FIRST_TOWN_HALL) + index);
+}
+
+/**
+ * @offset 0x4A3238 (MM6)
+ *
+ * @return                              A monster to hunt, from MM6's first 171 monsters without the Varn guardians,
+ *                                      merchants, peasants and robots.
+ */
+static MonsterId randomBountyMonster() {
+    while (true) {
+        const int monster = grng->random(171) + 1;
+        if ((monster < 88 || monster > 90) && (monster < 103 || monster > 105) && (monster < 121 || monster > 126) &&
+            (monster < 133 || monster > 135) && (monster < 148 || monster > 150))
+            return static_cast<MonsterId>(monster);
+    }
+}
+
 static Pointi portraitPosition(size_t count, size_t index) {
     return kPortraitPositions[count - 1][index];
 }
@@ -357,6 +388,7 @@ void GUIWindow_MM6House::selectResident(int index) {
     current_npc_text.clear();
     _membershipOffer.reset();
     _teacherOffer.reset();
+    _bountyShown = false;
     _selected = index;
     if (_residents[index].npc) {
         refreshTopics();
@@ -422,6 +454,8 @@ void GUIWindow_MM6House::refreshTopics() {
                                               std::to_underlying(DIALOGUE_MAGIC_GUILD_JOIN)));
         return;
     }
+    if (_bountyShown)
+        return;
     if (_teacherOffer) {
         _optionButtons.push_back(CreateButton("HouseNpcDialogue_Option0", {480, 160}, {139, 29}, BUTTON_TYPE_NORMAL, 0, UIMSG_SelectHouseNPCDialogueOption,
                                               std::to_underlying(DIALOGUE_MASTERY_TEACHER_LEARN)));
@@ -485,15 +519,48 @@ void GUIWindow_MM6House::learnFromTeacher() {
     refreshTopics();
 }
 
+void GUIWindow_MM6House::huntBounty() {
+    const HouseId slot = bountySlot(houseId());
+    if (pParty->PartyTimes.bountyHuntNextGenTime[slot] <= pParty->GetPlayingTime()) {
+        pParty->monster_for_hunting_killed[slot] = false;
+        pParty->PartyTimes.bountyHuntNextGenTime[slot] = Time::fromMonths(pParty->GetPlayingTime().toMonths() + 1);
+        pParty->monster_id_for_hunting[slot] = randomBountyMonster();
+    }
+    const MonsterId monster = pParty->monster_id_for_hunting[slot];
+    const int level = monster == MONSTER_INVALID ? 0 : pMonsterStats->infos[monster].level;
+    int text = monster == MONSTER_INVALID ? 369 : 367; // "Someone has already claimed the bounty", or "This month's bounty is on a %s".
+    if (pParty->monster_for_hunting_killed[slot]) {
+        if (monster != MONSTER_INVALID) {
+            pParty->partyFindsGold(100 * level, GOLD_RECEIVE_SHARE);
+            for (Character &character : pParty->pCharacters)
+                mm6::writeCharacterEventVariable(character, EVENT_Set, std::to_underlying(VAR_Award), kBountiesAward);
+            pParty->mm6Reputation += level;
+            ++pParty->uNumBountiesCollected;
+            pParty->monster_id_for_hunting[slot] = MONSTER_INVALID;
+            pParty->monster_for_hunting_killed[slot] = false;
+        }
+        text = 368; // "Congratulations on defeating the %s!"
+    }
+    if (monster == MONSTER_INVALID) {
+        current_npc_text = pNPCTopics[text].pText;
+    } else {
+        const std::string name = fmt::format("{::}{}{::}", colorTable.PaleCanary.tag(), pMonsterStats->infos[monster].name, colorTable.White.tag());
+        current_npc_text = fmt::sprintf(pNPCTopics[text].pText, name, 100 * level); // NOLINT: this is not ::sprintf.
+    }
+    _bountyShown = true;
+    refreshTopics();
+}
+
 NPCData *GUIWindow_MM6House::selectedNpc() const {
     return _selected == -1 ? nullptr : _residents[_selected].npc;
 }
 
 bool GUIWindow_MM6House::goBack() {
     current_npc_text.clear();
-    if (_membershipOffer || _teacherOffer) {
+    if (_membershipOffer || _teacherOffer || _bountyShown) {
         _membershipOffer.reset();
         _teacherOffer.reset();
+        _bountyShown = false;
         refreshTopics();
         return true;
     }
@@ -985,6 +1052,10 @@ void mm6SelectHouseTopic(DialogueId topic) {
     }
     if (event >= kFirstTeacherTopic && event <= kLastTeacherTopic) {
         house->offerTeacherTraining(event);
+        return;
+    }
+    if (event == kBountyHuntTopic) {
+        house->huntBounty();
         return;
     }
     handleScriptedNPCTopicSelection(topic, npc);

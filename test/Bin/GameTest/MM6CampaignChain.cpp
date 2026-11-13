@@ -59,12 +59,14 @@ static void clickArrow(EngineController &game, UIMessageType arrow, int times) {
 }
 
 static std::vector<std::pair<Vec3f, int>> placesNextTo(Vec3f target) {
-    // Positions 150 units to each side of the target with a floor under them, and the yaws that face the target.
+    // Floor positions 150 units to each side of the target, and the yaws that face the target.
     std::vector<std::pair<Vec3f, int>> result;
     for (Vec3f offset : {Vec3f(0, -150, 0), Vec3f(-150, 0, 0), Vec3f(0, 150, 0), Vec3f(150, 0, 0)}) {
         int sectorId = 0;
-        if (GetIndoorFloorZ(target + offset + Vec3f(0, 0, 40), &sectorId) != -30000)
-            result.emplace_back(target + offset, std::lround(std::atan2(-offset.y, -offset.x) * 180 / std::numbers::pi));
+        Vec3f position = target + offset;
+        position.z = GetIndoorFloorZ(position + Vec3f(0, 0, 40), &sectorId);
+        if (position.z != -30000)
+            result.emplace_back(position, std::lround(std::atan2(-offset.y, -offset.x) * 180 / std::numbers::pi));
     }
     return result;
 }

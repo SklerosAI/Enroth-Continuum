@@ -30,6 +30,7 @@
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6MonsterPreferences.h"
 #include "Engine/MM6/MM6Portraits.h"
+#include "Engine/MM6/MM6Potion.h"
 #include "Engine/MM6/MM6SpellItems.h"
 #include "Engine/MM6/MM6SpellLearning.h"
 #include "Engine/MM6/MM6ConsumableRules.h"
@@ -3395,10 +3396,22 @@ void Character::useItem(int targetCharacter, bool isPortraitClick) {
     }
     if (engine->gameTitle() == GameTitle::MM6 &&
         mm6::shouldBlockDirectUse(pParty->pPickedItem.itemId, pParty->pPickedItem.type())) {
-        // MM6 herb and potion effects have not been established. In particular,
-        // the inherited reagent branch has contradictory MM6 ID 161 cases.
-        engine->_statusBar->setEvent(LSTR_S_CAN_NOT_BE_USED_THAT_WAY, pParty->pPickedItem.GetDisplayName());
-        pAudioPlayer->playUISound(SOUND_error);
+        if (!mm6::drinkPotion(*playerAffected, pParty->pPickedItem.itemId, pParty->GetPlayingTime())) {
+            engine->_statusBar->setEvent(LSTR_S_CAN_NOT_BE_USED_THAT_WAY, pParty->pPickedItem.GetDisplayName());
+            pAudioPlayer->playUISound(SOUND_error);
+            return;
+        }
+        pAudioPlayer->playUISound(pParty->pPickedItem.type() == ITEM_TYPE_REAGENT ? SOUND_eat : SOUND_drink);
+        if (pGUIWindow_CurrentMenu && pGUIWindow_CurrentMenu->eWindowType != WINDOW_NULL)
+            engine->_messageQueue->addMessageCurrentFrame(UIMSG_Escape, 0, 0);
+        if (pParty->bTurnBasedModeOn) {
+            pParty->pTurnBasedCharacterRecoveryTimes[targetCharacter] = 100_ticks;
+            SetRecoveryTime(100_ticks);
+            pTurnEngine->ApplyPlayerAction();
+        } else {
+            SetRecoveryTime(debug_non_combat_recovery_mul * flt_debugrecmod3 * 100_ticks);
+        }
+        pParty->takeHoldingItem(); // No empty bottle comes back.
         return;
     }
     if (pParty->pPickedItem.isReagent()) {

@@ -411,6 +411,69 @@ GAME_TEST(MM6Rest, FinishedWaitWakesSleeper) {
     EXPECT_EQ(screenTape.back(), SCREEN_REST); // The party woke before the rest screen closed.
 }
 
+GAME_TEST(MM6Rest, NightWithAndWithoutRest) {
+    // Reputation didn't fade at 3 am. A party that rested first stays strong through the night, one that didn't turns
+    // weak.
+    for (bool rested : {false, true}) {
+        game.goToMainMenu();
+        startNewGameThroughInput(game);
+        pParty->mm6Reputation = 500;
+        auto weakTape = charTapes.custom([](const Character &character) { return character.conditions.has(CONDITION_WEAK); });
+        auto foodTape = tapes.food();
+        auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+        test.startTaping();
+
+        game.pressAndReleaseKey(PlatformKey::KEY_R);
+        game.tick();
+        if (rested) {
+            game.pressGuiButton("Rest_RestAndHeal");
+            game.tick();
+            while (current_screen_type == SCREEN_REST)
+                game.tick(); // The party sleeps eight hours.
+            game.pressAndReleaseKey(PlatformKey::KEY_R);
+            game.tick();
+        }
+        game.pressGuiButton("Rest_WaitTillDawn");
+        game.tick();
+        while (currentRestType != REST_NONE)
+            game.tick(); // The night passes.
+        test.stopTaping();
+
+        EXPECT_EQ(weakTape.back(), std::vector({!rested, !rested, !rested, !rested}));
+        EXPECT_EQ(foodTape, tape(7, 6)); // Rest and Heal on grass eats one food, so does a night without rest.
+        EXPECT_EQ(reputationTape, tape(500, 495));
+    }
+}
+
+GAME_TEST(MM6Rest, DeathWithoutRestSkipsInsanity) {
+    // A character who died after nights without rest could go insane on the same night too, MM6 rolls no insanity for
+    // him and zeroes his HP and SP.
+    startNewGameThroughInput(game);
+    auto deadInsaneTape = charTapes.custom([](const Character &character) {
+        return std::pair(character.conditions.has(CONDITION_DEAD), character.conditions.has(CONDITION_INSANE));
+    });
+    auto hpTape = charTapes.hps();
+    auto mpTape = charTapes.mps();
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    auto died = [] { return std::ranges::any_of(pParty->pCharacters, [](const Character &character) { return character.IsDead(); }); };
+    for (int night = 0; night < 10 && !died(); night++) {
+        game.pressGuiButton("Rest_WaitTillDawn");
+        game.tick();
+        while (currentRestType != REST_NONE)
+            game.tick(); // A night passes.
+    }
+    ASSERT_TRUE(died());
+
+    const int dead = std::ranges::find_if(pParty->pCharacters, [](const Character &character) { return character.IsDead(); }) - pParty->pCharacters.begin();
+    const int death = std::ranges::find_if(deadInsaneTape, [dead](const auto &frame) { return frame[dead].first; }) - deadInsaneTape.begin();
+    EXPECT_EQ(deadInsaneTape[death][dead].second, deadInsaneTape[death - 1][dead].second);
+    EXPECT_EQ(hpTape.back()[dead], 0);
+    EXPECT_EQ(mpTape.back()[dead], 0);
+}
+
 GAME_TEST(MM6Conditions, SpiderPoisonsAndRatDiseases) {
     // A spider's bite poisons and a rat's bite diseases, and the condition lowers the victim's might.
     startNewGameThroughInput(game);

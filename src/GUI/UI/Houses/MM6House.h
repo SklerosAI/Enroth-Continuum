@@ -51,8 +51,11 @@ class GUIWindow_MM6House : public GUIWindow_House {
     void offerGuildMembership(int guild);
 
     /**
-     * Takes the offered membership: the party pays and every character joins the guild. Does nothing when the active
-     * character can't act, is a member already, or the party can't pay.
+     * Takes the offered membership: the party pays, every character joins the guild with the award chime, and the NPC
+     * drops its third topic. Does nothing when the active character can't act, is a member already, or the party
+     * can't pay.
+     *
+     * @offset 0x496A96 (MM6)
      */
     void joinGuild();
 

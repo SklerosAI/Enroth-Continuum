@@ -801,8 +801,9 @@ GAME_TEST(MM6Houses, OptionFocusColor) {
 }
 
 GAME_TEST(MM6Houses, GuildMembership) {
-    // Harold Hess's "Blade's End Membership" topic did nothing. He tells what joining costs and offers to join, and
-    // joining makes every character a member for 25 gold. Asked again, he says the party is in already.
+    // Joining Blades' End through Harold Hess made the party members silently and left his membership topic up. He
+    // tells what joining costs and offers to join, joining makes every character a member for 25 gold with the award
+    // chime and reaction, and he drops the topic.
     auto goldTape = tapes.gold();
     auto membersTape = tapes.custom([] {
         std::vector<bool> result;
@@ -812,19 +813,31 @@ GAME_TEST(MM6Houses, GuildMembership) {
     });
     auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
     auto textTape = tapes.custom([] { return current_npc_text.substr(0, 20); }); // The start of what the NPC says.
+    auto topicsTape = tapes.custom([] {
+        const NPCData &harold = pNPCStats->pNPCData[33];
+        return std::vector<unsigned>{harold.dialogue_1_evt_id, harold.dialogue_2_evt_id, harold.dialogue_3_evt_id};
+    });
+    auto soundsTape = tapes.sounds();
+    auto portraitsTape = tapes.custom([] {
+        std::vector<PortraitId> result;
+        for (const Character &character : pParty->pCharacters)
+            result.push_back(character.portrait);
+        return result;
+    });
     startMM6NewGame(game);
     test.startTaping();
     enterThroughDoor(game, kHaroldHessDoor, 270);
     clickHouseOption(game, "Blade's End Membership");
     clickHouseOption(game, "Join Blades' End for 25 gold");
-    clickHouseOption(game, "Blade's End Membership");
 
     EXPECT_EQ(goldTape, tape(200, 175));
     EXPECT_EQ(membersTape, tape(std::vector<bool>(4, false), std::vector<bool>(4, true)));
     using Lines = std::vector<std::string>;
-    EXPECT_EQ(optionsTape, tape(Lines(), Lines{"Blade's End Membership"}, Lines{"Join Blades' End for 25 gold"}, Lines{"Blade's End Membership"},
-                                Lines{"You're already a member of this guild."}));
-    EXPECT_EQ(textTape, tape(std::string(), std::string("HEY!  The Blades' En"), std::string(), std::string("HEY!  The Blades' En")));
+    EXPECT_EQ(optionsTape, tape(Lines(), Lines{"Blade's End Membership"}, Lines{"Join Blades' End for 25 gold"}, Lines()));
+    EXPECT_EQ(textTape, tape(std::string(), std::string("HEY!  The Blades' En"), std::string()));
+    EXPECT_EQ(topicsTape, tape(std::vector<unsigned>{0, 0, 386}, std::vector<unsigned>{0, 0, 0}));
+    EXPECT_EQ(std::ranges::count(soundsTape.flatten(), SOUND_quest), 4); // Each new member's award chime.
+    EXPECT_EQ(portraitsTape.back(), std::vector<PortraitId>(4, PORTRAIT_WIDE_SMILE)); // The award reaction, the portraits idle before it.
 }
 
 GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {

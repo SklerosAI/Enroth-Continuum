@@ -17,6 +17,7 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineIocContainer.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Evt/MM6EventVariableDispatch.h"
 #include "Engine/Evt/MM6ItemEventCompare.h"
 #include "Engine/Localization.h"
 #include "Engine/mm7_data.h"
@@ -355,10 +356,12 @@ void GUIWindow_MM6House::joinGuild() {
         return;
     pParty->TakeGold(price);
     for (Character &member : pParty->pCharacters)
-        member._achievedAwardsBits.set(award);
+        mm6::writeCharacterEventVariable(member, EVENT_Set, std::to_underlying(VAR_Award), std::to_underlying(award));
+    selectedNpc()->dialogue_3_evt_id = 0; // MM6 clears the third topic whichever one held the offer.
     _membershipOffer.reset();
     current_npc_text.clear();
     refreshTopics();
+    pParty->activeCharacter().playReaction(SPEECH_JOINED_GUILD);
 }
 
 void GUIWindow_MM6House::offerExpertTraining(int topic) {

@@ -9,6 +9,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/MM6/MM6CombatRules.h"
+#include "Engine/MM6/MM6PartyHostility.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6EncounterMonster.h"
 #include "Engine/MM6/MM6Finale.h"
@@ -3994,7 +3995,7 @@ void Actor::MakeActorAIList_ODM() {
 
         if (distance < 5632) {
             actor.ResetHostile();
-            if (actor.ActorEnemy() || actor.GetActorsRelation(0) != HOSTILITY_FRIENDLY) {
+            if (engine->gameTitle() == GameTitle::MM6 ? mm6::isMonsterHostileToParty(actor) : actor.ActorEnemy() || actor.GetActorsRelation(0) != HOSTILITY_FRIENDLY) {
                 actor.attributes |= ACTOR_HOSTILE;
                 if (distance < 5120)
                     pParty->SetYellowAlert();
@@ -4049,7 +4050,7 @@ int Actor::MakeActorAIList_BLV() {
         // actor is in range
         if (distance < 10240) {
             actor.ResetHostile();
-            if (actor.ActorEnemy() || actor.GetActorsRelation(0) != HOSTILITY_FRIENDLY) {
+            if (engine->gameTitle() == GameTitle::MM6 ? mm6::isMonsterHostileToParty(actor) : actor.ActorEnemy() || actor.GetActorsRelation(0) != HOSTILITY_FRIENDLY) {
                 actor.attributes |= ACTOR_HOSTILE;
                 if (!(pParty->GetRedAlert()) && (double)distance < meleeRange)
                     pParty->SetRedAlert();

@@ -321,6 +321,18 @@ GAME_TEST(MM6Dungeons, TempleBatsBiteTheParty) {
     EXPECT_GT(huntersTape.back(), 0);
 }
 
+GAME_TEST(MM6Dungeons, TempleEntranceRaisesTheAlert) {
+    // The alert gems stayed green with the Abandoned Temple's bats in sight of the entrance.
+    startNewGameThroughInput(game);
+    enterD02(game);
+    auto yellowTape = tapes.custom([] { return pParty->GetYellowAlert(); });
+    test.startTaping();
+
+    game.tick();
+
+    EXPECT_EQ(yellowTape, tape(true));
+}
+
 GAME_TEST(MM6Dungeons, RestNearAndFarFromMonsters) {
     // The Abandoned Temple's monsters never noticed the party, and the party could rest next to them. Now the bats of
     // the entrance hall bite and the party can't rest there. In the cage room, far from every monster, it rests and

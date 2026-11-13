@@ -4,7 +4,7 @@
 
 /**
  * Portraits MM6 picks from for a generated street NPC, by sex. MM6.exe draws one uniformly at 0x469258 (female) and
- * 0x46926E (male), with one random call. icons.lod has no `npc397`..`npc500`, MM7's elf and goblin ranges.
+ * 0x46926E (male), with one random call. icons.lod has no `npc397`..`npc500`, where MM7's elf portraits are.
  */
 inline constexpr std::array<int, 120> mm6StreetNpcMalePortraits = {
     1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 32, 33,

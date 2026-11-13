@@ -199,7 +199,8 @@ GAME_TEST(MM6Potion, EmptyBottleStaysInHand) {
 }
 
 GAME_TEST(MM6TurnBased, PartyAndMonstersTakeTurns) {
-    // MM6 drew no turn-based indicator, and the party had MM7's movement phase between the rounds.
+    // MM6 drew no turn-based indicator, the party had MM7's movement phase between the rounds, and every monster waited
+    // for the party's first turn.
     startNewGameThroughInput(game);
     const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
     const int goblin = game.spawnMonster(pParty->pos + ahead * 150, static_cast<MonsterId>(76), SPAWN_DUMMY)->id;
@@ -209,6 +210,12 @@ GAME_TEST(MM6TurnBased, PartyAndMonstersTakeTurns) {
     auto timeTape = tapes.custom([] { return pParty->GetPlayingTime().ticks(); });
     auto goblinHpTape = actorTapes.hp(goblin);
     auto soundsTape = tapes.sounds();
+    auto queueTape = tapes.custom([] {
+        std::vector<std::pair<ObjectType, int>> queue;
+        for (const TurnBased_QueueElem &element : pTurnEngine->pQueue)
+            queue.emplace_back(element.uPackedID.type(), element.actor_initiative);
+        return queue;
+    });
     test.startTaping();
 
     game.pressAndReleaseKey(PlatformKey::KEY_RETURN);
@@ -247,6 +254,11 @@ GAME_TEST(MM6TurnBased, PartyAndMonstersTakeTurns) {
     EXPECT_CONTAINS(timeTape.adjacentDeltas(), 426); // A round is 100 game seconds.
     EXPECT_MISSES(timeTape.adjacentDeltas(), 213); // MM7's movement phase.
     EXPECT_LT(goblinHpTape.min(), 13);
+    const std::vector<std::pair<ObjectType, int>> &startQueue = *std::ranges::find_if(queueTape, [](const auto &queue) { return !queue.empty(); });
+    const auto firstCharacter = std::ranges::find(startQueue, OBJECT_Character, &std::pair<ObjectType, int>::first);
+    EXPECT_EQ(firstCharacter - startQueue.begin(), 6); // The monsters that rolled initiative 1 of 1, 3 and 5 act first.
+    for (const auto &[type, initiative] : startQueue)
+        EXPECT_LE(initiative, 5);
     EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(207)); // Entering turn-based mode.
     EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(206)); // Leaving it.
 }

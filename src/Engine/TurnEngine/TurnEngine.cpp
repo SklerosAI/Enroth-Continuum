@@ -151,11 +151,12 @@ void stru262_TurnBased::Start() {
         }
     }
 
+    const bool isMM6 = engine->gameTitle() == GameTitle::MM6;
     a_players_count = 0;
     for (int k = 0; k < this->pQueue.size(); ++k) {
         // set initial initiative for turn actors
         if (this->pQueue[k].uPackedID.type() == OBJECT_Character) {
-            if (pParty->pCharacters[this->pQueue[k].uPackedID.id()].timeToRecovery) {
+            if (!isMM6 && pParty->pCharacters[this->pQueue[k].uPackedID.id()].timeToRecovery) { // MM6 ranks every character by attack recovery.
                 this->pQueue[k].actor_initiative = (int)((double)pParty->pCharacters[this->pQueue[k].uPackedID.id()].timeToRecovery.ticks() * 0.46875);
             } else {
                 activ_players[a_players_count] = k;
@@ -170,7 +171,8 @@ void stru262_TurnBased::Start() {
         } else {  // fot non player and actor
             this->pQueue[k].actor_initiative = 666;
         }
-        this->pQueue[k].actor_initiative += 16;
+        if (!isMM6)
+            this->pQueue[k].actor_initiative += 16;
     }
 
     if (a_players_count > 0) {

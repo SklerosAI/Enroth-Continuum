@@ -408,6 +408,8 @@ GAME_TEST(MM6Rest, FinishedWaitWakesSleeper) {
     for (int frame = 0; frame < 300 && !asleep(); frame++)
         game.tick(); // The beholder shoots, a bolt can miss and a character can resist.
     ASSERT_TRUE(asleep());
+    for (Actor &actor : pActors)
+        actor.aiState = Removed; // A hostile monster within 5120 units refuses the wait, and the town's monsters hunt the party.
     game.teleportTo(engine->_currentLoadedMapId, nearestGround(0, 8000), 0); // Grass out of the beholder's sight.
     game.tick();
     while (pParty->uFlags & PARTY_FLAG_AIRBORNE)

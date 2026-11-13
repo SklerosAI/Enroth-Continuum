@@ -65,7 +65,8 @@ void useMM6CampaignChainIndoorEventFace(EngineController &game, int eventId);
  * Teleports next to a pressure plate of an event on the current indoor map and walks onto it.
  *
  * @param game                          Engine controller of the running test.
- * @param eventId                       Local event of the plate. Its first floor face that is a pressure plate is used.
+ * @param eventId                       Local event of the plate. The party walks towards its first floor face that is
+ *                                      a pressure plate and stops on any floor face of the event.
  */
 void walkOntoMM6CampaignChainIndoorEventPlate(EngineController &game, int eventId);
 

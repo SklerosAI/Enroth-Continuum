@@ -197,7 +197,9 @@ void walkOntoMM6CampaignChainIndoorEventPlate(EngineController &game, int eventI
         return face.eventId == eventId && face.Pressure_Plate() && face.facePlane.normal.z > 0.9f;
     });
     ASSERT_NE(plate, pIndoor->faces.end());
-    const int plateId = plate - pIndoor->faces.begin();
+    const auto onPlate = [eventId] { // An event can have several plates side by side.
+        return pParty->floor_face_id >= 0 && pIndoor->faces[pParty->floor_face_id].eventId == eventId;
+    };
     const Vec3f center = plate->boundingBox.center();
     const float reach = std::max(plate->boundingBox.x2 - plate->boundingBox.x1, plate->boundingBox.y2 - plate->boundingBox.y1) / 2 + 100;
     for (Vec3f direction : {Vec3f(0, -1, 0), Vec3f(-1, 0, 0), Vec3f(0, 1, 0), Vec3f(1, 0, 0)}) {
@@ -208,10 +210,10 @@ void walkOntoMM6CampaignChainIndoorEventPlate(EngineController &game, int eventI
             continue; // No floor there.
         game.teleportTo(engine->_currentLoadedMapId, start, std::lround(std::atan2(-direction.y, -direction.x) * 180 / std::numbers::pi));
         game.pressKey(PlatformKey::KEY_UP);
-        for (int i = 0; i < 30 && pParty->floor_face_id != plateId; i++)
+        for (int i = 0; i < 30 && !onPlate(); i++)
             game.tick();
         game.releaseKey(PlatformKey::KEY_UP);
-        ASSERT_EQ(pParty->floor_face_id, plateId);
+        ASSERT_TRUE(onPlate());
         return;
     }
     FAIL() << "No floor next to the plate of event " << eventId;

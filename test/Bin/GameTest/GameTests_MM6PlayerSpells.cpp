@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cctype>
 #include <cstdint>
 #include <functional>
@@ -104,6 +105,28 @@ static void castFromSpellbook(EngineController &game, SpellId spell) {
     selectInSpellbook(game, spell);
     game.pressGuiButton(fmt::format("SpellBook_Spell{}", spellIndexInMagicSchool(spell))); // A second click casts it.
     game.tick(2); // The book closes, the spell takes effect or opens the target picker on the next frame.
+}
+
+static void castAndRecover(EngineController &game, SpellId spell) {
+    castFromSpellbook(game, spell);
+    for (int frame = 0; frame < 100 && pParty->pCharacters[SORCERER].timeToRecovery > 0_ticks; frame++)
+        game.tick(); // The sorcerer recovers from the cast.
+}
+
+static std::vector<PartyBuff> activePartyBuffs() {
+    std::vector<PartyBuff> result;
+    for (PartyBuff buff : pParty->pPartyBuffs.indices())
+        if (pParty->pPartyBuffs[buff].Active())
+            result.push_back(buff);
+    return result;
+}
+
+static std::vector<CharacterBuff> activeCharacterBuffs(const Character &character) {
+    std::vector<CharacterBuff> result;
+    for (CharacterBuff buff : character.pCharacterBuffs.indices())
+        if (character.pCharacterBuffs[buff].Active())
+            result.push_back(buff);
+    return result;
 }
 
 static void setQuickSpellFromSpellbook(EngineController &game, SpellId spell) {
@@ -465,4 +488,29 @@ GAME_TEST(MM6PlayerSpells, FirstAidShortensTargetRecovery) {
     game.tick();
 
     EXPECT_EQ(recoveryTape, tape(Duration(), Duration::fromTicks(4)));
+}
+
+GAME_TEST(MM6PlayerSpells, MonsterDispelMagicEndsEveryBuff) {
+    // A monster's Dispel Magic left Protection from Magic on the party, with its icon on the buff shelf.
+    auto partyBuffsTape = tapes.custom([] { return activePartyBuffs(); });
+    auto characterBuffsTape = charTapes.custom([](const Character &character) { return activeCharacterBuffs(character); });
+    auto quadsTape = tapes.hudQuads();
+    enterFirstMapFromNewGame(game);
+    for (SpellId spell : {mm6::SPELL_BLESS, mm6::SPELL_HEROISM, static_cast<SpellId>(3), mm6::SPELL_FLY, mm6::SPELL_PROTECTION_FROM_MAGIC}) {
+        teachSorcerer(spell, CombinedSkillValue(4, MASTERY_EXPERT));
+        castAndRecover(game, spell);
+    }
+    test.startTaping();
+
+    Actor *lich = game.spawnMonster(pParty->pos + Vec3f(0, 1500, 0), static_cast<MonsterId>(94), SPAWN_STATIONARY);
+    lich->monsterInfo.spell1UseChance = 100;
+    for (int frame = 0; frame < 100 && pParty->pPartyBuffs[PARTY_BUFF_RESIST_FIRE].Active(); frame++)
+        game.tick(); // The lich turns to the party and casts.
+
+    EXPECT_EQ(partyBuffsTape, tape(std::vector{PARTY_BUFF_RESIST_FIRE, PARTY_BUFF_FLY, PARTY_BUFF_PROTECTION_FROM_MAGIC}, std::vector<PartyBuff>()));
+    const std::vector blessed = {CHARACTER_BUFF_BLESS, CHARACTER_BUFF_HEROISM};
+    const std::vector<CharacterBuff> none;
+    EXPECT_EQ(characterBuffsTape, tape({blessed, blessed, blessed, blessed}, {none, none, none, none})); // The new party fails every save.
+    EXPECT_CONTAINS(quadsTape.front().map(withoutAnimationFrame), "i6_magc");
+    EXPECT_FALSE(std::ranges::contains(quadsTape.back().map(withoutAnimationFrame), "i6_magc"));
 }

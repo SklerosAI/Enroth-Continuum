@@ -420,14 +420,14 @@ inline void castMonsterSpell(int actorId, const AIDirection &direction, SpellId 
             return;
         }
         case 80:
-            for (int i = 0; i < 13; i++)
-                pParty->pPartyBuffs[static_cast<PartyBuff>(i)].Reset(); // MM6 buffs keep their original slots.
+            for (SpellBuff &buff : pParty->pPartyBuffs)
+                buff.Reset();
             for (Character &character : pParty->pCharacters) {
                 const int luck = character.GetParameterBonus(character.GetActualLuck());
                 if (grng->random(30 + luck + characterResistance(character, DAMAGE_MAGIC, *pParty, 0)) >= 30)
                     continue;
-                for (int i = 0; i < 12; i++)
-                    character.pCharacterBuffs[static_cast<CharacterBuff>(i)].Reset();
+                for (SpellBuff &buff : character.pCharacterBuffs)
+                    buff.Reset();
             }
             pAudioPlayer->playSpellSound(spell, false, SOUND_MODE_PID, Pid(OBJECT_Actor, actorId));
             return;

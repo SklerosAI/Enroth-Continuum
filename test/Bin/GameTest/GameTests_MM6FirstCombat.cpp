@@ -217,3 +217,25 @@ GAME_TEST(MM6Rest, VolcanicGroundCostsFourFood) {
 
     EXPECT_EQ(foodTape, tape(7, 3));
 }
+
+GAME_TEST(MM6Rest, NotEnoughFood) {
+    // Without enough food the party doesn't rest, the original plays the error sound and no speech.
+    startNewGameThroughInput(game);
+    pParty->SetFood(0);
+    pParty->pCharacters[0].health = 1;
+    auto hpTape = charTapes.hp(0);
+    auto statusTape = tapes.statusBar();
+    auto soundsTape = tapes.sounds();
+    auto screenTape = tapes.screen();
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_RestAndHeal");
+    game.tick();
+
+    EXPECT_EQ(hpTape, tape(1));
+    EXPECT_CONTAINS(statusTape, "You don't have enough food to rest");
+    EXPECT_CONTAINS(soundsTape.flatten(), SOUND_error);
+    EXPECT_EQ(screenTape, tape(SCREEN_REST));
+}

@@ -1186,7 +1186,9 @@ void Game::processQueuedMessages() {
                 }
                 if (pParty->GetFood() < foodRequiredToRest) {
                     engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_FOOD_TO_REST);
-                    if (pParty->hasActiveCharacter() && pParty->activeCharacter().CanAct()) {
+                    if (engine->gameTitle() == GameTitle::MM6) {
+                        pAudioPlayer->playUISound(SOUND_error);
+                    } else if (pParty->hasActiveCharacter() && pParty->activeCharacter().CanAct()) {
                         pParty->activeCharacter().playReaction(SPEECH_NOT_ENOUGH_FOOD);
                     }
                 } else {

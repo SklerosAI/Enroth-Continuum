@@ -867,6 +867,10 @@ void Party::restOneFrame() {
     }
 
     if (!remainingRestTime) {
+        if (engine->gameTitle() == GameTitle::MM6)
+            for (Character &character : pParty->pCharacters)
+                character.conditions.reset(CONDITION_SLEEP); // MM6 wakes everyone when any rest or wait ends.
+
         if (currentRestType == REST_HEAL) {
             // Close rest screen when healing is done.
             // Resting type is reset on Escape processing

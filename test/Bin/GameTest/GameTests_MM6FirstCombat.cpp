@@ -73,17 +73,18 @@ static void drinkFromBackpack(EngineController &game, PlatformKey characterKey, 
     game.tick();
 }
 
-static Vec3f nearestVolcanicGround() {
-    // Center of the volcanic tile nearest the party.
+static Vec3f nearestGround(int sourceTileset, float minDistance = 0) {
+    // Center of the nearest tile of the given MM6 tileset at least minDistance away from the party.
     Vec3f result;
     float bestDistance = std::numeric_limits<float>::max();
     for (int y = 0; y < 128; y++) {
         for (int x = 0; x < 128; x++) {
-            if (pOutdoor->pTerrain.tileDataByGrid(Pointi(x, y)).sourceTileset != 3)
+            if (pOutdoor->pTerrain.tileDataByGrid(Pointi(x, y)).sourceTileset != sourceTileset)
                 continue;
             const Vec3f center((x - 64) * 512 + 256, (63 - y) * 512 + 256, 0);
-            if ((center - pParty->pos).xy().length() < bestDistance) {
-                bestDistance = (center - pParty->pos).xy().length();
+            const float distance = (center - pParty->pos).xy().length();
+            if (distance >= minDistance && distance < bestDistance) {
+                bestDistance = distance;
                 result = center;
             }
         }
@@ -281,7 +282,7 @@ GAME_TEST(MM6Rest, RestAndHealOnGrass) {
 GAME_TEST(MM6Rest, VolcanicGroundCostsFourFood) {
     // Resting on New Sorpigal's volcanic ground cost two food, MM6 asks four there.
     startNewGameThroughInput(game);
-    game.teleportTo(engine->_currentLoadedMapId, nearestVolcanicGround(), 0);
+    game.teleportTo(engine->_currentLoadedMapId, nearestGround(3), 0);
     auto foodTape = tapes.food();
     test.startTaping();
 
@@ -375,6 +376,39 @@ GAME_TEST(MM6Rest, FirstNightWithoutRestWeakens) {
     EXPECT_EQ(clockTape.back(), std::pair(5, 0));
     EXPECT_EQ(restTape, tape(REST_NONE, REST_WAIT, REST_NONE));
     EXPECT_EQ(pActors.size(), actorCount); // Waiting rolls no encounter.
+}
+
+GAME_TEST(MM6Rest, FinishedWaitWakesSleeper) {
+    // A character a monster put to sleep slept on after a wait, MM6 wakes everyone when any wait ends.
+    startNewGameThroughInput(game);
+    for (Character &character : pParty->pCharacters)
+        character.health = 200; // The beholder's bolts would knock a new character out.
+    const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+    Actor *beholder = game.spawnMonster(pParty->pos + ahead * 400, static_cast<MonsterId>(10), SPAWN_STATIONARY);
+    beholder->monsterInfo.specialAttackLevel = 10; // Level 10 times 10 makes every bolt try.
+    auto sleepTape = charTapes.custom([](const Character &character) { return character.conditions.has(CONDITION_SLEEP); });
+    auto restTape = tapes.custom([] { return currentRestType; });
+    auto screenTape = tapes.screen();
+    test.startTaping();
+
+    auto asleep = [] { return std::ranges::any_of(pParty->pCharacters, [](const Character &character) { return character.IsAsleep(); }); };
+    for (int frame = 0; frame < 300 && !asleep(); frame++)
+        game.tick(); // The beholder shoots, a bolt can miss and a character can resist.
+    ASSERT_TRUE(asleep());
+    game.teleportTo(engine->_currentLoadedMapId, nearestGround(0, 8000), 0); // Grass out of the beholder's sight.
+    game.tick();
+    while (pParty->uFlags & PARTY_FLAG_AIRBORNE)
+        game.tick(); // The party lands.
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_Wait1Hour");
+    game.tick();
+    while (currentRestType != REST_NONE)
+        game.tick(); // The hour passes.
+
+    EXPECT_EQ(sleepTape.back(), std::vector({false, false, false, false}));
+    EXPECT_EQ(restTape.back(), REST_NONE);
+    EXPECT_EQ(screenTape.back(), SCREEN_REST); // The party woke before the rest screen closed.
 }
 
 GAME_TEST(MM6Conditions, SpiderPoisonsAndRatDiseases) {

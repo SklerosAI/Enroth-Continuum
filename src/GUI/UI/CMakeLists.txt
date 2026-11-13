@@ -51,6 +51,7 @@ set(GUI_UI_HEADERS
         UIHouseEnums.h
         UIHouses.h
         MM6HouseServiceData.h
+        MM6GameMenuLayout.h
         MM6PartyCreationLayout.h
         MM6RoomDescriptors.h
         MM6TransitionDialog.h

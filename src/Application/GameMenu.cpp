@@ -24,6 +24,7 @@
 
 #include "GUI/GUIButton.h"
 #include "GUI/GUIMessageQueue.h"
+#include "GUI/UI/MM6GameMenuLayout.h"
 #include "GUI/UI/MM6SaveLoadMenu.h"
 #include "GUI/UI/UIGame.h"
 #include "GUI/UI/UISaveLoad.h"
@@ -81,6 +82,37 @@ void Game_OpenLoadGameDialog() {
     // LoadUI_Load(1);
     current_screen_type = SCREEN_LOADGAME;
     pGUIWindow_CurrentMenu = std::make_unique<GUIWindow_Load>(true);
+}
+
+struct VolumeSliderLayout {
+    Pointi leftArrow;
+    Pointi rightArrow;
+    int barX = 0;
+    int notchWidth = 0;
+};
+
+static VolumeSliderLayout volumeSliderLayout(int mm7Y, int mm6Y) {
+    if (engine->gameTitle() == GameTitle::MM6)
+        return {{mm6ControlsLeftArrowX, mm6Y}, {mm6ControlsRightArrowX, mm6Y}, mm6ControlsSliderX, mm6ControlsSliderNotch};
+    return {{243, mm7Y}, {435, mm7Y}, 263, 17};
+}
+
+/**
+ * @param level                         Current volume level.
+ * @param param                         4 for the left arrow, 5 for the right arrow, anything else for the bar.
+ * @param layout                        Where the slider is.
+ * @return                              New volume level, unclamped.
+ */
+static int clickVolumeSlider(int level, int param, const VolumeSliderLayout &layout) {
+    if (param == 4) {
+        new OnButtonClick(layout.leftArrow, {0, 0}, pBtn_SliderLeft, std::string(), false);
+        return level - 1;
+    }
+    if (param == 5) {
+        new OnButtonClick(layout.rightArrow, {0, 0}, pBtn_SliderRight, std::string(), false);
+        return level + 1;
+    }
+    return (EngineIocContainer::ResolveMouse()->position().x - layout.barX) / layout.notchWidth;
 }
 
 Menu::Menu() {
@@ -249,18 +281,7 @@ void Menu::EventLoop() {
                 continue;
 
             case UIMSG_ChangeMusicVolume: {
-                int new_level = engine->config->settings.MusicLevel.value();
-                if (param == 4) {
-                    new_level -= 1;
-                    new OnButtonClick({243, 216}, {0, 0}, pBtn_SliderLeft, std::string(), false);
-                } else if (param == 5) {
-                    new_level += 1;
-                    new OnButtonClick({435, 216}, {0, 0}, pBtn_SliderRight, std::string(), false);
-                } else {
-                    Pointi pt = mouse->position();
-                    new_level = (pt.x - 263) / 17;  // for mouse
-                }
-
+                int new_level = clickVolumeSlider(engine->config->settings.MusicLevel.value(), param, volumeSliderLayout(216, mm6ControlsMusicY));
                 engine->config->settings.MusicLevel.setValue(new_level);
                 pAudioPlayer->SetMusicVolume(engine->config->settings.MusicLevel.value());
                 pAudioPlayer->playSound(SOUND_hurp, SOUND_MODE_MUSIC);
@@ -268,18 +289,7 @@ void Menu::EventLoop() {
             }
 
             case UIMSG_ChangeSoundVolume: {
-                int new_level = engine->config->settings.SoundLevel.value();
-                if (param == 4) {
-                    new_level -= 1;
-                    new OnButtonClick({243, 162}, {0, 0}, pBtn_SliderLeft, std::string(), false);
-                } else if (param == 5) {
-                    new_level += 1;
-                    new OnButtonClick({435, 162}, {0, 0}, pBtn_SliderRight, std::string(), false);
-                } else {
-                    Pointi pt = mouse->position();
-                    new_level = (pt.x - 263) / 17;
-                }
-
+                int new_level = clickVolumeSlider(engine->config->settings.SoundLevel.value(), param, volumeSliderLayout(162, mm6ControlsSoundY));
                 engine->config->settings.SoundLevel.setValue(new_level);
 
                 pAudioPlayer->SetMasterVolume(engine->config->settings.SoundLevel.value());
@@ -299,18 +309,7 @@ void Menu::EventLoop() {
                 engine->config->settings.ShowHits.toggle();
                 continue;
             case UIMSG_ChangeVoiceVolume: {
-                int new_level = engine->config->settings.VoiceLevel.value();
-                if (param == 4) {
-                    new_level -= 1;
-                    new OnButtonClick({243, 270}, {0, 0}, pBtn_SliderLeft, std::string(), false);
-                } else if (param == 5) {
-                    new_level += 1;
-                    new OnButtonClick({435, 270}, {0, 0}, pBtn_SliderRight, std::string(), false);
-                } else {
-                    Pointi pt = mouse->position();
-                    new_level = (pt.x - 263) / 17;
-                }
-
+                int new_level = clickVolumeSlider(engine->config->settings.VoiceLevel.value(), param, volumeSliderLayout(270, mm6ControlsVoiceY));
                 engine->config->settings.VoiceLevel.setValue(new_level);
                 pAudioPlayer->SetVoiceVolume(engine->config->settings.VoiceLevel.value());
                 if (engine->config->settings.VoiceLevel.value() > 0) {
@@ -337,7 +336,7 @@ void Menu::EventLoop() {
             case UIMSG_Escape:
                 confirmationState = CONFIRM_NONE;
 
-                if (current_screen_type == SCREEN_MENU) {
+                if (current_screen_type == SCREEN_MENU || engine->gameTitle() == GameTitle::MM6) { // MM6 leaves every menu screen straight to the game.
                     gameTimer->setPaused(false);
                     current_screen_type = SCREEN_GAME;
                 } else if (current_screen_type == SCREEN_SAVEGAME ||

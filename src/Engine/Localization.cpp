@@ -197,6 +197,17 @@ void Localization::initializeSpellNames() {
 }
 
 void Localization::initializeNpcProfessionNames() {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        // MM6.exe's profession names, global.txt ids by npcprof.txt profession id.
+        static constexpr std::array<int, 78> mm6ProfessionNameIds = {
+            153, 308, 309, 7, 306, 310, 311, 312, 313, 314, 105, 315, 316, 317, 115, 318, 319, 320, 321, 322,
+            323, 293, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341,
+            342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352, 353, 305, 354, 355, 356, 357, 358, 359, 360,
+            361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 42, 100, 373, 303, 374, 558};
+        for (NpcProfession profession : _npcProfessionNames.indices())
+            this->_npcProfessionNames[profession] = this->_localizationStrings[static_cast<LstrId>(mm6ProfessionNameIds[std::to_underlying(profession)])];
+        return;
+    }
     this->_npcProfessionNames[NPC_PROFESSION_SMITH]          = this->_localizationStrings[LSTR_SMITH];
     this->_npcProfessionNames[NPC_PROFESSION_ARMORER]        = this->_localizationStrings[LSTR_ARMORER];
     this->_npcProfessionNames[NPC_PROFESSION_ALCHEMIST]      = this->_localizationStrings[LSTR_ALCHEMIST];

@@ -152,6 +152,7 @@ static const Vec3f kTrainingDoor(-13874, -7032, 300); // Training Grounds, facin
 static const Vec3f kTavernDoor(-8784, -8690, 300); // A Lonely Knight, facing east.
 static const Vec3f kBankDoor(-10800, -7416, 300); // In front of the bank, facing west.
 static constexpr int kBankDoorFace = 1928;
+static const Vec3f kBufordHouseDoor(-7014, -5798, 300); // In front of Buford T. Allman's house, facing north.
 static const Vec3f kStableDoor(-10346, -9472, 161); // In front of the stable, facing west.
 static constexpr AwardId kElementalGuildMember = static_cast<AwardId>(64);
 
@@ -604,6 +605,23 @@ GAME_TEST(MM6Houses, StableMenu) {
               tape(DrawnQuad{"evpan033", {481, 0}}, DrawnQuad{"npc385", {525, 34}}, DrawnQuad{"buttesc1", {526, 313}}));
 }
 
+GAME_TEST(MM6Houses, NpcHouseProfession) {
+    // Buford T. Allman's house named him "the Time in Enroth", MM7's id for his profession read MM6's calendar string.
+    // MM6 names him by his profession, a Barrister.
+    auto linesTape = tapes.titleLines();
+    auto houseTape = tapes.house();
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kBufordHouseDoor, 90);
+
+    EXPECT_EQ(houseTape, tape(HOUSE_INVALID, static_cast<HouseId>(470)));
+    auto nameLines = linesTape.back().filter([](const DrawnLine &line) { return line.position.y >= 100 && line.position.y < 140; });
+    auto nameLine = [](std::string_view text, int y) {
+        return DrawnLine{std::string(text), {483 + assets->pFontCreate->AlignText_Center(147, text), y}, colorTable.EasternBlue};
+    };
+    EXPECT_EQ(nameLines, tape(nameLine("Buford T. Allman", 108), nameLine("the Barrister", 123)));
+}
+
 GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
     // Hidden capture of New Sorpigal house screens: each house's first view, then the screens behind its options.
     ASSERT_FALSE(window->isVisible());
@@ -658,7 +676,7 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
              {kTrainingDoor, 180, "training", 0}, {kGuildDoor, 1536, "guild", 0}, {kTavernDoor, 0, "tavern", 0},
              {kStableDoor, 180, "stable", 0}, {Vec3f(-8678, -6352, 300), 0, "armor", 5}, {Vec3f(-6376, -7606, 300), 90, "magic", 5},
              {Vec3f(-6504, -6090, 300), 270, "merc", 0}, {Vec3f(-12528, -5814, 300), 90, "npchouse465", 0},
-             {Vec3f(-7014, -5798, 300), 90, "npchouse470", 0}}}) {
+             {kBufordHouseDoor, 90, "npchouse470", 0}}}) {
         enterThroughDoor(game, door, yaw);
         captureHouse(name, screens);
     }

@@ -71,6 +71,12 @@ SAVE_ANYWHERE = [
     ("MM6SaveAnywhereHeadless.DISABLED_DungeonSlotLoadsWithItsOutdoorMaps",
      "ENROTH_MM6_SAVE_ANYWHERE_ENABLE", "strict-save-anywhere-reload"),
 ]
+BUFF_SAVE = [
+    ("MM6SaveAnywhereHeadless.DISABLED_BuffsSaveWithTheParty",
+     "ENROTH_MM6_SAVE_ANYWHERE_ENABLE", "strict-buff-save-write"),
+    ("MM6SaveAnywhereHeadless.DISABLED_BuffsComeBackInFreshProcess",
+     "ENROTH_MM6_SAVE_ANYWHERE_ENABLE", "strict-buff-save-reload"),
+]
 AUTOSAVE = [
     ("MM6AutosaveHeadless.DISABLED_EdgeAndDoorWriteTheAutosave",
      "ENROTH_MM6_AUTOSAVE_ENABLE", "strict-autosave-write"),
@@ -147,6 +153,8 @@ def main():
             print("new game:", name)
         for name, _, _ in SAVE_ANYWHERE:
             print("save anywhere:", name)
+        for name, _, _ in BUFF_SAVE:
+            print("buff save:", name)
         for name, _, _ in AUTOSAVE:
             print("autosave:", name)
         for name, _, _ in VISIT:
@@ -258,6 +266,15 @@ def main():
             if not run_child(name, flag, value, profile,
                              paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
                 return 1
+    with tempfile.TemporaryDirectory(prefix="mm6-restart-buffs-") as buffs:
+        profile = Path(buffs)
+        os.chmod(profile, 0o700)
+        # A new party casts Bless, Heroism, Protection from Fire and Fly and saves. A fresh process loads the slot and
+        # finds every buff as it was saved.
+        for name, flag, value in BUFF_SAVE:
+            if not run_child(name, flag, value, profile,
+                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+                return 1
     with tempfile.TemporaryDirectory(prefix="mm6-restart-autosave-") as seventh:
         profile = Path(seventh)
         os.chmod(profile, 0o700)
@@ -281,8 +298,9 @@ def main():
             return 1
     print("PASS: seven-child MM6 chain, all full-retry fault children, the paperdoll child, normal Save/Load menus with a "
           "production load and resave, a production New Game saved, loaded and saved again, a dungeon save after travel "
-          "loaded with its outdoor maps and saved again, autosaves and a quick save loaded in fresh processes, a map visit "
-          "kept across a fresh-process load, and the MM7 controls")
+          "loaded with its outdoor maps and saved again, party and character buffs kept across a fresh-process load, "
+          "autosaves and a quick save loaded in fresh processes, a map visit kept across a fresh-process load, and the "
+          "MM7 controls")
     return 0
 
 

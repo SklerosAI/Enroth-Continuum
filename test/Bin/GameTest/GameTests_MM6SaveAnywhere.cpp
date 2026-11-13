@@ -1,3 +1,4 @@
+#include <cctype>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
@@ -18,6 +19,7 @@
 #include "Engine/Graphics/LocationFunctions.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
+#include "Engine/MM6/MM6PlayerSpell.h"
 #include "Engine/MM6/MM6SessionSave.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
@@ -27,6 +29,7 @@
 #include "Engine/Graphics/Vis.h"
 #include "Engine/Evt/EvtInstruction.h"
 #include "Engine/Party.h"
+#include "Engine/Spells/SpellEnumFunctions.h"
 #include "Engine/Tables/MapTable.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UISaveLoad.h"
@@ -187,6 +190,50 @@ static std::vector<int> deadActors() {
     for (const Actor &actor : pActors)
         if (actor.aiState == Dead)
             result.push_back(actor.id);
+    return result;
+}
+
+static void castFromSpellbook(EngineController &game, int characterIndex, SpellId spell) {
+    // The character, taught the spell at Expert, casts it from the spellbook.
+    Character &character = pParty->pCharacters[characterIndex];
+    character.pActiveSkills[skillForSpell(spell)] = CombinedSkillValue(4, MASTERY_EXPERT);
+    character.bHaveSpell[spell] = true;
+    character.mana = 100;
+    game.pressAndReleaseKey(static_cast<PlatformKey>(std::to_underlying(PlatformKey::KEY_DIGIT_1) + characterIndex));
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_C);
+    game.tick();
+    game.pressGuiButton(fmt::format("SpellBook_School{}", std::to_underlying(magicSchoolForSpell(spell))));
+    game.tick();
+    game.pressGuiButton(fmt::format("SpellBook_Spell{}", spellIndexInMagicSchool(spell)));
+    game.tick();
+    game.pressGuiButton(fmt::format("SpellBook_Spell{}", spellIndexInMagicSchool(spell))); // A second click casts it.
+    game.tick(2); // The book closes and the spell takes effect on the next frame.
+}
+
+static std::string buffSummary() {
+    // Every active party buff, then every active buff of each character, with its expiry, power, mastery and caster.
+    auto describe = [](int slot, const SpellBuff &buff) {
+        return fmt::format(" {}:{}:{}:{}:{}", slot, buff.expireTime.ticks(), buff.power, std::to_underlying(buff.skillMastery), buff.caster);
+    };
+    std::string result = "party";
+    for (PartyBuff buff : pParty->pPartyBuffs.indices())
+        if (pParty->pPartyBuffs[buff].Active())
+            result += describe(std::to_underlying(buff), pParty->pPartyBuffs[buff]);
+    for (const Character &character : pParty->pCharacters) {
+        result += " | character";
+        for (CharacterBuff buff : character.pCharacterBuffs.indices())
+            if (character.pCharacterBuffs[buff].Active())
+                result += describe(std::to_underlying(buff), character.pCharacterBuffs[buff]);
+    }
+    return result;
+}
+
+static std::string withoutAnimationFrame(const DrawnQuad &quad) {
+    // Buff sprite frames are numbered, i2_fire1 and on.
+    std::string result = quad.texture;
+    while (!result.empty() && std::isdigit(static_cast<unsigned char>(result.back())))
+        result.pop_back();
     return result;
 }
 
@@ -358,6 +405,102 @@ GAME_TEST(MM6SaveAnywhereHeadless, DISABLED_DungeonSlotLoadsWithItsOutdoorMaps) 
     game.runGameRoutine([&] {
         EXPECT_EQ(mm6::decodeSessionSave(resaved, GameTitle::MM6).raw.metadata.header.mapFileName, "oute3.odm");
         EXPECT_NO_THROW((void) mm6::stageSessionSave(resaved, GameTitle::MM6));
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+    EXPECT_EQ(window->nativeHandle(), nullptr);
+}
+
+GAME_TEST(MM6SaveAnywhereHeadless, DISABLED_BuffsSaveWithTheParty) {
+    // A party with Bless, Heroism, Protection from Fire and Fly saves to a slot, the first half of the buff round trip.
+    if (!enabled("strict-buff-save-write"))
+        GTEST_SKIP() << "Run only as the first buff save child of the first-map gate";
+    const std::filesystem::path profile = ownerOnlyProfile();
+    if (profile.empty())
+        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to an owner-only profile";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    const std::filesystem::path slot = profile / "saves/save000.ec6";
+    ASSERT_FALSE(std::filesystem::exists(slot));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    test.startTaping();
+    auto partyBuffsTape = tapes.custom([] {
+        std::vector<PartyBuff> result;
+        for (PartyBuff buff : pParty->pPartyBuffs.indices())
+            if (pParty->pPartyBuffs[buff].Active())
+                result.push_back(buff);
+        return result;
+    });
+    auto blessTape = charTapes.hasBuff(0, CHARACTER_BUFF_BLESS);
+    auto heroismTape = charTapes.hasBuff(3, CHARACTER_BUFF_HEROISM);
+    auto buffsTape = tapes.custom([] { return buffSummary(); });
+    auto statusTape = tapes.statusBar();
+    auto quadsTape = tapes.hudQuads();
+
+    castFromSpellbook(game, 0, mm6::SPELL_BLESS);
+    castFromSpellbook(game, 1, mm6::SPELL_HEROISM);
+    castFromSpellbook(game, 2, static_cast<SpellId>(3)); // Protection from Fire.
+    castFromSpellbook(game, 3, mm6::SPELL_FLY);
+
+    openSaveMenu(game);
+    game.doubleClickGuiButton("SaveMenu_Slot0"); // The new save slot.
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_B);
+    game.tick();
+    game.pressGuiButton("SaveMenu_Save");
+    game.tick(3); // The button animates for a frame, then posts the save for the next one.
+
+    EXPECT_EQ(partyBuffsTape.back(), std::vector({PARTY_BUFF_RESIST_FIRE, PARTY_BUFF_FLY}));
+    EXPECT_EQ(blessTape.back(), true);
+    EXPECT_EQ(heroismTape.back(), true);
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
+    EXPECT_CONTAINS(quadsTape.back().map(withoutAnimationFrame), "i2_fire");
+    EXPECT_TRUE(std::filesystem::is_regular_file(slot));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+    std::ofstream(profile / "expected.txt") << buffsTape.back() << "\n";
+}
+
+GAME_TEST(MM6SaveAnywhereHeadless, DISABLED_BuffsComeBackInFreshProcess) {
+    // A fresh MM6 process loads the slot with every buff the party saved, at the same strength and with the same time
+    // left, and the buff shelf shows Protection from Fire again.
+    if (!enabled("strict-buff-save-reload"))
+        GTEST_SKIP() << "Run only after the buff save write child of the first-map gate";
+    const std::filesystem::path profile = ownerOnlyProfile();
+    if (profile.empty())
+        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to an owner-only profile";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    std::istringstream expected(fileText(profile / "expected.txt"));
+    std::string savedBuffs;
+    ASSERT_TRUE(std::getline(expected, savedBuffs));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    test.startTaping();
+    auto screenTape = tapes.screen();
+    auto buffsTape = tapes.custom([] { return buffSummary(); });
+    auto quadsTape = tapes.hudQuads();
+
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(4);
+    ASSERT_EQ(screenTape.back(), SCREEN_LOADGAME);
+    ASSERT_EQ(saveLoadMenu()->slots().size(), 2); // The autosave from the new game, then the buff slot.
+    EXPECT_EQ(saveLoadMenu()->slots()[1].fileName, "save000.ec6");
+    EXPECT_EQ(saveLoadMenu()->slots()[1].header.name, "b");
+    game.pressGuiButton("LoadMenu_Slot1");
+    game.tick(2);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick();
+
+    ASSERT_EQ(screenTape.back(), SCREEN_GAME);
+    EXPECT_EQ(buffsTape.back(), savedBuffs);
+    EXPECT_CONTAINS(quadsTape.back().map(withoutAnimationFrame), "i2_fire");
+    game.runGameRoutine([&] {
         mm6::disarmFirstMapManualSave();
         mm6::testing::setNativeProfileRootForTest({});
     });

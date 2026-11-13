@@ -17,4 +17,13 @@ int tavernRoomPrice(float value, int merchant);
  */
 int tavernFoodPrice(float value, int merchant);
 
+/**
+ * @offset 0x42F31F (MM6)
+ *
+ * @param hour                          Hour of the day the party rents the room, 0 to 23.
+ * @param minute                        Minute of that hour.
+ * @return                              Minutes the party sleeps in a rented room. It wakes at 6 am.
+ */
+int tavernRoomRestMinutes(int hour, int minute);
+
 } // namespace mm6

@@ -248,6 +248,14 @@ void GUIWindow_MM6House::selectService(int index) {
         mm6::trainActiveCharacter(std::to_underlying(houseId()), _house.value.value_or(0), &_trainingTimePassed);
         return;
     }
+    if (_services[index] == mm6::HouseServiceOption::RentRoom) {
+        rentRoom();
+        return;
+    }
+    if (_services[index] == mm6::HouseServiceOption::FillPacks) {
+        fillPacks();
+        return;
+    }
     if (_services[index] == mm6::HouseServiceOption::Deposit || _services[index] == mm6::HouseServiceOption::Withdraw) {
         if (!_bankTransfer) {
             _bankTransfer = _services[index];
@@ -486,6 +494,42 @@ void GUIWindow_MM6House::healActiveCharacter() {
     mm6::templeHeal(house, &character);
     pAudioPlayer->playExclusiveSound(SOUND_heal);
     character.playReaction(SPEECH_TEMPLE_HEAL);
+}
+
+void GUIWindow_MM6House::rentRoom() {
+    if (!pParty->hasActiveCharacter())
+        return;
+    const int price = mm6::tavernRoomPrice(_house.value.value_or(0), mm6::merchantPercent(pParty->activeCharacter()));
+    if (pParty->GetGold() < price) {
+        engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_NOT_ENOUGH_GOLD);
+        return;
+    }
+    pParty->TakeGold(price);
+    mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_RENT_ROOM);
+    pMediaPlayer->Unload();
+    engine->_messageQueue->addMessageCurrentFrame(UIMSG_RentRoom, std::to_underlying(houseId()), 1);
+    window_SpeakInHouse = nullptr; // Destroys this window.
+}
+
+void GUIWindow_MM6House::fillPacks() {
+    if (!pParty->hasActiveCharacter())
+        return;
+    const float value = _house.value.value_or(0);
+    if (pParty->GetFood() >= value) {
+        engine->_statusBar->setEvent(LSTR_YOUR_PACKS_ARE_ALREADY_FULL);
+        pParty->activeCharacter().playReaction(SPEECH_PACKS_FULL);
+        return;
+    }
+    const int price = mm6::tavernFoodPrice(value, mm6::merchantPercent(pParty->activeCharacter()));
+    if (pParty->GetGold() < price) {
+        engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_NOT_ENOUGH_GOLD);
+        return;
+    }
+    pParty->TakeGold(price);
+    pParty->SetFood(static_cast<int>(value));
+    mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_BUY_FOOD);
 }
 
 std::string GUIWindow_MM6House::serviceLabel(int index) const {

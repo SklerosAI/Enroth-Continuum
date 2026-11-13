@@ -914,7 +914,6 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
     captureHouse("thieves-member", 0);
 }
 
-
 GAME_TEST(MM6Houses, WeaponShopIdentify) {
     // The New Sorpigal weapon shop identifies a weapon from the active character's backpack for gold.
     auto goldTape = tapes.gold();
@@ -995,4 +994,66 @@ GAME_TEST(MM6Houses, BankDepositAndWithdraw) {
     EXPECT_EQ(bankTape, tape(0, 150, 0));
     EXPECT_MISSES(statusTape, "This service is not available yet.");
     EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(31502)); // The banker when the party asks for more than the bank holds.
+}
+
+GAME_TEST(MM6Houses, TavernRentRoom) {
+    // A Lonely Knight's room said "not available yet". Renting it takes the price, leaves the house and sleeps the
+    // party until 6 am the next day, which restores HP and SP without eating food.
+    auto goldTape = tapes.gold();
+    auto foodTape = tapes.food();
+    auto screenTape = tapes.screen();
+    auto clockTape = tapes.custom([] {
+        const CivilTime time = pParty->GetPlayingTime().toCivilTime();
+        return std::tuple(time.day, time.hour, time.minute);
+    });
+    auto hpTape = charTapes.hp(0);
+    auto spTape = charTapes.mp(2);
+    auto statusTape = tapes.statusBar();
+    auto soundsTape = tapes.sounds();
+    startMM6NewGame(game);
+    pParty->pCharacters[0].health = 1;
+    pParty->pCharacters[2].mana = 0;
+    test.startTaping();
+    enterThroughDoor(game, kTavernDoor, 0);
+    game.pressGuiButton("House_Npc0"); // The proprietor.
+    game.tick();
+    clickHouseOption(game, localization->format(LSTR_RENT_ROOM_FOR_D_GOLD, 3));
+    for (int frame = 0; frame < 1000 && current_screen_type != SCREEN_GAME; ++frame)
+        game.tick(); // The party sleeps through the night.
+
+    EXPECT_EQ(goldTape, tape(200, 197));
+    EXPECT_EQ(foodTape, tape(7));
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE, SCREEN_REST, SCREEN_GAME));
+    EXPECT_EQ(clockTape.front(), std::tuple(1, 9, 0));
+    EXPECT_EQ(clockTape.back(), std::tuple(2, 6, 0));
+    EXPECT_EQ(hpTape, tape(1, pParty->pCharacters[0].GetMaxHealth()));
+    EXPECT_EQ(spTape, tape(0, pParty->pCharacters[2].GetMaxMana()));
+    EXPECT_MISSES(statusTape, "This service is not available yet.");
+    EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(32002)); // The tavern keeper renting the room.
+}
+
+GAME_TEST(MM6Houses, TavernFillPacks) {
+    // A Lonely Knight's packs said "not available yet". They fill up to the tavern's six days for the price, and packs
+    // that already hold six days are refused with the packs full line.
+    auto goldTape = tapes.gold();
+    auto foodTape = tapes.food();
+    auto statusTape = tapes.statusBar();
+    auto portraitTape = charTapes.portrait(0);
+    auto soundsTape = tapes.sounds();
+    startMM6NewGame(game);
+    pParty->SetFood(2);
+    test.startTaping();
+    enterThroughDoor(game, kTavernDoor, 0);
+    game.pressGuiButton("House_Npc0"); // The proprietor.
+    game.tick();
+    const std::string fill = localization->format(LSTR_FILL_PACKS_TO_D_DAYS_FOR_D_GOLD, 6, 2);
+    clickHouseOption(game, fill);
+    clickHouseOption(game, fill);
+
+    EXPECT_EQ(goldTape, tape(200, 198));
+    EXPECT_EQ(foodTape, tape(2, 6));
+    EXPECT_EQ(std::ranges::count(statusTape, localization->str(LSTR_YOUR_PACKS_ARE_ALREADY_FULL)), 1);
+    EXPECT_MISSES(statusTape, "This service is not available yet.");
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_NO)); // The packs full reaction.
+    EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(32003)); // The tavern keeper selling food.
 }

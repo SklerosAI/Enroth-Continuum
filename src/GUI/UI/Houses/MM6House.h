@@ -155,6 +155,21 @@ class GUIWindow_MM6House : public GUIWindow_House {
     void healActiveCharacter();
 
     /**
+     * Takes the room price, then leaves the house and puts the party to bed until 6 am.
+     *
+     * @offset 0x49F319 (MM6)
+     */
+    void rentRoom();
+
+    /**
+     * Takes the food price and fills the party's food up to the tavern's `Val`, unless the packs already hold that
+     * much.
+     *
+     * @offset 0x49F85F (MM6)
+     */
+    void fillPacks();
+
+    /**
      * Shows the bank's how much prompt while the player types an amount, and moves the gold once the amount is
      * confirmed. An amount above what the party has, or holds in the bank, moves all of it.
      */

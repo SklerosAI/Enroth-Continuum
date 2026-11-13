@@ -73,6 +73,7 @@
 #include "GUI/UI/Books/QuestBook.h"
 #include "GUI/UI/Books/TownPortalBook.h"
 #include "GUI/UI/Houses/MM6House.h"
+#include "GUI/UI/Houses/MM6Tavern.h"
 #include "GUI/UI/UISpellbook.h"
 #include "GUI/UI/MM6Spellbook.h"
 #include "GUI/UI/UIBooks.h"
@@ -1107,13 +1108,17 @@ void Game::processQueuedMessages() {
                 continue;
             case UIMSG_RentRoom: {
                 HouseId tavern = static_cast<HouseId>(uMessageParam);
-                assert(isTavern(tavern));
-
                 pGUIWindow_CurrentMenu = std::make_unique<GUIWindow_Rest>();
 
-                remainingRestTime = timeUntilDawn() + Duration::fromHours(1);
-                if (tavern == HOUSE_TAVERN_DEYJA || tavern == HOUSE_TAVERN_PIT || tavern == HOUSE_TAVERN_MOUNT_NIGHON) {
-                    remainingRestTime = remainingRestTime + Duration::fromHours(12);
+                if (engine->gameTitle() == GameTitle::MM6) {
+                    const CivilTime time = pParty->GetPlayingTime().toCivilTime();
+                    remainingRestTime = Duration::fromMinutes(mm6::tavernRoomRestMinutes(time.hour, time.minute));
+                } else {
+                    assert(isTavern(tavern));
+                    remainingRestTime = timeUntilDawn() + Duration::fromHours(1);
+                    if (tavern == HOUSE_TAVERN_DEYJA || tavern == HOUSE_TAVERN_PIT || tavern == HOUSE_TAVERN_MOUNT_NIGHON) {
+                        remainingRestTime = remainingRestTime + Duration::fromHours(12);
+                    }
                 }
                 currentRestType = REST_HEAL;
                 pParty->restAndHeal();

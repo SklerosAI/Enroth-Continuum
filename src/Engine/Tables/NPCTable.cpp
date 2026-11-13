@@ -12,6 +12,7 @@
 #include "Engine/Objects/NPC.h"
 #include "Engine/Objects/MonsterEnumFunctions.h"
 #include "Engine/Objects/NPCEnumFunctions.h"
+#include "Engine/MM6/MM6StreetNpcPortraits.h"
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/Random/Random.h"
 
@@ -302,9 +303,12 @@ void NPCStats::InitializeAdditionalNPCs(NPCData *pNPCDataBuff, MonsterId npc_uid
     pNPCDataBuff->name = grng->randomSample(pNPCNames[uNPCSex]);
 
     gen_attempts = 0;
-    break_gen = false;
+    break_gen = engine->gameTitle() == GameTitle::MM6;
+    if (break_gen) {
+        uGeneratedPortret = uNPCSex == SEX_MALE ? grng->randomSample(mm6StreetNpcMalePortraits) : grng->randomSample(mm6StreetNpcFemalePortraits);
+    }
 
-    do {
+    while (!break_gen) {
         switch (uRace) {
             case RACE_HUMAN:
                 if (uNPCSex == SEX_MALE) {
@@ -355,7 +359,7 @@ void NPCStats::InitializeAdditionalNPCs(NPCData *pNPCDataBuff, MonsterId npc_uid
             uGeneratedPortret = uPortretMin;
             break_gen = true;
         }
-    } while (!break_gen);
+    }
 
     pNPCDataBuff->portraitId = uGeneratedPortret;
     pNPCDataBuff->flags = 0;

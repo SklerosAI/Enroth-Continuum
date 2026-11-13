@@ -183,6 +183,7 @@ static const Vec3f kHaroldHessDoor(-5976, -8068, 160); // Harold Hess's house, f
 static const Vec3f kBladesEndDoor(-6504, -6090, 300); // Blades' End, a mercenary guild.
 static const Vec3f kBuccaneersLairDoor(-12632, -5946, 300); // Buccaneers' Lair, a thieves' guild.
 static const Vec3f kIsaoHouseDoor(-12528, -5814, 300); // In front of Isao Magistrus' house, facing north.
+static const Vec3f kJezebelHouseDoor(4688, -17668, 192); // In front of Jezebel's house in Castle Ironfist, facing south.
 static constexpr AwardId kElementalGuildMember = static_cast<AwardId>(64);
 static constexpr AwardId kSelfGuildMember = static_cast<AwardId>(65);
 static constexpr AwardId kBuccaneersLairMember = static_cast<AwardId>(66);
@@ -1087,6 +1088,48 @@ GAME_TEST(MM6Houses, ExpertTeacher) {
                                 std::vector<std::string>{"Become Expert in Fire Magic for 1000 gold"},
                                 std::vector<std::string>{"Fire Magic Expertise", "Jezebel"}));
     EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE));
+}
+
+GAME_TEST(MM6Houses, MasterTeacher) {
+    // Jezebel's Master of Fire topic in Castle Ironfist did nothing, so no character could become a master. Her offer
+    // turns away a character who doesn't know Fire Magic and an expert of rank 11, and makes an expert of rank 12 a
+    // master for 4000 gold.
+    auto goldTape = tapes.gold();
+    auto fireTape = tapes.custom([] {
+        const CombinedSkillValue fire = pParty->pCharacters[2].pActiveSkills[SKILL_FIRE];
+        return std::pair(fire.level(), fire.mastery());
+    });
+    auto textTape = tapes.custom([] { return current_npc_text; });
+    auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+    auto portraitTape = charTapes.portrait(2);
+    auto houseTape = tapes.house();
+    startMM6NewGame(game);
+    pParty->SetGold(5000);
+    pParty->pCharacters[2].pActiveSkills[SKILL_FIRE] = CombinedSkillValue(12, MASTERY_EXPERT); // Serena, a sorcerer.
+    pParty->pCharacters[3].pActiveSkills[SKILL_FIRE] = CombinedSkillValue(11, MASTERY_EXPERT);
+    std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
+    game.runGameRoutine([&] { chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>(); });
+    game.teleportTo(pMapTable->GetMapInfo("oute2.odm"), kJezebelHouseDoor, 270);
+    game.runGameRoutine([&] { chestOptIn.reset(); });
+    test.startTaping();
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    clickHouseOption(game, "Master of Fire "); // npctopic.txt ends the topic with a space.
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_4);
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_3);
+    game.tick();
+    clickHouseOption(game, "Become Master in Fire Magic for 4000 gold");
+
+    EXPECT_EQ(houseTape, tape(static_cast<HouseId>(455)));
+    EXPECT_EQ(goldTape, tape(5000, 1000));
+    EXPECT_EQ(fireTape, tape(std::pair(12, MASTERY_EXPERT), std::pair(12, MASTERY_MASTER)));
+    EXPECT_EQ(textTape, tape(std::string(), std::string(pNPCTopics[224].pText), std::string())); // The offer, text 225 of npctext.txt.
+    using Lines = std::vector<std::string>;
+    EXPECT_EQ(optionsTape, tape(Lines{"Master of Fire ", "Fire Guild Membership"}, Lines{pNPCTopics[261].pText}, // "You must know the skill before you can become an expert in it!"
+                                Lines{pNPCTopics[260].pText}, // "You don't meet the requirements, and cannot be taught until you do."
+                                Lines{"Become Master in Fire Magic for 4000 gold"}, Lines{"Master of Fire ", "Fire Guild Membership"}));
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_WIDE_SMILE)); // The mastery reaction.
 }
 
 GAME_TEST(MM6Houses, TempleDonate) {

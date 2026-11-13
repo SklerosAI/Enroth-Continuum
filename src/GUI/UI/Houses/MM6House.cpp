@@ -19,6 +19,7 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/MM6EventVariableDispatch.h"
 #include "Engine/Evt/MM6ItemEventCompare.h"
+#include "Engine/Evt/MM6ReputationEvent.h"
 #include "Engine/Localization.h"
 #include "Engine/mm7_data.h"
 #include "Engine/Graphics/Camera.h"
@@ -27,9 +28,11 @@
 #include "Engine/MM6/MM6RoomMovie.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/Resources/ResourceManager.h"
+#include "Engine/Objects/NPC.h"
 #include "Engine/Party.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Tables/HouseTable.h"
+#include "Engine/Tables/ItemTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/Tables/TransitionTable.h"
@@ -124,6 +127,81 @@ static int expertTeacherPrice(Skill skill) {
       default:
         return 2000;
     }
+}
+
+/**
+ * @param character                     Character who asks.
+ * @return                              Whether one of the character's items, the equipped ones included, is a blaster.
+ */
+static bool carriesBlaster(const Character &character) {
+    for (InventoryConstEntry entry : character.inventory.entries())
+        if (pItemTable->items[entry->itemId].skill == SKILL_BLASTER)
+            return true;
+    return false;
+}
+
+/**
+ * @offset 0x496D67 (MM6)
+ *
+ * @param character                     Character who asks, an expert in the skill.
+ * @param skill                         Skill taught.
+ * @return                              Gold a master teacher asks, or nothing when the character doesn't meet the
+ *                                      teacher's requirements.
+ */
+static std::optional<int> masterTeacherPrice(const Character &character, Skill skill) {
+    const int level = character.pActiveSkills[skill].level();
+    const int classId = std::to_underlying(character.classType); // MM6 class ids, Knight 0 to Arch Druid 17.
+    auto honorary = [&](int award) { return character._achievedAwardsBits[static_cast<AwardId>(award)]; };
+    auto price = [](bool met, int gold) { return met ? std::optional(gold) : std::nullopt; };
+    const bool knightPromoted = classId == 1 || classId == 2 || honorary(17) || honorary(19); // Cavalier or Champion, as a class or an honorary award.
+    switch (skill) {
+      case SKILL_STAFF: return price(level >= 8, 5000);
+      case SKILL_SWORD: return price(level >= 8 && knightPromoted, 0);
+      case SKILL_DAGGER: return price(level >= 8 && character.GetActualSpeed() >= 40, 5000);
+      case SKILL_AXE: return 0;
+      case SKILL_SPEAR: return price(level >= 8 && knightPromoted, 5000);
+      case SKILL_BOW: return price(level >= 8 && (classId == 13 || classId == 14 || honorary(29) || honorary(31)), 0); // Battle Mage or Warrior Mage.
+      case SKILL_MACE: return price(level >= 8 && character.GetActualMight() >= 40, 5000);
+      case SKILL_BLASTER: return price(carriesBlaster(character), 5000);
+      case SKILL_SHIELD: return price(level >= 10, 5000);
+      case SKILL_LEATHER: return price(level >= 10, 3000);
+      case SKILL_CHAIN: return price(level >= 10 && (classId == 10 || classId == 11 || honorary(9) || honorary(11)), 0); // Crusader or Hero.
+      case SKILL_PLATE: return price(classId == 11 || honorary(11), 0); // Hero.
+      case SKILL_FIRE: case SKILL_WATER: case SKILL_EARTH: case SKILL_MIND: case SKILL_BODY: return price(level >= 12, 4000);
+      case SKILL_AIR: return price(classId == 8 || honorary(15), 4000); // Arch Mage.
+      case SKILL_SPIRIT: return price(classId == 5 || honorary(23), 0); // High Priest.
+      case SKILL_LIGHT: return price(mm6::effectiveReputation(pParty->mm6Reputation, &CheckHiredNPCSpeciality) >= 1000, 0);
+      case SKILL_DARK: return price(mm6::effectiveReputation(pParty->mm6Reputation, &CheckHiredNPCSpeciality) <= -1000, 0);
+      case SKILL_ITEM_ID: return price(level >= 7 && character.GetActualIntelligence() >= 30, 2500);
+      case SKILL_MERCHANT: return price(level >= 7 && character.GetActualPersonality() >= 30, 4000);
+      case SKILL_REPAIR: case SKILL_TRAP_DISARM: return price(level >= 7 && character.GetActualAccuracy() >= 30, 2500);
+      case SKILL_BODYBUILDING: return price(level >= 7 && character.GetActualEndurance() >= 30, 2500);
+      case SKILL_MEDITATION: return price(level >= 7 && character.GetActualPersonality() >= 30, 2500);
+      case SKILL_PERCEPTION: return price(level >= 7 && character.GetActualLuck() >= 30, 2500);
+      case SKILL_DIPLOMACY: {
+        int64_t experience = 0;
+        for (const Character &member : pParty->pCharacters)
+            experience += static_cast<int32_t>(member.experience);
+        return price(experience / 1000 >= 200, 2500); // MM6's fame.
+      }
+      case SKILL_LEARNING: return price(level >= 7 && character.GetActualIntelligence() >= 30, 5000);
+      default: return std::nullopt;
+    }
+}
+
+/**
+ * @param character                     Character who asks.
+ * @param topic                         Teacher topic, 200 to 259.
+ * @return                              Gold the teacher asks, or nothing when the character doesn't meet the
+ *                                      requirements of the skill and mastery on offer.
+ */
+static std::optional<int> teacherPrice(const Character &character, int topic) {
+    const Skill skill = teacherSkill(topic);
+    if (topic % 2)
+        return masterTeacherPrice(character, skill);
+    if (character.pActiveSkills[skill].level() < 4)
+        return std::nullopt;
+    return expertTeacherPrice(skill);
 }
 
 static Pointi portraitPosition(size_t count, size_t index) {
@@ -384,8 +462,8 @@ void GUIWindow_MM6House::joinGuild() {
     pParty->activeCharacter().playReaction(SPEECH_JOINED_GUILD);
 }
 
-void GUIWindow_MM6House::offerExpertTraining(int topic) {
-    assert(topic >= kFirstTeacherTopic && topic <= kLastTeacherTopic && topic % 2 == 0);
+void GUIWindow_MM6House::offerTeacherTraining(int topic) {
+    assert(topic >= kFirstTeacherTopic && topic <= kLastTeacherTopic);
     _teacherOffer = topic;
     current_npc_text = pNPCTopics[topic - 1].pText; // The text with the topic's number.
     refreshTopics();
@@ -398,8 +476,9 @@ void GUIWindow_MM6House::learnFromTeacher() {
         return;
     const Skill skill = teacherSkill(*_teacherOffer);
     Character &character = pParty->activeCharacter();
-    pParty->TakeGold(expertTeacherPrice(skill));
-    character.pActiveSkills[skill] = CombinedSkillValue(character.pActiveSkills[skill].level(), MASTERY_EXPERT);
+    pParty->TakeGold(*teacherPrice(character, *_teacherOffer));
+    const Mastery mastery = *_teacherOffer % 2 ? MASTERY_MASTER : MASTERY_EXPERT;
+    character.pActiveSkills[skill] = CombinedSkillValue(character.pActiveSkills[skill].level(), mastery);
     character.playReaction(SPEECH_SKILL_MASTERY_INC);
     _teacherOffer.reset();
     current_npc_text.clear();
@@ -476,20 +555,23 @@ std::string GUIWindow_MM6House::teacherLabel(bool *approved) const {
         return {};
     const Character &character = pParty->activeCharacter();
     const Skill skill = teacherSkill(*_teacherOffer);
+    const bool master = *_teacherOffer % 2;
     const CombinedSkillValue value = character.pActiveSkills[skill];
     if (!character.CanAct())
         return pNPCTopics[263].pText; // "Not in your condition!"
     if (!value.level())
         return pNPCTopics[261].pText; // "You must know the skill before you can become an expert in it!"
-    if (value.mastery() >= MASTERY_EXPERT)
-        return pNPCTopics[264].pText; // "You are already an expert in this skill."
-    if (value.level() < 4)
+    if (value.mastery() >= (master ? MASTERY_MASTER : MASTERY_EXPERT))
+        return pNPCTopics[master ? 265 : 264].pText; // "You are already a master in this skill." or an expert.
+    if (master && value.mastery() < MASTERY_EXPERT)
+        return pNPCTopics[262].pText; // "You must first be an expert in the skill before you can become a master."
+    const std::optional<int> price = teacherPrice(character, *_teacherOffer);
+    if (!price)
         return pNPCTopics[260].pText; // "You don't meet the requirements, and cannot be taught until you do."
-    const int price = expertTeacherPrice(skill);
-    if (price > pParty->GetGold())
+    if (*price > pParty->GetGold())
         return pNPCTopics[259].pText; // "You don't have enough gold!"
     *approved = true;
-    return localization->format(LSTR_BECOME_S_IN_S_FOR_LU_GOLD, localization->str(LSTR_EXPERT), localization->skillName(skill), price);
+    return localization->format(LSTR_BECOME_S_IN_S_FOR_LU_GOLD, localization->str(master ? LSTR_MASTER : LSTR_EXPERT), localization->skillName(skill), *price);
 }
 
 std::string GUIWindow_MM6House::membershipLabel() const {
@@ -901,8 +983,8 @@ void mm6SelectHouseTopic(DialogueId topic) {
         house->offerGuildMembership(event - kFirstMembershipTopic);
         return;
     }
-    if (event >= kFirstTeacherTopic && event <= kLastTeacherTopic && event % 2 == 0) {
-        house->offerExpertTraining(event);
+    if (event >= kFirstTeacherTopic && event <= kLastTeacherTopic) {
+        house->offerTeacherTraining(event);
         return;
     }
     handleScriptedNPCTopicSelection(topic, npc);

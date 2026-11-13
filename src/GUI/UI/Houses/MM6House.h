@@ -60,17 +60,18 @@ class GUIWindow_MM6House : public GUIWindow_House {
     void joinGuild();
 
     /**
-     * Shows an expert teacher's offer with its one learn line in place of the NPC's topics.
+     * Shows a teacher's offer with its one learn line in place of the NPC's topics.
      *
      * @offset 0x499610 (MM6)
      *
-     * @param topic                     NPC topic of the teacher, an even one from 200 to 258.
+     * @param topic                     NPC topic of the teacher, from 200 to 259. An even one teaches Expert, an odd one
+     *                                  Master.
      */
-    void offerExpertTraining(int topic);
+    void offerTeacherTraining(int topic);
 
     /**
-     * Makes the active character an expert in the skill on offer when the teacher's checks pass and the party has the
-     * gold.
+     * Makes the active character an expert or a master in the skill on offer when the teacher's checks pass and the
+     * party has the gold.
      *
      * @offset 0x4969C4 (MM6)
      */

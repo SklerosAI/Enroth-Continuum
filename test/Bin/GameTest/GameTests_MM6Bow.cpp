@@ -17,6 +17,7 @@
 
 #include "Library/Image/Png.h"
 
+#include "Utility/Exception.h"
 #include "Utility/Math/TrigLut.h"
 #include "Utility/Streams/FileOutputStream.h"
 #include "Utility/System/Path.h"
@@ -163,7 +164,11 @@ GAME_TEST(MM6Loot, DevilWarriorDropsPlans) {
     test.startTaping();
 
     for (int frame = 0; frame < 300 && !pActors[warrior].IsNotAlive(); frame++) { // Blows can miss.
-        game.pointMouseAtActor(warrior);
+        try {
+            game.pointMouseAtActor(warrior);
+        } catch (const Exception &) {
+            // The warrior comes for the party and can be out of view for a frame, A still attacks then.
+        }
         game.pressAndReleaseKey(PlatformKey::KEY_A);
         game.tick();
     }

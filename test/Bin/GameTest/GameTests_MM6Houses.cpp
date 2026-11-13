@@ -36,6 +36,7 @@
 #include "GUI/GUIFont.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/ItemGrid.h"
+#include "GUI/UI/MM6HouseServiceData.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/Houses/MM6Shop.h"
 
@@ -242,7 +243,7 @@ GAME_TEST(MM6Houses, UnimplementedServiceRefuses) {
     enterThroughDoor(game, kTavernDoor, 0);
     game.pressGuiButton("House_Npc0"); // The proprietor.
     game.tick();
-    clickHouseOption(game, localization->str(LSTR_HAVE_A_DRINK));
+    clickHouseOption(game, localization->str(mm6::houseServiceOptionLabel(mm6::HouseServiceOption::TipBarkeep)));
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
     EXPECT_CONTAINS(statusTape, "This service is not available yet.");
     EXPECT_EQ(goldTape.size(), 1);
@@ -1111,4 +1112,35 @@ GAME_TEST(MM6Houses, TempleDonate) {
     EXPECT_CONTAINS(statusTape, localization->str(LSTR_THANK_YOU));
     EXPECT_MISSES(statusTape, "This service is not available yet.");
     EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_PURSE_LIPS_3)); // The donation reaction.
+}
+
+GAME_TEST(MM6Houses, TavernDrink) {
+    // A Lonely Knight's Have a Drink said "not available yet". A drink costs 1 gold, hiccups on the status line and
+    // plays the tavern keeper's sound, and by chance the drinker gets drunk or a stat bonus. These four get the
+    // character drunk.
+    auto goldTape = tapes.gold();
+    auto statusTape = tapes.statusBar();
+    auto soundsTape = tapes.sounds();
+    auto portraitTape = charTapes.portrait(0);
+    auto drunkTape = charTapes.custom(0, [](const Character &character) { return character.conditions.has(CONDITION_DRUNK); });
+    auto bonusesTape = charTapes.custom(0, [](const Character &character) {
+        std::vector<int> result;
+        for (Attribute stat : allStatAttributes())
+            result.push_back(character._statBonuses[stat]);
+        return result;
+    });
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kTavernDoor, 0);
+    game.pressGuiButton("House_Npc0"); // The proprietor.
+    game.tick();
+    for (int drink = 0; drink < 4; ++drink)
+        clickHouseOption(game, localization->str(LSTR_HAVE_A_DRINK));
+
+    EXPECT_EQ(goldTape, tape(200, 199, 198, 197, 196));
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_HIC));
+    EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(32003)); // The tavern keeper serving.
+    EXPECT_EQ(drunkTape, tape(false, true));
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_DRUNK));
+    EXPECT_EQ(bonusesTape.size(), 1); // These drinks rolled no stat bonus.
 }

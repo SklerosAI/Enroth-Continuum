@@ -203,6 +203,14 @@ class GUIWindow_MM6House : public GUIWindow_House {
     void fillPacks();
 
     /**
+     * Sells the active character a drink for 1 gold. Half the drinks get the got drunk reaction, and a third of those
+     * leave the character drunk. A quarter of the others add 5 to 10 to the bonus of a random stat.
+     *
+     * @offset 0x49F45C (MM6)
+     */
+    void haveDrink();
+
+    /**
      * Shows the bank's how much prompt while the player types an amount, and moves the gold once the amount is
      * confirmed. An amount above what the party has, or holds in the bank, moves all of it.
      */

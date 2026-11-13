@@ -26,6 +26,7 @@
 #include "Engine/MM6/MM6RoomMovie.h"
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/Party.h"
+#include "Engine/Random/Random.h"
 #include "Engine/Tables/HouseTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
@@ -295,6 +296,10 @@ void GUIWindow_MM6House::selectService(int index) {
     }
     if (_services[index] == mm6::HouseServiceOption::FillPacks) {
         fillPacks();
+        return;
+    }
+    if (_services[index] == mm6::HouseServiceOption::HaveADrink) {
+        haveDrink();
         return;
     }
     if (_services[index] == mm6::HouseServiceOption::Deposit || _services[index] == mm6::HouseServiceOption::Withdraw) {
@@ -642,6 +647,30 @@ void GUIWindow_MM6House::fillPacks() {
     pParty->TakeGold(price);
     pParty->SetFood(static_cast<int>(value));
     mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_BUY_FOOD);
+}
+
+void GUIWindow_MM6House::haveDrink() {
+    if (!pParty->hasActiveCharacter())
+        return;
+    if (pParty->GetGold() < 1) {
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_NOT_ENOUGH_GOLD);
+        return;
+    }
+    Character &character = pParty->activeCharacter();
+    pParty->TakeGold(1);
+    engine->_statusBar->setEvent(LSTR_HIC);
+    mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_BUY_FOOD);
+    if (grng->random(2) == 1) {
+        character.playReaction(SPEECH_TAVERN_GOT_DRUNK);
+        if (grng->random(3) == 1)
+            character.conditions.set(CONDITION_DRUNK, pParty->GetPlayingTime());
+        return;
+    }
+    if (grng->random(4) == 1) {
+        const Attribute stat = static_cast<Attribute>(grng->random(7)); // Might to Luck.
+        character._statBonuses[stat] += grng->random(6) + 5;
+    }
+    character.playReaction(SPEECH_TAVERN_DRINK);
 }
 
 std::string GUIWindow_MM6House::serviceLabel(int index) const {

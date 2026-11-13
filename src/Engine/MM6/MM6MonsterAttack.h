@@ -83,7 +83,7 @@ inline bool wearsUnbrokenItem(const Character &character, ItemSlot slot, int ite
  *                                      artifact 423 in either hand halve it once each.
  */
 inline int arrowHalvings(const Character &character) {
-    int result = character.pCharacterBuffs[static_cast<CharacterBuff>(3)].Active(); // MM6 buffs keep their original slots, 3 is Shield.
+    int result = character.pCharacterBuffs[CHARACTER_BUFF_SHIELD].Active();
     result += wearsUnbrokenEnchantment(character, ITEM_ENCHANTMENT_OF_SHIELDING);
     result += wearsUnbrokenItem(character, ITEM_SLOT_ARMOUR, 408);
     result += wearsUnbrokenItem(character, ITEM_SLOT_MAIN_HAND, 423) || wearsUnbrokenItem(character, ITEM_SLOT_OFF_HAND, 423);

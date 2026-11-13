@@ -514,3 +514,25 @@ GAME_TEST(MM6PlayerSpells, MonsterDispelMagicEndsEveryBuff) {
     EXPECT_CONTAINS(quadsTape.front().map(withoutAnimationFrame), "i6_magc");
     EXPECT_FALSE(std::ranges::contains(quadsTape.back().map(withoutAnimationFrame), "i6_magc"));
 }
+
+GAME_TEST(MM6PlayerSpells, ShieldHalvesArrows) {
+    // A Shield buff didn't halve a monster's arrow.
+    for (bool shield : {false, true}) {
+        SCOPED_TRACE(fmt::format("shield={}", shield));
+        test.prepareForNextTest();
+        auto hpTape = charTapes.hps();
+        auto spritesTape = tapes.sprites();
+        enterFirstMapFromNewGame(game);
+        if (shield)
+            for (Character &character : pParty->pCharacters)
+                character.pCharacterBuffs[CHARACTER_BUFF_SHIELD].Apply(pParty->GetPlayingTime() + Duration::fromHours(1), MASTERY_EXPERT, 0, 0, -1);
+        test.startTaping();
+
+        game.spawnMonster(pParty->pos + Vec3f(0, 1500, 0), static_cast<MonsterId>(1), SPAWN_STATIONARY);
+        for (int frame = 0; frame < 100 && hpTape.size() == 1; frame++)
+            game.tick(); // The archer shoots until an arrow lands.
+
+        EXPECT_CONTAINS(spritesTape.flatten(), static_cast<SpriteId>(500));
+        EXPECT_EQ(hpTape, tape({38, 22, 22, 20}, {38, 22, shield ? 20 : 18, 20}));
+    }
+}

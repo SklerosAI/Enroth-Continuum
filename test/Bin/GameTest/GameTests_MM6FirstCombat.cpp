@@ -20,6 +20,7 @@
 #include "Engine/TurnEngine/TurnEngine.h"
 
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/UIRest.h"
 #include "GUI/UI/UIStatusBar.h"
 
 #include "Library/Image/Png.h"
@@ -348,6 +349,32 @@ GAME_TEST(MM6Rest, WaitAnHourNeitherEatsNorHeals) {
 
     EXPECT_EQ(hpTape, tape(1));
     EXPECT_EQ(foodTape, tape(7));
+}
+
+GAME_TEST(MM6Rest, FirstNightWithoutRestWeakens) {
+    // A new party has already gone a day without rest, so waiting until dawn on the first night weakens everyone and
+    // eats a food.
+    startNewGameThroughInput(game);
+    const int actorCount = pActors.size();
+    auto weakTape = charTapes.custom([](const Character &character) { return character.conditions.has(CONDITION_WEAK); });
+    auto foodTape = tapes.food();
+    auto clockTape = tapes.custom([] { return std::pair(pParty->uCurrentHour, pParty->uCurrentMinute); });
+    auto restTape = tapes.custom([] { return currentRestType; });
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_WaitTillDawn");
+    game.tick();
+    while (currentRestType != REST_NONE)
+        game.tick(); // The night passes.
+
+    EXPECT_EQ(weakTape.frontBack(), tape({false, false, false, false}, {true, true, true, true}));
+    EXPECT_EQ(foodTape, tape(7, 6));
+    EXPECT_EQ(clockTape.front(), std::pair(9, 0));
+    EXPECT_EQ(clockTape.back(), std::pair(5, 0));
+    EXPECT_EQ(restTape, tape(REST_NONE, REST_WAIT, REST_NONE));
+    EXPECT_EQ(pActors.size(), actorCount); // Waiting rolls no encounter.
 }
 
 GAME_TEST(MM6Conditions, SpiderPoisonsAndRatDiseases) {

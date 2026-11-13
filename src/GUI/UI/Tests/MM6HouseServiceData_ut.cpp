@@ -480,6 +480,8 @@ TEST(MM6HouseServiceData, ServiceOptionsFollowHouseFamilyAndType) {
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_TRAINING_GROUND), Options({Train}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_BANK), Options({Deposit, Withdraw}));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_TAVERN), Options({RentRoom, FillPacks, HaveADrink, TipBarkeep}));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_MERCENARY_GUILD), Options(5, LearnSkill));
+    EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_SHADOW_GUILD), Options(5, LearnSkill));
     EXPECT_EQ(mm6::houseServiceOptions(HOUSE_TYPE_HOUSE), Options());
     EXPECT_EQ(mm6::houseServiceOptionLabel(TempleHeal), LSTR_HEAL);
     EXPECT_EQ(mm6::houseServiceOptionLabel(Deposit), LSTR_DEPOSIT);

@@ -177,7 +177,11 @@ static const Vec3f kBankDoor(-10800, -7416, 300); // In front of the bank, facin
 static constexpr int kBankDoorFace = 1928;
 static const Vec3f kBufordHouseDoor(-7014, -5798, 300); // In front of Buford T. Allman's house, facing north.
 static const Vec3f kStableDoor(-10346, -9472, 161); // In front of the stable, facing west.
+static const Vec3f kBladesEndDoor(-6504, -6090, 300); // Blades' End, a mercenary guild.
+static const Vec3f kBuccaneersLairDoor(-12632, -5946, 300); // Buccaneers' Lair, a thieves' guild.
 static constexpr AwardId kElementalGuildMember = static_cast<AwardId>(64);
+static constexpr AwardId kBuccaneersLairMember = static_cast<AwardId>(66);
+static constexpr AwardId kBladesEndMember = static_cast<AwardId>(69);
 
 static std::vector<std::pair<std::string, Recti>> houseOptions() {
     // The service and topic lines the house screen shows with their buttons, without the hidden ones.
@@ -645,6 +649,104 @@ GAME_TEST(MM6Houses, NpcHouseProfession) {
     EXPECT_EQ(nameLines, tape(nameLine("Buford T. Allman", 108), nameLine("the Barrister", 123)));
 }
 
+GAME_TEST(MM6Houses, MercenaryGuildMenu) {
+    // Blades' End, a mercenary guild, showed its proprietor with an empty menu. It turns away a non-member, and lists
+    // a member the skills it teaches that the member's class can learn and doesn't know yet, under their price.
+    // Choosing one teaches it, and once the member knows them all the guild sends the member elsewhere.
+    auto optionsTape = tapes.custom([] { return houseOptions(); });
+    auto linesTape = tapes.titleLines();
+    auto skillsTape = tapes.custom([] {
+        // The levels of the five skills the guild teaches, character by character.
+        std::vector<int> result;
+        for (const Character &character : pParty->pCharacters)
+            for (Skill skill : {SKILL_SWORD, SKILL_AXE, SKILL_SPEAR, SKILL_STAFF, SKILL_LEATHER})
+                result.push_back(character.pActiveSkills[skill].level());
+        return result;
+    });
+    auto goldTape = tapes.gold();
+    auto soundsTape = tapes.sounds();
+    startMM6NewGame(game);
+    pParty->pCharacters[0]._achievedAwardsBits.set(kBladesEndMember); // Zoltan, a knight who knows Sword, Axe and Leather.
+    pParty->SetGold(1000);
+    test.startTaping();
+    enterThroughDoor(game, kBladesEndDoor, 270);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_2);
+    game.tick();
+    const std::vector<DrawnLine> refusal = panelLines(linesTape.back());
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+    game.tick();
+    const std::vector<DrawnLine> menu = panelLines(linesTape.back());
+    clickHouseOption(game, localization->skillName(SKILL_SPEAR));
+    const std::vector<DrawnLine> menuAfterSpear = panelLines(linesTape.back());
+    clickHouseOption(game, localization->skillName(SKILL_STAFF));
+
+    const Color white = colorTable.White;
+    const Color yellow = colorTable.PaleCanary;
+    EXPECT_EQ(refusal, std::vector<DrawnLine>({panelLine("You must be a", 175, yellow), panelLine("member of this", 191, yellow),
+                                               panelLine("guild to study", 207, yellow), panelLine("here", 223, yellow)}));
+    EXPECT_EQ(menu, std::vector<DrawnLine>({panelLine("Spear", 204, white), panelLine("Staff", 251, white), panelLine("Skill Cost: 375", 146, white)}));
+    EXPECT_EQ(menuAfterSpear, std::vector<DrawnLine>({panelLine("Staff", 228, white), panelLine("Skill Cost: 375", 146, white)}));
+    EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>({panelLine("Seek knowledge", 169, yellow), panelLine("elsewhere", 185, yellow),
+                                                                    panelLine("Zoltan the", 201, yellow), panelLine("Knight", 217, yellow),
+                                                                    panelLine(" ", 233, yellow), panelLine("I can offer you", 249, yellow),
+                                                                    panelLine("nothing further.", 265, yellow)}));
+    using Options = std::vector<std::pair<std::string, Recti>>;
+    const Options both({{"Spear", Recti(480, 204, 140, 16)}, {"Staff", Recti(480, 251, 140, 16)}});
+    EXPECT_EQ(optionsTape, tape(Options(), both, Options(), both, Options({{"Staff", Recti(480, 228, 140, 16)}}), Options()));
+    EXPECT_EQ(skillsTape, tape(std::vector<int>{1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1},
+                               std::vector<int>{1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1},
+                               std::vector<int>{1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1}));
+    EXPECT_EQ(goldTape, tape(1000, 625, 250));
+    EXPECT_EQ(soundsTape.flatten(), tape(SOUND_gold01, static_cast<SoundId>(32902))); // The room's learn sound.
+}
+
+GAME_TEST(MM6Houses, ThievesGuildMenu) {
+    // Buccaneers' Lair, a thieves' guild, showed its proprietor with an empty menu. Once it opens at 6 pm it lists a
+    // member the skills it teaches that the member's class can learn and doesn't know yet, at a thieves' guild price.
+    // Choosing one teaches it, and a second one the party can no longer pay for is refused.
+    auto optionsTape = tapes.custom([] { return houseOptions(); });
+    auto linesTape = tapes.titleLines();
+    auto skillsTape = tapes.custom([] {
+        // The levels of the five skills the guild teaches, character by character.
+        std::vector<int> result;
+        for (const Character &character : pParty->pCharacters)
+            for (Skill skill : {SKILL_DAGGER, SKILL_MERCHANT, SKILL_ITEM_ID, SKILL_PERCEPTION, SKILL_TRAP_DISARM})
+                result.push_back(character.pActiveSkills[skill].level());
+        return result;
+    });
+    auto goldTape = tapes.gold();
+    auto statusTape = tapes.statusBar();
+    auto soundsTape = tapes.sounds();
+    startMM6NewGame(game);
+    pParty->pCharacters[0]._achievedAwardsBits.set(kBuccaneersLairMember); // Zoltan, who knows Dagger.
+    pParty->SetGold(200);
+    waitUntilHour(game, 18);
+    test.startTaping();
+    enterThroughDoor(game, kBuccaneersLairDoor, 270);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+    game.tick();
+    const std::vector<DrawnLine> menu = panelLines(linesTape.back());
+    clickHouseOption(game, localization->skillName(SKILL_MERCHANT));
+    clickHouseOption(game, localization->skillName(SKILL_ITEM_ID));
+
+    const Color white = colorTable.White;
+    EXPECT_EQ(menu, std::vector<DrawnLine>({panelLine("Merchant", 173, white), panelLine("Identify Item", 209, white), panelLine("Perception", 245, white),
+                                            panelLine("Disarm Trap", 281, white), panelLine("Skill Cost: 150", 146, white)}));
+    EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>({panelLine("Identify Item", 180, white), panelLine("Perception", 227, white),
+                                                                    panelLine("Disarm Trap", 274, white), panelLine("Skill Cost: 135", 146, white)}));
+    using Options = std::vector<std::pair<std::string, Recti>>;
+    EXPECT_EQ(optionsTape, tape(Options(),
+                                Options({{"Merchant", Recti(480, 173, 140, 16)}, {"Identify Item", Recti(480, 209, 140, 16)},
+                                         {"Perception", Recti(480, 245, 140, 16)}, {"Disarm Trap", Recti(480, 281, 140, 16)}}),
+                                Options({{"Identify Item", Recti(480, 180, 140, 16)}, {"Perception", Recti(480, 227, 140, 16)},
+                                         {"Disarm Trap", Recti(480, 274, 140, 16)}})));
+    EXPECT_EQ(skillsTape, tape(std::vector<int>{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                               std::vector<int>{1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}));
+    EXPECT_EQ(goldTape, tape(200, 50)); // Zoltan's new Merchant skill takes the price down to 135.
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD));
+    EXPECT_EQ(soundsTape.flatten(), tape(SOUND_gold01, static_cast<SoundId>(32602), static_cast<SoundId>(32604))); // The room's learn and no gold sounds.
+}
+
 GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
     // Hidden capture of New Sorpigal house screens: each house's first view, then the screens behind its options.
     ASSERT_FALSE(window->isVisible());
@@ -698,7 +800,7 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
              {kWeaponShopDoor, 0, "weapons", 5}, {kGeneralStoreDoor, 1536, "general", 2}, {kTempleDoor, 90, "temple", 0},
              {kTrainingDoor, 180, "training", 0}, {kGuildDoor, 1536, "guild", 0}, {kTavernDoor, 0, "tavern", 0},
              {kStableDoor, 180, "stable", 0}, {Vec3f(-8678, -6352, 300), 0, "armor", 5}, {Vec3f(-6376, -7606, 300), 90, "magic", 5},
-             {Vec3f(-6504, -6090, 300), 270, "merc", 0}, {Vec3f(-12528, -5814, 300), 90, "npchouse465", 0},
+             {kBladesEndDoor, 270, "merc", 0}, {Vec3f(-12528, -5814, 300), 90, "npchouse465", 0},
              {kBufordHouseDoor, 90, "npchouse470", 0}}}) {
         enterThroughDoor(game, door, yaw);
         captureHouse(name, screens);
@@ -724,7 +826,7 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
     captureHouse("townhall", 0);
 
     waitUntilHour(game, 18); // The thieves' guild opens at 6 pm.
-    enterThroughDoor(game, Vec3f(-12632, -5946, 300), 270);
+    enterThroughDoor(game, kBuccaneersLairDoor, 270);
     captureHouse("thieves", 0);
 }
 

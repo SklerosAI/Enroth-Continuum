@@ -1,7 +1,7 @@
 #include "MM6Guild.h"
 
 #include <algorithm>
-#include <array>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <utility>
@@ -17,17 +17,24 @@
 
 #include "MM6ShopPrices.h"
 
-/**
- * @param houseId                       MM6 house id.
- * @param character                     Character who wants to study.
- * @return                              Whether the character has the award that makes it a member of the spell guild.
- */
-static bool isGuildMember(int houseId, const Character &character) {
-    static constexpr int kFirstGuild = 119;
-    static constexpr std::array<int, 11> kAwards = {74, 72, 75, 73, 78, 77, 76, 79, 80, 64, 65}; // Fire to Self, two houses each.
-    const int guild = (houseId - kFirstGuild) / 2;
-    return houseId >= kFirstGuild && guild < static_cast<int>(kAwards.size()) && character._achievedAwardsBits[static_cast<AwardId>(kAwards[guild])];
+namespace mm6 {
+
+bool isGuildMember(HouseId houseId, const Character &character) {
+    const std::optional<AwardId> award = guildMembershipAward(std::to_underlying(houseId));
+    return award && character._achievedAwardsBits[*award];
 }
+
+bool classLearnsSkill(const Character &character, Skill skill) {
+    const int sourceSkill = skill == SKILL_LEARNING ? 30 : std::to_underlying(skill); // MM6 numbers Learning 30.
+    return creationRules().startingSkills[classFamily(std::to_underlying(character.classType))][sourceSkill] != 0;
+}
+
+int guildSkillPrice(float value, int unitPrice, const Character &character) {
+    const int full = static_cast<int>(unitPrice * value);
+    return std::max((100 - merchantPercent(character)) * full / 100, full / 3);
+}
+
+} // namespace mm6
 
 GUIWindow_MM6Guild::GUIWindow_MM6Guild(HouseId houseId, const mm6::HousePresentationState &presentation)
     : GUIWindow_MM6Shop(houseId, presentation) {}
@@ -39,7 +46,7 @@ void GUIWindow_MM6Guild::Update() {
 
     const Character &character = pParty->activeCharacter();
     std::string refusal;
-    if (!isGuildMember(std::to_underlying(houseId()), character)) {
+    if (!mm6::isGuildMember(houseId(), character)) {
         refusal = pNPCTopics[171].pText; // Text 172 of npctext.txt.
     } else if (!character.CanAct()) {
         refusal = localization->format(LSTR_S_IS_IN_NO_CONDITION_TO_S, character.name, localization->str(LSTR_DO_ANYTHING));
@@ -87,7 +94,7 @@ bool GUIWindow_MM6Guild::servesActiveCharacter() const {
     if (!pParty->hasActiveCharacter())
         return false;
     const Character &character = pParty->activeCharacter();
-    return isGuildMember(std::to_underlying(houseId()), character) && character.CanAct();
+    return mm6::isGuildMember(houseId(), character) && character.CanAct();
 }
 
 Skill GUIWindow_MM6Guild::learnableSkill(int index) const {
@@ -95,12 +102,9 @@ Skill GUIWindow_MM6Guild::learnableSkill(int index) const {
         return SKILL_INVALID;
     const Skill skill = mm6::guildSkills(_house.type)[index - 1]; // The skills follow Buy Spells.
     const Character &character = pParty->activeCharacter();
-    const int sourceSkill = skill == SKILL_LEARNING ? 30 : std::to_underlying(skill); // MM6 numbers Learning 30.
-    const bool classLearns = mm6::creationRules().startingSkills[mm6::classFamily(std::to_underlying(character.classType))][sourceSkill] != 0;
-    return classLearns && !character.pActiveSkills[skill] ? skill : SKILL_INVALID;
+    return mm6::classLearnsSkill(character, skill) && !character.pActiveSkills[skill] ? skill : SKILL_INVALID;
 }
 
 int GUIWindow_MM6Guild::skillPrice() const {
-    const int full = static_cast<int>(500 * _house.value.value_or(0));
-    return std::max((100 - mm6::merchantPercent(pParty->activeCharacter())) * full / 100, full / 3);
+    return mm6::guildSkillPrice(_house.value.value_or(0), 500, pParty->activeCharacter());
 }

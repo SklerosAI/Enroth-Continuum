@@ -38,6 +38,7 @@
 #include "GUI/UI/Houses/MM6Guild.h"
 #include "GUI/UI/Houses/MM6Shop.h"
 #include "GUI/UI/Houses/MM6ShopPrices.h"
+#include "GUI/UI/Houses/MM6SkillGuild.h"
 #include "GUI/UI/Houses/MM6Tavern.h"
 #include "GUI/UI/Houses/MM6Temple.h"
 #include "GUI/UI/Houses/MM6Training.h"
@@ -464,7 +465,9 @@ void GUIWindow_MM6House::drawOptionLabels(const std::vector<std::string> &labels
     } else if (proprietor && _house.type == HOUSE_TYPE_TRAINING_GROUND && shown == 1) {
         y = (212 - total) / 2 + 101;
     } else if (shown > 0) {
-        const bool guild = proprietor && _house.family == mm6::HouseServiceFamily::MagicGuild; // Leaves room for the skill cost line.
+        const bool skillCostLine = _house.family == mm6::HouseServiceFamily::MagicGuild || _house.type == HOUSE_TYPE_MERCENARY_GUILD ||
+                                   _house.type == HOUSE_TYPE_SHADOW_GUILD;
+        const bool guild = proprietor && skillCostLine; // Leaves room for the skill cost line.
         const int area = guild ? 149 : 174;
         int base = guild ? 162 : 138;
         if (proprietor && _house.type == HOUSE_TYPE_GENERAL_STORE)
@@ -552,13 +555,16 @@ bool mm6EnterHouse(HouseId houseId) {
 void mm6CreateHouseUI(HouseId houseId) {
     const mm6::HousePresentationState presentation =
         mm6::planHousePresentation(GameTitle::MM6, mm6::houseServiceData(), std::to_underlying(houseId));
-    const mm6::HouseServiceFamily family = mm6::houseServiceData().at(std::to_underlying(houseId)).family;
+    const mm6::HouseServiceRow &house = mm6::houseServiceData().at(std::to_underlying(houseId));
+    const mm6::HouseServiceFamily family = house.family;
     if (family == mm6::HouseServiceFamily::Shop) {
         window_SpeakInHouse = std::make_unique<GUIWindow_MM6Shop>(houseId, presentation);
     } else if (family == mm6::HouseServiceFamily::MagicGuild) {
         window_SpeakInHouse = std::make_unique<GUIWindow_MM6Guild>(houseId, presentation);
     } else if (family == mm6::HouseServiceFamily::Transport) {
         window_SpeakInHouse = std::make_unique<GUIWindow_MM6Transport>(houseId, presentation);
+    } else if (house.type == HOUSE_TYPE_MERCENARY_GUILD || house.type == HOUSE_TYPE_SHADOW_GUILD) {
+        window_SpeakInHouse = std::make_unique<GUIWindow_MM6SkillGuild>(houseId, presentation);
     } else {
         window_SpeakInHouse = std::make_unique<GUIWindow_MM6House>(houseId, presentation);
     }

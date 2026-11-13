@@ -1,6 +1,7 @@
 #include "GUI/UI/MM6HouseServiceData.h"
 
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <stdexcept>
 #include <string>
@@ -173,6 +174,9 @@ std::vector<HouseServiceOption> houseServiceOptions(HouseType type) {
             return {Deposit, Withdraw};
         case HOUSE_TYPE_TAVERN:
             return {RentRoom, FillPacks, HaveADrink, TipBarkeep};
+        case HOUSE_TYPE_MERCENARY_GUILD:
+        case HOUSE_TYPE_SHADOW_GUILD:
+            return std::vector<HouseServiceOption>(5, LearnSkill);
         default:
             return {};
     }
@@ -193,6 +197,34 @@ std::vector<Skill> guildSkills(HouseType type) {
         case HOUSE_TYPE_SELF_GUILD: return {SKILL_SPIRIT, SKILL_MIND, SKILL_BODY};
         default: return {}; // The mirrored path guild lists nothing.
     }
+}
+
+std::array<Skill, 5> skillGuildSkills(HouseType type, int houseId) {
+    assert(type == HOUSE_TYPE_MERCENARY_GUILD || type == HOUSE_TYPE_SHADOW_GUILD);
+    if (type == HOUSE_TYPE_SHADOW_GUILD) {
+        if (houseId >= 147 && houseId <= 151 && houseId % 2 == 1)
+            return {SKILL_DAGGER, SKILL_MERCHANT, SKILL_ITEM_ID, SKILL_PERCEPTION, SKILL_TRAP_DISARM};
+        return {SKILL_LEATHER, SKILL_DIPLOMACY, SKILL_ITEM_ID, SKILL_PERCEPTION, SKILL_TRAP_DISARM};
+    }
+    switch (houseId) {
+        case 141: return {SKILL_SWORD, SKILL_AXE, SKILL_SPEAR, SKILL_STAFF, SKILL_LEATHER};
+        case 142:
+        case 144: return {SKILL_MACE, SKILL_BOW, SKILL_CHAIN, SKILL_SHIELD, SKILL_BODYBUILDING};
+        case 145: return {SKILL_SWORD, SKILL_AXE, SKILL_SPEAR, SKILL_STAFF, SKILL_REPAIR};
+        default: return {SKILL_CHAIN, SKILL_BOW, SKILL_SHIELD, SKILL_PLATE, SKILL_REPAIR};
+    }
+}
+
+std::optional<AwardId> guildMembershipAward(int houseId) {
+    static constexpr int kFirstGuild = 119;
+    static constexpr std::array<int, 34> kAwards = {
+        74, 74, 72, 72, 75, 75, 73, 73, 78, 78, 77, 77, 76, 76, 79, 79, 80, 80, 64, 64, 65, 65, // Spell guilds, Fire to Self.
+        69, 70, 71, 70, 69, 71, // Mercenary guilds.
+        66, 66, 67, 67, 68, 68, // Thieves' guilds.
+    };
+    if (houseId < kFirstGuild || houseId >= kFirstGuild + static_cast<int>(kAwards.size()))
+        return std::nullopt;
+    return static_cast<AwardId>(kAwards[houseId - kFirstGuild]);
 }
 
 LstrId houseServiceOptionLabel(HouseServiceOption option) {

@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "Engine/Data/AwardEnums.h"
 #include "Engine/Data/HouseEnumFunctions.h"
 #include "Engine/Data/SoundEnums.h"
 #include "Engine/GameTitle.h"
@@ -110,7 +111,8 @@ enum class HouseServiceOption {
  * @return                              Services the proprietor of a house of this type lists, in menu order. A
  *                                      transport house lists `Travel` once for each of its three route slots, and a
  *                                      stable adds `FixPrices`. A spell guild lists `LearnSkill` once for each skill
- *                                      of `guildSkills`, after `BuySpells`.
+ *                                      of `guildSkills`, after `BuySpells`. A mercenary or thieves' guild lists
+ *                                      `LearnSkill` once for each skill of `skillGuildSkills`.
  */
 std::vector<HouseServiceOption> houseServiceOptions(HouseType type);
 
@@ -119,6 +121,20 @@ std::vector<HouseServiceOption> houseServiceOptions(HouseType type);
  * @return                              Skills a spell guild of this type teaches, in menu order.
  */
 std::vector<Skill> guildSkills(HouseType type);
+
+/**
+ * @param type                          `HOUSE_TYPE_MERCENARY_GUILD` or `HOUSE_TYPE_SHADOW_GUILD`.
+ * @param houseId                       MM6 house id of the guild.
+ * @return                              Skills the guild teaches, in menu order.
+ */
+std::array<Skill, 5> skillGuildSkills(HouseType type, int houseId);
+
+/**
+ * @param houseId                       MM6 house id of a spell, mercenary or thieves' guild.
+ * @return                              Award that makes a character a member of the guild, `std::nullopt` for a house
+ *                                      that isn't a guild.
+ */
+std::optional<AwardId> guildMembershipAward(int houseId);
 
 /**
  * @param option                        House service.

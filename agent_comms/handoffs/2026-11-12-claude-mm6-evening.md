@@ -19,7 +19,8 @@
 | `5001f152c` | Bank deposit and withdraw, services audit | lane: MM6 211 |
 | `66e71b82c` | First combat: potions, turn-based mode, volcanic rest cost, no-food sound | lane: MM6 212, MM7 controls 147. Master gate: unit 1123, MM6 224, MM7 147 |
 | `2c6f6dbdd` | Guild membership topics, Mercenary and Thieves guilds, menu focus colour, Self guild door | lane: MM6 213, MM7 controls 147, worktree houses run 42. Master gate: unit 1123, MM6 229, MM7 147 |
-| `353236d4d` | Tavern room, food and drinks, temple donate, expert teachers | lane: MM6 234, MM7 controls 147 |
+| `353236d4d` | Tavern room, food and drinks, temple donate, expert teachers | lane: MM6 234, MM7 controls 147. Master gate: unit 1124, MM6 234, MM7 147 |
+| `8f5b70560` | Monsters hunt the party, MM6 rest refusal, alert gems, three dungeon walks, four side quests | worktree run on the rebased tree: MM6 240, MM7 controls 147 |
 
 The first-map gate passed every fresh-process child and the MM7 controls on `f88268730` and again on `6361f74a5` (39 children, with the buff and first-map visit pairs). Master gate on `6361f74a5`: unit 1123, MM6 210, MM7 147. The Release MM6 app in `build-release/` was rebuilt at 20:02 and must be rebuilt again on the final master before the playtest, then launched once to the main menu.
 
@@ -32,8 +33,9 @@ The first-map gate passed every fresh-process child and the MM7 controls on `f88
 | Lane | Branch / worktree | Scope |
 | --- | --- | --- |
 | Services 3 | `claude/mm6-services-3` in `../enroth-worktrees/mm6-leftovers` | guild join polish (third topic, award variable, speech 86), Tip the Bartender, master teachers, Bounty Hunt |
-| Dungeons | `claude/mm6-dungeons` in `../enroth-worktrees/mm6-chain-c4` | d02, d01, d18 end to end, the town's side quests, dungeon rest |
-| Rest rules | `claude/mm6-rest-rules` in `../enroth-worktrees/mm6-spells` | new-party days without rest, Wait until Dawn and the rest encounter, wake-all and recovery across rest, the death rule, the 3 am daily rules, turn-based start order |
+| Street NPCs | `claude/mm6-street-npcs` in `../enroth-worktrees/mm6-chain-c4` | street NPC first screen (weekday topic, Join, News), house residents who can be hired, hireling abilities, the tavern rumour |
+| Rest rules | `claude/mm6-rest-rules` in `../enroth-worktrees/mm6-spells` | DONE, reviewed, rebasing onto the dungeons merge for its suite run, then merge |
+| Menus | `claude/mm6-menus-hirelings` in `../enroth-worktrees/mm6-indoor-light` | DONE, reviewed, rebasing onto the dungeons merge for its suite run, then merge. Fixes the escape menu whose Resume started a new game |
 | First hour | `claude/mm6-first-hour` in `../enroth-worktrees/mm6-control-center` | one scenario test of the owner's playtest path, captures of every screen on the way |
 | Menus and hirelings | `claude/mm6-menus-hirelings` in `../enroth-worktrees/mm6-indoor-light` | main menu, escape menu and options, hirelings, news and rumours |
 

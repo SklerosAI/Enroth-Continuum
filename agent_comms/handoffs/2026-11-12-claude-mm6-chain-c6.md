@@ -1,14 +1,14 @@
 # MM6 campaign chain C6 handoff
 
 - Owner: Claude Code lane C6, for the Claude lead. Branch `claude/mm6-chain-c6` in the `mm6-chain-c4` worktree,
-  rebased onto `master` `eb18eec2d` (the Question prompts lane). Not pushed.
+  rebased onto `master` `b86939eb7` (after the Question prompts and MM6 spells lanes). Not pushed.
 
 ## Commits
 
-1. `54d168338` The chain helpers that stand next to a target (decoration, floor item, corpse) now stand on the floor
+1. `1d6e9b5cf` The chain helpers that stand next to a target (decoration, floor item, corpse) now stand on the floor
    there instead of at the target's height. Delta sits on a ledge 128 units up, the party was still falling when the
    helper aimed, and pointing at the crystal failed. Test only.
-2. `97e1d1047` Chapter C6 and its CMake line. Test only.
+2. `2c59f1538` Chapter C6 and its CMake line. Test only.
 3. This handoff.
 
 No engine change was needed. Revert check for commit 1: C6 on the old helper fails with "Failed to point mouse at
@@ -69,6 +69,9 @@ Taking boats would mean days of resting first.
 - MM6 chain fresh, `--title mm6 --through 6`: C0 to C6 passed with pass markers, so commit 1 keeps C4 and C5
   passing. Profile kept for C7 at `/var/folders/qc/fg92hjk146s3g36x68b8n1lh0000gr/T/mm6-restart-chain-14996iuh`.
   The C5 profile `mm6-restart-chain-w2g2innk` now also holds a passing `save006.ec6`.
+- After rebasing onto `b86939eb7`: C6 rerun with the runner from a copy of that profile's saves 0-5 passed with its
+  pass marker. That profile, `/var/folders/qc/fg92hjk146s3g36x68b8n1lh0000gr/T/mm6-restart-chain-c6rebase`, is the
+  one to resume C7 from. The suites below ran before the rebase.
 - Unit tests: 1122 passed, 45 skipped.
 - MM6 suite `MM6*`: 188 passed, 2 skipped (the two `MM6ZSaveHeadless` tests that need private research files).
 - `check_style`: clean. `check_tidy` not run, no clang-tidy 22 locally.

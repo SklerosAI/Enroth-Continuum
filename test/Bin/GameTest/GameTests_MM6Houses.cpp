@@ -178,6 +178,7 @@ static constexpr int kBankDoorFace = 1928;
 static const Vec3f kBufordHouseDoor(-7014, -5798, 300); // In front of Buford T. Allman's house, facing north.
 static const Vec3f kStableDoor(-10346, -9472, 161); // In front of the stable, facing west.
 static const Vec3f kSelfGuildDoor(-13952, -684, 576); // Initiate Guild of the Self, on the ground south of its door.
+static const Vec3f kHaroldHessDoor(-5976, -8068, 160); // Harold Hess's house, facing south.
 static const Vec3f kBladesEndDoor(-6504, -6090, 300); // Blades' End, a mercenary guild.
 static const Vec3f kBuccaneersLairDoor(-12632, -5946, 300); // Buccaneers' Lair, a thieves' guild.
 static constexpr AwardId kElementalGuildMember = static_cast<AwardId>(64);
@@ -794,6 +795,33 @@ GAME_TEST(MM6Houses, OptionFocusColor) {
                                                    panelLine("Repair Items", 248, white), panelLine("Special Items", 281, white)}));
     EXPECT_EQ(shopAway, shopHovered);
     EXPECT_EQ(temple, std::vector<DrawnLine>({panelLine("Heal 10 Gold", 193, colorTable.PaleCanary), panelLine("Donate", 240, white)}));
+}
+
+GAME_TEST(MM6Houses, GuildMembership) {
+    // Harold Hess's "Blade's End Membership" topic did nothing. He tells what joining costs and offers to join, and
+    // joining makes every character a member for 25 gold. Asked again, he says the party is in already.
+    auto goldTape = tapes.gold();
+    auto membersTape = tapes.custom([] {
+        std::vector<bool> result;
+        for (const Character &character : pParty->pCharacters)
+            result.push_back(character._achievedAwardsBits[kBladesEndMember]);
+        return result;
+    });
+    auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+    auto textTape = tapes.custom([] { return current_npc_text.substr(0, 20); }); // The start of what the NPC says.
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kHaroldHessDoor, 270);
+    clickHouseOption(game, "Blade's End Membership");
+    clickHouseOption(game, "Join Blades' End for 25 gold");
+    clickHouseOption(game, "Blade's End Membership");
+
+    EXPECT_EQ(goldTape, tape(200, 175));
+    EXPECT_EQ(membersTape, tape(std::vector<bool>(4, false), std::vector<bool>(4, true)));
+    using Lines = std::vector<std::string>;
+    EXPECT_EQ(optionsTape, tape(Lines(), Lines{"Blade's End Membership"}, Lines{"Join Blades' End for 25 gold"}, Lines{"Blade's End Membership"},
+                                Lines{"You're already a member of this guild."}));
+    EXPECT_EQ(textTape, tape(std::string(), std::string("HEY!  The Blades' En"), std::string(), std::string("HEY!  The Blades' En")));
 }
 
 GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {

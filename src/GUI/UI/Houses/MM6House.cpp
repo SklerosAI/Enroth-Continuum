@@ -2,9 +2,11 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cstdlib>
 #include <exception>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -73,6 +75,17 @@ static constexpr Pointi kExitPicture = {526, 313};
 static constexpr int kPanelTextRight = 630; // Names and portrait labels are centred between their margin and here.
 static constexpr int kOptionTextX = 483;
 static constexpr int kOptionTextWidth = 148;
+
+static constexpr int kFirstMembershipTopic = 381; // npctopic.txt "Elemental Guild Membership", the Dark Guild's is 397.
+static constexpr std::array<int, 17> kMembershipPrices = {100, 100, 25, 50, 50, 25, 50, 50, 50, 50, 50, 50, 50, 50, 50, 1000, 1000};
+
+/**
+ * @param guild                         Guild in npctopic.txt membership order.
+ * @return                              Award that makes a character a member of the guild.
+ */
+static AwardId membershipAward(int guild) {
+    return static_cast<AwardId>(64 + guild);
+}
 
 static Pointi portraitPosition(size_t count, size_t index) {
     return kPortraitPositions[count - 1][index];
@@ -187,7 +200,9 @@ void GUIWindow_MM6House::Update() {
 
         std::vector<std::string> labels;
         for (GUIButton *button : _optionButtons) {
-            if (resident.npc) {
+            if (resident.npc && _membershipOffer) {
+                labels.push_back(membershipLabel());
+            } else if (resident.npc) {
                 labels.push_back(npcDialogueOptionString(static_cast<DialogueId>(button->msg_param), resident.npc));
             } else {
                 labels.push_back(serviceLabel(button->msg_param));
@@ -208,6 +223,7 @@ void GUIWindow_MM6House::selectResident(int index) {
     if (index < 0 || index >= static_cast<int>(_residents.size()))
         return;
     current_npc_text.clear();
+    _membershipOffer.reset();
     _selected = index;
     if (_residents[index].npc) {
         refreshTopics();
@@ -248,6 +264,11 @@ void GUIWindow_MM6House::refreshTopics() {
         return;
     clearOptionButtons();
     _focusedOption = 0;
+    if (_membershipOffer) {
+        _optionButtons.push_back(CreateButton("HouseNpcDialogue_Option0", {480, 160}, {139, 29}, BUTTON_TYPE_NORMAL, 0, UIMSG_SelectHouseNPCDialogueOption,
+                                              std::to_underlying(DIALOGUE_MAGIC_GUILD_JOIN)));
+        return;
+    }
     int row = 0;
     for (DialogueId topic : prepareScriptedNPCDialogueTopics(npc)) {
         if (topic < DIALOGUE_SCRIPTED_LINE_1 || topic > DIALOGUE_SCRIPTED_LINE_6)
@@ -258,12 +279,40 @@ void GUIWindow_MM6House::refreshTopics() {
     }
 }
 
+void GUIWindow_MM6House::offerGuildMembership(int guild) {
+    assert(guild >= 0 && guild < static_cast<int>(kMembershipPrices.size()));
+    _membershipOffer = guild;
+    current_npc_text = pNPCTopics[137 + guild].pText; // Text 138 and on of npctext.txt.
+    refreshTopics();
+}
+
+void GUIWindow_MM6House::joinGuild() {
+    if (!_membershipOffer || !pParty->hasActiveCharacter())
+        return;
+    const Character &character = pParty->activeCharacter();
+    const AwardId award = membershipAward(*_membershipOffer);
+    const int price = kMembershipPrices[*_membershipOffer];
+    if (!character.CanAct() || character._achievedAwardsBits[award] || pParty->GetGold() < price)
+        return;
+    pParty->TakeGold(price);
+    for (Character &member : pParty->pCharacters)
+        member._achievedAwardsBits.set(award);
+    _membershipOffer.reset();
+    current_npc_text.clear();
+    refreshTopics();
+}
+
 NPCData *GUIWindow_MM6House::selectedNpc() const {
     return _selected == -1 ? nullptr : _residents[_selected].npc;
 }
 
 bool GUIWindow_MM6House::goBack() {
     current_npc_text.clear();
+    if (_membershipOffer) {
+        _membershipOffer.reset();
+        refreshTopics();
+        return true;
+    }
     if (_selected == -1 || _residents.size() < 2)
         return false;
     _selected = -1;
@@ -314,6 +363,19 @@ Color GUIWindow_MM6House::optionFocusColor() const {
     if (!isProprietorSelected() || _house.family == mm6::HouseServiceFamily::Shop || _house.type == HOUSE_TYPE_TRAINING_GROUND)
         return colorTable.Sunflower;
     return colorTable.PaleCanary;
+}
+
+std::string GUIWindow_MM6House::membershipLabel() const {
+    if (!pParty->hasActiveCharacter())
+        return {};
+    const Character &character = pParty->activeCharacter();
+    if (!character.CanAct())
+        return pNPCTopics[263].pText; // "Not in your condition!"
+    if (character._achievedAwardsBits[membershipAward(*_membershipOffer)])
+        return pNPCTopics[136].pText; // "You're already a member of this guild."
+    if (pParty->GetGold() < kMembershipPrices[*_membershipOffer])
+        return pNPCTopics[259].pText; // "You don't have enough gold!"
+    return pNPCTopics[154 + *_membershipOffer].pText; // "Join the Elemental Guild for 100 gold" and on.
 }
 
 void GUIWindow_MM6House::showResidentButtons() {
@@ -587,9 +649,21 @@ void mm6CreateHouseUI(HouseId houseId) {
 }
 
 void mm6SelectHouseTopic(DialogueId topic) {
-    NPCData *npc = mm6HouseWindow()->selectedNpc();
+    GUIWindow_MM6House *house = mm6HouseWindow();
+    NPCData *npc = house->selectedNpc();
+    if (npc && topic == DIALOGUE_MAGIC_GUILD_JOIN) {
+        house->joinGuild();
+        return;
+    }
     if (!npc || topic < DIALOGUE_SCRIPTED_LINE_1 || topic > DIALOGUE_SCRIPTED_LINE_6)
         return;
+    const std::array<unsigned, 6> events = {npc->dialogue_1_evt_id, npc->dialogue_2_evt_id, npc->dialogue_3_evt_id,
+                                            npc->dialogue_4_evt_id, npc->dialogue_5_evt_id, npc->dialogue_6_evt_id};
+    const int event = events[std::to_underlying(topic) - std::to_underlying(DIALOGUE_SCRIPTED_LINE_1)];
+    if (event >= kFirstMembershipTopic && event < kFirstMembershipTopic + static_cast<int>(kMembershipPrices.size())) { // MM6.exe answers these topics itself.
+        house->offerGuildMembership(event - kFirstMembershipTopic);
+        return;
+    }
     handleScriptedNPCTopicSelection(topic, npc);
     if (GUIWindow_MM6House *house = mm6HouseWindow())
         house->refreshTopics(); // The event may have closed the house.

@@ -43,6 +43,20 @@ class GUIWindow_MM6House : public GUIWindow_House {
     void refreshTopics();
 
     /**
+     * The NPC the party is talking to tells what joining a guild costs, and offers to join.
+     *
+     * @param guild                     Guild of the NPC's membership topic, 0 for the Elemental Guild through 16 for
+     *                                  the Dark Guild, in npctopic.txt order.
+     */
+    void offerGuildMembership(int guild);
+
+    /**
+     * Takes the offered membership: the party pays and every character joins the guild. Does nothing when the active
+     * character can't act, is a member already, or the party can't pay.
+     */
+    void joinGuild();
+
+    /**
      * @return                          NPC the party is talking to, or `nullptr` if it isn't talking to an NPC.
      */
     NPCData *selectedNpc() const;
@@ -128,6 +142,12 @@ class GUIWindow_MM6House : public GUIWindow_House {
      */
     Color optionFocusColor() const;
 
+    /**
+     * @return                          Line of the offered membership's button: its price, or why the active character
+     *                                  can't join.
+     */
+    std::string membershipLabel() const;
+
     void showResidentButtons();
     void showExitButtons();
     void drawResidents();
@@ -145,6 +165,7 @@ class GUIWindow_MM6House : public GUIWindow_House {
     std::vector<GUIButton *> _optionButtons;
     int _focusedOption = 0; // Index into `_optionButtons` of the line the mouse last pointed at, the first one at the start.
     int _selected = -1;
+    std::optional<int> _membershipOffer; // Guild the selected NPC offers to join, see `offerGuildMembership`.
     bool _trainingTimePassed = false;
     std::optional<mm6::HouseServiceOption> _bankTransfer; // Deposit or withdraw while the player types the amount.
     std::string _roomMovie;

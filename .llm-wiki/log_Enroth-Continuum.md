@@ -3642,3 +3642,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Castle event data omitted three war-result banner combinations and allowed wizard/necromancer adviser flags to contradict alignment. The focused regression captured false-plans/real-Loren gaps, wrong-alignment flags and invalid-state overwrites.
 - Exact d29 event seams now score all 12 complete outcomes, retain base textures for incomplete/contradictory states and require Light+Walls or Dark+Breeding for adviser flags. The matrix plus quest-zero control pass 5/5; qbit 271 and the separate golem repair remain intact.
+
+## [2026-11-15] fix | MM7 exact compatibility guards
+- by: T-Burton-ND via codex
+- A cumulative review found that the Wine Cellar and Lady Carmine seams used an alert-filtered group predicate that could report vacuous success for a living exact target. Both now read the validated actor-zero state directly while generic empty-group behavior remains unchanged.
+- The Castle Harmondale pre-animation golem guard now requires the complete original event-376 signature and disengages for patched or custom qbit-46-gated data. The combined Assassin, Wine and Wizard regression selection passes 12/12.

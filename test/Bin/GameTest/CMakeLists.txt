@@ -70,6 +70,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7ColonyZod.cpp
         GameTests_MM7LichPromotion.cpp
         GameTests_MM7AssassinPromotion.cpp
+        GameTests_MM7BlackKnightPromotion.cpp
         GameTests_MM7ChampionPromotion.cpp
         GameTests_MM7PriestPromotion.cpp
         GameTests_MM7MasterPromotion.cpp

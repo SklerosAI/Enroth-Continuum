@@ -3551,3 +3551,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Dark C5 uses the authored temple chests for both altar pieces, the physical Thunderfist chest for the Soul Jars, Clanker's defense-disable face and a real player fight/corpse-loot interaction against Robert in Celeste. The four Pit hand-ins consume their items, grant novice Blaster to all characters and move Kastore to the Gloaming throne. The run also established that the relocation follows Robert's completion, not merely the adviser trio.
 - A fresh six-process C0-C5 chain passed with every predecessor digest and pass marker unchanged. Seven focused D2-D5 controls and the 157-target style gate passed. No progress image was generated; C6-C7 remain open.
+
+## [2026-11-14] test | MM7 Dark campaign through C6
+- by: T-Burton-ND via codex
+- Dark C6 continues the normal C5 save through Kastore's assignment, the authored Mount Nighon–Thunderfist–Tunnels to Eofol access route, Archibald's Land-of-the-Giants dialogue, Roland's cage and one-use key, both Colony Zod route controls, real Xenofex combat, the authored exit and return altar, and Kastore's hand-in before writing `save006.mm7`.
+- A fresh seven-process C0-C6 chain passed with every predecessor digest and pass marker unchanged. Four focused Xenofex/Kastore controls and the complete 157-target style gate passed. No progress image was generated; C7 remains open for physical Lincoln acquisition and the continuous Dark ending.

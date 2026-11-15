@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "MM7CampaignChain.h"
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
@@ -317,6 +318,30 @@ void openSowerHouse(EngineController &game, NPCData *sower) {
     }
 }
 
+void openSnickHouse(EngineController &game, NPCData *snick) {
+    game.teleportTo(MAP_AVLEE, Vec3f(), 0);
+    std::vector<std::pair<Vec3f, int>> doors;
+    for (const BLVFace &face : pOutdoor->faces)
+        if (face.Clickable() && eventOpensHouse(face.eventId, HOUSE_AVLEE_SNICK_HOUSE))
+            doors.push_back(approachFace(face));
+    ASSERT_FALSE(doors.empty());
+    for (auto [position, yaw] : doors) {
+        game.teleportTo(MAP_AVLEE, position, yaw);
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick();
+        if (current_screen_type == SCREEN_HOUSE && window_SpeakInHouse->houseId() == HOUSE_AVLEE_SNICK_HOUSE)
+            break;
+    }
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_AVLEE_SNICK_HOUSE);
+    auto entry = std::ranges::find(houseNpcs, snick, &HouseNpcDesc::npc);
+    ASSERT_NE(entry, houseNpcs.end());
+    if (houseNpcs.size() > 1) {
+        game.pressGuiButton(fmt::format("House_Npc{}", entry - houseNpcs.begin()));
+        game.tick();
+    }
+}
+
 bool openFaerieKingDialogue(EngineController &game, NPCData *faerieKing) {
     const int faerieKingId = faerieKing - pNPCStats->pNPCData.data();
     game.teleportTo(MAP_HALL_UNDER_THE_HILL, Vec3f(), 0);
@@ -389,6 +414,147 @@ GAME_TEST(MM7Promotions, HunterPromotionSourceContract) {
               1);
     EXPECT_TRUE(hasNpcTopicInstruction(promotion, 45, 0, 81));
     EXPECT_TRUE(hasNpcTopicInstruction(promotion, 52, 0, 0));
+}
+
+GAME_TEST(MM7Promotions, WarriorMagePromotionSourceContract) {
+    game.startNewGame();
+    const std::vector<EvtInstruction> &request = engine->_globalEventMap.function(67);
+    const std::vector<EvtInstruction> &promotion = engine->_globalEventMap.function(68);
+
+    EXPECT_EQ(countVariableInstruction(request, EVENT_Add, VAR_PlayerItemInHands,
+                                       std::to_underlying(ITEM_QUEST_WORN_BELT)),
+              1);
+    EXPECT_EQ(countVariableInstruction(request, EVENT_Add, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_RED_DWARF_MINES_LIFT_ACTIVE)),
+              1);
+    EXPECT_EQ(countVariableInstruction(request, EVENT_Add, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_ORACLE_RECOVERS_WORN_BELT)),
+              1);
+    EXPECT_TRUE(hasNpcTopicInstruction(request, 41, 0, 68));
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Compare, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_RED_DWARF_MINES_LIFT_SABOTAGED)),
+              1);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Compare, VAR_Class, std::to_underlying(CLASS_ARCHER)), 4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Set, VAR_Class, std::to_underlying(CLASS_WARRIOR_MAGE)), 4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_Award,
+                                       std::to_underlying(AWARD_PROMOTION_WARRIOR_MAGE)),
+              4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_Experience, 30000), 4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_Award,
+                                       std::to_underlying(AWARD_PROMOTION_WARRIOR_MAGE_HONORARY)),
+              4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_Experience, 15000), 4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Subtract, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_RED_DWARF_MINES_LIFT_ACTIVE)),
+              1);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_FixedGold, 7500), 1);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Subtract, VAR_ReputationInCurrentLocation, 5), 1);
+    EXPECT_TRUE(hasNpcTopicInstruction(promotion, 41, 0, 69));
+
+    game.teleportTo(MAP_RED_DWARF_MINES, Vec3f(), 0);
+    const std::vector<EvtInstruction> &sabotage = engine->_localEventMap.function(383);
+    EXPECT_EQ(countVariableInstruction(sabotage, EVENT_Compare, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_RED_DWARF_MINES_LIFT_ACTIVE)),
+              1);
+    EXPECT_EQ(countVariableInstruction(sabotage, EVENT_Compare, VAR_PlayerItemInHands,
+                                       std::to_underlying(ITEM_QUEST_WORN_BELT)),
+              1);
+    EXPECT_EQ(countVariableInstruction(sabotage, EVENT_Set, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_RED_DWARF_MINES_LIFT_SABOTAGED)),
+              1);
+    EXPECT_EQ(countVariableInstruction(sabotage, EVENT_Subtract, VAR_PlayerItemInHands,
+                                       std::to_underlying(ITEM_QUEST_WORN_BELT)),
+              1);
+    EXPECT_EQ(countVariableInstruction(sabotage, EVENT_Subtract, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_ORACLE_RECOVERS_WORN_BELT)),
+              1);
+}
+
+GAME_TEST(MM7Promotions, ArcherWarriorMagePhysicalPromotionPacket) {
+    game.startNewGame();
+    NPCData *snick = &pNPCStats->pNPCData[41];
+    ASSERT_EQ(snick->house, HOUSE_AVLEE_SNICK_HOUSE);
+    ASSERT_EQ(snick->dialogue_1_evt_id, 67u);
+
+    std::array initialClasses = {CLASS_ARCHER, CLASS_KNIGHT, CLASS_ARCHER, CLASS_SORCERER};
+    std::array<uint64_t, 4> experience;
+    for (int i = 0; i < 4; ++i) {
+        pParty->pCharacters[i].classType = initialClasses[i];
+        experience[i] = pParty->pCharacters[i].experience;
+    }
+    const int gold = pParty->GetGold();
+
+    openSnickHouse(game, snick);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    const int reputation = pParty->GetPartyReputation();
+    ASSERT_TRUE(selectNpcEvent(game, snick, 67));
+    ASSERT_TRUE(pParty->_questBits[QBIT_RED_DWARF_MINES_LIFT_ACTIVE]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_RED_DWARF_MINES_LIFT_SABOTAGED]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_ORACLE_RECOVERS_WORN_BELT]);
+    ASSERT_EQ(snick->dialogue_1_evt_id, 68u);
+    ASSERT_TRUE(pParty->hasItem(ITEM_QUEST_WORN_BELT) || pParty->pPickedItem.itemId == ITEM_QUEST_WORN_BELT);
+
+    ASSERT_TRUE(selectNpcEvent(game, snick, 68)); // The return topic refuses promotion before the physical sabotage.
+    EXPECT_TRUE(pParty->_questBits[QBIT_RED_DWARF_MINES_LIFT_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_RED_DWARF_MINES_LIFT_SABOTAGED]);
+    EXPECT_EQ(pParty->GetGold(), gold);
+    EXPECT_EQ(pParty->GetPartyReputation(), reputation);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, initialClasses[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experience[i]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_WARRIOR_MAGE]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_WARRIOR_MAGE_HONORARY]);
+    }
+    if (pParty->pPickedItem.itemId == ITEM_QUEST_WORN_BELT)
+        ASSERT_TRUE(pParty->pCharacters[0].inventory.add(pParty->takeHoldingItem()));
+    leaveHouse(game);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+
+    game.teleportTo(MAP_RED_DWARF_MINES, Vec3f(), 0);
+    ASSERT_FALSE(pParty->PartyTimes.CounterEventValues[3].isValid());
+    ASSERT_TRUE(clickCampaignChainEventFace(game, MAP_RED_DWARF_MINES, 383, 1, [] {
+        return pParty->_questBits[QBIT_RED_DWARF_MINES_LIFT_SABOTAGED];
+    }));
+    EXPECT_TRUE(pParty->_questBits[QBIT_RED_DWARF_MINES_LIFT_SABOTAGED]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_RED_DWARF_MINES_LIFT_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_ORACLE_RECOVERS_WORN_BELT]);
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_WORN_BELT));
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_TRUE(pParty->PartyTimes.CounterEventValues[3].isValid());
+
+    openSnickHouse(game, snick);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    ASSERT_TRUE(selectNpcEvent(game, snick, 68));
+    EXPECT_FALSE(pParty->_questBits[QBIT_RED_DWARF_MINES_LIFT_ACTIVE]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_RED_DWARF_MINES_LIFT_SABOTAGED]);
+    EXPECT_EQ(snick->dialogue_1_evt_id, 69u);
+    EXPECT_EQ(pParty->GetGold(), gold + 7500);
+    EXPECT_EQ(pParty->GetPartyReputation(), reputation - 5);
+    for (int i : {0, 2}) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, CLASS_WARRIOR_MAGE);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experience[i] + 30000);
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_WARRIOR_MAGE]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_WARRIOR_MAGE_HONORARY]);
+    }
+    for (int i : {1, 3}) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, initialClasses[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experience[i] + 15000);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_WARRIOR_MAGE]);
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_WARRIOR_MAGE_HONORARY]);
+    }
+
+    std::array<uint64_t, 4> promotedExperience;
+    for (int i = 0; i < 4; ++i)
+        promotedExperience[i] = pParty->pCharacters[i].experience;
+    leaveHouse(game);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    openSnickHouse(game, snick);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    EXPECT_FALSE(selectNpcEvent(game, snick, 68));
+    EXPECT_EQ(pParty->GetGold(), gold + 7500);
+    EXPECT_EQ(pParty->GetPartyReputation(), reputation - 5);
+    for (int i = 0; i < 4; ++i)
+        EXPECT_EQ(pParty->pCharacters[i].experience, promotedExperience[i]);
 }
 
 GAME_TEST(MM7Promotions, RangerHunterRealDialoguePacket) {

@@ -38,6 +38,10 @@ The owner's GOG MM6 install carries no GrayFace files. The engine reads official
 
 Eight fixes live in shared code with only MM7 tests or none: C3, C7, C21, C27, W4, W6, W17, W24.
 
+## Owner decision, 2026-11-15
+
+The owner decided to fix every bug the patch fixes, the way GrayFace did or a better way. That includes reversing the four deliberate-vanilla choices. Logic fixes sit behind default-on `gameplay.fix_*` flags, new saved state goes in our own save fields, and admission-time items are fixed when the spell or feature is admitted. Script fixes become a hash-checked engine-side patch table, and map fixes load from a GrayFace-style `data/*.games.lod` override in the owner's data folder. The per-item plan is in the [project reference](../project/MM6_GRAYFACE_PATCH_REFERENCE.md). No code has changed yet, and the MM6 playtest board keeps priority.
+
 ## How to use it
 
 - Before claiming a vanilla MM6 behaviour, grep the hook comments. A hook means the original is buggy there and the choice is ours.
@@ -46,6 +50,6 @@ Eight fixes live in shared code with only MM7 tests or none: C3, C7, C21, C27, W
 
 ## Superseded claims
 
-None. This page is new.
+- 2026-11-15: the deliberate-vanilla group (C12, C18, C25, W9) is no longer final. The owner's decision reverses it.
 
 See also: [MM6 Implementation Checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md), [MM6 F4 Spell Effect Dispatch](MM6-F4-Spell-Effect-Dispatch.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md), [Campaign Status](Campaign-Status.md).

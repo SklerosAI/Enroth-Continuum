@@ -99,22 +99,46 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
 | W28 | Unconscious members could identify and repair in shops (`FixDeadPlayerIdentifyItem=1`) | `MM6Shop.cpp:311-339` has no `CanAct` check and a house lets an incapacitated member be selected. | vanilla |
 | W29 | Free Haven Smuggler's Guild added to the map | House 151 exists in `2devents.txt` and `MM6HouseServiceData.cpp:203` gives it skills, but the GOG `Outc2.odm` has no door to it. The patched `Outc2.odm` and `outc2.evt` add the entrance. | vanilla by data |
 
-### Decisions this leaves open
+### Owner decision, 2026-11-15: fix them all
 
-Grouped by what a lane would do. Nothing here is assigned, the MM6 playtest board stays the priority list.
+The owner decided that MM6 fixes every bug in the tables above, the way GrayFace did or a better way where one exists. This replaces the earlier "decide per item" stance. It also reverses the four deliberate-vanilla choices (C12, C18, C25, W9), so their pinning tests flip with the fix. No code has changed yet. The MM6 playtest board keeps its priority over this backlog, and each fix lands as its own reviewed packet with a game test that reproduces the player-visible symptom.
 
-**Vanilla bugs we reproduce today and should decide on** (reproduce on purpose, fix, or fix behind a `gameplay.fix_*` flag like Water Walk):
-- C14 stronger-but-shorter buff refused. Affects every MM6 buff recast, the first thing a player hits after Bless at Novice then Expert.
-- C24 monsters jump into lava, W2 random member per command with nobody active, W7 fare before autosave, W13 chest overflow items hidden forever, W22 black potion wasted, W26 shops buy blasters, W28 unconscious members identify and repair, W12 found-artifact flags never cleared on respawn, W1 timer countdown reset per visit.
-- C12 Static Charge cost and C18 turn length and C25 item roll bias and W9 flying border offer are deliberate vanilla, recorded with tests. Leave them unless the owner asks.
+Rules for every fix in this backlog:
+- A fix that changes game logic sits behind a `gameplay.fix_*` config flag that defaults on, like `fix_water_walk_mana_drain`. GrayFace makes most fixes switchable through `mm6.ini`, and the flag keeps a vanilla run one switch away.
+- A fix that needs new saved state stores it in our own save fields, never in a layout the original MM6 can't read back. GrayFace keeps its timer state in a patch-only map extra for the same reason.
+- An admission-time item is fixed in the packet that admits the spell or feature. The spell isn't admitted with the vanilla bug and fixed later.
 
-**Admission-time decisions**, to settle in the packet that admits the spell or feature: C2 Paralyze, C4 weapon enchants, C9 Finger of Death, C11 Charm, C19 Starburst and Meteor Shower, W10 Lloyd's Beacon and Town Portal and Enchant Item, W20 wands, W21 scrolls.
+| # | Fix | Approach | Why this way |
+| --- | --- | --- | --- |
+| C14 | Stronger but shorter buff | Accept the new buff when it is longer **or** stronger, as GrayFace does. | Same as GrayFace. |
+| C24 | Monsters jump into lava | Refuse a walking step down more than 500 units for a non-flying monster, the GrayFace limit. | Same as GrayFace. Our actor movement has no drop check at all, so this is new code in both indoor and outdoor movement. |
+| W1 | Timer countdown resets on every visit | Store each map's last periodic firing per period kind and schedule from it, with GrayFace's daily-at-fixed-time rule. | Same as GrayFace, stored in our save fields. Keeps the catch-up guard we already have. |
+| W2 | Random member per command when nobody is active | Pick one conscious member once per event run and keep it for every command, falling back to member 1. | Same as GrayFace. Our current per-command re-roll is worse than vanilla, the compare and the set can hit different members. |
+| W7 | Fare taken before the travel autosave | Autosave before the fare and the travel days are applied. | Better than GrayFace, which only moves the gold. Ours also applies the travel days before the save, so the save should come first. |
+| W8 | Fixed coach and boat speech delay | Wait for the actual speech sample to finish, capped by the vanilla 1500 and 2500 ms. | Same as GrayFace. |
+| W12 | Found-artifact flags never cleared on respawn | On respawn, clear the found flag for every artifact generated in a chest that was never opened, and implement opcode 69 `RefundChestArtifacts`. | Same as GrayFace. Opcode 69 also unblocks the patched scripts. |
+| W13 | Chest overflow items hidden forever | At generation, place items most valuable first and compact them, then place leftovers when the chest is reopened with space. | GrayFace ships reorder and compacting on and leftover placement off. We turn all three on, because a hidden item is lost loot for the player. |
+| W15 | Door action 3 ignored | Accept action 3 as "switch even while moving". | Same as GrayFace, cheap and needed by anything that runs patched scripts. |
+| W22 | Black potion wasted | Leave the potion in the inventory when it has no effect. | Same as GrayFace. |
+| W26 | Shops buy blasters | Exclude blasters from every shop's trade list. | Same as GrayFace. |
+| W28 | Unconscious members identify and repair | Require the selected member to be able to act before identify or repair in a shop, and on the map. | Same as GrayFace. |
+| C12 | Static Charge cost from the exe table | Read Normal, Expert and Master costs from `spells.txt`, as GrayFace does. | Same as GrayFace. Flips the exe-table decision in `MM6_F4_SPELL_MANA_RECOVERY.md`. |
+| C18 | Turn-based turn twice as long | Advance 213 ticks per turn instead of 426. | Same as GrayFace. Flips `MM6TurnBased.PartyAndMonstersTakeTurns`. |
+| C25 | Item roll favours the first candidate | Fix the off-by-one in the cumulative compare so every candidate gets its weight. | Same as GrayFace. Flips the two `MM6ItemGenerator` pins. |
+| W9 | Border dialog offered while flying low | Don't offer the map-crossing dialog while flying. | Same as GrayFace. Flips `ConfirmationChecksFlyingSeparately`. |
+| C6 | Recovery enchant at the MM7 +50% | +10% recovery rate for MM6, the GrayFace default. | Same as GrayFace. MM6 vanilla did nothing, so 50% would be a new rule rather than a fix. |
+| C8 | Weapon-skill hirelings add a hidden skill | Apply the +2 and +3 to the weapon skills, as `npcprof.txt` describes, for delay and for whatever vanilla already applied it to. Remove the MM7 Armsmaster route for MM6. | Better than GrayFace, which only adds the bonus to delay. Trace what vanilla applies the bonus to before writing it. |
+| C22 | Armor recovery uses the MM7 table | Trace Mok's original change and MM6's skill text, then make Master armor eliminate the penalty if both agree. | Mok's fix isn't in the GrayFace source, so the target needs tracing first. |
+| C26 | Clubs swing silently | Play the mace swing sound for clubs. | Not an MM6 GrayFace item, but the same bug GrayFace fixed for MM7 and MM8. |
+| W19 | Stats screen shows the display condition | Show the condition that determines the stats on the stats screen, the most severe one everywhere else. | Same as GrayFace 2.5.2. |
+| W5, W18 | 5:00 AM brightness, buff duration text | Pin with a game test, fix only if the test shows the vanilla bug. | Both look fixed in code but nobody has watched them. |
+| C3, C7, C21, C27, W4, W6, W17, W24 | Fixed in shared code, no MM6 test | Add an MM6 game test for each. | A shared-code regression would otherwise pass unnoticed for MM6. |
 
-**Inherited MM7 shapes that are wrong for MM6**: C6 recovery enchant at +50% where MM6 vanilla did nothing and the patch gives +10%, C8 weapon-skill hirelings adding a skill MM6 doesn't have, C22 armor recovery table versus MM6's own skill text, W19 stats screen showing the display condition.
+**Admission-time fixes.** C2 monster Paralyze applies the Paralyzed condition to one chosen member. C4 elemental weapon enchants go through the monster resistance roll. C9 Finger of Death awards experience. C11 Charm uses the corrected Master duration. C19 Starburst and Meteor Shower refuse targets beyond arrow range. W10 Lloyd's Beacon and Town Portal autosave before taking spell points and recovery, Town Portal doesn't autosave within the same map and doesn't waste the turn on cancel, and Town Portal and Enchant Item pause the game. W20 an empty wand stays in the inventory. W21 scrolls don't repeat on the paper doll in turn-based mode, and a right-click scroll asks for its target.
 
-**Data fixes**: 34 scripts and 21 maps. The engine can't use them until it (a) handles opcode 69 for MM6 and (b) can overlay `data/*.games.lod` and `data/*.icons.lod` entries over the base archives the way `LodReader` is opened in `LOD.cpp` and `ResourceManager.cpp:123`. That overlay is the one GrayFace mechanism worth building, because it also gives the owner a drop-in for the patch's map fixes without redistributing anything. Until then, a map bug from the readme's "Fixes in maps" lists is known-vanilla, not an engine bug.
-
-**Missing MM6 tests on fixed shared code**: C3, C7, C21, C27, W4, W6, W17, W24 are fixed by shared code with only MM7 tests or none. A regression in shared code would go unnoticed for MM6.
+**Data fixes.** Better than GrayFace's override archives, in two parts:
+- The 34 script fixes become an engine-side patch table. Each entry names the original file's hash and the record-level edit from the diffs in the decoded folder, so the engine applies it only to the exact GOG 1.2 file and nothing derived from the game's data is shipped. Opcode 69 from W12 is a prerequisite. The three text tables are typo fixes and go in the same table.
+- The 21 map geometry fixes can't be expressed as small edits. The engine loads `data/*.games.lod` override archives from the owner's data folder, the GrayFace custom-archive convention, so the owner can drop in the archive from the official GrayFace download. W29, the Smuggler's Guild door, arrives this way.
 
 
 ## Data fixes, inventory

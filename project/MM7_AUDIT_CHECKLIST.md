@@ -11,6 +11,13 @@ data and personal Mac build. A generated per-resource catalog belongs in a
 Git-ignored local reference directory; this public document contains no game
 assets, save contents, or copied guide text.
 
+Checkpoint, 2026-11-15: all 27 promotion endpoints have focused behavior
+coverage and all 76 shipped maps have runtime GameTest references. These are
+important breadth milestones, not closure of the full audit below. War failure
+and result branches, regional durability, ordinary movement/combat,
+original-executable parity for the Strange Temple exit placement and graphical
+Mac play remain open.
+
 ## Baseline and independence
 
 - [ ] Record the current `mm7-isolated-runtime` source revision, staged and

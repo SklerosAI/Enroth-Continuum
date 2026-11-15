@@ -65,9 +65,9 @@ and Lincoln, powers the console, physically takes the Overthruster, exits and
 completes the Dark ending before `save007.mm7`. A fresh eight-process C0-C7
 run, six focused Overthruster/ending controls and the full 157-target style
 gate passed. No progress image was generated. Preserve this completed Dark
-chain while continuing the remaining quest, promotion, Barrow Downs,
-movement/combat and later graphical audit. Do not reuse or relabel a completed
-Light profile.
+chain while continuing the remaining war-alternative, durability,
+ordinary-movement/combat and later graphical audit. Do not reuse or relabel a
+completed Light profile.
 
 ## Current MM7 gameplay checkpoint — 2026-11-15
 
@@ -207,6 +207,25 @@ D09 seam now publishes the taken bit and map marker only after success,
 preserves same-map/reload access and routes fresh retrieved maps away from a
 duplicate bow. Both promotion routes and lifecycle cases pass 6/6. GrayFace's
 separate artifact-refund opcode remains deferred.
+
+The four final promotion packets bring endpoint behavior coverage to 27/27.
+Ranger Lord uses Lysander's offer/refusals, the Oldest Tree and physical
+Mercenary Guild Heart chest. Ninja carries Stephan Sand's cipher through the
+School of Sorcery and physically completes the Hidden Tomb code and
+sarcophagus. Bounty Hunter kills an authored Dragon C target through attack
+input and claims the real 10,000-gold Town Hall bounty. Black Knight kills a
+Navan guard through attack input, walks across treasury event 376 and loots
+physical chest 5 before Frederick's return. Exact qualifying/honorary rewards
+and duplicate stability pass for all four; none required a production fix.
+
+Temple of the Moon and Strange Temple close the final inventory-only map rows,
+so all 76 shipped maps have runtime GameTest coverage. The Moon route proves
+Emerald event-101 entry, physical item-636 pickup, door 4, event-100 exit and
+no respawn. The Strange route proves right-click bottle entry, event-454
+purchase and event-501 exit to Harmondale. Its shipped explicit destination
+position is out of bounds, so OpenEnroth skips placement after loading the
+correct map; retain this as an original-executable parity follow-up rather than
+assuming an engine defect.
 
 Haldar's Remains now has authored Maze face/chest lifecycle coverage. The
 source event previously set qbit 161 on open and redirected a later click to

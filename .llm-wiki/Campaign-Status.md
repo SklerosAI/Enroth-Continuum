@@ -146,6 +146,26 @@ trapped source no longer sets qbit 163 before a successful open; map variable 2
 preserves same-visit/reload access and fresh retrieved maps prevent duplicates.
 The Light/Dark reward, refusal, lifecycle and duplicate packet passes 6/6.
 
+The final four promotion packets bring MM7 to 27/27 behavior-covered
+endpoints. Ranger Lord uses Lysander and the Oldest Tree around the physical
+Mercenary Guild Heart of Wood chest. Ninja carries Sand's cipher through the
+School of Sorcery and physically completes the Hidden Tomb code and
+sarcophagus. Bounty Hunter kills an authored Dragon C target through attack
+input and claims the real 10,000-gold Harmondale Town Hall bounty. Black
+Knight kills a Navan treasury guard through attack input, walks across event
+376 and physically loots chest 5. Each packet covers its path/prerequisite and
+missing-objective refusals, exact qualifying/honorary rewards and duplicate
+stability; none required a production compatibility change.
+
+Temple of the Moon and Strange Temple close the final inventory-only map rows,
+so all 76 shipped MM7 maps now have runtime GameTest coverage. The Moon route
+enters through Emerald event 101, physically takes item 636, opens door 4,
+exits through event 100 and proves no respawn on re-entry. The Strange route
+right-clicks the reusable bottle, buys an empty potion bottle through event
+454 and exits through event 501 to Harmondale. That shipped exit carries an
+out-of-bounds explicit destination, so OpenEnroth loads the correct map but
+skips placement; original-executable parity remains open before any repair.
+
 Haldar's Remains now covers the authored trapped Maze face rather than only a
 direct backing-chest open. The close-before-pickup regression is repaired with
 a persistent source marker while legacy marker-zero routing remains intact.

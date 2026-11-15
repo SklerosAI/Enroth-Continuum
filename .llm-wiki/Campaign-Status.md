@@ -126,6 +126,12 @@ and the Wizard early-golem guard requires the complete original event shape.
 Patched/custom-shaped data disengages, generic empty-group behavior is retained,
 and the combined Assassin/Wine/Wizard regression set passes 12/12.
 
+Haunted Mansion's Angel painting and Castle Gryphonheart's Roland and
+Archibald paintings now stay visually absent after a taken wall is revisited.
+The reload seam requires each exact original six-record pickup event, runs
+after normal authored reload triggers and leaves patched-shaped data alone.
+All three reentry cases, no-duplicate behavior and sibling isolation pass 3/3.
+
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding
 Zone black occluder was a literal-origin capture-placement defect and disappears

@@ -194,6 +194,12 @@ behavior remains unchanged. The Wizard pre-animation guard now requires the
 full original event-376 signature and disengages for qbit-46-gated data. The
 combined focused regression set passes 12/12.
 
+All three Three Paintings source walls now retain their authored empty texture
+after leaving and re-entering Haunted Mansion or Castle Gryphonheart. The exact
+six-record pickup signatures are required, reload handlers run first, and
+patched-shaped data disengages. The 3/3 focused packet also proves no duplicate
+item and that taking Archibald's painting does not alter Roland's wall.
+
 Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the
 corrected Breeding Zone. Shoals' green short-range fog is authored underwater
 behavior. Breeding Zone's old black occluder was caused by a literal indoor

@@ -11,16 +11,20 @@
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Data/AwardEnums.h"
+#include "Engine/Data/HouseEnums.h"
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Evt/EvtProgram.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/MapEnums.h"
+#include "Engine/Objects/Decoration.h"
 #include "Engine/Party.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Tables/NPCTable.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/NPCTopics.h"
+#include "GUI/UI/UIHouses.h"
 #include "Utility/Exception.h"
 
 #include "MM7CampaignChain.h"
@@ -128,6 +132,29 @@ bool interactWithBarrowEventFace(EngineController &game, MapId map, int eventId)
     return interactWithBarrowFaceApproaches(game, map, barrowEventFaceApproaches(eventId));
 }
 
+bool interactWithBarrowEventDecoration(EngineController &game, MapId map, int eventId) {
+    auto decoration = std::ranges::find_if(pLevelDecorations, [eventId](const LevelDecoration &candidate) {
+        return candidate.uEventID == eventId;
+    });
+    if (decoration == pLevelDecorations.end())
+        return false;
+    const int decorationId = decoration - pLevelDecorations.begin();
+    for (const auto &[offset, yaw] : std::array{
+             std::pair{Vec3f(300, 0, 0), 180}, std::pair{Vec3f(-300, 0, 0), 0},
+             std::pair{Vec3f(0, 300, 0), 270}, std::pair{Vec3f(0, -300, 0), 90}}) {
+        game.teleportTo(map, decoration->vPosition + offset, yaw);
+        try {
+            game.pointMouseAtDecoration(decorationId);
+        } catch (const Exception &) {
+            continue;
+        }
+        game.pressAndReleaseButton(BUTTON_LEFT);
+        game.tick(2);
+        return true;
+    }
+    return false;
+}
+
 bool clickBarrowEventFace(EngineController &game, MapId map, int eventId, const std::function<bool()> &done) {
     for (const FaceApproach &approach : barrowEventFaceApproaches(eventId)) {
         game.teleportTo(map, approach.position, approach.yaw, approach.pitch);
@@ -158,9 +185,90 @@ bool selectBarrowNpcEvent(EngineController &game, int npcId, unsigned int eventI
     auto option = std::ranges::find(topics, line);
     if (option == topics.end())
         return false;
-    game.pressGuiButton(fmt::format("NpcDialogue_Option{}", option - topics.begin()));
+    const std::string_view prefix = current_screen_type == SCREEN_NPC_DIALOGUE ?
+                                    "NpcDialogue_Option" : "HouseNpcDialogue_Option";
+    game.pressGuiButton(fmt::format("{}{}", prefix, option - topics.begin()));
     game.tick();
     return true;
+}
+
+bool barrowNpcEventVisible(int npcId, unsigned int eventId) {
+    NPCData &npc = pNPCStats->pNPCData[npcId];
+    std::array eventIds = {npc.dialogue_1_evt_id, npc.dialogue_2_evt_id, npc.dialogue_3_evt_id,
+                           npc.dialogue_4_evt_id, npc.dialogue_5_evt_id, npc.dialogue_6_evt_id};
+    auto event = std::ranges::find(eventIds, eventId);
+    if (event == eventIds.end())
+        return false;
+    DialogueId line = static_cast<DialogueId>(std::to_underlying(DIALOGUE_SCRIPTED_LINE_1) +
+                                               (event - eventIds.begin()));
+    std::vector<DialogueId> topics = prepareScriptedNPCDialogueTopics(&npc);
+    return std::ranges::find(topics, line) != topics.end();
+}
+
+bool barrowEventOpensHouse(int eventId, HouseId houseId) {
+    return engine->_localEventMap.hasEvent(eventId) &&
+           std::ranges::any_of(engine->_localEventMap.function(eventId), [houseId](const EvtInstruction &instruction) {
+               return instruction.opcode == EVENT_SpeakInHouse && instruction.data.house_id == houseId;
+           });
+}
+
+void selectBarrowHouseNpc(EngineController &game, HouseId houseId, int npcId) {
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), houseId);
+    auto entry = std::ranges::find_if(houseNpcs, [npcId](const HouseNpcDesc &candidate) {
+        return candidate.npc == &pNPCStats->pNPCData[npcId];
+    });
+    ASSERT_NE(entry, houseNpcs.end());
+    if (houseNpcs.size() > 1) {
+        game.pressGuiButton(fmt::format("House_Npc{}", entry - houseNpcs.begin()));
+        game.tick();
+    }
+}
+
+void openBarrowOutdoorHouse(EngineController &game, MapId map, HouseId houseId, int npcId) {
+    game.teleportTo(map, Vec3f(), 0);
+    std::vector<std::pair<Vec3f, int>> approaches;
+    for (const BLVFace &face : pOutdoor->faces) {
+        if (face.Clickable() && barrowEventOpensHouse(face.eventId, houseId))
+            approaches.push_back(approachCampaignChainFace(face));
+    }
+    ASSERT_FALSE(approaches.empty());
+    for (const auto &[position, yaw] : approaches) {
+        game.teleportTo(map, position, yaw);
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick();
+        if (current_screen_type == SCREEN_HOUSE)
+            break;
+        if (current_screen_type == SCREEN_NPC_DIALOGUE) {
+            game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+            game.tick();
+        }
+    }
+    selectBarrowHouseNpc(game, houseId, npcId);
+}
+
+void openStoneCityKing(EngineController &game) {
+    game.teleportTo(MAP_STONE_CITY, Vec3f(-3100, 2176, -64), 270);
+    auto throneDoor = std::ranges::find_if(pIndoor->faces, [](const BLVFace &face) {
+        return face.eventId == 416;
+    });
+    ASSERT_NE(throneDoor, pIndoor->faces.end());
+    auto [position, yaw] = approachCampaignChainFace(*throneDoor);
+    game.teleportTo(MAP_STONE_CITY, position, yaw);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    selectBarrowHouseNpc(game, HOUSE_STONE_CITY_THRONE_ROOM, 59);
+}
+
+bool holdBarrowQuestItemFromInventory(ItemId itemId) {
+    for (Character &character : pParty->pCharacters) {
+        InventoryEntry entry = character.inventory.find(itemId);
+        if (!entry)
+            continue;
+        pParty->setHoldingItem(character.inventory.take(entry));
+        return true;
+    }
+    return false;
 }
 
 void leaveBarrowDialogue(EngineController &game) {
@@ -430,4 +538,193 @@ GAME_TEST(MM7BarrowQuests, ZokarrBonesRequireActiveQuestAndHeldSkull) {
         EXPECT_EQ(pParty->pCharacters[i].experience, experienceBefore[i]);
         EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, awardsBefore[i]);
     }
+}
+
+GAME_TEST(MM7BarrowDialogue, HumeOfferBecomesARewardlessReminder) {
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+
+    Character &monk = pParty->pCharacters[0];
+    monk.classType = CLASS_MONK;
+    const std::array experienceBefore = {pParty->pCharacters[0].experience, pParty->pCharacters[1].experience,
+                                         pParty->pCharacters[2].experience, pParty->pCharacters[3].experience};
+    const std::array classBefore = {pParty->pCharacters[0].classType, pParty->pCharacters[1].classType,
+                                    pParty->pCharacters[2].classType, pParty->pCharacters[3].classType};
+    const std::array awardsBefore = {pParty->pCharacters[0]._achievedAwardsBits,
+                                     pParty->pCharacters[1]._achievedAwardsBits,
+                                     pParty->pCharacters[2]._achievedAwardsBits,
+                                     pParty->pCharacters[3]._achievedAwardsBits};
+    const int goldBefore = pParty->GetGold();
+    NPCData &hume = pNPCStats->pNPCData[38];
+    ASSERT_EQ(hume.house, HOUSE_HARMONDALE_HUME_RESIDENCE);
+    ASSERT_EQ(hume.dialogue_1_evt_id, 58u);
+
+    openBarrowOutdoorHouse(game, MAP_HARMONDALE, HOUSE_HARMONDALE_HUME_RESIDENCE, 38);
+    ASSERT_TRUE(barrowNpcEventVisible(38, 58));
+    ASSERT_TRUE(selectBarrowNpcEvent(game, 38, 58));
+    EXPECT_TRUE(pParty->_questBits[QBIT_MEDITATION_SPOT_ACTIVE]);
+    EXPECT_EQ(hume.dialogue_1_evt_id, 59u);
+    EXPECT_EQ(pParty->GetGold(), goldBefore);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, classBefore[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experienceBefore[i]);
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, awardsBefore[i]);
+    }
+
+    leaveBarrowDialogue(game);
+    openBarrowOutdoorHouse(game, MAP_HARMONDALE, HOUSE_HARMONDALE_HUME_RESIDENCE, 38);
+    EXPECT_FALSE(barrowNpcEventVisible(38, 58));
+    ASSERT_TRUE(barrowNpcEventVisible(38, 59));
+    ASSERT_TRUE(selectBarrowNpcEvent(game, 38, 59));
+    EXPECT_TRUE(pParty->_questBits[QBIT_MEDITATION_SPOT_ACTIVE]);
+    EXPECT_EQ(hume.dialogue_1_evt_id, 59u);
+    EXPECT_EQ(pParty->GetGold(), goldBefore);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, classBefore[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experienceBefore[i]);
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, awardsBefore[i]);
+    }
+}
+
+GAME_TEST(MM7BarrowDialogue, GreenNighonAndZokarrCompleteArchDruidPromotionOnce) {
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+
+    NPCData &green = pNPCStats->pNPCData[50];
+    NPCData &hothfarr = pNPCStats->pNPCData[59];
+    ASSERT_EQ(green.house, HOUSE_TULAREAN_FOREST_GREEN_HOUSE);
+    ASSERT_EQ(green.dialogue_1_evt_id, 98u);
+    ASSERT_EQ(hothfarr.house, HOUSE_STONE_CITY_THRONE_ROOM);
+    ASSERT_EQ(hothfarr.dialogue_2_evt_id, 0u);
+
+    // Completing Green's first promotion establishes event 100. The event itself is tested here without
+    // replaying the unrelated three-circle route.
+    green.dialogue_1_evt_id = 100;
+    pParty->pCharacters[0].classType = CLASS_GREAT_DRUID;
+    for (Character &character : pParty->pCharacters)
+        character._achievedAwardsBits.set(AWARD_HARMONDALE_CASTLE_CLEARED);
+    const std::array experienceBefore = {pParty->pCharacters[0].experience, pParty->pCharacters[1].experience,
+                                         pParty->pCharacters[2].experience, pParty->pCharacters[3].experience};
+    const std::array classBefore = {pParty->pCharacters[0].classType, pParty->pCharacters[1].classType,
+                                    pParty->pCharacters[2].classType, pParty->pCharacters[3].classType};
+    const std::array awardsBefore = {pParty->pCharacters[0]._achievedAwardsBits,
+                                     pParty->pCharacters[1]._achievedAwardsBits,
+                                     pParty->pCharacters[2]._achievedAwardsBits,
+                                     pParty->pCharacters[3]._achievedAwardsBits};
+    const int goldBefore = pParty->GetGold();
+
+    // Global event 178 names Hothfarr as its owner, but neither his source data nor any authored SetNPCTopic
+    // assigns it to him. It is not the campaign's live skull source.
+    openStoneCityKing(game);
+    EXPECT_FALSE(barrowNpcEventVisible(59, 178));
+    EXPECT_FALSE(selectBarrowNpcEvent(game, 59, 178));
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_FALSE(pParty->_questBits[QBIT_ORACLE_RECOVERS_ZOKARR_IVS_SKULL]);
+    leaveBarrowDialogue(game);
+
+    // Green refuses an uncommitted party and a Dark-path party without changing the offer topic.
+    openBarrowOutdoorHouse(game, MAP_TULAREAN_FOREST, HOUSE_TULAREAN_FOREST_GREEN_HOUSE, 50);
+    ASSERT_TRUE(selectBarrowNpcEvent(game, 50, 100));
+    EXPECT_FALSE(pParty->_questBits[QBIT_ZOKARR_BONES_ACTIVE]);
+    EXPECT_EQ(green.dialogue_1_evt_id, 100u);
+    leaveBarrowDialogue(game);
+
+    pParty->_questBits.set(QBIT_DARK_PATH);
+    openBarrowOutdoorHouse(game, MAP_TULAREAN_FOREST, HOUSE_TULAREAN_FOREST_GREEN_HOUSE, 50);
+    ASSERT_TRUE(selectBarrowNpcEvent(game, 50, 100));
+    EXPECT_FALSE(pParty->_questBits[QBIT_ZOKARR_BONES_ACTIVE]);
+    EXPECT_EQ(green.dialogue_1_evt_id, 100u);
+    leaveBarrowDialogue(game);
+
+    pParty->_questBits.reset(QBIT_DARK_PATH);
+    pParty->_questBits.set(QBIT_LIGHT_PATH);
+    openBarrowOutdoorHouse(game, MAP_TULAREAN_FOREST, HOUSE_TULAREAN_FOREST_GREEN_HOUSE, 50);
+    ASSERT_TRUE(selectBarrowNpcEvent(game, 50, 100));
+    ASSERT_TRUE(pParty->_questBits[QBIT_ZOKARR_BONES_ACTIVE]);
+    EXPECT_EQ(green.dialogue_1_evt_id, 101u);
+    EXPECT_EQ(pParty->GetGold(), goldBefore);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].experience, experienceBefore[i]);
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, awardsBefore[i]);
+    }
+    leaveBarrowDialogue(game);
+
+    // The return topic is present immediately, but refuses a party that has not buried the bones.
+    openBarrowOutdoorHouse(game, MAP_TULAREAN_FOREST, HOUSE_TULAREAN_FOREST_GREEN_HOUSE, 50);
+    ASSERT_TRUE(selectBarrowNpcEvent(game, 50, 101));
+    EXPECT_TRUE(pParty->_questBits[QBIT_ZOKARR_BONES_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_ZOKARR_BONES_RETURNED]);
+    EXPECT_EQ(green.dialogue_1_evt_id, 101u);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].experience, experienceBefore[i]);
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, awardsBefore[i]);
+    }
+    leaveBarrowDialogue(game);
+
+    // Hothfarr still has no skull topic after the offer; the live authored source is in the Nighon Tunnels.
+    openStoneCityKing(game);
+    EXPECT_FALSE(barrowNpcEventVisible(59, 178));
+    EXPECT_FALSE(selectBarrowNpcEvent(game, 59, 178));
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_FALSE(pParty->_questBits[QBIT_ORACLE_RECOVERS_ZOKARR_IVS_SKULL]);
+    EXPECT_EQ(hothfarr.dialogue_2_evt_id, 0u);
+    EXPECT_EQ(pParty->GetGold(), goldBefore);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].experience, experienceBefore[i]);
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, awardsBefore[i]);
+    }
+    leaveBarrowDialogue(game);
+
+    game.teleportTo(MAP_NIGHON_TUNNELS, Vec3f(), 0);
+    ASSERT_TRUE(interactWithBarrowEventDecoration(game, MAP_NIGHON_TUNNELS, 196));
+    ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_QUEST_ZOKARR_IVS_SKULL);
+    EXPECT_TRUE(pParty->_questBits[QBIT_ORACLE_RECOVERS_ZOKARR_IVS_SKULL]);
+    ASSERT_TRUE(interactWithBarrowEventDecoration(game, MAP_NIGHON_TUNNELS, 196));
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_QUEST_ZOKARR_IVS_SKULL);
+    EXPECT_TRUE(pParty->_questBits[QBIT_ORACLE_RECOVERS_ZOKARR_IVS_SKULL]);
+    pParty->placeHeldItemInInventoryOrDrop();
+    ASSERT_TRUE(pParty->hasItem(ITEM_QUEST_ZOKARR_IVS_SKULL));
+
+    game.teleportTo(MAP_ZOKARRS_TOMB, Vec3f(), 0);
+    ASSERT_TRUE(pParty->hasItem(ITEM_QUEST_ZOKARR_IVS_SKULL));
+    ASSERT_TRUE(holdBarrowQuestItemFromInventory(ITEM_QUEST_ZOKARR_IVS_SKULL));
+    ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_QUEST_ZOKARR_IVS_SKULL);
+    ASSERT_TRUE(interactWithBarrowEventFace(game, MAP_ZOKARRS_TOMB, 377));
+    ASSERT_TRUE(pParty->_questBits[QBIT_ZOKARR_BONES_RETURNED]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_ZOKARR_BONES_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_ORACLE_RECOVERS_ZOKARR_IVS_SKULL]);
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+
+    openBarrowOutdoorHouse(game, MAP_TULAREAN_FOREST, HOUSE_TULAREAN_FOREST_GREEN_HOUSE, 50);
+    const int reputationBefore = pParty->GetPartyReputation();
+    ASSERT_TRUE(selectBarrowNpcEvent(game, 50, 101));
+    EXPECT_FALSE(pParty->_questBits[QBIT_ZOKARR_BONES_ACTIVE]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_ZOKARR_BONES_RETURNED]);
+    EXPECT_EQ(green.dialogue_1_evt_id, 0u);
+    EXPECT_EQ(green.greetingIndex, 81);
+    EXPECT_EQ(pParty->GetPartyReputation() - reputationBefore, -10);
+    EXPECT_EQ(pParty->GetGold(), goldBefore);
+    EXPECT_EQ(pParty->pCharacters[0].classType, CLASS_ARCH_DRUID);
+    auto expectedAwards = awardsBefore[0];
+    expectedAwards.set(AWARD_PROMOTION_ARCHDRUID);
+    EXPECT_EQ(pParty->pCharacters[0]._achievedAwardsBits, expectedAwards);
+    EXPECT_EQ(pParty->pCharacters[0].experience - experienceBefore[0], 80000);
+    for (int i = 1; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, classBefore[i]);
+        expectedAwards = awardsBefore[i];
+        expectedAwards.set(AWARD_PROMOTION_ARCHDRUID_HONORARY);
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, expectedAwards);
+        EXPECT_EQ(pParty->pCharacters[i].experience - experienceBefore[i], 40000);
+    }
+
+    leaveBarrowDialogue(game);
+    const std::array experienceAfter = {pParty->pCharacters[0].experience, pParty->pCharacters[1].experience,
+                                        pParty->pCharacters[2].experience, pParty->pCharacters[3].experience};
+    openBarrowOutdoorHouse(game, MAP_TULAREAN_FOREST, HOUSE_TULAREAN_FOREST_GREEN_HOUSE, 50);
+    EXPECT_FALSE(barrowNpcEventVisible(50, 101));
+    EXPECT_FALSE(selectBarrowNpcEvent(game, 50, 101));
+    EXPECT_EQ(pParty->GetPartyReputation() - reputationBefore, -10);
+    EXPECT_EQ(pParty->GetGold(), goldBefore);
+    for (int i = 0; i < 4; ++i)
+        EXPECT_EQ(pParty->pCharacters[i].experience, experienceAfter[i]);
 }

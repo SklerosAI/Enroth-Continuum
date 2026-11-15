@@ -125,6 +125,12 @@ constexpr int deyjaGuardSetupEventId = 1;
 constexpr int deyjaAlliedGuardGroup = 4;
 constexpr int deyjaAngerCounterIndex = 9;
 constexpr int deyjaGuardStateMapVariable = 4;
+constexpr int castleHarmondaleSetupEventId = 1;
+constexpr int castleHarmondaleWarBannerEventId = 451;
+constexpr int castleHarmondaleWarBannerLeftCog = 16;
+constexpr int castleHarmondaleWarBannerRightCog = 17;
+constexpr int castleHarmondaleAdvisorBannerLeftCog = 19;
+constexpr int castleHarmondaleAdvisorBannerRightCog = 20;
 
 static bool isOriginalBreedingZoneBookEvent(const EvtContext &context,
                                             std::span<const EvtInstruction> instructions) {
@@ -432,6 +438,126 @@ static void applyDeyjaGuardFaction() {
     }
 }
 
+static bool isOriginalCastleHarmondaleAdvisorBannerEvent(
+    const EvtContext &context, std::span<const EvtInstruction> instructions) {
+    if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_MAP ||
+        engine->_currentLoadedMapId != MAP_CASTLE_HARMONDALE ||
+        context.eventId != castleHarmondaleSetupEventId || !context.duringMapLoad)
+        return false;
+
+    const auto comparesQuestBitAt = [instructions](int step, int targetStep, QuestBit bit) {
+        return std::ranges::any_of(instructions, [=](const EvtInstruction &instruction) {
+            return instruction.step == step && instruction.target_step == targetStep &&
+                   instruction.opcode == EVENT_Compare &&
+                   instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+                   instruction.data.variable_descr.value == std::to_underlying(bit);
+        });
+    };
+    const auto setsTextureAt = [instructions](int step, int cog, std::string_view texture) {
+        return std::ranges::any_of(instructions, [=](const EvtInstruction &instruction) {
+            return instruction.step == step && instruction.opcode == EVENT_SetTexture &&
+                   instruction.data.sprite_texture_descr.cog == cog && instruction.str == texture;
+        });
+    };
+    const bool hasAlignmentGate = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               (instruction.data.variable_descr.value == std::to_underlying(QBIT_LIGHT_PATH) ||
+                instruction.data.variable_descr.value == std::to_underlying(QBIT_DARK_PATH));
+    });
+    return comparesQuestBitAt(25, 28, QBIT_WALLS_OF_MIST_PASSED) &&
+           comparesQuestBitAt(26, 31, QBIT_BREEDING_ZONE_FINISHED) &&
+           setsTextureAt(28, castleHarmondaleAdvisorBannerLeftCog, "wizh-a") &&
+           setsTextureAt(29, castleHarmondaleAdvisorBannerRightCog, "wizh-b") &&
+           setsTextureAt(31, castleHarmondaleAdvisorBannerLeftCog, "nechuma") &&
+           setsTextureAt(32, castleHarmondaleAdvisorBannerRightCog, "nechumb") &&
+           !hasAlignmentGate;
+}
+
+static bool isOriginalCastleHarmondaleWarBannerEvent(
+    const EvtContext &context, std::span<const EvtInstruction> instructions) {
+    if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_MAP ||
+        engine->_currentLoadedMapId != MAP_CASTLE_HARMONDALE ||
+        context.eventId != castleHarmondaleWarBannerEventId || !context.duringMapLoad)
+        return false;
+
+    const auto comparesQuestBitAt = [instructions](int step, int targetStep, QuestBit bit) {
+        return std::ranges::any_of(instructions, [=](const EvtInstruction &instruction) {
+            return instruction.step == step && instruction.target_step == targetStep &&
+                   instruction.opcode == EVENT_Compare &&
+                   instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+                   instruction.data.variable_descr.value == std::to_underlying(bit);
+        });
+    };
+    const auto setsTextureAt = [instructions](int step, int cog, std::string_view texture) {
+        return std::ranges::any_of(instructions, [=](const EvtInstruction &instruction) {
+            return instruction.step == step && instruction.opcode == EVENT_SetTexture &&
+                   instruction.data.sprite_texture_descr.cog == cog && instruction.str == texture;
+        });
+    };
+    return instructions.size() == 29 &&
+           comparesQuestBitAt(1, 9, QBIT_RIVERSTRIDE_PLANS_GIVEN) &&
+           comparesQuestBitAt(2, 7, QBIT_FALSE_RIVERSTRIDE_PLANS_GIVEN) &&
+           comparesQuestBitAt(3, 5, QBIT_FALSE_LOREN_GIVEN) &&
+           comparesQuestBitAt(9, 13, QBIT_LOREN_STEEL_RESCUED) &&
+           comparesQuestBitAt(13, 24, QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ARBITER) &&
+           comparesQuestBitAt(14, 16, QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ERATHIA) &&
+           comparesQuestBitAt(15, 20, QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_AVLEE) &&
+           setsTextureAt(16, castleHarmondaleWarBannerLeftCog, "chb1p6") &&
+           setsTextureAt(17, castleHarmondaleWarBannerRightCog, "chb1p7") &&
+           setsTextureAt(20, castleHarmondaleWarBannerLeftCog, "elfhuma") &&
+           setsTextureAt(21, castleHarmondaleWarBannerRightCog, "elfhumb") &&
+           setsTextureAt(24, castleHarmondaleWarBannerLeftCog, "bannwc-a") &&
+           setsTextureAt(25, castleHarmondaleWarBannerRightCog, "bannwc-b");
+}
+
+static std::optional<int> castleHarmondaleWarBannerScore() {
+    const int recipientCount = pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ERATHIA] +
+                               pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_AVLEE] +
+                               pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ARBITER];
+    const int plansCount = pParty->_questBits[QBIT_RIVERSTRIDE_PLANS_GIVEN] +
+                           pParty->_questBits[QBIT_FALSE_RIVERSTRIDE_PLANS_GIVEN];
+    const int lorenCount = pParty->_questBits[QBIT_LOREN_STEEL_RESCUED] +
+                           pParty->_questBits[QBIT_FALSE_LOREN_GIVEN];
+    if (recipientCount != 1 || plansCount != 1 || lorenCount != 1)
+        return std::nullopt;
+
+    int score = 0;
+    score += pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ERATHIA] ? -1 : 0;
+    score += pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_AVLEE] ? 1 : 0;
+    score += pParty->_questBits[QBIT_RIVERSTRIDE_PLANS_GIVEN] ? 1 : -1;
+    score += pParty->_questBits[QBIT_LOREN_STEEL_RESCUED] ? -1 : 1;
+    return score;
+}
+
+static void applyCastleHarmondaleAdvisorBanners() {
+    if (pParty->_questBits[QBIT_LIGHT_PATH] && pParty->_questBits[QBIT_WALLS_OF_MIST_PASSED]) {
+        setTexture(castleHarmondaleAdvisorBannerLeftCog, "wizh-a");
+        setTexture(castleHarmondaleAdvisorBannerRightCog, "wizh-b");
+    } else if (pParty->_questBits[QBIT_DARK_PATH] &&
+               pParty->_questBits[QBIT_BREEDING_ZONE_FINISHED]) {
+        setTexture(castleHarmondaleAdvisorBannerLeftCog, "nechuma");
+        setTexture(castleHarmondaleAdvisorBannerRightCog, "nechumb");
+    }
+}
+
+static void applyCastleHarmondaleWarBanners() {
+    const std::optional<int> score = castleHarmondaleWarBannerScore();
+    if (!score)
+        return;
+
+    if (*score < 0) {
+        setTexture(castleHarmondaleWarBannerLeftCog, "chb1p6");
+        setTexture(castleHarmondaleWarBannerRightCog, "chb1p7");
+    } else if (*score > 0) {
+        setTexture(castleHarmondaleWarBannerLeftCog, "elfhuma");
+        setTexture(castleHarmondaleWarBannerRightCog, "elfhumb");
+    } else {
+        setTexture(castleHarmondaleWarBannerLeftCog, "bannwc-a");
+        setTexture(castleHarmondaleWarBannerRightCog, "bannwc-b");
+    }
+}
+
 /**
  * @offset 0x448CF4
  */
@@ -582,12 +708,22 @@ EvtTransition EvtInterpreter::execute(int startStep) {
         !pParty->_questBits[QBIT_GOLEM_ANIMATED])
         return EVT_TRANSITION_NONE;
 
+    const bool correctCastleAdvisorBanners =
+        isOriginalCastleHarmondaleAdvisorBannerEvent(_context, _events);
+    const bool correctCastleWarBanners =
+        isOriginalCastleHarmondaleWarBannerEvent(_context, _events);
+
     int step = startStep;
 
     _who = !pParty->hasActiveCharacter() ? CHOOSE_RANDOM : CHOOSE_ACTIVE;
 
     while (step != -1)
         step = executeStep(step);
+
+    if (correctCastleAdvisorBanners)
+        applyCastleHarmondaleAdvisorBanners();
+    if (correctCastleWarBanners)
+        applyCastleHarmondaleWarBanners();
 
     return _transition;
 }
@@ -716,6 +852,13 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             }
             break;
         case EVENT_SetTexture:
+            // The original Castle Harmondale map-load trees choose these banners with incomplete conditions. Suppress
+            // their texture writes, then apply the complete alignment/war decision after their other side effects run.
+            if (isOriginalCastleHarmondaleAdvisorBannerEvent(_context, _events) &&
+                ir.step >= 28 && ir.step <= 32)
+                break;
+            if (isOriginalCastleHarmondaleWarBannerEvent(_context, _events))
+                break;
             if (engine->gameTitle() == GameTitle::MM6) {
                 if (BLVFace *face = mm6IndoorEventFace(ir.data.sprite_texture_descr.cog))
                     face->SetTexture(ir.str);

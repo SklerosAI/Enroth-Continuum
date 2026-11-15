@@ -3627,3 +3627,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Both ending completions left their final active quest bit set, so the completed task remained in the Quest Book. Focused Light and Dark tests captured qbits 130/131 staying active after successful Overthruster hand-in.
 - Exact global-event-170/172 success seams now clear only the corresponding active bit, preserve History 25/26, and leave no-item refusals active. Focused ending and Light hand-in controls pass 2/2; broad C7 chains remain reserved for the next integration milestone.
+
+## [2026-11-15] fix | MM7 Giants wishing-well payment
+- by: T-Burton-ND via codex
+- The Land of the Giants well granted repeatable random wishes without charging qualifying parties. A real-face regression reproduced 5,000 gold remaining unchanged after use.
+- An exact event-205 seam charges 5,000 before the authored random branch, preserves the 4,998/4,999 boundary oddity and skips already-patched data. Three physical well cases plus the existing effect control pass 4/4.

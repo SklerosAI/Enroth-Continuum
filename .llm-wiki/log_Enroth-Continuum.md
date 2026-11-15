@@ -3597,3 +3597,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The Breeding Zone source chest set the Book of Divine Intervention retrieval bits on open, then redirected a same-visit second click to the fallback chest if the book had not been taken. The focused test captured the book stranded in chest 0 before the repair.
 - A narrow event-195 map marker now preserves same-visit source-chest access while a fresh retrieved map still routes to the no-respawn fallback. Thomas Grey's real Archmage offer, refusals, physical pickup, retained-book rewards and duplicate guard plus the Lantern quest-chest control pass 6/6.
+
+## [2026-11-15] fix | MM7 Assassin Lady Carmine gate
+- by: T-Burton-ND via codex
+- Celeste map-leave event 378 checked an empty actor group, so Oracle recovery could produce Lady Carmine's dagger while she remained alive. The focused regression captured the bypass and preserves generic empty-group and Dark-map gates.
+- An exact MM7 Celeste seam now evaluates Lady Carmine herself. Seknit's real offer, friendly-target attack initiation, bounded combat, corpse mouse-loot, retained dagger, exact rewards and duplicate protection pass 5/5; the adjacent Wine Cellar kill control passes 1/1.

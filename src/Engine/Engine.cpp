@@ -1606,6 +1606,8 @@ void RegeneratePartyHealthMana() {
     if (!engine->config->debug.AllMagic.value() && pParty->FlyActive() && !pParty->pPartyBuffs[PARTY_BUFF_FLY].isGM) {
         if (pParty->bFlying) {
             int caster = pParty->pPartyBuffs[PARTY_BUFF_FLY].caster;
+            if (engine->gameTitle() == GameTitle::MM6 && pParty->pCharacters[caster].mana < ticks5)
+                pParty->bFlying = false; // MM6 drops the party once the drain would take the caster below zero.
             pParty->pCharacters[caster].mana = std::max(0, pParty->pCharacters[caster].mana - ticks5);
         }
     }

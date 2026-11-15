@@ -376,7 +376,7 @@ int OutdoorLocation::getNumFoodRequiredToRestInCurrentPos(const Vec3f &pos) {
         return 2;
     }
 
-    return foodRequiredForTileset(pTerrain.tilesetByPos(pos));
+    return foodRequiredForTile(engine->gameTitle(), pTerrain.tileDataByGrid(worldToGrid(pos)));
 }
 
 //----- (00489487) --------------------------------------------------------

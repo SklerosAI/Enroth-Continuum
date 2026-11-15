@@ -16,6 +16,8 @@
 
 #include "Testing/Game/GameTest.h"
 
+#include "Application/GameConfig.h"
+
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Localization.h"
@@ -26,10 +28,13 @@
 #include "Engine/Objects/Actor.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/MapTable.h"
+#include "Engine/Tables/NPCTable.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UISaveLoad.h"
 
 #include "Utility/ScopeGuard.h"
+
+#include "MM6CampaignChain.h"
 
 static std::filesystem::path ownerOnlyProfile() {
     const char *value = std::getenv("ENROTH_MM6_RESTART_PROFILE");
@@ -93,6 +98,29 @@ static void startNewGameThroughInput(EngineController &game) {
     game.pressGuiButton("PartyCreation_OK");
     game.skipLoadingScreen();
     game.tick();
+}
+
+static std::filesystem::path createTempProfile() {
+    // An owner-only mm6-restart- folder in the system temp folder, the only kind of profile a test saves into.
+    const std::filesystem::path tempRoot = std::filesystem::canonical(std::filesystem::temp_directory_path());
+    std::string created = (tempRoot / "mm6-restart-save-XXXXXX").string();
+    if (!mkdtemp(created.data()))
+        throw std::runtime_error("Can't create a temporary MM6 profile");
+    return std::filesystem::canonical(created);
+}
+
+static void saveFromMenu(EngineController &game) {
+    // Saves into the new slot from the Escape menu.
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressGuiButton("GameMenu_SaveGame");
+    game.tick(2);
+    game.doubleClickGuiButton("SaveMenu_Slot0"); // The new save slot.
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_C);
+    game.tick();
+    game.pressGuiButton("SaveMenu_Save");
+    game.tick(3); // The button animates for a frame, then posts the save for the next one.
 }
 
 static void confirmTransition(EngineController &game) {
@@ -364,6 +392,93 @@ GAME_TEST(MM6InGameLoad, EscapeMenuLoadReplacesTheSession) {
     EXPECT_EQ(d06DeadTape[2]->size(), 1); // The dummy fell.
     EXPECT_EQ(d06DeadTape[4], std::vector<int>()); // The dungeon is as it was before the save.
     EXPECT_EQ(screenTape.back(), SCREEN_GAME);
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6InGameSave, SavesWithTheCloakOfBaa) {
+    // The game couldn't be saved once Wilbur Humphrey had given the Cloak of Baa, an item an MM6 event gives had no
+    // record to save.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    pNPCStats->pNPCData[4].dialogue_1_evt_id = 101; // Slicker Silvertongue's refusal gives Wilbur Humphrey this topic.
+    auto cloakTape = tapes.hasItem(static_cast<ItemId>(485));
+    auto slotTape = tapes.custom([&] { return std::filesystem::exists(profile / "saves/save000.ec6"); });
+    test.startTaping();
+
+    enterMM6CampaignChainCastle(game, pMapTable->GetMapInfo("outd3.odm"), 43); // Castle Ironfist.
+    talkToMM6CampaignChainNpc(game, 4);
+    ASSERT_TRUE(selectMM6CampaignChainTopic(game, 101));
+    leaveMM6CampaignChainHouse(game);
+    game.pressGuiButton("Game_Character1"); // The cloak comes in hand and goes into the first character's backpack.
+    game.tick();
+    saveFromMenu(game);
+
+    EXPECT_EQ(cloakTape, tape(false, true));
+    EXPECT_EQ(slotTape, tape(false, true));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6InGameSave, SavesWithDevilPlans) {
+    // The game couldn't be saved while the party carried the Devil Plans, the item a monster drops had no record to
+    // save.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    const ItemId plans = static_cast<ItemId>(506);
+    game.teleportTo(pMapTable->GetMapInfo("zdwj02.blv"), Vec3f(-128, -300, 1), 90);
+    pActors[0].hp = 1; // The Devil Warrior, who carries the plans.
+    engine->config->debug.NoDamage.setValue(true); // The other devils of the outpost attack the party.
+    auto plansTape = tapes.hasItem(plans);
+    auto slotTape = tapes.custom([&] { return std::filesystem::exists(profile / "saves/save000.ec6"); });
+    test.startTaping();
+
+    killMM6CampaignChainActor(game, 0);
+    for (int frame = 0; frame < 100 && pActors[0].aiState != Removed; frame++)
+        game.tick(); // The warrior falls and vanishes, and the plans drop to the floor.
+    pickUpMM6CampaignChainFloorItem(game, plans);
+    saveFromMenu(game);
+
+    EXPECT_EQ(plansTape, tape(false, true));
+    EXPECT_EQ(slotTape, tape(false, true));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6InGameSave, SavesWithHighClericsKey) {
+    // The game couldn't be saved while the party carried the High Cleric's key, the item looted from a monster had no
+    // record to save.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    const ItemId key = static_cast<ItemId>(567);
+    game.teleportTo(pMapTable->GetMapInfo("t7.blv"), Vec3f(2094, -19, 177), 337); // The Temple of Baa's entrance.
+    pActors[0].hp = 1; // The priest of Baa who carries the key.
+    engine->config->debug.NoDamage.setValue(true); // The temple's priests and acolytes attack the party.
+    auto keyTape = tapes.hasItem(key);
+    auto slotTape = tapes.custom([&] { return std::filesystem::exists(profile / "saves/save000.ec6"); });
+    test.startTaping();
+
+    killMM6CampaignChainActor(game, 0);
+    lootMM6CampaignChainCorpse(game, 0);
+    saveFromMenu(game);
+
+    EXPECT_EQ(keyTape, tape(false, true));
+    EXPECT_EQ(slotTape, tape(false, true));
     game.runGameRoutine([&] {
         mm6::disarmFirstMapManualSave();
         mm6::testing::setNativeProfileRootForTest({});

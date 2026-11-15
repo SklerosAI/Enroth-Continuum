@@ -1215,7 +1215,8 @@ void GameUI_DrawPartySpells() {
         }
     }
 
-    if (current_screen_type == SCREEN_GAME || current_screen_type == SCREEN_NPC_DIALOGUE) {
+    // MM6's dift.bin has no Fly or Water Walk animation.
+    if (engine->gameTitle() != GameTitle::MM6 && (current_screen_type == SCREEN_GAME || current_screen_type == SCREEN_NPC_DIALOGUE)) {
         // Flight / water walk animation is purposefully slowed down compared to what's in the data files.
         Duration frameTime = animTimer->time() * 50 / 128;
 
@@ -1238,6 +1239,8 @@ void GameUI_DrawPartySpells() {
         }
     }
 
+    if (engine->gameTitle() == GameTitle::MM6)
+        return; // MM6's icons.lod has no isg character buff icons.
     for (int i = 0; i < pParty->pCharacters.size(); ++i) {
         if (pParty->pCharacters[i].pCharacterBuffs[CHARACTER_BUFF_HAMMERHANDS].Active())
             render->DrawQuad2D(game_ui_playerbuff_hammerhands, {pPlayerPortraitsXCoords_For_PlayerBuffAnimsDrawing[i] + 72, 427});

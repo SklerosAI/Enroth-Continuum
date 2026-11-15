@@ -3,11 +3,14 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "GUI/UI/UIHouseEnums.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/MM6HouseServiceData.h"
+
+#include "Library/Color/Color.h"
 
 class GraphicsImage;
 class GUIButton;
@@ -38,6 +41,37 @@ class GUIWindow_MM6House : public GUIWindow_House {
      * Rebuilds the topic buttons of the NPC the party is talking to. A topic's event can change them.
      */
     void refreshTopics();
+
+    /**
+     * The NPC the party is talking to tells what joining a guild costs, and offers to join.
+     *
+     * @param guild                     Guild of the NPC's membership topic, 0 for the Elemental Guild through 16 for
+     *                                  the Dark Guild, in npctopic.txt order.
+     */
+    void offerGuildMembership(int guild);
+
+    /**
+     * Takes the offered membership: the party pays and every character joins the guild. Does nothing when the active
+     * character can't act, is a member already, or the party can't pay.
+     */
+    void joinGuild();
+
+    /**
+     * Shows an expert teacher's offer with its one learn line in place of the NPC's topics.
+     *
+     * @offset 0x499610 (MM6)
+     *
+     * @param topic                     NPC topic of the teacher, an even one from 200 to 258.
+     */
+    void offerExpertTraining(int topic);
+
+    /**
+     * Makes the active character an expert in the skill on offer when the teacher's checks pass and the party has the
+     * gold.
+     *
+     * @offset 0x4969C4 (MM6)
+     */
+    void learnFromTeacher();
 
     /**
      * @return                          NPC the party is talking to, or `nullptr` if it isn't talking to an NPC.
@@ -85,6 +119,27 @@ class GUIWindow_MM6House : public GUIWindow_House {
      */
     virtual std::string serviceLabel(int index) const;
 
+    /**
+     * @return                          Top of the first line of a menu that stacks its lines with a blank line between
+     *                                  them, the way a tavern or a stable lists its services.
+     */
+    virtual int stackedMenuTop() const;
+
+    /**
+     * @param text                      Text drawn in the right panel.
+     * @return                          Height of the text as MM6 counts it, the font height minus 3 for every line.
+     */
+    static int panelTextHeight(std::string_view text);
+
+    /**
+     * Draws text in the right panel's text column, centred in it.
+     *
+     * @param text                      Text to draw, in the Arrus font.
+     * @param y                         Top of the first line.
+     * @param color                     Text color.
+     */
+    static void drawPanelText(std::string_view text, int y, Color color);
+
     const mm6::HouseServiceRow &_house;
     std::vector<mm6::HouseServiceOption> _services;
 
@@ -98,17 +153,78 @@ class GUIWindow_MM6House : public GUIWindow_House {
     };
 
     bool isExitSelected() const;
+
+    /**
+     * @return                          Color of the option line the mouse last pointed at.
+     */
+    Color optionFocusColor() const;
+
+    /**
+     * @return                          Line of the offered membership's button: its price, or why the active character
+     *                                  can't join.
+     */
+    std::string membershipLabel() const;
+
+    /**
+     * @offset 0x496C90 (MM6)
+     *
+     * @param[out] approved             Whether the active character may learn from the teacher on offer.
+     * @return                          Line of the learn button, or why the character can't learn.
+     */
+    std::string teacherLabel(bool *approved) const;
+
     void showResidentButtons();
     void showExitButtons();
     void drawResidents();
     void drawExit();
     void healActiveCharacter();
 
+    /**
+     * Takes the temple's `Val` in gold and raises the party's reputation by 200, to no more than 200. Temple Baa takes
+     * the 200 back while the reputation is above -800.
+     *
+     * @offset 0x49DD99 (MM6)
+     */
+    void donate();
+
+    /**
+     * Takes the room price, then leaves the house and puts the party to bed until 6 am.
+     *
+     * @offset 0x49F319 (MM6)
+     */
+    void rentRoom();
+
+    /**
+     * Takes the food price and fills the party's food up to the tavern's `Val`, unless the packs already hold that
+     * much.
+     *
+     * @offset 0x49F85F (MM6)
+     */
+    void fillPacks();
+
+    /**
+     * Sells the active character a drink for 1 gold. Half the drinks get the got drunk reaction, and a third of those
+     * leave the character drunk. A quarter of the others add 5 to 10 to the bonus of a random stat.
+     *
+     * @offset 0x49F45C (MM6)
+     */
+    void haveDrink();
+
+    /**
+     * Shows the bank's how much prompt while the player types an amount, and moves the gold once the amount is
+     * confirmed. An amount above what the party has, or holds in the bank, moves all of it.
+     */
+    void updateBankTransfer();
+
     GraphicsImage *_panel = nullptr;
     std::vector<Resident> _residents;
     std::vector<GUIButton *> _optionButtons;
+    int _focusedOption = 0; // Index into `_optionButtons` of the line the mouse last pointed at, the first one at the start.
     int _selected = -1;
+    std::optional<int> _membershipOffer; // Guild the selected NPC offers to join, see `offerGuildMembership`.
+    std::optional<int> _teacherOffer; // Topic of the teacher whose offer is shown.
     bool _trainingTimePassed = false;
+    std::optional<mm6::HouseServiceOption> _bankTransfer; // Deposit or withdraw while the player types the amount.
     std::string _roomMovie;
     int64_t _roomMovieStart = 0; // Platform tick count at which the room movie started.
     std::optional<int64_t> _roomMovieEnd; // Platform tick count at which the room movie stops, empty while it loops.

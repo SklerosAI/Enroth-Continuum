@@ -42,6 +42,34 @@
 #include "Utility/Streams/FileOutputStream.h"
 #include "Utility/System/Path.h"
 
+static void startNewGameThroughInput(EngineController &game) {
+    // Each character takes its first three optional skills and up to three points in every attribute, then the party
+    // enters the first map.
+    constexpr PlatformKey characterKeys[] = {PlatformKey::KEY_DIGIT_1, PlatformKey::KEY_DIGIT_2, PlatformKey::KEY_DIGIT_3,
+                                             PlatformKey::KEY_DIGIT_4};
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    for (PlatformKey key : characterKeys) {
+        game.pressAndReleaseKey(key);
+        game.tick();
+        for (int skill = 0; skill < 3; skill++) {
+            game.pressGuiButton(fmt::format("PartyCreation_Skill{}", skill));
+            game.tick();
+        }
+        for (int attribute = 0; attribute < 7; attribute++) {
+            for (int point = 0; point < 3; point++) {
+                game.pressAndReleaseKey(PlatformKey::KEY_ADD);
+                game.tick();
+            }
+            game.pressAndReleaseKey(PlatformKey::KEY_DOWN);
+            game.tick();
+        }
+    }
+    game.pressGuiButton("PartyCreation_OK");
+    game.skipLoadingScreen();
+    game.tick();
+}
+
 GAME_TEST(MM6SpriteOctants, SevenCharacterDirectionalPrefix) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     const int frameId = pSpriteFrameTable->FastFindSprite("pfemsta");
@@ -184,47 +212,15 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_FirstOutdoorCapture) {
     ASSERT_TRUE(Path(capturePath).isNormalized());
     ASSERT_EQ(Path(capturePath).extension(), ".png");
 
-    game.pressGuiButton("MainMenu_NewGame");
-    game.tick(2);
-    ASSERT_NE(pGUIWindow_CurrentMenu, nullptr);
-    ASSERT_EQ(pGUIWindow_CurrentMenu->eWindowType, WINDOW_PARTY_CREATION);
-    ASSERT_EQ(lWindowList.size(), 2u);
-
-    const MapId firstMap = pMapTable->GetMapInfo("oute3.odm");
-    ASSERT_NE(firstMap, MAP_INVALID);
-    pMapDeltas.clear();
-    for (const std::string &name : pGames_LOD->ls()) {
-        if (std::string_view(name).ends_with(".dlv") || std::string_view(name).ends_with(".ddm"))
-            pMapDeltas.emplace(name, Blob::copy(pGames_LOD->read(name)));
-    }
-    ASSERT_TRUE(pMapDeltas.contains("oute3.ddm"));
-    mm6::resetChestTitleState(&mm6::chestTitleState());
-    ASSERT_TRUE(mm6::restoreChestTitleState(GameTitle::MM6, &mm6::chestTitleState(),
-                                            0x12345678u, {}));
-
-    bool loaded = false;
-    game.runGameRoutine([firstMap, &loaded] {
-        GameUI_LoadPlayerPortraitsAndVoices();
-        engine->_pendingTransition = MapDestination(firstMap, MAP_START_POINT_PARTY);
-        {
-            mm6::ScopedChestMapLoadOptIn chestOptIn;
-            DoPrepareWorld(/* bLoading = */ false, /* fullscreen = */ 1);
-        }
-        loaded = !mm6::chestMapLoadOptedIn();
-    });
-    for (int tick = 0; tick < 256 && !loaded; ++tick)
-        game.tick();
-    ASSERT_TRUE(loaded);
-    ASSERT_EQ(engine->_currentLoadedMapId, firstMap);
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->_currentLoadedMapId, pMapTable->GetMapInfo("oute3.odm"));
     ASSERT_EQ(uCurrentlyLoadedLevelType, LEVEL_OUTDOOR);
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
     ASSERT_EQ(vChests.size(), 20u);
-    ASSERT_EQ(lWindowList.size(), 1u);
     ASSERT_FALSE(window->isVisible());
 
     RgbaImage frame;
     game.runGameRoutine([&frame] {
-        uGameState = GAME_STATE_PLAYING;
-        current_screen_type = SCREEN_GAME;
         render->ClearTarget(Color(0, 0, 0));
         engine->drawWorld();
         engine->drawHUD();

@@ -1,11 +1,14 @@
 #pragma once
 
 #include <cassert>
+#include <cstdlib>
 #include <optional>
 #include <stdexcept>
 #include <utility>
 
 #include "Engine/Graphics/Indoor.h"
+#include "Engine/MM6/MM6ChestTrap.h"
+#include "Engine/MM6/MM6MonsterAttack.h"
 #include "Engine/MM6/MM6SpellDamageTag.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Objects/Character.h"
@@ -27,7 +30,7 @@ namespace mm6 {
  * Damage of one hit by an MM6 event spell on a character, from the original's event spell damage table. Only the low
  * six bits of the event's skill level count there, so a level of 100 hits as 36.
  *
- * @param spell                         Event spell other than Armageddon, see `isVerifiedEventSpell`.
+ * @param spell                         Event spell that flies at the party, see `isEventProjectileSpell`.
  * @param skillLevel                    Skill level from the event.
  * @param rng                           Game RNG.
  * @return                              Damage before the character's resistance.
@@ -36,9 +39,12 @@ inline int eventSpellDamage(SpellId spell, int skillLevel, RandomEngine &rng) {
     const int level = skillLevel & 0x3F;
     switch (static_cast<int>(spell)) {
         case 6: return rng.randomDice(level, 6);
+        case 13: return 2 + rng.random(5);
         case 15: return level + 2;
+        case 24: return rng.randomDice(2, 3);
         case 28: return rng.randomDice(level, 7);
         case 32: return 12 + rng.randomDice(level, 2);
+        case 41: return rng.randomDice(level, 8);
         case 90: return 25 + rng.randomDice(level, 10);
         default: break;
     }
@@ -64,10 +70,10 @@ inline DamageType spellDamageType(SpellDamageTag tag) {
 }
 
 /**
- * Launches an MM6 event spell the way the original event cast does. Sparks spreads three, five or seven sparks over 60
- * degrees by mastery, the other projectiles fly alone, and Armageddon does nothing.
+ * Launches an MM6 event spell that flies at the party. Flame Arrow and Magic Arrow fly as Cold Beam, Sparks spreads
+ * three, five or seven sparks over 60 degrees by mastery, and the other projectiles fly alone.
  *
- * @param spell                         Verified event spell, see `isVerifiedEventSpell`.
+ * @param spell                         Event projectile spell, see `isEventProjectileSpell`.
  * @param mastery                       Mastery from the event.
  * @param skillLevel                    Skill level from the event.
  * @param from                          Launch point.
@@ -75,10 +81,10 @@ inline DamageType spellDamageType(SpellDamageTag tag) {
  * @param pitch                         Launch pitch toward the target.
  * @param distance                      Distance to the target.
  */
-inline void launchEventSpell(SpellId spell, Mastery mastery, int skillLevel, Vec3f from, int yaw, int pitch, float distance) {
-    assert(isVerifiedEventSpell(spell));
-    if (static_cast<int>(spell) == 98)
-        return;
+inline void launchEventProjectile(SpellId spell, Mastery mastery, int skillLevel, Vec3f from, int yaw, int pitch, float distance) {
+    assert(isEventProjectileSpell(spell));
+    if (static_cast<int>(spell) == 2 || static_cast<int>(spell) == 35)
+        spell = static_cast<SpellId>(24);
 
     SpriteObject sprite;
     sprite.spriteId = SpellSpriteMapping[spell]; // Sprite IDs follow the spell's school and slot, as the spell IDs do.
@@ -109,6 +115,59 @@ inline void launchEventSpell(SpellId spell, Mastery mastery, int skillLevel, Vec
         spriteId = sprite.Create(yaw, pitch, speed, 0);
     }
     pAudioPlayer->playSpellSound(spell, false, SOUND_MODE_PID, Pid(OBJECT_Sprite, spriteId));
+}
+
+/**
+ * Casts an MM6 event spell the way the original event cast does. Projectiles fly at the target, Bless and Day of the
+ * Gods buff every character, Mass Curse tries to curse every character when the party is near the launch point, and
+ * Wizard Eye and Armageddon do nothing.
+ *
+ * @param spell                         Verified event spell, see `isVerifiedEventSpell`.
+ * @param mastery                       Mastery from the event, Normal to Master.
+ * @param skillLevel                    Skill level from the event.
+ * @param from                          Launch point.
+ * @param yaw                           Launch yaw toward the target.
+ * @param pitch                         Launch pitch toward the target.
+ * @param distance                      Distance to the target.
+ */
+inline void castEventSpell(SpellId spell, Mastery mastery, int skillLevel, Vec3f from, int yaw, int pitch, float distance) {
+    assert(isVerifiedEventSpell(spell));
+    assert(mastery >= MASTERY_NOVICE && mastery <= MASTERY_MASTER);
+    if (isEventProjectileSpell(spell)) {
+        launchEventProjectile(spell, mastery, skillLevel, from, yaw, pitch, distance);
+        return;
+    }
+
+    const Time now = pParty->GetPlayingTime();
+    switch (static_cast<int>(spell)) {
+        case 46: {
+            const Duration duration = Duration::fromSeconds(240 + (mastery == MASTERY_NOVICE ? 300 : 900) * skillLevel);
+            for (Character &character : pParty->pCharacters)
+                character.pCharacterBuffs[CHARACTER_BUFF_BLESS].Apply(now + duration, mastery, 0, 0, -1); // The original applies no power.
+            break;
+        }
+        case 83: {
+            const int power = (std::to_underlying(mastery) + 1) * skillLevel;
+            for (Character &character : pParty->pCharacters)
+                for (CharacterBuff buff : {CHARACTER_BUFF_STRENGTH, CHARACTER_BUFF_INTELLIGENCE, CHARACTER_BUFF_PERSONALITY, CHARACTER_BUFF_ENDURANCE,
+                                           CHARACTER_BUFF_ACCURACY, CHARACTER_BUFF_SPEED, CHARACTER_BUFF_LUCK})
+                    character.pCharacterBuffs[buff].Apply(now + Duration::fromHours(skillLevel), mastery, power, 0, -1);
+            break;
+        }
+        case 91: {
+            const int dx = std::abs(static_cast<int>(pParty->pos.x) - static_cast<int>(from.x));
+            const int dy = std::abs(static_cast<int>(pParty->pos.y) - static_cast<int>(from.y));
+            const int dz = std::abs(static_cast<int>(pParty->pos.z) - static_cast<int>(from.z));
+            if (approximateLength(dx, dy, dz) > 4096)
+                return;
+            for (Character &character : pParty->pCharacters)
+                receiveSpecialAttack(character, SPECIAL_ATTACK_CURSE, *grng);
+            break;
+        }
+        default:
+            return; // Wizard Eye and Armageddon.
+    }
+    pAudioPlayer->playSpellSound(spell, false, SOUND_MODE_EXCLUSIVE);
 }
 
 /**

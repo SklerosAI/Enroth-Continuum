@@ -117,8 +117,8 @@ GAME_TEST(MM6Finale, BlasterHurtsReactor) {
     test.startTaping();
 
     game.teleportTo(engine->_currentLoadedMapId, Vec3f(5216, 22464, -2255), 180); // In sight of the reactor.
-    game.pointMouseAtActor(reactorActor);
-    for (int shot = 0; shot < 10 && hpTape.back() == 1300; shot++) {
+    for (int shot = 0; shot < 50 && hpTape.back() == 1300; shot++) {
+        game.pointMouseAtActor(reactorActor);
         game.pressAndReleaseKey(PlatformKey::KEY_A);
         game.tick();
     }

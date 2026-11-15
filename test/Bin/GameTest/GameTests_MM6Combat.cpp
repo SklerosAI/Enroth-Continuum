@@ -11,6 +11,8 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Evt/MM6MapByteState.h"
+#include "Engine/Graphics/Indoor.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/Objects/Actor.h"
@@ -502,4 +504,209 @@ GAME_TEST(MM6CombatHeadless, DISABLED_D18VentFireballsKeepExploding) {
 
     auto newExplosions = explosionsTape.adjacentDeltas().filter([](auto delta) { return delta > 0; });
     EXPECT_GE(std::ranges::fold_left(newExplosions, 0, std::plus()), 10); // Each explosion adds 5 to 10 trail particles.
+}
+
+GAME_TEST(MM6CombatHeadless, DISABLED_D08ArrowAndStaticChargePlateHitsParty) {
+    // A d08 plate that casts Flame Arrow and Static Charge at the party used to refuse its event spells and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = tapes.totalHp();
+    auto conditionTape = charTapes.conditions();
+    auto spritesTape = tapes.sprites();
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "d08.blv");
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(-1450, 4416, 0), 180); // Just east of the plate.
+    test.startTaping();
+
+    game.pressKey(PlatformKey::KEY_UP);
+    game.tick(3); // The party walks onto the plate.
+    game.releaseKey(PlatformKey::KEY_UP);
+    game.tick(5); // The beam and the charge fly in from two corridors.
+
+    auto sprites = spritesTape.flatten();
+    EXPECT_CONTAINS(sprites, SPRITE_SPELL_WATER_POISON_SPRAY); // Flame Arrow flies as Cold Beam.
+    EXPECT_CONTAINS(sprites, impactSprite(SPRITE_SPELL_WATER_POISON_SPRAY));
+    EXPECT_MISSES(sprites, SPRITE_SPELL_FIRE_FIRE_BOLT); // The MM6 Flame Arrow object.
+    EXPECT_CONTAINS(sprites, SPRITE_SPELL_AIR_FEATHER_FALL); // The MM6 Static Charge object.
+    EXPECT_CONTAINS(sprites, impactSprite(SPRITE_SPELL_AIR_FEATHER_FALL));
+    EXPECT_LT(hpTape.delta(), 0);
+    EXPECT_EQ(conditionTape.frontBack(), tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
+                                              {CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD}));
+}
+
+GAME_TEST(MM6CombatHeadless, DISABLED_D08MagicArrowPlateHitsParty) {
+    // A d08 plate that casts Magic Arrow at the party used to refuse its event spell and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = tapes.totalHp();
+    auto conditionTape = charTapes.conditions();
+    auto spritesTape = tapes.sprites();
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "d08.blv");
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(768, -1150, 0), 270); // Just north of the plate.
+    test.startTaping();
+
+    game.pressKey(PlatformKey::KEY_UP);
+    game.tick(3); // The party walks onto the plate.
+    game.releaseKey(PlatformKey::KEY_UP);
+    game.tick(); // The beam flies up from the far end of the plate.
+
+    auto sprites = spritesTape.flatten();
+    EXPECT_CONTAINS(sprites, SPRITE_SPELL_WATER_POISON_SPRAY); // Magic Arrow flies as Cold Beam.
+    EXPECT_CONTAINS(sprites, impactSprite(SPRITE_SPELL_WATER_POISON_SPRAY));
+    EXPECT_MISSES(sprites, SPRITE_SPELL_EARTH_SLOW); // The MM6 Magic Arrow object.
+    EXPECT_LT(hpTape.delta(), 0);
+    EXPECT_EQ(conditionTape.frontBack(), tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
+                                              {CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD}));
+}
+
+GAME_TEST(MM6CombatHeadless, DISABLED_D08MagicArrowTimerHitsParty) {
+    // A d08 timer that casts Magic Arrow down a corridor used to refuse its event spell and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = tapes.totalHp();
+    auto conditionTape = charTapes.conditions();
+    auto spritesTape = tapes.sprites();
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "d08.blv");
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(-1024, 4096, 0), 0); // In the corridor the timer shoots down.
+    test.startTaping();
+
+    game.tick(63); // Three minutes in, the timer shoots a beam from each end of the corridor.
+
+    auto sprites = spritesTape.flatten();
+    EXPECT_CONTAINS(sprites, SPRITE_SPELL_WATER_POISON_SPRAY);
+    EXPECT_CONTAINS(sprites, impactSprite(SPRITE_SPELL_WATER_POISON_SPRAY));
+    EXPECT_LT(hpTape.delta(), 0);
+    EXPECT_EQ(conditionTape.frontBack(), tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
+                                              {CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD}));
+}
+
+GAME_TEST(MM6CombatHeadless, DISABLED_D08RockBlastPlateHitsWholeParty) {
+    // A d08 plate that casts Rock Blast at the party used to refuse its event spell and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto hpTape = charTapes.hps();
+    auto conditionTape = charTapes.conditions();
+    auto spritesTape = tapes.sprites();
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "d08.blv");
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(1950, 1152, 0), 0); // Just west of the plate.
+    for (Character &character : pParty->pCharacters)
+        character.health = 200; // A level 8 Rock Blast can kill a new character.
+    test.startTaping();
+
+    game.pressKey(PlatformKey::KEY_UP);
+    game.tick(3); // The party walks onto the plate.
+    game.releaseKey(PlatformKey::KEY_UP);
+    game.tick(); // The rock flies in from behind and explodes on the party.
+
+    auto sprites = spritesTape.flatten();
+    EXPECT_CONTAINS(sprites, SPRITE_SPELL_EARTH_ROCK_BLAST);
+    EXPECT_CONTAINS(sprites, SPRITE_SPELL_EARTH_ROCK_BLAST_IMPACT);
+    for (int i = 0; i < 4; i++) // The blast hits every character.
+        EXPECT_LT(hpTape.back()[i], 200) << i;
+    EXPECT_EQ(conditionTape.frontBack(), tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
+                                              {CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD}));
+}
+
+GAME_TEST(MM6CombatHeadless, DISABLED_D01DaisWizardEyeDoesNothing) {
+    // The d01 dais that casts Wizard Eye used to refuse its event spell and end the run. The original cast does nothing.
+    // Run alone in a fresh MM6 headless process.
+    auto wizardEyeTape = tapes.custom([] { return pParty->pPartyBuffs[PARTY_BUFF_WIZARD_EYE].Active(); });
+    auto eventDoneTape = tapes.custom([] { return MM6MapByteState(pIndoor->mm6DeltaBytes).compare(118, 1); }); // The event's run-once byte.
+    auto hpTape = tapes.totalHp();
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "d01.blv");
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(6450, 4832, 123), 0); // In front of the dais.
+    test.startTaping();
+
+    game.pointMouseAtFace(1281); // The pillar on top.
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+
+    EXPECT_EQ(eventDoneTape, tape(false, true));
+    EXPECT_EQ(wizardEyeTape, tape(false));
+    EXPECT_EQ(hpTape.size(), 1);
+}
+
+GAME_TEST(MM6CombatHeadless, DISABLED_D04FaceCastsDayOfTheGods) {
+    // A d04 face that casts Day of the Gods used to refuse its event spell and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto statusTape = tapes.statusBar();
+    std::vector<TestMultiTape<int>> statTapes;
+    for (Attribute stat : allStatAttributes())
+        statTapes.push_back(charTapes.stats(stat));
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "d04.blv");
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(0, 4672, -3490), 180); // In front of the face.
+    test.startTaping();
+
+    game.pointMouseAtFace(1456);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+
+    EXPECT_CONTAINS(statusTape, "Magically Refreshing!");
+    for (const TestMultiTape<int> &statTape : statTapes) {
+        ASSERT_EQ(statTape.size(), 2);
+        for (int i = 0; i < 4; i++)
+            EXPECT_EQ(statTape.back()[i] - statTape.front()[i], 8) << i; // Normal at level 4 adds twice the level.
+    }
+}
+
+GAME_TEST(MM6CombatHeadless, DISABLED_ZnwcDeskCastsDayOfTheGods) {
+    // A znwc desk that casts Day of the Gods used to refuse its event spell and end the run.
+    // Run alone in a fresh MM6 headless process.
+    std::vector<TestMultiTape<int>> statTapes;
+    for (Attribute stat : allStatAttributes())
+        statTapes.push_back(charTapes.stats(stat));
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "znwc.blv");
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(2850, -2704, 100), 180, -20); // Behind the desk.
+    test.startTaping();
+
+    game.pointMouseAtFace(1951);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+
+    for (const TestMultiTape<int> &statTape : statTapes) {
+        ASSERT_EQ(statTape.size(), 2);
+        for (int i = 0; i < 4; i++)
+            EXPECT_EQ(statTape.back()[i] - statTape.front()[i], 256) << i; // Master at level 64 adds four times the level.
+    }
+}
+
+GAME_TEST(MM6CombatHeadless, DISABLED_Zddb08MuralBlessesParty) {
+    // The zddb08 mural that casts Bless used to refuse its event spell and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto statusTape = tapes.statusBar();
+    auto blessTape = charTapes.haveBuffs(CHARACTER_BUFF_BLESS);
+    auto attackTape = charTapes.custom([](const Character &character) { return character.GetActualAttack(false); });
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "zddb08.blv");
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(-1536, -3450, 0), 270); // In the mural room.
+    test.startTaping();
+
+    game.pointMouseAtFace(79);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+
+    EXPECT_CONTAINS(statusTape, "You study the mural and get a good feeling inside.");
+    EXPECT_EQ(blessTape, tape({false, false, false, false}, {true, true, true, true}));
+    EXPECT_EQ(attackTape.size(), 1); // The original's event Bless has no power.
+}
+
+GAME_TEST(MM6CombatHeadless, DISABLED_D13MonolithCursesParty) {
+    // The d13 monolith that casts Mass Curse used to refuse its event spell and end the run.
+    // Run alone in a fresh MM6 headless process.
+    auto statusTape = tapes.statusBar();
+    auto conditionTape = charTapes.conditions();
+    enterFirstMapFromNewGame(game);
+    enterMapAtShippedEntrance(game, "d13.blv");
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(-2496, -1250, 0), 90); // In front of the monolith.
+    test.startTaping();
+
+    game.pointMouseAtFace(506);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+
+    EXPECT_CONTAINS(statusTape, "The monolith feels strange to the touch.");
+    EXPECT_EQ(conditionTape, tape({CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD, CONDITION_GOOD},
+                                  {CONDITION_CURSED, CONDITION_CURSED, CONDITION_CURSED, CONDITION_CURSED})); // The new party fails every save.
 }

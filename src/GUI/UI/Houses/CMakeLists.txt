@@ -5,10 +5,12 @@ set(GUI_UI_HOUSES_SOURCES
         Temple.cpp
         Training.cpp
         Transport.cpp
+        MM6Guild.cpp
         MM6House.cpp
         MM6Shop.cpp
         MM6ShopPrices.cpp
         MM6ShopStock.cpp
+        MM6SkillGuild.cpp
         MM6Tavern.cpp
         MM6Temple.cpp
         MM6Training.cpp
@@ -26,10 +28,12 @@ set(GUI_UI_HOUSES_HEADERS
         Temple.h
         Training.h
         Transport.h
+        MM6Guild.h
         MM6House.h
         MM6Shop.h
         MM6ShopPrices.h
         MM6ShopStock.h
+        MM6SkillGuild.h
         MM6Tavern.h
         MM6Temple.h
         MM6Training.h

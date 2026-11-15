@@ -71,6 +71,12 @@ SAVE_ANYWHERE = [
     ("MM6SaveAnywhereHeadless.DISABLED_DungeonSlotLoadsWithItsOutdoorMaps",
      "ENROTH_MM6_SAVE_ANYWHERE_ENABLE", "strict-save-anywhere-reload"),
 ]
+BUFF_SAVE = [
+    ("MM6SaveAnywhereHeadless.DISABLED_BuffsSaveWithTheParty",
+     "ENROTH_MM6_SAVE_ANYWHERE_ENABLE", "strict-buff-save-write"),
+    ("MM6SaveAnywhereHeadless.DISABLED_BuffsComeBackInFreshProcess",
+     "ENROTH_MM6_SAVE_ANYWHERE_ENABLE", "strict-buff-save-reload"),
+]
 AUTOSAVE = [
     ("MM6AutosaveHeadless.DISABLED_EdgeAndDoorWriteTheAutosave",
      "ENROTH_MM6_AUTOSAVE_ENABLE", "strict-autosave-write"),
@@ -84,6 +90,12 @@ VISIT = [
      "ENROTH_MM6_VISIT_ENABLE", "strict-visit-write"),
     ("MM6MapVisitHeadless.DISABLED_LoadedSaveKeepsTheVisit",
      "ENROTH_MM6_VISIT_ENABLE", "strict-visit-reload"),
+]
+FIRST_MAP_VISIT = [
+    ("MM6MapVisitHeadless.DISABLED_SaveOnFirstMapAfterDrainingTheFountain",
+     "ENROTH_MM6_VISIT_ENABLE", "strict-visit-first-map-write"),
+    ("MM6MapVisitHeadless.DISABLED_LoadedFirstMapSaveKeepsTheFountainDry",
+     "ENROTH_MM6_VISIT_ENABLE", "strict-visit-first-map-reload"),
 ]
 MM7_CONTROLS = ["Prs.Pr2354", "Prs.Pr2956", "Issues.Issue840"]
 PASS_LINE = re.compile(r"\[\s*PASSED\s*\]\s+1 test\b")
@@ -147,10 +159,14 @@ def main():
             print("new game:", name)
         for name, _, _ in SAVE_ANYWHERE:
             print("save anywhere:", name)
+        for name, _, _ in BUFF_SAVE:
+            print("buff save:", name)
         for name, _, _ in AUTOSAVE:
             print("autosave:", name)
         for name, _, _ in VISIT:
             print("visit:", name)
+        for name, _, _ in FIRST_MAP_VISIT:
+            print("first-map visit:", name)
         for name in MM7_CONTROLS:
             print("MM7 control:", name)
         return 0
@@ -258,6 +274,15 @@ def main():
             if not run_child(name, flag, value, profile,
                              paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
                 return 1
+    with tempfile.TemporaryDirectory(prefix="mm6-restart-buffs-") as buffs:
+        profile = Path(buffs)
+        os.chmod(profile, 0o700)
+        # A new party casts Bless, Heroism, Protection from Fire and Fly and saves. A fresh process loads the slot and
+        # finds every buff as it was saved.
+        for name, flag, value in BUFF_SAVE:
+            if not run_child(name, flag, value, profile,
+                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+                return 1
     with tempfile.TemporaryDirectory(prefix="mm6-restart-autosave-") as seventh:
         profile = Path(seventh)
         os.chmod(profile, 0o700)
@@ -276,13 +301,23 @@ def main():
             if not run_child(name, flag, value, profile,
                              paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
                 return 1
+    with tempfile.TemporaryDirectory(prefix="mm6-restart-first-map-visit-") as ninth:
+        profile = Path(ninth)
+        os.chmod(profile, 0o700)
+        # A new party drains the first map's fountain and saves without leaving the map. A fresh process loads the save
+        # on the same day and finds the fountain still dry.
+        for name, flag, value in FIRST_MAP_VISIT:
+            if not run_child(name, flag, value, profile,
+                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+                return 1
     for name in MM7_CONTROLS:
         if not run_child(name, None, None, ROOT, paths["MM7_DATA_PATH"]):
             return 1
     print("PASS: seven-child MM6 chain, all full-retry fault children, the paperdoll child, normal Save/Load menus with a "
           "production load and resave, a production New Game saved, loaded and saved again, a dungeon save after travel "
-          "loaded with its outdoor maps and saved again, autosaves and a quick save loaded in fresh processes, a map visit "
-          "kept across a fresh-process load, and the MM7 controls")
+          "loaded with its outdoor maps and saved again, party and character buffs kept across a fresh-process load, "
+          "autosaves and a quick save loaded in fresh processes, a map visit kept across a fresh-process load, a first-map "
+          "save keeping its visit, and the MM7 controls")
     return 0
 
 

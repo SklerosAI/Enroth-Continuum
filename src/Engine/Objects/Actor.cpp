@@ -9,12 +9,15 @@
 
 #include "Engine/Engine.h"
 #include "Engine/MM6/MM6CombatRules.h"
+#include "Engine/MM6/MM6PartyHostility.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6EncounterMonster.h"
 #include "Engine/MM6/MM6Finale.h"
+#include "Engine/MM6/MM6EventSpell.h"
 #include "Engine/MM6/MM6MonsterAttack.h"
 #include "Engine/MM6/MM6MonsterProjectile.h"
 #include "Engine/MM6/MM6MonsterSpellEffect.h"
+#include "Engine/MM6/MM6PlayerSpell.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Data/AwardEnums.h"
 #include "Engine/Data/HouseEnumFunctions.h"
@@ -2170,6 +2173,8 @@ void Actor::_SelectTarget(unsigned int uActorID, Pid *OutTargetPID,
             !thisActor->buffs[ACTOR_BUFF_CHARM].Active() &&
             !thisActor->buffs[ACTOR_BUFF_SUMMONED].Active())
             v14 = HOSTILITY_LONG;
+        else if (engine->gameTitle() == GameTitle::MM6)
+            v14 = pMonsterStats->infos[thisActor->monsterInfo.id].hostilityType; // MM6 has no faction table, monsters.txt says whether a monster hunts the party.
         else
             v14 = thisActor->GetActorsRelation(0);
         if (v14 != HOSTILITY_FRIENDLY) {
@@ -2236,6 +2241,38 @@ MonsterHostility Actor::GetActorsRelation(Actor *otherActPtr) {
     }
 }
 
+/**
+ * @param itemId                        Item an MM6 monster carries.
+ * @return                              The item as MM6.exe builds it when the monster gives it up, with nothing but
+ *                                      its number in its raw record.
+ */
+static Item mm6CarriedItem(ItemId itemId) {
+    Item result;
+    result.itemId = itemId;
+    result.mm6RawRecord.emplace();
+    result.mm6RawRecord->setWord(0, std::to_underlying(itemId));
+    return result;
+}
+
+/**
+ * Puts the item a monster carries on the floor where the monster stands. MM6 monsters whose dead sprite is empty leave
+ * no corpse to loot, and MM6.exe 0x44C204 drops their item instead.
+ *
+ * @param actor                         Monster that has just vanished.
+ */
+static void dropCarriedItem(Actor &actor) {
+    if (actor.carriedItemId == ITEM_NULL)
+        return;
+    SpriteObject sprite;
+    sprite.containing_item = mm6CarriedItem(actor.carriedItemId);
+    sprite.spriteId = pItemTable->items[actor.carriedItemId].spriteId;
+    sprite.uObjectDescID = pObjectTable->ObjectIDByItemID(sprite.spriteId);
+    sprite.vPosition = actor.pos;
+    sprite.uSectorID = actor.sectorId;
+    sprite.Create(0, 0, 0, 0);
+    actor.carriedItemId = ITEM_NULL;
+}
+
 //----- (0045976D) --------------------------------------------------------
 void Actor::UpdateAnimation() {
     ResetAnimation();
@@ -2288,10 +2325,13 @@ void Actor::UpdateAnimation() {
 
         case Dead:
             pSpriteFrameTable->InitializeSprite(spriteIds[ANIM_Dead]);
-            if (pSpriteFrameTable->pSpriteSFrames[spriteIds[ANIM_Dead]].sprites[0] == nullptr)
+            if (pSpriteFrameTable->pSpriteSFrames[spriteIds[ANIM_Dead]].sprites[0] == nullptr) {
                 aiState = Removed;
-            else
+                if (engine->gameTitle() == GameTitle::MM6)
+                    dropCarriedItem(*this);
+            } else {
                 currentActionAnimation = ANIM_Dead;
+            }
             break;
 
         case Removed:
@@ -3157,8 +3197,16 @@ int Actor::DamageMonsterFromParty(Pid a1, unsigned int uActorID_Monster, const V
                 break;
 
             default:
-                attackElement = pSpellStats->pInfos[projectileSprite->uSpellID].damageType;
                 IsAdditionalDamagePossible = false;
+                if (engine->gameTitle() == GameTitle::MM6 && mm6::isPlayerAttackSpell(projectileSprite->uSpellID)) {
+                    const SpellId spell = projectileSprite->uSpellID;
+                    if (mm6::playerSpellRollsToHit(spell) && !character->characterHitOrMiss(pMonster, v61, 5 * projectileSprite->spell_level))
+                        return 0; // MM6 says nothing on a miss.
+                    attackElement = mm6::spellDamageType(*pSpellStats->pInfos[spell].mm6DamageTag);
+                    uDamageAmount = mm6::playerSpellDamage(spell, projectileSprite->spell_level, *grng);
+                    break;
+                }
+                attackElement = pSpellStats->pInfos[projectileSprite->uSpellID].damageType;
                 uDamageAmount = CalcSpellDamage(
                     projectileSprite->uSpellID,
                     projectileSprite->spell_level,
@@ -3579,7 +3627,10 @@ void Actor::LootActor() {
     }
     if (this->carriedItemId != ITEM_NULL) {
         Dst.Reset();
-        Dst.itemId = this->carriedItemId;
+        if (engine->gameTitle() == GameTitle::MM6)
+            Dst = mm6CarriedItem(this->carriedItemId); // MM6.exe 0x4217BD.
+        else
+            Dst.itemId = this->carriedItemId;
         Dst.postGenerate(ITEM_SOURCE_MONSTER);
 
         StatusBarItemFound(foundGold, pItemTable->items[Dst.itemId].unidentifiedName);
@@ -3778,7 +3829,8 @@ bool Actor::ActorHitOrMiss(Character *pPlayer) {
 //----- (0042756B) --------------------------------------------------------
 int Actor::CalcMagicalDamageToActor(DamageType dmgType,
                                     signed int incomingDmg) {
-    mm6::requireVerifiedMonsterDamage(engine->gameTitle(), dmgType);
+    if (engine->gameTitle() == GameTitle::MM6)
+        return mm6::monsterIncomingDamage(monsterInfo, dmgType, incomingDmg, *grng);
     int v4;             // edx@1
     int v5;             // ecx@1
     signed int v6;      // eax@4
@@ -3943,7 +3995,7 @@ void Actor::MakeActorAIList_ODM() {
 
         if (distance < 5632) {
             actor.ResetHostile();
-            if (actor.ActorEnemy() || actor.GetActorsRelation(0) != HOSTILITY_FRIENDLY) {
+            if (engine->gameTitle() == GameTitle::MM6 ? mm6::isMonsterHostileToParty(actor) : actor.ActorEnemy() || actor.GetActorsRelation(0) != HOSTILITY_FRIENDLY) {
                 actor.attributes |= ACTOR_HOSTILE;
                 if (distance < 5120)
                     pParty->SetYellowAlert();
@@ -3998,7 +4050,7 @@ int Actor::MakeActorAIList_BLV() {
         // actor is in range
         if (distance < 10240) {
             actor.ResetHostile();
-            if (actor.ActorEnemy() || actor.GetActorsRelation(0) != HOSTILITY_FRIENDLY) {
+            if (engine->gameTitle() == GameTitle::MM6 ? mm6::isMonsterHostileToParty(actor) : actor.ActorEnemy() || actor.GetActorsRelation(0) != HOSTILITY_FRIENDLY) {
                 actor.attributes |= ACTOR_HOSTILE;
                 if (!(pParty->GetRedAlert()) && (double)distance < meleeRange)
                     pParty->SetRedAlert();

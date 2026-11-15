@@ -75,6 +75,18 @@ static std::string_view configNameForTitle(GameTitle title) {
     return legacyConfigName;
 }
 
+/**
+ * Makes S and K the default stats and skills tab keys, the hotkeys `MM6.exe` gives those two tab buttons.
+ *
+ * @param config                    Config that hasn't been loaded yet.
+ */
+static void setMM6KeybindingDefaults(GameConfig *config) {
+    for (auto [entry, key] : {std::pair{&config->keybindings.Stats, PlatformKey::KEY_S}, std::pair{&config->keybindings.Skills, PlatformKey::KEY_K}}) {
+        entry->setDefaultValue(key);
+        entry->reset();
+    }
+}
+
 // Installed only by the explicitly opted-in, isolated GameTest. SDL still
 // owns a real hidden OpenGL window/context, but game code cannot reveal/raise
 // it or alter the physical cursor and mouse.
@@ -138,6 +150,8 @@ void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUse
 
     // Init config.
     _config = std::make_shared<GameConfig>();
+    if (_options.gameTitle == GameTitle::MM6)
+        setMM6KeybindingDefaults(_config.get());
     const std::string_view configName = configNameForTitle(_options.gameTitle);
     std::string_view loadConfigName = configName;
 #if defined(__APPLE__)

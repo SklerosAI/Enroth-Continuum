@@ -97,7 +97,7 @@ static std::array<Condition, 18> conditionImportancyTableAlternative = {{
 }};
 
 static bool blockConditionWithProtectionFromMagic(const ConditionTableEntry &entry) {
-    if (!(entry.flags & AFFECTED_BY_PROTECTION_FROM_MAGIC))
+    if (!(entry.flags & AFFECTED_BY_PROTECTION_FROM_MAGIC) || engine->gameTitle() == GameTitle::MM6) // MM6 Protection from Magic only adds to magic resistance.
         return false;
 
     SpellBuff &protectionBuff = pParty->pPartyBuffs[PARTY_BUFF_PROTECTION_FROM_MAGIC];

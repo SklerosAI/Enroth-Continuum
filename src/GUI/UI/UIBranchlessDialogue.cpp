@@ -18,6 +18,7 @@
 
 #include "GUI/GUIFont.h"
 #include "GUI/GUIMessageQueue.h"
+#include "GUI/MM6HudLayout.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UIGame.h"
 
@@ -38,38 +39,32 @@ GUIWindow_BranchlessDialogue::~GUIWindow_BranchlessDialogue() {
 }
 
 void GUIWindow_BranchlessDialogue::setMM6Question(MM6QuestionDialogue question) {
+    _continuation = question.incorrect; // MM6 resumes a prompt closed with Escape with no answer, which is a wrong one.
     _mm6Question = std::move(question);
 }
 
 void GUIWindow_BranchlessDialogue::Update() {
-    if (_mm6Question) {
-        DrawDialoguePanel(_mm6Question->question);
-        render->DrawQuad2D(game_ui_statusbar, {0, 352});
-        if (keyboard_input_status != WINDOW_INPUT_IN_PROGRESS) {
-            if (keyboard_input_status == WINDOW_INPUT_CONFIRMED) {
-                const bool correct = mm6QuestionMatches(keyboardInputHandler->GetTextInput(),
-                                                         _mm6Question->answer1, _mm6Question->answer2);
-                _continuation = correct ? _mm6Question->success : _mm6Question->incorrect;
-            } else {
-                // Escape cancels the prompt and stops the current event.
-                _continuation.reset();
-            }
-            keyboardInputHandler->EndTextInput(this);
-            engine->_messageQueue->addMessageCurrentFrame(UIMSG_Escape, 0, 0);
-            return;
-        }
-        GUIFont *font = assets->pFontLucida.get();
-        const std::string &input = keyboardInputHandler->GetTextInput();
-        DrawText(font, {13, 357}, colorTable.White, input, frameRect);
-        DrawFlashingInputCursor(font->GetLineWidth(input) + 13, 357, font, frameRect);
-        return;
-    }
-
     if (current_npc_text.length() > 0 && branchless_dialogue_str.empty())
         branchless_dialogue_str = current_npc_text;
 
     pGUIWindow_BranchlessDialogue->DrawDialoguePanel(branchless_dialogue_str);
     render->DrawQuad2D(game_ui_statusbar, {0, 352});
+
+    if (_mm6Question) {
+        if (keyboard_input_status != WINDOW_INPUT_IN_PROGRESS) {
+            if (keyboard_input_status == WINDOW_INPUT_CONFIRMED &&
+                mm6QuestionMatches(keyboardInputHandler->GetTextInput(), _mm6Question->answer1, _mm6Question->answer2))
+                _continuation = _mm6Question->success;
+            keyboardInputHandler->EndTextInput(this);
+            engine->_messageQueue->addMessageCurrentFrame(UIMSG_Escape, 0, 0);
+            return;
+        }
+        GUIFont *font = assets->pFontLucida.get();
+        const std::string prompt = fmt::format("{} {}", _mm6Question->question, keyboardInputHandler->GetTextInput());
+        DrawText(font, {13, mm6HudStatusTextY}, colorTable.White, prompt, frameRect);
+        DrawFlashingInputCursor(font->GetLineWidth(prompt) + 13, mm6HudStatusTextY, font, frameRect);
+        return;
+    }
 
     // TODO(Nik-RE-dev): this code related to text input in MM6/MM8, revisit
     // this functionality when it's time to support it.

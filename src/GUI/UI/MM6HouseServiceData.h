@@ -5,11 +5,13 @@
 #include <string>
 #include <vector>
 
+#include "Engine/Data/AwardEnums.h"
 #include "Engine/Data/HouseEnumFunctions.h"
 #include "Engine/Data/SoundEnums.h"
 #include "Engine/GameTitle.h"
 #include "Engine/LocalizationEnums.h"
 #include "Engine/MM6/MM6HouseExit.h"
+#include "Engine/Objects/CharacterEnums.h"
 
 #include "GUI/UI/MM6RoomDescriptors.h"
 
@@ -93,7 +95,7 @@ enum class HouseServiceOption {
     RepairItems,
     BuySpecialItems,
     BuySpells,
-    LearnSkills,
+    LearnSkill,
     Deposit,
     Withdraw,
     RentRoom,
@@ -108,14 +110,37 @@ enum class HouseServiceOption {
  * @param type                          Parsed MM6 house type.
  * @return                              Services the proprietor of a house of this type lists, in menu order. A
  *                                      transport house lists `Travel` once for each of its three route slots, and a
- *                                      stable adds `FixPrices`.
+ *                                      stable adds `FixPrices`. A spell guild lists `LearnSkill` once for each skill
+ *                                      of `guildSkills`, after `BuySpells`. A mercenary or thieves' guild lists
+ *                                      `LearnSkill` once for each skill of `skillGuildSkills`.
  */
 std::vector<HouseServiceOption> houseServiceOptions(HouseType type);
 
 /**
+ * @param type                          Parsed MM6 house type.
+ * @return                              Skills a spell guild of this type teaches, in menu order.
+ */
+std::vector<Skill> guildSkills(HouseType type);
+
+/**
+ * @param type                          `HOUSE_TYPE_MERCENARY_GUILD` or `HOUSE_TYPE_SHADOW_GUILD`.
+ * @param houseId                       MM6 house id of the guild.
+ * @return                              Skills the guild teaches, in menu order.
+ */
+std::array<Skill, 5> skillGuildSkills(HouseType type, int houseId);
+
+/**
+ * @param houseId                       MM6 house id of a spell, mercenary or thieves' guild.
+ * @return                              Award that makes a character a member of the guild, `std::nullopt` for a house
+ *                                      that isn't a guild.
+ */
+std::optional<AwardId> guildMembershipAward(int houseId);
+
+/**
  * @param option                        House service.
  * @return                              Id of the service's label in MM6's global.txt. Many of these ids hold other
- *                                      strings in MM7's global.txt. Throws for `FixPrices`, an NPC topic.
+ *                                      strings in MM7's global.txt. Throws for `FixPrices`, an NPC topic, and for
+ *                                      `LearnSkill`, which shows the skill's name.
  */
 LstrId houseServiceOptionLabel(HouseServiceOption option);
 

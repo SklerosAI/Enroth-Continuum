@@ -43,6 +43,7 @@
 #include "MM6GeneratedNpcSaveFields.h"
 #include "MM6HirelingSaveRuntime.h"
 #include "MM6LoadedMapSource.h"
+#include "MM6MapVisit.h"
 #include "MM6NpcStaticBaseline.h"
 #include "MM6NpcSaveFields.h"
 #include "MM6OutdoorWire.h"
@@ -166,7 +167,8 @@ std::vector<std::uint8_t> captureUnchecked(
     const Blob delta = captureOutdoorDeltaWithNativeSpriteAnchors(
         *pOutdoor, "oute3.odm", GameTitle::MM6);
     const auto *deltaBegin = static_cast<const std::uint8_t *>(delta.data());
-    const std::vector<std::uint8_t> current(deltaBegin, deltaBegin + delta.size());
+    std::vector<std::uint8_t> current(deltaBegin, deltaBegin + delta.size());
+    recordMapVisit(current, pParty->GetPlayingTime(), pOutdoor->weather.skyTextureName);
     const std::string activeName = "oute3.ddm";
     fields.raw.chest = captureChestSaveFields(chestTitleState(), activeName,
                                               current, GameTitle::MM6);

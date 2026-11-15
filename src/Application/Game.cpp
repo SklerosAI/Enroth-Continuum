@@ -54,6 +54,7 @@
 #include "Engine/MM6/MM6NewGameSession.h"
 #include "Engine/MM6/MM6Finale.h"
 #include "Engine/MM6/MM6PartyDeath.h"
+#include "Engine/MM6/MM6PartyRest.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
@@ -73,6 +74,7 @@
 #include "GUI/UI/Books/QuestBook.h"
 #include "GUI/UI/Books/TownPortalBook.h"
 #include "GUI/UI/Houses/MM6House.h"
+#include "GUI/UI/Houses/MM6Tavern.h"
 #include "GUI/UI/UISpellbook.h"
 #include "GUI/UI/MM6Spellbook.h"
 #include "GUI/UI/UIBooks.h"
@@ -1107,13 +1109,17 @@ void Game::processQueuedMessages() {
                 continue;
             case UIMSG_RentRoom: {
                 HouseId tavern = static_cast<HouseId>(uMessageParam);
-                assert(isTavern(tavern));
-
                 pGUIWindow_CurrentMenu = std::make_unique<GUIWindow_Rest>();
 
-                remainingRestTime = timeUntilDawn() + Duration::fromHours(1);
-                if (tavern == HOUSE_TAVERN_DEYJA || tavern == HOUSE_TAVERN_PIT || tavern == HOUSE_TAVERN_MOUNT_NIGHON) {
-                    remainingRestTime = remainingRestTime + Duration::fromHours(12);
+                if (engine->gameTitle() == GameTitle::MM6) {
+                    const CivilTime time = pParty->GetPlayingTime().toCivilTime();
+                    remainingRestTime = Duration::fromMinutes(mm6::tavernRoomRestMinutes(time.hour, time.minute));
+                } else {
+                    assert(isTavern(tavern));
+                    remainingRestTime = timeUntilDawn() + Duration::fromHours(1);
+                    if (tavern == HOUSE_TAVERN_DEYJA || tavern == HOUSE_TAVERN_PIT || tavern == HOUSE_TAVERN_MOUNT_NIGHON) {
+                        remainingRestTime = remainingRestTime + Duration::fromHours(12);
+                    }
                 }
                 currentRestType = REST_HEAL;
                 pParty->restAndHeal();
@@ -1133,7 +1139,7 @@ void Game::processQueuedMessages() {
                 if (current_screen_type != SCREEN_GAME) continue;
                 closeTargetedSpellWindow();
 
-                if (CheckActors_proximity()) {
+                if (engine->gameTitle() == GameTitle::MM6 ? mm6::hostileMonstersNearParty() : CheckActors_proximity()) {
                     if (pParty->bTurnBasedModeOn) {
                         engine->_statusBar->setEvent(LSTR_YOU_CANT_REST_IN_TURN_BASED_MODE);
                         continue;
@@ -1186,7 +1192,9 @@ void Game::processQueuedMessages() {
                 }
                 if (pParty->GetFood() < foodRequiredToRest) {
                     engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_FOOD_TO_REST);
-                    if (pParty->hasActiveCharacter() && pParty->activeCharacter().CanAct()) {
+                    if (engine->gameTitle() == GameTitle::MM6) {
+                        pAudioPlayer->playUISound(SOUND_error);
+                    } else if (pParty->hasActiveCharacter() && pParty->activeCharacter().CanAct()) {
                         pParty->activeCharacter().playReaction(SPEECH_NOT_ENOUGH_FOOD);
                     }
                 } else {
@@ -1504,14 +1512,14 @@ void Game::processQueuedMessages() {
                 continue;
             case UIMSG_ClickZoomInBtn:
                 if (!(current_screen_type == SCREEN_GAME)) continue;
-                new OnButtonClick({519, 136}, {0, 0}, pBtn_ZoomIn);
+                new OnButtonClick(engine->gameTitle() == GameTitle::MM6 ? mm6HudZoomInPressed : Pointi(519, 136), {0, 0}, pBtn_ZoomIn);
 
                 setMinimapZoom(viewparams->uMinimapZoom * 2);
 
                 break;
             case UIMSG_ClickZoomOutBtn:
                 if (!(current_screen_type == SCREEN_GAME)) continue;
-                new OnButtonClick({574, 136}, {0, 0}, pBtn_ZoomOut);
+                new OnButtonClick(engine->gameTitle() == GameTitle::MM6 ? mm6HudZoomOutPressed : Pointi(574, 136), {0, 0}, pBtn_ZoomOut);
 
                 setMinimapZoom(viewparams->uMinimapZoom / 2);
 

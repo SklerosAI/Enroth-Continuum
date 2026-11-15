@@ -13,6 +13,6 @@ struct HudNavigationResources {
 inline constexpr HudNavigationResources hudNavigationResources(GameTitle title,
         std::string_view mm7Compass, std::string_view mm7ZoomIn, std::string_view mm7ZoomOut) {
     if (title == GameTitle::MM6)
-        return {"compass", "zoom+on", "zoom-on"};
+        return {"compass", "buttplus", "buttminu"};
     return {mm7Compass, mm7ZoomIn, mm7ZoomOut};
 }

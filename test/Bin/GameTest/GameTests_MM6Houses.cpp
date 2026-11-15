@@ -1,13 +1,18 @@
+#include <algorithm>
 #include <array>
 #include <cstdlib>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
 
+#include "Engine/AssetsManager.h"
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
@@ -28,8 +33,10 @@
 #include "Engine/mm7_data.h"
 
 #include "GUI/GUIButton.h"
+#include "GUI/GUIFont.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/ItemGrid.h"
+#include "GUI/UI/MM6HouseServiceData.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/Houses/MM6Shop.h"
 
@@ -112,6 +119,28 @@ static std::vector<std::string> houseOptionLabels() {
     return result;
 }
 
+static void clickHouseOption(EngineController &game, std::string_view label) {
+    // Left click in the middle of the shown option with this line.
+    ASSERT_NE(window_SpeakInHouse, nullptr);
+    std::optional<Pointi> center;
+    for (GUIButton *button : window_SpeakInHouse->vButtons)
+        if (button->id.contains("Dialogue_Option") && button->rect.h > 0 && button->label == label)
+            center = button->rect.center();
+    ASSERT_TRUE(center) << "No house option " << label;
+    game.pressAndReleaseButton(BUTTON_LEFT, *center);
+    game.tick();
+}
+
+static void typeAmount(EngineController &game, std::string_view digits) {
+    // Types a number into the text input and confirms it with Enter.
+    for (char digit : digits) {
+        game.pressAndReleaseKey(static_cast<PlatformKey>(std::to_underlying(PlatformKey::KEY_DIGIT_0) + (digit - '0')));
+        game.tick();
+    }
+    game.pressAndReleaseKey(PlatformKey::KEY_RETURN);
+    game.tick();
+}
+
 static std::vector<int> shopStock(int house) {
     // Item ids in both stock banks of a shop.
     std::vector<int> result;
@@ -145,6 +174,48 @@ static const Vec3f kGeneralStoreDoor(-10333, -8532, 300); // General store, faci
 static const Vec3f kGuildDoor(-5384, -1276, 700); // Elemental guild.
 static const Vec3f kTrainingDoor(-13874, -7032, 300); // Training Grounds, facing west.
 static const Vec3f kTavernDoor(-8784, -8690, 300); // A Lonely Knight, facing east.
+static const Vec3f kBankDoor(-10800, -7416, 300); // In front of the bank, facing west.
+static constexpr int kBankDoorFace = 1928;
+static const Vec3f kBufordHouseDoor(-7014, -5798, 300); // In front of Buford T. Allman's house, facing north.
+static const Vec3f kStableDoor(-10346, -9472, 161); // In front of the stable, facing west.
+static const Vec3f kSelfGuildDoor(-13952, -684, 576); // Initiate Guild of the Self, on the ground south of its door.
+static const Vec3f kHaroldHessDoor(-5976, -8068, 160); // Harold Hess's house, facing south.
+static const Vec3f kBladesEndDoor(-6504, -6090, 300); // Blades' End, a mercenary guild.
+static const Vec3f kBuccaneersLairDoor(-12632, -5946, 300); // Buccaneers' Lair, a thieves' guild.
+static const Vec3f kIsaoHouseDoor(-12528, -5814, 300); // In front of Isao Magistrus' house, facing north.
+static constexpr AwardId kElementalGuildMember = static_cast<AwardId>(64);
+static constexpr AwardId kSelfGuildMember = static_cast<AwardId>(65);
+static constexpr AwardId kBuccaneersLairMember = static_cast<AwardId>(66);
+static constexpr AwardId kBladesEndMember = static_cast<AwardId>(69);
+
+static std::vector<std::pair<std::string, Recti>> houseOptions() {
+    // The service and topic lines the house screen shows with their buttons, without the hidden ones.
+    std::vector<std::pair<std::string, Recti>> result;
+    if (window_SpeakInHouse)
+        for (GUIButton *button : window_SpeakInHouse->vButtons)
+            if (button->id.contains("Dialogue_Option") && button->rect.h > 0)
+                result.emplace_back(button->label, button->rect);
+    return result;
+}
+
+static std::vector<DrawnLine> panelLines(const AccessibleVector<DrawnLine> &frame) {
+    // Lines drawn in the right panel below the resident's name.
+    std::vector<DrawnLine> result;
+    for (const DrawnLine &line : frame)
+        if (line.position.x >= 483 && line.position.y >= 140)
+            result.push_back(line);
+    return result;
+}
+
+static bool isHousePanelQuad(const DrawnQuad &quad) {
+    // The house's right panel, its portrait and the exit picture, without the HUD under them and the cursor over them.
+    return quad.texture.starts_with("evpan") || quad.texture.starts_with("npc") || quad.texture == "buttesc1";
+}
+
+static DrawnLine panelLine(std::string_view text, int y, Color color) {
+    // A line centred in the right panel's text column the way MM6 centres it.
+    return DrawnLine{std::string(text), {483 + assets->pFontArrus->AlignText_Center(148, text), y}, color};
+}
 
 GAME_TEST(MM6Houses, EnterAndExit) {
     // Space at a New Sorpigal house door opens its house screen, and Exit returns the party to the world.
@@ -169,9 +240,10 @@ GAME_TEST(MM6Houses, UnimplementedServiceRefuses) {
     auto itemsTape = tapes.totalItemCount();
     startMM6NewGame(game);
     test.startTaping();
-    enterThroughDoor(game, kGuildDoor, 1536);
-    game.pressGuiButton("HouseDialogue_Option1"); // Learn.
+    enterThroughDoor(game, kTavernDoor, 0);
+    game.pressGuiButton("House_Npc0"); // The proprietor.
     game.tick();
+    clickHouseOption(game, localization->str(mm6::houseServiceOptionLabel(mm6::HouseServiceOption::TipBarkeep)));
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
     EXPECT_CONTAINS(statusTape, "This service is not available yet.");
     EXPECT_EQ(goldTape.size(), 1);
@@ -235,7 +307,7 @@ GAME_TEST(MM6Houses, HouseNpcTopic) {
     game.pressGuiButton("HouseNpcDialogue_Option0");
     game.tick();
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
-    EXPECT_EQ(questBitsTape, tape(std::vector<int>(), std::vector<int>{138}));
+    EXPECT_EQ(questBitsTape, tape(std::vector<int>{81, 181}, std::vector<int>{81, 138, 181}));
     EXPECT_EQ(topicsTape, tape(std::vector<unsigned>{324, 326, 0}, std::vector<unsigned>{325, 326, 0}));
     const EvtInstruction &message = engine->_globalEventMap.function(324).front();
     ASSERT_EQ(message.opcode, EVENT_ShowMessage);
@@ -351,6 +423,7 @@ GAME_TEST(MM6Houses, GuildBuySpellbook) {
     auto stockTape = tapes.custom([] { return guildStock(137); });
     auto backpackTape = tapes.custom([] { return backpackItems(0); });
     startMM6NewGame(game);
+    pParty->pCharacters[0]._achievedAwardsBits.set(kElementalGuildMember);
     test.startTaping();
     enterThroughDoor(game, kGuildDoor, 1536);
     game.pressGuiButton("HouseDialogue_Option0"); // Buy Spells.
@@ -474,6 +547,286 @@ GAME_TEST(MM6Houses, GeneralStoreShelf) {
     EXPECT_EQ(goldTape, tape(200, 100));
 }
 
+GAME_TEST(MM6Houses, GuildMenu) {
+    // MM6 spell guilds listed Buy Spells and Learn on the generic menu grid and served anyone. A guild turns away a
+    // non-member, and lists a member the skills it teaches that the member's class can learn and doesn't know yet,
+    // under their price. Choosing one teaches it.
+    auto optionsTape = tapes.custom([] { return houseOptions(); });
+    auto linesTape = tapes.titleLines();
+    auto quadsTape = tapes.hudQuads();
+    auto skillsTape = tapes.custom([] {
+        // The levels of the four skills the guild teaches, character by character.
+        std::vector<int> result;
+        for (const Character &character : pParty->pCharacters)
+            for (Skill skill : {SKILL_FIRE, SKILL_AIR, SKILL_WATER, SKILL_EARTH})
+                result.push_back(character.pActiveSkills[skill].level());
+        return result;
+    });
+    auto goldTape = tapes.gold();
+    startMM6NewGame(game);
+    pParty->pCharacters[2]._achievedAwardsBits.set(kElementalGuildMember); // Serena, a sorcerer who knows Fire Magic.
+    pParty->SetGold(1000);
+    test.startTaping();
+    enterThroughDoor(game, kGuildDoor, 1536);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+    game.tick();
+    const std::vector<DrawnLine> refusal = panelLines(linesTape.back());
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_3);
+    game.tick();
+    const std::vector<DrawnLine> menu = panelLines(linesTape.back());
+    game.pressGuiButton("HouseDialogue_Option2"); // Air Magic.
+    game.tick();
+
+    const Color white = colorTable.White;
+    const Color yellow = colorTable.PaleCanary;
+    EXPECT_EQ(refusal, std::vector<DrawnLine>({panelLine("You must be a", 175, yellow), panelLine("member of this", 191, yellow),
+                                               panelLine("guild to study", 207, yellow), panelLine("here", 223, yellow)}));
+    EXPECT_EQ(menu, std::vector<DrawnLine>({panelLine("Buy Spells", 173, yellow), panelLine("Air Magic", 209, white), panelLine("Water Magic", 245, white),
+                                            panelLine("Earth Magic", 281, white), panelLine("Skill Cost: 750", 146, white)}));
+    EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>({panelLine("Buy Spells", 180, white), panelLine("Water Magic", 227, white),
+                                                                    panelLine("Earth Magic", 274, white), panelLine("Skill Cost: 750", 146, white)}));
+    using Options = std::vector<std::pair<std::string, Recti>>;
+    EXPECT_EQ(optionsTape, tape(Options(),
+                                Options({{"Buy Spells", Recti(480, 173, 140, 16)}, {"Air Magic", Recti(480, 209, 140, 16)},
+                                         {"Water Magic", Recti(480, 245, 140, 16)}, {"Earth Magic", Recti(480, 281, 140, 16)}}),
+                                Options({{"Buy Spells", Recti(480, 180, 140, 16)}, {"Water Magic", Recti(480, 227, 140, 16)},
+                                         {"Earth Magic", Recti(480, 274, 140, 16)}})));
+    EXPECT_EQ(skillsTape, tape(std::vector<int>{0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1}, std::vector<int>{0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1}));
+    EXPECT_EQ(goldTape, tape(1000, 250));
+    EXPECT_EQ(quadsTape.back().filter(isHousePanelQuad),
+              tape(DrawnQuad{"evpan043", {481, 0}}, DrawnQuad{"npc512", {525, 34}}, DrawnQuad{"buttesc1", {526, 313}}));
+}
+
+GAME_TEST(MM6Houses, BankMenu) {
+    // The bank listed Deposit and Withdraw on the generic menu grid and didn't show the party's balance.
+    auto optionsTape = tapes.custom([] { return houseOptions(); });
+    auto linesTape = tapes.titleLines();
+    auto quadsTape = tapes.hudQuads();
+    startMM6NewGame(game);
+    test.startTaping();
+    game.teleportTo(engine->_currentLoadedMapId, kBankDoor, 180);
+    game.pointMouseAtFace(kBankDoorFace);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+
+    EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>({panelLine("Deposit", 146, colorTable.PaleCanary), panelLine("Withdraw", 176, colorTable.White),
+                                                                    panelLine("Balance: 0", 220, colorTable.PaleCanary)}));
+    using Options = std::vector<std::pair<std::string, Recti>>;
+    EXPECT_EQ(optionsTape, tape(Options(), Options({{"Deposit", Recti(480, 146, 140, 30)}, {"Withdraw", Recti(480, 176, 140, 30)}})));
+    EXPECT_EQ(quadsTape.back().filter(isHousePanelQuad),
+              tape(DrawnQuad{"evpan006", {481, 0}}, DrawnQuad{"npc504", {525, 34}}, DrawnQuad{"buttesc1", {526, 313}}));
+}
+
+GAME_TEST(MM6Houses, StableMenu) {
+    // The stable drew its price above MM6's line and listed its routes on the generic menu grid. The price heads one
+    // block of lines with a blank line under each, and a route's button covers its lines.
+    auto optionsTape = tapes.custom([] { return houseOptions(); });
+    auto linesTape = tapes.titleLines();
+    auto quadsTape = tapes.hudQuads();
+    startMM6NewGame(game);
+    test.startTaping();
+    game.teleportTo(engine->_currentLoadedMapId, kStableDoor, 180);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+
+    const Color white = colorTable.White;
+    const Color yellow = colorTable.PaleCanary;
+    EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>({panelLine("2 days to Castle", 194, yellow), panelLine("Ironfist", 210, yellow),
+                                                                    panelLine("Travel Cost 25", 146, white), panelLine("gold", 162, white)}));
+    using Options = std::vector<std::pair<std::string, Recti>>;
+    EXPECT_EQ(optionsTape, tape(Options(), Options({{"2 days to Castle Ironfist", Recti(480, 194, 140, 32)}})));
+    EXPECT_EQ(quadsTape.back().filter(isHousePanelQuad),
+              tape(DrawnQuad{"evpan033", {481, 0}}, DrawnQuad{"npc385", {525, 34}}, DrawnQuad{"buttesc1", {526, 313}}));
+}
+
+GAME_TEST(MM6Houses, NpcHouseProfession) {
+    // Buford T. Allman's house named him "the Time in Enroth", MM7's id for his profession read MM6's calendar string.
+    // MM6 names him by his profession, a Barrister.
+    auto linesTape = tapes.titleLines();
+    auto houseTape = tapes.house();
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kBufordHouseDoor, 90);
+
+    EXPECT_EQ(houseTape, tape(HOUSE_INVALID, static_cast<HouseId>(470)));
+    auto nameLines = linesTape.back().filter([](const DrawnLine &line) { return line.position.y >= 100 && line.position.y < 140; });
+    auto nameLine = [](std::string_view text, int y) {
+        return DrawnLine{std::string(text), {483 + assets->pFontCreate->AlignText_Center(147, text), y}, colorTable.EasternBlue};
+    };
+    EXPECT_EQ(nameLines, tape(nameLine("Buford T. Allman", 108), nameLine("the Barrister", 123)));
+}
+
+GAME_TEST(MM6Houses, MercenaryGuildMenu) {
+    // Blades' End, a mercenary guild, showed its proprietor with an empty menu. It turns away a non-member, and lists
+    // a member the skills it teaches that the member's class can learn and doesn't know yet, under their price.
+    // Choosing one teaches it, and once the member knows them all the guild sends the member elsewhere.
+    auto optionsTape = tapes.custom([] { return houseOptions(); });
+    auto linesTape = tapes.titleLines();
+    auto skillsTape = tapes.custom([] {
+        // The levels of the five skills the guild teaches, character by character.
+        std::vector<int> result;
+        for (const Character &character : pParty->pCharacters)
+            for (Skill skill : {SKILL_SWORD, SKILL_AXE, SKILL_SPEAR, SKILL_STAFF, SKILL_LEATHER})
+                result.push_back(character.pActiveSkills[skill].level());
+        return result;
+    });
+    auto goldTape = tapes.gold();
+    auto soundsTape = tapes.sounds();
+    startMM6NewGame(game);
+    pParty->pCharacters[0]._achievedAwardsBits.set(kBladesEndMember); // Zoltan, a knight who knows Sword, Axe and Leather.
+    pParty->SetGold(1000);
+    test.startTaping();
+    enterThroughDoor(game, kBladesEndDoor, 270);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_2);
+    game.tick();
+    const std::vector<DrawnLine> refusal = panelLines(linesTape.back());
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+    game.tick();
+    const std::vector<DrawnLine> menu = panelLines(linesTape.back());
+    clickHouseOption(game, localization->skillName(SKILL_SPEAR));
+    const std::vector<DrawnLine> menuAfterSpear = panelLines(linesTape.back());
+    clickHouseOption(game, localization->skillName(SKILL_STAFF));
+
+    const Color white = colorTable.White;
+    const Color yellow = colorTable.PaleCanary;
+    EXPECT_EQ(refusal, std::vector<DrawnLine>({panelLine("You must be a", 175, yellow), panelLine("member of this", 191, yellow),
+                                               panelLine("guild to study", 207, yellow), panelLine("here", 223, yellow)}));
+    EXPECT_EQ(menu, std::vector<DrawnLine>({panelLine("Spear", 204, white), panelLine("Staff", 251, white), panelLine("Skill Cost: 375", 146, white)}));
+    EXPECT_EQ(menuAfterSpear, std::vector<DrawnLine>({panelLine("Staff", 228, white), panelLine("Skill Cost: 375", 146, white)}));
+    EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>({panelLine("Seek knowledge", 169, yellow), panelLine("elsewhere", 185, yellow),
+                                                                    panelLine("Zoltan the", 201, yellow), panelLine("Knight", 217, yellow),
+                                                                    panelLine(" ", 233, yellow), panelLine("I can offer you", 249, yellow),
+                                                                    panelLine("nothing further.", 265, yellow)}));
+    using Options = std::vector<std::pair<std::string, Recti>>;
+    const Options both({{"Spear", Recti(480, 204, 140, 16)}, {"Staff", Recti(480, 251, 140, 16)}});
+    EXPECT_EQ(optionsTape, tape(Options(), both, Options(), both, Options({{"Staff", Recti(480, 228, 140, 16)}}), Options()));
+    EXPECT_EQ(skillsTape, tape(std::vector<int>{1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1},
+                               std::vector<int>{1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1},
+                               std::vector<int>{1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1}));
+    EXPECT_EQ(goldTape, tape(1000, 625, 250));
+    EXPECT_EQ(soundsTape.flatten(), tape(SOUND_gold01, static_cast<SoundId>(32902))); // The room's learn sound.
+}
+
+GAME_TEST(MM6Houses, ThievesGuildMenu) {
+    // Buccaneers' Lair, a thieves' guild, showed its proprietor with an empty menu. Once it opens at 6 pm it lists a
+    // member the skills it teaches that the member's class can learn and doesn't know yet, at a thieves' guild price.
+    // Choosing one teaches it, and a second one the party can no longer pay for is refused.
+    auto optionsTape = tapes.custom([] { return houseOptions(); });
+    auto linesTape = tapes.titleLines();
+    auto skillsTape = tapes.custom([] {
+        // The levels of the five skills the guild teaches, character by character.
+        std::vector<int> result;
+        for (const Character &character : pParty->pCharacters)
+            for (Skill skill : {SKILL_DAGGER, SKILL_MERCHANT, SKILL_ITEM_ID, SKILL_PERCEPTION, SKILL_TRAP_DISARM})
+                result.push_back(character.pActiveSkills[skill].level());
+        return result;
+    });
+    auto goldTape = tapes.gold();
+    auto statusTape = tapes.statusBar();
+    auto soundsTape = tapes.sounds();
+    startMM6NewGame(game);
+    pParty->pCharacters[0]._achievedAwardsBits.set(kBuccaneersLairMember); // Zoltan, who knows Dagger.
+    pParty->SetGold(200);
+    waitUntilHour(game, 18);
+    test.startTaping();
+    enterThroughDoor(game, kBuccaneersLairDoor, 270);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+    game.tick();
+    const std::vector<DrawnLine> menu = panelLines(linesTape.back());
+    clickHouseOption(game, localization->skillName(SKILL_MERCHANT));
+    clickHouseOption(game, localization->skillName(SKILL_ITEM_ID));
+
+    const Color white = colorTable.White;
+    const Color yellow = colorTable.PaleCanary;
+    EXPECT_EQ(menu, std::vector<DrawnLine>({panelLine("Merchant", 173, white), panelLine("Identify Item", 209, white), panelLine("Perception", 245, white),
+                                            panelLine("Disarm Trap", 281, white), panelLine("Skill Cost: 150", 146, white)}));
+    EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>({panelLine("Identify Item", 180, yellow), panelLine("Perception", 227, white),
+                                                                    panelLine("Disarm Trap", 274, white), panelLine("Skill Cost: 135", 146, white)}));
+    using Options = std::vector<std::pair<std::string, Recti>>;
+    EXPECT_EQ(optionsTape, tape(Options(),
+                                Options({{"Merchant", Recti(480, 173, 140, 16)}, {"Identify Item", Recti(480, 209, 140, 16)},
+                                         {"Perception", Recti(480, 245, 140, 16)}, {"Disarm Trap", Recti(480, 281, 140, 16)}}),
+                                Options({{"Identify Item", Recti(480, 180, 140, 16)}, {"Perception", Recti(480, 227, 140, 16)},
+                                         {"Disarm Trap", Recti(480, 274, 140, 16)}})));
+    EXPECT_EQ(skillsTape, tape(std::vector<int>{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                               std::vector<int>{1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}));
+    EXPECT_EQ(goldTape, tape(200, 50)); // Zoltan's new Merchant skill takes the price down to 135.
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD));
+    EXPECT_EQ(soundsTape.flatten(), tape(SOUND_gold01, static_cast<SoundId>(32602), static_cast<SoundId>(32604))); // The room's learn and no gold sounds.
+}
+
+GAME_TEST(MM6Houses, SelfGuildDoor) {
+    // Space at the Initiate Guild of the Self's door, from the ground south of it, opens the guild. It lists a member
+    // Buy Spells and the Self skills the member's class can learn and doesn't know yet.
+    auto houseTape = tapes.house();
+    auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+    startMM6NewGame(game);
+    pParty->pCharacters[1]._achievedAwardsBits.set(kSelfGuildMember);
+    test.startTaping();
+    enterThroughDoor(game, kSelfGuildDoor, 90);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_2);
+    game.tick();
+    EXPECT_EQ(houseTape, tape(HOUSE_INVALID, static_cast<HouseId>(139)));
+    EXPECT_EQ(optionsTape, tape(std::vector<std::string>{}, std::vector<std::string>{"Buy Spells", "Spirit Magic", "Mind Magic"})); // The cleric knows Body Magic already.
+}
+
+GAME_TEST(MM6Houses, OptionFocusColor) {
+    // House menus drew every line white. MM6 draws the line the mouse last pointed at, the first one until then, in a
+    // focus colour: gold at a shop, pale yellow at a temple.
+    auto linesTape = tapes.titleLines();
+    startMM6NewGame(game);
+    pParty->pCharacters[0].SetCondition(CONDITION_POISON_WEAK, 0); // So that the temple offers to heal.
+    test.startTaping();
+    enterThroughDoor(game, kWeaponShopDoor, 0);
+    const std::vector<DrawnLine> shop = panelLines(linesTape.back());
+    game.hoverGuiButton("HouseDialogue_Option2");
+    game.tick();
+    const std::vector<DrawnLine> shopHovered = panelLines(linesTape.back());
+    game.moveMouse(240, 180); // Over the room, away from the menu.
+    game.tick();
+    const std::vector<DrawnLine> shopAway = panelLines(linesTape.back());
+    game.pressGuiButton("House_Exit");
+    game.tick();
+    enterThroughDoor(game, kTempleDoor, 90);
+    const std::vector<DrawnLine> temple = panelLines(linesTape.back());
+
+    const Color white = colorTable.White;
+    const Color gold = colorTable.Sunflower;
+    EXPECT_EQ(shop, std::vector<DrawnLine>({panelLine("Buy Items", 149, gold), panelLine("Sell Items", 182, white), panelLine("Identify Items", 215, white),
+                                            panelLine("Repair Items", 248, white), panelLine("Special Items", 281, white)}));
+    EXPECT_EQ(shopHovered, std::vector<DrawnLine>({panelLine("Buy Items", 149, white), panelLine("Sell Items", 182, white), panelLine("Identify Items", 215, gold),
+                                                   panelLine("Repair Items", 248, white), panelLine("Special Items", 281, white)}));
+    EXPECT_EQ(shopAway, shopHovered);
+    EXPECT_EQ(temple, std::vector<DrawnLine>({panelLine("Heal 10 Gold", 193, colorTable.PaleCanary), panelLine("Donate", 240, white)}));
+}
+
+GAME_TEST(MM6Houses, GuildMembership) {
+    // Harold Hess's "Blade's End Membership" topic did nothing. He tells what joining costs and offers to join, and
+    // joining makes every character a member for 25 gold. Asked again, he says the party is in already.
+    auto goldTape = tapes.gold();
+    auto membersTape = tapes.custom([] {
+        std::vector<bool> result;
+        for (const Character &character : pParty->pCharacters)
+            result.push_back(character._achievedAwardsBits[kBladesEndMember]);
+        return result;
+    });
+    auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+    auto textTape = tapes.custom([] { return current_npc_text.substr(0, 20); }); // The start of what the NPC says.
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kHaroldHessDoor, 270);
+    clickHouseOption(game, "Blade's End Membership");
+    clickHouseOption(game, "Join Blades' End for 25 gold");
+    clickHouseOption(game, "Blade's End Membership");
+
+    EXPECT_EQ(goldTape, tape(200, 175));
+    EXPECT_EQ(membersTape, tape(std::vector<bool>(4, false), std::vector<bool>(4, true)));
+    using Lines = std::vector<std::string>;
+    EXPECT_EQ(optionsTape, tape(Lines(), Lines{"Blade's End Membership"}, Lines{"Join Blades' End for 25 gold"}, Lines{"Blade's End Membership"},
+                                Lines{"You're already a member of this guild."}));
+    EXPECT_EQ(textTape, tape(std::string(), std::string("HEY!  The Blades' En"), std::string(), std::string("HEY!  The Blades' En")));
+}
+
 GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
     // Hidden capture of New Sorpigal house screens: each house's first view, then the screens behind its options.
     ASSERT_FALSE(window->isVisible());
@@ -497,17 +850,13 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
         output.close();
     };
 
-    engine->config->debug.NoVideo.setValue(false);
-    startMM6NewGame(game);
-    for (auto [door, yaw, name, screens] : std::array<std::tuple<Vec3f, int, std::string_view, int>, 6>{{
-             {kWeaponShopDoor, 0, "weapons", 5}, {kGeneralStoreDoor, 1536, "general", 2}, {kTempleDoor, 90, "temple", 0},
-             {kTrainingDoor, 180, "training", 0}, {kGuildDoor, 1536, "guild", 1}, {kTavernDoor, 0, "tavern", 0}}}) {
-        enterThroughDoor(game, door, yaw);
+    auto captureHouse = [&](std::string_view name, int screens) {
         game.tick();
         capture(fmt::format("{}-0", name));
         if (current_screen_type != SCREEN_HOUSE)
-            continue;
-        if (name == "tavern") {
+            return;
+        const bool listsResidents = std::ranges::any_of(window_SpeakInHouse->vButtons, [](GUIButton *button) { return button->id == "House_Npc0"; });
+        if (listsResidents && name != "npchouse465" && name != "npchouse470") {
             game.pressGuiButton("House_Npc0");
             game.tick();
             capture(fmt::format("{}-p", name));
@@ -523,5 +872,275 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
             game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
             game.tick(2);
         }
+    };
+
+    engine->config->debug.NoVideo.setValue(false);
+    startMM6NewGame(game);
+    for (auto [door, yaw, name, screens] : std::array<std::tuple<Vec3f, int, std::string_view, int>, 13>{{
+             {kWeaponShopDoor, 0, "weapons", 5}, {kGeneralStoreDoor, 1536, "general", 2}, {kTempleDoor, 90, "temple", 0},
+             {kTrainingDoor, 180, "training", 0}, {kGuildDoor, 1536, "guild", 0}, {kTavernDoor, 0, "tavern", 0},
+             {kStableDoor, 180, "stable", 0}, {Vec3f(-8678, -6352, 300), 0, "armor", 5}, {Vec3f(-6376, -7606, 300), 90, "magic", 5},
+             {kBladesEndDoor, 270, "merc", 0}, {Vec3f(-12528, -5814, 300), 90, "npchouse465", 0},
+             {kBufordHouseDoor, 90, "npchouse470", 0}, {kSelfGuildDoor, 90, "self", 0}}}) {
+        enterThroughDoor(game, door, yaw);
+        captureHouse(name, screens);
     }
+
+    game.teleportTo(engine->_currentLoadedMapId, kBankDoor, 180);
+    game.pointMouseAtFace(kBankDoorFace);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    captureHouse("bank", 0);
+
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(1800, -10224, 100), 0); // On the dock, facing the ship.
+    game.pointMouseAtDecoration(477);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    captureHouse("boat", 0);
+
+    pParty->pCharacters[2]._achievedAwardsBits.set(kElementalGuildMember);
+    enterThroughDoor(game, kGuildDoor, 1536);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_3);
+    captureHouse("guild-member", 1);
+
+    pParty->pCharacters[0]._achievedAwardsBits.set(kBladesEndMember);
+    enterThroughDoor(game, kBladesEndDoor, 270);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+    captureHouse("merc-member", 0);
+
+    waitUntilHour(game, 10); // The Town Hall opens at 10 am.
+    enterThroughDoor(game, kTownHallDoor, 180);
+    captureHouse("townhall", 0);
+
+    waitUntilHour(game, 18); // The thieves' guild opens at 6 pm.
+    pParty->pCharacters[0]._achievedAwardsBits.set(kBuccaneersLairMember);
+    enterThroughDoor(game, kBuccaneersLairDoor, 270);
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+    captureHouse("thieves-member", 0);
+}
+
+GAME_TEST(MM6Houses, WeaponShopIdentify) {
+    // The New Sorpigal weapon shop identifies a weapon from the active character's backpack for gold.
+    auto goldTape = tapes.gold();
+    auto identifiedTape = tapes.custom([] {
+        for (InventoryConstEntry entry : pParty->pCharacters[0].inventory.entries())
+            if (entry->itemId == static_cast<ItemId>(1))
+                return entry->IsIdentified();
+        return false;
+    });
+    auto statusTape = tapes.statusBar();
+    startMM6NewGame(game);
+    for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+        if (entry->itemId == static_cast<ItemId>(1))
+            entry->flags &= ~ITEM_IDENTIFIED;
+    test.startTaping();
+    enterThroughDoor(game, kWeaponShopDoor, 0);
+    clickHouseOption(game, localization->str(static_cast<LstrId>(541))); // Identify Items.
+    InventoryEntry sword;
+    for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+        if (entry->itemId == static_cast<ItemId>(1))
+            sword = entry;
+    ASSERT_TRUE(sword);
+    game.pressAndReleaseButton(BUTTON_LEFT, mapFromInventoryGrid(sword.geometry().topLeft(), Pointi(14, 17)) + Pointi(16, 16));
+    game.tick();
+    EXPECT_EQ(goldTape, tape(200, 125));
+    EXPECT_EQ(identifiedTape, tape(false, true));
+    EXPECT_CONTAINS(statusTape, localization->str(static_cast<LstrId>(569))); // "Done!"
+}
+
+GAME_TEST(MM6Houses, WeaponShopRepair) {
+    // The New Sorpigal weapon shop repairs a broken weapon from the active character's backpack for gold.
+    auto goldTape = tapes.gold();
+    auto brokenTape = tapes.custom([] {
+        for (InventoryConstEntry entry : pParty->pCharacters[0].inventory.entries())
+            if (entry->itemId == static_cast<ItemId>(1))
+                return entry->IsBroken();
+        return false;
+    });
+    auto statusTape = tapes.statusBar();
+    startMM6NewGame(game);
+    for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+        if (entry->itemId == static_cast<ItemId>(1))
+            entry->flags |= ITEM_BROKEN;
+    test.startTaping();
+    enterThroughDoor(game, kWeaponShopDoor, 0);
+    clickHouseOption(game, localization->str(static_cast<LstrId>(542))); // Repair Items.
+    InventoryEntry sword;
+    for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+        if (entry->itemId == static_cast<ItemId>(1))
+            sword = entry;
+    ASSERT_TRUE(sword);
+    game.pressAndReleaseButton(BUTTON_LEFT, mapFromInventoryGrid(sword.geometry().topLeft(), Pointi(14, 17)) + Pointi(16, 16));
+    game.tick();
+    EXPECT_EQ(goldTape, tape(200, 189));
+    EXPECT_EQ(brokenTape, tape(true, false));
+    EXPECT_CONTAINS(statusTape, localization->str(static_cast<LstrId>(570))); // "Good as New!"
+}
+
+GAME_TEST(MM6Houses, BankDepositAndWithdraw) {
+    // The New Sorpigal bank answered Deposit and Withdraw with a not available line instead of moving gold.
+    auto goldTape = tapes.gold();
+    auto bankTape = tapes.custom([] { return pParty->GetBankGold(); });
+    auto soundsTape = tapes.sounds();
+    auto screenTape = tapes.screen();
+    auto statusTape = tapes.statusBar();
+    startMM6NewGame(game);
+    test.startTaping();
+    game.teleportTo(engine->_currentLoadedMapId, kBankDoor, 180);
+    game.pointMouseAtFace(kBankDoorFace);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+    clickHouseOption(game, localization->str(LSTR_DEPOSIT));
+    typeAmount(game, "150");
+    clickHouseOption(game, localization->str(LSTR_WITHDRAW));
+    typeAmount(game, "999"); // More than the bank holds.
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
+    EXPECT_EQ(goldTape, tape(200, 50, 200));
+    EXPECT_EQ(bankTape, tape(0, 150, 0));
+    EXPECT_MISSES(statusTape, "This service is not available yet.");
+    EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(31502)); // The banker when the party asks for more than the bank holds.
+}
+
+GAME_TEST(MM6Houses, TavernRentRoom) {
+    // A Lonely Knight's room said "not available yet". Renting it takes the price, leaves the house and sleeps the
+    // party until 6 am the next day, which restores HP and SP without eating food.
+    auto goldTape = tapes.gold();
+    auto foodTape = tapes.food();
+    auto screenTape = tapes.screen();
+    auto clockTape = tapes.custom([] {
+        const CivilTime time = pParty->GetPlayingTime().toCivilTime();
+        return std::tuple(time.day, time.hour, time.minute);
+    });
+    auto hpTape = charTapes.hp(0);
+    auto spTape = charTapes.mp(2);
+    auto statusTape = tapes.statusBar();
+    auto soundsTape = tapes.sounds();
+    startMM6NewGame(game);
+    pParty->pCharacters[0].health = 1;
+    pParty->pCharacters[2].mana = 0;
+    test.startTaping();
+    enterThroughDoor(game, kTavernDoor, 0);
+    game.pressGuiButton("House_Npc0"); // The proprietor.
+    game.tick();
+    clickHouseOption(game, localization->format(LSTR_RENT_ROOM_FOR_D_GOLD, 3));
+    for (int frame = 0; frame < 1000 && current_screen_type != SCREEN_GAME; ++frame)
+        game.tick(); // The party sleeps through the night.
+
+    EXPECT_EQ(goldTape, tape(200, 197));
+    EXPECT_EQ(foodTape, tape(7));
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE, SCREEN_REST, SCREEN_GAME));
+    EXPECT_EQ(clockTape.front(), std::tuple(1, 9, 0));
+    EXPECT_EQ(clockTape.back(), std::tuple(2, 6, 0));
+    EXPECT_EQ(hpTape, tape(1, pParty->pCharacters[0].GetMaxHealth()));
+    EXPECT_EQ(spTape, tape(0, pParty->pCharacters[2].GetMaxMana()));
+    EXPECT_MISSES(statusTape, "This service is not available yet.");
+    EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(32002)); // The tavern keeper renting the room.
+}
+
+GAME_TEST(MM6Houses, TavernFillPacks) {
+    // A Lonely Knight's packs said "not available yet". They fill up to the tavern's six days for the price, and packs
+    // that already hold six days are refused with the packs full line.
+    auto goldTape = tapes.gold();
+    auto foodTape = tapes.food();
+    auto statusTape = tapes.statusBar();
+    auto portraitTape = charTapes.portrait(0);
+    auto soundsTape = tapes.sounds();
+    startMM6NewGame(game);
+    pParty->SetFood(2);
+    test.startTaping();
+    enterThroughDoor(game, kTavernDoor, 0);
+    game.pressGuiButton("House_Npc0"); // The proprietor.
+    game.tick();
+    const std::string fill = localization->format(LSTR_FILL_PACKS_TO_D_DAYS_FOR_D_GOLD, 6, 2);
+    clickHouseOption(game, fill);
+    clickHouseOption(game, fill);
+
+    EXPECT_EQ(goldTape, tape(200, 198));
+    EXPECT_EQ(foodTape, tape(2, 6));
+    EXPECT_EQ(std::ranges::count(statusTape, localization->str(LSTR_YOUR_PACKS_ARE_ALREADY_FULL)), 1);
+    EXPECT_MISSES(statusTape, "This service is not available yet.");
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_NO)); // The packs full reaction.
+    EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(32003)); // The tavern keeper selling food.
+}
+
+GAME_TEST(MM6Houses, ExpertTeacher) {
+    // Isao Magistrus' Fire Magic Expertise topic did nothing, so no character could become an expert. His offer turns
+    // away a character who doesn't know the skill, and makes one with rank 4 an expert for 1000 gold.
+    auto goldTape = tapes.gold();
+    auto fireTape = tapes.custom([] {
+        const CombinedSkillValue fire = pParty->pCharacters[2].pActiveSkills[SKILL_FIRE];
+        return std::pair(fire.level(), fire.mastery());
+    });
+    auto textTape = tapes.custom([] { return current_npc_text; });
+    auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+    auto portraitTape = charTapes.portrait(2);
+    auto houseTape = tapes.house();
+    startMM6NewGame(game);
+    pParty->SetGold(2000);
+    pParty->pCharacters[2].pActiveSkills[SKILL_FIRE] = CombinedSkillValue(4, MASTERY_NOVICE); // Serena, a sorcerer.
+    test.startTaping();
+    enterThroughDoor(game, kIsaoHouseDoor, 90);
+    clickHouseOption(game, "Fire Magic Expertise");
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_3);
+    game.tick();
+    clickHouseOption(game, "Become Expert in Fire Magic for 1000 gold");
+
+    EXPECT_EQ(houseTape, tape(HOUSE_INVALID, static_cast<HouseId>(465)));
+    EXPECT_EQ(goldTape, tape(2000, 1000));
+    EXPECT_EQ(fireTape, tape(std::pair(4, MASTERY_NOVICE), std::pair(4, MASTERY_EXPERT)));
+    EXPECT_EQ(textTape, tape(std::string(), std::string(pNPCTopics[223].pText), std::string())); // The offer, text 224 of npctext.txt.
+    EXPECT_EQ(optionsTape, tape(std::vector<std::string>{}, std::vector<std::string>{"Fire Magic Expertise", "Jezebel"},
+                                std::vector<std::string>{pNPCTopics[261].pText}, // "You must know the skill before you can become an expert in it!"
+                                std::vector<std::string>{"Become Expert in Fire Magic for 1000 gold"},
+                                std::vector<std::string>{"Fire Magic Expertise", "Jezebel"}));
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE));
+}
+
+GAME_TEST(MM6Houses, TempleDonate) {
+    // New Sorpigal Temple's Donate said "not available yet". A donation takes the temple's 10 gold, thanks the party
+    // and raises its reputation by 200, but not past 200.
+    auto goldTape = tapes.gold();
+    auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+    auto statusTape = tapes.statusBar();
+    auto portraitTape = charTapes.portrait(0);
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kTempleDoor, 90);
+    clickHouseOption(game, localization->str(LSTR_DONATE));
+    clickHouseOption(game, localization->str(LSTR_DONATE));
+
+    EXPECT_EQ(goldTape, tape(200, 190, 180));
+    EXPECT_EQ(reputationTape, tape(0, 200));
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_THANK_YOU));
+    EXPECT_MISSES(statusTape, "This service is not available yet.");
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_PURSE_LIPS_3)); // The donation reaction.
+}
+
+GAME_TEST(MM6Houses, TavernDrink) {
+    // A Lonely Knight's Have a Drink said "not available yet". A drink costs 1 gold, hiccups on the status line and
+    // plays the tavern keeper's sound, and by chance the drinker gets drunk or a stat bonus. These four get the
+    // character drunk.
+    auto goldTape = tapes.gold();
+    auto statusTape = tapes.statusBar();
+    auto soundsTape = tapes.sounds();
+    auto portraitTape = charTapes.portrait(0);
+    auto drunkTape = charTapes.custom(0, [](const Character &character) { return character.conditions.has(CONDITION_DRUNK); });
+    auto bonusesTape = charTapes.custom(0, [](const Character &character) {
+        std::vector<int> result;
+        for (Attribute stat : allStatAttributes())
+            result.push_back(character._statBonuses[stat]);
+        return result;
+    });
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kTavernDoor, 0);
+    game.pressGuiButton("House_Npc0"); // The proprietor.
+    game.tick();
+    for (int drink = 0; drink < 4; ++drink)
+        clickHouseOption(game, localization->str(LSTR_HAVE_A_DRINK));
+
+    EXPECT_EQ(goldTape, tape(200, 199, 198, 197, 196));
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_HIC));
+    EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(32003)); // The tavern keeper serving.
+    EXPECT_EQ(drunkTape, tape(false, true));
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_DRUNK));
+    EXPECT_EQ(bonusesTape.size(), 1); // These drinks rolled no stat bonus.
 }

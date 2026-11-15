@@ -2,8 +2,11 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
+#include <cstdlib>
 #include <exception>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -12,6 +15,7 @@
 
 #include "Engine/AssetsManager.h"
 #include "Engine/Engine.h"
+#include "Engine/EngineIocContainer.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/MM6ItemEventCompare.h"
 #include "Engine/Localization.h"
@@ -22,6 +26,7 @@
 #include "Engine/MM6/MM6RoomMovie.h"
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/Party.h"
+#include "Engine/Random/Random.h"
 #include "Engine/Tables/HouseTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
@@ -34,12 +39,17 @@
 #include "GUI/UI/MM6CharacterScreen.h"
 #include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/UIStatusBar.h"
+#include "GUI/UI/Houses/MM6Guild.h"
 #include "GUI/UI/Houses/MM6Shop.h"
 #include "GUI/UI/Houses/MM6ShopPrices.h"
+#include "GUI/UI/Houses/MM6SkillGuild.h"
 #include "GUI/UI/Houses/MM6Tavern.h"
 #include "GUI/UI/Houses/MM6Temple.h"
 #include "GUI/UI/Houses/MM6Training.h"
 #include "GUI/UI/Houses/MM6Transport.h"
+
+#include "Io/KeyboardInputHandler.h"
+#include "Io/Mouse.h"
 
 #include "Library/Logger/Logger.h"
 #include "Library/Platform/Interface/Platform.h"
@@ -50,6 +60,7 @@
 static constexpr LstrId LSTR_MM6_CANCEL = static_cast<LstrId>(34);
 static constexpr LstrId LSTR_MM6_END_CONVERSATION = static_cast<LstrId>(74);
 static constexpr LstrId LSTR_MM6_EXIT_BUILDING = static_cast<LstrId>(80);
+static constexpr LstrId LSTR_MM6_HOW_MUCH = static_cast<LstrId>(112);
 
 /** Portrait positions on the right panel, by the number of people in the house. */
 static constexpr std::array<std::array<Pointi, 6>, 6> kPortraitPositions = {{
@@ -65,6 +76,50 @@ static constexpr Pointi kExitPicture = {526, 313};
 static constexpr int kPanelTextRight = 630; // Names and portrait labels are centred between their margin and here.
 static constexpr int kOptionTextX = 483;
 static constexpr int kOptionTextWidth = 148;
+
+static constexpr int kFirstMembershipTopic = 381; // npctopic.txt "Elemental Guild Membership", the Dark Guild's is 397.
+static constexpr std::array<int, 17> kMembershipPrices = {100, 100, 25, 50, 50, 25, 50, 50, 50, 50, 50, 50, 50, 50, 50, 1000, 1000};
+
+/**
+ * @param guild                         Guild in npctopic.txt membership order.
+ * @return                              Award that makes a character a member of the guild.
+ */
+static AwardId membershipAward(int guild) {
+    return static_cast<AwardId>(64 + guild);
+}
+
+static constexpr int kFirstTeacherTopic = 200;
+static constexpr int kLastTeacherTopic = 259;
+
+/**
+ * @param topic                         Teacher topic, 200 to 259. Two topics per skill, expert then master.
+ * @return                              Skill the teacher teaches.
+ */
+static Skill teacherSkill(int topic) {
+    int index = (topic - kFirstTeacherTopic) / 2;
+    if (index > 27)
+        ++index; // No one teaches Thievery, MM6 skill 28.
+    return index == 30 ? SKILL_LEARNING : static_cast<Skill>(index); // MM6 numbers Learning 30.
+}
+
+/**
+ * @offset 0x497102 (MM6)
+ *
+ * @param skill                         Skill taught.
+ * @return                              Gold an expert teacher asks.
+ */
+static int expertTeacherPrice(Skill skill) {
+    switch (skill) {
+      case SKILL_LEATHER: case SKILL_CHAIN: case SKILL_PLATE: case SKILL_FIRE: case SKILL_AIR:
+      case SKILL_WATER: case SKILL_EARTH: case SKILL_SPIRIT: case SKILL_MIND: case SKILL_BODY:
+        return 1000;
+      case SKILL_ITEM_ID: case SKILL_REPAIR: case SKILL_BODYBUILDING: case SKILL_MEDITATION:
+      case SKILL_PERCEPTION: case SKILL_DIPLOMACY: case SKILL_TRAP_DISARM:
+        return 500;
+      default:
+        return 2000;
+    }
+}
 
 static Pointi portraitPosition(size_t count, size_t index) {
     return kPortraitPositions[count - 1][index];
@@ -171,15 +226,29 @@ void GUIWindow_MM6House::Update() {
                       resident.npc ? NameAndTitle(resident.npc) : NameAndTitle(resident.name, resident.title), 3,
                       Recti(0, 0, kPanelTextRight, screenHeight));
 
+        updateBankTransfer();
+        const Pointi mouse = EngineIocContainer::ResolveMouse()->position();
+        for (size_t i = 0; i < _optionButtons.size(); ++i)
+            if (_optionButtons[i]->rect.h > 0 && _optionButtons[i]->Contains(mouse))
+                _focusedOption = static_cast<int>(i);
+
         std::vector<std::string> labels;
         for (GUIButton *button : _optionButtons) {
-            if (resident.npc) {
+            if (resident.npc && _membershipOffer) {
+                labels.push_back(membershipLabel());
+            } else if (resident.npc && _teacherOffer) {
+                bool approved = false;
+                labels.push_back(teacherLabel(&approved));
+            } else if (resident.npc) {
                 labels.push_back(npcDialogueOptionString(static_cast<DialogueId>(button->msg_param), resident.npc));
             } else {
                 labels.push_back(serviceLabel(button->msg_param));
             }
         }
-        drawOptionLabels(labels);
+        if (!_bankTransfer)
+            drawOptionLabels(labels); // MM6 keeps the bank's buttons but draws the how much prompt instead of their lines.
+        if (isProprietorSelected() && _house.type == HOUSE_TYPE_BANK)
+            drawPanelText(fmt::format("{}: {}", localization->str(LSTR_BALANCE), pParty->GetBankGold()), 220, colorTable.PaleCanary);
     }
 
     DrawDialoguePanel(current_npc_text);
@@ -191,6 +260,8 @@ void GUIWindow_MM6House::selectResident(int index) {
     if (index < 0 || index >= static_cast<int>(_residents.size()))
         return;
     current_npc_text.clear();
+    _membershipOffer.reset();
+    _teacherOffer.reset();
     _selected = index;
     if (_residents[index].npc) {
         refreshTopics();
@@ -215,6 +286,29 @@ void GUIWindow_MM6House::selectService(int index) {
         mm6::trainActiveCharacter(std::to_underlying(houseId()), _house.value.value_or(0), &_trainingTimePassed);
         return;
     }
+    if (_services[index] == mm6::HouseServiceOption::TempleDonate) {
+        donate();
+        return;
+    }
+    if (_services[index] == mm6::HouseServiceOption::RentRoom) {
+        rentRoom();
+        return;
+    }
+    if (_services[index] == mm6::HouseServiceOption::FillPacks) {
+        fillPacks();
+        return;
+    }
+    if (_services[index] == mm6::HouseServiceOption::HaveADrink) {
+        haveDrink();
+        return;
+    }
+    if (_services[index] == mm6::HouseServiceOption::Deposit || _services[index] == mm6::HouseServiceOption::Withdraw) {
+        if (!_bankTransfer) {
+            _bankTransfer = _services[index];
+            keyboardInputHandler->StartTextInput(TEXT_INPUT_NUMBER, 10, this);
+        }
+        return;
+    }
     engine->_statusBar->setEvent("This service is not available yet.");
 }
 
@@ -223,6 +317,17 @@ void GUIWindow_MM6House::refreshTopics() {
     if (!npc)
         return;
     clearOptionButtons();
+    _focusedOption = 0;
+    if (_membershipOffer) {
+        _optionButtons.push_back(CreateButton("HouseNpcDialogue_Option0", {480, 160}, {139, 29}, BUTTON_TYPE_NORMAL, 0, UIMSG_SelectHouseNPCDialogueOption,
+                                              std::to_underlying(DIALOGUE_MAGIC_GUILD_JOIN)));
+        return;
+    }
+    if (_teacherOffer) {
+        _optionButtons.push_back(CreateButton("HouseNpcDialogue_Option0", {480, 160}, {139, 29}, BUTTON_TYPE_NORMAL, 0, UIMSG_SelectHouseNPCDialogueOption,
+                                              std::to_underlying(DIALOGUE_MASTERY_TEACHER_LEARN)));
+        return;
+    }
     int row = 0;
     for (DialogueId topic : prepareScriptedNPCDialogueTopics(npc)) {
         if (topic < DIALOGUE_SCRIPTED_LINE_1 || topic > DIALOGUE_SCRIPTED_LINE_6)
@@ -233,12 +338,63 @@ void GUIWindow_MM6House::refreshTopics() {
     }
 }
 
+void GUIWindow_MM6House::offerGuildMembership(int guild) {
+    assert(guild >= 0 && guild < static_cast<int>(kMembershipPrices.size()));
+    _membershipOffer = guild;
+    current_npc_text = pNPCTopics[137 + guild].pText; // Text 138 and on of npctext.txt.
+    refreshTopics();
+}
+
+void GUIWindow_MM6House::joinGuild() {
+    if (!_membershipOffer || !pParty->hasActiveCharacter())
+        return;
+    const Character &character = pParty->activeCharacter();
+    const AwardId award = membershipAward(*_membershipOffer);
+    const int price = kMembershipPrices[*_membershipOffer];
+    if (!character.CanAct() || character._achievedAwardsBits[award] || pParty->GetGold() < price)
+        return;
+    pParty->TakeGold(price);
+    for (Character &member : pParty->pCharacters)
+        member._achievedAwardsBits.set(award);
+    _membershipOffer.reset();
+    current_npc_text.clear();
+    refreshTopics();
+}
+
+void GUIWindow_MM6House::offerExpertTraining(int topic) {
+    assert(topic >= kFirstTeacherTopic && topic <= kLastTeacherTopic && topic % 2 == 0);
+    _teacherOffer = topic;
+    current_npc_text = pNPCTopics[topic - 1].pText; // The text with the topic's number.
+    refreshTopics();
+}
+
+void GUIWindow_MM6House::learnFromTeacher() {
+    bool approved = false;
+    teacherLabel(&approved);
+    if (!approved)
+        return;
+    const Skill skill = teacherSkill(*_teacherOffer);
+    Character &character = pParty->activeCharacter();
+    pParty->TakeGold(expertTeacherPrice(skill));
+    character.pActiveSkills[skill] = CombinedSkillValue(character.pActiveSkills[skill].level(), MASTERY_EXPERT);
+    character.playReaction(SPEECH_SKILL_MASTERY_INC);
+    _teacherOffer.reset();
+    current_npc_text.clear();
+    refreshTopics();
+}
+
 NPCData *GUIWindow_MM6House::selectedNpc() const {
     return _selected == -1 ? nullptr : _residents[_selected].npc;
 }
 
 bool GUIWindow_MM6House::goBack() {
     current_npc_text.clear();
+    if (_membershipOffer || _teacherOffer) {
+        _membershipOffer.reset();
+        _teacherOffer.reset();
+        refreshTopics();
+        return true;
+    }
     if (_selected == -1 || _residents.size() < 2)
         return false;
     _selected = -1;
@@ -283,6 +439,47 @@ void GUIWindow_MM6House::clearOptionButtons() {
 
 bool GUIWindow_MM6House::isExitSelected() const {
     return _selected != -1 && _residents[_selected].exit;
+}
+
+Color GUIWindow_MM6House::optionFocusColor() const {
+    if (!isProprietorSelected() || _house.family == mm6::HouseServiceFamily::Shop || _house.type == HOUSE_TYPE_TRAINING_GROUND)
+        return colorTable.Sunflower;
+    return colorTable.PaleCanary;
+}
+
+std::string GUIWindow_MM6House::teacherLabel(bool *approved) const {
+    *approved = false;
+    if (!pParty->hasActiveCharacter())
+        return {};
+    const Character &character = pParty->activeCharacter();
+    const Skill skill = teacherSkill(*_teacherOffer);
+    const CombinedSkillValue value = character.pActiveSkills[skill];
+    if (!character.CanAct())
+        return pNPCTopics[263].pText; // "Not in your condition!"
+    if (!value.level())
+        return pNPCTopics[261].pText; // "You must know the skill before you can become an expert in it!"
+    if (value.mastery() >= MASTERY_EXPERT)
+        return pNPCTopics[264].pText; // "You are already an expert in this skill."
+    if (value.level() < 4)
+        return pNPCTopics[260].pText; // "You don't meet the requirements, and cannot be taught until you do."
+    const int price = expertTeacherPrice(skill);
+    if (price > pParty->GetGold())
+        return pNPCTopics[259].pText; // "You don't have enough gold!"
+    *approved = true;
+    return localization->format(LSTR_BECOME_S_IN_S_FOR_LU_GOLD, localization->str(LSTR_EXPERT), localization->skillName(skill), price);
+}
+
+std::string GUIWindow_MM6House::membershipLabel() const {
+    if (!pParty->hasActiveCharacter())
+        return {};
+    const Character &character = pParty->activeCharacter();
+    if (!character.CanAct())
+        return pNPCTopics[263].pText; // "Not in your condition!"
+    if (character._achievedAwardsBits[membershipAward(*_membershipOffer)])
+        return pNPCTopics[136].pText; // "You're already a member of this guild."
+    if (pParty->GetGold() < kMembershipPrices[*_membershipOffer])
+        return pNPCTopics[259].pText; // "You don't have enough gold!"
+    return pNPCTopics[154 + *_membershipOffer].pText; // "Join the Elemental Guild for 100 gold" and on.
 }
 
 void GUIWindow_MM6House::showResidentButtons() {
@@ -337,9 +534,43 @@ void GUIWindow_MM6House::drawExit() {
 }
 
 void GUIWindow_MM6House::showServiceButtons() {
+    _focusedOption = 0;
     for (size_t i = 0; i < _services.size(); ++i)
         _optionButtons.push_back(CreateButton(fmt::format("HouseDialogue_Option{}", i), {480, 146 + 30 * static_cast<int>(i)}, {139, 29},
                                               BUTTON_TYPE_NORMAL, 0, UIMSG_SelectProprietorDialogueOption, i));
+}
+
+void GUIWindow_MM6House::updateBankTransfer() {
+    if (!_bankTransfer)
+        return;
+    const bool deposit = *_bankTransfer == mm6::HouseServiceOption::Deposit;
+    if (keyboard_input_status == WINDOW_INPUT_IN_PROGRESS) {
+        const std::string &typed = keyboardInputHandler->GetTextInput();
+        drawPanelText(fmt::format("{}\n{}", localization->str(mm6::houseServiceOptionLabel(*_bankTransfer)), localization->str(LSTR_MM6_HOW_MUCH)), 146, colorTable.PaleCanary);
+        drawPanelText(typed, 186, colorTable.White);
+        DrawFlashingInputCursor(assets->pFontArrus->GetLineWidth(typed) / 2 + 80, 185, assets->pFontArrus.get(),
+                                Recti(kOptionTextX, 0, kOptionTextWidth, render->GetRenderDimensions().h));
+        return;
+    }
+    if (keyboard_input_status == WINDOW_INPUT_CONFIRMED) {
+        int amount = std::strtol(keyboardInputHandler->GetTextInput().c_str(), nullptr, 10);
+        const int available = deposit ? pParty->GetGold() : pParty->GetBankGold();
+        if (amount > available) {
+            mm6PlayHouseSound(houseId(), HOUSE_SOUND_GENERAL_NOT_ENOUGH_GOLD);
+            amount = available;
+        }
+        if (amount > 0 && deposit) {
+            pParty->TakeGold(amount);
+            pParty->AddBankGold(amount);
+            if (pParty->hasActiveCharacter())
+                pParty->activeCharacter().playReaction(SPEECH_BANK_DEPOSIT);
+        } else if (amount > 0) {
+            pParty->TakeBankGold(amount);
+            pParty->AddGold(amount);
+        }
+    }
+    keyboard_input_status = WINDOW_INPUT_NONE;
+    _bankTransfer.reset();
 }
 
 void GUIWindow_MM6House::healActiveCharacter() {
@@ -359,6 +590,87 @@ void GUIWindow_MM6House::healActiveCharacter() {
     mm6::templeHeal(house, &character);
     pAudioPlayer->playExclusiveSound(SOUND_heal);
     character.playReaction(SPEECH_TEMPLE_HEAL);
+}
+
+void GUIWindow_MM6House::donate() {
+    if (!pParty->hasActiveCharacter())
+        return;
+    const int price = _house.value.value_or(0);
+    if (pParty->GetGold() < price) {
+        engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_GENERAL_NOT_ENOUGH_GOLD);
+        return;
+    }
+    pParty->TakeGold(price);
+    if (pParty->mm6Reputation < 200)
+        pParty->mm6Reputation = std::min(pParty->mm6Reputation + 200, 200);
+    // TODO(_): with an effective reputation above 200, the donation whose count this visit matches the day of the
+    // month mod 7 casts spells at master rank day mod 7 + 1: Guardian Angel above 200, Wizard Eye above 400, Day of the
+    // Gods above 600, Hour of Power above 800, Day of Protection above 1000. MM6 temple casts aren't verified yet.
+    if (houseId() == static_cast<HouseId>(78) && pParty->mm6Reputation > -800)
+        pParty->mm6Reputation -= 200; // Temple Baa.
+    pParty->activeCharacter().playReaction(SPEECH_TEMPLE_DONATE);
+    engine->_statusBar->setEvent(LSTR_THANK_YOU);
+}
+
+void GUIWindow_MM6House::rentRoom() {
+    if (!pParty->hasActiveCharacter())
+        return;
+    const int price = mm6::tavernRoomPrice(_house.value.value_or(0), mm6::merchantPercent(pParty->activeCharacter()));
+    if (pParty->GetGold() < price) {
+        engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_NOT_ENOUGH_GOLD);
+        return;
+    }
+    pParty->TakeGold(price);
+    mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_RENT_ROOM);
+    pMediaPlayer->Unload();
+    engine->_messageQueue->addMessageCurrentFrame(UIMSG_RentRoom, std::to_underlying(houseId()), 1);
+    window_SpeakInHouse = nullptr; // Destroys this window.
+}
+
+void GUIWindow_MM6House::fillPacks() {
+    if (!pParty->hasActiveCharacter())
+        return;
+    const float value = _house.value.value_or(0);
+    if (pParty->GetFood() >= value) {
+        engine->_statusBar->setEvent(LSTR_YOUR_PACKS_ARE_ALREADY_FULL);
+        pParty->activeCharacter().playReaction(SPEECH_PACKS_FULL);
+        return;
+    }
+    const int price = mm6::tavernFoodPrice(value, mm6::merchantPercent(pParty->activeCharacter()));
+    if (pParty->GetGold() < price) {
+        engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_NOT_ENOUGH_GOLD);
+        return;
+    }
+    pParty->TakeGold(price);
+    pParty->SetFood(static_cast<int>(value));
+    mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_BUY_FOOD);
+}
+
+void GUIWindow_MM6House::haveDrink() {
+    if (!pParty->hasActiveCharacter())
+        return;
+    if (pParty->GetGold() < 1) {
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_NOT_ENOUGH_GOLD);
+        return;
+    }
+    Character &character = pParty->activeCharacter();
+    pParty->TakeGold(1);
+    engine->_statusBar->setEvent(LSTR_HIC);
+    mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_BUY_FOOD);
+    if (grng->random(2) == 1) {
+        character.playReaction(SPEECH_TAVERN_GOT_DRUNK);
+        if (grng->random(3) == 1)
+            character.conditions.set(CONDITION_DRUNK, pParty->GetPlayingTime());
+        return;
+    }
+    if (grng->random(4) == 1) {
+        const Attribute stat = static_cast<Attribute>(grng->random(7)); // Might to Luck.
+        character._statBonuses[stat] += grng->random(6) + 5;
+    }
+    character.playReaction(SPEECH_TAVERN_DRINK);
 }
 
 std::string GUIWindow_MM6House::serviceLabel(int index) const {
@@ -382,29 +694,48 @@ std::string GUIWindow_MM6House::serviceLabel(int index) const {
     return fmt::format("{} {} {}", localization->str(mm6::houseServiceOptionLabel(option)), price, localization->str(LSTR_GOLD));
 }
 
+int GUIWindow_MM6House::stackedMenuTop() const {
+    return 146;
+}
+
+int GUIWindow_MM6House::panelTextHeight(std::string_view text) {
+    return mm6TextHeight(assets->pFontArrus.get(), text, kOptionTextWidth);
+}
+
+void GUIWindow_MM6House::drawPanelText(std::string_view text, int y, Color color) {
+    DrawTitleText(assets->pFontArrus.get(), 0, y, color, text, 3, Recti(kOptionTextX, 0, kOptionTextWidth, render->GetRenderDimensions().h));
+}
+
 void GUIWindow_MM6House::drawOptionLabels(const std::vector<std::string> &labels) {
     GUIFont *font = assets->pFontArrus.get();
-    const Recti textRect(kOptionTextX, 0, kOptionTextWidth, render->GetRenderDimensions().h);
     std::vector<int> heights;
     int total = 0;
     int shown = 0;
     for (const std::string &label : labels) {
-        heights.push_back(mm6TextHeight(font, label, kOptionTextWidth));
+        heights.push_back(panelTextHeight(label));
         total += heights.back();
         shown += !label.empty();
     }
 
     const bool proprietor = isProprietorSelected();
+    const bool stacked = proprietor && (_house.type == HOUSE_TYPE_TAVERN || _house.family == mm6::HouseServiceFamily::Transport);
+    const bool fixed = proprietor && _house.type == HOUSE_TYPE_BANK; // The bank leaves its lines where it created their buttons.
     int spacing = 0;
     int y = 0;
-    if (proprietor && _house.type == HOUSE_TYPE_TAVERN) {
-        y = 146; // The tavern stacks its lines with a blank line between them.
+    if (stacked) {
+        y = stackedMenuTop();
     } else if (proprietor && _house.type == HOUSE_TYPE_TRAINING_GROUND && shown == 1) {
         y = (212 - total) / 2 + 101;
     } else if (shown > 0) {
-        spacing = std::min((174 - total) / shown, 32);
-        const int base = proprietor && _house.type == HOUSE_TYPE_GENERAL_STORE ? 130 : 138;
-        y = (174 - shown * spacing - total) / 2 - spacing / 2 + base;
+        const bool skillCostLine = _house.family == mm6::HouseServiceFamily::MagicGuild || _house.type == HOUSE_TYPE_MERCENARY_GUILD ||
+                                   _house.type == HOUSE_TYPE_SHADOW_GUILD;
+        const bool guild = proprietor && skillCostLine; // Leaves room for the skill cost line.
+        const int area = guild ? 149 : 174;
+        int base = guild ? 162 : 138;
+        if (proprietor && _house.type == HOUSE_TYPE_GENERAL_STORE)
+            base = 130;
+        spacing = std::min((area - total) / shown, 32);
+        y = (area - shown * spacing - total) / 2 - spacing / 2 + base;
     }
 
     for (size_t i = 0; i < labels.size(); ++i) {
@@ -414,7 +745,12 @@ void GUIWindow_MM6House::drawOptionLabels(const std::vector<std::string> &labels
             continue;
         }
         button->label = labels[i];
-        if (proprietor && _house.type == HOUSE_TYPE_TAVERN) {
+        const Color color = static_cast<int>(i) == _focusedOption ? optionFocusColor() : colorTable.White;
+        if (fixed) {
+            drawPanelText(labels[i], button->rect.y, color);
+            continue;
+        }
+        if (stacked) {
             button->rect.y = y;
             y += heights[i] + font->GetHeight() - 3;
         } else {
@@ -423,7 +759,7 @@ void GUIWindow_MM6House::drawOptionLabels(const std::vector<std::string> &labels
             y += heights[i] - 1;
         }
         button->rect.h = heights[i];
-        DrawTitleText(font, 0, button->rect.y, colorTable.White, labels[i], 3, textRect);
+        drawPanelText(labels[i], button->rect.y, color);
     }
 }
 
@@ -482,20 +818,45 @@ bool mm6EnterHouse(HouseId houseId) {
 void mm6CreateHouseUI(HouseId houseId) {
     const mm6::HousePresentationState presentation =
         mm6::planHousePresentation(GameTitle::MM6, mm6::houseServiceData(), std::to_underlying(houseId));
-    const mm6::HouseServiceFamily family = mm6::houseServiceData().at(std::to_underlying(houseId)).family;
-    if (family == mm6::HouseServiceFamily::Shop || family == mm6::HouseServiceFamily::MagicGuild) {
+    const mm6::HouseServiceRow &house = mm6::houseServiceData().at(std::to_underlying(houseId));
+    const mm6::HouseServiceFamily family = house.family;
+    if (family == mm6::HouseServiceFamily::Shop) {
         window_SpeakInHouse = std::make_unique<GUIWindow_MM6Shop>(houseId, presentation);
+    } else if (family == mm6::HouseServiceFamily::MagicGuild) {
+        window_SpeakInHouse = std::make_unique<GUIWindow_MM6Guild>(houseId, presentation);
     } else if (family == mm6::HouseServiceFamily::Transport) {
         window_SpeakInHouse = std::make_unique<GUIWindow_MM6Transport>(houseId, presentation);
+    } else if (house.type == HOUSE_TYPE_MERCENARY_GUILD || house.type == HOUSE_TYPE_SHADOW_GUILD) {
+        window_SpeakInHouse = std::make_unique<GUIWindow_MM6SkillGuild>(houseId, presentation);
     } else {
         window_SpeakInHouse = std::make_unique<GUIWindow_MM6House>(houseId, presentation);
     }
 }
 
 void mm6SelectHouseTopic(DialogueId topic) {
-    NPCData *npc = mm6HouseWindow()->selectedNpc();
+    GUIWindow_MM6House *house = mm6HouseWindow();
+    NPCData *npc = house->selectedNpc();
+    if (npc && topic == DIALOGUE_MAGIC_GUILD_JOIN) {
+        house->joinGuild();
+        return;
+    }
+    if (npc && topic == DIALOGUE_MASTERY_TEACHER_LEARN) {
+        house->learnFromTeacher();
+        return;
+    }
     if (!npc || topic < DIALOGUE_SCRIPTED_LINE_1 || topic > DIALOGUE_SCRIPTED_LINE_6)
         return;
+    const std::array<unsigned, 6> events = {npc->dialogue_1_evt_id, npc->dialogue_2_evt_id, npc->dialogue_3_evt_id,
+                                            npc->dialogue_4_evt_id, npc->dialogue_5_evt_id, npc->dialogue_6_evt_id};
+    const int event = events[std::to_underlying(topic) - std::to_underlying(DIALOGUE_SCRIPTED_LINE_1)];
+    if (event >= kFirstMembershipTopic && event < kFirstMembershipTopic + static_cast<int>(kMembershipPrices.size())) { // MM6.exe answers these topics itself.
+        house->offerGuildMembership(event - kFirstMembershipTopic);
+        return;
+    }
+    if (event >= kFirstTeacherTopic && event <= kLastTeacherTopic && event % 2 == 0) {
+        house->offerExpertTraining(event);
+        return;
+    }
     handleScriptedNPCTopicSelection(topic, npc);
     if (GUIWindow_MM6House *house = mm6HouseWindow())
         house->refreshTopics(); // The event may have closed the house.

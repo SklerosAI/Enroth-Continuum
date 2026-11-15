@@ -4,6 +4,7 @@
 
 #include "Engine/GameTitle.h"
 #include "Engine/MM6/MM6MonsterSpellEffect.h"
+#include "Engine/MM6/MM6PlayerSpell.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
 #include "Engine/Spells/SpellEnums.h"
 
@@ -19,30 +20,71 @@ enum class SpellEffectSource {
 /**
  * @param spell                         MM6 spell ID.
  * @return                              Whether a player cast of this spell from the spellbook has a verified target,
- *                                      cost, recovery and effect. This is Cure Weakness.
+ *                                      cost, recovery and effect. These are the attack spells of `isPlayerAttackSpell`,
+ *                                      the travel spells Feather Fall, Jump, Fly and Water Walk, and the support spells
+ *                                      Torch Light, Wizard Eye, the five protections, Bless, Healing Touch, Heroism,
+ *                                      Cure Weakness, First Aid and Cure Wounds.
  */
 inline bool isVerifiedPlayerSpell(SpellId spell) {
-    return static_cast<int>(spell) == 67;
-}
-
-/**
- * @param spell                         MM6 spell ID from an event's CastSpell.
- * @return                              Whether an event cast of this spell has a verified launch and damage. These are
- *                                      Fireball, Sparks, Ice Bolt, Ice Blast and Toxic Cloud, plus Armageddon, which
- *                                      the original event cast leaves undone.
- */
-inline bool isVerifiedEventSpell(SpellId spell) {
+    if (isPlayerAttackSpell(spell))
+        return true;
     switch (static_cast<int>(spell)) {
-        case 6:
-        case 15:
-        case 28:
-        case 32:
-        case 90:
-        case 98:
+        case 1:
+        case 3:
+        case 12:
+        case 14:
+        case 16:
+        case 19:
+        case 21:
+        case 25:
+        case 27:
+        case 36:
+        case 46:
+        case 47:
+        case 51:
+        case 67:
+        case 68:
+        case 69:
+        case 71:
             return true;
         default:
             return false;
     }
+}
+
+/**
+ * @param spell                         MM6 spell ID from an event's CastSpell.
+ * @return                              Whether an event cast of this spell launches a projectile with a verified
+ *                                      launch, impact and damage. These are Flame Arrow, Fireball, Static Charge,
+ *                                      Sparks, Cold Beam, Ice Bolt, Ice Blast, Magic Arrow, Rock Blast and Toxic Cloud.
+ */
+inline bool isEventProjectileSpell(SpellId spell) {
+    switch (static_cast<int>(spell)) {
+        case 2:
+        case 6:
+        case 13:
+        case 15:
+        case 24:
+        case 28:
+        case 32:
+        case 35:
+        case 41:
+        case 90:
+            return true;
+        default:
+            return false;
+    }
+}
+
+/**
+ * @param spell                         MM6 spell ID from an event's CastSpell.
+ * @return                              Whether an event cast of this spell has a verified effect. These are the
+ *                                      projectiles, Bless, Day of the Gods and Mass Curse, plus Wizard Eye and
+ *                                      Armageddon, which the original event cast leaves undone.
+ */
+inline bool isVerifiedEventSpell(SpellId spell) {
+    const int id = static_cast<int>(spell);
+    return isEventProjectileSpell(spell) || id == 12 || id == 46 || id == 83 || id == 91 || id == 98;
 }
 
 /**
@@ -64,6 +106,8 @@ inline void requireVerifiedSpellEffect(GameTitle title, SpellId spell, SpellEffe
     if (source == SpellEffectSource::Monster && isVerifiedMonsterSpell(spell))
         return;
     if (source == SpellEffectSource::Event && isVerifiedEventSpell(spell))
+        return;
+    if (source == SpellEffectSource::Damage && isPlayerAttackSpell(spell))
         return;
     throw std::runtime_error("MM6 spell target and effect dispatch are not implemented");
 }

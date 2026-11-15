@@ -14,6 +14,7 @@
 #include "Engine/MM6/MM6ChestTrap.h"
 #include "Engine/MM6/MM6MonsterAttack.h"
 #include "Engine/MM6/MM6MonsterProjectile.h"
+#include "Engine/MM6/MM6PlayerSpell.h"
 #include "Engine/Spells/Spells.h"
 #include "Engine/Tables/MapTable.h"
 
@@ -775,9 +776,27 @@ bool processSpellImpact(unsigned int uLayingItemID, Pid pid) {
         return 0;
     }
 
-    // MM6 Ice Bolt flies as the sprite of MM7 Recharge Item.
-    const bool mm6IceBolt = engine->gameTitle() == GameTitle::MM6 && object->spriteId == SPRITE_SPELL_WATER_RECHARGE_ITEM;
-    switch (mm6IceBolt ? SPRITE_SPELL_FIRE_FIRE_BOLT : object->spriteId) {
+    if (engine->gameTitle() == GameTitle::MM6 && object->spell_caster_pid.type() == OBJECT_Character &&
+        mm6::isPlayerAttackSpell(object->uSpellID) && object->uSpellID != mm6::SPELL_SPARKS) {
+        if (mm6::isArrowObject(object->spriteId)) {
+            object->spellSpriteStop();
+            applySpellSpriteDamage(uLayingItemID, pid);
+            SpriteObject::Remove(uLayingItemID);
+        } else {
+            applySpellSpriteDamage(uLayingItemID, pid);
+            updateSpriteOnImpact(object);
+            if (object->uObjectDescID == 0)
+                SpriteObject::Remove(uLayingItemID);
+            object->spellSpriteStop();
+        }
+        pAudioPlayer->playSpellSound(object->uSpellID, true, SOUND_MODE_PID, Pid(OBJECT_Sprite, uLayingItemID));
+        return 0;
+    }
+
+    // MM6 Ice Bolt and Static Charge fly as the sprites of MM7 Recharge Item and Feather Fall, and hit like bolts.
+    const bool mm6Bolt = engine->gameTitle() == GameTitle::MM6 &&
+                         (object->spriteId == SPRITE_SPELL_WATER_RECHARGE_ITEM || object->spriteId == SPRITE_SPELL_AIR_FEATHER_FALL);
+    switch (mm6Bolt ? SPRITE_SPELL_FIRE_FIRE_BOLT : object->spriteId) {
         case SPRITE_SPELL_FIRE_FIRE_SPIKE:
         case SPRITE_SPELL_AIR_SPARKS:
         case SPRITE_SPELL_DARK_TOXIC_CLOUD: {

@@ -1,6 +1,7 @@
 #include "GUI/UI/MM6HouseServiceData.h"
 
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <stdexcept>
 #include <string>
@@ -149,8 +150,14 @@ std::vector<HouseServiceOption> houseServiceOptions(HouseType type) {
             if (type == HOUSE_TYPE_GENERAL_STORE)
                 return {BuyItems, SellItems};
             return {BuyItems, SellItems, IdentifyItems, RepairItems, BuySpecialItems};
-        case HouseServiceFamily::MagicGuild:
-            return {BuySpells, LearnSkills};
+        case HouseServiceFamily::MagicGuild: {
+            const std::vector<Skill> skills = guildSkills(type);
+            if (skills.empty())
+                return {};
+            std::vector<HouseServiceOption> result = {BuySpells};
+            result.insert(result.end(), skills.size(), LearnSkill);
+            return result;
+        }
         case HouseServiceFamily::Transport:
             if (type == HOUSE_TYPE_STABLE)
                 return {Travel, Travel, Travel, FixPrices};
@@ -167,9 +174,57 @@ std::vector<HouseServiceOption> houseServiceOptions(HouseType type) {
             return {Deposit, Withdraw};
         case HOUSE_TYPE_TAVERN:
             return {RentRoom, FillPacks, HaveADrink, TipBarkeep};
+        case HOUSE_TYPE_MERCENARY_GUILD:
+        case HOUSE_TYPE_SHADOW_GUILD:
+            return std::vector<HouseServiceOption>(5, LearnSkill);
         default:
             return {};
     }
+}
+
+std::vector<Skill> guildSkills(HouseType type) {
+    switch (type) {
+        case HOUSE_TYPE_FIRE_GUILD: return {SKILL_FIRE, SKILL_LEARNING};
+        case HOUSE_TYPE_AIR_GUILD: return {SKILL_AIR, SKILL_LEARNING};
+        case HOUSE_TYPE_WATER_GUILD: return {SKILL_WATER, SKILL_LEARNING};
+        case HOUSE_TYPE_EARTH_GUILD: return {SKILL_EARTH, SKILL_LEARNING};
+        case HOUSE_TYPE_SPIRIT_GUILD: return {SKILL_SPIRIT, SKILL_MEDITATION};
+        case HOUSE_TYPE_MIND_GUILD: return {SKILL_MIND, SKILL_MEDITATION};
+        case HOUSE_TYPE_BODY_GUILD: return {SKILL_BODY, SKILL_MEDITATION};
+        case HOUSE_TYPE_LIGHT_GUILD: return {SKILL_LIGHT};
+        case HOUSE_TYPE_DARK_GUILD: return {SKILL_DARK};
+        case HOUSE_TYPE_ELEMENTAL_GUILD: return {SKILL_FIRE, SKILL_AIR, SKILL_WATER, SKILL_EARTH};
+        case HOUSE_TYPE_SELF_GUILD: return {SKILL_SPIRIT, SKILL_MIND, SKILL_BODY};
+        default: return {}; // The mirrored path guild lists nothing.
+    }
+}
+
+std::array<Skill, 5> skillGuildSkills(HouseType type, int houseId) {
+    assert(type == HOUSE_TYPE_MERCENARY_GUILD || type == HOUSE_TYPE_SHADOW_GUILD);
+    if (type == HOUSE_TYPE_SHADOW_GUILD) {
+        if (houseId >= 147 && houseId <= 151 && houseId % 2 == 1)
+            return {SKILL_DAGGER, SKILL_MERCHANT, SKILL_ITEM_ID, SKILL_PERCEPTION, SKILL_TRAP_DISARM};
+        return {SKILL_LEATHER, SKILL_DIPLOMACY, SKILL_ITEM_ID, SKILL_PERCEPTION, SKILL_TRAP_DISARM};
+    }
+    switch (houseId) {
+        case 141: return {SKILL_SWORD, SKILL_AXE, SKILL_SPEAR, SKILL_STAFF, SKILL_LEATHER};
+        case 142:
+        case 144: return {SKILL_MACE, SKILL_BOW, SKILL_CHAIN, SKILL_SHIELD, SKILL_BODYBUILDING};
+        case 145: return {SKILL_SWORD, SKILL_AXE, SKILL_SPEAR, SKILL_STAFF, SKILL_REPAIR};
+        default: return {SKILL_CHAIN, SKILL_BOW, SKILL_SHIELD, SKILL_PLATE, SKILL_REPAIR};
+    }
+}
+
+std::optional<AwardId> guildMembershipAward(int houseId) {
+    static constexpr int kFirstGuild = 119;
+    static constexpr std::array<int, 34> kAwards = {
+        74, 74, 72, 72, 75, 75, 73, 73, 78, 78, 77, 77, 76, 76, 79, 79, 80, 80, 64, 64, 65, 65, // Spell guilds, Fire to Self.
+        69, 70, 71, 70, 69, 71, // Mercenary guilds.
+        66, 66, 67, 67, 68, 68, // Thieves' guilds.
+    };
+    if (houseId < kFirstGuild || houseId >= kFirstGuild + static_cast<int>(kAwards.size()))
+        return std::nullopt;
+    return static_cast<AwardId>(kAwards[houseId - kFirstGuild]);
 }
 
 LstrId houseServiceOptionLabel(HouseServiceOption option) {
@@ -183,7 +238,6 @@ LstrId houseServiceOptionLabel(HouseServiceOption option) {
         case HouseServiceOption::RepairItems: return static_cast<LstrId>(542);   // "Repair Items"
         case HouseServiceOption::BuySpecialItems: return static_cast<LstrId>(543); // "Special Items"
         case HouseServiceOption::BuySpells: return static_cast<LstrId>(400);     // "Buy Spells"
-        case HouseServiceOption::LearnSkills: return static_cast<LstrId>(535);   // "Learn"
         case HouseServiceOption::Deposit: return static_cast<LstrId>(60);        // "Deposit"
         case HouseServiceOption::Withdraw: return static_cast<LstrId>(244);      // "Withdraw"
         case HouseServiceOption::RentRoom: return static_cast<LstrId>(178);      // "Rent Room for %d gold"
@@ -191,6 +245,7 @@ LstrId houseServiceOptionLabel(HouseServiceOption option) {
         case HouseServiceOption::HaveADrink: return static_cast<LstrId>(398);    // "Have a Drink"
         case HouseServiceOption::TipBarkeep: return static_cast<LstrId>(399);    // "Tip Barkeep"
         case HouseServiceOption::Travel: return static_cast<LstrId>(404);        // "%d days to %s"
+        case HouseServiceOption::LearnSkill:
         case HouseServiceOption::FixPrices: break;
     }
     throw std::runtime_error("MM6 house service option has no global.txt label");

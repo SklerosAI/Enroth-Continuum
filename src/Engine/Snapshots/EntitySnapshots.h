@@ -1065,11 +1065,13 @@ void reconstruct(const Chest_MM7 &src, ChestInventory *dst, ContextTag<int> ches
 
 struct BLVLight_MM6 {
     Vec3s vPosition;
-    int16_t uRadius;
     int16_t uAttributes;
-    uint16_t uBrightness;
+    int16_t uBrightness;
+    int16_t uRadius;
 };
 static_assert(sizeof(BLVLight_MM6) == 12);
+static_assert(offsetof(BLVLight_MM6, uAttributes) == 6);
+static_assert(offsetof(BLVLight_MM6, uRadius) == 10);
 MM_DECLARE_MEMCOPY_SERIALIZABLE(BLVLight_MM6)
 
 struct BLVLight_MM7 {

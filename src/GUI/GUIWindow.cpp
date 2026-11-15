@@ -329,6 +329,8 @@ void GUIWindow::DrawTitleText(GUIFont *pFont, int horizontalMargin, int vertical
     Color lastcolor = color;
     while (std::getline(stream, line)) {
         int x_offset = pFont->AlignText_Center(width, line);
+        if (engine->callObserver)
+            engine->callObserver->notify(CALL_GUIWINDOW_DRAWN_TITLE_LINE, DrawnLine{line, {x + x_offset, y}, lastcolor});
         lastcolor = pFont->DrawTextLine(line, lastcolor, color, {x + x_offset, y});
         y += pFont->GetHeight() - lineSpacing;
     }
@@ -358,6 +360,7 @@ void GUIWindow::DrawDialoguePanel(std::string_view text) {
 void GUIWindow::DrawText(GUIFont *font, Pointi position, Color color, std::string_view text, Recti frameRect, int maxY, Color shadowColor) {
     if (engine->callObserver) {
         engine->callObserver->notify(CALL_GUIWINDOW_DRAWTEXT, std::string(text));
+        engine->callObserver->notify(CALL_GUIWINDOW_DRAWN_TEXT, DrawnText{std::string(text), color, position});
     }
     font->DrawText(frameRect, position, color, text, maxY, shadowColor);
 }
@@ -1209,8 +1212,10 @@ void UI_Create() {
     if (engine->gameTitle() == GameTitle::MM6) {
         pBtn_ZoomIn = createCircleHudButton(mm6HudZoomInCenter, mm6HudZoomRadius, UIMSG_ClickZoomInBtn, INPUT_ACTION_ZOOM_IN,
                                             localization->str(LSTR_ZOOM_IN));
+        pBtn_ZoomIn->vTextures = {game_ui_btn_zoomin};
         pBtn_ZoomOut = createCircleHudButton(mm6HudZoomOutCenter, mm6HudZoomRadius, UIMSG_ClickZoomOutBtn, INPUT_ACTION_ZOOM_OUT,
                                              localization->str(LSTR_ZOOM_OUT));
+        pBtn_ZoomOut->vTextures = {game_ui_btn_zoomout};
     } else {
         pBtn_ZoomIn = pPrimaryWindow->CreateButton({519, 136}, game_ui_btn_zoomin->size(), BUTTON_TYPE_NORMAL, 0,
                                                    UIMSG_ClickZoomInBtn, 0, INPUT_ACTION_ZOOM_IN,

@@ -593,7 +593,7 @@ void eventCastSpell(SpellId uSpellID, Mastery skillMastery, int skillLevel, Vec3
     }
 
     if (engine->gameTitle() == GameTitle::MM6) {
-        mm6::launchEventSpell(uSpellID, skillMastery, skillLevel, from, yaw, pitch, distance_to_target);
+        mm6::castEventSpell(uSpellID, skillMastery, skillLevel, from, yaw, pitch, distance_to_target);
         return;
     }
 

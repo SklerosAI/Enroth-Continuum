@@ -4,7 +4,6 @@
 
 #include "Engine/Objects/CombinedSkillValue.h"
 #include "Utility/String/Ascii.h"
-#include "Utility/String/Transformations.h"
 
 // MM6 encodes a Novice CheckSkill requirement as zero. It is a minimum
 // proficiency check, so higher mastery still satisfies the level threshold.
@@ -16,9 +15,12 @@ inline bool mm6CheckSkillSatisfied(CombinedSkillValue value, Mastery encodedMast
     return value.mastery() == encodedMastery && value.level() >= minimumLevel;
 }
 
+/**
+ * @param response                      Text the player typed, as typed.
+ * @param answer1                       First accepted answer.
+ * @param answer2                       Second accepted answer.
+ * @return                              Whether the response is one of the answers, ignoring ASCII case only.
+ */
 inline bool mm6QuestionMatches(std::string_view response, std::string_view answer1, std::string_view answer2) {
-    response = trim(response);
-    return !response.empty() &&
-        (!trim(answer1).empty() && ascii::noCaseEquals(response, trim(answer1)) ||
-         !trim(answer2).empty() && ascii::noCaseEquals(response, trim(answer2)));
+    return ascii::noCaseEquals(response, answer1) || ascii::noCaseEquals(response, answer2);
 }

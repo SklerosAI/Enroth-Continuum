@@ -113,6 +113,13 @@ void main() {
 
     vec3 clamps = result; // fragcol.rgb *  // clamp(result,0,1) * ;
 
+    if ((vsAttrib & 0x20000) > 0) { // MM6 lights the face from its own dim level, packed above this bit.
+        float dimLevel = float((vsAttrib >> 18) & 31);
+        for (int i = 0; i < num_point_lights; i++)
+            dimLevel -= CalcDimLevelLight(fspointlights[i], fragnorm, vsPos);
+        clamps = fragcol.rgb * (31.0 - clamp(dimLevel, 0.0, 31.0)) / 31.0;
+    }
+
         vec3 dull;
 
     // percpetion red fade

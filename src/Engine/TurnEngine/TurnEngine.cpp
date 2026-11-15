@@ -432,6 +432,13 @@ void stru262_TurnBased::NextTurn() {
         }
     }
 
+    if (engine->gameTitle() == GameTitle::MM6) { // MM6 has no party movement phase, the monsters move next.
+        turn_stage = TE_WAIT;
+        ai_turn_timer = 64_ticks;
+        _494035_timed_effects__water_walking_damage__etc(Duration::fromSeconds(100));
+        return;
+    }
+
     // turn tick
     turn_stage = TE_MOVEMENT;
     _494035_timed_effects__water_walking_damage__etc(213_ticks);

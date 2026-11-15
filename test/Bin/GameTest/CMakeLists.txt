@@ -55,6 +55,9 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM6CampaignChainC1.cpp
         GameTests_MM6CampaignChainC2.cpp
         GameTests_MM6CampaignChainC3.cpp
+        GameTests_MM6CampaignChainC4.cpp
+        GameTests_MM6CampaignChainC5.cpp
+        GameTests_MM6CampaignChainC6.cpp
         GameTests_MM6CharacterBitEvent.cpp
         GameTests_MM6EventVariables.cpp
         GameTests_MM6Creation.cpp
@@ -117,11 +120,13 @@ target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Combat.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6GiveItemEvent.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6BorderRest.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6StreetNpcs.cpp)
+target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Questions.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6NpcDialogue.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Calendar.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Books.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6CharacterScreen.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Spellbook.cpp)
+target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6PlayerSpells.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6NewGame.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6MapTravel.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6MapVisit.cpp)
@@ -131,8 +136,11 @@ target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Decorations.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Transport.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Autosave.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6HouseExit.cpp)
+target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6ControlCenter.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Finale.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Bow.cpp)
+target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6FirstCombat.cpp)
+target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Dungeons.cpp)
 target_link_libraries(OpenEnroth_GameTest PUBLIC application testing_game library_cli library_platform_main library_stack_trace
         engine_mm6_save_runtime engine_mm6_spawn_actor_section)
 

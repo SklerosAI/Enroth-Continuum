@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <string_view>
 
 #include "Engine/MapEnums.h"
 #include "Engine/Objects/ItemEnums.h"
@@ -61,6 +62,22 @@ void useMM6CampaignChainEventFace(EngineController &game, MapId map, int eventId
 void useMM6CampaignChainIndoorEventFace(EngineController &game, int eventId);
 
 /**
+ * Teleports next to a pressure plate of an event on the current indoor map and walks onto it.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param eventId                       Local event of the plate. Its first floor face that is a pressure plate is used.
+ */
+void walkOntoMM6CampaignChainIndoorEventPlate(EngineController &game, int eventId);
+
+/**
+ * Types an answer into the open Question prompt of an event and presses Enter.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param answer                        Lowercase letters, digits and spaces. MM6 compares answers ignoring case.
+ */
+void answerMM6CampaignChainQuestion(EngineController &game, std::string_view answer);
+
+/**
  * Picks an item up from the open chest and puts it into the first character's backpack.
  *
  * @param game                          Engine controller of the running test.
@@ -68,6 +85,39 @@ void useMM6CampaignChainIndoorEventFace(EngineController &game, int eventId);
  * @param itemId                        Item to take, must be in the chest.
  */
 void takeMM6CampaignChainChestItem(EngineController &game, int chestId, ItemId itemId);
+
+/**
+ * Attacks a monster on the current indoor map until it dies, standing next to it and aiming at it.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param actorId                       Monster to kill.
+ */
+void killMM6CampaignChainActor(EngineController &game, int actorId);
+
+/**
+ * Loots a corpse on the current indoor map by pressing Space next to it, once it has settled. Kills a living monster
+ * that stands in the way.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param actorId                       Dead monster.
+ */
+void lootMM6CampaignChainCorpse(EngineController &game, int actorId);
+
+/**
+ * Picks an item up off the floor of the current indoor map by clicking it.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param itemId                        Item to take, must lie on the floor.
+ */
+void pickUpMM6CampaignChainFloorItem(EngineController &game, ItemId itemId);
+
+/**
+ * Clicks a decoration on the current indoor map, standing next to it.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param decorationId                  Decoration to click.
+ */
+void useMM6CampaignChainDecoration(EngineController &game, int decorationId);
 
 /**
  * Enters a castle whose door asks before it lets the party in, and answers yes.

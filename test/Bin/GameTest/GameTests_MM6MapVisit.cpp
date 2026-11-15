@@ -9,11 +9,13 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <tuple>
 
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
@@ -21,6 +23,7 @@
 #include "Engine/Party.h"
 #include "Engine/Tables/MapTable.h"
 #include "GUI/UI/UISaveLoad.h"
+#include "Io/Mouse.h"
 
 static constexpr std::array<std::string_view, 16> mm6Skies = {
     "sky01", "sky02", "sky03", "sky05", "sky06", "sky07", "sky08", "sky09", "sky10", "sky12", "sky13", "sky14", "sky15", "sky16", "sky18", "sky19"};
@@ -119,7 +122,9 @@ static Time loadedMapLastVisit() {
 
 static void faceFountain(EngineController &game) {
     game.teleportTo(pMapTable->GetMapInfo("oute3.odm"), Vec3f(-10028, -7168, 0), 0); // West of the Sorpigal fountain, facing it.
-    game.pointMouseAtFace(863); // Its water.
+    game.pointMouseAtFace(863); // Its water, at the feet of the statue in the middle.
+    game.moveMouse(mouse->position() + Pointi(0, 20)); // Onto the near water, the statue's sprite covers its feet on some frames.
+    game.tick();
 }
 
 static void drinkFromFountain(EngineController &game) {
@@ -179,7 +184,8 @@ GAME_TEST(MM6MapVisit, SameDayReturnKeepsTheSky) {
 
 GAME_TEST(MM6MapVisit, FountainRefillsADayAfterTheLastVisit) {
     // A drained MM6 fountain was full again whenever the party came back, its daily refill went off on every return as
-    // if the map had never been visited. It refills on a return a day or more after the party left, not the same day.
+    // if the map had never been visited. It refills on a return a day or more after the party left, not the same day,
+    // and heals 30 times before it runs dry.
     startNewGameThroughInput(game);
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     const std::string healed = engine->_levelStrings[14]; // Hit points restored.
@@ -190,10 +196,10 @@ GAME_TEST(MM6MapVisit, FountainRefillsADayAfterTheLastVisit) {
 
     game.tick(10); // The event processor checks the map's timers 30 game seconds after the map loads, the fountain fills.
     faceFountain(game);
-    drinkFromFountain(game);
-    ASSERT_EQ(statusTape.back(), healed);
-    for (int drink = 0; drink < 100 && statusTape.back() != empty; drink++)
+    for (int drink = 0; drink < 30; drink++)
         drinkFromFountain(game);
+    ASSERT_EQ(statusTape.back(), healed);
+    drinkFromFountain(game);
     ASSERT_EQ(statusTape.back(), empty);
 
     for (bool laterDay : {false, true}) {
@@ -208,6 +214,37 @@ GAME_TEST(MM6MapVisit, FountainRefillsADayAfterTheLastVisit) {
         EXPECT_EQ(statusTape.back(), laterDay ? healed : empty) << laterDay;
     }
     EXPECT_GE(timeTape.back() - timeTape.front(), Duration::fromDays(10));
+}
+
+GAME_TEST(MM6MapVisit, TimerWithoutIntervalWaitsFromTheNextMidnight) {
+    // An MM6 OnTimer without an interval went off as soon as the party entered its map, so the Temple of the Sun ran
+    // its night, dawn and sunset timers at once. Its dawn timer goes off first 88 hours after the midnight that follows
+    // the arrival.
+    startNewGameThroughInput(game);
+    const MapId t4 = pMapTable->GetMapInfo("t4.blv");
+    game.teleportTo(pMapTable->GetMapInfo("outd2.odm"), Vec3f(-7608, 4032, 96), 180); // In front of the temple door, facing it.
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    confirmTransition(game);
+    ASSERT_EQ(engine->_currentLoadedMapId, t4);
+    engine->config->debug.NoDamage.setValue(true); // The temple's monsters hunt the party through the four-day wait.
+    const Time dawn = Time::fromDays(4) + Duration::fromHours(16);
+    using TempleState = std::tuple<std::string, bool, bool>; // The window's sky, and whether each of the two lights is on.
+    const TempleState night("sky_nit1", false, false);
+    const TempleState lit("orair256", true, true);
+    auto timeTape = tapes.time();
+    auto templeTape = tapes.custom([] {
+        GraphicsImage *sky = pIndoor->faces[79].GetTexture();
+        return TempleState(sky ? sky->name() : std::string(), !(pIndoor->lights[0].uAtributes & 8), !(pIndoor->lights[1].uAtributes & 8));
+    });
+    test.startTaping();
+
+    game.tick(123598); // Up to the last frame before 16:00 on the fourth day.
+    EXPECT_LT(timeTape.back(), dawn);
+    EXPECT_EQ(templeTape, tape(night));
+    game.tick(2); // The event processor's next timer check runs the dawn timer.
+    EXPECT_GE(timeTape.back(), dawn);
+    EXPECT_EQ(templeTape, tape(night, lit));
 }
 
 GAME_TEST(MM6MapVisitHeadless, DISABLED_SaveInDungeonAfterSkyRoll) {
@@ -305,6 +342,98 @@ GAME_TEST(MM6MapVisitHeadless, DISABLED_LoadedSaveKeepsTheVisit) {
     EXPECT_EQ(visitTape[1], saveTime);
     EXPECT_EQ(visitTape.back(), doorTime);
     EXPECT_EQ(timeTape.back().toDays(), saveTime.toDays());
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6MapVisitHeadless, DISABLED_SaveOnFirstMapAfterDrainingTheFountain) {
+    // A party that never left the first map drains the Sorpigal fountain and saves there.
+    if (!enabled("strict-visit-first-map-write"))
+        GTEST_SKIP() << "Run only as the first-map visit write child of the first-map gate";
+    const std::filesystem::path profile = ownerOnlyProfile();
+    if (profile.empty())
+        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to an owner-only profile";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    const std::string empty = engine->_levelStrings[8]; // Refreshing, and nothing else.
+    auto mapTape = tapes.map();
+    auto screenTape = tapes.screen();
+    auto statusTape = tapes.statusBar();
+    auto armedTape = tapes.custom([] { return mm6::isFirstMapManualSaveArmed(); });
+    test.startTaping();
+
+    game.tick(10); // The event processor checks the map's timers 30 game seconds after the map loads, the fountain fills.
+    faceFountain(game);
+    for (int drink = 0; drink < 31; drink++)
+        drinkFromFountain(game);
+    ASSERT_EQ(statusTape.back(), empty);
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressGuiButton("GameMenu_SaveGame");
+    game.tick(2);
+    game.doubleClickGuiButton("SaveMenu_Slot0"); // The new save slot.
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_F);
+    game.tick();
+    game.pressGuiButton("SaveMenu_Save");
+    game.tick(3); // The button animates for a frame, then posts the save for the next one.
+
+    EXPECT_EQ(mapTape, tape(pMapTable->GetMapInfo("oute3.odm")));
+    EXPECT_EQ(armedTape, tape(true)); // Saved through the first-map session.
+    EXPECT_EQ(screenTape.back(), SCREEN_GAME);
+    ASSERT_TRUE(std::filesystem::is_regular_file(profile / "saves/save000.ec6"));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6MapVisitHeadless, DISABLED_LoadedFirstMapSaveKeepsTheFountainDry) {
+    // A first-map MM6 save didn't record the visit, so a fresh process loading it treated the first map as never
+    // visited and refilled the drained fountain at once. The save time is the last visit, the fountain stays dry.
+    if (!enabled("strict-visit-first-map-reload"))
+        GTEST_SKIP() << "Run only after the first-map visit write child of the first-map gate";
+    const std::filesystem::path profile = ownerOnlyProfile();
+    if (profile.empty())
+        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to an owner-only profile";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    const MapId oute3 = pMapTable->GetMapInfo("oute3.odm");
+    test.startTaping();
+    auto mapTape = tapes.map();
+    auto screenTape = tapes.screen();
+    auto statusTape = tapes.statusBar();
+    auto skyTape = tapes.custom([] { return outdoorSky(); });
+    auto visitTape = tapes.custom([] { return engine->_currentLoadedMapId == MAP_INVALID ? Time() : loadedMapLastVisit(); });
+
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(4);
+    ASSERT_EQ(screenTape.back(), SCREEN_LOADGAME);
+    ASSERT_EQ(saveLoadMenu()->slots().size(), 2); // The autosave of the new party, then the drained-fountain slot.
+    ASSERT_EQ(saveLoadMenu()->slots()[1].fileName, "save000.ec6");
+    const Time saveTime = saveLoadMenu()->slots()[1].header.playingTime;
+    game.pressGuiButton("LoadMenu_Slot1");
+    game.tick(2);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick();
+    ASSERT_EQ(mapTape.back(), oute3);
+    const std::string empty = engine->_levelStrings[8]; // Refreshing, and nothing else.
+    game.tick(10); // The event processor checks the map's timers 30 game seconds after the map loads.
+    faceFountain(game);
+    drinkFromFountain(game);
+
+    EXPECT_EQ(mapTape, tape(MAP_INVALID, oute3));
+    EXPECT_EQ(visitTape, tape(Time(), saveTime));
+    EXPECT_EQ(skyTape.back(), "sky01");
+    EXPECT_EQ(statusTape.back(), empty);
     game.runGameRoutine([&] {
         mm6::disarmFirstMapManualSave();
         mm6::testing::setNativeProfileRootForTest({});

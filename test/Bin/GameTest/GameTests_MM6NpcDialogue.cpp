@@ -63,6 +63,34 @@ static void enterNewSorpigal(EngineController &game) {
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
 }
 
+static void startNewGameThroughInput(EngineController &game) {
+    // Each character takes its first three optional skills and up to three points in every attribute, then the party
+    // enters the first map. Nothing stands in for the new game's own save.
+    constexpr PlatformKey characterKeys[] = {PlatformKey::KEY_DIGIT_1, PlatformKey::KEY_DIGIT_2, PlatformKey::KEY_DIGIT_3,
+                                             PlatformKey::KEY_DIGIT_4};
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    for (PlatformKey key : characterKeys) {
+        game.pressAndReleaseKey(key);
+        game.tick();
+        for (int skill = 0; skill < 3; skill++) {
+            game.pressGuiButton(fmt::format("PartyCreation_Skill{}", skill));
+            game.tick();
+        }
+        for (int attribute = 0; attribute < 7; attribute++) {
+            for (int point = 0; point < 3; point++) {
+                game.pressAndReleaseKey(PlatformKey::KEY_ADD);
+                game.tick();
+            }
+            game.pressAndReleaseKey(PlatformKey::KEY_DOWN);
+            game.tick();
+        }
+    }
+    game.pressGuiButton("PartyCreation_OK");
+    game.skipLoadingScreen();
+    game.tick();
+}
+
 static void talkToMarianne(EngineController &game) {
     // Teleport next to the street NPC and talk to her with Space.
     game.teleportTo(engine->_currentLoadedMapId, kMarianneSpot, 0);
@@ -156,6 +184,25 @@ GAME_TEST(MM6NpcDialogue, StreetNpcEscape) {
     game.tick();
 
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_NPC_DIALOGUE, SCREEN_GAME));
+}
+
+GAME_TEST(MM6NpcDialogue, NewGameAfterHire) {
+    // Hiring a street NPC and then starting a new game kept the hireling's name behind a NUL, and the new game
+    // couldn't be saved.
+    startNewGameThroughInput(game);
+    game.runGameRoutine([] { pParty->SetGold(10000, true); });
+    auto hirelingsTape = tapes.totalHirelings();
+    auto statusTape = tapes.statusBar();
+    test.startTaping();
+
+    talkToMarianne(game);
+    game.pressAndReleaseButton(BUTTON_LEFT, 555, 255); // Hire.
+    game.tick();
+    game.goToMainMenu();
+    startNewGameThroughInput(game);
+
+    EXPECT_EQ(hirelingsTape, tape(0, 1, 0));
+    EXPECT_MISSES(statusTape, "This party can't be saved yet");
 }
 
 GAME_TEST(MM6OffscreenFrame, DISABLED_NpcDialogueCapture) {

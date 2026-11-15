@@ -699,8 +699,7 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             }
             if (isMM6SkillVariable(ir.data.variable_descr.type)) {
                 for (Character &character : iterateCharacters(_who, grng))
-                    mm6::setEventSkill(character, std::to_underlying(ir.data.variable_descr.type),
-                                       ir.data.variable_descr.value, GameTitle::MM6);
+                    mm6::writeEventSkill(character, std::to_underlying(ir.data.variable_descr.type), ir.data.variable_descr.value);
                 break;
             }
             if (isMM6AutonoteVariable(ir.data.variable_descr.type)) {

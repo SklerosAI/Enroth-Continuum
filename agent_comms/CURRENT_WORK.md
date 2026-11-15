@@ -17,8 +17,10 @@ current coordination surface; detailed historical lane results remain in
   a checkout.
 
 Current allocation: Codex 1/5 (`mm7-combat-fixes` on
-`codex/mm7-dark-chain`); Claude 4/5 (`mm6-chain-c4`, `mm6-indoor-light`,
-`mm6-leftovers`, and `mm6-spells`). All five linked worktrees are title-aligned. Neutral
+`codex/mm7-dark-chain`); Claude 5/5 (`mm6-chain-c4` on `claude/mm6-chain-c5`, `mm6-indoor-light` on
+`claude/mm6-event-spells`, `mm6-leftovers` on `claude/mm6-questions`, `mm6-spells`
+and `mm6-control-center`). All six linked worktrees are title-aligned. The owner
+released shared MM6/MM7 code to Claude on 2026-11-12 evening while Codex is idle. Neutral
 `master` and the Codex MM7 branch are kept synchronized after each integrated
 packet.
 

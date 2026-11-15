@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -28,6 +29,7 @@
 #include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Indoor.h"
+#include "Engine/Graphics/Lighting.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
@@ -757,4 +759,32 @@ GAME_TEST(MM6OutdoorSky, FirstVisitSky) {
         ++outdoorMaps;
     }
     EXPECT_EQ(outdoorMaps, 15);
+}
+
+GAME_TEST(MM6IndoorLight, D02FacesUseTheirSectorLevelAndWallLightsReach) {
+    // MM6 dungeons drew nearly black. Every face took the darkest sector level of the whole map, and wall lights
+    // loaded with no radius.
+    enterFirstMapFromNewGame(game);
+    if (::testing::Test::HasFatalFailure())
+        return;
+    enterMapAtFirstShippedEntrance(game, pMapTable->GetMapInfo("d02.blv"));
+    if (::testing::Test::HasFatalFailure())
+        return;
+
+    const int sectorId = pIndoor->GetSector(pParty->pos);
+    const BLVSector &sector = pIndoor->sectors[sectorId];
+    int roomFaces = 0;
+    for (uint16_t faceId : sector.faceIds) {
+        if (pIndoor->faces[faceId].sectorId != sectorId)
+            continue; // A room also lists faces that belong to its neighbours.
+        EXPECT_EQ(mm6IndoorFaceDimLevel(pIndoor->faces[faceId]), 25);
+        ++roomFaces;
+    }
+    EXPECT_GT(roomFaces, 0);
+
+    const std::vector<const BLVLight *> lights = litSectorLights(std::array{sectorId});
+    ASSERT_EQ(lights.size(), 1u);
+    EXPECT_EQ(lights[0]->uRadius, 384);
+    const Vec3f at = lights[0]->vPosition;
+    EXPECT_EQ(GetLightLevelAtPoint(sector.minAmbientLightLevel, sectorId, at.x, at.y, at.z), 0); // The party light doesn't reach here.
 }

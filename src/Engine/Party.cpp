@@ -48,6 +48,9 @@ Party *pParty = nullptr;
 
 ActionQueue *pPartyActionQueue = new ActionQueue;
 
+static constexpr QuestBit QBIT_MM6_LETTER_FOR_POTBELLO = static_cast<QuestBit>(81); // The first quest note, Andover Potbello clears it.
+static constexpr QuestBit QBIT_MM6_LETTER_QUEST_OPEN = static_cast<QuestBit>(181); // Hidden, Wilbur Humphrey clears it with bits 81 and 82.
+
 //----- (0044A56A) --------------------------------------------------------
 int Party::CountHirelings() {  // non hired followers
     cNonHireFollowers = 0;
@@ -147,8 +150,8 @@ void Party::zero(bool resetMouseCursor) {
         for (int j = 0; j < 12; ++j)
             spellBooksInGuilds[i][j].Reset();
 
-    pHireling1Name[0] = 0;
-    pHireling2Name[0] = 0;
+    pHireling1Name.clear();
+    pHireling2Name.clear();
     armageddon_timer = 0_ticks;
     armageddonDamage = 0;
     pTurnBasedCharacterRecoveryTimes.fill(0_ticks);
@@ -414,8 +417,8 @@ static void setProvisionalMM6Portraits(std::array<Character, 4> &characters) {
 }
 
 void Party::createDefaultParty() {
-    pHireling1Name[0] = 0;
-    pHireling2Name[0] = 0;
+    pHireling1Name.clear();
+    pHireling2Name.clear();
     this->hirelingScrollPosition = 0;
     pHirelings.fill(NPCData());
     pHirelingsSacrifice.fill(NPCSacrificeStatus());
@@ -597,7 +600,10 @@ void Party::Reset() {
     _autonoteBits.reset();
 
     _questBits.reset();
-    if (engine->gameTitle() != GameTitle::MM6) { // MM6 dungeon scripts use bits 1-6 as their own run-once flags.
+    if (engine->gameTitle() == GameTitle::MM6) { // The party reset in MM6.exe sets these two.
+        _questBits.set(QBIT_MM6_LETTER_FOR_POTBELLO);
+        _questBits.set(QBIT_MM6_LETTER_QUEST_OPEN);
+    } else { // MM6 dungeon scripts use bits 1-6 as their own run-once flags.
         _questBits.set(QBIT_EMERALD_ISLAND_RED_POTION_ACTIVE);
         _questBits.set(QBIT_EMERALD_ISLAND_SEASHELL_ACTIVE);
         _questBits.set(QBIT_EMERALD_ISLAND_LONGBOW_ACTIVE);

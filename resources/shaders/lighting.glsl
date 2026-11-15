@@ -61,3 +61,17 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {
     specular *= attenuation;
     return (ambient + diffuse + specular);
 }
+
+// Dim levels a light takes off a point in MM6's indoor lighting, where 0 is full bright and 31 is black. It is 30 at
+// the light, falls off linearly to nothing at its radius, and is nothing for a light behind the face.
+float CalcDimLevelLight(PointLight light, vec3 normal, vec3 fragPos) {
+    if (light.type == 0.0 || light.radius < 1.0)
+        return 0.0;
+
+    vec3 toLight = light.position - fragPos;
+    float distance = length(toLight);
+    if (distance >= light.radius || dot(toLight, normal) < 0.0)
+        return 0.0;
+
+    return 30.0 * (1.0 - distance / light.radius);
+}

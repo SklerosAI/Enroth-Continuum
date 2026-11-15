@@ -1,6 +1,7 @@
 #include "Engine/Evt/MM6ItemEventWrite.h"
 
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 #include "Engine/Tables/ItemTable.h"
@@ -35,6 +36,9 @@ Item makeEventItem(int rawId, int value) {
     Item item;
     item.itemId = itemId;
     item.flags = ITEM_IDENTIFIED;
+    item.mm6RawRecord.emplace();
+    item.mm6RawRecord->setWord(0, value);
+    item.mm6RawRecord->setWord(20, std::to_underlying(ITEM_IDENTIFIED)); // MM6.exe 0x441860 writes no other field and leaves bytes 25-27 as stack garbage.
     return item;
 }
 

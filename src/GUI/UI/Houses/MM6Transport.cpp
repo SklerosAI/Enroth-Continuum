@@ -39,21 +39,25 @@ void GUIWindow_MM6Transport::Update() {
     if (_route || !isProprietorSelected() || !pParty->hasActiveCharacter())
         return;
 
-    const Recti sidePanel(SIDE_TEXT_BOX_POS_X, 0, SIDE_TEXT_BOX_WIDTH, render->GetRenderDimensions().h);
+    const Character &character = pParty->activeCharacter();
+    if (!character.CanAct()) {
+        const std::string refusal = localization->format(LSTR_S_IS_IN_NO_CONDITION_TO_S, character.name, localization->str(LSTR_DO_ANYTHING));
+        drawPanelText(refusal, (212 - panelTextHeight(refusal)) / 2 + 101, colorTable.PaleCanary);
+        return;
+    }
     const std::array<const mm6::TransportRoute *, 3> routes = offeredRoutes();
     const bool anyRoute = std::ranges::any_of(routes, [](const mm6::TransportRoute *route) { return route != nullptr; });
     if (anyRoute || offersToFixPrices()) {
-        DrawTitleText(assets->pFontArrus.get(), 0, 136, colorTable.White, localization->format(LSTR_TRAVEL_COST_D_GOLD, price()), 3, sidePanel);
+        drawPanelText(priceLine(), 146, colorTable.White);
     } else {
         const std::string sorry = localization->str(LSTR_SORRY_COME_BACK_ANOTHER_DAY);
-        const int textHeight = assets->pFontArrus->CalcTextHeight(sorry, sidePanel.w, 0);
-        const int y = (SIDE_TEXT_BOX_BODY_TEXT_HEIGHT - textHeight) / 2 + SIDE_TEXT_BOX_BODY_TEXT_OFFSET;
-        DrawTitleText(assets->pFontArrus.get(), 0, y, colorTable.White, sorry, 3, sidePanel);
+        drawPanelText(sorry, (174 - panelTextHeight(sorry)) / 2 + 138, colorTable.White);
     }
 }
 
 void GUIWindow_MM6Transport::selectService(int index) {
-    if (_route || !isProprietorSelected() || !pParty->hasActiveCharacter() || index < 0 || index >= std::ssize(_services))
+    if (_route || !isProprietorSelected() || !pParty->hasActiveCharacter() || !pParty->activeCharacter().CanAct() || index < 0 ||
+        index >= std::ssize(_services))
         return;
     if (_services[index] == mm6::HouseServiceOption::FixPrices) {
         if (offersToFixPrices())
@@ -89,7 +93,7 @@ bool GUIWindow_MM6Transport::goBack() {
 }
 
 std::string GUIWindow_MM6Transport::serviceLabel(int index) const {
-    if (_route || !pParty->hasActiveCharacter())
+    if (_route || !pParty->hasActiveCharacter() || !pParty->activeCharacter().CanAct())
         return {};
     if (_services[index] == mm6::HouseServiceOption::FixPrices)
         return offersToFixPrices() ? pNPCTopics[99].pTopic : std::string();
@@ -98,6 +102,14 @@ std::string GUIWindow_MM6Transport::serviceLabel(int index) const {
         return {};
     const MapId destination = pMapTable->GetMM6TransportMapInfo(*pGames_LOD, route->mapIndex);
     return localization->format(mm6::houseServiceOptionLabel(_services[index]), travelDays(*route), pMapTable->pInfos[destination].name);
+}
+
+int GUIWindow_MM6Transport::stackedMenuTop() const {
+    return 146 + panelTextHeight(priceLine()) + assets->pFontArrus->GetHeight() - 3; // A blank line under the price.
+}
+
+std::string GUIWindow_MM6Transport::priceLine() const {
+    return localization->format(LSTR_TRAVEL_COST_D_GOLD, price());
 }
 
 std::array<const mm6::TransportRoute *, 3> GUIWindow_MM6Transport::offeredRoutes() const {

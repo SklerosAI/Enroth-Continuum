@@ -201,6 +201,26 @@ GAME_TEST(MM6Hud, ZoomCircles) {
     EXPECT_EQ(zoomTape, tape(1024, 512));
 }
 
+GAME_TEST(MM6Hud, ZoomPressedArt) {
+    // Clicking a zoom mark on the top panel showed no pressed art, the MM6 zoom buttons had none. MM6 shows BUTTPLUS or
+    // BUTTMINU next to the mark for one frame, the buttons don't stay down.
+    auto zoomTape = tapes.custom([] { return viewparams->uMinimapZoom; });
+    auto quadsTape = tapes.hudQuads();
+    enterFirstMapFromNewGame(game);
+    test.startTaping();
+
+    game.pressAndReleaseButton(BUTTON_LEFT, 595, 42); // Plus.
+    game.tick();
+    game.pressAndReleaseButton(BUTTON_LEFT, 502, 42); // Minus.
+    game.tick();
+    game.tick(); // The pressed art is gone.
+
+    auto isZoomArt = [](const DrawnQuad &quad) { return quad.texture == "buttplus" || quad.texture == "buttminu"; };
+    EXPECT_EQ(zoomTape, tape(1024, 512));
+    EXPECT_EQ(quadsTape.flatten().filter(isZoomArt), tape(DrawnQuad{"buttplus", {597, 43}}, DrawnQuad{"buttminu", {503, 44}}));
+    EXPECT_EQ(quadsTape.back().filter(isZoomArt).size(), 0);
+}
+
 GAME_TEST(MM6Hud, PartyBuffSprites) {
     // Party buffs were drawn as MM7's isn icons, which MM6 doesn't have, instead of MM6's sprites on the shelf.
     auto quadsTape = tapes.hudQuads();

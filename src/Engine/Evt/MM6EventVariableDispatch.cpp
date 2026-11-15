@@ -9,6 +9,7 @@
 #include "Engine/Evt/MM6HirelingEvent.h"
 #include "Engine/Evt/MM6ReputationEvent.h"
 #include "Engine/Evt/MM6ResistanceEvent.h"
+#include "Engine/Evt/MM6SkillEvent.h"
 #include "Engine/Objects/NPC.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/NPCTable.h"
@@ -111,6 +112,11 @@ void writeCharacterEventVariable(Character &character, EvtOpcode opcode, int raw
     } else {
         character.uSkillPoints = static_cast<unsigned>(value) > static_cast<unsigned>(character.uSkillPoints) ? 0 : character.uSkillPoints - value;
     }
+}
+
+void writeEventSkill(Character &character, int rawId, int value) {
+    setEventSkill(character, rawId, value, GameTitle::MM6);
+    playWriteFeedback(character, SPEECH_NONE);
 }
 
 } // namespace mm6

@@ -158,6 +158,26 @@ int foodRequiredForTileset(Tileset tileset) {
     }
 }
 
+int foodRequiredForTile(GameTitle gameTitle, const TileData &tile) {
+    if (gameTitle != GameTitle::MM6)
+        return foodRequiredForTileset(tile.tileset);
+
+    switch (tile.sourceTileset) { // The shared Tileset enum turns MM6 volcano tiles into dirt.
+    case 0:
+        return 1;
+    case 1:
+    case 7:
+        return 3;
+    case 2:
+        return 5;
+    case 3:
+    case 6:
+        return 4;
+    default:
+        return 2;
+    }
+}
+
 TileVariant tileVariantForTransitionDirections(Directions directions) {
     // First we need to canonize the directions a bit.
     if (directions & DIRECTION_N)

@@ -541,6 +541,13 @@ std::array<GraphicsImage *, 16> paperdoll_dbrds;
 
 Recti savedInventoryLeftClickButtonRect;
 
+static Skill hoveredSkill(GUIWindow *window) {
+    for (GUIButton *button : window->vButtons)
+        if (button->msg == UIMSG_SkillUp && button->Contains(mouse->position()))
+            return static_cast<Skill>(button->msg_param);
+    return SKILL_INVALID;
+}
+
 GUIWindow_CharacterRecord::GUIWindow_CharacterRecord(ScreenType screen)
     : GUIWindow(WINDOW_CHARACTER_RECORD, {0, 0}, render->GetRenderDimensions()) {
     gameTimer->setPaused(true);
@@ -654,6 +661,8 @@ void GUIWindow_CharacterRecord::Update() {
                 CharacterUI_SkillsTab_CreateButtons();
             }
             releaseAwardsScrollBar();
+            if (Skill hovered = hoveredSkill(this); isMM6 && hovered != SKILL_INVALID)
+                _focusedSkill = hovered;
             CharacterUI_SkillsTab_Draw(player);
             if (!isMM6)
                 render->DrawQuad2D(assets->getIcon("ib-cd2-d"), pCharacterScreen_SkillsBtn->rect.topLeft());
@@ -772,7 +781,7 @@ std::unique_ptr<TargetedSpellUI> CastSpellInfo::GetCastSpellInInventoryWindow() 
 }
 
 static int drawSkillTable(Character *player, int x, int y, const std::initializer_list<Skill> skill_list,
-                          int right_margin, std::string_view skill_group_name) {
+                          int right_margin, std::string_view skill_group_name, Skill focusedSkill) {
     int y_offset = y;
     Pointi pt = mouse->position();
 
@@ -802,7 +811,7 @@ static int drawSkillTable(Character *player, int x, int y, const std::initialize
                 skill_color = ui_character_skill_upgradeable_color;
             }
 
-            if (button->Contains(pt)) {
+            if (engine->gameTitle() == GameTitle::MM6 ? skill == focusedSkill : button->Contains(pt)) {
                 if (player->uSkillPoints > skill_level && skills_max_level[skill] > skill_level && skills_max_level[skill] != 1) {
                     skill_mastery_color = ui_character_bonus_text_color;
                 } else {
@@ -859,16 +868,16 @@ void GUIWindow_CharacterRecord::CharacterUI_SkillsTab_Draw(Character *player) {
     GUIWindow::DrawText(assets->pFontArrus.get(), {24, 18}, colorTable.White, str, pGUIWindow_CurrentMenu->frameRect);
 
     int y = 2 * assets->pFontLucida->GetHeight() + 13;
-    y = drawSkillTable(player, 24, y, allWeaponSkills(), 400, localization->str(LSTR_WEAPONS));
+    y = drawSkillTable(player, 24, y, allWeaponSkills(), 400, localization->str(LSTR_WEAPONS), _focusedSkill);
 
     y += groupGap;
-    drawSkillTable(player, 24, y, allMagicSkills(), 400, localization->str(LSTR_MAGIC));
+    drawSkillTable(player, 24, y, allMagicSkills(), 400, localization->str(LSTR_MAGIC), _focusedSkill);
 
     y = 2 * assets->pFontLucida->GetHeight() + 13;
-    y = drawSkillTable(player, 248, y, allArmorSkills(), 177, localization->str(LSTR_ARMOR));
+    y = drawSkillTable(player, 248, y, allArmorSkills(), 177, localization->str(LSTR_ARMOR), _focusedSkill);
 
     y += groupGap;
-    y = drawSkillTable(player, 248, y, allMiscSkills(), 177, localization->str(LSTR_MISC));
+    y = drawSkillTable(player, 248, y, allMiscSkills(), 177, localization->str(LSTR_MISC), _focusedSkill);
 }
 
 std::string GUIWindow_CharacterRecord::getAchievedAwardsString(int idx) {
@@ -1523,6 +1532,7 @@ void GUIWindow_CharacterRecord::CharacterUI_SkillsTab_CreateButtons() {
     }
     int first_rows = 0;
     Character *curr_player = &pParty->activeCharacter();
+    const size_t firstRow = pGUIWindow_CurrentMenu->vButtons.size();
 
     int uCurrFontHeght = assets->pFontLucida->GetHeight();
     int current_Y = 2 * uCurrFontHeght + 13;
@@ -1567,6 +1577,8 @@ void GUIWindow_CharacterRecord::CharacterUI_SkillsTab_CreateButtons() {
             pGUIWindow_CurrentMenu->CreateButton({246, current_Y}, {width, uCurrFontHeght - 3}, BUTTON_TYPE_SKILLS, skill_id | 0x8000, UIMSG_SkillUp, skill_id);
         }
     }
+    const std::vector<GUIButton *> &buttons = pGUIWindow_CurrentMenu->vButtons;
+    _focusedSkill = firstRow < buttons.size() ? static_cast<Skill>(buttons[firstRow]->msg_param) : SKILL_INVALID;
 }
 
 void GUIWindow_CharacterRecord::CharacterUI_StatsTab_Draw(Character *player) {

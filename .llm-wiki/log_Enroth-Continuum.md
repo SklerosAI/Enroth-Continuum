@@ -3541,3 +3541,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added a separately marked Dark campaign profile that reuses common C0-C2 and switches to a Dark-only suite after the Arbiter branch. The gate rejects Light C3 in a Dark profile and Dark C3 in a Light profile, while preserving the existing predecessor-slot and digest policy.
 - Dark C3 follows the authored 112-day messenger, Deyja tavern and Harmondale Arbiter interactions, verifies Evil alignment, the Dark path and Archibald activation, and writes a structurally checked normal save. A fresh four-process C0-C3 run, the ordinary Light C0 control and the 157-target style gate passed. The headless checks generated no progress images; C4-C7 remain open.
+
+## [2026-11-14] test | MM7 Dark campaign through C4
+- by: T-Burton-ND via codex
+- Dark C4 loads the normal C3 save, accepts Archibald's Castle Gloaming assignment, activates the authored Breeding Zone completion face, confirms both authored dungeon exits return to the Pit, uses one through the production transition UI, completes Archibald's hand-in and enters all three distinct adviser houses before writing `save004.mm7`.
+- A fresh five-process C0-C4 chain passed with retained predecessor saves and pass markers unchanged. The three independent Archibald/Breeding Zone controls and the 157-target style gate passed. No progress image was generated; C5-C7 remain open.

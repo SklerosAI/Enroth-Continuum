@@ -40,6 +40,7 @@
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/Actor.h"
+#include "Engine/Objects/MonsterEnumFunctions.h"
 #include "Engine/PartyPlacement.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Tables/ItemTable.h"
@@ -120,6 +121,10 @@ constexpr int mazeHaldarsRemainsMapVariable = 0;
 constexpr int lightEndingCompletionEventId = 170;
 constexpr int darkEndingCompletionEventId = 172;
 constexpr int giantsWishWellEventId = 205;
+constexpr int deyjaGuardSetupEventId = 1;
+constexpr int deyjaAlliedGuardGroup = 4;
+constexpr int deyjaAngerCounterIndex = 9;
+constexpr int deyjaGuardStateMapVariable = 4;
 
 static bool isOriginalBreedingZoneBookEvent(const EvtContext &context,
                                             std::span<const EvtInstruction> instructions) {
@@ -355,6 +360,76 @@ static bool isOriginalGiantsWishWellEvent(const EvtContext &context,
         });
     return hasOriginalGoldGate && hasInsufficientGoldWithdrawal && hasInsufficientGoldExit &&
            hasWishRandomizer && hasWishStatus && !alreadyChargesFiveThousand;
+}
+
+static bool isOriginalDeyjaGuardSetupEvent(const EvtContext &context,
+                                           std::span<const EvtInstruction> instructions) {
+    if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_MAP ||
+        engine->_currentLoadedMapId != MAP_DEYJA || context.eventId != deyjaGuardSetupEventId ||
+        !context.duringMapLoad)
+        return false;
+
+    const auto mapVariable = [](int index) {
+        return static_cast<EvtVariable>(std::to_underlying(VAR_MapPersistentVariable_0) + index);
+    };
+    const auto hasVariableInstruction = [instructions](int step, int targetStep, EvtOpcode opcode,
+                                                        EvtVariable variable, int value) {
+        return std::ranges::any_of(instructions, [=](const EvtInstruction &instruction) {
+            return instruction.step == step && instruction.target_step == targetStep &&
+                   instruction.opcode == opcode && instruction.data.variable_descr.type == variable &&
+                   instruction.data.variable_descr.value == value;
+        });
+    };
+    const auto togglesGroup = [instructions](int step, int group, bool set) {
+        return std::ranges::any_of(instructions, [=](const EvtInstruction &instruction) {
+            return instruction.step == step && instruction.opcode == EVENT_ToggleActorGroupFlag &&
+                   instruction.data.actor_flag_descr.id == group &&
+                   instruction.data.actor_flag_descr.attr == ACTOR_AGGRESSOR &&
+                   instruction.data.actor_flag_descr.is_set == set;
+        });
+    };
+    const bool hasMapLoadTrigger = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 0 && instruction.opcode == EVENT_OnMapReload;
+    });
+    const bool hasPatchedFactionWrite = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_ChangeGroupAlly;
+    });
+    return hasMapLoadTrigger &&
+           hasVariableInstruction(1, 0, EVENT_Set, mapVariable(29), 5) &&
+           hasVariableInstruction(2, 6, EVENT_Compare, VAR_QBits_QuestsDone,
+                                  std::to_underlying(QBIT_LIGHT_PATH)) &&
+           hasVariableInstruction(3, 10, EVENT_Compare, VAR_QBits_QuestsDone,
+                                  std::to_underlying(QBIT_ALLIED_GUARDS_ANGERED)) &&
+           hasVariableInstruction(4, 7, EVENT_Compare, mapVariable(deyjaGuardStateMapVariable), 2) &&
+           hasVariableInstruction(6, 0, EVENT_Set, mapVariable(deyjaGuardStateMapVariable), 2) &&
+           togglesGroup(7, deyjaAlliedGuardGroup, true) && togglesGroup(8, 5, true) &&
+           hasVariableInstruction(10, 12, EVENT_Compare, VAR_Counter10, 720) &&
+           hasVariableInstruction(12, 0, EVENT_Subtract, VAR_QBits_QuestsDone,
+                                  std::to_underlying(QBIT_ALLIED_GUARDS_ANGERED)) &&
+           hasVariableInstruction(13, 0, EVENT_Set, mapVariable(deyjaGuardStateMapVariable), 0) &&
+           togglesGroup(14, deyjaAlliedGuardGroup, false) && !hasPatchedFactionWrite;
+}
+
+static void applyDeyjaGuardFaction() {
+    const bool angered = pParty->_questBits[QBIT_ALLIED_GUARDS_ANGERED];
+    const Time angerStartedAt = pParty->PartyTimes.CounterEventValues[deyjaAngerCounterIndex];
+    const bool angerExpired = angered && angerStartedAt.isValid() &&
+                              angerStartedAt + Duration::fromHours(720) <= pParty->GetPlayingTime();
+    const bool hostile = pParty->_questBits[QBIT_LIGHT_PATH] ||
+                         (!angerExpired &&
+                          (angered || engine->_persistentVariables.mapVars[deyjaGuardStateMapVariable] >= 2));
+    for (Actor &actor : pActors) {
+        if (actor.group != deyjaAlliedGuardGroup)
+            continue;
+        actor.hostilityGroup = hostile ? monsterTypeForMonsterId(actor.monsterInfo.id)
+                                       : MONSTER_TYPE_PEASANT_GOBLIN_FEMALE_A;
+        if (hostile) {
+            actor.attributes |= ACTOR_AGGRESSOR;
+        } else {
+            actor.ResetAggressor();
+            actor.ResetHostile();
+        }
+    }
 }
 
 /**
@@ -1009,6 +1084,8 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         }
         case EVENT_Set:
+            if (ir.step == 1 && isOriginalDeyjaGuardSetupEvent(_context, _events))
+                applyDeyjaGuardFaction();
             if (engine->gameTitle() == GameTitle::MM6 &&
                 std::to_underlying(ir.data.variable_descr.type) == 213) {
                 if (ir.data.variable_descr.value < 0 || ir.data.variable_descr.value >= 512)

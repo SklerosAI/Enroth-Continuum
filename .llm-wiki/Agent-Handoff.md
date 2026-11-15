@@ -146,6 +146,29 @@ the shipped and GrayFace 2.5.7 records subtract 10 current-location reputation
 on both branches, so the packet preserves that authored direction. Five new
 cases plus the adjacent first-Priest route pass 6/6 without a production change.
 
+Rogue-to-Spy now uses William Lasker's real offer and return plus the physical
+Watchtower 6 counterweight face. Alignment and missing-objective refusals,
+exact class/award/XP/gold/reputation outcomes, cleanup and duplicate stability
+pass. The shipped promotion events match GrayFace; the reproduced defect was
+greeting row 39 saying “Rogues.” An MM7-only exact-string correction changes
+only both original English strings to “Spies,” leaving patched/localized data
+authoritative. The Spy packet plus the Markham-vase control passes 5/5.
+
+Paladin-to-Hero and -Villain now cover Charles Quixote's and William Setag's
+real path offers. Hero uses the authored Deyja tower transition, attack-input
+combat and corpse pickup for the tower key, then Alice's physical tower door;
+Villain physically enters Alice's Gryphonheart room. Both routes prove
+refusals, missing-objective returns, exact qualifying/honorary transactions,
+Alice relocation/hire cleanup and duplicate stability. Six focused tests pass;
+the relevant GrayFace records are unchanged and no production fix was needed.
+
+Mount Nighon's two bad building halves and its two doomed peasants are now
+covered against exact shipped signatures. Model 0 face 38 and model 12 face 17
+use their working paired tavern/training events, and actor groups 26/27 use the
+Warlock faction rather than human faction 54. Physical viewport picks open both
+houses and two-way actor relations remain friendly. The four Nighon cases plus
+the Deyja source control pass 5/5; generic opcode-55 handling remains closed.
+
 Wizard-to-Archmage now covers Thomas Grey's real Light offer, alignment and
 missing-book refusals, physical Breeding Zone acquisition, exact retained-book
 rewards and duplicate protection. Event 195 previously set retrieval bits on

@@ -34,7 +34,7 @@ progress-capture folder has a hard rolling limit of 100 images.
 | 4 | Light campaign strengthening after C0-C7 | Wine Cellar, Castle Gloaming, the Pit, Land of the Giants, Colony Zod, Shoals and Lincoln | Light C6 follows the authored Mount Nighon–Thunderfist–Tunnels–Land route through Xenofex and the return. The real Wine Cellar target now activates only for its live quest, input combat kills it, the composed harness walks then fights without measured-segment teleporting, and Tolberti's complete Blaster reward transaction is asserted. Remaining: the Walls protected-group predicate audit, reducing other approach teleports and broader graphical play. |
 | 5 | Regional strengthening and durability | Emerald Island, Erathia, Bracada Desert, Stone City, Bandit Caves, White Cliff Cave, the Maze and the Erathian Sewers | Acquire all six Emerald contest items physically. Add Griffin refusal, XP, gold and award assertions across Erathia/Bracada. Add direct Troglodyte combat. Add fresh-process checkpoints for behavior-covered but not yet durable routes: Lantern of Light, Davrik's Ring, Darron's brother, Haldar's remains, Troglodytes and Thief to Rogue. |
 | 6 | First promotions complete | All nine first-promotion routes | Every first promotion is behavior-covered through its real offer and objective. Priest physically loots the Tidewater map, verifies the exact Falk transaction and proves the Evenmorn boat unlock; Great Druid activates all three Stonehenges; Crusader uses attack-input Wromthrax combat; Wizard physically acquires and installs every golem component, covers both heads and proves the animated-golem Castle outcome. Remaining work is durability/regional continuity, not another first-promotion behavior row. |
-| 7 | Second promotions, ten remaining | Temple of Baa, Heart of Wood route, Alice route, Sun altar, Watchtower, Ashwar Nog'Nogoth, bounty route and Navan treasury | Both Archer branches now physically share the Titans' Stronghold Perfect Bow and return its adjusted form for Master Archer or Sniper. The trapped-chest false-taken state and persistent source routing are repaired. Druid to Arch Druid/Warlock, Knight to Champion, Sorcerer to Archmage/Lich and Thief to Assassin remain covered. Cover the other five Light and five Dark second promotions. |
+| 7 | Second promotions, four remaining | Heart of Wood route, Ashwar Nog'Nogoth, bounty route and Navan treasury | Twenty-three of 27 endpoints are behavior-covered. Spy physically operates Watchtower 6 and repairs Lasker's greeting; Hero/Villain physically rescue/capture Alice; Master and both Priest branches also use their authored objectives. Remaining: Ranger Lord, Ninja, Bounty Hunter and Black Knight. |
 
 ## Area-focused acceptance still open
 
@@ -52,6 +52,10 @@ progress-capture folder has a hard rolling limit of 100 images.
   return route now passes in both Light and Dark C6. Retain Roland's cage,
   one-use key, both controls, Xenofex combat and the return altar while reducing
   the remaining approach teleports during ordinary-movement strengthening.
+- **Mount Nighon:** both formerly dead tavern/training door halves now open
+  through physical viewport picks, and the two group-26/27 peasants use the
+  Warlock faction so the town's Warlocks do not attack them. Exact original
+  signatures keep patched/custom map data authoritative.
 - **Shoals and Lincoln:** retain the complete access and item chain in both
   Light and Dark continuity tests rather than accepting destination teleports
   as campaign proof.

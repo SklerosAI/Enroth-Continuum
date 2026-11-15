@@ -87,6 +87,32 @@ GrayFace 2.5.7 event records both apply -10 current-location reputation on both
 branches, so the apparently surprising Dark direction is preserved. Five new
 cases plus the adjacent first-Priest route pass 6/6 without a production fix.
 
+Rogue-to-Spy now follows William Lasker's real offer, physically operates the
+Watchtower 6 counterweight and returns through his Erathian Sewers dialogue.
+The exact qualifying and honorary transaction, path refusals, missing-objective
+refusal, topic cleanup and duplicate stability pass. Shipped and GrayFace
+global events 46/47 are byte-identical, but GrayFace changes greeting row 39
+from “Rogues” to “Spies”; an MM7-only exact-string normalization fixes that
+reproduced presentation defect while leaving localized or patched data
+authoritative. Four Spy cases plus the adjacent Markham-vase control pass 5/5.
+
+Paladin-to-Hero and -Villain now use Charles Quixote's and William Setag's real
+offers. Hero enters Setag's Tower through the authored Deyja event, kills and
+mouse-loots the tower-key carrier, opens Alice's physical door and rescues her;
+Villain physically enters Alice's Gryphonheart room and captures her. Both
+routes cover path and prerequisite refusals, missing-objective returns, exact
+class/award/XP/gold/reputation/NPC relocation, cleanup and duplicate stability.
+Six focused cases pass, and the relevant GrayFace records are byte-identical,
+so no production repair was needed.
+
+Mount Nighon's two shipped door halves pointed at exit-first events, and the
+two group-26/27 peasants retained human faction 54, making the town's Warlocks
+attack them. Exact original map/event signatures now redirect the tavern and
+training halves to their working paired events and assign only those two groups
+to Warlock faction 74. Physical viewport picks open both houses, the two-way
+actor relations are friendly, patched/custom data remains authoritative, and
+the four Nighon cases plus the adjacent Deyja source contract pass 5/5.
+
 Wizard-to-Archmage physically retrieves the Breeding Zone Book of Divine
 Intervention and retains it through Thomas Grey's exact transaction. The route
 reproduced event 195 stranding the book after a close-before-pickup; a guarded

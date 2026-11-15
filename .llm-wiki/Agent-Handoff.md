@@ -154,6 +154,13 @@ preserves same-map/reload access and routes fresh retrieved maps away from a
 duplicate bow. Both promotion routes and lifecycle cases pass 6/6. GrayFace's
 separate artifact-refund opcode remains deferred.
 
+Haldar's Remains now has authored Maze face/chest lifecycle coverage. The
+source event previously set qbit 161 on open and redirected a later click to
+chest 0 even if item 628 remained in chest 1. An exact event-176 marker seam
+reopens the source after a successful first open, retains legacy marker-zero
+fallback and prevents duplicates. The lifecycle suite passes 4/4 and the
+existing Mazim hand-in control 1/1.
+
 Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the
 corrected Breeding Zone. Shoals' green short-range fog is authored underwater
 behavior. Breeding Zone's old black occluder was caused by a literal indoor

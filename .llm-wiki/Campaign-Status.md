@@ -92,6 +92,11 @@ trapped source no longer sets qbit 163 before a successful open; map variable 2
 preserves same-visit/reload access and fresh retrieved maps prevent duplicates.
 The Light/Dark reward, refusal, lifecycle and duplicate packet passes 6/6.
 
+Haldar's Remains now covers the authored trapped Maze face rather than only a
+direct backing-chest open. The close-before-pickup regression is repaired with
+a persistent source marker while legacy marker-zero routing remains intact.
+Lifecycle tests pass 4/4 and the existing Mazim refusal/reward control 1/1.
+
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding
 Zone black occluder was a literal-origin capture-placement defect and disappears

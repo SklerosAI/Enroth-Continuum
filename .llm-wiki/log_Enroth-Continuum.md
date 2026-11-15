@@ -3602,3 +3602,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Celeste map-leave event 378 checked an empty actor group, so Oracle recovery could produce Lady Carmine's dagger while she remained alive. The focused regression captured the bypass and preserves generic empty-group and Dark-map gates.
 - An exact MM7 Celeste seam now evaluates Lady Carmine herself. Seknit's real offer, friendly-target attack initiation, bounded combat, corpse mouse-loot, retained dagger, exact rewards and duplicate protection pass 5/5; the adjacent Wine Cellar kill control passes 1/1.
+
+## [2026-11-15] fix | MM7 Warlock Tor greeting
+- by: T-Burton-ND via codex
+- Warlock completion applied Tor Anwyn's promotion greeting to Anthony Green. The focused regression captured Anthony changing from greeting 80 to 83 while Tor stayed at 82; GrayFace 2.5.7 preserves the same bad event target.
+- An exact MM7 global-event-103 instruction seam redirects only greeting 83 to Tor. The real offer, Land-to-Dragon-Caves transition, floor egg, exact rewards, Baby Dragon hire and duplicate guard pass 3/3, with the Great Druid control 1/1.

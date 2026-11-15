@@ -3572,3 +3572,8 @@ Chronological record of wiki activity.
 - Added bounded movement and attack-input contracts, a composed Wine Cellar walk-and-fight proof, complete authored traversal of Barrow Downs and Barrows I-XV, and real promotion packets for Monk, Ranger, Archer, Knight, Paladin and Light Arch Druid. The Arch Druid route uses Green, Nighon Tunnels event 196, Zokarr and Green's return; Hothfarr event 178 is dead original content.
 - Pinned the official GrayFace MM7 Patch 2.5.7 source in ignored local research and documented its use as a compatibility oracle. Its Wine Cellar delta independently confirms the disabled actor defect while the Enroth repair remains narrower at the live quest event; its Arch Druid scripts are byte-identical to the shipped data.
 - Inspected Tatalia, Avlee, Shoals, Wine Cellar and corrected Breeding Zone frames. The Shoals fog is authored, and the Breeding Zone occluder came from invalid diagnostic placement. Five selected captures remain private under the 100-image rolling cap. New slices received focused checks only after the owner's request to avoid repeating known-green suites.
+
+## [2026-11-15] test | MM7 Great Druid promotion
+- by: T-Burton-ND via codex
+- Anthony Green's real offer and return now have a focused promotion packet with zero- and one-site refusals, physical event-401 interactions at the Evenmorn, Tatalia and Avlee Stonehenges, exact qualifying and honorary outcomes, and duplicate prevention.
+- GrayFace 2.5.7 leaves the offer/return records byte-identical and provides no overrides for the three outdoor maps, so no production repair was needed. The focused test and one adjacent Arch Druid control passed; broader known-green suites were not repeated.

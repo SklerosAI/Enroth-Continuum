@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "Engine/Engine.h"
+#include "Engine/Data/HouseEnums.h"
 #include "Engine/Localization.h"
 #include "Engine/mm7_data.h"
 #include "Engine/Graphics/Indoor.h"
@@ -70,6 +71,23 @@ constexpr std::array paintingReloadSources = {
 
 constexpr Vec3f originalAvleeRockPosition(-15088, -4288, 208);
 constexpr float correctedAvleeRockZ = 148;
+
+constexpr int mountNighonSetupEventId = 1;
+constexpr int mountNighonWarlockGroupA = 26;
+constexpr int mountNighonWarlockGroupB = 27;
+
+struct MountNighonDoorHalf {
+    int model;
+    int face;
+    int originalEvent;
+    int correctedEvent;
+    HouseId house;
+};
+
+constexpr std::array mountNighonDoorHalves = {
+    MountNighonDoorHalf{0, 38, 12, 11, HOUSE_TAVERN_MOUNT_NIGHON},
+    MountNighonDoorHalf{12, 17, 10, 9, HOUSE_TRAINING_HALL_MOUNT_NIGHON},
+};
 
 const EvtInstruction *originalPaintingEmptyTexture(const PaintingReloadSource &source) {
     if (engine->gameTitle() != GameTitle::MM7 || engine->_currentLoadedMapId != source.map ||
@@ -137,6 +155,93 @@ void correctOriginalAvleeFlyingRock() {
     if (onWater || floor != correctedAvleeRockZ)
         return;
     candidate->vPosition.z = floor;
+}
+
+bool hasMountNighonHouseInstruction(std::span<const EvtInstruction> instructions, int step,
+                                    EvtOpcode opcode, HouseId house = HOUSE_INVALID) {
+    return std::ranges::any_of(instructions, [=](const EvtInstruction &instruction) {
+        return instruction.step == step && instruction.opcode == opcode &&
+               (opcode != EVENT_SpeakInHouse || instruction.data.house_id == house);
+    });
+}
+
+bool hasOriginalMountNighonDoorEvents(const MountNighonDoorHalf &source) {
+    if (!engine->_localEventMap.hasEvent(source.originalEvent) ||
+        !engine->_localEventMap.hasEvent(source.correctedEvent))
+        return false;
+
+    const std::span<const EvtInstruction> original = engine->_localEventMap.function(source.originalEvent);
+    const std::span<const EvtInstruction> corrected = engine->_localEventMap.function(source.correctedEvent);
+    return original.size() == 3 && corrected.size() == 2 &&
+           hasMountNighonHouseInstruction(original, 0, EVENT_Exit) &&
+           hasMountNighonHouseInstruction(original, 1, EVENT_SpeakInHouse, source.house) &&
+           hasMountNighonHouseInstruction(corrected, 0, EVENT_SpeakInHouse, source.house);
+}
+
+void correctOriginalMountNighonDoorHalves() {
+    if (engine->gameTitle() != GameTitle::MM7 || engine->_currentLoadedMapId != MAP_MOUNT_NIGHON)
+        return;
+
+    for (const MountNighonDoorHalf &source : mountNighonDoorHalves) {
+        if (!hasOriginalMountNighonDoorEvents(source) || source.model >= std::ssize(pOutdoor->pBModels))
+            continue;
+        const BSPModel &model = pOutdoor->pBModels[source.model];
+        if (source.face >= std::ssize(model.faces))
+            continue;
+        BLVFace &face = pOutdoor->faces[model.faces[source.face]];
+        if (face.eventId != source.originalEvent || !face.Clickable())
+            continue;
+        face.eventId = source.correctedEvent;
+    }
+}
+
+bool isOriginalMountNighonFactionSetup() {
+    if (engine->gameTitle() != GameTitle::MM7 || engine->_currentLoadedMapId != MAP_MOUNT_NIGHON ||
+        !engine->_localEventMap.hasEvent(mountNighonSetupEventId))
+        return false;
+
+    const std::span<const EvtInstruction> instructions =
+        engine->_localEventMap.function(mountNighonSetupEventId);
+    if (instructions.size() != 7)
+        return false;
+
+    const auto hasInstruction = [instructions](int step, EvtOpcode opcode) {
+        return std::ranges::any_of(instructions, [=](const EvtInstruction &instruction) {
+            return instruction.step == step && instruction.opcode == opcode;
+        });
+    };
+    const bool hasTownPortalGate = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 1 && instruction.target_step == 3 && instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_TOWN_PORTAL_TO_MOUNT_NIGHON);
+    });
+    const bool hasTownPortalUnlock = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 2 && instruction.opcode == EVENT_Add &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_TOWN_PORTAL_TO_MOUNT_NIGHON);
+    });
+    const bool hasWildernessAggression = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 3 && instruction.opcode == EVENT_ToggleActorGroupFlag &&
+               instruction.data.actor_flag_descr.id == 5 &&
+               instruction.data.actor_flag_descr.attr == ACTOR_AGGRESSOR &&
+               instruction.data.actor_flag_descr.is_set;
+    });
+    const bool hasPatchedFactionWrite = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_ChangeGroupAlly;
+    });
+    return hasInstruction(0, EVENT_OnMapReload) && hasTownPortalGate &&
+           hasTownPortalUnlock && hasWildernessAggression &&
+           hasInstruction(4, EVENT_Exit) && hasInstruction(5, EVENT_Exit) && !hasPatchedFactionWrite;
+}
+
+void correctOriginalMountNighonWarlockFaction() {
+    if (!isOriginalMountNighonFactionSetup())
+        return;
+
+    for (Actor &actor : pActors) {
+        if (actor.group == mountNighonWarlockGroupA || actor.group == mountNighonWarlockGroupB)
+            actor.hostilityGroup = MONSTER_TYPE_WARLOCK;
+    }
 }
 
 } // namespace
@@ -295,6 +400,12 @@ void onMapLoad() {
 
     // Avlee's original rock01 at this exact coordinate is authored sixty units above its terrain tile.
     correctOriginalAvleeFlyingRock();
+
+    // Mount Nighon's original data assigns two door halves to exit-only events and leaves two authored peasants in
+    // factions that the town's Warlocks attack. Apply the two exact GrayFace corrections only while all shipped
+    // event signatures are intact, leaving patched and custom map data authoritative.
+    correctOriginalMountNighonDoorHalves();
+    correctOriginalMountNighonWarlockFaction();
 }
 
 void onMapLeave() {

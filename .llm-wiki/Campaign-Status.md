@@ -97,6 +97,12 @@ direct backing-chest open. The close-before-pickup regression is repaired with
 a persistent source marker while legacy marker-zero routing remains intact.
 Lifecycle tests pass 4/4 and the existing Mazim refusal/reward control 1/1.
 
+The Light and Dark endings now clear their active final-quest bits after the
+successful Overthruster hand-in, removing the completed task from the Quest
+Book. History 25/26 remains valid and unchanged, and the no-item refusal keeps
+its bit/topic. Focused ending and Light hand-in controls pass 2/2; the broader
+C7 chains await the next integration milestone.
+
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding
 Zone black occluder was a literal-origin capture-placement defect and disappears

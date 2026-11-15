@@ -3673,3 +3673,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Priest-to-Priest-of-Light and -Dark now use Rebecca's and Falk's real dialogue, physical Moon/Sun altar face clicks, path/topic and missing-objective refusals, exact qualifying and honorary rewards, cleanup and duplicate stability.
 - Shipped and GrayFace 2.5.7 events 86/87/90/91 are byte-identical, including -10 current-location reputation on both returns, so the surprising Dark direction remains authored. Five new cases plus the first-Priest control pass 6/6 without a production change.
+
+## [2026-11-15] update | MM7 Spy, Paladin paths and Mount Nighon
+- by: T-Burton-ND via codex
+- Rogue-to-Spy now uses William Lasker's real dialogue and the physical Watchtower 6 counterweight. Exact rewards, refusals, cleanup and duplicate stability pass; an exact MM7 greeting-row correction changes the reproduced post-promotion “Rogues” text to “Spies.” The focused packet plus its adjacent control passes 5/5.
+- Paladin-to-Hero and -Villain now physically rescue or capture Alice through the authored Setag Tower and Gryphonheart interactions, with path/refusal, transaction, relocation and duplicate coverage. Six focused tests pass without a production change.
+- Mount Nighon's two dead tavern/training halves now use their working paired events, and the two group-26/27 peasants use Warlock faction 74. Both physical doors open and actor relations remain friendly; the four Nighon cases plus the Deyja source control pass 5/5 without generic opcode-55 support.

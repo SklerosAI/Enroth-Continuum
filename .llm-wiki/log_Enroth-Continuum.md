@@ -3647,3 +3647,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - A cumulative review found that the Wine Cellar and Lady Carmine seams used an alert-filtered group predicate that could report vacuous success for a living exact target. Both now read the validated actor-zero state directly while generic empty-group behavior remains unchanged.
 - The Castle Harmondale pre-animation golem guard now requires the complete original event-376 signature and disengages for patched or custom qbit-46-gated data. The combined Assassin, Wine and Wizard regression selection passes 12/12.
+
+## [2026-11-15] fix | MM7 painting reentry textures
+- by: T-Burton-ND via codex
+- Haunted Mansion's Angel painting and Castle Gryphonheart's Roland and Archibald paintings visibly returned after map reentry even though their taken quest bits persisted. A narrow map-load repair now recognizes each exact original six-record pickup event and reapplies its authored empty-wall texture after normal reload triggers.
+- The focused 3/3 selection proves all three empty textures persist, the clickable walls cannot duplicate items, Archibald-only state leaves Roland unchanged and patched-shaped event data disengages. Direct live texture assertions made another image unnecessary.

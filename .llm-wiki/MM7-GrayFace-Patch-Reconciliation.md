@@ -49,4 +49,9 @@ Green's global events 100/101, dead Hothfarr event 178 and Nighon Tunnels event
 engine-parser theory and identify event 196 as the live skull source without a
 production change.
 
+The Great Druid audit is another clean baseline: global offer/return events 98
+and 99 are byte-identical, and GrayFace supplies no overrides for the three
+outdoor Stonehenge maps. The physical promotion packet therefore required no
+compatibility repair.
+
 See also: [MM7 Quest Behavior Catalog](MM7-Quest-Behavior-Catalog.md), [MM7 Gameplay Harness](MM7-Gameplay-Harness.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

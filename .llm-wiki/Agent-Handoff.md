@@ -89,7 +89,9 @@ OpenEnroth regression. Ranger-to-Hunter uses Sower and the Hall Under the Hill
 audience, Archer-to-Warrior-Mage uses the physical Red Dwarf Mines sabotage
 face, Knight-to-Cavalier uses the real Haunted Mansion map-leave clear
 predicate, and Paladin-to-Crusader kills Wromthrax through attack input before
-the authored timer and Quixote return. These tests name their setup teleports;
+the authored timer and Quixote return. Druid-to-Great-Druid uses Green's real
+offer, partial-progress refusals and physical Stonehenge faces in Evenmorn,
+Tatalia and Avlee. These tests name their setup teleports;
 the harness is not autonomous pathfinding.
 
 Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the

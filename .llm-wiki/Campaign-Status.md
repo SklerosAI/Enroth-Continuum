@@ -35,8 +35,9 @@ The same checkpoint covers every Barrow Downs map through 27 authored
 transitions, plus the Zokarr meditation-pool promotion and the complete Light
 Arch Druid route through Green, Nighon Tunnels, Zokarr and Green's return. The
 unreachable Hothfarr/event-178 branch is dead original content. Ranger-to-Hunter,
-Archer-to-Warrior-Mage, Knight-to-Cavalier and Paladin-to-Crusader first
-promotions use their real dialogue/event routes; Crusader includes attack-input
+Druid-to-Great-Druid, Archer-to-Warrior-Mage, Knight-to-Cavalier and
+Paladin-to-Crusader first promotions use their real dialogue/event routes;
+Great Druid physically activates all three authored Stonehenges, while Crusader includes attack-input
 Wromthrax combat and the authored 210-second objective timer. A fresh Light C0-C7 chain passed before the owner asked
 to pause repeated known-green testing; later slices should receive focused
 checks until the next meaningful integration milestone.

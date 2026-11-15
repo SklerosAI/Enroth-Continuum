@@ -45,9 +45,16 @@ Kastore's assignment, the authored Mount Nighon–Thunderfist–Tunnels to Eofol
 access route, Archibald's Land-of-the-Giants dialogue, Roland's cage and key,
 both Colony Zod route controls, real Xenofex combat, the authored exit and
 return altar, and Kastore's hand-in before `save006.mm7`. A fresh seven-process
-C0-C6 run, four focused Xenofex/Kastore controls and the full 157-target style
-gate passed. No progress image was generated. Continue with C7: physical
-Lincoln acquisition and the Dark ending. Do not reuse or relabel a completed
+C0-C6 run and four focused Xenofex/Kastore controls passed. C7 then accepts
+Kastore's final task, dynamically identifies the two accessible Gloaming
+faces whose authored chest events contain wetsuits, equips four suits through
+inventory input, walks across the Avlee underwater border, traverses Shoals
+and Lincoln, powers the console, physically takes the Overthruster, exits and
+completes the Dark ending before `save007.mm7`. A fresh eight-process C0-C7
+run, six focused Overthruster/ending controls and the full 157-target style
+gate passed. No progress image was generated. Preserve this completed Dark
+chain while continuing the remaining quest, promotion, Barrow Downs,
+movement/combat and later graphical audit. Do not reuse or relabel a completed
 Light profile.
 
 ## Current MM7 regional checkpoint — 2026-11-12

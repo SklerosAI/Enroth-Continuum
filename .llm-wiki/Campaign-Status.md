@@ -18,9 +18,9 @@ The owner's [current delivery order](Current-Delivery-Order.md) puts MM7 working
 | MM6 | A seeded first-map session can Save to and Load from numbered native slots; the full headless gate passed 25 children, including three MM7 controls. Character paperdoll, portrait animation and Quest book slices passed focused and hidden checks. On 2026-11-11 production New Game reached the first map, saved from the menu and reloaded in a fresh process (gate 27/27). A sweep of all 67 maps found the blockers, and fixes for the award-animation crash, the reputation variable, the generated NPC pool and the damage channels are integrated. The first campaign chain now runs C0 (New Game to `save000.ec6`) and C1 (a fresh-process Load through councils, stable pricing, chest pickup and `save001.ec6`) in a marked disposable profile; both chapter-save digests passed. MM6 bows now use the native arrow projectile and hit their target, while map visits now preserve sky/timer state across travel and saves; all three revisit checks pass. | Extend the main-quest chain from C1, then prove the visible owner route. This remains headless campaign evidence, not a completed playable-campaign claim. |
 | MM8 | Private data is staged for local detection; the runtime is reserved. | Build and verify an isolated MM8 engine, save route and graphical session before any Play action. |
 
-## MM7 audit continuation — 2026-11-12
+## MM7 audit continuation — 2026-11-14
 
-The separately admitted Dark campaign profile is now established through C6.
+The separately admitted Dark campaign profile is now established through C7.
 It reuses common C0-C2, takes the authored messenger/Deyja/Arbiter route in C3,
 then carries Archibald's real assignment through the Breeding Zone proof,
 authored Pit exit, Gloaming hand-in and three enterable adviser houses before
@@ -31,9 +31,14 @@ novice Blaster skill and Kastore's relocation before `save005.mm7`. C6 then
 follows the authored Mount Nighon, Thunderfist Mountain and Tunnels to Eofol
 route; rescues Roland; consumes his key; activates both Colony Zod controls;
 kills Xenofex; returns through the Land of the Giants altar; and completes
-Kastore's hand-in before `save006.mm7`. A fresh seven-process C0-C6 run passed
-with retained predecessors unchanged. C7 remains open for physical Lincoln
-acquisition and the continuous Dark ending.
+Kastore's hand-in before `save006.mm7`. C7 accepts Kastore's final task, opens
+the two authored Gloaming faces backed by wetsuit-bearing chests, equips all
+four suits through inventory input, walks across Avlee's underwater border,
+traverses Shoals and Lincoln, powers the console, physically takes the
+Overthruster, exits and completes the Dark ending before `save007.mm7`. A fresh
+eight-process C0-C7 run passed with retained predecessors unchanged. Both
+Light and Dark campaign chains are now complete headless audit anchors; their
+named fixture, ordinary movement/combat and graphical gaps remain audit work.
 
 The `codex/mm7-dark-chain` audit line is integrated on `master`. It carries
 complete headless coverage for Norbert Thrush's Parsons' Quill route: Emerald

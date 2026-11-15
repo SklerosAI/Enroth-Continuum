@@ -120,6 +120,12 @@ textures. Advisor flags require Light+Walls or Dark+Breeding, so mismatched
 alignment no longer displays the wrong guild. The 12-outcome/invalid/adviser
 matrix plus the retained quest-zero control pass 5/5.
 
+The MM7 compatibility seams received a cumulative fail-closed review. Exact
+Wine and Lady Carmine targets now bypass alert-filtered vacuous kill checks,
+and the Wizard early-golem guard requires the complete original event shape.
+Patched/custom-shaped data disengages, generic empty-group behavior is retained,
+and the combined Assassin/Wine/Wizard regression set passes 12/12.
+
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding
 Zone black occluder was a literal-origin capture-placement defect and disappears

@@ -187,6 +187,13 @@ recipient/plans/Loren outcomes, invalid states that retain base textures, and
 Light+Walls versus Dark+Breeding adviser flags. The repair preserves qbit 271,
 Issue2903 and the separate early-golem gate; the focused selection passes 5/5.
 
+The cumulative compatibility review then tightened three earlier repairs. Wine
+Cellar and Lady Carmine use the validated actor-zero state directly rather than
+an alert-filtered predicate that could pass vacuously, while generic empty-group
+behavior remains unchanged. The Wizard pre-animation guard now requires the
+full original event-376 signature and disengages for qbit-46-gated data. The
+combined focused regression set passes 12/12.
+
 Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the
 corrected Breeding Zone. Shoals' green short-range fog is authored underwater
 behavior. Breeding Zone's old black occluder was caused by a literal indoor

@@ -62,4 +62,11 @@ transaction in GrayFace 2.5.7. The physical map hand-in and Evenmorn boat
 unlock pass without a production repair; GrayFace's broader Tidewater
 quest-chest work remains a separate lifecycle follow-up.
 
+A cumulative guard review hardened the exact Wine and Lady Carmine kill seams
+against alert-filtered vacuous success by reading the validated target actor's
+state directly. It also made the Castle golem pre-animation guard require the
+complete original event-376 signature and disengage for already-patched or
+custom qbit-46-gated data. The combined Assassin, Wine and Wizard controls pass
+12/12 while generic empty-group semantics remain unchanged.
+
 See also: [MM7 Quest Behavior Catalog](MM7-Quest-Behavior-Catalog.md), [MM7 Gameplay Harness](MM7-Gameplay-Harness.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

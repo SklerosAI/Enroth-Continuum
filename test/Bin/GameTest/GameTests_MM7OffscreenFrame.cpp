@@ -7,9 +7,12 @@
 
 #include "Testing/Game/GameTest.h"
 
+#include "Core/Time/Time.h"
+
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/Processor.h"
+#include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Objects/Actor.h"
@@ -65,7 +68,7 @@ CaptureStart placeAtCaptureStart(MapId map) {
     return *start;
 }
 
-void toughenWineCellarCaptureParty() {
+void toughenCaptureParty() {
     for (Character &character : pParty->pCharacters) {
         character._stats[ATTRIBUTE_SPEED] = 200;
         character._stats[ATTRIBUTE_ENDURANCE] = 200;
@@ -105,7 +108,7 @@ float horizontalDistance(const Vec3f &left, const Vec3f &right) {
 }
 
 void runWineCellarMovementCombatScene(EngineController &game) {
-    toughenWineCellarCaptureParty();
+    toughenCaptureParty();
     pParty->_questBits.set(QBIT_WINE_CELLAR_ACTIVE);
     game.teleportTo(MAP_WINE_CELLAR, Vec3f(601, -512, 1), 0);
 
@@ -157,6 +160,113 @@ void runWineCellarMovementCombatScene(EngineController &game) {
     fmt::print("offscreen wine cellar composition: {}\n", diagnostics);
 }
 
+bool stoneCityTroglodyteIsAlive(const Actor &actor) {
+    return actor.monsterInfo.id == MONSTER_TROGLODYTE_C && actor.aiState != Dead && actor.aiState != Dying &&
+           actor.aiState != Removed && actor.aiState != Disabled;
+}
+
+int lowestStoneCityTroglodyte() {
+    int result = -1;
+    for (const Actor &actor : pActors) {
+        if (stoneCityTroglodyteIsAlive(actor) && (result == -1 || actor.pos.z < pActors[result].pos.z))
+            result = actor.id;
+    }
+    return result;
+}
+
+bool placeNearStoneCityTroglodyte(EngineController &game, int actorId) {
+    for (int distance : {400, 250, 150}) {
+        for (const auto &[offset, yaw] : std::array{
+                 std::pair{Vec3f(0, -distance, 0), 90}, std::pair{Vec3f(-distance, 0, 0), 0},
+                 std::pair{Vec3f(0, distance, 0), 270}, std::pair{Vec3f(distance, 0, 0), 180}}) {
+            Vec3f position = pActors[actorId].pos + offset;
+            const int sectorId = pIndoor->GetSector(position);
+            int floorFaceId = -1;
+            const float floor = sectorId ? BLV_GetFloorLevel(position + Vec3f(0, 0, pParty->radius),
+                                                              sectorId, &floorFaceId) : -30000;
+            if (floor == -30000 || floorFaceId == -1)
+                continue;
+            position.z = floor;
+            game.teleportTo(MAP_STONE_CITY, position, yaw);
+            try {
+                game.pointMouseAtActor(actorId);
+                return true;
+            } catch (const Exception &) {
+            }
+        }
+    }
+    return false;
+}
+
+void runStoneCityTroglodyteCombatScene(EngineController &game) {
+    toughenCaptureParty();
+    game.teleportTo(MAP_STONE_CITY, Vec3f(), 0);
+
+    const int targetId = lowestStoneCityTroglodyte();
+    ASSERT_GE(targetId, 0);
+    ASSERT_TRUE(placeNearStoneCityTroglodyte(game, targetId));
+    Actor &target = pActors[targetId];
+    for (Actor &actor : pActors) {
+        if (actor.id != targetId)
+            actor.aiState = Disabled;
+    }
+    target.hp = 1;
+    target.moveSpeed = 1;
+    target.buffs[ACTOR_BUFF_PARALYZED].Apply(
+        pParty->GetPlayingTime() + Duration::fromDays(1), MASTERY_GRANDMASTER, 0, 0, 0);
+    target.aiState = Paralyzed;
+    target.attributes &= ~ACTOR_FLEEING;
+    game.tick(5); // Let the authored placement settle on its floor before measuring immobilization.
+    ASSERT_TRUE(target.buffs[ACTOR_BUFF_PARALYZED].Active());
+    const Vec3f targetPosition = target.pos;
+
+    // All setup teleporting ends here. The measured approach, targeting and attack sequence are input-only.
+    const float initialDistance = horizontalDistance(pParty->pos, target.pos);
+    mm7::testing::MM7MovementResult movement = mm7::testing::driveMovementInput(game, {
+        .key = PlatformKey::KEY_UP,
+        .heldTicks = 2,
+        .minimumHorizontalDistance = 15,
+    });
+    const float postMovementDistance = horizontalDistance(pParty->pos, target.pos);
+    const Vec3f releasedPosition = pParty->pos;
+    game.tick(3);
+    const float afterReleaseDrift = horizontalDistance(releasedPosition, pParty->pos);
+    ASSERT_EQ(target.pos, targetPosition);
+    mm7::testing::CombatResult combat = mm7::testing::fightActorWithAttackInput(
+        game, targetId, [&] {
+            try {
+                game.pointMouseAtActor(targetId);
+                return true;
+            } catch (const Exception &) {
+                return false;
+            }
+        }, 20, 1, 2);
+    game.tick(5);
+    const float finalDistance = horizontalDistance(pParty->pos, target.pos);
+    const std::string diagnostics = fmt::format(
+        "actor={}, distance={:.1f}->{:.1f}->{:.1f}, release_drift={:.1f}; movement=[{}]; combat=[{}]",
+        targetId, initialDistance, postMovementDistance, finalDistance, afterReleaseDrift,
+        movement.diagnostic(), mm7::testing::describeCombatResult(combat));
+
+    ASSERT_TRUE(movement.pressPosted) << diagnostics;
+    ASSERT_TRUE(movement.releasePosted) << diagnostics;
+    ASSERT_TRUE(movement.releaseProcessed) << diagnostics;
+    ASSERT_LT(postMovementDistance, initialDistance) << diagnostics;
+    ASSERT_LT(movement.postReleaseHorizontalDistance(), 1) << diagnostics;
+    ASSERT_LT(afterReleaseDrift, 5) << diagnostics;
+    ASSERT_EQ(movement.startMap, MAP_STONE_CITY) << diagnostics;
+    ASSERT_EQ(movement.endMap, MAP_STONE_CITY) << diagnostics;
+    ASSERT_TRUE(combat.targetAcquired) << diagnostics;
+    ASSERT_FALSE(combat.targetingFailed) << diagnostics;
+    ASSERT_TRUE(combat.observedHpDecrease) << diagnostics;
+    ASSERT_TRUE(combat.reachedTerminalDeath) << diagnostics;
+    ASSERT_TRUE(combat.reachedDeadState) << diagnostics;
+    ASSERT_EQ(target.aiState, Dead) << diagnostics;
+    ASSERT_EQ(combat.initialMap, MAP_STONE_CITY) << diagnostics;
+    ASSERT_EQ(combat.finalMap, MAP_STONE_CITY) << diagnostics;
+    fmt::print("offscreen Stone City troglodyte composition: {}\n", diagnostics);
+}
+
 } // namespace
 
 // A fresh-process, explicit macOS diagnostic. --offscreen-gl installs the
@@ -184,6 +294,9 @@ GAME_TEST(MM7OffscreenFrame, DISABLED_FirstOutdoorCapture) {
         ASSERT_FALSE(::testing::Test::HasFailure());
     } else if (scene && std::string_view(scene) == "wine-cellar-combat") {
         runWineCellarMovementCombatScene(game);
+        ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    } else if (scene && std::string_view(scene) == "stone-city-troglodyte") {
+        runStoneCityTroglodyteCombatScene(game);
         ASSERT_FALSE(::testing::Test::HasFatalFailure());
     }
     ASSERT_FALSE(window->isVisible());

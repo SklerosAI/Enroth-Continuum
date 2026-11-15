@@ -830,6 +830,49 @@ static MM6MapByteState mm6CurrentMapByteState() {
     throw Exception("MM6 map variable command has no loaded MM6 map delta");
 }
 
+constexpr int barrowLanternEventId = 177;
+constexpr int barrowLanternChestId = 2;
+constexpr int barrowLanternFallbackChestId = 0;
+constexpr int barrowLanternMapVariable = 2;
+
+static bool isOriginalBarrowLanternEvent(const EvtContext &context,
+                                         std::span<const EvtInstruction> instructions) {
+    if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_MAP ||
+        engine->_currentLoadedMapId != MAP_BARROW_II || context.eventId != barrowLanternEventId)
+        return false;
+
+    const bool hasHint = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == -1 && instruction.opcode == EVENT_MouseOver &&
+               instruction.data.text_id == 3;
+    });
+    const bool hasAwardGate = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 0 && instruction.target_step == 3 && instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == VAR_Award &&
+               instruction.data.variable_descr.value ==
+                   std::to_underlying(AWARD_HARMONDALE_RETURNED_LANTERN_OF_LIGHT);
+    });
+    const bool hasLanternChest = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 1 && instruction.opcode == EVENT_OpenChest &&
+               instruction.data.chest_id == barrowLanternChestId;
+    });
+    const bool hasExit = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 2 && instruction.opcode == EVENT_Exit;
+    });
+    const bool hasFallbackChest = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 3 && instruction.opcode == EVENT_OpenChest &&
+               instruction.data.chest_id == barrowLanternFallbackChestId;
+    });
+    const bool hasMapVariableInstruction = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return (instruction.opcode == EVENT_Compare || instruction.opcode == EVENT_Set ||
+                instruction.opcode == EVENT_Add) &&
+               instruction.data.variable_descr.type ==
+                   static_cast<EvtVariable>(std::to_underlying(VAR_MapPersistentVariable_0) +
+                                            barrowLanternMapVariable);
+    });
+    return instructions.size() == 5 && hasHint && hasAwardGate && hasLanternChest && hasExit &&
+           hasFallbackChest && !hasMapVariableInstruction;
+}
+
 void EvtInterpreter::prepare(EvtContext context) {
     _context = context;
 
@@ -985,6 +1028,9 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             if (isOriginalMazeHaldarsRemainsEvent(_context, _events) &&
                 ir.data.chest_id == mazeHaldarsRemainsChestId)
                 engine->_persistentVariables.mapVars[mazeHaldarsRemainsMapVariable] = 1;
+            if (isOriginalBarrowLanternEvent(_context, _events) &&
+                ir.data.chest_id == barrowLanternChestId)
+                engine->_persistentVariables.mapVars[barrowLanternMapVariable] = 1;
             break;
         case EVENT_ShowFace:
             for (Character &character : iterateCharacters(ir.who, vrng))
@@ -1136,6 +1182,14 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                            instruction.data.chest_id == breedingZoneBookChestId;
                 });
                 return {EVT_FLOW_JUMP, sourceChest->step};
+            }
+            if (isOriginalBarrowLanternEvent(_context, _events) && ir.step == 0 &&
+                engine->_persistentVariables.mapVars[barrowLanternMapVariable] >= 1) {
+                auto chest = std::ranges::find_if(_events, [](const EvtInstruction &instruction) {
+                    return instruction.opcode == EVENT_OpenChest &&
+                           instruction.data.chest_id == barrowLanternChestId;
+                });
+                return {EVT_FLOW_JUMP, chest->step};
             }
             if (engine->gameTitle() == GameTitle::MM6 &&
                 ir.data.variable_descr.type == VAR_PlayerItemInHands) {

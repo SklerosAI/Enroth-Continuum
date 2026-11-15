@@ -123,6 +123,14 @@ the book. A guarded per-map marker now preserves same-visit source-chest access
 without respawning it on a fresh retrieved map. Archmage plus the adjacent
 Lantern quest-chest control pass 6/6.
 
+Rogue-to-Assassin now uses Seknit's real offer, A-key initiation against the
+friendly Lady Carmine, bounded live combat and viewport corpse looting. The
+audit exposed Celeste map-leave event 378 treating an empty group as already
+killed and enabling Oracle dagger recovery while Lady remained alive. An exact
+MM7/Celeste/event/group seam evaluates actor zero instead and leaves generic
+empty-group behavior untouched. The Assassin suite passes 5/5 and the adjacent
+Wine Cellar kill control 1/1.
+
 Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the
 corrected Breeding Zone. Shoals' green short-range fog is authored underwater
 behavior. Breeding Zone's old black occluder was caused by a literal indoor

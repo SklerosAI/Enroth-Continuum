@@ -66,6 +66,13 @@ map-variable compatibility seam now reopens the source chest during that map
 incarnation while preserving fresh-map duplicate prevention. Focused Archmage
 and Lantern quest-chest controls pass 6/6.
 
+Rogue-to-Assassin now follows Seknit's real Dark offer through live combat and
+corpse looting against Lady Carmine. Celeste event 378 previously passed an
+empty group check and enabled Oracle dagger recovery before the assassination;
+an exact target seam now requires actor zero's death. Exact retained-dagger
+rewards, refusal and duplicate coverage pass 5/5, with the adjacent Wine Cellar
+kill control 1/1.
+
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding
 Zone black occluder was a literal-origin capture-placement defect and disappears

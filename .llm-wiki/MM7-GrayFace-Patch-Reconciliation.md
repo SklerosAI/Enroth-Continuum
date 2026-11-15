@@ -33,6 +33,7 @@ GrayFace is not automatically the design authority: each row still needs reconci
 | Deyja northern guards were always hostile. | Dark campaign visits Deyja but does not isolate this guard disposition. | Add a focused relation/hostility check if current data reproduces it. |
 | Land of the Giants well could grant its effect without charging 5,000 gold. | Both campaign routes traverse the region; the well is not covered. | Add payment/refusal/duplicate assertions as a regional side interaction. |
 | Kastore's altar-piece response texts were swapped and William Lasker's post-Spy greeting said Rogues. | State transactions are covered more strongly than these presentation strings. | Audit localized text only when the corresponding second-promotion/UI slice is active. |
+| Celeste's Dark map-leave recovery check could grant Lady Carmine's dagger before she was killed. | Independently reproduced. Event 378 tested an empty actor group, which passed vacuously and enabled Oracle recovery while actor zero was alive. An exact Celeste event/group compatibility seam now evaluates Lady Carmine herself; generic empty-group semantics remain unchanged. | Closed; preserve the real target kill and retained-dagger transaction. |
 
 ## Use in future lanes
 

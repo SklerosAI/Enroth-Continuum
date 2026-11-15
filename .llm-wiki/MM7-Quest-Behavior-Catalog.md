@@ -133,7 +133,7 @@ test when behavior coverage exists.
 | Dark second | Knight → Black Knight: rob the Navan treasury and return to Frederick Org. | C |
 | Dark second | Paladin → Villain: capture Alice. | C |
 | Dark second | Cleric → Priest of Dark: deface the Sun altar. | C |
-| Dark second | Thief → Assassin: kill Lady Carmine, return her dagger to Seknit Undershadow. | C |
+| Dark second | Rogue → Assassin: kill Lady Carmine and return her dagger to Seknit Undershadow. `MM7AssassinPromotion` proves the real Seknit gates and premature refusal, initiates combat against the initially friendly Celeste target through attack input, kills and mouse-loots her corpse, and verifies the retained dagger, exact qualifying/honorary rewards, gold, reputation, bits, topic/greeting cleanup and duplicate prevention. | C |
 | Dark second | Sorcerer → Lich: return the Proving Grounds soul jars. | C |
 
 ## Current-test-to-contract map

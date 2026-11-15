@@ -86,6 +86,12 @@ and ignored its persistent marker; the exact compatibility seam selects the
 source for active qbit 48 or decor 23 and survives save/reload. The focused
 packet plus the existing Lich control pass 7/7.
 
+Both Warrior-Mage second promotions now use the real Titans' Stronghold Perfect
+Bow chest and return the adjusted bow through Lawrence Mark or Snick. The
+trapped source no longer sets qbit 163 before a successful open; map variable 2
+preserves same-visit/reload access and fresh retrieved maps prevent duplicates.
+The Light/Dark reward, refusal, lifecycle and duplicate packet passes 6/6.
+
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding
 Zone black occluder was a literal-origin capture-placement defect and disappears

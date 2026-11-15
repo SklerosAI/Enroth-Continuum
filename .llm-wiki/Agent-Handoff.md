@@ -146,6 +146,14 @@ Four physical jars, cursor-empty 3/4 refusal, bound full-jar conversion, exact
 rewards, duplicate protection and save/reload routing pass in the 7/7 focused
 packet with the existing Lich control.
 
+Warrior-Mage-to-Master-Archer and -Sniper now share a physical Titans'
+Stronghold Perfect Bow source and complete through Lawrence Mark or Snick. The
+original trapped event set qbit 163 before the source chest opened; the exact
+D09 seam now publishes the taken bit and map marker only after success,
+preserves same-map/reload access and routes fresh retrieved maps away from a
+duplicate bow. Both promotion routes and lifecycle cases pass 6/6. GrayFace's
+separate artifact-refund opcode remains deferred.
+
 Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the
 corrected Breeding Zone. Shoals' green short-range fog is authored underwater
 behavior. Breeding Zone's old black occluder was caused by a literal indoor

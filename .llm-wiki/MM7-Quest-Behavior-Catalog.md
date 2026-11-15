@@ -120,7 +120,7 @@ test when behavior coverage exists.
 | Light second | Initiate → Master: on the Light path, accept from Bartholomew Hume, kill the High Priest of Baa in Avlee's Temple of Baa, collect his cloak, then return to Hume. | C |
 | Light second | Ranger → Ranger Lord: return the Heart of Wood. | C |
 | Light second | Druid → Arch Druid: retrieve Zokarr IV's skull, return it to his tomb, then report back. `MM7BarrowDialogue.ArchDruidUsesNighonSkullSourceAndZokarrReturn` covers Green's real Light-only offer and premature-return refusal, the live Nighon Tunnels event-196 skull source, Zokarr's physical deposit face, Green's exact qualifying/honorary reward transaction and duplicate prevention. The apparent Hothfarr/event-178 handoff is unreachable dead original content, not a missing OpenEnroth topic. | C |
-| Light second | Archer → Master Archer: return the Perfect Bow. | C |
+| Light second | Warrior Mage → Master Archer: return the Perfect Bow. `MM7ArcherPathPromotions` uses Lawrence Mark's real Light offer, proves award/alignment and no-bow refusals, physically opens and loots the Titans' Stronghold source, and verifies exact qualifying/honorary rewards, adjusted-bow return, no gold, reputation, topic/greeting cleanup and duplicate prevention. | C |
 | Light second | Knight → Champion: accumulate any combined total of five Knight- or Lord-difficulty Arena wins. `MM7ChampionPromotion` uses Leda Rowan's real dialogue and proves 5+0, 0+5 and 4+1 success, 2+2 and lower-difficulty refusal, exact qualifying/honorary outcomes, no gold, reputation, topic/greeting cleanup and duplicate prevention. | C |
 | Light second | Paladin → Hero: rescue Alice. | C |
 | Light second | Cleric → Priest of Light: purify the Sun altar. | C |
@@ -129,7 +129,7 @@ test when behavior coverage exists.
 | Dark second | Monk → Ninja: solve Ashwar Nog'Nogoth's tomb access, clear it, and return to Stephan Sand. | C |
 | Dark second | Ranger → Bounty Hunter: turn in 10,000 gold in bounties. | C |
 | Dark second | Great Druid → Warlock: return the Dragon Caves egg. `MM7WarlockPromotion` takes Tor Anwyn's real offer, follows an authored Land-of-the-Giants transition, physically clicks the floor egg and completes the exact qualifying/honorary transaction. It verifies egg and Oracle-bit cleanup, no gold, the Baby Dragon familiar, Tor's corrected greeting and duplicate prevention; killing the nearby dragon is gameplay pressure rather than a scripted prerequisite. | C |
-| Dark second | Archer → Sniper: return the Perfect Bow. | C |
+| Dark second | Warrior Mage → Sniper: return the Perfect Bow. The Dark half of `MM7ArcherPathPromotions` continues from Snick's first-promotion topic, proves alignment and no-bow refusals, physically loots a fresh source chest, and verifies the exact Sniper/honorary transaction, adjusted-bow return and duplicate guard. | C |
 | Dark second | Knight → Black Knight: rob the Navan treasury and return to Frederick Org. | C |
 | Dark second | Paladin → Villain: capture Alice. | C |
 | Dark second | Cleric → Priest of Dark: deface the Sun altar. | C |

@@ -3617,3 +3617,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Titans' Stronghold event 176 marked the Perfect Bow taken before its trapped source chest successfully opened. The focused regression captured qbit 163 set while the bow remained untouched and the UI stayed closed.
 - The exact D09 seam now publishes qbit 163 and map variable 2 only after a successful source open, preserves same-visit/save-load access and routes fresh retrieved maps away from duplicates. Real Master Archer and Sniper offers, physical pickups, adjusted-bow rewards and duplicate guards pass 6/6; GrayFace's separate artifact-refund opcode remains deferred.
+
+## [2026-11-15] fix | MM7 Haldar remains chest lifecycle
+- by: T-Burton-ND via codex
+- Maze event 176 set its source-access bit before Haldar's Remains were taken, then redirected later clicks to a different chest and stranded the item. The authored-face regression reproduced the close-before-pickup failure.
+- An exact Maze event seam now records a successful source open and reuses that chest, while preserving marker-zero legacy fallback. The lifecycle suite passes 4/4 and the existing Mazim refusal/reward control 1/1; GrayFace's separate artifact-refund opcode remains deferred.

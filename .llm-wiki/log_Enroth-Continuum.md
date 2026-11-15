@@ -3592,3 +3592,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Leda's real promotion dialogue reproduced the GrayFace defect: five Lord wins and a four-Knight/one-Lord mix were refused while five Knight wins passed. The compatibility rule is a combined Knight plus Lord total of five.
 - A narrow MM7 global-event-72 comparison now accepts 5+0, 0+5 and 4+1 while rejecting 2+2 and Page/Squire-only wins. Exact rewards, refusal and duplicate behavior plus the existing Arena control pass 5/5; generic counter semantics are unchanged.
+
+## [2026-11-15] fix | MM7 Archmage book chest reopening
+- by: T-Burton-ND via codex
+- The Breeding Zone source chest set the Book of Divine Intervention retrieval bits on open, then redirected a same-visit second click to the fallback chest if the book had not been taken. The focused test captured the book stranded in chest 0 before the repair.
+- A narrow event-195 map marker now preserves same-visit source-chest access while a fresh retrieved map still routes to the no-respawn fallback. Thomas Grey's real Archmage offer, refusals, physical pickup, retained-book rewards and duplicate guard plus the Lantern quest-chest control pass 6/6.

@@ -1,7 +1,11 @@
 #include "Processor.h"
 
-#include <vector>
+#include <algorithm>
+#include <array>
+#include <span>
 #include <string>
+#include <string_view>
+#include <vector>
 
 #include "Engine/Engine.h"
 #include "Engine/Localization.h"
@@ -43,6 +47,68 @@ static std::vector<int> decorationsWithEvents;
 // Was in original code and ensures that timers are checked not more often than 30 game seconds.
 // Do not needed in practice but can be considered optimization to avoid checking timers too often.
 static Time timerGuard;
+
+namespace {
+
+struct PaintingReloadSource {
+    MapId map;
+    int eventId;
+    ItemId item;
+    QuestBit takenBit;
+    int emptyTextureCog;
+    std::string_view emptyTexture;
+};
+
+constexpr std::array paintingReloadSources = {
+    PaintingReloadSource{MAP_HAUNTED_MANSION, 376, ITEM_QUEST_ANGEL_STATUE_PAINTING,
+                         QBIT_ANGEL_STATUE_PAINTING_TAKEN, 15, "t2bs"},
+    PaintingReloadSource{MAP_CASTLE_GRYPHONHEART, 377, ITEM_QUEST_ROLAND_IRONFIST_PAINTING,
+                         QBIT_ROLAND_PAINTING_TAKEN, 15, "chb1"},
+    PaintingReloadSource{MAP_CASTLE_GRYPHONHEART, 378, ITEM_QUEST_ARCHIBALD_IRONFIST_PAINTING,
+                         QBIT_ARCHIBALD_PAINTING_TAKEN, 16, "chb1"},
+};
+
+const EvtInstruction *originalPaintingEmptyTexture(const PaintingReloadSource &source) {
+    if (engine->gameTitle() != GameTitle::MM7 || engine->_currentLoadedMapId != source.map ||
+        !engine->_localEventMap.hasEvent(source.eventId))
+        return nullptr;
+
+    const std::span<const EvtInstruction> instructions = engine->_localEventMap.function(source.eventId);
+    if (instructions.size() != 6 ||
+        std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+            return instruction.opcode == EVENT_OnMapReload;
+        }))
+        return nullptr;
+
+    const EvtInstruction &gate = engine->_localEventMap.instruction(source.eventId, 0);
+    const EvtInstruction &texture = engine->_localEventMap.instruction(source.eventId, 1);
+    const EvtInstruction &item = engine->_localEventMap.instruction(source.eventId, 2);
+    const EvtInstruction &taken = engine->_localEventMap.instruction(source.eventId, 3);
+    const EvtInstruction &exit = engine->_localEventMap.instruction(source.eventId, 4);
+    const int textureCount = std::ranges::count(instructions, EVENT_SetTexture, &EvtInstruction::opcode);
+    if (gate.opcode != EVENT_Compare || gate.target_step != 4 ||
+        gate.data.variable_descr.type != VAR_QBits_QuestsDone ||
+        gate.data.variable_descr.value != std::to_underlying(source.takenBit) ||
+        texture.opcode != EVENT_SetTexture || texture.data.sprite_texture_descr.cog != source.emptyTextureCog ||
+        texture.str != source.emptyTexture || textureCount != 1 ||
+        item.opcode != EVENT_Add || item.data.variable_descr.type != VAR_PlayerItemInHands ||
+        item.data.variable_descr.value != std::to_underlying(source.item) ||
+        taken.opcode != EVENT_Add || taken.data.variable_descr.type != VAR_QBits_QuestsDone ||
+        taken.data.variable_descr.value != std::to_underlying(source.takenBit) || exit.opcode != EVENT_Exit)
+        return nullptr;
+    return &texture;
+}
+
+void restoreTakenPaintingTextures() {
+    for (const PaintingReloadSource &source : paintingReloadSources) {
+        if (!pParty->_questBits[source.takenBit])
+            continue;
+        if (const EvtInstruction *texture = originalPaintingEmptyTexture(source))
+            setTexture(texture->data.sprite_texture_descr.cog, texture->str);
+    }
+}
+
+} // namespace
 
 void initDecorationEvents() {
     DecorationId id = pDecorationTable->decorationId("Event Trigger");
@@ -191,6 +257,10 @@ void onMapLoad() {
 
     for (EventTrigger &triggers : onMapLoadTriggers)
         runEvent(EvtContext(EVT_SOURCE_MAP, triggers.eventId, Pid(), /* duringMapLoad = */ true), triggers.eventStep + 1);
+
+    // The original painting pickups persist only their quest bits. Reapply their authored empty-wall texture after
+    // normal reload events so revisiting the map cannot make a taken painting appear again.
+    restoreTakenPaintingTextures();
 }
 
 void onMapLeave() {

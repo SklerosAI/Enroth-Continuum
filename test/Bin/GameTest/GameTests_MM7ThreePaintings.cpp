@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <numbers>
 #include <span>
+#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -14,6 +15,8 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/EvtProgram.h"
+#include "Engine/Evt/Processor.h"
+#include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
@@ -46,14 +49,20 @@ constexpr int checkpointGoldBaseline = 6000;
 
 struct PaintingSource {
     MapId map;
+    int eventId;
     ItemId item;
     QuestBit takenBit;
+    int cog;
+    std::string_view emptyTexture;
 };
 
 constexpr std::array paintingSources = {
-    PaintingSource{MAP_HAUNTED_MANSION, ITEM_QUEST_ANGEL_STATUE_PAINTING, QBIT_ANGEL_STATUE_PAINTING_TAKEN},
-    PaintingSource{MAP_CASTLE_GRYPHONHEART, ITEM_QUEST_ARCHIBALD_IRONFIST_PAINTING, QBIT_ARCHIBALD_PAINTING_TAKEN},
-    PaintingSource{MAP_CASTLE_GRYPHONHEART, ITEM_QUEST_ROLAND_IRONFIST_PAINTING, QBIT_ROLAND_PAINTING_TAKEN},
+    PaintingSource{MAP_HAUNTED_MANSION, 376, ITEM_QUEST_ANGEL_STATUE_PAINTING,
+                   QBIT_ANGEL_STATUE_PAINTING_TAKEN, 15, "t2bs"},
+    PaintingSource{MAP_CASTLE_GRYPHONHEART, 378, ITEM_QUEST_ARCHIBALD_IRONFIST_PAINTING,
+                   QBIT_ARCHIBALD_PAINTING_TAKEN, 16, "chb1"},
+    PaintingSource{MAP_CASTLE_GRYPHONHEART, 377, ITEM_QUEST_ROLAND_IRONFIST_PAINTING,
+                   QBIT_ROLAND_PAINTING_TAKEN, 15, "chb1"},
 };
 
 std::pair<Vec3f, int> approachFace(const BLVFace &face) {
@@ -84,6 +93,18 @@ bool eventGrantsItem(const EvtProgram &program, int eventId, ItemId item) {
                instruction.data.variable_descr.type == VAR_PlayerItemInHands &&
                instruction.data.variable_descr.value == std::to_underlying(item);
     });
+}
+
+BLVFace *paintingFace(const PaintingSource &source) {
+    auto face = std::ranges::find(pIndoor->faces, source.eventId, &BLVFace::eventId);
+    return face == pIndoor->faces.end() ? nullptr : &*face;
+}
+
+int partyItemCount(ItemId item) {
+    int result = pParty->pPickedItem.itemId == item;
+    for (const Character &character : pParty->pCharacters)
+        result += std::ranges::distance(character.inventory.entries(item));
+    return result;
 }
 
 NPCData *findVisconti() {
@@ -318,6 +339,81 @@ void runThreePaintingsRoute(EngineController &game, bool useCheckpointBaseline =
 
 GAME_TEST(MM7SideQuests, ThreePaintingsRequireAuthoredWallPickups) {
     runThreePaintingsRoute(game);
+}
+
+GAME_TEST(MM7SideQuests, TakenPaintingWallsPersistAcrossReentry) {
+    for (const PaintingSource &source : paintingSources) {
+        SCOPED_TRACE(fmt::format("map={} event={}", std::to_underlying(source.map), source.eventId));
+        test.prepareForNextTest();
+        game.startNewGame();
+        game.teleportTo(source.map, Vec3f(), 0);
+        BLVFace *face = paintingFace(source);
+        ASSERT_NE(face, nullptr);
+        ASSERT_EQ(face->cogNumber, source.cog);
+        ASSERT_TRUE(face->Clickable());
+        ASSERT_NE(face->GetTexture(), nullptr);
+        const std::string originalTexture = face->GetTexture()->name();
+
+        std::string rolandTexture;
+        if (source.item == ITEM_QUEST_ARCHIBALD_IRONFIST_PAINTING) {
+            BLVFace *roland = paintingFace(paintingSources[2]);
+            ASSERT_NE(roland, nullptr);
+            ASSERT_NE(roland->GetTexture(), nullptr);
+            rolandTexture = roland->GetTexture()->name();
+        }
+
+        ASSERT_TRUE(clickPaintingFace(game, source));
+        if (pParty->pPickedItem.itemId == source.item)
+            pParty->placeHeldItemInInventoryOrDrop();
+        ASSERT_EQ(partyItemCount(source.item), 1);
+        ASSERT_TRUE(pParty->_questBits[source.takenBit]);
+        ASSERT_NE(face->GetTexture(), nullptr);
+        EXPECT_EQ(face->GetTexture()->name(), source.emptyTexture);
+        EXPECT_NE(face->GetTexture()->name(), originalTexture);
+        EXPECT_TRUE(face->Clickable());
+
+        game.teleportTo(MAP_TATALIA, Vec3f(), 0);
+        game.teleportTo(source.map, Vec3f(), 0);
+        face = paintingFace(source);
+        ASSERT_NE(face, nullptr);
+        ASSERT_NE(face->GetTexture(), nullptr);
+        EXPECT_EQ(face->GetTexture()->name(), source.emptyTexture);
+        EXPECT_TRUE(face->Clickable());
+
+        ASSERT_TRUE(clickPaintingFace(game, source));
+        EXPECT_EQ(partyItemCount(source.item), 1);
+
+        if (source.item == ITEM_QUEST_ARCHIBALD_IRONFIST_PAINTING) {
+            const PaintingSource &rolandSource = paintingSources[2];
+            BLVFace *roland = paintingFace(rolandSource);
+            ASSERT_NE(roland, nullptr);
+            ASSERT_NE(roland->GetTexture(), nullptr);
+            EXPECT_EQ(roland->GetTexture()->name(), rolandTexture);
+            EXPECT_TRUE(roland->Clickable());
+            EXPECT_FALSE(pParty->_questBits[rolandSource.takenBit]);
+            EXPECT_EQ(partyItemCount(rolandSource.item), 0);
+        }
+    }
+}
+
+GAME_TEST(MM7SideQuests, PaintingReloadCompatibilityDisengagesForPatchedShape) {
+    const PaintingSource &source = paintingSources[0];
+    game.startNewGame();
+    game.teleportTo(source.map, Vec3f(), 0);
+    BLVFace *face = paintingFace(source);
+    ASSERT_NE(face, nullptr);
+    ASSERT_NE(face->GetTexture(), nullptr);
+    const std::string originalTexture = face->GetTexture()->name();
+    ASSERT_NE(originalTexture, source.emptyTexture);
+
+    pParty->_questBits.set(source.takenBit);
+    EvtInstruction reload(EVENT_OnMapReload);
+    reload.step = 5;
+    engine->_localEventMap.add(source.eventId, reload);
+    onMapLoad();
+
+    ASSERT_NE(face->GetTexture(), nullptr);
+    EXPECT_EQ(face->GetTexture()->name(), originalTexture);
 }
 
 GAME_TEST(MM7SideQuestCheckpoint, DISABLED_WriteThreePaintings) {

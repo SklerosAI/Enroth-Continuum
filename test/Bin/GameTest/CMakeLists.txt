@@ -27,6 +27,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7CampaignChainC5.cpp
         GameTests_MM7CampaignChainC6.cpp
         GameTests_MM7CampaignChainC7.cpp
+        GameTests_MM7DarkCampaignChainC3.cpp
         GameTests_MM7LightWalls.cpp
         GameTests_MM7LightAdvisors.cpp
         GameTests_MM7LightXenofex.cpp

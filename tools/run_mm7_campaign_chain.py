@@ -31,6 +31,8 @@ class Title:
     ini: str | None
     chapters: int
     suite: str
+    shared_suite: str | None
+    shared_chapters: int
     profile_option: str
     data_env: str | None
     rules_env: str | None
@@ -52,12 +54,20 @@ TITLES = {
     "mm7": Title(game="mm7", profile_kind="an MM7 save gate", paths="MM7 data path", prefix="mm7-save-gate-",
                  marker=".ec-mm7-disposable-save-gate", marker_text="EnrothContinuum-MM7-save-gate-v1\n",
                  extension="mm7", ini="enroth-continuum-mm7.ini", chapters=8, suite="MM7CampaignChain",
+                 shared_suite=None, shared_chapters=0,
+                 profile_option="--mm7-disposable-profile", data_env=None, rules_env=None),
+    "mm7-dark": Title(game="mm7", profile_kind="an MM7 Dark campaign chain", paths="MM7 data path",
+                 prefix="mm7-dark-chain-", marker=".ec-mm7-dark-campaign-chain",
+                 marker_text="EnrothContinuum-MM7-dark-campaign-chain-v1\n",
+                 extension="mm7", ini="enroth-continuum-mm7.ini", chapters=8, suite="MM7DarkCampaignChain",
+                 shared_suite="MM7CampaignChain", shared_chapters=3,
                  profile_option="--mm7-disposable-profile", data_env=None, rules_env=None),
     "mm6": Title(game="mm6", profile_kind="an MM6 campaign chain", paths="MM6 data or rules path",
                  prefix="mm6-restart-chain-",  # The MM6 save code takes a GameTest profile root only under this prefix.
                  marker=".ec-mm6-campaign-chain",
                  marker_text="EnrothContinuum-MM6-campaign-chain-v1\n", extension="ec6", ini=None, chapters=10,
-                 suite="MM6CampaignChain", profile_option="--mm6-chain-profile", data_env="MM6_DATA_PATH",
+                 suite="MM6CampaignChain", shared_suite=None, shared_chapters=0,
+                 profile_option="--mm6-chain-profile", data_env="MM6_DATA_PATH",
                  rules_env="MM6_RULES_PATH"),
 }
 
@@ -144,7 +154,8 @@ def remove_unverified(title, root, chapter):
 
 
 def chapter_test_name(title, chapter):
-    return f"{title.suite}.DISABLED_Chapter{chapter}"
+    suite = title.shared_suite if chapter < title.shared_chapters else title.suite
+    return f"{suite}.DISABLED_Chapter{chapter}"
 
 
 def require_chapter_tests(title, args):
@@ -154,7 +165,7 @@ def require_chapter_tests(title, args):
         "--headless",
         "--gtest_list_tests",
         "--gtest_also_run_disabled_tests",
-        f"--gtest_filter={title.suite}.*",
+        f"--gtest_filter={title.suite}.*" + (f":{title.shared_suite}.*" if title.shared_suite else ""),
     ]
     result = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False,
                             timeout=LIST_TIMEOUT_SECONDS)

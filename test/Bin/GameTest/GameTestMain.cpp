@@ -138,6 +138,22 @@ constexpr DisposableProfileLayout mm7ProfileLayout = {
     "MM7 save gate", "mm7-save-gate-", ".ec-mm7-disposable-save-gate", "EnrothContinuum-MM7-save-gate-v1", "enroth-continuum-mm7.ini", "mm7"
 };
 
+constexpr DisposableProfileLayout mm7DarkChainProfileLayout = {
+    "MM7 Dark campaign chain", "mm7-dark-chain-", ".ec-mm7-dark-campaign-chain",
+    "EnrothContinuum-MM7-dark-campaign-chain-v1", "enroth-continuum-mm7.ini", "mm7"
+};
+
+constexpr std::array<Mm7ProfileGate, 8> mm7DarkChainGates = {{
+    {"MM7CampaignChain.DISABLED_Chapter0", true, false, 0},
+    {"MM7CampaignChain.DISABLED_Chapter1", false, true, 1},
+    {"MM7CampaignChain.DISABLED_Chapter2", false, true, 2},
+    {"MM7DarkCampaignChain.DISABLED_Chapter3", false, true, 3},
+    {"MM7DarkCampaignChain.DISABLED_Chapter4", false, true, 4},
+    {"MM7DarkCampaignChain.DISABLED_Chapter5", false, true, 5},
+    {"MM7DarkCampaignChain.DISABLED_Chapter6", false, true, 6},
+    {"MM7DarkCampaignChain.DISABLED_Chapter7", false, true, 7},
+}};
+
 constexpr DisposableProfileLayout mm6ChainProfileLayout = {
     "MM6 campaign chain",
     "mm6-restart-chain-", // The MM6 save code takes a GameTest profile root only under the mm6-restart- prefix.
@@ -249,11 +265,20 @@ int platformMain(int argc, char **argv) {
             return filter == entry.filter;
         });
         const bool hasMm7ProfileGate = gate != mm7ProfileGates.end();
-        if (opts.disposableMm7Profile || hasMm7ProfileGate) {
-            if (!opts.disposableMm7Profile || !hasMm7ProfileGate ||
+        auto darkGate = std::ranges::find_if(mm7DarkChainGates, [&filter](const Mm7ProfileGate &entry) {
+            return filter == entry.filter;
+        });
+        const bool hasMm7DarkChainGate = darkGate != mm7DarkChainGates.end();
+        const bool usesMm7DarkChainProfile = opts.disposableMm7Profile &&
+            std::filesystem::path(opts.userPath.str()).filename().string().starts_with(mm7DarkChainProfileLayout.prefix);
+        if (opts.disposableMm7Profile || hasMm7ProfileGate || hasMm7DarkChainGate) {
+            const bool hasSelectedGate = usesMm7DarkChainProfile ? hasMm7DarkChainGate : hasMm7ProfileGate;
+            if (!opts.disposableMm7Profile || !hasSelectedGate ||
                 !GTEST_FLAG_GET(also_run_disabled_tests))
                 throw Exception("MM7 disposable save gate requires its exact disabled test filter and temporary profile.");
-            opts.userPath = Path(validateDisposableProfile(opts.userPath.str(), mm7ProfileLayout, gate->writer, gate->chapter).string());
+            const Mm7ProfileGate &selectedGate = usesMm7DarkChainProfile ? *darkGate : *gate;
+            const DisposableProfileLayout &layout = usesMm7DarkChainProfile ? mm7DarkChainProfileLayout : mm7ProfileLayout;
+            opts.userPath = Path(validateDisposableProfile(opts.userPath.str(), layout, selectedGate.writer, selectedGate.chapter).string());
         }
         const auto mm6ChainGate = std::ranges::find(mm6ChainGates, filter);
         const bool hasMm6ChainGate = mm6ChainGate != mm6ChainGates.end();
@@ -280,7 +305,10 @@ int platformMain(int argc, char **argv) {
         starter.runInstrumented([&] (EngineController *game) {
             NativeFileSystem tfs(opts.testPath);
             TestController test(game, &tfs, opts.speed, opts.disposableMm7Profile,
-                                hasMm7ProfileGate && gate->preserveSave);
+                                opts.disposableMm7Profile &&
+                                    (usesMm7DarkChainProfile ? darkGate->preserveSave : gate->preserveSave),
+                                usesMm7DarkChainProfile ? std::string(mm7DarkChainProfileLayout.marker) :
+                                                         std::string(mm7ProfileLayout.marker));
             GameTest::init(game, &test);
             if (!mm6ChainRoot.empty())
                 game->runGameRoutine([&] { setMM6CampaignChainProfile(mm6ChainRoot); });

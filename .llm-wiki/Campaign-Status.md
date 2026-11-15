@@ -108,6 +108,12 @@ every qualifying click before its authored random effect. The exact event seam
 preserves the 4,998/4,999 insufficient-funds branches and already-patched data;
 physical face tests plus the existing well-effect control pass 4/4.
 
+Deyja's northern group-4 guards now resolve friendly for normal neutral/Dark
+visits and after the exact 720-hour anger expiry, while Light/active anger and
+stored hostile states use their default hostile faction. The unrelated group-5
+wilderness population remains hostile. The focused faction/timer matrix passes
+4/4 without adding broad unsupported opcode-55 semantics.
+
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding
 Zone black occluder was a literal-origin capture-placement defect and disappears

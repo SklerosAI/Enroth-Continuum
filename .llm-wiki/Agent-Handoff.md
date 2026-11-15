@@ -174,6 +174,13 @@ effects; an exact event-205 seam preserves the authored 4,998/4,999 boundary
 oddity and leaves already-patched data untouched. Three well cases plus the
 existing effect control pass 4/4.
 
+Deyja's northern group-4 guards now use the friendly peasant-goblin faction
+for normal neutral/Dark visits and after the exact 720-hour anger expiry.
+Light, active anger and persisted hostile state restore each guard's default
+Goblin faction; wilderness group 5 remains hostile. The implementation is an
+exact event-1 compatibility seam rather than unsupported generic opcode-55
+handling, and the focused matrix passes 4/4.
+
 Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the
 corrected Breeding Zone. Shoals' green short-range fog is authored underwater
 behavior. Breeding Zone's old black occluder was caused by a literal indoor

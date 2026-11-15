@@ -106,6 +106,10 @@ static bool checkSeason(Season season) {
 constexpr int breedingZoneBookEventId = 195;
 constexpr int breedingZoneBookChestId = 0;
 constexpr int breedingZoneFallbackChestId = 19;
+constexpr int tidewaterMapEventId = 176;
+constexpr int tidewaterMapChestId = 1;
+constexpr int tidewaterFallbackChestId = 0;
+constexpr int tidewaterMapVariable = 2;
 constexpr int wallsLichJarEventId = 176;
 constexpr int wallsLichJarChestId = 0;
 constexpr int wallsLichJarFallbackChestId = 1;
@@ -157,6 +161,46 @@ static bool isOriginalBreedingZoneBookEvent(const EvtContext &context,
         return instruction.opcode == EVENT_OpenChest && instruction.data.chest_id == breedingZoneFallbackChestId;
     });
     return hasOriginalGate && !hasMapVariableGate && hasBookChest && hasFallbackChest;
+}
+
+static bool isOriginalTidewaterMapEvent(const EvtContext &context,
+                                        std::span<const EvtInstruction> instructions) {
+    if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_MAP ||
+        engine->_currentLoadedMapId != MAP_TIDEWATER_CAVERNS || context.eventId != tidewaterMapEventId)
+        return false;
+
+    const auto changesVariableAt = [instructions](int step, int targetStep, EvtOpcode opcode,
+                                                   EvtVariable variable, int value) {
+        return std::ranges::any_of(instructions, [=](const EvtInstruction &instruction) {
+            return instruction.step == step && instruction.target_step == targetStep &&
+                   instruction.opcode == opcode && instruction.data.variable_descr.type == variable &&
+                   instruction.data.variable_descr.value == value;
+        });
+    };
+    const auto opensChestAt = [instructions](int step, int chestId) {
+        return std::ranges::any_of(instructions, [=](const EvtInstruction &instruction) {
+            return instruction.step == step && instruction.opcode == EVENT_OpenChest &&
+                   instruction.data.chest_id == chestId;
+        });
+    };
+    const bool hasHint = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == -1 && instruction.opcode == EVENT_MouseOver;
+    });
+    const bool hasTerminalJump = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 4 && instruction.target_step == 6 && instruction.opcode == EVENT_Jmp;
+    });
+    const bool hasExit = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 6 && instruction.opcode == EVENT_Exit;
+    });
+    return instructions.size() == 8 && hasHint &&
+           changesVariableAt(0, 5, EVENT_Compare, VAR_Award,
+                             std::to_underlying(AWARD_PROMOTION_PRIEST)) &&
+           changesVariableAt(1, 5, EVENT_Compare, VAR_Award,
+                             std::to_underlying(AWARD_PROMOTION_PRIEST_HONORARY)) &&
+           opensChestAt(2, tidewaterMapChestId) &&
+           changesVariableAt(3, 0, EVENT_Add, VAR_QBits_QuestsDone,
+                             std::to_underlying(QBIT_ORACLE_RECOVERS_EVENMORN_MAP)) &&
+           hasTerminalJump && opensChestAt(5, tidewaterFallbackChestId) && hasExit;
 }
 
 static bool isOriginalWallsLichJarEvent(const EvtContext &context,
@@ -898,6 +942,9 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             if (isOriginalBreedingZoneBookEvent(_context, _events) &&
                 ir.data.chest_id == breedingZoneBookChestId)
                 engine->_persistentVariables.mapVars[0] = 1;
+            if (isOriginalTidewaterMapEvent(_context, _events) &&
+                ir.data.chest_id == tidewaterMapChestId)
+                engine->_persistentVariables.mapVars[tidewaterMapVariable] = 1;
             if (isOriginalTitansPerfectBowEvent(_context, _events) &&
                 ir.data.chest_id == titansPerfectBowChestId) {
                 pParty->_questBits.set(QBIT_PERFECT_BOW_TAKEN);
@@ -988,6 +1035,20 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             }
             break;
         case EVENT_Compare:
+            if (isOriginalTidewaterMapEvent(_context, _events) && ir.step == 0) {
+                int chestId = -1;
+                if (engine->_persistentVariables.mapVars[tidewaterMapVariable] >= 1) {
+                    chestId = tidewaterMapChestId;
+                } else if (pParty->_questBits[QBIT_ORACLE_RECOVERS_EVENMORN_MAP]) {
+                    chestId = tidewaterFallbackChestId;
+                }
+                if (chestId >= 0) {
+                    auto chest = std::ranges::find_if(_events, [chestId](const EvtInstruction &instruction) {
+                        return instruction.opcode == EVENT_OpenChest && instruction.data.chest_id == chestId;
+                    });
+                    return {EVT_FLOW_JUMP, chest->step};
+                }
+            }
             if (isOriginalGiantsWishWellEvent(_context, _events) && ir.step == 0 &&
                 pParty->GetGold() >= 5000) {
                 pParty->TakeGold(5000);

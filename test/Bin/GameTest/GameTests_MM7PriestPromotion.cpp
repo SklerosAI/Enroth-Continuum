@@ -12,7 +12,9 @@
 #include "Engine/Data/HouseEnums.h"
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Evt/EvtContext.h"
 #include "Engine/Evt/EvtProgram.h"
+#include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/MapEnums.h"
@@ -40,6 +42,8 @@ constexpr int offerEventId = 88;
 constexpr int returnEventId = 89;
 constexpr int tidewaterChestEventId = 176;
 constexpr int tidewaterChestId = 1;
+constexpr int tidewaterFallbackChestId = 0;
+constexpr int tidewaterMapVariable = 2;
 
 bool eventOpensHouse(int eventId, HouseId houseId) {
     return engine->_localEventMap.hasEvent(eventId) &&
@@ -168,11 +172,9 @@ bool bracadaBoatAvailable(EngineController &game) {
     return result;
 }
 
-void pickUpEvenmornMap(EngineController &game) {
-    game.teleportTo(MAP_TIDEWATER_CAVERNS, Vec3f(), 0);
-    ASSERT_LT(tidewaterChestId, std::ssize(vChests));
-    ASSERT_TRUE(vChests[tidewaterChestId].inventory.find(ITEM_MESSAGE_MAP_TO_EVENMORN_ISLAND));
-
+int openTidewaterQuestChest(EngineController &game) {
+    if (engine->_currentLoadedMapId != MAP_TIDEWATER_CAVERNS)
+        game.teleportTo(MAP_TIDEWATER_CAVERNS, Vec3f(), 0);
     bool opened = false;
     for (int faceId = 0; faceId < std::ssize(pIndoor->faces) && !opened; ++faceId) {
         const BLVFace &face = pIndoor->faces[faceId];
@@ -203,8 +205,20 @@ void pickUpEvenmornMap(EngineController &game) {
                 break;
         }
     }
-    ASSERT_TRUE(opened);
-    ASSERT_EQ(pGUIWindow_CurrentChest->chestId(), tidewaterChestId);
+    EXPECT_TRUE(opened);
+    return opened ? pGUIWindow_CurrentChest->chestId() : -1;
+}
+
+void closeChest(EngineController &game) {
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+}
+
+void pickUpEvenmornMap(EngineController &game) {
+    ASSERT_EQ(openTidewaterQuestChest(game), tidewaterChestId);
+    ASSERT_LT(tidewaterChestId, std::ssize(vChests));
+    ASSERT_TRUE(vChests[tidewaterChestId].inventory.find(ITEM_MESSAGE_MAP_TO_EVENMORN_ISLAND));
 
     InventoryEntry entry = vChests[tidewaterChestId].inventory.find(ITEM_MESSAGE_MAP_TO_EVENMORN_ISLAND);
     ASSERT_TRUE(entry);
@@ -214,9 +228,7 @@ void pickUpEvenmornMap(EngineController &game) {
     game.pressAndReleaseButton(BUTTON_LEFT, itemPosition);
     game.tick();
     ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_MESSAGE_MAP_TO_EVENMORN_ISLAND);
-    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
-    game.tick();
-    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    closeChest(game);
 }
 
 } // namespace
@@ -244,6 +256,92 @@ GAME_TEST(MM7PriestPromotion, SourceContracts) {
         return instruction.opcode == EVENT_OpenChest && instruction.data.chest_id == tidewaterChestId;
     }));
     EXPECT_TRUE(vChests[tidewaterChestId].inventory.find(ITEM_MESSAGE_MAP_TO_EVENMORN_ISLAND));
+}
+
+GAME_TEST(MM7PriestPromotion, QuestChestReopensDuringSameVisit) {
+    engine->config->debug.NoActors.setValue(true);
+    engine->config->debug.NoDamage.setValue(true);
+    game.startNewGame();
+
+    ASSERT_EQ(openTidewaterQuestChest(game), tidewaterChestId);
+    ASSERT_TRUE(pParty->_questBits[QBIT_ORACLE_RECOVERS_EVENMORN_MAP]);
+    ASSERT_EQ(engine->_persistentVariables.mapVars[tidewaterMapVariable], 1);
+    ASSERT_TRUE(vChests[tidewaterChestId].inventory.find(ITEM_MESSAGE_MAP_TO_EVENMORN_ISLAND));
+    closeChest(game);
+
+    EXPECT_EQ(openTidewaterQuestChest(game), tidewaterChestId);
+    EXPECT_EQ(engine->_persistentVariables.mapVars[tidewaterMapVariable], 1);
+    EXPECT_TRUE(vChests[tidewaterChestId].inventory.find(ITEM_MESSAGE_MAP_TO_EVENMORN_ISLAND));
+    closeChest(game);
+}
+
+GAME_TEST(MM7PriestPromotion, SourceChestMarkerSurvivesSaveReload) {
+    engine->config->debug.NoActors.setValue(true);
+    engine->config->debug.NoDamage.setValue(true);
+    game.startNewGame();
+
+    ASSERT_EQ(openTidewaterQuestChest(game), tidewaterChestId);
+    ASSERT_EQ(engine->_persistentVariables.mapVars[tidewaterMapVariable], 1);
+    closeChest(game);
+    Blob checkpoint = game.saveGame();
+    game.loadGame(checkpoint);
+    game.tick(2);
+
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_TIDEWATER_CAVERNS);
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    ASSERT_TRUE(pParty->_questBits[QBIT_ORACLE_RECOVERS_EVENMORN_MAP]);
+    ASSERT_EQ(engine->_persistentVariables.mapVars[tidewaterMapVariable], 1);
+    EXPECT_EQ(openTidewaterQuestChest(game), tidewaterChestId);
+    closeChest(game);
+}
+
+GAME_TEST(MM7PriestPromotion, FreshRecoveryBitUsesFallbackChest) {
+    engine->config->debug.NoActors.setValue(true);
+    engine->config->debug.NoDamage.setValue(true);
+    game.startNewGame();
+    pParty->_questBits.set(QBIT_ORACLE_RECOVERS_EVENMORN_MAP);
+
+    ASSERT_EQ(engine->_persistentVariables.mapVars[tidewaterMapVariable], 0);
+    EXPECT_EQ(openTidewaterQuestChest(game), tidewaterFallbackChestId);
+    EXPECT_EQ(engine->_persistentVariables.mapVars[tidewaterMapVariable], 0);
+    closeChest(game);
+}
+
+GAME_TEST(MM7PriestPromotion, PromotionAwardsUseFallbackChest) {
+    for (AwardId award : {AWARD_PROMOTION_PRIEST, AWARD_PROMOTION_PRIEST_HONORARY}) {
+        SCOPED_TRACE(fmt::format("award={}", std::to_underlying(award)));
+        test.prepareForNextTest();
+        engine->config->debug.NoActors.setValue(true);
+        engine->config->debug.NoDamage.setValue(true);
+        game.startNewGame();
+        pParty->pCharacters[0]._achievedAwardsBits.set(award);
+
+        ASSERT_EQ(engine->_persistentVariables.mapVars[tidewaterMapVariable], 0);
+        EXPECT_EQ(openTidewaterQuestChest(game), tidewaterFallbackChestId);
+        EXPECT_EQ(engine->_persistentVariables.mapVars[tidewaterMapVariable], 0);
+        closeChest(game);
+    }
+}
+
+GAME_TEST(MM7PriestPromotion, CompatibilitySeamIgnoresPatchedEventShape) {
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+    game.teleportTo(MAP_TIDEWATER_CAVERNS, Vec3f(), 0);
+    ASSERT_TRUE(engine->_localEventMap.hasEvent(tidewaterChestEventId));
+
+    EvtInstruction patchedExit(EVENT_Exit);
+    patchedExit.step = 7;
+    engine->_localEventMap.add(tidewaterChestEventId, patchedExit);
+    pParty->pCharacters[0]._achievedAwardsBits.set(AWARD_PROMOTION_PRIEST);
+    engine->_persistentVariables.mapVars[tidewaterMapVariable] = 1;
+    vChests[tidewaterFallbackChestId].flags &= ~CHEST_TRAPPED;
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, tidewaterChestEventId));
+
+    ASSERT_EQ(current_screen_type, SCREEN_CHEST);
+    EXPECT_EQ(pGUIWindow_CurrentChest->chestId(), tidewaterFallbackChestId);
+    EXPECT_EQ(engine->_persistentVariables.mapVars[tidewaterMapVariable], 1);
+    closeChest(game);
 }
 
 GAME_TEST(MM7PriestPromotion, MapReturnPromotesClericAndUnlocksEvenmornBoat) {

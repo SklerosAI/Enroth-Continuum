@@ -3637,3 +3637,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Three northern group-4 guards retained their hostile Goblin faction on normal Dark/neutral visits despite having no aggressor flag. The focused probe also established the intended Light, anger and expiry branches.
 - An exact Deyja map-load seam applies friendly faction 78 for normal/expired states and default hostile factions for Light, active anger or persisted hostility. The 719/720-hour matrix passes 4/4; wilderness group 5 remains hostile and generic opcode-55 support was not added.
+
+## [2026-11-15] fix | MM7 Castle Harmondale flags
+- by: T-Burton-ND via codex
+- Castle event data omitted three war-result banner combinations and allowed wizard/necromancer adviser flags to contradict alignment. The focused regression captured false-plans/real-Loren gaps, wrong-alignment flags and invalid-state overwrites.
+- Exact d29 event seams now score all 12 complete outcomes, retain base textures for incomplete/contradictory states and require Light+Walls or Dark+Breeding for adviser flags. The matrix plus quest-zero control pass 5/5; qbit 271 and the separate golem repair remain intact.

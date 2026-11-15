@@ -28,7 +28,7 @@ deferred while the owner's headless-only instruction is active.
 | Priority | Quest group | Areas | Work remaining |
 | --- | --- | --- | --- |
 | 1 | War alternatives and Arbiter | Erathia, Tularean Forest, Avlee, Harmondale | Real-item, decoy-item and ignored/timeout outcomes now pass for both 28-day assignments, including physical Loren and plans acquisition; the two broken timeout fallthroughs are fixed. The authored 56–84-day trumpet window, physical chest, Catherine/Parson/Judge Grey hand-ins, balanced real/real neutral result, 112-day messenger, Dark judge installation and a durable checkpoint pass. Remaining: expose/treason failure branches, determine whether the unplaced envoy hand-ins are reachable, cover balanced decoy/decoy and the other bit-derived result combinations, and add the war packet to a continuous campaign chain. |
-| 2 | Malwick, Niles and the tapestries | Emerald Island, Harmondale, Tatalia, Castle Lambent, Castle Gloaming | Malwick's real street conversation now covers refusal, repeat offer and acceptance; the exact six-week Harmondale trigger, two-week Niles-visit deadline and four-week tapestry-return deadline pass through the authored clock event. Missing either deadline starts the invasion, empties the bank and closes a Harmondale service; the existing raid test proves clearing both attacker groups reopens services. Remaining: acquire and return both alignment-specific tapestries through their physical castle sources, prove the one-month allied-region hostility window, add the successful reward path and preserve the chain across a fresh-process checkpoint. |
+| 2 | Malwick, Niles and the tapestries | Emerald Island, Harmondale, Tatalia, Castle Lambent, Castle Gloaming | Behavior and durability complete. Malwick's real street conversation covers refusal, repeat offer and acceptance; the exact six-week Harmondale trigger, two-week Niles-visit deadline and four-week tapestry-return deadline pass through the authored clock event. Both alignment-specific Niles offers, physical Castle Lambent/Gloaming tapestry faces, successful returns, +5 reputation-only reward, exact 719/720-hour allied-castle hostility boundary and both missed-deadline invasions pass. Separate fresh-process checkpoints preserve the success and invasion outcomes; the existing raid test proves clearing both attacker groups reopens services. Remaining only at campaign level: connect the optional branch to a continuous Light or Dark chain rather than reopening its focused contract. |
 | 3 | Continuous Dark campaign D1-D7 | Castle Gloaming, the Pit, Celeste, Thunderfist Mountain, Clanker's Laboratory, Breeding Zone, Colony Zod, Shoals and Lincoln | Focused Dark contracts exist, but the durable chain does not. Link physical altar-piece acquisition, Robert's cube by combat or theft, Roland/control access and combat, physical Lincoln retrieval and the continuous Dark ending. |
 | 4 | Light route seams | Wine Cellar, Castle Gloaming, the Pit, Land of the Giants, Colony Zod, Shoals and Lincoln | Cover real Elder Vampire combat, the L5 Blaster reward, Roland/key/control access before Xenofex, and the retrieved Overthruster through the final hand-in. Audit the Walls protected-group predicate without weakening the no-kill player contract. |
 | 5 | Regional strengthening and durability | Emerald Island, Erathia, Bracada Desert, Stone City, Bandit Caves, White Cliff Cave, the Maze and the Erathian Sewers | Acquire all six Emerald contest items physically. Add Griffin refusal, XP, gold and award assertions across Erathia/Bracada. Add direct Troglodyte combat. Add fresh-process checkpoints for behavior-covered but not yet durable routes: Lantern of Light, Davrik's Ring, Darron's brother, Haldar's remains, Troglodytes and Thief to Rogue. |
@@ -63,11 +63,14 @@ fresh-process normal-Load pairs with unchanged slot bytes:
 - Arcomage Champion
 - Obelisk puzzle
 - Balanced war, neutral trumpet and Dark Arbiter
+- Malwick/Niles successful tapestry return
+- Malwick/Niles failed return and Harmondale invasion
 
 They are independent route boundaries, not a continuous regional campaign.
 The current regional side/promotion selection is 14/14; there are eighteen
-exact writer/reader checkpoint tests across the nine routes. The war checkpoint
-is a main-path boundary, not a regional side quest.
+exact regional writer/reader checkpoint tests across nine routes. The war and
+two Malwick checkpoints are main/optional-path boundaries, bringing the total
+to twenty-two exact checkpoint tests across eleven routes.
 
 ## Gate for each new quest slice
 

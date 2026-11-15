@@ -20,7 +20,19 @@ integration and does not use either allocation. Before creating one, run
 use the corresponding `codex/` or `claude/` branch prefix. Older global-lead
 language below is historical and superseded by this boundary.
 
-## Current MM7 Dark-chain checkpoint — 2026-11-14
+## Current MM7 campaign checkpoint — 2026-11-14
+
+Light C6 no longer teleports directly to Colony Zod. It accepts Resurecta's
+assignment, follows the authored Mount Nighon–Thunderfist–Tunnels to
+Eofol–Land of the Giants route, receives Archibald's Blaster, enters Colony
+Zod, rescues Roland, consumes his key, activates both route controls, kills
+Xenofex by player attack, exits to Land, uses the return altar and completes
+the Lambent hand-in before the existing C7 ending. The chain explicitly waits
+from the closed 5am throne to 6am. The shared indoor transition helper now
+handles moved clickable faces, pressure plates and decorations; this removed a
+repeatable Walls-of-Mist exit failure. A fresh C0-C7 run, five focused
+Xenofex/Roland/throne-hour controls and the 157-target style gate passed. No
+progress image was generated.
 
 The Dark campaign now has its own marked `mm7-dark-chain-*` disposable
 profile. It deliberately reuses the already-proven common C0-C2 tests, then
@@ -138,10 +150,11 @@ wine-cellar and soul-jar hand-ins through dialogue; the assassination cases
 cover Robert's advisor gate, the request, Pit door transition and cube
 hand-in. Xenofex coverage gates the request on the assassination result,
 checks map-leave with its actor alive versus a fixture death, and completes
-the throne hand-in. Fixtures provide prior quest state, items, travel and the
-Xenofex kill. Advisor-item acquisition, Xenofex combat and uninterrupted
-continuity remain open; Pit cube combat and the Overthruster checkpoint are
-covered below.
+the throne hand-in. These remain focused controls with fixture travel and
+death, but the current Light C6 checkpoint above supersedes the old open
+continuity claim with the full authored access route and live Xenofex combat.
+Real Elder Vampire combat and the Light-side Blaster reward assertion remain
+open; Pit cube combat is covered separately.
 Read the dated handoffs under
 `agent_comms/handoffs/` before extending these tests.
 The later four Overthruster cases are integrated. Together with two wetsuit/
@@ -149,15 +162,17 @@ Shoals controls and the two Xenofex cases, they passed 8/8 on integrated
 source. The test collects suits through chest input, checks the Avlee and
 Lincoln suit gates, enters Lincoln, powers its console and retrieves the
 Overthruster before exiting to Shoals with the item. L8 completion/topic169
-and the later chapter starting state are fixtures; L15 hand-in with the
-retrieved item and full
-continuity remain open. See the Overthruster handoff in `agent_comms/handoffs/`.
+and the later chapter starting state are fixtures in the focused test. The
+current Light C7 chain now joins physical retrieval to Resurecta's final
+hand-in and ending after a fresh C6 save. See the Overthruster handoff in
+`agent_comms/handoffs/`.
 The subsequent L8-to-L9-to-L15 final-link test is integrated and passed with
 the Xenofex and existing ending controls 3/3, and alongside the Overthruster
 cases 7/7. It asserts the real Xenofex hand-in changes NPC 80's second topic
 to 169, selects L9 through UI, rejects a no-item hand-in, then completes the
 ending with a held Overthruster fixture. The separate Lincoln case yields a
-held item; the two slices are not yet joined by a fresh-process checkpoint.
+held item; this focused split remains useful, while Light C7 now provides the
+joined fresh-process campaign proof.
 The later Pit cube acquisition test is integrated and passed with its no-cube
 control 2/2. It uses real attack-key combat, viewport corpse picking/clicking
 and advisor hand-in, with party-only combat strength and positioning fixtures.

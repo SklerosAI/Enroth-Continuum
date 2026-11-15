@@ -20,6 +20,17 @@ The owner's [current delivery order](Current-Delivery-Order.md) puts MM7 working
 
 ## MM7 audit continuation — 2026-11-14
 
+The Light campaign's C6 seam now follows the authored Mount Nighon,
+Thunderfist Mountain, Tunnels to Eofol, Land of the Giants and Colony Zod
+route instead of teleporting to Xenofex. It receives Archibald's Blaster,
+rescues Roland, consumes his key, activates both controls, kills Xenofex,
+leaves through the authored exit, uses the return altar, respects Lambent's
+5am throne closure and completes Resurecta's hand-in before `save006.mm7`.
+The shared transition helper now robustly handles clickable faces, pressure
+plates and decorations, including the moved Walls-of-Mist exit. A fresh Light
+C0-C7 run, five focused Xenofex/Roland/throne-hour controls and the 157-target
+style gate passed; the existing C7 ending accepted the strengthened C6 save.
+
 The separately admitted Dark campaign profile is now established through C7.
 It reuses common C0-C2, takes the authored messenger/Deyja/Arbiter route in C3,
 then carries Archibald's real assignment through the Breeding Zone proof,
@@ -121,28 +132,30 @@ and advisor controls passed 5/5, with writer and reader 1/1 each.
 The three advisor hand-in checks and assassination request/cube hand-in are
 also integrated. The focused combined Light run passed 7/7. These tests use
 fixture quest items and bits around input-driven dialogue and doors. Advisor
-item acquisition and uninterrupted chapter continuity remain open; a separate
-Pit test below covers combat and cube loot. Xenofex request,
+item acquisition is now continuous for the altar pieces, Soul Jars and Pit
+cube; real Elder Vampire combat and the Light Blaster reward assertion remain
+open. Xenofex request,
 alive/dead map-leave and hand-in are integrated, with travel and actor death
-as fixtures. The Overthruster tests now cover throne request, wetsuit chest
+as fixtures in those focused controls; the current C6 chain above supplies the
+authored travel, Roland/key/controls and live combat. The Overthruster tests now cover throne request, wetsuit chest
 collection, Avlee and Lincoln suit gates, Shoals entry, unpowered pedestal,
 console activation, item retrieval and exit. Four new cases and the two
 wetsuit/Shoals controls plus two Xenofex cases passed 8/8 together on
-integration source. An uninterrupted chapter route and L15 with the actual
-retrieved item remain open; later focused checkpoints cover adjacent slices.
+integration source. The current C7 chain joins that physical retrieval to
+Resurecta's final hand-in and Light ending from the fresh C6 save.
 The subsequent integrated final-link test passed with the existing Xenofex and
 ending controls 3/3, and with the Overthruster cases 7/7. It proves the real
 Xenofex hand-in unlocks the second NPC topic for L9, the request activates
 the final task, a no-item hand-in stays in the throne room, and a held-item
-Overthruster fixture is consumed for the ending. It does not yet link the
-retrieved item from Lincoln to that hand-in or prove a fresh-process reload.
+Overthruster fixture is consumed for the ending. This remains an independent
+control; C7 now provides the linked retrieval and fresh-process campaign proof.
 The later Pit cube acquisition test is integrated. It enters from the advisor
 request and Pit door, defeats the live carrier with bounded player attack
 input, picks and clicks the corpse to loot the cube, then returns for the
 advisor hand-in. The new test and existing no-cube control passed 2/2 on
 integrated source. Party combat strength and positioning are fixtures;
-natural walking through the room and uninterrupted campaign continuity
-remain open.
+natural walking through the room remains open, while C5 now supplies the
+uninterrupted campaign continuity.
 The later integrated Pit-to-Xenofex seam uses input-driven Walls, altar and
 Tolberti hand-ins to produce NPC80's throne house and Xenofex topic without
 assigning those fields. A marked disposable production Save writer and

@@ -3571,3 +3571,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via claude
 - Pinned GrayFace MM6 Patch 2.5.7 source and shipped data under the ignored public-references folder, decoded its 44 script and table entries and 26 map entries, and diffed them against the owner's unpatched GOG 1.2 files. Confirmed the owner's install carries no GrayFace files.
 - Cross-referenced all 58 logic fixes against our MM6 runtime: 24 fixed, 14 vanilla bugs still reproduced, 4 deliberately vanilla with tests, 8 unreachable until the spell or feature is admitted, 4 inherited MM7 shapes wrong for MM6. Recorded in `project/MM6_GRAYFACE_PATCH_REFERENCE.md` and the new wiki page. No code changed.
+
+## [2026-11-15] decision | MM6 fixes every GrayFace-listed bug
+- by: T-Burton-ND via claude
+- The owner decided MM6 fixes every bug the GrayFace MM6 Patch fixes, GrayFace's way or better, reversing the four deliberate-vanilla choices. The per-item plan is recorded in the project reference and the wiki page. No code changed.
+- The owner's short playtest the same day showed transparent street villagers in New Sorpigal. Recorded on the MM6 playtest board, not investigated.

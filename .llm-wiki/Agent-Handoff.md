@@ -40,10 +40,14 @@ pieces, the authored Thunderfist Soul Jars chest, Clanker's defense-disable
 face and Robert's cube from a live Celeste combat/corpse-loot interaction. The
 Tolberti hand-in consumes the cube, gives novice Blaster to all four characters
 and moves Kastore to the Gloaming throne; this relocation occurs after Robert,
-not immediately after the adviser trio. A fresh six-process C0-C5 run, seven
-focused D2-D5 controls and the full style gate passed. No progress image was
-generated. Continue with C6: Kastore's Xenofex assignment, Roland/control
-access and real Xenofex combat/return. Do not reuse or relabel a completed
+not immediately after the adviser trio. C6 continues from that save through
+Kastore's assignment, the authored Mount Nighon–Thunderfist–Tunnels to Eofol
+access route, Archibald's Land-of-the-Giants dialogue, Roland's cage and key,
+both Colony Zod route controls, real Xenofex combat, the authored exit and
+return altar, and Kastore's hand-in before `save006.mm7`. A fresh seven-process
+C0-C6 run, four focused Xenofex/Kastore controls and the full 157-target style
+gate passed. No progress image was generated. Continue with C7: physical
+Lincoln acquisition and the Dark ending. Do not reuse or relabel a completed
 Light profile.
 
 ## Current MM7 regional checkpoint — 2026-11-12

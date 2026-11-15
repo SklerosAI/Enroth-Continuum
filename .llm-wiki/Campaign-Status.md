@@ -20,16 +20,20 @@ The owner's [current delivery order](Current-Delivery-Order.md) puts MM7 working
 
 ## MM7 audit continuation — 2026-11-12
 
-The separately admitted Dark campaign profile is now established through C5.
+The separately admitted Dark campaign profile is now established through C6.
 It reuses common C0-C2, takes the authored messenger/Deyja/Arbiter route in C3,
 then carries Archibald's real assignment through the Breeding Zone proof,
 authored Pit exit, Gloaming hand-in and three enterable adviser houses before
 writing `save004.mm7`. C5 physically retrieves both temple altar pieces and
 Thunderfist's Soul Jars, activates Clanker's authored defense event, kills and
 loots Robert's live Celeste actor, and returns the cube for all-character
-novice Blaster skill and Kastore's relocation before `save005.mm7`. A fresh
-six-process C0-C5 run passed with retained predecessors unchanged. C6-C7
-remain open; the next chapter is Kastore, Roland/control access and Xenofex.
+novice Blaster skill and Kastore's relocation before `save005.mm7`. C6 then
+follows the authored Mount Nighon, Thunderfist Mountain and Tunnels to Eofol
+route; rescues Roland; consumes his key; activates both Colony Zod controls;
+kills Xenofex; returns through the Land of the Giants altar; and completes
+Kastore's hand-in before `save006.mm7`. A fresh seven-process C0-C6 run passed
+with retained predecessors unchanged. C7 remains open for physical Lincoln
+acquisition and the continuous Dark ending.
 
 The `codex/mm7-dark-chain` audit line is integrated on `master`. It carries
 complete headless coverage for Norbert Thrush's Parsons' Quill route: Emerald

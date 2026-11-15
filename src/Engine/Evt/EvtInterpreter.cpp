@@ -139,6 +139,9 @@ constexpr int castleHarmondaleGolemEventId = 376;
 constexpr int celesteLadyCarmineMapLeaveEventId = 378;
 constexpr int wineCellarKillCheckEventId = 2;
 constexpr int colonyZodKillMovieEventId = 2;
+constexpr int kastoreAltarPiecesEventId = 158;
+constexpr int kastoreHasDarkPieceTextId = 328;
+constexpr int kastoreNeedsDarkPieceTextId = 329;
 
 static bool isOriginalBreedingZoneBookEvent(const EvtContext &context,
                                             std::span<const EvtInstruction> instructions) {
@@ -233,6 +236,72 @@ static bool isOriginalColonyZodKillMovieEvent(const EvtContext &context,
            movie->opcode == EVENT_ShowMovie && movie->data.movie_unknown_field == 1 &&
            trimRemoveQuotes(movie->str) == "family reunion" && history->opcode == EVENT_Add &&
            history->data.variable_descr.type == history24 && history->data.variable_descr.value == 0;
+}
+
+static bool isOriginalKastoreAltarPiecesEvent(const EvtContext &context,
+                                               std::span<const EvtInstruction> instructions) {
+    if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_GLOBAL ||
+        context.eventId != kastoreAltarPiecesEventId || instructions.size() != 22)
+        return false;
+
+    const auto atStep = [instructions](int step) {
+        return std::ranges::find(instructions, step, &EvtInstruction::step);
+    };
+    std::array<std::span<const EvtInstruction>::iterator, 22> steps;
+    for (int step = 0; step < std::ssize(steps); ++step) {
+        steps[step] = atStep(step);
+        if (steps[step] == instructions.end())
+            return false;
+    }
+    const auto comparesItem = [&steps](int step, ItemId item, int targetStep) {
+        return steps[step]->opcode == EVENT_Compare && steps[step]->target_step == targetStep &&
+               steps[step]->data.variable_descr.type == VAR_PlayerItemInHands &&
+               steps[step]->data.variable_descr.value == std::to_underlying(item);
+    };
+    const auto showsText = [&steps](int step, int textId) {
+        return steps[step]->opcode == EVENT_ShowMessage && steps[step]->data.text_id == textId;
+    };
+    const auto removesItem = [&steps](int step, ItemId item) {
+        return steps[step]->opcode == EVENT_Subtract &&
+               steps[step]->data.variable_descr.type == VAR_PlayerItemInHands &&
+               steps[step]->data.variable_descr.value == std::to_underlying(item);
+    };
+    const auto changesVariable = [&steps](int step, EvtOpcode opcode, EvtVariable variable, int value) {
+        return steps[step]->opcode == opcode && steps[step]->data.variable_descr.type == variable &&
+               steps[step]->data.variable_descr.value == value;
+    };
+    const EvtVariable history19 =
+        static_cast<EvtVariable>(std::to_underlying(VAR_History_0) + 19);
+
+    return steps[0]->opcode == EVENT_ForPartyMember && steps[0]->who == CHOOSE_PARTY &&
+           comparesItem(1, ITEM_QUEST_ALTAR_PIECE_LIGHT, 7) &&
+           comparesItem(2, ITEM_QUEST_ALTAR_PIECE_DARK, 5) &&
+           showsText(3, 327) && steps[4]->opcode == EVENT_Exit &&
+           showsText(5, kastoreNeedsDarkPieceTextId) && steps[6]->opcode == EVENT_Exit &&
+           comparesItem(7, ITEM_QUEST_ALTAR_PIECE_DARK, 10) &&
+           showsText(8, kastoreHasDarkPieceTextId) && steps[9]->opcode == EVENT_Exit &&
+           showsText(10, 330) &&
+           removesItem(11, ITEM_QUEST_ALTAR_PIECE_LIGHT) &&
+           removesItem(12, ITEM_QUEST_ALTAR_PIECE_DARK) &&
+           changesVariable(13, EVENT_Subtract, VAR_QBits_QuestsDone,
+                           std::to_underlying(QBIT_ORACLE_RECOVERS_ALTAR_PIECE_LIGHT)) &&
+           changesVariable(14, EVENT_Subtract, VAR_QBits_QuestsDone,
+                           std::to_underlying(QBIT_ORACLE_RECOVERS_ALTAR_PIECE_DARK)) &&
+           changesVariable(15, EVENT_Add, history19, 0) &&
+           changesVariable(16, EVENT_Add, VAR_Experience, 50000) &&
+           steps[17]->opcode == EVENT_SetNPCTopic &&
+           steps[17]->data.npc_topic_descr.npc_id == 84 &&
+           steps[17]->data.npc_topic_descr.index == 0 &&
+           steps[17]->data.npc_topic_descr.event_id == 0 &&
+           steps[18]->opcode == EVENT_Subtract &&
+           steps[18]->data.variable_descr.type == VAR_QBits_QuestsDone &&
+           steps[18]->data.variable_descr.value == std::to_underlying(QBIT_ALTAR_PIECES_DARK_ACTIVE) &&
+           steps[19]->opcode == EVENT_Set &&
+           steps[19]->data.variable_descr.type == VAR_QBits_QuestsDone &&
+           steps[19]->data.variable_descr.value == std::to_underlying(QBIT_ALTAR_PIECES_DARK_FINISHED) &&
+           changesVariable(20, EVENT_Set, VAR_Award, std::to_underlying(AWARD_47)) &&
+           steps[21]->opcode == EVENT_SetNPCGreeting &&
+           steps[21]->data.npc_descr.npc_id == 84 && steps[21]->data.npc_descr.greeting == 112;
 }
 
 static bool isOriginalWallsLichJarEvent(const EvtContext &context,
@@ -1622,7 +1691,17 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
         case EVENT_ShowMessage:
             branchless_dialogue_str.clear();
             if (_context.source == EVT_SOURCE_GLOBAL) {
-                current_npc_text = pNPCTopics[ir.data.text_id - 1].pText;
+                int textId = ir.data.text_id;
+                // Kastore's shipped one-piece branches point at each other's responses. Match the complete original
+                // event signature before applying GrayFace's two-reference correction, leaving patched or custom
+                // global data authoritative.
+                if (isOriginalKastoreAltarPiecesEvent(_context, _events)) {
+                    if (ir.step == 5)
+                        textId = kastoreHasDarkPieceTextId;
+                    else if (ir.step == 8)
+                        textId = kastoreNeedsDarkPieceTextId;
+                }
+                current_npc_text = pNPCTopics[textId - 1].pText;
             } else if (ir.data.text_id < engine->_levelStrings.size()) {
                 branchless_dialogue_str = engine->_levelStrings[ir.data.text_id];
             }

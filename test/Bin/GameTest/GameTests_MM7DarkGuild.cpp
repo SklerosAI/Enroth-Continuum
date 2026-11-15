@@ -349,6 +349,45 @@ GAME_TEST(MM7DarkGuild, KastoreRequiresBothAltarPieces) {
     EXPECT_EQ(darkPieceTape, tape(false, true, false));
 }
 
+GAME_TEST(MM7DarkGuild, KastoreNamesTheMissingAltarPiece) {
+    struct OnePieceCase {
+        ItemId ownedPiece;
+        int expectedTextId;
+    };
+    constexpr std::array cases = {
+        OnePieceCase{ITEM_QUEST_ALTAR_PIECE_DARK, 328},
+        OnePieceCase{ITEM_QUEST_ALTAR_PIECE_LIGHT, 329},
+    };
+
+    // The shipped global event has Kastore's two one-piece responses crossed: carrying the Dark piece claims the
+    // Dark piece is missing, and carrying the Light piece claims the Light piece is missing. Exercise both branches
+    // through Kastore's physical Pit house and dialogue rather than accepting a table-only correction.
+    for (const OnePieceCase &onePiece : cases) {
+        SCOPED_TRACE(fmt::format("ownedPiece={}", std::to_underlying(onePiece.ownedPiece)));
+        test.prepareForNextTest();
+        engine->config->debug.NoActors.setValue(true);
+        game.startNewGame();
+        unlockDarkAdvisers(game);
+
+        openPitAdviser(game, 84);
+        game.pressGuiButton("HouseNpcDialogue_Option0");
+        game.tick();
+        ASSERT_TRUE(pParty->_questBits[QBIT_ALTAR_PIECES_DARK_ACTIVE]);
+        leaveDarkGuildHouse(game);
+        openPitAdviser(game, 84);
+
+        pParty->pCharacters[0].inventory.add(Item(onePiece.ownedPiece));
+        game.tick();
+        game.pressGuiButton("HouseNpcDialogue_Option0");
+        game.tick();
+
+        EXPECT_EQ(current_npc_text, pNPCTopics[onePiece.expectedTextId - 1].pText);
+        EXPECT_TRUE(pParty->_questBits[QBIT_ALTAR_PIECES_DARK_ACTIVE]);
+        EXPECT_FALSE(pParty->_questBits[QBIT_ALTAR_PIECES_DARK_FINISHED]);
+        EXPECT_TRUE(pParty->hasItem(onePiece.ownedPiece));
+    }
+}
+
 GAME_TEST(MM7DarkGuild, MaximusRequiresAndAcceptsSoulJars) {
     // Complete Kastore's prerequisite through his real Pit placement, then verify Maximus both assigns the distinct
     // Dark task and consumes the case. The Thunderfist acquisition event is covered separately because it is an

@@ -3662,3 +3662,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Current OpenEnroth reproduced GrayFace's Avlee geometry defect: the unique original `rock01` at (-15088, -4288) loaded at Z 208 over a verified non-water terrain floor at Z 148. A narrow post-reload correction now requires every original decoration field and the unique coordinate before using that live floor height.
 - The focused original-geometry and custom-shape controls pass 2/2. Patched or duplicate data remains authoritative, and exact runtime position/floor assertions provided stronger evidence than a camera-dependent capture.
+
+## [2026-11-15] update | MM7 Barrow, Colony and Master checkpoint
+- by: T-Burton-ND via codex
+- Barrow II now preserves the Lantern source chest after successful access across close, reload and award state, while fresh legacy award state uses the fallback. Its rat center is on a valid indoor floor under OpenEnroth's exact-center behavior; the focused Lantern/geometry selection passes 8/8.
+- Colony Zod now skips the Family Reunion movie and History 24 on a completed repeat exit while preserving the first completion and disengaging for custom event shapes. The focused Colony selection passes 3/3.
+- Initiate-to-Master follows Hume, the physical Temple of Baa transition, attack-input High Priest combat, corpse pickup and exact promotion transaction. Its cases plus the adjacent Zokarr control pass 4/4 without a production change.

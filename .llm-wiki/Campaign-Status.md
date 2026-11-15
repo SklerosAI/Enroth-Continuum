@@ -166,6 +166,22 @@ right-clicks the reusable bottle, buys an empty potion bottle through event
 out-of-bounds explicit destination, so OpenEnroth loads the correct map but
 skips placement; original-executable parity remains open before any repair.
 
+The remaining war-alternative gaps are now covered without a production
+change. Both opposing-throne exposure topics execute their authored death and
+failure cleanup; a representative Stone City rebuild return places both
+ambassadors before all five trumpet handlers are exercised with exact
+per-character rewards. All 27 effective result/recipient states resolve under
+both arbiters, including exposed/expired equivalence and the shipped
+incomplete-state defaults. The existing neutral/Dark checkpoint remains the
+durable boundary rather than duplicating every campaign step.
+
+Stone City's Troglodyte route now uses Spark's real dialogue, one measured
+approach and attack-input Queen kill, a survivor refusal and the exact clear
+reward; only the repetitive remainder is fixtured. Its production-Save writer
+and fresh-process normal-Load reader pass with unchanged slot bytes. The
+inspected lower-city capture shows coherent tunnel geometry, lighting, HUD and
+minimap plus the Queen kill message; the rolling private folder remains at 100.
+
 Haldar's Remains now covers the authored trapped Maze face rather than only a
 direct backing-chest open. The close-before-pickup regression is repaired with
 a persistent source marker while legacy marker-zero routing remains intact.

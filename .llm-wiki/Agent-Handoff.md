@@ -227,6 +227,19 @@ position is out of bounds, so OpenEnroth skips placement after loading the
 correct map; retain this as an original-executable parity follow-up rather than
 assuming an engine defect.
 
+War-alternative coverage now includes both physical exposure/death failures,
+all five trumpet handlers after a representative authored ambassador-placement
+return, and the 27 effective result/recipient states under both arbiters. The
+existing neutral/Dark checkpoint remains the durability proof; do not expand
+this into duplicated step-by-step combat or traversal coverage.
+
+Stone City's Troglodyte route uses Spark's real offer/return, one measured
+approach and attack-input Queen kill, a real survivor refusal and exact rewards,
+with only the repetitive remainder fixtured. Production Save and fresh-process
+normal Load preserve the completed state and unchanged slot bytes. The accepted
+actor-relative lower-city frame was visually inspected; the capture folder is
+still capped at 100.
+
 Haldar's Remains now has authored Maze face/chest lifecycle coverage. The
 source event previously set qbit 161 on open and redirected a later click to
 chest 0 even if item 628 remained in chest 1. An exact event-176 marker seam

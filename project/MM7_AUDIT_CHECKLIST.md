@@ -13,10 +13,12 @@ assets, save contents, or copied guide text.
 
 Checkpoint, 2026-11-15: all 27 promotion endpoints have focused behavior
 coverage and all 76 shipped maps have runtime GameTest references. These are
-important breadth milestones, not closure of the full audit below. War failure
-and result branches, regional durability, ordinary movement/combat,
-original-executable parity for the Strange Temple exit placement and graphical
-Mac play remain open.
+important breadth milestones, not closure of the full audit below. Both war
+exposure failures, all five trumpet handlers and the effective result matrix
+are covered; Stone City adds one representative movement/combat kill and a
+durable regional checkpoint. Other regional durability, representative
+movement/combat, original-executable parity for the Strange Temple exit
+placement and graphical Mac play remain open.
 
 ## Baseline and independence
 

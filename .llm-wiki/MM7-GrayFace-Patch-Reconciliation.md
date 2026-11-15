@@ -62,6 +62,11 @@ and the Temple of the Moon and Strange Temple routes likewise found no relevant
 GrayFace 2.5.7 behavioral delta. Their focused physical/input-driven coverage
 required no production compatibility change.
 
+The war exposure topics and Harmondale result resolver are also byte-identical
+in GrayFace 2.5.7. Both reachable death/failure branches, the five trumpet
+handlers and representative/full state resolution therefore remain authored
+behavior tests, not compatibility repairs.
+
 The Priest audit found the same authored Falk and Tidewater event-176
 transaction in GrayFace 2.5.7. The initial physical hand-in passed, but a
 deeper lifecycle audit showed the missing legacy/fresh-state distinction.

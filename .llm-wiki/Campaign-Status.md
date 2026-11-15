@@ -79,6 +79,14 @@ promotion control, 4/4. The source contract confirms eligibility is inherited
 through Hume's first-promotion topic rather than rechecking an Initiate award;
 no production change was needed.
 
+Priest-to-Priest-of-Light and -Dark now use Rebecca's and Falk's real dialogue
+and physically click the authored Moon and Sun altar faces. The packet covers
+Light/Dark path and topic gates, missing-objective refusals, qualifying and
+honorary outcomes, +10,000 gold, cleanup and duplicate stability. Original and
+GrayFace 2.5.7 event records both apply -10 current-location reputation on both
+branches, so the apparently surprising Dark direction is preserved. Five new
+cases plus the adjacent first-Priest route pass 6/6 without a production fix.
+
 Wizard-to-Archmage physically retrieves the Breeding Zone Book of Divine
 Intervention and retains it through Thomas Grey's exact transaction. The route
 reproduced event 195 stranding the book after a close-before-pickup; a guarded

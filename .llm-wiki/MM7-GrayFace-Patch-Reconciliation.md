@@ -65,6 +65,13 @@ preserves it across close and reload, and sends fresh recovery-bit or either
 Priest award state to fallback chest 0. The focused Priest packet plus the
 adjacent Breeding control pass 8/8, including custom-shape disengagement.
 
+The two second-Priest routes are also byte-identical between the shipped global
+events and GrayFace 2.5.7 for events 86/87/90/91. Both Light and Dark returns
+subtract 10 current-location reputation, so the Dark direction is preserved as
+authored rather than treated as a repair candidate. Real promoter dialogue,
+physical Moon/Sun altar faces, refusals, exact rewards and duplicate stability
+pass 6/6 with the adjacent first-Priest route.
+
 A cumulative guard review hardened the exact Wine and Lady Carmine kill seams
 against alert-filtered vacuous success by reading the validated target actor's
 state directly. It also made the Castle golem pre-animation guard require the

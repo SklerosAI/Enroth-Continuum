@@ -137,6 +137,15 @@ duplicate stability. Eligibility comes from Hume's first-promotion topic
 transition rather than a repeated Initiate-award check. The three Master cases
 and adjacent Zokarr control pass 4/4 without a production change.
 
+Priest-to-Priest-of-Light and -Dark now cover Rebecca's and Falk's real house
+dialogue, physical face clicks at the Grand Temple of the Moon and Grand Temple
+of the Sun, path/topic and missing-objective refusals, exact qualifying and
+honorary rewards, cleanup and duplicate stability. The Dark offer is inherited
+from Falk's first-promotion topic rather than repeating an award predicate. Both
+the shipped and GrayFace 2.5.7 records subtract 10 current-location reputation
+on both branches, so the packet preserves that authored direction. Five new
+cases plus the adjacent first-Priest route pass 6/6 without a production change.
+
 Wizard-to-Archmage now covers Thomas Grey's real Light offer, alignment and
 missing-book refusals, physical Breeding Zone acquisition, exact retained-book
 rewards and duplicate protection. Event 195 previously set retrieval bits on

@@ -3612,3 +3612,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Walls of Mist event 176 used the unrelated adviser Soul Jars award to route an active Lich quest to an empty chest, and it wrote but never read its persistent source marker. The physical regression reproduced the collision before repair.
 - An exact original-event seam now selects chest 0 for active qbit 48 or persisted decor 23. Real Wynac dialogue, four physical jars, 3/4 refusal, bound full-jar conversion, exact rewards, duplicate protection and save/reload routing pass 7/7 with the existing Lich control.
+
+## [2026-11-15] fix | MM7 Perfect Bow chest lifecycle
+- by: T-Burton-ND via codex
+- Titans' Stronghold event 176 marked the Perfect Bow taken before its trapped source chest successfully opened. The focused regression captured qbit 163 set while the bow remained untouched and the UI stayed closed.
+- The exact D09 seam now publishes qbit 163 and map variable 2 only after a successful source open, preserves same-visit/save-load access and routes fresh retrieved maps away from duplicates. Real Master Archer and Sniper offers, physical pickups, adjusted-bow rewards and duplicate guards pass 6/6; GrayFace's separate artifact-refund opcode remains deferred.

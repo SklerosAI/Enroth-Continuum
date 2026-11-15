@@ -10,6 +10,19 @@ The MM7 working gate is closed. This list is remaining audit and coverage work,
 not a claim that MM7 is presently unplayable. All graphical items remain
 deferred while the owner's headless-only instruction is active.
 
+## Owner-recorded future coverage decision
+
+- Add representative **real movement** coverage before closing the full MM7
+  audit. At least one accepted route must drive ordinary movement inputs and
+  exercise traversal/collision or a map-entry approach; a teleport may prepare
+  the scenario, but teleporting directly to every interaction does not satisfy
+  this requirement.
+- Cover the **complete Barrow Downs region**: the outdoor Barrow Downs map, all
+  fifteen numbered Barrow interiors, Zokarr's Tomb, and their authored travel
+  connections. Include the associated promotion/quest interactions where they
+  provide meaningful acceptance checks. This is a future test requirement, not
+  a claim that the coverage already exists.
+
 ## Recommended quest order
 
 | Priority | Quest group | Areas | Work remaining |

@@ -3587,3 +3587,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Falk's real Deyja offer now leads through the physical Tidewater map chest and held-item return, with the no-map refusal, exact Cleric and honorary rewards, item/bit/topic cleanup, gold, reputation and duplicate stability asserted.
 - The packet proves the Bracada boat schedule is unavailable before the hand-in and available afterward. Priest tests plus the Tidewater control pass 3/3, closing behavior coverage for all nine first promotions without a production change or broad-suite rerun.
+
+## [2026-11-15] fix | MM7 Champion combined Arena wins
+- by: T-Burton-ND via codex
+- Leda's real promotion dialogue reproduced the GrayFace defect: five Lord wins and a four-Knight/one-Lord mix were refused while five Knight wins passed. The compatibility rule is a combined Knight plus Lord total of five.
+- A narrow MM7 global-event-72 comparison now accepts 5+0, 0+5 and 4+1 while rejecting 2+2 and Page/Squire-only wins. Exact rewards, refusal and duplicate behavior plus the existing Arena control pass 5/5; generic counter semantics are unchanged.

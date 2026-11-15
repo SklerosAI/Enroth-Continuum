@@ -109,6 +109,10 @@ constexpr int wallsLichJarEventId = 176;
 constexpr int wallsLichJarChestId = 0;
 constexpr int wallsLichJarFallbackChestId = 1;
 constexpr int wallsLichJarDecorVariable = 23;
+constexpr int titansPerfectBowEventId = 176;
+constexpr int titansPerfectBowChestId = 1;
+constexpr int titansPerfectBowFallbackChestId = 0;
+constexpr int titansPerfectBowMapVariable = 2;
 
 static bool isOriginalBreedingZoneBookEvent(const EvtContext &context,
                                             std::span<const EvtInstruction> instructions) {
@@ -178,6 +182,51 @@ static bool isOriginalWallsLichJarEvent(const EvtContext &context,
     });
     return hasOriginalAwardGate && hasActiveQuestGate && !hasDecorVariableGate && hasJarChest &&
            hasFallbackChest && hasTakenBitWrite && hasDecorVariableWrite;
+}
+
+static bool isOriginalTitansPerfectBowEvent(const EvtContext &context,
+                                            std::span<const EvtInstruction> instructions) {
+    if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_MAP ||
+        engine->_currentLoadedMapId != MAP_TITANS_STRONGHOLD || context.eventId != titansPerfectBowEventId)
+        return false;
+
+    const bool hasPromotionAwardGate = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 0 && instruction.target_step == 6 && instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == VAR_Award &&
+               instruction.data.variable_descr.value == std::to_underlying(AWARD_PROMOTION_MASTER_ARCHER);
+    });
+    const bool hasLightQuestGate = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 4 && instruction.target_step == 8 && instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_PERFECT_BOW_LIGHT_ACTIVE);
+    });
+    const bool hasDarkQuestGate = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 5 && instruction.target_step == 8 && instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_PERFECT_BOW_DARK_ACTIVE);
+    });
+    const bool hasFallbackChest = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 6 && instruction.opcode == EVENT_OpenChest &&
+               instruction.data.chest_id == titansPerfectBowFallbackChestId;
+    });
+    const bool hasPrematureTakenWrite = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 8 && instruction.opcode == EVENT_Set &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_PERFECT_BOW_TAKEN);
+    });
+    const bool hasBowChest = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 9 && instruction.opcode == EVENT_OpenChest &&
+               instruction.data.chest_id == titansPerfectBowChestId;
+    });
+    const bool hasMapVariableInstruction = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return (instruction.opcode == EVENT_Compare || instruction.opcode == EVENT_Set ||
+                instruction.opcode == EVENT_Add) &&
+               instruction.data.variable_descr.type ==
+                   static_cast<EvtVariable>(std::to_underlying(VAR_MapPersistentVariable_0) +
+                                            titansPerfectBowMapVariable);
+    });
+    return hasPromotionAwardGate && hasLightQuestGate && hasDarkQuestGate && hasFallbackChest &&
+           hasPrematureTakenWrite && hasBowChest && !hasMapVariableInstruction;
 }
 
 /**
@@ -441,6 +490,11 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             if (isOriginalBreedingZoneBookEvent(_context, _events) &&
                 ir.data.chest_id == breedingZoneBookChestId)
                 engine->_persistentVariables.mapVars[0] = 1;
+            if (isOriginalTitansPerfectBowEvent(_context, _events) &&
+                ir.data.chest_id == titansPerfectBowChestId) {
+                pParty->_questBits.set(QBIT_PERFECT_BOW_TAKEN);
+                engine->_persistentVariables.mapVars[titansPerfectBowMapVariable] = 1;
+            }
             break;
         case EVENT_ShowFace:
             for (Character &character : iterateCharacters(ir.who, vrng))
@@ -516,6 +570,17 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             }
             break;
         case EVENT_Compare:
+            if (isOriginalTitansPerfectBowEvent(_context, _events) && ir.step == 0) {
+                const bool useBowChest = engine->_persistentVariables.mapVars[titansPerfectBowMapVariable] != 0 ||
+                                         !pParty->_questBits[QBIT_PERFECT_BOW_TAKEN] &&
+                                             (pParty->_questBits[QBIT_PERFECT_BOW_LIGHT_ACTIVE] ||
+                                              pParty->_questBits[QBIT_PERFECT_BOW_DARK_ACTIVE]);
+                const int chestId = useBowChest ? titansPerfectBowChestId : titansPerfectBowFallbackChestId;
+                auto chest = std::ranges::find_if(_events, [chestId](const EvtInstruction &instruction) {
+                    return instruction.opcode == EVENT_OpenChest && instruction.data.chest_id == chestId;
+                });
+                return {EVT_FLOW_JUMP, chest->step};
+            }
             if (isOriginalWallsLichJarEvent(_context, _events) &&
                 ir.data.variable_descr.type == VAR_QBits_QuestsDone &&
                 ir.data.variable_descr.value == std::to_underlying(QBIT_LICH_JARS_ACTIVE) &&

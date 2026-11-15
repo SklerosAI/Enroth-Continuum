@@ -3679,3 +3679,9 @@ Chronological record of wiki activity.
 - Rogue-to-Spy now uses William Lasker's real dialogue and the physical Watchtower 6 counterweight. Exact rewards, refusals, cleanup and duplicate stability pass; an exact MM7 greeting-row correction changes the reproduced post-promotion “Rogues” text to “Spies.” The focused packet plus its adjacent control passes 5/5.
 - Paladin-to-Hero and -Villain now physically rescue or capture Alice through the authored Setag Tower and Gryphonheart interactions, with path/refusal, transaction, relocation and duplicate coverage. Six focused tests pass without a production change.
 - Mount Nighon's two dead tavern/training halves now use their working paired events, and the two group-26/27 peasants use Warlock faction 74. Both physical doors open and actor relations remain friendly; the four Nighon cases plus the Deyja source control pass 5/5 without generic opcode-55 support.
+
+## [2026-11-15] update | MM7 promotions and full map runtime coverage
+- by: T-Burton-ND via codex
+- Ranger Lord, Ninja, Bounty Hunter and Black Knight now have real dialogue, refusal, physical or input-driven objective, exact reward and duplicate coverage. This brings all 27 MM7 promotion endpoints to behavior-covered status without a production change in those four packets.
+- Temple of the Moon and Strange Temple close the last two inventory-only rows, so all 76 shipped maps now have runtime GameTest coverage. The Strange exit reaches Harmondale but its shipped explicit position is out of bounds; original-executable placement parity remains open.
+- Kastore's two one-piece altar responses are corrected only under the exact original global-event-158 signature, closing the remaining pinned GrayFace presentation row. The current GameTest style target passes; broad known-green suites were not rerun.

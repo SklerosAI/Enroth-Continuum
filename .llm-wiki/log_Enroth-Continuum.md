@@ -3668,3 +3668,8 @@ Chronological record of wiki activity.
 - Barrow II now preserves the Lantern source chest after successful access across close, reload and award state, while fresh legacy award state uses the fallback. Its rat center is on a valid indoor floor under OpenEnroth's exact-center behavior; the focused Lantern/geometry selection passes 8/8.
 - Colony Zod now skips the Family Reunion movie and History 24 on a completed repeat exit while preserving the first completion and disengaging for custom event shapes. The focused Colony selection passes 3/3.
 - Initiate-to-Master follows Hume, the physical Temple of Baa transition, attack-input High Priest combat, corpse pickup and exact promotion transaction. Its cases plus the adjacent Zokarr control pass 4/4 without a production change.
+
+## [2026-11-15] test | MM7 second Priest promotions
+- by: T-Burton-ND via codex
+- Priest-to-Priest-of-Light and -Dark now use Rebecca's and Falk's real dialogue, physical Moon/Sun altar face clicks, path/topic and missing-objective refusals, exact qualifying and honorary rewards, cleanup and duplicate stability.
+- Shipped and GrayFace 2.5.7 events 86/87/90/91 are byte-identical, including -10 current-location reputation on both returns, so the surprising Dark direction remains authored. Five new cases plus the first-Priest control pass 6/6 without a production change.

@@ -1053,11 +1053,17 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
         case EVENT_NPCSetItem:
             npcSetItem(ir.data.npc_item_descr.id, ir.data.npc_item_descr.item, ir.data.npc_item_descr.is_give);
             break;
-        case EVENT_SetNPCGreeting:
-            pNPCStats->pNPCData[ir.data.npc_descr.npc_id].flags &= ~NPC_GREETED_FIRST;
-            pNPCStats->pNPCData[ir.data.npc_descr.npc_id].flags &= ~NPC_GREETED_SECOND;
-            pNPCStats->pNPCData[ir.data.npc_descr.npc_id].greetingIndex = ir.data.npc_descr.greeting;
+        case EVENT_SetNPCGreeting: {
+            int greetingNpcId = ir.data.npc_descr.npc_id;
+            // Tor Anwyn owns the Warlock promotion and greeting 83, but its return script targets Anthony Green.
+            if (engine->gameTitle() == GameTitle::MM7 && _context.source == EVT_SOURCE_GLOBAL &&
+                _context.eventId == 103 && greetingNpcId == 50 && ir.data.npc_descr.greeting == 83)
+                greetingNpcId = 51;
+            pNPCStats->pNPCData[greetingNpcId].flags &= ~NPC_GREETED_FIRST;
+            pNPCStats->pNPCData[greetingNpcId].flags &= ~NPC_GREETED_SECOND;
+            pNPCStats->pNPCData[greetingNpcId].greetingIndex = ir.data.npc_descr.greeting;
             break;
+        }
         case EVENT_IsActorKilled: {
             bool actorKilled = Actor::isActorKilled(ir.data.actor_descr.policy, ir.data.actor_descr.param, ir.data.actor_descr.num);
             // Celeste's map-leave script checks an unused group instead of Lady Carmine. An empty group satisfies

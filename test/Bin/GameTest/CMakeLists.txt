@@ -61,6 +61,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7ChampionPromotion.cpp
         GameTests_MM7PriestPromotion.cpp
         GameTests_MM7WizardPromotion.cpp
+        GameTests_MM7WarlockPromotion.cpp
         GameTests_MM7BarrowTraversal.cpp
         GameTests_MM7DarkGuild.cpp
         GameTests_MM7Scrolls.cpp

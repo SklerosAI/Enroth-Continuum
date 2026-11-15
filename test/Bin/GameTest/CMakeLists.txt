@@ -56,6 +56,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7ThreeStatuettes.cpp
         GameTests_MM7KerridLetter.cpp
         GameTests_MM7Promotions.cpp
+        GameTests_MM7ArchmagePromotion.cpp
         GameTests_MM7ChampionPromotion.cpp
         GameTests_MM7PriestPromotion.cpp
         GameTests_MM7WizardPromotion.cpp

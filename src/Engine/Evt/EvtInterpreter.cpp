@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <utility>
 #include <vector>
@@ -99,6 +100,34 @@ static bool checkSeason(Season season) {
             assert(false);
             return false;
     }
+}
+
+constexpr int breedingZoneBookEventId = 195;
+constexpr int breedingZoneBookChestId = 0;
+constexpr int breedingZoneFallbackChestId = 19;
+
+static bool isOriginalBreedingZoneBookEvent(const EvtContext &context,
+                                            std::span<const EvtInstruction> instructions) {
+    if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_MAP ||
+        engine->_currentLoadedMapId != MAP_BREEDING_ZONE || context.eventId != breedingZoneBookEventId)
+        return false;
+
+    const bool hasOriginalGate = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 0 && instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_DIVINE_INTERVENTION_RETRIEVED);
+    });
+    const bool hasMapVariableGate = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == VAR_MapPersistentVariable_0;
+    });
+    const bool hasBookChest = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_OpenChest && instruction.data.chest_id == breedingZoneBookChestId;
+    });
+    const bool hasFallbackChest = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_OpenChest && instruction.data.chest_id == breedingZoneFallbackChestId;
+    });
+    return hasOriginalGate && !hasMapVariableGate && hasBookChest && hasFallbackChest;
 }
 
 /**
@@ -359,6 +388,9 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
         case EVENT_OpenChest:
             if (!Chest::open(ir.data.chest_id, _context.objectPid))
                 return {EVT_FLOW_STOP};
+            if (isOriginalBreedingZoneBookEvent(_context, _events) &&
+                ir.data.chest_id == breedingZoneBookChestId)
+                engine->_persistentVariables.mapVars[0] = 1;
             break;
         case EVENT_ShowFace:
             for (Character &character : iterateCharacters(ir.who, vrng))
@@ -434,6 +466,17 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             }
             break;
         case EVENT_Compare:
+            if (isOriginalBreedingZoneBookEvent(_context, _events) && ir.step == 0 &&
+                ir.data.variable_descr.type == VAR_QBits_QuestsDone &&
+                ir.data.variable_descr.value == std::to_underlying(QBIT_DIVINE_INTERVENTION_RETRIEVED) &&
+                pParty->_questBits[QBIT_DIVINE_INTERVENTION_RETRIEVED] &&
+                engine->_persistentVariables.mapVars[0] >= 1) {
+                auto sourceChest = std::ranges::find_if(_events, [](const EvtInstruction &instruction) {
+                    return instruction.opcode == EVENT_OpenChest &&
+                           instruction.data.chest_id == breedingZoneBookChestId;
+                });
+                return {EVT_FLOW_JUMP, sourceChest->step};
+            }
             if (engine->gameTitle() == GameTitle::MM6 &&
                 ir.data.variable_descr.type == VAR_PlayerItemInHands) {
                 for (Character &character : iterateCharacters(_who, grng))

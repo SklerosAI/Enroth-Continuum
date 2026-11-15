@@ -7,6 +7,7 @@ set(GAME_TEST_MAIN_SOURCES
         MM6CampaignChain.cpp
         MM6HeadlessRules.cpp
         MM7CampaignChain.cpp
+        MM7CombatHarness.cpp
         GameTests_0000.cpp
         GameTests_0500.cpp
         GameTests_1000.cpp
@@ -15,6 +16,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_2500.cpp
         GameTests_MM7Vendor.cpp
         GameTests_MM7Combat.cpp
+        GameTests_MM7CombatHarness.cpp
         GameTests_MM7Campaign.cpp
         GameTests_MM7CastlePath.cpp
         GameTests_MM7CastleRebuild.cpp
@@ -80,7 +82,8 @@ set(GAME_TEST_MAIN_HEADERS
         GameTestOptions.h
         MM6CampaignChain.h
         MM6HeadlessRules.h
-        MM7CampaignChain.h)
+        MM7CampaignChain.h
+        MM7CombatHarness.h)
 
 add_executable(OpenEnroth_GameTest ${GAME_TEST_MAIN_SOURCES} ${GAME_TEST_MAIN_HEADERS})
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6Chest.cpp)

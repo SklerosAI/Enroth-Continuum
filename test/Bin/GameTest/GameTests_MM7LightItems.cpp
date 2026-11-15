@@ -4,6 +4,7 @@
 #include <cmath>
 #include <numbers>
 #include <optional>
+#include <string>
 #include <utility>
 
 #include "Testing/Game/GameTest.h"
@@ -18,6 +19,8 @@
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIHouses.h"
 #include "Utility/Exception.h"
+
+#include "MM7CombatHarness.h"
 
 static std::pair<Vec3f, int> approachFace(const BLVFace &face) {
     Vec3f position = face.boundingBox.center() + 150 * face.facePlane.normal;
@@ -123,10 +126,29 @@ static void joinLightGuild() {
 static void toughenParty() {
     // Guards in the Walls of Mist, Temple of the Dark, Castle Gloaming and Wine Cellar are hostile to a Light party.
     for (Character &character : pParty->pCharacters) {
+        character._stats[ATTRIBUTE_SPEED] = 200;
         character._stats[ATTRIBUTE_ENDURANCE] = 200;
         character.uLevel = 200;
+        character.sResBodyBase = 1000;
+        character._melee_dmg_bonus = 100;
         character.health = character.GetMaxHealth();
     }
+}
+
+static bool approachActorForMelee(EngineController &game, MapId map, int actorId) {
+    for (const auto &[offset, yaw] : std::array{
+             std::pair{Vec3f(0, -250, 0), 90}, std::pair{Vec3f(-250, 0, 0), 0},
+             std::pair{Vec3f(0, 250, 0), 270}, std::pair{Vec3f(250, 0, 0), 180}}) {
+        for (int pitch : {-20, 0, 20}) {
+            game.teleportTo(map, pActors[actorId].pos + offset, yaw, pitch);
+            try {
+                game.pointMouseAtActor(actorId);
+                return true;
+            } catch (const Exception &) {
+            }
+        }
+    }
+    return false;
 }
 
 GAME_TEST(MM7LightItems, WallsPillarKeysFromChests) {
@@ -300,9 +322,29 @@ GAME_TEST(MM7LightItems, SoulJarsFromGloamingChest) {
     test.stopTaping();
 }
 
+GAME_TEST(MM7LightItems, WineCellarDisabledSpawnDoesNotCountAsKill) {
+    game.startNewGame();
+    game.teleportTo(MAP_WINE_CELLAR, Vec3f(601, -512, 1), 0);
+    ASSERT_EQ(pActors[0].monsterInfo.id, MONSTER_VAMPIRE_C);
+    ASSERT_EQ(pActors[0].aiState, Disabled);
+    auto exit = std::ranges::find_if(pIndoor->faces, [](const BLVFace &face) {
+        return face.eventId == 501 && face.Clickable();
+    });
+    ASSERT_NE(exit, pIndoor->faces.end());
+    auto [exitPosition, exitYaw] = approachFace(*exit);
+    game.teleportTo(MAP_WINE_CELLAR, exitPosition, exitYaw);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_INPUT_BLV);
+    game.pressGuiButton("Transition_Yes");
+    game.skipLoadingScreen();
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_TATALIA);
+    EXPECT_FALSE(pParty->_questBits[QBIT_WINE_CELLAR_VAMPIRE_KILLED]);
+}
+
 GAME_TEST(MM7LightItems, WineCellarExitDoesNotReplaceVampireKill) {
-    // Leaving the cellar does not count as defeating the Elder Vampire, including when the map's initial actor is
-    // disabled. The adviser must keep the quest active until the genuine map-leave kill predicate is satisfied.
+    // Leaving the active quest target alive is refused. The positive route then damages and kills the real vampire
+    // through player attack input before the genuine map-leave predicate completes the adviser hand-in.
     game.startNewGame();
     joinLightGuild();
     toughenParty();
@@ -321,8 +363,9 @@ GAME_TEST(MM7LightItems, WineCellarExitDoesNotReplaceVampireKill) {
     ASSERT_FALSE(::testing::Test::HasFatalFailure());
 
     game.teleportTo(MAP_WINE_CELLAR, Vec3f(601, -512, 1), 0); // Cellar entrance from Tatalia.
-    ASSERT_EQ(pActors[0].monsterInfo.id, MONSTER_VAMPIRE_C); // The vampire the leave event checks. The map data has it disabled.
-    ASSERT_EQ(pActors[0].aiState, Disabled);
+    ASSERT_EQ(pActors[0].monsterInfo.id, MONSTER_VAMPIRE_C); // Event 2 checks this authored quest target.
+    ASSERT_EQ(pActors[0].uniqueNameIndex, 5);
+    ASSERT_EQ(pActors[0].aiState, Standing);
     auto exit = std::ranges::find_if(pIndoor->faces, [](const BLVFace &face) {
         return face.eventId == 501 && face.Clickable();
     });
@@ -343,13 +386,17 @@ GAME_TEST(MM7LightItems, WineCellarExitDoesNotReplaceVampireKill) {
     EXPECT_FALSE(pParty->_questBits[QBIT_WINE_CELLAR_FINISHED]);
     EXPECT_TRUE(pParty->_questBits[QBIT_WINE_CELLAR_ACTIVE]);
 
-    // The genuine map-leave predicate recognizes a dead vampire. This isolates the quest event from combat setup
-    // while proving the exit still carries a real kill through to the adviser hand-in.
+    // The genuine map-leave predicate recognizes the same target after player combat.
     leaveHouse(game);
     game.teleportTo(MAP_WINE_CELLAR, Vec3f(601, -512, 1), 0);
-    ASSERT_EQ(pActors[0].aiState, Disabled);
-    Actor::Die(0);
-    ASSERT_EQ(pActors[0].aiState, Dying);
+    ASSERT_EQ(pActors[0].aiState, Standing);
+    mm7::testing::CombatResult combat = mm7::testing::fightActorWithAttackInput(
+        game, 0, [&] { return approachActorForMelee(game, MAP_WINE_CELLAR, 0); },
+        400, 5, 5);
+    const std::string diagnostics = mm7::testing::describeCombatResult(combat);
+    ASSERT_TRUE(combat.observedHpDecrease) << diagnostics;
+    ASSERT_TRUE(combat.reachedTerminalDeath) << diagnostics;
+    ASSERT_TRUE(combat.reachedDeadState) << diagnostics;
     game.teleportTo(MAP_WINE_CELLAR, exitPosition, exitYaw);
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();

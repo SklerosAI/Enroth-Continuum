@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <array>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -16,8 +17,10 @@
 #include "Engine/Tables/NPCTable.h"
 #include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
+#include "Utility/Exception.h"
 
 #include "MM7CampaignChain.h"
+#include "MM7CombatHarness.h"
 
 static bool carriesCube(const Actor &actor) {
     return actor.carriedItemId == ITEM_QUEST_CONTROL_CUBE || actor.items[0].itemId == ITEM_QUEST_CONTROL_CUBE ||
@@ -31,6 +34,22 @@ static bool partyHasCube() {
 static DoorState templeDoorState(int doorId) {
     auto door = std::ranges::find(pIndoor->doors, doorId, &BLVDoor::doorId);
     return door == pIndoor->doors.end() ? DOOR_CLOSED : door->state;
+}
+
+static bool approachActorForMelee(EngineController &game, MapId map, int actorId) {
+    for (const auto &[offset, yaw] : std::array{
+             std::pair{Vec3f(0, -250, 0), 90}, std::pair{Vec3f(-250, 0, 0), 0},
+             std::pair{Vec3f(0, 250, 0), 270}, std::pair{Vec3f(250, 0, 0), 180}}) {
+        for (int pitch : {-20, 0, 20}) {
+            game.teleportTo(map, pActors[actorId].pos + offset, yaw, pitch);
+            try {
+                game.pointMouseAtActor(actorId);
+                return true;
+            } catch (const Exception &) {
+            }
+        }
+    }
+    return false;
 }
 
 static void fightAndLootCubeCarrier(EngineController &game) {
@@ -150,9 +169,15 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter5) {
     game.teleportTo(MAP_WINE_CELLAR, Vec3f(601, -512, 1), 0); // Cellar entrance from Tatalia.
     ASSERT_FALSE(pActors.empty());
     ASSERT_EQ(pActors[0].monsterInfo.id, MONSTER_VAMPIRE_C);
-    ASSERT_EQ(pActors[0].aiState, Disabled);
-    Actor::Die(0); // Event 2 only marks the quest complete on exit after this actor dies.
-    ASSERT_EQ(pActors[0].aiState, Dying);
+    ASSERT_EQ(pActors[0].uniqueNameIndex, 5);
+    ASSERT_EQ(pActors[0].aiState, Standing);
+    mm7::testing::CombatResult cellarCombat = mm7::testing::fightActorWithAttackInput(
+        game, 0, [&] { return approachActorForMelee(game, MAP_WINE_CELLAR, 0); },
+        400, 5, 5);
+    const std::string cellarDiagnostics = mm7::testing::describeCombatResult(cellarCombat);
+    ASSERT_TRUE(cellarCombat.observedHpDecrease) << cellarDiagnostics;
+    ASSERT_TRUE(cellarCombat.reachedTerminalDeath) << cellarDiagnostics;
+    ASSERT_TRUE(cellarCombat.reachedDeadState) << cellarDiagnostics;
     useCampaignChainTransition(game, MAP_WINE_CELLAR, 501);
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_TATALIA);
     openCampaignChainCelesteHouse(game, HOUSE_CELESTE_HOSTEL_2, 81);

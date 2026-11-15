@@ -1045,6 +1045,21 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         case EVENT_ToggleActorGroupFlag:
             toggleActorGroupFlag(ir.data.actor_flag_descr.id, ir.data.actor_flag_descr.attr, ir.data.actor_flag_descr.is_set);
+            // The Wine Cellar's first actor is the uniquely named "Super Vampire (fix)" that event 2 checks for the
+            // Light quest. The shipped DLV stores this quest target disabled and event 1 only makes group 5
+            // aggressive, so the target otherwise cannot be fought. Activate only that authored actor while its
+            // quest is active; the existing disabled-spawn guard still applies before the party accepts the quest.
+            if (engine->gameTitle() == GameTitle::MM7 && engine->_indoor->filename == "d16.blv" &&
+                _context.eventId == 1 && ir.data.actor_flag_descr.id == 5 &&
+                ir.data.actor_flag_descr.attr == ACTOR_AGGRESSOR && ir.data.actor_flag_descr.is_set &&
+                pParty->_questBits[QBIT_WINE_CELLAR_ACTIVE] &&
+                !pParty->_questBits[QBIT_WINE_CELLAR_VAMPIRE_KILLED] &&
+                !pParty->_questBits[QBIT_WINE_CELLAR_FINISHED] && !pActors.empty() &&
+                pActors[0].monsterInfo.id == MONSTER_VAMPIRE_C && pActors[0].group == 5 &&
+                pActors[0].uniqueNameIndex == 5 && pActors[0].aiState == Disabled) {
+                Actor::toggleFlag(0, ACTOR_UNKNOW11, false);
+                pActors[0].UpdateAnimation();
+            }
             break;
         case EVENT_ToggleChestFlag:
             Chest::toggleFlag(ir.data.chest_flag_descr.chest_id, ir.data.chest_flag_descr.flag, ir.data.chest_flag_descr.is_set);

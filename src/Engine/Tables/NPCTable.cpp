@@ -4,6 +4,7 @@
 #include <array>
 #include <limits>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -138,6 +139,19 @@ void NPCStats::InitializeNPCGreets(const Blob &npcGreets) {
         int i = fromString<int>(tokens[0]); // File indices are 1-based.
         pNPCGreetings[i].pGreeting1 = unquote(tokens[1]);
         pNPCGreetings[i].pGreeting2 = unquote(tokens[2]);
+    }
+
+    // MM7's Spy-promotion event switches William Lasker to greeting 39, whose shipped text still addresses the
+    // party as Rogues. GrayFace corrects only this table row. Match both original strings exactly so patched or
+    // localized data remains authoritative.
+    constexpr int williamLaskerSpyGreeting = 39;
+    constexpr std::string_view originalGreeting = "Greetings Rogues, how may I be of service?";
+    constexpr std::string_view correctedGreeting = "Greetings Spies, how may I be of service?";
+    NPCGreeting &greeting = pNPCGreetings[williamLaskerSpyGreeting];
+    if (engine->gameTitle() == GameTitle::MM7 && greeting.pGreeting1 == originalGreeting &&
+        greeting.pGreeting2 == originalGreeting) {
+        greeting.pGreeting1 = correctedGreeting;
+        greeting.pGreeting2 = correctedGreeting;
     }
 }
 

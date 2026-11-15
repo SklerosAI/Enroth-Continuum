@@ -138,6 +138,7 @@ constexpr int castleHarmondaleAdvisorBannerRightCog = 20;
 constexpr int castleHarmondaleGolemEventId = 376;
 constexpr int celesteLadyCarmineMapLeaveEventId = 378;
 constexpr int wineCellarKillCheckEventId = 2;
+constexpr int colonyZodKillMovieEventId = 2;
 
 static bool isOriginalBreedingZoneBookEvent(const EvtContext &context,
                                             std::span<const EvtInstruction> instructions) {
@@ -201,6 +202,37 @@ static bool isOriginalTidewaterMapEvent(const EvtContext &context,
            changesVariableAt(3, 0, EVENT_Add, VAR_QBits_QuestsDone,
                              std::to_underlying(QBIT_ORACLE_RECOVERS_EVENMORN_MAP)) &&
            hasTerminalJump && opensChestAt(5, tidewaterFallbackChestId) && hasExit;
+}
+
+static bool isOriginalColonyZodKillMovieEvent(const EvtContext &context,
+                                              std::span<const EvtInstruction> instructions) {
+    if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_MAP ||
+        engine->_currentLoadedMapId != MAP_COLONY_ZOD || context.eventId != colonyZodKillMovieEventId ||
+        instructions.size() != 6)
+        return false;
+
+    const auto atStep = [instructions](int step) {
+        return std::ranges::find(instructions, step, &EvtInstruction::step);
+    };
+    const auto trigger = atStep(0);
+    const auto killed = atStep(1);
+    const auto exit = atStep(2);
+    const auto setKilled = atStep(3);
+    const auto movie = atStep(4);
+    const auto history = atStep(5);
+    if (trigger == instructions.end() || killed == instructions.end() || exit == instructions.end() ||
+        setKilled == instructions.end() || movie == instructions.end() || history == instructions.end())
+        return false;
+    const EvtVariable history24 = static_cast<EvtVariable>(std::to_underlying(VAR_History_0) + 24);
+    return trigger->opcode == EVENT_OnMapLeave && killed->opcode == EVENT_IsActorKilled &&
+           killed->target_step == 3 && killed->data.actor_descr.policy == KILL_CHECK_ACTORID &&
+           killed->data.actor_descr.param == 0 && killed->data.actor_descr.num == 0 &&
+           exit->opcode == EVENT_Exit && setKilled->opcode == EVENT_Set &&
+           setKilled->data.variable_descr.type == VAR_QBits_QuestsDone &&
+           setKilled->data.variable_descr.value == std::to_underlying(QBIT_XENOFEX_KILLED) &&
+           movie->opcode == EVENT_ShowMovie && movie->data.movie_unknown_field == 1 &&
+           trimRemoveQuotes(movie->str) == "family reunion" && history->opcode == EVENT_Add &&
+           history->data.variable_descr.type == history24 && history->data.variable_descr.value == 0;
 }
 
 static bool isOriginalWallsLichJarEvent(const EvtContext &context,
@@ -1699,6 +1731,9 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         }
         case EVENT_IsActorKilled: {
+            if (isOriginalColonyZodKillMovieEvent(_context, _events) && ir.step == 1 &&
+                pParty->_questBits[QBIT_XENOFEX_KILLED])
+                return {EVT_FLOW_JUMP, 2};
             bool actorKilled;
             // These two quest scripts target actor zero exactly. The generic predicate filters exact actors through
             // map alert state and can therefore report a living mismatched actor as vacuously dead.

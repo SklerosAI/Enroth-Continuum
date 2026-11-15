@@ -35,6 +35,12 @@ repair keeps Castle event 376 from enabling the golem or dismissing its NPC
 before Thomas sets the animation bit; the regression was demonstrated before
 the fix.
 
+Cleric-to-Priest closes the first-promotion set. It uses Falk's real Deyja
+house, the Tidewater event face and chest UI, and the Bracada boat house. The
+packet proves the no-map refusal, physical map acquisition, exact promotion and
+honorary transaction, item/bit/topic cleanup, duplicate prevention and the
+Evenmorn schedule becoming available only after the hand-in.
+
 ## Visual findings
 
 Corrected hidden captures at authored starts show coherent Tatalia and Avlee terrain, HUD and minimaps. Shoals' dense green view matches its explicit underwater contract: weak/strong fog distances are 50/2000 and both fog and terrain light use Eucalyptus green. Wetsuits gate access and drowning, not fog.

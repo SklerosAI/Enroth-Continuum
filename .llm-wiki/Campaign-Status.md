@@ -48,6 +48,12 @@ enabling group 6 and dismissing the Golem NPC before Thomas's animation; an
 MM7-only guard now requires the authored animation bit. The Wizard tests plus
 the existing golem control pass 4/4 without rerunning broader suites.
 
+Cleric-to-Priest completes behavior coverage for all nine first promotions.
+The route uses Falk's real house, Tidewater's physical quest-map chest and the
+Bracada boat schedule, with exact refusal, reward, item, reputation, topic and
+duplicate assertions. Its focused packet plus the adjacent Tidewater control
+pass 3/3; broader known-green suites remain intentionally unrereun.
+
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding
 Zone black occluder was a literal-origin capture-placement defect and disappears

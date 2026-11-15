@@ -102,6 +102,12 @@ NPC from being dismissed before Thomas animates it. The focused Wizard suite
 and existing golem control pass 4/4; source approaches still use setup
 teleports rather than continuous walking.
 
+All nine first promotions now have behavior coverage. The final Cleric-to-Priest
+packet reaches Falk's real Deyja house, physically opens the Tidewater map
+chest, returns the held map and proves the Evenmorn boat schedule unlock. Its
+focused tests plus the Tidewater control pass 3/3; no production change was
+needed.
+
 Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the
 corrected Breeding Zone. Shoals' green short-range fog is authored underwater
 behavior. Breeding Zone's old black occluder was caused by a literal indoor

@@ -54,4 +54,9 @@ and 99 are byte-identical, and GrayFace supplies no overrides for the three
 outdoor Stonehenge maps. The physical promotion packet therefore required no
 compatibility repair.
 
+The Priest audit found the same authored Falk and Tidewater event-176
+transaction in GrayFace 2.5.7. The physical map hand-in and Evenmorn boat
+unlock pass without a production repair; GrayFace's broader Tidewater
+quest-chest work remains a separate lifecycle follow-up.
+
 See also: [MM7 Quest Behavior Catalog](MM7-Quest-Behavior-Catalog.md), [MM7 Gameplay Harness](MM7-Gameplay-Harness.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md).

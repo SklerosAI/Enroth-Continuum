@@ -244,6 +244,13 @@ EvtTransition EvtInterpreter::execute(int startStep) {
     if (!_context.eventId || !_events.size())
         return EVT_TRANSITION_NONE;
 
+    // Castle Harmondale's golem reload event omits the animation quest-bit gate. Without it, merely assembling the
+    // golem changes the dormant map actor and dismisses the hired golem before Thomas Grey animates it.
+    if (engine->gameTitle() == GameTitle::MM7 && _context.source == EVT_SOURCE_MAP &&
+        engine->_currentLoadedMapId == MAP_CASTLE_HARMONDALE && _context.eventId == 376 &&
+        !pParty->_questBits[QBIT_GOLEM_ANIMATED])
+        return EVT_TRANSITION_NONE;
+
     int step = startStep;
 
     _who = !pParty->hasActiveCharacter() ? CHOOSE_RANDOM : CHOOSE_ACTIVE;

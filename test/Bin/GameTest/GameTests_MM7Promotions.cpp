@@ -13,6 +13,7 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/EvtProgram.h"
+#include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
@@ -109,7 +110,8 @@ bool selectNpcEvent(EngineController &game, NPCData *npc, unsigned int eventId) 
     auto option = std::ranges::find(topics, line);
     if (option == topics.end())
         return false;
-    game.pressGuiButton(fmt::format("HouseNpcDialogue_Option{}", option - topics.begin()));
+    const char *prefix = current_screen_type == SCREEN_NPC_DIALOGUE ? "NpcDialogue_Option" : "HouseNpcDialogue_Option";
+    game.pressGuiButton(fmt::format("{}{}", prefix, option - topics.begin()));
     game.tick();
     return true;
 }
@@ -290,6 +292,65 @@ void openMarkhamManor(EngineController &game, NPCData *markham) {
     }
 }
 
+void openSowerHouse(EngineController &game, NPCData *sower) {
+    game.teleportTo(MAP_TULAREAN_FOREST, Vec3f(), 0);
+    std::vector<std::pair<Vec3f, int>> doors;
+    for (const BLVFace &face : pOutdoor->faces)
+        if (face.Clickable() && eventOpensHouse(face.eventId, HOUSE_TULAREAN_FOREST_SOWER_RESIDENCE))
+            doors.push_back(approachFace(face));
+    ASSERT_FALSE(doors.empty());
+    for (auto [position, yaw] : doors) {
+        game.teleportTo(MAP_TULAREAN_FOREST, position, yaw);
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick();
+        if (current_screen_type == SCREEN_HOUSE &&
+            window_SpeakInHouse->houseId() == HOUSE_TULAREAN_FOREST_SOWER_RESIDENCE)
+            break;
+    }
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_TULAREAN_FOREST_SOWER_RESIDENCE);
+    auto entry = std::ranges::find(houseNpcs, sower, &HouseNpcDesc::npc);
+    ASSERT_NE(entry, houseNpcs.end());
+    if (houseNpcs.size() > 1) {
+        game.pressGuiButton(fmt::format("House_Npc{}", entry - houseNpcs.begin()));
+        game.tick();
+    }
+}
+
+bool openFaerieKingDialogue(EngineController &game, NPCData *faerieKing) {
+    const int faerieKingId = faerieKing - pNPCStats->pNPCData.data();
+    game.teleportTo(MAP_HALL_UNDER_THE_HILL, Vec3f(), 0);
+    auto audience = std::ranges::find_if(pIndoor->faces, [faerieKingId](const BLVFace &face) {
+        return face.eventId != 0 && engine->_localEventMap.hasEvent(face.eventId) &&
+               std::ranges::any_of(engine->_localEventMap.function(face.eventId),
+                                   [faerieKingId](const EvtInstruction &instruction) {
+                                       return instruction.opcode == EVENT_SpeakNPC &&
+                                              instruction.data.npc_descr.npc_id == faerieKingId;
+                                   });
+    });
+    ASSERT_NE(audience, pIndoor->faces.end());
+    ASSERT_TRUE(audience->Pressure_Plate());
+    const int audienceEvent = audience->eventId;
+    game.runGameRoutine([audienceEvent] { runEvent(EvtContext(EVT_SOURCE_MAP, audienceEvent)); });
+    game.tick();
+    return current_screen_type == SCREEN_NPC_DIALOGUE;
+}
+
+int countVariableInstruction(const std::vector<EvtInstruction> &function, EvtOpcode opcode, EvtVariable variable,
+                             int value) {
+    return std::ranges::count_if(function, [=](const EvtInstruction &instruction) {
+        return instruction.opcode == opcode && instruction.data.variable_descr.type == variable &&
+               instruction.data.variable_descr.value == value;
+    });
+}
+
+bool hasNpcTopicInstruction(const std::vector<EvtInstruction> &function, int npcId, int index, int eventId) {
+    return std::ranges::any_of(function, [=](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_SetNPCTopic && instruction.data.npc_topic_descr.npc_id == npcId &&
+               instruction.data.npc_topic_descr.index == index && instruction.data.npc_topic_descr.event_id == eventId;
+    });
+}
+
 void assertDisposableHeadlessProfile() {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
     const auto profileRoot = mm7::startupNativeProfileRoot();
@@ -300,6 +361,103 @@ void assertDisposableHeadlessProfile() {
 }
 
 } // namespace
+
+GAME_TEST(MM7Promotions, HunterPromotionSourceContract) {
+    game.startNewGame();
+    const std::vector<EvtInstruction> &request = engine->_globalEventMap.function(79);
+    const std::vector<EvtInstruction> &promotion = engine->_globalEventMap.function(83);
+
+    EXPECT_EQ(countVariableInstruction(request, EVENT_Set, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_FAERIE_MOUND_ACTIVE)),
+              1);
+    EXPECT_TRUE(hasNpcTopicInstruction(request, 45, 0, 80));
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_OnCanShowDialogItemCmp, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_FAERIE_MOUND_ACTIVE)),
+              1);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Compare, VAR_Class, std::to_underlying(CLASS_RANGER)), 4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Set, VAR_Class, std::to_underlying(CLASS_HUNTER)), 4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_Award,
+                                       std::to_underlying(AWARD_PROMOTION_HUNTER)),
+              4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_Experience, 30000), 4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_Award,
+                                       std::to_underlying(AWARD_PROMOTION_HUNTER_HONORARY)),
+              4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_Experience, 15000), 4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Subtract, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_FAERIE_MOUND_ACTIVE)),
+              1);
+    EXPECT_TRUE(hasNpcTopicInstruction(promotion, 45, 0, 81));
+    EXPECT_TRUE(hasNpcTopicInstruction(promotion, 52, 0, 0));
+}
+
+GAME_TEST(MM7Promotions, RangerHunterRealDialoguePacket) {
+    game.startNewGame();
+    NPCData *sower = &pNPCStats->pNPCData[45];
+    NPCData *faerieKing = &pNPCStats->pNPCData[52];
+    ASSERT_EQ(sower->house, HOUSE_TULAREAN_FOREST_SOWER_RESIDENCE);
+    ASSERT_EQ(sower->dialogue_1_evt_id, 79u);
+    ASSERT_EQ(faerieKing->dialogue_1_evt_id, 83u);
+
+    std::array initialClasses = {CLASS_RANGER, CLASS_KNIGHT, CLASS_RANGER, CLASS_SORCERER};
+    std::array<uint64_t, 4> experience;
+    for (int i = 0; i < 4; ++i) {
+        pParty->pCharacters[i].classType = initialClasses[i];
+        experience[i] = pParty->pCharacters[i].experience;
+    }
+    const int gold = pParty->GetGold();
+
+    // The durable Kerrid route already proves the Hall Under the Hill audience face and Faerie King dialogue.
+    // Exercise that real dialogue here without repeating the letter, food, pipe, and return transaction.
+    pParty->_questBits.set(QBIT_FAERIE_PIPES_ACTIVE); // A nearby but wrong prerequisite must not unlock promotion 83.
+    EXPECT_FALSE(openFaerieKingDialogue(game, faerieKing));
+    EXPECT_FALSE(pParty->_questBits[QBIT_FAERIE_MOUND_ACTIVE]);
+    EXPECT_EQ(pParty->GetGold(), gold);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, initialClasses[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experience[i]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_HUNTER]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_HUNTER_HONORARY]);
+    }
+    openSowerHouse(game, sower);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    ASSERT_TRUE(selectNpcEvent(game, sower, 79));
+    ASSERT_TRUE(pParty->_questBits[QBIT_FAERIE_MOUND_ACTIVE]);
+    ASSERT_EQ(sower->dialogue_1_evt_id, 80u);
+    leaveHouse(game);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+
+    ASSERT_TRUE(openFaerieKingDialogue(game, faerieKing));
+    ASSERT_TRUE(selectNpcEvent(game, faerieKing, 83));
+    EXPECT_FALSE(pParty->_questBits[QBIT_FAERIE_MOUND_ACTIVE]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_FAERIE_PIPES_ACTIVE]);
+    EXPECT_EQ(sower->dialogue_1_evt_id, 81u);
+    EXPECT_EQ(faerieKing->dialogue_1_evt_id, 0u);
+    EXPECT_EQ(pParty->GetGold(), gold);
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    for (int i : {0, 2}) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, CLASS_HUNTER);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experience[i] + 30000);
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_HUNTER]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_HUNTER_HONORARY]);
+    }
+    for (int i : {1, 3}) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, initialClasses[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experience[i] + 15000);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_HUNTER]);
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_HUNTER_HONORARY]);
+    }
+
+    std::array<uint64_t, 4> promotedExperience;
+    for (int i = 0; i < 4; ++i)
+        promotedExperience[i] = pParty->pCharacters[i].experience;
+    leaveHouse(game);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    EXPECT_FALSE(openFaerieKingDialogue(game, faerieKing));
+    EXPECT_EQ(pParty->GetGold(), gold);
+    for (int i = 0; i < 4; ++i)
+        EXPECT_EQ(pParty->pCharacters[i].experience, promotedExperience[i]);
+}
 
 GAME_TEST(MM7Promotions, MarkhamVaseRequiresPhysicalPickup) {
     auto activeTape = tapes.questBit(QBIT_MARKHAM_VASE_ACTIVE);

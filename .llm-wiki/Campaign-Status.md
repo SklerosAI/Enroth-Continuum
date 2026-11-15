@@ -20,6 +20,14 @@ The owner's [current delivery order](Current-Delivery-Order.md) puts MM7 working
 
 ## MM7 audit continuation — 2026-11-12
 
+The separately admitted Dark campaign profile is now established through C3.
+It reuses common C0-C2, then takes the authored 112-day messenger, Deyja judge
+and Harmondale Arbiter route to Evil alignment, the Dark path and Archibald's
+activation before writing a structurally checked `save003.mm7`. A fresh
+four-process C0-C3 run passed with retained predecessors unchanged. Light and
+Dark post-choice filters reject the other profile. C4-C7 remain open; the next
+chapter is Archibald, the Breeding Zone proof and the adviser unlock.
+
 The `codex/mm7-dark-chain` audit line is integrated on `master`. It carries
 complete headless coverage for Norbert Thrush's Parsons' Quill route: Emerald
 Island contest completion and departure, the real letter offer, a

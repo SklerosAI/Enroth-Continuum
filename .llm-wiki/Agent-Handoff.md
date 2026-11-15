@@ -69,6 +69,39 @@ chain while continuing the remaining quest, promotion, Barrow Downs,
 movement/combat and later graphical audit. Do not reuse or relabel a completed
 Light profile.
 
+## Current MM7 gameplay checkpoint — 2026-11-15
+
+Continue from `codex/mm7-gameplay-harness`. Its runner requires fresh-process
+`MM7GameplayHarness` and `MM7CombatHarness` suites and optionally the complete
+`MM7BarrowTraversal` suite. The composed Wine Cellar proof performs bounded
+forward input, observes release and distance reduction, then uses attack input
+to damage and kill the live authored quest target. The only production change
+is a narrow MM7 Wine Cellar activation repair for actor zero under the exact
+map/event/group/quest-active contract; killed/finished blockers and actors one
+and two remain disabled. The full Tolberti reward transaction is also covered.
+
+Barrow Downs, Barrows I-XV and Zokarr's Tomb are all visited across 27 authored
+transitions. Zokarr's pool covers Monk-to-Initiate and honorary outcomes. The
+complete Light Arch Druid route uses Green's offer, the live Nighon Tunnels
+skull source, Zokarr's deposit face and Green's return; GrayFace confirms the
+tempting Hothfarr/event-178 route is dead original content rather than an
+OpenEnroth regression. Ranger-to-Hunter uses Sower and the Hall Under the Hill
+audience, Archer-to-Warrior-Mage uses the physical Red Dwarf Mines sabotage
+face, Knight-to-Cavalier uses the real Haunted Mansion map-leave clear
+predicate, and Paladin-to-Crusader kills Wromthrax through attack input before
+the authored timer and Quixote return. These tests name their setup teleports;
+the harness is not autonomous pathfinding.
+
+Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the
+corrected Breeding Zone. Shoals' green short-range fog is authored underwater
+behavior. Breeding Zone's old black occluder was caused by a literal indoor
+origin and disappears at the authored floor-resolved start. Keep selected
+private captures under ignored `local-game-data/progress-captures/` and rotate
+at 100. Per the owner's latest direction, do not repeatedly rerun known-green
+suites; use focused checks until the next substantive integration milestone.
+
+See [MM7 Gameplay Harness](MM7-Gameplay-Harness.md), [MM7 Quest Behavior Catalog](MM7-Quest-Behavior-Catalog.md) and [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md).
+
 ## Current MM7 regional checkpoint — 2026-11-12
 
 Codex integrated fresh-process Save/Load boundaries for the complete Season's

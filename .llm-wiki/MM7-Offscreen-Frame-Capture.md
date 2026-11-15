@@ -21,11 +21,23 @@ terrain from an invalid position. The capture now selects the first available
 party/north/south/east/west start after load and fails if none exists. A normal
 Null-renderer check passed 1/1 across Tatalia, Avlee and Shoals and proved the
 two missing-`Party Start` fallbacks. No new graphics process ran under the
-owner's 2026-11-12 headless-only rule; later hidden recaptures must distinguish
-valid map appearance and Shoals underwater fog from genuine rendering issues.
+owner's 2026-11-12 headless-only rule. On 2026-11-15 corrected hidden Tatalia,
+Avlee and Shoals frames were generated and inspected. Tatalia and Avlee show
+coherent terrain, HUD and minimaps. Shoals shows coherent seabed relief fading
+into its source-authored Eucalyptus-green underwater fog; the explicit weak
+and strong distances are 50 and 2000, and wetsuits do not alter fog.
+
+The opt-in `wine-cellar-combat` scene composes bounded forward input with real
+attack input, asserts key release, distance reduction, HP loss and settled
+death, then captures the result. Its inspected frame shows the dungeon, HUD,
+fallen quest target and killing-blow text. A separate Breeding Zone scene
+initially exposed another diagnostic placement bug: literal indoor `(0,0,0)`
+intersected a near-plane face and produced a large black occluder. Reusing the
+authored, floor-resolved map start removed it; the corrected room frame was
+inspected and no renderer change was required. See the [gameplay harness](MM7-Gameplay-Harness.md).
 
 The MM7 health and mana bars flank the portrait art consistently. Their inherited render coordinates repeat at 115-pixel intervals. A slight visual offset remains a user observation, but the capture and source do not establish a better target position, so HUD geometry was left unchanged. A separate 1–2 pixel hover-hitbox discrepancy does not account for visible placement.
 
 This diagnostic does not prove visible candidate-app launch, normal audio or input, save/quit/reload, installed-app cutover or a complete campaign. It rebuilt GameTest after copying test and startup files into the earlier temporary source extraction; that extraction was marked modified and is no longer pristine build evidence. The separately staged Atlas app was untouched. Continue using the protected installed MM7 app until candidate visible play and save/reload pass.
 
-See also: [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [MM6 Offscreen Render Capture](MM6-F4-Offscreen-Render-Capture.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md), [Agent Handoff](Agent-Handoff.md).
+See also: [MM7 Gameplay Harness](MM7-Gameplay-Harness.md), [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [MM6 Offscreen Render Capture](MM6-F4-Offscreen-Render-Capture.md), [Source and Privacy Boundary](Source-and-Privacy-Boundary.md), [Agent Handoff](Agent-Handoff.md).

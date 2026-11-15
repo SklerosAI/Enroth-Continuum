@@ -44,7 +44,9 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM6 Transition and Death Candidates](MM6-Transition-And-Death-Candidates.md) — Cancel-only MM6 indoor dialog and detached death model with explicit live integration gates
 - [MM7 Level-Seven Artifacts](MM7-Level-Seven-Artifacts.md) — MM7 artifact flags, cap and indoor pickup payload fixed with focused GameTests; graphical pickup remains open
 - [MM7 Combat Audit Fixes](MM7-Combat-Audit-Fixes.md) — Integrated combat, monster spell, Energy parser, Divine Intervention Zombie, event Day of the Gods, death-explosion, Spirit Lash, wand-recovery, Fate and Squire/Sage fixes
-- [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md) — Hidden OpenGL frame gate plus target-map start fallback for valid progress captures; replacement graphical recapture remains open
+- [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md) — Hidden OpenGL frame gate, authored-start placement, inspected regional/combat captures and corrected Breeding Zone diagnostic
+- [MM7 Gameplay Harness](MM7-Gameplay-Harness.md) — Bounded movement and attack-input helpers, composed Wine Cellar proof, complete Barrow traversal and inspected hidden visual evidence
+- [MM7 GrayFace Patch Reconciliation](MM7-GrayFace-Patch-Reconciliation.md) — Pinned public 2.5.7 bug index mapped to completed MM7 repairs, focused checks and priority audit gaps
 - [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md) — Private MM7 paths, save migration and installed Release helper with system OpenGL linkage
 
 ## Agent work and open questions

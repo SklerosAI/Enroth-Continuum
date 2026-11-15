@@ -1,4 +1,4 @@
-# MM7 remaining quests and areas — 2026-11-14
+# MM7 remaining quests and areas — 2026-11-15
 
 This is the concise selection board for Codex's MM7 lane. Current source and
 tests remain authoritative; the detailed contract is the
@@ -7,21 +7,22 @@ engine/acceptance work is in the
 [MM7 audit checklist](MM7_AUDIT_CHECKLIST.md).
 
 The MM7 working gate is closed. This list is remaining audit and coverage work,
-not a claim that MM7 is presently unplayable. All graphical items remain
-deferred while the owner's headless-only instruction is active.
+not a claim that MM7 is presently unplayable. Hidden offscreen captures are
+allowed evidence again; selected inspected PNGs stay private and the local
+progress-capture folder has a hard rolling limit of 100 images.
 
-## Owner-recorded future coverage decision
+## Owner-recorded coverage decision
 
-- Add representative **real movement** coverage before closing the full MM7
-  audit. At least one accepted route must drive ordinary movement inputs and
-  exercise traversal/collision or a map-entry approach; a teleport may prepare
-  the scenario, but teleporting directly to every interaction does not satisfy
-  this requirement.
-- Cover the **complete Barrow Downs region**: the outdoor Barrow Downs map, all
-  fifteen numbered Barrow interiors, Zokarr's Tomb, and their authored travel
-  connections. Include the associated promotion/quest interactions where they
-  provide meaningful acceptance checks. This is a future test requirement, not
-  a claim that the coverage already exists.
+- Representative **real movement** coverage is established by a bounded
+  press/hold/release helper and a composed Wine Cellar approach. Setup may
+  teleport to a deterministic lane, but the measured movement and combat
+  segment cannot teleport. Autonomous pathfinding remains outside this proof.
+- The **complete Barrow Downs region** now has authored-transition coverage:
+  the outdoor map, Barrows I-XV and Zokarr's Tomb are visited across 27 real
+  transition events. Monk-to-Initiate and the complete Light Arch Druid route
+  are also covered: Green's offer, the live Nighon Tunnels skull source,
+  Zokarr's deposit face and Green's return. This proves the graph and local
+  quest events, not natural walking.
 
 ## Recommended quest order
 
@@ -29,19 +30,24 @@ deferred while the owner's headless-only instruction is active.
 | --- | --- | --- | --- |
 | 1 | War alternatives and Arbiter | Erathia, Tularean Forest, Avlee, Harmondale | Real-item, decoy-item and ignored/timeout outcomes now pass for both 28-day assignments, including physical Loren and plans acquisition; the two broken timeout fallthroughs are fixed. The authored 56–84-day trumpet window, physical chest, Catherine/Parson/Judge Grey hand-ins, balanced real/real neutral result, 112-day messenger, Dark judge installation and a durable checkpoint pass. Remaining: expose/treason failure branches, determine whether the unplaced envoy hand-ins are reachable, cover balanced decoy/decoy and the other bit-derived result combinations, and add the war packet to a continuous campaign chain. |
 | 2 | Malwick, Niles and the tapestries | Emerald Island, Harmondale, Tatalia, Castle Lambent, Castle Gloaming | Behavior and durability complete. Malwick's real street conversation covers refusal, repeat offer and acceptance; the exact six-week Harmondale trigger, two-week Niles-visit deadline and four-week tapestry-return deadline pass through the authored clock event. Both alignment-specific Niles offers, physical Castle Lambent/Gloaming tapestry faces, successful returns, +5 reputation-only reward, exact 719/720-hour allied-castle hostility boundary and both missed-deadline invasions pass. Separate fresh-process checkpoints preserve the success and invasion outcomes; the existing raid test proves clearing both attacker groups reopens services. Remaining only at campaign level: connect the optional branch to a continuous Light or Dark chain rather than reopening its focused contract. |
-| 3 | Dark campaign strengthening after C0-C7 | Harmondale, Deyja, Castle Gloaming, the Pit, Celeste, Thunderfist Mountain, Clanker's Laboratory, Breeding Zone, Colony Zod, Shoals and Lincoln | The separately marked Dark profile now passes C0-C7. C7 accepts Kastore's final task, opens both authored wetsuit-bearing Gloaming chest events, equips all four suits through inventory input, walks across Avlee's underwater border, traverses Shoals and Lincoln, powers and physically takes the Overthruster, exits, completes Kastore's hand-in and reaches the Dark ending. Remaining is audit strengthening rather than a missing campaign link: reduce approach teleports where practical, add representative ordinary combat/traversal and later inspect Shoals graphically. |
-| 4 | Light campaign strengthening after C0-C7 | Wine Cellar, Castle Gloaming, the Pit, Land of the Giants, Colony Zod, Shoals and Lincoln | Light C6 now follows the authored Mount Nighon–Thunderfist–Tunnels–Land route, receives Archibald's Blaster, rescues Roland, consumes his key, activates both controls, kills Xenofex, uses the return altar and completes Resurecta's hand-in before the existing C7 ending. Remaining: real Elder Vampire combat, the L5 Blaster reward assertion, representative ordinary movement/combat, later graphics, and the Walls protected-group predicate audit without weakening the no-kill player contract. |
+| 3 | Dark campaign strengthening after C0-C7 | Harmondale, Deyja, Castle Gloaming, the Pit, Celeste, Thunderfist Mountain, Clanker's Laboratory, Breeding Zone, Colony Zod, Shoals and Lincoln | The separately marked Dark profile passes C0-C7. Representative movement/combat now has a reusable input contract, the Breeding Zone hidden frame is corrected, and Shoals' dense green fog is source-classified as authored underwater rendering. Remaining: reduce approach teleports where practical and eventually compare exact Shoals pixels with the original executable if parity matters. |
+| 4 | Light campaign strengthening after C0-C7 | Wine Cellar, Castle Gloaming, the Pit, Land of the Giants, Colony Zod, Shoals and Lincoln | Light C6 follows the authored Mount Nighon–Thunderfist–Tunnels–Land route through Xenofex and the return. The real Wine Cellar target now activates only for its live quest, input combat kills it, the composed harness walks then fights without measured-segment teleporting, and Tolberti's complete Blaster reward transaction is asserted. Remaining: the Walls protected-group predicate audit, reducing other approach teleports and broader graphical play. |
 | 5 | Regional strengthening and durability | Emerald Island, Erathia, Bracada Desert, Stone City, Bandit Caves, White Cliff Cave, the Maze and the Erathian Sewers | Acquire all six Emerald contest items physically. Add Griffin refusal, XP, gold and award assertions across Erathia/Bracada. Add direct Troglodyte combat. Add fresh-process checkpoints for behavior-covered but not yet durable routes: Lantern of Light, Davrik's Ring, Darron's brother, Haldar's remains, Troglodytes and Thief to Rogue. |
-| 6 | First promotions, eight remaining | Dwarven Barrows/Zokarr's Tomb, Hall Under the Hill, the three Druid monolith regions, Red Dwarf Mines, Haunted Mansion, Wromthrax's lair, the pirate-map/Evenmorn route and the six golem-component areas | Cover Monk to Initiate, Ranger to Hunter, Druid to Great Druid, Archer to Warrior Mage, Knight to Cavalier, Paladin to Crusader, Cleric to Priest and Sorcerer to Wizard. Thief to Rogue is already behavior-covered. |
-| 7 | Second promotions, eighteen remaining | Temple of Baa, Heart of Wood route, Zokarr's Tomb, Perfect Bow route, Arena, Alice route, Sun altar, Watchtower, Breeding Zone, Ashwar Nog'Nogoth, bounty route, dragon egg route, Navan treasury, Lady Carmine and Proving Grounds | Cover all nine Light and all nine Dark second promotions, including qualifying and honorary outcomes, XP, and wrong-alignment or missing-prerequisite refusals. Batch these geographically rather than as one monolithic test. |
+| 6 | First promotions, three remaining | Three Druid monolith regions, the pirate-map/Evenmorn route and the six golem-component areas | Monk to Initiate, Ranger to Hunter, Archer to Warrior Mage, Knight to Cavalier, Paladin to Crusader and Thief to Rogue are behavior-covered. Crusader includes real attack-input combat against Wromthrax and the authored 210-second completion timer. Remaining: Druid to Great Druid, Cleric to Priest and Sorcerer to Wizard. |
+| 7 | Second promotions, seventeen remaining | Temple of Baa, Heart of Wood route, Perfect Bow route, Arena, Alice route, Sun altar, Watchtower, Breeding Zone, Ashwar Nog'Nogoth, bounty route, dragon egg route, Navan treasury, Lady Carmine and Proving Grounds | Druid to Arch Druid now covers the real Green/Nighon/Zokarr/Green route, exact qualifying and honorary outcomes, and duplicate prevention. Cover the other eight Light and all nine Dark second promotions, including qualifying and honorary outcomes, XP, and wrong-alignment or missing-prerequisite refusals. Batch these geographically rather than as one monolithic test. |
 
 ## Area-focused acceptance still open
 
-- **Tatalia and Avlee:** the progress-capture placement defect is fixed
-  headlessly, but corrected graphical frames still need a later hidden
-  recapture and visual inspection.
-- **Shoals:** underwater fog remains visually unclassified. Reinspect a corrected
-  image before deciding whether it is a renderer defect.
+- **Tatalia and Avlee:** corrected authored-start hidden frames were visually
+  inspected. Both show coherent terrain, HUD and minimaps; the earlier invalid
+  placement evidence is superseded.
+- **Shoals:** the inspected frame shows coherent seabed relief fading into the
+  deliberately short-range Eucalyptus-green underwater fog. Source proves the
+  color and 50/2000 distances are authored; exact original-pixel parity remains
+  a separate optional comparison, not a current renderer defect.
+- **Breeding Zone:** a large black occluder came from the diagnostic's literal
+  indoor-origin placement. The authored floor-resolved start removes it; the
+  corrected hidden frame was inspected and no renderer change was needed.
 - **Land of the Giants and Colony Zod:** the complete authored access and
   return route now passes in both Light and Dark C6. Retain Roland's cage,
   one-use key, both controls, Xenofex combat and the return altar while reducing
@@ -55,7 +61,7 @@ deferred while the owner's headless-only instruction is active.
 
 ## Already durable; do not reopen without new evidence
 
-These nine independent routes have exact production-Save and
+These eleven independent routes have exact production-Save and
 fresh-process normal-Load pairs with unchanged slot bytes:
 
 - Season's Stole
@@ -86,8 +92,10 @@ to twenty-two exact checkpoint tests across eleven routes.
    state as applicable.
 4. Add a production-Save/fresh-process-normal-Load pair when the slice changes
    durable campaign state, with missing-profile and no-save admissions closed.
-5. Run the focused test, the current regional gate, changed-file lint and the
-   full style gate. Reconcile neutral `master` before integration.
+5. Run the focused test and changed-file lint. Reserve the broader regional,
+   campaign and style gates for meaningful integration milestones instead of
+   repeatedly rerunning known-green coverage. Reconcile neutral `master`
+   before final integration.
 6. Inspect every generated progress image before accepting it as evidence, and
    keep private data, saves and raw evidence outside Git.
 

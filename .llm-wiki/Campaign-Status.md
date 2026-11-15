@@ -6,11 +6,11 @@ tags: [mm6, mm7, mm8, status]
 
 # Campaign Status
 
-The campaigns have distinct readiness levels. This 2026-11-10 snapshot supersedes the historical 2026-11-07 table below; it is not a claim that every title is playable.
+The campaigns have distinct readiness levels. This page is current through the 2026-11-15 MM7 gameplay-harness checkpoint; it is not a claim that every title is fully audited.
 
 The owner's [current delivery order](Current-Delivery-Order.md) puts MM7 working first, MM6 working second, and the full title audits after both working gates. The next-gate cells below describe title-local gaps, not a competing cross-title priority order.
 
-## Current snapshot — 2026-11-10
+## Working-gate snapshot — 2026-11-10
 
 | Game | Verified state | Next acceptance gate |
 | --- | --- | --- |
@@ -18,7 +18,34 @@ The owner's [current delivery order](Current-Delivery-Order.md) puts MM7 working
 | MM6 | A seeded first-map session can Save to and Load from numbered native slots; the full headless gate passed 25 children, including three MM7 controls. Character paperdoll, portrait animation and Quest book slices passed focused and hidden checks. On 2026-11-11 production New Game reached the first map, saved from the menu and reloaded in a fresh process (gate 27/27). A sweep of all 67 maps found the blockers, and fixes for the award-animation crash, the reputation variable, the generated NPC pool and the damage channels are integrated. The first campaign chain now runs C0 (New Game to `save000.ec6`) and C1 (a fresh-process Load through councils, stable pricing, chest pickup and `save001.ec6`) in a marked disposable profile; both chapter-save digests passed. MM6 bows now use the native arrow projectile and hit their target, while map visits now preserve sky/timer state across travel and saves; all three revisit checks pass. | Extend the main-quest chain from C1, then prove the visible owner route. This remains headless campaign evidence, not a completed playable-campaign claim. |
 | MM8 | Private data is staged for local detection; the runtime is reserved. | Build and verify an isolated MM8 engine, save route and graphical session before any Play action. |
 
-## MM7 audit continuation — 2026-11-14
+## MM7 audit continuation — 2026-11-15
+
+### Gameplay and Barrow checkpoint — 2026-11-15
+
+The [MM7 gameplay harness](MM7-Gameplay-Harness.md) now provides bounded
+press/hold/release movement, attack-input combat and fresh-process suite
+admission. A composed Wine Cellar case walks toward the authored Elder Vampire,
+releases the key, damages and kills it through attack input, and has an
+inspected hidden OpenGL proof. The narrow MM7 compatibility repair activates
+only the exact disabled quest actor while its quest is live; completion
+blockers and the other disabled group actors remain closed. Tolberti's complete
+Light Blaster reward transaction is asserted.
+
+The same checkpoint covers every Barrow Downs map through 27 authored
+transitions, plus the Zokarr meditation-pool promotion and the complete Light
+Arch Druid route through Green, Nighon Tunnels, Zokarr and Green's return. The
+unreachable Hothfarr/event-178 branch is dead original content. Ranger-to-Hunter,
+Archer-to-Warrior-Mage, Knight-to-Cavalier and Paladin-to-Crusader first
+promotions use their real dialogue/event routes; Crusader includes attack-input
+Wromthrax combat and the authored 210-second objective timer. A fresh Light C0-C7 chain passed before the owner asked
+to pause repeated known-green testing; later slices should receive focused
+checks until the next meaningful integration milestone.
+
+Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
+green fog matches its explicit underwater color and distances. The Breeding
+Zone black occluder was a literal-origin capture-placement defect and disappears
+at the authored floor-resolved start. Selected private images are kept in the
+ignored progress folder under a rolling 100-image cap.
 
 The Light campaign's C6 seam now follows the authored Mount Nighon,
 Thunderfist Mountain, Tunnels to Eofol, Land of the Giants and Colony Zod

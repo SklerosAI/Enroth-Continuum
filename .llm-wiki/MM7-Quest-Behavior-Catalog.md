@@ -57,9 +57,9 @@ and by the [DungeonCrawl quest table](https://dungeoncrawl-classics.com/might-an
 | --- | --- | --- | --- |
 | L1 | Gavin Magnus sends the party through Walls of Mist; avoid killing its protected inhabitants, solve the key/pillar route, exit, and report back to join the Light guild. | C4 and focused Walls tests. Local group-ID predicate is unreachable, so retain the no-kill player contract and audit the predicate separately. | C / O for local predicate |
 | L2 | Resurecta requires both altar pieces from the Light and Dark temples; return both after their dungeon interactions. | C5 plus item/adviser tests. | C |
-| L3 | Crag Hack's Wine Cellar task requires the Elder Vampire to be defeated before return. | `MM7LightItems.WineCellarExitDoesNotReplaceVampireKill` rejects the disabled spawn/exit false positive, then proves the genuine map-leave kill predicate completes the adviser hand-in. | C |
+| L3 | Crag Hack's Wine Cellar task requires the Elder Vampire to be defeated before return. | The shipped quest actor is now activated only for the exact live Wine Cellar quest transaction. `MM7CombatHarness.WineCellarAttackInputDamagesAndKillsTarget` kills it through attack input, while completed/killed blockers keep it disabled and `MM7LightItems.WineCellarExitDoesNotReplaceVampireKill` retains the false-completion guard and adviser hand-in. | C |
 | L4 | Caneghem requires the Case of Soul Jars from Castle Gloaming. | C5 and item/adviser tests. | C |
-| L5 | Once the three advisers are complete, Robert requests Tolberti's control cube; kill Tolberti, loot the cube, return it, and gain Blaster training. | C5 and Cube combat/hand-in tests; add reward assertion. | C |
+| L5 | Once the three advisers are complete, Robert requests Tolberti's control cube; kill Tolberti, loot the cube, return it, and gain Blaster training. | C5 and the physical Pit cube combat/loot route remain; `MM7LightAssassination.RefusalFullRewardAndDuplicateProtection` verifies cube refusal/consumption, quest/history state, 250,000 XP per character, all-character award, novice Blaster only for untrained characters, preserved higher mastery, reputation, throne relocation, topic cleanup and no repeat reward. | C |
 | L6 | Resurecta sends the party after Xenofex in Colony Zod; the normal route includes Roland/key/control access, Xenofex's death, then Resurecta hand-in. | Light C6 accepts Resurecta's assignment, follows Mount Nighon through Thunderfist Mountain and the Tunnels to Eofol, receives Archibald's Land-of-the-Giants Blaster, enters Colony Zod, rescues Roland, consumes his one-use key, activates both route controls, kills Xenofex by player attack, leaves through the authored exit, uses the return altar, waits through Lambent's 5am closure and completes Resurecta's hand-in before `save006.mm7`. The existing C7 ending passes from that strengthened save. | C |
 | L7 | Acquire/equip four wetsuits, reach Shoals and Lincoln, restore power, take the Oscillation Overthruster, return to Resurecta, and receive the Light ending. | C7; individual gate controls and ending are present. | C |
 
@@ -103,23 +103,23 @@ Every promotion test must assert the intended class receives the class change,
 an ineligible party member receives only the honorary outcome, and a second-tier
 test rejects the wrong alignment or a missing first promotion. First promotions
 award 30,000 XP to a qualifying class and 15,000 XP honorary; second promotions
-award 80,000 XP qualifying and 40,000 XP honorary. All rows are uncovered
-unless stated otherwise.
+award 80,000 XP qualifying and 40,000 XP honorary. Rows name their accepted
+test when behavior coverage exists.
 
 | Tier | Quest and intended completion | Confidence |
 | --- | --- | --- |
-| First | Monk → Initiate: accept from Bartholomew Hume, find and use the meditation pool in Zokarr's Tomb in the Dwarven Barrows. The pool remotely completes the quest and grants the promotion (no return visit). | C |
-| First | Ranger → Hunter: complete the Faerie King's task. | C |
+| First | Monk → Initiate: accept from Bartholomew Hume, find and use the meditation pool in Zokarr's Tomb in the Dwarven Barrows. `MM7BarrowQuests.MeditationPoolPromotesMonksAndHonorsCompanionsOnce` uses the real pool event and proves missing-prerequisite refusal, qualifying/honorary awards and XP, topic cleanup, no gold and duplicate prevention. | C |
+| First | Ranger → Hunter: complete the Faerie King's task. `MM7Promotions.RangerHunterRealDialoguePacket` uses Sower's house, the Hall Under the Hill audience event and the real dialogue transaction; it covers the wrong prerequisite, qualifying/honorary outcomes, exact XP/topics/qbits and duplicate prevention. | C |
 | First | Druid → Great Druid: activate the three druid monoliths. | C |
-| First | Archer → Warrior Mage: use the supplied Worn Belt to sabotage the Red Dwarf Mines lift, then return. | C |
-| First | Knight → Cavalier: clear the Haunted Mansion task. | C |
-| First | Paladin → Crusader: defeat Wromthrax. | C |
+| First | Archer → Warrior Mage: use the supplied Worn Belt to sabotage the Red Dwarf Mines lift, then return. `MM7Promotions.ArcherWarriorMagePhysicalPromotionPacket` uses Steagal Snick's real house dialogue, proves premature refusal, clicks the authored mine-machine face, consumes the belt, and verifies qualifying/honorary XP and awards, gold, reputation, topics, bits and duplicate prevention. | C |
+| First | Knight → Cavalier: clear the Haunted Mansion task. `MM7Promotions.KnightCavalierPhysicalPromotionPacket` uses Frederick Org's real house dialogue, proves premature and live-actor exit refusals, requires the authored Mansion map-leave clear predicate, and verifies qualifying/honorary XP and awards, no-gold behavior, reputation, topics, bits and duplicate prevention. | C |
+| First | Paladin → Crusader: defeat Wromthrax. `MM7Promotions.PaladinCrusaderAttackInputPromotionPacket` takes Quixote's real offer, kills Wromthrax through bounded attack input, advances the authored 210-second objective timer, and completes Quixote's real hired-NPC dialogue. It verifies qualifying/honorary awards and XP, no gold, reputation, bits, topic/greeting changes, dismissal after dialogue closes and duplicate prevention. | C |
 | First | Cleric → Priest: recover the pirate map; its other intended effect is opening the Evenmorn route. | C |
 | First | Thief → Rogue: accept William Lasker’s request in the Erathian Sewers, take Markham’s Vase from the Markham Manor fireplace, and return it. `MM7Promotions.MarkhamVaseRequiresPhysicalPickup` proves offer, no-vase refusal, real map pickup, hand-in consumption, promotion/honorary split, XP and gold. | C |
 | First | Sorcerer → Wizard: recover and assemble all six golem components; separately cover the good/bad head choice. | C |
 | Light second | Initiate → Master: on the Light path, accept from Bartholomew Hume, kill the High Priest of Baa in Avlee's Temple of Baa, collect his cloak, then return to Hume. | C |
 | Light second | Ranger → Ranger Lord: return the Heart of Wood. | C |
-| Light second | Druid → Arch Druid: retrieve Zokarr IV's skull, return it to his tomb, then report back. | C |
+| Light second | Druid → Arch Druid: retrieve Zokarr IV's skull, return it to his tomb, then report back. `MM7BarrowDialogue.ArchDruidUsesNighonSkullSourceAndZokarrReturn` covers Green's real Light-only offer and premature-return refusal, the live Nighon Tunnels event-196 skull source, Zokarr's physical deposit face, Green's exact qualifying/honorary reward transaction and duplicate prevention. The apparent Hothfarr/event-178 handoff is unreachable dead original content, not a missing OpenEnroth topic. | C |
 | Light second | Archer → Master Archer: return the Perfect Bow. | C |
 | Light second | Knight → Champion: win five Knight Arena bouts. | C |
 | Light second | Paladin → Hero: rescue Alice. | C |
@@ -145,7 +145,7 @@ unless stated otherwise.
 | `MM7CampaignChainC2`, `MM7CastleRebuild` | M2 elixir, seven-dwarf, rebuild sequence and one-missing refusal. | Keep its save boundary. |
 | `MM7CampaignChainC3`, `MM7Campaign` | Light Arbiter selection and post-choice house relation. | Add M3–M5 timer, war-score, trumpet/neutral, and Dark selection cases. |
 | `MM7CampaignChainC4`, `MM7LightWalls`, `MM7LightItems` | L1 key/pillar path and no-kill player rule. | Audit the unreachable local protected-group predicate. |
-| `MM7CampaignChainC5`, `MM7LightItems`, `MM7LightAdvisors`, `MM7PitCubeAcquisition` | L2, L3 death-state plus exit/hand-in, L4, and L5 item/return progression. | Replace the C5 direct death-state fixture with real Elder Vampire combat; assert Blaster training reward. |
+| `MM7CampaignChainC5`, `MM7LightItems`, `MM7LightAdvisors`, `MM7PitCubeAcquisition`, `MM7CombatHarness` | L2, L3 live Elder Vampire input combat plus exit/hand-in, L4, and L5 physical item/return/full reward progression. | Preserve the narrow Wine Cellar activation conditions and Tolberti duplicate protection. |
 | `MM7CampaignChainC6`, `MM7LightXenofex`, `MM7XenofexCombat` | L6 authored Nighon/Thunderfist/Eofol/Land/Zod access, Archibald's Blaster, Roland/key/controls, Xenofex combat, return altar and Light hand-in. | Preserve the full route while reducing approach teleports during ordinary-movement strengthening. |
 | `MM7CampaignChainC7`, `MM7OverthrusterRoute` | L7 wetsuits, Lincoln, Overthruster, Light ending. | Retain all individual gate controls. |
 | `MM7DarkCampaignChainC3-C7` | The separately marked Dark profile reuses common C0-C2; C3 completes the Arbiter route, C4 completes Archibald/Breeding Zone, C5 completes all three physical adviser objectives plus Robert's live combat/cube hand-in, C6 completes the authored Colony Zod access and Xenofex return, and C7 completes the physical Lincoln/Overthruster route and Dark ending through normal chapter saves. | Preserve the chain while strengthening ordinary movement/combat and later graphical acceptance. |
@@ -169,7 +169,11 @@ unless stated otherwise.
 4. Implement side-quest tests in regional batches, with one positive, one meaningful refusal/alternate outcome, rewards/state assertions, and a save boundary where a quest changes durable world state.
 5. Add each verified row to the test-to-contract map before calling this catalog complete.
 
-See also: [Campaign Status](Campaign-Status.md), [Current Delivery Order](Current-Delivery-Order.md), and [MM7 Playtest Recording](MM7-Playtest-Recording.md).
+The [GrayFace patch reconciliation](MM7-GrayFace-Patch-Reconciliation.md) is a
+public bug-index and behavior cross-check for choosing focused follow-ups; it
+does not replace the current source, shipped data or tests as authority.
+
+See also: [Campaign Status](Campaign-Status.md), [Current Delivery Order](Current-Delivery-Order.md), [MM7 GrayFace Patch Reconciliation](MM7-GrayFace-Patch-Reconciliation.md), and [MM7 Playtest Recording](MM7-Playtest-Recording.md).
 
 ## Exhaustiveness audit — 2026-11-11
 

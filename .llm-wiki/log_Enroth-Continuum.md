@@ -3546,3 +3546,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Dark C4 loads the normal C3 save, accepts Archibald's Castle Gloaming assignment, activates the authored Breeding Zone completion face, confirms both authored dungeon exits return to the Pit, uses one through the production transition UI, completes Archibald's hand-in and enters all three distinct adviser houses before writing `save004.mm7`.
 - A fresh five-process C0-C4 chain passed with retained predecessor saves and pass markers unchanged. The three independent Archibald/Breeding Zone controls and the 157-target style gate passed. No progress image was generated; C5-C7 remain open.
+
+## [2026-11-14] test | MM7 Dark campaign through C5
+- by: T-Burton-ND via codex
+- Dark C5 uses the authored temple chests for both altar pieces, the physical Thunderfist chest for the Soul Jars, Clanker's defense-disable face and a real player fight/corpse-loot interaction against Robert in Celeste. The four Pit hand-ins consume their items, grant novice Blaster to all characters and move Kastore to the Gloaming throne. The run also established that the relocation follows Robert's completion, not merely the adviser trio.
+- A fresh six-process C0-C5 chain passed with every predecessor digest and pass marker unchanged. Seven focused D2-D5 controls and the 157-target style gate passed. No progress image was generated; C6-C7 remain open.

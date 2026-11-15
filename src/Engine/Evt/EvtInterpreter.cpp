@@ -119,6 +119,7 @@ constexpr int mazeHaldarsRemainsFallbackChestId = 0;
 constexpr int mazeHaldarsRemainsMapVariable = 0;
 constexpr int lightEndingCompletionEventId = 170;
 constexpr int darkEndingCompletionEventId = 172;
+constexpr int giantsWishWellEventId = 205;
 
 static bool isOriginalBreedingZoneBookEvent(const EvtContext &context,
                                             std::span<const EvtInstruction> instructions) {
@@ -318,6 +319,42 @@ static std::optional<QuestBit> originalEndingActiveBitCleanup(
         return std::nullopt;
 
     return activeBit;
+}
+
+static bool isOriginalGiantsWishWellEvent(const EvtContext &context,
+                                          std::span<const EvtInstruction> instructions) {
+    if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_MAP ||
+        engine->_currentLoadedMapId != MAP_LAND_OF_THE_GIANTS || context.eventId != giantsWishWellEventId)
+        return false;
+
+    const bool hasOriginalGoldGate = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 0 && instruction.target_step == 3 && instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == VAR_FixedGold &&
+               instruction.data.variable_descr.value == 5000;
+    });
+    const bool hasInsufficientGoldWithdrawal = std::ranges::any_of(
+        instructions, [](const EvtInstruction &instruction) {
+            return instruction.step == 1 && instruction.opcode == EVENT_Subtract &&
+                   instruction.data.variable_descr.type == VAR_FixedGold &&
+                   instruction.data.variable_descr.value == 4999;
+        });
+    const bool hasInsufficientGoldExit = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 2 && instruction.target_step == 30 && instruction.opcode == EVENT_Jmp;
+    });
+    const bool hasWishRandomizer = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 3 && instruction.opcode == EVENT_RandomGoTo;
+    });
+    const bool hasWishStatus = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 30 && instruction.opcode == EVENT_StatusText;
+    });
+    const bool alreadyChargesFiveThousand = std::ranges::any_of(
+        instructions, [](const EvtInstruction &instruction) {
+            return instruction.opcode == EVENT_Subtract &&
+                   instruction.data.variable_descr.type == VAR_FixedGold &&
+                   instruction.data.variable_descr.value == 5000;
+        });
+    return hasOriginalGoldGate && hasInsufficientGoldWithdrawal && hasInsufficientGoldExit &&
+           hasWishRandomizer && hasWishStatus && !alreadyChargesFiveThousand;
 }
 
 /**
@@ -664,6 +701,11 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             }
             break;
         case EVENT_Compare:
+            if (isOriginalGiantsWishWellEvent(_context, _events) && ir.step == 0 &&
+                pParty->GetGold() >= 5000) {
+                pParty->TakeGold(5000);
+                return {EVT_FLOW_JUMP, ir.target_step};
+            }
             if (isOriginalMazeHaldarsRemainsEvent(_context, _events) && ir.step == 0 &&
                 engine->_persistentVariables.mapVars[mazeHaldarsRemainsMapVariable] >= 1) {
                 auto chest = std::ranges::find_if(_events, [](const EvtInstruction &instruction) {

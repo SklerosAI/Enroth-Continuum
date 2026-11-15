@@ -59,6 +59,13 @@ total rather than only the Knight counter. The failing behavior was reproduced
 through Leda's real dialogue for 0+5 and 4+1; the event-scoped repair, exact
 promotion transaction, refusal matrix and Arena control pass 5/5.
 
+Wizard-to-Archmage physically retrieves the Breeding Zone Book of Divine
+Intervention and retains it through Thomas Grey's exact transaction. The route
+reproduced event 195 stranding the book after a close-before-pickup; a guarded
+map-variable compatibility seam now reopens the source chest during that map
+incarnation while preserving fresh-map duplicate prevention. Focused Archmage
+and Lantern quest-chest controls pass 6/6.
+
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding
 Zone black occluder was a literal-origin capture-placement defect and disappears

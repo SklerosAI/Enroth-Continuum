@@ -125,7 +125,7 @@ test when behavior coverage exists.
 | Light second | Paladin → Hero: rescue Alice. | C |
 | Light second | Cleric → Priest of Light: purify the Sun altar. | C |
 | Light second | Thief → Spy: recover the Watchtower counterweight. | C |
-| Light second | Sorcerer → Archmage: recover the Book of Divine Intervention from the Breeding Zone and return it. | C |
+| Light second | Wizard → Archmage: recover the Book of Divine Intervention from the Breeding Zone and return it. `MM7ArchmagePromotion` proves Thomas Grey's alignment gates and no-book refusal, physically opens and reopens the real Breeding Zone source chest, retains the book through the exact qualifying/honorary reward transaction, and verifies bits, gold, topic/greeting cleanup, no reputation change and duplicate prevention. | C |
 | Dark second | Monk → Ninja: solve Ashwar Nog'Nogoth's tomb access, clear it, and return to Stephan Sand. | C |
 | Dark second | Ranger → Bounty Hunter: turn in 10,000 gold in bounties. | C |
 | Dark second | Druid → Warlock: return the dragon egg. | C |

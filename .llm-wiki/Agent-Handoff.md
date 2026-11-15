@@ -115,6 +115,14 @@ MM7/global/event-72 repair now accepts 5+0, 0+5 and 4+1 while rejecting 2+2
 and Page/Squire-only wins. Real Leda dialogue, exact rewards and duplicate
 protection plus the Arena control pass 5/5.
 
+Wizard-to-Archmage now covers Thomas Grey's real Light offer, alignment and
+missing-book refusals, physical Breeding Zone acquisition, exact retained-book
+rewards and duplicate protection. Event 195 previously set retrieval bits on
+opening chest 0, then redirected a same-visit reopen to chest 19 and stranded
+the book. A guarded per-map marker now preserves same-visit source-chest access
+without respawning it on a fresh retrieved map. Archmage plus the adjacent
+Lantern quest-chest control pass 6/6.
+
 Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the
 corrected Breeding Zone. Shoals' green short-range fog is authored underwater
 behavior. Breeding Zone's old black occluder was caused by a literal indoor

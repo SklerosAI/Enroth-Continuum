@@ -3632,3 +3632,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The Land of the Giants well granted repeatable random wishes without charging qualifying parties. A real-face regression reproduced 5,000 gold remaining unchanged after use.
 - An exact event-205 seam charges 5,000 before the authored random branch, preserves the 4,998/4,999 boundary oddity and skips already-patched data. Three physical well cases plus the existing effect control pass 4/4.
+
+## [2026-11-15] fix | MM7 Deyja guard factions
+- by: T-Burton-ND via codex
+- Three northern group-4 guards retained their hostile Goblin faction on normal Dark/neutral visits despite having no aggressor flag. The focused probe also established the intended Light, anger and expiry branches.
+- An exact Deyja map-load seam applies friendly faction 78 for normal/expired states and default hostile factions for Light, active anger or persisted hostility. The 719/720-hour matrix passes 4/4; wilderness group 5 remains hostile and generic opcode-55 support was not added.

@@ -68,6 +68,9 @@ constexpr std::array paintingReloadSources = {
                          QBIT_ARCHIBALD_PAINTING_TAKEN, 16, "chb1"},
 };
 
+constexpr Vec3f originalAvleeRockPosition(-15088, -4288, 208);
+constexpr float correctedAvleeRockZ = 148;
+
 const EvtInstruction *originalPaintingEmptyTexture(const PaintingReloadSource &source) {
     if (engine->gameTitle() != GameTitle::MM7 || engine->_currentLoadedMapId != source.map ||
         !engine->_localEventMap.hasEvent(source.eventId))
@@ -106,6 +109,34 @@ void restoreTakenPaintingTextures() {
         if (const EvtInstruction *texture = originalPaintingEmptyTexture(source))
             setTexture(texture->data.sprite_texture_descr.cog, texture->str);
     }
+}
+
+void correctOriginalAvleeFlyingRock() {
+    if (engine->gameTitle() != GameTitle::MM7 || engine->_currentLoadedMapId != MAP_AVLEE)
+        return;
+
+    LevelDecoration *candidate = nullptr;
+    for (LevelDecoration &decoration : pLevelDecorations) {
+        if (decoration.vPosition.x != originalAvleeRockPosition.x ||
+            decoration.vPosition.y != originalAvleeRockPosition.y)
+            continue;
+        if (candidate)
+            return; // A duplicate coordinate is custom data, so leave both untouched.
+        candidate = &decoration;
+    }
+    if (!candidate || candidate->uDecorationDescID != DECORATION_ROCK_110 ||
+        pDecorationTable->decoration(candidate->uDecorationDescID)->internalName != "rock01" ||
+        candidate->uFlags != LevelDecorationFlags() || candidate->vPosition != originalAvleeRockPosition ||
+        candidate->_yawAngle != 0 || candidate->uCog != 0 || candidate->uEventID != 0 ||
+        candidate->uTriggerRange != 0 || candidate->eventVarId != -75)
+        return;
+
+    bool onWater = false;
+    int faceId = -1;
+    const float floor = ODM_GetFloorLevel(candidate->vPosition, &onWater, &faceId);
+    if (onWater || floor != correctedAvleeRockZ)
+        return;
+    candidate->vPosition.z = floor;
 }
 
 } // namespace
@@ -261,6 +292,9 @@ void onMapLoad() {
     // The original painting pickups persist only their quest bits. Reapply their authored empty-wall texture after
     // normal reload events so revisiting the map cannot make a taken painting appear again.
     restoreTakenPaintingTextures();
+
+    // Avlee's original rock01 at this exact coordinate is authored sixty units above its terrain tile.
+    correctOriginalAvleeFlyingRock();
 }
 
 void onMapLeave() {

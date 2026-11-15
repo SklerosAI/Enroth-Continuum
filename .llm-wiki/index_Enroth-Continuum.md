@@ -10,7 +10,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 ## Navigation and conventions
 
 - [Home](Home_Enroth-Continuum.md) — Curated entry point
-- [Agent Handoff](Agent-Handoff.md) — Title ownership, current MM7 regional Save/Load checkpoint, visible gaps and historical MM6 handoff
+- [Agent Handoff](Agent-Handoff.md) — Title ownership, current MM7 campaign/gameplay/promotion checkpoint, visible gaps and historical MM6 handoff
 - [Current Delivery Order](Current-Delivery-Order.md) — Owner's MM7 working → MM6 working → full MM7 audit → full MM6 audit sequence and coordination rules
 - [November 9 Progress](Progress-2026-11-09.md) — Dated integrated MM6/MM7 work and priority-ordered resume steps
 - [Agent communications](../agent_comms/README.md) — Cross-model claims, handoffs, reviews and model-card protocol
@@ -28,7 +28,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 
 ## Campaigns and runtime
 
-- [Campaign Status](Campaign-Status.md) — Current MM6, MM7 and MM8 readiness, including the MM6 C0-C1 chain and integrated MM7 campaign, quest-audit and regional durability gates
+- [Campaign Status](Campaign-Status.md) — Current MM6, MM7 and MM8 readiness, including the MM6 C0-C1 chain and integrated MM7 campaign, quest, promotion and regional durability gates
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [MM7 Private Portrait Mod](MM7-Private-Portrait-Mod.md) — Local mood PNG layout, shared MM7 portrait resolver, Atlas controls, and verified hidden HUD capture
 - [Runtime Isolation](Runtime-Isolation.md) — Title-locked MM6/MM7 helpers, staged Atlas sibling assembler and isolated MM6 playtest entry; MM8 remains gated
@@ -45,7 +45,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Level-Seven Artifacts](MM7-Level-Seven-Artifacts.md) — MM7 artifact flags, cap and indoor pickup payload fixed with focused GameTests; graphical pickup remains open
 - [MM7 Combat Audit Fixes](MM7-Combat-Audit-Fixes.md) — Integrated combat, monster spell, Energy parser, Divine Intervention Zombie, event Day of the Gods, death-explosion, Spirit Lash, wand-recovery, Fate and Squire/Sage fixes
 - [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md) — Hidden OpenGL frame gate, authored-start placement, inspected regional/combat captures and corrected Breeding Zone diagnostic
-- [MM7 Gameplay Harness](MM7-Gameplay-Harness.md) — Bounded movement and attack-input helpers, composed Wine Cellar proof, complete Barrow traversal and inspected hidden visual evidence
+- [MM7 Gameplay Harness](MM7-Gameplay-Harness.md) — Bounded movement and attack-input helpers, composed combat/loot proofs, complete Barrow traversal and inspected hidden visual evidence
 - [MM7 GrayFace Patch Reconciliation](MM7-GrayFace-Patch-Reconciliation.md) — Pinned public 2.5.7 bug index mapped to completed MM7 repairs, focused checks and priority audit gaps
 - [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md) — Private MM7 paths, save migration and installed Release helper with system OpenGL linkage
 

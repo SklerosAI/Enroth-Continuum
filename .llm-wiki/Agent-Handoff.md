@@ -94,6 +94,16 @@ offer, partial-progress refusals and physical Stonehenge faces in Evenmorn,
 Tatalia and Avlee. These tests name their setup teleports;
 the harness is not autonomous pathfinding.
 
+Barrow II event 177 now retains the Lantern of Light's source chest after a
+successful open even if the trapped first click or a close-before-pickup
+interrupts acquisition. Map variable 2 records only successful source chest 2
+access, survives save/reload and takes precedence over the later award; fresh
+award state without that marker still uses fallback chest 0. Exact original
+shape, trap timing, reload, legacy fallback and custom-shape cases plus the
+existing Lantern transaction and Barrow II rat-floor geometry pass 8/8. The rat
+already spawns at a valid indoor floor under OpenEnroth's exact-center behavior,
+so GrayFace's radius change does not require a production override.
+
 Sorcerer-to-Wizard now covers Thomas Grey's real offer, every physical golem
 component source, hireling-dialogue installation, the extra assembly
 confirmation, both head choices and exact rewards. A narrow MM7 Castle
@@ -117,6 +127,15 @@ wins. The prior script rejected five Lord wins and a 4+1 mix; the narrow
 MM7/global/event-72 repair now accepts 5+0, 0+5 and 4+1 while rejecting 2+2
 and Page/Squire-only wins. Real Leda dialogue, exact rewards and duplicate
 protection plus the Arena control pass 5/5.
+
+Initiate-to-Master now follows Hume's real Light dialogue, the physical Avlee
+to Temple of Baa transition, bounded attack-input combat against the authored
+High Priest, viewport corpse looting of the Cloak of the Sheep and the physical
+exit that triggers the map-leave objective. The packet proves missing-objective
+refusal, exact qualifying and honorary rewards, reputation/topic cleanup and
+duplicate stability. Eligibility comes from Hume's first-promotion topic
+transition rather than a repeated Initiate-award check. The three Master cases
+and adjacent Zokarr control pass 4/4 without a production change.
 
 Wizard-to-Archmage now covers Thomas Grey's real Light offer, alignment and
 missing-book refusals, physical Breeding Zone acquisition, exact retained-book
@@ -170,6 +189,12 @@ an exact global-170/172 success-path seam clears the appropriate bit while
 preserving History 25/26 and leaving no-item refusals active. The Light/Dark
 ending and Light no-item/success controls pass 2/2; broad C7 chains are reserved
 for the next integration milestone.
+
+Colony Zod's exact original exit event now treats completed qbit 105 as a jump
+past the Family Reunion movie and History 24 write. The first qualifying exit
+still plays the movie and records completion; a second exit does neither, and
+custom-shaped event data disengages from the compatibility guard. The two
+focused Colony cases plus the adjacent Xenofex map-leave control pass 3/3.
 
 The Land of the Giants wishing well now charges 5,000 gold before each
 qualifying random wish. The real-face regression reproduced free repeatable

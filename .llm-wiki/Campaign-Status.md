@@ -42,6 +42,15 @@ Wromthrax combat and the authored 210-second objective timer. A fresh Light C0-C
 to pause repeated known-green testing; later slices should receive focused
 checks until the next meaningful integration milestone.
 
+Barrow II's Lantern event now distinguishes a successfully opened source chest
+from fresh recovery state. Map variable 2 is set only after source chest 2
+opens, survives close and save/reload, and keeps that chest authoritative even
+after the award; fresh award state still uses fallback chest 0. Trap timing,
+source identity, legacy fallback, patched-shape disengagement and the existing
+quest transaction pass alongside a rat-floor geometry check, 8/8. The rat is
+already on a valid indoor floor under OpenEnroth's exact-center spawn behavior,
+so no general radius repair was added.
+
 Sorcerer-to-Wizard also follows the full physical golem-component route and
 both head outcomes. The focused packet exposed Castle Harmondale event 376
 enabling group 6 and dismissing the Golem NPC before Thomas's animation; an
@@ -61,6 +70,14 @@ Knight-to-Champion now counts the authored combined Knight plus Lord Arena-win
 total rather than only the Knight counter. The failing behavior was reproduced
 through Leda's real dialogue for 0+5 and 4+1; the event-scoped repair, exact
 promotion transaction, refusal matrix and Arena control pass 5/5.
+
+Initiate-to-Master now uses Hume's real Light offer/return, the physical Temple
+of Baa transition, attack-input High Priest combat and viewport corpse pickup
+of the Cloak of the Sheep. Exact qualifying and honorary outcomes, refusal,
+reputation/topic cleanup and duplicate stability pass with the adjacent Zokarr
+promotion control, 4/4. The source contract confirms eligibility is inherited
+through Hume's first-promotion topic rather than rechecking an Initiate award;
+no production change was needed.
 
 Wizard-to-Archmage physically retrieves the Breeding Zone Book of Divine
 Intervention and retains it through Thomas Grey's exact transaction. The route
@@ -139,6 +156,12 @@ Avlee's original `rock01` at (-15088, -4288) now sits on its verified terrain
 floor at Z 148 instead of its shipped Z 208. The map-load correction requires
 the unique complete original decoration signature and leaves patched/custom
 data authoritative. The focused geometry and disengagement controls pass 2/2.
+
+Colony Zod's Family Reunion movie now remains one-time on the exact original
+exit-event shape. The first qualifying exit sets qbit 105, plays the movie and
+adds History 24; a completed repeat jumps past both presentation steps, while
+custom-shaped data remains authoritative. Two Colony cases plus the adjacent
+Xenofex map-leave control pass 3/3.
 
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding

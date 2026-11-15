@@ -43,6 +43,11 @@ constexpr int catherineId = 69;
 constexpr int parsonId = 70;
 constexpr int lorenId = 71;
 constexpr int falseLorenId = 72;
+constexpr int humanAmbassadorId = 67;
+constexpr int elvenAmbassadorId = 68;
+constexpr int judgeGreyId = 74;
+constexpr int goodJudgeId = 77;
+constexpr int evilJudgeId = 78;
 constexpr std::string_view checkpointSlot = "saves/save000.mm7";
 constexpr std::string_view checkpointFileName = "save000.mm7";
 constexpr std::array<uint64_t, 4> checkpointExperience = {13500, 13600, 13700, 13800};
@@ -57,6 +62,23 @@ enum class TrumpetRecipient {
     CATHERINE,
     PARSON,
     ARBITER,
+};
+
+enum class WarResultState {
+    NONE,
+    REAL,
+    FAKE,
+};
+
+enum class WarWinner {
+    HUMAN,
+    ELF,
+    NEUTRAL,
+};
+
+enum class ArbiterPath {
+    LIGHT,
+    DARK,
 };
 
 std::pair<Vec3f, int> approachFace(const BLVFace &face) {
@@ -81,6 +103,35 @@ bool eventChangesQuestBit(const EvtInstruction &instruction, QuestBit bit) {
             instruction.opcode == EVENT_Subtract) &&
            instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
            instruction.data.variable_descr.value == std::to_underlying(bit);
+}
+
+bool eventUsesVariable(const EvtInstruction &instruction, EvtOpcode opcode, EvtVariable variable,
+                       int value, int targetStep = -1) {
+    return instruction.opcode == opcode && instruction.data.variable_descr.type == variable &&
+           instruction.data.variable_descr.value == value &&
+           (targetStep == -1 || instruction.target_step == targetStep);
+}
+
+bool eventUsesVariable(const EvtProgram &program, int eventId, int step, EvtOpcode opcode,
+                       EvtVariable variable, int value, int targetStep = -1) {
+    return program.hasEvent(eventId) &&
+           std::ranges::any_of(program.function(eventId), [=](const EvtInstruction &instruction) {
+               return instruction.step == step &&
+                      eventUsesVariable(instruction, opcode, variable, value, targetStep);
+           });
+}
+
+int countGlobalVariableUses(EvtOpcode opcode, EvtVariable variable, int value) {
+    int result = 0;
+    for (int eventId = 1; eventId < 1000; ++eventId) {
+        if (!engine->_globalEventMap.hasEvent(eventId))
+            continue;
+        result += std::ranges::count_if(engine->_globalEventMap.function(eventId),
+                                        [=](const EvtInstruction &instruction) {
+            return eventUsesVariable(instruction, opcode, variable, value);
+        });
+    }
+    return result;
 }
 
 bool eventOpensHouse(int eventId, HouseId houseId) {
@@ -246,6 +297,71 @@ int totalExperience() {
     return result;
 }
 
+void waitForPartyDeathRecovery(EngineController &game, int previousDeaths) {
+    for (int i = 0; i < 128 && pParty->uNumDeaths == previousDeaths; ++i)
+        game.tick();
+    ASSERT_EQ(pParty->uNumDeaths, previousDeaths + 1);
+    for (int i = 0; i < 256 && uGameState != GAME_STATE_PLAYING; ++i)
+        game.tick();
+    ASSERT_EQ(uGameState, GAME_STATE_PLAYING);
+    for (const Character &character : pParty->pCharacters)
+        ASSERT_TRUE(character.CanAct());
+    game.goToGame();
+}
+
+WarWinner expectedWarWinner(WarResultState plans, WarResultState loren,
+                            TrumpetRecipient recipient) {
+    if (plans == WarResultState::REAL) {
+        if (loren == WarResultState::FAKE)
+            return WarWinner::ELF;
+        if (loren == WarResultState::REAL) {
+            if (recipient == TrumpetRecipient::CATHERINE)
+                return WarWinner::HUMAN;
+            if (recipient == TrumpetRecipient::PARSON)
+                return WarWinner::ELF;
+            return WarWinner::NEUTRAL;
+        }
+        return recipient == TrumpetRecipient::PARSON ? WarWinner::ELF : WarWinner::HUMAN;
+    }
+
+    if (plans == WarResultState::FAKE && loren == WarResultState::FAKE) {
+        if (recipient == TrumpetRecipient::CATHERINE)
+            return WarWinner::HUMAN;
+        if (recipient == TrumpetRecipient::PARSON)
+            return WarWinner::ELF;
+        return WarWinner::NEUTRAL;
+    }
+
+    if (plans == WarResultState::NONE && loren == WarResultState::FAKE &&
+        recipient == TrumpetRecipient::PARSON)
+        return WarWinner::ELF;
+    return WarWinner::HUMAN;
+}
+
+void setWarResultBits(WarResultState plans, WarResultState loren,
+                      TrumpetRecipient recipient) {
+    if (plans == WarResultState::REAL)
+        pParty->_questBits.set(QBIT_RIVERSTRIDE_PLANS_GIVEN);
+    else if (plans == WarResultState::FAKE)
+        pParty->_questBits.set(QBIT_FALSE_RIVERSTRIDE_PLANS_GIVEN);
+    else
+        pParty->_questBits.set(QBIT_FALSE_RIVERSTRIDE_PLANS_REVEALED);
+
+    if (loren == WarResultState::REAL)
+        pParty->_questBits.set(QBIT_LOREN_STEEL_RESCUED);
+    else if (loren == WarResultState::FAKE)
+        pParty->_questBits.set(QBIT_FALSE_LOREN_GIVEN);
+    else
+        pParty->_questBits.set(QBIT_FALSE_LOREN_REVEALED);
+
+    if (recipient == TrumpetRecipient::CATHERINE)
+        pParty->_questBits.set(QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ERATHIA);
+    else if (recipient == TrumpetRecipient::PARSON)
+        pParty->_questBits.set(QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_AVLEE);
+    else
+        pParty->_questBits.set(QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ARBITER);
+}
+
 void prepareWarJobs() {
     pParty->_questBits.set(QBIT_HARMONDALE_REBUILT);
     pParty->SetGold(1000);
@@ -375,6 +491,59 @@ void installDarkArbiterAfterBalancedWar(EngineController &game) {
 }
 
 } // namespace
+
+GAME_TEST(MM7WarRevealMatrix, SourceContracts) {
+    game.startNewGame();
+    const EvtProgram &global = engine->_globalEventMap;
+
+    EXPECT_EQ(pNPCStats->pNPCData[catherineId].dialogue_2_evt_id, 126u);
+    EXPECT_EQ(pNPCStats->pNPCData[parsonId].dialogue_2_evt_id, 133u);
+    EXPECT_TRUE(eventUsesVariable(global, 126, 0, EVENT_OnCanShowDialogItemCmp, VAR_NPCs2,
+                                  falseLorenId, 3));
+    EXPECT_TRUE(eventUsesVariable(global, 133, 0, EVENT_OnCanShowDialogItemCmp,
+                                  VAR_PlayerItemInHands,
+                                  std::to_underlying(ITEM_MESSAGE_FALSE_RIVERSTRIDE_PLANS), 3));
+    EXPECT_TRUE(eventUsesVariable(global, 126, 10, EVENT_Set, VAR_QBits_QuestsDone,
+                                  std::to_underlying(QBIT_FALSE_LOREN_REVEALED)));
+    EXPECT_TRUE(eventUsesVariable(global, 133, 10, EVENT_Set, VAR_QBits_QuestsDone,
+                                  std::to_underlying(QBIT_FALSE_RIVERSTRIDE_PLANS_REVEALED)));
+    EXPECT_EQ(countGlobalVariableUses(EVENT_Set, VAR_QBits_QuestsDone,
+                                      std::to_underlying(QBIT_FALSE_LOREN_REVEALED)), 1);
+    EXPECT_EQ(countGlobalVariableUses(EVENT_Set, VAR_QBits_QuestsDone,
+                                      std::to_underlying(QBIT_FALSE_RIVERSTRIDE_PLANS_REVEALED)), 1);
+    for (EvtOpcode opcode : {EVENT_Add, EVENT_Subtract}) {
+        EXPECT_EQ(countGlobalVariableUses(opcode, VAR_QBits_QuestsDone,
+                                          std::to_underlying(QBIT_FALSE_LOREN_REVEALED)), 0);
+        EXPECT_EQ(countGlobalVariableUses(
+                      opcode, VAR_QBits_QuestsDone,
+                      std::to_underlying(QBIT_FALSE_RIVERSTRIDE_PLANS_REVEALED)), 0);
+    }
+
+    EXPECT_TRUE(eventUsesVariable(global, 135, 1, EVENT_Compare, VAR_QBits_QuestsDone,
+                                  std::to_underlying(QBIT_FALSE_LOREN_REVEALED), 13));
+    EXPECT_TRUE(eventUsesVariable(global, 128, 1, EVENT_Compare, VAR_QBits_QuestsDone,
+                                  std::to_underlying(QBIT_FALSE_RIVERSTRIDE_PLANS_REVEALED), 13));
+    EXPECT_EQ(countGlobalVariableUses(EVENT_Compare, VAR_QBits_QuestsDone,
+                                      std::to_underlying(QBIT_FALSE_LOREN_REVEALED)), 1);
+    EXPECT_EQ(countGlobalVariableUses(EVENT_Compare, VAR_QBits_QuestsDone,
+                                      std::to_underlying(QBIT_FALSE_RIVERSTRIDE_PLANS_REVEALED)), 1);
+    for (int eventId : {126, 133}) {
+        EXPECT_EQ(std::ranges::count_if(global.function(eventId), [](const EvtInstruction &instruction) {
+            return eventUsesVariable(instruction, EVENT_Set, VAR_Dead, 1);
+        }), 4);
+    }
+
+    game.teleportTo(MAP_HARMONDALE, Vec3f(), 0);
+    ASSERT_TRUE(engine->_localEventMap.hasEvent(37));
+    EXPECT_TRUE(std::ranges::none_of(engine->_localEventMap.function(37),
+                                     [](const EvtInstruction &instruction) {
+        return instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               (instruction.data.variable_descr.value ==
+                    std::to_underlying(QBIT_FALSE_LOREN_REVEALED) ||
+                instruction.data.variable_descr.value ==
+                    std::to_underlying(QBIT_FALSE_RIVERSTRIDE_PLANS_REVEALED));
+    }));
+}
 
 GAME_TEST(MM7WarAlternatives, LorenRealDecoyAndExpiredOutcomes) {
     for (WarJobOutcome outcome : {WarJobOutcome::REAL, WarJobOutcome::DECOY, WarJobOutcome::EXPIRED}) {
@@ -509,6 +678,100 @@ GAME_TEST(MM7WarAlternatives, RiverstrideRealDecoyAndExpiredOutcomes) {
     }
 }
 
+GAME_TEST(MM7WarRevealMatrix, ExposedDecoysArePhysicalDeathAndFailureRoutes) {
+    for (bool exposeFalseLoren : {true, false}) {
+        SCOPED_TRACE(fmt::format("exposeFalseLoren={}", exposeFalseLoren));
+        test.prepareForNextTest();
+        game.startNewGame();
+        prepareWarJobs();
+
+        int targetNpcId;
+        int revealEventId;
+        int sponsorNpcId;
+        int sponsorFollowupEventId;
+        QuestBit revealBit;
+        if (exposeFalseLoren) {
+            openCatherine(game);
+            ASSERT_TRUE(selectNpcEvent(game, catherineId, 124));
+            leaveHouse(game);
+            openParson(game);
+            ASSERT_TRUE(selectNpcEvent(game, parsonId, 134));
+            ASSERT_TRUE(pNPCStats->pNPCData[falseLorenId].Hired());
+            ASSERT_TRUE(pParty->_questBits[QBIT_FALSE_LOREN_ACTIVE]);
+            leaveHouse(game);
+
+            openCatherine(game);
+            targetNpcId = catherineId;
+            revealEventId = 126;
+            sponsorNpcId = parsonId;
+            sponsorFollowupEventId = 135;
+            revealBit = QBIT_FALSE_LOREN_REVEALED;
+        } else {
+            openParson(game);
+            ASSERT_TRUE(selectNpcEvent(game, parsonId, 131));
+            leaveHouse(game);
+            openCatherine(game);
+            ASSERT_TRUE(selectNpcEvent(game, catherineId, 127));
+            ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_MESSAGE_FALSE_RIVERSTRIDE_PLANS);
+            pParty->placeHeldItemInInventoryOrDrop();
+            ASSERT_TRUE(pParty->hasItem(ITEM_MESSAGE_FALSE_RIVERSTRIDE_PLANS));
+            ASSERT_TRUE(pParty->_questBits[QBIT_FALSE_RIVERSTRIDE_PLANS_ACTIVE]);
+            leaveHouse(game);
+
+            openParson(game);
+            targetNpcId = parsonId;
+            revealEventId = 133;
+            sponsorNpcId = catherineId;
+            sponsorFollowupEventId = 128;
+            revealBit = QBIT_FALSE_RIVERSTRIDE_PLANS_REVEALED;
+        }
+
+        const auto topics = prepareScriptedNPCDialogueTopics(&pNPCStats->pNPCData[targetNpcId]);
+        ASSERT_TRUE(std::ranges::contains(topics, DIALOGUE_SCRIPTED_LINE_2));
+        const int deathsBefore = pParty->uNumDeaths;
+        ASSERT_TRUE(selectNpcEvent(game, targetNpcId, revealEventId));
+        for (const Character &character : pParty->pCharacters)
+            EXPECT_TRUE(character.conditions.has(CONDITION_DEAD));
+        leaveHouse(game);
+        waitForPartyDeathRecovery(game, deathsBefore);
+
+        EXPECT_TRUE(pParty->_questBits[revealBit]);
+        EXPECT_FALSE(pParty->_questBits[QBIT_RIVERSTRIDE_PLANS_ACTIVE]);
+        EXPECT_FALSE(pParty->_questBits[QBIT_LOREN_STEEL_RESCUE_ACTIVE]);
+        EXPECT_FALSE(pParty->_questBits[QBIT_FALSE_RIVERSTRIDE_PLANS_ACTIVE]);
+        EXPECT_FALSE(pParty->_questBits[QBIT_FALSE_LOREN_ACTIVE]);
+        EXPECT_FALSE(pParty->_questBits[QBIT_RIVERSTRIDE_PLANS_GIVEN]);
+        EXPECT_FALSE(pParty->_questBits[QBIT_LOREN_STEEL_RESCUED]);
+        EXPECT_FALSE(pParty->_questBits[QBIT_FALSE_RIVERSTRIDE_PLANS_GIVEN]);
+        EXPECT_FALSE(pParty->_questBits[QBIT_FALSE_LOREN_GIVEN]);
+        EXPECT_FALSE(pNPCStats->pNPCData[lorenId].Hired());
+        EXPECT_FALSE(pNPCStats->pNPCData[falseLorenId].Hired());
+        EXPECT_FALSE(pParty->hasItem(ITEM_MESSAGE_RIVERSTRIDE_PLANS));
+        EXPECT_FALSE(pParty->hasItem(ITEM_MESSAGE_FALSE_RIVERSTRIDE_PLANS));
+        EXPECT_EQ(pNPCStats->pNPCData[targetNpcId].dialogue_1_evt_id, 0u);
+        EXPECT_EQ(pNPCStats->pNPCData[targetNpcId].dialogue_2_evt_id, 0u);
+        EXPECT_FALSE(selectNpcEvent(game, targetNpcId, revealEventId));
+
+        if (sponsorNpcId == catherineId)
+            openCatherine(game);
+        else
+            openParson(game);
+        const int goldBefore = pParty->GetGold();
+        const int bankBefore = pParty->uNumGoldInBank;
+        const int experienceBefore = totalExperience();
+        const int reputationBefore = pParty->GetPartyReputation();
+        ASSERT_TRUE(selectNpcEvent(game, sponsorNpcId, sponsorFollowupEventId));
+        EXPECT_EQ(pParty->GetGold(), goldBefore);
+        EXPECT_EQ(pParty->uNumGoldInBank, bankBefore);
+        EXPECT_EQ(totalExperience(), experienceBefore);
+        EXPECT_EQ(pParty->GetPartyReputation(), reputationBefore);
+        EXPECT_TRUE(pParty->_questBits[revealBit]);
+        EXPECT_EQ(pNPCStats->pNPCData[sponsorNpcId].dialogue_3_evt_id, 0u);
+        EXPECT_EQ(pNPCStats->pNPCData[sponsorNpcId].dialogue_4_evt_id, 0u);
+        EXPECT_FALSE(selectNpcEvent(game, sponsorNpcId, sponsorFollowupEventId));
+    }
+}
+
 GAME_TEST(MM7WarAlternatives, TrumpetSupportsErathiaAvleeAndArbiterRecipients) {
     for (TrumpetRecipient recipient : {TrumpetRecipient::CATHERINE, TrumpetRecipient::PARSON,
                                        TrumpetRecipient::ARBITER}) {
@@ -550,6 +813,159 @@ GAME_TEST(MM7WarAlternatives, TrumpetSupportsErathiaAvleeAndArbiterRecipients) {
         EXPECT_EQ(pParty->uNumGoldInBank, recipient == TrumpetRecipient::ARBITER ? 1000 : 6000);
         EXPECT_EQ(pParty->GetGold(), 1000);
         EXPECT_EQ(totalExperience(), initialExperience + (recipient == TrumpetRecipient::ARBITER ? 50000 : 40000));
+    }
+}
+
+GAME_TEST(MM7WarRevealMatrix, AllFivePhysicalTrumpetRecipientsHaveExactRewards) {
+    struct RecipientCase {
+        int npcId;
+        int eventId;
+        QuestBit recipientBit;
+        int goldDelta;
+        int bankDelta;
+        int reputationDelta;
+        int experienceDelta;
+    };
+    constexpr std::array cases = {
+        RecipientCase{humanAmbassadorId, 118, QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ERATHIA,
+                      5000, 0, 0, 40000},
+        RecipientCase{catherineId, 130, QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ERATHIA,
+                      0, 5000, -5, 40000},
+        RecipientCase{elvenAmbassadorId, 122, QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_AVLEE,
+                      5000, 0, 0, 40000},
+        RecipientCase{parsonId, 137, QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_AVLEE,
+                      0, 5000, -5, 40000},
+        RecipientCase{judgeGreyId, 140, QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ARBITER,
+                      0, 0, 0, 50000},
+    };
+
+    for (const RecipientCase &testCase : cases) {
+        SCOPED_TRACE(fmt::format("npc={}", testCase.npcId));
+        test.prepareForNextTest();
+        game.startNewGame();
+        prepareWarJobs();
+        acquireGryphonheartTrumpet(game);
+
+        if (testCase.npcId == humanAmbassadorId || testCase.npcId == elvenAmbassadorId) {
+            // Authored global event 108 places both ambassadors here after the castle rebuild.
+            pNPCStats->pNPCData[testCase.npcId].house = HOUSE_CASTLE_HARMONDALE_THRONE_ROOM;
+            openThroneRoom(game, MAP_CASTLE_HARMONDALE, HOUSE_CASTLE_HARMONDALE_THRONE_ROOM,
+                           testCase.npcId);
+        } else if (testCase.npcId == catherineId) {
+            openCatherine(game);
+        } else if (testCase.npcId == parsonId) {
+            openParson(game);
+        } else {
+            openJudgeGrey(game);
+        }
+
+        const int goldBefore = pParty->GetGold();
+        const int bankBefore = pParty->uNumGoldInBank;
+        const int reputationBefore = pParty->GetPartyReputation();
+        const int experienceBefore = totalExperience();
+        ASSERT_TRUE(selectNpcEvent(game, testCase.npcId, testCase.eventId));
+
+        EXPECT_EQ(pParty->GetGold() - goldBefore, testCase.goldDelta);
+        EXPECT_EQ(pParty->uNumGoldInBank - bankBefore, testCase.bankDelta);
+        EXPECT_EQ(pParty->GetPartyReputation() - reputationBefore, testCase.reputationDelta);
+        EXPECT_EQ(totalExperience() - experienceBefore, testCase.experienceDelta);
+        EXPECT_TRUE(pParty->_questBits[testCase.recipientBit]);
+        EXPECT_EQ(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ERATHIA],
+                  testCase.recipientBit == QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ERATHIA);
+        EXPECT_EQ(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_AVLEE],
+                  testCase.recipientBit == QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_AVLEE);
+        EXPECT_EQ(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ARBITER],
+                  testCase.recipientBit == QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ARBITER);
+        EXPECT_FALSE(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_ACTIVE]);
+        EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_GRYPHONHEARTS_TRUMPET));
+        EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+        EXPECT_FALSE(selectNpcEvent(game, testCase.npcId, testCase.eventId));
+
+        const int goldAfter = pParty->GetGold();
+        const int bankAfter = pParty->uNumGoldInBank;
+        const int reputationAfter = pParty->GetPartyReputation();
+        const int experienceAfter = totalExperience();
+        game.tick();
+        EXPECT_EQ(pParty->GetGold(), goldAfter);
+        EXPECT_EQ(pParty->uNumGoldInBank, bankAfter);
+        EXPECT_EQ(pParty->GetPartyReputation(), reputationAfter);
+        EXPECT_EQ(totalExperience(), experienceAfter);
+    }
+}
+
+GAME_TEST(MM7WarRevealMatrix, AllEffectiveResultsResolveUnderBothArbiters) {
+    constexpr std::array resultStates = {
+        WarResultState::NONE,
+        WarResultState::REAL,
+        WarResultState::FAKE,
+    };
+    constexpr std::array recipients = {
+        TrumpetRecipient::CATHERINE,
+        TrumpetRecipient::PARSON,
+        TrumpetRecipient::ARBITER,
+    };
+    constexpr std::array paths = {
+        ArbiterPath::LIGHT,
+        ArbiterPath::DARK,
+    };
+
+    for (WarResultState plans : resultStates) {
+        for (WarResultState loren : resultStates) {
+            for (TrumpetRecipient recipient : recipients) {
+                for (ArbiterPath path : paths) {
+                    SCOPED_TRACE(fmt::format(
+                        "plans={} loren={} recipient={} path={} (NONE=exposed/expired equivalent)",
+                        std::to_underlying(plans), std::to_underlying(loren),
+                        std::to_underlying(recipient), std::to_underlying(path)));
+                    test.prepareForNextTest();
+                    game.startNewGame();
+                    pParty->_questBits.reset();
+                    pParty->_questBits.set(QBIT_HARMONDALE_REBUILT);
+                    pParty->_questBits.set(QBIT_ARBITER_CHOICE_ACTIVE);
+                    setWarResultBits(plans, loren, recipient);
+
+                    const bool light = path == ArbiterPath::LIGHT;
+                    NPCData &judge = pNPCStats->pNPCData[light ? goodJudgeId : evilJudgeId];
+                    NPCData &otherJudge = pNPCStats->pNPCData[light ? evilJudgeId : goodJudgeId];
+                    judge.flags |= NPC_HIRED;
+                    judge.dialogue_1_evt_id = 0;  // State after authored hire event 143/141.
+                    otherJudge.flags &= ~NPC_HIRED;
+
+                    loadMapAtPartyStart(game, MAP_HARMONDALE);
+                    game.teleportTo(MAP_HARMONDALE, Vec3f(20992, -6450, 672), 90);
+                    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+                    game.tick();
+                    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+                    const WarWinner winner = expectedWarWinner(plans, loren, recipient);
+                    const int historyBase = light ? 6 : 13;
+                    const int winnerOffset = winner == WarWinner::HUMAN ? 0 :
+                                             winner == WarWinner::ELF ? 1 : 2;
+                    for (int offset = 0; offset < 3; ++offset) {
+                        EXPECT_EQ(pParty->PartyTimes.HistoryEventTimes[historyBase + offset].isValid(),
+                                  offset == winnerOffset);
+                    }
+
+                    EXPECT_EQ(pParty->_questBits[QBIT_LIGHT_PATH], light);
+                    EXPECT_EQ(pParty->_questBits[QBIT_DARK_PATH], !light);
+                    EXPECT_EQ(pParty->_questBits[QBIT_GAVIN_MAGNUS_VISIT_ACTIVE], light);
+                    EXPECT_EQ(pParty->_questBits[QBIT_ARCHIBALD_VISIT_ACTIVE], !light);
+                    EXPECT_FALSE(pParty->_questBits[QBIT_ARBITER_CHOICE_ACTIVE]);
+                    EXPECT_FALSE(judge.Hired());
+                    EXPECT_FALSE(otherJudge.Hired());
+                    EXPECT_EQ(judge.house, light ? HOUSE_HARMONDALE_ARBITER_1
+                                                 : HOUSE_HARMONDALE_ARBITER_2);
+                    EXPECT_EQ(otherJudge.house, HOUSE_INVALID);
+                    EXPECT_EQ(judge.greetingIndex, light ? 106 : 103);
+                    EXPECT_EQ(judge.dialogue_2_evt_id, light ? 144u : 142u);
+                    EXPECT_EQ(judge.dialogue_3_evt_id, 139u);
+
+                    EXPECT_EQ(pParty->_questBits[QBIT_FALSE_RIVERSTRIDE_PLANS_REVEALED],
+                              plans == WarResultState::NONE);
+                    EXPECT_EQ(pParty->_questBits[QBIT_FALSE_LOREN_REVEALED],
+                              loren == WarResultState::NONE);
+                }
+            }
+        }
     }
 }
 

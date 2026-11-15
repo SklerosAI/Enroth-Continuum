@@ -24,6 +24,7 @@
 #include "Engine/Objects/NPC.h"
 #include "Engine/Party.h"
 #include "Engine/PartyEnums.h"
+#include "Engine/PartyPlacement.h"
 #include "Engine/Tables/ChestTable.h"
 #include "Engine/Tables/NPCTable.h"
 
@@ -44,6 +45,60 @@ constexpr int tidewaterChestEventId = 176;
 constexpr int tidewaterChestId = 1;
 constexpr int tidewaterFallbackChestId = 0;
 constexpr int tidewaterMapVariable = 2;
+constexpr int rebeccaNpcId = 46;
+constexpr int lightOfferEventId = 86;
+constexpr int lightReturnEventId = 87;
+constexpr int darkOfferEventId = 90;
+constexpr int darkReturnEventId = 91;
+constexpr int altarEventId = 376;
+
+struct SecondPriestPath {
+    int npcId;
+    MapId promoterMap;
+    HouseId promoterHouse;
+    int offerEventId;
+    int returnEventId;
+    QuestBit pathBit;
+    QuestBit activeBit;
+    MapId altarMap;
+    QuestBit objectiveBit;
+    Class promotedClass;
+    AwardId qualifyingAward;
+    AwardId honoraryAward;
+    int greeting;
+};
+
+constexpr SecondPriestPath lightPriestPath = {
+    rebeccaNpcId,
+    MAP_CELESTE,
+    HOUSE_CELESTE_HOUSE_DEVINE,
+    lightOfferEventId,
+    lightReturnEventId,
+    QBIT_LIGHT_PATH,
+    QBIT_TEMPLE_OF_THE_MOON_ALTAR_ACTIVE,
+    MAP_GRAND_TEMPLE_OF_THE_MOON,
+    QBIT_TEMPLE_OF_THE_MOON_ALTAR_PURIFIED,
+    CLASS_PRIEST_OF_SUN,
+    AWARD_PROMOTION_PRIEST_OF_LIGHT,
+    AWARD_PROMOTION_PRIEST_OF_LIGHT_HONORARY,
+    73,
+};
+
+constexpr SecondPriestPath darkPriestPath = {
+    falkNpcId,
+    MAP_DEYJA,
+    HOUSE_DEYJA_FALK_RESIDENCE,
+    darkOfferEventId,
+    darkReturnEventId,
+    QBIT_DARK_PATH,
+    QBIT_TEMPLE_OF_THE_SUN_ALTAR_ACTIVE,
+    MAP_GRAND_TEMPLE_OF_THE_SUN,
+    QBIT_TEMPLE_OF_THE_SUN_ALTAR_DEFILED,
+    CLASS_PRIEST_OF_MOON,
+    AWARD_PROMOTION_PRIEST_OF_DARK,
+    AWARD_PROMOTION_PRIEST_OF_DARK_HONORARY,
+    75,
+};
 
 bool eventOpensHouse(int eventId, HouseId houseId) {
     return engine->_localEventMap.hasEvent(eventId) &&
@@ -160,9 +215,171 @@ void openOutdoorHouse(EngineController &game, MapId map, HouseId houseId, NPCDat
     }
 }
 
+void openIndoorHouse(EngineController &game, MapId map, Vec3f arrival, HouseId houseId, NPCData *npc = nullptr) {
+    game.teleportTo(map, arrival, 0);
+    std::vector<int> doorIds;
+    for (int faceId = 0; faceId < std::ssize(pIndoor->faces); ++faceId) {
+        const BLVFace &face = pIndoor->faces[faceId];
+        if (face.Clickable() && eventOpensHouse(face.eventId, houseId))
+            doorIds.push_back(faceId);
+    }
+    ASSERT_FALSE(doorIds.empty());
+
+    for (int faceId : doorIds) {
+        const BLVFace &face = pIndoor->faces[faceId];
+        for (float distance : {80.0f, 150.0f, 250.0f}) {
+            for (float direction : {1.0f, -1.0f}) {
+                Vec3f position = face.boundingBox.center() + direction * distance * face.facePlane.normal;
+                int sectorId = 0;
+                int floorFaceId = -1;
+                float floorZ = GetIndoorFloorZ(position + Vec3f(0, 0, pParty->radius), &sectorId, &floorFaceId);
+                if (floorZ == -30000 || floorFaceId == -1)
+                    continue;
+                position.z = floorZ;
+                int yaw = std::lround(std::atan2(-direction * face.facePlane.normal.y,
+                                                 -direction * face.facePlane.normal.x) *
+                                      180 / std::numbers::pi);
+                game.teleportTo(map, position, yaw);
+                try {
+                    game.pointMouseAtFace(faceId);
+                } catch (const Exception &) {
+                    continue;
+                }
+                game.pressAndReleaseButton(BUTTON_LEFT);
+                game.tick();
+                if (current_screen_type == SCREEN_HOUSE || current_screen_type == SCREEN_NPC_DIALOGUE)
+                    break;
+            }
+            if (current_screen_type == SCREEN_HOUSE || current_screen_type == SCREEN_NPC_DIALOGUE)
+                break;
+        }
+        if (current_screen_type == SCREEN_HOUSE || current_screen_type == SCREEN_NPC_DIALOGUE)
+            break;
+    }
+
+    ASSERT_TRUE(current_screen_type == SCREEN_HOUSE || current_screen_type == SCREEN_NPC_DIALOGUE);
+    if (current_screen_type == SCREEN_HOUSE) {
+        ASSERT_NE(window_SpeakInHouse, nullptr);
+        ASSERT_EQ(window_SpeakInHouse->houseId(), houseId);
+    }
+    if (!npc)
+        return;
+
+    auto entry = std::ranges::find(houseNpcs, npc, &HouseNpcDesc::npc);
+    ASSERT_NE(entry, houseNpcs.end());
+    if (current_screen_type == SCREEN_HOUSE && houseNpcs.size() > 1) {
+        game.pressGuiButton(fmt::format("House_Npc{}", entry - houseNpcs.begin()));
+        game.tick();
+    }
+}
+
 void openFalkDialogue(EngineController &game, NPCData *falk) {
     openOutdoorHouse(game, MAP_DEYJA, HOUSE_DEYJA_FALK_RESIDENCE, falk);
     ASSERT_EQ(falk->house, HOUSE_DEYJA_FALK_RESIDENCE);
+}
+
+void openPromoterDialogue(EngineController &game, const SecondPriestPath &path, NPCData *promoter) {
+    if (path.promoterMap == MAP_CELESTE) {
+        openIndoorHouse(game, MAP_CELESTE, Vec3f(-158, 7624, 1), path.promoterHouse, promoter);
+    } else {
+        openOutdoorHouse(game, path.promoterMap, path.promoterHouse, promoter);
+    }
+    ASSERT_EQ(promoter->house, path.promoterHouse);
+}
+
+void loadMapAtPartyStart(EngineController &game, MapId map) {
+    if (engine->_currentLoadedMapId == map)
+        return;
+    game.runGameRoutine([map] {
+        engine->_pendingTransition = MapDestination(map, MAP_START_POINT_PARTY);
+        engineFlags |= ENGINE_SKIP_NEXT_WORLD_UPDATE;
+        uGameState = GAME_STATE_CHANGE_LOCATION;
+        onMapLeave();
+    });
+    game.tick();
+    game.skipLoadingScreen();
+    ASSERT_EQ(engine->_currentLoadedMapId, map);
+}
+
+bool eventSetsQuestBit(const EvtProgram &program, int eventId, QuestBit bit) {
+    return eventChangesVariable(program, eventId, EVENT_Set, VAR_QBits_QuestsDone, std::to_underlying(bit)) ||
+           eventChangesVariable(program, eventId, EVENT_Add, VAR_QBits_QuestsDone, std::to_underlying(bit));
+}
+
+void useAltar(EngineController &game, const SecondPriestPath &path) {
+    loadMapAtPartyStart(game, path.altarMap);
+    ASSERT_TRUE(engine->_localEventMap.hasEvent(altarEventId));
+    ASSERT_TRUE(eventSetsQuestBit(engine->_localEventMap, altarEventId, path.objectiveBit));
+
+    bool used = false;
+    for (int faceId = 0; faceId < std::ssize(pIndoor->faces) && !used; ++faceId) {
+        const BLVFace &face = pIndoor->faces[faceId];
+        if (!face.Clickable() || face.eventId != altarEventId)
+            continue;
+        if (std::abs(face.facePlane.normal.z) > 0.5f) {
+            for (const auto &[offset, yaw] : std::array{
+                     std::pair{Vec3f(300, 0, 50), 180}, std::pair{Vec3f(-300, 0, 50), 0},
+                     std::pair{Vec3f(0, 300, 50), 270}, std::pair{Vec3f(0, -300, 50), 90}}) {
+                Vec3f position = face.boundingBox.center() + offset;
+                int sectorId = 0;
+                int floorFaceId = -1;
+                float floorZ = GetIndoorFloorZ(position + Vec3f(0, 0, pParty->radius), &sectorId, &floorFaceId);
+                if (floorZ == -30000 || floorFaceId == -1)
+                    continue;
+                position.z = floorZ;
+                game.teleportTo(path.altarMap, position, yaw, -45);
+                try {
+                    game.pointMouseAtFace(faceId);
+                } catch (const Exception &) {
+                    continue;
+                }
+                game.pressAndReleaseButton(BUTTON_LEFT);
+                game.tick();
+                used = pParty->_questBits[path.objectiveBit];
+                if (used)
+                    break;
+            }
+            if (used)
+                break;
+        }
+        for (float distance : {80.0f, 150.0f, 250.0f}) {
+            for (float direction : {1.0f, -1.0f}) {
+                Vec3f position = face.boundingBox.center() + direction * distance * face.facePlane.normal;
+                int sectorId = 0;
+                int floorFaceId = -1;
+                float floorZ = GetIndoorFloorZ(position + Vec3f(0, 0, pParty->radius), &sectorId, &floorFaceId);
+                if (floorZ == -30000 || floorFaceId == -1)
+                    continue;
+                position.z = floorZ;
+                int yaw = std::lround(std::atan2(-direction * face.facePlane.normal.y,
+                                                 -direction * face.facePlane.normal.x) *
+                                      180 / std::numbers::pi);
+                game.teleportTo(path.altarMap, position, yaw);
+                try {
+                    game.pointMouseAtFace(faceId);
+                } catch (const Exception &) {
+                    continue;
+                }
+                game.pressAndReleaseButton(BUTTON_LEFT);
+                game.tick();
+                used = pParty->_questBits[path.objectiveBit];
+                if (used)
+                    break;
+            }
+            if (used)
+                break;
+        }
+    }
+    ASSERT_TRUE(used);
+}
+
+void prepareSecondPromotionParty() {
+    const std::array classes = {CLASS_PRIEST, CLASS_PRIEST, CLASS_CLERIC, CLASS_KNIGHT};
+    for (int i = 0; i < 4; ++i) {
+        pParty->pCharacters[i].classType = classes[i];
+        pParty->pCharacters[i]._achievedAwardsBits.set(i < 2 ? AWARD_PROMOTION_PRIEST :
+                                                       AWARD_PROMOTION_PRIEST_HONORARY);
+    }
 }
 
 bool bracadaBoatAvailable(EngineController &game) {
@@ -342,6 +559,215 @@ GAME_TEST(MM7PriestPromotion, CompatibilitySeamIgnoresPatchedEventShape) {
     EXPECT_EQ(pGUIWindow_CurrentChest->chestId(), tidewaterFallbackChestId);
     EXPECT_EQ(engine->_persistentVariables.mapVars[tidewaterMapVariable], 1);
     closeChest(game);
+}
+
+GAME_TEST(MM7PriestSecondPromotion, SourceContracts) {
+    game.startNewGame();
+    const NPCData &rebecca = pNPCStats->pNPCData[rebeccaNpcId];
+    const NPCData &falk = pNPCStats->pNPCData[falkNpcId];
+    EXPECT_EQ(rebecca.house, HOUSE_CELESTE_HOUSE_DEVINE);
+    EXPECT_EQ(rebecca.dialogue_1_evt_id, lightOfferEventId);
+    EXPECT_EQ(falk.house, HOUSE_DEYJA_FALK_RESIDENCE);
+    EXPECT_EQ(falk.dialogue_1_evt_id, offerEventId);
+
+    EXPECT_TRUE(eventChangesVariable(engine->_globalEventMap, lightOfferEventId, EVENT_Compare, VAR_Award,
+                                     std::to_underlying(AWARD_PROMOTION_PRIEST)));
+    EXPECT_TRUE(eventChangesVariable(engine->_globalEventMap, lightOfferEventId, EVENT_Compare, VAR_Award,
+                                     std::to_underlying(AWARD_PROMOTION_PRIEST_HONORARY)));
+    EXPECT_TRUE(eventChangesVariable(engine->_globalEventMap, lightOfferEventId, EVENT_Compare,
+                                     VAR_QBits_QuestsDone, std::to_underlying(QBIT_LIGHT_PATH)));
+    EXPECT_TRUE(eventChangesVariable(engine->_globalEventMap, lightOfferEventId, EVENT_Set, VAR_QBits_QuestsDone,
+                                     std::to_underlying(lightPriestPath.activeBit)));
+    EXPECT_TRUE(eventSetsNpcTopic(engine->_globalEventMap, lightOfferEventId, rebeccaNpcId, 0,
+                                  lightReturnEventId));
+
+    // Falk's dark offer is chained from the first promotion return instead of repeating the award comparison.
+    EXPECT_TRUE(eventSetsNpcTopic(engine->_globalEventMap, returnEventId, falkNpcId, 0, darkOfferEventId));
+    EXPECT_TRUE(eventChangesVariable(engine->_globalEventMap, darkOfferEventId, EVENT_Compare,
+                                     VAR_QBits_QuestsDone, std::to_underlying(QBIT_DARK_PATH)));
+    EXPECT_TRUE(eventChangesVariable(engine->_globalEventMap, darkOfferEventId, EVENT_Set, VAR_QBits_QuestsDone,
+                                     std::to_underlying(darkPriestPath.activeBit)));
+    EXPECT_TRUE(eventSetsNpcTopic(engine->_globalEventMap, darkOfferEventId, falkNpcId, 0,
+                                  darkReturnEventId));
+
+    for (const SecondPriestPath &path : {lightPriestPath, darkPriestPath}) {
+        EXPECT_TRUE(eventChangesVariable(engine->_globalEventMap, path.returnEventId, EVENT_Compare,
+                                         VAR_QBits_QuestsDone, std::to_underlying(path.objectiveBit)));
+        EXPECT_TRUE(eventChangesVariable(engine->_globalEventMap, path.returnEventId, EVENT_Subtract,
+                                         VAR_QBits_QuestsDone, std::to_underlying(path.activeBit)));
+        EXPECT_TRUE(eventChangesVariable(engine->_globalEventMap, path.returnEventId, EVENT_Add, VAR_FixedGold,
+                                         10000));
+        EXPECT_TRUE(eventChangesVariable(engine->_globalEventMap, path.returnEventId, EVENT_Subtract,
+                                         VAR_ReputationInCurrentLocation, 10));
+        EXPECT_TRUE(eventSetsNpcTopic(engine->_globalEventMap, path.returnEventId, path.npcId, 0, 0));
+
+        loadMapAtPartyStart(game, path.altarMap);
+        ASSERT_TRUE(engine->_localEventMap.hasEvent(altarEventId));
+        EXPECT_TRUE(eventChangesVariable(engine->_localEventMap, altarEventId, EVENT_Compare,
+                                         VAR_QBits_QuestsDone, std::to_underlying(path.activeBit)));
+        EXPECT_TRUE(eventSetsQuestBit(engine->_localEventMap, altarEventId, path.objectiveBit));
+        EXPECT_TRUE(std::ranges::any_of(pIndoor->faces, [](const BLVFace &face) {
+            return face.Clickable() && face.eventId == altarEventId;
+        }));
+    }
+}
+
+GAME_TEST(MM7PriestSecondPromotion, LightOfferRequiresPriestAwardAndLightPath) {
+    game.startNewGame();
+    NPCData &rebecca = pNPCStats->pNPCData[rebeccaNpcId];
+    pParty->_questBits.set(QBIT_LIGHT_PATH);
+
+    openPromoterDialogue(game, lightPriestPath, &rebecca);
+    ASSERT_TRUE(selectNpcEvent(game, &rebecca, lightOfferEventId));
+    EXPECT_FALSE(pParty->_questBits[lightPriestPath.activeBit]);
+    EXPECT_EQ(rebecca.dialogue_1_evt_id, lightOfferEventId);
+    leaveDialogue(game);
+
+    pParty->pCharacters[0]._achievedAwardsBits.set(AWARD_PROMOTION_PRIEST);
+    pParty->_questBits.reset(QBIT_LIGHT_PATH);
+    pParty->_questBits.set(QBIT_DARK_PATH);
+    openPromoterDialogue(game, lightPriestPath, &rebecca);
+    ASSERT_TRUE(selectNpcEvent(game, &rebecca, lightOfferEventId));
+    EXPECT_FALSE(pParty->_questBits[lightPriestPath.activeBit]);
+    EXPECT_EQ(rebecca.dialogue_1_evt_id, lightOfferEventId);
+    leaveDialogue(game);
+
+    pParty->_questBits.reset(QBIT_DARK_PATH);
+    pParty->_questBits.set(QBIT_LIGHT_PATH);
+    openPromoterDialogue(game, lightPriestPath, &rebecca);
+    ASSERT_TRUE(selectNpcEvent(game, &rebecca, lightOfferEventId));
+    EXPECT_TRUE(pParty->_questBits[lightPriestPath.activeBit]);
+    EXPECT_EQ(rebecca.dialogue_1_evt_id, lightReturnEventId);
+    leaveDialogue(game);
+}
+
+GAME_TEST(MM7PriestSecondPromotion, DarkOfferRequiresFirstPromotionTopicAndDarkPath) {
+    game.startNewGame();
+    NPCData &falk = pNPCStats->pNPCData[falkNpcId];
+    pParty->pCharacters[0]._achievedAwardsBits.set(AWARD_PROMOTION_PRIEST);
+
+    openPromoterDialogue(game, darkPriestPath, &falk);
+    EXPECT_FALSE(npcEventVisible(&falk, darkOfferEventId));
+    EXPECT_FALSE(selectNpcEvent(game, &falk, darkOfferEventId));
+    EXPECT_FALSE(pParty->_questBits[darkPriestPath.activeBit]);
+    leaveDialogue(game);
+
+    // Event 89 assigns this endpoint only after the physical Evenmorn map return succeeds.
+    falk.dialogue_1_evt_id = darkOfferEventId;
+    pParty->_questBits.set(QBIT_LIGHT_PATH);
+    openPromoterDialogue(game, darkPriestPath, &falk);
+    ASSERT_TRUE(selectNpcEvent(game, &falk, darkOfferEventId));
+    EXPECT_FALSE(pParty->_questBits[darkPriestPath.activeBit]);
+    EXPECT_EQ(falk.dialogue_1_evt_id, darkOfferEventId);
+    leaveDialogue(game);
+
+    pParty->_questBits.reset(QBIT_LIGHT_PATH);
+    pParty->_questBits.set(QBIT_DARK_PATH);
+    openPromoterDialogue(game, darkPriestPath, &falk);
+    ASSERT_TRUE(selectNpcEvent(game, &falk, darkOfferEventId));
+    EXPECT_TRUE(pParty->_questBits[darkPriestPath.activeBit]);
+    EXPECT_EQ(falk.dialogue_1_evt_id, darkReturnEventId);
+    leaveDialogue(game);
+}
+
+void runSecondPriestPromotion(EngineController &game, const SecondPriestPath &path) {
+    engine->config->debug.NoActors.setValue(true);
+    engine->config->debug.NoDamage.setValue(true);
+    game.startNewGame();
+    prepareSecondPromotionParty();
+    pParty->_questBits.set(path.pathBit);
+    NPCData &promoter = pNPCStats->pNPCData[path.npcId];
+    if (path.npcId == falkNpcId)
+        promoter.dialogue_1_evt_id = darkOfferEventId; // First promotion event 89 establishes this endpoint.
+
+    const std::array classBefore = {pParty->pCharacters[0].classType, pParty->pCharacters[1].classType,
+                                    pParty->pCharacters[2].classType, pParty->pCharacters[3].classType};
+    const std::array experienceBefore = {pParty->pCharacters[0].experience, pParty->pCharacters[1].experience,
+                                         pParty->pCharacters[2].experience, pParty->pCharacters[3].experience};
+    const std::array awardsBefore = {pParty->pCharacters[0]._achievedAwardsBits,
+                                     pParty->pCharacters[1]._achievedAwardsBits,
+                                     pParty->pCharacters[2]._achievedAwardsBits,
+                                     pParty->pCharacters[3]._achievedAwardsBits};
+
+    openPromoterDialogue(game, path, &promoter);
+    ASSERT_TRUE(selectNpcEvent(game, &promoter, path.offerEventId));
+    ASSERT_TRUE(pParty->_questBits[path.activeBit]);
+    ASSERT_EQ(promoter.dialogue_1_evt_id, path.returnEventId);
+
+    const int goldBefore = pParty->GetGold();
+    const int reputationBefore = pParty->GetPartyReputation();
+    ASSERT_FALSE(pParty->_questBits[path.objectiveBit]);
+    ASSERT_TRUE(selectNpcEvent(game, &promoter, path.returnEventId));
+    EXPECT_TRUE(pParty->_questBits[path.activeBit]);
+    EXPECT_FALSE(pParty->_questBits[path.objectiveBit]);
+    EXPECT_EQ(promoter.dialogue_1_evt_id, path.returnEventId);
+    EXPECT_EQ(pParty->GetGold(), goldBefore);
+    EXPECT_EQ(pParty->GetPartyReputation(), reputationBefore);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, classBefore[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experienceBefore[i]);
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, awardsBefore[i]);
+    }
+    leaveDialogue(game);
+
+    useAltar(game, path);
+    EXPECT_TRUE(pParty->_questBits[path.activeBit]);
+    EXPECT_TRUE(pParty->_questBits[path.objectiveBit]);
+
+    openPromoterDialogue(game, path, &promoter);
+    const int goldBeforeReturn = pParty->GetGold();
+    const int reputationBeforeReturn = pParty->GetPartyReputation();
+    ASSERT_TRUE(selectNpcEvent(game, &promoter, path.returnEventId));
+    EXPECT_FALSE(pParty->_questBits[path.activeBit]);
+    EXPECT_TRUE(pParty->_questBits[path.objectiveBit]);
+    EXPECT_EQ(promoter.dialogue_1_evt_id, 0u);
+    EXPECT_EQ(promoter.greetingIndex, path.greeting);
+    EXPECT_EQ(pParty->GetGold() - goldBeforeReturn, 10000);
+    EXPECT_EQ(pParty->GetPartyReputation() - reputationBeforeReturn, -10);
+
+    for (int i = 0; i < 4; ++i) {
+        const bool qualifying = classBefore[i] == CLASS_PRIEST;
+        EXPECT_EQ(pParty->pCharacters[i].classType, qualifying ? path.promotedClass : classBefore[i]);
+        auto expectedAwards = awardsBefore[i];
+        expectedAwards.set(qualifying ? path.qualifyingAward : path.honoraryAward);
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, expectedAwards);
+        EXPECT_EQ(pParty->pCharacters[i].experience - experienceBefore[i], qualifying ? 80000 : 40000);
+    }
+
+    leaveDialogue(game);
+    const std::array experienceAfter = {pParty->pCharacters[0].experience, pParty->pCharacters[1].experience,
+                                        pParty->pCharacters[2].experience, pParty->pCharacters[3].experience};
+    const std::array awardsAfter = {pParty->pCharacters[0]._achievedAwardsBits,
+                                    pParty->pCharacters[1]._achievedAwardsBits,
+                                    pParty->pCharacters[2]._achievedAwardsBits,
+                                    pParty->pCharacters[3]._achievedAwardsBits};
+    const std::array classAfter = {pParty->pCharacters[0].classType, pParty->pCharacters[1].classType,
+                                   pParty->pCharacters[2].classType, pParty->pCharacters[3].classType};
+    const int goldAfter = pParty->GetGold();
+    const int reputationAfter = pParty->GetPartyReputation();
+    openPromoterDialogue(game, path, &promoter);
+    EXPECT_FALSE(npcEventVisible(&promoter, path.returnEventId));
+    EXPECT_FALSE(selectNpcEvent(game, &promoter, path.returnEventId));
+    EXPECT_FALSE(pParty->_questBits[path.activeBit]);
+    EXPECT_TRUE(pParty->_questBits[path.objectiveBit]);
+    EXPECT_EQ(promoter.dialogue_1_evt_id, 0u);
+    EXPECT_EQ(promoter.greetingIndex, path.greeting);
+    EXPECT_EQ(pParty->GetGold(), goldAfter);
+    EXPECT_EQ(pParty->GetPartyReputation(), reputationAfter);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, classAfter[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experienceAfter[i]);
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, awardsAfter[i]);
+    }
+    leaveDialogue(game);
+}
+
+GAME_TEST(MM7PriestSecondPromotion, PriestOfLightUsesMoonAltarAndPromotes) {
+    runSecondPriestPromotion(game, lightPriestPath);
+}
+
+GAME_TEST(MM7PriestSecondPromotion, PriestOfDarkUsesSunAltarAndPromotes) {
+    runSecondPriestPromotion(game, darkPriestPath);
 }
 
 GAME_TEST(MM7PriestPromotion, MapReturnPromotesClericAndUnlocksEvenmornBoat) {

@@ -131,6 +131,9 @@ constexpr int castleHarmondaleWarBannerLeftCog = 16;
 constexpr int castleHarmondaleWarBannerRightCog = 17;
 constexpr int castleHarmondaleAdvisorBannerLeftCog = 19;
 constexpr int castleHarmondaleAdvisorBannerRightCog = 20;
+constexpr int castleHarmondaleGolemEventId = 376;
+constexpr int celesteLadyCarmineMapLeaveEventId = 378;
+constexpr int wineCellarKillCheckEventId = 2;
 
 static bool isOriginalBreedingZoneBookEvent(const EvtContext &context,
                                             std::span<const EvtInstruction> instructions) {
@@ -558,6 +561,73 @@ static void applyCastleHarmondaleWarBanners() {
     }
 }
 
+static bool isOriginalCastleGolemEvent(const EvtContext &context,
+                                       std::span<const EvtInstruction> instructions) {
+    if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_MAP ||
+        engine->_currentLoadedMapId != MAP_CASTLE_HARMONDALE ||
+        context.eventId != castleHarmondaleGolemEventId)
+        return false;
+
+    const auto changesVariableAt = [instructions](int step, int targetStep, EvtOpcode opcode,
+                                                   EvtVariable variable, int value) {
+        return std::ranges::any_of(instructions, [=](const EvtInstruction &instruction) {
+            return instruction.step == step && instruction.target_step == targetStep &&
+                   instruction.opcode == opcode &&
+                   instruction.data.variable_descr.type == variable &&
+                   instruction.data.variable_descr.value == value;
+        });
+    };
+    const auto togglesGroupAt = [instructions](int step, ActorAttribute attribute, bool set) {
+        return std::ranges::any_of(instructions, [=](const EvtInstruction &instruction) {
+            return instruction.step == step && instruction.opcode == EVENT_ToggleActorGroupFlag &&
+                   instruction.data.actor_flag_descr.id == 6 &&
+                   instruction.data.actor_flag_descr.attr == attribute &&
+                   instruction.data.actor_flag_descr.is_set == set;
+        });
+    };
+    const bool hasAnimationGate = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_GOLEM_ANIMATED);
+    });
+    const bool hasReloadTrigger = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 0 && instruction.opcode == EVENT_OnMapReload;
+    });
+    const bool hasOriginalJump = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 3 && instruction.target_step == 7 && instruction.opcode == EVENT_Jmp;
+    });
+    const bool hasExit = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 7 && instruction.opcode == EVENT_Exit;
+    });
+    return instructions.size() == 9 && hasReloadTrigger &&
+           changesVariableAt(1, 4, EVENT_Compare, VAR_QBits_QuestsDone,
+                             std::to_underlying(QBIT_ABBEY_NORMAL_GOLEM_ASSEMBLED)) &&
+           changesVariableAt(2, 5, EVENT_Compare, VAR_QBits_QuestsDone,
+                             std::to_underlying(QBIT_GOLEM_ASSEMBLED)) &&
+           hasOriginalJump && togglesGroupAt(4, ACTOR_AGGRESSOR, true) &&
+           changesVariableAt(5, 0, EVENT_Subtract, VAR_NPCs2, 56) &&
+           togglesGroupAt(6, ACTOR_UNKNOW11, false) && hasExit && !hasAnimationGate;
+}
+
+static bool isCelesteLadyCarmineKillCheck(const EvtContext &context, const EvtInstruction &instruction) {
+    return engine->gameTitle() == GameTitle::MM7 && context.source == EVT_SOURCE_MAP &&
+           engine->_currentLoadedMapId == MAP_CELESTE &&
+           context.eventId == celesteLadyCarmineMapLeaveEventId &&
+           instruction.data.actor_descr.policy == KILL_CHECK_GROUPID &&
+           instruction.data.actor_descr.param == 1 && instruction.data.actor_descr.num == 0 &&
+           !pActors.empty() && pActors[0].npcId == 92 &&
+           pActors[0].monsterInfo.id == MONSTER_PEASANT_HUMAN2_FEMALE_A_C && pActors[0].group == 22;
+}
+
+static bool isWineCellarVampireKillCheck(const EvtContext &context, const EvtInstruction &instruction) {
+    return engine->gameTitle() == GameTitle::MM7 && context.source == EVT_SOURCE_MAP &&
+           engine->_currentLoadedMapId == MAP_WINE_CELLAR &&
+           context.eventId == wineCellarKillCheckEventId &&
+           instruction.data.actor_descr.policy == KILL_CHECK_ACTORID &&
+           instruction.data.actor_descr.param == 0 && instruction.data.actor_descr.num == 0 &&
+           !pActors.empty() && pActors[0].monsterInfo.id == MONSTER_VAMPIRE_C;
+}
+
 /**
  * @offset 0x448CF4
  */
@@ -703,8 +773,7 @@ EvtTransition EvtInterpreter::execute(int startStep) {
 
     // Castle Harmondale's golem reload event omits the animation quest-bit gate. Without it, merely assembling the
     // golem changes the dormant map actor and dismisses the hired golem before Thomas Grey animates it.
-    if (engine->gameTitle() == GameTitle::MM7 && _context.source == EVT_SOURCE_MAP &&
-        engine->_currentLoadedMapId == MAP_CASTLE_HARMONDALE && _context.eventId == 376 &&
+    if (isOriginalCastleGolemEvent(_context, _events) &&
         !pParty->_questBits[QBIT_GOLEM_ANIMATED])
         return EVT_TRANSITION_NONE;
 
@@ -1569,20 +1638,18 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         }
         case EVENT_IsActorKilled: {
-            bool actorKilled = Actor::isActorKilled(ir.data.actor_descr.policy, ir.data.actor_descr.param, ir.data.actor_descr.num);
-            // Celeste's map-leave script checks an unused group instead of Lady Carmine. An empty group satisfies
-            // the generic "all dead" predicate, allowing the Oracle to recover her dagger while she is still alive.
-            if (engine->gameTitle() == GameTitle::MM7 && _context.source == EVT_SOURCE_MAP &&
-                engine->_currentLoadedMapId == MAP_CELESTE && _context.eventId == 378 &&
-                ir.data.actor_descr.policy == KILL_CHECK_GROUPID && ir.data.actor_descr.param == 1 &&
-                ir.data.actor_descr.num == 0)
-                actorKilled = Actor::isActorKilled(KILL_CHECK_ACTORID, 0, 0);
-            // The Wine Cellar's map-leave script asks whether actor zero is dead. Its map data starts the Elder
-            // Vampire disabled; that is a spawn state, not the required quest kill.
-            if (engine->_indoor->filename == "d16.blv" && _context.eventId == 2 &&
-                ir.data.actor_descr.policy == KILL_CHECK_ACTORID && ir.data.actor_descr.param == 0 &&
-                pActors[0].aiState == Disabled)
-                actorKilled = false;
+            bool actorKilled;
+            // These two quest scripts target actor zero exactly. The generic predicate filters exact actors through
+            // map alert state and can therefore report a living mismatched actor as vacuously dead.
+            if (isCelesteLadyCarmineKillCheck(_context, ir)) {
+                actorKilled = pActors[0].IsNotAlive();
+            } else if (isWineCellarVampireKillCheck(_context, ir)) {
+                // The Elder Vampire starts disabled in the map data; that spawn state is not the required quest kill.
+                actorKilled = pActors[0].aiState != Disabled && pActors[0].IsNotAlive();
+            } else {
+                actorKilled = Actor::isActorKilled(ir.data.actor_descr.policy, ir.data.actor_descr.param,
+                                                   ir.data.actor_descr.num);
+            }
             if (actorKilled) {
                 return {EVT_FLOW_JUMP, ir.target_step};
             }

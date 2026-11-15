@@ -16,6 +16,7 @@
 #include "Engine/Evt/EvtContext.h"
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Evt/Processor.h"
+#include "Engine/Graphics/LocationFunctions.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Vis.h"
 #include "Engine/MapEnums.h"
@@ -291,11 +292,19 @@ GAME_TEST(MM7AssassinPromotion, LivingLadyDoesNotUnlockOracleDagger) {
     game.startNewGame();
     game.teleportTo(MAP_CELESTE, Vec3f(-158, 7624, 1), 0);
     ASSERT_FALSE(pActors.empty());
-    ASSERT_FALSE(pActors[0].IsNotAlive());
-    ASSERT_EQ(pActors[0].npcId, ladyCarmineNpcId);
-    ASSERT_EQ(pActors[0].carriedItemId, ITEM_SPECIAL_LADY_CARMINES_DAGGER);
+    Actor &lady = pActors[0];
+    ASSERT_FALSE(lady.IsNotAlive());
+    ASSERT_EQ(lady.npcId, ladyCarmineNpcId);
+    ASSERT_EQ(lady.carriedItemId, ITEM_SPECIAL_LADY_CARMINES_DAGGER);
     ASSERT_TRUE(std::ranges::none_of(pActors, [](const Actor &actor) { return actor.group == 1; }));
     ASSERT_TRUE(Actor::isActorKilled(KILL_CHECK_GROUPID, 1, 0));
+    if (GetAlertStatus()) {
+        lady.attributes &= ~ACTOR_UNKNOW7;
+    } else {
+        lady.attributes |= ACTOR_UNKNOW7;
+    }
+    ASSERT_NE(static_cast<bool>(lady.attributes & ACTOR_UNKNOW7), GetAlertStatus());
+    ASSERT_TRUE(Actor::isActorKilled(KILL_CHECK_ACTORID, 0, 0)); // Alert filtering vacuously passes.
 
     engine->_persistentVariables.mapVars[0] = 1;
     pParty->_questBits.reset(QBIT_ORACLE_RECOVERS_LADY_CARMINES_DAGGER);
@@ -314,6 +323,12 @@ GAME_TEST(MM7AssassinPromotion, KilledLadyUnlocksOracleDagger) {
 
     Actor::Die(0);
     ASSERT_TRUE(pActors[0].IsNotAlive());
+    if (GetAlertStatus()) {
+        pActors[0].attributes &= ~ACTOR_UNKNOW7;
+    } else {
+        pActors[0].attributes |= ACTOR_UNKNOW7;
+    }
+    ASSERT_NE(static_cast<bool>(pActors[0].attributes & ACTOR_UNKNOW7), GetAlertStatus());
     engine->_persistentVariables.mapVars[0] = 0;
     runEvent(EvtContext(EVT_SOURCE_MAP, celesteMapLeaveEventId), 1);
     EXPECT_FALSE(pParty->_questBits[QBIT_ORACLE_RECOVERS_LADY_CARMINES_DAGGER]);

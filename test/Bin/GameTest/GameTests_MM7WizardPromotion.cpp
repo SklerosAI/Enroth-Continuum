@@ -459,6 +459,36 @@ GAME_TEST(MM7WizardPromotion, CastleGolemEventWaitsForAnimation) {
     EXPECT_TRUE(pNPCStats->pNPCData[56].flags & NPC_HIRED);
 }
 
+GAME_TEST(MM7WizardPromotion, CastleGolemGuardIgnoresPatchedEventShape) {
+    game.startNewGame();
+    game.teleportTo(MAP_CASTLE_HARMONDALE, Vec3f(), 0);
+    ASSERT_FALSE(pParty->_questBits[QBIT_GOLEM_ANIMATED]);
+
+    engine->_localEventMap.clear();
+    EvtInstruction trigger(EVENT_OnMapReload);
+    trigger.step = 0;
+    engine->_localEventMap.add(376, trigger);
+    EvtInstruction marker(EVENT_Set);
+    marker.step = 1;
+    marker.data.variable_descr.type = VAR_MapPersistentVariable_0;
+    marker.data.variable_descr.value = 1;
+    engine->_localEventMap.add(376, marker);
+    EvtInstruction animationGate(EVENT_Compare);
+    animationGate.step = 2;
+    animationGate.target_step = 4;
+    animationGate.data.variable_descr.type = VAR_QBits_QuestsDone;
+    animationGate.data.variable_descr.value = std::to_underlying(QBIT_GOLEM_ANIMATED);
+    engine->_localEventMap.add(376, animationGate);
+    EvtInstruction stop(EVENT_Exit);
+    stop.step = 3;
+    engine->_localEventMap.add(376, stop);
+    engine->_persistentVariables.mapVars[0] = 0;
+
+    runEvent(EvtContext(EVT_SOURCE_MAP, 376), 1);
+
+    EXPECT_EQ(engine->_persistentVariables.mapVars[0], 1);
+}
+
 GAME_TEST(MM7WizardPromotion, GoodHeadPromotesSorcererAndCreatesFriendlyGolem) {
     runWizardPromotion(game, false);
 }

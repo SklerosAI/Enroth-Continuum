@@ -10,7 +10,10 @@
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
+#include "Engine/Evt/EvtContext.h"
+#include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Indoor.h"
+#include "Engine/Graphics/LocationFunctions.h"
 #include "Engine/MapEnums.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/ItemEnums.h"
@@ -414,4 +417,32 @@ GAME_TEST(MM7LightItems, WineCellarExitDoesNotReplaceVampireKill) {
     EXPECT_EQ(mapTape, tape(MAP_EMERALD_ISLAND, MAP_CELESTE, MAP_WINE_CELLAR, MAP_TATALIA, MAP_CELESTE,
                             MAP_WINE_CELLAR, MAP_TATALIA, MAP_CELESTE));
     test.stopTaping();
+}
+
+GAME_TEST(MM7LightItems, WineCellarExactKillIgnoresAlertFilter) {
+    game.startNewGame();
+    game.teleportTo(MAP_WINE_CELLAR, Vec3f(601, -512, 1), 0);
+    ASSERT_FALSE(pActors.empty());
+    Actor &vampire = pActors[0];
+    ASSERT_EQ(vampire.monsterInfo.id, MONSTER_VAMPIRE_C);
+
+    vampire.aiState = Standing;
+    vampire.hp = std::max<int16_t>(vampire.hp, 1);
+    if (GetAlertStatus()) {
+        vampire.attributes &= ~ACTOR_UNKNOW7;
+    } else {
+        vampire.attributes |= ACTOR_UNKNOW7;
+    }
+    ASSERT_FALSE(vampire.IsNotAlive());
+    ASSERT_NE(static_cast<bool>(vampire.attributes & ACTOR_UNKNOW7), GetAlertStatus());
+    ASSERT_TRUE(Actor::isActorKilled(KILL_CHECK_ACTORID, 0, 0)); // Alert filtering vacuously passes.
+
+    pParty->_questBits.reset(QBIT_WINE_CELLAR_VAMPIRE_KILLED);
+    runEvent(EvtContext(EVT_SOURCE_MAP, 2), 1);
+    EXPECT_FALSE(pParty->_questBits[QBIT_WINE_CELLAR_VAMPIRE_KILLED]);
+
+    Actor::Die(0);
+    ASSERT_TRUE(vampire.IsNotAlive());
+    runEvent(EvtContext(EVT_SOURCE_MAP, 2), 1);
+    EXPECT_TRUE(pParty->_questBits[QBIT_WINE_CELLAR_VAMPIRE_KILLED]);
 }

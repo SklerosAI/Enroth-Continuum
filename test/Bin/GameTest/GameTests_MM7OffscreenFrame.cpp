@@ -1,6 +1,8 @@
 #include <array>
 #include <cstdlib>
 #include <optional>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
@@ -10,14 +12,18 @@
 #include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
+#include "Engine/Objects/Actor.h"
 #include "Engine/Party.h"
 #include "Engine/PartyPlacement.h"
 #include "Engine/Tables/MapTable.h"
 
 #include "GUI/GUIWindow.h"
 
+#include "Utility/Exception.h"
 #include "Utility/String/Format.h"
 
+#include "MM7CombatHarness.h"
+#include "MM7GameplayHarness.h"
 #include "OffscreenCaptureForTest.h"
 
 namespace {
@@ -59,6 +65,98 @@ CaptureStart placeAtCaptureStart(MapId map) {
     return *start;
 }
 
+void toughenWineCellarCaptureParty() {
+    for (Character &character : pParty->pCharacters) {
+        character._stats[ATTRIBUTE_SPEED] = 200;
+        character._stats[ATTRIBUTE_ENDURANCE] = 200;
+        character.uLevel = 200;
+        character._melee_dmg_bonus = 100;
+        character.sResFireBase = 1000;
+        character.sResAirBase = 1000;
+        character.sResWaterBase = 1000;
+        character.sResEarthBase = 1000;
+        character.sResPhysicalBase = 1000;
+        character.sResMagicBase = 1000;
+        character.sResSpiritBase = 1000;
+        character.sResMindBase = 1000;
+        character.sResBodyBase = 1000;
+        character.sResLightBase = 1000;
+        character.sResDarkBase = 1000;
+        character.health = 100000;
+    }
+}
+
+bool placeNearActorForInputApproach(EngineController &game, MapId map, int actorId) {
+    for (const auto &[offset, yaw] : std::array{
+             std::pair{Vec3f(0, -250, 0), 90}, std::pair{Vec3f(-250, 0, 0), 0},
+             std::pair{Vec3f(0, 250, 0), 270}, std::pair{Vec3f(250, 0, 0), 180}}) {
+        game.teleportTo(map, pActors[actorId].pos + offset, yaw);
+        try {
+            game.pointMouseAtActor(actorId);
+            return true;
+        } catch (const Exception &) {
+        }
+    }
+    return false;
+}
+
+float horizontalDistance(const Vec3f &left, const Vec3f &right) {
+    return (left - right).xy().length();
+}
+
+void runWineCellarMovementCombatScene(EngineController &game) {
+    toughenWineCellarCaptureParty();
+    pParty->_questBits.set(QBIT_WINE_CELLAR_ACTIVE);
+    game.teleportTo(MAP_WINE_CELLAR, Vec3f(601, -512, 1), 0);
+
+    ASSERT_FALSE(pActors.empty());
+    ASSERT_EQ(pActors[0].monsterInfo.id, MONSTER_VAMPIRE_C);
+    ASSERT_EQ(pActors[0].uniqueNameIndex, 5);
+    ASSERT_EQ(pActors[0].aiState, Standing);
+    ASSERT_TRUE(placeNearActorForInputApproach(game, MAP_WINE_CELLAR, 0));
+
+    // All setup teleporting ends here. The measured approach, targeting and attack sequence are input-only.
+    const float initialDistance = horizontalDistance(pParty->pos, pActors[0].pos);
+    mm7::testing::MM7MovementResult movement = mm7::testing::driveMovementInput(game, {
+        .key = PlatformKey::KEY_UP,
+        .heldTicks = 8,
+        .minimumHorizontalDistance = 15,
+    });
+    const float postMovementDistance = horizontalDistance(pParty->pos, pActors[0].pos);
+    mm7::testing::CombatResult combat = mm7::testing::fightActorWithAttackInput(
+        game, 0, [&] {
+            try {
+                game.pointMouseAtActor(0);
+                return true;
+            } catch (const Exception &) {
+                return false;
+            }
+        }, 400, 1, 5);
+    const float finalDistance = horizontalDistance(pParty->pos, pActors[0].pos);
+    const std::string diagnostics = fmt::format(
+        "distance={:.1f}->{:.1f}->{:.1f}; movement=[{}]; combat=[{}]",
+        initialDistance, postMovementDistance, finalDistance, movement.diagnostic(),
+        mm7::testing::describeCombatResult(combat));
+
+    ASSERT_TRUE(movement.pressPosted) << diagnostics;
+    ASSERT_TRUE(movement.releasePosted) << diagnostics;
+    ASSERT_TRUE(movement.releaseProcessed) << diagnostics;
+    ASSERT_LT(postMovementDistance, initialDistance) << diagnostics;
+    ASSERT_EQ(movement.startMap, MAP_WINE_CELLAR) << diagnostics;
+    ASSERT_EQ(movement.endMap, MAP_WINE_CELLAR) << diagnostics;
+    ASSERT_TRUE(combat.targetAcquired) << diagnostics;
+    ASSERT_FALSE(combat.targetingFailed) << diagnostics;
+    ASSERT_TRUE(combat.observedHpDecrease) << diagnostics;
+    ASSERT_TRUE(combat.reachedTerminalDeath) << diagnostics;
+    ASSERT_TRUE(combat.reachedDeadState) << diagnostics;
+    ASSERT_EQ(combat.gameTitle, GameTitle::MM7) << diagnostics;
+    ASSERT_EQ(combat.initialMap, MAP_WINE_CELLAR) << diagnostics;
+    ASSERT_EQ(combat.finalMap, MAP_WINE_CELLAR) << diagnostics;
+    ASSERT_EQ(combat.initialScreen, SCREEN_GAME) << diagnostics;
+    ASSERT_EQ(combat.finalScreen, SCREEN_GAME) << diagnostics;
+    fmt::print("offscreen wine cellar composition: {}\n", diagnostics);
+}
+
 } // namespace
 
 // A fresh-process, explicit macOS diagnostic. --offscreen-gl installs the
@@ -82,6 +180,9 @@ GAME_TEST(MM7OffscreenFrame, DISABLED_FirstOutdoorCapture) {
         game.teleportTo(MAP_BREEDING_ZONE, Vec3f(), 0);
         ASSERT_EQ(engine->_currentLoadedMapId, MAP_BREEDING_ZONE);
         ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    } else if (scene && std::string_view(scene) == "wine-cellar-combat") {
+        runWineCellarMovementCombatScene(game);
+        ASSERT_FALSE(::testing::Test::HasFatalFailure());
     }
     ASSERT_FALSE(window->isVisible());
     ASSERT_FALSE(window->grabsMouse());

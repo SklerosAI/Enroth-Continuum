@@ -114,6 +114,12 @@ stored hostile states use their default hostile faction. The unrelated group-5
 wilderness population remains hostile. The focused faction/timer matrix passes
 4/4 without adding broad unsupported opcode-55 semantics.
 
+Castle Harmondale now renders human, neutral or elf banners for every complete
+war-result combination and leaves incomplete/contradictory states at base
+textures. Advisor flags require Light+Walls or Dark+Breeding, so mismatched
+alignment no longer displays the wrong guild. The 12-outcome/invalid/adviser
+matrix plus the retained quest-zero control pass 5/5.
+
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding
 Zone black occluder was a literal-origin capture-placement defect and disappears

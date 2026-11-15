@@ -181,6 +181,12 @@ Goblin faction; wilderness group 5 remains hostile. The implementation is an
 exact event-1 compatibility seam rather than unsupported generic opcode-55
 handling, and the focused matrix passes 4/4.
 
+Castle Harmondale's faction and adviser banners now match the complete war
+score and alignment. The focused matrix covers all 12 complete
+recipient/plans/Loren outcomes, invalid states that retain base textures, and
+Light+Walls versus Dark+Breeding adviser flags. The repair preserves qbit 271,
+Issue2903 and the separate early-golem gate; the focused selection passes 5/5.
+
 Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the
 corrected Breeding Zone. Shoals' green short-range fog is authored underwater
 behavior. Breeding Zone's old black occluder was caused by a literal indoor

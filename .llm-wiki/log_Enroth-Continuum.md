@@ -3652,3 +3652,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Haunted Mansion's Angel painting and Castle Gryphonheart's Roland and Archibald paintings visibly returned after map reentry even though their taken quest bits persisted. A narrow map-load repair now recognizes each exact original six-record pickup event and reapplies its authored empty-wall texture after normal reload triggers.
 - The focused 3/3 selection proves all three empty textures persist, the clickable walls cannot duplicate items, Archibald-only state leaves Roland unchanged and patched-shaped event data disengages. Direct live texture assertions made another image unnecessary.
+
+## [2026-11-15] fix | MM7 Tidewater quest chest lifecycle
+- by: T-Burton-ND via codex
+- Tidewater's physical map route passed only because it took the item immediately; the original event lacked GrayFace's distinction between a successfully opened source chest and fresh legacy recovery state. An exact D17 event-176 seam now records source chest 1 in map variable 2 after successful open and preserves that chest through close and reload.
+- Fresh recovery-bit or Priest-award state with no marker routes to fallback chest 0, preventing map duplication, while patched-shaped data disengages. The expanded Priest packet plus the adjacent Breeding chest control passes 8/8.

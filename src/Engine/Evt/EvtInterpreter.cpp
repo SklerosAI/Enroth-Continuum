@@ -105,6 +105,10 @@ static bool checkSeason(Season season) {
 constexpr int breedingZoneBookEventId = 195;
 constexpr int breedingZoneBookChestId = 0;
 constexpr int breedingZoneFallbackChestId = 19;
+constexpr int wallsLichJarEventId = 176;
+constexpr int wallsLichJarChestId = 0;
+constexpr int wallsLichJarFallbackChestId = 1;
+constexpr int wallsLichJarDecorVariable = 23;
 
 static bool isOriginalBreedingZoneBookEvent(const EvtContext &context,
                                             std::span<const EvtInstruction> instructions) {
@@ -128,6 +132,52 @@ static bool isOriginalBreedingZoneBookEvent(const EvtContext &context,
         return instruction.opcode == EVENT_OpenChest && instruction.data.chest_id == breedingZoneFallbackChestId;
     });
     return hasOriginalGate && !hasMapVariableGate && hasBookChest && hasFallbackChest;
+}
+
+static bool isOriginalWallsLichJarEvent(const EvtContext &context,
+                                        std::span<const EvtInstruction> instructions) {
+    if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_MAP ||
+        engine->_currentLoadedMapId != MAP_WALLS_OF_MIST || context.eventId != wallsLichJarEventId)
+        return false;
+
+    const bool hasOriginalAwardGate = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 3 && instruction.target_step == 1 && instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == VAR_Award &&
+               instruction.data.variable_descr.value == std::to_underlying(AWARD_THE_PIT_RETRIEVED_SOUL_JARS);
+    });
+    const bool hasActiveQuestGate = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 0 && instruction.target_step == 3 && instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_LICH_JARS_ACTIVE);
+    });
+    const bool hasDecorVariableGate = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type ==
+                   static_cast<EvtVariable>(std::to_underlying(VAR_MapPersistentDecorVariable_0) +
+                                            wallsLichJarDecorVariable);
+    });
+    const bool hasJarChest = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 4 && instruction.opcode == EVENT_OpenChest &&
+               instruction.data.chest_id == wallsLichJarChestId;
+    });
+    const bool hasFallbackChest = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 1 && instruction.opcode == EVENT_OpenChest &&
+               instruction.data.chest_id == wallsLichJarFallbackChestId;
+    });
+    const bool hasTakenBitWrite = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 5 && instruction.opcode == EVENT_Add &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_WALLS_OF_MIST_LICH_JARS_TAKEN);
+    });
+    const bool hasDecorVariableWrite = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 6 && instruction.opcode == EVENT_Set &&
+               instruction.data.variable_descr.type ==
+                   static_cast<EvtVariable>(std::to_underlying(VAR_MapPersistentDecorVariable_0) +
+                                            wallsLichJarDecorVariable) &&
+               instruction.data.variable_descr.value == 1;
+    });
+    return hasOriginalAwardGate && hasActiveQuestGate && !hasDecorVariableGate && hasJarChest &&
+           hasFallbackChest && hasTakenBitWrite && hasDecorVariableWrite;
 }
 
 /**
@@ -466,6 +516,27 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             }
             break;
         case EVENT_Compare:
+            if (isOriginalWallsLichJarEvent(_context, _events) &&
+                ir.data.variable_descr.type == VAR_QBits_QuestsDone &&
+                ir.data.variable_descr.value == std::to_underlying(QBIT_LICH_JARS_ACTIVE) &&
+                engine->_persistentVariables.decorVars[wallsLichJarDecorVariable] == 1) {
+                auto chest = std::ranges::find_if(_events, [](const EvtInstruction &instruction) {
+                    return instruction.opcode == EVENT_OpenChest &&
+                           instruction.data.chest_id == wallsLichJarChestId;
+                });
+                return {EVT_FLOW_JUMP, chest->step};
+            }
+            if (isOriginalWallsLichJarEvent(_context, _events) &&
+                ir.data.variable_descr.type == VAR_Award &&
+                ir.data.variable_descr.value == std::to_underlying(AWARD_THE_PIT_RETRIEVED_SOUL_JARS)) {
+                const int chestId = engine->_persistentVariables.decorVars[wallsLichJarDecorVariable] == 1 ||
+                                            pParty->_questBits[QBIT_LICH_JARS_ACTIVE] ?
+                                        wallsLichJarChestId : wallsLichJarFallbackChestId;
+                auto chest = std::ranges::find_if(_events, [chestId](const EvtInstruction &instruction) {
+                    return instruction.opcode == EVENT_OpenChest && instruction.data.chest_id == chestId;
+                });
+                return {EVT_FLOW_JUMP, chest->step};
+            }
             if (isOriginalBreedingZoneBookEvent(_context, _events) && ir.step == 0 &&
                 ir.data.variable_descr.type == VAR_QBits_QuestsDone &&
                 ir.data.variable_descr.value == std::to_underlying(QBIT_DIVINE_INTERVENTION_RETRIEVED) &&

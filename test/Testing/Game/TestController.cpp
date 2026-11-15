@@ -42,7 +42,8 @@ class TestControllerTickCallback : public ProxyOpenGLContext {
 };
 
 TestController::TestController(EngineController *controller, FileSystem *tfs, float playbackSpeed,
-                               bool disposableMm7Profile, bool preserveDisposableMm7Save) {
+                               bool disposableMm7Profile, bool preserveDisposableMm7Save,
+                               std::string disposableMm7Marker) {
     assert(controller);
     assert(tfs);
 
@@ -51,6 +52,7 @@ TestController::TestController(EngineController *controller, FileSystem *tfs, fl
     _playbackSpeed = playbackSpeed;
     _disposableMm7Profile = disposableMm7Profile;
     _preserveDisposableMm7Save = preserveDisposableMm7Save;
+    _disposableMm7Marker = std::move(disposableMm7Marker);
 
     assert(engine->callObserver == nullptr);
     engine->callObserver = &_callObserver;
@@ -134,7 +136,7 @@ void TestController::prepareForNextTestInternal() {
     for (const DirectoryEntry &entry : ufs->ls("")) {
         // MM6's private rule manifests are seeded into ramfs before engine
         // startup. Keep them across test resets while clearing saves/config.
-        if (_disposableMm7Profile && entry.name == ".ec-mm7-disposable-save-gate")
+        if (_disposableMm7Profile && entry.name == _disposableMm7Marker)
             continue;
         if (_preserveDisposableMm7Save && entry.name == "saves")
             continue;

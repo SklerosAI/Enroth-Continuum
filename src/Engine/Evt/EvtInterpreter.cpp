@@ -513,6 +513,16 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                     return {EVT_FLOW_JUMP, ir.target_step};
                 break;
             }
+            // Leda Rowan's Champion return script checks only Knight wins, but the original compatibility behavior
+            // accepts five combined Knight and Lord victories. Keep this correction scoped to that exact comparison.
+            if (engine->gameTitle() == GameTitle::MM7 && _context.source == EVT_SOURCE_GLOBAL &&
+                _context.eventId == 72 && ir.step == 0 &&
+                ir.data.variable_descr.type == VAR_ArenaWinsKnight && ir.data.variable_descr.value == 5) {
+                if (pParty->uNumArenaWins[ARENA_LEVEL_KNIGHT] +
+                    pParty->uNumArenaWins[ARENA_LEVEL_LORD] >= ir.data.variable_descr.value)
+                    return {EVT_FLOW_JUMP, ir.target_step};
+                break;
+            }
             if (!validateVariableValue(ir))
                 break;
             for (Character &character : iterateCharacters(_who, ir.data.variable_descr.type, grng))

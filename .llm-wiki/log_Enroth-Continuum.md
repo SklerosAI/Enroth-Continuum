@@ -3685,3 +3685,8 @@ Chronological record of wiki activity.
 - Ranger Lord, Ninja, Bounty Hunter and Black Knight now have real dialogue, refusal, physical or input-driven objective, exact reward and duplicate coverage. This brings all 27 MM7 promotion endpoints to behavior-covered status without a production change in those four packets.
 - Temple of the Moon and Strange Temple close the last two inventory-only rows, so all 76 shipped maps now have runtime GameTest coverage. The Strange exit reaches Harmondale but its shipped explicit position is out of bounds; original-executable placement parity remains open.
 - Kastore's two one-piece altar responses are corrected only under the exact original global-event-158 signature, closing the remaining pinned GrayFace presentation row. The current GameTest style target passes; broad known-green suites were not rerun.
+
+## [2026-11-15] test | MM7 war alternatives and durable Stone City
+- by: T-Burton-ND via codex
+- Both reachable war exposure topics now prove their authored party-death and cleanup/failure behavior. A representative rebuild return places both ambassadors before all five trumpet handlers are exercised, and the effective result/recipient states resolve under both arbiters without a production change.
+- Stone City now has Spark dialogue, one measured approach and attack-input Troglodyte Queen kill, survivor refusal, exact reward and production-Save/fresh-process-Load coverage; only repetitive enemies are fixtured. The accepted lower-city frame was visually inspected and the private rolling folder remains at 100.

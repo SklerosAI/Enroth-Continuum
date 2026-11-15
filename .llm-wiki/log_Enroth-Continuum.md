@@ -3622,3 +3622,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Maze event 176 set its source-access bit before Haldar's Remains were taken, then redirected later clicks to a different chest and stranded the item. The authored-face regression reproduced the close-before-pickup failure.
 - An exact Maze event seam now records a successful source open and reuses that chest, while preserving marker-zero legacy fallback. The lifecycle suite passes 4/4 and the existing Mazim refusal/reward control 1/1; GrayFace's separate artifact-refund opcode remains deferred.
+
+## [2026-11-15] fix | MM7 final quest-log cleanup
+- by: T-Burton-ND via codex
+- Both ending completions left their final active quest bit set, so the completed task remained in the Quest Book. Focused Light and Dark tests captured qbits 130/131 staying active after successful Overthruster hand-in.
+- Exact global-event-170/172 success seams now clear only the corresponding active bit, preserve History 25/26, and leave no-item refusals active. Focused ending and Light hand-in controls pass 2/2; broad C7 chains remain reserved for the next integration milestone.

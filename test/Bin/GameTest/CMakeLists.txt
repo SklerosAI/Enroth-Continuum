@@ -58,6 +58,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7Promotions.cpp
         GameTests_MM7ArchmagePromotion.cpp
         GameTests_MM7ArcherPathPromotions.cpp
+        GameTests_MM7HaldarsRemains.cpp
         GameTests_MM7LichPromotion.cpp
         GameTests_MM7AssassinPromotion.cpp
         GameTests_MM7ChampionPromotion.cpp

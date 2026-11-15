@@ -113,6 +113,10 @@ constexpr int titansPerfectBowEventId = 176;
 constexpr int titansPerfectBowChestId = 1;
 constexpr int titansPerfectBowFallbackChestId = 0;
 constexpr int titansPerfectBowMapVariable = 2;
+constexpr int mazeHaldarsRemainsEventId = 176;
+constexpr int mazeHaldarsRemainsChestId = 1;
+constexpr int mazeHaldarsRemainsFallbackChestId = 0;
+constexpr int mazeHaldarsRemainsMapVariable = 0;
 
 static bool isOriginalBreedingZoneBookEvent(const EvtContext &context,
                                             std::span<const EvtInstruction> instructions) {
@@ -227,6 +231,44 @@ static bool isOriginalTitansPerfectBowEvent(const EvtContext &context,
     });
     return hasPromotionAwardGate && hasLightQuestGate && hasDarkQuestGate && hasFallbackChest &&
            hasPrematureTakenWrite && hasBowChest && !hasMapVariableInstruction;
+}
+
+static bool isOriginalMazeHaldarsRemainsEvent(const EvtContext &context,
+                                              std::span<const EvtInstruction> instructions) {
+    if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_MAP ||
+        engine->_currentLoadedMapId != MAP_MAZE || context.eventId != mazeHaldarsRemainsEventId)
+        return false;
+
+    const bool hasAwardGate = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 0 && instruction.target_step == 5 && instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == VAR_Award &&
+               instruction.data.variable_descr.value == std::to_underlying(AWARD_NIGHON_RETRIEVED_HALDARS_REMAINS);
+    });
+    const bool hasTakenGate = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 1 && instruction.target_step == 5 && instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_HALDARS_REMAINS_TAKEN);
+    });
+    const bool hasRemainsChest = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 2 && instruction.opcode == EVENT_OpenChest &&
+               instruction.data.chest_id == mazeHaldarsRemainsChestId;
+    });
+    const bool hasTakenWrite = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 3 && instruction.opcode == EVENT_Add &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_HALDARS_REMAINS_TAKEN);
+    });
+    const bool hasFallbackChest = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 5 && instruction.opcode == EVENT_OpenChest &&
+               instruction.data.chest_id == mazeHaldarsRemainsFallbackChestId;
+    });
+    const bool hasMapVariableInstruction = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return (instruction.opcode == EVENT_Compare || instruction.opcode == EVENT_Set ||
+                instruction.opcode == EVENT_Add) &&
+               instruction.data.variable_descr.type == VAR_MapPersistentVariable_0;
+    });
+    return hasAwardGate && hasTakenGate && hasRemainsChest && hasTakenWrite && hasFallbackChest &&
+           !hasMapVariableInstruction;
 }
 
 /**
@@ -495,6 +537,9 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                 pParty->_questBits.set(QBIT_PERFECT_BOW_TAKEN);
                 engine->_persistentVariables.mapVars[titansPerfectBowMapVariable] = 1;
             }
+            if (isOriginalMazeHaldarsRemainsEvent(_context, _events) &&
+                ir.data.chest_id == mazeHaldarsRemainsChestId)
+                engine->_persistentVariables.mapVars[mazeHaldarsRemainsMapVariable] = 1;
             break;
         case EVENT_ShowFace:
             for (Character &character : iterateCharacters(ir.who, vrng))
@@ -570,6 +615,14 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             }
             break;
         case EVENT_Compare:
+            if (isOriginalMazeHaldarsRemainsEvent(_context, _events) && ir.step == 0 &&
+                engine->_persistentVariables.mapVars[mazeHaldarsRemainsMapVariable] >= 1) {
+                auto chest = std::ranges::find_if(_events, [](const EvtInstruction &instruction) {
+                    return instruction.opcode == EVENT_OpenChest &&
+                           instruction.data.chest_id == mazeHaldarsRemainsChestId;
+                });
+                return {EVT_FLOW_JUMP, chest->step};
+            }
             if (isOriginalTitansPerfectBowEvent(_context, _events) && ir.step == 0) {
                 const bool useBowChest = engine->_persistentVariables.mapVars[titansPerfectBowMapVariable] != 0 ||
                                          !pParty->_questBits[QBIT_PERFECT_BOW_TAKEN] &&

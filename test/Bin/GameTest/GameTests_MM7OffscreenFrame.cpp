@@ -180,6 +180,8 @@ GAME_TEST(MM7OffscreenFrame, DISABLED_FirstOutdoorCapture) {
         game.teleportTo(MAP_BREEDING_ZONE, Vec3f(), 0);
         ASSERT_EQ(engine->_currentLoadedMapId, MAP_BREEDING_ZONE);
         ASSERT_EQ(current_screen_type, SCREEN_GAME);
+        placeAtCaptureStart(MAP_BREEDING_ZONE);
+        ASSERT_FALSE(::testing::Test::HasFailure());
     } else if (scene && std::string_view(scene) == "wine-cellar-combat") {
         runWineCellarMovementCombatScene(game);
         ASSERT_FALSE(::testing::Test::HasFatalFailure());

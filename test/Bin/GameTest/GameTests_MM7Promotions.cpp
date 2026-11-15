@@ -21,6 +21,7 @@
 #include "Engine/MapEnums.h"
 #include "Engine/MM7/MM7AtomicSaveFile.h"
 #include "Engine/MM7/MM7SaveValidation.h"
+#include "Engine/Objects/Actor.h"
 #include "Engine/Objects/CharacterEnums.h"
 #include "Engine/Objects/Decoration.h"
 #include "Engine/Objects/Chest.h"
@@ -230,6 +231,30 @@ void openThrushHouse(EngineController &game, NPCData *thrush) {
     ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
     ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_ERATHIA_THRUSH_RESIDENCE);
     auto entry = std::ranges::find(houseNpcs, thrush, &HouseNpcDesc::npc);
+    ASSERT_NE(entry, houseNpcs.end());
+    if (houseNpcs.size() > 1) {
+        game.pressGuiButton(fmt::format("House_Npc{}", entry - houseNpcs.begin()));
+        game.tick();
+    }
+}
+
+void openOrgHouse(EngineController &game, NPCData *org) {
+    game.teleportTo(MAP_ERATHIA, Vec3f(), 0);
+    std::vector<std::pair<Vec3f, int>> doors;
+    for (const BLVFace &face : pOutdoor->faces)
+        if (face.Clickable() && eventOpensHouse(face.eventId, HOUSE_ERATHIA_ORG_HOUSE))
+            doors.push_back(approachFace(face));
+    ASSERT_FALSE(doors.empty());
+    for (auto [position, yaw] : doors) {
+        game.teleportTo(MAP_ERATHIA, position, yaw);
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick();
+        if (current_screen_type == SCREEN_HOUSE && window_SpeakInHouse->houseId() == HOUSE_ERATHIA_ORG_HOUSE)
+            break;
+    }
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_ERATHIA_ORG_HOUSE);
+    auto entry = std::ranges::find(houseNpcs, org, &HouseNpcDesc::npc);
     ASSERT_NE(entry, houseNpcs.end());
     if (houseNpcs.size() > 1) {
         game.pressGuiButton(fmt::format("House_Npc{}", entry - houseNpcs.begin()));
@@ -468,6 +493,141 @@ GAME_TEST(MM7Promotions, WarriorMagePromotionSourceContract) {
     EXPECT_EQ(countVariableInstruction(sabotage, EVENT_Subtract, VAR_QBits_QuestsDone,
                                        std::to_underlying(QBIT_ORACLE_RECOVERS_WORN_BELT)),
               1);
+}
+
+GAME_TEST(MM7Promotions, CavalierPromotionSourceContract) {
+    game.startNewGame();
+    const std::vector<EvtInstruction> &request = engine->_globalEventMap.function(73);
+    const std::vector<EvtInstruction> &promotion = engine->_globalEventMap.function(74);
+
+    EXPECT_EQ(countVariableInstruction(request, EVENT_Set, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_HAUNTED_HOUSE_UNDEAD_ACTIVE)),
+              1);
+    EXPECT_TRUE(hasNpcTopicInstruction(request, 43, 0, 74));
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Compare, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_HAUNTED_HOUSE_CLEARED)),
+              1);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Compare, VAR_Class, std::to_underlying(CLASS_KNIGHT)), 4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Set, VAR_Class, std::to_underlying(CLASS_CAVALIER)), 4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_Award,
+                                       std::to_underlying(AWARD_PROMOTION_CHEVALIER)),
+              4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_Experience, 30000), 4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_Award,
+                                       std::to_underlying(AWARD_PROMOTION_CHEVALIER_HONORARY)),
+              4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_Experience, 15000), 4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Subtract, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_HAUNTED_HOUSE_UNDEAD_ACTIVE)),
+              1);
+    EXPECT_EQ(std::ranges::count_if(promotion, [](const EvtInstruction &instruction) {
+                  return (instruction.opcode == EVENT_Add || instruction.opcode == EVENT_Set ||
+                          instruction.opcode == EVENT_Subtract) &&
+                         (instruction.data.variable_descr.type == VAR_FixedGold ||
+                          instruction.data.variable_descr.type == VAR_RandomGold);
+              }),
+              0);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Subtract, VAR_ReputationInCurrentLocation, 5), 1);
+    EXPECT_TRUE(hasNpcTopicInstruction(promotion, 43, 0, 75));
+
+    game.teleportTo(MAP_HAUNTED_MANSION, Vec3f(), 0);
+    const std::vector<EvtInstruction> &mapLeave = engine->_localEventMap.function(2);
+    EXPECT_EQ(std::ranges::count(mapLeave, EVENT_OnMapLeave, &EvtInstruction::opcode), 1);
+    auto allActorsKilled = std::ranges::find(mapLeave, EVENT_IsActorKilled, &EvtInstruction::opcode);
+    ASSERT_NE(allActorsKilled, mapLeave.end());
+    EXPECT_EQ(allActorsKilled->data.actor_descr.policy, KILL_CHECK_ANY);
+    EXPECT_EQ(allActorsKilled->data.actor_descr.param, 0);
+    EXPECT_EQ(allActorsKilled->data.actor_descr.num, 0);
+    EXPECT_EQ(countVariableInstruction(mapLeave, EVENT_Set, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_HAUNTED_HOUSE_CLEARED)),
+              1);
+}
+
+GAME_TEST(MM7Promotions, KnightCavalierPhysicalPromotionPacket) {
+    game.startNewGame();
+    NPCData *org = &pNPCStats->pNPCData[43];
+    ASSERT_EQ(org->house, HOUSE_ERATHIA_ORG_HOUSE);
+    ASSERT_EQ(org->dialogue_1_evt_id, 73u);
+
+    std::array initialClasses = {CLASS_KNIGHT, CLASS_ARCHER, CLASS_KNIGHT, CLASS_SORCERER};
+    std::array<uint64_t, 4> experience;
+    for (int i = 0; i < 4; ++i) {
+        pParty->pCharacters[i].classType = initialClasses[i];
+        experience[i] = pParty->pCharacters[i].experience;
+    }
+    const int gold = pParty->GetGold();
+
+    openOrgHouse(game, org);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    const int reputation = pParty->GetPartyReputation();
+    ASSERT_TRUE(selectNpcEvent(game, org, 73));
+    ASSERT_TRUE(pParty->_questBits[QBIT_HAUNTED_HOUSE_UNDEAD_ACTIVE]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_HAUNTED_HOUSE_CLEARED]);
+    ASSERT_EQ(org->dialogue_1_evt_id, 74u);
+
+    ASSERT_TRUE(selectNpcEvent(game, org, 74)); // The return topic refuses promotion before the mansion is cleared.
+    EXPECT_TRUE(pParty->_questBits[QBIT_HAUNTED_HOUSE_UNDEAD_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_HAUNTED_HOUSE_CLEARED]);
+    EXPECT_EQ(pParty->GetGold(), gold);
+    EXPECT_EQ(pParty->GetPartyReputation(), reputation);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, initialClasses[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experience[i]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_CHEVALIER]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_CHEVALIER_HONORARY]);
+    }
+    leaveHouse(game);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+
+    game.teleportTo(MAP_HAUNTED_MANSION, Vec3f(), 0);
+    ASSERT_FALSE(pActors.empty());
+    ASSERT_FALSE(Actor::isActorKilled(KILL_CHECK_ANY, 0, 0));
+    useCampaignChainTransition(game, MAP_HAUNTED_MANSION, 501);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_BARROW_DOWNS);
+    EXPECT_FALSE(pParty->_questBits[QBIT_HAUNTED_HOUSE_CLEARED]);
+
+    game.teleportTo(MAP_HAUNTED_MANSION, Vec3f(), 0);
+    for (Actor &actor : pActors)
+        if (!actor.IsNotAlive())
+            Actor::Die(actor.id); // Fixture the combat outcome; event 2 and the physical exit still own quest completion.
+    ASSERT_TRUE(Actor::isActorKilled(KILL_CHECK_ANY, 0, 0));
+    useCampaignChainTransition(game, MAP_HAUNTED_MANSION, 501);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_BARROW_DOWNS);
+    ASSERT_TRUE(pParty->_questBits[QBIT_HAUNTED_HOUSE_CLEARED]);
+
+    openOrgHouse(game, org);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    ASSERT_TRUE(selectNpcEvent(game, org, 74));
+    EXPECT_FALSE(pParty->_questBits[QBIT_HAUNTED_HOUSE_UNDEAD_ACTIVE]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_HAUNTED_HOUSE_CLEARED]);
+    EXPECT_EQ(org->dialogue_1_evt_id, 75u);
+    EXPECT_EQ(pParty->GetGold(), gold); // The authored Cavalier promotion has no gold reward.
+    EXPECT_EQ(pParty->GetPartyReputation(), reputation - 5);
+    for (int i : {0, 2}) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, CLASS_CAVALIER);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experience[i] + 30000);
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_CHEVALIER]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_CHEVALIER_HONORARY]);
+    }
+    for (int i : {1, 3}) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, initialClasses[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experience[i] + 15000);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_CHEVALIER]);
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_CHEVALIER_HONORARY]);
+    }
+
+    std::array<uint64_t, 4> promotedExperience;
+    for (int i = 0; i < 4; ++i)
+        promotedExperience[i] = pParty->pCharacters[i].experience;
+    leaveHouse(game);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    openOrgHouse(game, org);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    EXPECT_FALSE(selectNpcEvent(game, org, 74));
+    EXPECT_EQ(pParty->GetGold(), gold);
+    EXPECT_EQ(pParty->GetPartyReputation(), reputation - 5);
+    for (int i = 0; i < 4; ++i)
+        EXPECT_EQ(pParty->pCharacters[i].experience, promotedExperience[i]);
 }
 
 GAME_TEST(MM7Promotions, ArcherWarriorMagePhysicalPromotionPacket) {

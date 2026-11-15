@@ -3566,3 +3566,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Light C6 now follows Mount Nighon through Thunderfist Mountain and the Tunnels to Eofol, receives Archibald's Land-of-the-Giants Blaster, enters Colony Zod, rescues Roland, consumes his one-use key, activates both route controls, kills Xenofex by player attack, exits through the authored transition, uses the return altar, waits past Lambent's 5am closure and completes Resurecta's hand-in before `save006.mm7`. The existing Light C7 ending passes from the strengthened save.
 - The shared indoor transition helper now handles moved clickable faces, pressure plates and decorations, eliminating a repeatable Walls-of-Mist exit failure found during the fresh gate. A fresh eight-process Light C0-C7 run, five focused Xenofex/Roland/throne-hour controls and the complete 157-target style gate passed. No progress image was generated.
+
+## [2026-11-15] reference | GrayFace MM6 Patch pinned and cross-referenced
+- by: T-Burton-ND via claude
+- Pinned GrayFace MM6 Patch 2.5.7 source and shipped data under the ignored public-references folder, decoded its 44 script and table entries and 26 map entries, and diffed them against the owner's unpatched GOG 1.2 files. Confirmed the owner's install carries no GrayFace files.
+- Cross-referenced all 58 logic fixes against our MM6 runtime: 24 fixed, 14 vanilla bugs still reproduced, 4 deliberately vanilla with tests, 8 unreachable until the spell or feature is admitted, 4 inherited MM7 shapes wrong for MM6. Recorded in `project/MM6_GRAYFACE_PATCH_REFERENCE.md` and the new wiki page. No code changed.

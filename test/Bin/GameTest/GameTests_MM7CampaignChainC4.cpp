@@ -63,14 +63,20 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter4) {
     game.skipLoadingScreen();
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_CELESTE);
 
-    useCampaignChainTransition(game, MAP_CELESTE, 503);
+    {
+        SCOPED_TRACE("Celeste to Castle Lambent");
+        useCampaignChainTransition(game, MAP_CELESTE, 503);
+    }
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_CASTLE_LAMBENT);
     openCampaignChainThroneRoom(game, 79);
     ASSERT_TRUE(selectCampaignChainNpcEvent(game, 79, 145));
     leaveCampaignChainHouse(game);
 
     game.teleportTo(MAP_CELESTE, Vec3f(-158, 7624, 1), 0); // Town portal arrival point.
-    useCampaignChainTransition(game, MAP_CELESTE, 502);
+    {
+        SCOPED_TRACE("Celeste to Walls of Mist");
+        useCampaignChainTransition(game, MAP_CELESTE, 502);
+    }
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_WALLS_OF_MIST);
     for (int lever : {5, 8})
         ASSERT_TRUE(clickCampaignChainEventFace(game, MAP_WALLS_OF_MIST, lever, 1, [lever] { return engine->_persistentVariables.mapVars[lever] == 1; }));
@@ -101,7 +107,10 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter4) {
     for (int i = 0; i < 100 && wallsDoorState(1) != DOOR_OPEN; i++) // The exit doors slide open.
         game.tick();
     ASSERT_EQ(wallsDoorState(1), DOOR_OPEN);
-    useCampaignChainTransition(game, MAP_WALLS_OF_MIST, 502);
+    {
+        SCOPED_TRACE("Walls of Mist to Celeste");
+        useCampaignChainTransition(game, MAP_WALLS_OF_MIST, 502);
+    }
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_CELESTE);
 
     openCampaignChainThroneRoom(game, 79);

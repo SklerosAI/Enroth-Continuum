@@ -20,6 +20,7 @@
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MM7/MM7AtomicSaveFile.h"
 #include "Engine/MM7/MM7SaveValidation.h"
+#include "Engine/Objects/Decoration.h"
 #include "Engine/Party.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
@@ -139,15 +140,73 @@ void lootCampaignChainChest(EngineController &game, MapId map, int eventId, Item
 }
 
 void useCampaignChainTransition(EngineController &game, MapId map, int eventId) {
-    auto door = std::ranges::find_if(pIndoor->faces, [eventId](const BLVFace &face) {
-        return face.eventId == eventId && face.Clickable();
+    auto face = std::ranges::find_if(pIndoor->faces, [eventId](const BLVFace &candidate) {
+        return candidate.eventId == eventId && candidate.Clickable();
     });
-    ASSERT_NE(door, pIndoor->faces.end());
-    auto [position, yaw] = approachCampaignChainFace(*door);
-    game.teleportTo(map, position, yaw);
-    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
-    game.tick();
-    ASSERT_EQ(current_screen_type, SCREEN_INPUT_BLV);
+    if (face != pIndoor->faces.end()) {
+        bool opened = clickCampaignChainEventFace(game, map, eventId, 1, [] { return current_screen_type == SCREEN_INPUT_BLV; });
+        for (float distance : {150.0f, 300.0f, -150.0f, -300.0f}) {
+            for (float height : {face->boundingBox.z1, face->boundingBox.center().z}) {
+                if (opened)
+                    break;
+                Vec3f position = face->boundingBox.center() + distance * face->facePlane.normal;
+                position.z = height;
+                int sector = pIndoor->GetSector(position);
+                int floorFace = -1;
+                if (sector == 0 || BLV_GetFloorLevel(position + Vec3f(0, 0, pParty->radius), sector, &floorFace) == -30000 || floorFace == -1)
+                    continue;
+                int yaw = std::lround(std::atan2(-face->facePlane.normal.y, -face->facePlane.normal.x) * 180 / std::numbers::pi);
+                if (distance < 0)
+                    yaw += 180;
+                game.teleportTo(map, position, yaw);
+                game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+                game.tick();
+                opened = current_screen_type == SCREEN_INPUT_BLV;
+                if (opened)
+                    break;
+                try {
+                    game.pointMouseAtFace(face - pIndoor->faces.begin());
+                } catch (const Exception &) {
+                    continue;
+                }
+                game.pressAndReleaseButton(BUTTON_LEFT);
+                game.tick();
+                opened = current_screen_type == SCREEN_INPUT_BLV;
+            }
+        }
+        ASSERT_TRUE(opened);
+    } else {
+        face = std::ranges::find(pIndoor->faces, eventId, &BLVFace::eventId);
+        if (face != pIndoor->faces.end()) {
+            ASSERT_TRUE(face->Pressure_Plate());
+            Vec3f position = face->boundingBox.center();
+            position.z = face->boundingBox.z1 + 50;
+            game.teleportTo(map, position, 0);
+            for (int frame = 0; frame < 10 && current_screen_type != SCREEN_INPUT_BLV; ++frame)
+                game.tick();
+            ASSERT_EQ(current_screen_type, SCREEN_INPUT_BLV);
+        } else {
+            auto decoration = std::ranges::find(pLevelDecorations, eventId, &LevelDecoration::uEventID);
+            ASSERT_NE(decoration, pLevelDecorations.end());
+            const int decorationId = decoration - pLevelDecorations.begin();
+            bool pointed = false;
+            for (const auto &[offset, yaw] : std::array{
+                     std::pair{Vec3f(300, 0, 0), 180}, std::pair{Vec3f(-300, 0, 0), 0},
+                     std::pair{Vec3f(0, 300, 0), 270}, std::pair{Vec3f(0, -300, 0), 90}}) {
+                game.teleportTo(map, decoration->vPosition + offset, yaw);
+                try {
+                    game.pointMouseAtDecoration(decorationId);
+                    pointed = true;
+                    break;
+                } catch (const Exception &) {
+                }
+            }
+            ASSERT_TRUE(pointed);
+            game.pressAndReleaseButton(BUTTON_LEFT);
+            game.tick();
+            ASSERT_EQ(current_screen_type, SCREEN_INPUT_BLV);
+        }
+    }
     game.pressGuiButton("Transition_Yes");
     game.skipLoadingScreen();
 }

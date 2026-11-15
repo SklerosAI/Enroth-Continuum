@@ -121,7 +121,7 @@ test when behavior coverage exists.
 | Light second | Ranger → Ranger Lord: return the Heart of Wood. | C |
 | Light second | Druid → Arch Druid: retrieve Zokarr IV's skull, return it to his tomb, then report back. `MM7BarrowDialogue.ArchDruidUsesNighonSkullSourceAndZokarrReturn` covers Green's real Light-only offer and premature-return refusal, the live Nighon Tunnels event-196 skull source, Zokarr's physical deposit face, Green's exact qualifying/honorary reward transaction and duplicate prevention. The apparent Hothfarr/event-178 handoff is unreachable dead original content, not a missing OpenEnroth topic. | C |
 | Light second | Archer → Master Archer: return the Perfect Bow. | C |
-| Light second | Knight → Champion: win five Knight Arena bouts. | C |
+| Light second | Knight → Champion: accumulate any combined total of five Knight- or Lord-difficulty Arena wins. `MM7ChampionPromotion` uses Leda Rowan's real dialogue and proves 5+0, 0+5 and 4+1 success, 2+2 and lower-difficulty refusal, exact qualifying/honorary outcomes, no gold, reputation, topic/greeting cleanup and duplicate prevention. | C |
 | Light second | Paladin → Hero: rescue Alice. | C |
 | Light second | Cleric → Priest of Light: purify the Sun altar. | C |
 | Light second | Thief → Spy: recover the Watchtower counterweight. | C |

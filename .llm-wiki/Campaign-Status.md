@@ -54,6 +54,11 @@ Bracada boat schedule, with exact refusal, reward, item, reputation, topic and
 duplicate assertions. Its focused packet plus the adjacent Tidewater control
 pass 3/3; broader known-green suites remain intentionally unrereun.
 
+Knight-to-Champion now counts the authored combined Knight plus Lord Arena-win
+total rather than only the Knight counter. The failing behavior was reproduced
+through Leda's real dialogue for 0+5 and 4+1; the event-scoped repair, exact
+promotion transaction, refusal matrix and Arena control pass 5/5.
+
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding
 Zone black occluder was a literal-origin capture-placement defect and disappears

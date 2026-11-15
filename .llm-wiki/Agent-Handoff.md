@@ -108,6 +108,13 @@ chest, returns the held map and proves the Evenmorn boat schedule unlock. Its
 focused tests plus the Tidewater control pass 3/3; no production change was
 needed.
 
+Knight-to-Champion is the first completed post-Arch-Druid second promotion.
+GrayFace revealed that event 72 must count combined Knight plus Lord Arena
+wins. The prior script rejected five Lord wins and a 4+1 mix; the narrow
+MM7/global/event-72 repair now accepts 5+0, 0+5 and 4+1 while rejecting 2+2
+and Page/Squire-only wins. Real Leda dialogue, exact rewards and duplicate
+protection plus the Arena control pass 5/5.
+
 Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the
 corrected Breeding Zone. Shoals' green short-range fog is authored underwater
 behavior. Breeding Zone's old black occluder was caused by a literal indoor

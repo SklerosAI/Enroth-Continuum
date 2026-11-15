@@ -3607,3 +3607,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Warlock completion applied Tor Anwyn's promotion greeting to Anthony Green. The focused regression captured Anthony changing from greeting 80 to 83 while Tor stayed at 82; GrayFace 2.5.7 preserves the same bad event target.
 - An exact MM7 global-event-103 instruction seam redirects only greeting 83 to Tor. The real offer, Land-to-Dragon-Caves transition, floor egg, exact rewards, Baby Dragon hire and duplicate guard pass 3/3, with the Great Druid control 1/1.
+
+## [2026-11-15] fix | MM7 Lich jar chest routing
+- by: T-Burton-ND via codex
+- Walls of Mist event 176 used the unrelated adviser Soul Jars award to route an active Lich quest to an empty chest, and it wrote but never read its persistent source marker. The physical regression reproduced the collision before repair.
+- An exact original-event seam now selects chest 0 for active qbit 48 or persisted decor 23. Real Wynac dialogue, four physical jars, 3/4 refusal, bound full-jar conversion, exact rewards, duplicate protection and save/reload routing pass 7/7 with the existing Lich control.

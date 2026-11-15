@@ -168,6 +168,12 @@ preserving History 25/26 and leaving no-item refusals active. The Light/Dark
 ending and Light no-item/success controls pass 2/2; broad C7 chains are reserved
 for the next integration milestone.
 
+The Land of the Giants wishing well now charges 5,000 gold before each
+qualifying random wish. The real-face regression reproduced free repeatable
+effects; an exact event-205 seam preserves the authored 4,998/4,999 boundary
+oddity and leaves already-patched data untouched. Three well cases plus the
+existing effect control pass 4/4.
+
 Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the
 corrected Breeding Zone. Shoals' green short-range fog is authored underwater
 behavior. Breeding Zone's old black occluder was caused by a literal indoor

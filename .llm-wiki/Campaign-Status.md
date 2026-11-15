@@ -103,6 +103,11 @@ Book. History 25/26 remains valid and unchanged, and the no-item refusal keeps
 its bit/topic. Focused ending and Light hand-in controls pass 2/2; the broader
 C7 chains await the next integration milestone.
 
+The Land of the Giants wishing well now charges the intended 5,000 gold on
+every qualifying click before its authored random effect. The exact event seam
+preserves the 4,998/4,999 insufficient-funds branches and already-patched data;
+physical face tests plus the existing well-effect control pass 4/4.
+
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding
 Zone black occluder was a literal-origin capture-placement defect and disappears

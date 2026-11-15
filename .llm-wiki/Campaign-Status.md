@@ -51,8 +51,11 @@ the existing golem control pass 4/4 without rerunning broader suites.
 Cleric-to-Priest completes behavior coverage for all nine first promotions.
 The route uses Falk's real house, Tidewater's physical quest-map chest and the
 Bracada boat schedule, with exact refusal, reward, item, reputation, topic and
-duplicate assertions. Its focused packet plus the adjacent Tidewater control
-pass 3/3; broader known-green suites remain intentionally unrereun.
+duplicate assertions. The exact original event now preserves source chest 1
+through close and reload using map variable 2, while fresh recovery-bit or
+Priest-award state routes to fallback chest 0. The expanded Priest packet plus
+the adjacent Breeding control passes 8/8; broader known-green suites remain
+intentionally unrereun.
 
 Knight-to-Champion now counts the authored combined Knight plus Lord Arena-win
 total rather than only the Knight counter. The failing behavior was reproduced

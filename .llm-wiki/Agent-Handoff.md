@@ -105,8 +105,11 @@ teleports rather than continuous walking.
 All nine first promotions now have behavior coverage. The final Cleric-to-Priest
 packet reaches Falk's real Deyja house, physically opens the Tidewater map
 chest, returns the held map and proves the Evenmorn boat schedule unlock. Its
-focused tests plus the Tidewater control pass 3/3; no production change was
-needed.
+focused route originally passed without a production change. A later lifecycle
+audit added the missing GrayFace contract: successful source chest 1 access
+sets map variable 2 and survives close/reload, while fresh recovery-bit or
+Priest-award state uses fallback chest 0. The expanded Priest selection plus
+the Breeding control passes 8/8 and custom-shaped data disengages.
 
 Knight-to-Champion is the first completed post-Arch-Druid second promotion.
 GrayFace revealed that event 72 must count combined Knight plus Lord Arena

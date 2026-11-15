@@ -24,7 +24,7 @@ GrayFace is not automatically the design authority: each row still needs reconci
 | Loren Steel and Riverstride Plans could reward after timeout. | Both timeout fallthroughs were independently found, repaired and covered across real/decoy/timeout matrices. | Closed; retain war tests. |
 | Roland could give his key repeatedly and the Colony Zod exit replayed Archibald's trial movie. | Current Light/Dark C6 consumes the one-use key and covers the route; repeat-movie behavior is not separately asserted. | Keep the key guard; add a focused repeat-exit movie/event check only if the current source path remains ambiguous. |
 | Castle Harmondale could show quest zero, choose wrong/missing alignment flags or show the golem early. | All three classes are reconciled. Quest-zero presentation was already fixed while retaining durable qbit 271. The early golem requires Thomas's animation bit. Advisor flags now require matching alignment, and the 12 complete war-result combinations select human/neutral/elf banners while incomplete or contradictory states retain base textures. | Closed; preserve Issue2903, the golem gate and the focused flag matrix. |
-| Quest-item chests in Titan's Stronghold, Breeding Zone, Tidewater Caverns and Barrow II needed better handling. | Breeding Zone and Titans' Stronghold quest lifecycles are independently reproduced and repaired. The Perfect Bow taken bit now publishes only after successful trapped-chest open; map variable 2 preserves same-visit/reload access and fresh retrieved maps prevent duplicates. Barrow II and Tidewater remain separate. | Bow and Breeding Zone quest contracts closed; GrayFace opcode-45 artifact refunds plus Barrow II/Tidewater lifecycle remain. |
+| Quest-item chests in Titan's Stronghold, Breeding Zone, Tidewater Caverns and Barrow II needed better handling. | Breeding Zone, Titans' Stronghold and Tidewater are independently reconciled. Tidewater records a successful source-chest open in map variable 2, preserves that chest through close/reload, and routes fresh recovery-bit or Priest-award state to the fallback so the map cannot duplicate. Barrow II remains separate. | Bow, Breeding Zone and Tidewater quest contracts closed; GrayFace opcode-45 artifact refunds plus Barrow II lifecycle remain. |
 | Haunted Mansion and Gryphonheart paintings could reappear after reentry. | Independently reproduced for the Angel, Roland and Archibald paintings: their taken bits persisted but the wall portrait texture returned. Exact original-event reload restoration now reapplies each authored empty-wall texture; the walls remain clickable without duplicating the item, and patched-shaped data disengages. | Closed; retain the three-map reentry and sibling-isolation controls. |
 | Maze Haldar's Remains could disappear if left in the chest on first open. | Independently reproduced. Opening source chest 1 set qbit 161 before pickup, so a later click selected chest 0 and stranded the item. An exact Maze event-176 seam sets map variable 0 after successful source open and uses it to reopen chest 1; legacy marker-zero routing remains unchanged. | Closed; fresh-process quest durability remains separate from the chest lifecycle. |
 | Champion promotion should accept Lord as well as Knight Arena difficulty. | Independently reproduced. The actual compatibility rule is a combined Knight+Lord total of five, including mixed totals. A narrow MM7 global-event-72 repair now passes Leda dialogue cases for 5+0, 0+5 and 4+1 while rejecting 2+2 and lower difficulties. | Closed; preserve the event-scoped sum and generic counter semantics. |
@@ -58,9 +58,12 @@ outdoor Stonehenge maps. The physical promotion packet therefore required no
 compatibility repair.
 
 The Priest audit found the same authored Falk and Tidewater event-176
-transaction in GrayFace 2.5.7. The physical map hand-in and Evenmorn boat
-unlock pass without a production repair; GrayFace's broader Tidewater
-quest-chest work remains a separate lifecycle follow-up.
+transaction in GrayFace 2.5.7. The initial physical hand-in passed, but a
+deeper lifecycle audit showed the missing legacy/fresh-state distinction.
+An exact D17 event-176 seam now records source chest 1 in map variable 2,
+preserves it across close and reload, and sends fresh recovery-bit or either
+Priest award state to fallback chest 0. The focused Priest packet plus the
+adjacent Breeding control pass 8/8, including custom-shape disengagement.
 
 A cumulative guard review hardened the exact Wine and Lady Carmine kill seams
 against alert-filtered vacuous success by reading the validated target actor's

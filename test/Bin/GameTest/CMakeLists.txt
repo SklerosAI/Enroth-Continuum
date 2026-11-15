@@ -53,6 +53,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7MalwickNiles.cpp
         GameTests_MM7MountNighon.cpp
         GameTests_MM7SeasonsStole.cpp
+        GameTests_MM7NinjaPromotion.cpp
         GameTests_MM7SpyPromotion.cpp
         GameTests_MM7ThreePaintings.cpp
         GameTests_MM7ThreeStatuettes.cpp

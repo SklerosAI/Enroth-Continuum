@@ -904,6 +904,11 @@ constexpr int barrowLanternChestId = 2;
 constexpr int barrowLanternFallbackChestId = 0;
 constexpr int barrowLanternMapVariable = 2;
 
+constexpr int hiddenTombRevealEventId = 406;
+constexpr int hiddenTombPuzzleMapVariable = 9;
+constexpr int hiddenTombWallCog = 16;
+constexpr int hiddenTombEntranceCog = 17;
+
 static bool isOriginalBarrowLanternEvent(const EvtContext &context,
                                          std::span<const EvtInstruction> instructions) {
     if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_MAP ||
@@ -942,6 +947,53 @@ static bool isOriginalBarrowLanternEvent(const EvtContext &context,
            hasFallbackChest && !hasMapVariableInstruction;
 }
 
+static bool isOriginalHiddenTombReloadEvent(const EvtContext &context,
+                                            std::span<const EvtInstruction> instructions) {
+    if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_MAP ||
+        engine->_currentLoadedMapId != MAP_ERATHIA || context.eventId != 1 || !context.duringMapLoad ||
+        instructions.size() != 6 || !engine->_localEventMap.hasEvent(hiddenTombRevealEventId))
+        return false;
+
+    const bool hasReloadTrigger = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 0 && instruction.opcode == EVENT_OnMapReload;
+    });
+    const bool hasErathiaPortalBit = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 1 && instruction.target_step == 3 && instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_TOWN_PORTAL_TO_ERATHIA);
+    });
+
+    const auto &reveal = engine->_localEventMap.function(hiddenTombRevealEventId);
+    const EvtVariable mapVariable = static_cast<EvtVariable>(
+        std::to_underlying(VAR_MapPersistentVariable_0) + hiddenTombPuzzleMapVariable);
+    const bool hasSolvedGate = std::ranges::any_of(reveal, [mapVariable](const EvtInstruction &instruction) {
+        return instruction.step == 0 && instruction.target_step == 13 && instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == mapVariable && instruction.data.variable_descr.value == 5;
+    });
+    const bool setsCodeBit = std::ranges::any_of(reveal, [](const EvtInstruction &instruction) {
+        return instruction.step == 6 && instruction.opcode == EVENT_Set &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_HIDDEN_TOMB_CODE_ENTERED);
+    });
+    const bool hidesWall = std::ranges::any_of(reveal, [](const EvtInstruction &instruction) {
+        return instruction.step == 9 && instruction.opcode == EVENT_SetFacesBit &&
+               instruction.data.faces_bit_descr.cog == hiddenTombWallCog &&
+               instruction.data.faces_bit_descr.face_bit == FACE_IsInvisible && instruction.data.faces_bit_descr.is_on;
+    });
+    const bool opensWall = std::ranges::any_of(reveal, [](const EvtInstruction &instruction) {
+        return instruction.step == 7 && instruction.opcode == EVENT_SetFacesBit &&
+               instruction.data.faces_bit_descr.cog == hiddenTombWallCog &&
+               instruction.data.faces_bit_descr.face_bit == FACE_ETHEREAL && instruction.data.faces_bit_descr.is_on;
+    });
+    const bool showsEntrance = std::ranges::any_of(reveal, [](const EvtInstruction &instruction) {
+        return instruction.step == 8 && instruction.opcode == EVENT_SetFacesBit &&
+               instruction.data.faces_bit_descr.cog == hiddenTombEntranceCog &&
+               instruction.data.faces_bit_descr.face_bit == FACE_IsInvisible && !instruction.data.faces_bit_descr.is_on;
+    });
+    return hasReloadTrigger && hasErathiaPortalBit && reveal.size() == 15 && hasSolvedGate && setsCodeBit &&
+           hidesWall && opensWall && showsEntrance;
+}
+
 void EvtInterpreter::prepare(EvtContext context) {
     _context = context;
 
@@ -969,6 +1021,15 @@ EvtTransition EvtInterpreter::execute(int startStep) {
         isOriginalCastleHarmondaleAdvisorBannerEvent(_context, _events);
     const bool correctCastleWarBanners =
         isOriginalCastleHarmondaleWarBannerEvent(_context, _events);
+
+    // The original game preserves the entrance revealed by Erathia's five-part Hidden Tomb puzzle. OpenEnroth
+    // reloads the base face flags while retaining the solved quest bit, so the entrance is hidden again.
+    // Reapply only the exact original reveal records; patched or custom event data remains authoritative.
+    if (pParty->_questBits[QBIT_HIDDEN_TOMB_CODE_ENTERED] && isOriginalHiddenTombReloadEvent(_context, _events)) {
+        setFacesBit(hiddenTombWallCog, FACE_ETHEREAL, true);
+        setFacesBit(hiddenTombEntranceCog, FACE_IsInvisible, false);
+        setFacesBit(hiddenTombWallCog, FACE_IsInvisible, true);
+    }
 
     int step = startStep;
 

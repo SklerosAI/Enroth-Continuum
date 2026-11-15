@@ -48,6 +48,7 @@ constexpr int elvenAmbassadorId = 68;
 constexpr int judgeGreyId = 74;
 constexpr int goodJudgeId = 77;
 constexpr int evilJudgeId = 78;
+constexpr int stoneCityKingId = 59;
 constexpr std::string_view checkpointSlot = "saves/save000.mm7";
 constexpr std::string_view checkpointFileName = "save000.mm7";
 constexpr std::array<uint64_t, 4> checkpointExperience = {13500, 13600, 13700, 13800};
@@ -295,6 +296,56 @@ int totalExperience() {
     for (const Character &character : pParty->pCharacters)
         result += character.experience;
     return result;
+}
+
+void openStoneCityKing(EngineController &game) {
+    game.teleportTo(MAP_STONE_CITY, Vec3f(-3100, 2176, -64), 270);
+    auto door = std::ranges::find_if(pIndoor->faces, [](const BLVFace &face) {
+        return face.eventId == 416;
+    });
+    ASSERT_NE(door, pIndoor->faces.end());
+    Vec3f position = door->boundingBox.center() + 150 * door->facePlane.normal;
+    position.z = door->boundingBox.z1;
+    int yaw = std::lround(std::atan2(-door->facePlane.normal.y, -door->facePlane.normal.x) *
+                          180 / std::numbers::pi);
+    game.teleportTo(MAP_STONE_CITY, position, yaw);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_STONE_CITY_THRONE_ROOM);
+    auto king = std::ranges::find_if(houseNpcs, [](const HouseNpcDesc &entry) {
+        return entry.npc == &pNPCStats->pNPCData[stoneCityKingId];
+    });
+    ASSERT_NE(king, houseNpcs.end());
+    if (houseNpcs.size() > 1) {
+        game.pressGuiButton(fmt::format("House_Npc{}", king - houseNpcs.begin()));
+        game.tick();
+    }
+}
+
+void placeAmbassadorsThroughCastleRebuild(EngineController &game) {
+    pParty->_questBits.set(QBIT_CASTLE_HARMONDALE_GOBLINS_KILLED);
+    pParty->_questBits.set(QBIT_CASTLE_HARMONDALE_REPAIR_ACTIVE);
+    for (Character &character : pParty->pCharacters)
+        character._achievedAwardsBits.set(AWARD_HARMONDALE_CASTLE_CLEARED);
+    openStoneCityKing(game);
+    ASSERT_TRUE(selectNpcEvent(game, stoneCityKingId, 107));
+    ASSERT_TRUE(pParty->_questBits[QBIT_RED_DWARF_MINES_RESCUE_ACTIVE]);
+    ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_QUEST_ELIXIR);
+    leaveHouse(game);
+
+    // The rescue itself is outside this packet; seed its seven follower outcomes, then physically
+    // return to the authored king topic whose event 108 performs the castle rebuild and placement.
+    for (int npcId = 60; npcId <= 66; ++npcId)
+        pNPCStats->pNPCData[npcId].flags |= NPC_HIRED;
+    openStoneCityKing(game);
+    ASSERT_TRUE(selectNpcEvent(game, stoneCityKingId, 108));
+    ASSERT_TRUE(pParty->_questBits[QBIT_HARMONDALE_REBUILT]);
+    ASSERT_EQ(pNPCStats->pNPCData[humanAmbassadorId].house,
+              HOUSE_CASTLE_HARMONDALE_THRONE_ROOM);
+    ASSERT_EQ(pNPCStats->pNPCData[elvenAmbassadorId].house,
+              HOUSE_CASTLE_HARMONDALE_THRONE_ROOM);
+    leaveHouse(game);
 }
 
 void waitForPartyDeathRecovery(EngineController &game, int previousDeaths) {
@@ -843,12 +894,16 @@ GAME_TEST(MM7WarRevealMatrix, AllFivePhysicalTrumpetRecipientsHaveExactRewards) 
         SCOPED_TRACE(fmt::format("npc={}", testCase.npcId));
         test.prepareForNextTest();
         game.startNewGame();
+        if (testCase.npcId == humanAmbassadorId || testCase.npcId == elvenAmbassadorId)
+            placeAmbassadorsThroughCastleRebuild(game);
         prepareWarJobs();
         acquireGryphonheartTrumpet(game);
 
         if (testCase.npcId == humanAmbassadorId || testCase.npcId == elvenAmbassadorId) {
-            // Authored global event 108 places both ambassadors here after the castle rebuild.
-            pNPCStats->pNPCData[testCase.npcId].house = HOUSE_CASTLE_HARMONDALE_THRONE_ROOM;
+            ASSERT_EQ(pNPCStats->pNPCData[humanAmbassadorId].house,
+                      HOUSE_CASTLE_HARMONDALE_THRONE_ROOM);
+            ASSERT_EQ(pNPCStats->pNPCData[elvenAmbassadorId].house,
+                      HOUSE_CASTLE_HARMONDALE_THRONE_ROOM);
             openThroneRoom(game, MAP_CASTLE_HARMONDALE, HOUSE_CASTLE_HARMONDALE_THRONE_ROOM,
                            testCase.npcId);
         } else if (testCase.npcId == catherineId) {
@@ -863,12 +918,20 @@ GAME_TEST(MM7WarRevealMatrix, AllFivePhysicalTrumpetRecipientsHaveExactRewards) 
         const int bankBefore = pParty->uNumGoldInBank;
         const int reputationBefore = pParty->GetPartyReputation();
         const int experienceBefore = totalExperience();
+        const std::array<uint64_t, 4> characterExperienceBefore = {
+            pParty->pCharacters[0].experience, pParty->pCharacters[1].experience,
+            pParty->pCharacters[2].experience, pParty->pCharacters[3].experience,
+        };
         ASSERT_TRUE(selectNpcEvent(game, testCase.npcId, testCase.eventId));
 
         EXPECT_EQ(pParty->GetGold() - goldBefore, testCase.goldDelta);
         EXPECT_EQ(pParty->uNumGoldInBank - bankBefore, testCase.bankDelta);
         EXPECT_EQ(pParty->GetPartyReputation() - reputationBefore, testCase.reputationDelta);
         EXPECT_EQ(totalExperience() - experienceBefore, testCase.experienceDelta);
+        for (int i = 0; i < 4; ++i) {
+            EXPECT_EQ(pParty->pCharacters[i].experience - characterExperienceBefore[i],
+                      testCase.experienceDelta / 4);
+        }
         EXPECT_TRUE(pParty->_questBits[testCase.recipientBit]);
         EXPECT_EQ(pParty->_questBits[QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ERATHIA],
                   testCase.recipientBit == QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ERATHIA);

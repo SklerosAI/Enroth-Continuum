@@ -135,6 +135,11 @@ The reload seam requires each exact original six-record pickup event, runs
 after normal authored reload triggers and leaves patched-shaped data alone.
 All three reentry cases, no-duplicate behavior and sibling isolation pass 3/3.
 
+Avlee's original `rock01` at (-15088, -4288) now sits on its verified terrain
+floor at Z 148 instead of its shipped Z 208. The map-load correction requires
+the unique complete original decoration signature and leaves patched/custom
+data authoritative. The focused geometry and disengagement controls pass 2/2.
+
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding
 Zone black occluder was a literal-origin capture-placement defect and disappears

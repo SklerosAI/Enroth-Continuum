@@ -203,6 +203,12 @@ six-record pickup signatures are required, reload handlers run first, and
 patched-shaped data disengages. The 3/3 focused packet also proves no duplicate
 item and that taking Archibald's painting does not alter Roland's wall.
 
+Avlee's unique original `rock01` no longer floats sixty units over its terrain
+tile. The exact decoration at (-15088, -4288, 208) is corrected to its verified
+non-water floor Z 148 only when every original field and coordinate remain
+unchanged; patched/custom or duplicate data disengages. The focused geometry
+and signature controls pass 2/2, with no camera-dependent image required.
+
 Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the
 corrected Breeding Zone. Shoals' green short-range fog is authored underwater
 behavior. Breeding Zone's old black occluder was caused by a literal indoor

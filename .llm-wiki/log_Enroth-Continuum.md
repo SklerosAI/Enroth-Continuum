@@ -3657,3 +3657,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Tidewater's physical map route passed only because it took the item immediately; the original event lacked GrayFace's distinction between a successfully opened source chest and fresh legacy recovery state. An exact D17 event-176 seam now records source chest 1 in map variable 2 after successful open and preserves that chest through close and reload.
 - Fresh recovery-bit or Priest-award state with no marker routes to fallback chest 0, preventing map duplication, while patched-shaped data disengages. The expanded Priest packet plus the adjacent Breeding chest control passes 8/8.
+
+## [2026-11-15] fix | MM7 Avlee flying rock
+- by: T-Burton-ND via codex
+- Current OpenEnroth reproduced GrayFace's Avlee geometry defect: the unique original `rock01` at (-15088, -4288) loaded at Z 208 over a verified non-water terrain floor at Z 148. A narrow post-reload correction now requires every original decoration field and the unique coordinate before using that live floor height.
+- The focused original-geometry and custom-shape controls pass 2/2. Patched or duplicate data remains authoritative, and exact runtime position/floor assertions provided stronger evidence than a camera-dependent capture.

@@ -134,7 +134,7 @@ test when behavior coverage exists.
 | Dark second | Paladin → Villain: capture Alice. | C |
 | Dark second | Cleric → Priest of Dark: deface the Sun altar. | C |
 | Dark second | Rogue → Assassin: kill Lady Carmine and return her dagger to Seknit Undershadow. `MM7AssassinPromotion` proves the real Seknit gates and premature refusal, initiates combat against the initially friendly Celeste target through attack input, kills and mouse-loots her corpse, and verifies the retained dagger, exact qualifying/honorary rewards, gold, reputation, bits, topic/greeting cleanup and duplicate prevention. | C |
-| Dark second | Sorcerer → Lich: return the Proving Grounds soul jars. | C |
+| Dark second | Wizard → Lich: retrieve four empty soul jars from the Walls of Mist training grounds. `MM7LichPromotion` uses Wynac's real dialogue, physically opens the source chest despite the unrelated adviser award, clicks all four jars, proves a cursor-empty 3/4 refusal, and verifies exact class/award/XP, gold, reputation, empty-to-bound-full-jar conversion, bits, topic/greeting cleanup and duplicate prevention. The persisted map marker continues selecting the source chest after qbit 48 clears. | C |
 
 ## Current-test-to-contract map
 

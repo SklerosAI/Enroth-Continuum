@@ -79,6 +79,13 @@ Warlock greeting to Anthony Green rather than Tor; the instruction-scoped
 recipient correction, exact rewards, familiar hire and duplicate coverage pass
 3/3 with the Great Druid control 1/1.
 
+Wizard-to-Lich now physically opens the Walls of Mist jar chest, takes all four
+jars and proves the 3/4 refusal and exact bound-jar conversion. Event 176
+previously used unrelated award 80 to route the active quest to an empty chest
+and ignored its persistent marker; the exact compatibility seam selects the
+source for active qbit 48 or decor 23 and survives save/reload. The focused
+packet plus the existing Lich control pass 7/7.
+
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding
 Zone black occluder was a literal-origin capture-placement defect and disappears

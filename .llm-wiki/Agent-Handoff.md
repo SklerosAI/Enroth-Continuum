@@ -138,6 +138,14 @@ Tor's greeting 83 to Anthony Green; an exact MM7/global/event-103 seam redirects
 only that instruction to Tor. The Warlock suite passes 3/3 and the Great Druid
 control 1/1.
 
+Wizard-to-Lich now uses Wynac's real Pit dialogue and the physical Walls of
+Mist event-176 chest. The prior script let unrelated adviser award 80 route an
+active Lich quest to empty chest 1 and never read its own decor-23 marker. An
+exact original-event seam selects chest 0 for qbit 48 or persisted decor 23.
+Four physical jars, cursor-empty 3/4 refusal, bound full-jar conversion, exact
+rewards, duplicate protection and save/reload routing pass in the 7/7 focused
+packet with the existing Lich control.
+
 Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the
 corrected Breeding Zone. Shoals' green short-range fog is authored underwater
 behavior. Breeding Zone's old black occluder was caused by a literal indoor

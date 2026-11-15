@@ -155,6 +155,39 @@ bool interactWithBarrowEventDecoration(EngineController &game, MapId map, int ev
     return false;
 }
 
+bool interactWithBarrowOutdoorEvent(EngineController &game, MapId map, int eventId) {
+    auto decoration = std::ranges::find(pLevelDecorations, eventId, &LevelDecoration::uEventID);
+    if (decoration != pLevelDecorations.end())
+        return interactWithBarrowEventDecoration(game, map, eventId);
+
+    auto face = std::ranges::find_if(pOutdoor->faces, [eventId](const BLVFace &candidate) {
+        return candidate.eventId == eventId && candidate.Clickable();
+    });
+    if (face == pOutdoor->faces.end())
+        return false;
+    const int faceId = face - pOutdoor->faces.begin();
+    for (float distance : {150.0f, 300.0f, 500.0f}) {
+        for (const auto &[direction, yaw] : std::array{
+                 std::pair{Vec3f(1, 0, 0), 180}, std::pair{Vec3f(-1, 0, 0), 0},
+                 std::pair{Vec3f(0, 1, 0), 270}, std::pair{Vec3f(0, -1, 0), 90}}) {
+            Vec3f position = face->boundingBox.center() + distance * direction;
+            bool onWater = false;
+            int floorFace = -1;
+            position.z = ODM_GetFloorLevel(position, &onWater, &floorFace);
+            game.teleportTo(map, position, yaw, -30);
+            try {
+                game.pointMouseAtFace(faceId);
+            } catch (const Exception &) {
+                continue;
+            }
+            game.pressAndReleaseButton(BUTTON_LEFT);
+            game.tick(2);
+            return true;
+        }
+    }
+    return false;
+}
+
 bool clickBarrowEventFace(EngineController &game, MapId map, int eventId, const std::function<bool()> &done) {
     for (const FaceApproach &approach : barrowEventFaceApproaches(eventId)) {
         game.teleportTo(map, approach.position, approach.yaw, approach.pitch);
@@ -583,6 +616,145 @@ GAME_TEST(MM7BarrowDialogue, HumeOfferBecomesARewardlessReminder) {
         EXPECT_EQ(pParty->pCharacters[i].classType, classBefore[i]);
         EXPECT_EQ(pParty->pCharacters[i].experience, experienceBefore[i]);
         EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, awardsBefore[i]);
+    }
+}
+
+GAME_TEST(MM7BarrowGreatDruid, ThreeStonehengesPromoteDruidsOnce) {
+    engine->config->debug.NoActors.setValue(true);
+    game.startNewGame();
+
+    NPCData &green = pNPCStats->pNPCData[50];
+    Character &druid = pParty->pCharacters[0];
+    druid.classType = CLASS_DRUID;
+    ASSERT_EQ(green.house, HOUSE_TULAREAN_FOREST_GREEN_HOUSE);
+    ASSERT_EQ(green.dialogue_1_evt_id, 98u);
+    const std::array experienceBefore = {pParty->pCharacters[0].experience, pParty->pCharacters[1].experience,
+                                         pParty->pCharacters[2].experience, pParty->pCharacters[3].experience};
+    const std::array classBefore = {pParty->pCharacters[0].classType, pParty->pCharacters[1].classType,
+                                    pParty->pCharacters[2].classType, pParty->pCharacters[3].classType};
+    const std::array awardsBefore = {pParty->pCharacters[0]._achievedAwardsBits,
+                                     pParty->pCharacters[1]._achievedAwardsBits,
+                                     pParty->pCharacters[2]._achievedAwardsBits,
+                                     pParty->pCharacters[3]._achievedAwardsBits};
+    const int goldBefore = pParty->GetGold();
+
+    // A Stonehenge does nothing until Anthony Green gives the quest.
+    game.teleportTo(MAP_EVENMORN_ISLAND, Vec3f(), 0);
+    ASSERT_TRUE(interactWithBarrowOutdoorEvent(game, MAP_EVENMORN_ISLAND, 401));
+    EXPECT_FALSE(pParty->_questBits[QBIT_STONEHENGES_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_STONEHENGES_VISITED]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_EVENMORN_STONEHENGE_VISITED]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_TATALIA_STONEHENGE_VISITED]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_AVLEE_STONEHENGE_VISITED]);
+
+    openBarrowOutdoorHouse(game, MAP_TULAREAN_FOREST, HOUSE_TULAREAN_FOREST_GREEN_HOUSE, 50);
+    const int reputationBefore = pParty->GetPartyReputation();
+    ASSERT_TRUE(selectBarrowNpcEvent(game, 50, 98));
+    ASSERT_TRUE(pParty->_questBits[QBIT_STONEHENGES_ACTIVE]);
+    EXPECT_EQ(green.dialogue_1_evt_id, 99u);
+    EXPECT_EQ(pParty->GetPartyReputation(), reputationBefore);
+    EXPECT_EQ(pParty->GetGold(), goldBefore);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, classBefore[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experienceBefore[i]);
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, awardsBefore[i]);
+    }
+    leaveBarrowDialogue(game);
+
+    // Green's return topic is immediately available, but refuses a party that has visited no Stonehenges.
+    openBarrowOutdoorHouse(game, MAP_TULAREAN_FOREST, HOUSE_TULAREAN_FOREST_GREEN_HOUSE, 50);
+    ASSERT_TRUE(selectBarrowNpcEvent(game, 50, 99));
+    EXPECT_TRUE(pParty->_questBits[QBIT_STONEHENGES_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_STONEHENGES_VISITED]);
+    EXPECT_EQ(green.dialogue_1_evt_id, 99u);
+    EXPECT_EQ(pParty->GetPartyReputation(), reputationBefore);
+    EXPECT_EQ(pParty->GetGold(), goldBefore);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, classBefore[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experienceBefore[i]);
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, awardsBefore[i]);
+    }
+    leaveBarrowDialogue(game);
+
+    game.teleportTo(MAP_EVENMORN_ISLAND, Vec3f(), 0);
+    ASSERT_TRUE(interactWithBarrowOutdoorEvent(game, MAP_EVENMORN_ISLAND, 401));
+    ASSERT_TRUE(pParty->_questBits[QBIT_EVENMORN_STONEHENGE_VISITED]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_TATALIA_STONEHENGE_VISITED]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_AVLEE_STONEHENGE_VISITED]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_STONEHENGES_VISITED]);
+
+    // Reusing the same altar is a no-op and cannot satisfy the remaining two visits.
+    ASSERT_TRUE(interactWithBarrowOutdoorEvent(game, MAP_EVENMORN_ISLAND, 401));
+    EXPECT_TRUE(pParty->_questBits[QBIT_EVENMORN_STONEHENGE_VISITED]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_STONEHENGES_VISITED]);
+
+    // One visited Stonehenge changes Green's refusal branch, but still grants no promotion or reward.
+    openBarrowOutdoorHouse(game, MAP_TULAREAN_FOREST, HOUSE_TULAREAN_FOREST_GREEN_HOUSE, 50);
+    ASSERT_TRUE(selectBarrowNpcEvent(game, 50, 99));
+    EXPECT_TRUE(pParty->_questBits[QBIT_STONEHENGES_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_STONEHENGES_VISITED]);
+    EXPECT_EQ(green.dialogue_1_evt_id, 99u);
+    EXPECT_EQ(pParty->GetPartyReputation(), reputationBefore);
+    EXPECT_EQ(pParty->GetGold(), goldBefore);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, classBefore[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experienceBefore[i]);
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, awardsBefore[i]);
+    }
+    leaveBarrowDialogue(game);
+
+    game.teleportTo(MAP_TATALIA, Vec3f(), 0);
+    ASSERT_TRUE(interactWithBarrowOutdoorEvent(game, MAP_TATALIA, 401));
+    ASSERT_TRUE(pParty->_questBits[QBIT_TATALIA_STONEHENGE_VISITED]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_STONEHENGES_VISITED]);
+
+    game.teleportTo(MAP_AVLEE, Vec3f(), 0);
+    ASSERT_TRUE(interactWithBarrowOutdoorEvent(game, MAP_AVLEE, 401));
+    ASSERT_TRUE(pParty->_questBits[QBIT_AVLEE_STONEHENGE_VISITED]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_STONEHENGES_VISITED]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_STONEHENGES_ACTIVE]);
+
+    openBarrowOutdoorHouse(game, MAP_TULAREAN_FOREST, HOUSE_TULAREAN_FOREST_GREEN_HOUSE, 50);
+    ASSERT_TRUE(selectBarrowNpcEvent(game, 50, 99));
+    EXPECT_FALSE(pParty->_questBits[QBIT_STONEHENGES_ACTIVE]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_STONEHENGES_VISITED]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_EVENMORN_STONEHENGE_VISITED]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_TATALIA_STONEHENGE_VISITED]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_AVLEE_STONEHENGE_VISITED]);
+    EXPECT_EQ(green.dialogue_1_evt_id, 100u);
+    EXPECT_EQ(pParty->GetPartyReputation() - reputationBefore, -5);
+    EXPECT_EQ(pParty->GetGold(), goldBefore);
+    EXPECT_EQ(druid.classType, CLASS_GREAT_DRUID);
+    auto expectedAwards = awardsBefore[0];
+    expectedAwards.set(AWARD_PROMOTION_GREAT_DRUID);
+    EXPECT_EQ(druid._achievedAwardsBits, expectedAwards);
+    EXPECT_EQ(druid.experience - experienceBefore[0], 30000);
+    for (int i = 1; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, classBefore[i]);
+        expectedAwards = awardsBefore[i];
+        expectedAwards.set(AWARD_PROMOTION_GREAT_DRUID_HONORARY);
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, expectedAwards);
+        EXPECT_EQ(pParty->pCharacters[i].experience - experienceBefore[i], 15000);
+    }
+
+    leaveBarrowDialogue(game);
+    const std::array experienceAfter = {pParty->pCharacters[0].experience, pParty->pCharacters[1].experience,
+                                        pParty->pCharacters[2].experience, pParty->pCharacters[3].experience};
+    const std::array classAfter = {pParty->pCharacters[0].classType, pParty->pCharacters[1].classType,
+                                   pParty->pCharacters[2].classType, pParty->pCharacters[3].classType};
+    const std::array awardsAfter = {pParty->pCharacters[0]._achievedAwardsBits,
+                                    pParty->pCharacters[1]._achievedAwardsBits,
+                                    pParty->pCharacters[2]._achievedAwardsBits,
+                                    pParty->pCharacters[3]._achievedAwardsBits};
+    openBarrowOutdoorHouse(game, MAP_TULAREAN_FOREST, HOUSE_TULAREAN_FOREST_GREEN_HOUSE, 50);
+    EXPECT_FALSE(barrowNpcEventVisible(50, 99));
+    EXPECT_FALSE(selectBarrowNpcEvent(game, 50, 99));
+    EXPECT_EQ(pParty->GetPartyReputation() - reputationBefore, -5);
+    EXPECT_EQ(pParty->GetGold(), goldBefore);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, classAfter[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experienceAfter[i]);
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, awardsAfter[i]);
     }
 }
 

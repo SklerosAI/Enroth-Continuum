@@ -42,6 +42,12 @@ Wromthrax combat and the authored 210-second objective timer. A fresh Light C0-C
 to pause repeated known-green testing; later slices should receive focused
 checks until the next meaningful integration milestone.
 
+Sorcerer-to-Wizard also follows the full physical golem-component route and
+both head outcomes. The focused packet exposed Castle Harmondale event 376
+enabling group 6 and dismissing the Golem NPC before Thomas's animation; an
+MM7-only guard now requires the authored animation bit. The Wizard tests plus
+the existing golem control pass 4/4 without rerunning broader suites.
+
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding
 Zone black occluder was a literal-origin capture-placement defect and disappears

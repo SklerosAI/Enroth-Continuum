@@ -27,6 +27,14 @@ The Barrow suite visits Barrow Downs, Barrows I–XV and Zokarr's Tomb through 2
 
 Ranger-to-Hunter, Druid-to-Great-Druid, Archer-to-Warrior-Mage, Knight-to-Cavalier and Paladin-to-Crusader first promotions now use their real dialogue and physical/event routes. Ranger covers the Hall Under the Hill audience and qualifying/honorary transaction. Great Druid proves zero/partial refusals and physically activates the Evenmorn, Tatalia and Avlee Stonehenges before Green's exact return. Archer covers the supplied belt, physical Red Dwarf Mines sabotage face, return rewards and duplicate prevention. Knight covers Frederick Org's dialogue and the Haunted Mansion map-leave clear predicate, including the authored no-gold reward. Crusader kills Wromthrax through attack input, waits through the authored 210-second completion timer and verifies Quixote's no-gold promotion, deferred dismissal and duplicate protection.
 
+Sorcerer-to-Wizard now uses Thomas Grey's real dialogue, physical component
+sources across Barrow Downs, Deyja, Avlee, Tatalia and Bracada, Golem hireling
+installation, and the required extra assembly confirmation. Good and dented
+heads produce the authored friendly and hostile Castle outcomes. A narrow MM7
+repair keeps Castle event 376 from enabling the golem or dismissing its NPC
+before Thomas sets the animation bit; the regression was demonstrated before
+the fix.
+
 ## Visual findings
 
 Corrected hidden captures at authored starts show coherent Tatalia and Avlee terrain, HUD and minimaps. Shoals' dense green view matches its explicit underwater contract: weak/strong fog distances are 50/2000 and both fog and terrain light use Eucalyptus green. Wetsuits gate access and drowning, not fog.

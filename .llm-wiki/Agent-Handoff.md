@@ -94,6 +94,14 @@ offer, partial-progress refusals and physical Stonehenge faces in Evenmorn,
 Tatalia and Avlee. These tests name their setup teleports;
 the harness is not autonomous pathfinding.
 
+Sorcerer-to-Wizard now covers Thomas Grey's real offer, every physical golem
+component source, hireling-dialogue installation, the extra assembly
+confirmation, both head choices and exact rewards. A narrow MM7 Castle
+Harmondale event-376 guard prevents the assembled golem from appearing or its
+NPC from being dismissed before Thomas animates it. The focused Wizard suite
+and existing golem control pass 4/4; source approaches still use setup
+teleports rather than continuous walking.
+
 Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the
 corrected Breeding Zone. Shoals' green short-range fog is authored underwater
 behavior. Breeding Zone's old black occluder was caused by a literal indoor

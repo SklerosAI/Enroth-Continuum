@@ -3582,3 +3582,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The Wizard packet now uses Thomas Grey's real dialogue, every authored physical component source, Golem hireling installation, the required extra assembly confirmation and both good/dented head outcomes. It verifies exact qualifying and honorary rewards, no gold or reputation change, Castle actor disposition, NPC dismissal and duplicate prevention.
 - The route exposed Castle Harmondale event 376 enabling the assembled golem and dismissing NPC 56 before Thomas animated it. A narrow MM7 event/qbit guard fixes the premature state; the focused Wizard suite and existing golem control pass 4/4. GrayFace independently applies the same missing animation gate in patched event data.
+
+## [2026-11-15] test | MM7 Priest promotion and Evenmorn route
+- by: T-Burton-ND via codex
+- Falk's real Deyja offer now leads through the physical Tidewater map chest and held-item return, with the no-map refusal, exact Cleric and honorary rewards, item/bit/topic cleanup, gold, reputation and duplicate stability asserted.
+- The packet proves the Bracada boat schedule is unavailable before the hand-in and available afterward. Priest tests plus the Tidewater control pass 3/3, closing behavior coverage for all nine first promotions without a production change or broad-suite rerun.

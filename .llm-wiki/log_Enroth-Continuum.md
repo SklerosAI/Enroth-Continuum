@@ -3577,3 +3577,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Anthony Green's real offer and return now have a focused promotion packet with zero- and one-site refusals, physical event-401 interactions at the Evenmorn, Tatalia and Avlee Stonehenges, exact qualifying and honorary outcomes, and duplicate prevention.
 - GrayFace 2.5.7 leaves the offer/return records byte-identical and provides no overrides for the three outdoor maps, so no production repair was needed. The focused test and one adjacent Arch Druid control passed; broader known-green suites were not repeated.
+
+## [2026-11-15] fix | MM7 Wizard promotion and Castle golem gate
+- by: T-Burton-ND via codex
+- The Wizard packet now uses Thomas Grey's real dialogue, every authored physical component source, Golem hireling installation, the required extra assembly confirmation and both good/dented head outcomes. It verifies exact qualifying and honorary rewards, no gold or reputation change, Castle actor disposition, NPC dismissal and duplicate prevention.
+- The route exposed Castle Harmondale event 376 enabling the assembled golem and dismissing NPC 56 before Thomas animated it. A narrow MM7 event/qbit guard fixes the premature state; the focused Wizard suite and existing golem control pass 4/4. GrayFace independently applies the same missing animation gate in patched event data.

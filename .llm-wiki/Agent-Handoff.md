@@ -131,6 +131,13 @@ MM7/Celeste/event/group seam evaluates actor zero instead and leaves generic
 empty-group behavior untouched. The Assassin suite passes 5/5 and the adjacent
 Wine Cellar kill control 1/1.
 
+Great-Druid-to-Warlock now follows Tor Anwyn's real offer, a physical Land of
+the Giants to Dragon Caves transition and the floor egg pickup before the exact
+promotion and Baby Dragon familiar transaction. The original event assigned
+Tor's greeting 83 to Anthony Green; an exact MM7/global/event-103 seam redirects
+only that instruction to Tor. The Warlock suite passes 3/3 and the Great Druid
+control 1/1.
+
 Hidden frames were inspected for Tatalia, Avlee, Shoals, Wine Cellar and the
 corrected Breeding Zone. Shoals' green short-range fog is authored underwater
 behavior. Breeding Zone's old black occluder was caused by a literal indoor

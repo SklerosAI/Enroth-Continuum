@@ -34,6 +34,7 @@ GrayFace is not automatically the design authority: each row still needs reconci
 | Land of the Giants well could grant its effect without charging 5,000 gold. | Both campaign routes traverse the region; the well is not covered. | Add payment/refusal/duplicate assertions as a regional side interaction. |
 | Kastore's altar-piece response texts were swapped and William Lasker's post-Spy greeting said Rogues. | State transactions are covered more strongly than these presentation strings. | Audit localized text only when the corresponding second-promotion/UI slice is active. |
 | Celeste's Dark map-leave recovery check could grant Lady Carmine's dagger before she was killed. | Independently reproduced. Event 378 tested an empty actor group, which passed vacuously and enabled Oracle recovery while actor zero was alive. An exact Celeste event/group compatibility seam now evaluates Lady Carmine herself; generic empty-group semantics remain unchanged. | Closed; preserve the real target kill and retained-dagger transaction. |
+| Warlock completion assigned Tor Anwyn's congratulatory greeting to Anthony Green. | Independently reproduced. Global event 103 targets NPC 50 even though NPC 51 is the promoter and greeting 83 is Warlock-specific. GrayFace preserves the bad target; an exact event/instruction compatibility seam redirects only this greeting to Tor. | Closed; preserve the authored reputation direction separately from the corrected recipient. |
 
 ## Use in future lanes
 

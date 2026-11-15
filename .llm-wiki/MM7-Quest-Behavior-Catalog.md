@@ -128,7 +128,7 @@ test when behavior coverage exists.
 | Light second | Wizard → Archmage: recover the Book of Divine Intervention from the Breeding Zone and return it. `MM7ArchmagePromotion` proves Thomas Grey's alignment gates and no-book refusal, physically opens and reopens the real Breeding Zone source chest, retains the book through the exact qualifying/honorary reward transaction, and verifies bits, gold, topic/greeting cleanup, no reputation change and duplicate prevention. | C |
 | Dark second | Monk → Ninja: solve Ashwar Nog'Nogoth's tomb access, clear it, and return to Stephan Sand. | C |
 | Dark second | Ranger → Bounty Hunter: turn in 10,000 gold in bounties. | C |
-| Dark second | Druid → Warlock: return the dragon egg. | C |
+| Dark second | Great Druid → Warlock: return the Dragon Caves egg. `MM7WarlockPromotion` takes Tor Anwyn's real offer, follows an authored Land-of-the-Giants transition, physically clicks the floor egg and completes the exact qualifying/honorary transaction. It verifies egg and Oracle-bit cleanup, no gold, the Baby Dragon familiar, Tor's corrected greeting and duplicate prevention; killing the nearby dragon is gameplay pressure rather than a scripted prerequisite. | C |
 | Dark second | Archer → Sniper: return the Perfect Bow. | C |
 | Dark second | Knight → Black Knight: rob the Navan treasury and return to Frederick Org. | C |
 | Dark second | Paladin → Villain: capture Alice. | C |

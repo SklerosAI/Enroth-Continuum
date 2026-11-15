@@ -73,6 +73,12 @@ an exact target seam now requires actor zero's death. Exact retained-dagger
 rewards, refusal and duplicate coverage pass 5/5, with the adjacent Wine Cellar
 kill control 1/1.
 
+Great-Druid-to-Warlock now uses the real Tor dialogue, authored Land-to-Dragon-
+Caves transition and physical egg sprite. Event 103 previously assigned the
+Warlock greeting to Anthony Green rather than Tor; the instruction-scoped
+recipient correction, exact rewards, familiar hire and duplicate coverage pass
+3/3 with the Great Druid control 1/1.
+
 Inspected hidden frames show coherent Tatalia and Avlee views. Shoals' dense
 green fog matches its explicit underwater color and distances. The Breeding
 Zone black occluder was a literal-origin capture-placement defect and disappears

@@ -16,3 +16,9 @@ The owner playtests MM6 on 2026-11-13: party creation, New Sorpigal (oute3) and 
 | P10 | The Release app launches, plays and quits cleanly on the owner's profile | A rebuilt `build-release` MM6 app on tonight's master, a short hidden or second-monitor run | Rebuilt at 20:02 on tonight's master. A final rebuild and a short launch check follow the last merges |
 
 Lanes for the open rows, all running since about 20:00: P4 services (`claude/mm6-services`), P7 dungeon interiors and the Town Hall side quests (`claude/mm6-dungeons`), P6 turn-based mode, potions and resting (`claude/mm6-first-combat`), P2 and P3 layouts (`claude/mm6-ui-leftovers`), P9 fountain and timers (`claude/mm6-visit-timers`). Chain C6 is merged and C7 is parked on `claude/mm6-chain-c7`.
+
+## Owner playtest notes
+
+| Date | What the owner saw | State |
+| --- | --- | --- |
+| 2026-11-15 | In a short playtest, every villager on the New Sorpigal streets drew transparent. The build and save weren't recorded. | Open, not investigated. The owner asked for it to be recorded, not fixed yet. Reproduce with a hidden capture of New Sorpigal's streets and inspect the whole frame before claiming a cause. |

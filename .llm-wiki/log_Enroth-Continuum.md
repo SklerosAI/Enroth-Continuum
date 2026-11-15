@@ -3536,3 +3536,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Niles's Light and Dark offers are distinct global events. The completed contract selects the matching offer, clicks the authored Castle Lambent or Castle Gloaming tapestry face, returns the item through Niles's real Tatalia dialogue and verifies the +5 reputation-only reward. The allied-castle guards remain aggressive at 719 hours and clear at exactly 720; both missed-deadline invasion branches remain covered.
 - Separate admitted production-Save and fresh-process normal-Load pairs preserve the successful return and failed Harmondale invasion, including completion/failure bits, the consumed tapestry, emptied bank and live raid actors, with unchanged slot bytes. Five focused behavior tests, the older Niles and raid regressions, both checkpoint pairs, changed-target style and the full style gate passed; the headless run generated no progress images.
+
+## [2026-11-14] test | MM7 Dark campaign profile through C3
+- by: T-Burton-ND via codex
+- Added a separately marked Dark campaign profile that reuses common C0-C2 and switches to a Dark-only suite after the Arbiter branch. The gate rejects Light C3 in a Dark profile and Dark C3 in a Light profile, while preserving the existing predecessor-slot and digest policy.
+- Dark C3 follows the authored 112-day messenger, Deyja tavern and Harmondale Arbiter interactions, verifies Evil alignment, the Dark path and Archibald activation, and writes a structurally checked normal save. A fresh four-process C0-C3 run, the ordinary Light C0 control and the 157-target style gate passed. The headless checks generated no progress images; C4-C7 remain open.

@@ -76,6 +76,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7MasterPromotion.cpp
         GameTests_MM7PaladinPathPromotions.cpp
         GameTests_MM7RangerLordPromotion.cpp
+        GameTests_MM7BountyHunterPromotion.cpp
         GameTests_MM7WizardPromotion.cpp
         GameTests_MM7WarlockPromotion.cpp
         GameTests_MM7BarrowTraversal.cpp

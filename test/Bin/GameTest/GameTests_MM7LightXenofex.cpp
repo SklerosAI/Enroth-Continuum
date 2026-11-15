@@ -189,7 +189,7 @@ GAME_TEST(MM7LightXenofex, MapLeaveHandInAndEnding) {
     EXPECT_EQ(activeTape, tape(false, true, false));
     EXPECT_EQ(killedTape, tape(false, true));
     EXPECT_EQ(finishedTape, tape(false, true));
-    EXPECT_EQ(finalTaskTape, tape(false, true));
+    EXPECT_EQ(finalTaskTape, tape(false, true, false));
     EXPECT_EQ(topicTape, tape(149u, 150u, 169u, 170u, 0u));
     EXPECT_EQ(heldItemTape, tape(false, true, false));
     EXPECT_EQ(certificateTape, tape(false, true));

@@ -119,6 +119,9 @@ GAME_TEST(MM7Campaign, Endings) {
         }
         game.pressGuiButton("HouseNpcDialogue_Option0"); // The final task.
         game.tick();
+        const int historyIndex = light ? 25 : 26;
+        const Time assignedHistoryTime = pParty->PartyTimes.HistoryEventTimes[historyIndex];
+        ASSERT_TRUE(assignedHistoryTime.isValid());
         game.pressGuiButton("HouseNpcDialogue_Option0"); // Hand over the overthruster.
         game.tick(2); // The game over window opens on the frame after the topic.
         game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE); // Shows the farewell box.
@@ -130,7 +133,8 @@ GAME_TEST(MM7Campaign, Endings) {
         EXPECT_EQ(houseTape, light ? tape(HOUSE_CASTLE_LAMBENT_THRONE_ROOM, HOUSE_INVALID)
                                    : tape(HOUSE_CASTLE_GLOAMING_THRONE_ROOM_2, HOUSE_INVALID));
         EXPECT_EQ(mapTape, tape(light ? MAP_CASTLE_LAMBENT : MAP_CASTLE_GLOAMING, MAP_HARMONDALE));
-        EXPECT_EQ(activeTape, tape(false, true));
+        EXPECT_EQ(activeTape, tape(false, true, false));
+        EXPECT_EQ(pParty->PartyTimes.HistoryEventTimes[historyIndex], assignedHistoryTime);
         EXPECT_EQ(overthrusterTape, tape(true, false));
         EXPECT_EQ(certificateTape, tape(false, true));
         EXPECT_EQ(autosaveTape, tape(false, true));

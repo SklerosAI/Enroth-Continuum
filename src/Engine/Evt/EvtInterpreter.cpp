@@ -117,6 +117,8 @@ constexpr int mazeHaldarsRemainsEventId = 176;
 constexpr int mazeHaldarsRemainsChestId = 1;
 constexpr int mazeHaldarsRemainsFallbackChestId = 0;
 constexpr int mazeHaldarsRemainsMapVariable = 0;
+constexpr int lightEndingCompletionEventId = 170;
+constexpr int darkEndingCompletionEventId = 172;
 
 static bool isOriginalBreedingZoneBookEvent(const EvtContext &context,
                                             std::span<const EvtInstruction> instructions) {
@@ -269,6 +271,53 @@ static bool isOriginalMazeHaldarsRemainsEvent(const EvtContext &context,
     });
     return hasAwardGate && hasTakenGate && hasRemainsChest && hasTakenWrite && hasFallbackChest &&
            !hasMapVariableInstruction;
+}
+
+static std::optional<QuestBit> originalEndingActiveBitCleanup(
+    const EvtContext &context, std::span<const EvtInstruction> instructions) {
+    if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_GLOBAL ||
+        (context.eventId != lightEndingCompletionEventId && context.eventId != darkEndingCompletionEventId))
+        return std::nullopt;
+
+    const bool light = context.eventId == lightEndingCompletionEventId;
+    const QuestBit activeBit = light ? QBIT_OSCILLATION_OVERTHRUSTER_LIGHT_ACTIVE
+                                     : QBIT_OSCILLATION_OVERTHRUSTER_DARK_ACTIVE;
+    const int npcId = light ? 80 : 84;
+    const bool hasItemGate = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 1 && instruction.target_step == 4 && instruction.opcode == EVENT_Compare &&
+               instruction.data.variable_descr.type == VAR_PlayerItemInHands &&
+               instruction.data.variable_descr.value ==
+                   std::to_underlying(ITEM_QUEST_OSCILLATION_OVERTHRUSTER);
+    });
+    const bool hasItemRemoval = std::ranges::any_of(instructions, [](const EvtInstruction &instruction) {
+        return instruction.step == 4 && instruction.opcode == EVENT_Subtract &&
+               instruction.data.variable_descr.type == VAR_PlayerItemInHands &&
+               instruction.data.variable_descr.value ==
+                   std::to_underlying(ITEM_QUEST_OSCILLATION_OVERTHRUSTER);
+    });
+    const auto removesQuestBitAt = [instructions](int step, QuestBit bit) {
+        return std::ranges::any_of(instructions, [step, bit](const EvtInstruction &instruction) {
+            return instruction.step == step && instruction.opcode == EVENT_Subtract &&
+                   instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+                   instruction.data.variable_descr.value == std::to_underlying(bit);
+        });
+    };
+    const bool hasTopicClear = std::ranges::any_of(instructions, [npcId](const EvtInstruction &instruction) {
+        return instruction.step == 7 && instruction.opcode == EVENT_SetNPCTopic &&
+               instruction.data.npc_topic_descr.npc_id == npcId &&
+               instruction.data.npc_topic_descr.index == 1 &&
+               instruction.data.npc_topic_descr.event_id == 0;
+    });
+    const bool alreadyCleansActiveBit = std::ranges::any_of(instructions, [activeBit](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_Subtract && instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(activeBit);
+    });
+    if (!hasItemGate || !hasItemRemoval || !removesQuestBitAt(5, QBIT_ORACLE_RECOVERS_WETSUIT) ||
+        !removesQuestBitAt(6, QBIT_ORACLE_RECOVERS_OSCILLATION_OVERTHRUSTER) || !hasTopicClear ||
+        alreadyCleansActiveBit)
+        return std::nullopt;
+
+    return activeBit;
 }
 
 /**
@@ -1130,6 +1179,10 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                 mm6::setNpcTopic(*pNPCStats, GameTitle::MM6, ir.data.npc_topic_descr.npc_id,
                                  ir.data.npc_topic_descr.index, ir.data.npc_topic_descr.event_id);
                 break;
+            }
+            if (ir.step == 7) {
+                if (std::optional<QuestBit> activeBit = originalEndingActiveBitCleanup(_context, _events))
+                    pParty->_questBits.reset(*activeBit);
             }
             NPCData *npc = &pNPCStats->pNPCData[ir.data.npc_topic_descr.npc_id];
             if (ir.data.npc_topic_descr.index == 0) npc->dialogue_1_evt_id = ir.data.npc_topic_descr.event_id;

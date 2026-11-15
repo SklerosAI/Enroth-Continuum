@@ -1060,6 +1060,13 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             break;
         case EVENT_IsActorKilled: {
             bool actorKilled = Actor::isActorKilled(ir.data.actor_descr.policy, ir.data.actor_descr.param, ir.data.actor_descr.num);
+            // Celeste's map-leave script checks an unused group instead of Lady Carmine. An empty group satisfies
+            // the generic "all dead" predicate, allowing the Oracle to recover her dagger while she is still alive.
+            if (engine->gameTitle() == GameTitle::MM7 && _context.source == EVT_SOURCE_MAP &&
+                engine->_currentLoadedMapId == MAP_CELESTE && _context.eventId == 378 &&
+                ir.data.actor_descr.policy == KILL_CHECK_GROUPID && ir.data.actor_descr.param == 1 &&
+                ir.data.actor_descr.num == 0)
+                actorKilled = Actor::isActorKilled(KILL_CHECK_ACTORID, 0, 0);
             // The Wine Cellar's map-leave script asks whether actor zero is dead. Its map data starts the Elder
             // Vampire disabled; that is a spawn state, not the required quest kill.
             if (engine->_indoor->filename == "d16.blv" && _context.eventId == 2 &&

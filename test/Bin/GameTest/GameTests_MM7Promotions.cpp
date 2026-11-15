@@ -262,6 +262,31 @@ void openOrgHouse(EngineController &game, NPCData *org) {
     }
 }
 
+void openQuixoteHouse(EngineController &game, NPCData *quixote) {
+    game.teleportTo(MAP_ERATHIA, Vec3f(), 0);
+    std::vector<std::pair<Vec3f, int>> doors;
+    for (const BLVFace &face : pOutdoor->faces)
+        if (face.Clickable() && eventOpensHouse(face.eventId, HOUSE_ERATHIA_QUIXOTE_RESIDENCE))
+            doors.push_back(approachFace(face));
+    ASSERT_FALSE(doors.empty());
+    for (auto [position, yaw] : doors) {
+        game.teleportTo(MAP_ERATHIA, position, yaw);
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick();
+        if (current_screen_type == SCREEN_HOUSE &&
+            window_SpeakInHouse->houseId() == HOUSE_ERATHIA_QUIXOTE_RESIDENCE)
+            break;
+    }
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), HOUSE_ERATHIA_QUIXOTE_RESIDENCE);
+    auto entry = std::ranges::find(houseNpcs, quixote, &HouseNpcDesc::npc);
+    ASSERT_NE(entry, houseNpcs.end());
+    if (houseNpcs.size() > 1) {
+        game.pressGuiButton(fmt::format("House_Npc{}", entry - houseNpcs.begin()));
+        game.tick();
+    }
+}
+
 void leaveEmeraldIsland(EngineController &game) {
     engine->config->debug.NoMargaret.setValue(true);
     game.startNewGame();
@@ -541,6 +566,197 @@ GAME_TEST(MM7Promotions, CavalierPromotionSourceContract) {
     EXPECT_EQ(countVariableInstruction(mapLeave, EVENT_Set, VAR_QBits_QuestsDone,
                                        std::to_underlying(QBIT_HAUNTED_HOUSE_CLEARED)),
               1);
+}
+
+GAME_TEST(MM7Promotions, CrusaderPromotionSourceContract) {
+    game.startNewGame();
+    const std::vector<EvtInstruction> &request = engine->_globalEventMap.function(51);
+    const std::vector<EvtInstruction> &promotion = engine->_globalEventMap.function(52);
+
+    EXPECT_EQ(countVariableInstruction(request, EVENT_Set, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_WROMTHRAX_ACTIVE)),
+              1);
+    EXPECT_EQ(countVariableInstruction(request, EVENT_Set, VAR_NPCs2, 17), 1);
+    EXPECT_TRUE(hasNpcTopicInstruction(request, 17, 0, 52));
+    EXPECT_TRUE(std::ranges::any_of(request, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_MoveNPC && instruction.data.npc_move_descr.npc_id == 17 &&
+               instruction.data.npc_move_descr.location_id == HOUSE_INVALID;
+    }));
+
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Compare, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_WROMTHRAX_KILLED)),
+              1);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Compare, VAR_Class, std::to_underlying(CLASS_PALADIN)), 4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Set, VAR_Class, std::to_underlying(CLASS_CRUSADER)), 4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_Award,
+                                       std::to_underlying(AWARD_PROMOTION_CRUSADER)),
+              4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_Experience, 30000), 4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_Award,
+                                       std::to_underlying(AWARD_PROMOTION_CRUSADER_HONORARY)),
+              4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Add, VAR_Experience, 15000), 4);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Subtract, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_WROMTHRAX_ACTIVE)),
+              1);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Subtract, VAR_NPCs2, 17), 1);
+    EXPECT_EQ(countVariableInstruction(promotion, EVENT_Subtract, VAR_ReputationInCurrentLocation, 5), 1);
+    EXPECT_EQ(std::ranges::count_if(promotion, [](const EvtInstruction &instruction) {
+                  return (instruction.opcode == EVENT_Add || instruction.opcode == EVENT_Set ||
+                          instruction.opcode == EVENT_Subtract) &&
+                         (instruction.data.variable_descr.type == VAR_FixedGold ||
+                          instruction.data.variable_descr.type == VAR_RandomGold);
+              }),
+              0);
+    EXPECT_TRUE(hasNpcTopicInstruction(promotion, 17, 0, 53));
+    EXPECT_TRUE(std::ranges::any_of(promotion, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_MoveNPC && instruction.data.npc_move_descr.npc_id == 17 &&
+               instruction.data.npc_move_descr.location_id == HOUSE_ERATHIA_QUIXOTE_RESIDENCE;
+    }));
+
+    game.teleportTo(MAP_WROMTHRAXS_CAVE, Vec3f(), 0);
+    const std::vector<EvtInstruction> &objective = engine->_localEventMap.function(376);
+    EXPECT_EQ(std::ranges::count(objective, EVENT_OnTimer, &EvtInstruction::opcode), 1);
+    auto timer = std::ranges::find(objective, EVENT_OnTimer, &EvtInstruction::opcode);
+    ASSERT_NE(timer, objective.end());
+    EXPECT_EQ(timer->data.timer_descr.alt_halfmin_interval, 7);
+    EXPECT_EQ(countVariableInstruction(objective, EVENT_Compare, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_WROMTHRAX_ACTIVE)),
+              1);
+    EXPECT_EQ(countVariableInstruction(objective, EVENT_Compare, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_WROMTHRAX_KILLED)),
+              1);
+    auto killCheck = std::ranges::find(objective, EVENT_IsActorKilled, &EvtInstruction::opcode);
+    ASSERT_NE(killCheck, objective.end());
+    EXPECT_EQ(killCheck->data.actor_descr.policy, KILL_CHECK_GROUPID);
+    EXPECT_EQ(killCheck->data.actor_descr.param, 5);
+    EXPECT_EQ(killCheck->data.actor_descr.num, 1);
+    EXPECT_EQ(countVariableInstruction(objective, EVENT_Set, VAR_QBits_QuestsDone,
+                                       std::to_underlying(QBIT_WROMTHRAX_KILLED)),
+              1);
+    EXPECT_TRUE(std::ranges::any_of(objective, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_SpeakNPC && instruction.data.npc_descr.npc_id == 17;
+    }));
+    const std::vector<EvtInstruction> &activation = engine->_localEventMap.function(1);
+    EXPECT_TRUE(std::ranges::any_of(activation, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_ToggleActorGroupFlag && instruction.data.actor_flag_descr.id == 5 &&
+               instruction.data.actor_flag_descr.attr == ACTOR_UNKNOW11 && !instruction.data.actor_flag_descr.is_set;
+    }));
+}
+
+GAME_TEST(MM7Promotions, PaladinCrusaderAttackInputPromotionPacket) {
+    engine->config->debug.NoMargaret.setValue(true);
+    game.startNewGame();
+    engine->config->debug.NoDamage.setValue(true);
+    NPCData *quixote = &pNPCStats->pNPCData[17];
+    ASSERT_EQ(quixote->house, HOUSE_ERATHIA_QUIXOTE_RESIDENCE);
+    ASSERT_EQ(quixote->dialogue_1_evt_id, 51u);
+
+    std::array initialClasses = {CLASS_PALADIN, CLASS_KNIGHT, CLASS_PALADIN, CLASS_SORCERER};
+    std::array<uint64_t, 4> experience;
+    for (int i = 0; i < 4; ++i) {
+        Character &character = pParty->pCharacters[i];
+        character.classType = initialClasses[i];
+        experience[i] = character.experience;
+        character.inventory.equip(ITEM_SLOT_MAIN_HAND, Item(ITEM_CHAMPION_SWORD));
+        character.setSkillValue(SKILL_SWORD, CombinedSkillValue(30, MASTERY_GRANDMASTER));
+        character._stats[ATTRIBUTE_MIGHT] = 200;
+        character._stats[ATTRIBUTE_ACCURACY] = 200;
+        character.uLevel = 100;
+    }
+    const int gold = pParty->GetGold();
+
+    openQuixoteHouse(game, quixote);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    ASSERT_TRUE(selectNpcEvent(game, quixote, 51));
+    ASSERT_TRUE(pParty->_questBits[QBIT_WROMTHRAX_ACTIVE]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_WROMTHRAX_KILLED]);
+    ASSERT_TRUE(quixote->Hired());
+    ASSERT_EQ(quixote->house, HOUSE_INVALID);
+    ASSERT_EQ(quixote->dialogue_1_evt_id, 52u);
+    leaveHouse(game);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+
+    game.pressGuiButton("Game_Hireling1");
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_NPC_DIALOGUE);
+    ASSERT_TRUE(selectNpcEvent(game, quixote, 52)); // The hired promoter refuses before Wromthrax is dead.
+    EXPECT_TRUE(pParty->_questBits[QBIT_WROMTHRAX_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_WROMTHRAX_KILLED]);
+    EXPECT_TRUE(quixote->Hired());
+    EXPECT_EQ(pParty->GetGold(), gold);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, initialClasses[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, experience[i]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_CRUSADER]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_CRUSADER_HONORARY]);
+    }
+    leaveHouse(game);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+
+    game.teleportTo(MAP_WROMTHRAXS_CAVE, Vec3f(), 0);
+    ASSERT_EQ(pActors.size(), 1u);
+    Actor &wromthrax = pActors[0];
+    ASSERT_EQ(wromthrax.monsterInfo.id, MONSTER_DRAGON_B);
+    ASSERT_EQ(wromthrax.group, 5);
+    ASSERT_TRUE(wromthrax.CanBeDamaged());
+    const int initialHp = wromthrax.hp;
+    game.teleportTo(MAP_WROMTHRAXS_CAVE, wromthrax.pos + Vec3f(0, -250, 0), 90);
+    for (int attack = 0; attack < 400 && !wromthrax.IsNotAlive(); ++attack) {
+        if (attack && attack % 10 == 0)
+            game.teleportTo(MAP_WROMTHRAXS_CAVE, wromthrax.pos + Vec3f(0, -250, 0), 90);
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick(5);
+    }
+    EXPECT_LT(wromthrax.hp, initialHp);
+    ASSERT_TRUE(wromthrax.IsNotAlive()) << "remaining HP: " << wromthrax.hp;
+    for (int frame = 0; frame < 120 && wromthrax.aiState != Dead; ++frame)
+        game.tick();
+    ASSERT_EQ(wromthrax.aiState, Dead);
+
+    const int caveReputation = pParty->GetPartyReputation();
+    pParty->GetPlayingTime() += Duration::fromSeconds(211); // Event 376's authored seven-half-minute timer.
+    game.tick();
+    ASSERT_TRUE(pParty->_questBits[QBIT_WROMTHRAX_KILLED]);
+    ASSERT_EQ(current_screen_type, SCREEN_NPC_DIALOGUE);
+    std::array<uint64_t, 4> prePromotionExperience;
+    for (int i = 0; i < 4; ++i) {
+        prePromotionExperience[i] = pParty->pCharacters[i].experience;
+        EXPECT_GT(prePromotionExperience[i], experience[i]); // Wromthrax's combat XP precedes the promotion reward.
+    }
+    ASSERT_TRUE(selectNpcEvent(game, quixote, 52));
+    EXPECT_FALSE(pParty->_questBits[QBIT_WROMTHRAX_ACTIVE]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_WROMTHRAX_KILLED]);
+    EXPECT_TRUE(quixote->Hired()); // Quest-NPC dismissal is deliberately deferred until this dialogue closes.
+    EXPECT_EQ(quixote->house, HOUSE_ERATHIA_QUIXOTE_RESIDENCE);
+    EXPECT_EQ(quixote->dialogue_1_evt_id, 53u);
+    EXPECT_EQ(pParty->GetGold(), gold); // The authored Crusader promotion has no gold reward.
+    EXPECT_EQ(pParty->GetPartyReputation(), caveReputation - 5);
+    for (int i : {0, 2}) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, CLASS_CRUSADER);
+        EXPECT_EQ(pParty->pCharacters[i].experience, prePromotionExperience[i] + 30000);
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_CRUSADER]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_CRUSADER_HONORARY]);
+    }
+    for (int i : {1, 3}) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, initialClasses[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, prePromotionExperience[i] + 15000);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_CRUSADER]);
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_CRUSADER_HONORARY]);
+    }
+
+    std::array<uint64_t, 4> promotedExperience;
+    for (int i = 0; i < 4; ++i)
+        promotedExperience[i] = pParty->pCharacters[i].experience;
+    leaveHouse(game);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    ASSERT_FALSE(quixote->Hired());
+    openQuixoteHouse(game, quixote);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    EXPECT_FALSE(selectNpcEvent(game, quixote, 52));
+    EXPECT_EQ(pParty->GetGold(), gold);
+    for (int i = 0; i < 4; ++i)
+        EXPECT_EQ(pParty->pCharacters[i].experience, promotedExperience[i]);
 }
 
 GAME_TEST(MM7Promotions, KnightCavalierPhysicalPromotionPacket) {

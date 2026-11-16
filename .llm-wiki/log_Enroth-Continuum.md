@@ -3690,3 +3690,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Both reachable war exposure topics now prove their authored party-death and cleanup/failure behavior. A representative rebuild return places both ambassadors before all five trumpet handlers are exercised, and the effective result/recipient states resolve under both arbiters without a production change.
 - Stone City now has Spark dialogue, one measured approach and attack-input Troglodyte Queen kill, survivor refusal, exact reward and production-Save/fresh-process-Load coverage; only repetitive enemies are fixtured. The accepted lower-city frame was visually inspected and the private rolling folder remains at 100.
+
+## [2026-11-15] feat | MM7 All Artifacts and Storage
+- by: T-Burton-ND via codex
+- An optional MM7-only Atlas toggle now replaces generated-item exclusion with a separate monotonic 29-item collection ledger, bypasses the vanilla artifact cap only while enabled and preserves tier-six probability, native generated flags and fixed save layout. Conservative legacy migration scans party inventory, equipment and cursor; MM6 remains a Claude-owned plan only.
+- Castle Harmondale's 20 existing d29 chests remain the storage surface. Focused engine cases cover all IDs, both random-generation routes, exhaustion, acquisition hooks, migration and snapshot persistence; a representative production chest deposit persists exact item/grid bytes and collection state beyond the authored reset interval and through normal save/load. The installed build still requires the owner's visible existing-save playtest.

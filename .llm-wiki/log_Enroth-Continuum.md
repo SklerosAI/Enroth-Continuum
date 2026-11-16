@@ -3695,3 +3695,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - An optional MM7-only Atlas toggle now replaces generated-item exclusion with a separate monotonic 29-item collection ledger, bypasses the vanilla artifact cap only while enabled and preserves tier-six probability, native generated flags and fixed save layout. Conservative legacy migration scans party inventory, equipment and cursor; MM6 remains a Claude-owned plan only.
 - Castle Harmondale's 20 existing d29 chests remain the storage surface. Focused engine cases cover all IDs, both random-generation routes, exhaustion, acquisition hooks, migration and snapshot persistence; a representative production chest deposit persists exact item/grid bytes and collection state beyond the authored reset interval and through normal save/load. The installed build still requires the owner's visible existing-save playtest.
+
+## [2026-11-15] audit | MM7 Strange Temple native exit handling
+- by: T-Burton-ND via codex
+- The shipped event-501 Harmondale destination contains a grossly out-of-bounds signed 32-bit X coordinate. Static original-executable inspection shows the native engine copies that coordinate and delegates overflow handling to the first outdoor update, while OpenEnroth rejects placement and GrayFace 2.5.7 supplies no override.
+- A private native trace of the first settled frames is now the explicit repair gate. It must distinguish edge clamping from a border-travel dialog or secondary transition; truncation, clamping or map-start substitution before that evidence would be speculative.

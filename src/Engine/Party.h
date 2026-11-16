@@ -116,6 +116,12 @@ struct Party {
      */
     bool addItemToParty(Item *pItem, bool isSilent = false);
 
+    /** Initializes the optional MM7 collection ledger from items currently owned by the party. */
+    void initializeCollectedArtifactsFromOwnedItems();
+
+    /** Records a real party acquisition when the optional MM7 collection behavior is enabled. */
+    void recordArtifactAcquisition(const Item &item);
+
     /**
      * @offset 0x43AD34
      */
@@ -325,6 +331,9 @@ struct Party {
     ArenaLevel arenaLevel = ARENA_LEVEL_INVALID;
     IndexedArray<uint8_t, ARENA_LEVEL_FIRST_VALID, ARENA_LEVEL_LAST_VALID> uNumArenaWins;
     IndexedArray<bool, ITEM_FIRST_SPAWNABLE_ARTIFACT, ITEM_LAST_SPAWNABLE_ARTIFACT> isArtifactGenerated;  // 7ba
+    IndexedArray<bool, ITEM_FIRST_SPAWNABLE_ARTIFACT, ITEM_LAST_SPAWNABLE_ARTIFACT> isArtifactCollected;
+    bool artifactCollectionInitialized = false;
+    uint8_t artifactCollectionVersion = 0;
     IndexedBitset<1, 208> _autonoteBits;
     int uNumArcomageWins = 0;
     int uNumArcomageLoses = 0;

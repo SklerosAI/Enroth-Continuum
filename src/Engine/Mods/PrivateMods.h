@@ -5,12 +5,17 @@
 #include <memory>
 #include <string_view>
 
+#include "Engine/GameTitle.h"
 #include "Engine/Objects/CharacterEnums.h"
 #include "Utility/System/Path.h"
 
 class GraphicsImage;
 
 namespace mm7::mods {
+
+/** Exact, MM7-only opt-in for the private all-artifacts engine behavior. */
+bool allArtifactsStorageEnabled(GameTitle title, const char *flag);
+bool allArtifactsStorageEnabled(GameTitle title);
 
 enum class PortraitMood {
     Normal, Talk, Smile, Sad, Hurt, Pain, Afraid, Cast, Sleep, Unconscious,

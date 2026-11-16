@@ -19,6 +19,7 @@
 #include "Engine/Graphics/Sprites.h"
 #include "Engine/Tables/TextureFrameTable.h"
 #include "Engine/Graphics/Image.h"
+#include "Engine/Mods/PrivateMods.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/NPC.h"
 #include "Engine/Data/ObjectData.h"
@@ -44,6 +45,48 @@
 #include "Utility/Memory/MemSet.h"
 #include "Utility/String/Ascii.h"
 #include "Utility/MapAccess.h"
+
+namespace {
+
+constexpr std::array<char, 4> artifactCollectionMagic = {'O', 'E', 'A', 'C'};
+constexpr uint8_t artifactCollectionVersion = 1;
+constexpr size_t artifactCollectionDataOffset = artifactCollectionMagic.size() + 1;
+static_assert(artifactCollectionDataOffset + 29 <= Party_MM7{}.field_7d7.size());
+
+bool hasArtifactCollectionState(const Party_MM7 &party) {
+    return std::equal(artifactCollectionMagic.begin(), artifactCollectionMagic.end(), party.field_7d7.begin()) &&
+           static_cast<uint8_t>(party.field_7d7[artifactCollectionMagic.size()]) == artifactCollectionVersion;
+}
+
+void snapshotArtifactCollectionState(const Party &src, Party_MM7 *dst) {
+    if (!src.artifactCollectionInitialized)
+        return;
+
+    std::copy(artifactCollectionMagic.begin(), artifactCollectionMagic.end(), dst->field_7d7.begin());
+    dst->field_7d7[artifactCollectionMagic.size()] = static_cast<char>(artifactCollectionVersion);
+    size_t offset = artifactCollectionDataOffset;
+    for (ItemId itemId : allSpawnableArtifacts())
+        dst->field_7d7[offset++] = src.isArtifactCollected[itemId] ? 1 : 0;
+}
+
+void reconstructArtifactCollectionState(const Party_MM7 &src, Party *dst) {
+    if (hasArtifactCollectionState(src)) {
+        size_t offset = artifactCollectionDataOffset;
+        for (ItemId itemId : allSpawnableArtifacts())
+            dst->isArtifactCollected[itemId] = src.field_7d7[offset++] != 0;
+        dst->artifactCollectionInitialized = true;
+        dst->artifactCollectionVersion = artifactCollectionVersion;
+        return;
+    }
+
+    if (mm7::mods::allArtifactsStorageEnabled(GameTitle::MM7)) {
+        // Legacy saves have no pickup history. Migrate only party inventory, equipment and cursor ownership.
+        // Artifacts left in world or storage chests become collected when they next cross an acquisition hook.
+        dst->initializeCollectedArtifactsFromOwnedItems();
+    }
+}
+
+}  // namespace
 
 /**
  * Mapping used for beacon map id serialization.
@@ -606,6 +649,7 @@ void snapshot(const Party &src, Party_MM7 *dst) {
     snapshot(src.uNumArenaWins, &dst->numArenaWins);
 
     snapshot(src.isArtifactGenerated, &dst->isArtifactGenerated);
+    snapshotArtifactCollectionState(src, dst);
     snapshot(src._autonoteBits, &dst->autonoteBits, tags::reverseBits);
 
     dst->numArcomageWins = src.uNumArcomageWins;
@@ -765,6 +809,7 @@ void reconstruct(const Party_MM7 &src, Party *dst) {
     }
 
     reconstruct(src.pickedItem, &dst->pPickedItem);
+    reconstructArtifactCollectionState(src, dst);
 
     dst->uFlags = static_cast<PartyFlags>(src.flags);
 

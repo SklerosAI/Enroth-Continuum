@@ -15,6 +15,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_2000.cpp
         GameTests_2500.cpp
         GameTests_MM7Vendor.cpp
+        GameTests_MM7AllArtifactsEngine.cpp
         GameTests_MM7Combat.cpp
         GameTests_MM7CombatHarness.cpp
         GameTests_MM7Campaign.cpp

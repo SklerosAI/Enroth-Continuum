@@ -452,6 +452,7 @@ void Chest::GrabItem(bool all) {  // new function to grab items from chest using
 
             if (pos) {  // can place
                 pParty->activeCharacter().inventory.add(*pos, *entry);
+                pParty->recordArtifactAcquisition(*entry);
                 grabcount++;
                 engine->_statusBar->setEvent(LSTR_YOU_FOUND_AN_ITEM_S, pItemTable->items[entry->itemId].unidentifiedName);
             } else {  // no room so set as holding item

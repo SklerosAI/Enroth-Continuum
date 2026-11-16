@@ -39,6 +39,18 @@ class PortraitTestDirectory {
 
 }  // namespace
 
+UNIT_TEST(MM7PrivateMods, AllArtifactsStorageRequiresExactMM7OptIn) {
+    using mm7::mods::allArtifactsStorageEnabled;
+
+    EXPECT_FALSE(allArtifactsStorageEnabled(GameTitle::MM7, nullptr));
+    EXPECT_FALSE(allArtifactsStorageEnabled(GameTitle::MM7, ""));
+    EXPECT_FALSE(allArtifactsStorageEnabled(GameTitle::MM7, "0"));
+    EXPECT_FALSE(allArtifactsStorageEnabled(GameTitle::MM7, "true"));
+    EXPECT_FALSE(allArtifactsStorageEnabled(GameTitle::MM7, "01"));
+    EXPECT_TRUE(allArtifactsStorageEnabled(GameTitle::MM7, "1"));
+    EXPECT_FALSE(allArtifactsStorageEnabled(GameTitle::MM6, "1"));
+}
+
 UNIT_TEST(MM7PrivatePortraits, MoodMapping) {
     using mm7::mods::PortraitMood;
     using mm7::mods::portraitMood;

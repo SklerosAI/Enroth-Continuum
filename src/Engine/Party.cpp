@@ -20,6 +20,7 @@
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
+#include "Engine/Mods/PrivateMods.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
 #include "Engine/Tables/ItemTable.h"
@@ -122,6 +123,9 @@ void Party::zero(bool resetMouseCursor) {
     arenaLevel = ARENA_LEVEL_INVALID;
     uNumArenaWins.fill(0);
     isArtifactGenerated.fill(false);
+    isArtifactCollected.fill(false);
+    artifactCollectionInitialized = false;
+    artifactCollectionVersion = 0;
     _autonoteBits.reset();
     uNumArcomageWins = 0;
     uNumArcomageLoses = 0;
@@ -208,6 +212,7 @@ void Party::setHoldingItem(const Item &item, Pointi offset) {
 
     placeHeldItemInInventoryOrDrop();
     pPickedItem = item;
+    recordArtifactAcquisition(item);
     if (this == pParty && engine && engine->gameTitle() == GameTitle::MM6)
         mm6::syncRawHeldCursorSet(&mm6::rawHeldCursorState(GameTitle::MM6), pPickedItem, GameTitle::MM6);
     mouse->SetCursorBitmapFromItemID(pPickedItem.itemId);
@@ -613,6 +618,9 @@ void Party::Reset() {
     }
 
     isArtifactGenerated.fill(false);
+    isArtifactCollected.fill(false);
+    artifactCollectionInitialized = false;
+    artifactCollectionVersion = 0;
 
     PartyTimes.shopBanTimes.fill(Time());
 
@@ -1006,6 +1014,7 @@ bool Party::addItemToParty(Item *pItem, bool isSilent) {
                 playerId = 0;
             }
             if (pCharacters[playerId].inventory.tryAdd(*pItem)) {
+                recordArtifactAcquisition(*pItem);
                 pItem->Reset();
                 if (!isSilent) {
                     pAudioPlayer->playUISound(SOUND_gold01);
@@ -1019,6 +1028,30 @@ bool Party::addItemToParty(Item *pItem, bool isSilent) {
         MM_WARNING("Invalid picture_name detected ::addItem()");
     }
     return false;
+}
+
+void Party::initializeCollectedArtifactsFromOwnedItems() {
+    isArtifactCollected.fill(false);
+
+    // Inventory::entries() covers both backpack and equipped physical records.
+    for (const Character &character : pCharacters)
+        for (InventoryConstEntry entry : character.inventory.entries())
+            if (isSpawnableArtifact(entry->itemId))
+                isArtifactCollected[entry->itemId] = true;
+    if (isSpawnableArtifact(pPickedItem.itemId))
+        isArtifactCollected[pPickedItem.itemId] = true;
+
+    artifactCollectionInitialized = true;
+    artifactCollectionVersion = 1;
+}
+
+void Party::recordArtifactAcquisition(const Item &item) {
+    if (!engine || !mm7::mods::allArtifactsStorageEnabled(engine->gameTitle()))
+        return;
+    if (!artifactCollectionInitialized)
+        initializeCollectedArtifactsFromOwnedItems();
+    if (isSpawnableArtifact(item.itemId))
+        isArtifactCollected[item.itemId] = true;
 }
 
 int Party::getRandomActiveCharacterId(RandomEngine *rng) const {

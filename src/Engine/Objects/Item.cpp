@@ -6,6 +6,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/Localization.h"
+#include "Engine/Mods/PrivateMods.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Objects/ItemEnchantment.h"
 #include "Engine/Objects/CharacterEnums.h"
@@ -239,8 +240,14 @@ bool Item::GenerateArtifact() {
     artifacts_list.fill(ITEM_NULL);
     uNumArtifactsNotGenerated = 0;
 
+    const bool mm7 = engine->gameTitle() == GameTitle::MM7;
+    const bool collectionMode = mm7::mods::allArtifactsStorageEnabled(engine->gameTitle());
+    if (collectionMode && !pParty->artifactCollectionInitialized)
+        pParty->initializeCollectedArtifactsFromOwnedItems();
+
     for (ItemId i : allSpawnableArtifacts()) {
-        if (pParty->isArtifactGenerated[i]) {
+        const bool unavailable = collectionMode ? pParty->isArtifactCollected[i] : pParty->isArtifactGenerated[i];
+        if (unavailable) {
             ++artifactsGenerated;
         } else {
             artifacts_list[uNumArtifactsNotGenerated++] = i;
@@ -248,10 +255,9 @@ bool Item::GenerateArtifact() {
     }
 
     Reset();
-    const bool mm7 = engine->gameTitle() == GameTitle::MM7;
     const int artifactLimit = mm7 ? engine->config->gameplay.ArtifactLimit.value() : 0;
     if (uNumArtifactsNotGenerated &&
-        (artifactLimit == 0 || artifactsGenerated < artifactLimit)) {
+        (collectionMode || artifactLimit == 0 || artifactsGenerated < artifactLimit)) {
         itemId = artifacts_list[grng->random(uNumArtifactsNotGenerated)];
         if (mm7)
             pParty->isArtifactGenerated[itemId] = true;

@@ -1,6 +1,7 @@
 #include "Engine/Mods/PrivateMods.h"
 
 #include <array>
+#include <cstdlib>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -55,6 +56,14 @@ std::unique_ptr<GraphicsImage> readPortrait(PathView path, int slot, PortraitMoo
 }
 
 }  // namespace
+
+bool allArtifactsStorageEnabled(GameTitle title, const char *flag) {
+    return title == GameTitle::MM7 && flag && std::string_view(flag) == "1";
+}
+
+bool allArtifactsStorageEnabled(GameTitle title) {
+    return allArtifactsStorageEnabled(title, std::getenv("ENROTH_MM7_ALL_ARTIFACTS_STORAGE"));
+}
 
 PrivatePortraits::~PrivatePortraits() = default;
 

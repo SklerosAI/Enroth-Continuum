@@ -3710,3 +3710,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The Emerald packet now retains the wealthy hat through Sal Sharktooth's authored refusal, proves group aggression, kills Sal through bounded attack input and physically corpse-loots his fixed Longbow. All five non-tile items and NPC state survive normal save/load and their real Judge hand-ins; together with the Moon tile, all six contest sources are behavior-covered. The integrated focused selection passes 3/3.
 - Haldar's repaired Maze source boundary now has a production-save writer and separate-process normal-Load reader. Active/taken bits, map-variable source marker, chest delta and the physically acquired Remains survive; event 176 reopens source chest 1 without respawn and the slot remains byte-identical. Lifecycle controls pass 4/4 and the two fresh processes pass 1/1 each.
+
+## [2026-11-15] test | MM7 durable Darron and complete Griffin matrix
+- by: T-Burton-ND via codex
+- Darron's physically acquired White Cliff deck now survives a production Save and separate-process normal-menu Load with the quest active, the deck retained, its world sprite removed, no respawn and byte-identical save output. The existing route and both fresh processes pass 1/1 each.
+- Seth Drakkson's real Griffin report now covers neither region clear, either single region clear and both regions clear. Refusals make no transaction; success grants the exact carried gold, per-character XP, reputation and all-character award, retains both regional bits, clears the topic and cannot be claimed twice. The focused packet and both predicate/lifecycle controls pass 4/4 without a production change.

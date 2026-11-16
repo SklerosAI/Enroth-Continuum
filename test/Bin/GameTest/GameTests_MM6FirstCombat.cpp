@@ -17,9 +17,11 @@
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
+#include "Engine/Tables/MapTable.h"
 #include "Engine/TurnEngine/TurnEngine.h"
 
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/UIRest.h"
 #include "GUI/UI/UIStatusBar.h"
 
 #include "Library/Image/Png.h"
@@ -72,17 +74,18 @@ static void drinkFromBackpack(EngineController &game, PlatformKey characterKey, 
     game.tick();
 }
 
-static Vec3f nearestVolcanicGround() {
-    // Center of the volcanic tile nearest the party.
+static Vec3f nearestGround(int sourceTileset, float minDistance = 0) {
+    // Center of the nearest tile of the given MM6 tileset at least minDistance away from the party.
     Vec3f result;
     float bestDistance = std::numeric_limits<float>::max();
     for (int y = 0; y < 128; y++) {
         for (int x = 0; x < 128; x++) {
-            if (pOutdoor->pTerrain.tileDataByGrid(Pointi(x, y)).sourceTileset != 3)
+            if (pOutdoor->pTerrain.tileDataByGrid(Pointi(x, y)).sourceTileset != sourceTileset)
                 continue;
             const Vec3f center((x - 64) * 512 + 256, (63 - y) * 512 + 256, 0);
-            if ((center - pParty->pos).xy().length() < bestDistance) {
-                bestDistance = (center - pParty->pos).xy().length();
+            const float distance = (center - pParty->pos).xy().length();
+            if (distance >= minDistance && distance < bestDistance) {
+                bestDistance = distance;
                 result = center;
             }
         }
@@ -197,7 +200,8 @@ GAME_TEST(MM6Potion, EmptyBottleStaysInHand) {
 }
 
 GAME_TEST(MM6TurnBased, PartyAndMonstersTakeTurns) {
-    // MM6 drew no turn-based indicator, and the party had MM7's movement phase between the rounds.
+    // MM6 drew no turn-based indicator, the party had MM7's movement phase between the rounds, and every monster waited
+    // for the party's first turn.
     startNewGameThroughInput(game);
     const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
     const int goblin = game.spawnMonster(pParty->pos + ahead * 150, static_cast<MonsterId>(76), SPAWN_DUMMY)->id;
@@ -207,6 +211,12 @@ GAME_TEST(MM6TurnBased, PartyAndMonstersTakeTurns) {
     auto timeTape = tapes.custom([] { return pParty->GetPlayingTime().ticks(); });
     auto goblinHpTape = actorTapes.hp(goblin);
     auto soundsTape = tapes.sounds();
+    auto queueTape = tapes.custom([] {
+        std::vector<std::pair<ObjectType, int>> queue;
+        for (const TurnBased_QueueElem &element : pTurnEngine->pQueue)
+            queue.emplace_back(element.uPackedID.type(), element.actor_initiative);
+        return queue;
+    });
     test.startTaping();
 
     game.pressAndReleaseKey(PlatformKey::KEY_RETURN);
@@ -245,6 +255,11 @@ GAME_TEST(MM6TurnBased, PartyAndMonstersTakeTurns) {
     EXPECT_CONTAINS(timeTape.adjacentDeltas(), 426); // A round is 100 game seconds.
     EXPECT_MISSES(timeTape.adjacentDeltas(), 213); // MM7's movement phase.
     EXPECT_LT(goblinHpTape.min(), 13);
+    const std::vector<std::pair<ObjectType, int>> &startQueue = *std::ranges::find_if(queueTape, [](const auto &queue) { return !queue.empty(); });
+    const auto firstCharacter = std::ranges::find(startQueue, OBJECT_Character, &std::pair<ObjectType, int>::first);
+    EXPECT_EQ(firstCharacter - startQueue.begin(), 6); // The monsters that rolled initiative 1 of 1, 3 and 5 act first.
+    for (const auto &[type, initiative] : startQueue)
+        EXPECT_LE(initiative, 5);
     EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(207)); // Entering turn-based mode.
     EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(206)); // Leaving it.
 }
@@ -280,7 +295,7 @@ GAME_TEST(MM6Rest, RestAndHealOnGrass) {
 GAME_TEST(MM6Rest, VolcanicGroundCostsFourFood) {
     // Resting on New Sorpigal's volcanic ground cost two food, MM6 asks four there.
     startNewGameThroughInput(game);
-    game.teleportTo(engine->_currentLoadedMapId, nearestVolcanicGround(), 0);
+    game.teleportTo(engine->_currentLoadedMapId, nearestGround(3), 0);
     auto foodTape = tapes.food();
     test.startTaping();
 
@@ -350,6 +365,189 @@ GAME_TEST(MM6Rest, WaitAnHourNeitherEatsNorHeals) {
     EXPECT_EQ(foodTape, tape(7));
 }
 
+GAME_TEST(MM6Rest, FirstNightWithoutRestWeakens) {
+    // A new party has already gone a day without rest, so waiting until dawn on the first night weakens everyone and
+    // eats a food.
+    startNewGameThroughInput(game);
+    const int actorCount = pActors.size();
+    auto weakTape = charTapes.custom([](const Character &character) { return character.conditions.has(CONDITION_WEAK); });
+    auto foodTape = tapes.food();
+    auto clockTape = tapes.custom([] { return std::pair(pParty->uCurrentHour, pParty->uCurrentMinute); });
+    auto restTape = tapes.custom([] { return currentRestType; });
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_WaitTillDawn");
+    game.tick();
+    while (currentRestType != REST_NONE)
+        game.tick(); // The night passes.
+
+    EXPECT_EQ(weakTape.frontBack(), tape({false, false, false, false}, {true, true, true, true}));
+    EXPECT_EQ(foodTape, tape(7, 6));
+    EXPECT_EQ(clockTape.front(), std::pair(9, 0));
+    EXPECT_EQ(clockTape.back(), std::pair(5, 0));
+    EXPECT_EQ(restTape, tape(REST_NONE, REST_WAIT, REST_NONE));
+    EXPECT_EQ(pActors.size(), actorCount); // Waiting rolls no encounter.
+}
+
+GAME_TEST(MM6Rest, FinishedWaitWakesSleeper) {
+    // A character a monster put to sleep slept on after a wait, MM6 wakes everyone when any wait ends.
+    startNewGameThroughInput(game);
+    for (Character &character : pParty->pCharacters)
+        character.health = 200; // The beholder's bolts would knock a new character out.
+    const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+    Actor *beholder = game.spawnMonster(pParty->pos + ahead * 400, static_cast<MonsterId>(10), SPAWN_STATIONARY);
+    beholder->monsterInfo.specialAttackLevel = 10; // Level 10 times the beholder's 30 makes every bolt try.
+    auto sleepTape = charTapes.custom([](const Character &character) { return character.conditions.has(CONDITION_SLEEP); });
+    auto restTape = tapes.custom([] { return currentRestType; });
+    auto screenTape = tapes.screen();
+    test.startTaping();
+
+    auto asleep = [] { return std::ranges::any_of(pParty->pCharacters, [](const Character &character) { return character.IsAsleep(); }); };
+    for (int frame = 0; frame < 300 && !asleep(); frame++)
+        game.tick(); // The beholder shoots, a bolt can miss and a character can resist.
+    ASSERT_TRUE(asleep());
+    for (Actor &actor : pActors)
+        actor.aiState = Removed; // A hostile monster within 5120 units refuses the wait, and the town's monsters hunt the party.
+    game.teleportTo(engine->_currentLoadedMapId, nearestGround(0, 8000), 0); // Grass out of the beholder's sight.
+    game.tick();
+    while (pParty->uFlags & PARTY_FLAG_AIRBORNE)
+        game.tick(); // The party lands.
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_Wait1Hour");
+    game.tick();
+    while (currentRestType != REST_NONE)
+        game.tick(); // The hour passes.
+
+    EXPECT_EQ(sleepTape.back(), std::vector({false, false, false, false}));
+    EXPECT_EQ(restTape.back(), REST_NONE);
+    EXPECT_EQ(screenTape.back(), SCREEN_REST); // The party woke before the rest screen closed.
+}
+
+GAME_TEST(MM6Rest, NightWithAndWithoutRest) {
+    // Reputation didn't fade at 3 am. A party that rested first stays strong through the night, one that didn't turns
+    // weak.
+    for (bool rested : {false, true}) {
+        game.goToMainMenu();
+        startNewGameThroughInput(game);
+        pParty->mm6Reputation = 500;
+        auto weakTape = charTapes.custom([](const Character &character) { return character.conditions.has(CONDITION_WEAK); });
+        auto foodTape = tapes.food();
+        auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+        test.startTaping();
+
+        game.pressAndReleaseKey(PlatformKey::KEY_R);
+        game.tick();
+        if (rested) {
+            game.pressGuiButton("Rest_RestAndHeal");
+            game.tick();
+            while (current_screen_type == SCREEN_REST)
+                game.tick(); // The party sleeps eight hours.
+            game.pressAndReleaseKey(PlatformKey::KEY_R);
+            game.tick();
+        }
+        game.pressGuiButton("Rest_WaitTillDawn");
+        game.tick();
+        while (currentRestType != REST_NONE)
+            game.tick(); // The night passes.
+        test.stopTaping();
+
+        EXPECT_EQ(weakTape.back(), std::vector({!rested, !rested, !rested, !rested}));
+        EXPECT_EQ(foodTape, tape(7, 6)); // Rest and Heal on grass eats one food, so does a night without rest.
+        EXPECT_EQ(reputationTape, tape(500, 495));
+    }
+}
+
+GAME_TEST(MM6Rest, DeathWithoutRestSkipsInsanity) {
+    // A character who died after nights without rest could go insane on the same night too, MM6 rolls no insanity for
+    // him and zeroes his HP and SP.
+    startNewGameThroughInput(game);
+    auto deadInsaneTape = charTapes.custom([](const Character &character) {
+        return std::pair(character.conditions.has(CONDITION_DEAD), character.conditions.has(CONDITION_INSANE));
+    });
+    auto hpTape = charTapes.hps();
+    auto mpTape = charTapes.mps();
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    auto died = [] { return std::ranges::any_of(pParty->pCharacters, [](const Character &character) { return character.IsDead(); }); };
+    for (int night = 0; night < 10 && !died(); night++) {
+        game.pressGuiButton("Rest_WaitTillDawn");
+        game.tick();
+        while (currentRestType != REST_NONE)
+            game.tick(); // A night passes.
+    }
+    ASSERT_TRUE(died());
+
+    const int dead = std::ranges::find_if(pParty->pCharacters, [](const Character &character) { return character.IsDead(); }) - pParty->pCharacters.begin();
+    const int death = std::ranges::find_if(deadInsaneTape, [dead](const auto &frame) { return frame[dead].first; }) - deadInsaneTape.begin();
+    EXPECT_EQ(deadInsaneTape[death][dead].second, deadInsaneTape[death - 1][dead].second);
+    EXPECT_EQ(hpTape.back()[dead], 0);
+    EXPECT_EQ(mpTape.back()[dead], 0);
+}
+
+GAME_TEST(MM6Rest, EncounterWakesOneSleeper) {
+    // A rest encounter brings monsters, wakes one character, takes an hour and no food.
+    startNewGameThroughInput(game);
+    pMapTable->pInfos[engine->_currentLoadedMapId].encounterChance = 100;
+    auto actorCountTape = tapes.custom([] { return static_cast<int>(pActors.size()); });
+    auto sleepTape = charTapes.custom([](const Character &character) { return character.conditions.has(CONDITION_SLEEP); });
+    auto foodTape = tapes.food();
+    auto timeTape = tapes.time();
+    auto statusTape = tapes.statusBar();
+    auto soundsTape = tapes.sounds();
+    auto screenTape = tapes.screen();
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_RestAndHeal");
+    game.tick();
+    game.tick(); // The rest screen closes.
+
+    const std::vector<bool> asleep = sleepTape.back();
+    EXPECT_EQ(std::ranges::count(asleep, true), 3);
+    EXPECT_EQ(screenTape, tape(SCREEN_REST, SCREEN_GAME));
+    EXPECT_EQ(foodTape, tape(7));
+    EXPECT_CONTAINS(statusTape, "Encounter!");
+    EXPECT_CONTAINS(soundsTape.flatten(), SOUND_encounter);
+    EXPECT_GE(timeTape.back() - timeTape.front(), Duration::fromMinutes(60));
+    EXPECT_LT(timeTape.back() - timeTape.front(), Duration::fromMinutes(66));
+    EXPECT_GE(actorCountTape.delta(), 3); // New Sorpigal's goblins and apprentice mages come three to five.
+    EXPECT_LE(actorCountTape.delta(), 5);
+}
+
+GAME_TEST(MM6Rest, NoEncounterOnClearedMap) {
+    // A rest on a map with only peasants left could still bring an encounter, MM6 needs a living monster on the map.
+    startNewGameThroughInput(game);
+    pMapTable->pInfos[engine->_currentLoadedMapId].encounterChance = 100;
+    for (Actor &actor : pActors) {
+        const int family = (std::to_underlying(actor.monsterInfo.id) - 1) / 3;
+        if (family != 40 && family != 41 && family != 44)
+            actor.aiState = Dead; // The party cleared the map, the Peasant F1, F2 and M1 families are left.
+    }
+    auto actorCountTape = tapes.custom([] { return static_cast<int>(pActors.size()); });
+    auto foodTape = tapes.food();
+    auto statusTape = tapes.statusBar();
+    auto screenTape = tapes.screen();
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_RestAndHeal");
+    game.tick();
+    while (current_screen_type == SCREEN_REST)
+        game.tick(); // The party sleeps eight hours.
+
+    EXPECT_EQ(actorCountTape.size(), 1);
+    EXPECT_EQ(foodTape, tape(7, 6));
+    EXPECT_MISSES(statusTape, "Encounter!");
+    EXPECT_EQ(screenTape, tape(SCREEN_REST, SCREEN_GAME));
+}
+
 GAME_TEST(MM6Conditions, SpiderPoisonsAndRatDiseases) {
     // A spider's bite poisons and a rat's bite diseases, and the condition lowers the victim's might.
     startNewGameThroughInput(game);
@@ -379,6 +577,44 @@ GAME_TEST(MM6Conditions, SpiderPoisonsAndRatDiseases) {
             EXPECT_LT(mightTape.back()[i], mightTape.front()[i]) << i;
         else
             EXPECT_EQ(mightTape.back()[i], mightTape.front()[i]) << i;
+    }
+}
+
+GAME_TEST(MM6Conditions, KnockedToMinusMaxHpDies) {
+    // A character bitten down to minus his max HP stayed unconscious as long as his endurance kept him above MM7's
+    // death line, MM6 kills him on the next frame.
+    for (int margin : {0, 1}) {
+        game.goToMainMenu();
+        startNewGameThroughInput(game);
+        std::vector<int> maxHps;
+        for (Character &character : pParty->pCharacters) {
+            character._stats[ATTRIBUTE_ENDURANCE] = 100; // More endurance than max HP, so the blow itself only knocks out.
+            maxHps.push_back(character.GetMaxHealth());
+            character.health = 100 - maxHps.back() + margin;
+        }
+        const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+        Actor *rat = game.spawnMonster(pParty->pos + ahead * 200, static_cast<MonsterId>(146), SPAWN_STATIONARY);
+        rat->monsterInfo.attack1DamageDiceRolls = 1;
+        rat->monsterInfo.attack1DamageDiceSides = 1;
+        rat->monsterInfo.attack1DamageBonus = 99; // Every bite deals 100.
+        rat->monsterInfo.specialAttackType = SPECIAL_ATTACK_NONE;
+        auto hpTape = charTapes.hps();
+        auto conditionTape = charTapes.conditions();
+        test.startTaping();
+
+        auto hit = [&] { return std::ranges::any_of(pParty->pCharacters, [](const Character &character) { return character.health <= 0; }); };
+        for (int frame = 0; frame < 300 && !hit(); frame++)
+            game.tick(); // The rat walks up and bites, a bite can miss.
+        ASSERT_TRUE(hit());
+        game.tick();
+        test.stopTaping();
+
+        for (int i = 0; i < 4; i++) {
+            if (hpTape.back()[i] > 0)
+                continue;
+            EXPECT_EQ(hpTape.back()[i], -maxHps[i] + margin) << i;
+            EXPECT_EQ(conditionTape.back()[i], margin == 0 ? CONDITION_DEAD : CONDITION_UNCONSCIOUS) << i;
+        }
     }
 }
 

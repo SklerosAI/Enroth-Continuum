@@ -77,6 +77,7 @@
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6Finale.h"
+#include "Engine/MM6/MM6NewDay.h"
 #include "Engine/MM6/MM6PostMapGeneratedNpcLinks.h"
 #include "Engine/MM6/MM6NativeActorNpcPolicy.h"
 #include "Engine/MM6/MM6PreEventCheckpointForTest.h"
@@ -1348,6 +1349,8 @@ void _494035_timed_effects__water_walking_damage__etc(Duration dt) {
     Time oldTime = pParty->GetPlayingTime();
     Time newTime = oldTime + dt;
     pParty->GetPlayingTime() = newTime;
+    const int oldHour = pParty->uCurrentHour;
+    const int oldDayOfMonth = pParty->uCurrentDayOfMonth;
 
     CivilTime time = pParty->GetPlayingTime().toCivilTime();
     pParty->uCurrentTimeSecond = time.second;
@@ -1360,15 +1363,17 @@ void _494035_timed_effects__water_walking_damage__etc(Duration dt) {
 
     // New day dawns at 3am.
     Time next3am = Time::fromDurationSinceSilence((oldTime.toDurationSinceSilence() - Duration::fromHours(3)).roundedUp(Duration::fromDays(1)) + Duration::fromHours(3));
-    if (oldTime < next3am && newTime >= next3am) {
+    const bool isMM6 = engine->gameTitle() == GameTitle::MM6;
+    if (isMM6 ? mm6::isNewDay(oldHour, oldDayOfMonth, pParty->uCurrentHour, pParty->uCurrentDayOfMonth) : oldTime < next3am && newTime >= next3am) {
         pParty->pHirelings[0].hasUsedAbility = false;
         pParty->pHirelings[1].hasUsedAbility = false;
 
         for (unsigned i = 0; i < pNPCStats->uNumNewNPCs; ++i)
             pNPCStats->pNPCData[i].hasUsedAbility = false;
 
-        ++pParty->days_played_without_rest;
-        if (pParty->days_played_without_rest > 1) {
+        if (isMM6) {
+            mm6::startNewDay(*pParty, *grng);
+        } else if (++pParty->days_played_without_rest > 1) {
             for (Character &character : pParty->pCharacters)
                 character.SetCondWeakWithBlockCheck(0);
 
@@ -1448,8 +1453,14 @@ void _494035_timed_effects__water_walking_damage__etc(Duration dt) {
         if (character.timeToRecovery && recoveryTimeDt > 0_ticks)
             character.Recover(recoveryTimeDt);
 
-        if (character.GetBaseEndurance() + character.health >= 1 ||
-            character.pCharacterBuffs[CHARACTER_BUFF_PRESERVATION].Active()) {
+        if (engine->gameTitle() == GameTitle::MM6) {
+            if (character.health <= -std::max(1, character.GetMaxHealth()) && !character.conditions.has(CONDITION_DEAD)) {
+                character.conditions.set(CONDITION_DEAD, pParty->GetPlayingTime());
+            } else if (character.health <= 0 && !character.conditions.has(CONDITION_UNCONSCIOUS)) {
+                character.conditions.set(CONDITION_UNCONSCIOUS, pParty->GetPlayingTime());
+            }
+        } else if (character.GetBaseEndurance() + character.health >= 1 ||
+                   character.pCharacterBuffs[CHARACTER_BUFF_PRESERVATION].Active()) {
             if (character.health < 1)
                 character.SetCondition(CONDITION_UNCONSCIOUS, 0);
         } else {

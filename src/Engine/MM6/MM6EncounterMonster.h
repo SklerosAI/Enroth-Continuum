@@ -79,4 +79,21 @@ inline MonsterId resolveEncounterMonster(GameTitle title, const MonsterStats &st
     return stats.infos[result].name.empty() ? MONSTER_INVALID : result;
 }
 
+/**
+ * @offset 0x454C0E
+ *
+ * @param actors                        Actors of the current map.
+ * @return                              Whether a rest encounter can spawn. MM6 needs a monster on the map that can
+ *                                      act and isn't of the Peasant F1, F2 or M1 families.
+ */
+template<class Actors>
+bool restEncounterCanSpawn(const Actors &actors) {
+    for (const auto &actor : actors) {
+        const int family = (std::to_underlying(actor.monsterInfo.id) - 1) / 3;
+        if (family != 40 && family != 41 && family != 44 && actor.CanAct())
+            return true;
+    }
+    return false;
+}
+
 } // namespace mm6

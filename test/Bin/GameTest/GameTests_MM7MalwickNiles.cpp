@@ -264,6 +264,88 @@ void returnToHarmondale(EngineController &game) {
     loadMapAtPartyStart(game, MAP_HARMONDALE);
 }
 
+void acceptMalwickWand(EngineController &game, Time &acceptedAt) {
+    NPCData &malwick = pNPCStats->pNPCData[malwickId];
+    openOutdoorNpc(game, MAP_EMERALD_ISLAND, malwickId);
+    const unsigned int proposal = findNpcEvent(malwick, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_SetNPCTopic && instruction.data.npc_topic_descr.npc_id == malwickId &&
+               instruction.data.npc_topic_descr.event_id == 19;
+    });
+    ASSERT_TRUE(selectNpcEvent(game, malwick, proposal));
+    const unsigned int acceptance = findNpcEvent(malwick, [](const EvtInstruction &instruction) {
+        return eventWritesQuestBit(instruction, QBIT_MALWICK_FIREBALL_WAND_ACCEPTED) &&
+               instruction.opcode != EVENT_Subtract;
+    });
+    acceptedAt = pParty->GetPlayingTime();
+    ASSERT_TRUE(selectNpcEvent(game, malwick, acceptance));
+    ASSERT_TRUE(pParty->_questBits[QBIT_MALWICK_FIREBALL_WAND_ACCEPTED]);
+    ASSERT_TRUE(pParty->hasItem(ITEM_ALACORN_WAND_OF_FIREBALLS) ||
+                pParty->pPickedItem.itemId == ITEM_ALACORN_WAND_OF_FIREBALLS);
+    if (pParty->pPickedItem.itemId == ITEM_ALACORN_WAND_OF_FIREBALLS)
+        pParty->placeHeldItemInInventoryOrDrop();
+    leaveDialogue(game);
+}
+
+void chooseAuthoredAlignment(EngineController &game, bool light, Time &startedAt) {
+    ASSERT_TRUE(pParty->_questBits[QBIT_MALWICK_FIREBALL_WAND_ACCEPTED]);
+    ASSERT_FALSE(pParty->PartyTimes.CounterEventValues[malwickCounterIndex].isValid());
+
+    pParty->_questBits.set(QBIT_ARBITER_MESSENGER_MET);
+    pParty->_questBits.set(QBIT_ARBITER_CHOICE_ACTIVE);
+    pNPCStats->pNPCData[77].house = HOUSE_TAVERN_BRACADA_DESERT;
+    pNPCStats->pNPCData[78].house = HOUSE_TAVERN_DEYJA;
+    const int judgeId = light ? 77 : 78;
+    const MapId judgeMap = light ? MAP_BRACADA_DESERT : MAP_DEYJA;
+    const Vec3f judgeDoor = light ? Vec3f(-13180, 18432, 800) : Vec3f(4544, -12350, 2592);
+    const int judgeYaw = light ? 0 : 90;
+    const HouseId tavern = light ? HOUSE_TAVERN_BRACADA_DESERT : HOUSE_TAVERN_DEYJA;
+    const HouseId arbiter = light ? HOUSE_HARMONDALE_ARBITER_1 : HOUSE_HARMONDALE_ARBITER_2;
+
+    game.teleportTo(judgeMap, judgeDoor, judgeYaw);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), tavern);
+    auto judge = std::ranges::find_if(houseNpcs, [judgeId](const HouseNpcDesc &npc) {
+        return npc.npc == &pNPCStats->pNPCData[judgeId];
+    });
+    ASSERT_NE(judge, houseNpcs.end());
+    game.pressGuiButton(fmt::format("House_Npc{}", judge - houseNpcs.begin()));
+    game.tick();
+    game.pressGuiButton("HouseNpcDialogue_Option0");
+    game.tick();
+    leaveDialogue(game);
+
+    game.teleportTo(MAP_HARMONDALE, Vec3f(20992, -6450, 672), 90);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), arbiter);
+    startedAt = pParty->PartyTimes.CounterEventValues[malwickCounterIndex];
+    EXPECT_TRUE(startedAt.isValid());
+    EXPECT_EQ(startedAt, pParty->GetPlayingTime());
+    EXPECT_EQ(pParty->_questBits[QBIT_LIGHT_PATH], light);
+    EXPECT_EQ(pParty->_questBits[QBIT_DARK_PATH], !light);
+    EXPECT_FALSE(pParty->_questBits[QBIT_ARBITER_CHOICE_ACTIVE]);
+    EXPECT_EQ(pParty->alignment, light ? PartyAlignment::PartyAlignment_Good : PartyAlignment::PartyAlignment_Evil);
+    leaveDialogue(game);
+}
+
+void acceptMalwickAndChooseAlignment(EngineController &game, bool light, Time &startedAt) {
+    game.startNewGame();
+    Time acceptedAt;
+    acceptMalwickWand(game, acceptedAt);
+    chooseAuthoredAlignment(game, light, startedAt);
+    EXPECT_GE(startedAt, acceptedAt);
+    EXPECT_TRUE(pParty->hasItem(ITEM_ALACORN_WAND_OF_FIREBALLS));
+    EXPECT_FALSE(pParty->_questBits[QBIT_MERCENARY_GUILD_VISIT_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_MERCENARY_GUILD_TAPESTRY_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_MERCENARY_GUILD_QUEST_FAILED]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_MALWICK_QUESTS_FINISHED]);
+    EXPECT_FALSE(pParty->hasItem(ITEM_MESSAGE_FROM_MR_STANTLEY));
+    EXPECT_NE(pParty->pPickedItem.itemId, ITEM_MESSAGE_FROM_MR_STANTLEY);
+}
+
 void triggerNilesLetter(EngineController &game, QuestBit path = QBIT_LIGHT_PATH) {
     pParty->_questBits.set(QBIT_MALWICK_FIREBALL_WAND_ACCEPTED);
     pParty->_questBits.set(path);
@@ -440,6 +522,16 @@ GAME_TEST(MM7MalwickNiles, RefusalKeepsMalwickProposalAvailable) {
     EXPECT_TRUE(pParty->_questBits[QBIT_MALWICK_FIREBALL_WAND_ACCEPTED]);
     EXPECT_TRUE(pParty->hasItem(ITEM_ALACORN_WAND_OF_FIREBALLS) ||
                 pParty->pPickedItem.itemId == ITEM_ALACORN_WAND_OF_FIREBALLS);
+}
+
+GAME_TEST(MM7MalwickNiles, AlignmentChoicesStartCounterAfterRealWandAcceptance) {
+    for (bool light : {true, false}) {
+        SCOPED_TRACE(fmt::format("light={}", light));
+        test.prepareForNextTest();
+        Time startedAt;
+        acceptMalwickAndChooseAlignment(game, light, startedAt);
+        EXPECT_EQ(pParty->PartyTimes.CounterEventValues[malwickCounterIndex], startedAt);
+    }
 }
 
 GAME_TEST(MM7MalwickNiles, SixWeekTriggerAndMissingTapestryRefusal) {
@@ -639,5 +731,65 @@ GAME_TEST(MM7MalwickCheckpoint, DISABLED_ReloadInvasion) {
     EXPECT_TRUE(std::ranges::any_of(pActors, [](Actor &actor) {
         return actor.group == 9 && !actor.IsNotAlive();
     }));
+    EXPECT_TRUE(ufs->read(checkpointSlot).str() == saved.str());
+}
+
+GAME_TEST(MM7MalwickCheckpoint, DISABLED_WritePreTrigger) {
+    assertDisposableHeadlessProfile();
+    ASSERT_FALSE(ufs->exists(checkpointSlot));
+    Time startedAt;
+    acceptMalwickAndChooseAlignment(game, true, startedAt);
+    ASSERT_EQ(pParty->PartyTimes.CounterEventValues[malwickCounterIndex], startedAt);
+    pParty->GetPlayingTime() = startedAt + Duration::fromHours(1007);
+    returnToHarmondale(game);
+    ASSERT_EQ(pParty->GetPlayingTime(), startedAt + Duration::fromHours(1007));
+    ASSERT_FALSE(pParty->_questBits[QBIT_MERCENARY_GUILD_VISIT_ACTIVE]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_MERCENARY_GUILD_TAPESTRY_ACTIVE]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_MERCENARY_GUILD_TAPESTRY_TAKEN]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_MERCENARY_GUILD_QUEST_FAILED]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_MALWICK_QUESTS_FINISHED]);
+    ASSERT_FALSE(pParty->hasItem(ITEM_MESSAGE_FROM_MR_STANTLEY));
+    ASSERT_NE(pParty->pPickedItem.itemId, ITEM_MESSAGE_FROM_MR_STANTLEY);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_HARMONDALE);
+    saveCheckpoint(game, "Malwick pre-trigger checkpoint");
+}
+
+GAME_TEST(MM7MalwickCheckpoint, DISABLED_ReloadPreTriggerAndDeliverLetter) {
+    assertDisposableHeadlessProfile();
+    Blob saved;
+    reloadCheckpoint(game, saved);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_HARMONDALE);
+    ASSERT_TRUE(pParty->_questBits[QBIT_MALWICK_FIREBALL_WAND_ACCEPTED]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_LIGHT_PATH]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_DARK_PATH]);
+    ASSERT_EQ(pParty->alignment, PartyAlignment::PartyAlignment_Good);
+    ASSERT_TRUE(pParty->hasItem(ITEM_ALACORN_WAND_OF_FIREBALLS));
+    const Time countdownStartedAt = pParty->PartyTimes.CounterEventValues[malwickCounterIndex];
+    ASSERT_TRUE(countdownStartedAt.isValid());
+    // Normal-menu loading advances 39 engine ticks while settling the game view. The persisted 1007-hour state
+    // must remain inside the final pre-trigger hour rather than being normalized or reset.
+    ASSERT_GE(pParty->GetPlayingTime(), countdownStartedAt + Duration::fromHours(1007));
+    ASSERT_LT(pParty->GetPlayingTime(), countdownStartedAt + Duration::fromHours(1008));
+    ASSERT_FALSE(pParty->_questBits[QBIT_MERCENARY_GUILD_VISIT_ACTIVE]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_MERCENARY_GUILD_TAPESTRY_ACTIVE]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_MERCENARY_GUILD_TAPESTRY_TAKEN]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_MERCENARY_GUILD_QUEST_FAILED]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_MALWICK_QUESTS_FINISHED]);
+    ASSERT_FALSE(pParty->hasItem(ITEM_MESSAGE_FROM_MR_STANTLEY));
+    ASSERT_NE(pParty->pPickedItem.itemId, ITEM_MESSAGE_FROM_MR_STANTLEY);
+    ASSERT_TRUE(ufs->read(checkpointSlot).str() == saved.str());
+
+    pParty->GetPlayingTime() = countdownStartedAt + Duration::fromHours(1008);
+    returnToHarmondale(game);
+    EXPECT_TRUE(pParty->_questBits[QBIT_MALWICK_FIREBALL_WAND_ACCEPTED]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_LIGHT_PATH]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_MERCENARY_GUILD_VISIT_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_MERCENARY_GUILD_TAPESTRY_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_MERCENARY_GUILD_TAPESTRY_TAKEN]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_MERCENARY_GUILD_QUEST_FAILED]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_MALWICK_QUESTS_FINISHED]);
+    EXPECT_EQ(pParty->PartyTimes.CounterEventValues[malwickCounterIndex], pParty->GetPlayingTime());
+    EXPECT_TRUE(pParty->hasItem(ITEM_MESSAGE_FROM_MR_STANTLEY) ||
+                pParty->pPickedItem.itemId == ITEM_MESSAGE_FROM_MR_STANTLEY);
     EXPECT_TRUE(ufs->read(checkpointSlot).str() == saved.str());
 }

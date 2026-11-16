@@ -244,7 +244,7 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter7) {
     EXPECT_EQ(takenTape, tape(false, true));
     EXPECT_EQ(oracleTape, tape(false, true, false));
     EXPECT_EQ(overthrusterTape, tape(false, true, false));
-    EXPECT_EQ(activeTape, tape(true));
+    EXPECT_EQ(activeTape, tape(true, false));
     EXPECT_EQ(topicTape, tape(170u, 0u));
     EXPECT_EQ(certificateTape, tape(false, true));
     EXPECT_EQ(autosaveTape.size(), 2); // Closing the game over window autosaves.

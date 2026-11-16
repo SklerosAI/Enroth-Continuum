@@ -3700,3 +3700,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The shipped event-501 Harmondale destination contains a grossly out-of-bounds signed 32-bit X coordinate. Static original-executable inspection shows the native engine copies that coordinate and delegates overflow handling to the first outdoor update, while OpenEnroth rejects placement and GrayFace 2.5.7 supplies no override.
 - A private native trace of the first settled frames is now the explicit repair gate. It must distinguish edge clamping from a border-travel dialog or secondary transition; truncation, clamping or map-start substitution before that evidence would be speculative.
+
+## [2026-11-15] test | MM7 Emerald contest acquisitions
+- by: T-Burton-ND via codex
+- A representative opening packet now creates Cure Wounds through live alchemy, buys Sally's seashell and Ailyssa's lute, trades the potion to Brent for the wealthy hat, preserves all four items and NPC topic state through normal save/load and performs their real Judge hand-ins. The new case plus the Judge, Moon-tile and cross-character hat controls pass 4/4; only deterministic physical acquisition of the random-shop longbow remains.
+- A fixture-free New Game experiment also reached the first hostile Dragonflies using only real movement and untouched party/actors, but their flying approach left the fixed viewport before reliable selection and the ordinary party died while seeking another angle. The diagnostic was reverted; simultaneous movement/camera input is the gate for a stronger natural-start combat test, and the accepted representative harness remains unchanged.

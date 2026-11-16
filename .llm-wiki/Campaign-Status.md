@@ -6,7 +6,7 @@ tags: [mm6, mm7, mm8, status]
 
 # Campaign Status
 
-The campaigns have distinct readiness levels. This page is current through the 2026-11-15 MM7 gameplay-harness checkpoint; it is not a claim that every title is fully audited.
+The campaigns have distinct readiness levels. This page is current through the 2026-11-15 MM7 gameplay-harness checkpoint; it is not a claim that every title is fully audited. The published MM7 tag and exact local installation evidence are recorded in [[Release-Milestones]].
 
 The owner's [current delivery order](Current-Delivery-Order.md) puts MM7 working first, MM6 working second, and the full title audits after both working gates. The next-gate cells below describe title-local gaps, not a competing cross-title priority order.
 

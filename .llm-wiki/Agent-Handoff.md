@@ -20,6 +20,24 @@ integration and does not use either allocation. Before creating one, run
 use the corresponding `codex/` or `claude/` branch prefix. Older global-lead
 language below is historical and superseded by this boundary.
 
+## ECv0.1.0 release checkpoint — 2026-11-16
+
+The annotated `ECv0.1.0` tag is published at release commit `50d7d4197` as the
+MM7 milestone. A clean exact-tag Release arm64 Atlas with MM7 and the isolated
+MM6 helper was installed and matched the staged candidate; code signing and
+visible Atlas rendering passed. The MM6 helper remains a playtest candidate,
+not an MM6 release or completed campaign claim. See [[Release-Milestones]] for
+the evidence and known outer-bundle `0.1` versus tag `0.1.0` metadata gap.
+
+Claude's finished menus/hirelings, services and rest/time lanes are integrated
+on `master`. The dirty street-NPC and disabled first-hour lanes were preserved
+but excluded. Claude should first make a branch-local WIP commit in the
+street-NPC worktree, synchronize with current `master`, remove its debug probe,
+finish the scoped dialogue behavior, then run focused and transaction-gate
+checks with the required MM7 shared-core controls. The first-hour packet stays
+behind that work. Exact commits and file-state cautions are in the
+[release handoff message](../agent_comms/messages/2026-11-16T19-54-52Z--from-codex--to-claude--ecv0.1.0-and-mm6-integration.md).
+
 ## Current MM7 campaign checkpoint — 2026-11-14
 
 Light C6 no longer teleports directly to Colony Zod. It accepts Resurecta's

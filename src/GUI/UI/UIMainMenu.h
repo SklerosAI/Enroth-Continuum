@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <functional>
 
 #include "GUI/GUIWindow.h"
@@ -25,4 +26,9 @@ class GUIWindow_MainMenu : public GUIWindow {
     GraphicsImage *ui_mainmenu_load = nullptr;
     GraphicsImage *ui_mainmenu_credits = nullptr;
     GraphicsImage *ui_mainmenu_exit = nullptr;
+
+ private:
+    int _hoverFrame = 0;
+    int _hoverStep = 1;
+    int64_t _nextHoverStepTime = 0;
 };

@@ -24,6 +24,7 @@
 #include "GUI/GUIButton.h"
 #include "GUI/GUIFont.h"
 #include "GUI/GUIMessageQueue.h"
+#include "GUI/UI/MM6GameMenuLayout.h"
 #include "GUI/UI/MM6SaveLoadMenu.h"
 
 #include "Library/Image/Pcx.h"
@@ -228,7 +229,8 @@ void GUIWindow_SaveLoad::drawSaveLoad() {
             if (_scrollPosition > slotCount - 7)
                 stopPos = 89;
         }
-        render->DrawQuad2D(scrollstop, {216 + frameRect.x, static_cast<int>(217 + frameRect.y + stopPos)});
+        if (engine->gameTitle() != GameTitle::MM6)
+            render->DrawQuad2D(scrollstop, {216 + frameRect.x, static_cast<int>(217 + frameRect.y + stopPos)});
 
         int slot_Y = 199;
         for (int i = _scrollPosition; i < slotCount; ++i) {
@@ -245,6 +247,24 @@ void GUIWindow_SaveLoad::drawSaveLoad() {
             slot_Y += 21;
         }
     }
+}
+
+void GUIWindow_SaveLoad::createMM6Buttons(std::string_view idPrefix, std::string_view actionId) {
+    for (int i = 0; i < 7; i++)
+        CreateButton(fmt::format("{}_Slot{}", idPrefix, i), {21, 198 + 20 * i}, {190, 17}, BUTTON_TYPE_NORMAL, 0, UIMSG_SelectLoadSlot, i);
+
+    auto button = [this](std::string_view id, const Recti &rect, UIMessageType msg, std::string_view pressed) {
+        return CreateButton(std::string(id), rect.topLeft(), {rect.w - 1, rect.h - 1}, BUTTON_TYPE_NORMAL, 0, msg, 0, INPUT_ACTION_INVALID, "",
+                            {assets->getIcon(pressed)});
+    };
+    pBtnLoadSlot = button(actionId, mm6SaveLoadActionRect, UIMSG_SaveLoadBtn, "check_p");
+    pBtnCancel = button(fmt::format("{}_Cancel", idPrefix), mm6SaveLoadCancelRect, UIMSG_Cancel, "x_d");
+    pBtnArrowUp = button(fmt::format("{}_Up", idPrefix), mm6SaveLoadUpRect, UIMSG_ArrowUp, "sarr1_pr");
+    pBtnDownArrow = button(fmt::format("{}_Down", idPrefix), mm6SaveLoadDownRect, UIMSG_DownArrow, "sarr2_pr");
+}
+
+Pointi saveLoadPressedPosition(const GUIButton *button, Pointi mm7Position) {
+    return engine->gameTitle() == GameTitle::MM6 ? button->rect.topLeft() : mm7Position;
 }
 
 GUIWindow_Save::GUIWindow_Save() : GUIWindow_SaveLoad(WINDOW_SAVE, {0, 0}, render->GetRenderDimensions()) {
@@ -266,6 +286,11 @@ GUIWindow_Save::GUIWindow_Save() : GUIWindow_SaveLoad(WINDOW_SAVE, {0, 0}, rende
 
     scrollstop = assets->getIcon("con_x");
 
+    if (engine->gameTitle() == GameTitle::MM6) {
+        createMM6Buttons("SaveMenu", "SaveMenu_Save");
+        return;
+    }
+
     CreateButton("SaveMenu_Slot0", {21, 198}, {191, 18}, BUTTON_TYPE_NORMAL, 0, UIMSG_SelectLoadSlot, 0);
     CreateButton("SaveMenu_Slot1", {21, 218}, {191, 18}, BUTTON_TYPE_NORMAL, 0, UIMSG_SelectLoadSlot, 1);
     CreateButton("SaveMenu_Slot2", {21, 238}, {191, 18}, BUTTON_TYPE_NORMAL, 0, UIMSG_SelectLoadSlot, 2);
@@ -285,9 +310,13 @@ GUIWindow_Save::GUIWindow_Save() : GUIWindow_SaveLoad(WINDOW_SAVE, {0, 0}, rende
 void GUIWindow_Save::Update() {
     if (GetCurrentMenuID() != MENU_SAVELOAD && GetCurrentMenuID() != MENU_LoadingProcInMainMenu) {
         render->DrawQuad2D(saveload_ui_loadsave, {8, 8});
-        render->DrawQuad2D(saveload_ui_saveu, {241, 302});
-        render->DrawQuad2D(saveload_ui_save_up, {18, 139});
-        render->DrawQuad2D(saveload_ui_x_u, {351, 302});
+        if (engine->gameTitle() == GameTitle::MM6) {
+            render->DrawQuad2D(saveload_ui_save_up, mm6SaveLoadHeaderPosition);
+        } else {
+            render->DrawQuad2D(saveload_ui_saveu, {241, 302});
+            render->DrawQuad2D(saveload_ui_save_up, {18, 139});
+            render->DrawQuad2D(saveload_ui_x_u, {351, 302});
+        }
     }
     drawSaveLoad();
 }
@@ -320,9 +349,13 @@ GUIWindow_Load::GUIWindow_Load(bool ingame) : GUIWindow_SaveLoad(WINDOW_LOAD, {0
         render->DrawQuad2D(main_menu_background, {0, 0});
     } else {
         render->DrawQuad2D(saveload_ui_loadsave, {8, 8});
-        render->DrawQuad2D(saveload_ui_loadu, {241, 302});
-        render->DrawQuad2D(saveload_ui_load_up, {18, 139});
-        render->DrawQuad2D(saveload_ui_x_u, {351, 302});
+        if (engine->gameTitle() == GameTitle::MM6) {
+            render->DrawQuad2D(saveload_ui_load_up, mm6SaveLoadHeaderPosition);
+        } else {
+            render->DrawQuad2D(saveload_ui_loadu, {241, 302});
+            render->DrawQuad2D(saveload_ui_load_up, {18, 139});
+            render->DrawQuad2D(saveload_ui_x_u, {351, 302});
+        }
     }
 
     this->frameRect = Recti(saveload_dlg_xs[ingame ? 1 : 0], saveload_dlg_ys[ingame ? 1 : 0],
@@ -342,6 +375,11 @@ GUIWindow_Load::GUIWindow_Load(bool ingame) : GUIWindow_SaveLoad(WINDOW_LOAD, {0
     ui_ar_dn_dn = assets->getIcon("AR_DN_DN");
 
     scrollstop = assets->getIcon("con_x");
+
+    if (engine->gameTitle() == GameTitle::MM6) {
+        createMM6Buttons("LoadMenu", "LoadMenu_Load");
+        return;
+    }
 
     CreateButton("LoadMenu_Slot0", {21, 198}, {191, 18}, BUTTON_TYPE_NORMAL, 0, UIMSG_SelectLoadSlot, 0);
     CreateButton("LoadMenu_Slot1", {21, 219}, {191, 18}, BUTTON_TYPE_NORMAL, 0, UIMSG_SelectLoadSlot, 1);
@@ -365,9 +403,13 @@ void GUIWindow_Load::Update() {
     }
     if (GetCurrentMenuID() != MENU_SAVELOAD && GetCurrentMenuID() != MENU_LoadingProcInMainMenu) {
         render->DrawQuad2D(saveload_ui_loadsave, {8, 8});
-        render->DrawQuad2D(saveload_ui_loadu, {241, 302});
-        render->DrawQuad2D(saveload_ui_load_up, {18, 139});
-        render->DrawQuad2D(saveload_ui_x_u, {351, 302});
+        if (engine->gameTitle() == GameTitle::MM6) {
+            render->DrawQuad2D(saveload_ui_load_up, mm6SaveLoadHeaderPosition);
+        } else {
+            render->DrawQuad2D(saveload_ui_loadu, {241, 302});
+            render->DrawQuad2D(saveload_ui_load_up, {18, 139});
+            render->DrawQuad2D(saveload_ui_x_u, {351, 302});
+        }
     }
     drawSaveLoad();
 }
@@ -384,21 +426,21 @@ void GUIWindow_Load::slotClicked(int slotIndex, bool isDoubleClick) {
 }
 
 void GUIWindow_Load::loadButtonPressed() {
-    new OnSaveLoad({ frameRect.x + 241, frameRect.y + 302 }, { 61, 28 }, pBtnLoadSlot);
+    new OnSaveLoad(saveLoadPressedPosition(pBtnLoadSlot, {frameRect.x + 241, frameRect.y + 302}), {61, 28}, pBtnLoadSlot);
 }
 
 void GUIWindow_Load::downArrowPressed() {
     scrollDown();
-    new OnButtonClick({ frameRect.x + 215, frameRect.y + 323 }, { 0, 0 }, pBtnDownArrow);
+    new OnButtonClick(saveLoadPressedPosition(pBtnDownArrow, {frameRect.x + 215, frameRect.y + 323}), {0, 0}, pBtnDownArrow);
 }
 
 void GUIWindow_Load::upArrowPressed() {
     scrollUp();
-    new OnButtonClick({ frameRect.x + 215, frameRect.y + 197 }, { 0, 0 }, pBtnArrowUp);
+    new OnButtonClick(saveLoadPressedPosition(pBtnArrowUp, {frameRect.x + 215, frameRect.y + 197}), {0, 0}, pBtnArrowUp);
 }
 
 void GUIWindow_Load::cancelButtonPressed() {
-    new OnCancel3({ frameRect.x + 350, frameRect.y + 302 }, { 61, 28 }, pBtnCancel);
+    new OnCancel3(saveLoadPressedPosition(pBtnCancel, {frameRect.x + 350, frameRect.y + 302}), {61, 28}, pBtnCancel);
 }
 
 void GUIWindow_Load::quickLoad() {

@@ -144,7 +144,7 @@ GAME_TEST(MM6NpcDialogue, StreetNpcPanel) {
                               std::vector<Recti>()));
     auto textures = texturesTape.flatten();
     EXPECT_CONTAINS(textures, "evpan019");
-    EXPECT_CONTAINS(textures, "npc382");
+    EXPECT_CONTAINS(textures, "npc260");
     EXPECT_CONTAINS(textures, "buttesc1");
     EXPECT_MISSES(textures, "evt02");
     EXPECT_MISSES(textures, "evtnpc");
@@ -206,7 +206,7 @@ GAME_TEST(MM6NpcDialogue, NewGameAfterHire) {
 }
 
 GAME_TEST(MM6OffscreenFrame, DISABLED_NpcDialogueCapture) {
-    // Hidden capture of a street NPC's conversation, before and after its first topic.
+    // Hidden capture of a street NPC's conversation, before and after its first topic, and of the HUD once she's hired.
     ASSERT_FALSE(window->isVisible());
     ASSERT_EQ(dynamic_cast<NullRenderer *>(render), nullptr);
     const char *capturePrefix = std::getenv("MM6_OFFSCREEN_CAPTURE_PATH");
@@ -220,4 +220,8 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_NpcDialogueCapture) {
     game.pressAndReleaseButton(BUTTON_LEFT, 555, 200); // More Information.
     game.tick();
     captureFrame(game, capturePrefix, "topic");
+    game.runGameRoutine([] { pParty->SetGold(10000, true); });
+    game.pressAndReleaseButton(BUTTON_LEFT, 555, 255); // Hire.
+    game.tick();
+    captureFrame(game, capturePrefix, "hired");
 }

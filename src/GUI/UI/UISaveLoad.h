@@ -63,6 +63,14 @@ class GUIWindow_SaveLoad : public GUIWindow {
     void preselectSlot(std::string_view fileName); // Selects & scrolls to the slot for the given file. No-op if there's no such slot.
     void drawSaveLoad();
 
+    /**
+     * Creates MM6's slot rows, action and cancel buttons and scroll arrows. MM6 has no scroll bar.
+     *
+     * @param idPrefix                      `SaveMenu` or `LoadMenu`, the slots are named `<prefix>_Slot<n>`.
+     * @param actionId                      Id of the Save or Load button.
+     */
+    void createMM6Buttons(std::string_view idPrefix, std::string_view actionId);
+
  protected:
     std::vector<SavegameSlot> _slots;
     int _selectedSlot = 0;
@@ -110,3 +118,10 @@ class GUIWindow_Load : public GUIWindow_SaveLoad {
  * @return                      Currently open save/load menu. Should only be called when one is open.
  */
 GUIWindow_SaveLoad *saveLoadMenu();
+
+/**
+ * @param button                        A save or load window button that was just pressed.
+ * @param mm7Position                   Where MM7 draws the pressed image.
+ * @return                              Where to draw the pressed image. MM6 draws it at the button's top left.
+ */
+Pointi saveLoadPressedPosition(const GUIButton *button, Pointi mm7Position);

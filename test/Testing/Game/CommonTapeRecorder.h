@@ -113,6 +113,8 @@ class CommonTapeRecorder {
 
     TestMultiTape<int> musicPauses();
 
+    TestMultiTape<MusicId> music(); // Tracks the game asked to play, also when sound is off.
+
     TestMultiTape<std::string> hudTextures();
 
     TestMultiTape<DrawnQuad> hudQuads(); // Like hudTextures, but with positions, and paletted images drawn by DrawImage too.

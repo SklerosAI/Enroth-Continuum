@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 #include <memory>
+#include <vector>
 
 #include "GUI/UI/UIGame.h"
 
@@ -58,6 +59,7 @@
 #include "GUI/UI/UIStatusBar.h"
 #include "GUI/UI/UISpellbook.h"
 #include "GUI/UI/MM6Spellbook.h"
+#include "GUI/UI/MM6GameMenuLayout.h"
 
 #include "Io/InputEnumFunctions.h"
 #include "Io/Mouse.h"
@@ -192,9 +194,29 @@ GUIWindow_GameMenu::GUIWindow_GameMenu()
     game_ui_menu_new = assets->getIcon("new1");
     game_ui_menu_load = assets->getIcon("load1");
     game_ui_menu_save = assets->getIcon("save1");
-    game_ui_menu_controls = assets->getIcon("controls1");
+    game_ui_menu_controls = assets->getIcon(engine->gameTitle() == GameTitle::MM6 ? "control1" : "controls1");
     game_ui_menu_resume = assets->getIcon("resume1");
     game_ui_menu_quit = assets->getIcon("quit1");
+
+    if (engine->gameTitle() == GameTitle::MM6) {
+        auto button = [this](std::string_view id, const Recti &rect, UIMessageType msg, InputAction action, std::string_view label, GraphicsImage *pressed) {
+            return CreateButton(std::string(id), rect.topLeft(), {rect.w - 1, rect.h - 1}, BUTTON_TYPE_NORMAL, 0, msg, 0, action, label, {pressed});
+        };
+        pBtn_Resume = button("GameMenu_Resume", mm6GameMenuResumeRect, UIMSG_GameMenu_ReturnToGame, INPUT_ACTION_BACK_TO_GAME,
+                             localization->str(LSTR_RETURN_TO_GAME), game_ui_menu_resume);
+        pBtn_NewGame = button("GameMenu_NewGame", mm6GameMenuNewRect, UIMSG_StartNewGame, INPUT_ACTION_NEW_GAME,
+                              localization->str(LSTR_NEW_GAME), game_ui_menu_new);
+        pBtn_LoadGame = button("GameMenu_LoadGame", mm6GameMenuLoadRect, UIMSG_Game_OpenLoadGameDialog, INPUT_ACTION_LOAD_GAME,
+                               localization->str(LSTR_LOAD_GAME), game_ui_menu_load);
+        pBtn_SaveGame = button("GameMenu_SaveGame", mm6GameMenuSaveRect, UIMSG_Game_OpenSaveGameDialog, INPUT_ACTION_SAVE_GAME,
+                               localization->str(LSTR_SAVE_GAME), game_ui_menu_save);
+        pBtn_GameControls = button("GameMenu_Controls", mm6GameMenuControlsRect, UIMSG_Game_OpenOptionsDialog, INPUT_ACTION_OPEN_CONTROLS,
+                                   localization->str(LSTR_SOUND_KEYBOARD_GAME_OPTIONS), game_ui_menu_controls);
+        pBtn_QuitGame = button("GameMenu_Quit", mm6GameMenuQuitRect, UIMSG_Quit, INPUT_ACTION_EXIT_GAME, localization->str(LSTR_QUIT),
+                               game_ui_menu_quit);
+        setKeyboardControlGroup(6, false, 0, 0);
+        return;
+    }
 
     pBtn_NewGame = CreateButton({0x13u, 0x9Bu}, {0xD6u, 0x28u}, BUTTON_TYPE_NORMAL, 0,
         UIMSG_StartNewGame, 0, INPUT_ACTION_NEW_GAME, localization->str(LSTR_NEW_GAME), {game_ui_menu_new});
@@ -485,6 +507,16 @@ GUIWindow_GameOptions::GUIWindow_GameOptions()
     options_menu_skin.uTextureID_ShowDamage = assets->getIcon("option02");
     options_menu_skin.uTextureID_WalkSound = assets->getIcon("option01");
 
+    if (engine->gameTitle() == GameTitle::MM6) {
+        options_menu_skin.uTextureID_ShowDamage = assets->getIcon("con_X"); // MM6 marks both check boxes with con_X.
+        options_menu_skin.uTextureID_WalkSound = options_menu_skin.uTextureID_ShowDamage;
+        options_menu_skin.uTextureID_FlipOnExit = nullptr;
+        options_menu_skin.uTextureID_AlwaysRun = nullptr;
+        _mm6DetailHigh = assets->getIcon("con_High");
+        createMM6Buttons();
+        return;
+    }
+
     CreateButton({22, 270}, options_menu_skin.uTextureID_TurnSpeed[2]->size(), BUTTON_TYPE_NORMAL, 0,
                  UIMSG_SetTurnSpeed, 0x80);
     CreateButton({93, 270}, options_menu_skin.uTextureID_TurnSpeed[1]->size(), BUTTON_TYPE_NORMAL, 0,
@@ -524,9 +556,40 @@ GUIWindow_GameOptions::GUIWindow_GameOptions()
     CreateButton({19, 194}, {214, 40}, BUTTON_TYPE_NORMAL, 0, UIMSG_OpenVideoOptions, 0, INPUT_ACTION_OPEN_OPTIONS);
 }
 
+void GUIWindow_GameOptions::createMM6Buttons() {
+    auto button = [this](const Recti &rect, UIMessageType msg, int param, std::string_view label = {}, GraphicsImage *pressed = nullptr) {
+        std::vector<GraphicsImage *> textures;
+        if (pressed)
+            textures.push_back(pressed);
+        return CreateButton(rect.topLeft(), {rect.w - 1, rect.h - 1}, BUTTON_TYPE_NORMAL, 0, msg, param, INPUT_ACTION_INVALID, label, textures);
+    };
+
+    button(mm6ControlsTurn16Rect, UIMSG_SetTurnSpeed, 128);
+    button(mm6ControlsTurn32Rect, UIMSG_SetTurnSpeed, 64);
+    button(mm6ControlsTurnSmoothRect, UIMSG_SetTurnSpeed, 0);
+    button(mm6ControlsWalkSoundRect, UIMSG_ToggleWalkSound, 0);
+    button(mm6ControlsShowDamageRect, UIMSG_ToggleShowDamage, 0);
+
+    const std::array<std::pair<int, UIMessageType>, 3> sliders = {{
+        {mm6ControlsSoundY, UIMSG_ChangeSoundVolume}, {mm6ControlsMusicY, UIMSG_ChangeMusicVolume}, {mm6ControlsVoiceY, UIMSG_ChangeVoiceVolume}
+    }};
+    for (const auto &[y, msg] : sliders) {
+        pBtn_SliderLeft = button({mm6ControlsLeftArrowX, y, 16, 16}, msg, 4, {}, options_menu_skin.uTextureID_ArrowLeft);
+        pBtn_SliderRight = button({mm6ControlsRightArrowX, y, 16, 16}, msg, 5, {}, options_menu_skin.uTextureID_ArrowRight);
+        button({mm6ControlsSliderX, y, 10 * mm6ControlsSliderNotch, 16}, msg, 0);
+    }
+
+    button(mm6ControlsResumeRect, UIMSG_Escape, 0, localization->str(LSTR_RETURN_TO_GAME));
+}
+
 void GUIWindow_GameOptions::Update() {
     render->DrawQuad2D(game_ui_menu_options, {8, 8});
     render->DrawQuad2D(options_menu_skin.uTextureID_Background, {8, 132});
+
+    if (engine->gameTitle() == GameTitle::MM6) {
+        drawMM6();
+        return;
+    }
 
     switch ((int) engine->config->settings.TurnSpeed.value()) {
         case 64:
@@ -559,6 +622,34 @@ void GUIWindow_GameOptions::Update() {
         {265 + 17 * engine->config->settings.MusicLevel.value(), 216});
     render->DrawQuad2D(options_menu_skin.uTextureID_SoundLevels[engine->config->settings.VoiceLevel.value()],
         {265 + 17 * engine->config->settings.VoiceLevel.value(), 270});
+}
+
+void GUIWindow_GameOptions::drawMM6() {
+    render->DrawQuad2D(_mm6DetailHigh, mm6ControlsDetailHighMark); // OpenEnroth always draws at full detail.
+
+    switch (engine->config->settings.TurnSpeed.value()) {
+    case 128:
+        render->DrawQuad2D(options_menu_skin.uTextureID_TurnSpeed[2], mm6ControlsTurn16Mark);
+        break;
+    case 64:
+        render->DrawQuad2D(options_menu_skin.uTextureID_TurnSpeed[1], mm6ControlsTurn32Mark);
+        break;
+    default:
+        render->DrawQuad2D(options_menu_skin.uTextureID_TurnSpeed[0], mm6ControlsTurnSmoothMark);
+        break;
+    }
+
+    if (engine->config->settings.WalkSound.value())
+        render->DrawQuad2D(options_menu_skin.uTextureID_WalkSound, mm6ControlsWalkSoundRect.topLeft());
+    if (engine->config->settings.ShowHits.value())
+        render->DrawQuad2D(options_menu_skin.uTextureID_ShowDamage, mm6ControlsShowDamageRect.topLeft());
+
+    auto drawLevel = [](int level, int y) {
+        render->DrawQuad2D(options_menu_skin.uTextureID_SoundLevels[level], {mm6ControlsSliderX + mm6ControlsSliderNotch * level, y});
+    };
+    drawLevel(engine->config->settings.SoundLevel.value(), mm6ControlsSoundY);
+    drawLevel(engine->config->settings.MusicLevel.value(), mm6ControlsMusicY);
+    drawLevel(engine->config->settings.VoiceLevel.value(), mm6ControlsVoiceY);
 }
 
 void GameUI_OnPlayerPortraitLeftClick(int uPlayerID) {

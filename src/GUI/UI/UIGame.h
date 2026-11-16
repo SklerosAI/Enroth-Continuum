@@ -25,6 +25,13 @@ class GUIWindow_GameOptions : public GUIWindow {
     virtual ~GUIWindow_GameOptions() {}
 
     virtual void Update() override;
+
+ private:
+    void createMM6Buttons();
+    void drawMM6();
+
+ private:
+    GraphicsImage *_mm6DetailHigh = nullptr;
 };
 
 class GUIWindow_GameKeyBindings : public GUIWindow {

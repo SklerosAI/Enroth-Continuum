@@ -7,6 +7,7 @@
 #include <GUI/GUIMessageQueue.h>
 #include <GUI/GUIWindow.h>
 #include <GUI/UI/UIBranchlessDialogue.h>
+#include <GUI/UI/MainMenuResources.h>
 #include <Library/Logger/Logger.h>
 #include <Engine/Graphics/Renderer/Renderer.h>
 
@@ -26,7 +27,7 @@ MainMenuState::MainMenuState() {
 
 FsmAction MainMenuState::enter() {
     pAudioPlayer->stopSounds();
-    pAudioPlayer->MusicPlayTrack(MUSIC_MAIN_MENU);
+    pAudioPlayer->MusicPlayTrack(mainMenuResources(engine->gameTitle()).music);
 
     current_screen_type = SCREEN_GAME;
 

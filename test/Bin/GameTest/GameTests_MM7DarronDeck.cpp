@@ -1,7 +1,10 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <filesystem>
 #include <numbers>
+#include <span>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -12,20 +15,30 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MapEnums.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
+#include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
 #include "Engine/PartyEnums.h"
+#include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/Resources/LOD.h"
+#include "Engine/SaveLoad.h"
 #include "Engine/Tables/NPCTable.h"
 
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/UIHouses.h"
+#include "GUI/UI/UISaveLoad.h"
 
 #include "Utility/Exception.h"
 
 namespace {
+
+constexpr std::string_view checkpointSlot = "saves/save000.mm7";
+constexpr std::string_view checkpointFileName = "save000.mm7";
 
 std::pair<Vec3f, int> approachFace(const BLVFace &face) {
     Vec3f position = face.boundingBox.center() + 150 * face.facePlane.normal;
@@ -141,6 +154,15 @@ int totalExperience() {
     return result;
 }
 
+void assertDisposableHeadlessProfile() {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    const auto profileRoot = mm7::startupNativeProfileRoot();
+    ASSERT_TRUE(profileRoot);
+    ASSERT_EQ(*profileRoot, std::filesystem::canonical(std::filesystem::path(ufs->displayPath(""))));
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+}
+
 } // namespace
 
 GAME_TEST(MM7SideQuests, DarronsDeckIsPhysicallyAcquiredAndReturned) {
@@ -174,4 +196,77 @@ GAME_TEST(MM7SideQuests, DarronsDeckIsPhysicallyAcquiredAndReturned) {
     EXPECT_TRUE(pParty->hasItem(ITEM_QUEST_ARCOMAGE_DECK) || pParty->pPickedItem.itemId == ITEM_QUEST_ARCOMAGE_DECK);
     EXPECT_EQ(pParty->uNumGold, gold + 750);
     EXPECT_EQ(totalExperience(), experience + 4 * 2000);
+}
+
+GAME_TEST(MM7SideQuestCheckpoint, DISABLED_WriteDarronsDeck) {
+    assertDisposableHeadlessProfile();
+    ASSERT_FALSE(ufs->exists(checkpointSlot));
+    game.startNewGame();
+    engine->config->debug.NoDamage.setValue(true);
+
+    game.teleportTo(MAP_WHITE_CLIFF_CAVE, Vec3f(), 0);
+    ASSERT_GE(deckSprite(), 0);
+    NPCData *darron = findDarron();
+    ASSERT_NE(darron, nullptr);
+    const unsigned int event = offerEvent(darron);
+    ASSERT_NE(event, 0u);
+    openDarronHouse(game, darron);
+    ASSERT_TRUE(selectOffer(game, darron, event));
+    ASSERT_TRUE(pParty->_questBits[QBIT_DARRONS_BROTHER_ACTIVE]);
+
+    game.teleportTo(MAP_WHITE_CLIFF_CAVE, Vec3f(), 0);
+    const int sprite = deckSprite();
+    ASSERT_GE(sprite, 0);
+    ASSERT_EQ(pSpriteObjects[sprite].containing_item.itemId, ITEM_QUEST_ARCOMAGE_DECK);
+    ASSERT_TRUE(pickUpDeck(game, sprite));
+    pParty->placeHeldItemInInventoryOrDrop();
+    ASSERT_TRUE(pParty->hasItem(ITEM_QUEST_ARCOMAGE_DECK));
+    ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    ASSERT_EQ(deckSprite(), -1);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_WHITE_CLIFF_CAVE);
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    ASSERT_FALSE(::testing::Test::HasFailure());
+
+    game.runGameRoutine([] {
+        saveGame(false, false, checkpointSlot, "Darron's Brother regional checkpoint");
+    });
+
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = ufs->read(checkpointSlot);
+    ASSERT_GT(saved.size(), 1024u);
+    ASSERT_TRUE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saved.data()), saved.size()),
+        GameTitle::MM7, *pGames_LOD));
+}
+
+GAME_TEST(MM7SideQuestCheckpoint, DISABLED_ReloadDarronsDeck) {
+    assertDisposableHeadlessProfile();
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = Blob::copy(ufs->read(checkpointSlot));
+    ASSERT_GT(saved.size(), 1024u);
+
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(3);
+    ASSERT_EQ(current_screen_type, SCREEN_LOADGAME);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto found = std::ranges::find(slots, checkpointFileName, &SavegameSlot::fileName);
+    ASSERT_NE(found, slots.end());
+    const int index = static_cast<int>(found - slots.begin());
+    ASSERT_LT(index, 7);
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", index));
+    game.tick(2);
+    ASSERT_EQ(saveLoadMenu()->selectedSlot().fileName, checkpointFileName);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick(2);
+
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_WHITE_CLIFF_CAVE);
+    ASSERT_EQ(engine->_lastLoadedSaveFileName, checkpointFileName);
+    EXPECT_TRUE(pParty->_questBits[QBIT_DARRONS_BROTHER_ACTIVE]);
+    EXPECT_TRUE(pParty->hasItem(ITEM_QUEST_ARCOMAGE_DECK));
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_EQ(deckSprite(), -1);
+    EXPECT_TRUE(ufs->read(checkpointSlot).str() == saved.str());
 }

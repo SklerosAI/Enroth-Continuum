@@ -35,6 +35,7 @@ function state(overrides) {
     data: titles, paths: {}, saves: [], running: false, runningBuild: '', mm6Available: false, upstreamAvailable: false,
     recordingFinalizing: false, recordingEnabled: false, recordVideo: false, recordDiagnostics: false,
     recordingPath: '', recordingSession: '', modsEnabled: false, vendorRefreshOnEntry: false,
+    allArtifactsStorage: false,
     portraits: [false, false, false, false], portraitMoods: [{}, {}, {}, {}],
     armor: {saved: false}, ...overrides,
   };
@@ -85,5 +86,17 @@ assert.strictEqual(document.getElementById('record-diagnostics-toggle').textCont
 document.getElementById('record-video-toggle').click();
 document.getElementById('record-diagnostics-toggle').click();
 assert.deepStrictEqual(sent.slice(-2), ['record-video-on', 'record-diagnostics-off']);
+
+// The MM7 artifact/storage preference is saved independently, but applies only with Private mods.
+window.Atlas.receive(state({modsEnabled: false, allArtifactsStorage: true}));
+assert.strictEqual(document.getElementById('all-artifacts-storage-toggle').textContent, 'Turn off');
+assert.match(document.getElementById('all-artifacts-storage-status').textContent, /enable Private mods/);
+document.getElementById('all-artifacts-storage-toggle').click();
+assert.strictEqual(sent.at(-1), 'all-artifacts-storage-off');
+window.Atlas.receive(state({modsEnabled: true, allArtifactsStorage: false}));
+assert.strictEqual(document.getElementById('all-artifacts-storage-toggle').textContent, 'Turn on');
+assert.match(document.getElementById('all-artifacts-storage-status').textContent, /normal artifact cap/);
+document.getElementById('all-artifacts-storage-toggle').click();
+assert.strictEqual(sent.at(-1), 'all-artifacts-storage-on');
 
 console.log('Atlas page checks passed');

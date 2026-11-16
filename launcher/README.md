@@ -15,8 +15,8 @@ data path and user path. It does not package original Might & Magic data.
   Upstream plays MM7 only and has no `--game` option. Its profile is
   `Profiles/MM7-OpenEnroth`, created before launch because upstream requires an
   existing folder, and never the fork's `MM7-Atlas`. Atlas removes
-  `OPENENROTH_MM7_PATH` from its environment and passes no fork mod or vendor
-  settings, so upstream never falls back to `~/.openenroth` or another data
+  `OPENENROTH_MM7_PATH` from its environment and passes no fork mod, artifact,
+  storage or vendor settings, so upstream never falls back to `~/.openenroth` or another data
   folder. Upstream writes its config, saves and `logs/openenroth_*.log` into
   that profile and only reads the data folder, as its `GameStarter` source
   shows. On its first start with an empty profile it copies any `saves` folder
@@ -57,13 +57,18 @@ data path and user path. It does not package original Might & Magic data.
 - The Vault lists MM7 saves and creates local backup copies.
 - The Atelier provides private portrait moods for four party positions,
   one MM7 armor template AC override, an optional fresh-vendor-stock-on-entry
-  setting for MM6 and MM7, and a Vanilla/Private mods switch.
+  setting for MM6 and MM7, the MM7-only **All Artifacts + Storage** option,
+  and a Vanilla/Private mods switch.
   Portrait moods can replace normal, condition and reaction art in party creation
   and game play. Voices and body art remain original; death and eradication art
   remain original unless their own mood PNGs are supplied. An armor AC change
   applies to every copy of that item type while the profile is active.
   MM7's vendor option applies on the next Private mods launch. The MM6 choice
   is retained locally for its future playable engine; MM6 shops are not live yet.
+  All Artifacts + Storage removes MM7's normal cap on randomly spawnable
+  artifacts and relics and keeps generated chest overflow available until
+  visible chest space opens. It does not grant quest artifacts, add backpack
+  slots or affect MM6.
 
 ## Private data
 
@@ -95,10 +100,14 @@ Use actual tab characters in the file. The Atelier writes a one-row file for you
 hand-edited files may contain up to 32 valid armor rows. Invalid values are rejected
 and the original game values remain in use. The
 app keeps the active game data paths and mod switch in local macOS preferences.
-The vendor option is also stored in preferences and does not edit game archives
-or existing saves. When MM7 Private mods is active, Atlas passes
+The vendor and All Artifacts + Storage options are also stored in preferences
+and do not edit game archives, the MM7 configuration file or existing saves.
+When MM7 Private mods is active, Atlas passes
 `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY=1` to its bundled engine. The corresponding
 MM6 engine setting is `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY=1` once MM6 launches.
+Atlas also passes `ENROTH_MM7_ALL_ARTIFACTS_STORAGE=1` only when its MM7 toggle
+and Private mods are both on; vanilla MM7, MM6 and upstream OpenEnroth receive
+no active MM7 artifact/storage flag.
 
 The source defaults for a future MM7 Atlas build are
 `~/Library/Application Support/Enroth Continuum/Game Data/MM7` and the fresh

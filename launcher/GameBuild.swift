@@ -73,20 +73,25 @@ enum GameBuild: String {
      * @param base                      Atlas's own environment.
      * @param modRoot                   Private mods folder when Private mods is on, else nil.
      * @param vendorRefresh             Whether Private mods asks for fresh vendor stock.
+     * @param allArtifactsStorage       Whether Private mods asks for uncapped artifact loot and chest overflow storage.
      * @return                          The environment to launch the helper with.
      */
-    func environment(base: [String: String], modRoot: URL?, vendorRefresh: Bool) -> [String: String] {
+    func environment(base: [String: String], modRoot: URL?, vendorRefresh: Bool,
+                     allArtifactsStorage: Bool) -> [String: String] {
         var environment = base
         environment.removeValue(forKey: "ENROTH_MM7_MOD_DIR")
+        environment.removeValue(forKey: "ENROTH_MM7_ALL_ARTIFACTS_STORAGE")
         switch self {
         case .mm6:
             environment.removeValue(forKey: "ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY")
             environment.removeValue(forKey: "OPENENROTH_MM7_PATH")
         case .fork:
             environment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] = "0"
+            environment["ENROTH_MM7_ALL_ARTIFACTS_STORAGE"] = "0"
             if let modRoot {
                 environment["ENROTH_MM7_MOD_DIR"] = modRoot.path
                 if vendorRefresh { environment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] = "1" }
+                if allArtifactsStorage { environment["ENROTH_MM7_ALL_ARTIFACTS_STORAGE"] = "1" }
             }
         case .upstream:
             environment.removeValue(forKey: "ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY")

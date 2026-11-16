@@ -76,14 +76,24 @@ precondition(GameBuild.fork.arguments(dataPath: data, profilePath: profile)
 precondition(GameBuild.mm6.arguments(dataPath: URL(fileURLWithPath: "/data/MM6"), profilePath: profile)
              == ["--game", "mm6", "--data-path", "/data/MM6", "--user-path", "/profiles/MM7-OpenEnroth"])
 
-let base = ["OPENENROTH_MM7_PATH": "/elsewhere", "ENROTH_MM7_MOD_DIR": "/mods", "HOME": "/home"]
+let base = ["OPENENROTH_MM7_PATH": "/elsewhere", "ENROTH_MM7_MOD_DIR": "/mods",
+            "ENROTH_MM7_ALL_ARTIFACTS_STORAGE": "1", "HOME": "/home"]
 let mods = URL(fileURLWithPath: "/mods/MM7", isDirectory: true)
-let upstreamEnvironment = GameBuild.upstream.environment(base: base, modRoot: mods, vendorRefresh: true)
+let upstreamEnvironment = GameBuild.upstream.environment(base: base, modRoot: mods, vendorRefresh: true,
+                                                         allArtifactsStorage: true)
 precondition(upstreamEnvironment == ["HOME": "/home"])
-let forkEnvironment = GameBuild.fork.environment(base: base, modRoot: mods, vendorRefresh: true)
+let forkEnvironment = GameBuild.fork.environment(base: base, modRoot: mods, vendorRefresh: true,
+                                                 allArtifactsStorage: true)
 precondition(forkEnvironment["ENROTH_MM7_MOD_DIR"] == "/mods/MM7")
 precondition(forkEnvironment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] == "1")
-precondition(GameBuild.fork.environment(base: base, modRoot: nil, vendorRefresh: true)["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] == "0")
-precondition(GameBuild.mm6.environment(base: base, modRoot: mods, vendorRefresh: true) == ["HOME": "/home"])
+precondition(forkEnvironment["ENROTH_MM7_ALL_ARTIFACTS_STORAGE"] == "1")
+let vanillaEnvironment = GameBuild.fork.environment(base: base, modRoot: nil, vendorRefresh: true,
+                                                    allArtifactsStorage: true)
+precondition(vanillaEnvironment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] == "0")
+precondition(vanillaEnvironment["ENROTH_MM7_ALL_ARTIFACTS_STORAGE"] == "0")
+precondition(GameBuild.fork.environment(base: base, modRoot: mods, vendorRefresh: false,
+                                        allArtifactsStorage: false)["ENROTH_MM7_ALL_ARTIFACTS_STORAGE"] == "0")
+precondition(GameBuild.mm6.environment(base: base, modRoot: mods, vendorRefresh: true,
+                                       allArtifactsStorage: true) == ["HOME": "/home"])
 
 print("MM7 profile path and game build checks passed")

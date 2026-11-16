@@ -273,6 +273,8 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         else if action == "mods-off" { preferences.set(false, forKey: "mods.mm7.enabled"); sendState(message: "Vanilla MM7 will run at the next launch.") }
         else if action == "vendor-refresh-on" { preferences.set(true, forKey: "mods.vendorRefreshOnEntry"); sendState(message: "Fresh vendor stock is saved for MM6 and MM7. MM7 applies on the next private-mods launch.") }
         else if action == "vendor-refresh-off" { preferences.set(false, forKey: "mods.vendorRefreshOnEntry"); sendState(message: "Vendor stock will use its normal refresh schedule on the next launch.") }
+        else if action == "all-artifacts-storage-on" { preferences.set(true, forKey: "mods.mm7.allArtifactsStorage"); sendState(message: "All Artifacts + Storage will apply on the next private-mods MM7 launch.") }
+        else if action == "all-artifacts-storage-off" { preferences.set(false, forKey: "mods.mm7.allArtifactsStorage"); sendState(message: "MM7 will use its normal artifact cap and chest behavior on the next launch.") }
         else if action.hasPrefix("choose-portrait-") {
             if let slot = Int(action.dropFirst("choose-portrait-".count)), (1...4).contains(slot) { choosePortrait(slot) }
         }
@@ -336,6 +338,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             "modSupport": true,
             "modsEnabled": preferences.bool(forKey: "mods.mm7.enabled"),
             "vendorRefreshOnEntry": preferences.bool(forKey: "mods.vendorRefreshOnEntry"),
+            "allArtifactsStorage": preferences.bool(forKey: "mods.mm7.allArtifactsStorage"),
             "portraits": (1...4).map { validPortraitURL($0, mood: "normal") != nil },
             "portraitNormalFiles": (1...4).map { portraitExists($0, mood: "normal") },
             "legacyPortraits": (1...4).map { FileManager.default.fileExists(atPath: portraitURL($0).path) },
@@ -715,7 +718,8 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             if modsEnabled { try FileManager.default.createDirectory(at: modRoot, withIntermediateDirectories: true) }
             process.environment = build.environment(base: ProcessInfo.processInfo.environment,
                                                     modRoot: modsEnabled ? modRoot : nil,
-                                                    vendorRefresh: preferences.bool(forKey: "mods.vendorRefreshOnEntry"))
+                                                    vendorRefresh: preferences.bool(forKey: "mods.vendorRefreshOnEntry"),
+                                                    allArtifactsStorage: preferences.bool(forKey: "mods.mm7.allArtifactsStorage"))
             let startedAt = Date()
             process.terminationHandler = { [weak self] finished in
                 DispatchQueue.main.async {
@@ -905,6 +909,14 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
 
         Other files are currently ignored by the engine. Keep original game data
         and existing saves outside this folder.
+
+        ## Gameplay toggles
+
+        **All Artifacts + Storage** is controlled in The Atlas rather than by a
+        file in this folder. On a Private mods MM7 launch it removes the normal
+        cap on randomly spawnable artifacts and relics, and keeps generated
+        chest overflow available until visible chest space opens. It does not
+        grant quest artifacts or add backpack slots.
         """
         try contents.write(to: guide, atomically: true, encoding: .utf8)
     }

@@ -169,6 +169,13 @@ signed coordinate and delegates overflow handling to the first outdoor update,
 while GrayFace 2.5.7 has no override. A private trace of the settled position
 and border-dialog state remains the required parity gate before any repair.
 
+The opening contest now has representative physical acquisition for five of
+its six items. The Moon tile comes from its authored world sprite; a separate
+Emerald packet creates Cure Wounds through live alchemy, buys the seashell and
+lute, trades the potion for the wealthy hat, roundtrips those items and NPC
+state through normal save/load, and performs the real Judge hand-ins. Only the
+weapon-shop longbow lacks a deterministic physical acquisition check.
+
 The remaining war-alternative gaps are now covered without a production
 change. Both opposing-throne exposure topics execute their authored death and
 failure cleanup; a representative Stone City rebuild return places both

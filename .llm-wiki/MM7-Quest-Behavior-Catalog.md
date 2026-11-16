@@ -44,7 +44,7 @@ and by the [DungeonCrawl quest table](https://dungeoncrawl-classics.com/might-an
 
 | ID | Intended behavior | Current test status | Confidence |
 | --- | --- | --- | --- |
-| M0 | Give Judge Thomas the six required Emerald Island contest items; Markham awards Harmondale and offers departure. Missing any item refuses completion. | C0 and `MM7ScavengerPath` cover delivery. `MM7TempleOfMoon.PhysicalContestItemRoute` physically acquires the floor tile and proves it does not respawn after exit/re-entry; physical acquisition of the other five items remains open. | C |
+| M0 | Give Judge Thomas the six required Emerald Island contest items; Markham awards Harmondale and offers departure. Missing any item refuses completion. | C0 and `MM7ScavengerPath` cover delivery. `MM7TempleOfMoon.PhysicalContestItemRoute` physically acquires the floor tile and proves it does not respawn. `MM7EmeraldContestAcquisition` creates Cure Wounds through live alchemy, buys Sally's seashell and Ailyssa's lute, trades with Brent for the wealthy hat, preserves all four/NPC state through normal save/load and uses the real Judge hand-ins. Only deterministic physical longbow acquisition remains open. | C |
 | M1 | Meet the Butler, clear all Castle Harmondale goblins, leave, and report back; this unlocks the dwarf repair route. | C1 and Castle-path controls, including survivor refusal. | C |
 | M2 | Hothfarr gives the elixir route; cure all seven petrified dwarves and report to the king to rebuild Harmondale. | C2 and rebuild controls, including one-missing refusal. | C |
 | M3 | Catherine's Loren Steel rescue and Parson's Riverstride-plans request each have a 28-day response window. The party may complete the real task, deliver its decoy, ignore it until timeout, or expose the opposing decoy; those choices determine the war result unless the trumpet is used. | `MM7WarAlternatives` covers real, decoy and timeout through authored dialogue and physical sources. `MM7WarRevealMatrix` physically selects both opposing-throne exposure topics, proves the four-character death/recovery and exact cleanup/failure behavior, and guards the two timeout repairs. | C |
@@ -140,7 +140,7 @@ test when behavior coverage exists.
 
 | Existing test family | Contract it is allowed to claim | Required correction or follow-up |
 | --- | --- | --- |
-| `MM7CampaignChainC0`, `MM7ScavengerPath`, `MM7TempleOfMoon` | M0 delivery, refusal when one contest item is missing, Judge and ship progression. The Temple packet physically acquires the Moon tile through its world sprite and proves no respawn after exit/re-entry. | Add separate acquisition checks for the other five items. |
+| `MM7CampaignChainC0`, `MM7ScavengerPath`, `MM7TempleOfMoon`, `MM7EmeraldContestAcquisition` | M0 delivery, refusal when one contest item is missing, Judge and ship progression. The Temple packet physically acquires the Moon tile; the Emerald packet covers live alchemy, Sally/Ailyssa purchases, Brent's potion trade, normal save/load and real hand-ins for four more items. | Add deterministic physical longbow acquisition. |
 | `MM7CampaignChainC1`, `MM7CastlePath` | M1 Butler/goblin/report sequence and survivor refusal. | None before broader side coverage. |
 | `MM7CampaignChainC2`, `MM7CastleRebuild` | M2 elixir, seven-dwarf, rebuild sequence and one-missing refusal. | Keep its save boundary. |
 | `MM7CampaignChainC3`, `MM7Campaign` | Light Arbiter selection and post-choice house relation. | Add M3–M5 timer, war-score, trumpet/neutral, and Dark selection cases. |

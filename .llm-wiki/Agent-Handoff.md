@@ -246,6 +246,22 @@ coordinate and lets the first outdoor update process the overflow; GrayFace
 position and border-dialog state as the gate before any compatibility seam;
 clamping or truncating now would be speculative.
 
+Emerald contest acquisition now has a representative physical packet beyond
+the Moon tile. It creates Cure Wounds through live alchemy from setup inputs,
+buys the seashell and lute through Sally/Ailyssa, trades the potion to Brent for
+the wealthy hat, preserves the four items and NPC topic state through normal
+save/load and exercises their real Judge hand-ins. The new case plus the Judge,
+Temple and cross-character hat controls pass 4/4. The random weapon-shop
+longbow remains the sole deterministic physical acquisition gap.
+
+A separate fixture-free New Game probe reached the first hostile Dragonflies
+with only real movement input and untouched party/actors. Their flying approach
+crossed outside the fixed viewport before reliable selection, and seeking a new
+angle killed the ordinary party. No brittle diagnostic was retained; adding
+simultaneous movement/camera control is the explicit prerequisite for revisiting
+that stronger route, while the accepted representative movement/combat harness
+remains unchanged.
+
 War-alternative coverage now includes both physical exposure/death failures,
 all five trumpet handlers after a representative authored ambassador-placement
 return, and the 27 effective result/recipient states under both arbiters. The

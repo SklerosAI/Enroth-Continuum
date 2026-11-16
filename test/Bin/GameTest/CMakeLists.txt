@@ -22,6 +22,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7CastlePath.cpp
         GameTests_MM7CastleRebuild.cpp
         GameTests_MM7HarmondaleStorage.cpp
+        GameTests_MM7EmeraldContestAcquisition.cpp
         GameTests_MM7ScavengerPath.cpp
         GameTests_MM7CampaignChainC0.cpp
         GameTests_MM7CampaignChainC1.cpp

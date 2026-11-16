@@ -190,6 +190,44 @@ snapshot() {
 
 # Logs are append-only byte ranges. A new inode, shorter file or changed prefix
 # starts a new range at byte zero, covering common rotation/truncation cases.
+baseline_log() {
+    local source="$1" key state_file identity size prefix prefix_len
+    [[ -f "$source" && ! -L "$source" ]] || return 0
+    key=$(printf '%s' "$source" | shasum -a 256 | awk '{print $1}')
+    state_file="$session/state/$key.logstate"
+    identity=$(stat -f '%d:%i' "$source" 2>/dev/null) || return 0
+    size=$(stat -f '%z' "$source" 2>/dev/null) || return 0
+    prefix_len="$size"
+    (( prefix_len <= 4096 )) || prefix_len=4096
+    if (( prefix_len > 0 )); then
+        prefix=$(head -c "$prefix_len" "$source" | shasum -a 256 | awk '{print $1}') || return 0
+    else
+        prefix=$(printf '' | shasum -a 256 | awk '{print $1}')
+    fi
+    printf '%s|%s|%s|%s\n' "$identity" "$size" "$prefix" "$prefix_len" > "$state_file.tmp"
+    mv "$state_file.tmp" "$state_file"
+}
+
+# Atlas starts the recorder just after the game process. Logs last modified
+# before that process began belong to older sessions: remember their current
+# ends without copying them. The small grace covers filesystem timestamp
+# precision, while retaining a current log created just before recorder startup.
+baseline_historical_logs() {
+    local game_started_epoch="$1" grace_seconds=5 cutoff path modified baselined=0
+    is_uint "${game_started_epoch:-}" || return 0
+    [[ -d "$profile/logs" ]] || return 0
+    cutoff=$((game_started_epoch - grace_seconds))
+    while IFS= read -r -d '' path; do
+        modified=$(stat -f '%m' "$path" 2>/dev/null) || continue
+        is_uint "${modified:-}" || continue
+        (( modified < cutoff )) || continue
+        baseline_log "$path" || return 1
+        baselined=$((baselined + 1))
+    done < <(find "$profile/logs" -maxdepth 1 -type f -name "$log_pattern" -print0 2>/dev/null)
+    (( baselined == 0 )) ||
+        event log-baseline "Skipped existing bytes from $baselined historical engine log(s); later changes are still recorded."
+}
+
 capture_log() {
     local source="$1" key state_file identity size prefix prefix_len old_identity old_size old_prefix old_prefix_len
     local start length tmp copied target after_identity after_size comparison_prefix
@@ -277,6 +315,46 @@ sample_process() {
     printf '%s\t%s\t%s\n' "$(utc)" "$1" "$2" >> "$session/samples.tsv"
 }
 
+# Copy only a complete report. macOS can expose the destination name while it
+# is still writing the report, so require it to stay unchanged for a second
+# and across the copy. The final rename keeps readers from seeing a partial
+# report in the session.
+copy_stable_crash_report() {
+    local report="$1" target before after source_hash copied_hash final_hash tmp
+    target="$session/crash-reports/$(basename "$report")"
+    [[ ! -e "$target" ]] || return 0
+    before=$(stat -f '%d:%i:%z:%m' "$report" 2>/dev/null) || return 1
+    sleep 1
+    after=$(stat -f '%d:%i:%z:%m' "$report" 2>/dev/null) || return 1
+    [[ "$before" == "$after" ]] || return 1
+    source_hash=$(sha "$report" 2>/dev/null) || return 1
+    [[ "$before" == "$(stat -f '%d:%i:%z:%m' "$report" 2>/dev/null)" ]] || return 1
+    check_destination || return 1
+    mkdir -p "$session/crash-reports" || return 1
+    tmp=$(mktemp "$session/crash-reports/.incoming.XXXXXX") || return 1
+    if ! cp "$report" "$tmp" 2>/dev/null; then
+        unlink "$tmp" 2>/dev/null || true
+        return 1
+    fi
+    copied_hash=$(sha "$tmp" 2>/dev/null) || { unlink "$tmp" 2>/dev/null || true; return 1; }
+    after=$(stat -f '%d:%i:%z:%m' "$report" 2>/dev/null) || after=""
+    final_hash=$(sha "$report" 2>/dev/null) || final_hash=""
+    if [[ "$before" != "$after" || "$source_hash" != "$final_hash" || "$source_hash" != "$copied_hash" ]]; then
+        unlink "$tmp" 2>/dev/null || true
+        return 1
+    fi
+    check_destination || { unlink "$tmp" 2>/dev/null || true; return 1; }
+    if [[ -e "$target" ]]; then
+        unlink "$tmp" 2>/dev/null || true
+        return 0
+    fi
+    if ! mv "$tmp" "$target"; then
+        unlink "$tmp" 2>/dev/null || true
+        return 1
+    fi
+    event crash-report "Copied $report"
+}
+
 # macOS names a report after the process, such as MM7-2026-11-10-213455.ips,
 # and writes it a few seconds after the crash.
 collect_crash_reports() {
@@ -286,10 +364,7 @@ collect_crash_reports() {
             while IFS= read -r -d '' report; do
                 grep -Eq "\"pid\" *: *${game_pid}([^0-9]|\$)|\[${game_pid}\]" "$report" 2>/dev/null || continue
                 [[ ! -e "$session/crash-reports/$(basename "$report")" ]] || { found=1; continue; }
-                check_destination || return 1
-                mkdir -p "$session/crash-reports"
-                cp "$report" "$session/crash-reports/" 2>/dev/null || continue
-                event crash-report "Copied $report"
+                copy_stable_crash_report "$report" || continue
                 found=1
             done < <(find "$reports" -maxdepth 1 -type f \( -name "${helper_name}-*.ips" -o -name "${helper_name}_*.crash" \) \
                 -newer "$session/.ec-mm7-playtest-session" -print0 2>/dev/null)
@@ -703,6 +778,10 @@ if [[ "$video_enabled" == 1 ]]; then
 fi
 
 game_start=$(ps -p "$game_pid" -o lstart= 2>/dev/null || true)
+game_start_epoch=$(LC_ALL=C date -j -f '%a %b %e %T %Y' "$game_start" '+%s' 2>/dev/null || true)
+if (( diagnostics_enabled )); then
+    baseline_historical_logs "$game_start_epoch" || true
+fi
 requested=0
 next_save_checkpoint_epoch=$(( $(date +%s) + save_checkpoint_seconds ))
 next_sample_epoch=0
@@ -776,7 +855,9 @@ if volume_ok; then
     close_clip
     if (( diagnostics_enabled )) && [[ "$stop_reason" != low-space && "$game_exit" != normal ]]; then
         crash_wait=0
-        [[ "$game_exit" != abnormal ]] || crash_wait=15
+        if [[ "$game_exit" == abnormal || ( -z "$game_exit" && "$stop_reason" == game-exited ) ]]; then
+            crash_wait=15
+        fi
         collect_crash_reports "$crash_wait" || true
     fi
     if [[ "$video_state" != off && "$video_state" != failed ]]; then

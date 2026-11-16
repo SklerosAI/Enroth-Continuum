@@ -393,6 +393,45 @@ class DiagnosticsTest(CaptureCase):
         self.assertIn("stopped (normal exit, exit status 0)", self.timeline())
         self.assertFalse((self.session / "crash-reports").exists())
 
+    def test_historical_logs_are_baselined_while_current_logs_are_captured(self) -> None:
+        # Old profile logs are not recopied, but a log started with this game and
+        # another log created after recorder startup are both kept from byte zero.
+        historical = self.profile / "logs/enroth-continuum-mm7_2026_01_01.log"
+        historical.write_text("historical session\n")
+        os.utime(historical, (1_000_000_000, 1_000_000_000))
+        current = self.profile / "logs/enroth-continuum-mm7_current.log"
+        current.write_text("current startup\n")
+
+        self.start(video=False)
+        self.assertTrue(wait_for(
+            lambda: any(path.read_text() == "current startup\n"
+                        for path in (self.session / "logs").glob("*.log.part")), 10))
+        initial_rows = [line.split("\t") for line in (self.session / "snapshots.tsv").read_text().splitlines()]
+        self.assertNotIn(str(historical), [row[2] for row in initial_rows if row[1] == "logs"])
+        current.write_text("current startup\ncurrent append\n")
+        with historical.open("a") as stream:
+            stream.write("historical-file append during current session\n")
+        rotated = self.profile / "logs/enroth-continuum-mm7_rotated.log"
+        rotated.write_text("new current-session log\n")
+        self.assertTrue(wait_for(
+            lambda: "new current-session log\n" in "".join(
+                path.read_text() for path in (self.session / "logs").glob("*.log.part")), 10))
+        self.cli("stop", "--game-exit", "normal")
+        self.finish()
+
+        rows = [line.split("\t") for line in (self.session / "snapshots.tsv").read_text().splitlines()]
+        log_sources = [row[2] for row in rows if row[1] == "logs"]
+        recorded = "".join(path.read_text() for path in (self.session / "logs").glob("*.log.part"))
+        self.assertIn(str(historical), log_sources)
+        self.assertIn(str(current), log_sources)
+        self.assertIn(str(rotated), log_sources)
+        self.assertNotIn("historical session", recorded)
+        self.assertIn("historical-file append during current session\n", recorded)
+        self.assertIn("current startup\n", recorded)
+        self.assertIn("current append\n", recorded)
+        self.assertIn("new current-session log\n", recorded)
+        self.assertIn("\tlog-baseline\t", self.timeline())
+
     def test_video_without_diagnostics(self) -> None:
         # Video alone keeps the replay but copies no logs or saves.
         (self.profile / "saves/save000.mm7").write_bytes(b"save one")
@@ -475,6 +514,35 @@ class DiagnosticsTest(CaptureCase):
         self.finish()
         self.assertEqual([path.name for path in (self.session / "crash-reports").iterdir()],
                          ["MM7-2026-11-10-213455.ips"])
+
+    def test_unreported_exit_waits_for_late_crash_report(self) -> None:
+        # A disappeared PID has no Atlas exit classification, but its report can still arrive late.
+        self.start(video=False)
+        self.game.kill()
+        self.game.wait()
+        time.sleep(12)  # Past the recorder's 10-second wait for a late Atlas stop request.
+        self.write_crash_report("MM7-2026-11-10-213455.ips", self.game.pid)
+        self.finish()
+        self.assertEqual([path.name for path in (self.session / "crash-reports").iterdir()],
+                         ["MM7-2026-11-10-213455.ips"])
+
+    def test_crash_report_copy_retries_if_source_changes(self) -> None:
+        # The report becomes visible before macOS finishes it; only the stable final bytes appear.
+        self.start(video=False)
+        report = self.write_crash_report("MM7-2026-11-10-213455.ips", self.game.pid)
+        (self.stub / "slow-cp").touch()
+        self.game.kill()
+        self.game.wait()
+        self.cli("stop", "--game-exit", "abnormal")
+        self.assertTrue(wait_for(lambda: (self.stub / "cp-started").exists(), 10))
+        crash_dir = self.session / "crash-reports"
+        self.assertEqual(list(crash_dir.glob("*.ips")), [])
+        report.write_bytes(report.read_bytes() + b'"report_complete": true\n')
+        (self.stub / "slow-cp").unlink()
+        self.finish()
+        copied = crash_dir / report.name
+        self.assertEqual(copied.read_bytes(), report.read_bytes())
+        self.assertEqual(list(crash_dir.glob(".incoming.*")), [])
 
     def test_normal_exit_skips_crash_reports(self) -> None:
         # A normal exit never copies crash reports.

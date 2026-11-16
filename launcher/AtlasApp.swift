@@ -550,6 +550,18 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
     }
 
     private func requestRecorderStop(session: URL, normalExit: Bool, exitDetail: String) {
+        let request = session.appendingPathComponent(".stop-requested")
+        let sanitizedDetail = exitDetail
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "\t", with: " ")
+        let contents = "\(normalExit ? "normal" : "abnormal")\n\(sanitizedDetail.prefix(200))\n"
+        if (try? contents.write(to: request, atomically: true, encoding: .utf8)) != nil {
+            return
+        }
+
+        // The recorder's CLI performs the same atomic handoff. Keep it as a
+        // fallback for an unexpected Foundation write failure, but do not make
+        // the normal exit path depend on scheduling another short-lived process.
         guard let script = recordingScript else { return }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
@@ -557,7 +569,9 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
                              "--game-exit", normalExit ? "normal" : "abnormal", "--exit-detail", exitDetail]
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
-        try? process.run()
+        if (try? process.run()) != nil {
+            process.waitUntilExit()
+        }
     }
 
     private func reportFinishedGame(_ finished: Process, build: GameBuild, session: URL?, recorderProcess: Process?,

@@ -3715,3 +3715,8 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Darron's physically acquired White Cliff deck now survives a production Save and separate-process normal-menu Load with the quest active, the deck retained, its world sprite removed, no respawn and byte-identical save output. The existing route and both fresh processes pass 1/1 each.
 - Seth Drakkson's real Griffin report now covers neither region clear, either single region clear and both regions clear. Refusals make no transaction; success grants the exact carried gold, per-character XP, reputation and all-character award, retains both regional bits, clears the topic and cannot be claimed twice. The focused packet and both predicate/lifecycle controls pass 4/4 without a production change.
+
+## [2026-11-15] test | MM7 Malwick pre-trigger durability
+- by: T-Burton-ND via codex
+- Malwick's real Emerald Wand acceptance now flows into both authored Light and Dark Arbiter installations, proving each choice starts Counter5. Original and GrayFace 2.5.7 Harmondale event-37/event-50 records are identical, so no production seam was added.
+- The Light writer reaches 1,007 hours with no letter or Niles state before a production Save. A separate normal-menu reader preserves the Wand, path, alignment and counter below the boundary, then exact 1,008-hour Harmondale entry delivers item 704 and starts the visit without changing the save slot. Focused behavior passes 2/2 and both fresh processes pass 1/1.

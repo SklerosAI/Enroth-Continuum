@@ -133,18 +133,24 @@ void stru262_TurnBased::Start() {
     }
 
     for (int i = 0; i < ai_arrays_size; ++i) {
-        if (pActors[ai_near_actors_ids[i]].CanAct()) {
-            if (pActors[ai_near_actors_ids[i]].ActorNearby()) {
-                pActors[ai_near_actors_ids[i]].attributes |=
+        unsigned actorId = ai_near_actors_ids[i];
+        // Map transitions rebuild pActors before the nearby-AI list gets its
+        // next frame. Ignore a stale entry instead of indexing the new map's
+        // actor deque with an id from the map we just left.
+        if (actorId >= pActors.size() || actorId >= ai_near_actors_targets_pid.size())
+            continue;
+        if (pActors[actorId].CanAct()) {
+            if (pActors[actorId].ActorNearby()) {
+                pActors[actorId].attributes |=
                     ACTOR_STAND_IN_QUEUE;  // 0x80
                 Actor::GetDirectionInfo(
-                    Pid(OBJECT_Actor, ai_near_actors_ids[i]),
-                    ai_near_actors_targets_pid[ai_near_actors_ids[i]], &v31, 0);
+                    Pid(OBJECT_Actor, actorId),
+                    ai_near_actors_targets_pid[actorId], &v31, 0);
                 v30 = v31;
-                Actor::AI_StandOrBored(ai_near_actors_ids[i], Pid::character(0), 32_ticks, &v30);
+                Actor::AI_StandOrBored(actorId, Pid::character(0), 32_ticks, &v30);
 
                 TurnBased_QueueElem &element = this->pQueue.emplace_back();
-                element.uPackedID = Pid(OBJECT_Actor, ai_near_actors_ids[i]);
+                element.uPackedID = Pid(OBJECT_Actor, actorId);
                 element.AI_action_type = TE_AI_PURSUE;
                 element.uActionLength = 0_ticks;
             }
@@ -333,6 +339,8 @@ void stru262_TurnBased::StartTurn() {
     }
     // add new arrived actors
     for (actor_num = 0; actor_num < ai_arrays_size; ++actor_num) {
+        if (ai_near_actors_ids[actor_num] >= pActors.size())
+            continue;
         for (j = 0; j < this->pQueue.size(); ++j) {
             if ((pQueue[j].uPackedID.type() == OBJECT_Actor) &&
                 ai_near_actors_ids[actor_num] == pQueue[j].uPackedID.id())

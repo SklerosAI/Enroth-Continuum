@@ -22,9 +22,11 @@ The start command stays in the foreground, prints SESSION_DIR=..., and exits
 after the game PID exits or stop is requested. It never launches or signals MM7.
 --build names the Atlas helper being played: the fork's MM7.app (default) or
 the upstream OpenEnroth.app. Diagnostics (logs, saves, crash reports and
-process samples) are on by default. Video keeps a rolling buffer of the last two minutes. A clip request, an
-abnormal game exit, or a game exit with no stop request keeps the buffer as a
-clip. Otherwise the buffer is deleted when recording ends.
+process samples) are on by default. Video keeps a rolling buffer of the last
+two minutes. The latest completed buffer remains in the session when recording
+ends and is replaced chunk by chunk during a recording. A clip request, an
+abnormal game exit, or a game exit with no stop request also keeps the buffer
+as a permanent clip.
 A session keeps the newest --max-save-snapshots copies of each save file
 (default 3, or EC_MM7_MAX_SAVE_SNAPSHOTS). Start removes all but the newest
 --max-sessions sessions in the destination (default 20, or EC_MM7_MAX_SESSIONS),
@@ -389,7 +391,6 @@ video_restart=1
 pending_clip=""
 clip_counter=0
 clips_saved=0
-last_clip_saved=0
 video_running() {
     local status
     [[ -n "$video_pid" ]] || return 1
@@ -451,11 +452,9 @@ close_clip() {
     count=$(find "$pending_clip" -maxdepth 1 -type f -name 'chunk-*.mov' | wc -l | tr -d ' ')
     if (( count == 0 )); then
         rmdir "$pending_clip" 2>/dev/null || true
-        last_clip_saved=0
         event video-clip "No video was available for the clip."
     else
         clips_saved=$((clips_saved + 1))
-        last_clip_saved=1
         event video-clip "Clip saved with $count chunk(s): $pending_clip"
         write_status
     fi
@@ -552,9 +551,10 @@ idle() {
     done
 }
 
-# An abnormal exit waits for the chunk being recorded to complete, so the
-# clip holds the moments around the exit.
-drain_video_into_clip() {
+# Finish the chunk being recorded before finalizing any exit. This makes the
+# retained rolling replay end at the game exit instead of up to one chunk
+# earlier. If a clip is open, finish_video_chunk adds the chunk to it too.
+finish_current_video_chunk() {
     local waited=0 limit=$((video_chunk_seconds + 15)) signals="$requested"
     while video_running && (( waited < limit && requested == signals )); do
         sleep 1 || true
@@ -770,8 +770,8 @@ if volume_ok; then
     fi
     if (( keep_video )) && [[ "$video_enabled" == 1 ]]; then
         [[ -n "$pending_clip" ]] || open_clip "game exit ${game_exit:-unreported}" || true
-        drain_video_into_clip || true
     fi
+    if [[ "$video_enabled" == 1 ]]; then finish_current_video_chunk || true; fi
     stop_video
     close_clip
     if (( diagnostics_enabled )) && [[ "$stop_reason" != low-space && "$game_exit" != normal ]]; then
@@ -779,10 +779,15 @@ if volume_ok; then
         [[ "$game_exit" != abnormal ]] || crash_wait=15
         collect_crash_reports "$crash_wait" || true
     fi
-    while IFS= read -r chunk; do unlink "$chunk" 2>/dev/null || true; done < <(completed_chunks)
     if [[ "$video_state" != off && "$video_state" != failed ]]; then
-        if (( keep_video && last_clip_saved )); then video_state="kept"; else video_state="discarded"; fi
-        event video "Rolling video buffer deleted ($video_state)."
+        prune_video_buffer "$video_keep"
+        if [[ -n "$(completed_chunks)" ]]; then
+            video_state="retained"
+            event video "Latest rolling replay retained."
+        else
+            video_state="unavailable"
+            event video "No completed rolling replay was available."
+        fi
     fi
     state="$stop_reason"
     ended_json="\"$(utc)\""

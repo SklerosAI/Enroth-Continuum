@@ -190,6 +190,16 @@ class CaptureCase(unittest.TestCase):
         self.assertEqual(self.video_files(), [])
         self.assertEqual(list((self.session / "video").glob(".*")), [])
 
+    def assert_buffer_retained(self, count: int = 2) -> list[str]:
+        names = self.completed()
+        self.assertEqual(len(names), count)
+        self.assertEqual(list((self.session / "video").glob(".*")), [])
+        for name in names:
+            recorded = self.stub / "ledger" / name.replace(".mov", ".recording.mov")
+            self.assertEqual((self.session / "video" / name).read_bytes(), recorded.read_bytes(), name)
+            self.assertTrue((self.session / "video" / name).read_bytes().endswith(b"complete\n"), name)
+        return names
+
     def add_upstream_helper(self) -> None:
         write_executable(self.app / "Contents/Helpers/OpenEnroth.app/Contents/MacOS/OpenEnroth", "#!/bin/sh\n")
         info = self.app / "Contents/Resources/Helpers/OpenEnroth-BUILD-INFO.txt"
@@ -237,7 +247,7 @@ class RollingReplayTest(CaptureCase):
         self.cli("stop", "--game-exit", "normal")
         self.finish()
         self.assertEqual(len(self.clips()), 1)
-        self.assert_buffer_gone()
+        self.assert_buffer_retained()
         self.assertEqual(self.status()["clips"], 1)
 
     def test_abnormal_exit_keeps_clip(self) -> None:
@@ -249,12 +259,12 @@ class RollingReplayTest(CaptureCase):
         self.cli("stop", "--game-exit", "abnormal")
         self.finish()
         status = self.status()
-        self.assertEqual(status["video"], "kept")
+        self.assertEqual(status["video"], "retained")
         self.assertEqual(len(self.clips()), 1)
         names = self.assert_clip_matches_ledger(self.clips()[0])
         self.assertEqual(len(names), 3)
         self.assertEqual(int(names[-1][6:12]), len(self.calls()))
-        self.assert_buffer_gone()
+        self.assert_buffer_retained()
         self.assert_no_capture_running()
         self.assertIn("abnormal exit", (self.session / "timeline.tsv").read_text())
 
@@ -266,13 +276,13 @@ class RollingReplayTest(CaptureCase):
         self.game.wait()
         self.finish(timeout=40)
         self.assertEqual(self.status()["state"], "game-exited")
-        self.assertEqual(self.status()["video"], "kept")
+        self.assertEqual(self.status()["video"], "retained")
         self.assertEqual(len(self.clips()), 1)
         self.assert_clip_matches_ledger(self.clips()[0])
-        self.assert_buffer_gone()
+        self.assert_buffer_retained()
 
-    def test_normal_exit_discards_video(self) -> None:
-        # A normal exit deletes the buffer and keeps logs and saves.
+    def test_normal_exit_retains_latest_video(self) -> None:
+        # A normal exit keeps the latest rolling replay alongside logs and saves.
         (self.profile / "saves/save000.mm7").write_bytes(b"save one")
         (self.profile / "logs/enroth-continuum-mm7_1.log").write_text("line one\n")
         self.start()
@@ -282,10 +292,10 @@ class RollingReplayTest(CaptureCase):
         self.cli("stop", "--game-exit", "normal")
         self.finish()
         status = self.status()
-        self.assertEqual(status["video"], "discarded")
+        self.assertEqual(status["video"], "retained")
         self.assertEqual(status["clips"], 0)
         self.assertEqual(self.clips(), [])
-        self.assert_buffer_gone()
+        self.assert_buffer_retained()
         self.assert_no_capture_running()
         self.assertEqual([path.read_bytes() for path in (self.session / "saves").glob("*.mm7")], [b"save one"])
         self.assertEqual([path.read_text() for path in (self.session / "logs").glob("*.log.part")], ["line one\n"])
@@ -300,7 +310,7 @@ class RollingReplayTest(CaptureCase):
         status = self.status()
         self.assertEqual(status["state"], "low-space")
         self.assertIn("free space fell below 128 MiB", (self.session / "warnings.txt").read_text())
-        self.assert_buffer_gone()
+        self.assert_buffer_retained()
         self.assert_no_capture_running()
         self.assertTrue(self.game.poll() is None, "the recorder must never stop MM7")
 
@@ -323,7 +333,7 @@ class RollingReplayTest(CaptureCase):
         self.assertEqual(len(self.clips()), 1)
         names = self.assert_clip_matches_ledger(self.clips()[0])
         self.assertEqual(len(names), 3, "the pending clip still receives the chunk being recorded")
-        self.assert_buffer_gone()
+        self.assert_buffer_retained()
         self.assert_no_capture_running()
 
     def test_failed_video_warns_about_permission(self) -> None:
@@ -393,7 +403,7 @@ class DiagnosticsTest(CaptureCase):
         self.game.wait()
         self.cli("stop", "--game-exit", "abnormal", "--exit-detail", "uncaught signal 9")
         self.finish()
-        self.assertEqual(self.status()["video"], "kept")
+        self.assertEqual(self.status()["video"], "retained")
         self.assertEqual(len(self.clips()), 1)
         self.assertEqual(list((self.session / "saves").iterdir()), [])
         self.assertEqual(list((self.session / "logs").iterdir()), [])

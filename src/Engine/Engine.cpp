@@ -731,6 +731,11 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
     attackList.clear();
     // Clearing actors lists mean turn engine queue will have invalid actor ids
     std::erase_if(pTurnEngine->pQueue, [](const auto& item) { return item.uPackedID.type() == OBJECT_Actor; });
+    // The AI list still describes the map we are leaving until the first world
+    // update on the new map. Input can be processed before that update (for
+    // example, a held combat key while accepting an indoor transition), so do
+    // not let turn-based startup consume actor ids from the previous map.
+    ai_arrays_size = 0;
     int configLimit = engine->config->gameplay.MaxActors.value();
     ai_near_actors_targets_pid.resize(configLimit, Pid());
     ai_near_actors_ids.resize(configLimit);

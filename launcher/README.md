@@ -33,7 +33,9 @@ data path and user path. It does not package original Might & Magic data.
   toggles. With video on, press **Command-Shift-R** while the game runs
   to keep the replay in a new clip folder. If the game crashes, quits on a
   signal or exits with an error, Atlas tells the recorder and the replay is
-  kept as a clip automatically. After a normal exit the replay is deleted.
+  kept as a clip automatically. After every exit, the latest two-minute replay
+  remains in the session's `video` folder; new chunks replace old ones while a
+  recording runs.
   Diagnostics keep at most the newest 3 copies of each save per session and
   copy a save at a checkpoint only when it changed. Each recording start keeps
   the newest 20 sessions in the recording folder. Sessions with clips or crash

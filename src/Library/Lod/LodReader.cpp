@@ -174,6 +174,12 @@ std::string_view LodReader::entryNameAtDirectoryIndex(size_t oneBasedIndex) cons
     return _directoryEntryNames[oneBasedIndex - 1];
 }
 
+size_t LodReader::directoryEntryCount() const {
+    assert(isOpen());
+
+    return _directoryEntryNames.size();
+}
+
 [[nodiscard]] const LodInfo &LodReader::info() const {
     assert(isOpen());
 

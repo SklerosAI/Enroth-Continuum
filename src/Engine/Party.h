@@ -360,6 +360,8 @@ struct Party {
     IndexedArray<int, HOUSE_FIRST_SHOP, HOUSE_LAST_SHOP> InTheShopFlags;
     int uFine = 0;
     int mm6Reputation = 0; // MM6 keeps one party-wide reputation and positive is good. MM7 keeps it per location.
+    std::array<bool, 21> mm6TavernDrinks = {}; // MM6 taverns 92 to 112 where the party had a drink.
+    std::array<int, 21> mm6TavernTips = {}; // npcnews.txt entry each MM6 tavern's barkeep tells for a tip, 0 for none yet.
     float TorchLightLastIntensity = 0.0f;
 
     Duration _roundingDt;  // keeps track of rounding remainder for recovery

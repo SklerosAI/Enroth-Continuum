@@ -23,7 +23,9 @@
 #include "Engine/MM6/MM6ShopTitleState.h"
 #include "Engine/Localization.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
+#include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
+#include "Engine/Objects/Monsters.h"
 #include "Engine/Party.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
@@ -183,6 +185,7 @@ static const Vec3f kHaroldHessDoor(-5976, -8068, 160); // Harold Hess's house, f
 static const Vec3f kBladesEndDoor(-6504, -6090, 300); // Blades' End, a mercenary guild.
 static const Vec3f kBuccaneersLairDoor(-12632, -5946, 300); // Buccaneers' Lair, a thieves' guild.
 static const Vec3f kIsaoHouseDoor(-12528, -5814, 300); // In front of Isao Magistrus' house, facing north.
+static const Vec3f kJezebelHouseDoor(4688, -17668, 192); // In front of Jezebel's house on the Misty Islands, facing south.
 static constexpr AwardId kElementalGuildMember = static_cast<AwardId>(64);
 static constexpr AwardId kSelfGuildMember = static_cast<AwardId>(65);
 static constexpr AwardId kBuccaneersLairMember = static_cast<AwardId>(66);
@@ -230,24 +233,6 @@ GAME_TEST(MM6Houses, EnterAndExit) {
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE, SCREEN_GAME));
     EXPECT_EQ(houseTape, tape(HOUSE_INVALID, static_cast<HouseId>(69), HOUSE_INVALID));
     EXPECT_EQ(mapTape, tape(pMapTable->GetMapInfo("oute3.odm")));
-}
-
-GAME_TEST(MM6Houses, UnimplementedServiceRefuses) {
-    // A service the MM6 house screen doesn't implement is listed, and choosing it refuses without touching the party.
-    auto screenTape = tapes.screen();
-    auto statusTape = tapes.statusBar();
-    auto goldTape = tapes.gold();
-    auto itemsTape = tapes.totalItemCount();
-    startMM6NewGame(game);
-    test.startTaping();
-    enterThroughDoor(game, kTavernDoor, 0);
-    game.pressGuiButton("House_Npc0"); // The proprietor.
-    game.tick();
-    clickHouseOption(game, localization->str(mm6::houseServiceOptionLabel(mm6::HouseServiceOption::TipBarkeep)));
-    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE));
-    EXPECT_CONTAINS(statusTape, "This service is not available yet.");
-    EXPECT_EQ(goldTape.size(), 1);
-    EXPECT_EQ(itemsTape.size(), 1);
 }
 
 GAME_TEST(MM6Houses, TempleHeal) {
@@ -801,8 +786,9 @@ GAME_TEST(MM6Houses, OptionFocusColor) {
 }
 
 GAME_TEST(MM6Houses, GuildMembership) {
-    // Harold Hess's "Blade's End Membership" topic did nothing. He tells what joining costs and offers to join, and
-    // joining makes every character a member for 25 gold. Asked again, he says the party is in already.
+    // Joining Blades' End through Harold Hess made the party members silently and left his membership topic up. He
+    // tells what joining costs and offers to join, joining makes every character a member for 25 gold with the award
+    // chime and reaction, and he drops the topic.
     auto goldTape = tapes.gold();
     auto membersTape = tapes.custom([] {
         std::vector<bool> result;
@@ -812,19 +798,31 @@ GAME_TEST(MM6Houses, GuildMembership) {
     });
     auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
     auto textTape = tapes.custom([] { return current_npc_text.substr(0, 20); }); // The start of what the NPC says.
+    auto topicsTape = tapes.custom([] {
+        const NPCData &harold = pNPCStats->pNPCData[33];
+        return std::vector<unsigned>{harold.dialogue_1_evt_id, harold.dialogue_2_evt_id, harold.dialogue_3_evt_id};
+    });
+    auto soundsTape = tapes.sounds();
+    auto portraitsTape = tapes.custom([] {
+        std::vector<PortraitId> result;
+        for (const Character &character : pParty->pCharacters)
+            result.push_back(character.portrait);
+        return result;
+    });
     startMM6NewGame(game);
     test.startTaping();
     enterThroughDoor(game, kHaroldHessDoor, 270);
     clickHouseOption(game, "Blade's End Membership");
     clickHouseOption(game, "Join Blades' End for 25 gold");
-    clickHouseOption(game, "Blade's End Membership");
 
     EXPECT_EQ(goldTape, tape(200, 175));
     EXPECT_EQ(membersTape, tape(std::vector<bool>(4, false), std::vector<bool>(4, true)));
     using Lines = std::vector<std::string>;
-    EXPECT_EQ(optionsTape, tape(Lines(), Lines{"Blade's End Membership"}, Lines{"Join Blades' End for 25 gold"}, Lines{"Blade's End Membership"},
-                                Lines{"You're already a member of this guild."}));
-    EXPECT_EQ(textTape, tape(std::string(), std::string("HEY!  The Blades' En"), std::string(), std::string("HEY!  The Blades' En")));
+    EXPECT_EQ(optionsTape, tape(Lines(), Lines{"Blade's End Membership"}, Lines{"Join Blades' End for 25 gold"}, Lines()));
+    EXPECT_EQ(textTape, tape(std::string(), std::string("HEY!  The Blades' En"), std::string()));
+    EXPECT_EQ(topicsTape, tape(std::vector<unsigned>{0, 0, 386}, std::vector<unsigned>{0, 0, 0}));
+    EXPECT_EQ(std::ranges::count(soundsTape.flatten(), SOUND_quest), 4); // Each new member's award chime.
+    EXPECT_EQ(portraitsTape.back(), std::vector<PortraitId>(4, PORTRAIT_WIDE_SMILE)); // The award reaction, the portraits idle before it.
 }
 
 GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
@@ -1094,6 +1092,115 @@ GAME_TEST(MM6Houses, ExpertTeacher) {
     EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE));
 }
 
+GAME_TEST(MM6Houses, MasterTeacher) {
+    // Jezebel's Master of Fire topic on the Misty Islands did nothing, so no character could become a master. Her offer
+    // turns away a character who doesn't know Fire Magic and an expert of rank 11, and makes an expert of rank 12 a
+    // master for 4000 gold.
+    auto goldTape = tapes.gold();
+    auto fireTape = tapes.custom([] {
+        const CombinedSkillValue fire = pParty->pCharacters[2].pActiveSkills[SKILL_FIRE];
+        return std::pair(fire.level(), fire.mastery());
+    });
+    auto textTape = tapes.custom([] { return current_npc_text; });
+    auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+    auto portraitTape = charTapes.portrait(2);
+    auto houseTape = tapes.house();
+    startMM6NewGame(game);
+    pParty->SetGold(5000);
+    pParty->pCharacters[2].pActiveSkills[SKILL_FIRE] = CombinedSkillValue(12, MASTERY_EXPERT); // Serena, a sorcerer.
+    pParty->pCharacters[3].pActiveSkills[SKILL_FIRE] = CombinedSkillValue(11, MASTERY_EXPERT);
+    std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
+    game.runGameRoutine([&] { chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>(); });
+    game.teleportTo(pMapTable->GetMapInfo("oute2.odm"), kJezebelHouseDoor, 270);
+    game.runGameRoutine([&] { chestOptIn.reset(); });
+    test.startTaping();
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    clickHouseOption(game, "Master of Fire "); // npctopic.txt ends the topic with a space.
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_4);
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_3);
+    game.tick();
+    clickHouseOption(game, "Become Master in Fire Magic for 4000 gold");
+
+    EXPECT_EQ(houseTape, tape(static_cast<HouseId>(455)));
+    EXPECT_EQ(goldTape, tape(5000, 1000));
+    EXPECT_EQ(fireTape, tape(std::pair(12, MASTERY_EXPERT), std::pair(12, MASTERY_MASTER)));
+    EXPECT_EQ(textTape, tape(std::string(), std::string(pNPCTopics[224].pText), std::string())); // The offer, text 225 of npctext.txt.
+    using Lines = std::vector<std::string>;
+    EXPECT_EQ(optionsTape, tape(Lines{"Master of Fire ", "Fire Guild Membership"}, Lines{pNPCTopics[261].pText}, // "You must know the skill before you can become an expert in it!"
+                                Lines{pNPCTopics[260].pText}, // "You don't meet the requirements, and cannot be taught until you do."
+                                Lines{"Become Master in Fire Magic for 4000 gold"}, Lines{"Master of Fire ", "Fire Guild Membership"}));
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_WIDE_SMILE)); // The mastery reaction.
+}
+
+static void talkTo(EngineController &game, std::string_view name) {
+    // Clicks the portrait of the person in the house with this name.
+    ASSERT_NE(window_SpeakInHouse, nullptr);
+    std::optional<Pointi> center;
+    for (GUIButton *button : window_SpeakInHouse->vButtons)
+        if (button->id.starts_with("House_Npc") && button->label.contains(name))
+            center = button->rect.center();
+    ASSERT_TRUE(center) << "No one called " << name;
+    game.pressAndReleaseButton(BUTTON_LEFT, *center);
+    game.tick();
+}
+
+GAME_TEST(MM6Houses, BountyHunt) {
+    // Janice's Bounty Hunt topic in the New Sorpigal Town Hall did nothing. She names this month's monster, and once
+    // the party has killed one she pays 100 gold per level of the monster, every character gets the bounties
+    // collected award with its chime, and the reputation grows by the level. Asked again that month, she says the
+    // bounty is claimed.
+    auto goldTape = tapes.gold();
+    auto textTape = tapes.custom([] { return current_npc_text; });
+    auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+    auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+    auto bountyTape = tapes.custom([] { return std::pair(pParty->monster_id_for_hunting[HOUSE_FIRST_TOWN_HALL], pParty->monster_for_hunting_killed[HOUSE_FIRST_TOWN_HALL]); });
+    auto awardsTape = charTapes.custom([](const Character &character) { return character._achievedAwardsBits[static_cast<AwardId>(81)]; });
+    auto soundsTape = tapes.sounds();
+    startMM6NewGame(game);
+    waitUntilHour(game, 10); // The Town Hall opens at 10 am.
+    test.startTaping();
+    enterThroughDoor(game, kTownHallDoor, 180);
+    talkTo(game, "Janice");
+    clickHouseOption(game, "Bounty Hunt");
+    for (int i = 0; i < 3 && current_screen_type != SCREEN_GAME; ++i) {
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+    }
+    game.teleportTo(engine->_currentLoadedMapId, kTownHallDoor, 0); // Back to the street, facing east.
+    ASSERT_NE(pParty->monster_id_for_hunting[HOUSE_FIRST_TOWN_HALL], MONSTER_INVALID);
+    Actor *target = game.spawnMonster(kTownHallDoor + Vec3f(200, 0, 0), pParty->monster_id_for_hunting[HOUSE_FIRST_TOWN_HALL], SPAWN_DUMMY);
+    target->hp = 1; // One hit kills it.
+    game.pointMouseAtActor(target->id);
+    for (int attack = 0; attack < 1000 && target->aiState != Dead; ++attack) {
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+    }
+    for (int frame = 0; frame < 100 && !pParty->hasActiveCharacter(); frame++)
+        game.tick(); // A door opens only for a character who has recovered from the fight.
+    enterThroughDoor(game, kTownHallDoor, 180);
+    talkTo(game, "Janice");
+    clickHouseOption(game, "Bounty Hunt");
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    clickHouseOption(game, "Bounty Hunt");
+
+    const MonsterId ooze = static_cast<MonsterId>(116);
+    const std::string name = fmt::format("{::}Acidic Ooze{::}", colorTable.PaleCanary.tag(), colorTable.White.tag());
+    EXPECT_EQ(bountyTape, tape(std::pair(MONSTER_INVALID, false), std::pair(ooze, false), std::pair(ooze, true), std::pair(MONSTER_INVALID, false)));
+    EXPECT_EQ(textTape, tape(std::string(), "This month's bounty is on a " + name + ".  Kill it and return before the end of the month to collect the 1800 gold reward.",
+                             std::string(), "Congratulations on defeating the " + name + "!  Here is the 1800 gold reward.  Come back next month for a new bounty.",
+                             std::string(), "Someone has already claimed the bounty this month.  Come back next month for a new bounty."));
+    using Lines = std::vector<std::string>;
+    const Lines topics = {"Goblinwatch", "Bounty Hunt"};
+    EXPECT_EQ(optionsTape, tape(Lines(), topics, Lines(), topics, Lines(), topics, Lines(), topics, Lines())); // The bounty takes the place of her topics, escape brings them back.
+    EXPECT_EQ(goldTape, tape(200, 2000)); // A level 18 monster.
+    EXPECT_EQ(reputationTape, tape(0, 18));
+    EXPECT_EQ(awardsTape, tape({false, false, false, false}, {true, true, true, true}));
+    EXPECT_EQ(std::ranges::count(soundsTape.flatten(), SOUND_quest), 4); // Each character's award chime.
+}
+
 GAME_TEST(MM6Houses, TempleDonate) {
     // New Sorpigal Temple's Donate said "not available yet". A donation takes the temple's 10 gold, thanks the party
     // and raises its reputation by 200, but not past 200.
@@ -1143,4 +1250,37 @@ GAME_TEST(MM6Houses, TavernDrink) {
     EXPECT_EQ(drunkTape, tape(false, true));
     EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_DRUNK));
     EXPECT_EQ(bonusesTape.size(), 1); // These drinks rolled no stat bonus.
+}
+
+GAME_TEST(MM6Houses, TavernTip) {
+    // A Lonely Knight's Tip the Bartender said "not available yet". The barkeep wants the party to have a drink first.
+    // After one, a tip of 1 gold gets a piece of New Sorpigal's news, and the next tip gets the same news again. The
+    // drinker gets drunk, so a sober character tips.
+    auto goldTape = tapes.gold();
+    auto statusTape = tapes.statusBar();
+    auto textTape = tapes.custom([] { return current_npc_text; });
+    auto drawnTape = tapes.allGUIWindowsText();
+    auto portraitTape = charTapes.portrait(1);
+    auto tipsTape = tapes.custom([] { return pParty->mm6TavernTips[0]; });
+    startMM6NewGame(game);
+    test.startTaping();
+    enterThroughDoor(game, kTavernDoor, 0);
+    game.pressGuiButton("House_Npc0"); // The proprietor.
+    game.tick();
+    const std::string tip = localization->str(mm6::houseServiceOptionLabel(mm6::HouseServiceOption::TipBarkeep));
+    clickHouseOption(game, tip);
+    clickHouseOption(game, localization->str(LSTR_HAVE_A_DRINK));
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_2);
+    game.tick();
+    clickHouseOption(game, tip);
+    clickHouseOption(game, tip);
+
+    const std::string news = pNPCStats->pCatchPhrases[30]; // The last of New Sorpigal's news.
+    EXPECT_EQ(goldTape, tape(200, 199, 198, 197));
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_HAVE_A_DRINK_FIRST));
+    EXPECT_MISSES(statusTape, "This service is not available yet.");
+    EXPECT_EQ(textTape, tape(std::string(), news));
+    EXPECT_EQ(tipsTape, tape(0, 29));
+    EXPECT_CONTAINS(portraitTape, PORTRAIT_45); // The tip reaction.
+    EXPECT_CONTAINS(drawnTape.flatten(), "Berserker's Fury in Castle Ironfist can teach you\nbow, shield, chain, plate, and repair item.");
 }

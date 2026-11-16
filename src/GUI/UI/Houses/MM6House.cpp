@@ -17,17 +17,23 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineIocContainer.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Evt/MM6EventVariableDispatch.h"
 #include "Engine/Evt/MM6ItemEventCompare.h"
+#include "Engine/Evt/MM6ReputationEvent.h"
 #include "Engine/Localization.h"
 #include "Engine/mm7_data.h"
 #include "Engine/Graphics/Camera.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/MM6/MM6HouseExit.h"
 #include "Engine/MM6/MM6RoomMovie.h"
+#include "Engine/Resources/LOD.h"
 #include "Engine/Resources/ResourceManager.h"
+#include "Engine/Objects/Monsters.h"
+#include "Engine/Objects/NPC.h"
 #include "Engine/Party.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Tables/HouseTable.h"
+#include "Engine/Tables/ItemTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/Tables/TransitionTable.h"
@@ -51,11 +57,14 @@
 #include "Io/KeyboardInputHandler.h"
 #include "Io/Mouse.h"
 
+#include "Library/Lod/LodReader.h"
 #include "Library/Logger/Logger.h"
 #include "Library/Platform/Interface/Platform.h"
 
 #include "Media/Audio/AudioPlayer.h"
 #include "Media/MediaPlayer.h"
+
+#include "Utility/String/Ascii.h"
 
 static constexpr LstrId LSTR_MM6_CANCEL = static_cast<LstrId>(34);
 static constexpr LstrId LSTR_MM6_END_CONVERSATION = static_cast<LstrId>(74);
@@ -121,6 +130,111 @@ static int expertTeacherPrice(Skill skill) {
     }
 }
 
+/**
+ * @param character                     Character who asks.
+ * @return                              Whether one of the character's items, the equipped ones included, is a blaster.
+ */
+static bool carriesBlaster(const Character &character) {
+    for (InventoryConstEntry entry : character.inventory.entries())
+        if (pItemTable->items[entry->itemId].skill == SKILL_BLASTER)
+            return true;
+    return false;
+}
+
+/**
+ * @offset 0x496D67 (MM6)
+ *
+ * @param character                     Character who asks, an expert in the skill.
+ * @param skill                         Skill taught.
+ * @return                              Gold a master teacher asks, or nothing when the character doesn't meet the
+ *                                      teacher's requirements.
+ */
+static std::optional<int> masterTeacherPrice(const Character &character, Skill skill) {
+    const int level = character.pActiveSkills[skill].level();
+    const int classId = std::to_underlying(character.classType); // MM6 class ids, Knight 0 to Arch Druid 17.
+    auto honorary = [&](int award) { return character._achievedAwardsBits[static_cast<AwardId>(award)]; };
+    auto price = [](bool met, int gold) { return met ? std::optional(gold) : std::nullopt; };
+    const bool knightPromoted = classId == 1 || classId == 2 || honorary(17) || honorary(19); // Cavalier or Champion, as a class or an honorary award.
+    switch (skill) {
+      case SKILL_STAFF: return price(level >= 8, 5000);
+      case SKILL_SWORD: return price(level >= 8 && knightPromoted, 0);
+      case SKILL_DAGGER: return price(level >= 8 && character.GetActualSpeed() >= 40, 5000);
+      case SKILL_AXE: return 0;
+      case SKILL_SPEAR: return price(level >= 8 && knightPromoted, 5000);
+      case SKILL_BOW: return price(level >= 8 && (classId == 13 || classId == 14 || honorary(29) || honorary(31)), 0); // Battle Mage or Warrior Mage.
+      case SKILL_MACE: return price(level >= 8 && character.GetActualMight() >= 40, 5000);
+      case SKILL_BLASTER: return price(carriesBlaster(character), 5000);
+      case SKILL_SHIELD: return price(level >= 10, 5000);
+      case SKILL_LEATHER: return price(level >= 10, 3000);
+      case SKILL_CHAIN: return price(level >= 10 && (classId == 10 || classId == 11 || honorary(9) || honorary(11)), 0); // Crusader or Hero.
+      case SKILL_PLATE: return price(classId == 11 || honorary(11), 0); // Hero.
+      case SKILL_FIRE: case SKILL_WATER: case SKILL_EARTH: case SKILL_MIND: case SKILL_BODY: return price(level >= 12, 4000);
+      case SKILL_AIR: return price(classId == 8 || honorary(15), 4000); // Arch Mage.
+      case SKILL_SPIRIT: return price(classId == 5 || honorary(23), 0); // High Priest.
+      case SKILL_LIGHT: return price(mm6::effectiveReputation(pParty->mm6Reputation, &CheckHiredNPCSpeciality) >= 1000, 0);
+      case SKILL_DARK: return price(mm6::effectiveReputation(pParty->mm6Reputation, &CheckHiredNPCSpeciality) <= -1000, 0);
+      case SKILL_ITEM_ID: return price(level >= 7 && character.GetActualIntelligence() >= 30, 2500);
+      case SKILL_MERCHANT: return price(level >= 7 && character.GetActualPersonality() >= 30, 4000);
+      case SKILL_REPAIR: case SKILL_TRAP_DISARM: return price(level >= 7 && character.GetActualAccuracy() >= 30, 2500);
+      case SKILL_BODYBUILDING: return price(level >= 7 && character.GetActualEndurance() >= 30, 2500);
+      case SKILL_MEDITATION: return price(level >= 7 && character.GetActualPersonality() >= 30, 2500);
+      case SKILL_PERCEPTION: return price(level >= 7 && character.GetActualLuck() >= 30, 2500);
+      case SKILL_DIPLOMACY: {
+        int64_t experience = 0;
+        for (const Character &member : pParty->pCharacters)
+            experience += static_cast<int32_t>(member.experience);
+        return price(experience / 1000 >= 200, 2500); // MM6's fame.
+      }
+      case SKILL_LEARNING: return price(level >= 7 && character.GetActualIntelligence() >= 30, 5000);
+      default: return std::nullopt;
+    }
+}
+
+/**
+ * @param character                     Character who asks.
+ * @param topic                         Teacher topic, 200 to 259.
+ * @return                              Gold the teacher asks, or nothing when the character doesn't meet the
+ *                                      requirements of the skill and mastery on offer.
+ */
+static std::optional<int> teacherPrice(const Character &character, int topic) {
+    const Skill skill = teacherSkill(topic);
+    if (topic % 2)
+        return masterTeacherPrice(character, skill);
+    if (character.pActiveSkills[skill].level() < 4)
+        return std::nullopt;
+    return expertTeacherPrice(skill);
+}
+
+static constexpr int kFirstTownHall = 89; // New Sorpigal's, then the Misty Islands' and Silver Cove's.
+static constexpr int kBountyHuntTopic = 399;
+static constexpr int kBountiesAward = 81; // awards.txt "Collected %u bounties".
+
+/**
+ * @param townHall                      MM6 town hall.
+ * @return                              Slot of the party's bounty arrays the town hall keeps its bounty in. The three
+ *                                      MM6 town halls take the first three, which `Actor::Die` marks killed.
+ */
+static HouseId bountySlot(HouseId townHall) {
+    const int index = std::to_underlying(townHall) - kFirstTownHall;
+    assert(index >= 0 && index < 3);
+    return static_cast<HouseId>(std::to_underlying(HOUSE_FIRST_TOWN_HALL) + index);
+}
+
+/**
+ * @offset 0x4A3238 (MM6)
+ *
+ * @return                              A monster to hunt, from MM6's first 171 monsters without the Varn guardians,
+ *                                      merchants, peasants and robots.
+ */
+static MonsterId randomBountyMonster() {
+    while (true) {
+        const int monster = grng->random(171) + 1;
+        if ((monster < 88 || monster > 90) && (monster < 103 || monster > 105) && (monster < 121 || monster > 126) &&
+            (monster < 133 || monster > 135) && (monster < 148 || monster > 150))
+            return static_cast<MonsterId>(monster);
+    }
+}
+
 static Pointi portraitPosition(size_t count, size_t index) {
     return kPortraitPositions[count - 1][index];
 }
@@ -169,6 +283,18 @@ static std::pair<std::string, bool> roomMovie(HouseId houseId, const std::string
     if (std::optional<std::string_view> once = mm6::oneShotRoomMovie(std::to_underlying(houseId), carriesTanirsBell()))
         return {std::string(*once), false};
     return {videoName, true};
+}
+
+/**
+ * @return                              Region of the map the party is on, see `mm6::tavernTipNews`.
+ */
+static int newsRegion() {
+    const std::string &map = pMapTable->pInfos[engine->_currentLoadedMapId].fileName;
+    const size_t baseMaps = pGames_LOD->directoryEntryCount() / 2;
+    for (size_t i = 1; i <= baseMaps; ++i)
+        if (ascii::toLower(pGames_LOD->entryNameAtDirectoryIndex(i)) == map)
+            return static_cast<int>(i);
+    return 1;
 }
 
 static std::string exitLabel(MapId map) {
@@ -262,6 +388,7 @@ void GUIWindow_MM6House::selectResident(int index) {
     current_npc_text.clear();
     _membershipOffer.reset();
     _teacherOffer.reset();
+    _bountyShown = false;
     _selected = index;
     if (_residents[index].npc) {
         refreshTopics();
@@ -302,6 +429,10 @@ void GUIWindow_MM6House::selectService(int index) {
         haveDrink();
         return;
     }
+    if (_services[index] == mm6::HouseServiceOption::TipBarkeep) {
+        tipBarkeep();
+        return;
+    }
     if (_services[index] == mm6::HouseServiceOption::Deposit || _services[index] == mm6::HouseServiceOption::Withdraw) {
         if (!_bankTransfer) {
             _bankTransfer = _services[index];
@@ -323,6 +454,8 @@ void GUIWindow_MM6House::refreshTopics() {
                                               std::to_underlying(DIALOGUE_MAGIC_GUILD_JOIN)));
         return;
     }
+    if (_bountyShown)
+        return;
     if (_teacherOffer) {
         _optionButtons.push_back(CreateButton("HouseNpcDialogue_Option0", {480, 160}, {139, 29}, BUTTON_TYPE_NORMAL, 0, UIMSG_SelectHouseNPCDialogueOption,
                                               std::to_underlying(DIALOGUE_MASTERY_TEACHER_LEARN)));
@@ -355,14 +488,16 @@ void GUIWindow_MM6House::joinGuild() {
         return;
     pParty->TakeGold(price);
     for (Character &member : pParty->pCharacters)
-        member._achievedAwardsBits.set(award);
+        mm6::writeCharacterEventVariable(member, EVENT_Set, std::to_underlying(VAR_Award), std::to_underlying(award));
+    selectedNpc()->dialogue_3_evt_id = 0; // MM6 clears the third topic whichever one held the offer.
     _membershipOffer.reset();
     current_npc_text.clear();
     refreshTopics();
+    pParty->activeCharacter().playReaction(SPEECH_JOINED_GUILD);
 }
 
-void GUIWindow_MM6House::offerExpertTraining(int topic) {
-    assert(topic >= kFirstTeacherTopic && topic <= kLastTeacherTopic && topic % 2 == 0);
+void GUIWindow_MM6House::offerTeacherTraining(int topic) {
+    assert(topic >= kFirstTeacherTopic && topic <= kLastTeacherTopic);
     _teacherOffer = topic;
     current_npc_text = pNPCTopics[topic - 1].pText; // The text with the topic's number.
     refreshTopics();
@@ -375,11 +510,44 @@ void GUIWindow_MM6House::learnFromTeacher() {
         return;
     const Skill skill = teacherSkill(*_teacherOffer);
     Character &character = pParty->activeCharacter();
-    pParty->TakeGold(expertTeacherPrice(skill));
-    character.pActiveSkills[skill] = CombinedSkillValue(character.pActiveSkills[skill].level(), MASTERY_EXPERT);
+    pParty->TakeGold(*teacherPrice(character, *_teacherOffer));
+    const Mastery mastery = *_teacherOffer % 2 ? MASTERY_MASTER : MASTERY_EXPERT;
+    character.pActiveSkills[skill] = CombinedSkillValue(character.pActiveSkills[skill].level(), mastery);
     character.playReaction(SPEECH_SKILL_MASTERY_INC);
     _teacherOffer.reset();
     current_npc_text.clear();
+    refreshTopics();
+}
+
+void GUIWindow_MM6House::huntBounty() {
+    const HouseId slot = bountySlot(houseId());
+    if (pParty->PartyTimes.bountyHuntNextGenTime[slot] <= pParty->GetPlayingTime()) {
+        pParty->monster_for_hunting_killed[slot] = false;
+        pParty->PartyTimes.bountyHuntNextGenTime[slot] = Time::fromMonths(pParty->GetPlayingTime().toMonths() + 1);
+        pParty->monster_id_for_hunting[slot] = randomBountyMonster();
+    }
+    const MonsterId monster = pParty->monster_id_for_hunting[slot];
+    const int level = monster == MONSTER_INVALID ? 0 : pMonsterStats->infos[monster].level;
+    int text = monster == MONSTER_INVALID ? 369 : 367; // "Someone has already claimed the bounty", or "This month's bounty is on a %s".
+    if (pParty->monster_for_hunting_killed[slot]) {
+        if (monster != MONSTER_INVALID) {
+            pParty->partyFindsGold(100 * level, GOLD_RECEIVE_SHARE);
+            for (Character &character : pParty->pCharacters)
+                mm6::writeCharacterEventVariable(character, EVENT_Set, std::to_underlying(VAR_Award), kBountiesAward);
+            pParty->mm6Reputation += level;
+            ++pParty->uNumBountiesCollected;
+            pParty->monster_id_for_hunting[slot] = MONSTER_INVALID;
+            pParty->monster_for_hunting_killed[slot] = false;
+        }
+        text = 368; // "Congratulations on defeating the %s!"
+    }
+    if (monster == MONSTER_INVALID) {
+        current_npc_text = pNPCTopics[text].pText;
+    } else {
+        const std::string name = fmt::format("{::}{}{::}", colorTable.PaleCanary.tag(), pMonsterStats->infos[monster].name, colorTable.White.tag());
+        current_npc_text = fmt::sprintf(pNPCTopics[text].pText, name, 100 * level); // NOLINT: this is not ::sprintf.
+    }
+    _bountyShown = true;
     refreshTopics();
 }
 
@@ -389,9 +557,10 @@ NPCData *GUIWindow_MM6House::selectedNpc() const {
 
 bool GUIWindow_MM6House::goBack() {
     current_npc_text.clear();
-    if (_membershipOffer || _teacherOffer) {
+    if (_membershipOffer || _teacherOffer || _bountyShown) {
         _membershipOffer.reset();
         _teacherOffer.reset();
+        _bountyShown = false;
         refreshTopics();
         return true;
     }
@@ -453,20 +622,23 @@ std::string GUIWindow_MM6House::teacherLabel(bool *approved) const {
         return {};
     const Character &character = pParty->activeCharacter();
     const Skill skill = teacherSkill(*_teacherOffer);
+    const bool master = *_teacherOffer % 2;
     const CombinedSkillValue value = character.pActiveSkills[skill];
     if (!character.CanAct())
         return pNPCTopics[263].pText; // "Not in your condition!"
     if (!value.level())
         return pNPCTopics[261].pText; // "You must know the skill before you can become an expert in it!"
-    if (value.mastery() >= MASTERY_EXPERT)
-        return pNPCTopics[264].pText; // "You are already an expert in this skill."
-    if (value.level() < 4)
+    if (value.mastery() >= (master ? MASTERY_MASTER : MASTERY_EXPERT))
+        return pNPCTopics[master ? 265 : 264].pText; // "You are already a master in this skill." or an expert.
+    if (master && value.mastery() < MASTERY_EXPERT)
+        return pNPCTopics[262].pText; // "You must first be an expert in the skill before you can become a master."
+    const std::optional<int> price = teacherPrice(character, *_teacherOffer);
+    if (!price)
         return pNPCTopics[260].pText; // "You don't meet the requirements, and cannot be taught until you do."
-    const int price = expertTeacherPrice(skill);
-    if (price > pParty->GetGold())
+    if (*price > pParty->GetGold())
         return pNPCTopics[259].pText; // "You don't have enough gold!"
     *approved = true;
-    return localization->format(LSTR_BECOME_S_IN_S_FOR_LU_GOLD, localization->str(LSTR_EXPERT), localization->skillName(skill), price);
+    return localization->format(LSTR_BECOME_S_IN_S_FOR_LU_GOLD, localization->str(master ? LSTR_MASTER : LSTR_EXPERT), localization->skillName(skill), *price);
 }
 
 std::string GUIWindow_MM6House::membershipLabel() const {
@@ -660,6 +832,8 @@ void GUIWindow_MM6House::haveDrink() {
     pParty->TakeGold(1);
     engine->_statusBar->setEvent(LSTR_HIC);
     mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_BUY_FOOD);
+    pParty->mm6TavernDrinks[std::to_underlying(houseId()) - mm6::kFirstTavern] = true;
+    current_npc_text.clear(); // A drink hides the tip.
     if (grng->random(2) == 1) {
         character.playReaction(SPEECH_TAVERN_GOT_DRUNK);
         if (grng->random(3) == 1)
@@ -671,6 +845,29 @@ void GUIWindow_MM6House::haveDrink() {
         character._statBonuses[stat] += grng->random(6) + 5;
     }
     character.playReaction(SPEECH_TAVERN_DRINK);
+}
+
+void GUIWindow_MM6House::tipBarkeep() {
+    const int tavern = std::to_underlying(houseId()) - mm6::kFirstTavern;
+    if (!pParty->mm6TavernDrinks[tavern]) {
+        engine->_statusBar->setEvent(LSTR_HAVE_A_DRINK_FIRST);
+        return;
+    }
+    if (pParty->GetGold() < 1) {
+        engine->_statusBar->setEvent(LSTR_YOU_DONT_HAVE_ENOUGH_GOLD);
+        mm6PlayHouseSound(houseId(), HOUSE_SOUND_TAVERN_NOT_ENOUGH_GOLD);
+        return;
+    }
+    pParty->TakeGold(1);
+    int &tip = pParty->mm6TavernTips[tavern];
+    if (!tip) {
+        const std::vector<int> regions = mm6::tavernNewsRegions(engine->resources()->eventsData("npcnews.txt").str());
+        const auto [first, count] = mm6::tavernTipNews(regions, newsRegion());
+        tip = first + grng->random(count);
+        if (pParty->hasActiveCharacter())
+            pParty->activeCharacter().playReaction(SPEECH_TAVERN_TIP);
+    }
+    current_npc_text = tip ? pNPCStats->pCatchPhrases[tip + 1] : std::string(); // MM6 shows nothing for the first entry, which is New Sorpigal's.
 }
 
 std::string GUIWindow_MM6House::serviceLabel(int index) const {
@@ -853,8 +1050,12 @@ void mm6SelectHouseTopic(DialogueId topic) {
         house->offerGuildMembership(event - kFirstMembershipTopic);
         return;
     }
-    if (event >= kFirstTeacherTopic && event <= kLastTeacherTopic && event % 2 == 0) {
-        house->offerExpertTraining(event);
+    if (event >= kFirstTeacherTopic && event <= kLastTeacherTopic) {
+        house->offerTeacherTraining(event);
+        return;
+    }
+    if (event == kBountyHuntTopic) {
+        house->huntBounty();
         return;
     }
     handleScriptedNPCTopicSelection(topic, npc);

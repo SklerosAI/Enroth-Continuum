@@ -51,27 +51,40 @@ class GUIWindow_MM6House : public GUIWindow_House {
     void offerGuildMembership(int guild);
 
     /**
-     * Takes the offered membership: the party pays and every character joins the guild. Does nothing when the active
-     * character can't act, is a member already, or the party can't pay.
+     * Takes the offered membership: the party pays, every character joins the guild with the award chime, and the NPC
+     * drops its third topic. Does nothing when the active character can't act, is a member already, or the party
+     * can't pay.
+     *
+     * @offset 0x496A96 (MM6)
      */
     void joinGuild();
 
     /**
-     * Shows an expert teacher's offer with its one learn line in place of the NPC's topics.
+     * Shows a teacher's offer with its one learn line in place of the NPC's topics.
      *
      * @offset 0x499610 (MM6)
      *
-     * @param topic                     NPC topic of the teacher, an even one from 200 to 258.
+     * @param topic                     NPC topic of the teacher, from 200 to 259. An even one teaches Expert, an odd one
+     *                                  Master.
      */
-    void offerExpertTraining(int topic);
+    void offerTeacherTraining(int topic);
 
     /**
-     * Makes the active character an expert in the skill on offer when the teacher's checks pass and the party has the
-     * gold.
+     * Makes the active character an expert or a master in the skill on offer when the teacher's checks pass and the
+     * party has the gold.
      *
      * @offset 0x4969C4 (MM6)
      */
     void learnFromTeacher();
+
+    /**
+     * Shows the town hall's bounty for this month in place of the NPC's topics, rolling a new monster when the month
+     * has turned. When the party has killed the monster since, pays 100 gold per monster level, gives every character
+     * the bounties collected award and adds the level to the reputation.
+     *
+     * @offset 0x4A30B0 (MM6)
+     */
+    void huntBounty();
 
     /**
      * @return                          NPC the party is talking to, or `nullptr` if it isn't talking to an NPC.
@@ -211,6 +224,14 @@ class GUIWindow_MM6House : public GUIWindow_House {
     void haveDrink();
 
     /**
+     * Takes 1 gold for the barkeep, who tells a piece of the region's news. The party has to have had a drink at the
+     * tavern first, and each tavern keeps telling the news it picked the first time.
+     *
+     * @offset 0x49F716 (MM6)
+     */
+    void tipBarkeep();
+
+    /**
      * Shows the bank's how much prompt while the player types an amount, and moves the gold once the amount is
      * confirmed. An amount above what the party has, or holds in the bank, moves all of it.
      */
@@ -223,6 +244,7 @@ class GUIWindow_MM6House : public GUIWindow_House {
     int _selected = -1;
     std::optional<int> _membershipOffer; // Guild the selected NPC offers to join, see `offerGuildMembership`.
     std::optional<int> _teacherOffer; // Topic of the teacher whose offer is shown.
+    bool _bountyShown = false; // The NPC tells the town hall's bounty, see `huntBounty`.
     bool _trainingTimePassed = false;
     std::optional<mm6::HouseServiceOption> _bankTransfer; // Deposit or withdraw while the player types the amount.
     std::string _roomMovie;

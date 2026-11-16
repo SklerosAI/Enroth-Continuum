@@ -9,12 +9,14 @@
 #include "Engine/Engine.h"
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Graphics/Vis.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Objects/NPC.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/NPCTable.h"
 
+#include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/ItemGrid.h"
 #include "GUI/UI/NPCTopics.h"
@@ -28,6 +30,10 @@ namespace {
 
 constexpr Vec3f markhamHeadquartersDoor(16154, 8560, 128);
 constexpr Pointi inventoryOffset(14, 17);
+constexpr int salSharktoothNpcId = 7;
+constexpr int salSharktoothOfferEventId = 21;
+constexpr int salSharktoothRefusalEventId = 24;
+constexpr int salSharktoothGroup = 3;
 
 struct Delivery {
     ItemId item;
@@ -136,16 +142,16 @@ void leaveDialogue(EngineController &game) {
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
 }
 
-void openOutdoorNpc(EngineController &game, NPCData *npc) {
+void openMapNpc(EngineController &game, MapId map, NPCData *npc) {
     ASSERT_NE(npc, nullptr);
-    ASSERT_EQ(engine->_currentLoadedMapId, MAP_EMERALD_ISLAND);
+    ASSERT_EQ(engine->_currentLoadedMapId, map);
     const int npcId = npc - pNPCStats->pNPCData.data();
     auto actor = std::ranges::find(pActors, npcId, &Actor::npcId);
     ASSERT_NE(actor, pActors.end()) << npc->name;
     for (const auto &[offset, yaw] : std::array{
              std::pair{Vec3f(200, 0, 0), 180}, std::pair{Vec3f(-200, 0, 0), 0},
              std::pair{Vec3f(0, 200, 0), 270}, std::pair{Vec3f(0, -200, 0), 90}}) {
-        game.teleportTo(MAP_EMERALD_ISLAND, actor->pos + offset, yaw);
+        game.teleportTo(map, actor->pos + offset, yaw);
         try {
             game.pointMouseAtActor(actor->id);
         } catch (const Exception &) {
@@ -179,7 +185,7 @@ void buyNpcItem(EngineController &game, NPCData *npc, ItemId item, int price) {
     ASSERT_TRUE(std::ranges::any_of(engine->_globalEventMap.function(chain.reward), [price](const EvtInstruction &instruction) {
         return eventChangesVariable(instruction, EVENT_Subtract, VAR_FixedGold, price);
     }));
-    openOutdoorNpc(game, npc);
+    openMapNpc(game, MAP_EMERALD_ISLAND, npc);
     ASSERT_TRUE(selectNpcEvent(game, *npc, chain.offer));
     const int goldBefore = pParty->GetGold();
     ASSERT_TRUE(selectNpcEvent(game, *npc, chain.reward));
@@ -221,7 +227,7 @@ void tradePotionForHat(EngineController &game, NPCData *brent) {
         return eventChangesVariable(instruction, EVENT_Subtract, VAR_PlayerItemInHands,
                                     std::to_underlying(ITEM_POTION_CURE_WOUNDS));
     }));
-    openOutdoorNpc(game, brent);
+    openMapNpc(game, MAP_EMERALD_ISLAND, brent);
     ASSERT_TRUE(selectNpcEvent(game, *brent, chain.offer));
     const int potionBefore = countPartyItem(ITEM_POTION_CURE_WOUNDS);
     const int goldBefore = pParty->GetGold();
@@ -250,6 +256,141 @@ void takeItemToCursor(EngineController &game, ItemId item) {
     FAIL() << "Missing acquired item " << std::to_underlying(item);
 }
 
+bool actorCarriesItem(const Actor &actor, ItemId item) {
+    return actor.carriedItemId == item || std::ranges::any_of(actor.items, [item](const Item &candidate) {
+        return candidate.itemId == item;
+    });
+}
+
+Actor *findSalSharktooth() {
+    auto sal = std::ranges::find_if(pActors, [](const Actor &actor) {
+        return actor.npcId == salSharktoothNpcId && actorCarriesItem(actor, ITEM_LONGBOW);
+    });
+    EXPECT_NE(sal, pActors.end());
+    return sal == pActors.end() ? nullptr : &*sal;
+}
+
+void prepareContestCombatParty() {
+    for (Character &character : pParty->pCharacters) {
+        character.inventory.equip(ITEM_SLOT_MAIN_HAND, Item(ITEM_CHAMPION_SWORD));
+        character.setSkillValue(SKILL_SWORD, CombinedSkillValue(30, MASTERY_GRANDMASTER));
+        character._stats[ATTRIBUTE_MIGHT] = 200;
+        character._stats[ATTRIBUTE_ACCURACY] = 200;
+        character.uLevel = 100;
+    }
+}
+
+void lootSalSharktooth(EngineController &game, int actorId) {
+    ASSERT_EQ(pActors[actorId].aiState, Dead);
+    auto viewport = std::ranges::find(pPrimaryWindow->vButtons, "Game_Viewport", &GUIButton::id);
+    ASSERT_NE(viewport, pPrimaryWindow->vButtons.end());
+
+    bool corpseVisible = false;
+    for (const auto &[offset, yaw] : std::array{
+             std::pair{Vec3f(0, -250, 0), 90}, std::pair{Vec3f(-250, 0, 0), 0},
+             std::pair{Vec3f(0, 250, 0), 270}, std::pair{Vec3f(250, 0, 0), 180}}) {
+        for (int pitch : {-20, 0, 20}) {
+            game.teleportTo(MAP_TEMPLE_OF_THE_MOON, pActors[actorId].pos + offset, yaw, pitch);
+            for (int y = 10; y < 470 && !corpseVisible; y += 10) {
+                for (int x = 10; x < 630 && !corpseVisible; x += 10) {
+                    Pointi point(x, y);
+                    if (!(*viewport)->Contains(point) ||
+                        engine->PickMouse(engine->config->gameplay.MouseInteractionDepth.value(), x, y,
+                                          &vis_anything_filter, &vis_face_filter).pid != Pid::actor(actorId))
+                        continue;
+                    game.moveMouse(point);
+                    game.tick();
+                    corpseVisible = engine->PickMouseForInteraction().pid == Pid::actor(actorId);
+                }
+            }
+            if (corpseVisible)
+                break;
+        }
+        if (corpseVisible)
+            break;
+    }
+    ASSERT_TRUE(corpseVisible);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+}
+
+void acquireLongbowFromSalSharktooth(EngineController &game) {
+    takeItemToCursor(game, ITEM_QUEST_WEALTHY_HAT);
+
+    // Setup teleport beside the authored carrier. MM7TempleOfMoon separately covers the in-world map transition.
+    game.teleportTo(MAP_TEMPLE_OF_THE_MOON, Vec3f(-5568, 6534, -96), 90);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_TEMPLE_OF_THE_MOON);
+    ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_QUEST_WEALTHY_HAT);
+
+    NPCData &salNpc = pNPCStats->pNPCData[salSharktoothNpcId];
+    ASSERT_EQ(salNpc.dialogue_1_evt_id, salSharktoothOfferEventId);
+    ASSERT_EQ(salNpc.dialogue_2_evt_id, 22u);
+    ASSERT_TRUE(engine->_globalEventMap.hasEvent(salSharktoothRefusalEventId));
+    const auto &refusal = engine->_globalEventMap.function(salSharktoothRefusalEventId);
+    auto hostility = std::ranges::find(refusal, EVENT_ToggleActorGroupFlag, &EvtInstruction::opcode);
+    ASSERT_NE(hostility, refusal.end());
+    EXPECT_EQ(hostility->data.actor_flag_descr.id, salSharktoothGroup);
+    EXPECT_EQ(hostility->data.actor_flag_descr.attr, ACTOR_AGGRESSOR);
+    EXPECT_TRUE(hostility->data.actor_flag_descr.is_set);
+
+    Actor *sal = findSalSharktooth();
+    ASSERT_NE(sal, nullptr);
+    const int salActorId = sal->id;
+    EXPECT_EQ(sal->group, 0u);
+    EXPECT_FALSE(sal->ActorEnemy());
+
+    openMapNpc(game, MAP_TEMPLE_OF_THE_MOON, &salNpc);
+    ASSERT_TRUE(selectNpcEvent(game, salNpc, salSharktoothOfferEventId));
+    EXPECT_EQ(salNpc.dialogue_1_evt_id, 23u);
+    EXPECT_EQ(salNpc.dialogue_2_evt_id, salSharktoothRefusalEventId);
+    ASSERT_TRUE(selectNpcEvent(game, salNpc, salSharktoothRefusalEventId));
+    leaveDialogue(game);
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_QUEST_WEALTHY_HAT);
+    EXPECT_EQ(salNpc.dialogue_1_evt_id, 0u);
+    EXPECT_EQ(salNpc.dialogue_2_evt_id, 0u);
+    EXPECT_TRUE(std::ranges::any_of(pActors, [](const Actor &actor) {
+        return actor.group == salSharktoothGroup && actor.ActorEnemy();
+    }));
+    EXPECT_FALSE(pActors[salActorId].ActorEnemy());
+    storeHeldItem(game);
+
+    prepareContestCombatParty();
+    const int initialHp = pActors[salActorId].hp;
+    bool becameAggressor = false;
+    game.teleportTo(MAP_TEMPLE_OF_THE_MOON, pActors[salActorId].pos + Vec3f(0, -250, 0), 90);
+    game.pointMouseAtActor(salActorId);
+    for (int attack = 0; attack < 400 && !pActors[salActorId].IsNotAlive(); ++attack) {
+        SCOPED_TRACE(fmt::format("attack {}", attack));
+        if (attack && attack % 10 == 0) {
+            game.teleportTo(MAP_TEMPLE_OF_THE_MOON,
+                            pActors[salActorId].pos + Vec3f(0, -250, 0), 90);
+            game.pointMouseAtActor(salActorId);
+        }
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick(5);
+        becameAggressor |= pActors[salActorId].ActorEnemy();
+    }
+    EXPECT_LT(pActors[salActorId].hp, initialHp);
+    EXPECT_TRUE(becameAggressor);
+    ASSERT_TRUE(pActors[salActorId].IsNotAlive()) << "remaining HP: " << pActors[salActorId].hp;
+    for (int frame = 0; frame < 120 && pActors[salActorId].aiState != Dead; ++frame)
+        game.tick();
+    ASSERT_EQ(pActors[salActorId].aiState, Dead);
+
+    lootSalSharktooth(game, salActorId);
+    EXPECT_FALSE(actorCarriesItem(pActors[salActorId], ITEM_LONGBOW));
+    EXPECT_EQ(countPartyItem(ITEM_LONGBOW), 1);
+    EXPECT_EQ(countPartyItem(ITEM_QUEST_WEALTHY_HAT), 1);
+
+    // Setup teleport back to the contest hub after the fully physical acquisition.
+    game.teleportTo(MAP_EMERALD_ISLAND, markhamHeadquartersDoor, 180);
+    for (Character &character : pParty->pCharacters) {
+        character.health = character.GetMaxHealth();
+        character.timeToRecovery = 0_ticks;
+    }
+    pParty->setActiveCharacterIndex(0);
+}
+
 void handItemToJudge(EngineController &game, const Delivery &delivery) {
     if (delivery.item == ITEM_QUEST_FLOOR_TILE_W_MOON_INSIGNIA) {
         // The Temple-of-the-Moon suite already proves this sixth item's physical route.
@@ -276,8 +417,9 @@ void handItemToJudge(EngineController &game, const Delivery &delivery) {
 
 }  // namespace
 
-GAME_TEST(MM7EmeraldContestAcquisition, FourPhysicalSourcesPersistAndJudgeAcceptsThem) {
+GAME_TEST(MM7EmeraldContestAcquisition, FivePhysicalSourcesPersistAndJudgeAcceptsThem) {
     engine->config->debug.NoMargaret.setValue(true);
+    engine->config->debug.NoDamage.setValue(true);
     game.startNewGame();
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_EMERALD_ISLAND);
     pParty->SetGold(3000, true);
@@ -304,8 +446,10 @@ GAME_TEST(MM7EmeraldContestAcquisition, FourPhysicalSourcesPersistAndJudgeAccept
     tradePotionForHat(game, brent);
     EXPECT_EQ(pParty->GetGold(), initialGold - 100 - 500);
 
+    acquireLongbowFromSalSharktooth(game);
+
     for (ItemId item : {ITEM_POTION_CURE_WOUNDS, ITEM_QUEST_SEASHELL,
-                        ITEM_QUEST_LUTE, ITEM_QUEST_WEALTHY_HAT})
+                        ITEM_LONGBOW, ITEM_QUEST_LUTE, ITEM_QUEST_WEALTHY_HAT})
         ASSERT_EQ(countPartyItem(item), 1) << std::to_underlying(item);
 
     const std::array sallyTopics = {sally->dialogue_1_evt_id, sally->dialogue_2_evt_id,
@@ -314,6 +458,8 @@ GAME_TEST(MM7EmeraldContestAcquisition, FourPhysicalSourcesPersistAndJudgeAccept
                                       ailyssa->dialogue_3_evt_id, ailyssa->dialogue_4_evt_id};
     const std::array brentTopics = {brent->dialogue_1_evt_id, brent->dialogue_2_evt_id,
                                     brent->dialogue_3_evt_id, brent->dialogue_4_evt_id};
+    const std::array salTopics = {pNPCStats->pNPCData[salSharktoothNpcId].dialogue_1_evt_id,
+                                  pNPCStats->pNPCData[salSharktoothNpcId].dialogue_2_evt_id};
     const int acquiredGold = pParty->GetGold();
     Blob checkpoint = game.saveGame();
 
@@ -324,7 +470,7 @@ GAME_TEST(MM7EmeraldContestAcquisition, FourPhysicalSourcesPersistAndJudgeAccept
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_EMERALD_ISLAND);
     EXPECT_EQ(pParty->GetGold(), acquiredGold);
     for (ItemId item : {ITEM_POTION_CURE_WOUNDS, ITEM_QUEST_SEASHELL,
-                        ITEM_QUEST_LUTE, ITEM_QUEST_WEALTHY_HAT})
+                        ITEM_LONGBOW, ITEM_QUEST_LUTE, ITEM_QUEST_WEALTHY_HAT})
         EXPECT_EQ(countPartyItem(item), 1) << std::to_underlying(item);
     sally = findNpcByGreeting(5);
     ailyssa = findNpcByGreeting(4);
@@ -335,12 +481,14 @@ GAME_TEST(MM7EmeraldContestAcquisition, FourPhysicalSourcesPersistAndJudgeAccept
                           ailyssa->dialogue_3_evt_id, ailyssa->dialogue_4_evt_id}), ailyssaTopics);
     EXPECT_EQ((std::array{brent->dialogue_1_evt_id, brent->dialogue_2_evt_id,
                           brent->dialogue_3_evt_id, brent->dialogue_4_evt_id}), brentTopics);
+    EXPECT_EQ((std::array{pNPCStats->pNPCData[salSharktoothNpcId].dialogue_1_evt_id,
+                          pNPCStats->pNPCData[salSharktoothNpcId].dialogue_2_evt_id}), salTopics);
 
     for (const Delivery &delivery : deliveries)
-        if (delivery.item != ITEM_LONGBOW &&
-            delivery.item != ITEM_QUEST_FLOOR_TILE_W_MOON_INSIGNIA)
+        if (delivery.item != ITEM_QUEST_FLOOR_TILE_W_MOON_INSIGNIA)
             handItemToJudge(game, delivery);
     EXPECT_FALSE(pParty->_questBits[QBIT_EMERALD_ISLAND_SCAVENGER_HUNT_WON]);
-    EXPECT_TRUE(pParty->_questBits[QBIT_EMERALD_ISLAND_LONGBOW_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_EMERALD_ISLAND_LONGBOW_ACTIVE]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_EMERALD_ISLAND_LONGBOW_GIVEN]);
     EXPECT_TRUE(pParty->_questBits[QBIT_EMERALD_ISLAND_FLOOR_TILE_ACTIVE]);
 }

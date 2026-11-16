@@ -286,6 +286,20 @@ physical acquisition; its separate-process normal-Load reader preserves the
 active/taken bits, map-variable source marker, source-chest delta and retained
 Remains, reopens chest 1 without respawn and leaves the slot byte-identical.
 
+Darron's White Cliff deck now has its own production-Save and fresh-process
+normal-Load pair. The writer accepts the real Harmondale offer, physically
+takes the deck and removes its world sprite; the reader preserves the active
+quest, retained deck and removed source without respawn or save-byte drift.
+
+The Dark Griffin hunt now exercises Seth Drakkson's real offer and report
+topics across all four regional states. Neither clear and either single-region
+clear refuse without a transaction; both clear grants exactly 5,000 carried
+gold, 10,000 XP per character, -10 current-location reputation and award 98 to
+all four, retains the two regional bits, clears the topic, advances the
+greeting and remains stable after reopening the house. The prior regional
+predicate repair stays pinned by its original control, and this packet required
+no production change.
+
 Both endings now remove their final active quest from the Quest Book. The
 focused tests captured qbits 130/131 staying set after successful completion;
 an exact global-170/172 success-path seam clears the appropriate bit while

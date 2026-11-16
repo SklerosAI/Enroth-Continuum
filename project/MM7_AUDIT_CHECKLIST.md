@@ -16,7 +16,10 @@ coverage and all 76 shipped maps have runtime GameTest references. These are
 important breadth milestones, not closure of the full audit below. Both war
 exposure failures, all five trumpet handlers and the effective result matrix
 are covered; Stone City adds one representative movement/combat kill and a
-durable regional checkpoint. Other regional durability, representative
+durable regional checkpoint. Darron's physically acquired White Cliff deck now
+survives a separate-process normal Load with its source removed and no save-byte
+drift. The Griffin hunt covers all three incomplete-region refusals and the
+exact both-clear reward, award, topic and duplicate behavior. Other regional durability, representative
 movement/combat, original-executable parity for the Strange Temple exit
 placement and graphical Mac play remain open.
 

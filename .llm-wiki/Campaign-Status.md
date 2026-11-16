@@ -201,6 +201,21 @@ preserve the acquired Remains, active/taken bits, repaired source marker and
 source-chest delta; event 176 reopens chest 1 without respawning the item, and
 the saved slot remains byte-identical.
 
+Darron's White Cliff deck now has an independent durability boundary. The
+writer accepts the real quest, physically removes the deck world sprite and
+saves with the deck retained; a separate-process normal-menu reader preserves
+the active quest, retained item and removed source without respawn or save-byte
+change.
+
+The Dark Griffin hunt now covers its complete report matrix through Seth
+Drakkson's real topics. Neither region clear, Erathia-only clear and
+Bracada-only clear all refuse without changing gold, bank, XP, reputation or
+awards. Both regions clear grants exactly 5,000 carried gold, 10,000 XP per
+character, -10 current-location reputation and award 98 to all four, retains
+both regional bits, clears the active topic, changes the greeting and cannot be
+claimed twice. The existing predicate repair remains independently pinned; no
+new production defect was reproduced.
+
 The Light and Dark endings now clear their active final-quest bits after the
 successful Overthruster hand-in, removing the completed task from the Quest
 Book. History 25/26 remains valid and unchanged, and the no-item refusal keeps

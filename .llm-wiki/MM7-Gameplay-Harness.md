@@ -9,6 +9,14 @@ tags: [mm7, testing, movement, combat, barrows, promotions, graphics]
 
 The MM7 gameplay harness supplies bounded input-driven movement, attack-input combat, authored Barrow traversal and opt-in hidden visual evidence without claiming autonomous navigation.
 
+## Immediate post-transition combat admission — 2026-11-15
+
+An owner playtest crashed while accepting Emerald Island's Dragon's Cave transition. The installed `53ae417f0` helper aborted in `stru262_TurnBased::Start()` after the same Enter input that accepted the location change also reached the combat-toggle path. This was not a Dragon's Lair map-load failure.
+
+World preparation removed prior-map actors from the turn queue but left `ai_arrays_size` and its actor IDs describing Emerald Island until the Dragon's Lair AI update. Turn-based startup could therefore index the new, smaller actor deque with an old outdoor actor ID. World preparation now invalidates the nearby-AI count before replacing actors, and both turn-based actor-admission paths reject any out-of-range ID as a defensive boundary.
+
+`MM7TransitionCombat.StalePreviousMapActorIsIgnoredAtTurnBasedStart` seeds the exact stale-ID shape and proves combat starts with only valid queue entries. The focused test, Debug GameTest build and engine/turn-engine/GameTest style targets pass. A signed Release `95442333e` MM7 helper carrying the guard is installed while the MM6 helper remains byte-identical. Broad known-green campaign tests were deliberately not repeated for this isolated admission fix.
+
 ## Runner and contracts
 
 `tools/run_mm7_gameplay_harness.py` fails closed unless the built GameTest binary contains both `MM7GameplayHarness` and `MM7CombatHarness`; `--with-barrows` also requires `MM7BarrowTraversal`. Each suite runs in a fresh headless process against an explicit private MM7 data path.

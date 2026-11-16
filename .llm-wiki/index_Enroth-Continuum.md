@@ -38,7 +38,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md) — One-command clean tracked-source MM7 and Atlas build under network denial, with focused headless controls
 - [MM7 Disposable Save and Reload](MM7-Disposable-Save-Reload.md) — Isolated Save/Load evidence, campaign checkpoints, 18 durable quest boundaries and installed-candidate limits
 - [MM7 Scroll Cancellation](MM7-Scroll-Cancel.md) — Item-, actor- and character-target scroll return on cancelled targeting, focused integrated controls and remaining exit paths
-- [MM7 Playtest Recording](MM7-Playtest-Recording.md) — Staged Atlas rolling-video, log/save collector, intentional clip hotkey, drive/relaunch guards, and live acceptance boundary
+- [MM7 Playtest Recording](MM7-Playtest-Recording.md) — Atlas rolling video now retains the newest two minutes after every exit, alongside bounded diagnostics, protected clips and the remaining macOS permission gate
 - [MM7 Quest Behavior Catalog](MM7-Quest-Behavior-Catalog.md) — Public/source-event reconciliation of every main, Light, Dark, side and promotion quest; includes both C0-C7 chains, 18 durable side/objective routes, complete Malwick/Niles contracts and all 27 promotion endpoints
 - [MM7 Remaining Quests and Areas](../project/MM7_REMAINING_QUESTS_AND_AREAS.md) — Post-quest priority board for visible playtest, natural movement/combat strengthening, native-parity questions and selective durability
 - [MM7 Atomic Save File](MM7-Atomic-Save-File.md) — Native-slot helper, detached preflight and integrated staged live capture; production atomic SaveLoad wiring remains open
@@ -47,7 +47,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Level-Seven Artifacts](MM7-Level-Seven-Artifacts.md) — MM7 artifact flags, cap and indoor pickup payload fixed with focused GameTests; graphical pickup remains open
 - [MM7 Combat Audit Fixes](MM7-Combat-Audit-Fixes.md) — Integrated combat, monster spell, Energy parser, Divine Intervention Zombie, event Day of the Gods, death-explosion, Spirit Lash, wand-recovery, Fate and Squire/Sage fixes
 - [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md) — Hidden OpenGL frame gate, authored-start placement, inspected regional/combat captures and corrected Breeding Zone diagnostic
-- [MM7 Gameplay Harness](MM7-Gameplay-Harness.md) — Bounded movement and attack-input helpers, composed combat/loot proofs, complete Barrow traversal and inspected hidden visual evidence
+- [MM7 Gameplay Harness](MM7-Gameplay-Harness.md) — Bounded movement and attack-input helpers, composed combat/loot proofs, complete Barrow traversal, hidden visual evidence and guarded post-transition combat admission
 - [MM7 GrayFace Patch Reconciliation](MM7-GrayFace-Patch-Reconciliation.md) — Pinned public 2.5.7 bug index mapped to completed MM7 repairs including Mount Nighon and the Spy greeting, focused checks and priority audit gaps
 - [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md) — Private MM7 paths, save migration and installed Release helper with system OpenGL linkage
 

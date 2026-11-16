@@ -169,12 +169,12 @@ signed coordinate and delegates overflow handling to the first outdoor update,
 while GrayFace 2.5.7 has no override. A private trace of the settled position
 and border-dialog state remains the required parity gate before any repair.
 
-The opening contest now has representative physical acquisition for five of
-its six items. The Moon tile comes from its authored world sprite; a separate
-Emerald packet creates Cure Wounds through live alchemy, buys the seashell and
-lute, trades the potion for the wealthy hat, roundtrips those items and NPC
-state through normal save/load, and performs the real Judge hand-ins. Only the
-weapon-shop longbow lacks a deterministic physical acquisition check.
+The opening contest now has physical acquisition coverage for all six items.
+The Moon tile comes from its authored world sprite; a separate Emerald packet
+creates Cure Wounds through live alchemy, buys the seashell and lute, trades the
+potion for the wealthy hat, retains it through Sal Sharktooth's refusal, then
+kills and physically corpse-loots Sal for the fixed Longbow. The five items and
+NPC state roundtrip through normal save/load before their real Judge hand-ins.
 
 The remaining war-alternative gaps are now covered without a production
 change. Both opposing-throne exposure topics execute their authored death and
@@ -196,6 +196,10 @@ Haldar's Remains now covers the authored trapped Maze face rather than only a
 direct backing-chest open. The close-before-pickup regression is repaired with
 a persistent source marker while legacy marker-zero routing remains intact.
 Lifecycle tests pass 4/4 and the existing Mazim refusal/reward control 1/1.
+A production-save writer and separate-process normal-Load reader additionally
+preserve the acquired Remains, active/taken bits, repaired source marker and
+source-chest delta; event 176 reopens chest 1 without respawning the item, and
+the saved slot remains byte-identical.
 
 The Light and Dark endings now clear their active final-quest bits after the
 successful Overthruster hand-in, removing the completed task from the Quest

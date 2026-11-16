@@ -21,10 +21,11 @@ movement/combat, original-executable parity for the Strange Temple exit
 placement and graphical Mac play remain open.
 
 Emerald contest coverage now physically produces or acquires the Cure Wounds
-potion, seashell, lute and wealthy hat through live inventory/NPC interactions,
-preserves them and the NPC state through normal save/load, and hands them to
-the real Judge. The Temple packet covers the floor tile; deterministic physical
-longbow acquisition is the remaining opening-item gap.
+potion, seashell, lute and wealthy hat through live inventory/NPC interactions.
+It then retains the hat through Sal Sharktooth's authored refusal, fights and
+physically loots his fixed Longbow, preserves all five items and NPC state
+through normal save/load, and hands them to the real Judge. The Temple packet
+covers the floor tile, so all six opening contest sources are behavior-covered.
 
 The Strange Temple source audit now narrows that parity question. The shipped
 event supplies a grossly out-of-bounds signed 32-bit Harmondale X coordinate.

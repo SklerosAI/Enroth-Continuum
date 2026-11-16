@@ -248,11 +248,12 @@ clamping or truncating now would be speculative.
 
 Emerald contest acquisition now has a representative physical packet beyond
 the Moon tile. It creates Cure Wounds through live alchemy from setup inputs,
-buys the seashell and lute through Sally/Ailyssa, trades the potion to Brent for
-the wealthy hat, preserves the four items and NPC topic state through normal
-save/load and exercises their real Judge hand-ins. The new case plus the Judge,
-Temple and cross-character hat controls pass 4/4. The random weapon-shop
-longbow remains the sole deterministic physical acquisition gap.
+buys the seashell and lute through Sally/Ailyssa and trades the potion to Brent
+for the wealthy hat. It then retains that hat through Sal Sharktooth's authored
+refusal, proves group aggression, kills Sal through bounded attack input and
+physically corpse-loots his fixed Longbow. The five items and NPC state survive
+normal save/load before their real Judge hand-ins; with the Moon tile packet,
+all six contest sources are behavior-covered. The focused selection passes 3/3.
 
 A separate fixture-free New Game probe reached the first hostile Dragonflies
 with only real movement input and untouched party/actors. Their flying approach
@@ -280,7 +281,10 @@ source event previously set qbit 161 on open and redirected a later click to
 chest 0 even if item 628 remained in chest 1. An exact event-176 marker seam
 reopens the source after a successful first open, retains legacy marker-zero
 fallback and prevents duplicates. The lifecycle suite passes 4/4 and the
-existing Mazim hand-in control 1/1.
+existing Mazim hand-in control 1/1. A production-save writer now stops after
+physical acquisition; its separate-process normal-Load reader preserves the
+active/taken bits, map-variable source marker, source-chest delta and retained
+Remains, reopens chest 1 without respawn and leaves the slot byte-identical.
 
 Both endings now remove their final active quest from the Quest Book. The
 focused tests captured qbits 130/131 staying set after successful completion;

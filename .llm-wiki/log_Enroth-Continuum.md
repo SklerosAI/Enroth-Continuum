@@ -3742,3 +3742,10 @@ Chronological record of wiki activity.
 - An owner playtest crashed while accepting Emerald Island's Dragon's Cave transition. Enter also reached turn-based startup before the new map refreshed its AI list, so a stale outdoor actor ID indexed the smaller indoor actor deque. World preparation now clears the list count and turn-based admission rejects stale IDs; the focused regression and three relevant style targets pass.
 - Tonight's launch had no recording session because recording was off, and the only older video attempt had failed macOS Screen Recording permission. The recorder now finishes the active chunk and retains the newest two 60-second chunks after every exit; abnormal exits still save a protected clip. Nine focused recorder cases and the Atlas page check pass.
 - Signed Release MM7 commit `95442333e` and the updated recorder are installed with video and diagnostics enabled for the next launch. The installed MM6 helper is byte-identical to its predecessor, and the prior Atlas remains in the private rollback folder.
+
+## [2026-11-16] ingest | ECv0.1.0 release and MM6 handoff
+- by: T-Burton-ND via codex
+- Published the annotated `ECv0.1.0` tag at `50d7d4197` as the MM7 milestone, then built and installed the exact tagged Release arm64 Atlas with MM7 and an MM6 playtest-candidate helper.
+- Verified clean-source provenance, strict signing, staged-versus-installed identity and visible Atlas rendering. Recorded the outer bundle's `0.1` versus tag `0.1.0` metadata gap for a later release; the published tag remains fixed.
+- Sent the superseded application to macOS Trash without a project rollback archive and left profiles, saves, mods and recordings untouched.
+- Added the release milestone page and Claude handoff covering the three integrated MM6 lanes, the two preserved excluded WIP lanes and the next MM6 sequence.

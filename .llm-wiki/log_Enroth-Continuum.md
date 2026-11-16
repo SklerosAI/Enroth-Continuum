@@ -3720,3 +3720,12 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Malwick's real Emerald Wand acceptance now flows into both authored Light and Dark Arbiter installations, proving each choice starts Counter5. Original and GrayFace 2.5.7 Harmondale event-37/event-50 records are identical, so no production seam was added.
 - The Light writer reaches 1,007 hours with no letter or Niles state before a production Save. A separate normal-menu reader preserves the Wand, path, alignment and counter below the boundary, then exact 1,008-hour Harmondale entry delivers item 704 and starts the visit without changing the save slot. Focused behavior passes 2/2 and both fresh processes pass 1/1.
+## [2026-11-15] reference | GrayFace MM6 Patch pinned and cross-referenced
+- by: T-Burton-ND via claude
+- Pinned GrayFace MM6 Patch 2.5.7 source and shipped data under the ignored public-references folder, decoded its 44 script and table entries and 26 map entries, and diffed them against the owner's unpatched GOG 1.2 files. Confirmed the owner's install carries no GrayFace files.
+- Cross-referenced all 58 logic fixes against our MM6 runtime: 24 fixed, 14 vanilla bugs still reproduced, 4 deliberately vanilla with tests, 8 unreachable until the spell or feature is admitted, 4 inherited MM7 shapes wrong for MM6. Recorded in `project/MM6_GRAYFACE_PATCH_REFERENCE.md` and the new wiki page. No code changed.
+
+## [2026-11-15] decision | MM6 fixes every GrayFace-listed bug
+- by: T-Burton-ND via claude
+- The owner decided MM6 fixes every bug the GrayFace MM6 Patch fixes, GrayFace's way or better, reversing the four deliberate-vanilla choices. The per-item plan is recorded in the project reference and the wiki page. No code changed.
+- The owner's short playtest the same day showed transparent street villagers in New Sorpigal. Recorded on the MM6 playtest board, not investigated.

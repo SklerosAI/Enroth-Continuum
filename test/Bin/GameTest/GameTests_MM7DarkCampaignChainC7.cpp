@@ -315,7 +315,7 @@ GAME_TEST(MM7DarkCampaignChain, DISABLED_Chapter7) {
     EXPECT_EQ(takenTape, tape(false, true));
     EXPECT_EQ(oracleTape, tape(false, true, false));
     EXPECT_EQ(overthrusterTape, tape(false, true, false));
-    EXPECT_EQ(activeTape, tape(false, true));
+    EXPECT_EQ(activeTape, tape(false, true, false));
     EXPECT_EQ(topicTape, tape(171u, 172u, 0u));
     EXPECT_EQ(certificateTape, tape(false, true));
     EXPECT_EQ(autosaveTape.size(), 2);

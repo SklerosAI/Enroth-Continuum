@@ -914,9 +914,10 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
 
         **All Artifacts + Storage** is controlled in The Atlas rather than by a
         file in this folder. On a Private mods MM7 launch it removes the normal
-        cap on randomly spawnable artifacts and relics, and keeps generated
-        chest overflow available until visible chest space opens. It does not
-        grant quest artifacts or add backpack slots.
+        cap on randomly spawnable artifacts and relics and excludes each one
+        only after the party collects it. Castle Harmondale's existing chests
+        remain the persistent storage location. It does not grant quest
+        artifacts or add backpack slots.
         """
         try contents.write(to: guide, atomically: true, encoding: .utf8)
     }

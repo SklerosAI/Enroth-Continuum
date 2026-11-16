@@ -66,9 +66,9 @@ data path and user path. It does not package original Might & Magic data.
   MM7's vendor option applies on the next Private mods launch. The MM6 choice
   is retained locally for its future playable engine; MM6 shops are not live yet.
   All Artifacts + Storage removes MM7's normal cap on randomly spawnable
-  artifacts and relics and keeps generated chest overflow available until
-  visible chest space opens. It does not grant quest artifacts, add backpack
-  slots or affect MM6.
+  artifacts and relics and excludes each one only after the party collects it.
+  Castle Harmondale's existing chests remain the persistent storage location.
+  It does not grant quest artifacts, add backpack slots or affect MM6.
 
 ## Private data
 

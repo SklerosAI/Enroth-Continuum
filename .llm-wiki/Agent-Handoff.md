@@ -300,6 +300,15 @@ greeting and remains stable after reopening the house. The prior regional
 predicate repair stays pinned by its original control, and this packet required
 no production change.
 
+Malwick's previously split seam is now continuous. The focused packet accepts
+his Wand through the placed Emerald NPC, recruits and installs both real
+Arbiter candidates, and proves the authored alignment event starts Counter5.
+The Light writer reaches 1,007 hours with no letter/Niles state before a
+production Save; its fresh-process normal-Load reader preserves the Wand,
+alignment, path and counter, then triggers the exact 1,008-hour Harmondale
+letter without changing the save slot. Original and GrayFace 2.5.7 event 37/50
+records are identical, and no engine repair was required.
+
 Both endings now remove their final active quest from the Quest Book. The
 focused tests captured qbits 130/131 staying set after successful completion;
 an exact global-170/172 success-path seam clears the appropriate bit while

@@ -36,7 +36,7 @@ progress-capture folder has a hard rolling limit of 100 images.
 | Priority | Quest group | Areas | Work remaining |
 | --- | --- | --- | --- |
 | 1 | War alternatives and Arbiter | Erathia, Tularean Forest, Avlee, Harmondale | Real-item, decoy-item, ignored/timeout and physically selected expose/treason outcomes now pass for both 28-day assignments. A narrow representative rebuild route executes the Stone City king's authored placement event, then all five trumpet handlers are reached through their real houses with exact per-character rewards. The 27 effective result/recipient states resolve under both arbiters, including balanced decoy/decoy and exposed/expired equivalence, and the balanced neutral/Dark checkpoint remains durable. Remaining only at continuity level: connect the packet to a campaign chain; the shipped incomplete-result default is documented rather than changed. |
-| 2 | Malwick, Niles and the tapestries | Emerald Island, Harmondale, Tatalia, Castle Lambent, Castle Gloaming | The downstream behavior and both Niles outcomes are focused and durable. Malwick's real street conversation covers refusal, repeat offer and acceptance; the exact six-week Harmondale trigger, two-week Niles-visit deadline and four-week tapestry-return deadline pass through the authored clock event. Both alignment-specific Niles offers, physical Castle Lambent/Gloaming tapestry faces, successful returns, +5 reputation-only reward, exact 719/720-hour allied-castle hostility boundary and both missed-deadline invasions pass. Separate fresh-process checkpoints preserve the success and invasion outcomes; the existing raid test proves clearing both attacker groups reopens services. Remaining: one continuous alignment-choice-to-counter-to-1,008-hour trigger route and a pre-trigger durability boundary. |
+| 2 | Malwick, Niles and the tapestries | Emerald Island, Harmondale, Tatalia, Castle Lambent, Castle Gloaming | The focused behavior and three durability boundaries are complete. A single continuous packet accepts Malwick's Wand through his real Emerald dialogue, installs either authored Arbiter, proves both choices start Counter5, and reaches the exact 1,007/1,008-hour Harmondale boundary. The Light pre-trigger state survives a production Save and fresh-process normal Load before the letter starts Niles's visit. Both alignment-specific tapestry sources/returns, exact 719/720-hour allied-castle hostility boundary, both missed-deadline invasions and service reopening remain covered. Remaining only at campaign level: optional placement into a full C0-C7 branch rather than another focused contract. |
 | 3 | Dark campaign strengthening after C0-C7 | Harmondale, Deyja, Castle Gloaming, the Pit, Celeste, Thunderfist Mountain, Clanker's Laboratory, Breeding Zone, Colony Zod, Shoals and Lincoln | The separately marked Dark profile passes C0-C7. Representative movement/combat now has a reusable input contract, the Breeding Zone hidden frame is corrected, and Shoals' dense green fog is source-classified as authored underwater rendering. Remaining: reduce approach teleports where practical and eventually compare exact Shoals pixels with the original executable if parity matters. |
 | 4 | Light campaign strengthening after C0-C7 | Wine Cellar, Castle Gloaming, the Pit, Land of the Giants, Colony Zod, Shoals and Lincoln | Light C6 follows the authored Mount Nighon–Thunderfist–Tunnels–Land route through Xenofex and the return. The real Wine Cellar target now activates only for its live quest, input combat kills it, the composed harness walks then fights without measured-segment teleporting, and Tolberti's complete Blaster reward transaction is asserted. Remaining: the Walls protected-group predicate audit, reducing other approach teleports and broader graphical play. |
 | 5 | Regional strengthening and durability | Emerald Island, Erathia, Bracada Desert, Stone City, Bandit Caves, White Cliff Cave, the Maze and the Erathian Sewers | All six contest sources are now physical: the Moon tile; live-alchemy Cure Wounds; Sally's seashell; Ailyssa's lute; Brent's hat trade; and Sal Sharktooth's fixed Longbow after authored refusal, aggression, attack-input combat and corpse loot. The five-item packet persists its items/NPC state through normal save/load and uses real Judge hand-ins. Griffin coverage now proves all three refusal permutations and the exact both-regions-clear transaction without a production repair. Stone City and Haldar have fresh-process checkpoints; Darron's active quest, retained deck and removed White Cliff source now survive another fresh process without respawn or save-byte drift. Add checkpoints only for Lantern of Light, Davrik's Ring and Thief to Rogue. |
@@ -89,7 +89,7 @@ the Strange Temple exit-placement parity check, and eventual graphical play.
 
 ## Already durable; do not reopen without new evidence
 
-These fourteen independent routes have exact production-Save and
+These fifteen independent routes have exact production-Save and
 fresh-process normal-Load pairs with unchanged slot bytes:
 
 - Season's Stole
@@ -103,6 +103,7 @@ fresh-process normal-Load pairs with unchanged slot bytes:
 - Balanced war, neutral trumpet and Dark Arbiter
 - Malwick/Niles successful tapestry return
 - Malwick/Niles failed return and Harmondale invasion
+- Malwick accepted through the real Arbiter choice at the 1,007-hour pre-trigger boundary
 - Stone City Troglodytes
 - Haldar's Remains acquired from the repaired Maze source chest
 - Darron's deck acquired from the White Cliff Cave world sprite
@@ -116,7 +117,8 @@ checkpoint tests across twelve routes. Haldar adds another pair at the repaired
 source-marker boundary, bringing the total to twenty-six exact checkpoint tests
 across thirteen routes. Darron's White Cliff acquisition adds one more pair,
 bringing the total to twenty-eight exact checkpoint tests across fourteen
-routes.
+routes. Malwick's accepted pre-trigger state adds another pair, bringing the
+total to thirty exact checkpoint tests across fifteen routes.
 
 ## Gate for each new quest slice
 

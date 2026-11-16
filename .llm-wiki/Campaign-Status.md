@@ -216,6 +216,15 @@ both regional bits, clears the active topic, changes the greeting and cannot be
 claimed twice. The existing predicate repair remains independently pinned; no
 new production defect was reproduced.
 
+Malwick's optional debt chain now has a continuous accepted-to-trigger proof.
+The packet takes his Wand through the real Emerald conversation, installs both
+authored Light and Dark Arbiters and verifies each transaction starts Counter5.
+A Light writer reaches 1,007 hours with no letter or downstream state and saves;
+the fresh-process normal-menu reader preserves the Wand, alignment, path and
+counter, then exact 1,008-hour Harmondale entry supplies the letter and starts
+Niles's visit without changing the slot bytes. Original and GrayFace 2.5.7
+event-37/event-50 records match, so no production change was needed.
+
 The Light and Dark endings now clear their active final-quest bits after the
 successful Overthruster hand-in, removing the completed task from the Quest
 Book. History 25/26 remains valid and unchanged, and the no-item refusal keeps

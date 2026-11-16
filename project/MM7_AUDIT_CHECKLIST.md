@@ -19,9 +19,13 @@ are covered; Stone City adds one representative movement/combat kill and a
 durable regional checkpoint. Darron's physically acquired White Cliff deck now
 survives a separate-process normal Load with its source removed and no save-byte
 drift. The Griffin hunt covers all three incomplete-region refusals and the
-exact both-clear reward, award, topic and duplicate behavior. Other regional durability, representative
-movement/combat, original-executable parity for the Strange Temple exit
-placement and graphical Mac play remain open.
+exact both-clear reward, award, topic and duplicate behavior. Malwick's real
+Wand acceptance now flows through both authored Arbiter choices
+into Counter5; a 1,007-hour production Save and fresh-process Load remains
+pre-trigger, then exact 1,008-hour Harmondale entry delivers the letter and
+starts Niles's visit without save-byte drift. Other regional durability,
+representative movement/combat, original-executable parity for the Strange
+Temple exit placement and graphical Mac play remain open.
 
 Emerald contest coverage now physically produces or acquires the Cure Wounds
 potion, seashell, lute and wealthy hat through live inventory/NPC interactions.

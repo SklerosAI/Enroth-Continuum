@@ -228,8 +228,25 @@ event-37/event-50 records match, so no production change was needed.
 The Light and Dark endings now clear their active final-quest bits after the
 successful Overthruster hand-in, removing the completed task from the Quest
 Book. History 25/26 remains valid and unchanged, and the no-item refusal keeps
-its bit/topic. Focused ending and Light hand-in controls pass 2/2; the broader
-C7 chains await the next integration milestone.
+its bit/topic. Focused ending and Light hand-in controls pass 2/2. A later full
+fresh rerun exposed stale C7 tape expectations that stopped before the intended
+final inactive sample; the one-line Light and Dark expectations now include
+that settled cleanup, and both complete fresh C0-C7 chains pass again.
+
+### Consolidated MM7 full gate — 2026-11-15
+
+The final integration sweep passed the full build, all 157 style targets,
+1,124 of 1,169 unit tests with 45 expected private-MM6-fixture skips, and 721
+of 729 default MM7 GameTests with eight expected opt-in-mod skips. The
+complementary All Artifacts/Storage and vendor packet passed eight tests with
+its disabled-mode control skipped as designed. All 23 admitted legacy
+writer/reader pairs passed in 46 processes, including the new Lantern, Davrik
+and Griffin boundaries. Both fresh eight-process Light and Dark campaign
+chains passed through C7 after the ending-tape reconciliation. Both isolated
+hidden OpenGL capture tests passed; the owner accepted the dark Barrow II frame
+as normal without Torch Light. This closes the three remaining side/objective
+durability rows, not the visible Mac playtest or the Strange Temple native
+placement question.
 
 The Land of the Giants wishing well now charges the intended 5,000 gold on
 every qualifying click before its authored random effect. The exact event seam

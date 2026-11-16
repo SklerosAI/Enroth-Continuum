@@ -28,7 +28,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 
 ## Campaigns and runtime
 
-- [Campaign Status](Campaign-Status.md) — Current MM6, MM7 and MM8 readiness, including the MM6 C0-C1 chain and integrated MM7 campaign, quest, 27-of-27 promotion, 76-of-76 shipped-map runtime and regional durability gates
+- [Campaign Status](Campaign-Status.md) — Current MM6, MM7 and MM8 readiness, including the MM6 C0-C1 chain and consolidated MM7 full gate with both endings, all side-objective durability, 27-of-27 promotions and 76-of-76 map runtime coverage
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [MM7 All Artifacts + Storage](MM7-All-Artifacts-Storage-Mod.md) — Optional collection-based random-artifact eligibility with Castle Harmondale persistent storage
 - [MM7 Private Portrait Mod](MM7-Private-Portrait-Mod.md) — Local mood PNG layout, shared MM7 portrait resolver, Atlas controls, and verified hidden HUD capture
@@ -36,11 +36,11 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Self-Contained Source](MM7-Self-Contained-Source.md) — Tracked Mac source, verified integration candidate and remaining graphical, save and identity gates
 - [MM7 Mac Dependency Recipe](MM7-Mac-Dependency-Recipe.md) — Five tracked media-library sources build to nine static arm64 archives
 - [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md) — One-command clean tracked-source MM7 and Atlas build under network denial, with focused headless controls
-- [MM7 Disposable Save and Reload](MM7-Disposable-Save-Reload.md) — Isolated Save/Load evidence, campaign checkpoints, eight regional quest boundaries and installed-candidate limits
+- [MM7 Disposable Save and Reload](MM7-Disposable-Save-Reload.md) — Isolated Save/Load evidence, campaign checkpoints, 18 durable quest boundaries and installed-candidate limits
 - [MM7 Scroll Cancellation](MM7-Scroll-Cancel.md) — Item-, actor- and character-target scroll return on cancelled targeting, focused integrated controls and remaining exit paths
 - [MM7 Playtest Recording](MM7-Playtest-Recording.md) — Staged Atlas rolling-video, log/save collector, intentional clip hotkey, drive/relaunch guards, and live acceptance boundary
-- [MM7 Quest Behavior Catalog](MM7-Quest-Behavior-Catalog.md) — Public/source-event reconciliation of every main, Light, Dark, side and promotion quest; includes the strengthened authored Light C6 route, the separately admitted Dark chain through C7 and its ending, the durable balanced-war route, complete Malwick/Niles contracts, and regional quest contracts
-- [MM7 Remaining Quests and Areas](../project/MM7_REMAINING_QUESTS_AND_AREAS.md) — Priority-ordered quest, region, durability and deferred graphical backlog for the Codex MM7 lane
+- [MM7 Quest Behavior Catalog](MM7-Quest-Behavior-Catalog.md) — Public/source-event reconciliation of every main, Light, Dark, side and promotion quest; includes both C0-C7 chains, 18 durable side/objective routes, complete Malwick/Niles contracts and all 27 promotion endpoints
+- [MM7 Remaining Quests and Areas](../project/MM7_REMAINING_QUESTS_AND_AREAS.md) — Post-quest priority board for visible playtest, natural movement/combat strengthening, native-parity questions and selective durability
 - [MM7 Atomic Save File](MM7-Atomic-Save-File.md) — Native-slot helper, detached preflight and integrated staged live capture; production atomic SaveLoad wiring remains open
 - [MM6 GrayFace Patch Reference](MM6-GrayFace-Patch-Reference.md) — Pinned GrayFace MM6 Patch 2.5.7, its 90 engine fixes cross-referenced against our runtime, decoded data fixes and open vanilla-bug decisions
 - [MM6 Transition and Death Candidates](MM6-Transition-And-Death-Candidates.md) — Cancel-only MM6 indoor dialog and detached death model with explicit live integration gates

@@ -12,7 +12,8 @@ Git-ignored local reference directory; this public document contains no game
 assets, save contents, or copied guide text.
 
 Checkpoint, 2026-11-15: all 27 promotion endpoints have focused behavior
-coverage and all 76 shipped maps have runtime GameTest references. These are
+coverage, all 76 shipped maps have runtime GameTest references, and all 17
+side/objective rows have exact fresh-process durability boundaries. These are
 important breadth milestones, not closure of the full audit below. Both war
 exposure failures, all five trumpet handlers and the effective result matrix
 are covered; Stone City adds one representative movement/combat kill and a
@@ -23,9 +24,14 @@ exact both-clear reward, award, topic and duplicate behavior. Malwick's real
 Wand acceptance now flows through both authored Arbiter choices
 into Counter5; a 1,007-hour production Save and fresh-process Load remains
 pre-trigger, then exact 1,008-hour Harmondale entry delivers the letter and
-starts Niles's visit without save-byte drift. Other regional durability,
-representative movement/combat, original-executable parity for the Strange
-Temple exit placement and graphical Mac play remain open.
+starts Niles's visit without save-byte drift. Lantern, Davrik and Griffin now
+preserve their physical-source or pre-report state through production Save and
+normal-menu Load. A consolidated full gate passed 1,124 unit tests (45 expected
+private-MM6-fixture skips), 721 default MM7 GameTests (8 opt-in skips), the
+complementary 8 opt-in mod tests, all 23 checkpoint pairs, both fresh C0-C7
+chains and both hidden capture tests. Representative movement/combat,
+original-executable parity for the Strange Temple exit placement and graphical
+Mac play remain open.
 
 Emerald contest coverage now physically produces or acquires the Cure Wounds
 potion, seashell, lute and wealthy hat through live inventory/NPC interactions.

@@ -87,8 +87,20 @@ artifacts already sitting in storage/world state are registered on withdrawal
 or pickup, and simultaneous uncollected world copies remain possible. MM6 is a
 Claude-owned future plan only.
 
-Continue from `codex/mm7-gameplay-harness`. Its runner requires fresh-process
-`MM7GameplayHarness` and `MM7CombatHarness` suites and optionally the complete
+The final consolidated MM7 checkpoint is on `codex/mm7-gameplay-harness` and
+is intended to be fast-forwarded into `master` before the temporary MM7
+worktrees are archived. All 17 side/objective rows are durable: Lantern,
+Davrik and Griffin add the last three production-Save/fresh-process-normal-Load
+boundaries. The final sweep passed 1,124 unit tests, 721 default MM7 tests,
+eight opt-in mod tests, all 23 admitted writer/reader pairs, both fresh C0-C7
+chains, both hidden capture tests and all 157 style targets. The C7 tapes now
+include the intended final inactive sample after ending quest cleanup. Barrow
+II's dark capture was inspected and accepted by the owner as normal without
+Torch Light. Resume remaining MM7 work from `master`; do not reopen the four
+temporary lanes merely to repeat this gate.
+
+The gameplay runner requires fresh-process `MM7GameplayHarness` and
+`MM7CombatHarness` suites and optionally the complete
 `MM7BarrowTraversal` suite. The composed Wine Cellar proof performs bounded
 forward input, observes release and distance reduction, then uses attack input
 to damage and kill the live authored quest target. The only production change

@@ -154,4 +154,20 @@ regional side/promotion selection passed 14/14 and `check_style` passed
 157/157. These are independent completed-route checkpoints, not a continuous
 regional campaign or a visible installed-app run.
 
+## Final side/objective durability closure — 2026-11-15
+
+Lantern of Light, Davrik's Signet Ring and the Griffin hunt add the last three
+side/objective boundaries. Lantern preserves the Barrow II source marker,
+unique item and emptied chest; Davrik preserves the active/taken bits, unique
+ring and emptied Bandit Caves chest; Griffin preserves both regional-clear
+bits and Seth's report topic before completing and duplicate-checking the exact
+reward transaction. Each reader uses the normal Load menu in a separate
+process and leaves its slot byte-identical.
+
+The quest-level total is now 36 writer/reader processes across 18 durable
+routes. Including the five older technical seams, the consolidated gate passed
+all 23 admitted pairs in 46 separate processes. Both fresh C0-C7 campaign
+chains also pass. These results close the table's side/objective durability
+column, not visible installed-app acceptance or optional promotion continuity.
+
 See also: [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [MM7 Atomic Save File](MM7-Atomic-Save-File.md), [MM7 Playtest Recording](MM7-Playtest-Recording.md), [Campaign Status](Campaign-Status.md), [Agent Handoff](Agent-Handoff.md).

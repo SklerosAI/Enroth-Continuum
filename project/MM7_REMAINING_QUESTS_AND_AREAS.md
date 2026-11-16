@@ -39,7 +39,7 @@ progress-capture folder has a hard rolling limit of 100 images.
 | 2 | Malwick, Niles and the tapestries | Emerald Island, Harmondale, Tatalia, Castle Lambent, Castle Gloaming | The focused behavior and three durability boundaries are complete. A single continuous packet accepts Malwick's Wand through his real Emerald dialogue, installs either authored Arbiter, proves both choices start Counter5, and reaches the exact 1,007/1,008-hour Harmondale boundary. The Light pre-trigger state survives a production Save and fresh-process normal Load before the letter starts Niles's visit. Both alignment-specific tapestry sources/returns, exact 719/720-hour allied-castle hostility boundary, both missed-deadline invasions and service reopening remain covered. Remaining only at campaign level: optional placement into a full C0-C7 branch rather than another focused contract. |
 | 3 | Dark campaign strengthening after C0-C7 | Harmondale, Deyja, Castle Gloaming, the Pit, Celeste, Thunderfist Mountain, Clanker's Laboratory, Breeding Zone, Colony Zod, Shoals and Lincoln | The separately marked Dark profile passes C0-C7. Representative movement/combat now has a reusable input contract, the Breeding Zone hidden frame is corrected, and Shoals' dense green fog is source-classified as authored underwater rendering. Remaining: reduce approach teleports where practical and eventually compare exact Shoals pixels with the original executable if parity matters. |
 | 4 | Light campaign strengthening after C0-C7 | Wine Cellar, Castle Gloaming, the Pit, Land of the Giants, Colony Zod, Shoals and Lincoln | Light C6 follows the authored Mount Nighon–Thunderfist–Tunnels–Land route through Xenofex and the return. The real Wine Cellar target now activates only for its live quest, input combat kills it, the composed harness walks then fights without measured-segment teleporting, and Tolberti's complete Blaster reward transaction is asserted. Remaining: the Walls protected-group predicate audit, reducing other approach teleports and broader graphical play. |
-| 5 | Regional strengthening and durability | Emerald Island, Erathia, Bracada Desert, Stone City, Bandit Caves, White Cliff Cave, the Maze and the Erathian Sewers | All six contest sources are now physical: the Moon tile; live-alchemy Cure Wounds; Sally's seashell; Ailyssa's lute; Brent's hat trade; and Sal Sharktooth's fixed Longbow after authored refusal, aggression, attack-input combat and corpse loot. The five-item packet persists its items/NPC state through normal save/load and uses real Judge hand-ins. Griffin coverage now proves all three refusal permutations and the exact both-regions-clear transaction without a production repair. Stone City and Haldar have fresh-process checkpoints; Darron's active quest, retained deck and removed White Cliff source now survive another fresh process without respawn or save-byte drift. Add checkpoints only for Lantern of Light, Davrik's Ring and Thief to Rogue. |
+| 5 | Regional strengthening and durability | Emerald Island, Erathia, Bracada Desert, Stone City, Bandit Caves, White Cliff Cave, the Maze and the Erathian Sewers | All six contest sources are physical and their five inventory/NPC items persist through normal save/load. Lantern, Davrik and Griffin now add exact production-Save/fresh-process-normal-Load boundaries: Lantern preserves the Barrow II source marker/chest without respawn, Davrik preserves the unique ring and empty Bandit Caves chest, and Griffin preserves both cleared regions before the exact one-time Seth transaction. All 17 side/objective rows are durable. Promotion checkpoints such as Thief-to-Rogue remain optional strengthening rather than an open quest-behavior gap. |
 | 6 | First promotions complete | All nine first-promotion routes | Every first promotion is behavior-covered through its real offer and objective. Priest physically loots the Tidewater map, verifies the exact Falk transaction and proves the Evenmorn boat unlock; Great Druid activates all three Stonehenges; Crusader uses attack-input Wromthrax combat; Wizard physically acquires and installs every golem component, covers both heads and proves the animated-golem Castle outcome. Remaining work is durability/regional continuity, not another first-promotion behavior row. |
 | 7 | Second promotions complete | All eighteen Light/Dark second-promotion endpoints | All 27 promotion endpoints are behavior-covered. Ranger Lord physically returns the Mercenary Guild Heart of Wood; Ninja follows Stephan Sand's Erathian cipher through the Hidden Tomb sarcophagus; Bounty Hunter kills an authored Dragon C target through attack input and claims the real Harmondale Town Hall bounty; Black Knight uses Navan guard combat, treasury movement and the physical quest chest before Frederick Org's return. Remaining work is durability and regional continuity rather than another promotion behavior row. |
 
@@ -55,6 +55,10 @@ progress-capture folder has a hard rolling limit of 100 images.
 - **Breeding Zone:** a large black occluder came from the diagnostic's literal
   indoor-origin placement. The authored floor-resolved start removes it; the
   corrected hidden frame was inspected and no renderer change was needed.
+- **Barrow II:** the final hidden authored-start frame was inspected. Its very
+  dark room and close foreground geometry are expected without Torch Light;
+  the owner accepted the rendering. The complete 27-transition Barrow graph
+  and the Lantern durability boundary remain the behavioral evidence.
 - **Land of the Giants and Colony Zod:** the complete authored access and
   return route now passes in both Light and Dark C6. Retain Roland's cage,
   one-use key, both controls, Xenofex combat and the return altar while reducing
@@ -83,13 +87,13 @@ progress-capture folder has a hard rolling limit of 100 images.
   an ending, plus representative UI, movie, music and sound checks on the Mac.
 
 All 76 shipped MM7 maps now have runtime GameTest coverage; there are no
-inventory-only map rows left. The highest-value open work is fresh-process durability
-for regional routes, representative ordinary movement/combat strengthening,
-the Strange Temple exit-placement parity check, and eventual graphical play.
+inventory-only map rows left. The highest-value open work is representative
+ordinary movement/combat strengthening, selective promotion/regional
+durability, the Strange Temple exit-placement parity check, and graphical play.
 
 ## Already durable; do not reopen without new evidence
 
-These fifteen independent routes have exact production-Save and
+These eighteen independent routes have exact production-Save and
 fresh-process normal-Load pairs with unchanged slot bytes:
 
 - Season's Stole
@@ -107,6 +111,9 @@ fresh-process normal-Load pairs with unchanged slot bytes:
 - Stone City Troglodytes
 - Haldar's Remains acquired from the repaired Maze source chest
 - Darron's deck acquired from the White Cliff Cave world sprite
+- Lantern of Light acquired from the persistent Barrow II source chest
+- Davrik's Signet Ring acquired from Bandit Caves chest 0
+- Griffin hunt at the both-regions-clear, pre-report boundary
 
 They are independent route boundaries, not a continuous regional campaign.
 The current regional side/promotion selection is 14/14; there are eighteen
@@ -118,7 +125,11 @@ source-marker boundary, bringing the total to twenty-six exact checkpoint tests
 across thirteen routes. Darron's White Cliff acquisition adds one more pair,
 bringing the total to twenty-eight exact checkpoint tests across fourteen
 routes. Malwick's accepted pre-trigger state adds another pair, bringing the
-total to thirty exact checkpoint tests across fifteen routes.
+total to thirty exact checkpoint tests across fifteen routes. Lantern, Davrik
+and Griffin add six more exact tests, bringing the quest total to thirty-six
+tests across eighteen durable routes. Including the five older technical
+save/campaign seams, the final full checkpoint sweep passed all 23 writer/reader
+pairs, 46 separate processes, on the consolidated branch.
 
 ## Gate for each new quest slice
 

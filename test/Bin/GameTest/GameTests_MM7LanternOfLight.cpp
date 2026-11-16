@@ -1,8 +1,10 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <filesystem>
 #include <numbers>
 #include <span>
+#include <string_view>
 #include <utility>
 
 #include "Testing/Game/GameTest.h"
@@ -12,15 +14,24 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Graphics/Indoor.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MapEnums.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
+#include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Objects/MonsterEnums.h"
 #include "Engine/Party.h"
+#include "Engine/PartyEnums.h"
+#include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/Resources/LOD.h"
+#include "Engine/SaveLoad.h"
+#include "Engine/Tables/ChestTable.h"
 
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIChest.h"
+#include "GUI/UI/UISaveLoad.h"
 
 #include "Utility/Exception.h"
 
@@ -32,6 +43,8 @@ constexpr int fallbackChestId = 0;
 constexpr int lanternMapVariable = 2;
 constexpr Vec3f ratSpawnPosition(5024, -224, -1376);
 constexpr EvtVariable lanternMapVariableType = static_cast<EvtVariable>(std::to_underlying(VAR_MapPersistentVariable_0) + lanternMapVariable);
+constexpr std::string_view checkpointSlot = "saves/save000.mm7";
+constexpr std::string_view checkpointFileName = "save000.mm7";
 
 int pointAtLanternChestFace(EngineController &game) {
     if (engine->_currentLoadedMapId != MAP_BARROW_II)
@@ -75,6 +88,70 @@ void closeChest(EngineController &game) {
     game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
     game.tick();
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
+}
+
+void pickUpLantern(EngineController &game) {
+    ASSERT_EQ(current_screen_type, SCREEN_CHEST);
+    ASSERT_EQ(pGUIWindow_CurrentChest->chestId(), lanternChestId);
+    InventoryEntry entry = vChests[lanternChestId].inventory.find(ITEM_QUEST_LANTERN_OF_LIGHT);
+    ASSERT_TRUE(entry);
+    ASSERT_EQ(entry.zone(), INVENTORY_ZONE_GRID);
+    Pointi itemPosition = chestTable[vChests[lanternChestId].chestTypeId].inventoryOffset +
+                          entry.geometry().topLeft() * 32 + Pointi(16, 16);
+    game.pressAndReleaseButton(BUTTON_LEFT, itemPosition);
+    game.tick();
+    ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_QUEST_LANTERN_OF_LIGHT);
+}
+
+int countPartyLanterns() {
+    int result = pParty->pPickedItem.itemId == ITEM_QUEST_LANTERN_OF_LIGHT;
+    for (const Character &character : pParty->pCharacters)
+        for (InventoryConstEntry entry : character.inventory.entries())
+            result += entry->itemId == ITEM_QUEST_LANTERN_OF_LIGHT;
+    return result;
+}
+
+void assertDisposableHeadlessProfile() {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    const auto profileRoot = mm7::startupNativeProfileRoot();
+    ASSERT_TRUE(profileRoot);
+    ASSERT_EQ(*profileRoot, std::filesystem::canonical(std::filesystem::path(ufs->displayPath(""))));
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+}
+
+void saveCheckpoint(EngineController &game) {
+    game.runGameRoutine([] {
+        saveGame(false, false, checkpointSlot, "Lantern of Light regional checkpoint");
+    });
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = ufs->read(checkpointSlot);
+    ASSERT_GT(saved.size(), 1024u);
+    ASSERT_TRUE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saved.data()), saved.size()),
+        GameTitle::MM7, *pGames_LOD));
+}
+
+void reloadCheckpoint(EngineController &game, Blob &saved) {
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    saved = Blob::copy(ufs->read(checkpointSlot));
+    ASSERT_GT(saved.size(), 1024u);
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(3);
+    ASSERT_EQ(current_screen_type, SCREEN_LOADGAME);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto found = std::ranges::find(slots, checkpointFileName, &SavegameSlot::fileName);
+    ASSERT_NE(found, slots.end());
+    const int index = static_cast<int>(found - slots.begin());
+    ASSERT_LT(index, 7);
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", index));
+    game.tick(2);
+    ASSERT_EQ(saveLoadMenu()->selectedSlot().fileName, checkpointFileName);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick(2);
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    ASSERT_EQ(engine->_lastLoadedSaveFileName, checkpointFileName);
 }
 
 void grantLanternReturnAward() {
@@ -254,6 +331,63 @@ GAME_TEST(MM7LanternOfLight, ExtendedMapVariableShapeDisengagesCompatibilityGuar
     EXPECT_EQ(pGUIWindow_CurrentChest->chestId(), fallbackChestId);
     EXPECT_EQ(engine->_persistentVariables.mapVars[lanternMapVariable], 7);
     closeChest(game);
+}
+
+GAME_TEST(MM7SideQuestCheckpoint, DISABLED_WriteLanternOfLight) {
+    assertDisposableHeadlessProfile();
+    ASSERT_FALSE(ufs->exists(checkpointSlot));
+    engine->config->debug.NoActors.setValue(true);
+    engine->config->debug.NoDamage.setValue(true);
+    game.startNewGame();
+    pParty->_questBits.set(QBIT_LANTERN_OF_LIGHT_ACTIVE);
+    ASSERT_FALSE(pParty->_questBits[QBIT_LANTERN_OF_LIGHT_TAKEN]);
+
+    game.teleportTo(MAP_BARROW_II, Vec3f(), 0);
+    vChests[lanternChestId].flags &= ~CHEST_TRAPPED;
+    ASSERT_EQ(engine->_persistentVariables.mapVars[lanternMapVariable], 0);
+    clickLanternChestFace(game);
+    ASSERT_EQ(current_screen_type, SCREEN_CHEST);
+    ASSERT_EQ(pGUIWindow_CurrentChest->chestId(), lanternChestId);
+    ASSERT_EQ(engine->_persistentVariables.mapVars[lanternMapVariable], 1);
+    pickUpLantern(game);
+    pParty->placeHeldItemInInventoryOrDrop();
+    ASSERT_EQ(countPartyLanterns(), 1);
+    ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    ASSERT_FALSE(vChests[lanternChestId].inventory.find(ITEM_QUEST_LANTERN_OF_LIGHT));
+    closeChest(game);
+
+    ASSERT_TRUE(pParty->_questBits[QBIT_LANTERN_OF_LIGHT_ACTIVE]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_LANTERN_OF_LIGHT_TAKEN]);
+    for (const Character &character : pParty->pCharacters)
+        ASSERT_FALSE(character._achievedAwardsBits[AWARD_HARMONDALE_RETURNED_LANTERN_OF_LIGHT]);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_BARROW_II);
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    ASSERT_FALSE(::testing::Test::HasFailure());
+    saveCheckpoint(game);
+}
+
+GAME_TEST(MM7SideQuestCheckpoint, DISABLED_ReloadLanternOfLight) {
+    assertDisposableHeadlessProfile();
+    Blob saved;
+    reloadCheckpoint(game, saved);
+
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_BARROW_II);
+    EXPECT_TRUE(pParty->_questBits[QBIT_LANTERN_OF_LIGHT_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_LANTERN_OF_LIGHT_TAKEN]);
+    for (const Character &character : pParty->pCharacters)
+        EXPECT_FALSE(character._achievedAwardsBits[AWARD_HARMONDALE_RETURNED_LANTERN_OF_LIGHT]);
+    EXPECT_EQ(engine->_persistentVariables.mapVars[lanternMapVariable], 1);
+    EXPECT_EQ(countPartyLanterns(), 1);
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_FALSE(vChests[lanternChestId].inventory.find(ITEM_QUEST_LANTERN_OF_LIGHT));
+
+    clickLanternChestFace(game);
+    ASSERT_EQ(current_screen_type, SCREEN_CHEST);
+    EXPECT_EQ(pGUIWindow_CurrentChest->chestId(), lanternChestId);
+    EXPECT_FALSE(vChests[lanternChestId].inventory.find(ITEM_QUEST_LANTERN_OF_LIGHT));
+    closeChest(game);
+    EXPECT_TRUE(ufs->read(checkpointSlot).str() == saved.str());
 }
 
 GAME_TEST(MM7BarrowII, RatEncounterStartsOnValidIndoorFloor) {

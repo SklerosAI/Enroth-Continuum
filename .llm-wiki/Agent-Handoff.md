@@ -240,8 +240,11 @@ Emerald event-101 entry, physical item-636 pickup, door 4, event-100 exit and
 no respawn. The Strange route proves right-click bottle entry, event-454
 purchase and event-501 exit to Harmondale. Its shipped explicit destination
 position is out of bounds, so OpenEnroth skips placement after loading the
-correct map; retain this as an original-executable parity follow-up rather than
-assuming an engine defect.
+correct map. Static native inspection shows the original copies the full signed
+coordinate and lets the first outdoor update process the overflow; GrayFace
+2.5.7 supplies no override. Retain a private native trace of the settled
+position and border-dialog state as the gate before any compatibility seam;
+clamping or truncating now would be speculative.
 
 War-alternative coverage now includes both physical exposure/death failures,
 all five trumpet handlers after a representative authored ambassador-placement

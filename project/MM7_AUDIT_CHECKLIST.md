@@ -20,6 +20,14 @@ durable regional checkpoint. Other regional durability, representative
 movement/combat, original-executable parity for the Strange Temple exit
 placement and graphical Mac play remain open.
 
+The Strange Temple source audit now narrows that parity question. The shipped
+event supplies a grossly out-of-bounds signed 32-bit Harmondale X coordinate.
+Static original-executable evidence shows the native engine copies that value
+and lets its first outdoor update handle the overflow, whereas OpenEnroth
+rejects the placement. A private native trace through the first settled frames
+is still required to distinguish edge clamping from an unintended border
+travel prompt before any compatibility repair is justified.
+
 ## Baseline and independence
 
 - [ ] Record the current `mm7-isolated-runtime` source revision, staged and

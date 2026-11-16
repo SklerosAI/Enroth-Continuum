@@ -164,7 +164,10 @@ exits through event 100 and proves no respawn on re-entry. The Strange route
 right-clicks the reusable bottle, buys an empty potion bottle through event
 454 and exits through event 501 to Harmondale. That shipped exit carries an
 out-of-bounds explicit destination, so OpenEnroth loads the correct map but
-skips placement; original-executable parity remains open before any repair.
+skips placement. Static native evidence shows the original copies the full
+signed coordinate and delegates overflow handling to the first outdoor update,
+while GrayFace 2.5.7 has no override. A private trace of the settled position
+and border-dialog state remains the required parity gate before any repair.
 
 The remaining war-alternative gaps are now covered without a production
 change. Both opposing-throne exposure topics execute their authored death and

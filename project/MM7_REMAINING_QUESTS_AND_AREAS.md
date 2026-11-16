@@ -63,8 +63,11 @@ progress-capture folder has a hard rolling limit of 100 images.
 - **Strange Temple:** the reusable bottle enters through a real portrait
   right-click, the interior event-454 purchase yields the empty potion bottle,
   and event 501 exits to Harmondale. The shipped exit coordinates are outside
-  the destination bounds, so OpenEnroth logs and skips the explicit placement;
-  establish original-executable parity before changing that authored payload.
+  the destination bounds, so OpenEnroth logs and skips the explicit placement.
+  Static native evidence shows the original copies the signed 32-bit coordinate
+  and defers overflow handling to its first outdoor update; GrayFace 2.5.7 has
+  no override. Trace the native settled position/dialog state before choosing
+  between clamping, travel handling or no compatibility change.
 - **Shoals and Lincoln:** retain the complete access and item chain in both
   Light and Dark continuity tests rather than accepting destination teleports
   as campaign proof.

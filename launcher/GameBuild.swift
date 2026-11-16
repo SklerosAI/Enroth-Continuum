@@ -73,7 +73,7 @@ enum GameBuild: String {
      * @param base                      Atlas's own environment.
      * @param modRoot                   Private mods folder when Private mods is on, else nil.
      * @param vendorRefresh             Whether Private mods asks for fresh vendor stock.
-     * @param allArtifactsStorage       Whether Private mods asks for uncapped artifact loot and chest overflow storage.
+     * @param allArtifactsStorage       Whether Private mods asks for collection-based artifact eligibility and storage support.
      * @return                          The environment to launch the helper with.
      */
     func environment(base: [String: String], modRoot: URL?, vendorRefresh: Bool,

@@ -30,6 +30,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 
 - [Campaign Status](Campaign-Status.md) — Current MM6, MM7 and MM8 readiness, including the MM6 C0-C1 chain and integrated MM7 campaign, quest, 27-of-27 promotion, 76-of-76 shipped-map runtime and regional durability gates
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
+- [MM7 All Artifacts + Storage](MM7-All-Artifacts-Storage-Mod.md) — Optional collection-based random-artifact eligibility with Castle Harmondale persistent storage
 - [MM7 Private Portrait Mod](MM7-Private-Portrait-Mod.md) — Local mood PNG layout, shared MM7 portrait resolver, Atlas controls, and verified hidden HUD capture
 - [Runtime Isolation](Runtime-Isolation.md) — Title-locked MM6/MM7 helpers, staged Atlas sibling assembler and isolated MM6 playtest entry; MM8 remains gated
 - [MM7 Self-Contained Source](MM7-Self-Contained-Source.md) — Tracked Mac source, verified integration candidate and remaining graphical, save and identity gates

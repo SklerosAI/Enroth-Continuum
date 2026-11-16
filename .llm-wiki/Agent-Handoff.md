@@ -71,6 +71,22 @@ completed Light profile.
 
 ## Current MM7 gameplay checkpoint — 2026-11-15
 
+The optional MM7-only **All Artifacts + Storage** rule is implemented for the
+next playtest build. An exact Atlas Private mods launch flag selects a separate
+29-entry collected ledger while leaving the native generated ledger intact.
+The collected state is versioned in reserved fixed-size party snapshot bytes;
+legacy saves migrate party inventory, equipment and cursor without treating all
+historic generated bits as acquisitions. Both level-seven and tier-six paths
+retain their original eligibility/probability boundaries, ignore the cap only
+under opt-in and fail safely after all 29 IDs are collected. Castle Harmondale's
+existing twenty `d29` chests already persist full item/grid state across time,
+renovation and saves, so no new storage UI or reset override was added. The
+focused engine packet passes; retain the visible existing-save acquisition,
+Harmondale deposit and fresh-process reload as the next owner playtest. Older
+artifacts already sitting in storage/world state are registered on withdrawal
+or pickup, and simultaneous uncollected world copies remain possible. MM6 is a
+Claude-owned future plan only.
+
 Continue from `codex/mm7-gameplay-harness`. Its runner requires fresh-process
 `MM7GameplayHarness` and `MM7CombatHarness` suites and optionally the complete
 `MM7BarrowTraversal` suite. The composed Wine Cellar proof performs bounded

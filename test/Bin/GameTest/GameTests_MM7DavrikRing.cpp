@@ -1,7 +1,10 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <filesystem>
 #include <numbers>
+#include <span>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -14,20 +17,32 @@
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MapEnums.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
+#include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Party.h"
 #include "Engine/PartyEnums.h"
+#include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/Resources/LOD.h"
+#include "Engine/SaveLoad.h"
 #include "Engine/Tables/NPCTable.h"
 
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/NPCTopics.h"
+#include "GUI/UI/UIChest.h"
 #include "GUI/UI/UIHouses.h"
+#include "GUI/UI/UISaveLoad.h"
 
 #include "Utility/Exception.h"
 
 namespace {
+
+constexpr int signetRingChestId = 0;
+constexpr std::string_view checkpointSlot = "saves/save000.mm7";
+constexpr std::string_view checkpointFileName = "save000.mm7";
 
 std::pair<Vec3f, int> approachFace(const BLVFace &face) {
     Vec3f position = face.boundingBox.center() + 150 * face.facePlane.normal;
@@ -172,6 +187,29 @@ int totalExperience() {
     return result;
 }
 
+int countPartyItem(ItemId itemId) {
+    int result = pParty->pPickedItem.itemId == itemId;
+    for (const Character &character : pParty->pCharacters)
+        for (InventoryConstEntry entry : character.inventory.entries())
+            result += entry->itemId == itemId;
+    return result;
+}
+
+void closeChest(EngineController &game) {
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+}
+
+void assertDisposableHeadlessProfile() {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    const auto profileRoot = mm7::startupNativeProfileRoot();
+    ASSERT_TRUE(profileRoot);
+    ASSERT_EQ(*profileRoot, std::filesystem::canonical(std::filesystem::path(ufs->displayPath(""))));
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+}
+
 } // namespace
 
 GAME_TEST(MM7SideQuests, DavriksSignetRingRequiresBanditCavesChest) {
@@ -219,4 +257,87 @@ GAME_TEST(MM7SideQuests, DavriksSignetRingRequiresBanditCavesChest) {
     EXPECT_EQ(totalExperience(), experience + 4 * 5000);
     for (const Character &character : pParty->pCharacters)
         EXPECT_TRUE(character._achievedAwardsBits[AWARD_HARMONDALE_RETURNED_DAVRIKS_SIGNET_RING]);
+}
+
+GAME_TEST(MM7SideQuestCheckpoint, DISABLED_WriteDavriksSignetRing) {
+    assertDisposableHeadlessProfile();
+    ASSERT_FALSE(ufs->exists(checkpointSlot));
+    game.startNewGame();
+    engine->config->debug.NoDamage.setValue(true);
+
+    pParty->_questBits.set(QBIT_DAVRIKS_SIGNET_RING_ACTIVE);
+    ASSERT_FALSE(pParty->_questBits[QBIT_DAVRIKS_SIGNET_RING_TAKEN]);
+    for (const Character &character : pParty->pCharacters)
+        ASSERT_FALSE(character._achievedAwardsBits[AWARD_HARMONDALE_RETURNED_DAVRIKS_SIGNET_RING]);
+
+    game.teleportTo(MAP_BANDIT_CAVES, Vec3f(), 0);
+    ASSERT_TRUE(vChests[signetRingChestId].inventory.find(ITEM_QUEST_SIGNET_RING));
+    ASSERT_TRUE(lootSignetRing(game));
+    ASSERT_EQ(current_screen_type, SCREEN_CHEST);
+    ASSERT_EQ(pGUIWindow_CurrentChest->chestId(), signetRingChestId);
+    ASSERT_TRUE(pParty->_questBits[QBIT_DAVRIKS_SIGNET_RING_ACTIVE]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_DAVRIKS_SIGNET_RING_TAKEN]);
+    ASSERT_FALSE(vChests[signetRingChestId].inventory.find(ITEM_QUEST_SIGNET_RING));
+    pParty->placeHeldItemInInventoryOrDrop();
+    ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    ASSERT_EQ(countPartyItem(ITEM_QUEST_SIGNET_RING), 1);
+    closeChest(game);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_BANDIT_CAVES);
+    ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    ASSERT_FALSE(::testing::Test::HasFailure());
+
+    game.runGameRoutine([] {
+        saveGame(false, false, checkpointSlot, "Davrik's Signet Ring regional checkpoint");
+    });
+
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = ufs->read(checkpointSlot);
+    ASSERT_GT(saved.size(), 1024u);
+    ASSERT_TRUE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saved.data()), saved.size()),
+        GameTitle::MM7, *pGames_LOD));
+}
+
+GAME_TEST(MM7SideQuestCheckpoint, DISABLED_ReloadDavriksSignetRing) {
+    assertDisposableHeadlessProfile();
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = Blob::copy(ufs->read(checkpointSlot));
+    ASSERT_GT(saved.size(), 1024u);
+
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(3);
+    ASSERT_EQ(current_screen_type, SCREEN_LOADGAME);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto found = std::ranges::find(slots, checkpointFileName, &SavegameSlot::fileName);
+    ASSERT_NE(found, slots.end());
+    const int index = static_cast<int>(found - slots.begin());
+    ASSERT_LT(index, 7);
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", index));
+    game.tick(2);
+    ASSERT_EQ(saveLoadMenu()->selectedSlot().fileName, checkpointFileName);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick(2);
+
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_BANDIT_CAVES);
+    ASSERT_EQ(engine->_lastLoadedSaveFileName, checkpointFileName);
+    EXPECT_TRUE(pParty->_questBits[QBIT_DAVRIKS_SIGNET_RING_ACTIVE]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_DAVRIKS_SIGNET_RING_TAKEN]);
+    EXPECT_EQ(countPartyItem(ITEM_QUEST_SIGNET_RING), 1);
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_FALSE(vChests[signetRingChestId].inventory.find(ITEM_QUEST_SIGNET_RING));
+    for (const Character &character : pParty->pCharacters)
+        EXPECT_FALSE(character._achievedAwardsBits[AWARD_HARMONDALE_RETURNED_DAVRIKS_SIGNET_RING]);
+
+    for (int attempt = 0; attempt < 2 && current_screen_type != SCREEN_CHEST; ++attempt) {
+        Chest::open(signetRingChestId, Pid());
+        game.tick();
+    }
+    ASSERT_EQ(current_screen_type, SCREEN_CHEST);
+    EXPECT_EQ(pGUIWindow_CurrentChest->chestId(), signetRingChestId);
+    EXPECT_FALSE(vChests[signetRingChestId].inventory.find(ITEM_QUEST_SIGNET_RING));
+    EXPECT_EQ(countPartyItem(ITEM_QUEST_SIGNET_RING), 1);
+    closeChest(game);
+    EXPECT_TRUE(ufs->read(checkpointSlot).str() == saved.str());
 }

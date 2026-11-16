@@ -54,6 +54,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7ObeliskPuzzle.cpp
         GameTests_MM7WarAlternatives.cpp
         GameTests_MM7MalwickNiles.cpp
+        GameTests_MM7Griffins.cpp
         GameTests_MM7MountNighon.cpp
         GameTests_MM7SeasonsStole.cpp
         GameTests_MM7NinjaPromotion.cpp

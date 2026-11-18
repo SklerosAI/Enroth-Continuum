@@ -13,7 +13,11 @@
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
+#include "Engine/Objects/Actor.h"
+#include "Engine/Objects/NPC.h"
 #include "Engine/Party.h"
+#include "Engine/Tables/NPCTable.h"
+#include "GUI/UI/UIDialogue.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/MapTable.h"
 
@@ -224,4 +228,22 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_NpcDialogueCapture) {
     game.pressAndReleaseButton(BUTTON_LEFT, 555, 255); // Hire.
     game.tick();
     captureFrame(game, capturePrefix, "hired");
+}
+
+GAME_TEST(MM6NpcDialogue, ZzProbe) {
+    auto textTape = tapes.allGUIWindowsText();
+    enterNewSorpigal(game);
+    test.startTaping();
+    talkToMarianne(game);
+    NPCData *npc = getNPCData(speakingNpcId);
+    fmt::println("PROBE name={} prof={} rep={} fame={} flags={} news={} f24={} day={} partyrep={} partyfame={}", npc->name, (int)npc->profession, npc->rep, npc->fame,
+                 (int)static_cast<uint32_t>(npc->flags), npc->newsTopic, npc->field_24, pParty->uCurrentDayOfMonth, pParty->mm6Reputation, pParty->fame());
+    for (const auto &frame : textTape)
+        for (const auto &t : frame) fmt::println("PROBE text: {}", t);
+    // Street NPCs near Marianne.
+    for (const Actor &actor : pActors)
+        if (actor.npcId >= 5000) {
+            NPCData *n = getNPCData(actor.npcId);
+            fmt::println("PROBE actor {} at ({},{},{}) {} prof={} rep={}", actor.id, actor.pos.x, actor.pos.y, actor.pos.z, n->name, (int)n->profession, n->rep);
+        }
 }

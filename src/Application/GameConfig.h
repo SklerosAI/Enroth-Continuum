@@ -252,6 +252,10 @@ class GameConfig : public Config {
             "Change water walk mana drain interval to 20 minutes. "
             "Spell description says that mana is drained every 20 minutes, but in vanilla, it was every 5 minutes."};
 
+        Bool FixStrongerShorterBuff = {this, "fix_stronger_shorter_buff", true,
+            "Let a stronger buff replace a weaker one of the same kind even when it ends sooner, as the GrayFace patch does. "
+            "In vanilla MM6 a buff that would end sooner was refused whatever its power. MM6 only."};
+
         Float SpellFailureRecoveryMod = {this, "spell_failure_recovery_mod", 0.5f, &ValidateSpellFailureRecoveryMod,
             "Recovery time modifier when spell casting ended in failure for the reason where spell cannot be cast at all in current context. "
             "Context include situation where outdoor spell is casted indoor or targeted spell is casted with no characters on screen."};

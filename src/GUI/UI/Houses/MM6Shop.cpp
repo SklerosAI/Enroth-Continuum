@@ -31,6 +31,8 @@
 
 #include "Library/Logger/Logger.h"
 
+#include "Media/Audio/AudioPlayer.h"
+
 #include "MM6ShopPrices.h"
 #include "MM6ShopStock.h"
 
@@ -120,6 +122,11 @@ void GUIWindow_MM6Shop::Update() {
     const std::string footer = localization->str(footerLine(*_screen));
     render->DrawQuad2D(assets->getIcon("footer"), {0, 352});
     DrawText(assets->pFontLucida.get(), {assets->pFontLucida->AlignText_Center(450, footer) + 11, 355}, colorTable.White, footer, frameRect);
+
+    if (pParty->hasActiveCharacter() && !pParty->activeCharacter().CanAct()) {
+        const std::string refusal = localization->format(LSTR_S_IS_IN_NO_CONDITION_TO_S, pParty->activeCharacter().name, localization->str(LSTR_DO_ANYTHING));
+        drawPanelText(refusal, (212 - panelTextHeight(refusal)) / 2 + 101, colorTable.PaleCanary);
+    }
 }
 
 void GUIWindow_MM6Shop::selectService(int index) {
@@ -140,6 +147,10 @@ bool GUIWindow_MM6Shop::goBack() {
 void GUIWindow_MM6Shop::houseScreenClick() {
     if (!_screen || !pParty->hasActiveCharacter())
         return;
+    if (!pParty->activeCharacter().CanAct()) {
+        pAudioPlayer->playUISound(SOUND_error);
+        return;
+    }
     switch (*_screen) {
         case mm6::HouseServiceOption::BuyItems:
         case mm6::HouseServiceOption::BuySpecialItems:

@@ -462,15 +462,18 @@ bool SpellBuff::IsBuffExpiredToTime(Time time) {
     return false;
 }
 
+static bool strongerBuffReplacesLonger() {
+    return engine->gameTitle() == GameTitle::MM6 && engine->config->gameplay.FixStrongerShorterBuff.value();
+}
+
 bool SpellBuff::Apply(Time expire_time, Mastery uSkillMastery,
                       int uPower, int uOverlayID,
                       int caster) {
     // For bug catching
     assert(uSkillMastery >= MASTERY_NOVICE && uSkillMastery <= MASTERY_GRANDMASTER);
 
-    if (this->expireTime && (expire_time < this->expireTime)) {
+    if (this->expireTime && expire_time < this->expireTime && !(uPower > this->power && strongerBuffReplacesLonger()))
         return false;
-    }
 
     this->skillMastery = uSkillMastery;
     this->power = uPower;

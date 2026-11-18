@@ -77,21 +77,28 @@ static void enterFirstMapFromNewGame(EngineController &game) {
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
 }
 
+static constexpr int KNIGHT = 0;
+static constexpr int CLERIC = 1;
 static constexpr int SORCERER = 2;
+static constexpr int DRUID = 3;
 
 static PlatformKey characterKey(int characterIndex) {
     return static_cast<PlatformKey>(std::to_underlying(PlatformKey::KEY_DIGIT_1) + characterIndex);
 }
 
-static void teachSorcerer(SpellId spell, CombinedSkillValue value) {
-    Character &sorcerer = pParty->pCharacters[SORCERER];
-    sorcerer.pActiveSkills[skillForSpell(spell)] = value;
-    sorcerer.bHaveSpell[spell] = true;
-    sorcerer.mana = 100;
+static void teachSpell(int characterIndex, SpellId spell, CombinedSkillValue value) {
+    Character &character = pParty->pCharacters[characterIndex];
+    character.pActiveSkills[skillForSpell(spell)] = value;
+    character.bHaveSpell[spell] = true;
+    character.mana = 100;
 }
 
-static void selectInSpellbook(EngineController &game, SpellId spell) {
-    game.pressAndReleaseKey(characterKey(SORCERER));
+static void teachSorcerer(SpellId spell, CombinedSkillValue value) {
+    teachSpell(SORCERER, spell, value);
+}
+
+static void selectInSpellbook(EngineController &game, SpellId spell, int caster = SORCERER) {
+    game.pressAndReleaseKey(characterKey(caster));
     game.tick();
     game.pressAndReleaseKey(PlatformKey::KEY_C);
     game.tick();
@@ -101,8 +108,8 @@ static void selectInSpellbook(EngineController &game, SpellId spell) {
     game.tick();
 }
 
-static void castFromSpellbook(EngineController &game, SpellId spell) {
-    selectInSpellbook(game, spell);
+static void castFromSpellbook(EngineController &game, SpellId spell, int caster = SORCERER) {
+    selectInSpellbook(game, spell, caster);
     game.pressGuiButton(fmt::format("SpellBook_Spell{}", spellIndexInMagicSchool(spell))); // A second click casts it.
     game.tick(2); // The book closes, the spell takes effect or opens the target picker on the next frame.
 }
@@ -175,6 +182,30 @@ static Vec3f waterAhead() {
             return position;
     }
     throw std::runtime_error("No water ahead of the party");
+}
+
+static void openCharacterScreen(EngineController &game, int characterIndex) {
+    game.pressAndReleaseKey(characterKey(characterIndex));
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_I);
+    game.tick(2); // The key queues the character screen for the next frame.
+}
+
+static void drinkFromBackpack(EngineController &game, int characterIndex, Pointi cell) {
+    // The character picks the potion up in the backpack and drops it on the paperdoll.
+    openCharacterScreen(game, characterIndex);
+    game.pressAndReleaseButton(BUTTON_LEFT, Pointi(14, 17) + cell * 32 + Pointi(16, 16));
+    game.tick();
+    game.pressAndReleaseButton(BUTTON_LEFT, {550, 200}); // The paperdoll.
+    game.tick();
+}
+
+static void lookAtStats(EngineController &game, int characterIndex) {
+    openCharacterScreen(game, characterIndex);
+    game.pressAndReleaseKey(PlatformKey::KEY_S);
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
 }
 
 GAME_TEST(MM6PlayerSpells, Fly) {
@@ -437,6 +468,61 @@ GAME_TEST(MM6PlayerSpells, BlessAndHeroism) {
         EXPECT_EQ(timeLeftTape.max(), Duration::fromMinutes(84));
         EXPECT_EQ(powerTape, tape(0, 9));
         EXPECT_EQ(otherBuffTape, tape(false));
+    }
+}
+
+GAME_TEST(MM6PlayerSpells, StrongerShorterBlessReplacesLongerOne) {
+    // A Bless that would end sooner was refused even when it was stronger, so casting Bless after drinking a Bless
+    // potion left the attack bonus at the potion's. A weaker Bless that would end sooner is still refused.
+    for (bool stronger : {true, false}) {
+        SCOPED_TRACE(fmt::format("stronger={}", stronger));
+        test.prepareForNextTest();
+        auto powerTape = charTapes.custom(KNIGHT, [](const Character &character) { return character.pCharacterBuffs[CHARACTER_BUFF_BLESS].power; });
+        auto timeLeftTape = buffDurationTape(tapes, []() -> const SpellBuff & { return pParty->pCharacters[KNIGHT].pCharacterBuffs[CHARACTER_BUFF_BLESS]; });
+        auto clericMpTape = charTapes.mp(CLERIC);
+        auto textTape = tapes.drawnTexts();
+        enterFirstMapFromNewGame(game);
+        teachSpell(CLERIC, mm6::SPELL_BLESS, CombinedSkillValue(1, MASTERY_NOVICE));
+        Pointi potion;
+        if (stronger) {
+            potion = pParty->pCharacters[KNIGHT].inventory.add(Item(static_cast<ItemId>(177))).geometry().topLeft();
+        } else {
+            teachSpell(DRUID, mm6::SPELL_BLESS, CombinedSkillValue(2, MASTERY_NOVICE));
+        }
+        test.startTaping();
+
+        if (stronger) {
+            drinkFromBackpack(game, KNIGHT, potion);
+            for (int frame = 0; frame < 100 && pParty->pCharacters[KNIGHT].timeToRecovery > 0_ticks; frame++)
+                game.tick(); // The knight recovers from the drink, a recovering character can't be selected.
+        } else {
+            castFromSpellbook(game, mm6::SPELL_BLESS, DRUID);
+            game.pressAndReleaseKey(characterKey(KNIGHT));
+            game.tick();
+        }
+        lookAtStats(game, KNIGHT);
+        castFromSpellbook(game, mm6::SPELL_BLESS, CLERIC);
+        game.pressAndReleaseKey(characterKey(KNIGHT));
+        game.tick();
+        lookAtStats(game, KNIGHT);
+
+        auto attackRows = textTape.flatten()
+            .map([](const DrawnText &text) { return text.text; })
+            .filter([](const std::string &text) { return text.starts_with("Attack"); })
+            .unique();
+        EXPECT_LT(clericMpTape.back(), clericMpTape.front());
+        if (stronger) {
+            EXPECT_EQ(powerTape, tape(0, 5, 6));
+            EXPECT_CONTAINS(timeLeftTape, Duration::fromHours(6));
+            EXPECT_CONTAINS(timeLeftTape, Duration::fromMinutes(69));
+            EXPECT_CONTAINS(attackRows, "Attack\t100+5\n");
+            EXPECT_EQ(attackRows.back(), "Attack\t100+6\n");
+        } else {
+            EXPECT_EQ(powerTape, tape(0, 7));
+            EXPECT_CONTAINS(timeLeftTape, Duration::fromMinutes(74));
+            EXPECT_MISSES(timeLeftTape, Duration::fromMinutes(69));
+            EXPECT_EQ(attackRows, tape(std::string("Attack\t100+7\n")));
+        }
     }
 }
 

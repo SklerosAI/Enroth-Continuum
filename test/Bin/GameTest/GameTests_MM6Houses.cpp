@@ -169,6 +169,26 @@ static std::vector<int> backpackItems(int character) {
     return result;
 }
 
+static InventoryEntry knightSword() {
+    // The sword in the first character's backpack.
+    for (InventoryEntry entry : pParty->pCharacters[0].inventory.entries())
+        if (entry->itemId == static_cast<ItemId>(1))
+            return entry;
+    return {};
+}
+
+static void clickKnightSword(EngineController &game) {
+    // Left click on the sword in the backpack a shop screen shows.
+    ASSERT_TRUE(knightSword());
+    game.pressAndReleaseButton(BUTTON_LEFT, mapFromInventoryGrid(knightSword().geometry().topLeft(), Pointi(14, 17)) + Pointi(16, 16));
+    game.tick();
+}
+
+static void knockOut(Character *character) {
+    character->health = 0;
+    character->conditions.set(CONDITION_UNCONSCIOUS, pParty->GetPlayingTime());
+}
+
 static const Vec3f kTempleDoor(-9744, -1862, 700); // New Sorpigal Temple, facing north.
 static const Vec3f kWeaponShopDoor(-8422, -7392, 300); // Weapon shop, facing east.
 static const Vec3f kTownHallDoor(-11090, -6536, 300); // Town Hall, facing west.
@@ -218,6 +238,12 @@ static bool isHousePanelQuad(const DrawnQuad &quad) {
 static DrawnLine panelLine(std::string_view text, int y, Color color) {
     // A line centred in the right panel's text column the way MM6 centres it.
     return DrawnLine{std::string(text), {483 + assets->pFontArrus->AlignText_Center(148, text), y}, color};
+}
+
+static std::vector<DrawnLine> noConditionLines() {
+    // The first character's no condition refusal, wrapped in the right panel and centred on it the way MM6 places it.
+    const Color yellow = colorTable.PaleCanary;
+    return {panelLine("Zoltan is in no", 183, yellow), panelLine("condition to do", 199, yellow), panelLine("anything", 215, yellow)};
 }
 
 GAME_TEST(MM6Houses, EnterAndExit) {
@@ -971,6 +997,86 @@ GAME_TEST(MM6Houses, WeaponShopRepair) {
     EXPECT_EQ(goldTape, tape(200, 189));
     EXPECT_EQ(brokenTape, tape(true, false));
     EXPECT_CONTAINS(statusTape, localization->str(static_cast<LstrId>(570))); // "Good as New!"
+}
+
+GAME_TEST(MM6Houses, WeaponShopIdentifyUnconscious) {
+    // An unconscious character had a weapon identified at the New Sorpigal weapon shop. The shop turns him away with
+    // the no condition line and the error sound, and a conscious one still pays and gets it identified.
+    for (bool conscious : {false, true}) {
+        SCOPED_TRACE(fmt::format("conscious={}", conscious));
+        test.prepareForNextTest();
+        auto goldTape = tapes.gold();
+        auto identifiedTape = tapes.custom([] { return knightSword() && knightSword()->IsIdentified(); });
+        auto unconsciousTape = tapes.custom([] { return pParty->pCharacters[0].conditions.has(CONDITION_UNCONSCIOUS); });
+        auto activeTape = tapes.activeCharacterIndex();
+        auto statusTape = tapes.statusBar();
+        auto soundsTape = tapes.sounds();
+        auto linesTape = tapes.titleLines();
+        startMM6NewGame(game);
+        knightSword()->flags &= ~ITEM_IDENTIFIED;
+        if (!conscious)
+            knockOut(&pParty->pCharacters[0]);
+        test.startTaping();
+        enterThroughDoor(game, kWeaponShopDoor, 0);
+        game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+        game.tick();
+        clickHouseOption(game, localization->str(static_cast<LstrId>(541))); // Identify Items.
+        clickKnightSword(game);
+
+        EXPECT_EQ(unconsciousTape, tape(!conscious));
+        EXPECT_EQ(activeTape.back(), 0);
+        EXPECT_EQ(goldTape, conscious ? tape(200, 125) : tape(200));
+        EXPECT_EQ(identifiedTape, conscious ? tape(false, true) : tape(false));
+        if (conscious) {
+            EXPECT_CONTAINS(statusTape, localization->str(static_cast<LstrId>(569))); // "Done!"
+            EXPECT_MISSES(soundsTape.flatten(), SOUND_error);
+            EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>());
+        } else {
+            EXPECT_MISSES(statusTape, localization->str(static_cast<LstrId>(569)));
+            EXPECT_CONTAINS(soundsTape.flatten(), SOUND_error);
+            EXPECT_EQ(panelLines(linesTape.back()), noConditionLines());
+        }
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopRepairUnconscious) {
+    // An unconscious character had a broken weapon repaired at the New Sorpigal weapon shop. The shop turns him away
+    // with the no condition line and the error sound, and a conscious one still pays and gets it repaired.
+    for (bool conscious : {false, true}) {
+        SCOPED_TRACE(fmt::format("conscious={}", conscious));
+        test.prepareForNextTest();
+        auto goldTape = tapes.gold();
+        auto brokenTape = tapes.custom([] { return knightSword() && knightSword()->IsBroken(); });
+        auto unconsciousTape = tapes.custom([] { return pParty->pCharacters[0].conditions.has(CONDITION_UNCONSCIOUS); });
+        auto activeTape = tapes.activeCharacterIndex();
+        auto statusTape = tapes.statusBar();
+        auto soundsTape = tapes.sounds();
+        auto linesTape = tapes.titleLines();
+        startMM6NewGame(game);
+        knightSword()->flags |= ITEM_BROKEN;
+        if (!conscious)
+            knockOut(&pParty->pCharacters[0]);
+        test.startTaping();
+        enterThroughDoor(game, kWeaponShopDoor, 0);
+        game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+        game.tick();
+        clickHouseOption(game, localization->str(static_cast<LstrId>(542))); // Repair Items.
+        clickKnightSword(game);
+
+        EXPECT_EQ(unconsciousTape, tape(!conscious));
+        EXPECT_EQ(activeTape.back(), 0);
+        EXPECT_EQ(goldTape, conscious ? tape(200, 189) : tape(200));
+        EXPECT_EQ(brokenTape, conscious ? tape(true, false) : tape(true));
+        if (conscious) {
+            EXPECT_CONTAINS(statusTape, localization->str(static_cast<LstrId>(570))); // "Good as New!"
+            EXPECT_MISSES(soundsTape.flatten(), SOUND_error);
+            EXPECT_EQ(panelLines(linesTape.back()), std::vector<DrawnLine>());
+        } else {
+            EXPECT_MISSES(statusTape, localization->str(static_cast<LstrId>(570)));
+            EXPECT_CONTAINS(soundsTape.flatten(), SOUND_error);
+            EXPECT_EQ(panelLines(linesTape.back()), noConditionLines());
+        }
+    }
 }
 
 GAME_TEST(MM6Houses, BankDepositAndWithdraw) {

@@ -1,11 +1,8 @@
 #include <array>
-#include <cstdlib>
-#include <fstream>
-#include <iterator>
+#include <optional>
 #include <stdexcept>
-#include <string>
-#include <utility>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/Spells/MM6FirstAidTransaction.h"
@@ -61,20 +58,13 @@ UNIT_TEST(MM6FirstAidTransaction, RejectsChangedStateWithoutMutation) {
     EXPECT_EQ(characters[0].timeToRecovery, 0_ticks);
 }
 
-UNIT_TEST(MM6FirstAidTransaction, PrivateRulesPlanAndStageActualCharacterState) {
-    const char *spellPath = std::getenv("ENROTH_MM6_SPELL_RULES_MANIFEST");
-    const char *firstAidPath = std::getenv("ENROTH_MM6_FIRST_AID_MANIFEST");
-    if (!spellPath || !firstAidPath)
-        GTEST_SKIP() << "Set ignored MM6 spell and First Aid manifests";
-
-    auto loadFile = [](const char *path, void (*load)(const Blob &)) {
-        std::ifstream stream(path);
-        ASSERT_TRUE(stream.is_open());
-        std::string bytes(std::istreambuf_iterator<char>{stream}, {});
-        load(Blob::fromString(std::move(bytes)));
-    };
-    loadFile(spellPath, mm6::loadSpellRules);
-    loadFile(firstAidPath, mm6::loadFirstAidRules);
+UNIT_TEST(MM6FirstAidTransaction, ProfileRulesPlanAndStageActualCharacterState) {
+    const std::optional<Blob> spells = readMM6TestRules("spells.json");
+    const std::optional<Blob> firstAid = readMM6TestRules("first-aid.json");
+    if (!spells || !firstAid)
+        GTEST_SKIP() << mm6TestRulesMissing;
+    mm6::loadSpellRules(*spells);
+    mm6::loadFirstAidRules(*firstAid);
 
     std::array<Character, 4> characters;
     characters[0].mana = 1000;

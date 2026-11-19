@@ -19,6 +19,18 @@ class Blob;
 struct ItemTable {
     void Initialize(ResourceManager *resourceManager);
     void InitializeMm6(ResourceManager *resourceManager);
+
+    /**
+     * Reads the MM6 item templates and the enchantment and treasure tables. Unlike `InitializeMm6`, it doesn't load
+     * the potion combinations or the item sizes.
+     *
+     * @param standard                  Contents of `stditems.txt`.
+     * @param special                   Contents of `spcitems.txt`.
+     * @param templates                 Contents of `items.txt`.
+     * @param random                    Contents of `rnditems.txt`.
+     */
+    void loadMm6Tables(const Blob &standard, const Blob &special, const Blob &templates, const Blob &random);
+
     void LoadStandardEnchantments(const Blob &stditems);
     void LoadSpecialEnchantments(const Blob &spcitems);
     void LoadItems(const Blob &items);

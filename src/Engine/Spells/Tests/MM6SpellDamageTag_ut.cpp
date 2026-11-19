@@ -1,12 +1,7 @@
 #include <array>
-#include <cstdlib>
-#include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <stdexcept>
-#include <string>
-#include <utility>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6SpellDamageTag.h"
@@ -26,16 +21,12 @@ UNIT_TEST(MM6SpellDamageTag, DistinguishesAllSourceLabels) {
     EXPECT_THROW(mm6::parseSpellDamageTag("unknown"), std::runtime_error);
 }
 
-UNIT_TEST(MM6SpellDamageTag, RetainsAllF3MatchedSpellSourceTags) {
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    if (!research)
-        GTEST_SKIP() << "Set ignored MM6 F3 research directory";
-    const std::filesystem::path path = std::filesystem::path(research) / "icons/spells.txt";
-    std::ifstream stream(path, std::ios::binary);
-    ASSERT_TRUE(stream.is_open());
-    std::string data(std::istreambuf_iterator<char>{stream}, {});
+UNIT_TEST(MM6SpellDamageTag, RetainsAllShippedSpellSourceTags) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
     SpellStats stats;
-    stats.Initialize(Blob::fromString(std::move(data)), GameTitle::MM6);
+    stats.Initialize(data->iconsData("spells.txt"), GameTitle::MM6);
 
     std::array<int, 7> counts{};
     for (int rawId = 1; rawId <= 99; ++rawId) {

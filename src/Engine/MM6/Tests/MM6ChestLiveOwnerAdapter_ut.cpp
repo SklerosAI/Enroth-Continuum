@@ -1,19 +1,18 @@
 #include <array>
 #include <cstdint>
-#include <cstdlib>
 #include <cstring>
-#include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <memory>
 #include <span>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
+#include "Engine/MM6/MM6Archive.h"
 #include "Engine/MM6/MM6ChestLiveOwnerAdapter.h"
+#include "Engine/Snapshots/MM6IndoorSnapshot.h"
 #include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
 #include "Engine/Tables/ChestTable.h"
 
@@ -78,9 +77,9 @@ std::vector<Chest> baselineChests(const mm6::ChestRecordSet &records) {
     return chests;
 }
 
-Blob readFile(const std::filesystem::path &path) {
-    std::ifstream stream(path, std::ios::binary);
-    return Blob::fromString(std::string(std::istreambuf_iterator<char>(stream), {}));
+Blob decodedMap(const MM6TestData &data, const std::string &name) {
+    const Blob entry = data.games().read(name);
+    return name.ends_with(".blv") ? decodeMM6IndoorBaseArchiveEntry(name, entry) : decodeMM6ArchiveEntry(entry);
 }
 
 mm6::ChestRecordSet recordsFromOutdoor(const std::vector<std::uint8_t> &sidecar) {
@@ -226,23 +225,18 @@ UNIT_TEST(MM6ChestLiveOwnerAdapter, ForeignUnreadyAndMalformedStateReject) {
     EXPECT_FALSE(state.ready);
 }
 
-UNIT_TEST(MM6ChestLiveOwnerAdapter, RetainedDecodedMapsMatchCurrentRuntimeChestShape) {
-    const char *indoorDirectory = std::getenv("ENROTH_MM6_INDOOR_DECODED_DIR");
-    const char *outdoorDirectory = std::getenv("ENROTH_MM6_OUTDOOR_DECODED_DIR");
-    if (!indoorDirectory || !outdoorDirectory)
-        GTEST_SKIP() << "Set retained decoded MM6 map directories";
+UNIT_TEST(MM6ChestLiveOwnerAdapter, ShippedMapsMatchCurrentRuntimeChestShape) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
     TableScope table;
     int indoorCount = 0;
     int outdoorCount = 0;
-    for (const auto &entry : std::filesystem::directory_iterator(indoorDirectory)) {
-        if (entry.path().extension() != ".dlv")
-            continue;
-        auto basePath = entry.path();
-        basePath.replace_extension(".blv");
-        const auto fullBase = deserializeMM6IndoorBase(readFile(basePath));
+    for (const std::string &name : data->mapNames(".dlv")) {
+        const auto fullBase = deserializeMM6IndoorBase(decodedMap(*data, name.substr(0, name.size() - 4) + ".blv"));
         auto base = indoorBaseShape();
         base.doorDataBytes = fullBase.doorDataBytes;
-        const Blob delta = readFile(entry.path());
+        const Blob delta = decodedMap(*data, name);
         std::vector<std::uint8_t> sidecar(static_cast<const std::uint8_t *>(delta.data()),
                                           static_cast<const std::uint8_t *>(delta.data()) + delta.size());
         auto chests = baselineChests(recordsFromIndoor(sidecar, base));
@@ -253,10 +247,8 @@ UNIT_TEST(MM6ChestLiveOwnerAdapter, RetainedDecodedMapsMatchCurrentRuntimeChestS
             << "indoor ordinal=" << indoorCount;
         ++indoorCount;
     }
-    for (const auto &entry : std::filesystem::directory_iterator(outdoorDirectory)) {
-        if (entry.path().extension() != ".ddm")
-            continue;
-        const Blob delta = readFile(entry.path());
+    for (const std::string &name : data->mapNames(".ddm")) {
+        const Blob delta = decodedMap(*data, name);
         std::vector<std::uint8_t> sidecar(static_cast<const std::uint8_t *>(delta.data()),
                                           static_cast<const std::uint8_t *>(delta.data()) + delta.size());
         auto chests = baselineChests(recordsFromOutdoor(sidecar));

@@ -1,10 +1,8 @@
 #include <array>
-#include <cstdlib>
-#include <fstream>
-#include <iterator>
+#include <optional>
 #include <string>
-#include <utility>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
 #include "GUI/UI/Houses/MM6TransportRules.h"
@@ -13,26 +11,12 @@
 
 #include "Utility/Memory/Blob.h"
 
-namespace {
+UNIT_TEST(MM6TransportRules, ProfileManifestShape) {
+    const std::optional<Blob> manifest = readMM6TestRules("transport.json");
+    if (!manifest)
+        GTEST_SKIP() << mm6TestRulesMissing;
 
-std::string privateManifest() {
-    const char *path = std::getenv("ENROTH_MM6_TRANSPORT_MANIFEST");
-    if (!path)
-        return {};
-    std::ifstream stream(path, std::ios::binary);
-    if (!stream)
-        throw std::runtime_error("Cannot open ignored MM6 transport manifest fixture");
-    return {std::istreambuf_iterator<char>{stream}, {}};
-}
-
-} // namespace
-
-UNIT_TEST(MM6TransportRules, PrivateManifestShape) {
-    std::string text = privateManifest();
-    if (text.empty())
-        GTEST_SKIP() << "Set ENROTH_MM6_TRANSPORT_MANIFEST to the private profile manifest";
-
-    mm6::TransportRules rules = mm6::decodeTransportRules(Blob::fromString(std::move(text)));
+    mm6::TransportRules rules = mm6::decodeTransportRules(*manifest);
     ASSERT_EQ(rules.routes.size(), 36);
     ASSERT_EQ(rules.houses.size(), 21);
     for (const mm6::TransportHouse &house : rules.houses)
@@ -76,10 +60,11 @@ UNIT_TEST(MM6TransportRules, Price) {
     EXPECT_EQ(mm6::transportPrice(59, 10.0f, 0), 0);
 }
 
-UNIT_TEST(MM6TransportRules, RejectsAlteredPrivateManifest) {
-    std::string text = privateManifest();
-    if (text.empty())
-        GTEST_SKIP() << "Set ENROTH_MM6_TRANSPORT_MANIFEST to the private profile manifest";
+UNIT_TEST(MM6TransportRules, RejectsAlteredProfileManifest) {
+    const std::optional<Blob> manifest = readMM6TestRules("transport.json");
+    if (!manifest)
+        GTEST_SKIP() << mm6TestRulesMissing;
+    const std::string text(manifest->str());
 
     Json document = Json::parse(text);
     document["routes"][0]["map_index"] = 0;

@@ -1,9 +1,7 @@
 #include <array>
-#include <cstdlib>
-#include <fstream>
 #include <memory>
-#include <string>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6ChestCallerAdapter.h"
@@ -113,74 +111,18 @@ UNIT_TEST(MM6ChestCallerAdapter, AdaptsSpecialAndWandRows) {
     EXPECT_FALSE(mm6::stageChestAnyFromItemTable(GameTitle::MM6, ITEM_TREASURE_LEVEL_4, *table, flags, 0));
 }
 
-UNIT_TEST(MM6ChestCallerAdapter, StagesF3MatchedPrivateProfile) {
-    const char *path = std::getenv("MM6_F3_CHEST_CALLER_PROFILE");
-    if (!path)
-        GTEST_SKIP() << "Set MM6_F3_CHEST_CALLER_PROFILE to the ignored F3-matched numeric profile";
-    std::ifstream input(path);
-    ASSERT_TRUE(input.good());
-    std::string magic;
-    input >> magic;
-    ASSERT_EQ(magic, "MM6CHESTCALLER1");
+UNIT_TEST(MM6ChestCallerAdapter, StagesShippedItemTables) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
     auto table = std::make_unique<ItemTable>();
-    const std::array<int, 6> expectedWeightSums = {437, 827, 959, 970, 928, 805};
+    table->loadMm6Tables(data->iconsData("stditems.txt"), data->iconsData("spcitems.txt"),
+                         data->iconsData("items.txt"), data->iconsData("rnditems.txt"));
     std::array<int, 6> weightSums{};
-    for (int id = 1; id <= 399; ++id) {
-        int readId = 0, type = 0, difficulty = 0, damageMod = 0;
-        input >> readId >> type >> difficulty >> damageMod;
-        ASSERT_EQ(readId, id);
-        auto &data = table->items[static_cast<ItemId>(id)];
-        data.type = static_cast<ItemType>(type);
-        data.identifyAndRepairDifficulty = difficulty;
-        data.damageMod = damageMod;
-        for (int tier = 0; tier < 6; ++tier) {
-            int weight = 0;
-            input >> weight;
-            data.uChanceByTreasureLvl[static_cast<ItemTreasureLevel>(tier + 1)] = weight;
-            weightSums[tier] += weight;
-        }
-    }
-    EXPECT_EQ(weightSums, expectedWeightSums);
-    for (int tier = 0; tier < 6; ++tier) {
-        int readTier = 0, standard = 0, special = 0, weapon = 0, low = 0, high = 0;
-        input >> readTier >> standard >> special >> weapon >> low >> high;
-        ASSERT_EQ(readTier, tier + 1);
-        auto level = static_cast<ItemTreasureLevel>(readTier);
-        table->standardEnchantmentChanceForEquipment[level] = standard;
-        table->specialEnchantmentChanceForEquipment[level] = special;
-        table->specialEnchantmentChanceForWeapons[level] = weapon;
-        table->standardEnchantmentRangeByTreasureLevel[level] = {low, high};
-    }
-    static constexpr std::array<Attribute, 14> attributes = {
-        ATTRIBUTE_MIGHT, ATTRIBUTE_INTELLIGENCE, ATTRIBUTE_PERSONALITY, ATTRIBUTE_ENDURANCE,
-        ATTRIBUTE_ACCURACY, ATTRIBUTE_SPEED, ATTRIBUTE_LUCK, ATTRIBUTE_HEALTH, ATTRIBUTE_MANA,
-        ATTRIBUTE_AC_BONUS, ATTRIBUTE_RESIST_FIRE, ATTRIBUTE_RESIST_AIR, ATTRIBUTE_RESIST_WATER,
-        ATTRIBUTE_RESIST_BODY};
-    for (int attribute = 0; attribute < 14; ++attribute) {
-        int readIndex = 0;
-        input >> readIndex;
-        ASSERT_EQ(readIndex, attribute);
-        for (int type = 3; type <= 11; ++type) {
-            int weight = 0;
-            input >> weight;
-            table->standardEnchantments[attributes[attribute]].chanceByItemType[static_cast<ItemType>(type)] = weight;
-        }
-    }
-    for (int id = 1; id <= 59; ++id) {
-        int readId = 0, code = 0;
-        input >> readId >> code;
-        ASSERT_EQ(readId, id);
-        auto &row = table->specialEnchantments[static_cast<ItemEnchantment>(id)];
-        row.enchantmentLevel = code;
-        for (int type = 0; type <= 11; ++type) {
-            int weight = 0;
-            input >> weight;
-            row.chanceByItemType[static_cast<ItemType>(type)] = weight;
-        }
-    }
-    ASSERT_TRUE(input.good());
-    input >> magic;
-    EXPECT_TRUE(input.eof());
+    for (int id = 1; id <= 399; ++id)
+        for (int tier = 0; tier < 6; ++tier)
+            weightSums[tier] += table->items[static_cast<ItemId>(id)].uChanceByTreasureLvl[static_cast<ItemTreasureLevel>(tier + 1)];
+    EXPECT_EQ(weightSums, (std::array<int, 6>{437, 827, 959, 970, 928, 805}));
 
     std::array<std::uint8_t, 30> flags{};
     for (int tier = 1; tier <= 6; ++tier) {

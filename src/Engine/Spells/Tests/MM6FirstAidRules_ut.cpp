@@ -1,9 +1,8 @@
-#include <cstdlib>
-#include <fstream>
-#include <iterator>
+#include <optional>
 #include <stdexcept>
 #include <string>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/Spells/MM6FirstAidRules.h"
@@ -60,15 +59,12 @@ UNIT_TEST(MM6FirstAidRules, RejectsMalformedReloadWithoutReplacingValidAmounts) 
     EXPECT_EQ(mm6::firstAidHealAmount(SPELL_BODY_FIRST_AID, MASTERY_MASTER), 9);
 }
 
-UNIT_TEST(MM6FirstAidRules, PrivateF3MatchedManifest) {
-    const char *path = std::getenv("ENROTH_MM6_FIRST_AID_MANIFEST");
-    if (!path)
-        GTEST_SKIP() << "Set ignored MM6 rules/first-aid.json manifest path";
-    std::ifstream stream(path);
-    ASSERT_TRUE(stream.good());
-    std::string bytes(std::istreambuf_iterator<char>{stream}, {});
-    Json document = Json::parse(bytes);
-    mm6::loadFirstAidRules(Blob::fromString(bytes));
+UNIT_TEST(MM6FirstAidRules, ProfileManifest) {
+    const std::optional<Blob> manifest = readMM6TestRules("first-aid.json");
+    if (!manifest)
+        GTEST_SKIP() << mm6TestRulesMissing;
+    Json document = Json::parse(manifest->str());
+    mm6::loadFirstAidRules(*manifest);
     for (int rank = 1; rank <= 3; ++rank)
         EXPECT_EQ(mm6::firstAidHealAmount(SPELL_BODY_FIRST_AID, static_cast<Mastery>(rank)),
                   document["heal"][rank - 1].get<int>());

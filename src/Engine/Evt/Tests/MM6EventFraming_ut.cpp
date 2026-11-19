@@ -1,10 +1,9 @@
 #include <cstdint>
-#include <cstdlib>
 #include <exception>
-#include <filesystem>
-#include <fstream>
 #include <string>
+#include <vector>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/Evt/EvtProgram.h"
@@ -94,28 +93,15 @@ UNIT_TEST(MM6EventFraming, RejectsTruncatedOrForeignRecords) {
     EXPECT_EQ(mm7.instruction(2, 0).str, "intro");
 }
 
-UNIT_TEST(MM6EventFraming, AllActiveRetainedResources) {
-    const char *directory = std::getenv("MM6_RETAINED_EVT_DIR");
-    const char *listPath = std::getenv("MM6_ACTIVE_EVT_LIST");
-    if (!directory || !listPath)
-        GTEST_SKIP() << "Private retained MM6 event corpus was not supplied";
+UNIT_TEST(MM6EventFraming, AllActiveShippedScripts) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    std::ifstream list(listPath);
-    ASSERT_TRUE(list.good());
-    size_t checked = 0;
-    std::string name;
-    while (std::getline(list, name)) {
-        if (name.empty())
-            continue;
-        try {
-            std::filesystem::path path = std::filesystem::path(directory) / name;
-            (void) EvtProgram::load(Blob::fromFile(Path(path.string())), GameTitle::MM6);
-            ++checked;
-        } catch (const std::exception &e) {
-            ADD_FAILURE() << "Failed to parse retained EVT resource: " << e.what();
-        }
-    }
-    EXPECT_EQ(checked, 68); // 67 listed map scripts plus global.evt; extras are separately classified.
+    const std::vector<std::string> names = data->activeEventScripts();
+    EXPECT_EQ(names.size(), 68);
+    for (const std::string &name : names)
+        EXPECT_NO_THROW((void) EvtProgram::load(data->iconsData(name), GameTitle::MM6)) << name;
 }
 
 UNIT_TEST(MM6EventFraming, ZeroMasterySkillCheckMatchesTrainedSkill) {

@@ -1,19 +1,19 @@
 #include <algorithm>
 #include <cctype>
-#include <cstdlib>
-#include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <set>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
+#include "Engine/MM6/MM6Archive.h"
 #include "Engine/MM6/MM6MapSaveValidation.h"
+#include "Engine/Snapshots/MM6IndoorSnapshot.h"
 
 namespace {
 
@@ -62,10 +62,8 @@ std::vector<std::uint8_t> deltaWithChestItem(bool indoor, std::int32_t itemId) {
 
 bool validGroundItem(std::int32_t id) { return id >= 1 && id <= 580; }
 
-std::set<std::int32_t> retainedItemTemplates(const std::filesystem::path &researchDir) {
-    std::ifstream stream(researchDir / "icons/items.txt");
-    if (!stream)
-        throw std::runtime_error("MM6 retained item table is missing");
+std::set<std::int32_t> shippedItemTemplates(const MM6TestData &data) {
+    std::istringstream stream(std::string(data.iconsData("items.txt").str()));
     std::set<std::int32_t> ids;
     std::string line;
     while (std::getline(stream, line)) {
@@ -85,7 +83,7 @@ std::set<std::int32_t> retainedItemTemplates(const std::filesystem::path &resear
             ids.insert(id);
     }
     if (ids.size() != 578)
-        throw std::runtime_error("MM6 retained item template coverage changed");
+        throw std::runtime_error("MM6 item template coverage changed");
     return ids;
 }
 
@@ -122,12 +120,11 @@ Blob syntheticBase(std::string_view name) {
     return Blob::copy(bytes.data(), bytes.size());
 }
 
-std::vector<std::uint8_t> readBytes(const std::filesystem::path &path) {
-    std::ifstream stream(path, std::ios::binary);
-    if (!stream)
-        throw std::runtime_error("MM6 retained map fixture is missing");
-    std::string bytes(std::istreambuf_iterator<char>{stream}, {});
-    return {bytes.begin(), bytes.end()};
+std::vector<std::uint8_t> decodedMap(const MM6TestData &data, const std::string &name) {
+    const Blob entry = data.games().read(name);
+    const Blob decoded = name.ends_with(".blv") ? decodeMM6IndoorBaseArchiveEntry(name, entry) : decodeMM6ArchiveEntry(entry);
+    const auto *bytes = static_cast<const std::uint8_t *>(decoded.data());
+    return {bytes, bytes + decoded.size()};
 }
 
 } // namespace
@@ -268,23 +265,17 @@ UNIT_TEST(MM6MapSaveValidation, FixedChestItemSlotsRequireMM6TemplateBeforeMutat
     EXPECT_EQ(destination.core.party.playingTicks, 999);
 }
 
-UNIT_TEST(MM6MapSaveValidation, RetainedSixtySevenBaseDeltaPairs) {
-    const char *indoor = std::getenv("ENROTH_MM6_INDOOR_DECODED_DIR");
-    const char *outdoor = std::getenv("ENROTH_MM6_OUTDOOR_DECODED_DIR");
-    if (!indoor || !outdoor)
-        GTEST_SKIP() << "Set ignored decoded MM6 indoor and outdoor fixture directories";
+UNIT_TEST(MM6MapSaveValidation, ShippedSixtySevenBaseDeltaPairs) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    const std::filesystem::path indoorDir(indoor);
-    const std::filesystem::path outdoorDir(outdoor);
-    const std::set<std::int32_t> templates = retainedItemTemplates(indoorDir.parent_path());
+    const std::set<std::int32_t> templates = shippedItemTemplates(*data);
     mm6::KnownSaveFields source = exampleFields();
     source.maps.deltas.clear();
-    for (const auto &[directory, suffix] : {std::pair{indoorDir, ".dlv"}, std::pair{outdoorDir, ".ddm"}}) {
-        for (const auto &entry : std::filesystem::directory_iterator(directory)) {
-            if (entry.path().extension() == suffix)
-                source.maps.deltas.push_back({entry.path().filename().string(), readBytes(entry.path())});
-        }
-    }
+    for (std::string_view extension : {".dlv", ".ddm"})
+        for (const std::string &name : data->mapNames(extension))
+            source.maps.deltas.push_back({name, decodedMap(*data, name)});
     ASSERT_EQ(source.maps.deltas.size(), 67);
     source.metadata.header.mapFileName = source.maps.deltas.front().name;
     source.metadata.header.mapFileName.replace(source.metadata.header.mapFileName.size() - 4, 4,
@@ -297,8 +288,7 @@ UNIT_TEST(MM6MapSaveValidation, RetainedSixtySevenBaseDeltaPairs) {
     mm6::KnownSaveFields restored = mm6::decodeKnownSaveWithMapBases(bytes, expected,
         [&](std::string_view baseName) {
             ++reads;
-            const auto &directory = baseName.ends_with(".blv") ? indoorDir : outdoorDir;
-            const std::vector<std::uint8_t> base = readBytes(directory / baseName);
+            const std::vector<std::uint8_t> base = decodedMap(*data, std::string(baseName));
             return Blob::copy(base.data(), base.size());
         }, [&templates](std::int32_t id) { return templates.contains(id); });
     EXPECT_EQ(reads, 67);

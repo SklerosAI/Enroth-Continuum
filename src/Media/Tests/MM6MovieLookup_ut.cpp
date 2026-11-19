@@ -1,10 +1,8 @@
-#include <cstdlib>
+#include <algorithm>
 #include <cstdint>
-#include <filesystem>
-#include <fstream>
+#include <iterator>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 #include "Library/Snapshots/CommonSnapshots.h"
@@ -13,6 +11,7 @@
 
 #include "Media/MM6MovieLookup.h"
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
 #include "Utility/Streams/BlobOutputStream.h"
@@ -30,17 +29,6 @@ static Blob makeMovieVid(const std::vector<std::string> &names, std::string_view
     for (size_t i = 0; i < names.size(); ++i)
         stream.write(payload);
     stream.close();
-    return result;
-}
-
-static std::vector<std::string> retainedNames(const std::filesystem::path &path) {
-    std::ifstream input(path);
-    std::vector<std::string> result;
-    for (std::string line; std::getline(input, line);) {
-        if (!line.empty() && line.back() == '\r')
-            line.pop_back();
-        if (!line.empty()) result.push_back(std::move(line));
-    }
     return result;
 }
 
@@ -66,23 +54,19 @@ UNIT_TEST(MM6MovieLookup, RetainsMM7SuffixAndArchivePriority) {
     EXPECT_FALSE(lookupMovieBlob(GameTitle::MM7, first, second, "Missing"));
 }
 
-UNIT_TEST(MM6MovieLookup, CoversF3MatchedRetainedNameInventory) {
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    if (!research)
-        GTEST_SKIP() << "private retained MM6 VID inventory is unavailable";
+UNIT_TEST(MM6MovieLookup, ResolvesEveryShippedMovieByItsExtensionlessName) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    const auto firstNames = retainedNames(std::filesystem::path(research) / "Anims1.entries");
-    const auto secondNames = retainedNames(std::filesystem::path(research) / "Anims2.entries");
-    ASSERT_EQ(firstNames.size(), 40);
-    ASSERT_EQ(secondNames.size(), 87);
-    VidReader first(makeMovieVid(firstNames));
-    VidReader second(makeMovieVid(secondNames));
-    for (const std::string &name : firstNames) {
-        EXPECT_TRUE(lookupMovieBlob(GameTitle::MM6, first, second, name));
-        EXPECT_FALSE(lookupMovieBlob(GameTitle::MM6, first, second, name + ".smk"));
-    }
-    for (const std::string &name : secondNames) {
-        EXPECT_TRUE(lookupMovieBlob(GameTitle::MM6, first, second, name));
-        EXPECT_FALSE(lookupMovieBlob(GameTitle::MM6, first, second, name + ".smk"));
+    VidReader first(data->read("anims/anims1.vid"));
+    VidReader second(data->read("anims/anims2.vid"));
+    std::vector<std::string> names = first.ls();
+    ASSERT_EQ(names.size(), 40);
+    std::ranges::copy(second.ls(), std::back_inserter(names));
+    ASSERT_EQ(names.size(), 127);
+    for (const std::string &name : names) {
+        EXPECT_TRUE(lookupMovieBlob(GameTitle::MM6, first, second, name)) << name;
+        EXPECT_FALSE(lookupMovieBlob(GameTitle::MM6, first, second, name + ".smk")) << name;
     }
 }

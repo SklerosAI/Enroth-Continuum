@@ -1,10 +1,9 @@
-#include <cstdlib>
-#include <fstream>
-#include <iterator>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/Spells/MM6PowerCureRules.h"
@@ -58,15 +57,12 @@ UNIT_TEST(MM6PowerCureRules, MalformedReloadRetainsGoodRule) {
     EXPECT_EQ(mm6::powerCureHealAmount(SPELL_BODY_POWER_CURE, MASTERY_MASTER, 7), 32);
 }
 
-UNIT_TEST(MM6PowerCureRules, PrivateF3MatchedManifest) {
-    const char *path = std::getenv("ENROTH_MM6_POWER_CURE_MANIFEST");
-    if (!path)
-        GTEST_SKIP() << "Set ignored MM6 rules/power-cure.json manifest path";
-    std::ifstream stream(path);
-    ASSERT_TRUE(stream.good());
-    std::string bytes(std::istreambuf_iterator<char>{stream}, {});
-    Json document = Json::parse(bytes);
-    mm6::loadPowerCureRules(Blob::fromString(bytes));
+UNIT_TEST(MM6PowerCureRules, ProfileManifest) {
+    const std::optional<Blob> manifest = readMM6TestRules("power-cure.json");
+    if (!manifest)
+        GTEST_SKIP() << mm6TestRulesMissing;
+    Json document = Json::parse(manifest->str());
+    mm6::loadPowerCureRules(*manifest);
     for (int rank = 1; rank <= 3; ++rank)
         for (int skill : {1, 7, 63})
             EXPECT_EQ(mm6::powerCureHealAmount(SPELL_BODY_POWER_CURE, static_cast<Mastery>(rank), skill),

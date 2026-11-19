@@ -1,11 +1,9 @@
 #include <array>
-#include <cstdlib>
-#include <fstream>
-#include <iterator>
+#include <optional>
 #include <stdexcept>
 #include <string>
-#include <utility>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/Spells/MM6TimedCureRules.h"
@@ -97,15 +95,12 @@ UNIT_TEST(MM6TimedCureRules, MalformedReloadRetainsGoodWindows) {
     EXPECT_TRUE(mm6::applyTimedCure(static_cast<SpellId>(67), MASTERY_NOVICE, 1, now, conditions));
 }
 
-UNIT_TEST(MM6TimedCureRules, PrivateF3MatchedManifest) {
-    const char *path = std::getenv("ENROTH_MM6_TIMED_CURE_MANIFEST");
-    if (!path)
-        GTEST_SKIP() << "Set ignored MM6 rules/timed-cures.json manifest path";
-    std::ifstream stream(path);
-    ASSERT_TRUE(stream.good());
-    std::string bytes(std::istreambuf_iterator<char>{stream}, {});
-    Json document = Json::parse(bytes);
-    mm6::loadTimedCureRules(Blob::fromString(bytes));
+UNIT_TEST(MM6TimedCureRules, ProfileManifest) {
+    const std::optional<Blob> manifest = readMM6TestRules("timed-cures.json");
+    if (!manifest)
+        GTEST_SKIP() << mm6TestRulesMissing;
+    Json document = Json::parse(manifest->str());
+    mm6::loadTimedCureRules(*manifest);
     const Time now = Time::fromDays(10);
     for (size_t i = 0; i < kIds.size(); ++i)
         for (int rank = 1; rank <= 3; ++rank) {

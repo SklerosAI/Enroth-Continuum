@@ -1,13 +1,12 @@
 #include <cstdint>
-#include <cstdlib>
 #include <cstring>
 #include <string>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6Archive.h"
 
-#include "Library/Lod/LodReader.h"
 #include "Library/LodFormats/LodFormats.h"
 
 static std::uint32_t headerWord(const Blob &blob, size_t index) {
@@ -42,16 +41,15 @@ UNIT_TEST(MM6Archive, RefusesEmptyEntry) {
 
 UNIT_TEST(MM6Archive, ShippedDeltasRoundTrip) {
     // Every map delta shipped in the MM6 games archive re-encodes to an entry that decodes to the same bytes.
-    const char *archive = std::getenv("ENROTH_MM6_STAGED_GAMES_LOD");
-    if (!archive)
-        GTEST_SKIP() << "private staged MM6 games archive is unavailable";
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    const LodReader games{PathView(archive)};
     int deltas = 0;
-    for (const std::string &name : games.ls()) {
+    for (const std::string &name : data->games().ls()) {
         if (!name.ends_with(".ddm") && !name.ends_with(".dlv"))
             continue;
-        const Blob original = games.read(name);
+        const Blob original = data->games().read(name);
         const Blob decoded = decodeMM6ArchiveEntry(original);
         ASSERT_NE(decoded.size(), original.size()) << name;
         const Blob encoded = encodeMM6ArchiveEntry(decoded);

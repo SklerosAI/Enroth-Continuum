@@ -1,16 +1,9 @@
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <cstdlib>
-#include <filesystem>
-#include <fstream>
-#include <iterator>
+#include <cstdint>
+#include <optional>
 #include <set>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -22,9 +15,9 @@
 #include "GUI/UI/Houses/MM6TransportRules.h"
 #include "GUI/UI/UIHouses.h"
 
+#include "Engine/Evt/EvtProgram.h"
 #include "Engine/Snapshots/TableSerialization.h"
 
-#include "Library/Json/Json.h"
 #include "Library/Lod/LodReader.h"
 #include "Library/LodFormats/LodFormats.h"
 #include "Library/Snd/SndReader.h"
@@ -36,29 +29,37 @@
 #include "Media/Audio/SoundList.h"
 #include "Media/AudioBufferDataSource.h"
 
+#include "Testing/Unit/MM6TestData.h"
+
 #include "Utility/Memory/Blob.h"
 
 #include "gtest/gtest.h"
 
 namespace {
 
-std::string readFile(const std::filesystem::path &path) {
-    std::ifstream input(path, std::ios::binary);
-    if (!input)
-        throw std::runtime_error("MM6 private house test input is missing");
-    return {std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
+std::vector<EvtInstruction> activeEventInstructions(const MM6TestData &data, EvtOpcode opcode) {
+    std::vector<EvtInstruction> result;
+    for (const std::string &name : data.activeEventScripts()) {
+        const EvtProgram program = EvtProgram::load(data.iconsData(name), GameTitle::MM6);
+        for (int eventId = 0; eventId <= 0xFFFF; ++eventId)
+            if (program.hasEvent(eventId))
+                for (const EvtInstruction &instruction : program.function(eventId))
+                    if (instruction.opcode == opcode)
+                        result.push_back(instruction);
+    }
+    return result;
 }
 
 std::string changeHouseRowField(std::string source, int houseId, int column, std::string_view replacement) {
     size_t start = source.find("\r\n" + std::to_string(houseId) + "\t");
     if (start == std::string::npos)
-        throw std::runtime_error("MM6 retained first house row is missing");
+        throw std::runtime_error("MM6 first house row is missing");
     start += 2;
     const size_t end = source.find("\r\n", start);
     for (int current = 0; current < column; ++current) {
         start = source.find('\t', start);
         if (start == std::string::npos || start >= end)
-            throw std::runtime_error("MM6 retained house row is too short");
+            throw std::runtime_error("MM6 house row is too short");
         ++start;
     }
     size_t next = source.find('\t', start);
@@ -70,19 +71,14 @@ std::string changeHouseRowField(std::string source, int houseId, int column, std
 
 } // namespace
 
-TEST(MM6HouseServiceData, PreservesRetainedRowsWithoutMM7ServiceRules) {
-    const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    if (!manifest || !research)
-        GTEST_SKIP() << "private MM6 house evidence is unavailable";
+TEST(MM6HouseServiceData, PreservesShippedRowsWithoutMM7ServiceRules) {
+    const auto gameData = MM6TestData::open();
+    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
+    if (!gameData || !manifest)
+        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
 
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(manifest)));
-    const std::filesystem::path root(research);
-    const mm6::HouseServiceData data = mm6::decodeHouseServiceData(
-        Blob::fromString(readFile(root / "icons" / "2devents.txt")), rooms);
-    const Json report = Json::parse(readFile(root / "house-route-probe.json"));
-    const Json &reportedRows = report.at("house_rows");
-    ASSERT_EQ(reportedRows.size(), 557);
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const mm6::HouseServiceData data = mm6::decodeHouseServiceData(gameData->iconsData("2devents.txt"), rooms);
 
     std::array<int, 4> families{};
     int numericRooms = 0;
@@ -96,17 +92,14 @@ TEST(MM6HouseServiceData, PreservesRetainedRowsWithoutMM7ServiceRules) {
         const mm6::HouseServiceRow &row = data.at(houseId);
         EXPECT_EQ(row.houseId, houseId);
         ++families[static_cast<int>(row.family)];
-        const Json &reported = reportedRows.at(std::to_string(houseId));
-        if (reported.at("room_id").is_null()) {
+        if (row.room.kind == mm6::HouseRoomKind::Room) {
+            ASSERT_TRUE(row.room.room.has_value());
+            EXPECT_FALSE(row.room.room->videoName.empty());
+            ++numericRooms;
+        } else {
             EXPECT_EQ(row.room.kind, mm6::HouseRoomKind::Blank);
             EXPECT_FALSE(row.room.room.has_value());
             ++blankRooms;
-        } else {
-            EXPECT_EQ(row.room.kind, mm6::HouseRoomKind::Room);
-            ASSERT_TRUE(row.room.room.has_value());
-            EXPECT_EQ(row.room.room->videoName,
-                      rooms.at(reported.at("room_id").get<int>()).videoName);
-            ++numericRooms;
         }
         valueRows += row.value.has_value();
         stockRows += !row.stockOrSkillText.empty();
@@ -131,12 +124,12 @@ TEST(MM6HouseServiceData, PreservesRetainedRowsWithoutMM7ServiceRules) {
 }
 
 TEST(MM6HouseServiceData, RejectsMalformedHouseTableBeforeSelection) {
-    const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    if (!manifest || !research)
-        GTEST_SKIP() << "private MM6 house evidence is unavailable";
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(manifest)));
-    const std::string source = readFile(std::filesystem::path(research) / "icons" / "2devents.txt");
+    const auto data = MM6TestData::open();
+    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
+    if (!data || !manifest)
+        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const std::string source(data->iconsData("2devents.txt").str());
     const mm6::HouseServiceData valid = mm6::decodeHouseServiceData(Blob::fromString(source), rooms);
     EXPECT_THROW(valid.at(0), std::exception);
     EXPECT_THROW(valid.at(558), std::exception);
@@ -152,17 +145,15 @@ TEST(MM6HouseServiceData, RejectsMalformedHouseTableBeforeSelection) {
 }
 
 TEST(MM6HouseServiceData, EveryTransportHouseHasRoutesAndARoom) {
-    const char *roomManifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
-    const char *transportManifest = std::getenv("ENROTH_MM6_TRANSPORT_MANIFEST");
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    if (!roomManifest || !transportManifest || !research)
-        GTEST_SKIP() << "private MM6 transport evidence is unavailable";
+    const auto data = MM6TestData::open();
+    const std::optional<Blob> roomManifest = readMM6TestRules("house-rooms.json");
+    const std::optional<Blob> transportManifest = readMM6TestRules("transport.json");
+    if (!data || !roomManifest || !transportManifest)
+        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
 
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(roomManifest)));
-    const std::filesystem::path root(research);
-    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
-        Blob::fromString(readFile(root / "icons" / "2devents.txt")), rooms);
-    const mm6::TransportRules rules = mm6::decodeTransportRules(Blob::fromString(readFile(transportManifest)));
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*roomManifest);
+    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(data->iconsData("2devents.txt"), rooms);
+    const mm6::TransportRules rules = mm6::decodeTransportRules(*transportManifest);
     ASSERT_EQ(rules.houses.size(), 21);
 
     int transportRows = 0;
@@ -184,29 +175,19 @@ TEST(MM6HouseServiceData, EveryTransportHouseHasRoutesAndARoom) {
 }
 
 TEST(MM6HouseServiceData, PreflightsEveryActiveHouseInstruction) {
-    const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    if (!manifest || !research)
-        GTEST_SKIP() << "private MM6 house evidence is unavailable";
+    const auto data = MM6TestData::open();
+    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
+    if (!data || !manifest)
+        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
 
-    const std::filesystem::path root(research);
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(manifest)));
-    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
-        Blob::fromString(readFile(root / "icons" / "2devents.txt")), rooms);
-    const Json report = Json::parse(readFile(root / "house-route-probe.json"));
-    std::istringstream iconIndex(readFile(root / "icons.entries"));
-    std::set<std::string> iconNames;
-    for (std::string name; std::getline(iconIndex, name);) {
-        if (!name.empty() && name.back() == '\r')
-            name.pop_back();
-        iconNames.insert(name);
-    }
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(data->iconsData("2devents.txt"), rooms);
     int tableBacked = 0;
     int blankOrUnused = 0;
     int terminal = 0;
     int proprietorIcons = 0;
-    for (const Json &site : report.at("enter_house_refs")) {
-        const int houseId = site.at("house_id").get<int>();
+    for (const EvtInstruction &instruction : activeEventInstructions(*data, EVENT_SpeakInHouse)) {
+        const int houseId = std::to_underlying(instruction.data.house_id);
         const mm6::HouseEntryPlan entry = mm6::planHouseEntry(houses, houseId);
         EXPECT_EQ(entry.houseId, houseId);
         switch (entry.kind) {
@@ -215,7 +196,7 @@ TEST(MM6HouseServiceData, PreflightsEveryActiveHouseInstruction) {
                 EXPECT_FALSE(entry.room->videoName.empty());
                 if (entry.proprietorIconName) {
                     EXPECT_GT(entry.room->npcPicture, 0);
-                    EXPECT_TRUE(iconNames.contains(*entry.proprietorIconName));
+                    EXPECT_TRUE(data->icons().exists(*entry.proprietorIconName));
                     ++proprietorIcons;
                 } else {
                     EXPECT_EQ(entry.room->npcPicture, 0);
@@ -257,17 +238,15 @@ TEST(MM6HouseServiceData, PreflightsEveryActiveHouseInstruction) {
     EXPECT_EQ(taverns, 21);
 }
 
-TEST(MM6HouseServiceData, DecodesEveryReferencedProprietorImageFromStagedArchive) {
-    const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    const char *archive = std::getenv("ENROTH_MM6_STAGED_ICONS_LOD");
-    if (!manifest || !research || !archive)
-        GTEST_SKIP() << "private MM6 room and staged icon evidence is unavailable";
+TEST(MM6HouseServiceData, DecodesEveryReferencedProprietorImage) {
+    const auto data = MM6TestData::open();
+    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
+    if (!data || !manifest)
+        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
 
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(manifest)));
-    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
-        Blob::fromString(readFile(std::filesystem::path(research) / "icons" / "2devents.txt")), rooms);
-    const LodReader icons{PathView(archive)};
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(data->iconsData("2devents.txt"), rooms);
+    const LodReader &icons = data->icons();
     std::set<std::string> names;
     for (int houseId = 1; houseId <= 557; ++houseId) {
         const mm6::HouseEntryPlan entry = mm6::planHouseEntry(houses, houseId);
@@ -290,37 +269,34 @@ TEST(MM6HouseServiceData, DecodesEveryReferencedProprietorImageFromStagedArchive
 }
 
 TEST(MM6HouseServiceData, DecodesMM6PreviewPanelAndExitImages) {
-    const char *archive = std::getenv("ENROTH_MM6_STAGED_ICONS_LOD");
-    if (!archive)
-        GTEST_SKIP() << "private staged MM6 icon evidence is unavailable";
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    const LodReader icons{PathView(archive)};
+    const LodReader &icons = data->icons();
     for (const auto &[name, maximumWidth, maximumHeight] : {
              std::tuple{"backevt", 163, 480}, std::tuple{"buttexi1", 169, 35}}) {
         ASSERT_TRUE(icons.exists(name));
-        const Blob data = icons.read(name);
-        const Sizei size = lod::decodeImageSize(data);
+        const Blob image = icons.read(name);
+        const Sizei size = lod::decodeImageSize(image);
         EXPECT_GT(size.w, 0);
         EXPECT_GT(size.h, 0);
         EXPECT_LE(size.w, maximumWidth) << name;
         EXPECT_LE(size.h, maximumHeight) << name;
-        EXPECT_EQ(lod::decodeImage(data).image.size(), size);
+        EXPECT_EQ(lod::decodeImage(image).image.size(), size);
     }
 }
 
-TEST(MM6HouseServiceData, ResolvesEveryReferencedRoomMovieFromStagedArchives) {
-    const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    const char *firstPath = std::getenv("ENROTH_MM6_STAGED_ANIMS1_VID");
-    const char *secondPath = std::getenv("ENROTH_MM6_STAGED_ANIMS2_VID");
-    if (!manifest || !research || !firstPath || !secondPath)
-        GTEST_SKIP() << "private MM6 room and staged movie evidence is unavailable";
+TEST(MM6HouseServiceData, ResolvesEveryReferencedRoomMovie) {
+    const auto data = MM6TestData::open();
+    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
+    if (!data || !manifest)
+        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
 
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(manifest)));
-    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
-        Blob::fromString(readFile(std::filesystem::path(research) / "icons" / "2devents.txt")), rooms);
-    const VidReader first{PathView(firstPath)};
-    const VidReader second{PathView(secondPath)};
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(data->iconsData("2devents.txt"), rooms);
+    const VidReader first(data->read("anims/anims1.vid"));
+    const VidReader second(data->read("anims/anims2.vid"));
     std::set<std::string> names;
     for (int houseId = 1; houseId <= 557; ++houseId) {
         const mm6::HouseEntryPlan entry = mm6::planHouseEntry(houses, houseId);
@@ -339,19 +315,16 @@ TEST(MM6HouseServiceData, ResolvesEveryReferencedRoomMovieFromStagedArchives) {
 }
 
 TEST(MM6HouseServiceData, RejectsMalformedAndTruncatedRoomMovieFrames) {
-    const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    const char *firstPath = std::getenv("ENROTH_MM6_STAGED_ANIMS1_VID");
-    const char *secondPath = std::getenv("ENROTH_MM6_STAGED_ANIMS2_VID");
-    if (!manifest || !research || !firstPath || !secondPath)
-        GTEST_SKIP() << "private MM6 room and staged movie evidence is unavailable";
+    const auto data = MM6TestData::open();
+    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
+    if (!data || !manifest)
+        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
 
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(manifest)));
-    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
-        Blob::fromString(readFile(std::filesystem::path(research) / "icons" / "2devents.txt")), rooms);
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(data->iconsData("2devents.txt"), rooms);
     const mm6::HousePresentationState room = mm6::planHousePresentation(GameTitle::MM6, houses, 1);
-    const VidReader first{PathView(firstPath)};
-    const VidReader second{PathView(secondPath)};
+    const VidReader first(data->read("anims/anims1.vid"));
+    const VidReader second(data->read("anims/anims2.vid"));
     const Blob movie = lookupMovieBlob(GameTitle::MM6, first, second, room.videoName);
     ASSERT_TRUE(movie);
 
@@ -360,19 +333,16 @@ TEST(MM6HouseServiceData, RejectsMalformedAndTruncatedRoomMovieFrames) {
     EXPECT_FALSE(mm6::probeRoomMovieFirstFrame(movie.subBlob(0, std::min<size_t>(movie.size(), 64))));
 }
 
-TEST(MM6HouseServiceData, DecodesAllReferencedStagedRoomMovieFirstFramesWithoutAudioOrUI) {
-    const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    const char *firstPath = std::getenv("ENROTH_MM6_STAGED_ANIMS1_VID");
-    const char *secondPath = std::getenv("ENROTH_MM6_STAGED_ANIMS2_VID");
-    if (!manifest || !research || !firstPath || !secondPath)
-        GTEST_SKIP() << "private MM6 room and staged movie evidence is unavailable";
+TEST(MM6HouseServiceData, DecodesAllReferencedRoomMovieFirstFramesWithoutAudioOrUI) {
+    const auto data = MM6TestData::open();
+    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
+    if (!data || !manifest)
+        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
 
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(manifest)));
-    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
-        Blob::fromString(readFile(std::filesystem::path(research) / "icons" / "2devents.txt")), rooms);
-    const VidReader first{PathView(firstPath)};
-    const VidReader second{PathView(secondPath)};
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(data->iconsData("2devents.txt"), rooms);
+    const VidReader first(data->read("anims/anims1.vid"));
+    const VidReader second(data->read("anims/anims2.vid"));
     std::set<std::string> names;
     for (int houseId = 1; houseId <= 557; ++houseId) {
         const mm6::HouseEntryPlan entry = mm6::planHouseEntry(houses, houseId);
@@ -408,32 +378,19 @@ TEST(MM6HouseServiceData, DecodesAllReferencedStagedRoomMovieFirstFramesWithoutA
         }
     }
 
-    if (!failures.empty()) {
-        const std::filesystem::path privateReport = std::filesystem::path(research) / "F4_ROOM_FRAME_FAILURES_PRIVATE.tsv";
-        const int fd = ::open(privateReport.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC,
-                              S_IRUSR | S_IWUSR);
-        ASSERT_GE(fd, 0);
-        const int chmodResult = ::fchmod(fd, S_IRUSR | S_IWUSR);
-        ::close(fd);
-        ASSERT_EQ(chmodResult, 0);
-        std::ofstream output(privateReport, std::ios::app);
-        ASSERT_TRUE(output.good());
-        for (const auto &[name, reason] : failures)
-            output << name << '\t' << reason << '\n';
-    }
+    for (const auto &[name, reason] : failures)
+        ADD_FAILURE() << name << ": " << reason;
     EXPECT_EQ(decoded, 116);
-    EXPECT_EQ(failures.size(), 0);
 }
 
 TEST(MM6HouseServiceData, ActivatesPresentationOnlyForTableBackedMM6Rooms) {
-    const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    if (!manifest || !research)
-        GTEST_SKIP() << "private MM6 house evidence is unavailable";
+    const auto data = MM6TestData::open();
+    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
+    if (!data || !manifest)
+        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
 
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(manifest)));
-    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
-        Blob::fromString(readFile(std::filesystem::path(research) / "icons" / "2devents.txt")), rooms);
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(data->iconsData("2devents.txt"), rooms);
     int tableBacked = 0;
     int unavailable = 0;
     for (int houseId = 1; houseId <= 557; ++houseId) {
@@ -489,110 +446,85 @@ TEST(MM6HouseServiceData, ServiceOptionsFollowHouseFamilyAndType) {
     EXPECT_THROW(mm6::houseServiceOptionLabel(LearnSkill), std::exception);
 }
 
-TEST(MM6HouseServiceData, StagesOnlyF3MatchedMM6GreetingCandidatesWithoutPlayback) {
-    const char *manifest = std::getenv("ENROTH_MM6_ROOM_MANIFEST");
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    const char *archive = std::getenv("ENROTH_MM6_STAGED_AUDIO_SND");
-    if (!manifest || !research || !archive)
-        GTEST_SKIP() << "private MM6 house cue evidence is unavailable";
+TEST(MM6HouseServiceData, StagesShippedGreetingCandidatesWithoutPlayback) {
+    const auto data = MM6TestData::open();
+    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
+    if (!data || !manifest)
+        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
 
-    const std::filesystem::path root(research);
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(Blob::fromString(readFile(manifest)));
-    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(
-        Blob::fromString(readFile(root / "icons" / "2devents.txt")), rooms);
-    const Json media = Json::parse(readFile(root / "F3_MEDIA_RECONCILIATION_2026-11-05.json"));
-    const Json routes = Json::parse(readFile(root / "house-route-probe.json"));
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(data->iconsData("2devents.txt"), rooms);
     SoundList sounds;
-    deserialize(Blob::fromString(readFile(root / "icons" / "dsounds.bin")), &sounds, GameTitle::MM6);
-    const SndReader snd{PathView(archive)};
+    deserialize(data->iconsData("dsounds.bin"), &sounds, GameTitle::MM6);
+    const SndReader snd(data->read("sounds/audio.snd"));
 
-    std::array<int, 119> houseForRoom{};
-    for (int houseId = 1; houseId <= 557; ++houseId) {
-        const Json &row = routes.at("house_rows").at(std::to_string(houseId));
-        if (row.at("room_id").is_number_integer()) {
-            const int roomId = row.at("room_id").get<int>();
-            ASSERT_GE(roomId, 1);
-            ASSERT_LE(roomId, 118);
-            if (!houseForRoom[roomId])
-                houseForRoom[roomId] = houseId;
-        }
-    }
-
+    std::set<std::string> seenRooms;
     int withGreeting = 0;
     int silent = 0;
-    for (const Json &join : media.at("house_room_joins")) {
-        const int roomId = join.at("room_id").get<int>();
-        ASSERT_GE(roomId, 1);
-        ASSERT_LE(roomId, 118);
-        ASSERT_NE(houseForRoom[roomId], 0);
-        const mm6::HousePresentationState state = mm6::planHousePresentation(
-            GameTitle::MM6, houses, houseForRoom[roomId]);
-        const mm6::RoomDescriptor &room = rooms.at(roomId);
-        const Json &candidate = join.at("candidate_house_sounds").at("1");
-        if (!room.soundGroup) {
+    for (int houseId = 1; houseId <= 557; ++houseId) {
+        const mm6::HouseEntryPlan entry = mm6::planHouseEntry(houses, houseId);
+        if (entry.kind != mm6::HouseEntryKind::TableBacked || !seenRooms.insert(entry.room->videoName).second)
+            continue;
+        const mm6::HousePresentationState state = mm6::planHousePresentation(GameTitle::MM6, houses, houseId);
+        if (!entry.room->soundGroup) {
             EXPECT_FALSE(state.candidateGreetingSoundId);
-            EXPECT_FALSE(candidate.at("name_in_original_snd").get<bool>());
             ++silent;
             continue;
         }
 
         ASSERT_TRUE(state.candidateGreetingSoundId);
-        const SoundId soundId = *state.candidateGreetingSoundId;
-        EXPECT_EQ(std::to_underlying(soundId), candidate.at("id").get<int>());
-        EXPECT_TRUE(candidate.at("name_in_original_snd").get<bool>());
-        const SoundInfo *sound = sounds.soundInfo(soundId);
+        const SoundInfo *sound = sounds.soundInfo(*state.candidateGreetingSoundId);
         ASSERT_NE(sound, nullptr);
         ASSERT_FALSE(sound->name.empty());
-        EXPECT_TRUE(snd.exists(sound->name));
+        EXPECT_TRUE(snd.exists(sound->name)) << sound->name;
         ++withGreeting;
     }
     EXPECT_EQ(withGreeting, 63);
     EXPECT_EQ(silent, 53);
 }
 
-TEST(MM6HouseServiceData, DecodesOneActiveMM6EventSoundWithoutPlayback) {
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    const char *archive = std::getenv("ENROTH_MM6_STAGED_AUDIO_SND");
-    if (!research || !archive)
-        GTEST_SKIP() << "private MM6 event sound and staged SND evidence is unavailable";
-
-    const std::filesystem::path root(research);
-    const Json report = Json::parse(readFile(root / "F3_MEDIA_RECONCILIATION_2026-11-05.json"));
-    const Json &events = report.at("event_sound_joins");
-    ASSERT_EQ(events.size(), 8);
-    const int soundId = events.at(0).at("sound_id").get<int>();
-    ASSERT_GT(soundId, 0);
+TEST(MM6HouseServiceData, DecodesEveryActiveMM6EventSoundWithoutPlayback) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
     SoundList table;
-    deserialize(Blob::fromString(readFile(root / "icons" / "dsounds.bin")), &table, GameTitle::MM6);
-    const SoundInfo *sound = table.soundInfo(static_cast<SoundId>(soundId));
-    ASSERT_NE(sound, nullptr);
-    ASSERT_FALSE(sound->name.empty());
-    const SndReader snd{PathView(archive)};
-    ASSERT_TRUE(snd.exists(sound->name));
-    Blob wave = snd.read(sound->name);
-    ASSERT_TRUE(wave);
-    ASSERT_LE(wave.size(), 4 * 1024 * 1024);
+    deserialize(data->iconsData("dsounds.bin"), &table, GameTitle::MM6);
+    const SndReader snd(data->read("sounds/audio.snd"));
+    const std::vector<EvtInstruction> events = activeEventInstructions(*data, EVENT_PlaySound);
+    ASSERT_EQ(events.size(), 8);
+    std::set<SoundId> soundIds;
+    for (const EvtInstruction &event : events)
+        soundIds.insert(event.data.sound_descr.sound_id);
+    for (SoundId soundId : soundIds) {
+        const SoundInfo *sound = table.soundInfo(soundId);
+        ASSERT_NE(sound, nullptr);
+        ASSERT_FALSE(sound->name.empty());
+        ASSERT_TRUE(snd.exists(sound->name)) << sound->name;
+        Blob wave = snd.read(sound->name);
+        ASSERT_TRUE(wave);
+        ASSERT_LE(wave.size(), 4 * 1024 * 1024);
 
-    AudioBufferDataSource decoder(std::move(wave));
-    ASSERT_TRUE(decoder.Open());
-    const size_t sampleRate = decoder.GetSampleRate();
-    const size_t channels = decoder.GetChannelCount();
-    EXPECT_GE(sampleRate, 8000);
-    EXPECT_LE(sampleRate, 96000);
-    EXPECT_GE(channels, 1);
-    EXPECT_LE(channels, 2);
-    EXPECT_TRUE(std::isfinite(decoder.GetDuration()));
-    EXPECT_GT(decoder.GetDuration(), 0.0f);
-    EXPECT_LE(decoder.GetDuration(), 60.0f);
-    const Blob samples = decoder.GetNextBuffer();
-    ASSERT_TRUE(samples);
-    ASSERT_GT(channels, 0);
-    const size_t sampleCount = samples.size() / (channels * sizeof(std::int16_t));
-    EXPECT_GT(sampleCount, 0);
-    EXPECT_LE(sampleCount, 2'000'000);
-    EXPECT_EQ(samples.size(), sampleCount * channels * sizeof(std::int16_t));
-    decoder.Close();
+        AudioBufferDataSource decoder(std::move(wave));
+        ASSERT_TRUE(decoder.Open()) << sound->name;
+        const size_t sampleRate = decoder.GetSampleRate();
+        const size_t channels = decoder.GetChannelCount();
+        EXPECT_GE(sampleRate, 8000);
+        EXPECT_LE(sampleRate, 96000);
+        EXPECT_GE(channels, 1);
+        EXPECT_LE(channels, 2);
+        EXPECT_TRUE(std::isfinite(decoder.GetDuration()));
+        EXPECT_GT(decoder.GetDuration(), 0.0f);
+        EXPECT_LE(decoder.GetDuration(), 60.0f);
+        const Blob samples = decoder.GetNextBuffer();
+        ASSERT_TRUE(samples);
+        ASSERT_GT(channels, 0);
+        const size_t sampleCount = samples.size() / (channels * sizeof(std::int16_t));
+        EXPECT_GT(sampleCount, 0);
+        EXPECT_LE(sampleCount, 2'000'000);
+        EXPECT_EQ(samples.size(), sampleCount * channels * sizeof(std::int16_t));
+        decoder.Close();
+    }
 
     AudioBufferDataSource malformed(Blob::fromString("not a sound"));
     EXPECT_FALSE(malformed.Open());

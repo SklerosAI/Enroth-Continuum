@@ -1,13 +1,10 @@
 #include <array>
-#include <cstdlib>
-#include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6MonsterDamage.h"
@@ -106,16 +103,12 @@ UNIT_TEST(MM6MonsterDamage, ReadsSixExplicitMonsterResistanceColumns) {
     EXPECT_THROW(mm6::monsterResistanceForAttack(monster, mm6::MonsterDamageLabel::Energy), std::runtime_error);
 }
 
-UNIT_TEST(MM6MonsterDamage, RetainsSixF3MatchedMonsterResistanceColumns) {
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    if (!research)
-        GTEST_SKIP() << "Set ignored MM6 F3 research directory";
-    const std::filesystem::path path = std::filesystem::path(research) / "icons/monsters.txt";
-    std::ifstream stream(path, std::ios::binary);
-    ASSERT_TRUE(stream.is_open());
-    std::string data(std::istreambuf_iterator<char>{stream}, {});
+UNIT_TEST(MM6MonsterDamage, ReadsSixShippedMonsterResistanceColumns) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
     MonsterStats stats;
-    stats.Initialize(Blob::fromString(std::move(data)), GameTitle::MM6);
+    stats.Initialize(data->iconsData("monsters.txt"), GameTitle::MM6);
 
     std::array<int, 6> immuneCounts{};
     int rows = 0;
@@ -154,16 +147,12 @@ UNIT_TEST(MM6MonsterSpecialAttack, ReadsTheFirstNameTheCellContains) {
     EXPECT_EQ(mm6::parseMonsterSpecialAttackName("unsupported"), SPECIAL_ATTACK_NONE);
 }
 
-UNIT_TEST(MM6MonsterSpecialAttack, CoversAllF3MatchedActiveMonsterRows) {
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    if (!research)
-        GTEST_SKIP() << "Set ignored MM6 F3 research directory";
-    const std::filesystem::path path = std::filesystem::path(research) / "icons/monsters.txt";
-    std::ifstream stream(path, std::ios::binary);
-    ASSERT_TRUE(stream.is_open());
-    std::string data(std::istreambuf_iterator<char>{stream}, {});
+UNIT_TEST(MM6MonsterSpecialAttack, CoversAllShippedActiveMonsterRows) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
     MonsterStats stats;
-    stats.Initialize(Blob::fromString(std::move(data)), GameTitle::MM6);
+    stats.Initialize(data->iconsData("monsters.txt"), GameTitle::MM6);
     int active = 0;
     int fear = 0;
     int mediumPoison = 0;
@@ -229,16 +218,12 @@ UNIT_TEST(MM6MonsterSpells, SpellsLaunchTheirOriginalObjects) {
     EXPECT_EQ(mm6::monsterSkillByte(CombinedSkillValue(10, MASTERY_MASTER)), 0x8A);
 }
 
-UNIT_TEST(MM6MonsterSpells, RetainsAllF3MatchedActiveMonsterCasts) {
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    if (!research)
-        GTEST_SKIP() << "Set ignored MM6 F3 research directory";
-    const std::filesystem::path path = std::filesystem::path(research) / "icons/monsters.txt";
-    std::ifstream stream(path, std::ios::binary);
-    ASSERT_TRUE(stream.is_open());
-    std::string data(std::istreambuf_iterator<char>{stream}, {});
+UNIT_TEST(MM6MonsterSpells, ReadsAllShippedActiveMonsterCasts) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
     MonsterStats stats;
-    stats.Initialize(Blob::fromString(std::move(data)), GameTitle::MM6);
+    stats.Initialize(data->iconsData("monsters.txt"), GameTitle::MM6);
     int active = 0;
     for (int rawId = 1; rawId <= 173; ++rawId) {
         const MonsterInfo &info = stats.infos[static_cast<MonsterId>(rawId)];
@@ -304,16 +289,12 @@ UNIT_TEST(MM6MonsterProjectile, ObjectsLandAsTheOriginalCollisionDecides) {
     EXPECT_EQ(mm6::monsterObjectExplosion(static_cast<SpriteId>(590)), static_cast<SpriteId>(561));
 }
 
-UNIT_TEST(MM6MonsterProjectile, RetainsAllF3MatchedRangedAttackCells) {
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    if (!research)
-        GTEST_SKIP() << "Set ignored MM6 F3 research directory";
-    const std::filesystem::path path = std::filesystem::path(research) / "icons/monsters.txt";
-    std::ifstream stream(path, std::ios::binary);
-    ASSERT_TRUE(stream.is_open());
-    std::string data(std::istreambuf_iterator<char>{stream}, {});
+UNIT_TEST(MM6MonsterProjectile, ReadsAllShippedRangedAttackCells) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
     MonsterStats stats;
-    stats.Initialize(Blob::fromString(std::move(data)), GameTitle::MM6);
+    stats.Initialize(data->iconsData("monsters.txt"), GameTitle::MM6);
 
     std::array<int, 9> counts{};
     for (int rawId = 1; rawId <= 173; ++rawId) {
@@ -330,23 +311,16 @@ UNIT_TEST(MM6MonsterProjectile, RetainsAllF3MatchedRangedAttackCells) {
     EXPECT_EQ(counts, (std::array<int, 9>{6, 18, 17, 10, 12, 3, 4, 3, 3}));
 }
 
-UNIT_TEST(MM6MonsterProjectile, NineLabelsResolveToRetainedMM6ObjectAndSpriteRows) {
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    if (!research)
-        GTEST_SKIP() << "Set ignored MM6 F3 research directory";
-    const std::filesystem::path path = std::filesystem::path(research) / "icons/dobjlist.bin";
-    std::ifstream stream(path, std::ios::binary);
-    ASSERT_TRUE(stream.is_open());
-    std::string data(std::istreambuf_iterator<char>{stream}, {});
+UNIT_TEST(MM6MonsterProjectile, NineLabelsResolveToShippedObjectAndSpriteRows) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
     ObjectTable objects;
-    deserialize(Blob::fromString(std::move(data)), &objects, GameTitle::MM6);
+    deserialize(data->iconsData("dobjlist.bin"), &objects, GameTitle::MM6);
     ASSERT_EQ(objects.pObjects.size(), 232);
 
-    std::ifstream frameStream(std::filesystem::path(research) / "icons/dsft.bin", std::ios::binary);
-    ASSERT_TRUE(frameStream.is_open());
-    std::string frameData(std::istreambuf_iterator<char>{frameStream}, {});
     SpriteFrameTable frames;
-    deserialize(Blob::fromString(std::move(frameData)), &frames, GameTitle::MM6);
+    deserialize(data->iconsData("dsft.bin"), &frames, GameTitle::MM6);
     ASSERT_EQ(frames.pSpriteSFrames.size(), 6455);
 
     constexpr std::array labels = {

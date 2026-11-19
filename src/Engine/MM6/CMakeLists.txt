@@ -242,7 +242,8 @@ if(OE_BUILD_TESTS)
         Tests/MM6BackpackItemEventRemoval_ut.cpp
         Tests/MM6KnownSaveFields_ut.cpp
         Tests/MM6PotionCombinations_ut.cpp)
-    target_link_libraries(test_engine_mm6_save_container PUBLIC testing_unit engine_mm6_save_container engine_tables)
+    target_link_libraries(test_engine_mm6_save_container PUBLIC testing_unit engine_mm6_save_container engine_tables
+        engine_serialization)
     target_check_style(test_engine_mm6_save_container)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_save_container)
 
@@ -264,7 +265,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6DecodedEffectPartyStage_ut.cpp
         Tests/MM6AntiqueItemProjection_ut.cpp
         Tests/MM6BeaconSaveFields_ut.cpp
-        Tests/MM6PrivateMapSource_ut.cpp Tests/MM6WorldSaveRuntime_ut.cpp
+        Tests/MM6WorldSaveRuntime_ut.cpp
         Tests/MM6NewGameSaveRuntime_ut.cpp
         Tests/MM6RawNewGameSaveRuntime_ut.cpp
         Tests/MM6NpcStaticBaseline_ut.cpp

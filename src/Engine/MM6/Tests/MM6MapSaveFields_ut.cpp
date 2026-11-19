@@ -1,15 +1,13 @@
-#include <cstdlib>
-#include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
+#include "Engine/MM6/MM6Archive.h"
 #include "Engine/MM6/MM6MapSaveFields.h"
 
 namespace {
@@ -18,16 +16,9 @@ mm6::SavedMapDelta map(std::string name, std::string bytes) {
     return {std::move(name), {bytes.begin(), bytes.end()}};
 }
 
-void appendDecodedDeltas(const char *directory, std::string_view extension, mm6::MapSaveFields *fields) {
-    for (const auto &entry : std::filesystem::directory_iterator(directory)) {
-        if (entry.path().extension() != extension)
-            continue;
-        std::ifstream stream(entry.path(), std::ios::binary);
-        if (!stream)
-            throw std::runtime_error("Cannot read ignored MM6 map fixture");
-        std::string bytes(std::istreambuf_iterator<char>{stream}, {});
-        fields->deltas.push_back(map(entry.path().filename().string(), std::move(bytes)));
-    }
+void appendShippedDeltas(const MM6TestData &data, std::string_view extension, mm6::MapSaveFields *fields) {
+    for (const std::string &name : data.mapNames(extension))
+        fields->deltas.push_back(map(name, std::string(decodeMM6ArchiveEntry(data.games().read(name)).str())));
 }
 
 } // namespace
@@ -53,15 +44,14 @@ UNIT_TEST(MM6MapSaveFields, RoundTripAndRejectBeforeMutation) {
     EXPECT_THROW(mm6::encodeMapSection(source), std::exception);
 }
 
-UNIT_TEST(MM6MapSaveFields, RetainedSixtySevenDeltas) {
-    const char *indoor = std::getenv("ENROTH_MM6_INDOOR_DECODED_DIR");
-    const char *outdoor = std::getenv("ENROTH_MM6_OUTDOOR_DECODED_DIR");
-    if (!indoor || !outdoor)
-        GTEST_SKIP() << "Set ignored decoded indoor and outdoor MM6 fixture directories";
+UNIT_TEST(MM6MapSaveFields, ShippedSixtySevenDeltas) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
     mm6::MapSaveFields source;
-    appendDecodedDeltas(indoor, ".dlv", &source);
-    appendDecodedDeltas(outdoor, ".ddm", &source);
+    appendShippedDeltas(*data, ".dlv", &source);
+    appendShippedDeltas(*data, ".ddm", &source);
     ASSERT_EQ(source.deltas.size(), 67);
     std::vector<std::uint8_t> bytes = mm6::encodeSaveContainer({{mm6::encodeMapSection(source)}});
     mm6::MapSaveFields restored;

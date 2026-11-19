@@ -120,8 +120,8 @@ StagedRawWorldAndVisuals stageRawWorldAndVisuals(
 
 // Compose every currently represented Party/Character family on one detached
 // Party after the known-section and 67-map checks. Nonempty inherited shop,
-// guild, bounty or beacon state rejects rather than silently carrying through
-// an unrepresented owner. The result cannot be committed to a live session.
+// guild or beacon state rejects rather than silently carrying through an
+// unrepresented owner. The result cannot be committed to a live session.
 StagedKnownSession stageKnownSession(
     const Party &liveParty, const NPCStats &liveNpcs, const Timer &liveTimer,
     const ActiveOverlayList &liveOverlays, std::span<const std::uint8_t> bytes,

@@ -72,7 +72,7 @@ The 19 raw owners, in file order. `RawSaveFields` holds their decoded form.
 
 | Tag | Payload ver. | Codec | What it stores |
 |---|---|---|---|
-| `PART` | 5 | `MM6CoreSaveFields.cpp` | Party scalars, see below |
+| `PART` | 6 | `MM6CoreSaveFields.cpp` | Party scalars, see below |
 | `CHAR` | 4 | `MM6CoreSaveFields.cpp` | Four characters, see below |
 | `QEST` | 1 | `MM6DurableSaveFields.cpp` | Quest bits 1 to 512, autonote bits 1 to 208, award bits and character event bits per character |
 | `EFFT` | 1 | `MM6DurableSaveFields.cpp` | The 19 condition clocks of each character |
@@ -96,7 +96,9 @@ Details for the rows above:
 
 - `PART`: gold, food, bank gold, playing time, position, yaw and pitch, active character, vertical velocity, flight Z,
   water and lava timer, fall start Z, flying, the two party flag words, fine, deaths, prison terms, bounties
-  collected, reputation, bribes, the tavern drink bits and the 21 tavern tips.
+  collected, reputation, bribes, the tavern drink bits and the 21 tavern tips. Then the bounty of each of the three
+  town halls (New Sorpigal, Misty Islands, Silver Cove), each as the time of its next monster roll, the monster and
+  its killed flag. The capture refuses bounty state in the inherited fourth and fifth town hall slots.
 - `CHAR`: name, sex, class, face, voice, level, experience, HP, SP, skill points, 7 base stats, 31 skills, 99
   learned-spell flags, stat bonuses, AC, level and age modifiers, birth year, the 7 pure-stat-potion flags, quick
   spell, spellbook page, and 8 raw runtime bonus bytes whose original meaning is unknown.

@@ -549,8 +549,14 @@ UNIT_TEST(MM6WorldSaveRuntime, StagesRepresentedPartyFamiliesWithWorldAndRejects
     liveParty.PartyTimes.guildNextRefreshTime[HOUSE_FIRST_MAGIC_GUILD] = Time();
 
     liveParty.PartyTimes.bountyHuntNextGenTime[HOUSE_FIRST_TOWN_HALL] = Time::fromTicks(702);
-    EXPECT_THROW((void) stage(), std::exception);
-    EXPECT_EQ(liveParty.PartyTimes.bountyHuntNextGenTime[HOUSE_FIRST_TOWN_HALL].ticks(), 702);
+    liveParty.monster_id_for_hunting[HOUSE_LAST_TOWN_HALL] = static_cast<MonsterId>(49);
+    Party loaded = stage().party;
+    EXPECT_EQ(loaded.PartyTimes.bountyHuntNextGenTime[HOUSE_FIRST_TOWN_HALL].ticks(), 0); // The save's bounties replace the live ones.
+    EXPECT_EQ(loaded.monster_id_for_hunting[HOUSE_LAST_TOWN_HALL], MONSTER_INVALID);
+    loaded.PartyTimes.bountyHuntNextGenTime[HOUSE_FIRST_TOWN_HALL] = Time::fromTicks(702);
+    EXPECT_EQ(mm6::captureKnownPartyFields(source, loaded, GameTitle::MM6).core.party.bounties[0].nextRollTicks, 702);
+    loaded.monster_id_for_hunting[HOUSE_LAST_TOWN_HALL] = static_cast<MonsterId>(49);
+    EXPECT_THROW((void) mm6::captureKnownPartyFields(source, loaded, GameTitle::MM6), std::exception); // MM6 has three town halls.
     EXPECT_EQ(liveNpcs.pNPCData[70].name, "Prior NPC");
 }
 

@@ -42,6 +42,8 @@ mm6::CoreSaveFields exampleFields() {
     fields.party.tavernDrinks = 0x100001; // The first and the last tavern.
     fields.party.tavernTips[0] = 29;
     fields.party.tavernTips[20] = 312;
+    fields.party.bounties[0] = {10321920, 49, 1};
+    fields.party.bounties[2] = {20643840, 171, 0};
     for (size_t i = 0; i < fields.characters.size(); ++i) {
         auto &character = fields.characters[i];
         character.name = "Hero" + std::to_string(i);
@@ -184,7 +186,7 @@ UNIT_TEST(MM6CoreSaveFields, NonzeroPartyAndFourCharacterRoundTrip) {
     EXPECT_EQ(destination.party.savedFlightZ, 720);
     EXPECT_EQ(destination.party.fallStartZ, 910);
     EXPECT_EQ(destination.party.partyFlags, 0x020c);
-    EXPECT_EQ(containerFor(source).sections[0].payload.size(), 186);
+    EXPECT_EQ(containerFor(source).sections[0].payload.size(), 216);
     EXPECT_EQ(destination.party.fine, 125);
     EXPECT_EQ(destination.party.bountiesCollected, -7);
     EXPECT_EQ(destination.party.reputation, -928);
@@ -192,6 +194,9 @@ UNIT_TEST(MM6CoreSaveFields, NonzeroPartyAndFourCharacterRoundTrip) {
     EXPECT_EQ(destination.party.tavernDrinks, 0x100001);
     EXPECT_EQ(destination.party.tavernTips[0], 29);
     EXPECT_EQ(destination.party.tavernTips[20], 312);
+    EXPECT_EQ(destination.party.bounties[0], (mm6::CoreBountyFields{10321920, 49, 1}));
+    EXPECT_EQ(destination.party.bounties[1], mm6::CoreBountyFields());
+    EXPECT_EQ(destination.party.bounties[2], (mm6::CoreBountyFields{20643840, 171, 0}));
 }
 
 UNIT_TEST(MM6CoreSaveFields, CapturesAndStagesMovementOnDetachedParty) {
@@ -215,6 +220,10 @@ UNIT_TEST(MM6CoreSaveFields, CapturesAndStagesMovementOnDetachedParty) {
     source.mm6Bribes = 3;
     source.mm6TavernDrinks[1] = true;
     source.mm6TavernTips[1] = 29;
+    const HouseId silverCove = static_cast<HouseId>(std::to_underlying(HOUSE_FIRST_TOWN_HALL) + 2);
+    source.PartyTimes.bountyHuntNextGenTime[silverCove] = Time::fromTicks(10321920);
+    source.monster_id_for_hunting[silverCove] = static_cast<MonsterId>(49);
+    source.monster_for_hunting_killed[silverCove] = true;
     mm6::CoreSaveFields fields = mm6::captureCoreFields(source, GameTitle::MM6);
     EXPECT_EQ(fields.party.verticalVelocity, -237.5f);
     EXPECT_EQ(fields.party.fallStartZ, 910);
@@ -228,11 +237,15 @@ UNIT_TEST(MM6CoreSaveFields, CapturesAndStagesMovementOnDetachedParty) {
     EXPECT_EQ(fields.party.bribes, 3);
     EXPECT_EQ(fields.party.tavernDrinks, 2);
     EXPECT_EQ(fields.party.tavernTips[1], 29);
+    EXPECT_EQ(fields.party.bounties[0], mm6::CoreBountyFields());
+    EXPECT_EQ(fields.party.bounties[2], (mm6::CoreBountyFields{10321920, 49, 1}));
 
     Party prior;
     prior.velocity = Vec3f(8, 9, 10);
     prior.uFallStartZ = 77;
     prior.floor_face_id = 42;
+    prior.monster_id_for_hunting[HOUSE_FIRST_TOWN_HALL] = static_cast<MonsterId>(116);
+    prior.monster_id_for_hunting[HOUSE_LAST_TOWN_HALL] = static_cast<MonsterId>(116);
     Party staged = mm6::stageCoreParty(
         prior, mm6::encodeSaveContainer(containerFor(fields)), GameTitle::MM6);
     Party direct = mm6::stageCoreParty(prior, fields, GameTitle::MM6);
@@ -259,10 +272,17 @@ UNIT_TEST(MM6CoreSaveFields, CapturesAndStagesMovementOnDetachedParty) {
     EXPECT_EQ(staged.mm6TavernDrinks[1], true);
     EXPECT_EQ(staged.mm6TavernDrinks[0], false);
     EXPECT_EQ(staged.mm6TavernTips[1], 29);
+    EXPECT_EQ(staged.PartyTimes.bountyHuntNextGenTime[silverCove].ticks(), 10321920);
+    EXPECT_EQ(staged.monster_id_for_hunting[silverCove], static_cast<MonsterId>(49));
+    EXPECT_EQ(staged.monster_for_hunting_killed[silverCove], true);
+    EXPECT_EQ(staged.monster_id_for_hunting[HOUSE_FIRST_TOWN_HALL], MONSTER_INVALID);
+    EXPECT_EQ(staged.monster_id_for_hunting[HOUSE_LAST_TOWN_HALL], MONSTER_INVALID);
     EXPECT_EQ(prior.velocity.z, 10);
     EXPECT_EQ(prior.uFallStartZ, 77);
     EXPECT_EQ(prior.floor_face_id, 42);
     EXPECT_THROW((void) mm6::captureCoreFields(source, GameTitle::MM7), std::exception);
+    source.monster_id_for_hunting[HOUSE_LAST_TOWN_HALL] = static_cast<MonsterId>(49); // MM6 has three town halls.
+    EXPECT_THROW((void) mm6::captureCoreFields(source, GameTitle::MM6), std::exception);
     EXPECT_THROW((void) mm6::stageCoreParty(
         prior, mm6::encodeSaveContainer(containerFor(fields)), GameTitle::MM7), std::exception);
     EXPECT_THROW((void) mm6::stageCoreParty(prior, fields, GameTitle::MM7), std::exception);
@@ -285,7 +305,7 @@ UNIT_TEST(MM6CoreSaveFields, InvalidFieldLeavesDestinationUntouched) {
     EXPECT_EQ(destination, before);
 
     invalid = containerFor(before);
-    invalid.sections[0].payload.pop_back(); // Final PART v5 tavern tip byte is missing.
+    invalid.sections[0].payload.pop_back(); // Final PART v6 bounty byte is missing.
     EXPECT_THROW(mm6::loadCoreFieldsBeforeMutation(mm6::encodeSaveContainer(invalid), &destination),
                  std::exception);
     EXPECT_EQ(destination, before);
@@ -301,6 +321,18 @@ UNIT_TEST(MM6CoreSaveFields, InvalidFieldLeavesDestinationUntouched) {
 
     invalid = containerFor(before);
     invalid.sections[0].payload[101] = 0x20; // A drink in a 22nd tavern, valid container checksum.
+    EXPECT_THROW(mm6::loadCoreFieldsBeforeMutation(mm6::encodeSaveContainer(invalid), &destination),
+                 std::exception);
+    EXPECT_EQ(destination, before);
+
+    invalid = containerFor(before);
+    invalid.sections[0].payload[195] = 2; // A first bounty killed flag that isn't a bool, valid container checksum.
+    EXPECT_THROW(mm6::loadCoreFieldsBeforeMutation(mm6::encodeSaveContainer(invalid), &destination),
+                 std::exception);
+    EXPECT_EQ(destination, before);
+
+    invalid = containerFor(before);
+    invalid.sections[0].payload[193] = 0x80; // A negative first bounty roll time, valid container checksum.
     EXPECT_THROW(mm6::loadCoreFieldsBeforeMutation(mm6::encodeSaveContainer(invalid), &destination),
                  std::exception);
     EXPECT_EQ(destination, before);
@@ -356,6 +388,10 @@ UNIT_TEST(MM6CoreSaveFields, RejectsMissingMalformedAndForeignSections) {
     container.sections[0].payload[0] = 3; // Superseded PART v3 payload.
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
     container.sections[0].payload[0] = 4; // Superseded PART v4 payload.
+    EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
+    container.sections[0].payload[0] = 5; // Superseded PART v5 payload.
+    EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
+    container.sections[0].payload.resize(186); // Exact superseded v5 length.
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
     container.sections[0].payload.resize(94); // Exact superseded v4 length.
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);

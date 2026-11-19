@@ -33,6 +33,7 @@
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/MM6HouseServiceData.h"
 #include "GUI/UI/UIHouses.h"
+#include "GUI/UI/UIRest.h"
 #include "GUI/UI/UISaveLoad.h"
 
 #include "Utility/ScopeGuard.h"
@@ -228,6 +229,62 @@ static void pressSpaceAt(EngineController &game, Vec3f position, int viewYaw) {
     game.teleportTo(engine->_currentLoadedMapId, position, viewYaw);
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();
+}
+
+static const Vec3f kTownHallDoor(-11090, -6536, 300); // New Sorpigal Town Hall, facing west.
+
+static void waitUntilTownHallOpens(EngineController &game) {
+    // Waits in the rest screen an hour at a time until 10 am, when the Town Hall opens.
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    while (pParty->GetPlayingTime().toCivilTime().hour < 10) {
+        game.pressGuiButton("Rest_Wait1Hour");
+        game.tick();
+        while (currentRestType != REST_NONE)
+            game.tick(); // The hour passes.
+    }
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+}
+
+static void askJaniceForBounty(EngineController &game) {
+    // Janice in the Town Hall answers the Bounty Hunt topic, then the party steps back out, facing east.
+    pressSpaceAt(game, kTownHallDoor, 180);
+    ASSERT_NE(window_SpeakInHouse, nullptr);
+    std::optional<Pointi> portrait;
+    for (GUIButton *button : window_SpeakInHouse->vButtons)
+        if (button->id.starts_with("House_Npc") && button->label.contains("Janice"))
+            portrait = button->rect.center();
+    ASSERT_TRUE(portrait);
+    game.pressAndReleaseButton(BUTTON_LEFT, *portrait);
+    game.tick();
+    clickOption(game, window_SpeakInHouse.get(), "Bounty Hunt");
+    for (int i = 0; i < 3 && current_screen_type != SCREEN_GAME; ++i) {
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+    }
+    game.teleportTo(engine->_currentLoadedMapId, kTownHallDoor, 0);
+}
+
+static void killBountyMonster(EngineController &game) {
+    // The party hits a dummy of this month's New Sorpigal bounty monster in front of it until it's dead.
+    Actor *monster = game.spawnMonster(kTownHallDoor + Vec3f(200, 0, 0), pParty->monster_id_for_hunting[HOUSE_FIRST_TOWN_HALL], SPAWN_DUMMY);
+    monster->hp = 1; // One hit kills it.
+    game.pointMouseAtActor(monster->id);
+    for (int attack = 0; attack < 1000 && monster->aiState != Dead; attack++) {
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+    }
+    for (int frame = 0; frame < 100 && !pParty->hasActiveCharacter(); frame++)
+        game.tick(); // A door opens only for a character who has recovered from the fight.
+}
+
+static void loadFromEscapeMenu(EngineController &game, int slot) {
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressGuiButton("GameMenu_LoadGame");
+    game.tick(3);
+    loadFromMenu(game, slot);
 }
 
 GAME_TEST(MM6AutosaveHeadless, DISABLED_EdgeAndDoorWriteTheAutosave) {
@@ -572,6 +629,96 @@ GAME_TEST(MM6InGameSave, StreetNpcBribesAndTavernTipsSurviveLoad) {
     EXPECT_TRUE(tipTape[1].starts_with("An evil guild of mages has been searching the southeast end of our peninsula"));
     EXPECT_EQ(tipTape, tape(std::string(), tipTape[1], std::string(), tipTape[1], std::string()));
     EXPECT_EQ(optionsTape.back(), (std::vector<std::string>{"Beg", "Threat", "Bribe 100 Gold"}));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6InGameSave, BountySurvivesLoad) {
+    // The game couldn't be saved once Janice in the New Sorpigal Town Hall had named this month's bounty. Loaded after a
+    // new game, she names the same monster, and killing it pays.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    waitUntilTownHallOpens(game);
+    auto goldTape = tapes.gold();
+    auto textTape = tapes.custom([] { return current_npc_text; });
+    auto bountyTape = tapes.custom([] { return std::pair(pParty->monster_id_for_hunting[HOUSE_FIRST_TOWN_HALL], pParty->monster_for_hunting_killed[HOUSE_FIRST_TOWN_HALL]); });
+    auto countTape = tapes.custom([] { return pParty->uNumBountiesCollected; });
+    auto slotTape = tapes.custom([&] { return std::filesystem::exists(profile / "saves/save000.ec6"); });
+    test.startTaping();
+
+    askJaniceForBounty(game);
+    saveFromMenu(game);
+    ASSERT_TRUE(slotTape.back());
+    game.goToMainMenu();
+    startNewGameThroughInput(game);
+    loadFromEscapeMenu(game, 1);
+    askJaniceForBounty(game);
+    killBountyMonster(game);
+    askJaniceForBounty(game);
+
+    const MonsterId druid = static_cast<MonsterId>(45);
+    const std::string name = fmt::format("{::}Grand Druid{::}", colorTable.PaleCanary.tag(), colorTable.White.tag());
+    const std::string offer = "This month's bounty is on a " + name + ".  Kill it and return before the end of the month to collect the 2800 gold reward.";
+    EXPECT_EQ(slotTape, tape(false, true));
+    EXPECT_EQ(bountyTape, tape(std::pair(MONSTER_INVALID, false), std::pair(druid, false), std::pair(MONSTER_INVALID, false), std::pair(druid, false),
+                               std::pair(druid, true), std::pair(MONSTER_INVALID, false))); // Named, a new game, the load, the kill and the reward.
+    EXPECT_EQ(textTape, tape(std::string(), offer, std::string(), offer, std::string(),
+                             "Congratulations on defeating the " + name + "!  Here is the 2800 gold reward.  Come back next month for a new bounty.",
+                             std::string()));
+    EXPECT_EQ(goldTape, tape(200, 3000)); // A level 28 monster.
+    EXPECT_EQ(countTape, tape(0, 1));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6InGameSave, BountyKillSurvivesAutosave) {
+    // A load forgot the town hall bounties. The autosave written as the party left New Sorpigal with this month's
+    // bounty monster dead came back with no bounty, and Janice named a new monster instead of paying. Once she has
+    // paid, the game saves.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    waitUntilTownHallOpens(game);
+    const MapId oute3 = pMapTable->GetMapInfo("oute3.odm");
+    const MapId outd3 = pMapTable->GetMapInfo("outd3.odm");
+    auto mapTape = tapes.map();
+    auto goldTape = tapes.gold();
+    auto textTape = tapes.custom([] { return current_npc_text; });
+    auto bountyTape = tapes.custom([] { return std::pair(pParty->monster_id_for_hunting[HOUSE_FIRST_TOWN_HALL], pParty->monster_for_hunting_killed[HOUSE_FIRST_TOWN_HALL]); });
+    auto autosaveTape = tapes.custom([&] { return slotSummary(profile / "saves/autosave.ec6"); });
+    auto slotTape = tapes.custom([&] { return slotSummary(profile / "saves/save000.ec6"); });
+    test.startTaping();
+
+    askJaniceForBounty(game);
+    killBountyMonster(game);
+    walkOverWestEdge(game);
+    loadFromEscapeMenu(game, 0);
+    game.pressGuiButton("Transition_No"); // The autosave has the party at the edge, so the travel dialogue is up again.
+    game.tick();
+    askJaniceForBounty(game);
+    saveFromMenu(game);
+
+    const MonsterId druid = static_cast<MonsterId>(45);
+    const std::string name = fmt::format("{::}Grand Druid{::}", colorTable.PaleCanary.tag(), colorTable.White.tag());
+    EXPECT_EQ(mapTape, tape(oute3, outd3, oute3));
+    EXPECT_EQ(autosaveTape, tape("v5 oute3.odm", "v7 oute3.odm"));
+    EXPECT_EQ(bountyTape, tape(std::pair(MONSTER_INVALID, false), std::pair(druid, false), std::pair(druid, true), std::pair(MONSTER_INVALID, false)));
+    EXPECT_EQ(textTape, tape(std::string(),
+                             "This month's bounty is on a " + name + ".  Kill it and return before the end of the month to collect the 2800 gold reward.",
+                             std::string(),
+                             "Congratulations on defeating the " + name + "!  Here is the 2800 gold reward.  Come back next month for a new bounty.",
+                             std::string()));
+    EXPECT_EQ(goldTape, tape(200, 3000)); // A level 28 monster.
+    EXPECT_EQ(slotTape, tape("", "v7 oute3.odm"));
     game.runGameRoutine([&] {
         mm6::disarmFirstMapManualSave();
         mm6::testing::setNativeProfileRootForTest({});

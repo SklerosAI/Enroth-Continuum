@@ -55,6 +55,15 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Potion mixing.** Item-on-item use of potions stays refused (`mm6::shouldBlockItemOnItemUse` in
   `src/Engine/MM6/MM6ConsumableRules.h`). The mixing outcomes are not traced.
 
+## MM6: saves
+
+- **Border autosave reopens the travel dialog.** The autosave on a walk across an outdoor border holds the party at
+  the edge, so loading it opens the travel dialog again at once. Not checked against MM6.exe.
+  `MM6InGameSave.BountyKillSurvivesAutosave` closes it with No.
+- **First-map save after a spawned actor.** A v5 first-map save refuses with "ARTR count differs from ACTR baseline"
+  once an actor was added to `oute3` after the anchor, seen only with a test's `spawnMonster`. Whether play can add
+  one there (a summon, a scripted spawn) was not checked. `MM6V5ActorRuntimeFields.cpp`.
+
 ## MM6: media and UI
 
 - **Voices.** MM6 voice samples exist, but the shared `speechVariants` table has no variant for the travel speeches 71

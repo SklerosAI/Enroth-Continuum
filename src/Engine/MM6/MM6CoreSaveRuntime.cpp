@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "Engine/Party.h"
+#include "Engine/Data/HouseEnumFunctions.h"
 #include "Engine/Objects/CombinedSkillValue.h"
 #include "Engine/Spells/SpellEnums.h"
 
@@ -135,6 +136,20 @@ CoreSaveFields captureCoreFields(const Party &party, GameTitle title) {
         if (party.mm6TavernDrinks[i])
             fields.party.tavernDrinks |= 1u << i;
     std::ranges::copy(party.mm6TavernTips, fields.party.tavernTips.begin());
+    for (HouseId hall : allTownhallHouses()) {
+        const size_t index = std::to_underlying(hall) - std::to_underlying(HOUSE_FIRST_TOWN_HALL);
+        const Time nextRoll = party.PartyTimes.bountyHuntNextGenTime[hall];
+        const int monster = std::to_underlying(party.monster_id_for_hunting[hall]);
+        const bool killed = party.monster_for_hunting_killed[hall];
+        if (index >= fields.party.bounties.size()) {
+            if (nextRoll.ticks() || monster || killed)
+                throw std::runtime_error("MM6 has bounty state past its three town halls");
+            continue;
+        }
+        if (monster < 0 || monster > 255)
+            throw std::runtime_error("MM6 bounty monster exceeds core field width");
+        fields.party.bounties[index] = {nextRoll.ticks(), static_cast<std::uint8_t>(monster), killed};
+    }
 
     for (size_t i = 0; i < fields.characters.size(); ++i) {
         const Character &source = party.pCharacters[i];
@@ -204,6 +219,13 @@ Party stageCoreParty(const Party &live, const CoreSaveFields &fields, GameTitle 
     for (size_t i = 0; i < staged.mm6TavernDrinks.size(); ++i)
         staged.mm6TavernDrinks[i] = fields.party.tavernDrinks & (1u << i);
     std::ranges::copy(fields.party.tavernTips, staged.mm6TavernTips.begin());
+    for (HouseId hall : allTownhallHouses()) {
+        const size_t index = std::to_underlying(hall) - std::to_underlying(HOUSE_FIRST_TOWN_HALL);
+        const CoreBountyFields bounty = index < fields.party.bounties.size() ? fields.party.bounties[index] : CoreBountyFields();
+        staged.PartyTimes.bountyHuntNextGenTime[hall] = Time::fromTicks(bounty.nextRollTicks);
+        staged.monster_id_for_hunting[hall] = static_cast<MonsterId>(bounty.monster);
+        staged.monster_for_hunting_killed[hall] = bounty.killed;
+    }
     staged.floor_face_id = -1;
     staged.currentWalkingSound = SOUND_Invalid;
 

@@ -1,4 +1,6 @@
+#include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
@@ -49,6 +51,18 @@ static void talkToStreetNpc(EngineController &game, int actorId) {
     game.tick();
 }
 
+static void clickNpcOption(EngineController &game, std::string_view label) {
+    // Left click in the middle of the conversation topic with this label.
+    ASSERT_NE(pDialogueWindow, nullptr);
+    std::optional<Pointi> center;
+    for (GUIButton *button : pDialogueWindow->vButtons)
+        if (button->id.starts_with("NpcDialogue_Option") && button->label == label)
+            center = button->rect.center();
+    ASSERT_TRUE(center) << "No conversation topic " << label;
+    game.pressAndReleaseButton(BUTTON_LEFT, *center);
+    game.tick();
+}
+
 GAME_TEST(MM6Hirelings, StreetNpcPortraitExists) {
     // Talking to a street NPC drew a missing image for her portrait, she had one of MM7's elf portraits.
     startNewGameThroughInput(game);
@@ -75,8 +89,8 @@ GAME_TEST(MM6Hirelings, HireTwoAndRefuseAThird) {
 
     for (int actorId : {15, 1, 4}) { // Noreen the Banker, Tanya the Porter, Eleanor the Acolyte.
         talkToStreetNpc(game, actorId);
-        game.pressAndReleaseButton(BUTTON_LEFT, 555, 255); // Hire.
-        game.tick();
+        clickNpcOption(game, "Join");
+        clickNpcOption(game, "Hire");
     }
 
     auto hirelings = quadsTape.flatten().filter([](const DrawnQuad &quad) { return quad.position.y == 149; }); // Both portrait frames.
@@ -84,5 +98,5 @@ GAME_TEST(MM6Hirelings, HireTwoAndRefuseAThird) {
     EXPECT_EQ(goldTape, tape(10000, 9000, 8900));
     EXPECT_EQ(statusTape, tape("Rest", "Noreen the Banker", "", "Tanya the Porter", "", "Eleanor the Acolyte", "", "I cannot join you, you're party is full"));
     const DrawnQuad noreen{"npc114", {491, 149}}, tanya{"npc250", {561, 149}};
-    EXPECT_EQ(hirelings, tape(noreen, noreen, noreen, noreen, tanya, noreen, tanya, noreen, tanya, noreen, tanya));
+    EXPECT_EQ(hirelings, tape(noreen, noreen, noreen, noreen, noreen, noreen, tanya, noreen, tanya, noreen, tanya, noreen, tanya, noreen, tanya));
 }

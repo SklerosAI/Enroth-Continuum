@@ -833,8 +833,14 @@ std::string BuildDialogueString(std::string_view str, int uPlayerID, NPCData *np
                     i += 2;
                 break;
             case 3:
-            case 4:
                 result += v1;
+                break;
+            case 4:
+                if (engine->gameTitle() == GameTitle::MM6) {
+                    result += fmt::format("{}", mm6::streetNpcBribePrice(*pPlayer));
+                } else {
+                    result += v1;
+                }
                 break;
             case 5:
                 time = pParty->GetPlayingTime().toCivilTime();

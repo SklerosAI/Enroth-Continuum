@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -13,11 +14,7 @@
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
-#include "Engine/Objects/Actor.h"
-#include "Engine/Objects/NPC.h"
 #include "Engine/Party.h"
-#include "Engine/Tables/NPCTable.h"
-#include "GUI/UI/UIDialogue.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Tables/MapTable.h"
 
@@ -108,6 +105,43 @@ static void talkToMarianne(EngineController &game) {
     talkAt(game, kMarianneSpot);
 }
 
+static void leaveConversation(EngineController &game) {
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+}
+
+static std::vector<std::string> dialogueOptionLabels() {
+    // Labels of the conversation window's topics, empty while no conversation is open.
+    std::vector<std::string> result;
+    if (pDialogueWindow)
+        for (GUIButton *button : pDialogueWindow->vButtons)
+            if (button->id.starts_with("NpcDialogue_Option"))
+                result.push_back(button->label);
+    return result;
+}
+
+static std::vector<DialogueId> dialogueOptionTopics() {
+    // Topics of the conversation window's buttons, empty while no conversation is open.
+    std::vector<DialogueId> result;
+    if (pDialogueWindow)
+        for (GUIButton *button : pDialogueWindow->vButtons)
+            if (button->id.starts_with("NpcDialogue_Option"))
+                result.push_back(static_cast<DialogueId>(button->msg_param));
+    return result;
+}
+
+static void clickNpcOption(EngineController &game, std::string_view label) {
+    // Left click in the middle of the conversation topic with this label.
+    ASSERT_NE(pDialogueWindow, nullptr);
+    std::optional<Pointi> center;
+    for (GUIButton *button : pDialogueWindow->vButtons)
+        if (button->id.starts_with("NpcDialogue_Option") && button->label == label)
+            center = button->rect.center();
+    ASSERT_TRUE(center) << "No conversation topic " << label;
+    game.pressAndReleaseButton(BUTTON_LEFT, *center);
+    game.tick();
+}
+
 static void captureFrame(EngineController &game, std::string_view prefix, std::string_view name) {
     RgbaImage frame;
     game.runGameRoutine([&frame] {
@@ -142,28 +176,29 @@ GAME_TEST(MM6NpcDialogue, StreetNpcPanel) {
     auto rectsTape = tapes.custom([] { return dialogueButtonRects(); });
     enterNewSorpigal(game);
     test.startTaping();
-    talkToMarianne(game);
-    game.pressAndReleaseButton(BUTTON_LEFT, 555, 200); // More Information.
-    game.tick();
+    talkAt(game, kMariaSpot);
+    clickNpcOption(game, "Join");
+    clickNpcOption(game, "More Information");
     game.pressAndReleaseButton(BUTTON_LEFT, 560, 325); // The exit picture.
     game.tick();
 
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_NPC_DIALOGUE, SCREEN_GAME));
     EXPECT_EQ(rectsTape, tape(std::vector<Recti>(),
+                              std::vector<Recti>{{526, 313, 75, 33}, {480, 169, 140, 16}, {480, 216, 140, 16}, {480, 263, 140, 16}},
                               std::vector<Recti>{{526, 313, 75, 33}, {480, 185, 140, 32}, {480, 248, 140, 16}},
                               std::vector<Recti>()));
     auto textures = texturesTape.flatten();
     EXPECT_CONTAINS(textures, "evpan019");
-    EXPECT_CONTAINS(textures, "npc260");
+    EXPECT_CONTAINS(textures, "npc149");
     EXPECT_CONTAINS(textures, "buttesc1");
     EXPECT_MISSES(textures, "evt02");
     EXPECT_MISSES(textures, "evtnpc");
     EXPECT_MISSES(textures, "ib-bcu-a");
     auto text = textTape.flatten();
-    EXPECT_CONTAINS(text, "Marianne the Teacher");
+    EXPECT_CONTAINS(text, "Maria the Scholar");
     EXPECT_CONTAINS(text, "More Information");
     EXPECT_CONTAINS(text, "Hire");
-    EXPECT_CONTAINS(text, "Ten percent bonus on all experience learned. \nMarianne takes 3 percent of all gold you find.");
+    EXPECT_CONTAINS(text, "Unlimited item Identification and a 5 percent bonus\non all experience gained.  Maria takes 5 percent\nof all gold you find.");
 }
 
 GAME_TEST(MM6NpcDialogue, StreetNpcHire) {
@@ -174,9 +209,9 @@ GAME_TEST(MM6NpcDialogue, StreetNpcHire) {
     auto statusTape = tapes.statusBar();
     enterNewSorpigal(game);
     test.startTaping();
-    talkToMarianne(game);
-    game.pressAndReleaseButton(BUTTON_LEFT, 555, 255); // Hire.
-    game.tick();
+    talkAt(game, kMariaSpot);
+    clickNpcOption(game, "Join");
+    clickNpcOption(game, "Hire");
 
     EXPECT_EQ(hirelingsTape, tape(0));
     EXPECT_EQ(goldTape, tape(200));
@@ -205,9 +240,9 @@ GAME_TEST(MM6NpcDialogue, NewGameAfterHire) {
     auto statusTape = tapes.statusBar();
     test.startTaping();
 
-    talkToMarianne(game);
-    game.pressAndReleaseButton(BUTTON_LEFT, 555, 255); // Hire.
-    game.tick();
+    talkToMarianne(game); // This party finds Noreen there, who talks to it.
+    clickNpcOption(game, "Join");
+    clickNpcOption(game, "Hire");
     game.goToMainMenu();
     startNewGameThroughInput(game);
 
@@ -224,15 +259,14 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_NpcDialogueCapture) {
     ASSERT_TRUE(std::string_view(capturePrefix).starts_with("/private/tmp/"));
 
     enterNewSorpigal(game);
-    talkToMarianne(game);
+    talkAt(game, kMariaSpot);
     ASSERT_EQ(current_screen_type, SCREEN_NPC_DIALOGUE);
     captureFrame(game, capturePrefix, "talk");
-    game.pressAndReleaseButton(BUTTON_LEFT, 555, 200); // More Information.
-    game.tick();
+    clickNpcOption(game, "Join");
+    clickNpcOption(game, "More Information");
     captureFrame(game, capturePrefix, "topic");
     game.runGameRoutine([] { pParty->SetGold(10000, true); });
-    game.pressAndReleaseButton(BUTTON_LEFT, 555, 255); // Hire.
-    game.tick();
+    clickNpcOption(game, "Hire");
     captureFrame(game, capturePrefix, "hired");
 }
 
@@ -259,20 +293,203 @@ GAME_TEST(MM6NpcDialogue, StreetNpcGreetingDeeds) {
                                         "consider your holier-than-thou attitude quite\ninsulting\x85" "sir.");
 }
 
-GAME_TEST(MM6NpcDialogue, ZzProbe) {
+GAME_TEST(MM6NpcDialogue, StreetNpcBeg) {
+    // Marianne the Teacher turns away a party without a good name, and offered nothing to change her mind. Begging
+    // works on a scholar: it costs 10 reputation, she answers, and her usual topics replace Beg, Threat and Bribe.
+    auto goldTape = tapes.gold();
+    auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+    auto dialogueTape = tapes.dialogueType();
+    auto topicsTape = tapes.custom([] { return dialogueOptionTopics(); });
+    auto textTape = tapes.allGUIWindowsText();
+    auto portraitTape = charTapes.portrait(0);
+    enterNewSorpigal(game);
+    test.startTaping();
+    talkToMarianne(game);
+    clickNpcOption(game, "Beg");
+
+    EXPECT_EQ(goldTape, tape(200));
+    EXPECT_EQ(reputationTape, tape(0, -10));
+    EXPECT_EQ(dialogueTape, tape(DIALOGUE_NULL, DIALOGUE_MAIN, DIALOGUE_BEG));
+    EXPECT_EQ(topicsTape, tape(std::vector<DialogueId>(), std::vector<DialogueId>{DIALOGUE_BEG, DIALOGUE_THREAT, DIALOGUE_BRIBE},
+                               std::vector<DialogueId>{DIALOGUE_WEEKDAY_TOPIC, DIALOGUE_13_hiring_related, DIALOGUE_NEWS}));
+    auto text = textTape.flatten();
+    EXPECT_CONTAINS(text, "People have been talking about how you like to\ncommit crimes, Zoltan.  I don't like how that\nsounds, so I don't want to talk to you.");
+    EXPECT_CONTAINS(text, "Fine, but make it quick.");
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE, PORTRAIT_44)); // The greeting, then the beg.
+}
+
+GAME_TEST(MM6NpcDialogue, StreetNpcBegAgain) {
+    // A street NPC who was begged once greets the party coldly next time, and begging again only gets that greeting.
+    auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+    auto dialogueTape = tapes.dialogueType();
+    auto optionsTape = tapes.custom([] { return dialogueOptionLabels(); });
     auto textTape = tapes.allGUIWindowsText();
     enterNewSorpigal(game);
     test.startTaping();
     talkToMarianne(game);
-    NPCData *npc = getNPCData(speakingNpcId);
-    fmt::println("PROBE name={} prof={} rep={} fame={} flags={} news={} f24={} day={} partyrep={} partyfame={}", npc->name, (int)npc->profession, npc->rep, npc->fame,
-                 (int)static_cast<uint32_t>(npc->flags), npc->newsTopic, npc->field_24, pParty->uCurrentDayOfMonth, pParty->mm6Reputation, pParty->fame());
-    for (const auto &frame : textTape)
-        for (const auto &t : frame) fmt::println("PROBE text: {}", t);
-    // Street NPCs near Marianne.
-    for (const Actor &actor : pActors)
-        if (actor.npcId >= 5000) {
-            NPCData *n = getNPCData(actor.npcId);
-            fmt::println("PROBE actor {} at ({},{},{}) {} prof={} rep={}", actor.id, actor.pos.x, actor.pos.y, actor.pos.z, n->name, (int)n->profession, n->rep);
-        }
+    clickNpcOption(game, "Beg");
+    leaveConversation(game);
+    talkToMarianne(game);
+    clickNpcOption(game, "Beg");
+
+    EXPECT_EQ(reputationTape, tape(0, -10));
+    EXPECT_EQ(dialogueTape, tape(DIALOGUE_NULL, DIALOGUE_MAIN, DIALOGUE_BEG, DIALOGUE_NULL, DIALOGUE_MAIN, DIALOGUE_NULL));
+    EXPECT_EQ(optionsTape.back(), (std::vector<std::string>{"Beg", "Threat", "Bribe 50 Gold"}));
+    EXPECT_CONTAINS(textTape.flatten(), "No.  I won't let you waste any more of my time. \nPerhaps tomorrow.");
+}
+
+GAME_TEST(MM6NpcDialogue, StreetNpcBegRefused) {
+    // Ginger the Negotiator won't listen to begging. She says so, and the party's reputation stays.
+    auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+    auto dialogueTape = tapes.dialogueType();
+    auto optionsTape = tapes.custom([] { return dialogueOptionLabels(); });
+    auto textTape = tapes.allGUIWindowsText();
+    auto portraitTape = charTapes.portrait(0);
+    enterNewSorpigal(game);
+    test.startTaping();
+    talkAt(game, kGingerSpot);
+    clickNpcOption(game, "Beg");
+
+    EXPECT_EQ(reputationTape, tape(0));
+    EXPECT_EQ(dialogueTape, tape(DIALOGUE_NULL, DIALOGUE_MAIN, DIALOGUE_BEG));
+    EXPECT_EQ(optionsTape, tape(std::vector<std::string>(), std::vector<std::string>{"Beg", "Threat", "Bribe 50 Gold"}));
+    EXPECT_CONTAINS(textTape.flatten(), "Beg all you like.  I still won't help you.");
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE, PORTRAIT_48)); // The greeting, then the failed beg.
+}
+
+GAME_TEST(MM6NpcDialogue, StreetNpcThreat) {
+    // Threatening Marianne costs 50 reputation, and she talks from then on, with a frightened greeting.
+    auto goldTape = tapes.gold();
+    auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+    auto dialogueTape = tapes.dialogueType();
+    auto topicsTape = tapes.custom([] { return dialogueOptionTopics(); });
+    auto textTape = tapes.allGUIWindowsText();
+    auto portraitTape = charTapes.portrait(0);
+    enterNewSorpigal(game);
+    test.startTaping();
+    talkToMarianne(game);
+    clickNpcOption(game, "Threat");
+    leaveConversation(game);
+    talkToMarianne(game);
+
+    EXPECT_EQ(goldTape, tape(200));
+    EXPECT_EQ(reputationTape, tape(0, -50));
+    EXPECT_EQ(dialogueTape, tape(DIALOGUE_NULL, DIALOGUE_MAIN, DIALOGUE_THREAT, DIALOGUE_NULL, DIALOGUE_MAIN));
+    EXPECT_EQ(topicsTape, tape(std::vector<DialogueId>(), std::vector<DialogueId>{DIALOGUE_BEG, DIALOGUE_THREAT, DIALOGUE_BRIBE},
+                               std::vector<DialogueId>{DIALOGUE_WEEKDAY_TOPIC, DIALOGUE_13_hiring_related, DIALOGUE_NEWS},
+                               std::vector<DialogueId>(),
+                               std::vector<DialogueId>{DIALOGUE_WEEKDAY_TOPIC, DIALOGUE_13_hiring_related, DIALOGUE_NEWS}));
+    auto text = textTape.flatten();
+    EXPECT_CONTAINS(text, "Understood sir.  I want to live.  What do you need?");
+    EXPECT_CONTAINS(text, "Now what?  Have you returned to slay me?  I will\nsurely call out your name before you strike me\ndown!  Someone will come to save me!");
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE, PORTRAIT_WIDE_SMILE)); // The greeting, then the threat.
+}
+
+GAME_TEST(MM6NpcDialogue, StreetNpcThreatRefused) {
+    // Ginger the Negotiator won't take a threat. She says so, and the party's reputation stays.
+    auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+    auto dialogueTape = tapes.dialogueType();
+    auto optionsTape = tapes.custom([] { return dialogueOptionLabels(); });
+    auto textTape = tapes.allGUIWindowsText();
+    auto portraitTape = charTapes.portrait(0);
+    enterNewSorpigal(game);
+    test.startTaping();
+    talkAt(game, kGingerSpot);
+    clickNpcOption(game, "Threat");
+
+    EXPECT_EQ(reputationTape, tape(0));
+    EXPECT_EQ(dialogueTape, tape(DIALOGUE_NULL, DIALOGUE_MAIN, DIALOGUE_THREAT));
+    EXPECT_EQ(optionsTape, tape(std::vector<std::string>(), std::vector<std::string>{"Beg", "Threat", "Bribe 50 Gold"}));
+    EXPECT_CONTAINS(textTape.flatten(), "A threat?  You had best be gone before I set the\nwatch on you!");
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE, PORTRAIT_41)); // The greeting, then the failed threat.
+}
+
+GAME_TEST(MM6NpcDialogue, StreetNpcBribe) {
+    // Bribing Ginger the Negotiator takes 50 gold and 20 reputation, and she talks.
+    auto goldTape = tapes.gold();
+    auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+    auto dialogueTape = tapes.dialogueType();
+    auto topicsTape = tapes.custom([] { return dialogueOptionTopics(); });
+    auto textTape = tapes.allGUIWindowsText();
+    auto portraitTape = charTapes.portrait(0);
+    enterNewSorpigal(game);
+    test.startTaping();
+    talkAt(game, kGingerSpot);
+    clickNpcOption(game, "Bribe 50 Gold");
+
+    EXPECT_EQ(goldTape, tape(200, 150));
+    EXPECT_EQ(reputationTape, tape(0, -20));
+    EXPECT_EQ(dialogueTape, tape(DIALOGUE_NULL, DIALOGUE_MAIN, DIALOGUE_BRIBE));
+    EXPECT_EQ(topicsTape, tape(std::vector<DialogueId>(), std::vector<DialogueId>{DIALOGUE_BEG, DIALOGUE_THREAT, DIALOGUE_BRIBE},
+                               std::vector<DialogueId>{DIALOGUE_WEEKDAY_TOPIC, DIALOGUE_13_hiring_related, DIALOGUE_NEWS}));
+    EXPECT_CONTAINS(textTape.flatten(), "Thank you.  How may I be of service?");
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE, PORTRAIT_47)); // The greeting, then the bribe.
+}
+
+GAME_TEST(MM6NpcDialogue, StreetNpcBribeAgain) {
+    // A bribed NPC wants a bribe every time, and every bribe the party pays makes the next one cost 50 gold more.
+    // When the party can't pay, the NPC greets it again and the gold stays.
+    auto goldTape = tapes.gold();
+    auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+    auto dialogueTape = tapes.dialogueType();
+    auto optionsTape = tapes.custom([] { return dialogueOptionLabels(); });
+    auto statusTape = tapes.statusBar();
+    auto textTape = tapes.allGUIWindowsText();
+    enterNewSorpigal(game);
+    test.startTaping();
+    talkAt(game, kGingerSpot);
+    clickNpcOption(game, "Bribe 50 Gold");
+    leaveConversation(game);
+    talkAt(game, kGingerSpot);
+    clickNpcOption(game, "Bribe 100 Gold");
+    leaveConversation(game);
+    talkAt(game, kGingerSpot);
+    clickNpcOption(game, "Bribe 150 Gold");
+
+    EXPECT_EQ(goldTape, tape(200, 150, 50));
+    EXPECT_EQ(reputationTape, tape(0, -20, -40));
+    EXPECT_EQ(dialogueTape.back(), DIALOGUE_NULL);
+    EXPECT_EQ(optionsTape.back(), (std::vector<std::string>{"Beg", "Threat", "Bribe 150 Gold"}));
+    EXPECT_EQ(statusTape.back(), "You don't have enough gold");
+    auto text = textTape.flatten();
+    EXPECT_CONTAINS(text, "I'm afraid I will require a second payment, sir. \n100 now, or the conversation ends here.");
+    EXPECT_CONTAINS(text, "I'm afraid I will require a second payment, sir. \n150 now, or the conversation ends here.");
+}
+
+GAME_TEST(MM6NpcDialogue, StreetNpcBribeRefused) {
+    // Marianne the Teacher can't be bought. She says so, and the party keeps its gold and reputation.
+    auto goldTape = tapes.gold();
+    auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+    auto dialogueTape = tapes.dialogueType();
+    auto optionsTape = tapes.custom([] { return dialogueOptionLabels(); });
+    auto textTape = tapes.allGUIWindowsText();
+    auto portraitTape = charTapes.portrait(0);
+    enterNewSorpigal(game);
+    test.startTaping();
+    talkToMarianne(game);
+    clickNpcOption(game, "Bribe 50 Gold");
+
+    EXPECT_EQ(goldTape, tape(200));
+    EXPECT_EQ(reputationTape, tape(0));
+    EXPECT_EQ(dialogueTape, tape(DIALOGUE_NULL, DIALOGUE_MAIN, DIALOGUE_BRIBE));
+    EXPECT_EQ(optionsTape, tape(std::vector<std::string>(), std::vector<std::string>{"Beg", "Threat", "Bribe 50 Gold"}));
+    EXPECT_CONTAINS(textTape.flatten(), "Money means little.  Knowledge is power to me.  ");
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE, PORTRAIT_SAD)); // The greeting, then the failed bribe.
+}
+
+
+GAME_TEST(MM6NpcDialogue, StreetNpcBribeDiplomacy) {
+    // The diplomacy of the character who talks lowers the price of a bribe and the reputation it costs.
+    auto goldTape = tapes.gold();
+    auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
+    auto dialogueTape = tapes.dialogueType();
+    enterNewSorpigal(game);
+    game.runGameRoutine([] { pParty->pCharacters[0].pActiveSkills[SKILL_DIPLOMACY] = CombinedSkillValue(2, MASTERY_EXPERT); });
+    test.startTaping();
+    talkAt(game, kGingerSpot);
+    clickNpcOption(game, "Bribe 47 Gold");
+
+    EXPECT_EQ(goldTape, tape(200, 153));
+    EXPECT_EQ(reputationTape, tape(0, -14));
+    EXPECT_EQ(dialogueTape, tape(DIALOGUE_NULL, DIALOGUE_MAIN, DIALOGUE_BRIBE));
 }

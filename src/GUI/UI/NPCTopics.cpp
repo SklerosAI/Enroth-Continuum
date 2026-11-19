@@ -576,6 +576,10 @@ std::string npcDialogueOptionString(DialogueId topic, NPCData *npcData) {
         return std::string(mm6::streetNpcWeekdayTopic(*npcData, pParty->uCurrentDayOfMonth));
       case DIALOGUE_NEWS:
         return std::string(mm6::streetNpcNewsTopic(*npcData));
+      case DIALOGUE_BEG:
+      case DIALOGUE_THREAT:
+      case DIALOGUE_BRIBE:
+        return mm6::streetNpcActionLabel(topic);
       case DIALOGUE_MASTERY_TEACHER_LEARN:
         return masteryTeacherOptionString();
       case DIALOGUE_MAGIC_GUILD_JOIN:

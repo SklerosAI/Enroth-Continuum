@@ -362,6 +362,7 @@ struct Party {
     int mm6Reputation = 0; // MM6 keeps one party-wide reputation and positive is good. MM7 keeps it per location.
     std::array<bool, 21> mm6TavernDrinks = {}; // MM6 taverns 92 to 112 where the party had a drink.
     std::array<int, 21> mm6TavernTips = {}; // npcnews.txt entry each MM6 tavern's barkeep tells for a tip, 0 for none yet.
+    int mm6Bribes = 0; // Street NPCs the party has bribed, every bribe raises the price of the next one.
     float TorchLightLastIntensity = 0.0f;
 
     Duration _roundingDt;  // keeps track of rounding remainder for recovery

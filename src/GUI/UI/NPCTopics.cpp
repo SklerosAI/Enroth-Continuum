@@ -28,6 +28,7 @@
 
 #include "GUI/GUIWindow.h"
 #include "GUI/GUIMessageQueue.h"
+#include "GUI/UI/MM6StreetNpcTalk.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UIStatusBar.h"
 
@@ -571,6 +572,14 @@ std::string npcDialogueOptionString(DialogueId topic, NPCData *npcData) {
         }
       case DIALOGUE_PROFESSION_DETAILS:
         return localization->str(LSTR_MORE_INFORMATION);
+      case DIALOGUE_WEEKDAY_TOPIC:
+        return std::string(mm6::streetNpcWeekdayTopic(*npcData, pParty->uCurrentDayOfMonth));
+      case DIALOGUE_NEWS:
+        return std::string(mm6::streetNpcNewsTopic(*npcData));
+      case DIALOGUE_BEG:
+      case DIALOGUE_THREAT:
+      case DIALOGUE_BRIBE:
+        return mm6::streetNpcActionLabel(topic);
       case DIALOGUE_MASTERY_TEACHER_LEARN:
         return masteryTeacherOptionString();
       case DIALOGUE_MAGIC_GUILD_JOIN:

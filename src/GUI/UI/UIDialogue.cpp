@@ -16,11 +16,14 @@
 #include "Engine/AssetsManager.h"
 #include "Engine/Engine.h"
 #include "Engine/Graphics/Viewport.h"
+#include "Engine/Evt/MM6ReputationEvent.h"
+#include "Engine/Tables/MapTable.h"
 
 #include "GUI/GUIFont.h"
 #include "GUI/GUIButton.h"
 #include "GUI/GUIMessageQueue.h"
 #include "GUI/UI/MM6NpcDialogue.h"
+#include "GUI/UI/MM6StreetNpcTalk.h"
 #include "GUI/UI/UIGame.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/NPCTopics.h"
@@ -44,6 +47,22 @@ GraphicsImage *dialogueBackground(PartyAlignment alignment) {
     return assets->getIcon(dialogueBackgroundResourceByAlignment[alignment]);
 }
 
+static bool isMm6StreetNpc(int npcId) {
+    return npcId >= 0 && getNPCType(npcId) == NPC_TYPE_HIREABLE && !getNPCData(npcId)->Hired();
+}
+
+static int mm6PartyReputation() {
+    return mm6::effectiveReputation(pParty->mm6Reputation, &CheckHiredNPCSpeciality);
+}
+
+static mm6::StreetNpcTalkMode mm6StreetNpcTalkMode(const NPCData &npc) {
+    return mm6::streetNpcTalkMode(npc, pParty->fame(), mm6PartyReputation());
+}
+
+static int mm6TalkerIndex() {
+    return pParty->hasActiveCharacter() ? pParty->activeCharacterIndex() : 0;
+}
+
 void initializeNPCDialogue(int npcId, int bPlayerSaysHello, Actor *actor) {
     pNPCStats->dword_AE336C_LastMispronouncedNameFirstLetter = -1;
     gameTimer->setPaused(true);
@@ -51,7 +70,11 @@ void initializeNPCDialogue(int npcId, int bPlayerSaysHello, Actor *actor) {
     speakingNpcId = npcId;
     currentSpeakingActor = actor;
     NPCData *pNPCInfo = getNPCData(npcId);
-    if (!(pNPCInfo->flags & NPC_GREETED_SECOND)) {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        mm6::forgetAddressingAwardChoice();
+        if (isMm6StreetNpc(npcId))
+            mm6::pickStreetNpcNews(pNPCInfo, pMapTable->pInfos[engine->_currentLoadedMapId].fileName);
+    } else if (!(pNPCInfo->flags & NPC_GREETED_SECOND)) {
         if (pNPCInfo->flags & NPC_GREETED_FIRST) {
             pNPCInfo->flags &= ~NPC_GREETED_FIRST;
             pNPCInfo->flags |= NPC_GREETED_SECOND;
@@ -121,7 +144,9 @@ GUIWindow_Dialogue::GUIWindow_Dialogue(DialogWindowType type) : GUIWindow(WINDOW
     NPCData *speakingNPC = getNPCData(speakingNpcId);
     std::vector<DialogueId> optionList;
 
-    if (type == DIALOG_WINDOW_FULL) {
+    if (type == DIALOG_WINDOW_FULL && engine->gameTitle() == GameTitle::MM6 && isMm6StreetNpc(speakingNpcId)) {
+        optionList = mm6::streetNpcTopics(mm6StreetNpcTalkMode(*speakingNPC));
+    } else if (type == DIALOG_WINDOW_FULL) {
         if (getNPCType(speakingNpcId) == NPC_TYPE_QUEST) {
             optionList = prepareScriptedNPCDialogueTopics(speakingNPC);
         } else if (speakingNPC->canJoin) {
@@ -192,6 +217,20 @@ void GUIWindow_Dialogue::Update() {
 
     std::string dialogue_string;
     switch (_displayedDialogue) {
+        case DIALOGUE_WEEKDAY_TOPIC:
+            dialogue_string = mm6::streetNpcWeekdayText(*pNPC, pParty->uCurrentDayOfMonth);
+            break;
+
+        case DIALOGUE_NEWS:
+            dialogue_string = mm6::streetNpcNewsText(*pNPC);
+            break;
+
+        case DIALOGUE_BEG:
+        case DIALOGUE_THREAT:
+        case DIALOGUE_BRIBE:
+            dialogue_string = BuildDialogueString(mm6::streetNpcActionText(*pNPC, _displayedDialogue), mm6TalkerIndex(), pNPC);
+            break;
+
         case DIALOGUE_13_hiring_related:
             dialogue_string = BuildDialogueString(pNPCStats->pProfessions[pNPC->profession].pJoinText, 0, pNPC);
             break;
@@ -227,6 +266,14 @@ void GUIWindow_Dialogue::Update() {
             if (_displayedDialogue >= DIALOGUE_SCRIPTED_LINE_1 && _displayedDialogue < DIALOGUE_SCRIPTED_LINE_6 &&
                 branchless_dialogue_str.empty()) {
                 dialogue_string = current_npc_text;
+            } else if (engine->gameTitle() == GameTitle::MM6 && isMm6StreetNpc(speakingNpcId)) {
+                mm6::StreetNpcTalkMode mode = mm6StreetNpcTalkMode(*pNPC);
+                std::string greeting = BuildDialogueString(mm6::streetNpcGreeting(*pNPC, mode, mm6PartyReputation()), mm6TalkerIndex(), pNPC);
+                if (mode == mm6::STREET_NPC_TALK_FAME_TOO_LOW) {
+                    DrawTitleText(assets->pFontCreate.get(), 483, 150, colorTable.White, greeting, 3, Recti(0, 0, 630, 480)); // On the right panel.
+                } else {
+                    dialogue_string = greeting;
+                }
             } else if (npcType == NPC_TYPE_QUEST) {
                 if (pNPC->greetingIndex) {
                     if (pNPC->flags & NPC_GREETED_SECOND) {
@@ -335,6 +382,11 @@ void selectNPCDialogueOption(DialogueId option) {
         speakingNPC->flags = NPC_GREETED_FIRST;
     }
 
+    if (option == DIALOGUE_BEG || option == DIALOGUE_THREAT || option == DIALOGUE_BRIBE) {
+        ((GUIWindow_Dialogue *)pDialogueWindow.get())->setDisplayedDialogueType(mm6::takeStreetNpcAction(speakingNPC, option, pDialogueWindow.get()));
+        return;
+    }
+
     if (option >= DIALOGUE_SCRIPTED_LINE_1 && option <= DIALOGUE_SCRIPTED_LINE_6) {
         DialogueId newTopic = handleScriptedNPCTopicSelection(option, speakingNPC);
 
@@ -365,7 +417,10 @@ void selectNPCDialogueOption(DialogueId option) {
     }
 
     if (option == DIALOGUE_13_hiring_related) {
-        if (!speakingNPC->Hired()) {
+        if (!speakingNPC->Hired() && engine->gameTitle() == GameTitle::MM6) {
+            mm6::showStreetNpcJoinTopics(pDialogueWindow.get(), *speakingNPC);
+            dialogue_show_profession_details = false;
+        } else if (!speakingNPC->Hired()) {
             BuildHireableNpcDialogue();
             dialogue_show_profession_details = false;
         } else {

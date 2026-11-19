@@ -265,6 +265,10 @@ class GameConfig : public Config {
             "MM6 only. Start a new day when time jumps past 3 am into the next month, as the GrayFace patch does. "
             "In vanilla, pressing Esc during \"Wait until Dawn\" on the last day of a month skipped the New Day effects."};
 
+        Bool FixSunriseLight = {this, "fix_sunrise_light", true,
+            "MM6 only. Move the outdoor sunlight to sunrise at 5:00 AM, as the GrayFace patch does. "
+            "In vanilla, the first minute after 5:00 AM could keep the light of an earlier daytime hour."};
+
         Float SpellFailureRecoveryMod = {this, "spell_failure_recovery_mod", 0.5f, &ValidateSpellFailureRecoveryMod,
             "Recovery time modifier when spell casting ended in failure for the reason where spell cannot be cast at all in current context. "
             "Context include situation where outdoor spell is casted indoor or targeted spell is casted with no characters on screen."};

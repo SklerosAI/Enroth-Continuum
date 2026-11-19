@@ -347,6 +347,10 @@ void OutdoorLocation::UpdateSunlightVectors() {
     unsigned int minutes;  // edi@3
     double v8;        // st7@4
 
+    // Stored by night too, or a 5:00 AM that matches the minute of the last daytime update skips sunrise for a minute.
+    if (engine->gameTitle() == GameTitle::MM6 && engine->config->gameplay.FixSunriseLight.value())
+        this->uLastSunlightUpdateMinute = pParty->uCurrentMinute;
+
     if (pParty->uCurrentHour >= 5 && pParty->uCurrentHour < 21) {
         minutes = pParty->uCurrentMinute + 60 * (pParty->uCurrentHour - 5);
 

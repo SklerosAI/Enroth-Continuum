@@ -1,6 +1,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -10,6 +11,7 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Image.h"
+#include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Sprites.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/NPC.h"
@@ -74,6 +76,13 @@ static void clickNpcOption(EngineController &game, std::string_view label) {
 
 static void waitInRestScreen(EngineController &game, std::string_view button) {
     game.pressGuiButton(button);
+    game.tick();
+    while (currentRestType != REST_NONE)
+        game.tick(); // The wait passes.
+}
+
+static void waitFiveMinutes(EngineController &game) {
+    game.pressAndReleaseButton(BUTTON_LEFT, {140, 320}); // The Wait 5 Minutes picture.
     game.tick();
     while (currentRestType != REST_NONE)
         game.tick(); // The wait passes.
@@ -256,6 +265,34 @@ GAME_TEST(MM6GrayFaceShared, NewDayAtMonthStartAfterWaitUntilDawnAndEsc) {
         EXPECT_EQ(foodTape.delta(), -1);
         EXPECT_EQ(clockTape.back(), std::pair(5, 0));
         EXPECT_EQ(dateTape.frontBack(), monthEnd ? tape(std::pair(0, 27), std::pair(1, 0)) : tape(std::pair(0, 0), std::pair(0, 1)));
+    }
+}
+
+GAME_TEST(MM6GrayFaceShared, SunRisesAtFiveAm) {
+    // Outdoors stayed at the last daytime light for the first minute after 5:00 AM in vanilla MM6. At 5:00 the sun is
+    // on the horizon and the terrain at its darkest daytime level.
+    startNewGameThroughInput(game);
+    auto sunTape = tapes.custom([] {
+        return std::tuple(pParty->uCurrentHour, pParty->uCurrentMinute, pOutdoor->vSunlight, pOutdoor->max_terrain_dimming_level);
+    });
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    while (pParty->uCurrentHour != 4)
+        waitInRestScreen(game, "Rest_Wait1Hour");
+    while (pParty->uCurrentMinute < 55)
+        waitFiveMinutes(game);
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    while (pParty->uCurrentHour != 5 || pParty->uCurrentMinute != 1)
+        game.tick(); // The night ends.
+
+    auto atFive = sunTape.filter([](const auto &frame) { return std::get<0>(frame) == 5 && std::get<1>(frame) == 0; });
+    ASSERT_FALSE(atFive.empty());
+    for (const auto &[hour, minute, sun, dimming] : atFive) {
+        EXPECT_EQ(sun, Vec3f(1, 0, 0));
+        EXPECT_EQ(dimming, 20);
     }
 }
 

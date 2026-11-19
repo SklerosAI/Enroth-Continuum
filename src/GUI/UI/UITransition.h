@@ -57,6 +57,7 @@ class GUIWindow_IndoorEntryExit : public GUIWindow_Transition {
     void initializeMM6(HouseId transitionHouse, unsigned exitPictureId);
     void updateMM6();
     bool _mm6Unsupported = false;
+    MapId _mm6TitleMap = MAP_INVALID;
 
     MapDestination _destination;
     EvtContinuation _continuation;

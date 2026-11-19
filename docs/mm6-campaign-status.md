@@ -172,8 +172,11 @@ full `MM6*` game suite, the unit tests and the MM7 controls, and took before and
   fare, travel leaves when its speech ends, map timers count from their last firing (new optional EC6 `TIMR`
   section). Left: no travel speech plays yet, so the W8 cap always applies.
 - **travel-dialog-icons.** The map-edge travel dialog draws MM6.exe's own layout, `evpan004`, the `outside` picture and
-  `BUTTYES1` and `BUTTESC1` at y 313, instead of MM7 icons MM6 lacks. Left: the dungeon entry and exit dialog still has
-  the wrong layout.
+  `BUTTYES1` and `BUTTESC1` at y 313, instead of MM7 icons MM6 lacks.
+- **dungeon-dialog.** The dungeon entry and exit dialog draws MM6.exe's layout too: the room's `evpan` panel, the exit
+  picture at (525,34), the buttons at y 313 and the hour's top panel beside it. The exit dialog names the dungeon, and
+  the Dragon's Lair and Devil Outpost doors show their `trans.txt` lines. Left: the sound and speech calls MM6.exe makes
+  when the dialog opens, see [Open questions](open-questions.md).
 - **docs.** `project/`, `.llm-wiki/` and the tracked `agent_comms/` notes became this `docs/` wiki.
 - **code-cleanup.** MM6 code only its own tests reached, the save-research probe tests and the research-folder map
   reader are gone. No MM6 test skips on a machine with the MM6 data. Left: files such as `MM6NewGameSaveRuntime.cpp`

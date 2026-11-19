@@ -58,8 +58,8 @@ int getSpecialTransferMessageIndex(std::string_view locationName) {
 GUIWindow_Transition::GUIWindow_Transition(WindowType windowType, ScreenType screenType) : GUIWindow(windowType, {0, 0}, render->GetRenderDimensions()) {
     gameTimer->setPaused(true);
 
-    _dialogueBackground = windowType == WINDOW_INDOOR_ENTRY_EXIT && engine->gameTitle() == GameTitle::MM6
-        ? assets->getIcon("backevt") : dialogueBackground(pParty->alignment);
+    if (engine->gameTitle() != GameTitle::MM6)
+        _dialogueBackground = dialogueBackground(pParty->alignment);
     prev_screen_type = current_screen_type;
     current_screen_type = screenType;
 }

@@ -8,7 +8,6 @@
 namespace mm6 {
 
 struct TransitionDialogPlan {
-    std::string_view backgroundIcon;
     std::string_view destinationIcon;
     std::string_view confirmIcon;
     std::string_view cancelIcon;

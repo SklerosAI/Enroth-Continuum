@@ -130,6 +130,8 @@ void GUIWindow_MM6Shop::Update() {
 }
 
 void GUIWindow_MM6Shop::selectService(int index) {
+    if (turnsAwayActiveCharacter())
+        return;
     if (_screen || !isProprietorSelected() || index < 0 || index >= static_cast<int>(_services.size()) || !isShopService(_services[index])) {
         GUIWindow_MM6House::selectService(index);
         return;
@@ -213,6 +215,12 @@ Recti GUIWindow_MM6Shop::stockItemRect(int slot) const {
     if (slot < 6 && y < 1)
         y = 0;
     return Recti(x, y, size.w, size.h);
+}
+
+bool GUIWindow_MM6Shop::menuNeedsActingCharacter() const {
+    const HouseType type = _house.type;
+    return !_screen && isProprietorSelected() &&
+           (type == HOUSE_TYPE_WEAPON_SHOP || type == HOUSE_TYPE_ARMOR_SHOP || type == HOUSE_TYPE_MAGIC_SHOP || type == HOUSE_TYPE_GENERAL_STORE);
 }
 
 void GUIWindow_MM6Shop::openScreen(mm6::HouseServiceOption option) {

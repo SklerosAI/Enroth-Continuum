@@ -1,12 +1,11 @@
 #include <algorithm>
 #include <array>
-#include <cstdlib>
-#include <fstream>
-#include <iterator>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/Spells/MM6PowerCureTransaction.h"
@@ -63,13 +62,6 @@ std::array<Character, 4> party() {
     return characters;
 }
 
-void loadFile(const char *path, void (*load)(const Blob &)) {
-    std::ifstream stream(path);
-    if (!stream.good())
-        throw std::runtime_error("Cannot read ignored MM6 spell rule manifest");
-    std::string bytes(std::istreambuf_iterator<char>{stream}, {});
-    load(Blob::fromString(std::move(bytes)));
-}
 
 }  // namespace
 
@@ -124,13 +116,13 @@ UNIT_TEST(MM6PowerCureTransaction, RejectsMM7AndChangedCasterBeforeAnyMutation) 
     EXPECT_EQ(characters[0].timeToRecovery, Duration::fromTicks(1));
 }
 
-UNIT_TEST(MM6PowerCureTransaction, PrivateRulesStageActualCharacterState) {
-    const char *spellPath = std::getenv("ENROTH_MM6_SPELL_RULES_MANIFEST");
-    const char *powerCurePath = std::getenv("ENROTH_MM6_POWER_CURE_MANIFEST");
-    if (!spellPath || !powerCurePath)
-        GTEST_SKIP() << "Set ignored MM6 spell and Power Cure manifests";
-    loadFile(spellPath, mm6::loadSpellRules);
-    loadFile(powerCurePath, mm6::loadPowerCureRules);
+UNIT_TEST(MM6PowerCureTransaction, ProfileRulesStageActualCharacterState) {
+    const std::optional<Blob> spells = readMM6TestRules("spells.json");
+    const std::optional<Blob> powerCure = readMM6TestRules("power-cure.json");
+    if (!spells || !powerCure)
+        GTEST_SKIP() << mm6TestRulesMissing;
+    mm6::loadSpellRules(*spells);
+    mm6::loadPowerCureRules(*powerCure);
 
     auto characters = party();
     characters[0].mana = 1000;

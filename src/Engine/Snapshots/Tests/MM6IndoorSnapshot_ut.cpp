@@ -1,13 +1,11 @@
-#include <cstdlib>
 #include <cstring>
-#include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <string>
 #include <utility>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
+#include "Engine/MM6/MM6Archive.h"
 #include "Engine/Snapshots/MM6IndoorSnapshot.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
 
@@ -40,13 +38,6 @@ Blob minimalDeltaWithChest() {
     putU32(&data, chest + 4, 200);
     data[chest + 4 + 26] = static_cast<char>(0xA5);
     return Blob::fromString(std::move(data));
-}
-
-Blob readFile(const std::filesystem::path &path) {
-    std::ifstream stream(path, std::ios::binary);
-    if (!stream)
-        throw Exception("MM6 indoor fixture file could not be opened");
-    return Blob::fromString(std::string(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()));
 }
 
 void expectEqualBytes(const Blob &expected, const Blob &actual) {
@@ -149,10 +140,10 @@ UNIT_TEST(MM6IndoorSnapshot, RejectsTruncatedAndInconsistentData) {
     EXPECT_THROW(deserializeMM6IndoorDelta(Blob::fromString(std::move(negativeDoorCount)), base), Exception);
 }
 
-UNIT_TEST(MM6IndoorSnapshot, RetainedFiftyTwoPairs) {
-    const char *directory = std::getenv("ENROTH_MM6_INDOOR_DECODED_DIR");
-    if (!directory)
-        GTEST_SKIP() << "Set ENROTH_MM6_INDOOR_DECODED_DIR to the ignored decoded fixture directory";
+UNIT_TEST(MM6IndoorSnapshot, ShippedFiftyTwoPairs) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
     size_t pairs = 0;
     bool testedBadDoorReference = false;
@@ -160,17 +151,12 @@ UNIT_TEST(MM6IndoorSnapshot, RetainedFiftyTwoPairs) {
     bool testedGroundWrite = false;
     bool testedChestWrite = false;
     bool testedDoorWrite = false;
-    for (const auto &entry : std::filesystem::directory_iterator(directory)) {
-        if (entry.path().extension() != ".blv")
-            continue;
-        Blob baseBytes = readFile(entry.path());
-        Blob retainedEntry = readFile(entry.path().parent_path().parent_path() / "Games" / entry.path().filename());
-        expectEqualBytes(baseBytes, decodeMM6IndoorBaseArchiveEntry(entry.path().filename().string(), retainedEntry));
-        if (entry.path().filename() == "cd3.blv" || entry.path().filename() == "d08.blv")
-            EXPECT_THROW(decodeMM6IndoorBaseArchiveEntry("other.blv", retainedEntry), Exception);
-        std::filesystem::path deltaPath = entry.path();
-        deltaPath.replace_extension(".dlv");
-        Blob deltaBytes = readFile(deltaPath);
+    for (const std::string &name : data->mapNames(".blv")) {
+        const Blob archiveEntry = data->games().read(name);
+        Blob baseBytes = decodeMM6IndoorBaseArchiveEntry(name, archiveEntry);
+        if (name == "cd3.blv" || name == "d08.blv")
+            EXPECT_THROW(decodeMM6IndoorBaseArchiveEntry("other.blv", archiveEntry), Exception);
+        Blob deltaBytes = decodeMM6ArchiveEntry(data->games().read(name.substr(0, name.size() - 4) + ".dlv"));
         MM6IndoorSnapshot base = deserializeMM6IndoorBase(baseBytes);
         MM6IndoorSnapshot delta = deserializeMM6IndoorDelta(deltaBytes, base);
         IndoorLocation_MM7 projected = projectMM6IndoorBase(base);

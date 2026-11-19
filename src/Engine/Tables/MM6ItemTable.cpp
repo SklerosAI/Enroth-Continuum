@@ -26,11 +26,22 @@
 #include "Utility/String/Transformations.h"
 
 void ItemTable::InitializeMm6(ResourceManager *resourceManager) {
+    loadMm6Tables(resourceManager->eventsData("stditems.txt"), resourceManager->eventsData("spcitems.txt"),
+                  resourceManager->eventsData("items.txt"), resourceManager->eventsData("rnditems.txt"));
+
+    Item::PopulateSpecialBonusMap();
+    Item::PopulateArtifactBonusMap();
+    LodReader icons(dfs->read("data/icons.lod"));
+    Blob combinations = lod::decodeMaybeCompressed(icons.read("useitems.txt"));
+    mm6PotionCombinations = mm6::PotionCombinations::parse(combinations.str());
+    LoadItemSizes();
+}
+
+void ItemTable::loadMm6Tables(const Blob &standard, const Blob &special, const Blob &templates, const Blob &random) {
     MM_INFO("Loading MM6 item enchantments.");
     constexpr auto &attributes = mm6::kStandardBonusAttributes;
 
-    Blob standardBlob = resourceManager->eventsData("stditems.txt");
-    std::vector<std::string_view> standardLines = split(standardBlob.str()).by("\r\n");
+    std::vector<std::string_view> standardLines = split(standard.str()).by("\r\n");
     for (size_t i = 0; i < attributes.size(); i++) {
         std::array<std::string_view, 11> cells = split(standardLines[i + 4]).by('\t');
         auto &enchantment = standardEnchantments[attributes[i]];
@@ -49,8 +60,7 @@ void ItemTable::InitializeMm6(ResourceManager *resourceManager) {
         standardEnchantmentRangeByTreasureLevel[level] = Segment(fromString<int>(cells[2]), fromString<int>(cells[3]));
     }
 
-    Blob specialBlob = resourceManager->eventsData("spcitems.txt");
-    std::vector<std::string_view> specialLines = split(specialBlob.str()).by("\r\n");
+    std::vector<std::string_view> specialLines = split(special.str()).by("\r\n");
     for (int id = 1; id <= 59; id++) {
         std::array<std::string_view, 17> cells = split(specialLines[id + 3]).by('\t');
         auto &enchantment = specialEnchantments[static_cast<ItemEnchantment>(id)];
@@ -88,8 +98,7 @@ void ItemTable::InitializeMm6(ResourceManager *resourceManager) {
     };
 
     MM_INFO("Loading MM6 item templates.");
-    Blob itemsBlob = resourceManager->eventsData("items.txt");
-    for (std::string_view line : split(itemsBlob.str()).by("\r\n").drop(3).skip("")) {
+    for (std::string_view line : split(templates.str()).by("\r\n").drop(3).skip("")) {
         std::array<std::string_view, 16> cells = split(line).by('\t');
         int id = 0;
         if (!tryDeserialize(trim(cells[0]), &id) || cells[1].empty() ||
@@ -126,8 +135,7 @@ void ItemTable::InitializeMm6(ResourceManager *resourceManager) {
     }
 
     MM_INFO("Loading MM6 random item weights.");
-    Blob randomBlob = resourceManager->eventsData("rnditems.txt");
-    std::vector<std::string_view> randomLines = split(randomBlob.str()).by("\r\n");
+    std::vector<std::string_view> randomLines = split(random.str()).by("\r\n");
     for (int id = 1; id <= 399; id++) {
         std::array<std::string_view, 8> cells = split(randomLines[id + 3]).by('\t');
         if (fromString<int>(cells[0]) != id)
@@ -148,11 +156,4 @@ void ItemTable::InitializeMm6(ResourceManager *resourceManager) {
         for (ItemTreasureLevel level : chances->indices())
             (*chances)[level] = fromString<int>(cells[1 + std::to_underlying(level)]);
     }
-
-    Item::PopulateSpecialBonusMap();
-    Item::PopulateArtifactBonusMap();
-    LodReader icons(dfs->read("data/icons.lod"));
-    Blob combinations = lod::decodeMaybeCompressed(icons.read("useitems.txt"));
-    mm6PotionCombinations = mm6::PotionCombinations::parse(combinations.str());
-    LoadItemSizes();
 }

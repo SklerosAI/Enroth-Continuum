@@ -1,11 +1,11 @@
 #include <algorithm>
-#include <cstdlib>
-#include <filesystem>
-#include <fstream>
+#include <sstream>
 #include <string>
 #include <string_view>
 
 #include "Engine/Tables/HouseTable.h"
+
+#include "Testing/Unit/MM6TestData.h"
 
 #include "gtest/gtest.h"
 
@@ -32,13 +32,12 @@ TEST(MM6HouseType, PreservesMM7ParserFallback) {
     EXPECT_EQ(parseHouseType("", GameTitle::MM7), HOUSE_TYPE_INVALID);
 }
 
-TEST(MM6HouseType, RetainedTableHasNoUnknownLabels) {
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    if (!research)
-        GTEST_SKIP() << "private retained MM6 table is unavailable";
+TEST(MM6HouseType, ShippedTableHasNoUnknownLabels) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    std::ifstream source(std::filesystem::path(research) / "icons" / "2devents.txt");
-    ASSERT_TRUE(source.is_open());
+    std::istringstream source(std::string(data->iconsData("2devents.txt").str()));
     int rows = 0;
     int unknown = 0;
     for (std::string line; std::getline(source, line);) {

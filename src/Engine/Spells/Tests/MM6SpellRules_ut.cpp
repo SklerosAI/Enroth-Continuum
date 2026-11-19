@@ -1,9 +1,8 @@
-#include <cstdlib>
-#include <fstream>
-#include <iterator>
+#include <optional>
 #include <stdexcept>
 #include <string>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/Spells/MM6SpellRules.h"
@@ -68,15 +67,12 @@ UNIT_TEST(MM6SpellRules, InvalidManifestCannotReplaceLoadedRules) {
               before.recoveryTicks);
 }
 
-UNIT_TEST(MM6SpellRules, PrivateF3MatchedManifest) {
-    const char *path = std::getenv("ENROTH_MM6_SPELL_RULES_MANIFEST");
-    if (!path)
-        GTEST_SKIP() << "Set ignored MM6 rules/spells.json manifest path";
-    std::ifstream stream(path);
-    ASSERT_TRUE(stream.good());
-    std::string bytes(std::istreambuf_iterator<char>{stream}, {});
-    Json document = Json::parse(bytes);
-    mm6::loadSpellRules(Blob::fromString(bytes));
+UNIT_TEST(MM6SpellRules, ProfileManifest) {
+    const std::optional<Blob> manifest = readMM6TestRules("spells.json");
+    if (!manifest)
+        GTEST_SKIP() << mm6TestRulesMissing;
+    Json document = Json::parse(manifest->str());
+    mm6::loadSpellRules(*manifest);
     ASSERT_EQ(document["spells"].size(), 99);
     for (int id = 1; id <= 99; ++id)
         for (int rank = 1; rank <= 3; ++rank) {

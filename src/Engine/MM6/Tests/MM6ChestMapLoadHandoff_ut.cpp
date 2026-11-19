@@ -1,17 +1,15 @@
 #include <array>
 #include <cstdint>
 #include <cstring>
-#include <cstdlib>
-#include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <memory>
 #include <span>
 #include <string>
 #include <utility>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
+#include "Engine/MM6/MM6Archive.h"
 #include "Engine/MM6/MM6ChestMapLoadHandoff.h"
 #include "Engine/Snapshots/MM6IndoorSnapshot.h"
 #include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
@@ -50,9 +48,9 @@ mm6::ChestMapLoadOwners ownersWithMarker(int marker = -1) {
     return owners;
 }
 
-Blob readFile(const std::filesystem::path &path) {
-    std::ifstream stream(path, std::ios::binary);
-    return Blob::fromString(std::string(std::istreambuf_iterator<char>(stream), {}));
+Blob decodedMap(const MM6TestData &data, const std::string &name) {
+    const Blob entry = data.games().read(name);
+    return name.ends_with(".blv") ? decodeMM6IndoorBaseArchiveEntry(name, entry) : decodeMM6ArchiveEntry(entry);
 }
 
 void copyRecords(std::span<const std::uint8_t> section, mm6::ChestRecordSet *records) {
@@ -147,21 +145,16 @@ UNIT_TEST(MM6ChestMapLoadHandoff, MarkerFreeMapRejectsMalformedArtifactFlags) {
     EXPECT_EQ(owners.records, original);
 }
 
-UNIT_TEST(MM6ChestMapLoadHandoff, RetainedBaselinesStageWithSyntheticTable) {
-    const char *indoorDirectory = std::getenv("ENROTH_MM6_INDOOR_DECODED_DIR");
-    const char *outdoorDirectory = std::getenv("ENROTH_MM6_OUTDOOR_DECODED_DIR");
-    if (!indoorDirectory || !outdoorDirectory)
-        GTEST_SKIP() << "Set retained decoded MM6 map directories";
+UNIT_TEST(MM6ChestMapLoadHandoff, ShippedBaselinesStageWithSyntheticTable) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
     TableScope table;
     int indoorCount = 0;
     int outdoorCount = 0;
-    for (const auto &entry : std::filesystem::directory_iterator(indoorDirectory)) {
-        if (entry.path().extension() != ".dlv")
-            continue;
-        auto basePath = entry.path();
-        basePath.replace_extension(".blv");
-        const auto base = deserializeMM6IndoorBase(readFile(basePath));
-        const auto delta = deserializeMM6IndoorDelta(readFile(entry.path()), base);
+    for (const std::string &name : data->mapNames(".dlv")) {
+        const auto base = deserializeMM6IndoorBase(decodedMap(*data, name.substr(0, name.size() - 4) + ".blv"));
+        const auto delta = deserializeMM6IndoorDelta(decodedMap(*data, name), base);
         auto owners = ownersWithMarker(0);
         const Blob &chests = delta.section(MM6IndoorSectionKind::Chests).bytes;
         copyRecords({static_cast<const std::uint8_t *>(chests.data()), chests.size()}, &owners.records);
@@ -169,10 +162,8 @@ UNIT_TEST(MM6ChestMapLoadHandoff, RetainedBaselinesStageWithSyntheticTable) {
             << "indoor ordinal=" << indoorCount;
         ++indoorCount;
     }
-    for (const auto &entry : std::filesystem::directory_iterator(outdoorDirectory)) {
-        if (entry.path().extension() != ".ddm")
-            continue;
-        const auto delta = decodeMM6OutdoorDelta(readFile(entry.path()));
+    for (const std::string &name : data->mapNames(".ddm")) {
+        const auto delta = decodeMM6OutdoorDelta(decodedMap(*data, name));
         auto owners = ownersWithMarker(0);
         copyRecords(delta.wire.part(mm6::OutdoorDeltaPart::Chests), &owners.records);
         ASSERT_TRUE(mm6::stageChestMapLoadHandoff(owners, MAP_TREASURE_LEVEL_6, *table.table, {}))

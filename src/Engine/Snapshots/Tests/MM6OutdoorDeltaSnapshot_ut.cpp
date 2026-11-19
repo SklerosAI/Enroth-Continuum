@@ -1,15 +1,13 @@
 #include <array>
 #include <cstdint>
-#include <cstdlib>
-#include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <stdexcept>
 #include <string>
 #include <utility>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
+#include "Engine/MM6/MM6Archive.h"
 #include "Engine/Objects/CombinedSkillValue.h"
 #include "Engine/Objects/MonsterEnums.h"
 #include "Engine/Snapshots/MM6OutdoorDeltaSnapshot.h"
@@ -156,22 +154,17 @@ UNIT_TEST(MM6OutdoorDeltaSnapshot, RejectsUnsupportedChangedState) {
     EXPECT_THROW(encodeMM6OutdoorRuntimeDelta(delta), std::runtime_error);
 }
 
-UNIT_TEST(MM6OutdoorDeltaSnapshot, RetainedFifteenDeltas) {
-    const char *directory = std::getenv("ENROTH_MM6_OUTDOOR_DECODED_DIR");
-    if (!directory)
-        GTEST_SKIP() << "Set ENROTH_MM6_OUTDOOR_DECODED_DIR to ignored decoded fixtures";
+UNIT_TEST(MM6OutdoorDeltaSnapshot, ShippedFifteenDeltas) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
     size_t count = 0;
     size_t actors = 0;
     size_t items = 0;
     size_t chests = 0;
-    for (const auto &entry : std::filesystem::directory_iterator(directory)) {
-        if (entry.path().extension() != ".ddm")
-            continue;
-        std::ifstream stream(entry.path(), std::ios::binary);
-        ASSERT_TRUE(stream.good());
-        std::string data(std::istreambuf_iterator<char>{stream}, {});
-        MM6OutdoorDeltaSnapshot delta = decodeMM6OutdoorDelta(Blob::fromString(std::move(data)));
+    for (const std::string &name : data->mapNames(".ddm")) {
+        MM6OutdoorDeltaSnapshot delta = decodeMM6OutdoorDelta(decodeMM6ArchiveEntry(data->games().read(name)));
         EXPECT_EQ(mm6::encodeOutdoorDelta(delta.wire), delta.wire.bytes);
         Blob encoded = encodeMM6OutdoorRuntimeDelta(delta);
         EXPECT_EQ(std::string(static_cast<const char *>(encoded.data()), encoded.size()),

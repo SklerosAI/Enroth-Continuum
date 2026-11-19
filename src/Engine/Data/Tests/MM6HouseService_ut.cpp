@@ -1,13 +1,13 @@
 #include <algorithm>
 #include <array>
-#include <cstdlib>
-#include <filesystem>
-#include <fstream>
+#include <sstream>
 #include <string>
 #include <string_view>
 
 #include "Engine/Data/HouseEnumFunctions.h"
 #include "Engine/Tables/HouseTable.h"
+
+#include "Testing/Unit/MM6TestData.h"
 
 #include "gtest/gtest.h"
 
@@ -22,13 +22,12 @@ TEST(MM6HouseService, CategoriesDoNotUseHouseIdRanges) {
     EXPECT_EQ(mm6::houseServiceFamily(HOUSE_TYPE_HOUSE), HouseServiceFamily::Other);
 }
 
-TEST(MM6HouseService, RetainedTableFamilyCounts) {
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    if (!research)
-        GTEST_SKIP() << "private retained MM6 table is unavailable";
+TEST(MM6HouseService, ShippedTableFamilyCounts) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    std::ifstream source(std::filesystem::path(research) / "icons" / "2devents.txt");
-    ASSERT_TRUE(source.is_open());
+    std::istringstream source(std::string(data->iconsData("2devents.txt").str()));
     std::array<int, 4> counts{};
     for (std::string line; std::getline(source, line);) {
         const size_t first = line.find('\t');

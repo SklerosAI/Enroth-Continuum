@@ -1,11 +1,9 @@
-#include <cstdlib>
-#include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <string>
 #include <utility>
 
 #include "Engine/Tables/AwardTable.h"
+
+#include "Testing/Unit/MM6TestData.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -49,15 +47,12 @@ TEST(MM6AwardTable, PreservesMM7PriorityParser) {
     EXPECT_EQ(pAwards[static_cast<AwardId>(1)].uPriority, 3u);
 }
 
-TEST(MM6AwardTable, RetainedHundredRowsLoadWithTextAndNoPriority) {
-    const char *research = std::getenv("ENROTH_MM6_F3_RESEARCH_DIR");
-    if (!research)
-        GTEST_SKIP() << "private retained MM6 table is unavailable";
+TEST(MM6AwardTable, ShippedHundredRowsLoadWithTextAndNoPriority) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    std::ifstream source(std::filesystem::path(research) / "icons" / "awards.txt", std::ios::binary);
-    ASSERT_TRUE(source.is_open());
-    std::string bytes(std::istreambuf_iterator<char>{source}, {});
-    initializeAwards(Blob::fromString(std::move(bytes)), GameTitle::MM6);
+    initializeAwards(data->iconsData("awards.txt"), GameTitle::MM6);
 
     int withText = 0;
     int deferredFormat = 0;

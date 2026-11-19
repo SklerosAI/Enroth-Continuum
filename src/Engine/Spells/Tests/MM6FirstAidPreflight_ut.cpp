@@ -1,9 +1,8 @@
-#include <cstdlib>
-#include <fstream>
-#include <iterator>
+#include <optional>
 #include <stdexcept>
 #include <string>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/Spells/MM6FirstAidPreflight.h"
@@ -55,13 +54,6 @@ mm6::FirstAidPreflightInput ordinaryCast() {
     return input;
 }
 
-void loadFile(const char *path, void (*load)(const Blob &)) {
-    std::ifstream stream(path);
-    if (!stream.good())
-        throw std::runtime_error("Cannot read ignored MM6 rule manifest");
-    std::string bytes(std::istreambuf_iterator<char>{stream}, {});
-    load(Blob::fromString(bytes));
-}
 
 } // namespace
 
@@ -145,13 +137,13 @@ UNIT_TEST(MM6FirstAidPreflight, RejectsUnsupportedRoutesAndState) {
     EXPECT_THROW(mm6::planFirstAidSpellbookCast(input), std::runtime_error);
 }
 
-UNIT_TEST(MM6FirstAidPreflight, PrivateF3MatchedRuleComposition) {
-    const char *spellPath = std::getenv("ENROTH_MM6_SPELL_RULES_MANIFEST");
-    const char *firstAidPath = std::getenv("ENROTH_MM6_FIRST_AID_MANIFEST");
-    if (!spellPath || !firstAidPath)
-        GTEST_SKIP() << "Set ignored MM6 spell and First Aid manifests";
-    loadFile(spellPath, mm6::loadSpellRules);
-    loadFile(firstAidPath, mm6::loadFirstAidRules);
+UNIT_TEST(MM6FirstAidPreflight, ProfileRuleComposition) {
+    const std::optional<Blob> spells = readMM6TestRules("spells.json");
+    const std::optional<Blob> firstAid = readMM6TestRules("first-aid.json");
+    if (!spells || !firstAid)
+        GTEST_SKIP() << mm6TestRulesMissing;
+    mm6::loadSpellRules(*spells);
+    mm6::loadFirstAidRules(*firstAid);
     for (int rank = 1; rank <= 3; ++rank) {
         auto input = ordinaryCast();
         input.mastery = static_cast<Mastery>(rank);

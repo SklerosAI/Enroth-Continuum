@@ -1,10 +1,8 @@
-#include <cstdlib>
-#include <fstream>
-#include <iterator>
+#include <optional>
 #include <stdexcept>
 #include <string>
-#include <utility>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/Spells/MM6CombatBuffRules.h"
@@ -88,15 +86,12 @@ UNIT_TEST(MM6CombatBuffRules, InvalidReloadPreservesGoodRule) {
     EXPECT_EQ(mm6::planCombatBuff(SPELL_SPIRIT_HEROISM, MASTERY_MASTER, 3, Time::fromDays(10)).power, 13);
 }
 
-UNIT_TEST(MM6CombatBuffRules, PrivateF3MatchedManifest) {
-    const char *path = std::getenv("ENROTH_MM6_COMBAT_BUFF_MANIFEST");
-    if (!path)
-        GTEST_SKIP() << "Set ignored MM6 rules/combat-buffs.json manifest path";
-    std::ifstream stream(path);
-    ASSERT_TRUE(stream.good());
-    std::string bytes(std::istreambuf_iterator<char>{stream}, {});
-    Json document = Json::parse(bytes);
-    mm6::loadCombatBuffRules(Blob::fromString(bytes));
+UNIT_TEST(MM6CombatBuffRules, ProfileManifest) {
+    const std::optional<Blob> manifest = readMM6TestRules("combat-buffs.json");
+    if (!manifest)
+        GTEST_SKIP() << mm6TestRulesMissing;
+    Json document = Json::parse(manifest->str());
+    mm6::loadCombatBuffRules(*manifest);
     const Time now = Time::fromDays(10);
     for (SpellId spell : {SPELL_AIR_SHIELD, SPELL_SPIRIT_HEROISM})
         for (int rank = 1; rank <= 3; ++rank) {

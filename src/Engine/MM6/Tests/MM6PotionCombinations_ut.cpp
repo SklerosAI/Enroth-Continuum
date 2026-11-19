@@ -1,10 +1,8 @@
 #include <array>
-#include <cstdlib>
-#include <fstream>
-#include <iterator>
 #include <stdexcept>
 #include <string>
 
+#include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/Tables/MM6PotionCombinations.h"
@@ -124,13 +122,11 @@ UNIT_TEST(MM6PotionCombinations, RejectsMalformedAxesCellsAndAsymmetry) {
     EXPECT_THROW((void) mm6::PotionCombinations::parse(text.substr(firstEnd + 1)), std::runtime_error);
 }
 
-UNIT_TEST(MM6PotionCombinations, RetainedMatrixAggregateWhenSupplied) {
-    const char *path = std::getenv("MM6_F3_RETAINED_USEITEMS");
-    if (!path)
-        GTEST_SKIP() << "Set MM6_F3_RETAINED_USEITEMS to the ignored F3-matched copy";
-    std::ifstream input(path, std::ios::binary);
-    ASSERT_TRUE(input);
-    std::string text(std::istreambuf_iterator<char>{input}, {});
+UNIT_TEST(MM6PotionCombinations, ShippedMatrixAggregate) {
+    const auto data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
+    const std::string text(data->iconsData("useitems.txt").str());
     mm6::PotionCombinations table = mm6::PotionCombinations::parse(text);
     int products = 0;
     for (int first = 160; first <= 188; ++first)

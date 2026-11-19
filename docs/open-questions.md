@@ -61,7 +61,8 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   and 72 or for Beg, Threat and Bribe (53 to 58). Those play as portrait reactions only, and the W8 cap always applies.
 - **Dungeon entry and exit dialog.** `GUIWindow_IndoorEntryExit::updateMM6` uses MM6 icon names but not MM6's layout.
   MM6.exe draws the house room's `evpan%03d` panel at (481,0), `evpan004` without a house, and `BUTTESC1` and
-  `BUTTYES1` at (566,313) and (486,313). Ours draws `backevt` and the pressed button art at y 445 over the HUD buttons.
+  `BUTTYES1` at (566,313) and (486,313). Ours draws `backevt` and the pressed button art at y 445 over the HUD buttons,
+  and leaves a white strip between the view and the panel at the top right (2026-11-19 tour, frame 30).
   The map-edge travel dialog is fixed in `src/GUI/UI/MM6TransitionDialog.cpp`, and this one should follow it.
 - **Spell cast on an item.** `GUIWindow_Inventory_CastSpell` in `src/GUI/UI/UIInventory.cpp` draws `x_x_u`, absent
   from MM6 `icons.lod`. It opens for item-targeted spells listed by MM7 ids, and MM7's Fire Aura (4) shares its number

@@ -47,6 +47,7 @@
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UIPopup.h"
 #include "GUI/UI/UIDialogue.h"
+#include "GUI/UI/MM6StreetNpcTalk.h"
 #include "GUI/UI/UIBranchlessDialogue.h"
 #include "GUI/UI/UIGameOver.h"
 #include "GUI/UI/UISpell.h"
@@ -828,7 +829,8 @@ std::string BuildDialogueString(std::string_view str, int uPlayerID, NPCData *np
                 break;
             case 2:
                 result += pPlayer->name;
-                i += 2;
+                if (engine->gameTitle() != GameTitle::MM6)
+                    i += 2;
                 break;
             case 3:
             case 4:
@@ -862,14 +864,14 @@ std::string BuildDialogueString(std::string_view str, int uPlayerID, NPCData *np
             case 8:
                 // #mm6 remnant, this code simply won't work in mm7, relevant bits don't look like they are related
                 // to titles.
-                assert(false);
+                assert(engine->gameTitle() == GameTitle::MM6);
                 for (int bit : possibleAddressingAwardBits) {
                     if (pPlayer->_achievedAwardsBits[static_cast<AwardId>(bit)]) {
                         addressingBits.push_back(static_cast<AwardId>(bit));
                     }
                 }
                 if (!addressingBits.empty()) {
-                    AwardId currentAddressingAwardBit = addressingBits[vrng->random(addressingBits.size())];
+                    AwardId currentAddressingAwardBit = addressingBits[mm6::addressingAwardChoice(addressingBits.size())];
                     result += pAwards[currentAddressingAwardBit].pText;
                 } else {
                     result += pNPCTopics[55].pText; // #mm6 remnant, in mm7 that's a dialogue text for Thieves to Rogues promotion.

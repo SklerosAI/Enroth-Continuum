@@ -67,6 +67,7 @@ void initializeNPCDialogue(int npcId, int bPlayerSaysHello, Actor *actor) {
     currentSpeakingActor = actor;
     NPCData *pNPCInfo = getNPCData(npcId);
     if (engine->gameTitle() == GameTitle::MM6) {
+        mm6::forgetAddressingAwardChoice();
         if (isMm6StreetNpc(npcId))
             mm6::pickStreetNpcNews(pNPCInfo, pMapTable->pInfos[engine->_currentLoadedMapId].fileName);
     } else if (!(pNPCInfo->flags & NPC_GREETED_SECOND)) {

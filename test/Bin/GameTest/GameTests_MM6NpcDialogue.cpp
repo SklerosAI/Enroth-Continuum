@@ -30,6 +30,8 @@
 #include "Utility/System/Path.h"
 
 static const Vec3f kMarianneSpot(-10333, -8532, 300); // In front of the general store, Marianne the Teacher stands close by.
+static const Vec3f kGingerSpot(-6360, -5864, 300); // Ginger the Negotiator stands to the east.
+static const Vec3f kMariaSpot(-12028, -7957, 300); // Maria the Scholar stands to the east.
 
 static void enterNewSorpigal(EngineController &game) {
     // Default party through the creation screen, then New Sorpigal. The test-only new-game callback seeds the map
@@ -95,11 +97,15 @@ static void startNewGameThroughInput(EngineController &game) {
     game.tick();
 }
 
-static void talkToMarianne(EngineController &game) {
-    // Teleport next to the street NPC and talk to her with Space.
-    game.teleportTo(engine->_currentLoadedMapId, kMarianneSpot, 0);
+static void talkAt(EngineController &game, const Vec3f &spot) {
+    // Teleport next to a street NPC and talk to her with Space.
+    game.teleportTo(engine->_currentLoadedMapId, spot, 0);
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();
+}
+
+static void talkToMarianne(EngineController &game) {
+    talkAt(game, kMarianneSpot);
 }
 
 static void captureFrame(EngineController &game, std::string_view prefix, std::string_view name) {
@@ -228,6 +234,29 @@ GAME_TEST(MM6OffscreenFrame, DISABLED_NpcDialogueCapture) {
     game.pressAndReleaseButton(BUTTON_LEFT, 555, 255); // Hire.
     game.tick();
     captureFrame(game, capturePrefix, "hired");
+}
+
+GAME_TEST(MM6NpcDialogue, StreetNpcGreetingName) {
+    // The party's name in a street NPC's greeting swallowed the full stop and the space after it.
+    auto textTape = tapes.allGUIWindowsText();
+    enterNewSorpigal(game);
+    test.startTaping();
+    talkAt(game, kMariaSpot);
+
+    EXPECT_CONTAINS(textTape.flatten(), "Zoltan.  Charmed, I'm sure.");
+}
+
+GAME_TEST(MM6NpcDialogue, StreetNpcGreetingDeeds) {
+    // Ginger the Negotiator's greeting names the deeds the party is known for, and drawing it hit an assert.
+    auto screenTape = tapes.screen();
+    auto textTape = tapes.allGUIWindowsText();
+    enterNewSorpigal(game);
+    test.startTaping();
+    talkAt(game, kGingerSpot);
+
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_NPC_DIALOGUE));
+    EXPECT_CONTAINS(textTape.flatten(), "Sorry, sir but it doesn't matter to me if you\nperformed daring deeds.  As a matter of fact, I\n"
+                                        "consider your holier-than-thou attitude quite\ninsulting\x85" "sir.");
 }
 
 GAME_TEST(MM6NpcDialogue, ZzProbe) {

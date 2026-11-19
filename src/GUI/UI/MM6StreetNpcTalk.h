@@ -80,4 +80,18 @@ std::string_view streetNpcNewsText(const NPCData &npc);
  */
 std::string_view streetNpcGreeting(const NPCData &npc, StreetNpcTalkMode mode, int reputation);
 
+/**
+ * @offset 0x48A01C
+ * @param count                         Number of addressing awards the talking character has, at least one.
+ * @return                              Which of them `%08` names in dialogue text, picked once per conversation.
+ */
+int addressingAwardChoice(int count);
+
+/**
+ * Makes the next `addressingAwardChoice` pick again. MM6 does it when a conversation with an NPC starts.
+ *
+ * @offset 0x43BE5F
+ */
+void forgetAddressingAwardChoice();
+
 } // namespace mm6

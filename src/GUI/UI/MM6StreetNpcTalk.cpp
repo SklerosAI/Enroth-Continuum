@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <string>
 #include <utility>
 #include <vector>
@@ -161,6 +162,8 @@ int mapNewsNumber(std::string_view mapFileName) {
     return pos == names.end() ? 1 : static_cast<int>(pos - names.begin()) + 1;
 }
 
+static int addressingAwardIndex = -1;
+
 } // namespace
 
 mm6::StreetNpcTalkMode mm6::streetNpcTalkMode(const NPCData &npc, int fame, int reputation) {
@@ -260,4 +263,15 @@ std::string_view mm6::streetNpcGreeting(const NPCData &npc, StreetNpcTalkMode mo
     if (reputation >= 1000 && npcReputation > 0)
         return greeting(npc, GREETING_SAINTLY_TO_GOOD);
     return greeting(npc, state == 1 ? GREETING_SECOND : GREETING_FIRST);
+}
+
+int mm6::addressingAwardChoice(int count) {
+    assert(count > 0);
+    if (addressingAwardIndex < 0)
+        addressingAwardIndex = vrng->random(count);
+    return addressingAwardIndex % count; // MM6 reads past the list when the character gained or lost awards since the pick.
+}
+
+void mm6::forgetAddressingAwardChoice() {
+    addressingAwardIndex = -1;
 }

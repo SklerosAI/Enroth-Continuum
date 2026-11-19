@@ -14,6 +14,7 @@
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/NPC.h"
 #include "Engine/Party.h"
+#include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/Tables/TextureFrameTable.h"
 
@@ -210,6 +211,51 @@ GAME_TEST(MM6GrayFaceShared, HitWithoutRecoveryKeepsActiveCharacter) {
             EXPECT_CONTAINS(activeTape, 1);
             EXPECT_GT(recoveryTape.max(), 0_ticks);
         }
+    }
+}
+
+GAME_TEST(MM6GrayFaceShared, NewDayAtMonthStartAfterWaitUntilDawnAndEsc) {
+    // Pressing Esc during "Wait until Dawn" skipped the New Day effects when the jump crossed into a new month in
+    // vanilla MM6. Mid-month and at the month's end alike, the party that went without rest turns weak and eats.
+    for (bool monthEnd : {false, true}) {
+        SCOPED_TRACE(fmt::format("monthEnd={}", monthEnd));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        if (monthEnd) {
+            pMapTable->pInfos[engine->_currentLoadedMapId].encounterChance = 0;
+            pParty->SetFood(40); // A Rest and Heal a day for four weeks.
+            for (int day = 0; day < 40 && pParty->uCurrentDayOfMonth < 27; day++) {
+                game.pressAndReleaseKey(PlatformKey::KEY_R);
+                game.tick();
+                game.pressGuiButton("Rest_RestAndHeal");
+                game.tick();
+                while (current_screen_type == SCREEN_REST)
+                    game.tick(); // The party sleeps eight hours.
+                game.pressAndReleaseKey(PlatformKey::KEY_R);
+                game.tick();
+                waitInRestScreen(game, "Rest_WaitTillDawn");
+                game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+                game.tick();
+            }
+            ASSERT_EQ(pParty->uCurrentDayOfMonth, 27);
+        }
+        auto weakTape = charTapes.custom([](const Character &character) { return character.conditions.has(CONDITION_WEAK); });
+        auto foodTape = tapes.food();
+        auto dateTape = tapes.custom([] { return std::pair(pParty->uCurrentMonth, pParty->uCurrentDayOfMonth); });
+        auto clockTape = tapes.custom([] { return std::pair(pParty->uCurrentHour, pParty->uCurrentMinute); });
+        test.startTaping();
+
+        game.pressAndReleaseKey(PlatformKey::KEY_R);
+        game.tick();
+        game.pressGuiButton("Rest_WaitTillDawn");
+        game.tick();
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+
+        EXPECT_EQ(weakTape.frontBack(), tape({false, false, false, false}, {true, true, true, true}));
+        EXPECT_EQ(foodTape.delta(), -1);
+        EXPECT_EQ(clockTape.back(), std::pair(5, 0));
+        EXPECT_EQ(dateTape.frontBack(), monthEnd ? tape(std::pair(0, 27), std::pair(1, 0)) : tape(std::pair(0, 0), std::pair(0, 1)));
     }
 }
 

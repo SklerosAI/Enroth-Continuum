@@ -261,6 +261,10 @@ class GameConfig : public Config {
             "In vanilla, every command of the event picked its own random member, so a check could read one member and "
             "a reward land on another, and a fountain could be drunk more than once."};
 
+        Bool FixNewDayAtMonthStart = {this, "fix_new_day_at_month_start", true,
+            "MM6 only. Start a new day when time jumps past 3 am into the next month, as the GrayFace patch does. "
+            "In vanilla, pressing Esc during \"Wait until Dawn\" on the last day of a month skipped the New Day effects."};
+
         Float SpellFailureRecoveryMod = {this, "spell_failure_recovery_mod", 0.5f, &ValidateSpellFailureRecoveryMod,
             "Recovery time modifier when spell casting ended in failure for the reason where spell cannot be cast at all in current context. "
             "Context include situation where outdoor spell is casted indoor or targeted spell is casted with no characters on screen."};

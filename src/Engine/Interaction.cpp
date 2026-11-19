@@ -83,6 +83,10 @@ void DecorationInteraction(int id, Pid pid) {
     }
 }
 
+bool canRunInteractionEvent() {
+    return pParty->hasActiveCharacter() || engine->gameTitle() == GameTitle::MM6;
+}
+
 //----- (0046A334) --------------------------------------------------------
 void DoInteractionWithTopmostZObject(Pid pid) {
     auto id = pid.id();
@@ -118,7 +122,7 @@ void DoInteractionWithTopmostZObject(Pid pid) {
             break;
 
         case OBJECT_Decoration:
-            if (pParty->hasActiveCharacter()) {
+            if (canRunInteractionEvent()) {
                 DecorationInteraction(id, pid);
             } else {
                 engine->_statusBar->setEvent(LSTR_NOBODY_IS_IN_CONDITION);
@@ -135,7 +139,7 @@ void DoInteractionWithTopmostZObject(Pid pid) {
             if (face.attributes & FACE_EVENT_IS_HINT || face.eventId == 0)
                 return;
 
-            if (pParty->hasActiveCharacter()) {
+            if (canRunInteractionEvent()) {
                 beginClickedLootCapture();
                 runEvent(EvtContext(EVT_SOURCE_MAP, face.eventId, pid));
                 finishClickedLootCapture();

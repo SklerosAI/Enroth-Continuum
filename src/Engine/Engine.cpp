@@ -561,8 +561,7 @@ void Engine::onGameViewportClick() {
     } else if (pid.type() == OBJECT_Decoration) {
         int id = pid.id();
         if (distance - pDecorationTable->decoration(pLevelDecorations[id].uDecorationDescID)->uRadius < clickable_distance) {
-            if (pParty->hasActiveCharacter()) {
-                // Do not interact with decoration with no active character
+            if (canRunInteractionEvent()) {
                 DecorationInteraction(id, pid);
             } else {
                 engine->_statusBar->setEvent(LSTR_NOBODY_IS_IN_CONDITION);
@@ -598,10 +597,9 @@ void Engine::onGameViewportClick() {
             }
         }
 
-        if (pParty->hasActiveCharacter()) {
+        if (canRunInteractionEvent()) {
             runEvent(EvtContext(EVT_SOURCE_MAP, eventId, pid));
         } else {
-            // Do not interact with faces with no active character
             engine->_statusBar->setEvent(LSTR_NOBODY_IS_IN_CONDITION);
         }
     } else {

@@ -252,6 +252,11 @@ class GameConfig : public Config {
             "Change water walk mana drain interval to 20 minutes. "
             "Spell description says that mana is drained every 20 minutes, but in vanilla, it was every 5 minutes."};
 
+        Bool FixInactivePartyEvents = {this, "fix_inactive_party_events", true,
+            "MM6 only. With nobody active, run each event for one member who can act, picked once for the whole event. "
+            "In vanilla, every command of the event picked its own random member, so a check could read one member and "
+            "a reward land on another, and a fountain could be drunk more than once."};
+
         Float SpellFailureRecoveryMod = {this, "spell_failure_recovery_mod", 0.5f, &ValidateSpellFailureRecoveryMod,
             "Recovery time modifier when spell casting ended in failure for the reason where spell cannot be cast at all in current context. "
             "Context include situation where outdoor spell is casted indoor or targeted spell is casted with no characters on screen."};

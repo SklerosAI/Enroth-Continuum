@@ -1,6 +1,9 @@
 #pragma once
 
+#include <optional>
 #include <vector>
+
+#include <tl/generator.hpp>
 
 #include "Engine/Evt/EvtContext.h"
 #include "Engine/Evt/EvtContinuation.h"
@@ -8,6 +11,9 @@
 #include "Engine/Evt/EvtProgram.h"
 
 #include "Library/Geometry/Vec.h"
+
+class Character;
+class RandomEngine;
 
 /**
  * What an instruction tells the interpreter to do next.
@@ -100,12 +106,32 @@ class EvtInterpreter {
       */
      [[nodiscard]] const EvtInstruction *instructionAt(int step) const;
 
+     /**
+      * @param who                      Characters that a command targets.
+      * @param rng                      Random engine for `CHOOSE_RANDOM`.
+      * @return                         Characters to run the command for. When an MM6 event runs with nobody active,
+      *                                 the active character is one member who can act, picked on first use and kept
+      *                                 for the rest of the run.
+      */
+     tl::generator<Character &> iterateCharacters(EvtTargetCharacter who, RandomEngine *rng);
+
+     /**
+      * @param who                      Characters that a variable command targets.
+      * @param variable                 Variable of the command.
+      * @param rng                      Random engine for `CHOOSE_RANDOM`.
+      * @return                         Characters to run the command for. For a party variable this is just the first
+      *                                 targeted character, since the whole party shares one value.
+      */
+     tl::generator<Character &> iterateCharacters(EvtTargetCharacter who, EvtVariable variable, RandomEngine *rng);
+
  private:
      EvtContext _context;
      std::vector<EvtInstruction> _events;
      bool _canShowTopic = true;
      EvtTransition _transition = EVT_TRANSITION_NONE;
      EvtTargetCharacter _who = CHOOSE_PARTY;
+     bool _pickActiveStandIn = false;
+     std::optional<EvtTargetCharacter> _activeStandIn;
 };
 
 void spawnMonsters(int16_t typeindex, int16_t level, int count,

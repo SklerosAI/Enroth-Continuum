@@ -7,8 +7,10 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Evt/EvtEnums.h"
 #include "Engine/Evt/EvtInterpreter.h"
 #include "Engine/Evt/EvtProgram.h"
+#include "Engine/Evt/MM6MapByteState.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
@@ -19,6 +21,18 @@
 #include "Engine/Tables/NPCTable.h"
 
 #include "Utility/Memory/Blob.h"
+
+static constexpr int sorpigalWellFace = 921;
+static constexpr Vec3f sorpigalWellFront(-13820, -5832, 161); // East of the New Sorpigal well, facing it from yaw 180.
+static constexpr Vec3f sorpigalMightFaceFront(-8636, -5400, 0); // West of a face that sets a might bonus, facing it from yaw 0.
+static constexpr int sorpigalWellWater = std::to_underlying(VAR_MapPersistentVariable_0) + 52; // Eight drinks, refilled every month.
+
+static int wellWater() {
+    int water = 0;
+    while (MM6MapByteState(pOutdoor->mm6DeltaBytes).compare(sorpigalWellWater, water + 1))
+        water++;
+    return water;
+}
 
 namespace {
 
@@ -183,4 +197,65 @@ GAME_TEST(MM6EventVariables, ShippedReputationWritesLandOncePerTargetedCharacter
         EXPECT_EQ(interpreter.executeInstruction(reputation).type, EVT_FLOW_NEXT);
         EXPECT_EQ(pParty->mm6Reputation, write.reputation) << write.eventId;
     }
+}
+
+GAME_TEST(MM6EventMember, ClickWellWithNobodyActive) {
+    // With nobody active, the New Sorpigal well's event refused to run. MM6 runs it, and each of its commands picked
+    // its own member, so the luck check could read one member and the +2 Luck land on another who was already lucky.
+    // It runs for one member who can act, picked once per click.
+    for (bool nobodyActive : {false, true}) {
+        game.goToMainMenu();
+        startMM6NewGame(game);
+        auto luckTape = charTapes.stats(ATTRIBUTE_LUCK);
+        auto statusTape = tapes.statusBar();
+        auto activeTape = tapes.activeCharacterIndex();
+        auto waterTape = tapes.custom([] { return wellWater(); });
+        game.teleportTo(engine->_currentLoadedMapId, sorpigalWellFront, 180);
+        game.tick(10); // The event processor runs the well's monthly refill 30 game seconds after the map loads.
+        game.pointMouseAtFace(sorpigalWellFace);
+        test.startTaping();
+        if (nobodyActive) {
+            for (int character = 0; character < 4; character++) {
+                game.pressAndReleaseKey(PlatformKey::KEY_A); // Each swings at the air and recovers.
+                game.tick();
+            }
+        }
+        for (int drink = 0; drink < 8; drink++) {
+            game.pressAndReleaseButton(BUTTON_LEFT);
+            game.tick();
+        }
+        test.stopTaping();
+        if (nobodyActive) {
+            EXPECT_EQ(activeTape, tape(1, 2, 3, -1));
+            // One member drinks per click, and nobody drinks once his luck reaches 15. The second member starts at 16.
+            EXPECT_EQ(luckTape, tape({11, 16, 13, 10}, {13, 16, 13, 10}, {13, 16, 15, 10}, {13, 16, 15, 12}, {13, 16, 15, 14}, {15, 16, 15, 14}));
+            EXPECT_EQ(statusTape, tape("Well", "+2 Luck permanent", "Refreshing!", "+2 Luck permanent", "Refreshing!", "+2 Luck permanent"));
+            EXPECT_EQ(waterTape, tape(8, 7, 6, 5, 4, 3));
+        } else {
+            EXPECT_EQ(activeTape, tape(0));
+            EXPECT_EQ(luckTape, tape({13, 16, 13, 10}, {15, 16, 13, 10}));
+            EXPECT_EQ(statusTape, tape("+2 Luck permanent", "Refreshing!"));
+            EXPECT_EQ(waterTape, tape(7, 6));
+        }
+    }
+}
+
+GAME_TEST(MM6EventMember, SpaceAtMightFaceWithNobodyActive) {
+    // With nobody active, Space at a New Sorpigal face that sets a might bonus refused to run its event. MM6 runs it
+    // for one member.
+    startMM6NewGame(game);
+    auto mightTape = charTapes.stats(ATTRIBUTE_MIGHT);
+    auto statusTape = tapes.statusBar();
+    auto activeTape = tapes.activeCharacterIndex();
+    game.teleportTo(engine->_currentLoadedMapId, sorpigalMightFaceFront, 0);
+    test.startTaping();
+    for (int character = 0; character < 4; character++) {
+        game.pressAndReleaseKey(PlatformKey::KEY_A); // Each swings at the air and recovers.
+        game.tick();
+    }
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    EXPECT_EQ(activeTape, tape(1, 2, 3, -1));
+    EXPECT_EQ(mightTape, tape({16, 9, 9, 9}, {16, 9, 9, 19}));
+    EXPECT_EQ(statusTape, tape("Rest", "+10 Might temporary.")); // The mouse rests on the Rest button.
 }

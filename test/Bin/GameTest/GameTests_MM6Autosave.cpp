@@ -29,7 +29,10 @@
 #include "Engine/Party.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
+#include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/MM6HouseServiceData.h"
+#include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UISaveLoad.h"
 
 #include "Utility/ScopeGuard.h"
@@ -193,6 +196,38 @@ static std::vector<int> deadActors() {
         if (actor.aiState == Dead)
             result.push_back(actor.id);
     return result;
+}
+
+static const Vec3f kTavernDoor(-8784, -8690, 300); // A Lonely Knight in New Sorpigal, facing east.
+static const Vec3f kJanineSpot(-7896, -5464, 300); // Janine, who wants a bribe from this party, stands to the east.
+
+static void clickOption(EngineController &game, GUIWindow *window, std::string_view label) {
+    // Left click in the middle of the shown house or conversation option with this line.
+    ASSERT_NE(window, nullptr);
+    std::optional<Pointi> center;
+    for (GUIButton *button : window->vButtons)
+        if (button->id.contains("Dialogue_Option") && button->rect.h > 0 && button->label == label)
+            center = button->rect.center();
+    ASSERT_TRUE(center) << "No option " << label;
+    game.pressAndReleaseButton(BUTTON_LEFT, *center);
+    game.tick();
+}
+
+static std::vector<std::string> conversationOptions() {
+    // Topics of the street NPC conversation, empty while none is open.
+    std::vector<std::string> result;
+    if (pDialogueWindow)
+        for (GUIButton *button : pDialogueWindow->vButtons)
+            if (button->id.starts_with("NpcDialogue_Option"))
+                result.push_back(button->label);
+    return result;
+}
+
+static void pressSpaceAt(EngineController &game, Vec3f position, int viewYaw) {
+    // Same map teleport, then Space at the door or the villager in front of the party.
+    game.teleportTo(engine->_currentLoadedMapId, position, viewYaw);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
 }
 
 GAME_TEST(MM6AutosaveHeadless, DISABLED_EdgeAndDoorWriteTheAutosave) {
@@ -479,6 +514,64 @@ GAME_TEST(MM6InGameSave, SavesWithHighClericsKey) {
 
     EXPECT_EQ(keyTape, tape(false, true));
     EXPECT_EQ(slotTape, tape(false, true));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6InGameSave, StreetNpcBribesAndTavernTipsSurviveLoad) {
+    // A load forgot the party's bribes, so the next bribe cost as much as the first, and its tavern drinks and tips, so
+    // the barkeep wanted another drink before telling his news again.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    auto goldTape = tapes.gold();
+    auto statusTape = tapes.statusBar();
+    auto tipTape = tapes.custom([] { return current_npc_text; });
+    auto optionsTape = tapes.custom([] { return conversationOptions(); });
+    const std::string tip = localization->str(mm6::houseServiceOptionLabel(mm6::HouseServiceOption::TipBarkeep));
+    test.startTaping();
+
+    pressSpaceAt(game, kTavernDoor, 0);
+    game.pressGuiButton("House_Npc0"); // The proprietor.
+    game.tick();
+    clickOption(game, window_SpeakInHouse.get(), localization->str(LSTR_HAVE_A_DRINK));
+    clickOption(game, window_SpeakInHouse.get(), tip);
+    game.pressGuiButton("House_Exit"); // Back to the tavern's residents.
+    game.tick();
+    game.pressGuiButton("House_Exit");
+    game.tick();
+    pressSpaceAt(game, kJanineSpot, 0);
+    clickOption(game, pDialogueWindow.get(), "Bribe 50 Gold");
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    saveFromMenu(game);
+    game.goToMainMenu();
+    startNewGameThroughInput(game);
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressGuiButton("GameMenu_LoadGame");
+    game.tick(3);
+    loadFromMenu(game, 1);
+    pressSpaceAt(game, kTavernDoor, 0);
+    game.pressGuiButton("House_Npc0");
+    game.tick();
+    clickOption(game, window_SpeakInHouse.get(), tip);
+    game.pressGuiButton("House_Exit");
+    game.tick();
+    game.pressGuiButton("House_Exit");
+    game.tick();
+    pressSpaceAt(game, kJanineSpot, 0);
+
+    EXPECT_EQ(goldTape, tape(200, 199, 198, 148, 200, 148, 147)); // A drink, a tip, the bribe, the new game, the load and the second tip.
+    EXPECT_MISSES(statusTape, localization->str(LSTR_HAVE_A_DRINK_FIRST));
+    ASSERT_EQ(tipTape.size(), 5);
+    EXPECT_TRUE(tipTape[1].starts_with("An evil guild of mages has been searching the southeast end of our peninsula"));
+    EXPECT_EQ(tipTape, tape(std::string(), tipTape[1], std::string(), tipTape[1], std::string()));
+    EXPECT_EQ(optionsTape.back(), (std::vector<std::string>{"Beg", "Threat", "Bribe 100 Gold"}));
     game.runGameRoutine([&] {
         mm6::disarmFirstMapManualSave();
         mm6::testing::setNativeProfileRootForTest({});

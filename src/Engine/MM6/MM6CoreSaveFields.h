@@ -84,6 +84,9 @@ struct CorePartyFields {
     std::int32_t prisonTerms = 0;
     std::int32_t bountiesCollected = 0;
     std::int32_t reputation = 0;
+    std::int32_t bribes = 0;
+    std::uint32_t tavernDrinks = 0; // Bit per MM6 tavern, 92 to 112.
+    std::array<std::int32_t, 21> tavernTips{};
 
     bool operator==(const CorePartyFields &) const = default;
 };

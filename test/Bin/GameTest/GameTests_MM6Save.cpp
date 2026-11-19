@@ -27,7 +27,6 @@
 #include "Engine/MM6/MM6NewGameSaveRuntime.h"
 #include "Engine/MM6/MM6NpcStaticBaseline.h"
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
-#include "Engine/MM6/MM6PrivateMapSource.h"
 #include "Engine/MM6/MM6RawSessionStage.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/MM6/MM6WorldSaveRuntime.h"
@@ -137,34 +136,6 @@ GAME_TEST(MM6ZSaveHeadless, DetachedPartyConstructionPreservesLiveCursor) {
     mouse->bInitialized = previousInitialized;
 }
 
-GAME_TEST(MM6ZSaveHeadless, LoadedMapSourceMatchesPrivateResearch) {
-    const char *research = std::getenv("ENROTH_MM6_MAP_RESEARCH_ROOT");
-    if (!research || !std::filesystem::is_directory(research))
-        GTEST_SKIP() << "Set ENROTH_MM6_MAP_RESEARCH_ROOT to the ignored private F3 map source";
-    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
-    ASSERT_EQ(window->nativeHandle(), nullptr);
-    const mm6::PrivateMapSource privateMaps(research);
-    const mm6::LoadedMapSource loaded(*pGames_LOD, *pMapTable, GameTitle::MM6);
-    ASSERT_EQ(loaded.expectedNames().size(), privateMaps.expectedNames().size());
-    EXPECT_TRUE(std::equal(loaded.expectedNames().begin(), loaded.expectedNames().end(),
-                           privateMaps.expectedNames().begin()));
-    for (std::size_t index = 0; index < loaded.expectedNames().size(); ++index) {
-        const std::string &delta = loaded.expectedNames()[index];
-        const std::string base = delta.substr(0, delta.size() - 4) +
-            (delta.ends_with(".dlv") ? ".blv" : ".odm");
-        try {
-            const Blob original = loaded.readBase(base);
-            const Blob retained = privateMaps.readBase(base);
-            EXPECT_EQ(original.size(), retained.size());
-            EXPECT_TRUE(original.str() == retained.str());
-            EXPECT_FALSE(loaded.readDefaultDelta(delta).empty());
-        } catch (const std::exception &error) {
-            FAIL() << "MM6 loaded map source failed at pair " << index << ": " << error.what();
-            return;
-        }
-    }
-}
-
 GAME_TEST(MM6ZSaveHeadless, NewGameCallbackFailureRestoresPlacement) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     const MapId priorMap = engine->_currentLoadedMapId;
@@ -191,9 +162,6 @@ GAME_TEST(MM6ZSaveHeadless, NewGameCallbackFailureRestoresPlacement) {
 }
 
 GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
-    const char *research = std::getenv("ENROTH_MM6_MAP_RESEARCH_ROOT");
-    if (!research || !std::filesystem::is_directory(research))
-        GTEST_SKIP() << "Set ENROTH_MM6_MAP_RESEARCH_ROOT to the ignored private F3 map source";
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     ASSERT_EQ(window->nativeHandle(), nullptr);
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
@@ -245,7 +213,7 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
             result.idleHeldCursorPlan = cursorPlan.iconName == "MICON1" &&
                 !cursorPlan.itemCursor && cursorPlan.resetClickOffset;
 
-            (void) mm6::saveNewGameMM6ScopedForTest(profile.root, research,
+            (void) mm6::saveNewGameMM6FromLoadedMapsScopedForTest(profile.root,
                 [&](const Party &staged, const std::unordered_map<std::string, Blob> &cache,
                     const mm6::ChestTitleState &chest) {
                     result.firstCallback = staged.pos.z == 340 && cache.size() == 67 &&
@@ -253,7 +221,7 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
                 });
             result.firstSeed = mm6::chestTitleState().lcgState;
             // A second successful write creates both a primary and a backup.
-            (void) mm6::saveNewGameMM6ScopedForTest(profile.root, research,
+            (void) mm6::saveNewGameMM6FromLoadedMapsScopedForTest(profile.root,
                 [&](const Party &staged, const std::unordered_map<std::string, Blob> &cache,
                     const mm6::ChestTitleState &chest) {
                     result.success = staged.pos.z == 340 && cache.size() == 67 && chest.ready;
@@ -261,7 +229,7 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
             result.secondSeed = mm6::chestTitleState().lcgState;
             result.primaryBeforeFailure = readFile(profile.primary());
             result.backupBeforeFailure = readFile(profile.backup());
-            const mm6::PrivateMapSource maps(research);
+            const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
             Party freshParty;
             freshParty.uNumGold = 27;
             NPCStats freshNpcs{};
@@ -329,7 +297,7 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
             const auto cacheBeforeFailure = snapshotCache();
             const auto chestBeforeFailure = mm6::chestTitleState();
             try {
-                (void) mm6::saveNewGameMM6ScopedForTest(profile.root, research,
+                (void) mm6::saveNewGameMM6FromLoadedMapsScopedForTest(profile.root,
                     [&](const Party &staged, const std::unordered_map<std::string, Blob> &cache,
                         const mm6::ChestTitleState &chest) {
                         result.failureCallback = staged.pos.z == 340 && cache.size() == 67 && chest.ready;
@@ -347,7 +315,7 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
                 mm6::chestTitleState().lcgState == chestBeforeFailure.lcgState &&
                 mm6::chestTitleState().generatedArtifactFlags == chestBeforeFailure.generatedArtifactFlags;
             try {
-                (void) mm6::saveNewGameMM6ScopedForTest(profile.root, research,
+                (void) mm6::saveNewGameMM6FromLoadedMapsScopedForTest(profile.root,
                     [&](const Party &, const std::unordered_map<std::string, Blob> &,
                         const mm6::ChestTitleState &) {
                         engine->_messageQueue->addMessageNextFrame(UIMSG_OpenInventory);
@@ -391,9 +359,6 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
 // Run alone in a fresh headless process. DoPrepareWorld changes renderer and
 // process-global owners that the scoped .ec6 writer cannot yet roll back.
 GAME_TEST(MM6ZSaveHeadless, DISABLED_ScopedSaveFeedsFirstOutdoorWorld) {
-    const char *research = std::getenv("ENROTH_MM6_MAP_RESEARCH_ROOT");
-    if (!research || !std::filesystem::is_directory(research))
-        GTEST_SKIP() << "Set ENROTH_MM6_MAP_RESEARCH_ROOT to the ignored private F3 map source";
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     ASSERT_EQ(window->nativeHandle(), nullptr);
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
@@ -419,7 +384,7 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_ScopedSaveFeedsFirstOutdoorWorld) {
             mm6::resetChestTitleState(&mm6::chestTitleState());
             hadNoHouseNpc = std::any_of(pNPCStats->pNPCData.begin(), pNPCStats->pNPCData.end(),
                 [](const NPCData &npc) { return std::to_underlying(npc.house) == -1; });
-            (void) mm6::saveNewGameMM6ScopedForTest(profile.root, research,
+            (void) mm6::saveNewGameMM6FromLoadedMapsScopedForTest(profile.root,
                 [](const Party &, const std::unordered_map<std::string, Blob> &,
                    const mm6::ChestTitleState &) {});
             engine->_pendingTransition = MapDestination(firstMap, MAP_START_POINT_PARTY);

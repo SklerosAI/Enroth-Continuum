@@ -429,10 +429,10 @@ UNIT_TEST(MM6NewGameSaveRuntime, ScopedEntryPrecommitFailurePreservesPriorPrimar
     EXPECT_EQ(chest.lcgState, 75u);
 }
 
-UNIT_TEST(MM6NewGameSaveRuntime, ScopedRuntimeCallsiteRequiresMM6EngineBeforePrivateReads) {
+UNIT_TEST(MM6NewGameSaveRuntime, ScopedRuntimeCallsiteRequiresMM6EngineBeforeArchiveReads) {
     TestProfile profile;
-    EXPECT_THROW((void) mm6::saveNewGameMM6ScopedForTest(
-        profile.root(), profile.root() / "missing-private-map-source",
+    EXPECT_THROW((void) mm6::saveNewGameMM6FromLoadedMapsScopedForTest(
+        profile.root(),
         [](const Party &, const std::unordered_map<std::string, Blob> &,
            const mm6::ChestTitleState &) {}), std::exception);
     EXPECT_FALSE(std::filesystem::exists(profile.primary()));

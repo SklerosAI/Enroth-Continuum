@@ -116,8 +116,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6Finale.cpp MM6Finale.h
     MM6PartyRest.cpp MM6PartyRest.h MM6PartyHostility.h
     MM6HouseExit.h MM6RoomMovie.h
-    MM6LoadedMapSource.cpp MM6LoadedMapSource.h
-    MM6PrivateMapSource.cpp MM6PrivateMapSource.h)
+    MM6LoadedMapSource.cpp MM6LoadedMapSource.h)
 target_link_libraries(engine_mm6_save_runtime PUBLIC engine_mm6_save_container engine_mm6_atomic_save
     engine engine_components_random library_json)
 target_check_style(engine_mm6_save_runtime)

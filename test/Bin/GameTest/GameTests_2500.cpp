@@ -968,7 +968,7 @@ GAME_TEST(Issues, Issue2817) {
         EXPECT_CONTAINS(portraitTape.slice(i), PORTRAIT_WIDE_SMILE);
     EXPECT_MISSES(portraitTape.slice(3), PORTRAIT_WIDE_SMILE); // Already had the award.
     int expAnim = pIconsFrameTable->animationId("spboost2"); // Add Experience runs right before the award, on everyone.
-    EXPECT_EQ(buffAnimTape, tape({expAnim, expAnim, expAnim, expAnim}));
+    EXPECT_EQ(buffAnimTape, tape({0, 0, 0, 0}, {expAnim, expAnim, expAnim, expAnim}));
 }
 
 GAME_TEST(Issues, Issue2834) {

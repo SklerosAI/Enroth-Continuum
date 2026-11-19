@@ -970,8 +970,11 @@ void ODM_UpdateUserInputAndOther() {
     if (pParty->pos.x < -maxPartyAxisDistance || pParty->pos.x > maxPartyAxisDistance ||
         pParty->pos.y < -maxPartyAxisDistance || pParty->pos.y > maxPartyAxisDistance) {
         MapDestination destination = pOutdoor->getTravelDestination(pParty->pos.x, pParty->pos.y);
+        const bool mm6PartyStatePermits = engine->config->gameplay.FixFlyingBorderOffer.value()
+            ? mm6::borderOfferPartyStatePermits(GameTitle::MM6, pParty->uFlags, pParty->bFlying)
+            : mm6::borderOfferPartyFlagsPermit(GameTitle::MM6, pParty->uFlags);
         const bool partyStateBlocks = engine->gameTitle() == GameTitle::MM6
-            ? !mm6::borderOfferPartyFlagsPermit(GameTitle::MM6, pParty->uFlags)
+            ? !mm6PartyStatePermits
             : !engine->IsUnderwater() && (pParty->isAirborne() || (pParty->uFlags & (PARTY_FLAG_STANDING_ON_WATER | PARTY_FLAG_WATER_DAMAGE)) ||
                                           pParty->uFlags & PARTY_FLAG_BURNING || pParty->bFlying);
         if (partyStateBlocks || destination.map() == MAP_INVALID) {

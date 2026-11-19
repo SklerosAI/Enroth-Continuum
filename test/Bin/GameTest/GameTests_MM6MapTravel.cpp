@@ -7,10 +7,15 @@
 #include "Engine/Engine.h"
 #include "Engine/MM6/MM6ChestBaseItemPicker.h"
 #include "Engine/MM6/MM6ChestTitleState.h"
+#include "Engine/MM6/MM6PlayerSpell.h"
 #include "Engine/Objects/Actor.h"
+#include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Party.h"
+#include "Engine/Spells/SpellEnumFunctions.h"
 #include "Engine/Tables/MapTable.h"
+
+#include "GUI/GUIWindow.h"
 
 static void startNewGameThroughInput(EngineController &game) {
     // Each character takes its first three optional skills and up to three points in every attribute, then the party
@@ -85,6 +90,24 @@ static void killAndLootChest(EngineController &game, const Actor *monster) {
     game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
     game.moveMouse(600, 400); // Off the viewport. Hovering an interactive decoration without a variable of its own indexes the decoration variables at -75.
     game.tick();
+}
+
+static void castFly(EngineController &game) {
+    // The sorcerer learns Fly, has the spell points for it, and casts it from the spellbook.
+    Character &sorcerer = pParty->pCharacters[2];
+    sorcerer.pActiveSkills[skillForSpell(mm6::SPELL_FLY)] = CombinedSkillValue(4, MASTERY_NOVICE);
+    sorcerer.bHaveSpell[mm6::SPELL_FLY] = true;
+    sorcerer.mana = 100;
+    game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_3);
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_C);
+    game.tick();
+    game.pressGuiButton(fmt::format("SpellBook_School{}", std::to_underlying(magicSchoolForSpell(mm6::SPELL_FLY))));
+    game.tick();
+    game.pressGuiButton(fmt::format("SpellBook_Spell{}", spellIndexInMagicSchool(mm6::SPELL_FLY)));
+    game.tick();
+    game.pressGuiButton(fmt::format("SpellBook_Spell{}", spellIndexInMagicSchool(mm6::SPELL_FLY))); // A second click casts it.
+    game.tick(2); // The book closes, the spell takes effect on the next frame.
 }
 
 static void confirmTransition(EngineController &game) {
@@ -258,3 +281,39 @@ GAME_TEST(MM6MapTravel, TeleportToUnvisitedMap) {
     EXPECT_EQ(mapTape, tape(pMapTable->GetMapInfo("oute3.odm"), outb2));
     EXPECT_EQ(shieldChestTape, tape(false, true)); // Kilburn's shield is in its chest.
 }
+
+
+GAME_TEST(MM6MapTravel, FlyingLowOverTheEdgeOffersNoTrip) {
+    // Flying low over the edge of an MM6 outdoor map offered the trip to the next map, and accepting it did nothing.
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const MapId oute3 = pMapTable->GetMapInfo("oute3.odm");
+    auto mapTape = tapes.map();
+    auto screenTape = tapes.screen();
+    auto flyingTape = tapes.custom([] { return pParty->bFlying; });
+    auto xTape = tapes.custom([] { return pParty->pos.x; });
+    test.startTaping();
+
+    for (bool flying : {false, true}) {
+        game.teleportTo(oute3, Vec3f(-22425, -13896, 307), 180); // On the slope down to the west edge, facing it.
+        if (flying) {
+            castFly(game);
+            game.pressKey(PlatformKey::KEY_PAGEUP);
+            game.tick(); // The party lifts off, then holds the height it took off from, just above the falling slope.
+            game.releaseKey(PlatformKey::KEY_PAGEUP);
+        }
+        game.pressKey(PlatformKey::KEY_UP);
+        game.tick(flying ? 2 : 3); // The party reaches the edge, flying is faster than walking.
+        game.releaseKey(PlatformKey::KEY_UP);
+        EXPECT_EQ(screenTape.back(), flying ? SCREEN_GAME : SCREEN_CHANGE_LOCATION) << flying;
+        if (!flying) {
+            game.pressGuiButton("Transition_No");
+            game.tick();
+        }
+    }
+
+    EXPECT_EQ(mapTape, tape(oute3));
+    EXPECT_EQ(flyingTape.back(), true);
+    EXPECT_EQ(xTape.back(), -22528); // Held at the edge.
+}
+

@@ -1,0 +1,119 @@
+# Open questions
+
+Open questions and known bugs across MM6 and MM7 that were still open on 2026-11-19, grouped by title and area.
+
+Each item names a source file or test where one exists. Remove an item when its fix or answer lands, and say where.
+The open GrayFace MM6 backlog is tracked in [MM6 GrayFace patch reference](mm6-grayface-patch-reference.md) and
+summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeated here.
+
+## MM6: campaign and gates
+
+- **Chain C7 to C9.** C7 (Tomb of VARN, Control Cube) passed only on a provisional C6 fixture and is parked on
+  `claude/mm6-chain-c7`. C8 (the NPC 12 release through houses 168, 553 and 554) and a C9 finale chapter are not
+  written. `test/Bin/GameTest/MM6CampaignChain.cpp`.
+- **Owner sessions.** The working gate needs visible owner play beyond New Sorpigal: travel, a later dungeon, chain
+  checkpoints and the ending.
+- **Research-folder tests.** `mm6::PrivateMapSource`, `saveNewGameMM6ScopedForTest` and the `GameTests_MM6Save` cases
+  gated on `ENROTH_MM6_MAP_RESEARCH_ROOT` still read the private research folder and `tools/mm6_map_name_manifest.py`.
+- **Test-only rule code.** `MM6FirstAidPreflight`, `MM6FirstAidTransaction` and `MM6PowerCureTransaction` are used
+  only by their unit tests.
+
+## MM6: rules and combat
+
+- **Encounter spawner.** MM6.exe rings extra monsters 128 (outdoor) or 64 (indoor) units around the spawn point,
+  caps the level odds at difficulty 4 and keeps table hostility. The port stacks them, caps at 5 and spawns friendly
+  aggressors. Not changed because it reaches every MM6 map. `SpawnEncounter` in `src/Engine/Objects/Actor.cpp`.
+- **Travel clears recovery.** Map travel calls the shared `restAndHeal`, which clears recovery. MM6's travel keeps it.
+  `src/Application/Game.cpp`, the travel branch near `restAndHeal`.
+- **Map variable overflow.** `MM6MapByteState` throws where MM6 wraps on subtract below zero or saturates on add above
+  255. No shipped script was checked for either case. `src/Engine/Evt/MM6MapByteState.cpp`.
+- **Event W2 follow-up.** With nobody active, the event run picks one member, but other active-member reads in the
+  same run (a held item moved when a new one is given) still see nobody. `MM6GiveItemEvent.cpp`, `EvtInterpreter.cpp`.
+- **Map timer hour 88.** The Temple of the Sun (t4) dawn timer has an out-of-range hour byte. Its first firing now
+  follows GrayFace, later firings step one day where GrayFace steps 88 hours. `GameTests_MM6MapVisit.cpp`.
+- **Break Weapon and Zombie.** If MM6 Break Weapon is admitted for an unarmed target, the shared empty-list path can
+  assert. Divine Intervention's Zombie exception is MM7-gated until MM6 evidence exists. `Character.cpp`.
+- **Question inside another window.** A Question reached while another branchless window is open throws, where MM6
+  ends the event. No shipped script reaches it.
+
+## MM6: houses, shops and NPCs
+
+- **Temple blessings.** Above reputation 200 a matching donation casts Guardian Angel through Day of Protection at
+  master rank. Not done, the spells aren't verified MM6 player spells. TODO in `GUIWindow_MM6House::donate`.
+- **House residents can't be hired.** Joinable residents such as the New Sorpigal healer and scholar show only their
+  scripted topics. `mm6SelectHouseTopic` in `src/GUI/UI/Houses/MM6House.cpp`.
+- **Shop sounds and hints.** The MM6 sell screen is silent. MM6.exe plays sound 479 and speech 77 on a sale and speech
+  79 with sound 27 on a refusal. There is no sell hint, so GrayFace's hint half of W26 has nothing to attach to.
+- **Shop item info box.** MM6 shops have no right-click item info box. When it is ported, GrayFace's W28 check (no
+  skill identify or repair by a member who can't act) comes with it. `src/GUI/UI/Houses/MM6Shop.cpp`.
+- **Shop footer.** The footer draws over the status bar, so "Done!" and "Good as New!" never show. Not checked against
+  MM6.exe.
+- **Greeting speech.** MM6 greets with speech 22 or 23 by the party's reputation. Ours picks good day or good evening
+  by the hour. `initializeNPCDialogue` in `UIDialogue.cpp`.
+- **Street NPC news carry-over.** A street NPC slot keeps its news topic across map loads within one game, as in
+  vanilla. GrayFace has no fix. Owner's call whether to clear it.
+- **Potion mixing.** Item-on-item use of potions stays refused (`mm6::shouldBlockItemOnItemUse` in
+  `src/Engine/MM6/MM6ConsumableRules.h`). The mixing outcomes are not traced.
+
+## MM6: media and UI
+
+- **Voices.** MM6 voice samples exist, but the shared `speechVariants` table has no variant for the travel speeches 71
+  and 72 or for Beg, Threat and Bribe (53 to 58). Those play as portrait reactions only, and the W8 cap always applies.
+- **Missing travel icons.** The travel dialog's Yes and No icons `x_ok_u` and `x_x_u` are absent from MM6 `icons.lod`
+  and draw as prohibition signs.
+- **Missing chest button art.** Opening a chest logs a missing `ib-bcu-a`, the MM7 cancel button background loaded in
+  `src/GUI/GUIWindow.cpp`. Harmless.
+- **Character screen.** Pressing I draws the stats tab for one frame before the inventory. Tab doesn't switch members
+  on the MM6 character screen, the digit keys do. Neither is checked against MM6.exe.
+- **Space at the New Sorpigal well.** Space picks the well's wall face, so a drink needs a click. Not checked against
+  MM6.exe.
+- **Menus.** The title music starts at the top of its track where MM6 starts 18.5 s in. The Escape menu has no pressed
+  art. MM6 saves have no thumbnail. The voice volume feedback plays OpenEnroth's sound. Credits are not traced.
+- **Fog and overlays.** MM6 fog is not implemented, the map-visit block only carries its fields. The Torch Light radius
+  and the Fly and Water Walk overlays are not ported. Buff portrait sparkles are not drawn.
+
+## MM7
+
+- **Strange Temple exit.** Event 501 carries an out-of-bounds Harmondale X, so OpenEnroth loads the map but skips the
+  placement. Static evidence says the original executable copies the value and lets its first outdoor update handle
+  it. A private native trace of the settled position decides between clamping, travel handling or no change.
+- **Ordinary movement and combat.** Chains still use approach teleports. The audit wants representative regions walked
+  and fought through input, plus the Walls protected-group predicate audit. `tools/run_mm7_gameplay_harness.py`.
+- **Graphical Mac play.** The audit's interface, media, mods and long-session rows need visible play on the Mac. See
+  [MM7 status](mm7-status.md) for the rows.
+- **Scroll targeting exits.** Cancel returns the scroll. Attacking, passing the turn, stealing, a full spell queue and
+  turn-based wait still use it up. `src/Engine/Objects/Character.cpp`, `GameTests_MM7Scrolls.cpp`.
+- **5:00 AM sunlight.** MM7 has the same `UpdateSunlightVectors` minute check MM6 fixed behind `fix_sunrise_light`.
+  MM7 owner's call. `src/Engine/Graphics/Outdoor.cpp`.
+- **Wall pressure plates.** Original MM7 fires a pressure plate the party runs into. Upstream's fix for #2244 dropped
+  wall plates along with the lift retrigger. MM7 keeps upstream's behaviour. `BLV_ProcessPartyActions` in `Indoor.cpp`.
+- **2026-11-07 audit items with no fix recorded since.** A wand charge is spent before the outcome. Monster Haste and
+  Day of Protection are never read. The Hour of Power hit check reads the Shield buff's power. The `_SelectTarget`
+  index never advances. Two enchantment families add no elemental damage. Artifacts 530, 531 and 536 lack their
+  described effects. Two grandmaster teacher requirements and two Disarm Trap caps differ from their text.
+- **Upstream issues still present at the audit.** #2867, #2502, #1463, #2770, #2763, #2786, #2071, #920 and #2003,
+  #1530, #682, #586, #1917, #1918, #843, #2268, #2232. Mac: #1201 (HiDPI), #2171 (window size after fullscreen) and
+  #1591 (signing).
+- **All Artifacts and Storage.** The owner's own transaction with the opt-in mod is still to be run.
+- **Shoals pixels.** The dense green fog is authored. An exact comparison with the original executable is optional.
+
+## Platform and release
+
+- **Atlas version metadata.** The outer Atlas `Info.plist` says `0.1` build `1` while the tag and helper provenance say
+  `0.1.0`. Fix in the next release, never by moving `ECv0.1.0`.
+- **Screen Recording permission.** Atlas is ad-hoc signed, so macOS may ask for Screen Recording again after each
+  install before rolling video works.
+- **Lint.** `check_tidy` needs clang-tidy 22, which is not installed on the owner's Mac.
+
+## Source
+
+- [MM6House.cpp](../src/GUI/UI/Houses/MM6House.cpp), [MM6Shop.cpp](../src/GUI/UI/Houses/MM6Shop.cpp)
+- [MM6ConsumableRules.h](../src/Engine/MM6/MM6ConsumableRules.h)
+- [MM6MapByteState.cpp](../src/Engine/Evt/MM6MapByteState.cpp)
+- [Actor.cpp](../src/Engine/Objects/Actor.cpp), [Character.cpp](../src/Engine/Objects/Character.cpp)
+- [GUIWindow.cpp](../src/GUI/GUIWindow.cpp)
+- [MM6CampaignChain.cpp](../test/Bin/GameTest/MM6CampaignChain.cpp)
+- [GameTests_MM7Scrolls.cpp](../test/Bin/GameTest/GameTests_MM7Scrolls.cpp)
+- [run_mm7_gameplay_harness.py](../tools/run_mm7_gameplay_harness.py)
+
+See also: [MM6 campaign status](mm6-campaign-status.md), [MM7 status](mm7-status.md), [MM6 GrayFace patch reference](mm6-grayface-patch-reference.md), [Releases](releases.md)

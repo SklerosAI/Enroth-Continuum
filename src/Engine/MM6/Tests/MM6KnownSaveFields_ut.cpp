@@ -10,8 +10,6 @@
 #include "Testing/Unit/UnitTest.h"
 
 #include "Engine/MM6/MM6KnownSaveFields.h"
-#include "Engine/MM6/MM6BeaconSaveFields.h"
-#include "Engine/MM6/MM6IndoorFaceOverrides.h"
 #include "Engine/MM6/MM6RawInventoryFields.h"
 #include "Engine/MM6/MM6ShopStockFields.h"
 
@@ -103,14 +101,8 @@ UNIT_TEST(MM6KnownSaveFields, StandaloneSectionsStayOutsideKnownSave) {
     shop->ready = true;
     auto inventory = std::make_unique<mm6::RawInventoryFields>();
     inventory->ready = true;
-    const mm6::BeaconSaveFields beacon;
-    const std::vector<mm6::IndoorFaceState> baseFaces = {{1, "wall"}};
-    const std::vector<mm6::IndoorFaceState> changedFaces = {{2, "wall"}};
-    const mm6::IndoorFaceOverrides faces{{*mm6::captureIndoorFaceOverrides(
-        "a.blv", baseFaces, changedFaces, GameTitle::MM6)}};
     for (const mm6::SaveSection &standalone : {
-             mm6::encodeShopStockSection(*shop), mm6::encodeBeaconSection(beacon),
-             mm6::encodeIndoorFaceOverrideSection(faces),
+             mm6::encodeShopStockSection(*shop),
              mm6::encodeRawInventorySection(*inventory)}) {
         mm6::SaveContainer candidate = baseline;
         candidate.sections.push_back(standalone);

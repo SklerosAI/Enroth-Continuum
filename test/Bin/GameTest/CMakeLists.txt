@@ -135,7 +135,6 @@ target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6V5OutdoorSourceAudit.cpp
 target_sources(OpenEnroth_GameTest PRIVATE MM6MapEntranceForTest.h)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6MapSweep.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6V5NormalLoadMenu.cpp)
-target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6NpcResourceIdentity.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6HudAudit.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6TopPanel.cpp)
 target_sources(OpenEnroth_GameTest PRIVATE GameTests_MM6PortraitAlert.cpp)

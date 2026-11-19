@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
 add_library(engine_mm6_save_container STATIC MM6SaveContainer.cpp MM6SaveContainer.h
     MM6CoreSaveFields.cpp MM6CoreSaveFields.h MM6DurableSaveFields.cpp MM6DurableSaveFields.h
     MM6MapSaveFields.cpp MM6MapSaveFields.h MM6SaveMetadata.cpp MM6SaveMetadata.h
-    MM6IndoorFaceOverrides.cpp MM6IndoorFaceOverrides.h
+    MM6IndoorFaceOverrides.h
     MM6NpcSaveFields.cpp MM6NpcSaveFields.h
     MM6ResistanceSaveFields.cpp MM6ResistanceSaveFields.h
     MM6HeldItemSaveFields.cpp MM6HeldItemSaveFields.h
@@ -15,12 +15,11 @@ add_library(engine_mm6_save_container STATIC MM6SaveContainer.cpp MM6SaveContain
     MM6ShopGuildClockFields.cpp MM6ShopGuildClockFields.h
     MM6ShopStockFields.cpp MM6ShopStockFields.h MM6ShopTitleState.h
     MM6ShopStockPurchase.h MM6ShopBoundedPurchase.h
-    MM6ShopPhysicalPurchase.h MM6ItemRecord28.h
+    MM6ItemRecord28.h
     MM6PlainItemProjection.h MM6StandardBonusMap.h MM6StandardItemProjection.h
-    MM6BoundedItemProjection.h MM6GroundItemProjection.h MM6BoundedInventoryProjection.h
+    MM6BoundedItemProjection.h MM6BoundedInventoryProjection.h
     MM6BoundedPartyInventoryProjection.h
     MM6RawInventoryFields.cpp MM6RawInventoryFields.h
-    MM6BeaconSaveFields.cpp MM6BeaconSaveFields.h
     MM6ShopRefreshBoundary.cpp MM6ShopRefreshBoundary.h
     MM6SaveCrossFields.h MM6KnownSaveFields.cpp MM6KnownSaveFields.h
     MM6RawSaveFields.cpp MM6RawSaveFields.h)
@@ -31,12 +30,10 @@ target_link_libraries(engine_mm6_atomic_save PUBLIC engine_mm6_save_container)
 target_check_style(engine_mm6_atomic_save)
 
 add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRuntime.h
-    MM6BeaconSaveRuntime.cpp MM6BeaconSaveRuntime.h
     MM6DurableSaveRuntime.cpp MM6SaveMetadataRuntime.cpp MM6ResistanceSaveRuntime.cpp
     MM6HeldItemSaveRuntime.cpp MM6BuffSaveRuntime.cpp MM6HirelingSaveRuntime.cpp MM6HirelingSaveRuntime.h
     MM6RecoverySaveRuntime.cpp MM6RecoverySaveRuntime.h MM6MapSaveValidation.cpp MM6MapSaveValidation.h
     MM6NpcStaticBaseline.cpp MM6NpcStaticBaseline.h
-    MM6NpcResourceIdentity.cpp MM6NpcResourceIdentity.h
     MM6PostMapGeneratedNpcLinks.cpp MM6PostMapGeneratedNpcLinks.h
     MM6GeneratedNpcSaveFields.cpp MM6GeneratedNpcSaveFields.h
     MM6PreEventGeneratedNpcReplay.cpp MM6PreEventGeneratedNpcReplay.h
@@ -59,12 +56,6 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6V5ActorRuntimeFields.cpp MM6V5ActorRuntimeFields.h
     MM6V5DecorationRuntimeFields.cpp MM6V5DecorationRuntimeFields.h
     MM6V5SaveFields.cpp MM6V5SaveFields.h
-    MM6V6OutdoorSaveFields.cpp MM6V6OutdoorSaveFields.h MM6VisitedOutdoorRuntimeOwner.h
-    MM6VisitedOutdoorReturnPlan.h
-    MM6VisitedIndoorRuntimeOwner.h
-    MM6VisitedMapCache.cpp MM6VisitedMapCache.h
-    MM6VisitedMapSection.cpp MM6VisitedMapSection.h
-    MM6TransitionPostWorldCaptureForTest.h
     MM6V5LiveSaveCapture.cpp MM6V5LiveSaveCapture.h
     MM6V5FirstMapSaveWriter.cpp MM6V5FirstMapSaveWriter.h
     MM6V5FirstMapNativeSlotPolicy.cpp MM6V5FirstMapNativeSlotPolicy.h
@@ -72,14 +63,6 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6NewGameSession.cpp MM6NewGameSession.h
     MM6V5FirstMapLoadPreflight.cpp MM6V5FirstMapLoadPreflight.h
     MM6V5FirstMapLoadAttempt.cpp MM6V5FirstMapLoadAttempt.h
-    MM6V6IndoorSaveFields.cpp MM6V6IndoorSaveFields.h MM6IndoorFaceLiveOwner.h
-    MM6V6IndoorPreEventOwnerGate.cpp MM6V6IndoorPreEventOwnerGate.h
-    MM6V6IndoorDecorationRuntime.cpp MM6V6IndoorDecorationRuntime.h
-    MM6V6IndoorSpriteRuntime.cpp MM6V6IndoorSpriteRuntime.h
-    MM6V6IndoorActorRuntime.cpp MM6V6IndoorActorRuntime.h
-    MM6V6PreEventIndoorDecorationReplayForTest.h
-    MM6V6PreEventIndoorSpriteReplayForTest.h
-    MM6V6PreEventIndoorActorReplayForTest.h
     MM6ActiveActorOutdoorDeltaCapture.cpp MM6ActiveActorOutdoorDeltaCapture.h
     MM6IndoorWorldPlan.cpp MM6IndoorWorldPlan.h
     MM6WorldSaveRuntime.cpp MM6WorldSaveRuntime.h
@@ -100,10 +83,6 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6RawPartyInventoryStage.cpp MM6RawPartyInventoryStage.h
     MM6NewGameSaveRuntime.cpp MM6NewGameSaveRuntime.h
     MM6RawNewGameSaveRuntime.cpp MM6RawNewGameSaveRuntime.h MM6CreationItemSeed.h
-    MM6FirstMapWorldTransaction.h
-    MM6FirstMapPlacementTransaction.h
-    MM6FirstMapCombatTransientTransaction.h
-    MM6FirstMapPersistentEventTransaction.h
     MM6OutdoorBorderTravel.h
     MM6OutdoorBorderEligibility.h
     MM6OutdoorBorderConfirmation.h
@@ -140,11 +119,6 @@ target_link_libraries(engine_mm6_outdoor_sky PUBLIC core_time library_random uti
 target_check_style(engine_mm6_outdoor_sky)
 target_link_libraries(engine_graphics PUBLIC engine_mm6_outdoor_sky)
 
-add_library(engine_mm6_outdoor_actor_append STATIC
-    MM6OutdoorActorAppendCodec.cpp MM6OutdoorActorAppendCodec.h)
-target_link_libraries(engine_mm6_outdoor_actor_append PUBLIC engine_mm6_outdoor_wire engine_objects)
-target_check_style(engine_mm6_outdoor_actor_append)
-
 add_library(engine_mm6_spawn_actor_section STATIC
     MM6SpawnedActorSection.cpp MM6SpawnedActorSection.h
     MM6ActiveActorSection.cpp MM6ActiveActorSection.h)
@@ -178,11 +152,6 @@ if(OE_BUILD_TESTS)
     target_link_libraries(test_engine_mm6_creation_item_seed PUBLIC testing_unit engine_mm6_save_runtime)
     target_check_style(test_engine_mm6_creation_item_seed)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_creation_item_seed)
-
-    add_library(test_engine_mm6_voice_sound OBJECT Tests/MM6VoiceSound_ut.cpp)
-    target_link_libraries(test_engine_mm6_voice_sound PUBLIC testing_unit)
-    target_check_style(test_engine_mm6_voice_sound)
-    target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_voice_sound)
 
     add_library(test_engine_mm6_chest_guard OBJECT Tests/MM6ChestGenerationGuard_ut.cpp
         Tests/MM6ChestOuterPlan_ut.cpp)
@@ -237,18 +206,15 @@ if(OE_BUILD_TESTS)
         Tests/MM6NpcSaveFields_ut.cpp Tests/MM6ResistanceSaveFields_ut.cpp
         Tests/MM6HeldItemSaveFields_ut.cpp Tests/MM6RawHeldItemSaveFields_ut.cpp Tests/MM6RawHeldCursorOwner_ut.cpp
         Tests/MM6BuffSaveFields_ut.cpp
-        Tests/MM6IndoorFaceOverrides_ut.cpp
         Tests/MM6HirelingSaveFields_ut.cpp Tests/MM6RecoverySaveFields_ut.cpp Tests/MM6Calendar_ut.cpp
         Tests/MM6ChestSaveFields_ut.cpp Tests/MM6ShopGuildClockFields_ut.cpp
         Tests/MM6ShopStockFields_ut.cpp Tests/MM6ShopBoundedPurchase_ut.cpp
-        Tests/MM6ShopPhysicalPurchase_ut.cpp
         Tests/MM6ItemRecord28_ut.cpp Tests/MM6PlainItemProjection_ut.cpp
         Tests/MM6BoundedInventoryProjection_ut.cpp
-        Tests/MM6BoundedPartyInventoryProjection_ut.cpp Tests/MM6GroundItemProjection_ut.cpp Tests/MM6StandardBonusMap_ut.cpp
+        Tests/MM6BoundedPartyInventoryProjection_ut.cpp Tests/MM6StandardBonusMap_ut.cpp
         Tests/MM6StandardItemProjection_ut.cpp
         Tests/MM6RawInventoryFields_ut.cpp
         Tests/MM6RawSaveFields_ut.cpp
-        Tests/MM6BackpackItemEventRemoval_ut.cpp
         Tests/MM6KnownSaveFields_ut.cpp
         Tests/MM6PotionCombinations_ut.cpp)
     target_link_libraries(test_engine_mm6_save_container PUBLIC testing_unit engine_mm6_save_container engine_tables
@@ -273,12 +239,10 @@ if(OE_BUILD_TESTS)
         Tests/MM6PostWorldOwnerValidator_ut.cpp
         Tests/MM6DecodedEffectPartyStage_ut.cpp
         Tests/MM6AntiqueItemProjection_ut.cpp
-        Tests/MM6BeaconSaveFields_ut.cpp
         Tests/MM6WorldSaveRuntime_ut.cpp
         Tests/MM6NewGameSaveRuntime_ut.cpp
         Tests/MM6RawNewGameSaveRuntime_ut.cpp
         Tests/MM6NpcStaticBaseline_ut.cpp
-        Tests/MM6NpcResourceIdentity_ut.cpp
         Tests/MM6PostMapGeneratedNpcLinks_ut.cpp
         Tests/MM6GeneratedNpcSaveFields_ut.cpp
         Tests/MM6PreEventGeneratedNpcReplay_ut.cpp
@@ -294,33 +258,22 @@ if(OE_BUILD_TESTS)
         Tests/MM6V5SpriteRuntimeFields_ut.cpp
         Tests/MM6V5ActorRuntimeFields_ut.cpp
         Tests/MM6V5DecorationRuntimeFields_ut.cpp
-        Tests/MM6V6IndoorSaveFields_ut.cpp
         Tests/MM6V5PreEventSpriteReplayForTest_ut.cpp
         Tests/MM6V5PreEventActorReplayForTest_ut.cpp
         Tests/MM6V5PreEventDecorationReplayForTest_ut.cpp
         Tests/MM6V5LaterOutdoorReplay_ut.cpp
         Tests/MM6OutdoorBorderTravel_ut.cpp
         Tests/MM6OutdoorBorderEligibility_ut.cpp
-        Tests/MM6OutdoorBorderPrecommit_ut.cpp
         Tests/MM6OutdoorBorderConfirmation_ut.cpp
-        Tests/MM6OutdoorReturnArrival_ut.cpp
-        Tests/MM6VisitedOwnerFixtures.h
-        Tests/MM6VisitedIndoorRuntimeOwner_ut.cpp
-        Tests/MM6VisitedMapCache_ut.cpp
-        Tests/MM6VisitedMapSection_ut.cpp
         Tests/MM6ParkedMapSection_ut.cpp
         Tests/MM6MapTimerSection_ut.cpp
         Tests/MM6MapEnumFunctions_ut.cpp
-        Tests/MM6VisitedReturnPreEventProbeForTest_ut.cpp
-        Tests/MM6TransitionAutosaveInterceptForTest_ut.cpp
         Tests/MM6V5OutdoorDecorationSource_ut.cpp
         Tests/MM6V5DerivedActorNames_ut.cpp
         Tests/MM6MapStatsEncounterColumns_ut.cpp
         Tests/MM6V4OutdoorDecorationReplay_ut.cpp
         Tests/MM6IndoorWorldPlan_ut.cpp
-        Tests/MM6HirelingRecoveryV2Stage_ut.cpp
-        Tests/MM6FirstMapCombatTransientTransaction_ut.cpp
-        Tests/MM6FirstMapPersistentEventTransaction_ut.cpp)
+        Tests/MM6HirelingRecoveryV2Stage_ut.cpp)
     target_sources(test_engine_mm6_save_runtime PRIVATE Tests/MM6PartyDeath_ut.cpp Tests/MM6Archive_ut.cpp Tests/MM6HouseExit_ut.cpp)
     target_link_libraries(test_engine_mm6_save_runtime PUBLIC testing_unit engine_mm6_save_runtime)
     target_check_style(test_engine_mm6_save_runtime)
@@ -337,11 +290,6 @@ if(OE_BUILD_TESTS)
     target_link_libraries(test_engine_mm6_outdoor_wire PUBLIC testing_unit engine_mm6_outdoor_wire)
     target_check_style(test_engine_mm6_outdoor_wire)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_outdoor_wire)
-
-    add_library(test_engine_mm6_outdoor_actor_append OBJECT Tests/MM6OutdoorActorAppendCodec_ut.cpp)
-    target_link_libraries(test_engine_mm6_outdoor_actor_append PUBLIC testing_unit engine_mm6_outdoor_actor_append)
-    target_check_style(test_engine_mm6_outdoor_actor_append)
-    target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_outdoor_actor_append)
 
     add_library(test_engine_mm6_spawn_actor_section OBJECT Tests/MM6SpawnedActorSection_ut.cpp
         Tests/MM6ActiveActorSection_ut.cpp)

@@ -256,6 +256,10 @@ class GameConfig : public Config {
             "Let a stronger buff replace a weaker one of the same kind even when it ends sooner, as the GrayFace patch does. "
             "In vanilla MM6 a buff that would end sooner was refused whatever its power. MM6 only."};
 
+        Bool FixConditionSpells = {this, "fix_condition_spells", true,
+            "Let Remove Fear, Cure Paralysis, Cure Insanity and Cure Weakness cure a condition up to 1 hour per skill point old at Expert and 1 day at Master, "
+            "as their descriptions say and the GrayFace patch does. In vanilla MM6 they took 3 hours and 3 days. MM6 only."};
+
         Float SpellFailureRecoveryMod = {this, "spell_failure_recovery_mod", 0.5f, &ValidateSpellFailureRecoveryMod,
             "Recovery time modifier when spell casting ended in failure for the reason where spell cannot be cast at all in current context. "
             "Context include situation where outdoor spell is casted indoor or targeted spell is casted with no characters on screen."};

@@ -89,7 +89,7 @@ add_subdirectory(Books)
 add_subdirectory(Houses)
 
 if(OE_BUILD_TESTS)
-    add_library(test_gui_ui_mm6_rooms OBJECT Tests/MM6HouseServiceData_ut.cpp Tests/MM6RoomDescriptors_ut.cpp Tests/MM6TransitionDialog_ut.cpp)
+    add_library(test_gui_ui_mm6_rooms OBJECT Tests/MM6ExecutableRules_ut.cpp Tests/MM6HouseServiceData_ut.cpp Tests/MM6RoomDescriptors_ut.cpp Tests/MM6TransitionDialog_ut.cpp)
     target_link_libraries(test_gui_ui_mm6_rooms PUBLIC testing_unit gui_ui)
     target_check_style(test_gui_ui_mm6_rooms)
     target_link_libraries(OpenEnroth_UnitTest PUBLIC test_gui_ui_mm6_rooms)

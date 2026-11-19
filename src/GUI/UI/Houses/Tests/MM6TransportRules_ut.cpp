@@ -1,26 +1,33 @@
+#include <algorithm>
 #include <array>
-#include <optional>
-#include <string>
+#include <memory>
 
 #include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
+#include "Engine/MM6/MM6Executable.h"
+
 #include "GUI/UI/Houses/MM6TransportRules.h"
 
-#include "Library/Json/Json.h"
-
-#include "Utility/Memory/Blob.h"
-
-UNIT_TEST(MM6TransportRules, ProfileManifestShape) {
-    const std::optional<Blob> manifest = readMM6TestRules("transport.json");
-    if (!manifest)
-        GTEST_SKIP() << mm6TestRulesMissing;
-
-    mm6::TransportRules rules = mm6::decodeTransportRules(*manifest);
+UNIT_TEST(MM6TransportRules, ExecutableTables) {
+    // 21 stables and boats with three slots each, every slot on one of 36 routes to a map in games.lod.
+    const std::unique_ptr<MM6TestData> data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
+    const mm6::TransportRules rules = mm6::decodeTransportRules(mm6::Executable(data->read("mm6.exe")));
     ASSERT_EQ(rules.routes.size(), 36);
     ASSERT_EQ(rules.houses.size(), 21);
-    for (const mm6::TransportHouse &house : rules.houses)
+    for (const mm6::TransportHouse &house : rules.houses) {
         EXPECT_EQ(rules.findHouse(house.id), &house);
+        for (size_t route : house.routes)
+            EXPECT_LT(route, rules.routes.size());
+    }
+    for (const mm6::TransportRoute &route : rules.routes) {
+        EXPECT_GE(route.mapIndex, 1);
+        EXPECT_LE(route.mapIndex, data->games().ls().size());
+        EXPECT_GE(route.duration, 1);
+        EXPECT_NE(std::ranges::count(route.days, 1), 0);
+    }
     const auto never = [](int) { return false; };
     EXPECT_EQ(rules.offeredRoutes(999, 0, never), (std::array<const mm6::TransportRoute *, 3>{}));
 }
@@ -33,8 +40,8 @@ UNIT_TEST(MM6TransportRules, OfferedRoutes) {
     rules.routes[1].days = {1, 0, 0, 0, 0, 0, 1};
     rules.routes[2].days = {1, 1, 1, 1, 1, 1, 1};
     rules.routes[2].questBit = 7;
-    rules.houses.push_back({48, {{{mm6::TransportSlotKind::Scheduled, 0}, {mm6::TransportSlotKind::Blank, 0}, {mm6::TransportSlotKind::SpecialUnresolved, 2}}}});
-    rules.houses.push_back({49, {{{mm6::TransportSlotKind::Scheduled, 1}, {mm6::TransportSlotKind::Scheduled, 0}, {mm6::TransportSlotKind::Scheduled, 1}}}});
+    rules.houses.push_back({48, {0, 0, 2}});
+    rules.houses.push_back({49, {1, 0, 1}});
     const auto never = [](int) { return false; };
     const auto bit7 = [](int bit) { return bit == 7; };
     using Offer = std::array<const mm6::TransportRoute *, 3>;
@@ -58,24 +65,4 @@ UNIT_TEST(MM6TransportRules, Price) {
     EXPECT_EQ(mm6::transportPrice(60, 5.0f, 10), 225);
     EXPECT_EQ(mm6::transportPrice(60, 5.0f, 90), 83); // A third of the full price, not of the base price.
     EXPECT_EQ(mm6::transportPrice(59, 10.0f, 0), 0);
-}
-
-UNIT_TEST(MM6TransportRules, RejectsAlteredProfileManifest) {
-    const std::optional<Blob> manifest = readMM6TestRules("transport.json");
-    if (!manifest)
-        GTEST_SKIP() << mm6TestRulesMissing;
-    const std::string text(manifest->str());
-
-    Json document = Json::parse(text);
-    document["routes"][0]["map_index"] = 0;
-    EXPECT_THROW(mm6::decodeTransportRules(Blob::fromString(document.dump())), std::exception);
-    document = Json::parse(text);
-    document["houses"][0]["slots"][0]["kind"] = "unverified";
-    EXPECT_THROW(mm6::decodeTransportRules(Blob::fromString(document.dump())), std::exception);
-    document = Json::parse(text);
-    document["houses"][1]["id"] = document["houses"][0]["id"];
-    EXPECT_THROW(mm6::decodeTransportRules(Blob::fromString(document.dump())), std::exception);
-    document = Json::parse(text);
-    document["houses"][0]["slots"][0]["route"] = 36;
-    EXPECT_THROW(mm6::decodeTransportRules(Blob::fromString(document.dump())), std::exception);
 }

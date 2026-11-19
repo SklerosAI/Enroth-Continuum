@@ -26,6 +26,7 @@
 #include "Engine/MM6/MM6CombatRules.h"
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6EventSpell.h"
+#include "Engine/MM6/MM6Executable.h"
 #include "Engine/MM6/MM6MonsterAttack.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
 #include "Engine/MM6/MM6MonsterPreferences.h"
@@ -69,72 +70,30 @@
 #include "GUI/UI/ItemGrid.h"
 
 #include "Library/Logger/Logger.h"
-#include "Library/Json/Json.h"
 
 #include "Utility/IndexedArray.h"
 
 static SpellFxRenderer *spell_fx_renderer = EngineIocContainer::ResolveSpellFxRenderer();
 
 namespace mm6 {
-namespace {
 
-std::optional<CreationRules> loadedCreationRules;
+static std::optional<CreationRules> loadedCreationRules;
 
-template <size_t N>
-std::array<int, N> readIntArray(const Json &rows, int maximum) {
-    if (!rows.is_array() || rows.size() != N)
-        throw std::runtime_error("Invalid MM6 creation rules array shape");
-    std::array<int, N> result{};
-    for (size_t i = 0; i < N; ++i) {
-        if (!rows[i].is_number_integer())
-            throw std::runtime_error("Invalid MM6 creation rules value type");
-        const int value = rows[i].get<int>();
-        if (value < 0 || value > maximum)
-            throw std::runtime_error("Invalid MM6 creation rules value");
-        result[i] = value;
+void loadCreationRules(const Executable &exe) {
+    CreationRules rules;
+    for (int family = 0; family < kClassFamilyCount; family++) {
+        rules.hpBase[family] = exe.u8(0x4C2630 + family);
+        rules.spBase[family] = exe.u8(0x4C2638 + family);
+        for (int stat = 0; stat < kAttributeCount; stat++)
+            rules.startingStats[family][stat] = exe.u8(0x4C2668 + kAttributeCount * family + stat);
+        for (int skill = 0; skill < kSkillCount; skill++)
+            rules.startingSkills[family][skill] = exe.u8(0x4C2694 + kSkillCount * family + skill);
     }
-    return result;
-}
-
-}  // namespace
-
-void loadCreationRules(const Blob &source) {
-    if (source.size() > 16384)
-        throw std::runtime_error("MM6 creation rules manifest is too large");
-    const Json document = Json::parse(source.str());
-    if (!document.is_object() || document.at("format") != 1 ||
-        !document.at("source_report_sha256").is_string() ||
-        document.at("source_report_sha256").get<std::string>().size() != 64)
-        throw std::runtime_error("Invalid MM6 creation rules manifest header");
-
-    CreationRules candidate;
-    candidate.hpBase = readIntArray<kClassFamilyCount>(document.at("hp_base"), 255);
-    candidate.spBase = readIntArray<kClassFamilyCount>(document.at("sp_base"), 255);
-    candidate.hpFactor = readIntArray<kClassCount>(document.at("hp_factor"), 255);
-    candidate.spFactor = readIntArray<kClassCount>(document.at("sp_factor"), 255);
-
-    const Json &stats = document.at("starting_stats");
-    const Json &skills = document.at("starting_skills");
-    if (!stats.is_array() || stats.size() != kClassFamilyCount ||
-        !skills.is_array() || skills.size() != kClassFamilyCount)
-        throw std::runtime_error("Invalid MM6 creation family count");
-    for (int family = 0; family < kClassFamilyCount; ++family) {
-        candidate.startingStats[family] = readIntArray<kAttributeCount>(stats[family], 255);
-        const std::array<int, kSkillCount> codes = readIntArray<kSkillCount>(skills[family], 3);
-        int statTotal = 0;
-        int granted = 0;
-        int selectable = 0;
-        for (int stat : candidate.startingStats[family])
-            statTotal += stat;
-        for (int skill = 0; skill < kSkillCount; ++skill) {
-            candidate.startingSkills[family][skill] = codes[skill];
-            granted += codes[skill] == 1;
-            selectable += codes[skill] == 2;
-        }
-        if (statTotal != 73 || granted != 2 || selectable != 9)
-            throw std::runtime_error("Invalid MM6 creation family shape");
+    for (int classId = 0; classId < kClassCount; classId++) {
+        rules.hpFactor[classId] = exe.u8(0x4C2640 + classId);
+        rules.spFactor[classId] = exe.u8(0x4C2654 + classId);
     }
-    loadedCreationRules = std::move(candidate);
+    loadedCreationRules = rules;
 }
 
 const CreationRules &creationRules() {

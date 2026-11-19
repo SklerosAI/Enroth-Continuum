@@ -1,35 +1,23 @@
-#include <optional>
+#include <cstdint>
+#include <memory>
 #include <stdexcept>
-#include <string>
 
 #include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
+#include "Engine/MM6/MM6Executable.h"
 #include "Engine/Spells/MM6FirstAidPreflight.h"
 #include "Engine/Spells/MM6FirstAidRules.h"
 #include "Engine/Spells/MM6SpellRules.h"
 
-#include "Library/Json/Json.h"
-
-#include "Utility/Memory/Blob.h"
-
 namespace {
 
 void loadSyntheticRules() {
-    Json spellRules;
-    spellRules["format"] = 1;
-    spellRules["source_report_sha256"] = std::string(64, 'a');
-    spellRules["spells"] = Json::array();
+    mm6::SpellRules rules{};
     for (int id = 1; id <= 99; ++id)
-        spellRules["spells"].push_back({{"id", id}, {"mana", {id, id + 1, id + 2}},
-                                         {"recovery", {120, 100, 80}}});
-    mm6::loadSpellRules(Blob::fromString(spellRules.dump()));
-
-    const Json firstAidRules = {{"format", 1}, {"id", std::to_underlying(SPELL_BODY_FIRST_AID)},
-                                {"spell_report_sha256", std::string(64, 'a')},
-                                {"guide_report_sha256", std::string(64, 'b')},
-                                {"heal", {4, 6, 9}}};
-    mm6::loadFirstAidRules(Blob::fromString(firstAidRules.dump()));
+        for (int rank = 0; rank < 3; ++rank)
+            rules[id][rank] = {static_cast<std::uint16_t>(id + rank), static_cast<std::int16_t>(120 - 20 * rank)};
+    mm6::loadSpellRules(rules);
 }
 
 mm6::FirstAidPreflightInput ordinaryCast() {
@@ -59,7 +47,7 @@ mm6::FirstAidPreflightInput ordinaryCast() {
 
 UNIT_TEST(MM6FirstAidPreflight, ThreeRanksProduceReadOnlyPlans) {
     loadSyntheticRules();
-    const int healAmounts[] = {4, 6, 9};
+    const int healAmounts[] = {5, 7, 10};
     for (int rank = 1; rank <= 3; ++rank) {
         const auto input = [&] {
             auto value = ordinaryCast();
@@ -137,13 +125,11 @@ UNIT_TEST(MM6FirstAidPreflight, RejectsUnsupportedRoutesAndState) {
     EXPECT_THROW(mm6::planFirstAidSpellbookCast(input), std::runtime_error);
 }
 
-UNIT_TEST(MM6FirstAidPreflight, ProfileRuleComposition) {
-    const std::optional<Blob> spells = readMM6TestRules("spells.json");
-    const std::optional<Blob> firstAid = readMM6TestRules("first-aid.json");
-    if (!spells || !firstAid)
-        GTEST_SKIP() << mm6TestRulesMissing;
-    mm6::loadSpellRules(*spells);
-    mm6::loadFirstAidRules(*firstAid);
+UNIT_TEST(MM6FirstAidPreflight, ExecutableRuleComposition) {
+    const std::unique_ptr<MM6TestData> data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
+    mm6::loadSpellRules(mm6::decodeSpellRules(mm6::Executable(data->read("mm6.exe"))));
     for (int rank = 1; rank <= 3; ++rank) {
         auto input = ordinaryCast();
         input.mastery = static_cast<Mastery>(rank);

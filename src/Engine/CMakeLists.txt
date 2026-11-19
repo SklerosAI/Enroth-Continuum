@@ -75,6 +75,7 @@ target_link_libraries(engine
         engine_tables
         engine_turn_engine
         engine_events
+        engine_mm6_executable
         engine_random
         engine_resources
         core_time

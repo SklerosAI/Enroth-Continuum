@@ -6,11 +6,9 @@
 #include <functional>
 #include <vector>
 
-class Blob;
-
 namespace mm6 {
 
-enum class TransportSlotKind { Blank, Scheduled, WeekdayUncertain, SpecialUnresolved };
+class Executable;
 
 struct TransportRoute {
     size_t mapIndex = 0; // One-based position in the original Games LOD directory.
@@ -21,14 +19,9 @@ struct TransportRoute {
     int questBit = 0;
 };
 
-struct TransportSlot {
-    TransportSlotKind kind = TransportSlotKind::Blank; // What the slot's text in 2DEvents.txt looks like. The original ignores it.
-    size_t route = 0;
-};
-
 struct TransportHouse {
     int id = 0;
-    std::array<TransportSlot, 3> slots{};
+    std::array<size_t, 3> routes{}; // Route of each slot. Every slot has one, a slot that's blank in 2DEvents.txt too.
 };
 
 struct TransportRules {
@@ -66,8 +59,11 @@ constexpr bool isTransportStable(int houseId) {
  */
 int transportPrice(int houseId, float value, int merchant);
 
-// Only a generated private profile manifest may supply the game-specific values.
-TransportRules decodeTransportRules(const Blob &source);
+/**
+ * @param exe                           `MM6.exe` to read the route and slot tables from.
+ * @return                              The 36 routes and the slots of the 21 stables and boats.
+ */
+TransportRules decodeTransportRules(const Executable &exe);
 const TransportRules &transportRules();
 
 } // namespace mm6

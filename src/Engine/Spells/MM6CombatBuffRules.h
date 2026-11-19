@@ -6,8 +6,6 @@
 #include "Engine/Spells/SpellBuff.h"
 #include "Engine/Spells/SpellEnums.h"
 
-class Blob;
-
 namespace mm6 {
 
 struct CombatBuffPlan {
@@ -18,9 +16,8 @@ struct CombatBuffPlan {
     bool partyWide = false;
 };
 
-// Shield and Heroism share target scope and rank duration. The profile holds
-// source-checked coefficients; live casting remains blocked by the MM6 guard.
-void loadCombatBuffRules(const Blob &source);
+// Shield and Heroism share target scope and rank duration. The MM6 guard
+// refuses a live Shield cast.
 bool isCombatBuffSpell(SpellId spellId);
 CombatBuffPlan planCombatBuff(SpellId spellId, Mastery mastery, int skillLevel, Time now);
 

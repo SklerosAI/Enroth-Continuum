@@ -15,6 +15,7 @@ set(UTILITY_SOURCES
         System/Fs.cpp
         System/Path.cpp
         System/PathView.cpp
+        Sha256.cpp
         UnicodeCrt.cpp
         String/Wrap.cpp)
 
@@ -69,6 +70,7 @@ set(UTILITY_HEADERS
         UnicodeCrt.h
         SmallVector.h
         ScopedRollback.h
+        Sha256.h
         String/Wrap.h)
 
 add_library(utility STATIC ${UTILITY_SOURCES} ${UTILITY_HEADERS})
@@ -108,6 +110,7 @@ if(OE_BUILD_TESTS)
             Tests/IndexedBitset_ut.cpp
             Tests/View_ut.cpp
             Tests/Segment_ut.cpp
+            Tests/Sha256_ut.cpp
             Tests/UnicodeCrt_ut.cpp
             String/Tests/Transformations_ut.cpp
             String/Tests/TransparentFunctors_ut.cpp

@@ -9,11 +9,11 @@
 #include "Engine/MM6/MM6ShopStockFields.h"
 #include "Engine/MM6/MM6ShopStockIdentity.h"
 
-class Blob;
 struct ItemTable;
 
 namespace mm6 {
 
+class Executable;
 struct ChestTitleState;
 
 /**
@@ -32,8 +32,8 @@ struct ShopStockRow {
 };
 
 /**
- * Stock generation table of one shop bank, from the private MM6 rules profile. Weapon, magic and general shops have
- * one row. Armor shops have two, the second one for slots 4 and up.
+ * Stock generation table of one shop bank. Weapon, magic and general shops have one row. Armor shops have two, the
+ * second one for slots 4 and up.
  */
 struct ShopStockHouse {
     std::vector<ShopStockRow> rows;
@@ -45,10 +45,14 @@ struct ShopStockRules {
     std::array<int, 22> guildBooks = {}; // Books per school a spell guild offers, by MM6 house id from 119.
 };
 
-ShopStockRules decodeShopStockRules(const Blob &source);
+/**
+ * @param exe                           `MM6.exe` to read the stock tables from.
+ * @return                              Shop stock rules.
+ */
+ShopStockRules decodeShopStockRules(const Executable &exe);
 
 /**
- * @return                              Shop stock rules loaded once from `rules/shop-stock.json` in the MM6 profile.
+ * @return                              Shop stock rules loaded once from `MM6.exe`.
  */
 const ShopStockRules &shopStockRules();
 

@@ -16,6 +16,7 @@
 #include "GUI/UI/UIHouses.h"
 
 #include "Engine/Evt/EvtProgram.h"
+#include "Engine/MM6/MM6Executable.h"
 #include "Engine/Snapshots/TableSerialization.h"
 
 #include "Library/Lod/LodReader.h"
@@ -73,11 +74,10 @@ std::string changeHouseRowField(std::string source, int houseId, int column, std
 
 TEST(MM6HouseServiceData, PreservesShippedRowsWithoutMM7ServiceRules) {
     const auto gameData = MM6TestData::open();
-    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
-    if (!gameData || !manifest)
-        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
+    if (!gameData)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(mm6::Executable(gameData->read("mm6.exe")));
     const mm6::HouseServiceData data = mm6::decodeHouseServiceData(gameData->iconsData("2devents.txt"), rooms);
 
     std::array<int, 4> families{};
@@ -125,10 +125,9 @@ TEST(MM6HouseServiceData, PreservesShippedRowsWithoutMM7ServiceRules) {
 
 TEST(MM6HouseServiceData, RejectsMalformedHouseTableBeforeSelection) {
     const auto data = MM6TestData::open();
-    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
-    if (!data || !manifest)
-        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(mm6::Executable(data->read("mm6.exe")));
     const std::string source(data->iconsData("2devents.txt").str());
     const mm6::HouseServiceData valid = mm6::decodeHouseServiceData(Blob::fromString(source), rooms);
     EXPECT_THROW(valid.at(0), std::exception);
@@ -146,14 +145,12 @@ TEST(MM6HouseServiceData, RejectsMalformedHouseTableBeforeSelection) {
 
 TEST(MM6HouseServiceData, EveryTransportHouseHasRoutesAndARoom) {
     const auto data = MM6TestData::open();
-    const std::optional<Blob> roomManifest = readMM6TestRules("house-rooms.json");
-    const std::optional<Blob> transportManifest = readMM6TestRules("transport.json");
-    if (!data || !roomManifest || !transportManifest)
-        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*roomManifest);
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(mm6::Executable(data->read("mm6.exe")));
     const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(data->iconsData("2devents.txt"), rooms);
-    const mm6::TransportRules rules = mm6::decodeTransportRules(*transportManifest);
+    const mm6::TransportRules rules = mm6::decodeTransportRules(mm6::Executable(data->read("mm6.exe")));
     ASSERT_EQ(rules.houses.size(), 21);
 
     int transportRows = 0;
@@ -176,11 +173,10 @@ TEST(MM6HouseServiceData, EveryTransportHouseHasRoutesAndARoom) {
 
 TEST(MM6HouseServiceData, PreflightsEveryActiveHouseInstruction) {
     const auto data = MM6TestData::open();
-    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
-    if (!data || !manifest)
-        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(mm6::Executable(data->read("mm6.exe")));
     const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(data->iconsData("2devents.txt"), rooms);
     int tableBacked = 0;
     int blankOrUnused = 0;
@@ -240,11 +236,10 @@ TEST(MM6HouseServiceData, PreflightsEveryActiveHouseInstruction) {
 
 TEST(MM6HouseServiceData, DecodesEveryReferencedProprietorImage) {
     const auto data = MM6TestData::open();
-    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
-    if (!data || !manifest)
-        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(mm6::Executable(data->read("mm6.exe")));
     const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(data->iconsData("2devents.txt"), rooms);
     const LodReader &icons = data->icons();
     std::set<std::string> names;
@@ -289,11 +284,10 @@ TEST(MM6HouseServiceData, DecodesMM6PreviewPanelAndExitImages) {
 
 TEST(MM6HouseServiceData, ResolvesEveryReferencedRoomMovie) {
     const auto data = MM6TestData::open();
-    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
-    if (!data || !manifest)
-        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(mm6::Executable(data->read("mm6.exe")));
     const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(data->iconsData("2devents.txt"), rooms);
     const VidReader first(data->read("anims/anims1.vid"));
     const VidReader second(data->read("anims/anims2.vid"));
@@ -316,11 +310,10 @@ TEST(MM6HouseServiceData, ResolvesEveryReferencedRoomMovie) {
 
 TEST(MM6HouseServiceData, RejectsMalformedAndTruncatedRoomMovieFrames) {
     const auto data = MM6TestData::open();
-    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
-    if (!data || !manifest)
-        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(mm6::Executable(data->read("mm6.exe")));
     const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(data->iconsData("2devents.txt"), rooms);
     const mm6::HousePresentationState room = mm6::planHousePresentation(GameTitle::MM6, houses, 1);
     const VidReader first(data->read("anims/anims1.vid"));
@@ -335,11 +328,10 @@ TEST(MM6HouseServiceData, RejectsMalformedAndTruncatedRoomMovieFrames) {
 
 TEST(MM6HouseServiceData, DecodesAllReferencedRoomMovieFirstFramesWithoutAudioOrUI) {
     const auto data = MM6TestData::open();
-    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
-    if (!data || !manifest)
-        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(mm6::Executable(data->read("mm6.exe")));
     const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(data->iconsData("2devents.txt"), rooms);
     const VidReader first(data->read("anims/anims1.vid"));
     const VidReader second(data->read("anims/anims2.vid"));
@@ -385,11 +377,10 @@ TEST(MM6HouseServiceData, DecodesAllReferencedRoomMovieFirstFramesWithoutAudioOr
 
 TEST(MM6HouseServiceData, ActivatesPresentationOnlyForTableBackedMM6Rooms) {
     const auto data = MM6TestData::open();
-    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
-    if (!data || !manifest)
-        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(mm6::Executable(data->read("mm6.exe")));
     const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(data->iconsData("2devents.txt"), rooms);
     int tableBacked = 0;
     int unavailable = 0;
@@ -448,11 +439,10 @@ TEST(MM6HouseServiceData, ServiceOptionsFollowHouseFamilyAndType) {
 
 TEST(MM6HouseServiceData, StagesShippedGreetingCandidatesWithoutPlayback) {
     const auto data = MM6TestData::open();
-    const std::optional<Blob> manifest = readMM6TestRules("house-rooms.json");
-    if (!data || !manifest)
-        GTEST_SKIP() << mm6TestDataMissing << ", " << mm6TestRulesMissing;
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
 
-    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(*manifest);
+    const mm6::RoomDescriptors rooms = mm6::decodeRoomDescriptors(mm6::Executable(data->read("mm6.exe")));
     const mm6::HouseServiceData houses = mm6::decodeHouseServiceData(data->iconsData("2devents.txt"), rooms);
     SoundList sounds;
     deserialize(data->iconsData("dsounds.bin"), &sounds, GameTitle::MM6);

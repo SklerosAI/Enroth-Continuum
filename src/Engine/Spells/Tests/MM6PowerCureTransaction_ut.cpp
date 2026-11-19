@@ -1,37 +1,25 @@
 #include <algorithm>
 #include <array>
-#include <optional>
+#include <cstdint>
+#include <memory>
 #include <stdexcept>
-#include <string>
-#include <utility>
 
 #include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
+#include "Engine/MM6/MM6Executable.h"
 #include "Engine/Spells/MM6PowerCureTransaction.h"
 #include "Engine/Spells/MM6PowerCureRules.h"
 #include "Engine/Spells/MM6SpellRules.h"
 
-#include "Library/Json/Json.h"
-
-#include "Utility/Memory/Blob.h"
-
 namespace {
 
 void loadSyntheticRules() {
-    Json spellRules;
-    spellRules["format"] = 1;
-    spellRules["source_report_sha256"] = std::string(64, 'a');
-    spellRules["spells"] = Json::array();
+    mm6::SpellRules rules{};
     for (int id = 1; id <= 99; ++id)
-        spellRules["spells"].push_back({{"id", id}, {"mana", {id, id + 1, id + 2}},
-                                         {"recovery", {120, 100, 80}}});
-    mm6::loadSpellRules(Blob::fromString(spellRules.dump()));
-    const Json powerCureRules = {{"format", 1}, {"id", std::to_underlying(SPELL_BODY_POWER_CURE)},
-                                 {"spell_report_sha256", std::string(64, 'a')},
-                                 {"guide_report_sha256", std::string(64, 'b')},
-                                 {"base", 11}, {"per_skill", 3}};
-    mm6::loadPowerCureRules(Blob::fromString(powerCureRules.dump()));
+        for (int rank = 0; rank < 3; ++rank)
+            rules[id][rank] = {static_cast<std::uint16_t>(id + rank), static_cast<std::int16_t>(120 - 20 * rank)};
+    mm6::loadSpellRules(rules);
 }
 
 mm6::PowerCureTransactionInput ordinaryCast() {
@@ -71,7 +59,7 @@ UNIT_TEST(MM6PowerCureTransaction, StagesAllFourCappedHealsWithManaAndRecovery) 
     const auto change = mm6::stagePowerCureOnCharacters(ordinaryCast(), &characters);
     EXPECT_EQ(change.casterMana, 23);
     EXPECT_EQ(change.casterRecovery, Duration::fromTicks(120));
-    EXPECT_EQ(change.health, (std::array<int, 4>{20, 25, 50, 10}));
+    EXPECT_EQ(change.health, (std::array<int, 4>{19, 25, 50, 10}));
     EXPECT_EQ(characters[0].mana, 23);
     EXPECT_EQ(characters[0].timeToRecovery, Duration::fromTicks(120));
     for (int i = 0; i < 4; ++i)
@@ -116,13 +104,11 @@ UNIT_TEST(MM6PowerCureTransaction, RejectsMM7AndChangedCasterBeforeAnyMutation) 
     EXPECT_EQ(characters[0].timeToRecovery, Duration::fromTicks(1));
 }
 
-UNIT_TEST(MM6PowerCureTransaction, ProfileRulesStageActualCharacterState) {
-    const std::optional<Blob> spells = readMM6TestRules("spells.json");
-    const std::optional<Blob> powerCure = readMM6TestRules("power-cure.json");
-    if (!spells || !powerCure)
-        GTEST_SKIP() << mm6TestRulesMissing;
-    mm6::loadSpellRules(*spells);
-    mm6::loadPowerCureRules(*powerCure);
+UNIT_TEST(MM6PowerCureTransaction, ExecutableRulesStageActualCharacterState) {
+    const std::unique_ptr<MM6TestData> data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
+    mm6::loadSpellRules(mm6::decodeSpellRules(mm6::Executable(data->read("mm6.exe"))));
 
     auto characters = party();
     characters[0].mana = 1000;

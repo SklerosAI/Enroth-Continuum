@@ -117,8 +117,9 @@ described windows for those four, as the GrayFace patch does.
 The JSON these constants replaced was wrong in two places. It gave the buffs 3600 base seconds, copied from the printed
 "1 hour", where the executable adds 3840 (64 minutes). It also gave all six condition cures the shorter window.
 
-Known disagreement still open: Static Charge's Expert cost. The executable table gives 2/1/0 by mastery and
-`spells.txt` gives 2/2/0. The GrayFace patch takes the text's value. `mm6::spellManaRecovery` keeps the executable's.
+Known disagreement still open: Static Charge's Expert cost. The executable table gives 2/2/0 by mastery, row 13 at
+`0x4BDD70 + 14 * 13`. `spells.txt` gives 2/1/0, and its Expert text says "Casting cost 1 spell point". The GrayFace
+patch takes the text's value (C12). `mm6::spellManaRecovery` keeps the executable's.
 
 ## Not from the executable
 

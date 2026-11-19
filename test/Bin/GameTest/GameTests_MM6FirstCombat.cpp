@@ -133,6 +133,37 @@ GAME_TEST(MM6Melee, KillGoblinAndLootIt) {
     EXPECT_EQ(goldTape.delta(), 8);
 }
 
+GAME_TEST(MM6Melee, ClubAndEmptyHandSwingLikeAMace) {
+    // A club swung in silence and an empty hand swung with the staff's sound. MM6 plays the mace swing for both.
+    startNewGameThroughInput(game);
+    const ItemId mainHands[] = {static_cast<ItemId>(58), static_cast<ItemId>(50), ITEM_NULL}; // Club, Mace, nothing.
+    for (int i = 0; i < 3; i++) {
+        auto &inventory = pParty->pCharacters[i].inventory;
+        if (InventoryEntry mainHand = inventory.entry(ITEM_SLOT_MAIN_HAND))
+            inventory.take(mainHand);
+        if (mainHands[i] != ITEM_NULL)
+            inventory.equip(ITEM_SLOT_MAIN_HAND, Item(mainHands[i]));
+    }
+    const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+    const int goblin = game.spawnMonster(pParty->pos + ahead * 150, static_cast<MonsterId>(76), SPAWN_DUMMY)->id;
+    auto soundsTape = tapes.sounds();
+    auto recoveringTape = charTapes.areRecovering();
+    test.startTaping();
+
+    game.pointMouseAtActor(goblin);
+    for (int i = 0; i < 3; i++) { // Each swing hands the turn to the next member.
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+        game.tick(); // A silent frame keeps two equal swings apart on the tape.
+    }
+
+    auto swings = soundsTape.flatten().filter([](SoundId sound) {
+        return sound >= SOUND_shoot_blaster01 && sound <= SOUND_swing_with_sword02;
+    });
+    EXPECT_EQ(swings, tape(SOUND_swing_with_blunt_weapon03, SOUND_swing_with_blunt_weapon03, SOUND_swing_with_blunt_weapon03));
+    EXPECT_EQ(recoveringTape.back(), std::vector<bool>({true, true, true, false}));
+}
+
 GAME_TEST(MM6Potion, DrinkCureWoundsAndMagicPotion) {
     // MM6 potions could not be drunk, every herb and potion was "can not be used that way".
     startNewGameThroughInput(game);

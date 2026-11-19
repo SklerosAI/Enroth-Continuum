@@ -4697,6 +4697,8 @@ void Character::_42ECB5_CharacterAttacksActor() {
     } else {
         if (character->inventory.functionalEntry(ITEM_SLOT_MAIN_HAND) && main_hand)
             skill = main_hand->skill();
+        else if (engine->gameTitle() == GameTitle::MM6)
+            skill = SKILL_CLUB; // MM6.exe swings an empty or broken hand with the club's sound (0x42A36A).
 
         pTurnEngine->ApplyPlayerAction();
     }
@@ -4722,6 +4724,10 @@ void Character::_42ECB5_CharacterAttacksActor() {
             break;
         case SKILL_MACE:
             pAudioPlayer->playUISound(SOUND_swing_with_blunt_weapon03);
+            break;
+        case SKILL_CLUB:
+            if (engine->gameTitle() == GameTitle::MM6)
+                pAudioPlayer->playUISound(SOUND_swing_with_blunt_weapon03); // MM6.exe's jump table at 0x42A408 gives clubs the mace swing.
             break;
         case SKILL_BLASTER:
             pAudioPlayer->playUISound(SOUND_shoot_blaster01);

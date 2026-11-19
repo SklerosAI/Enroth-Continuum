@@ -171,6 +171,9 @@ full `MM6*` game suite, the unit tests and the MM7 controls, and took before and
 - **grayface-travel (W1, W7, W8, W9).** No map-crossing offer while flying, the travel autosave is written before the
   fare, travel leaves when its speech ends, map timers count from their last firing (new optional EC6 `TIMR`
   section). Left: no travel speech plays yet, so the W8 cap always applies.
+- **travel-dialog-icons.** The map-edge travel dialog draws MM6.exe's own layout, `evpan004`, the `outside` picture and
+  `BUTTYES1` and `BUTTESC1` at y 313, instead of MM7 icons MM6 lacks. Left: the dungeon entry and exit dialog still has
+  the wrong layout.
 
 Earlier MM6 lanes (menus and hirelings, services, rest and time rules) reached `master` before `ECv0.1.0`.
 

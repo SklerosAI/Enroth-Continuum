@@ -252,8 +252,8 @@ GAME_TEST(MM6TurnBased, PartyAndMonstersTakeTurns) {
     for (const DrawnQuad &quad : hourglass)
         EXPECT_EQ(quad.position, Pointi(433, 306));
     EXPECT_EQ(positionTape.size(), 1); // The party can't walk in turn-based mode.
-    EXPECT_CONTAINS(timeTape.adjacentDeltas(), 426); // A round is 100 game seconds.
-    EXPECT_MISSES(timeTape.adjacentDeltas(), 213); // MM7's movement phase.
+    EXPECT_CONTAINS(timeTape.adjacentDeltas(), 213); // A round is 50 game seconds.
+    EXPECT_MISSES(timeTape.adjacentDeltas(), 426);
     EXPECT_LT(goblinHpTape.min(), 13);
     const std::vector<std::pair<ObjectType, int>> &startQueue = *std::ranges::find_if(queueTape, [](const auto &queue) { return !queue.empty(); });
     const auto firstCharacter = std::ranges::find(startQueue, OBJECT_Character, &std::pair<ObjectType, int>::first);
@@ -262,6 +262,42 @@ GAME_TEST(MM6TurnBased, PartyAndMonstersTakeTurns) {
         EXPECT_LE(initiative, 5);
     EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(207)); // Entering turn-based mode.
     EXPECT_CONTAINS(soundsTape.flatten(), static_cast<SoundId>(206)); // Leaving it.
+}
+
+GAME_TEST(MM6TurnBased, RoundTakesFiftyGameSeconds) {
+    // A turn-based round moved the clock by 100 game seconds, twice what the GrayFace patch does, while the monsters
+    // only got one round's worth of moving.
+    std::vector<std::vector<Vec3f>> goblinPaths;
+    for (bool fix : {true, false}) {
+        SCOPED_TRACE(fmt::format("fix={}", fix));
+        test.prepareForNextTest();
+        engine->config->gameplay.FixTurnBasedTurnTime.setValue(fix);
+        startNewGameThroughInput(game);
+        const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+        const int goblin = game.spawnMonster(pParty->pos + ahead * 3000, static_cast<MonsterId>(76))->id;
+        auto turnBasedTape = tapes.turnBasedMode();
+        auto timeTape = tapes.custom([] { return pParty->GetPlayingTime().ticks(); });
+        auto goblinTape = actorTapes.custom(goblin, [](const Actor &actor) { return actor.pos; });
+        test.startTaping();
+
+        game.pressAndReleaseKey(PlatformKey::KEY_RETURN);
+        game.tick();
+        for (int round = 0; round < 3; round++) {
+            while (!(pTurnEngine->turn_stage == TE_ATTACK && pTurnEngine->flags & TE_PLAYER_TURN))
+                game.tick(); // The goblin walks towards the party.
+            while (pTurnEngine->turn_stage != TE_WAIT) {
+                game.pressAndReleaseKey(PlatformKey::KEY_B);
+                game.tick();
+            }
+        }
+
+        EXPECT_EQ(turnBasedTape, tape(true));
+        EXPECT_EQ(timeTape.adjacentDeltas().count(fix ? 213 : 426), 3);
+        EXPECT_EQ(timeTape.adjacentDeltas().count(fix ? 426 : 213), 0);
+        EXPECT_GT(goblinTape.size(), 1);
+        goblinPaths.emplace_back(goblinTape.begin(), goblinTape.end());
+    }
+    EXPECT_EQ(goblinPaths[0], goblinPaths[1]); // The clock is all that changes.
 }
 
 GAME_TEST(MM6Rest, RestAndHealOnGrass) {

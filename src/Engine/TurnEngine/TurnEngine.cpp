@@ -445,7 +445,8 @@ void stru262_TurnBased::NextTurn() {
     if (engine->gameTitle() == GameTitle::MM6) { // MM6 has no party movement phase, the monsters move next.
         turn_stage = TE_WAIT;
         ai_turn_timer = 64_ticks;
-        _494035_timed_effects__water_walking_damage__etc(Duration::fromSeconds(100));
+        const bool halfRound = engine->config->gameplay.FixTurnBasedTurnTime.value(); // GrayFace patches MM6.exe's 426.67 at 0x4B9370 to 213.
+        _494035_timed_effects__water_walking_damage__etc(halfRound ? 213_ticks : Duration::fromSeconds(100));
         return;
     }
 

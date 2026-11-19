@@ -261,6 +261,10 @@ class GameConfig : public Config {
             "In vanilla, every command of the event picked its own random member, so a check could read one member and "
             "a reward land on another, and a fountain could be drunk more than once."};
 
+        Bool FixTurnBasedTurnTime = {this, "fix_turn_based_turn_time", true,
+            "MM6 only. Advance the clock by 50 game seconds per turn-based round, as the GrayFace patch does. "
+            "In vanilla MM6 a round took 100 game seconds, so buffs and other timed effects ran out in half the rounds."};
+
         Float SpellFailureRecoveryMod = {this, "spell_failure_recovery_mod", 0.5f, &ValidateSpellFailureRecoveryMod,
             "Recovery time modifier when spell casting ended in failure for the reason where spell cannot be cast at all in current context. "
             "Context include situation where outdoor spell is casted indoor or targeted spell is casted with no characters on screen."};

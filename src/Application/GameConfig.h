@@ -256,6 +256,11 @@ class GameConfig : public Config {
             "Let a stronger buff replace a weaker one of the same kind even when it ends sooner, as the GrayFace patch does. "
             "In vanilla MM6 a buff that would end sooner was refused whatever its power. MM6 only."};
 
+        Bool FixInactivePartyEvents = {this, "fix_inactive_party_events", true,
+            "MM6 only. With nobody active, run each event for one member who can act, picked once for the whole event. "
+            "In vanilla, every command of the event picked its own random member, so a check could read one member and "
+            "a reward land on another, and a fountain could be drunk more than once."};
+
         Float SpellFailureRecoveryMod = {this, "spell_failure_recovery_mod", 0.5f, &ValidateSpellFailureRecoveryMod,
             "Recovery time modifier when spell casting ended in failure for the reason where spell cannot be cast at all in current context. "
             "Context include situation where outdoor spell is casted indoor or targeted spell is casted with no characters on screen."};

@@ -836,37 +836,17 @@ void spawnMonsters(int16_t typeindex, int16_t level, int count,
     }
 }
 
-static tl::generator<Character &> iterateCharacters(EvtTargetCharacter who, RandomEngine *rng) {
-    if (who >= CHOOSE_PLAYER1 && who <= CHOOSE_PLAYER4) {
-        co_yield pParty->pCharacters[std::to_underlying(who)];
-    } else if (who == CHOOSE_ACTIVE) {
-        if (pParty->hasActiveCharacter()) {
-            co_yield pParty->activeCharacter();
-        } else {
-            co_yield pParty->pCharacters[rng->random(4)]; // Nobody is active while all four characters recover.
-        }
-    } else if (who == CHOOSE_PARTY) {
-        for (Character &player : pParty->pCharacters)
-            co_yield player;
-    } else {
-        assert(who == CHOOSE_RANDOM);
-        co_yield pParty->pCharacters[rng->random(4)];
-    }
-}
-
 /**
- * @param who                           Characters that a variable command targets.
- * @param variable                      Variable of the command.
- * @param rng                           Random engine for `CHOOSE_RANDOM`.
- * @return                              Characters to run the command for. For a party variable this is just the first
- *                                      targeted character, since the whole party shares one value.
+ * @param rng                           Random engine for the pick.
+ * @return                              Member an MM6 event runs for when nobody is active, a random one among those who
+ *                                      can act, or the first one when nobody can.
  */
-static tl::generator<Character &> iterateCharacters(EvtTargetCharacter who, EvtVariable variable, RandomEngine *rng) {
-    for (Character &character : iterateCharacters(who, rng)) {
-        co_yield character;
-        if (isPartyVariable(variable))
-            co_return;
-    }
+static EvtTargetCharacter mm6InactivePartyEventTarget(RandomEngine *rng) {
+    std::vector<EvtTargetCharacter> candidates;
+    for (EvtTargetCharacter who : {CHOOSE_PLAYER1, CHOOSE_PLAYER2, CHOOSE_PLAYER3, CHOOSE_PLAYER4})
+        if (pParty->pCharacters[std::to_underlying(who)].CanAct())
+            candidates.push_back(who);
+    return candidates.empty() ? CHOOSE_PLAYER1 : rng->randomSample(candidates);
 }
 
 /**
@@ -1069,7 +1049,9 @@ EvtTransition EvtInterpreter::execute(int startStep) {
 
     int step = startStep;
 
-    _who = !pParty->hasActiveCharacter() ? CHOOSE_RANDOM : CHOOSE_ACTIVE;
+    _pickActiveStandIn = engine->gameTitle() == GameTitle::MM6 && engine->config->gameplay.FixInactivePartyEvents.value();
+    _activeStandIn.reset();
+    _who = pParty->hasActiveCharacter() || _pickActiveStandIn ? CHOOSE_ACTIVE : CHOOSE_RANDOM;
 
     while (step != -1)
         step = executeStep(step);
@@ -2210,4 +2192,36 @@ bool EvtInterpreter::validateVariableValue(const EvtInstruction &ir) const {
 const EvtInstruction *EvtInterpreter::instructionAt(int step) const {
     auto pos = std::ranges::find(_events, step, &EvtInstruction::step);
     return pos == _events.end() ? nullptr : &*pos;
+}
+
+tl::generator<Character &> EvtInterpreter::iterateCharacters(EvtTargetCharacter who, RandomEngine *rng) {
+    if (who == CHOOSE_ACTIVE && !pParty->hasActiveCharacter() && _pickActiveStandIn) {
+        if (!_activeStandIn)
+            _activeStandIn = mm6InactivePartyEventTarget(grng);
+        who = *_activeStandIn;
+    }
+
+    if (who >= CHOOSE_PLAYER1 && who <= CHOOSE_PLAYER4) {
+        co_yield pParty->pCharacters[std::to_underlying(who)];
+    } else if (who == CHOOSE_ACTIVE) {
+        if (pParty->hasActiveCharacter()) {
+            co_yield pParty->activeCharacter();
+        } else {
+            co_yield pParty->pCharacters[rng->random(4)]; // Nobody is active while all four characters recover.
+        }
+    } else if (who == CHOOSE_PARTY) {
+        for (Character &player : pParty->pCharacters)
+            co_yield player;
+    } else {
+        assert(who == CHOOSE_RANDOM);
+        co_yield pParty->pCharacters[rng->random(4)];
+    }
+}
+
+tl::generator<Character &> EvtInterpreter::iterateCharacters(EvtTargetCharacter who, EvtVariable variable, RandomEngine *rng) {
+    for (Character &character : iterateCharacters(who, rng)) {
+        co_yield character;
+        if (isPartyVariable(variable))
+            co_return;
+    }
 }

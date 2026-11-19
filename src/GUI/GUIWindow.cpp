@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <string>
 #include <sstream>
+#include <string_view>
 #include <utility>
 #include <list>
 #include <memory>
@@ -785,8 +786,36 @@ void SetUserInterface(PartyAlignment align) {
     UI_Create();
 }
 
+/**
+ * @param time                          Time left.
+ * @return                              The two largest nonzero units of the time, as the GrayFace patch shows a buff's
+ *                                      time left.
+ */
+static std::string makeTwoUnitDurationString(Duration time) {
+    const CivilDuration d = time.toCivilDuration();
+    const std::pair<int, std::string_view> units[] = {
+        {d.days, localization->str(d.days <= 1 ? LSTR_DAY_CAPITALIZED : LSTR_DAYS)},
+        {d.hours, localization->str(d.hours <= 1 ? LSTR_HOUR : LSTR_HOURS)},
+        {d.minutes, localization->str(d.minutes <= 1 ? LSTR_MINUTE : LSTR_MINUTES)},
+        {d.seconds, localization->str(d.seconds <= 1 ? LSTR_SECOND : LSTR_SECONDS)},
+    };
+
+    std::string str;
+    int shown = 0;
+    for (const auto &[value, unit] : units) {
+        if (!value || shown == 2)
+            continue;
+        if (shown++)
+            str += ' ';
+        str += fmt::format("{} {}", value, unit);
+    }
+    return str;
+}
+
 void DrawBuff_remaining_time_string(int uY, Recti window, Duration remaining_time, GUIFont *Font) {
-    GUIWindow::DrawText(Font, {32, uY}, colorTable.White, "\r020" + MakeDateTimeString(remaining_time), window);
+    const bool twoUnits = engine->gameTitle() == GameTitle::MM6 && engine->config->gameplay.FixBuffDurationText.value();
+    const std::string time = twoUnits ? makeTwoUnitDurationString(remaining_time) : MakeDateTimeString(remaining_time);
+    GUIWindow::DrawText(Font, {32, uY}, colorTable.White, "\r020" + time, window);
 }
 
 bool isHoldingMouseRightButton() {

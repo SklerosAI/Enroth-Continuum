@@ -1371,7 +1371,8 @@ void _494035_timed_effects__water_walking_damage__etc(Duration dt) {
     // New day dawns at 3am.
     Time next3am = Time::fromDurationSinceSilence((oldTime.toDurationSinceSilence() - Duration::fromHours(3)).roundedUp(Duration::fromDays(1)) + Duration::fromHours(3));
     const bool isMM6 = engine->gameTitle() == GameTitle::MM6;
-    if (isMM6 ? mm6::isNewDay(oldHour, oldDayOfMonth, pParty->uCurrentHour, pParty->uCurrentDayOfMonth) : oldTime < next3am && newTime >= next3am) {
+    const mm6::MonthStartRule monthStartRule = engine->config->gameplay.FixNewDayAtMonthStart.value() ? mm6::MONTH_START_GRAYFACE : mm6::MONTH_START_VANILLA;
+    if (isMM6 ? mm6::isNewDay(oldHour, oldDayOfMonth, pParty->uCurrentHour, pParty->uCurrentDayOfMonth, monthStartRule) : oldTime < next3am && newTime >= next3am) {
         pParty->pHirelings[0].hasUsedAbility = false;
         pParty->pHirelings[1].hasUsedAbility = false;
 

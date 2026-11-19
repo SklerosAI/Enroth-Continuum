@@ -10,17 +10,27 @@
 namespace mm6 {
 
 /**
+ * What a jump in time across a month end does to the day change.
+ */
+enum class MonthStartRule {
+    MONTH_START_VANILLA, // A jump across a month end with both hours past 3 am starts no new day.
+    MONTH_START_GRAYFACE // It does, the GrayFace patch compares the days for inequality.
+};
+using enum MonthStartRule;
+
+/**
  * @offset 0x4881C4
  *
  * @param oldHour                       Hour of the party clock before time moved on.
  * @param oldDayOfMonth                 Day of the month before time moved on, 0-based.
  * @param newHour                       Hour after time moved on.
  * @param newDayOfMonth                 Day of the month after time moved on, 0-based.
- * @return                              Whether MM6 starts a new day. A jump that lands before 3 am starts none, and
- *                                      neither does one across a month end with both hours past 3 am.
+ * @param rule                          What a jump across a month end does.
+ * @return                              Whether MM6 starts a new day. A jump that lands before 3 am starts none.
  */
-inline bool isNewDay(int oldHour, int oldDayOfMonth, int newHour, int newDayOfMonth) {
-    return newHour >= 3 && (oldHour < 3 || newDayOfMonth > oldDayOfMonth);
+inline bool isNewDay(int oldHour, int oldDayOfMonth, int newHour, int newDayOfMonth, MonthStartRule rule) {
+    const bool dayChanged = rule == MONTH_START_GRAYFACE ? newDayOfMonth != oldDayOfMonth : newDayOfMonth > oldDayOfMonth;
+    return newHour >= 3 && (oldHour < 3 || dayChanged);
 }
 
 /**

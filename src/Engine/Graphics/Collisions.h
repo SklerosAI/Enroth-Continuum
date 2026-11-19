@@ -122,7 +122,16 @@ void ProcessActorCollisionsBLV(Actor &actor, bool isAboveGround, bool isFlying);
 
 void ProcessActorCollisionsODM(Actor &actor, bool isFlying);
 
-void ProcessPartyCollisionsBLV(int sectorId, int min_party_move_delta_sqr, int *faceId, int *faceEvent);
+/**
+ * Moves the party through an indoor level by its velocity, sliding along whatever it runs into.
+ *
+ * @param sectorId                      Sector the party starts in.
+ * @param min_party_move_delta_sqr      Squared distance below which the party doesn't move.
+ * @param[out] faceId                   Floor face under the party's new position.
+ * @param[out] wallPlateEvent           Event of the last pressure plate wall or ceiling the party ran into,
+ *                                      left as is if there was none. Floor plates aren't reported here.
+ */
+void ProcessPartyCollisionsBLV(int sectorId, int min_party_move_delta_sqr, int *faceId, int *wallPlateEvent);
 
 void ProcessPartyCollisionsODM(Vec3f* partyNewPos, Vec3f* partyInputSpeed, int* floorFaceId, bool* partyNotOnModel, bool* partyHasHitModel, int* triggerID);
 

@@ -899,7 +899,7 @@ static Vec3f decorationSlideDirection() {
     return newDirection;
 }
 
-void ProcessPartyCollisionsBLV(int sectorId, int min_party_move_delta_sqr, int *faceId, int *faceEvent) {
+void ProcessPartyCollisionsBLV(int sectorId, int min_party_move_delta_sqr, int *faceId, int *wallPlateEvent) {
     collision_state.total_move_distance = 0;
     collision_state.radius_lo = pParty->radius;
     collision_state.radius_hi = pParty->radius;
@@ -1014,8 +1014,9 @@ void ProcessPartyCollisionsBLV(int sectorId, int min_party_move_delta_sqr, int *
             // set movement speed along sliding plane
             pParty->velocity = newDirection * dot(newDirection, pParty->velocity);
 
-            if (pParty->floor_face_id != collision_state.pid.id() && pFace->Pressure_Plate())
-                *faceEvent = pFace->eventId;
+            if (pParty->floor_face_id != collision_state.pid.id() && pFace->Pressure_Plate() &&
+                pFace->polygonType != POLYGON_Floor && pFace->polygonType != POLYGON_InBetweenFloorAndWall)
+                *wallPlateEvent = pFace->eventId;
 
             if (pFace->polygonType == POLYGON_Floor) {
                 float new_party_z_tmp = pIndoor->vertices[pFace->vertexIds[0]].z;

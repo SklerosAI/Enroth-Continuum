@@ -5,19 +5,20 @@
 > OpenEnroth is the engine project this repository builds upon. This fork retains its
 > upstream history, license, notices, and attribution, and intends to keep general
 > improvements suitable for upstream collaboration. See [CREDITS.md](CREDITS.md) and
-> [project/UPSTREAM.md](project/UPSTREAM.md).
+> [docs/upstream.md](docs/upstream.md).
 
 Enroth Continuum is a personal, native Apple Silicon launcher and fork for
 Might & Magic VII, with MM6 and MM8 data staging and later campaign support
 planned. The local **Atlas** app opens MM7 through this fork's bundled engine,
 manages local save backups, and offers optional private MM7 portrait and armor
 AC overrides. See [launcher/README.md](launcher/README.md) for the current scope
-and build instructions. MM6, MM8, and character transfer are not yet playable
-through this fork.
+and build instructions. The MM6 port is in progress, see
+[MM6 campaign status](docs/mm6-campaign-status.md). MM8 and character transfer
+are not yet playable through this fork.
 
 For a new Apple Silicon MM7 build, use the repository-owned
 [`tools/build_mm7_macos.py`](tools/build_mm7_macos.py) command. Its
-[verified offline route](project/MM7_CLEAN_OFFLINE_BUILD.md) builds the Mac
+[verified offline route](docs/build-and-dev-setup.md) builds the Mac
 helper and stages Atlas from tracked source without downloading an OpenEnroth
 binary or dependency archive. The staged candidate still needs visible
 save/reload acceptance before replacing the installed app. The ordinary shared
@@ -27,10 +28,11 @@ Original game assets remain local to each owner. The tracked
 [local-game-data/README.md](local-game-data/README.md) describes the deliberately
 ignored workspace location for MM6, MM7, and MM8 installations.
 
-Project decisions, verified campaign status, and source summaries are maintained in
-the [LLM wiki](.llm-wiki/Home_Enroth-Continuum.md), based on the University of
-Notre Dame CRC [llm-wiki-memory-template](https://github.com/crcresearch/llm-wiki-memory-template).
-The wiki contains no game assets or private saves.
+Project decisions, verified campaign status, architecture notes and development
+guides live in [docs/](docs/README.md), a knowledge base that follows the
+University of Notre Dame CRC
+[llm-wiki-memory-template](https://github.com/crcresearch/llm-wiki-memory-template)
+pattern. The docs contain no game assets or private saves.
 
 ---
 

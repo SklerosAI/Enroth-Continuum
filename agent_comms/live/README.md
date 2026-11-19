@@ -4,8 +4,8 @@ This directory is a **local-only**, non-Git mailbox for agents running on this
 Mac. It is ignored except for this protocol file. The canonical mailbox is
 `agent_comms/live/` in the main checkout.
 
-Agents in linked worktrees read and write the main checkout's copy. Its parent
-is the directory above `git rev-parse --path-format=absolute --git-common-dir`.
+Agents in linked worktrees read and write the main checkout's copy. The main
+checkout is the parent of `git rev-parse --path-format=absolute --git-common-dir`.
 A linked worktree's own `agent_comms/live/` is never read.
 
 ## Send a message

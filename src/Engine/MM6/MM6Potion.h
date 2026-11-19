@@ -13,6 +13,19 @@
 namespace mm6 {
 
 /**
+ * @param drinker                       Character that would drink.
+ * @param item                          Held item.
+ * @return                              Whether the item is an Essence (181-187) that the drinker already drank, so
+ *                                      drinking it would do nothing.
+ */
+inline bool isRepeatedEssence(const Character &drinker, ItemId item) {
+    const int id = std::to_underlying(item);
+    if (id < 181 || id > 187)
+        return false;
+    return drinker._pureStatPotionUsed[static_cast<Attribute>(id - 181)]; // Essences of Might to Luck follow the attribute order.
+}
+
+/**
  * Effect of an MM6 herb or potion on the character that eats or drinks it. MM6 potions have no power, every amount is
  * fixed.
  *

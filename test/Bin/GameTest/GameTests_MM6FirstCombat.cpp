@@ -199,6 +199,35 @@ GAME_TEST(MM6Potion, EmptyBottleStaysInHand) {
     EXPECT_MISSES(soundsTape.flatten(), SOUND_drink);
 }
 
+GAME_TEST(MM6Potion, RepeatedEssenceIsNotWasted) {
+    // A second Essence of Might did nothing and was used up anyway.
+    startNewGameThroughInput(game);
+    const Pointi first = giveToBackpack(0, static_cast<ItemId>(181));
+    const Pointi second = giveToBackpack(0, static_cast<ItemId>(181));
+    auto mightTape = charTapes.stat(0, ATTRIBUTE_MIGHT);
+    auto intellectTape = charTapes.stat(0, ATTRIBUTE_INTELLIGENCE);
+    auto essenceTape = tapes.totalItemCount(static_cast<ItemId>(181));
+    auto heldTape = tapes.custom([] { return pParty->pPickedItem.itemId; });
+    auto statusTape = tapes.statusBar();
+    auto soundsTape = tapes.sounds();
+    test.startTaping();
+
+    drinkFromBackpack(game, PlatformKey::KEY_DIGIT_1, first);
+    while (pParty->pCharacters[0].timeToRecovery)
+        game.tick(); // A recovering character can't be selected.
+    drinkFromBackpack(game, PlatformKey::KEY_DIGIT_1, second);
+
+    EXPECT_EQ(mightTape.delta(), 15);
+    EXPECT_EQ(mightTape.size(), 2);
+    EXPECT_EQ(intellectTape.delta(), -5);
+    EXPECT_EQ(intellectTape.size(), 2);
+    EXPECT_EQ(essenceTape, tape(2, 1));
+    EXPECT_EQ(heldTape, tape(ITEM_NULL, static_cast<ItemId>(181), ITEM_NULL, static_cast<ItemId>(181)));
+    EXPECT_EQ(soundsTape.flatten().count(SOUND_drink), 1);
+    EXPECT_EQ(soundsTape.flatten().count(SOUND_error), 1);
+    EXPECT_EQ(statusTape, tape(""));
+}
+
 GAME_TEST(MM6TurnBased, PartyAndMonstersTakeTurns) {
     // MM6 drew no turn-based indicator, the party had MM7's movement phase between the rounds, and every monster waited
     // for the party's first turn.

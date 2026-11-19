@@ -3396,6 +3396,10 @@ void Character::useItem(int targetCharacter, bool isPortraitClick) {
     }
     if (engine->gameTitle() == GameTitle::MM6 &&
         mm6::shouldBlockDirectUse(pParty->pPickedItem.itemId, pParty->pPickedItem.type())) {
+        if (engine->config->gameplay.FixWastedBlackPotion.value() && mm6::isRepeatedEssence(*playerAffected, pParty->pPickedItem.itemId)) {
+            pAudioPlayer->playUISound(SOUND_error);
+            return;
+        }
         if (!mm6::drinkPotion(*playerAffected, pParty->pPickedItem.itemId, pParty->GetPlayingTime())) {
             engine->_statusBar->setEvent(LSTR_S_CAN_NOT_BE_USED_THAT_WAY, pParty->pPickedItem.GetDisplayName());
             pAudioPlayer->playUISound(SOUND_error);

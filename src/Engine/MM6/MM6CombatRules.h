@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cstdint>
 #include <span>
 #include <stdexcept>
 
@@ -200,6 +201,19 @@ inline void breakItem(Character *character, Item *item) {
     character->playReaction(SPEECH_ITEM_BROKEN);
     item->SetBroken();
     pAudioPlayer->playUISound(SOUND_metal_vs_metal03h);
+}
+
+/**
+ * Shortens a recovery the way the GrayFace patch makes the MM6 "Increases rate of Recovery" enchantment work
+ * (`IncreaseRecoveryRateProc`, applied when a recovery starts).
+ *
+ * @param recovery                      Recovery the character is about to start.
+ * @param bonus                         Enchantment strength in percent, 0 without the enchantment.
+ * @return                              `recovery` divided by `1 + bonus / 100`, rounded to the nearest tick.
+ */
+inline Duration recoveryShortenedByEnchant(Duration recovery, int bonus) {
+    const int64_t rate = 100 + bonus;
+    return Duration::fromTicks((recovery.ticks() * 100 + rate / 2) / rate);
 }
 
 }  // namespace mm6

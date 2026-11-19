@@ -2234,10 +2234,14 @@ int Character::GetActualResistance(Attribute resistance) const {
     return result;
 }
 
+static bool recoveryEnchantShortensRecovery() {
+    return engine->gameTitle() == GameTitle::MM6 && engine->config->gameplay.FixRecoveryEnchant.value();
+}
+
 //----- (0048E8F5) --------------------------------------------------------
 bool Character::Recover(Duration dt) {
-    Duration timepassed =
-        dt * (100 + GetSpecialItemBonus(ITEM_ENCHANTMENT_OF_RECOVERY)) / 100;
+    const int rateBonus = recoveryEnchantShortensRecovery() ? 0 : GetSpecialItemBonus(ITEM_ENCHANTMENT_OF_RECOVERY);
+    Duration timepassed = dt * (100 + rateBonus) / 100;
 
     if (timeToRecovery > timepassed) {  // need more time till recovery
         timeToRecovery -= timepassed;
@@ -2257,11 +2261,18 @@ void Character::SetRecoveryTime(Duration rec) {
     // to avoid switching characters if endurance eliminates hit recovery
     if (rec <= 0_ticks) return;
 
+    rec = recoveryAfterEnchant(rec);
     if (rec > timeToRecovery) timeToRecovery = rec;
 
     if (pParty->hasActiveCharacter() && &pParty->activeCharacter() == this &&
         enchantingActiveCharacter == -1)
         pParty->switchToNextActiveCharacter();
+}
+
+Duration Character::recoveryAfterEnchant(Duration recovery) const {
+    if (!recoveryEnchantShortensRecovery())
+        return recovery;
+    return mm6::recoveryShortenedByEnchant(recovery, GetSpecialItemBonus(ITEM_ENCHANTMENT_OF_RECOVERY));
 }
 
 //----- (0048E9B7) --------------------------------------------------------
@@ -2296,7 +2307,7 @@ int Character::GetSpecialItemBonus(ItemEnchantment enchantment) const {
         if (enchantment == ITEM_ENCHANTMENT_OF_RECOVERY) {
             if (entry->specialEnchantment == ITEM_ENCHANTMENT_OF_RECOVERY ||
                 entry->itemId == ITEM_ARTIFACT_ELVEN_CHAINMAIL)
-                return 50;
+                return recoveryEnchantShortensRecovery() ? 10 : 50; // GrayFace's IncreaseRecoveryRateStrength default.
         }
 
         if (enchantment == ITEM_ENCHANTMENT_OF_FORCE) {

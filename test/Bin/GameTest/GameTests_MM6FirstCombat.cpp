@@ -164,6 +164,38 @@ GAME_TEST(MM6Melee, ClubAndEmptyHandSwingLikeAMace) {
     EXPECT_EQ(recoveringTape.back(), std::vector<bool>({true, true, true, false}));
 }
 
+GAME_TEST(MM6Melee, RecoveryEnchantShortensRecoveryByTenPercent) {
+    // The "Increases rate of Recovery" enchantment ran recovery 50% faster, MM7's rate. GrayFace's MM6 patch makes it
+    // shorten every recovery by 10%.
+    for (bool enchanted : {false, true}) {
+        SCOPED_TRACE(fmt::format("enchanted={}", enchanted));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        if (enchanted) {
+            Item helm(static_cast<ItemId>(89)); // Helm.
+            helm.specialEnchantment = ITEM_ENCHANTMENT_OF_RECOVERY;
+            auto &inventory = pParty->pCharacters[0].inventory;
+            if (InventoryEntry oldHelm = inventory.entry(ITEM_SLOT_HELMET))
+                inventory.take(oldHelm);
+            inventory.equip(ITEM_SLOT_HELMET, helm);
+        }
+        const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+        const int goblin = game.spawnMonster(pParty->pos + ahead * 150, static_cast<MonsterId>(76), SPAWN_DUMMY)->id;
+        auto recoveryTape = charTapes.custom(0, [](const Character &character) { return character.timeToRecovery.ticks(); });
+        test.startTaping();
+
+        game.pointMouseAtActor(goblin);
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+        while (pParty->pCharacters[0].timeToRecovery > 0_ticks)
+            game.tick(); // The knight recovers.
+
+        EXPECT_EQ(recoveryTape.max(), enchanted ? 187 : 206); // 206 / 1.1, rounded.
+        EXPECT_EQ(recoveryTape.size(), enchanted ? 32 : 35);
+        EXPECT_EQ(recoveryTape.back(), 0);
+    }
+}
+
 GAME_TEST(MM6Potion, DrinkCureWoundsAndMagicPotion) {
     // MM6 potions could not be drunk, every herb and potion was "can not be used that way".
     startNewGameThroughInput(game);
@@ -329,6 +361,47 @@ GAME_TEST(MM6TurnBased, RoundTakesFiftyGameSeconds) {
         goblinPaths.emplace_back(goblinTape.begin(), goblinTape.end());
     }
     EXPECT_EQ(goblinPaths[0], goblinPaths[1]); // The clock is all that changes.
+}
+
+GAME_TEST(MM6TurnBased, RecoveryEnchantShortensWaitForNextTurn) {
+    // In turn-based mode the "Increases rate of Recovery" enchantment did nothing. GrayFace's MM6 patch shortens the
+    // wait for the next turn by 10%.
+    for (bool enchanted : {false, true}) {
+        SCOPED_TRACE(fmt::format("enchanted={}", enchanted));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        if (enchanted) {
+            for (Character &character : pParty->pCharacters) {
+                Item helm(static_cast<ItemId>(89)); // Helm.
+                helm.specialEnchantment = ITEM_ENCHANTMENT_OF_RECOVERY;
+                if (InventoryEntry oldHelm = character.inventory.entry(ITEM_SLOT_HELMET))
+                    character.inventory.take(oldHelm);
+                character.inventory.equip(ITEM_SLOT_HELMET, helm);
+            }
+        }
+        const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+        const int goblin = game.spawnMonster(pParty->pos + ahead * 150, static_cast<MonsterId>(76), SPAWN_DUMMY)->id;
+        auto initiativeTape = tapes.custom([] {
+            std::vector<int> initiatives;
+            for (const TurnBased_QueueElem &element : pTurnEngine->pQueue)
+                if (element.uPackedID.type() == OBJECT_Character)
+                    initiatives.push_back(element.actor_initiative);
+            return initiatives;
+        });
+        auto activeTape = tapes.activeCharacterIndex();
+        test.startTaping();
+
+        game.pressAndReleaseKey(PlatformKey::KEY_RETURN);
+        game.tick();
+        while (!(pTurnEngine->turn_stage == TE_ATTACK && pTurnEngine->flags & TE_PLAYER_TURN))
+            game.tick(); // The monsters finish their opening move.
+        game.pointMouseAtActor(goblin);
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+
+        EXPECT_EQ(activeTape, tape(-1, 0, 2)); // The knight swings, then the turn passes on.
+        EXPECT_EQ(initiativeTape.back(), std::vector<int>({0, 1, 2, enchanted ? 90 : 99})); // The knight waits 99 / 1.1, rounded.
+    }
 }
 
 GAME_TEST(MM6Rest, RestAndHealOnGrass) {

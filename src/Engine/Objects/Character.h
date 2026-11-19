@@ -155,6 +155,15 @@ class Character {
     int GetBaseResistance(Attribute a2) const;
     int GetActualResistance(Attribute resistance) const;
     void SetRecoveryTime(Duration sRecoveryTime);
+
+    /**
+     * @param recovery                  Recovery the character is about to start.
+     * @return                          `recovery` shortened by an equipped "Increases rate of Recovery" enchantment
+     *                                  when that enchantment acts on new recoveries (MM6 with
+     *                                  `gameplay.fix_recovery_enchant`), `recovery` otherwise.
+     */
+    Duration recoveryAfterEnchant(Duration recovery) const;
+
     void RandomizeName();
     Condition GetMajorConditionIdx() const;
     int GetParameterBonus(int character_parameter) const;

@@ -508,6 +508,7 @@ void stru262_TurnBased::_406457(int a2) {
             v6 = pParty->pCharacters[v4].GetAttackRecoveryTime(false);
         }
         if (v6 < 30_ticks) v6 = 30_ticks;
+        v6 = pParty->pCharacters[v4].recoveryAfterEnchant(v6);
     } else {
         v6 =
             pMonsterStats

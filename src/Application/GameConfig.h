@@ -269,6 +269,10 @@ class GameConfig : public Config {
             "MM6 only. Move the outdoor sunlight to sunrise at 5:00 AM, as the GrayFace patch does. "
             "In vanilla, the first minute after 5:00 AM could keep the light of an earlier daytime hour."};
 
+        Bool FixBuffDurationText = {this, "fix_buff_duration_text", true,
+            "MM6 only. Show the two largest units of a buff's remaining time, as the GrayFace patch does. "
+            "In vanilla, a buff with a day and some minutes left showed only the day."};
+
         Float SpellFailureRecoveryMod = {this, "spell_failure_recovery_mod", 0.5f, &ValidateSpellFailureRecoveryMod,
             "Recovery time modifier when spell casting ended in failure for the reason where spell cannot be cast at all in current context. "
             "Context include situation where outdoor spell is casted indoor or targeted spell is casted with no characters on screen."};

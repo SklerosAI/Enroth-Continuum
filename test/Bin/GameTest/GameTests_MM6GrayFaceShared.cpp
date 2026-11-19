@@ -16,6 +16,7 @@
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/NPC.h"
 #include "Engine/Party.h"
+#include "Engine/Spells/SpellEnumFunctions.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
 #include "Engine/Tables/TextureFrameTable.h"
@@ -341,6 +342,42 @@ GAME_TEST(MM6GrayFaceShared, AwardsFollowActiveCharacter) {
     }).unique();
     EXPECT_EQ(activeTape, tape(0, 1));
     EXPECT_EQ(awardLines, tape(std::vector<std::string>(), std::vector<std::string>{"Returned the Prince"}, std::vector<std::string>{"Ended Winter"}));
+}
+
+GAME_TEST(MM6GrayFaceShared, BuffDurationShowsMinutesNextToDays) {
+    // A buff with a day and some minutes left showed only the day in vanilla MM6.
+    startNewGameThroughInput(game);
+    Character &sorcerer = pParty->pCharacters[2];
+    const SpellId spell = static_cast<SpellId>(3); // Protection from Fire.
+    sorcerer.pActiveSkills[skillForSpell(spell)] = CombinedSkillValue(25, MASTERY_EXPERT);
+    sorcerer.bHaveSpell[spell] = true;
+    sorcerer.mana = 100;
+    auto textTape = tapes.drawnTexts();
+    test.startTaping();
+
+    for (PlatformKey key : {PlatformKey::KEY_DIGIT_3, PlatformKey::KEY_C}) {
+        game.pressAndReleaseKey(key);
+        game.tick();
+    }
+    game.pressGuiButton(fmt::format("SpellBook_School{}", std::to_underlying(magicSchoolForSpell(spell))));
+    game.tick();
+    game.pressGuiButton(fmt::format("SpellBook_Spell{}", spellIndexInMagicSchool(spell)));
+    game.tick();
+    game.pressGuiButton(fmt::format("SpellBook_Spell{}", spellIndexInMagicSchool(spell))); // A second click casts it.
+    game.tick(2); // The book closes, the spell takes effect on the next frame.
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    for (int i = 0; i < 11; i++)
+        waitFiveMinutes(game);
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    game.pressButton(BUTTON_RIGHT, 550, 260); // The buff sprites on the right panel.
+    game.tick();
+    game.releaseButton(BUTTON_RIGHT);
+    game.tick();
+
+    auto timeLines = textTape.flatten().map([](const DrawnText &text) { return text.text; }).filter([](const std::string &text) { return text.starts_with("\r020"); });
+    EXPECT_EQ(timeLines.unique(), tape(std::string("\r0201 Day 4 Minutes"))); // 25 hours less 55 minutes of waiting and a few seconds of play.
 }
 
 GAME_TEST(MM6GrayFaceShared, AnimationFramesTurnWhenTheirTimeIsUp) {

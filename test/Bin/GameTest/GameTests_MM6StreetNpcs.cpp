@@ -1,11 +1,14 @@
 #include <algorithm>
 #include <memory>
 #include <stdexcept>
+#include <vector>
 
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Graphics/RenderEntities.h"
+#include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6NativeActorNpcPolicy.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
@@ -17,6 +20,18 @@
 #include "Engine/Tables/NPCTable.h"
 
 #include "GUI/GUIWindow.h"
+
+static AccessibleVector<RenderBillboardD3D::OpacityType> drawnBlendModes(ObjectType type) {
+    // Blend modes of this frame's billboards for objects of the given type, each mode once.
+    AccessibleVector<RenderBillboardD3D::OpacityType> result;
+    for (int i = 0; i < static_cast<int>(render->uNumBillboardsToDraw); ++i) {
+        const RenderBillboardD3D &billboard = render->pBillboardRenderListD3D[i];
+        if (billboard.sParentBillboardID >= 0 && pBillboardRenderList[billboard.sParentBillboardID].object_pid.type() == type &&
+            !std::ranges::contains(result, billboard.opacity))
+            result.push_back(billboard.opacity);
+    }
+    return result;
+}
 
 static void completeEditableMM6Party() {
     // Four skills for every character and no unspent attribute points, so that the creation screen accepts the party.
@@ -92,4 +107,17 @@ GAME_TEST(MM6StreetNpcs, Outc2LoadsWithItsStreetNpcs) {
     EXPECT_EQ(streetLinksTape, tape(58));
     EXPECT_EQ(poolTape, tape(58));
     EXPECT_EQ(otherLinksTape, tape(0));
+}
+
+GAME_TEST(MM6StreetNpcs, VillagersDrawOpaque) {
+    // Villagers and monsters outdoors were drawn with additive blending, so they looked washed out and see-through.
+    enterFirstMapFromNewGame(game);
+    auto actorsTape = tapes.custom([] { return drawnBlendModes(OBJECT_Actor); });
+    auto decorationsTape = tapes.custom([] { return drawnBlendModes(OBJECT_Decoration); });
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(-10217, -7978, 161), 90); // Down the street from Rosemary the Guard.
+    test.startTaping();
+    game.tick();
+
+    EXPECT_EQ(actorsTape, tape(std::vector{RenderBillboardD3D::Transparent})); // Alpha blended, the opaque modes are additive.
+    EXPECT_EQ(decorationsTape, tape(std::vector{RenderBillboardD3D::Transparent}));
 }

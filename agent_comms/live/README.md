@@ -1,13 +1,12 @@
 # Live local agent bridge
 
 This directory is a **local-only**, non-Git mailbox for agents running on this
-Mac. It is ignored except for this protocol file. Use the canonical path:
+Mac. It is ignored except for this protocol file. The canonical mailbox is
+`agent_comms/live/` in the main checkout.
 
-`/Users/tburton2/Desktop/Repos/Enroth-Continuum/agent_comms/live/`
-
-Agents in any worktree may read and write this exact path. Do not use a
-worktree-relative `agent_comms/live/` path unless that worktree is the main
-integration checkout.
+Agents in linked worktrees read and write the main checkout's copy. Its parent
+is the directory above `git rev-parse --path-format=absolute --git-common-dir`.
+A linked worktree's own `agent_comms/live/` is never read.
 
 ## Send a message
 

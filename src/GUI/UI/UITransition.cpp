@@ -91,10 +91,20 @@ GUIWindow_Travel::GUIWindow_Travel() : GUIWindow_Transition(WINDOW_TRAVEL, SCREE
         hint = localization->str(LSTR_EXIT_DIALOGUE);
     }
 
+    if (engine->gameTitle() == GameTitle::MM6) {
+        initializeMM6(hint);
+        return;
+    }
+
     createButtons(hint, localization->str(LSTR_STAY_IN_THIS_AREA), UIMSG_OnTravelByFoot, UIMSG_CancelTravelByFoot);
 }
 
 void GUIWindow_Travel::Update() {
+    if (engine->gameTitle() == GameTitle::MM6) {
+        updateMM6();
+        return;
+    }
+
     MapId destinationMap = pOutdoor->getTravelDestination(pParty->pos.x, pParty->pos.y).map();
 
     render->DrawQuad2D(_dialogueBackground, {477, 0});

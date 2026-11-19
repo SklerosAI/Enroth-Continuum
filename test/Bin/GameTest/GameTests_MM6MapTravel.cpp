@@ -12,10 +12,13 @@
 #include "Engine/Objects/CharacterEnumFunctions.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Party.h"
+#include "Engine/Resources/ResourceManager.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
 #include "Engine/Tables/MapTable.h"
 
 #include "GUI/GUIWindow.h"
+
+#include "Library/Color/ColorTable.h"
 
 static void startNewGameThroughInput(EngineController &game) {
     // Each character takes its first three optional skills and up to three points in every attribute, then the party
@@ -317,3 +320,46 @@ GAME_TEST(MM6MapTravel, FlyingLowOverTheEdgeOffersNoTrip) {
     EXPECT_EQ(xTape.back(), -22528); // Held at the edge.
 }
 
+GAME_TEST(MM6MapTravel, EdgeDialogArt) {
+    // The MM6 travel dialogue at a map edge drew MM7 art that MM6 doesn't have, its Yes and No buttons were missing
+    // texture signs over the HUD and the text sat on the HUD instead of on a panel.
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const MapId oute3 = pMapTable->GetMapInfo("oute3.odm");
+    const MapId outd3 = pMapTable->GetMapInfo("outd3.odm");
+    auto mapTape = tapes.map();
+    auto screenTape = tapes.screen();
+    auto quadsTape = tapes.hudQuads();
+    auto linesTape = tapes.titleLines();
+    test.startTaping();
+
+    for (bool confirm : {false, true}) {
+        game.teleportTo(oute3, Vec3f(-22425, -13896, 307), 180); // On the slope down to the west edge, facing it.
+        game.pressKey(PlatformKey::KEY_UP);
+        game.tick(3); // The party reaches the edge and the travel dialogue opens.
+        game.releaseKey(PlatformKey::KEY_UP);
+        ASSERT_EQ(screenTape.back(), SCREEN_CHANGE_LOCATION) << confirm;
+        game.pressAndReleaseButton(BUTTON_LEFT, confirm ? Pointi(516, 329) : Pointi(596, 329)); // The middle of the Yes or the No art.
+        game.tick();
+        if (!confirm) {
+            ASSERT_EQ(screenTape.back(), SCREEN_GAME);
+            continue;
+        }
+        game.skipLoadingScreen();
+        game.tick();
+    }
+
+    auto art = quadsTape.flatten();
+    auto missing = art.filter([](const DrawnQuad &quad) { return !quad.texture.empty() && !engine->resources()->iconSize(quad.texture); });
+    EXPECT_EQ(mapTape, tape(oute3, outd3));
+    EXPECT_EQ(screenTape.back(), SCREEN_GAME);
+    EXPECT_CONTAINS(art, (DrawnQuad{"evpan004", {481, 0}}));
+    EXPECT_CONTAINS(art, (DrawnQuad{"outside", {525, 34}}));
+    EXPECT_CONTAINS(art, (DrawnQuad{"buttyes1", {486, 313}}));
+    EXPECT_CONTAINS(art, (DrawnQuad{"buttesc1", {566, 313}}));
+    EXPECT_EQ(missing, AccessibleVector<DrawnQuad>());
+    auto lines = linesTape.flatten();
+    EXPECT_CONTAINS(lines, (DrawnLine{"Castle Ironfist", {504, 2}, colorTable.White}));
+    EXPECT_CONTAINS(lines, (DrawnLine{"It will take 5 days", {491, 156}, colorTable.White}));
+    EXPECT_CONTAINS(lines, (DrawnLine{"Sorpigal?", {524, 246}, colorTable.White}));
+}

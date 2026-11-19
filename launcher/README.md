@@ -109,7 +109,7 @@ When MM7 Private mods is active, Atlas passes
 `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` as `1` or `0` from its own saved choice
 (`mods.mm6.vendorRefreshOnEntry`), which the same toggle writes. Atlas also
 passes `ENROTH_MM7_ALL_ARTIFACTS_STORAGE=1` only when its MM7 toggle
-and Private mods are both on; vanilla MM7, MM6 and upstream OpenEnroth receive
+and Private mods are both on. Vanilla MM7, MM6 and upstream OpenEnroth receive
 no active MM7 artifact/storage flag.
 The chest reroll toggle similarly passes `ENROTH_MM7_CHEST_REROLL=1` only to a
 Private mods MM7 launch. Its Reroll button appears on unclaimed chests whose

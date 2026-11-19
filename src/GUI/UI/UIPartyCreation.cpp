@@ -290,6 +290,8 @@ bool PartyCreationUI_Loop() {
     pNPCStats->pGroups = pNPCStats->pOriginalGroups;
     if (engine->gameTitle() != GameTitle::MM6)
         pNPCStats->pNPCData[3].flags |= NPC_HIRED; // Lady Margaret. MM6's NPC 3 is Frank Fairchild in the Town Hall.
+    if (engine->gameTitle() == GameTitle::MM6)
+        pNPCStats->pAdditionalNPC.fill(NPCData()); // Street NPC generation keeps each slot's news topic, as MM6's 0x469210 does.
 
     pGUIWindow_CurrentMenu = std::make_unique<GUIWindow_PartyCreation>();
     return !PartyCreationUI_LoopInternal();

@@ -29,6 +29,7 @@
 static const Vec3f kMarianneSpot(-10333, -8532, 300); // In front of the general store, Marianne the Teacher stands close by.
 static const Vec3f kGingerSpot(-6360, -5864, 300); // Ginger the Negotiator stands to the east.
 static const Vec3f kMariaSpot(-12028, -7957, 300); // Maria the Scholar stands to the east.
+static const Vec3f kCastleIronfistVillagerSpot(15556, 2776, 96); // A villager stands to the east, south of the castle.
 
 static void enterNewSorpigal(EngineController &game) {
     // Default party through the creation screen, then New Sorpigal. The test-only new-game callback seeds the map
@@ -492,4 +493,24 @@ GAME_TEST(MM6NpcDialogue, StreetNpcBribeDiplomacy) {
     EXPECT_EQ(goldTape, tape(200, 153));
     EXPECT_EQ(reputationTape, tape(0, -14));
     EXPECT_EQ(dialogueTape, tape(DIALOGUE_NULL, DIALOGUE_MAIN, DIALOGUE_BRIBE));
+}
+
+GAME_TEST(MM6NpcDialogue, StreetNpcNewsAfterNewGame) {
+    // A New Sorpigal villager of a new game told Castle Ironfist's news, the news a villager of the last game had
+    // picked when the party talked to her there.
+    auto mapTape = tapes.map();
+    auto optionsTape = tapes.custom([] { return dialogueOptionLabels(); });
+    enterNewSorpigal(game);
+    test.startTaping();
+    game.teleportTo(pMapTable->GetMapInfo("outd3.odm"), kCastleIronfistVillagerSpot, 0);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE); // Cora, the villager there.
+    game.tick();
+    leaveConversation(game);
+    game.goToMainMenu();
+    enterNewSorpigal(game);
+    talkToMarianne(game); // Philomena stands there in this game.
+
+    EXPECT_EQ(mapTape, tape(pMapTable->GetMapInfo("oute3.odm"), pMapTable->GetMapInfo("outd3.odm"), pMapTable->GetMapInfo("oute3.odm")));
+    EXPECT_EQ(optionsTape, tape(std::vector<std::string>(), std::vector<std::string>{"Beg", "Threat", "Bribe 50 Gold"}, std::vector<std::string>(),
+                                std::vector<std::string>{"Magic Weapons", "Join", "Abandoned Temple"}));
 }

@@ -1,3 +1,5 @@
+#include <unistd.h>
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -22,8 +24,11 @@
 #include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/MapTable.h"
+#include "GUI/UI/UIRest.h"
 #include "GUI/UI/UISaveLoad.h"
 #include "Io/Mouse.h"
+
+#include "Utility/ScopeGuard.h"
 
 static constexpr std::array<std::string_view, 16> mm6Skies = {
     "sky01", "sky02", "sky03", "sky05", "sky06", "sky07", "sky08", "sky09", "sky10", "sky12", "sky13", "sky14", "sky15", "sky16", "sky18", "sky19"};
@@ -100,16 +105,72 @@ static void toOutd3AndBack(EngineController &game) {
     walkOverEdge(game, pMapTable->GetMapInfo("outd3.odm"), Vec3f(22450, -10000, 164), 0); // The east edge.
 }
 
-static void toD02AndBack(EngineController &game) {
-    const MapId d02 = pMapTable->GetMapInfo("d02.blv");
+static void enterD02(EngineController &game) {
     game.teleportTo(pMapTable->GetMapInfo("oute3.odm"), Vec3f(-21456, -286, 193), 90); // In front of the d02 door, facing it.
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();
     confirmTransition(game);
-    game.teleportTo(d02, Vec3f(16384, -19626, 864.5f), 270); // In front of the way out, facing it.
+}
+
+static void leaveD02(EngineController &game) {
+    game.teleportTo(pMapTable->GetMapInfo("d02.blv"), Vec3f(16384, -19626, 864.5f), 270); // In front of the way out, facing it.
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();
     confirmTransition(game);
+}
+
+static void toD02AndBack(EngineController &game) {
+    enterD02(game);
+    leaveD02(game);
+}
+
+static void waitHours(EngineController &game, int hours) {
+    // Waits in the rest screen an hour at a time, then closes it.
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    for (int hour = 0; hour < hours; hour++) {
+        game.pressGuiButton("Rest_Wait1Hour");
+        game.tick();
+        while (currentRestType != REST_NONE)
+            game.tick(); // The hour passes.
+    }
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+}
+
+static std::filesystem::path createTempProfile() {
+    // An owner-only mm6-restart- folder in the system temp folder, the only kind of profile a test saves into.
+    const std::filesystem::path tempRoot = std::filesystem::canonical(std::filesystem::temp_directory_path());
+    std::string created = (tempRoot / "mm6-restart-visit-XXXXXX").string();
+    if (!mkdtemp(created.data()))
+        throw std::runtime_error("Can't create a temporary MM6 profile");
+    return std::filesystem::canonical(created);
+}
+
+static void saveAndLoadFromMenu(EngineController &game) {
+    // Saves into a new slot from the Escape menu, then loads that slot from the Escape menu.
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressGuiButton("GameMenu_SaveGame");
+    game.tick(2);
+    game.doubleClickGuiButton("SaveMenu_Slot0"); // The new save slot.
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_T);
+    game.tick();
+    game.pressGuiButton("SaveMenu_Save");
+    game.tick(3); // The button animates for a frame, then posts the save for the next one.
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressGuiButton("GameMenu_LoadGame");
+    game.tick(3);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto slot = std::ranges::find(slots, std::string("save000.ec6"), &SavegameSlot::fileName);
+    ASSERT_NE(slot, slots.end());
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", slot - slots.begin()));
+    game.tick(2);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick();
 }
 
 static std::string outdoorSky() {
@@ -216,10 +277,57 @@ GAME_TEST(MM6MapVisit, FountainRefillsADayAfterTheLastVisit) {
     EXPECT_GE(timeTape.back() - timeTape.front(), Duration::fromDays(10));
 }
 
-GAME_TEST(MM6MapVisit, TimerWithoutIntervalWaitsFromTheNextMidnight) {
+GAME_TEST(MM6MapVisit, FountainRefillCountsDownWhileAway) {
+    // An MM6 map started its timers over on every visit, so a drained fountain the party left wasn't full again on a
+    // return after its refill time, it waited for the next midnight from the return. Its refill comes a day after the
+    // last one, also across a save and a load while the party is away.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const std::string healed = engine->_levelStrings[14]; // Hit points restored.
+    const std::string empty = engine->_levelStrings[8]; // Refreshing, and nothing else.
+    const MapId oute3 = pMapTable->GetMapInfo("oute3.odm");
+    const MapId d02 = pMapTable->GetMapInfo("d02.blv");
+    auto mapTape = tapes.map();
+    auto statusTape = tapes.statusBar();
+    auto timeTape = tapes.time();
+    auto visitTape = tapes.custom([] { return loadedMapLastVisit(); });
+    test.startTaping();
+
+    game.tick(10); // The event processor checks the map's timers 30 game seconds after the map loads, the fountain fills.
+    faceFountain(game);
+    for (int drink = 0; drink < 30; drink++)
+        drinkFromFountain(game);
+    ASSERT_EQ(statusTape.back(), healed);
+    drinkFromFountain(game);
+    ASSERT_EQ(statusTape.back(), empty);
+    waitHours(game, 14); // Up to the last hour before midnight, when the original refill would have come.
+    enterD02(game);
+    engine->config->debug.NoDamage.setValue(true); // The dungeon's monsters attack the party through the wait.
+    game.tick(12000); // Ten hours, the dungeon's monsters refuse a rest.
+    saveAndLoadFromMenu(game);
+    leaveD02(game);
+    game.tick(10); // The event processor checks the map's timers 30 game seconds after the map loads.
+    faceFountain(game);
+    drinkFromFountain(game);
+
+    EXPECT_EQ(statusTape.back(), healed);
+    EXPECT_EQ(mapTape.back(), oute3);
+    EXPECT_CONTAINS(mapTape, d02);
+    EXPECT_LT(timeTape.back() - visitTape.back(), Duration::fromDays(1)); // Back less than a day after leaving.
+    EXPECT_GT(timeTape.back() - timeTape.front(), Duration::fromDays(1)); // More than a day after the fountain filled on arrival.
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6MapVisit, TimerWithoutIntervalWaitsForItsTimeOfDay) {
     // An MM6 OnTimer without an interval went off as soon as the party entered its map, so the Temple of the Sun ran
-    // its night, dawn and sunset timers at once. Its dawn timer goes off first 88 hours after the midnight that follows
-    // the arrival.
+    // its night, dawn and sunset timers at once. Its dawn timer goes off first 88 hours after the midnight that began
+    // the arrival day, the time of day the GrayFace patch counts from.
     startNewGameThroughInput(game);
     const MapId t4 = pMapTable->GetMapInfo("t4.blv");
     game.teleportTo(pMapTable->GetMapInfo("outd2.odm"), Vec3f(-7608, 4032, 96), 180); // In front of the temple door, facing it.
@@ -228,7 +336,7 @@ GAME_TEST(MM6MapVisit, TimerWithoutIntervalWaitsFromTheNextMidnight) {
     confirmTransition(game);
     ASSERT_EQ(engine->_currentLoadedMapId, t4);
     engine->config->debug.NoDamage.setValue(true); // The temple's monsters hunt the party through the four-day wait.
-    const Time dawn = Time::fromDays(4) + Duration::fromHours(16);
+    const Time dawn = Time::fromDays(3) + Duration::fromHours(16);
     using TempleState = std::tuple<std::string, bool, bool>; // The window's sky, and whether each of the two lights is on.
     const TempleState night("sky_nit1", false, false);
     const TempleState lit("orair256", true, true);
@@ -239,7 +347,7 @@ GAME_TEST(MM6MapVisit, TimerWithoutIntervalWaitsFromTheNextMidnight) {
     });
     test.startTaping();
 
-    game.tick(123598); // Up to the last frame before 16:00 on the fourth day.
+    game.tick(94798); // Up to the last frame before 16:00 on the third day.
     EXPECT_LT(timeTape.back(), dawn);
     EXPECT_EQ(templeTape, tape(night));
     game.tick(2); // The event processor's next timer check runs the dawn timer.

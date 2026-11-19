@@ -8,6 +8,7 @@
 
 #include "Engine/GameTitle.h"
 
+#include "MM6MapVisit.h"
 #include "MM6ParkedMapSection.h"
 #include "MM6RawSaveFields.h"
 #include "MM6RawSessionStage.h"
@@ -19,11 +20,13 @@ inline constexpr std::uint16_t SESSION_SAVE_VERSION = 7;
 /**
  * EC6 v7, a save on any map. The nineteen v2 raw owners hold the party, and `MAPS` the native delta of every map with
  * the visited maps as the party left them. `PRKM` holds the actors, ground items and event variables of the active map
- * and of every visited map.
+ * and of every visited map. The optional `TIMR` holds when each map's periodic timers last went off, a save written
+ * before it existed has none.
  */
 struct SessionSaveFields {
     RawSaveFields raw;
     std::vector<ParkedMapRuntime> maps;
+    MapTimerFirings timers;
 };
 
 std::vector<std::uint8_t> encodeSessionSave(const SessionSaveFields &fields, GameTitle title);
@@ -39,6 +42,7 @@ SessionSaveFields decodeSessionSave(std::span<const std::uint8_t> bytes, GameTit
 struct StagedSessionSave {
     StagedRawSessionFields represented;
     std::vector<ParkedMapRuntime> maps;
+    MapTimerFirings timers;
 };
 
 /**

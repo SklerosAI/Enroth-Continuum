@@ -31,6 +31,7 @@
 #include "MM6DurableSaveFields.h"
 #include "MM6HirelingSaveRuntime.h"
 #include "MM6LoadedMapSource.h"
+#include "MM6MapTimerSection.h"
 #include "MM6MapTransition.h"
 #include "MM6NpcSaveFields.h"
 #include "MM6NpcStaticBaseline.h"
@@ -72,6 +73,7 @@ std::vector<std::uint8_t> encodeSessionSave(const SessionSaveFields &fields, Gam
     SaveContainer container = decodeSaveContainer(encodeRawSave(fields.raw, title));
     container.version = SESSION_SAVE_VERSION;
     container.sections.push_back(encodeParkedMapSection(fields.maps, title));
+    container.sections.push_back(encodeMapTimerSection(fields.timers, title));
     return encodeSaveContainer(container);
 }
 
@@ -80,9 +82,11 @@ SessionSaveFields decodeSessionSave(std::span<const std::uint8_t> bytes, GameTit
     SaveContainer container = decodeSaveContainer(bytes);
     if (container.version != SESSION_SAVE_VERSION)
         throw std::runtime_error("MM6 session save has another EC6 version");
+    SessionSaveFields result;
+    result.timers = decodeMapTimerSection(container, title);
+    std::erase_if(container.sections, [](const SaveSection &section) { return section.tag == std::array{'T', 'I', 'M', 'R'}; });
     if (container.sections.size() != RAW_SECTIONS + 1)
         throw std::runtime_error("MM6 session save has a missing or extra section");
-    SessionSaveFields result;
     result.maps = decodeParkedMapSection(container, title);
     std::erase_if(container.sections, [](const SaveSection &section) { return section.tag == std::array{'P', 'R', 'K', 'M'}; });
     container.version = 2;
@@ -116,7 +120,7 @@ std::unique_ptr<StagedSessionSave> stageSessionSave(std::span<const std::uint8_t
         stageRawSessionFields(encodeRawSave(fields.raw, title), freshNpcs, maps.expectedNames(),
                               [&maps](std::string_view name) { return maps.readBase(name); }, isMM6ItemTemplate,
                               *pItemTable, pOverlayTable->overlays.size(), pTileTable->tileCount(), title),
-        std::move(fields.maps)});
+        std::move(fields.maps), std::move(fields.timers)});
     if (result->represented.needsRecovery)
         throw std::runtime_error("MM6 session save needs recovery");
     return result;
@@ -177,6 +181,7 @@ std::vector<std::uint8_t> captureSessionSave(const RawSaveFields &sessionTemplat
         throw std::runtime_error("MM6 session save has no delta for its active map");
     for (SessionMap &map : session)
         fields.maps.push_back(std::move(map.runtime));
+    fields.timers = mapTimerFirings();
     return encodeSessionSave(fields, title);
 }
 
@@ -205,6 +210,7 @@ void publishSessionSave(StagedSessionSave *staged, GameTitle title) {
         maps.push_back(std::move(map));
     }
     restoreSessionMaps(std::move(maps));
+    mapTimerFirings() = std::move(staged->timers);
     admitChestMapLoad(activeMap);
     engine->_pendingTransition = MapDestination(activeMap, MAP_START_POINT_PARTY);
     engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;

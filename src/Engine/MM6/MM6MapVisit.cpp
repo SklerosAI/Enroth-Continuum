@@ -46,4 +46,42 @@ Time mapTimerFirstAlarm(EvtOpcode trigger, Duration interval, Duration timeInsid
     return now + interval;
 }
 
+MapTimerFirings &mapTimerFirings() {
+    static MapTimerFirings firings;
+    return firings;
+}
+
+int mapTimerIntervalIndex(Duration interval) {
+    if (interval == Duration::fromYears(1))
+        return 0;
+    if (interval == Duration::fromDays(28))
+        return 1;
+    if (interval == Duration::fromDays(7))
+        return 2;
+    assert(interval == Duration::fromDays(1));
+    return 3;
+}
+
+Time mapTimerFirstAlarmAfterLastFiring(EvtOpcode trigger, Duration interval, Duration timeInsideDay, Time lastVisit, Time lastFiring,
+                                       Time now) {
+    assert(trigger == EVENT_OnTimer || trigger == EVENT_OnLongTimer);
+    if (trigger == EVENT_OnLongTimer) {
+        if (!lastVisit)
+            return Time();
+        if (!lastFiring || lastVisit - lastFiring > interval)
+            lastFiring = lastVisit; // A save without TIMR, or a timer the map's script didn't have on the last visit.
+        return lastFiring + interval;
+    }
+    if (interval == Duration::fromDays(1)) {
+        const Time today = Time::fromDays(now.toDays()) + timeInsideDay;
+        return today > now ? today : today + interval;
+    }
+    return now + interval;
+}
+
+Time longTimerNextAlarm(Time alarm, Duration interval, Time now) {
+    const Time next = alarm + interval;
+    return next > now ? next : now + interval;
+}
+
 } // namespace mm6

@@ -69,7 +69,7 @@ void leaveMap(MapId target);
 void restoreParkedMap(std::string_view deltaName, bool respawned);
 
 /**
- * Forgets every parked map, for a new or loaded game.
+ * Forgets every parked map and when the maps' periodic timers last went off, for a new or loaded game.
  */
 void forgetParkedMaps();
 

@@ -154,11 +154,15 @@ SaveHeaderFields decodeV6OutdoorSlotShell(std::span<const std::uint8_t> bytes) {
 /**
  * @param bytes                         Bytes of a v7 slot file.
  * @return                              HEAD of the nineteen v2 raw owners. Throws unless they are followed by a
- *                                      required PRKM, whose payload is left to the caller's validator.
+ *                                      required PRKM and an optional TIMR, whose payloads are left to the caller's
+ *                                      validator.
  */
 SaveHeaderFields decodeV7SlotShell(std::span<const std::uint8_t> bytes) {
     SaveContainer container = decodeSaveContainer(bytes);
     constexpr std::array<char, 4> parkedTag = {'P', 'R', 'K', 'M'};
+    constexpr std::array<char, 4> timerTag = {'T', 'I', 'M', 'R'};
+    if (!container.sections.empty() && container.sections.back().tag == timerTag && !container.sections.back().required)
+        container.sections.pop_back();
     if (container.version != 7 || container.sections.size() != 20 ||
         container.sections.back().tag != parkedTag || !container.sections.back().required)
         throw std::runtime_error("MM6 v7 slot lacks exact PRKM shell");

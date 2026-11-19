@@ -294,6 +294,11 @@ class GameConfig : public Config {
             "MM6 only. Show the two largest units of a buff's remaining time, as the GrayFace patch does. "
             "In vanilla, a buff with a day and some minutes left showed only the day."};
 
+        Bool FixMapTimers = {this, "fix_map_timers", true,
+            "MM6 only. Keep each map's periodic timers counting from their last firing while the party is away, and start a "
+            "daily timer today when its time hasn't come yet, as the GrayFace patch does. In vanilla, every visit restarted "
+            "the countdown, so a fountain the party left just before its refill waited another whole day."};
+
         Bool FixTravelAutosave = {this, "fix_travel_autosave", true,
             "MM6 only. Write the coach and boat autosave before the fare is paid and the trip's days pass. In vanilla, the "
             "autosave was written after, so loading it lost the fare and the days without the trip."};

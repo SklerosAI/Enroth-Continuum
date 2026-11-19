@@ -149,6 +149,7 @@ void restoreParkedMap(std::string_view deltaName, bool respawned) {
 
 void forgetParkedMaps() {
     parkedMaps.clear();
+    mapTimerFirings().clear();
 }
 
 std::vector<SessionMap> captureSessionMaps() {

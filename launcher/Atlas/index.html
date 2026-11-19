@@ -151,8 +151,9 @@
     for(const save of state.saves){const li=document.createElement('li'),name=document.createElement('span'),date=document.createElement('time');name.textContent=save.name;date.textContent=save.date;li.append(name,date);saves.append(li)}
     safeText('mod-mode',state.modsEnabled?'Current play mode · Private mods':'Current play mode · Vanilla');
     safeText('mod-toggle',state.modsEnabled?'Play Vanilla':'Use private mods');
-    safeText('vendor-refresh-toggle',state.vendorRefreshOnEntry?'Turn off':'Turn on');
-    safeText('vendor-refresh-status',state.vendorRefreshOnEntry?(state.modsEnabled?'On for next MM7 launch · MM6 queued':'Saved · enable Private mods for MM7'):'Off · normal refresh schedule');
+    const mm7Vendor=state.vendorRefreshOnEntry,mm6Vendor=state.mm6VendorRefreshOnEntry;
+    safeText('vendor-refresh-toggle',mm7Vendor||mm6Vendor?'Turn off':'Turn on');
+    safeText('vendor-refresh-status',mm6Vendor?(mm7Vendor?(state.modsEnabled?'On for next MM6 and MM7 launch':'On for next MM6 launch · enable Private mods for MM7'):'On for next MM6 launch'):mm7Vendor?(state.modsEnabled?'On for next MM7 launch':'Saved · enable Private mods for MM7'):'Off · normal refresh schedule');
     safeText('all-artifacts-storage-toggle',state.allArtifactsStorage?'Turn off':'Turn on');
     safeText('all-artifacts-storage-status',state.allArtifactsStorage?(state.modsEnabled?'On for next MM7 launch':'Saved · enable Private mods for MM7'):'Off · normal artifact cap');
     safeText('chest-reroll-toggle',state.chestReroll?'Turn off':'Turn on');

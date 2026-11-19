@@ -125,6 +125,10 @@ add_library(engine_mm6_outdoor_wire STATIC MM6OutdoorWire.cpp MM6OutdoorWire.h
     MM6NativeActorResistanceBytes.h)
 target_check_style(engine_mm6_outdoor_wire)
 
+add_library(engine_mm6_executable STATIC MM6Executable.cpp MM6Executable.h)
+target_link_libraries(engine_mm6_executable PUBLIC engine_resources utility)
+target_check_style(engine_mm6_executable)
+
 add_library(engine_mm6_map_visit STATIC MM6MapVisit.cpp MM6MapVisit.h)
 target_link_libraries(engine_mm6_map_visit PUBLIC core_time utility)
 target_check_style(engine_mm6_map_visit)
@@ -155,6 +159,11 @@ target_link_libraries(engine_mm6_save_runtime PUBLIC engine_mm6_spawn_actor_sect
 target_link_libraries(application PUBLIC engine_mm6_save_runtime)
 
 if(OE_BUILD_TESTS)
+    add_library(test_engine_mm6_executable OBJECT Tests/MM6Executable_ut.cpp)
+    target_link_libraries(test_engine_mm6_executable PUBLIC testing_unit engine)
+    target_check_style(test_engine_mm6_executable)
+    target_link_libraries(OpenEnroth_UnitTest PUBLIC test_engine_mm6_executable)
+
     add_library(test_engine_mm6_actual_stat_condition OBJECT Tests/MM6ActualStatCondition_ut.cpp)
     target_link_libraries(test_engine_mm6_actual_stat_condition PUBLIC testing_unit)
     target_check_style(test_engine_mm6_actual_stat_condition)

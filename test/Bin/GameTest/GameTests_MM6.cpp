@@ -72,10 +72,7 @@
 #include "Library/Platform/Null/NullWindow.h"
 #include "Library/Platform/Proxy/ProxyBase.h"
 
-#include "Utility/Exception.h"
 
-#include "GameTestOptions.h"
-#include "MM6HeadlessRules.h"
 
 namespace {
 template<class T>
@@ -102,8 +99,6 @@ GAME_TEST(MM6Headless, StartupAndChestGuard) {
     EXPECT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
     EXPECT_NE(dynamic_cast<MemoryFileSystem *>(ufs), nullptr);
     EXPECT_FALSE(ufs->exists("saves"));
-    for (std::string_view name : mm6HeadlessRuleNames)
-        EXPECT_TRUE(ufs->exists("rules/" + std::string(name)));
 
     // This is the first live-engine boundary, not a claim that the opening
     // map can load. Keep the existing MM6 guard closed until chest items are
@@ -1069,39 +1064,3 @@ TEST(MM6HeadlessMenuAssets, TitleSpecificLookup) {
     EXPECT_EQ(mm7.buttons[3].position, Pointi(495, 337));
 }
 
-TEST(MM6HeadlessRules, RejectsMissingRulesOption) {
-    char app[] = "game-test";
-    char gameFlag[] = "--game";
-    char mm6[] = "mm6";
-    char headless[] = "--headless";
-    char dataFlag[] = "--data-path";
-    char testFlag[] = "--test-path";
-    char dot[] = ".";
-    char *argv[] = {app, gameFlag, mm6, headless, dataFlag, dot, testFlag, dot};
-    EXPECT_THROW(GameTestOptions::parse(8, argv), Exception);
-}
-
-TEST(MM6HeadlessRules, SeedsOnlyCompleteBoundedRuleSet) {
-    MemoryFileSystem source("source");
-    MemoryFileSystem destination("destination");
-    for (std::string_view name : mm6HeadlessRuleNames)
-        source.write(name, Blob::fromString("{}"));
-
-    source.remove("spells.json");
-    EXPECT_THROW(seedMm6HeadlessRules(source, &destination), Exception);
-    EXPECT_FALSE(destination.exists("rules"));
-
-    source.write("spells.json", Blob::fromString("{}"));
-    source.write("creation.json", Blob::fromString(std::string(1024 * 1024 + 1, 'x')));
-    EXPECT_THROW(seedMm6HeadlessRules(source, &destination), Exception);
-    EXPECT_FALSE(destination.exists("rules"));
-
-    source.write("creation.json", Blob::fromString("{}"));
-    seedMm6HeadlessRules(source, &destination);
-    for (std::string_view name : mm6HeadlessRuleNames) {
-        Blob staged = destination.read("rules/" + std::string(name));
-        EXPECT_EQ(staged.str(), "{}");
-    }
-    Blob original = source.read("creation.json");
-    EXPECT_EQ(original.str(), "{}");
-}

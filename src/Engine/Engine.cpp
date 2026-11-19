@@ -51,10 +51,6 @@
 #include "Engine/Spells/CastSpellInfo.h"
 #include "Engine/Spells/Spells.h"
 #include "Engine/Spells/MM6SpellRules.h"
-#include "Engine/Spells/MM6FirstAidRules.h"
-#include "Engine/Spells/MM6PowerCureRules.h"
-#include "Engine/Spells/MM6TimedCureRules.h"
-#include "Engine/Spells/MM6CombatBuffRules.h"
 #include "Engine/Tables/AwardTable.h"
 #include "Engine/Tables/ChestTable.h"
 #include "Engine/Tables/HouseTable.h"
@@ -76,6 +72,7 @@
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6CreationRules.h"
+#include "Engine/MM6/MM6Executable.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6Finale.h"
 #include "Engine/MM6/MM6NewDay.h"
@@ -945,12 +942,8 @@ void Engine::MM7_Initialize() {
     vrng->seed(platform->tickCount());
 
     if (gameTitle() == GameTitle::MM6) {
-        mm6::loadCreationRules(ufs->read("rules/creation.json"));
-        mm6::loadSpellRules(ufs->read("rules/spells.json"));
-        mm6::loadFirstAidRules(ufs->read("rules/first-aid.json"));
-        mm6::loadPowerCureRules(ufs->read("rules/power-cure.json"));
-        mm6::loadTimedCureRules(ufs->read("rules/timed-cures.json"));
-        mm6::loadCombatBuffRules(ufs->read("rules/combat-buffs.json"));
+        mm6::loadCreationRules(mm6::executable());
+        mm6::loadSpellRules(mm6::decodeSpellRules(mm6::executable()));
     }
 
     gameTimer = new Timer();

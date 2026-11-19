@@ -3,9 +3,9 @@
 #include <array>
 #include <cstdint>
 
-class Blob;
-
 namespace mm6 {
+
+class Executable;
 
 inline constexpr int kClassCount = 18;
 inline constexpr int kClassFamilyCount = 6;
@@ -51,9 +51,13 @@ struct CreationRules {
     std::array<std::array<uint8_t, kSkillCount>, kClassFamilyCount> startingSkills{};
 };
 
-// Reads only a private, generated profile manifest. Does not open the original
-// game executable or publish its creation arrays in the source tree.
-void loadCreationRules(const Blob &source);
+/**
+ * Loads the class arrays: HP and SP base by class family, HP and SP factor by class, and starting stats and skills by
+ * class family.
+ *
+ * @param exe                           `MM6.exe` to read the arrays from.
+ */
+void loadCreationRules(const Executable &exe);
 const CreationRules &creationRules();
 
 }  // namespace mm6

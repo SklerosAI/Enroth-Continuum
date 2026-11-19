@@ -10,7 +10,7 @@
 
 #include "Engine/Tables/HouseTable.h"
 #include "Engine/Engine.h"
-#include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/MM6/MM6Executable.h"
 #include "Engine/Resources/ResourceManager.h"
 
 #include "Library/Serialization/Serialization.h"
@@ -96,7 +96,7 @@ const HouseServiceData &houseServiceData() {
     if (!engine || engine->gameTitle() != GameTitle::MM6)
         throw std::runtime_error("MM6 house data requires the MM6 runtime");
     static const HouseServiceData data = [] {
-        const RoomDescriptors rooms = decodeRoomDescriptors(ufs->read("rules/house-rooms.json"));
+        const RoomDescriptors rooms = decodeRoomDescriptors(executable());
         return decodeHouseServiceData(engine->resources()->eventsData("2dEvents.txt"), rooms);
     }();
     return data;

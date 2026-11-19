@@ -576,6 +576,29 @@ GAME_TEST(MM6PlayerSpells, FirstAidShortensTargetRecovery) {
     EXPECT_EQ(recoveryTape, tape(Duration(), Duration::fromTicks(4)));
 }
 
+GAME_TEST(MM6PlayerSpells, CureWeaknessWindow) {
+    // Expert Cure Weakness cured a weakness 2 hours old at skill 1, where its description promises 1 hour per skill
+    // point. MM6.exe allows 3 hours, which fix_condition_spells turns off.
+    for (bool fix : {true, false}) {
+        SCOPED_TRACE(fmt::format("fix={}", fix));
+        test.prepareForNextTest();
+        engine->config->gameplay.FixConditionSpells.setValue(fix);
+        auto conditionTape = charTapes.condition(KNIGHT);
+        auto mpTape = charTapes.mp(SORCERER);
+        enterFirstMapFromNewGame(game);
+        teachSorcerer(SPELL_BODY_CURE_WEAKNESS, CombinedSkillValue(1, MASTERY_EXPERT));
+        pParty->pCharacters[KNIGHT].conditions.set(CONDITION_WEAK, pParty->GetPlayingTime() - Duration::fromHours(2));
+        test.startTaping();
+
+        castFromSpellbook(game, SPELL_BODY_CURE_WEAKNESS);
+        game.pressAndReleaseKey(characterKey(KNIGHT));
+        game.tick();
+
+        EXPECT_EQ(mpTape.size(), 2);
+        EXPECT_EQ(conditionTape, fix ? tape(CONDITION_WEAK) : tape(CONDITION_WEAK, CONDITION_GOOD));
+    }
+}
+
 GAME_TEST(MM6PlayerSpells, MonsterDispelMagicEndsEveryBuff) {
     // A monster's Dispel Magic left Protection from Magic on the party, with its icon on the buff shelf.
     auto partyBuffsTape = tapes.custom([] { return activePartyBuffs(); });

@@ -8,7 +8,6 @@
 #include "LogStarter.h"
 
 class MemoryFileSystem;
-class FileSystem;
 class EngineFileSystem;
 class Platform;
 class Environment;
@@ -28,7 +27,7 @@ class EngineController;
 
 class GameStarter {
  public:
-    explicit GameStarter(GameStarterOptions options, std::function<void(FileSystem *)> prepareUserFs = {});
+    explicit GameStarter(GameStarterOptions options);
     ~GameStarter();
 
     PlatformApplication *application() const {
@@ -44,7 +43,7 @@ class GameStarter {
     void runInstrumented(std::function<void(EngineController *)> controlRoutine);
 
  private:
-    void initialize(const std::function<void(FileSystem *)> &prepareUserFs);
+    void initialize();
 
     static void resolveUserPath(Environment *environment, GameStarterOptions *options);
     static void resolveDataPath(Environment *environment, GameStarterOptions *options);

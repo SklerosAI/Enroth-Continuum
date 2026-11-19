@@ -442,7 +442,8 @@ void CastSpellInfoHelpers::castSpell() {
                 throw std::runtime_error("MM6 timed cure requires one party member target");
             mm6::applyTimedCure(pCastSpell->uSpellID, spell_mastery, spell_level,
                                  pParty->GetPlayingTime(),
-                                 pParty->pCharacters[pCastSpell->targetCharacterIndex].conditions);
+                                 pParty->pCharacters[pCastSpell->targetCharacterIndex].conditions,
+                                 engine->config->gameplay.FixConditionSpells.value() ? mm6::TIMED_CURE_WINDOW_DESCRIBED : mm6::TIMED_CURE_WINDOW_ORIGINAL);
             pPlayer->SpendMana(uRequiredMana);
             setSpellRecovery(pCastSpell, recoveryTime);
         } else if (engine->gameTitle() == GameTitle::MM6 && mm6::isCombatBuffSpell(pCastSpell->uSpellID)) {

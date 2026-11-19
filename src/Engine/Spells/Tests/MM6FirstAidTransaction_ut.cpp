@@ -1,15 +1,14 @@
 #include <array>
-#include <optional>
+#include <memory>
 #include <stdexcept>
 
 #include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
+#include "Engine/MM6/MM6Executable.h"
 #include "Engine/Spells/MM6FirstAidTransaction.h"
 #include "Engine/Spells/MM6FirstAidRules.h"
 #include "Engine/Spells/MM6SpellRules.h"
-
-#include "Utility/Memory/Blob.h"
 
 UNIT_TEST(MM6FirstAidTransaction, StagesManaHealingAndRecoveryTogether) {
     std::array<Character, 4> characters;
@@ -58,13 +57,11 @@ UNIT_TEST(MM6FirstAidTransaction, RejectsChangedStateWithoutMutation) {
     EXPECT_EQ(characters[0].timeToRecovery, 0_ticks);
 }
 
-UNIT_TEST(MM6FirstAidTransaction, ProfileRulesPlanAndStageActualCharacterState) {
-    const std::optional<Blob> spells = readMM6TestRules("spells.json");
-    const std::optional<Blob> firstAid = readMM6TestRules("first-aid.json");
-    if (!spells || !firstAid)
-        GTEST_SKIP() << mm6TestRulesMissing;
-    mm6::loadSpellRules(*spells);
-    mm6::loadFirstAidRules(*firstAid);
+UNIT_TEST(MM6FirstAidTransaction, ExecutableRulesPlanAndStageActualCharacterState) {
+    const std::unique_ptr<MM6TestData> data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
+    mm6::loadSpellRules(mm6::decodeSpellRules(mm6::Executable(data->read("mm6.exe"))));
 
     std::array<Character, 4> characters;
     characters[0].mana = 1000;

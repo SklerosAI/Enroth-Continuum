@@ -1,37 +1,19 @@
-#include <optional>
+#include <cstdint>
+#include <memory>
 #include <stdexcept>
-#include <string>
 
 #include "Testing/Unit/MM6TestData.h"
 #include "Testing/Unit/UnitTest.h"
 
+#include "Engine/MM6/MM6Executable.h"
 #include "Engine/Spells/MM6SpellRules.h"
 
-#include "Library/Json/Json.h"
-
-#include "Utility/Memory/Blob.h"
-
-namespace {
-
-Json syntheticManifest() {
-    Json document;
-    document["format"] = 1;
-    document["source_report_sha256"] = std::string(64, 'a');
-    document["spells"] = Json::array();
-    for (int id = 1; id <= 99; ++id)
-        document["spells"].push_back({{"id", id}, {"mana", {id, id + 1, id + 2}},
-                                       {"recovery", {120, 100, 80}}});
-    return document;
-}
-
-void load(const Json &document) {
-    mm6::loadSpellRules(Blob::fromString(document.dump()));
-}
-
-} // namespace
-
 UNIT_TEST(MM6SpellRules, AllIdsAndThreeRanks) {
-    load(syntheticManifest());
+    mm6::SpellRules rules{};
+    for (int id = 1; id <= 99; ++id)
+        for (int rank = 0; rank < 3; ++rank)
+            rules[id][rank] = {static_cast<std::uint16_t>(id + rank), static_cast<std::int16_t>(120 - 20 * rank)};
+    mm6::loadSpellRules(rules);
     for (int id = 1; id <= 99; ++id) {
         const SpellId spell = static_cast<SpellId>(id);
         for (int rank = 1; rank <= 3; ++rank) {
@@ -46,38 +28,19 @@ UNIT_TEST(MM6SpellRules, AllIdsAndThreeRanks) {
     EXPECT_THROW(mm6::spellManaRecovery(SPELL_FIRE_TORCH_LIGHT, MASTERY_GRANDMASTER), std::runtime_error);
 }
 
-UNIT_TEST(MM6SpellRules, InvalidManifestCannotReplaceLoadedRules) {
-    Json manifest = syntheticManifest();
-    load(manifest);
-    const auto before = mm6::spellManaRecovery(SPELL_DARK_SOULDRINKER, MASTERY_MASTER);
-
-    manifest["spells"][98]["id"] = 98;
-    EXPECT_THROW(load(manifest), std::runtime_error);
-    manifest = syntheticManifest();
-    manifest["spells"][0]["recovery"] = {80, 100, 120};
-    EXPECT_THROW(load(manifest), std::runtime_error);
-    manifest = syntheticManifest();
-    manifest["spells"][0]["mana"] = {-1, 1, 1};
-    EXPECT_THROW(load(manifest), std::runtime_error);
-    manifest = syntheticManifest();
-    manifest["spells"][0]["mana"] = {32768, 1, 1};
-    EXPECT_THROW(load(manifest), std::runtime_error);
-    EXPECT_EQ(mm6::spellManaRecovery(SPELL_DARK_SOULDRINKER, MASTERY_MASTER).mana, before.mana);
-    EXPECT_EQ(mm6::spellManaRecovery(SPELL_DARK_SOULDRINKER, MASTERY_MASTER).recoveryTicks,
-              before.recoveryTicks);
-}
-
-UNIT_TEST(MM6SpellRules, ProfileManifest) {
-    const std::optional<Blob> manifest = readMM6TestRules("spells.json");
-    if (!manifest)
-        GTEST_SKIP() << mm6TestRulesMissing;
-    Json document = Json::parse(manifest->str());
-    mm6::loadSpellRules(*manifest);
-    ASSERT_EQ(document["spells"].size(), 99);
-    for (int id = 1; id <= 99; ++id)
-        for (int rank = 1; rank <= 3; ++rank) {
-            auto actual = mm6::spellManaRecovery(static_cast<SpellId>(id), static_cast<Mastery>(rank));
-            EXPECT_EQ(actual.mana, document["spells"][id - 1]["mana"][rank - 1].get<int>());
-            EXPECT_EQ(actual.recoveryTicks, document["spells"][id - 1]["recovery"][rank - 1].get<int>());
-        }
+UNIT_TEST(MM6SpellRules, ExecutableTable) {
+    // Every MM6 spell costs something at Normal and recovers no faster as mastery rises.
+    const std::unique_ptr<MM6TestData> data = MM6TestData::open();
+    if (!data)
+        GTEST_SKIP() << mm6TestDataMissing;
+    const mm6::SpellRules rules = mm6::decodeSpellRules(mm6::Executable(data->read("mm6.exe")));
+    for (int id = 1; id <= 99; ++id) {
+        SCOPED_TRACE(id);
+        EXPECT_GT(rules[id][0].mana, 0);
+        EXPECT_GT(rules[id][2].recoveryTicks, 0);
+        EXPECT_GE(rules[id][0].recoveryTicks, rules[id][1].recoveryTicks);
+        EXPECT_GE(rules[id][1].recoveryTicks, rules[id][2].recoveryTicks);
+    }
+    EXPECT_EQ(rules[1].front().mana, 1); // Torch Light.
+    EXPECT_EQ(rules[1].front().recoveryTicks, 60);
 }

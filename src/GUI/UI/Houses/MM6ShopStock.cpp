@@ -2,87 +2,51 @@
 
 #include <optional>
 #include <stdexcept>
-#include <string>
-#include <utility>
+#include <vector>
 
 #include "Core/Time/Duration.h"
 
 #include "Engine/MM6/MM6ChestTitleState.h"
+#include "Engine/MM6/MM6Executable.h"
 #include "Engine/MM6/MM6ItemGenerator.h"
-#include "Engine/Resources/EngineFileSystem.h"
-
-#include "Library/Json/Json.h"
-
-#include "Utility/Memory/Blob.h"
 
 namespace mm6 {
-namespace {
 
-int boundedInt(const Json &value, int low, int high) {
-    if (!value.is_number_integer())
-        throw std::runtime_error("Invalid MM6 shop stock integer type");
-    const int result = value.get<int>();
-    if (result < low || result > high)
-        throw std::runtime_error("MM6 shop stock integer outside verified bounds");
+static ShopStockRow readShopStockRow(const Executable &exe, std::uint32_t address, int choices) {
+    ShopStockRow result;
+    result.treasureLevel = exe.i16(address);
+    for (int i = 1; i <= choices; i++)
+        result.choices.push_back(exe.i16(address + 2 * i));
     return result;
 }
 
-size_t expectedRows(int houseId) {
-    return houseId >= 15 && houseId < 29 ? 2 : 1;
-}
-
-size_t expectedChoices(int houseId) {
-    if (houseId < 29)
-        return 4;
-    return houseId < 42 ? 0 : 6;
-}
-
-} // namespace
-
-ShopStockRules decodeShopStockRules(const Blob &source) {
-    if (source.size() > 65536)
-        throw std::runtime_error("MM6 shop stock manifest is too large");
-    const Json json = Json::parse(source.str());
-    if (boundedInt(json.at("format"), 1, 1) != 1 || !json.at("visible").is_array() || json.at("visible").size() != 4 ||
-        !json.at("banks").is_array() || json.at("banks").size() != 2)
-        throw std::runtime_error("MM6 shop stock manifest has an unknown shape");
-
+ShopStockRules decodeShopStockRules(const Executable &exe) {
     ShopStockRules result;
-    for (size_t i = 0; i < 4; ++i)
-        result.visibleSlots[i] = boundedInt(json.at("visible")[i], 1, 12);
-    for (size_t bank = 0; bank < 2; ++bank) {
-        const Json &houses = json.at("banks")[bank];
-        if (!houses.is_array() || houses.size() != 47)
-            throw std::runtime_error("MM6 shop stock bank needs 47 shops");
-        for (size_t i = 0; i < 47; ++i) {
-            const Json &house = houses[i];
-            const int houseId = boundedInt(house.at("house"), 1, 47);
-            if (houseId != static_cast<int>(i) + 1 || !house.at("rows").is_array() || house.at("rows").size() != expectedRows(houseId))
-                throw std::runtime_error("MM6 shop stock rows are missing or out of order");
-            for (const Json &row : house.at("rows")) {
-                if (!row.at("choices").is_array() || row.at("choices").size() != expectedChoices(houseId))
-                    throw std::runtime_error("MM6 shop stock row has the wrong number of choices");
-                ShopStockRow decoded;
-                decoded.treasureLevel = boundedInt(row.at("level"), 1, 6);
-                for (const Json &choice : row.at("choices"))
-                    decoded.choices.push_back(boundedInt(choice, 0, 580));
-                result.banks[bank][houseId].rows.push_back(std::move(decoded));
+    for (int type = 0; type < 4; type++)
+        result.visibleSlots[type] = exe.u8(0x4C45F1 + type); // A byte per house type from 0, weapon shops are type 1.
+    for (int bank = 0; bank < 2; bank++) {
+        const std::uint32_t offset = 540 * bank; // The second bank's tables follow the first one's.
+        for (int houseId = 1; houseId <= 47; houseId++) {
+            std::vector<ShopStockRow> &rows = result.banks[bank][houseId].rows;
+            if (houseId < 15) {
+                rows.push_back(readShopStockRow(exe, 0x4C433C + offset + 10 * (houseId + 15), 4));
+            } else if (houseId < 29) {
+                rows.push_back(readShopStockRow(exe, 0x4C433C + offset + 10 * (2 * houseId), 4));
+                rows.push_back(readShopStockRow(exe, 0x4C433C + offset + 10 * (2 * houseId + 1), 4));
+            } else if (houseId < 42) {
+                rows.push_back(readShopStockRow(exe, 0x4C4546 + offset + 2 * houseId, 0));
+            } else {
+                rows.push_back(readShopStockRow(exe, 0x4C459C + offset + 14 * (houseId - 42), 6));
             }
         }
     }
-    const Json &guilds = json.at("guilds");
-    if (!guilds.is_array() || guilds.size() != result.guildBooks.size())
-        throw std::runtime_error("MM6 shop stock manifest needs 22 spell guilds");
-    for (size_t i = 0; i < guilds.size(); ++i) {
-        if (boundedInt(guilds[i].at("house"), 119, 140) != 119 + static_cast<int>(i))
-            throw std::runtime_error("MM6 spell guild rows are missing or out of order");
-        result.guildBooks[i] = boundedInt(guilds[i].at("books"), 1, 11);
-    }
+    for (size_t i = 0; i < result.guildBooks.size(); i++)
+        result.guildBooks[i] = exe.i16(0x4C48B0 + 2 * i);
     return result;
 }
 
 const ShopStockRules &shopStockRules() {
-    static const ShopStockRules rules = decodeShopStockRules(ufs->read("rules/shop-stock.json"));
+    static const ShopStockRules rules = decodeShopStockRules(executable());
     return rules;
 }
 

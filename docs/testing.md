@@ -269,6 +269,7 @@ The harness helpers (`driveMovementInput`, `fightActorWithAttackInput`) are in
 | `ENROTH_MM6_MAP_RESEARCH_ROOT` | `MM6Save` game tests | Private research folder, see above. |
 | `MM6_OFFSCREEN_*`, `MM7_OFFSCREEN_*` | Capture tests | See [Hidden frame captures](#hidden-frame-captures). |
 | `ENROTH_MM7_MOD_DIR`, `ENROTH_MM7_ALL_ARTIFACTS_STORAGE`, `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY` | Engine, MM7 mod tests | See [Mods and Atlas](mods-and-atlas.md). |
+| `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` | Engine, MM6 vendor refresh tests | See [Mods and Atlas](mods-and-atlas.md). The tests set it themselves. |
 | `EC_MM7_MAX_SAVE_SNAPSHOTS`, `EC_MM7_MAX_SESSIONS` | `mm7_playtest_capture.sh` | Recorder caps when the option is absent. |
 
 `git grep -n "getenv\|OPENENROTH_\|ENROTH_" src test tools` lists every one.

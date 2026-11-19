@@ -2,7 +2,9 @@
 
 #include <bit>
 #include <cstdint>
+#include <cstdlib>
 #include <stdexcept>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 
@@ -27,6 +29,14 @@ void requirePolicy(ShopRefreshPolicy policy) {
 }
 
 } // namespace
+
+ShopRefreshPolicy vendorRefreshPolicy(const char *flag) {
+    return flag && std::string_view(flag) == "1" ? ShopRefreshPolicy::OnEntry : ShopRefreshPolicy::WhenExpired;
+}
+
+ShopRefreshPolicy vendorRefreshPolicy() {
+    return vendorRefreshPolicy(std::getenv("ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY"));
+}
 
 bool refreshShopStockForEntry(ShopStockFields *stock, ShopGuildClockFields *clocks,
                               unsigned shopRow, std::uint64_t now, std::uint64_t nextDeadline,

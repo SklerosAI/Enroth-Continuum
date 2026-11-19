@@ -1,6 +1,9 @@
+#include <unistd.h>
+
 #include <algorithm>
 #include <array>
 #include <cstdlib>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -19,6 +22,7 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/MM6/MM6ShopStockIdentity.h"
 #include "Engine/MM6/MM6ShopTitleState.h"
 #include "Engine/Localization.h"
@@ -40,13 +44,16 @@
 #include "GUI/UI/ItemGrid.h"
 #include "GUI/UI/MM6HouseServiceData.h"
 #include "GUI/UI/UIHouses.h"
+#include "GUI/UI/UISaveLoad.h"
 #include "GUI/UI/Houses/MM6Shop.h"
 
+#include "Library/Environment/Interface/Environment.h"
 #include "Library/Image/Png.h"
 
 #include "Media/MediaPlayer.h"
 
 #include "Utility/Memory/Blob.h"
+#include "Utility/ScopeGuard.h"
 #include "Utility/Streams/FileOutputStream.h"
 #include "Utility/System/Path.h"
 
@@ -181,6 +188,87 @@ static void clickKnightSword(EngineController &game) {
     // Left click on the sword in the backpack a shop screen shows.
     ASSERT_TRUE(knightSword());
     game.pressAndReleaseButton(BUTTON_LEFT, mapFromInventoryGrid(knightSword().geometry().topLeft(), Pointi(14, 17)) + Pointi(16, 16));
+    game.tick();
+}
+
+struct ScopedVendorRefresh {
+    // Sets the MM6 vendor refresh on entry switch the way Atlas does, and clears it when the test is done with it.
+    explicit ScopedVendorRefresh(bool on) {
+        set(on);
+    }
+    ~ScopedVendorRefresh() {
+        environment->setenv("ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY", "");
+    }
+    void set(bool on) {
+        environment->setenv("ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY", on ? "1" : "0");
+    }
+    std::unique_ptr<Environment> environment = Environment::createStandardEnvironment();
+};
+
+static std::filesystem::path createTempProfile() {
+    // An owner-only mm6-restart- folder in the system temp folder, the only kind of profile a test saves into.
+    const std::filesystem::path tempRoot = std::filesystem::canonical(std::filesystem::temp_directory_path());
+    std::string created = (tempRoot / "mm6-restart-houses-XXXXXX").string();
+    if (!mkdtemp(created.data()))
+        throw std::runtime_error("Can't create a temporary MM6 profile");
+    return std::filesystem::canonical(created);
+}
+
+static void startNewGameThroughInput(EngineController &game) {
+    // Each character takes its first three optional skills and up to three points in every attribute, then the party
+    // enters the first map.
+    constexpr PlatformKey characterKeys[] = {PlatformKey::KEY_DIGIT_1, PlatformKey::KEY_DIGIT_2, PlatformKey::KEY_DIGIT_3,
+                                             PlatformKey::KEY_DIGIT_4};
+    game.pressGuiButton("MainMenu_NewGame");
+    game.tick(2);
+    for (PlatformKey key : characterKeys) {
+        game.pressAndReleaseKey(key);
+        game.tick();
+        for (int skill = 0; skill < 3; skill++) {
+            game.pressGuiButton(fmt::format("PartyCreation_Skill{}", skill));
+            game.tick();
+        }
+        for (int attribute = 0; attribute < 7; attribute++) {
+            for (int point = 0; point < 3; point++) {
+                game.pressAndReleaseKey(PlatformKey::KEY_ADD);
+                game.tick();
+            }
+            game.pressAndReleaseKey(PlatformKey::KEY_DOWN);
+            game.tick();
+        }
+    }
+    game.pressGuiButton("PartyCreation_OK");
+    game.skipLoadingScreen();
+    game.tick();
+}
+
+static void saveFromMenu(EngineController &game) {
+    // Saves into a new slot from the Escape menu.
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressGuiButton("GameMenu_SaveGame");
+    game.tick(2);
+    game.doubleClickGuiButton("SaveMenu_Slot0"); // The new save slot.
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_T);
+    game.tick();
+    game.pressGuiButton("SaveMenu_Save");
+    game.tick(3); // The button animates for a frame, then posts the save for the next one.
+}
+
+static void loadFromMenu(EngineController &game) {
+    // Loads the first numbered save from the Escape menu.
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressGuiButton("GameMenu_LoadGame");
+    game.tick(3);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto slot = std::ranges::find(slots, std::string("save000.ec6"), &SavegameSlot::fileName);
+    ASSERT_NE(slot, slots.end());
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", slot - slots.begin()));
+    game.tick(2);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
     game.tick();
 }
 
@@ -472,6 +560,146 @@ GAME_TEST(MM6Houses, GuildBuySpellbook) {
     EXPECT_EQ(stockTape, tape(std::vector<int>(12, 0), generated, afterSale));
     EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66, 505}, std::vector<int>{124, 1, 15, 23, 66, 505, 322}));
     EXPECT_EQ(goldTape, tape(200, 50));
+}
+
+GAME_TEST(MM6Houses, WeaponShopVendorRefreshOnEntry) {
+    // With vendor refresh on entry the New Sorpigal weapon shop restocks once per visit, so the slot the party bought
+    // out is filled again on its next visit. Without it the slot stays empty until the stock deadline.
+    for (bool refresh : {false, true}) {
+        SCOPED_TRACE(fmt::format("refresh={}", refresh));
+        test.prepareForNextTest();
+        ScopedVendorRefresh vendorRefresh(refresh);
+        auto goldTape = tapes.gold();
+        auto stockTape = tapes.custom([] { return shopStock(1); });
+        auto backpackTape = tapes.custom([] { return backpackItems(0); });
+        auto deadlineTape = tapes.custom([] { return mm6::shopTitleState().clocks.deadlineWords[mm6::shopClockSlot(1)]; });
+        auto houseTape = tapes.house();
+        startMM6NewGame(game);
+        test.startTaping();
+        enterThroughDoor(game, kWeaponShopDoor, 0);
+        clickHouseOption(game, localization->str(static_cast<LstrId>(539))); // Buy Items.
+        GUIWindow_MM6Shop *shop = dynamic_cast<GUIWindow_MM6Shop *>(window_SpeakInHouse.get());
+        ASSERT_NE(shop, nullptr);
+        game.pressAndReleaseButton(BUTTON_LEFT, shop->stockItemRect(0).center());
+        game.tick();
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+        game.pressGuiButton("House_Exit");
+        game.tick();
+        enterThroughDoor(game, kWeaponShopDoor, 0);
+        clickHouseOption(game, localization->str(static_cast<LstrId>(539))); // Buy Items.
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+        clickHouseOption(game, localization->str(static_cast<LstrId>(543))); // Special Items.
+
+        const std::vector<int> generated = {50, 55, 31, 1, 20, 24, 0, 0, 0, 0, 0, 0, 20, 20, 16, 20, 17, 15, 0, 0, 0, 0, 0, 0};
+        std::vector<int> afterSale = generated;
+        afterSale[0] = 0;
+        EXPECT_EQ(houseTape, tape(HOUSE_INVALID, static_cast<HouseId>(1), HOUSE_INVALID, static_cast<HouseId>(1)));
+        EXPECT_EQ(goldTape, tape(200, 125));
+        EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66, 505}, std::vector<int>{124, 1, 15, 23, 66, 505, 50}));
+        if (refresh) {
+            const std::vector<int> restocked = {12, 12, 15, 50, 31, 50, 0, 0, 0, 0, 0, 0, 20, 21, 17, 16, 20, 16, 0, 0, 0, 0, 0, 0};
+            EXPECT_EQ(stockTape, tape(std::vector<int>(24, 0), generated, afterSale, restocked));
+            ASSERT_EQ(deadlineTape.size(), 3);
+            EXPECT_GT(deadlineTape.back(), deadlineTape[1]);
+        } else {
+            EXPECT_EQ(stockTape, tape(std::vector<int>(24, 0), generated, afterSale));
+            EXPECT_EQ(deadlineTape.size(), 2);
+        }
+    }
+}
+
+GAME_TEST(MM6Houses, GuildVendorRefreshOnEntry) {
+    // With vendor refresh on entry a New Sorpigal spell guild restocks once per visit, so the book the party bought is
+    // replaced on its next visit. Without it the slot stays empty until the stock deadline.
+    for (bool refresh : {false, true}) {
+        SCOPED_TRACE(fmt::format("refresh={}", refresh));
+        test.prepareForNextTest();
+        ScopedVendorRefresh vendorRefresh(refresh);
+        auto goldTape = tapes.gold();
+        auto stockTape = tapes.custom([] { return guildStock(137); });
+        auto backpackTape = tapes.custom([] { return backpackItems(0); });
+        auto houseTape = tapes.house();
+        startMM6NewGame(game);
+        pParty->pCharacters[0]._achievedAwardsBits.set(kElementalGuildMember);
+        test.startTaping();
+        enterThroughDoor(game, kGuildDoor, 1536);
+        clickHouseOption(game, localization->str(static_cast<LstrId>(400))); // Buy Spells.
+        GUIWindow_MM6Shop *guild = dynamic_cast<GUIWindow_MM6Shop *>(window_SpeakInHouse.get());
+        ASSERT_NE(guild, nullptr);
+        game.pressAndReleaseButton(BUTTON_LEFT, guild->stockItemRect(0).center());
+        game.tick();
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+        game.pressGuiButton("House_Exit");
+        game.tick();
+        enterThroughDoor(game, kGuildDoor, 1536);
+        clickHouseOption(game, localization->str(static_cast<LstrId>(400))); // Buy Spells.
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+        clickHouseOption(game, localization->str(static_cast<LstrId>(400))); // Buy Spells.
+
+        const std::vector<int> generated = {322, 322, 301, 336, 333, 301, 313, 333, 314, 300, 325, 314};
+        std::vector<int> afterSale = generated;
+        afterSale[0] = 0;
+        EXPECT_EQ(houseTape, tape(HOUSE_INVALID, static_cast<HouseId>(137), HOUSE_INVALID, static_cast<HouseId>(137)));
+        EXPECT_EQ(goldTape, tape(200, 50));
+        EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66, 505}, std::vector<int>{124, 1, 15, 23, 66, 505, 322}));
+        if (refresh) {
+            const std::vector<int> restocked = {323, 335, 312, 301, 324, 334, 314, 314, 322, 325, 314, 336};
+            EXPECT_EQ(stockTape, tape(std::vector<int>(12, 0), generated, afterSale, restocked));
+        } else {
+            EXPECT_EQ(stockTape, tape(std::vector<int>(12, 0), generated, afterSale));
+        }
+    }
+}
+
+GAME_TEST(MM6Houses, VendorRefreshStockSavesAsStock) {
+    // Stock that vendor refresh on entry rolled is saved and loaded like any other stock, and with the switch off the
+    // shop keeps it until its deadline.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+    MM_AT_SCOPE_EXIT(game.runGameRoutine([] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    }));
+    ScopedVendorRefresh vendorRefresh(true);
+    auto goldTape = tapes.gold();
+    auto stockTape = tapes.custom([] { return shopStock(1); });
+    auto statusTape = tapes.statusBar();
+    startNewGameThroughInput(game);
+    test.startTaping();
+    const auto visitWeaponShop = [&](bool buy) {
+        enterThroughDoor(game, kWeaponShopDoor, 0);
+        clickHouseOption(game, localization->str(static_cast<LstrId>(539))); // Buy Items.
+        if (buy) {
+            GUIWindow_MM6Shop *shop = dynamic_cast<GUIWindow_MM6Shop *>(window_SpeakInHouse.get());
+            ASSERT_NE(shop, nullptr);
+            game.pressAndReleaseButton(BUTTON_LEFT, shop->stockItemRect(0).center());
+            game.tick();
+        }
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+        game.pressGuiButton("House_Exit");
+        game.tick();
+    };
+    visitWeaponShop(false);
+    visitWeaponShop(false);
+    saveFromMenu(game);
+    vendorRefresh.set(false);
+    visitWeaponShop(true);
+    loadFromMenu(game);
+    visitWeaponShop(false);
+
+    const std::vector<int> generated = {51, 15, 58, 31, 31, 56, 0, 0, 0, 0, 0, 0, 21, 16, 15, 15, 15, 15, 0, 0, 0, 0, 0, 0};
+    const std::vector<int> restocked = {15, 50, 15, 12, 58, 51, 0, 0, 0, 0, 0, 0, 15, 20, 16, 15, 21, 16, 0, 0, 0, 0, 0, 0};
+    std::vector<int> restockedAfterSale = restocked;
+    restockedAfterSale[0] = 0;
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
+    EXPECT_EQ(stockTape, tape(std::vector<int>(24, 0), generated, restocked, restockedAfterSale, restocked));
+    EXPECT_EQ(goldTape, tape(200, 188, 200));
 }
 
 GAME_TEST(MM6Houses, Training) {

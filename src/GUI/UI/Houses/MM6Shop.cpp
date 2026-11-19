@@ -261,20 +261,22 @@ bool GUIWindow_MM6Shop::refreshStock() {
         const std::uint64_t next = now + mm6::shopRefreshTicks(houseTable[houseId()].generation_interval_days);
         bool refreshed = false;
         if (_screen == mm6::HouseServiceOption::BuySpells) {
-            refreshed = mm6::refreshGuildStockIfExpired(&shops.stock, &shops.clocks, house, now, next, [&](mm6::ShopStockFields &stock) {
+            refreshed = mm6::refreshGuildStockForEntry(&shops.stock, &shops.clocks, house, now, next, [&](mm6::ShopStockFields &stock) {
                 mm6::generateGuildStockWithTitleRng(&stock, rules, house, type, &rng);
-            }, GameTitle::MM6);
+            }, GameTitle::MM6, _refreshPolicy);
         } else {
             const auto generate = [&](mm6::ShopStockBank stockBank) {
                 return [&, stockBank](mm6::ShopStockFields &stock) {
                     mm6::generateShopBankWithTitleRng(&stock, rules, stockBank, house, type, &rng, *pItemTable);
                 };
             };
-            refreshed = mm6::refreshShopStockIfExpired(&shops.stock, &shops.clocks, house, now, next,
-                                                       generate(mm6::ShopStockBank::First), generate(mm6::ShopStockBank::Second), GameTitle::MM6);
+            refreshed = mm6::refreshShopStockForEntry(&shops.stock, &shops.clocks, house, now, next,
+                                                      generate(mm6::ShopStockBank::First), generate(mm6::ShopStockBank::Second), GameTitle::MM6,
+                                                      _refreshPolicy);
         }
         if (refreshed)
             mm6::chestTitleState() = rng;
+        _refreshPolicy = mm6::ShopRefreshPolicy::WhenExpired;
     } catch (const std::exception &e) {
         MM_WARNING("MM6 shop {} stock refused: {}", house, e.what());
         return false;

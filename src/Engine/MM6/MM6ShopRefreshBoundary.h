@@ -17,6 +17,20 @@ enum class ShopRefreshPolicy {
     OnEntry,
 };
 
+/**
+ * @param flag                          Value of `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY`, or `nullptr` if it isn't set.
+ * @return                              `OnEntry` for exactly `1`, `WhenExpired` for anything else.
+ */
+ShopRefreshPolicy vendorRefreshPolicy(const char *flag);
+
+/**
+ * Vendor refresh on entry is an opt-in mod. Atlas sets `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` for an MM6 launch from the
+ * player's saved choice.
+ *
+ * @return                              The policy that the process environment asks for.
+ */
+ShopRefreshPolicy vendorRefreshPolicy();
+
 // Detached model of the original observed menu refresh branches. The caller
 // supplies the next deadline calculated from its MM6 house interval. A shop
 // refresh invokes both bank generators; a guild refresh invokes only its own.

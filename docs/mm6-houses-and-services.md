@@ -92,6 +92,10 @@ patch does.
   row, armour shops a second one for slots 4 and up.
 - Stock refreshes when a buy screen opens after the deadline. The next deadline is now plus the house's day interval.
   A shop refresh regenerates both banks, a guild refresh only its spellbooks.
+- With the opt-in `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY=1` (set by Atlas, see [Mods and Atlas](mods-and-atlas.md)) the
+  first buy screen of each visit refreshes even before the deadline, through the same generator, and writes the
+  ordinary next deadline. Later buy screens of that visit follow the deadline again. Without it the schedule above is
+  the vanilla one.
 - Generation draws from the MM6 gameplay LCG through the MM6 item generator, and every generated slot is identified.
   Slots past the visible count keep their bytes.
 - A spell guild of one school offers its first books. A guild of several schools picks a school per slot first.

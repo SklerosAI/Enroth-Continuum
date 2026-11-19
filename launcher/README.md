@@ -65,8 +65,8 @@ data path and user path. It does not package original Might & Magic data.
   and game play. Voices and body art remain original; death and eradication art
   remain original unless their own mood PNGs are supplied. An armor AC change
   applies to every copy of that item type while the profile is active.
-  MM7's vendor option applies on the next Private mods launch. The MM6 choice
-  is retained locally for its future playable engine; MM6 shops are not live yet.
+  MM7's vendor option applies on the next Private mods launch. MM6 keeps its
+  own saved choice and applies it on its next launch, without Private mods.
   All Artifacts + Storage removes MM7's normal cap on randomly spawnable
   artifacts and relics and excludes each one only after the party collects it.
   Castle Harmondale's existing chests remain the persistent storage location.
@@ -105,8 +105,10 @@ app keeps the active game data paths and mod switch in local macOS preferences.
 The vendor, All Artifacts + Storage, and MM7 chest reroll options are stored in preferences
 and do not edit game archives, the MM7 configuration file or existing saves.
 When MM7 Private mods is active, Atlas passes
-`ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY=1` to its bundled engine. MM6 has no vendor
-refresh setting. Atlas also passes `ENROTH_MM7_ALL_ARTIFACTS_STORAGE=1` only when its MM7 toggle
+`ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY=1` to its bundled engine. Play MM6 passes
+`ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` as `1` or `0` from its own saved choice
+(`mods.mm6.vendorRefreshOnEntry`), which the same toggle writes. Atlas also
+passes `ENROTH_MM7_ALL_ARTIFACTS_STORAGE=1` only when its MM7 toggle
 and Private mods are both on; vanilla MM7, MM6 and upstream OpenEnroth receive
 no active MM7 artifact/storage flag.
 The chest reroll toggle similarly passes `ENROTH_MM7_CHEST_REROLL=1` only to a

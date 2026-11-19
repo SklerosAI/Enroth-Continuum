@@ -72,7 +72,8 @@ enum GameBuild: String {
      *
      * @param base                      Atlas's own environment.
      * @param modRoot                   Private mods folder when Private mods is on, else nil.
-     * @param vendorRefresh             Whether Private mods asks for fresh vendor stock.
+     * @param vendorRefresh             Whether this title's saved vendor choice asks for fresh stock on entry. MM7
+     *                                  applies it only together with Private mods.
      * @param allArtifactsStorage       Whether Private mods asks for collection-based artifact eligibility and storage support.
      * @param chestReroll               Whether Private mods allows rerolling unclaimed MM7 chest loot.
      * @param monsterLootReroll          Whether Private mods allows MM7 monster loot previews and rerolls.
@@ -85,10 +86,12 @@ enum GameBuild: String {
         environment.removeValue(forKey: "ENROTH_MM7_ALL_ARTIFACTS_STORAGE")
         environment.removeValue(forKey: "ENROTH_MM7_CHEST_REROLL")
         environment.removeValue(forKey: "ENROTH_MM7_MONSTER_LOOT_REROLL")
+        environment.removeValue(forKey: "ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY")
         switch self {
         case .mm6:
             environment.removeValue(forKey: "ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY")
             environment.removeValue(forKey: "OPENENROTH_MM7_PATH")
+            environment["ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY"] = vendorRefresh ? "1" : "0"
         case .fork:
             environment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] = "0"
             environment["ENROTH_MM7_ALL_ARTIFACTS_STORAGE"] = "0"

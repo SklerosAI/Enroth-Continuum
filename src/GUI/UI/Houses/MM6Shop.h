@@ -6,6 +6,8 @@
 
 #include "Library/Geometry/Rect.h"
 
+#include "Engine/MM6/MM6ShopRefreshBoundary.h"
+
 #include "MM6House.h"
 
 class GraphicsImage;
@@ -57,4 +59,5 @@ class GUIWindow_MM6Shop : public GUIWindow_MM6House {
     std::optional<mm6::HouseServiceOption> _screen;
     GUIButton *_screenButton = nullptr;
     std::array<int, 6> _weaponDrops = {}; // How far below the top of the table each weapon hangs, rolled when the buy screen opens.
+    mm6::ShopRefreshPolicy _refreshPolicy = mm6::vendorRefreshPolicy(); // A window is one visit, and an OnEntry visit restocks on its first buy screen.
 };

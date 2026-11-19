@@ -62,6 +62,9 @@ Each title keeps its own profile so saves and configs never mix. An MM7 Atlas pr
   player's route to fullscreen, since macOS greys out the fullscreen button of a fixed-size window.
 - MM6 gets no recording and no private-mod settings. The child environment drops `ENROTH_MM7_MOD_DIR`,
   `ENROTH_MM7_ALL_ARTIFACTS_STORAGE`, `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY` and `OPENENROTH_MM7_PATH`.
+- The one Atelier option MM6 honours is fresh vendor stock on entry. Atlas sets `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` to
+  `1` or `0` from the preference `mods.mm6.vendorRefreshOnEntry`, with or without Private mods. See
+  [Vendor refresh on entry](#vendor-refresh-on-entry).
 - Play MM6 is a playtest entry. MM8 is a data-detection card only. There is no MM8 helper.
 
 ### Upstream OpenEnroth
@@ -148,15 +151,17 @@ node launcher/tests/atlas_page.js   # prints "Atlas page checks passed"
 discovery with stub executables (bundled first, external upstream fallback, disabled when absent), that upstream and MM6
 never share the fork's profile, the exact argument lists per build, and the child environment per build. In
 particular, upstream and MM6 receive no fork mod keys and no `OPENENROTH_MM7_PATH`, and vanilla MM7 gets the mod
-flags forced to `0`. `tests/atlas_page.js` runs the page script against a fake DOM and checks the play and recording
+flags forced to `0`. MM6 gets `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` from its own choice, and MM7 and upstream never
+get it. `tests/atlas_page.js` runs the page script against a fake DOM and checks the play, recording and vendor
 controls.
 
 ## MM7 private mods
 
-All private mods are MM7-only and opt-in. They live in the user's home folder, never in the repository or in game
-archives. The engine sees them only through environment variables that the Atlas sets for a Play MM7 launch when the
-**Use private mods** switch is on (preference `mods.mm7.enabled`). With the switch off (Vanilla), the Atlas removes
-`ENROTH_MM7_MOD_DIR` and sets both boolean flags to `0`.
+All private mods are opt-in, and all but fresh vendor stock on entry are MM7-only. MM6 has its own vendor variable,
+see [Vendor refresh on entry](#vendor-refresh-on-entry). They live in the user's home folder, never in the repository
+or in game archives. The engine sees them only through environment variables that the Atlas sets for a Play MM7 launch
+when the **Use private mods** switch is on (preference `mods.mm7.enabled`). With the switch off (Vanilla), the Atlas
+removes `ENROTH_MM7_MOD_DIR` and sets both boolean flags to `0`.
 
 | Variable | Set by the Atlas when | Read in |
 |---|---|---|
@@ -217,6 +222,8 @@ writes a one-row file for an item picked from its fixed armor list. A hand-edite
 
 ### Vendor refresh on entry
 
+#### MM7
+
 With the flag set, entering a weapon, armor, magic or alchemy shop regenerates both its standard and special stock
 once, and entering a magic guild regenerates its spellbooks once. The next deadline is then set from the house's
 normal generation interval. One `VendorRefreshVisit` (`src/GUI/UI/Houses/VendorRefreshMod.h`) belongs to each house
@@ -224,10 +231,23 @@ window, so switching to a buy tab in the same visit does not reroll again. Close
 window, and non-vendor houses have no hook. With the flag off the original refresh-on-expiry path in the buy dialogue
 is unchanged.
 
-The Atelier labels the toggle "MM6 + MM7" and stores one shared preference, but only MM7 receives a flag. The MM6
-side is a detached model in `src/Engine/MM6/MM6ShopRefreshBoundary.{h,cpp}`: `shopRefreshPolicyFromEnvironment` reads
-`ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` and `mm6::ShopRefreshVisit` applies the same once-per-visit rule. Only unit tests
-call it. No live MM6 house reads the variable, and the Atlas does not pass it to Play MM6.
+#### MM6
+
+`ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` accepts only the exact string `1` (`mm6::vendorRefreshPolicy` in
+`src/Engine/MM6/MM6ShopRefreshBoundary.{h,cpp}`). Each MM6 shop and spell guild window (`GUIWindow_MM6Shop`) reads it
+when the party enters and holds an `OnEntry` policy for that visit. MM6 rolls stock when a buy screen opens, so the
+first buy screen of the visit regenerates the stock through the same generator and title RNG as the vanilla deadline
+refresh, and writes the ordinary next deadline. A shop rolls both banks, a guild its spellbooks. Later buy screens of
+the visit go back to the deadline rule, so switching between Buy Items and Special Items doesn't reroll. The result
+lives in the normal stock and clock owners and is saved in `SHOP` and `SCLK` like any other stock. With the flag off
+the deadline schedule resumes from the last written deadline.
+
+#### Atlas
+
+The Atelier shows one toggle, "MM6 + MM7". It writes two preferences, `mods.vendorRefreshOnEntry` for MM7 and
+`mods.mm6.vendorRefreshOnEntry` for MM6, so each title keeps its own saved choice. MM7 applies its choice only with
+Private mods. MM6 has no Private mods and applies its choice on every Play MM6 launch, as
+`ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY=1`, or `0` when off. The MM7 and upstream launches drop the MM6 variable.
 
 ### All Artifacts + Storage
 
@@ -272,11 +292,14 @@ collection ledger across a save round trip.
 - [VendorRefreshMod.h](../src/GUI/UI/Houses/VendorRefreshMod.h),
   [VendorRefreshMod_ut.cpp](../src/GUI/UI/Houses/Tests/VendorRefreshMod_ut.cpp),
   [Shops.cpp](../src/GUI/UI/Houses/Shops.cpp), [MagicGuild.cpp](../src/GUI/UI/Houses/MagicGuild.cpp),
-  [MM6ShopRefreshBoundary.h](../src/Engine/MM6/MM6ShopRefreshBoundary.h)
+  [MM6ShopRefreshBoundary.h](../src/Engine/MM6/MM6ShopRefreshBoundary.h),
+  [MM6Shop.cpp](../src/GUI/UI/Houses/MM6Shop.cpp)
 - Game tests: [GameTests_MM7Vendor.cpp](../test/Bin/GameTest/GameTests_MM7Vendor.cpp),
   [GameTests_MM7AllArtifactsEngine.cpp](../test/Bin/GameTest/GameTests_MM7AllArtifactsEngine.cpp),
   [GameTests_MM7HarmondaleStorage.cpp](../test/Bin/GameTest/GameTests_MM7HarmondaleStorage.cpp). The artifact tests
   skip unless `ENROTH_MM7_ALL_ARTIFACTS_STORAGE=1` is set (one control test skips when it is set). The vendor tests
-  skip unless `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY=1` is set.
+  skip unless `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY=1` is set. The MM6 vendor tests in
+  [GameTests_MM6Houses.cpp](../test/Bin/GameTest/GameTests_MM6Houses.cpp) (`MM6Houses.*VendorRefresh*`) set their own
+  flag.
 
 See also: [Build setup](build-and-dev-setup.md), [Testing](testing.md), [MM7 status](mm7-status.md), [Upstream](upstream.md), [Source and privacy](source-and-privacy.md)

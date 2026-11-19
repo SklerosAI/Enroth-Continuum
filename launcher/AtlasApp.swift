@@ -250,8 +250,8 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         else if action == "backup-saves" { backupSaves() }
         else if action == "mods-on" { preferences.set(true, forKey: "mods.mm7.enabled"); sendState(message: "MM7 private mods will apply at the next launch.") }
         else if action == "mods-off" { preferences.set(false, forKey: "mods.mm7.enabled"); sendState(message: "Vanilla MM7 will run at the next launch.") }
-        else if action == "vendor-refresh-on" { preferences.set(true, forKey: "mods.vendorRefreshOnEntry"); sendState(message: "Fresh vendor stock is saved for MM6 and MM7. MM7 applies on the next private-mods launch.") }
-        else if action == "vendor-refresh-off" { preferences.set(false, forKey: "mods.vendorRefreshOnEntry"); sendState(message: "Vendor stock will use its normal refresh schedule on the next launch.") }
+        else if action == "vendor-refresh-on" { preferences.set(true, forKey: "mods.vendorRefreshOnEntry"); preferences.set(true, forKey: "mods.mm6.vendorRefreshOnEntry"); sendState(message: "Fresh vendor stock is saved for MM6 and MM7. MM6 applies on its next launch, MM7 on the next private-mods launch.") }
+        else if action == "vendor-refresh-off" { preferences.set(false, forKey: "mods.vendorRefreshOnEntry"); preferences.set(false, forKey: "mods.mm6.vendorRefreshOnEntry"); sendState(message: "Vendor stock will use its normal refresh schedule on the next launch.") }
         else if action == "all-artifacts-storage-on" { preferences.set(true, forKey: "mods.mm7.allArtifactsStorage"); sendState(message: "All Artifacts + Storage will apply on the next private-mods MM7 launch.") }
         else if action == "all-artifacts-storage-off" { preferences.set(false, forKey: "mods.mm7.allArtifactsStorage"); sendState(message: "MM7 will use its normal artifact cap and chest behavior on the next launch.") }
         else if action == "chest-reroll-on" { preferences.set(true, forKey: "mods.mm7.chestReroll"); sendState(message: "MM7 chest reroll will apply on the next private-mods launch.") }
@@ -321,6 +321,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             "modSupport": true,
             "modsEnabled": preferences.bool(forKey: "mods.mm7.enabled"),
             "vendorRefreshOnEntry": preferences.bool(forKey: "mods.vendorRefreshOnEntry"),
+            "mm6VendorRefreshOnEntry": preferences.bool(forKey: "mods.mm6.vendorRefreshOnEntry"),
             "allArtifactsStorage": preferences.bool(forKey: "mods.mm7.allArtifactsStorage"),
             "chestReroll": preferences.bool(forKey: "mods.mm7.chestReroll"),
             "monsterLootReroll": preferences.bool(forKey: "mods.mm7.monsterLootReroll"),
@@ -717,7 +718,7 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
             if modsEnabled { try FileManager.default.createDirectory(at: modRoot, withIntermediateDirectories: true) }
             process.environment = build.environment(base: ProcessInfo.processInfo.environment,
                                                     modRoot: modsEnabled ? modRoot : nil,
-                                                    vendorRefresh: preferences.bool(forKey: "mods.vendorRefreshOnEntry"),
+                                                    vendorRefresh: preferences.bool(forKey: build == .mm6 ? "mods.mm6.vendorRefreshOnEntry" : "mods.vendorRefreshOnEntry"),
                                                     allArtifactsStorage: preferences.bool(forKey: "mods.mm7.allArtifactsStorage"),
                                                     chestReroll: preferences.bool(forKey: "mods.mm7.chestReroll"),
                                                     monsterLootReroll: preferences.bool(forKey: "mods.mm7.monsterLootReroll"))

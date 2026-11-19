@@ -35,7 +35,7 @@ function state(overrides) {
     data: titles, paths: {}, saves: [], running: false, runningBuild: '', mm6Available: false, upstreamAvailable: false,
     recordingFinalizing: false, recordingEnabled: false, recordVideo: false, recordDiagnostics: false,
     recordingPath: '', recordingSession: '', modsEnabled: false, vendorRefreshOnEntry: false,
-    allArtifactsStorage: false, chestReroll: false, monsterLootReroll: false,
+    mm6VendorRefreshOnEntry: false, allArtifactsStorage: false, chestReroll: false, monsterLootReroll: false,
     portraits: [false, false, false, false], portraitMoods: [{}, {}, {}, {}],
     armor: {saved: false}, ...overrides,
   };
@@ -116,5 +116,26 @@ assert.strictEqual(sent.at(-1), 'monster-loot-reroll-off');
 window.Atlas.receive(state({modsEnabled: true, monsterLootReroll: false}));
 document.getElementById('monster-loot-reroll-toggle').click();
 assert.strictEqual(sent.at(-1), 'monster-loot-reroll-on');
+
+// The vendor toggle saves a choice for each title. MM6 applies its own without Private mods, MM7 only with them.
+const vendorToggle = document.getElementById('vendor-refresh-toggle');
+const vendorStatus = document.getElementById('vendor-refresh-status');
+window.Atlas.receive(state({modsEnabled: false, vendorRefreshOnEntry: true, mm6VendorRefreshOnEntry: true}));
+assert.strictEqual(vendorToggle.textContent, 'Turn off');
+assert.strictEqual(vendorStatus.textContent, 'On for next MM6 launch · enable Private mods for MM7');
+vendorToggle.click();
+assert.strictEqual(sent.at(-1), 'vendor-refresh-off');
+window.Atlas.receive(state({modsEnabled: true, vendorRefreshOnEntry: true, mm6VendorRefreshOnEntry: true}));
+assert.strictEqual(vendorStatus.textContent, 'On for next MM6 and MM7 launch');
+window.Atlas.receive(state({modsEnabled: true, vendorRefreshOnEntry: true}));
+assert.strictEqual(vendorStatus.textContent, 'On for next MM7 launch');
+window.Atlas.receive(state({mm6VendorRefreshOnEntry: true}));
+assert.strictEqual(vendorToggle.textContent, 'Turn off');
+assert.strictEqual(vendorStatus.textContent, 'On for next MM6 launch');
+window.Atlas.receive(state({modsEnabled: true}));
+assert.strictEqual(vendorToggle.textContent, 'Turn on');
+assert.strictEqual(vendorStatus.textContent, 'Off · normal refresh schedule');
+vendorToggle.click();
+assert.strictEqual(sent.at(-1), 'vendor-refresh-on');
 
 console.log('Atlas page checks passed');

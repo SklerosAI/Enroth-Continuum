@@ -196,6 +196,15 @@ UNIT_TEST(MM6ShopStockFields, FailedRefreshDoesNotPartiallyChangeDetachedOwners)
     EXPECT_EQ(clocks.deadlineWords[mm6::shopClockSlot(47)], 0);
 }
 
+UNIT_TEST(MM6ShopStockFields, VendorRefreshPolicyNeedsExactOptIn) {
+    EXPECT_EQ(mm6::vendorRefreshPolicy("1"), mm6::ShopRefreshPolicy::OnEntry);
+    EXPECT_EQ(mm6::vendorRefreshPolicy(nullptr), mm6::ShopRefreshPolicy::WhenExpired);
+    EXPECT_EQ(mm6::vendorRefreshPolicy(""), mm6::ShopRefreshPolicy::WhenExpired);
+    EXPECT_EQ(mm6::vendorRefreshPolicy("0"), mm6::ShopRefreshPolicy::WhenExpired);
+    EXPECT_EQ(mm6::vendorRefreshPolicy("true"), mm6::ShopRefreshPolicy::WhenExpired);
+    EXPECT_EQ(mm6::vendorRefreshPolicy("01"), mm6::ShopRefreshPolicy::WhenExpired);
+}
+
 UNIT_TEST(MM6ShopStockFields, EntryModRefreshesEachVisitAndPreservesSharedRow) {
     auto stock = std::make_unique<mm6::ShopStockFields>();
     stock->ready = true;

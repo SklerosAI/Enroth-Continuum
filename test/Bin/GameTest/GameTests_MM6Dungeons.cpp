@@ -16,6 +16,7 @@
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/Decoration.h"
 #include "Engine/Party.h"
+#include "Engine/Resources/ResourceManager.h"
 #include "Engine/Tables/ChestTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
@@ -23,6 +24,8 @@
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/UIRest.h"
+
+#include "Library/Color/ColorTable.h"
 
 #include "Utility/Exception.h"
 
@@ -581,4 +584,78 @@ GAME_TEST(MM6Dungeons, GharikForgeFloorAndChests) {
     // Every character takes the timer's 25 fire damage at least once while the party stands on the hot floor.
     for (int i = 0; i < 4; i++)
         EXPECT_LT(std::ranges::min(hpTape, {}, [i](const auto &hps) { return hps[i]; })[i], 2000) << i;
+}
+
+GAME_TEST(MM6Dungeons, TempleDoorDialogArt) {
+    // The MM6 dungeon door dialogue drew its Yes and No buttons over the HUD menu buttons, left a gap between the view
+    // and its panel while the door's movie played, and titled the exit dialogue with the map outside the dungeon.
+    startNewGameThroughInput(game);
+    engine->config->debug.NoVideo.setValue(false); // The HUD leaves the top panel out while the temple's movie plays.
+    const MapId oute3 = pMapTable->GetMapInfo("oute3.odm");
+    const MapId d02 = pMapTable->GetMapInfo("d02.blv");
+    auto mapTape = tapes.map();
+    auto screenTape = tapes.screen();
+    auto quadsTape = tapes.hudQuads();
+    auto linesTape = tapes.titleLines();
+    test.startTaping();
+
+    for (bool confirm : {false, true}) {
+        game.teleportTo(oute3, Vec3f(-21456, -286, 193), 90); // In front of the d02 door, facing it.
+        game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+        game.tick();
+        ASSERT_EQ(screenTape.back(), SCREEN_INPUT_BLV) << confirm;
+        game.pressAndReleaseButton(BUTTON_LEFT, confirm ? Pointi(516, 327) : Pointi(596, 327)); // The middle of the Yes or the No art.
+        game.tick();
+        if (!confirm)
+            ASSERT_EQ(screenTape.back(), SCREEN_GAME);
+    }
+    game.skipLoadingScreen();
+    game.tick();
+    ASSERT_EQ(engine->_currentLoadedMapId, d02);
+
+    useIndoorEventFace(game, 50); // The way out.
+    ASSERT_EQ(screenTape.back(), SCREEN_INPUT_BLV);
+    game.pressAndReleaseButton(BUTTON_LEFT, Pointi(516, 327)); // The middle of the Yes art.
+    game.tick();
+    game.skipLoadingScreen();
+    game.tick();
+
+    auto art = quadsTape.flatten();
+    auto missing = art.filter([](const DrawnQuad &quad) { return !quad.texture.empty() && !engine->resources()->iconSize(quad.texture); });
+    EXPECT_EQ(mapTape, tape(oute3, d02, oute3));
+    EXPECT_EQ(screenTape.back(), SCREEN_GAME);
+    EXPECT_CONTAINS(art, (DrawnQuad{"evpan020", {481, 0}})); // The panel of the temple's room.
+    EXPECT_CONTAINS(art, (DrawnQuad{"castle", {525, 34}}));
+    EXPECT_CONTAINS(art, (DrawnQuad{"evpan004", {481, 0}}));
+    EXPECT_CONTAINS(art, (DrawnQuad{"istairup", {525, 34}}));
+    EXPECT_CONTAINS(art, (DrawnQuad{"buttyes1", {486, 313}}));
+    EXPECT_CONTAINS(art, (DrawnQuad{"buttesc1", {566, 313}}));
+    EXPECT_EQ(missing, AccessibleVector<DrawnQuad>());
+    auto isPanel = [](const DrawnQuad &quad) { return quad.texture.starts_with("evpan"); };
+    auto isTopPanel = [](const DrawnQuad &quad) { return quad.texture.starts_with("tap") && quad.position == Pointi(468, 0); };
+    for (const AccessibleVector<DrawnQuad> &frame : quadsTape) // The hour's top panel fills the gap between the view and the dialogue panel.
+        if (frame.contains(isPanel))
+            EXPECT_TRUE(frame.contains(isTopPanel));
+    auto lines = linesTape.flatten();
+    EXPECT_CONTAINS(lines, (DrawnLine{"Abandoned", {514, 2}, colorTable.White}));
+    EXPECT_CONTAINS(lines, (DrawnLine{"Strange squeaking", {490, 147}, colorTable.White}));
+    EXPECT_CONTAINS(lines, (DrawnLine{"Do you wish to", {501, 184}, colorTable.White}));
+    EXPECT_CONTAINS(lines, (DrawnLine{"leave Abandoned", {494, 199}, colorTable.White}));
+}
+
+GAME_TEST(MM6Dungeons, DragonsLairDoorText) {
+    // The Dragon's Lair door asked "Do you wish to leave Dragon's Lair?" instead of showing the cave's trans.txt line.
+    // MM6 picks that line by the map's name, the door's event has no house.
+    startNewGameThroughInput(game);
+    auto screenTape = tapes.screen();
+    auto linesTape = tapes.titleLines();
+    test.startTaping();
+
+    useMM6CampaignChainEventFace(game, pMapTable->GetMapInfo("outc3.odm"), 93); // The Dragon's Lair.
+    ASSERT_EQ(screenTape.back(), SCREEN_INPUT_BLV);
+
+    auto lines = linesTape.flatten();
+    EXPECT_CONTAINS(lines, (DrawnLine{"Dragon's Lair", {509, 2}, colorTable.White}));
+    EXPECT_CONTAINS(lines, (DrawnLine{"A large dragon", {504, 139}, colorTable.White}));
+    EXPECT_CONTAINS(lines, (DrawnLine{"dragon's treasure.", {493, 259}, colorTable.White}));
 }

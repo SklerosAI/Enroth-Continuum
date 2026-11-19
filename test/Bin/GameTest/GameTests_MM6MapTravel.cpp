@@ -360,6 +360,6 @@ GAME_TEST(MM6MapTravel, EdgeDialogArt) {
     EXPECT_EQ(missing, AccessibleVector<DrawnQuad>());
     auto lines = linesTape.flatten();
     EXPECT_CONTAINS(lines, (DrawnLine{"Castle Ironfist", {504, 2}, colorTable.White}));
-    EXPECT_CONTAINS(lines, (DrawnLine{"It will take 5 days", {491, 156}, colorTable.White}));
-    EXPECT_CONTAINS(lines, (DrawnLine{"Sorpigal?", {524, 246}, colorTable.White}));
+    EXPECT_CONTAINS(lines, (DrawnLine{"It will take 5 days", {491, 154}, colorTable.White}));
+    EXPECT_CONTAINS(lines, (DrawnLine{"Sorpigal?", {524, 244}, colorTable.White}));
 }

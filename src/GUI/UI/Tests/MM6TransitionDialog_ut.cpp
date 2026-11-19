@@ -14,7 +14,6 @@ UNIT_TEST(MM6TransitionDialog, UsesOriginalExitPicturesAndTitleLocalArt) {
     for (unsigned id = 1; id <= expectedIcons.size(); ++id) {
         const mm6::TransitionDialogPlan plan = mm6::planIndoorTransition(
             GameTitle::MM6, static_cast<HouseId>(171), id, "present in MM6 trans.txt");
-        EXPECT_EQ(plan.backgroundIcon, "backevt");
         EXPECT_EQ(plan.destinationIcon, expectedIcons[id - 1]);
         EXPECT_EQ(plan.confirmIcon, "buttyes2");
         EXPECT_EQ(plan.cancelIcon, "buttesc2");

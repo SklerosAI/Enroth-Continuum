@@ -177,4 +177,4 @@ explicit input. It always writes a staged bundle, never directly to
 save/load behavior.
 
 The source of OpenEnroth and its contributor history remain part of this
-fork. See [../CREDITS.md](../CREDITS.md) and [../project/UPSTREAM.md](../project/UPSTREAM.md).
+fork. See [../CREDITS.md](../CREDITS.md) and [../docs/upstream.md](../docs/upstream.md).

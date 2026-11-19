@@ -165,8 +165,9 @@ def assemble(output: Path, helpers: dict[str, Path], mm7_deps_build_root: Path |
         shutil.copy2(ROOT / "launcher/Info.plist", contents / "Info.plist")
         shutil.copy2(ROOT / "launcher/Atlas/index.html", contents / "Resources/Atlas/index.html")
         shutil.copy2(ROOT / "tools/mm7_playtest_capture.sh", contents / "Resources/Atlas/mm7_playtest_capture.sh")
-        for source in (ROOT / "LICENSE", ROOT / "CREDITS.md", ROOT / "project/UPSTREAM.md"):
-            shutil.copy2(source, contents / "Resources/Notices" / source.name)
+        for source, name in ((ROOT / "LICENSE", "LICENSE"), (ROOT / "CREDITS.md", "CREDITS.md"),
+                             (ROOT / "docs/upstream.md", "UPSTREAM.md")):
+            shutil.copy2(source, contents / "Resources/Notices" / name)
         if notice_source:
             shutil.copytree(notice_source, contents / "Resources/Notices/MM7-Media")
         shutil.copy2(ATLAS_ICON, contents / "Resources/AtlasIcon.icns")

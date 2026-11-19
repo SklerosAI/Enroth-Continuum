@@ -1,0 +1,282 @@
+# Mods and the Atlas launcher
+
+This page covers The Atlas, the macOS launcher app that runs the fork's title-locked engines, and the private MM7 mods
+it can switch on.
+
+## The Atlas at a glance
+
+`Enroth Continuum.app` is a small AppKit window that hosts an HTML page in a `WKWebView`. The page posts named actions
+(`play-mm7`, `mods-on`, `open-mm7-mods` and so on) to the Swift host, which launches helper apps, stores settings in
+macOS user defaults and manages local files. The Atlas never packages or writes original game archives.
+
+| Source | Role |
+|---|---|
+| `launcher/AtlasApp.swift` | App delegate: page bridge, play actions, data paths, recording, Atelier and Vault actions |
+| `launcher/GameBuild.swift` | `GameBuild` enum (`mm6`, `fork` = MM7, `upstream`): helper path, profile, arguments, child environment |
+| `launcher/MM7ProfilePath.swift` | MM7 profile resolver, with a guarded disposable-profile override for visible gates |
+| `launcher/Atlas/index.html` | The page itself (Play cards, recording toggles, The Vault, The Atelier) |
+| `launcher/Info.plist`, `AtlasIcon.svg`, `AtlasIcon.icns`, `make_icon.py` | Bundle metadata and icon. `make_icon.py` packs rendered PNG sizes into the tracked ICNS |
+| `launcher/assemble.py`, `launcher/build.sh` | Stage a signed Atlas bundle from verified helper apps |
+| `launcher/tests/` | Swift checks for `GameBuild` and `MM7ProfilePath`, Node checks for the page controls |
+
+## Helpers and title locks
+
+The Atlas launches one of three helpers from `Contents/Helpers/<Name>.app`:
+
+| Button | `GameBuild` | Helper | Arguments | Profile under `~/Library/Application Support/Enroth Continuum/` |
+|---|---|---|---|---|
+| Play MM7 | `fork` | `MM7.app` | `--game mm7 --data-path <data> --user-path <profile>` | `Profiles/MM7-Atlas` |
+| Play MM6 | `mm6` | `MM6.app` | `--game mm6 --data-path <data> --user-path <profile>` | `Profiles/MM6-Atlas` |
+| Play upstream OpenEnroth | `upstream` | `OpenEnroth.app` | `--data-path <data> --user-path <profile>` | `Profiles/MM7-OpenEnroth` |
+
+`MM6.app` and `MM7.app` are the CMake targets `MM6` and `MM7` in `src/Bin/OpenEnroth/CMakeLists.txt`. They build on
+macOS only, from the same sources as `OpenEnroth`, with `EC_MM6_ONLY=1` or `EC_MM7_ONLY=1` and their own bundle IDs
+(`org.sklerosai.enrothcontinuum.mm6`, `org.sklerosai.enrothcontinuum.mm7`). `src/Bin/OpenEnroth/OpenEnrothOptions.cpp`
+rejects a missing or different `--game` value with "This MM6 app only accepts --game mm6." or the MM7 equivalent.
+That rejection is the title lock the assembler checks.
+
+Each title keeps its own profile so saves and configs never mix. An MM7 Atlas profile holds
+`enroth-continuum-mm7.ini` and `logs/enroth-continuum-mm7*.log` (names from `src/Application/Startup/GameStarter.cpp`).
+
+### MM7
+
+- Default data folder: `Game Data/MM7` under the Atlas support folder. A folder chosen in the page is stored in the
+  `data.mm7` preference and wins.
+- Before launch the Atlas checks for the eight archives the engine needs (`anims/magic7.vid`, `anims/might7.vid`,
+  `data/bitmaps.lod`, `data/events.lod`, `data/games.lod`, `data/icons.lod`, `data/sprites.lod`, `sounds/audio.snd`),
+  matching folder and file names case-insensitively.
+- MM7 on macOS does not copy saves from the data folder into a fresh profile. Copy old saves into
+  `Profiles/MM7-Atlas/saves` by hand.
+- `ENROTH_CONTINUUM_MM7_DISPOSABLE_PROFILE` in the Atlas's own environment replaces the profile, for visible gates. The
+  path must be absolute, an immediate child of the system temp folder named `mm7-visible-gate-*`, owned by the user,
+  mode `0700`, not a symlink, and must contain a `.ec-mm7-visible-gate` marker with the exact text
+  `EnrothContinuum-MM7-visible-gate-v1`. Anything else makes the profile invalid and the Atlas refuses to launch.
+
+### MM6
+
+- Default data folder: `Game Data/MM6/app` under the Atlas support folder, or the `data.mm6` preference.
+- The readiness check looks for `anims/anims1.vid`, `data/games.lod`, `data/icons.lod` and `sounds/audio.snd`.
+- On launch the Atlas copies `openenroth.ini` from the integration profile `Profiles/MM6` into `Profiles/MM6-Atlas`
+  only when the Atlas profile has none. It then applies two one-time window defaults (resizable, and windowed on first
+  run), tracked by a version number in preferences, so a player's later window choice is kept. A resizable window is the
+  player's route to fullscreen, since macOS greys out the fullscreen button of a fixed-size window.
+- MM6 gets no recording and no private-mod settings. The child environment drops `ENROTH_MM7_MOD_DIR`,
+  `ENROTH_MM7_ALL_ARTIFACTS_STORAGE`, `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY` and `OPENENROTH_MM7_PATH`.
+- Play MM6 is a playtest entry. MM8 is a data-detection card only. There is no MM8 helper.
+
+### Upstream OpenEnroth
+
+The upstream button is for playtesting current upstream on the same MM7 data. It prefers a bundled
+`Contents/Helpers/OpenEnroth.app` and otherwise uses `/Applications/OpenEnroth.app`. Without either, the button stays
+visible but disabled. Upstream plays MM7 only and has no `--game` option, so the Atlas passes only `--data-path` and
+`--user-path`. Its profile `Profiles/MM7-OpenEnroth` is created before launch, because upstream requires an existing
+folder, and is never the fork's `MM7-Atlas`.
+
+The upstream child environment drops `OPENENROTH_MM7_PATH` (upstream's fallback data path) and every fork mod flag,
+so upstream cannot fall back to `~/.openenroth` or another data folder. Upstream reads only the data folder and writes
+its config, saves and logs into the profile. On its first start with an empty profile it copies any `saves` folder from
+the data folder into the profile.
+
+## Recording
+
+Two persistent toggles, **Record video** and **Record diagnostics**, apply to Play MM7 and Play upstream OpenEnroth.
+The Atlas bundles `tools/mm7_playtest_capture.sh` as `Contents/Resources/Atlas/mm7_playtest_capture.sh` and runs it
+beside the game. Video keeps a rolling two-minute replay. **Command-Shift-R** keeps the current replay as a clip, and a
+crash or abnormal exit keeps one automatically. Diagnostics keep log ranges, changed save snapshots, the build identity
+and launch command, the exit status and crash reports. The hotkey uses the Carbon hot key API and is registered only
+while a video session runs. Video needs macOS Screen Recording permission. Diagnostics do not. The recording folder,
+its drive identity and the toggles live in `recording.mm7.*` preferences. Retention limits and the capture script's
+own options are documented in [MM7_PLAYTEST_CAPTURE.md](../tools/MM7_PLAYTEST_CAPTURE.md) and on the testing page.
+
+## Building and staging the Atlas
+
+`launcher/build.sh` runs `python3 launcher/assemble.py` with the same arguments.
+
+```sh
+cmake -B build-release -S . -G Ninja -DCMAKE_BUILD_TYPE=Release -DOE_BUILD_TESTS=OFF
+cmake --build build-release --target MM7
+launcher/build.sh --mm7-app build-release/src/Bin/OpenEnroth/MM7.app
+```
+
+A Debug helper works but is larger and slower, so the installed Atlas packages a Release `MM7` build.
+
+| Option | Meaning |
+|---|---|
+| `--mm7-app PATH` | Title-locked `MM7.app`. Required unless `--reuse-from` supplies one |
+| `--mm6-app PATH` | `MM6.app`, only after its play gate |
+| `--mm8-app PATH` | `MM8.app`, only after its play gate. No target builds one today |
+| `--openenroth-app PATH` | Upstream `OpenEnroth.app`. A sibling `BUILD-INFO.txt` is copied to `Contents/Resources/Helpers/OpenEnroth-BUILD-INFO.txt`, where the recorder reads the upstream commit |
+| `--mm7-deps-build-root DIR` | Output of `tools/build_mm7_macos_dependencies.py`. Verifies and bundles its source notices |
+| `--reuse-from APP` | Existing Atlas whose helpers (and their `BUILD-INFO.txt`) are carried forward unless replaced explicitly |
+| `--output PATH` | Default `build/Atlas/Enroth Continuum.app` |
+
+What the assembler checks and does:
+
+1. Finds the macOS SDK and `swiftc` through `xcrun`. It refuses an output under `/Applications`, so a build always
+   stages first and installing is a separate, manual step after launch and save/load checks.
+2. Verifies each helper: bundle ID and executable name from `Info.plist`, an arm64 slice (`lipo -archs`), and for
+   `MM6`, `MM7` and `MM8` the title lock. It runs the helper with the other title's `--game` and `--headless` and
+   expects the exact rejection text. A GUI bundle can stay resident after its `main` returns, so on a timeout it
+   falls back to finding the rejection string in the binary. Upstream has no title lock to probe.
+3. Validates the tracked `AtlasIcon.icns` header. Packaging needs no Homebrew or SVG tools.
+4. With `--mm7-deps-build-root`, reads `build-report.json` and requires arm64, source commits equal to
+   `thirdparty/repo-source/SOURCES.json`, exactly nine static archives with matching SHA-256 and no dylibs, and a
+   matching notice set that includes each source's primary license. The notices land in
+   `Contents/Resources/Notices/MM7-Media`. This is explicit because a helper linked against older cached libraries
+   cannot be told apart from bundle metadata alone.
+5. Compiles `AtlasApp.swift`, `MM7ProfilePath.swift` and `GameBuild.swift` with `-O` against AppKit, WebKit and Carbon
+   into `Contents/MacOS/EnrothContinuum`. The Swift module cache lives in `~/Library/Caches/EnrothContinuum`.
+6. Copies the page, the capture script, the icon, and `LICENSE`, `CREDITS.md` and `docs/upstream.md` (as
+   `UPSTREAM.md`) into `Contents/Resources/Notices`.
+7. Copies helpers with `ditto`, re-verifies them, and ad-hoc signs each helper and then the app (`codesign --sign -`).
+8. Builds in a temporary folder beside the output and swaps it in with a rename. A failed build or a wrong-title helper
+   leaves the previous staged Atlas intact.
+
+The Atlas is ad-hoc signed, so macOS may ask again for Screen Recording permission after each new install.
+
+## Launcher tests
+
+Both checks run without building the app or the engine.
+
+```sh
+xcrun swiftc launcher/MM7ProfilePath.swift launcher/GameBuild.swift launcher/tests/main.swift -o "$TMPDIR/atlas-tests"
+"$TMPDIR/atlas-tests"          # prints "MM7 profile path and game build checks passed"
+node launcher/tests/atlas_page.js   # prints "Atlas page checks passed"
+```
+
+`tests/main.swift` checks the profile override rules (relative path, missing marker, wrong permissions), helper
+discovery with stub executables (bundled first, external upstream fallback, disabled when absent), that upstream and MM6
+never share the fork's profile, the exact argument lists per build, and the child environment per build. In
+particular, upstream and MM6 receive no fork mod keys and no `OPENENROTH_MM7_PATH`, and vanilla MM7 gets the mod
+flags forced to `0`. `tests/atlas_page.js` runs the page script against a fake DOM and checks the play and recording
+controls.
+
+## MM7 private mods
+
+All private mods are MM7-only and opt-in. They live in the user's home folder, never in the repository or in game
+archives. The engine sees them only through environment variables that the Atlas sets for a Play MM7 launch when the
+**Use private mods** switch is on (preference `mods.mm7.enabled`). With the switch off (Vanilla), the Atlas removes
+`ENROTH_MM7_MOD_DIR` and sets both boolean flags to `0`.
+
+| Variable | Set by the Atlas when | Read in |
+|---|---|---|
+| `ENROTH_MM7_MOD_DIR` | Private mods on. Value is `~/Library/Application Support/Enroth Continuum/Mods/MM7` | `AssetsManager::getCustomPortrait`, `ItemTable::ApplyPrivateArmorOverrides` |
+| `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY` | Private mods on and preference `mods.vendorRefreshOnEntry` | `GUIWindow_Shop::onHouseEntered`, `GUIWindow_MagicGuild::onHouseEntered` |
+| `ENROTH_MM7_ALL_ARTIFACTS_STORAGE` | Private mods on and preference `mods.mm7.allArtifactsStorage` | `mm7::mods::allArtifactsStorageEnabled` |
+
+Every reader checks `GameTitle::MM7` first, so the same variables do nothing in an MM6 run. The two boolean flags
+accept only the exact string `1`. Values such as `true` or `01` leave the mod off. None of these settings is written
+into saves, the engine config or game archives, so turning a mod off restores vanilla rules on the next launch. A
+direct diagnostic launch of the engine may set the same variables by hand.
+
+The mods folder may hold only these files. Anything else is ignored.
+
+```text
+Mods/MM7/
+  README.md                  written once by "Open mods folder", never overwritten
+  armor.tsv                  armor AC overrides
+  portrait-<1..4>.png        legacy single portrait per party slot
+  portraits/<1..4>/<mood>.png
+```
+
+After an MM7 run with private mods, the Atlas scans the newest profile log for the engine's "Ignoring invalid MM7
+portrait" and "Ignoring private armor overrides" warnings and reports them in the page.
+
+### Portraits
+
+`src/Engine/Mods/PrivateMods.{h,cpp}` loads portraits once per run, on the first `getCustomPortrait` call. There are
+20 moods: normal, talk, smile, sad, hurt, pain, afraid, cast, sleep, unconscious, weak, cursed, drunk, insane, sick,
+paralyzed, stone, zombie, dead and eradicated. `mm7::mods::portraitMood` maps the engine's `PortraitId` frame and the
+character's `Condition` to a mood. Eradicated, dead and zombie conditions take priority over the frame, because a
+zombie uses the normal frame in the original frame table.
+
+Loading rules:
+
+- A slot is active only when it has a valid normal image, from `portraits/<slot>/normal.png` or else the legacy
+  `portrait-<slot>.png`. Other moods for that slot are loaded only when the normal image is present.
+- A PNG must be at most 4 MiB and between 32 and 512 pixels in each dimension. An invalid file logs a warning without
+  its path and is skipped.
+- Fallbacks: pain uses hurt, unconscious uses sleep, then any missing mood uses normal. Dead and eradicated never fall
+  back. Without their own PNGs the original death art shows.
+- Voices and body art stay original. Portraits apply in party creation and in play.
+
+The Atelier imports single portraits or a folder of named mood PNGs for one slot, converting each to PNG before
+placing it. Changes take effect on the next launch.
+
+### Armor overrides (`armor.tsv`)
+
+`ItemTable::ApplyPrivateArmorOverrides` runs at the end of item table loading. Each non-comment line is
+`item_id<TAB>base_ac<TAB>bonus_ac`. Lines starting with `#` and blank lines are skipped, and a trailing CR is allowed.
+The override writes the item template's `damageDice` (base AC) and `damageMod` (bonus AC), so it changes every copy
+of that item type while the profile runs with private mods.
+
+The file is all or nothing. Any bad row rejects the whole file and the original values stay. A row is bad when it is
+longer than 128 characters, does not have exactly three tab-separated integers, names an item outside the valid item
+range or one whose type is not armour, repeats an ID, has an AC outside 0 to 100, or is the 33rd row. The Atelier
+writes a one-row file for an item picked from its fixed armor list. A hand-edited file may hold up to 32 rows.
+
+### Vendor refresh on entry
+
+With the flag set, entering a weapon, armor, magic or alchemy shop regenerates both its standard and special stock
+once, and entering a magic guild regenerates its spellbooks once. The next deadline is then set from the house's
+normal generation interval. One `VendorRefreshVisit` (`src/GUI/UI/Houses/VendorRefreshMod.h`) belongs to each house
+window, so switching to a buy tab in the same visit does not reroll again. Closed and banned shops never open a
+window, and non-vendor houses have no hook. With the flag off the original refresh-on-expiry path in the buy dialogue
+is unchanged.
+
+The Atelier labels the toggle "MM6 + MM7" and stores one shared preference, but only MM7 receives a flag. The MM6
+side is a detached model in `src/Engine/MM6/MM6ShopRefreshBoundary.{h,cpp}`: `shopRefreshPolicyFromEnvironment` reads
+`ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` and `mm6::ShopRefreshVisit` applies the same once-per-visit rule. Only unit tests
+call it. No live MM6 house reads the variable, and the Atlas does not pass it to Play MM6.
+
+### All Artifacts + Storage
+
+This mod removes the vanilla cap on random artifacts and changes artifact uniqueness from "generated" to "collected".
+Treasure levels, the tier-six artifact roll, loot families, item statistics and the random artifact list
+(`allSpawnableArtifacts()`) do not change. Fixed-location and quest artifacts are never added to random loot.
+
+- `Party::isArtifactGenerated` is still kept up to date. With the mod on, `Item::GenerateArtifact` and the tier-six
+  path in `ItemTable` exclude items in `Party::isArtifactCollected` instead, so the `artifact_limit` config value no
+  longer caps generation. The config value itself is not rewritten.
+- `Party::recordArtifactAcquisition` marks an artifact collected when it goes onto the cursor
+  (`Party::setHoldingItem`), into a character's inventory through `Party::addItemToParty`, or straight from a chest grab
+  (`Chest.cpp`). Selling, dropping or storing it later does not clear the bit. An artifact that was generated but never
+  picked up stays eligible.
+- Once every eligible artifact is collected, tier-six rolls fall back to ordinary loot.
+- Two world sources can hold the same uncollected artifact at once. The mod does not track or remove world instances.
+
+The collected ledger is saved in 39 previously unused bytes of `Party_MM7::field_7d7` in
+`src/Engine/Snapshots/EntitySnapshots.{h,cpp}`, with a version marker, so `party.bin` keeps its native size and layout.
+Once written, the ledger survives with the mod off. On first opt-in an older save is migrated conservatively. Only
+artifacts in backpacks, equipment and the cursor are marked. Artifacts left in chests are marked when next taken.
+Migration never moves, deletes or duplicates an item.
+
+The mod adds no storage UI. Castle Harmondale's existing chests are the storage. The engine already saves every chest's
+item records and grid in the indoor map delta, and the game tests check that a boundary chest keeps its items and the
+collection ledger across a save round trip.
+
+## Source
+
+- [AtlasApp.swift](../launcher/AtlasApp.swift), [GameBuild.swift](../launcher/GameBuild.swift),
+  [MM7ProfilePath.swift](../launcher/MM7ProfilePath.swift), [index.html](../launcher/Atlas/index.html)
+- [assemble.py](../launcher/assemble.py), [build.sh](../launcher/build.sh), [make_icon.py](../launcher/make_icon.py),
+  [launcher README](../launcher/README.md)
+- [tests/main.swift](../launcher/tests/main.swift), [tests/atlas_page.js](../launcher/tests/atlas_page.js)
+- [OpenEnroth CMakeLists.txt](../src/Bin/OpenEnroth/CMakeLists.txt) (`MM6`, `MM7` targets),
+  [OpenEnrothOptions.cpp](../src/Bin/OpenEnroth/OpenEnrothOptions.cpp) (title lock)
+- [PrivateMods.h](../src/Engine/Mods/PrivateMods.h), [PrivateMods.cpp](../src/Engine/Mods/PrivateMods.cpp),
+  [PrivateMods_ut.cpp](../src/Engine/Mods/PrivateMods_ut.cpp)
+- [AssetsManager.cpp](../src/Engine/AssetsManager.cpp), [ItemTable.cpp](../src/Engine/Tables/ItemTable.cpp),
+  [Item.cpp](../src/Engine/Objects/Item.cpp), [Party.cpp](../src/Engine/Party.cpp),
+  [EntitySnapshots.cpp](../src/Engine/Snapshots/EntitySnapshots.cpp)
+- [VendorRefreshMod.h](../src/GUI/UI/Houses/VendorRefreshMod.h),
+  [VendorRefreshMod_ut.cpp](../src/GUI/UI/Houses/Tests/VendorRefreshMod_ut.cpp),
+  [Shops.cpp](../src/GUI/UI/Houses/Shops.cpp), [MagicGuild.cpp](../src/GUI/UI/Houses/MagicGuild.cpp),
+  [MM6ShopRefreshBoundary.h](../src/Engine/MM6/MM6ShopRefreshBoundary.h)
+- Game tests: [GameTests_MM7Vendor.cpp](../test/Bin/GameTest/GameTests_MM7Vendor.cpp),
+  [GameTests_MM7AllArtifactsEngine.cpp](../test/Bin/GameTest/GameTests_MM7AllArtifactsEngine.cpp),
+  [GameTests_MM7HarmondaleStorage.cpp](../test/Bin/GameTest/GameTests_MM7HarmondaleStorage.cpp). The artifact tests
+  skip unless `ENROTH_MM7_ALL_ARTIFACTS_STORAGE=1` is set (one control test skips when it is set). The vendor tests
+  skip unless `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY=1` is set.
+
+See also: [Build setup](build-and-dev-setup.md), [Testing](testing.md), [MM7 status](mm7-status.md), [Upstream](upstream.md), [Source and privacy](source-and-privacy.md)

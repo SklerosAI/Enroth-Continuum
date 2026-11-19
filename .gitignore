@@ -39,7 +39,7 @@ tmp
 __pycache__/
 
 # Doxygen
-docs
+/docs/html/
 
 # Release
 dist

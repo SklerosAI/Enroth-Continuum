@@ -36,8 +36,8 @@ their safe checkpoints and reply in a separate file whose topic begins
 - This is immediate local file communication, not a Git artifact.
 - Do not put proprietary game data, passwords, personal data, raw logs, saves,
   screenshots, or asset inventories here.
-- Messages do not grant file ownership; record durable ownership in the tracked
-  `agent_comms/claims/` and `agent_comms/handoffs/` files.
-- Before ending a session, convert any unresolved live instruction into a
-  tracked handoff so it survives cleanup or a restarted agent.
+- Messages do not grant file ownership. Lane branch names carry ownership, see
+  `docs/agent-workflow.md`.
+- Before ending a session, move any unresolved live instruction to where it
+  lasts: a commit message, a `docs/` page, or `docs/open-questions.md`.
 

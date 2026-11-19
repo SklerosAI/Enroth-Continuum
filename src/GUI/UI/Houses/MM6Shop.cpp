@@ -313,6 +313,8 @@ void GUIWindow_MM6Shop::sell() {
     InventoryEntry entry = clickedBackpackEntry();
     if (!entry || !mm6::shopTradesItem(std::to_underlying(houseId()), entry->itemId, pItemTable->items[entry->itemId]))
         return;
+    if (engine->config->gameplay.FixShopsBuyingBlasters.value() && pItemTable->items[entry->itemId].baseValue == 0)
+        return; // Blasters 64 and 65 have no value in MM6 items.txt.
     int value = 0;
     try {
         value = mm6::itemValue(*entry, *pItemTable);

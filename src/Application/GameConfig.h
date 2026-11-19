@@ -261,6 +261,14 @@ class GameConfig : public Config {
             "In vanilla, every command of the event picked its own random member, so a check could read one member and "
             "a reward land on another, and a fountain could be drunk more than once."};
 
+        Bool FixWastedBlackPotion = {this, "fix_wasted_black_potion", true,
+            "MM6 only. An Essence the drinker already drank stays in the hand with an error sound, as the GrayFace patch does. "
+            "In vanilla it was used up and did nothing."};
+
+        Bool FixShopsBuyingBlasters = {this, "fix_shops_buying_blasters", true,
+            "MM6 only. Shops refuse to buy an item with no value, a blaster, as the GrayFace patch does. "
+            "In vanilla a weapon shop or the general store bought a blaster for 1 gold."};
+
         Float SpellFailureRecoveryMod = {this, "spell_failure_recovery_mod", 0.5f, &ValidateSpellFailureRecoveryMod,
             "Recovery time modifier when spell casting ended in failure for the reason where spell cannot be cast at all in current context. "
             "Context include situation where outdoor spell is casted indoor or targeted spell is casted with no characters on screen."};

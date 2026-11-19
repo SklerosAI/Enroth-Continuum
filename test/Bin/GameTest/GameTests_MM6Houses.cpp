@@ -428,6 +428,29 @@ GAME_TEST(MM6Houses, WeaponShopBuyAndSellBack) {
     EXPECT_EQ(clockTape, tape(false, true));
 }
 
+GAME_TEST(MM6Houses, WeaponShopRefusesBlaster) {
+    // The New Sorpigal weapon shop bought a blaster for 1 gold.
+    auto goldTape = tapes.gold();
+    auto backpackTape = tapes.custom([] { return backpackItems(0); });
+    startMM6NewGame(game);
+    pParty->pCharacters[0].inventory.add(Item(static_cast<ItemId>(64)));
+    test.startTaping();
+    enterThroughDoor(game, kWeaponShopDoor, 0);
+    game.pressGuiButton("HouseDialogue_Option1"); // Sell Items.
+    game.tick();
+    for (ItemId item : {static_cast<ItemId>(64), static_cast<ItemId>(1)}) { // The blaster, then the knight's sword.
+        InventoryEntry entry;
+        for (InventoryEntry candidate : pParty->pCharacters[0].inventory.entries())
+            if (candidate->itemId == item)
+                entry = candidate;
+        ASSERT_TRUE(entry);
+        game.pressAndReleaseButton(BUTTON_LEFT, mapFromInventoryGrid(entry.geometry().topLeft(), Pointi(14, 17)) + Pointi(16, 16));
+        game.tick();
+    }
+    EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66, 505, 64}, std::vector<int>{124, 15, 23, 66, 505, 64}));
+    EXPECT_EQ(goldTape, tape(200, 214)); // The sword alone.
+}
+
 GAME_TEST(MM6Houses, GuildBuySpellbook) {
     // A New Sorpigal spell guild sells a spellbook from its generated stock for gold.
     auto goldTape = tapes.gold();

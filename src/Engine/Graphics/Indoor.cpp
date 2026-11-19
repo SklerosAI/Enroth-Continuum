@@ -1594,14 +1594,14 @@ void BLV_ProcessPartyActions() {  // could this be combined with odm process act
     Vec3f oldPos = pParty->pos;
     Vec3f savedspeed = pParty->velocity;
 
-    int faceEvent2 = 0; // dont overwrite faceEvent
+    int wallPlateEvent = 0;
     // horizontal
     pParty->velocity.z = 0;
-    ProcessPartyCollisionsBLV(pBLVRenderParams->uPartySectorID, min_party_move_delta_sqr, &faceId, &faceEvent2);
+    ProcessPartyCollisionsBLV(pBLVRenderParams->uPartySectorID, min_party_move_delta_sqr, &faceId, &wallPlateEvent);
     // vertical -  only when horizonal motion hasnt caused height gain
     if (pParty->pos.z <= oldPos.z) {
         pParty->velocity = Vec3f(0, 0, savedspeed.z);
-        ProcessPartyCollisionsBLV(pBLVRenderParams->uPartySectorID, min_party_move_delta_sqr, &faceId, &faceEvent2);
+        ProcessPartyCollisionsBLV(pBLVRenderParams->uPartySectorID, min_party_move_delta_sqr, &faceId, &wallPlateEvent);
     }
 
     // walking / running sounds ------------------------
@@ -1674,6 +1674,9 @@ void BLV_ProcessPartyActions() {  // could this be combined with odm process act
     if (faceId >= 0) // TODO(pskelton): investigate why this happens
         if (!isAboveGround && pIndoor->faces[faceId].attributes & FACE_IsLava)
             pParty->uFlags |= PARTY_FLAG_BURNING;
+
+    if (wallPlateEvent && engine->gameTitle() == GameTitle::MM6)
+        faceEvent = wallPlateEvent; // MM6 runs a wall plate on every frame the party pushes against it.
 
     if (faceEvent)
         runEvent(EvtContext(EVT_SOURCE_MAP, faceEvent));

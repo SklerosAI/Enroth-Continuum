@@ -102,6 +102,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM6CampaignChainC6.cpp
         GameTests_MM6CharacterBitEvent.cpp
         GameTests_MM6EventVariables.cpp
+        GameTests_MM6WallPlate.cpp
         GameTests_MM6Creation.cpp
         GameTests_MM6FlyingEvent.cpp
         GameTests_MM6IndoorFacetEvent.cpp

@@ -195,6 +195,6 @@ void GUIWindow_Travel::updateMM6() {
     const std::string text = localization->format(LSTR_IT_WILL_TAKE_D_DAYS_TO_TRAVEL_TO_S, getTravelTime(), destinationName) + "\n \n" +
                              localization->format(LSTR_DO_YOU_WISH_TO_LEAVE_S_1, pMapTable->pInfos[engine->_currentLoadedMapId].name);
     const Recti panel(483, 0, 148, screenHeight);
-    const int y = (212 - assets->pFontCreate->CalcTextHeight(text, panel.w, 0)) / 2 + 101;
+    const int y = (212 - mm6TextHeight(text, panel.w)) / 2 + 101;
     DrawTitleText(assets->pFontCreate.get(), 0, y, colorTable.White, text, 3, panel);
 }

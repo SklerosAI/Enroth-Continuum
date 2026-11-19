@@ -5,7 +5,7 @@ Each kind of monster on a map gets the party to itself for a number of frames. A
 again without the monster it happened with, until every kind has had its turn. Per-map records, logs and the summary go
 to a Git-ignored folder, by default local-game-data/mm6/combat-sweep-YYYY-MM-DD. The summary lists every throw with the
 monster that caused it and ranks throw categories by the main-quest maps they block, read from a private --main-quest
-list. Set MM6_DATA_PATH and MM6_RULES_PATH as for run_mm6_firstmap_gate.py.
+list. Set MM6_DATA_PATH as for run_mm6_firstmap_gate.py.
 """
 
 import argparse
@@ -33,7 +33,7 @@ def sweep_one(args, map_id, stem, skipped):
            "ENROTH_MM6_COMBAT_SWEEP_FRAMES": str(args.frames)}
     if skipped:
         env["ENROTH_MM6_COMBAT_SWEEP_SKIP_MONSTERS"] = ",".join(map(str, skipped))
-    code, seconds = run_game_test(args.data, args.rules, env, log_path, args.timeout, TEST)
+    code, seconds = run_game_test(args.data, env, log_path, args.timeout, TEST)
     log_text = log_path.read_text(errors="replace")
     record = json.loads(record_path.read_text()) if record_path.is_file() else {"phase": "no record"}
     record["exitCode"], record["seconds"] = code, round(seconds, 1)
@@ -55,11 +55,10 @@ def main():
     parser.add_argument("--retries", type=int, default=12, help="reruns past monsters that end the process")
     args = parser.parse_args()
 
-    for key in ("MM6_DATA_PATH", "MM6_RULES_PATH"):
-        if not os.environ.get(key) or not Path(os.environ[key]).is_dir():
-            print(f"Set {key} to an existing private directory.", file=sys.stderr)
-            return 2
-    args.data, args.rules = Path(os.environ["MM6_DATA_PATH"]), Path(os.environ["MM6_RULES_PATH"])
+    if not os.environ.get("MM6_DATA_PATH") or not Path(os.environ["MM6_DATA_PATH"]).is_dir():
+        print("Set MM6_DATA_PATH to an existing private directory.", file=sys.stderr)
+        return 2
+    args.data = Path(os.environ["MM6_DATA_PATH"])
     if not GAME_TEST.is_file():
         print("Build OpenEnroth_GameTest first.", file=sys.stderr)
         return 2
@@ -74,7 +73,7 @@ def main():
     stems = args.maps or main_quest
     started = time.monotonic()
     list_path = args.out / "maps.txt"
-    run_game_test(args.data, args.rules, {"ENROTH_MM6_MAP_SWEEP_MAP": "list", "ENROTH_MM6_MAP_SWEEP_RESULT": str(list_path)},
+    run_game_test(args.data, {"ENROTH_MM6_MAP_SWEEP_MAP": "list", "ENROTH_MM6_MAP_SWEEP_RESULT": str(list_path)},
                   args.out / "logs" / "list.log", 120)
     ids = {line.split()[1].rsplit(".", 1)[0]: int(line.split()[0]) for line in list_path.read_text().splitlines() if line.strip()}
 

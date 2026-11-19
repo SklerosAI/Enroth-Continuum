@@ -5,7 +5,7 @@ Each map runs with actors first. A map that doesn't finish runs again without ac
 timer ended that run, then once more past each face or decoration event that ended a run, so that its timers and events
 still get swept. Per-map records, logs and the summary go to a Git-ignored folder, by default
 local-game-data/mm6/sweep-YYYY-MM-DD. The summary ranks first-throw categories by the main-quest maps they block, read
-from a private --main-quest list. Set MM6_DATA_PATH and MM6_RULES_PATH as for run_mm6_firstmap_gate.py.
+from a private --main-quest list. Set MM6_DATA_PATH as for run_mm6_firstmap_gate.py.
 """
 
 import argparse
@@ -28,11 +28,11 @@ MISSING = re.compile(r"fail(ed)? to (load|open|find)|not found|missing|could not
 IGNORED_LOG = re.compile(r"configuration file|Face has invalid event ID", re.I)
 
 
-def run_game_test(data, rules, env_extra, log_path, timeout, test=TEST):
+def run_game_test(data, env_extra, log_path, timeout, test=TEST):
     env = {key: value for key, value in os.environ.items() if not key.startswith("ENROTH_MM6_")}
     env.update(env_extra)
-    command = [str(GAME_TEST), "--game", "mm6", "--headless", "--data-path", str(data), "--rules-path", str(rules),
-               "--test-path", "test/Data", "--gtest_also_run_disabled_tests", "--gtest_filter=" + test, "--gtest_brief=1"]
+    command = [str(GAME_TEST), "--game", "mm6", "--headless", "--data-path", str(data), "--test-path", "test/Data",
+               "--gtest_also_run_disabled_tests", "--gtest_filter=" + test, "--gtest_brief=1"]
     start = time.monotonic()
     with open(log_path, "w") as log:
         try:
@@ -86,7 +86,7 @@ def sweep_one(args, map_id, stem, suffix, actors=True, skip_timers=False, skip_e
         env["ENROTH_MM6_MAP_SWEEP_SKIP_TIMERS"] = "1"
     if skip_events:
         env["ENROTH_MM6_MAP_SWEEP_SKIP_EVENTS"] = ",".join(map(str, skip_events))
-    code, seconds = run_game_test(args.data, args.rules, env, log_path, args.timeout)
+    code, seconds = run_game_test(args.data, env, log_path, args.timeout)
     log_text = log_path.read_text(errors="replace")
     record = json.loads(record_path.read_text()) if record_path.is_file() else {"phase": "no record"}
     record["exitCode"] = code
@@ -152,11 +152,10 @@ def main():
     parser.add_argument("--event-retries", type=int, default=8, help="reruns past events that end the process")
     args = parser.parse_args()
 
-    for key in ("MM6_DATA_PATH", "MM6_RULES_PATH"):
-        if not os.environ.get(key) or not Path(os.environ[key]).is_dir():
-            print(f"Set {key} to an existing private directory.", file=sys.stderr)
-            return 2
-    args.data, args.rules = Path(os.environ["MM6_DATA_PATH"]), Path(os.environ["MM6_RULES_PATH"])
+    if not os.environ.get("MM6_DATA_PATH") or not Path(os.environ["MM6_DATA_PATH"]).is_dir():
+        print("Set MM6_DATA_PATH to an existing private directory.", file=sys.stderr)
+        return 2
+    args.data = Path(os.environ["MM6_DATA_PATH"])
     if not GAME_TEST.is_file():
         print("Build OpenEnroth_GameTest first.", file=sys.stderr)
         return 2
@@ -169,7 +168,7 @@ def main():
 
     started = time.monotonic()
     list_path = args.out / "maps.txt"
-    run_game_test(args.data, args.rules, {"ENROTH_MM6_MAP_SWEEP_MAP": "list", "ENROTH_MM6_MAP_SWEEP_RESULT": str(list_path)},
+    run_game_test(args.data, {"ENROTH_MM6_MAP_SWEEP_MAP": "list", "ENROTH_MM6_MAP_SWEEP_RESULT": str(list_path)},
                   args.out / "logs" / "list.log", 120)
     maps = [(int(line.split()[0]), line.split()[1]) for line in list_path.read_text().splitlines() if line.strip()]
     if args.maps:

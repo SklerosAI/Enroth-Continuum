@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -63,11 +62,3 @@ class MM6TestData {
 };
 
 inline constexpr std::string_view mm6TestDataMissing = "Set OPENENROTH_MM6_PATH to the MM6 data folder";
-inline constexpr std::string_view mm6TestRulesMissing = "Set OPENENROTH_MM6_RULES_PATH to the MM6 rules folder";
-
-/**
- * @param name                          File name in the MM6 rules folder, e.g. `spells.json`.
- * @return                              The file from the folder named by `OPENENROTH_MM6_RULES_PATH`, or
- *                                      `std::nullopt` if the variable is not set.
- */
-std::optional<Blob> readMM6TestRules(std::string_view name);

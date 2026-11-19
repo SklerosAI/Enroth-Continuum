@@ -5,7 +5,6 @@ set(GAME_TEST_MAIN_SOURCES
         GameTestMain.cpp
         GameTestOptions.cpp
         MM6CampaignChain.cpp
-        MM6HeadlessRules.cpp
         MM7CampaignChain.cpp
         MM7MalwickCampaign.cpp
         MM7CombatHarness.cpp
@@ -116,7 +115,6 @@ set(GAME_TEST_MAIN_HEADERS
         GameTestCommon.h
         GameTestOptions.h
         MM6CampaignChain.h
-        MM6HeadlessRules.h
         MM7CampaignChain.h
         MM7CombatHarness.h)
 

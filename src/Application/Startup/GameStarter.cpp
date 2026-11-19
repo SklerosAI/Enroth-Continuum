@@ -115,12 +115,12 @@ class OffscreenCaptureGuard final : public ProxyPlatform, public ProxyWindow {
     PlatformWindow *nonNullWindow() const { return ProxyWindow::nonNullBase(); }
 };
 
-GameStarter::GameStarter(GameStarterOptions options, std::function<void(FileSystem *)> prepareUserFs): _options(std::move(options)) {
+GameStarter::GameStarter(GameStarterOptions options): _options(std::move(options)) {
     // Note: basic logging is initialized in LogStarter constructor, so it's safe to log here.
     Engine::LogEngineBuildInfo();
 
     try {
-        initialize(prepareUserFs);
+        initialize();
     } catch (const std::exception &e) {
         mm7::setStartupNativeProfileRoot(GameTitle::MM7, true, {});
         MM_CRITICAL("Terminated with exception: {}", e.what());
@@ -128,7 +128,7 @@ GameStarter::GameStarter(GameStarterOptions options, std::function<void(FileSyst
     }
 }
 
-void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUserFs) {
+void GameStarter::initialize() {
     if (_options.gameTitle == GameTitle::MM6) {
         mm6::resetRawCursorShopProcessOwners(GameTitle::MM6);
         gameStartingYear = mm6::calendarStartingYear;
@@ -145,8 +145,6 @@ void GameStarter::initialize(const std::function<void(FileSystem *)> &prepareUse
                                     std::filesystem::path(_options.userPath.native()));
     if (_options.gameTitle == GameTitle::MM6)
         mm6::setStartupNativeProfileRoot(_options.ramFsUserData, std::filesystem::path(_options.userPath.native()));
-    if (prepareUserFs)
-        prepareUserFs(ufs);
 
     // Init config.
     _config = std::make_shared<GameConfig>();

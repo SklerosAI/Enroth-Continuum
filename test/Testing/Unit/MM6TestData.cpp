@@ -55,10 +55,3 @@ std::vector<std::string> MM6TestData::activeEventScripts() const {
     std::ranges::sort(result);
     return result;
 }
-
-std::optional<Blob> readMM6TestRules(std::string_view name) {
-    const char *path = std::getenv("OPENENROTH_MM6_RULES_PATH");
-    if (!path)
-        return std::nullopt;
-    return Blob::fromFile(Path(path) / name);
-}

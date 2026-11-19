@@ -104,7 +104,7 @@ PASS_LINE = re.compile(r"\[\s*PASSED\s*\]\s+1 test\b")
 CHILD_TIMEOUT = int(os.environ.get("ENROTH_GATE_CHILD_TIMEOUT", "240"))
 
 
-def run_child(name, flag, value, profile, data, rules=None, timeout=None):
+def run_child(name, flag, value, profile, data, mm6=True, timeout=None):
     timeout = max(timeout or 0, CHILD_TIMEOUT)
     env = os.environ.copy()
     for key in list(env):
@@ -112,17 +112,15 @@ def run_child(name, flag, value, profile, data, rules=None, timeout=None):
                                                      "ENROTH_MM6_SAVE_ANYWHERE_ENABLE", "ENROTH_MM6_AUTOSAVE_ENABLE",
                                                      "ENROTH_MM6_VISIT_ENABLE"):
             del env[key]
-    if rules:
+    if mm6:
         env["ENROTH_MM6_RESTART_PROFILE"] = str(profile)
     if flag:
         env[flag] = value
-    command = [str(GAME_TEST), "--game", "mm6" if rules else "mm7",
-               "--headless", "--data-path", str(data)]
-    if rules:
-        command += ["--rules-path", str(rules)]
-    command += ["--test-path", "test/Data", "--gtest_filter=" + name,
-                "--gtest_brief=1"]
-    if rules:
+    command = [str(GAME_TEST), "--game", "mm6" if mm6 else "mm7",
+               "--headless", "--data-path", str(data),
+               "--test-path", "test/Data", "--gtest_filter=" + name,
+               "--gtest_brief=1"]
+    if mm6:
         command += ["--gtest_also_run_disabled_tests"]
     try:
         result = subprocess.run(command, cwd=ROOT, env=env,
@@ -172,8 +170,7 @@ def main():
         return 0
 
     paths = {}
-    required_paths = ("MM6_DATA_PATH", "MM6_RULES_PATH") if args.stage_f5a_profile else (
-        "MM6_DATA_PATH", "MM6_RULES_PATH", "MM7_DATA_PATH")
+    required_paths = ("MM6_DATA_PATH",) if args.stage_f5a_profile else ("MM6_DATA_PATH", "MM7_DATA_PATH")
     for key in required_paths:
         value = os.environ.get(key)
         if not value or not Path(value).is_dir():
@@ -202,14 +199,12 @@ def main():
         staged = False
         try:
             for name, flag, value in [SEED, V4, V5_WRITE, NORMAL_SAVE_LOAD[0], NORMAL_SAVE_LOAD[1]]:
-                if not run_child(name, flag, value, profile,
-                                 paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+                if not run_child(name, flag, value, profile, paths["MM6_DATA_PATH"], timeout=1500):
                     return 1
             slot = profile / "saves/save000.ec6"
             if not slot.is_file() or not slot.stat().st_size:
                 print("The staged first-map slot is absent or empty.", file=sys.stderr)
                 return 1
-            shutil.copytree(paths["MM6_RULES_PATH"], profile / "rules")
             staged = True
         finally:
             if not staged:
@@ -226,35 +221,30 @@ def main():
         profile = Path(first)
         os.chmod(profile, 0o700)
         for name, flag, value in SEVEN_CHILD_CHAIN:
-            if not run_child(name, flag, value, profile,
-                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"]):
+            if not run_child(name, flag, value, profile, paths["MM6_DATA_PATH"]):
                 return 1
     with tempfile.TemporaryDirectory(prefix="mm6-restart-fault-") as second:
         profile = Path(second)
         os.chmod(profile, 0o700)
         for name, flag, value in [SEED, V4, V5_WRITE, *FAULT_CHILDREN]:
-            if not run_child(name, flag, value, profile,
-                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"]):
+            if not run_child(name, flag, value, profile, paths["MM6_DATA_PATH"]):
                 return 1
     with tempfile.TemporaryDirectory(prefix="mm6-restart-paperdoll-") as third:
         profile = Path(third)
         os.chmod(profile, 0o700)
         for name, flag, value in [SEED, V4, V5_WRITE, *PAPERDOLL_CHILDREN]:
-            if not run_child(name, flag, value, profile,
-                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"]):
+            if not run_child(name, flag, value, profile, paths["MM6_DATA_PATH"]):
                 return 1
     with tempfile.TemporaryDirectory(prefix="mm6-restart-normal-") as third:
         profile = Path(third)
         os.chmod(profile, 0o700)
         for name, flag, value in [SEED, V4]:
-            if not run_child(name, flag, value, profile,
-                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"]):
+            if not run_child(name, flag, value, profile, paths["MM6_DATA_PATH"]):
                 return 1
         # Every save and every menu listing stages complete first-map sessions. The Load menu child and the resave
         # child load save000.ec6 through the production main-menu load, each in a fresh process.
         for name, flag, value in NORMAL_SAVE_LOAD:
-            if not run_child(name, flag, value, profile,
-                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+            if not run_child(name, flag, value, profile, paths["MM6_DATA_PATH"], timeout=1500):
                 return 1
     with tempfile.TemporaryDirectory(prefix="mm6-restart-new-game-") as fifth:
         profile = Path(fifth)
@@ -262,8 +252,7 @@ def main():
         # A party made on the creation screen saves from the Save menu, then a fresh process loads, walks and saves
         # again. No seed, v4 or v5 child runs first.
         for name, flag, value in NEW_GAME:
-            if not run_child(name, flag, value, profile,
-                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+            if not run_child(name, flag, value, profile, paths["MM6_DATA_PATH"], timeout=1500):
                 return 1
     with tempfile.TemporaryDirectory(prefix="mm6-restart-save-anywhere-") as sixth:
         profile = Path(sixth)
@@ -271,8 +260,7 @@ def main():
         # A new party saves on the first map, travels to a neighbouring map and into a dungeon and saves there over the
         # first save. A fresh process loads the dungeon save, walks back out over both outdoor maps and saves again.
         for name, flag, value in SAVE_ANYWHERE:
-            if not run_child(name, flag, value, profile,
-                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+            if not run_child(name, flag, value, profile, paths["MM6_DATA_PATH"], timeout=1500):
                 return 1
     with tempfile.TemporaryDirectory(prefix="mm6-restart-buffs-") as buffs:
         profile = Path(buffs)
@@ -280,8 +268,7 @@ def main():
         # A new party casts Bless, Heroism, Protection from Fire and Fly and saves. A fresh process loads the slot and
         # finds every buff as it was saved.
         for name, flag, value in BUFF_SAVE:
-            if not run_child(name, flag, value, profile,
-                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+            if not run_child(name, flag, value, profile, paths["MM6_DATA_PATH"], timeout=1500):
                 return 1
     with tempfile.TemporaryDirectory(prefix="mm6-restart-autosave-") as seventh:
         profile = Path(seventh)
@@ -289,8 +276,7 @@ def main():
         # A new party is autosaved, then autosaved again over a map edge and at a dungeon door. A fresh process loads
         # the autosave, quick saves and quick loads, and another fresh process loads the quick save.
         for name, flag, value in AUTOSAVE:
-            if not run_child(name, flag, value, profile,
-                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+            if not run_child(name, flag, value, profile, paths["MM6_DATA_PATH"], timeout=1500):
                 return 1
     with tempfile.TemporaryDirectory(prefix="mm6-restart-visit-") as eighth:
         profile = Path(eighth)
@@ -298,8 +284,7 @@ def main():
         # A new party walks to the next map and back, which rolls the first map's sky, and saves in a dungeon. A fresh
         # process loads the save and walks out to the first map on the same day, under the sky it left.
         for name, flag, value in VISIT:
-            if not run_child(name, flag, value, profile,
-                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+            if not run_child(name, flag, value, profile, paths["MM6_DATA_PATH"], timeout=1500):
                 return 1
     with tempfile.TemporaryDirectory(prefix="mm6-restart-first-map-visit-") as ninth:
         profile = Path(ninth)
@@ -307,11 +292,10 @@ def main():
         # A new party drains the first map's fountain and saves without leaving the map. A fresh process loads the save
         # on the same day and finds the fountain still dry.
         for name, flag, value in FIRST_MAP_VISIT:
-            if not run_child(name, flag, value, profile,
-                             paths["MM6_DATA_PATH"], paths["MM6_RULES_PATH"], timeout=1500):
+            if not run_child(name, flag, value, profile, paths["MM6_DATA_PATH"], timeout=1500):
                 return 1
     for name in MM7_CONTROLS:
-        if not run_child(name, None, None, ROOT, paths["MM7_DATA_PATH"]):
+        if not run_child(name, None, None, ROOT, paths["MM7_DATA_PATH"], mm6=False):
             return 1
     print("PASS: seven-child MM6 chain, all full-retry fault children, the paperdoll child, normal Save/Load menus with a "
           "production load and resave, a production New Game saved, loaded and saved again, a dungeon save after travel "

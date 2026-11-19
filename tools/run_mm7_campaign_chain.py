@@ -35,7 +35,6 @@ class Title:
     shared_chapters: int
     profile_option: str
     data_env: str | None
-    rules_env: str | None
 
     @property
     def slot_re(self):
@@ -55,26 +54,25 @@ TITLES = {
                  marker=".ec-mm7-disposable-save-gate", marker_text="EnrothContinuum-MM7-save-gate-v1\n",
                  extension="mm7", ini="enroth-continuum-mm7.ini", chapters=8, suite="MM7CampaignChain",
                  shared_suite=None, shared_chapters=0,
-                 profile_option="--mm7-disposable-profile", data_env=None, rules_env=None),
+                 profile_option="--mm7-disposable-profile", data_env=None),
     "mm7-dark": Title(game="mm7", profile_kind="an MM7 Dark campaign chain", paths="MM7 data path",
                  prefix="mm7-dark-chain-", marker=".ec-mm7-dark-campaign-chain",
                  marker_text="EnrothContinuum-MM7-dark-campaign-chain-v1\n",
                  extension="mm7", ini="enroth-continuum-mm7.ini", chapters=8, suite="MM7DarkCampaignChain",
                  shared_suite="MM7CampaignChain", shared_chapters=3,
-                 profile_option="--mm7-disposable-profile", data_env=None, rules_env=None),
+                 profile_option="--mm7-disposable-profile", data_env=None),
     "mm7-war-dark": Title(game="mm7", profile_kind="an MM7 war and Dark campaign chain", paths="MM7 data path",
                  prefix="mm7-war-dark-chain-", marker=".ec-mm7-war-dark-campaign-chain",
                  marker_text="EnrothContinuum-MM7-war-dark-campaign-chain-v1\n",
                  extension="mm7", ini="enroth-continuum-mm7.ini", chapters=8, suite="MM7DarkCampaignChain",
                  shared_suite="MM7CampaignChain", shared_chapters=3,
-                 profile_option="--mm7-disposable-profile", data_env=None, rules_env=None),
-    "mm6": Title(game="mm6", profile_kind="an MM6 campaign chain", paths="MM6 data or rules path",
+                 profile_option="--mm7-disposable-profile", data_env=None),
+    "mm6": Title(game="mm6", profile_kind="an MM6 campaign chain", paths="MM6 data path",
                  prefix="mm6-restart-chain-",  # The MM6 save code takes a GameTest profile root only under this prefix.
                  marker=".ec-mm6-campaign-chain",
                  marker_text="EnrothContinuum-MM6-campaign-chain-v1\n", extension="ec6", ini=None, chapters=10,
                  suite="MM6CampaignChain", shared_suite=None, shared_chapters=0,
-                 profile_option="--mm6-chain-profile", data_env="MM6_DATA_PATH",
-                 rules_env="MM6_RULES_PATH"),
+                 profile_option="--mm6-chain-profile", data_env="MM6_DATA_PATH"),
 }
 
 
@@ -201,10 +199,6 @@ def run_chapter(title, args, root, chapter):
         "--game", title.game,
         "--headless",
         "--data-path", str(args.data_path),
-    ]
-    if title.rules_env:
-        command += ["--rules-path", str(args.rules_path)]
-    command += [
         "--test-path", str(args.test_path),
         title.profile_option, str(root),
         f"--gtest_filter={chapter_test_name(title, chapter)}",
@@ -237,7 +231,6 @@ def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--title", choices=sorted(TITLES), default="mm7", help="Game whose chain to run")
     parser.add_argument("--data-path", type=Path, help="Local game data, MM6_DATA_PATH by default for MM6")
-    parser.add_argument("--rules-path", type=Path, help="Private MM6 rules, MM6_RULES_PATH by default")
     parser.add_argument("--game-test", type=Path, default=REPO / "build/test/Bin/GameTest/OpenEnroth_GameTest")
     parser.add_argument("--test-path", type=Path, default=REPO / "test/Data")
     parser.add_argument("--through", type=int, default=0)
@@ -253,16 +246,10 @@ def parse_args():
         if args.profile is None:
             parser.error("--remove-profile requires --profile")
         return args
-    if title.rules_env is None and args.rules_path is not None:
-        parser.error("--rules-path is only for --title mm6")
     if args.data_path is None and title.data_env and os.environ.get(title.data_env):
         args.data_path = Path(os.environ[title.data_env])
     if args.data_path is None:
         parser.error("--data-path is required")
-    if title.rules_env and args.rules_path is None:
-        if not os.environ.get(title.rules_env):
-            parser.error("--rules-path is required")
-        args.rules_path = Path(os.environ[title.rules_env])
     return args
 
 
@@ -273,8 +260,7 @@ def main(args):
         shutil.rmtree(root)
         print("Marked profile removed")
         return 0
-    if not args.game_test.is_file() or not args.test_path.is_dir() or not args.data_path.is_dir() or \
-            (title.rules_env and not args.rules_path.is_dir()):
+    if not args.game_test.is_file() or not args.test_path.is_dir() or not args.data_path.is_dir():
         raise ValueError(f"GameTest binary, test path, or {title.paths} is missing")
     require_chapter_tests(title, args)
     if args.profile is None:

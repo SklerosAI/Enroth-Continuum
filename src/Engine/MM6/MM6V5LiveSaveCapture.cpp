@@ -93,11 +93,6 @@ void requireEmptyInheritedCommerce(const Party &party) {
             if (hasItemPayload(item))
                 throw std::runtime_error("MM6 v5 inherited commerce is not represented");
     }
-    for (HouseId id : party.PartyTimes.bountyHuntNextGenTime.indices())
-        if (party.PartyTimes.bountyHuntNextGenTime[id].ticks() ||
-            party.monster_id_for_hunting[id] != MONSTER_INVALID ||
-            party.monster_for_hunting_killed[id])
-            throw std::runtime_error("MM6 v5 inherited commerce is not represented");
 }
 
 void requireFirstMapLiveBoundary(V5FirstMapCaptureBoundary boundary) {

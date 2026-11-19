@@ -15,7 +15,7 @@ namespace {
 
 constexpr std::array<char, 4> PART_TAG = {'P', 'A', 'R', 'T'};
 constexpr std::array<char, 4> CHAR_TAG = {'C', 'H', 'A', 'R'};
-constexpr std::uint8_t PARTY_VERSION = 5;
+constexpr std::uint8_t PARTY_VERSION = 6;
 constexpr std::uint8_t CHARACTER_VERSION = 4;
 constexpr size_t MAX_NAME_BYTES = 63;
 constexpr size_t MAX_CHARACTER_PAYLOAD = 4 * (1 + MAX_NAME_BYTES + 4 + 2 + 8 + 12 + 28 + 62 + 13 + 39 + 2 + 8) + 2;
@@ -107,7 +107,9 @@ void validate(const CoreSaveFields &fields) {
         fields.party.fallStartZ < -10000000 || fields.party.fallStartZ > 10000000 ||
         fields.party.flying > 1 || fields.party.fine < 0 || fields.party.bribes < 0 ||
         fields.party.tavernDrinks >= (1u << fields.party.tavernTips.size()) ||
-        std::any_of(fields.party.tavernTips.begin(), fields.party.tavernTips.end(), [](std::int32_t tip) { return tip < 0; }))
+        std::any_of(fields.party.tavernTips.begin(), fields.party.tavernTips.end(), [](std::int32_t tip) { return tip < 0; }) ||
+        std::any_of(fields.party.bounties.begin(), fields.party.bounties.end(),
+                    [](const CoreBountyFields &bounty) { return bounty.nextRollTicks < 0 || bounty.killed > 1; }))
         throw std::runtime_error("invalid MM6 core party fields");
 
     for (const CoreCharacterFields &character : fields.characters) {
@@ -150,11 +152,16 @@ std::vector<std::uint8_t> encodeParty(const CorePartyFields &party) {
     put32(&bytes, party.tavernDrinks);
     for (std::int32_t tip : party.tavernTips)
         put32(&bytes, std::bit_cast<std::uint32_t>(tip));
+    for (const CoreBountyFields &bounty : party.bounties) {
+        put64(&bytes, std::bit_cast<std::uint64_t>(bounty.nextRollTicks));
+        put8(&bytes, bounty.monster);
+        put8(&bytes, bounty.killed);
+    }
     return bytes;
 }
 
 CorePartyFields decodeParty(std::span<const std::uint8_t> bytes) {
-    if (bytes.size() != 186)
+    if (bytes.size() != 216)
         throw std::runtime_error("invalid MM6 PART field length");
     Reader reader(bytes);
     if (reader.u8() != PARTY_VERSION)
@@ -185,6 +192,11 @@ CorePartyFields decodeParty(std::span<const std::uint8_t> bytes) {
     party.tavernDrinks = reader.u32();
     for (std::int32_t &tip : party.tavernTips)
         tip = std::bit_cast<std::int32_t>(reader.u32());
+    for (CoreBountyFields &bounty : party.bounties) {
+        bounty.nextRollTicks = std::bit_cast<std::int64_t>(reader.u64());
+        bounty.monster = reader.u8();
+        bounty.killed = reader.u8();
+    }
     reader.finish();
     return party;
 }

@@ -60,6 +60,14 @@ struct CoreCharacterFields {
     bool operator==(const CoreCharacterFields &) const = default;
 };
 
+struct CoreBountyFields {
+    std::int64_t nextRollTicks = 0;
+    std::uint8_t monster = 0;
+    std::uint8_t killed = 0;
+
+    bool operator==(const CoreBountyFields &) const = default;
+};
+
 struct CorePartyFields {
     std::int32_t gold = 0;
     std::int32_t food = 0;
@@ -87,6 +95,7 @@ struct CorePartyFields {
     std::int32_t bribes = 0;
     std::uint32_t tavernDrinks = 0; // Bit per MM6 tavern, 92 to 112.
     std::array<std::int32_t, 21> tavernTips{};
+    std::array<CoreBountyFields, 3> bounties{}; // New Sorpigal, Misty Islands and Silver Cove town halls.
 
     bool operator==(const CorePartyFields &) const = default;
 };

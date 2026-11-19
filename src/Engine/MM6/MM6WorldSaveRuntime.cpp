@@ -94,7 +94,7 @@ bool hasItemPayload(const Item &item) {
 void requireNoUnrepresentedCommerce(const Party &party) {
     // These are inherited MM7-indexed arrays, not an MM6 house-keyed owner.
     // Reject nonempty values until the original MM6 tuple and new storage are
-    // proved; copying them would silently lose guild or bounty identity.
+    // proved; copying them would silently lose guild identity.
     for (HouseId id : party.standartItemsInShops.indices()) {
         if (party.PartyTimes.shopNextRefreshTime[id].ticks() ||
             party.PartyTimes.shopBanTimes[id].ticks() || party.InTheShopFlags[id])
@@ -113,11 +113,6 @@ void requireNoUnrepresentedCommerce(const Party &party) {
             if (hasItemPayload(item))
                 throw std::runtime_error("MM6 guild stock lacks a title-specific save owner");
     }
-    for (HouseId id : party.PartyTimes.bountyHuntNextGenTime.indices())
-        if (party.PartyTimes.bountyHuntNextGenTime[id].ticks() ||
-            party.monster_id_for_hunting[id] != MONSTER_INVALID ||
-            party.monster_for_hunting_killed[id])
-            throw std::runtime_error("MM6 bounty state lacks a title-specific save owner");
 }
 
 } // namespace

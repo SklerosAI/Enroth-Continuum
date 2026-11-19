@@ -174,6 +174,14 @@ full `MM6*` game suite, the unit tests and the MM7 controls, and took before and
 - **travel-dialog-icons.** The map-edge travel dialog draws MM6.exe's own layout, `evpan004`, the `outside` picture and
   `BUTTYES1` and `BUTTESC1` at y 313, instead of MM7 icons MM6 lacks. Left: the dungeon entry and exit dialog still has
   the wrong layout.
+- **docs.** `project/`, `.llm-wiki/` and the tracked `agent_comms/` notes became this `docs/` wiki.
+- **code-cleanup.** MM6 code only its own tests reached, the save-research probe tests and the research-folder map
+  reader are gone. No MM6 test skips on a machine with the MM6 data. Left: files such as `MM6NewGameSaveRuntime.cpp`
+  are live but mostly dead and want a finer pass.
+
+The merged branch passed 298 `MM6*` game tests with none skipped, 1084 unit tests, `check_style`, the first-map gate
+and 729 of 730 MM7 game tests. The one MM7 failure, `Issues.Issue2817`, fails the same way on `master`. A 41-frame
+hidden tour on the same build showed every outdoor actor opaque and every change above on screen.
 
 Earlier MM6 lanes (menus and hirelings, services, rest and time rules) reached `master` before `ECv0.1.0`.
 

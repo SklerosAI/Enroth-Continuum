@@ -1018,9 +1018,9 @@ GAME_TEST(MM6Houses, WeaponShopIdentifyUnconscious) {
             knockOut(&pParty->pCharacters[0]);
         test.startTaping();
         enterThroughDoor(game, kWeaponShopDoor, 0);
+        clickHouseOption(game, localization->str(static_cast<LstrId>(541))); // Identify Items.
         game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
         game.tick();
-        clickHouseOption(game, localization->str(static_cast<LstrId>(541))); // Identify Items.
         clickKnightSword(game);
 
         EXPECT_EQ(unconsciousTape, tape(!conscious));
@@ -1058,9 +1058,9 @@ GAME_TEST(MM6Houses, WeaponShopRepairUnconscious) {
             knockOut(&pParty->pCharacters[0]);
         test.startTaping();
         enterThroughDoor(game, kWeaponShopDoor, 0);
+        clickHouseOption(game, localization->str(static_cast<LstrId>(542))); // Repair Items.
         game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
         game.tick();
-        clickHouseOption(game, localization->str(static_cast<LstrId>(542))); // Repair Items.
         clickKnightSword(game);
 
         EXPECT_EQ(unconsciousTape, tape(!conscious));
@@ -1074,6 +1074,98 @@ GAME_TEST(MM6Houses, WeaponShopRepairUnconscious) {
         } else {
             EXPECT_MISSES(statusTape, localization->str(static_cast<LstrId>(570)));
             EXPECT_CONTAINS(soundsTape.flatten(), SOUND_error);
+            EXPECT_EQ(panelLines(linesTape.back()), noConditionLines());
+        }
+    }
+}
+
+GAME_TEST(MM6Houses, WeaponShopMenuUnconscious) {
+    // The New Sorpigal weapon shop listed its services to an unconscious character, and Identify Items opened. The shop
+    // hides its menu behind the no condition line until a conscious character is selected.
+    for (bool conscious : {false, true}) {
+        SCOPED_TRACE(fmt::format("conscious={}", conscious));
+        test.prepareForNextTest();
+        auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+        auto activeTape = tapes.activeCharacterIndex();
+        auto linesTape = tapes.titleLines();
+        auto screenTape = tapes.custom([] {
+            GUIWindow_MM6Shop *shop = dynamic_cast<GUIWindow_MM6Shop *>(window_SpeakInHouse.get());
+            return shop ? shop->screen() : std::nullopt;
+        });
+        startMM6NewGame(game);
+        if (!conscious)
+            knockOut(&pParty->pCharacters[0]);
+        test.startTaping();
+        enterThroughDoor(game, kWeaponShopDoor, 0);
+        game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_2);
+        game.tick();
+        std::optional<Pointi> identify;
+        for (const auto &[label, rect] : houseOptions())
+            if (label == localization->str(static_cast<LstrId>(541))) // Identify Items.
+                identify = rect.center();
+        ASSERT_TRUE(identify);
+        game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+        game.tick();
+        const std::vector<DrawnLine> zoltanPanel = panelLines(linesTape.back());
+        game.pressAndReleaseButton(BUTTON_LEFT, *identify);
+        game.tick();
+        game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_2);
+        game.tick();
+
+        const std::vector<std::string> menu = {"Buy Items", "Sell Items", "Identify Items", "Repair Items", "Special Items"};
+        using Labels = std::vector<std::string>;
+        if (conscious) {
+            EXPECT_EQ(optionsTape, tape(Labels(), menu, Labels()));
+            EXPECT_EQ(screenTape, tape(std::optional<mm6::HouseServiceOption>(), std::optional(mm6::HouseServiceOption::IdentifyItems)));
+            EXPECT_EQ(zoltanPanel.size(), menu.size());
+        } else {
+            EXPECT_EQ(optionsTape, tape(Labels(), menu, Labels(), menu));
+            EXPECT_EQ(screenTape, tape(std::optional<mm6::HouseServiceOption>()));
+            EXPECT_EQ(zoltanPanel, noConditionLines());
+        }
+        EXPECT_EQ(activeTape, conscious ? tape(0, 1, 0, 1) : tape(1, 0, 1)); // An unconscious Zoltan loses the focus on the street.
+    }
+}
+
+GAME_TEST(MM6Houses, TrainingUnconscious) {
+    // An unconscious character trained to the next level at the New Sorpigal Training Grounds, and came out with full
+    // hit points. The trainer hides the offer behind the no condition line.
+    for (bool conscious : {false, true}) {
+        SCOPED_TRACE(fmt::format("conscious={}", conscious));
+        test.prepareForNextTest();
+        auto levelsTape = charTapes.levels();
+        auto hpTape = charTapes.hps();
+        auto goldTape = tapes.gold();
+        auto optionsTape = tapes.custom([] { return houseOptionLabels(); });
+        auto linesTape = tapes.titleLines();
+        startMM6NewGame(game);
+        pParty->pCharacters[0].experience = 1000;
+        pParty->pCharacters[1].experience = 1000;
+        if (!conscious)
+            knockOut(&pParty->pCharacters[0]);
+        test.startTaping();
+        enterThroughDoor(game, kTrainingDoor, 180);
+        game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_2);
+        game.tick();
+        ASSERT_EQ(houseOptions().size(), 1);
+        const Pointi train = houseOptions().front().second.center();
+        game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1);
+        game.tick();
+        game.pressAndReleaseButton(BUTTON_LEFT, train);
+        game.tick();
+
+        using Labels = std::vector<std::string>;
+        const Labels offer = {localization->format(LSTR_TRAIN_TO_LEVEL_D_FOR_D_GOLD, 2, 10)};
+        const Labels needMore = {localization->format(LSTR_YOU_NEED_D_MORE_EXPERIENCE_TO_TRAIN_TO, 2000, 3)};
+        if (conscious) {
+            EXPECT_EQ(levelsTape, tape({1, 1, 1, 1}, {2, 1, 1, 1}));
+            EXPECT_EQ(goldTape, tape(200, 190));
+            EXPECT_EQ(optionsTape.back(), needMore);
+        } else {
+            EXPECT_EQ(levelsTape, tape({1, 1, 1, 1}));
+            EXPECT_EQ(hpTape.size(), 1);
+            EXPECT_EQ(goldTape, tape(200));
+            EXPECT_EQ(optionsTape.back(), Labels());
             EXPECT_EQ(panelLines(linesTape.back()), noConditionLines());
         }
     }

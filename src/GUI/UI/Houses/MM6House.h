@@ -139,6 +139,18 @@ class GUIWindow_MM6House : public GUIWindow_House {
     virtual int stackedMenuTop() const;
 
     /**
+     * @return                          Whether the proprietor's service menu is up and this house hides it from an
+     *                                  active character who can't act.
+     */
+    virtual bool menuNeedsActingCharacter() const;
+
+    /**
+     * @return                          Whether the service menu is hidden behind the no condition line because the
+     *                                  active character can't act.
+     */
+    bool turnsAwayActiveCharacter() const;
+
+    /**
      * @param text                      Text drawn in the right panel.
      * @return                          Height of the text as MM6 counts it, the font height minus 3 for every line.
      */

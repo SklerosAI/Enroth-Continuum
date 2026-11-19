@@ -358,9 +358,12 @@ void GUIWindow_MM6House::Update() {
             if (_optionButtons[i]->rect.h > 0 && _optionButtons[i]->Contains(mouse))
                 _focusedOption = static_cast<int>(i);
 
+        const bool turnedAway = turnsAwayActiveCharacter();
         std::vector<std::string> labels;
         for (GUIButton *button : _optionButtons) {
-            if (resident.npc && _membershipOffer) {
+            if (turnedAway) {
+                labels.emplace_back();
+            } else if (resident.npc && _membershipOffer) {
                 labels.push_back(membershipLabel());
             } else if (resident.npc && _teacherOffer) {
                 bool approved = false;
@@ -375,6 +378,10 @@ void GUIWindow_MM6House::Update() {
             drawOptionLabels(labels); // MM6 keeps the bank's buttons but draws the how much prompt instead of their lines.
         if (isProprietorSelected() && _house.type == HOUSE_TYPE_BANK)
             drawPanelText(fmt::format("{}: {}", localization->str(LSTR_BALANCE), pParty->GetBankGold()), 220, colorTable.PaleCanary);
+        if (turnedAway) {
+            const std::string refusal = localization->format(LSTR_S_IS_IN_NO_CONDITION_TO_S, pParty->activeCharacter().name, localization->str(LSTR_DO_ANYTHING));
+            drawPanelText(refusal, (212 - panelTextHeight(refusal)) / 2 + 101, colorTable.PaleCanary);
+        }
     }
 
     DrawDialoguePanel(current_npc_text);
@@ -403,7 +410,7 @@ void GUIWindow_MM6House::selectResident(int index) {
 }
 
 void GUIWindow_MM6House::selectService(int index) {
-    if (!isProprietorSelected() || index < 0 || index >= static_cast<int>(_services.size()))
+    if (!isProprietorSelected() || turnsAwayActiveCharacter() || index < 0 || index >= static_cast<int>(_services.size()))
         return;
     if (_services[index] == mm6::HouseServiceOption::TempleHeal) {
         healActiveCharacter();
@@ -893,6 +900,14 @@ std::string GUIWindow_MM6House::serviceLabel(int index) const {
 
 int GUIWindow_MM6House::stackedMenuTop() const {
     return 146;
+}
+
+bool GUIWindow_MM6House::menuNeedsActingCharacter() const {
+    return isProprietorSelected() && (_house.type == HOUSE_TYPE_TAVERN || _house.type == HOUSE_TYPE_TRAINING_GROUND);
+}
+
+bool GUIWindow_MM6House::turnsAwayActiveCharacter() const {
+    return menuNeedsActingCharacter() && pParty->hasActiveCharacter() && !pParty->activeCharacter().CanAct();
 }
 
 int GUIWindow_MM6House::panelTextHeight(std::string_view text) {

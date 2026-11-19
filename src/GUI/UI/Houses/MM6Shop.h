@@ -39,6 +39,9 @@ class GUIWindow_MM6Shop : public GUIWindow_MM6House {
      */
     Recti stockItemRect(int slot) const;
 
+ protected:
+    virtual bool menuNeedsActingCharacter() const override;
+
  private:
     void openScreen(mm6::HouseServiceOption option);
     void closeScreen();

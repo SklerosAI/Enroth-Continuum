@@ -27,7 +27,6 @@
 #include "Engine/MM6/MM6NewGameSaveRuntime.h"
 #include "Engine/MM6/MM6NpcStaticBaseline.h"
 #include "Engine/MM6/MM6PostWorldAdmissionForTest.h"
-#include "Engine/MM6/MM6PrivateMapSource.h"
 #include "Engine/MM6/MM6RawSessionStage.h"
 #include "Engine/MM6/MM6ScopedNewGameSave.h"
 #include "Engine/MM6/MM6WorldSaveRuntime.h"
@@ -137,34 +136,6 @@ GAME_TEST(MM6ZSaveHeadless, DetachedPartyConstructionPreservesLiveCursor) {
     mouse->bInitialized = previousInitialized;
 }
 
-GAME_TEST(MM6ZSaveHeadless, LoadedMapSourceMatchesPrivateResearch) {
-    const char *research = std::getenv("ENROTH_MM6_MAP_RESEARCH_ROOT");
-    if (!research || !std::filesystem::is_directory(research))
-        GTEST_SKIP() << "Set ENROTH_MM6_MAP_RESEARCH_ROOT to the ignored private F3 map source";
-    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
-    ASSERT_EQ(window->nativeHandle(), nullptr);
-    const mm6::PrivateMapSource privateMaps(research);
-    const mm6::LoadedMapSource loaded(*pGames_LOD, *pMapTable, GameTitle::MM6);
-    ASSERT_EQ(loaded.expectedNames().size(), privateMaps.expectedNames().size());
-    EXPECT_TRUE(std::equal(loaded.expectedNames().begin(), loaded.expectedNames().end(),
-                           privateMaps.expectedNames().begin()));
-    for (std::size_t index = 0; index < loaded.expectedNames().size(); ++index) {
-        const std::string &delta = loaded.expectedNames()[index];
-        const std::string base = delta.substr(0, delta.size() - 4) +
-            (delta.ends_with(".dlv") ? ".blv" : ".odm");
-        try {
-            const Blob original = loaded.readBase(base);
-            const Blob retained = privateMaps.readBase(base);
-            EXPECT_EQ(original.size(), retained.size());
-            EXPECT_TRUE(original.str() == retained.str());
-            EXPECT_FALSE(loaded.readDefaultDelta(delta).empty());
-        } catch (const std::exception &error) {
-            FAIL() << "MM6 loaded map source failed at pair " << index << ": " << error.what();
-            return;
-        }
-    }
-}
-
 GAME_TEST(MM6ZSaveHeadless, NewGameCallbackFailureRestoresPlacement) {
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     const MapId priorMap = engine->_currentLoadedMapId;
@@ -191,9 +162,6 @@ GAME_TEST(MM6ZSaveHeadless, NewGameCallbackFailureRestoresPlacement) {
 }
 
 GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
-    const char *research = std::getenv("ENROTH_MM6_MAP_RESEARCH_ROOT");
-    if (!research || !std::filesystem::is_directory(research))
-        GTEST_SKIP() << "Set ENROTH_MM6_MAP_RESEARCH_ROOT to the ignored private F3 map source";
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     ASSERT_EQ(window->nativeHandle(), nullptr);
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
@@ -245,7 +213,7 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
             result.idleHeldCursorPlan = cursorPlan.iconName == "MICON1" &&
                 !cursorPlan.itemCursor && cursorPlan.resetClickOffset;
 
-            (void) mm6::saveNewGameMM6ScopedForTest(profile.root, research,
+            (void) mm6::saveNewGameMM6FromLoadedMapsScopedForTest(profile.root,
                 [&](const Party &staged, const std::unordered_map<std::string, Blob> &cache,
                     const mm6::ChestTitleState &chest) {
                     result.firstCallback = staged.pos.z == 340 && cache.size() == 67 &&
@@ -253,7 +221,7 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
                 });
             result.firstSeed = mm6::chestTitleState().lcgState;
             // A second successful write creates both a primary and a backup.
-            (void) mm6::saveNewGameMM6ScopedForTest(profile.root, research,
+            (void) mm6::saveNewGameMM6FromLoadedMapsScopedForTest(profile.root,
                 [&](const Party &staged, const std::unordered_map<std::string, Blob> &cache,
                     const mm6::ChestTitleState &chest) {
                     result.success = staged.pos.z == 340 && cache.size() == 67 && chest.ready;
@@ -261,7 +229,7 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
             result.secondSeed = mm6::chestTitleState().lcgState;
             result.primaryBeforeFailure = readFile(profile.primary());
             result.backupBeforeFailure = readFile(profile.backup());
-            const mm6::PrivateMapSource maps(research);
+            const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
             Party freshParty;
             freshParty.uNumGold = 27;
             NPCStats freshNpcs{};
@@ -329,7 +297,7 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
             const auto cacheBeforeFailure = snapshotCache();
             const auto chestBeforeFailure = mm6::chestTitleState();
             try {
-                (void) mm6::saveNewGameMM6ScopedForTest(profile.root, research,
+                (void) mm6::saveNewGameMM6FromLoadedMapsScopedForTest(profile.root,
                     [&](const Party &staged, const std::unordered_map<std::string, Blob> &cache,
                         const mm6::ChestTitleState &chest) {
                         result.failureCallback = staged.pos.z == 340 && cache.size() == 67 && chest.ready;
@@ -347,7 +315,7 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
                 mm6::chestTitleState().lcgState == chestBeforeFailure.lcgState &&
                 mm6::chestTitleState().generatedArtifactFlags == chestBeforeFailure.generatedArtifactFlags;
             try {
-                (void) mm6::saveNewGameMM6ScopedForTest(profile.root, research,
+                (void) mm6::saveNewGameMM6FromLoadedMapsScopedForTest(profile.root,
                     [&](const Party &, const std::unordered_map<std::string, Blob> &,
                         const mm6::ChestTitleState &) {
                         engine->_messageQueue->addMessageNextFrame(UIMSG_OpenInventory);
@@ -391,9 +359,6 @@ GAME_TEST(MM6ZSaveHeadless, ScopedRealFirstMapSaveAndRollback) {
 // Run alone in a fresh headless process. DoPrepareWorld changes renderer and
 // process-global owners that the scoped .ec6 writer cannot yet roll back.
 GAME_TEST(MM6ZSaveHeadless, DISABLED_ScopedSaveFeedsFirstOutdoorWorld) {
-    const char *research = std::getenv("ENROTH_MM6_MAP_RESEARCH_ROOT");
-    if (!research || !std::filesystem::is_directory(research))
-        GTEST_SKIP() << "Set ENROTH_MM6_MAP_RESEARCH_ROOT to the ignored private F3 map source";
     ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
     ASSERT_EQ(window->nativeHandle(), nullptr);
     ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
@@ -419,7 +384,7 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_ScopedSaveFeedsFirstOutdoorWorld) {
             mm6::resetChestTitleState(&mm6::chestTitleState());
             hadNoHouseNpc = std::any_of(pNPCStats->pNPCData.begin(), pNPCStats->pNPCData.end(),
                 [](const NPCData &npc) { return std::to_underlying(npc.house) == -1; });
-            (void) mm6::saveNewGameMM6ScopedForTest(profile.root, research,
+            (void) mm6::saveNewGameMM6FromLoadedMapsScopedForTest(profile.root,
                 [](const Party &, const std::unordered_map<std::string, Blob> &,
                    const mm6::ChestTitleState &) {});
             engine->_pendingTransition = MapDestination(firstMap, MAP_START_POINT_PARTY);
@@ -506,435 +471,5 @@ GAME_TEST(MM6ZSaveHeadless, DISABLED_NewGameControlFlowReachesFirstFrame) {
     EXPECT_FALSE(pOutdoor->faces.empty());
     EXPECT_FALSE(pActors.empty());
     EXPECT_EQ(vChests.size(), 20u);
-    EXPECT_EQ(window->nativeHandle(), nullptr);
-}
-
-// Run in a new process after DISABLED_NewGameControlFlowReachesFirstFrame with
-// the same disposable ENROTH_MM6_RESTART_PROFILE. This stages only owned data;
-// it does not assign the saved Party or enter the live world.
-GAME_TEST(MM6ZSaveHeadless, DISABLED_RestartSlotStagesDetachedFirstMap) {
-    const auto profileRoot = restartProfileRoot();
-    if (!profileRoot)
-        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to a disposable system-temp directory";
-    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
-    ASSERT_EQ(window->nativeHandle(), nullptr);
-    const std::filesystem::path primary = *profileRoot / "saves" / "autosave.ec6";
-    ASSERT_TRUE(std::filesystem::is_regular_file(primary));
-    const auto before = readFile(primary);
-
-    bool completed = false;
-    bool stagedCorrectly = false;
-    std::string error;
-    game.runGameRoutine([&] {
-        try {
-            const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
-            Party freshParty;
-            NPCStats freshNpcs{};
-            Timer freshTimer;
-            ActiveOverlayList freshOverlays;
-            const auto verifyItem = [](std::int32_t id) {
-                return id >= 1 && id <= 580 &&
-                    !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
-            };
-            auto staged = mm6::stageOfflineSaveSlotForTest(
-                *profileRoot, mm6::NEW_GAME_AUTOSAVE_SLOT, freshParty, freshNpcs,
-                freshTimer, freshOverlays, maps.expectedNames(),
-                [&maps](std::string_view name) { return maps.readBase(name); },
-                verifyItem, pOverlayTable->overlays.size(), GameTitle::MM6);
-            if (!staged)
-                throw std::runtime_error("MM6 restart slot was absent after first process");
-            int firstCharacterItems = 0;
-            for (const auto &entry : staged->staged.party.pCharacters[0].inventory.entries()) {
-                (void) entry;
-                ++firstCharacterItems;
-            }
-            const auto plan = mm6::prepareDetachedOutdoorWorldPlan(
-                staged->staged.worldAndVisuals, pTileTable->tileCount(), GameTitle::MM6);
-            stagedCorrectly = !staged->needsRecovery && staged->bytes == before &&
-                staged->staged.party.pos.z == 340 &&
-                staged->staged.worldAndVisuals.world.mapDeltas.size() == 67 &&
-                staged->staged.worldAndVisuals.chestTitle.ready &&
-                firstCharacterItems > 0 && plan.mapName == "oute3.odm" &&
-                !plan.vertices.empty() && !plan.spawnPoints.empty();
-        } catch (const std::exception &exception) {
-            error = exception.what();
-        }
-        completed = true;
-    });
-    for (int tick = 0; tick < 256 && !completed; ++tick)
-        game.tick();
-    ASSERT_TRUE(completed);
-    ASSERT_TRUE(error.empty()) << error;
-    EXPECT_TRUE(stagedCorrectly);
-    EXPECT_EQ(readFile(primary), before);
-    EXPECT_EQ(window->nativeHandle(), nullptr);
-}
-
-// Run in a new headless process after an independently validated v2 writer
-// has placed autosave.ec6 in the disposable restart profile. This exercises
-// the native v2 selector and detached session stage only. Live publication
-// and the Main Menu -> gameLoop edge remain gated on complete owner capture.
-GAME_TEST(MM6ZSaveHeadless, DISABLED_RawV2RestartSlotStagesDetachedSession) {
-    const auto profileRoot = restartProfileRoot();
-    if (!profileRoot)
-        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to a disposable system-temp directory";
-    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
-    ASSERT_EQ(window->nativeHandle(), nullptr);
-    const std::filesystem::path primary = *profileRoot / "saves" / "autosave.ec6";
-    ASSERT_TRUE(std::filesystem::is_regular_file(primary));
-    const auto before = readFile(primary);
-
-    bool completed = false;
-    bool stagedCorrectly = false;
-    std::string error;
-    game.runGameRoutine([&] {
-        try {
-            const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
-            const mm6::NpcStaticBaseline freshNpcs =
-                mm6::loadNpcStaticBaseline(*engine->resources(), GameTitle::MM6);
-            const auto verifyItem = [](std::int32_t id) {
-                return id >= 1 && id <= 580 &&
-                    !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
-            };
-            auto staged = mm6::preflightStagedRawSessionFields(
-                *profileRoot, mm6::NEW_GAME_AUTOSAVE_SLOT, freshNpcs,
-                maps.expectedNames(),
-                [&maps](std::string_view name) { return maps.readBase(name); },
-                verifyItem, *pItemTable, pOverlayTable->overlays.size(),
-                pTileTable->tileCount(), GameTitle::MM6);
-            stagedCorrectly = staged && !staged->needsRecovery &&
-                staged->outdoorPlan && !staged->indoorPlan &&
-                staged->outdoorPlan->mapName == "oute3.odm" &&
-                staged->party.party.pos.z == 340 &&
-                staged->world.world.mapDeltas.size() == 67 &&
-                staged->world.chestTitle.ready &&
-                staged->raw.shops.ready() &&
-                staged->raw.inventory.ready;
-        } catch (const std::exception &exception) {
-            error = exception.what();
-        }
-        completed = true;
-    });
-    for (int tick = 0; tick < 256 && !completed; ++tick)
-        game.tick();
-    ASSERT_TRUE(completed);
-    ASSERT_TRUE(error.empty()) << error;
-    EXPECT_TRUE(stagedCorrectly);
-    EXPECT_EQ(readFile(primary), before);
-    EXPECT_EQ(window->nativeHandle(), nullptr);
-}
-
-// Run in a disposable fresh process after the two tests above. This probes
-// live reentry from the partial new-game slot; it must never become loadGame's
-// production commit path without completing every owner and rollback gate.
-GAME_TEST(MM6ZSaveHeadless, DISABLED_RestartSlotEntersFirstOutdoorWorld) {
-    const auto profileRoot = restartProfileRoot();
-    if (!profileRoot)
-        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to a disposable system-temp directory";
-    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
-    ASSERT_EQ(window->nativeHandle(), nullptr);
-    game.pressGuiButton("MainMenu_NewGame");
-    game.tick(2);
-    ASSERT_NE(pGUIWindow_CurrentMenu, nullptr);
-    ASSERT_EQ(pGUIWindow_CurrentMenu->eWindowType, WINDOW_PARTY_CREATION);
-    const std::filesystem::path primary = *profileRoot / "saves" / "autosave.ec6";
-    ASSERT_TRUE(std::filesystem::is_regular_file(primary));
-    const auto before = readFile(primary);
-
-    bool completed = false;
-    bool enteredWorld = false;
-    std::string error;
-    game.runGameRoutine([&] {
-        try {
-            const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
-            Party freshParty;
-            // Saved NPC fields overlay the freshly loaded source tables;
-            // name pools and other static resources are not EC6 fields.
-            NPCStats freshNpcs = *pNPCStats;
-            Timer freshTimer;
-            ActiveOverlayList freshOverlays;
-            const auto verifyItem = [](std::int32_t id) {
-                return id >= 1 && id <= 580 &&
-                    !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
-            };
-            auto staged = mm6::stageOfflineSaveSlotForTest(
-                *profileRoot, mm6::NEW_GAME_AUTOSAVE_SLOT, freshParty, freshNpcs,
-                freshTimer, freshOverlays, maps.expectedNames(),
-                [&maps](std::string_view name) { return maps.readBase(name); },
-                verifyItem, pOverlayTable->overlays.size(), GameTitle::MM6);
-            if (!staged || staged->needsRecovery)
-                throw std::runtime_error("MM6 restart slot did not stage a primary candidate");
-            const auto plan = mm6::prepareDetachedOutdoorWorldPlan(
-                staged->staged.worldAndVisuals, pTileTable->tileCount(), GameTitle::MM6);
-            if (plan.mapName != "oute3.odm")
-                throw std::runtime_error("MM6 restart slot selected another first map");
-
-            *pParty = std::move(staged->staged.party);
-            *pNPCStats = std::move(staged->staged.worldAndVisuals.world.npcs);
-            *gameTimer = std::move(staged->staged.worldAndVisuals.visuals.timer);
-            *pActiveOverlayList = std::move(staged->staged.worldAndVisuals.visuals.overlays);
-            pMapDeltas = std::move(staged->staged.worldAndVisuals.world.mapDeltas);
-            mm6::chestTitleState() = std::move(staged->staged.worldAndVisuals.chestTitle);
-            GameUI_LoadPlayerPortraitsAndVoices();
-            current_screen_type = SCREEN_GAME;
-            engine->_pendingTransition = MapDestination(
-                pMapTable->GetMapInfo("oute3.odm"), MAP_START_POINT_PARTY);
-            engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
-            {
-                mm6::ScopedChestMapLoadOptIn chestOptIn;
-                DoPrepareWorld(/* bLoading = */ true, /* fullscreen = */ 1);
-            }
-            enteredWorld = engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute3.odm") &&
-                uCurrentlyLoadedLevelType == LEVEL_OUTDOOR && !pOutdoor->faces.empty() &&
-                !pActors.empty() && vChests.size() == 20 && pMapDeltas.size() == 67 &&
-                mm6::chestTitleState().ready && pParty->pos.z == 340;
-        } catch (const std::exception &exception) {
-            error = exception.what();
-        }
-        completed = true;
-    });
-    for (int tick = 0; tick < 256 && !completed; ++tick)
-        game.tick();
-    ASSERT_TRUE(completed);
-    ASSERT_TRUE(error.empty()) << error;
-    EXPECT_TRUE(enteredWorld);
-    EXPECT_EQ(readFile(primary), before);
-    EXPECT_EQ(window->nativeHandle(), nullptr);
-
-    // Exercise the first two control gates of Game::gameLoop after loading,
-    // then the movement frame. The parent test loop still belongs to party
-    // creation: this is not a production loadGame or gameLoop acceptance test.
-    const Vec3f initialPos = pParty->pos;
-    const int initialYaw = pParty->_viewYaw;
-    bool firstFrameCorrect = false;
-    bool secondFrameCorrect = false;
-    bool movementFrameCorrect = false;
-    std::string stepError;
-    game.runGameRoutine([] {
-        gameTimer->setPaused(false);
-        engineFlags |= ENGINE_SKIP_NEXT_WORLD_UPDATE | ENGINE_SKIP_NEXT_USER_INPUT;
-        pPartyActionQueue->Reset();
-    });
-    for (int phase = 0; phase < 3; ++phase) {
-        bool stepped = false;
-        game.tick(2);
-        game.runGameRoutine([&, phase] {
-            try {
-                if (phase == 1) {
-                    pPartyActionQueue->Add(PARTY_TurnLeft);
-                    pPartyActionQueue->Add(PARTY_WalkForward);
-                }
-                gameTimer->tick();
-                current_screen_type = SCREEN_GAME;
-                uGameState = GAME_STATE_PLAYING;
-                onTimer();
-                if (engineFlags & ENGINE_SKIP_NEXT_WORLD_UPDATE) {
-                    engineFlags &= ~ENGINE_SKIP_NEXT_WORLD_UPDATE;
-                } else {
-                    Actor::UpdateActorAI();
-                    UpdateUserInput_and_MapSpecificStuff();
-                }
-                engine->Draw();
-                const bool sameWorld =
-                    engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute3.odm") &&
-                    !engine->_pendingTransition.has_value();
-                if (phase == 0) {
-                    firstFrameCorrect = sameWorld && pParty->pos == initialPos &&
-                        pParty->_viewYaw == initialYaw &&
-                        !(engineFlags & ENGINE_SKIP_NEXT_WORLD_UPDATE) &&
-                        (engineFlags & ENGINE_SKIP_NEXT_USER_INPUT);
-                } else if (phase == 1) {
-                    secondFrameCorrect = sameWorld && pParty->pos == initialPos &&
-                        pParty->_viewYaw == initialYaw &&
-                        !(engineFlags & ENGINE_SKIP_NEXT_USER_INPUT) &&
-                        pPartyActionQueue->uNumActions == 2;
-                } else {
-                    movementFrameCorrect = sameWorld && pParty->pos != initialPos &&
-                        pParty->_viewYaw != initialYaw &&
-                        pPartyActionQueue->uNumActions == 0;
-                }
-            } catch (const std::exception &exception) {
-                stepError = exception.what();
-            }
-            stepped = true;
-        });
-        for (int tick = 0; tick < 256 && !stepped; ++tick)
-            game.tick();
-        ASSERT_TRUE(stepped);
-        ASSERT_TRUE(stepError.empty()) << stepError;
-    }
-    game.runGameRoutine([] { gameTimer->setPaused(true); });
-    ASSERT_TRUE(stepError.empty()) << stepError;
-    EXPECT_TRUE(firstFrameCorrect);
-    EXPECT_TRUE(secondFrameCorrect);
-    EXPECT_TRUE(movementFrameCorrect);
-    EXPECT_EQ(readFile(primary), before);
-    EXPECT_EQ(window->nativeHandle(), nullptr);
-}
-
-// Run alone after DISABLED_NewGameControlFlowReachesFirstFrame wrote the slot
-// into the same disposable profile. This enters Game::gameLoop through the real
-// Main Menu QuickLoad FSM edge, with only its MM6 slot/load body overridden.
-// Normal MM6 slot listing and production loadGame remain guarded.
-GAME_TEST(MM6ZSaveHeadless, DISABLED_RestartSlotThroughMainMenuGameLoop) {
-    const auto profileRoot = restartProfileRoot();
-    if (!profileRoot)
-        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to a disposable system-temp directory";
-    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
-    ASSERT_EQ(window->nativeHandle(), nullptr);
-    const std::filesystem::path primary = *profileRoot / "saves" / "autosave.ec6";
-    ASSERT_TRUE(std::filesystem::is_regular_file(primary));
-    const auto before = readFile(primary);
-
-    bool loadCalled = false;
-    std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
-    game.runGameRoutine([&] {
-        mm6::testing::setLoadGameOverride([&](std::string_view fileName) {
-            if (fileName != mm6::NEW_GAME_AUTOSAVE_SLOT)
-                throw std::runtime_error("MM6 test load selected another slot");
-            const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
-            Party freshParty;
-            NPCStats freshNpcs = *pNPCStats;
-            Timer freshTimer;
-            ActiveOverlayList freshOverlays;
-            const auto verifyItem = [](std::int32_t id) {
-                return id >= 1 && id <= 580 &&
-                    !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
-            };
-            auto staged = mm6::stageOfflineSaveSlotForTest(
-                *profileRoot, fileName, freshParty, freshNpcs, freshTimer,
-                freshOverlays, maps.expectedNames(),
-                [&maps](std::string_view name) { return maps.readBase(name); },
-                verifyItem, pOverlayTable->overlays.size(), GameTitle::MM6);
-            if (!staged || staged->needsRecovery || staged->bytes != before)
-                throw std::runtime_error("MM6 test load did not stage the primary slot");
-            const auto plan = mm6::prepareDetachedOutdoorWorldPlan(
-                staged->staged.worldAndVisuals, pTileTable->tileCount(), GameTitle::MM6);
-            if (plan.mapName != "oute3.odm")
-                throw std::runtime_error("MM6 test load selected another first map");
-
-            *pParty = std::move(staged->staged.party);
-            *pNPCStats = std::move(staged->staged.worldAndVisuals.world.npcs);
-            *gameTimer = std::move(staged->staged.worldAndVisuals.visuals.timer);
-            *pActiveOverlayList = std::move(staged->staged.worldAndVisuals.visuals.overlays);
-            pMapDeltas = std::move(staged->staged.worldAndVisuals.world.mapDeltas);
-            mm6::chestTitleState() = std::move(staged->staged.worldAndVisuals.chestTitle);
-            engine->_pendingTransition = MapDestination(
-                pMapTable->GetMapInfo("oute3.odm"), MAP_START_POINT_PARTY);
-            engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
-            chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>();
-            loadCalled = true;
-        });
-        mm6::testing::setMainMenuAutosaveQuickLoadOverride(true);
-        engine->_messageQueue->addMessageCurrentFrame(UIMSG_QuickLoad);
-    });
-
-    game.skipLoadingScreen();
-    game.tick(3);
-    const bool entered = loadCalled && GetCurrentMenuID() == MENU_NONE &&
-        engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute3.odm") &&
-        uCurrentlyLoadedLevelType == LEVEL_OUTDOOR && !pOutdoor->faces.empty() &&
-        !pActors.empty() && vChests.size() == 20 &&
-        !(engineFlags & ENGINE_SKIP_NEXT_WORLD_UPDATE) &&
-        !(engineFlags & ENGINE_SKIP_NEXT_USER_INPUT) &&
-        !engine->_pendingTransition.has_value();
-    const Vec3f initialPos = pParty->pos;
-    const int initialYaw = pParty->_viewYaw;
-    game.runGameRoutine([] {
-        pPartyActionQueue->Add(PARTY_TurnLeft);
-        pPartyActionQueue->Add(PARTY_WalkForward);
-    });
-    game.tick(3);
-    const bool moved = pParty->pos != initialPos && pParty->_viewYaw != initialYaw &&
-        pPartyActionQueue->uNumActions == 0 &&
-        engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute3.odm");
-
-    game.runGameRoutine([&] {
-        mm6::testing::setMainMenuAutosaveQuickLoadOverride(false);
-        mm6::testing::setLoadGameOverride({});
-        chestOptIn.reset();
-    });
-    EXPECT_TRUE(entered);
-    EXPECT_TRUE(moved);
-    EXPECT_EQ(readFile(primary), before);
-    EXPECT_EQ(window->nativeHandle(), nullptr);
-}
-
-// Run alone after the v1 New Game writer made the disposable slot. This uses
-// the existing v1 callback solely to prove the real gameLoop hook order; it
-// does not admit v2 publication or change the normal MM6 loader.
-GAME_TEST(MM6ZSaveHeadless, DISABLED_PostWorldHookRunsBeforeFirstInput) {
-    const auto profileRoot = restartProfileRoot();
-    if (!profileRoot)
-        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to a disposable system-temp directory";
-    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
-    ASSERT_EQ(window->nativeHandle(), nullptr);
-    const std::filesystem::path primary = *profileRoot / "saves" / "autosave.ec6";
-    ASSERT_TRUE(std::filesystem::is_regular_file(primary));
-    const auto before = readFile(primary);
-
-    bool loadCalled = false;
-    bool hookCalled = false;
-    bool sawPostWorldBeforeInput = false;
-    std::unique_ptr<mm6::ScopedChestMapLoadOptIn> chestOptIn;
-    std::unique_ptr<mm6::testing::ScopedPostWorldAdmissionForTest> admission;
-    game.runGameRoutine([&] {
-        mm6::testing::setLoadGameOverride([&](std::string_view fileName) {
-            if (fileName != mm6::NEW_GAME_AUTOSAVE_SLOT)
-                throw std::runtime_error("MM6 hook test selected another slot");
-            const mm6::LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
-            Party freshParty;
-            NPCStats freshNpcs = *pNPCStats;
-            Timer freshTimer;
-            ActiveOverlayList freshOverlays;
-            const auto verifyItem = [](std::int32_t id) {
-                return id >= 1 && id <= 580 &&
-                    !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
-            };
-            auto staged = mm6::stageOfflineSaveSlotForTest(
-                *profileRoot, fileName, freshParty, freshNpcs, freshTimer,
-                freshOverlays, maps.expectedNames(),
-                [&maps](std::string_view name) { return maps.readBase(name); },
-                verifyItem, pOverlayTable->overlays.size(), GameTitle::MM6);
-            if (!staged || staged->needsRecovery || staged->bytes != before)
-                throw std::runtime_error("MM6 hook test did not stage its v1 slot");
-            *pParty = std::move(staged->staged.party);
-            *pNPCStats = std::move(staged->staged.worldAndVisuals.world.npcs);
-            *gameTimer = std::move(staged->staged.worldAndVisuals.visuals.timer);
-            *pActiveOverlayList = std::move(staged->staged.worldAndVisuals.visuals.overlays);
-            pMapDeltas = std::move(staged->staged.worldAndVisuals.world.mapDeltas);
-            mm6::chestTitleState() = std::move(staged->staged.worldAndVisuals.chestTitle);
-            engine->_pendingTransition = MapDestination(
-                pMapTable->GetMapInfo("oute3.odm"), MAP_START_POINT_PARTY);
-            engineFlags |= ENGINE_LOADING_SAVEGAME | ENGINE_SKIP_NEXT_WORLD_UPDATE;
-            chestOptIn = std::make_unique<mm6::ScopedChestMapLoadOptIn>();
-            admission = std::make_unique<mm6::testing::ScopedPostWorldAdmissionForTest>(
-                GameTitle::MM6, [&] {
-                    hookCalled = true;
-                    sawPostWorldBeforeInput = gameTimer->isPaused() &&
-                        !engine->_pendingTransition &&
-                        engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute3.odm") &&
-                        uCurrentlyLoadedLevelType == LEVEL_OUTDOOR &&
-                        !pActors.empty() && vChests.size() == 20 &&
-                        pPartyActionQueue->uNumActions == 0;
-                });
-            loadCalled = true;
-        });
-        mm6::testing::setMainMenuAutosaveQuickLoadOverride(true);
-        engine->_messageQueue->addMessageCurrentFrame(UIMSG_QuickLoad);
-    });
-
-    game.skipLoadingScreen();
-    game.tick(3);
-    game.runGameRoutine([&] {
-        admission.reset();
-        chestOptIn.reset();
-        mm6::testing::setMainMenuAutosaveQuickLoadOverride(false);
-        mm6::testing::setLoadGameOverride({});
-    });
-    EXPECT_TRUE(loadCalled);
-    EXPECT_TRUE(hookCalled);
-    EXPECT_TRUE(sawPostWorldBeforeInput);
-    EXPECT_EQ(readFile(primary), before);
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }

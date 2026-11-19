@@ -325,8 +325,8 @@ GAME_TEST(MM6MapSweep, DISABLED_EnterTickAndFireEvents) {
     // is the file to write. Optional: ENROTH_MM6_MAP_SWEEP_NO_ACTORS=1 loads the map without actors,
     // ENROTH_MM6_MAP_SWEEP_MAX_FRAMES caps the timer wait at that many frames instead of 3000,
     // ENROTH_MM6_MAP_SWEEP_SKIP_TIMERS=1 skips the wait, and ENROTH_MM6_MAP_SWEEP_SKIP_EVENTS lists event IDs not to run.
-    // The party enters the first map through New Game, then the target map at its first shipped entrance, the way
-    // MM6WorldLoadProbe does. The map's on-load events run as part of the load. One frame runs, then frames until
+    // The party enters the first map through New Game, then the target map at its first shipped entrance. The map's
+    // on-load events run as part of the load. One frame runs, then frames until
     // every timer has fired once, then each face and decoration event is run once without input, with the party
     // restored after each. A throw that escapes the game loop ends the process, the runner takes it from the
     // log and the record says which step it happened in.

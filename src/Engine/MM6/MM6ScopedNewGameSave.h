@@ -19,17 +19,11 @@ struct PreparedLoadedFirstMap {
 PreparedLoadedFirstMap prepareNewGameMM6FromLoadedMaps();
 
 // Explicit native test seam at the SaveLoad boundary. The ordinary
-// saveNewGame() MM6 guard remains closed. Callers provide an owner-local F3
-// research root and native MM6 profile, then inspect the staged Party and
-// candidate map/chest owners through a precommit callback. Pending actions
-// are checked again after that callback, before any disk or process change.
-std::unique_ptr<PublishedFirstMapCache> saveNewGameMM6ScopedForTest(
-    const std::filesystem::path &profileRoot,
-    const std::filesystem::path &privateMapResearchRoot,
-    const FirstMapEntryProbe &probe);
-
-// Same bounded temporary-profile route, with names and map bytes obtained
-// only from the loaded MM6 game archive and map table.
+// saveNewGame() MM6 guard remains closed. Callers provide a native MM6 profile,
+// then inspect the staged Party and candidate map/chest owners through a
+// precommit callback. Pending actions are checked again after that callback,
+// before any disk or process change. Names and map bytes come only from the
+// loaded MM6 game archive and map table.
 std::unique_ptr<PublishedFirstMapCache> saveNewGameMM6FromLoadedMapsScopedForTest(
     const std::filesystem::path &profileRoot, const FirstMapEntryProbe &probe);
 

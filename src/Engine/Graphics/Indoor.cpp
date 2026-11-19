@@ -12,7 +12,6 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
-#include "Engine/MM6/MM6DoorMotionTraceForTest.h"
 #include "Engine/MM6/MM6EncounterMonster.h"
 #include "Engine/MM6/MM6MapTransition.h"
 #include "Engine/MM6/MM6MapVisit.h"
@@ -727,7 +726,6 @@ void BLV_UpdateDoors() {
         }
 
         BLV_UpdateDoorGeometry(door, closeDistance);
-        mm6::testing::noteDoorMotionForTest(engine->gameTitle(), *door);
     }
 }
 
@@ -832,7 +830,6 @@ void switchDoorAnimation(unsigned int uDoorID, DoorAction action) {
         }
         door.state = DOOR_CLOSING;
     }
-    mm6::testing::noteDoorMotionForTest(engine->gameTitle(), door);
 }
 
 //----- (0046F90C) --------------------------------------------------------

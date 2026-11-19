@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <functional>
-#include <string_view>
 
 #include "Engine/GameTitle.h"
 
@@ -17,12 +16,6 @@ enum class ShopRefreshPolicy {
     WhenExpired,
     OnEntry,
 };
-
-// Atlas stores the MM6 choice, but has no MM6 launch action yet. A future
-// MM6 launch may pass this title-local flag; other values keep the original
-// deadline schedule.
-ShopRefreshPolicy shopRefreshPolicyFromModValue(std::string_view value, GameTitle title);
-ShopRefreshPolicy shopRefreshPolicyFromEnvironment(GameTitle title);
 
 // Detached model of the original observed menu refresh branches. The caller
 // supplies the next deadline calculated from its MM6 house interval. A shop
@@ -51,26 +44,5 @@ bool refreshGuildStockForEntry(ShopStockFields *stock, ShopGuildClockFields *clo
                                unsigned guildRow, std::uint64_t now, std::uint64_t nextDeadline,
                                const ShopStockGenerator &guild, GameTitle title,
                                ShopRefreshPolicy policy);
-
-// Allocate one guard per genuine MM6 vendor window. The entry override runs
-// only once for that visit; subpanel redraws cannot consume another draw.
-// An absent mod leaves the normal deadline path to refresh*IfExpired. Failed
-// generation does not consume the visit, allowing the caller to retry.
-class ShopRefreshVisit {
- public:
-    bool refreshShopOnEntry(ShopStockFields *stock, ShopGuildClockFields *clocks,
-                            unsigned shopRow, std::uint64_t now, std::uint64_t nextDeadline,
-                            const ShopStockGenerator &firstBank,
-                            const ShopStockGenerator &secondBank, GameTitle title,
-                            ShopRefreshPolicy policy);
-
-    bool refreshGuildOnEntry(ShopStockFields *stock, ShopGuildClockFields *clocks,
-                             unsigned guildRow, std::uint64_t now, std::uint64_t nextDeadline,
-                             const ShopStockGenerator &guild, GameTitle title,
-                             ShopRefreshPolicy policy);
-
- private:
-    bool _entryHandled = false;
-};
 
 } // namespace mm6

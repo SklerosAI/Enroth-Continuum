@@ -82,16 +82,10 @@
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6V3PreEventReplayForTest.h"
 #include "Engine/MM6/MM6V5PreEventActorReplayForTest.h"
-#include "Engine/MM6/MM6V6PreEventIndoorActorReplayForTest.h"
 #include "Engine/MM6/MM6V5PreEventDecorationReplayForTest.h"
-#include "Engine/MM6/MM6V6PreEventIndoorDecorationReplayForTest.h"
-#include "Engine/MM6/MM6V6PreEventIndoorSpriteReplayForTest.h"
 #include "Engine/MM6/MM6V5PreEventSpriteReplayForTest.h"
 #include "Engine/MM6/MM6V5FirstMapLoadAttempt.h"
 #include "Engine/MM6/MM6MapTransition.h"
-#include "Engine/MM6/MM6TransitionAutosaveInterceptForTest.h"
-#include "Engine/MM6/MM6TransitionPostWorldCaptureForTest.h"
-#include "Engine/MM6/MM6VisitedReturnPreEventProbeForTest.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
@@ -671,10 +665,6 @@ void PrepareWorld(int _0_box_loading_1_fullscreen) {
     animTimer->setPaused(true);
     DoPrepareWorld(false, (_0_box_loading_1_fullscreen == 0) + 1);
 
-    if (engine->gameTitle() == GameTitle::MM6)
-        mm6::testing::runArmedTransitionPostWorldCaptureForTest(
-            GameTitle::MM6, engine->_currentLoadedMapId);
-
     assert(gameTimer->isPaused()); // DoPrepareWorld shouldn't un-pause.
     assert(animTimer->isPaused());
     animTimer->setPaused(false);
@@ -758,12 +748,6 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
         engine->_pendingTransition.reset();
         pGameLoadingUI_ProgressBar->Release();
         throw mm6::testing::PreEventCheckpointAbortForTest();
-    } catch (const mm6::testing::VisitedReturnProbeAbortForTest &) {
-        // A test-only return probe observed the target before Party placement
-        // and events. The partial world has no rollback owner: abandon it.
-        engine->_pendingTransition.reset();
-        pGameLoadingUI_ProgressBar->Release();
-        throw mm6::testing::PreEventCheckpointAbortForTest();
     }
 
     // After the load, because the map delta overwrites face attributes.
@@ -798,20 +782,9 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
                 (eventRuntimeScope && eventRuntimeScope->restored()) ||
                 (engine->_mm6FirstMapLoadAttempt &&
                  engine->_mm6FirstMapLoadAttempt->eventRestored());
-            (void) mm6::testing::runArmedV6PreEventIndoorActorReplayForTest(
-                checkpoint, pActors, &pActors, pNPCStats,
-                application->component<EngineRandomComponent>()->type(),
-                eventRuntimeRestored,
-                pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
-                GameTitle::MM6);
             (void) mm6::testing::runArmedV5PreEventDecorationReplayForTest(
                 checkpoint, pLevelDecorations, &pLevelDecorations,
                 actorPublished && dynamicActorPublished,
-                eventRuntimeRestored,
-                pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
-                GameTitle::MM6);
-            (void) mm6::testing::runArmedV6PreEventIndoorDecorationReplayForTest(
-                checkpoint, pLevelDecorations, &pLevelDecorations,
                 eventRuntimeRestored,
                 pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
                 GameTitle::MM6);
@@ -819,11 +792,6 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
                 checkpoint, pSpriteObjects, &pSpriteObjects, actorPublished,
                 pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
                 pOutdoor->mm6DeltaBytes, GameTitle::MM6);
-            (void) mm6::testing::runArmedV6PreEventIndoorSpriteReplayForTest(
-                checkpoint, pSpriteObjects, &pSpriteObjects,
-                eventRuntimeRestored,
-                pMapTable->pInfos[engine->_currentLoadedMapId].fileName,
-                GameTitle::MM6);
         } catch (...) {
             // This test-only early exit precedes the usual progress release.
             // Leave no pending transition for the resumed main menu.
@@ -884,11 +852,6 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
                 &mm6::chestTitleState(), pOutdoor->mm6DeltaBytes,
                 GameTitle::MM6);
             mm6::testing::requireV3ReplayBeforeMapLoadForTest(GameTitle::MM6);
-            mm6::testing::restoreV6IndoorRngBeforeMapLoadForTest(
-                [](const GameplayRandomState &state) {
-                    application->component<EngineRandomComponent>()->restoreGameplayState(state);
-                }, GameTitle::MM6);
-            mm6::testing::requireV6IndoorReplayBeforeMapLoadForTest(GameTitle::MM6);
         } catch (...) {
             engine->_pendingTransition.reset();
             pGameLoadingUI_ProgressBar->Release();
@@ -1186,15 +1149,9 @@ void Engine::_461103_load_level_sub() {
         _mm6FirstMapLoadAttempt->keepGeneratedNpcsAtNativeMap(gameTitle());
     const bool v3NpcBypass = gameTitle() == GameTitle::MM6 && !firstMapNpcs &&
         mm6::testing::consumeV3GeneratedNpcBypassForTest(GameTitle::MM6);
-    const bool v6NpcBypass = gameTitle() == GameTitle::MM6 && !firstMapNpcs && !v3NpcBypass &&
-        mm6::testing::consumeV6IndoorGeneratedNpcBypassForTest(GameTitle::MM6);
-    if (firstMapNpcs || v3NpcBypass || v6NpcBypass) {
+    if (firstMapNpcs || v3NpcBypass) {
         const std::vector<Actor> restoredActors(pActors.begin(), pActors.end());
-        const std::vector<std::size_t> clearedNativeSlots = v6NpcBypass ?
-            mm6::testing::nativeClearedIndoorActorSlotsForTest(GameTitle::MM6) :
-            std::vector<std::size_t>{};
-        mm6::requirePostMapGeneratedNpcLinks(
-            restoredActors, *pNPCStats, gameTitle(), clearedNativeSlots);
+        mm6::requirePostMapGeneratedNpcLinks(restoredActors, *pNPCStats, gameTitle());
     } else if (gameTitle() == GameTitle::MM6) {
         mm6::requirePreMapGeneratedNpcCapacity(pActors, *pNPCStats, gameTitle());
         pNPCStats->uNewlNPCBufPos = 0;
@@ -1835,8 +1792,7 @@ void startMapTransition(const MapDestination &destination) {
     if (engine->_currentLoadedMapId != destination.map()) {
         if (engine->gameTitle() == GameTitle::MM6)
             mm6::leaveMap(destination.map());
-        if (!mm6::testing::interceptTransitionAutosaveForTest(engine->gameTitle(), engine->_currentLoadedMapId, destination.map()))
-            autoSave();
+        autoSave();
     }
 
     uGameState = GAME_STATE_CHANGE_LOCATION;

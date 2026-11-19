@@ -139,26 +139,13 @@ std::vector<LevelDecoration> sourceDecorations(const mm6::LoadedMapSource &maps,
 
 } // namespace
 
-// Both probes consume a candidate produced by a separate strict writer in an
-// owner-only disposable profile. The second probe reaches only a bounded
-// first input and movement step; neither opens production SaveLoad.
-void runV4FreshChildReplay(EngineController &game, bool allowInput,
-                           bool writeAfterAction = false,
-                           bool writeV5AfterAction = false,
-                           bool checkPausedSaveMenu = false,
-                           bool writePausedSaveMenu = false,
+void runV4FreshChildReplay(EngineController &game, bool writeV5AfterAction,
                            const std::function<void()> &afterMovement = {}) {
-    const char *enable = std::getenv(afterMovement ? "ENROTH_MM6_V5_NORMAL_SAVE_ENABLE" : writePausedSaveMenu ?
-        "ENROTH_MM6_V5_PAUSED_SAVE_WRITE_ENABLE" : checkPausedSaveMenu ?
-        "ENROTH_MM6_V5_PAUSED_SAVE_CAPTURE_ENABLE" : writeV5AfterAction ?
-        "ENROTH_MM6_V5_AFTER_ACTION_WRITE_ENABLE" : writeAfterAction ?
-        "ENROTH_MM6_V4_AFTER_ACTION_WRITE_ENABLE" :
-        allowInput ? "ENROTH_MM6_V4_FIRST_INPUT_ENABLE" :
-                     "ENROTH_MM6_V4_REPLAY_ENABLE");
-    const std::string_view required = afterMovement ? "strict-v5-normal-save" : writePausedSaveMenu ?
-        "strict-v5-paused-write" : checkPausedSaveMenu ?
-        "strict-v5-paused-save" : writeV5AfterAction ?
-        "strict-v5-after-action" : writeAfterAction ? "strict-v4-after-action" : "strict-v4";
+    // Quick loads the strict v4 candidate in the disposable profile, takes one step, then writes the v5 after-action
+    // candidate or runs afterMovement.
+    const char *enable = std::getenv(afterMovement ? "ENROTH_MM6_V5_NORMAL_SAVE_ENABLE" :
+                                                     "ENROTH_MM6_V5_AFTER_ACTION_WRITE_ENABLE");
+    const std::string_view required = afterMovement ? "strict-v5-normal-save" : "strict-v5-after-action";
     if (!enable || std::string_view(enable) != required)
         GTEST_SKIP() << "Run only after strict v4 writer and owner admission";
     const std::filesystem::path profile = ownerOnlyProfile();
@@ -172,16 +159,6 @@ void runV4FreshChildReplay(EngineController &game, bool allowInput,
     const auto seedBefore = slotBytes(profile / "saves" / "autosave.ec6");
     ASSERT_FALSE(before.empty());
     ASSERT_FALSE(seedBefore.empty());
-    const std::filesystem::path pausedSlot =
-        profile / "saves/candidate-v5-after-action.ec6";
-    const std::filesystem::path pausedBackup =
-        profile / "saves/candidate-v5-after-action.ec6.bak";
-    if (writePausedSaveMenu) {
-        ASSERT_TRUE(std::filesystem::is_regular_file(pausedSlot));
-        ASSERT_FALSE(std::filesystem::exists(pausedBackup));
-    }
-    const auto priorPausedSlot = writePausedSaveMenu ? slotBytes(pausedSlot) :
-                                                      std::vector<std::uint8_t>{};
 
     bool selected = false;
     bool checkpointRan = false;
@@ -190,8 +167,6 @@ void runV4FreshChildReplay(EngineController &game, bool allowInput,
     bool finalOwnersAgree = false;
     bool firstInputReached = false;
     bool movementApplied = false;
-    bool pausedCapturePassed = false;
-    bool pausedWritePassed = false;
     std::string finalOwnerError;
     std::size_t expectedNativeActors = 0;
     std::size_t expectedActiveActors = 0;
@@ -368,11 +343,10 @@ void runV4FreshChildReplay(EngineController &game, bool allowInput,
                         finalOwnerError = error.what();
                     }
                     // A failing owner check must never admit the input loop.
-                    if (allowInput && !finalOwnersAgree)
+                    if (!finalOwnersAgree)
                         throw std::runtime_error("MM6 v4 first-input admission refused: " +
                                                  finalOwnerError);
-                }, allowInput ? mm6::testing::PostWorldAdmissionResult::Continue :
-                                mm6::testing::PostWorldAdmissionResult::AbortToMainMenu);
+                }, mm6::testing::PostWorldAdmissionResult::Continue);
             selected = true;
         });
         mm6::testing::setMainMenuAutosaveQuickLoadOverride(true);
@@ -380,8 +354,8 @@ void runV4FreshChildReplay(EngineController &game, bool allowInput,
     });
 
     game.skipLoadingScreen();
-    game.tick(allowInput ? 3 : 2);
-    if (allowInput && finalOwnersAgree) {
+    game.tick(3);
+    if (finalOwnersAgree) {
         game.runGameRoutine([&] {
             firstInputReached = checkpoint->reachedInput() &&
                 !gameTimer->isPaused() &&
@@ -406,52 +380,8 @@ void runV4FreshChildReplay(EngineController &game, bool allowInput,
                     pPartyActionQueue->uNumActions == 0 &&
                     engine->_currentLoadedMapId == pMapTable->GetMapInfo("oute3.odm") &&
                     !engine->_pendingTransition;
-                if (writeAfterAction && movementApplied)
-                    mm6::testing::writeV4AfterActionCandidateForTest(profile, before);
                 if (writeV5AfterAction && movementApplied)
                     mm6::testing::writeV5AfterActionCandidateForTest(profile, before);
-            });
-        }
-        if ((checkPausedSaveMenu || writePausedSaveMenu) && movementApplied) {
-            // Enter the real game Save window without sending UIMSG_SaveGame.
-            game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
-            game.tick(2);
-            game.pressGuiButton("GameMenu_SaveGame");
-            game.tick(2);
-            game.runGameRoutine([&] {
-                if (!gameTimer->isPaused() ||
-                    current_screen_type != SCREEN_SAVEGAME ||
-                    !pGUIWindow_CurrentMenu ||
-                    pGUIWindow_CurrentMenu->eWindowType != WINDOW_SAVE ||
-                    engine->_messageQueue->hasPendingForSave())
-                    throw std::runtime_error("MM6 v5 paused capture did not reach idle Save menu");
-                if (checkPausedSaveMenu) {
-                    EXPECT_THROW(mm6::captureV5FirstMapLiveSession(before),
-                                 std::runtime_error);
-                    const auto captured = mm6::captureV5FirstMapLiveSession(
-                        before, mm6::V5FirstMapCaptureBoundary::PausedSaveMenu);
-                    EXPECT_FALSE(captured.empty());
-                    mm6::requireV5FirstMapLiveSessionAgreement(
-                        captured, mm6::V5FirstMapCaptureBoundary::PausedSaveMenu);
-                    EXPECT_THROW(mm6::requireV5FirstMapLiveSessionAgreement(captured),
-                                 std::runtime_error);
-                    pausedCapturePassed = true;
-                }
-                if (writePausedSaveMenu) {
-                    const auto expected = mm6::captureV5FirstMapLiveSession(
-                        before, mm6::V5FirstMapCaptureBoundary::PausedSaveMenu);
-                    const auto attempt = mm6::writeV5FirstMapLiveSaveForTest(
-                        profile, "candidate-v5-after-action.ec6", before,
-                        GameTitle::MM6,
-                        mm6::V5FirstMapCaptureBoundary::PausedSaveMenu);
-                    if (attempt.outcome != mm6::V5FirstMapSaveOutcome::Committed ||
-                        attempt.candidate != expected ||
-                        slotBytes(pausedSlot) != expected ||
-                        slotBytes(pausedBackup) != priorPausedSlot)
-                        throw std::runtime_error(
-                            "MM6 v5 paused Save write differs from live or prior slot");
-                    pausedWritePassed = true;
-                }
             });
         }
         if (afterMovement && movementApplied)
@@ -475,51 +405,17 @@ void runV4FreshChildReplay(EngineController &game, bool allowInput,
     EXPECT_TRUE(freshMapBeforeReplay);
     EXPECT_TRUE(postWorldRan);
     EXPECT_TRUE(finalOwnersAgree) << finalOwnerError;
-    if (allowInput) {
-        EXPECT_TRUE(firstInputReached);
-        EXPECT_TRUE(movementApplied);
-    } else {
-        EXPECT_FALSE(checkpointRan && firstInputReached);
-    }
-    if (checkPausedSaveMenu)
-        EXPECT_TRUE(pausedCapturePassed);
-    if (writePausedSaveMenu)
-        EXPECT_TRUE(pausedWritePassed);
+    EXPECT_TRUE(firstInputReached);
+    EXPECT_TRUE(movementApplied);
     EXPECT_EQ(slotBytes(candidate), before);
     EXPECT_EQ(slotBytes(profile / "saves" / "autosave.ec6"), seedBefore);
-    if (writeAfterAction)
-        EXPECT_FALSE(slotBytes(profile / "saves/candidate-v4-after-action.ec6").empty());
     if (writeV5AfterAction)
         EXPECT_FALSE(slotBytes(profile / "saves/candidate-v5-after-action.ec6").empty());
-    if (writePausedSaveMenu) {
-        EXPECT_EQ(slotBytes(pausedBackup), priorPausedSlot);
-        EXPECT_FALSE(slotBytes(pausedSlot).empty());
-    }
     EXPECT_EQ(window->nativeHandle(), nullptr);
 }
 
-GAME_TEST(MM6V4FreshChildReplayHeadless, DISABLED_FreshQuickLoadRestoresBeforeEventsAndAborts) {
-    runV4FreshChildReplay(game, false);
-}
-
-GAME_TEST(MM6V4FirstInputHeadless, DISABLED_FreshQuickLoadMovesOnceInRealLoop) {
-    runV4FreshChildReplay(game, true);
-}
-
-GAME_TEST(MM6V4AfterActionWriterHeadless, DISABLED_FreshQuickLoadWritesMovedPartyCandidate) {
-    runV4FreshChildReplay(game, true, true);
-}
-
 GAME_TEST(MM6V5AfterActionWriterHeadless, DISABLED_FreshQuickLoadWritesExactMovedPartyAndSprites) {
-    runV4FreshChildReplay(game, true, false, true);
-}
-
-GAME_TEST(MM6V5PausedSaveCaptureHeadless, DISABLED_RealSaveMenuCapturesExactFirstMapOwners) {
-    runV4FreshChildReplay(game, true, false, false, true);
-}
-
-GAME_TEST(MM6V5PausedSaveWriterHeadless, DISABLED_RealSaveMenuWritesExactDisposableSlot) {
-    runV4FreshChildReplay(game, true, false, false, false, true);
+    runV4FreshChildReplay(game, true);
 }
 
 GAME_TEST(MM6V5NormalSaveMenuHeadless, DISABLED_SaveMenuWritesNumberedFirstMapSlot) {
@@ -529,7 +425,7 @@ GAME_TEST(MM6V5NormalSaveMenuHeadless, DISABLED_SaveMenuWritesNumberedFirstMapSl
     const std::filesystem::path backup = profile / "saves/save000.ec6.bak";
     auto statusTape = tapes.statusBar();
     bool saved = false;
-    runV4FreshChildReplay(game, true, false, false, false, false, [&] {
+    runV4FreshChildReplay(game, false, [&] {
         const auto anchor = slotBytes(profile / "saves/candidate-v4.ec6");
         ASSERT_FALSE(std::filesystem::exists(slot));
         mm6::CorePartyFields liveParty;

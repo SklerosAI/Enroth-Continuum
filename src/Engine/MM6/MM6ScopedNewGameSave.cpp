@@ -23,7 +23,6 @@
 #include "MM6ChestTitleState.h"
 #include "MM6HeldItemSaveFields.h"
 #include "MM6LoadedMapSource.h"
-#include "MM6PrivateMapSource.h"
 
 namespace mm6 {
 
@@ -81,19 +80,6 @@ std::unique_ptr<PublishedFirstMapCache> publishScopedNewGameForTest(
 }
 
 } // namespace
-
-std::unique_ptr<PublishedFirstMapCache> saveNewGameMM6ScopedForTest(
-    const std::filesystem::path &profileRoot,
-    const std::filesystem::path &privateMapResearchRoot,
-    const FirstMapEntryProbe &probe) {
-    if (!probe)
-        throw std::runtime_error("MM6 scoped new-game save requires a precommit probe");
-    const PrivateMapSource maps(privateMapResearchRoot);
-    PreparedNewGameSession prepared = prepareNewGameFromMapSource(maps.expectedNames(),
-        [](std::string_view name) { return pGames_LOD->read(name); },
-        [&maps](std::string_view name) { return maps.readBase(name); });
-    return publishScopedNewGameForTest(profileRoot, std::move(prepared), probe);
-}
 
 PreparedLoadedFirstMap prepareNewGameMM6FromLoadedMaps() {
     if (!engine || !pGames_LOD || !pMapTable || !pTileTable)

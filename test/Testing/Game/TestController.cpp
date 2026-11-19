@@ -134,14 +134,11 @@ void TestController::prepareForNextTestInternal() {
     RandomEngineType rngType = engine->config->debug.TraceRandomEngine.value();
 
     for (const DirectoryEntry &entry : ufs->ls("")) {
-        // MM6's private rule manifests are seeded into ramfs before engine
-        // startup. Keep them across test resets while clearing saves/config.
         if (_disposableMm7Profile && entry.name == _disposableMm7Marker)
             continue;
         if (_preserveDisposableMm7Save && entry.name == "saves")
             continue;
-        if (engine->gameTitle() != GameTitle::MM6 || entry.name != "rules")
-            ufs->remove(entry.name);
+        ufs->remove(entry.name);
     }
 
     _callObserver.reset();

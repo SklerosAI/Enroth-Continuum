@@ -116,7 +116,6 @@ void requireEmptyInheritedCommerce(const Party &party) {
 static void writeAfterActionCandidateForTest(
     const std::filesystem::path &profile,
     std::span<const std::uint8_t> sourceCandidate,
-    bool v5,
     std::span<const std::uint8_t> previousV5 = {}) {
     if (engine->gameTitle() != GameTitle::MM6 ||
         uCurrentlyLoadedLevelType != LEVEL_OUTDOOR ||
@@ -132,7 +131,7 @@ static void writeAfterActionCandidateForTest(
         std::vector<std::uint8_t>{};
     if (seedBefore.empty() || !std::ranges::equal(sourceBefore, sourceCandidate))
         throw std::runtime_error("MM6 v4 after-action capture lacks original disposable slots");
-    if (afterReloadedInput && (!v5 || previousBefore.empty() ||
+    if (afterReloadedInput && (previousBefore.empty() ||
         !std::ranges::equal(previousBefore, previousV5)))
         throw std::runtime_error("MM6 v5 second capture lacks exact prior disposable slot");
 
@@ -146,12 +145,6 @@ static void writeAfterActionCandidateForTest(
     (void) stageRawCursorImagePlan(*pParty, rawHeldCursorState(GameTitle::MM6),
                                    *pItemTable, GameTitle::MM6);
     const LoadedMapSource maps(*pGames_LOD, *pMapTable, GameTitle::MM6);
-    const NpcStaticBaseline freshNpcs =
-        loadNpcStaticBaseline(*engine->resources(), GameTitle::MM6);
-    const auto verifyItem = [](std::int32_t id) {
-        return id >= 1 && id <= 580 &&
-            !pItemTable->items[static_cast<ItemId>(id)].iconName.empty();
-    };
     if (pMapDeltas.size() != maps.expectedNames().size())
         throw std::runtime_error("MM6 v4 after-action map cache shape changed");
 
@@ -164,112 +157,25 @@ static void writeAfterActionCandidateForTest(
         throw std::runtime_error("MM6 v4 after-action movement was not captured");
     if (afterReloadedInput)
         requireSecondMovement(previousBefore, fields.raw.core.party);
-    if (v5) {
-        const std::string_view slot = afterReloadedInput ?
-            "candidate-v5-after-reload-input.ec6" : "candidate-v5-after-action.ec6";
-        const auto attempt = writeV5FirstMapLiveSaveForTest(
-            profile, slot, sourceCandidate, GameTitle::MM6);
-        if (attempt.outcome != V5FirstMapSaveOutcome::Committed)
-            throw std::runtime_error("MM6 v5 first-map save is not durably confirmed");
-        const auto &bytes = attempt.candidate;
-        if (readFile(profile / "saves" / slot) != bytes ||
-            readFile(profile / "saves/candidate-v4.ec6") != sourceBefore ||
-            readFile(profile / "saves/autosave.ec6") != seedBefore ||
-            (afterReloadedInput &&
-             readFile(profile / "saves/candidate-v5-after-action.ec6") != previousBefore))
-            throw std::runtime_error("MM6 v5 atomic write changed another slot");
-        return;
-    }
-    const auto durable = captureDurableFields(*pParty, GameTitle::MM6);
-    fields.raw.bits = durable.bits;
-    fields.raw.effects = durable.effects;
-    fields.raw.inventory = captureRawPartyInventories(
-        {*pParty, fields.raw.inventory}, *pItemTable, GameTitle::MM6);
-    fields.raw.metadata = captureMetadata(
-        fields.raw.metadata.header.displayName, GameTitle::MM6);
-    fields.raw.npcs = captureNpcFields(*pNPCStats, GameTitle::MM6);
-    fields.raw.resistances = captureResistanceFields(*pParty, GameTitle::MM6);
-    fields.raw.buffs = captureBuffFields(*pParty, GameTitle::MM6);
-    fields.raw.hirelings = captureHirelingFields(*pParty, GameTitle::MM6);
-    fields.raw.recovery = captureRecoveryFields(*pParty, GameTitle::MM6);
-    const auto held = captureRawHeldCursor(rawHeldCursorState(GameTitle::MM6),
-                                            GameTitle::MM6);
-    if (!held)
-        throw std::runtime_error("MM6 v4 after-action cursor owner changed");
-    fields.raw.heldItem = *held;
-    fields.raw.shops = shopTitleState();
-    const Blob delta = captureOutdoorDeltaWithActiveActors(*pOutdoor, GameTitle::MM6);
-    const auto *deltaBegin = static_cast<const std::uint8_t *>(delta.data());
-    const std::vector<std::uint8_t> current(deltaBegin, deltaBegin + delta.size());
-    const std::string activeName = "oute3.ddm";
-    fields.raw.chest = captureChestSaveFields(chestTitleState(), activeName,
-                                              current, GameTitle::MM6);
-    for (auto &entry : fields.raw.maps.deltas) {
-        const auto it = pMapDeltas.find(entry.name);
-        if (it == pMapDeltas.end())
-            throw std::runtime_error("MM6 v4 after-action map cache missing");
-        const auto *begin = static_cast<const std::uint8_t *>(it->second.data());
-        const std::vector<std::uint8_t> cached(begin, begin + it->second.size());
-        if (entry.name == activeName)
-            entry.bytes = current;
-        else if (entry.bytes != cached)
-            throw std::runtime_error("MM6 v4 after-action nonactive map cache changed");
-    }
-    const std::vector<Actor> actors(pActors.begin(), pActors.end());
-    fields.activeActorPayload = encodeActiveActorSection(actors, GameTitle::MM6);
-    fields.generatedNpcs = captureGeneratedNpcFields(
-        pActors, *pNPCStats, "oute3.odm", GameTitle::MM6);
-    const auto random = application->component<EngineRandomComponent>();
-    fields.gameplayRng = captureGameplayRngFields(*random, GameTitle::MM6);
-    auto &event = saved.eventRuntime.maps[0];
-    event.respawnCount = pOutdoor->ddm.respawnCount;
-    event.lastRespawnDay = pOutdoor->ddm.lastRespawnDay;
-    event.mapVars = engine->_persistentVariables.mapVars;
-    event.decorVars = engine->_persistentVariables.decorVars;
-    event.bindings = captureEventRuntimeDecorationBindings(pLevelDecorations,
-                                                            GameTitle::MM6);
-    const std::vector<std::uint8_t> bytes = encodeV4Save(saved, GameTitle::MM6);
-
-    const auto validate = [&](std::span<const std::uint8_t> proposed) {
-        std::unique_ptr<V4FullSessionPreflight> checked;
-        const auto readBase = [&maps](std::string_view name) { return maps.readBase(name); };
-        checked.reset(new V4FullSessionPreflight(stageV4FullSessionPreflight(
-            proposed, freshNpcs, maps.expectedNames(), readBase,
-            verifyItem, *pItemTable, pOverlayTable->overlays.size(),
-            pTileTable->tileCount(), pActors.size(), random->type(),
-            pLevelDecorations, GameTitle::MM6)));
-        const auto expectedEvents = capturePersistentEventBoundary(
-            checked->v3.represented.persistentEvents, GameTitle::MM6);
-        const auto liveWire = decodeOutdoorDelta(pOutdoor->mm6DeltaBytes);
-        if (!std::ranges::equal(expectedEvents,
-                                liveWire.part(OutdoorDeltaPart::PersistentBytes)) ||
-            checked->activeEventRuntime.mapVars != engine->_persistentVariables.mapVars ||
-            checked->activeEventRuntime.decorVars != engine->_persistentVariables.decorVars)
-            throw std::runtime_error("MM6 v4 after-action event owner changed");
-        requireFirstMapOutdoorDecorationReplay(
-            "oute3.odm", maps.readBase("oute3.odm"),
-            checked->activeEventRuntime, *pDecorationTable,
-            pLevelDecorations, GameTitle::MM6);
-    };
-    validate(bytes);
-    const std::string_view slot = "candidate-v4-after-action.ec6";
-    writeAtomicV4SaveFileForTest(profile, slot, bytes, validate);
+    const std::string_view slot = afterReloadedInput ?
+        "candidate-v5-after-reload-input.ec6" : "candidate-v5-after-action.ec6";
+    const auto attempt = writeV5FirstMapLiveSaveForTest(
+        profile, slot, sourceCandidate, GameTitle::MM6);
+    if (attempt.outcome != V5FirstMapSaveOutcome::Committed)
+        throw std::runtime_error("MM6 v5 first-map save is not durably confirmed");
+    const auto &bytes = attempt.candidate;
     if (readFile(profile / "saves" / slot) != bytes ||
         readFile(profile / "saves/candidate-v4.ec6") != sourceBefore ||
-        readFile(profile / "saves/autosave.ec6") != seedBefore)
-        throw std::runtime_error("MM6 after-action atomic write changed another slot");
-}
-
-void writeV4AfterActionCandidateForTest(
-    const std::filesystem::path &profile,
-    std::span<const std::uint8_t> sourceCandidate) {
-    writeAfterActionCandidateForTest(profile, sourceCandidate, false);
+        readFile(profile / "saves/autosave.ec6") != seedBefore ||
+        (afterReloadedInput &&
+         readFile(profile / "saves/candidate-v5-after-action.ec6") != previousBefore))
+        throw std::runtime_error("MM6 v5 atomic write changed another slot");
 }
 
 void writeV5AfterActionCandidateForTest(
     const std::filesystem::path &profile,
     std::span<const std::uint8_t> sourceCandidate) {
-    writeAfterActionCandidateForTest(profile, sourceCandidate, true);
+    writeAfterActionCandidateForTest(profile, sourceCandidate);
 }
 
 void writeV5AfterReloadedInputCandidateForTest(
@@ -278,7 +184,7 @@ void writeV5AfterReloadedInputCandidateForTest(
     std::span<const std::uint8_t> previousV5) {
     if (previousV5.empty())
         throw std::invalid_argument("MM6 v5 second capture requires prior candidate");
-    writeAfterActionCandidateForTest(profile, originalV4, true, previousV5);
+    writeAfterActionCandidateForTest(profile, originalV4, previousV5);
 }
 
 } // namespace mm6::testing

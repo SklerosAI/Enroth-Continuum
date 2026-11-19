@@ -78,7 +78,7 @@ ValidatedRawMapSave decodeRawSaveWithActiveMapCounts(
 
 // Decode every known EC6 section, check all 67 expected names, and validate
 // every delta against its corresponding base before returning candidate state.
-// The expected names must come from the locally verified private F3 manifest.
+// The expected names come from the loaded game's map table, see LoadedMapSource.
 KnownSaveFields decodeKnownSaveWithMapBases(std::span<const std::uint8_t> bytes,
                                             std::span<const std::string> expectedNames,
                                             const MapBaseReader &readBase,

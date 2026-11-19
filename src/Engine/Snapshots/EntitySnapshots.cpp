@@ -38,7 +38,7 @@
 
 #include "Core/Time/Time.h"
 
-#include "Library/Color/ColorTable.h"
+#include "Library/Color/Color.h"
 #include "Library/Logger/Logger.h"
 #include "Library/Snapshots/CommonSnapshots.h"
 
@@ -1340,7 +1340,7 @@ void reconstruct(const MonsterDesc_MM6 &src, MonsterDesc *dst) {
     dst->monsterRadius = src.monsterRadius;
     dst->movementSpeed = src.movementSpeed;
     dst->toHitRadius = src.toHitRadius;
-    dst->tintColor = colorTable.White;
+    dst->tintColor = Color();
     reconstruct(src.soundSampleIds, &dst->soundSampleIds, tags::cast<uint16_t, SoundId>);
     reconstruct(src.internalMonsterName, &dst->internalMonsterName);
     reconstruct(src.spriteNames, &dst->spriteNames);

@@ -26,6 +26,10 @@ class GUIWindow_Travel : public GUIWindow_Transition {
     virtual ~GUIWindow_Travel() {}
 
     virtual void Update() override;
+
+ private:
+    void initializeMM6(const std::string &leaveHint);
+    void updateMM6();
 };
 
 class GUIWindow_IndoorEntryExit : public GUIWindow_Transition {

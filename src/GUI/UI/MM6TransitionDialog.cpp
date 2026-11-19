@@ -8,8 +8,10 @@
 #include "Engine/AssetsManager.h"
 #include "Engine/Engine.h"
 #include "Engine/Graphics/Image.h"
+#include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
+#include "Engine/Party.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/TransitionTable.h"
 
@@ -137,4 +139,36 @@ void GUIWindow_IndoorEntryExit::updateMM6() {
             : localization->str(LSTR_EXIT_DIALOGUE);
     const int y = (212 - assets->pFontCreate->CalcTextHeight(text, transitionWindow.w, 0)) / 2 + 101;
     DrawTitleText(assets->pFontCreate.get(), 0, y, colorTable.White, text, 3, transitionWindow);
+}
+
+void GUIWindow_Travel::initializeMM6(const std::string &leaveHint) {
+    sHint = leaveHint;
+    _dialogueBackground = assets->getIcon("evpan004");
+    pBtn_ExitCancel = CreateButton("Transition_No", {566, 313}, {74, 32}, BUTTON_TYPE_NORMAL, 0, UIMSG_CancelTravelByFoot, 0,
+                                   INPUT_ACTION_TRANSITION_NO, localization->str(LSTR_STAY_IN_THIS_AREA), {ui_buttdesc2});
+    pBtn_YES = CreateButton("Transition_Yes", {486, 313}, {74, 32}, BUTTON_TYPE_NORMAL, 0, UIMSG_OnTravelByFoot, 0,
+                            INPUT_ACTION_TRANSITION_YES, leaveHint, {ui_buttyes2});
+    CreateButton({525, 34}, {62, 72}, BUTTON_TYPE_NORMAL, 0, UIMSG_OnTravelByFoot, 1, INPUT_ACTION_INTERACT, leaveHint);
+    CreateButton({8, 8}, {459, 343}, BUTTON_TYPE_NORMAL, 0, UIMSG_OnTravelByFoot, 1, INPUT_ACTION_INVALID, leaveHint);
+}
+
+void GUIWindow_Travel::updateMM6() {
+    render->DrawQuad2D(_dialogueBackground, {481, 0});
+    render->DrawQuad2D(transition_ui_icon, {525, 34});
+    render->DrawQuad2D(assets->getIcon("buttesc1"), {566, 313});
+    render->DrawQuad2D(assets->getIcon("buttyes1"), {486, 313});
+
+    const MapId destination = pOutdoor->getTravelDestination(pParty->pos.x, pParty->pos.y).map();
+    if (destination == MAP_INVALID)
+        return;
+    const std::string &destinationName = pMapTable->pInfos[destination].name;
+    const int screenHeight = render->GetRenderDimensions().h;
+    DrawTitleText(assets->pFontCreate.get(), 0, 2, colorTable.White, destinationName, 3, Recti(493, 0, 126, screenHeight));
+
+    // MM6 has no one-day line, a one-day trip reads "1 days".
+    const std::string text = localization->format(LSTR_IT_WILL_TAKE_D_DAYS_TO_TRAVEL_TO_S, getTravelTime(), destinationName) + "\n \n" +
+                             localization->format(LSTR_DO_YOU_WISH_TO_LEAVE_S_1, pMapTable->pInfos[engine->_currentLoadedMapId].name);
+    const Recti panel(483, 0, 148, screenHeight);
+    const int y = (212 - assets->pFontCreate->CalcTextHeight(text, panel.w, 0)) / 2 + 101;
+    DrawTitleText(assets->pFontCreate.get(), 0, y, colorTable.White, text, 3, panel);
 }

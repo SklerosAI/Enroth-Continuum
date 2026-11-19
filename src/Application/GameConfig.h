@@ -294,6 +294,10 @@ class GameConfig : public Config {
             "MM6 only. Show the two largest units of a buff's remaining time, as the GrayFace patch does. "
             "In vanilla, a buff with a day and some minutes left showed only the day."};
 
+        Bool FixTravelAutosave = {this, "fix_travel_autosave", true,
+            "MM6 only. Write the coach and boat autosave before the fare is paid and the trip's days pass. In vanilla, the "
+            "autosave was written after, so loading it lost the fare and the days without the trip."};
+
         Bool FixFlyingBorderOffer = {this, "fix_flying_border_offer", true,
             "MM6 only. Don't offer the trip to the next map while the party flies, as the GrayFace patch does. In vanilla, "
             "flying low over the map edge offered the trip, and accepting it did nothing."};

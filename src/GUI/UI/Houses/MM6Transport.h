@@ -66,11 +66,19 @@ class GUIWindow_MM6Transport : public GUIWindow_MM6House {
     QuestBit stablePricesFixedBit() const;
 
     /**
-     * Moves the paid party to the route's arrival point and leaves the house.
+     * Moves the party to the route's arrival point and leaves the house.
      */
     void depart();
 
-    const mm6::TransportRoute *_route = nullptr; // Route the party paid for.
-    std::optional<int64_t> _departureTime; // Platform tick count at which the paid party leaves.
+    /**
+     * Takes the fare and passes the trip's days with rest.
+     */
+    void payForTrip();
+
+    const mm6::TransportRoute *_route = nullptr; // Route the party chose.
+    int _fare = 0;
+    int _tripDays = 0;
+    bool _paysOnDeparture = false; // The fare and the days come after the departure's autosave.
+    std::optional<int64_t> _departureTime; // Platform tick count at which the party leaves.
     bool _departed = false;
 };

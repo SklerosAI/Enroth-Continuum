@@ -25,6 +25,8 @@
 
 #include "Library/Platform/Interface/Platform.h"
 
+#include "Media/Audio/AudioPlayer.h"
+
 static constexpr QuestBit QBIT_MM6_PRICE_FIXING_TOPIC = static_cast<QuestBit>(116); // Loretta Fleise's topic sets it.
 static constexpr QuestBit QBIT_MM6_ALL_STABLE_PRICES_FIXED = static_cast<QuestBit>(117); // Her reward topic reads it.
 
@@ -83,8 +85,11 @@ void GUIWindow_MM6Transport::selectService(int index) {
     if (!_paysOnDeparture)
         payForTrip();
     mm6PlayHouseSound(houseId(), HOUSE_SOUND_TRANSPORT_TRAVEL);
-    pParty->activeCharacter().playReaction(stable ? SPEECH_TRAVEL_HORSE : SPEECH_TRAVEL_BOAT);
-    _departureTime = platform->tickCount() + (stable ? 1500 : 2500);
+    const SoundId speech = pParty->activeCharacter().playReaction(stable ? SPEECH_TRAVEL_HORSE : SPEECH_TRAVEL_BOAT);
+    int speechMs = 0;
+    if (engine->config->gameplay.FixTravelSpeechDelay.value() && speech != SOUND_Invalid)
+        speechMs = static_cast<int>(1000 * pAudioPlayer->getSoundLength(speech));
+    _departureTime = platform->tickCount() + mm6::transportDepartureDelayMs(std::to_underlying(houseId()), speechMs);
 }
 
 bool GUIWindow_MM6Transport::goBack() {

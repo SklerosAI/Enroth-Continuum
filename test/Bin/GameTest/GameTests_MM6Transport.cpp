@@ -344,3 +344,21 @@ GAME_TEST(MM6Transport, CoachAutosaveKeepsTheFare) {
         mm6::testing::setNativeProfileRootForTest({});
     });
 }
+
+GAME_TEST(MM6Transport, CoachLeavesAfterTheOriginalDelayWithoutSpeech) {
+    // No travel speech plays, so the coach leaves after the original's fixed second and a half.
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    auto screenTape = tapes.screen();
+    test.startTaping();
+
+    enterNewSorpigalStable(game);
+    game.pressGuiButton("HouseDialogue_Option0");
+    game.tick();
+    int frames = 0;
+    for (; frames < 100 && current_screen_type == SCREEN_HOUSE; frames++)
+        game.tick(); // The party waits in the stable until the coach leaves.
+
+    EXPECT_EQ(frames, 16); // The coach leaves a second and a half after the party pays, the house closes a frame later.
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE, SCREEN_GAME));
+}

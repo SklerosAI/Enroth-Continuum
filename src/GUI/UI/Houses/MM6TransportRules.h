@@ -60,6 +60,15 @@ constexpr bool isTransportStable(int houseId) {
 int transportPrice(int houseId, float value, int merchant);
 
 /**
+ * @param houseId                       MM6 transport house id.
+ * @param speechMs                      Length of the travel speech in milliseconds, zero without one.
+ * @return                              Milliseconds between paying and leaving: the speech's length, but never more than
+ *                                      the original's fixed 1500 for a coach and 2500 for a boat, which also apply
+ *                                      without a speech.
+ */
+int transportDepartureDelayMs(int houseId, int speechMs);
+
+/**
  * @param exe                           `MM6.exe` to read the route and slot tables from.
  * @return                              The 36 routes and the slots of the 21 stables and boats.
  */

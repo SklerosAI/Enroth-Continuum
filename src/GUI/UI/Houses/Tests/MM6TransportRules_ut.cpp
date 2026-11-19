@@ -66,3 +66,13 @@ UNIT_TEST(MM6TransportRules, Price) {
     EXPECT_EQ(mm6::transportPrice(60, 5.0f, 90), 83); // A third of the full price, not of the base price.
     EXPECT_EQ(mm6::transportPrice(59, 10.0f, 0), 0);
 }
+
+UNIT_TEST(MM6TransportRules, DepartureWaitsForTheSpeech) {
+    // House 48 is a stable, house 58 a boat.
+    EXPECT_EQ(mm6::transportDepartureDelayMs(48, 0), 1500);
+    EXPECT_EQ(mm6::transportDepartureDelayMs(58, 0), 2500);
+    EXPECT_EQ(mm6::transportDepartureDelayMs(48, 700), 700);
+    EXPECT_EQ(mm6::transportDepartureDelayMs(58, 2000), 2000);
+    EXPECT_EQ(mm6::transportDepartureDelayMs(48, 2000), 1500);
+    EXPECT_EQ(mm6::transportDepartureDelayMs(58, 4000), 2500);
+}

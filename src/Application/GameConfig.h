@@ -273,6 +273,15 @@ class GameConfig : public Config {
             "Let Remove Fear, Cure Paralysis, Cure Insanity and Cure Weakness cure a condition up to 1 hour per skill point old at Expert and 1 day at Master, "
             "as their descriptions say and the GrayFace patch does. In vanilla MM6 they took 3 hours and 3 days. MM6 only."};
 
+        Bool FixTurnBasedTurnTime = {this, "fix_turn_based_turn_time", true,
+            "MM6 only. Advance the clock by 50 game seconds per turn-based round, as the GrayFace patch does. "
+            "In vanilla MM6 a round took 100 game seconds, so buffs and other timed effects ran out in half the rounds."};
+
+        Bool FixRecoveryEnchant = {this, "fix_recovery_enchant", true,
+            "MM6 only. Make the 'Increases rate of Recovery' enchantment shorten every recovery by 10%, in real time and "
+            "in turn-based mode, as the GrayFace patch does. Without it recovery runs 50% faster in real time only, as MM6.exe's "
+            "own code and MM7 have it."};
+
         Float SpellFailureRecoveryMod = {this, "spell_failure_recovery_mod", 0.5f, &ValidateSpellFailureRecoveryMod,
             "Recovery time modifier when spell casting ended in failure for the reason where spell cannot be cast at all in current context. "
             "Context include situation where outdoor spell is casted indoor or targeted spell is casted with no characters on screen."};

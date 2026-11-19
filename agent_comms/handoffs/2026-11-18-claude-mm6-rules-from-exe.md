@@ -73,7 +73,7 @@ The acceptance test was also checked against a tampered copy of the json (one gu
 - MM7 controls `Prs.Pr2354:Prs.Pr2956:Issues.Issue840`: 3/3.
 - `check_style`: clean. `check_tidy` not run, clang-tidy 22 isn't installed.
 - `tools/run_mm6_firstmap_gate.py --skip-build`, with only `MM6_DATA_PATH` and `MM7_DATA_PATH`: passed, 38/38 children
-  (35 MM6 children over the nine profiles and the 3 MM7 controls).
+  (35 MM6 children in ten temporary profiles and the 3 MM7 controls).
 - Atlas: `swiftc -typecheck` of the three launcher sources passes. Atlas itself was not rebuilt or launched.
 
 ## Outside the repo

@@ -38,6 +38,10 @@ mm6::CoreSaveFields exampleFields() {
     fields.party.prisonTerms = 2;
     fields.party.bountiesCollected = -7; // Preserve raw current-runtime event arithmetic.
     fields.party.reputation = -928;
+    fields.party.bribes = 4;
+    fields.party.tavernDrinks = 0x100001; // The first and the last tavern.
+    fields.party.tavernTips[0] = 29;
+    fields.party.tavernTips[20] = 312;
     for (size_t i = 0; i < fields.characters.size(); ++i) {
         auto &character = fields.characters[i];
         character.name = "Hero" + std::to_string(i);
@@ -180,10 +184,14 @@ UNIT_TEST(MM6CoreSaveFields, NonzeroPartyAndFourCharacterRoundTrip) {
     EXPECT_EQ(destination.party.savedFlightZ, 720);
     EXPECT_EQ(destination.party.fallStartZ, 910);
     EXPECT_EQ(destination.party.partyFlags, 0x020c);
-    EXPECT_EQ(containerFor(source).sections[0].payload.size(), 94);
+    EXPECT_EQ(containerFor(source).sections[0].payload.size(), 186);
     EXPECT_EQ(destination.party.fine, 125);
     EXPECT_EQ(destination.party.bountiesCollected, -7);
     EXPECT_EQ(destination.party.reputation, -928);
+    EXPECT_EQ(destination.party.bribes, 4);
+    EXPECT_EQ(destination.party.tavernDrinks, 0x100001);
+    EXPECT_EQ(destination.party.tavernTips[0], 29);
+    EXPECT_EQ(destination.party.tavernTips[20], 312);
 }
 
 UNIT_TEST(MM6CoreSaveFields, CapturesAndStagesMovementOnDetachedParty) {
@@ -204,6 +212,9 @@ UNIT_TEST(MM6CoreSaveFields, CapturesAndStagesMovementOnDetachedParty) {
     source.uNumPrisonTerms = 2;
     source.uNumBountiesCollected = -7;
     source.mm6Reputation = 800;
+    source.mm6Bribes = 3;
+    source.mm6TavernDrinks[1] = true;
+    source.mm6TavernTips[1] = 29;
     mm6::CoreSaveFields fields = mm6::captureCoreFields(source, GameTitle::MM6);
     EXPECT_EQ(fields.party.verticalVelocity, -237.5f);
     EXPECT_EQ(fields.party.fallStartZ, 910);
@@ -214,6 +225,9 @@ UNIT_TEST(MM6CoreSaveFields, CapturesAndStagesMovementOnDetachedParty) {
     EXPECT_EQ(fields.party.prisonTerms, 2);
     EXPECT_EQ(fields.party.bountiesCollected, -7);
     EXPECT_EQ(fields.party.reputation, 800);
+    EXPECT_EQ(fields.party.bribes, 3);
+    EXPECT_EQ(fields.party.tavernDrinks, 2);
+    EXPECT_EQ(fields.party.tavernTips[1], 29);
 
     Party prior;
     prior.velocity = Vec3f(8, 9, 10);
@@ -241,6 +255,10 @@ UNIT_TEST(MM6CoreSaveFields, CapturesAndStagesMovementOnDetachedParty) {
     EXPECT_EQ(staged.uNumPrisonTerms, 2);
     EXPECT_EQ(staged.uNumBountiesCollected, -7);
     EXPECT_EQ(staged.mm6Reputation, 800);
+    EXPECT_EQ(staged.mm6Bribes, 3);
+    EXPECT_EQ(staged.mm6TavernDrinks[1], true);
+    EXPECT_EQ(staged.mm6TavernDrinks[0], false);
+    EXPECT_EQ(staged.mm6TavernTips[1], 29);
     EXPECT_EQ(prior.velocity.z, 10);
     EXPECT_EQ(prior.uFallStartZ, 77);
     EXPECT_EQ(prior.floor_face_id, 42);
@@ -267,7 +285,7 @@ UNIT_TEST(MM6CoreSaveFields, InvalidFieldLeavesDestinationUntouched) {
     EXPECT_EQ(destination, before);
 
     invalid = containerFor(before);
-    invalid.sections[0].payload.pop_back(); // Final PART v4 reputation byte is missing.
+    invalid.sections[0].payload.pop_back(); // Final PART v5 tavern tip byte is missing.
     EXPECT_THROW(mm6::loadCoreFieldsBeforeMutation(mm6::encodeSaveContainer(invalid), &destination),
                  std::exception);
     EXPECT_EQ(destination, before);
@@ -277,6 +295,12 @@ UNIT_TEST(MM6CoreSaveFields, InvalidFieldLeavesDestinationUntouched) {
     invalid.sections[0].payload[75] = 0xff;
     invalid.sections[0].payload[76] = 0xff;
     invalid.sections[0].payload[77] = 0xff;
+    EXPECT_THROW(mm6::loadCoreFieldsBeforeMutation(mm6::encodeSaveContainer(invalid), &destination),
+                 std::exception);
+    EXPECT_EQ(destination, before);
+
+    invalid = containerFor(before);
+    invalid.sections[0].payload[101] = 0x20; // A drink in a 22nd tavern, valid container checksum.
     EXPECT_THROW(mm6::loadCoreFieldsBeforeMutation(mm6::encodeSaveContainer(invalid), &destination),
                  std::exception);
     EXPECT_EQ(destination, before);
@@ -330,6 +354,10 @@ UNIT_TEST(MM6CoreSaveFields, RejectsMissingMalformedAndForeignSections) {
     container.sections[0].payload[0] = 2; // Superseded PART v2 payload.
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
     container.sections[0].payload[0] = 3; // Superseded PART v3 payload.
+    EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
+    container.sections[0].payload[0] = 4; // Superseded PART v4 payload.
+    EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
+    container.sections[0].payload.resize(94); // Exact superseded v4 length.
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);
     container.sections[0].payload.resize(90); // Exact superseded v3 length.
     EXPECT_THROW((void) mm6::decodeCoreSections(container), std::exception);

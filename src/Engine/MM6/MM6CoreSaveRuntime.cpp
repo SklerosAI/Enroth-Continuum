@@ -1,5 +1,6 @@
 #include "MM6CoreSaveRuntime.h"
 
+#include <algorithm>
 #include <bit>
 #include <cstddef>
 #include <stdexcept>
@@ -129,6 +130,11 @@ CoreSaveFields captureCoreFields(const Party &party, GameTitle title) {
     fields.party.prisonTerms = party.uNumPrisonTerms;
     fields.party.bountiesCollected = party.uNumBountiesCollected;
     fields.party.reputation = party.mm6Reputation;
+    fields.party.bribes = party.mm6Bribes;
+    for (size_t i = 0; i < party.mm6TavernDrinks.size(); ++i)
+        if (party.mm6TavernDrinks[i])
+            fields.party.tavernDrinks |= 1u << i;
+    std::ranges::copy(party.mm6TavernTips, fields.party.tavernTips.begin());
 
     for (size_t i = 0; i < fields.characters.size(); ++i) {
         const Character &source = party.pCharacters[i];
@@ -194,6 +200,10 @@ Party stageCoreParty(const Party &live, const CoreSaveFields &fields, GameTitle 
     staged.uNumPrisonTerms = fields.party.prisonTerms;
     staged.uNumBountiesCollected = fields.party.bountiesCollected;
     staged.mm6Reputation = fields.party.reputation;
+    staged.mm6Bribes = fields.party.bribes;
+    for (size_t i = 0; i < staged.mm6TavernDrinks.size(); ++i)
+        staged.mm6TavernDrinks[i] = fields.party.tavernDrinks & (1u << i);
+    std::ranges::copy(fields.party.tavernTips, staged.mm6TavernTips.begin());
     staged.floor_face_id = -1;
     staged.currentWalkingSound = SOUND_Invalid;
 

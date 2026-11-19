@@ -105,9 +105,8 @@ app keeps the active game data paths and mod switch in local macOS preferences.
 The vendor, All Artifacts + Storage, and MM7 chest reroll options are stored in preferences
 and do not edit game archives, the MM7 configuration file or existing saves.
 When MM7 Private mods is active, Atlas passes
-`ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY=1` to its bundled engine. The corresponding
-MM6 engine setting is `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY=1` once MM6 launches.
-Atlas also passes `ENROTH_MM7_ALL_ARTIFACTS_STORAGE=1` only when its MM7 toggle
+`ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY=1` to its bundled engine. MM6 has no vendor
+refresh setting. Atlas also passes `ENROTH_MM7_ALL_ARTIFACTS_STORAGE=1` only when its MM7 toggle
 and Private mods are both on; vanilla MM7, MM6 and upstream OpenEnroth receive
 no active MM7 artifact/storage flag.
 The chest reroll toggle similarly passes `ENROTH_MM7_CHEST_REROLL=1` only to a

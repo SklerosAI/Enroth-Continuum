@@ -16,6 +16,7 @@
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/MM6/MM6MapVisit.h"
 #include "Engine/Tables/DecorationTable.h"
+#include "Engine/Tables/MapTable.h"
 #include "Engine/Objects/Decoration.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Objects/Actor.h"
@@ -308,7 +309,12 @@ static void registerTimerTriggers(EvtOpcode triggerType, std::vector<MapTimer> *
                 timer.timeInsideDay += Duration::fromSeconds(ir.data.timer_descr.daily_start_second);
             }
 
-            if (engine->gameTitle() == GameTitle::MM6) {
+            if (engine->gameTitle() == GameTitle::MM6 && engine->config->gameplay.FixMapTimers.value()) {
+                const auto firings = mm6::mapTimerFirings().find(pMapTable->pInfos[engine->_currentLoadedMapId].fileName);
+                const Time lastFiring = firings == mm6::mapTimerFirings().end() ? Time() : firings->second[mm6::mapTimerIntervalIndex(timer.interval)];
+                timer.alarmTime = mm6::mapTimerFirstAlarmAfterLastFiring(triggerType, timer.interval, timer.timeInsideDay, levelLastVisit,
+                                                                         lastFiring, pParty->GetPlayingTime());
+            } else if (engine->gameTitle() == GameTitle::MM6) {
                 timer.alarmTime = mm6::mapTimerFirstAlarm(triggerType, timer.interval, timer.timeInsideDay, levelLastVisit,
                                                           pParty->GetPlayingTime());
             } else if (timer.interval == Duration::fromDays(1)) {
@@ -417,11 +423,19 @@ void onMapLeave() {
     onTimerTriggers.clear();
 }
 
-static void checkTimer(MapTimer &timer) {
+static void checkTimer(MapTimer &timer, EvtOpcode triggerType) {
     if (pParty->GetPlayingTime() >= timer.alarmTime) {
+        const bool mm6PeriodicTimer = engine->gameTitle() == GameTitle::MM6 && engine->config->gameplay.FixMapTimers.value() &&
+                                      triggerType == EVENT_OnLongTimer && !timer.altInterval;
+        if (mm6PeriodicTimer) {
+            mm6::mapTimerFirings()[pMapTable->pInfos[engine->_currentLoadedMapId].fileName][mm6::mapTimerIntervalIndex(timer.interval)] =
+                pParty->GetPlayingTime();
+        }
         runEvent(EvtContext(EVT_SOURCE_MAP, timer.eventId), timer.eventStep + 1);
         if (timer.altInterval) {
             timer.alarmTime = pParty->GetPlayingTime() + timer.altInterval;
+        } else if (mm6PeriodicTimer) {
+            timer.alarmTime = mm6::longTimerNextAlarm(timer.alarmTime, timer.interval, pParty->GetPlayingTime());
         } else {
             if (!timer.alarmTime.isValid() && timer.interval == Duration::fromDays(1)) {
                 // Initial firing of daily timers, next alarm must be configured to fire on exact time of day
@@ -446,10 +460,10 @@ void onTimer() {
     timerGuard = pParty->GetPlayingTime();
 
     for (MapTimer &timer : onTimerTriggers) {
-        checkTimer(timer);
+        checkTimer(timer, EVENT_OnTimer);
     }
 
     for (MapTimer &timer : onLongTimerTriggers) {
-        checkTimer(timer);
+        checkTimer(timer, EVENT_OnLongTimer);
     }
 }

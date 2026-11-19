@@ -20,4 +20,17 @@ namespace mm6 {
     return title == GameTitle::MM6 && flying == 0;
 }
 
+/**
+ * The GrayFace patch's offer check, the original flag check plus the confirmation's flying check, so the crossing isn't
+ * offered to a party flying close enough to the ground to clear the flags.
+ *
+ * @param title                         Game title, only MM6 is accepted.
+ * @param flags                         Party flags.
+ * @param flying                        Party flying state.
+ * @return                              Whether the crossing may be offered.
+ */
+[[nodiscard]] inline bool borderOfferPartyStatePermits(GameTitle title, PartyFlags flags, unsigned int flying) {
+    return borderOfferPartyFlagsPermit(title, flags) && borderConfirmFlyingStatePermits(title, flying);
+}
+
 } // namespace mm6

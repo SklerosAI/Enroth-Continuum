@@ -4782,7 +4782,7 @@ void Character::tickRegeneration(int tick5, const RegenData &rData) {
     }
 }
 
-void Character::playReaction(SpeechId speech, int a3) {
+SoundId Character::playReaction(SpeechId speech, int a3) {
     int speechCount = 0;
     int portraitCount = 0;
     int pickedSoundID = 0;
@@ -4819,6 +4819,7 @@ void Character::playReaction(SpeechId speech, int a3) {
         }
         playEmotion(portrait, expressionDuration);
     }
+    return static_cast<SoundId>(pickedSoundID);
 }
 
 void Character::playEmotion(PortraitId newPortrait, Duration duration) {

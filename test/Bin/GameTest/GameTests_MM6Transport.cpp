@@ -1,9 +1,15 @@
+#include <unistd.h>
+
+#include <algorithm>
+#include <filesystem>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
+#include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/Localization.h"
 #include "Engine/Objects/NPCEnums.h"
 #include "Engine/Party.h"
@@ -14,6 +20,9 @@
 #include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIHouses.h"
+#include "GUI/UI/UISaveLoad.h"
+
+#include "Utility/ScopeGuard.h"
 
 static void startNewGameThroughInput(EngineController &game) {
     // Each character takes its first three optional skills and up to three points in every attribute, then the party
@@ -92,6 +101,30 @@ static void boardShip(EngineController &game, Vec3f dock, int yaw, int decoratio
 static void sail(EngineController &game, int slot) {
     game.pressGuiButton(fmt::format("HouseDialogue_Option{}", slot));
     game.tick(27); // The ship leaves two and a half seconds after the party pays, then the house closes.
+    game.skipLoadingScreen();
+    game.tick();
+}
+
+static std::filesystem::path createTempProfile() {
+    // An owner-only mm6-restart- folder in the system temp folder, the only kind of profile a test saves into.
+    const std::filesystem::path tempRoot = std::filesystem::canonical(std::filesystem::temp_directory_path());
+    std::string created = (tempRoot / "mm6-restart-transport-XXXXXX").string();
+    if (!mkdtemp(created.data()))
+        throw std::runtime_error("Can't create a temporary MM6 profile");
+    return std::filesystem::canonical(created);
+}
+
+static void loadAutosaveFromMenu(EngineController &game) {
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressGuiButton("GameMenu_LoadGame");
+    game.tick(3);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto slot = std::ranges::find(slots, std::string("autosave.ec6"), &SavegameSlot::fileName);
+    ASSERT_NE(slot, slots.end());
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", slot - slots.begin()));
+    game.tick(2);
+    game.pressGuiButton("LoadMenu_Load");
     game.skipLoadingScreen();
     game.tick();
 }
@@ -280,4 +313,52 @@ GAME_TEST(MM6Transport, HiredHorsemanShortensCoach) {
     EXPECT_CONTAINS(optionsTape, std::vector<std::string>{routeLabel(1, "outd3.odm")});
     EXPECT_CONTAINS(timeTape.adjacentDeltas(), Duration::fromDays(1).ticks());
     EXPECT_MISSES(timeTape.adjacentDeltas(), Duration::fromDays(2).ticks());
+}
+
+GAME_TEST(MM6Transport, CoachAutosaveKeepsTheFare) {
+    // The autosave of a coach trip was written after the fare and the trip's days, so loading it put the party back at
+    // the stable two days later and without the fare.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    const MapId oute3 = pMapTable->GetMapInfo("oute3.odm");
+    const MapId outd3 = pMapTable->GetMapInfo("outd3.odm");
+    auto mapTape = tapes.map();
+    auto goldTape = tapes.gold();
+    auto timeTape = tapes.custom([] { return pParty->GetPlayingTime().ticks(); });
+    auto positionTape = tapes.custom([] { return Vec2f(pParty->pos.x, pParty->pos.y); });
+    test.startTaping();
+
+    takeCoachFromNewSorpigal(game);
+    loadAutosaveFromMenu(game);
+
+    EXPECT_EQ(mapTape, tape(oute3, outd3, oute3));
+    EXPECT_EQ(goldTape, tape(200, 175, 200));
+    EXPECT_CONTAINS(timeTape.adjacentDeltas(), Duration::fromDays(2).ticks()); // The trip.
+    EXPECT_LT(timeTape.back() - timeTape.front(), Duration::fromHours(1).ticks());
+    EXPECT_EQ(positionTape.back(), Vec2f(-10346, -9472)); // At the stable door.
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6Transport, CoachLeavesAfterTheOriginalDelayWithoutSpeech) {
+    // No travel speech plays, so the coach leaves after the original's fixed second and a half.
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    auto screenTape = tapes.screen();
+    test.startTaping();
+
+    enterNewSorpigalStable(game);
+    game.pressGuiButton("HouseDialogue_Option0");
+    game.tick();
+    int frames = 0;
+    for (; frames < 100 && current_screen_type == SCREEN_HOUSE; frames++)
+        game.tick(); // The party waits in the stable until the coach leaves.
+
+    EXPECT_EQ(frames, 16); // The coach leaves a second and a half after the party pays, the house closes a frame later.
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE, SCREEN_GAME));
 }

@@ -1,6 +1,9 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
+#include <functional>
+#include <map>
 #include <span>
 #include <string>
 #include <string_view>
@@ -48,5 +51,50 @@ void recordMapVisit(std::span<std::uint8_t> deltaBytes, Time leaveTime, std::str
  *                                      tomorrow.
  */
 Time mapTimerFirstAlarm(EvtOpcode trigger, Duration interval, Duration timeInsideDay, Time lastVisit, Time now);
+
+/**
+ * When each map's `OnLongTimer` triggers without a half-minute interval last went off, by map file name. One time per
+ * interval, a year, 28 days, 7 days and a day, in that order. Zero for an interval that never went off.
+ */
+using MapTimerFirings = std::map<std::string, std::array<Time, 4>, std::less<>>;
+
+/**
+ * @return                              Timer firings of the running session, kept for `fix_map_timers`.
+ */
+MapTimerFirings &mapTimerFirings();
+
+/**
+ * @param interval                      One year, 28 days, 7 days or one day.
+ * @return                              Index of the interval in a `MapTimerFirings` entry.
+ */
+int mapTimerIntervalIndex(Duration interval);
+
+/**
+ * First alarm an MM6 map load gives an `OnTimer` or `OnLongTimer` trigger that has no half-minute interval, the way the
+ * GrayFace patch's timer fix gives it.
+ *
+ * @param trigger                       `EVENT_OnTimer` or `EVENT_OnLongTimer`.
+ * @param interval                      One year, 28 days, 7 days or one day.
+ * @param timeInsideDay                 Time of day a daily timer goes off at.
+ * @param lastVisit                     When the party last left the map, zero for a map it never left.
+ * @param lastFiring                    When the map's `OnLongTimer` triggers with this interval last went off, zero for
+ *                                      never.
+ * @param now                           Party's playing time.
+ * @return                              For an `OnLongTimer`, zero on a first visit, otherwise one interval after its last
+ *                                      firing, or after the last visit when it has no firing within an interval of that
+ *                                      visit. For a daily `OnTimer`, its time of day today, or tomorrow once that has
+ *                                      passed. For any other `OnTimer`, one interval from now.
+ */
+Time mapTimerFirstAlarmAfterLastFiring(EvtOpcode trigger, Duration interval, Duration timeInsideDay, Time lastVisit, Time lastFiring,
+                                       Time now);
+
+/**
+ * @param alarm                         Alarm of an `OnLongTimer` without a half-minute interval that just went off.
+ * @param interval                      Its interval.
+ * @param now                           Party's playing time.
+ * @return                              Its next alarm, one interval after this one, or one interval from now when the
+ *                                      party missed more than one.
+ */
+Time longTimerNextAlarm(Time alarm, Duration interval, Time now);
 
 } // namespace mm6

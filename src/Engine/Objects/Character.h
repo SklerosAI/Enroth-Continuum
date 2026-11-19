@@ -9,6 +9,7 @@
 #include "Inventory.h"
 #include "Engine/Data/AwardEnums.h"
 #include "Engine/Data/HouseEnums.h"
+#include "Engine/Data/SoundEnums.h"
 #include "Engine/Objects/NPCEnums.h"
 #include "Engine/Objects/ActorEnums.h"
 #include "Engine/Objects/CombinedSkillValue.h"
@@ -232,8 +233,9 @@ class Character {
 
     /**
      * @offset 0x4948B1
+     * @return                          Voice sound the character spoke, `SOUND_Invalid` when the reaction has none.
      */
-    void playReaction(SpeechId speech, int a3 = 0);
+    SoundId playReaction(SpeechId speech, int a3 = 0);
 
     /**
      * @offset 0x494A25

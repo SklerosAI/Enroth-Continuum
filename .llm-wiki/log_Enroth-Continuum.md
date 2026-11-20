@@ -3789,3 +3789,7 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - Added an Atlas private-mod toggle and a small MM7 chest Reroll button. The engine retains authored random-loot markers through MM7 saves, draws a fresh seed per click, and uses each marker's original treasure-level range. Fixed chest contents and chest flags remain; taking or depositing an item ends rerolls for that chest. MM6, MM8 and upstream launch paths do not receive the flag.
 - The default MM7 headless target passed 733/733. The final rebuilt focused reroll and flag tests passed 2/2; the native unit target, Atlas page and Swift environment checks, and `check_style` passed. A staged Atlas bundle passed signature verification and preserved the installed MM6 executable byte for byte. Graphical button placement and mouse acceptance remain for a normal play session. The pre-tag checkpoint sweep remains deferred to a release candidate.
+
+## [2026-11-20] install | MM7 chest reroll Atlas
+- by: T-Burton-ND via codex
+- Installed the verified local Atlas bundle after confirming no Atlas or game helper was running. The installed bundle passes strict signature verification, contains the chest reroll toggle and keeps the MM6 executable byte-identical to the previous app. The previous app is retained in the ignored build rollback folder. The MM7 release tag was not moved, and normal graphical button placement and mouse acceptance remain to be observed.

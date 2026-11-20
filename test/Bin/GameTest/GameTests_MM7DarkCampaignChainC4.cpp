@@ -18,6 +18,7 @@
 #include "Utility/String/Ascii.h"
 
 #include "MM7CampaignChain.h"
+#include "MM7MalwickCampaign.h"
 
 static std::vector<int> breedingZoneCompletionEvents() {
     std::vector<int> result;
@@ -172,6 +173,9 @@ GAME_TEST(MM7DarkCampaignChain, DISABLED_Chapter4) {
     EXPECT_EQ(houseTape.size(), 11u); // Invalid/throne/invalid twice, then three adviser house/invalid pairs.
     EXPECT_EQ(houseTape.front(), HOUSE_INVALID);
     EXPECT_EQ(houseTape.back(), HOUSE_INVALID);
+    ASSERT_FALSE(::testing::Test::HasFailure());
+
+    completeCampaignMalwickTapestry(game, QBIT_DARK_PATH);
     ASSERT_FALSE(::testing::Test::HasFailure());
 
     saveCampaignChainSlot(game, 4);

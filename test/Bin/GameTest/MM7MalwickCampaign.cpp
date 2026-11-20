@@ -24,7 +24,7 @@
 
 #include "MM7CampaignChain.h"
 
-static bool takeCampaignTapestry(EngineController &game) {
+static bool takeCampaignTapestry(EngineController &game, MapId castle) {
     auto taken = [] {
         return pParty->_questBits[QBIT_MERCENARY_GUILD_TAPESTRY_TAKEN] &&
                (pParty->hasItem(ITEM_BIG_TAPESTRY) || pParty->pPickedItem.itemId == ITEM_BIG_TAPESTRY);
@@ -39,7 +39,7 @@ static bool takeCampaignTapestry(EngineController &game) {
             int yaw = std::lround(std::atan2(-direction * face.facePlane.normal.y,
                                             -direction * face.facePlane.normal.x) *
                                   180 / std::numbers::pi);
-            game.teleportTo(MAP_CASTLE_LAMBENT, position, yaw);
+            game.teleportTo(castle, position, yaw);
             try {
                 game.pointMouseAtFace(faceId);
             } catch (const Exception &) {
@@ -51,7 +51,7 @@ static bool takeCampaignTapestry(EngineController &game) {
                 return true;
         }
     }
-    return clickCampaignChainEventFace(game, MAP_CASTLE_LAMBENT, 376, 1, taken);
+    return clickCampaignChainEventFace(game, castle, 376, 1, taken);
 }
 
 void acceptCampaignMalwickWand(EngineController &game) {
@@ -115,10 +115,14 @@ void acceptCampaignMalwickWand(EngineController &game) {
     game.teleportTo(MAP_HARMONDALE, Vec3f(-17331, 12547, 465), 0);
 }
 
-void completeCampaignMalwickTapestry(EngineController &game) {
+void completeCampaignMalwickTapestry(EngineController &game, QuestBit path) {
     constexpr int nilesId = 99;
+    ASSERT_TRUE(path == QBIT_LIGHT_PATH || path == QBIT_DARK_PATH);
+    const MapId castle = path == QBIT_LIGHT_PATH ? MAP_CASTLE_LAMBENT : MAP_CASTLE_GLOAMING;
+    const Vec3f castlePosition = path == QBIT_LIGHT_PATH ? Vec3f(-3456, 12700, 1115) : Vec3f(-10300, -18432, -2861);
+    const int castleYaw = path == QBIT_LIGHT_PATH ? 90 : 180;
     ASSERT_TRUE(pParty->_questBits[QBIT_MALWICK_FIREBALL_WAND_ACCEPTED]);
-    ASSERT_TRUE(pParty->_questBits[QBIT_LIGHT_PATH]);
+    ASSERT_TRUE(pParty->_questBits[path]);
     ASSERT_FALSE(pParty->_questBits[QBIT_MERCENARY_GUILD_VISIT_ACTIVE]);
     const Time startedAt = pParty->PartyTimes.CounterEventValues[4];
     ASSERT_TRUE(startedAt.isValid());
@@ -172,18 +176,18 @@ void completeCampaignMalwickTapestry(EngineController &game) {
     };
 
     talkToNiles();
-    selectEvent([](const EvtInstruction &instruction) {
+    selectEvent([path](const EvtInstruction &instruction) {
         return instruction.opcode == EVENT_OnCanShowDialogItemCmp &&
                instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
-               instruction.data.variable_descr.value == std::to_underlying(QBIT_LIGHT_PATH);
+               instruction.data.variable_descr.value == std::to_underlying(path);
     });
     ASSERT_TRUE(pParty->_questBits[QBIT_MERCENARY_GUILD_TAPESTRY_ACTIVE]);
     ASSERT_EQ(pParty->PartyTimes.CounterEventValues[4], pParty->GetPlayingTime());
     leaveNiles();
 
-    game.teleportTo(MAP_CASTLE_LAMBENT, Vec3f(-3456, 12700, 1115), 90);
+    game.teleportTo(castle, castlePosition, castleYaw);
     ASSERT_EQ(engine->_persistentVariables.mapVars[4], 0);
-    ASSERT_TRUE(takeCampaignTapestry(game));
+    ASSERT_TRUE(takeCampaignTapestry(game, castle));
     if (pParty->pPickedItem.itemId == ITEM_BIG_TAPESTRY)
         pParty->placeHeldItemInInventoryOrDrop();
     ASSERT_TRUE(pParty->hasItem(ITEM_BIG_TAPESTRY));
@@ -206,6 +210,9 @@ void completeCampaignMalwickTapestry(EngineController &game) {
     EXPECT_EQ(pParty->uNumGoldInBank, bankGold);
     leaveNiles();
 
-    // Keep the C5 predecessor's authored starting map while saving the completed side quest.
-    game.teleportTo(MAP_CASTLE_LAMBENT, Vec3f(-3456, 12700, 1115), 90);
+    // Keep each C5 predecessor's expected map while saving the completed side quest.
+    if (path == QBIT_LIGHT_PATH)
+        game.teleportTo(castle, castlePosition, castleYaw);
+    else
+        game.teleportTo(MAP_PIT, Vec3f(), 0);
 }

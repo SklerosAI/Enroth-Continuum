@@ -29,12 +29,14 @@ struct Chest {
     static int FindFreeItemSlot(int uChestID);
     static int PutItemInChest(int a1, Item *a2, int uChestID);
     static void PlaceItemAt(unsigned int put_cell_pos, unsigned int uItemIdx, int uChestID);
-    static void PlaceItems(int uChestID);
+    static void PlaceItems(int uChestID, bool rerollOnly = false);
     static bool open(int uChestID, Pid objectPid);
     static void toggleFlag(int uChestID, ChestFlag uFlag, bool bValue);
     static bool ChestUI_WritePointedObjectStatusString();
     static void OnChestLeftClick();
     static void GrabItem(bool all = false);
+    static bool canReroll(int chestId);
+    static bool reroll(int chestId);
 
     uint16_t chestTypeId = 0;
     ChestFlags flags;

@@ -529,6 +529,7 @@ void snapshot(const Item &src, Item_MM7 *dst, ContextTag<ItemSlot> slot) {
     dst->equippedSlot = std::to_underlying(*slot);
     dst->maxCharges = src.maxCharges;
     dst->lichJarCharacterIndex = src.lichJarCharacterIndex + 1;
+    dst->_pad = src.chestRerollSource;
     snapshot(src.enchantmentExpirationTime, &dst->enchantmentExpirationTime);
 }
 
@@ -562,6 +563,7 @@ void reconstruct(const Item_MM7 &src, Item *dst) {
     // src.equippedSlot is ignored - we handle it externally.
     dst->maxCharges = src.maxCharges;
     dst->lichJarCharacterIndex = src.lichJarCharacterIndex - 1;
+    dst->chestRerollSource = src._pad;
     reconstruct(src.enchantmentExpirationTime, &dst->enchantmentExpirationTime);
 }
 

@@ -1,6 +1,7 @@
 #include "Engine/Objects/Chest.h"
 
 #include <array>
+#include <climits>
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -20,6 +21,7 @@
 #include "Engine/Graphics/Image.h"
 #include "Engine/Localization.h"
 #include "Engine/Random/Random.h"
+#include "Engine/Mods/PrivateMods.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Item.h"
 #include "Engine/Tables/ObjectTable.h"
@@ -32,6 +34,8 @@
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/ChestTable.h"
+
+#include "Library/Random/MersenneTwisterRandomEngine.h"
 
 #include "GUI/UI/UIChest.h"
 #include "GUI/UI/UIStatusBar.h"
@@ -185,6 +189,61 @@ void takeMm6ChestItem(int chestId, Pointi mousePos) {
     pParty->setHoldingItem(staged->heldItem, -offset);
 }
 
+constexpr uint8_t kRerollMarker = 255;
+
+void generateMarkerLoot(Chest &chest, InventoryEntry marker, ItemTreasureLevel level, uint8_t source) {
+    auto place = [&](Item item) {
+        if (item.itemId == ITEM_NULL)
+            return;
+        item.chestRerollSource = source;
+        if (marker && source == 0) {
+            *marker = item;
+            marker = {};
+        } else if (source == 0) {
+            chest.inventory.stash(item);
+        } else {
+            chest.inventory.tryStash(item);
+        }
+    };
+
+    if (level == ITEM_TREASURE_LEVEL_7) {
+        Item item;
+        if (item.GenerateArtifact())
+            place(item);
+    } else {
+        int itemCount = grng->randomInSegment(1, 5);
+        for (int k = 0; k < itemCount; ++k) {
+            Item item;
+            int choice = grng->random(100);
+            if (choice < 20) {
+                continue;
+            } else if (choice < 60) {
+                item.generateGold(level);
+            } else {
+                pItemTable->generateItem(level, RANDOM_ITEM_ANY, &item);
+            }
+            place(item);
+        }
+    }
+    if (marker && source == 0)
+        chest.inventory.take(marker);
+}
+
+void claimChestReroll(Chest &chest) {
+    std::vector<InventoryEntry> markers;
+    for (InventoryEntry entry : chest.inventory.entries()) {
+        if (entry->chestRerollSource == kRerollMarker && isRandomItem(entry->itemId))
+            markers.push_back(entry);
+    }
+    if (markers.empty())
+        return;
+    for (InventoryEntry entry : chest.inventory.entries())
+        if (entry->chestRerollSource != kRerollMarker || !isRandomItem(entry->itemId))
+            entry->chestRerollSource = 0;
+    for (InventoryEntry marker : markers)
+        chest.inventory.take(marker);
+}
+
 } // namespace
 
 bool Chest::open(int uChestID, Pid objectPid) {
@@ -320,7 +379,7 @@ bool Chest::ChestUI_WritePointedObjectStatusString() {
     }
 }
 
-void Chest::PlaceItems(int uChestID) { // only used for setup
+void Chest::PlaceItems(int uChestID, bool rerollOnly) {
     Chest &chest = vChests[uChestID];
 
     char chest_cells_map[144];   // [sp+Ch] [bp-A0h]@1
@@ -345,6 +404,10 @@ void Chest::PlaceItems(int uChestID) { // only used for setup
     Sizei chestSize = chest.inventory.gridSize();
     for (InventoryEntry entry : chest.inventory.entries()) {
         if (entry.zone() != INVENTORY_ZONE_STASH)
+            continue;
+        if (entry->chestRerollSource == kRerollMarker && isRandomItem(entry->itemId))
+            continue;
+        if (rerollOnly && entry->chestRerollSource == 0)
             continue;
 
         assert(!isRandomItem(entry->itemId) && "Checking that generated items are valid");
@@ -403,10 +466,13 @@ void Chest::OnChestLeftClick() {
 
         if (pos) {
             chest->inventory.add(*pos, pParty->takeHoldingItem());
+            claimChestReroll(*chest);
         }
     } else {
         if (InventoryEntry entry = chest->inventory.entry(inventoryPos)) {
             Item item = chest->inventory.take(entry);
+            item.chestRerollSource = 0;
+            claimChestReroll(*chest);
 
             if (item.isGold()) {
                 pParty->partyFindsGold(item.goldAmount, GOLD_RECEIVE_SHARE);
@@ -436,11 +502,14 @@ void Chest::GrabItem(bool all) {  // new function to grab items from chest using
     int grabcount = 0;
     int goldcount = 0;
     int goldamount = 0;
+    bool claimed = false;
 
     int chestId = pGUIWindow_CurrentChest->chestId();
     Chest *chest = &vChests[chestId];
 
     for (InventoryEntry entry : chest->inventory.entries()) {
+        if (entry->chestRerollSource == kRerollMarker && isRandomItem(entry->itemId))
+            continue;
         if (entry->isGold()) {
             pParty->partyFindsGold(entry->goldAmount, GOLD_RECEIVE_SHARE);
             goldamount += entry->goldAmount;
@@ -451,21 +520,30 @@ void Chest::GrabItem(bool all) {  // new function to grab items from chest using
                 pos = pParty->activeCharacter().inventory.findSpace(*entry);
 
             if (pos) {  // can place
-                pParty->activeCharacter().inventory.add(*pos, *entry);
-                pParty->recordArtifactAcquisition(*entry);
+                Item item = *entry;
+                item.chestRerollSource = 0;
+                pParty->activeCharacter().inventory.add(*pos, item);
+                pParty->recordArtifactAcquisition(item);
                 grabcount++;
                 engine->_statusBar->setEvent(LSTR_YOU_FOUND_AN_ITEM_S, pItemTable->items[entry->itemId].unidentifiedName);
             } else {  // no room so set as holding item
-                pParty->setHoldingItem(*entry);
+                Item item = *entry;
+                item.chestRerollSource = 0;
+                pParty->setHoldingItem(item);
                 chest->inventory.take(entry);
+                claimed = true;
                 pParty->activeCharacter().playReaction(SPEECH_NO_ROOM);
                 break;
             }
         }
         chest->inventory.take(entry);
+        claimed = true;
         if (all == false)  // only grab 1 item
             break;
     }
+
+    if (claimed)
+        claimChestReroll(*chest);
 
     if (engine->config->gameplay.ChestTryPlaceItems.value() == 2)
         Chest::PlaceItems(chestId);
@@ -484,45 +562,77 @@ void GenerateItemsInChest() {
         for (InventoryEntry entry : vChests[i].inventory.entries()) {
             if (!isRandomItem(entry->itemId))
                 continue;
+            if (entry->chestRerollSource == kRerollMarker)
+                continue;
+
+            const bool reroll = mm7::mods::chestRerollEnabled(engine->gameTitle());
+            if (reroll) {
+                Item source = vChests[i].inventory.take(entry);
+                source.chestRerollSource = kRerollMarker;
+                entry = vChests[i].inventory.stash(source);
+            }
 
             ItemTreasureLevel resultTreasureLevel = grng->randomSample(
                 RemapTreasureLevel(randomItemTreasureLevel(entry->itemId), mapData->mapTreasureLevel));
-
-            if (resultTreasureLevel == ITEM_TREASURE_LEVEL_7) {
-                // TODO(captainurist): GenerateArtifact calls Reset on failure, this messes up inventory state. Rewrite properly.
-                Item item;
-                if (item.GenerateArtifact()) {
-                    *entry = item;
-                } else {
-                    vChests[i].inventory.take(entry);
-                }
-                continue;
-            }
-
-            int itemCount = grng->randomInSegment(1, 5);
-            for (int k = 0; k < itemCount; k++) {
-                Item item;
-                int whatToGenerateProb = grng->random(100);
-                if (whatToGenerateProb < 20) {
-                    // Do nothing.
-                } else if (whatToGenerateProb < 60) {  // generate gold
-                    item.generateGold(resultTreasureLevel);
-                } else {
-                    pItemTable->generateItem(resultTreasureLevel, RANDOM_ITEM_ANY, &item);
-                }
-                if (item.itemId != ITEM_NULL) {
-                    if (entry) {
-                        *entry = item;
-                        entry = {};
-                    } else {
-                        vChests[i].inventory.stash(item);
-                    }
-                }
-            }
-            if (entry) // We didn't generate anything.
-                vChests[i].inventory.take(entry);
+            generateMarkerLoot(vChests[i], entry, resultTreasureLevel,
+                               reroll ? static_cast<uint8_t>(entry.index() + 1) : 0);
         }
     }
+}
+
+bool Chest::canReroll(int chestId) {
+    if (!engine || !mm7::mods::chestRerollEnabled(engine->gameTitle()) ||
+        chestId < 0 || chestId >= static_cast<int>(vChests.size()))
+        return false;
+    for (InventoryConstEntry entry : vChests[chestId].inventory.entries())
+        if (entry->chestRerollSource == kRerollMarker && isRandomItem(entry->itemId))
+            return true;
+    return false;
+}
+
+bool Chest::reroll(int chestId) {
+    if (!canReroll(chestId) || current_screen_type != SCREEN_CHEST ||
+        pParty->pPickedItem.itemId != ITEM_NULL || engine->_currentLoadedMapId == MAP_INVALID)
+        return false;
+
+    Chest before = vChests[chestId];
+    auto ledgerBefore = pParty->isArtifactGenerated;
+    MersenneTwisterRandomEngine seeded;
+    seeded.seed(grng->random(INT_MAX) + 1);
+    RandomEngine *previous = grng;
+    grng = &seeded;
+    try {
+        Chest &chest = vChests[chestId];
+        std::vector<InventoryEntry> markers;
+        for (InventoryEntry entry : chest.inventory.entries())
+            if (entry->chestRerollSource == kRerollMarker && isRandomItem(entry->itemId))
+                markers.push_back(entry);
+        for (InventoryEntry marker : markers) {
+            const uint8_t source = static_cast<uint8_t>(marker.index() + 1);
+            std::vector<InventoryEntry> generated;
+            for (InventoryEntry entry : chest.inventory.entries())
+                if (entry->chestRerollSource == source)
+                    generated.push_back(entry);
+            for (InventoryEntry entry : generated) {
+                if (!mm7::mods::allArtifactsStorageEnabled(GameTitle::MM7) &&
+                    isSpawnableArtifact(entry->itemId))
+                    pParty->isArtifactGenerated[entry->itemId] = false;
+                chest.inventory.take(entry);
+            }
+            ItemTreasureLevel level = grng->randomSample(RemapTreasureLevel(
+                randomItemTreasureLevel(marker->itemId),
+                pMapTable->pInfos[engine->_currentLoadedMapId].mapTreasureLevel));
+            generateMarkerLoot(chest, marker, level, source);
+        }
+        PlaceItems(chestId, true);
+    } catch (...) {
+        grng = previous;
+        vChests[chestId] = std::move(before);
+        pParty->isArtifactGenerated = ledgerBefore;
+        throw;
+    }
+    grng = previous;
+    return true;
 }
 
 mm6::ChestGenerationRoute mm6::chestGenerationRoute(GameTitle title) {

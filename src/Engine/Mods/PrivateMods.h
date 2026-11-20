@@ -17,6 +17,10 @@ namespace mm7::mods {
 bool allArtifactsStorageEnabled(GameTitle title, const char *flag);
 bool allArtifactsStorageEnabled(GameTitle title);
 
+/** Exact, MM7-only opt-in for rerolling unclaimed random chest loot. */
+bool chestRerollEnabled(GameTitle title, const char *flag);
+bool chestRerollEnabled(GameTitle title);
+
 enum class PortraitMood {
     Normal, Talk, Smile, Sad, Hurt, Pain, Afraid, Cast, Sleep, Unconscious,
     Weak, Cursed, Drunk, Insane, Sick, Paralyzed, Stone, Zombie, Dead, Eradicated,

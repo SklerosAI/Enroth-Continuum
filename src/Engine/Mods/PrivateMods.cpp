@@ -65,6 +65,14 @@ bool allArtifactsStorageEnabled(GameTitle title) {
     return allArtifactsStorageEnabled(title, std::getenv("ENROTH_MM7_ALL_ARTIFACTS_STORAGE"));
 }
 
+bool chestRerollEnabled(GameTitle title, const char *flag) {
+    return title == GameTitle::MM7 && flag && std::string_view(flag) == "1";
+}
+
+bool chestRerollEnabled(GameTitle title) {
+    return chestRerollEnabled(title, std::getenv("ENROTH_MM7_CHEST_REROLL"));
+}
+
 PrivatePortraits::~PrivatePortraits() = default;
 
 std::string_view portraitMoodName(PortraitMood mood) {

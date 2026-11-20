@@ -12,8 +12,10 @@
 #include "Engine/Party.h"
 #include "Engine/Snapshots/EntitySnapshots.h"
 #include "Engine/Tables/ItemTable.h"
+#include "Engine/Tables/ChestTable.h"
 
 #include "GUI/GUIWindow.h"
+#include "GUI/GUIButton.h"
 #include "GUI/UI/UIChest.h"
 
 namespace {
@@ -34,6 +36,61 @@ GAME_TEST(MM7AllArtifactsEngine, DisabledModeLeavesCollectionStateUntouched) {
     EXPECT_FALSE(pParty->artifactCollectionInitialized);
     EXPECT_FALSE(pParty->isArtifactCollected[target]);
     pParty->takeHoldingItem();
+}
+
+GAME_TEST(MM7ChestReroll, KeepsAuthoredChestAndStopsAfterClaim) {
+    if (!mm7::mods::chestRerollEnabled(engine->gameTitle()))
+        GTEST_SKIP() << "Set ENROTH_MM7_CHEST_REROLL=1";
+    game.startNewGame();
+
+    constexpr int chestId = 0;
+    Chest &chest = vChests[chestId];
+    chest.chestTypeId = 0;
+    chest.inventory = ChestInventory(chestTable[0].size);
+    chest.inventory.stash(Item(ITEM_RANDOM_LEVEL_4));
+    Item fixed(ITEM_CRUDE_LONGSWORD);
+    fixed.SetIdentified();
+    chest.inventory.stash(fixed);
+    GenerateItemsInChest();
+    Chest::PlaceItems(chestId);
+    ASSERT_TRUE(Chest::canReroll(chestId));
+    const ChestFlags originalFlags = chest.flags;
+
+    auto wire = std::make_unique<Chest_MM7>();
+    snapshot(chest, wire.get());
+    reconstruct(*wire, &chest, tags::context<int>(chestId));
+    ASSERT_TRUE(Chest::canReroll(chestId));
+    GenerateItemsInChest(); // A normal map reload must not generate the retained marker again.
+    ASSERT_TRUE(Chest::canReroll(chestId));
+
+    pGUIWindow_CurrentChest = std::make_unique<GUIWindow_Chest>(chestId);
+    ASSERT_EQ(current_screen_type, SCREEN_CHEST);
+    EXPECT_TRUE(std::ranges::any_of(pGUIWindow_CurrentChest->vButtons,
+                                    [](const GUIButton *button) { return button->id == "Chest_Reroll"; }));
+    bool sawMarker = false;
+    for (int attempt = 0; attempt < 3; ++attempt) {
+        ASSERT_TRUE(Chest::reroll(chestId));
+        EXPECT_EQ(chest.chestTypeId, 0);
+        EXPECT_EQ(chest.flags, originalFlags);
+        sawMarker = false;
+        for (InventoryConstEntry entry : chest.inventory.entries())
+            if (entry->chestRerollSource == 255) {
+                EXPECT_EQ(entry->itemId, ITEM_RANDOM_LEVEL_4);
+                EXPECT_EQ(entry.zone(), INVENTORY_ZONE_STASH);
+                sawMarker = true;
+            }
+        EXPECT_TRUE(sawMarker);
+        InventoryConstEntry authored = chest.inventory.find(ITEM_CRUDE_LONGSWORD);
+        ASSERT_TRUE(authored);
+        EXPECT_TRUE(authored->IsIdentified());
+        EXPECT_EQ(authored->chestRerollSource, 0);
+    }
+
+    Chest::GrabItem(false);
+    EXPECT_FALSE(Chest::canReroll(chestId));
+    EXPECT_FALSE(Chest::reroll(chestId));
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
 }
 
 GAME_TEST(MM7AllArtifactsEngine, CollectsAllTwentyNineAndIgnoresVanillaCap) {

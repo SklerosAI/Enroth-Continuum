@@ -25,6 +25,9 @@ GUIWindow_Chest::GUIWindow_Chest(int chestId) : GUIWindow(WINDOW_CHEST, {0, 0}, 
                                        localization->str(LSTR_EXIT_DIALOGUE), {ui_exit_cancel_button_background});
     }
     CreateButton({7, 8}, {460, 343}, BUTTON_TYPE_NORMAL, 0, UIMSG_CHEST_ClickItem, 0);
+    if (engine->gameTitle() == GameTitle::MM7 && Chest::canReroll(chestId))
+        CreateButton("Chest_Reroll", {488, 384}, {86, 24}, BUTTON_TYPE_NORMAL, 0,
+                     UIMSG_CHEST_Reroll, 0, INPUT_ACTION_INVALID, "Reroll chest loot");
     current_screen_type = SCREEN_CHEST;
     gameTimer->setPaused(true);
 }
@@ -74,5 +77,9 @@ void GUIWindow_Chest::Update() {
         }
 
         drawExitButton();
+        if (engine->gameTitle() == GameTitle::MM7 && Chest::canReroll(_chestId)) {
+            render->FillRect({488, 384, 86, 24}, colorTable.NavyBlue);
+            DrawText(assets->pFontSmallnum.get(), {501, 388}, colorTable.White, "Reroll", frameRect);
+        }
     }
 }

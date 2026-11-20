@@ -22,6 +22,15 @@ language below is historical and superseded by this boundary.
 
 ## MM7 one-branch continuity checkpoint — 2026-11-20
 
+The MM7-only [chest reroll mod](MM7-Chest-Reroll-Mod.md) is implemented in the
+continuing source branch. Atlas has an independent toggle under Private mods;
+the MM7 chest window shows a small button while an unclaimed random marker is
+present. The focused chest snapshot/reroll/claim test, combined artifact-mod
+checks, Atlas page test and Swift launch-environment check passed. The full
+default MM7 suite, style gate and visible installed-app click check are tracked
+as separate acceptance steps. Do not infer support for old already-generated
+chests, monster loot or MM6/MM8 from this source slice.
+
 The owner requested one continuing branch and worktree per title at round end.
 `codex/mm7` holds the current MM7 lane, `master` is neutral integration, and
 `ECv0.1.0` remains the fixed release tag. Temporary Codex branches/worktrees

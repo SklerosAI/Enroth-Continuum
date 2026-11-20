@@ -35,7 +35,7 @@ function state(overrides) {
     data: titles, paths: {}, saves: [], running: false, runningBuild: '', mm6Available: false, upstreamAvailable: false,
     recordingFinalizing: false, recordingEnabled: false, recordVideo: false, recordDiagnostics: false,
     recordingPath: '', recordingSession: '', modsEnabled: false, vendorRefreshOnEntry: false,
-    allArtifactsStorage: false,
+    allArtifactsStorage: false, chestReroll: false,
     portraits: [false, false, false, false], portraitMoods: [{}, {}, {}, {}],
     armor: {saved: false}, ...overrides,
   };
@@ -98,5 +98,14 @@ assert.strictEqual(document.getElementById('all-artifacts-storage-toggle').textC
 assert.match(document.getElementById('all-artifacts-storage-status').textContent, /normal artifact cap/);
 document.getElementById('all-artifacts-storage-toggle').click();
 assert.strictEqual(sent.at(-1), 'all-artifacts-storage-on');
+
+window.Atlas.receive(state({modsEnabled: false, chestReroll: true}));
+assert.strictEqual(document.getElementById('chest-reroll-toggle').textContent, 'Turn off');
+assert.match(document.getElementById('chest-reroll-status').textContent, /enable Private mods/);
+document.getElementById('chest-reroll-toggle').click();
+assert.strictEqual(sent.at(-1), 'chest-reroll-off');
+window.Atlas.receive(state({modsEnabled: true, chestReroll: false}));
+document.getElementById('chest-reroll-toggle').click();
+assert.strictEqual(sent.at(-1), 'chest-reroll-on');
 
 console.log('Atlas page checks passed');

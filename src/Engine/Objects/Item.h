@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <optional>
 
@@ -150,6 +151,10 @@ struct Item {
     Time enchantmentExpirationTime; // Enchantment expiration time, if this item is temporarily enchanted. Note that
                                     // both special and attribute enchantments can be temporary, but in MM7 we only have
                                     // special temporary enchantments.
+
+    // MM7 private chest reroll: 0 is ordinary, 1..140 names the retained marker
+    // slot, and 255 marks a hidden source marker. Serialized in Item_MM7::_pad.
+    uint8_t chestRerollSource = 0;
 
     // MM6 source bytes follow this value through shared inventory/cursor copy paths.
     // Physical slot/index tables remain owned by their title-specific container.

@@ -1,7 +1,8 @@
 # MM7 private mods: troubleshooting and next design
 
-Status: **Design A implemented in source, 2026-11-07; staged graphical and
-installed Atlas checks remain open**. The equipment design remains planned.
+Status: **Design A and the separate MM7 chest reroll are implemented in source;
+staged graphical and installed Atlas checks remain open**. The equipment
+design remains planned.
 The earlier small fixes are implemented in source but need an installed Atlas check.
 Findings came from a source review of the installed Atlas and integration tree.
 
@@ -63,12 +64,12 @@ textures per character. Conditions pick a portrait through
 
 ## Design B: single-item equipment override
 
-- Identity: `Item_MM7` has an unused byte at offset 0x1B, previously used as
-  `placedInChest`. Store a private mod tag there. Every item conversion goes
-  through the same snapshot code, so the tag follows the item between
-  characters, chests, maps and shops. Before relying on it, scan the shipped
-  chests and map items for nonzero values in that byte. Each override row also
-  stores the item ID and must match it.
+- Identity: the `Item_MM7` byte at offset 0x1B now carries MM7 chest-reroll
+  provenance for unclaimed random loot. This proposed single-item mod needs a
+  different durable identity design before implementation. The original
+  byte-tag proposal below is superseded; any replacement must survive item
+  conversion between characters, chests, maps and shops without colliding
+  with chest-reroll provenance. Each override row must still match an item ID.
 - Persistence: `Mods/MM7/items.tsv` with tag, item ID, party slot, equipment
   slot, base AC, bonus AC and state (pending or bound). Atlas allocates tags
   1 to 255 and never reuses one.
@@ -97,4 +98,4 @@ Recommended defaults first.
 
 ## Future trilogy mod request
 
-- Instant reroll of artifact-eligible high-level chest and monster loot in MM6, MM7 and MM8. Planning entry only. Design and implementation are deferred; see [the cross-game roadmap](ROADMAP.md#optional-mod-backlog).
+- MM7 chest-only reroll is implemented in source; see [the chest reroll contract](MM7_CHEST_REROLL_MOD.md). Monster loot and the MM6/MM8 versions remain future work in [the cross-game roadmap](ROADMAP.md#optional-mod-backlog).

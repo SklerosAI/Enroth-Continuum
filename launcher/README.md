@@ -102,7 +102,7 @@ Use actual tab characters in the file. The Atelier writes a one-row file for you
 hand-edited files may contain up to 32 valid armor rows. Invalid values are rejected
 and the original game values remain in use. The
 app keeps the active game data paths and mod switch in local macOS preferences.
-The vendor and All Artifacts + Storage options are also stored in preferences
+The vendor, All Artifacts + Storage, and MM7 chest reroll options are stored in preferences
 and do not edit game archives, the MM7 configuration file or existing saves.
 When MM7 Private mods is active, Atlas passes
 `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY=1` to its bundled engine. The corresponding
@@ -110,6 +110,10 @@ MM6 engine setting is `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY=1` once MM6 launches.
 Atlas also passes `ENROTH_MM7_ALL_ARTIFACTS_STORAGE=1` only when its MM7 toggle
 and Private mods are both on; vanilla MM7, MM6 and upstream OpenEnroth receive
 no active MM7 artifact/storage flag.
+The chest reroll toggle similarly passes `ENROTH_MM7_CHEST_REROLL=1` only to a
+Private mods MM7 launch. Its Reroll button appears on unclaimed chests whose
+random loot was generated while the toggle was active; see
+[the chest reroll contract](../project/MM7_CHEST_REROLL_MOD.md).
 
 The source defaults for a future MM7 Atlas build are
 `~/Library/Application Support/Enroth Continuum/Game Data/MM7` and the fresh

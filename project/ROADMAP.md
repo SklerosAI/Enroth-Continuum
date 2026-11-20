@@ -56,4 +56,4 @@ have passed play, export, import, and save/load checks.
 
 ## Optional mod backlog
 
-- **Instant loot reroll (MM6, MM7, MM8):** Allow the player to reroll artifact-eligible high-level chest and monster loot instantly. This is a requested future mod for all three games. Its behavior and interface are not designed yet.
+- **Instant loot reroll (MM6, MM7, MM8):** The MM7 chest-only, unclaimed-loot slice is implemented in source; see [MM7 chest reroll](MM7_CHEST_REROLL_MOD.md). Monster loot and the MM6/MM8 versions remain future work.

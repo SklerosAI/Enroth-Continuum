@@ -102,7 +102,7 @@ The MM6 item table holds ids 1 to 580 (`items.txt`, loaded by `ItemTable` with `
 | 197 to 199 | Gold piles |
 | 200 to 298 | Spell scrolls, one per spell in spell order (`MM6SpellItems.h`) |
 | 300 to 398 | Spellbooks, one per spell in spell order |
-| 400 to 429 | Artifacts the generator can roll, tracked by 30 generated flags |
+| 400 to 429 | Artifacts and relics the generator can roll, tracked by 30 generated flags, see below |
 
 These ranges overlap MM7's reagent and potion ids. Code that tests raw ids with MM7 predicates must check the title
 first, see `MM6ConsumableRules.h`.
@@ -147,6 +147,54 @@ Special bonuses are one-based ids into `spcitems.txt`. Only id 58, Antique, is m
 item's value by 10 and does nothing else. The other specials appear on generated items and save with them
 (`MM6SpecialItemProjection.h`), but their effects are open, except where a lane traced one (special 17, Recovery,
 above).
+
+### Artifacts and relics
+
+Items 400 to 414 are MM6's 15 artifacts and 415 to 429 its 15 relics. Their bonuses aren't in the item records,
+MM6.exe hardcodes them. Its item bonus routine (0x482E80) skips the standard and special bonus for any item above 399
+and switches on items 401 to 429 instead. Other effects sit in the routines that need them. The port's table is
+`mm6::kArtifactAttributeBonuses` (`MM6ArtifactBonus.h`), which `Character::GetItemsBonus` reads for MM6 in place of
+MM7's artifact map, so the stats tab, hit points, spell points, armor class and resistances all see it. "Resistances"
+are the four that items raise, Fire, Electricity, Cold and Poison, not Magic. A broken item gives nothing.
+
+| Id | Name | Attribute bonuses (0x482E80) | Other effects in MM6.exe | Port |
+|---|---|---|---|---|
+| 400 | Mordred | none | Melee hit heals the wielder by a fifth of the damage (0x430FEB) | Bonuses n/a, heal missing |
+| 401 | Thor | Might +20 | none, its "Force" isn't in the executable | Done |
+| 402 | Conan | Might +20 | Double melee damage against monster types 25 to 42 (0x47E4B0, 0x47E5CE) | Might done, slaying missing |
+| 403 | Excalibur | Might +30 | none | Done |
+| 404 | Merlin | Spell points +40 | Swift, recovery -20 (0x481E61) | Done |
+| 405 | Percival | none | Swift (0x481E69), carnage arrows (0x45CD5D) | Done |
+| 406 | Galahad | Hit points +25, resistances +10 | none | Done |
+| 407 | Pellinore | Endurance +30 | Hit point regeneration (0x487BB5) | Endurance done, regeneration missing |
+| 408 | Valeria | Accuracy +30 | Halves missile damage to the wielder (0x431F7E) | Accuracy done, shielding missing |
+| 409 | Arthur | Seven stats +10, spell points +25 | none | Done |
+| 410 | Pendragon | Luck +30 | Poison immunity (0x481250, 0x481318, 0x4813C3), double disarm skill (0x485409) | Luck and disarm done, immunity missing |
+| 411 | Lucius | Speed +30 | none | Done |
+| 412 | Guinevere | Spell points +30 | Light and Dark spell skill x1.5 (0x422A9A, 0x422B12) | Spell points done, skill missing |
+| 413 | Igraine | Spell points +25 | Spirit, Mind and Body spell skill x1.5 (0x422932, 0x4229AA, 0x422A22) | Spell points done, skill missing |
+| 414 | Morgan | Spell points +20 | Fire, Air, Water and Earth spell skill x1.5 (0x422829) | Spell points done, skill missing |
+| 415 | Hades | Luck +20 | Melee hit takes 20 more hit points (0x430FDA), disarm bonus (0x48543A), drains a hit point per regeneration step (0x487BC4) | Luck and disarm done, damage and drain missing |
+| 416 | Ares | Fire resistance +25 | Melee hit takes 30 more hit points (0x430FC9) | Resistance done, damage missing |
+| 417 | Poseidon | Might, Endurance, Accuracy +20, Speed -10, armor class -10 | none | Done |
+| 418 | Cronos | Hit points +100, Luck -50 | none | Done |
+| 419 | Hercules | Might +50, Endurance +20, Intellect -30 | none | Done |
+| 420 | Artemis | Resistances -10 | Arrow hit takes 20 more hit points (0x431615) | Resistances done, damage missing |
+| 421 | Apollo | Resistances +20, Luck +20, Endurance -30 | none | Done |
+| 422 | Zeus | Hit points, spell points, Luck +50, Intellect -50 | none | Done |
+| 423 | Aegis | Luck +20, Speed -20 | Stone immunity in either hand (0x481632), halves missile damage (0x431FAA) | Stats done, immunity and shielding missing |
+| 424 | Odin | Resistances +50, Speed -40 | none | Done |
+| 425 | Atlas | Might +100, Speed -40 | none | Done |
+| 426 | Hermes | Speed +100, Accuracy -40 | none | Done |
+| 427 | Aphrodite | Personality +100, Luck -40 | none | Done |
+| 428 | Athena | Intellect +100, Might -40 | none | Done |
+| 429 | Hera | Hit points, spell points, Luck +50, Personality -50 | none | Done |
+
+The item texts mostly agree. Thor and Conan carry a Might bonus their texts don't mention, Thor's "Force" and
+Pellinore's "Hit Recovery" have no code behind them, MM6.exe compares against neither item number outside the
+bonus routine. Galahad's "Protection" is the resistance bonus. Swift
+artifacts shorten recovery through `mm6::isSwiftArtifact`, next to the Swift enchantment in
+`Character::GetAttackRecoveryTime`. The missing effects are listed in [Open questions](open-questions.md).
 
 ### Shops and value
 
@@ -250,7 +298,8 @@ terms and arena wins) are not shown, their MM6 counters aren't mapped. Guild mem
 - [MM6ActualStatCondition.h](../src/Engine/MM6/MM6ActualStatCondition.h), [MM6NewDay.h](../src/Engine/MM6/MM6NewDay.h)
 - [MM6ItemGenerator.h](../src/Engine/MM6/MM6ItemGenerator.h), [MM6ChestBaseItemPicker.h](../src/Engine/MM6/MM6ChestBaseItemPicker.h),
   [MM6ItemRecord28.h](../src/Engine/MM6/MM6ItemRecord28.h), [MM6StandardBonusMap.h](../src/Engine/MM6/MM6StandardBonusMap.h),
-  [MM6AntiqueItemProjection.h](../src/Engine/MM6/MM6AntiqueItemProjection.h), [MM6BoundedItemProjection.h](../src/Engine/MM6/MM6BoundedItemProjection.h)
+  [MM6AntiqueItemProjection.h](../src/Engine/MM6/MM6AntiqueItemProjection.h), [MM6BoundedItemProjection.h](../src/Engine/MM6/MM6BoundedItemProjection.h),
+  [MM6ArtifactBonus.h](../src/Engine/MM6/MM6ArtifactBonus.h)
 - [MM6Potion.h](../src/Engine/MM6/MM6Potion.h), [MM6ConsumableRules.h](../src/Engine/MM6/MM6ConsumableRules.h),
   [MM6PotionCombinations.h](../src/Engine/Tables/MM6PotionCombinations.h)
 - [MM6PlayerSpell.h](../src/Engine/MM6/MM6PlayerSpell.h), [MM6SpellEffectGuard.h](../src/Engine/MM6/MM6SpellEffectGuard.h),
@@ -261,7 +310,7 @@ terms and arena wins) are not shown, their MM6 counters aren't mapped. Guild mem
 - [AwardTable.cpp](../src/Engine/Tables/AwardTable.cpp)
 - [GameConfig.h](../src/Application/GameConfig.h) for the `gameplay.fix_*` flags
 - Unit tests in [src/Engine/MM6/Tests](../src/Engine/MM6/Tests) and [src/Engine/Spells/Tests](../src/Engine/Spells/Tests).
-  Game tests `MM6PlayerSpells.*`, `MM6Potion.*` and the other `GameTests_MM6*.cpp` files in
+  Game tests `MM6PlayerSpells.*`, `MM6Potion.*`, `MM6ArtifactBonus.*` and the other `GameTests_MM6*.cpp` files in
   [test/Bin/GameTest](../test/Bin/GameTest)
 
 See also: [Rules from MM6.exe](mm6-executable-rules.md), [MM6 save format](mm6-save-format.md),

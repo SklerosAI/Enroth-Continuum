@@ -48,6 +48,12 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   message scrolls in MM6: 20,000 level-6 rolls in an MM6 run gave 13 different scrolls, such as Letter from Zenofex,
   and no artifact. The Great Wyrm, the Red, Blue and Gold Dragons, the Efreet and the Supreme Titan roll level-6
   loot of any kind. The All Artifacts mod reaches neither path until they move to `mm6::generateItem`.
+- **Artifact effects beyond attributes.** MM6.exe's artifacts and relics have effects outside its item bonus routine
+  that the port doesn't have yet: Mordred's healing hit, Conan's slaying, Pellinore's regeneration and Hades's drain,
+  the shielding of Valeria and Aegis, the immunities of Pendragon and Aegis, the spell skill boost of Guinevere,
+  Igraine and Morgan, and the extra hit point damage of Hades, Ares and Artemis. Addresses are in the artifact table on
+  [Characters, items and spells](mm6-characters-items-spells.md#artifacts-and-relics). Poseidon's armor class -10 has
+  no game test, a new party has no armor class for it to lower.
 - **Any-item roll.** Chests and `GiveItem` kind 0 keep MM6.exe's off-by-one, which favours item 1, because the GrayFace
   patch leaves that roll alone. Fixing it changes chest contents on every map. Owner's call. `mm6::generateAnyItem`.
 - **Retracting lava bridges.** The Supreme Temple of Baa's four lava bridges are doors 12 to 15. A monster on one when

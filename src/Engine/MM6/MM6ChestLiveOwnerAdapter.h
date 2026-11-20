@@ -31,6 +31,7 @@ struct ChestLiveBinding {
     std::vector<std::uint8_t> *deltaBytes = nullptr;
     ChestTitleState *titleState = nullptr;
     const MM6IndoorSnapshot *indoorBase = nullptr;  // Required only indoors.
+    ChestOverflow overflow = ChestOverflow::Hidden;
 };
 
 struct ChestLiveCandidate {

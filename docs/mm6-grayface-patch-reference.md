@@ -296,9 +296,23 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   `MM6ChestArtifact.RefundCommandReturnsAnUnopenedChestArtifact`.
 - **W13**. Items that didn't fit a chest reappear when space is freed (`FixChests=0`, off), most valuable items placed
   first (`FixChestsByReorder=1`), compact stacking (`FixChestsByCompacting=1`), vertical stacking
-  (`PlaceChestItemsVertically=1`). State: **vanilla, put-in absent**.
-  `MM6ChestPlacement.h` places once in random order, items that don't fit keep a slot with no cell and are never shown,
-  no retry, reorder or compaction. Putting an item into an MM6 chest throws. Unit test
+  (`PlaceChestItemsVertically=1`). State: **fixed, `fix_chest_overflow`**.
+  GrayFace (`MMHooks.pas:1561-1683`, `1987-2036`): `FixChestSmartProc` sorts a chest's item slots before generation,
+  fixed items first, then markers by level, artifacts and 6 down to 1. `FixChestsCompactProc` runs after MM6.exe's
+  shuffled pass (0x41e3b0), places every slot again into the first free cells in row order, and keeps that layout when
+  the earliest slot where the two differ is placed only by it. `FixChest` runs on every later opening and puts each
+  slot without a cell into the first free cells in row order. `PlaceChestItemsVertically` only changes the free-cell
+  scan of the put-in helper at 0x41dfd0. MM6.exe's pass visits slots below the grid area only, and a wand drawn its
+  charges only once placed.
+  Ours, in `MM6ChestPlacement.h`: MM6.exe's pass runs unchanged. When it leaves an item without a cell, the chest is laid
+  out again with items 400 and up (artifacts and quest items) first, then by MM6 item value, gold by amount, both
+  shuffled and packed into rows, GrayFace's rule picking between them. Reopening places the items without a cell, most
+  valuable first, in row order. The order comes after generation, so the generator's draws are vanilla's, and a chest
+  whose items all fit looks and draws exactly as in MM6.exe. Only a wand placed that vanilla left out draws its
+  charges. Vertical placement has nothing to change, putting an item into an MM6 chest isn't implemented. Real data,
+  1,000 rolls of every chest of all 67 maps: 322 chests on 56 maps hide items in some rolls, Abandoned Temple chest 1
+  in 356 of them. Tests `MM6Chest.OverflowShowsMostValuableItems`, `MM6Chest.OverflowItemAppearsWhenThereIsRoom`,
+  unit tests `MM6ChestGenerationGuard.Overflow*` and `LeftoverPlacement*`. Vanilla stays pinned by
   `PlacementKeepsNoFitItemWithoutExtraWandDraw`.
 - **W14**. Event commands couldn't operate on some skills, Thievery included (four range bytes in `Hooks.pas`). State:
   **fixed range**.
@@ -433,7 +447,9 @@ Rules for every fix in this backlog:
 - **W13**. Chest overflow items hidden forever. At generation, place items most valuable first and compact them, then
   place leftovers when the chest is reopened with space.
   GrayFace ships reorder and compacting on and leftover placement off. We turn all three on, because a hidden item is
-  lost loot for the player.
+  lost loot for the player. Done 2026-11-20 behind `fix_chest_overflow`, one flag for all three. The order is by value
+  at first opening instead of by marker level at generation, so the generator's random draws stay vanilla's, and only a
+  chest that overflows is laid out differently.
 - **W15**. Door action 3 ignored. Accept action 3 as "switch even while moving".
   Same as GrayFace. Done 2026-11-20 behind `fix_door_state_switch`. No shipped script, patched or not, uses it, so only
   modded scripts see a difference and there is no game test.

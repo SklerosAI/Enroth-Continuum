@@ -580,7 +580,7 @@ GAME_TEST(MM6Dungeons, GharikForgeFloorAndChests) {
     EXPECT_CONTAINS(statusTape, "Found something!");
     EXPECT_EQ(letterTape, tape(false, true));
     EXPECT_EQ(journalTape, tape(false, true));
-    EXPECT_EQ(itemCountTape.delta(), 5); // The bookcase's item, the letter, the journal scrap and two more chest items.
+    EXPECT_EQ(itemCountTape.delta(), 6); // The bookcase's item, the letter, the journal scrap and three more chest items.
     // Every character takes the timer's 25 fire damage at least once while the party stands on the hot floor.
     for (int i = 0; i < 4; i++)
         EXPECT_LT(std::ranges::min(hpTape, {}, [i](const auto &hps) { return hps[i]; })[i], 2000) << i;

@@ -59,7 +59,7 @@ inline bool chestMatchesOpenRecord(const Chest &chest, const ChestRecord &record
  * is gone and the chest opens. A trap that goes off is gone too, but the chest stays shut. When the chest wasn't
  * clicked through a decoration or a face, a trap that would go off stays armed and the chest opens.
  *
- * @param binding                       Live chests, sidecar and chest title state.
+ * @param binding                       Live chests, sidecar, chest title state and overflow policy.
  * @param chestIndex                    Chest to open.
  * @param dchest                        Contents of `dchest.bin`.
  * @param iconLookup                    Item icon sizes, for the first placement.
@@ -109,6 +109,7 @@ inline std::optional<ChestOpenOwnerCandidate> stageChestOpenOwner(
         input.lcgState = binding.titleState->lcgState;
         input.iconLookup = iconLookup;
         input.action = action;
+        input.overflow = binding.overflow;
         input.gridPoint = gridPoint;
         const auto opened = stageChestFirstOpenInteraction(input);
         if (!opened || opened->itemTaken != (action == ChestInteractionAction::TakeGridItem))

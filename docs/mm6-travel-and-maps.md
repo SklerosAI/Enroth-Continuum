@@ -210,8 +210,9 @@ the target of a map change. Any other load keeps the blocking guard, and the MM7
 
 The chest grid is 9 x 9 with fixed pixel offsets, as MM6's chest UI hard-codes. `dchest.bin` carries unused 14 x 10
 metadata. Items are placed once in shuffled order, with a footprint of `(pixels - 14) / 32 + 1` cells per axis from the
-icon size. An item that doesn't fit keeps its slot with no cell and is never shown. GrayFace's reorder, compaction and
-later placement are not done.
+icon size. In MM6.exe an item that doesn't fit keeps its slot with no cell and is never shown. With
+`gameplay.fix_chest_overflow` (W13) such a chest is laid out again, artifacts and quest items first, then the most
+valuable, packed into rows when that shows more of them, and reopening it places what had no room.
 
 ### Traps
 
@@ -232,7 +233,7 @@ A chest is trapped when flag bits 0 and 1 are both set (`MM6ChestTrapDecision.h`
 An artifact a chest's generation puts on the found list carries condition bit `0x400` in its item record until the
 chest's first opening places it in the grid. With `gameplay.fix_unopened_chest_artifacts` (W12, default on), a timed
 respawn takes the marked artifacts of the map's old chests off the found list before the chests generate again, so
-they can be rolled again. Event opcode 69 does the same for one chest. The W13 overflow fix is not done.
+they can be rolled again. Event opcode 69 does the same for one chest.
 
 ## GrayFace travel and map fixes
 
@@ -245,11 +246,11 @@ they can be rolled again. Event opcode 69 does the same for one chest. The W13 o
 | No border offer while flying (W9) | `gameplay.fix_flying_border_offer` |
 | Ground items don't leak between maps (W11) | By design, each map rebuilds from its own data |
 | Artifacts in unopened chests can be found again after a respawn (W12) | `gameplay.fix_unopened_chest_artifacts` |
+| Chest items that had no room show later (W13) | `gameplay.fix_chest_overflow` |
 | Sprite and texture animation frame timing (W24) | Shared code |
 
-Open: W13 chest overflow, W15 door action 3, and GrayFace's map data fixes (W29, the
-Free Haven Smuggler's Guild door, is in GrayFace's patched `Outc2.odm`). The full list is on the
-[GrayFace patch reference](mm6-grayface-patch-reference.md).
+Open: GrayFace's map data fixes (W29, the Free Haven Smuggler's Guild door, is in GrayFace's patched `Outc2.odm`).
+The full list is on the [GrayFace patch reference](mm6-grayface-patch-reference.md).
 
 ## Source
 

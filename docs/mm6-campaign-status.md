@@ -167,13 +167,13 @@ Landed:
 | C25 | `fix_item_generation`. Shop stock and `GiveItem` kinds only, the any-item roll stays vanilla as in the patch. |
 | W28 | No flag. MM6.exe already refused paid shop services. The skill half waits for the shop item info box. |
 | W12 | `fix_unopened_chest_artifacts` for the respawn refund. Event opcode 69 `RefundChestArtifacts` runs without a flag, no shipped script uses it. |
+| W13 | `fix_chest_overflow`. Reorder by value, compaction and leftovers on reopening, only for a chest that overflows. |
 
 Open:
 
 | Items | What is left |
 | --- | --- |
 | C24 | Doesn't reproduce. MM6.exe's own walking edge check, which we port, keeps chasing monsters on their ledges. Needs a vanilla case that falls. |
-| W13 | Chest overflow items stay hidden forever |
 | W19 | The stats screen shows the display condition, not the one that sets the stats |
 | C2, C4, C9, C11, C19, W10, W20, W21 | Fixed when the spell or feature is admitted, not before |
 | Data fixes | Script fixes as an engine-side patch table keyed by file hash. Map fixes through `*.games.lod` override archives. |

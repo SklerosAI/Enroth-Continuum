@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstring>
 #include <optional>
+#include <set>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -27,6 +28,7 @@
 #include "Engine/Resources/LOD.h"
 #include "Engine/SaveLoad.h"
 #include "Engine/Snapshots/CompositeSnapshots.h"
+#include "Engine/Tables/ChestTable.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Timer.h"
 
@@ -34,6 +36,8 @@
 #include "GUI/UI/UIRest.h"
 
 #include "Utility/Memory/Blob.h"
+
+#include "MM6CampaignChain.h"
 
 static void startNewGameThroughInput(EngineController &game) {
     // Each character takes its first three optional skills and up to three points in every attribute, then the party
@@ -93,6 +97,38 @@ static std::vector<int> chestContents(int chestId) {
     for (InventoryEntry entry : vChests[chestId].inventory.entries())
         result.insert(result.end(), {std::to_underlying(entry->itemId), entry.geometry().x, entry.geometry().y});
     return result;
+}
+
+static void enterAbandonedTempleWithChestRoll(EngineController &game, std::uint32_t chestRoll) {
+    // A new party walks into the Abandoned Temple, whose chests roll their items as it loads, from the given chest
+    // random state. Chest 1 is trapped, the active character disarms it.
+    startNewGameThroughInput(game);
+    pParty->activeCharacter().setSkillValue(SKILL_TRAP_DISARM, CombinedSkillValue(10, MASTERY_MASTER));
+    game.teleportTo(pMapTable->GetMapInfo("oute3.odm"), Vec3f(-21456, -286, 193), 90); // In front of the temple door, facing it.
+    mm6::chestTitleState().lcgState = chestRoll;
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    game.pressGuiButton("Transition_Yes");
+    game.tick();
+    game.skipLoadingScreen();
+    game.tick();
+}
+
+static std::vector<int> hiddenChestItems(int chestId) {
+    // Items the chest holds without a cell in its grid.
+    std::vector<int> result;
+    for (InventoryEntry entry : vChests[chestId].inventory.entries())
+        if (entry.zone() == INVENTORY_ZONE_STASH)
+            result.push_back(std::to_underlying(entry->itemId));
+    return result;
+}
+
+static int drawnChestItems(const AccessibleVector<DrawnQuad> &quads, int chestId) {
+    // Icons of the chest's items on the chest screen.
+    std::set<std::string> icons;
+    for (InventoryEntry entry : vChests[chestId].inventory.entries())
+        icons.insert(entry->GetIconName());
+    return quads.count([&](const DrawnQuad &quad) { return icons.contains(quad.texture); });
 }
 
 static int trapSprites() {
@@ -432,3 +468,65 @@ GAME_TEST(MM6ChestScreen, ExitButton) {
     EXPECT_EQ(frameArt, tape(DrawnQuad{"chest01", {8, 8}}, DrawnQuad{"border5", {7, 8}}, DrawnQuad{"border6", {461, 8}}, DrawnQuad{"buttesc1", {392, 318}}));
 }
 
+GAME_TEST(MM6Chest, OverflowShowsMostValuableItems) {
+    // Chest items that didn't fit the grid on first opening were never shown. This roll puts twelve items into chest 1
+    // of the Abandoned Temple. MM6 showed eight, four gold piles among them, and hid four weapons. Placed most valuable
+    // first and packed into rows, only the Emerald Staff, nine cells tall, has no room.
+    constexpr int ornateTrident = 40, longbow = 42, crossbow = 47, emeraldStaff = 62;
+    for (bool fix : {false, true}) {
+        SCOPED_TRACE(fmt::format("fix={}", fix));
+        test.prepareForNextTest();
+        engine->config->gameplay.FixChestOverflow.setValue(fix);
+        enterAbandonedTempleWithChestRoll(game, 3041712726u);
+        auto hiddenTape = tapes.custom([] { return hiddenChestItems(1); });
+        auto quadsTape = tapes.hudQuads();
+        auto screenTape = tapes.screen();
+        test.startTaping();
+
+        useMM6CampaignChainIndoorEventFace(game, 12); // Opens chest 1.
+
+        EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHEST));
+        if (fix) {
+            EXPECT_EQ(hiddenTape.back(), std::vector<int>{emeraldStaff});
+            EXPECT_EQ(drawnChestItems(quadsTape.back(), 1), 11);
+        } else {
+            EXPECT_EQ(hiddenTape.back(), (std::vector<int>{ornateTrident, crossbow, emeraldStaff, longbow}));
+            EXPECT_EQ(drawnChestItems(quadsTape.back(), 1), 8);
+        }
+        EXPECT_EQ(hiddenTape.front().size(), 12); // Nothing has a cell before the first opening.
+    }
+}
+
+GAME_TEST(MM6Chest, OverflowItemAppearsWhenThereIsRoom) {
+    // A chest item that had no room on first opening stayed hidden after the party made room. Taking the Longbow out of
+    // chest 1 of the Abandoned Temple frees a whole column, and the Emerald Staff shows there when the chest is opened
+    // again.
+    constexpr ItemId longbow = static_cast<ItemId>(42), emeraldStaff = static_cast<ItemId>(62);
+    enterAbandonedTempleWithChestRoll(game, 3041712726u);
+    auto hiddenTape = tapes.custom([] { return hiddenChestItems(1); });
+    auto staffTape = tapes.custom([=] {
+        const InventoryEntry staff = vChests[1].inventory.find(emeraldStaff);
+        return staff && staff.zone() == INVENTORY_ZONE_GRID ? std::optional(staff.geometry().topLeft()) : std::nullopt;
+    });
+    auto longbowTape = tapes.custom([=] { return std::ranges::distance(pParty->pCharacters[0].inventory.entries(longbow)); });
+    auto quadsTape = tapes.hudQuads();
+    auto screenTape = tapes.screen();
+    test.startTaping();
+
+    useMM6CampaignChainIndoorEventFace(game, 12); // Opens chest 1.
+    const InventoryEntry bow = vChests[1].inventory.find(longbow);
+    ASSERT_TRUE(bow);
+    game.pressAndReleaseButton(BUTTON_LEFT, chestTable[vChests[1].chestTypeId].inventoryOffset + bow.geometry().topLeft() * 32 + Pointi(16, 16));
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    game.pressGuiButton("Game_Character1"); // Into the first backpack.
+    game.tick();
+    useMM6CampaignChainIndoorEventFace(game, 12);
+
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHEST, SCREEN_GAME, SCREEN_CHEST));
+    EXPECT_EQ(longbowTape, tape(0, 1));
+    EXPECT_EQ(hiddenTape.back(), std::vector<int>{});
+    EXPECT_EQ(staffTape.back(), Pointi(6, 0)); // The Longbow's column.
+    EXPECT_EQ(drawnChestItems(quadsTape.back(), 1), 11);
+}

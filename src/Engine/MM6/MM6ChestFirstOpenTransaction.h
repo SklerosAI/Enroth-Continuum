@@ -24,6 +24,7 @@ struct ChestFirstOpenInput {
     std::uint32_t lcgState = 0;
     ChestIconLookup iconLookup;
     ChestInteractionAction action = ChestInteractionAction::OpenOnly;
+    ChestOverflow overflow = ChestOverflow::Hidden;
     Pointi gridPoint;
     Item heldItem;
     int partyGold = 0;
@@ -46,7 +47,8 @@ struct ChestFirstOpenResult {
 // updates are staged in a returned value. The caller must atomically publish
 // it with its active-map sidecar and title state; this function does not touch
 // live owners. The trap check follows placement and is the caller's, see
-// `stageChestOpenOwner`. Repeat-placement debug options remain unproved.
+// `stageChestOpenOwner`. With `ChestOverflow::Placed`, opening an opened chest
+// again places the items that had no room before.
 inline std::optional<ChestFirstOpenResult> stageChestFirstOpenInteraction(
     const ChestFirstOpenInput &input) {
     if (input.title != GameTitle::MM6 || input.chestIndex < 0 || input.chestIndex >= 20 ||
@@ -60,13 +62,20 @@ inline std::optional<ChestFirstOpenResult> stageChestFirstOpenInteraction(
     result.partyGold = input.partyGold;
     if (!(readChest16(result.record, 2) & 2u)) {
         const auto placed = stageFirstChestRecordPlacement(input.title, result.record, input.dchest,
-                                                           result.nextLcgState, input.iconLookup);
+                                                           result.nextLcgState, input.iconLookup, input.overflow);
         if (!placed)
             return std::nullopt;
         result.record = placed->record;
         unmarkPlacedChestArtifacts(result.record);
         result.nextLcgState = placed->nextRngState;
         result.placed = true;
+    } else if (input.overflow == ChestOverflow::Placed && input.action == ChestInteractionAction::OpenOnly) {
+        const auto placed = stageFirstChestRecordPlacement(input.title, result.record, input.dchest,
+                                                           result.nextLcgState, input.iconLookup, input.overflow);
+        if (!placed)
+            return std::nullopt;
+        result.record = placed->record;
+        result.nextLcgState = placed->nextRngState;
     }
 
     auto projection = stageChestRuntimeProjection(input.title, result.record, input.chestIndex);

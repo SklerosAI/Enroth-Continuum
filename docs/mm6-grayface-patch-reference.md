@@ -94,9 +94,19 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   `learningPercent` adds 5 for Scholar, used by `Party::GivePartyExp`. MM7 test `Issues.Issue1068`, MM6 test
   `MM6GrayFaceShared.ScholarAddsFivePercentExperience`.
 - **C8**. +2/+3 weapon-skill hirelings (professions 15, 16, 46) didn't reduce weapon delay (`CheckWeaponNPCs`,
-  `Hooks.pas:2602`). State: **mm7, wrong shape**.
-  Arms Master and Weapons Master add +2/+3 to `SKILL_ARMSMASTER`, a skill MM6 doesn't have, and the recovery formula
-  subtracts that level. Net effect is a hidden flat cut, not the MM6 "+N to all weapon skills" rule.
+  `Hooks.pas:2602`, hooked at 0x481E1B). State: **fixed**.
+  `npcprof.txt` gives Arms Master "two point bonus to all weapon skills", Weapons Master three, and Squire "armor and
+  weapon skills are increased by two points". MM6.exe reads the three professions only in its skill bonus routine
+  0x483930 (through the hireling check 0x467F30), which adds the summed weapon points to the weapon skill in the
+  attack (attribute 15, the stats screen Attack row through 0x47E270), melee damage (16 to 18, only where the mastery
+  gives a damage bonus) and shooting (19) bonuses, and the Squire's 2 to every armor class term (9, armor, shield and
+  Expert staff and spear). The skills tab (0x415AEE) shows the bare skill, and the recovery routine 0x481A80 cuts
+  Expert sword, axe and bow recovery by the bare skill (0x481E13), which is what GrayFace adds the points to. The port
+  added Arms Master and Weapons Master to MM7's `SKILL_ARMSMASTER`, a hidden flat cut of every melee recovery, and
+  gave Squire nothing. Fixed 2026-11-19. MM6 no longer counts the masters toward Armsmaster, `Character::GetSkillBonus`
+  adds `mm6::weaponSkillHirelingBonus` and `mm6::armorSkillHirelingBonus` where MM6.exe does, and
+  `gameplay.fix_weapon_skill_hirelings` (default on) adds the weapon points to the Expert recovery cut too. Tests
+  `MM6Hirelings.ArmsMasterAddsToWeaponSkillAttack` and `MM6Hirelings.ArmsMasterShortensOnlyExpertSwordRecovery`.
 - **C9**. Finger of Death gave no experience (`FixFingerDeathBug`, `Hooks.pas:1753`). State: **absent**.
   Spell 95 not verified for players, refused. The shared kill path would award XP.
 - **C10**. Condition cures lasted 3 hours or 3 days per skill point instead of 1, overflowing at high skill
@@ -397,7 +407,9 @@ Rules for every fix in this backlog:
   `fix_recovery_enchant`, see the C6 row above about MM6.exe's code.
 - **C8**. Weapon-skill hirelings add a hidden skill. Apply the +2 and +3 to the weapon skills, as `npcprof.txt`
   describes, for delay and for whatever vanilla already applied it to. Remove the MM7 Armsmaster route for MM6.
-  Better than GrayFace, which only adds the bonus to delay. Trace what vanilla applies the bonus to before writing it.
+  Done 2026-11-19 behind `fix_weapon_skill_hirelings`, see the C8 row above. The trace showed vanilla already applies
+  the points to attack, damage, shooting and the Squire's armor, so the result matches GrayFace's patched game. The
+  Armsmaster route is gone for MM6 without a flag, MM6.exe has no such skill.
 - **C22**. Armor recovery uses the MM7 table. Trace Mok's original change and MM6's skill text, then make Master armor
   eliminate the penalty if both agree.
   Mok's fix isn't in the GrayFace source, so the target needs tracing first.

@@ -322,6 +322,13 @@ GAME_TEST(MM7DarkCampaignChain, DISABLED_Chapter6) {
     ASSERT_TRUE(pParty->_questBits[QBIT_DARK_PATH]);
     ASSERT_TRUE(pParty->_questBits[QBIT_ROBERT_THE_WISE_ASSASSINATED]);
     ASSERT_FALSE(pParty->_questBits[QBIT_XENOFEX_DARK_ACTIVE]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_MALWICK_QUESTS_FINISHED]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_ALLIED_GUARDS_ANGERED]);
+    const Time angerStartedAt = pParty->PartyTimes.CounterEventValues[9];
+    ASSERT_TRUE(angerStartedAt.isValid());
+    // Taking Gloaming's tapestry closes its throne while its guards are angry. The authored map-entry event
+    // clears that state at thirty days, before Kastore's next campaign offer can be taken.
+    pParty->GetPlayingTime() = angerStartedAt + Duration::fromHours(720);
     for (Character &character : pParty->pCharacters)
         character.health = character.GetMaxHealth();
 
@@ -348,6 +355,7 @@ GAME_TEST(MM7DarkCampaignChain, DISABLED_Chapter6) {
     test.startTaping();
 
     openGloamingKastore(game);
+    ASSERT_FALSE(pParty->_questBits[QBIT_ALLIED_GUARDS_ANGERED]);
     ASSERT_TRUE(selectCampaignChainNpcEvent(game, 84, 159));
     ASSERT_TRUE(pParty->_questBits[QBIT_XENOFEX_DARK_ACTIVE]);
     leaveCampaignChainHouse(game);

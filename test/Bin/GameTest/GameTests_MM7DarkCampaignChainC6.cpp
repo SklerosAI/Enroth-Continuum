@@ -323,12 +323,19 @@ GAME_TEST(MM7DarkCampaignChain, DISABLED_Chapter6) {
     ASSERT_TRUE(pParty->_questBits[QBIT_ROBERT_THE_WISE_ASSASSINATED]);
     ASSERT_FALSE(pParty->_questBits[QBIT_XENOFEX_DARK_ACTIVE]);
     ASSERT_TRUE(pParty->_questBits[QBIT_MALWICK_QUESTS_FINISHED]);
-    ASSERT_TRUE(pParty->_questBits[QBIT_ALLIED_GUARDS_ANGERED]);
-    const Time angerStartedAt = pParty->PartyTimes.CounterEventValues[9];
-    ASSERT_TRUE(angerStartedAt.isValid());
-    // Taking Gloaming's tapestry closes its throne while its guards are angry. The authored map-entry event
-    // clears that state at thirty days, before Kastore's next campaign offer can be taken.
-    pParty->GetPlayingTime() = angerStartedAt + Duration::fromHours(720);
+    ASSERT_FALSE(pParty->_questBits[QBIT_ALLIED_GUARDS_ANGERED]);
+    // The six-week Malwick trigger changes the inherited clock. Gloaming's throne opens at dawn,
+    // so reach its hours through the real rest UI before taking Kastore's next offer.
+    engine->config->debug.NoActors.setValue(true);
+    game.pressAndReleaseKey(PlatformKey::KEY_R);
+    game.tick();
+    game.pressGuiButton("Rest_WaitTillDawn");
+    game.tick();
+    while (currentRestType == REST_WAIT)
+        game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    engine->config->debug.NoActors.setValue(false);
     for (Character &character : pParty->pCharacters)
         character.health = character.GetMaxHealth();
 
@@ -355,7 +362,6 @@ GAME_TEST(MM7DarkCampaignChain, DISABLED_Chapter6) {
     test.startTaping();
 
     openGloamingKastore(game);
-    ASSERT_FALSE(pParty->_questBits[QBIT_ALLIED_GUARDS_ANGERED]);
     ASSERT_TRUE(selectCampaignChainNpcEvent(game, 84, 159));
     ASSERT_TRUE(pParty->_questBits[QBIT_XENOFEX_DARK_ACTIVE]);
     leaveCampaignChainHouse(game);

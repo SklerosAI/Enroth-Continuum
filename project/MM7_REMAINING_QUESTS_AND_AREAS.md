@@ -1,4 +1,4 @@
-# MM7 remaining quests and areas — 2026-11-15
+# MM7 remaining quests and areas — 2026-11-20
 
 This is the concise selection board for Codex's MM7 lane. Current source and
 tests remain authoritative; the detailed contract is the
@@ -75,6 +75,8 @@ progress-capture folder has a hard rolling limit of 100 images.
   right-click, the interior event-454 purchase yields the empty potion bottle,
   and event 501 exits to Harmondale. The shipped exit coordinates are outside
   the destination bounds, so OpenEnroth logs and skips the explicit placement.
+  Headless tests now pin both the out-of-bounds source coordinate and the
+  in-bounds Harmondale landing.
   Static native evidence shows the original copies the signed 32-bit coordinate
   and defers overflow handling to its first outdoor update; GrayFace 2.5.7 has
   no override. Trace the native settled position/dialog state before choosing
@@ -85,15 +87,18 @@ progress-capture folder has a hard rolling limit of 100 images.
 - **Representative regions generally:** the full audit still needs graphical
   play through outdoor and indoor regions, combat, travel, branch choices and
   an ending, plus representative UI, movie, music and sound checks on the Mac.
+  The Light C6 chain now measures keyboard movement in Colony Zod after the
+  live Xenofex fight and before the authored exit; its fresh C0-C7 chain passed.
+  Ordinary movement before the Colony entrance still needs a stable test route.
 
 All 76 shipped MM7 maps now have runtime GameTest coverage; there are no
-inventory-only map rows left. The highest-value open work is representative
-ordinary movement/combat strengthening, selective promotion/regional
-durability, the Strange Temple exit-placement parity check, and graphical play.
+inventory-only map rows left. The remaining work includes broader ordinary
+movement/combat, promotion and regional durability, the original MM7 Strange
+Temple exit-placement parity check, and graphical play.
 
 ## Already durable; do not reopen without new evidence
 
-These eighteen independent routes have exact production-Save and
+These twenty independent routes have exact production-Save and
 fresh-process normal-Load pairs with unchanged slot bytes:
 
 - Season's Stole
@@ -114,6 +119,8 @@ fresh-process normal-Load pairs with unchanged slot bytes:
 - Lantern of Light acquired from the persistent Barrow II source chest
 - Davrik's Signet Ring acquired from Bandit Caves chest 0
 - Griffin hunt at the both-regions-clear, pre-report boundary
+- Evenmorn map physically acquired in Tidewater Caverns before Falk's first Priest promotion
+- Grand Temple of the Moon altar used before Rebecca's Light second Priest promotion
 
 They are independent route boundaries, not a continuous regional campaign.
 The current regional side/promotion selection is 14/14; there are eighteen
@@ -126,10 +133,12 @@ across thirteen routes. Darron's White Cliff acquisition adds one more pair,
 bringing the total to twenty-eight exact checkpoint tests across fourteen
 routes. Malwick's accepted pre-trigger state adds another pair, bringing the
 total to thirty exact checkpoint tests across fifteen routes. Lantern, Davrik
-and Griffin add six more exact tests, bringing the quest total to thirty-six
-tests across eighteen durable routes. Including the five older technical
-save/campaign seams, the final full checkpoint sweep passed all 23 writer/reader
-pairs, 46 separate processes, on the consolidated branch.
+and Griffin add six more exact tests, bringing that quest total to thirty-six
+tests across eighteen durable routes. The two Priest promotion checkpoints add
+four tests across two more routes. Including the five older technical
+save/campaign seams, the inventory is 25 writer/reader pairs. The earlier full
+checkpoint sweep passed 23 pairs (46 separate processes), and both new Priest
+pairs passed independently in four separate processes on the consolidated branch.
 
 ## Gate for each new quest slice
 

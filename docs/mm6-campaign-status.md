@@ -146,6 +146,7 @@ Landed:
 | W2 | `fix_inactive_party_events` |
 | W4, W5, W18 | `fix_new_day_at_month_start`, `fix_sunrise_light`, `fix_buff_duration_text` |
 | W22, W26 | `fix_wasted_black_potion`, `fix_shops_buying_blasters` |
+| C12 | `fix_spells_cost` |
 | W28 | No flag. MM6.exe already refused paid shop services. The skill half waits for the shop item info box. |
 
 Open:
@@ -153,7 +154,6 @@ Open:
 | Items | What is left |
 | --- | --- |
 | C8 | Weapon-skill hirelings add to an MM7 skill MM6 doesn't have. Trace what vanilla applies the bonus to first. |
-| C12 | Static Charge Expert cost still comes from the exe table, not `spells.txt` |
 | C22 | Armor recovery uses the MM7 table. Mok's change needs tracing. |
 | C24 | Monsters can walk off ledges into lava. Actor movement has no drop limit. |
 | C25 | The item roll still favours the first candidate |

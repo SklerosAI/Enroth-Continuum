@@ -110,9 +110,13 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   **absent**.
   Charm (61) refused for players.
 - **C12**. Static Charge Expert cost wrong, costs not read from `spells.txt` (`FixSpellsCost`, `Hooks.pas:2857`, copies
-  `spells.txt` costs over the exe table). State: **vanilla, deliberate**.
-  `mm6::spellManaRecovery` reads the spell table in MM6.exe on purpose, see [MM6 rules from MM6.exe](mm6-executable-rules.md). The
-  exe row for Static Charge is mana 2/2/0 where `spells.txt` says 2/1/0.
+  the Normal, Expert and Master cost bytes of every `spells.txt` record over the cost words of MM6.exe's table for
+  spells 1 to 99, recovery untouched). State: **fixed, flag**.
+  `mm6::spellManaRecovery` takes the cost from `spells.txt` while `gameplay.fix_spells_cost` is on (default) and from
+  the executable's table when it is off. Recovery always comes from the executable, see
+  [MM6 rules from MM6.exe](mm6-executable-rules.md). Of the 297 costs, Static Charge's Expert cost is the only one the
+  two tables disagree on, 2 in the exe and 1 in `spells.txt`. Game test `MM6PlayerSpells.ExpertStaticChargeCost`,
+  unit test `MM6SpellRules.SpellsTxtCosts`.
 - **C13**. Water Walk drained mana every 5 minutes (`FixWaterWalkManaDrain=1`). State: **fixed, config**.
   `Engine.cpp` behind `gameplay.fix_water_walk_mana_drain`, default true. No test pins the interval.
 - **C14**. Stronger but shorter buff was refused when a weaker longer one was active (`FixCompareBuff`,
@@ -384,7 +388,8 @@ Rules for every fix in this backlog:
   skill path is unreachable today, see the W28 row above.
 - **C12**. Static Charge cost from the exe table. Read Normal, Expert and Master costs from `spells.txt`, as GrayFace
   does.
-  Same as GrayFace. Flips the exe-table decision described in [MM6 rules from MM6.exe](mm6-executable-rules.md).
+  Same as GrayFace. Flips the exe-table decision described in [MM6 rules from MM6.exe](mm6-executable-rules.md). Done
+  2026-11-19 behind `fix_spells_cost`. No test pinned the exe value.
 - **C18**. Turn-based turn twice as long. Advance 213 ticks per turn instead of 426.
   Same as GrayFace. Flips `MM6TurnBased.PartyAndMonstersTakeTurns`. Done 2026-11-18 behind `fix_turn_based_turn_time`.
 - **C25**. Item roll favours the first candidate. Fix the off-by-one in the cumulative compare so every candidate gets

@@ -1081,6 +1081,139 @@ GAME_TEST(MM7Promotions, MarkhamVaseRequiresPhysicalPickup) {
     EXPECT_EQ(knight.experience - knightExperience, 15000);
 }
 
+namespace {
+
+constexpr std::array rogueCheckpointClasses = {CLASS_THIEF, CLASS_KNIGHT, CLASS_THIEF, CLASS_SORCERER};
+
+void prepareMarkhamVaseCheckpoint(EngineController &game) {
+    game.startNewGame();
+    pParty->SetGold(checkpointGoldBaseline);
+    for (int i = 0; i < 4; i++) {
+        pParty->pCharacters[i].classType = rogueCheckpointClasses[i];
+        pParty->pCharacters[i].experience = checkpointExperienceBaseline[i];
+    }
+
+    NPCData *lasker = findHouseNpc(HOUSE_ERATHIAN_SEWERS_MASTER_THIEF);
+    ASSERT_NE(lasker, nullptr);
+    const unsigned int offerEvent = findNpcEvent(lasker, [](const EvtInstruction &instruction) {
+        return (instruction.opcode == EVENT_Set || instruction.opcode == EVENT_Add) &&
+               instruction.data.variable_descr.type == VAR_QBits_QuestsDone &&
+               instruction.data.variable_descr.value == std::to_underlying(QBIT_MARKHAM_VASE_ACTIVE);
+    });
+    ASSERT_NE(offerEvent, 0u);
+    openLaskerHouse(game, lasker);
+    ASSERT_TRUE(selectNpcEvent(game, lasker, offerEvent));
+    ASSERT_TRUE(pParty->_questBits[QBIT_MARKHAM_VASE_ACTIVE]);
+    leaveHouse(game);
+
+    game.teleportTo(MAP_LORD_MARKHAMS_MANOR, Vec3f(), 0);
+    auto vase = std::ranges::find_if(pLevelDecorations, [](const LevelDecoration &decoration) {
+        return decoration.uEventID != 0 &&
+               (eventGrantsVase(engine->_localEventMap, decoration.uEventID) ||
+                eventGrantsVase(engine->_globalEventMap, decoration.uEventID));
+    });
+    ASSERT_NE(vase, pLevelDecorations.end());
+    const int vaseId = vase - pLevelDecorations.begin();
+    bool pointed = false;
+    for (const auto &[offset, yaw] : std::array{
+             std::pair{Vec3f(300, 0, 0), 180}, std::pair{Vec3f(-300, 0, 0), 0},
+             std::pair{Vec3f(0, 300, 0), 270}, std::pair{Vec3f(0, -300, 0), 90}}) {
+        game.teleportTo(MAP_LORD_MARKHAMS_MANOR, vase->vPosition + offset, yaw);
+        try {
+            game.pointMouseAtDecoration(vaseId);
+            pointed = true;
+            break;
+        } catch (const Exception &) {
+        }
+    }
+    ASSERT_TRUE(pointed);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+    ASSERT_TRUE(pParty->_questBits[QBIT_MARKHAM_VASE_TAKEN]);
+    ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_QUEST_VASE);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_LORD_MARKHAMS_MANOR);
+}
+
+} // namespace
+
+GAME_TEST(MM7RogueCheckpoint, DISABLED_WriteMarkhamVase) {
+    assertDisposableHeadlessProfile();
+    ASSERT_FALSE(ufs->exists(checkpointSlot));
+    prepareMarkhamVaseCheckpoint(game);
+    ASSERT_FALSE(::testing::Test::HasFailure());
+    game.runGameRoutine([] {
+        saveGame(false, false, checkpointSlot, "Markham Vase Rogue checkpoint");
+    });
+
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = ufs->read(checkpointSlot);
+    ASSERT_GT(saved.size(), 1024u);
+    ASSERT_TRUE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saved.data()), saved.size()),
+        GameTitle::MM7, *pGames_LOD));
+}
+
+GAME_TEST(MM7RogueCheckpoint, DISABLED_ReloadMarkhamVaseAndPromote) {
+    assertDisposableHeadlessProfile();
+    ASSERT_TRUE(ufs->exists(checkpointSlot));
+    const Blob saved = Blob::copy(ufs->read(checkpointSlot));
+    ASSERT_GT(saved.size(), 1024u);
+
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(3);
+    ASSERT_EQ(current_screen_type, SCREEN_LOADGAME);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto found = std::ranges::find(slots, checkpointFileName, &SavegameSlot::fileName);
+    ASSERT_NE(found, slots.end());
+    const int index = static_cast<int>(found - slots.begin());
+    ASSERT_LT(index, 7);
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", index));
+    game.tick(2);
+    ASSERT_EQ(saveLoadMenu()->selectedSlot().fileName, checkpointFileName);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick(2);
+
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_LORD_MARKHAMS_MANOR);
+    ASSERT_EQ(engine->_lastLoadedSaveFileName, checkpointFileName);
+    ASSERT_TRUE(pParty->_questBits[QBIT_MARKHAM_VASE_ACTIVE]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_MARKHAM_VASE_TAKEN]);
+    ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_QUEST_VASE);
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_VASE));
+    EXPECT_EQ(pParty->uNumGold, checkpointGoldBaseline);
+    for (int i = 0; i < 4; i++) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, rogueCheckpointClasses[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, checkpointExperienceBaseline[i]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_ROGUE]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_ROGUE_HONORARY]);
+    }
+
+    NPCData *lasker = findHouseNpc(HOUSE_ERATHIAN_SEWERS_MASTER_THIEF);
+    ASSERT_NE(lasker, nullptr);
+    const unsigned int handInEvent = findNpcEvent(lasker, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_Subtract && instruction.data.variable_descr.type == VAR_PlayerItemInHands &&
+               instruction.data.variable_descr.value == std::to_underlying(ITEM_QUEST_VASE);
+    });
+    ASSERT_NE(handInEvent, 0u);
+    openLaskerHouse(game, lasker);
+    ASSERT_TRUE(selectNpcEvent(game, lasker, handInEvent));
+    EXPECT_FALSE(pParty->_questBits[QBIT_MARKHAM_VASE_ACTIVE]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_MARKHAM_VASE_TAKEN]);
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_FALSE(pParty->hasItem(ITEM_QUEST_VASE));
+    EXPECT_EQ(pParty->uNumGold, checkpointGoldBaseline + 5000);
+    for (int i = 0; i < 4; i++) {
+        const bool promoted = rogueCheckpointClasses[i] == CLASS_THIEF;
+        EXPECT_EQ(pParty->pCharacters[i].classType, promoted ? CLASS_ROGUE : rogueCheckpointClasses[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience,
+                  checkpointExperienceBaseline[i] + (promoted ? 30000 : 15000));
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_ROGUE], promoted);
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_ROGUE_HONORARY], !promoted);
+    }
+    EXPECT_TRUE(ufs->read(checkpointSlot).str() == saved.str());
+}
+
 GAME_TEST(MM7SideQuests, LanternOfLightRequiresBarrowChest) {
     auto activeTape = tapes.questBit(QBIT_LANTERN_OF_LIGHT_ACTIVE);
     auto goldTape = tapes.gold();

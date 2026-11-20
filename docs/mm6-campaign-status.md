@@ -72,7 +72,7 @@ The last map sweep on record loaded all 67 MM6 maps and ran every phase on all 2
 | M1 | Production New Game, Save, fresh-process Load | Done (first-map gate) |
 | M2 | Live travel, Save on any map, fresh-process Load restoring chests, dead monsters and doors on active and parked maps | Done headless |
 | M3 | Party death and respawn, in-game Load, autosave and quick save | Done headless |
-| M4 | Main-quest chain from New Game to the finale with fresh-process checkpoints | C0 to C6 merged, C7 to C9 open |
+| M4 | Main-quest chain from New Game to the finale with fresh-process checkpoints | C0 to C6 merged, C7 ready, C8 and C9 open |
 | M5 | Owner sessions: the first hours, travel and a dungeon, chain checkpoints and the ending | Partial, New Sorpigal playtests only |
 | M6 | The Atlas installs a sibling MM6 helper with its own profile, MM7 untouched | Helper ships in `ECv0.1.0` on `Profiles/MM6-Atlas` |
 | M7 | MM7 stays working after every shared-core merge | Continuous |
@@ -94,39 +94,53 @@ in front of doors, crystals and exits.
 | C4 | Council F and the traitor | Merged |
 | C5 | Oracle admission and the t6 crystal | Merged |
 | C6 | The three castle crystals (Alamos, Darkmoor, Kriegspire) and the Oracle hand-in | Merged |
-| C7 | The Tomb of VARN and the Control Cube | Not written. A draft fails on the real C6 save, see below |
+| C7 | The Tomb of VARN and the Control Cube | Merged-ready, passes on the real C6 save, see below |
 | C8 | The NPC 12 release, through the room chain between houses 168, 553 and 554 | Not written |
 | C9 | The hive finale | Not written as a chapter. `MM6Finale.*` covers the hive itself. |
 
 The chapter helpers live in [MM6CampaignChain.h](../test/Bin/GameTest/MM6CampaignChain.h). Private event traces for
 each chapter stay in the ignored `local-game-data/private-wiki/mm6/`.
 
-### C7 route and what blocks it
+### C7 route
 
-A C7 draft from 2026-11-12 passed only on a stand-in for C6. On the real C6 save (2026-11-19) it fails in the Tomb of
-VARN. The route it found:
+C7 passes on the real C6 save, run through C0 to C6 in fresh processes, with no fixture beyond C1's party strength.
 
-- Starts on `outc2`. The Oracle's screen (`oracle.blv` door 2) is already raised from C5 and her floor plate (event 2)
-  toggles it, so the party walks up without the plate. Face event 3, NPC 8, topic 76: award 33, quest bit 166, bits 162
-  to 165 cleared. Out through event 50.
-- `outb3` event 90 leads into `pyramid.blv`. The keyed doors, chests and pools check the active character's items, so
-  one character has to carry every key and code and be active at each check.
-- Switch event 29 opens doors 37 and 38 over chest 44 (keys 574, 537, 466, bit 231). Flame Door event 31 takes 574.
-  Chest 42 holds 573 and 538 (bit 229), the Water Temple door (event 11) takes 573. Chest 45 holds 576 and 539 (bit 232).
-  Chest 43 takes 576 and holds 577 and 542 (bit 230). Bookshelves 26 and 27 give 540 (bit 234) and 541 (bit 233).
-- Each code is spoken holding its scroll: pools 21 to 25 take `kcops`, `ulus`, `aruhu`, `yttocs` and `yoccm`, the Well of
-  VARN (event 1) takes `krik` and shows "The waters part.". The well is two pressure plates side by side, faces 226 and
-  3293, and `walkOntoMM6CampaignChainIndoorEventPlate` stops on either.
+- Starts on `outc2`. The Oracle's screen (`oracle.blv` door 2) is already raised from C5, and her floor plate
+  (event 2) toggles it, so the party walks up without the plate. Face event 3, NPC 8, topic 76: award 33, quest bit
+  166, bits 162 to 165 cleared. Out through event 50.
+- `outb3` event 90 leads into `pyramid.blv`. The keyed doors, chests and pools check the active character's items,
+  and the first character carries every key and scroll, so the chapter selects it with the 1 key before each check
+  and tries a check again when a monster's hit moved the active character off it.
+- Switch event 29 is a mouse click, Space from in front of it finds nothing. It opens doors 37 and 38 over chest 44
+  (keys 574, 537, bit 231). Flame Door event 31 takes 574. Chest 42 holds 573 and 538 (bit 229), the Water Temple door
+  (event 11) takes 573. Chest 45 holds 576 and 539 (bit 232). Chest 43 takes 576 and holds 577 and 542 (bit 230).
+  Bookshelves 26 and 27 give 540 (bit 234) and 541 (bit 233), each scroll comes in hand.
+- Each code is spoken holding its scroll: pools 21 to 25 take `kcops`, `ulus`, `aruhu`, `yttocs` and `yoccm`, and
+  clear bits 229, 232, 234, 233 and 230. The Well of VARN (event 1) takes `krik`, clears 231 and shows "The waters
+  part.". The well is two pressure plates side by side, faces 226 and 3293, and
+  `walkOntoMM6CampaignChainIndoorEventPlate` stops on either.
 - Control Room Entry event 35, then chest 41 takes 577 and gives the Control Cube 456 (bits 42 and 195). Out through
-  event 17. The Oracle's topic 76 takes the cube for award 34 and 500,000 experience each, topic 77 sets bits 169 and 235
-  and moves Nicolai from topic 25 to 26.
+  event 17. The Oracle's topic 76 takes the cube for award 34 and 500,000 experience each, topic 77 sets bits 169 and
+  235 and moves Nicolai (NPC 13) from topic 25 to 26.
 
-What blocks it: a Djinn and two Genies (actors 35 to 37) stand at switch 29 and fight the party there. Their hits keep
-the party in recovery and move the active character, and the first character is asleep by chest 43, which then
-answers "The chest is locked". With `NoDamage` and C1's party strength the party hits the Djinn (325 HP, level 44,
-armor class 45, physical resistance 30) for 2 to 18 and is mostly unable to act, so `killMM6CampaignChainActor` gives up
-after 500 attacks. C7 needs a way past them that a player would take, and the key carrier selected again before each
-keyed check. Kill experience then joins the Oracle's 2,000,000.
+The guardians at switch 29, a Djinn and two Genies, are not fought. The party works the switch with them next to it,
+takes the chest and moves on, and the chapter's experience is exactly the Oracle's 2,000,000. Fighting isn't a way
+past them for C1's party, whose weapons are at skill 1. Its hits on VARN's guardians land for 2 to 18 after the
+physical resistance roll, and each character attacks about once every 180 recovery ticks. Their hits stop a route that
+doesn't allow for them, in two ways seen in runs on the real C6 save:
+
+- A hit leaves the character a short recovery, and a hit on the active character moves the active character to the
+  next one. A check made right then reads the wrong backpack. In one run every keyed check passed up to pool 25, where
+  a hit during the walk onto the plate left the pool silent. A player steps onto the plate again with the carrier
+  selected, and so does the chapter.
+- The Djinn's special attack, a 44% roll per hit at its level 44 saved against Endurance as
+  [MM6 combat and monsters](mm6-combat-and-monsters.md) describes, put the first character to sleep within 30 frames
+  of the switch in a run that stood there longer. A sleeping character can't be selected, so the Flame Door answered
+  "The door is locked". The chapter leaves the switch as soon as the cover is open and the carrier isn't slept on the
+  real C6 save. If a later change to the RNG stream lets the sleep land, C4's fixture, no damage inside the dungeon,
+  also blocks special attacks on all three monster hit paths.
+
+The guardians' actor indices differ between runs that reach the tomb by different routes, so C7 doesn't name them.
 
 ## GrayFace fix progress
 

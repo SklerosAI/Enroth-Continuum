@@ -20,6 +20,29 @@ integration and does not use either allocation. Before creating one, run
 use the corresponding `codex/` or `claude/` branch prefix. Older global-lead
 language below is historical and superseded by this boundary.
 
+## MM7 one-branch continuity checkpoint — 2026-11-20
+
+The owner requested one continuing branch and worktree per title at round end.
+`codex/mm7` holds the current MM7 lane, `master` is neutral integration, and
+`ECv0.1.0` remains the fixed release tag. Temporary Codex branches/worktrees
+are used only during concurrent slices and retired after consolidation. This
+supersedes the older five-per-title worktree cap above; keep at least 10 GB
+free while parallel builds run. The old `mm7-isolated-runtime` commit supplied
+an early helper name and profile path that the current title-locked `MM7.app`, Atlas route and
+`Profiles/MM7-Atlas` supersede. The full MM7 audit still requires a fresh
+tagged/installed-app baseline record; do not infer that deleting the old branch
+completes that acceptance gate. Claude's active MM6 branches/worktrees are
+separate and remain in use.
+
+The latest three MM7 slices put the successful Malwick/Niles tapestry return
+in both Light and Dark C4 chains, add measured forward input before Crag Hack's
+Celeste house in Light C5, and add a production-Save/fresh-process-normal-Load
+checkpoint after the physical Markham Vase pickup before Thief-to-Rogue. Both
+fresh C0-C7 chains and the separate Rogue writer/reader pair passed. Dark C6
+uses the real rest UI to reach Gloaming's dawn throne hours after Malwick's
+six-week clock advance. Graphical Mac play and Strange Temple native exit
+placement parity remain open; see the [remaining-work board](../project/MM7_REMAINING_QUESTS_AND_AREAS.md).
+
 ## ECv0.1.0 release checkpoint — 2026-11-16
 
 The annotated `ECv0.1.0` tag is published at release commit `50d7d4197` as the

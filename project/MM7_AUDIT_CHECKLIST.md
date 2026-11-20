@@ -11,6 +11,18 @@ data and personal Mac build. A generated per-resource catalog belongs in a
 Git-ignored local reference directory; this public document contains no game
 assets, save contents, or copied guide text.
 
+Checkpoint, 2026-11-20: both fresh Light and Dark C0-C7 chains now take
+Malwick's real six-week letter, Niles offer, physical allied-castle tapestry
+pickup and successful return in C4. Light C5 measures forward input before
+Crag Hack's Celeste house. Thief-to-Rogue adds a production-Save/fresh-process
+normal-Load boundary after the physical Markham Vase pickup; the hand-in and
+exact four-character rewards leave the saved slot unchanged. The combined
+gate passed 731 default MM7 headless GameTests, the unit target and
+`check_style`. Graphical Mac play and original-executable Strange Temple exit
+placement parity remain open. The fixed `ECv0.1.0` tag is the release-source
+reference for the one-branch MM7 lane; installed-app and save hashes must be
+rechecked at the actual audit start.
+
 Checkpoint, 2026-11-15: all 27 promotion endpoints have focused behavior
 coverage, all 76 shipped maps have runtime GameTest references, and all 17
 side/objective rows have exact fresh-process durability boundaries. These are
@@ -50,11 +62,11 @@ travel prompt before any compatibility repair is justified.
 
 ## Baseline and independence
 
-- [ ] Record the current `mm7-isolated-runtime` source revision, staged and
+- [ ] Record the fixed `ECv0.1.0` MM7 release-tag revision, staged and
   installed bundle hashes, bundle identity, launcher route, game-data root,
   profile, save files and local backup hashes. Verify live launch and reload
   immediately before audit work begins.
-- [ ] Keep that known-good source and app available; perform fixes in a separate
+- [ ] Keep that known-good tagged source and app available; perform fixes in a temporary
   MM7 audit branch/worktree and stage a candidate app without replacing the
   installed or frozen baseline.
 - [ ] Verify MM7 reads only its own data and writes only its own profile, saves,

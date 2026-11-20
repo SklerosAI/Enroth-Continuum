@@ -16,6 +16,9 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   gated on `ENROTH_MM6_MAP_RESEARCH_ROOT` still read the private research folder and `tools/mm6_map_name_manifest.py`.
 - **Test-only rule code.** `MM6FirstAidPreflight`, `MM6FirstAidTransaction` and `MM6PowerCureTransaction` are used
   only by their unit tests.
+- **Spellbook state between tests.** `MM6GrayFaceShared.BuffDurationShowsMinutesNextToDays` leaves the global
+  `spellbookSelectedSpell` at Protection from Fire. Run with only those two tests,
+  `MM6Spellbook.SpellPictureSelectsThenCasts` then fails. The full `MM6*` run passes.
 
 ## MM6: rules and combat
 
@@ -34,6 +37,14 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   assert. Divine Intervention's Zombie exception is MM7-gated until MM6 evidence exists. `Character.cpp`.
 - **Question inside another window.** A Question reached while another branchless window is open throws, where MM6
   ends the event. No shipped script reaches it.
+- **Skill bonus formulas.** Several MM6 skill bonuses in `Character::GetSkillBonus` use MM7's formulas where MM6.exe's
+  skill bonus routine (0x483930) differs. Spear damage starts at Expert where MM6 needs Master, Expert spear gives no
+  armor class, shields scale by (1, 1, 2) where MM6 has (1, 2, 3), leather by (1, 1, 2) where MM6 has 1, and the blaster
+  multipliers differ. Weapon-skill hireling points ride on the same terms.
+- **Any-item roll.** Chests and `GiveItem` kind 0 keep MM6.exe's off-by-one, which favours item 1, because the GrayFace
+  patch leaves that roll alone. Fixing it changes chest contents on every map. Owner's call. `mm6::generateAnyItem`.
+- **Retracting lava bridges.** The Supreme Temple of Baa's four lava bridges are doors 12 to 15. A monster on one when
+  it retracts falls into the lava. GrayFace's C24 limit wouldn't stop that either.
 
 ## MM6: houses, shops and NPCs
 
@@ -47,6 +58,7 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   skill identify or repair by a member who can't act) comes with it. `src/GUI/UI/Houses/MM6Shop.cpp`.
 - **Shop footer.** The footer draws over the status bar, so "Done!" and "Good as New!" never show. Not checked against
   MM6.exe.
+- **Shop item hover.** Hovering an item on a shop shelf shows no name in the status bar. Not checked against MM6.exe.
 - **Greeting speech.** MM6 greets with speech 22 or 23 by the party's reputation. Ours picks good day or good evening
   by the hour. `initializeNPCDialogue` in `UIDialogue.cpp`.
 - **Street NPC news carry-over.** A street NPC slot keeps its news topic across map loads within one game, as in
@@ -73,6 +85,10 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Spell cast on an item.** `GUIWindow_Inventory_CastSpell` in `src/GUI/UI/UIInventory.cpp` draws `x_x_u`, absent
   from MM6 `icons.lod`. It opens for item-targeted spells listed by MM7 ids, and MM7's Fire Aura (4) shares its number
   with MM6's Fire Bolt. Whether an MM6 cast reaches it is not verified.
+- **Spell popup mastery lines.** The spellbook's right-click popup shows a fourth line, "Get : Casting cost 0 spell
+  points", the Master text under a Grandmaster label MM6 doesn't have.
+- **Oracle background.** A hidden capture of the Oracle's conversation draws the left view area plain white. Not checked
+  in visible play, so it may be offscreen-only or a missing house picture.
 - **Missing chest button art.** Opening a chest logs a missing `ib-bcu-a`, the MM7 cancel button background loaded in
   `src/GUI/GUIWindow.cpp`. Harmless.
 - **Character screen.** Pressing I draws the stats tab for one frame before the inventory. Tab doesn't switch members

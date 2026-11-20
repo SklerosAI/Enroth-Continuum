@@ -25,3 +25,5 @@ Format: `- YYYY-MM-DD: what landed.` See [SCHEMA.md](SCHEMA.md) for what earns a
   shop menus, wall plates and offline fixtures.
 - 2026-11-19: The LLM wiki, the project notes and the tracked agent coordination files consolidated into `docs/`.
   Per-lane handoff files retired.
+- 2026-11-19: MM6 chain chapter C7 and GrayFace fixes C8, C12 and C25 merged into `claude/mm6`. C24 doesn't
+  reproduce.

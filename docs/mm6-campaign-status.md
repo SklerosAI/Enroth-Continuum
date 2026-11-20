@@ -1,6 +1,6 @@
 # MM6 campaign status
 
-Where Might and Magic VI stands on `claude/mm6` at `a927bd004` (2026-11-19): what a player can do, how it is verified,
+Where Might and Magic VI stands on `claude/mm6` at `c5bb601f8` (2026-11-19): what a player can do, how it is verified,
 the campaign chain, GrayFace fix progress and the latest lane results.
 
 ## Summary
@@ -179,6 +179,25 @@ Open:
 | Data fixes | Script fixes as an engine-side patch table keyed by file hash. Map fixes through `*.games.lod` override archives. |
 
 ## Latest lane results
+
+Five lanes merged into `claude/mm6` late on 2026-11-19, at `c5bb601f8`:
+
+- **chain-c7.** C7 passes on the real C6 save without fighting VARN's guardians. The key carrier is selected again
+  before each keyed check, and a check a hit spoiled is tried again. Left: a random-stream shift that lets the Djinn's
+  sleep land on the carrier stops C7, with C4's `NoDamage` fixture as the fallback.
+- **gf-c8.** Arms Master, Weapons Master and Squire add their points where MM6.exe does, attack, melee damage, shooting
+  and armor class, and the MM7 Armsmaster route is gone for MM6. `fix_weapon_skill_hirelings` adds them to the Expert
+  recovery cut. Left: several MM6 skill bonus formulas are MM7's, see [Open questions](open-questions.md).
+- **gf-c12.** Spell costs come from `spells.txt` behind `fix_spells_cost`. Expert Static Charge is the only one of 297
+  costs that changes.
+- **gf-c24.** Not reproduced, so no fix. MM6.exe's own walking edge check, already ported, keeps chasing monsters on
+  their ledges in 18 indoor maps with drops over 500.
+- **gf-c25.** The requested-kind item roll gives every candidate its weight behind `fix_item_generation`. Left: the
+  any-item roll for chests keeps the vanilla off-by-one, as in the patch.
+
+The merged branch passed 309 `MM6*` game tests, 1087 unit tests, `check_style`, the chain from C0 through C7 in fresh
+processes and 729 of 730 MM7 game tests. The MM7 failure is `Issues.Issue2817`, fixed on `master` by `4172727f1`, which
+`claude/mm6` doesn't have yet.
 
 The lanes below merged into `claude/mm6` on 2026-11-18, the travel lane at `a927bd004` the next morning. Each ran the
 full `MM6*` game suite, the unit tests and the MM7 controls, and took before and after captures.

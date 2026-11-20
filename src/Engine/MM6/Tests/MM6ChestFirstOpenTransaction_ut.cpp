@@ -93,6 +93,27 @@ UNIT_TEST(MM6ChestFirstOpenTransaction, FirstOpenAndItemPickupAreDetached) {
     EXPECT_EQ(reopened->nextLcgState, opened->nextLcgState);
 }
 
+UNIT_TEST(MM6ChestFirstOpenTransaction, LeftoverArtifactPlacedOnReopenIsNotRefunded) {
+    // A chest artifact that had no room at first opening and shows on a later one is seen, so a respawn must not take
+    // it off the found list again.
+    TableScope table;
+    const auto types = chestTypes();
+    for (mm6::ChestOverflow overflow : {mm6::ChestOverflow::Hidden, mm6::ChestOverflow::Placed}) {
+        auto input = inputFor(200);
+        input.dchest = types;
+        input.overflow = overflow;
+        input.action = mm6::ChestInteractionAction::OpenOnly;
+        mm6::writeChest16(input.record, 2, 2);
+        mm6::writeChest32(std::span(input.record).subspan(4, 28), 20, mm6::CHEST_ARTIFACT_CONDITION);
+        auto reopened = mm6::stageChestFirstOpenInteraction(input);
+        ASSERT_TRUE(reopened);
+        const bool placed = overflow == mm6::ChestOverflow::Placed;
+        EXPECT_EQ(itemPoint(reopened->record) != Pointi(-1, -1), placed);
+        EXPECT_EQ(mm6::readChest32(std::span(reopened->record).subspan(4, 28), 20),
+                  placed ? 0 : static_cast<std::int32_t>(mm6::CHEST_ARTIFACT_CONDITION));
+    }
+}
+
 UNIT_TEST(MM6ChestFirstOpenTransaction, GoldRequiresExplicitNetCreditAndBounds) {
     TableScope table;
     const auto types = chestTypes();

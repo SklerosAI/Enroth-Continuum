@@ -75,6 +75,7 @@ inline std::optional<ChestFirstOpenResult> stageChestFirstOpenInteraction(
         if (!placed)
             return std::nullopt;
         result.record = placed->record;
+        unmarkPlacedChestArtifacts(result.record);
         result.nextLcgState = placed->nextRngState;
     }
 

@@ -23,9 +23,10 @@ The snapshot round trip and focused headless chest test passed with the toggle
 on, including a rebuild after the final source edit (2/2). A combined run with
 All Artifacts + Storage passed its focused game tests. The Atlas page and
 Swift environment checks passed. The default full MM7 headless suite passed
-733/733; the native unit target and `check_style` passed. A staged Atlas bundle
-passed macOS signature verification and retained the installed MM6 executable
-unchanged.
+733/733; the native unit target and `check_style` passed. The installed Atlas
+bundle passed macOS signature verification and retained the previous MM6
+executable unchanged. Its previous version is kept in an ignored local rollback
+folder under `build/Atlas-MM7-Chest-Reroll/`.
 Visible installed-app interaction remains to be checked in normal graphical
 play; headless checks do not establish the button's appearance or mouse click.
 

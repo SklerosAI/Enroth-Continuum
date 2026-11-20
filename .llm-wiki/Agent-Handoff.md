@@ -27,9 +27,11 @@ continuing source branch. Atlas has an independent toggle under Private mods;
 the MM7 chest window shows a small button while an unclaimed random marker is
 present. The focused chest snapshot/reroll/claim test, combined artifact-mod
 checks, Atlas page test and Swift launch-environment check passed. The full
-default MM7 suite, style gate and visible installed-app click check are tracked
-as separate acceptance steps. Do not infer support for old already-generated
-chests, monster loot or MM6/MM8 from this source slice.
+default MM7 suite passed 733/733; the native unit target and style gate passed.
+The signed Atlas bundle was installed with the MM6 helper unchanged. Visible
+button placement and mouse acceptance remain for graphical play. Do not infer
+support for old already-generated chests, monster loot or MM6/MM8 from this
+source slice.
 
 The owner requested one continuing branch and worktree per title at round end.
 `codex/mm7` holds the current MM7 lane, `master` is neutral integration, and

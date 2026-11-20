@@ -145,8 +145,8 @@ static std::vector<int> chestContents(int chestId) {
 }
 
 static void enterAbandonedTempleWithChestRoll(EngineController &game, std::uint32_t chestRoll) {
-    // A new party walks into the Abandoned Temple, whose chests roll their items as it loads, from the given chest
-    // random state. Chest 1 is trapped, the active character disarms it.
+    // A new party walks into the Abandoned Temple, whose ground treasure and then chests roll their items as it loads,
+    // from the given chest random state. Chest 1 is trapped, the active character disarms it.
     startNewGameThroughInput(game);
     pParty->activeCharacter().setSkillValue(SKILL_TRAP_DISARM, CombinedSkillValue(10, MASTERY_MASTER));
     game.teleportTo(pMapTable->GetMapInfo("oute3.odm"), Vec3f(-21456, -286, 193), 90); // In front of the temple door, facing it.
@@ -183,7 +183,7 @@ static std::vector<std::pair<ItemId, Pointi>> chestPages(int chestId) {
     return result;
 }
 
-static constexpr std::uint32_t secondPageRoll = 9; // Chest luck that puts two items on the second page of the Abandoned Temple's chest 1.
+static constexpr std::uint32_t secondPageRoll = 1529485513; // Chest luck that puts two items on the second page of the Abandoned Temple's chest 1.
 
 static int drawnChestItems(const AccessibleVector<DrawnQuad> &quads, int chestId) {
     // Icons of the chest's items on the chest screen.
@@ -539,7 +539,7 @@ GAME_TEST(MM6Chest, OverflowShowsMostValuableItems) {
         SCOPED_TRACE(fmt::format("fix={}", fix));
         test.prepareForNextTest();
         engine->config->gameplay.FixChestOverflow.setValue(fix);
-        enterAbandonedTempleWithChestRoll(game, 3041712726u);
+        enterAbandonedTempleWithChestRoll(game, 4265220630u);
         auto hiddenTape = tapes.custom([] { return hiddenChestItems(1); });
         auto quadsTape = tapes.hudQuads();
         auto screenTape = tapes.screen();
@@ -569,7 +569,7 @@ GAME_TEST(MM6Chest, OverflowItemIsOnTheSecondPage) {
         SCOPED_TRACE(fmt::format("fix={}", fix));
         test.prepareForNextTest();
         engine->config->gameplay.FixChestOverflow.setValue(fix);
-        enterAbandonedTempleWithChestRoll(game, 3041712726u);
+        enterAbandonedTempleWithChestRoll(game, 4265220630u);
         auto pageButtonTape = tapes.custom([] { return chestPageButton() != nullptr; });
         auto heldTape = tapes.custom([] { return pParty->pPickedItem.itemId; });
         auto quadsTape = tapes.hudQuads();

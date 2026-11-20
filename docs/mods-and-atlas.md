@@ -298,8 +298,10 @@ direct picker also skips generated ones and caps their union at 13. With the mod
   as without the mod, so a roll that would land on an uncollected artifact gives it.
 - The generated flags in `CHST` are still kept up to date, so turning the mod off returns to MM6.exe's rule on the
   next launch with an honest generated list.
-- The rule reaches chest generation (`applyActiveChestLiveOwnerHandoff`) and event GiveItem
-  (`mm6::giveEventItem`). Shops never ask the generator for any item, so they roll no artifact either way.
+- The rule reaches chest generation (`applyActiveChestLiveOwnerHandoff`), event GiveItem (`mm6::giveEventItem`),
+  monster loot (`mm6::generateTitleItem`) and the tier-7 direct picker of random ground treasure
+  (`mm6::spawnRandomTreasure`), so a party can get artifacts from monsters too. Shops and ground items never ask the
+  generator for any item, so they roll no artifact either way.
 - An artifact is collected when it reaches the cursor or a backpack, through `Party::recordArtifactAcquisition`. Taking
   it from a chest puts it on the cursor. Throwing, selling or losing it later doesn't clear the mark. An artifact that
   was rolled but never picked up stays eligible, and two copies can then exist in the world.
@@ -315,8 +317,7 @@ loaded from one rebuilds it from what the party carries. See [MM6 save format](m
 MM6 has no storage the way MM7 has Castle Harmondale. The party owns no house, the port's MM6 chests only let items be
 taken out, and every MM6 map refills, which regenerates its chests (`mapstats.txt` refill days 1 to 672, all 67 maps).
 The four backpacks are the only place to keep artifacts, and a save today refuses a party that carries one, see
-[Open questions](open-questions.md). MM6 monsters and random ground treasure don't roll MM6 artifacts in the port yet
-either.
+[Open questions](open-questions.md).
 
 The Atelier shows "All Artifacts · MM6" next to the MM7 toggle. It writes `mods.mm6.allArtifacts`, and Play MM6 passes
 it as `ENROTH_MM6_ALL_ARTIFACTS=1`, or `0` when off. The MM7 and upstream launches drop the variable.

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <string>
 #include <string_view>
@@ -10,9 +11,11 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
+#include "Engine/MM6/MM6ChestTitleState.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Party.h"
+#include "Engine/Random/Random.h"
 #include "Engine/Tables/MapTable.h"
 
 #include "Library/Image/Png.h"
@@ -47,6 +50,42 @@ static void startNewGameThroughInput(EngineController &game) {
     }
     game.pressGuiButton("PartyCreation_OK");
     game.skipLoadingScreen();
+    game.tick();
+}
+
+static constexpr std::uint32_t merlinLuck = 17; // Chest luck that rolls artifact 404, Merlin, at tier 6.
+static constexpr ItemId merlin = static_cast<ItemId>(404);
+
+static bool partyCarries(ItemId itemId) {
+    return pParty->hasItem(itemId) || pParty->pPickedItem.itemId == itemId;
+}
+
+static std::string carriedItemName(ItemId itemId) {
+    // Identified name of the first such item in the backpacks, or empty.
+    for (const Character &character : pParty->pCharacters)
+        if (InventoryConstEntry entry = character.inventory.find(itemId))
+            return entry->GetIdentifiedName();
+    return {};
+}
+
+static int spawnGreatWyrm(EngineController &game) {
+    // A Great Wyrm, whose loot is gold and a level-6 item of any kind, stands in front of the party at 1 HP.
+    const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+    Actor *wyrm = game.spawnMonster(pParty->pos + ahead * 400, static_cast<MonsterId>(39), SPAWN_DUMMY);
+    wyrm->hp = 1;
+    return wyrm->id;
+}
+
+static void killAndLoot(EngineController &game, int actorId) {
+    // The party hits the monster until it dies, waits for it to fall, and clicks the corpse.
+    for (int frame = 0; frame < 300 && !pActors[actorId].IsNotAlive(); frame++) { // Blows can miss.
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+    }
+    for (int frame = 0; frame < 100 && pActors[actorId].aiState != Dead; frame++) // The monster falls.
+        game.tick();
+    game.pointMouseAtActor(actorId);
+    game.pressAndReleaseButton(BUTTON_LEFT);
     game.tick();
 }
 
@@ -185,6 +224,48 @@ GAME_TEST(MM6Loot, DevilWarriorDropsPlans) {
     EXPECT_EQ(stateTape.back(), Removed);
     EXPECT_EQ(floorTape, tape(0, 1, 0));
     EXPECT_EQ(plansTape, tape(false, true));
+}
+
+GAME_TEST(MM6Loot, GreatWyrmDropsMM6Artifact) {
+    // A Great Wyrm's level-6 loot came from MM7's item generator, whose artifacts are message scrolls in MM6, where
+    // MM6 rolls its own artifacts.
+    startNewGameThroughInput(game);
+    engine->config->debug.NoDamage.setValue(true); // The wyrm breathes on the party.
+    const int wyrm = spawnGreatWyrm(game);
+    auto merlinTape = tapes.custom([] { return partyCarries(merlin); });
+    auto generatedTape = tapes.custom([] { return mm6::chestTitleState().generatedArtifactFlags[404 - 400]; });
+    auto statusTape = tapes.statusBar();
+    test.startTaping();
+
+    mm6::chestTitleState().lcgState = merlinLuck;
+    grng->seed(15); // Game luck with which MM7's item generator rolls one of its artifacts here, a message scroll in MM6.
+    killAndLoot(game, wyrm);
+
+    EXPECT_EQ(merlinTape, tape(false, true));
+    EXPECT_EQ(generatedTape, tape(0, 1));
+    EXPECT_CONTAINS(statusTape, std::string("You found 1117 gold and an item (Artifact)!"));
+}
+
+GAME_TEST(MM6Loot, OracleTreasureIsMM6Item) {
+    // Random ground treasure came from MM7's item generator, with MM7's item kinds and bonuses, where MM6 rolls its own.
+    startNewGameThroughInput(game);
+    const ItemId belt = static_cast<ItemId>(100);
+    const Vec3f marker(-64, 7104, 0); // The Oracle's third treasure marker, level 2.
+    auto beltTape = tapes.custom([=] { return carriedItemName(belt); });
+    test.startTaping();
+
+    mm6::chestTitleState().lcgState = 7; // Chest luck with which the third marker rolls a Leather Belt of Speed.
+    game.teleportTo(pMapTable->GetMapInfo("oracle.blv"), Vec3f(-1408, 900, -512), 90);
+    auto sprite = std::ranges::find_if(pSpriteObjects, [&](const SpriteObject &object) {
+        return object.uObjectDescID && object.vPosition.x == marker.x && object.vPosition.y == marker.y;
+    });
+    ASSERT_NE(sprite, pSpriteObjects.end());
+    game.teleportTo(engine->_currentLoadedMapId, sprite->vPosition - Vec3f(0, 150, 0), 90, -20); // Looking down at the treasure.
+    game.pointMouseAtSprite(sprite - pSpriteObjects.begin());
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+
+    EXPECT_EQ(beltTape, tape(std::string(), std::string("Leather Belt of Speed")));
 }
 
 GAME_TEST(MM6OffscreenFrame, DISABLED_MissileCapture) {

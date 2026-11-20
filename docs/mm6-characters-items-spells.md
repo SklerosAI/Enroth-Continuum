@@ -119,9 +119,9 @@ record the way the original does.
 
 `mm6::generateItem` (`MM6ItemGenerator.h`) is the original random item generator. It draws from the MM6 gameplay LCG,
 the MSVC `rand` recurrence `state * 214013 + 2531011` returning bits 16 to 30 (`nextChestRandom15`). That state and
-the generated-artifact flags live in `mm6::ChestTitleState` and are saved in `CHST`. Chests, shop stock and event item
-gifts all draw from it. Random monster loot rolled at death still goes through the inherited
-`ItemTable::generateItem`, whose artifact branch gives MM6 message scrolls, see [Open questions](open-questions.md).
+the generated-artifact flags live in `mm6::ChestTitleState` and are saved in `CHST`. Chests, shop stock, event item
+gifts, monster loot and random ground treasure all draw from it. MM7's `ItemTable::generateItem` must not roll MM6
+loot, its artifact branch gives MM7's ids 500 to 528, which are message scrolls in MM6.
 
 - A request for any item first draws an artifact candidate at every treasure level. At level 6 it becomes that
   artifact with a 5% chance, when it wasn't generated before and fewer than 13 artifacts were. With the All Artifacts
@@ -133,6 +133,14 @@ gifts all draw from it. Random monster loot rolled at death still goes through t
   it, so the first candidate gets one chance more than its weight, even at weight 0, and the last one one less. With
   `fix_item_generation`, on by default, the roll is one higher, as the GrayFace patch has it, and every candidate gets
   its weight. The any-item roll keeps MM6.exe's compare either way.
+- A looted corpse's random item (MM6.exe 0x4218E0) asks for the monster's `monsters.txt` treasure level and kind
+  (`mm6::generateTitleItem`), so the Great Wyrm, the Red, Blue and Gold Dragons, the Efreet and the Supreme Titan can
+  drop artifacts. The gold dice, the drop chance and the 10% chance that the corpse stays to be looted again still
+  draw from the shared RNG.
+- Random ground treasure (MM6.exe 0x455ED0, `mm6::spawnRandomTreasure`) draws everything from the LCG: 20% nothing,
+  40% gold and 40% an item of a random kind 20 to 43, both at the marker's own level. The map remap only decides
+  whether the marker reaches tier 7, which goes to the direct artifact picker the chests use. No shipped marker is
+  level 7, all 67 maps checked, and kinds 20 to 43 never roll an artifact, so ground treasure gives none in practice.
 - The finalizer can give a weapon a special bonus, and armor to amulets a standard or a special bonus, with chances
   and strengths by treasure level from `stditems.txt` and `spcitems.txt`. MM6's second equipment chance row is a
   separate chance, not MM7's cumulative one.

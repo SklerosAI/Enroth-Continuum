@@ -20,6 +20,7 @@
 #include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/MM6/MM6ArtifactCollection.h"
 #include "Engine/MM6/MM6ChestTitleState.h"
+#include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/MapTable.h"
@@ -29,10 +30,14 @@
 
 #include "Library/Environment/Interface/Environment.h"
 
+#include "Utility/Math/TrigLut.h"
+
 #include "MM6CampaignChain.h"
 
 static constexpr std::uint32_t hiveArtifactLuck = 4; // Chest luck that rolls artifact 415 into the hive's chest 4 at tier 6, and no other artifact.
 static constexpr ItemId hiveArtifact = static_cast<ItemId>(415);
+static constexpr std::uint32_t merlinLuck = 17; // Chest luck that rolls artifact 404, Merlin, at tier 6.
+static constexpr ItemId merlin = static_cast<ItemId>(404);
 
 struct ScopedAllArtifacts {
     // Sets the MM6 All Artifacts switch the way Atlas does, and clears it when the test is done with it.
@@ -137,6 +142,24 @@ static void waitForHiveRespawn(EngineController &game) {
     restDays(game, 7);
 }
 
+static void killGreatWyrmAndLoot(EngineController &game) {
+    // A Great Wyrm, whose loot is gold and a level-6 item of any kind, stands in front of the party at 1 HP. The party
+    // hits it until it dies, waits for it to fall, and clicks the corpse.
+    const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+    Actor *wyrm = game.spawnMonster(pParty->pos + ahead * 400, static_cast<MonsterId>(39), SPAWN_DUMMY);
+    wyrm->hp = 1;
+    const int wyrmId = wyrm->id;
+    for (int frame = 0; frame < 300 && !pActors[wyrmId].IsNotAlive(); frame++) { // Blows can miss.
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+    }
+    for (int frame = 0; frame < 100 && pActors[wyrmId].aiState != Dead; frame++) // The wyrm falls.
+        game.tick();
+    game.pointMouseAtActor(wyrmId);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+}
+
 GAME_TEST(MM6AllArtifacts, ArtifactRollsPastTheCap) {
     // MM6 rolls no random artifact once 13 have been generated. With the All Artifacts mod a tier-6 roll still gives a
     // new one, and without it the cap holds.
@@ -157,6 +180,29 @@ GAME_TEST(MM6AllArtifacts, ArtifactRollsPastTheCap) {
 
         EXPECT_EQ(screenTape.back(), SCREEN_CHEST);
         EXPECT_EQ(artifactTape.back(), modOn ? std::vector{415} : std::vector<int>());
+        EXPECT_EQ(generatedTape, modOn ? tape(13, 14) : tape(13));
+    }
+}
+
+GAME_TEST(MM6AllArtifacts, MonsterLootRollsPastTheCap) {
+    // With the All Artifacts mod a monster's tier-6 loot still gives a new artifact once 13 have been generated, and
+    // without it the cap holds.
+    for (bool modOn : {true, false}) {
+        SCOPED_TRACE(fmt::format("modOn={}", modOn));
+        test.prepareForNextTest();
+        ScopedAllArtifacts mod(modOn);
+        auto merlinTape = tapes.custom([] { return pParty->hasItem(merlin) || pParty->pPickedItem.itemId == merlin; });
+        auto generatedTape = tapes.custom([] { return generatedArtifacts(); });
+        startNewGameThroughInput(game);
+        engine->config->debug.NoDamage.setValue(true); // The wyrm breathes on the party.
+        test.startTaping();
+
+        for (int index = 13; index < 26; index++)
+            mm6::chestTitleState().generatedArtifactFlags[index] = 1; // Artifacts 413 to 425 were rolled elsewhere.
+        mm6::chestTitleState().lcgState = merlinLuck;
+        killGreatWyrmAndLoot(game);
+
+        EXPECT_EQ(merlinTape, modOn ? tape(false, true) : tape(false));
         EXPECT_EQ(generatedTape, modOn ? tape(13, 14) : tape(13));
     }
 }

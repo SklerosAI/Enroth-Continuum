@@ -20,6 +20,7 @@
 #include "Engine/MM6/MM6MonsterProjectile.h"
 #include "Engine/MM6/MM6MonsterSpellEffect.h"
 #include "Engine/MM6/MM6PlayerSpell.h"
+#include "Engine/MM6/MM6RandomTreasure.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Data/AwardEnums.h"
 #include "Engine/Data/HouseEnumFunctions.h"
@@ -3678,7 +3679,11 @@ void Actor::LootActor() {
         }
     } else {
         if (grng->random(100) < this->monsterInfo.treasureDropChance && this->monsterInfo.treasureLevel != ITEM_TREASURE_LEVEL_INVALID) {
-            pItemTable->generateItem(this->monsterInfo.treasureLevel, this->monsterInfo.treasureType, &Dst);
+            if (engine->gameTitle() == GameTitle::MM6) {
+                Dst = mm6::generateTitleItem(this->monsterInfo.treasureLevel, this->monsterInfo.treasureType); // MM6.exe 0x4218E0.
+            } else {
+                pItemTable->generateItem(this->monsterInfo.treasureLevel, this->monsterInfo.treasureType, &Dst);
+            }
 
             StatusBarItemFound(foundGold, pItemTable->items[Dst.itemId].unidentifiedName);
 

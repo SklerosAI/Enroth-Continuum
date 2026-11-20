@@ -1063,3 +1063,70 @@ GAME_TEST(MM7PriestCheckpoint, DISABLED_ReloadMoonAltarAndPromote) {
     }
     EXPECT_TRUE(ufs->read(priestCheckpointSlot).str() == saved.str());
 }
+
+GAME_TEST(MM7PriestCheckpoint, DISABLED_WriteSunAltar) {
+    assertPriestDisposableProfile();
+    engine->config->debug.NoActors.setValue(true);
+    engine->config->debug.NoDamage.setValue(true);
+    game.startNewGame();
+    setPriestCheckpointBaseline();
+    prepareSecondPromotionParty();
+    pParty->_questBits.set(QBIT_DARK_PATH);
+    NPCData &falk = pNPCStats->pNPCData[falkNpcId];
+    // Falk's first-promotion return establishes this second-promotion topic.
+    falk.dialogue_1_evt_id = darkOfferEventId;
+    openPromoterDialogue(game, darkPriestPath, &falk);
+    ASSERT_TRUE(selectNpcEvent(game, &falk, darkOfferEventId));
+    leaveDialogue(game);
+    ASSERT_TRUE(pParty->_questBits[darkPriestPath.activeBit]);
+    ASSERT_EQ(falk.dialogue_1_evt_id, darkReturnEventId);
+    useAltar(game, darkPriestPath);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_GRAND_TEMPLE_OF_THE_SUN);
+    ASSERT_TRUE(pParty->_questBits[darkPriestPath.objectiveBit]);
+    pParty->SetGold(priestCheckpointGold);
+    ASSERT_FALSE(::testing::Test::HasFailure());
+    writePriestCheckpoint(game, "Sun altar Priest of Dark checkpoint");
+}
+
+GAME_TEST(MM7PriestCheckpoint, DISABLED_ReloadSunAltarAndPromote) {
+    assertPriestDisposableProfile();
+    ASSERT_TRUE(ufs->exists(priestCheckpointSlot));
+    const Blob saved = Blob::copy(ufs->read(priestCheckpointSlot));
+    ASSERT_GT(saved.size(), 1024u);
+    loadPriestCheckpoint(game);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_GRAND_TEMPLE_OF_THE_SUN);
+    ASSERT_TRUE(pParty->_questBits[QBIT_DARK_PATH]);
+    ASSERT_TRUE(pParty->_questBits[darkPriestPath.activeBit]);
+    ASSERT_TRUE(pParty->_questBits[darkPriestPath.objectiveBit]);
+    ASSERT_EQ(pParty->GetGold(), priestCheckpointGold);
+    const std::array classes = {CLASS_PRIEST, CLASS_PRIEST, CLASS_CLERIC, CLASS_KNIGHT};
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, classes[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, priestCheckpointExperience[i]);
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[i < 2 ? AWARD_PROMOTION_PRIEST :
+                                                               AWARD_PROMOTION_PRIEST_HONORARY]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_PRIEST_OF_DARK]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_PRIEST_OF_DARK_HONORARY]);
+    }
+
+    NPCData &falk = pNPCStats->pNPCData[falkNpcId];
+    ASSERT_EQ(falk.dialogue_1_evt_id, darkReturnEventId);
+    openPromoterDialogue(game, darkPriestPath, &falk);
+    const int reputationBefore = pParty->GetPartyReputation();
+    ASSERT_TRUE(selectNpcEvent(game, &falk, darkReturnEventId));
+    EXPECT_FALSE(pParty->_questBits[darkPriestPath.activeBit]);
+    EXPECT_TRUE(pParty->_questBits[darkPriestPath.objectiveBit]);
+    EXPECT_EQ(falk.dialogue_1_evt_id, 0u);
+    EXPECT_EQ(falk.greetingIndex, darkPriestPath.greeting);
+    EXPECT_EQ(pParty->GetGold(), priestCheckpointGold + 10000);
+    EXPECT_EQ(pParty->GetPartyReputation() - reputationBefore, -10);
+    for (int i = 0; i < 4; ++i) {
+        const bool promoted = classes[i] == CLASS_PRIEST;
+        EXPECT_EQ(pParty->pCharacters[i].classType, promoted ? CLASS_PRIEST_OF_MOON : classes[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience,
+                  priestCheckpointExperience[i] + (promoted ? 80000 : 40000));
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[promoted ? AWARD_PROMOTION_PRIEST_OF_DARK :
+                                                                AWARD_PROMOTION_PRIEST_OF_DARK_HONORARY]);
+    }
+    EXPECT_TRUE(ufs->read(priestCheckpointSlot).str() == saved.str());
+}

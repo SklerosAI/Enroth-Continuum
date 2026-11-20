@@ -43,6 +43,14 @@ uses the real rest UI to reach Gloaming's dawn throne hours after Malwick's
 six-week clock advance. Graphical Mac play and Strange Temple native exit
 placement parity remain open; see the [remaining-work board](../project/MM7_REMAINING_QUESTS_AND_AREAS.md).
 
+The later focused pre-audit round adds Dark Priest Sun altar and physical Lich
+jars writer/reader pairs, bringing the verified inventory to 27 of the owner's
+36-pair cap. Two earlier/later owner MM7 slots passed copied-primary and
+copied-backup normal-menu Load probes; the originals were unchanged. The
+archive, map/EVT, spell, item and monster audit has not started. Resume it from
+the [2026-11-23 delta-first plan](../project/MM7_FULL_AUDIT_NEXT_WEEK_PLAN.md),
+reusing the existing ignored A0-A2 reports where source and data match.
+
 ## ECv0.1.0 release checkpoint — 2026-11-16
 
 The annotated `ECv0.1.0` tag is published at release commit `50d7d4197` as the

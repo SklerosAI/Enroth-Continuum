@@ -15,6 +15,7 @@
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Localization.h"
+#include "Engine/MapEnums.h"
 #include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/MM7/MM7AtomicSaveFile.h"
 #include "Engine/Objects/SpriteObject.h"
@@ -102,6 +103,54 @@ class ScopedLegacyOutdoorDelta {
     Time _oldVisit;
     std::vector<SpriteObject> _originalSprites;
 };
+
+void loadCopiedOwnedSlot(EngineController &game, bool useBackup) {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    const auto nativeRoot = mm7::startupNativeProfileRoot();
+    ASSERT_TRUE(nativeRoot);
+    ASSERT_EQ(*nativeRoot, std::filesystem::canonical(std::filesystem::path(ufs->displayPath(""))));
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    ASSERT_TRUE(ufs->exists(slot));
+    const Blob primary = Blob::copy(ufs->read(slot));
+    const std::string_view backupPath = "saves/save000.mm7.bak";
+    Blob backup;
+    if (useBackup) {
+        ASSERT_TRUE(ufs->exists(backupPath));
+        backup = Blob::copy(ufs->read(backupPath));
+        ASSERT_LT(primary.size(), 1024u);
+    } else {
+        ASSERT_FALSE(ufs->exists(backupPath));
+    }
+    const Blob &candidate = useBackup ? backup : primary;
+    ASSERT_GT(candidate.size(), 1024u);
+    ASSERT_TRUE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(candidate.data()), candidate.size()),
+        GameTitle::MM7, *pGames_LOD));
+
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(3);
+    ASSERT_EQ(current_screen_type, SCREEN_LOADGAME);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto found = std::find_if(slots.begin(), slots.end(), [](const SavegameSlot &entry) {
+        return entry.fileName == fileName;
+    });
+    ASSERT_NE(found, slots.end());
+    const int index = static_cast<int>(found - slots.begin());
+    ASSERT_LT(index, 7);
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", index));
+    game.tick(2);
+    ASSERT_EQ(saveLoadMenu()->selectedSlot().fileName, fileName);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick(2);
+    EXPECT_EQ(current_screen_type, SCREEN_GAME);
+    EXPECT_NE(engine->_currentLoadedMapId, MAP_INVALID);
+    EXPECT_EQ(engine->_lastLoadedSaveFileName, fileName);
+    EXPECT_TRUE(ufs->read(slot).str() == primary.str());
+    if (useBackup)
+        EXPECT_TRUE(ufs->read(backupPath).str() == backup.str());
+}
 } // namespace
 
 GAME_TEST(MM7SaveCapture, FailedWriteLeavesLiveStateUntouched) {
@@ -352,4 +401,14 @@ GAME_TEST(MM7DisposableSave, DISABLED_ReloadFreshProcess) {
     EXPECT_EQ(engine->_lastLoadedSaveFileName, fileName);
     EXPECT_EQ(pParty->uNumGold, savedGold);
     EXPECT_TRUE(ufs->read(slot).str() == corruptPrimary.str());
+}
+
+// The runner stages copies of an owner save in a marked temporary profile.
+// These probes never open the original file from inside the game process.
+GAME_TEST(MM7OwnedSaveProbe, DISABLED_LoadCopiedPrimary) {
+    loadCopiedOwnedSlot(game, false);
+}
+
+GAME_TEST(MM7OwnedSaveProbe, DISABLED_LoadCopiedBackup) {
+    loadCopiedOwnedSlot(game, true);
 }

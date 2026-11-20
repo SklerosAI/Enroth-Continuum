@@ -98,7 +98,7 @@ Temple exit-placement parity check, and graphical play.
 
 ## Already durable; do not reopen without new evidence
 
-These twenty independent routes have exact production-Save and
+These twenty-two independent routes have exact production-Save and
 fresh-process normal-Load pairs with unchanged slot bytes:
 
 - Season's Stole
@@ -121,6 +121,8 @@ fresh-process normal-Load pairs with unchanged slot bytes:
 - Griffin hunt at the both-regions-clear, pre-report boundary
 - Evenmorn map physically acquired in Tidewater Caverns before Falk's first Priest promotion
 - Grand Temple of the Moon altar used before Rebecca's Light second Priest promotion
+- Grand Temple of the Sun altar used before Falk's Dark second Priest promotion
+- Four empty Lich jars physically taken from the Walls of Mist chest before Wynac's return
 
 They are independent route boundaries, not a continuous regional campaign.
 The current regional side/promotion selection is 14/14; there are eighteen
@@ -134,11 +136,18 @@ bringing the total to twenty-eight exact checkpoint tests across fourteen
 routes. Malwick's accepted pre-trigger state adds another pair, bringing the
 total to thirty exact checkpoint tests across fifteen routes. Lantern, Davrik
 and Griffin add six more exact tests, bringing that quest total to thirty-six
-tests across eighteen durable routes. The two Priest promotion checkpoints add
-four tests across two more routes. Including the five older technical
-save/campaign seams, the inventory is 25 writer/reader pairs. The earlier full
-checkpoint sweep passed 23 pairs (46 separate processes), and both new Priest
-pairs passed independently in four separate processes on the consolidated branch.
+tests across eighteen durable routes. The three Priest promotion checkpoints
+and physical Lich jars checkpoint add eight tests across four more routes.
+Including the five older technical save/campaign seams, the inventory is 27
+writer/reader pairs, below the owner's cap of 36 pairs. The earlier full
+checkpoint sweep passed 23 pairs (46 separate processes); the four newer
+promotion pairs passed independently in eight separate processes. Copied-save
+primary and backup load probes also passed for two owner slots without changing
+their originals; these read-only probes are not writer/reader pairs.
+
+The broader map, spell, item, monster and archive audit is planned for the week
+of 2026-11-23 in [the full-audit handoff](MM7_FULL_AUDIT_NEXT_WEEK_PLAN.md);
+it has not started.
 
 ## Gate for each new quest slice
 

@@ -1,8 +1,10 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <filesystem>
 #include <numbers>
 #include <span>
+#include <string_view>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -17,13 +19,19 @@
 #include "Engine/Evt/EvtProgram.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/Indoor.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/MapEnums.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
+#include "Engine/MM7/MM7SaveValidation.h"
 #include "Engine/Objects/CharacterEnums.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Objects/NPC.h"
 #include "Engine/Party.h"
 #include "Engine/PartyEnums.h"
+#include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/Resources/LOD.h"
+#include "Engine/SaveLoad.h"
 #include "Engine/Tables/ChestTable.h"
 #include "Engine/Tables/NPCTable.h"
 
@@ -31,6 +39,7 @@
 #include "GUI/UI/UIChest.h"
 #include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/UIHouses.h"
+#include "GUI/UI/UISaveLoad.h"
 
 #include "Utility/Exception.h"
 
@@ -44,6 +53,10 @@ constexpr int jarChestId = 0;
 constexpr int fallbackChestId = 1;
 constexpr int lichGreetingId = 79;
 constexpr int jarDecorVariable = 23;
+constexpr std::string_view lichCheckpointSlot = "saves/save000.mm7";
+constexpr std::string_view lichCheckpointFileName = "save000.mm7";
+constexpr std::array<uint64_t, 4> lichCheckpointExperience = {3000, 3100, 3200, 3300};
+constexpr int lichCheckpointGold = 4000;
 
 bool eventChangesQuestBit(const EvtProgram &program, int eventId, EvtOpcode opcode, QuestBit bit) {
     return program.hasEvent(eventId) &&
@@ -199,6 +212,34 @@ void prepareLichParty(AwardId prerequisite, bool lightPath, bool darkPath) {
         pParty->pCharacters[0]._achievedAwardsBits.set(prerequisite);
     pParty->_questBits.set(QBIT_LIGHT_PATH, lightPath);
     pParty->_questBits.set(QBIT_DARK_PATH, darkPath);
+}
+
+void assertLichDisposableProfile() {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    const auto root = mm7::startupNativeProfileRoot();
+    ASSERT_TRUE(root);
+    ASSERT_EQ(*root, std::filesystem::canonical(std::filesystem::path(ufs->displayPath(""))));
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+}
+
+void loadLichCheckpoint(EngineController &game) {
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(3);
+    ASSERT_EQ(current_screen_type, SCREEN_LOADGAME);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto found = std::ranges::find(slots, lichCheckpointFileName, &SavegameSlot::fileName);
+    ASSERT_NE(found, slots.end());
+    const int index = static_cast<int>(found - slots.begin());
+    ASSERT_LT(index, 7);
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", index));
+    game.tick(2);
+    ASSERT_EQ(saveLoadMenu()->selectedSlot().fileName, lichCheckpointFileName);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick(2);
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    ASSERT_EQ(engine->_lastLoadedSaveFileName, lichCheckpointFileName);
 }
 
 } // namespace
@@ -434,4 +475,89 @@ GAME_TEST(MM7LichPromotion, FourPhysicalJarsPromoteWizard) {
         EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits, awardsAfter[i]);
     }
     leaveDialogue(game);
+}
+
+GAME_TEST(MM7LichCheckpoint, DISABLED_WritePhysicalJars) {
+    assertLichDisposableProfile();
+    engine->config->debug.NoActors.setValue(true);
+    engine->config->debug.NoDamage.setValue(true);
+    game.startNewGame();
+    prepareLichParty(AWARD_PROMOTION_WIZARD, false, true);
+    NPCData &wynac = pNPCStats->pNPCData[wynacNpcId];
+    openWynacDialogue(game, &wynac);
+    ASSERT_TRUE(selectNpcEvent(game, &wynac, offerEventId));
+    leaveDialogue(game);
+    ASSERT_TRUE(pParty->_questBits[QBIT_LICH_JARS_ACTIVE]);
+    ASSERT_EQ(wynac.dialogue_1_evt_id, returnEventId);
+
+    pParty->pCharacters[0]._achievedAwardsBits.set(AWARD_THE_PIT_RETRIEVED_SOUL_JARS);
+    ASSERT_EQ(openWallsJarChest(game), jarChestId);
+    for (int i = 0; i < 3; ++i)
+        takeJarFromChest(game, i);
+    takeJarFromChest(game, 3);
+    ASSERT_FALSE(vChests[jarChestId].inventory.find(ITEM_QUEST_LICH_JAR_EMPTY));
+    closeChest(game);
+    pParty->_questBits.set(QBIT_ORACLE_RECOVERS_LICH_JAR_EMPTY);
+    pParty->SetGold(lichCheckpointGold);
+    for (int i = 0; i < 4; ++i)
+        pParty->pCharacters[i].experience = lichCheckpointExperience[i];
+    ASSERT_TRUE(pParty->_questBits[QBIT_WALLS_OF_MIST_LICH_JARS_TAKEN]);
+    ASSERT_EQ(engine->_persistentVariables.decorVars[jarDecorVariable], 1);
+    ASSERT_FALSE(::testing::Test::HasFailure());
+
+    ASSERT_FALSE(ufs->exists(lichCheckpointSlot));
+    game.runGameRoutine([] {
+        saveGame(false, false, lichCheckpointSlot, "Physical Lich jars checkpoint");
+    });
+    ASSERT_TRUE(ufs->exists(lichCheckpointSlot));
+    const Blob saved = ufs->read(lichCheckpointSlot);
+    ASSERT_GT(saved.size(), 1024u);
+    ASSERT_TRUE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saved.data()), saved.size()),
+        GameTitle::MM7, *pGames_LOD));
+}
+
+GAME_TEST(MM7LichCheckpoint, DISABLED_ReloadPhysicalJarsAndPromote) {
+    assertLichDisposableProfile();
+    ASSERT_TRUE(ufs->exists(lichCheckpointSlot));
+    const Blob saved = Blob::copy(ufs->read(lichCheckpointSlot));
+    ASSERT_GT(saved.size(), 1024u);
+    loadLichCheckpoint(game);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_WALLS_OF_MIST);
+    ASSERT_TRUE(pParty->_questBits[QBIT_DARK_PATH]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_LICH_JARS_ACTIVE]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_ORACLE_RECOVERS_LICH_JAR_EMPTY]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_WALLS_OF_MIST_LICH_JARS_TAKEN]);
+    ASSERT_EQ(engine->_persistentVariables.decorVars[jarDecorVariable], 1);
+    ASSERT_EQ(pParty->GetGold(), lichCheckpointGold);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].experience, lichCheckpointExperience[i]);
+        EXPECT_EQ(pParty->pCharacters[i].classType, i == 0 ? CLASS_WIZARD : CLASS_KNIGHT);
+        EXPECT_TRUE(pParty->pCharacters[i].inventory.find(ITEM_QUEST_LICH_JAR_EMPTY));
+    }
+
+    NPCData &wynac = pNPCStats->pNPCData[wynacNpcId];
+    ASSERT_EQ(wynac.dialogue_1_evt_id, returnEventId);
+    openWynacDialogue(game, &wynac);
+    const int reputationBefore = pParty->GetPartyReputation();
+    ASSERT_TRUE(selectNpcEvent(game, &wynac, returnEventId));
+    EXPECT_FALSE(pParty->_questBits[QBIT_LICH_JARS_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_ORACLE_RECOVERS_LICH_JAR_EMPTY]);
+    EXPECT_EQ(wynac.dialogue_1_evt_id, 0u);
+    EXPECT_EQ(wynac.greetingIndex, lichGreetingId);
+    EXPECT_EQ(pParty->GetGold(), lichCheckpointGold + 7500);
+    EXPECT_EQ(pParty->GetPartyReputation() - reputationBefore, -10);
+    for (int i = 0; i < 4; ++i) {
+        const bool promoted = i == 0;
+        EXPECT_EQ(pParty->pCharacters[i].classType, promoted ? CLASS_LICH : CLASS_KNIGHT);
+        EXPECT_EQ(pParty->pCharacters[i].experience,
+                  lichCheckpointExperience[i] + (promoted ? 80000 : 40000));
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[promoted ? AWARD_PROMOTION_LICH :
+                                                                AWARD_PROMOTION_LICH_HONORARY]);
+        EXPECT_FALSE(pParty->pCharacters[i].inventory.find(ITEM_QUEST_LICH_JAR_EMPTY));
+    }
+    InventoryEntry fullJar = pParty->pCharacters[0].inventory.find(ITEM_QUEST_LICH_JAR_FULL);
+    ASSERT_TRUE(fullJar);
+    EXPECT_EQ(fullJar->lichJarCharacterIndex, 0);
+    EXPECT_TRUE(ufs->read(lichCheckpointSlot).str() == saved.str());
 }

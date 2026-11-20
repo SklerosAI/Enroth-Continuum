@@ -23,6 +23,17 @@ placement parity remain open. The fixed `ECv0.1.0` tag is the release-source
 reference for the one-branch MM7 lane; installed-app and save hashes must be
 rechecked at the actual audit start.
 
+Focused pre-audit checkpoint, 2026-11-20: the Dark Priest Sun altar and the
+physical Lich jars add two production-Save/fresh-process-normal-Load pairs,
+bringing the inventory to 27 of the owner's 36-pair cap. Both new pairs and
+their existing promotion controls passed. Two copies of owner MM7 saves, one
+earlier and one later, each passed normal-menu primary admission and corrupt-
+temporary-primary/valid-backup admission in separate headless processes. The
+owner source files stayed fingerprint-identical. These probes do not establish
+all legacy-save or long-play compatibility. The full archive, map, spell, item
+and monster audit remains unstarted; its [efficient handoff](MM7_FULL_AUDIT_NEXT_WEEK_PLAN.md)
+is for the week of 2026-11-23.
+
 Checkpoint, 2026-11-15: all 27 promotion endpoints have focused behavior
 coverage, all 76 shipped maps have runtime GameTest references, and all 17
 side/objective rows have exact fresh-process durability boundaries. These are

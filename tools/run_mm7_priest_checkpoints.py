@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the two MM7 Priest promotion save checkpoints in fresh game processes."""
+"""Run MM7 Priest promotion save checkpoints in fresh game processes."""
 
 import argparse
 from pathlib import Path
@@ -12,6 +12,7 @@ MARKER_TEXT = "EnrothContinuum-MM7-save-gate-v1\n"
 PAIRS = (
     ("DISABLED_WriteEvenmornMap", "DISABLED_ReloadEvenmornMapAndPromote"),
     ("DISABLED_WriteMoonAltar", "DISABLED_ReloadMoonAltarAndPromote"),
+    ("DISABLED_WriteSunAltar", "DISABLED_ReloadSunAltarAndPromote"),
 )
 
 
@@ -24,6 +25,7 @@ def run_pair(binary: Path, data: Path, test_data: Path, writer: str, reader: str
                 str(binary), "--game=mm7", "--headless", f"--data-path={data}",
                 f"--test-path={test_data}", f"--mm7-disposable-profile={profile}",
                 f"--gtest_filter=MM7PriestCheckpoint.{test}", "--gtest_also_run_disabled_tests",
+                "--log-level=critical",
             )
             print(f"Running MM7PriestCheckpoint.{test}", flush=True)
             subprocess.run(command, check=True)

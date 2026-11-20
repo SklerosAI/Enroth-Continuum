@@ -16,6 +16,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [Agent communications](../agent_comms/README.md) — Cross-model claims, handoffs, reviews and model-card protocol
 - [MM6 Resume Runbook](../project/MM6_RESUME_HANDOFF.md) — Current first-map production Save/Load scope, gate runner and next graphical check
 - [MM6 Implementation Checklist](../project/MM6_IMPLEMENTATION_CHECKLIST.md) — Source-reconciled MM6 runtime status, remaining gaps and the F4b/F4d slice register with backing tests
+- [MM7 Full Audit Next Week Plan](../project/MM7_FULL_AUDIT_NEXT_WEEK_PLAN.md) — Delta-first archive, map, spell, item and monster audit handoff with evidence and checkpoint budgets
 - [MM6 Session Handoff 2026-11-07](../project/SESSION_HANDOFF_2026-11-07.md) — Parallel lane reports, merge record and ready-ordered backlog
 - [Schema](SCHEMA_Enroth-Continuum.md) — Page, link, log, and ingest rules
 - [Log](log_Enroth-Continuum.md) — Chronological operations
@@ -37,7 +38,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Self-Contained Source](MM7-Self-Contained-Source.md) — Tracked Mac source, verified integration candidate and remaining graphical, save and identity gates
 - [MM7 Mac Dependency Recipe](MM7-Mac-Dependency-Recipe.md) — Five tracked media-library sources build to nine static arm64 archives
 - [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md) — One-command clean tracked-source MM7 and Atlas build under network denial, with focused headless controls
-- [MM7 Disposable Save and Reload](MM7-Disposable-Save-Reload.md) — Isolated Save/Load evidence, campaign checkpoints, 18 durable quest boundaries and installed-candidate limits
+- [MM7 Disposable Save and Reload](MM7-Disposable-Save-Reload.md) — Isolated Save/Load evidence, 27 checkpoint pairs, copied owner-save primary/backup probes and installed-candidate limits
 - [MM7 Scroll Cancellation](MM7-Scroll-Cancel.md) — Item-, actor- and character-target scroll return on cancelled targeting, focused integrated controls and remaining exit paths
 - [MM7 Playtest Recording](MM7-Playtest-Recording.md) — Atlas rolling video now retains the newest two minutes after every exit, alongside bounded diagnostics, protected clips and the remaining macOS permission gate
 - [MM7 Quest Behavior Catalog](MM7-Quest-Behavior-Catalog.md) — Public/source-event reconciliation of every main, Light, Dark, side and promotion quest; includes both Niles chain returns, Rogue checkpoint, Walls predicate coverage, 18 durable side/objective routes and all 27 promotion endpoints

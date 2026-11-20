@@ -80,9 +80,11 @@ struct Mm7ProfileGate {
     int chapter;
 };
 
-constexpr std::array<Mm7ProfileGate, 61> mm7ProfileGates = {{
+constexpr std::array<Mm7ProfileGate, 67> mm7ProfileGates = {{
     {"MM7DisposableSave.DISABLED_WriteFreshProfile", true, false, -1},
     {"MM7DisposableSave.DISABLED_ReloadFreshProcess", false, true, -1},
+    {"MM7OwnedSaveProbe.DISABLED_LoadCopiedPrimary", false, true, -1},
+    {"MM7OwnedSaveProbe.DISABLED_LoadCopiedBackup", false, true, -1},
     {"MM7CastleRebuild.DISABLED_WriteFreshCheckpoint", true, false, -1},
     {"MM7CastleRebuild.DISABLED_ReloadFreshCheckpoint", false, true, -1},
     {"MM7LightWalls.DISABLED_WriteFreshCheckpoint", true, false, -1},
@@ -103,6 +105,10 @@ constexpr std::array<Mm7ProfileGate, 61> mm7ProfileGates = {{
     {"MM7PriestCheckpoint.DISABLED_ReloadEvenmornMapAndPromote", false, true, -1},
     {"MM7PriestCheckpoint.DISABLED_WriteMoonAltar", true, false, -1},
     {"MM7PriestCheckpoint.DISABLED_ReloadMoonAltarAndPromote", false, true, -1},
+    {"MM7PriestCheckpoint.DISABLED_WriteSunAltar", true, false, -1},
+    {"MM7PriestCheckpoint.DISABLED_ReloadSunAltarAndPromote", false, true, -1},
+    {"MM7LichCheckpoint.DISABLED_WritePhysicalJars", true, false, -1},
+    {"MM7LichCheckpoint.DISABLED_ReloadPhysicalJarsAndPromote", false, true, -1},
     {"MM7SideQuestCheckpoint.DISABLED_WriteMissingContestants", true, false, -1},
     {"MM7SideQuestCheckpoint.DISABLED_ReloadMissingContestants", false, true, -1},
     {"MM7SideQuestCheckpoint.DISABLED_WriteThreePaintings", true, false, -1},

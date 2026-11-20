@@ -164,10 +164,31 @@ bits and Seth's report topic before completing and duplicate-checking the exact
 reward transaction. Each reader uses the normal Load menu in a separate
 process and leaves its slot byte-identical.
 
-The quest-level total is now 36 writer/reader processes across 18 durable
+At that checkpoint, the quest-level total was 36 writer/reader processes across 18 durable
 routes. Including the five older technical seams, the consolidated gate passed
 all 23 admitted pairs in 46 separate processes. Both fresh C0-C7 campaign
 chains also pass. These results close the table's side/objective durability
 column, not visible installed-app acceptance or optional promotion continuity.
+
+## Copied owner-save probes and promotion checkpoints — 2026-11-20
+
+The checkpoint inventory is now 27 writer/reader pairs, capped by the owner at
+36. The new Dark Priest pair saves after the Grand Temple of the Sun altar and
+loads normally in a fresh process before Falk's exact promotion transaction.
+The new Lich pair saves after all four empty jars are physically taken from
+the Walls of Mist chest, then loads normally before Wynac's exact promotion
+transaction. Both readers left their saved slots byte-identical. The four new
+checkpoint processes and nineteen adjacent promotion/load-admission controls
+passed.
+
+A separate guarded runner copies one owned MM7 slot into a marked owner-only
+temporary profile. A fresh headless process loads it through the normal menu
+as a primary; another loads the same bytes as a backup behind a corrupt
+temporary primary. Both modes passed for two owner slots from different dates,
+four processes total. The runner checks the source's inode, size, modification
+time and SHA-256 before and after copying and after the probe, and the source
+files remained unchanged. The temporary copies were removed. This is bounded
+compatibility evidence for those slots, not a survey of every legacy save or
+proof of visible installed-app play. The probes are not checkpoint pairs.
 
 See also: [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [MM7 Atomic Save File](MM7-Atomic-Save-File.md), [MM7 Playtest Recording](MM7-Playtest-Recording.md), [Campaign Status](Campaign-Status.md), [Agent Handoff](Agent-Handoff.md).

@@ -8,6 +8,7 @@
 #include "Engine/Engine.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/MapEnums.h"
+#include "Engine/Objects/ItemEnums.h"
 #include "Engine/Party.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Tables/NPCTable.h"
@@ -16,6 +17,7 @@
 #include "GUI/UI/UIRest.h"
 
 #include "MM7CampaignChain.h"
+#include "MM7MalwickCampaign.h"
 
 GAME_TEST(MM7CampaignChain, DISABLED_Chapter3) {
     // Fixtures: no actors while the party rests in the castle. Teleports to Harmondale, to the castle door, to the
@@ -78,6 +80,9 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter3) {
     game.tick();
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
 
+    acceptCampaignMalwickWand(game);
+    ASSERT_FALSE(::testing::Test::HasFailure());
+
     game.teleportTo(MAP_BRACADA_DESERT, Vec3f(-13180, 18432, 800), 0); // In front of the tavern door.
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();
@@ -109,12 +114,16 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter3) {
     EXPECT_EQ(darkTape, tape(false));
     EXPECT_EQ(gavinTape, tape(false, true));
     EXPECT_EQ(alignmentTape, tape(PartyAlignment::PartyAlignment_Neutral, PartyAlignment::PartyAlignment_Good));
+    EXPECT_TRUE(pParty->_questBits[QBIT_MALWICK_FIREBALL_WAND_ACCEPTED]);
+    EXPECT_TRUE(pParty->PartyTimes.CounterEventValues[4].isValid());
+    EXPECT_TRUE(pParty->hasItem(ITEM_ALACORN_WAND_OF_FIREBALLS));
     EXPECT_EQ(judgesTape, tape(std::pair(HOUSE_INVALID, HOUSE_INVALID),
                                std::pair(HOUSE_TAVERN_BRACADA_DESERT, HOUSE_TAVERN_DEYJA),
                                std::pair(HOUSE_HARMONDALE_ARBITER_1, HOUSE_INVALID)));
     EXPECT_EQ(judgeHiredTape, tape(false, true, false)); // The arbiter takes the judge back.
     EXPECT_EQ(foodTape.size(), 1); // Rest in the rebuilt castle is free.
-    EXPECT_EQ(mapTape, tape(MAP_STONE_CITY, MAP_HARMONDALE, MAP_CASTLE_HARMONDALE, MAP_HARMONDALE, MAP_BRACADA_DESERT, MAP_HARMONDALE));
+    EXPECT_EQ(mapTape, tape(MAP_STONE_CITY, MAP_HARMONDALE, MAP_CASTLE_HARMONDALE, MAP_HARMONDALE,
+                            MAP_EMERALD_ISLAND, MAP_HARMONDALE, MAP_BRACADA_DESERT, MAP_HARMONDALE));
     EXPECT_EQ(houseTape, tape(HOUSE_INVALID, HOUSE_TAVERN_BRACADA_DESERT, HOUSE_INVALID, HOUSE_HARMONDALE_ARBITER_1, HOUSE_INVALID));
     ASSERT_FALSE(::testing::Test::HasFailure());
 

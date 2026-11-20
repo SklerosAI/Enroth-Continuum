@@ -7,6 +7,7 @@ set(GAME_TEST_MAIN_SOURCES
         MM6CampaignChain.cpp
         MM6HeadlessRules.cpp
         MM7CampaignChain.cpp
+        MM7MalwickCampaign.cpp
         MM7CombatHarness.cpp
         GameTests_0000.cpp
         GameTests_0500.cpp
@@ -55,6 +56,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM7ObeliskPuzzle.cpp
         GameTests_MM7WarAlternatives.cpp
         GameTests_MM7MalwickNiles.cpp
+        GameTests_MM7MalwickCampaign.cpp
         GameTests_MM7Griffins.cpp
         GameTests_MM7MountNighon.cpp
         GameTests_MM7SeasonsStole.cpp

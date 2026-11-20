@@ -3778,3 +3778,9 @@ Chronological record of wiki activity.
 - by: T-Burton-ND via codex
 - The owner raised the ceiling from 36 to 48 writer/reader pairs. The verified inventory remains 27; the new number is a ceiling, not a target.
 - A successful physical-Lich pair measured 118.2/117.9 MB peak resident size and 53.6/54.0 MB peak footprint in its separate writer/reader processes, with a 348,399-byte slot and a 720 KiB temporary profile. The profile was removed, and the checkout stayed clean. Apple memory guidance, gtest-parallel's worker model and Python subprocess buffering guidance support keeping pair runners sequential and bounding any future pair-level concurrency. No engine or runner behavior was changed.
+
+## [2026-11-20] decision | MM7 pre-tag checkpoint sweep
+- by: T-Burton-ND via codex
+- Recounting the source registry found 28 writer/reader checkpoint pairs: the previous total of 27 omitted the earlier Rogue pair. The 48-pair ceiling therefore leaves 20 possible additions. This corrects the inventory claim in the earlier entry without changing its measured resource evidence.
+- The full sweep now has one explicit local pre-tag runner. It discovers registered pairs, uses one marked temporary profile per pair, runs writer then reader in separate fresh processes, checks the 10 GiB disk floor and refuses an existing tag or dirty candidate tree. It never creates or moves a tag. New or changed pairs remain author-time focused checks; ordinary builds, default GameTests and CI do not invoke the full sweep.
+- The 28-pair listing and Python syntax passed. The full sweep was intentionally deferred until an actual release candidate; the archive, map, spell, item and monster audit remains scheduled for the later audit round.

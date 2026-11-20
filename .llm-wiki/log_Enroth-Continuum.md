@@ -3799,3 +3799,9 @@ Chronological record of wiki activity.
 - Recorded the separate MM7 click-loot mod: a shared in-game checkbox and paused Reroll/Take popup for eligible random monster corpses and random scripted items from clicked trash heaps, decorations and faces. Fixed rewards, gold and pre-generated items remain on the inherited path.
 - Documented the one-session Emerald Isle dragon test setup and the proposed 0.1.1 MM7 patch boundary. MM6 remains a separate playtest helper; Claude's active MM6 branch is not included in this source candidate.
 - The default MM7 headless suite passed 737/737, opt-in mod combination 5/5, MM6 item/decor controls 3/3, unit tests 1125 passed with 45 optional skips, and style and Atlas contract checks passed. The pre-tag fresh-process sweep and release installation remain pending.
+
+## [2026-11-20] update | ECv0.1.1 released and installed
+- by: T-Burton-ND via codex
+- Recorded the immutable annotated `ECv0.1.1` MM7 patch tag and exact source provenance. Master and the tag were pushed; the MM6 helper remains an owner playtest candidate and Claude's active MM6 branch was not merged.
+- All 28 fresh-process MM7 checkpoint pairs, both C0–C7 campaign chains and two hidden OpenGL captures passed before release. The inspected mod-enabled HUD frame showed the checkbox and dice mark.
+- Built and signed both title helpers and Atlas from the exact tagged source. The installed bundle matches the stage recursively and passes deep strict code-sign verification. The old installed app and app-only rollback copies were removed without a new backup; profiles and saves were preserved. Installed-app gameplay and graphical popup acceptance remain for owner playtesting.

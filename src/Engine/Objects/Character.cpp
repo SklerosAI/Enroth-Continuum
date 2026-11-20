@@ -22,6 +22,7 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
 #include "Engine/MM6/MM6ActualStatCondition.h"
+#include "Engine/MM6/MM6ArtifactBonus.h"
 #include "Engine/MM6/MM6Calendar.h"
 #include "Engine/MM6/MM6CombatRules.h"
 #include "Engine/MM6/MM6CreationRules.h"
@@ -2535,7 +2536,11 @@ int Character::GetItemsBonus(Attribute attr, bool getOnlyMainHandDmg /*= false*/
                 }
 
                 if (entry->rarity() == RARITY_ARTIFACT || entry->rarity() == RARITY_RELIC) {
-                    entry->GetItemBonusArtifact(this, attr, &v62);
+                    if (engine->gameTitle() == GameTitle::MM6) {
+                        v62 += mm6::artifactAttributeBonus(entry->itemId, attr);
+                    } else {
+                        entry->GetItemBonusArtifact(this, attr, &v62);
+                    }
                 } else if (entry->standardEnchantment == attr) {
                     v5 += entry->standardEnchantmentStrength;
                 } else {

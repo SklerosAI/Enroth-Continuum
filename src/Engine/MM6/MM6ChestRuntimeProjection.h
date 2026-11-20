@@ -21,7 +21,7 @@ static_assert(std::endian::native == std::endian::little);
 
 // A bounded MM6 chest grid in the MM7-shaped intermediate. The active 9x9
 // area may reference only slots the current ChestInventory reconstructor can
-// restore; the remaining 59 wire cells hold the later pages, see `decodeChestPages`.
+// restore. The remaining 59 wire cells hold the later pages, see `decodeChestPages`.
 inline bool validChestRuntimeGrid(GameTitle title, const Chest_MM7 &chest) {
     if (title != GameTitle::MM6 || chest.chestTypeId >= 8)
         return false;

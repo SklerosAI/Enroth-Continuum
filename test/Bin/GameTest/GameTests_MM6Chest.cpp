@@ -100,8 +100,8 @@ static std::vector<int> chestContents(int chestId) {
 }
 
 static void enterAbandonedTempleWithChestRoll(EngineController &game, std::uint32_t chestRoll) {
-    // A new party walks into the Abandoned Temple, whose chests roll their items as it loads, from the given chest
-    // random state. Chest 1 is trapped, the active character disarms it.
+    // A new party walks into the Abandoned Temple, whose ground treasure and then chests roll their items as it loads,
+    // from the given chest random state. Chest 1 is trapped, the active character disarms it.
     startNewGameThroughInput(game);
     pParty->activeCharacter().setSkillValue(SKILL_TRAP_DISARM, CombinedSkillValue(10, MASTERY_MASTER));
     game.teleportTo(pMapTable->GetMapInfo("oute3.odm"), Vec3f(-21456, -286, 193), 90); // In front of the temple door, facing it.
@@ -477,7 +477,7 @@ GAME_TEST(MM6Chest, OverflowShowsMostValuableItems) {
         SCOPED_TRACE(fmt::format("fix={}", fix));
         test.prepareForNextTest();
         engine->config->gameplay.FixChestOverflow.setValue(fix);
-        enterAbandonedTempleWithChestRoll(game, 3041712726u);
+        enterAbandonedTempleWithChestRoll(game, 4265220630u);
         auto hiddenTape = tapes.custom([] { return hiddenChestItems(1); });
         auto quadsTape = tapes.hudQuads();
         auto screenTape = tapes.screen();
@@ -502,7 +502,7 @@ GAME_TEST(MM6Chest, OverflowItemAppearsWhenThereIsRoom) {
     // chest 1 of the Abandoned Temple frees a whole column, and the Emerald Staff shows there when the chest is opened
     // again.
     constexpr ItemId longbow = static_cast<ItemId>(42), emeraldStaff = static_cast<ItemId>(62);
-    enterAbandonedTempleWithChestRoll(game, 3041712726u);
+    enterAbandonedTempleWithChestRoll(game, 4265220630u);
     auto hiddenTape = tapes.custom([] { return hiddenChestItems(1); });
     auto staffTape = tapes.custom([=] {
         const InventoryEntry staff = vChests[1].inventory.find(emeraldStaff);

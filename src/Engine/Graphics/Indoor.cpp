@@ -17,6 +17,7 @@
 #include "Engine/MM6/MM6EncounterMonster.h"
 #include "Engine/MM6/MM6MapTransition.h"
 #include "Engine/MM6/MM6MapVisit.h"
+#include "Engine/MM6/MM6RandomTreasure.h"
 #include "Engine/AssetsManager.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Graphics/BspRenderer.h"
@@ -1807,6 +1808,10 @@ int DropTreasureAt(ItemTreasureLevel trs_level, RandomItemType trs_type, Vec3f p
 
 void SpawnRandomTreasure(MapData *mapData, SpawnPoint *spawn) {
     assert(spawn->type == OBJECT_Sprite);
+    if (engine->gameTitle() == GameTitle::MM6) {
+        mm6::spawnRandomTreasure(mapData->mapTreasureLevel, *spawn);
+        return;
+    }
 
     SpriteObject spawnedObject;
     spawnedObject.containing_item.Reset();

@@ -1794,6 +1794,18 @@ int Character::ReceiveSpecialAttackEffect(MonsterSpecialAttack attType, Actor *p
 
 // 48DCF6: using guessed type char var_94[140];
 
+static int hiredWeaponSkillBonus() {
+    return engine->gameTitle() == GameTitle::MM6 ? mm6::weaponSkillHirelingBonus() : 0;
+}
+
+static int hiredArmorSkillBonus() {
+    return engine->gameTitle() == GameTitle::MM6 ? mm6::armorSkillHirelingBonus() : 0;
+}
+
+static int hiredWeaponSkillRecoveryBonus() {
+    return engine->config->gameplay.FixWeaponSkillHirelings.value() ? hiredWeaponSkillBonus() : 0;
+}
+
 //----- (0048E1B5) --------------------------------------------------------
 Duration Character::GetAttackRecoveryTime(bool attackUsesBow) const {
     InventoryConstEntry weapon;
@@ -1866,7 +1878,7 @@ Duration Character::GetAttackRecoveryTime(bool attackUsesBow) const {
              weapon->skill() == SKILL_BOW)) {
             // Expert Sword, Axe & Bow reduce recovery
             if (weaponSkill.mastery() >= MASTERY_EXPERT)
-                sword_axe_bow_recovery_reduction = Duration::fromTicks(weaponSkill.level());
+                sword_axe_bow_recovery_reduction = Duration::fromTicks(weaponSkill.level() + hiredWeaponSkillRecoveryBonus());
         }
     }
 
@@ -2641,8 +2653,10 @@ int Character::actualSkillLevel(Skill skill) const {
         } break;
 
         case SKILL_ARMSMASTER: {
-            if (CheckHiredNPCSpeciality(NPC_PROFESSION_ARMS_MASTER)) bonus = 2;
-            if (CheckHiredNPCSpeciality(NPC_PROFESSION_WEAPONS_MASTER)) bonus += 3;
+            if (engine->gameTitle() != GameTitle::MM6) { // MM6 has no Armsmaster, its masters add to the weapon skills.
+                if (CheckHiredNPCSpeciality(NPC_PROFESSION_ARMS_MASTER)) bonus = 2;
+                if (CheckHiredNPCSpeciality(NPC_PROFESSION_WEAPONS_MASTER)) bonus += 3;
+            }
             bonus += GetItemsBonus(ATTRIBUTE_SKILL_ARMSMASTER);
         } break;
 
@@ -2837,6 +2851,7 @@ int Character::GetSkillBonus(Attribute inSkill) const {
             bool wearingArmor = false;
             bool wearingLeather = false;
             int ACSum = 0;
+            const int hirelingBonus = hiredArmorSkillBonus();
 
             for (InventoryConstEntry item : inventory.functionalEquipment()) {
                 Skill itemSkillType = item->skill();
@@ -2875,7 +2890,7 @@ int Character::GetSkillBonus(Attribute inSkill) const {
                     default:
                         break;
                 }
-                ACSum += multiplier * currArmorSkillLevel;
+                ACSum += multiplier * (currArmorSkillLevel + hirelingBonus);
             }
 
             CombinedSkillValue dodgeValue = getActualSkillValue(SKILL_DODGE);
@@ -2899,7 +2914,7 @@ int Character::GetSkillBonus(Attribute inSkill) const {
             for (InventoryConstEntry item : inventory.functionalEquipment()) {
                 if (item->isMeleeWeapon()) {
                     Skill currItemSkillType = item->skill();
-                    int currentItemSkillLevel = this->getActualSkillValue(currItemSkillType).level();
+                    int currentItemSkillLevel = this->getActualSkillValue(currItemSkillType).level() + hiredWeaponSkillBonus();
                     if (currItemSkillType == SKILL_BLASTER) {
                         int multiplier = GetMultiplierForSkillLevel(currItemSkillType, 1, 2, 3, 5);
                         return multiplier * currentItemSkillLevel;
@@ -2918,7 +2933,7 @@ int Character::GetSkillBonus(Attribute inSkill) const {
             for (InventoryConstEntry item : inventory.functionalEquipment()) {
                 if (item->isWeapon()) {
                     Skill currentItemSkillType = item->skill();
-                    int currentItemSkillLevel = this->getActualSkillValue(currentItemSkillType).level();
+                    int currentItemSkillLevel = this->getActualSkillValue(currentItemSkillType).level() + hiredWeaponSkillBonus();
                     if (currentItemSkillType == SKILL_BOW) {
                         int multiplier = GetMultiplierForSkillLevel(SKILL_BOW, 1, 1, 1, 1);
                         return multiplier * currentItemSkillLevel;
@@ -2942,7 +2957,7 @@ int Character::GetSkillBonus(Attribute inSkill) const {
             for (InventoryConstEntry item : inventory.functionalEquipment()) {
                 if (item->isMeleeWeapon()) {
                     Skill currItemSkillType = item->skill();
-                    int currItemSkillLevel = this->getActualSkillValue(currItemSkillType).level();
+                    int currItemSkillLevel = this->getActualSkillValue(currItemSkillType).level() + hiredWeaponSkillBonus();
                     int baseSkillBonus;
                     int multiplier;
                     switch (currItemSkillType) {

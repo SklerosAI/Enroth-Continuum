@@ -141,6 +141,7 @@ Landed:
 | C3, C5, C7, C17, C20, C21, C27, C28, C29, W3, W6, W11, W14, W16, W17, W24, W27 | Already right in code. Those without an MM6 test got one in `GameTests_MM6GrayFaceShared.cpp`. |
 | C10, C13, C14 | `fix_condition_spells`, `fix_water_walk_mana_drain`, `fix_stronger_shorter_buff` |
 | C6, C18 | `fix_recovery_enchant`, `fix_turn_based_turn_time` |
+| C8 | `fix_weapon_skill_hirelings` for the Expert recovery cut. The attack, damage and armor points and the dropped Armsmaster route follow MM6.exe, no flag. |
 | C26 | No flag. MM6.exe plays the mace swing for clubs, the port was wrong. |
 | W1, W7, W8, W9 | `fix_map_timers`, `fix_travel_autosave`, `fix_travel_speech_delay`, `fix_flying_border_offer` |
 | W2 | `fix_inactive_party_events` |
@@ -154,7 +155,6 @@ Open:
 
 | Items | What is left |
 | --- | --- |
-| C8 | Weapon-skill hirelings add to an MM7 skill MM6 doesn't have. Trace what vanilla applies the bonus to first. |
 | C22 | Armor recovery uses the MM7 table. Mok's change needs tracing. |
 | C24 | Doesn't reproduce. MM6.exe's own walking edge check, which we port, keeps chasing monsters on their ledges. Needs a vanilla case that falls. |
 | W12 | Found-artifact flags never clear on respawn. Needs event opcode 69 `RefundChestArtifacts`. |

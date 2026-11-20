@@ -172,7 +172,9 @@ See [travel and maps](mm6-travel-and-maps.md) for the arrival side.
   found gold match the shared code.
 - Profession effects the port uses: merchant points (above), travel days (above), effective reputation for event
   compares and teachers (Bard +200, Pirate, Gypsy, Duper and Burglar -200 each), a hired Enchanter's +20 resistance,
-  and diplomacy bonuses for Counselor, Barrister and Negotiator.
+  diplomacy bonuses for Counselor, Barrister and Negotiator, and weapon skill points (Arms Master 2, Weapons Master 3,
+  Squire 2) in the attack, melee damage and shooting bonuses, with the Squire's 2 in every armor class term
+  (`MM6CombatRules.h`, MM6.exe 0x483930).
 - Event variables 214 and 223 hire, dismiss and test hirelings, see [MM6 events](mm6-events.md).
 - House residents marked as joinable can't be hired yet. The MM6 house window shows them by name and runs their scripted
   topics only.

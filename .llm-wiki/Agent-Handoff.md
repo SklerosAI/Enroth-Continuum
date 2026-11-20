@@ -38,6 +38,21 @@ checks with the required MM7 shared-core controls. The first-hour packet stays
 behind that work. Exact commits and file-state cautions are in the
 [release handoff message](../agent_comms/messages/2026-11-16T19-54-52Z--from-codex--to-claude--ecv0.1.0-and-mm6-integration.md).
 
+## MM7 continuity checkpoint — 2026-11-19
+
+The current MM7 integration branch extends the fresh Light C0-C7 chain through
+Malwick's six-week letter, Niles's Tatalia offer, the physical Lambent tapestry
+pickup and his successful return before C4 saves. The fresh Light chain passes
+all eight chapters. Dark C5 now measures a forward-input approach to Kastore's
+Pit door before the authored offer; its independent fresh C0-C7 chain passes.
+The shipped Walls of Mist map has no protected group-1 actor, spawn or remap;
+the normal no-kill route and a synthetic killed-group failure branch both pass
+through the real exit event. No engine change was needed. The combined full
+headless and style gate is the integration check before merging into `master`.
+Remaining MM7 work is in the [selection board](../project/MM7_REMAINING_QUESTS_AND_AREAS.md)
+and [audit checklist](../project/MM7_AUDIT_CHECKLIST.md); graphical Mac play and
+Strange Temple original placement parity remain open.
+
 ## Current MM7 campaign checkpoint — 2026-11-14
 
 Light C6 no longer teleports directly to Colony Zod. It accepts Resurecta's

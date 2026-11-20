@@ -41,7 +41,7 @@ struct ChestOpenOwnerCandidate {
 // still agree with the authoritative raw map record before first placement.
 inline bool chestMatchesOpenRecord(const Chest &chest, const ChestRecord &record) {
     Chest_MM7 live{};
-    snapshot(chest, &live);
+    snapshotChest(chest, &live);
     if (live.chestTypeId != readChest16(record, 0) || live.flags != readChest16(record, 2))
         return false;
     const auto grid = decodeChestGridWire(GameTitle::MM6, record);

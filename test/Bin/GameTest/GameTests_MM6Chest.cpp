@@ -330,7 +330,7 @@ GAME_TEST(MM6ZChestHeadless, ScopedFirstOutdoorMapAndRollback) {
     ASSERT_TRUE(mm6::copyChestRecords(wire.part(mm6::OutdoorDeltaPart::Chests), &records));
     for (int index = 0; index < 20; ++index) {
         Chest_MM7 live{};
-        snapshot(vChests[index], &live);
+        mm6::snapshotChest(vChests[index], &live);
         EXPECT_EQ(live.chestTypeId, mm6::readChest16(records[index], 0));
         EXPECT_EQ(live.flags, mm6::readChest16(records[index], 2));
         for (int slot = 0; slot < 140; ++slot)

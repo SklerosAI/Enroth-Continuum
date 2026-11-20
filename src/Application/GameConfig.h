@@ -311,6 +311,10 @@ class GameConfig : public Config {
             "MM6 only. Don't offer the trip to the next map while the party flies, as the GrayFace patch does. In vanilla, "
             "flying low over the map edge offered the trip, and accepting it did nothing."};
 
+        Bool FixSpellsCost = {this, "fix_spells_cost", true,
+            "MM6 only. Take every spell's cost from spells.txt, as the GrayFace patch does. In vanilla the costs came from a "
+            "table in MM6.exe, where Expert Static Charge costs 2 spell points and its description says 1."};
+
         Float SpellFailureRecoveryMod = {this, "spell_failure_recovery_mod", 0.5f, &ValidateSpellFailureRecoveryMod,
             "Recovery time modifier when spell casting ended in failure for the reason where spell cannot be cast at all in current context. "
             "Context include situation where outdoor spell is casted indoor or targeted spell is casted with no characters on screen."};

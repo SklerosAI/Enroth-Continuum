@@ -645,3 +645,29 @@ GAME_TEST(MM6PlayerSpells, ShieldHalvesArrows) {
         EXPECT_EQ(hpTape, tape({38, 22, 22, 20}, {38, 22, shield ? 20 : 18, 20}));
     }
 }
+
+GAME_TEST(MM6PlayerSpells, ExpertStaticChargeCost) {
+    // Expert Static Charge cost 2 spell points, where spells.txt and the spell's description say 1. MM6.exe charges
+    // from its own table, which fix_spells_cost replaces with spells.txt.
+    for (bool fix : {true, false}) {
+        SCOPED_TRACE(fmt::format("fix={}", fix));
+        test.prepareForNextTest();
+        engine->config->gameplay.FixSpellsCost.setValue(fix);
+        auto mpTape = charTapes.mp(SORCERER);
+        enterFirstMapFromNewGame(game);
+        teachSorcerer(mm6::SPELL_STATIC_CHARGE, CombinedSkillValue(4, MASTERY_EXPERT));
+        const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+        const int monster = game.spawnMonster(pParty->pos + ahead * 1000, sturdyMonster(), SPAWN_DUMMY)->id;
+        auto hpTape = actorTapes.hp(monster);
+        test.startTaping();
+
+        setQuickSpellFromSpellbook(game, mm6::SPELL_STATIC_CHARGE);
+        game.pointMouseAtActor(monster);
+        game.pressAndReleaseKey(PlatformKey::KEY_S);
+        for (int frame = 0; frame < 20 && hpTape.size() == 1; frame++)
+            game.tick(); // The spark flies to the monster.
+
+        EXPECT_EQ(mpTape, tape(100, fix ? 99 : 98));
+        EXPECT_EQ(hpTape.size(), 2);
+    }
+}

@@ -16,6 +16,7 @@
 #include "GUI/UI/UIRest.h"
 
 #include "MM7CampaignChain.h"
+#include "MM7GameplayHarness.h"
 
 GAME_TEST(MM7DarkCampaignChain, DISABLED_Chapter3) {
     // Continue the common C0-C2 history, wait for the arbiter messenger, then install Judge Grey from Deyja.
@@ -44,7 +45,14 @@ GAME_TEST(MM7DarkCampaignChain, DISABLED_Chapter3) {
     auto castleDoor = std::ranges::find_if(pOutdoor->faces, [](const BLVFace &face) { return face.eventId == 301; });
     ASSERT_NE(castleDoor, pOutdoor->faces.end());
     auto [castlePosition, castleYaw] = approachCampaignChainFace(*castleDoor);
-    game.teleportTo(MAP_HARMONDALE, castlePosition, castleYaw);
+    game.teleportTo(MAP_HARMONDALE, castlePosition + 300 * castleDoor->facePlane.normal, castleYaw);
+    game.tick(2); // Outdoor floor and party velocity settle before measured input.
+    mm7::testing::MM7MovementResult castleApproach = mm7::testing::driveMovementInput(game, {
+        .key = PlatformKey::KEY_UP,
+        .heldTicks = 8,
+        .minimumHorizontalDistance = 50,
+    });
+    SCOPED_TRACE(castleApproach.diagnostic());
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();
     ASSERT_EQ(current_screen_type, SCREEN_INPUT_BLV);

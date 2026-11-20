@@ -18,6 +18,7 @@
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Resources/LOD.h"
 #include "Engine/Localization.h"
+#include "Engine/Mods/PrivateMods.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/MM6/MM6NewGameSession.h"
 #include "Engine/MM7/MM7AtomicSaveFile.h"
@@ -152,6 +153,7 @@ bool loadGame(std::string_view fileName) {
     deserialize(saveBytes, &state, tags::via<SaveGame_MM7>);
 
     // Move loaded state to global variables.
+    mm7::mods::cancelMonsterLootNewGameDragon();
     *pParty = std::move(state.party);
     *gameTimer = std::move(state.eventTimer);
     *pActiveOverlayList = std::move(state.overlays);
@@ -385,6 +387,7 @@ void doSavegame(std::string fileName, std::string_view title) {
 }
 
 void saveNewGame() {
+    mm7::mods::cancelMonsterLootNewGameDragon();
     if (engine->gameTitle() == GameTitle::MM6 && !mm6NewGameSaveOverride) {
         engine->_lastLoadedSaveFileName.clear();
         mm6::startNewGameSession();
@@ -430,6 +433,7 @@ void saveNewGame() {
     pParty->_viewYaw = 512;
     engine->_lastLoadedSaveFileName.clear(); // Otherwise the save menu would pre-select a save from a previous playthrough.
     saveGame(true, true, fmt::format("saves/{}", autosaveFileName), localization->str(LSTR_AUTOSAVE));
+    mm7::mods::armMonsterLootNewGameDragon(engine->gameTitle());
 }
 
 void quickSaveGame() {

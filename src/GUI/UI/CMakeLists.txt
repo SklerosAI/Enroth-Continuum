@@ -10,6 +10,7 @@ set(GUI_UI_SOURCES
         MM6Spellbook.cpp
         MM6NpcDialogue.cpp
         UIChest.cpp
+        UIMonsterLoot.cpp
         UICredits.cpp
         UIDialogue.cpp
         UIBranchlessDialogue.cpp
@@ -43,6 +44,7 @@ set(GUI_UI_HEADERS
         MM6NpcDialogue.h
         MM6PaperdollArt.h
         UIChest.h
+        UIMonsterLoot.h
         UICredits.h
         UIDialogue.h
         UIBranchlessDialogue.h

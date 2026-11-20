@@ -27,6 +27,7 @@
 #include "Engine/Graphics/Vis.h"
 #include "Engine/Graphics/Image.h"
 #include "Engine/Localization.h"
+#include "Engine/Mods/PrivateMods.h"
 #include "Engine/MapEnumFunctions.h"
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/Tables/MapTable.h"
@@ -1442,6 +1443,17 @@ void GameUI_DrawPortraits() {
                 render->DrawQuad2D(alert_texture, position);
             }
         }
+    }
+    if (current_screen_type == SCREEN_GAME && mm7::mods::monsterLootRerollEnabled(engine->gameTitle())) {
+        render->FillRect({5, 423, 18, 18}, colorTable.White);
+        render->FillRect({7, 425, 14, 14}, colorTable.NavyBlue);
+        if (engine->config->gameplay.MonsterLootRerollInGame.value())
+            render->FillRect({10, 428, 8, 8}, colorTable.White);
+        render->FillRect({5, 444, 18, 18}, colorTable.White);
+        render->FillRect({7, 446, 14, 14}, colorTable.NavyBlue);
+        render->FillRect({10, 449, 2, 2}, colorTable.White);
+        render->FillRect({16, 455, 2, 2}, colorTable.White);
+        render->FillRect({13, 452, 2, 2}, colorTable.White);
     }
 }
 

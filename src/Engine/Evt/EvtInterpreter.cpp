@@ -66,6 +66,7 @@
 #include "GUI/UI/UIBranchlessDialogue.h"
 #include "GUI/UI/UITransition.h"
 #include "GUI/UI/UIStatusBar.h"
+#include "GUI/UI/UIMonsterLoot.h"
 
 #include "Library/Logger/Logger.h"
 
@@ -1852,6 +1853,10 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                                    ir.data.give_item_descr.item_id);
                 break;
             }
+            if (ir.data.give_item_descr.item_id == ITEM_NULL &&
+                captureClickedRandomLoot(ir.data.give_item_descr.treasure_level,
+                                         ir.data.give_item_descr.treasure_type))
+                break;
             Item item;
             item.Reset();
             pItemTable->generateItem(ir.data.give_item_descr.treasure_level, ir.data.give_item_descr.treasure_type, &item);

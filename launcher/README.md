@@ -114,6 +114,10 @@ The chest reroll toggle similarly passes `ENROTH_MM7_CHEST_REROLL=1` only to a
 Private mods MM7 launch. Its Reroll button appears on unclaimed chests whose
 random loot was generated while the toggle was active; see
 [the chest reroll contract](../project/MM7_CHEST_REROLL_MOD.md).
+The separate click-loot toggle passes `ENROTH_MM7_MONSTER_LOOT_REROLL=1` only
+to a Private mods MM7 launch. Its in-game dice checkbox controls whether an
+eligible random-loot corpse or clicked random script item opens a paused
+Reroll/Take popup; see [the click-loot contract](../project/MM7_MONSTER_LOOT_REROLL_MOD.md).
 
 The source defaults for a future MM7 Atlas build are
 `~/Library/Application Support/Enroth Continuum/Game Data/MM7` and the fresh

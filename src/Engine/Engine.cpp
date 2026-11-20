@@ -35,6 +35,7 @@
 #include "Engine/Graphics/Weather.h"
 #include "Engine/Graphics/TurnBasedOverlay.h"
 #include "Engine/Localization.h"
+#include "Engine/Mods/PrivateMods.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Tables/ObjectTable.h"
@@ -837,6 +838,21 @@ void DoPrepareWorld(bool bLoading, int _1_fullscreen_loading_2_box) {
         }
     }
     engine->_461103_load_level_sub();
+    if (engine->gameTitle() == GameTitle::MM7 && engine->_currentLoadedMapId == MAP_DRAGONS_LAIR &&
+        mm7::mods::consumeMonsterLootNewGameDragon()) {
+        for (Actor &actor : pActors) {
+            if (actor.monsterInfo.id < MONSTER_DRAGON_A || actor.monsterInfo.id > MONSTER_DRAGON_C ||
+                actor.IsNotAlive())
+                continue;
+            Actor::Die(actor.id);
+            actor.aiState = Dead;
+            actor.currentActionAnimation = ANIM_Dead;
+            actor.currentActionTime = 0_ticks;
+            actor.currentActionLength = 0_ticks;
+            actor.UpdateAnimation();
+            break;
+        }
+    }
     if (engine->gameTitle() == GameTitle::MM6)
         mm6::removeDefeatedFinaleBosses();
     if (engine->_currentLoadedMapId == MAP_BREEDING_ZONE || engine->_currentLoadedMapId == MAP_WALLS_OF_MIST) {

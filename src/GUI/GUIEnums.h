@@ -13,6 +13,9 @@ enum UIMessageType : uint32_t {
 
     UIMSG_CHEST_ClickItem = 12,
     UIMSG_CHEST_Reroll = 13,
+    UIMSG_MONSTER_LOOT_Reroll = 16,
+    UIMSG_MONSTER_LOOT_Take = 18,
+    UIMSG_MONSTER_LOOT_Toggle = 19,
 
     UIMSG_MouseLeftClickInScreen = 14,
     UIMSG_F = 15,
@@ -274,6 +277,7 @@ enum class ScreenType {
     SCREEN_KEYBOARD_OPTIONS = 26,
     SCREEN_1B = 27,
     SCREEN_VIDEO_OPTIONS = 28,
+    SCREEN_MONSTER_LOOT = 29,
 
     SCREEN_63 = 0x63,
     SCREEN_64 = 0x64,
@@ -332,6 +336,7 @@ enum class WindowType {
     WINDOW_PARTY_CREATION,      // Vanilla MM7 uses 1.
     WINDOW_GAME_UI,             // Vanilla MM7 uses 1.
     WINDOW_CREDITS,             // Vanilla MM7 uses 1.
+    WINDOW_MONSTER_LOOT,
 };
 using enum WindowType;
 

@@ -50,6 +50,11 @@ struct ActorJob {
 
 class GUIWindow;
 
+struct MonsterLootOffer {
+    int gold = 0;
+    Item item;
+};
+
 class Actor {
  public:
     Actor() {}
@@ -223,6 +228,9 @@ class Actor {
     static int searchDeadActorsByID(int *pTotalActors, int id);
 
     void LootActor();
+    bool canRerollLoot() const;
+    MonsterLootOffer rollRerollLoot();
+    void takeRerollLoot(const MonsterLootOffer &offer);
     bool _427102_IsOkToCastSpell(SpellId spell);
     ActorAbility special_ability_use_check(int a2);
     bool _4273BB_DoesHitOtherActor(Actor *defender, int a3, int a4);

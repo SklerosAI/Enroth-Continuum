@@ -56,4 +56,4 @@ have passed play, export, import, and save/load checks.
 
 ## Optional mod backlog
 
-- **Instant loot reroll (MM6, MM7, MM8):** The MM7 chest-only, unclaimed-loot slice is implemented in source; see [MM7 chest reroll](MM7_CHEST_REROLL_MOD.md). Monster loot and the MM6/MM8 versions remain future work.
+- **Instant loot reroll (MM6, MM7, MM8):** MM7 has separate chest and random click-loot mods. The latter covers eligible monster corpses and scripted random items from trash heaps, decorations and faces; see [chest reroll](MM7_CHEST_REROLL_MOD.md) and [click loot reroll](MM7_MONSTER_LOOT_REROLL_MOD.md). MM6/MM8 versions remain future work.

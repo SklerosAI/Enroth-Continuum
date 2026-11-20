@@ -174,6 +174,9 @@ class GameConfig : public Config {
             "Use 1 to try to place items that didn't fit every time the chest is opened again. "
             "Use 2 to try to place items that didn't fit every time an item is picked up from the chest."};
 
+        Bool MonsterLootRerollInGame = {this, "mm7_monster_loot_reroll_in_game", true,
+            "In-game dice checkbox for the opt-in MM7 monster loot reroll mod."};
+
         Int Gravity = {this, "gravity", 5,
             "Gravity strength, the higher the more gravity, 0 disables gravity completely."};
 

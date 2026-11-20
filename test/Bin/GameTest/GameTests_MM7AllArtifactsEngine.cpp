@@ -6,17 +6,22 @@
 #include "Testing/Game/GameTest.h"
 
 #include "Engine/Engine.h"
+#include "Engine/Interaction.h"
+#include "Engine/Objects/Decoration.h"
 #include "Engine/Mods/PrivateMods.h"
+#include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/ItemEnumFunctions.h"
 #include "Engine/Party.h"
 #include "Engine/Snapshots/EntitySnapshots.h"
 #include "Engine/Tables/ItemTable.h"
 #include "Engine/Tables/ChestTable.h"
+#include "Engine/Timer.h"
 
 #include "GUI/GUIWindow.h"
 #include "GUI/GUIButton.h"
 #include "GUI/UI/UIChest.h"
+#include "GUI/UI/UIMonsterLoot.h"
 
 namespace {
 
@@ -35,6 +40,61 @@ GAME_TEST(MM7AllArtifactsEngine, DisabledModeLeavesCollectionStateUntouched) {
     pParty->setHoldingItem(Item(target));
     EXPECT_FALSE(pParty->artifactCollectionInitialized);
     EXPECT_FALSE(pParty->isArtifactCollected[target]);
+    pParty->takeHoldingItem();
+}
+
+GAME_TEST(MM7MonsterLootReroll, ClickedRandomScriptItemUsesSamePopup) {
+    if (!mm7::mods::monsterLootRerollEnabled(engine->gameTitle()))
+        GTEST_SKIP() << "Set ENROTH_MM7_MONSTER_LOOT_REROLL=1";
+    game.startNewGame();
+    engine->config->gameplay.MonsterLootRerollInGame.setValue(true);
+    ASSERT_FALSE(pLevelDecorations.empty());
+    constexpr int eventId = 32000;
+    pLevelDecorations[0].uEventID = eventId;
+    EvtInstruction give(EVENT_GiveItem);
+    give.step = 0;
+    give.data.give_item_descr = {ITEM_TREASURE_LEVEL_2, RANDOM_ITEM_ANY, ITEM_NULL};
+    engine->_localEventMap.add(eventId, give);
+    EvtInstruction exit(EVENT_Exit);
+    exit.step = 1;
+    engine->_localEventMap.add(eventId, exit);
+    pParty->takeHoldingItem();
+    auto generatedBefore = pParty->isArtifactGenerated;
+
+    DecorationInteraction(0, Pid::decoration(0));
+    ASSERT_TRUE(monsterLootPopupOpen());
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_TRUE(gameTimer->isPaused());
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    EXPECT_FALSE(monsterLootPopupOpen());
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    DecorationInteraction(0, Pid::decoration(0));
+    ASSERT_TRUE(monsterLootPopupOpen());
+    game.pressGuiButton("MonsterLoot_Reroll");
+    game.tick();
+    EXPECT_EQ(pParty->isArtifactGenerated, generatedBefore);
+    game.pressGuiButton("MonsterLoot_Take");
+    game.tick();
+    EXPECT_FALSE(monsterLootPopupOpen());
+    EXPECT_NE(pParty->pPickedItem.itemId, ITEM_NULL);
+    pParty->takeHoldingItem();
+
+    give.data.give_item_descr.item_id = ITEM_CRUDE_LONGSWORD;
+    constexpr int fixedEventId = eventId + 1;
+    pLevelDecorations[0].uEventID = fixedEventId;
+    engine->_localEventMap.add(fixedEventId, give);
+    engine->_localEventMap.add(fixedEventId, exit);
+    DecorationInteraction(0, Pid::decoration(0));
+    EXPECT_FALSE(monsterLootPopupOpen());
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_CRUDE_LONGSWORD);
+    pParty->takeHoldingItem();
+
+    engine->config->gameplay.MonsterLootRerollInGame.setValue(false);
+    pLevelDecorations[0].uEventID = eventId;
+    DecorationInteraction(0, Pid::decoration(0));
+    EXPECT_FALSE(monsterLootPopupOpen());
+    EXPECT_NE(pParty->pPickedItem.itemId, ITEM_NULL);
     pParty->takeHoldingItem();
 }
 
@@ -91,6 +151,88 @@ GAME_TEST(MM7ChestReroll, KeepsAuthoredChestAndStopsAfterClaim) {
     EXPECT_FALSE(Chest::reroll(chestId));
     game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
     game.tick();
+}
+
+GAME_TEST(MM7MonsterLootReroll, PopupDefersAwardAndLeavesFixedDropsAlone) {
+    if (!mm7::mods::monsterLootRerollEnabled(engine->gameTitle()))
+        GTEST_SKIP() << "Set ENROTH_MM7_MONSTER_LOOT_REROLL=1";
+    game.startNewGame();
+    engine->config->gameplay.MonsterLootRerollInGame.setValue(true);
+    EXPECT_TRUE(std::ranges::any_of(pPrimaryWindow->vButtons,
+                                    [](const GUIButton *button) { return button->id == "MonsterLoot_InGameToggle"; }));
+    game.pressGuiButton("MonsterLoot_InGameToggle");
+    game.tick();
+    EXPECT_FALSE(engine->config->gameplay.MonsterLootRerollInGame.value());
+    game.pressGuiButton("MonsterLoot_InGameToggle");
+    game.tick();
+    EXPECT_TRUE(engine->config->gameplay.MonsterLootRerollInGame.value());
+    ASSERT_FALSE(pActors.empty());
+    constexpr int actorId = 0;
+    Actor &actor = pActors[actorId];
+    actor.aiState = Dead;
+    actor.attributes &= ~ACTOR_HAS_ITEM;
+    actor.carriedItemId = ITEM_NULL;
+    for (Item &item : actor.items)
+        item.Reset();
+    actor.monsterInfo.level = 10;
+    actor.monsterInfo.treasureDropChance = 100;
+    actor.monsterInfo.treasureLevel = ITEM_TREASURE_LEVEL_1;
+    actor.monsterInfo.treasureType = RANDOM_ITEM_ANY;
+    ASSERT_TRUE(actor.canRerollLoot());
+    engine->config->gameplay.MonsterLootRerollInGame.setValue(false);
+    EXPECT_FALSE(actor.canRerollLoot());
+    engine->config->gameplay.MonsterLootRerollInGame.setValue(true);
+    auto generatedBefore = pParty->isArtifactGenerated;
+
+    actor.LootActor();
+    ASSERT_TRUE(monsterLootPopupOpen());
+    EXPECT_EQ(current_screen_type, SCREEN_MONSTER_LOOT);
+    EXPECT_TRUE(gameTimer->isPaused());
+    EXPECT_EQ(actor.aiState, Dead);
+    game.pressGuiButton("MonsterLoot_Reroll");
+    game.tick();
+    EXPECT_EQ(pParty->isArtifactGenerated, generatedBefore);
+    closeMonsterLootPopup();
+    EXPECT_EQ(actor.aiState, Dead);
+    EXPECT_EQ(current_screen_type, SCREEN_GAME);
+
+    actor.LootActor();
+    ASSERT_TRUE(monsterLootPopupOpen());
+    game.pressGuiButton("MonsterLoot_Take");
+    game.tick();
+    EXPECT_EQ(actor.aiState, Removed);
+    EXPECT_FALSE(monsterLootPopupOpen());
+    EXPECT_EQ(current_screen_type, SCREEN_GAME);
+
+    pActors.emplace_back(pActors.size());
+    Actor &fixed = pActors.back();
+    fixed.aiState = Dead;
+    fixed.attributes |= ACTOR_HAS_ITEM;
+    fixed.items[3] = Item(ITEM_GOLD_SMALL);
+    fixed.items[3].goldAmount = 10;
+    fixed.monsterInfo.treasureDropChance = 100;
+    fixed.monsterInfo.treasureLevel = ITEM_TREASURE_LEVEL_1;
+    EXPECT_FALSE(fixed.canRerollLoot());
+}
+
+GAME_TEST(MM7MonsterLootReroll, NewGameEmeraldDragonIsReadyForLoot) {
+    if (!mm7::mods::monsterLootRerollEnabled(engine->gameTitle()))
+        GTEST_SKIP() << "Set ENROTH_MM7_MONSTER_LOOT_REROLL=1";
+    game.startNewGame();
+    game.teleportTo(MAP_DRAGONS_LAIR, Vec3f(), 0);
+    int dragons = 0;
+    int deadDragons = 0;
+    for (const Actor &actor : pActors) {
+        if (actor.monsterInfo.id < MONSTER_DRAGON_A || actor.monsterInfo.id > MONSTER_DRAGON_C)
+            continue;
+        dragons++;
+        if (actor.aiState == Dead) {
+            deadDragons++;
+            EXPECT_TRUE(actor.canRerollLoot());
+        }
+    }
+    EXPECT_GT(dragons, 0);
+    EXPECT_GT(deadDragons, 0);
 }
 
 GAME_TEST(MM7AllArtifactsEngine, CollectsAllTwentyNineAndIgnoresVanillaCap) {

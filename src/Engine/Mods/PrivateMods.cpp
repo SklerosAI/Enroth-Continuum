@@ -73,6 +73,30 @@ bool chestRerollEnabled(GameTitle title) {
     return chestRerollEnabled(title, std::getenv("ENROTH_MM7_CHEST_REROLL"));
 }
 
+bool monsterLootRerollEnabled(GameTitle title, const char *flag) {
+    return title == GameTitle::MM7 && flag && std::string_view(flag) == "1";
+}
+
+bool monsterLootRerollEnabled(GameTitle title) {
+    return monsterLootRerollEnabled(title, std::getenv("ENROTH_MM7_MONSTER_LOOT_REROLL"));
+}
+
+namespace {
+bool monsterLootNewGameDragonPending = false;
+}
+
+void armMonsterLootNewGameDragon(GameTitle title) {
+    monsterLootNewGameDragonPending = monsterLootRerollEnabled(title);
+}
+
+void cancelMonsterLootNewGameDragon() {
+    monsterLootNewGameDragonPending = false;
+}
+
+bool consumeMonsterLootNewGameDragon() {
+    return std::exchange(monsterLootNewGameDragonPending, false);
+}
+
 PrivatePortraits::~PrivatePortraits() = default;
 
 std::string_view portraitMoodName(PortraitMood mood) {

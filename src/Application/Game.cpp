@@ -33,6 +33,7 @@
 #include "Engine/Graphics/Image.h"
 #include "Engine/Graphics/TurnBasedOverlay.h"
 #include "Engine/Localization.h"
+#include "Engine/Mods/PrivateMods.h"
 #include "Engine/PartyPlacement.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
@@ -93,6 +94,7 @@
 #include "GUI/UI/UIStatusBar.h"
 #include "GUI/UI/UISpell.h"
 #include "GUI/UI/UIChest.h"
+#include "GUI/UI/UIMonsterLoot.h"
 
 #include "Io/Mouse.h"
 #include "Io/KeyboardInputHandler.h"
@@ -500,6 +502,7 @@ void Game::processQueuedMessages() {
                     case SCREEN_SHOP_INVENTORY:
                     case SCREEN_NPC_DIALOGUE:
                     case SCREEN_CHEST:
+                    case SCREEN_MONSTER_LOOT:
                     case SCREEN_CHEST_INVENTORY:
                     case SCREEN_CHANGE_LOCATION:
                     case SCREEN_INPUT_BLV:
@@ -589,6 +592,9 @@ void Game::processQueuedMessages() {
                                     pGUIWindow_CurrentChest = nullptr;
                                     current_screen_type = SCREEN_GAME;
                                     gameTimer->setPaused(false);
+                                    continue;
+                                case SCREEN_MONSTER_LOOT:
+                                    closeMonsterLootPopup();
                                     continue;
                                 case SCREEN_REST:  // close rest screen
                                     if (currentRestType != REST_NONE) {
@@ -1493,6 +1499,18 @@ void Game::processQueuedMessages() {
             case UIMSG_CHEST_Reroll:
                 if (current_screen_type == SCREEN_CHEST && pGUIWindow_CurrentChest)
                     Chest::reroll(pGUIWindow_CurrentChest->chestId());
+                continue;
+            case UIMSG_MONSTER_LOOT_Reroll:
+                rerollMonsterLootPopup();
+                continue;
+            case UIMSG_MONSTER_LOOT_Take:
+                takeMonsterLootPopup();
+                continue;
+            case UIMSG_MONSTER_LOOT_Toggle:
+                if (mm7::mods::monsterLootRerollEnabled(engine->gameTitle()) &&
+                    current_screen_type == SCREEN_GAME)
+                    engine->config->gameplay.MonsterLootRerollInGame.setValue(
+                        !engine->config->gameplay.MonsterLootRerollInGame.value());
                 continue;
             case UIMSG_InventoryLeftClick:
                 pParty->activeCharacter().OnInventoryLeftClick();

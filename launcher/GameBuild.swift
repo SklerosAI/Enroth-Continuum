@@ -75,14 +75,16 @@ enum GameBuild: String {
      * @param vendorRefresh             Whether Private mods asks for fresh vendor stock.
      * @param allArtifactsStorage       Whether Private mods asks for collection-based artifact eligibility and storage support.
      * @param chestReroll               Whether Private mods allows rerolling unclaimed MM7 chest loot.
+     * @param monsterLootReroll          Whether Private mods allows MM7 monster loot previews and rerolls.
      * @return                          The environment to launch the helper with.
      */
     func environment(base: [String: String], modRoot: URL?, vendorRefresh: Bool,
-                     allArtifactsStorage: Bool, chestReroll: Bool) -> [String: String] {
+                     allArtifactsStorage: Bool, chestReroll: Bool, monsterLootReroll: Bool) -> [String: String] {
         var environment = base
         environment.removeValue(forKey: "ENROTH_MM7_MOD_DIR")
         environment.removeValue(forKey: "ENROTH_MM7_ALL_ARTIFACTS_STORAGE")
         environment.removeValue(forKey: "ENROTH_MM7_CHEST_REROLL")
+        environment.removeValue(forKey: "ENROTH_MM7_MONSTER_LOOT_REROLL")
         switch self {
         case .mm6:
             environment.removeValue(forKey: "ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY")
@@ -91,11 +93,13 @@ enum GameBuild: String {
             environment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] = "0"
             environment["ENROTH_MM7_ALL_ARTIFACTS_STORAGE"] = "0"
             environment["ENROTH_MM7_CHEST_REROLL"] = "0"
+            environment["ENROTH_MM7_MONSTER_LOOT_REROLL"] = "0"
             if let modRoot {
                 environment["ENROTH_MM7_MOD_DIR"] = modRoot.path
                 if vendorRefresh { environment["ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY"] = "1" }
                 if allArtifactsStorage { environment["ENROTH_MM7_ALL_ARTIFACTS_STORAGE"] = "1" }
                 if chestReroll { environment["ENROTH_MM7_CHEST_REROLL"] = "1" }
+                if monsterLootReroll { environment["ENROTH_MM7_MONSTER_LOOT_REROLL"] = "1" }
             }
         case .upstream:
             environment.removeValue(forKey: "ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY")

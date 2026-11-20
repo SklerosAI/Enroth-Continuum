@@ -21,6 +21,13 @@ bool allArtifactsStorageEnabled(GameTitle title);
 bool chestRerollEnabled(GameTitle title, const char *flag);
 bool chestRerollEnabled(GameTitle title);
 
+/** Exact, MM7-only opt-in for the separate monster loot reroll mod. */
+bool monsterLootRerollEnabled(GameTitle title, const char *flag);
+bool monsterLootRerollEnabled(GameTitle title);
+void armMonsterLootNewGameDragon(GameTitle title);
+void cancelMonsterLootNewGameDragon();
+bool consumeMonsterLootNewGameDragon();
+
 enum class PortraitMood {
     Normal, Talk, Smile, Sad, Hurt, Pain, Afraid, Cast, Sleep, Unconscious,
     Weak, Cursed, Drunk, Insane, Sick, Paralyzed, Stone, Zombie, Dead, Eradicated,

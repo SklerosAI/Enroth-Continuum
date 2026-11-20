@@ -97,6 +97,7 @@
         <div class="row"><div><strong>Fresh vendor stock on entry · MM6 + MM7</strong><p>Re-randomize shops and guilds each time you enter. MM7 uses this on the next Private mods launch; MM6 keeps its own saved choice.</p><span class="pill" id="vendor-refresh-status">Off</span></div><button class="secondary" id="vendor-refresh-toggle">Turn on</button></div>
         <div class="row"><div><strong>All Artifacts + Storage · MM7</strong><p>Keep randomly spawnable artifacts and relics eligible until you collect them, without the normal cap. Castle Harmondale's existing chests remain your persistent storage. This does not grant quest artifacts or add backpack slots.</p><span class="pill" id="all-artifacts-storage-status">Off</span></div><button class="secondary" id="all-artifacts-storage-toggle">Turn on</button></div>
         <div class="row"><div><strong>Reroll chest loot · MM7</strong><p>Show a small Reroll button in chests with random loot. Each press uses a fresh seed and the chest's original treasure-level range. Authored items stay put. Reroll ends when you take or deposit an item.</p><span class="pill" id="chest-reroll-status">Off</span></div><button class="secondary" id="chest-reroll-toggle">Turn on</button></div>
+        <div class="row"><div><strong>Reroll click loot · MM7</strong><p>Preview random corpse and clicked trash or decoration items in a paused Reroll/Take popup. The dice checkbox beside the first portrait switches it on or off during play. Fixed drops and gold keep their normal behavior.</p><span class="pill" id="monster-loot-reroll-status">Off</span></div><button class="secondary" id="monster-loot-reroll-toggle">Turn on</button></div>
       </div>
     </div>
     <div id="echoes" class="view"><div class="pagehero"><span class="eyebrow">Hall of Echoes</span><h1>Carry a legend forward.</h1><p>One day, a hero can begin a new campaign with a small trace of the old one. The original saves will stay untouched.</p></div>
@@ -156,6 +157,8 @@
     safeText('all-artifacts-storage-status',state.allArtifactsStorage?(state.modsEnabled?'On for next MM7 launch':'Saved · enable Private mods for MM7'):'Off · normal artifact cap');
     safeText('chest-reroll-toggle',state.chestReroll?'Turn off':'Turn on');
     safeText('chest-reroll-status',state.chestReroll?(state.modsEnabled?'On for next MM7 launch':'Saved · enable Private mods for MM7'):'Off · normal chest loot');
+    safeText('monster-loot-reroll-toggle',state.monsterLootReroll?'Turn off':'Turn on');
+    safeText('monster-loot-reroll-status',state.monsterLootReroll?(state.modsEnabled?'On for next MM7 launch':'Saved · enable Private mods for MM7'):'Off · normal click loot');
     const slots=document.getElementById('portrait-slots');slots.replaceChildren();
     for(let index=1;index<=4;index++){
       const slot=document.createElement('div'),label=document.createElement('b'),stateText=document.createElement('span'),choose=document.createElement('button'),preview=document.createElement('img');
@@ -218,6 +221,7 @@
   document.getElementById('vendor-refresh-toggle').addEventListener('click',()=>send(document.getElementById('vendor-refresh-toggle').textContent==='Turn off'?'vendor-refresh-off':'vendor-refresh-on'));
   document.getElementById('all-artifacts-storage-toggle').addEventListener('click',()=>send(document.getElementById('all-artifacts-storage-toggle').textContent==='Turn off'?'all-artifacts-storage-off':'all-artifacts-storage-on'));
   document.getElementById('chest-reroll-toggle').addEventListener('click',()=>send(document.getElementById('chest-reroll-toggle').textContent==='Turn off'?'chest-reroll-off':'chest-reroll-on'));
+  document.getElementById('monster-loot-reroll-toggle').addEventListener('click',()=>send(document.getElementById('monster-loot-reroll-toggle').textContent==='Turn off'?'monster-loot-reroll-off':'monster-loot-reroll-on'));
   document.getElementById('save-armor').addEventListener('click',()=>send('armor:'+document.getElementById('armor-id').value+':'+document.getElementById('armor-base').value+':'+document.getElementById('armor-bonus').value));
   document.getElementById('clear-armor').addEventListener('click',()=>send('clear-armor'));
   document.getElementById('credit-link').addEventListener('click',e=>{e.preventDefault();show('settings')});

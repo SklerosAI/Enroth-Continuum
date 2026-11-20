@@ -1,6 +1,7 @@
 #include "Engine/Objects/Actor.h"
 
 #include <algorithm>
+#include <climits>
 #include <deque>
 #include <string>
 #include <utility>
@@ -8,6 +9,7 @@
 #include <optional>
 
 #include "Engine/Engine.h"
+#include "Engine/Mods/PrivateMods.h"
 #include "Engine/MM6/MM6CombatRules.h"
 #include "Engine/MM6/MM6PartyHostility.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
@@ -50,11 +52,13 @@
 #include "Utility/Exception.h"
 
 #include "GUI/UI/UIGame.h"
+#include "GUI/UI/UIMonsterLoot.h"
 #include "GUI/UI/UIStatusBar.h"
 
 #include "Media/Audio/AudioPlayer.h"
 
 #include "Library/Logger/Logger.h"
+#include "Library/Random/MersenneTwisterRandomEngine.h"
 
 #include "Utility/Math/TrigLut.h"
 
@@ -3604,6 +3608,10 @@ void StatusBarItemFound(int num_gold_found, std::string_view item_unidentified_n
 
 //----- (00426A5A) --------------------------------------------------------
 void Actor::LootActor() {
+    if (canRerollLoot()) {
+        openMonsterLootPopup(id);
+        return;
+    }
     Item Dst;         // [sp+Ch] [bp-2Ch]@1
     bool itemFound;      // [sp+30h] [bp-8h]@1
 
@@ -3699,6 +3707,71 @@ void Actor::LootActor() {
     if (!itemFound || grng->random(100) < 90) {  // for repeatedly get gold and item
         this->Remove();
     }
+}
+
+bool Actor::canRerollLoot() const {
+    if (!engine || !mm7::mods::monsterLootRerollEnabled(engine->gameTitle()) ||
+        !engine->config->gameplay.MonsterLootRerollInGame.value() ||
+        current_screen_type != SCREEN_GAME || aiState != Dead || ActorHasItem() ||
+        carriedItemId != ITEM_NULL ||
+        ((monsterInfo.treasureDropChance == 0 || monsterInfo.treasureLevel == ITEM_TREASURE_LEVEL_INVALID) &&
+         (monsterInfo.goldDiceRolls == 0 || monsterInfo.goldDiceSides == 0)))
+        return false;
+    for (const Item &item : items)
+        if (item.itemId != ITEM_NULL)
+            return false;
+    return true;
+}
+
+MonsterLootOffer Actor::rollRerollLoot() {
+    MonsterLootOffer offer;
+    if (aiState != Dead || ActorHasItem() || carriedItemId != ITEM_NULL)
+        return offer;
+
+    MersenneTwisterRandomEngine seeded;
+    seeded.seed(grng->random(INT_MAX) + 1);
+    RandomEngine *previous = grng;
+    auto generatedBefore = pParty->isArtifactGenerated;
+    auto collectedBefore = pParty->isArtifactCollected;
+    bool initializedBefore = pParty->artifactCollectionInitialized;
+    uint8_t versionBefore = pParty->artifactCollectionVersion;
+    grng = &seeded;
+    try {
+        offer.gold = grng->randomDice(monsterInfo.goldDiceRolls, monsterInfo.goldDiceSides);
+        if (monsterInfo.treasureLevel != ITEM_TREASURE_LEVEL_INVALID &&
+            grng->random(100) < monsterInfo.treasureDropChance)
+            pItemTable->generateItem(monsterInfo.treasureLevel, monsterInfo.treasureType, &offer.item);
+    } catch (...) {
+        grng = previous;
+        pParty->isArtifactGenerated = generatedBefore;
+        pParty->isArtifactCollected = collectedBefore;
+        pParty->artifactCollectionInitialized = initializedBefore;
+        pParty->artifactCollectionVersion = versionBefore;
+        throw;
+    }
+    grng = previous;
+    pParty->isArtifactGenerated = generatedBefore;
+    pParty->isArtifactCollected = collectedBefore;
+    pParty->artifactCollectionInitialized = initializedBefore;
+    pParty->artifactCollectionVersion = versionBefore;
+    return offer;
+}
+
+void Actor::takeRerollLoot(const MonsterLootOffer &offer) {
+    if (aiState != Dead || ActorHasItem() || carriedItemId != ITEM_NULL)
+        return;
+    pParty->placeHeldItemInInventoryOrDrop();
+    if (offer.gold > 0)
+        pParty->partyFindsGold(offer.gold, GOLD_RECEIVE_SHARE);
+    if (offer.item.itemId != ITEM_NULL) {
+        Item item = offer.item;
+        if (isSpawnableArtifact(item.itemId))
+            pParty->isArtifactGenerated[item.itemId] = true;
+        StatusBarItemFound(offer.gold, pItemTable->items[item.itemId].unidentifiedName);
+        if (!pParty->addItemToParty(&item))
+            pParty->setHoldingItem(item);
+    }
+    Remove();
 }
 
 //----- (00427102) --------------------------------------------------------

@@ -27,6 +27,7 @@
 #include "Engine/Graphics/Viewport.h"
 #include "Engine/Graphics/Image.h"
 #include "Engine/Localization.h"
+#include "Engine/Mods/PrivateMods.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Objects/CharacterEnums.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
@@ -51,6 +52,7 @@
 #include "GUI/UI/UISpell.h"
 #include "GUI/UI/UIMessageScroll.h"
 #include "GUI/UI/UIChest.h"
+#include "GUI/UI/UIMonsterLoot.h"
 
 #include "Io/InputEnums.h"
 #include "Io/KeyboardInputHandler.h"
@@ -1056,6 +1058,7 @@ void WindowManager::DeleteAllVisibleWindows() {
     pGUIWindow_BranchlessDialogue = nullptr;
     window_SpeakInHouse = nullptr;
     pGUIWindow_CurrentChest = nullptr;
+    closeMonsterLootPopup();
     pGUIWindow_CurrentMenu = nullptr;
 
     // Only primary window should be left now
@@ -1153,6 +1156,10 @@ void UI_Create() {
     ui_buttyes2 = assets->getIcon("BUTTYES2");
 
     pPrimaryWindow = std::make_unique<GUIWindow>(WINDOW_GAME_UI, Pointi{0, 0}, render->GetRenderDimensions());
+    if (mm7::mods::monsterLootRerollEnabled(engine->gameTitle()))
+        pPrimaryWindow->CreateButton("MonsterLoot_InGameToggle", {5, 423}, {20, 39}, BUTTON_TYPE_NORMAL, 0,
+                                     UIMSG_MONSTER_LOOT_Toggle, 0, INPUT_ACTION_INVALID,
+                                     "Toggle monster loot reroll during play");
     const Recti viewport = engine->gameTitle() == GameTitle::MM6 ? Recti(7, 8, 460, 343) : Recti(7, 8, 461, 344);
     pPrimaryWindow->CreateButton("Game_Viewport", viewport.topLeft(), {viewport.w - 1, viewport.h - 1}, BUTTON_TYPE_NORMAL, 0, UIMSG_MouseLeftClickInGame, 0);
 

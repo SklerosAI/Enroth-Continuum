@@ -1,7 +1,7 @@
 # MM7 private mods: troubleshooting and next design
 
-Status: **Design A and the separate MM7 chest reroll are implemented in source;
-staged graphical and installed Atlas checks remain open**. The equipment
+Status: **Design A and the separate MM7 chest and click-loot rerolls are
+implemented in source; graphical monster-popup acceptance remains open**. The equipment
 design remains planned.
 The earlier small fixes are implemented in source but need an installed Atlas check.
 Findings came from a source review of the installed Atlas and integration tree.
@@ -98,4 +98,4 @@ Recommended defaults first.
 
 ## Future trilogy mod request
 
-- MM7 chest-only reroll is implemented in source; see [the chest reroll contract](MM7_CHEST_REROLL_MOD.md). Monster loot and the MM6/MM8 versions remain future work in [the cross-game roadmap](ROADMAP.md#optional-mod-backlog).
+- MM7 chest reroll and the separate random click-loot reroll are implemented in source; see [the chest contract](MM7_CHEST_REROLL_MOD.md) and [the click-loot contract](MM7_MONSTER_LOOT_REROLL_MOD.md). Random items awarded by clicked trash heaps, decorations and faces share the monster popup and checkbox. The MM6/MM8 versions remain future work in [the cross-game roadmap](ROADMAP.md#optional-mod-backlog).

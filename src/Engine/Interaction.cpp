@@ -17,6 +17,7 @@
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIBranchlessDialogue.h"
 #include "GUI/UI/UIStatusBar.h"
+#include "GUI/UI/UIMonsterLoot.h"
 
 #include "Library/Logger/Logger.h"
 
@@ -70,11 +71,15 @@ void InteractWithActor(int id) {
 
 void DecorationInteraction(int id, Pid pid) {
     if (pLevelDecorations[id].uEventID) {
+        beginClickedLootCapture();
         runEvent(EvtContext(EVT_SOURCE_MAP, pLevelDecorations[id].uEventID, pid));
         pLevelDecorations[id].uFlags |= LEVEL_DECORATION_VISIBLE_ON_MAP;
+        finishClickedLootCapture();
     } else if (pLevelDecorations[id].IsInteractive()) {
         int eventId = engine->_persistentVariables.decorVars[pLevelDecorations[id].eventVarId] + decorationEventBase();
+        beginClickedLootCapture();
         runEvent(EvtContext(EVT_SOURCE_GLOBAL, eventId, pid));
+        finishClickedLootCapture();
     }
 }
 
@@ -131,7 +136,9 @@ void DoInteractionWithTopmostZObject(Pid pid) {
                 return;
 
             if (pParty->hasActiveCharacter()) {
+                beginClickedLootCapture();
                 runEvent(EvtContext(EVT_SOURCE_MAP, face.eventId, pid));
+                finishClickedLootCapture();
             } else {
                 engine->_statusBar->setEvent(LSTR_NOBODY_IS_IN_CONDITION);
             }

@@ -3755,3 +3755,9 @@ Chronological record of wiki activity.
 - A separate marked war-to-Dark profile completed both physical war assignments, gave the neutral trumpet to the Arbiter and continued through the Dark C7 ending. The existing Light and Dark chains also passed fresh C0-C7 runs.
 - Both standard chains now accept Malwick's Wand during Emerald C0 and carry it into their authored C3 Arbiter choices. Two separately admitted C3 reload controls passed. Dark C3 measures forward movement before the Harmondale Castle door.
 - The full default MM7 headless target, unit target and style target were run on the combined branch. Native Strange Temple exit placement and graphical Mac play remain open.
+
+## [2026-11-19] test | MM7 Niles, Dark movement and Walls integration
+- by: T-Burton-ND via codex
+- Light C4 now advances Malwick's accepted Wand through the six-week letter, Niles's real offer, Lambent's physical tapestry face and the successful Tatalia return before saving. The first C4 attempt exposed a face-approach mismatch; using the proven face-normal viewport approach fixed it. The marked fresh Light chain passed C0-C7, with C4-C7 retried from unchanged earlier chapter saves.
+- Dark C5 now measures forward keyboard movement toward Kastore's Pit door before the real offer. Its separate marked fresh C0-C7 chain passed all eight chapters. The normal Walls route and synthetic killed-group failure branch passed 2/2; the shipped map has no group-1 actor, spawn or remap, so no engine change was made.
+- The combined integration target passed all 731 default MM7 headless GameTests, the unit target and `check_style`. No graphical Mac play or original-executable Strange Temple exit trace was performed. The three temporary Codex worktrees were removed after their commits landed on the integration branch; Claude's five active MM6 worktrees remain registered.

@@ -149,7 +149,9 @@ loot, its artifact branch gives MM7's ids 500 to 528, which are message scrolls 
 
 The record's standard bonus word is one-based into 14 MM6 attributes: the seven stats, HP, SP, AC and the Fire,
 Electricity, Cold and Poison resistances (`kStandardBonusAttributes` in `MM6StandardBonusMap.h`). The shared runtime
-stores Electricity, Cold and Poison as Air, Water and Body.
+stores Electricity, Cold and Poison as Air, Water and Body. Bonuses 1 to 13 have the same numbers as the shared
+`Item_MM7` word, but its 14 is Earth. A chest record goes to and from a live chest only through `mm6::reconstructChest`
+and `mm6::snapshotChest` (`MM6ChestRuntimeProjection.h`), which swap 14 and Body's 16 on armor to amulets.
 
 Special bonuses are one-based ids into `spcitems.txt`. Only id 58, Antique, is modelled end to end. It multiplies the
 item's value by 10 and does nothing else. The other specials appear on generated items and save with them

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "Engine/Engine.h"
@@ -934,7 +935,7 @@ void Party::GivePartyExp(int pEXPNum) {
     }
 }
 
-void Party::partyFindsGold(int amount, GoldReceivePolicy policy) {
+FoundGold Party::foundGold(int amount, GoldReceivePolicy policy) const {
     int hirelingSalaries = 0;
     unsigned int goldToGain = amount;
 
@@ -971,9 +972,14 @@ void Party::partyFindsGold(int amount, GoldReceivePolicy policy) {
             status = localization->format(LSTR_YOU_FOUND_LU_GOLD, amount);
         }
     }
-    AddGold(goldToGain - hirelingSalaries);
-    if (status.length() > 0) {
-        engine->_statusBar->setEvent(status);
+    return FoundGold{static_cast<int>(goldToGain), hirelingSalaries, std::move(status)};
+}
+
+void Party::partyFindsGold(int amount, GoldReceivePolicy policy) {
+    FoundGold found = foundGold(amount, policy);
+    AddGold(found.gold - found.hirelingShare);
+    if (found.status.length() > 0) {
+        engine->_statusBar->setEvent(found.status);
     }
 }
 

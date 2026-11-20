@@ -3749,3 +3749,9 @@ Chronological record of wiki activity.
 - Verified clean-source provenance, strict signing, staged-versus-installed identity and visible Atlas rendering. Recorded the outer bundle's `0.1` versus tag `0.1.0` metadata gap for a later release; the published tag remains fixed.
 - Sent the superseded application to macOS Trash without a project rollback archive and left profiles, saves, mods and recordings untouched.
 - Added the release milestone page and Claude handoff covering the three integrated MM6 lanes, the two preserved excluded WIP lanes and the next MM6 sequence.
+
+## [2026-11-19] test | MM7 war and Malwick campaign continuity
+- by: T-Burton-ND via codex
+- A separate marked war-to-Dark profile completed both physical war assignments, gave the neutral trumpet to the Arbiter and continued through the Dark C7 ending. The existing Light and Dark chains also passed fresh C0-C7 runs.
+- Both standard chains now accept Malwick's Wand during Emerald C0 and carry it into their authored C3 Arbiter choices. Two separately admitted C3 reload controls passed. Dark C3 measures forward movement before the Harmondale Castle door.
+- The full default MM7 headless target, unit target and style target were run on the combined branch. Native Strange Temple exit placement and graphical Mac play remain open.

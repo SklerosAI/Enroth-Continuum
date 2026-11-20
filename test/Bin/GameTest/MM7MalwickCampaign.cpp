@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
+#include <numbers>
 #include <ranges>
 #include <utility>
 
@@ -10,6 +12,7 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Evt/EvtProgram.h"
+#include "Engine/Graphics/Indoor.h"
 #include "Engine/MapEnums.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/ItemEnums.h"
@@ -20,6 +23,36 @@
 #include "Utility/Exception.h"
 
 #include "MM7CampaignChain.h"
+
+static bool takeCampaignTapestry(EngineController &game) {
+    auto taken = [] {
+        return pParty->_questBits[QBIT_MERCENARY_GUILD_TAPESTRY_TAKEN] &&
+               (pParty->hasItem(ITEM_BIG_TAPESTRY) || pParty->pPickedItem.itemId == ITEM_BIG_TAPESTRY);
+    };
+    for (const BLVFace &face : pIndoor->faces) {
+        if (face.eventId != 376 || !face.Clickable())
+            continue;
+        const int faceId = static_cast<int>(&face - pIndoor->faces.data());
+        for (float direction : {1.0f, -1.0f}) {
+            Vec3f position = face.boundingBox.center() + direction * 150 * face.facePlane.normal;
+            position.z = face.boundingBox.z1;
+            int yaw = std::lround(std::atan2(-direction * face.facePlane.normal.y,
+                                            -direction * face.facePlane.normal.x) *
+                                  180 / std::numbers::pi);
+            game.teleportTo(MAP_CASTLE_LAMBENT, position, yaw);
+            try {
+                game.pointMouseAtFace(faceId);
+            } catch (const Exception &) {
+                continue;
+            }
+            game.pressAndReleaseButton(BUTTON_LEFT);
+            game.tick();
+            if (taken())
+                return true;
+        }
+    }
+    return clickCampaignChainEventFace(game, MAP_CASTLE_LAMBENT, 376, 1, taken);
+}
 
 void acceptCampaignMalwickWand(EngineController &game) {
     constexpr int malwickId = 6;
@@ -150,10 +183,7 @@ void completeCampaignMalwickTapestry(EngineController &game) {
 
     game.teleportTo(MAP_CASTLE_LAMBENT, Vec3f(-3456, 12700, 1115), 90);
     ASSERT_EQ(engine->_persistentVariables.mapVars[4], 0);
-    ASSERT_TRUE(clickCampaignChainEventFace(game, MAP_CASTLE_LAMBENT, 376, 1, [] {
-        return pParty->_questBits[QBIT_MERCENARY_GUILD_TAPESTRY_TAKEN] &&
-               (pParty->hasItem(ITEM_BIG_TAPESTRY) || pParty->pPickedItem.itemId == ITEM_BIG_TAPESTRY);
-    }));
+    ASSERT_TRUE(takeCampaignTapestry(game));
     if (pParty->pPickedItem.itemId == ITEM_BIG_TAPESTRY)
         pParty->placeHeldItemInInventoryOrDrop();
     ASSERT_TRUE(pParty->hasItem(ITEM_BIG_TAPESTRY));

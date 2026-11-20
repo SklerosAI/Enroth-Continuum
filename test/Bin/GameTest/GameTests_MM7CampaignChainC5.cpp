@@ -17,10 +17,12 @@
 #include "Engine/Tables/NPCTable.h"
 #include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/UIHouses.h"
 #include "Utility/Exception.h"
 
 #include "MM7CampaignChain.h"
 #include "MM7CombatHarness.h"
+#include "MM7GameplayHarness.h"
 
 static bool carriesCube(const Actor &actor) {
     return actor.carriedItemId == ITEM_QUEST_CONTROL_CUBE || actor.items[0].itemId == ITEM_QUEST_CONTROL_CUBE ||
@@ -34,6 +36,40 @@ static bool partyHasCube() {
 static DoorState templeDoorState(int doorId) {
     auto door = std::ranges::find(pIndoor->doors, doorId, &BLVDoor::doorId);
     return door == pIndoor->doors.end() ? DOOR_CLOSED : door->state;
+}
+
+static void openMeasuredCelesteHouse(EngineController &game, HouseId houseId, int npcId) {
+    game.teleportTo(MAP_CELESTE, Vec3f(-158, 7624, 1), 0);
+    auto door = std::ranges::find_if(pIndoor->faces, [houseId](const BLVFace &face) {
+        return face.Clickable() && engine->_localEventMap.hasEvent(face.eventId) &&
+               std::ranges::any_of(engine->_localEventMap.function(face.eventId), [houseId](const EvtInstruction &instruction) {
+                   return instruction.opcode == EVENT_SpeakInHouse && instruction.data.house_id == houseId;
+               });
+    });
+    ASSERT_NE(door, pIndoor->faces.end());
+    auto [position, yaw] = approachCampaignChainFace(*door);
+    game.teleportTo(MAP_CELESTE, position + 150 * door->facePlane.normal, yaw);
+    game.tick(2);
+    const float initialDistance = (pParty->pos - door->boundingBox.center()).xy().length();
+    mm7::testing::MM7MovementResult approach = mm7::testing::driveMovementInput(game, {
+        .key = PlatformKey::KEY_UP,
+        .heldTicks = 8,
+        .minimumHorizontalDistance = 15,
+    });
+    SCOPED_TRACE(approach.diagnostic());
+    EXPECT_LT((pParty->pos - door->boundingBox.center()).xy().length(), initialDistance);
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    ASSERT_EQ(window_SpeakInHouse->houseId(), houseId);
+    auto npc = std::ranges::find_if(houseNpcs, [npcId](const HouseNpcDesc &entry) {
+        return entry.npc == &pNPCStats->pNPCData[npcId];
+    });
+    ASSERT_NE(npc, houseNpcs.end());
+    if (houseNpcs.size() > 1) {
+        game.pressGuiButton(fmt::format("House_Npc{}", npc - houseNpcs.begin()));
+        game.tick();
+    }
 }
 
 static bool approachActorForMelee(EngineController &game, MapId map, int actorId) {
@@ -180,7 +216,7 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter5) {
     ASSERT_TRUE(cellarCombat.reachedDeadState) << cellarDiagnostics;
     useCampaignChainTransition(game, MAP_WINE_CELLAR, 501);
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_TATALIA);
-    openCampaignChainCelesteHouse(game, HOUSE_CELESTE_HOSTEL_2, 81);
+    openMeasuredCelesteHouse(game, HOUSE_CELESTE_HOSTEL_2, 81);
     ASSERT_TRUE(selectCampaignChainNpcEvent(game, 81, 152));
     leaveCampaignChainHouse(game);
 

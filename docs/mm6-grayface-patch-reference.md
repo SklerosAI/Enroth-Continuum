@@ -155,9 +155,19 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
 - **C21**. Party attacked monsters in their dying animation (`CanAttackMon`, `MMHooks.pas:2941`). State: **fixed**.
   Melee falls back unless `CanBeDamaged`, `FindClosestActor` filters Dying, `DamageMonsterFromParty` returns on
   `IsNotAlive`. Test `MM6GrayFaceShared.BlowSkipsDyingMonster`.
-- **C22**. Shield and armor recovery penalties (Mok's patch). State: **mm7, open**.
-  MM7 multiplier table in `Character.cpp:1864`. MM6 `skilldes.txt` says armor Expert reduces and Master eliminates the
-  penalty, our table keeps half for Plate at Master. Mok's actual change not traced.
+- **C22**. Shield and armor recovery penalties (Mok's patch). State: **fixed**.
+  The readme credits Mok's patch with "Fixed shield and armor recovery (Thanks to Mike Kienenberger for the fix)". The
+  GrayFace source has no hook for it, because Mok's patch is already in the MM6.exe GrayFace builds on. The GOG exe
+  reads `mm6.ini` keys AlwaysRun, FlipOnExit and LoudMusic from appended code at 0x4B8DCE into 0x4C0E18 to 0x4C0E20,
+  the globals GrayFace's `Common.pas` names. In that exe the recovery routine 0x481A80 adds the base penalty of the worn
+  armor (shield 10, leather 10, chain 20, plate 30, the word table at 0x4C2750) and of a shield in the off hand, halved
+  at Expert and zero at Master, for every armor kind. `skilldes.txt` (GOG and patch copies identical) says the same for
+  leather, chain and plate, "Recovery penalty reduced" and "Recovery penalty eliminated", and says nothing about
+  recovery for shields. The port used MM7's table, which removed the whole penalty of Expert leather and Expert
+  shields and kept half of it for Master plate. Fixed 2026-11-20 without a flag, MM6 now takes
+  `mm6::armorRecoveryPenalty` in `Character::GetAttackRecoveryTime`. Test
+  `MM6Melee.ArmorRecoveryPenaltyFollowsMastery`. The unpatched 1.2 exe was not available, so what Mok changed is not
+  known byte for byte.
 - **C23**. Blaster recovery floor (`BlasterRecovery=4`, game default 0). State: **fixed, QoL**.
   `gameplay.minimum_recovery_blasters` default 5.
 - **C24**. Monsters jumped off bridges into lava (`MonsterJumpDownLimit=500`, `Hooks.pas:2522`). State: **not
@@ -440,7 +450,8 @@ Rules for every fix in this backlog:
   Armsmaster route is gone for MM6 without a flag, MM6.exe has no such skill.
 - **C22**. Armor recovery uses the MM7 table. Trace Mok's original change and MM6's skill text, then make Master armor
   eliminate the penalty if both agree.
-  Mok's fix isn't in the GrayFace source, so the target needs tracing first.
+  Done 2026-11-20 without a flag. The GOG MM6.exe already carries Mok's patch and halves every armor and shield
+  penalty at Expert and drops it at Master, as `skilldes.txt` says, so the MM7 table was a port bug. See the C22 row.
 - **C26**. Clubs swing silently. Play the mace swing sound for clubs.
   Not an MM6 GrayFace item, but the same bug GrayFace fixed for MM7 and MM8. Done 2026-11-18. MM6.exe plays the mace
   swing for clubs, so it has no config flag.

@@ -219,9 +219,10 @@ Landed, matching the GrayFace patch:
 | Progressive dagger triple damage, 1% per skill point | `Character.cpp` |
 | Clubs swing with the mace sound | Port bug against MM6.exe, no flag |
 | Arms Master, Weapons Master and Squire points shorten Expert sword, axe and bow recovery | `gameplay.fix_weapon_skill_hirelings` |
+| Armor and shield recovery penalty halved at Expert, gone at Master | Port bug against MM6.exe, no flag |
 
 Not yet: monster Paralyze, elemental weapon enchants through the monster resistance roll, Finger of Death experience for
-the party, the armour recovery table, and the lava drop limit for monsters. That one hasn't reproduced, MM6.exe's
+the party, and the lava drop limit for monsters. That one hasn't reproduced, MM6.exe's
 walking edge check, ported in `ProcessActorCollisionsBLV`, already keeps a walking monster from stepping more than 100
 units down. Spell-side fixes (condition cures, Water Walk drain, stronger shorter buffs, Quick Spell school) are on
 [characters, items and spells](mm6-characters-items-spells.md). The full list is on the

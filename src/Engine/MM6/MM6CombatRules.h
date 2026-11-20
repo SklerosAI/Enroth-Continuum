@@ -232,6 +232,22 @@ inline int armorSkillHirelingBonus() {
 }
 
 /**
+ * Recovery penalty of worn body armor or a shield, as MM6.exe adds it to the attack recovery (0x481A80). Leather, chain,
+ * plate and shields alike lose half of the penalty at Expert and all of it at Master.
+ *
+ * @param penalty                       Penalty of the armor kind at Novice.
+ * @param mastery                       Mastery of the armor's own skill.
+ * @return                              The penalty that applies at `mastery`.
+ */
+inline Duration armorRecoveryPenalty(Duration penalty, Mastery mastery) {
+    if (mastery >= MASTERY_MASTER)
+        return 0_ticks;
+    if (mastery == MASTERY_EXPERT)
+        return Duration::fromTicks(penalty.ticks() / 2);
+    return penalty;
+}
+
+/**
  * Shortens a recovery the way the GrayFace patch makes the MM6 "Increases rate of Recovery" enchantment work
  * (`IncreaseRecoveryRateProc`, applied when a recovery starts).
  *

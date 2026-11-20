@@ -20,6 +20,8 @@
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIHouses.h"
 
+#include "MM7MalwickCampaign.h"
+
 namespace {
 
 struct Delivery {
@@ -74,6 +76,8 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter0) {
     game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
     game.tick();
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    acceptCampaignMalwickWand(game);
+    ASSERT_FALSE(::testing::Test::HasFailure());
     game.teleportTo(MAP_EMERALD_ISLAND, Vec3f(16154, 8560, 128), 180);
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();

@@ -80,7 +80,7 @@ struct Mm7ProfileGate {
     int chapter;
 };
 
-constexpr std::array<Mm7ProfileGate, 54> mm7ProfileGates = {{
+constexpr std::array<Mm7ProfileGate, 55> mm7ProfileGates = {{
     {"MM7DisposableSave.DISABLED_WriteFreshProfile", true, false, -1},
     {"MM7DisposableSave.DISABLED_ReloadFreshProcess", false, true, -1},
     {"MM7CastleRebuild.DISABLED_WriteFreshCheckpoint", true, false, -1},
@@ -135,6 +135,7 @@ constexpr std::array<Mm7ProfileGate, 54> mm7ProfileGates = {{
     {"MM7CampaignChain.DISABLED_Chapter5", false, true, 5},
     {"MM7CampaignChain.DISABLED_Chapter6", false, true, 6},
     {"MM7CampaignChain.DISABLED_Chapter7", false, true, 7},
+    {"MM7MalwickCampaign.DISABLED_LightChapter3", false, true, 4},
 }};
 
 /**
@@ -158,11 +159,28 @@ constexpr DisposableProfileLayout mm7DarkChainProfileLayout = {
     "EnrothContinuum-MM7-dark-campaign-chain-v1", "enroth-continuum-mm7.ini", "mm7"
 };
 
-constexpr std::array<Mm7ProfileGate, 8> mm7DarkChainGates = {{
+constexpr std::array<Mm7ProfileGate, 9> mm7DarkChainGates = {{
     {"MM7CampaignChain.DISABLED_Chapter0", true, false, 0},
     {"MM7CampaignChain.DISABLED_Chapter1", false, true, 1},
     {"MM7CampaignChain.DISABLED_Chapter2", false, true, 2},
     {"MM7DarkCampaignChain.DISABLED_Chapter3", false, true, 3},
+    {"MM7DarkCampaignChain.DISABLED_Chapter4", false, true, 4},
+    {"MM7DarkCampaignChain.DISABLED_Chapter5", false, true, 5},
+    {"MM7DarkCampaignChain.DISABLED_Chapter6", false, true, 6},
+    {"MM7DarkCampaignChain.DISABLED_Chapter7", false, true, 7},
+    {"MM7MalwickCampaign.DISABLED_DarkChapter3", false, true, 4},
+}};
+
+constexpr DisposableProfileLayout mm7WarDarkChainProfileLayout = {
+    "MM7 war and Dark campaign chain", "mm7-war-dark-chain-", ".ec-mm7-war-dark-campaign-chain",
+    "EnrothContinuum-MM7-war-dark-campaign-chain-v1", "enroth-continuum-mm7.ini", "mm7"
+};
+
+constexpr std::array<Mm7ProfileGate, 8> mm7WarDarkChainGates = {{
+    {"MM7CampaignChain.DISABLED_Chapter0", true, false, 0},
+    {"MM7CampaignChain.DISABLED_Chapter1", false, true, 1},
+    {"MM7CampaignChain.DISABLED_Chapter2", false, true, 2},
+    {"MM7WarCampaignChain.DISABLED_Chapter3", false, true, 3},
     {"MM7DarkCampaignChain.DISABLED_Chapter4", false, true, 4},
     {"MM7DarkCampaignChain.DISABLED_Chapter5", false, true, 5},
     {"MM7DarkCampaignChain.DISABLED_Chapter6", false, true, 6},
@@ -284,15 +302,24 @@ int platformMain(int argc, char **argv) {
             return filter == entry.filter;
         });
         const bool hasMm7DarkChainGate = darkGate != mm7DarkChainGates.end();
+        auto warDarkGate = std::ranges::find_if(mm7WarDarkChainGates, [&filter](const Mm7ProfileGate &entry) {
+            return filter == entry.filter;
+        });
+        const bool hasMm7WarDarkChainGate = warDarkGate != mm7WarDarkChainGates.end();
+        const bool usesMm7WarDarkChainProfile = opts.disposableMm7Profile &&
+            std::filesystem::path(opts.userPath.str()).filename().string().starts_with(mm7WarDarkChainProfileLayout.prefix);
         const bool usesMm7DarkChainProfile = opts.disposableMm7Profile &&
             std::filesystem::path(opts.userPath.str()).filename().string().starts_with(mm7DarkChainProfileLayout.prefix);
-        if (opts.disposableMm7Profile || hasMm7ProfileGate || hasMm7DarkChainGate) {
-            const bool hasSelectedGate = usesMm7DarkChainProfile ? hasMm7DarkChainGate : hasMm7ProfileGate;
+        if (opts.disposableMm7Profile || hasMm7ProfileGate || hasMm7DarkChainGate || hasMm7WarDarkChainGate) {
+            const bool hasSelectedGate = usesMm7WarDarkChainProfile ? hasMm7WarDarkChainGate :
+                usesMm7DarkChainProfile ? hasMm7DarkChainGate : hasMm7ProfileGate;
             if (!opts.disposableMm7Profile || !hasSelectedGate ||
                 !GTEST_FLAG_GET(also_run_disabled_tests))
                 throw Exception("MM7 disposable save gate requires its exact disabled test filter and temporary profile.");
-            const Mm7ProfileGate &selectedGate = usesMm7DarkChainProfile ? *darkGate : *gate;
-            const DisposableProfileLayout &layout = usesMm7DarkChainProfile ? mm7DarkChainProfileLayout : mm7ProfileLayout;
+            const Mm7ProfileGate &selectedGate = usesMm7WarDarkChainProfile ? *warDarkGate :
+                usesMm7DarkChainProfile ? *darkGate : *gate;
+            const DisposableProfileLayout &layout = usesMm7WarDarkChainProfile ? mm7WarDarkChainProfileLayout :
+                usesMm7DarkChainProfile ? mm7DarkChainProfileLayout : mm7ProfileLayout;
             opts.userPath = Path(validateDisposableProfile(opts.userPath.str(), layout, selectedGate.writer, selectedGate.chapter).string());
         }
         const auto mm6ChainGate = std::ranges::find(mm6ChainGates, filter);
@@ -321,7 +348,9 @@ int platformMain(int argc, char **argv) {
             NativeFileSystem tfs(opts.testPath);
             TestController test(game, &tfs, opts.speed, opts.disposableMm7Profile,
                                 opts.disposableMm7Profile &&
-                                    (usesMm7DarkChainProfile ? darkGate->preserveSave : gate->preserveSave),
+                                    (usesMm7WarDarkChainProfile ? warDarkGate->preserveSave :
+                                     usesMm7DarkChainProfile ? darkGate->preserveSave : gate->preserveSave),
+                                usesMm7WarDarkChainProfile ? std::string(mm7WarDarkChainProfileLayout.marker) :
                                 usesMm7DarkChainProfile ? std::string(mm7DarkChainProfileLayout.marker) :
                                                          std::string(mm7ProfileLayout.marker));
             GameTest::init(game, &test);

@@ -17,7 +17,6 @@
 #include "GUI/UI/UIRest.h"
 
 #include "MM7CampaignChain.h"
-#include "MM7MalwickCampaign.h"
 
 GAME_TEST(MM7CampaignChain, DISABLED_Chapter3) {
     // Fixtures: no actors while the party rests in the castle. Teleports to Harmondale, to the castle door, to the
@@ -80,8 +79,7 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter3) {
     game.tick();
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
 
-    acceptCampaignMalwickWand(game);
-    ASSERT_FALSE(::testing::Test::HasFailure());
+    ASSERT_TRUE(pParty->_questBits[QBIT_MALWICK_FIREBALL_WAND_ACCEPTED]);
 
     game.teleportTo(MAP_BRACADA_DESERT, Vec3f(-13180, 18432, 800), 0); // In front of the tavern door.
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
@@ -123,7 +121,7 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter3) {
     EXPECT_EQ(judgeHiredTape, tape(false, true, false)); // The arbiter takes the judge back.
     EXPECT_EQ(foodTape.size(), 1); // Rest in the rebuilt castle is free.
     EXPECT_EQ(mapTape, tape(MAP_STONE_CITY, MAP_HARMONDALE, MAP_CASTLE_HARMONDALE, MAP_HARMONDALE,
-                            MAP_EMERALD_ISLAND, MAP_HARMONDALE, MAP_BRACADA_DESERT, MAP_HARMONDALE));
+                            MAP_BRACADA_DESERT, MAP_HARMONDALE));
     EXPECT_EQ(houseTape, tape(HOUSE_INVALID, HOUSE_TAVERN_BRACADA_DESERT, HOUSE_INVALID, HOUSE_HARMONDALE_ARBITER_1, HOUSE_INVALID));
     ASSERT_FALSE(::testing::Test::HasFailure());
 

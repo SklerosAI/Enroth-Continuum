@@ -18,7 +18,6 @@
 
 #include "MM7CampaignChain.h"
 #include "MM7GameplayHarness.h"
-#include "MM7MalwickCampaign.h"
 
 GAME_TEST(MM7DarkCampaignChain, DISABLED_Chapter3) {
     // Continue the common C0-C2 history, wait for the arbiter messenger, then install Judge Grey from Deyja.
@@ -87,8 +86,7 @@ GAME_TEST(MM7DarkCampaignChain, DISABLED_Chapter3) {
     game.tick();
     ASSERT_EQ(current_screen_type, SCREEN_GAME);
 
-    acceptCampaignMalwickWand(game);
-    ASSERT_FALSE(::testing::Test::HasFailure());
+    ASSERT_TRUE(pParty->_questBits[QBIT_MALWICK_FIREBALL_WAND_ACCEPTED]);
 
     game.teleportTo(MAP_DEYJA, Vec3f(4544, -12350, 2592), 90);
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
@@ -130,7 +128,7 @@ GAME_TEST(MM7DarkCampaignChain, DISABLED_Chapter3) {
     EXPECT_EQ(judgeHiredTape, tape(false, true, false));
     EXPECT_EQ(foodTape.size(), 1);
     EXPECT_EQ(mapTape, tape(MAP_STONE_CITY, MAP_HARMONDALE, MAP_CASTLE_HARMONDALE, MAP_HARMONDALE,
-                            MAP_EMERALD_ISLAND, MAP_HARMONDALE, MAP_DEYJA, MAP_HARMONDALE));
+                            MAP_DEYJA, MAP_HARMONDALE));
     EXPECT_EQ(houseTape, tape(HOUSE_INVALID, HOUSE_TAVERN_DEYJA, HOUSE_INVALID, HOUSE_HARMONDALE_ARBITER_2, HOUSE_INVALID));
     ASSERT_FALSE(::testing::Test::HasFailure());
 

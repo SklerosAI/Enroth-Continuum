@@ -62,6 +62,12 @@ TITLES = {
                  extension="mm7", ini="enroth-continuum-mm7.ini", chapters=8, suite="MM7DarkCampaignChain",
                  shared_suite="MM7CampaignChain", shared_chapters=3,
                  profile_option="--mm7-disposable-profile", data_env=None, rules_env=None),
+    "mm7-war-dark": Title(game="mm7", profile_kind="an MM7 war and Dark campaign chain", paths="MM7 data path",
+                 prefix="mm7-war-dark-chain-", marker=".ec-mm7-war-dark-campaign-chain",
+                 marker_text="EnrothContinuum-MM7-war-dark-campaign-chain-v1\n",
+                 extension="mm7", ini="enroth-continuum-mm7.ini", chapters=8, suite="MM7DarkCampaignChain",
+                 shared_suite="MM7CampaignChain", shared_chapters=3,
+                 profile_option="--mm7-disposable-profile", data_env=None, rules_env=None),
     "mm6": Title(game="mm6", profile_kind="an MM6 campaign chain", paths="MM6 data or rules path",
                  prefix="mm6-restart-chain-",  # The MM6 save code takes a GameTest profile root only under this prefix.
                  marker=".ec-mm6-campaign-chain",
@@ -154,6 +160,8 @@ def remove_unverified(title, root, chapter):
 
 
 def chapter_test_name(title, chapter):
+    if title.prefix == "mm7-war-dark-chain-" and chapter == 3:
+        return "MM7WarCampaignChain.DISABLED_Chapter3"
     suite = title.shared_suite if chapter < title.shared_chapters else title.suite
     return f"{suite}.DISABLED_Chapter{chapter}"
 
@@ -165,7 +173,8 @@ def require_chapter_tests(title, args):
         "--headless",
         "--gtest_list_tests",
         "--gtest_also_run_disabled_tests",
-        f"--gtest_filter={title.suite}.*" + (f":{title.shared_suite}.*" if title.shared_suite else ""),
+        f"--gtest_filter={title.suite}.*" + (f":{title.shared_suite}.*" if title.shared_suite else "") +
+        (":MM7WarCampaignChain.*" if title.prefix == "mm7-war-dark-chain-" else ""),
     ]
     result = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False,
                             timeout=LIST_TIMEOUT_SECONDS)

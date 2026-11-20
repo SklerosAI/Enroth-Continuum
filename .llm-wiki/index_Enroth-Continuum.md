@@ -41,7 +41,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Scroll Cancellation](MM7-Scroll-Cancel.md) — Item-, actor- and character-target scroll return on cancelled targeting, focused integrated controls and remaining exit paths
 - [MM7 Playtest Recording](MM7-Playtest-Recording.md) — Atlas rolling video now retains the newest two minutes after every exit, alongside bounded diagnostics, protected clips and the remaining macOS permission gate
 - [MM7 Quest Behavior Catalog](MM7-Quest-Behavior-Catalog.md) — Public/source-event reconciliation of every main, Light, Dark, side and promotion quest; includes both C0-C7 chains, 18 durable side/objective routes, complete Malwick/Niles contracts and all 27 promotion endpoints
-- [MM7 Remaining Quests and Areas](../project/MM7_REMAINING_QUESTS_AND_AREAS.md) — Post-quest priority board for visible playtest, natural movement/combat strengthening, native-parity questions and selective durability
+- [MM7 Remaining Quests and Areas](../project/MM7_REMAINING_QUESTS_AND_AREAS.md) — Current war-to-Dark continuity, Malwick campaign uptake, measured Dark approach and remaining graphical, parity and durability work
 - [MM7 Atomic Save File](MM7-Atomic-Save-File.md) — Native-slot helper, detached preflight and integrated staged live capture; production atomic SaveLoad wiring remains open
 - [MM6 GrayFace Patch Reference](MM6-GrayFace-Patch-Reference.md) — Pinned GrayFace MM6 Patch 2.5.7, its 90 engine fixes cross-referenced against our runtime, decoded data fixes and open vanilla-bug decisions
 - [MM6 Transition and Death Candidates](MM6-Transition-And-Death-Candidates.md) — Cancel-only MM6 indoor dialog and detached death model with explicit live integration gates

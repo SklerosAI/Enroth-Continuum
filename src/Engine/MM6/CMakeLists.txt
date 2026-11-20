@@ -16,7 +16,7 @@ add_library(engine_mm6_save_container STATIC MM6SaveContainer.cpp MM6SaveContain
     MM6ShopStockFields.cpp MM6ShopStockFields.h MM6ShopTitleState.h
     MM6ShopStockPurchase.h MM6ShopBoundedPurchase.h
     MM6ItemRecord28.h
-    MM6PlainItemProjection.h MM6StandardBonusMap.h MM6StandardItemProjection.h
+    MM6PlainItemProjection.h MM6StandardBonusMap.h MM6StandardItemProjection.h MM6SpecialItemProjection.h
     MM6BoundedItemProjection.h MM6BoundedInventoryProjection.h
     MM6BoundedPartyInventoryProjection.h
     MM6RawInventoryFields.cpp MM6RawInventoryFields.h
@@ -239,7 +239,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6PreEventCheckpointForTest_ut.cpp
         Tests/MM6PostWorldOwnerValidator_ut.cpp
         Tests/MM6DecodedEffectPartyStage_ut.cpp
-        Tests/MM6AntiqueItemProjection_ut.cpp
+        Tests/MM6SpecialItemProjection_ut.cpp
         Tests/MM6WorldSaveRuntime_ut.cpp
         Tests/MM6NewGameSaveRuntime_ut.cpp
         Tests/MM6RawNewGameSaveRuntime_ut.cpp

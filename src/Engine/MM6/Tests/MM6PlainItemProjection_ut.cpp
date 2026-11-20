@@ -97,12 +97,6 @@ UNIT_TEST(MM6PlainItemProjection, GoldValueRoundTripAndUnsupportedUnionsReject) 
     projection->raw.setWord(4, 1);
     EXPECT_FALSE(mm6::capturePlainItem(*projection, table, GameTitle::MM6));
 
-    projection = mm6::stagePlainItem(raw, table, GameTitle::MM6);
-    ASSERT_TRUE(projection);
-    table.items[bottle].rarity = RARITY_ARTIFACT;
-    EXPECT_FALSE(mm6::stagePlainItem(projection->raw, table, GameTitle::MM6));
-    EXPECT_FALSE(mm6::capturePlainItem(*projection, table, GameTitle::MM6));
-    table.items[bottle].rarity = RARITY_COMMON;
 
     raw = {};
     raw.setWord(0, 135);
@@ -116,6 +110,36 @@ UNIT_TEST(MM6PlainItemProjection, GoldValueRoundTripAndUnsupportedUnionsReject) 
     ASSERT_TRUE(updatedWand);
     EXPECT_EQ(updatedWand->word(16), 4);
     EXPECT_EQ((*updatedWand)[25], 6);
+}
+
+UNIT_TEST(MM6PlainItemProjection, RelicKeepsItsChestArtifactCondition) {
+    // A relic's record goes back with all of its condition bits, GrayFace's chest artifact bit 0x400 among them.
+    ItemTable table;
+    const ItemId hades = static_cast<ItemId>(415);
+    table.items[hades].iconName = "lsword5";
+    table.items[hades].type = ITEM_TYPE_SINGLE_HANDED;
+    table.items[hades].rarity = RARITY_RELIC;
+
+    mm6::ItemRecord28 raw;
+    raw.setWord(0, 415);
+    raw.setWord(20, 0x400);
+    raw[26] = 0x5a;
+    auto projection = mm6::stagePlainItem(raw, table, GameTitle::MM6);
+    ASSERT_TRUE(projection);
+    EXPECT_EQ(projection->item.flags, ItemFlags(0x400));
+    EXPECT_EQ(projection->item.specialEnchantment, ITEM_ENCHANTMENT_NULL);
+    EXPECT_EQ(mm6::capturePlainItem(*projection, table, GameTitle::MM6), raw);
+
+    projection->item.flags = ItemFlags(0x401);
+    auto identified = mm6::capturePlainItem(*projection, table, GameTitle::MM6);
+    ASSERT_TRUE(identified);
+    EXPECT_EQ(identified->conditionRaw(), 0x401u);
+    EXPECT_EQ((*identified)[26], 0x5a);
+    projection->item.flags = ItemFlags(0x1);
+    EXPECT_FALSE(mm6::capturePlainItem(*projection, table, GameTitle::MM6));
+
+    raw.setWord(12, 12);
+    EXPECT_FALSE(mm6::stagePlainItem(raw, table, GameTitle::MM6));
 }
 
 UNIT_TEST(MM6PlainItemProjection, RawRecordFollowsValueCopyAcrossInventories) {

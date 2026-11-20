@@ -22,7 +22,6 @@
 #include "Engine/MM6/MM6ChestTitleState.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Party.h"
-#include "Engine/Tables/ChestTable.h"
 #include "Engine/Tables/MapTable.h"
 
 #include "GUI/UI/UIRest.h"
@@ -201,8 +200,8 @@ GAME_TEST(MM6AllArtifacts, ArtifactComesBackUntilCollected) {
 }
 
 GAME_TEST(MM6AllArtifactsHeadless, DISABLED_LedgerSavesWithTheParty) {
-    // With the All Artifacts mod a party takes artifact 415 from the hive's chest 4, throws it away, waits a week in the
-    // Oracle and saves, the first half of the ledger round trip. A save refuses a party that carries an artifact.
+    // With the All Artifacts mod a party takes artifact 415 from the hive's chest 4, waits a week in the Oracle and saves
+    // carrying it, the first half of the ledger round trip.
     if (!enabled("strict-artifact-ledger-write"))
         GTEST_SKIP() << "Run only as the artifact ledger write child of the first-map gate";
     const std::filesystem::path profile = ownerOnlyProfile();
@@ -215,20 +214,13 @@ GAME_TEST(MM6AllArtifactsHeadless, DISABLED_LedgerSavesWithTheParty) {
     game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
     ScopedAllArtifacts mod(true);
     auto statusTape = tapes.statusBar();
-    auto heldTape = tapes.custom([] { return std::to_underlying(pParty->pPickedItem.itemId); });
+    auto carriedTape = charTapes.hasItem(0, hiveArtifact);
     auto collectedTape = tapes.custom([] { return mm6::artifactCollection().collected[415 - 400]; });
     startNewGameThroughInput(game);
     test.startTaping();
 
     openHiveChest4(game);
-    InventoryEntry artifact = vChests[4].inventory.find(hiveArtifact);
-    ASSERT_TRUE(artifact);
-    game.pressAndReleaseButton(BUTTON_LEFT, chestTable[vChests[4].chestTypeId].inventoryOffset + artifact.geometry().topLeft() * 32 + Pointi(16, 16));
-    game.tick();
-    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
-    game.tick();
-    game.pressAndReleaseButton(BUTTON_LEFT, 240, 160); // The middle of the 3D view, the party throws the artifact.
-    game.tick();
+    takeMM6CampaignChainChestItem(game, 4, hiveArtifact);
     waitForHiveRespawn(game);
     game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
     game.tick(2);
@@ -241,7 +233,7 @@ GAME_TEST(MM6AllArtifactsHeadless, DISABLED_LedgerSavesWithTheParty) {
     game.pressGuiButton("SaveMenu_Save");
     game.tick(3); // The button animates for a frame, then posts the save for the next one.
 
-    EXPECT_EQ(heldTape, tape(0, 415, 0));
+    EXPECT_EQ(carriedTape, tape(false, true));
     EXPECT_EQ(collectedTape, tape(0, 1));
     EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
     EXPECT_TRUE(std::filesystem::is_regular_file(slot));
@@ -252,8 +244,9 @@ GAME_TEST(MM6AllArtifactsHeadless, DISABLED_LedgerSavesWithTheParty) {
 }
 
 GAME_TEST(MM6AllArtifactsHeadless, DISABLED_LedgerComesBackInFreshProcess) {
-    // A fresh MM6 process with the All Artifacts mod loads the slot and still knows the party collected artifact 415, so
-    // the refilled hive's chest 4 doesn't roll it again with the luck that rolled it the first time.
+    // A fresh MM6 process with the All Artifacts mod loads the slot with artifact 415 in the backpack and still knows the
+    // party collected it, so the refilled hive's chest 4 doesn't roll it again with the luck that rolled it the first
+    // time.
     if (!enabled("strict-artifact-ledger-reload"))
         GTEST_SKIP() << "Run only after the artifact ledger write child of the first-map gate";
     const std::filesystem::path profile = ownerOnlyProfile();
@@ -267,6 +260,7 @@ GAME_TEST(MM6AllArtifactsHeadless, DISABLED_LedgerComesBackInFreshProcess) {
     auto screenTape = tapes.screen();
     auto artifactTape = tapes.custom([=] { return engine->_currentLoadedMapId == hive ? std::optional(chestArtifacts(4)) : std::nullopt; });
     auto respawnTape = tapes.custom([=] { return engine->_currentLoadedMapId == hive ? std::optional(pIndoor->dlv.respawnCount) : std::nullopt; });
+    auto carriedTape = charTapes.hasItem(0, hiveArtifact);
     test.startTaping();
 
     game.pressGuiButton("MainMenu_LoadGame");
@@ -286,6 +280,7 @@ GAME_TEST(MM6AllArtifactsHeadless, DISABLED_LedgerComesBackInFreshProcess) {
     EXPECT_EQ(screenTape.back(), SCREEN_CHEST);
     EXPECT_EQ(respawnTape.back(), 1);
     EXPECT_EQ(artifactTape.back(), std::vector<int>());
+    EXPECT_EQ(carriedTape, tape(false, true));
     game.runGameRoutine([&] {
         mm6::disarmFirstMapManualSave();
         mm6::testing::setNativeProfileRootForTest({});

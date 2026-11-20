@@ -109,7 +109,7 @@ UNIT_TEST(MM6RawPartyInventoryStage, StandardEquipmentAndUnsupportedUnionFailClo
     EXPECT_THROW((void) mm6::stageRawPartyInventories(baseline, raw, *scope.table,
                                                       GameTitle::MM6), std::exception);
     raw = before;
-    scope.table->items[static_cast<ItemId>(120)].rarity = RARITY_ARTIFACT;
+    scope.table->items[static_cast<ItemId>(103)].rarity = RARITY_ARTIFACT; // The original generator gives an artifact no bonus.
     EXPECT_THROW((void) mm6::stageRawPartyInventories(baseline, raw, *scope.table,
                                                       GameTitle::MM6), std::exception);
     EXPECT_EQ(raw, before);

@@ -5,13 +5,13 @@
 #include <utility>
 #include <variant>
 
-#include "MM6AntiqueItemProjection.h"
 #include "MM6PlainItemProjection.h"
+#include "MM6SpecialItemProjection.h"
 #include "MM6StandardItemProjection.h"
 
 namespace mm6 {
 
-using BoundedItemProjection = std::variant<PlainItemProjection, StandardItemProjection, AntiqueItemProjection>;
+using BoundedItemProjection = std::variant<PlainItemProjection, StandardItemProjection, SpecialItemProjection>;
 
 inline std::optional<BoundedItemProjection> stageBoundedItem(
     const ItemRecord28 &raw, const ItemTable &table, GameTitle title) {
@@ -22,9 +22,9 @@ inline std::optional<BoundedItemProjection> stageBoundedItem(
         return BoundedItemProjection(std::move(*standard));
     }
     if (raw.secondBonusRaw()) {
-        auto antique = stageAntiqueItem(raw, table, title);
-        if (antique)
-            return BoundedItemProjection(std::move(*antique));
+        auto special = stageSpecialItem(raw, table, title);
+        if (special)
+            return BoundedItemProjection(std::move(*special));
     }
     auto plain = stagePlainItem(raw, table, title);
     if (!plain)
@@ -48,7 +48,7 @@ inline std::optional<ItemRecord28> captureBoundedItem(
         else if constexpr (std::is_same_v<std::decay_t<decltype(value)>, StandardItemProjection>)
             return captureStandardItem(value, table, title);
         else
-            return captureAntiqueItem(value, table, title);
+            return captureSpecialItem(value, table, title);
     }, projection);
 }
 

@@ -14,8 +14,9 @@
 namespace mm6 {
 
 // A deliberately narrow view of one native MM6 record. The original raw
-// record remains authoritative; this view accepts plain items and gold only.
-// Enchantment and potion-power unions require separate source-backed rules.
+// record remains authoritative. This view accepts items without a bonus and
+// gold. Artifacts and relics are among them, the original generator writes
+// nothing but their item number.
 struct PlainItemProjection {
     Item item;
     ItemRecord28 raw;
@@ -31,7 +32,6 @@ inline std::optional<PlainItemProjection> stagePlainItem(
 
     const ItemData &data = table.items[static_cast<ItemId>(id)];
     if (data.iconName.empty() || data.type == ITEM_TYPE_INVALID ||
-        data.rarity != RARITY_COMMON ||
         (data.type != ITEM_TYPE_GOLD && raw.secondBonusRaw()))
         return std::nullopt;
 

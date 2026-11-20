@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Engine/MM6/MM6ItemRecord28.h"
+#include "Engine/MM6/MM6ItemValue.h"
 #include "Engine/Objects/CombinedSkillValue.h"
 #include "Engine/Objects/ItemEnums.h"
 
@@ -32,16 +32,6 @@ int hirelingMerchantPoints();
  * @return                              The character's merchant percentage, with the party's hirelings.
  */
 int merchantPercent(const Character &character);
-
-/**
- * MM6 item value. A standard bonus adds 100 gold per point of strength. A special bonus whose value is above 10 adds
- * that much gold, otherwise it multiplies the base value.
- *
- * @param record                        Original 28-byte item record.
- * @param table                         MM6 item table.
- * @return                              Item value in gold.
- */
-int itemValue(const ItemRecord28 &record, const ItemTable &table);
 
 /**
  * MM6 item value of a live item. Uses the item's original record when it has one, otherwise its bonus fields. A potion

@@ -88,7 +88,7 @@ every family has two skills granted (code 1) and nine to choose from (code 2). T
 | Rule | Call |
 |---|---|
 | Creation arrays | `mm6::creationRules()` after `mm6::loadCreationRules`. Throws if not loaded |
-| Spell cost and recovery | `mm6::spellManaRecovery(spellId, mastery)` for spells 1 to 99 and Novice to Master |
+| Spell cost and recovery | `mm6::spellManaRecovery(spellId, mastery)` for spells 1 to 99 and Novice to Master. The cost comes from `spells.txt` while `gameplay.fix_spells_cost` is on |
 | Rooms | `mm6::decodeRoomDescriptors(mm6::executable())`, used by `MM6HouseServiceData.cpp`, and `mm6::selectHouseRoom` |
 | Transport | `mm6::transportRules()`, then `offeredRoutes`, `transportPrice`, `transportDepartureDelayMs` |
 | Shop stock | `mm6::shopStockRules()`, `mm6::shopVisibleSlots` |
@@ -117,9 +117,11 @@ described windows for those four, as the GrayFace patch does.
 The JSON these constants replaced was wrong in two places. It gave the buffs 3600 base seconds, copied from the printed
 "1 hour", where the executable adds 3840 (64 minutes). It also gave all six condition cures the shorter window.
 
-Known disagreement still open: Static Charge's Expert cost. The executable table gives 2/2/0 by mastery, row 13 at
-`0x4BDD70 + 14 * 13`. `spells.txt` gives 2/1/0, and its Expert text says "Casting cost 1 spell point". The GrayFace
-patch takes the text's value (C12). `mm6::spellManaRecovery` keeps the executable's.
+The spell table and `spells.txt` disagree on one cost out of 297: Static Charge at Expert. The executable gives 2/2/0
+by mastery, row 13 at `0x4BDD70 + 14 * 13`. `spells.txt` gives 2/1/0, and its Expert text says "Casting cost 1 spell
+point". The GrayFace patch copies every `spells.txt` cost over the table at startup (C12).
+`gameplay.fix_spells_cost`, on by default, does the same: `mm6::spellManaRecovery` then takes the cost from
+`spells.txt` and only the recovery from the executable.
 
 ## Not from the executable
 
@@ -128,7 +130,7 @@ loaders with MM6 branches: `items.txt`, `stditems.txt`, `spcitems.txt`, `rnditem
 `useitems.txt`, `spells.txt`, `class.txt`, `skilldes.txt`, `stats.txt`, `awards.txt`, `autonote.txt`, `quests.txt`,
 `npc*.txt`, `proftext.txt`, `2devents.txt`, `mapstats.txt`, the map `.evt` and `.str` files and the monster tables.
 Spell costs exist both in `spells.txt` and in the executable table. The original's cast path reads the executable
-table, and so does the port.
+table. The port reads `spells.txt` through `mm6::decodeSpellCosts` unless `gameplay.fix_spells_cost` is off.
 
 ## Tests
 

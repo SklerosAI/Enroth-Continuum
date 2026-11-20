@@ -991,6 +991,8 @@ void Engine::SecondaryInitialization() {
     if (gameTitle() == GameTitle::MM6)
         MM_INFO("Loading MM6 spell table.");
     pSpellStats->Initialize(engine->resources()->eventsData("spells.txt"), gameTitle());
+    if (gameTitle() == GameTitle::MM6)
+        mm6::loadSpellCosts(mm6::decodeSpellCosts(engine->resources()->eventsData("spells.txt")));
 
     pHostilityTable = new HostilityTable();
     if (gameTitle() == GameTitle::MM6)

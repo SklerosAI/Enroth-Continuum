@@ -25,9 +25,10 @@ rechecked at the actual audit start.
 
 Focused pre-audit checkpoint, 2026-11-20: the Dark Priest Sun altar and the
 physical Lich jars add two production-Save/fresh-process-normal-Load pairs,
-bringing the inventory to 27 of the owner's 36-pair cap. Both new pairs and
-their existing promotion controls passed. Two copies of owner MM7 saves, one
-earlier and one later, each passed normal-menu primary admission and corrupt-
+bringing the inventory to 27 pairs. The owner later raised the cap to 48 pairs.
+Both new pairs and their existing promotion controls passed. Two copies of
+owner MM7 saves, one earlier and one later, each passed normal-menu primary
+admission and corrupt-
 temporary-primary/valid-backup admission in separate headless processes. The
 owner source files stayed fingerprint-identical. These probes do not establish
 all legacy-save or long-play compatibility. The full archive, map, spell, item

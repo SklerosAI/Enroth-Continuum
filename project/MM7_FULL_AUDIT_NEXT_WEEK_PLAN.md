@@ -48,8 +48,8 @@ worktree at the end of each round. Claude's MM6 checkouts remain separate.
 
 The current verified inventory is 27 production-Save/fresh-process-normal-Load
 writer/reader pairs, including the new Sun altar and physical Lich jars pairs.
-The cap is **36 pairs total** (72 individual writer/reader tests), leaving at
-most nine additional pairs. A probe that only reads an existing save copy is
+The cap is **48 pairs total** (96 individual writer/reader tests), leaving at
+most 21 additional pairs. A probe that only reads an existing save copy is
 not a checkpoint pair. Add a pair only for a distinct high-risk durable
 boundary found by the audit; do not fill the cap for its own sake. Reuse the
 marked disposable profile gate, normal menu Load, exact bytes and missing-save
@@ -61,6 +61,40 @@ milestone or after shared engine changes. Use the fresh Light/Dark C0-C7 chains
 when a campaign dependency changes. Do not rerun all 27 checkpoint pairs for
 an unrelated catalog edit. The normal-play, media and Atlas cutover checks in
 the audit checklist still require the owner's graphical playthrough.
+
+### Checkpoint resource budget and memory optimization
+
+On 2026-11-20, one physical-Lich-jars pair was measured directly with macOS
+`/usr/bin/time -l`: writer/reader maximum resident sizes were 118.2/117.9 MB,
+and peak memory footprints were 53.6/54.0 MB. The saved slot was 348,399 bytes;
+the complete temporary profile occupied 720 KiB, including filesystem
+allocation. Writer and reader took 4.37 and 1.45 seconds. This is one route,
+not an upper bound for later campaign maps. The temporary profile was removed.
+At this profile size, even retaining all 48 profiles would occupy about 34 MiB;
+normal runners retain only one at a time.
+
+Keep the existing fresh-process writer then reader sequence. Peak memory is
+set by concurrent game processes, not by the number of pairs in the catalog;
+each pair's owner-only temporary profile is deleted after its reader. Keep one
+compiled GameTest binary and reuse the private read-only data directory. The
+checkpoint tests already use the null renderer. Avoid capturing unbounded
+subprocess output in Python memory; the current runners inherit stdout/stderr.
+Do not merge writer and reader into one process to reuse fixture memory: that
+would remove the restart and normal-Load guarantee the checkpoint measures.
+If an aggregate runner is added, schedule *whole pairs* in separate profiles,
+start with at most two concurrent pairs while MM6 work is active, and measure
+the largest campaign cases before raising that limit. A generic per-test
+parallel runner must not reorder a reader ahead of its writer or share slots.
+
+Apple distinguishes resident pages from the dirty memory footprint in its
+[memory analysis guidance](https://developer.apple.com/documentation/xcode/analyzing-the-memory-usage-of-your-metal-app).
+The [gtest-parallel README](https://github.com/google/gtest-parallel) confirms
+that worker count controls simultaneous test processes and defaults to core
+count; this is why checkpoint pairs use their own sequential runners. Python's
+[subprocess documentation](https://docs.python.org/3/library/subprocess.html)
+notes that captured pipe output is buffered in memory. Do not weaken the
+byte-identical saved-slot comparison to save roughly one slot's worth of RAM:
+that is a small fraction of the measured footprint and is part of the proof.
 
 ## Resume commands
 

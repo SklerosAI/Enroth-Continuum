@@ -139,7 +139,7 @@ and Griffin add six more exact tests, bringing that quest total to thirty-six
 tests across eighteen durable routes. The three Priest promotion checkpoints
 and physical Lich jars checkpoint add eight tests across four more routes.
 Including the five older technical save/campaign seams, the inventory is 27
-writer/reader pairs, below the owner's cap of 36 pairs. The earlier full
+writer/reader pairs, below the owner's cap of 48 pairs. The earlier full
 checkpoint sweep passed 23 pairs (46 separate processes); the four newer
 promotion pairs passed independently in eight separate processes. Copied-save
 primary and backup load probes also passed for two owner slots without changing

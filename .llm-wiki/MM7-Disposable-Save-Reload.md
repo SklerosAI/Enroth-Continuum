@@ -173,7 +173,7 @@ column, not visible installed-app acceptance or optional promotion continuity.
 ## Copied owner-save probes and promotion checkpoints — 2026-11-20
 
 The checkpoint inventory is now 27 writer/reader pairs, capped by the owner at
-36. The new Dark Priest pair saves after the Grand Temple of the Sun altar and
+48. The new Dark Priest pair saves after the Grand Temple of the Sun altar and
 loads normally in a fresh process before Falk's exact promotion transaction.
 The new Lich pair saves after all four empty jars are physically taken from
 the Walls of Mist chest, then loads normally before Wynac's exact promotion
@@ -190,5 +190,17 @@ time and SHA-256 before and after copying and after the probe, and the source
 files remained unchanged. The temporary copies were removed. This is bounded
 compatibility evidence for those slots, not a survey of every legacy save or
 proof of visible installed-app play. The probes are not checkpoint pairs.
+
+## Checkpoint memory budget — 2026-11-20
+
+The owner raised the ceiling to 48 pairs (21 additional pairs from the 27
+verified), as a limit rather than a coverage target. A measured physical-Lich
+pair peaked at about 118 MB resident size and 54 MB memory footprint per
+process; its complete temporary profile used 720 KiB. Writer and reader run
+sequentially in separate processes, so the pair count does not accumulate RAM.
+The [next-week audit plan](../project/MM7_FULL_AUDIT_NEXT_WEEK_PLAN.md) records
+the measurement and low-concurrency policy. Keep exact saved-slot byte
+comparisons; removing a single copied slot would save little against the
+measured process footprint.
 
 See also: [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md), [MM7 Offscreen Frame Capture](MM7-Offscreen-Frame-Capture.md), [MM7 Runtime Path Cutover](MM7-Runtime-Path-Cutover.md), [MM7 Atomic Save File](MM7-Atomic-Save-File.md), [MM7 Playtest Recording](MM7-Playtest-Recording.md), [Campaign Status](Campaign-Status.md), [Agent Handoff](Agent-Handoff.md).

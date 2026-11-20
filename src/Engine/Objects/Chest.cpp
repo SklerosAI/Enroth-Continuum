@@ -58,6 +58,7 @@ bool bindMm6Chests(mm6::ChestLiveBinding *binding, MM6IndoorSnapshot *indoorBase
     binding->levelType = uCurrentlyLoadedLevelType;
     binding->chests = &vChests;
     binding->titleState = &mm6::chestTitleState();
+    binding->overflow = engine->config->gameplay.FixChestOverflow.value() ? mm6::ChestOverflow::Placed : mm6::ChestOverflow::Hidden;
     if (binding->levelType == LEVEL_OUTDOOR && pOutdoor) {
         binding->deltaBytes = &pOutdoor->mm6DeltaBytes;
     } else if (binding->levelType == LEVEL_INDOOR && pIndoor &&

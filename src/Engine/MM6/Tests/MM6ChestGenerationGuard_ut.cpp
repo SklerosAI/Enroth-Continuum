@@ -1,4 +1,6 @@
+#include <array>
 #include <cstddef>
+#include <cstdint>
 #include <stdexcept>
 
 #include "Testing/Unit/UnitTest.h"
@@ -331,6 +333,105 @@ UNIT_TEST(MM6ChestGenerationGuard, PlacementRejectsMalformedOrRepeatedInputAtomi
     input.title = GameTitle::MM6;
     input.width = 141;
     EXPECT_FALSE(mm6::placeChestItemsDetached(input));
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, OverflowPlacementLeavesFittingChestAsVanilla) {
+    // A chest whose items all fit is laid out as MM6.exe does, with the same random draws.
+    mm6::ChestPlacementInput input;
+    input.title = GameTitle::MM6;
+    input.width = 3;
+    input.height = 2;
+    input.rngState = 67;
+    input.items[0] = {10, 16, 16, 0, 1};
+    input.items[1] = {135, 50, 16, 0, 2};
+    input.items[2] = {200, 16, 16, 0, 3};
+    const auto vanilla = mm6::placeChestItemsDetached(input);
+    input.overflow = mm6::ChestOverflow::Placed;
+    const auto fixed = mm6::placeChestItemsDetached(input);
+    ASSERT_TRUE(vanilla && fixed);
+    EXPECT_EQ(fixed->grid, vanilla->grid);
+    EXPECT_EQ(fixed->items[1].currentCharges, 28);
+    EXPECT_EQ(fixed->drawsConsumed, 206);
+    EXPECT_EQ(fixed->nextRngState, 4188316497u);
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, OverflowPlacementPutsMostValuableItemFirst) {
+    // Only one of the two items fits. MM6.exe showed the first slot's, the fix shows the more valuable one, and a quest
+    // item before anything.
+    mm6::ChestPlacementInput input;
+    input.title = GameTitle::MM6;
+    input.width = 2;
+    input.height = 1;
+    input.rngState = 4;
+    input.overflow = mm6::ChestOverflow::Placed;
+    input.items[0] = {10, 16, 16, 0, 1};
+    input.items[1] = {20, 50, 16, 0, 50};
+    auto placed = mm6::placeChestItemsDetached(input);
+    ASSERT_TRUE(placed);
+    EXPECT_EQ(placed->grid[0], 2);
+    EXPECT_EQ(placed->grid[1], -1);
+    EXPECT_EQ(placed->placedCount, 1);
+    EXPECT_EQ(placed->unplacedCount, 1);
+    EXPECT_EQ(placed->drawsConsumed, 192);
+
+    input.items[0] = {10, 16, 16, 0, 1000};
+    input.items[1] = {450, 50, 16, 0, 0};
+    placed = mm6::placeChestItemsDetached(input);
+    ASSERT_TRUE(placed);
+    EXPECT_EQ(placed->grid[0], 2);
+    EXPECT_EQ(placed->grid[1], -1);
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, OverflowPlacementCompactsWhenScatterShowsLess) {
+    // The shuffle puts the first two-cell item in the middle of a four-cell row, leaving no room for the second. Packed
+    // from the left, both fit.
+    mm6::ChestPlacementInput input;
+    input.title = GameTitle::MM6;
+    input.width = 4;
+    input.height = 1;
+    input.rngState = 2;
+    input.items[0] = {10, 50, 16, 0, 5};
+    input.items[1] = {11, 50, 16, 0, 5};
+    const auto vanilla = mm6::placeChestItemsDetached(input);
+    ASSERT_TRUE(vanilla);
+    EXPECT_EQ(vanilla->placedCount, 1);
+    EXPECT_EQ(vanilla->grid[1], 1);
+
+    input.overflow = mm6::ChestOverflow::Placed;
+    const auto fixed = mm6::placeChestItemsDetached(input);
+    ASSERT_TRUE(fixed);
+    EXPECT_EQ(fixed->placedCount, 2);
+    EXPECT_EQ(fixed->unplacedCount, 0);
+    EXPECT_EQ(fixed->grid, (std::array<std::int16_t, 140>{1, -1, 2, -3}));
+    EXPECT_EQ(fixed->drawsConsumed, 166);
+    EXPECT_EQ(fixed->nextRngState, 3573641392u);
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, LeftoverPlacementFillsFreeCellsMostValuableFirst) {
+    // An opened chest with two free cells and two items that had no room. The more valuable one takes the first free
+    // cell, the wand the next, and draws its charges.
+    mm6::ChestPlacementInput input;
+    input.title = GameTitle::MM6;
+    input.width = 3;
+    input.height = 1;
+    input.flags = 2;
+    input.rngState = 5;
+    input.items[0] = {10, 16, 16, 0, 1};
+    input.items[1] = {135, 16, 16, 0, 2};
+    input.items[2] = {200, 16, 16, 0, 100};
+    input.grid[1] = 1;
+    const auto placed = mm6::placeChestLeftoversDetached(input);
+    ASSERT_TRUE(placed);
+    EXPECT_EQ(placed->grid, (std::array<std::int16_t, 140>{3, 1, 2}));
+    EXPECT_EQ(placed->placedCount, 2);
+    EXPECT_EQ(placed->unplacedCount, 0);
+    EXPECT_EQ(placed->items[1].currentCharges, 22);
+    EXPECT_EQ(placed->drawsConsumed, 1);
+    EXPECT_EQ(placed->nextRngState, 3601076u);
+    EXPECT_EQ(placed->flags, 2);
+
+    input.flags = 0;
+    EXPECT_FALSE(mm6::placeChestLeftoversDetached(input)); // A chest that was never opened is placed the first time.
 }
 
 UNIT_TEST(MM6ChestGenerationGuard, DirectArtifactPickerIncludesOriginalExtraCandidate) {

@@ -16,6 +16,7 @@
 #include "Engine/MM6/MM6ChestOuterPlan.h"
 #include "Engine/MM6/MM6ChestPlacement.h"
 #include "Engine/MM6/MM6ChestTypeLayout.h"
+#include "Engine/MM6/MM6ItemValue.h"
 
 namespace mm6 {
 
@@ -180,10 +181,12 @@ struct ChestRecordPlacementResult {
 
 // Original placement runs at first chest-open, after map-level generation.
 // It is deliberately a separate transaction and does not mutate a live chest.
+// With `ChestOverflow::Placed`, an opened chest gets the items that had no
+// room placed instead, see `placeChestLeftoversDetached`.
 inline std::optional<ChestRecordPlacementResult> stageFirstChestRecordPlacement(
     GameTitle title, const ChestRecord &record, std::span<const std::uint8_t> dchest,
-    std::uint32_t rngState, const ChestIconLookup &iconLookup) {
-    if (title != GameTitle::MM6 || !iconLookup)
+    std::uint32_t rngState, const ChestIconLookup &iconLookup, ChestOverflow overflow = ChestOverflow::Hidden) {
+    if (title != GameTitle::MM6 || !iconLookup || (overflow == ChestOverflow::Placed && !pItemTable))
         return std::nullopt;
     const auto layout = chestTypeLayout(title, readChest16(record, 0), dchest);
     const auto grid = decodeChestGridWire(title, record);
@@ -196,6 +199,7 @@ inline std::optional<ChestRecordPlacementResult> stageFirstChestRecordPlacement(
     input.flags = readChest16(record, 2);
     input.rngState = rngState;
     input.grid = *grid;
+    input.overflow = overflow;
     for (int slot = 0; slot < 140; ++slot) {
         const auto item = std::span(record).subspan(4 + slot * 28, 28);
         const int id = readChest32(item, 0);
@@ -210,8 +214,15 @@ inline std::optional<ChestRecordPlacementResult> stageFirstChestRecordPlacement(
             input.items[slot].iconWidth = icon->width;
             input.items[slot].iconHeight = icon->height;
         }
+        if (id != 0 && overflow == ChestOverflow::Placed) {
+            ItemRecord28 raw;
+            std::copy(item.begin(), item.end(), raw.begin());
+            const bool gold = id >= 197 && id <= 199;
+            input.items[slot].value = gold ? readChest32(item, 12) : itemValue(raw, *pItemTable);
+        }
     }
-    const auto placed = placeChestItemsDetached(input);
+    const bool opened = overflow == ChestOverflow::Placed && (input.flags & 2u);
+    const auto placed = opened ? placeChestLeftoversDetached(input) : placeChestItemsDetached(input);
     if (!placed)
         return std::nullopt;
     const auto encoded = encodeChestGridWire(title, record, placed->grid);

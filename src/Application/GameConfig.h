@@ -324,6 +324,11 @@ class GameConfig : public Config {
             "In vanilla, the first candidate got one chance more, even an item with no chance at that treasure level, and the last one "
             "got one less."};
 
+        Bool FixChestOverflow = {this, "fix_chest_overflow", true,
+            "MM6 only. When a chest's items don't all fit on first opening, place the most valuable first and pack them into rows "
+            "when that shows more of them, and put the rest in once there's room and the chest is opened again, as the GrayFace "
+            "patch does with all its chest options on. In vanilla, an item that didn't fit was never shown."};
+
         Float SpellFailureRecoveryMod = {this, "spell_failure_recovery_mod", 0.5f, &ValidateSpellFailureRecoveryMod,
             "Recovery time modifier when spell casting ended in failure for the reason where spell cannot be cast at all in current context. "
             "Context include situation where outdoor spell is casted indoor or targeted spell is casted with no characters on screen."};

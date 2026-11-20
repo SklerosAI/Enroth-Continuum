@@ -3793,3 +3793,9 @@ Chronological record of wiki activity.
 ## [2026-11-20] install | MM7 chest reroll Atlas
 - by: T-Burton-ND via codex
 - Installed the verified local Atlas bundle after confirming no Atlas or game helper was running. The installed bundle passes strict signature verification, contains the chest reroll toggle and keeps the MM6 executable byte-identical to the previous app. The previous app is retained in the ignored build rollback folder. The MM7 release tag was not moved, and normal graphical button placement and mouse acceptance remain to be observed.
+
+## [2026-11-20] update | MM7 click loot reroll and 0.1.1 candidate
+- by: T-Burton-ND via codex
+- Recorded the separate MM7 click-loot mod: a shared in-game checkbox and paused Reroll/Take popup for eligible random monster corpses and random scripted items from clicked trash heaps, decorations and faces. Fixed rewards, gold and pre-generated items remain on the inherited path.
+- Documented the one-session Emerald Isle dragon test setup and the proposed 0.1.1 MM7 patch boundary. MM6 remains a separate playtest helper; Claude's active MM6 branch is not included in this source candidate.
+- The default MM7 headless suite passed 737/737, opt-in mod combination 5/5, MM6 item/decor controls 3/3, unit tests 1125 passed with 45 optional skips, and style and Atlas contract checks passed. The pre-tag fresh-process sweep and release installation remain pending.

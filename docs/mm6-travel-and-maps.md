@@ -210,8 +210,9 @@ the target of a map change. Any other load keeps the blocking guard, and the MM7
 
 The chest grid is 9 x 9 with fixed pixel offsets, as MM6's chest UI hard-codes. `dchest.bin` carries unused 14 x 10
 metadata. Items are placed once in shuffled order, with a footprint of `(pixels - 14) / 32 + 1` cells per axis from the
-icon size. An item that doesn't fit keeps its slot with no cell and is never shown. GrayFace's reorder, compaction and
-later placement are not done.
+icon size. In MM6.exe an item that doesn't fit keeps its slot with no cell and is never shown. With
+`gameplay.fix_chest_overflow` (W13) such a chest is laid out again, artifacts and quest items first, then the most
+valuable, packed into rows when that shows more of them, and reopening it places what had no room.
 
 ### Traps
 
@@ -227,8 +228,7 @@ A chest is trapped when flag bits 0 and 1 are both set (`MM6ChestTrapDecision.h`
   from the map's trap dice. A character with Perception avoids it when `random(perception + 20) > 20`, using the raw
   skill byte with its mastery bits.
 
-The W12 GrayFace fix (clearing found flags of artifacts in never-opened chests on respawn) and the W13 overflow fix are
-not done.
+The W12 GrayFace fix (clearing found flags of artifacts in never-opened chests on respawn) is not done.
 
 ## GrayFace travel and map fixes
 
@@ -240,9 +240,10 @@ not done.
 | Travel speech delay (W8) | `gameplay.fix_travel_speech_delay` |
 | No border offer while flying (W9) | `gameplay.fix_flying_border_offer` |
 | Ground items don't leak between maps (W11) | By design, each map rebuilds from its own data |
+| Chest items that had no room show later (W13) | `gameplay.fix_chest_overflow` |
 | Sprite and texture animation frame timing (W24) | Shared code |
 
-Open: W12 chest artifacts on respawn, W13 chest overflow, W15 door action 3, and GrayFace's map data fixes (W29, the
+Open: W12 chest artifacts on respawn, W15 door action 3, and GrayFace's map data fixes (W29, the
 Free Haven Smuggler's Guild door, is in GrayFace's patched `Outc2.odm`). The full list is on the
 [GrayFace patch reference](mm6-grayface-patch-reference.md).
 

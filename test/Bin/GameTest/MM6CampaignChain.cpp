@@ -135,8 +135,12 @@ void saveMM6CampaignChainSlot(EngineController &game, int chapter) {
     const auto &slots = saveLoadMenu()->slots();
     ASSERT_EQ(std::ssize(slots), chapter + 1); // The new save slot, then the slots of the earlier chapters.
     ASSERT_TRUE(slots.front().fileName.empty());
-    const int selected = std::ranges::find(slots, saveLoadMenu()->selectedSlot().fileName, &SavegameSlot::fileName) - slots.begin();
-    clickArrow(game, UIMSG_ArrowUp, std::min(selected, std::max(0, static_cast<int>(slots.size()) - 7))); // The menu scrolled to the loaded slot.
+    for (int i = 0; i < std::ssize(slots) && !saveLoadMenu()->selectedSlot().fileName.empty(); i++) {
+        clickArrow(game, UIMSG_ArrowUp, 1); // The menu opens scrolled to the loaded slot.
+        game.pressGuiButton("SaveMenu_Slot0");
+        game.tick();
+    }
+    ASSERT_TRUE(saveLoadMenu()->selectedSlot().fileName.empty());
     game.doubleClickGuiButton("SaveMenu_Slot0");
     game.tick();
     game.pressAndReleaseKey(PlatformKey::KEY_C);
@@ -189,6 +193,32 @@ void useMM6CampaignChainIndoorEventFace(EngineController &game, int eventId) {
     game.teleportTo(engine->_currentLoadedMapId, position, yaw);
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();
+}
+
+void clickMM6CampaignChainIndoorEventFace(EngineController &game, int eventId) {
+    ASSERT_EQ(uCurrentlyLoadedLevelType, LEVEL_INDOOR);
+    for (size_t faceId = 0; faceId < pIndoor->faces.size(); faceId++) {
+        const BLVFace &face = pIndoor->faces[faceId];
+        if (face.eventId != eventId || std::abs(face.facePlane.normal.z) > 0.1f)
+            continue;
+        const Vec3f front = face.boundingBox.center() + 150 * face.facePlane.normal;
+        int sectorId = 0;
+        Vec3f position = front;
+        position.z = GetIndoorFloorZ(front + Vec3f(0, 0, 40), &sectorId);
+        if (position.z <= -29000)
+            position.z = GetIndoorFloorZ(front - Vec3f(0, 0, 150), &sectorId); // A face above eye level.
+        if (position.z <= -29000)
+            continue;
+        const int yaw = std::lround(std::atan2(-face.facePlane.normal.y, -face.facePlane.normal.x) * 180 / std::numbers::pi);
+        const int pitch = std::lround(std::atan2(face.boundingBox.center().z - position.z - pParty->eyeLevel, 150) * 180 / std::numbers::pi);
+        game.teleportTo(engine->_currentLoadedMapId, position, yaw, pitch);
+        game.tick();
+        game.pointMouseAtFace(faceId);
+        game.pressAndReleaseButton(BUTTON_LEFT);
+        game.tick();
+        return;
+    }
+    FAIL() << "No face of event " << eventId << " to click";
 }
 
 void walkOntoMM6CampaignChainIndoorEventPlate(EngineController &game, int eventId) {
@@ -316,6 +346,33 @@ void enterMM6CampaignChainCastle(EngineController &game, MapId map, int eventId)
     game.pressGuiButton("Transition_Yes");
     game.tick();
     ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+}
+
+void confirmMM6CampaignChainTransition(EngineController &game) {
+    ASSERT_EQ(current_screen_type, SCREEN_INPUT_BLV);
+    game.pressGuiButton("Transition_Yes");
+    game.tick();
+    game.skipLoadingScreen();
+    game.tick();
+}
+
+void enterMM6CampaignChainOracle(EngineController &game) {
+    const MapId oracle = pMapTable->GetMapInfo("oracle.blv");
+    useMM6CampaignChainEventFace(game, pMapTable->GetMapInfo("outc2.odm"), 49);
+    takeMM6CampaignChainHouseExit(game, oracle);
+}
+
+void takeMM6CampaignChainHouseExit(EngineController &game, MapId map) {
+    ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
+    auto button = std::ranges::find(window_SpeakInHouse->vButtons, localization->format(LSTR_ENTER_S, pMapTable->pInfos[map].name), &GUIButton::label);
+    ASSERT_NE(button, window_SpeakInHouse->vButtons.end());
+    game.pressGuiButton((*button)->id);
+    game.tick();
+    game.pressGuiButton("HouseExit_Yes");
+    game.tick();
+    game.skipLoadingScreen();
+    game.tick();
+    ASSERT_EQ(engine->_currentLoadedMapId, map);
 }
 
 void talkToMM6CampaignChainNpc(EngineController &game, int npcId) {

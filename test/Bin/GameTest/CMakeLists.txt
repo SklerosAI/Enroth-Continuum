@@ -100,6 +100,7 @@ set(GAME_TEST_MAIN_SOURCES
         GameTests_MM6CampaignChainC5.cpp
         GameTests_MM6CampaignChainC6.cpp
         GameTests_MM6CampaignChainC7.cpp
+        GameTests_MM6CampaignChainC8.cpp
         GameTests_MM6CharacterBitEvent.cpp
         GameTests_MM6EventVariables.cpp
         GameTests_MM6WallPlate.cpp

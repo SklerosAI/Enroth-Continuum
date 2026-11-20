@@ -62,6 +62,14 @@ void useMM6CampaignChainEventFace(EngineController &game, MapId map, int eventId
 void useMM6CampaignChainIndoorEventFace(EngineController &game, int eventId);
 
 /**
+ * Clicks the first wall face of an event on the current indoor map that the party sees from 150 units in front of it.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param eventId                       Local event of the face.
+ */
+void clickMM6CampaignChainIndoorEventFace(EngineController &game, int eventId);
+
+/**
  * Teleports next to a pressure plate of an event on the current indoor map and walks onto it.
  *
  * @param game                          Engine controller of the running test.
@@ -128,6 +136,28 @@ void useMM6CampaignChainDecoration(EngineController &game, int decorationId);
  * @param eventId                       Local event of the castle door.
  */
 void enterMM6CampaignChainCastle(EngineController &game, MapId map, int eventId);
+
+/**
+ * Answers yes to the open dungeon entrance or exit prompt and waits out the loading screen.
+ *
+ * @param game                          Engine controller of the running test.
+ */
+void confirmMM6CampaignChainTransition(EngineController &game);
+
+/**
+ * Goes down to the Oracle through the High Council's door on `outc2`, which the council's approval opens.
+ *
+ * @param game                          Engine controller of the running test.
+ */
+void enterMM6CampaignChainOracle(EngineController &game);
+
+/**
+ * Picks the way to another map in the open house screen and confirms it.
+ *
+ * @param game                          Engine controller of the running test.
+ * @param map                           Map the way leads to.
+ */
+void takeMM6CampaignChainHouseExit(EngineController &game, MapId map);
 
 /**
  * Picks a person in the open house screen by name.

@@ -1,8 +1,6 @@
 #include <algorithm>
-#include <cmath>
 #include <cstdint>
 #include <initializer_list>
-#include <numbers>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -13,15 +11,12 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Graphics/Indoor.h"
-#include "Engine/Localization.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Tables/NPCTable.h"
 
-#include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIBranchlessDialogue.h"
-#include "GUI/UI/UIHouses.h"
 
 #include "MM6CampaignChain.h"
 
@@ -48,64 +43,15 @@ static const BLVDoor &door(int doorId) {
     return *std::ranges::find(pIndoor->doors, static_cast<uint32_t>(doorId), &BLVDoor::doorId);
 }
 
-static void confirmTransition(EngineController &game) {
-    ASSERT_EQ(current_screen_type, SCREEN_INPUT_BLV);
-    game.pressGuiButton("Transition_Yes");
-    game.tick();
-    game.skipLoadingScreen();
-    game.tick();
-}
-
-static void enterOracle(EngineController &game) {
-    // The High Council's way down, which its approval opens.
-    const MapId oracle = pMapTable->GetMapInfo("oracle.blv");
-    useMM6CampaignChainEventFace(game, pMapTable->GetMapInfo("outc2.odm"), 49);
-    auto button = std::ranges::find(window_SpeakInHouse->vButtons, localization->format(LSTR_ENTER_S, pMapTable->pInfos[oracle].name), &GUIButton::label);
-    ASSERT_NE(button, window_SpeakInHouse->vButtons.end());
-    game.pressGuiButton((*button)->id);
-    game.tick();
-    game.pressGuiButton("HouseExit_Yes");
-    game.tick();
-    game.skipLoadingScreen();
-    game.tick();
-    ASSERT_EQ(engine->_currentLoadedMapId, oracle);
-}
-
 static void askOracle(EngineController &game, std::initializer_list<int> topics) {
-    enterOracle(game);
+    enterMM6CampaignChainOracle(game);
     useMM6CampaignChainIndoorEventFace(game, 3); // The Oracle. Her screen is still raised from C5.
     talkToMM6CampaignChainNpc(game, 8);
     for (int topic : topics)
         ASSERT_TRUE(selectMM6CampaignChainTopic(game, topic));
     leaveMM6CampaignChainHouse(game);
     useMM6CampaignChainIndoorEventFace(game, 50); // The way out.
-    confirmTransition(game);
-}
-
-static void clickIndoorEventFace(EngineController &game, int eventId) {
-    // Clicks the first wall face of the event that the party sees from 150 units in front of it.
-    for (size_t faceId = 0; faceId < pIndoor->faces.size(); faceId++) {
-        const BLVFace &face = pIndoor->faces[faceId];
-        if (face.eventId != eventId || std::abs(face.facePlane.normal.z) > 0.1f)
-            continue;
-        const Vec3f front = face.boundingBox.center() + 150 * face.facePlane.normal;
-        int sectorId = 0;
-        Vec3f position = front;
-        position.z = GetIndoorFloorZ(front + Vec3f(0, 0, 40), &sectorId);
-        if (position.z <= -29000)
-            position.z = GetIndoorFloorZ(front - Vec3f(0, 0, 150), &sectorId); // A face above eye level.
-        if (position.z <= -29000)
-            continue;
-        const int yaw = std::lround(std::atan2(-face.facePlane.normal.y, -face.facePlane.normal.x) * 180 / std::numbers::pi);
-        const int pitch = std::lround(std::atan2(face.boundingBox.center().z - position.z - pParty->eyeLevel, 150) * 180 / std::numbers::pi);
-        game.teleportTo(engine->_currentLoadedMapId, position, yaw, pitch);
-        game.tick();
-        game.pointMouseAtFace(faceId);
-        game.pressAndReleaseButton(BUTTON_LEFT);
-        game.tick();
-        return;
-    }
-    FAIL() << "No face of event " << eventId << " to click";
+    confirmMM6CampaignChainTransition(game);
 }
 
 static void selectKeyCarrier(EngineController &game) {
@@ -125,7 +71,7 @@ static void takeChestItems(EngineController &game, int chestEvent, int chestId, 
     for (int item : items) {
         for (int attempt = 0; attempt < 3 && current_screen_type != SCREEN_CHEST; attempt++) {
             selectKeyCarrier(game);
-            clickIndoorEventFace(game, chestEvent);
+            clickMM6CampaignChainIndoorEventFace(game, chestEvent);
         }
         ASSERT_EQ(current_screen_type, SCREEN_CHEST);
         takeMM6CampaignChainChestItem(game, chestId, static_cast<ItemId>(item));
@@ -150,13 +96,13 @@ static void speakCode(EngineController &game, int plateEvent, std::string_view c
 
 static void enterTomb(EngineController &game) {
     useMM6CampaignChainEventFace(game, pMapTable->GetMapInfo("outb3.odm"), 90);
-    confirmTransition(game);
+    confirmMM6CampaignChainTransition(game);
     ASSERT_EQ(engine->_currentLoadedMapId, pMapTable->GetMapInfo("pyramid.blv"));
 }
 
 static void takeControlCube(EngineController &game) {
     // The keys, scrolls and codes of the tomb in the order they open each other, then out with the cube.
-    clickIndoorEventFace(game, 29); // The switch by the chest, where a Djinn and two Genies stand guard.
+    clickMM6CampaignChainIndoorEventFace(game, 29); // The switch by the chest, where a Djinn and two Genies stand guard.
     for (int frame = 0; frame < 50 && door(38).state != DOOR_OPEN; frame++)
         game.tick(); // The cover over the chest slides away.
     takeChestItems(game, 44, 4, {574, 537});
@@ -166,7 +112,7 @@ static void takeControlCube(EngineController &game) {
     takeChestItems(game, 45, 5, {576, 539});
     takeChestItems(game, 43, 3, {577, 542});
     for (int bookshelf : {26, 27}) {
-        clickIndoorEventFace(game, bookshelf);
+        clickMM6CampaignChainIndoorEventFace(game, bookshelf);
         game.pressGuiButton("Game_Character1"); // The scroll comes in hand and goes into the first character's backpack.
         game.tick();
     }
@@ -179,7 +125,7 @@ static void takeControlCube(EngineController &game) {
     useMM6CampaignChainIndoorEventFace(game, 35); // The control room entry.
     takeChestItems(game, 41, 1, {456});
     useMM6CampaignChainIndoorEventFace(game, 17); // The way out.
-    confirmTransition(game);
+    confirmMM6CampaignChainTransition(game);
 }
 
 GAME_TEST(MM6CampaignChain, DISABLED_Chapter7) {

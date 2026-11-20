@@ -25,7 +25,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 ## Project and provenance
 
 - [Project Overview](Project-Overview.md) — Fork scope, upstream authorship, and project goals
-- [Release Milestones](Release-Milestones.md) — Published ECv0.1.0 tag, exact installed-build provenance, verification and known packaging follow-ups
+- [Release Milestones](Release-Milestones.md) — Published ECv0.1.0 and ECv0.1.1 tags, installed-build provenance, verification and remaining playtest checks
 - [Source and Privacy Boundary](Source-and-Privacy-Boundary.md) — Public source and private game-data rules
 
 ## Campaigns and runtime

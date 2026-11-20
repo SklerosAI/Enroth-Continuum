@@ -7,6 +7,42 @@ related: ["[[Campaign-Status]]", "[[Runtime-Isolation]]", "[[MM7-Playtest-Record
 
 # Release Milestones
 
+## ECv0.1.1 — MM7 patch — 2026-11-20
+
+`ECv0.1.1` is an annotated public tag on commit
+`e7ed060979d2942f92f0dd10f312914a3efd0947`, tree
+`54e392993be87d53d30211d57af135c869af8879`. The tag and `master`
+source history were pushed to origin. It adds separate opt-in MM7 chest and
+click-loot rerolls, including a shared in-game checkbox for random monster
+corpses and clicked random scripted items. Fixed rewards and gold retain their
+original path. The MM7 helper and Atlas now report version 0.1.1.
+
+The source also builds a title-locked MM6 helper for owner playtests. MM6 is
+still not a released or campaign-complete title. Claude's active `claude/mm6`
+worktree remains separate, and its later work was not merged into this patch.
+
+### Release evidence
+
+- Full default MM7 headless suite: 737/737 passed. Opt-in mod combination:
+  5/5 passed. Unit tests: 1125 passed, 45 expected private-evidence skips.
+- MM6 item-event and decoration controls: 3/3 passed. `check_style`, Atlas
+  page and Swift build-contract tests passed.
+- All 28 MM7 fresh-process checkpoint pairs passed from the clean candidate.
+  Both light and dark C0–C7 campaign chains passed from new temporary profiles,
+  which were removed afterward.
+- Two hidden MM7 OpenGL captures passed. The mod-enabled opening HUD capture
+  was inspected and showed the checkbox and dice mark beside the first portrait.
+- The exact-tag Release arm64 build used the pinned local media recipe. The
+  combined Atlas bundle contains MM7 and MM6 helpers with tag, commit and tree
+  build-info records; both helper binaries identify `ECv0.1.1`. The staged
+  and installed bundles match recursively and pass deep strict signature
+  verification. The prior installed app and old app-only rollback copies were
+  removed without making a new backup. Private game data and saves stayed put.
+
+Graphical popup interaction, an installed-app game launch and an installed-app
+Save/Load remain for owner playtesting. The full MM7 map, spell, item, monster
+and archive audit remains planned separately.
+
 ## ECv0.1.0 — MM7 — 2026-11-16
 
 `ECv0.1.0` is the first published Enroth Continuum milestone and the MM7

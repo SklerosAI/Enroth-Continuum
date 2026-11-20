@@ -1,5 +1,9 @@
 # ECv0.1.1 candidate
 
+Released on 2026-11-20. This file preserves the pre-tag plan and candidate
+checks; [Release Milestones](../.llm-wiki/Release-Milestones.md) records the
+final gates, tag and local installation.
+
 `ECv0.1.1` is a proposed MM7 patch release. No tag has been created or moved.
 It includes the existing separate MM6 playtest helper, but does not declare
 MM6 released or its campaign accepted. MM6 release work continues on

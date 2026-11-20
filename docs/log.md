@@ -28,4 +28,5 @@ Format: `- YYYY-MM-DD: what landed.` See [SCHEMA.md](SCHEMA.md) for what earns a
 - 2026-11-19: MM6 chain chapter C7 and GrayFace fixes C8, C12 and C25 merged into `claude/mm6`. C24 doesn't
   reproduce.
 - 2026-11-20: MM6 chain C8, GrayFace C22, W12, W13 and W15, chest pages, the All Artifacts mod for MM6, artifact
-  saves, MM6 loot, artifact bonuses and chest fixes merged into `claude/mm6`.
+  saves, MM6 loot and artifact bonuses merged into `claude/mm6`.
+  Chest fixes reverted, patches kept.

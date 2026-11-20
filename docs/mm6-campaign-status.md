@@ -1,6 +1,6 @@
 # MM6 campaign status
 
-Where Might and Magic VI stands on `claude/mm6` at `3c68e90c0` (2026-11-20): what a player can do, how it is verified,
+Where Might and Magic VI stands on `claude/mm6` (2026-11-20): what a player can do, how it is verified,
 the campaign chain, GrayFace fix progress and the latest lane results.
 
 ## Summary
@@ -215,7 +215,7 @@ Open:
 
 ## Latest lane results
 
-Eleven lanes merged into `claude/mm6` on 2026-11-20, at `3c68e90c0`:
+Ten lanes merged into `claude/mm6` on 2026-11-20:
 
 - **chain-c8.** C8 passes from the C7 save: Nicolai, the outd3 well's Third Eye, Tanir's Bell, the King's Library and
   Archibald's release, plus the Control Center's blasters the hive reactor needs. Saving after the Control Center was
@@ -232,10 +232,12 @@ Eleven lanes merged into `claude/mm6` on 2026-11-20, at `3c68e90c0`:
   the loot lane's message by mistake, its merge commit gives the right one.
 - **mm6-loot.** Monster loot and random ground treasure roll through MM6's generator, so dragons drop artifacts, not
   message scrolls. Ground treasure now draws before chests, as in MM6.exe, which moved the chest rolls tests set.
-- **artifact-bonuses, chest-fixes.** Artifacts and relics give their attribute bonuses, Merlin and Percival shorten
-  recovery, chest gold piles can be taken, the chest right-click reads the right cell and Poison Resistance is Body.
-  Both lanes were stopped before their reports when the owner ran short of budget, so only the integrator's final
-  check covers them.
+- **artifact-bonuses.** Artifacts and relics give their attribute bonuses, and Merlin and Percival shorten recovery.
+  The lane was stopped before its report when the owner ran short of budget, so only the integrator's final check
+  covers it.
+- **chest-fixes, not merged.** Chest gold piles, the chest right-click offset and Poison Resistance as Body. Its merge
+  was reverted after `MM6ChestScreen.RightClickShowsTheItemUnderTheCursor` failed and the suite aborted on an
+  inventory assert on top of chest pages. Its four commits are in `local-game-data/mm6/wip-patches-2026-11-20/`.
 
 ## Source
 

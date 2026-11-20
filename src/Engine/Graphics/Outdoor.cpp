@@ -12,7 +12,6 @@
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/MM6/MM6ChestRecordTransaction.h"
-#include "Engine/MM6/MM6ChestRuntimeProjection.h"
 #include "Engine/MM6/MM6ChestTitleState.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6MapTransition.h"
@@ -557,7 +556,7 @@ void OutdoorLocation::Load(std::string_view filename, int days_played, int respa
             // events. Reusing the vector must not carry the previous map's
             // position into the pre-generation MM6 chest/sidecar join.
             vChests[i].position.reset();
-            mm6::reconstructChest(delta.chests[i], &vChests[i], i);
+            reconstruct(delta.chests[i], &vChests[i], tags::context<int>(i));
         }
 
         if (respawnInitial || respawnTimed) {

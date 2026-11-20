@@ -7,11 +7,9 @@
 #include <cstring>
 #include <optional>
 #include <span>
-#include <utility>
 #include <vector>
 
 #include "Engine/MM6/MM6ChestRecordTransaction.h"
-#include "Engine/MM6/MM6StandardBonusMap.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Snapshots/EntitySnapshots.h"
 #include "Engine/Tables/ChestTable.h"
@@ -20,51 +18,6 @@
 namespace mm6 {
 
 static_assert(std::endian::native == std::endian::little);
-
-/**
- * Converts the standard bonuses of a chest's items between an MM6 chest record and `Item_MM7`, both ways. They agree
- * on bonuses 1 to 13. MM6's bonus 14 is Poison Resistance, which the runtime keeps as Body resistance, while
- * `Item_MM7`'s 14 is Earth resistance, which MM6 doesn't have. So the two swap.
- *
- * @param chest                         Chest whose items to convert, in place.
- */
-inline void swapChestPoisonBonuses(Chest_MM7 *chest) {
-    constexpr int earth = std::to_underlying(ATTRIBUTE_RESIST_EARTH) + 1;
-    constexpr int body = std::to_underlying(ATTRIBUTE_RESIST_BODY) + 1;
-    static_assert(standardBonusForAttribute(ATTRIBUTE_RESIST_BODY) == earth);
-    for (Item_MM7 &item : chest->items) {
-        int &bonus = item.standardEnchantmentOrPotionPower;
-        if ((bonus != earth && bonus != body) || item.itemId <= 0 || item.itemId > 580)
-            continue;
-        const ItemType type = pItemTable->items[static_cast<ItemId>(item.itemId)].type;
-        if (type >= ITEM_TYPE_FIRST_NORMAL_ENCHANTABLE && type <= ITEM_TYPE_LAST_NORMAL_ENCHANTABLE) // A potion's power shares the field.
-            bonus = bonus == earth ? body : earth;
-    }
-}
-
-/**
- * Fills a live MM6 chest from its record fields through the shared `reconstruct`, with MM6's standard bonuses.
- *
- * @param record                        Chest's record fields, as the map holds them.
- * @param chest                         Live chest to fill.
- * @param chestIndex                    Chest's index on the map.
- */
-inline void reconstructChest(Chest_MM7 record, Chest *chest, int chestIndex) {
-    swapChestPoisonBonuses(&record);
-    reconstruct(record, chest, tags::context<int>(chestIndex));
-}
-
-/**
- * Record fields of a live MM6 chest through the shared `snapshot`, with MM6's standard bonuses. The inverse of
- * `reconstructChest`.
- *
- * @param chest                         Live chest.
- * @param record                        Chest's record fields, as the map holds them.
- */
-inline void snapshotChest(const Chest &chest, Chest_MM7 *record) {
-    snapshot(chest, record);
-    swapChestPoisonBonuses(record);
-}
 
 // A bounded MM6 chest grid in the MM7-shaped intermediate. The active 9x9
 // area may reference only slots the current ChestInventory reconstructor can
@@ -186,10 +139,10 @@ inline std::optional<ChestRuntimeProjection> stageChestRuntimeProjection(
 
     ChestRuntimeProjection result;
     result.wireSidecar = record;
-    reconstructChest(source, &result.chest, chestIndex);
+    reconstruct(source, &result.chest, tags::context<int>(chestIndex));
     result.chest.mm6Pages = *pages;
     Chest_MM7 replay{};
-    snapshotChest(result.chest, &replay);
+    snapshot(result.chest, &replay);
     if (replay.chestTypeId != source.chestTypeId || replay.flags != source.flags ||
         replay.inventoryMatrix != source.inventoryMatrix)
         return std::nullopt;
@@ -220,7 +173,7 @@ inline std::optional<ChestRecord> stageChestRuntimeRecord(
     if (title != GameTitle::MM6)
         return std::nullopt;
     Chest_MM7 live{};
-    snapshotChest(projection.chest, &live);
+    snapshot(projection.chest, &live);
     if (!validChestRuntimeGrid(title, live) || live.chestTypeId != readChest16(projection.wireSidecar, 0))
         return std::nullopt;
     if (std::any_of(live.inventoryMatrix.begin() + 81, live.inventoryMatrix.end(),

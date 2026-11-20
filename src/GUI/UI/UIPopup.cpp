@@ -30,7 +30,6 @@
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/MM6/MM6SpellItems.h"
 #include "Engine/MM6/MM6ConsumableRules.h"
-#include "Engine/Tables/ChestTable.h"
 #include "Engine/Timer.h"
 #include "Engine/Conditions.h"
 #include "Engine/Objects/ActorEnumFunctions.h"
@@ -1790,8 +1789,7 @@ void UI_OnMouseRightClick(Pointi mousePos) {
 
                 Chest &chest = vChests[pGUIWindow_CurrentChest->chestId()];
                 InventoryEntry entry = engine->gameTitle() == GameTitle::MM6
-                                           ? mm6::chestPageEntry(chest, pGUIWindow_CurrentChest->page(),
-                                                                 mapToInventoryGrid(mousePos, chestTable[chest.chestTypeId].inventoryOffset))
+                                           ? mm6::chestPageEntry(chest, pGUIWindow_CurrentChest->page(), {inventoryXCoord, inventoryYCoord})
                                            : chest.inventory.entry({inventoryXCoord, inventoryYCoord});
                 if (entry)
                     GameUI_DrawItemInfo(entry.get());

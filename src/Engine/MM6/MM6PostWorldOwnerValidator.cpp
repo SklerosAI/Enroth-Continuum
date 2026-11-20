@@ -50,7 +50,8 @@ void requireFinalChests(const StagedRawSessionFields &staged,
     const ChestRecordSet initialRecords = readChestRecords(saved.rawActiveDelta, indoorBase);
     std::vector<Chest> initialChests(20);
     for (int index = 0; index < 20; ++index) {
-        reconstructChest(projectMM6ChestRecord(initialRecords[index]), &initialChests[index], index);
+        const Chest_MM7 source = projectMM6ChestRecord(initialRecords[index]);
+        reconstruct(source, &initialChests[index], tags::context<int>(index));
     }
     std::vector<std::uint8_t> initialDelta = saved.rawActiveDelta;
     ChestTitleState initialTitle = staged.world.chestTitle;

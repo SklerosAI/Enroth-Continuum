@@ -45,15 +45,6 @@ struct PartyTimeStruct {
     std::array<Time, 20> _s_times;  // 5d8 440h+8*51     //(0xACD44Ch in Silvo's binary)
 };
 
-/**
- * Gold the party finds, as `Party::foundGold` works it out.
- */
-struct FoundGold {
-    int gold = 0; // With the Factor, Banker and Pirate bonuses.
-    int hirelingShare = 0; // The hirelings' cut of `gold`.
-    std::string status; // Empty for a silent find.
-};
-
 struct Party {
     Party() : playing_time(), last_regenerated() {
         zero(false);
@@ -140,14 +131,6 @@ struct Party {
     void GivePartyExp(int pEXPNum);
 
     int GetPartyReputation();
-
-    /**
-     * @param amount                    Gold found.
-     * @param policy                    Whether the hirelings share in it, and whether the status bar tells.
-     * @return                          The gold, the hirelings' share of it and the status bar message, without giving
-     *                                  the party anything.
-     */
-    FoundGold foundGold(int amount, GoldReceivePolicy policy) const;
 
     /**
      * @offset 0x420C05

@@ -62,7 +62,7 @@ inline bool liveChestsMatchSidecar(GameTitle title, const std::vector<Chest> &ch
         if (chests[index].position)  // UpdateChestPositions follows the load-time generator call.
             return false;
         Chest_MM7 live{};
-        snapshotChest(chests[index], &live);
+        snapshot(chests[index], &live);
         const ChestRecord &raw = records[index];
         if (live.chestTypeId != readChest16(raw, 0) || live.flags != readChest16(raw, 2))
             return false;

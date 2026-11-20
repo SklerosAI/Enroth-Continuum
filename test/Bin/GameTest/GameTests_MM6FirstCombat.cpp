@@ -196,6 +196,62 @@ GAME_TEST(MM6Melee, RecoveryEnchantShortensRecoveryByTenPercent) {
     }
 }
 
+GAME_TEST(MM6Melee, ArmorRecoveryPenaltyFollowsMastery) {
+    // Armor and shields slowed recovery by MM7's table, Expert leather and shields lost all of their penalty and Master
+    // plate kept half. MM6 halves the penalty of every armor kind at Expert and removes it at Master.
+    struct Case {
+        ItemSlot slot;
+        int item;
+        Skill skill;
+        Mastery mastery;
+        int recovery;
+        int frames;
+    };
+    const Case cases[] = {
+        {ITEM_SLOT_ARMOUR, 0, SKILL_LEATHER, MASTERY_NOVICE, 185, 31}, // Nothing worn.
+        {ITEM_SLOT_ARMOUR, 66, SKILL_LEATHER, MASTERY_NOVICE, 206, 35}, // Leather Armor.
+        {ITEM_SLOT_ARMOUR, 66, SKILL_LEATHER, MASTERY_EXPERT, 195, 33},
+        {ITEM_SLOT_ARMOUR, 66, SKILL_LEATHER, MASTERY_MASTER, 185, 31},
+        {ITEM_SLOT_ARMOUR, 71, SKILL_CHAIN, MASTERY_NOVICE, 227, 38}, // Chain Mail.
+        {ITEM_SLOT_ARMOUR, 71, SKILL_CHAIN, MASTERY_EXPERT, 206, 35},
+        {ITEM_SLOT_ARMOUR, 71, SKILL_CHAIN, MASTERY_MASTER, 185, 31},
+        {ITEM_SLOT_ARMOUR, 76, SKILL_PLATE, MASTERY_NOVICE, 249, 41}, // Plate Armor.
+        {ITEM_SLOT_ARMOUR, 76, SKILL_PLATE, MASTERY_EXPERT, 217, 36},
+        {ITEM_SLOT_ARMOUR, 76, SKILL_PLATE, MASTERY_MASTER, 185, 31},
+        {ITEM_SLOT_OFF_HAND, 79, SKILL_SHIELD, MASTERY_NOVICE, 206, 35}, // Kite Shield.
+        {ITEM_SLOT_OFF_HAND, 79, SKILL_SHIELD, MASTERY_EXPERT, 195, 33},
+        {ITEM_SLOT_OFF_HAND, 79, SKILL_SHIELD, MASTERY_MASTER, 185, 31},
+    };
+    for (const auto &[slot, item, skill, mastery, recovery, frames] : cases) {
+        SCOPED_TRACE(fmt::format("item={} mastery={}", item, std::to_underlying(mastery)));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        Character &knight = pParty->pCharacters[0];
+        for (ItemSlot worn : {ITEM_SLOT_MAIN_HAND, ITEM_SLOT_OFF_HAND, ITEM_SLOT_ARMOUR})
+            if (InventoryEntry old = knight.inventory.entry(worn))
+                knight.inventory.take(old);
+        knight.inventory.equip(ITEM_SLOT_MAIN_HAND, Item(static_cast<ItemId>(1))); // Longsword.
+        if (item) {
+            knight.inventory.equip(slot, Item(static_cast<ItemId>(item)));
+            knight.pActiveSkills[skill] = CombinedSkillValue(1, mastery);
+        }
+        const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+        const int goblin = game.spawnMonster(pParty->pos + ahead * 150, static_cast<MonsterId>(76), SPAWN_DUMMY)->id;
+        auto recoveryTape = charTapes.custom(0, [](const Character &character) { return character.timeToRecovery.ticks(); });
+        test.startTaping();
+
+        game.pointMouseAtActor(goblin);
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+        while (pParty->pCharacters[0].timeToRecovery > 0_ticks)
+            game.tick(); // The knight recovers.
+
+        EXPECT_EQ(recoveryTape.max(), recovery);
+        EXPECT_EQ(recoveryTape.size(), frames);
+        EXPECT_EQ(recoveryTape.back(), 0);
+    }
+}
+
 GAME_TEST(MM6Potion, DrinkCureWoundsAndMagicPotion) {
     // MM6 potions could not be drunk, every herb and potion was "can not be used that way".
     startNewGameThroughInput(game);

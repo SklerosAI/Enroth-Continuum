@@ -157,6 +157,7 @@ Landed:
 | C6, C18 | `fix_recovery_enchant`, `fix_turn_based_turn_time` |
 | C8 | `fix_weapon_skill_hirelings` for the Expert recovery cut. The attack, damage and armor points and the dropped Armsmaster route follow MM6.exe, no flag. |
 | C26 | No flag. MM6.exe plays the mace swing for clubs, the port was wrong. |
+| C22 | No flag. MM6.exe, which already carries Mok's patch, halves armor and shield recovery penalties at Expert and drops them at Master, as `skilldes.txt` says. The port used MM7's table. |
 | W1, W7, W8, W9 | `fix_map_timers`, `fix_travel_autosave`, `fix_travel_speech_delay`, `fix_flying_border_offer` |
 | W2 | `fix_inactive_party_events` |
 | W4, W5, W18 | `fix_new_day_at_month_start`, `fix_sunrise_light`, `fix_buff_duration_text` |
@@ -169,7 +170,6 @@ Open:
 
 | Items | What is left |
 | --- | --- |
-| C22 | Armor recovery uses the MM7 table. Mok's change needs tracing. |
 | C24 | Doesn't reproduce. MM6.exe's own walking edge check, which we port, keeps chasing monsters on their ledges. Needs a vanilla case that falls. |
 | W12 | Found-artifact flags never clear on respawn. Needs event opcode 69 `RefundChestArtifacts`. |
 | W13 | Chest overflow items stay hidden forever |

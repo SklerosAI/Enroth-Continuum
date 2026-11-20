@@ -1837,8 +1837,12 @@ Duration Character::GetAttackRecoveryTime(bool attackUsesBow) const {
         if (offHandItem->isShield()) {
             Skill skill_type = offHandItem->skill();
             Duration shield_base_recovery = base_recovery_times_per_weapon_type[skill_type];
-            float multiplier = GetArmorRecoveryMultiplierFromSkillLevel(skill_type, 1.0f, 0, 0, 0);
-            shield_recovery = shield_base_recovery * multiplier;
+            if (engine->gameTitle() == GameTitle::MM6) {
+                shield_recovery = mm6::armorRecoveryPenalty(shield_base_recovery, getSkillValue(skill_type).mastery());
+            } else {
+                float multiplier = GetArmorRecoveryMultiplierFromSkillLevel(skill_type, 1.0f, 0, 0, 0);
+                shield_recovery = shield_base_recovery * multiplier;
+            }
         } else {
             if (base_recovery_times_per_weapon_type[offHandItem->skill()] > weapon_recovery) {
                 weapon = offHandItem;
@@ -1851,20 +1855,23 @@ Duration Character::GetAttackRecoveryTime(bool attackUsesBow) const {
     if (InventoryConstEntry armor = inventory.functionalEntry(ITEM_SLOT_ARMOUR)) {
         Skill armour_skill_type = armor->skill();
         Duration base_armour_recovery = base_recovery_times_per_weapon_type[armour_skill_type];
-        float multiplier;
 
-        if (armour_skill_type == SKILL_LEATHER) {
-            multiplier = GetArmorRecoveryMultiplierFromSkillLevel(armour_skill_type, 1.0f, 0, 0, 0);
-        } else if (armour_skill_type == SKILL_CHAIN) {
-            multiplier = GetArmorRecoveryMultiplierFromSkillLevel(armour_skill_type, 1.0f, 0.5f, 0, 0);
-        } else if (armour_skill_type == SKILL_PLATE) {
-            multiplier = GetArmorRecoveryMultiplierFromSkillLevel(armour_skill_type, 1.0f, 0.5f, 0.5f, 0);
+        if (engine->gameTitle() == GameTitle::MM6) {
+            armour_recovery = mm6::armorRecoveryPenalty(base_armour_recovery, getSkillValue(armour_skill_type).mastery());
         } else {
-            assert(armour_skill_type == SKILL_MISC && armor->itemId == ITEM_QUEST_WETSUIT);
-            multiplier = GetArmorRecoveryMultiplierFromSkillLevel(armour_skill_type, 1.0f, 1.0f, 1.0f, 1.0f);
+            float multiplier;
+            if (armour_skill_type == SKILL_LEATHER) {
+                multiplier = GetArmorRecoveryMultiplierFromSkillLevel(armour_skill_type, 1.0f, 0, 0, 0);
+            } else if (armour_skill_type == SKILL_CHAIN) {
+                multiplier = GetArmorRecoveryMultiplierFromSkillLevel(armour_skill_type, 1.0f, 0.5f, 0, 0);
+            } else if (armour_skill_type == SKILL_PLATE) {
+                multiplier = GetArmorRecoveryMultiplierFromSkillLevel(armour_skill_type, 1.0f, 0.5f, 0.5f, 0);
+            } else {
+                assert(armour_skill_type == SKILL_MISC && armor->itemId == ITEM_QUEST_WETSUIT);
+                multiplier = GetArmorRecoveryMultiplierFromSkillLevel(armour_skill_type, 1.0f, 1.0f, 1.0f, 1.0f);
+            }
+            armour_recovery = base_armour_recovery * multiplier;
         }
-
-        armour_recovery = base_armour_recovery * multiplier;
     }
 
     Duration player_speed_recovery_reduction = Duration::fromTicks(GetParameterBonus(GetActualSpeed()));

@@ -79,6 +79,7 @@ enum class DoorAction {
     DOOR_ACTION_OPEN = 0, // If closed or closing, transitions to opening.
     DOOR_ACTION_CLOSE = 1, // If open or opening, transitions to closing.
     DOOR_ACTION_TRIGGER = 2, // Only works on fully open / closed doors. Closes / opens the door.
+    DOOR_ACTION_SWITCH = 3, // GrayFace MM6 patch only. Like trigger, but a moving door turns around too.
 };
 using enum DoorAction;
 

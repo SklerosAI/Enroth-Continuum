@@ -31,6 +31,7 @@
 #include "Engine/Evt/MM6ItemEventWrite.h"
 #include "Engine/Evt/MM6GiveItemEvent.h"
 #include "Engine/Evt/MM6EventVariableDispatch.h"
+#include "Engine/Evt/MM6DoorSwitch.h"
 #include "Engine/Evt/Processor.h"
 #include "Engine/Party.h"
 #include "Engine/Graphics/Indoor.h"
@@ -1435,7 +1436,12 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
                     return {EVT_FLOW_JUMP, ir.target_step};
             break;
         case EVENT_ChangeDoorState:
-            switchDoorAnimation(ir.data.door_descr.door_id, ir.data.door_descr.door_action);
+            if (engine->gameTitle() == GameTitle::MM6 && ir.data.door_descr.door_action == DOOR_ACTION_SWITCH &&
+                engine->config->gameplay.FixDoorStateSwitch.value()) {
+                mm6::switchDoorEvenIfMoving(ir.data.door_descr.door_id);
+            } else {
+                switchDoorAnimation(ir.data.door_descr.door_id, ir.data.door_descr.door_action);
+            }
             break;
         case EVENT_Add:
             if (engine->gameTitle() == GameTitle::MM6 &&

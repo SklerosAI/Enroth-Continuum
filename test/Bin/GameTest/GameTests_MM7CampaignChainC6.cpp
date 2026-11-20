@@ -26,6 +26,7 @@
 #include "Utility/Exception.h"
 
 #include "MM7CampaignChain.h"
+#include "MM7GameplayHarness.h"
 
 static bool isXenofex(const Actor &actor) {
     return actor.uniqueNameIndex != 0 && pMonsterStats->uniqueNames[actor.uniqueNameIndex] == "Xenofex";
@@ -293,7 +294,8 @@ static int fightXenofex(EngineController &game) {
 GAME_TEST(MM7CampaignChain, DISABLED_Chapter6) {
     // Fixtures: teleports to the Castle Lambent throne room door, Celeste's temple and Mount Nighon. The party then
     // follows the authored Thunderfist/Tunnels/Land/Zod transitions, Roland/key/control events, live Xenofex combat,
-    // Colony exit and Land-of-the-Giants return altar. Teleports still approach individual doors, controls and actors.
+    // Colony exit and Land-of-the-Giants return altar. After the live Xenofex fight, player input crosses a measured
+    // segment in Colony Zod before the authored exit. Fixtures still teleport near individual doors, controls and actors.
     assertCampaignChainProfile();
     ASSERT_FALSE(ufs->exists("saves/save006.mm7"));
     loadCampaignChainSlot(game, 5);
@@ -377,6 +379,16 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter6) {
     rescueRolandAndOpenRoute(game);
     const int xenofexId = fightXenofex(game);
     ASSERT_NE(xenofexId, -1);
+    ASSERT_TRUE(pActors[xenofexId].IsNotAlive());
+    ASSERT_GT(pParty->canActCount(), 0);
+    // Fixture boundary: start on a known Colony floor, then walk under normal input before leaving the live map.
+    game.teleportTo(MAP_COLONY_ZOD, Vec3f(-1849, 6726, 934), 0);
+    mm7::testing::MM7MovementResult exitWalk = mm7::testing::driveMovementInput(game, {
+        .key = PlatformKey::KEY_UP,
+        .heldTicks = 8,
+        .minimumHorizontalDistance = 15,
+    });
+    SCOPED_TRACE(exitWalk.diagnostic());
     ASSERT_TRUE(pActors[xenofexId].IsNotAlive());
     ASSERT_GT(pParty->canActCount(), 0);
     {

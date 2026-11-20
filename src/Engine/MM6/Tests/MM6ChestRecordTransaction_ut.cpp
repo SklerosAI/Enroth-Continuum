@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -199,4 +200,62 @@ UNIT_TEST(MM6ChestRecordTransaction, RejectsMalformedAndForeignInputsAtomically)
     auto icon = [](int) -> std::optional<mm6::ChestIconSize> { return mm6::ChestIconSize{14, 14}; };
     EXPECT_FALSE(mm6::stageFirstChestRecordPlacement(GameTitle::MM6, record, types, 0, icon));
     EXPECT_FALSE(mm6::stageFirstChestRecordPlacement(GameTitle::MM7, record, types, 0, icon));
+}
+
+UNIT_TEST(MM6ChestRecordTransaction, GeneratedArtifactCarriesChestArtifactCondition) {
+    // An artifact a chest generation puts on the found list carries the GrayFace patch's chest artifact condition.
+    const auto input = inputWithMarker(0, -7);
+    auto table = oneItemTable(static_cast<ItemId>(200), ITEM_TYPE_RING);
+    const auto result = mm6::stageChestRecordGeneration(input, *table);
+    ASSERT_TRUE(result);
+    const auto item = std::span(result->records[0]).subspan(4, 28);
+    EXPECT_EQ(mm6::readChest32(item, 20), std::bit_cast<std::int32_t>(mm6::CHEST_ARTIFACT_CONDITION));
+
+    std::array<std::uint8_t, 28> found{};
+    mm6::writeChest32(found, 0, 410);
+    std::array<std::uint8_t, 30> before{};
+    before[10] = 1;
+    mm6::markGeneratedChestArtifact(found, before);
+    EXPECT_EQ(mm6::readChest32(found, 20), 0); // Found before the generation.
+}
+
+UNIT_TEST(MM6ChestRecordTransaction, PlacedArtifactLosesChestArtifactCondition) {
+    // Opening a chest clears the condition of the artifacts it shows, an artifact that didn't fit keeps it.
+    mm6::ChestRecord record{};
+    for (int slot = 0; slot < 2; ++slot) {
+        const auto item = std::span(record).subspan(4 + slot * 28, 28);
+        mm6::writeChest32(item, 0, 400 + slot);
+        mm6::writeChest32(item, 20, std::bit_cast<std::int32_t>(mm6::CHEST_ARTIFACT_CONDITION) | 1);
+    }
+    mm6::writeChest16(record, mm6::CHEST_GRID_OFFSET + 2 * 5, 1); // Slot 0 in cell 5.
+    mm6::unmarkPlacedChestArtifacts(record);
+    EXPECT_EQ(mm6::readChest32(std::span(record).subspan(4, 28), 20), 1);
+    EXPECT_EQ(mm6::readChest32(std::span(record).subspan(4 + 28, 28), 20), std::bit_cast<std::int32_t>(mm6::CHEST_ARTIFACT_CONDITION) | 1);
+}
+
+UNIT_TEST(MM6ChestRecordTransaction, RefundTakesOnlyMarkedArtifactsOffTheFoundList) {
+    // A refund takes the chest's unseen generated artifacts off the found list, and leaves an artifact the party saw.
+    mm6::ChestRecord record{};
+    const auto unseen = std::span(record).subspan(4, 28);
+    mm6::writeChest32(unseen, 0, 415);
+    mm6::writeChest32(unseen, 20, std::bit_cast<std::int32_t>(mm6::CHEST_ARTIFACT_CONDITION));
+    mm6::writeChest32(std::span(record).subspan(4 + 28, 28), 0, 416);
+    std::array<std::uint8_t, 30> found{};
+    found[15] = 1;
+    found[16] = 1;
+
+    std::array<std::uint8_t, 4 + 2 * mm6::CHEST_WIRE_SIZE> section{};
+    mm6::writeChest32(section, 0, 2);
+    std::copy(record.begin(), record.end(), section.begin() + 4 + mm6::CHEST_WIRE_SIZE);
+    auto respawned = found;
+    mm6::refundRespawnedChestArtifacts(section, &respawned);
+    EXPECT_EQ(respawned[15], 0);
+    EXPECT_EQ(respawned[16], 1);
+
+    EXPECT_TRUE(mm6::refundChestRecordArtifacts(record, &found));
+    EXPECT_EQ(found[15], 0);
+    EXPECT_EQ(found[16], 1);
+    EXPECT_EQ(mm6::readChest32(unseen, 0), 415); // The artifact stays in the chest.
+    EXPECT_EQ(mm6::readChest32(unseen, 20), 0);
+    EXPECT_FALSE(mm6::refundChestRecordArtifacts(record, &found));
 }

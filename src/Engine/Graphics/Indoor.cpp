@@ -11,6 +11,8 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/MM6/MM6ChestRecordTransaction.h"
+#include "Engine/MM6/MM6ChestTitleState.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6EncounterMonster.h"
 #include "Engine/MM6/MM6MapTransition.h"
@@ -306,6 +308,11 @@ void IndoorLocation::Load(std::string_view filename, int num_days_played, int re
             MM6IndoorRuntimeDelta fresh = decodeMM6IndoorRuntimeDelta(
                 decodeMM6ArchiveEntry(pGames_LOD->read(dlv_filename)), base);
             if (respawnTimed) {
+                if (engine->config->gameplay.FixUnopenedChestArtifacts.value()) {
+                    const Blob &chests = delta.wire.section(MM6IndoorSectionKind::Chests).bytes;
+                    mm6::refundRespawnedChestArtifacts({static_cast<const std::uint8_t *>(chests.data()), chests.size()},
+                                                       &mm6::chestTitleState().generatedArtifactFlags);
+                }
                 fresh.respawnCount = delta.respawnCount;
                 fresh.lastRespawnDay = delta.lastRespawnDay;
                 fresh.visibleOutlines = delta.visibleOutlines;

@@ -39,6 +39,7 @@
 #include "Engine/Objects/Decoration.h"
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Objects/Chest.h"
+#include "Engine/MM6/MM6ChestArtifactRefund.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/MonsterEnumFunctions.h"
 #include "Engine/PartyPlacement.h"
@@ -2042,6 +2043,11 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
         case EVENT_IsTotalBountyHuntingAwardInRange:
         case EVENT_IsNPCInParty:
             assert(false);
+            break;
+        case EVENT_RefundChestArtifacts:
+            if (engine->gameTitle() != GameTitle::MM6 || ir.gameTitle != GameTitle::MM6)
+                throw Exception("MM6-only evt opcode {} in another title", std::to_underlying(ir.opcode));
+            mm6::refundActiveChestArtifacts(ir.data.chest_id);
             break;
         default:
             break;

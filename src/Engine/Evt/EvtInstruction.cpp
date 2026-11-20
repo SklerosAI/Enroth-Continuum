@@ -717,6 +717,8 @@ std::string EvtInstruction::toString(EvtSource source) const {
                                std::to_underlying(data.move_map_descr.house_id), data.move_map_descr.exit_pic_id, str);
         case EVENT_OpenChest:
             return fmt::format("{}: OpenChest({})", step, data.chest_id);
+        case EVENT_RefundChestArtifacts:
+            return fmt::format("{}: RefundChestArtifacts({})", step, data.chest_id);
         case EVENT_ShowFace:
             return fmt::format("{}: SetExpression({}, {})", step, std::to_underlying(who), std::to_underlying(data.portrait_id));
         case EVENT_ReceiveDamage:
@@ -1303,6 +1305,12 @@ EvtInstruction EvtInstruction::parse(InputStream &stream, size_t size, GameTitle
             break;
         case EVENT_IsNPCInParty:  // TODO(yoctozepto): not present in used MM7 data
             // TODO
+            break;
+        case EVENT_RefundChestArtifacts:
+            if (gameTitle != GameTitle::MM6)
+                throw Exception("Unknown evt type: {}", static_cast<uint8_t>(ir.opcode));
+            requireSize(6);
+            ir.data.chest_id = fromStream<uint8_t>(stream);
             break;
         default:
             throw Exception("Unknown evt type: {}", static_cast<uint8_t>(ir.opcode));

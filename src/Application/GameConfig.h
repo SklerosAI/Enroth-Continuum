@@ -324,6 +324,11 @@ class GameConfig : public Config {
             "In vanilla, the first candidate got one chance more, even an item with no chance at that treasure level, and the last one "
             "got one less."};
 
+        Bool FixUnopenedChestArtifacts = {this, "fix_unopened_chest_artifacts", true,
+            "MM6 only. When a map respawns, artifacts its chests rolled that the party never saw can be found again, as the "
+            "GrayFace patch does. In vanilla they stayed on the found list, so the respawned chests and every chest after "
+            "them rolled something else."};
+
         Float SpellFailureRecoveryMod = {this, "spell_failure_recovery_mod", 0.5f, &ValidateSpellFailureRecoveryMod,
             "Recovery time modifier when spell casting ended in failure for the reason where spell cannot be cast at all in current context. "
             "Context include situation where outdoor spell is casted indoor or targeted spell is casted with no characters on screen."};

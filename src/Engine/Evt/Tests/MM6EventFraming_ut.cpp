@@ -93,6 +93,14 @@ UNIT_TEST(MM6EventFraming, RejectsTruncatedOrForeignRecords) {
     EXPECT_EQ(mm7.instruction(2, 0).str, "intro");
 }
 
+UNIT_TEST(MM6EventFraming, RefundChestArtifactsIsMM6Only) {
+    // GrayFace's patched MM6 scripts refund a chest's artifacts with opcode 69 and a chest number.
+    const std::string refund = record(3, EVENT_RefundChestArtifacts, std::string("\x08", 1));
+    EXPECT_EQ(EvtProgram::load(Blob::fromString(refund), GameTitle::MM6).instruction(3, 0).data.chest_id, 8);
+    EXPECT_THROW(EvtProgram::load(Blob::fromString(refund), GameTitle::MM7), std::exception);
+    EXPECT_THROW(EvtProgram::load(Blob::fromString(record(3, EVENT_RefundChestArtifacts, "")), GameTitle::MM6), std::exception);
+}
+
 UNIT_TEST(MM6EventFraming, AllActiveShippedScripts) {
     const auto data = MM6TestData::open();
     if (!data)

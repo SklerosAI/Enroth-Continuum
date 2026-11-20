@@ -1913,7 +1913,8 @@ Duration Character::GetAttackRecoveryTime(bool attackUsesBow) const {
     if (weapon) {
         if (weapon->specialEnchantment == ITEM_ENCHANTMENT_SWIFT ||
             weapon->specialEnchantment == ITEM_ENCHANTMENT_OF_DARKNESS ||
-            weapon->itemId == ITEM_ARTIFACT_PUCK)
+            weapon->itemId == ITEM_ARTIFACT_PUCK ||
+            (engine->gameTitle() == GameTitle::MM6 && mm6::isSwiftArtifact(weapon->itemId)))
             weapon_enchantment_recovery_reduction = 20_ticks;
     }
 

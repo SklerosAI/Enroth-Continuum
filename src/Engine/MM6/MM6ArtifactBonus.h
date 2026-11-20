@@ -109,4 +109,15 @@ constexpr int artifactAttributeBonus(ItemId item, Attribute attribute) {
     return result;
 }
 
+/**
+ * @offset 0x481E61
+ *
+ * @param item                          Weapon an MM6 character attacks with.
+ * @return                              Whether it's Merlin or Percival, which shorten the attack recovery as much as the
+ *                                      Swift enchantment does.
+ */
+constexpr bool isSwiftArtifact(ItemId item) {
+    return std::to_underlying(item) == 404 || std::to_underlying(item) == 405;
+}
+
 } // namespace mm6

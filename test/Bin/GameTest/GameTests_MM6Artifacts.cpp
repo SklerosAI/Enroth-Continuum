@@ -17,6 +17,8 @@
 #include "Engine/Tables/ChestTable.h"
 #include "Engine/Tables/MapTable.h"
 
+#include "Utility/Math/TrigLut.h"
+
 static void startNewGameThroughInput(EngineController &game) {
     // Each character takes its first three optional skills and up to three points in every attribute, then the party
     // enters the first map. The party is a Knight, a Cleric, a Sorcerer and a Druid with nothing equipped.
@@ -203,4 +205,40 @@ GAME_TEST(MM6ArtifactBonus, RelicsRaiseStatsAndTakeTheirToll) {
         {1020, 429, 3, SKILL_INVALID, {{LSTR_HIT_POINTS, 50}, {LSTR_LUCK, 50}, {LSTR_PERSONALITY, -50}}, {LSTR_SPELL_POINTS, LSTR_ARMOR_CLASS}}, // Hera.
     };
     checkArtifactCases(game, test, tapes, cases);
+}
+
+GAME_TEST(MM6ArtifactBonus, SwiftArtifactsShortenRecovery) {
+    // Merlin and Percival recovered as slowly as a plain staff and a plain bow. They shorten the recovery as much as
+    // the Swift enchantment does.
+    struct Case {
+        int weapon;
+        ItemSlot slot;
+        Skill skill;
+        int distance; // How far ahead the goblin stands, in reach of the staff or out of it for the bow.
+        int recovery;
+    };
+    const Case cases[] = {
+        {61, ITEM_SLOT_MAIN_HAND, SKILL_STAFF, 150, 206}, // Staff.
+        {404, ITEM_SLOT_MAIN_HAND, SKILL_STAFF, 150, 163}, // Merlin.
+        {42, ITEM_SLOT_BOW, SKILL_BOW, 1000, 206}, // Longbow.
+        {405, ITEM_SLOT_BOW, SKILL_BOW, 1000, 163}, // Percival.
+    };
+    for (const Case &c : cases) {
+        SCOPED_TRACE(fmt::format("weapon={}", c.weapon));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        Character &knight = pParty->pCharacters[0];
+        knight.inventory.equip(c.slot, Item(static_cast<ItemId>(c.weapon)));
+        knight.setSkillValue(c.skill, CombinedSkillValue::novice());
+        const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+        const int goblin = game.spawnMonster(pParty->pos + ahead * c.distance, static_cast<MonsterId>(76), SPAWN_DUMMY)->id;
+        auto recoveryTape = charTapes.custom(0, [](const Character &character) { return character.timeToRecovery.ticks(); });
+        test.startTaping();
+
+        game.pointMouseAtActor(goblin);
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+
+        EXPECT_EQ(recoveryTape.max(), c.recovery);
+    }
 }

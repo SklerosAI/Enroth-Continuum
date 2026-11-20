@@ -112,7 +112,10 @@ GAME_TEST(MM6Bow, PercivalArrowExplodes) {
         test.startTaping();
 
         game.pointMouseAtActor(target);
-        for (int frame = 0; frame < 300 && targetHpTape.back() == targetHpTape.front(); frame++) { // Arrows can miss.
+        auto waiting = [&] {
+            return targetHpTape.back() == targetHpTape.front() || (bow == static_cast<ItemId>(405) && bystanderHpTape.back() == bystanderHpTape.front());
+        };
+        for (int frame = 0; frame < 300 && waiting(); frame++) { // Arrows and blasts can miss.
             game.pressAndReleaseKey(PlatformKey::KEY_A);
             game.tick();
         }

@@ -153,6 +153,10 @@ MM6.exe 0x454C0E). Rest is refused near hostile monsters by MM6's own rule, see
 When a monster dies with no dead sprite it is removed and drops its carried item. `mm6CarriedItem` builds that item
 as MM6.exe 0x4217BD does.
 
+Clicking a corpse loots it (MM6.exe 0x421670): gold from the treasure dice, then the carried item, or else a random
+item with the treasure chance from MM6's item generator, see
+[characters, items and spells](mm6-characters-items-spells.md#generation).
+
 ## Party attacks
 
 Melee and bow to-hit and damage use the shared formulas. MM6-specific parts:

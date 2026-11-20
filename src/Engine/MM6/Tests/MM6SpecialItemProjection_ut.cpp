@@ -3,9 +3,9 @@
 
 #include "Testing/Unit/UnitTest.h"
 
-#include "Engine/MM6/MM6AntiqueItemProjection.h"
 #include "Engine/MM6/MM6BoundedInventoryProjection.h"
 #include "Engine/MM6/MM6RawPartyInventoryStage.h"
+#include "Engine/MM6/MM6SpecialItemProjection.h"
 
 namespace {
 
@@ -25,6 +25,11 @@ struct TableScope {
         special.itemSuffixOrPrefix = "Antique";
         special.valueMul = 10;
         special.chanceByItemType[ITEM_TYPE_ARMOUR] = 1;
+        auto &protection = table->specialEnchantments[ITEM_ENCHANTMENT_OF_PROTECTION];
+        protection.itemSuffixOrPrefix = "of Protection";
+        protection.valueAdd = 1000;
+        protection.valueMul = 1;
+        protection.chanceByItemType[ITEM_TYPE_ARMOUR] = 10;
     }
 
     ~TableScope() { pItemTable = previous; }
@@ -45,19 +50,19 @@ mm6::ItemRecord28 antiqueRecord() {
 
 } // namespace
 
-UNIT_TEST(MM6AntiqueItemProjection, ValueAndExactRawCarrier) {
+UNIT_TEST(MM6SpecialItemProjection, ValueAndExactRawCarrier) {
     TableScope scope;
     const auto raw = antiqueRecord();
-    auto projection = mm6::stageAntiqueItem(raw, *scope.table, GameTitle::MM6);
+    auto projection = mm6::stageSpecialItem(raw, *scope.table, GameTitle::MM6);
     ASSERT_TRUE(projection);
     EXPECT_EQ(projection->item.specialEnchantment, ITEM_ENCHANTMENT_ANTIQUE);
     EXPECT_EQ(projection->item.mm6RawRecord, raw);
     EXPECT_EQ(projection->item.GetValue(), 1230);
     EXPECT_EQ(projection->item.GetIdentifiedName(), "Antique Armor");
-    EXPECT_EQ(mm6::captureAntiqueItem(*projection, *scope.table, GameTitle::MM6), raw);
+    EXPECT_EQ(mm6::captureSpecialItem(*projection, *scope.table, GameTitle::MM6), raw);
 
     projection->item.SetBroken();
-    auto changed = mm6::captureAntiqueItem(*projection, *scope.table, GameTitle::MM6);
+    auto changed = mm6::captureSpecialItem(*projection, *scope.table, GameTitle::MM6);
     ASSERT_TRUE(changed);
     EXPECT_EQ(changed->conditionRaw(), 0x80000003u);
     EXPECT_EQ(changed->secondBonusRaw(), 58);
@@ -66,38 +71,57 @@ UNIT_TEST(MM6AntiqueItemProjection, ValueAndExactRawCarrier) {
     EXPECT_EQ((*changed)[27], 0xa5);
 
     projection->item.mm6RawRecord.reset();
-    EXPECT_FALSE(mm6::captureAntiqueItem(*projection, *scope.table, GameTitle::MM6));
+    EXPECT_FALSE(mm6::captureSpecialItem(*projection, *scope.table, GameTitle::MM6));
 }
 
-UNIT_TEST(MM6AntiqueItemProjection, RejectsUnprovedSemanticsAndUnsafeValue) {
+UNIT_TEST(MM6SpecialItemProjection, EverySpecialBonusKeepsItsRecord) {
+    // Items with a special bonus other than Antique couldn't be saved.
     TableScope scope;
     auto raw = antiqueRecord();
-    EXPECT_FALSE(mm6::stageAntiqueItem(raw, *scope.table, GameTitle::MM7));
     raw.setWord(12, 1);
-    EXPECT_FALSE(mm6::stageAntiqueItem(raw, *scope.table, GameTitle::MM6));
-    raw = antiqueRecord();
-    raw.setWord(4, 1);
-    EXPECT_FALSE(mm6::stageAntiqueItem(raw, *scope.table, GameTitle::MM6));
-    raw = antiqueRecord();
-    scope.table->items[static_cast<ItemId>(100)].rarity = RARITY_ARTIFACT;
-    EXPECT_FALSE(mm6::stageAntiqueItem(raw, *scope.table, GameTitle::MM6));
-    scope.table->items[static_cast<ItemId>(100)].rarity = RARITY_COMMON;
-    scope.table->items[static_cast<ItemId>(100)].baseValue = 214748365;
-    EXPECT_FALSE(mm6::stageAntiqueItem(raw, *scope.table, GameTitle::MM6));
-    scope.table->items[static_cast<ItemId>(100)].baseValue = 123;
-    auto projection = mm6::stageAntiqueItem(raw, *scope.table, GameTitle::MM6);
+    auto projection = mm6::stageSpecialItem(raw, *scope.table, GameTitle::MM6);
     ASSERT_TRUE(projection);
-    projection->item.potionPower = 1;
-    EXPECT_FALSE(mm6::captureAntiqueItem(*projection, *scope.table, GameTitle::MM6));
-    projection->item.potionPower = 0;
-    projection->item.specialEnchantment = ITEM_ENCHANTMENT_OF_PROTECTION;
-    EXPECT_FALSE(mm6::captureAntiqueItem(*projection, *scope.table, GameTitle::MM6));
+    EXPECT_EQ(projection->item.specialEnchantment, ITEM_ENCHANTMENT_OF_PROTECTION);
+    EXPECT_EQ(projection->item.GetValue(), 1123);
+    EXPECT_EQ(mm6::captureSpecialItem(*projection, *scope.table, GameTitle::MM6), raw);
     projection->item.specialEnchantment = ITEM_ENCHANTMENT_ANTIQUE;
-    scope.table->specialEnchantments[ITEM_ENCHANTMENT_ANTIQUE].valueMul = 9;
-    EXPECT_FALSE(mm6::captureAntiqueItem(*projection, *scope.table, GameTitle::MM6));
+    EXPECT_FALSE(mm6::captureSpecialItem(*projection, *scope.table, GameTitle::MM6));
+
+    scope.table->specialEnchantments[ITEM_ENCHANTMENT_OF_PROTECTION].chanceByItemType[ITEM_TYPE_ARMOUR] = 0;
+    EXPECT_FALSE(mm6::stageSpecialItem(raw, *scope.table, GameTitle::MM6)); // The generator never gives it to armor.
+    raw.setWord(12, 2);
+    EXPECT_FALSE(mm6::stageSpecialItem(raw, *scope.table, GameTitle::MM6)); // No such row.
+    raw.setWord(12, 59);
+    EXPECT_FALSE(mm6::stageSpecialItem(raw, *scope.table, GameTitle::MM6));
 }
 
-UNIT_TEST(MM6AntiqueItemProjection, FreshPartyRoundTripAndLateFailure) {
+UNIT_TEST(MM6SpecialItemProjection, RejectsUnprovedSemanticsAndUnsafeValue) {
+    TableScope scope;
+    auto raw = antiqueRecord();
+    EXPECT_FALSE(mm6::stageSpecialItem(raw, *scope.table, GameTitle::MM7));
+    raw = antiqueRecord();
+    raw.setWord(4, 1);
+    EXPECT_FALSE(mm6::stageSpecialItem(raw, *scope.table, GameTitle::MM6));
+    raw = antiqueRecord();
+    scope.table->items[static_cast<ItemId>(100)].rarity = RARITY_ARTIFACT;
+    EXPECT_FALSE(mm6::stageSpecialItem(raw, *scope.table, GameTitle::MM6));
+    scope.table->items[static_cast<ItemId>(100)].rarity = RARITY_COMMON;
+    scope.table->items[static_cast<ItemId>(100)].baseValue = 214748365;
+    EXPECT_FALSE(mm6::stageSpecialItem(raw, *scope.table, GameTitle::MM6));
+    scope.table->items[static_cast<ItemId>(100)].baseValue = 123;
+    auto projection = mm6::stageSpecialItem(raw, *scope.table, GameTitle::MM6);
+    ASSERT_TRUE(projection);
+    projection->item.potionPower = 1;
+    EXPECT_FALSE(mm6::captureSpecialItem(*projection, *scope.table, GameTitle::MM6));
+    projection->item.potionPower = 0;
+    projection->item.specialEnchantment = ITEM_ENCHANTMENT_OF_PROTECTION;
+    EXPECT_FALSE(mm6::captureSpecialItem(*projection, *scope.table, GameTitle::MM6));
+    projection->item.specialEnchantment = ITEM_ENCHANTMENT_ANTIQUE;
+    projection->item.numCharges = 1;
+    EXPECT_FALSE(mm6::captureSpecialItem(*projection, *scope.table, GameTitle::MM6));
+}
+
+UNIT_TEST(MM6SpecialItemProjection, FreshPartyRoundTripAndLateFailure) {
     TableScope scope;
     Party baseline;
     baseline.uNumGold = 17;

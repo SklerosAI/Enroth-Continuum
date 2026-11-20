@@ -41,7 +41,8 @@ Every item below has input-driven game tests against the owner's real MM6 data. 
   map state kept across a return, map timers that count while the party is away. `MM6MapTravel.*`, `MM6Transport.*`,
   `MM6MapVisit.*`.
 - **Save and load.** Save on any map in the EC6 container, autosave on map change, quick save, in-game Load and load
-  in a fresh process. `MM6InGameSave.*`, `MM6InGameLoad.*`, `MM6SaveAnywhereHeadless.*`, `MM6AutosaveHeadless.*`.
+  in a fresh process, with artifacts, relics and specially enchanted items carried or worn. `MM6InGameSave.*`,
+  `MM6InGameLoad.*`, `MM6SaveAnywhereHeadless.*`, `MM6AutosaveHeadless.*`, `MM6ItemSaveHeadless.*`.
 - **Finale.** The hive is won with the ritual and lost on the scripted failure paths. `MM6Finale.*`.
 
 Spells MM6 has not admitted refuse with a status line instead of running inherited MM7 code. The admission list is

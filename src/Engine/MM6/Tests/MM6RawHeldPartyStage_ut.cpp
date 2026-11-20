@@ -74,7 +74,7 @@ UNIT_TEST(MM6RawHeldPartyStage, RejectsForeignUnreadyAndUnsupportedCursorWithout
     EXPECT_THROW((void) mm6::stageRawHeldParty(baseline, cursor, *items.table, GameTitle::MM6),
                  std::exception);
     cursor = plainCursor();
-    items.table->items[static_cast<ItemId>(100)].rarity = RARITY_ARTIFACT;
+    cursor.record.setWord(4, 15); // MM6 has 14 standard bonuses.
     EXPECT_THROW((void) mm6::stageRawHeldParty(baseline, cursor, *items.table, GameTitle::MM6),
                  std::exception);
     EXPECT_EQ(baseline.uNumGold, 321);

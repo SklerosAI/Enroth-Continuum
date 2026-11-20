@@ -143,10 +143,10 @@ The record's standard bonus word is one-based into 14 MM6 attributes: the seven 
 Electricity, Cold and Poison resistances (`kStandardBonusAttributes` in `MM6StandardBonusMap.h`). The shared runtime
 stores Electricity, Cold and Poison as Air, Water and Body.
 
-Special bonuses are one-based ids into `spcitems.txt`. Only id 58, Antique, is modelled end to end
-(`MM6AntiqueItemProjection.h`). It multiplies the item's value by 10 and does nothing else. The other specials appear
-on generated items, but their effects and their save support are open, except where a lane traced one (special 17,
-Recovery, above).
+Special bonuses are one-based ids into `spcitems.txt`. Only id 58, Antique, is modelled end to end. It multiplies the
+item's value by 10 and does nothing else. The other specials appear on generated items and save with them
+(`MM6SpecialItemProjection.h`), but their effects are open, except where a lane traced one (special 17, Recovery,
+above).
 
 ### Shops and value
 

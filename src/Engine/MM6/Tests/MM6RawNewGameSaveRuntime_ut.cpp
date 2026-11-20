@@ -157,7 +157,7 @@ UNIT_TEST(MM6RawNewGameSaveRuntime, RejectsMismatchedOrUnsupportedSourceItems) {
     shops = mm6::emptyNewGameShopTitleState(GameTitle::MM6);
 
     // The Party carries the same raw item, but its potion union is outside the
-    // currently reversible plain/standard/Antique projection.
+    // currently reversible plain, standard and special projections.
     mm6::ItemRecord28 unsupported;
     unsupported.setWord(0, 10);
     unsupported.setWord(12, 1);

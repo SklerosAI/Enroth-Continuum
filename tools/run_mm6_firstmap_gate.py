@@ -103,6 +103,12 @@ ARTIFACT_LEDGER = [
     ("MM6AllArtifactsHeadless.DISABLED_LedgerComesBackInFreshProcess",
      "ENROTH_MM6_ALL_ARTIFACTS_SAVE_ENABLE", "strict-artifact-ledger-reload"),
 ]
+ITEM_SAVE = [
+    ("MM6ItemSaveHeadless.DISABLED_ArtifactsSaveWithTheParty",
+     "ENROTH_MM6_AUTOSAVE_ENABLE", "strict-item-save-write"),
+    ("MM6ItemSaveHeadless.DISABLED_ArtifactsComeBackInFreshProcess",
+     "ENROTH_MM6_AUTOSAVE_ENABLE", "strict-item-save-reload"),
+]
 MM7_CONTROLS = ["Prs.Pr2354", "Prs.Pr2956", "Issues.Issue840"]
 PASS_LINE = re.compile(r"\[\s*PASSED\s*\]\s+1 test\b")
 
@@ -174,6 +180,8 @@ def main():
             print("first-map visit:", name)
         for name, _, _ in ARTIFACT_LEDGER:
             print("artifact ledger:", name)
+        for name, _, _ in ITEM_SAVE:
+            print("item save:", name)
         for name in MM7_CONTROLS:
             print("MM7 control:", name)
         return 0
@@ -306,9 +314,17 @@ def main():
     with tempfile.TemporaryDirectory(prefix="mm6-restart-artifacts-") as tenth:
         profile = Path(tenth)
         os.chmod(profile, 0o700)
-        # With the All Artifacts mod a new party takes an artifact from a chest, throws it away and saves. A fresh
-        # process loads the save and the refilled chest doesn't roll the collected artifact again.
+        # With the All Artifacts mod a new party takes an artifact from a chest and saves carrying it. A fresh process
+        # loads the save, still carries the artifact, and the refilled chest doesn't roll it again.
         for name, flag, value in ARTIFACT_LEDGER:
+            if not run_child(name, flag, value, profile, paths["MM6_DATA_PATH"], timeout=1500):
+                return 1
+    with tempfile.TemporaryDirectory(prefix="mm6-restart-items-") as eleventh:
+        profile = Path(eleventh)
+        os.chmod(profile, 0o700)
+        # A new party takes an artifact, a relic and an item with a special bonus from a chest, wears the relic and
+        # saves. A fresh process loads the save and finds the same records, paperdoll and character stats.
+        for name, flag, value in ITEM_SAVE:
             if not run_child(name, flag, value, profile, paths["MM6_DATA_PATH"], timeout=1500):
                 return 1
     for name in MM7_CONTROLS:
@@ -318,7 +334,8 @@ def main():
           "production load and resave, a production New Game saved, loaded and saved again, a dungeon save after travel "
           "loaded with its outdoor maps and saved again, party and character buffs kept across a fresh-process load, "
           "autosaves and a quick save loaded in fresh processes, a map visit kept across a fresh-process load, a first-map "
-          "save keeping its visit, the All Artifacts ledger kept across a fresh-process load, and the MM7 controls")
+          "save keeping its visit, the All Artifacts ledger kept across a fresh-process load, artifacts, a relic and a "
+          "special bonus kept across a fresh-process load, and the MM7 controls")
     return 0
 
 

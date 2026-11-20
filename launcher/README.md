@@ -110,15 +110,17 @@ When MM7 Private mods is active, Atlas passes
 (`mods.mm6.vendorRefreshOnEntry`), which the same toggle writes. Atlas also
 passes `ENROTH_MM7_ALL_ARTIFACTS_STORAGE=1` only when its MM7 toggle
 and Private mods are both on. Vanilla MM7, MM6 and upstream OpenEnroth receive
-no active MM7 artifact/storage flag.
-The chest reroll toggle similarly passes `ENROTH_MM7_CHEST_REROLL=1` only to a
+no active MM7 artifact/storage flag. Play MM6 passes `ENROTH_MM6_ALL_ARTIFACTS`
+as `1` or `0` from its own toggle (`mods.mm6.allArtifacts`), with or without
+Private mods. MM7 and upstream never receive it.
+The chest reroll toggle passes `ENROTH_MM7_CHEST_REROLL=1` only to a
 Private mods MM7 launch. Its Reroll button appears on unclaimed chests whose
-random loot was generated while the toggle was active; see
-[the chest reroll contract](../project/MM7_CHEST_REROLL_MOD.md).
+random loot was generated while the toggle was active. See
+[mods and Atlas](../docs/mods-and-atlas.md) for the chest reroll contract.
 The separate click-loot toggle passes `ENROTH_MM7_MONSTER_LOOT_REROLL=1` only
 to a Private mods MM7 launch. Its in-game dice checkbox controls whether an
 eligible random-loot corpse or clicked random script item opens a paused
-Reroll/Take popup; see [the click-loot contract](../project/MM7_MONSTER_LOOT_REROLL_MOD.md).
+Reroll/Take popup. See [mods and Atlas](../docs/mods-and-atlas.md) for the click-loot contract.
 
 The source defaults for a future MM7 Atlas build are
 `~/Library/Application Support/Enroth Continuum/Game Data/MM7` and the fresh

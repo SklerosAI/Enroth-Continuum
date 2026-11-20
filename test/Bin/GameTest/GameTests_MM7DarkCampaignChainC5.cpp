@@ -21,6 +21,7 @@
 #include "GUI/UI/UIHouses.h"
 
 #include "MM7CampaignChain.h"
+#include "MM7GameplayHarness.h"
 
 static bool opensHouse(int eventId, HouseId houseId) {
     if (!engine->_localEventMap.hasEvent(eventId))
@@ -30,7 +31,7 @@ static bool opensHouse(int eventId, HouseId houseId) {
     });
 }
 
-static void openPitAdviser(EngineController &game, int npcId) {
+static void openPitAdviser(EngineController &game, int npcId, bool measuredApproach = false) {
     const HouseId houseId = pNPCStats->pNPCData[npcId].house;
     ASSERT_NE(houseId, HOUSE_INVALID);
     game.teleportTo(MAP_PIT, Vec3f(), 0);
@@ -39,7 +40,20 @@ static void openPitAdviser(EngineController &game, int npcId) {
     });
     ASSERT_NE(door, pIndoor->faces.end());
     auto [position, yaw] = approachCampaignChainFace(*door);
-    game.teleportTo(MAP_PIT, position, yaw);
+    if (measuredApproach) {
+        game.teleportTo(MAP_PIT, position + 150 * door->facePlane.normal, yaw);
+        game.tick(2);
+        const float initialDistance = (pParty->pos - door->boundingBox.center()).xy().length();
+        mm7::testing::MM7MovementResult approach = mm7::testing::driveMovementInput(game, {
+            .key = PlatformKey::KEY_UP,
+            .heldTicks = 8,
+            .minimumHorizontalDistance = 15,
+        });
+        SCOPED_TRACE(approach.diagnostic());
+        EXPECT_LT((pParty->pos - door->boundingBox.center()).xy().length(), initialDistance);
+    } else {
+        game.teleportTo(MAP_PIT, position, yaw);
+    }
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();
     ASSERT_EQ(current_screen_type, SCREEN_HOUSE);
@@ -159,7 +173,7 @@ static void fightAndLootRobert(EngineController &game) {
 
 GAME_TEST(MM7DarkCampaignChain, DISABLED_Chapter5) {
     // Fixtures: actors are disabled during item/event dungeon interactions, then restored for Robert's real fight.
-    // The inherited C0 party is strengthened against Robert's blaster. Teleports approach adviser houses, dungeon
+    // The inherited C0 party is strengthened against Robert's blaster. Teleports approach most adviser houses, dungeon
     // interactions and the live target; every item comes from its authored chest or actor and every hand-in uses the
     // production dialogue path.
     assertCampaignChainProfile();
@@ -195,7 +209,7 @@ GAME_TEST(MM7DarkCampaignChain, DISABLED_Chapter5) {
     test.startTaping();
 
     engine->config->debug.NoActors.setValue(true);
-    openPitAdviser(game, 84); // Kastore.
+    openPitAdviser(game, 84, true); // Kastore: a measured keyboard approach precedes the real offer.
     game.pressGuiButton("HouseNpcDialogue_Option0");
     game.tick();
     ASSERT_TRUE(pParty->_questBits[QBIT_ALTAR_PIECES_DARK_ACTIVE]);

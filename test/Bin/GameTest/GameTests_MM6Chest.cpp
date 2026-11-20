@@ -183,7 +183,7 @@ static std::vector<std::pair<ItemId, Pointi>> chestPages(int chestId) {
     return result;
 }
 
-static constexpr std::uint32_t secondPageRoll = 1529485513; // Chest luck that puts two items on the second page of the Abandoned Temple's chest 1.
+static constexpr std::uint32_t secondPageRoll = 1; // Chest luck that puts two items on the second page of the Abandoned Temple's chest 1.
 
 static int drawnChestItems(const AccessibleVector<DrawnQuad> &quads, int chestId) {
     // Icons of the chest's items on the chest screen.

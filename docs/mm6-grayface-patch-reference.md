@@ -150,8 +150,16 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   penalty, our table keeps half for Plate at Master. Mok's actual change not traced.
 - **C23**. Blaster recovery floor (`BlasterRecovery=4`, game default 0). State: **fixed, QoL**.
   `gameplay.minimum_recovery_blasters` default 5.
-- **C24**. Monsters jumped off bridges into lava (`MonsterJumpDownLimit=500`, `Hooks.pas:2522`). State: **vanilla**.
-  No drop-height limit in indoor or outdoor actor movement.
+- **C24**. Monsters jumped off bridges into lava (`MonsterJumpDownLimit=500`, `Hooks.pas:2522`). State: **not
+  reproduced**.
+  The patch hooks only the indoor actor mover (MM6.exe 0x460780). At 0x4608EB it takes the floor under the monster
+  before it moves, minus 500, as a limit, or no limit when the monsters.txt Fly flag (actor byte 0x3B) is set, even
+  while the monster can't act. At 0x461019 and 0x46104D a floor at the new position at or below the limit counts as no
+  floor, so the move is refused like a move into a wall ("Monster attempt to move into illegal area"). It covers every
+  move, walking, knockback or sliding, and the monster doesn't turn. Outdoor movement is untouched. MM6.exe already
+  has a walking edge check at 0x46107F: a walking monster on the ground that doesn't fly turns 100 units of yaw and
+  stays put when the next floor is more than 100 below it. `ProcessActorCollisionsBLV` ports that check. With it,
+  chasing monsters held their ledge in every case tried on 2026-11-19 (see the plan entry).
 - **C25**. Random item generation favoured the first candidate and starved the last (`FixItemGeneration`,
   `MMHooks.pas:3705`, one-off in the cumulative compare). State: **vanilla, deliberate**.
   `MM6ItemGenerator.h:96` keeps `cumulative >= roll`, pinned by
@@ -348,10 +356,19 @@ Rules for every fix in this backlog:
 
 - **C14**. Stronger but shorter buff. Accept the new buff when it is longer **or** stronger, as GrayFace does.
   Same as GrayFace.
-- **C24**. Monsters jump into lava. Refuse a walking step down more than 500 units for a non-flying monster, the
-  GrayFace limit.
-  Same as GrayFace. Our actor movement has no drop check at all, so this is new code in both indoor and outdoor
-  movement.
+- **C24**. Monsters jump into lava. Refuse an indoor move onto a floor 500 or more units below the one a non-flying
+  monster stands on, the GrayFace limit.
+  Not landed, the symptom doesn't reproduce on our runtime. The only lava floor in the scanned MM6 maps is in the
+  Supreme Temple of Baa (`t6.blv`, sector 1): a `LAVATYL` pit at z -1024 under four retractable bridges at z 0 (doors 12
+  to 15, the west and south ones out on load). A Priest of Baa on a bridge chasing a party in the pit or across it, a
+  fleeing goblin and a skeleton chasing across the bridges walked along them and never dropped. A scan of every indoor
+  map's spawn points flagged 18 maps with a drop over 500 within 600 units of one (`d04`, `t6`, `pyramid`, `cd1`, `cd2`,
+  `d17`, `d18`, `hive`, `t3`, `d06`, `d11`, `sci-fi`, `d01`, `d19`, `d20`, `t7`, `znwc`, `d07`, `cd3` and `d08` weren't
+  scanned). On each, a copy of every spawned monster near such a drop chased a party standing on the floor below for 30
+  seconds, and none fell. The one monster that ended 504 below its start, a Sorcerer in `t7`, walked down a ramp. The
+  largest knockback a hit gives, set by hand on a skeleton, moved it about 40 units and didn't push it off a bridge. A
+  fix would be the patch's rule in `ProcessActorCollisionsBLV`, behind `gameplay.fix_monster_jump_down`, MM6 only. It
+  needs a reproduction first, such as a monster that falls in MM6.exe without the patch.
 - **W1**. Timer countdown resets on every visit. Store each map's last periodic firing per period kind and schedule from
   it, with GrayFace's daily-at-fixed-time rule.
   Same as GrayFace, stored in our save fields. Keeps the catch-up guard we already have. Done 2026-11-18 behind

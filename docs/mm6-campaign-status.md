@@ -155,7 +155,7 @@ Open:
 | --- | --- |
 | C8 | Weapon-skill hirelings add to an MM7 skill MM6 doesn't have. Trace what vanilla applies the bonus to first. |
 | C22 | Armor recovery uses the MM7 table. Mok's change needs tracing. |
-| C24 | Monsters can walk off ledges into lava. Actor movement has no drop limit. |
+| C24 | Doesn't reproduce. MM6.exe's own walking edge check, which we port, keeps chasing monsters on their ledges. Needs a vanilla case that falls. |
 | C25 | The item roll still favours the first candidate |
 | W12 | Found-artifact flags never clear on respawn. Needs event opcode 69 `RefundChestArtifacts`. |
 | W13 | Chest overflow items stay hidden forever |

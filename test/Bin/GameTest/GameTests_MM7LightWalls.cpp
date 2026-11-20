@@ -17,6 +17,7 @@
 #include "Engine/MapEnums.h"
 #include "Engine/MM7/MM7AtomicSaveFile.h"
 #include "Engine/MM7/MM7SaveValidation.h"
+#include "Engine/Objects/Actor.h"
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Party.h"
 #include "Engine/Resources/EngineFileSystem.h"
@@ -55,7 +56,8 @@ std::pair<Vec3f, int> approachFace(const BLVFace &face) {
     return {position, yaw};
 }
 
-void runLightRoute(EngineController &game, TestController &test, CommonTapeRecorder &tapes) {
+void runLightRoute(EngineController &game, TestController &test, CommonTapeRecorder &tapes,
+                   bool protectedActorKilled = false) {
     // Light choice, city entry, the Walls quest, and its no-kill hand-in all run through their own interactions.
     game.startNewGame();
     engine->config->debug.NoDamage.setValue(true);
@@ -162,6 +164,18 @@ void runLightRoute(EngineController &game, TestController &test, CommonTapeRecor
         ASSERT_FALSE(pParty->hasItem(keys[i]));
     }
     game.tick(20);
+    if (protectedActorKilled) {
+        // The shipped map has no group-1 actor. Inject one only to exercise the dormant map-leave failure branch.
+        ASSERT_FALSE(pActors.empty());
+        Actor &protectedActor = pActors[0];
+        protectedActor.group = 1;
+        protectedActor.aiState = Dead;
+        if (GetAlertStatus())
+            protectedActor.attributes |= ACTOR_UNKNOW7;
+        else
+            protectedActor.attributes &= ~ACTOR_UNKNOW7;
+        ASSERT_TRUE(Actor::isActorKilled(KILL_CHECK_GROUPID, 1, 1));
+    }
     auto exitDoor = std::ranges::find_if(pIndoor->faces, [](const BLVFace &face) {
         return face.eventId == 502 && face.Clickable();
     });
@@ -172,11 +186,17 @@ void runLightRoute(EngineController &game, TestController &test, CommonTapeRecor
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
     game.tick();
     ASSERT_EQ(current_screen_type, SCREEN_INPUT_BLV);
-    ASSERT_TRUE(pParty->_questBits[QBIT_WALLS_OF_MIST_PASSED]); // The exit event runs before transition acceptance.
+    ASSERT_EQ(pParty->_questBits[QBIT_WALLS_OF_MIST_PASSED], !protectedActorKilled); // The exit event runs first.
     game.pressGuiButton("Transition_Yes");
     game.skipLoadingScreen();
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_CELESTE);
     ASSERT_TRUE(pParty->_questBits[QBIT_WALLS_OF_MIST_ACTIVE]);
+    if (protectedActorKilled) {
+        EXPECT_FALSE(pParty->_questBits[QBIT_WALLS_OF_MIST_PASSED]);
+        EXPECT_FALSE(pParty->_questBits[QBIT_LIGHT_GUILD_JOINED]);
+        test.stopTaping();
+        return;
+    }
 
     game.teleportTo(MAP_CASTLE_LAMBENT, Vec3f(-3456, 12700, 1115), 90);
     game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
@@ -207,6 +227,10 @@ void runLightRoute(EngineController &game, TestController &test, CommonTapeRecor
 
 GAME_TEST(MM7LightWalls, LightRoute) {
     runLightRoute(game, test, tapes);
+}
+
+GAME_TEST(MM7LightWalls, ProtectedGroupFailureBranch) {
+    runLightRoute(game, test, tapes, true);
 }
 
 // These disabled tests require GameTestMain's exact-filter disposable MM7 profile gate.

@@ -284,9 +284,13 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   `MM6SkillEvent.cpp` accepts all 31 slots 56..86 for Compare and Set, Add and Subtract throw. Tests
   `MM6SkillEvent_ut.cpp`, `MM6SkillEvent` game suite.
 - **W15**. Door state command accepts 3 to switch a moving door (`DoorStateSwitchHook`, `Hooks.pas:1213`). State:
-  **vanilla, modder feature**.
-  `Indoor.cpp:786-834` ignores action 2 while moving, action 3 matches nothing. Only the patched `cd2.evt` could need
-  it.
+  **fixed, config, modder feature**.
+  The hook sits at MM6.exe 0x43FCBA and turns action 3 into action 0 for a door in state 1 or 2 and into action 1 for
+  a door in state 0 or 3, so a moving door turns around from where it is. Vanilla action 3 fell through every branch.
+  No shipped script uses it. All 83 `.evt` in the GOG `icons.lod`, the 36 scripts GrayFace's patch replaces (its
+  `cd2.evt` included) and all 77 MM7 `Events.lod` scripts pass only actions 0, 1 and 2. The patch readme calls it a
+  modder feature. Now `mm6::switchDoorEvenIfMoving` (`MM6DoorSwitch.h`) behind `gameplay.fix_door_state_switch`, MM7
+  ignores action 3 as before. Unit test `MM6DoorSwitch.SwitchesDoorInEveryState`.
 - **W16**. Save slots couldn't have gaps and save and load targeted different slots, Quick Save broke in the Hive after
   the Reactor. State: **fixed by the list design**.
   New saves take the first free `saveNNN.ec6`, the menu is a file list, Quick Save has no Hive check, only autosave is
@@ -408,7 +412,8 @@ Rules for every fix in this backlog:
   GrayFace ships reorder and compacting on and leftover placement off. We turn all three on, because a hidden item is
   lost loot for the player.
 - **W15**. Door action 3 ignored. Accept action 3 as "switch even while moving".
-  Same as GrayFace, cheap and needed by anything that runs patched scripts.
+  Same as GrayFace. Done 2026-11-20 behind `fix_door_state_switch`. No shipped script, patched or not, uses it, so only
+  modded scripts see a difference and there is no game test.
 - **W22**. Black potion wasted. Leave the potion in the inventory when it has no effect.
   Same as GrayFace. Done 2026-11-18 behind `fix_wasted_black_potion`. The potion stays in the hand, as in the patch.
 - **W26**. Shops buy blasters. Exclude blasters from every shop's trade list.

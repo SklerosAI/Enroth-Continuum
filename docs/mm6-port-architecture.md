@@ -96,7 +96,7 @@ Current MM6 flags, by key:
 | Key | Read in |
 |---|---|
 | `fix_stronger_shorter_buff` | [Spells.cpp](../src/Engine/Spells/Spells.cpp) |
-| `fix_inactive_party_events` | [EvtInterpreter.cpp](../src/Engine/Evt/EvtInterpreter.cpp) |
+| `fix_inactive_party_events`, `fix_door_state_switch` | [EvtInterpreter.cpp](../src/Engine/Evt/EvtInterpreter.cpp) |
 | `fix_wasted_black_potion` | [Character.cpp](../src/Engine/Objects/Character.cpp) |
 | `fix_shops_buying_blasters` | [MM6Shop.cpp](../src/GUI/UI/Houses/MM6Shop.cpp) |
 | `fix_condition_spells` | [CastSpellInfo.cpp](../src/Engine/Spells/CastSpellInfo.cpp) |

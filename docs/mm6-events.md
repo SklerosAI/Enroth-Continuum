@@ -66,7 +66,8 @@ every shipped record is in range.
 - **2 `SpeakInHouse`**: enters the house through the MM6 house UI. MM6 plays no house-enter sound here.
 - **6 `MoveToMap`**: an all-zero position means "don't place the party". On the current map the party stays put
   (castle throne rooms open this way), on another map it arrives at Party Start. Shipped MM6 doors name only the map.
-- **15 `ChangeDoorState`**: shared door code. Action 3 ("switch while moving", a GrayFace addition) is not accepted.
+- **15 `ChangeDoorState`**: shared door code. Action 3, GrayFace's "switch even while moving", runs through
+  `mm6::switchDoorEvenIfMoving` behind `fix_door_state_switch`. No shipped MM6 or MM7 script passes it.
 - **21 `CastSpell`**: only verified event spells run, see below.
 - **26 Question**: `startMM6QuestionDialogue` shows the question and takes typed text. Either answer, compared ignoring
   ASCII case, jumps to the target step. Other text resumes at the next step. Escape stops the event.

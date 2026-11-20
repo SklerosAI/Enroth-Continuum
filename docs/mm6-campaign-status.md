@@ -161,6 +161,7 @@ Landed:
 | W2 | `fix_inactive_party_events` |
 | W4, W5, W18 | `fix_new_day_at_month_start`, `fix_sunrise_light`, `fix_buff_duration_text` |
 | W22, W26 | `fix_wasted_black_potion`, `fix_shops_buying_blasters` |
+| W15 | `fix_door_state_switch`. No shipped script uses door action 3, so it is unit tested only. |
 | C12 | `fix_spells_cost` |
 | C25 | `fix_item_generation`. Shop stock and `GiveItem` kinds only, the any-item roll stays vanilla as in the patch. |
 | W28 | No flag. MM6.exe already refused paid shop services. The skill half waits for the shop item info box. |
@@ -173,7 +174,6 @@ Open:
 | C24 | Doesn't reproduce. MM6.exe's own walking edge check, which we port, keeps chasing monsters on their ledges. Needs a vanilla case that falls. |
 | W12 | Found-artifact flags never clear on respawn. Needs event opcode 69 `RefundChestArtifacts`. |
 | W13 | Chest overflow items stay hidden forever |
-| W15 | Door action 3 (switch while moving) is ignored |
 | W19 | The stats screen shows the display condition, not the one that sets the stats |
 | C2, C4, C9, C11, C19, W10, W20, W21 | Fixed when the spell or feature is admitted, not before |
 | Data fixes | Script fixes as an engine-side patch table keyed by file hash. Map fixes through `*.games.lod` override archives. |

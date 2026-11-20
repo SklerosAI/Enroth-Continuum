@@ -80,7 +80,7 @@ struct Mm7ProfileGate {
     int chapter;
 };
 
-constexpr std::array<Mm7ProfileGate, 57> mm7ProfileGates = {{
+constexpr std::array<Mm7ProfileGate, 61> mm7ProfileGates = {{
     {"MM7DisposableSave.DISABLED_WriteFreshProfile", true, false, -1},
     {"MM7DisposableSave.DISABLED_ReloadFreshProcess", false, true, -1},
     {"MM7CastleRebuild.DISABLED_WriteFreshCheckpoint", true, false, -1},
@@ -99,6 +99,10 @@ constexpr std::array<Mm7ProfileGate, 57> mm7ProfileGates = {{
     {"MM7SideQuestCheckpoint.DISABLED_ReloadParsonsQuill", false, true, -1},
     {"MM7RogueCheckpoint.DISABLED_WriteMarkhamVase", true, false, -1},
     {"MM7RogueCheckpoint.DISABLED_ReloadMarkhamVaseAndPromote", false, true, -1},
+    {"MM7PriestCheckpoint.DISABLED_WriteEvenmornMap", true, false, -1},
+    {"MM7PriestCheckpoint.DISABLED_ReloadEvenmornMapAndPromote", false, true, -1},
+    {"MM7PriestCheckpoint.DISABLED_WriteMoonAltar", true, false, -1},
+    {"MM7PriestCheckpoint.DISABLED_ReloadMoonAltarAndPromote", false, true, -1},
     {"MM7SideQuestCheckpoint.DISABLED_WriteMissingContestants", true, false, -1},
     {"MM7SideQuestCheckpoint.DISABLED_ReloadMissingContestants", false, true, -1},
     {"MM7SideQuestCheckpoint.DISABLED_WriteThreePaintings", true, false, -1},

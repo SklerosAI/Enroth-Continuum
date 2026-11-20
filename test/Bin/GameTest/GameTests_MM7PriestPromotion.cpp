@@ -1,8 +1,10 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <filesystem>
 #include <numbers>
 #include <span>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -18,6 +20,9 @@
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/MapEnums.h"
+#include "Engine/MM7/MM7AtomicSaveFile.h"
+#include "Engine/MM7/MM7SaveValidation.h"
+#include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Objects/CharacterEnums.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/ItemEnums.h"
@@ -25,6 +30,9 @@
 #include "Engine/Party.h"
 #include "Engine/PartyEnums.h"
 #include "Engine/PartyPlacement.h"
+#include "Engine/Resources/EngineFileSystem.h"
+#include "Engine/Resources/LOD.h"
+#include "Engine/SaveLoad.h"
 #include "Engine/Tables/ChestTable.h"
 #include "Engine/Tables/NPCTable.h"
 
@@ -33,6 +41,7 @@
 #include "GUI/UI/UIChest.h"
 #include "GUI/UI/NPCTopics.h"
 #include "GUI/UI/UIHouses.h"
+#include "GUI/UI/UISaveLoad.h"
 
 #include "Utility/Exception.h"
 
@@ -51,6 +60,10 @@ constexpr int lightReturnEventId = 87;
 constexpr int darkOfferEventId = 90;
 constexpr int darkReturnEventId = 91;
 constexpr int altarEventId = 376;
+constexpr std::string_view priestCheckpointSlot = "saves/save000.mm7";
+constexpr std::string_view priestCheckpointFileName = "save000.mm7";
+constexpr std::array<uint64_t, 4> priestCheckpointExperience = {3000, 3100, 3200, 3300};
+constexpr int priestCheckpointGold = 4000;
 
 struct SecondPriestPath {
     int npcId;
@@ -446,6 +459,53 @@ void pickUpEvenmornMap(EngineController &game) {
     game.tick();
     ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_MESSAGE_MAP_TO_EVENMORN_ISLAND);
     closeChest(game);
+}
+
+void assertPriestDisposableProfile() {
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM7);
+    const auto profileRoot = mm7::startupNativeProfileRoot();
+    ASSERT_TRUE(profileRoot);
+    ASSERT_EQ(*profileRoot, std::filesystem::canonical(std::filesystem::path(ufs->displayPath(""))));
+    ASSERT_EQ(window->nativeHandle(), nullptr);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+}
+
+void setPriestCheckpointBaseline() {
+    pParty->SetGold(priestCheckpointGold);
+    for (int i = 0; i < 4; ++i)
+        pParty->pCharacters[i].experience = priestCheckpointExperience[i];
+}
+
+void writePriestCheckpoint(EngineController &game, std::string_view description) {
+    ASSERT_FALSE(ufs->exists(priestCheckpointSlot));
+    game.runGameRoutine([description] {
+        saveGame(false, false, priestCheckpointSlot, description);
+    });
+    ASSERT_TRUE(ufs->exists(priestCheckpointSlot));
+    const Blob saved = ufs->read(priestCheckpointSlot);
+    ASSERT_GT(saved.size(), 1024u);
+    ASSERT_TRUE(mm7::preflightNativeSaveStructure(
+        std::span<const std::uint8_t>(static_cast<const std::uint8_t *>(saved.data()), saved.size()),
+        GameTitle::MM7, *pGames_LOD));
+}
+
+void loadPriestCheckpoint(EngineController &game) {
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(3);
+    ASSERT_EQ(current_screen_type, SCREEN_LOADGAME);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto found = std::ranges::find(slots, priestCheckpointFileName, &SavegameSlot::fileName);
+    ASSERT_NE(found, slots.end());
+    const int index = static_cast<int>(found - slots.begin());
+    ASSERT_LT(index, 7);
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", index));
+    game.tick(2);
+    ASSERT_EQ(saveLoadMenu()->selectedSlot().fileName, priestCheckpointFileName);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick(2);
+    ASSERT_EQ(current_screen_type, SCREEN_GAME);
+    ASSERT_EQ(engine->_lastLoadedSaveFileName, priestCheckpointFileName);
 }
 
 } // namespace
@@ -868,4 +928,138 @@ GAME_TEST(MM7PriestPromotion, MapReturnPromotesClericAndUnlocksEvenmornBoat) {
 
     ASSERT_EQ(pParty->uCurrentDayOfMonth % 7, 1);
     EXPECT_TRUE(bracadaBoatAvailable(game));
+}
+
+GAME_TEST(MM7PriestCheckpoint, DISABLED_WriteEvenmornMap) {
+    assertPriestDisposableProfile();
+    engine->config->debug.NoActors.setValue(true);
+    engine->config->debug.NoDamage.setValue(true);
+    game.startNewGame();
+    setPriestCheckpointBaseline();
+    pParty->pCharacters[0].classType = CLASS_CLERIC;
+    for (int i = 1; i < 4; ++i)
+        pParty->pCharacters[i].classType = CLASS_KNIGHT;
+
+    NPCData &falk = pNPCStats->pNPCData[falkNpcId];
+    openFalkDialogue(game, &falk);
+    ASSERT_TRUE(selectNpcEvent(game, &falk, offerEventId));
+    leaveDialogue(game);
+    ASSERT_TRUE(pParty->_questBits[QBIT_EVENMORN_MAP_ACTIVE]);
+    ASSERT_EQ(falk.dialogue_1_evt_id, returnEventId);
+    pickUpEvenmornMap(game);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_TIDEWATER_CAVERNS);
+    ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_MESSAGE_MAP_TO_EVENMORN_ISLAND);
+    ASSERT_TRUE(pParty->_questBits[QBIT_ORACLE_RECOVERS_EVENMORN_MAP]);
+    ASSERT_EQ(engine->_persistentVariables.mapVars[tidewaterMapVariable], 1);
+    pParty->SetGold(priestCheckpointGold);
+    ASSERT_FALSE(::testing::Test::HasFailure());
+    writePriestCheckpoint(game, "Evenmorn map Priest checkpoint");
+}
+
+GAME_TEST(MM7PriestCheckpoint, DISABLED_ReloadEvenmornMapAndPromote) {
+    assertPriestDisposableProfile();
+    ASSERT_TRUE(ufs->exists(priestCheckpointSlot));
+    const Blob saved = Blob::copy(ufs->read(priestCheckpointSlot));
+    ASSERT_GT(saved.size(), 1024u);
+    loadPriestCheckpoint(game);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_TIDEWATER_CAVERNS);
+    ASSERT_TRUE(pParty->_questBits[QBIT_EVENMORN_MAP_ACTIVE]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_ORACLE_RECOVERS_EVENMORN_MAP]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_EVENMORN_MAP_GIVEN]);
+    ASSERT_EQ(engine->_persistentVariables.mapVars[tidewaterMapVariable], 1);
+    ASSERT_EQ(pParty->pPickedItem.itemId, ITEM_MESSAGE_MAP_TO_EVENMORN_ISLAND);
+    ASSERT_EQ(pParty->GetGold(), priestCheckpointGold);
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, i == 0 ? CLASS_CLERIC : CLASS_KNIGHT);
+        EXPECT_EQ(pParty->pCharacters[i].experience, priestCheckpointExperience[i]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_PRIEST]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_PRIEST_HONORARY]);
+    }
+
+    NPCData &falk = pNPCStats->pNPCData[falkNpcId];
+    ASSERT_EQ(falk.dialogue_1_evt_id, returnEventId);
+    openFalkDialogue(game, &falk);
+    const int reputationBefore = pParty->GetPartyReputation();
+    ASSERT_TRUE(selectNpcEvent(game, &falk, returnEventId));
+    EXPECT_FALSE(pParty->_questBits[QBIT_EVENMORN_MAP_ACTIVE]);
+    EXPECT_FALSE(pParty->_questBits[QBIT_ORACLE_RECOVERS_EVENMORN_MAP]);
+    EXPECT_TRUE(pParty->_questBits[QBIT_EVENMORN_MAP_GIVEN]);
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_EQ(falk.dialogue_1_evt_id, darkOfferEventId);
+    EXPECT_EQ(pParty->GetGold(), priestCheckpointGold + 5000);
+    EXPECT_EQ(pParty->GetPartyReputation() - reputationBefore, -5);
+    for (int i = 0; i < 4; ++i) {
+        const bool promoted = i == 0;
+        EXPECT_EQ(pParty->pCharacters[i].classType, promoted ? CLASS_PRIEST : CLASS_KNIGHT);
+        EXPECT_EQ(pParty->pCharacters[i].experience,
+                  priestCheckpointExperience[i] + (promoted ? 30000 : 15000));
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_PRIEST], promoted);
+        EXPECT_EQ(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_PRIEST_HONORARY], !promoted);
+    }
+    EXPECT_TRUE(ufs->read(priestCheckpointSlot).str() == saved.str());
+}
+
+GAME_TEST(MM7PriestCheckpoint, DISABLED_WriteMoonAltar) {
+    assertPriestDisposableProfile();
+    engine->config->debug.NoActors.setValue(true);
+    engine->config->debug.NoDamage.setValue(true);
+    game.startNewGame();
+    setPriestCheckpointBaseline();
+    prepareSecondPromotionParty();
+    pParty->_questBits.set(QBIT_LIGHT_PATH);
+    NPCData &rebecca = pNPCStats->pNPCData[rebeccaNpcId];
+    openPromoterDialogue(game, lightPriestPath, &rebecca);
+    ASSERT_TRUE(selectNpcEvent(game, &rebecca, lightOfferEventId));
+    leaveDialogue(game);
+    ASSERT_TRUE(pParty->_questBits[lightPriestPath.activeBit]);
+    ASSERT_EQ(rebecca.dialogue_1_evt_id, lightReturnEventId);
+    useAltar(game, lightPriestPath);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_GRAND_TEMPLE_OF_THE_MOON);
+    ASSERT_TRUE(pParty->_questBits[lightPriestPath.objectiveBit]);
+    pParty->SetGold(priestCheckpointGold);
+    ASSERT_FALSE(::testing::Test::HasFailure());
+    writePriestCheckpoint(game, "Moon altar Priest of Light checkpoint");
+}
+
+GAME_TEST(MM7PriestCheckpoint, DISABLED_ReloadMoonAltarAndPromote) {
+    assertPriestDisposableProfile();
+    ASSERT_TRUE(ufs->exists(priestCheckpointSlot));
+    const Blob saved = Blob::copy(ufs->read(priestCheckpointSlot));
+    ASSERT_GT(saved.size(), 1024u);
+    loadPriestCheckpoint(game);
+    ASSERT_EQ(engine->_currentLoadedMapId, MAP_GRAND_TEMPLE_OF_THE_MOON);
+    ASSERT_TRUE(pParty->_questBits[QBIT_LIGHT_PATH]);
+    ASSERT_TRUE(pParty->_questBits[lightPriestPath.activeBit]);
+    ASSERT_TRUE(pParty->_questBits[lightPriestPath.objectiveBit]);
+    ASSERT_EQ(pParty->GetGold(), priestCheckpointGold);
+    const std::array classes = {CLASS_PRIEST, CLASS_PRIEST, CLASS_CLERIC, CLASS_KNIGHT};
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_EQ(pParty->pCharacters[i].classType, classes[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience, priestCheckpointExperience[i]);
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[i < 2 ? AWARD_PROMOTION_PRIEST :
+                                                               AWARD_PROMOTION_PRIEST_HONORARY]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_PRIEST_OF_LIGHT]);
+        EXPECT_FALSE(pParty->pCharacters[i]._achievedAwardsBits[AWARD_PROMOTION_PRIEST_OF_LIGHT_HONORARY]);
+    }
+
+    NPCData &rebecca = pNPCStats->pNPCData[rebeccaNpcId];
+    ASSERT_EQ(rebecca.dialogue_1_evt_id, lightReturnEventId);
+    openPromoterDialogue(game, lightPriestPath, &rebecca);
+    const int reputationBefore = pParty->GetPartyReputation();
+    ASSERT_TRUE(selectNpcEvent(game, &rebecca, lightReturnEventId));
+    EXPECT_FALSE(pParty->_questBits[lightPriestPath.activeBit]);
+    EXPECT_TRUE(pParty->_questBits[lightPriestPath.objectiveBit]);
+    EXPECT_EQ(rebecca.dialogue_1_evt_id, 0u);
+    EXPECT_EQ(rebecca.greetingIndex, lightPriestPath.greeting);
+    EXPECT_EQ(pParty->GetGold(), priestCheckpointGold + 10000);
+    EXPECT_EQ(pParty->GetPartyReputation() - reputationBefore, -10);
+    for (int i = 0; i < 4; ++i) {
+        const bool promoted = classes[i] == CLASS_PRIEST;
+        EXPECT_EQ(pParty->pCharacters[i].classType, promoted ? CLASS_PRIEST_OF_SUN : classes[i]);
+        EXPECT_EQ(pParty->pCharacters[i].experience,
+                  priestCheckpointExperience[i] + (promoted ? 80000 : 40000));
+        EXPECT_TRUE(pParty->pCharacters[i]._achievedAwardsBits[promoted ? AWARD_PROMOTION_PRIEST_OF_LIGHT :
+                                                                AWARD_PROMOTION_PRIEST_OF_LIGHT_HONORARY]);
+    }
+    EXPECT_TRUE(ufs->read(priestCheckpointSlot).str() == saved.str());
 }

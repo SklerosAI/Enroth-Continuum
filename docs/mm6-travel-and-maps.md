@@ -201,8 +201,9 @@ the target of a map change. Any other load keeps the blocking guard, and the MM7
   table against the map's treasure level. The first attempt reuses the previous probability roll, only extra attempts
   draw a new one. Below 20% gives nothing, 20% to under 60% gold, 60% and up an item.
 - The item picker draws an artifact candidate from MM6's 30 artifacts on every call. At tier 6 a 5% roll gives it, if
-  not yet generated and under the cap of 13. Otherwise it draws against the weights of regular items 1 to 399. A zero
-  remainder returns item 1, which is what MM6.exe does.
+  not yet generated and under the cap of 13. The All Artifacts mod replaces that test with "not yet collected", see
+  [Mods and the Atlas](mods-and-atlas.md#all-artifacts-for-mm6). Otherwise it draws against the weights of regular items
+  1 to 399. A zero remainder returns item 1, which is what MM6.exe does.
 - Draws use the MM6 gameplay LCG. MM6's initial seed is not known, so the port seeds it once from platform entropy at
   New Game and saves the LCG state in `CHST`.
 

@@ -183,6 +183,7 @@ afterwards:
 - the normal Save and Load menu children, including a production load and resave
 - a new game saved, loaded and saved again
 - save anywhere after travel, buffs across a fresh process, autosave and quick save, map visits
+- the All Artifacts ledger across a fresh process
 - three MM7 control tests
 
 ```sh

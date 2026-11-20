@@ -556,6 +556,33 @@ GAME_TEST(MM6ChestScreen, ExitButton) {
     EXPECT_EQ(frameArt, tape(DrawnQuad{"chest01", {8, 8}}, DrawnQuad{"border5", {7, 8}}, DrawnQuad{"border6", {461, 8}}, DrawnQuad{"buttesc1", {392, 318}}));
 }
 
+GAME_TEST(MM6ChestScreen, RightClickShowsTheItemUnderTheCursor) {
+    // Right-clicking an item in a chest of a type whose grid sits at another offset than the first type's showed the
+    // item one cell to the left, or nothing. Chest 1 of the Shadow Guild is such a chest, with its Poleax right of a
+    // Crossbow.
+    startNewGameThroughInput(game);
+    mm6::chestTitleState().lcgState = 0;
+    game.teleportTo(pMapTable->GetMapInfo("d08.blv"), Vec3f(2624, 4344, 0), 90, -20); // South of chest 1, looking down at it.
+    auto linesTape = tapes.titleLines();
+    auto screenTape = tapes.screen();
+    test.startTaping();
+
+    game.pointMouseAtDecoration(0); // Chest 1.
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+    const Pointi poleaxCell = vChests[1].inventory.find(static_cast<ItemId>(28)).geometry().topLeft();
+    game.pressButton(BUTTON_RIGHT, chestTable[vChests[1].chestTypeId].inventoryOffset + poleaxCell * 32 + Pointi(16, 16));
+    game.tick();
+    game.releaseButton(BUTTON_RIGHT);
+    game.tick();
+
+    auto titles = linesTape.flatten().map([](const DrawnLine &line) { return line.text; });
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHEST));
+    EXPECT_EQ(vChests[1].chestTypeId, 2);
+    EXPECT_EQ(poleaxCell, Pointi(7, 2));
+    EXPECT_EQ(titles.unique(), tape(std::string("Two-Handed Axe"), std::string("Not Identified")));
+}
+
 GAME_TEST(MM6Chest, GoldPileGoesToTheParty) {
     // Clicking a gold pile in a chest did nothing, the pile stayed where it was. The party takes the 983 gold pile in chest
     // 1 of the Abandoned Temple, once alone and once with Noreen the Banker hired, who adds a fifth and takes her share.

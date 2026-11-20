@@ -3773,3 +3773,8 @@ Chronological record of wiki activity.
 - Dark Priest Sun altar and four physical Lich jars now have production-Save/fresh-process-normal-Load pairs. All four new writer/reader processes passed with unchanged slot bytes, bringing the checkpoint inventory to 27 pairs under the owner's 36-pair cap. Nineteen adjacent promotion and load-admission controls passed.
 - A guarded runner copied two owner MM7 slots from different dates into separate marked temporary profiles. Each copy passed normal-menu primary Load and valid-backup Load behind a corrupt temporary primary, four probe processes total; source fingerprints stayed unchanged. The originals and MM6 profiles were not modified. The new exact probe filters reject a run without a disposable profile.
 - `check_style` passed 158/158. No engine code changed. The full archive, map/EVT, spell, item and monster audit remains unstarted; `project/MM7_FULL_AUDIT_NEXT_WEEK_PLAN.md` records the delta-first handoff for the week of 2026-11-23.
+
+## [2026-11-20] decision | MM7 checkpoint ceiling and memory budget
+- by: T-Burton-ND via codex
+- The owner raised the ceiling from 36 to 48 writer/reader pairs. The verified inventory remains 27; the new number is a ceiling, not a target.
+- A successful physical-Lich pair measured 118.2/117.9 MB peak resident size and 53.6/54.0 MB peak footprint in its separate writer/reader processes, with a 348,399-byte slot and a 720 KiB temporary profile. The profile was removed, and the checkout stayed clean. Apple memory guidance, gtest-parallel's worker model and Python subprocess buffering guidance support keeping pair runners sequential and bounding any future pair-level concurrency. No engine or runner behavior was changed.

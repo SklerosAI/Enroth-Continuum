@@ -11,9 +11,12 @@
 #include "Engine/Objects/NPC.h"
 #include "Engine/Party.h"
 #include "Engine/Resources/ResourceManager.h"
+#include "Engine/TurnEngine/TurnEngine.h"
 
 #include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
+
+#include "Utility/Math/TrigLut.h"
 
 static void startNewGameThroughInput(EngineController &game) {
     // Each character takes its first three optional skills and up to three points in every attribute, then the party
@@ -63,6 +66,29 @@ static void clickNpcOption(EngineController &game, std::string_view label) {
     game.tick();
 }
 
+static void equipLongsword(int characterIndex) {
+    auto &inventory = pParty->pCharacters[characterIndex].inventory;
+    inventory.equip(ITEM_SLOT_MAIN_HAND, Item(static_cast<ItemId>(1))); // Longsword.
+}
+
+static void hireArmsMaster(EngineController &game) {
+    game.runGameRoutine([] { pParty->SetGold(10000, true); });
+    talkToStreetNpc(game, 8); // Deloris the Arms Master.
+    clickNpcOption(game, "Beg"); // A Paladin talks to a party of no reputation only once it begs.
+    clickNpcOption(game, "Join");
+    clickNpcOption(game, "Hire");
+}
+
+static void viewStats(EngineController &game) {
+    // Open the active character's stats tab and close the character screen again.
+    game.pressAndReleaseKey(PlatformKey::KEY_I);
+    game.tick(2); // The key queues the character screen for the next frame.
+    game.pressAndReleaseKey(PlatformKey::KEY_S);
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+}
+
 GAME_TEST(MM6Hirelings, StreetNpcPortraitExists) {
     // Talking to a street NPC drew a missing image for her portrait, she had one of MM7's elf portraits.
     startNewGameThroughInput(game);
@@ -99,4 +125,79 @@ GAME_TEST(MM6Hirelings, HireTwoAndRefuseAThird) {
     EXPECT_EQ(statusTape, tape("Rest", "Noreen the Banker", "", "Tanya the Porter", "", "Eleanor the Acolyte", "", "I cannot join you, you're party is full"));
     const DrawnQuad noreen{"npc114", {491, 149}}, tanya{"npc250", {561, 149}};
     EXPECT_EQ(hirelings, tape(noreen, noreen, noreen, noreen, noreen, noreen, tanya, noreen, tanya, noreen, tanya, noreen, tanya, noreen, tanya));
+}
+
+GAME_TEST(MM6Hirelings, ArmsMasterAddsToWeaponSkillAttack) {
+    // A hired Arms Master didn't change the attack bonus on the stats screen. MM6 adds her two points to the weapon skill
+    // of every character.
+    startNewGameThroughInput(game);
+    equipLongsword(0);
+    auto textTape = tapes.drawnTexts();
+    auto hirelingsTape = tapes.totalHirelings();
+    test.startTaping();
+
+    viewStats(game);
+    hireArmsMaster(game);
+    viewStats(game);
+
+    auto rows = [&](std::string_view label) {
+        return textTape.map([&](const AccessibleVector<DrawnText> &frame) {
+            std::string result;
+            for (const DrawnText &text : frame)
+                if (text.text.starts_with(label))
+                    result += text.text;
+            return result;
+        }).filter([](const std::string &row) { return !row.empty(); }).unique();
+    };
+    EXPECT_EQ(hirelingsTape, tape(0, 1));
+    EXPECT_EQ(rows("Attack"), tape("Attack\t100+1\n", "Attack\t100+3\n"));
+    EXPECT_EQ(rows("Damage"), tape("Damage\t100 5 - 11\nDamage\t100 N/A\n\n")); // A Novice sword adds no damage.
+    EXPECT_EQ(rows("Armor Class"), tape("Armor Class\f65535\r4240\f00000 /\t1850\n")); // Only a Squire adds to armor skills.
+}
+
+GAME_TEST(MM6Hirelings, ArmsMasterShortensOnlyExpertSwordRecovery) {
+    // A hired Arms Master cut the recovery of every melee attack by two, as MM7's Armsmaster skill does. MM6 adds her
+    // points to the weapon skill, so only an Expert sword, axe or bow recovers faster. In turn-based mode the recovery is
+    // the knight's wait for her next turn.
+    struct Case {
+        bool expert;
+        bool hired;
+        bool fix;
+        int knightWait;
+    };
+    for (auto [expert, hired, fix, knightWait] : {Case{false, false, true, 89}, Case{false, true, true, 89}, Case{true, false, true, 88},
+                                                  Case{true, true, true, 86}, Case{true, true, false, 88}}) {
+        SCOPED_TRACE(fmt::format("expert={} hired={} fix={}", expert, hired, fix));
+        test.prepareForNextTest();
+        engine->config->gameplay.FixWeaponSkillHirelings.setValue(fix);
+        startNewGameThroughInput(game);
+        equipLongsword(0);
+        if (expert)
+            pParty->pCharacters[0].pActiveSkills[SKILL_SWORD] = CombinedSkillValue(1, MASTERY_EXPERT);
+        if (hired)
+            hireArmsMaster(game);
+        const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+        const int goblin = game.spawnMonster(pParty->pos + ahead * 150, static_cast<MonsterId>(76), SPAWN_DUMMY)->id;
+        auto hirelingsTape = tapes.totalHirelings();
+        auto activeTape = tapes.activeCharacterIndex();
+        auto knightWaitTape = tapes.custom([] {
+            for (const TurnBased_QueueElem &element : pTurnEngine->pQueue)
+                if (element.uPackedID == Pid::character(0))
+                    return element.actor_initiative;
+            return -1;
+        });
+        test.startTaping();
+
+        game.pressAndReleaseKey(PlatformKey::KEY_RETURN);
+        game.tick();
+        while (!(pTurnEngine->turn_stage == TE_ATTACK && pTurnEngine->flags & TE_PLAYER_TURN))
+            game.tick(); // The monsters finish their opening move.
+        game.pointMouseAtActor(goblin);
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+
+        EXPECT_EQ(hirelingsTape, tape(hired ? 1 : 0));
+        EXPECT_EQ(activeTape.frontBack(), tape(-1, 2)); // The knight swings, then the turn passes on.
+        EXPECT_EQ(knightWaitTape.back(), knightWait);
+    }
 }

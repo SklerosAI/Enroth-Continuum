@@ -39,8 +39,8 @@ enum class NpcProfession : int32_t {
     NPC_PROFESSION_MASTER_HEALER = 12,   // Heals the party and cures every condition except Eradicated once a day.
     NPC_PROFESSION_TEACHER = 13,         // Experience: +10%.
     NPC_PROFESSION_INSTRUCTOR = 14,      // Experience: +15%.
-    NPC_PROFESSION_ARMS_MASTER = 15,     // Armsmaster: +2.
-    NPC_PROFESSION_WEAPONS_MASTER = 16,  // Armsmaster: +3.
+    NPC_PROFESSION_ARMS_MASTER = 15,     // MM7: Armsmaster +2. MM6: +2 to weapon skills.
+    NPC_PROFESSION_WEAPONS_MASTER = 16,  // MM7: Armsmaster +3. MM6: +3 to weapon skills.
     NPC_PROFESSION_APPRENTICE = 17,      // Fire: +2, Air: +2, Water: +2, Earth: +2.
     NPC_PROFESSION_MYSTIC = 18,          // Fire: +3, Air: +3, Water: +3, Earth: +3.
     NPC_PROFESSION_SPELL_MASTER = 19,    // Fire: +4, Air: +4, Water: +4, Earth: +4.
@@ -70,7 +70,7 @@ enum class NpcProfession : int32_t {
     NPC_PROFESSION_PIPER = 43,           // Casts Heroism once a day.
     NPC_PROFESSION_EXPLORER = 44,        // Travel by foot: -1 day, Travel by sea: -1 day, Travel by stable: -1 day.
     NPC_PROFESSION_PIRATE = 45,          // Travel by sea: -2 days, Gold finds: +10%, Reputation: +5.
-    NPC_PROFESSION_SQUIRE = 46,          // MM7: +2 to weapon and armor skills.
+    NPC_PROFESSION_SQUIRE = 46,          // +2 to weapon and armor skills.
     NPC_PROFESSION_PSYCHIC = 47,         // Perception: +5, Luck: +10.
     NPC_PROFESSION_GYPSY = 48,           // Food for rest: -1, Merchant: +3, Reputation: +5.
     NPC_PROFESSION_DIPLOMAT = 49,        // Never generated in MM7 and has no effect.

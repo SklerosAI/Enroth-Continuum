@@ -204,6 +204,34 @@ inline void breakItem(Character *character, Item *item) {
 }
 
 /**
+ * Points that hired Arms Masters, Weapons Masters and Squires add to every weapon skill of every character, as
+ * `npcprof.txt` describes them. MM6.exe adds them where the attack, melee damage and shooting bonuses read the weapon
+ * skill (0x483930).
+ *
+ * @return                              2 for an Arms Master, 3 for a Weapons Master and 2 for a Squire, summed.
+ */
+inline int weaponSkillHirelingBonus() {
+    int bonus = 0;
+    if (CheckHiredNPCSpeciality(NPC_PROFESSION_ARMS_MASTER))
+        bonus += 2;
+    if (CheckHiredNPCSpeciality(NPC_PROFESSION_WEAPONS_MASTER))
+        bonus += 3;
+    if (CheckHiredNPCSpeciality(NPC_PROFESSION_SQUIRE))
+        bonus += 2;
+    return bonus;
+}
+
+/**
+ * Points that a hired Squire adds to every skill term of the armor class bonus, armor, shield and Expert staff alike,
+ * as MM6.exe adds them (0x483C66).
+ *
+ * @return                              2 with a Squire, 0 without.
+ */
+inline int armorSkillHirelingBonus() {
+    return CheckHiredNPCSpeciality(NPC_PROFESSION_SQUIRE) ? 2 : 0;
+}
+
+/**
  * Shortens a recovery the way the GrayFace patch makes the MM6 "Increases rate of Recovery" enchantment work
  * (`IncreaseRecoveryRateProc`, applied when a recovery starts).
  *

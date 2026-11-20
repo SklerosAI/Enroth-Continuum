@@ -282,6 +282,10 @@ class GameConfig : public Config {
             "in turn-based mode, as the GrayFace patch does. Without it recovery runs 50% faster in real time only, as MM6.exe's "
             "own code and MM7 have it."};
 
+        Bool FixWeaponSkillHirelings = {this, "fix_weapon_skill_hirelings", true,
+            "MM6 only. Let the weapon skill points of a hired Arms Master, Weapons Master or Squire also shorten the "
+            "recovery of Expert Sword, Axe and Bow, as the GrayFace patch does. In vanilla they counted for attack, damage and shooting only."};
+
         Bool FixNewDayAtMonthStart = {this, "fix_new_day_at_month_start", true,
             "MM6 only. Start a new day when time jumps past 3 am into the next month, as the GrayFace patch does. "
             "In vanilla, pressing Esc during \"Wait until Dawn\" on the last day of a month skipped the New Day effects."};

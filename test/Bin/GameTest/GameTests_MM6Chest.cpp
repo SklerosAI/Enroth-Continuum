@@ -1,8 +1,14 @@
 #include <algorithm>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <optional>
 #include <set>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -17,7 +23,9 @@
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/Localization.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/MM6/MM6ChestTitleState.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/CombinedSkillValue.h"
@@ -32,12 +40,49 @@
 #include "Engine/Tables/MapTable.h"
 #include "Engine/Timer.h"
 
+#include "GUI/GUIButton.h"
 #include "GUI/UI/UIChest.h"
 #include "GUI/UI/UIRest.h"
+#include "GUI/UI/UISaveLoad.h"
 
 #include "Utility/Memory/Blob.h"
 
 #include "MM6CampaignChain.h"
+
+static std::filesystem::path ownerOnlyProfile() {
+    const char *value = std::getenv("ENROTH_MM6_RESTART_PROFILE");
+    if (!value || !*value)
+        return {};
+    const std::filesystem::path root = std::filesystem::canonical(std::filesystem::path(value));
+    if (root.parent_path() != std::filesystem::canonical(std::filesystem::temp_directory_path()) ||
+        !root.filename().string().starts_with("mm6-restart-") ||
+        (std::filesystem::status(root).permissions() &
+         (std::filesystem::perms::group_all | std::filesystem::perms::others_all)) != std::filesystem::perms::none)
+        throw std::runtime_error("MM6 chest save test needs an owner-only system-temp profile");
+    return root;
+}
+
+static bool enabled(std::string_view value) {
+    const char *flag = std::getenv("ENROTH_MM6_SAVE_ANYWHERE_ENABLE");
+    return flag && std::string_view(flag) == value;
+}
+
+static std::string fileText(const std::filesystem::path &path) {
+    std::ifstream input(path);
+    return {std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
+}
+
+static std::string chestPagesText(int chestId) {
+    // Every item on each of the chest's pages, with its top left cell.
+    std::string result;
+    for (InventoryEntry entry : vChests[chestId].inventory.entries())
+        if (entry.zone() == INVENTORY_ZONE_GRID)
+            result += fmt::format(" {}@{},{}", std::to_underlying(entry->itemId), entry.geometry().x, entry.geometry().y);
+    for (const mm6::ChestPageItem &item : vChests[chestId].mm6Pages)
+        result += fmt::format(" p{}:{}@{},{}", item.page + 1, std::to_underlying(vChests[chestId].inventory.entry(item.slot)->itemId),
+                              item.cell % 9, item.cell / 9);
+    return result;
+}
 
 static void startNewGameThroughInput(EngineController &game) {
     // Each character takes its first three optional skills and up to three points in every attribute, then the party
@@ -122,6 +167,23 @@ static std::vector<int> hiddenChestItems(int chestId) {
             result.push_back(std::to_underlying(entry->itemId));
     return result;
 }
+
+static GUIButton *chestPageButton() {
+    if (!pGUIWindow_CurrentChest)
+        return nullptr;
+    const auto button = std::ranges::find(pGUIWindow_CurrentChest->vButtons, "Chest_NextPage", &GUIButton::id);
+    return button == pGUIWindow_CurrentChest->vButtons.end() ? nullptr : *button;
+}
+
+static std::vector<std::pair<ItemId, Pointi>> chestPages(int chestId) {
+    // Items on the chest's later pages, with their top left cells.
+    std::vector<std::pair<ItemId, Pointi>> result;
+    for (const mm6::ChestPageItem &item : vChests[chestId].mm6Pages)
+        result.push_back({vChests[chestId].inventory.entry(item.slot)->itemId, Pointi(item.cell % 9, item.cell / 9)});
+    return result;
+}
+
+static constexpr std::uint32_t secondPageRoll = 9; // Chest luck that puts two items on the second page of the Abandoned Temple's chest 1.
 
 static int drawnChestItems(const AccessibleVector<DrawnQuad> &quads, int chestId) {
     // Icons of the chest's items on the chest screen.
@@ -471,7 +533,7 @@ GAME_TEST(MM6ChestScreen, ExitButton) {
 GAME_TEST(MM6Chest, OverflowShowsMostValuableItems) {
     // Chest items that didn't fit the grid on first opening were never shown. This roll puts twelve items into chest 1
     // of the Abandoned Temple. MM6 showed eight, four gold piles among them, and hid four weapons. Placed most valuable
-    // first and packed into rows, only the Emerald Staff, nine cells tall, has no room.
+    // first and packed into rows, only the Emerald Staff, nine cells tall, has no room on the first page.
     constexpr int ornateTrident = 40, longbow = 42, crossbow = 47, emeraldStaff = 62;
     for (bool fix : {false, true}) {
         SCOPED_TRACE(fmt::format("fix={}", fix));
@@ -497,36 +559,185 @@ GAME_TEST(MM6Chest, OverflowShowsMostValuableItems) {
     }
 }
 
-GAME_TEST(MM6Chest, OverflowItemAppearsWhenThereIsRoom) {
-    // A chest item that had no room on first opening stayed hidden after the party made room. Taking the Longbow out of
-    // chest 1 of the Abandoned Temple frees a whole column, and the Emerald Staff shows there when the chest is opened
-    // again.
-    constexpr ItemId longbow = static_cast<ItemId>(42), emeraldStaff = static_cast<ItemId>(62);
-    enterAbandonedTempleWithChestRoll(game, 3041712726u);
-    auto hiddenTape = tapes.custom([] { return hiddenChestItems(1); });
-    auto staffTape = tapes.custom([=] {
-        const InventoryEntry staff = vChests[1].inventory.find(emeraldStaff);
-        return staff && staff.zone() == INVENTORY_ZONE_GRID ? std::optional(staff.geometry().topLeft()) : std::nullopt;
-    });
-    auto longbowTape = tapes.custom([=] { return std::ranges::distance(pParty->pCharacters[0].inventory.entries(longbow)); });
-    auto quadsTape = tapes.hudQuads();
-    auto screenTape = tapes.screen();
+GAME_TEST(MM6Chest, OverflowItemIsOnTheSecondPage) {
+    // A chest item that had no room on the chest's grid was never shown. With this roll the Emerald Staff has no room in
+    // chest 1 of the Abandoned Temple. It is on the chest's second page, which the page button turns to, and the party
+    // takes it from there. Then the chest has one page and no button. Without the fix there is no button and no staff.
+    constexpr ItemId emeraldStaff = static_cast<ItemId>(62);
+    const std::string staffIcon = pItemTable->items[emeraldStaff].iconName;
+    for (bool fix : {false, true}) {
+        SCOPED_TRACE(fmt::format("fix={}", fix));
+        test.prepareForNextTest();
+        engine->config->gameplay.FixChestOverflow.setValue(fix);
+        enterAbandonedTempleWithChestRoll(game, 3041712726u);
+        auto pageButtonTape = tapes.custom([] { return chestPageButton() != nullptr; });
+        auto heldTape = tapes.custom([] { return pParty->pPickedItem.itemId; });
+        auto quadsTape = tapes.hudQuads();
+        auto screenTape = tapes.screen();
+        test.startTaping();
+
+        useMM6CampaignChainIndoorEventFace(game, 12); // Opens chest 1.
+        const auto firstPage = quadsTape.back();
+        const int firstPageItems = drawnChestItems(firstPage, 1);
+        if (!fix) {
+            EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHEST));
+            EXPECT_EQ(pageButtonTape, tape(false));
+            EXPECT_FALSE(firstPage.contains([&](const DrawnQuad &quad) { return quad.texture == staffIcon; }));
+            continue;
+        }
+        game.pressGuiButton("Chest_NextPage");
+        game.tick();
+        const auto secondPage = quadsTape.back();
+        const int secondPageItems = drawnChestItems(secondPage, 1);
+        game.pressAndReleaseButton(BUTTON_LEFT, chestTable[vChests[1].chestTypeId].inventoryOffset + Pointi(16, 16)); // The staff's top cell.
+        game.tick();
+
+        EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHEST));
+        EXPECT_EQ(pageButtonTape, tape(false, true, false));
+        EXPECT_EQ(heldTape, tape(ITEM_NULL, emeraldStaff));
+        EXPECT_EQ(firstPageItems, 11);
+        EXPECT_FALSE(firstPage.contains([&](const DrawnQuad &quad) { return quad.texture == staffIcon; }));
+        EXPECT_EQ(secondPageItems, 1);
+        EXPECT_TRUE(secondPage.contains([&](const DrawnQuad &quad) { return quad.texture == staffIcon; }));
+        EXPECT_EQ(drawnChestItems(quadsTape.back(), 1), 11); // Back on the first page.
+    }
+}
+
+GAME_TEST(MM6Chest, SecondPageStaysAfterLeavingTheMap) {
+    // A chest's second page is kept with the map. With this roll chest 1 of the Abandoned Temple has two items on its
+    // second page. The party takes one, leaves the temple and comes back, and the chest still shows the other one there.
+    enterAbandonedTempleWithChestRoll(game, secondPageRoll);
+    auto pagesTape = tapes.custom([] { return chestPages(1); });
+    auto heldTape = tapes.custom([] { return pParty->pPickedItem.itemId; });
+    auto mapTape = tapes.map();
     test.startTaping();
 
     useMM6CampaignChainIndoorEventFace(game, 12); // Opens chest 1.
-    const InventoryEntry bow = vChests[1].inventory.find(longbow);
-    ASSERT_TRUE(bow);
-    game.pressAndReleaseButton(BUTTON_LEFT, chestTable[vChests[1].chestTypeId].inventoryOffset + bow.geometry().topLeft() * 32 + Pointi(16, 16));
+    game.pressGuiButton("Chest_NextPage");
+    game.tick();
+    const std::vector<std::pair<ItemId, Pointi>> opened = pagesTape.back();
+    ASSERT_EQ(opened.size(), 2);
+    game.pressAndReleaseButton(BUTTON_LEFT, chestTable[vChests[1].chestTypeId].inventoryOffset + opened.front().second * 32 + Pointi(16, 16));
     game.tick();
     game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
     game.tick();
     game.pressGuiButton("Game_Character1"); // Into the first backpack.
     game.tick();
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(16384, -19626, 864.5f), 270); // In front of the way out, facing it.
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    game.pressGuiButton("Transition_Yes");
+    game.tick();
+    game.skipLoadingScreen();
+    game.tick();
+    game.teleportTo(engine->_currentLoadedMapId, Vec3f(-21456, -286, 193), 90); // In front of the temple door, facing it.
+    game.pressAndReleaseKey(PlatformKey::KEY_SPACE);
+    game.tick();
+    game.pressGuiButton("Transition_Yes");
+    game.tick();
+    game.skipLoadingScreen();
+    game.tick();
     useMM6CampaignChainIndoorEventFace(game, 12);
+    game.pressGuiButton("Chest_NextPage");
+    game.tick();
 
-    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHEST, SCREEN_GAME, SCREEN_CHEST));
-    EXPECT_EQ(longbowTape, tape(0, 1));
-    EXPECT_EQ(hiddenTape.back(), std::vector<int>{});
-    EXPECT_EQ(staffTape.back(), Pointi(6, 0)); // The Longbow's column.
-    EXPECT_EQ(drawnChestItems(quadsTape.back(), 1), 11);
+    const MapId d02 = pMapTable->GetMapInfo("d02.blv");
+    EXPECT_EQ(mapTape, tape(d02, pMapTable->GetMapInfo("oute3.odm"), d02));
+    EXPECT_EQ(heldTape, tape(ITEM_NULL, opened.front().first, ITEM_NULL));
+    EXPECT_EQ(pagesTape.back(), std::vector(opened.begin() + 1, opened.end()));
+}
+
+GAME_TEST(MM6ChestHeadless, DISABLED_ChestWithSecondPageSaves) {
+    // A party takes one of the items on the second page of the Abandoned Temple's chest 1 and saves in the temple, the
+    // first half of the chest page round trip.
+    if (!enabled("strict-chest-pages-write"))
+        GTEST_SKIP() << "Run only as the chest page write child of the first-map gate";
+    const std::filesystem::path profile = ownerOnlyProfile();
+    if (profile.empty())
+        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to an owner-only profile";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    const std::filesystem::path slot = profile / "saves/save000.ec6";
+    ASSERT_FALSE(std::filesystem::exists(slot));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    enterAbandonedTempleWithChestRoll(game, secondPageRoll);
+    auto pagesTape = tapes.custom([] { return chestPagesText(1); });
+    auto statusTape = tapes.statusBar();
+    test.startTaping();
+
+    useMM6CampaignChainIndoorEventFace(game, 12); // Opens chest 1.
+    game.pressGuiButton("Chest_NextPage");
+    game.tick();
+    const mm6::ChestPageItem taken = vChests[1].mm6Pages.front();
+    game.pressAndReleaseButton(BUTTON_LEFT, chestTable[vChests[1].chestTypeId].inventoryOffset + Pointi(taken.cell % 9, taken.cell / 9) * 32 + Pointi(16, 16));
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    game.pressGuiButton("Game_Character1"); // Into the first backpack.
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressGuiButton("GameMenu_SaveGame");
+    game.tick(2);
+    game.doubleClickGuiButton("SaveMenu_Slot0"); // The new save slot.
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_C);
+    game.tick();
+    game.pressGuiButton("SaveMenu_Save");
+    game.tick(3); // The button animates for a frame, then posts the save for the next one.
+
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
+    EXPECT_TRUE(std::filesystem::is_regular_file(slot));
+    ASSERT_EQ(pagesTape.size(), 3); // Shut, opened, then one item fewer on the second page.
+    EXPECT_TRUE(pagesTape.back().contains(" p2:"));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+    std::ofstream(profile / "expected-chest.txt") << pagesTape.back() << "\n";
+}
+
+GAME_TEST(MM6ChestHeadless, DISABLED_ChestKeepsItsSecondPageInFreshProcess) {
+    // A fresh MM6 process loads the temple save, and chest 1 still has both pages with the items the party left there.
+    if (!enabled("strict-chest-pages-reload"))
+        GTEST_SKIP() << "Run only after the chest page write child of the first-map gate";
+    const std::filesystem::path profile = ownerOnlyProfile();
+    if (profile.empty())
+        GTEST_SKIP() << "Set ENROTH_MM6_RESTART_PROFILE to an owner-only profile";
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    ASSERT_NE(dynamic_cast<NullRenderer *>(render), nullptr);
+    std::istringstream expected(fileText(profile / "expected-chest.txt"));
+    std::string savedPages;
+    ASSERT_TRUE(std::getline(expected, savedPages));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    test.startTaping();
+    auto screenTape = tapes.screen();
+    auto mapTape = tapes.map();
+    auto quadsTape = tapes.hudQuads();
+
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(4);
+    ASSERT_EQ(screenTape.back(), SCREEN_LOADGAME);
+    const auto chestSlot = std::ranges::find(saveLoadMenu()->slots(), "save000.ec6", [](const auto &slot) { return slot.fileName; });
+    ASSERT_NE(chestSlot, saveLoadMenu()->slots().end());
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", chestSlot - saveLoadMenu()->slots().begin()));
+    game.tick(2);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick();
+    ASSERT_EQ(mapTape.back(), pMapTable->GetMapInfo("d02.blv"));
+    useMM6CampaignChainIndoorEventFace(game, 12); // Opens chest 1.
+    const int firstPageItems = drawnChestItems(quadsTape.back(), 1);
+    game.pressGuiButton("Chest_NextPage");
+    game.tick();
+
+    EXPECT_EQ(chestPagesText(1), savedPages);
+    EXPECT_GT(firstPageItems, 0);
+    EXPECT_EQ(drawnChestItems(quadsTape.back(), 1), std::ranges::count(vChests[1].mm6Pages, 1, &mm6::ChestPageItem::page));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
 }

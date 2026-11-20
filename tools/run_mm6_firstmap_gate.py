@@ -77,6 +77,12 @@ BUFF_SAVE = [
     ("MM6SaveAnywhereHeadless.DISABLED_BuffsComeBackInFreshProcess",
      "ENROTH_MM6_SAVE_ANYWHERE_ENABLE", "strict-buff-save-reload"),
 ]
+CHEST_PAGES = [
+    ("MM6ChestHeadless.DISABLED_ChestWithSecondPageSaves",
+     "ENROTH_MM6_SAVE_ANYWHERE_ENABLE", "strict-chest-pages-write"),
+    ("MM6ChestHeadless.DISABLED_ChestKeepsItsSecondPageInFreshProcess",
+     "ENROTH_MM6_SAVE_ANYWHERE_ENABLE", "strict-chest-pages-reload"),
+]
 AUTOSAVE = [
     ("MM6AutosaveHeadless.DISABLED_EdgeAndDoorWriteTheAutosave",
      "ENROTH_MM6_AUTOSAVE_ENABLE", "strict-autosave-write"),
@@ -172,6 +178,8 @@ def main():
             print("save anywhere:", name)
         for name, _, _ in BUFF_SAVE:
             print("buff save:", name)
+        for name, _, _ in CHEST_PAGES:
+            print("chest pages:", name)
         for name, _, _ in AUTOSAVE:
             print("autosave:", name)
         for name, _, _ in VISIT:
@@ -287,6 +295,14 @@ def main():
         for name, flag, value in BUFF_SAVE:
             if not run_child(name, flag, value, profile, paths["MM6_DATA_PATH"], timeout=1500):
                 return 1
+    with tempfile.TemporaryDirectory(prefix="mm6-restart-chest-pages-") as pages:
+        profile = Path(pages)
+        os.chmod(profile, 0o700)
+        # A new party takes an item from the second page of a dungeon chest and saves. A fresh process loads the save
+        # and finds the chest with both pages and the items left on them.
+        for name, flag, value in CHEST_PAGES:
+            if not run_child(name, flag, value, profile, paths["MM6_DATA_PATH"], timeout=1500):
+                return 1
     with tempfile.TemporaryDirectory(prefix="mm6-restart-autosave-") as seventh:
         profile = Path(seventh)
         os.chmod(profile, 0o700)
@@ -333,6 +349,7 @@ def main():
     print("PASS: seven-child MM6 chain, all full-retry fault children, the paperdoll child, normal Save/Load menus with a "
           "production load and resave, a production New Game saved, loaded and saved again, a dungeon save after travel "
           "loaded with its outdoor maps and saved again, party and character buffs kept across a fresh-process load, "
+          "a chest's second page kept across a fresh-process load, "
           "autosaves and a quick save loaded in fresh processes, a map visit kept across a fresh-process load, a first-map "
           "save keeping its visit, the All Artifacts ledger kept across a fresh-process load, artifacts, a relic and a "
           "special bonus kept across a fresh-process load, and the MM7 controls")

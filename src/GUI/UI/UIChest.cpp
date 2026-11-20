@@ -1,5 +1,8 @@
 #include "UIChest.h"
 
+#include <algorithm>
+#include <string>
+
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Graphics/Image.h"
 #include "Engine/Localization.h"
@@ -11,6 +14,7 @@
 #include "Engine/Tables/ChestTable.h"
 
 #include "GUI/GUIButton.h"
+#include "GUI/GUIFont.h"
 #include "GUI/UI/ItemGrid.h"
 #include "GUI/UI/MM6CharacterScreen.h"
 
@@ -43,6 +47,8 @@ void GUIWindow_Chest::drawExitButton() {
 }
 
 void GUIWindow_Chest::Update() {
+    if (engine->gameTitle() == GameTitle::MM6)
+        updatePageButton();
     if (current_screen_type == SCREEN_CHEST_INVENTORY && pParty->hasActiveCharacter()) {
         draw_leather();
         CharacterUI_InventoryTab_Draw(&pParty->activeCharacter(), true);
@@ -62,22 +68,39 @@ void GUIWindow_Chest::Update() {
         CharacterUI_DrawPickedItemUnderlay({ chest_offs_x, chest_offs_y });
         render->ResetUIClipRect();
 
-        for (InventoryEntry entry : vChests[uChestID].inventory.entries()) {
-            if (entry.zone() != INVENTORY_ZONE_GRID)
-                continue;
-
-            auto item_texture = assets->getIcon(entry->GetIconName());
+        auto drawItem = [&](const Item &item, Pointi cell) {
+            auto item_texture = assets->getIcon(item.GetIconName());
             int X_offset = itemOffset(item_texture->width());
             int Y_offset = itemOffset(item_texture->height());
-            int itemPixelPosX = chest_offs_x + 32 * entry.geometry().x + X_offset;
-            int itemPixelPosY = chest_offs_y + 32 * entry.geometry().y + Y_offset;
+            int itemPixelPosX = chest_offs_x + 32 * cell.x + X_offset;
+            int itemPixelPosY = chest_offs_y + 32 * cell.y + Y_offset;
 
             assert(0 < itemPixelPosX && itemPixelPosX < 640);
             assert(0 < itemPixelPosY && itemPixelPosY < 480);
             render->DrawQuad2D(item_texture, {itemPixelPosX, itemPixelPosY});
+        };
+
+        if (_page == 0) {
+            for (InventoryEntry entry : vChests[uChestID].inventory.entries())
+                if (entry.zone() == INVENTORY_ZONE_GRID)
+                    drawItem(*entry, entry.geometry().topLeft());
+        } else {
+            for (const mm6::ChestPageItem &item : vChests[uChestID].mm6Pages)
+                if (InventoryEntry entry = vChests[uChestID].inventory.entry(item.slot); item.page == _page && entry)
+                    drawItem(*entry, {item.cell % chestWidthCells, item.cell / chestWidthCells});
         }
 
         drawExitButton();
+        if (_pageButton) {
+            GUIFont *font = assets->pFontArrus.get();
+            GraphicsImage *arrow = assets->getIcon("con_arrr");
+            const std::string text = fmt::format("{}/{}", _page + 1, pageCount());
+            const int textWidth = font->GetLineWidth(text);
+            const Recti &rect = _pageButton->rect;
+            const int x = rect.x + (rect.w - textWidth - 4 - arrow->width()) / 2;
+            GUIWindow::DrawText(font, {x, rect.y + (rect.h - font->GetHeight()) / 2}, colorTable.White, text, frameRect);
+            render->DrawQuad2D(arrow, {x + textWidth + 4, rect.y + (rect.h - arrow->height()) / 2});
+        }
         if (engine->gameTitle() == GameTitle::MM7 && Chest::canReroll(_chestId)) {
             render->FillRect({337, 326, 105, 24}, colorTable.Tacha);
             render->FillRect({339, 328, 101, 20}, colorTable.CarnabyTan);
@@ -86,5 +109,29 @@ void GUIWindow_Chest::Update() {
                      {341 + assets->pFontLucida->AlignText_Center(97, "Reroll"), 331},
                      colorTable.PaleCanary, "Reroll", frameRect);
         }
+    }
+}
+
+void GUIWindow_Chest::showNextPage() {
+    _page = (_page + 1) % pageCount();
+}
+
+int GUIWindow_Chest::pageCount() const {
+    int result = 1;
+    for (const mm6::ChestPageItem &item : vChests[_chestId].mm6Pages)
+        result = std::max(result, item.page + 1);
+    return result;
+}
+
+void GUIWindow_Chest::updatePageButton() {
+    const int pages = pageCount();
+    _page = std::min(_page, pages - 1);
+    const bool shown = current_screen_type == SCREEN_CHEST && pages > 1;
+    if (shown && !_pageButton) {
+        _pageButton = CreateButton("Chest_NextPage", {400, 284}, {58, 26}, BUTTON_TYPE_NORMAL, 0, UIMSG_CHEST_NextPage, 0);
+        std::rotate(vButtons.begin(), vButtons.end() - 1, vButtons.end()); // Ahead of the chest grid's button, which covers it.
+    } else if (!shown && _pageButton) {
+        _pageButton->Release();
+        _pageButton = nullptr;
     }
 }

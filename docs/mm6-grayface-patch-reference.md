@@ -296,7 +296,7 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   `MM6ChestArtifact.RefundCommandReturnsAnUnopenedChestArtifact`.
 - **W13**. Items that didn't fit a chest reappear when space is freed (`FixChests=0`, off), most valuable items placed
   first (`FixChestsByReorder=1`), compact stacking (`FixChestsByCompacting=1`), vertical stacking
-  (`PlaceChestItemsVertically=1`). State: **fixed, `fix_chest_overflow`**.
+  (`PlaceChestItemsVertically=1`). State: **fixed, `fix_chest_overflow`, beyond GrayFace**.
   GrayFace (`MMHooks.pas:1561-1683`, `1987-2036`): `FixChestSmartProc` sorts a chest's item slots before generation,
   fixed items first, then markers by level, artifacts and 6 down to 1. `FixChestsCompactProc` runs after MM6.exe's
   shuffled pass (0x41e3b0), places every slot again into the first free cells in row order, and keeps that layout when
@@ -306,13 +306,20 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   charges only once placed.
   Ours, in `MM6ChestPlacement.h`: MM6.exe's pass runs unchanged. When it leaves an item without a cell, the chest is laid
   out again with items 400 and up (artifacts and quest items) first, then by MM6 item value, gold by amount, both
-  shuffled and packed into rows, GrayFace's rule picking between them. Reopening places the items without a cell, most
-  valuable first, in row order. The order comes after generation, so the generator's draws are vanilla's, and a chest
-  whose items all fit looks and draws exactly as in MM6.exe. Only a wand placed that vanilla left out draws its
-  charges. Vertical placement has nothing to change, putting an item into an MM6 chest isn't implemented. Real data,
-  1,000 rolls of every chest of all 67 maps: 322 chests on 56 maps hide items in some rolls, Abandoned Temple chest 1
-  in 356 of them. Tests `MM6Chest.OverflowShowsMostValuableItems`, `MM6Chest.OverflowItemAppearsWhenThereIsRoom`,
-  unit tests `MM6ChestGenerationGuard.Overflow*` and `LeftoverPlacement*`. Vanilla stays pinned by
+  shuffled and packed into rows, GrayFace's rule picking between them. Instead of GrayFace's placement on a later
+  opening, what still has no room goes on a second page, and on more pages if needed, in row order, most valuable first,
+  so the player never has to empty a chest and open it again. A page button on the chest screen turns the pages, and
+  only a chest with more than one page has it. The later pages ride in the 59 grid cells of the chest record that
+  MM6.exe never reads, see [Travel and maps](mm6-travel-and-maps.md#placement). The order comes after generation, so
+  the generator's draws are vanilla's, and a chest whose items all fit looks and draws exactly as in MM6.exe. Only a
+  wand placed that vanilla left out draws its charges. Vertical placement has nothing to change, putting an item into
+  an MM6 chest isn't implemented. Real data, 1,000 rolls of every chest of all 67 maps: 322 chests on 56 maps hide
+  items in some rolls, Abandoned Temple chest 1 in 356 of them. With pages, 1,000 rolls of every chest
+  of all 67 maps need at most four pages and 19 items past the first page, and hide nothing. Tests `MM6Chest.OverflowShowsMostValuableItems`,
+  `MM6Chest.OverflowItemIsOnTheSecondPage`, `MM6Chest.SecondPageStaysAfterLeavingTheMap`, the fresh-process pair
+  `MM6ChestHeadless.DISABLED_ChestWithSecondPageSaves` and `DISABLED_ChestKeepsItsSecondPageInFreshProcess` in the
+  first-map gate, unit tests `MM6ChestGenerationGuard.Overflow*`, `MM6ChestGridWire.LaterPages*` and
+  `MM6ChestFirstOpenTransaction.ArtifactOnSecondPageIsSeenAndCanBeTaken`. Vanilla stays pinned by
   `PlacementKeepsNoFitItemWithoutExtraWandDraw`.
 - **W14**. Event commands couldn't operate on some skills, Thievery included (four range bytes in `Hooks.pas`). State:
   **fixed range**.
@@ -446,10 +453,11 @@ Rules for every fix in this backlog:
   already fix by design. Opcode 69 runs without a flag.
 - **W13**. Chest overflow items hidden forever. At generation, place items most valuable first and compact them, then
   place leftovers when the chest is reopened with space.
-  GrayFace ships reorder and compacting on and leftover placement off. We turn all three on, because a hidden item is
-  lost loot for the player. Done 2026-11-20 behind `fix_chest_overflow`, one flag for all three. The order is by value
-  at first opening instead of by marker level at generation, so the generator's random draws stay vanilla's, and only a
-  chest that overflows is laid out differently.
+  Beyond GrayFace. GrayFace ships reorder and compacting on and leftover placement off. We keep reorder and compacting,
+  and in place of the leftover placement an overflowing chest gets a second page, owner decision 2026-11-20, so nothing
+  is hidden and the player never has to reopen a chest. Done 2026-11-20 behind `fix_chest_overflow`, one flag for all
+  of it. The order is by value at first opening instead of by marker level at generation, so the generator's random
+  draws stay vanilla's, and only a chest that overflows is laid out differently.
 - **W15**. Door action 3 ignored. Accept action 3 as "switch even while moving".
   Same as GrayFace. Done 2026-11-20 behind `fix_door_state_switch`. No shipped script, patched or not, uses it, so only
   modded scripts see a difference and there is no game test.

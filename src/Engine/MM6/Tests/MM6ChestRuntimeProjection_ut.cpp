@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <memory>
 #include <span>
+#include <vector>
 
 #include "Testing/Unit/UnitTest.h"
 
@@ -98,6 +99,32 @@ UNIT_TEST(MM6ChestRuntimeProjection, RejectsForeignMarkerAndInvalidGridWithoutMu
     mm6::writeChest16(tailGrid, mm6::CHEST_GRID_OFFSET + 2 * 139, 1);
     EXPECT_FALSE(mm6::stageChestRuntimeProjection(GameTitle::MM6, tailGrid, 0));
     EXPECT_EQ(source, oneItemRecord());
+}
+
+UNIT_TEST(MM6ChestRuntimeProjection, LaterPageItemIsStashedAndMustBeOnOnePage) {
+    // An item on the second page projects into the stash with its page cell. An item that is also on the first page, or
+    // that lies over another item of its page, doesn't project.
+    TableScope table;
+    auto paged = oneItemRecord();
+    mm6::writeChest16(paged, 2, 2);
+    mm6::writeChest32(std::span(paged).subspan(4 + 28, 28), 0, 400);
+    mm6::writeChest16(paged, mm6::CHEST_GRID_OFFSET, 1);
+    mm6::writeChest16(paged, mm6::CHEST_GRID_OFFSET + 2 * 81, 1 + 1 + 140 * 10);
+    auto projected = mm6::stageChestRuntimeProjection(GameTitle::MM6, paged, 0);
+    ASSERT_TRUE(projected);
+    EXPECT_EQ(projected->chest.mm6Pages, (std::vector<mm6::ChestPageItem>{{1, 1, 10}}));
+    EXPECT_EQ(projected->chest.inventory.entry(1).zone(), INVENTORY_ZONE_STASH);
+    EXPECT_EQ(mm6::chestPageEntry(projected->chest, 1, Pointi(1, 1)).index(), 1);
+    EXPECT_FALSE(mm6::chestPageEntry(projected->chest, 0, Pointi(1, 1)));
+    EXPECT_EQ(mm6::stageChestRuntimeRecord(GameTitle::MM6, *projected), paged);
+
+    auto twice = paged;
+    mm6::writeChest16(twice, mm6::CHEST_GRID_OFFSET + 2 * 81, 1 + 0 + 140 * 10);
+    EXPECT_FALSE(mm6::stageChestRuntimeProjection(GameTitle::MM6, twice, 0));
+    auto overlapping = paged;
+    mm6::writeChest32(std::span(overlapping).subspan(4 + 2 * 28, 28), 0, 200);
+    mm6::writeChest16(overlapping, mm6::CHEST_GRID_OFFSET + 2 * 82, 1 + 2 + 140 * 10);
+    EXPECT_FALSE(mm6::stageChestRuntimeProjection(GameTitle::MM6, overlapping, 0));
 }
 
 UNIT_TEST(MM6ChestRuntimeProjection, GoldAndSafeArtifactKeepTheirItemFields) {

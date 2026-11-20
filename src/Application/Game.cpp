@@ -1497,6 +1497,9 @@ void Game::processQueuedMessages() {
                 }
                 Chest::OnChestLeftClick();
                 continue;
+            case UIMSG_CHEST_NextPage:
+                pGUIWindow_CurrentChest->showNextPage();
+                continue;
             case UIMSG_CHEST_Reroll:
                 if (current_screen_type == SCREEN_CHEST && pGUIWindow_CurrentChest)
                     Chest::reroll(pGUIWindow_CurrentChest->chestId());

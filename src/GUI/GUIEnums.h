@@ -11,6 +11,7 @@ enum UIMessageType : uint32_t {
 
     UIMSG_MouseLeftClickInGame = 10,
 
+    UIMSG_CHEST_NextPage = 11,
     UIMSG_CHEST_ClickItem = 12,
     UIMSG_CHEST_Reroll = 13,
     UIMSG_MONSTER_LOOT_Reroll = 16,

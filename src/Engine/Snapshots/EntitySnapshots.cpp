@@ -1766,6 +1766,7 @@ void reconstruct(const Chest_MM7 &src, Chest *dst, ContextTag<int> chestId) {
     dst->chestTypeId = src.chestTypeId;
     dst->flags = ChestFlags(src.flags);
     reconstruct(src, &dst->inventory, chestId);
+    dst->mm6Pages.clear();
 }
 
 void snapshot(const ChestInventory &src, Chest_MM7 *dst) {

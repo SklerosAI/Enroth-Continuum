@@ -26,6 +26,7 @@
 #include "Engine/Spells/MM6SpellRules.h"
 #include "Engine/Party.h"
 #include "Engine/MapEnumFunctions.h"
+#include "Engine/MM6/MM6ChestRuntimeProjection.h"
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/MM6/MM6SpellItems.h"
 #include "Engine/MM6/MM6ConsumableRules.h"
@@ -1786,7 +1787,10 @@ void UI_OnMouseRightClick(Pointi mousePos) {
                 int inventoryYCoord = (pY - 34) / 32;  // TODO(captainurist): use pchestoffsets
                 int inventoryXCoord = (pX - 42) / 32;
 
-                InventoryEntry entry = vChests[pGUIWindow_CurrentChest->chestId()].inventory.entry({inventoryXCoord, inventoryYCoord});
+                Chest &chest = vChests[pGUIWindow_CurrentChest->chestId()];
+                InventoryEntry entry = engine->gameTitle() == GameTitle::MM6
+                                           ? mm6::chestPageEntry(chest, pGUIWindow_CurrentChest->page(), {inventoryXCoord, inventoryYCoord})
+                                           : chest.inventory.entry({inventoryXCoord, inventoryYCoord});
                 if (entry)
                     GameUI_DrawItemInfo(entry.get());
             }

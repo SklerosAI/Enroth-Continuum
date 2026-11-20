@@ -13,6 +13,7 @@
 #include "Engine/Objects/ItemEnums.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/MapTable.h"
+#include "Engine/mm7_data.h"
 
 #include "Utility/Exception.h"
 
@@ -99,6 +100,14 @@ GAME_TEST(MM7StrangeTemple, SourceContracts) {
     EXPECT_TRUE(eventChangesVariable(engine->_localEventMap, emptyBottleEventId, EVENT_Add,
                                      VAR_PlayerItemInHands, std::to_underlying(ITEM_POTION_BOTTLE)));
     EXPECT_TRUE(eventMovesToMap(engine->_localEventMap, exitEventId, "out02.odm"));
+    const auto &exit = engine->_localEventMap.function(exitEventId);
+    auto move = std::ranges::find_if(exit, [](const EvtInstruction &instruction) {
+        return instruction.opcode == EVENT_MoveToMap && instruction.str == "out02.odm";
+    });
+    ASSERT_NE(move, exit.end());
+    // This shipped coordinate is beyond the outdoor boundary; keep the unusual source data visible
+    // while native settled-position parity remains unresolved.
+    EXPECT_GT(std::abs(move->data.move_map_descr.x), maxPartyAxisDistance);
     for (int eventId : {emptyBottleEventId, exitEventId}) {
         EXPECT_TRUE(std::ranges::any_of(pIndoor->faces, [eventId](const BLVFace &face) {
             return face.eventId == eventId && face.Clickable();
@@ -151,5 +160,7 @@ GAME_TEST(MM7StrangeTemple, BottleEntryInteractionAndExit) {
     EXPECT_EQ(uGameState, GAME_STATE_PLAYING);
     EXPECT_EQ(engine->_currentLoadedMapId, MAP_HARMONDALE);
     EXPECT_EQ(pMapTable->pInfos[engine->_currentLoadedMapId].fileName, "out02.odm");
+    EXPECT_LE(std::abs(pParty->pos.x), maxPartyAxisDistance);
+    EXPECT_LE(std::abs(pParty->pos.y), maxPartyAxisDistance);
     EXPECT_TRUE(pParty->hasItem(ITEM_TEMPLE_IN_A_BOTTLE));
 }

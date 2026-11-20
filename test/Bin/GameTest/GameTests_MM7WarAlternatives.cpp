@@ -37,6 +37,8 @@
 
 #include "Utility/Exception.h"
 
+#include "MM7CampaignChain.h"
+
 namespace {
 
 constexpr int catherineId = 69;
@@ -489,8 +491,8 @@ void openJudgeGrey(EngineController &game) {
 }
 
 void installDarkArbiterAfterBalancedWar(EngineController &game) {
-    pParty->_questBits.set(QBIT_RIVERSTRIDE_PLANS_GIVEN);
-    pParty->_questBits.set(QBIT_LOREN_STEEL_RESCUED);
+    ASSERT_TRUE(pParty->_questBits[QBIT_RIVERSTRIDE_PLANS_GIVEN]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_LOREN_STEEL_RESCUED]);
     acquireGryphonheartTrumpet(game);
     openJudgeGrey(game);
     const unsigned int handIn = findNpcEvent(74, [](const EvtInstruction &instruction) {
@@ -1035,6 +1037,8 @@ GAME_TEST(MM7WarRevealMatrix, AllEffectiveResultsResolveUnderBothArbiters) {
 GAME_TEST(MM7WarAlternatives, BalancedWarAndNeutralTrumpetCanInstallDarkArbiter) {
     game.startNewGame();
     prepareWarJobs();
+    pParty->_questBits.set(QBIT_RIVERSTRIDE_PLANS_GIVEN);
+    pParty->_questBits.set(QBIT_LOREN_STEEL_RESCUED);
     installDarkArbiterAfterBalancedWar(game);
 
     EXPECT_TRUE(pParty->_questBits[QBIT_RIVERSTRIDE_PLANS_GIVEN]);
@@ -1045,11 +1049,69 @@ GAME_TEST(MM7WarAlternatives, BalancedWarAndNeutralTrumpetCanInstallDarkArbiter)
     EXPECT_EQ(pParty->alignment, PartyAlignment::PartyAlignment_Evil);
 }
 
+GAME_TEST(MM7WarCampaignChain, DISABLED_Chapter3) {
+    // The rebuilt-castle campaign could bypass both war assignments before selecting the Dark Arbiter.
+    assertCampaignChainProfile();
+    ASSERT_FALSE(ufs->exists("saves/save003.mm7"));
+    loadCampaignChainSlot(game, 2);
+    ASSERT_TRUE(pParty->_questBits[QBIT_HARMONDALE_REBUILT]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_RIVERSTRIDE_PLANS_GIVEN]);
+    ASSERT_FALSE(pParty->_questBits[QBIT_LOREN_STEEL_RESCUED]);
+
+    auto plansTape = tapes.questBit(QBIT_RIVERSTRIDE_PLANS_GIVEN);
+    auto lorenTape = tapes.questBit(QBIT_LOREN_STEEL_RESCUED);
+    auto trumpetTape = tapes.questBit(QBIT_GRYPHONHEART_TRUMPET_GIVEN_TO_ARBITER);
+    auto darkTape = tapes.questBit(QBIT_DARK_PATH);
+    auto mapTape = tapes.map();
+    test.startTaping();
+
+    openCatherine(game);
+    const unsigned int lorenOffer = findNpcEvent(catherineId, [](const EvtInstruction &instruction) {
+        return eventChangesQuestBit(instruction, QBIT_LOREN_STEEL_RESCUE_ACTIVE) && instruction.opcode != EVENT_Subtract;
+    });
+    ASSERT_TRUE(selectNpcEvent(game, catherineId, lorenOffer));
+    leaveHouse(game);
+    acquireLoren(game);
+    openCatherine(game);
+    ASSERT_TRUE(selectNpcEvent(game, catherineId, pNPCStats->pNPCData[catherineId].dialogue_1_evt_id));
+    leaveHouse(game);
+
+    openParson(game);
+    const unsigned int plansOffer = findNpcEvent(parsonId, [](const EvtInstruction &instruction) {
+        return eventChangesQuestBit(instruction, QBIT_RIVERSTRIDE_PLANS_ACTIVE) && instruction.opcode != EVENT_Subtract;
+    });
+    ASSERT_TRUE(selectNpcEvent(game, parsonId, plansOffer));
+    leaveHouse(game);
+    acquireRiverstridePlans(game);
+    openParson(game);
+    ASSERT_TRUE(selectNpcEvent(game, parsonId, pNPCStats->pNPCData[parsonId].dialogue_1_evt_id));
+    leaveHouse(game);
+
+    ASSERT_TRUE(pParty->_questBits[QBIT_LOREN_STEEL_RESCUED]);
+    ASSERT_TRUE(pParty->_questBits[QBIT_RIVERSTRIDE_PLANS_GIVEN]);
+    installDarkArbiterAfterBalancedWar(game);
+
+    EXPECT_EQ(lorenTape, tape(false, true));
+    EXPECT_EQ(plansTape, tape(false, true));
+    EXPECT_EQ(trumpetTape, tape(false, true));
+    EXPECT_EQ(darkTape, tape(false, true));
+    EXPECT_CONTAINS(mapTape, MAP_TULAREAN_CAVES);
+    EXPECT_CONTAINS(mapTape, MAP_FORT_RIVERSTRIDE);
+    EXPECT_CONTAINS(mapTape, MAP_TULAREAN_FOREST);
+    EXPECT_EQ(engine->_currentLoadedMapId, MAP_HARMONDALE);
+    EXPECT_EQ(pParty->alignment, PartyAlignment::PartyAlignment_Evil);
+    ASSERT_FALSE(::testing::Test::HasFailure());
+
+    saveCampaignChainSlot(game, 3);
+}
+
 GAME_TEST(MM7WarCheckpoint, DISABLED_WriteNeutralDarkArbiter) {
     assertDisposableHeadlessProfile();
     ASSERT_FALSE(ufs->exists(checkpointSlot));
     game.startNewGame();
     prepareWarJobs();
+    pParty->_questBits.set(QBIT_RIVERSTRIDE_PLANS_GIVEN);
+    pParty->_questBits.set(QBIT_LOREN_STEEL_RESCUED);
     installDarkArbiterAfterBalancedWar(game);
     ASSERT_FALSE(::testing::Test::HasFailure());
     ASSERT_EQ(engine->_currentLoadedMapId, MAP_HARMONDALE);

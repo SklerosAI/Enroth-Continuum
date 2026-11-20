@@ -164,6 +164,7 @@ Landed:
 | C12 | `fix_spells_cost` |
 | C25 | `fix_item_generation`. Shop stock and `GiveItem` kinds only, the any-item roll stays vanilla as in the patch. |
 | W28 | No flag. MM6.exe already refused paid shop services. The skill half waits for the shop item info box. |
+| W12 | `fix_unopened_chest_artifacts` for the respawn refund. Event opcode 69 `RefundChestArtifacts` runs without a flag, no shipped script uses it. |
 
 Open:
 
@@ -171,7 +172,6 @@ Open:
 | --- | --- |
 | C22 | Armor recovery uses the MM7 table. Mok's change needs tracing. |
 | C24 | Doesn't reproduce. MM6.exe's own walking edge check, which we port, keeps chasing monsters on their ledges. Needs a vanilla case that falls. |
-| W12 | Found-artifact flags never clear on respawn. Needs event opcode 69 `RefundChestArtifacts`. |
 | W13 | Chest overflow items stay hidden forever |
 | W15 | Door action 3 (switch while moving) is ignored |
 | W19 | The stats screen shows the display condition, not the one that sets the stats |

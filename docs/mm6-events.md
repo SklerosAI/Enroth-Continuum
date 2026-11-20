@@ -57,6 +57,8 @@ and the MM8 additions) never occur in shipped MM6 data.
   `model:u32, facet:u32, bit:u32, on:u8`. Facet `0xFFFFFFFF` means every face of the model.
 - **26, `InputString` in MM7**: MM6 Question, three local string ids (question, answer 1, answer 2) and a target step.
 - **33 `PressAnyKey`** (MM6 only): opens the branchless dialogue and resumes at the next step.
+- **69 `RefundChestArtifacts`** (MM6 only, a GrayFace patch addition): one byte, a chest index. No shipped MM6 script
+  uses it, GrayFace's patched `d18`, `hive`, `outb2` and `pyramid` scripts do. MM7 still refuses the record.
 
 Outdoor face targets resolve through `pOutdoor->pBModels[model].faces`. An out-of-range model or facet throws, since
 every shipped record is in range.
@@ -81,6 +83,9 @@ every shipped record is in range.
   (`MM6_DECORATION_EVENT_BASE`), MM7 to 380. Operand 0 hides the decoration.
 - **43 `CheckSkill`**: encoded mastery 0 means "any trained mastery" and is checked as a minimum level. Other masteries
   match exactly (`mm6CheckSkillSatisfied` in `MM6EventRules.h`).
+- **69 `RefundChestArtifacts`**: takes the artifacts that chest's generation put on the found list, and that weren't
+  in its grid when it was first opened, off the list again (`MM6ChestArtifactRefund.h`). They stay in the chest. It
+  runs whatever `fix_unopened_chest_artifacts` says.
 
 ### Event spells
 
@@ -237,8 +242,7 @@ see [houses and services](mm6-houses-and-services.md). `SpeakNPC` (22) opens an 
   Add throws.
 - `GiveItem` throws when no character has room for the held item. MM6 drops it on the ground, which the port doesn't do.
 - The generated-artifact item band is refused by item Add.
-- `ChangeDoorState` action 3 and the GrayFace opcode 69 (`RefundChestArtifacts`) are not implemented. Both only matter
-  for GrayFace-patched scripts.
+- `ChangeDoorState` action 3 is not implemented. It only matters for GrayFace-patched scripts.
 - With nobody active, the stand-in member of `fix_inactive_party_events` steers only the character selector. Where an
   event moves a held item while giving a new one, that path still sees nobody active.
 

@@ -315,6 +315,11 @@ class GameConfig : public Config {
             "MM6 only. Take every spell's cost from spells.txt, as the GrayFace patch does. In vanilla the costs came from a "
             "table in MM6.exe, where Expert Static Charge costs 2 spell points and its description says 1."};
 
+        Bool FixItemGeneration = {this, "fix_item_generation", true,
+            "MM6 only. Give every candidate of a shop's or an event's random item its own chance, as the GrayFace patch does. "
+            "In vanilla, the first candidate got one chance more, even an item with no chance at that treasure level, and the last one "
+            "got one less."};
+
         Float SpellFailureRecoveryMod = {this, "spell_failure_recovery_mod", 0.5f, &ValidateSpellFailureRecoveryMod,
             "Recovery time modifier when spell casting ended in failure for the reason where spell cannot be cast at all in current context. "
             "Context include situation where outdoor spell is casted indoor or targeted spell is casted with no characters on screen."};

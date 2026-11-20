@@ -11,6 +11,7 @@
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Localization.h"
 #include "Engine/MM6/MM6ChestTitleState.h"
+#include "Engine/MM6/MM6ItemGenerator.h"
 #include "Engine/MM6/MM6ShopBoundedPurchase.h"
 #include "Engine/MM6/MM6ShopRefreshBoundary.h"
 #include "Engine/MM6/MM6ShopTitleState.h"
@@ -265,9 +266,10 @@ bool GUIWindow_MM6Shop::refreshStock() {
                 mm6::generateGuildStockWithTitleRng(&stock, rules, house, type, &rng);
             }, GameTitle::MM6, _refreshPolicy);
         } else {
+            const mm6::ItemKindRoll kindRoll = engine->config->gameplay.FixItemGeneration.value() ? mm6::ITEM_KIND_ROLL_FIXED : mm6::ITEM_KIND_ROLL_VANILLA;
             const auto generate = [&](mm6::ShopStockBank stockBank) {
                 return [&, stockBank](mm6::ShopStockFields &stock) {
-                    mm6::generateShopBankWithTitleRng(&stock, rules, stockBank, house, type, &rng, *pItemTable);
+                    mm6::generateShopBankWithTitleRng(&stock, rules, stockBank, house, type, &rng, *pItemTable, kindRoll);
                 };
             };
             refreshed = mm6::refreshShopStockForEntry(&shops.stock, &shops.clocks, house, now, next,

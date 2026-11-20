@@ -161,9 +161,14 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   stays put when the next floor is more than 100 below it. `ProcessActorCollisionsBLV` ports that check. With it,
   chasing monsters held their ledge in every case tried on 2026-11-19 (see the plan entry).
 - **C25**. Random item generation favoured the first candidate and starved the last (`FixItemGeneration`,
-  `MMHooks.pas:3705`, one-off in the cumulative compare). State: **vanilla, deliberate**.
-  `MM6ItemGenerator.h:96` keeps `cumulative >= roll`, pinned by
-  `MM6ItemGenerator.FilteredKindDrawsOverTypeCandidatesOnly`.
+  `MMHooks.pas:3705`, one-off in the cumulative compare). State: **fixed**.
+  The hook sits after MM6.exe's `rand() % total` at 0x448A33 and adds 1 (`inc edx`), on the requested-kind path that
+  shops and `GiveItem` use. A total of 0 jumps past it and still takes the first candidate. MM6.exe's any-item roll at
+  0x448AFA has the same off-by-one, a roll of 0 takes item 1, and the patch leaves it, so chests stay vanilla. In the
+  MM6 data the last kind 22 candidate at treasure levels 4 to 6 has weight 1, the Toxic Cloud, Day of Protection and
+  Armageddon books, so vanilla magic shops 36 to 41 and the `global.evt` level 4 and 6 kind 22 rewards never give
+  them, and a roll of 0 gives a Helm, which has weight 0 there. Fixed 2026-11-19 behind `fix_item_generation`. Tests
+  `MM6ItemGenerator.KindRollGivesEveryCandidateItsWeight` and `MM6Houses.WeaponShopStockGivesEveryCandidateItsWeight`.
 - **C26**. Clubs had no sound and no delay. State: **fixed, vanilla**.
   MM7 and MM8 hooks only. Our club delay is MM6's native 100 ticks. MM6.exe's swing sound comes from a jump table
   (0x42A3AE, table 0x42A408) indexed by the item skill byte, where club and an empty or broken hand are both 0 and play
@@ -411,7 +416,8 @@ Rules for every fix in this backlog:
   Same as GrayFace. Flips `MM6TurnBased.PartyAndMonstersTakeTurns`. Done 2026-11-18 behind `fix_turn_based_turn_time`.
 - **C25**. Item roll favours the first candidate. Fix the off-by-one in the cumulative compare so every candidate gets
   its weight.
-  Same as GrayFace. Flips the two `MM6ItemGenerator` pins.
+  Same as GrayFace. Done 2026-11-19 behind `fix_item_generation`. The any-item roll has the same off-by-one and stays,
+  as in the patch.
 - **W9**. Border dialog offered while flying low. Don't offer the map-crossing dialog while flying.
   Same as GrayFace. Flips `ConfirmationChecksFlyingSeparately`. Done 2026-11-18 behind `fix_flying_border_offer`.
 - **C6**. Recovery enchant at the MM7 +50%. +10% recovery rate for MM6, the GrayFace default.

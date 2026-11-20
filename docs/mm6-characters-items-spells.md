@@ -128,6 +128,10 @@ gifts all draw from it. Random monster loot rolled at death still goes through t
 - Otherwise the base item is a weighted pick over items 1 to 399 by treasure level. A roll of exactly 0 picks item 1,
   whatever its weight, as the original does.
 - A request for a kind (20 to 43) filters by the original's type or skill codes. Other kinds are an item type plus 1.
+  MM6.exe rolls `rand() % total` over the kind's candidates and takes the first one whose cumulative weight reaches
+  it, so the first candidate gets one chance more than its weight, even at weight 0, and the last one one less. With
+  `fix_item_generation`, on by default, the roll is one higher, as the GrayFace patch has it, and every candidate gets
+  its weight. The any-item roll keeps MM6.exe's compare either way.
 - The finalizer can give a weapon a special bonus, and armor to amulets a standard or a special bonus, with chances
   and strengths by treasure level from `stditems.txt` and `spcitems.txt`. MM6's second equipment chance row is a
   separate chance, not MM7's cumulative one.

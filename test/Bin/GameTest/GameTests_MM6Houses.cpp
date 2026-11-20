@@ -539,6 +539,34 @@ GAME_TEST(MM6Houses, WeaponShopRefusesBlaster) {
     EXPECT_EQ(goldTape, tape(200, 214)); // The sword alone.
 }
 
+GAME_TEST(MM6Houses, WeaponShopStockGivesEveryCandidateItsWeight) {
+    // The roll for a shop item of a given kind started at 0, so the first candidate got one chance more than its weight
+    // and the last one one less. On a new game, the draw for the sixth weapon of New Sorpigal's weapon shop is the Dark
+    // Hammer's last number, and the fixed roll, one higher, is the Club's first. The sixth special item moves from the
+    // Dagger to the Blood Dagger the same way.
+    for (bool fix : {false, true}) {
+        SCOPED_TRACE(fmt::format("fix={}", fix));
+        test.prepareForNextTest();
+        engine->config->gameplay.FixItemGeneration.setValue(fix);
+        auto stockTape = tapes.custom([] { return shopStock(1); });
+        auto quadsTape = tapes.hudQuads();
+        startNewGameThroughInput(game);
+        test.startTaping();
+        enterThroughDoor(game, kWeaponShopDoor, 0);
+        clickHouseOption(game, localization->str(static_cast<LstrId>(539))); // Buy Items.
+
+        const int sixthWeapon = fix ? 58 : 56; // Club or Dark Hammer.
+        const int sixthSpecial = fix ? 16 : 15; // Blood Dagger or Dagger.
+        EXPECT_EQ(stockTape, tape(std::vector<int>(24, 0),
+                                  std::vector<int>{51, 15, 58, 31, 31, sixthWeapon, 0, 0, 0, 0, 0, 0, 21, 16, 15, 15, 15, sixthSpecial, 0, 0, 0, 0, 0, 0}));
+        const auto shelfCount = [&](std::string_view icon) {
+            return quadsTape.back().count([icon](const DrawnQuad &quad) { return quad.texture == icon; });
+        };
+        EXPECT_EQ(shelfCount("hammer2"), fix ? 0 : 1);
+        EXPECT_EQ(shelfCount("club1"), fix ? 2 : 1);
+    }
+}
+
 GAME_TEST(MM6Houses, GuildBuySpellbook) {
     // A New Sorpigal spell guild sells a spellbook from its generated stock for gold.
     auto goldTape = tapes.gold();
@@ -599,7 +627,7 @@ GAME_TEST(MM6Houses, WeaponShopVendorRefreshOnEntry) {
         EXPECT_EQ(goldTape, tape(200, 125));
         EXPECT_EQ(backpackTape, tape(std::vector<int>{124, 1, 15, 23, 66, 505}, std::vector<int>{124, 1, 15, 23, 66, 505, 50}));
         if (refresh) {
-            const std::vector<int> restocked = {12, 12, 15, 50, 31, 50, 0, 0, 0, 0, 0, 0, 20, 21, 17, 16, 20, 16, 0, 0, 0, 0, 0, 0};
+            const std::vector<int> restocked = {12, 12, 15, 50, 31, 51, 0, 0, 0, 0, 0, 0, 20, 21, 17, 16, 20, 16, 0, 0, 0, 0, 0, 0};
             EXPECT_EQ(stockTape, tape(std::vector<int>(24, 0), generated, afterSale, restocked));
             ASSERT_EQ(deadlineTape.size(), 3);
             EXPECT_GT(deadlineTape.back(), deadlineTape[1]);
@@ -693,7 +721,7 @@ GAME_TEST(MM6Houses, VendorRefreshStockSavesAsStock) {
     loadFromMenu(game);
     visitWeaponShop(false);
 
-    const std::vector<int> generated = {51, 15, 58, 31, 31, 56, 0, 0, 0, 0, 0, 0, 21, 16, 15, 15, 15, 15, 0, 0, 0, 0, 0, 0};
+    const std::vector<int> generated = {51, 15, 58, 31, 31, 58, 0, 0, 0, 0, 0, 0, 21, 16, 15, 15, 15, 16, 0, 0, 0, 0, 0, 0};
     const std::vector<int> restocked = {15, 50, 15, 12, 58, 51, 0, 0, 0, 0, 0, 0, 15, 20, 16, 15, 21, 16, 0, 0, 0, 0, 0, 0};
     std::vector<int> restockedAfterSale = restocked;
     restockedAfterSale[0] = 0;

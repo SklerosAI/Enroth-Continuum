@@ -15,6 +15,7 @@ namespace mm6 {
 
 class Executable;
 struct ChestTitleState;
+enum class ItemKindRoll;
 
 /**
  * Fills a cleared 28-byte record with a random item of the given kind and treasure level. Throws when it can't.
@@ -88,9 +89,10 @@ void generateShopBank(ShopStockFields *stock, const ShopStockRules &rules, ShopS
  * @param type                          Shop's house type.
  * @param rng                           Gameplay LCG and artifact flags, advanced by every draw.
  * @param table                         MM6 item table.
+ * @param kindRoll                      Roll for the requested item kinds, MM6.exe's or the GrayFace patch's.
  */
 void generateShopBankWithTitleRng(ShopStockFields *stock, const ShopStockRules &rules, ShopStockBank bank, int houseId,
-                                  HouseType type, ChestTitleState *rng, const ItemTable &table);
+                                  HouseType type, ChestTitleState *rng, const ItemTable &table, ItemKindRoll kindRoll);
 
 /**
  * Regenerates the twelve spellbook slots of a spell guild the way the original game does. A guild of one school offers

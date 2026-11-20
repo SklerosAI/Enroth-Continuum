@@ -91,13 +91,14 @@ void generateShopBank(ShopStockFields *stock, const ShopStockRules &rules, ShopS
 }
 
 void generateShopBankWithTitleRng(ShopStockFields *stock, const ShopStockRules &rules, ShopStockBank bank, int houseId,
-                                  HouseType type, ChestTitleState *rng, const ItemTable &table) {
+                                  HouseType type, ChestTitleState *rng, const ItemTable &table, ItemKindRoll kindRoll) {
     if (!rng || !rng->ready)
         throw std::runtime_error("MM6 shop stock needs a restored gameplay LCG");
     const ShopRandom random = [rng](int hi) { return static_cast<int>(nextChestRandom15(rng->lcgState) % hi); };
-    const ShopItemGenerator generator = [rng, &table](int treasureLevel, int itemKind, ItemRecord28 *record) {
+    const ShopItemGenerator generator = [rng, &table, kindRoll](int treasureLevel, int itemKind, ItemRecord28 *record) {
         const std::optional<ChestFinalizedItem> fields = generateItem(GameTitle::MM6, table, static_cast<ItemTreasureLevel>(treasureLevel),
-                                                                      static_cast<RandomItemType>(itemKind), rng->generatedArtifactFlags, rng->lcgState);
+                                                                      static_cast<RandomItemType>(itemKind), kindRoll, rng->generatedArtifactFlags,
+                                                                      rng->lcgState);
         if (!fields)
             throw std::runtime_error("MM6 shop stock request is outside the random item generator's tables");
         rng->lcgState = fields->nextRngState;

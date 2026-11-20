@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <utility>
 
+#include "Engine/Engine.h"
 #include "Engine/Evt/MM6ItemEventWrite.h"
 #include "Engine/MM6/MM6ChestTitleState.h"
 #include "Engine/MM6/MM6ItemGenerator.h"
@@ -18,7 +19,8 @@ void giveEventItem(ItemTreasureLevel treasureLevel, RandomItemType requestedKind
     const int fixed = std::to_underlying(fixedId);
     if (fixed < 0 || fixed > 580)
         throw std::runtime_error("MM6 GiveItem fixed item is outside the title's item range");
-    StagedTitleItem staged = stageTitleItem(chestTitleState(), *pItemTable, treasureLevel, requestedKind);
+    const ItemKindRoll kindRoll = engine->config->gameplay.FixItemGeneration.value() ? ITEM_KIND_ROLL_FIXED : ITEM_KIND_ROLL_VANILLA;
+    StagedTitleItem staged = stageTitleItem(chestTitleState(), *pItemTable, treasureLevel, requestedKind, kindRoll);
     if (fixedId != ITEM_NULL)
         staged.item.itemId = fixedId;
 

@@ -15,6 +15,18 @@
 
 namespace mm6 {
 
+/**
+ * How the roll for a requested item kind lands on its candidates. MM6.exe draws `rand() % total` and takes the first
+ * candidate whose cumulative weight reaches the roll, so the first candidate gets one chance more than its weight, even
+ * at weight 0, and the last one gets one chance less. The any-item roll keeps MM6.exe's compare either way, the
+ * GrayFace patch doesn't change it.
+ */
+enum class ItemKindRoll {
+    ITEM_KIND_ROLL_VANILLA,
+    ITEM_KIND_ROLL_FIXED, // The GrayFace patch adds 1 to the roll at 0x448A33, so every candidate gets its weight.
+};
+using enum ItemKindRoll;
+
 namespace detail {
 
 // The original items.txt loader stores weapon1or2 as 0 and every unlisted name as 19. The shared loader skips the
@@ -67,11 +79,12 @@ inline ItemKindFilter itemKindFilter(int requestedKind) {
  * @param table                         MM6 item table.
  * @param treasureLevel                 Treasure level 1..6.
  * @param requestedKind                 Nonzero requested kind.
+ * @param kindRoll                      MM6.exe's roll or the GrayFace patch's.
  * @param rngState                      MM6 gameplay LCG state.
  * @return                              Picked ID with the next LCG state, or `std::nullopt` without candidates.
  */
 inline std::optional<ChestFinalizedItem> pickFilteredItemId(const ItemTable &table, ItemTreasureLevel treasureLevel,
-                                                            int requestedKind, std::uint32_t rngState) {
+                                                            int requestedKind, ItemKindRoll kindRoll, std::uint32_t rngState) {
     const ItemKindFilter filter = itemKindFilter(requestedKind);
     std::vector<int> candidates;
     std::int64_t total = 0;
@@ -94,6 +107,8 @@ inline std::optional<ChestFinalizedItem> pickFilteredItemId(const ItemTable &tab
     int roll = 0;
     if (total) {
         roll = nextChestRandom15(result.nextRngState) % static_cast<int>(total);
+        if (kindRoll == ITEM_KIND_ROLL_FIXED)
+            roll++;
         result.drawsConsumed = 1;
     }
     std::int64_t cumulative = 0;
@@ -157,6 +172,55 @@ inline std::optional<std::pair<ChestItemTemplateFields, ChestItemFinalizationRul
     return std::pair{itemTemplate, rules};
 }
 
+namespace detail {
+
+inline std::optional<ChestFinalizedItem> finalizePickedItem(const ItemTable &table, ItemTreasureLevel treasureLevel,
+                                                            const ChestFinalizedItem &picked) {
+    const auto inputs = itemFinalizationInputs(table, picked.itemId);
+    if (!inputs)
+        return std::nullopt;
+    return finalizeRegularItem(treasureLevel, picked, inputs->first, inputs->second);
+}
+
+} // namespace detail
+
+/**
+ * The original MM6 random item generator for `RANDOM_ITEM_ANY`, the only kind that can roll a generated artifact.
+ * Draws from the MM6 gameplay LCG exactly as the original does, and returns the staged item fields with the next LCG
+ * state and artifact flags. Nothing is published.
+ *
+ * @param title                         Must be `GameTitle::MM6`.
+ * @param table                         MM6 item table.
+ * @param treasureLevel                 Treasure level 1..6.
+ * @param generatedArtifactFlags        Generated flags of artifacts 400..429.
+ * @param rngState                      MM6 gameplay LCG state.
+ * @return                              Generated item, or `std::nullopt` where the original would read outside its
+ *                                      tables or divide by zero.
+ */
+inline std::optional<ChestFinalizedItem> generateAnyItem(GameTitle title, const ItemTable &table,
+                                                         ItemTreasureLevel treasureLevel,
+                                                         const std::array<std::uint8_t, 30> &generatedArtifactFlags,
+                                                         std::uint32_t rngState) {
+    const int tier = std::to_underlying(treasureLevel);
+    if (title != GameTitle::MM6 || tier < 1 || tier > 6)
+        return std::nullopt;
+
+    std::array<int, 399> weights{};
+    for (int id = 1; id <= 399; ++id)
+        weights[id - 1] = table.items[static_cast<ItemId>(id)].uChanceByTreasureLvl[treasureLevel];
+    const auto base = pickChestBaseItemId(title, treasureLevel, weights, generatedArtifactFlags, rngState);
+    if (!base)
+        return std::nullopt;
+    if (base->itemId >= 400)
+        return finalizeChestAnyItem(title, treasureLevel, *base, {}, {});
+    ChestFinalizedItem picked;
+    picked.itemId = base->itemId;
+    picked.nextRngState = base->nextRngState;
+    picked.drawsConsumed = base->drawsConsumed;
+    picked.generatedArtifactFlags = base->generatedArtifactFlags;
+    return detail::finalizePickedItem(table, treasureLevel, picked);
+}
+
 /**
  * The original MM6 random item generator. Draws from the MM6 gameplay LCG exactly as the original does, and returns
  * the staged item fields with the next LCG state and artifact flags. Nothing is published.
@@ -164,8 +228,8 @@ inline std::optional<std::pair<ChestItemTemplateFields, ChestItemFinalizationRul
  * @param title                         Must be `GameTitle::MM6`.
  * @param table                         MM6 item table.
  * @param treasureLevel                 Treasure level 1..6.
- * @param requestedKind                 Any item, or a type or skill group. Only `RANDOM_ITEM_ANY` can roll a
- *                                      generated artifact.
+ * @param requestedKind                 Any item, or a type or skill group. `RANDOM_ITEM_ANY` goes to `generateAnyItem`.
+ * @param kindRoll                      Roll for a type or skill group, MM6.exe's or the GrayFace patch's.
  * @param generatedArtifactFlags        Generated flags of artifacts 400..429.
  * @param rngState                      MM6 gameplay LCG state.
  * @return                              Generated item, or `std::nullopt` where the original would read outside its
@@ -173,42 +237,24 @@ inline std::optional<std::pair<ChestItemTemplateFields, ChestItemFinalizationRul
  */
 inline std::optional<ChestFinalizedItem> generateItem(GameTitle title, const ItemTable &table,
                                                       ItemTreasureLevel treasureLevel, RandomItemType requestedKind,
+                                                      ItemKindRoll kindRoll,
                                                       const std::array<std::uint8_t, 30> &generatedArtifactFlags,
                                                       std::uint32_t rngState) {
     const int tier = std::to_underlying(treasureLevel);
     const int kind = std::to_underlying(requestedKind);
     if (title != GameTitle::MM6 || tier < 1 || tier > 6 || kind < 0 || kind > 255)
         return std::nullopt;
+    if (requestedKind == RANDOM_ITEM_ANY)
+        return generateAnyItem(title, table, treasureLevel, generatedArtifactFlags, rngState);
 
-    std::optional<ChestFinalizedItem> picked;
-    if (requestedKind == RANDOM_ITEM_ANY) {
-        std::array<int, 399> weights{};
-        for (int id = 1; id <= 399; ++id)
-            weights[id - 1] = table.items[static_cast<ItemId>(id)].uChanceByTreasureLvl[treasureLevel];
-        const auto base = pickChestBaseItemId(title, treasureLevel, weights, generatedArtifactFlags, rngState);
-        if (!base)
+    for (std::uint8_t flag : generatedArtifactFlags)
+        if (flag > 1)
             return std::nullopt;
-        if (base->itemId >= 400)
-            return finalizeChestAnyItem(title, treasureLevel, *base, {}, {});
-        picked = ChestFinalizedItem{};
-        picked->itemId = base->itemId;
-        picked->nextRngState = base->nextRngState;
-        picked->drawsConsumed = base->drawsConsumed;
-        picked->generatedArtifactFlags = base->generatedArtifactFlags;
-    } else {
-        for (std::uint8_t flag : generatedArtifactFlags)
-            if (flag > 1)
-                return std::nullopt;
-        picked = detail::pickFilteredItemId(table, treasureLevel, kind, rngState);
-        if (!picked)
-            return std::nullopt;
-        picked->generatedArtifactFlags = generatedArtifactFlags;
-    }
-
-    const auto inputs = itemFinalizationInputs(table, picked->itemId);
-    if (!inputs)
+    std::optional<ChestFinalizedItem> picked = detail::pickFilteredItemId(table, treasureLevel, kind, kindRoll, rngState);
+    if (!picked)
         return std::nullopt;
-    return finalizeRegularItem(treasureLevel, *picked, inputs->first, inputs->second);
+    picked->generatedArtifactFlags = generatedArtifactFlags;
+    return detail::finalizePickedItem(table, treasureLevel, *picked);
 }
 
 /**
@@ -235,10 +281,11 @@ struct StagedTitleItem {
  * @param table                         MM6 item table.
  * @param treasureLevel                 Treasure level 1..6.
  * @param requestedKind                 Requested item kind.
+ * @param kindRoll                      Roll for a type or skill group, MM6.exe's or the GrayFace patch's.
  * @return                              Staged item and title state. Throws if the state isn't ready or the original
  *                                      generator would fail.
  */
 StagedTitleItem stageTitleItem(const ChestTitleState &state, const ItemTable &table, ItemTreasureLevel treasureLevel,
-                               RandomItemType requestedKind);
+                               RandomItemType requestedKind, ItemKindRoll kindRoll);
 
 } // namespace mm6

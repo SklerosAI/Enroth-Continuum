@@ -1,6 +1,8 @@
 #include <array>
 #include <cstdint>
+#include <map>
 #include <memory>
+#include <set>
 #include <stdexcept>
 
 #include "Testing/Unit/UnitTest.h"
@@ -34,25 +36,50 @@ UNIT_TEST(MM6ItemGenerator, FilteredKindDrawsOverTypeCandidatesOnly) {
     auto table = weaponTable();
     const std::array<std::uint8_t, 30> flags{};
 
-    // Seed 1 draws 41, 41 % 7 = 6 lands on item 9 at cumulative 7.
-    auto item = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON, flags, 1);
+    // Seed 1 draws 41, 41 % 7 = 6, and the roll of 7 lands on item 9 at cumulative 7.
+    auto item = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON, mm6::ITEM_KIND_ROLL_FIXED, flags, 1);
     ASSERT_TRUE(item);
     EXPECT_EQ(item->itemId, 9);
     EXPECT_EQ(item->flags, 1u);
     EXPECT_EQ(item->drawsConsumed, 1);
     EXPECT_EQ(item->nextRngState, 2745024u);
 
-    // Seed 100 draws 365, 365 % 7 = 1 lands on item 3 at cumulative 2.
-    item = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON, flags, 100);
+    // Seed 100 draws 365, 365 % 7 = 1, and the roll of 2 lands on item 3 at cumulative 2.
+    item = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON, mm6::ITEM_KIND_ROLL_FIXED, flags, 100);
     ASSERT_TRUE(item);
     EXPECT_EQ(item->itemId, 3);
     EXPECT_EQ(item->nextRngState, 23932311u);
 
-    // Seed 12 draws 77, a zero remainder that picks the zero-weight first candidate.
-    item = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON, flags, 12);
+    // Seed 12 draws 77, 77 % 7 = 0, and the roll of 1 passes the zero-weight first candidate for item 3.
+    item = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON, mm6::ITEM_KIND_ROLL_FIXED, flags, 12);
     ASSERT_TRUE(item);
-    EXPECT_EQ(item->itemId, 2);
+    EXPECT_EQ(item->itemId, 3);
     EXPECT_EQ(item->nextRngState, 5099167u);
+}
+
+UNIT_TEST(MM6ItemGenerator, KindRollGivesEveryCandidateItsWeight) {
+    // MM6.exe's roll gave the first candidate of a requested kind one chance more than its weight, even at weight 0,
+    // and the last one one chance less. Over every remainder of the total, items 2, 3 and 9 should come up 0, 2 and 5
+    // times, their weights.
+    auto table = weaponTable();
+    const std::array<std::uint8_t, 30> flags{};
+    for (mm6::ItemKindRoll kindRoll : {mm6::ITEM_KIND_ROLL_VANILLA, mm6::ITEM_KIND_ROLL_FIXED}) {
+        std::map<int, int> picks;
+        std::set<std::uint32_t> remainders;
+        for (std::uint32_t seed = 0; remainders.size() < 7; ++seed) {
+            std::uint32_t state = seed;
+            if (!remainders.insert(mm6::nextChestRandom15(state) % 7).second)
+                continue;
+            auto item = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON, kindRoll, flags, seed);
+            ASSERT_TRUE(item);
+            picks[item->itemId]++;
+        }
+        if (kindRoll == mm6::ITEM_KIND_ROLL_FIXED) {
+            EXPECT_EQ(picks, (std::map<int, int>{{3, 2}, {9, 5}}));
+        } else {
+            EXPECT_EQ(picks, (std::map<int, int>{{2, 1}, {3, 2}, {9, 4}}));
+        }
+    }
 }
 
 UNIT_TEST(MM6ItemGenerator, SkillKindsUseOriginalSkillCodes) {
@@ -60,18 +87,18 @@ UNIT_TEST(MM6ItemGenerator, SkillKindsUseOriginalSkillCodes) {
     auto table = weaponTable();
     const std::array<std::uint8_t, 30> flags{};
 
-    auto club = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_CLUB, flags, 0);
+    auto club = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_CLUB, mm6::ITEM_KIND_ROLL_FIXED, flags, 0);
     ASSERT_TRUE(club);
     EXPECT_EQ(club->itemId, 20);
     EXPECT_EQ(club->drawsConsumed, 1);
     EXPECT_EQ(club->nextRngState, 2531011u);
 
-    auto staff = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_STAFF, flags, 0);
+    auto staff = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_STAFF, mm6::ITEM_KIND_ROLL_FIXED, flags, 0);
     ASSERT_TRUE(staff);
     EXPECT_EQ(staff->itemId, 21);
 
     // Kind 23 is sword code 2, over items 2, 3 and 7 with weights 0, 2 and 4. Seed 1 draws 41, 41 % 6 = 5.
-    auto sword = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_SWORD, flags, 1);
+    auto sword = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_SWORD, mm6::ITEM_KIND_ROLL_FIXED, flags, 1);
     ASSERT_TRUE(sword);
     EXPECT_EQ(sword->itemId, 7);
     EXPECT_EQ(sword->flags, 0u);
@@ -82,16 +109,16 @@ UNIT_TEST(MM6ItemGenerator, ZeroWeightKindPicksFirstCandidateWithoutDrawing) {
     // Kind 43 is the original spell scroll type 15. All its candidates have zero weight, so nothing is drawn.
     auto table = weaponTable();
     const std::array<std::uint8_t, 30> flags{};
-    auto scroll = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_SPELL_SCROLL, flags, 7);
+    auto scroll = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_SPELL_SCROLL, mm6::ITEM_KIND_ROLL_FIXED, flags, 7);
     ASSERT_TRUE(scroll);
     EXPECT_EQ(scroll->itemId, 250);
     EXPECT_EQ(scroll->drawsConsumed, 0);
     EXPECT_EQ(scroll->nextRngState, 7u);
 
     // Kind 19 asks for type 18, gold, which has no candidates. The original would continue with item 0.
-    EXPECT_FALSE(mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, static_cast<RandomItemType>(19), flags, 7));
-    EXPECT_FALSE(mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_INVALID, RANDOM_ITEM_WEAPON, flags, 7));
-    EXPECT_FALSE(mm6::generateItem(GameTitle::MM7, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON, flags, 7));
+    EXPECT_FALSE(mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, static_cast<RandomItemType>(19), mm6::ITEM_KIND_ROLL_FIXED, flags, 7));
+    EXPECT_FALSE(mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_INVALID, RANDOM_ITEM_WEAPON, mm6::ITEM_KIND_ROLL_FIXED, flags, 7));
+    EXPECT_FALSE(mm6::generateItem(GameTitle::MM7, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON, mm6::ITEM_KIND_ROLL_FIXED, flags, 7));
 }
 
 UNIT_TEST(MM6ItemGenerator, WeaponSpecialScansOnlyFiftyEightRows) {
@@ -111,7 +138,7 @@ UNIT_TEST(MM6ItemGenerator, WeaponSpecialScansOnlyFiftyEightRows) {
     const std::array<std::uint8_t, 30> flags{};
 
     // Seed 1 draws 41 for item 9, 18467 % 100 = 67 for the chance and 6334 % 5 = 4 for special 5.
-    auto item = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON, flags, 1);
+    auto item = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON, mm6::ITEM_KIND_ROLL_FIXED, flags, 1);
     ASSERT_TRUE(item);
     EXPECT_EQ(item->itemId, 9);
     EXPECT_EQ(item->specialEnchantmentId, 5);
@@ -121,7 +148,7 @@ UNIT_TEST(MM6ItemGenerator, WeaponSpecialScansOnlyFiftyEightRows) {
     // With only row 59 eligible the original would divide by zero.
     special(2, 3, 3);
     special(5, 3, 2);
-    EXPECT_FALSE(mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON, flags, 1));
+    EXPECT_FALSE(mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON, mm6::ITEM_KIND_ROLL_FIXED, flags, 1));
 }
 
 UNIT_TEST(MM6ItemGenerator, OnlyAnyKindRollsGeneratedArtifacts) {
@@ -133,7 +160,7 @@ UNIT_TEST(MM6ItemGenerator, OnlyAnyKindRollsGeneratedArtifacts) {
         table->standardEnchantmentRangeByTreasureLevel[level] = Segment(1, 1);
     std::array<std::uint8_t, 30> flags{};
 
-    auto artifact = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_6, RANDOM_ITEM_ANY, flags, 17);
+    auto artifact = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_6, RANDOM_ITEM_ANY, mm6::ITEM_KIND_ROLL_FIXED, flags, 17);
     ASSERT_TRUE(artifact);
     EXPECT_EQ(artifact->itemId, 404);
     EXPECT_EQ(artifact->generatedArtifactFlags[4], 1);
@@ -141,7 +168,7 @@ UNIT_TEST(MM6ItemGenerator, OnlyAnyKindRollsGeneratedArtifacts) {
     EXPECT_EQ(artifact->nextRngState, 1743419155u);
 
     // The filtered path makes one draw over item 5 and leaves the artifact flags alone.
-    auto weapon = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_6, RANDOM_ITEM_WEAPON, flags, 17);
+    auto weapon = mm6::generateItem(GameTitle::MM6, *table, ITEM_TREASURE_LEVEL_6, RANDOM_ITEM_WEAPON, mm6::ITEM_KIND_ROLL_FIXED, flags, 17);
     ASSERT_TRUE(weapon);
     EXPECT_EQ(weapon->itemId, 5);
     EXPECT_EQ(weapon->drawsConsumed, 1);
@@ -157,15 +184,15 @@ UNIT_TEST(MM6ItemGenerator, TitleStagingMapsFieldsAndKeepsStateUntilPublished) {
     row.chanceByItemType[ITEM_TYPE_SINGLE_HANDED] = 2;
 
     mm6::ChestTitleState state;
-    EXPECT_THROW((void) mm6::stageTitleItem(state, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON), std::runtime_error);
+    EXPECT_THROW((void) mm6::stageTitleItem(state, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON, mm6::ITEM_KIND_ROLL_FIXED), std::runtime_error);
     ASSERT_TRUE(mm6::restoreChestTitleState(GameTitle::MM6, &state, 1, {}));
-    auto staged = mm6::stageTitleItem(state, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON);
+    auto staged = mm6::stageTitleItem(state, *table, ITEM_TREASURE_LEVEL_4, RANDOM_ITEM_WEAPON, mm6::ITEM_KIND_ROLL_FIXED);
     EXPECT_EQ(staged.item.itemId, static_cast<ItemId>(9));
     EXPECT_EQ(staged.item.specialEnchantment, static_cast<ItemEnchantment>(5));
     EXPECT_EQ(staged.item.flags, ITEM_IDENTIFIED);
     EXPECT_EQ(staged.nextState.lcgState, 415139642u);
     EXPECT_EQ(state.lcgState, 1u);
-    EXPECT_THROW((void) mm6::stageTitleItem(state, *table, ITEM_TREASURE_LEVEL_4, static_cast<RandomItemType>(19)),
+    EXPECT_THROW((void) mm6::stageTitleItem(state, *table, ITEM_TREASURE_LEVEL_4, static_cast<RandomItemType>(19), mm6::ITEM_KIND_ROLL_FIXED),
                  std::runtime_error);
 
     mm6::ChestFinalizedItem fields;

@@ -74,7 +74,7 @@ inline std::optional<ChestFinalizedItem> stageChestAnyFromItemTable(
     GameTitle title, ItemTreasureLevel tier, const ItemTable &table,
     const std::array<std::uint8_t, 30> &generatedArtifactFlags,
     std::uint32_t rngState) {
-    return generateItem(title, table, tier, RANDOM_ITEM_ANY, generatedArtifactFlags, rngState);
+    return generateAnyItem(title, table, tier, generatedArtifactFlags, rngState);
 }
 
 }  // namespace mm6

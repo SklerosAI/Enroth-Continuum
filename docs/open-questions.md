@@ -8,8 +8,8 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 
 ## MM6: campaign and gates
 
-- **Chain C8 and C9.** C8 (the NPC 12 release through houses 168, 553 and 554) and a C9 finale chapter are not
-  written. `test/Bin/GameTest/MM6CampaignChain.cpp`.
+- **Chain C9.** C8 releases Archibald and ends with the Ritual, blasters and the Blaster skill. A C9 finale chapter
+  that loads `save008.ec6` and plays the hive is not written. `test/Bin/GameTest/MM6CampaignChain.cpp`.
 - **Owner sessions.** The working gate needs visible owner play beyond New Sorpigal: travel, a later dungeon, chain
   checkpoints and the ending.
 - **Research-folder tests.** `mm6::PrivateMapSource`, `saveNewGameMM6ScopedForTest` and the `GameTests_MM6Save` cases

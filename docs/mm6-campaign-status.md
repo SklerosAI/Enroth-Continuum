@@ -72,7 +72,7 @@ The last map sweep on record loaded all 67 MM6 maps and ran every phase on all 2
 | M1 | Production New Game, Save, fresh-process Load | Done (first-map gate) |
 | M2 | Live travel, Save on any map, fresh-process Load restoring chests, dead monsters and doors on active and parked maps | Done headless |
 | M3 | Party death and respawn, in-game Load, autosave and quick save | Done headless |
-| M4 | Main-quest chain from New Game to the finale with fresh-process checkpoints | C0 to C6 merged, C7 ready, C8 and C9 open |
+| M4 | Main-quest chain from New Game to the finale with fresh-process checkpoints | C0 to C7 merged, C8 ready, C9 open |
 | M5 | Owner sessions: the first hours, travel and a dungeon, chain checkpoints and the ending | Partial, New Sorpigal playtests only |
 | M6 | The Atlas installs a sibling MM6 helper with its own profile, MM7 untouched | Helper ships in `ECv0.1.0` on `Profiles/MM6-Atlas` |
 | M7 | MM7 stays working after every shared-core merge | Continuous |
@@ -95,7 +95,7 @@ in front of doors, crystals and exits.
 | C5 | Oracle admission and the t6 crystal | Merged |
 | C6 | The three castle crystals (Alamos, Darkmoor, Kriegspire) and the Oracle hand-in | Merged |
 | C7 | The Tomb of VARN and the Control Cube | Merged-ready, passes on the real C6 save, see below |
-| C8 | The NPC 12 release, through the room chain between houses 168, 553 and 554 | Not written |
+| C8 | The Control Center's blasters and the NPC 12 release, through the room chain between houses 168, 553 and 554 | Passes on the real C7 save, see below |
 | C9 | The hive finale | Not written as a chapter. `MM6Finale.*` covers the hive itself. |
 
 The chapter helpers live in [MM6CampaignChain.h](../test/Bin/GameTest/MM6CampaignChain.h). Private event traces for
@@ -141,6 +141,40 @@ doesn't allow for them, in two ways seen in runs on the real C6 save:
   also blocks special attacks on all three monster hit paths.
 
 The guardians' actor indices differ between runs that reach the tomb by different routes, so C7 doesn't name them.
+
+### C8 route
+
+C8 passes on the real C7 save, run through C0 to C7 in fresh processes, with no fixture beyond C1's party strength. It
+also takes the Control Center's blasters, which no earlier chapter took and the hive's reactor needs, as it takes no
+physical damage.
+
+- Starts on `outc2`. Down to the Oracle through the High Council (event 49), her screen still raised from C5, and
+  through her way down to the Control Center (house 170, open since C7's Kreegan topic set bit 169).
+- The terminal (event 61) teaches every character Blaster at 1 and sets bit 276. Storage containers 2 (event 31) and 1
+  (event 30) hold two blasters and a blaster rifle, and one blaster. Back up through event 70 and out of the Oracle
+  through event 50.
+- A party that had been to the Control Center couldn't save. The PRKM and TIMR save sections refused `sci-fi.blv`, the
+  one MM6 map with a hyphen. Fixed, with `MM6ControlCenter.SavesInTheControlCenter`.
+- On `outd3`, Castle Ironfist's door (event 43) leads to the throne room, house 154. Nicolai (NPC 13), topic 26 The
+  Third Eye: bit 96, his topic moves to 27 and the Oracle's second topic clears.
+- The well by the castle (event 231) is a water face inside a rim. Space from beside the rim runs it, a mouse click
+  needs the party within 200 units. With bit 96 it gives the Third Eye 446 and sets bits 305 and 196.
+- Nicolai's topic 27 takes the Eye, gives the active character Tanir's Bell 461 and sets bit 197. The King's Library
+  door (event 42) opens house 168, which with the bell carried plays `archie` once and becomes 553. Archibald (NPC 12),
+  topic 30: the Ritual of the Void 544, bits 177 and 198 set, 197 and 235 cleared, 50,000 experience each, and he
+  leaves, which empties the room to 554. The library door leads to 554 from then on.
+- Items a script adds come in hand, and the chapter puts each into the first character's backpack.
+- Reputation falls from 1600 to 672. The release's Subtract 1000 keeps only its low byte, 232, as MM6.exe does, and runs
+  once for each character.
+- Nicolai's circus quest (bits 90 and 95) is not on the way. His Third Eye topic sits in his second slot whatever his
+  first holds.
+
+C8 ends on `outd3` with the Ritual, the bell, three blasters, a blaster rifle and Blaster 1 on every character, the
+state the hive's reactor and its exit obelisk need in C9. The blasters are in the first character's backpack, not
+equipped.
+
+With nine saves the chain's save helper scrolled the Save menu one slot short of the top and saved over
+`save000.ec6`. It now clicks up until the new slot is selected, and checks that before it saves.
 
 ## GrayFace fix progress
 

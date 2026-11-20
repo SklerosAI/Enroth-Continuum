@@ -78,6 +78,7 @@ enum class EvtOpcode : uint8_t {
     EVENT_SpecialJump = 66, // MM8-only.
     EVENT_IsTotalBountyHuntingAwardInRange = 67, // MM8-only.
     EVENT_IsNPCInParty = 68, // MM8-only.
+    EVENT_RefundChestArtifacts = 69, // GrayFace patch, MM6 only.
 };
 using enum EvtOpcode;
 MM_DECLARE_SERIALIZATION_FUNCTIONS(EvtOpcode)

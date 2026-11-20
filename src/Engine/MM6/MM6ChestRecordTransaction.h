@@ -62,6 +62,82 @@ inline void writeChest32(std::span<std::uint8_t> bytes, std::size_t offset, std:
         bytes[offset + i] = static_cast<std::uint8_t>(bits >> (i * 8));
 }
 
+/**
+ * Condition bit of an artifact that a chest's generation put on the found list, kept until the chest is first opened
+ * with the artifact in its grid. It is the GrayFace patch's `_ItemCond_ChestArtifact`.
+ */
+inline constexpr std::uint32_t CHEST_ARTIFACT_CONDITION = 0x400;
+
+/**
+ * @param item                          28-byte item record a chest generation just wrote.
+ * @param foundBefore                   Found artifacts before the generation.
+ */
+inline void markGeneratedChestArtifact(std::span<std::uint8_t> item, const std::array<std::uint8_t, 30> &foundBefore) {
+    const int id = readChest32(item, 0);
+    if (id >= 400 && id <= 429 && !foundBefore[id - 400])
+        writeChest32(item, 20, readChest32(item, 20) | std::bit_cast<std::int32_t>(CHEST_ARTIFACT_CONDITION));
+}
+
+/**
+ * Clears `CHEST_ARTIFACT_CONDITION` from every item that has a cell in the chest's grid.
+ *
+ * @param[in,out] record                Chest record.
+ */
+inline void unmarkPlacedChestArtifacts(std::span<std::uint8_t, CHEST_WIRE_SIZE> record) {
+    for (std::size_t cell = 0; cell < CHEST_GRID_CELLS; ++cell) {
+        const int value = static_cast<std::int16_t>(readChest16(record, CHEST_GRID_OFFSET + cell * 2));
+        if (value <= 0 || value > 140)
+            continue;
+        const auto item = record.subspan(4 + (value - 1) * 28, 28);
+        writeChest32(item, 20, readChest32(item, 20) & ~std::bit_cast<std::int32_t>(CHEST_ARTIFACT_CONDITION));
+    }
+}
+
+/**
+ * Takes every artifact the chest's generation found, and that no one saw since, off the found list, and clears its
+ * `CHEST_ARTIFACT_CONDITION`. The artifacts stay in the chest.
+ *
+ * @param[in,out] record                Chest record.
+ * @param[in,out] found                 Found artifacts.
+ * @return                              Whether any item had the condition.
+ */
+inline bool refundChestRecordArtifacts(std::span<std::uint8_t, CHEST_WIRE_SIZE> record, std::array<std::uint8_t, 30> *found) {
+    bool refunded = false;
+    for (int slot = 0; slot < 140; ++slot) {
+        const auto item = record.subspan(4 + slot * 28, 28);
+        const auto condition = std::bit_cast<std::uint32_t>(readChest32(item, 20));
+        if (!(condition & CHEST_ARTIFACT_CONDITION))
+            continue;
+        writeChest32(item, 20, std::bit_cast<std::int32_t>(condition & ~CHEST_ARTIFACT_CONDITION));
+        const int id = readChest32(item, 0);
+        if (id >= 400 && id <= 429)
+            (*found)[id - 400] = 0;
+        refunded = true;
+    }
+    return refunded;
+}
+
+/**
+ * Takes the artifacts that a map's chests generated, and that no one saw, off the found list. A respawn throws those
+ * chests away.
+ *
+ * @param chestSection                  Chest part of the map's delta before the respawn, a 32-bit count, then the
+ *                                      records.
+ * @param[in,out] found                 Found artifacts.
+ */
+inline void refundRespawnedChestArtifacts(std::span<const std::uint8_t> chestSection, std::array<std::uint8_t, 30> *found) {
+    if (chestSection.size() < 4)
+        return;
+    const auto count = static_cast<std::uint32_t>(readChest32(chestSection, 0));
+    if ((chestSection.size() - 4) / CHEST_WIRE_SIZE != count || (chestSection.size() - 4) % CHEST_WIRE_SIZE != 0)
+        return;
+    for (std::size_t index = 0; index < count; ++index) {
+        ChestRecord record;
+        std::copy_n(chestSection.begin() + 4 + index * CHEST_WIRE_SIZE, CHEST_WIRE_SIZE, record.begin());
+        refundChestRecordArtifacts(record, found);
+    }
+}
+
 // Stages all twenty original-size chest records, preserving fixed-item bytes
 // and every opaque byte. A generated target must be a blank or marker slot;
 // this is true of all retained baselines, but changed-save semantics remain
@@ -150,6 +226,7 @@ inline std::optional<ChestRecordGenerationResult> stageChestRecordGeneration(
         if (selection.source == ChestRewardSource::DirectArtifact) {
             if (selection.itemId != picked.directId)
                 return std::nullopt;
+            markGeneratedChestArtifact(item, input.generatedArtifactFlags);
             continue;
         }
         if (selection.itemId != picked.item.itemId)
@@ -159,6 +236,7 @@ inline std::optional<ChestRecordGenerationResult> stageChestRecordGeneration(
         writeChest32(item, 12, picked.item.specialEnchantmentId);
         writeChest32(item, 16, picked.item.numCharges);
         writeChest32(item, 20, std::bit_cast<std::int32_t>(picked.item.flags));
+        markGeneratedChestArtifact(item, input.generatedArtifactFlags);
     }
     if (nextPick != picks.size())
         return std::nullopt;

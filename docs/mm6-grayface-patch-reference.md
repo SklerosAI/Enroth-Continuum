@@ -44,8 +44,9 @@ Three layers, and only the first two matter to a reimplementation:
    already has and marks the rest not applicable.
 
 The patch also adds one event opcode, `0x45` (69) `RefundChestArtifacts`, used by the patched `d18`, `outb2`, `hive` and
-`pyramid` scripts. Our `EvtOpcode` enum stops at 68, so an overlay of the patched scripts needs that opcode handled
-before it can load.
+`pyramid` scripts. Our MM6 decoder accepts it since W12, see [MM6 events](mm6-events.md). No shipped MM6 script uses
+it: all 83 `.evt` entries of the GOG `icons.lod` were decoded, and the one apparent opcode 69 is in `OUT.EVT`, an
+orphan in another record layout that no map loads.
 
 ## Engine bug fixes, cross-referenced
 
@@ -278,11 +279,21 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   `MM6MapTransition.cpp:139` restores only that map's items.
 - **W12**. On respawn, artifacts generated in never-opened chests must be cleared from the found list, and the
   exclusive-artifact generator was broken and didn't mark artifacts found (`FixUnmarkedArtifacts=1`,
-  `MMHooks.pas:1370-1560`, plus the `RefundChestArtifacts` opcode in scripts). State: **half: clearing is vanilla,
-  picker is fixed**.
-  Respawn at `Outdoor.cpp:511` never touches `generatedArtifactFlags`, nothing clears them. The live direct-artifact
-  picker is our own safe policy (`MM6ChestDirectArtifactPicker.h`), marks generated and caps at 13, with the broken
-  original kept detached for tests.
+  `MMHooks.pas:1370-1560`, plus the `RefundChestArtifacts` opcode in scripts). State: **fixed**.
+  The patch's mechanism, read in `MMHooks.pas`: while a map's chests generate, an artifact that the generation put on
+  the found list gets condition bit `0x400` (`_ItemCond_ChestArtifact`) in its item record. The first opening clears
+  the bit from every item it places in the grid. When a map the party visited before refills, every item of its old
+  chests that still has the bit comes off the found list. Opcode 69 does the same for one chest of the loaded map. The
+  refill hooks sit at MM6.exe `0x48BEF2` (indoor) and `0x46DADD` (outdoor), on the path that runs when the refill
+  interval has passed. The generator hook at `0x448AE7` replaces MM6.exe's `mov [ebp+0x14], 0` after the found flag
+  is set.
+  Ours: `stageChestRecordGeneration` marks, `stageChestFirstOpenInteraction` unmarks, the MM6 branches of
+  `OutdoorLocation::Load` and `IndoorLocation::Load` refund a timed respawn behind `gameplay.fix_unopened_chest_artifacts`,
+  and opcode 69 runs `refundActiveChestArtifacts` (`MM6ChestArtifactRefund.h`). The bit rides in the chest item record
+  of the map delta, as in the patch's saves. The live direct-artifact picker is our own safe policy
+  (`MM6ChestDirectArtifactPicker.h`), marks generated and caps at 13, with the broken original kept detached for
+  tests. Game tests `MM6ChestArtifact.UnopenedChestArtifactComesBackAfterRespawn` and
+  `MM6ChestArtifact.RefundCommandReturnsAnUnopenedChestArtifact`.
 - **W13**. Items that didn't fit a chest reappear when space is freed (`FixChests=0`, off), most valuable items placed
   first (`FixChestsByReorder=1`), compact stacking (`FixChestsByCompacting=1`), vertical stacking
   (`PlaceChestItemsVertically=1`). State: **vanilla, put-in absent**.
@@ -416,7 +427,9 @@ Rules for every fix in this backlog:
   applies.
 - **W12**. Found-artifact flags never cleared on respawn. On respawn, clear the found flag for every artifact generated
   in a chest that was never opened, and implement opcode 69 `RefundChestArtifacts`.
-  Same as GrayFace. Opcode 69 also unblocks the patched scripts.
+  Same as GrayFace. Opcode 69 also unblocks the patched scripts. Done 2026-11-20 behind `fix_unopened_chest_artifacts`
+  for the respawn. GrayFace has no option for it, its `FixUnmarkedArtifacts` covers the direct picker, which we
+  already fix by design. Opcode 69 runs without a flag.
 - **W13**. Chest overflow items hidden forever. At generation, place items most valuable first and compact them, then
   place leftovers when the chest is reopened with space.
   GrayFace ships reorder and compacting on and leftover placement off. We turn all three on, because a hidden item is
@@ -479,7 +492,7 @@ don't repeat on the paper doll in turn-based mode, and a right-click scroll asks
 **Data fixes.** Better than GrayFace's override archives, in two parts:
 - The 34 script fixes become an engine-side patch table. Each entry names the original file's hash and the record-level
   edit from the diffs in the decoded folder, so the engine applies it only to the exact GOG 1.2 file and nothing derived
-  from the game's data is shipped. Opcode 69 from W12 is a prerequisite. The three text tables are typo fixes and go in
+  from the game's data is shipped. Opcode 69 from W12 is in. The three text tables are typo fixes and go in
   the same table.
 - The 21 map geometry fixes can't be expressed as small edits. The engine loads `data/*.games.lod` override archives
   from the owner's data folder, the GrayFace custom-archive convention, so the owner can drop in the archive from the

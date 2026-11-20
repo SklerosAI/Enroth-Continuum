@@ -11,9 +11,13 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Evt/EvtInterpreter.h"
+#include "Engine/Evt/EvtProgram.h"
 #include "Engine/Graphics/Renderer/NullRenderer.h"
+#include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/Outdoor.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/MM6/MM6ChestTitleState.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/CombinedSkillValue.h"
 #include "Engine/Objects/SpriteEnumFunctions.h"
@@ -27,6 +31,7 @@
 #include "Engine/Timer.h"
 
 #include "GUI/UI/UIChest.h"
+#include "GUI/UI/UIRest.h"
 
 #include "Utility/Memory/Blob.h"
 
@@ -94,6 +99,58 @@ static int trapSprites() {
     return std::ranges::count_if(pSpriteObjects, [](const SpriteObject &object) {
         return object.uObjectDescID && object.spriteId >= SPRITE_TRAP_FIRE && object.spriteId <= SPRITE_TRAP_BODY;
     });
+}
+
+static std::vector<int> chestArtifacts(int chestId) {
+    std::vector<int> result;
+    for (InventoryEntry entry : vChests[chestId].inventory.entries())
+        if (std::to_underlying(entry->itemId) >= 400 && std::to_underlying(entry->itemId) <= 429)
+            result.push_back(std::to_underlying(entry->itemId));
+    return result;
+}
+
+static void restDays(EngineController &game, int days) {
+    // Rests and heals once a day in the rest screen, then waits there for the next dawn, that many days.
+    for (int day = 0; day < days; day++) {
+        for (std::string_view button : {"Rest_RestAndHeal", "Rest_WaitTillDawn"}) {
+            game.pressAndReleaseKey(PlatformKey::KEY_R);
+            game.tick();
+            game.pressGuiButton(button);
+            game.tick();
+            while (currentRestType != REST_NONE)
+                game.tick(); // The hours pass.
+            if (current_screen_type == SCREEN_REST) {
+                game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+                game.tick();
+            }
+        }
+    }
+}
+
+static constexpr std::uint32_t hiveArtifactLuck = 4; // Chest luck that rolls artifact 415 into the hive's chest 4, and no other artifact.
+
+static void reopenHiveChest4AfterRespawn(EngineController &game) {
+    // The party leaves the hive, rests a week in the Oracle for the hive to refill, comes back with the same chest luck and
+    // opens chest 4.
+    game.teleportTo(pMapTable->GetMapInfo("oracle.blv"), Vec3f(-1408, 900, -512), 90); // No random encounters here.
+    pParty->SetFood(14); // Seven rests at two food each, a new party has seven.
+    restDays(game, 7);
+    mm6::chestTitleState().lcgState = hiveArtifactLuck;
+    game.teleportTo(pMapTable->GetMapInfo("hive.blv"), Vec3f(-3000, 4182, -1777), 0, -20); // West of chest 4, looking down at it.
+    game.pointMouseAtFace(2960);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+}
+
+static EvtInstruction parsedMM6Instruction(EvtOpcode opcode, std::string payload) {
+    std::string record;
+    record.push_back(static_cast<char>(4 + payload.size()));
+    record.push_back(1); // Event ID, little endian.
+    record.push_back(0);
+    record.push_back(0); // Step.
+    record.push_back(static_cast<char>(opcode));
+    record += payload;
+    return EvtProgram::load(Blob::fromString(record), GameTitle::MM6).instruction(1, 0);
 }
 
 // This is intentionally separate from GameTests_MM6.cpp, which owns the
@@ -298,6 +355,57 @@ GAME_TEST(MM6ChestTrap, SprungTrapStaysGoneAfterReturn) {
     EXPECT_EQ(chestTape[1]->front(), std::to_underlying(CHEST_ITEMS_PLACED));
     EXPECT_EQ(chestTape[2], std::nullopt);
     EXPECT_EQ(chestTape[3], chestTape[1]);
+}
+
+GAME_TEST(MM6ChestArtifact, UnopenedChestArtifactComesBackAfterRespawn) {
+    // An artifact generated in a chest the party never opened was lost for good once the map respawned. It stayed on the
+    // found list, so the respawned chest rolled something else with the same luck, and no chest could ever roll it again.
+    startNewGameThroughInput(game);
+    const MapId hive = pMapTable->GetMapInfo("hive.blv");
+    const MapId oute3 = pMapTable->GetMapInfo("oute3.odm");
+    const MapId oracle = pMapTable->GetMapInfo("oracle.blv");
+    auto mapTape = tapes.map();
+    auto screenTape = tapes.screen();
+    auto respawnTape = tapes.custom([=] { return engine->_currentLoadedMapId == hive ? std::optional(pIndoor->dlv.respawnCount) : std::nullopt; });
+    auto artifactTape = tapes.custom([=] { return engine->_currentLoadedMapId == hive ? std::optional(chestArtifacts(4)) : std::nullopt; });
+    auto chestTape = tapes.custom([=] { return engine->_currentLoadedMapId == hive ? std::optional(chestContents(4)) : std::nullopt; });
+    test.startTaping();
+
+    mm6::chestTitleState().lcgState = hiveArtifactLuck;
+    game.teleportTo(hive, Vec3f(435, 3707, 1), 90);
+    reopenHiveChest4AfterRespawn(game);
+
+    EXPECT_EQ(mapTape, tape(oute3, hive, oracle, hive));
+    EXPECT_EQ(screenTape.back(), SCREEN_CHEST);
+    EXPECT_EQ(respawnTape, tape(std::optional<int>(), 0, std::nullopt, 1));
+    // Chest 4 holds no artifact while the hive loads, before its chests are generated.
+    EXPECT_EQ(artifactTape, tape(std::optional<std::vector<int>>(), std::vector<int>(), std::vector{415}, std::nullopt, std::vector<int>(), std::vector{415}));
+    ASSERT_TRUE(chestTape.back());
+    EXPECT_EQ(chestTape.back()->front(), std::to_underlying(CHEST_ITEMS_PLACED));
+    EXPECT_TRUE(std::ranges::contains(*chestTape.back(), 415));
+}
+
+GAME_TEST(MM6ChestArtifact, RefundCommandReturnsAnUnopenedChestArtifact) {
+    // GrayFace's patched MM6 scripts run event command 69 for a chest the party can't reach, so the artifacts it rolled
+    // can be found elsewhere. The command alone brings the artifact back in the respawned chest.
+    startNewGameThroughInput(game);
+    engine->config->gameplay.FixUnopenedChestArtifacts.setValue(false);
+    const MapId hive = pMapTable->GetMapInfo("hive.blv");
+    auto artifactTape = tapes.custom([=] { return engine->_currentLoadedMapId == hive ? std::optional(chestArtifacts(4)) : std::nullopt; });
+    auto chestTape = tapes.custom([=] { return engine->_currentLoadedMapId == hive ? std::optional(chestContents(4)) : std::nullopt; });
+    auto respawnTape = tapes.custom([=] { return engine->_currentLoadedMapId == hive ? std::optional(pIndoor->dlv.respawnCount) : std::nullopt; });
+    test.startTaping();
+
+    mm6::chestTitleState().lcgState = hiveArtifactLuck;
+    game.teleportTo(hive, Vec3f(435, 3707, 1), 90);
+    (void) EvtInterpreter().executeInstruction(parsedMM6Instruction(EVENT_RefundChestArtifacts, std::string("\x04", 1))); // Chest 4.
+    reopenHiveChest4AfterRespawn(game);
+
+    EXPECT_EQ(respawnTape, tape(std::optional<int>(), 0, std::nullopt, 1));
+    EXPECT_EQ(artifactTape, tape(std::optional<std::vector<int>>(), std::vector<int>(), std::vector{415}, std::nullopt, std::vector<int>(), std::vector{415}));
+    ASSERT_TRUE(chestTape.back());
+    EXPECT_EQ(chestTape.back()->front(), std::to_underlying(CHEST_ITEMS_PLACED));
+    EXPECT_TRUE(std::ranges::contains(*chestTape.back(), 415));
 }
 
 GAME_TEST(MM6ChestScreen, ExitButton) {

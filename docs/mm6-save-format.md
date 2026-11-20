@@ -146,8 +146,10 @@ without it still loads, and its maps then start with no recorded firings. It onl
 header (respawn count and last respawn day), the revealed-map bits, counted actor records of 548 bytes, counted ground
 item records of 100 bytes, counted chest records of 4,204 bytes (header, 140 item records of 28 bytes, 140 grid
 cells), indoors the door block, then 200 persistent event bytes and a 56-byte visit block (last visit time, sky name,
-fog). MM6 deltas have no per-face attribute or decoration flag section, unlike MM7. The delta codecs live in
-`MM6OutdoorWire.cpp` and the indoor world plan. [Travel and maps](mm6-travel-and-maps.md) owns the details.
+fog). MM6 deltas have no per-face attribute or decoration flag section, unlike MM7. A chest item record can carry the
+GrayFace chest artifact condition `0x400`, see
+[Travel and maps](mm6-travel-and-maps.md#artifacts-in-unopened-chests). The delta codecs live in `MM6OutdoorWire.cpp`
+and the indoor world plan. [Travel and maps](mm6-travel-and-maps.md) owns the details.
 
 ## What is and isn't saved
 

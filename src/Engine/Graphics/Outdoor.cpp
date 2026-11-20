@@ -11,6 +11,8 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/MM6/MM6ChestRecordTransaction.h"
+#include "Engine/MM6/MM6ChestTitleState.h"
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6MapTransition.h"
 #include "Engine/MM6/MM6MapVisit.h"
@@ -515,6 +517,8 @@ void OutdoorLocation::Load(std::string_view filename, int days_played, int respa
             Blob original = decodeMM6ArchiveEntry(pGames_LOD->read(ddm_filename));
             MM6OutdoorDeltaSnapshot fresh = decodeMM6OutdoorDelta(original);
             if (respawnTimed) {
+                if (engine->config->gameplay.FixUnopenedChestArtifacts.value())
+                    mm6::refundRespawnedChestArtifacts(delta.wire.part(mm6::OutdoorDeltaPart::Chests), &mm6::chestTitleState().generatedArtifactFlags);
                 fresh.respawnCount = delta.respawnCount;
                 fresh.lastRespawnDay = delta.lastRespawnDay;
                 fresh.fullyRevealedCells = delta.fullyRevealedCells;

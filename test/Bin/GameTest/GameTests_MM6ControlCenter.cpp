@@ -1,4 +1,7 @@
+#include <unistd.h>
+
 #include <algorithm>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <vector>
@@ -11,6 +14,7 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Localization.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
+#include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Party.h"
 #include "Engine/Tables/MapTable.h"
@@ -19,6 +23,8 @@
 #include "GUI/GUIButton.h"
 #include "GUI/GUIWindow.h"
 #include "GUI/UI/UIHouses.h"
+
+#include "Utility/ScopeGuard.h"
 
 #include "MM6CampaignChain.h"
 
@@ -188,4 +194,40 @@ GAME_TEST(MM6ControlCenter, TerminalTeachesBlaster) {
     EXPECT_EQ(terminalTape, tape(false, true));
     EXPECT_EQ(std::ranges::count(soundsTape.flatten(), SOUND_quest), 4);
     EXPECT_EQ(std::ranges::count_if(textTape, [](const auto &frame) { return std::ranges::any_of(frame, isBlasterLesson); }), 2);
+}
+
+GAME_TEST(MM6ControlCenter, SavesInTheControlCenter) {
+    // A party in the Control Center couldn't save, the save refused the map's name with its hyphen.
+    char profileTemplate[] = "mm6-restart-control-center-XXXXXX";
+    std::string created = (std::filesystem::canonical(std::filesystem::temp_directory_path()) / profileTemplate).string();
+    ASSERT_NE(mkdtemp(created.data()), nullptr);
+    const std::filesystem::path profile = std::filesystem::canonical(created);
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+    teleportToMap(game, "sci-fi.blv", Vec3f(-9280, 4160, 196), 0);
+    auto screenTape = tapes.screen();
+    auto savedTape = tapes.custom([&] { return std::filesystem::exists(profile / "saves/save000.ec6"); });
+    test.startTaping();
+
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressGuiButton("GameMenu_SaveGame");
+    game.tick(2);
+    game.doubleClickGuiButton("SaveMenu_Slot0"); // The new save slot.
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_A);
+    game.tick();
+    game.pressGuiButton("SaveMenu_Save");
+    game.tick(3); // The button animates for a frame, then posts the save for the next one.
+
+    EXPECT_EQ(screenTape, tape(SCREEN_MENU, SCREEN_SAVEGAME, SCREEN_GAME));
+    EXPECT_EQ(savedTape, tape(false, true));
+    game.runGameRoutine([] {
+        EXPECT_NO_THROW((void) mm6::readFirstMapManualSlot("save000.ec6"));
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
 }

@@ -23,7 +23,7 @@ static void requireMM6(GameTitle title) {
 
 static bool isCanonicalMapName(std::string_view name) {
     return name.size() > 4 && name.size() <= 63 && (name.ends_with(".odm") || name.ends_with(".blv")) &&
-           std::ranges::all_of(name, [](unsigned char c) { return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '.'; });
+           std::ranges::all_of(name, [](unsigned char c) { return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-' || c == '.'; }); // The Control Center is sci-fi.blv.
 }
 
 static void writeU64(std::vector<std::uint8_t> *bytes, std::uint64_t value) {

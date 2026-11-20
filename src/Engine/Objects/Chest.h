@@ -4,6 +4,7 @@
 #include <optional>
 
 #include "Engine/GameTitle.h"
+#include "Engine/MM6/MM6ChestGridWire.h"
 #include "Engine/Objects/Item.h"
 #include "Engine/Pid.h"
 
@@ -46,6 +47,9 @@ struct Chest {
     std::optional<Vec3f> position;
 
     ChestInventory inventory;
+
+    // Items on an MM6 chest's pages after the first. The items themselves are in the inventory's stash.
+    std::vector<mm6::ChestPageItem> mm6Pages;
 };
 
 void RemoveItemAtChestIndex(int index);

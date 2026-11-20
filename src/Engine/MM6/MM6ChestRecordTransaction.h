@@ -80,16 +80,21 @@ inline void markGeneratedChestArtifact(std::span<std::uint8_t> item, const std::
 }
 
 /**
- * Clears `CHEST_ARTIFACT_CONDITION` from every item that has a cell in the chest's grid.
+ * Clears `CHEST_ARTIFACT_CONDITION` from every item that is on one of the chest's pages.
  *
  * @param[in,out] record                Chest record.
  */
 inline void unmarkPlacedChestArtifacts(std::span<std::uint8_t, CHEST_WIRE_SIZE> record) {
-    for (std::size_t cell = 0; cell < CHEST_GRID_CELLS; ++cell) {
-        const int value = static_cast<std::int16_t>(readChest16(record, CHEST_GRID_OFFSET + cell * 2));
-        if (value <= 0 || value > 140)
-            continue;
-        const auto item = record.subspan(4 + (value - 1) * 28, 28);
+    const auto grid = decodeChestGridWire(GameTitle::MM6, record);
+    std::vector<int> slots;
+    for (int cell = 0; cell < CHEST_PAGE_CELLS; ++cell)
+        if ((*grid)[cell] > 0 && (*grid)[cell] <= 140)
+            slots.push_back((*grid)[cell] - 1);
+    if (const auto pages = decodeChestPages(*grid, CHEST_PAGE_CELLS))
+        for (const ChestPageItem &item : *pages)
+            slots.push_back(item.slot);
+    for (int slot : slots) {
+        const auto item = record.subspan(4 + slot * 28, 28);
         writeChest32(item, 20, readChest32(item, 20) & ~std::bit_cast<std::int32_t>(CHEST_ARTIFACT_CONDITION));
     }
 }
@@ -259,12 +264,12 @@ struct ChestRecordPlacementResult {
 
 // Original placement runs at first chest-open, after map-level generation.
 // It is deliberately a separate transaction and does not mutate a live chest.
-// With `ChestOverflow::Placed`, an opened chest gets the items that had no
-// room placed instead, see `placeChestLeftoversDetached`.
+// With `ChestOverflow::Paged`, the items on later pages go into the grid cells
+// past the first page, see `encodeChestPages`.
 inline std::optional<ChestRecordPlacementResult> stageFirstChestRecordPlacement(
     GameTitle title, const ChestRecord &record, std::span<const std::uint8_t> dchest,
     std::uint32_t rngState, const ChestIconLookup &iconLookup, ChestOverflow overflow = ChestOverflow::Hidden) {
-    if (title != GameTitle::MM6 || !iconLookup || (overflow == ChestOverflow::Placed && !pItemTable))
+    if (title != GameTitle::MM6 || !iconLookup || (overflow == ChestOverflow::Paged && !pItemTable))
         return std::nullopt;
     const auto layout = chestTypeLayout(title, readChest16(record, 0), dchest);
     const auto grid = decodeChestGridWire(title, record);
@@ -292,18 +297,20 @@ inline std::optional<ChestRecordPlacementResult> stageFirstChestRecordPlacement(
             input.items[slot].iconWidth = icon->width;
             input.items[slot].iconHeight = icon->height;
         }
-        if (id != 0 && overflow == ChestOverflow::Placed) {
+        if (id != 0 && overflow == ChestOverflow::Paged) {
             ItemRecord28 raw;
             std::copy(item.begin(), item.end(), raw.begin());
             const bool gold = id >= 197 && id <= 199;
             input.items[slot].value = gold ? readChest32(item, 12) : itemValue(raw, *pItemTable);
         }
     }
-    const bool opened = overflow == ChestOverflow::Placed && (input.flags & 2u);
-    const auto placed = opened ? placeChestLeftoversDetached(input) : placeChestItemsDetached(input);
+    const auto placed = placeChestItemsDetached(input);
     if (!placed)
         return std::nullopt;
-    const auto encoded = encodeChestGridWire(title, record, placed->grid);
+    const auto pagedGrid = encodeChestPages(placed->grid, input.width * input.height, placed->pages);
+    if (!pagedGrid)
+        return std::nullopt;
+    const auto encoded = encodeChestGridWire(title, record, *pagedGrid);
     if (!encoded)
         return std::nullopt;
     ChestRecordPlacementResult result;

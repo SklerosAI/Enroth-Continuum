@@ -25,6 +25,7 @@ struct ChestFirstOpenInput {
     ChestIconLookup iconLookup;
     ChestInteractionAction action = ChestInteractionAction::OpenOnly;
     ChestOverflow overflow = ChestOverflow::Hidden;
+    int page = 0; // Chest page that `gridPoint` is on.
     Pointi gridPoint;
     Item heldItem;
     int partyGold = 0;
@@ -47,8 +48,7 @@ struct ChestFirstOpenResult {
 // updates are staged in a returned value. The caller must atomically publish
 // it with its active-map sidecar and title state; this function does not touch
 // live owners. The trap check follows placement and is the caller's, see
-// `stageChestOpenOwner`. With `ChestOverflow::Placed`, opening an opened chest
-// again places the items that had no room before.
+// `stageChestOpenOwner`.
 inline std::optional<ChestFirstOpenResult> stageChestFirstOpenInteraction(
     const ChestFirstOpenInput &input) {
     if (input.title != GameTitle::MM6 || input.chestIndex < 0 || input.chestIndex >= 20 ||
@@ -69,14 +69,6 @@ inline std::optional<ChestFirstOpenResult> stageChestFirstOpenInteraction(
         unmarkPlacedChestArtifacts(result.record);
         result.nextLcgState = placed->nextRngState;
         result.placed = true;
-    } else if (input.overflow == ChestOverflow::Placed && input.action == ChestInteractionAction::OpenOnly) {
-        const auto placed = stageFirstChestRecordPlacement(input.title, result.record, input.dchest,
-                                                           result.nextLcgState, input.iconLookup, input.overflow);
-        if (!placed)
-            return std::nullopt;
-        result.record = placed->record;
-        unmarkPlacedChestArtifacts(result.record);
-        result.nextLcgState = placed->nextRngState;
     }
 
     auto projection = stageChestRuntimeProjection(input.title, result.record, input.chestIndex);
@@ -90,7 +82,7 @@ inline std::optional<ChestFirstOpenResult> stageChestFirstOpenInteraction(
         input.heldItem.itemId != ITEM_NULL)
         return std::nullopt;
 
-    InventoryEntry entry = projection->chest.inventory.entry(input.gridPoint);
+    InventoryEntry entry = chestPageEntry(projection->chest, input.page, input.gridPoint);
     if (!entry)
         return std::nullopt;
     const Item taken = projection->chest.inventory.take(entry);

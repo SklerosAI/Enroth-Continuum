@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "Engine/MM6/MM6ChestBaseItemPicker.h"
+#include "Engine/MM6/MM6ChestGridWire.h"
 
 namespace mm6 {
 
@@ -17,7 +18,7 @@ namespace mm6 {
  */
 enum class ChestOverflow {
     Hidden, // MM6.exe places the items once, in slot order, and never shows an item that didn't fit.
-    Placed  // GrayFace's FixChestsByReorder, FixChestsByCompacting and FixChests.
+    Paged   // GrayFace's FixChestsByReorder and FixChestsByCompacting, and what still has no room goes on later pages.
 };
 
 // A detached view of the original 4,204-byte chest: four header bytes,
@@ -28,7 +29,7 @@ struct ChestPlacementItem {
     int iconWidth = 0;
     int iconHeight = 0;
     int currentCharges = 0;
-    int value = 0; // Gold value, orders the items for `ChestOverflow::Placed`.
+    int value = 0; // Gold value, orders the items for `ChestOverflow::Paged`.
 };
 
 struct ChestPlacementInput {
@@ -50,6 +51,7 @@ struct ChestPlacementResult {
     int unplacedCount = 0;
     std::array<ChestPlacementItem, 140> items = {};
     std::array<std::int16_t, 140> grid = {};
+    std::vector<ChestPageItem> pages; // Items on later pages, for `ChestOverflow::Paged`.
 };
 
 namespace detail {
@@ -139,11 +141,11 @@ inline std::vector<int> chestCellsInRowOrder(int area) {
 /**
  * Gives each placed wand that has no charges 10 to 30, as MM6.exe's place helper at 0x41e210 does.
  *
- * @param layout                        Placed item slots, in placement order.
+ * @param placed                        Placed item slots, in placement order.
  * @param[out] result                   Items, chest random state and draw count to update.
  */
-inline void chargeChestWands(const ChestLayout &layout, ChestPlacementResult *result) {
-    for (int itemIndex : layout.placed) {
+inline void chargeChestWands(const std::vector<int> &placed, ChestPlacementResult *result) {
+    for (int itemIndex : placed) {
         ChestPlacementItem &item = result->items[itemIndex];
         if (item.itemId >= 135 && item.itemId <= 159 && item.currentCharges == 0) {
             ++result->drawsConsumed;
@@ -152,14 +154,45 @@ inline void chargeChestWands(const ChestLayout &layout, ChestPlacementResult *re
     }
 }
 
+/**
+ * Lays out items on the pages after the first, each page filled in row order, most valuable items first.
+ *
+ * @param input                         Chest dimensions and items.
+ * @param slots                         Item slots that have no room on the first page.
+ * @return                              The items on later pages, in page order. What doesn't fit in the chest record's
+ *                                      grid cells past the first page stays hidden.
+ */
+inline std::vector<ChestPageItem> layOutChestPages(const ChestPlacementInput &input, const std::vector<int> &slots) {
+    const int area = input.width * input.height;
+    const std::vector<int> order = mostValuableChestItemsFirst(input, slots);
+    std::vector<int> remaining = order;
+    std::vector<ChestPageItem> result;
+    for (int page = 1; !remaining.empty(); ++page) {
+        const ChestLayout layout = layOutChestItems(input, {}, remaining, chestCellsInRowOrder(area));
+        if (layout.placed.empty())
+            break; // An item larger than the chest has no page.
+        for (int cell = 0; cell < area; ++cell)
+            if (layout.grid[cell] > 0)
+                result.push_back({page, layout.grid[cell] - 1, cell});
+        std::erase_if(remaining, [&](int slot) { return std::ranges::contains(layout.placed, slot); });
+    }
+    std::ranges::sort(result, std::less(), [&](const ChestPageItem &item) {
+        return std::pair(item.page, std::ranges::find(order, item.slot) - order.begin());
+    });
+    if (result.size() > CHEST_GRID_CELLS - area)
+        result.resize(CHEST_GRID_CELLS - area);
+    return result;
+}
+
 }  // namespace detail
 
 // Model only first-time placement into an empty grid. Existing-grid replay,
 // icon lookup, chest-type dimensions and the live load/save transaction remain
-// deliberately outside this contract. With `ChestOverflow::Placed`, a chest
+// deliberately outside this contract. With `ChestOverflow::Paged`, a chest
 // whose items don't all fit the original pass is laid out again, most valuable
 // items first, and compacted into rows when that shows more of the valuable
-// items. The original pass's random draws stay the same.
+// items. The original pass's random draws stay the same. Whatever still has no
+// room goes on later pages.
 inline std::optional<ChestPlacementResult> placeChestItemsDetached(const ChestPlacementInput &input) {
     if (!detail::validChestPlacementInput(input) || (input.flags & 2u))
         return std::nullopt;
@@ -195,7 +228,7 @@ inline std::optional<ChestPlacementResult> placeChestItemsDetached(const ChestPl
         if (input.items[itemIndex].itemId != 0)
             slots.push_back(itemIndex);
     detail::ChestLayout layout = detail::layOutChestItems(input, input.grid, slots, shuffledOrder);
-    if (input.overflow == ChestOverflow::Placed && layout.placed.size() < slots.size()) {
+    if (input.overflow == ChestOverflow::Paged && layout.placed.size() < slots.size()) {
         const std::vector<int> order = detail::mostValuableChestItemsFirst(input, slots);
         layout = detail::layOutChestItems(input, input.grid, order, shuffledOrder);
         const detail::ChestLayout compact = detail::layOutChestItems(input, input.grid, order, detail::chestCellsInRowOrder(area));
@@ -209,50 +242,24 @@ inline std::optional<ChestPlacementResult> placeChestItemsDetached(const ChestPl
             layout = compact;
     }
 
-    detail::chargeChestWands(layout, &result);
-    result.grid = layout.grid;
-    result.placedCount = layout.placed.size();
-    result.unplacedCount = slots.size() - layout.placed.size();
-    result.flags |= 2u;
-    return result;
-}
-
-/**
- * Places the items of an already opened chest that have no cell, most valuable first, each into the first cells in row
- * order where it fits. This is GrayFace's FixChests, run each time the chest is opened again.
- *
- * @param input                         Opened chest, with its grid.
- * @return                              The chest with the items that fit now, or empty for a chest that was never
- *                                      opened or malformed input.
- */
-inline std::optional<ChestPlacementResult> placeChestLeftoversDetached(const ChestPlacementInput &input) {
-    if (!detail::validChestPlacementInput(input) || !(input.flags & 2u))
-        return std::nullopt;
-    const int area = input.width * input.height;
-    std::array<bool, 140> gridded = {};
-    for (int cell = 0; cell < 140; ++cell) {
-        const int value = input.grid[cell];
-        if ((cell >= area && value != 0) || value > area || (value > 0 && input.items[value - 1].itemId == 0))
-            return std::nullopt;
-        if (value > 0)
-            gridded[value - 1] = true;
+    std::vector<int> placed = layout.placed;
+    int itemCount = slots.size();
+    if (input.overflow == ChestOverflow::Paged) {
+        std::vector<int> leftovers;
+        for (int itemIndex = 0; itemIndex < 140; ++itemIndex)
+            if (input.items[itemIndex].itemId != 0 && !std::ranges::contains(layout.placed, itemIndex))
+                leftovers.push_back(itemIndex);
+        itemCount = layout.placed.size() + leftovers.size();
+        result.pages = detail::layOutChestPages(input, leftovers);
+        for (const ChestPageItem &item : result.pages)
+            placed.push_back(item.slot);
     }
 
-    std::vector<int> slots;
-    for (int itemIndex = 0; itemIndex < area; ++itemIndex)
-        if (input.items[itemIndex].itemId != 0 && !gridded[itemIndex])
-            slots.push_back(itemIndex);
-    const detail::ChestLayout layout = detail::layOutChestItems(input, input.grid, detail::mostValuableChestItemsFirst(input, slots),
-                                                                detail::chestCellsInRowOrder(area));
-
-    ChestPlacementResult result;
-    result.items = input.items;
-    result.flags = input.flags;
-    result.nextRngState = input.rngState;
-    detail::chargeChestWands(layout, &result);
+    detail::chargeChestWands(placed, &result);
     result.grid = layout.grid;
-    result.placedCount = layout.placed.size();
-    result.unplacedCount = slots.size() - layout.placed.size();
+    result.placedCount = placed.size();
+    result.unplacedCount = itemCount - placed.size();
+    result.flags |= 2u;
     return result;
 }
 

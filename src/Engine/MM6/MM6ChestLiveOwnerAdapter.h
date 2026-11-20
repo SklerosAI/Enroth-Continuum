@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -67,7 +68,7 @@ inline bool liveChestsMatchSidecar(GameTitle title, const std::vector<Chest> &ch
             if (std::memcmp(&live.items[slot], raw.data() + 4 + slot * 28, 24) != 0)
                 return false;
         const auto grid = decodeChestGridWire(title, raw);
-        if (!grid || live.inventoryMatrix != *grid)
+        if (!grid || !std::equal(grid->begin(), grid->begin() + CHEST_PAGE_CELLS, live.inventoryMatrix.begin()))
             return false;
     }
     return true;

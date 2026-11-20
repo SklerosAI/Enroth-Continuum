@@ -58,7 +58,7 @@ bool bindMm6Chests(mm6::ChestLiveBinding *binding, MM6IndoorSnapshot *indoorBase
     binding->levelType = uCurrentlyLoadedLevelType;
     binding->chests = &vChests;
     binding->titleState = &mm6::chestTitleState();
-    binding->overflow = engine->config->gameplay.FixChestOverflow.value() ? mm6::ChestOverflow::Placed : mm6::ChestOverflow::Hidden;
+    binding->overflow = engine->config->gameplay.FixChestOverflow.value() ? mm6::ChestOverflow::Paged : mm6::ChestOverflow::Hidden;
     if (binding->levelType == LEVEL_OUTDOOR && pOutdoor) {
         binding->deltaBytes = &pOutdoor->mm6DeltaBytes;
     } else if (binding->levelType == LEVEL_INDOOR && pIndoor &&
@@ -177,8 +177,8 @@ void takeMm6ChestItem(int chestId, Pointi mousePos) {
     if (inGrid.x < 0 || inGrid.y < 0)
         return;
     const Pointi gridPoint = inGrid / 32;
-    auto staged = mm6::stageChestOpenOwner(binding, chestId, rawTypes, mm6ChestIconSize,
-                                           mm6::ChestInteractionAction::TakeGridItem, gridPoint);
+    auto staged = mm6::stageChestOpenOwner(binding, chestId, rawTypes, mm6ChestIconSize, mm6::ChestInteractionAction::TakeGridItem,
+                                           gridPoint, std::nullopt, pGUIWindow_CurrentChest->page());
     if (!staged)
         return; // An empty cell takes nothing, and neither does gold.
 
@@ -370,7 +370,8 @@ bool Chest::ChestUI_WritePointedObjectStatusString() {
     // TODO(captainurist): need to use mouse->pickedItemOffset here?
     Pointi inventoryPos = mapToInventoryGrid(mousePos, chestTable[chest->chestTypeId].inventoryOffset);
 
-    InventoryEntry entry = chest->inventory.entry(inventoryPos);
+    InventoryEntry entry = engine->gameTitle() == GameTitle::MM6 ? mm6::chestPageEntry(*chest, pGUIWindow_CurrentChest->page(), inventoryPos)
+                                                                  : chest->inventory.entry(inventoryPos);
     if (entry) {
         engine->_statusBar->setPermanent(entry->GetDisplayName());
         uLastPointedObjectID = Pid::dummy();

@@ -334,8 +334,8 @@ class GameConfig : public Config {
             "them rolled something else."};
         Bool FixChestOverflow = {this, "fix_chest_overflow", true,
             "MM6 only. When a chest's items don't all fit on first opening, place the most valuable first and pack them into rows "
-            "when that shows more of them, and put the rest in once there's room and the chest is opened again, as the GrayFace "
-            "patch does with all its chest options on. In vanilla, an item that didn't fit was never shown."};
+            "when that shows more of them, as the GrayFace patch does, and put the rest on further pages, which a button on the "
+            "chest screen turns. In vanilla, an item that didn't fit was never shown."};
 
         Float SpellFailureRecoveryMod = {this, "spell_failure_recovery_mod", 0.5f, &ValidateSpellFailureRecoveryMod,
             "Recovery time modifier when spell casting ended in failure for the reason where spell cannot be cast at all in current context. "

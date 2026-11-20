@@ -1,8 +1,10 @@
 #include <array>
+#include <bit>
 #include <cstdint>
 #include <limits>
 #include <memory>
 #include <span>
+#include <vector>
 
 #include "Testing/Unit/UnitTest.h"
 
@@ -93,25 +95,39 @@ UNIT_TEST(MM6ChestFirstOpenTransaction, FirstOpenAndItemPickupAreDetached) {
     EXPECT_EQ(reopened->nextLcgState, opened->nextLcgState);
 }
 
-UNIT_TEST(MM6ChestFirstOpenTransaction, LeftoverArtifactPlacedOnReopenIsNotRefunded) {
-    // A chest artifact that had no room at first opening and shows on a later one is seen, so a respawn must not take
-    // it off the found list again.
+UNIT_TEST(MM6ChestFirstOpenTransaction, ArtifactOnSecondPageIsSeenAndCanBeTaken) {
+    // Two artifacts that each fill the grid. The second goes on the second page at first opening, so the opening clears
+    // its chest artifact condition, and taking it from there empties the chest record's later pages.
     TableScope table;
+    table.table->itemSizes[static_cast<ItemId>(400)] = Sizei(9, 9);
+    table.table->itemSizes[static_cast<ItemId>(401)] = Sizei(9, 9);
     const auto types = chestTypes();
-    for (mm6::ChestOverflow overflow : {mm6::ChestOverflow::Hidden, mm6::ChestOverflow::Placed}) {
-        auto input = inputFor(200);
-        input.dchest = types;
-        input.overflow = overflow;
-        input.action = mm6::ChestInteractionAction::OpenOnly;
-        mm6::writeChest16(input.record, 2, 2);
-        mm6::writeChest32(std::span(input.record).subspan(4, 28), 20, mm6::CHEST_ARTIFACT_CONDITION);
-        auto reopened = mm6::stageChestFirstOpenInteraction(input);
-        ASSERT_TRUE(reopened);
-        const bool placed = overflow == mm6::ChestOverflow::Placed;
-        EXPECT_EQ(itemPoint(reopened->record) != Pointi(-1, -1), placed);
-        EXPECT_EQ(mm6::readChest32(std::span(reopened->record).subspan(4, 28), 20),
-                  placed ? 0 : static_cast<std::int32_t>(mm6::CHEST_ARTIFACT_CONDITION));
-    }
+    auto input = inputFor(400);
+    input.dchest = types;
+    input.overflow = mm6::ChestOverflow::Paged;
+    input.iconLookup = [](int) { return mm6::ChestIconSize{288, 288}; };
+    const auto second = std::span(input.record).subspan(4 + 28, 28);
+    mm6::writeChest32(second, 0, 401);
+    mm6::writeChest32(second, 20, std::bit_cast<std::int32_t>(mm6::CHEST_ARTIFACT_CONDITION));
+    const auto opened = mm6::stageChestFirstOpenInteraction(input);
+    ASSERT_TRUE(opened);
+    const auto grid = mm6::decodeChestGridWire(GameTitle::MM6, opened->record);
+    ASSERT_TRUE(grid);
+    EXPECT_EQ((*grid)[0], 1);
+    EXPECT_EQ(mm6::decodeChestPages(*grid, mm6::CHEST_PAGE_CELLS), (std::vector<mm6::ChestPageItem>{{1, 1, 0}}));
+    EXPECT_EQ(mm6::readChest32(std::span(opened->record).subspan(4 + 28, 28), 20), 0);
+
+    input.record = opened->record;
+    input.action = mm6::ChestInteractionAction::TakeGridItem;
+    input.page = 1;
+    input.gridPoint = Pointi(4, 7);
+    const auto taken = mm6::stageChestFirstOpenInteraction(input);
+    ASSERT_TRUE(taken);
+    EXPECT_EQ(taken->heldItem.itemId, static_cast<ItemId>(401));
+    const auto left = mm6::decodeChestGridWire(GameTitle::MM6, taken->record);
+    ASSERT_TRUE(left);
+    EXPECT_EQ((*left)[0], 1);
+    EXPECT_EQ(mm6::decodeChestPages(*left, mm6::CHEST_PAGE_CELLS), std::vector<mm6::ChestPageItem>{});
 }
 
 UNIT_TEST(MM6ChestFirstOpenTransaction, GoldRequiresExplicitNetCreditAndBounds) {

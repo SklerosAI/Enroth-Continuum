@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <exception>
@@ -43,7 +44,7 @@ inline bool chestMatchesOpenRecord(const Chest &chest, const ChestRecord &record
     if (live.chestTypeId != readChest16(record, 0) || live.flags != readChest16(record, 2))
         return false;
     const auto grid = decodeChestGridWire(GameTitle::MM6, record);
-    if (!grid || live.inventoryMatrix != *grid)
+    if (!grid || !std::equal(grid->begin(), grid->begin() + CHEST_PAGE_CELLS, live.inventoryMatrix.begin()))
         return false;
     for (int slot = 0; slot < 140; ++slot)
         if (std::memcmp(&live.items[slot], record.data() + 4 + slot * 28, 24) != 0)
@@ -52,7 +53,7 @@ inline bool chestMatchesOpenRecord(const Chest &chest, const ChestRecord &record
 }
 
 /**
- * Stages opening one MM6 chest, or taking a non-gold item out of its grid, against the decoded active sidecar. No GUI,
+ * Stages opening one MM6 chest, or taking a non-gold item off one of its pages, against the decoded active sidecar. No GUI,
  * trap effect or inherited MM7 generator is invoked.
  *
  * Opening places the items first. A trapped chest then makes the active character's disarm attempt. A disarmed trap
@@ -67,13 +68,14 @@ inline bool chestMatchesOpenRecord(const Chest &chest, const ChestRecord &record
  * @param gridPoint                     Grid cell of the item to take.
  * @param trapCheck                     Disarm inputs for opening a trapped chest. Without them a trapped chest
  *                                      refuses to open.
+ * @param page                          Chest page of `gridPoint`, 0 for the first.
  * @return                              The chests, sidecar, chest RNG, taken item and trap outcome after the action,
  *                                      or empty if anything refuses.
  */
 inline std::optional<ChestOpenOwnerCandidate> stageChestOpenOwner(
     const ChestLiveBinding &binding, int chestIndex, std::span<const std::uint8_t> dchest,
     const ChestIconLookup &iconLookup, ChestInteractionAction action = ChestInteractionAction::OpenOnly,
-    Pointi gridPoint = {}, const std::optional<ChestTrapCheck> &trapCheck = std::nullopt) {
+    Pointi gridPoint = {}, const std::optional<ChestTrapCheck> &trapCheck = std::nullopt, int page = 0) {
     if (binding.title != GameTitle::MM6 || !binding.chests || binding.chests->size() != 20 ||
         !binding.deltaBytes || binding.deltaBytes->empty() || !binding.titleState ||
         !binding.titleState->ready || chestIndex < 0 || chestIndex >= 20 ||
@@ -110,6 +112,7 @@ inline std::optional<ChestOpenOwnerCandidate> stageChestOpenOwner(
         input.iconLookup = iconLookup;
         input.action = action;
         input.overflow = binding.overflow;
+        input.page = page;
         input.gridPoint = gridPoint;
         const auto opened = stageChestFirstOpenInteraction(input);
         if (!opened || opened->itemTaken != (action == ChestInteractionAction::TakeGridItem))

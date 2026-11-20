@@ -7,6 +7,7 @@
 #include <cstring>
 #include <optional>
 #include <span>
+#include <vector>
 
 #include "Engine/MM6/MM6ChestRecordTransaction.h"
 #include "Engine/Objects/Chest.h"
@@ -20,7 +21,7 @@ static_assert(std::endian::native == std::endian::little);
 
 // A bounded MM6 chest grid in the MM7-shaped intermediate. The active 9x9
 // area may reference only slots the current ChestInventory reconstructor can
-// restore; the remaining 59 wire cells are carried by the raw sidecar.
+// restore; the remaining 59 wire cells hold the later pages, see `decodeChestPages`.
 inline bool validChestRuntimeGrid(GameTitle title, const Chest_MM7 &chest) {
     if (title != GameTitle::MM6 || chest.chestTypeId >= 8)
         return false;
@@ -43,6 +44,55 @@ inline bool validChestRuntimeGrid(GameTitle title, const Chest_MM7 &chest) {
         }
     }
     return true;
+}
+
+/**
+ * @param chest                         Chest whose first page is laid out in its grid.
+ * @param pages                         Items on its later pages.
+ * @return                              Whether every item on a later page is in the chest, on no other page, and fits
+ *                                      its page next to the others.
+ */
+inline bool validChestPages(const Chest_MM7 &chest, const std::vector<ChestPageItem> &pages) {
+    std::array<bool, 140> seen = {};
+    for (int cell = 0; cell < CHEST_PAGE_CELLS; ++cell)
+        if (chest.inventoryMatrix[cell] > 0)
+            seen[chest.inventoryMatrix[cell] - 1] = true;
+    std::vector<std::array<bool, CHEST_PAGE_CELLS>> used(pages.empty() ? 0 : pages.back().page + 1);
+    for (const ChestPageItem &item : pages) {
+        const int id = chest.items[item.slot].itemId;
+        if (id <= 0 || id > 580 || seen[item.slot])
+            return false;
+        seen[item.slot] = true;
+        const Sizei size = pItemTable->itemSizes[static_cast<ItemId>(id)];
+        const Pointi at(item.cell % 9, item.cell / 9);
+        if (at.x + size.w > 9 || at.y + size.h > 9)
+            return false;
+        for (int y = at.y; y < at.y + size.h; ++y) {
+            for (int x = at.x; x < at.x + size.w; ++x) {
+                if (used[item.page][y * 9 + x])
+                    return false;
+                used[item.page][y * 9 + x] = true;
+            }
+        }
+    }
+    return true;
+}
+
+/**
+ * @param chest                         Live MM6 chest.
+ * @param page                          Chest page, 0 for the first.
+ * @param point                         Grid cell.
+ * @return                              The item that covers the cell on that page, or an invalid entry.
+ */
+inline InventoryEntry chestPageEntry(Chest &chest, int page, Pointi point) {
+    if (page == 0)
+        return chest.inventory.entry(point);
+    for (const ChestPageItem &item : chest.mm6Pages) {
+        InventoryEntry entry = chest.inventory.entry(item.slot);
+        if (item.page == page && entry && Recti(Pointi(item.cell % 9, item.cell / 9), entry->inventorySize()).contains(point))
+            return entry;
+    }
+    return {};
 }
 
 struct ChestRuntimeProjection {
@@ -79,17 +129,18 @@ inline std::optional<ChestRuntimeProjection> stageChestRuntimeProjection(
         }
     }
     const auto grid = decodeChestGridWire(title, record);
-    if (!grid || std::any_of(grid->begin() + 81, grid->end(), [](std::int16_t cell) {
-            return cell != 0;
-        }))
+    if (!grid)
         return std::nullopt;
     source.inventoryMatrix = *grid;
-    if (!validChestRuntimeGrid(title, source))
+    const auto pages = decodeChestPages(*grid, CHEST_PAGE_CELLS);
+    if (!validChestRuntimeGrid(title, source) || !pages || !validChestPages(source, *pages))
         return std::nullopt;
+    std::fill(source.inventoryMatrix.begin() + CHEST_PAGE_CELLS, source.inventoryMatrix.end(), 0);
 
     ChestRuntimeProjection result;
     result.wireSidecar = record;
     reconstruct(source, &result.chest, tags::context<int>(chestIndex));
+    result.chest.mm6Pages = *pages;
     Chest_MM7 replay{};
     snapshot(result.chest, &replay);
     if (replay.chestTypeId != source.chestTypeId || replay.flags != source.flags ||
@@ -144,7 +195,23 @@ inline std::optional<ChestRecord> stageChestRuntimeRecord(
         }
         std::memcpy(bytes.data(), &live.items[slot], 24);
     }
-    const auto encoded = encodeChestGridWire(title, result, live.inventoryMatrix);
+    std::vector<ChestPageItem> pages;
+    for (const ChestPageItem &item : projection.chest.mm6Pages)
+        if (live.items[item.slot].itemId > 0)
+            pages.push_back(item);
+    int lastPage = 0;
+    int page = 0;
+    for (ChestPageItem &item : pages) {
+        if (item.page != lastPage) {
+            lastPage = item.page;
+            ++page;
+        }
+        item.page = page; // A page whose items are all gone closes up.
+    }
+    const auto grid = encodeChestPages(live.inventoryMatrix, CHEST_PAGE_CELLS, pages);
+    if (!grid)
+        return std::nullopt;
+    const auto encoded = encodeChestGridWire(title, result, *grid);
     if (!encoded)
         return std::nullopt;
     return *encoded;

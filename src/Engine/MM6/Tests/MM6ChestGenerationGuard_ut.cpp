@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
+#include <vector>
 
 #include "Testing/Unit/UnitTest.h"
 
@@ -346,7 +347,7 @@ UNIT_TEST(MM6ChestGenerationGuard, OverflowPlacementLeavesFittingChestAsVanilla)
     input.items[1] = {135, 50, 16, 0, 2};
     input.items[2] = {200, 16, 16, 0, 3};
     const auto vanilla = mm6::placeChestItemsDetached(input);
-    input.overflow = mm6::ChestOverflow::Placed;
+    input.overflow = mm6::ChestOverflow::Paged;
     const auto fixed = mm6::placeChestItemsDetached(input);
     ASSERT_TRUE(vanilla && fixed);
     EXPECT_EQ(fixed->grid, vanilla->grid);
@@ -356,22 +357,23 @@ UNIT_TEST(MM6ChestGenerationGuard, OverflowPlacementLeavesFittingChestAsVanilla)
 }
 
 UNIT_TEST(MM6ChestGenerationGuard, OverflowPlacementPutsMostValuableItemFirst) {
-    // Only one of the two items fits. MM6.exe showed the first slot's, the fix shows the more valuable one, and a quest
-    // item before anything.
+    // Only one of the two items fits. MM6.exe showed the first slot's, the fix shows the more valuable one on the first
+    // page, and a quest item before anything.
     mm6::ChestPlacementInput input;
     input.title = GameTitle::MM6;
     input.width = 2;
     input.height = 1;
     input.rngState = 4;
-    input.overflow = mm6::ChestOverflow::Placed;
+    input.overflow = mm6::ChestOverflow::Paged;
     input.items[0] = {10, 16, 16, 0, 1};
     input.items[1] = {20, 50, 16, 0, 50};
     auto placed = mm6::placeChestItemsDetached(input);
     ASSERT_TRUE(placed);
     EXPECT_EQ(placed->grid[0], 2);
     EXPECT_EQ(placed->grid[1], -1);
-    EXPECT_EQ(placed->placedCount, 1);
-    EXPECT_EQ(placed->unplacedCount, 1);
+    EXPECT_EQ(placed->pages, (std::vector<mm6::ChestPageItem>{{1, 0, 0}}));
+    EXPECT_EQ(placed->placedCount, 2);
+    EXPECT_EQ(placed->unplacedCount, 0);
     EXPECT_EQ(placed->drawsConsumed, 192);
 
     input.items[0] = {10, 16, 16, 0, 1000};
@@ -397,7 +399,7 @@ UNIT_TEST(MM6ChestGenerationGuard, OverflowPlacementCompactsWhenScatterShowsLess
     EXPECT_EQ(vanilla->placedCount, 1);
     EXPECT_EQ(vanilla->grid[1], 1);
 
-    input.overflow = mm6::ChestOverflow::Placed;
+    input.overflow = mm6::ChestOverflow::Paged;
     const auto fixed = mm6::placeChestItemsDetached(input);
     ASSERT_TRUE(fixed);
     EXPECT_EQ(fixed->placedCount, 2);
@@ -407,31 +409,31 @@ UNIT_TEST(MM6ChestGenerationGuard, OverflowPlacementCompactsWhenScatterShowsLess
     EXPECT_EQ(fixed->nextRngState, 3573641392u);
 }
 
-UNIT_TEST(MM6ChestGenerationGuard, LeftoverPlacementFillsFreeCellsMostValuableFirst) {
-    // An opened chest with two free cells and two items that had no room. The more valuable one takes the first free
-    // cell, the wand the next, and draws its charges.
+UNIT_TEST(MM6ChestGenerationGuard, OverflowPlacementPutsTheRestOnLaterPages) {
+    // A chest with room for one of its four items. Each takes a page of its own, most valuable first, and the wand on
+    // the second page draws its charges.
     mm6::ChestPlacementInput input;
     input.title = GameTitle::MM6;
-    input.width = 3;
-    input.height = 1;
-    input.flags = 2;
-    input.rngState = 5;
-    input.items[0] = {10, 16, 16, 0, 1};
-    input.items[1] = {135, 16, 16, 0, 2};
-    input.items[2] = {200, 16, 16, 0, 100};
-    input.grid[1] = 1;
-    const auto placed = mm6::placeChestLeftoversDetached(input);
-    ASSERT_TRUE(placed);
-    EXPECT_EQ(placed->grid, (std::array<std::int16_t, 140>{3, 1, 2}));
-    EXPECT_EQ(placed->placedCount, 2);
-    EXPECT_EQ(placed->unplacedCount, 0);
-    EXPECT_EQ(placed->items[1].currentCharges, 22);
-    EXPECT_EQ(placed->drawsConsumed, 1);
-    EXPECT_EQ(placed->nextRngState, 3601076u);
-    EXPECT_EQ(placed->flags, 2);
-
-    input.flags = 0;
-    EXPECT_FALSE(mm6::placeChestLeftoversDetached(input)); // A chest that was never opened is placed the first time.
+    input.width = 2;
+    input.height = 2;
+    input.rngState = 4;
+    input.items[0] = {10, 50, 50, 0, 1};
+    input.items[1] = {135, 50, 50, 0, 5};
+    input.items[2] = {11, 50, 50, 0, 9};
+    input.items[3] = {12, 50, 50, 0, 3};
+    const auto vanilla = mm6::placeChestItemsDetached(input);
+    input.overflow = mm6::ChestOverflow::Paged;
+    const auto paged = mm6::placeChestItemsDetached(input);
+    ASSERT_TRUE(vanilla && paged);
+    EXPECT_TRUE(vanilla->pages.empty());
+    EXPECT_EQ(vanilla->items[1].currentCharges, 0);
+    EXPECT_EQ(paged->grid, (std::array<std::int16_t, 140>{3, -1, -1, -1}));
+    EXPECT_EQ(paged->pages, (std::vector<mm6::ChestPageItem>{{1, 1, 0}, {2, 3, 0}, {3, 0, 0}}));
+    EXPECT_EQ(paged->placedCount, 4);
+    EXPECT_EQ(paged->unplacedCount, 0);
+    EXPECT_GE(paged->items[1].currentCharges, 10);
+    EXPECT_LE(paged->items[1].currentCharges, 30);
+    EXPECT_EQ(paged->drawsConsumed, vanilla->drawsConsumed + 1);
 }
 
 UNIT_TEST(MM6ChestGenerationGuard, DirectArtifactPickerIncludesOriginalExtraCandidate) {

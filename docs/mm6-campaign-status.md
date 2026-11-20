@@ -1,6 +1,6 @@
 # MM6 campaign status
 
-Where Might and Magic VI stands on `claude/mm6` at `c5bb601f8` (2026-11-19): what a player can do, how it is verified,
+Where Might and Magic VI stands on `claude/mm6` at `3c68e90c0` (2026-11-20): what a player can do, how it is verified,
 the campaign chain, GrayFace fix progress and the latest lane results.
 
 ## Summary
@@ -215,73 +215,27 @@ Open:
 
 ## Latest lane results
 
-Five lanes merged into `claude/mm6` late on 2026-11-19, at `c5bb601f8`:
+Eleven lanes merged into `claude/mm6` on 2026-11-20, at `3c68e90c0`:
 
-- **chain-c7.** C7 passes on the real C6 save without fighting VARN's guardians. The key carrier is selected again
-  before each keyed check, and a check a hit spoiled is tried again. Left: a random-stream shift that lets the Djinn's
-  sleep land on the carrier stops C7, with C4's `NoDamage` fixture as the fallback.
-- **gf-c8.** Arms Master, Weapons Master and Squire add their points where MM6.exe does, attack, melee damage, shooting
-  and armor class, and the MM7 Armsmaster route is gone for MM6. `fix_weapon_skill_hirelings` adds them to the Expert
-  recovery cut. Left: several MM6 skill bonus formulas are MM7's, see [Open questions](open-questions.md).
-- **gf-c12.** Spell costs come from `spells.txt` behind `fix_spells_cost`. Expert Static Charge is the only one of 297
-  costs that changes.
-- **gf-c24.** Not reproduced, so no fix. MM6.exe's own walking edge check, already ported, keeps chasing monsters on
-  their ledges in 18 indoor maps with drops over 500.
-- **gf-c25.** The requested-kind item roll gives every candidate its weight behind `fix_item_generation`. Left: the
-  any-item roll for chests keeps the vanilla off-by-one, as in the patch.
-
-The merged branch passed 309 `MM6*` game tests, 1087 unit tests, `check_style`, the chain from C0 through C7 in fresh
-processes and 729 of 730 MM7 game tests. The MM7 failure is `Issues.Issue2817`, fixed on `master` by `4172727f1`, which
-`claude/mm6` doesn't have yet.
-
-The lanes below merged into `claude/mm6` on 2026-11-18, the travel lane at `a927bd004` the next morning. Each ran the
-full `MM6*` game suite, the unit tests and the MM7 controls, and took before and after captures.
-
-- **shop-unconscious (W28).** MM6 shops refuse identify, repair and every paid screen to a character who can't act,
-  with MM6's "in no condition" line. Left: shops have no right-click item info box yet.
-- **shop-menu.** Shop, tavern and training menus hide their options from a character who can't act, as MM6.exe does.
-  Left: no tavern-specific test.
-- **buff-compare (C14).** A stronger buff replaces a longer weaker one. Left: pressing I draws the stats tab for one
-  frame before the inventory.
-- **outdoor-actor-alpha.** Outdoor MM6 actors draw opaque. MM6 monster records have no tint field, and a filled-in
-  opaque white tint sent them down the additive blend path. This was the owner's "transparent villagers".
-- **wall-plates.** Pressure plates on walls and ceilings fire when the party runs into them, as in MM6.exe. MM7 keeps
-  upstream's behaviour, which drops them.
-- **street-npc-talk.** Beg, Threat and Bribe with MM6's acceptance and price rules, the `%02` and `%08` text codes,
-  Join as a sub-screen. Left: speeches 53 to 58 show only as portrait reactions.
-- **street-npc-followups.** Bribe count, tavern drink bits and tavern tips are saved in EC6 `PART` v5. Street NPCs are
-  cleared on New Game. Left: news topics carry over across map loads within one game, as in vanilla.
-- **event-member (W2).** An event triggered with nobody active runs for one member who can act. Left: other
-  active-member reads in the same run, such as held-item moves, still see nobody active.
-- **offline-fixtures.** Data-backed unit tests read the MM6 install directly through `MM6TestData`. The Python
-  research scripts are gone. Left: a few `GameTests_MM6Save` cases still need the private research folder.
-- **grayface-items (W22, W26).** A repeated Essence stays in the hand. Shops refuse zero-value items such as blasters.
-  Left: the MM6 sell screen plays no sale or refusal speech and sound.
-- **rules-from-exe.** Rule tables come from `MM6.exe` through `mm6::Executable` with a SHA-256 check. `--rules-path` and
-  the profile rules JSON are gone. Adds `fix_condition_spells`. Left: C12.
-- **grayface-combat (C6, C18, C26).** The recovery enchantment shortens recovery by 10 percent, a turn-based round takes
-  50 game seconds, clubs and empty hands swing with the mace sound.
-- **shared-coverage.** MM6 tests for ten GrayFace fixes in shared code, and fixes for month-start New Day, 5:00 AM
-  sunrise light and minutes next to days in buff times. Left: MM7 has the same 5:00 AM sunlight code.
-- **grayface-travel (W1, W7, W8, W9).** No map-crossing offer while flying, the travel autosave is written before the
-  fare, travel leaves when its speech ends, map timers count from their last firing (new optional EC6 `TIMR`
-  section). Left: no travel speech plays yet, so the W8 cap always applies.
-- **travel-dialog-icons.** The map-edge travel dialog draws MM6.exe's own layout, `evpan004`, the `outside` picture and
-  `BUTTYES1` and `BUTTESC1` at y 313, instead of MM7 icons MM6 lacks.
-- **dungeon-dialog.** The dungeon entry and exit dialog draws MM6.exe's layout too: the room's `evpan` panel, the exit
-  picture at (525,34), the buttons at y 313 and the hour's top panel beside it. The exit dialog names the dungeon, and
-  the Dragon's Lair and Devil Outpost doors show their `trans.txt` lines. Left: the sound and speech calls MM6.exe makes
-  when the dialog opens, see [Open questions](open-questions.md).
-- **docs.** `project/`, `.llm-wiki/` and the tracked `agent_comms/` notes became this `docs/` wiki.
-- **code-cleanup.** MM6 code only its own tests reached, the save-research probe tests and the research-folder map
-  reader are gone. No MM6 test skips on a machine with the MM6 data. Left: files such as `MM6NewGameSaveRuntime.cpp`
-  are live but mostly dead and want a finer pass.
-
-The merged branch passed 298 `MM6*` game tests with none skipped, 1084 unit tests, `check_style`, the first-map gate
-and 729 of 730 MM7 game tests. The one MM7 failure, `Issues.Issue2817`, fails the same way on `master`. A 41-frame
-hidden tour on the same build showed every outdoor actor opaque and every change above on screen.
-
-Earlier MM6 lanes (menus and hirelings, services, rest and time rules) reached `master` before `ECv0.1.0`.
+- **chain-c8.** C8 passes from the C7 save: Nicolai, the outd3 well's Third Eye, Tanir's Bell, the King's Library and
+  Archibald's release, plus the Control Center's blasters the hive reactor needs. Saving after the Control Center was
+  refused because `sci-fi.blv` has a hyphen, now fixed. The chain from C0 through C8 passed in fresh processes.
+- **gf-c22.** Armor and shield recovery penalties follow MM6.exe, which already carries Mok's fix: half at Expert, none
+  at Master. No flag.
+- **gf-w12, gf-w13, gf-w15.** Artifacts of unopened chests come back after a respawn, event opcode 69 runs, door action
+  3 switches a moving door, and an overflowing chest shows its most valuable items first.
+- **chest-pages.** The owner chose pages over GrayFace's reopen step. An overflowing chest gets later pages behind a
+  page button, kept in the record's spare grid cells.
+- **all-artifacts.** The All Artifacts mod reaches MM6: no cap of 13, uniqueness by collected, an Atlas toggle and an
+  `ARTC` save section. MM6 has no storage half.
+- **artifact-saves.** A party carrying an artifact, a relic or a special bonus item can save. Commit `82abbc12a` carries
+  the loot lane's message by mistake, its merge commit gives the right one.
+- **mm6-loot.** Monster loot and random ground treasure roll through MM6's generator, so dragons drop artifacts, not
+  message scrolls. Ground treasure now draws before chests, as in MM6.exe, which moved the chest rolls tests set.
+- **artifact-bonuses, chest-fixes.** Artifacts and relics give their attribute bonuses, Merlin and Percival shorten
+  recovery, chest gold piles can be taken, the chest right-click reads the right cell and Poison Resistance is Body.
+  Both lanes were stopped before their reports when the owner ran short of budget, so only the integrator's final
+  check covers them.
 
 ## Source
 

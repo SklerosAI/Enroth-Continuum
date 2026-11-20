@@ -230,6 +230,18 @@ looks and draws exactly as in MM6.exe.
   35,512 of the 357,324 chests that got items have more than one page, on 52 maps. 790 have three pages, 24 have four,
   none more. The most items past a first page is 19, and no item stays hidden.
 
+### Taking items
+
+MM6.exe's chest click (0x41F080) finds the item under the cursor and hands it over. A gold pile (item type 18) goes
+to the gold-find routine 0x41EDE0 instead, the one every shared gold find uses: Factor, Banker and Pirate bonuses, the
+hirelings' share, the "You found ... gold" status line and sound 200. The port does the same through
+`Party::foundGold`, and the chest takes the pile out with the credited gold in one staged step (`takeMm6ChestItem`).
+
+Chest types 1, 2 and 6 put their grid at (18, 30), the others at (42, 34) (`MM6ChestTypeLayout.h`). The click, the
+hover name and the right-click info box all map the cursor through the chest's own type. Of the 53 maps a game test
+could enter (all but the 14 dungeons no map script leads to), d04, d08, d09, d11, t2 and t7 have chests of types 2
+and 6, and none has type 1.
+
 ### Traps
 
 A chest is trapped when flag bits 0 and 1 are both set (`MM6ChestTrapDecision.h`).

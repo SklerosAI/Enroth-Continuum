@@ -22,11 +22,12 @@ Item generatedRuntimeItem(const ChestFinalizedItem &fields) {
 }
 
 StagedTitleItem stageTitleItem(const ChestTitleState &state, const ItemTable &table, ItemTreasureLevel treasureLevel,
-                               RandomItemType requestedKind, ItemKindRoll kindRoll) {
+                               RandomItemType requestedKind, ItemKindRoll kindRoll,
+                               const std::array<std::uint8_t, 30> *collectedArtifactFlags) {
     if (!state.ready)
         throw std::runtime_error("MM6 random item needs a restored gameplay LCG");
     const auto fields = generateItem(GameTitle::MM6, table, treasureLevel, requestedKind, kindRoll,
-                                     state.generatedArtifactFlags, state.lcgState);
+                                     state.generatedArtifactFlags, state.lcgState, collectedArtifactFlags);
     if (!fields)
         throw std::runtime_error("MM6 random item request is outside the original generator's tables");
 

@@ -17,6 +17,7 @@
 #include "Engine/Objects/SpriteObject.h"
 #include "Engine/Objects/NPC.h"
 #include "Engine/Objects/CharacterEnumFunctions.h"
+#include "Engine/MM6/MM6ArtifactCollection.h"
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6Portraits.h"
 #include "Engine/MM6/MM6RawCursorShopProcessOwner.h"
@@ -1053,6 +1054,10 @@ void Party::initializeCollectedArtifactsFromOwnedItems() {
 }
 
 void Party::recordArtifactAcquisition(const Item &item) {
+    if (this == pParty && engine && engine->gameTitle() == GameTitle::MM6) {
+        mm6::recordArtifactAcquisition(item.itemId);
+        return;
+    }
     if (!engine || !mm7::mods::allArtifactsStorageEnabled(engine->gameTitle()))
         return;
     if (!artifactCollectionInitialized)

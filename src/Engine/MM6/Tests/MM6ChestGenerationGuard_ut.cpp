@@ -102,6 +102,40 @@ UNIT_TEST(MM6ChestGenerationGuard, BasePickerStagesTierSixArtifactAndFallback) {
     EXPECT_EQ(limited->generatedArtifactFlags, artifacts);
 }
 
+UNIT_TEST(MM6ChestGenerationGuard, BasePickerUnderAllArtifactsSkipsCollectedWithNoCap) {
+    // Under the All Artifacts mod the tier-6 roll skips collected artifacts instead of generated ones, past the cap of
+    // 13, with the same draws.
+    std::array<int, 399> weights{};
+    weights[4] = 3;
+    weights[9] = 2;
+    std::array<std::uint8_t, 30> generated{};
+    for (int i = 5; i < 18; ++i)
+        generated[i] = 1;
+    std::array<std::uint8_t, 30> collected{};
+
+    auto pastCap = mm6::pickChestBaseItemId(GameTitle::MM6, ITEM_TREASURE_LEVEL_6, weights, generated, 17, &collected);
+    ASSERT_TRUE(pastCap.has_value());
+    EXPECT_EQ(pastCap->itemId, 404);
+    EXPECT_EQ(pastCap->drawsConsumed, 2);
+    EXPECT_EQ(pastCap->nextRngState, 1743419155u);
+    EXPECT_EQ(pastCap->generatedArtifactFlags[4], 1);
+
+    generated[4] = 1;
+    auto again = mm6::pickChestBaseItemId(GameTitle::MM6, ITEM_TREASURE_LEVEL_6, weights, generated, 17, &collected);
+    ASSERT_TRUE(again.has_value());
+    EXPECT_EQ(again->itemId, 404);  // Generated but never collected.
+
+    collected[4] = 1;
+    auto skipped = mm6::pickChestBaseItemId(GameTitle::MM6, ITEM_TREASURE_LEVEL_6, weights, generated, 17, &collected);
+    ASSERT_TRUE(skipped.has_value());
+    EXPECT_EQ(skipped->itemId, 5);
+    EXPECT_EQ(skipped->drawsConsumed, 3);
+    EXPECT_EQ(skipped->nextRngState, 1967211914u);
+
+    collected[4] = 2;
+    EXPECT_FALSE(mm6::pickChestBaseItemId(GameTitle::MM6, ITEM_TREASURE_LEVEL_6, weights, generated, 17, &collected));
+}
+
 UNIT_TEST(MM6ChestGenerationGuard, BasePickerFailsClosedForInvalidInputsAndMM7) {
     std::array<int, 399> weights{};
     weights[4] = 3;
@@ -432,4 +466,30 @@ UNIT_TEST(MM6ChestGenerationGuard, SafeDirectArtifactPolicyCapsUnionAndRejectsMa
     owned[12] = 0;
     generated[12] = 2;
     EXPECT_FALSE(mm6::pickDirectChestArtifactSafePolicy(GameTitle::MM6, owned, generated, 17));
+}
+
+UNIT_TEST(MM6ChestGenerationGuard, SafeDirectArtifactPolicyUnderAllArtifactsSkipsOwnedAndCollected) {
+    // Under the All Artifacts mod the direct picker has no cap and skips what the party carries or collected, not what
+    // was generated.
+    std::array<std::uint8_t, 30> owned{};
+    std::array<std::uint8_t, 30> generated{};
+    std::array<std::uint8_t, 30> collected{};
+    for (int i = 0; i < 12; ++i)
+        generated[i] = 1;
+    owned[12] = 1;
+    auto uncapped = mm6::pickDirectChestArtifactSafePolicy(GameTitle::MM6, owned, generated, 0, &collected);
+    ASSERT_TRUE(uncapped.has_value());
+    EXPECT_FALSE(uncapped->capped);
+    EXPECT_EQ(uncapped->candidateCount, 29);
+    EXPECT_EQ(uncapped->itemId, 409);
+    EXPECT_EQ(uncapped->generatedArtifactFlags, generated);  // 409 was generated before and never collected.
+
+    collected[9] = 1;
+    auto skipped = mm6::pickDirectChestArtifactSafePolicy(GameTitle::MM6, owned, generated, 0, &collected);
+    ASSERT_TRUE(skipped.has_value());
+    EXPECT_EQ(skipped->candidateCount, 28);
+    EXPECT_EQ(skipped->itemId, 411);
+
+    collected[9] = 2;
+    EXPECT_FALSE(mm6::pickDirectChestArtifactSafePolicy(GameTitle::MM6, owned, generated, 0, &collected));
 }

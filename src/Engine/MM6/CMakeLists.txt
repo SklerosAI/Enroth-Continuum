@@ -89,6 +89,7 @@ add_library(engine_mm6_save_runtime STATIC MM6CoreSaveRuntime.cpp MM6CoreSaveRun
     MM6MapTransition.cpp MM6MapTransition.h
     MM6ParkedMapSection.cpp MM6ParkedMapSection.h
     MM6MapTimerSection.cpp MM6MapTimerSection.h
+    MM6ArtifactCollectionSection.cpp MM6ArtifactCollectionSection.h MM6ArtifactCollection.h
     MM6SessionSave.cpp MM6SessionSave.h
     MM6ScopedNewGameSave.cpp MM6ScopedNewGameSave.h
     MM6PartyDeath.cpp MM6PartyDeath.h MM6NewDay.h
@@ -267,6 +268,7 @@ if(OE_BUILD_TESTS)
         Tests/MM6OutdoorBorderConfirmation_ut.cpp
         Tests/MM6ParkedMapSection_ut.cpp
         Tests/MM6MapTimerSection_ut.cpp
+        Tests/MM6ArtifactCollectionSection_ut.cpp
         Tests/MM6MapEnumFunctions_ut.cpp
         Tests/MM6V5OutdoorDecorationSource_ut.cpp
         Tests/MM6V5DerivedActorNames_ut.cpp

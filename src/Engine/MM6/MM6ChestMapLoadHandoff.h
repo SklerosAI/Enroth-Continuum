@@ -19,6 +19,7 @@ struct ChestMapLoadOwners {
     std::vector<Chest> chests;
     std::uint32_t rngState = 0;
     std::array<std::uint8_t, 30> generatedArtifactFlags = {};
+    std::optional<std::array<std::uint8_t, 30>> collectedArtifactFlags; // Set under the All Artifacts mod.
 };
 
 struct ChestMapLoadCandidate {
@@ -50,6 +51,7 @@ inline std::optional<ChestMapLoadCandidate> stageChestMapLoadHandoff(
     input.records = owners.records;
     input.partyOwnedArtifactFlags = partyOwnedArtifactFlags;
     input.generatedArtifactFlags = owners.generatedArtifactFlags;
+    input.collectedArtifactFlags = owners.collectedArtifactFlags;
     const auto generated = stageChestRecordGeneration(input, table);
     if (!generated)
         return std::nullopt;

@@ -203,3 +203,15 @@ void PrivatePortraits::releaseRenderIds() {
 }
 
 }  // namespace mm7::mods
+
+namespace mm6::mods {
+
+bool allArtifactsEnabled(GameTitle title, const char *flag) {
+    return title == GameTitle::MM6 && flag && std::string_view(flag) == "1";
+}
+
+bool allArtifactsEnabled(GameTitle title) {
+    return allArtifactsEnabled(title, std::getenv("ENROTH_MM6_ALL_ARTIFACTS"));
+}
+
+}  // namespace mm6::mods

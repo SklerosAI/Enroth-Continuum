@@ -175,12 +175,9 @@ inline std::optional<ChestFinalizedItem> finalizeChestAnyItem(
     if (tier < 1 || tier > 6 || base.drawsConsumed < 2)
         return std::nullopt;
 
-    int generatedCount = 0;
-    for (std::uint8_t flag : base.generatedArtifactFlags) {
+    for (std::uint8_t flag : base.generatedArtifactFlags)
         if (flag > 1)
             return std::nullopt;
-        generatedCount += flag;
-    }
 
     ChestFinalizedItem result;
     result.itemId = base.itemId;
@@ -189,8 +186,7 @@ inline std::optional<ChestFinalizedItem> finalizeChestAnyItem(
     result.generatedArtifactFlags = base.generatedArtifactFlags;
 
     if (base.itemId >= 400 && base.itemId <= 429) {
-        if (tier != 6 || base.drawsConsumed != 2 || generatedCount > 13 ||
-            !base.generatedArtifactFlags[base.itemId - 400])
+        if (tier != 6 || base.drawsConsumed != 2 || !base.generatedArtifactFlags[base.itemId - 400])
             return std::nullopt;
         return result;  // The original artifact success exits before regular field writes.
     }

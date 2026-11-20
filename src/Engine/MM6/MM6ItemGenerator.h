@@ -194,13 +194,16 @@ inline std::optional<ChestFinalizedItem> finalizePickedItem(const ItemTable &tab
  * @param treasureLevel                 Treasure level 1..6.
  * @param generatedArtifactFlags        Generated flags of artifacts 400..429.
  * @param rngState                      MM6 gameplay LCG state.
+ * @param collectedArtifactFlags        Collected flags of artifacts 400..429 under the All Artifacts mod, or `nullptr`.
+ *                                      See `pickChestBaseItemId`.
  * @return                              Generated item, or `std::nullopt` where the original would read outside its
  *                                      tables or divide by zero.
  */
 inline std::optional<ChestFinalizedItem> generateAnyItem(GameTitle title, const ItemTable &table,
                                                          ItemTreasureLevel treasureLevel,
                                                          const std::array<std::uint8_t, 30> &generatedArtifactFlags,
-                                                         std::uint32_t rngState) {
+                                                         std::uint32_t rngState,
+                                                         const std::array<std::uint8_t, 30> *collectedArtifactFlags = nullptr) {
     const int tier = std::to_underlying(treasureLevel);
     if (title != GameTitle::MM6 || tier < 1 || tier > 6)
         return std::nullopt;
@@ -208,7 +211,7 @@ inline std::optional<ChestFinalizedItem> generateAnyItem(GameTitle title, const 
     std::array<int, 399> weights{};
     for (int id = 1; id <= 399; ++id)
         weights[id - 1] = table.items[static_cast<ItemId>(id)].uChanceByTreasureLvl[treasureLevel];
-    const auto base = pickChestBaseItemId(title, treasureLevel, weights, generatedArtifactFlags, rngState);
+    const auto base = pickChestBaseItemId(title, treasureLevel, weights, generatedArtifactFlags, rngState, collectedArtifactFlags);
     if (!base)
         return std::nullopt;
     if (base->itemId >= 400)
@@ -232,6 +235,8 @@ inline std::optional<ChestFinalizedItem> generateAnyItem(GameTitle title, const 
  * @param kindRoll                      Roll for a type or skill group, MM6.exe's or the GrayFace patch's.
  * @param generatedArtifactFlags        Generated flags of artifacts 400..429.
  * @param rngState                      MM6 gameplay LCG state.
+ * @param collectedArtifactFlags        Collected flags of artifacts 400..429 under the All Artifacts mod, or `nullptr`.
+ *                                      See `pickChestBaseItemId`.
  * @return                              Generated item, or `std::nullopt` where the original would read outside its
  *                                      tables or divide by zero.
  */
@@ -239,13 +244,14 @@ inline std::optional<ChestFinalizedItem> generateItem(GameTitle title, const Ite
                                                       ItemTreasureLevel treasureLevel, RandomItemType requestedKind,
                                                       ItemKindRoll kindRoll,
                                                       const std::array<std::uint8_t, 30> &generatedArtifactFlags,
-                                                      std::uint32_t rngState) {
+                                                      std::uint32_t rngState,
+                                                      const std::array<std::uint8_t, 30> *collectedArtifactFlags = nullptr) {
     const int tier = std::to_underlying(treasureLevel);
     const int kind = std::to_underlying(requestedKind);
     if (title != GameTitle::MM6 || tier < 1 || tier > 6 || kind < 0 || kind > 255)
         return std::nullopt;
     if (requestedKind == RANDOM_ITEM_ANY)
-        return generateAnyItem(title, table, treasureLevel, generatedArtifactFlags, rngState);
+        return generateAnyItem(title, table, treasureLevel, generatedArtifactFlags, rngState, collectedArtifactFlags);
 
     for (std::uint8_t flag : generatedArtifactFlags)
         if (flag > 1)
@@ -282,10 +288,12 @@ struct StagedTitleItem {
  * @param treasureLevel                 Treasure level 1..6.
  * @param requestedKind                 Requested item kind.
  * @param kindRoll                      Roll for a type or skill group, MM6.exe's or the GrayFace patch's.
+ * @param collectedArtifactFlags        Collected flags of artifacts 400..429 under the All Artifacts mod, or `nullptr`.
  * @return                              Staged item and title state. Throws if the state isn't ready or the original
  *                                      generator would fail.
  */
 StagedTitleItem stageTitleItem(const ChestTitleState &state, const ItemTable &table, ItemTreasureLevel treasureLevel,
-                               RandomItemType requestedKind, ItemKindRoll kindRoll);
+                               RandomItemType requestedKind, ItemKindRoll kindRoll,
+                               const std::array<std::uint8_t, 30> *collectedArtifactFlags = nullptr);
 
 } // namespace mm6

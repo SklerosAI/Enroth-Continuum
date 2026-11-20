@@ -8,8 +8,7 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 
 ## MM6: campaign and gates
 
-- **Chain C7 to C9.** C7 (Tomb of VARN, Control Cube) passed only on a provisional C6 fixture and is parked on
-  `claude/mm6-chain-c7`. C8 (the NPC 12 release through houses 168, 553 and 554) and a C9 finale chapter are not
+- **Chain C8 and C9.** C8 (the NPC 12 release through houses 168, 553 and 554) and a C9 finale chapter are not
   written. `test/Bin/GameTest/MM6CampaignChain.cpp`.
 - **Owner sessions.** The working gate needs visible owner play beyond New Sorpigal: travel, a later dungeon, chain
   checkpoints and the ending.

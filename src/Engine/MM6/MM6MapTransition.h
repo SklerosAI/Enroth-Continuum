@@ -69,7 +69,8 @@ void leaveMap(MapId target);
 void restoreParkedMap(std::string_view deltaName, bool respawned);
 
 /**
- * Forgets every parked map and when the maps' periodic timers last went off, for a new or loaded game.
+ * Forgets every parked map, when the maps' periodic timers last went off and the All Artifacts ledger, for a new or
+ * loaded game.
  */
 void forgetParkedMaps();
 

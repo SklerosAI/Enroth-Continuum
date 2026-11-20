@@ -15,6 +15,7 @@
 #include "Engine/Graphics/Indoor.h"
 #include "Engine/Graphics/LocationFunctions.h"
 #include "Engine/Graphics/Outdoor.h"
+#include "Engine/MM6/MM6ArtifactCollection.h"
 #include "Engine/MM6/MM6ChestMapLoadHandoff.h"
 #include "Engine/MM6/MM6ChestTitleState.h"
 #include "Engine/MM6/MM6OutdoorWire.h"
@@ -32,6 +33,7 @@ struct ChestLiveBinding {
     ChestTitleState *titleState = nullptr;
     const MM6IndoorSnapshot *indoorBase = nullptr;  // Required only indoors.
     ChestOverflow overflow = ChestOverflow::Hidden;
+    const std::array<std::uint8_t, 30> *collectedArtifactFlags = nullptr; // Set under the All Artifacts mod.
 };
 
 struct ChestLiveCandidate {
@@ -90,6 +92,8 @@ inline std::optional<ChestLiveCandidate> stageChestLiveOwnerHandoff(
         owners.title = binding.title;
         owners.rngState = binding.titleState->lcgState;
         owners.generatedArtifactFlags = binding.titleState->generatedArtifactFlags;
+        if (binding.collectedArtifactFlags)
+            owners.collectedArtifactFlags = *binding.collectedArtifactFlags;
         MM6IndoorSnapshot indoorWire;
         OutdoorDeltaWire outdoorWire;
         if (binding.levelType == LEVEL_INDOOR) {
@@ -185,6 +189,7 @@ inline bool applyActiveChestLiveOwnerHandoff(
     binding.levelType = uCurrentlyLoadedLevelType;
     binding.chests = &vChests;
     binding.titleState = &chestTitleState();
+    binding.collectedArtifactFlags = collectedArtifactExclusion();
     if (binding.levelType == LEVEL_OUTDOOR && pOutdoor) {
         binding.deltaBytes = &pOutdoor->mm6DeltaBytes;
     } else if (binding.levelType == LEVEL_INDOOR && pIndoor &&

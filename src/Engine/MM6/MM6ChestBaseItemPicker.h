@@ -25,11 +25,25 @@ struct ChestBaseItemPick {
     std::array<std::uint8_t, 30> generatedArtifactFlags = {};
 };
 
+/**
+ * The base item stage of MM6.exe's any-item picker, with its tier-6 artifact roll.
+ *
+ * @param title                         Must be `GameTitle::MM6`.
+ * @param treasureLevel                 Treasure level 1..6.
+ * @param regularWeights                Weights of items 1..399 at that treasure level.
+ * @param generatedArtifactFlags        Generated flags of artifacts 400..429.
+ * @param rngState                      MM6 gameplay LCG state.
+ * @param collectedArtifactFlags        Collected flags of artifacts 400..429 under the All Artifacts mod. The roll
+ *                                      then skips these instead of the generated ones, with no cap of 13. `nullptr`
+ *                                      keeps MM6.exe's rule.
+ * @return                              Picked id with the next LCG state and generated flags, or `std::nullopt` for
+ *                                      weights or flags the original would misread.
+ */
 inline std::optional<ChestBaseItemPick> pickChestBaseItemId(
     GameTitle title, ItemTreasureLevel treasureLevel,
     const std::array<int, 399> &regularWeights,
     const std::array<std::uint8_t, 30> &generatedArtifactFlags,
-    std::uint32_t rngState) {
+    std::uint32_t rngState, const std::array<std::uint8_t, 30> *collectedArtifactFlags = nullptr) {
     if (title != GameTitle::MM6)
         return std::nullopt;
     const int tier = std::to_underlying(treasureLevel);
@@ -51,6 +65,10 @@ inline std::optional<ChestBaseItemPick> pickChestBaseItemId(
             return std::nullopt;
         artifactsGenerated += flag;
     }
+    if (collectedArtifactFlags)
+        for (std::uint8_t flag : *collectedArtifactFlags)
+            if (flag > 1)
+                return std::nullopt;
 
     ChestBaseItemPick result;
     result.generatedArtifactFlags = generatedArtifactFlags;
@@ -61,8 +79,9 @@ inline std::optional<ChestBaseItemPick> pickChestBaseItemId(
 
     // The original ANY path draws this candidate at every treasure tier.
     const int artifactIndex = draw() % 30;
-    if (tier == 6 && draw() % 100 < 5 &&
-        !generatedArtifactFlags[artifactIndex] && artifactsGenerated < 13) {
+    const bool artifactAvailable = collectedArtifactFlags ? !(*collectedArtifactFlags)[artifactIndex]
+                                                          : !generatedArtifactFlags[artifactIndex] && artifactsGenerated < 13;
+    if (tier == 6 && draw() % 100 < 5 && artifactAvailable) {
         result.itemId = 400 + artifactIndex;
         result.generatedArtifactFlags[artifactIndex] = 1;
         result.nextRngState = rngState;

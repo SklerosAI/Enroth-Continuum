@@ -121,10 +121,11 @@ record the way the original does.
 the MSVC `rand` recurrence `state * 214013 + 2531011` returning bits 16 to 30 (`nextChestRandom15`). That state and
 the generated-artifact flags live in `mm6::ChestTitleState` and are saved in `CHST`. Chests, shop stock and event item
 gifts all draw from it. Random monster loot rolled at death still goes through the inherited
-`ItemTable::generateItem`.
+`ItemTable::generateItem`, whose artifact branch gives MM6 message scrolls, see [Open questions](open-questions.md).
 
 - A request for any item first draws an artifact candidate at every treasure level. At level 6 it becomes that
-  artifact with a 5% chance, when it wasn't generated before and fewer than 13 artifacts were.
+  artifact with a 5% chance, when it wasn't generated before and fewer than 13 artifacts were. With the All Artifacts
+  mod it only needs not to be collected, see [Mods and the Atlas](mods-and-atlas.md#all-artifacts-for-mm6).
 - Otherwise the base item is a weighted pick over items 1 to 399 by treasure level. A roll of exactly 0 picks item 1,
   whatever its weight, as the original does.
 - A request for a kind (20 to 43) filters by the original's type or skill codes. Other kinds are an item type plus 1.

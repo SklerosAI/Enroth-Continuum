@@ -41,6 +41,13 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   skill bonus routine (0x483930) differs. Spear damage starts at Expert where MM6 needs Master, Expert spear gives no
   armor class, shields scale by (1, 1, 2) where MM6 has (1, 2, 3), leather by (1, 1, 2) where MM6 has 1, and the blaster
   multipliers differ. Weapon-skill hireling points ride on the same terms.
+- **Monster loot and ground treasure use the MM7 generator.** MM6.exe rolls a dead monster's random item and a random
+  ground treasure through its own item picker (calls to 0x448790 at 0x4218E0 and 0x456197, and the direct artifact
+  picker at 0x456240), which can give artifacts 400 to 429. The port's `Actor::LootActor` and `SpawnRandomTreasure`
+  call the inherited `ItemTable::generateItem` instead. Its artifact branch draws MM7's ids 500 to 528, which are
+  message scrolls in MM6: 20,000 level-6 rolls in an MM6 run gave 13 different scrolls, such as Letter from Zenofex,
+  and no artifact. The Great Wyrm, the Red, Blue and Gold Dragons, the Efreet and the Supreme Titan roll level-6
+  loot of any kind. The All Artifacts mod reaches neither path until they move to `mm6::generateItem`.
 - **Any-item roll.** Chests and `GiveItem` kind 0 keep MM6.exe's off-by-one, which favours item 1, because the GrayFace
   patch leaves that roll alone. Fixing it changes chest contents on every map. Owner's call. `mm6::generateAnyItem`.
 - **Retracting lava bridges.** The Supreme Temple of Baa's four lava bridges are doors 12 to 15. A monster on one when
@@ -68,6 +75,10 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 
 ## MM6: saves
 
+- **A party carrying an artifact can't save.** The inventory capture admits only common-rarity items
+  (`stagePlainItem` and its siblings), so a save refuses a party with any of artifacts 400 to 429 in a backpack or on a
+  paperdoll, with "This game can't be saved here yet". Seen in a game test that took artifact 415 from the hive and
+  saved. MM6 has no storage chest, so this hits every player who picks one up.
 - **Border autosave reopens the travel dialog.** The autosave on a walk across an outdoor border holds the party at
   the edge, so loading it opens the travel dialog again at once. Not checked against MM6.exe.
   `MM6InGameSave.BountyKillSurvivesAutosave` closes it with No.

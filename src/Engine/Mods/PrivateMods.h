@@ -53,3 +53,23 @@ class PrivatePortraits {
 };
 
 }  // namespace mm7::mods
+
+namespace mm6::mods {
+
+/**
+ * The MM6 All Artifacts mod lifts the cap on random artifacts and keeps an artifact eligible until the party collects
+ * it. Atlas sets `ENROTH_MM6_ALL_ARTIFACTS` for an MM6 launch from its own preference.
+ *
+ * @param title                         Running game title.
+ * @param flag                          Value of `ENROTH_MM6_ALL_ARTIFACTS`, or `nullptr` if it isn't set.
+ * @return                              Whether the mod is on, which takes MM6 and the exact string `1`.
+ */
+bool allArtifactsEnabled(GameTitle title, const char *flag);
+
+/**
+ * @param title                         Running game title.
+ * @return                              Whether `ENROTH_MM6_ALL_ARTIFACTS` turns the All Artifacts mod on.
+ */
+bool allArtifactsEnabled(GameTitle title);
+
+}  // namespace mm6::mods

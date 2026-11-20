@@ -36,6 +36,7 @@ function state(overrides) {
     recordingFinalizing: false, recordingEnabled: false, recordVideo: false, recordDiagnostics: false,
     recordingPath: '', recordingSession: '', modsEnabled: false, vendorRefreshOnEntry: false,
     mm6VendorRefreshOnEntry: false, allArtifactsStorage: false, chestReroll: false, monsterLootReroll: false,
+    mm6AllArtifacts: false,
     portraits: [false, false, false, false], portraitMoods: [{}, {}, {}, {}],
     armor: {saved: false}, ...overrides,
   };
@@ -116,6 +117,21 @@ assert.strictEqual(sent.at(-1), 'monster-loot-reroll-off');
 window.Atlas.receive(state({modsEnabled: true, monsterLootReroll: false}));
 document.getElementById('monster-loot-reroll-toggle').click();
 assert.strictEqual(sent.at(-1), 'monster-loot-reroll-on');
+
+// The MM6 All Artifacts toggle saves MM6's own choice, which applies without Private mods and leaves MM7's alone.
+const mm6ArtifactsToggle = document.getElementById('mm6-all-artifacts-toggle');
+const mm6ArtifactsStatus = document.getElementById('mm6-all-artifacts-status');
+window.Atlas.receive(state({mm6AllArtifacts: true}));
+assert.strictEqual(mm6ArtifactsToggle.textContent, 'Turn off');
+assert.strictEqual(mm6ArtifactsStatus.textContent, 'On for next MM6 launch');
+assert.strictEqual(document.getElementById('all-artifacts-storage-toggle').textContent, 'Turn on');
+mm6ArtifactsToggle.click();
+assert.strictEqual(sent.at(-1), 'mm6-all-artifacts-off');
+window.Atlas.receive(state({modsEnabled: true, allArtifactsStorage: true}));
+assert.strictEqual(mm6ArtifactsToggle.textContent, 'Turn on');
+assert.strictEqual(mm6ArtifactsStatus.textContent, 'Off · normal artifact cap');
+mm6ArtifactsToggle.click();
+assert.strictEqual(sent.at(-1), 'mm6-all-artifacts-on');
 
 // The vendor toggle saves a choice for each title. MM6 applies its own without Private mods, MM7 only with them.
 const vendorToggle = document.getElementById('vendor-refresh-toggle');

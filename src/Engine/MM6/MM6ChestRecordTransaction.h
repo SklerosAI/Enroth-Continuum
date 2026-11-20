@@ -30,6 +30,7 @@ struct ChestRecordGenerationInput {
     ChestRecordSet records = {};
     std::array<std::uint8_t, 30> partyOwnedArtifactFlags = {};
     std::array<std::uint8_t, 30> generatedArtifactFlags = {};
+    std::optional<std::array<std::uint8_t, 30>> collectedArtifactFlags; // Set under the All Artifacts mod, see `pickChestBaseItemId`.
 };
 
 struct ChestRecordGenerationResult {
@@ -183,8 +184,9 @@ inline std::optional<ChestRecordGenerationResult> stageChestRecordGeneration(
     };
     std::vector<PickedFields> picks;
     auto generated = input.generatedArtifactFlags;
+    const auto *collected = input.collectedArtifactFlags ? &*input.collectedArtifactFlags : nullptr;
     auto any = [&](ItemTreasureLevel tier, std::uint32_t state) -> std::optional<ChestOuterReward> {
-        const auto item = stageChestAnyFromItemTable(input.title, tier, table, generated, state);
+        const auto item = stageChestAnyFromItemTable(input.title, tier, table, generated, state, collected);
         if (!item)
             return std::nullopt;
         generated = item->generatedArtifactFlags;
@@ -193,7 +195,7 @@ inline std::optional<ChestRecordGenerationResult> stageChestRecordGeneration(
     };
     auto direct = [&](ItemTreasureLevel, std::uint32_t state) -> std::optional<ChestOuterReward> {
         const auto item = pickDirectChestArtifactSafePolicy(input.title, input.partyOwnedArtifactFlags,
-                                                            generated, state);
+                                                            generated, state, collected);
         if (!item)
             return std::nullopt;
         generated = item->generatedArtifactFlags;

@@ -24,7 +24,8 @@ struct DirectArtifactPick {
 // Explicit deterministic compatibility policy for a future live adapter.
 // It intentionally differs from the original direct picker: it uses real
 // title-specific ownership flags, excludes ID 430, applies a global union cap
-// of 13, and stages a generated flag after a successful grant.
+// of 13, and stages a generated flag after a successful grant. Under the All
+// Artifacts mod it skips owned and collected artifacts instead, with no cap.
 struct SafeDirectArtifactPick {
     int itemId = 0;
     int candidateCount = 0;
@@ -36,26 +37,28 @@ struct SafeDirectArtifactPick {
 
 inline std::optional<SafeDirectArtifactPick> pickDirectChestArtifactSafePolicy(
     GameTitle title, const std::array<std::uint8_t, 30> &partyOwnedFlags,
-    const std::array<std::uint8_t, 30> &generatedArtifactFlags, std::uint32_t rngState) {
+    const std::array<std::uint8_t, 30> &generatedArtifactFlags, std::uint32_t rngState,
+    const std::array<std::uint8_t, 30> *collectedArtifactFlags = nullptr) {
     if (title != GameTitle::MM6)
         return std::nullopt;
+    const std::array<std::uint8_t, 30> &excluded = collectedArtifactFlags ? *collectedArtifactFlags : generatedArtifactFlags;
     int occupiedCount = 0;
     for (int i = 0; i < 30; ++i) {
-        if (partyOwnedFlags[i] > 1 || generatedArtifactFlags[i] > 1)
+        if (partyOwnedFlags[i] > 1 || generatedArtifactFlags[i] > 1 || excluded[i] > 1)
             return std::nullopt;
         occupiedCount += partyOwnedFlags[i] || generatedArtifactFlags[i];
     }
     SafeDirectArtifactPick result;
     result.generatedArtifactFlags = generatedArtifactFlags;
     result.nextRngState = rngState;
-    if (occupiedCount >= 13) {
+    if (!collectedArtifactFlags && occupiedCount >= 13) {
         result.capped = true;
         return result;
     }
 
     std::array<int, 30> candidates = {};
     for (int i = 0; i < 30; ++i)
-        if (!partyOwnedFlags[i] && !generatedArtifactFlags[i])
+        if (!partyOwnedFlags[i] && !excluded[i])
             candidates[result.candidateCount++] = 400 + i;
     if (result.candidateCount == 0)
         return result;

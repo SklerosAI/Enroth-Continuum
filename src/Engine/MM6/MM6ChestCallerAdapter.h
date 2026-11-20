@@ -73,8 +73,8 @@ inline std::optional<ItemId> mm6ChestItemId(GameTitle title, int rawId) {
 inline std::optional<ChestFinalizedItem> stageChestAnyFromItemTable(
     GameTitle title, ItemTreasureLevel tier, const ItemTable &table,
     const std::array<std::uint8_t, 30> &generatedArtifactFlags,
-    std::uint32_t rngState) {
-    return generateAnyItem(title, table, tier, generatedArtifactFlags, rngState);
+    std::uint32_t rngState, const std::array<std::uint8_t, 30> *collectedArtifactFlags = nullptr) {
+    return generateAnyItem(title, table, tier, generatedArtifactFlags, rngState, collectedArtifactFlags);
 }
 
 }  // namespace mm6

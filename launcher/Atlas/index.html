@@ -98,6 +98,7 @@
         <div class="row"><div><strong>All Artifacts + Storage · MM7</strong><p>Keep randomly spawnable artifacts and relics eligible until you collect them, without the normal cap. Castle Harmondale's existing chests remain your persistent storage. This does not grant quest artifacts or add backpack slots.</p><span class="pill" id="all-artifacts-storage-status">Off</span></div><button class="secondary" id="all-artifacts-storage-toggle">Turn on</button></div>
         <div class="row"><div><strong>Reroll chest loot · MM7</strong><p>Show a small Reroll button in chests with random loot. Each press uses a fresh seed and the chest's original treasure-level range. Authored items stay put. Reroll ends when you take or deposit an item.</p><span class="pill" id="chest-reroll-status">Off</span></div><button class="secondary" id="chest-reroll-toggle">Turn on</button></div>
         <div class="row"><div><strong>Fortune's Turn · MM7</strong><p>Reroll random monster and click loot, monthly bounty targets, ore smith rewards, and successful Enchant Item results on weapons. A shared preview shows item details or the bounty reward. Use the dice checkbox beside the first portrait during play. Fixed drops and gold keep their normal behavior.</p><span class="pill" id="monster-loot-reroll-status">Off</span></div><button class="secondary" id="monster-loot-reroll-toggle">Turn on</button></div>
+        <div class="row"><div><strong>All Artifacts · MM6</strong><p>Lift MM6's cap of 13 random artifacts and relics, and keep each one eligible until you pick it up. MM6 has no storage chest, so artifacts stay in your backpacks. Applies on every Play MM6 launch.</p><span class="pill" id="mm6-all-artifacts-status">Off</span></div><button class="secondary" id="mm6-all-artifacts-toggle">Turn on</button></div>
       </div>
     </div>
     <div id="echoes" class="view"><div class="pagehero"><span class="eyebrow">Hall of Echoes</span><h1>Carry a legend forward.</h1><p>One day, a hero can begin a new campaign with a small trace of the old one. The original saves will stay untouched.</p></div>
@@ -160,6 +161,8 @@
     safeText('chest-reroll-status',state.chestReroll?(state.modsEnabled?'On for next MM7 launch':'Saved · enable Private mods for MM7'):'Off · normal chest loot');
     safeText('monster-loot-reroll-toggle',state.monsterLootReroll?'Turn off':'Turn on');
     safeText('monster-loot-reroll-status',state.monsterLootReroll?(state.modsEnabled?'On for next MM7 launch':'Saved · enable Private mods for MM7'):'Off · normal rewards');
+    safeText('mm6-all-artifacts-toggle',state.mm6AllArtifacts?'Turn off':'Turn on');
+    safeText('mm6-all-artifacts-status',state.mm6AllArtifacts?'On for next MM6 launch':'Off · normal artifact cap');
     const slots=document.getElementById('portrait-slots');slots.replaceChildren();
     for(let index=1;index<=4;index++){
       const slot=document.createElement('div'),label=document.createElement('b'),stateText=document.createElement('span'),choose=document.createElement('button'),preview=document.createElement('img');
@@ -223,6 +226,7 @@
   document.getElementById('all-artifacts-storage-toggle').addEventListener('click',()=>send(document.getElementById('all-artifacts-storage-toggle').textContent==='Turn off'?'all-artifacts-storage-off':'all-artifacts-storage-on'));
   document.getElementById('chest-reroll-toggle').addEventListener('click',()=>send(document.getElementById('chest-reroll-toggle').textContent==='Turn off'?'chest-reroll-off':'chest-reroll-on'));
   document.getElementById('monster-loot-reroll-toggle').addEventListener('click',()=>send(document.getElementById('monster-loot-reroll-toggle').textContent==='Turn off'?'monster-loot-reroll-off':'monster-loot-reroll-on'));
+  document.getElementById('mm6-all-artifacts-toggle').addEventListener('click',()=>send(document.getElementById('mm6-all-artifacts-toggle').textContent==='Turn off'?'mm6-all-artifacts-off':'mm6-all-artifacts-on'));
   document.getElementById('save-armor').addEventListener('click',()=>send('armor:'+document.getElementById('armor-id').value+':'+document.getElementById('armor-base').value+':'+document.getElementById('armor-bonus').value));
   document.getElementById('clear-armor').addEventListener('click',()=>send('clear-armor'));
   document.getElementById('credit-link').addEventListener('click',e=>{e.preventDefault();show('settings')});

@@ -1,7 +1,7 @@
 # Mods and the Atlas launcher
 
-This page covers The Atlas, the macOS launcher app that runs the fork's title-locked engines, and the private MM7 mods
-it can switch on.
+This page covers The Atlas, the macOS launcher app that runs the fork's title-locked engines, and the private mods it
+can switch on.
 
 ## The Atlas at a glance
 
@@ -60,11 +60,13 @@ Each title keeps its own profile so saves and configs never mix. An MM7 Atlas pr
   only when the Atlas profile has none. It then applies two one-time window defaults (resizable, and windowed on first
   run), tracked by a version number in preferences, so a player's later window choice is kept. A resizable window is the
   player's route to fullscreen, since macOS greys out the fullscreen button of a fixed-size window.
-- MM6 gets no recording and no private-mod settings. The child environment drops `ENROTH_MM7_MOD_DIR`,
+- MM6 gets no recording and no Private mods switch. The child environment drops `ENROTH_MM7_MOD_DIR`,
   `ENROTH_MM7_ALL_ARTIFACTS_STORAGE`, `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY` and `OPENENROTH_MM7_PATH`.
-- The one Atelier option MM6 honours is fresh vendor stock on entry. Atlas sets `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` to
-  `1` or `0` from the preference `mods.mm6.vendorRefreshOnEntry`, with or without Private mods. See
-  [Vendor refresh on entry](#vendor-refresh-on-entry).
+- MM6 honours two Atelier options of its own, set on every Play MM6 launch whatever the Private mods switch says:
+  - Fresh vendor stock on entry. Atlas sets `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` to `1` or `0` from the preference
+    `mods.mm6.vendorRefreshOnEntry`. See [Vendor refresh on entry](#vendor-refresh-on-entry).
+  - All Artifacts. Atlas sets `ENROTH_MM6_ALL_ARTIFACTS` to `1` or `0` from the preference `mods.mm6.allArtifacts`.
+    See [All Artifacts for MM6](#all-artifacts-for-mm6).
 - Play MM6 is a playtest entry. MM8 is a data-detection card only. There is no MM8 helper.
 
 ### Upstream OpenEnroth
@@ -151,25 +153,29 @@ node launcher/tests/atlas_page.js   # prints "Atlas page checks passed"
 discovery with stub executables (bundled first, external upstream fallback, disabled when absent), that upstream and MM6
 never share the fork's profile, the exact argument lists per build, and the child environment per build. In
 particular, upstream and MM6 receive no fork mod keys and no `OPENENROTH_MM7_PATH`, and vanilla MM7 gets the mod
-flags forced to `0`. MM6 gets `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` from its own choice, and MM7 and upstream never
-get it. `tests/atlas_page.js` runs the page script against a fake DOM and checks the play, recording and vendor
-controls.
+flags forced to `0`. MM6 gets `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` and `ENROTH_MM6_ALL_ARTIFACTS` from its own
+choices, and MM7 and upstream never get them. `tests/atlas_page.js` runs the page script against a fake DOM and checks
+the play, recording, vendor and artifact controls.
 
 ## MM7 private mods
 
-All private mods are opt-in, and all but fresh vendor stock on entry are MM7-only. MM6 has its own vendor variable,
-see [Vendor refresh on entry](#vendor-refresh-on-entry). They live in the user's home folder, never in the repository
-or in game archives. The engine sees them only through environment variables that the Atlas sets for a Play MM7 launch
-when the **Use private mods** switch is on (preference `mods.mm7.enabled`). With the switch off (Vanilla), the Atlas
-removes `ENROTH_MM7_MOD_DIR` and sets both boolean flags to `0`.
+All private mods are opt-in. Fresh vendor stock on entry and All Artifacts also exist for MM6, each with its own MM6
+variable, see [Vendor refresh on entry](#vendor-refresh-on-entry) and [All Artifacts for MM6](#all-artifacts-for-mm6).
+The MM7 mods live in the user's home folder, never in the repository or in game archives. The engine sees them only
+through environment variables that the Atlas sets for a Play MM7 launch when the **Use private mods** switch is on
+(preference `mods.mm7.enabled`). With the switch off (Vanilla), the Atlas removes `ENROTH_MM7_MOD_DIR` and sets both
+boolean flags to `0`.
 
 | Variable | Set by the Atlas when | Read in |
 |---|---|---|
 | `ENROTH_MM7_MOD_DIR` | Private mods on. Value is `~/Library/Application Support/Enroth Continuum/Mods/MM7` | `AssetsManager::getCustomPortrait`, `ItemTable::ApplyPrivateArmorOverrides` |
 | `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY` | Private mods on and preference `mods.vendorRefreshOnEntry` | `GUIWindow_Shop::onHouseEntered`, `GUIWindow_MagicGuild::onHouseEntered` |
 | `ENROTH_MM7_ALL_ARTIFACTS_STORAGE` | Private mods on and preference `mods.mm7.allArtifactsStorage` | `mm7::mods::allArtifactsStorageEnabled` |
+| `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.vendorRefreshOnEntry` | `mm6::vendorRefreshPolicy` |
+| `ENROTH_MM6_ALL_ARTIFACTS` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.allArtifacts` | `mm6::mods::allArtifactsEnabled` |
 
-Every reader checks `GameTitle::MM7` first, so the same variables do nothing in an MM6 run. The two boolean flags
+Every MM7 reader checks `GameTitle::MM7` first, so the MM7 variables do nothing in an MM6 run, and the MM6 readers
+check `GameTitle::MM6`. The two boolean flags
 accept only the exact string `1`. Values such as `true` or `01` leave the mod off. None of these settings is written
 into saves, the engine config or game archives, so turning a mod off restores vanilla rules on the next launch. A
 direct diagnostic launch of the engine may set the same variables by hand.
@@ -275,6 +281,46 @@ The mod adds no storage UI. Castle Harmondale's existing chests are the storage.
 item records and grid in the indoor map delta, and the game tests check that a boundary chest keeps its items and the
 collection ledger across a save round trip.
 
+### All Artifacts for MM6
+
+`ENROTH_MM6_ALL_ARTIFACTS` accepts only the exact string `1` (`mm6::mods::allArtifactsEnabled` in
+`src/Engine/Mods/PrivateMods.{h,cpp}`). It is the cap-removal and collected-uniqueness half of All Artifacts + Storage.
+MM6 has no storage half, see below.
+
+MM6's random artifacts are items 400 to 429, its 15 artifacts and 15 relics, all 30 of which the generator can roll
+(`items.txt` rarity, the `RNG % 30` candidate draw in MM6.exe's item picker). MM6.exe has two artifact pickers. The
+item picker gives the drawn candidate at tier 6 with a 5% chance when it wasn't generated and fewer than 13
+were, and a tier-7 chest marker goes to a direct picker that skips the artifacts the party carries. The port's safe
+direct picker also skips generated ones and caps their union at 13. With the mod on:
+
+- Both pickers skip collected artifacts instead of generated ones, with no cap (`pickChestBaseItemId`,
+  `pickDirectChestArtifactSafePolicy`). The direct picker still skips what the party carries. The draws are the same
+  as without the mod, so a roll that would land on an uncollected artifact gives it.
+- The generated flags in `CHST` are still kept up to date, so turning the mod off returns to MM6.exe's rule on the
+  next launch with an honest generated list.
+- The rule reaches chest generation (`applyActiveChestLiveOwnerHandoff`) and event GiveItem
+  (`mm6::giveEventItem`). Shops never ask the generator for any item, so they roll no artifact either way.
+- An artifact is collected when it reaches the cursor or a backpack, through `Party::recordArtifactAcquisition`. Taking
+  it from a chest puts it on the cursor. Throwing, selling or losing it later doesn't clear the mark. An artifact that
+  was rolled but never picked up stays eligible, and two copies can then exist in the world.
+- The first time the mod is consulted in a game, the ledger starts with the artifacts the party carries, in backpacks,
+  on paperdolls and on the cursor (`mm6::initializeArtifactCollection` in `MM6ArtifactCollection.h`).
+- Once all 30 are collected, rolls fall back to ordinary loot.
+
+The ledger is saved in the optional `ARTC` section of a v7 save, after `TIMR`, only once the mod started it, so a game
+that never ran the mod saves the same bytes as before. A load takes it from the save, and a new game or a save without
+`ARTC` starts empty. Once written, the ledger survives with the mod off. A first-map v5 save doesn't carry it, a game
+loaded from one rebuilds it from what the party carries. See [MM6 save format](mm6-save-format.md).
+
+MM6 has no storage the way MM7 has Castle Harmondale. The party owns no house, the port's MM6 chests only let items be
+taken out, and every MM6 map refills, which regenerates its chests (`mapstats.txt` refill days 1 to 672, all 67 maps).
+The four backpacks are the only place to keep artifacts, and a save today refuses a party that carries one, see
+[Open questions](open-questions.md). MM6 monsters and random ground treasure don't roll MM6 artifacts in the port yet
+either.
+
+The Atelier shows "All Artifacts · MM6" next to the MM7 toggle. It writes `mods.mm6.allArtifacts`, and Play MM6 passes
+it as `ENROTH_MM6_ALL_ARTIFACTS=1`, or `0` when off. The MM7 and upstream launches drop the variable.
+
 ## Source
 
 - [AtlasApp.swift](../launcher/AtlasApp.swift), [GameBuild.swift](../launcher/GameBuild.swift),
@@ -286,6 +332,10 @@ collection ledger across a save round trip.
   [OpenEnrothOptions.cpp](../src/Bin/OpenEnroth/OpenEnrothOptions.cpp) (title lock)
 - [PrivateMods.h](../src/Engine/Mods/PrivateMods.h), [PrivateMods.cpp](../src/Engine/Mods/PrivateMods.cpp),
   [PrivateMods_ut.cpp](../src/Engine/Mods/PrivateMods_ut.cpp)
+- [MM6ArtifactCollection.h](../src/Engine/MM6/MM6ArtifactCollection.h),
+  [MM6ArtifactCollectionSection.cpp](../src/Engine/MM6/MM6ArtifactCollectionSection.cpp),
+  [MM6ChestBaseItemPicker.h](../src/Engine/MM6/MM6ChestBaseItemPicker.h),
+  [MM6ChestDirectArtifactPicker.h](../src/Engine/MM6/MM6ChestDirectArtifactPicker.h)
 - [AssetsManager.cpp](../src/Engine/AssetsManager.cpp), [ItemTable.cpp](../src/Engine/Tables/ItemTable.cpp),
   [Item.cpp](../src/Engine/Objects/Item.cpp), [Party.cpp](../src/Engine/Party.cpp),
   [EntitySnapshots.cpp](../src/Engine/Snapshots/EntitySnapshots.cpp)
@@ -299,7 +349,8 @@ collection ledger across a save round trip.
   [GameTests_MM7HarmondaleStorage.cpp](../test/Bin/GameTest/GameTests_MM7HarmondaleStorage.cpp). The artifact tests
   skip unless `ENROTH_MM7_ALL_ARTIFACTS_STORAGE=1` is set (one control test skips when it is set). The vendor tests
   skip unless `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY=1` is set. The MM6 vendor tests in
-  [GameTests_MM6Houses.cpp](../test/Bin/GameTest/GameTests_MM6Houses.cpp) (`MM6Houses.*VendorRefresh*`) set their own
-  flag.
+  [GameTests_MM6Houses.cpp](../test/Bin/GameTest/GameTests_MM6Houses.cpp) (`MM6Houses.*VendorRefresh*`) and the MM6
+  artifact tests in [GameTests_MM6AllArtifacts.cpp](../test/Bin/GameTest/GameTests_MM6AllArtifacts.cpp) set their own
+  flag. The MM6 ledger's fresh-process pair runs in `tools/run_mm6_firstmap_gate.py`.
 
 See also: [Build setup](build-and-dev-setup.md), [Testing](testing.md), [MM7 status](mm7-status.md), [Upstream](upstream.md), [Source and privacy](source-and-privacy.md)

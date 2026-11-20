@@ -99,13 +99,24 @@ precondition(vanillaEnvironment["ENROTH_MM7_MONSTER_LOOT_REROLL"] == "0")
 precondition(GameBuild.fork.environment(base: base, modRoot: mods, vendorRefresh: false,
                                         allArtifactsStorage: false, chestReroll: false, monsterLootReroll: false)["ENROTH_MM7_MONSTER_LOOT_REROLL"] == "0")
 precondition(GameBuild.mm6.environment(base: base, modRoot: mods, vendorRefresh: true,
-                                       allArtifactsStorage: true, chestReroll: true, monsterLootReroll: true) == ["HOME": "/home", "ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY": "1"])
+                                       allArtifactsStorage: true, chestReroll: true, monsterLootReroll: true)
+             == ["HOME": "/home", "ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY": "1", "ENROTH_MM6_ALL_ARTIFACTS": "0"])
 precondition(GameBuild.mm6.environment(base: base, modRoot: nil, vendorRefresh: false,
-                                       allArtifactsStorage: false, chestReroll: false, monsterLootReroll: false) == ["HOME": "/home", "ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY": "0"])
-let mm6FlagBase = base.merging(["ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY": "1"]) { $1 }
-precondition(GameBuild.fork.environment(base: mm6FlagBase, modRoot: mods, vendorRefresh: true,
-                                        allArtifactsStorage: true, chestReroll: true, monsterLootReroll: true)["ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY"] == nil)
+                                       allArtifactsStorage: false, chestReroll: false, monsterLootReroll: false)
+             == ["HOME": "/home", "ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY": "0", "ENROTH_MM6_ALL_ARTIFACTS": "0"])
+precondition(GameBuild.mm6.environment(base: base, modRoot: nil, vendorRefresh: false, allArtifactsStorage: false,
+                                       chestReroll: false, monsterLootReroll: false, mm6AllArtifacts: true)
+             == ["HOME": "/home", "ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY": "0", "ENROTH_MM6_ALL_ARTIFACTS": "1"])
+let mm6FlagBase = base.merging(["ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY": "1", "ENROTH_MM6_ALL_ARTIFACTS": "1"]) { $1 }
+precondition(GameBuild.mm6.environment(base: mm6FlagBase, modRoot: nil, vendorRefresh: false,
+                                       allArtifactsStorage: false, chestReroll: false, monsterLootReroll: false)["ENROTH_MM6_ALL_ARTIFACTS"] == "0")
+let forkWithMM6Flags = GameBuild.fork.environment(base: mm6FlagBase, modRoot: mods, vendorRefresh: true,
+                                                  allArtifactsStorage: true, chestReroll: true, monsterLootReroll: true,
+                                                  mm6AllArtifacts: true)
+precondition(forkWithMM6Flags["ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY"] == nil)
+precondition(forkWithMM6Flags["ENROTH_MM6_ALL_ARTIFACTS"] == nil)
 precondition(GameBuild.upstream.environment(base: mm6FlagBase, modRoot: mods, vendorRefresh: true,
-                                            allArtifactsStorage: true, chestReroll: true, monsterLootReroll: true) == ["HOME": "/home"])
+                                            allArtifactsStorage: true, chestReroll: true, monsterLootReroll: true,
+                                            mm6AllArtifacts: true) == ["HOME": "/home"])
 
 print("MM7 profile path and game build checks passed")

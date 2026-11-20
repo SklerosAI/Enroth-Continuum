@@ -15,6 +15,7 @@
 #include "Utility/Exception.h"
 
 #include "MM7CampaignChain.h"
+#include "MM7MalwickCampaign.h"
 
 static DoorState wallsDoorState(int doorId) {
     auto door = std::ranges::find(pIndoor->doors, doorId, &BLVDoor::doorId);
@@ -132,6 +133,9 @@ GAME_TEST(MM7CampaignChain, DISABLED_Chapter4) {
                             MAP_WALLS_OF_MIST, MAP_CELESTE, MAP_CASTLE_LAMBENT));
     EXPECT_EQ(houseTape, tape(HOUSE_INVALID, HOUSE_CASTLE_LAMBENT_THRONE_ROOM, HOUSE_INVALID,
                               HOUSE_CASTLE_LAMBENT_THRONE_ROOM, HOUSE_INVALID));
+    ASSERT_FALSE(::testing::Test::HasFailure());
+
+    completeCampaignMalwickTapestry(game);
     ASSERT_FALSE(::testing::Test::HasFailure());
 
     saveCampaignChainSlot(game, 4);

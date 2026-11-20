@@ -188,7 +188,9 @@ respawn, `decorationGlobalEvent` picks the first event with MM6.exe's own odds. 
 
 Shipped maps have 20 chest records each, 4,204 bytes: a 4-byte header (id, flags), 140 item slots of 28 bytes, then
 140 signed 16-bit grid cells (`MM6ChestPlacement.h`, `MM6ChestGridWire.h`). MM6's map writer saves the whole in-memory
-record, grid included.
+record, grid included. MM6.exe reads only the first 81 cells, the 9 x 9 grid. Every other access to the grid indexes
+it by the chest's width times height, and the map loader and writer copy the record whole (checked in the disassembly
+around 0x41de90 to 0x41f4d1). The other 59 cells hold our later chest pages, see [Placement](#placement).
 
 ### Generation
 
@@ -212,7 +214,20 @@ The chest grid is 9 x 9 with fixed pixel offsets, as MM6's chest UI hard-codes. 
 metadata. Items are placed once in shuffled order, with a footprint of `(pixels - 14) / 32 + 1` cells per axis from the
 icon size. In MM6.exe an item that doesn't fit keeps its slot with no cell and is never shown. With
 `gameplay.fix_chest_overflow` (W13) such a chest is laid out again, artifacts and quest items first, then the most
-valuable, packed into rows when that shows more of them, and reopening it places what had no room.
+valuable, packed into rows when that shows more of them. What still has no room goes on a second page, and on further
+pages once that is full, each filled in row order, most valuable first. A chest whose items all fit has one page and
+looks and draws exactly as in MM6.exe.
+
+- The chest screen shows a page button above the exit button, the page number and MM6's `con_arrr` arrow, only while
+  the chest has more than one page. It turns to the next page, and from the last back to the first. Items are taken
+  from any page.
+- Each item on a later page takes one of the 59 spare grid cells, as `1 + slot + 140 * cell`, in page order, and the
+  first item of each page after the second is negated (`encodeChestPages`). So a chest holds 59 items past its first
+  page, on as many pages as they need. Anything past that would stay hidden, as in MM6.exe. Taking the last item of a
+  page closes the page up.
+- Real data, 1,000 rolls of every chest of all 67 maps, each placed with the chest random state the generation left:
+  35,512 of the 357,324 chests that got items have more than one page, on 52 maps. 790 have three pages, 24 have four,
+  none more. The most items past a first page is 19, and no item stays hidden.
 
 ### Traps
 
@@ -231,7 +246,7 @@ A chest is trapped when flag bits 0 and 1 are both set (`MM6ChestTrapDecision.h`
 ### Artifacts in unopened chests
 
 An artifact a chest's generation puts on the found list carries condition bit `0x400` in its item record until the
-chest's first opening places it in the grid. With `gameplay.fix_unopened_chest_artifacts` (W12, default on), a timed
+chest's first opening places it on one of the chest's pages. With `gameplay.fix_unopened_chest_artifacts` (W12, default on), a timed
 respawn takes the marked artifacts of the map's old chests off the found list before the chests generate again, so
 they can be rolled again. Event opcode 69 does the same for one chest.
 
@@ -246,7 +261,7 @@ they can be rolled again. Event opcode 69 does the same for one chest.
 | No border offer while flying (W9) | `gameplay.fix_flying_border_offer` |
 | Ground items don't leak between maps (W11) | By design, each map rebuilds from its own data |
 | Artifacts in unopened chests can be found again after a respawn (W12) | `gameplay.fix_unopened_chest_artifacts` |
-| Chest items that had no room show later (W13) | `gameplay.fix_chest_overflow` |
+| Chest items that have no room go on a second page (W13) | `gameplay.fix_chest_overflow` |
 | Sprite and texture animation frame timing (W24) | Shared code |
 
 Open: GrayFace's map data fixes (W29, the Free Haven Smuggler's Guild door, is in GrayFace's patched `Outc2.odm`).

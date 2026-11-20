@@ -201,7 +201,7 @@ Landed:
 | C25 | `fix_item_generation`. Shop stock and `GiveItem` kinds only, the any-item roll stays vanilla as in the patch. |
 | W28 | No flag. MM6.exe already refused paid shop services. The skill half waits for the shop item info box. |
 | W12 | `fix_unopened_chest_artifacts` for the respawn refund. Event opcode 69 `RefundChestArtifacts` runs without a flag, no shipped script uses it. |
-| W13 | `fix_chest_overflow`. Reorder by value, compaction and leftovers on reopening, only for a chest that overflows. |
+| W13 | `fix_chest_overflow`. Reorder by value and compaction, only for a chest that overflows, and what still has no room on a second page. Beyond GrayFace, whose reopen step pages replace. |
 
 Open:
 

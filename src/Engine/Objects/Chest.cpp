@@ -177,16 +177,26 @@ void takeMm6ChestItem(int chestId, Pointi mousePos) {
     if (inGrid.x < 0 || inGrid.y < 0)
         return;
     const Pointi gridPoint = inGrid / 32;
+    std::optional<FoundGold> found;
+    if (InventoryEntry entry = mm6::chestPageEntry(vChests[chestId], pGUIWindow_CurrentChest->page(), gridPoint); entry && entry->isGold())
+        found = pParty->foundGold(entry->goldAmount, GOLD_RECEIVE_SHARE);
     auto staged = mm6::stageChestOpenOwner(binding, chestId, rawTypes, mm6ChestIconSize, mm6::ChestInteractionAction::TakeGridItem,
-                                           gridPoint, std::nullopt, pGUIWindow_CurrentChest->page());
+                                           gridPoint, std::nullopt, pGUIWindow_CurrentChest->page(), pParty->GetGold(),
+                                           found ? std::optional(found->gold - found->hirelingShare) : std::nullopt);
     if (!staged)
-        return; // An empty cell takes nothing, and neither does gold.
+        return;
+
+    binding.chests->swap(staged->chests);
+    binding.deltaBytes->swap(staged->deltaBytes);
+    if (found) {
+        pParty->SetGold(staged->partyGold);
+        engine->_statusBar->setEvent(found->status);
+        return;
+    }
 
     Pointi offset = inGrid - gridPoint * 32;
     GraphicsImage *icon = assets->getIcon(staged->heldItem.GetIconName());
     offset -= Pointi(itemOffset(icon->width()), itemOffset(icon->height()));
-    binding.chests->swap(staged->chests);
-    binding.deltaBytes->swap(staged->deltaBytes);
     pParty->setHoldingItem(staged->heldItem, -offset);
 }
 

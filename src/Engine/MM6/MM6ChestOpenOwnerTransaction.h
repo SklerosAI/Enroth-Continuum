@@ -32,6 +32,7 @@ struct ChestOpenOwnerCandidate {
     std::uint32_t nextLcgState = 0;
     bool placed = false;
     Item heldItem; // The item taken out of the chest, for `ChestInteractionAction::TakeGridItem`.
+    int partyGold = 0; // With the gold pile taken out of the chest, if one was.
     std::optional<ChestTrapDecision> trap; // The disarm attempt, if the opening made one.
     bool trapFired = false; // The trap went off instead of the chest opening.
 };
@@ -53,7 +54,7 @@ inline bool chestMatchesOpenRecord(const Chest &chest, const ChestRecord &record
 }
 
 /**
- * Stages opening one MM6 chest, or taking a non-gold item off one of its pages, against the decoded active sidecar. No GUI,
+ * Stages opening one MM6 chest, or taking an item off one of its pages, against the decoded active sidecar. No GUI,
  * trap effect or inherited MM7 generator is invoked.
  *
  * Opening places the items first. A trapped chest then makes the active character's disarm attempt. A disarmed trap
@@ -69,13 +70,17 @@ inline bool chestMatchesOpenRecord(const Chest &chest, const ChestRecord &record
  * @param trapCheck                     Disarm inputs for opening a trapped chest. Without them a trapped chest
  *                                      refuses to open.
  * @param page                          Chest page of `gridPoint`, 0 for the first.
- * @return                              The chests, sidecar, chest RNG, taken item and trap outcome after the action,
- *                                      or empty if anything refuses.
+ * @param partyGold                     Party's gold before the action.
+ * @param netGoldCredit                 What the party keeps of the gold pile at `gridPoint`, empty unless the cell
+ *                                      holds one.
+ * @return                              The chests, sidecar, chest RNG, taken item, party gold and trap outcome after
+ *                                      the action, or empty if anything refuses.
  */
 inline std::optional<ChestOpenOwnerCandidate> stageChestOpenOwner(
     const ChestLiveBinding &binding, int chestIndex, std::span<const std::uint8_t> dchest,
     const ChestIconLookup &iconLookup, ChestInteractionAction action = ChestInteractionAction::OpenOnly,
-    Pointi gridPoint = {}, const std::optional<ChestTrapCheck> &trapCheck = std::nullopt, int page = 0) {
+    Pointi gridPoint = {}, const std::optional<ChestTrapCheck> &trapCheck = std::nullopt, int page = 0, int partyGold = 0,
+    std::optional<int> netGoldCredit = std::nullopt) {
     if (binding.title != GameTitle::MM6 || !binding.chests || binding.chests->size() != 20 ||
         !binding.deltaBytes || binding.deltaBytes->empty() || !binding.titleState ||
         !binding.titleState->ready || chestIndex < 0 || chestIndex >= 20 ||
@@ -114,6 +119,8 @@ inline std::optional<ChestOpenOwnerCandidate> stageChestOpenOwner(
         input.overflow = binding.overflow;
         input.page = page;
         input.gridPoint = gridPoint;
+        input.partyGold = partyGold;
+        input.netGoldCredit = netGoldCredit;
         const auto opened = stageChestFirstOpenInteraction(input);
         if (!opened || opened->itemTaken != (action == ChestInteractionAction::TakeGridItem))
             return std::nullopt;
@@ -145,6 +152,7 @@ inline std::optional<ChestOpenOwnerCandidate> stageChestOpenOwner(
         result.chests[chestIndex] = std::move(projection->chest);
         result.placed = opened->placed;
         result.heldItem = opened->heldItem;
+        result.partyGold = opened->partyGold;
         if (binding.levelType == LEVEL_INDOOR) {
             const auto &section = indoorWire.section(MM6IndoorSectionKind::Chests);
             std::string bytes(static_cast<const char *>(section.bytes.data()), section.bytes.size());

@@ -269,6 +269,10 @@ class GameConfig : public Config {
             "MM6 only. Shops refuse to buy an item with no value, a blaster, as the GrayFace patch does. "
             "In vanilla a weapon shop or the general store bought a blaster for 1 gold."};
 
+        Bool FixDoorStateSwitch = {this, "fix_door_state_switch", true,
+            "MM6 only. Event scripts can pass door action 3 to switch a door even while it's moving, as the GrayFace patch does. "
+            "In vanilla action 3 did nothing. No shipped script uses it, it is there for modded scripts."};
+
         Bool FixConditionSpells = {this, "fix_condition_spells", true,
             "Let Remove Fear, Cure Paralysis, Cure Insanity and Cure Weakness cure a condition up to 1 hour per skill point old at Expert and 1 day at Master, "
             "as their descriptions say and the GrayFace patch does. In vanilla MM6 they took 3 hours and 3 days. MM6 only."};

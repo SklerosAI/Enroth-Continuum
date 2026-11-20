@@ -44,12 +44,15 @@ six-week clock advance. Graphical Mac play and Strange Temple native exit
 placement parity remain open; see the [remaining-work board](../project/MM7_REMAINING_QUESTS_AND_AREAS.md).
 
 The later focused pre-audit round adds Dark Priest Sun altar and physical Lich
-jars writer/reader pairs, bringing the verified inventory to 27 of the owner's
+jars writer/reader pairs, bringing the verified inventory to 28 of the owner's
 48-pair cap. Two earlier/later owner MM7 slots passed copied-primary and
 copied-backup normal-menu Load probes; the originals were unchanged. The
 archive, map/EVT, spell, item and monster audit has not started. Resume it from
 the [2026-11-23 delta-first plan](../project/MM7_FULL_AUDIT_NEXT_WEEK_PLAN.md),
 reusing the existing ignored A0-A2 reports where source and data match.
+The corrected count includes the earlier Rogue pair. The full checkpoint sweep
+is now an explicit local pre-tag gate, while new or changed pairs are checked
+when authored; see the linked audit plan. No release tag was created or moved.
 
 ## ECv0.1.0 release checkpoint — 2026-11-16
 

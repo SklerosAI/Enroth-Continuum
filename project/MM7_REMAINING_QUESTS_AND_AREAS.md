@@ -98,7 +98,7 @@ Temple exit-placement parity check, and graphical play.
 
 ## Already durable; do not reopen without new evidence
 
-These twenty-two independent routes have exact production-Save and
+These twenty-three independent routes have exact production-Save and
 fresh-process normal-Load pairs with unchanged slot bytes:
 
 - Season's Stole
@@ -123,6 +123,7 @@ fresh-process normal-Load pairs with unchanged slot bytes:
 - Grand Temple of the Moon altar used before Rebecca's Light second Priest promotion
 - Grand Temple of the Sun altar used before Falk's Dark second Priest promotion
 - Four empty Lich jars physically taken from the Walls of Mist chest before Wynac's return
+- Markham Vase physically acquired before the Thief-to-Rogue hand-in
 
 They are independent route boundaries, not a continuous regional campaign.
 The current regional side/promotion selection is 14/14; there are eighteen
@@ -138,10 +139,12 @@ total to thirty exact checkpoint tests across fifteen routes. Lantern, Davrik
 and Griffin add six more exact tests, bringing that quest total to thirty-six
 tests across eighteen durable routes. The three Priest promotion checkpoints
 and physical Lich jars checkpoint add eight tests across four more routes.
-Including the five older technical save/campaign seams, the inventory is 27
+The Rogue checkpoint adds one further route and pair. Including the five older
+technical save/campaign seams, the inventory is 28
 writer/reader pairs, below the owner's cap of 48 pairs. The earlier full
 checkpoint sweep passed 23 pairs (46 separate processes); the four newer
-promotion pairs passed independently in eight separate processes. Copied-save
+promotion pairs and Rogue pair passed independently in ten separate processes.
+Copied-save
 primary and backup load probes also passed for two owner slots without changing
 their originals; these read-only probes are not writer/reader pairs.
 

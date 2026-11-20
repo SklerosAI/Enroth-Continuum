@@ -46,10 +46,10 @@ worktree at the end of each round. Claude's MM6 checkouts remain separate.
 
 ## Checkpoint and test budget
 
-The current verified inventory is 27 production-Save/fresh-process-normal-Load
+The current verified inventory is 28 production-Save/fresh-process-normal-Load
 writer/reader pairs, including the new Sun altar and physical Lich jars pairs.
 The cap is **48 pairs total** (96 individual writer/reader tests), leaving at
-most 21 additional pairs. A probe that only reads an existing save copy is
+most 20 additional pairs. A probe that only reads an existing save copy is
 not a checkpoint pair. Add a pair only for a distinct high-risk durable
 boundary found by the audit; do not fill the cap for its own sake. Reuse the
 marked disposable profile gate, normal menu Load, exact bytes and missing-save
@@ -58,9 +58,26 @@ admission checks.
 Run focused tests and changed-file lint after each finding. Run the full MM7
 headless GameTest target, unit target and `check_style` once at an integration
 milestone or after shared engine changes. Use the fresh Light/Dark C0-C7 chains
-when a campaign dependency changes. Do not rerun all 27 checkpoint pairs for
-an unrelated catalog edit. The normal-play, media and Atlas cutover checks in
+when a campaign dependency changes. Run a new or changed checkpoint pair once
+when authored. The full 28-pair sweep is an explicit local pre-tag gate after
+the release candidate is committed; it is not part of ordinary edit, build or
+CI runs. The normal-play, media and Atlas cutover checks in
 the audit checklist still require the owner's graphical playthrough.
+
+Before creating a new tag, build GameTest from the clean candidate revision,
+then run the local gate with the private MM7 data path. It discovers registered
+writer/reader pairs and gives each pair a fresh marked temporary profile. It
+stops on the first failure and never creates or moves a tag:
+
+```sh
+python3 tools/run_mm7_pretag_checkpoints.py --list
+python3 tools/run_mm7_pretag_checkpoints.py --candidate-tag ECvX.Y.Z \
+  --binary build/test/Bin/GameTest/OpenEnroth_GameTest \
+  --data-path "$OPENENROTH_MM7_PATH" --test-path test/Data
+```
+
+Keep this local because the game assets are private. A passing pre-tag sweep
+does not replace the graphical installed-app checks or the full MM7 audit.
 
 ### Checkpoint resource budget and memory optimization
 
@@ -81,9 +98,10 @@ checkpoint tests already use the null renderer. Avoid capturing unbounded
 subprocess output in Python memory; the current runners inherit stdout/stderr.
 Do not merge writer and reader into one process to reuse fixture memory: that
 would remove the restart and normal-Load guarantee the checkpoint measures.
-If an aggregate runner is added, schedule *whole pairs* in separate profiles,
-start with at most two concurrent pairs while MM6 work is active, and measure
-the largest campaign cases before raising that limit. A generic per-test
+The aggregate pre-tag runner runs one pair at a time while MM6 work is active.
+If parallelism is later needed, schedule *whole pairs* in separate profiles,
+start with at most two concurrent pairs, and measure the largest campaign
+cases before raising that limit. A generic per-test
 parallel runner must not reorder a reader ahead of its writer or share slots.
 
 Apple distinguishes resident pages from the dirty memory footprint in its

@@ -75,10 +75,16 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 
 ## MM6: saves
 
-- **A party carrying an artifact can't save.** The inventory capture admits only common-rarity items
-  (`stagePlainItem` and its siblings), so a save refuses a party with any of artifacts 400 to 429 in a backpack or on a
-  paperdoll, with "This game can't be saved here yet". Seen in a game test that took artifact 415 from the hive and
-  saved. MM6 has no storage chest, so this hits every player who picks one up.
+- **A party carrying an item it found lying on a map can't save.** Items a map's own data puts on the ground, the
+  herbs around New Sorpigal or the scroll in the hive, load through the shared `Item_MM7` reconstruct, which drops the
+  native record. Once the party picks one up the inventory capture finds no record and every save says "This game
+  can't be saved here yet". Seen with a throwaway game test that picked up an `oute3` herb and saved.
+- **Poison Resistance items from chests can't be saved.** A chest item's runtime view comes from the shared
+  `Item_MM7` reconstruct, which reads standard bonus 14, MM6's Poison Resistance, as Earth resistance instead of the
+  Body resistance `kStandardBonusAttributes` maps it to. A throwaway game test saw Earth on item 83 in the hive's
+  chest 1 with chest luck 0. `captureStandardItem` has no MM6 bonus for Earth, so a save with one carried should be
+  refused, not yet run through a save. The fix belongs in the chest runtime projection (`MM6ChestRuntimeProjection.h`),
+  whose record writer relies on the same reconstruct.
 - **Border autosave reopens the travel dialog.** The autosave on a walk across an outdoor border holds the party at
   the edge, so loading it opens the travel dialog again at once. Not checked against MM6.exe.
   `MM6InGameSave.BountyKillSurvivesAutosave` closes it with No.

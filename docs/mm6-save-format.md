@@ -166,11 +166,15 @@ Not held by a v7 save:
 
 - Lloyd's Beacons. There is no `BEAC` in the manifest, and `requireRawV2NoBeacons` refuses the save while any
   character has a beacon set. The player can't cast Lloyd's Beacon yet, so this doesn't come up in play.
-- Some carried items. `INVR` keeps each item's native record, and the capture (`captureBoundedInventory` in
-  `MM6BoundedInventoryProjection.h`) accepts only plain items, gold, items with a standard bonus and items with the
-  Antique special bonus, all of common rarity. A character carrying an item with any other special bonus, or an
-  artifact, makes the capture throw and the save is refused. Items on the ground and in chests are not limited this
-  way, they ride in `PRKM` and the map deltas.
+- Carried items without their native record. `INVR` keeps each item's 28-byte record, and the capture
+  (`captureBoundedInventory` in `MM6BoundedInventoryProjection.h`) writes it back for items without a bonus, gold,
+  artifacts and relics 400 to 429 (`MM6PlainItemProjection.h`), items with a standard bonus
+  (`MM6StandardItemProjection.h`) and items with any of the 58 special bonuses the generator gives
+  (`MM6SpecialItemProjection.h`). A capture writes back only the fields a projection maps, the identified and broken
+  bits, a wand's charges, a gold pile's amount and a standard bonus. Every other byte, the chest artifact condition
+  `0x400` among them, goes back as it came. An item that came without a record, or whose record the projections
+  don't accept, makes the capture throw and the save is refused. Items on the ground and in chests are not limited
+  this way, they ride in `PRKM` and the map deltas.
 - Generated NPCs and the gameplay random state. v7 has no `GNPC` or `RNGS`. Street NPCs come back the way they do on
   a map return.
 - Indoor face changes. v7 has no `IFOV`, so a face change survives only when the map's reload script reapplies it.

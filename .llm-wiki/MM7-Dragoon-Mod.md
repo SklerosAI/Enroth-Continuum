@@ -8,7 +8,9 @@ related: ["[[MM7-Atomic-Save-File]]", "[[MM7-Private-Portrait-Mod]]"]
 
 Atlas exposes an MM7-only, default-off Dragoon class family using the original portraits, voices and paperdolls.
 
-The implemented family is Dragoon (36), Lancer (37), Dragon Knight (38), Dread Lancer (39). Original class IDs and their data remain intact. The current user specification supersedes the broader [custom-class plan](../docs/plans/mm7-dragoon-alchemist-classes.md): only Dragoon is implemented, mandatory skills are Spear/Air with Archer's optional choices, Air reaches GM, Shield reaches Master, HP advances 5/7/9 and SP 2/4/6 using Intelligence. The supplied icon ships with Atlas and is staged into the private mod folder on enabled launches.
+The implemented family is Dragoon (36), Lancer (37), Dragon Knight (38), Dread Lancer (39). Original class IDs and their data remain intact. The current user specification supersedes the broader [custom-class plan](../docs/plans/mm7-dragoon-alchemist-classes.md): only Dragoon is implemented, mandatory skills are Spear/Air, Air reaches GM, Shield reaches Master, HP advances 5/7/9 and SP 2/4/6 using Intelligence. The supplied icon ships with Atlas and is staged into the private mod folder on enabled launches.
+
+The November 21 starting-skill correction supersedes the initial Archer-choice rule. The nine optional choices are Bow, Leather, Water, Repair, Meditation, Perception, Disarm Trap, Armsmaster and Learning; each is trainable by Dragoon. Fire is excluded. The family retains at least a five-SP pool even at low Intelligence, preventing the default Goblin's negative stat modifier from erasing its starting SP. Higher-level progression remains 2/4/6. Existing saves retain their current spent SP and can refill by normal rest/recovery.
 
 The Knight promotion adapter operates only in global events 71–76, including topic eligibility and class changes. Other class comparisons retain exact equality. Final promotions add independently resisted 10 Air and 10 Water damage to successful melee hits. There is no Aegis or other final ability. Blaster ceilings derive from Knight, while creation does not grant Blaster.
 

@@ -26,6 +26,17 @@ signature verification. The old app was removed without retaining a backup.
 Game data, profiles and saves were left outside the app. Visible installed-app
 interaction remains for owner playtesting.
 
+A further local update at commit `ed28816ff014387ce0f89fcde76b2f8097828118`
+expanded the click-loot popup to show the rolled item's full name, attack or
+armor stats, magic bonus, value and description on screen. The preview reads
+these values without marking the item identified. Its focused MM7 tests passed
+4/4, `check_style` passed, and a hidden OpenGL popup capture was inspected.
+The signed Release arm64 Atlas was reinstalled with this commit in its MM7
+build-info record and the same MM6 helper. The previous app was removed, while
+profiles and saves remained outside the bundle. The full 737-test suite above
+was run for the earlier themed update; it was not repeated for this popup-only
+follow-up. The `ECv0.1.1` tag remains fixed.
+
 ## ECv0.1.1 — MM7 patch — 2026-11-20
 
 `ECv0.1.1` is an annotated public tag on commit

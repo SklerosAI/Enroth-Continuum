@@ -3811,3 +3811,9 @@ Chronological record of wiki activity.
 - Moved the chest Reroll control into the chest's lower wooden border, gave the chest and click-loot controls brass and dark-wood styling, brightened loot text, and kept the world visible behind the stone loot popup. The owner's headless chest, popup and HUD captures were reviewed before the code commit.
 - The focused reroll tests passed 4/4; the full MM7 headless suite passed 737/737 and `check_style` passed. A revert-and-fail check proved that the popup-world capture detects removal of the drawing change.
 - Installed a signed Release arm64 Atlas with MM7 code commit `bfb4dba6038c57c7b9c5351602071d6268ffcbaf`; the carried MM6 helper matched the previous executable byte-for-byte. The old app was removed without backup. The `ECv0.1.1` tag was not moved, and local profiles and saves stayed outside the app.
+
+## [2026-11-20] update | MM7 loot preview item details installed
+- by: T-Burton-ND via codex
+- Expanded the click-loot popup to show the rolled item's full name, combat or item stats, magic bonus, value and description. The display reads the offer without changing its identified flag, so Take keeps the item's original state. A hidden OpenGL capture showed the text and item art together.
+- Focused click-loot tests passed 4/4, including a new text and identification-state assertion. `check_style` passed. The earlier 737-test full MM7 suite was not repeated for this popup-only change.
+- Rebuilt the Release arm64 MM7 helper from code commit `ed28816ff014387ce0f89fcde76b2f8097828118`, verified the signed staged bundle, then reinstalled and verified Atlas. The MM6 helper remained byte-identical, the old app and temporary stage were removed without backup, and local profiles and saves stayed outside the app. The `ECv0.1.1` tag remains unchanged.

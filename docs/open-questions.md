@@ -19,9 +19,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Spellbook state between tests.** `MM6GrayFaceShared.BuffDurationShowsMinutesNextToDays` leaves the global
   `spellbookSelectedSpell` at Protection from Fire. Run with only those two tests,
   `MM6Spellbook.SpellPictureSelectsThenCasts` then fails. The full `MM6*` run passes.
-- **Abandoned Temple flake.** `MM6Dungeons.AbandonedTemple` hit `assert(false)` in `BLV_ProcessPartyActions`
-  (`Indoor.cpp`) once in a suite run on 2026-11-20 and passed twice alone. The loot lane saw it fail once too. Ground
-  treasure and loot now vary with the new-game random seed, which may be why.
 - **King's Library panel.** The library's right panel draws red and grey stripes in the C8 capture. Not yet checked
   against MM6's art.
 

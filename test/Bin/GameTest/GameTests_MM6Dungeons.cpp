@@ -107,7 +107,7 @@ static bool standAwayFrom(EngineController &game, Vec3f target, float distance) 
         Vec3f position = target + distance * direction;
         int sectorId = 0;
         position.z = GetIndoorFloorZ(position + Vec3f(0, 0, 40), &sectorId);
-        if (sectorId != targetSector)
+        if (position.z == -30000 || sectorId != targetSector)
             continue;
         game.teleportTo(engine->_currentLoadedMapId, position, std::lround(std::atan2(-direction.y, -direction.x) * 180 / std::numbers::pi));
         return true;

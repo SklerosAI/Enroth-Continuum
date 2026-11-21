@@ -1447,8 +1447,12 @@ void GameUI_DrawPortraits() {
     if (current_screen_type == SCREEN_GAME && mm7::mods::monsterLootRerollEnabled(engine->gameTitle())) {
         render->FillRect({5, 423, 18, 18}, colorTable.Tacha);
         render->FillRect({7, 425, 14, 14}, colorTable.Cioccolato);
-        if (engine->config->gameplay.MonsterLootRerollInGame.value())
-            render->FillRect({10, 428, 8, 8}, colorTable.PaleCanary);
+        if (engine->config->gameplay.MonsterLootRerollInGame.value()) {
+            for (int i = 0; i < 5; ++i) {
+                render->FillRect({9 + 2 * i, 427 + 2 * i, 2, 2}, colorTable.PaleCanary);
+                render->FillRect({17 - 2 * i, 427 + 2 * i, 2, 2}, colorTable.PaleCanary);
+            }
+        }
         render->FillRect({5, 444, 18, 18}, colorTable.Tacha);
         render->FillRect({7, 446, 14, 14}, colorTable.Cioccolato);
         render->FillRect({10, 449, 2, 2}, colorTable.PaleCanary);

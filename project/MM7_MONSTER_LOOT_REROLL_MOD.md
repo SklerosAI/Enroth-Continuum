@@ -1,7 +1,7 @@
-# MM7 monster loot reroll mod
+# Fortune's Turn: MM7 random reward rerolls
 
 This is a separate, opt-in MM7 private mod. Turn on **Use private mods** and
-**Reroll click loot · MM7** in Atlas and relaunch MM7. The dice checkbox on
+**Fortune's Turn · MM7** in Atlas and relaunch MM7. The dice checkbox on
 the left edge of the game HUD, beside the first party portrait, switches the
 popup on or off immediately. The checkbox choice is saved in the MM7 game
 configuration; Atlas remains the master launch toggle.
@@ -29,6 +29,26 @@ other one-time effects, such as disease or a used-up pile, have already run
 and are not repeated by Reroll. A click that yields no random item proceeds
 normally. Scripted fixed items and gold do not open the popup.
 
+Monthly town-hall bounties use the same preview frame. It shows the chosen
+monster, its level, and the gold reward. Reroll chooses only from that hall's
+normal eligible monster pool and retains the monthly deadline. Keep or Escape
+leaves the current choice in place. A killed or already claimed bounty cannot
+be rerolled.
+
+The three original ore smith services also use this frame. The original
+script consumes one held ore once, then Fortune's Turn previews the random
+item at that ore's original treasure level and item type. The preview shows
+the item's art, stats, magic bonus, value, and description. Reroll changes
+only that output. Take or Escape puts the selected item in hand; neither
+repeats the ore consumption. Other scripted gifts keep their normal path.
+
+Successful Enchant Item casts on regular weapons show the same frame after
+the casting screen closes. The first enchantment has already succeeded and
+the spell's normal mana and recovery are charged once. Reroll chooses another
+special enchantment from the spell's original weapon and mastery pool on the
+same item. Keep or Escape leaves the current enchantment. Failed casts,
+broken items, armor, and deterministic weapon effects do not open this frame.
+
 Only corpses whose random reward has not yet been generated are eligible.
 Actors with carried items, stored items, stored gold or other pre-generated
 contents use normal MM7 looting. The chest mod is independent; MM6 and MM8 are
@@ -42,5 +62,6 @@ not alter the published ECv0.1.0 tag or existing saves. A newly started game
 must reach the lair before changing sessions for this convenience to apply.
 
 Headless tests cover the toggle boundary, deferred award, reroll, Escape,
-one-time Take, fixed-item exclusion, clicked script rewards and new-game dragon setup. Visible
-graphical placement and click acceptance remain for a normal play session.
+one-time Take, fixed-item exclusion, clicked script rewards, new-game dragon setup,
+the original ore smith transaction, bounty deadline and eligibility, and one-cast
+weapon enchanting. Visible graphical placement and click acceptance remain for a normal play session.

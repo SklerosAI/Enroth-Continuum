@@ -1160,7 +1160,7 @@ void UI_Create() {
     if (mm7::mods::monsterLootRerollEnabled(engine->gameTitle()))
         pPrimaryWindow->CreateButton("MonsterLoot_InGameToggle", {5, 423}, {20, 39}, BUTTON_TYPE_NORMAL, 0,
                                      UIMSG_MONSTER_LOOT_Toggle, 0, INPUT_ACTION_INVALID,
-                                     "Toggle monster loot reroll during play");
+                                     "Toggle Fortune's Turn during play");
     const Recti viewport = engine->gameTitle() == GameTitle::MM6 ? Recti(7, 8, 460, 343) : Recti(7, 8, 461, 344);
     pPrimaryWindow->CreateButton("Game_Viewport", viewport.topLeft(), {viewport.w - 1, viewport.h - 1}, BUTTON_TYPE_NORMAL, 0, UIMSG_MouseLeftClickInGame, 0);
 

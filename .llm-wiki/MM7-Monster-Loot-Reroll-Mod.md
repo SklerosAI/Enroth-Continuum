@@ -2,31 +2,36 @@
 type: synthesis
 up: "[[MM7-Chest-Reroll-Mod]]"
 related: ["[[MM7-Disposable-Save-Reload]]"]
-tags: [mm7, mods, monster, loot]
+tags: [mm7, mods, monster, loot, bounty, enchanting]
 ---
 
-# MM7 Click Loot Reroll Mod
+# MM7 Fortune's Turn Mod
 
-The separate [source contract](../project/MM7_MONSTER_LOOT_REROLL_MOD.md)
-defines an Atlas launch toggle and an in-game dice checkbox beside the first
-portrait. Eligible random monster rewards and random scripted rewards from
-clicked trash heaps, decorations and faces use a paused Reroll/Take popup.
-The current local build uses a stone popup over the visible world, with brass
-and dark-wood buttons and bright gold text. The HUD checkbox and dice have the
-same palette.
-The latest popup shows the roll's identified name, base combat or item stats,
-magic bonus, value and item description directly on screen. It does not
-change the rolled item's identified flag, so Take preserves its original
-inventory state. The focused display and loot tests passed 4/4; an offscreen
-capture showed the text fitting around item art.
-Preview generation restores the artifact ledger and does not award loot; Take
-awards the selected result once. Clicked events run once and their other effects
-are not repeated on reroll. Fixed rewards, gold and pre-generated contents stay
-on the inherited loot path. A new game with this mod active also arms a
-same-session dead dragon in Emerald Isle's Dragon's Lair for quick manual
-acceptance. Existing saves are not changed.
+The [source contract](../project/MM7_MONSTER_LOOT_REROLL_MOD.md) defines one
+Atlas launch toggle and one in-game dice checkbox for random monster and click
+loot, monthly town-hall bounties, original ore smith rewards, and successful
+Enchant Item casts on regular weapons. The checkbox now shows a gold X when
+enabled. The chest mod remains independent.
 
-Hidden OpenGL captures of the popup and HUD were inspected. Mouse acceptance
-in the installed app still requires graphical play.
+All eligible results use the same paused stone Reroll/Take frame, brass and
+dark-wood buttons, and bright gold text. Item results show art, name, combat
+or item stats, magic bonus, value and description without changing the item's
+identified flag. The bounty result shows its monster, level and gold reward.
+
+Monster previews defer the one-time corpse award. Clicked events run once and
+retain their other effects. Original global ore smith events 501-503 consume
+one held ore before the random output is intercepted; Take or Escape awards
+only the selected item. Bounty rerolls keep the hall's eligible monster pool
+and monthly deadline, and stop after a kill or reward. Weapon rerolls keep the
+successful spell's mana and recovery charge, original item, and its weighted
+special-enchantment pool. Fixed gifts, authored gold, failed casts and
+pre-generated contents stay on their existing paths.
+
+The focused headless mod gate passed 7/7. The full MM7 GameTest gate ran 741
+registered cases in six isolated workers with no failures; opt-in tests skip
+when their launch flags are off. `Issue2817` passed in that isolated run. A
+hidden OpenGL capture showed the gold X on the live HUD. Installed-app click
+acceptance for the three added flows remains for graphical play.
+
 See [MM7 Chest Reroll Mod](MM7-Chest-Reroll-Mod.md) for the independent chest
 option.

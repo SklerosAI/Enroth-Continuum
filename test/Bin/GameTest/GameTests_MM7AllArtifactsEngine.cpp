@@ -11,12 +11,14 @@
 #include "Engine/AssetsManager.h"
 #include "Engine/Engine.h"
 #include "Engine/Interaction.h"
+#include "Engine/Evt/Processor.h"
 #include "Engine/Localization.h"
 #include "Engine/Objects/Decoration.h"
 #include "Engine/Mods/PrivateMods.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/ItemEnumFunctions.h"
+#include "Engine/Objects/MonsterEnumFunctions.h"
 #include "Engine/Party.h"
 #include "Engine/Snapshots/EntitySnapshots.h"
 #include "Engine/Tables/ItemTable.h"
@@ -28,6 +30,7 @@
 #include "GUI/GUIFont.h"
 #include "GUI/UI/UIChest.h"
 #include "GUI/UI/UIMonsterLoot.h"
+#include "GUI/UI/Houses/TownHall.h"
 
 namespace {
 
@@ -290,6 +293,137 @@ GAME_TEST(MM7MonsterLootReroll, NewGameEmeraldDragonIsReadyForLoot) {
     }
     EXPECT_GT(dragons, 0);
     EXPECT_GT(deadDragons, 0);
+}
+
+GAME_TEST(MM7FortunesTurn, OreSmithConsumesOneOreAndUsesSharedItemPopup) {
+    if (!mm7::mods::monsterLootRerollEnabled(engine->gameTitle()))
+        GTEST_SKIP() << "Set ENROTH_MM7_MONSTER_LOOT_REROLL=1";
+    game.startNewGame();
+    engine->config->gameplay.MonsterLootRerollInGame.setValue(true);
+    ASSERT_TRUE(engine->_globalEventMap.hasEvent(501));
+    pParty->setHoldingItem(Item(ITEM_STALT_LACED_ORE));
+    current_screen_type = SCREEN_NPC_DIALOGUE;
+
+    runEvent(EvtContext(EVT_SOURCE_GLOBAL, 501), 8);
+
+    ASSERT_TRUE(monsterLootPopupOpen());
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_TRUE(gameTimer->isPaused());
+    auto oreTexts = tapes.drawnTexts();
+    test.startTaping();
+    game.tick();
+    EXPECT_CONTAINS(oreTexts.flatten().map([](const DrawnText &text) { return text.text; }), "Ore smith result");
+    game.pressGuiButton("MonsterLoot_Reroll");
+    game.tick();
+    EXPECT_EQ(pParty->pPickedItem.itemId, ITEM_NULL);
+    game.pressGuiButton("MonsterLoot_Take");
+    game.tick();
+    EXPECT_FALSE(monsterLootPopupOpen());
+    EXPECT_EQ(current_screen_type, SCREEN_NPC_DIALOGUE);
+    EXPECT_NE(pParty->pPickedItem.itemId, ITEM_NULL);
+    EXPECT_NE(pParty->pPickedItem.itemId, ITEM_STALT_LACED_ORE);
+    pParty->takeHoldingItem();
+
+    pParty->setHoldingItem(Item(ITEM_STALT_LACED_ORE));
+    runEvent(EvtContext(EVT_SOURCE_GLOBAL, 501), 8);
+    ASSERT_TRUE(monsterLootPopupOpen());
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    EXPECT_FALSE(monsterLootPopupOpen());
+    EXPECT_NE(pParty->pPickedItem.itemId, ITEM_NULL);
+    pParty->takeHoldingItem();
+
+    engine->config->gameplay.MonsterLootRerollInGame.setValue(false);
+    pParty->setHoldingItem(Item(ITEM_STALT_LACED_ORE));
+    runEvent(EvtContext(EVT_SOURCE_GLOBAL, 501), 8);
+    EXPECT_FALSE(monsterLootPopupOpen());
+    EXPECT_NE(pParty->pPickedItem.itemId, ITEM_NULL);
+    pParty->takeHoldingItem();
+    current_screen_type = SCREEN_GAME;
+}
+
+GAME_TEST(MM7FortunesTurn, BountyRerollKeepsMonthlyDeadlineAndHallPool) {
+    if (!mm7::mods::monsterLootRerollEnabled(engine->gameTitle()))
+        GTEST_SKIP() << "Set ENROTH_MM7_MONSTER_LOOT_REROLL=1";
+    game.startNewGame();
+    engine->config->gameplay.MonsterLootRerollInGame.setValue(true);
+    constexpr HouseId hall = HOUSE_TOWN_HALL_HARMONDALE;
+    pParty->monster_id_for_hunting[hall] = GUIWindow_TownHall::randomMonsterForHunting(hall);
+    pParty->monster_for_hunting_killed[hall] = false;
+    pParty->PartyTimes.bountyHuntNextGenTime[hall] = Time::fromMonths(pParty->GetPlayingTime().toMonths() + 1);
+    Time deadline = pParty->PartyTimes.bountyHuntNextGenTime[hall];
+    current_screen_type = SCREEN_HOUSE;
+
+    openBountyRerollPopup(hall);
+    ASSERT_TRUE(monsterLootPopupOpen());
+    auto bountyTexts = tapes.drawnTexts();
+    test.startTaping();
+    game.tick();
+    auto displayedBounty = bountyTexts.flatten().map([](const DrawnText &text) { return text.text; });
+    EXPECT_CONTAINS(displayedBounty, "Bounty hunt");
+    EXPECT_TRUE(std::ranges::any_of(displayedBounty, [](const std::string &text) {
+        return text.find("Reward:") != std::string::npos;
+    }));
+    for (int i = 0; i < 12; ++i) {
+        game.pressGuiButton("MonsterLoot_Reroll");
+        game.tick();
+        EXPECT_TRUE(isBountyHuntable(monsterTypeForMonsterId(pParty->monster_id_for_hunting[hall]), hall));
+        EXPECT_EQ(pParty->PartyTimes.bountyHuntNextGenTime[hall], deadline);
+        EXPECT_FALSE(pParty->monster_for_hunting_killed[hall]);
+    }
+    game.pressGuiButton("MonsterLoot_Take");
+    game.tick();
+    EXPECT_FALSE(monsterLootPopupOpen());
+    EXPECT_EQ(current_screen_type, SCREEN_HOUSE);
+    pParty->monster_for_hunting_killed[hall] = true;
+    openBountyRerollPopup(hall);
+    EXPECT_FALSE(monsterLootPopupOpen());
+    current_screen_type = SCREEN_GAME;
+}
+
+GAME_TEST(MM7FortunesTurn, WeaponEnchantRerollSpendsOneCastAndKeepsWeapon) {
+    if (!mm7::mods::monsterLootRerollEnabled(engine->gameTitle()))
+        GTEST_SKIP() << "Set ENROTH_MM7_MONSTER_LOOT_REROLL=1";
+    game.startNewGame();
+    engine->config->gameplay.MonsterLootRerollInGame.setValue(true);
+    Character &caster = pParty->pCharacters[3];
+    caster.inventory.clear();
+    Item &weapon = *caster.inventory.add(Pointi(0, 0), Item(ITEM_CHAMPION_SWORD));
+    ASSERT_GE(weapon.GetValue(), 250);
+    caster.pActiveSkills[SKILL_WATER] = CombinedSkillValue(10, MASTERY_GRANDMASTER);
+    caster.bHaveSpell[SPELL_WATER_ENCHANT_ITEM] = true;
+    int manaBefore = caster.mana;
+
+    game.castSpell(3, SPELL_WATER_ENCHANT_ITEM);
+    game.tick();
+    game.pressAndReleaseButton(BUTTON_LEFT, 30, 30);
+    game.tick();
+    ASSERT_NE(weapon.specialEnchantment, ITEM_ENCHANTMENT_NULL);
+    EXPECT_EQ(caster.mana, manaBefore - 15);
+    EXPECT_EQ(current_screen_type, SCREEN_CASTING);
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+    EXPECT_EQ(current_screen_type, SCREEN_MONSTER_LOOT);
+    ASSERT_TRUE(monsterLootPopupOpen());
+    auto enchantTexts = tapes.drawnTexts();
+    test.startTaping();
+    game.tick();
+    auto displayedEnchant = enchantTexts.flatten().map([](const DrawnText &text) { return text.text; });
+    EXPECT_CONTAINS(displayedEnchant, "Enchanted weapon");
+    EXPECT_TRUE(std::ranges::any_of(displayedEnchant, [](const std::string &text) {
+        return text.find(localization->str(LSTR_SPECIAL)) != std::string::npos;
+    }));
+    for (int i = 0; i < 8; ++i) {
+        game.pressGuiButton("MonsterLoot_Reroll");
+        game.tick();
+        EXPECT_EQ(weapon.itemId, ITEM_CHAMPION_SWORD);
+        EXPECT_NE(weapon.specialEnchantment, ITEM_ENCHANTMENT_NULL);
+        EXPECT_EQ(caster.mana, manaBefore - 15);
+    }
+    game.pressGuiButton("MonsterLoot_Take");
+    game.tick();
+    EXPECT_FALSE(monsterLootPopupOpen());
+    EXPECT_EQ(current_screen_type, SCREEN_GAME);
 }
 
 GAME_TEST(MM7AllArtifactsEngine, CollectsAllTwentyNineAndIgnoresVanillaCap) {

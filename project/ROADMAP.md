@@ -56,4 +56,5 @@ have passed play, export, import, and save/load checks.
 
 ## Optional mod backlog
 
-- **Instant loot reroll (MM6, MM7, MM8):** MM7 has separate chest and random click-loot mods. The latter covers eligible monster corpses and scripted random items from trash heaps, decorations and faces; see [chest reroll](MM7_CHEST_REROLL_MOD.md) and [click loot reroll](MM7_MONSTER_LOOT_REROLL_MOD.md). MM6/MM8 versions remain future work.
+- **Instant loot reroll (MM6, MM7, MM8):** MM7 has a separate chest mod and Fortune's Turn for random monster, click, ore smith, bounty and weapon-enchantment results; see [chest reroll](MM7_CHEST_REROLL_MOD.md) and [Fortune's Turn](MM7_MONSTER_LOOT_REROLL_MOD.md). MM6/MM8 versions remain future work.
+- **MM7 in-game mod panel:** Show the Atlas launch options and the live loot-reroll checkbox in a small read-only panel reached from the game menu. Keep the panel out of saves and keep Atlas as the master launch toggle. See [MM7 mod research](MM7_MODS_PLAN.md#next-opt-in-mm7-ideas).

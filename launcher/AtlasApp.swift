@@ -277,8 +277,8 @@ final class AtlasApp: NSObject, NSApplicationDelegate, WKScriptMessageHandler, W
         else if action == "all-artifacts-storage-off" { preferences.set(false, forKey: "mods.mm7.allArtifactsStorage"); sendState(message: "MM7 will use its normal artifact cap and chest behavior on the next launch.") }
         else if action == "chest-reroll-on" { preferences.set(true, forKey: "mods.mm7.chestReroll"); sendState(message: "MM7 chest reroll will apply on the next private-mods launch.") }
         else if action == "chest-reroll-off" { preferences.set(false, forKey: "mods.mm7.chestReroll"); sendState(message: "MM7 chests will use their normal loot on the next launch.") }
-        else if action == "monster-loot-reroll-on" { preferences.set(true, forKey: "mods.mm7.monsterLootReroll"); sendState(message: "MM7 click loot reroll will apply on the next private-mods launch.") }
-        else if action == "monster-loot-reroll-off" { preferences.set(false, forKey: "mods.mm7.monsterLootReroll"); sendState(message: "MM7 click loot will use normal rewards on the next launch.") }
+        else if action == "monster-loot-reroll-on" { preferences.set(true, forKey: "mods.mm7.monsterLootReroll"); sendState(message: "Fortune's Turn will apply on the next private-mods MM7 launch.") }
+        else if action == "monster-loot-reroll-off" { preferences.set(false, forKey: "mods.mm7.monsterLootReroll"); sendState(message: "Fortune's Turn is off for the next MM7 launch.") }
         else if action.hasPrefix("choose-portrait-") {
             if let slot = Int(action.dropFirst("choose-portrait-".count)), (1...4).contains(slot) { choosePortrait(slot) }
         }

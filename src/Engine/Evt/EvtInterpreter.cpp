@@ -70,6 +70,41 @@
 
 #include "Library/Logger/Logger.h"
 
+static bool isOriginalOreSmithReward(const EvtContext &context, std::span<const EvtInstruction> instructions,
+                                     const EvtInstruction &reward) {
+    if (engine->gameTitle() != GameTitle::MM7 || context.source != EVT_SOURCE_GLOBAL ||
+        context.eventId < 501 || context.eventId > 503 || reward.opcode != EVENT_GiveItem ||
+        reward.data.give_item_descr.item_id != ITEM_NULL)
+        return false;
+    const int oreIndex = (reward.step - 9) / 4;
+    if (reward.step < 9 || reward.step > 29 || reward.step != 9 + 4 * oreIndex ||
+        std::to_underlying(reward.data.give_item_descr.treasure_level) != 6 - oreIndex ||
+        std::to_underlying(reward.data.give_item_descr.treasure_type) != context.eventId - 481)
+        return false;
+
+    // The six original branches each gate a held ore, consume it once, then give one random item.
+    // A patched script with different reward semantics must use its own event behavior.
+    for (int i = 0; i < 6; ++i) {
+        const int ore = std::to_underlying(ITEM_STALT_LACED_ORE) - i;
+        const auto has = [&](int step, EvtOpcode opcode, bool isReward) {
+            return std::ranges::any_of(instructions, [&](const EvtInstruction &ir) {
+                if (ir.step != step || ir.opcode != opcode)
+                    return false;
+                if (isReward)
+                    return ir.data.give_item_descr.item_id == ITEM_NULL &&
+                           std::to_underlying(ir.data.give_item_descr.treasure_level) == 6 - i &&
+                           std::to_underlying(ir.data.give_item_descr.treasure_type) == context.eventId - 481;
+                return ir.data.variable_descr.type == VAR_PlayerItemInHands &&
+                       ir.data.variable_descr.value == ore;
+            });
+        };
+        if (!has(i, EVENT_Compare, false) || !has(8 + 4 * i, EVENT_Subtract, false) ||
+            !has(9 + 4 * i, EVENT_GiveItem, true))
+            return false;
+    }
+    return true;
+}
+
 /**
  * @offset 0x4465DF
  */
@@ -1851,6 +1886,11 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
             if (engine->gameTitle() == GameTitle::MM6) {
                 mm6::giveEventItem(ir.data.give_item_descr.treasure_level, ir.data.give_item_descr.treasure_type,
                                    ir.data.give_item_descr.item_id);
+                break;
+            }
+            if (isOriginalOreSmithReward(_context, _events, ir) && fortuneRerollActive() &&
+                (current_screen_type == SCREEN_HOUSE || current_screen_type == SCREEN_NPC_DIALOGUE)) {
+                openOreRerollPopup(ir.data.give_item_descr.treasure_level, ir.data.give_item_descr.treasure_type);
                 break;
             }
             if (ir.data.give_item_descr.item_id == ITEM_NULL &&

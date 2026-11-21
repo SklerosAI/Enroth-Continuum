@@ -21,6 +21,7 @@ class GUIWindow_TownHall : public GUIWindow_House {
      * @return   Text to show after the player has clicked on the "Bounty Hunt" dialogue option.
      */
     std::string bountyHuntingText();
+    void refreshBountyPreview();
 
     static MonsterId randomMonsterForHunting(HouseId townhall);
 

@@ -18,6 +18,7 @@
 #include "GUI/GUIWindow.h"
 #include "GUI/GUIFont.h"
 #include "GUI/UI/UIHouses.h"
+#include "GUI/UI/UIMonsterLoot.h"
 
 #include "Io/KeyboardActionMapping.h"
 
@@ -112,6 +113,7 @@ void GUIWindow_TownHall::houseDialogueOptionSelected(DialogueId option) {
     _currentDialogue = option;
     if (option == DIALOGUE_TOWNHALL_BOUNTY_HUNT) {
         bountyHuntingDialogueOptionClicked();
+        openBountyRerollPopup(houseId());
     } else if (option == DIALOGUE_TOWNHALL_PAY_FINE) {
         keyboardInputHandler->StartTextInput(TEXT_INPUT_NUMBER, 10, this);
     }
@@ -185,4 +187,8 @@ std::string GUIWindow_TownHall::bountyHuntingText() {
     // TODO(captainurist): what do we do with exceptions inside fmt?
     std::string name = fmt::format("{::}{}{::}", colorTable.PaleCanary.tag(), pMonsterStats->infos[_bountyHuntMonsterId].name, colorTable.White.tag());
     return fmt::sprintf(_bountyHuntText, name, 100 * pMonsterStats->infos[_bountyHuntMonsterId].level); // NOLINT: this is not ::sprintf.
+}
+
+void GUIWindow_TownHall::refreshBountyPreview() {
+    _bountyHuntMonsterId = pParty->monster_id_for_hunting[houseId()];
 }

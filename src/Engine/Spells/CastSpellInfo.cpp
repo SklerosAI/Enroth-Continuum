@@ -43,6 +43,7 @@
 #include "GUI/GUIMessageQueue.h"
 #include "GUI/UI/UIStatusBar.h"
 #include "GUI/UI/UISpell.h"
+#include "GUI/UI/UIMonsterLoot.h"
 
 #include "Io/Mouse.h"
 
@@ -3109,6 +3110,15 @@ void CastSpellInfoHelpers::castSpell() {
             pPlayer->SpendMana(uRequiredMana);
             setSpellRecovery(pCastSpell, recoveryTime);
             pAudioPlayer->playSpellSound(pCastSpell->uSpellID, false, SOUND_MODE_EXCLUSIVE);
+            if (pCastSpell->uSpellID == SPELL_WATER_ENCHANT_ITEM &&
+                engine->gameTitle() == GameTitle::MM7) {
+                InventoryEntry enchanted = pParty->pCharacters[pCastSpell->targetCharacterIndex].inventory.entry(
+                    pCastSpell->targetInventoryIndex);
+                if (enchanted && isWeapon(enchanted->type()) &&
+                    enchanted->specialEnchantment != ITEM_ENCHANTMENT_NULL)
+                    queueWeaponEnchantReroll(pCastSpell->targetCharacterIndex,
+                                             pCastSpell->targetInventoryIndex, spell_mastery);
+            }
         }
 
         pCastSpell->uSpellID = SPELL_NONE;

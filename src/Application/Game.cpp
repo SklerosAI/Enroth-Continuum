@@ -580,6 +580,7 @@ void Game::processQueuedMessages() {
                                         ptr_50C9A4_ItemToEnchant = nullptr;
                                     }
                                     onEscape();
+                                    openPendingWeaponEnchantRerollPopup();
                                     continue;
                                 case SCREEN_BOOKS:
                                     gameTimer->setPaused(false);

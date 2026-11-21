@@ -97,7 +97,7 @@
         <div class="row"><div><strong>Fresh vendor stock on entry · MM6 + MM7</strong><p>Re-randomize shops and guilds each time you enter. MM7 uses this on the next Private mods launch; MM6 keeps its own saved choice.</p><span class="pill" id="vendor-refresh-status">Off</span></div><button class="secondary" id="vendor-refresh-toggle">Turn on</button></div>
         <div class="row"><div><strong>All Artifacts + Storage · MM7</strong><p>Keep randomly spawnable artifacts and relics eligible until you collect them, without the normal cap. Castle Harmondale's existing chests remain your persistent storage. This does not grant quest artifacts or add backpack slots.</p><span class="pill" id="all-artifacts-storage-status">Off</span></div><button class="secondary" id="all-artifacts-storage-toggle">Turn on</button></div>
         <div class="row"><div><strong>Reroll chest loot · MM7</strong><p>Show a small Reroll button in chests with random loot. Each press uses a fresh seed and the chest's original treasure-level range. Authored items stay put. Reroll ends when you take or deposit an item.</p><span class="pill" id="chest-reroll-status">Off</span></div><button class="secondary" id="chest-reroll-toggle">Turn on</button></div>
-        <div class="row"><div><strong>Reroll click loot · MM7</strong><p>Preview random corpse and clicked trash or decoration items in a paused Reroll/Take popup. The dice checkbox beside the first portrait switches it on or off during play. Fixed drops and gold keep their normal behavior.</p><span class="pill" id="monster-loot-reroll-status">Off</span></div><button class="secondary" id="monster-loot-reroll-toggle">Turn on</button></div>
+        <div class="row"><div><strong>Fortune's Turn · MM7</strong><p>Reroll random monster and click loot, monthly bounty targets, ore smith rewards, and successful Enchant Item results on weapons. A shared preview shows item details or the bounty reward. Use the dice checkbox beside the first portrait during play. Fixed drops and gold keep their normal behavior.</p><span class="pill" id="monster-loot-reroll-status">Off</span></div><button class="secondary" id="monster-loot-reroll-toggle">Turn on</button></div>
       </div>
     </div>
     <div id="echoes" class="view"><div class="pagehero"><span class="eyebrow">Hall of Echoes</span><h1>Carry a legend forward.</h1><p>One day, a hero can begin a new campaign with a small trace of the old one. The original saves will stay untouched.</p></div>
@@ -158,7 +158,7 @@
     safeText('chest-reroll-toggle',state.chestReroll?'Turn off':'Turn on');
     safeText('chest-reroll-status',state.chestReroll?(state.modsEnabled?'On for next MM7 launch':'Saved · enable Private mods for MM7'):'Off · normal chest loot');
     safeText('monster-loot-reroll-toggle',state.monsterLootReroll?'Turn off':'Turn on');
-    safeText('monster-loot-reroll-status',state.monsterLootReroll?(state.modsEnabled?'On for next MM7 launch':'Saved · enable Private mods for MM7'):'Off · normal click loot');
+    safeText('monster-loot-reroll-status',state.monsterLootReroll?(state.modsEnabled?'On for next MM7 launch':'Saved · enable Private mods for MM7'):'Off · normal rewards');
     const slots=document.getElementById('portrait-slots');slots.replaceChildren();
     for(let index=1;index<=4;index++){
       const slot=document.createElement('div'),label=document.createElement('b'),stateText=document.createElement('span'),choose=document.createElement('button'),preview=document.createElement('img');

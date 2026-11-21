@@ -10,6 +10,10 @@ match the MM7 interface; the loot preview keeps the game world visible behind
 its stone frame.
 
 Clicking an eligible dead monster pauses the game and opens a loot preview.
+The preview shows the roll's full item name, visible item art, attack or armor
+stats, any magic bonus, value, and item description. Previewing does not
+identify the item in the party inventory; Take preserves the rolled item's
+original identified state.
 **Reroll** draws a fresh seed and repeats the monster's original gold dice,
 item-drop chance, treasure level and treasure type. **Take** grants exactly the
 displayed reward once and removes the corpse. Escape leaves the corpse intact

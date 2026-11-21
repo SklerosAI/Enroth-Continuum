@@ -2,13 +2,16 @@
 #include <memory>
 #include <ranges>
 #include <set>
+#include <string>
 #include <utility>
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
 
+#include "Engine/AssetsManager.h"
 #include "Engine/Engine.h"
 #include "Engine/Interaction.h"
+#include "Engine/Localization.h"
 #include "Engine/Objects/Decoration.h"
 #include "Engine/Mods/PrivateMods.h"
 #include "Engine/Objects/Actor.h"
@@ -22,6 +25,7 @@
 
 #include "GUI/GUIWindow.h"
 #include "GUI/GUIButton.h"
+#include "GUI/GUIFont.h"
 #include "GUI/UI/UIChest.h"
 #include "GUI/UI/UIMonsterLoot.h"
 
@@ -237,6 +241,35 @@ GAME_TEST(MM7MonsterLootReroll, PopupDefersAwardAndLeavesFixedDropsAlone) {
     fixed.monsterInfo.treasureDropChance = 100;
     fixed.monsterInfo.treasureLevel = ITEM_TREASURE_LEVEL_1;
     EXPECT_FALSE(fixed.canRerollLoot());
+}
+
+GAME_TEST(MM7MonsterLootReroll, PreviewShowsStatsAndDescriptionWithoutIdentifyingItem) {
+    game.startNewGame();
+    Item item(ITEM_BATTLE_AXE);
+    item.specialEnchantment = ITEM_ENCHANTMENT_SWIFT;
+    ASSERT_FALSE(item.IsIdentified());
+    ASSERT_FALSE(pItemTable->items[item.itemId].description.empty());
+    const bool timerWasPaused = gameTimer->isPaused();
+    auto popup = std::make_unique<GUIWindow_MonsterLoot>(ITEM_TREASURE_LEVEL_2, RANDOM_ITEM_ANY, item);
+    auto textTape = tapes.drawnTexts();
+    test.startTaping();
+
+    game.tick();
+
+    auto texts = textTape.flatten().map([](const DrawnText &text) { return text.text; });
+    EXPECT_CONTAINS(texts, item.GetIdentifiedName());
+    EXPECT_CONTAINS(texts, assets->pFontSmallnum->WrapText(
+        pItemTable->items[item.itemId].description, 290, 1));
+    EXPECT_TRUE(std::ranges::any_of(texts, [](const std::string &text) {
+        return text.find(localization->str(LSTR_DAMAGE)) != std::string::npos;
+    }));
+    EXPECT_TRUE(std::ranges::any_of(texts, [](const std::string &text) {
+        return text.find(localization->str(LSTR_SPECIAL)) != std::string::npos;
+    }));
+    EXPECT_FALSE(popup->offer().item.IsIdentified());
+    popup.reset();
+    current_screen_type = SCREEN_GAME;
+    gameTimer->setPaused(timerWasPaused);
 }
 
 GAME_TEST(MM7MonsterLootReroll, NewGameEmeraldDragonIsReadyForLoot) {

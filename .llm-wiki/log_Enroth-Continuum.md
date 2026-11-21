@@ -3805,3 +3805,9 @@ Chronological record of wiki activity.
 - Recorded the immutable annotated `ECv0.1.1` MM7 patch tag and exact source provenance. Master and the tag were pushed; the MM6 helper remains an owner playtest candidate and Claude's active MM6 branch was not merged.
 - All 28 fresh-process MM7 checkpoint pairs, both C0–C7 campaign chains and two hidden OpenGL captures passed before release. The inspected mod-enabled HUD frame showed the checkbox and dice mark.
 - Built and signed both title helpers and Atlas from the exact tagged source. The installed bundle matches the stage recursively and passes deep strict code-sign verification. The old installed app and app-only rollback copies were removed without a new backup; profiles and saves were preserved. Installed-app gameplay and graphical popup acceptance remain for owner playtesting.
+
+## [2026-11-20] update | MM7 themed reroll UI installed after 0.1.1
+- by: T-Burton-ND via codex
+- Moved the chest Reroll control into the chest's lower wooden border, gave the chest and click-loot controls brass and dark-wood styling, brightened loot text, and kept the world visible behind the stone loot popup. The owner's headless chest, popup and HUD captures were reviewed before the code commit.
+- The focused reroll tests passed 4/4; the full MM7 headless suite passed 737/737 and `check_style` passed. A revert-and-fail check proved that the popup-world capture detects removal of the drawing change.
+- Installed a signed Release arm64 Atlas with MM7 code commit `bfb4dba6038c57c7b9c5351602071d6268ffcbaf`; the carried MM6 helper matched the previous executable byte-for-byte. The old app was removed without backup. The `ECv0.1.1` tag was not moved, and local profiles and saves stayed outside the app.

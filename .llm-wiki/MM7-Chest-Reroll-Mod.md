@@ -9,6 +9,8 @@ tags: [mm7, mods, chests, save]
 
 The MM7-only private mod exposes a small Reroll button for unclaimed random
 chest loot while its Atlas toggle and Private mods are on.
+The current post-0.1.1 local build places a brass and dark-wood button in the
+lower wooden chest border.
 
 The [source contract](../project/MM7_CHEST_REROLL_MOD.md) defines the boundary.
 The engine retains each authored random marker in a hidden chest record and
@@ -19,16 +21,12 @@ draw of the normal stream. Fixed items and the chest's type, flags, trap and
 map state remain. Taking or depositing an item removes the hidden markers and
 ends rerolls for that chest, including after save/load.
 
-The snapshot round trip and focused headless chest test passed with the toggle
-on, including a rebuild after the final source edit (2/2). A combined run with
-All Artifacts + Storage passed its focused game tests. The Atlas page and
-Swift environment checks passed. The default full MM7 headless suite passed
-733/733; the native unit target and `check_style` passed. The installed Atlas
-bundle passed macOS signature verification and retained the previous MM6
-executable unchanged. Its previous version is kept in an ignored local rollback
-folder under `build/Atlas-MM7-Chest-Reroll/`.
-Visible installed-app interaction remains to be checked in normal graphical
-play; headless checks do not establish the button's appearance or mouse click.
+The snapshot round trip, focused chest tests and a headless click on the inset
+button passed. The current full MM7 headless suite passed 737/737 and
+`check_style` passed. A hidden OpenGL capture established placement and
+appearance in the MM7 chest. The installed Atlas passed signature verification
+and retained the previous MM6 executable unchanged. Visible installed-app
+interaction remains to be checked in normal graphical play.
 
 An older save's already-generated chest lacks marker provenance, so this mod
 does not offer a reroll for it until that map normally respawns. Monster loot,

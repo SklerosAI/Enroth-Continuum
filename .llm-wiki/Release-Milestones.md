@@ -7,6 +7,25 @@ related: ["[[Campaign-Status]]", "[[Runtime-Isolation]]", "[[MM7-Playtest-Record
 
 # Release Milestones
 
+## Local MM7 UI update after ECv0.1.1 — 2026-11-20
+
+The installed Atlas still reports 0.1.1, but its MM7 helper now contains the
+themed reroll controls from commit `bfb4dba6038c57c7b9c5351602071d6268ffcbaf`.
+The `ECv0.1.1` tag was not moved. The chest button sits inside the lower wooden
+frame, and the loot popup and HUD dice use MM7-style brass, dark wood and gold
+lettering. The popup shows the game world behind its stone frame. The MM6
+helper was carried forward byte-for-byte.
+
+The full MM7 headless suite passed 737/737, the focused reroll tests passed
+4/4, `check_style` passed, and hidden OpenGL captures of the chest, popup and
+HUD were inspected. A revert-and-fail check confirmed the popup-world capture
+fails when the drawing change is removed and passes when restored. The new
+Release arm64 MM7 helper was staged with a build-info record naming the
+post-tag commit; the staged and installed Atlas bundles passed deep strict
+signature verification. The old app was removed without retaining a backup.
+Game data, profiles and saves were left outside the app. Visible installed-app
+interaction remains for owner playtesting.
+
 ## ECv0.1.1 — MM7 patch — 2026-11-20
 
 `ECv0.1.1` is an annotated public tag on commit

@@ -25,7 +25,7 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 ## Project and provenance
 
 - [Project Overview](Project-Overview.md) — Fork scope, upstream authorship, and project goals
-- [Release Milestones](Release-Milestones.md) — Published ECv0.1.0 and ECv0.1.1 tags, installed-build provenance, verification and remaining playtest checks
+- [Release Milestones](Release-Milestones.md) — Published ECv0.1.0 and ECv0.1.1 tags, post-tag local MM7 UI update, installed-build provenance and remaining playtest checks
 - [Source and Privacy Boundary](Source-and-Privacy-Boundary.md) — Public source and private game-data rules
 
 ## Campaigns and runtime
@@ -39,8 +39,8 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 - [MM7 Mac Dependency Recipe](MM7-Mac-Dependency-Recipe.md) — Five tracked media-library sources build to nine static arm64 archives
 - [MM7 Clean Offline Build](MM7-Clean-Offline-Build.md) — One-command clean tracked-source MM7 and Atlas build under network denial, with focused headless controls
 - [MM7 Disposable Save and Reload](MM7-Disposable-Save-Reload.md) — Isolated Save/Load evidence, 28 checkpoint pairs, a local pre-tag gate, copied owner-save primary/backup probes and installed-candidate limits
-- [MM7 Chest Reroll Mod](MM7-Chest-Reroll-Mod.md) — MM7-only Atlas toggle and unclaimed chest-loot reroll boundary, source-marker persistence and playtest limit
-- [MM7 Click Loot Reroll Mod](MM7-Monster-Loot-Reroll-Mod.md) — independent Atlas toggle, in-game dice checkbox, random corpse and clicked script-item popup, and new-game dragon test setup
+- [MM7 Chest Reroll Mod](MM7-Chest-Reroll-Mod.md) — MM7-only Atlas toggle, inset chest button, source-marker persistence and playtest limit
+- [MM7 Click Loot Reroll Mod](MM7-Monster-Loot-Reroll-Mod.md) — independent Atlas toggle, themed in-game dice checkbox and random corpse or clicked script-item popup
 - [ECv0.1.1 Release Candidate](../project/ECV011_RELEASE_CANDIDATE.md) — proposed MM7 patch scope, MM6 playtest boundary and release gates; no tag created
 - [MM7 Scroll Cancellation](MM7-Scroll-Cancel.md) — Item-, actor- and character-target scroll return on cancelled targeting, focused integrated controls and remaining exit paths
 - [MM7 Playtest Recording](MM7-Playtest-Recording.md) — Atlas rolling video now retains the newest two minutes after every exit, alongside bounded diagnostics, protected clips and the remaining macOS permission gate

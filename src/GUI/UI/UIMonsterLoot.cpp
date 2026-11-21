@@ -16,6 +16,7 @@
 #include "Engine/Tables/ItemTable.h"
 #include "Engine/Timer.h"
 #include "Engine/Mods/PrivateMods.h"
+#include "GUI/UI/UIPopup.h"
 #include "Library/Random/MersenneTwisterRandomEngine.h"
 
 namespace {
@@ -89,27 +90,31 @@ GUIWindow_MonsterLoot::GUIWindow_MonsterLoot(ItemTreasureLevel level, RandomItem
 }
 
 void GUIWindow_MonsterLoot::Update() {
-    render->FillRect({0, 0, 640, 480}, colorTable.Black);
-    render->FillRect({115, 105, 410, 235}, colorTable.White);
-    render->FillRect({118, 108, 404, 229}, colorTable.NavyBlue);
-    DrawText(assets->pFontSmallnum.get(), {145, 125}, colorTable.White,
+    DrawPopupWindow(115, 105, 410, 235);
+    DrawText(assets->pFontArrus.get(), {145, 125}, colorTable.PaleCanary,
              isClickedLoot() ? "Found item" : pActors[_actorId].GetDisplayName(), frameRect);
-    DrawText(assets->pFontSmallnum.get(), {145, 170}, colorTable.White,
+    DrawText(assets->pFontLucida.get(), {145, 170}, colorTable.PaleCanary,
              _offer.gold ? "Gold: " + std::to_string(_offer.gold) : "No gold", frameRect);
     if (_offer.item.itemId == ITEM_NULL) {
-        DrawText(assets->pFontSmallnum.get(), {145, 205}, colorTable.White, "No item", frameRect);
+        DrawText(assets->pFontLucida.get(), {145, 205}, colorTable.PaleCanary, "No item", frameRect);
     } else {
-        DrawText(assets->pFontSmallnum.get(), {145, 205}, colorTable.White,
+        DrawText(assets->pFontLucida.get(), {145, 205}, colorTable.PaleCanary,
                  pItemTable->items[_offer.item.itemId].unidentifiedName, frameRect);
         render->DrawQuad2D(assets->getIcon(_offer.item.GetIconName()), {435, 195});
     }
-    render->FillRect({188, 295, 112, 30}, colorTable.White);
-    render->FillRect({190, 297, 108, 26}, colorTable.NavyBlue);
-    DrawText(assets->pFontSmallnum.get(), {209, 303}, colorTable.White, "Reroll", frameRect);
-    render->FillRect({340, 295, 112, 30}, colorTable.White);
-    render->FillRect({342, 297, 108, 26}, colorTable.NavyBlue);
-    DrawText(assets->pFontSmallnum.get(), {378, 303}, colorTable.White, "Take", frameRect);
-    DrawText(assets->pFontSmallnum.get(), {492, 116}, colorTable.White, "X", frameRect);
+    render->FillRect({188, 295, 112, 30}, colorTable.Tacha);
+    render->FillRect({190, 297, 108, 26}, colorTable.CarnabyTan);
+    render->FillRect({192, 299, 104, 22}, colorTable.Cioccolato);
+    DrawText(assets->pFontLucida.get(),
+             {192 + assets->pFontLucida->AlignText_Center(104, "Reroll"), 301},
+             colorTable.PaleCanary, "Reroll", frameRect);
+    render->FillRect({340, 295, 112, 30}, colorTable.Tacha);
+    render->FillRect({342, 297, 108, 26}, colorTable.CarnabyTan);
+    render->FillRect({344, 299, 104, 22}, colorTable.Cioccolato);
+    DrawText(assets->pFontLucida.get(),
+             {344 + assets->pFontLucida->AlignText_Center(104, "Take"), 301},
+             colorTable.PaleCanary, "Take", frameRect);
+    DrawText(assets->pFontLucida.get(), {492, 116}, colorTable.PaleCanary, "X", frameRect);
 }
 
 void GUIWindow_MonsterLoot::reroll() {

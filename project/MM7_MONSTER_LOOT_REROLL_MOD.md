@@ -5,6 +5,9 @@ This is a separate, opt-in MM7 private mod. Turn on **Use private mods** and
 the left edge of the game HUD, beside the first party portrait, switches the
 popup on or off immediately. The checkbox choice is saved in the MM7 game
 configuration; Atlas remains the master launch toggle.
+The HUD control and popup buttons use brass, dark wood and gold lettering to
+match the MM7 interface; the loot preview keeps the game world visible behind
+its stone frame.
 
 Clicking an eligible dead monster pauses the game and opens a loot preview.
 **Reroll** draws a fresh seed and repeats the monster's original gold dice,

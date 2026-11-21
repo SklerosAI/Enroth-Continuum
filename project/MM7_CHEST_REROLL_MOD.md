@@ -4,6 +4,7 @@ This private, opt-in MM7 mod adds a small **Reroll** button to a chest that
 contains authored random-loot markers. Enable **Use private mods** and
 **Reroll chest loot · MM7** in The Atlas, then launch MM7 again. Vanilla MM7,
 MM6 and upstream OpenEnroth do not receive the launch flag.
+The brass and dark-wood button sits in the chest's lower wooden border.
 
 Each click draws a fresh seed from the gameplay RNG and rolls the chest's
 unclaimed random slots through the existing MM7 chest generator. The authored
@@ -28,5 +29,6 @@ changes only local source and preferences; it does not edit GOG archives.
 Focused validation: exact MM7-only flag parsing, Atlas environment isolation,
 the Atlas toggle, a chest snapshot round trip, retained fixed item and
 source treasure marker, repeated rerolls, and reroll cutoff after an item is
-taken. Visible installed-app placement and click acceptance remain for the
-next play session.
+taken. The inset button's click was checked headlessly, and its placement was
+reviewed in an offscreen MM7 capture. Visible installed-app interaction remains
+for the next play session.

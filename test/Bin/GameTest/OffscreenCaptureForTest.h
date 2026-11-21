@@ -24,11 +24,12 @@
  * @param game                          Controller to run the draw in.
  * @return                              The 640x480 frame.
  */
-inline RgbaImage drawOffscreenGameFrame(EngineController &game) {
+inline RgbaImage drawOffscreenGameFrame(EngineController &game, bool preserveScreen = false) {
     RgbaImage frame;
-    game.runGameRoutine([&frame] {
+    game.runGameRoutine([&frame, preserveScreen] {
         uGameState = GAME_STATE_PLAYING;
-        current_screen_type = SCREEN_GAME;
+        if (!preserveScreen)
+            current_screen_type = SCREEN_GAME;
         render->ClearTarget(Color(0, 0, 0));
         engine->drawWorld();
         engine->drawHUD();

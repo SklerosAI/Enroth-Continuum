@@ -1445,15 +1445,15 @@ void GameUI_DrawPortraits() {
         }
     }
     if (current_screen_type == SCREEN_GAME && mm7::mods::monsterLootRerollEnabled(engine->gameTitle())) {
-        render->FillRect({5, 423, 18, 18}, colorTable.White);
-        render->FillRect({7, 425, 14, 14}, colorTable.NavyBlue);
+        render->FillRect({5, 423, 18, 18}, colorTable.Tacha);
+        render->FillRect({7, 425, 14, 14}, colorTable.Cioccolato);
         if (engine->config->gameplay.MonsterLootRerollInGame.value())
-            render->FillRect({10, 428, 8, 8}, colorTable.White);
-        render->FillRect({5, 444, 18, 18}, colorTable.White);
-        render->FillRect({7, 446, 14, 14}, colorTable.NavyBlue);
-        render->FillRect({10, 449, 2, 2}, colorTable.White);
-        render->FillRect({16, 455, 2, 2}, colorTable.White);
-        render->FillRect({13, 452, 2, 2}, colorTable.White);
+            render->FillRect({10, 428, 8, 8}, colorTable.PaleCanary);
+        render->FillRect({5, 444, 18, 18}, colorTable.Tacha);
+        render->FillRect({7, 446, 14, 14}, colorTable.Cioccolato);
+        render->FillRect({10, 449, 2, 2}, colorTable.PaleCanary);
+        render->FillRect({16, 455, 2, 2}, colorTable.PaleCanary);
+        render->FillRect({13, 452, 2, 2}, colorTable.PaleCanary);
     }
 }
 

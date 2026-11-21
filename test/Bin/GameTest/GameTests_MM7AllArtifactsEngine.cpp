@@ -2,6 +2,8 @@
 #include <memory>
 #include <ranges>
 #include <set>
+#include <utility>
+#include <vector>
 
 #include "Testing/Game/GameTest.h"
 
@@ -125,8 +127,13 @@ GAME_TEST(MM7ChestReroll, KeepsAuthoredChestAndStopsAfterClaim) {
 
     pGUIWindow_CurrentChest = std::make_unique<GUIWindow_Chest>(chestId);
     ASSERT_EQ(current_screen_type, SCREEN_CHEST);
-    EXPECT_TRUE(std::ranges::any_of(pGUIWindow_CurrentChest->vButtons,
-                                    [](const GUIButton *button) { return button->id == "Chest_Reroll"; }));
+    auto rerollControl = std::ranges::find_if(pGUIWindow_CurrentChest->vButtons,
+        [](const GUIButton *button) { return button->id == "Chest_Reroll"; });
+    ASSERT_NE(rerollControl, pGUIWindow_CurrentChest->vButtons.end());
+    const GUIButton *rerollButton = *rerollControl;
+    EXPECT_LT(rerollButton->rect.x + rerollButton->rect.w, 469);
+    EXPECT_GE(rerollButton->rect.y, 322);
+    EXPECT_LT(rerollButton->rect.y + rerollButton->rect.h, 352);
     bool sawMarker = false;
     for (int attempt = 0; attempt < 3; ++attempt) {
         ASSERT_TRUE(Chest::reroll(chestId));
@@ -145,6 +152,23 @@ GAME_TEST(MM7ChestReroll, KeepsAuthoredChestAndStopsAfterClaim) {
         EXPECT_TRUE(authored->IsIdentified());
         EXPECT_EQ(authored->chestRerollSource, 0);
     }
+
+    auto generatedItems = [&chest] {
+        std::vector<std::pair<ItemId, int>> result;
+        for (InventoryConstEntry entry : chest.inventory.entries())
+            if (entry->chestRerollSource != 0 && entry->chestRerollSource != 255)
+                result.emplace_back(entry->itemId, entry->goldAmount);
+        std::ranges::sort(result);
+        return result;
+    };
+    const auto beforeClick = generatedItems();
+    bool changedByClick = false;
+    for (int attempt = 0; attempt < 5 && !changedByClick; ++attempt) {
+        game.pressGuiButton("Chest_Reroll");
+        game.tick();
+        changedByClick = generatedItems() != beforeClick;
+    }
+    EXPECT_TRUE(changedByClick);
 
     Chest::GrabItem(false);
     EXPECT_FALSE(Chest::canReroll(chestId));

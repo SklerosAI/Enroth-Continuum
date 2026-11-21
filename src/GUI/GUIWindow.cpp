@@ -147,6 +147,7 @@ MenuType GetCurrentMenuID() {
 
 bool PauseGameDrawing() {
     if (current_screen_type != SCREEN_GAME &&
+        current_screen_type != SCREEN_MONSTER_LOOT &&
         current_screen_type != SCREEN_NPC_DIALOGUE &&
         current_screen_type != SCREEN_CHANGE_LOCATION) {
         if (current_screen_type == SCREEN_INPUT_BLV) return false; // uCurrentHouse_Animation;

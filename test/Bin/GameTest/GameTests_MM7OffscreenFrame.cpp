@@ -1,5 +1,6 @@
 #include <array>
 #include <cstdlib>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -16,11 +17,15 @@
 #include "Engine/Graphics/Renderer/NullRenderer.h"
 #include "Engine/Graphics/Renderer/Renderer.h"
 #include "Engine/Objects/Actor.h"
+#include "Engine/Objects/Chest.h"
 #include "Engine/Party.h"
 #include "Engine/PartyPlacement.h"
 #include "Engine/Tables/MapTable.h"
+#include "Engine/Tables/ChestTable.h"
 
 #include "GUI/GUIWindow.h"
+#include "GUI/UI/UIChest.h"
+#include "GUI/UI/UIMonsterLoot.h"
 
 #include "Utility/Exception.h"
 #include "Utility/String/Format.h"
@@ -298,11 +303,37 @@ GAME_TEST(MM7OffscreenFrame, DISABLED_FirstOutdoorCapture) {
     } else if (scene && std::string_view(scene) == "stone-city-troglodyte") {
         runStoneCityTroglodyteCombatScene(game);
         ASSERT_FALSE(::testing::Test::HasFatalFailure());
+    } else if (scene && std::string_view(scene) == "chest-reroll") {
+        ASSERT_FALSE(vChests.empty());
+        Chest &chest = vChests[0];
+        chest.chestTypeId = 0;
+        chest.inventory = ChestInventory(chestTable[0].size);
+        chest.inventory.stash(Item(ITEM_RANDOM_LEVEL_4));
+        GenerateItemsInChest();
+        Chest::PlaceItems(0);
+        ASSERT_TRUE(Chest::canReroll(0));
+        pGUIWindow_CurrentChest = std::make_unique<GUIWindow_Chest>(0);
+        ASSERT_EQ(current_screen_type, SCREEN_CHEST);
+    } else if (scene && std::string_view(scene) == "click-loot-popup") {
+        ASSERT_FALSE(pActors.empty());
+        Actor &actor = pActors[0];
+        actor.aiState = Dead;
+        actor.attributes &= ~ACTOR_HAS_ITEM;
+        actor.carriedItemId = ITEM_NULL;
+        for (Item &item : actor.items)
+            item.Reset();
+        actor.monsterInfo.treasureDropChance = 100;
+        actor.monsterInfo.treasureLevel = ITEM_TREASURE_LEVEL_1;
+        actor.monsterInfo.treasureType = RANDOM_ITEM_ANY;
+        ASSERT_TRUE(actor.canRerollLoot());
+        openMonsterLootPopup(actor.id);
+        ASSERT_EQ(current_screen_type, SCREEN_MONSTER_LOOT);
     }
     ASSERT_FALSE(window->isVisible());
     ASSERT_FALSE(window->grabsMouse());
 
-    const RgbaImage frame = drawOffscreenGameFrame(game);
+    const RgbaImage frame = drawOffscreenGameFrame(game, scene && (std::string_view(scene) == "chest-reroll" ||
+                                                                  std::string_view(scene) == "click-loot-popup"));
 
     ASSERT_FALSE(window->isVisible());
     ASSERT_FALSE(window->grabsMouse());
@@ -311,6 +342,7 @@ GAME_TEST(MM7OffscreenFrame, DISABLED_FirstOutdoorCapture) {
     size_t changed = 0;
     size_t nonblackWorld = 0;
     size_t nonblackHud = 0;
+    size_t visibleWorldBesidePopup = 0;
     for (int y = 0; y < frame.height(); ++y) {
         for (int x = 0; x < frame.width(); ++x) {
             const Color pixel = frame[y][x];
@@ -320,12 +352,17 @@ GAME_TEST(MM7OffscreenFrame, DISABLED_FirstOutdoorCapture) {
                     ++nonblackWorld;
                 if (y >= 350)
                     ++nonblackHud;
+                if (x < 100 && y < 340)
+                    ++visibleWorldBesidePopup;
             }
         }
     }
     EXPECT_GT(changed, 10000u);
     EXPECT_GT(nonblackWorld, 10000u);
-    EXPECT_GT(nonblackHud, 10000u);
+    if (!scene || std::string_view(scene) != "click-loot-popup")
+        EXPECT_GT(nonblackHud, 10000u);
+    else
+        EXPECT_GT(visibleWorldBesidePopup, 10000u);
 
     writeOffscreenCapture(capturePath, frame);
 }

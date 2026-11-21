@@ -24,10 +24,11 @@ GUIWindow_Chest::GUIWindow_Chest(int chestId) : GUIWindow(WINDOW_CHEST, {0, 0}, 
         pBtn_ExitCancel = CreateButton({471, 445}, {169, 35}, BUTTON_TYPE_NORMAL, 0, UIMSG_Escape, 0, INPUT_ACTION_INVALID,
                                        localization->str(LSTR_EXIT_DIALOGUE), {ui_exit_cancel_button_background});
     }
-    CreateButton({7, 8}, {460, 343}, BUTTON_TYPE_NORMAL, 0, UIMSG_CHEST_ClickItem, 0);
     if (engine->gameTitle() == GameTitle::MM7 && Chest::canReroll(chestId))
-        CreateButton("Chest_Reroll", {488, 384}, {86, 24}, BUTTON_TYPE_NORMAL, 0,
+        CreateButton("Chest_Reroll", {337, 326}, {104, 23}, BUTTON_TYPE_NORMAL, 0,
                      UIMSG_CHEST_Reroll, 0, INPUT_ACTION_INVALID, "Reroll chest loot");
+    // The chest click area includes its lower wooden rim. Give the inset button first refusal.
+    CreateButton({7, 8}, {460, 343}, BUTTON_TYPE_NORMAL, 0, UIMSG_CHEST_ClickItem, 0);
     current_screen_type = SCREEN_CHEST;
     gameTimer->setPaused(true);
 }
@@ -78,8 +79,12 @@ void GUIWindow_Chest::Update() {
 
         drawExitButton();
         if (engine->gameTitle() == GameTitle::MM7 && Chest::canReroll(_chestId)) {
-            render->FillRect({488, 384, 86, 24}, colorTable.NavyBlue);
-            DrawText(assets->pFontSmallnum.get(), {501, 388}, colorTable.White, "Reroll", frameRect);
+            render->FillRect({337, 326, 105, 24}, colorTable.Tacha);
+            render->FillRect({339, 328, 101, 20}, colorTable.CarnabyTan);
+            render->FillRect({341, 330, 97, 16}, colorTable.Cioccolato);
+            DrawText(assets->pFontLucida.get(),
+                     {341 + assets->pFontLucida->AlignText_Center(97, "Reroll"), 331},
+                     colorTable.PaleCanary, "Reroll", frameRect);
         }
     }
 }

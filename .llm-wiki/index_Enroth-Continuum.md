@@ -30,6 +30,8 @@ Catalog of all wiki pages, organized by category. Read this before querying the 
 
 ## Campaigns and runtime
 
+- [MM7 Dragoon Mod](MM7-Dragoon-Mod.md) — Default-off Atlas class family, tiered skills, scoped Knight promotions and headless regression matrix
+
 - [Campaign Status](Campaign-Status.md) — Current MM6, MM7 and MM8 readiness, including the MM6 C0-C1 chain and consolidated MM7 full gate with both endings, all side-objective durability, 27-of-27 promotions and 76-of-76 map runtime coverage
 - [MM7 Vendor Refresh Mod](MM7-Vendor-Refresh-Mod.md) — Optional once-per-visit shop and guild stock reroll for MM7 private-mod launches
 - [MM7 All Artifacts + Storage](MM7-All-Artifacts-Storage-Mod.md) — Optional collection-based random-artifact eligibility with Castle Harmondale persistent storage

@@ -7,6 +7,8 @@ tags: [mm7, mod, portrait, atlas]
 
 # MM7 Private Portrait Mod
 
+The separate [Dragoon mod](MM7-Dragoon-Mod.md) reuses the bounded private PNG decoder for its class icon, while retaining vanilla portraits and bodies.
+
 The MM7 private portrait loader now selects condition and reaction art for each party position from local PNGs.
 
 The source contract is in `src/Engine/Mods/PrivateMods.{h,cpp}` and the user-facing file layout is in [the mod packet](../project/MM7_MODS_PLAN.md). An MM7-only `ENROTH_MM7_MOD_DIR` selects the local folder. Each position needs a valid `portraits/<slot>/normal.png` or legacy `portrait-N.png`; the new normal file takes priority and an invalid one can fall back to legacy. Optional moods cover talk, smile, sad, damage, spellcasting and conditions. Missing pain uses hurt, missing unconscious uses sleep, and other missing moods use normal. Dead and eradicated use original art unless their own image exists. The zombie condition takes priority because the original animation uses a normal portrait ID for zombies.

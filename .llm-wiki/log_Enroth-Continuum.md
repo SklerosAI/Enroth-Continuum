@@ -3835,3 +3835,9 @@ Chronological record of wiki activity.
 - Superseded Archer-derived starting options with nine trainable Bow/armor/magic/utility choices, excluding Fire. The Dragoon family retains at least five maximum SP even with low Intelligence; per-level SP stays 2/4/6.
 - Actual creation/save/reload checks verify the default low-Intelligence Goblin starts at 5/5 SP, all nine choices are trainable, and neutral Intelligence still yields seven SP at level one. Focused tests passed 4/4; the full MM7 suites passed 299 with Dragoon enabled and 294 with it disabled, with expected opt-in skips and no failures.
 - Installed and strictly verified the signed correction in normal Atlas, preserving the owner's enabled toggle setting, sibling helpers, notices and saves. Prior app copies remain recoverable locally. Existing spent SP refills through normal recovery rather than a load-time refill.
+
+## [2026-11-21] update | Dragoon HP and SP balance
+- by: T-Burton-ND via codex
+- Applied the owner's revised per-level HP 4/6/8 and SP 2/3/5, one growth point below Knight HP and Sorcerer SP at each tier. Retained base HP/SP, the five-SP minimum and all class skills.
+- Updated the four-stage vital-growth regression. Focused cases passed 4/4; full MM7 runs passed 299 enabled and 294 disabled with expected opt-in skips and no failures. Changed-source lint and diff checks passed.
+- Rebuilt and installed the signed MM7 helper in normal Atlas, strictly verified the installed bundle, preserved the owner's enabled toggle and sibling helpers, and retained a recoverable prior app copy locally. Graphical play remains with the owner.

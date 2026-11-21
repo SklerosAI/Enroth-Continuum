@@ -3829,3 +3829,9 @@ Chronological record of wiki activity.
 - Recorded the Dragoon-only implementation and superseding requirements in [MM7 Dragoon Mod](MM7-Dragoon-Mod.md). Higher-model review findings were corrected: empty creation slots, overwritten bonus damage, premature masteries, broad quest aliases and save compatibility handling.
 - Final headless matrix: default mode 729 passed and 20 opt-in skips; Dragoon mode 299 passed and 13 other-mod skips; existing-mod coexistence 21 passed and one off-only skip. Launcher checks and changed-source lint passed. A reusable runner is tracked; private test data and logs remain outside the wiki.
 - Installed the signed local Debug arm64 update in the normal Atlas app, preserving MM6/upstream helpers, notices and local profiles. Dragoon is explicitly off. A recoverable pre-update app copy is retained locally. The owner will perform graphical acceptance; no completed Dragoon campaign is claimed.
+
+## [2026-11-21] update | Dragoon starting SP and skill correction
+- by: T-Burton-ND via codex
+- Superseded Archer-derived starting options with nine trainable Bow/armor/magic/utility choices, excluding Fire. The Dragoon family retains at least five maximum SP even with low Intelligence; per-level SP stays 2/4/6.
+- Actual creation/save/reload checks verify the default low-Intelligence Goblin starts at 5/5 SP, all nine choices are trainable, and neutral Intelligence still yields seven SP at level one. Focused tests passed 4/4; the full MM7 suites passed 299 with Dragoon enabled and 294 with it disabled, with expected opt-in skips and no failures.
+- Installed and strictly verified the signed correction in normal Atlas, preserving the owner's enabled toggle setting, sibling helpers, notices and saves. Prior app copies remain recoverable locally. Existing spent SP refills through normal recovery rather than a load-time refill.

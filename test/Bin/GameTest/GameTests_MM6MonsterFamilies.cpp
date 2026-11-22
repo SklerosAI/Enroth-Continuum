@@ -6,6 +6,7 @@
 #include "Engine/Data/AwardEnums.h"
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Graphics/Outdoor.h"
 #include "Engine/Objects/Actor.h"
 #include "Engine/Party.h"
 
@@ -59,6 +60,27 @@ static int nearestActor(Vec3f pos, int monster) {
             result = actor.id;
         }
     }
+    return result;
+}
+
+static Vec3f nearestShoreWater() {
+    // Center of the water tile nearest to the party that has land on the next two tiles to the north.
+    Vec3f result;
+    float bestDistance = std::numeric_limits<float>::max();
+    for (int y = 2; y < 128; y++) {
+        for (int x = 0; x < 128; x++) {
+            if (!pOutdoor->pTerrain.isWaterByGrid({x, y}) || pOutdoor->pTerrain.isWaterByGrid({x, y - 1}) ||
+                pOutdoor->pTerrain.isWaterByGrid({x, y - 2}))
+                continue;
+            const Vec3f center((x - 64) * 512 + 256, (63 - y) * 512 + 256, 0);
+            const float distance = (center - pParty->pos).xy().length();
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                result = center;
+            }
+        }
+    }
+    result.z = pOutdoor->pTerrain.heightByPos(result);
     return result;
 }
 
@@ -170,4 +192,22 @@ GAME_TEST(MM6MonsterFamilies, PeasantsStandTogether) {
             EXPECT_EQ(reputationTape, tape(0));
         }
     }
+}
+
+GAME_TEST(MM6MonsterFamilies, SeaMonstersStayInWater) {
+    // Sea Serpents and Water Elementals swam ashore, because MM7's water elemental type covers MM6's dwarves instead.
+    // MM6 keeps both families in the water, they turn back at the shore.
+    startNewGameThroughInput(game);
+    const Vec3f shore = nearestShoreWater();
+    game.teleportTo(engine->_currentLoadedMapId, shore + Vec3f(0, 1024, 0), 270); // Two tiles inland, facing the water.
+    const int serpent = game.spawnMonster(shore - Vec3f(120, 0, 0), static_cast<MonsterId>(151), SPAWN_LEVEL_1)->id;
+    const int beast = game.spawnMonster(shore + Vec3f(120, 0, 0), static_cast<MonsterId>(58), SPAWN_LEVEL_1)->id;
+    auto waterTape = actorTapes.custom({serpent, beast}, [](const Actor &actor) { return pOutdoor->pTerrain.isWaterByPos(actor.pos); });
+    auto distanceTape = actorTapes.custom({serpent, beast}, [](const Actor &actor) { return static_cast<int>((actor.pos - pParty->pos).xy().length()) / 128; });
+    test.startTaping();
+
+    game.tick(100); // The serpent and the water beast come for the party.
+
+    EXPECT_EQ(waterTape, tape({true, true}));
+    EXPECT_GT(distanceTape.size(), 1);
 }

@@ -17,6 +17,7 @@
 #include "Engine/MM6/MM6EventRuntimeRestoreForTest.h"
 #include "Engine/MM6/MM6MapTransition.h"
 #include "Engine/MM6/MM6MapVisit.h"
+#include "Engine/MM6/MM6MonsterRules.h"
 #include "Engine/MM6/MM6OutdoorBorderEligibility.h"
 #include "Engine/MM6/MM6OutdoorSky.h"
 #include "Engine/MM6/MM6V5FirstMapLoadAttempt.h"
@@ -1701,7 +1702,8 @@ void UpdateActors_ODM() {
             actor.aiState == Summoned || !actor.moveSpeed)
                 continue;
 
-        bool Water_Walk = supertypeForMonsterId(actor.monsterInfo.id) == MONSTER_SUPERTYPE_WATER_ELEMENTAL;
+        bool Water_Walk = engine->gameTitle() == GameTitle::MM6 ? mm6::keepsToWater(actor.monsterInfo.id)
+                                                                 : supertypeForMonsterId(actor.monsterInfo.id) == MONSTER_SUPERTYPE_WATER_ELEMENTAL;
 
         actor.sectorId = 0;
 
@@ -1804,6 +1806,7 @@ void UpdateActors_ODM() {
         }
 
         // COLLISIONS
+        const Vec3f positionBeforeMove = actor.pos;
         ProcessActorCollisionsODM(actor, uIsFlying);
 
         // WATER TILE CHECKING
@@ -1849,6 +1852,17 @@ void UpdateActors_ODM() {
                     // no land found so drowning damage
                     // actor.sCurrentHP -= 1;
                     // logger->Warning("DROWNING");
+                }
+            }
+        } else if (engine->gameTitle() == GameTitle::MM6) {
+            if (!uIsFlying && pOutdoor->pTerrain.isWaterByPos(positionBeforeMove) && !pOutdoor->pTerrain.isWaterByPos(actor.pos)) {
+                actor.pos.x = positionBeforeMove.x; // MM6 undoes a step that would take a water monster ashore.
+                actor.pos.y = positionBeforeMove.y;
+                if (actor.CanAct()) {
+                    actor.yawAngle -= 32;
+                    actor.currentActionTime = 0_ticks;
+                    actor.currentActionLength = 128_ticks;
+                    actor.aiState = Fleeing;
                 }
             }
         }

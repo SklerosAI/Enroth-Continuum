@@ -57,6 +57,8 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Monster popup.** The right-click popup offsets the monster picture by MM7 type (`monster_popup_y_offsets`) and
   never plays the attack animation for MM7's peasant types, MM6 IDs 115 onwards. MM6.exe's popup was not traced.
   `UIPopup.cpp`.
+- **Land monsters in water.** Outdoors the port steers a land monster that stands on water back to land, an MM7 rule.
+  The part of MM6.exe's mover read so far (0x4622D8 to 0x46237C) only turns it away at the shore. `UpdateActors_ODM`.
 - **Retracting lava bridges.** The Supreme Temple of Baa's four lava bridges are doors 12 to 15. A monster on one when
   it retracts falls into the lava. GrayFace's C24 limit wouldn't stop that either.
 

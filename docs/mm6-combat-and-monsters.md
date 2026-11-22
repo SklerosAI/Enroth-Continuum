@@ -92,6 +92,10 @@ instead:
   `Actor::AggroSurroundingPeasants`.
 - MM6 has no reagent drops. MM7's chance of one on a monster's death is off under MM6.
 
+Outdoors, the actor mover (0x461590, family checks at 0x4615FB and 0x46230B) keeps the Water Elemental (58 to 60) and
+Sea Serpent (151 to 153) families on water the way it keeps every other monster on land: a step from water onto land
+is undone and the monster turns away. `mm6::keepsToWater`, used in the water check of `UpdateActors_ODM`.
+
 The shared MM7 type helpers (`monsterTypeForMonsterId`, `isPeasant`, `supertypeForMonsterId`, `sexForMonsterType`)
 map an MM6 family onto whatever MM7 type has its number, so MM6 ID 115 onwards (oozes, rats, sea serpents, the hive
 bosses) lands on MM7's peasants. MM6 paths that still reach them are listed in [open questions](open-questions.md).

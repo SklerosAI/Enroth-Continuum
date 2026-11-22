@@ -46,4 +46,16 @@ constexpr bool bystanderTurnsHostile(MonsterId victim, MonsterId bystander) {
     return (std::to_underlying(victim) - 1) / 3 == (std::to_underlying(bystander) - 1) / 3;
 }
 
+/**
+ * @offset 0x4615FB
+ *
+ * @param monster                       MM6 monster ID.
+ * @return                              Whether the monster keeps to water outdoors, the way land monsters keep to land.
+ *                                      These are the Water Elemental and Sea Serpent families.
+ */
+constexpr bool keepsToWater(MonsterId monster) {
+    const int id = std::to_underlying(monster);
+    return (id >= 58 && id <= 60) || (id >= 151 && id <= 153);
+}
+
 } // namespace mm6

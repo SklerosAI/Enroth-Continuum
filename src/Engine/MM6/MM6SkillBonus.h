@@ -3,6 +3,9 @@
 #include <stdexcept>
 #include <utility>
 
+#include "Application/GameConfig.h"
+
+#include "Engine/Engine.h"
 #include "Engine/MM6/MM6CombatRules.h"
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/Objects/Character.h"
@@ -12,6 +15,8 @@ namespace mm6 {
 /**
  * Skill bonus to a character attribute, as MM6.exe's skill bonus routine (0x483930) computes it. Weapon terms take the
  * points of `weaponSkillHirelingBonus` as extra skill levels, armor class terms those of `armorSkillHirelingBonus`.
+ * MM6.exe multiplies an Expert blaster's attack by 1 where `skilldes.txt` promises double, `gameplay.fix_expert_blaster`
+ * makes it 2.
  *
  * @param character                     Character whose skills and equipment give the bonus.
  * @param attribute                     Attribute to get the bonus for.
@@ -21,7 +26,13 @@ inline int skillBonus(const Character &character, Attribute attribute) {
     auto level = [&](Skill skill) { return character.getActualSkillValue(skill).level(); };
     auto mastery = [&](Skill skill) { return character.getActualSkillValue(skill).mastery(); };
     auto shieldFactor = [](Mastery mastery) { return mastery == MASTERY_MASTER ? 3 : mastery == MASTERY_EXPERT ? 2 : 1; };
-    auto blasterFactor = [](Mastery mastery) { return mastery == MASTERY_MASTER ? 3 : 1; };
+    auto blasterFactor = [](Mastery mastery) {
+        if (mastery == MASTERY_MASTER)
+            return 3;
+        if (mastery == MASTERY_EXPERT && engine->config->gameplay.FixExpertBlaster.value())
+            return 2;
+        return 1;
+    };
 
     switch (attribute) {
         case ATTRIBUTE_HEALTH:

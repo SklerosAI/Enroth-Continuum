@@ -38,9 +38,9 @@ int transportPrice(int houseId, float value, int merchant) {
     return std::max((100 - merchant) * full / 100, full / 3);
 }
 
-int transportDepartureDelayMs(int houseId, int speechMs) {
+int transportDepartureDelayMs(int houseId, int farewellMs) {
     const int originalDelayMs = isTransportStable(houseId) ? 1500 : 2500;
-    return speechMs > 0 ? std::min(speechMs, originalDelayMs) : originalDelayMs;
+    return farewellMs > 0 ? std::min(farewellMs, originalDelayMs) : originalDelayMs;
 }
 
 TransportRules decodeTransportRules(const Executable &exe) {

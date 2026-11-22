@@ -259,12 +259,14 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   `MM6Transport.cpp` takes the fare and passes the trip's days in `depart()` after the map change's autosave, so the
   autosave has the party at the house with its gold and date. Flag `gameplay.fix_travel_autosave`. Test
   `MM6Transport.CoachAutosaveKeepsTheFare` loads the autosave.
-- **W8**. Horseman and boatman speech lengths detected automatically. State: **fixed, unobservable until travel voices
-  load**.
-  `mm6::transportDepartureDelayMs` waits for the speech `Character::playReaction` played, capped by the vanilla 1500 and
-  2500 ms, flag `gameplay.fix_travel_speech_delay`. The shared speech table has no voice for travel speeches 71 and 72,
-  so no sample plays and the cap applies, test `MM6Transport.CoachLeavesAfterTheOriginalDelayWithoutSpeech`. GrayFace
-  waits nothing without a sample, we keep the vanilla delay.
+- **W8**. Horseman and boatman speech lengths detected automatically. State: **fixed**.
+  On paying, MM6.exe plays the room's sound 2, the horseman's or boatman's farewell (0x49D91B), has the active
+  character say speech 71 or 72 (0x49D9BB), then waits 1500 or 2500 ms. GrayFace waits for the last sample started
+  instead (`TravelDelayHook1` to `3`, `MMHooks.pas:3647`). MM6.exe has no voice line for speeches 71 and 72, so that is
+  the farewell. `mm6::transportDepartureDelayMs` waits for the farewell, capped by the vanilla delay, flag
+  `gameplay.fix_travel_speech_delay`. The New Sorpigal coach leaves after a second instead of a second and a half, test
+  `MM6Transport.CoachLeavesWhenTheHorsemanIsDone`. A room without a sound group plays no farewell and keeps the vanilla
+  delay, where GrayFace waits nothing.
 - **W9**. Map-crossing dialog offered while flying low, accepting did nothing (`TravelWalkTriggerFixHook`,
   `Hooks.pas:1639`). State: **fixed**.
   `Outdoor.cpp` offers through `borderOfferPartyStatePermits`, the flags plus the confirmation's flying check, flag
@@ -446,8 +448,8 @@ Rules for every fix in this backlog:
   come first. Done 2026-11-18 behind `fix_travel_autosave`.
 - **W8**. Fixed coach and boat speech delay. Wait for the actual speech sample to finish, capped by the vanilla 1500 and
   2500 ms.
-  Same as GrayFace. Done 2026-11-18 behind `fix_travel_speech_delay`. No travel speech plays yet, so the cap is what
-  applies.
+  Same as GrayFace. Done 2026-11-18 behind `fix_travel_speech_delay`. Since 2026-11-21 it waits for the horseman's or
+  boatman's farewell, the last sample GrayFace sees, because MM6's travel speeches have no voice line.
 - **W12**. Found-artifact flags never cleared on respawn. On respawn, clear the found flag for every artifact generated
   in a chest that was never opened, and implement opcode 69 `RefundChestArtifacts`.
   Same as GrayFace. Opcode 69 also unblocks the patched scripts. Done 2026-11-20 behind `fix_unopened_chest_artifacts`

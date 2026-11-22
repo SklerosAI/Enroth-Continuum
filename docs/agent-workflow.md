@@ -55,14 +55,35 @@ python3 tools/check_worktree_budget.py --agent claude
 
 Disk is the real limit. Keep at least 10 GB free on the system disk.
 A new worktree build costs about 1.5 to 2 GB, so check `df -h /` before starting one. Under load, run game tests one
-process at a time, and check `uptime` and `sysctl vm.swapusage` before adding a lane. A finished lane's worktree is
-retired or reused at the end of the session, never kept for its own sake. Before removing one, save its uncommitted
-changes, local-only commits and ignored private files, and keep its branch ref.
+process at a time, and check `uptime` and `sysctl vm.swapusage` before adding a lane. A finished lane's worktree takes
+the next lane, see [Lane slots](#lane-slots), or is retired, never kept for its own sake. Before removing one, save its
+uncommitted changes, local-only commits and ignored private files, and keep its branch ref.
+
+### Lane slots
+
+Since 2026-11-21, MM6 lanes run in a few long-lived slot worktrees instead of a new worktree per lane. MM8 lanes follow
+the same rule once MM8 has a runtime. A worktree costs about 2.2 GB, nearly all of it the Debug build, and a first build
+takes 20 to 30 minutes. A reused build recompiles only what changed.
+
+- A slot is a worktree under `../enroth-worktrees/` with its own Debug build, next to the integration worktree. A round
+  has as many slots as the owner's cap on working lanes.
+- A slot hosts about six lanes in turn. Once a lane is merged, its slot starts the next lane from the current
+  `claude/mm6`:
+  ```bash
+  git -C ../enroth-worktrees/<slot> switch -c claude/mm6-<next-lane> claude/mm6
+  ```
+- Every lane still builds and runs its own tests before it reports, including the test that fails with its fix
+  reverted. A slot never batches several lanes' fixes into one build or one test run.
+- After about six lanes, or after `claude/mm6` is rebased onto `master`, the slot gets one clean build. Delete its
+  `build/`, configure, and build again. A long incremental chain can carry stale objects and old CMake settings.
+- A slot with nothing queued is removed rather than left holding its build. At the end of a round only the
+  integration worktree remains, see [Budget](#budget).
 
 ### Starting a lane
 
 1. Check the budget and the disk as above.
-2. Create the worktree, or reuse a finished one:
+2. Take a free slot, see [Lane slots](#lane-slots). Create a new worktree only when the round has fewer slots than its
+   lane cap:
    ```bash
    git worktree add ../enroth-worktrees/<name> -b claude/mm6-<lane> claude/mm6
    ```

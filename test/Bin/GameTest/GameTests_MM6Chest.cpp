@@ -558,8 +558,8 @@ GAME_TEST(MM6ChestScreen, ExitButton) {
 
 GAME_TEST(MM6ChestScreen, RightClickShowsTheItemUnderTheCursor) {
     // Right-clicking an item in a chest of a type whose grid sits at another offset than the first type's showed the
-    // item one cell to the left, or nothing. Chest 1 of the Shadow Guild is such a chest, with its Poleax right of a
-    // Crossbow.
+    // item one cell to the left, or nothing. Chest 1 of the Shadow Guild is such a chest, and the cell left of its Poleax
+    // is empty.
     startNewGameThroughInput(game);
     mm6::chestTitleState().lcgState = 0;
     game.teleportTo(pMapTable->GetMapInfo("d08.blv"), Vec3f(2624, 4344, 0), 90, -20); // South of chest 1, looking down at it.
@@ -579,12 +579,38 @@ GAME_TEST(MM6ChestScreen, RightClickShowsTheItemUnderTheCursor) {
     auto titles = linesTape.flatten().map([](const DrawnLine &line) { return line.text; });
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHEST));
     EXPECT_EQ(vChests[1].chestTypeId, 2);
-    EXPECT_EQ(poleaxCell, Pointi(7, 2));
+    EXPECT_EQ(poleaxCell, Pointi(6, 0));
     EXPECT_EQ(titles.unique(), tape(std::string("Two-Handed Axe"), std::string("Not Identified")));
 }
 
+GAME_TEST(MM6ChestScreen, RightClickShowsTheItemUnderTheCursorOnALaterPage) {
+    // Right-clicking an item on a chest's later page shows that item. With this roll chest 1 of the Shadow Guild has one
+    // item on its second page, in the top left cell, where the first type's grid offset finds no cell.
+    startNewGameThroughInput(game);
+    mm6::chestTitleState().lcgState = 12;
+    game.teleportTo(pMapTable->GetMapInfo("d08.blv"), Vec3f(2624, 4344, 0), 90, -20); // South of chest 1, looking down at it.
+    auto linesTape = tapes.titleLines();
+    auto pagesTape = tapes.custom([] { return chestPages(1); });
+    test.startTaping();
+
+    game.pointMouseAtDecoration(0); // Chest 1.
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+    game.pressGuiButton("Chest_NextPage");
+    game.tick();
+    game.pressButton(BUTTON_RIGHT, chestTable[vChests[1].chestTypeId].inventoryOffset + Pointi(16, 16));
+    game.tick();
+    game.releaseButton(BUTTON_RIGHT);
+    game.tick();
+
+    auto titles = linesTape.flatten().map([](const DrawnLine &line) { return line.text; });
+    EXPECT_EQ(vChests[1].chestTypeId, 2);
+    EXPECT_EQ(pagesTape.back(), (std::vector<std::pair<ItemId, Pointi>>{{static_cast<ItemId>(36), Pointi(0, 0)}}));
+    EXPECT_EQ(titles.unique(), tape(std::string("Halberd"), std::string("Not Identified")));
+}
+
 GAME_TEST(MM6Chest, GoldPileGoesToTheParty) {
-    // Clicking a gold pile in a chest did nothing, the pile stayed where it was. The party takes the 983 gold pile in chest
+    // Clicking a gold pile in a chest did nothing, the pile stayed where it was. The party takes the 395 gold pile in chest
     // 1 of the Abandoned Temple, once alone and once with Noreen the Banker hired, who adds a fifth and takes her share.
     constexpr ItemId mediumGold = static_cast<ItemId>(198);
     for (bool banker : {false, true}) {
@@ -595,7 +621,7 @@ GAME_TEST(MM6Chest, GoldPileGoesToTheParty) {
             game.runGameRoutine([] { pParty->SetGold(1000, true); }); // Her fee.
             hireNoreenTheBanker(game);
         }
-        walkIntoAbandonedTemple(game, 3041712726u);
+        walkIntoAbandonedTemple(game, 38);
         auto goldTape = tapes.gold();
         auto pilesTape = tapes.custom([] { return chestGoldPiles(1); });
         auto heldTape = tapes.custom([] { return pParty->pPickedItem.itemId; });
@@ -604,20 +630,22 @@ GAME_TEST(MM6Chest, GoldPileGoesToTheParty) {
         test.startTaping();
 
         useMM6CampaignChainIndoorEventFace(game, 12); // Opens chest 1.
-        ASSERT_EQ(vChests[1].inventory.entry(Pointi(0, 0))->itemId, mediumGold);
-        ASSERT_EQ(vChests[1].inventory.entry(Pointi(0, 0))->goldAmount, 983);
+        const InventoryEntry pile = vChests[1].inventory.entry(Pointi(0, 0));
+        ASSERT_TRUE(pile);
+        ASSERT_EQ(pile->itemId, mediumGold);
+        ASSERT_EQ(pile->goldAmount, 395);
         game.pressAndReleaseButton(BUTTON_LEFT, chestTable[vChests[1].chestTypeId].inventoryOffset + Pointi(16, 16)); // The pile in the top left cell.
         game.tick();
 
-        EXPECT_EQ(pilesTape, tape(4, 3));
+        EXPECT_EQ(pilesTape, tape(6, 5));
         EXPECT_EQ(heldTape, tape(ITEM_NULL));
         EXPECT_CONTAINS(soundsTape.flatten(), SOUND_gold01);
         if (banker) {
-            EXPECT_EQ(goldTape, tape(0, 1062)); // 983 and a fifth make 1179, the banker takes a tenth of it.
-            EXPECT_EQ(statusTape.back(), localization->format(LSTR_YOU_FOUND_LU_GOLD_FOLLOWERS_TAKE_LU, 1179, 117));
+            EXPECT_EQ(goldTape, tape(0, 427)); // 395 and a fifth make 474, the banker takes a tenth of it.
+            EXPECT_EQ(statusTape.back(), localization->format(LSTR_YOU_FOUND_LU_GOLD_FOLLOWERS_TAKE_LU, 474, 47));
         } else {
-            EXPECT_EQ(goldTape, tape(200, 1183));
-            EXPECT_EQ(statusTape.back(), localization->format(LSTR_YOU_FOUND_LU_GOLD, 983));
+            EXPECT_EQ(goldTape, tape(200, 595));
+            EXPECT_EQ(statusTape.back(), localization->format(LSTR_YOU_FOUND_LU_GOLD, 395));
         }
     }
 }

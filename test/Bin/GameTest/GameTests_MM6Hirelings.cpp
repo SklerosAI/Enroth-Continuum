@@ -73,7 +73,7 @@ static void equipLongsword(int characterIndex) {
 
 static void hireArmsMaster(EngineController &game) {
     game.runGameRoutine([] { pParty->SetGold(10000, true); });
-    talkToStreetNpc(game, 8); // Deloris the Arms Master.
+    talkToStreetNpc(game, 8); // Chester the Arms Master.
     clickNpcOption(game, "Beg"); // A Paladin talks to a party of no reputation only once it begs.
     clickNpcOption(game, "Join");
     clickNpcOption(game, "Hire");
@@ -90,15 +90,15 @@ static void viewStats(EngineController &game) {
 }
 
 GAME_TEST(MM6Hirelings, StreetNpcPortraitExists) {
-    // Talking to a street NPC drew a missing image for her portrait, she had one of MM7's elf portraits.
+    // Talking to a street NPC drew a missing image for the portrait, it was one of MM7's elf portraits.
     startNewGameThroughInput(game);
     auto quadsTape = tapes.hudQuads();
     test.startTaping();
 
-    talkToStreetNpc(game, 4); // Eleanor the Acolyte.
+    talkToStreetNpc(game, 4); // Dal the Acolyte.
 
     auto portraits = quadsTape.flatten().filter([](const DrawnQuad &quad) { return quad.position == Pointi(525, 34); });
-    EXPECT_EQ(portraits, tape(DrawnQuad{"npc301", {525, 34}}));
+    EXPECT_EQ(portraits, tape(DrawnQuad{"npc197", {525, 34}}));
     for (const DrawnQuad &quad : portraits)
         EXPECT_GT(engine->resources()->iconSize(quad.texture).w, 0) << quad.texture;
 }
@@ -113,7 +113,7 @@ GAME_TEST(MM6Hirelings, HireTwoAndRefuseAThird) {
     auto quadsTape = tapes.hudQuads();
     test.startTaping();
 
-    for (int actorId : {15, 1, 4}) { // Noreen the Banker, Tanya the Porter, Eleanor the Acolyte.
+    for (int actorId : {15, 1, 4}) { // Noreen the Banker, Tanya the Porter, Dal the Acolyte.
         talkToStreetNpc(game, actorId);
         clickNpcOption(game, "Join");
         clickNpcOption(game, "Hire");
@@ -122,13 +122,13 @@ GAME_TEST(MM6Hirelings, HireTwoAndRefuseAThird) {
     auto hirelings = quadsTape.flatten().filter([](const DrawnQuad &quad) { return quad.position.y == 149; }); // Both portrait frames.
     EXPECT_EQ(hirelingsTape, tape(0, 1, 2));
     EXPECT_EQ(goldTape, tape(10000, 9000, 8900));
-    EXPECT_EQ(statusTape, tape("Rest", "Noreen the Banker", "", "Tanya the Porter", "", "Eleanor the Acolyte", "", "I cannot join you, you're party is full"));
+    EXPECT_EQ(statusTape, tape("Rest", "Noreen the Banker", "", "Tanya the Porter", "", "Dal the Acolyte", "", "I cannot join you, you're party is full"));
     const DrawnQuad noreen{"npc114", {491, 149}}, tanya{"npc250", {561, 149}};
     EXPECT_EQ(hirelings, tape(noreen, noreen, noreen, noreen, noreen, noreen, tanya, noreen, tanya, noreen, tanya, noreen, tanya, noreen, tanya));
 }
 
 GAME_TEST(MM6Hirelings, ArmsMasterAddsToWeaponSkillAttack) {
-    // A hired Arms Master didn't change the attack bonus on the stats screen. MM6 adds her two points to the weapon skill
+    // A hired Arms Master didn't change the attack bonus on the stats screen. MM6 adds his two points to the weapon skill
     // of every character.
     startNewGameThroughInput(game);
     equipLongsword(0);
@@ -156,7 +156,7 @@ GAME_TEST(MM6Hirelings, ArmsMasterAddsToWeaponSkillAttack) {
 }
 
 GAME_TEST(MM6Hirelings, ArmsMasterShortensOnlyExpertSwordRecovery) {
-    // A hired Arms Master cut the recovery of every melee attack by two, as MM7's Armsmaster skill does. MM6 adds her
+    // A hired Arms Master cut the recovery of every melee attack by two, as MM7's Armsmaster skill does. MM6 adds his
     // points to the weapon skill, so only an Expert sword, axe or bow recovers faster. In turn-based mode the recovery is
     // the knight's wait for her next turn.
     struct Case {

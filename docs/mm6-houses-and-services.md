@@ -184,7 +184,10 @@ See [travel and maps](mm6-travel-and-maps.md) for the arrival side.
 
 Map load gives a generated street NPC to each peasant actor that carries an NPC link (see
 [combat and monsters](mm6-combat-and-monsters.md)). The generator draws a portrait from MM6's male and female tables
-in one random call (`MM6StreetNpcPortraits.h`).
+in one random call (`MM6StreetNpcPortraits.h`). The sex, which also picks the name list, comes from a byte per monster
+ID at MM6.exe 0x4BF8B4 (read at 0x469210): the Peasant F1 and F2 families are women, Peasant M1 men
+(`mm6::nativeStreetNpcSex`). That table sits one ID below the `monsters.txt` rows, 120 to 131 are female where the
+Peasant F rows are 121 to 132, which leaves the three street families alone.
 
 The conversation (`MM6StreetNpcTalk.h`) opens in one of three modes, chosen at its start from fame, reputation and the
 NPC's state:

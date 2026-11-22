@@ -10,8 +10,6 @@
 #include <utility>
 #include <vector>
 
-#include "Engine/Objects/MonsterEnumFunctions.h"
-
 #include "MM6NativeActorNpcPolicy.h"
 #include "MM6NpcSaveFields.h"
 
@@ -82,7 +80,6 @@ void validateRow(const GeneratedNpcRow &row) {
         !nativeStreetNpcEligible(row.monster) || row.npc.name.empty() ||
         row.npc.portraitId == 0 || !row.npc.canJoin ||
         row.npc.field_24 != 1 || row.npc.house != HOUSE_INVALID ||
-        row.npc.sex != sexForMonsterType(monsterTypeForMonsterId(row.monster)) ||
         row.npc.profession < NPC_PROFESSION_FIRST ||
         row.npc.profession >= NPC_PROFESSION_MM6_LAST)
         throw std::runtime_error("MM6 GNPC row is not a street NPC");

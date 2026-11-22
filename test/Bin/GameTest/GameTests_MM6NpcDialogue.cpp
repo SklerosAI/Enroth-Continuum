@@ -27,7 +27,7 @@
 #include "Utility/System/Path.h"
 
 static const Vec3f kMarianneSpot(-10333, -8532, 300); // In front of the general store, Marianne the Teacher stands close by.
-static const Vec3f kGingerSpot(-6360, -5864, 300); // Ginger the Negotiator stands to the east.
+static const Vec3f kHenrySpot(-6360, -5864, 300); // Henry the Negotiator stands to the east.
 static const Vec3f kMariaSpot(-12028, -7957, 300); // Maria the Scholar stands to the east.
 static const Vec3f kCastleIronfistVillagerSpot(15556, 2776, 96); // A villager stands to the east, south of the castle.
 
@@ -282,12 +282,12 @@ GAME_TEST(MM6NpcDialogue, StreetNpcGreetingName) {
 }
 
 GAME_TEST(MM6NpcDialogue, StreetNpcGreetingDeeds) {
-    // Ginger the Negotiator's greeting names the deeds the party is known for, and drawing it hit an assert.
+    // Henry the Negotiator's greeting names the deeds the party is known for, and drawing it hit an assert.
     auto screenTape = tapes.screen();
     auto textTape = tapes.allGUIWindowsText();
     enterNewSorpigal(game);
     test.startTaping();
-    talkAt(game, kGingerSpot);
+    talkAt(game, kHenrySpot);
 
     EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_NPC_DIALOGUE));
     EXPECT_CONTAINS(textTape.flatten(), "Sorry, sir but it doesn't matter to me if you\nperformed daring deeds.  As a matter of fact, I\n"
@@ -340,7 +340,7 @@ GAME_TEST(MM6NpcDialogue, StreetNpcBegAgain) {
 }
 
 GAME_TEST(MM6NpcDialogue, StreetNpcBegRefused) {
-    // Ginger the Negotiator won't listen to begging. She says so, and the party's reputation stays.
+    // Henry the Negotiator won't listen to begging. He says so, and the party's reputation stays.
     auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
     auto dialogueTape = tapes.dialogueType();
     auto optionsTape = tapes.custom([] { return dialogueOptionLabels(); });
@@ -348,7 +348,7 @@ GAME_TEST(MM6NpcDialogue, StreetNpcBegRefused) {
     auto portraitTape = charTapes.portrait(0);
     enterNewSorpigal(game);
     test.startTaping();
-    talkAt(game, kGingerSpot);
+    talkAt(game, kHenrySpot);
     clickNpcOption(game, "Beg");
 
     EXPECT_EQ(reputationTape, tape(0));
@@ -387,7 +387,7 @@ GAME_TEST(MM6NpcDialogue, StreetNpcThreat) {
 }
 
 GAME_TEST(MM6NpcDialogue, StreetNpcThreatRefused) {
-    // Ginger the Negotiator won't take a threat. She says so, and the party's reputation stays.
+    // Henry the Negotiator won't take a threat. He says so, and the party's reputation stays.
     auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
     auto dialogueTape = tapes.dialogueType();
     auto optionsTape = tapes.custom([] { return dialogueOptionLabels(); });
@@ -395,7 +395,7 @@ GAME_TEST(MM6NpcDialogue, StreetNpcThreatRefused) {
     auto portraitTape = charTapes.portrait(0);
     enterNewSorpigal(game);
     test.startTaping();
-    talkAt(game, kGingerSpot);
+    talkAt(game, kHenrySpot);
     clickNpcOption(game, "Threat");
 
     EXPECT_EQ(reputationTape, tape(0));
@@ -406,7 +406,7 @@ GAME_TEST(MM6NpcDialogue, StreetNpcThreatRefused) {
 }
 
 GAME_TEST(MM6NpcDialogue, StreetNpcBribe) {
-    // Bribing Ginger the Negotiator takes 50 gold and 20 reputation, and she talks.
+    // Bribing Henry the Negotiator takes 50 gold and 20 reputation, and he talks.
     auto goldTape = tapes.gold();
     auto reputationTape = tapes.custom([] { return pParty->mm6Reputation; });
     auto dialogueTape = tapes.dialogueType();
@@ -415,7 +415,7 @@ GAME_TEST(MM6NpcDialogue, StreetNpcBribe) {
     auto portraitTape = charTapes.portrait(0);
     enterNewSorpigal(game);
     test.startTaping();
-    talkAt(game, kGingerSpot);
+    talkAt(game, kHenrySpot);
     clickNpcOption(game, "Bribe 50 Gold");
 
     EXPECT_EQ(goldTape, tape(200, 150));
@@ -438,13 +438,13 @@ GAME_TEST(MM6NpcDialogue, StreetNpcBribeAgain) {
     auto textTape = tapes.allGUIWindowsText();
     enterNewSorpigal(game);
     test.startTaping();
-    talkAt(game, kGingerSpot);
+    talkAt(game, kHenrySpot);
     clickNpcOption(game, "Bribe 50 Gold");
     leaveConversation(game);
-    talkAt(game, kGingerSpot);
+    talkAt(game, kHenrySpot);
     clickNpcOption(game, "Bribe 100 Gold");
     leaveConversation(game);
-    talkAt(game, kGingerSpot);
+    talkAt(game, kHenrySpot);
     clickNpcOption(game, "Bribe 150 Gold");
 
     EXPECT_EQ(goldTape, tape(200, 150, 50));
@@ -487,7 +487,7 @@ GAME_TEST(MM6NpcDialogue, StreetNpcBribeDiplomacy) {
     enterNewSorpigal(game);
     game.runGameRoutine([] { pParty->pCharacters[0].pActiveSkills[SKILL_DIPLOMACY] = CombinedSkillValue(2, MASTERY_EXPERT); });
     test.startTaping();
-    talkAt(game, kGingerSpot);
+    talkAt(game, kHenrySpot);
     clickNpcOption(game, "Bribe 47 Gold");
 
     EXPECT_EQ(goldTape, tape(200, 153));

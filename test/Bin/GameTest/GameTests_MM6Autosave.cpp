@@ -208,7 +208,7 @@ static std::vector<int> deadActors() {
 }
 
 static const Vec3f kTavernDoor(-8784, -8690, 300); // A Lonely Knight in New Sorpigal, facing east.
-static const Vec3f kJanineSpot(-7896, -5464, 300); // Janine, who wants a bribe from this party, stands to the east.
+static const Vec3f kGinoSpot(-7896, -5464, 300); // Gino, who wants a bribe from this party, stands to the east.
 
 static void clickOption(EngineController &game, GUIWindow *window, std::string_view label) {
     // Left click in the middle of the shown house or conversation option with this line.
@@ -797,7 +797,7 @@ GAME_TEST(MM6InGameSave, StreetNpcBribesAndTavernTipsSurviveLoad) {
     game.tick();
     game.pressGuiButton("House_Exit");
     game.tick();
-    pressSpaceAt(game, kJanineSpot, 0);
+    pressSpaceAt(game, kGinoSpot, 0);
     clickOption(game, pDialogueWindow.get(), "Bribe 50 Gold");
     game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
     game.tick();
@@ -817,7 +817,7 @@ GAME_TEST(MM6InGameSave, StreetNpcBribesAndTavernTipsSurviveLoad) {
     game.tick();
     game.pressGuiButton("House_Exit");
     game.tick();
-    pressSpaceAt(game, kJanineSpot, 0);
+    pressSpaceAt(game, kGinoSpot, 0);
 
     EXPECT_EQ(goldTape, tape(200, 199, 198, 148, 200, 148, 147)); // A drink, a tip, the bribe, the new game, the load and the second tip.
     EXPECT_MISSES(statusTape, localization->str(LSTR_HAVE_A_DRINK_FIRST));

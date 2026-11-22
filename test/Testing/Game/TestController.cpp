@@ -7,6 +7,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/EngineGlobals.h"
+#include "Engine/Timer.h"
 #include "Engine/Resources/EngineFileSystem.h"
 #include "Engine/Components/Trace/EngineTracePlayer.h"
 #include "Engine/Components/Trace/EngineTraceStateAccessor.h"
@@ -152,6 +153,8 @@ void TestController::prepareForNextTestInternal() {
 
     _controller->goToMainMenu();
     adjustMaxFps(); // Set max fps AFTER going to the main menu, so that the latter one is done quickly.
+
+    *gameTimer = Timer(); // A new game keeps the game clock, and AI and walking animations run off it.
 
     // Menu transition might depend on the previous test's state and consume rng calls. We don't want that, so restart
     // the deterministic component last.

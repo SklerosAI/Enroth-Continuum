@@ -148,6 +148,27 @@ moves time to 9 am a week after the next dawn and rests the party.
   hireling share, gives every character the bounty award, and adds the level to reputation. The three MM6 halls use the
   first three town hall slots of the shared bounty arrays.
 
+## Throne rooms and the jail
+
+MM6.exe's house entry (0x43C300) checks the room type once the house is open. A throne room (room type 20) entered with
+a stored reputation of -1000 or worse becomes the jail, house 167 (0x43C598). Hirelings don't adjust the reputation
+here, unlike event variable 215. The six throne rooms are houses 154, 156, 158, 160, 162 and 164 (Castle Ironfist,
+Newton, Temper, Stone, Fleise and Stromgard), rooms 18 to 23 in MM6.exe's room table. `SpeakInHouse` events on `outc1`,
+`outc2`, `outd1`, `outd3` and `oute2` enter them, and no MM6 script enters house 167 itself.
+
+The sentence (0x43C5C4) adds a year to the clock and clears every character's recovery and daily casts, dead ones
+included. It runs no party rest, so health, mana, conditions, buffs, food and the hirelings' daily abilities are left
+alone. A year moves neither the hour nor the day of the month, so the new day check (0x4881C4) doesn't fire. Reputation
+goes to 0, the prison terms count goes up, and every character gets award 83, "Served %u Prison Terms", through the
+award variable write, with its chime and reaction. Like the other counter awards it isn't listed on the character screen
+yet, see [awards](mm6-characters-items-spells.md#awards).
+
+The jail is room 47, with no proprietor, no residents and no exit. With nobody selected its panel shows npctext.txt text
+173, "For your numerous crimes and evil deeds, you have been sentenced to one year in prison.", centred in pale yellow
+(0x49812D). It is entered even when its movie can't play. Leaving it returns the party to the map it was on. MM7's jail
+in `UIHouses.cpp`, triggered by the fine and with a full heal, isn't reached by MM6. GrayFace's MM6 patch leaves the
+jail alone.
+
 ## Stables and boats
 
 `MM6Transport` shows a stable or boat as a menu. The route tables come from MM6.exe (`decodeTransportRules`): 36 routes
@@ -254,8 +275,8 @@ MM6 refuses to open a street NPC conversation with nobody active, and so does th
   [MM6NewDay.h](../src/Engine/MM6/MM6NewDay.h)
 - Unit tests: [src/GUI/UI/Houses/Tests](../src/GUI/UI/Houses/Tests), `MM6HouseServiceData_ut.cpp`,
   `MM6HouseType_ut.cpp`, `MM6HouseExit_ut.cpp`, `MM6Shop*_ut.cpp` in `src/Engine/MM6/Tests`
-- Game tests: `GameTests_MM6Houses.cpp`, `GameTests_MM6HouseExit.cpp`, `GameTests_MM6Transport.cpp`,
-  `GameTests_MM6Hirelings.cpp`, `GameTests_MM6NpcDialogue.cpp`, `GameTests_MM6StreetNpcs.cpp`,
-  `GameTests_MM6FirstCombat.cpp` (rest) in [test/Bin/GameTest](../test/Bin/GameTest)
+- Game tests: `GameTests_MM6Houses.cpp`, `GameTests_MM6HouseExit.cpp`, `GameTests_MM6Jail.cpp`,
+  `GameTests_MM6Transport.cpp`, `GameTests_MM6Hirelings.cpp`, `GameTests_MM6NpcDialogue.cpp`,
+  `GameTests_MM6StreetNpcs.cpp`, `GameTests_MM6FirstCombat.cpp` (rest) in [test/Bin/GameTest](../test/Bin/GameTest)
 
 See also: [Events](mm6-events.md), [Travel and maps](mm6-travel-and-maps.md), [Save format](mm6-save-format.md), [Media and UI](mm6-media-and-ui.md), [GrayFace](mm6-grayface-patch-reference.md)

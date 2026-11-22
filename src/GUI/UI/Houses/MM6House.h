@@ -292,16 +292,19 @@ class GUIWindow_MM6House : public GUIWindow_House {
 /**
  * MM6 counterpart of `enterHouse`. Refuses with a status line, without touching the party or the UI, when the house
  * has no room, its room media can't be loaded, or it would show nothing at all: no movie, no proprietor and no NPC.
+ * The jail always shows its sentence. A throne room entered at reputation -1000 or worse sends the party to jail for a
+ * year instead.
  *
- * @param houseId                       MM6 house id from a `SpeakInHouse` event.
+ * @param requestedHouse                MM6 house id from a `SpeakInHouse` event.
  * @return                              Whether the house was entered, and `mm6CreateHouseUI` should follow.
  */
-bool mm6EnterHouse(HouseId houseId);
+bool mm6EnterHouse(HouseId requestedHouse);
 
 /**
  * MM6 counterpart of `createHouseUI`.
  *
- * @param houseId                       House that `mm6EnterHouse` accepted.
+ * @param houseId                       House that `mm6EnterHouse` accepted. A throne room it turned into the jail opens
+ *                                      the jail.
  */
 void mm6CreateHouseUI(HouseId houseId);
 

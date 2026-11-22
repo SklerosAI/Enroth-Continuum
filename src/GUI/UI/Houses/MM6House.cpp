@@ -235,6 +235,43 @@ static MonsterId randomBountyMonster() {
     }
 }
 
+static constexpr HouseId kJail = static_cast<HouseId>(167);
+static constexpr int kJailSentenceText = 173; // npctext.txt "For your numerous crimes and evil deeds...".
+static constexpr int kPrisonTermsAward = 83; // awards.txt "Served %u Prison Terms".
+
+static HouseId jailedFrom = HOUSE_INVALID; // Throne room that `mm6EnterHouse` last turned into the jail.
+
+/**
+ * @offset 0x43C598
+ *
+ * @param house                         House the party enters.
+ * @return                              Whether MM6 sends the party to jail instead. The stored reputation is compared,
+ *                                      hirelings don't change it here.
+ */
+static bool sendsToJail(const mm6::HouseServiceRow &house) {
+    return house.type == HOUSE_TYPE_THRONE_ROOM && pParty->mm6Reputation <= -1000;
+}
+
+/**
+ * @offset 0x43C5C4
+ *
+ * A year passes in jail. Recovery and the daily casts are cleared, but the party doesn't rest, so nobody heals.
+ * Reputation is cleared, and every character gets the prison terms award.
+ */
+static void serveJailSentence() {
+    pParty->GetPlayingTime() += Duration::fromYears(1);
+    for (Character &character : pParty->pCharacters) {
+        character.timeToRecovery = 0_ticks;
+        character.uNumDivineInterventionCastsThisDay = 0;
+        character.uNumArmageddonCasts = 0;
+        character.uNumFireSpikeCasts = 0;
+    }
+    pParty->mm6Reputation = 0;
+    ++pParty->uNumPrisonTerms;
+    for (Character &character : pParty->pCharacters)
+        mm6::writeCharacterEventVariable(character, EVENT_Set, std::to_underlying(VAR_Award), kPrisonTermsAward);
+}
+
 static Pointi portraitPosition(size_t count, size_t index) {
     return kPortraitPositions[count - 1][index];
 }
@@ -352,7 +389,10 @@ void GUIWindow_MM6House::Update() {
     pBtn_ExitCancel->label = localization->str(_selected == -1 ? LSTR_MM6_EXIT_BUILDING : LSTR_MM6_END_CONVERSATION);
     DrawTitleText(assets->pFontCreate.get(), 490, 2, colorTable.White, houseTable[houseId()].name, 3, Recti(0, 0, 622, screenHeight));
 
-    if (_selected == -1) {
+    if (_selected == -1 && _house.type == HOUSE_TYPE_JAIL) {
+        const std::string_view sentence = pNPCTopics[kJailSentenceText - 1].pText;
+        drawPanelText(sentence, (310 - panelTextHeight(sentence)) / 2 + 18, colorTable.PaleCanary);
+    } else if (_selected == -1) {
         drawResidents();
     } else {
         const Resident &resident = _residents[_selected];
@@ -1011,8 +1051,8 @@ void GUIWindow_MM6House::drawOptionLabels(const std::vector<std::string> &labels
     }
 }
 
-bool mm6EnterHouse(HouseId houseId) {
-    const int id = std::to_underlying(houseId);
+bool mm6EnterHouse(HouseId requestedHouse) {
+    int id = std::to_underlying(requestedHouse);
     const mm6::HouseServiceData *houses = nullptr;
     try {
         houses = &mm6::houseServiceData();
@@ -1021,7 +1061,7 @@ bool mm6EnterHouse(HouseId houseId) {
         engine->_statusBar->setEvent("This place is unavailable.");
         return false;
     }
-    const mm6::HouseEntryPlan entry = mm6::planHouseEntry(*houses, id);
+    mm6::HouseEntryPlan entry = mm6::planHouseEntry(*houses, id);
     if (entry.kind != mm6::HouseEntryKind::TableBacked) {
         if (entry.kind == mm6::HouseEntryKind::Terminal) {
             engine->_statusBar->setEvent("This passage is unavailable.");
@@ -1037,6 +1077,12 @@ bool mm6EnterHouse(HouseId houseId) {
         if (pParty->hasActiveCharacter())
             pParty->activeCharacter().playReaction(SPEECH_STORE_CLOSED);
         return false;
+    }
+    const bool jailed = sendsToJail(houses->at(id));
+    const HouseId houseId = jailed ? kJail : requestedHouse;
+    if (jailed) {
+        id = std::to_underlying(houseId);
+        entry = mm6::planHouseEntry(*houses, id);
     }
     const mm6::HousePresentationState presentation = mm6::planHousePresentation(GameTitle::MM6, *houses, id);
     const auto [movie, loops] = roomMovie(houseId, presentation.videoName);
@@ -1056,14 +1102,19 @@ bool mm6EnterHouse(HouseId houseId) {
     currentHouseNpc = -1;
     uCurrentHouse_Animation = 0; // The MM7 jail sentinel in event dispatch must not remap this house.
     const bool showsExit = mm6::isHouseExitOffered(houses->at(id).exit, pParty->_questBits);
-    if (!pMediaPlayer->tryOpenHouseMovie(movie, loops) && !presentation.proprietorIconName && !hasResidentNpc(houseId) && !showsExit) {
+    if (!pMediaPlayer->tryOpenHouseMovie(movie, loops) && !presentation.proprietorIconName && !hasResidentNpc(houseId) && !showsExit && !jailed) {
         engine->_statusBar->setEvent("This place is unavailable.");
         return false;
     }
+    jailedFrom = jailed ? requestedHouse : HOUSE_INVALID;
+    if (jailed)
+        serveJailSentence();
     return true;
 }
 
 void mm6CreateHouseUI(HouseId houseId) {
+    if (houseId == jailedFrom)
+        houseId = kJail;
     const mm6::HousePresentationState presentation =
         mm6::planHousePresentation(GameTitle::MM6, mm6::houseServiceData(), std::to_underlying(houseId));
     const mm6::HouseServiceRow &house = mm6::houseServiceData().at(std::to_underlying(houseId));

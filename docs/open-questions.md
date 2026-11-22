@@ -33,8 +33,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   aggressors. Not changed because it reaches every MM6 map. `SpawnEncounter` in `src/Engine/Objects/Actor.cpp`.
 - **Travel clears recovery.** Map travel calls the shared `restAndHeal`, which clears recovery. MM6's travel keeps it.
   `src/Application/Game.cpp`, the travel branch near `restAndHeal`.
-- **Map variable overflow.** `MM6MapByteState` throws where MM6 wraps on subtract below zero or saturates on add above
-  255. No shipped script was checked for either case. `src/Engine/Evt/MM6MapByteState.cpp`.
 - **Event W2 follow-up.** With nobody active, the event run picks one member, but other active-member reads in the
   same run (a held item moved when a new one is given) still see nobody. `MM6GiveItemEvent.cpp`, `EvtInterpreter.cpp`.
 - **Map timer hour 88.** The Temple of the Sun (t4) dawn timer has an out-of-range hour byte. Its first firing now
@@ -153,7 +151,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 
 - [MM6House.cpp](../src/GUI/UI/Houses/MM6House.cpp), [MM6Shop.cpp](../src/GUI/UI/Houses/MM6Shop.cpp)
 - [MM6ConsumableRules.h](../src/Engine/MM6/MM6ConsumableRules.h)
-- [MM6MapByteState.cpp](../src/Engine/Evt/MM6MapByteState.cpp)
 - [Actor.cpp](../src/Engine/Objects/Actor.cpp), [Character.cpp](../src/Engine/Objects/Character.cpp)
 - [GUIWindow.cpp](../src/GUI/GUIWindow.cpp)
 - [MM6CampaignChain.cpp](../test/Bin/GameTest/MM6CampaignChain.cpp)

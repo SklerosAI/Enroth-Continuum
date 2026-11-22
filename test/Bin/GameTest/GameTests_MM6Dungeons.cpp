@@ -673,3 +673,37 @@ GAME_TEST(MM6Dungeons, DragonsLairDoorText) {
     EXPECT_CONTAINS(lines, (DrawnLine{"A large dragon", {504, 139}, colorTable.White}));
     EXPECT_CONTAINS(lines, (DrawnLine{"dragon's treasure.", {493, 259}, colorTable.White}));
 }
+
+GAME_TEST(MM6Dungeons, MoonAltarTouchedPast255Times) {
+    // The 86th touch of the Altar of Might in the Temple of the Moon threw. Once its trap is sprung, each touch hurts
+    // the party and adds 3 to a map byte, which MM6 stops at 255.
+    // Fixture: the party gets 2000 HP, as for the other dungeon walks.
+    startNewGameThroughInput(game);
+    const MapId t5 = pMapTable->GetMapInfo("t5.blv");
+    useMM6CampaignChainEventFace(game, pMapTable->GetMapInfo("outc2.odm"), 152); // The Temple of the Moon.
+    confirmTransition(game);
+    ASSERT_EQ(engine->_currentLoadedMapId, t5);
+    strengthenParty();
+    auto pointsTape = tapes.custom([] {
+        int points = 0;
+        while (points < 255 && MM6MapByteState(pIndoor->mm6DeltaBytes).compare(111, points + 1))
+            points++;
+        return points;
+    });
+    auto hpTape = tapes.totalHp();
+    auto statusTape = tapes.statusBar();
+    test.startTaping();
+
+    clickIndoorEventFace(game, 16);
+    for (int touch = 1; touch < 86; touch++) {
+        game.pressAndReleaseButton(BUTTON_LEFT);
+        game.tick();
+    }
+
+    AccessibleVector<int> points;
+    for (int value = 0; value <= 255; value += 3)
+        points.push_back(value);
+    EXPECT_EQ(pointsTape, points);
+    EXPECT_EQ(hpTape.size(), 87); // Every touch hurts, the 86th too.
+    EXPECT_CONTAINS(statusTape, "Ouch!");
+}

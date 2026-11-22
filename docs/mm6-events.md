@@ -163,8 +163,16 @@ Rules per family:
 - **Condition (87 to 104)**: 17 conditions in MM6 order, then Good (104), which skips MM7's Zombie slot. No operation
   reads its operand. Set and Add start the condition with no protection check, and Good clears all. Subtract clears it.
 - **Map byte (105 to 204)**: 100 per-map bytes in the map delta (`.ddm` or `.dlv`). Only 105 to 175 occur in shipped
-  scripts and only those are accepted. Compare is "at least". MM6.exe saturates Add at 255 and lets Subtract wrap below
-  0. The port throws in both cases instead.
+  scripts and only those are accepted. As in MM6.exe's handlers (Compare 0x43FE40, Set 0x4407E0, Add 0x4412B0,
+  Subtract 0x4420E0), Compare is "at least" against the whole signed operand, Set stores the operand's low byte, Add
+  adds the low byte and stops at 255, and Subtract takes the low byte away and wraps below 0. No other family shares
+  this code. MM6.exe runs a write once per targeted character, so a whole-party Add lands four times. The port writes
+  once. Only `zddb05` event 6 and `zddb07` event 10 add for the whole party, each a once-only flag that is only
+  compared with 1, on maps no script leads to. Every shipped Subtract is guarded by a Compare with its operand, so none
+  wraps. Repeated clicks push an Add past 255 on three maps: the Temple of the Moon (`t5`) altars add 1 to 6 per touch
+  once their trap is sprung, the Temple of Tsantsa (`t3`) levers add 1 per pull, and the Icewind Keep (`d15`) chest
+  adds 1 per opening once an opening with quest bit 25 clear has started the count. `zddb10` has unbounded adds too,
+  on a map no script leads to. Test `MM6Dungeons.MoonAltarTouchedPast255Times`.
 - **Autonote (205)**: bits 1 to 128 of the party autonote field.
 - **Character bit (213)**: 512 bits per character. The wire index is zero-based (MM6.exe tests bit `0x80 >> (n % 8)` of
   byte `n / 8`), the runtime bitset is one-based. Compare and Set only.

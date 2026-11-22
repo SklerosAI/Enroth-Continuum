@@ -1,5 +1,6 @@
 #include "Engine/Evt/MM6MapByteState.h"
 
+#include <algorithm>
 #include <stdexcept>
 
 namespace {
@@ -21,32 +22,20 @@ int MM6MapByteState::checkedIndex(int rawId) {
     return rawId - kFirstEventId;
 }
 
-std::uint8_t MM6MapByteState::checkedValue(int value) {
-    if (value < 0 || value > 255)
-        throw std::runtime_error("MM6 map variable operand is outside byte range");
-    return static_cast<std::uint8_t>(value);
-}
-
 bool MM6MapByteState::compare(int rawId, int value) const {
-    return _bytes[checkedIndex(rawId)] >= checkedValue(value);
+    return _bytes[checkedIndex(rawId)] >= value;
 }
 
 void MM6MapByteState::add(int rawId, int value) {
-    int index = checkedIndex(rawId);
-    std::uint8_t operand = checkedValue(value);
-    if (static_cast<int>(_bytes[index]) + operand > 255)
-        throw std::runtime_error("MM6 map variable addition would overflow");
-    _bytes[index] += operand;
+    std::uint8_t &byte = _bytes[checkedIndex(rawId)];
+    byte = std::min(byte + (value & 0xFF), 255);
 }
 
 void MM6MapByteState::subtract(int rawId, int value) {
-    int index = checkedIndex(rawId);
-    std::uint8_t operand = checkedValue(value);
-    if (_bytes[index] < operand)
-        throw std::runtime_error("MM6 map variable subtraction would underflow");
-    _bytes[index] -= operand;
+    std::uint8_t &byte = _bytes[checkedIndex(rawId)];
+    byte -= value & 0xFF;
 }
 
 void MM6MapByteState::set(int rawId, int value) {
-    _bytes[checkedIndex(rawId)] = checkedValue(value);
+    _bytes[checkedIndex(rawId)] = static_cast<std::uint8_t>(value);
 }

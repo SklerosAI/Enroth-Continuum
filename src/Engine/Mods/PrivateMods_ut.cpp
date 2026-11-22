@@ -93,6 +93,18 @@ UNIT_TEST(MM6PrivateMods, MonsterLootRerollRequiresExactMM6OptIn) {
     EXPECT_FALSE(monsterLootRerollEnabled(GameTitle::MM7, "1"));
 }
 
+UNIT_TEST(MM6PrivateMods, ChestRerollRequiresExactMM6OptIn) {
+    using mm6::mods::chestRerollEnabled;
+
+    EXPECT_FALSE(chestRerollEnabled(GameTitle::MM6, nullptr));
+    EXPECT_FALSE(chestRerollEnabled(GameTitle::MM6, ""));
+    EXPECT_FALSE(chestRerollEnabled(GameTitle::MM6, "0"));
+    EXPECT_FALSE(chestRerollEnabled(GameTitle::MM6, "true"));
+    EXPECT_FALSE(chestRerollEnabled(GameTitle::MM6, "01"));
+    EXPECT_TRUE(chestRerollEnabled(GameTitle::MM6, "1"));
+    EXPECT_FALSE(chestRerollEnabled(GameTitle::MM7, "1"));
+}
+
 UNIT_TEST(MM7PrivatePortraits, MoodMapping) {
     using mm7::mods::PortraitMood;
     using mm7::mods::portraitMood;

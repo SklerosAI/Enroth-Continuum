@@ -43,6 +43,7 @@ struct ChestLiveCandidate {
     std::uint32_t nextLcgState = 0;
     std::array<std::uint8_t, 30> generatedArtifactFlags = {};
     int markersVisited = 0;
+    ChestRecordSet rolledFrom = {}; // The chest records before the roll.
 };
 
 inline bool copyChestRecords(std::span<const std::uint8_t> section, ChestRecordSet *records) {
@@ -121,6 +122,7 @@ inline std::optional<ChestLiveCandidate> stageChestLiveOwnerHandoff(
         result.nextLcgState = staged->nextRngState;
         result.generatedArtifactFlags = staged->generatedArtifactFlags;
         result.markersVisited = staged->markersVisited;
+        result.rolledFrom = owners.records;
         if (binding.levelType == LEVEL_INDOOR) {
             const auto &section = indoorWire.section(MM6IndoorSectionKind::Chests);
             std::string bytes(static_cast<const char *>(section.bytes.data()), section.bytes.size());
@@ -151,7 +153,7 @@ static_assert(noexcept(std::declval<std::vector<std::uint8_t> &>().swap(
 inline bool applyChestLiveOwnerHandoff(
     const ChestLiveBinding &binding, MapTreasureLevel mapLevel, const ItemTable &table,
     const std::array<std::uint8_t, 30> &partyOwnedArtifactFlags,
-    bool preserveMarkerFree = false) {
+    bool preserveMarkerFree = false, std::optional<ChestRecordSet> *rolledFrom = nullptr) {
     auto staged = stageChestLiveOwnerHandoff(binding, mapLevel, table, partyOwnedArtifactFlags);
     if (!staged)
         return false;
@@ -173,6 +175,8 @@ inline bool applyChestLiveOwnerHandoff(
     binding.deltaBytes->swap(staged->deltaBytes);
     binding.titleState->lcgState = staged->nextLcgState;
     binding.titleState->generatedArtifactFlags = staged->generatedArtifactFlags;
+    if (rolledFrom)
+        *rolledFrom = staged->rolledFrom;
     return true;
 }
 
@@ -182,7 +186,7 @@ inline bool applyChestLiveOwnerHandoff(
 inline bool applyActiveChestLiveOwnerHandoff(
     GameTitle title, MapTreasureLevel mapLevel, const ItemTable &table,
     const std::array<std::uint8_t, 30> &partyOwnedArtifactFlags,
-    bool preserveMarkerFree = false) {
+    bool preserveMarkerFree = false, std::optional<ChestRecordSet> *rolledFrom = nullptr) {
     if (title != GameTitle::MM6)
         return false;
     ChestLiveBinding binding;
@@ -201,12 +205,12 @@ inline bool applyActiveChestLiveOwnerHandoff(
         base.sections.push_back({MM6IndoorSectionKind::DoorSlots, Blob(), 200});
         binding.indoorBase = &base;
         return applyChestLiveOwnerHandoff(binding, mapLevel, table,
-                                         partyOwnedArtifactFlags, preserveMarkerFree);
+                                         partyOwnedArtifactFlags, preserveMarkerFree, rolledFrom);
     } else {
         return false;
     }
     return applyChestLiveOwnerHandoff(binding, mapLevel, table,
-                                     partyOwnedArtifactFlags, preserveMarkerFree);
+                                     partyOwnedArtifactFlags, preserveMarkerFree, rolledFrom);
 }
 
 }  // namespace mm6

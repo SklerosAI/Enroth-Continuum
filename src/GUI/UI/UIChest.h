@@ -42,7 +42,13 @@ class GUIWindow_Chest : public GUIWindow {
      */
     void updatePageButton();
 
+    /**
+     * Shows the Reroll button of an MM6 chest on the chest screen while the chest reroll mod can reroll the chest.
+     */
+    void updateRerollButton();
+
     int _chestId = 0;
     int _page = 0;
     GUIButton *_pageButton = nullptr;
+    GUIButton *_rerollButton = nullptr;
 };

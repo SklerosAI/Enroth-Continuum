@@ -222,4 +222,12 @@ bool monsterLootRerollEnabled(GameTitle title) {
     return monsterLootRerollEnabled(title, std::getenv("ENROTH_MM6_MONSTER_LOOT_REROLL"));
 }
 
+bool chestRerollEnabled(GameTitle title, const char *flag) {
+    return title == GameTitle::MM6 && flag && std::string_view(flag) == "1";
+}
+
+bool chestRerollEnabled(GameTitle title) {
+    return chestRerollEnabled(title, std::getenv("ENROTH_MM6_CHEST_REROLL"));
+}
+
 }  // namespace mm6::mods

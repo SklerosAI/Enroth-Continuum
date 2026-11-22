@@ -88,4 +88,20 @@ bool monsterLootRerollEnabled(GameTitle title, const char *flag);
  */
 bool monsterLootRerollEnabled(GameTitle title);
 
+/**
+ * The MM6 chest reroll mod adds a Reroll button to a chest that still holds the random loot of its first roll. Atlas
+ * sets `ENROTH_MM6_CHEST_REROLL` for an MM6 launch from its own preference.
+ *
+ * @param title                         Running game title.
+ * @param flag                          Value of `ENROTH_MM6_CHEST_REROLL`, or `nullptr` if it isn't set.
+ * @return                              Whether the mod is on, which takes MM6 and the exact string `1`.
+ */
+bool chestRerollEnabled(GameTitle title, const char *flag);
+
+/**
+ * @param title                         Running game title.
+ * @return                              Whether `ENROTH_MM6_CHEST_REROLL` turns the chest reroll mod on.
+ */
+bool chestRerollEnabled(GameTitle title);
+
 }  // namespace mm6::mods

@@ -1,3 +1,5 @@
+#include <unistd.h>
+
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
@@ -5,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <memory>
 #include <optional>
 #include <set>
 #include <sstream>
@@ -47,7 +50,10 @@
 #include "GUI/UI/UIRest.h"
 #include "GUI/UI/UISaveLoad.h"
 
+#include "Library/Environment/Interface/Environment.h"
+
 #include "Utility/Memory/Blob.h"
+#include "Utility/ScopeGuard.h"
 
 #include "MM6CampaignChain.h"
 
@@ -275,6 +281,76 @@ static EvtInstruction parsedMM6Instruction(EvtOpcode opcode, std::string payload
     record.push_back(static_cast<char>(opcode));
     record += payload;
     return EvtProgram::load(Blob::fromString(record), GameTitle::MM6).instruction(1, 0);
+}
+
+struct ScopedModFlag {
+    // Sets an MM6 mod switch the way Atlas does, and clears it when the test is done with it.
+    ScopedModFlag(const char *name, bool on) : name(name) {
+        environment->setenv(name, on ? "1" : "0");
+    }
+    ~ScopedModFlag() {
+        environment->setenv(name, "");
+    }
+    const char *name;
+    std::unique_ptr<Environment> environment = Environment::createStandardEnvironment();
+};
+
+static void standAtShadowGuildHideoutChest1(EngineController &game) {
+    // Chest 1 of the Shadow Guild Hideout holds one fixed item and two random-loot markers. It is trapped, the active
+    // character can disarm it.
+    pParty->activeCharacter().setSkillValue(SKILL_TRAP_DISARM, CombinedSkillValue(10, MASTERY_MASTER));
+    game.teleportTo(pMapTable->GetMapInfo("d03.blv"), Vec3f(400, 3984, -255.5f), 180, -30); // East of the chest, looking down at it.
+}
+
+static void openShadowGuildHideoutChest1(EngineController &game) {
+    game.pointMouseAtFace(889);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+}
+
+static GUIButton *chestRerollButton() {
+    if (!pGUIWindow_CurrentChest)
+        return nullptr;
+    const auto button = std::ranges::find(pGUIWindow_CurrentChest->vButtons, "Chest_Reroll", &GUIButton::id);
+    return button == pGUIWindow_CurrentChest->vButtons.end() ? nullptr : *button;
+}
+
+static bool drewReroll(const AccessibleVector<DrawnText> &texts) {
+    return texts.contains([](const DrawnText &text) { return text.text == "Reroll"; });
+}
+
+static std::filesystem::path createTempProfile() {
+    // An owner-only mm6-restart- folder in the system temp folder, the only kind of profile a test saves into.
+    const std::filesystem::path tempRoot = std::filesystem::canonical(std::filesystem::temp_directory_path());
+    std::string created = (tempRoot / "mm6-restart-save-XXXXXX").string();
+    if (!mkdtemp(created.data()))
+        throw std::runtime_error("Can't create a temporary MM6 profile");
+    return std::filesystem::canonical(created);
+}
+
+static void saveAndLoad(EngineController &game) {
+    // Saves into the new slot from the Escape menu, goes to the main menu and loads the save.
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick(2);
+    game.pressGuiButton("GameMenu_SaveGame");
+    game.tick(2);
+    game.doubleClickGuiButton("SaveMenu_Slot0"); // The new save slot.
+    game.tick();
+    game.pressAndReleaseKey(PlatformKey::KEY_C);
+    game.tick();
+    game.pressGuiButton("SaveMenu_Save");
+    game.tick(3); // The button animates for a frame, then posts the save for the next one.
+    game.goToMainMenu();
+    game.pressGuiButton("MainMenu_LoadGame");
+    game.tick(4);
+    const auto &slots = saveLoadMenu()->slots();
+    const auto saved = std::ranges::find(slots, "save000.ec6", [](const auto &entry) { return entry.fileName; });
+    ASSERT_NE(saved, slots.end());
+    game.pressGuiButton(fmt::format("LoadMenu_Slot{}", saved - slots.begin()));
+    game.tick(2);
+    game.pressGuiButton("LoadMenu_Load");
+    game.skipLoadingScreen();
+    game.tick();
 }
 
 // This is intentionally separate from GameTests_MM6.cpp, which owns the
@@ -860,4 +936,143 @@ GAME_TEST(MM6ChestHeadless, DISABLED_ChestKeepsItsSecondPageInFreshProcess) {
         mm6::disarmFirstMapManualSave();
         mm6::testing::setNativeProfileRootForTest({});
     });
+}
+
+GAME_TEST(MM6ChestReroll, RerollRollsTheRandomLootAgain) {
+    // With the chest reroll mod on, a chest with random loot shows a Reroll button, and the button rolls the chest's
+    // random loot again. The fixed item, the chest's type and its flags stay. Without the mod there is no button.
+    constexpr ItemId fixedItem = static_cast<ItemId>(513);
+    for (bool on : {false, true}) {
+        SCOPED_TRACE(fmt::format("on={}", on));
+        test.prepareForNextTest();
+        ScopedModFlag reroll("ENROTH_MM6_CHEST_REROLL", on);
+        startNewGameThroughInput(game);
+        standAtShadowGuildHideoutChest1(game);
+        auto contentsTape = tapes.custom([] { return chestContents(1); });
+        auto typeTape = tapes.custom([] { return vChests[1].chestTypeId; });
+        auto fixedTape = tapes.custom([=] { return static_cast<bool>(vChests[1].inventory.find(fixedItem)); });
+        auto buttonTape = tapes.custom([] { return chestRerollButton() != nullptr; });
+        auto textsTape = tapes.drawnTexts();
+        auto quadsTape = tapes.hudQuads();
+        auto screenTape = tapes.screen();
+        test.startTaping();
+
+        openShadowGuildHideoutChest1(game);
+        if (!on) {
+            EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHEST));
+            EXPECT_EQ(buttonTape, tape(false));
+            EXPECT_FALSE(drewReroll(textsTape.back()));
+            continue;
+        }
+        const auto opened = quadsTape.back();
+        game.pressGuiButton("Chest_Reroll");
+        game.tick();
+
+        EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHEST));
+        EXPECT_EQ(buttonTape, tape(false, true));
+        EXPECT_TRUE(drewReroll(textsTape.back()));
+        EXPECT_EQ(typeTape.size(), 1);
+        ASSERT_EQ(contentsTape.size(), 3); // Shut, opened, rerolled.
+        EXPECT_NE(contentsTape[1], contentsTape[2]);
+        EXPECT_EQ(contentsTape[1][0], contentsTape[2][0]); // The flags.
+        EXPECT_EQ(fixedTape, tape(true));
+        EXPECT_NE(opened, quadsTape.back());
+    }
+}
+
+GAME_TEST(MM6ChestReroll, TakingAnItemEndsTheReroll) {
+    // Taking an item from a chest makes its loot the party's, the Reroll button goes and stays gone after a save and a
+    // load. A chest the party left alone keeps its button through the save and still rerolls after the load. With this
+    // roll chest 1 of the Abandoned Temple has a gold pile in its top left cell.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    for (bool take : {false, true}) {
+        SCOPED_TRACE(fmt::format("take={}", take));
+        test.prepareForNextTest();
+        std::filesystem::remove_all(profile / "saves");
+        game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+        ScopedModFlag reroll("ENROTH_MM6_CHEST_REROLL", true);
+        enterAbandonedTempleWithChestRoll(game, 38);
+        auto buttonTape = tapes.custom([] { return chestRerollButton() != nullptr; });
+        auto contentsTape = tapes.custom([] { return chestContents(1); });
+        auto statusTape = tapes.statusBar();
+        auto screenTape = tapes.screen();
+        test.startTaping();
+
+        useMM6CampaignChainIndoorEventFace(game, 12); // Opens chest 1.
+        if (take) {
+            game.pressAndReleaseButton(BUTTON_LEFT, chestTable[vChests[1].chestTypeId].inventoryOffset + Pointi(16, 16)); // The pile in the top left cell.
+            game.tick();
+        }
+        game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+        game.tick();
+        const std::vector<int> saved = contentsTape.back();
+        saveAndLoad(game);
+        useMM6CampaignChainIndoorEventFace(game, 12);
+        const std::vector<int> loaded = contentsTape.back();
+        if (!take) {
+            game.pressGuiButton("Chest_Reroll");
+            game.tick();
+        }
+
+        EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
+        EXPECT_EQ(saved, loaded);
+        if (take) {
+            EXPECT_EQ(buttonTape.unique(), tape(false, true, false));
+        } else {
+            EXPECT_EQ(buttonTape.unique(), tape(false, true, false, true));
+            EXPECT_NE(contentsTape.back(), loaded);
+        }
+        game.runGameRoutine([&] {
+            mm6::disarmFirstMapManualSave();
+            mm6::testing::setNativeProfileRootForTest({});
+        });
+    }
+}
+
+GAME_TEST(MM6ChestReroll, ChestRolledWithTheModOffHasNoButton) {
+    // A chest whose loot was rolled before the chest reroll mod was on can't be rerolled.
+    startNewGameThroughInput(game);
+    standAtShadowGuildHideoutChest1(game); // The map rolls its chests as it loads.
+    ScopedModFlag reroll("ENROTH_MM6_CHEST_REROLL", true);
+    auto buttonTape = tapes.custom([] { return chestRerollButton() != nullptr; });
+    auto screenTape = tapes.screen();
+    test.startTaping();
+
+    openShadowGuildHideoutChest1(game);
+
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHEST));
+    EXPECT_EQ(buttonTape, tape(false));
+}
+
+GAME_TEST(MM6ChestReroll, DiscardedArtifactLeavesTheGeneratedList) {
+    // An artifact that a reroll throws away was never found, so it comes off MM6's generated list and can be rolled
+    // again. With the All Artifacts mod the list doesn't decide what rolls, and the artifact stays on it. The hive's
+    // chest 4 rolls artifact 415 at this chest luck.
+    constexpr ItemId hiveArtifact = static_cast<ItemId>(415);
+    for (bool allArtifacts : {false, true}) {
+        SCOPED_TRACE(fmt::format("allArtifacts={}", allArtifacts));
+        test.prepareForNextTest();
+        ScopedModFlag reroll("ENROTH_MM6_CHEST_REROLL", true);
+        ScopedModFlag artifacts("ENROTH_MM6_ALL_ARTIFACTS", allArtifacts);
+        startNewGameThroughInput(game);
+        mm6::chestTitleState().lcgState = hiveArtifactLuck;
+        game.teleportTo(pMapTable->GetMapInfo("hive.blv"), Vec3f(-3000, 4182, -1777), 0, -20); // West of chest 4, looking down at it.
+        auto artifactsTape = tapes.custom([] { return chestArtifacts(4); });
+        auto generatedTape = tapes.custom([] { return static_cast<int>(mm6::chestTitleState().generatedArtifactFlags[15]); });
+        test.startTaping();
+
+        game.pointMouseAtFace(2960);
+        game.pressAndReleaseButton(BUTTON_LEFT);
+        game.tick();
+        game.pressGuiButton("Chest_Reroll");
+        game.tick();
+
+        EXPECT_EQ(artifactsTape, tape(std::vector<int>{std::to_underlying(hiveArtifact)}, std::vector<int>{}));
+        if (allArtifacts) {
+            EXPECT_EQ(generatedTape, tape(1));
+        } else {
+            EXPECT_EQ(generatedTape, tape(1, 0));
+        }
+    }
 }

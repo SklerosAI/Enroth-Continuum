@@ -1,8 +1,10 @@
 #pragma once
 
+#include <optional>
 #include <utility>
 
 #include "Engine/MM6/MM6ChestLiveOwnerAdapter.h"
+#include "Engine/MM6/MM6ChestReroll.h"
 #include "Engine/MM6/MM6ChestSeedAndOwnership.h"
 #include "Engine/Tables/MapTable.h"
 
@@ -85,9 +87,12 @@ inline bool tryActiveChestMapLoad(GameTitle title, MapId mapId, const MapTable *
         mapId < MAP_FIRST || mapId > MAP_LAST || !chestTitleState().ready)
         return false;
     const auto owned = scanPartyOwnedChestArtifacts(title, *party);
-    return owned && applyActiveChestLiveOwnerHandoff(
-        title, maps->pInfos[mapId].mapTreasureLevel, *table, *owned,
-        detail::preserveMarkerFreeChestFlag());
+    std::optional<ChestRecordSet> rolledFrom;
+    if (!owned || !applyActiveChestLiveOwnerHandoff(title, maps->pInfos[mapId].mapTreasureLevel, *table, *owned,
+                                                    detail::preserveMarkerFreeChestFlag(), &rolledFrom))
+        return false;
+    noteActiveMapRolledChests(rolledFrom);
+    return true;
 }
 
 }  // namespace mm6

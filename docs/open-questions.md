@@ -86,8 +86,8 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 
 ## MM6: media and UI
 
-- **Voices.** MM6 voice samples exist, but the shared `speechVariants` table has no variant for the travel speeches 71
-  and 72 or for Beg, Threat and Bribe (53 to 58). Those play as portrait reactions only, and the W8 cap always applies.
+- **Look up and look down portraits.** MM6.exe's speech table gives speech 63 portrait 31 and speech 64 portrait 32.
+  The shared `portraitVariants` table in `src/Engine/mm7_data.cpp`, which MM6 uses, gives 17 and 20.
 - **Dungeon door sounds.** When MM6.exe opens the dungeon entry and exit dialog (0x43A070) it calls 0x496520 with the
   house if the room's sound byte is set, and 0x488CA0 with 47 on a character under a level and alert check. Neither
   call is traced. The MM6 path plays nothing there. The d01 and d02 rooms have no sound byte.

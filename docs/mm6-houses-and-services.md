@@ -160,8 +160,9 @@ and three slots for each of the 21 stables and boats. Stables are houses below 5
 - Paying passes the trip's days with rest and heal, then the party arrives at the route's point.
 - `gameplay.fix_travel_autosave` (default on) writes the autosave before the fare and the days. Vanilla wrote it after,
   so loading it lost the fare and the days without the trip.
-- `gameplay.fix_travel_speech_delay` (default on) leaves as soon as the travel speech ends, capped by the vanilla
-  1.5 s for a coach and 2.5 s for a boat. MM6 travel speeches have no voice sample in the port, so the cap applies.
+- `gameplay.fix_travel_speech_delay` (default on) leaves as soon as the horseman's or boatman's farewell (the room's
+  sound 2) ends, capped by the vanilla 1.5 s for a coach and 2.5 s for a boat. The party's travel speeches 71 and 72
+  have no voice line in MM6.exe.
 - Stables take part in the price-fixing quest. Each agrees once, and when all nine have agreed the quest is done.
 
 See [travel and maps](mm6-travel-and-maps.md) for the arrival side.

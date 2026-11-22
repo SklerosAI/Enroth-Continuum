@@ -1127,7 +1127,7 @@ GAME_TEST(MM6Houses, GuildMembership) {
     EXPECT_EQ(textTape, tape(std::string(), std::string("HEY!  The Blades' En"), std::string()));
     EXPECT_EQ(topicsTape, tape(std::vector<unsigned>{0, 0, 386}, std::vector<unsigned>{0, 0, 0}));
     EXPECT_EQ(std::ranges::count(soundsTape.flatten(), SOUND_quest), 4); // Each new member's award chime.
-    EXPECT_EQ(portraitsTape.back(), std::vector<PortraitId>(4, PORTRAIT_WIDE_SMILE)); // The award reaction, the portraits idle before it.
+    EXPECT_EQ(portraitsTape.back(), std::vector<PortraitId>({PORTRAIT_SMILE, PORTRAIT_WIDE_SMILE, PORTRAIT_WIDE_SMILE, PORTRAIT_WIDE_SMILE})); // The award reaction, the portraits idle before it.
 }
 
 GAME_TEST(MM6OffscreenFrame, DISABLED_HousesCapture) {
@@ -1608,7 +1608,7 @@ GAME_TEST(MM6Houses, MasterTeacher) {
     EXPECT_EQ(optionsTape, tape(Lines{"Master of Fire ", "Fire Guild Membership"}, Lines{pNPCTopics[261].pText}, // "You must know the skill before you can become an expert in it!"
                                 Lines{pNPCTopics[260].pText}, // "You don't meet the requirements, and cannot be taught until you do."
                                 Lines{"Become Master in Fire Magic for 4000 gold"}, Lines{"Master of Fire ", "Fire Guild Membership"}));
-    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_WIDE_SMILE)); // The mastery reaction.
+    EXPECT_EQ(portraitTape, tape(PORTRAIT_NORMAL, PORTRAIT_SMILE)); // The mastery reaction.
 }
 
 static void talkTo(EngineController &game, std::string_view name) {

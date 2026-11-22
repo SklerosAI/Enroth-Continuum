@@ -61,12 +61,13 @@ int transportPrice(int houseId, float value, int merchant);
 
 /**
  * @param houseId                       MM6 transport house id.
- * @param speechMs                      Length of the travel speech in milliseconds, zero without one.
- * @return                              Milliseconds between paying and leaving: the speech's length, but never more than
- *                                      the original's fixed 1500 for a coach and 2500 for a boat, which also apply
- *                                      without a speech.
+ * @param farewellMs                    Length of the horseman's or boatman's farewell in milliseconds, zero without
+ *                                      one.
+ * @return                              Milliseconds between paying and leaving: the farewell's length, but never more
+ *                                      than the original's fixed 1500 for a coach and 2500 for a boat, which also
+ *                                      apply without a farewell.
  */
-int transportDepartureDelayMs(int houseId, int speechMs);
+int transportDepartureDelayMs(int houseId, int farewellMs);
 
 /**
  * @param exe                           `MM6.exe` to read the route and slot tables from.

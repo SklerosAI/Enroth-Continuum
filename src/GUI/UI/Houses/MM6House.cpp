@@ -1110,8 +1110,11 @@ void mm6OnNpcMoved() {
         house->stopRoomMovieLoop();
 }
 
-void mm6PlayHouseSound(HouseId houseId, HouseSoundType type) {
+SoundId mm6PlayHouseSound(HouseId houseId, HouseSoundType type) {
     const mm6::HouseServiceRow &house = mm6::houseServiceData().at(std::to_underlying(houseId));
-    if (house.room.room && house.room.room->soundGroup)
-        pAudioPlayer->playHouseSound(static_cast<SoundId>(30000 + 100 * house.room.room->soundGroup + std::to_underlying(type)), true);
+    if (!house.room.room || !house.room.room->soundGroup)
+        return SOUND_Invalid;
+    const SoundId sound = static_cast<SoundId>(30000 + 100 * house.room.room->soundGroup + std::to_underlying(type));
+    pAudioPlayer->playHouseSound(sound, true);
+    return sound;
 }

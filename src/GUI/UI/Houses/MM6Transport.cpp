@@ -84,12 +84,12 @@ void GUIWindow_MM6Transport::selectService(int index) {
     _paysOnDeparture = engine->config->gameplay.FixTravelAutosave.value();
     if (!_paysOnDeparture)
         payForTrip();
-    mm6PlayHouseSound(houseId(), HOUSE_SOUND_TRANSPORT_TRAVEL);
-    const SoundId speech = pParty->activeCharacter().playReaction(stable ? SPEECH_TRAVEL_HORSE : SPEECH_TRAVEL_BOAT);
-    int speechMs = 0;
-    if (engine->config->gameplay.FixTravelSpeechDelay.value() && speech != SOUND_Invalid)
-        speechMs = static_cast<int>(1000 * pAudioPlayer->getSoundLength(speech));
-    _departureTime = platform->tickCount() + mm6::transportDepartureDelayMs(std::to_underlying(houseId()), speechMs);
+    const SoundId farewell = mm6PlayHouseSound(houseId(), HOUSE_SOUND_TRANSPORT_TRAVEL);
+    pParty->activeCharacter().playReaction(stable ? SPEECH_TRAVEL_HORSE : SPEECH_TRAVEL_BOAT); // MM6 has no voice line for these.
+    int farewellMs = 0;
+    if (engine->config->gameplay.FixTravelSpeechDelay.value() && farewell != SOUND_Invalid)
+        farewellMs = static_cast<int>(1000 * pAudioPlayer->getSoundLength(farewell));
+    _departureTime = platform->tickCount() + mm6::transportDepartureDelayMs(std::to_underlying(houseId()), farewellMs);
 }
 
 bool GUIWindow_MM6Transport::goBack() {

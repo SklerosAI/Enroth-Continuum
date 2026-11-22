@@ -6,6 +6,8 @@
 #include <string_view>
 #include <vector>
 
+#include "Engine/Data/SoundEnums.h"
+
 #include "GUI/UI/UIHouseEnums.h"
 #include "GUI/UI/UIHouses.h"
 #include "GUI/UI/MM6HouseServiceData.h"
@@ -309,5 +311,6 @@ void mm6OnNpcMoved();
  *
  * @param houseId                       MM6 house id.
  * @param type                          Which of the room's sounds to play.
+ * @return                              The sound, or `SOUND_Invalid` for a room without a sound group.
  */
-void mm6PlayHouseSound(HouseId houseId, HouseSoundType type);
+SoundId mm6PlayHouseSound(HouseId houseId, HouseSoundType type);

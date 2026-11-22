@@ -85,7 +85,7 @@ static void takeCoachFromNewSorpigal(EngineController &game) {
     // Space at the door of the New Sorpigal stable, then its only route to outd3.
     enterNewSorpigalStable(game);
     game.pressGuiButton("HouseDialogue_Option0");
-    game.tick(17); // The coach leaves a second and a half after the party pays, then the house closes.
+    game.tick(12); // The horseman says farewell, the coach leaves and the house closes.
     game.skipLoadingScreen();
     game.tick();
 }
@@ -345,20 +345,28 @@ GAME_TEST(MM6Transport, CoachAutosaveKeepsTheFare) {
     });
 }
 
-GAME_TEST(MM6Transport, CoachLeavesAfterTheOriginalDelayWithoutSpeech) {
-    // No travel speech plays, so the coach leaves after the original's fixed second and a half.
-    startNewGameThroughInput(game);
-    ASSERT_EQ(engine->gameTitle(), GameTitle::MM6);
+GAME_TEST(MM6Transport, CoachLeavesWhenTheHorsemanIsDone) {
+    // The coach always left after the original's fixed second and a half. With the GrayFace fix it leaves as soon as
+    // the horseman's farewell ends, a second in New Sorpigal.
     auto screenTape = tapes.screen();
-    test.startTaping();
+    auto soundsTape = tapes.sounds();
+    std::vector<int> waits;
+    for (bool fix : {true, false}) {
+        engine->config->gameplay.FixTravelSpeechDelay.setValue(fix);
+        startNewGameThroughInput(game);
+        test.startTaping();
+        enterNewSorpigalStable(game);
+        game.pressGuiButton("HouseDialogue_Option0");
+        game.tick();
+        int frames = 0;
+        for (; frames < 100 && current_screen_type == SCREEN_HOUSE; frames++)
+            game.tick(); // The party waits in the stable until the coach leaves.
+        waits.push_back(frames);
+        test.stopTaping();
+        game.goToMainMenu();
+    }
 
-    enterNewSorpigalStable(game);
-    game.pressGuiButton("HouseDialogue_Option0");
-    game.tick();
-    int frames = 0;
-    for (; frames < 100 && current_screen_type == SCREEN_HOUSE; frames++)
-        game.tick(); // The party waits in the stable until the coach leaves.
-
-    EXPECT_EQ(frames, 16); // The coach leaves a second and a half after the party pays, the house closes a frame later.
-    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE, SCREEN_GAME));
+    EXPECT_EQ(waits, std::vector<int>({11, 16})); // The house closes a frame after the coach leaves.
+    EXPECT_EQ(soundsTape.flatten().count(static_cast<SoundId>(31102)), 2); // The horseman's farewell, 11_02.
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_HOUSE, SCREEN_GAME, SCREEN_HOUSE, SCREEN_GAME));
 }

@@ -35,6 +35,7 @@
 #include "Engine/MM6/MM6Potion.h"
 #include "Engine/MM6/MM6SpellItems.h"
 #include "Engine/MM6/MM6SpellLearning.h"
+#include "Engine/MM6/MM6VoiceRules.h"
 #include "Engine/MM6/MM6ConsumableRules.h"
 #include "Engine/Random/Random.h"
 #include "Engine/Objects/Actor.h"
@@ -4821,7 +4822,11 @@ SoundId Character::playReaction(SpeechId speech, int a3) {
     int portraitCount = 0;
     int pickedSoundID = 0;
 
-    if (engine->config->settings.VoiceLevel.value() > 0) {
+    if (engine->config->settings.VoiceLevel.value() > 0 && engine->gameTitle() == GameTitle::MM6) {
+        pickedSoundID = std::to_underlying(mm6::speechSound(mm6::voiceRules(), speech, uVoiceID, vrng));
+        if (pickedSoundID)
+            pAudioPlayer->playSound(static_cast<SoundId>(pickedSoundID), SOUND_MODE_PID, Pid(OBJECT_Character, characterIndex()));
+    } else if (engine->config->settings.VoiceLevel.value() > 0) {
         for (int i = 0; i < speechVariants[speech].size(); i++) {
             if (speechVariants[speech][i]) {
                 speechCount++;

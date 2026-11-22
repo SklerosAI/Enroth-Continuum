@@ -30,6 +30,7 @@
 #include "Engine/Evt/MM6ItemEventCompare.h"
 #include "Engine/Evt/MM6ItemEventWrite.h"
 #include "Engine/Evt/MM6GiveItemEvent.h"
+#include "Engine/Evt/MM6CircusPrizeEvent.h"
 #include "Engine/Evt/MM6EventVariableDispatch.h"
 #include "Engine/Evt/MM6DoorSwitch.h"
 #include "Engine/Evt/Processor.h"
@@ -1873,6 +1874,11 @@ EvtFlow EvtInterpreter::executeInstruction(EvtInstruction ir) {
         case EVENT_GiveItem:
         {
             if (engine->gameTitle() == GameTitle::MM6) {
+                if (mm6::isCircusPrizeTrade(_context, _events, ir) && fortuneRerollActive() &&
+                    (current_screen_type == SCREEN_HOUSE || current_screen_type == SCREEN_NPC_DIALOGUE)) {
+                    openOreRerollPopup(ir.data.give_item_descr.treasure_level, ir.data.give_item_descr.treasure_type);
+                    break;
+                }
                 if (ir.data.give_item_descr.item_id == ITEM_NULL &&
                     captureClickedRandomLoot(ir.data.give_item_descr.treasure_level, ir.data.give_item_descr.treasure_type))
                     break;

@@ -210,7 +210,7 @@ void GUIWindow_MonsterLoot::Update() {
     }
     if (_kind != Kind::Bounty) {
         std::string title = _kind == Kind::Monster ? pActors[_actorId].GetDisplayName() :
-                            _kind == Kind::Ore ? "Ore smith result" :
+                            _kind == Kind::Ore ? (engine->gameTitle() == GameTitle::MM6 ? "Circus prize trade" : "Ore smith result") :
                             _kind == Kind::Enchantment ? "Enchanted weapon" : "Found item";
         DrawText(assets->pFontArrus.get(), {125, 58}, colorTable.PaleCanary, title, frameRect);
         if (_kind == Kind::Monster)
@@ -338,7 +338,9 @@ void takeMonsterLootPopup() {
 void closeMonsterLootPopup() {
     if (lootPopup && lootPopup->isClickedLoot())
         clickedRewards.clear();
-    if (lootPopup && lootPopup->kind() == GUIWindow_MonsterLoot::Kind::Ore) {
+    if (lootPopup && lootPopup->kind() == GUIWindow_MonsterLoot::Kind::Ore && engine->gameTitle() == GameTitle::MM6) {
+        mm6::takeFortuneItem(lootPopup->offer().item);
+    } else if (lootPopup && lootPopup->kind() == GUIWindow_MonsterLoot::Kind::Ore) {
         if (isSpawnableArtifact(lootPopup->offer().item.itemId))
             pParty->isArtifactGenerated[lootPopup->offer().item.itemId] = true;
         pParty->setHoldingItem(lootPopup->offer().item);

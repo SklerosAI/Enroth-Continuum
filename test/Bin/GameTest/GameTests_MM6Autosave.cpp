@@ -14,6 +14,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "Testing/Game/GameTest.h"
@@ -333,6 +334,7 @@ static void takeShieldFromHiveChest1(EngineController &game) {
     game.tick();
 }
 
+static constexpr ItemId kPoppysnaps = static_cast<ItemId>(160); // An herb oute3's own data puts on the ground around New Sorpigal.
 static constexpr ItemId kCobraEgg = static_cast<ItemId>(474); // Lies on the floor of the Abandoned Temple.
 
 static void pickUpFromGround(EngineController &game, ItemId item) {
@@ -1006,6 +1008,62 @@ GAME_TEST(MM6InGameSave, SavesWithAPoisonResistanceShield) {
     EXPECT_EQ(shieldTape, tape(ITEM_NULL, kOlympianShield));
     EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
     EXPECT_EQ(slotTape, tape(false, true));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6InGameSave, SavesWithAnHerbFromTheGround) {
+    // The game couldn't be saved once the party picked up an herb lying near New Sorpigal, before it ever left the
+    // first map.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    auto herbTape = tapes.hasItem(kPoppysnaps);
+    auto statusTape = tapes.statusBar();
+    auto slotTape = tapes.custom([&] { return std::filesystem::exists(profile / "saves/save000.ec6"); });
+    test.startTaping();
+
+    pickUpFromGround(game, kPoppysnaps);
+    saveFromMenu(game);
+    game.goToMainMenu();
+    startNewGameThroughInput(game);
+    loadFromEscapeMenu(game, 1);
+
+    EXPECT_EQ(herbTape, tape(false, true, false, true)); // Picked up, a new game, the load.
+    EXPECT_CONTAINS(statusTape, localization->str(LSTR_GAME_SAVED));
+    EXPECT_EQ(slotTape, tape(false, true));
+    game.runGameRoutine([&] {
+        mm6::disarmFirstMapManualSave();
+        mm6::testing::setNativeProfileRootForTest({});
+    });
+}
+
+GAME_TEST(MM6InGameSave, SavesWithAnHerbPickedUpAfterALoad) {
+    // The game couldn't be saved once the party picked up an herb that lay near New Sorpigal when the game was saved
+    // and loaded.
+    const std::filesystem::path profile = createTempProfile();
+    MM_AT_SCOPE_EXIT(std::filesystem::remove_all(profile));
+    game.runGameRoutine([&] { mm6::testing::setNativeProfileRootForTest(profile); });
+
+    startNewGameThroughInput(game);
+    auto herbTape = tapes.hasItem(kPoppysnaps);
+    auto slotTape = tapes.custom([&] { return std::pair(std::filesystem::exists(profile / "saves/save000.ec6"),
+                                                        std::filesystem::exists(profile / "saves/save001.ec6")); });
+    test.startTaping();
+
+    saveFromMenu(game);
+    game.goToMainMenu();
+    startNewGameThroughInput(game);
+    loadFromEscapeMenu(game, 1);
+    pickUpFromGround(game, kPoppysnaps);
+    saveFromMenu(game);
+
+    EXPECT_EQ(herbTape, tape(false, true));
+    EXPECT_EQ(slotTape, tape(std::pair(false, false), std::pair(true, false), std::pair(true, true)));
     game.runGameRoutine([&] {
         mm6::disarmFirstMapManualSave();
         mm6::testing::setNativeProfileRootForTest({});

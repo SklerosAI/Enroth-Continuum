@@ -89,19 +89,9 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   throwaway game tests that picked up the Oracle's third treasure marker (a Leather Belt of Speed) and that put a level
   2 `GiveItem` roll in the backpack on `oute3`. Chest loot is not affected, the chest projection reads each record
   from the chest.
-- **A party carrying an item it found lying on a map can't save.** Items a map's own data puts on the ground, the
-  herbs around New Sorpigal or the scroll in the hive, load through the shared `Item_MM7` reconstruct, which drops the
-  native record. Once the party picks one up the inventory capture finds no record and every save says "This game
-  can't be saved here yet". Seen with a throwaway game test that picked up an `oute3` herb and saved.
-- **Poison Resistance on ground items.** Ground item records load through the shared `SpriteObject_MM7` reconstruct,
-  which reads standard bonus 14, MM6's Poison Resistance, as Earth. Chests convert it (`mm6::reconstructChest`), ground
-  items don't. Whether a shipped map places such an item was not checked.
 - **Border autosave reopens the travel dialog.** The autosave on a walk across an outdoor border holds the party at
   the edge, so loading it opens the travel dialog again at once. Not checked against MM6.exe.
   `MM6InGameSave.BountyKillSurvivesAutosave` closes it with No.
-- **First-map save after a spawned actor.** A v5 first-map save refuses with "ARTR count differs from ACTR baseline"
-  once an actor was added to `oute3` after the anchor, seen only with a test's `spawnMonster`. Whether play can add
-  one there (a summon, a scripted spawn) was not checked. `MM6V5ActorRuntimeFields.cpp`.
 
 ## MM6: media and UI
 

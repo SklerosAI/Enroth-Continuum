@@ -197,8 +197,9 @@ Entry points, all in `src/GUI/UI/MM6SaveLoadMenu.cpp` and reached from `src/Engi
 | Quick save, F5 | `mm6QuickSave`, then `saveSessionSlot` | `quicksaveN.ec6`, rotating with `gameplay.QuickSavesCount` |
 
 `mm6::saveSlot` in `MM6FirstMapManualSave.cpp` does the work. It needs an armed session (see below) and a profile root,
-and refuses an item on the cursor. Then it either captures a first-map v5 save or calls `captureSessionSave` for v7,
-and commits the bytes through `writeNumberedSlotCandidate`. It never throws. It returns one of:
+and refuses an item on the cursor. Then it either captures a first-map v5 save or, when there is no anchor or the v5
+capture refuses, calls `captureSessionSave` for v7, and commits the bytes through `writeNumberedSlotCandidate`. It never
+throws. It returns one of:
 
 | Outcome | Meaning | Menu message |
 |---|---|---|
@@ -229,6 +230,13 @@ native actor slots, `ACTR` and the `EVRT` decoration bindings of the first map, 
 left that map, a save is a v5 save built from the anchor (`writeV5FirstMapNativeLiveSave`). The first `leaveMap`
 drops the anchor and every later save of the session is v7. Loading a v5 save restores the anchor, so a session loaded
 on the first map saves v5 again until it leaves.
+
+A v5 save keeps the first map's ground items and actors in their native slots, so it can't hold a picked-up ground
+item, whose slot is emptied, or an added one. When the v5 capture refuses, `saveSlot` writes a v7 save of the session
+instead, the same save it writes after the party has left. Compared with v5, that save has no `GNPC`, `RNGS` or `DECR`.
+Street NPCs come back the way they do on a map return, the gameplay random state isn't kept, and of the first map's
+decorations only their event variables are kept, in `PRKM`, as for every map of a v7 save. A session loaded from it
+has no anchor and saves v7.
 
 ### Autosaves
 

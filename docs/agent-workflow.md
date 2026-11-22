@@ -27,7 +27,7 @@ There is no direct channel between the two sessions.
 ## Lanes and worktrees
 
 A lane is one task in one worktree on one branch. Two agents never write to the same working tree. The main checkout
-stays on `master` and is not used for lane edits.
+is Codex's and is not used for Claude lane edits.
 
 | Item | Convention |
 | --- | --- |
@@ -42,16 +42,18 @@ branch in it, so a folder name often doesn't match its branch. `git worktree lis
 
 ### Budget
 
-Each title owner gets five linked worktrees. The main checkout on `master` counts against neither.
+Since 2026-11-20 temporary lane worktrees may exceed the old five-per-title cap during a round. At the end of a round
+each title keeps one branch and one worktree, `claude/mm6` for MM6 and `codex/mm7` for MM7. Temporary branches and
+worktrees are retired once their work is merged or judged equivalent.
 [tools/check_worktree_budget.py](../tools/check_worktree_budget.py) assigns each worktree by its `claude/` or `codex/`
-branch prefix, prints both counts and any worktree without a prefix, and exits non-zero when the given agent is at
-the cap. Run it before adding a worktree:
+branch prefix and prints both counts and any worktree without a prefix. Its exit code still enforces the old cap of
+five, so read its counts rather than its status:
 
 ```bash
 python3 tools/check_worktree_budget.py --agent claude
 ```
 
-Disk is the other limit, and the owner may trade a sixth worktree for it. Keep at least 10 GB free on the system disk.
+Disk is the real limit. Keep at least 10 GB free on the system disk.
 A new worktree build costs about 1.5 to 2 GB, so check `df -h /` before starting one. Under load, run game tests one
 process at a time, and check `uptime` and `sysctl vm.swapusage` before adding a lane. A finished lane's worktree is
 retired or reused at the end of the session, never kept for its own sake. Before removing one, save its uncommitted
@@ -80,7 +82,7 @@ tags.
 
 - Nobody pushes a lane to `master` directly. An integrator merges reviewed lanes, one at a time.
 - Claude integrates MM6 lanes into `claude/mm6` with a merge commit, `Merge MM6 <lane> lane`.
-- Codex integrates MM7 lanes onto `master`.
+- Codex consolidates MM7 work on `codex/mm7` and integrates verified commits onto `master`.
 - A lane that falls behind its base branch rebases onto it. `master` is never merged into an MM6 branch.
 - Commits are never amended and pushed history is never rewritten without an explicit ask. Fixes go on top.
 

@@ -1,12 +1,13 @@
 # MM7 status
 
-Where Might and Magic VII stands through 2026-11-16: what is playable and verified, the audit and its fixes, the
+Where Might and Magic VII stands through 2026-11-20: what is playable and verified, the audit and its fixes, the
 harnesses that prove it, the runtime paths and what remains.
 
 ## Summary
 
-Codex owns MM7. It is the fork's first playable title and was released as `ECv0.1.0` on 2026-11-16 (see
-[Releases](releases.md)). Its working gate closed on 2026-11-11: the current build launched through The Atlas, the
+Codex owns MM7. It is the fork's first playable title, released as `ECv0.1.0` on 2026-11-16 and patched as
+`ECv0.1.1` on 2026-11-20 (see [Releases](releases.md)). MM7 work continues on the single `codex/mm7` branch and
+reaches `master` from there. Its working gate closed on 2026-11-11: the current build launched through The Atlas, the
 owner played visibly with music, voices and combat sound, saved, relaunched and loaded, and a chained test run reached
 the Light ending through real saves. The full audit (stage 3 of the delivery order) continues alongside MM6 work.
 
@@ -27,6 +28,15 @@ the Light ending through real saves. The full audit (stage 3 of the delivery ord
   then `GameTests_MM7DarkCampaignChainC3.cpp` to `C7`) each run eight fresh processes from New Game to their ending.
   Both endings clear their final quest bit from the Quest Book. Named fixtures remain: C5 party strength and some
   approach teleports.
+- **Malwick and Niles in the chains.** Both chains accept Malwick's Wand in Emerald C0, carry it through the Arbiter
+  choice in C3 and in C4 reach the six-week letter, Niles's real offer, the physical allied-castle tapestry (Lambent
+  on Light, Gloaming on Dark) and its return. Dark C6 uses the real rest UI to reach Gloaming's throne at dawn.
+- **Measured approaches.** Dark C3 walks toward Harmondale castle, Light C5 toward Crag Hack's Celeste house and Dark
+  C5 toward Kastore's Pit door through bounded forward input. Light C6 measures movement in Colony Zod after the
+  Xenofex fight.
+- **War and Dark chain.** The optional `mm7-war-dark` chain branches at C3 (`MM7WarCampaignChain`), completes both
+  real war assignments, takes the neutral trumpet path and installs the Dark Arbiter, then continues through the Dark
+  ending.
 - **Promotions.** All 27 promotion endpoints (nine first promotions, eighteen Light and Dark second promotions) are
   covered through their real offers, objectives, refusals, rewards and duplicate checks. `GameTests_MM7*Promotion*.cpp`.
 - **Maps.** All 76 shipped MM7 maps have runtime game test coverage. The Barrow Downs region is covered through its
@@ -34,14 +44,19 @@ the Light ending through real saves. The full audit (stage 3 of the delivery ord
 - **Side quests and contests.** The opening contest acquires all six items physically. The war alternatives resolve
   all 27 result and recipient states under both arbiters. Malwick and Niles, the tapestries, Stone City, the Griffin
   hunt, Haldar, Darron, the Lantern, Davrik and the other regional quests have focused behavior tests.
-- **Durable save boundaries.** Eighteen independent quest routes have exact production Save and fresh-process normal
-  Load pairs with byte-identical slots. With five older technical seams, 23 writer and reader pairs run in 46
-  processes. The routes are listed below.
+- **Durable save boundaries.** Twenty-three independent quest routes have exact production Save and fresh-process
+  normal Load pairs with byte-identical slots. With five older technical seams the registry holds 28 writer and reader
+  pairs. The owner capped it at 48 pairs, as a limit, not a target. The routes are listed below.
+- **Walls of Mist.** The shipped map has no group-1 actor, spawn or remap, so the protected-group failure branch is
+  dormant there. `MM7LightWalls.ProtectedGroupFailureBranch` injects a killed group-1 actor and checks that the real
+  exit refuses the pass bit. No engine change is needed.
 
 Durable quest routes: Season's Stole, Kerrid and the Faerie King, Parsons' Quill, Missing Contestants, Three Paintings,
 Three Statuettes, Arcomage Champion, the obelisk puzzle, the balanced war with neutral trumpet and Dark Arbiter,
 Malwick and Niles success, failure and the 1,007-hour pre-trigger boundary, Stone City Troglodytes, Haldar's Remains,
-Darron's deck, the Lantern of Light, Davrik's Signet Ring and the Griffin hunt.
+Darron's deck, the Lantern of Light, Davrik's Signet Ring, the Griffin hunt, the Evenmorn map taken from Tidewater
+before Falk's first Priest promotion, the Moon altar before Rebecca's Priest of Light, the Sun altar before Falk's
+Priest of Dark, the four Lich jars taken from the Walls of Mist chest and Markham's Vase before the Rogue hand-in.
 
 The last consolidated gate (2026-11-15) passed the full build, every style target, the unit tests, the default MM7
 game tests with only the opt-in mod cases skipped, the opt-in mod tests, all checkpoint pairs, both fresh chains and
@@ -105,9 +120,19 @@ World preparation now clears that list before replacing actors, and turn-based a
   measured segment may not. `tools/run_mm7_gameplay_harness.py` runs the `MM7GameplayHarness`, `MM7CombatHarness`
   and optional `MM7BarrowTraversal` suites in fresh headless processes.
 - **Campaign chain runner.** `tools/run_mm7_campaign_chain.py` runs chain chapters in order in fresh processes, each
-  loading the previous chapter's save from a marked disposable profile. `--title mm6` runs the MM6 chain.
+  loading the previous chapter's save from a marked disposable profile. `--title mm7-dark` and `--title mm7-war-dark`
+  run the Dark chains, `--title mm6` the MM6 chain.
 - **Disposable save gate.** A writer saves into an owner-only temporary profile and a reader in a separate process
   loads it through the normal Load menu and checks the slot is byte-identical. `GameTests_MM7DisposableSave.cpp`.
+- **Pre-tag checkpoint sweep.** `tools/run_mm7_pretag_checkpoints.py` reads the pair registry in
+  `test/Bin/GameTest/GameTestMain.cpp` and runs every writer and reader pair one at a time, each in a fresh marked
+  temporary profile, stopping at the first failure. It is a local gate before a new tag, never part of ordinary
+  builds, default game tests or CI. `--list` prints the pairs. `tools/run_mm7_priest_checkpoints.py` and
+  `tools/run_mm7_lich_checkpoint.py` run the promotion pairs alone. A measured Lich pair peaked near 118 MB resident
+  per process with a 720 KiB profile. Writer and reader run in turn, so memory doesn't grow with the pair count.
+- **Owned-save probe.** `tools/probe_mm7_owned_save.py` copies one owner slot into a marked owner-only temporary
+  profile and loads it in fresh processes through the normal menu, once as the primary and once as the backup behind
+  a corrupt primary. It fingerprints the source before and after. A probe is not a checkpoint pair.
 - **Hidden captures.** `MM7OffscreenFrame.*` renders frames offscreen without a visible window. Every image is
   inspected whole before it counts as evidence.
 
@@ -133,16 +158,27 @@ Older save folders hold different saves with colliding names. They are never mer
 ## Mods
 
 The Atlas Atelier offers opt-in MM7 mods for a Private mods launch only: portrait moods, an armor AC override, vendor
-stock refreshed on entry and All Artifacts + Storage (every spawnable artifact obtainable once, Castle Harmondale's
-chests as storage). Details are in [Mods and Atlas](mods-and-atlas.md).
+stock refreshed on entry, All Artifacts + Storage (every spawnable artifact obtainable once, Castle Harmondale's
+chests as storage), chest reroll and Fortune's Turn (reroll random monster and click loot, bounty targets, ore smith
+rewards and weapon enchantments). Details are in [Mods and Atlas](mods-and-atlas.md).
+
+## Full audit plan
+
+The archive, map, spell, item and monster audit has not started. It is planned for the week of 2026-11-23, delta-first:
+record the `codex/mm7` commit, the tag and the installed identities, then reuse the 2026-11-07 per-entry reports
+wherever an archive's hash and its consumers are unchanged. Raw output goes to an ignored
+`local-game-data/mm7/audit-2026-11-23/` folder and public summaries carry counts and code references only. The work
+order is archives and loader, maps and EVT with the campaign dependency graph, spells, items, then monsters, so that
+the first two supply IDs and reachability to the rest. Game probes run on copies in marked disposable profiles. A new
+checkpoint pair is added only for a distinct high-risk durable boundary the audit finds.
 
 ## What remains
 
 - Visible Mac play through representative regions, combat, travel, branch choices and an ending, with UI, movie,
   music and sound checks.
 - Fewer approach teleports in the chains, and ordinary movement and combat in more regions.
-- The Strange Temple exit-placement parity trace and the Walls protected-group predicate audit.
-- The rules catalogs and campaign dependency graph of the audit.
+- The Strange Temple exit-placement parity trace.
+- The full audit above: the rules catalogs and the campaign dependency graph.
 - The open items in [Open questions](open-questions.md).
 
 ## Source
@@ -153,5 +189,10 @@ chests as storage). Details are in [Mods and Atlas](mods-and-atlas.md).
 - [GameTests_MM7TransitionCombat.cpp](../test/Bin/GameTest/GameTests_MM7TransitionCombat.cpp)
 - [GameTests_MM7Scrolls.cpp](../test/Bin/GameTest/GameTests_MM7Scrolls.cpp)
 - [run_mm7_campaign_chain.py](../tools/run_mm7_campaign_chain.py), [run_mm7_gameplay_harness.py](../tools/run_mm7_gameplay_harness.py)
+- [run_mm7_pretag_checkpoints.py](../tools/run_mm7_pretag_checkpoints.py), [probe_mm7_owned_save.py](../tools/probe_mm7_owned_save.py),
+  [GameTests_MM7DisposableSave.cpp](../test/Bin/GameTest/GameTests_MM7DisposableSave.cpp)
+- [GameTests_MM7LightWalls.cpp](../test/Bin/GameTest/GameTests_MM7LightWalls.cpp),
+  [GameTests_MM7WarAlternatives.cpp](../test/Bin/GameTest/GameTests_MM7WarAlternatives.cpp),
+  [MM7MalwickCampaign.cpp](../test/Bin/GameTest/MM7MalwickCampaign.cpp)
 
 See also: [Project overview](project-overview.md), [Releases](releases.md), [Open questions](open-questions.md), [Mods and Atlas](mods-and-atlas.md), [Testing](testing.md)

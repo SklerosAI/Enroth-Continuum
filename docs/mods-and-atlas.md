@@ -61,7 +61,8 @@ Each title keeps its own profile so saves and configs never mix. An MM7 Atlas pr
   run), tracked by a version number in preferences, so a player's later window choice is kept. A resizable window is the
   player's route to fullscreen, since macOS greys out the fullscreen button of a fixed-size window.
 - MM6 gets no recording and no Private mods switch. The child environment drops `ENROTH_MM7_MOD_DIR`,
-  `ENROTH_MM7_ALL_ARTIFACTS_STORAGE`, `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY` and `OPENENROTH_MM7_PATH`.
+  `ENROTH_MM7_ALL_ARTIFACTS_STORAGE`, `ENROTH_MM7_CHEST_REROLL`, `ENROTH_MM7_MONSTER_LOOT_REROLL`,
+  `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY` and `OPENENROTH_MM7_PATH`.
 - MM6 honours two Atelier options of its own, set on every Play MM6 launch whatever the Private mods switch says:
   - Fresh vendor stock on entry. Atlas sets `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` to `1` or `0` from the preference
     `mods.mm6.vendorRefreshOnEntry`. See [Vendor refresh on entry](#vendor-refresh-on-entry).
@@ -155,7 +156,7 @@ never share the fork's profile, the exact argument lists per build, and the chil
 particular, upstream and MM6 receive no fork mod keys and no `OPENENROTH_MM7_PATH`, and vanilla MM7 gets the mod
 flags forced to `0`. MM6 gets `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` and `ENROTH_MM6_ALL_ARTIFACTS` from its own
 choices, and MM7 and upstream never get them. `tests/atlas_page.js` runs the page script against a fake DOM and checks
-the play, recording, vendor and artifact controls.
+the play, recording, vendor, artifact and reroll controls.
 
 ## MM7 private mods
 
@@ -163,19 +164,21 @@ All private mods are opt-in. Fresh vendor stock on entry and All Artifacts also 
 variable, see [Vendor refresh on entry](#vendor-refresh-on-entry) and [All Artifacts for MM6](#all-artifacts-for-mm6).
 The MM7 mods live in the user's home folder, never in the repository or in game archives. The engine sees them only
 through environment variables that the Atlas sets for a Play MM7 launch when the **Use private mods** switch is on
-(preference `mods.mm7.enabled`). With the switch off (Vanilla), the Atlas removes `ENROTH_MM7_MOD_DIR` and sets both
-boolean flags to `0`.
+(preference `mods.mm7.enabled`). With the switch off (Vanilla), the Atlas removes `ENROTH_MM7_MOD_DIR` and sets the
+four MM7 boolean flags to `0`.
 
 | Variable | Set by the Atlas when | Read in |
 |---|---|---|
 | `ENROTH_MM7_MOD_DIR` | Private mods on. Value is `~/Library/Application Support/Enroth Continuum/Mods/MM7` | `AssetsManager::getCustomPortrait`, `ItemTable::ApplyPrivateArmorOverrides` |
 | `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY` | Private mods on and preference `mods.vendorRefreshOnEntry` | `GUIWindow_Shop::onHouseEntered`, `GUIWindow_MagicGuild::onHouseEntered` |
 | `ENROTH_MM7_ALL_ARTIFACTS_STORAGE` | Private mods on and preference `mods.mm7.allArtifactsStorage` | `mm7::mods::allArtifactsStorageEnabled` |
+| `ENROTH_MM7_CHEST_REROLL` | Private mods on and preference `mods.mm7.chestReroll` | `mm7::mods::chestRerollEnabled` |
+| `ENROTH_MM7_MONSTER_LOOT_REROLL` | Private mods on and preference `mods.mm7.monsterLootReroll` | `mm7::mods::monsterLootRerollEnabled` |
 | `ENROTH_MM6_VENDOR_REFRESH_ON_ENTRY` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.vendorRefreshOnEntry` | `mm6::vendorRefreshPolicy` |
 | `ENROTH_MM6_ALL_ARTIFACTS` | Every Play MM6 launch, `1` or `0` from preference `mods.mm6.allArtifacts` | `mm6::mods::allArtifactsEnabled` |
 
 Every MM7 reader checks `GameTitle::MM7` first, so the MM7 variables do nothing in an MM6 run, and the MM6 readers
-check `GameTitle::MM6`. The two boolean flags
+check `GameTitle::MM6`. The boolean flags
 accept only the exact string `1`. Values such as `true` or `01` leave the mod off. None of these settings is written
 into saves, the engine config or game archives, so turning a mod off restores vanilla rules on the next launch. A
 direct diagnostic launch of the engine may set the same variables by hand.
@@ -281,6 +284,57 @@ The mod adds no storage UI. Castle Harmondale's existing chests are the storage.
 item records and grid in the indoor map delta, and the game tests check that a boundary chest keeps its items and the
 collection ledger across a save round trip.
 
+### Chest reroll
+
+The Atelier's "Reroll chest loot · MM7" toggle adds a small Reroll button, in brass and dark wood, to the lower wooden
+border of an MM7 chest that still holds an authored random-loot marker. The button is absent when the flag is off, when
+no marker remains, and in MM6.
+
+- The chest keeps each authored random marker as a hidden record. Its generated items link back to it through
+  `Item::chestRerollSource`, saved in the formerly unused pad byte at offset 0x1B of `Item_MM7`, so the native chest
+  record keeps its size. 0 is an ordinary item, 1 to 140 names the marker slot and 255 marks a hidden source marker.
+- Each click draws one value from the gameplay RNG to seed a fresh roll of the chest's unclaimed random slots through
+  the ordinary MM7 chest generator (`Chest::reroll`). The marker and the map's current treasure level give the same
+  treasure-level range as the first generation. The chest type, flags, fixed items, trap and map state stay.
+- An artifact from a discarded roll that was never claimed has its generated flag released before the new roll. All
+  Artifacts + Storage keeps using its collected ledger.
+- Taking or depositing an item removes the hidden markers, so the chest can't be rerolled after it is looted. This
+  holds across save and load.
+- A save whose chest was generated before the mod was on has no marker for it. That chest can't be rerolled until its
+  map respawns.
+
+### Fortune's Turn
+
+The Atelier's "Fortune's Turn · MM7" toggle is the launch switch. In play, a dice checkbox on the left of the HUD, beside
+the first party portrait, turns the popup on and off at once. It shows a gold X when on and is saved in the MM7 config
+as `mm7_monster_loot_reroll_in_game`. Every eligible result opens the same paused stone frame (`UIMonsterLoot`) with
+Reroll and Take. Item results show the item's art, name, attack or armor stats, magic bonus, value and description
+without identifying the item. Escape takes nothing for a corpse and keeps the current result elsewhere.
+
+| Source | What Reroll repeats | What stays |
+|---|---|---|
+| Dead monster with an ungenerated random reward | Gold dice, item-drop chance, treasure level and type | Take grants it once and removes the corpse. Previews restore the artifact ledger. |
+| Clicked heap, decoration or face that yields a random item | The item, at the event's treasure level and type | The event ran once and its other effects don't repeat. Take puts the item in hand. |
+| Monthly town-hall bounty | The monster, from that hall's normal eligible pool | The monthly deadline. A killed or claimed bounty can't be rerolled. |
+| Ore smith services, global events 501 to 503 | The item, at the ore's treasure level and the smith's item type | The ore is consumed once. Take or Escape puts the selected item in hand. |
+| Successful Enchant Item on a regular weapon | The special enchantment, from the spell's weapon and mastery pool | The cast's mana and recovery, charged once, and the weapon |
+
+Monsters with carried or stored items or gold, fixed drops, authored gold, failed casts, broken items, armor,
+deterministic weapon effects and ground items that already exist keep their normal path. Starting a new MM7 game with
+the mod on arms a one-time test setup. On the first visit to Emerald Isle's Dragon's Lair in that session the first live
+dragon is already a lootable corpse. Loading another save cancels it.
+
+### Candidate MM7 mods
+
+- A read-only game-menu panel that lists the MM7 options Atlas supplied at launch and the live Fortune's Turn checkbox.
+  The owner selected it for the backlog. It is not implemented.
+- Loot reroll for MM6 and MM8 is future work.
+- From the save-and-reload tactics reviewed on 2026-11-20: an in-shop reroll button needs a purchase guard and is
+  deferred, since vendor refresh on entry already covers the shortcut. Rerolling hireling professions would mutate the
+  map's generated NPCs and is deferred. Repeating a dragon corpse's payout after Take is excluded.
+- An equipment override for one item needs its own durable item identity. The `Item_MM7` pad byte is taken by chest
+  reroll.
+
 ### All Artifacts for MM6
 
 `ENROTH_MM6_ALL_ARTIFACTS` accepts only the exact string `1` (`mm6::mods::allArtifactsEnabled` in
@@ -337,6 +391,8 @@ it as `ENROTH_MM6_ALL_ARTIFACTS=1`, or `0` when off. The MM7 and upstream launch
   [MM6ArtifactCollectionSection.cpp](../src/Engine/MM6/MM6ArtifactCollectionSection.cpp),
   [MM6ChestBaseItemPicker.h](../src/Engine/MM6/MM6ChestBaseItemPicker.h),
   [MM6ChestDirectArtifactPicker.h](../src/Engine/MM6/MM6ChestDirectArtifactPicker.h)
+- [Chest.cpp](../src/Engine/Objects/Chest.cpp), [UIChest.cpp](../src/GUI/UI/UIChest.cpp),
+  [UIMonsterLoot.cpp](../src/GUI/UI/UIMonsterLoot.cpp), [TownHall.cpp](../src/GUI/UI/Houses/TownHall.cpp)
 - [AssetsManager.cpp](../src/Engine/AssetsManager.cpp), [ItemTable.cpp](../src/Engine/Tables/ItemTable.cpp),
   [Item.cpp](../src/Engine/Objects/Item.cpp), [Party.cpp](../src/Engine/Party.cpp),
   [EntitySnapshots.cpp](../src/Engine/Snapshots/EntitySnapshots.cpp)
@@ -348,7 +404,9 @@ it as `ENROTH_MM6_ALL_ARTIFACTS=1`, or `0` when off. The MM7 and upstream launch
 - Game tests: [GameTests_MM7Vendor.cpp](../test/Bin/GameTest/GameTests_MM7Vendor.cpp),
   [GameTests_MM7AllArtifactsEngine.cpp](../test/Bin/GameTest/GameTests_MM7AllArtifactsEngine.cpp),
   [GameTests_MM7HarmondaleStorage.cpp](../test/Bin/GameTest/GameTests_MM7HarmondaleStorage.cpp). The artifact tests
-  skip unless `ENROTH_MM7_ALL_ARTIFACTS_STORAGE=1` is set (one control test skips when it is set). The vendor tests
+  skip unless `ENROTH_MM7_ALL_ARTIFACTS_STORAGE=1` is set (one control test skips when it is set). The same file's
+  `MM7ChestReroll`, `MM7MonsterLootReroll` and `MM7FortunesTurn` tests skip unless their own flag is set, except the
+  preview test, which always runs. The vendor tests
   skip unless `ENROTH_MM7_VENDOR_REFRESH_ON_ENTRY=1` is set. The MM6 vendor tests in
   [GameTests_MM6Houses.cpp](../test/Bin/GameTest/GameTests_MM6Houses.cpp) (`MM6Houses.*VendorRefresh*`) and the MM6
   artifact tests in [GameTests_MM6AllArtifacts.cpp](../test/Bin/GameTest/GameTests_MM6AllArtifacts.cpp) set their own

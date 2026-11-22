@@ -7,6 +7,7 @@ Enroth Continuum's release tags, their provenance, how a release is built and ch
 | Tag | Title | State |
 | --- | --- | --- |
 | `ECv0.1.0` | MM7 | Published 2026-11-16 |
+| `ECv0.1.1` | MM7 patch | Published 2026-11-20 |
 | `ECv0.2.0` | MM6 | Planned, date undecided. MM6 work collects on `claude/mm6` until then. |
 | `ECv0.3.0` | MM8 | Planned after MM6 |
 
@@ -19,6 +20,7 @@ no release ever contains game data. A published tag is never moved or rewritten.
 | Tag | Kind | Points at | Meaning |
 | --- | --- | --- | --- |
 | `ECv0.1.0` | Annotated, tag object `9757e16d394f`, pushed to `origin` | Commit `50d7d4197eece1805866a2cc33977f44b9a2dd87`, tree `dd124fb2abdf302eaeb2beb6dfeae0b8bf63a4d1` | The MM7 release |
+| `ECv0.1.1` | Annotated, tag object `d5907f2d30e3`, pushed to `origin` | Commit `e7ed060979d2942f92f0dd10f312914a3efd0947`, tree `54e392993be87d53d30211d57af135c869af8879` | The MM7 patch |
 | `nightly` | Lightweight, local only | Upstream commit `8010ac364` (2026-11-09) | A stale local copy of upstream OpenEnroth's moving `nightly` tag. Not a fork release. |
 
 Check a tag with `git tag -l` and `git show <tag> --no-patch`.
@@ -38,6 +40,25 @@ Evidence gathered before tagging:
 - The active MM7 movement and combat controls and the MM7 vendor and All Artifacts mod controls passed.
 - The consolidated MM7 checkpoint before it passed the unit tests, the default game tests, the opt-in mod tests, every
   durable writer and reader pair, both fresh C0 to C7 campaign chains and both hidden capture tests.
+
+## ECv0.1.1
+
+An MM7 patch on `master`. It adds the two opt-in MM7 reroll mods, chest reroll and the click-loot popup that later grew
+into Fortune's Turn (see [Mods and Atlas](mods-and-atlas.md)). Fixed rewards and gold keep their original path, and
+MM7 keeps the `ECv0.1.0` save and profile paths. The Atlas `Info.plist` and the MM7 helper report `0.1.1`. The source
+still builds the title-locked MM6 helper for owner playtests, without the later `claude/mm6` work, and MM6 is not
+released.
+
+Evidence gathered before tagging: the full default MM7 game tests, the opt-in mod combination, the unit tests,
+`check_style`, the Atlas page and Swift checks, the MM6 item-event and decoration controls, every fresh-process MM7
+checkpoint pair, both fresh C0 to C7 chains and two hidden MM7 captures. The exact-tag Release arm64 build carries tag,
+commit and tree build-info records for both helpers. The staged and installed bundles matched and passed deep strict
+signature verification. Graphical popup interaction, a game launch from the installed app and an installed-app save
+and load were left for owner playtesting.
+
+Later local installs carried post-tag MM7 commits into the installed Atlas: the themed reroll controls, the fuller
+loot preview and Fortune's Turn. It still reports `0.1.1` and the tag did not move, so the installed MM7 helper is
+ahead of the tag.
 
 ## How a release is built and checked
 
@@ -62,10 +83,8 @@ check.
 
 ## Packaging follow-ups
 
-- **Atlas version metadata.** The outer bundle's `launcher/Info.plist` reports short version `0.1` and build `1`,
-  while the tag and the MM7 helper (`src/Bin/OpenEnroth/CMakeLists.txt`) report `0.1.0`. Fix it in the next release.
-- **Post-install launch.** The next release's install check should also launch each playable title and do one save
-  and reload.
+- **Post-install launch.** Neither `ECv0.1.0` nor `ECv0.1.1` launched a game from the installed app. The next
+  release's install check should launch each playable title and do one save and reload.
 - **Screen Recording permission.** The Atlas is ad-hoc signed, so macOS may ask again for Screen Recording after each
   install before the playtest recorder's video works.
 - **MM6 helper version.** The `MM6` app target sets no bundle version strings yet. `ECv0.2.0` needs them.

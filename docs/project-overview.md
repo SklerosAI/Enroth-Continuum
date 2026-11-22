@@ -34,7 +34,7 @@ shared code. Original game data never enters the repository (see [Source and pri
 
 | Title | Today | Runtime |
 | --- | --- | --- |
-| MM7 | Playable, released as `ECv0.1.0`. Working gate closed 2026-11-11, full audit in progress. | `MM7` app, `--game mm7`, `EC_MM7_ONLY` |
+| MM7 | Playable, released as `ECv0.1.0` and patched as `ECv0.1.1`. Working gate closed 2026-11-11, full audit planned. | `MM7` app, `--game mm7`, `EC_MM7_ONLY` |
 | MM6 | Playtest candidate. Main-quest chain runs C0 to C6. Planned release `ECv0.2.0`. | `MM6` app, `--game mm6`, `EC_MM6_ONLY` |
 | MM8 | Gated. The Atlas card only detects data. No `GameTitle::MM8`, no helper. Planned release `ECv0.3.0`. | None |
 

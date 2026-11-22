@@ -230,6 +230,7 @@ A rerun resumes after the last passed chapter.
 |---|---|---|---|
 | `mm7` (default) | `MM7CampaignChain` | 8 | `--mm7-disposable-profile` |
 | `mm7-dark` | `MM7DarkCampaignChain`, sharing the first 3 chapters of `MM7CampaignChain` | 8 | `--mm7-disposable-profile` |
+| `mm7-war-dark` | `MM7DarkCampaignChain`, with `MM7CampaignChain` C0 to C2 and `MM7WarCampaignChain` C3 | 8 | `--mm7-disposable-profile` |
 | `mm6` | `MM6CampaignChain` | 10 | `--mm6-chain-profile` |
 
 ```sh
@@ -240,6 +241,22 @@ python3 tools/run_mm7_campaign_chain.py --title mm6 --profile /tmp/mm6-restart-c
 ```
 
 The per-chapter timeout is three hours. Status of the chains is on [MM6 Campaign Status](mm6-campaign-status.md) and
+[MM7 Status](mm7-status.md).
+
+### `run_mm7_pretag_checkpoints.py`
+
+Runs every registered MM7 checkpoint writer and reader pair, one at a time, each in a fresh marked temporary profile,
+and stops at the first failure. It is a local gate before a new release tag, never part of ordinary builds, default
+game tests or CI. It never creates or moves a tag.
+
+```sh
+python3 tools/run_mm7_pretag_checkpoints.py --list
+python3 tools/run_mm7_pretag_checkpoints.py --candidate-tag ECvX.Y.Z \
+    --binary build/test/Bin/GameTest/OpenEnroth_GameTest --data-path "$OPENENROTH_MM7_PATH" --test-path test/Data
+```
+
+`run_mm7_priest_checkpoints.py` and `run_mm7_lich_checkpoint.py` run the promotion pairs on their own.
+`probe_mm7_owned_save.py` loads a copy of one owner save as primary and as backup in fresh processes, see
 [MM7 Status](mm7-status.md).
 
 ### `run_mm7_gameplay_harness.py`

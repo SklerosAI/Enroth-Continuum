@@ -123,10 +123,17 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Strange Temple exit.** Event 501 carries an out-of-bounds Harmondale X, so OpenEnroth loads the map but skips the
   placement. Static evidence says the original executable copies the value and lets its first outdoor update handle
   it. A private native trace of the settled position decides between clamping, travel handling or no change.
+  `MM7StrangeTemple` pins both the out-of-bounds source coordinate and today's in-bounds landing.
 - **Ordinary movement and combat.** Chains still use approach teleports. The audit wants representative regions walked
-  and fought through input, plus the Walls protected-group predicate audit. `tools/run_mm7_gameplay_harness.py`.
+  and fought through input. Movement before the Colony Zod entrance still needs a stable route.
+  `tools/run_mm7_gameplay_harness.py`.
 - **Graphical Mac play.** The audit's interface, media, mods and long-session rows need visible play on the Mac. See
-  [MM7 status](mm7-status.md) for the rows.
+  [MM7 status](mm7-status.md) for the rows. The chest reroll button and the Fortune's Turn popup, checkbox, bounty, ore
+  smith and enchant flows were checked headlessly and in hidden captures, not by clicking in the installed app.
+- **Full audit.** The archive, map, spell, item and monster audit is planned for the week of 2026-11-23 and has not
+  started. See [MM7 status](mm7-status.md#full-audit-plan).
+- **In-game mod panel.** A read-only panel of the Atlas launch options and the Fortune's Turn checkbox is on the
+  owner's backlog, not implemented.
 - **Scroll targeting exits.** Cancel returns the scroll. Attacking, passing the turn, stealing, a full spell queue and
   turn-based wait still use it up. `src/Engine/Objects/Character.cpp`, `GameTests_MM7Scrolls.cpp`.
 - **5:00 AM sunlight.** MM7 has the same `UpdateSunlightVectors` minute check MM6 fixed behind `fix_sunrise_light`.
@@ -145,8 +152,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 
 ## Platform and release
 
-- **Atlas version metadata.** The outer Atlas `Info.plist` says `0.1` build `1` while the tag and helper provenance say
-  `0.1.0`. Fix in the next release, never by moving `ECv0.1.0`.
 - **Screen Recording permission.** Atlas is ad-hoc signed, so macOS may ask for Screen Recording again after each
   install before rolling video works.
 - **Lint.** `check_tidy` needs clang-tidy 22, which is not installed on the owner's Mac.

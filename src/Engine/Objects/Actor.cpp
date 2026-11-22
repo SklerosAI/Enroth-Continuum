@@ -10,6 +10,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/Mods/PrivateMods.h"
+#include "Engine/MM6/MM6ArtifactEffects.h"
 #include "Engine/MM6/MM6CombatRules.h"
 #include "Engine/MM6/MM6PartyHostility.h"
 #include "Engine/MM6/MM6MonsterDamage.h"
@@ -3230,7 +3231,14 @@ int Actor::DamageMonsterFromParty(Pid a1, unsigned int uActorID_Monster, const V
             character->pCharacterBuffs[CHARACTER_BUFF_HAMMERHANDS].power);
     }
     uDamageAmount = v61;
-    if (IsAdditionalDamagePossible) {
+    if (IsAdditionalDamagePossible && engine->gameTitle() == GameTitle::MM6) {
+        const bool resisted = engine->config->gameplay.FixBonusDamageResistance.value();
+        if (projectileSprite) {
+            uDamageAmount += mm6::artifactArrowHit(projectileSprite->containing_item, *pMonster, resisted, *grng);
+        } else {
+            uDamageAmount += mm6::artifactMeleeHit(*character, *pMonster, v61, resisted, *grng);
+        }
+    } else if (IsAdditionalDamagePossible) {
         if (projectileSprite) {
             skillLevel =
                 projectileSprite->containing_item._439DF3_get_additional_damage(

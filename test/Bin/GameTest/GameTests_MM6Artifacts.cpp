@@ -11,6 +11,7 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Localization.h"
 #include "Engine/MM6/MM6ChestTitleState.h"
+#include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/CombinedSkillValue.h"
 #include "Engine/Party.h"
@@ -157,6 +158,39 @@ static void checkArtifactCases(EngineController &game, TestController &test, Com
     }
 }
 
+static int spawnAhead(EngineController &game, MonsterId monster, int distance, SpawnFlags flags) {
+    const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+    return game.spawnMonster(pParty->pos + ahead * distance, monster, flags)->id;
+}
+
+static void attackUntilHit(EngineController &game, int actorId) {
+    // The knight attacks the monster until a blow or an arrow lands, the others keep still.
+    const int hp = pActors[actorId].hp;
+    for (int attack = 0; attack < 20 && pActors[actorId].hp == hp; attack++) {
+        for (int frame = 0; frame < 100 && pParty->pCharacters[0].timeToRecovery > 0_ticks; frame++)
+            game.tick(); // The knight recovers from the last attack.
+        if (!pParty->hasActiveCharacter() || pParty->activeCharacterIndex() != 0) {
+            game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1); // On the active character the key opens the character screen.
+            game.tick();
+        }
+        game.pointMouseAtActor(actorId);
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+        for (int frame = 0; frame < 20 && pActors[actorId].hp == hp; frame++)
+            game.tick(); // An arrow flies to the monster.
+    }
+}
+
+static void wieldFromBackpack(EngineController &game, Skill skill, int item) {
+    // The knight learns the skill the item needs, if any, finds it in the backpack and puts it on.
+    if (skill != SKILL_INVALID)
+        pParty->pCharacters[0].setSkillValue(skill, CombinedSkillValue::novice());
+    pParty->pCharacters[0].inventory.add(Item(static_cast<ItemId>(item)));
+    wearFromBackpack(game, 0, static_cast<ItemId>(item));
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+}
+
 GAME_TEST(MM6ArtifactBonus, ArtifactsRaiseStats) {
     // Artifacts gave none of their stat, hit point, spell point or resistance bonuses. A character who puts one on
     // sees it on the stats tab.
@@ -240,5 +274,73 @@ GAME_TEST(MM6ArtifactBonus, SwiftArtifactsShortenRecovery) {
         game.tick();
 
         EXPECT_EQ(recoveryTape.max(), c.recovery);
+    }
+}
+
+GAME_TEST(MM6ArtifactEffects, MordredHealsTheWielder) {
+    // Mordred didn't heal its wielder. A hit heals a fifth of its damage while the monster still stands, and nothing
+    // when it kills.
+    for (bool kills : {false, true}) {
+        SCOPED_TRACE(fmt::format("kills={}", kills));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        wieldFromBackpack(game, SKILL_DAGGER, 400);
+        pParty->pCharacters[0].health = 1;
+        const int dwarf = spawnAhead(game, static_cast<MonsterId>(46), 150, SPAWN_DUMMY | SPAWN_FRIENDLY);
+        if (kills)
+            pActors[dwarf].hp = 1;
+        auto monsterHpTape = actorTapes.hp(dwarf);
+        auto hpTape = charTapes.hp(0);
+        test.startTaping();
+
+        attackUntilHit(game, dwarf);
+
+        ASSERT_EQ(monsterHpTape.size(), 2);
+        const int damage = monsterHpTape.front() - monsterHpTape.back();
+        EXPECT_EQ(hpTape, kills ? tape(1) : tape(1, 1 + damage / 5));
+    }
+}
+
+GAME_TEST(MM6ArtifactEffects, RelicsAddElementalDamage) {
+    // Hades, Ares and Artemis dealt only their weapon damage. Each hit takes 20 Poison, 30 Fire or 20 Electricity hit
+    // points more, through the monster's resistance unless fix_bonus_damage_resistance is off. The spider is immune to
+    // poison.
+    struct Case {
+        int relic;
+        Skill skill;
+        MonsterId monster;
+        SpawnFlags flags;
+        bool fix;
+        int expectedExtra;
+    };
+    const MonsterId veteran = static_cast<MonsterId>(63);
+    const MonsterId spider = static_cast<MonsterId>(162);
+    const Case cases[] = {
+        {415, SKILL_SWORD, veteran, SPAWN_DUMMY, true, 20}, // Hades.
+        {415, SKILL_SWORD, spider, SPAWN_STATIONARY, true, 0},
+        {415, SKILL_SWORD, spider, SPAWN_STATIONARY, false, 20},
+        {416, SKILL_MACE, veteran, SPAWN_DUMMY, true, 30}, // Ares.
+        {420, SKILL_BOW, veteran, SPAWN_DUMMY, true, 20}, // Artemis.
+    };
+    for (const Case &c : cases) {
+        SCOPED_TRACE(fmt::format("relic={} monster={} fix={}", c.relic, std::to_underlying(c.monster), c.fix));
+        test.prepareForNextTest();
+        engine->config->gameplay.FixBonusDamageResistance.setValue(c.fix);
+        startNewGameThroughInput(game);
+        wieldFromBackpack(game, c.skill, c.relic);
+        Character &knight = pParty->pCharacters[0];
+        const bool bow = c.skill == SKILL_BOW;
+        const int minDamage = bow ? knight.GetRangedDamageMin() : knight.GetMeleeDamageMinimal();
+        const int maxDamage = bow ? knight.GetRangedDamageMax() : knight.GetMeleeDamageMaximal();
+        const int monster = spawnAhead(game, c.monster, bow ? 1000 : 150, c.flags);
+        auto monsterHpTape = actorTapes.hp(monster);
+        test.startTaping();
+
+        attackUntilHit(game, monster);
+
+        ASSERT_EQ(monsterHpTape.size(), 2);
+        const int damage = monsterHpTape.front() - monsterHpTape.back();
+        EXPECT_GE(damage, minDamage + c.expectedExtra);
+        EXPECT_LE(damage, maxDamage + c.expectedExtra);
     }
 }

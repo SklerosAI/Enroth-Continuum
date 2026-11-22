@@ -81,8 +81,9 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 
 - **Look up and look down portraits.** MM6.exe's speech table gives speech 63 portrait 31 and speech 64 portrait 32.
   The shared `portraitVariants` table in `src/Engine/mm7_data.cpp`, which MM6 uses, gives 17 and 20.
-- **Oracle background.** A hidden capture of the Oracle's conversation draws the left view area plain white. Not checked
-  in visible play, so it may be offscreen-only or a missing house picture.
+- **House view background.** Hidden captures of the Oracle's conversation and of the Circus tents on Dragonsand draw
+  the left view area plain white. Not checked in visible play, so it may be offscreen-only, since hidden runs play no
+  house video, or a missing house picture.
 - **Missing chest button art.** Opening a chest logs a missing `ib-bcu-a`, the MM7 cancel button background loaded in
   `src/GUI/GUIWindow.cpp`. Harmless.
 - **Character screen.** Pressing I draws the stats tab for one frame before the inventory. Tab doesn't switch members

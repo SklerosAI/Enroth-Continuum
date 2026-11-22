@@ -36,6 +36,10 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
 - **Hireling share rounding.** MM6.exe's gold-find routine 0x41EDE0 takes `(salaries / 100) * gold / 100` from a find,
   at least 1. `Party::foundGold` takes `gold * salaries / 100 / 100`. They differ only when the hirelings' prices don't
   add up to a multiple of 100, which needs one of the cheap professions 52 to 77 hired, and by at most a few gold.
+- **Blaster bolt range.** MM6.exe's projectile hit routine (0x431505 to 0x43152B) takes a blaster bolt's range factor
+  from the bolt's byte at 0x54, read statically as its distance, and uses 1 only at Expert and Master. At Master it also
+  adds the skill to hit. The port's `SPELL_BLASTER_PROJECTILE` case in `Actor.cpp` uses 1 at every mastery, so a Novice
+  bolt at long range may hit more often than in MM6. The 0x54 byte isn't confirmed at runtime.
 - **Any-item roll.** Chests and `GiveItem` kind 0 keep MM6.exe's off-by-one, which favours item 1, because the GrayFace
   patch leaves that roll alone. Fixing it changes chest contents on every map. Owner's call. `mm6::generateAnyItem`.
 - **MM7 monster types on MM6 paths.** `supertypeForMonsterId` makes MM6's Genies and Plate Knights undead and its

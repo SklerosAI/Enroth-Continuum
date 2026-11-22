@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdint>
 #include <map>
 #include <regex>
@@ -189,6 +190,12 @@ static void wieldFromBackpack(EngineController &game, Skill skill, int item) {
     wearFromBackpack(game, 0, static_cast<ItemId>(item));
     game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
     game.tick();
+}
+
+static void paralyzeAllButTheKnight() {
+    // Monsters don't attack paralyzed characters, so the knight takes every hit.
+    for (int i = 1; i < 4; i++)
+        pParty->pCharacters[i].conditions.set(CONDITION_PARALYZED, pParty->GetPlayingTime());
 }
 
 GAME_TEST(MM6ArtifactBonus, ArtifactsRaiseStats) {
@@ -409,4 +416,106 @@ GAME_TEST(MM6ArtifactEffects, HadesDrainsItsWielder) {
 
     EXPECT_EQ(hpTape, tape(1, 0, -1));
     EXPECT_EQ(conditionTape, tape(CONDITION_GOOD, CONDITION_UNCONSCIOUS));
+}
+
+GAME_TEST(MM6ArtifactEffects, AegisHalvesArrows) {
+    // Aegis halves the arrows that hit its wielder, an archer's 2 to 7 damage becomes 1 to 3.
+    for (bool aegis : {false, true}) {
+        SCOPED_TRACE(fmt::format("aegis={}", aegis));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        if (aegis)
+            wieldFromBackpack(game, SKILL_SHIELD, 423);
+        paralyzeAllButTheKnight();
+        auto hpTape = charTapes.hp(0);
+        test.startTaping();
+
+        spawnAhead(game, static_cast<MonsterId>(1), 1500, SPAWN_STATIONARY);
+        for (int frame = 0; frame < 1000 && hpTape.size() < 4; frame++)
+            game.tick(); // The archer shoots until three arrows land.
+
+        ASSERT_EQ(hpTape.size(), 4);
+        std::vector<int> hits;
+        for (size_t i = 1; i < hpTape.size(); i++)
+            hits.push_back(hpTape[i - 1] - hpTape[i]);
+        if (aegis) {
+            EXPECT_LE(*std::ranges::max_element(hits), 3);
+        } else {
+            EXPECT_GT(*std::ranges::max_element(hits), 3);
+        }
+    }
+}
+
+GAME_TEST(MM6ArtifactEffects, PendragonWardsOffPoison) {
+    // Pendragon keeps a spider's bite from poisoning its wearer.
+    for (bool pendragon : {false, true}) {
+        SCOPED_TRACE(fmt::format("pendragon={}", pendragon));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        if (pendragon)
+            wieldFromBackpack(game, SKILL_INVALID, 410);
+        paralyzeAllButTheKnight();
+        auto hpTape = charTapes.hp(0);
+        auto conditionTape = charTapes.condition(0);
+        test.startTaping();
+
+        Actor &spider = pActors[spawnAhead(game, static_cast<MonsterId>(160), 150, SPAWN_STATIONARY)];
+        spider.monsterInfo.specialAttackLevel = 20; // Every bite tries to poison, the spider is level 5.
+        for (int frame = 0; frame < 1000 && hpTape.size() < 4; frame++)
+            game.tick(); // The spider bites three times, the wearer's luck could shake off a single bite.
+
+        ASSERT_EQ(hpTape.size(), 4);
+        EXPECT_EQ(conditionTape, pendragon ? tape(CONDITION_GOOD) : tape(CONDITION_GOOD, CONDITION_POISON_WEAK));
+    }
+}
+
+GAME_TEST(MM6ArtifactEffects, AegisWardsOffStone) {
+    // Aegis keeps the Abomination's gaze from turning its wielder to stone.
+    for (bool aegis : {false, true}) {
+        SCOPED_TRACE(fmt::format("aegis={}", aegis));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        if (aegis)
+            wieldFromBackpack(game, SKILL_SHIELD, 423);
+        paralyzeAllButTheKnight();
+        auto hpTape = charTapes.hp(0);
+        auto conditionTape = charTapes.condition(0);
+        test.startTaping();
+
+        Actor &abomination = pActors[spawnAhead(game, static_cast<MonsterId>(24), 150, SPAWN_STATIONARY)];
+        abomination.monsterInfo.specialAttackLevel = 6; // Every blow tries to petrify, the Abomination is level 17.
+        abomination.monsterInfo.spell1UseChance = 0;
+        for (int frame = 0; frame < 300 && hpTape.size() < 2; frame++)
+            game.tick(); // The Abomination strikes.
+
+        ASSERT_EQ(hpTape.size(), 2);
+        EXPECT_EQ(conditionTape, aegis ? tape(CONDITION_GOOD) : tape(CONDITION_GOOD, CONDITION_PETRIFIED));
+    }
+}
+
+GAME_TEST(MM6ArtifactEffects, PoseidonLowersArmorClass) {
+    // Poseidon takes 10 off its wielder's armor class, besides what its -10 Speed costs. The knight wears plate armor
+    // first, a new party has no armor class to lower.
+    auto textTape = tapes.allGUIWindowsText();
+    startNewGameThroughInput(game);
+    wieldFromBackpack(game, SKILL_PLATE, 76);
+    pParty->pCharacters[0].setSkillValue(SKILL_SPEAR, CombinedSkillValue::novice());
+    pParty->pCharacters[0].inventory.add(Item(static_cast<ItemId>(417)));
+    test.startTaping();
+
+    showStats(game, 0);
+    wearFromBackpack(game, 0, static_cast<ItemId>(417));
+    game.pressGuiButton("CharacterWindow_Stats");
+    game.tick();
+
+    auto shown = textTape.map(shownStats).filter([](const ShownStats &stats) { return !stats.empty(); });
+    ASSERT_EQ(shown.size(), 2);
+    const std::string speed = localization->str(LSTR_SPEED);
+    const std::string armorClass = localization->str(LSTR_ARMOR_CLASS);
+    const Character &knight = pParty->pCharacters[0];
+    const ShownStats &before = shown[0];
+    const ShownStats &after = shown[1];
+    const int speedBonusChange = knight.GetParameterBonus(after.at(speed).first) - knight.GetParameterBonus(before.at(speed).first);
+    EXPECT_EQ(after.at(speed).first, before.at(speed).first - 10);
+    EXPECT_EQ(after.at(armorClass).first, before.at(armorClass).first - 10 + speedBonusChange);
 }

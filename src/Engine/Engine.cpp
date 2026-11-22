@@ -71,6 +71,8 @@
 #include "Engine/AttackList.h"
 #include "Engine/Resources/ResourceManager.h"
 #include "Engine/MapEnumFunctions.h"
+#include "Engine/MM6/MM6ArtifactBonus.h"
+#include "Engine/MM6/MM6ArtifactEffects.h"
 #include "Engine/MM6/MM6CreationRules.h"
 #include "Engine/MM6/MM6Executable.h"
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
@@ -1657,9 +1659,15 @@ void RegeneratePartyHealthMana() {
             continue; // No HP/MP regen/drain for dead characters.
 
         RegenData thisChar;
+        bool drainedByHades = false;
         // Item regeneration
         for (InventoryEntry item : character.inventory.functionalEquipment()) {
-            if (!isRegular(item->itemId)) {
+            if (engine->gameTitle() == GameTitle::MM6 && mm6::isArtifactOrRelic(item->itemId)) {
+                if (std::to_underlying(item->itemId) == 407) // Pellinore, MM6.exe 0x487BB5.
+                    thisChar.hpRegen++;
+                if (std::to_underlying(item->itemId) == 415) // Hades.
+                    drainedByHades = true;
+            } else if (!isRegular(item->itemId)) {
                 if (item->itemId == ITEM_RELIC_ETHRICS_STAFF) {
                     bool undead = character.classType == CLASS_LICH || character.conditions.has(CONDITION_ZOMBIE);
                     if (!undead) // Vanilla bug: the staff drained every wielder, while its description only has it drain mortals.
@@ -1733,6 +1741,12 @@ void RegeneratePartyHealthMana() {
         // Wake up unconscious chars due to hp regen.
         if (character.health > 0 && character.conditions.has(CONDITION_UNCONSCIOUS))
             character.conditions.reset(CONDITION_UNCONSCIOUS);
+
+        if (engine->gameTitle() == GameTitle::MM6) {
+            if (drainedByHades)
+                mm6::drainHadesWielder(character, ticks5, pParty->GetPlayingTime());
+            continue;
+        }
 
         // Knock out / kill chars due to hp drain.
         if (character.health <= 0) {

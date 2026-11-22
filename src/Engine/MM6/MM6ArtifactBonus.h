@@ -95,6 +95,14 @@ inline constexpr std::array kArtifactAttributeBonuses = std::to_array<ArtifactAt
 });
 
 /**
+ * @param item                          Item ID.
+ * @return                              Whether it's one of MM6's artifacts and relics, items 400 to 429.
+ */
+constexpr bool isArtifactOrRelic(ItemId item) {
+    return std::to_underlying(item) >= 400 && std::to_underlying(item) <= 429;
+}
+
+/**
  * @offset 0x482E80
  *
  * @param item                          Equipped MM6 artifact or relic.

@@ -376,3 +376,37 @@ GAME_TEST(MM6ArtifactEffects, ConanSlaysDevilsAndDragons) {
         }
     }
 }
+
+GAME_TEST(MM6ArtifactEffects, PellinoreRegeneratesHitPoints) {
+    // Pellinore didn't regenerate hit points. Its wearer gains one every five minutes.
+    for (bool pellinore : {false, true}) {
+        SCOPED_TRACE(fmt::format("pellinore={}", pellinore));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        if (pellinore)
+            wieldFromBackpack(game, SKILL_PLATE, 407);
+        pParty->pCharacters[0].health = 1;
+        auto hpTape = charTapes.hp(0);
+        test.startTaping();
+
+        game.tick(100); // Five game minutes, one regeneration step.
+
+        EXPECT_EQ(hpTape, pellinore ? tape(1, 2) : tape(1));
+    }
+}
+
+GAME_TEST(MM6ArtifactEffects, HadesDrainsItsWielder) {
+    // Hades didn't drain its wielder. It takes a hit point every five minutes, and the wielder stays conscious at 0 and
+    // falls unconscious below it.
+    startNewGameThroughInput(game);
+    wieldFromBackpack(game, SKILL_SWORD, 415);
+    pParty->pCharacters[0].health = 1;
+    auto hpTape = charTapes.hp(0);
+    auto conditionTape = charTapes.condition(0);
+    test.startTaping();
+
+    game.tick(200); // Ten game minutes, two regeneration steps.
+
+    EXPECT_EQ(hpTape, tape(1, 0, -1));
+    EXPECT_EQ(conditionTape, tape(CONDITION_GOOD, CONDITION_UNCONSCIOUS));
+}

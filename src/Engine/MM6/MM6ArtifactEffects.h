@@ -86,4 +86,22 @@ inline int artifactArrowHit(const Item &bow, const Actor &monster, bool resisted
     return artifactExtraDamage(monster, DAMAGE_AIR, 20, resisted, rng);
 }
 
+/**
+ * Takes the hit points that Hades drains from its wielder, as MM6.exe's regeneration routine does once per step. The
+ * wielder falls unconscious below 0 hit points, not at 0, and dies once hit points plus Endurance drop below 1.
+ *
+ * @offset 0x487F74
+ *
+ * @param character                     Character who wields Hades, neither dead nor eradicated.
+ * @param steps                         Five-minute regeneration steps that passed.
+ * @param now                           Current game time.
+ */
+inline void drainHadesWielder(Character &character, int steps, Time now) {
+    character.health -= steps;
+    if (character.health < 0 && !character.conditions.has(CONDITION_UNCONSCIOUS))
+        character.conditions.set(CONDITION_UNCONSCIOUS, now);
+    if (character.health + character.GetBaseEndurance() < 1 && !character.conditions.has(CONDITION_DEAD))
+        character.conditions.set(CONDITION_DEAD, now);
+}
+
 } // namespace mm6

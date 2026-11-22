@@ -769,11 +769,15 @@ std::unique_ptr<TargetedSpellUI> CastSpellInfo::GetCastSpellInInventoryWindow() 
     CharacterUI_LoadPaperdollTextures();
     current_screen_type = SCREEN_CASTING;
     std::unique_ptr<TargetedSpellUI> CS_inventory_window = std::make_unique<GUIWindow_Inventory_CastSpell>(Pointi(0, 0), render->GetRenderDimensions(), this, "");
-    pCharacterScreen_ExitBtn = CS_inventory_window->CreateButton({394, 318}, {75, 33}, BUTTON_TYPE_NORMAL, 0,
-        UIMSG_ClickExitCharacterWindowBtn, 0, INPUT_ACTION_INVALID, localization->str(LSTR_EXIT_DIALOGUE),
-        {{paperdoll_dbrds[2], paperdoll_dbrds[1]}});
+    const bool isMM6 = engine->gameTitle() == GameTitle::MM6; // MM6's screen has no paperdoll and only the window's Cancel button.
+    if (!isMM6) {
+        pCharacterScreen_ExitBtn = CS_inventory_window->CreateButton({394, 318}, {75, 33}, BUTTON_TYPE_NORMAL, 0,
+            UIMSG_ClickExitCharacterWindowBtn, 0, INPUT_ACTION_INVALID, localization->str(LSTR_EXIT_DIALOGUE),
+            {{paperdoll_dbrds[2], paperdoll_dbrds[1]}});
+    }
     CS_inventory_window->CreateButton({0, 0}, {0x1DCu, 0x159u}, BUTTON_TYPE_NORMAL, 122, UIMSG_InventoryLeftClick, 0);
-    pCharacterScreen_DollBtn = CS_inventory_window->CreateButton({0x1DCu, 0}, {0xA4u, 0x159u}, BUTTON_TYPE_NORMAL, 0, UIMSG_ClickPaperdoll, 0);
+    if (!isMM6)
+        pCharacterScreen_DollBtn = CS_inventory_window->CreateButton({0x1DCu, 0}, {0xA4u, 0x159u}, BUTTON_TYPE_NORMAL, 0, UIMSG_ClickPaperdoll, 0);
 
     CS_inventory_window->CreateCharacterButtons();
 
@@ -1341,7 +1345,7 @@ void CharacterUI_InventoryTab_Draw(Character *player, bool Cover_Strip) {
     render->DrawQuad2D(ui_character_inventory_background,
                        engine->gameTitle() == GameTitle::MM6 ? MM6_INVENTORY_BACKGROUND_POSITION : Pointi(8, 8));
 
-    if (Cover_Strip) {
+    if (Cover_Strip && engine->gameTitle() != GameTitle::MM6) { // MM6's icons.lod has no fr_strip.
         ui_character_inventory_background_strip = assets->getIcon("fr_strip");
         render->DrawQuad2D(ui_character_inventory_background_strip, {8, 305});
     }

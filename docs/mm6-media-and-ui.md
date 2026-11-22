@@ -258,6 +258,7 @@ plan carries none for an occupied cursor. `requirePostWorldEmptyCursorReady` che
 | Spellbook | [MM6Spellbook.h](../src/GUI/UI/MM6Spellbook.h) | Eleven spells per school page, quick spell hot spots, right-click popup from `0x40C580` |
 | Character screen | [MM6CharacterScreen.h](../src/GUI/UI/MM6CharacterScreen.h) | MM6 tab art, five resistances, side borders over the paperdoll |
 | Chest | [UIChest.cpp](../src/GUI/UI/UIChest.cpp) | `buttesc1`/`buttesc2` exit at (392, 318), character-screen side borders |
+| Spell item pick | [UIInventory.cpp](../src/GUI/UI/UIInventory.cpp) | Backpack with `buttesc1`/`buttesc2` Cancel at (392, 318), no paperdoll, see [spells that pick an item](mm6-characters-items-spells.md#spells-that-pick-an-item) |
 | Quick reference | [UIQuickReference.cpp](../src/GUI/UI/UIQuickReference.cpp) | `leather` background, reputation colour from the MM6 effective reputation |
 | Rest | [UIRest.cpp](../src/GUI/UI/UIRest.cpp) | MM6 button sizes and positions |
 | NPC conversation | [MM6NpcDialogue.h](../src/GUI/UI/MM6NpcDialogue.h), [MM6StreetNpcTalk.h](../src/GUI/UI/MM6StreetNpcTalk.h) | Right-panel layout from `0x43AB60`, street NPC topics |

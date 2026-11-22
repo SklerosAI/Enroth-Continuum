@@ -49,6 +49,9 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   Igraine and Morgan, and the extra hit point damage of Hades, Ares and Artemis. Addresses are in the artifact table on
   [Characters, items and spells](mm6-characters-items-spells.md#artifacts-and-relics). Poseidon's armor class -10 has
   no game test, a new party has no armor class for it to lower.
+- **Hireling share rounding.** MM6.exe's gold-find routine 0x41EDE0 takes `(salaries / 100) * gold / 100` from a find,
+  at least 1. `Party::foundGold` takes `gold * salaries / 100 / 100`. They differ only when the hirelings' prices don't
+  add up to a multiple of 100, which needs one of the cheap professions 52 to 77 hired, and by at most a few gold.
 - **Any-item roll.** Chests and `GiveItem` kind 0 keep MM6.exe's off-by-one, which favours item 1, because the GrayFace
   patch leaves that roll alone. Fixing it changes chest contents on every map. Owner's call. `mm6::generateAnyItem`.
 - **Retracting lava bridges.** The Supreme Temple of Baa's four lava bridges are doors 12 to 15. A monster on one when
@@ -80,12 +83,9 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   herbs around New Sorpigal or the scroll in the hive, load through the shared `Item_MM7` reconstruct, which drops the
   native record. Once the party picks one up the inventory capture finds no record and every save says "This game
   can't be saved here yet". Seen with a throwaway game test that picked up an `oute3` herb and saved.
-- **Poison Resistance items from chests can't be saved.** A chest item's runtime view comes from the shared
-  `Item_MM7` reconstruct, which reads standard bonus 14, MM6's Poison Resistance, as Earth resistance instead of the
-  Body resistance `kStandardBonusAttributes` maps it to. A throwaway game test saw Earth on item 83 in the hive's
-  chest 1 with chest luck 0. `captureStandardItem` has no MM6 bonus for Earth, so a save with one carried should be
-  refused, not yet run through a save. The fix belongs in the chest runtime projection (`MM6ChestRuntimeProjection.h`),
-  whose record writer relies on the same reconstruct.
+- **Poison Resistance on ground items.** Ground item records load through the shared `SpriteObject_MM7` reconstruct,
+  which reads standard bonus 14, MM6's Poison Resistance, as Earth. Chests convert it (`mm6::reconstructChest`), ground
+  items don't. Whether a shipped map places such an item was not checked.
 - **Border autosave reopens the travel dialog.** The autosave on a walk across an outdoor border holds the party at
   the edge, so loading it opens the travel dialog again at once. Not checked against MM6.exe.
   `MM6InGameSave.BountyKillSurvivesAutosave` closes it with No.

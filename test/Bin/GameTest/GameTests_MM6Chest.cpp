@@ -27,6 +27,7 @@
 #include "Engine/MM6/MM6ChestMapLoadRoute.h"
 #include "Engine/MM6/MM6FirstMapManualSave.h"
 #include "Engine/MM6/MM6ChestTitleState.h"
+#include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/CombinedSkillValue.h"
 #include "Engine/Objects/SpriteEnumFunctions.h"
@@ -41,6 +42,7 @@
 #include "Engine/Timer.h"
 
 #include "GUI/GUIButton.h"
+#include "GUI/GUIWindow.h"
 #include "GUI/UI/UIChest.h"
 #include "GUI/UI/UIRest.h"
 #include "GUI/UI/UISaveLoad.h"
@@ -144,10 +146,9 @@ static std::vector<int> chestContents(int chestId) {
     return result;
 }
 
-static void enterAbandonedTempleWithChestRoll(EngineController &game, std::uint32_t chestRoll) {
-    // A new party walks into the Abandoned Temple, whose ground treasure and then chests roll their items as it loads,
+static void walkIntoAbandonedTemple(EngineController &game, std::uint32_t chestRoll) {
+    // The party walks into the Abandoned Temple, whose ground treasure and then chests roll their items as it loads,
     // from the given chest random state. Chest 1 is trapped, the active character disarms it.
-    startNewGameThroughInput(game);
     pParty->activeCharacter().setSkillValue(SKILL_TRAP_DISARM, CombinedSkillValue(10, MASTERY_MASTER));
     game.teleportTo(pMapTable->GetMapInfo("oute3.odm"), Vec3f(-21456, -286, 193), 90); // In front of the temple door, facing it.
     mm6::chestTitleState().lcgState = chestRoll;
@@ -157,6 +158,31 @@ static void enterAbandonedTempleWithChestRoll(EngineController &game, std::uint3
     game.tick();
     game.skipLoadingScreen();
     game.tick();
+}
+
+static void enterAbandonedTempleWithChestRoll(EngineController &game, std::uint32_t chestRoll) {
+    startNewGameThroughInput(game);
+    walkIntoAbandonedTemple(game, chestRoll);
+}
+
+static void hireNoreenTheBanker(EngineController &game) {
+    // The party stands next to Noreen, facing east towards her, clicks on her and hires her.
+    game.teleportTo(engine->_currentLoadedMapId, pActors[15].pos - Vec3f(150, 0, 0), 0);
+    game.pointMouseAtActor(15);
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+    for (std::string_view label : {"Join", "Hire"}) {
+        const auto option = std::ranges::find_if(pDialogueWindow->vButtons, [&](GUIButton *button) {
+            return button->id.starts_with("NpcDialogue_Option") && button->label == label;
+        });
+        ASSERT_NE(option, pDialogueWindow->vButtons.end()) << "No conversation topic " << label;
+        game.pressAndReleaseButton(BUTTON_LEFT, (*option)->rect.center());
+        game.tick();
+    }
+}
+
+static int chestGoldPiles(int chestId) {
+    return std::ranges::count_if(vChests[chestId].inventory.entries(), [](InventoryEntry entry) { return entry->isGold(); });
 }
 
 static std::vector<int> hiddenChestItems(int chestId) {
@@ -304,7 +330,7 @@ GAME_TEST(MM6ZChestHeadless, ScopedFirstOutdoorMapAndRollback) {
     ASSERT_TRUE(mm6::copyChestRecords(wire.part(mm6::OutdoorDeltaPart::Chests), &records));
     for (int index = 0; index < 20; ++index) {
         Chest_MM7 live{};
-        snapshot(vChests[index], &live);
+        mm6::snapshotChest(vChests[index], &live);
         EXPECT_EQ(live.chestTypeId, mm6::readChest16(records[index], 0));
         EXPECT_EQ(live.flags, mm6::readChest16(records[index], 2));
         for (int slot = 0; slot < 140; ++slot)
@@ -528,6 +554,72 @@ GAME_TEST(MM6ChestScreen, ExitButton) {
                quad.texture.starts_with("buttesc") || quad.texture.starts_with("ib-");
     });
     EXPECT_EQ(frameArt, tape(DrawnQuad{"chest01", {8, 8}}, DrawnQuad{"border5", {7, 8}}, DrawnQuad{"border6", {461, 8}}, DrawnQuad{"buttesc1", {392, 318}}));
+}
+
+GAME_TEST(MM6ChestScreen, RightClickShowsTheItemUnderTheCursor) {
+    // Right-clicking an item in a chest of a type whose grid sits at another offset than the first type's showed the
+    // item one cell to the left, or nothing. Chest 1 of the Shadow Guild is such a chest, with its Poleax right of a
+    // Crossbow.
+    startNewGameThroughInput(game);
+    mm6::chestTitleState().lcgState = 0;
+    game.teleportTo(pMapTable->GetMapInfo("d08.blv"), Vec3f(2624, 4344, 0), 90, -20); // South of chest 1, looking down at it.
+    auto linesTape = tapes.titleLines();
+    auto screenTape = tapes.screen();
+    test.startTaping();
+
+    game.pointMouseAtDecoration(0); // Chest 1.
+    game.pressAndReleaseButton(BUTTON_LEFT);
+    game.tick();
+    const Pointi poleaxCell = vChests[1].inventory.find(static_cast<ItemId>(28)).geometry().topLeft();
+    game.pressButton(BUTTON_RIGHT, chestTable[vChests[1].chestTypeId].inventoryOffset + poleaxCell * 32 + Pointi(16, 16));
+    game.tick();
+    game.releaseButton(BUTTON_RIGHT);
+    game.tick();
+
+    auto titles = linesTape.flatten().map([](const DrawnLine &line) { return line.text; });
+    EXPECT_EQ(screenTape, tape(SCREEN_GAME, SCREEN_CHEST));
+    EXPECT_EQ(vChests[1].chestTypeId, 2);
+    EXPECT_EQ(poleaxCell, Pointi(7, 2));
+    EXPECT_EQ(titles.unique(), tape(std::string("Two-Handed Axe"), std::string("Not Identified")));
+}
+
+GAME_TEST(MM6Chest, GoldPileGoesToTheParty) {
+    // Clicking a gold pile in a chest did nothing, the pile stayed where it was. The party takes the 983 gold pile in chest
+    // 1 of the Abandoned Temple, once alone and once with Noreen the Banker hired, who adds a fifth and takes her share.
+    constexpr ItemId mediumGold = static_cast<ItemId>(198);
+    for (bool banker : {false, true}) {
+        SCOPED_TRACE(fmt::format("banker={}", banker));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        if (banker) {
+            game.runGameRoutine([] { pParty->SetGold(1000, true); }); // Her fee.
+            hireNoreenTheBanker(game);
+        }
+        walkIntoAbandonedTemple(game, 3041712726u);
+        auto goldTape = tapes.gold();
+        auto pilesTape = tapes.custom([] { return chestGoldPiles(1); });
+        auto heldTape = tapes.custom([] { return pParty->pPickedItem.itemId; });
+        auto statusTape = tapes.statusBar();
+        auto soundsTape = tapes.sounds();
+        test.startTaping();
+
+        useMM6CampaignChainIndoorEventFace(game, 12); // Opens chest 1.
+        ASSERT_EQ(vChests[1].inventory.entry(Pointi(0, 0))->itemId, mediumGold);
+        ASSERT_EQ(vChests[1].inventory.entry(Pointi(0, 0))->goldAmount, 983);
+        game.pressAndReleaseButton(BUTTON_LEFT, chestTable[vChests[1].chestTypeId].inventoryOffset + Pointi(16, 16)); // The pile in the top left cell.
+        game.tick();
+
+        EXPECT_EQ(pilesTape, tape(4, 3));
+        EXPECT_EQ(heldTape, tape(ITEM_NULL));
+        EXPECT_CONTAINS(soundsTape.flatten(), SOUND_gold01);
+        if (banker) {
+            EXPECT_EQ(goldTape, tape(0, 1062)); // 983 and a fifth make 1179, the banker takes a tenth of it.
+            EXPECT_EQ(statusTape.back(), localization->format(LSTR_YOU_FOUND_LU_GOLD_FOLLOWERS_TAKE_LU, 1179, 117));
+        } else {
+            EXPECT_EQ(goldTape, tape(200, 1183));
+            EXPECT_EQ(statusTape.back(), localization->format(LSTR_YOU_FOUND_LU_GOLD, 983));
+        }
+    }
 }
 
 GAME_TEST(MM6Chest, OverflowShowsMostValuableItems) {

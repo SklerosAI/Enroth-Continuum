@@ -298,7 +298,7 @@ static Blob encodeOutdoorLiveState(const OutdoorLocation &location, OutdoorActor
     }
     for (size_t i = 0; i < current.chests.size(); ++i) {
         Chest_MM7 live{};
-        snapshot(vChests[i], &live);
+        mm6::snapshotChest(vChests[i], &live);
         if (!mm6::validChestRuntimeGrid(GameTitle::MM6, live))
             throw std::runtime_error("MM6 outdoor live chest has invalid active grid");
         std::copy_n(live.inventoryMatrix.begin(), mm6::CHEST_PAGE_CELLS, current.chests[i].inventoryMatrix.begin()); // The later pages stay as the delta has them.

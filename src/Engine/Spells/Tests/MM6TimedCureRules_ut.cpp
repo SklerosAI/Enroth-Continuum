@@ -4,6 +4,7 @@
 
 #include "Testing/Unit/UnitTest.h"
 
+#include "Engine/MM6/MM6ArtifactBonus.h"
 #include "Engine/Spells/MM6TimedCureRules.h"
 
 #include "Utility/String/Format.h"
@@ -53,7 +54,7 @@ UNIT_TEST(MM6TimedCureRules, RejectsUnsupportedInputsBeforeMutation) {
     EXPECT_THROW(mm6::applyTimedCure(SPELL_BODY_FIRST_AID, MASTERY_NOVICE, 1, now, conditions, window), std::runtime_error);
     EXPECT_THROW(mm6::applyTimedCure(static_cast<SpellId>(67), MASTERY_GRANDMASTER, 1, now, conditions, window), std::runtime_error);
     EXPECT_THROW(mm6::applyTimedCure(static_cast<SpellId>(67), MASTERY_NOVICE, 0, now, conditions, window), std::runtime_error);
-    EXPECT_THROW(mm6::applyTimedCure(static_cast<SpellId>(67), MASTERY_NOVICE, 64, now, conditions, window), std::runtime_error);
+    EXPECT_THROW(mm6::applyTimedCure(static_cast<SpellId>(67), MASTERY_NOVICE, mm6::kMaxCastSkillLevel + 1, now, conditions, window), std::runtime_error);
     EXPECT_TRUE(conditions.has(CONDITION_WEAK));
     conditions.set(CONDITION_WEAK, now + Duration::fromSeconds(1));
     EXPECT_THROW(mm6::applyTimedCure(static_cast<SpellId>(67), MASTERY_NOVICE, 1, now, conditions, window), std::runtime_error);

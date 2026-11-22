@@ -36,6 +36,7 @@
 #include "Engine/Spells/MM6PowerCureRules.h"
 #include "Engine/Spells/MM6TimedCureRules.h"
 #include "Engine/Spells/MM6CombatBuffRules.h"
+#include "Engine/MM6/MM6ArtifactEffects.h"
 #include "Engine/MM6/MM6PlayerSpell.h"
 #include "Engine/MM6/MM6SpellEffectGuard.h"
 #include "Engine/Spells/SpellEnumFunctions.h"
@@ -292,6 +293,8 @@ void CastSpellInfoHelpers::castSpell() {
             CombinedSkillValue val = pPlayer->getActualSkillValue(which_skill);
             spell_level = val.level();
             spell_mastery = val.mastery();
+            if (engine->gameTitle() == GameTitle::MM6)
+                spell_level = mm6::artifactSpellSkillLevel(*pPlayer, which_skill, spell_level);
 
             if (engine->config->debug.AllMagic.value()) {
                 spell_level = 10;

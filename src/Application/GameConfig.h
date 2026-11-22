@@ -286,6 +286,14 @@ class GameConfig : public Config {
             "in turn-based mode, as the GrayFace patch does. Without it recovery runs 50% faster in real time only, as MM6.exe's "
             "own code and MM7 have it."};
 
+        Bool FixBonusDamageResistance = {this, "fix_bonus_damage_resistance", true,
+            "MM6 only. Send the elemental extra damage of the relics Hades, Ares and Artemis through the monster's resistance, "
+            "and keep it off a stoned monster, as the GrayFace patch does. In vanilla it ignored both."};
+
+        Bool FixValeriaShield = {this, "fix_valeria_shield", true,
+            "MM6 only. Let the shield Valeria halve the arrows that hit its bearer, as its description says. In vanilla MM6.exe "
+            "looked for it in the armor slot, where a shield can't go, so it never did. The GrayFace patch doesn't fix it."};
+
         Bool FixWeaponSkillHirelings = {this, "fix_weapon_skill_hirelings", true,
             "MM6 only. Let the weapon skill points of a hired Arms Master, Weapons Master or Squire also shorten the "
             "recovery of Expert Sword, Axe and Bow, as the GrayFace patch does. In vanilla they counted for attack, damage and shooting only."};

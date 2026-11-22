@@ -79,13 +79,18 @@ inline bool wearsUnbrokenItem(const Character &character, ItemSlot slot, int ite
 /**
  * @param character                     Character an arrow hits.
  * @return                              How many times the original halves the arrow's damage for this character. The
- *                                      Shield buff, any Shielding item, the artifact 408 in the armor slot and the
- *                                      artifact 423 in either hand halve it once each.
+ *                                      Shield buff, any Shielding item, Valeria (408) and Aegis (423) in either hand
+ *                                      halve it once each. MM6.exe looks for Valeria in the armor slot, where a shield
+ *                                      can't go, `gameplay.fix_valeria_shield` off keeps that.
  */
 inline int arrowHalvings(const Character &character) {
     int result = character.pCharacterBuffs[CHARACTER_BUFF_SHIELD].Active();
     result += wearsUnbrokenEnchantment(character, ITEM_ENCHANTMENT_OF_SHIELDING);
-    result += wearsUnbrokenItem(character, ITEM_SLOT_ARMOUR, 408);
+    if (engine->config->gameplay.FixValeriaShield.value()) {
+        result += wearsUnbrokenItem(character, ITEM_SLOT_MAIN_HAND, 408) || wearsUnbrokenItem(character, ITEM_SLOT_OFF_HAND, 408);
+    } else {
+        result += wearsUnbrokenItem(character, ITEM_SLOT_ARMOUR, 408); // MM6.exe 0x431F7E.
+    }
     result += wearsUnbrokenItem(character, ITEM_SLOT_MAIN_HAND, 423) || wearsUnbrokenItem(character, ITEM_SLOT_OFF_HAND, 423);
     return result;
 }

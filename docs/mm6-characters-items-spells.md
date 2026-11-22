@@ -170,30 +170,30 @@ are the four that items raise, Fire, Electricity, Cold and Poison, not Magic. A 
 
 | Id | Name | Attribute bonuses (0x482E80) | Other effects in MM6.exe | Port |
 |---|---|---|---|---|
-| 400 | Mordred | none | Melee hit heals the wielder by a fifth of the damage (0x430FEB) | Bonuses n/a, heal missing |
+| 400 | Mordred | none | Melee hit heals the wielder by a fifth of the hit while the monster still stands (0x430FEB) | Done |
 | 401 | Thor | Might +20 | none, its "Force" isn't in the executable | Done |
-| 402 | Conan | Might +20 | Double melee damage against monster types 25 to 42 (0x47E4B0, 0x47E5CE) | Might done, slaying missing |
+| 402 | Conan | Might +20 | Doubles its damage roll against monsters 25 to 42, the devils, lizards, drakes, wyrms and dragons (0x47E4B0, 0x47E5CE) | Done |
 | 403 | Excalibur | Might +30 | none | Done |
 | 404 | Merlin | Spell points +40 | Swift, recovery -20 (0x481E61) | Done |
 | 405 | Percival | none | Swift (0x481E69), carnage arrows (0x45CD5D) | Done |
 | 406 | Galahad | Hit points +25, resistances +10 | none | Done |
-| 407 | Pellinore | Endurance +30 | Hit point regeneration (0x487BB5) | Endurance done, regeneration missing |
-| 408 | Valeria | Accuracy +30 | Halves missile damage to the wielder (0x431F7E) | Accuracy done, shielding missing |
+| 407 | Pellinore | Endurance +30 | A hit point per regeneration step (0x487BB5) | Done |
+| 408 | Valeria | Accuracy +30 | Halves arrows, but only from the armour slot (0x431F7E), where a shield can't go | Done, from either hand with `fix_valeria_shield` |
 | 409 | Arthur | Seven stats +10, spell points +25 | none | Done |
-| 410 | Pendragon | Luck +30 | Poison immunity (0x481250, 0x481318, 0x4813C3), double disarm skill (0x485409) | Luck and disarm done, immunity missing |
+| 410 | Pendragon | Luck +30 | Wards off a monster's poison from the cloak slot (0x481250, 0x481318, 0x4813C3), double disarm skill (0x485409) | Done |
 | 411 | Lucius | Speed +30 | none | Done |
-| 412 | Guinevere | Spell points +30 | Light and Dark spell skill x1.5 (0x422A9A, 0x422B12) | Spell points done, skill missing |
-| 413 | Igraine | Spell points +25 | Spirit, Mind and Body spell skill x1.5 (0x422932, 0x4229AA, 0x422A22) | Spell points done, skill missing |
-| 414 | Morgan | Spell points +20 | Fire, Air, Water and Earth spell skill x1.5 (0x422829) | Spell points done, skill missing |
-| 415 | Hades | Luck +20 | Melee hit takes 20 more hit points (0x430FDA), disarm bonus (0x48543A), drains a hit point per regeneration step (0x487BC4) | Luck and disarm done, damage and drain missing |
-| 416 | Ares | Fire resistance +25 | Melee hit takes 30 more hit points (0x430FC9) | Resistance done, damage missing |
+| 412 | Guinevere | Spell points +30 | Light and Dark spell skill x1.5 on a ring finger (0x422A9A, 0x422B12) | Done, no Light or Dark player spell is admitted yet |
+| 413 | Igraine | Spell points +25 | Spirit, Mind and Body spell skill x1.5 on a ring finger (0x422932, 0x4229AA, 0x422A22) | Done |
+| 414 | Morgan | Spell points +20 | Fire, Air, Water and Earth spell skill x1.5 as the amulet (0x422829) | Done |
+| 415 | Hades | Luck +20 | Melee hit takes 20 more hit points (0x430FDA), disarm bonus (0x48543A), drains a hit point per regeneration step (0x487BC4) | Done |
+| 416 | Ares | Fire resistance +25 | Melee hit takes 30 more hit points (0x430FC9) | Done |
 | 417 | Poseidon | Might, Endurance, Accuracy +20, Speed -10, armor class -10 | none | Done |
 | 418 | Cronos | Hit points +100, Luck -50 | none | Done |
 | 419 | Hercules | Might +50, Endurance +20, Intellect -30 | none | Done |
-| 420 | Artemis | Resistances -10 | Arrow hit takes 20 more hit points (0x431615) | Resistances done, damage missing |
+| 420 | Artemis | Resistances -10 | Arrow hit takes 20 more hit points (0x431615) | Done |
 | 421 | Apollo | Resistances +20, Luck +20, Endurance -30 | none | Done |
 | 422 | Zeus | Hit points, spell points, Luck +50, Intellect -50 | none | Done |
-| 423 | Aegis | Luck +20, Speed -20 | Stone immunity in either hand (0x481632), halves missile damage (0x431FAA) | Stats done, immunity and shielding missing |
+| 423 | Aegis | Luck +20, Speed -20 | Wards off a monster's stone gaze in either hand (0x481632), halves arrows (0x431FAA) | Done |
 | 424 | Odin | Resistances +50, Speed -40 | none | Done |
 | 425 | Atlas | Might +100, Speed -40 | none | Done |
 | 426 | Hermes | Speed +100, Accuracy -40 | none | Done |
@@ -205,7 +205,42 @@ The item texts mostly agree. Thor and Conan carry a Might bonus their texts don'
 Pellinore's "Hit Recovery" have no code behind them, MM6.exe compares against neither item number outside the
 bonus routine. Galahad's "Protection" is the resistance bonus. Swift
 artifacts shorten recovery through `mm6::isSwiftArtifact`, next to the Swift enchantment in
-`Character::GetAttackRecoveryTime`. The missing effects are listed in [Open questions](open-questions.md).
+`Character::GetAttackRecoveryTime`.
+
+What the other addresses do, and where the port has it:
+
+- **Hits** (`MM6ArtifactEffects.h`, called from `Actor::DamageMonsterFromParty`). The melee hit routine walks the off
+  hand, then the main hand. Mordred (0x430FEB) adds a fifth of the hit, after the monster's resistance, to the
+  wielder's hit points, capped at the maximum, when the monster still has hit points after the hit and any relic
+  damage before it. Hades (0x430FDA) and Ares (0x430FC9) take 20 and 30 hit points off the monster, and the arrow hit
+  routine (0x431615) does the same for 20 when the bow is Artemis. MM6.exe subtracts these straight from the monster's
+  hit points. The GrayFace patch sends them through the monster damage routine (0x421DC0) as Poison, Fire and
+  Electricity, and gives a stoned monster none, which `gameplay.fix_bonus_damage_resistance` (default on) does. The
+  status line counts them in the damage.
+- **Slaying** (`mm6::weaponSlays`, `Character::CalculateMeleeDmgToEnemyWithWeapon`). The melee damage routine doubles a
+  weapon's dice and modifier, before the dagger triple, when the weapon is Conan and the monster is 25 to 42, or when it
+  has Demon Slaying and the monster is 25 to 30, or Dragon Slaying and 31 to 42. Conan skips its enchantment check.
+- **Regeneration** (`RegeneratePartyHealthMana`). The routine at 0x4879F0 runs once five game minutes have passed since
+  its last run. Pellinore (0x487BB5) adds a hit point up to the maximum. Hades (0x487BC4) takes one, knocks the wielder
+  out below 0, not at 0, and kills once hit points plus Endurance drop below 1 (`mm6::drainHadesWielder`). Neither works
+  on a dead or eradicated wielder. The port steps once per five-minute mark passed, as for every other regeneration
+  source.
+- **Spell skill** (`mm6::artifactSpellSkillLevel`, called where a spellbook cast reads its skill). The cast routine
+  (0x4227E1 on) adds half the skill for a school enchantment, then half of that result again for Morgan in the amulet
+  slot, or Igraine or Guinevere on any ring finger. Only the level grows, the mastery, cost and recovery don't.
+  MM6.exe uses the boosted level as it is, Heroism's power and duration too (0x426C21), so the spell rules accept
+  levels up to `mm6::kMaxCastSkillLevel`, 141, which a skill of 63 reaches with both boosts.
+- **Warding** (`mm6::receiveSpecialAttack`, `MM6MonsterAttack.h`). The monster special attack routine checks the cloak
+  slot for Pendragon before it poisons (0x481250, 0x481318, 0x4813C3), and both hands for Aegis before it petrifies
+  (0x481632). The checks jump on the item number before they test it for breakage, so a broken Pendragon or Aegis still
+  wards. The jump on breakage goes the same way, so in MM6.exe any broken cloak wards off poison and any broken item
+  in hand wards off stone. The port deliberately differs, by the owner's decision of 2026-11-21: a broken item wards
+  off nothing, so only an unbroken Pendragon or Aegis wards.
+- **Shielding** (`mm6::arrowHalvings`, `MM6MonsterAttack.h`). The routine for an object that hits a character halves an
+  arrow once for an unbroken Aegis in either hand (0x431FAA), and once for an unbroken Valeria in the armour slot
+  (0x431F7E). A shield can't go there, so Valeria never halves anything in MM6.exe. With `gameplay.fix_valeria_shield`,
+  default on and beyond GrayFace, an unbroken Valeria halves an arrow from either hand instead. Off, the port keeps the
+  armour slot check.
 
 ### Shops and value
 

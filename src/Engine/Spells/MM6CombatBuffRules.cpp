@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <utility>
 
+#include "Engine/MM6/MM6ArtifactBonus.h"
 #include "Engine/MM6/MM6PlayerSpell.h"
 
 namespace mm6 {
@@ -13,7 +14,7 @@ bool isCombatBuffSpell(SpellId spellId) {
 
 CombatBuffPlan planCombatBuff(SpellId spellId, Mastery mastery, int skillLevel, Time now) {
     const int rank = std::to_underlying(mastery);
-    if (!isCombatBuffSpell(spellId) || rank < 1 || rank > 3 || skillLevel < 1 || skillLevel > 63 ||
+    if (!isCombatBuffSpell(spellId) || rank < 1 || rank > 3 || skillLevel < 1 || skillLevel > kMaxCastSkillLevel ||
         !now.isValid())
         throw std::runtime_error("Invalid MM6 combat buff spell, mastery, skill or clock");
     CombatBuffPlan result;

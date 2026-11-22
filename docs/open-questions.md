@@ -47,12 +47,6 @@ summarised in [MM6 campaign status](mm6-campaign-status.md), so it is not repeat
   skill bonus routine (0x483930) differs. Spear damage starts at Expert where MM6 needs Master, Expert spear gives no
   armor class, shields scale by (1, 1, 2) where MM6 has (1, 2, 3), leather by (1, 1, 2) where MM6 has 1, and the blaster
   multipliers differ. Weapon-skill hireling points ride on the same terms.
-- **Artifact effects beyond attributes.** MM6.exe's artifacts and relics have effects outside its item bonus routine
-  that the port doesn't have yet: Mordred's healing hit, Conan's slaying, Pellinore's regeneration and Hades's drain,
-  the shielding of Valeria and Aegis, the immunities of Pendragon and Aegis, the spell skill boost of Guinevere,
-  Igraine and Morgan, and the extra hit point damage of Hades, Ares and Artemis. Addresses are in the artifact table on
-  [Characters, items and spells](mm6-characters-items-spells.md#artifacts-and-relics). Poseidon's armor class -10 has
-  no game test, a new party has no armor class for it to lower.
 - **Hireling share rounding.** MM6.exe's gold-find routine 0x41EDE0 takes `(salaries / 100) * gold / 100` from a find,
   at least 1. `Party::foundGold` takes `gold * salaries / 100 / 100`. They differ only when the hirelings' prices don't
   add up to a multiple of 100, which needs one of the cheap professions 52 to 77 hired, and by at most a few gold.

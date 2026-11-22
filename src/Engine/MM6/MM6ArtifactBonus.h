@@ -95,6 +95,14 @@ inline constexpr std::array kArtifactAttributeBonuses = std::to_array<ArtifactAt
 });
 
 /**
+ * @param item                          Item ID.
+ * @return                              Whether it's one of MM6's artifacts and relics, items 400 to 429.
+ */
+constexpr bool isArtifactOrRelic(ItemId item) {
+    return std::to_underlying(item) >= 400 && std::to_underlying(item) <= 429;
+}
+
+/**
  * @offset 0x482E80
  *
  * @param item                          Equipped MM6 artifact or relic.
@@ -118,6 +126,63 @@ constexpr int artifactAttributeBonus(ItemId item, Attribute attribute) {
  */
 constexpr bool isSwiftArtifact(ItemId item) {
     return std::to_underlying(item) == 404 || std::to_underlying(item) == 405;
+}
+
+/**
+ * @offset 0x47E4B0
+ *
+ * @param weapon                        MM6 weapon that hits.
+ * @param enchantment                   Its special enchantment.
+ * @param monster                       MM6 monster ID of the target, its row in `monsters.txt`.
+ * @return                              Whether the weapon's damage roll doubles against the monster. Conan doubles
+ *                                      against the devils, 25 to 30, and the lizards, drakes, wyrms and dragons, 31
+ *                                      to 42, and ignores its enchantment. Demon and Dragon Slaying each take one of
+ *                                      the two ranges.
+ */
+constexpr bool weaponSlays(ItemId weapon, ItemEnchantment enchantment, int monster) {
+    if (std::to_underlying(weapon) == 402) // Conan.
+        return monster >= 25 && monster <= 42;
+    if (enchantment == ITEM_ENCHANTMENT_DEMON_SLAYING)
+        return monster >= 25 && monster <= 30;
+    if (enchantment == ITEM_ENCHANTMENT_DRAGON_SLAYING)
+        return monster >= 31 && monster <= 42;
+    return false;
+}
+
+/**
+ * Highest skill level an MM6 spellbook cast can use: a skill of 63, half again for a school enchantment and half of
+ * that again for an artifact. MM6.exe casts with the boosted level as it is.
+ */
+inline constexpr int kMaxCastSkillLevel = 141;
+
+/**
+ * @offset 0x422829
+ *
+ * @param item                          Item an MM6 caster wears.
+ * @param slot                          Slot it's worn in.
+ * @param school                        Magic skill of the spell being cast.
+ * @return                              Whether the item boosts that school's spells by half the skill. Morgan does it
+ *                                      for Fire, Air, Water and Earth as the amulet, Igraine for Spirit, Mind and Body
+ *                                      and Guinevere for Light and Dark on any ring finger.
+ */
+constexpr bool boostsSpellSchool(ItemId item, ItemSlot slot, Skill school) {
+    const bool ring = slot >= ITEM_SLOT_RING1 && slot <= ITEM_SLOT_RING6;
+    switch (school) {
+        case SKILL_FIRE:
+        case SKILL_AIR:
+        case SKILL_WATER:
+        case SKILL_EARTH:
+            return slot == ITEM_SLOT_AMULET && std::to_underlying(item) == 414;
+        case SKILL_SPIRIT:
+        case SKILL_MIND:
+        case SKILL_BODY:
+            return ring && std::to_underlying(item) == 413;
+        case SKILL_LIGHT:
+        case SKILL_DARK:
+            return ring && std::to_underlying(item) == 412;
+        default:
+            return false;
+    }
 }
 
 } // namespace mm6

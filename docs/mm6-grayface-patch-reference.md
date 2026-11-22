@@ -76,9 +76,11 @@ MM6 runs behind verification lists: `src/Engine/MM6/MM6SpellEffectGuard.h` for p
   Carnage arrow's explosion is the area damage a player can aim at monsters. Test
   `MM6GrayFaceShared.ExplosionHitsParalyzedMonster`.
 - **C4**. Elemental weapon enchants ignored resistances (`FixBonusDamageProc`, `Hooks.pas:1432`, routes the bonus
-  through the monster resistance roll). State: **absent**.
-  `MM6CombatRules.h` throws on any special enchantment other than Antique, so no enchant reaches the shared
-  resistance-aware path in `Actor.cpp`.
+  through the monster resistance roll). State: **partly fixed**.
+  The hooks at 0x430FD3, 0x430FE4 and 0x431628 cover Ares, Hades and Artemis, which `mm6::artifactExtraDamage` sends
+  through the roll behind `gameplay.fix_bonus_damage_resistance`, keeping it off a stoned monster too. Test
+  `MM6ArtifactEffects.RelicsAddElementalDamage`. `MM6CombatRules.h` still throws on any special enchantment other than
+  Antique, so no enchant reaches it.
 - **C5**. Second-hand weapon doubled recovery (`FixDualWeaponsRecovery=1`, works like MM7). State: **fixed by MM7
   rule**.
   `Character::GetAttackRecoveryTime` takes the slower weapon, no MM6 branch.
@@ -505,6 +507,10 @@ Rules for every fix in this backlog:
 - **C3, C7, C21, C27, W4, W6, W17, W24**. Fixed in shared code, no MM6 test. Add an MM6 game test for each.
   Done 2026-11-18 in `GameTests_MM6GrayFaceShared.cpp`. W4 turned out vanilla in MM6's own day check and is fixed behind
   `fix_new_day_at_month_start`.
+
+- **Valeria**. Not a GrayFace item. MM6.exe checks the armor slot for the shield Valeria before it halves an arrow
+  (0x431F7E), so Valeria never shields. Beyond GrayFace, owner decision 2026-11-21. Done behind `fix_valeria_shield`,
+  an unbroken Valeria in either hand halves arrows. Test `MM6ArtifactEffects.ValeriaHalvesArrows`.
 
 **Admission-time fixes.** C2 monster Paralyze applies the Paralyzed condition to one chosen member. C4 elemental weapon
 enchants go through the monster resistance roll. C9 Finger of Death awards experience. C11 Charm uses the corrected

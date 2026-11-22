@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdint>
 #include <map>
 #include <regex>
@@ -11,6 +12,7 @@
 #include "Engine/EngineGlobals.h"
 #include "Engine/Localization.h"
 #include "Engine/MM6/MM6ChestTitleState.h"
+#include "Engine/Objects/Actor.h"
 #include "Engine/Objects/Chest.h"
 #include "Engine/Objects/CombinedSkillValue.h"
 #include "Engine/Party.h"
@@ -157,6 +159,45 @@ static void checkArtifactCases(EngineController &game, TestController &test, Com
     }
 }
 
+static int spawnAhead(EngineController &game, MonsterId monster, int distance, SpawnFlags flags) {
+    const Vec3f ahead(TrigLUT.cos(pParty->_viewYaw), TrigLUT.sin(pParty->_viewYaw), 0);
+    return game.spawnMonster(pParty->pos + ahead * distance, monster, flags)->id;
+}
+
+static void attackUntilHit(EngineController &game, int actorId) {
+    // The knight attacks the monster until a blow or an arrow lands, the others keep still.
+    const int hp = pActors[actorId].hp;
+    for (int attack = 0; attack < 20 && pActors[actorId].hp == hp; attack++) {
+        for (int frame = 0; frame < 100 && pParty->pCharacters[0].timeToRecovery > 0_ticks; frame++)
+            game.tick(); // The knight recovers from the last attack.
+        if (!pParty->hasActiveCharacter() || pParty->activeCharacterIndex() != 0) {
+            game.pressAndReleaseKey(PlatformKey::KEY_DIGIT_1); // On the active character the key opens the character screen.
+            game.tick();
+        }
+        game.pointMouseAtActor(actorId);
+        game.pressAndReleaseKey(PlatformKey::KEY_A);
+        game.tick();
+        for (int frame = 0; frame < 20 && pActors[actorId].hp == hp; frame++)
+            game.tick(); // An arrow flies to the monster.
+    }
+}
+
+static void wieldFromBackpack(EngineController &game, Skill skill, int item) {
+    // The knight learns the skill the item needs, if any, finds it in the backpack and puts it on.
+    if (skill != SKILL_INVALID)
+        pParty->pCharacters[0].setSkillValue(skill, CombinedSkillValue::novice());
+    pParty->pCharacters[0].inventory.add(Item(static_cast<ItemId>(item)));
+    wearFromBackpack(game, 0, static_cast<ItemId>(item));
+    game.pressAndReleaseKey(PlatformKey::KEY_ESCAPE);
+    game.tick();
+}
+
+static void paralyzeAllButTheKnight() {
+    // Monsters don't attack paralyzed characters, so the knight takes every hit.
+    for (int i = 1; i < 4; i++)
+        pParty->pCharacters[i].conditions.set(CONDITION_PARALYZED, pParty->GetPlayingTime());
+}
+
 GAME_TEST(MM6ArtifactBonus, ArtifactsRaiseStats) {
     // Artifacts gave none of their stat, hit point, spell point or resistance bonuses. A character who puts one on
     // sees it on the stats tab.
@@ -241,4 +282,279 @@ GAME_TEST(MM6ArtifactBonus, SwiftArtifactsShortenRecovery) {
 
         EXPECT_EQ(recoveryTape.max(), c.recovery);
     }
+}
+
+GAME_TEST(MM6ArtifactEffects, MordredHealsTheWielder) {
+    // Mordred didn't heal its wielder. A hit heals a fifth of its damage while the monster still stands, and nothing
+    // when it kills.
+    for (bool kills : {false, true}) {
+        SCOPED_TRACE(fmt::format("kills={}", kills));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        wieldFromBackpack(game, SKILL_DAGGER, 400);
+        pParty->pCharacters[0].health = 1;
+        const int dwarf = spawnAhead(game, static_cast<MonsterId>(46), 150, SPAWN_DUMMY | SPAWN_FRIENDLY);
+        if (kills)
+            pActors[dwarf].hp = 1;
+        auto monsterHpTape = actorTapes.hp(dwarf);
+        auto hpTape = charTapes.hp(0);
+        test.startTaping();
+
+        attackUntilHit(game, dwarf);
+
+        ASSERT_EQ(monsterHpTape.size(), 2);
+        const int damage = monsterHpTape.front() - monsterHpTape.back();
+        EXPECT_EQ(hpTape, kills ? tape(1) : tape(1, 1 + damage / 5));
+    }
+}
+
+GAME_TEST(MM6ArtifactEffects, RelicsAddElementalDamage) {
+    // Hades, Ares and Artemis dealt only their weapon damage. Each hit takes 20 Poison, 30 Fire or 20 Electricity hit
+    // points more, through the monster's resistance unless fix_bonus_damage_resistance is off. The spider is immune to
+    // poison.
+    struct Case {
+        int relic;
+        Skill skill;
+        MonsterId monster;
+        SpawnFlags flags;
+        bool fix;
+        int expectedExtra;
+    };
+    const MonsterId veteran = static_cast<MonsterId>(63);
+    const MonsterId spider = static_cast<MonsterId>(162);
+    const Case cases[] = {
+        {415, SKILL_SWORD, veteran, SPAWN_DUMMY, true, 20}, // Hades.
+        {415, SKILL_SWORD, spider, SPAWN_STATIONARY, true, 0},
+        {415, SKILL_SWORD, spider, SPAWN_STATIONARY, false, 20},
+        {416, SKILL_MACE, veteran, SPAWN_DUMMY, true, 30}, // Ares.
+        {420, SKILL_BOW, veteran, SPAWN_DUMMY, true, 20}, // Artemis.
+    };
+    for (const Case &c : cases) {
+        SCOPED_TRACE(fmt::format("relic={} monster={} fix={}", c.relic, std::to_underlying(c.monster), c.fix));
+        test.prepareForNextTest();
+        engine->config->gameplay.FixBonusDamageResistance.setValue(c.fix);
+        startNewGameThroughInput(game);
+        wieldFromBackpack(game, c.skill, c.relic);
+        Character &knight = pParty->pCharacters[0];
+        const bool bow = c.skill == SKILL_BOW;
+        const int minDamage = bow ? knight.GetRangedDamageMin() : knight.GetMeleeDamageMinimal();
+        const int maxDamage = bow ? knight.GetRangedDamageMax() : knight.GetMeleeDamageMaximal();
+        const int monster = spawnAhead(game, c.monster, bow ? 1000 : 150, c.flags);
+        auto monsterHpTape = actorTapes.hp(monster);
+        test.startTaping();
+
+        attackUntilHit(game, monster);
+
+        ASSERT_EQ(monsterHpTape.size(), 2);
+        const int damage = monsterHpTape.front() - monsterHpTape.back();
+        EXPECT_GE(damage, minDamage + c.expectedExtra);
+        EXPECT_LE(damage, maxDamage + c.expectedExtra);
+    }
+}
+
+GAME_TEST(MM6ArtifactEffects, ConanSlaysDevilsAndDragons) {
+    // Conan dealt the same damage to every monster. Its 3d7+10 roll doubles against devils and dragons, so a devil
+    // loses an even 26 to 62 on top of the knight's own bonus, and a veteran no more than the stats tab shows.
+    for (MonsterId monster : {static_cast<MonsterId>(63), static_cast<MonsterId>(29)}) {
+        SCOPED_TRACE(fmt::format("monster={}", std::to_underlying(monster)));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        wieldFromBackpack(game, SKILL_AXE, 402);
+        const int minDamage = pParty->pCharacters[0].GetMeleeDamageMinimal();
+        const int maxDamage = pParty->pCharacters[0].GetMeleeDamageMaximal();
+        const int target = spawnAhead(game, monster, 150, SPAWN_DUMMY | SPAWN_FRIENDLY);
+        auto monsterHpTape = actorTapes.hp(target);
+        test.startTaping();
+
+        for (int hit = 0; hit < 2; hit++)
+            attackUntilHit(game, target);
+
+        ASSERT_EQ(monsterHpTape.size(), 3);
+        for (size_t i = 1; i < monsterHpTape.size(); i++) {
+            const int damage = monsterHpTape[i - 1] - monsterHpTape[i];
+            if (monster == static_cast<MonsterId>(63)) {
+                EXPECT_LE(damage, maxDamage);
+            } else {
+                const int roll = damage - (minDamage - 13); // The rest of the shown minimum is the knight's bonus.
+                EXPECT_EQ(roll % 2, 0);
+                EXPECT_GE(roll, 26);
+                EXPECT_LE(roll, 62);
+            }
+        }
+    }
+}
+
+GAME_TEST(MM6ArtifactEffects, PellinoreRegeneratesHitPoints) {
+    // Pellinore didn't regenerate hit points. Its wearer gains one every five minutes.
+    for (bool pellinore : {false, true}) {
+        SCOPED_TRACE(fmt::format("pellinore={}", pellinore));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        if (pellinore)
+            wieldFromBackpack(game, SKILL_PLATE, 407);
+        pParty->pCharacters[0].health = 1;
+        auto hpTape = charTapes.hp(0);
+        test.startTaping();
+
+        game.tick(100); // Five game minutes, one regeneration step.
+
+        EXPECT_EQ(hpTape, pellinore ? tape(1, 2) : tape(1));
+    }
+}
+
+GAME_TEST(MM6ArtifactEffects, HadesDrainsItsWielder) {
+    // Hades didn't drain its wielder. It takes a hit point every five minutes, and the wielder stays conscious at 0 and
+    // falls unconscious below it.
+    startNewGameThroughInput(game);
+    wieldFromBackpack(game, SKILL_SWORD, 415);
+    pParty->pCharacters[0].health = 1;
+    auto hpTape = charTapes.hp(0);
+    auto conditionTape = charTapes.condition(0);
+    test.startTaping();
+
+    game.tick(200); // Ten game minutes, two regeneration steps.
+
+    EXPECT_EQ(hpTape, tape(1, 0, -1));
+    EXPECT_EQ(conditionTape, tape(CONDITION_GOOD, CONDITION_UNCONSCIOUS));
+}
+
+GAME_TEST(MM6ArtifactEffects, AegisHalvesArrows) {
+    // Aegis halves the arrows that hit its wielder, an archer's 2 to 7 damage becomes 1 to 3.
+    for (bool aegis : {false, true}) {
+        SCOPED_TRACE(fmt::format("aegis={}", aegis));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        if (aegis)
+            wieldFromBackpack(game, SKILL_SHIELD, 423);
+        paralyzeAllButTheKnight();
+        auto hpTape = charTapes.hp(0);
+        test.startTaping();
+
+        spawnAhead(game, static_cast<MonsterId>(1), 1500, SPAWN_STATIONARY);
+        for (int frame = 0; frame < 1000 && hpTape.size() < 4; frame++)
+            game.tick(); // The archer shoots until three arrows land.
+
+        ASSERT_EQ(hpTape.size(), 4);
+        std::vector<int> hits;
+        for (size_t i = 1; i < hpTape.size(); i++)
+            hits.push_back(hpTape[i - 1] - hpTape[i]);
+        if (aegis) {
+            EXPECT_LE(*std::ranges::max_element(hits), 3);
+        } else {
+            EXPECT_GT(*std::ranges::max_element(hits), 3);
+        }
+    }
+}
+
+GAME_TEST(MM6ArtifactEffects, ValeriaHalvesArrows) {
+    // Valeria never halved an arrow, MM6.exe looked for it in the armor slot. With fix_valeria_shield an unbroken Valeria
+    // in hand halves an archer's 2 to 7 damage to 1 to 3, a broken one doesn't.
+    struct Case {
+        bool fix;
+        bool broken;
+        bool halves;
+    };
+    for (const Case &c : {Case{true, false, true}, Case{false, false, false}, Case{true, true, false}}) {
+        SCOPED_TRACE(fmt::format("fix={} broken={}", c.fix, c.broken));
+        test.prepareForNextTest();
+        engine->config->gameplay.FixValeriaShield.setValue(c.fix);
+        startNewGameThroughInput(game);
+        wieldFromBackpack(game, SKILL_SHIELD, 408);
+        if (c.broken)
+            pParty->pCharacters[0].inventory.entry(ITEM_SLOT_OFF_HAND)->SetBroken();
+        paralyzeAllButTheKnight();
+        auto hpTape = charTapes.hp(0);
+        test.startTaping();
+
+        spawnAhead(game, static_cast<MonsterId>(1), 1500, SPAWN_STATIONARY);
+        for (int frame = 0; frame < 1000 && hpTape.size() < 4; frame++)
+            game.tick(); // The archer shoots until three arrows land.
+
+        ASSERT_EQ(hpTape.size(), 4);
+        std::vector<int> hits;
+        for (size_t i = 1; i < hpTape.size(); i++)
+            hits.push_back(hpTape[i - 1] - hpTape[i]);
+        if (c.halves) {
+            EXPECT_LE(*std::ranges::max_element(hits), 3);
+        } else {
+            EXPECT_GT(*std::ranges::max_element(hits), 3);
+        }
+    }
+}
+
+GAME_TEST(MM6ArtifactEffects, PendragonWardsOffPoison) {
+    // Pendragon keeps a spider's bite from poisoning its wearer. A broken Pendragon doesn't, where MM6.exe lets it.
+    enum class Cloak { CLOAK_NONE, CLOAK_PENDRAGON, CLOAK_BROKEN_PENDRAGON };
+    for (Cloak cloak : {Cloak::CLOAK_NONE, Cloak::CLOAK_PENDRAGON, Cloak::CLOAK_BROKEN_PENDRAGON}) {
+        SCOPED_TRACE(fmt::format("cloak={}", std::to_underlying(cloak)));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        if (cloak != Cloak::CLOAK_NONE)
+            wieldFromBackpack(game, SKILL_INVALID, 410);
+        if (cloak == Cloak::CLOAK_BROKEN_PENDRAGON)
+            pParty->pCharacters[0].inventory.entry(ITEM_SLOT_CLOAK)->SetBroken();
+        paralyzeAllButTheKnight();
+        auto hpTape = charTapes.hp(0);
+        auto conditionTape = charTapes.condition(0);
+        test.startTaping();
+
+        Actor &spider = pActors[spawnAhead(game, static_cast<MonsterId>(160), 150, SPAWN_STATIONARY)];
+        spider.monsterInfo.specialAttackLevel = 20; // Every bite tries to poison, the spider is level 5.
+        for (int frame = 0; frame < 1000 && hpTape.size() < 4; frame++)
+            game.tick(); // The spider bites three times, the wearer's luck could shake off a single bite.
+
+        ASSERT_EQ(hpTape.size(), 4);
+        EXPECT_EQ(conditionTape, cloak == Cloak::CLOAK_PENDRAGON ? tape(CONDITION_GOOD) : tape(CONDITION_GOOD, CONDITION_POISON_WEAK));
+    }
+}
+
+GAME_TEST(MM6ArtifactEffects, AegisWardsOffStone) {
+    // Aegis keeps the Abomination's gaze from turning its wielder to stone.
+    for (bool aegis : {false, true}) {
+        SCOPED_TRACE(fmt::format("aegis={}", aegis));
+        test.prepareForNextTest();
+        startNewGameThroughInput(game);
+        if (aegis)
+            wieldFromBackpack(game, SKILL_SHIELD, 423);
+        paralyzeAllButTheKnight();
+        auto hpTape = charTapes.hp(0);
+        auto conditionTape = charTapes.condition(0);
+        test.startTaping();
+
+        Actor &abomination = pActors[spawnAhead(game, static_cast<MonsterId>(24), 150, SPAWN_STATIONARY)];
+        abomination.monsterInfo.specialAttackLevel = 6; // Every blow tries to petrify, the Abomination is level 17.
+        abomination.monsterInfo.spell1UseChance = 0;
+        for (int frame = 0; frame < 300 && hpTape.size() < 2; frame++)
+            game.tick(); // The Abomination strikes.
+
+        ASSERT_EQ(hpTape.size(), 2);
+        EXPECT_EQ(conditionTape, aegis ? tape(CONDITION_GOOD) : tape(CONDITION_GOOD, CONDITION_PETRIFIED));
+    }
+}
+
+GAME_TEST(MM6ArtifactEffects, PoseidonLowersArmorClass) {
+    // Poseidon takes 10 off its wielder's armor class, besides what its -10 Speed costs. The knight wears plate armor
+    // first, a new party has no armor class to lower.
+    auto textTape = tapes.allGUIWindowsText();
+    startNewGameThroughInput(game);
+    wieldFromBackpack(game, SKILL_PLATE, 76);
+    pParty->pCharacters[0].setSkillValue(SKILL_SPEAR, CombinedSkillValue::novice());
+    pParty->pCharacters[0].inventory.add(Item(static_cast<ItemId>(417)));
+    test.startTaping();
+
+    showStats(game, 0);
+    wearFromBackpack(game, 0, static_cast<ItemId>(417));
+    game.pressGuiButton("CharacterWindow_Stats");
+    game.tick();
+
+    auto shown = textTape.map(shownStats).filter([](const ShownStats &stats) { return !stats.empty(); });
+    ASSERT_EQ(shown.size(), 2);
+    const std::string speed = localization->str(LSTR_SPEED);
+    const std::string armorClass = localization->str(LSTR_ARMOR_CLASS);
+    const Character &knight = pParty->pCharacters[0];
+    const ShownStats &before = shown[0];
+    const ShownStats &after = shown[1];
+    const int speedBonusChange = knight.GetParameterBonus(after.at(speed).first) - knight.GetParameterBonus(before.at(speed).first);
+    EXPECT_EQ(after.at(speed).first, before.at(speed).first - 10);
+    EXPECT_EQ(after.at(armorClass).first, before.at(armorClass).first - 10 + speedBonusChange);
 }
